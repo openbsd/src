@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.9 2001/06/27 06:34:51 kjc Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.10 2001/08/17 21:52:16 deraadt Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -316,7 +316,8 @@ cnw_enable(sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
-	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET, cnw_intr, sc);
+	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
+	    cnw_intr, sc, "");
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt handler\n",
 		    sc->sc_dev.dv_xname);
@@ -875,10 +876,8 @@ cnw_activate(dev, act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		pcmcia_function_enable(sc->sc_pf);
-		printf("%s:", sc->sc_dev.dv_xname);
-		sc->sc_ih =
-		    pcmcia_intr_establish(sc->sc_pf, IPL_NET, cnw_intr, sc);
-		printf("\n");
+		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
+		    cnw_intr, sc, sc->sc_dev.dv_xname);
 		cnw_init(sc);
 		break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ray.c,v 1.16 2001/06/27 06:34:52 kjc Exp $	*/
+/*	$OpenBSD: if_ray.c,v 1.17 2001/08/17 21:52:16 deraadt Exp $	*/
 /*	$NetBSD: if_ray.c,v 1.21 2000/07/05 02:35:54 onoe Exp $	*/
 
 /*
@@ -780,7 +780,7 @@ ray_enable(sc)
 
 	if ((error = ray_init(sc)) == 0) {
 		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
-		    ray_intr, sc);
+		    ray_intr, sc, "");
 		if (sc->sc_ih == NULL) {
 			ray_stop(sc);
 			return (EIO);

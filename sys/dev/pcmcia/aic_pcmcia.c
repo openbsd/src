@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_pcmcia.c,v 1.8 1999/09/13 13:07:00 deraadt Exp $	*/
+/*	$OpenBSD: aic_pcmcia.c,v 1.9 2001/08/17 21:52:16 deraadt Exp $	*/
 /*	$NetBSD: aic_pcmcia.c,v 1.6 1998/07/19 17:28:15 christos Exp $	*/
 
 /*
@@ -160,7 +160,8 @@ aic_pcmcia_attach(parent, self, aux)
 	}
 
 	/* Establish the interrupt handler. */
-	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_BIO, aicintr, sc);
+	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_BIO,
+	    aicintr, sc, "");
 	if (psc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt\n");
 		return;

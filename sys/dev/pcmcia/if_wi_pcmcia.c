@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pcmcia.c,v 1.7 2001/06/23 01:56:10 millert Exp $	*/
+/*	$OpenBSD: if_wi_pcmcia.c,v 1.8 2001/08/17 21:52:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -280,7 +280,7 @@ wi_pcmcia_attach(parent, self, aux)
 	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xffff);
 
 	/* Establish the interrupt. */
-	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, wi_intr, psc);
+	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_NET, wi_intr, psc, "");
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -331,10 +331,8 @@ wi_pcmcia_activate(dev, act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		pcmcia_function_enable(psc->sc_pf);
-		printf("%s:", WI_PRT_ARG(sc));
-		sc->sc_ih =
-		    pcmcia_intr_establish(psc->sc_pf, IPL_NET, wi_intr, sc);
-		printf("\n");
+		sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
+		    wi_intr, sc, sc->sc_dev.dv_xname);
 		wi_init(sc);
 		break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2_isa.c,v 1.1 2000/05/15 04:17:29 jason Exp $	*/
+/*	$OpenBSD: tcic2_isa.c,v 1.2 2001/08/17 21:52:16 deraadt Exp $	*/
 /*	$NetBSD: tcic2_isa.c,v 1.2 1999/04/08 16:14:29 bad Exp $	*/
 
 #undef	TCICISADEBUG
@@ -112,7 +112,7 @@ int	tcic_isa_probe __P((struct device *, void *, void *));
 void	tcic_isa_attach __P((struct device *, struct device *, void *));
 
 void	*tcic_isa_chip_intr_establish __P((pcmcia_chipset_handle_t,
-	    struct pcmcia_function *, int, int (*) (void *), void *));
+	    struct pcmcia_function *, int, int (*) (void *), void *, char *));
 void	tcic_isa_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
 
 struct cfattach tcic_isa_ca = {
@@ -308,12 +308,13 @@ tcic_isa_attach(parent, self, aux)
 }
 
 void *
-tcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
+tcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg, xname)
 	pcmcia_chipset_handle_t pch;
 	struct pcmcia_function *pf;
 	int ipl;
 	int (*fct) __P((void *));
 	void *arg;
+	char *xname;
 {
 	struct tcic_handle *h = (struct tcic_handle *) pch;
 	int irq, ist, val, reg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isa.c,v 1.12 2000/07/03 02:59:24 aaron Exp $	*/
+/*	$OpenBSD: i82365_isa.c,v 1.13 2001/08/17 21:52:16 deraadt Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ int	pcic_isa_probe __P((struct device *, void *, void *));
 void	pcic_isa_attach __P((struct device *, struct device *, void *));
 
 void	*pcic_isa_chip_intr_establish __P((pcmcia_chipset_handle_t,
-	    struct pcmcia_function *, int, int (*) (void *), void *));
+	    struct pcmcia_function *, int, int (*) (void *), void *, char *));
 void	pcic_isa_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
 
 struct cfattach pcic_isa_ca = {

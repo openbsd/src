@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isavar.h,v 1.3 1999/08/11 12:02:07 niklas Exp $	*/
+/*	$OpenBSD: i82365_isavar.h,v 1.4 2001/08/17 21:52:16 deraadt Exp $	*/
 /*	$NetBSD: i82365_isavar.h,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -39,7 +39,7 @@ extern int npcic_isa_intr_list;
  */
 
 void	*pcic_isa_chip_intr_establish __P((pcmcia_chipset_handle_t,
-	    struct pcmcia_function *, int, int (*) (void *), void *));
+	    struct pcmcia_function *, int, int (*) (void *), void *, char *));
 void	pcic_isa_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.29 2000/06/28 17:38:25 aaron Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.30 2001/08/17 21:52:16 deraadt Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -681,11 +681,12 @@ pcmcia_io_map(pf, width, offset, size, pcihp, windowp)
 }
 
 void *
-pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
+pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg, xname)
 	struct pcmcia_function *pf;
 	int ipl;
 	int (*ih_fct) __P((void *));
 	void *ih_arg;
+	char *xname;
 {
 	void *ret;
 	int s, ihcnt, hiipl, reg;
@@ -731,7 +732,8 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 			pf->ih_ipl = ipl;
 
 			pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct,
-			    pf->sc->pch, pf, ipl, pcmcia_card_intr, pf->sc);
+			    pf->sc->pch, pf, ipl, pcmcia_card_intr, pf->sc,
+			    xname);
 			splx(s);
 		} else if (ipl > hiipl) {
 #ifdef DIAGNOSTIC
@@ -751,7 +753,8 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 			pf->ih_ipl = ipl;
 
 			pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct,
-			    pf->sc->pch, pf, ipl, pcmcia_card_intr, pf->sc);
+			    pf->sc->pch, pf, ipl, pcmcia_card_intr, pf->sc,
+			    xname);
 
 			splx(s);
 		} else {
@@ -778,7 +781,7 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 		}
 	} else
 		ret = pcmcia_chip_intr_establish(pf->sc->pct, pf->sc->pch,
-		    pf, ipl, ih_fct, ih_arg);
+		    pf, ipl, ih_fct, ih_arg, xname);
 
 	return (ret);
 }
@@ -848,7 +851,8 @@ pcmcia_intr_disestablish(pf, ih)
 			pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch,
 			    pf->sc->ih);
 			pf->sc->ih = pcmcia_chip_intr_establish(pf->sc->pct,
-			    pf->sc->pch, pf, hiipl, pcmcia_card_intr, pf->sc);
+			    pf->sc->pch, pf, hiipl, pcmcia_card_intr, pf->sc,
+			    NULL);
 
 			/* Null out the handler for this function. */
 			pf->ih_fct = NULL;

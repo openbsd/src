@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.14 2000/08/04 15:51:02 aaron Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.15 2001/08/17 21:52:16 deraadt Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -218,8 +218,8 @@ sm_pcmcia_attach(parent, self, aux)
 	if (enaddr == NULL)
 		printf(", unable to get Ethernet address\n");
 
-	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, smc91cxx_intr,
-	    sc);
+	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
+	    smc91cxx_intr, sc, "");
 	if (psc->sc_ih == NULL)
 		printf(": couldn't establish interrupt\n");
 
@@ -262,10 +262,8 @@ sm_pcmcia_activate(dev, act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		pcmcia_function_enable(sc->sc_pf);
-		printf("%s:", sc->sc_smc.sc_dev.dv_xname);
 		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
-		    smc91cxx_intr, sc);
-		printf("\n");
+		    smc91cxx_intr, sc, sc->sc_smc.sc_dev.dv_xname);
 		smc91cxx_init(&sc->sc_smc);
 		break;
 
@@ -368,7 +366,7 @@ sm_pcmcia_enable(sc)
 
 	/* Establish the interrupt handler. */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, smc91cxx_intr,
-	    sc);
+	    sc, sc->sc_dev.dv_xname);
 	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt handler\n",
 		    sc->sc_dev.dv_xname);

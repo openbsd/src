@@ -1,5 +1,5 @@
 /* $NetBSD: if_awi_pcmcia.c,v 1.13 2000/03/22 11:22:20 onoe Exp $ */
-/* $OpenBSD: if_awi_pcmcia.c,v 1.8 2001/05/22 11:04:50 fgsch Exp $ */
+/* $OpenBSD: if_awi_pcmcia.c,v 1.9 2001/08/17 21:52:16 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -185,7 +185,8 @@ awi_pcmcia_enable(sc)
 	struct pcmcia_function *pf = psc->sc_pf;
 
 	/* establish the interrupt. */
-	sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, awi_intr, sc);
+	sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, awi_intr,
+	    sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -346,7 +347,8 @@ awi_pcmcia_attach(parent, self, aux)
 	sc->sc_disable = awi_pcmcia_disable;
 
 	/* establish the interrupt. */
-	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, awi_intr, sc);
+	sc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET,
+	    awi_intr, sc, "");
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.21 2001/06/20 23:12:11 niklas Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.22 2001/08/17 21:52:16 deraadt Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -152,7 +152,7 @@ int	pccbb_pcmcia_io_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
     bus_size_t, struct pcmcia_io_handle *, int *));
 void	pccbb_pcmcia_io_unmap __P((pcmcia_chipset_handle_t, int));
 void   *pccbb_pcmcia_intr_establish __P((pcmcia_chipset_handle_t,
-    struct pcmcia_function *, int, int (*)(void *), void *));
+    struct pcmcia_function *, int, int (*)(void *), void *, char *));
 void	pccbb_pcmcia_intr_disestablish __P((pcmcia_chipset_handle_t,
     void *));
 void	pccbb_pcmcia_socket_enable __P((pcmcia_chipset_handle_t));
@@ -2737,12 +2737,13 @@ pccbb_pcmcia_poll(arg)
  * This function enables PC-Card interrupt.  PCCBB uses PCI interrupt line.
  */
 void *
-pccbb_pcmcia_intr_establish(pch, pf, ipl, func, arg)
+pccbb_pcmcia_intr_establish(pch, pf, ipl, func, arg, xname)
 	pcmcia_chipset_handle_t pch;
 	struct pcmcia_function *pf;
 	int ipl;
 	int (*func) __P((void *));
 	void *arg;
+	char *xname;
 {
 	struct pcic_handle *ph = (struct pcic_handle *)pch;
 	struct pccbb_softc *sc = (struct pccbb_softc *)ph->ph_parent;

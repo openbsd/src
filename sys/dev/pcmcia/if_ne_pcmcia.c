@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.51 2001/06/12 05:54:25 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.52 2001/08/17 21:52:16 deraadt Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -671,7 +671,7 @@ again:
 
 	/* set up the interrupt */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, dp8390_intr,
-	    dsc);
+	    dsc, "");
 	if (psc->sc_ih == NULL)
 		printf("no irq");
 
@@ -744,10 +744,8 @@ ne_pcmcia_activate(dev, act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		pcmcia_function_enable(sc->sc_pf);
-		printf("%s:", esc->sc_dev.dv_xname);
-		sc->sc_ih =
-		    pcmcia_intr_establish(sc->sc_pf, IPL_NET, dp8390_intr, sc);
-		printf("\n");
+		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
+		    dp8390_intr, sc, esc->sc_dev.dv_xname);
 		dp8390_init(esc);
 		break;
 
@@ -771,7 +769,7 @@ ne_pcmcia_enable(dsc)
 
 	/* set up the interrupt */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, dp8390_intr,
-	    dsc);
+	    dsc, dsc->sc_dev.dv_xname);
 	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    dsc->sc_dev.dv_xname);

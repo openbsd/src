@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rln_pcmcia.c,v 1.11 2000/12/16 21:47:49 mickey Exp $	*/
+/*	$OpenBSD: if_rln_pcmcia.c,v 1.12 2001/08/17 21:52:16 deraadt Exp $	*/
 /*
  * David Leonard <d@openbsd.org>, 1999. Public domain.
  *
@@ -225,7 +225,7 @@ rln_pcmcia_attach(parent, self, aux)
 	 * responses, causes hard lock-ups.
 	 */
 	psc->psc_ih = pcmcia_intr_establish(psc->psc_pf, IPL_NET,
-		rlnintr_pcmcia, sc);
+		rlnintr_pcmcia, sc, "");
 	if (psc->psc_ih == NULL)
 		printf(": couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
@@ -274,11 +274,8 @@ rln_pcmcia_activate(dev, act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		pcmcia_function_enable(psc->psc_pf);
-		printf("%s:", sc->sc_dev.dv_xname);
-		psc->psc_ih =
-		    pcmcia_intr_establish(psc->psc_pf, IPL_NET, rlnintr_pcmcia,
-		        psc);
-		printf("\n");
+		psc->psc_ih = pcmcia_intr_establish(psc->psc_pf, IPL_NET,
+		    rlnintr_pcmcia, psc, sc->sc_dev.dv_xname);
 		rlninit(sc);
 		break;
 

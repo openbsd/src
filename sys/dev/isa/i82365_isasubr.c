@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isasubr.c,v 1.14 2000/07/03 19:02:47 niklas Exp $	*/
+/*	$OpenBSD: i82365_isasubr.c,v 1.15 2001/08/17 21:52:16 deraadt Exp $	*/
 /*	$NetBSD: i82365_isasubr.c,v 1.1 1998/06/07 18:28:31 sommerfe Exp $  */
 
 /*
@@ -184,12 +184,13 @@ pcic_isa_bus_width_probe(sc, iot, ioh, base, length)
 
 
 void *
-pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
+pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg, xname)
 	pcmcia_chipset_handle_t pch;
 	struct pcmcia_function *pf;
 	int ipl;
 	int (*fct) __P((void *));
 	void *arg;
+	char *xname;
 {
 	struct pcic_handle *h = (struct pcic_handle *)pch;
 	struct pcic_softc *sc = (struct pcic_softc *)(h->ph_parent);
@@ -218,7 +219,11 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	if (!ih)
 		return (NULL);
 
-	printf(" irq %d", irq);
+	if (xname) {
+		printf("%s: irq %d", xname, irq);
+		if (*xname)
+			printf("\n");
+	}
 	return (ih);
 }
 

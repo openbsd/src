@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_pcmcia.c,v 1.2 2000/06/20 04:56:57 niklas Exp $	*/
+/*	$OpenBSD: esp_pcmcia.c,v 1.3 2001/08/17 21:52:16 deraadt Exp $	*/
 /*	$NetBSD: esp_pcmcia.c,v 1.8 2000/06/05 15:36:45 tsutsui Exp $	*/
 
 /*-
@@ -200,7 +200,7 @@ esp_pcmcia_attach(parent, self, aux)
 	esp_pcmcia_init(esc);
 
 	esc->sc_ih = pcmcia_intr_establish(esc->sc_pf, IPL_BIO,
-	    ncr53c9x_intr, &esc->sc_ncr53c9x);
+	    ncr53c9x_intr, &esc->sc_ncr53c9x, "");
 	if (esc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt\n");
 		goto iomap_failed;
@@ -307,7 +307,8 @@ esp_pcmcia_enable(arg, onoff)
 #else
 		/* Establish the interrupt handler. */
 		esc->sc_ih = pcmcia_intr_establish(esc->sc_pf, IPL_BIO,
-		    ncr53c9x_intr, &esc->sc_ncr53c9x);
+		    ncr53c9x_intr, &esc->sc_ncr53c9x,
+		    esc->sc_ncr53c9x.sc_dev.dv_xname);
 		if (esc->sc_ih == NULL) {
 			printf("%s: couldn't establish interrupt handler\n",
 			    esc->sc_ncr53c9x.sc_dev.dv_xname);
