@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.63 2004/05/23 20:53:18 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.1 2004/07/23 15:34:03 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
