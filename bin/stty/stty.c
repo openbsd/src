@@ -1,4 +1,4 @@
-/*	$OpenBSD: stty.c,v 1.6 1997/09/01 18:30:35 deraadt Exp $	*/
+/*	$OpenBSD: stty.c,v 1.7 2000/10/06 02:49:55 aaron Exp $	*/
 /*	$NetBSD: stty.c,v 1.11 1995/03/21 09:11:30 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)stty.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: stty.c,v 1.6 1997/09/01 18:30:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: stty.c,v 1.7 2000/10/06 02:49:55 aaron Exp $";
 #endif
 #endif /* not lint */
 
@@ -161,6 +161,6 @@ void
 usage()
 {
 
-	(void)fprintf(stderr, "usage: stty [-a|-e|-g] [-f file] [options]\n");
+	(void)fprintf(stderr, "usage: stty [-a|-e|-g] [-f file] [operands]\n");
 	exit (1);
 }
