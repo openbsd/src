@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.73 1998/05/14 23:58:01 millert Exp $
+#	$OpenBSD: rc,v 1.74 1998/06/03 16:04:07 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -85,11 +85,21 @@ rm -f /var/spool/uucp/STST/*
 
 echo 'starting system logger'
 rm -f /dev/log
+if [ "X${named_chroot}" != "X" -a "X${named_chroot}" != X"NO" ]; then
+	rm -f ${named_chroot}/dev/log
+	syslogd_flags="${syslogd_flags} -a ${named_chroot}/dev/log"
+fi
 syslogd ${syslogd_flags}
 
-# $named_flags is imported from /etc/rc.conf;
+# $named_flags, $named_user, and $named_chroot are imported from /etc/rc.conf;
 # if $named_flags != NO, named is run.
 if [ "X${named_flags}" != X"NO" ]; then
+	if [ "X${named_user}" != "X" -a "X${named_user}" != X"root" ]; then
+		named_flags="-u ${named_user} ${named_flags}"
+	fi
+	if [ "X${named_chroot}" != "X" -a "X${named_chroot}" != X"NO" ]; then
+		named_flags="-t ${named_chroot} ${named_flags}"
+	fi
 	echo 'starting named';		named $named_flags
 fi
 
