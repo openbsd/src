@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.13 2000/03/01 05:57:37 jason Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.14 2000/08/28 04:55:32 jason Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.11 2000/03/01 05:57:18 jason Exp 
+ *	OpenBSD: miidevs,v 1.12 2000/08/28 04:55:10 jason Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -71,10 +71,12 @@
 
 /* some vendors have the bits swapped within bytes
 	(ie, ordered as on the wire) */
+#define	MII_OUI_xxBROADCOM	0x000818	/* Broadcom Corporation */
 #define	MII_OUI_xxICS	0x00057d	/* Integrated Circuit Systems */
 #define	MII_OUI_xxSEEQ	0x0005be	/* Seeq */
 #define	MII_OUI_xxSIS	0x000760	/* Silicon Integrated Systems */
 #define	MII_OUI_xxTI	0x100014	/* Texas Instruments */
+#define	MII_OUI_XAQTI	0x00e0ae	/* XaQti Corp. */
 
 /* Level 1 is completely different - from right to left.
 	(Two bits get lost in the third OUI byte.) */
@@ -101,6 +103,8 @@
 #define	MII_STR_BROADCOM_3C905C	"Broadcom 3C905C internal PHY"
 #define	MII_MODEL_BROADCOM_BCM5201	0x0021
 #define	MII_STR_BROADCOM_BCM5201	"BCM5201 10/100 media interface"
+#define	MII_MODEL_xxBROADCOM_BCM5400	0x0004
+#define	MII_STR_xxBROADCOM_BCM5400	"BCM5400 1000baseTX PHY"
 
 /* Davicom Semiconductor PHYs */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000
@@ -163,3 +167,7 @@
 #define	MII_STR_TSC_78Q2120	"78Q2120 10/100 media interface"
 #define	MII_MODEL_TSC_78Q2121	0x0015
 #define	MII_STR_TSC_78Q2121	"78Q2121 100baseTX media interface"
+
+/* XaQti Corp. PHYs */
+#define	MII_MODEL_XAQTI_XMACII	0x0000
+#define	MII_STR_XAQTI_XMACII	"XaQti Corp. XMAC II gigabit interface"
