@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.302 2003/05/12 18:16:15 krw Exp $
+#	$OpenBSD: install.sub,v 1.303 2003/05/12 19:01:58 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -225,7 +225,7 @@ ask() {
 # Save the user input (or the default) in $resp.
 ask_until () {
 	resp=
-	while [ -z "$resp" ] ; do
+	while [[ -z $resp ]] ; do
 		ask "$1" "$2"
 	done
 }
@@ -926,7 +926,7 @@ ftp_error () {
 # Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
 #	_ftp_server_password, and _ftp_active must be global.
 install_url() {
-	local _file_list _url_type=$1 _url_base _oifs
+	local _url_type=$1 _file_list _url_base _oifs _prompt _line
 
 	donetconfig
 
@@ -935,58 +935,57 @@ install_url() {
 	unset ftp_proxy http_proxy
 	[[ $resp == none ]] || export ftp_proxy=$resp http_proxy=$resp
 
-	ask "Display the list of known $_url_type servers?" "${_ftp_getlist:-y}"
+	rm -f $SERVERLIST
+	ask "Display the list of known $_url_type servers?" "${_get_server_list:-y}"
 	case $resp in
-	n*|N*)	_ftp_getlist=n
+	n*|N*)	_get_server_list=n
 		;;
 	*)
-		_ftp_getlist=y
+		_get_server_list=y
 		# ftp.openbsd.org == 129.128.5.191 and will remain at
 		# that address for the forseeable future.
-		ftp ${_ftp_active} -V -a -o /tmp/ftplist ftp://129.128.5.191/$FTPDIR/ftplist > /dev/null
-		grep "^${_url_type}:" /tmp/ftplist | cat -n | less -XE
+		echo -n "Getting the list from 129.128.5.191 (ftp.openbsd.org)..."
+		ftp $_ftp_active -V -a -o - \
+			ftp://129.128.5.191/$FTPDIR/ftplist 2>/tmp/ftplisterr \
+			| sed -ne "/^${_url_type}:\/\//s///p" >$SERVERLIST
+		if [[ -s $SERVERLIST ]]; then
+			echo "done."
+			_prompt="Server? (IP address, hostname, list#, 'done' or '?')"
+			cat -n $SERVERLIST | less -XE
+		else
+			echo "FAILED."
+			cat /tmp/ftplisterr
+		fi
 		;;
 	esac
 
 	# Get server IP address or hostname
-	resp=
-	while [[ -z $resp ]] ; do
-		if [ ! -f /tmp/ftplist ]; then
-			eval ask \"Server IP address, or hostname?\" \"\$_${_url_type}_server_ip\"
-			continue;
-		fi
-
-		eval ask \"Server IP address, hostname, or list#?\" \"\$_${_url_type}_server_ip\"
-
+	: ${_prompt:="Server? (IP address, hostname or 'done')"}
+	while : ; do
+		eval resp=\$_${_url_type}_server_ip
+		ask_until "$_prompt" "$resp"
 		case $resp in
-		"?")
-			grep "^${_url_type}:" /tmp/ftplist | cat -n | less -XE
-			resp=
+		done)	return ;;
+		"?")	[[ -s $SERVERLIST ]] || continue
+			cat -n $SERVERLIST | less -XE
 			;;
 		+([0-9]))
-			maxlines=`grep "^${_url_type}:" /tmp/ftplist | sed -ne '$='`
-
-			if [ $maxlines -lt $resp -o $resp -lt 1 ]; then
-				echo "There is no ${resp}th line in the list."
-			else
-				tline=`grep "^${_url_type}:" /tmp/ftplist | sed -ne "${resp}p"`
-				echo "Using	$tline"
-				url=`echo $tline | sed -e "s/^${_url_type}:\/\///" |
-					cutword -t' ' 1 | cutword -t' ' 1`
-				host=`echo $url | cutword -t/ 1`
-				eval _${_url_type}_server_ip=$host
-				eval _${_url_type}_server_dir=$(echo $url | sed -e "s/^${host}\///")/$SETDIR
-			fi
-
-			# Always do it again, just to double check
-			resp=
-			;;
-		*)
+			# A numeric hostname is ignored. A number is only used
+			# as a line number in $SERVERLIST.
+			[[ -s $SERVERLIST ]] || continue
+			_line=$(sed -ne "${resp}p" $SERVERLIST)
+			[[ -n $_line ]] || { echo "There is no line $resp." ; continue ; }
+			echo "Using	$_line"
+			_line=$(echo $_line | cutword -t' ' 1)
+			eval _${_url_type}_server_ip=${_line%%/*}
+			eval _${_url_type}_server_dir=${_line#*/}/$SETDIR
+			# Repeat loop to get user to confirm server address.
+ 			;;
+		*)	eval _${_url_type}_server_ip=$resp
+			break
 			;;
 		esac
 	done
-
-	eval _${_url_type}_server_ip=$resp
 
 	# Some older servers lie about their support for passive mode ftp, so
 	# ask the user if it worth trying passive mode to the chosen server.
@@ -1056,11 +1055,10 @@ install_mounted_fs() {
 	local _mp=$1 _dir=$2
 
 	while : ; do
-		ask "Pathname to the sets? (or 'done')" "$_dir"
+		ask_until "Pathname to the sets? (or 'done')" "$_dir"
 		case $resp in
 		done)	return
 			;;
-		"")	;;
 		*)
 			# Accept a valid $_mp relative path.
 			[[ -d $_mp/$resp ]] && { _dir=$_mp/$resp ; break ; }
@@ -1756,6 +1754,7 @@ VNAME="$(( $VERSION / 10 )).$(( $VERSION % 10 ))"
 SETDIR="$VNAME/$ARCH"
 FTPDIR="pub/OpenBSD/$VNAME"
 OBSD="OpenBSD/$ARCH $VNAME"
+SERVERLIST=/tmp/serverlist
 
 # Extract and save one boot's worth of dmesg
 dmesg | sed -ne '/^OpenBSD /h;/^OpenBSD /!H;${g;p;}' > /var/run/dmesg.boot
