@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.50 2003/07/15 06:10:45 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.51 2003/08/19 22:10:08 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.50 2003/07/15 06:10:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.51 2003/08/19 22:10:08 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -334,7 +334,8 @@ main(int argc, char *argv[])
 	char path[MAXPATHLEN];
 	struct sockaddr_in sin;
 	struct timeval tv;
-	fd_set fdsr;
+	fd_set *fdsrp = NULL;
+	int fdsrl = 0;
 	int width, lockfd, lsock;
 	socklen_t len;
 	int evil = 0, one = 1;
@@ -524,21 +525,34 @@ main(int argc, char *argv[])
 	checkwork();
 
 	while (1) {
-		fdsr = svc_fdset;
-		FD_SET(rpcsock, &fdsr);
-		FD_SET(pingsock, &fdsr);
+		extern int __svc_fdsetsize;
+		extern void *__svc_fdset;
 
-		width = svc_maxfd;
-		if (rpcsock > width)
-			width = rpcsock;
-		if (pingsock > width)
-			width = pingsock;
-		width++;
+		if (fdsrp == NULL || fdsrl != __svc_fdsetsize) {
+			if (fdsrp)
+				free(fdsrp);
+
+			fdsrl = __svc_fdsetsize;
+			width = __svc_fdsetsize;
+			if (rpcsock > __svc_fdsetsize)
+				width = rpcsock;
+			if (pingsock > __svc_fdsetsize)
+				width = pingsock;
+			fdsrp = (fd_set *)calloc(howmany(width+1, NFDBITS),
+			    sizeof(fd_mask));
+			if (fdsrp == NULL)
+				errx(1, "no memory");
+		}
+
+		bcopy(__svc_fdset, fdsrp, howmany(fdsrl+1, NFDBITS) *
+		    sizeof(fd_mask));
+		FD_SET(rpcsock, fdsrp);
+		FD_SET(pingsock, fdsrp);
 
 		tv.tv_sec = 1;
 		tv.tv_usec = 0;
 
-		switch (select(width, &fdsr, NULL, NULL, &tv)) {
+		switch (select(width+1, fdsrp, NULL, NULL, &tv)) {
 		case 0:
 			checkwork();
 			break;
@@ -546,11 +560,11 @@ main(int argc, char *argv[])
 			perror("select\n");
 			break;
 		default:
-			if (FD_ISSET(rpcsock, &fdsr))
+			if (FD_ISSET(rpcsock, fdsrp))
 				handle_replies();
-			if (FD_ISSET(pingsock, &fdsr))
+			if (FD_ISSET(pingsock, fdsrp))
 				handle_ping();
-			svc_getreqset(&fdsr);
+			svc_getreqset2(fdsrp, width);
 			if (check)
 				checkwork();
 			break;
