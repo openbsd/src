@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.12 2004/11/23 05:15:35 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.13 2004/12/13 04:07:26 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -780,12 +780,27 @@ ahd_adapter_req_set_xfer_mode(struct ahd_softc *ahd, struct scb *scb)
 }
 
 void
-aic_scb_timer_reset(struct scb *scb, u_int usec)
+aic_timer_reset(aic_timer_t *timer, u_int msec, ahd_callback_t *func,
+    void *arg)
 {
-	if (!(scb->xs->xs_control & XS_CTL_POLL)) {
-		callout_reset(&scb->xs->xs_callout,
-		    (usec * hz)/1000000, ahd_timeout, scb);
-	}
+	uint64_t ticks;
+
+	ticks = msec;
+	ticks *= hz;
+	ticks /= 1000;
+	callout_reset(timer, ticks, func, arg);
+}
+
+void
+aic_scb_timer_reset(struct scb *scb, u_int msec)
+{
+	uint64_t ticks;
+
+	ticks = msec;
+	ticks *= hz;
+	ticks /= 1000;
+	if (!(scb->xs->xs_control & XS_CTL_POLL))
+		callout_reset(&scb->xs->xs_callout, ticks, ahd_timeout, scb);
 }
 
 void

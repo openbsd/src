@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.15 2004/12/10 17:00:36 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.16 2004/12/13 04:07:26 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -66,7 +66,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aic79xx.h,v 1.18 2004/02/04 16:38:38 gibbs Exp $
+ * Id: //depot/aic7xxx/aic7xxx/aic79xx.h#107
+ *
+ * FreeBSD: src/sys/dev/aic7xxx/aic79xx.h,v 1.23 2004/11/18 20:22:31 gibbs Exp
  */
 
 #ifndef _AIC79XX_H_
@@ -1171,7 +1173,7 @@ struct ahd_softc {
 	/*
 	 * Statistics.
 	 */
-#define	AHD_STAT_UPDATE_US	250000 /* 250ms */
+#define	AHD_STAT_UPDATE_MS	250
 #define	AHD_STAT_BUCKETS	4
 	u_int			  cmdcmplt_bucket;
 	uint32_t		  cmdcmplt_counts[AHD_STAT_BUCKETS];

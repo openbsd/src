@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.h,v 1.9 2004/11/23 05:15:35 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.h,v 1.10 2004/12/13 04:07:26 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -158,10 +158,10 @@ typedef struct timeout aic_timer_t;
 
 /***************************** Timer Facilities *******************************/
 void ahd_timeout(void*);
+void aic_timer_reset(aic_timer_t *, u_int, ahd_callback_t *, void *);
 void aic_scb_timer_reset(struct scb *, u_int);
 
 #define aic_timer_stop timeout_del
-#define aic_timer_reset callout_reset
 
 /*************************** Device Access ************************************/
 #define ahd_inb(ahd, port)					\
