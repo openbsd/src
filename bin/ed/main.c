@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 2001/06/22 23:53:53 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 2001/11/11 07:36:40 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -39,7 +39,7 @@ char *copyright =
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.22 2001/06/22 23:53:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.23 2001/11/11 07:36:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1478,7 +1478,6 @@ handle_winch(signo)
 	int signo;
 {
 	int save_errno = errno;
-
 	struct winsize ws;		/* window size structure */
 
 	sigflags &= ~(1 << (signo - 1));
