@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 2002/05/16 21:11:18 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.20 2002/06/15 17:23:31 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1308,7 +1308,7 @@ syscall(tf, code, pc)
 		if (error)
 			goto bad;
 	} else {
-#if defined(__arch64__) && !defined(COMPAT_NETBSD32)
+#if !defined(COMPAT_NETBSD32)
 		error = EFAULT;
 		goto bad;
 #else
@@ -1337,7 +1337,6 @@ syscall(tf, code, pc)
 				*argp++ = *ap++;
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL)) {
-#if defined(__arch64__)
 			register_t temp[8];
 			
 			/* Need to xlate 32-bit->64-bit */
@@ -1347,16 +1346,12 @@ syscall(tf, code, pc)
 				temp[j] = args.i[j];
 			ktrsyscall(p, code,
 				   i * sizeof(register_t), (register_t *)temp);
-#else
-			ktrsyscall(p, code,
-				   callp->sy_argsize, (register_t *)args.i);
-#endif
 		}
 #endif
 		if (error) {
 			goto bad;
 		}
-#endif	/* __arch64__ && !COMPAT_NETBSD32 */
+#endif	/* !COMPAT_NETBSD32 */
 	}
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, (register_t *)&args);

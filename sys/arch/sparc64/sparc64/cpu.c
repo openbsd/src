@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.8 2002/06/11 10:57:51 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.9 2002/06/15 17:23:31 art Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -90,38 +90,10 @@ struct cfattach cpu_ca = {
 
 extern struct cfdriver cpu_cd;
 
-#if defined(SUN4C) || defined(SUN4M)
-static char *psrtoname(int, int, int, char *);
-#endif
 static char *fsrtoname(int, int, int, char *);
 
 #define	IU_IMPL(v)	((((u_int64_t)(v))&VER_IMPL) >> VER_IMPL_SHIFT)
 #define	IU_VERS(v)	((((u_int64_t)(v))&VER_MASK) >> VER_MASK_SHIFT)
-
-#ifdef notdef
-/*
- * IU implementations are parceled out to vendors (with some slight
- * glitches).  Printing these is cute but takes too much space.
- */
-static char *iu_vendor[16] = {
-	"Fujitsu",	/* and also LSI Logic */
-	"ROSS",		/* ROSS (ex-Cypress) */
-	"BIT",
-	"LSIL",		/* LSI Logic finally got their own */
-	"TI",		/* Texas Instruments */
-	"Matsushita",
-	"Philips",
-	"Harvest",	/* Harvest VLSI Design Center */
-	"SPEC",		/* Systems and Processes Engineering Corporation */
-	"Weitek",
-	"vendor#10",
-	"vendor#11",
-	"vendor#12",
-	"vendor#13",
-	"vendor#14",
-	"vendor#15"
-};
-#endif
 
 int
 cpu_match(parent, vcf, aux)
@@ -306,40 +278,6 @@ struct info {
 
 #define	ANY	0xff	/* match any FPU version (or, later, IU version) */
 
-#if defined(SUN4C) || defined(SUN4M)
-static struct info iu_types[] = {
-	{ 1, 0x0, 0x4, 4,   "MB86904" },
-	{ 1, 0x0, 0x0, ANY, "MB86900/1A or L64801" },
-	{ 1, 0x1, 0x0, ANY, "RT601 or L64811 v1" },
-	{ 1, 0x1, 0x1, ANY, "RT601 or L64811 v2" },
-	{ 1, 0x1, 0x3, ANY, "RT611" },
-	{ 1, 0x1, 0xf, ANY, "RT620" },
-	{ 1, 0x2, 0x0, ANY, "B5010" },
-	{ 1, 0x4, 0x0,   0, "TMS390Z50 v0 or TMS390Z55" },
-	{ 1, 0x4, 0x1,   0, "TMS390Z50 v1" },
-	{ 1, 0x4, 0x1,   4, "TMS390S10" },
-	{ 1, 0x5, 0x0, ANY, "MN10501" },
-	{ 1, 0x9, 0x0, ANY, "W8601/8701 or MB86903" },
-	{ 0 }
-};
-
-static char *
-psrtoname(impl, vers, fver, buf)
-	register int impl, vers, fver;
-	char *buf;
-{
-	register struct info *p;
-
-	for (p = iu_types; p->valid; p++)
-		if (p->iu_impl == impl && p->iu_vers == vers &&
-		    (p->fpu_vers == fver || p->fpu_vers == ANY))
-			return (p->name);
-
-	/* Not found. */
-	sprintf(buf, "IU impl 0x%x vers 0x%x", impl, vers);
-	return (buf);
-}
-#endif /* SUN4C || SUN4M */
 
 /* NB: table order matters here; specific numbers must appear before ANY. */
 static struct info fpu_types[] = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.12 2002/04/04 17:01:12 jason Exp $	*/
+/*	$OpenBSD: clock.c,v 1.13 2002/06/15 17:23:31 art Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -693,17 +693,7 @@ cpu_initclocks()
 	
 	/* Initialize the %tick register */
 	lasttick = start_time;
-#ifdef __arch64__
 	__asm __volatile("wrpr %0, 0, %%tick" : : "r" (start_time));
-#else
-	{
-		int start_hi = (start_time>>32), start_lo = start_time;
-		__asm __volatile("sllx %1,32,%0; or %0,%2,%0; wrpr %0, 0, %%tick" 
-				 : "=&r" (start_hi) /* scratch register */
-				 : "r" ((int)(start_hi)), "r" ((int)(start_lo)));
-	}
-#endif
-
 
 	/*
 	 * Now handle machines w/o counter-timers.

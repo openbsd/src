@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.24 2002/06/07 19:31:08 jason Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.25 2002/06/15 17:23:31 art Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -110,8 +110,6 @@ char platform_type[32];
 
 static	char *str2hex(char *, int *);
 static	int mbprint(void *, const char *);
-static	void crazymap(char *, int *);
-int	st_crazymap(int);
 void	sync_crash(void);
 int	mainbus_match(struct device *, void *, void *);
 static	void mainbus_attach(struct device *, struct device *, void *);
@@ -227,11 +225,6 @@ bootstrap(nctx)
 	int nctx;
 {
 	extern int end;	/* End of kernel */
-#ifndef	__arch64__
-	/* Assembly glue for the PROM */
-	extern void OF_sym2val32(void *);
-	extern void OF_val2sym32(void *);
-#endif
 
 	/* 
 	 * Initialize ddb first and register OBP callbacks.
@@ -251,14 +244,8 @@ bootstrap(nctx)
 #ifdef DDB
 	db_machine_init();
 	ddb_init();
-#ifdef __arch64__
 	/* This can only be installed on an 64-bit system cause otherwise our stack is screwed */
 	OF_set_symbol_lookup(OF_sym2val, OF_val2sym);
-#else
-#if 1
-	OF_set_symbol_lookup(OF_sym2val32, OF_val2sym32);
-#endif
-#endif
 #endif
 
 	pmap_bootstrap(KERNBASE, (u_long)&end, nctx);
@@ -464,56 +451,6 @@ bootpath_store(storep, bp)
 
 	return (retval);
 }
-
-/*
- * Set up the sd target mappings for non SUN4 PROMs.
- * Find out about the real SCSI target, given the PROM's idea of the
- * target of the (boot) device (i.e., the value in bp->v0val[0]).
- */
-static void
-crazymap(prop, map)
-	char *prop;
-	int *map;
-{
-	int i;
-
-	/*
-	 * Set up the identity mapping for old sun4 monitors
-	 * and v[2-] OpenPROMs. Note: dkestablish() does the
-	 * SCSI-target juggling for sun4 monitors.
-	 */
-	for (i = 0; i < 8; ++i)
-		map[i] = i;
-}
-
-int
-sd_crazymap(n)
-	int	n;
-{
-	static int prom_sd_crazymap[8]; /* static: compute only once! */
-	static int init = 0;
-
-	if (init == 0) {
-		crazymap("sd-targets", prom_sd_crazymap);
-		init = 1;
-	}
-	return prom_sd_crazymap[n];
-}
-
-int
-st_crazymap(n)
-	int	n;
-{
-	static int prom_st_crazymap[8]; /* static: compute only once! */
-	static int init = 0;
-
-	if (init == 0) {
-		crazymap("st-targets", prom_st_crazymap);
-		init = 1;
-	}
-	return prom_st_crazymap[n];
-}
-
 
 /*
  * Determine mass storage and memory configuration for a machine.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_machdep.c,v 1.2 2001/11/06 19:53:16 miod Exp $	*/
+/*	$OpenBSD: netbsd_machdep.c,v 1.3 2002/06/15 17:23:31 art Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -120,22 +120,13 @@ extern int sigpid;
 struct netbsd_sigframe {
 	int	sf_signo;		/* signal number */
 	int	sf_code;		/* code */
-#ifndef __arch64__
-	struct	sigcontext *sf_scp;	/* SunOS user addr of sigcontext */
-	int	sf_addr;		/* SunOS compat, always 0 for now */
-#endif
 	struct	netbsd_sigcontext sf_sc;	/* actual sigcontext */
 };
 
-#ifdef __arch64__
 #define STACK_OFFSET    BIAS
 #define CPOUTREG(l,v)   copyout(&(v), (l), sizeof(v))
 #undef CCFSZ
 #define CCFSZ   CC64FSZ
-#else
-#define STACK_OFFSET    0
-#define CPOUTREG(l,v)   copyout(&(v), (l), sizeof(v))
-#endif
 
 /*
  * Send an interrupt to process.
@@ -184,10 +175,6 @@ netbsd_sendsig(catcher, sig, mask, code, type, val)
 	 */
 	sf.sf_signo = sig;
 	sf.sf_code = 0; /* XXX */
-#ifndef __arch64__
-	sf.sf_scp = 0;
-	sf.sf_addr = 0;			/* XXX */
-#endif
 
 	/*
 	 * Build the signal context to be used by sigreturn.
@@ -198,11 +185,7 @@ netbsd_sendsig(catcher, sig, mask, code, type, val)
 	sf.sf_sc.sc_sp = (long)tf->tf_out[6];
 	sf.sf_sc.sc_pc = tf->tf_pc;
 	sf.sf_sc.sc_npc = tf->tf_npc;
-#ifdef __arch64__
 	sf.sf_sc.sc_tstate = tf->tf_tstate; /* XXX */
-#else
-	sf.sf_sc.sc_psr = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */
-#endif
 	sf.sf_sc.sc_g1 = tf->tf_global[1];
 	sf.sf_sc.sc_o0 = tf->tf_out[0];
 
@@ -276,13 +259,8 @@ netbsd_sys___sigreturn14(p, v, retval)
 	    (nbsc.sc_pc == 0) || (nbsc.sc_npc == 0))
 		return (EINVAL);
 	/* take only psr ICC field */
-#ifdef __arch64__
 	tf->tf_tstate = (u_int64_t)(tf->tf_tstate & ~TSTATE_CCR) |
 	    (scp->sc_tstate & TSTATE_CCR);
-#else
-	tf->tf_tstate = (u_int64_t)(tf->tf_tstate & ~TSTATE_CCR) |
-	    PSRCC_TO_TSTATE(scp->sc_psr);
-#endif
 	tf->tf_pc = (u_int64_t)scp->sc_pc;
 	tf->tf_npc = (u_int64_t)scp->sc_npc;
 	tf->tf_global[1] = (u_int64_t)scp->sc_g1;

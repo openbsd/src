@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.4 2002/03/17 18:38:43 art Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.5 2002/06/15 17:23:31 art Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.10 2000/09/26 22:05:50 eeh Exp $ */
 
 /*
@@ -87,7 +87,6 @@ process_read_regs(p, regs)
 	struct reg32* regp = (struct reg32*)regs;
 	int i;
 
-#ifdef __arch64__
 	if (!(curproc->p_flag & P_32)) {
 		/* 64-bit mode -- copy out regs */
 		regs->r_tstate = tf->tf_tstate;
@@ -102,7 +101,7 @@ process_read_regs(p, regs)
 		}
 		return (0);
 	}
-#endif
+
 	/* 32-bit mode -- copy out & convert 32-bit regs */
 	regp->r_psr = TSTATECCR_TO_PSR(tf->tf_tstate);
 	regp->r_pc = tf->tf_pc;
@@ -154,7 +153,6 @@ process_write_regs(p, regs)
 	struct reg32* regp = (struct reg32*)regs;
 	int i;
 
-#ifdef __arch64__
 	if (!(curproc->p_flag & P_32)) {
 		/* 64-bit mode -- copy in regs */
 		tf->tf_pc = regs->r_pc;
@@ -169,7 +167,7 @@ process_write_regs(p, regs)
 			(regs->r_tstate & TSTATE_CCR);
 		return (0);
 	}
-#endif
+
 	/* 32-bit mode -- copy in & convert 32-bit regs */
 	tf->tf_pc = regp->r_pc;
 	tf->tf_npc = regp->r_npc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.3 2001/11/17 20:43:22 deraadt Exp $	*/
+/*	$OpenBSD: signal.h,v 1.4 2002/06/15 17:23:31 art Exp $	*/
 /*	$NetBSD: signal.h,v 1.10 2001/05/09 19:50:49 kleink Exp $ */
 
 /*
@@ -65,23 +65,6 @@ typedef int sig_atomic_t;
  *
  * All machines must have an sc_onstack and sc_mask.
  */
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
-struct sigcontext13 {
-	int	sc_onstack;		/* sigstack state to restore */
-	int	sc_mask;		/* signal mask to restore (old style) */
-	/* begin machine dependent portion */
-	long	sc_sp;			/* %sp to restore */
-	long	sc_pc;			/* pc to restore */
-	long	sc_npc;			/* npc to restore */
-#ifdef __arch64__
-	long	sc_tstate;		/* tstate to restore */
-#else
-	long	sc_psr;			/* psr portion to restore */
-#endif
-	long	sc_g1;			/* %g1 to restore */
-	long	sc_o0;			/* %o0 to restore */
-};
-#endif /* __LIBC12_SOURCE__ || _KERNEL */
 struct sigcontext {
 	int		sc_onstack;	/* sigstack state to restore */
 	int		__sc_mask13;	/* signal mask to restore (old style) */
@@ -89,23 +72,11 @@ struct sigcontext {
 	long		sc_sp;		/* %sp to restore */
 	long		sc_pc;		/* pc to restore */
 	long		sc_npc;		/* npc to restore */
-#ifdef __arch64__
 	long		sc_tstate;	/* tstate to restore */
-#else
-	long		sc_psr;		/* psr portion to restore */
-#endif
 	long		sc_g1;		/* %g1 to restore */
 	long		sc_o0;		/* %o0 to restore */
 	int		sc_mask;	/* signal mask to restore (new style) */
 };
-#else /* _LOCORE */
-/* XXXXX These values don't work for _LP64 */
-#define	SC_SP_OFFSET	8
-#define	SC_PC_OFFSET	12
-#define	SC_NPC_OFFSET	16
-#define	SC_PSR_OFFSET	20
-#define	SC_G1_OFFSET	24
-#define	SC_O0_OFFSET	28
 #endif /* _LOCORE */
 
 /*

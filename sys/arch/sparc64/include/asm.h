@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.2 2001/08/20 20:23:52 jason Exp $	*/
+/*	$OpenBSD: asm.h,v 1.3 2002/06/15 17:23:31 art Exp $	*/
 /*	$NetBSD: asm.h,v 1.15 2000/08/02 22:24:39 eeh Exp $ */
 
 /*
@@ -49,12 +49,6 @@
 #define _LOCORE
 #endif
 #include <machine/frame.h>
-
-#ifdef __arch64__
-#ifndef __ELF__
-#define __ELF__
-#endif
-#endif
 
 /* Pull in CCFSZ, CC64FSZ, and BIAS from frame.h */
 #ifndef _LOCORE

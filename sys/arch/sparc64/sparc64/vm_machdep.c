@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.7 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.8 2002/06/15 17:23:31 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -179,28 +179,14 @@ vunmapbuf(bp, len)
 	uvm_km_free_wakeup(kernel_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
-
-#if 0	/* XXX: The flush above is sufficient, right? */
-	if (CACHEINFO.c_vactype != VAC_NONE)
-		cpuinfo.cache_flush(bp->b_data, len);
-#endif
 }
 
 
 /*
  * The offset of the topmost frame in the kernel stack.
  */
-#ifdef __arch64__
 #define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-CC64FSZ)
 #define	STACK_OFFSET	BIAS
-#else
-#undef	trapframe
-#define	trapframe	trapframe64
-#undef	rwindow
-#define	rwindow		rwindow32
-#define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-CC64FSZ)
-#define	STACK_OFFSET	0
-#endif
 
 #ifdef DEBUG
 char cpu_forkname[] = "cpu_fork()";

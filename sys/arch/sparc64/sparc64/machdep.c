@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.43 2002/06/14 21:34:59 todd Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.44 2002/06/15 17:23:31 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -108,13 +108,6 @@
 #include <uvm/uvm.h>
 
 #include <sys/sysctl.h>
-#ifndef	ELFSIZE
-#ifdef __arch64__
-#define	ELFSIZE	64
-#else
-#define	ELFSIZE	32
-#endif
-#endif
 #include <sys/exec_elf.h>
 
 #ifdef SYSVMSG
@@ -427,15 +420,10 @@ allocsys(caddr_t v)
  * Set up registers on exec.
  */
 
-#ifdef __arch64__
 #define STACK_OFFSET	BIAS
 #define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
 #undef CCFSZ
 #define CCFSZ	CC64FSZ
-#else
-#define STACK_OFFSET	0
-#define CPOUTREG(l,v)	copyout(&(v), (l), sizeof(v))
-#endif
 
 /* ARGSUSED */
 void
@@ -449,9 +437,7 @@ setregs(p, pack, stack, retval)
 	struct fpstate64 *fs;
 	int64_t tstate;
 	int pstate = PSTATE_USER;
-#ifdef __arch64__
 	Elf_Ehdr *eh = pack->ep_hdr;
-#endif
 
 	/* Don't allow misaligned code by default */
 	p->p_md.md_flags &= ~MDP_FIXALIGN;
@@ -463,7 +449,6 @@ setregs(p, pack, stack, retval)
 	 *	%g1: address of PS_STRINGS (used by crt0)
 	 *	%tpc,%tnpc: entry point of program
 	 */
-#ifdef __arch64__
 	/* Check what memory model is requested */
 	switch ((eh->e_flags & EF_SPARCV9_MM)) {
 	default:
@@ -480,7 +465,7 @@ setregs(p, pack, stack, retval)
 		pstate = PSTATE_MM_RMO|PSTATE_IE;
 		break;
 	}
-#endif
+
 	tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
 		((pstate)<<TSTATE_PSTATE_SHIFT) | 
 		(tf->tf_tstate & TSTATE_CWP);
@@ -526,10 +511,6 @@ struct sigframe {
 	int	sf_signo;		/* signal number */
 	int	sf_code;		/* signal code (unused) */
 	siginfo_t *sf_sip;		/* points to siginfo_t */
-#ifndef __arch64__
-	struct	sigcontext *sf_scp;	/* SunOS user addr of sigcontext */
-	int	sf_addr;		/* SunOS compat, always 0 for now */
-#endif
 	struct	sigcontext sf_sc;	/* actual sigcontext */
 	siginfo_t sf_si;
 };
@@ -668,10 +649,6 @@ sendsig(catcher, sig, mask, code, type, val)
 	 */
 	sf.sf_signo = sig;
 	sf.sf_sip = NULL;
-#ifndef __arch64__
-	sf.sf_scp = 0;
-	sf.sf_addr = 0;			/* XXX */
-#endif
 
 	/*
 	 * Build the signal context to be used by sigreturn.
@@ -682,11 +659,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	sf.sf_sc.sc_sp = (long)tf->tf_out[6];
 	sf.sf_sc.sc_pc = tf->tf_pc;
 	sf.sf_sc.sc_npc = tf->tf_npc;
-#ifdef __arch64__
 	sf.sf_sc.sc_tstate = tf->tf_tstate; /* XXX */
-#else
-	sf.sf_sc.sc_psr = TSTATECCR_TO_PSR(tf->tf_tstate); /* XXX */
-#endif
 	sf.sf_sc.sc_g1 = tf->tf_global[1];
 	sf.sf_sc.sc_o0 = tf->tf_out[0];
 
@@ -798,11 +771,7 @@ sys_sigreturn(p, v, retval)
 	}
 
 	/* take only psr ICC field */
-#ifdef __arch64__
 	tf->tf_tstate = (u_int64_t)(tf->tf_tstate & ~TSTATE_CCR) | (scp->sc_tstate & TSTATE_CCR);
-#else
-	tf->tf_tstate = (u_int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(scp->sc_psr);
-#endif
 	tf->tf_pc = (u_int64_t)scp->sc_pc;
 	tf->tf_npc = (u_int64_t)scp->sc_npc;
 	tf->tf_global[1] = (u_int64_t)scp->sc_g1;

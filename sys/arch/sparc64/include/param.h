@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.10 2002/06/15 00:38:37 art Exp $	*/
+/*	$OpenBSD: param.h,v 1.11 2002/06/15 17:23:31 art Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -73,15 +73,9 @@
 
 #define	_MACHINE	sparc64
 #define	MACHINE		"sparc64"
-#ifdef __arch64__
 #define	_MACHINE_ARCH	sparc64
 #define	MACHINE_ARCH	"sparc64"
 #define	MID_MACHINE	MID_SPARC64
-#else
-#define	_MACHINE_ARCH	sparc
-#define	MACHINE_ARCH	"sparc"
-#define	MID_MACHINE	MID_SPARC
-#endif
 
 #ifdef _KERNEL				/* XXX */
 #ifndef _LOCORE				/* XXX */
@@ -100,13 +94,7 @@
  * (within reasonable limits). 
  *
  */
-#define ALIGNBYTES32		0x7
-#define ALIGNBYTES64		0xf
-#ifdef __arch64__
-#define	ALIGNBYTES		ALIGNBYTES64
-#else
-#define	ALIGNBYTES		ALIGNBYTES32
-#endif
+#define	ALIGNBYTES		0xf
 #define	ALIGN(p)		(((u_long)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define ALIGN32(p)		(((u_long)(p) + ALIGNBYTES32) & ~ALIGNBYTES32)
 #define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
@@ -127,12 +115,8 @@ extern int nbpg, pgofset, pgshift;
 #define	BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)
 
-#ifdef __arch64__
 /* We get stack overflows w/8K stacks in 64-bit mode */
 #define	SSIZE		2		/* initial stack size in pages */
-#else
-#define	SSIZE		2
-#endif
 #define	USPACE		(SSIZE*8192)
 
 
