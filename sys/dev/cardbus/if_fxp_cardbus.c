@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.8 2004/08/04 19:42:30 mickey Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.9 2004/10/07 21:16:59 brad Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -85,7 +85,6 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
 
 int fxp_cardbus_match(struct device *, void *, void *);
 void fxp_cardbus_attach(struct device *, struct device *, void *);
@@ -119,8 +118,8 @@ fxp_cardbus_match(parent, match, aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
-	if (CARDBUS_VENDOR(ca->ca_id) == CARDBUS_VENDOR_INTEL &&
-	    CARDBUS_PRODUCT(ca->ca_id) == CARDBUS_PRODUCT_INTEL_82557)
+	if (CARDBUS_VENDOR(ca->ca_id) == PCI_VENDOR_INTEL &&
+	    CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_INTEL_82557)
 		return (1);
 
 	return (0);
@@ -180,8 +179,6 @@ fxp_cardbus_attach(parent, self, aux)
 	sc->sc_disable = fxp_cardbus_disable;
 	sc->sc_enabled = 0;
 #endif
-
-	sc->not_82557 = 1;
 
 	Cardbus_function_enable(csc->ct);
 

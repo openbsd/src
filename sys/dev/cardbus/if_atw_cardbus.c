@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_cardbus.c,v 1.6 2004/08/04 01:05:54 millert Exp $	*/
+/*	$OpenBSD: if_atw_cardbus.c,v 1.7 2004/10/07 21:16:59 brad Exp $	*/
 /*	$NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -92,7 +92,6 @@
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
 
 /*
  * PCI configuration space registers used by the ADM8211.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.14 2004/09/18 00:19:48 brad Exp $ */
+/*	$OpenBSD: cardbus.c,v 1.15 2004/10/07 21:16:59 brad Exp $ */
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #include <machine/bus.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbus_exrom.h>
 
@@ -448,7 +448,7 @@ cardbus_attach_card(sc)
     cis_ptr = cardbus_conf_read(cc, cf, tag, CARDBUS_CIS_REG);
   
     /* Invalid vendor ID value? */
-    if (CARDBUS_VENDOR(id) == CARDBUS_VENDOR_INVALID) {
+    if (CARDBUS_VENDOR(id) == PCI_VENDOR_INVALID) {
       continue;
     }
       

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwohci_cardbus.c,v 1.5 2003/07/13 01:19:14 brad Exp $	*/
+/*	$OpenBSD: fwohci_cardbus.c,v 1.6 2004/10/07 21:16:59 brad Exp $	*/
 /*	$NetBSD: fwohci_cardbus.c,v 1.5 2002/01/26 16:34:28 ichiro Exp $	*/
 
 /*
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: fwohci_cardbus.c,v 1.5 2002/01/26 16:34:28 ichiro Ex
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
 
 #include <dev/ieee1394/ieee1394reg.h>
 #include <dev/ieee1394/ieee1394var.h>
