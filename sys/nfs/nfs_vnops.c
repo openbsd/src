@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.34 2001/06/27 04:58:46 art Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.35 2001/07/03 01:55:13 csapuntz Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1887,6 +1887,7 @@ nfs_readdir(v)
 		readdir_uio.uio_segflg = UIO_SYSSPACE;
 		readdir_uio.uio_rw = UIO_READ;
 		readdir_uio.uio_resid = NFS_DIRBLKSIZ;
+		readdir_uio.uio_procp = curproc;
 
 		if (nmp->nm_flag & NFSMNT_RDIRPLUS) {
 			error = nfs_readdirplusrpc(vp, &readdir_uio, cred, 
