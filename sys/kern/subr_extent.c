@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.3 1997/07/12 22:50:06 weingart Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.4 1998/02/25 19:53:49 weingart Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -49,6 +49,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <ddb/db_output.h>
 #else
 /*
  * user-land definitions, so it can fit into a testing harness.
@@ -64,6 +65,7 @@
 #define	free(p, t)			free(p)
 #define	tsleep(chan, pri, str, timo)	(EWOULDBLOCK)
 #define	wakeup(chan)			((void)0)
+#define db_printf printf
 #endif
 
 static	void extent_insert_and_optimize __P((struct extent *, u_long, u_long,
@@ -990,6 +992,10 @@ extent_free_region_descriptor(ex, rp)
 	free(rp, ex->ex_mtype);
 }
 
+#ifndef DDB
+#define db_printf printf
+#endif
+
 void
 extent_print(ex)
 	struct extent *ex;
@@ -999,10 +1005,10 @@ extent_print(ex)
 	if (ex == NULL)
 		panic("extent_print: NULL extent");
 
-	printf("extent `%s' (0x%lx - 0x%lx), flags = 0x%x\n", ex->ex_name,
+	db_printf("extent `%s' (0x%lx - 0x%lx), flags = 0x%x\n", ex->ex_name,
 	    ex->ex_start, ex->ex_end, ex->ex_flags);
 
 	for (rp = ex->ex_regions.lh_first; rp != NULL;
 	    rp = rp->er_link.le_next)
-		printf("     0x%lx - 0x%lx\n", rp->er_start, rp->er_end);
+		db_printf("     0x%lx - 0x%lx\n", rp->er_start, rp->er_end);
 }

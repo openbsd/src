@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.13 1997/09/08 19:46:37 deraadt Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.14 1998/02/25 19:53:46 weingart Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -34,6 +34,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
+#include <sys/extent.h>
 
 #include <vm/vm.h>
 #include <machine/db_machdep.h>		/* type definitions */
@@ -308,6 +309,17 @@ db_object_print_cmd(addr, have_addr, count, modif)
         _vm_object_print((vm_object_t) addr, full, db_printf);
 }
 
+/*ARGSUSED*/
+void
+db_extent_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	extent_print_all();
+}
+
 /*
  * 'show' commands
  */
@@ -325,6 +337,7 @@ struct db_command db_show_cmds[] = {
 	{ "watches",	db_listwatch_cmd, 	0,	NULL },
 	{ "map",	db_map_print_cmd,	0,	NULL },
 	{ "object",	db_object_print_cmd,	0,	NULL },
+	{ "extents",	db_extent_print_cmd,	0,	NULL },
 	{ NULL,		NULL,			0,	NULL, }
 };
 
