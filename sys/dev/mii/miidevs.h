@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.6 1999/02/08 13:31:21 jason Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.7 1999/05/07 21:38:57 jason Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.4 1999/02/08 13:29:04 jason Exp 
+ *	OpenBSD: miidevs,v 1.5 1999/05/07 21:37:45 jason Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -58,6 +58,7 @@
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_SEEQ	0x0005be	/* Seeq */
+#define	MII_OUI_SIS	0x000760	/* Silicon Integrated Systems */
 #define	MII_OUI_TI	0x100014	/* Texas Instruments */
 
 /*
@@ -103,6 +104,10 @@
 #define	MII_STR_SEEQ_80220	"Seeq 80220 10/100 media interface"
 #define	MII_MODEL_SEEQ_84220	0x0004
 #define	MII_STR_SEEQ_84220	"Seeq 84220 10/100 media interface"
+
+/* Silicon Integrated Systems PHYs */
+#define	MII_MODEL_SIS_900	0x0000
+#define	MII_STR_SIS_900	"SiS 900 10/100 media interface"
 
 /* Texas Instruments PHYs */
 #define	MII_MODEL_TI_TLAN10T	0x0001
