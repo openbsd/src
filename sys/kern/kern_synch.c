@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.29 2000/11/10 18:15:47 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.30 2001/02/19 16:33:20 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -229,6 +229,7 @@ schedcpu(arg)
 	 * clock available)
 	 */
 	phz = stathz ? stathz : profhz;
+	KASSERT(phz);
 
 	for (p = LIST_FIRST(&allproc); p != 0; p = LIST_NEXT(p, p_list)) {
 		/*
@@ -250,7 +251,6 @@ schedcpu(arg)
 		/*
 		 * p_pctcpu is only for ps.
 		 */
-		KASSERT(phz);
 #if	(FSHIFT >= CCPU_SHIFT)
 		p->p_pctcpu += (phz == 100)?
 			((fixpt_t) p->p_cpticks) << (FSHIFT - CCPU_SHIFT):
