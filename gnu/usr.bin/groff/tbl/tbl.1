@@ -1,4 +1,4 @@
-.\" $OpenBSD: tbl.1,v 1.3 2003/03/01 14:40:49 espie Exp $
+.\" $OpenBSD: tbl.1,v 1.4 2003/03/01 23:53:03 wcobb Exp $
 .\"
 .\" Copyright (c) 2003 Marc Espie
 .\"
@@ -218,7 +218,7 @@ Individual data items within the table may override these specifications.
 .El
 .Ss TABLE DATA
 Each table line is normally entered as one line of data.
-Long lines may be broken, by using \ as a continuation character.
+Long lines may be broken, by using \\ as a continuation character.
 Table entries are separated with tabulations (or with the character
 specified in the
 .Ar tabs
@@ -227,7 +227,7 @@ There a few exceptions:
 .Bl -tag -width l
 .It "Embedded troff commands"
 An input line beginning with a
-.Sq .
+.Sq \&.
 followed by anything but a number is passed through to
 troff unchanged.
 For instance,
@@ -258,8 +258,7 @@ shipping with
 is part of 
 .Xr groff 1 , 
 and features a few differences from classical
-.Ux
-.Nm .
+.Ux .
 .Pp
 For instance, the output of GNU
 .Nm
