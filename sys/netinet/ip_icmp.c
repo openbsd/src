@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.40 2001/07/01 23:04:44 dhartmei Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.41 2001/07/04 05:52:16 angelos Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -577,6 +577,14 @@ reflect:
 	case ICMP_TSTAMPREPLY:
 	case ICMP_IREQREPLY:
 	case ICMP_MASKREPLY:
+	case ICMP_TRACEROUTE:
+	case ICMP_DATACONVERR:
+	case ICMP_MOBILE_REDIRECT:
+	case ICMP_IPV6_WHEREAREYOU:
+	case ICMP_IPV6_IAMHERE:
+	case ICMP_MOBILE_REGREQUEST:
+	case ICMP_MOBILE_REGREPLY:
+	case ICMP_PHOTURIS:
 	default:
 		break;
 	}
