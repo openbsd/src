@@ -461,7 +461,7 @@ char *argv[];
 		if(vflag)
 			printf("processing option -c, setting current screen to %d\n",current);
 		
-		if(ioctl(1, VGASETSCREEN, &screeninfo) == -1)
+		if(ioctl(fd, VGASETSCREEN, &screeninfo) == -1)
 		{
 			perror("ioctl VGASETSCREEN failed");
 			exit(1);
