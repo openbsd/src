@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.47 2000/02/06 16:58:01 itojun Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.48 2000/03/21 20:46:30 mickey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.47 2000/02/06 16:58:01 itojun Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.48 2000/03/21 20:46:30 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -643,11 +643,12 @@ parse(string, flags)
 	}
 	if (special & RNDSTATS) {
 		struct rndstats *rndstats = (struct rndstats *)buf;
+		int i;
 
 		if (!nflag)
 			(void)printf("%s = ", string);
 		(void)printf(
-		    "%u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u\n",
+		    "%lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
 		    rndstats->rnd_total, rndstats->rnd_used,
 		    rndstats->arc4_reads, rndstats->rnd_timer,
 		    rndstats->rnd_mouse, rndstats->rnd_tty,
@@ -655,7 +656,11 @@ parse(string, flags)
 		    rndstats->rnd_reads, rndstats->rnd_waits,
 		    rndstats->rnd_enqs, rndstats->rnd_deqs,
 		    rndstats->rnd_drops, rndstats->rnd_drople,
-		    rndstats->rnd_asleep, rndstats->rnd_queued);
+		    rndstats->rnd_asleep, rndstats->rnd_queued,
+		    rndstats->arc4_stirs);
+		for (i = 0; i < sizeof(rndstats->rnd_ed)/sizeof(rndstats->rnd_ed[0]); i++)
+			(void)printf(" %lu", rndstats->rnd_ed[i]);
+		printf("\n");
 		return;
 	}
 	if (special & BADDYNAMIC) {
