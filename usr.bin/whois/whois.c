@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.19 2002/12/19 21:34:28 millert Exp $	*/
+/*	$OpenBSD: whois.c,v 1.20 2003/01/05 00:27:55 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: whois.c,v 1.19 2002/12/19 21:34:28 millert Exp $";
+static const char rcsid[] = "$OpenBSD: whois.c,v 1.20 2003/01/05 00:27:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,7 +164,7 @@ whois(const char *name, const char *server, int flags)
 	size_t len;
 	int s, nomatch, error;
 	const char *reason = NULL;
-	struct addrinfo hints, *res;
+	struct addrinfo hints, *res, *ai;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = 0;
@@ -176,14 +176,13 @@ whois(const char *name, const char *server, int flags)
 		return (1);
 	}
 
-	s = -1;
-	for (/*nothing*/; res; res = res->ai_next) {
-		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+	for (s = -1, ai = res; ai != NULL; ai = ai->ai_next) {
+		s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (s < 0) {
 			reason = "socket";
 			continue;
 		}
-		if (connect(s, res->ai_addr, res->ai_addrlen) < 0) {
+		if (connect(s, ai->ai_addr, ai->ai_addrlen) < 0) {
 			reason = "connect";
 			close(s);
 			s = -1;
