@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raid.4,v 1.17 2002/01/05 13:47:28 tdeval Exp $
+.\"	$OpenBSD: raid.4,v 1.18 2002/04/07 00:03:29 tdeval Exp $
 .\"     $NetBSD: raid.4,v 1.20 2001/09/22 16:03:58 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -268,13 +268,11 @@ re-compute parity are well understood by the system administrator(s)
 a component failure.  Doing the wrong thing when a component fails may
 result in data loss.
 .Pp
-Additional internal consistency checking can be enabled by specifying:
+Additional debug information can be sent to the console by specifying:
 .Bd -unfilled -offset indent
-options    RAID_DIAGNOSTIC
+options    RAIDDEBUG
 .Ed
 .Pp
-These assertions are disabled by default in order to improve
-performance.
 .Sh WARNINGS
 Certain RAID levels (1, 4, 5, 6, and others) can protect against some
 data loss due to component failure.  However the loss of two
