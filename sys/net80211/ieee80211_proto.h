@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.4 2004/12/23 12:27:25 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.5 2004/12/25 20:40:19 deraadt Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@ enum ieee80211_state {
 	IEEE80211_S_SCAN	= 1,	/* scanning */
 	IEEE80211_S_AUTH	= 2,	/* try to authenticate */
 	IEEE80211_S_ASSOC	= 3,	/* try to assoc */
-	IEEE80211_S_RUN		= 4,	/* associated */
+	IEEE80211_S_RUN		= 4	/* associated */
 };
 #define	IEEE80211_S_MAX		(IEEE80211_S_RUN+1)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.3 2004/12/06 11:15:14 dlg Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.4 2004/12/25 20:40:19 deraadt Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ enum ieee80211_phytype {
 	IEEE80211_T_FH,			/* frequency hopping */
 	IEEE80211_T_OFDM,		/* frequency division multiplexing */
 	IEEE80211_T_TURBO,		/* high rate OFDM, aka turbo mode */
-	IEEE80211_T_XR,		        /* extended range mode */
+	IEEE80211_T_XR		        /* extended range mode */
 };
 #define	IEEE80211_T_CCK	IEEE80211_T_DS	/* more common nomenclature */
 
@@ -71,7 +71,7 @@ enum ieee80211_phymode {
 	IEEE80211_MODE_11B	= 2,	/* 2GHz, CCK */
 	IEEE80211_MODE_11G	= 3,	/* 2GHz, OFDM */
 	IEEE80211_MODE_FH	= 4,	/* 2GHz, GFSK */
-	IEEE80211_MODE_TURBO	= 5,	/* 5GHz, OFDM, 2x clock */
+	IEEE80211_MODE_TURBO	= 5	/* 5GHz, OFDM, 2x clock */
 };
 #define	IEEE80211_MODE_MAX	(IEEE80211_MODE_TURBO+1)
 
@@ -89,7 +89,7 @@ enum ieee80211_opmode {
 enum ieee80211_protmode {
 	IEEE80211_PROT_NONE	= 0,	/* no protection */
 	IEEE80211_PROT_CTSONLY	= 1,	/* CTS to self */
-	IEEE80211_PROT_RTSCTS	= 2,	/* RTS-CTS */
+	IEEE80211_PROT_RTSCTS	= 2	/* RTS-CTS */
 };
 
 /*

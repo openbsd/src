@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_regdomain.h,v 1.2 2004/11/06 18:31:41 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_regdomain.h,v 1.3 2004/12/25 20:40:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -105,7 +105,7 @@ enum ieee80211_regdomain {
 	DMN_MKKA		= 0xf0200000,
 	DMN_NULL1		= 0xf0400000,
 	DMN_WORLD		= 0xf0800000,
-	DMN_DEBUG               = 0xf1000000,  /* used for debugging */
+	DMN_DEBUG               = 0xf1000000  /* used for debugging */
 };
 
 #define IEEE80211_DMN(_d)	((_d) & ~0xf0000000)
@@ -350,7 +350,7 @@ enum ieee80211_countrycode {
 	CTRY_VIET_NAM           = 704, /* Viet Nam */
 	CTRY_YEMEN              = 887, /* Yemen */
 	CTRY_ZIMBABWE           = 716, /* Zimbabwe */
-        CTRY_DEBUG              = 0x1ff, /* for debugging */
+        CTRY_DEBUG              = 0x1ff /* for debugging */
 };
 
 struct ieee80211_countryname {
