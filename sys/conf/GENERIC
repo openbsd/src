@@ -1,9 +1,9 @@
-#	$OpenBSD: GENERIC,v 1.6 1996/08/11 20:45:40 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.7 1996/08/11 20:47:56 deraadt Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
 
-option		INSECURE	# insecure; allow /dev/mem writing for X
+#option		INSECURE	# default to secure
 
 option		TIMEZONE=0	# time zone to adjust RTC time by
 option		DST=0		# daylight savings time used by RTC
