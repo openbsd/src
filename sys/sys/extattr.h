@@ -1,4 +1,4 @@
-/*	$OpenBSD: extattr.h,v 1.1 2002/02/22 20:37:45 drahn Exp $	*/
+/*	$OpenBSD: extattr.h,v 1.2 2002/05/16 16:42:15 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 Robert N. M. Watson
@@ -63,6 +63,9 @@ int	extattr_set_fd(int _fd, int _attrnamespace, const char *_attrname,
 	    const void *_data, size_t _nbytes);
 int	extattr_set_file(const char *_path, int _attrnamespace,
 	    const char *_attrname, const void *_data, size_t _nbytes);
+int	 extattr_namespace_to_string(int attrnamespace, char **string);
+int	 extattr_string_to_namespace(const char *string, int *attrnamespace);
+
 __END_DECLS
 
 #endif /* !_KERNEL */
