@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.h,v 1.10 1999/07/07 22:13:08 niklas Exp $	*/
-/*	$EOM: ipsec.h,v 1.37 1999/06/10 13:34:58 niklas Exp $	*/
+/*	$OpenBSD: ipsec.h,v 1.11 1999/08/05 22:41:31 niklas Exp $	*/
+/*	$EOM: ipsec.h,v 1.38 1999/07/25 09:12:36 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -54,6 +54,7 @@ struct sa;
  * for phase 2 parameters.
  */
 struct ipsec_exch {
+  u_int flags;
   struct hash *hash;
   struct ike_auth *ike_auth;
   struct group *group;
@@ -92,6 +93,8 @@ struct ipsec_exch {
   u_int8_t *id_cr;
   size_t id_cr_sz;
 };
+
+#define IPSEC_EXCH_FLAG_NO_ID 1
 
 struct ipsec_sa {
   /* Phase 1.  */
