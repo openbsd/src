@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.25 2002/06/11 05:13:39 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.26 2002/06/12 03:49:56 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -1064,10 +1064,6 @@ clcnputc(dev, c)
 	dev_t dev;
 	u_char c;
 {
-	/* is this the correct location for the cr -> cr/lf tranlation? */
-	if (c == '\n')
-		clputc(0, 0, '\r');
-
 	clputc(0, 0, c);
 }
 

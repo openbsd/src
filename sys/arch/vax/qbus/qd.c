@@ -1,4 +1,4 @@
-/*	$OpenBSD: qd.c,v 1.5 2002/06/10 21:56:08 miod Exp $	*/
+/*	$OpenBSD: qd.c,v 1.6 2002/06/12 03:50:05 miod Exp $	*/
 /*	$NetBSD: qd.c,v 1.17 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
@@ -2924,9 +2924,6 @@ qdcnputc(dev, chr)
 		return;
 
 	blitc(0, (u_char)(chr & 0xff));
-	if ((chr & 0177) == '\n')
-		blitc(0, '\r');
-
 } /* qdputc */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qv.c,v 1.4 2000/11/10 15:33:09 provos Exp $	*/
+/*	$OpenBSD: qv.c,v 1.5 2002/06/12 03:50:10 miod Exp $	*/
 /*	$NetBSD: qv.c,v 1.2 1996/09/02 06:44:28 mycroft Exp $	*/
 
 /*-
@@ -981,8 +981,6 @@ qvputc(c)
 char c;
 {
 	qvputchar(c);
-	if (c == '\n')
-		qvputchar('\r');
 }
 
 /*
