@@ -413,6 +413,7 @@ freedev(int sig)
    *  own purpose. 
    */
   close(mouse.mfd);
+  mouse.mfd = -1;
   sigpause(0);
   errno = save_errno;
 }
@@ -424,12 +425,12 @@ opendev(int sig)
 {
 	/* re-open the mouse device */
 	if ((mouse.mfd = open(mouse.portname, O_RDWR | O_NONBLOCK, 0)) == -1) {
-		logerr(1, "unable to open %s", mouse.portname);
-		exit(1);
+		logerr(1, "unable to open %s", mouse.portname);	/* XXX race */
+		_exit(1);
 	}
 	/* re-init the mouse */
 	mouse_init();
-	longjmp(restart_env, 1);
+	longjmp(restart_env, 1);	/* XXX signal/longjmp re-entrancy */
 }
 
 static void 
@@ -438,7 +439,7 @@ cleanup(int sig)
     char moused_flag = MOUSED_OFF;
   
     ioctl(mouse.cfd, PCVT_MOUSED, &moused_flag);
-    exit(0);
+    _exit(0);
 }
 
 /*
@@ -2045,7 +2046,6 @@ main(int argc, char **argv)
 			signal(SIGINT , cleanup);
 			signal(SIGQUIT, cleanup);
 			signal(SIGTERM, cleanup);
-			signal(SIGKILL, cleanup);
 			if ((mouse.mfd = open(mouse.portname, 
 			    O_RDWR | O_NONBLOCK, 0)) == -1) 
 				logerr(1, "unable to open %s", mouse.portname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.20 2000/12/10 19:05:21 provos Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.21 2001/01/19 17:53:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@ static const char copyright[] =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n";
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.20 2000/12/10 19:05:21 provos Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/tcpdump.c,v 1.21 2001/01/19 17:53:19 deraadt Exp $ (LBL)";
 #endif
 
 /*
@@ -387,6 +387,7 @@ cleanup(int signo)
 
 	/* Can't print the summary if reading from a savefile */
 	if (pd != NULL && pcap_file(pd) == NULL) {
+		/* XXX unsafe */
 		(void)fflush(stdout);
 		putc('\n', stderr);
 		if (pcap_stats(pd, &stat) < 0)

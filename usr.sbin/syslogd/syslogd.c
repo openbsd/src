@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.38 2001/01/16 23:58:00 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.39 2001/01/19 17:53:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.38 2001/01/16 23:58:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.39 2001/01/19 17:53:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -193,8 +193,9 @@ int	Initialized = 0;	/* set when we have initialized ourselves */
 
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
-volatile int MarkSet;
-volatile int WantDie;
+
+sig_atomic_t MarkSet;
+sig_atomic_t WantDie;
 
 int	SecureMode = 1;		/* when true, speak only unix domain socks */
 

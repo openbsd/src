@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbootd.c,v 1.6 2001/01/17 00:33:03 pjanzen Exp $	*/
+/*	$OpenBSD: rbootd.c,v 1.7 2001/01/19 17:53:18 deraadt Exp $	*/
 /*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: rbootd.c,v 1.6 2001/01/17 00:33:03 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: rbootd.c,v 1.7 2001/01/19 17:53:18 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -365,6 +365,7 @@ void
 Exit(sig)
 	int sig;
 {
+	/* XXX race */
 	if (sig > 0)
 		syslog(LOG_ERR, "going down on signal %d", sig);
 	else
@@ -394,6 +395,7 @@ void
 ReConfig(signo)
 	int signo;
 {
+	/* XXX race */
 	syslog(LOG_NOTICE, "reconfiguring boot server");
 
 	FreeConns();
@@ -421,6 +423,8 @@ void
 DebugOff(signo)
 	int signo;
 {
+	/* XXX race */
+
 	if (DbgFp != NULL)
 		(void) fclose(DbgFp);
 
@@ -444,6 +448,7 @@ void
 DebugOn(signo)
 	int signo;
 {
+	/* XXX race */
 	if (DbgFp == NULL) {
 		if ((DbgFp = fopen(DbgFile, "w")) == NULL)
 			syslog(LOG_ERR, "can't open debug file (%s)", DbgFile);

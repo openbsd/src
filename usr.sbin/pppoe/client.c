@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.8 2001/01/16 05:34:15 jason Exp $	*/
+/*	$OpenBSD: client.c,v 1.9 2001/01/19 17:53:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -541,7 +541,7 @@ recv_padt(bfd, myea, rmea, eh, ph, len, pkt)
 	return (0);
 }
 
-static volatile int timer_alarm;
+sig_atomic_t timer_alarm;
 static struct sigaction timer_oact;
 
 void

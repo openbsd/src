@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: cron.c,v 1.8 2000/09/15 07:13:50 deraadt Exp $";
+static char rcsid[] = "$Id: cron.c,v 1.9 2001/01/19 17:53:12 deraadt Exp $";
 #endif
 
 
@@ -352,6 +352,7 @@ sigchld_handler(x) {
 #else
 		pid = wait3(&waiter, WNOHANG, (struct rusage *)0);
 #endif
+		/* XXX unsafe */
 		switch (pid) {
 		case -1:
 			Debug(DPROC,
@@ -378,6 +379,7 @@ static void
 sighup_handler(x) {
 	int save_errno = errno;
 
+	/* XXX unsafe */
 	log_close();
 	errno = save_errno;
 }
