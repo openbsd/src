@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.26 2001/01/26 16:25:34 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.27 2001/01/26 16:27:04 millert Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -154,7 +154,7 @@ main(argc, argv)
 	switch (rval) {
 		case -1:
 			if (errno == ENOENT)
-				errx(1, "s/key disabled");
+				errx(1, "S/Key disabled");
 			else
 				err(1, "cannot open database");
 			break;
