@@ -58,7 +58,11 @@ typedef struct {
 #define __VA_GP_REGSAVE(AP,TYPE)					\
   ((TYPE *) (void *) (&(((__va_regsave_t *)				\
 			 (AP)->reg_save_area)->__gp_save[(int)(AP)->gpr])))
+#if __GNUC_MINOR__ > 8
+#define GCC29
+#endif
 
+#ifndef GCC29
 /* Common code for va_start for both varargs and stdarg.  This depends
    on the format of rs6000_args in rs6000.h.  The fields used are:
 
@@ -67,7 +71,14 @@ typedef struct {
    #2	NARGS_PROTOTYPE		# args left in the current prototype
    #3	ORIG_NARGS		original value of NARGS_PROTOTYPE
    #4	VARARGS_OFFSET		offset from frame pointer of varargs area */
+#else /* GCC29 */
+/* Common code for va_start for both varargs and stdarg.  We allow all
+   the work to be done by __builtin_saveregs.  It returns a pointer to
+   a va_list that was constructed on the stack; we must simply copy it
+   to the user's variable.  */
+#endif /* GCC29 */
 
+#ifndef GCC29
 #define __va_words		__builtin_args_info (0)
 #define __va_fregno		__builtin_args_info (1)
 #define	__va_nargs		__builtin_args_info (2)
@@ -88,6 +99,13 @@ __extension__ ({							\
 			   * sizeof (long)));				\
    (void)0;								\
 })
+#else /* GCC29 */
+#define __va_start_common(AP, FAKE) \
+__extension__ ({							\
+   (AP) = (struct __va_list_tag *)__builtin_alloca(sizeof(__gnuc_va_list));   \
+  __builtin_memcpy ((AP), __builtin_saveregs (), sizeof(__gnuc_va_list)); \
+  })
+#endif /* GCC29 */
 
 #ifdef _STDARG_H /* stdarg.h support */
 
@@ -116,6 +134,7 @@ __extension__ ({							\
 #define __va_aggregate_p(TYPE)	(__builtin_classify_type(*(TYPE *)0) >= 12)
 #define __va_size(TYPE)		((sizeof(TYPE) + sizeof (long) - 1) / sizeof (long))
 
+#ifndef GCC29
 #define va_arg(AP,TYPE)							\
 __extension__ (*({							\
   register TYPE *__ptr;							\
@@ -168,6 +187,57 @@ __extension__ (*({							\
 									\
   __ptr;								\
 }))
+#else /* GCC29 */
+#define va_arg(AP,TYPE)							\
+__extension__ (*({							\
+  register TYPE *__ptr;							\
+									\
+  if (__va_float_p (TYPE) && (AP)->fpr < 8)				\
+    {									\
+      __ptr = __VA_FP_REGSAVE (AP, TYPE);				\
+      (AP)->fpr++;							\
+    }									\
+									\
+  else if (__va_aggregate_p (TYPE) && (AP)->gpr < 8)			\
+    {									\
+      __ptr = * __VA_GP_REGSAVE (AP, TYPE *);				\
+      (AP)->gpr++;							\
+    }									\
+									\
+  else if (!__va_float_p (TYPE) && !__va_aggregate_p (TYPE)		\
+	   && (AP)->gpr + __va_size(TYPE) <= 8				\
+	   && (!__va_longlong_p(TYPE)					\
+	       || (AP)->gpr + __va_size(TYPE) <= 8))			\
+    {									\
+      if (__va_longlong_p(TYPE) && ((AP)->gpr & 1) != 0)		\
+	(AP)->gpr++;							\
+									\
+      __ptr = __VA_GP_REGSAVE (AP, TYPE);				\
+      (AP)->gpr += __va_size (TYPE);					\
+    }									\
+									\
+  else if (!__va_float_p (TYPE) && !__va_aggregate_p (TYPE)		\
+	   && (AP)->gpr < 8)						\
+    {									\
+      (AP)->gpr = 8;							\
+      __ptr = (TYPE *) (void *) (__va_overflow(AP));			\
+      __va_overflow(AP) += __va_size (TYPE) * sizeof (long);		\
+    }									\
+									\
+  else if (__va_aggregate_p (TYPE))					\
+    {									\
+      __ptr = * (TYPE **) (void *) (__va_overflow(AP));			\
+      __va_overflow(AP) += sizeof (TYPE *);				\
+    }									\
+  else									\
+    {									\
+      __ptr = (TYPE *) (void *) (__va_overflow(AP));			\
+      __va_overflow(AP) += __va_size (TYPE) * sizeof (long);		\
+    }									\
+									\
+  __ptr;								\
+}))
+#endif /* not GCC29 */
 
 #define va_end(AP)	((void)0)
 
