@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.37 2003/12/17 17:29:23 jason Exp $
+dnl	$OpenBSD: hardware,v 1.38 2004/01/01 01:52:11 deraadt Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -304,7 +304,7 @@ work. It's our best guess that they do, but any feedback is appreciated.
 
 	SCSI Host Adapters [*]
 		AdvanSys ABP940UW, ASB3940UW-00, ASB3940U2W-00 and
-		  ASB3950U160 PCI SCSI controlers. (adw)
+		  ASB3950U160 PCI SCSI controllers. (adw)
 	RAID and Cache Controllers [*]
 		3ware Escalade 3W-5x00, 3W-6x00
 		DPT SmartCache and SmartRaid III/IV PCI/EISA adapters (dpt)
