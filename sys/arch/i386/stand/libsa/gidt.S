@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.5 1997/05/29 05:32:07 mickey Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.6 1997/07/18 00:48:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -40,18 +40,154 @@
 #include <machine/segments.h>
 #include <machine/specialreg.h>
 #include <machine/trap.h>
+#include <machine/biosvar.h>
 #include <debug_md.h>
 #undef _LOCORE
 
 #define addr32  .byte 0x67
 #define data32  .byte 0x66
 
+#ifdef	GIDT_DEBUG
+#define	gidt_debug0		; \
+	movl	$0xb8000, %eax	; \
+	movl	$0x47314730, (%eax)
+#define	gidt_debug1		; \
+	data32			; \
+	movl	$(0xb8000 - START), %eax	; \
+	data32			; \
+	addr32			; \
+	movl	$0x4f314f30, (%eax)
+#define	gidt_debug2		; \
+	data32			; \
+	movl	$0xb8004, %eax	; \
+	data32			; \
+	addr32			; \
+	movl	$0x47334732, (%eax)
+#define	gidt_debug3		; \
+	data32			; \
+	movl	$0xb8004, %eax	; \
+	data32			; \
+	addr32			; \
+	movl	$0x4f334f32, (%eax)
+#define gidt_debug4		; \
+	movl	$0xb8008, %eax	; \
+	movl	$0x47344733, (%eax)
+#else
+#define gidt_debug0 /* gidt_debug0 */
+#define gidt_debug1 /* gidt_debug1 */
+#define gidt_debug2 /* gidt_debug2 */
+#define gidt_debug3 /* gidt_debug3 */
+#define gidt_debug4 /* gidt_debug4 */
+#endif
+
+#define prot2real						\
+	gidt_debug0;						\
+								\
+	movl	$0x20, %eax;					\
+								\
+	/* ljmp	$0x18, $1f */;					\
+	.byte	0xea;		/* Change to 16bit mode */	\
+	.long	1f - START;					\
+	.word	0x18;						\
+1:								\
+	movl	%ax, %ds;					\
+	movl	%ax, %es;					\
+								\
+	gidt_debug1;						\
+								\
+	movl	%cr0, %eax;	/* disable pmmm */		\
+	data32;							\
+	andl 	$~CR0_PE, %eax;					\
+	movl	%eax, %cr0;					\
+								\
+	/* ljmp	(START >> 4), $1f */;				\
+	.byte	0xea;		/* load real mode cs:ip */	\
+	.word	1f;						\
+	.word	(START >> 4);					\
+1:								\
+	xorl	%eax, %eax;	/* setup: %ds, %es, %ss */	\
+	movl	%ax, %ds;					\
+	movl	%ax, %es;					\
+	movl	%ax, %ss;					\
+								\
+	gidt_debug2;						\
+								\
+	addr32;							\
+	data32;							\
+	lidt	Idtr_real;	/* load idtr for real mode */
+
+#define real2prot						\
+	gidt_debug3;						\
+								\
+	addr32;							\
+	data32;							\
+	lgdt	Gdtr;		/* load the gdtr */		\
+								\
+	movl	%cr0, %eax;	/* enable pmmm */		\
+	data32;							\
+	orl	$CR0_PE, %eax;					\
+	movl	%eax, %cr0;					\
+								\
+	data32;							\
+	ljmp	$0x08, $1f;   /* reload %cs flushing pipeline */\
+1:								\
+	/* reload 32bit %ds, %ss, %es */			\
+	movl	$0x10, %eax;					\
+	movl	%ax, %ds;					\
+	movl	%ax, %ss;					\
+	movl	%ax, %es;					\
+								\
+	gidt_debug4;						\
+								\
+	/* load idtr for debugger and DOS/BIOS iface */		\
+	lidt	Idtr;
+
+
+	.globl	_C_LABEL(BIOS_regs)
+
 	.text
 	.globl	pmm_init
+	.globl	__rtt
+
+__rtt:
+#ifdef DEBUG
+	movl	$0xb8000, %ebx
+	movl	$0x4f514f51, (%ebx)
+#endif
+	movw	$0x1234, %ax
+	movw	%ax, 0x472	# warm boot
+
+	/* Try to use the KBD to reboot system */
+	movb	$0xfe, %al
+	outb	%al, $0x64
+
+	movl	$0x5000, %ecx
+1:	inb	$0x84, %al
+	loop	1b
+
+	movb	$0xfe, %al
+	outb	%al, $0x64
+
+#ifdef DEBUG
+	movl	$0xb8000, %ebx
+	movl	$0x07310731, (%ebx)
+#endif
+
+	/* Try to cause a tripple fault... */
+	lidt    Idtr_reset
+	xorl	%eax, %eax
+	divl	%eax, %eax
+
+	/* Again... */
+	int $0x8
+
+	/* Again... */
+	movl	$0, %esp	# segment violation
+	ret
 
 pmm_init:
 	/* reload new gdt */
-	lgdt	_Gdtr
+	lgdt	Gdtr
 	ljmp	$8, $1f
 1:	
 	movw	$0x10, %ax
@@ -60,15 +196,49 @@ pmm_init:
 	movl	%ax, %es
 	movl	%ax, %fs
 	movl	%ax, %gs
-	/* init idt */
-	call	idt_init
+
 	/* load idtr for interrupts */
-	lidt	_Idtr_prot
+	lidt	Idtr
 	ret
 
-	.data
+#define IPROC(n)	X/**/n
+#define IEMU(n)		IPROC(emu/**/n)
+	.align 3
+idt:
+#define idte(e)	.word IPROC(e), 0x8, (0x80|SDT_SYS386TGT) << 8, (START >> 16)
+		/* internal (0-31) */
+	idte(de); idte(db); idte(nmi); idte(bp); idte(of); idte(br)
+	idte(ud); idte(nm); idte(df);  idte(fo); idte(ts); idte(np)
+	idte(ss); idte(gp); idte(pf);  idte(xx); idte(mf); idte(ac)
+	idte(mc)
+	idte(xx); idte(xx); idte(xx);  idte(xx); idte(xx); idte(xx)
+	idte(xx); idte(xx); idte(xx);  idte(xx); idte(xx); idte(xx)
+	idte(xx) 
+		/*	Maskable interrupts (32-255) */
+		/* BIOS entry points (32-63) */
+		/* DOS entry points (64-80) */
+#define idtb(b)	idte(emu/**/b)
+	idtb(0);  idtb(1);  idtb(2);  idtb(3);  idtb(4);  idtb(5)
+	idtb(6);  idtb(7);  idtb(8);  idtb(9);  idtb(10); idtb(11)
+	idtb(12); idtb(13); idtb(14); idtb(15); idtb(16); idtb(17)
+	idtb(18); idtb(19); idtb(20); idtb(21); idtb(22); idtb(23)
+	idtb(24); idtb(25); idtb(26); idtb(27); idtb(28); idtb(29)
+	idtb(30); idtb(31); idtb(32); idtb(33); idtb(34); idtb(35)
+	idtb(36); idtb(37); idtb(38); idtb(39); idtb(40); idtb(41)
+	idtb(42); idtb(43); idtb(44); idtb(45); idtb(46); idtb(47)
+		/* kernel entry point */
+	idte(kent)
+#undef idte
+Idtr:	.word	. - idt - 1
+	.long	idt
+	.word	0
 
-	.align	3
+Idtr_real:	.word	1023
+		.long	0
+		.word	0
+
+Idtr_reset:	.long	0, 0
+
 gdt:
 		/* 0x00 : null */
 	.space	8
@@ -101,67 +271,9 @@ gdt:
 	.byte	0xf | 0 | 0 | 0		# hilimit, xx, 16bit, byte granularity
 	.byte	(START >> 20) & 0xff	# hibase
 
-_Gdtr:	.word	. - gdt - 1
+Gdtr:	.word	. - gdt - 1
 	.long	gdt
 	.word	0
-
-	.align 3
-_Idtr_real:
-	.word	1023
-	.long	0
-
-	.align 3
-idt:
-	.space 32*8, 0	/* internal (0-31) */
-			/*	Maskable interrupts (32-255) */
-	.space 32*8, 0	/* BIOS entry points (32-63) */
-	.space 16*8, 0	/* DOS entry points (64-80) */
-
-_Idtr_prot:
-	.word	. - idt - 1
-	.long	idt
-
-	.text
-#define IPROC(n)	X/**/n
-#define IBIOS(n)	IPROC(bios/**/n)
-#define IDOS(n)		IPROC(dos/**/n)
-
-idt_init:
-	pushl	%edi
-
-	movl	$idt, %edi
-
-#define	fixe(p)								\
-	movl	$ IPROC(p), %eax;					\
-	stosw; 					/* lo offset handler */	\
-	movw	$0x8, (%edi);			/* handler %cs */	\
-	incl %edi; incl %edi;						\
-	incl %edi;				/* reserved */		\
-	movb	$(0x80|SDT_SYS386TGT), (%edi);	/* 32bit trap gate */	\
-	incl %edi;							\
-	shrl	$16, %eax;						\
-	stosw;					/* hi offset handler */
-
-	fixe(de); fixe(db); fixe(nmi); fixe(bp); fixe(of); fixe(br)
-	fixe(ud); fixe(nm); fixe(df);  fixe(fo); fixe(ts); fixe(np)
-	fixe(ss); fixe(gp); fixe(pf);  fixe(xx); fixe(mf); fixe(ac)
-	fixe(mc)
-	fixe(xx); fixe(xx); fixe(xx);  fixe(xx); fixe(xx); fixe(xx)
-	fixe(xx); fixe(xx); fixe(xx);  fixe(xx); fixe(xx); fixe(xx)
-	fixe(xx) 
-
-#define fixb(b) fixe(bios/**/b)
-	fixb(0);  fixb(1);  fixb(2);  fixb(3);  fixb(4);  fixb(5)
-	fixb(6);  fixb(7);  fixb(8);  fixb(9);  fixb(10); fixb(11)
-	fixb(12); fixb(13); fixb(14); fixb(15); fixb(16); fixb(17)
-	fixb(18); fixb(19); fixb(20); fixb(21); fixb(22); fixb(23)
-	fixb(24); fixb(25); fixb(26); fixb(27); fixb(28); fixb(29)
-	fixb(30); fixb(31)
-
-#define fixd(d) fixe(dos/**/b)
-
-	popl	%edi
-	ret
 
 #define IENTRY(name,type) \
 IPROC(name): \
@@ -201,151 +313,123 @@ IENTRY(mc,T_MACHK)		/* #MC machine check */
 1:	/* save on jumps */
 	jmp	alltraps
 
-#define	IBIOSENT(n)	IBIOS(n): pushl $n; jmp BIOSh
+#define	IEMUENT(n)	IEMU(n): pushl $n; jmp 1f
 
-IBIOSENT(0);  IBIOSENT(1);  IBIOSENT(2);  IBIOSENT(3)
-IBIOSENT(4);  IBIOSENT(5);  IBIOSENT(6);  IBIOSENT(7)
-IBIOSENT(8);  IBIOSENT(9);  IBIOSENT(10); IBIOSENT(11)
-IBIOSENT(12); IBIOSENT(13); IBIOSENT(14); IBIOSENT(15)
-IBIOSENT(16); IBIOSENT(17); IBIOSENT(18); IBIOSENT(19)
-IBIOSENT(20); IBIOSENT(21); IBIOSENT(22); IBIOSENT(23)
-IBIOSENT(24); IBIOSENT(25); IBIOSENT(26); IBIOSENT(27)
-IBIOSENT(28); IBIOSENT(29); IBIOSENT(30); IBIOSENT(31)
+IEMUENT(0);  IEMUENT(1);  IEMUENT(2);  IEMUENT(3)
+IEMUENT(4);  IEMUENT(5);  IEMUENT(6);  IEMUENT(7)
+IEMUENT(8);  IEMUENT(9);  IEMUENT(10); IEMUENT(11)
+IEMUENT(12); IEMUENT(13); IEMUENT(14); IEMUENT(15)
+IEMUENT(16); IEMUENT(17); IEMUENT(18); IEMUENT(19)
+IEMUENT(20); IEMUENT(21); IEMUENT(22); IEMUENT(23)
+IEMUENT(24); IEMUENT(25); IEMUENT(26); IEMUENT(27)
+IEMUENT(28); IEMUENT(29); IEMUENT(30); IEMUENT(31)
+1:	jmp	EMUh	/* redirect for short jumps */
+IEMUENT(32); IEMUENT(33); IEMUENT(34); IEMUENT(35)
+IEMUENT(36); IEMUENT(37); IEMUENT(38); IEMUENT(39)
+IEMUENT(40); IEMUENT(41); IEMUENT(42); IEMUENT(43)
+IEMUENT(44); IEMUENT(45); IEMUENT(46); IEMUENT(47)
+1:	jmp	EMUh
 
 /*
  * entry point for BIOS real-mode interface
  * all the magic for real-prot mode switching is here
  *
- * Call:	%eax, %ecx, %edx, %ebx, %ebp, %esi, %ds, %di==real mode %es
+ * Call:	%eax, %ecx, %edx, %ebx, %ebp, %esi, %edi, %es
  * Return:	%eax, %edx, %ecx, %eflags (as returned from BIOS)
  *
  */
-	.globl	BIOSh
-BIOSh:
+EMUh:
 	pushal
 	pushl	%ds
 	pushl	%es
+	pushl	%fs
+	pushl	%gs
 
 	/* save %eax */
-	movl	%eax, 2f
+	movl	%eax, 3f
 
 	/* save BIOS int vector */
-	movb	10*4(%esp), %al
+	movb	12*4(%esp), %al
 	movb	%al, intno
+	movl	%eax, 2f
 
-	/* setup 16bit labels in ljmps */
-
-#ifdef	GIDT_DEBUG
-	movl	$0xb8000, %eax
-	movl	$0x47314730, (%eax)
-#endif
-	movl	$0x20, %eax
-
-	# ljmp	$0x18, $2f
-	.byte	0xea		/* Change to 16bit mode */
-	.long	1f - START
-	.word	0x18
-1:
-	movl	%ax, %ds
-#ifdef	GIDT_DEBUG
-	data32
-	movl	$(0xb8000 - START), %eax
-	data32
-	addr32
-	movl	$0x4f314f30, (%eax)
-#endif
-	movl	%cr0, %eax	/* disable prot mode memory management */
-	data32
-	andl 	$~CR0_PE, %eax
-	movl	%eax, %cr0
-
-	# ljmp	(START >> 16), $4f
-	.byte	0xea		/* load real mode cs:ip */
-	.word	1f
-	.word	(START >> 4)
-1:
-	xorl	%eax, %eax	/* setup: %ds, %es, %ss */
-	movl	%ax, %ds
-	movl	%ax, %ss
-	movl	%di, %es
-#ifdef	GIDT_DEBUG
-	data32
-	movl	$0xb8004, %eax
-	data32
-	addr32
-	movl	$0x47334732, (%eax)
-#endif
+	prot2real
 
 	addr32
-	data32
-	lidt	_Idtr_real	/* load idtr for DOS/BIOS operations */
+	movl	_C_LABEL(BIOS_regs)+(BIOSR_ES), %eax
+	movl	%ax, %es
 
 	data32
 	# movl	Leax, %eax
 	.byte	0xb8
-2:	.long	0x90909090	/* restore %eax */
+3:	.long	0x90909090	/* restore %eax */
 
 	sti
-
 	int	$0
 intno	= . - 1
+	cli
 
+	addr32
+	data32
+	movl	%ebx, _C_LABEL(BIOS_regs)+(BIOSR_BX)
+	movl	%es, %bx
+	addr32
+	movl	%bx, _C_LABEL(BIOS_regs)+(BIOSR_ES)
 	movb	%ah, %bh	/* save flags to return to caller */
 	lahf
 	xchgb	%ah, %bh
-
-	cli			/* no maskable interrupts in prot mode */
 
 	addr32
 	data32
 	movl	%eax, 2f	/* save %eax */
 
-#ifdef	GIDT_DEBUG
-	data32
-	movl	$0xb8004, %eax
-	data32
-	addr32
-	movl	$0x4f334f32, (%eax)
-#endif
-
-	addr32
-	data32
-	lgdt	_C_LABEL(Gdtr)	/* load the gdtr */
-
-	movl	%cr0, %eax	/* enable prot mode memory management */
-	data32
-	orl	$CR0_PE, %eax
-	movl	%eax, %cr0 
-
-	data32
-	ljmp	$0x08, $1f	/* reload %cs, and flush pipeline */
-1:
-	/* reload 32bit %ds, %ss, %es */
-	movl	$0x10, %eax
-	movl	%ax, %ds
-	movl	%ax, %ss
-
-#ifdef	GIDT_DEBUG
-	movl	$0xb8008, %eax
-	movl	$0x47344733, (%eax)
-#endif
-
-	/* load idtr for debugger and DOS/BIOS iface */
-	lidt	_Idtr_prot
+	real2prot
 
 	# movl	Leax, %eax
 	.byte	0xb8
 2:	.long	0x90909090	/* eax */
 
 	/* pass BIOS return values back to caller */
-	movl	%eax, 0x9*4(%esp)
-	movl	%ecx, 0x8*4(%esp)
-	movl	%edx, 0x7*4(%esp)
-	movb	%bh , 0xd*4(%esp)
+	movl	%eax, 0xb*4(%esp)
+	movl	%ecx, 0xa*4(%esp)
+	movl	%edx, 0x9*4(%esp)
+	movb	%bh , 0xf*4(%esp)
 
+	/* save registers into save area */
+	movl	%eax, _C_LABEL(BIOS_regs)+BIOSR_AX
+	movl	%ecx, _C_LABEL(BIOS_regs)+BIOSR_CX
+	movl	%edx, _C_LABEL(BIOS_regs)+BIOSR_DX
+	movl	%ebp, _C_LABEL(BIOS_regs)+BIOSR_BP
+	movl	%esi, _C_LABEL(BIOS_regs)+BIOSR_SI
+	movl	%edi, _C_LABEL(BIOS_regs)+BIOSR_DI
+
+	popl	%gs
+	popl	%fs
 	popl	%es
 	popl	%ds
 	popal
-	incl %esp; incl %esp; incl %esp; incl %esp
+	addl	$4, %esp
+	iret
+
+	.globl	_C_LABEL(kentry)
+
+IPROC(kent):
+	pushal
+	pushl	%ds
+	pushl	%es
+	pushl	%fs
+	pushl	%gs
+
+	/* call kent */
+	pushl	%edx
+	pushl	%eax
+	call	_C_LABEL(kentry)
+	addl	$8, %esp
+
+	popl	%gs
+	popl	%fs
+	popl	%es
+	popl	%ds
+	popal
 	iret
 
