@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.13 2002/08/11 18:41:17 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.14 2002/10/21 16:01:55 drahn Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -104,10 +104,9 @@ _dl_start:
 	add	%sp, BIAS + ARGC, %l3
 
 	add	%l3, DL_DATA_SIZE, %o0
-	mov	0, %o2			! dynp = 0
 	mov	%o0, %l0
-	call	_dl_boot_bind		! _dl_boot_bind(sp,loff,dynp,dl_data)
-	 mov	%l3, %o3
+	call	_dl_boot_bind		! _dl_boot_bind(sp,dl_data)
+	 mov	%l3, %o1
 
 	mov	%l3, %o3
 	ldx	[%l0], %l3		! argc = *sp

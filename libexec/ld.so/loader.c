@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.49 2002/08/23 23:02:48 drahn Exp $ */
+/*	$OpenBSD: loader.c,v 1.50 2002/10/21 16:01:55 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -309,7 +309,7 @@ _dl_boot(const char **argv, char **envp, const long loff, long *dl_data)
 }
 
 void
-_dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
+_dl_boot_bind(const long sp, long *dl_data)
 {
 	AuxInfo		*auxstack;
 	long		*stack;
@@ -318,6 +318,7 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 	int argc;
 	char **argv;
 	char **envp;
+	long loff;
 	struct elf_object  dynld;	/* Resolver data for the loader */
 
 	/*
@@ -348,9 +349,7 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 			continue;
 		dl_data[auxstack->au_id] = auxstack->au_v;
 	}
-#if defined(__sparc64__) || defined(__sparc__) || defined(__i386__)
 	loff = dl_data[AUX_base];
-#endif
 
 	/*
 	 * We need to do 'selfreloc' in case the code weren't
@@ -360,10 +359,8 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 	 * Cache the data for easier access.
 	 */
 
-#if defined(__sparc64__) || defined(__sparc__)
-	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);
-#elif defined(__powerpc__) || defined(__alpha__)
-	dynp = dynamicp;
+#if defined(__alpha__)
+	dynp = (Elf_Dyn *)((long)_DYNAMIC);
 #else
 	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);
 #endif

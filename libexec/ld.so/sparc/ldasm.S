@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.5 2002/08/11 18:41:17 drahn Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.6 2002/10/21 16:01:55 drahn Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -86,10 +86,9 @@ _dl_start:
 	add	%sp, ARGC, %l3
 
 	add	%l3, DL_DATA_SIZE, %o0
-	mov	0, %o2			! dynp = 0
 	mov	%o0, %l0
-	call	_dl_boot_bind		! _dl_boot_bind(sp,loff,dynp,dl_data)
-	 mov	%l3, %o3
+	call	_dl_boot_bind		! _dl_boot_bind(sp,dl_data)
+	 mov	%l3, %o1
 
 	mov	%l3, %o3
 	ld	[%l0], %l3		! argc = *sp

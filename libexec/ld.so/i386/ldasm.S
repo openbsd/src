@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.1 2002/08/23 23:02:48 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.2 2002/10/21 16:01:55 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -49,14 +49,11 @@ _dl_start:
 	movl	%ebx,%edi		# save dl_data arg for dl_boot
 	pushl	%ebx			# push dl_data for dl_boot_bind
 
-	pushl	$0			# dynp
-	pushl	$0			# push dummy for loff
-
 	mov	%eax, %esi		# save stack for dl_boot
 
 	pushl	%eax			# load saved SP for dl_boot_bind
 
-	call	_dl_boot_bind@PLT	# _dl_boot_bind(sp,loff,dl_data)
+	call	_dl_boot_bind@PLT	# _dl_boot_bind(sp,dl_data)
 
 	pushl	%edi			# push saved dl_data
 	movl	%edi,%ebp
@@ -75,7 +72,7 @@ _dl_start:
 
 	call	_dl_boot@PLT		# _dl_boot(argv,envp,loff,dl_data)
 
-	addl	$4*6,%esp			# pop args
+	addl	$4*4,%esp			# pop args
 
 	addl	$DL_DATA_SIZE,%esp	# return dl_data
 

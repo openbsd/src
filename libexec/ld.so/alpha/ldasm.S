@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.9 2002/08/11 18:41:17 drahn Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.10 2002/10/21 16:01:55 drahn Exp $ */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -88,8 +88,7 @@ L2:	cmpult	t0, t1, t3
 	br	L2
 L3:
 	mov	a0, s0
-	mov	t2, a1		/* relocation displacement */
-	mov	a1, s1
+	mov	t2, s1		/* relocation displacement */
 	ldq	a2, 0(a0)	/* argc */
 	lda	a3, 8(a0)	/* argv */
 	mov	a3, s3
@@ -97,10 +96,9 @@ L3:
 	sll	t3, 3, t3
 	addq	a3, t3, a4	/* envp */
 	mov	a4, s4
-	mov	t1, a2		/* dynamic */
 	mov	a5, s5
 	lda	s2, 0(sp)
-	mov	s2, a3
+	mov	s2, a1
 	CALL(_dl_boot_bind)
 	mov	s3, a0		/* **argv  */
 	mov	s4, a1		/* **envp  */
