@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: ether.c,v 1.3 2000/02/27 01:38:25 brian Exp $
+ *	$OpenBSD: ether.c,v 1.4 2000/06/28 09:35:19 brian Exp $
  */
 
 #include <sys/param.h>
@@ -413,8 +413,14 @@ ether_Create(struct physical *p)
       return NULL;
     }
 
-    if (modfind("ng_socket") == -1 &&
-        ID0kldload("ng_socket") == -1) {
+    if (modfind("ng_ether") == -1 && ID0kldload("ng_ether") == -1)
+      /*
+       * Don't treat this as an error as older kernels have this stuff
+       * built in as part of the netgraph node itself.
+       */
+      log_Printf(LogWARN, "kldload: ng_ether: %s\n", strerror(errno));
+
+    if (modfind("ng_socket") == -1 && ID0kldload("ng_socket") == -1) {
       log_Printf(LogWARN, "kldload: ng_socket: %s\n", strerror(errno));
       return NULL;
     }
