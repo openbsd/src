@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.434 2001/08/23 16:16:43 csapuntz Exp $
+	$OpenBSD: pcidevs,v 1.435 2001/08/26 18:15:28 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1771,17 +1771,26 @@ product SONY CXD3222		0x8039	CXD3222 FireWire
 product SONY MEMSTICK_SLOT	0x808a	Memory Stick Slot
 
 /* STB products */
-product STB2 RIVA128		0x0018 Velocity128
+product STB2 RIVA128		0x0018	Velocity128
 
 /* Sun */
-product SUN EBUS		0x1000 PCIO Ebus2
-product SUN HME			0x1001 HME
+product SUN EBUS		0x1000	PCIO Ebus2
+product SUN HME			0x1001	HME
+product SUN EBUSIII		0x1100	PCIO Ebus2 (US III)
+product SUN ERINETWORK		0x1101	ERI Ethernet
+product SUN FIREWIRE		0x1102	FireWire
+product SUN USB			0x1103	USB
+product SUN SIMBA		0x5000	Simba PCI-PCI
+product SUN PSYCHO		0x8000	Psycho PCI
+product SUN MS_IIep		0x9000	microSPARC IIep PCI
+product SUN US_IIi		0xa000	UltraSPARC IIi PCI
+product SUN US_IIe		0xa001	UltraSPARC IIe PCI
 
 /* Sundance products */
 product SUNDANCE ST201		0x0201	ST201
 
 /* Surecom products */
-product SURECOM NE34		0x0e34 Surecom NE-34
+product SURECOM NE34		0x0e34	Surecom NE-34
 
 /* Symphony Labs products */
 product SYMPHONY 82C101		0x0001	82C101
