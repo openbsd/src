@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.7 2004/02/23 19:19:12 henning Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.8 2004/02/23 19:51:15 henning Exp $	*/
 
 /* Definitions for dhcpd... */
 
@@ -458,18 +458,6 @@ int note(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 int debug(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 int parse_warn(char *, ...) __attribute__ ((__format__ (__printf__, 1, 2)));
 
-/* dhcpd.c */
-extern TIME cur_time;
-extern struct group root_group;
-
-extern u_int16_t local_port;
-extern u_int16_t remote_port;
-extern int log_priority;
-extern int log_perror;
-
-int main(int, char **);
-void cleanup(void);
-
 /* conflex.c */
 extern int lexline, lexchar;
 extern char *token_line, *tlname;
@@ -480,34 +468,18 @@ void new_parse(char *);
 int next_token(char **, FILE *);
 int peek_token(char **, FILE *);
 
-/* confpars.c */
-int readconf(void);
-void read_leases(void);
-int parse_statement(FILE *, struct group *, int, struct host_decl *, int);
-void parse_allow_deny(FILE *, struct group *, int);
+/* parse.c */
 void skip_to_semi(FILE *);
-int parse_boolean(FILE *);
 int parse_semi(FILE *);
-int parse_lbrace(FILE *);
-void parse_host_declaration(FILE *, struct group *);
-char *parse_host_name(FILE *);
-void parse_class_declaration(FILE *, struct group *, int);
-void parse_lease_time(FILE *, TIME *);
-void parse_shared_net_declaration(FILE *, struct group *);
-void parse_subnet_declaration(FILE *, struct shared_network *);
-void parse_group_declaration(FILE *, struct group *);
-void parse_hardware_param(FILE *, struct hardware *);
 char *parse_string(FILE *);
-struct tree *parse_ip_addr_or_hostname(FILE *, int);
-struct tree_cache *parse_fixed_addr_param(FILE *);
-void parse_option_param(FILE *, struct group *);
-TIME parse_timestamp(FILE *);
-struct lease *parse_lease_declaration(FILE *);
-void parse_address_range(FILE *, struct subnet *);
-TIME parse_date(FILE *);
+char *parse_host_name(FILE *);
+int parse_ip_addr(FILE *, struct iaddr *);
+void parse_hardware_param(FILE *, struct hardware *);
+void parse_lease_time(FILE *, TIME *);
 unsigned char *parse_numeric_aggregate(FILE *, unsigned char *, int *,
     int, int, int);
 void convert_num(unsigned char *, char *, int, int);
+TIME parse_date(FILE *);
 
 /* tree.c */
 pair cons(caddr_t, pair);
@@ -518,25 +490,6 @@ struct tree *tree_const(unsigned char *, int);
 struct tree *tree_concat(struct tree *, struct tree *);
 struct tree *tree_limit(struct tree *, int);
 int tree_evaluate(struct tree_cache *);
-
-/* dhcp.c */
-extern int outstanding_pings;
-
-void dhcp(struct packet *);
-void dhcpdiscover(struct packet *);
-void dhcprequest(struct packet *);
-void dhcprelease(struct packet *);
-void dhcpdecline(struct packet *);
-void dhcpinform(struct packet *);
-void nak_lease(struct packet *, struct iaddr *cip);
-void ack_lease(struct packet *, struct lease *, unsigned int, TIME);
-void dhcp_reply(struct lease *);
-struct lease *find_lease(struct packet *, struct shared_network *, int *);
-struct lease *mockup_lease(struct packet *, struct shared_network *,
-    struct host_decl *);
-
-/* bootp.c */
-void bootp(struct packet *);
 
 /* alloc.c */
 VOIDPTR dmalloc(int, char *);
@@ -654,6 +607,10 @@ extern char *path_dhclient_conf;
 extern char *path_dhclient_db;
 extern char *path_dhclient_pid;
 extern int interfaces_requested;
+extern TIME cur_time;
+extern u_int16_t local_port;
+extern int log_priority;
+extern int log_perror;
 
 extern struct client_config top_level_config;
 
@@ -700,11 +657,9 @@ void go_daemon(void);
 void write_client_pid_file(void);
 void client_location_changed(void);
 
-/* db.c */
-int write_lease(struct lease *);
-int commit_leases(void);
-void db_startup(void);
-void new_lease_file(void);
+void bootp(struct packet *);
+void dhcp(struct packet *);
+void cleanup(void);
 
 /* packet.c */
 u_int32_t checksum(unsigned char *, unsigned, u_int32_t);
@@ -724,48 +679,6 @@ void assemble_ethernet_header(struct interface_info *, unsigned char *,
 ssize_t decode_ethernet_header(struct interface_info *, unsigned char *,
     int, struct hardware *);
 
-/* tr.c */
-void assemble_tr_header(struct interface_info *, unsigned char *,
-    int *, struct hardware *);
-ssize_t decode_tr_header(struct interface_info *,
-    unsigned char *, int, struct hardware *);
-
-/* dhxpxlt.c */
-void convert_statement(FILE *);
-void convert_host_statement(FILE *, jrefproto);
-void convert_host_name(FILE *, jrefproto);
-void convert_class_statement(FILE *, jrefproto, int);
-void convert_class_decl(FILE *, jrefproto);
-void convert_lease_time(FILE *, jrefproto, char *);
-void convert_shared_net_statement(FILE *, jrefproto);
-void convert_subnet_statement(FILE *, jrefproto);
-void convert_subnet_decl(FILE *, jrefproto);
-void convert_host_decl(FILE *, jrefproto);
-void convert_hardware_decl(FILE *, jrefproto);
-void convert_hardware_addr(FILE *, jrefproto);
-void convert_filename_decl(FILE *, jrefproto);
-void convert_servername_decl(FILE *, jrefproto);
-void convert_ip_addr_or_hostname(FILE *, jrefproto, int);
-void convert_fixed_addr_decl(FILE *, jrefproto);
-void convert_option_decl(FILE *, jrefproto);
-void convert_timestamp(FILE *, jrefproto);
-void convert_lease_statement(FILE *, jrefproto);
-void convert_address_range(FILE *, jrefproto);
-void convert_date(FILE *, jrefproto, char *);
-void convert_numeric_aggregate(FILE *, jrefproto, int, int, int, int);
-void indent(int);
-
-/* route.c */
-void add_route_direct(struct interface_info *, struct in_addr);
-void add_route_net(struct interface_info *, struct in_addr, struct in_addr);
-void add_route_default_gateway(struct interface_info *, struct in_addr);
-void remove_routes(struct in_addr);
-void remove_if_route(struct interface_info *, struct in_addr);
-void remove_all_if_routes(struct interface_info *);
-void set_netmask(struct interface_info *, struct in_addr);
-void set_broadcast_addr(struct interface_info *, struct in_addr);
-void set_ip_address(struct interface_info *, struct in_addr);
-
 /* clparse.c */
 int read_client_conf(void);
 void read_client_leases(void);
@@ -782,27 +695,4 @@ void parse_client_lease_declaration(FILE *, struct client_lease *,
     struct interface_info **);
 struct option *parse_option_decl(FILE *, struct option_data *);
 void parse_string_list(FILE *, struct string_list **, int);
-int parse_ip_addr(FILE *, struct iaddr *);
 void parse_reject_statement(FILE *, struct client_config *);
-
-/* dhcrelay.c */
-void relay(struct interface_info *, struct dhcp_packet *, int,
-    unsigned int, struct iaddr, struct hardware *);
-
-/* icmp.c */
-void icmp_startup(int, void (*)(struct iaddr, u_int8_t *, int));
-int icmp_echorequest(struct iaddr *);
-void icmp_echoreply(struct protocol *);
-
-/* dns.c */
-void dns_startup(void);
-int ns_inaddr_lookup(u_int16_t, struct iaddr);
-void dns_packet(struct protocol *);
-
-/* resolv.c */
-extern char path_resolv_conf[];
-struct name_server *name_servers;
-struct domain_search_list *domains;
-
-void read_resolv_conf(TIME);
-struct sockaddr_in *pick_name_server (void);
