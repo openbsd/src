@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.39 2003/12/24 23:48:05 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.40 2003/12/25 13:13:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -59,6 +59,7 @@ void	session_close_connection(struct peer *);
 void	session_terminate(void);
 void	change_state(struct peer *, enum session_state, enum session_events);
 int	session_setup_socket(struct peer *);
+void	session_socket_blockmode(int, int);
 void	session_accept(int);
 int	session_connect(struct peer *);
 void	session_open(struct peer *);
@@ -688,6 +689,8 @@ session_connect(struct peer *peer)
 		return (-1);
 	}
 
+	session_socket_blockmode(peer->sock, 1);
+
 	if ((n = connect(peer->sock, (struct sockaddr *)&peer->conf.remote_addr,
 	    sizeof(peer->conf.remote_addr))) == -1)
 		if (errno != EINPROGRESS) {
@@ -734,12 +737,31 @@ session_setup_socket(struct peer *p)
 }
 
 void
+session_socket_blockmode(int fd, int block)
+{
+	int	flags;
+
+	if ((flags = fcntl(fd, F_GETFL, 0)) == -1)
+		fatal("fnctl F_GETFL", errno);
+
+	if (block)
+		flags |= O_NONBLOCK;
+	else
+		flags &= ~O_NONBLOCK;
+
+	if ((flags = fcntl(fd, F_SETFL, flags)) == -1)
+		fatal("fnctl F_SETFL", errno);
+}
+
+void
 session_open(struct peer *peer)
 {
 	struct msg_open	 msg;
 	struct buf	*buf;
 	u_int16_t	 len;
 	int		 errs = 0, n;
+
+	session_socket_blockmode(peer->sock, 0);
 
 	len = MSGSIZE_OPEN_MIN;
 
