@@ -76,6 +76,7 @@
 #include "util_date.h"          /* For parseHTTPdate and BAD_DATE */
 #include <stdarg.h>
 #include "http_conf_globals.h"
+#include "ap_sha1.h"
 
 #define SET_BYTES_SENT(r) \
   do { if (r->sent_bodyct) \
@@ -667,7 +668,7 @@ API_EXPORT(int) ap_meets_conditions(request_rec *r)
  * could be modified again in as short an interval.  We rationalize the
  * modification time we're given to keep it from being in the future.
  */
-API_EXPORT(char *) ap_make_etag(request_rec *r, int force_weak)
+API_EXPORT(char *) ap_make_etag_orig(request_rec *r, int force_weak)
 {
     char *etag;
     char *weak;
@@ -3176,4 +3177,143 @@ API_EXPORT(void) ap_send_error_response(request_rec *r, int recursive_error)
     ap_kill_timeout(r);
     ap_finalize_request_protocol(r);
     ap_rflush(r);
+}
+
+/*
+ * The shared hash context, copies of which are used by all children for
+ * etag generation.  ap_init_etag() must be called once before all the
+ * children are created.  We use a secret hash initialization value
+ * so that people can't brute-force inode numbers.
+ */
+static AP_SHA1_CTX baseCtx;
+
+API_EXPORT(void) ap_init_etag(pool *pconf)
+{
+    struct stat st;
+    u_int32_t rnd;
+    unsigned int u;
+    int fd;
+    const char* filename;
+
+    ap_SHA1Init(&baseCtx);
+
+    filename = ap_server_root_relative(pconf, "logs/etag-state");
+    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, NULL,
+      "Initializing etag from %s", filename);
+
+    if ((fd = open(filename, O_CREAT|O_RDWR|O_NOFOLLOW, 0600)) == -1) {
+        ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
+          "could not open %s", filename);
+        exit(-1);
+    }
+
+    if (fstat(fd, &st) == -1) {
+        ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
+          "could not fstat %s", filename);
+        exit(-1);
+    }
+
+    if (st.st_size != sizeof(rnd)*4) {
+        if (st.st_size > 0) {
+            ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_WARNING, NULL,
+              "truncating %s from %qd bytes to 0", filename, st.st_size);
+        }
+
+        if (ftruncate(fd, 0) == -1) {
+            ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
+              "could not truncate %s", filename);
+            exit(-1);
+        }
+
+        /* generate random bytes and write them */
+        for (u = 0; u < 4; u++) {
+            rnd = arc4random();
+            if (write(fd, &rnd, sizeof(rnd)) == -1) {
+                ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
+                  "could not write to %s", filename);
+                exit(-1);
+            }
+        }
+
+        /* rewind */
+        if (lseek(fd, 0, SEEK_SET) == -1) {
+            ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
+              "could not seek on %s", filename);
+            exit(-1);
+        }
+    }
+
+    /* read 4 random 32-bit uints from file and update the hash context */
+    for (u = 0; u < 4; u++) {
+        if (read(fd, &rnd, sizeof(rnd)) < sizeof(rnd)) {
+            ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
+              "could not read from %s", filename);
+            exit(-1);
+        }
+
+        ap_SHA1Update_binary(&baseCtx, (const unsigned char *)&rnd,
+          sizeof(rnd));
+    }
+
+    if (close(fd) == -1) {
+        ap_log_error(APLOG_MARK, APLOG_CRIT, NULL,
+          "could not properly close %s", filename);
+        exit(-1);
+    }
+}
+
+API_EXPORT(char *) ap_make_etag(request_rec *r, int force_weak)
+{
+    AP_SHA1_CTX hashCtx;
+    core_dir_config *cfg;
+    etag_components_t etag_bits;
+    int weak;
+    unsigned char md[SHA_DIGESTSIZE];
+    unsigned int i;
+    
+    memcpy(&hashCtx, &baseCtx, sizeof(hashCtx));
+    
+    cfg = (core_dir_config *)ap_get_module_config(r->per_dir_config,
+      &core_module);
+    etag_bits = (cfg->etag_bits & (~ cfg->etag_remove)) | cfg->etag_add;
+    if (etag_bits == ETAG_UNSET)
+        etag_bits = ETAG_BACKWARD;
+    
+    weak = ((r->request_time - r->mtime <= 1) || force_weak);
+    
+    if (r->finfo.st_mode != 0) {
+        if (etag_bits & ETAG_NONE) {
+            ap_table_setn(r->notes, "no-etag", "omit");
+            return "";
+        }
+        if (etag_bits & ETAG_INODE) {
+            ap_SHA1Update_binary(&hashCtx,
+              (const unsigned char *)&r->finfo.st_dev,
+              sizeof(r->finfo.st_dev));
+            ap_SHA1Update_binary(&hashCtx,
+              (const unsigned char *)&r->finfo.st_ino,
+              sizeof(r->finfo.st_ino));
+        }
+        if (etag_bits & ETAG_SIZE)
+            ap_SHA1Update_binary(&hashCtx,
+              (const unsigned char *)&r->finfo.st_size,
+              sizeof(r->finfo.st_size));
+        if (etag_bits & ETAG_MTIME)
+            ap_SHA1Update_binary(&hashCtx,
+              (const unsigned char *)&r->mtime,
+              sizeof(r->mtime));
+    }
+    else {
+        weak = 1;
+        ap_SHA1Update_binary(&hashCtx, (const unsigned char *)&r->mtime,
+          sizeof(r->mtime));
+    }
+    ap_SHA1Final(md, &hashCtx);
+    return ap_psprintf(r->pool, "%s\""
+      "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+        "\"", weak ? "W/" : "",
+      md[0], md[1], md[2], md[3], md[4], md[5], md[6], md[7],
+      md[8], md[9], md[10], md[11], md[12], md[13], md[14], md[15],
+      md[16], md[17], md[18], md[19]);
 }
