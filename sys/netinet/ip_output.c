@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.113 2001/06/24 18:24:11 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.114 2001/06/24 19:48:58 kjell Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/pfvar.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -640,6 +641,16 @@ sendit:
 		goto done;
 	}
 #endif /* IPSEC */
+
+	/*
+	 * Packet filter
+	 */
+	{
+		struct mbuf *m1 = m;
+		if (pf_test(PF_OUT, ifp, &m1) != PF_PASS)
+			goto done;
+		ip = mtod(m = m1, struct ip *);
+	}
 
 	/* Catch routing changes wrt. hardware checksumming for TCP or UDP. */
 	if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT &&

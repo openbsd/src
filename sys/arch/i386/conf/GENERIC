@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.262 2001/06/07 04:48:49 millert Exp $
+#	$OpenBSD: GENERIC,v 1.263 2001/06/24 19:48:56 kjell Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -440,5 +440,7 @@ pseudo-device	sequencer	1
 #pseudo-device	raid		4	# RAIDframe disk driver
 
 # mouse & keyboard multiplexor pseudo-devices
+pseudo-device	pf		1	# packetfilter
+
 pseudo-device	wsmux		2
 pseudo-device	crypto		1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.83 2001/06/24 18:24:56 provos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.84 2001/06/24 19:48:58 kjell Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
+#include <net/pfvar.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -374,6 +375,16 @@ ipv4_input(m)
 			m->m_pkthdr.len = ip->ip_len;
 		} else
 			m_adj(m, ip->ip_len - m->m_pkthdr.len);
+	}
+
+	/*
+	 * Packet filter
+	 */
+	{
+		struct mbuf *m1 = m;
+		if (pf_test(PF_IN, m->m_pkthdr.rcvif, &m1) != PF_PASS)
+			goto bad;
+		ip = mtod(m = m1, struct ip *);
 	}
 
 	/*

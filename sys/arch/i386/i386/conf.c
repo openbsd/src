@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.72 2001/06/23 03:47:16 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.73 2001/06/24 19:48:57 kjell Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -235,6 +235,9 @@ cdev_decl(wsmux);
 cdev_decl(pci);
 #endif
 
+#include "pf.h"
+cdev_decl(pf);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -338,6 +341,7 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),
 #endif
+	cdev_pf_init(NPF,pf),		/* 73: packet filter */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
