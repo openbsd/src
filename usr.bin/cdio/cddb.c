@@ -1,4 +1,4 @@
-/* $OpenBSD: cddb.c,v 1.7 2003/03/13 09:32:06 espie Exp $ */
+/* $OpenBSD: cddb.c,v 1.8 2003/06/09 11:33:14 espie Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -222,7 +222,7 @@ get_answer(FILE *cin)
 	char *line;
 
 	line = get_line(cin);
-	if (*line != '2')
+	if (!line || *line != '2')
 		return NULL;
 	else
 		return line;
@@ -306,7 +306,7 @@ cddb(const char *host_port, int n, struct cd_toc_entry *e, char *arg)
 		if (number == 0) {
 			for (i = 1;; i++) {
 				line = get_line(cin);
-				if (strcmp(line, ".") == 0)
+				if (!line || strcmp(line, ".") == 0)
 					goto end;
 				printf("%d: %s\n", i, line);
 			}
