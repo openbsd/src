@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.15 2000/12/24 11:35:42 aaron Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.16 2001/06/22 14:26:36 lebel Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -324,8 +324,7 @@ int run (cmd, arg)
 		/* open new device */
 		if (!open_cd (arg))
 			return (0);
-		(void) strncpy(newcdname, arg, sizeof(newcdname) - 1);
-		newcdname[sizeof(newcdname) - 1] = '\0';
+		(void) strlcpy(newcdname, arg, sizeof(newcdname));
 		cdname = newcdname;
 		return (1);
 
