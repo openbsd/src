@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.54 2004/09/10 19:41:39 miod Exp $
+dnl	$OpenBSD: contents,v 1.55 2005/04/03 15:55:26 martin Exp $
 TopPart
 
 OpenBSDfloppy
@@ -26,11 +26,23 @@ OpenBSDrd
 
 OpenBSDcd
 
+	cdbr		First-stage CD bootstrap (boot sector), which loads
+			the cdboot second-stage bootstrap.  This file is
+			included in the cd{:--:}OSrev.iso image, and is provided as
+			a convenience, but will rarely be needed.
+
+	cdboot		Second-stage CD bootstrap loader for non-emulation
+			OpenBSD El Torito CD-ROMs. It processes boot.conf
+			then loads the bsd.rd installation ramdisk kernel.
+			This file is included in the cd{:--:}OSrev.iso image, and is
+			provided as a convenience, but will rarely be needed.
+
 	cdemu{:--:}OSrev.iso	Another bootable CD-ROM image, for older systems
-			which BIOS only support the ``large floppy emulation''
-			mode for bootable CD-ROM, and as such are unable to
-			boot cd{:--:}OSrev.iso; this image is provided for
-			convenience purposes, but should never be needed.
+			where the BIOS only supports the ``large floppy
+			emulation'' mode for bootable CD-ROMs, and which
+			are therefore unable to boot cd{:--:}OSrev.iso.  This image
+			is provided as a convenience, but should rarely be
+			needed.
 
 Additionally, you may be interested in
 
