@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.1,v 1.7 1999/02/17 20:39:16 deraadt Exp $
+.\" $OpenBSD: ipsecadm.1,v 1.8 1999/02/24 22:53:36 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -58,13 +58,12 @@ Allowed
 modifiers are:
 .Fl dst ,
 .Fl src ,
+.Fl proxy ,
 .Fl spi ,
-.Fl tunnel ,
 .Fl enc ,
 .Fl auth ,
-.Fl iv ,
-.Fl newpadding ,
 .Fl authkey ,
+.Fl forcetunnel ,
 and
 .Fl key .
 .It old esp
@@ -72,10 +71,11 @@ Setup a SPI which uses the old esp transforms. Only
 encryption algorithms can be applied. Allowed modifiers are:
 .Fl dst ,
 .Fl src ,
+.Fl proxy ,
 .Fl spi ,
-.Fl tunnel ,
 .Fl enc ,
-.Fl iv
+.Fl halfiv ,
+.Fl forcetunnel , 
 and
 .Fl key .
 .It new ah
@@ -84,8 +84,9 @@ will be done with HMAC using the specified hash algorithm. Allowed modifiers
 are:
 .Fl dst ,
 .Fl src ,
+.Fl proxy ,
 .Fl spi ,
-.Fl tunnel ,
+.Fl forcetunnel ,
 .Fl auth ,
 and
 .Fl key .
@@ -94,8 +95,9 @@ Setup a SPI which uses the old ah transforms. Simple keyed
 hashes will be used for authentication. Allowed modifiers are:
 .Fl dst ,
 .Fl src ,
+.Fl proxy ,
 .Fl spi ,
-.Fl tunnel ,
+.Fl forcetunnel ,
 .Fl auth ,
 and
 .Fl key .
@@ -108,9 +110,8 @@ does not appear on the wire. Unlike other setups, like new esp, there
 is no necessary setup in the receiving side. Allowed modifiers are:
 .Fl dst ,
 .Fl src ,
-.Fl spi ,
 and
-.Fl tunnel .
+.Fl spi.
 .It delspi
 The specified Security Association (SA) will be deleted. An SA consists of
 the destination address, SPI and security protocol. Allowed modifiers are:
@@ -150,27 +151,46 @@ If no command is given
 defaults to new esp mode.
 .Pp
 The modifiers have the following meanings:
-.Bl -tag -width newpadding -offset indent
+.Bl -tag -width forcetunnel -offset indent
 .It src
 The source IP address for the SPI. This is necessary for incoming
 SAs to avoid source address spoofing between mutually
 suspicious hosts that have established SAs with us. For outgoing SAs, this
-field is used if the SA is for packets that originate from this host, and 
-its purpose is to slightly speedup packet processing. If this field is
+field is used to slightly speedup packet processing. If this field is
 zero (0.0.0.0), no spoofing check will be done for incoming SAs, and an
 extra routing lookup may be necessary for certain classes of packets that
-originate from the local machine and make use of the SA. The value in this
-field is not used when processing outgoing packets in
-.Xr vpn 8
-mode (encrypting/authenticating other hosts' packets).
+originate from the local machine and make use of the SA. If present, the
+value of this field is used when doing IP-in-IP encapsulation (e.g., when
+the
+.Nm forcetunnel
+option has been specified.
 .It dst
 The destination IP address for the SPI.
+.It proxy
+This IP address, if provided, is checked against the inner IP address when
+doing tunneling to a firewall, to prevent source spoofing attacks. It is
+strongly recommended that this option is provided when applicable. It is
+applicable in a scenario when host A is using IPsec to communicate with
+firewall B, and through that to host C. In that case, the proxy address for
+the incoming SA should be C. This option is not necessary for outgoing SAs.
 .It spi
 The unique Security Parameter Index (SPI).
 .It tunnel
-The source and destination IP addresses for the external IP header.
+This option has been deprecated. The arguments are ignored, and it
+otherwise has the same effect as the
+.Nm forcetunnel
+option.
 .It newpadding
-For new ESP, specify new style self-describing padding should be used.
+This option has been deprecated.
+.It forcetunnel
+Force IP-inside-IP encapsulation before ESP or AH processing is performed for
+outgoing packets. The source/destination addresses of the outgoing IP packet
+will be those provided in the
+.Nm src
+and
+.Nm dst
+options. Notice that the IPsec stack will perform IP-inside-IP encapsulation
+when deemed necessary, even if this flag has not been set.
 .It enc
 The encryption algorithm to be used with the SPI. Possible values
 are:
@@ -179,7 +199,7 @@ are:
 This is available for both old and new esp.
 Notice that hardware crackers for DES can be (and have been) built for
 US$250,000. Use DES for encryption of critical information at your risk.
-We suggest using of 3DES instead. The DES support is kept for interoperability
+We suggest using 3DES instead. DES support is kept for interoperability
 (with old implementations) purposes only.
 .It Nm 3des 
 This is available for both old and new esp.  It is more considered to be
@@ -237,14 +257,13 @@ practical way of generating keys is by using the
 .Xr random 4
 device (e.g. dd if=/dev/urandom bs=1024 count=1 | sha1)
 .It iv
-The initialization vector used for encryption. In old esp mode you need
-to specify it as either four or eight byte long value. In new esp mode
-the transforms can either use an eight byte iv or will derive one
-when none is specified with
-.Xr ipsecadm 1 .
-The
-.Nm iv
-should be given in hexadecimal digits.
+This option has been deprecated. The argument is ignored. When applicable,
+it has the same behaviour as the
+.Nm halfiv
+option.
+.It halfiv
+This option causes use of a 4 byte IV in old ESP (as opposed to 8 bytes). It
+may only be used with old ESP.
 .It proto
 The security protocol needed by
 .Nm delspi ,
