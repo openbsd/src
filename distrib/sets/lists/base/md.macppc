@@ -2200,5 +2200,6 @@
 ./usr/mdec/ofwboot
 ./usr/sbin/apm
 ./usr/sbin/apmd
+./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
