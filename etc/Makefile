@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.57 1997/05/16 18:02:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.58 1997/05/18 13:42:36 pefo Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -45,7 +45,7 @@ GZIPEXT=
 all clean cleandir depend etc install lint:
 
 .ifndef DESTDIR
-distribution-etc-root-var distribution distrib-dirs snapshot:
+distribution-etc-root-var distribution distrib-dirs release snapshot:
 	@echo setenv DESTDIR before doing that!
 	@false
 .else
@@ -154,6 +154,10 @@ distribution-etc-root-var: distrib-dirs
 .if (${MACHINE_ARCH} == "mips")
 	(cd etc.${MACHINE}; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    ld.so.conf ${DESTDIR}/etc)
+.endif
+.if ${MACHINE} == "arc"
+	(cd etc.${MACHINE}; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
+	    mbr msdos5mb.gz ${DESTDIR}/usr/mdec)
 .endif
 	(cd ${DESTDIR}/dev; ./MAKEDEV all)
 .if ${MACHINE} == "vax"

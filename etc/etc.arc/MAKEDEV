@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.17 1997/05/14 18:31:15 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.18 1997/05/18 13:42:37 pefo Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -71,6 +71,11 @@ all)
 	sh MAKEDEV std fd fd0 wd0 wd1 wd2 wd3 sd0 sd1 sd2 st0 acd0 cd0 ss0
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 tty00 tty01 pty0 pty1
 	sh MAKEDEV ttyC0 lpt0 pms0 random bpf0 local
+	;;
+
+ramdisk)
+	sh MAKEDEV std fd0 wd0 wd1 wd2 wd3 sd0 sd1 sd2 st0 acd0 cd0 
+	sh MAKEDEV tty00 tty01 ttyC0 lpt0 random rd0
 	;;
 
 std)
@@ -160,7 +165,17 @@ bpf*|tun*)
 	chown root.wheel $name$unit
 	;;
 
-#	;;
+rd*)
+	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
+	mknod rd${unit}a b 8 `expr $unit '*' 16 + 0`
+	mknod rd${unit}c b 8 `expr $unit '*' 16 + 2`
+	mknod rrd${unit}a c 22 `expr $unit '*' 16 + 0`
+	mknod rrd${unit}c c 22 `expr $unit '*' 16 + 2`
+	chown root.operator rd${unit}[ac] rrd${unit}[ac]
+	chmod 640 rd${unit}[ac] rrd${unit}[ac]
+	umask 77
+	;;
+
 #lkm)
 #	rm -f lkm
 #	mknod lkm c 112 0
