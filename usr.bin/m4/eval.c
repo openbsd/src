@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.24 2000/01/12 17:49:53 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.25 2000/03/11 15:54:43 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.24 2000/01/12 17:49:53 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.25 2000/03/11 15:54:43 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -402,6 +402,30 @@ eval(argv, argc, td)
 				dodefn(argv[n]);
 		break;
 
+	case INDIRTYPE:	/* Indirect call */
+		if (argc > 2)
+			doindir(argv, argc);
+		break;
+	
+	case BUILTINTYPE: /* Builtins only */
+		if (argc > 2)
+			dobuiltin(argv, argc);
+		break;
+
+	case PATSTYPE:
+		if (argc > 2)
+			dopatsubst(argv, argc);
+		break;
+	case REGEXPTYPE:
+		if (argc > 2)
+			doregexp(argv, argc);
+		break;
+	case LINETYPE:
+		doprintlineno(infile+ilevel);
+		break;
+	case FILENAMETYPE:
+		doprintfilename(infile+ilevel);
+		break;
 	case SELFTYPE:
 		pbstr(rquote);
 		pbstr(argv[1]);

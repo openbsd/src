@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.17 2000/01/15 14:26:00 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.18 2000/03/11 15:54:44 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.17 2000/01/15 14:26:00 espie Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.18 2000/03/11 15:54:44 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -142,6 +142,18 @@ pbnum(n)
 		putback('-');
 }
 
+/*
+ *  pbunsigned - convert unsigned long to string, push back on input.
+ */
+void
+pbunsigned(n)
+	unsigned long n;
+{
+	do {
+		putback(n % 10 + '0');
+	}
+	while ((n /= 10) > 0);
+}
 
 void 
 initspaces()
@@ -269,7 +281,7 @@ killdiv()
 		}
 }
 
-char *
+void *
 xalloc(n)
 	size_t n;
 {
@@ -333,4 +345,18 @@ release_input(f)
 	 * XXX can't free filename, as there might still be 
 	 * error information pointing to it.
 	 */
+}
+
+void
+doprintlineno(f)
+	struct input_file *f;
+{
+	pbunsigned(f->lineno);
+}
+
+void
+doprintfilename(f)
+	struct input_file *f;
+{
+	pbstr(f->name);
 }

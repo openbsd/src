@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.16 2000/01/15 14:26:00 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.17 2000/03/11 15:54:44 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -50,6 +50,14 @@ extern int	expr __P((const char *));
 /* gnum4.c */
 extern void 	addtoincludepath __P((const char *dirname));
 extern struct input_file *fopen_trypath __P((struct input_file *, const char *filename));
+extern void doindir __P((const char *[], int));
+extern void dobuiltin __P((const char *[], int));
+extern void dopatsubst __P((const char *[], int));
+extern void doregexp __P((const char *[], int));
+
+extern void doprintlineno __P((struct input_file *));
+extern void doprintfilename __P((struct input_file *));
+ 
 
 /* look.c */
 extern ndptr	addent __P((const char *));
@@ -59,6 +67,7 @@ extern void	remhash __P((const char *, int));
 
 /* main.c */
 extern void outputstr __P((const char *));
+extern int builtin_type __P((const char *));
 
 /* misc.c */
 extern void	chrsave __P((int));
@@ -69,9 +78,10 @@ extern void 	initspaces __P((void));
 extern void	killdiv __P((void));
 extern void	onintr __P((int));
 extern void	pbnum __P((int));
+extern void	pbunsigned __P((unsigned long));
 extern void	pbstr __P((const char *));
 extern void	putback __P((int));
-extern char	*xalloc __P((size_t));
+extern void	*xalloc __P((size_t));
 extern char	*xstrdup __P((const char *));
 extern void	usage __P((void));
 

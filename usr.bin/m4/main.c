@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.30 2000/02/02 14:05:22 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.31 2000/03/11 15:54:44 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.30 2000/02/02 14:05:22 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.31 2000/03/11 15:54:44 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,6 +109,13 @@ struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 #ifdef EXTENDED
 	{ "paste",        PASTTYPE },
 	{ "spaste",       SPASTYPE },
+    	/* Newer extensions, needed to handle gnu-m4 scripts */
+	{ "indir",        INDIRTYPE},
+	{ "builtin",      BUILTINTYPE},
+	{ "patsubst",	  PATSTYPE},
+	{ "regexp",	  REGEXPTYPE},
+	{ "__file__",	  FILENAMETYPE | NOARGS},
+	{ "__line__",	  LINETYPE | NOARGS},
 #endif
 	{ "popdef",       POPDTYPE },
 	{ "pushdef",      PUSDTYPE },
@@ -516,6 +523,20 @@ initkwds()
 			p->type |= NEEDARGS;
 	}
 }
+
+/* Look up a builtin type, even if overridden by the user */
+int 
+builtin_type(key)
+	const char *key;
+{
+	int i;
+
+	for (i = 0; i != MAXKEYS; i++)
+		if (STREQ(keywrds[i].knam, key))
+			return keywrds[i].ktyp;
+	return -1;
+}
+
 
 static void
 record(t, lev)
