@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.741 2004/06/05 22:11:58 brad Exp 
+ *	OpenBSD: pcidevs,v 1.742 2004/06/16 20:50:59 matthieu Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1843,7 +1843,8 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCE4TI4200	0x0253		/* GeForce4 Ti 4200 */
 #define	PCI_PRODUCT_NVIDIA_QUADRO4900XGL	0x0258		/* Quadro4 900 XGL */
 #define	PCI_PRODUCT_NVIDIA_QUADRO4750XGL	0x0259		/* Quadro4 750 XGL */
-#define	PCI_PRODUCT_NVIDIA_QUADRO4700XGL	0x025B		/* Qaudro4 700 XGL */
+#define	PCI_PRODUCT_NVIDIA_QUADRO4700XGL	0x025B		/* Quadro4 700 XGL */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE4TI4200GO	0x286		/* GeForce4 Ti 4200 Go */
 #define	PCI_PRODUCT_NVIDIA_GEFORCEFX5200	0x0322		/* GeForce FX 5200 */
 
 /* Oak Technologies products */

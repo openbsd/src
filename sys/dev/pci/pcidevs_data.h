@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.741 2004/06/05 22:11:58 brad Exp 
+ *	OpenBSD: pcidevs,v 1.742 2004/06/16 20:50:59 matthieu Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -5192,7 +5192,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4700XGL,
-	    "Qaudro4 700 XGL",
+	    "Quadro4 700 XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4TI4200GO,
+	    "GeForce4 Ti 4200 Go",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEFX5200,
