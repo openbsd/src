@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2001/05/25 08:20:34 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2001/06/22 16:12:18 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -9,6 +9,6 @@ SRCS=	kinit.c kinit_options.c
 
 .PATH:	${KRB5SRC}/kuser
 
-LDADD+=	${LIBROKEN} -lkrb5 -ldes -lkafs -l45 -lkrb -lkafs5
+LDADD+=	-lkrb5 -ldes -lkafs -l45 -lkrb -lkafs ${LIBROKEN} -lasn1 -lcrypto
 
 .include <bsd.prog.mk>
