@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.5 2002/05/15 03:51:59 mickey Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.6 2002/12/17 14:27:50 mickey Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -98,7 +98,7 @@ FPC (w/Bit):
 Timex-II:
 Rolex:725/50
 HARP-I:
-Tornado:
+Tornado:J2x0,C1x0
 PA-50 (Hitachi):
 PCXL:712/60/80/100
 .TE
