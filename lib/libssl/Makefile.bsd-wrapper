@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.24 2000/10/13 21:31:28 hugh Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.25 2000/11/10 09:59:02 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -70,7 +70,11 @@ MANALL=	ssl.cat3 SSL_get_error.cat3 \
 	\
 	BUF_MEM_new.cat3 RC4.cat3 \
 	RIPEMD160.cat3 CRYPTO_set_locking_callback.cat3
-	
+
+.if MANPS
+PSALL=	${MANALL:S/.cat1/.ps1/g:S/.cat2/.ps2/g:S/.cat3/.ps3/g:S/.cat4/.ps4/g:S/.cat5/.ps5/g:S/.cat6/.ps6/g:S/.cat7/.ps7/g:S/.cat8/.ps8/g:S/.cat9/.ps9/g}
+.endif
+
 # these are is a real problem, since they re-document functions described in
 # other pages.
 #
@@ -88,73 +92,107 @@ MANALL=	ssl.cat3 SSL_get_error.cat3 \
 # RAND_screen RAND_load_file RAND_write_file RAND_file_name RAND_egd
 # RAND_set_rand_method RAND_get_rand_method RAND_SSLeay RAND_cleanup
 
-
 # buffer.pod -> BUF_MEM_new.pod
 # BUF_MEM_free BUF_MEM_grow BUF_strdup
-#
 BUF_MEM_new.cat3: buffer.pod
 	( cp ${.ALLSRC} BUF_MEM_new.pm && pod2man --section=3 --official \
 	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  BUF_MEM_new.pm ) | nroff -Tascii -man > ${.TARGET}
+.if MANPS
+BUF_MEM_new.ps3: buffer.pod
+	( cp ${.ALLSRC} BUF_MEM_new.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  BUF_MEM_new.pm ) | nroff -Tps -man > ${.TARGET}
+.endif
 
 # rc4.pod -> RC4.pod
 # RC4_set_key
-#
 RC4.cat3: rc4.pod
 	( cp ${.ALLSRC} RC4.pm && pod2man --section=3 --official \
 	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  RC4.pm ) | nroff -Tascii -man > ${.TARGET}
-
+.if MANPS
+RC4.ps3: rc4.pod
+	( cp ${.ALLSRC} RC4.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  RC4.pm ) | nroff -Tps -man > ${.TARGET}
+.endif
 
 # threads.pod -> CRYPTO_set_locking_callback.pod
 # CRYPTO_set_id_callback CRYPTO_num_locks
-#
 CRYPTO_set_locking_callback.cat3: threads.pod
 	( cp ${.ALLSRC} CRYPTO_set_locking_callback.pm && \
 	  pod2man --section=3 --official \
 	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  CRYPTO_set_locking_callback.pm ) | nroff -Tascii -man > ${.TARGET}
+.if MANPS
+CRYPTO_set_locking_callback.ps3: threads.pod
+	( cp ${.ALLSRC} CRYPTO_set_locking_callback.pm && \
+	  pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  CRYPTO_set_locking_callback.pm ) | nroff -Tps -man > ${.TARGET}
+.endif
 
 # ripemd.pod -> RIPEMD160.pod
 # RIPEMD160_Init RIPEMD160_Update RIPEMD160_Final
-#
 RIPEMD160.cat3: ripemd.pod
 	( cp ${.ALLSRC} RIPEMD160.pm && pod2man --section=3 --official \
 	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  RIPEMD160.pm ) | nroff -Tascii -man > ${.TARGET}
+.if MANPS
+RIPEMD160.ps3: ripemd.pod
+	( cp ${.ALLSRC} RIPEMD160.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  RIPEMD160.pm ) | nroff -Tps -man > ${.TARGET}
+.endif
 
 # sha.pod -> SHA1.pod
-# ...
-#
 SHA1.cat3: sha.pod
 	( cp ${.ALLSRC} SHA1.pm && pod2man --section=3 --official \
 	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  SHA1.pm ) | nroff -Tascii -man > ${.TARGET}
+.if MANPS
+SHA1.ps3: sha.pod
+	( cp ${.ALLSRC} SHA1.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  SHA1.pm ) | nroff -Tps -man > ${.TARGET}
+.endif
 
 # md5.pod -> MD5.pod
-# ...
-#
 MD5.cat3: md5.pod
 	( cp ${.ALLSRC} MD5.pm && pod2man --section=3 --official \
 	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  MD5.pm ) | nroff -Tascii -man > ${.TARGET}
+.if MANPS
+MD5.ps3: md5.pod
+	( cp ${.ALLSRC} MD5.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  MD5.pm ) | nroff -Tps -man > ${.TARGET}
+.endif
 
 # mdc2.pod -> MDC2.pod
-# ...
-#
 MDC2.cat3: mdc2.pod
 	( cp ${.ALLSRC} MDC2.pm && pod2man --section=3 --official \
 	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  MDC2.pm ) | nroff -Tascii -man > ${.TARGET}
+.if MANPS
+MDC2.ps3: mdc2.pod
+	( cp ${.ALLSRC} MDC2.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  MDC2.pm ) | nroff -Tps -man > ${.TARGET}
+.endif
 
 # hmac.pod -> HMAC.pod
-# ...
-#
 HMAC.cat3: hmac.pod
 	( cp ${.ALLSRC} HMAC.pm && pod2man --section=3 --official \
 	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  HMAC.pm ) | nroff -Tascii -man > ${.TARGET}
-
+.if MANPS
+HMAC.ps3: hmac.pod
+	( cp ${.ALLSRC} HMAC.pm && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  HMAC.pm ) | nroff -Tps -man > ${.TARGET}
+.endif
 
 MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	BN_CTX_start.3 BN_CTX_get.3 BN_CTX_start.3 BN_CTX_end.3 \
@@ -437,13 +475,26 @@ MANALL=
 	  `basename ${.ALLSRC}` ) | nroff -Tascii -man > ${.TARGET}
 
 
+.pod.ps3:
+	( cd `dirname ${.ALLSRC}` && pod2man --section=3 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  `basename ${.ALLSRC}` ) | nroff -Tps -man > ${.TARGET}
+.pod.ps7:
+	( cd `dirname ${.ALLSRC}` && pod2man --section=7 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  `basename ${.ALLSRC}` ) | nroff -Tps -man > ${.TARGET}
+.pod.ps1:
+	( cd `dirname ${.ALLSRC}` && pod2man --section=1 --official \
+	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
+	  `basename ${.ALLSRC}` ) | nroff -Tps -man > ${.TARGET}
+
 .if exists(src-patent)
 SSL_SRC=src-patent
 .else
 SSL_SRC=src
 .endif 	  
 
-all: 	prereq ${MANALL}
+all: 	prereq ${MANALL} ${PSALL}
 	cd ${.OBJDIR} && ${MAKE}
 
 includes: prereq
