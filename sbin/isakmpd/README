@@ -1,4 +1,4 @@
-$Id: README,v 1.1.1.1 1998/11/15 00:03:48 niklas Exp $
+$Id: README,v 1.2 1998/11/15 00:15:04 niklas Exp $
 
 This is isakmpd, a BSD-licensed ISAKMP/Oakley (a.k.a. IKE)
 implementation.  It's written by Niklas Hallqvist and Niels Provos,
@@ -9,7 +9,9 @@ released, thus I won't bother calling it any version numbers.  When you
 got the source, hopefully the archive was named with a date which
 reflects when it was created.  These archives are also known as snapshots
 and will be created at irregular intervals and put up on ftp.gsnig.net
-and ftp.appli.se in /pub/isakmpd.
+and ftp.appli.se in /pub/isakmpd.  From Nov 14, 1998 isakmpd is also
+available in the OpenBSD main source tree under src/sbin/isakmpd.  Look
+at http://www.openbsd.org/ for details on how to get OpenBSD source.
 
 Isakmpd is being developed under OpenBSD, with OpenBSD as its primary
 target, soon enough however, a Linux effort will be started.  Until
@@ -47,7 +49,10 @@ $ echo "c udp 127.0.0.1:5000 2 1" >/tmp/other.fifo
 and watch.  You can turn on debugging on that isakmpd too of course, for
 greater fun.  When the ISAKMP SA is setup you can try quick mode too:
 
-$ echo "c udp 127.0.0.1:5000 32 1" >/tmp/other.fifo
+$ echo "c isakmp <icookie+rcookie> 32 1" >/tmp/other.fifo
+
+The cookie string you can get by sending the "r" command to the FIFO and
+watching the log.
 
 You will by now have noticed that this implementation is incomplete, but
 who cares?  You are here because you want to read code, start porting work

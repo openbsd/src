@@ -1,4 +1,4 @@
-$Id: TO-DO,v 1.1.1.1 1998/11/15 00:03:48 niklas Exp $
+$Id: TO-DO,v 1.2 1998/11/15 00:15:04 niklas Exp $
 
 This file is pretty lame as it should really contain a lot more given that
 the program is far from ready in any area.
@@ -38,7 +38,7 @@ the program is far from ready in any area.
 
 * Setup the IPSEC situation field in the main mode. [done]
 
-* Kernel interface for IPSEC parameter passing.
+* Kernel interface for IPSEC parameter passing. [done]
 
 * Notify of unsupported situations.
 
