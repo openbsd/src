@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.27 1999/01/05 04:29:03 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.28 1999/05/03 22:33:31 mickey Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -60,9 +60,9 @@
 /* The native defaults... */
 #if defined(alpha) && !defined(DISKLABEL_ALPHA)
 #define DISKLABEL_ALPHA
-#elif (defined(i386) || defined(arc))) && !defined(DISKLABEL_I386)
+#elif (defined(i386) || defined(arc)) && !defined(DISKLABEL_I386)
 #define DISKLABEL_I386
-#elif defined(amiga)) && !defined(DISKLABEL_AMIGA)
+#elif defined(amiga) && !defined(DISKLABEL_AMIGA)
 #define DISKLABEL_AMIGA
 #endif
 
