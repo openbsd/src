@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.9 2003/07/09 10:54:38 markus Exp $
+.\"	$OpenBSD: event.3,v 1.10 2003/09/23 08:52:04 markus Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -278,11 +278,13 @@ adds
 .Va EV_PERSIST .
 .Pp
 It is possible to disable support for
-.Va kqueue
+.Xr kqueue 2 ,
+.Xr poll 2 ,
 or
-.Va select
+.Xr select 2
 by setting the environment variable
-.Va EVENT_NOKQUEUE
+.Va EVENT_NOKQUEUE ,
+.Va EVENT_NOPOLL ,
 or
 .Va EVENT_NOSELECT .
 By setting the environment variable
@@ -300,6 +302,7 @@ Otherwise, -1 is returned and the global variable errno is
 set to indicate the error.
 .Sh SEE ALSO
 .Xr kqueue 2 ,
+.Xr poll 2 ,
 .Xr select 2 ,
 .Xr timeout 9
 .Sh HISTORY
