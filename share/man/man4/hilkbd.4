@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hilkbd.4,v 1.3 2003/02/15 23:55:27 miod Exp $
+.\"	$OpenBSD: hilkbd.4,v 1.4 2003/03/16 10:18:44 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Miodrag Vallat.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 This driver supports HIL keyboards within the
 .Xr wscons 4
 framework.
-It doesn't prowide direct device driver entry points, but makes its
+It doesn't provide direct device driver entry points, but makes its
 functions available through the internal
 .Xr wskbd 4
 interface.
@@ -90,5 +90,5 @@ to the kernel configuration file.
 .Xr wskbd 4 ,
 .Xr wsconsctl 8
 .Sh BUGS
-The list of built-in mappings doesn't follow any logics.
+The list of built-in mappings doesn't follow any logic.
 It grew as people submitted what they needed.

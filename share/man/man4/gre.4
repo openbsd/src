@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.15 2003/03/06 04:03:40 david Exp $
+.\" $OpenBSD: gre.4,v 1.16 2003/03/16 10:18:44 jmc Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ the Mobile-IP (RFC 2004) encapsulation protocols.
 This driver currently supports the following modes of operation:
 .Bl -tag -width abc
 .It GRE encapsulation (IP protocol number 47).
-Encapsulated datagrams are prepended by a outer datagram and a GRE header.
+Encapsulated datagrams are prepended by an outer datagram and a GRE header.
 The GRE header specifies the type of the encapsulated datagram
 and thus allows for tunneling other protocols than IP like
 e.g. AppleTalk.
@@ -214,7 +214,9 @@ To avoid the address munging described above, turn on the link1 flag
 on the ifconfig command line.
 This implies that the GRE packet destination and the remote host are not
 the same IP addresses, and that the GRE destination does not route over
-the greX interface itself.
+the
+.Sy gre Ns Ar X
+interface itself.
 .Pp
 GRE RFC not yet fully implemented (no GRE options).
 .Pp

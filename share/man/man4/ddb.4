@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.31 2002/09/10 13:15:38 mpech Exp $
+.\"	$OpenBSD: ddb.4,v 1.32 2003/03/16 10:18:44 jmc Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -143,9 +143,9 @@ and waits for a response.
 The valid responses are:
 .Pp
 .Bl -tag -width 10n -offset indent -compact
-.It <space>
+.It Ic <space>
 One more page.
-.It <return>
+.It Ic <return>
 One more line.
 .It Ic q
 Abort the current command, and return to the command input mode.
@@ -155,16 +155,16 @@ The following command line editing keys are provided:
 .Pp
 .Bl -tag -width 10n -offset indent -compact
 .It Ic \&^b
-back up one character
+back one character
 .It Ic \&^f
-forward up one character
+forward one character
 .It Ic \&^a
 beginning of line
 .It Ic \&^e
 end of line
 .It Ic \&^w
 erase word back
-.It Ic \&^h No | <del>
+.It Ic \&^h | <del>
 erase previous character
 .It Ic \&^d
 erase next character
@@ -215,7 +215,7 @@ Display the contents at address
 according to the formats in the modifier.
 Multiple modifier formats display multiple locations.
 If no format is specified, the last formats specified for this command
-is used.
+are used.
 .Pp
 The format characters are:
 .Pp
@@ -282,7 +282,7 @@ except that the next address displayed by it is used as the start address.
 .\" --------------------
 .It Ic xb
 Examine backward.
-Executes an
+Execute an
 .Ic examine
 command with the last specified parameters to it
 except that the last start address subtracted by the size displayed by it
@@ -291,7 +291,7 @@ is used as the start address.
 .It Xo
 .Ic print
 .Op Cm /axzodurc
-.Op Ar addr Op addr ...
+.Op Ar addr Op Ar addr ...
 .Xc
 Print each
 .Ar addr
@@ -327,7 +327,7 @@ ecx = yyyyyy
 .Ic w Ns Oo Ic rite Oc
 .Op Cm /bhl
 .Op Ar addr
-.Ar expr Op expr ...
+.Ar expr Op Ar expr ...
 .Xc
 Write the value of each
 .Ar expr
@@ -409,7 +409,7 @@ When the
 modifier is specified,
 .Ar addr
 is taken as a user space address.
-Without it, the address is considered in the kernel space.
+Without it, the address is considered as a kernel space address.
 Wrong space addresses are rejected with an error message.
 The
 .Cm /u
@@ -505,13 +505,13 @@ with an error message.
 .Pp
 .Sy Warning:
 attempts to watch wired kernel memory
-may cause unrecoverable error on some systems (e.g., i386).
+may cause an unrecoverable error on some systems (e.g., i386).
 Watchpoints on user addresses work best.
 .\" --------------------
 .It Ic dwatch Ar addr
 Delete the watchpoint at address
 .Ar addr
-that was previously set with
+that was previously set with a
 .Ic watch
 command.
 .\" --------------------
@@ -519,11 +519,11 @@ command.
 .Ic hangman
 .Op Cm /s Ns Op Ic 0-9
 .Xc
-This is tiny and handy tool for random kernel hangs analysis, of which its
+This is a tiny and handy tool for random kernel hangs analysis, of which its
 depth is controlled by the optional argument of the default value of five.
 It uses some sophisticated heuristics to spot the global symbol that
 caused the hang.
-Since the discovering algorithm is a probabilistic one
+Since the discovering algorithm is a probabilistic one,
 you may spend substantial time to figure the exact symbol name.
 This smart thing requires a little of your attention, the input it accepts
 is mostly of the same format as that of the famous
@@ -542,7 +542,7 @@ Stop at the next
 or
 .Qq return
 instruction.
-If
+If the
 .Cm /p
 modifier is specified,
 .Nm
@@ -576,7 +576,7 @@ Show the stack trace.
 The
 .Cm /u
 modifier shows the stack trace of user space;
-If omitted, the kernel stack is traced instead.
+if omitted, the kernel stack is traced instead.
 The
 .Ar count
 argument is the limit on the number of frames to be followed.
@@ -769,7 +769,7 @@ Register names can be found with the
 .Ic show registers
 command.
 .Pp
-Some variables names are suffixed with numbers, and some may have a modifier
+Some variable names are suffixed with numbers, and some may have a modifier
 following a colon immediately after the variable name.
 For example, register variables can have the
 .Ql :u
@@ -780,14 +780,14 @@ user register (e.g.,
 Built-in debugger variables currently supported are:
 .Bl -tag -width 10n -compact -offset indent
 .It Va \&$radix
-Input and output radix
+Input and output radix.
 .It Va \&$maxoff
 Addresses are printed as
 .Ar symbol Ns Li + Ns Ar offset
 unless
 .Ar offset
 is greater than
-.Va \&$maxoff.
+.Va \&$maxoff .
 .It Va \&$maxwidth
 The width of the displayed lines.
 .It Va \&$lines
@@ -880,7 +880,7 @@ A binary operator which rounds up the left hand side to the next
 multiple of right hand side.
 .It Li \&* Ns Ar expr
 Indirection.
-It may be followed by a ':' and  modifiers as described above.
+It may be followed by a ':' and modifiers as described above.
 .El
 .Sh SEE ALSO
 .Xr gdb 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gdt.4,v 1.16 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: gdt.4,v 1.17 2003/03/16 10:18:44 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -94,7 +94,7 @@ Although the controllers are actual RAID controllers the driver makes them
 look just like SCSI controllers.
 All RAID configuration is done through the controllers' BIOSes.
 .Sh DIAGNOSTICS
-.Bl -tag
+.Bl -diag
 .It "pci_mem_find: expected mem type 00000000, found 00000002"
 This message occurs during autoconfiguration if jumper J4 is set to map
 the controller memory below 1MB in physical memory.
