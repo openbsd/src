@@ -1,7 +1,7 @@
-/*	$OpenBSD: pch.c,v 1.22 2003/07/22 17:20:53 millert Exp $	*/
+/*	$OpenBSD: pch.c,v 1.23 2003/07/22 17:52:20 deraadt Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pch.c,v 1.22 2003/07/22 17:20:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pch.c,v 1.23 2003/07/22 17:52:20 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,7 +47,7 @@ static void	grow_hunkmax(void);
 static int	intuit_diff_type(void);
 static void	next_intuit_at(long, long);
 static void	skip_to(long, long);
-static char 	*pgets(char *, int, FILE *);
+static char	*pgets(char *, int, FILE *);
 
 /*
  * Prepare to look for the next patch in the patch file.
@@ -679,7 +679,7 @@ another_hunk(void)
 				break;
 			case ' ':
 				if (!isspace(buf[1]) &&
-				  repl_beginning && repl_could_be_missing) {
+				    repl_beginning && repl_could_be_missing) {
 					repl_missing = TRUE;
 					goto hunk_done;
 				}

@@ -1,8 +1,8 @@
-/*	$OpenBSD: util.c,v 1.16 2003/07/22 17:18:49 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.17 2003/07/22 17:52:20 deraadt Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: util.c,v 1.16 2003/07/22 17:18:49 otto Exp $";
-#endif				/* not lint */
+static const char     rcsid[] = "$OpenBSD: util.c,v 1.17 2003/07/22 17:52:20 deraadt Exp $";
+#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
