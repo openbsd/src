@@ -136,13 +136,15 @@ fd)
 ser02)
 	rm -f ser02
 	mknod ser02 c 7 0
-	chown uucp.wheel ser02
+	chown uucp.dialer ser02
+	chmod 660 ser02
 	;;
 
 mdm02)
 	rm -f mdm02
 	mknod mdm02 c 7 16
-	chown uucp.wheel mdm02
+	chown uucp.dialer mdm02
+	chmod 660 mdm02
 	;;
 
 st*)

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.42 1999/07/30 18:49:35 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.43 1999/08/20 17:00:33 downsj Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -406,7 +406,8 @@ tty0*|ttyA*)
 			rm -f tty0${unit} cua0${unit}
 			mknod tty0${unit} c 12 0
 			mknod cua0${unit} c 12 128
-			chown uucp.wheel tty0${unit} cua0${unit}
+			chown uucp.dialer tty0${unit} cua0${unit}
+			chmod 660 tty0${unit} cua0${unit}
 			;;
 		*)
 			echo bad unit for tty0 in: $i
@@ -418,7 +419,8 @@ tty0*|ttyA*)
 			rm -f ttyA${unit} ttyM${unit}
 			mknod ttyA${unit} c 17 $unit
 			mknod ttyM${unit} c 17 `expr 128 + $unit`
-			chown uucp.wheel ttyA${unit} ttyM${unit}
+			chown uucp.dialer ttyA${unit} ttyM${unit}
+			chmod 660 ttyA${unit} ttyM${unit}
 			;;
 		*)
 			echo bad unit for ttyA in: $i
@@ -568,7 +570,8 @@ ttyB*)
 	rm -f ttyB$unit cuaB$unit
 	mknod ttyB$unit c 32 $unit
 	mknod cuaB$unit c 32 `expr $unit + 128`
-	chown uucp.wheel ttyB$unit cuaB$unit
+	chown uucp.dialer ttyB$unit cuaB$unit
+	chmod 660 ttyB$unit cuaB$unit
 	;;
 
 lpt*|lpa*)

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.58 1999/07/18 17:07:48 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.59 1999/08/20 17:00:37 downsj Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -557,7 +557,8 @@ tty[a-z])
 	*) echo unknown tty device $i ;;
 	esac
 	mknod tty$unit c 12 $n
-	chown uucp.wheel tty$unit
+	chown uucp.dialer tty$unit
+	chmod 660 tty$unit
 	;;
 
 cua[a-z])
@@ -571,7 +572,8 @@ cua[a-z])
 	*) echo unknown cua device $i ;;
 	esac
 	mknod cua$unit c 12 `add $n 128`
-	chown uucp.wheel cua$unit
+	chown uucp.dialer cua$unit
+	chmod 660 cua$unit
 	;;
 
 pty*)
@@ -625,7 +627,8 @@ spif*)
 	do
 		name=$nam`hex $n`
 		mknod tty$name c 102 `add $offset $n`
-		chown uucp.wheel tty$name
+		chown uucp.dialer tty$name
+		chmod 660 tty$name
 		n=`add $n 1`
 	done
 	mknod bpps${unit}0 c 103 `add $offset 0`
@@ -645,7 +648,8 @@ magma*)
 	do
 		name=$nam`hex $n`
 		mknod tty$name c 100 `add $offset $n`
-		chown uucp.wheel tty$name
+		chown uucp.dialer tty$name
+		chmod 660 tty$name
 		n=`add $n 1`
 	done
 	mknod bppm${unit}0 c 101 `add $offset 0`

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.30 1998/11/25 04:58:54 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.31 1999/08/20 17:00:37 downsj Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -314,6 +314,8 @@ dc*)
 	0)
 		mknod tty00 c 16 2
 		mknod tty01 c 16 3
+		chown uucp.dialer tty00 tty01
+		chmod 660 tty00 tty01
 		;;
 	*)
 		echo bad unit for dc in: $i
@@ -327,6 +329,8 @@ scc*)
 	0)
 		mknod tty00 c 17 0
 		mknod tty01 c 17 2
+		chown uucp.dialer tty00 tty01
+		chmod 660 tty00 tty01
 		;;
 	*)
 		echo bad unit for scc in: $i

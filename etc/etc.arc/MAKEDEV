@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.31 1999/07/30 18:49:36 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.32 1999/08/20 17:00:34 downsj Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -398,7 +398,8 @@ tty*)
 	rm -f tty$unit cua$unit
 	mknod tty$unit c 17 $unit
 	mknod cua$unit c 17 `expr $unit + 128`
-	chown uucp.wheel tty$unit cua$unit
+	chown uucp.dialer tty$unit cua$unit
+	chmod 660 tty$unit cua$unit
 	;;
 
 pty*)

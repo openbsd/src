@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.29 1999/05/01 06:28:47 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.30 1999/08/20 17:00:36 downsj Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -255,7 +255,8 @@ tty0*)
 	case ${unit} in
 	0|1)
 		mknod tty0${unit} c 12 ${unit}
-		chown uucp.wheel tty0${unit}
+		chown uucp.dialer tty0${unit}
+		chmod 660 tty0${unit}
 		;;
 	*)
 		echo bad unit for serial tty in: $i

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.29 1998/11/19 08:18:56 dugsong Exp $
+#	$OpenBSD: MAKEDEV,v 1.30 1999/08/20 17:00:35 downsj Exp $
 #	$NetBSD: MAKEDEV,v 1.12 1995/11/05 23:50:22 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -320,6 +320,8 @@ dca*)
 		rm -f tty${unit} cua${unit}
 		mknod tty${unit} c 12 ${unit}
 		mknod cua${unit} c 12 `expr ${unit} + 128`
+		chown uucp.dialer tty${unit} cua${unit}
+		chmod 660 tty${unit} cua${unit}
 		;;
 	*)
 		echo bad unit for dca in: $i
@@ -341,6 +343,8 @@ dcm*)
 			rm -f {tty0,cua0}${ext}
 			mknod tty0${ext} c 15 ${n}
 			mknod cua0${ext} c 15 "$(( $n + 128 ))"
+			chown uucp.dialer tty0${ext} cua0${ext}
+			chmod 660 tty0${ext} cua0${ext}
 
 			i="$(( $i + 1 ))"
 		done
@@ -360,6 +364,8 @@ apci*)
 			rm -f ttya${i} cuaa${i}
 			mknod ttya${i} c 35 ${i}
 			mknod cuaa${i} c 35 `expr ${i} + 128`
+			chown uucp.dialer ttya${i} cuaa${i}
+			chmod 660 ttya${i} cuaa${i}
 		done
 		;;
 	*)

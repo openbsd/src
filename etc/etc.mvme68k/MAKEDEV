@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.27 1998/11/25 04:58:54 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.28 1999/08/20 17:00:36 downsj Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$OpenBSD: MAKEDEV,v 1.27 1998/11/25 04:58:54 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.28 1999/08/20 17:00:36 downsj Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -306,7 +306,8 @@ ttyw*|tty0*|ttya|ttyb|ttyc|ttyd)
 			rm -f tty0${unit} cua0${unit}
 			mknod tty0${unit} c 13 ${unit}
 			mknod cua0${unit} c 13 `expr 128 + ${unit}`
-			chown uucp.wheel tty0${unit} cua0${unit}
+			chown uucp.dialer tty0${unit} cua0${unit}
+			chmod 660 tty0${unit} cua0${unit}
 			;;
 		*)
 			echo bad unit for tty0 in: $i
@@ -320,7 +321,8 @@ ttyw*|tty0*|ttya|ttyb|ttyc|ttyd)
 			rm -f ttyw${unit} cuaw${unit}
 			mknod ttyw${unit} c 30 ${unit}
 			mknod cuaw${unit} c 30 `expr 128 + ${unit}`
-			chown uucp.wheel ttyw${unit} cuaw${unit}
+			chown uucp.dialer ttyw${unit} cuaw${unit}
+			chmod 660 ttyw${unit} cuaw${unit}
 			;;
 		*)
 			echo bad unit for ttyw in: $i
@@ -333,7 +335,8 @@ ttyw*|tty0*|ttya|ttyb|ttyc|ttyd)
 		rm -f tty${unit} cua${unit}
 		mknod tty${unit} c 12 ${num}
 		mknod cua${unit} c 12 `expr 128 + ${num}`
-		chown uucp.wheel tty${unit} cua${unit}
+		chown uucp.dialer tty${unit} cua${unit}
+		chmod 660 tty${unit} cua${unit}
 		;;
 	*)
 		echo bad type for tty in: $i

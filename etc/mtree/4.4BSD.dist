@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.78 1999/08/02 19:50:09 jakob Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.79 1999/08/20 17:00:38 downsj Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1790,7 +1790,7 @@ hidden           mode=0111
 ..
 
 # ./var/spool/lock
-lock		uname=uucp gname=daemon
+lock		uname=uucp gname=dialer mode=1775
 # ./var/spool/lock
 ..
 

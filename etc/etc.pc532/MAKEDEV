@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.16 1998/11/25 04:58:54 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.17 1999/08/20 17:00:36 downsj Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -176,7 +176,8 @@ vnd*)
 tty*)
 	unit=`expr $i : '...\(.*\)'`
 	mknod tty0$unit c 8 $unit
-	chown uucp.wheel tty0$unit
+	chown uucp.dialer tty0$unit
+	chmod 660 tty0$unit
 	;;
 
 pty*)

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.26 1998/11/25 04:58:55 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.27 1999/08/20 17:00:37 downsj Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -290,7 +290,8 @@ ttyo*)
 	case ${unit} in
 	0|1)
 		mknod ttyo${unit} c 14 ${unit}
-		chown uucp.wheel ttyo${unit}
+		chown uucp.dialer ttyo${unit}
+		chmod 660 ttyo${unit}
 		;;
 	*)
 		echo bad unit for serial tty in: $i
@@ -302,7 +303,8 @@ tty0*)
 	rm -f tty0$unit cua0$unit
 	mknod tty0$unit c 7 $unit
 	mknod cua0$unit c 7 `expr $unit + 128`
-	chown uucp.wheel tty0$unit cua0$unit
+	chown uucp.dialer tty0$unit cua0$unit
+	chmod 660 tty0$unit cua0$unit
 	;;
 
 pty*)

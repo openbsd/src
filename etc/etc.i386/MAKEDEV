@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.72 1999/08/13 05:39:24 fgsch Exp $
+#	$OpenBSD: MAKEDEV,v 1.73 1999/08/20 17:00:36 downsj Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -217,7 +217,8 @@ ttyc*)
 	rm -f ttyc$unit cuac$unit
 	mknod ttyc$unit c 38 $unit
 	mknod cuac$unit c 38 `expr $unit + 128`
-	chown uucp.wheel ttyc$unit cuac$unit
+	chown uucp.dialer ttyc$unit cuac$unit
+	chmod 660 ttyc$unit cuac$unit
         ;;
 
 fd)
@@ -419,7 +420,8 @@ tty0*)
 	rm -f com0$unit tty0$unit cua0$unit
 	mknod tty0$unit c 8 $unit
 	mknod cua0$unit c 8 `expr $unit + 128`
-	chown uucp.wheel tty0$unit cua0$unit
+	chown uucp.dialer tty0$unit cua0$unit
+	chmod 660 tty0$unit cua0$unit
 	;;
 
 pty*)
