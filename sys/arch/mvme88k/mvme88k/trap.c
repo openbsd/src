@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.14 2001/03/09 05:44:42 smurph Exp $	*/
+/*	$OpenBSD: trap.c,v 1.15 2001/03/12 23:00:40 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -129,11 +129,6 @@ char  *pbus_exception_type[] = {
 	"Supervisor Violation",
 	"Write Violation",
 };
-
-#define NSIR	8
-void (*sir_routines[NSIR])();
-void *sir_args[NSIR];
-u_char next_sir;
 
 int   trap_types = sizeof trap_type / sizeof trap_type[0];
 
@@ -298,7 +293,7 @@ trap(unsigned type, struct m88100_saved_state *frame)
 		return;
 
 	case T_MISALGNFLT:
-		DEBUG_MSG("kernel misalgined "
+		DEBUG_MSG("kernel misaligned "
 			  "access exception @ 0x%08x\n", frame->sxip);
 		panictrap(frame->vector, frame);
 		break;
@@ -909,7 +904,7 @@ trap2(unsigned type, struct m88100_saved_state *frame)
 		break;
 
 	case T_MISALGNFLT:
-		DEBUG_MSG("kernel misalgined "
+		DEBUG_MSG("kernel misaligned "
 			  "access exception @ 0x%08x\n", frame->sxip);
 		panictrap(frame->vector, frame);
 		break;
@@ -1238,7 +1233,6 @@ trap2(unsigned type, struct m88100_saved_state *frame)
 	}
 	userret(p, frame, sticks);
 }
-#endif /* MVME197 */
 
 void
 test_trap2(int num, int m197)
@@ -1246,6 +1240,7 @@ test_trap2(int num, int m197)
 	DEBUG_MSG("\n[test_trap (Good News[tm]) m197 = %d, vec = %d]\n", m197, num);
 	bugreturn();
 }
+#endif /* MVME197 */
 
 void
 test_trap(struct m88100_saved_state *frame)
@@ -1449,6 +1444,7 @@ syscall(register_t code, struct m88100_saved_state *tf)
 #endif
 }
 
+#ifdef MVME197
 /* Instruction pointers opperate differently on mc88110 */
 void
 m197_syscall(register_t code, struct m88100_saved_state *tf)
@@ -1605,6 +1601,7 @@ m197_syscall(register_t code, struct m88100_saved_state *tf)
 		ktrsysret(p, code, error, rval[0]);
 #endif
 }
+#endif	/* MVME197 */
 
 /*
  * Set up return-value registers as fork() libc stub expects,
@@ -1632,34 +1629,6 @@ child_return(struct proc *p)
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, SYS_fork, 0, 0);
 #endif
-}
-
-/*
- * Allocation routines for software interrupts.
- */
-u_long
-allocate_sir(proc, arg)
-	void (*proc)();
-	void *arg;
-{
-	int bit;
-
-	if (next_sir >= NSIR)
-		panic("allocate_sir: none left");
-	bit = next_sir++;
-	sir_routines[bit] = proc;
-	sir_args[bit] = arg;
-	return (1 << bit);
-}
-
-void
-init_sir()
-{
-	extern void netintr();
-
-	sir_routines[0] = netintr;
-	sir_routines[1] = softclock;
-	next_sir = 2;
 }
 
 /************************************\
