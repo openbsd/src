@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.3 2003/12/23 16:07:37 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.4 2003/12/23 16:17:15 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -68,7 +68,7 @@ kroute_msg(int fd, int action, struct kroute *kroute)
 	r.hdr.rtm_msglen = sizeof(r);
 	r.hdr.rtm_version = RTM_VERSION;
 	r.hdr.rtm_type = action;
-	r.hdr.rtm_flags = RTF_GATEWAY|RTF_MASK; /* XXX */
+	r.hdr.rtm_flags = RTF_GATEWAY; /* XXX */
 	r.hdr.rtm_seq = rtseq++;	/* overflow doesn't matter */
 	r.hdr.rtm_addrs = RTA_DST|RTA_GATEWAY|RTA_NETMASK;
 	r.prefix.sin_len = sizeof(r.prefix);
