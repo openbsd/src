@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.99 2002/05/13 22:28:56 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.100 2002/05/15 15:15:41 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -110,8 +110,9 @@ struct ubsec_softc *ubsec_kfind(struct cryptkop *);
 int	ubsec_kprocess_modexp(struct ubsec_softc *, struct cryptkop *);
 int	ubsec_kprocess_rsapriv(struct ubsec_softc *, struct cryptkop *);
 void	ubsec_kfree(struct ubsec_softc *, struct ubsec_q2 *);
-int	ubsec_kcopyin(struct crparam *, caddr_t, u_int, u_int *);
-int	ubsec_norm_sigbits(const u_int8_t *, u_int);
+int	ubsec_ksigbits(struct crparam *);
+void	ubsec_kshift_r(u_int, u_int8_t *, u_int, u_int8_t *, u_int);
+void	ubsec_kshift_l(u_int, u_int8_t *, u_int, u_int8_t *, u_int);
 
 /* DEBUG crap... */
 void ubsec_dump_pb(struct ubsec_pktbuf *);
@@ -387,7 +388,8 @@ ubsec_intr(arg)
 	/*
 	 * Check to see if we have any key setups/rng's waiting for us
 	 */
-	if ((sc->sc_flags & UBS_FLAGS_KEY) && (stat & BS_STAT_MCR2_DONE)) {
+	if ((sc->sc_flags & (UBS_FLAGS_KEY|UBS_FLAGS_RNG)) &&
+	    (stat & BS_STAT_MCR2_DONE)) {
 		struct ubsec_q2 *q2;
 		struct ubsec_mcr *mcr;
 
@@ -1403,14 +1405,11 @@ ubsec_callback2(sc, q)
 
 		if (clen < rlen)
 			krp->krp_status = E2BIG;
-		else {
-			caddr_t dst;
-
-			krp->krp_status = 0;
-			dst = krp->krp_param[UBS_MODEXP_PAR_C].crp_p;
-			bcopy(me->me_C.dma_vaddr, dst, rlen);
-			bzero(dst + rlen, clen - rlen);
-		}
+		else
+			ubsec_kshift_l(me->me_shiftbits,
+			    me->me_C.dma_vaddr, me->me_modbits,
+			    krp->krp_param[UBS_MODEXP_PAR_C].crp_p,
+			    krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits);
 
 		crypto_kdone(krp);
 
@@ -1812,44 +1811,51 @@ ubsec_kprocess_modexp(sc, krp)
 	struct ubsec_softc *sc;
 	struct cryptkop *krp;
 {
-	struct ubsec_q2_modexp *me = NULL;
+	struct ubsec_q2_modexp *me;
 	struct ubsec_mcr *mcr;
 	struct ubsec_ctx_modexp *ctx;
 	struct ubsec_pktbuf *epb;
 	int err = 0, s;
-	u_int len;
-	u_int modbits;
+	u_int nbits, normbits, mbits, shiftbits, ebits;
 
-	modbits = krp->krp_param[UBS_MODEXP_PAR_N].crp_nbits;
-	if (modbits <= 512)
-		modbits = 512;
-	else if (modbits <= 768)
-		modbits = 768;
-	else if (modbits <= 1024)
-		modbits = 1024;
-	else if (sc->sc_flags & UBS_FLAGS_LONGCTX && modbits <= 1536)
-		modbits = 1536;
-	else if (sc->sc_flags & UBS_FLAGS_LONGCTX && modbits <= 2048)
-		modbits = 2048;
+	me = (struct ubsec_q2_modexp *)malloc(sizeof *me, M_DEVBUF, M_NOWAIT);
+	if (me == NULL) {
+		err = ENOMEM;
+		goto errout;
+	}
+	bzero(me, sizeof *me);
+	me->me_krp = krp;
+	me->me_q.q_type = UBS_CTXOP_MODEXP;
+
+	nbits = ubsec_ksigbits(&krp->krp_param[UBS_MODEXP_PAR_N]);
+	if (nbits <= 512)
+		normbits = 512;
+	else if (nbits <= 768)
+		normbits = 768;
+	else if (nbits <= 1024)
+		normbits = 1024;
+	else if (sc->sc_flags & UBS_FLAGS_BIGKEY && nbits <= 1536)
+		normbits = 1536;
+	else if (sc->sc_flags & UBS_FLAGS_BIGKEY && nbits <= 2048)
+		normbits = 2048;
 	else {
 		err = E2BIG;
 		goto errout;
 	}
 
+	if (sc->sc_flags & UBS_FLAGS_HWNORM)
+		shiftbits = 0;
+	else
+		shiftbits = normbits - nbits;
+
+	me->me_modbits = normbits;
+	me->me_shiftbits = shiftbits;
+
 	/* Sanity check: result bits must be >= true modulus bits. */
-	if (krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits <
-	    krp->krp_param[UBS_MODEXP_PAR_N].crp_nbits) {
+	if (krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits < nbits) {
 		err = ERANGE;
 		goto errout;
 	}
-
-	me = (struct ubsec_q2_modexp *)malloc(sizeof *me, M_DEVBUF, M_NOWAIT);
-	if (me == NULL)
-		return (ENOMEM);
-	bzero(me, sizeof *me);
-	me->me_krp = krp;
-	me->me_q.q_type = UBS_CTXOP_MODEXP;
-	me->me_modbits = modbits;
 
 	if (ubsec_dma_malloc(sc, sizeof(struct ubsec_mcr),
 	    &me->me_q.q_mcr, 0)) {
@@ -1864,17 +1870,25 @@ ubsec_kprocess_modexp(sc, krp)
 		goto errout;
 	}
 
-	if (ubsec_dma_malloc(sc, 2048 / 8, &me->me_M, 0)) {
+	mbits = ubsec_ksigbits(&krp->krp_param[UBS_MODEXP_PAR_M]);
+	if (mbits > nbits) {
+		err = E2BIG;
+		goto errout;
+	}
+	if (ubsec_dma_malloc(sc, normbits / 8, &me->me_M, 0)) {
 		err = ENOMEM;
 		goto errout;
 	}
+	ubsec_kshift_r(shiftbits,
+	    krp->krp_param[UBS_MODEXP_PAR_M].crp_p, mbits,
+	    me->me_M.dma_vaddr, normbits);
 
 	if (ubsec_dma_malloc(sc, 2048 / 8, &me->me_E, 0)) {
 		err = ENOMEM;
 		goto errout;
 	}
 
-	if (ubsec_dma_malloc(sc, modbits / 8, &me->me_C, 0)) {
+	if (ubsec_dma_malloc(sc, normbits / 8, &me->me_C, 0)) {
 		err = ENOMEM;
 		goto errout;
 	}
@@ -1887,15 +1901,17 @@ ubsec_kprocess_modexp(sc, krp)
 	}
 	epb = (struct ubsec_pktbuf *)me->me_epb.dma_vaddr;
 
-	len = (krp->krp_param[UBS_MODEXP_PAR_E].crp_nbits + 7) / 8;
-	if (len > me->me_E.dma_size) {
-		err = EOPNOTSUPP;
+	ebits = ubsec_ksigbits(&krp->krp_param[UBS_MODEXP_PAR_E]);
+	if (ebits > nbits) {
+		err = E2BIG;
 		goto errout;
 	}
-	bcopy(krp->krp_param[UBS_MODEXP_PAR_E].crp_p, me->me_E.dma_vaddr, len);
+	bcopy(krp->krp_param[UBS_MODEXP_PAR_E].crp_p,
+	    me->me_E.dma_vaddr, (ebits + 7) / 8);
 	epb->pb_addr = htole32(me->me_E.dma_paddr);
 	epb->pb_next = 0;
-	epb->pb_len = htole32(len);
+	epb->pb_len = htole32((ebits + 7) / 8);
+
 #ifdef UBSEC_DEBUG
 	printf("Epb ");
 	ubsec_dump_pb(epb);
@@ -1907,18 +1923,13 @@ ubsec_kprocess_modexp(sc, krp)
 	mcr->mcr_reserved = 0;
 	mcr->mcr_pktlen = 0;
 
-	if (ubsec_kcopyin(&krp->krp_param[UBS_MODEXP_PAR_M], me->me_M.dma_vaddr,
-	    1024 / 8, &len)) {
-		err = EOPNOTSUPP;
-		goto errout;
-	}
 	mcr->mcr_ipktbuf.pb_addr = htole32(me->me_M.dma_paddr);
-	mcr->mcr_ipktbuf.pb_len = htole32(len);
+	mcr->mcr_ipktbuf.pb_len = htole32(normbits / 8);
 	mcr->mcr_ipktbuf.pb_next = htole32(me->me_epb.dma_paddr);
 
 	mcr->mcr_opktbuf.pb_addr = htole32(me->me_C.dma_paddr);
 	mcr->mcr_opktbuf.pb_next = 0;
-	mcr->mcr_opktbuf.pb_len = htole32(modbits / 8);
+	mcr->mcr_opktbuf.pb_len = htole32(normbits / 8);
 
 #ifdef DIAGNOSTIC
 	/* Misaligned output buffer will hang the chip. */
@@ -1932,19 +1943,13 @@ ubsec_kprocess_modexp(sc, krp)
 
 	ctx = (struct ubsec_ctx_modexp *)me->me_q.q_ctx.dma_vaddr;
 	bzero(ctx, sizeof(*ctx));
-	if (ubsec_kcopyin(&krp->krp_param[UBS_MODEXP_PAR_N], ctx->me_N,
-	    1024 / 8, &len)) {
-		err = EOPNOTSUPP;
-		goto errout;
-	}
-	len = ((krp->krp_param[UBS_MODEXP_PAR_N].crp_nbits + 31) / 32) * 32;
-	if (len < 512)
-		len = 512;
-	ctx->me_len = htole16((len / 8) + (4 * sizeof(u_int16_t)));
+	ubsec_kshift_r(shiftbits,
+	    krp->krp_param[UBS_MODEXP_PAR_N].crp_p, nbits,
+	    ctx->me_N, normbits);
+	ctx->me_len = htole16((normbits / 8) + (4 * sizeof(u_int16_t)));
 	ctx->me_op = htole16(UBS_CTXOP_MODEXP);
-	ctx->me_E_len =
-	    htole16(((krp->krp_param[UBS_MODEXP_PAR_E].crp_nbits + 7) / 8) * 8);
-	ctx->me_N_len = htole16(len);
+	ctx->me_E_len = htole16(ebits);
+	ctx->me_N_len = htole16(normbits - shiftbits);
 
 #ifdef UBSEC_DEBUG
 	ubsec_dump_mcr(mcr);
@@ -2012,10 +2017,8 @@ ubsec_kprocess_rsapriv(sc, krp)
 	int err = 0, s;
 	u_int padlen, msglen;
 
-	msglen = ubsec_norm_sigbits(krp->krp_param[UBS_RSAPRIV_PAR_P].crp_p,
-	    krp->krp_param[UBS_RSAPRIV_PAR_P].crp_nbits);
-	padlen = ubsec_norm_sigbits(krp->krp_param[UBS_RSAPRIV_PAR_Q].crp_p,
-	    krp->krp_param[UBS_RSAPRIV_PAR_Q].crp_nbits);
+	msglen = ubsec_ksigbits(&krp->krp_param[UBS_RSAPRIV_PAR_P]);
+	padlen = ubsec_ksigbits(&krp->krp_param[UBS_RSAPRIV_PAR_Q]);
 	if (msglen > padlen)
 		padlen = msglen;
 
@@ -2025,9 +2028,9 @@ ubsec_kprocess_rsapriv(sc, krp)
 		padlen = 384;
 	else if (padlen <= 512)
 		padlen = 512;
-	else if (sc->sc_flags & UBS_FLAGS_LONGCTX && padlen <= 768)
+	else if (sc->sc_flags & UBS_FLAGS_BIGKEY && padlen <= 768)
 		padlen = 768;
-	else if (sc->sc_flags & UBS_FLAGS_LONGCTX && padlen <= 1024)
+	else if (sc->sc_flags & UBS_FLAGS_BIGKEY && padlen <= 1024)
 		padlen = 1024;
 	else {
 		err = E2BIG;
@@ -2035,22 +2038,19 @@ ubsec_kprocess_rsapriv(sc, krp)
 		goto errout;
 	}
 
-	if (ubsec_norm_sigbits(krp->krp_param[UBS_RSAPRIV_PAR_DP].crp_p,
-	    krp->krp_param[UBS_RSAPRIV_PAR_DP].crp_nbits) > padlen) {
+	if (ubsec_ksigbits(&krp->krp_param[UBS_RSAPRIV_PAR_DP]) > padlen) {
 		err = E2BIG;
 		printf("bad p\n");
 		goto errout;
 	}
 
-	if (ubsec_norm_sigbits(krp->krp_param[UBS_RSAPRIV_PAR_DQ].crp_p,
-	    krp->krp_param[UBS_RSAPRIV_PAR_DQ].crp_nbits) > padlen) {
+	if (ubsec_ksigbits(&krp->krp_param[UBS_RSAPRIV_PAR_DQ]) > padlen) {
 		err = E2BIG;
 		printf("bad q\n");
 		goto errout;
 	}
 
-	if (ubsec_norm_sigbits(krp->krp_param[UBS_RSAPRIV_PAR_PINV].crp_p,
-	    krp->krp_param[UBS_RSAPRIV_PAR_PINV].crp_nbits) > padlen) {
+	if (ubsec_ksigbits(&krp->krp_param[UBS_RSAPRIV_PAR_PINV]) > padlen) {
 		err = E2BIG;
 		printf("bad pinv\n");
 		goto errout;
@@ -2106,8 +2106,7 @@ ubsec_kprocess_rsapriv(sc, krp)
 	msglen = padlen * 2;
 
 	/* Copy in input message (aligned buffer/length). */
-	if (ubsec_norm_sigbits(krp->krp_param[UBS_RSAPRIV_PAR_MSGIN].crp_p,
-	    krp->krp_param[UBS_RSAPRIV_PAR_MSGIN].crp_nbits) > msglen) {
+	if (ubsec_ksigbits(&krp->krp_param[UBS_RSAPRIV_PAR_MSGIN]) > msglen) {
 		/* Is this likely? */
 		printf("msginbuf...\n");
 		err = E2BIG;
@@ -2123,8 +2122,7 @@ ubsec_kprocess_rsapriv(sc, krp)
 	    (krp->krp_param[UBS_RSAPRIV_PAR_MSGIN].crp_nbits + 7) / 8);
 
 	/* Prepare space for output message (aligned buffer/length). */
-	if (ubsec_norm_sigbits(krp->krp_param[UBS_RSAPRIV_PAR_MSGOUT].crp_p,
-	    krp->krp_param[UBS_RSAPRIV_PAR_MSGOUT].crp_nbits) < msglen) {
+	if (ubsec_ksigbits(&krp->krp_param[UBS_RSAPRIV_PAR_MSGOUT]) < msglen) {
 		printf("msgoutbuf\n");
 		/* Is this likely? */
 		err = E2BIG;
@@ -2201,34 +2199,6 @@ errout:
 	return (0);
 }
 
-/*
- * Copy a key into a ubsec dma buffer, round up to multiple of 32 bits.
- */
-int
-ubsec_kcopyin(crpar, buf, bufsiz, reslen)
-	struct crparam *crpar;
-	caddr_t buf;
-	u_int bufsiz, *reslen;
-{
-	u_int nbytes, npad;
-
-	nbytes = (crpar->crp_nbits + 7) / 8;
-	if ((nbytes & 3) != 0)
-		npad = 4 - (nbytes & 3);
-	else
-		npad = 0;
-
-	if ((bufsiz & 3) != 0)
-		panic("ubsec_kcopyin: bad len");
-	if ((nbytes + npad) > bufsiz)
-		return (-1);
-
-	bcopy(crpar->crp_p, buf, nbytes);
-	bzero(buf + nbytes, npad);
-	*reslen = nbytes + npad;
-	return (0);
-}
-
 void
 ubsec_dump_pb(struct ubsec_pktbuf *pb)
 {
@@ -2290,13 +2260,12 @@ ubsec_dump_mcr(struct ubsec_mcr *mcr)
  * Return the number of significant bits of a big number.
  */
 int
-ubsec_norm_sigbits(p, pbits)
-	const u_int8_t *p;
-	u_int pbits;
+ubsec_ksigbits(cr)
+	struct crparam *cr;
 {
-	u_int plen = (pbits + 7) / 8;
+	u_int plen = (cr->crp_nbits + 7) / 8;
 	int i, sig = plen * 8;
-	u_int8_t c;
+	u_int8_t c, *p = cr->crp_p;
 
 	for (i = plen - 1; i >= 0; i--) {
 		c = p[i];
@@ -2312,3 +2281,61 @@ ubsec_norm_sigbits(p, pbits)
 	return (sig);
 }
 
+void
+ubsec_kshift_r(shiftbits, src, srcbits, dst, dstbits)
+	u_int shiftbits, srcbits, dstbits;
+	u_int8_t *src, *dst;
+{
+	u_int slen, dlen;
+	int i, si, di, n;
+
+	slen = (srcbits + 7) / 8;
+	dlen = (dstbits + 7) / 8;
+
+	for (i = 0; i < slen; i++)
+		dst[i] = src[i];
+	for (i = 0; i < dlen - slen; i++)
+		dst[slen + i] = 0;
+
+	n = shiftbits / 8;
+	if (n != 0) {
+		si = dlen - n - 1;
+		di = dlen - 1;
+		while (si >= 0)
+			dst[di--] = dst[si--];
+		while (di >= 0)
+			dst[di--] = 0;
+	}
+
+	n = shiftbits % 8;
+	if (n != 0) {
+		for (i = dlen - 1; i > 0; i--)
+			dst[i] = (dst[i] << n) |
+			    (dst[i - 1] >> (8 - n));
+		dst[0] = dst[0] << n;
+	}
+}
+
+void
+ubsec_kshift_l(shiftbits, src, srcbits, dst, dstbits)
+	u_int shiftbits, srcbits, dstbits;
+	u_int8_t *src, *dst;
+{
+	int slen, dlen, i, n;
+
+	slen = (srcbits + 7) / 8;
+	dlen = (dstbits + 7) / 8;
+
+	n = shiftbits / 8;
+	for (i = 0; i < slen; i++)
+		dst[i] = src[i + n];
+	for (i = 0; i < dlen - slen; i++)
+		dst[slen + i] = 0;
+
+	n = shiftbits % 8;
+	if (n != 0) {
+		for (i = 0; i < (dlen - 1); i++)
+			dst[i] = (dst[i] >> n) | (dst[i + 1] << (8 - n));
+		dst[dlen - 1] = dst[dlen - 1] >> n;
+	}
+}
