@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.90 2002/05/16 21:11:14 miod Exp $	*/
+/*	$OpenBSD: conf.c,v 1.91 2002/06/09 22:03:43 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -142,6 +142,7 @@ cdev_decl(mm);
 cdev_decl(wd);
 cdev_decl(crypto);
 #include "systrace.h"
+#include "bio.h"
 #include "pty.h"
 #include "com.h"
 #include "pccom.h"
@@ -339,6 +340,7 @@ struct cdevsw	cdevsw[] =
 	cdev_radio_init(NRADIO, radio), /* 76: generic radio I/O */
 	cdev_ugen_init(NUSCANNER,uscanner),	/* 77: USB scanners */
 	cdev_systrace_init(NSYSTRACE,systrace),	/* 78: system call tracing */
+ 	cdev_oci_init(NBIO,bio),	/* 79: ioctl tunnel */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

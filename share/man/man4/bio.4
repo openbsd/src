@@ -1,0 +1,82 @@
+.\"	$OpenBSD: bio.4,v 1.1 2002/06/09 22:03:43 niklas Exp $
+.\"
+.\" Copyright (c) 2002 Niklas Hallqvist
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+.\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd Jun 8, 2002
+.Dt BIO 4
+.Os
+.Sh NAME
+.Nm bio
+.Nd ioctl tunnel pseudo-device
+.Sh SYNOPSIS
+.Nm pseudo-device bio
+.Op Ar count
+.Sh DESCRIPTION
+The
+.Nm
+driver provides userland applications ioctl access to devices otherwise not
+found as
+.Pa /dev
+nodes.
+The
+.Pa /dev/bio
+device node operates by delegating
+.Xr ioctl 2
+calls to a requested device driver.  Only drivers which have registered
+with the
+.Nm
+device can be accessed via this interface.
+.Pp
+If
+.Ar count
+given in the specification, and is greater than 0, a maximum of one
+.Nm bio
+device is created.
+.Pp
+The following
+.Xr ioctl 2
+call apply to the
+.Nm bio
+device:
+.Bl -tag -width BIOCLOCATE
+.It Dv BIOCLOCATE
+Locate a named device and give back a cookie to the application
+for subsequent ioctl calls.  The cookie is used to tunnel further
+ioctls to the right device.
+.El
+.Sh FILES
+.Bl -tag -width /dev/bio -compact
+.It Pa /dev/bio
+ioctl tunnel device
+.El
+.Sh SEE ALSO
+.Xr gdt 4
+.Sh HISTORY
+The
+.Nm
+driver appeared in
+.Ox 3.2 .
