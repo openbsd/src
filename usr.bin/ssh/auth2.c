@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.39 2001/02/08 18:20:01 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.40 2001/02/10 12:52:02 markus Exp $");
 
 #include <openssl/evp.h>
 
@@ -89,12 +89,12 @@ Authmethod authmethods[] = {
 	{"publickey",
 		userauth_pubkey,
 		&options.pubkey_authentication},
-	{"keyboard-interactive",
-		userauth_kbdint,
-		&options.kbd_interactive_authentication},
 	{"password",
 		userauth_passwd,
 		&options.password_authentication},
+	{"keyboard-interactive",
+		userauth_kbdint,
+		&options.kbd_interactive_authentication},
 	{NULL, NULL, NULL}
 };
 
