@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$Id: yplib_host.c,v 1.3 1996/03/02 04:54:58 dm Exp $";
+static char *rcsid = "$Id: yplib_host.c,v 1.4 1996/05/30 01:34:10 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -49,7 +49,7 @@ static char *rcsid = "$Id: yplib_host.c,v 1.3 1996/03/02 04:54:58 dm Exp $";
 #include <unistd.h>
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
-#include <rpcsvc/yp_prot.h>
+#include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 
 extern bool_t xdr_domainname(), xdr_ypbind_resp();
@@ -172,8 +172,8 @@ int *outvallen;
 
 	yprk.domain = indomain;
 	yprk.map = inmap;
-	yprk.keydat.dptr = (char *)inkey;
-	yprk.keydat.dsize = inkeylen;
+	yprk.key.keydat_val = (char *)inkey;
+	yprk.key.keydat_len = inkeylen;
 
 	memset(&yprv, 0, sizeof yprv);
 
@@ -182,10 +182,10 @@ int *outvallen;
 	if(r != RPC_SUCCESS) {
 		clnt_perror(client, "yp_match_host: clnt_call");
 	}
-	if( !(r=ypprot_err(yprv.status)) ) {
-		*outvallen = yprv.valdat.dsize;
+	if( !(r=ypprot_err(yprv.stat)) ) {
+		*outvallen = yprv.val.valdat_len;
 		*outval = (char *)malloc(*outvallen+1);
-		memcpy(*outval, yprv.valdat.dptr, *outvallen);
+		memcpy(*outval, yprv.val.valdat_val, *outvallen);
 		(*outval)[*outvallen] = '\0';
 	}
 	xdr_free(xdr_ypresp_val, (char *)&yprv);
@@ -222,14 +222,14 @@ int *outvallen;
 	if(r != RPC_SUCCESS) {
 		clnt_perror(client, "yp_first_host: clnt_call");
 	}
-	if( !(r=ypprot_err(yprkv.status)) ) {
-		*outkeylen = yprkv.keydat.dsize;
+	if( !(r=ypprot_err(yprkv.stat)) ) {
+		*outkeylen = yprkv.key.keydat_len;
 		*outkey = (char *)malloc(*outkeylen+1);
-		memcpy(*outkey, yprkv.keydat.dptr, *outkeylen);
+		memcpy(*outkey, yprkv.key.keydat_val, *outkeylen);
 		(*outkey)[*outkeylen] = '\0';
-		*outvallen = yprkv.valdat.dsize;
+		*outvallen = yprkv.val.valdat_len;
 		*outval = (char *)malloc(*outvallen+1);
-		memcpy(*outval, yprkv.valdat.dptr, *outvallen);
+		memcpy(*outval, yprkv.val.valdat_val, *outvallen);
 		(*outval)[*outvallen] = '\0';
 	}
 	xdr_free(xdr_ypresp_key_val, (char *)&yprkv);
@@ -261,8 +261,8 @@ int *outvallen;
 
 	yprk.domain = indomain;
 	yprk.map = inmap;
-	yprk.keydat.dptr = inkey;
-	yprk.keydat.dsize = inkeylen;
+	yprk.key.keydat_val = inkey;
+	yprk.key.keydat_len = inkeylen;
 	memset(&yprkv, 0, sizeof yprkv);
 
 	r = clnt_call(client, YPPROC_NEXT,
@@ -270,14 +270,14 @@ int *outvallen;
 	if(r != RPC_SUCCESS) {
 		clnt_perror(client, "yp_next_host: clnt_call");
 	}
-	if( !(r=ypprot_err(yprkv.status)) ) {
-		*outkeylen = yprkv.keydat.dsize;
+	if( !(r=ypprot_err(yprkv.stat)) ) {
+		*outkeylen = yprkv.key.keydat_len;
 		*outkey = (char *)malloc(*outkeylen+1);
-		memcpy(*outkey, yprkv.keydat.dptr, *outkeylen);
+		memcpy(*outkey, yprkv.key.keydat_val, *outkeylen);
 		(*outkey)[*outkeylen] = '\0';
-		*outvallen = yprkv.valdat.dsize;
+		*outvallen = yprkv.val.valdat_len;
 		*outval = (char *)malloc(*outvallen+1);
-		memcpy(*outval, yprkv.valdat.dptr, *outvallen);
+		memcpy(*outval, yprkv.val.valdat_val, *outvallen);
 		(*outval)[*outvallen] = '\0';
 	}
 	xdr_free(xdr_ypresp_key_val, (char *)&yprkv);
@@ -340,7 +340,7 @@ int *outorder;
 
 	*outorder = ypro.ordernum;
 	xdr_free(xdr_ypresp_order, (char *)&ypro);
-	return ypprot_err(ypro.status);
+	return ypprot_err(ypro.stat);
 }
 
 int
@@ -368,8 +368,8 @@ char **outname;
 	if(r != RPC_SUCCESS) {
 		clnt_perror(client, "yp_master: clnt_call");
 	}
-	if( !(r=ypprot_err(yprm.status)) ) {
-		*outname = (char *)strdup(yprm.master);
+	if( !(r=ypprot_err(yprm.stat)) ) {
+		*outname = (char *)strdup(yprm.peer);
 	}
 	xdr_free(xdr_ypresp_master, (char *)&yprm);
 	return r;
@@ -395,8 +395,8 @@ struct ypmaplist **outmaplist;
 	if (r != RPC_SUCCESS) {
 		clnt_perror(client, "yp_maplist: clnt_call");
 	}
-	*outmaplist = ypml.list;
+	*outmaplist = ypml.maps;
 	/* NO: xdr_free(xdr_ypresp_maplist, &ypml);*/
-	return ypprot_err(ypml.status);
+	return ypprot_err(ypml.stat);
 }
 
