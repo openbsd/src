@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.29 2002/05/09 21:22:01 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.30 2002/05/09 22:14:37 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: crontab.c,v 1.29 2002/05/09 21:22:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: crontab.c,v 1.30 2002/05/09 22:14:37 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -645,7 +645,6 @@ static void
 poke_daemon() {
 	int sock, flags;
 	struct sockaddr_un sun;
-	FILE *fp;
 
 	if (utime(SPOOL_DIR, NULL) < OK) {
 		fprintf(stderr, "crontab: can't update mtime on spooldir\n");
