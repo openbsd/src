@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.5 1999/09/06 13:10:48 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.6 1999/09/06 13:15:33 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ void	expand __P((char *[], int));
 void	getdiv __P((int));
 char	*xstrdup __P((const char *));
 int	hash __P((char *));
-int	indx __P((char *, char *));
+ptrdiff_t	indx __P((const char *, const char *));
 void	killdiv __P((void));
 ndptr	lookup __P((char *));
 void	map __P((char *, char *, char *, char *));
