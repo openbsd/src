@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.21 1999/10/13 17:24:23 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.22 1999/11/06 20:45:26 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.21 1999/10/13 17:24:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.22 1999/11/06 20:45:26 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -198,7 +198,7 @@ void do_entry(ent)
 			(ent->flags & CE_COMPACT) ? "Z" : "");
         size = sizefile(ent->log);
 	if (age_old_log(ent->log, &modtime) == -1)
-		modtime = 0;
+		modtime = -1;
         if (size < 0) {
                 if (verbose)
                         printf("does not exist.\n");
@@ -489,23 +489,21 @@ void dotrim(log, numdays, flags, perm, owner_uid, group_gid, daemon_pid)
 	                (void) rename(log,file1);
 	}
 
-        if (noaction) 
+        if (noaction)  {
                 printf("Start new log...");
-        else {
-                fd = creat(log,perm);
+        } else {
+                fd = open(log, O_WRONLY|O_TRUNC|O_CREAT, perm);
                 if (fd < 0)
 			err(1, "can't start \'%s\' log", log);
                 if (fchown(fd, owner_uid, group_gid))
 			err(1, "can't chown \'%s\' log file", log);
+                if (fchmod(fd, perm))
+			err(1, "can't chmod \'%s\' log file", log, perm);
                 (void) close(fd);
                 if (!(flags & CE_BINARY))
                         if (log_trim(log))	/* Add status message */
                                 err(1, "can't add status message to log \'%s\'", log);
         }
-        if (noaction)
-                printf("chmod %o %s...",perm,log);
-        else
-                (void) chmod(log,perm);
         if (noaction)
                 printf("kill -HUP %d\n",daemon_pid);
         else if (daemon_pid < MIN_PID)
