@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lpt.4,v 1.1 2002/03/14 19:39:16 jason Exp $
+.\"	$OpenBSD: lpt.4,v 1.2 2002/03/14 19:43:26 jason Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -35,8 +35,15 @@
 .Nm lpt
 .Nd parallel port driver
 .Sh SYNOPSIS
+.Cd "# alpha/hppa/i386
 .Cd "lpt0 at isa? port" \&"IO_LPT1\&" irq 7
 .Cd "lpt1 at isa? port" \&"IO_LPT2\&"
+.Pp
+.Cd "# hppa"
+.Cd "lpt0 at gsc? irq 7"
+.Pp
+.Cd "# sparc64"
+.Cd "lpt* at apio?"
 .Sh DESCRIPTION
 This driver provides access to parallel ports.
 .Pp
