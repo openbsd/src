@@ -1098,7 +1098,7 @@ graphic_object *object_spec::make_move(position *curpos, direction *dirp)
   // No need to look at at since `at' attribute sets `from' attribute.
   position startpos = (flags & HAS_FROM) ? from : *curpos;
   if (!(flags & HAS_SEGMENT)) {
-    if ((flags && IS_SAME) && have_last_move)
+    if ((flags & IS_SAME) && have_last_move)
       segment_pos = last_move;
     else {
       switch (dir) {
