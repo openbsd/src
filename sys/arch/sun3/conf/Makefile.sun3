@@ -38,7 +38,7 @@ XDEFS=		-undef -D__OpenBSD__ -Dm68k -Dmc68000
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Dsun3 ${XDEFS}
 CWARNFLAGS= 	-Werror -Wall -Wstrict-prototypes \
-		-Wno-format \
+		-Wno-format -Wno-uninitialized \
 		# -Wmissing-prototypes
 CFLAGS= 	${DEBUG} ${CWARNFLAGS} -O2 -msoft-float -pipe
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
