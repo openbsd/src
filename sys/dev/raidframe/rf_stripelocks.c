@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_stripelocks.c,v 1.1 1999/01/11 14:29:51 niklas Exp $	*/
-/*	$NetBSD: rf_stripelocks.c,v 1.1 1998/11/13 04:20:34 oster Exp $	*/
+/*	$OpenBSD: rf_stripelocks.c,v 1.2 1999/02/16 00:03:28 niklas Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.3 1999/02/05 00:06:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -25,93 +25,6 @@
  *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-
-/* :  
- * Log: rf_stripelocks.c,v 
- * Revision 1.35  1996/06/10 12:50:57  jimz
- * Add counters to freelists to track number of allocations, frees,
- * grows, max size, etc. Adjust a couple sets of PRIME params based
- * on the results.
- *
- * Revision 1.34  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.33  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.32  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.31  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.30  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.29  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.28  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.27  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.26  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.25  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.24  1996/05/20  16:15:00  jimz
- * switch to rf_{mutex,cond}_{init,destroy}
- *
- * Revision 1.23  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.22  1996/05/16  22:28:11  jimz
- * misc cleanup
- *
- * Revision 1.21  1996/05/15  23:39:52  jimz
- * remove #if 0 code
- *
- * Revision 1.20  1996/05/15  23:37:38  jimz
- * convert to using RF_FREELIST stuff for StripeLockDesc allocation
- *
- * Revision 1.19  1996/05/08  18:00:53  jimz
- * fix number of args to debug printf
- *
- * Revision 1.18  1996/05/06  22:33:07  jimz
- * added better debug info
- *
- * Revision 1.17  1996/05/06  22:09:01  wvcii
- * added copyright info and change log
- *
  */
 
 /*
@@ -144,10 +57,6 @@
  * searching through stripe lock descriptors.
  */
 
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
 #include "rf_types.h"
 #include "rf_raid.h"
 #include "rf_stripelocks.h"
@@ -168,19 +77,15 @@
 #define Dprintf7(s,a,b,c,d,e,f,g) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),NULL)
 #define Dprintf8(s,a,b,c,d,e,f,g,h) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),(void *)((unsigned long)h))
 
-#ifndef KERNEL
-#define FLUSH fflush(stdout)
-#else /* !KERNEL */
 #define FLUSH
-#endif /* !KERNEL */
 
 #define HASH_STRIPEID(_sid_)  ( (_sid_) & (rf_lockTableSize-1) )
 #define MAX_FREELIST 100
 
-static void AddToWaitersQueue(RF_LockTableEntry_t *lockTable, RF_StripeLockDesc_t *lockDesc, RF_LockReqDesc_t *lockReqDesc);
+static void AddToWaitersQueue(RF_LockTableEntry_t * lockTable, RF_StripeLockDesc_t * lockDesc, RF_LockReqDesc_t * lockReqDesc);
 static RF_StripeLockDesc_t *AllocStripeLockDesc(RF_StripeNum_t stripeID);
-static void FreeStripeLockDesc(RF_StripeLockDesc_t *p);
-static void PrintLockedStripes(RF_LockTableEntry_t *lockTable);
+static void FreeStripeLockDesc(RF_StripeLockDesc_t * p);
+static void PrintLockedStripes(RF_LockTableEntry_t * lockTable);
 
 /* determines if two ranges overlap.  always yields false if either start value is negative  */
 #define SINGLE_RANGE_OVERLAP(_strt1, _stop1, _strt2, _stop2)                                     \
@@ -216,427 +121,550 @@ static RF_FreeList_t *rf_stripelock_freelist;
 static void rf_ShutdownStripeLockFreeList(void *);
 static void rf_RaidShutdownStripeLocks(void *);
 
-static void rf_ShutdownStripeLockFreeList(ignored)
-  void  *ignored;
+static void 
+rf_ShutdownStripeLockFreeList(ignored)
+	void   *ignored;
 {
-	RF_FREELIST_DESTROY(rf_stripelock_freelist,next,(RF_StripeLockDesc_t *));
+	RF_FREELIST_DESTROY(rf_stripelock_freelist, next, (RF_StripeLockDesc_t *));
 }
 
-int rf_ConfigureStripeLockFreeList(listp)
-  RF_ShutdownList_t  **listp;
+int 
+rf_ConfigureStripeLockFreeList(listp)
+	RF_ShutdownList_t **listp;
 {
 	unsigned mask;
-	int rc;
+	int     rc;
 
 	RF_FREELIST_CREATE(rf_stripelock_freelist, RF_MAX_FREE_STRIPELOCK,
-		RF_STRIPELOCK_INITIAL,sizeof(RF_StripeLockDesc_t));
+	    RF_STRIPELOCK_INITIAL, sizeof(RF_StripeLockDesc_t));
 	rc = rf_ShutdownCreate(listp, rf_ShutdownStripeLockFreeList, NULL);
 	if (rc) {
 		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-			__FILE__, __LINE__, rc);
+		    __FILE__, __LINE__, rc);
 		rf_ShutdownStripeLockFreeList(NULL);
-		return(rc);
+		return (rc);
 	}
-	RF_FREELIST_PRIME(rf_stripelock_freelist,RF_STRIPELOCK_INITIAL,next,
-		(RF_StripeLockDesc_t *));
-	for (mask=0x1; mask; mask<<=1)
-		if (rf_lockTableSize==mask)
+	RF_FREELIST_PRIME(rf_stripelock_freelist, RF_STRIPELOCK_INITIAL, next,
+	    (RF_StripeLockDesc_t *));
+	for (mask = 0x1; mask; mask <<= 1)
+		if (rf_lockTableSize == mask)
 			break;
 	if (!mask) {
-		printf("[WARNING:  lock table size must be a power of two.  Setting to %d.]\n",RF_DEFAULT_LOCK_TABLE_SIZE);
+		printf("[WARNING:  lock table size must be a power of two.  Setting to %d.]\n", RF_DEFAULT_LOCK_TABLE_SIZE);
 		rf_lockTableSize = RF_DEFAULT_LOCK_TABLE_SIZE;
 	}
-	return(0);
+	return (0);
 }
 
-RF_LockTableEntry_t *rf_MakeLockTable()
+RF_LockTableEntry_t *
+rf_MakeLockTable()
 {
 	RF_LockTableEntry_t *lockTable;
-	int i, rc;
+	int     i, rc;
 
 	RF_Calloc(lockTable, ((int) rf_lockTableSize), sizeof(RF_LockTableEntry_t), (RF_LockTableEntry_t *));
 	if (lockTable == NULL)
-		return(NULL);
-	for (i=0; i<rf_lockTableSize; i++) {
+		return (NULL);
+	for (i = 0; i < rf_lockTableSize; i++) {
 		rc = rf_mutex_init(&lockTable[i].mutex);
 		if (rc) {
-		    RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
-		      __LINE__, rc);
+			RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
+			    __LINE__, rc);
 			/* XXX clean up other mutexes */
-			return(NULL);
+			return (NULL);
 		}
 	}
-	return(lockTable);
+	return (lockTable);
 }
 
-void rf_ShutdownStripeLocks(RF_LockTableEntry_t *lockTable)
+void 
+rf_ShutdownStripeLocks(RF_LockTableEntry_t * lockTable)
 {
-	int i;
+	int     i;
 
 	if (rf_stripeLockDebug) {
 		PrintLockedStripes(lockTable);
 	}
-	for (i=0; i<rf_lockTableSize; i++) {
+	for (i = 0; i < rf_lockTableSize; i++) {
 		rf_mutex_destroy(&lockTable[i].mutex);
 	}
-	RF_Free(lockTable, rf_lockTableSize*sizeof(RF_LockTableEntry_t));
+	RF_Free(lockTable, rf_lockTableSize * sizeof(RF_LockTableEntry_t));
 }
 
-static void rf_RaidShutdownStripeLocks(arg)
-  void  *arg;
+static void 
+rf_RaidShutdownStripeLocks(arg)
+	void   *arg;
 {
-	RF_Raid_t *raidPtr = (RF_Raid_t *)arg;
+	RF_Raid_t *raidPtr = (RF_Raid_t *) arg;
 	rf_ShutdownStripeLocks(raidPtr->lockTable);
 }
 
-int rf_ConfigureStripeLocks(
-  RF_ShutdownList_t  **listp,
-  RF_Raid_t           *raidPtr,
-  RF_Config_t         *cfgPtr)
+int 
+rf_ConfigureStripeLocks(
+    RF_ShutdownList_t ** listp,
+    RF_Raid_t * raidPtr,
+    RF_Config_t * cfgPtr)
 {
-	int rc;
+	int     rc;
 
 	raidPtr->lockTable = rf_MakeLockTable();
 	if (raidPtr->lockTable == NULL)
-		return(ENOMEM);
+		return (ENOMEM);
 	rc = rf_ShutdownCreate(listp, rf_RaidShutdownStripeLocks, raidPtr);
 	if (rc) {
 		RF_ERRORMSG3("Unable to add to shutdown list file %s line %d rc=%d\n",
-			__FILE__, __LINE__, rc);
+		    __FILE__, __LINE__, rc);
 		rf_ShutdownStripeLocks(raidPtr->lockTable);
-		return(rc);
+		return (rc);
 	}
-	return(0);
+	return (0);
 }
-
 /* returns 0 if you've got the lock, and non-zero if you have to wait.
  * if and only if you have to wait, we'll cause cbFunc to get invoked
  * with cbArg when you are granted the lock.  We store a tag in *releaseTag
  * that you need to give back to us when you release the lock.
  */
-int rf_AcquireStripeLock(
-  RF_LockTableEntry_t  *lockTable,
-  RF_StripeNum_t        stripeID,
-  RF_LockReqDesc_t     *lockReqDesc)
+int 
+rf_AcquireStripeLock(
+    RF_LockTableEntry_t * lockTable,
+    RF_StripeNum_t stripeID,
+    RF_LockReqDesc_t * lockReqDesc)
 {
-  RF_StripeLockDesc_t *lockDesc;
-  RF_LockReqDesc_t    *p;
-  int tid=0, hashval = HASH_STRIPEID(stripeID);
-  int retcode = 0;
+	RF_StripeLockDesc_t *lockDesc;
+	RF_LockReqDesc_t *p;
+	int     tid = 0, hashval = HASH_STRIPEID(stripeID);
+	int     retcode = 0;
 
-  RF_ASSERT(RF_IO_IS_R_OR_W(lockReqDesc->type));
+	RF_ASSERT(RF_IO_IS_R_OR_W(lockReqDesc->type));
 
-  if (rf_stripeLockDebug) {
-    rf_get_threadid(tid);
-    if (stripeID == -1) Dprintf1("[%d] Lock acquisition supressed (stripeID == -1)\n",tid);
-    else {
-      Dprintf8("[%d] Trying to acquire stripe lock table 0x%lx SID %ld type %c range %ld-%ld, range2 %ld-%ld hashval %d\n",
-        tid, (unsigned long) lockTable, stripeID, lockReqDesc->type, lockReqDesc->start,
-        lockReqDesc->stop, lockReqDesc->start2, lockReqDesc->stop2);
-      Dprintf3("[%d] lock %ld hashval %d\n", tid, stripeID, hashval);
-      FLUSH;
-    }
-  }
-  if (stripeID == -1) return(0);
-  lockReqDesc->next = NULL;                       /* just to be sure */
-  
-  RF_LOCK_MUTEX(lockTable[hashval].mutex);
-  for (lockDesc = lockTable[hashval].descList; lockDesc; lockDesc=lockDesc->next) {
-    if (lockDesc->stripeID == stripeID) break;
-  }
-  
-  if (!lockDesc) {            /* no entry in table => no one reading or writing */
-    lockDesc = AllocStripeLockDesc(stripeID);
-    lockDesc->next = lockTable[hashval].descList;
-    lockTable[hashval].descList = lockDesc;
-    if (lockReqDesc->type == RF_IO_TYPE_WRITE) lockDesc->nWriters++;
-    lockDesc->granted = lockReqDesc;
-    if (rf_stripeLockDebug) {Dprintf7("[%d] no one waiting: lock %ld %c %ld-%ld %ld-%ld granted\n",
-				tid,stripeID,lockReqDesc->type,lockReqDesc->start,lockReqDesc->stop,lockReqDesc->start2,lockReqDesc->stop2); FLUSH;}
-  } else {
-
-    if (lockReqDesc->type == RF_IO_TYPE_WRITE) lockDesc->nWriters++;
-    
-    if (lockDesc->nWriters == 0) {                        /* no need to search any lists if there are no writers anywhere */
-      lockReqDesc->next = lockDesc->granted;
-      lockDesc->granted = lockReqDesc;
-      if (rf_stripeLockDebug) {Dprintf7("[%d] no writers: lock %ld %c %ld-%ld %ld-%ld granted\n",
-				  tid,stripeID,lockReqDesc->type,lockReqDesc->start,lockReqDesc->stop,lockReqDesc->start2,lockReqDesc->stop2); FLUSH;}
-    } else {
-
-      /* search the granted & waiting lists for a conflict.  stop searching as soon as we find one */
-      retcode = 0;
-      for (p = lockDesc->granted; p; p=p->next) if (STRIPELOCK_CONFLICT(lockReqDesc, p)) {retcode = 1; break;}
-      if (!retcode) for (p = lockDesc->waitersH; p; p=p->next) if (STRIPELOCK_CONFLICT(lockReqDesc, p)) {retcode = 2; break;}
-
-      if (!retcode) {
-	lockReqDesc->next = lockDesc->granted;                                   /* no conflicts found => grant lock */
-	lockDesc->granted = lockReqDesc;
 	if (rf_stripeLockDebug) {
-		Dprintf7("[%d] no conflicts: lock %ld %c %ld-%ld %ld-%ld granted\n",
-			tid,stripeID,lockReqDesc->type,lockReqDesc->start,lockReqDesc->stop,
-			lockReqDesc->start2,lockReqDesc->stop2);
-		FLUSH;
+		rf_get_threadid(tid);
+		if (stripeID == -1)
+			Dprintf1("[%d] Lock acquisition supressed (stripeID == -1)\n", tid);
+		else {
+			Dprintf8("[%d] Trying to acquire stripe lock table 0x%lx SID %ld type %c range %ld-%ld, range2 %ld-%ld hashval %d\n",
+			    tid, (unsigned long) lockTable, stripeID, lockReqDesc->type, lockReqDesc->start,
+			    lockReqDesc->stop, lockReqDesc->start2, lockReqDesc->stop2);
+			Dprintf3("[%d] lock %ld hashval %d\n", tid, stripeID, hashval);
+			FLUSH;
+		}
 	}
-      } else {
-	if (rf_stripeLockDebug) {
-		Dprintf6("[%d] conflict: lock %ld %c %ld-%ld hashval=%d not granted\n",
-				tid,stripeID,lockReqDesc->type,lockReqDesc->start,lockReqDesc->stop,
-				hashval);
-		Dprintf3("[%d] lock %ld retcode=%d\n", tid, stripeID, retcode);
-		FLUSH;
-	}
-	AddToWaitersQueue(lockTable, lockDesc, lockReqDesc);                     /* conflict => the current access must wait */
-      }
-    }
-  }
+	if (stripeID == -1)
+		return (0);
+	lockReqDesc->next = NULL;	/* just to be sure */
 
-  RF_UNLOCK_MUTEX(lockTable[hashval].mutex);
-  return(retcode);
+	RF_LOCK_MUTEX(lockTable[hashval].mutex);
+	for (lockDesc = lockTable[hashval].descList; lockDesc; lockDesc = lockDesc->next) {
+		if (lockDesc->stripeID == stripeID)
+			break;
+	}
+
+	if (!lockDesc) {	/* no entry in table => no one reading or
+				 * writing */
+		lockDesc = AllocStripeLockDesc(stripeID);
+		lockDesc->next = lockTable[hashval].descList;
+		lockTable[hashval].descList = lockDesc;
+		if (lockReqDesc->type == RF_IO_TYPE_WRITE)
+			lockDesc->nWriters++;
+		lockDesc->granted = lockReqDesc;
+		if (rf_stripeLockDebug) {
+			Dprintf7("[%d] no one waiting: lock %ld %c %ld-%ld %ld-%ld granted\n",
+			    tid, stripeID, lockReqDesc->type, lockReqDesc->start, lockReqDesc->stop, lockReqDesc->start2, lockReqDesc->stop2);
+			FLUSH;
+		}
+	} else {
+
+		if (lockReqDesc->type == RF_IO_TYPE_WRITE)
+			lockDesc->nWriters++;
+
+		if (lockDesc->nWriters == 0) {	/* no need to search any lists
+						 * if there are no writers
+						 * anywhere */
+			lockReqDesc->next = lockDesc->granted;
+			lockDesc->granted = lockReqDesc;
+			if (rf_stripeLockDebug) {
+				Dprintf7("[%d] no writers: lock %ld %c %ld-%ld %ld-%ld granted\n",
+				    tid, stripeID, lockReqDesc->type, lockReqDesc->start, lockReqDesc->stop, lockReqDesc->start2, lockReqDesc->stop2);
+				FLUSH;
+			}
+		} else {
+
+			/* search the granted & waiting lists for a conflict.
+			 * stop searching as soon as we find one */
+			retcode = 0;
+			for (p = lockDesc->granted; p; p = p->next)
+				if (STRIPELOCK_CONFLICT(lockReqDesc, p)) {
+					retcode = 1;
+					break;
+				}
+			if (!retcode)
+				for (p = lockDesc->waitersH; p; p = p->next)
+					if (STRIPELOCK_CONFLICT(lockReqDesc, p)) {
+						retcode = 2;
+						break;
+					}
+			if (!retcode) {
+				lockReqDesc->next = lockDesc->granted;	/* no conflicts found =>
+									 * grant lock */
+				lockDesc->granted = lockReqDesc;
+				if (rf_stripeLockDebug) {
+					Dprintf7("[%d] no conflicts: lock %ld %c %ld-%ld %ld-%ld granted\n",
+					    tid, stripeID, lockReqDesc->type, lockReqDesc->start, lockReqDesc->stop,
+					    lockReqDesc->start2, lockReqDesc->stop2);
+					FLUSH;
+				}
+			} else {
+				if (rf_stripeLockDebug) {
+					Dprintf6("[%d] conflict: lock %ld %c %ld-%ld hashval=%d not granted\n",
+					    tid, stripeID, lockReqDesc->type, lockReqDesc->start, lockReqDesc->stop,
+					    hashval);
+					Dprintf3("[%d] lock %ld retcode=%d\n", tid, stripeID, retcode);
+					FLUSH;
+				}
+				AddToWaitersQueue(lockTable, lockDesc, lockReqDesc);	/* conflict => the
+											 * current access must
+											 * wait */
+			}
+		}
+	}
+
+	RF_UNLOCK_MUTEX(lockTable[hashval].mutex);
+	return (retcode);
 }
 
-void rf_ReleaseStripeLock(
-  RF_LockTableEntry_t  *lockTable,
-  RF_StripeNum_t        stripeID,
-  RF_LockReqDesc_t     *lockReqDesc)
+void 
+rf_ReleaseStripeLock(
+    RF_LockTableEntry_t * lockTable,
+    RF_StripeNum_t stripeID,
+    RF_LockReqDesc_t * lockReqDesc)
 {
-  RF_StripeLockDesc_t *lockDesc, *ld_t;
-  RF_LockReqDesc_t    *lr, *lr_t, *callbacklist, *t;
-  RF_IoType_t type = lockReqDesc->type;
-  int tid=0, hashval = HASH_STRIPEID(stripeID);
-  int release_it, consider_it;
-  RF_LockReqDesc_t *candidate, *candidate_t, *predecessor;
+	RF_StripeLockDesc_t *lockDesc, *ld_t;
+	RF_LockReqDesc_t *lr, *lr_t, *callbacklist, *t;
+	RF_IoType_t type = lockReqDesc->type;
+	int     tid = 0, hashval = HASH_STRIPEID(stripeID);
+	int     release_it, consider_it;
+	RF_LockReqDesc_t *candidate, *candidate_t, *predecessor;
 
-  RF_ASSERT(RF_IO_IS_R_OR_W(type));
+	RF_ASSERT(RF_IO_IS_R_OR_W(type));
 
-  if (rf_stripeLockDebug) {
-    rf_get_threadid(tid);
-    if (stripeID == -1) Dprintf1("[%d] Lock release supressed (stripeID == -1)\n",tid);
-    else {Dprintf8("[%d] Releasing stripe lock on stripe ID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
-		 tid,stripeID,lockReqDesc->type,lockReqDesc->start,lockReqDesc->stop,lockReqDesc->start2,lockReqDesc->stop2, lockTable); FLUSH;}
-  }
-
-  if (stripeID == -1) return;
-  
-  RF_LOCK_MUTEX(lockTable[hashval].mutex);
-
-  /* find the stripe lock descriptor */
-  for (ld_t = NULL, lockDesc = lockTable[hashval].descList; lockDesc; ld_t = lockDesc, lockDesc=lockDesc->next) {
-    if (lockDesc->stripeID == stripeID) break;
-  }
-  RF_ASSERT(lockDesc);                                    /* major error to release a lock that doesn't exist */
-
-  /* find the stripe lock request descriptor & delete it from the list */
-  for (lr_t = NULL, lr = lockDesc->granted; lr; lr_t = lr, lr=lr->next) if (lr == lockReqDesc) break;
-  
-  RF_ASSERT(lr && (lr == lockReqDesc));                            /* major error to release a lock that hasn't been granted */
-  if (lr_t) lr_t->next = lr->next; else {
-    RF_ASSERT(lr == lockDesc->granted);
-    lockDesc->granted = lr->next;
-  }
-  lr->next = NULL;
-  
-  if (lockReqDesc->type == RF_IO_TYPE_WRITE) lockDesc->nWriters--;
-
-  /* search through the waiters list to see if anyone needs to be woken up.
-   * for each such descriptor in the wait list, we check it against everything granted and against
-   * everything _in front_ of it in the waiters queue.  If it conflicts with none of these, we release it.
-   *
-   * DON'T TOUCH THE TEMPLINK POINTER OF ANYTHING IN THE GRANTED LIST HERE.  This will roach the case where
-   * the callback tries to acquire a new lock in the same stripe.  There are some asserts to try and detect this.
-   *
-   * We apply 2 performance optimizations:
-   * (1) if releasing this lock results in no more writers to this stripe, we just release everybody waiting,
-   * since we place no restrictions on the number of concurrent reads.
-   * (2) we consider as candidates for wakeup only those waiters that have a range overlap with either
-   * the descriptor being woken up or with something in the callbacklist (i.e. something we've just now woken up).
-   * This allows us to avoid the long evaluation for some descriptors.
-   */
-  
-  callbacklist = NULL;
-  if (lockDesc->nWriters == 0) {                          /* performance tweak (1) */
-    while (lockDesc->waitersH) {
-      
-      lr = lockDesc->waitersH;                            /* delete from waiters list */
-      lockDesc->waitersH = lr->next;
-      
-      RF_ASSERT(lr->type == RF_IO_TYPE_READ);
-      
-      lr->next = lockDesc->granted;                       /* add to granted list */
-      lockDesc->granted = lr;
-
-      RF_ASSERT(!lr->templink);
-      lr->templink = callbacklist;                        /* put on callback list so that we'll invoke callback below */
-      callbacklist = lr;
-      if (rf_stripeLockDebug) {Dprintf8("[%d] No writers: granting lock stripe ID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
-				     tid,stripeID,lr->type,lr->start,lr->stop,lr->start2,lr->stop2,(unsigned long) lockTable); FLUSH;}
-    }
-    lockDesc->waitersT = NULL;                            /* we've purged the whole waiters list */
-      
-  } else for (candidate_t = NULL, candidate = lockDesc->waitersH; candidate; ) {
-  
-    /* performance tweak (2) */
-    consider_it = 0;
-    if (RANGE_OVERLAP(lockReqDesc, candidate)) consider_it = 1;
-    else for (t = callbacklist; t; t=t->templink) if (RANGE_OVERLAP(t, candidate)) {
-      consider_it = 1;
-      break;
-    }
-    if (!consider_it) {
-      if (rf_stripeLockDebug) {Dprintf8("[%d] No overlap: rejecting candidate stripeID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
-				     tid, stripeID, candidate->type, candidate->start, candidate->stop, candidate->start2, candidate->stop2,
-				     (unsigned long) lockTable); FLUSH;}
-      candidate_t = candidate; candidate = candidate->next;
-      continue;
-    }
-    
-    
-    /* we have a candidate for release.  check to make sure it is not blocked by any granted locks */
-    release_it = 1;
-    for (predecessor = lockDesc->granted; predecessor; predecessor = predecessor->next) {
-      if (STRIPELOCK_CONFLICT(candidate, predecessor)) {
 	if (rf_stripeLockDebug) {
-	  Dprintf8("[%d] Conflicts with granted lock: rejecting candidate stripeID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
-		   tid, stripeID, candidate->type, candidate->start, candidate->stop, candidate->start2, candidate->stop2,
-		   (unsigned long) lockTable); FLUSH;
+		rf_get_threadid(tid);
+		if (stripeID == -1)
+			Dprintf1("[%d] Lock release supressed (stripeID == -1)\n", tid);
+		else {
+			Dprintf8("[%d] Releasing stripe lock on stripe ID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
+			    tid, stripeID, lockReqDesc->type, lockReqDesc->start, lockReqDesc->stop, lockReqDesc->start2, lockReqDesc->stop2, lockTable);
+			FLUSH;
+		}
 	}
-	release_it = 0; break;
-      }
-    }
-    
-    /* now check to see if the candidate is blocked by any waiters that occur before it it the wait queue */
-    if (release_it) for (predecessor = lockDesc->waitersH; predecessor != candidate; predecessor = predecessor->next) {
-      if (STRIPELOCK_CONFLICT(candidate, predecessor)) {
-	if (rf_stripeLockDebug) {
-	  Dprintf8("[%d] Conflicts with waiting lock: rejecting candidate stripeID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
-		   tid, stripeID, candidate->type, candidate->start, candidate->stop, candidate->start2, candidate->stop2,
-		   (unsigned long) lockTable); FLUSH;
+	if (stripeID == -1)
+		return;
+
+	RF_LOCK_MUTEX(lockTable[hashval].mutex);
+
+	/* find the stripe lock descriptor */
+	for (ld_t = NULL, lockDesc = lockTable[hashval].descList; lockDesc; ld_t = lockDesc, lockDesc = lockDesc->next) {
+		if (lockDesc->stripeID == stripeID)
+			break;
 	}
-	release_it = 0; break;
-      }
-    }
-    
-    /* release it if indicated */
-    if (release_it) {
-      if (rf_stripeLockDebug) {Dprintf8("[%d] Granting lock to candidate stripeID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
-				     tid, stripeID, candidate->type, candidate->start, candidate->stop, candidate->start2, candidate->stop2,
-				     (unsigned long) lockTable); FLUSH;}
-      if (candidate_t) {
-	candidate_t->next = candidate->next;
-	if (lockDesc->waitersT == candidate) lockDesc->waitersT = candidate_t;       /* cannot be waitersH since candidate_t is not NULL */
-      } else {
-	RF_ASSERT(candidate == lockDesc->waitersH);
-	lockDesc->waitersH = lockDesc->waitersH->next;
-	if (!lockDesc->waitersH) lockDesc->waitersT = NULL;
-      }
-      candidate->next = lockDesc->granted;                    /* move it to the granted list */
-      lockDesc->granted = candidate;
-      
-      RF_ASSERT(!candidate->templink);
-      candidate->templink = callbacklist;                     /* put it on the list of things to be called after we release the mutex */
-      callbacklist = candidate;
-      
-      if (!candidate_t) candidate = lockDesc->waitersH; else candidate = candidate_t->next;     /* continue with the rest of the list */
-    } else {
-      candidate_t = candidate; candidate = candidate->next;                                     /* continue with the rest of the list */
-    }
-  }
+	RF_ASSERT(lockDesc);	/* major error to release a lock that doesn't
+				 * exist */
 
-  /* delete the descriptor if no one is waiting or active */
-  if (!lockDesc->granted && !lockDesc->waitersH) {
-    RF_ASSERT(lockDesc->nWriters == 0);
-    if (rf_stripeLockDebug) {
-      Dprintf3("[%d] Last lock released (table 0x%lx): deleting desc for stripeID %ld\n",tid,(unsigned long) lockTable, stripeID); FLUSH;
-    }
-    if (ld_t) ld_t->next = lockDesc->next; else {
-      RF_ASSERT(lockDesc == lockTable[hashval].descList);
-      lockTable[hashval].descList = lockDesc->next;
-    }
-    FreeStripeLockDesc(lockDesc);
-    lockDesc = NULL;                                                               /* only for the ASSERT below */
-  }
-	
-  RF_UNLOCK_MUTEX(lockTable[hashval].mutex);
+	/* find the stripe lock request descriptor & delete it from the list */
+	for (lr_t = NULL, lr = lockDesc->granted; lr; lr_t = lr, lr = lr->next)
+		if (lr == lockReqDesc)
+			break;
 
-  /* now that we've unlocked the mutex, invoke the callback on all the descriptors in the list */
-  RF_ASSERT(!( (callbacklist) && (!lockDesc) ));                   /* if we deleted the descriptor, we should have no callbacks to do */
-  for (candidate = callbacklist; candidate; ) {
-    t = candidate;
-    candidate = candidate->templink;
-    t->templink = NULL;
-    (t->cbFunc)(t->cbArg);
-  }
+	RF_ASSERT(lr && (lr == lockReqDesc));	/* major error to release a
+						 * lock that hasn't been
+						 * granted */
+	if (lr_t)
+		lr_t->next = lr->next;
+	else {
+		RF_ASSERT(lr == lockDesc->granted);
+		lockDesc->granted = lr->next;
+	}
+	lr->next = NULL;
+
+	if (lockReqDesc->type == RF_IO_TYPE_WRITE)
+		lockDesc->nWriters--;
+
+	/* search through the waiters list to see if anyone needs to be woken
+	 * up. for each such descriptor in the wait list, we check it against
+	 * everything granted and against everything _in front_ of it in the
+	 * waiters queue.  If it conflicts with none of these, we release it.
+	 * 
+	 * DON'T TOUCH THE TEMPLINK POINTER OF ANYTHING IN THE GRANTED LIST HERE.
+	 * This will roach the case where the callback tries to acquire a new
+	 * lock in the same stripe.  There are some asserts to try and detect
+	 * this.
+	 * 
+	 * We apply 2 performance optimizations: (1) if releasing this lock
+	 * results in no more writers to this stripe, we just release
+	 * everybody waiting, since we place no restrictions on the number of
+	 * concurrent reads. (2) we consider as candidates for wakeup only
+	 * those waiters that have a range overlap with either the descriptor
+	 * being woken up or with something in the callbacklist (i.e.
+	 * something we've just now woken up). This allows us to avoid the
+	 * long evaluation for some descriptors. */
+
+	callbacklist = NULL;
+	if (lockDesc->nWriters == 0) {	/* performance tweak (1) */
+		while (lockDesc->waitersH) {
+
+			lr = lockDesc->waitersH;	/* delete from waiters
+							 * list */
+			lockDesc->waitersH = lr->next;
+
+			RF_ASSERT(lr->type == RF_IO_TYPE_READ);
+
+			lr->next = lockDesc->granted;	/* add to granted list */
+			lockDesc->granted = lr;
+
+			RF_ASSERT(!lr->templink);
+			lr->templink = callbacklist;	/* put on callback list
+							 * so that we'll invoke
+							 * callback below */
+			callbacklist = lr;
+			if (rf_stripeLockDebug) {
+				Dprintf8("[%d] No writers: granting lock stripe ID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
+				    tid, stripeID, lr->type, lr->start, lr->stop, lr->start2, lr->stop2, (unsigned long) lockTable);
+				FLUSH;
+			}
+		}
+		lockDesc->waitersT = NULL;	/* we've purged the whole
+						 * waiters list */
+
+	} else
+		for (candidate_t = NULL, candidate = lockDesc->waitersH; candidate;) {
+
+			/* performance tweak (2) */
+			consider_it = 0;
+			if (RANGE_OVERLAP(lockReqDesc, candidate))
+				consider_it = 1;
+			else
+				for (t = callbacklist; t; t = t->templink)
+					if (RANGE_OVERLAP(t, candidate)) {
+						consider_it = 1;
+						break;
+					}
+			if (!consider_it) {
+				if (rf_stripeLockDebug) {
+					Dprintf8("[%d] No overlap: rejecting candidate stripeID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
+					    tid, stripeID, candidate->type, candidate->start, candidate->stop, candidate->start2, candidate->stop2,
+					    (unsigned long) lockTable);
+					FLUSH;
+				}
+				candidate_t = candidate;
+				candidate = candidate->next;
+				continue;
+			}
+			/* we have a candidate for release.  check to make
+			 * sure it is not blocked by any granted locks */
+			release_it = 1;
+			for (predecessor = lockDesc->granted; predecessor; predecessor = predecessor->next) {
+				if (STRIPELOCK_CONFLICT(candidate, predecessor)) {
+					if (rf_stripeLockDebug) {
+						Dprintf8("[%d] Conflicts with granted lock: rejecting candidate stripeID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
+						    tid, stripeID, candidate->type, candidate->start, candidate->stop, candidate->start2, candidate->stop2,
+						    (unsigned long) lockTable);
+						FLUSH;
+					}
+					release_it = 0;
+					break;
+				}
+			}
+
+			/* now check to see if the candidate is blocked by any
+			 * waiters that occur before it it the wait queue */
+			if (release_it)
+				for (predecessor = lockDesc->waitersH; predecessor != candidate; predecessor = predecessor->next) {
+					if (STRIPELOCK_CONFLICT(candidate, predecessor)) {
+						if (rf_stripeLockDebug) {
+							Dprintf8("[%d] Conflicts with waiting lock: rejecting candidate stripeID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
+							    tid, stripeID, candidate->type, candidate->start, candidate->stop, candidate->start2, candidate->stop2,
+							    (unsigned long) lockTable);
+							FLUSH;
+						}
+						release_it = 0;
+						break;
+					}
+				}
+
+			/* release it if indicated */
+			if (release_it) {
+				if (rf_stripeLockDebug) {
+					Dprintf8("[%d] Granting lock to candidate stripeID %ld, type %c range %ld-%ld %ld-%ld table 0x%lx\n",
+					    tid, stripeID, candidate->type, candidate->start, candidate->stop, candidate->start2, candidate->stop2,
+					    (unsigned long) lockTable);
+					FLUSH;
+				}
+				if (candidate_t) {
+					candidate_t->next = candidate->next;
+					if (lockDesc->waitersT == candidate)
+						lockDesc->waitersT = candidate_t;	/* cannot be waitersH
+											 * since candidate_t is
+											 * not NULL */
+				} else {
+					RF_ASSERT(candidate == lockDesc->waitersH);
+					lockDesc->waitersH = lockDesc->waitersH->next;
+					if (!lockDesc->waitersH)
+						lockDesc->waitersT = NULL;
+				}
+				candidate->next = lockDesc->granted;	/* move it to the
+									 * granted list */
+				lockDesc->granted = candidate;
+
+				RF_ASSERT(!candidate->templink);
+				candidate->templink = callbacklist;	/* put it on the list of
+									 * things to be called
+									 * after we release the
+									 * mutex */
+				callbacklist = candidate;
+
+				if (!candidate_t)
+					candidate = lockDesc->waitersH;
+				else
+					candidate = candidate_t->next;	/* continue with the
+									 * rest of the list */
+			} else {
+				candidate_t = candidate;
+				candidate = candidate->next;	/* continue with the
+								 * rest of the list */
+			}
+		}
+
+	/* delete the descriptor if no one is waiting or active */
+	if (!lockDesc->granted && !lockDesc->waitersH) {
+		RF_ASSERT(lockDesc->nWriters == 0);
+		if (rf_stripeLockDebug) {
+			Dprintf3("[%d] Last lock released (table 0x%lx): deleting desc for stripeID %ld\n", tid, (unsigned long) lockTable, stripeID);
+			FLUSH;
+		}
+		if (ld_t)
+			ld_t->next = lockDesc->next;
+		else {
+			RF_ASSERT(lockDesc == lockTable[hashval].descList);
+			lockTable[hashval].descList = lockDesc->next;
+		}
+		FreeStripeLockDesc(lockDesc);
+		lockDesc = NULL;/* only for the ASSERT below */
+	}
+	RF_UNLOCK_MUTEX(lockTable[hashval].mutex);
+
+	/* now that we've unlocked the mutex, invoke the callback on all the
+	 * descriptors in the list */
+	RF_ASSERT(!((callbacklist) && (!lockDesc)));	/* if we deleted the
+							 * descriptor, we should
+							 * have no callbacks to
+							 * do */
+	for (candidate = callbacklist; candidate;) {
+		t = candidate;
+		candidate = candidate->templink;
+		t->templink = NULL;
+		(t->cbFunc) (t->cbArg);
+	}
 }
-
 /* must have the indicated lock table mutex upon entry */
-static void AddToWaitersQueue(
-  RF_LockTableEntry_t  *lockTable,
-  RF_StripeLockDesc_t  *lockDesc,
-  RF_LockReqDesc_t     *lockReqDesc)
+static void 
+AddToWaitersQueue(
+    RF_LockTableEntry_t * lockTable,
+    RF_StripeLockDesc_t * lockDesc,
+    RF_LockReqDesc_t * lockReqDesc)
 {
-  int tid;
+	int     tid;
 
-  if (rf_stripeLockDebug) {
-    rf_get_threadid(tid);
-    Dprintf3("[%d] Waiting on lock for stripe %ld table 0x%lx\n", tid, lockDesc->stripeID, (unsigned long) lockTable); FLUSH;
-  }
-  if (!lockDesc->waitersH) {
-    lockDesc->waitersH = lockDesc->waitersT = lockReqDesc;
-  } else {
-    lockDesc->waitersT->next = lockReqDesc;
-    lockDesc->waitersT = lockReqDesc;
-  }
+	if (rf_stripeLockDebug) {
+		rf_get_threadid(tid);
+		Dprintf3("[%d] Waiting on lock for stripe %ld table 0x%lx\n", tid, lockDesc->stripeID, (unsigned long) lockTable);
+		FLUSH;
+	}
+	if (!lockDesc->waitersH) {
+		lockDesc->waitersH = lockDesc->waitersT = lockReqDesc;
+	} else {
+		lockDesc->waitersT->next = lockReqDesc;
+		lockDesc->waitersT = lockReqDesc;
+	}
 }
 
-static RF_StripeLockDesc_t *AllocStripeLockDesc(RF_StripeNum_t stripeID)
+static RF_StripeLockDesc_t *
+AllocStripeLockDesc(RF_StripeNum_t stripeID)
 {
 	RF_StripeLockDesc_t *p;
 
-	RF_FREELIST_GET(rf_stripelock_freelist,p,next,(RF_StripeLockDesc_t *));
+	RF_FREELIST_GET(rf_stripelock_freelist, p, next, (RF_StripeLockDesc_t *));
 	if (p) {
 		p->stripeID = stripeID;
 	}
-	return(p);
+	return (p);
 }
 
-static void FreeStripeLockDesc(RF_StripeLockDesc_t *p)
+static void 
+FreeStripeLockDesc(RF_StripeLockDesc_t * p)
 {
-	RF_FREELIST_FREE(rf_stripelock_freelist,p,next);
+	RF_FREELIST_FREE(rf_stripelock_freelist, p, next);
 }
 
-static void PrintLockedStripes(lockTable)
-  RF_LockTableEntry_t  *lockTable;
+static void 
+PrintLockedStripes(lockTable)
+	RF_LockTableEntry_t *lockTable;
 {
-  int i, j, foundone = 0, did;
-  RF_StripeLockDesc_t *p;
-  RF_LockReqDesc_t *q;
+	int     i, j, foundone = 0, did;
+	RF_StripeLockDesc_t *p;
+	RF_LockReqDesc_t *q;
 
-  RF_LOCK_MUTEX(rf_printf_mutex);
-  printf("Locked stripes:\n");
-  for (i=0; i<rf_lockTableSize; i++) if (lockTable[i].descList) {
-    foundone = 1;
-    for (p = lockTable[i].descList; p; p=p->next) {
-      printf("Stripe ID 0x%lx (%d) nWriters %d\n",
-	     (long)p->stripeID, (int)p->stripeID, p->nWriters);
-      
-      if (! (p->granted) ) printf("Granted: (none)\n"); else printf("Granted:\n");
-      for (did=1,j=0,q = p->granted; q; j++,q=q->next) {
-	printf("  %c(%ld-%ld",q->type,(long)q->start,(long)q->stop);
-	if (q->start2 != -1) printf(",%ld-%ld) ",(long)q->start2,
-				    (long)q->stop2); else printf(") ");
-	if (j && !(j%4)) {printf("\n"); did=1;} else did=0;
-      }
-      if (!did) printf("\n");
-      
-      if (! (p->waitersH) ) printf("Waiting: (none)\n"); else printf("Waiting:\n");
-      for (did=1,j=0,q = p->waitersH; q; j++,q=q->next) {
-	printf("%c(%ld-%ld",q->type,(long)q->start,(long)q->stop);
-	if (q->start2 != -1) printf(",%ld-%ld) ",(long)q->start2,(long)q->stop2); else printf(") ");
-	if (j && !(j%4)) {printf("\n         "); did=1;} else did=0;
-      }
-      if (!did) printf("\n");
-    }
-  }
-  if (!foundone) printf("(none)\n"); else printf("\n");
-  RF_UNLOCK_MUTEX(rf_printf_mutex);
+	RF_LOCK_MUTEX(rf_printf_mutex);
+	printf("Locked stripes:\n");
+	for (i = 0; i < rf_lockTableSize; i++)
+		if (lockTable[i].descList) {
+			foundone = 1;
+			for (p = lockTable[i].descList; p; p = p->next) {
+				printf("Stripe ID 0x%lx (%d) nWriters %d\n",
+				    (long) p->stripeID, (int) p->stripeID, p->nWriters);
+
+				if (!(p->granted))
+					printf("Granted: (none)\n");
+				else
+					printf("Granted:\n");
+				for (did = 1, j = 0, q = p->granted; q; j++, q = q->next) {
+					printf("  %c(%ld-%ld", q->type, (long) q->start, (long) q->stop);
+					if (q->start2 != -1)
+						printf(",%ld-%ld) ", (long) q->start2,
+						    (long) q->stop2);
+					else
+						printf(") ");
+					if (j && !(j % 4)) {
+						printf("\n");
+						did = 1;
+					} else
+						did = 0;
+				}
+				if (!did)
+					printf("\n");
+
+				if (!(p->waitersH))
+					printf("Waiting: (none)\n");
+				else
+					printf("Waiting:\n");
+				for (did = 1, j = 0, q = p->waitersH; q; j++, q = q->next) {
+					printf("%c(%ld-%ld", q->type, (long) q->start, (long) q->stop);
+					if (q->start2 != -1)
+						printf(",%ld-%ld) ", (long) q->start2, (long) q->stop2);
+					else
+						printf(") ");
+					if (j && !(j % 4)) {
+						printf("\n         ");
+						did = 1;
+					} else
+						did = 0;
+				}
+				if (!did)
+					printf("\n");
+			}
+		}
+	if (!foundone)
+		printf("(none)\n");
+	else
+		printf("\n");
+	RF_UNLOCK_MUTEX(rf_printf_mutex);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_openbsdkintf.c,v 1.1 1999/01/11 14:29:32 niklas Exp $	*/
+/*	$OpenBSD: rf_openbsdkintf.c,v 1.2 1999/02/16 00:03:01 niklas Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -113,183 +113,9 @@
  * rf_kintf.c -- the kernel interface routines for RAIDframe
  *
  ***********************************************************/
-/*
- * :
- * Log: rf_kintf.c,v
- * Revision 1.57  1996/07/19 16:12:20  jimz
- * remove addition of protectedSectors in InitBP- it's already
- * done in the diskqueue code
- *
- * Revision 1.56  1996/07/17  21:00:58	jimz
- * clean up timer interface, tracing
- *
- * Revision 1.55  1996/06/17  03:00:54	jimz
- * Change RAIDFRAME_GET_INFO interface to do its own copyout()
- * (because size of device config structure now exceeds 8k)
- *
- * Revision 1.54  1996/06/09  02:36:46	jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.53  1996/06/07  21:33:04	jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.52  1996/06/06  17:28:08	jimz
- * track sector number of last I/O dequeued
- *
- * Revision 1.51  1996/06/05  18:06:02	jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.50  1996/06/03  23:28:26	jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.49  1996/06/02  17:31:48	jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.48  1996/05/31  22:26:54	jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.47  1996/05/30  12:59:18	jimz
- * make etimer happier, more portable
- *
- * Revision 1.46  1996/05/30  11:29:41	jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.45  1996/05/27  18:56:37	jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.44  1996/05/24  22:17:04	jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.43  1996/05/24  01:59:45	jimz
- * another checkpoint in code cleanup for release
- * time to sync kernel tree
- *
- * Revision 1.42  1996/05/23  22:17:54	jimz
- * fix sector size hardcoding problems
- *
- * Revision 1.41  1996/05/23  21:46:35	jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.40  1996/05/23  13:18:07	jimz
- * tracing_mutex -> rf_tracing_mutex
- *
- * Revision 1.39  1996/05/23  00:33:23	jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.38  1996/05/20  16:15:32	jimz
- * switch to rf_{mutex,cond}_{init,destroy}
- *
- * Revision 1.37  1996/05/10  16:23:47	jimz
- * RF_offset -> RF_Offset
- *
- * Revision 1.36  1996/05/08  21:01:24	jimz
- * fixed up enum type names that were conflicting with other
- * enums and function names (ie, "panic")
- * future naming trends will be towards RF_ and rf_ for
- * everything raidframe-related
- *
- * Revision 1.35  1996/05/03  19:10:48	jimz
- * change sanity checking for bogus I/Os to return more appropriate
- * values (to make some user-level utilities happer with RAIDframe)
- *
- * Revision 1.34  1996/05/02  22:17:00	jimz
- * When using DKUSAGE, send a bogus IO after configuring to let DKUSAGE know
- * that we exist. This will let user-level programs doing group stats on the
- * RF device function without error before RF gets its first IO
- *
- * Changed rf_device_config devs and spares fields to RF_RaidDisk_t
- *
- * Inc numOutstanding for the disk queue in rf_DispatchKernelIO if
- * type is IO_TYPE_NOP. I'm not sure this is right, but it seems to be,
- * because the disk IO completion routine wants to dec it, and doesn't
- * care if there was no such IO.
- *
- * Revision 1.33  1996/05/02  15:05:44	jimz
- * for now, rf_DoAccessKernel will reject non-sector-sized I/Os
- * eventually, it should do something more clever...
- * (and do it in DoAccess(), not just DoAccessKernel())
- *
- * Revision 1.32  1996/05/01  16:28:39	jimz
- * get rid of uses of ccmn_ functions
- *
- * Revision 1.31  1996/05/01  15:42:17	jimz
- * ccmn_* memory management is on the way out. This is an archival checkpoint-
- * both the old and new code are in place (all the ccmn_ calls are #if 0). After
- * this, the ccmn_ code will no longer appear.
- *
- * Revision 1.30  1996/04/22  15:53:13	jimz
- * MAX_RAIDS -> NRAIDFRAME
- *
- * Revision 1.29  1995/12/12  18:10:06	jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.28  1995/12/01  19:11:01	root
- * added copyright info
- *
- * Revision 1.27  1995/11/28  18:56:40	wvcii
- * disabled buffer copy in rf_write
- *
- * Revision 1.26  1995/10/06  16:37:08	jimz
- * get struct bufs from ubc, not cam
- * copy all write data, and operate on copy
- * (temporary hack to get around dags in PQ that want
- * to Xor into user write buffers)
- *
- * Revision 1.25  1995/09/30  22:23:08	jimz
- * do not require raid to be active to perform ACCTOTAL ioctl
- *
- * Revision 1.24  1995/09/30  20:39:08	jimz
- * added new ioctls:
- *   RAIDFRAME_RESET_ACCTOTALS
- *   RAIDFRAME_GET_ACCTOTALS
- *   RAIDFRAME_KEEP_ACCTOTALS
- *
- * Revision 1.23  1995/09/20  21:11:59	jimz
- * include dfstrace.h in KERNEL block
- * (even though it's a kernel-only file, this makes the depend process
- * at user-level happy. Why the user-level Makefile wants to depend
- * kintf.c is less clear, but this is a workaround).
- *
- * Revision 1.22  1995/09/19  23:19:03	jimz
- * added DKUSAGE support
- *
- */
-
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
-#ifdef KERNEL
 
 #include <sys/errno.h>
 
-#include "raid.h"
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -305,6 +131,7 @@
 #include <sys/buf.h>
 #include <sys/user.h>
 
+#include "raid.h"
 #include "rf_raid.h"
 #include "rf_raidframe.h"
 #include "rf_dag.h"
@@ -321,7 +148,7 @@
 #include "rf_debugprint.h"
 #include "rf_threadstuff.h"
 
-int rf_kdebug_level = 0;
+int	rf_kdebug_level = 0;
 
 #define RFK_BOOT_NONE 0
 #define RFK_BOOT_GOOD 1
@@ -336,16 +163,16 @@ static int rf_kbooted = RFK_BOOT_NONE;
 #define db3_printf(a) do if (rf_kdebug_level > 2) printf a; while(0)
 #define db4_printf(a) do if (rf_kdebug_level > 3) printf a; while(0)
 #define db5_printf(a) do if (rf_kdebug_level > 4) printf a; while(0)
-#else /* RAIDDEBUG */
+#else	/* RAIDDEBUG */
 #define db0_printf(a) printf a
 #define db1_printf(a) (void)0
 #define db2_printf(a) (void)0
 #define db3_printf(a) (void)0
 #define db4_printf(a) (void)0
 #define db5_printf(a) (void)0
-#endif /* RAIDDEBUG */
+#endif	/* RAIDDEBUG */
 
-static RF_Raid_t **raidPtrs; /* global raid device descriptors */
+static RF_Raid_t **raidPtrs;	/* global raid device descriptors */
 
 static int rf_pending_testaccs;
 
@@ -362,7 +189,7 @@ static struct rf_test_acc    *rf_async_done_qh, *rf_async_done_qt;
 /* used to communicate reconstruction requests */
 static struct rf_recon_req *recon_queue = NULL;
 
-decl_simple_lock_data(,recon_queue_mutex)
+decl_simple_lock_data(, recon_queue_mutex)
 
 #define LOCK_RECON_Q_MUTEX() simple_lock(&recon_queue_mutex)
 #define UNLOCK_RECON_Q_MUTEX() simple_unlock(&recon_queue_mutex)
@@ -376,7 +203,7 @@ void	rf_InitBP __P((struct buf *, struct vnode *, unsigned, dev_t,
 /* this is so that we can compile under 2.0 as well as 3.2 */
 #ifndef proc_to_task
 #define proc_to_task(x) ((x)->task)
-#endif /* !proc_to_task */
+#endif	/* !proc_to_task */
 
 void	raidattach __P((int));
 int	raidsize __P((dev_t));
@@ -397,27 +224,27 @@ int	raiddump __P((dev_t, daddr_t, caddr_t, size_t));
  * Pilfered from ccd.c
  */
 struct raidbuf {
-	struct buf	rf_buf;		/* new I/O buf.	 MUST BE FIRST!!! */
-	struct buf	*rf_obp;	/* ptr. to original I/O buf */
-	int		rf_flags;	/* misc. flags */
-	RF_DiskQueueData_t  *req;	/* the request that this was part of.. */
+	struct buf rf_buf;	/* new I/O buf.	 MUST BE FIRST!!! */
+	struct buf *rf_obp;	/* ptr. to original I/O buf */
+	int	rf_flags;	/* misc. flags */
+	RF_DiskQueueData_t *req;/* the request that this was part of.. */
 };
 
-#define RAIDGETBUF() malloc(sizeof (struct raidbuf), M_DEVBUF, M_NOWAIT)
-#define	RAIDPUTBUF(buf) free(buf, M_DEVBUF)
+#define RAIDGETBUF() malloc(sizeof (struct raidbuf), M_RAIDFRAME, M_NOWAIT)
+#define	RAIDPUTBUF(buf) free(buf, M_RAIDFRAME)
 
 /*
  * XXX Not sure if the following should be replacing the raidPtrs above,
  * or if it should be used in conjunction with that...
  */
 struct raid_softc {
-	int		 sc_unit;		/* logical unit number */
-	int		 sc_flags;		/* flags */
-	int		 sc_cflags;		/* configuration flags */
-	size_t		 sc_size;		/* size of the raid device */
-	dev_t		 sc_dev;		/* our device..*/
-	char		 sc_xname[20];		/* XXX external name */
-	struct disk	 sc_dkdev;		/* generic disk device info */
+	int	 sc_unit;		/* logical unit number */
+	int	 sc_flags;		/* flags */
+	int	 sc_cflags;		/* configuration flags */
+	size_t	 sc_size;		/* size of the raid device */
+	dev_t	 sc_dev;		/* our device..*/
+	char	 sc_xname[20];		/* XXX external name */
+	struct disk sc_dkdev;		/* generic disk device info */
 };
 
 /* sc_flags */
@@ -428,7 +255,7 @@ struct raid_softc {
 #define RAIDF_LOCKED	0x80	/* unit is locked */
 
 #define	raidunit(x)	DISKUNIT(x)
-static int numraid=0;
+static int numraid = 0;
 
 #define RAIDLABELDEV(dev)	\
 	(MAKEDISKDEV(major((dev)), raidunit((dev)), RAW_PART))
@@ -461,9 +288,7 @@ raidattach(num)
 		return;
 	}
 
-	/*
-	 * This is where all the initialization stuff gets done.
-	 */
+	/* This is where all the initialization stuff gets done. */
 
 	/* Make some space for requested number of units... */
 	RF_Calloc(raidPtrs, num, sizeof(RF_Raid_t *), (RF_Raid_t **));
@@ -479,25 +304,24 @@ raidattach(num)
 	rf_kbooted = RFK_BOOT_GOOD;
 
 	/*
-	   put together some datastructures like the CCD device does..
-	   This lets us lock the device and what-not when it gets opened.
-	*/
+	 * Put together some datastructures like the CCD device does..
+	 * This lets us lock the device and what-not when it gets opened.
+	 */
 	
 	raid_softc = (struct raid_softc *)
-		malloc(num * sizeof(struct raid_softc),
-		       M_DEVBUF, M_NOWAIT);
+	    malloc(num * sizeof (struct raid_softc), M_RAIDFRAME, M_NOWAIT);
 	if (raid_softc == NULL) {
 		printf("WARNING: no memory for RAIDframe driver\n");
 		return;
 	}
 	numraid = num;
-	bzero(raid_softc, num * sizeof(struct raid_softc));
+	bzero(raid_softc, num * sizeof (struct raid_softc));
 
-	for(raidID=0;raidID < num;raidID++) {
-		RF_Calloc(raidPtrs[raidID], 1, sizeof(RF_Raid_t),
-			  (RF_Raid_t *));
-		if (raidPtrs[raidID]==NULL) {
-			printf("raidPtrs[%d] is NULL\n",raidID);
+	for (raidID = 0; raidID < num; raidID++) {
+		RF_Calloc(raidPtrs[raidID], 1, sizeof (RF_Raid_t),
+		    (RF_Raid_t *));
+		if (raidPtrs[raidID] == NULL) {
+			printf("raidPtrs[%d] is NULL\n", raidID);
 		}
 	}
 }
@@ -720,12 +544,12 @@ raidstrategy(bp)
 	 * Do bounds checking and adjust transfer.  If there's an
 	 * error, the bounds check will flag that for us.
 	 */
-	wlabel = rs->sc_flags & (RAIDF_WLABEL|RAIDF_LABELLING);
+	wlabel = rs->sc_flags & (RAIDF_WLABEL | RAIDF_LABELLING);
 	if (DISKPART(bp->b_dev) != RAW_PART)
 		if (bounds_check_with_label(bp, lp, rs->sc_dkdev.dk_cpulabel,
 		    wlabel) <= 0) {
 			db1_printf(("Bounds check failed!!:%d %d\n",
-			       (int)bp->b_blkno, (int)wlabel));
+			    (int)bp->b_blkno, (int)wlabel));
 			biodone(bp);
 			return;
 		}
@@ -772,7 +596,7 @@ raidread(dev, uio, flags)
 #if 0
 	return (physio(raidstrategy, NULL, dev, B_READ, minphys, uio));
 #endif
-	result=physio(raidstrategy, NULL, dev, B_READ, minphys, uio);
+	result = physio(raidstrategy, NULL, dev, B_READ, minphys, uio);
 	db1_printf(("raidread done.  Result is %d %d\n", result,
 	    uio->uio_resid));
 	return (result);
@@ -1041,8 +865,8 @@ raidioctl(dev, cmd, data, flag, p)
 			if (!raid->valid)
 				return (ENODEV);
 			ucfgp = (RF_DeviceConfig_t **)data;
-			RF_Malloc(cfg,sizeof(RF_DeviceConfig_t),
-				  (RF_DeviceConfig_t *));
+			RF_Malloc(cfg, sizeof (RF_DeviceConfig_t),
+			    (RF_DeviceConfig_t *));
 			if (cfg == NULL)
 				return (ENOMEM);
 			bzero((char *)cfg, sizeof(RF_DeviceConfig_t));
@@ -1060,18 +884,18 @@ raidioctl(dev, cmd, data, flag, p)
 			}
 			cfg->maxqdepth = raid->maxQueueDepth;
 			d = 0;
-			for(i=0;i<cfg->rows;i++) {
-				for(j=0;j<cfg->cols;j++) {
+			for(i = 0; i < cfg->rows; i++) {
+				for(j = 0; j < cfg->cols; j++) {
 					cfg->devs[d] = raid->Disks[i][j];
 					d++;
 				}
 			}
-			for(j=cfg->cols,i=0;i<cfg->nspares;i++,j++) {
+			for(j = cfg->cols, i = 0; i < cfg->nspares; i++, j++) {
 				cfg->spares[i] = raid->Disks[0][j];
 			}
 			retcode = copyout((caddr_t)cfg, (caddr_t)*ucfgp,
-					  sizeof(RF_DeviceConfig_t));
-			RF_Free(cfg,sizeof(RF_DeviceConfig_t));
+			    sizeof (RF_DeviceConfig_t));
+			RF_Free(cfg, sizeof (RF_DeviceConfig_t));
 			
 			return (retcode);
 		}
@@ -1116,10 +940,10 @@ raidioctl(dev, cmd, data, flag, p)
 
 		/* fail a disk & optionally start reconstruction */
 	case RAIDFRAME_FAIL_DISK:
-		rr = (struct rf_recon_req *) data;
+		rr = (struct rf_recon_req *)data;
 		
-		if (rr->row < 0 || rr->row >= raidPtrs[unit]->numRow
-		    || rr->col < 0 || rr->col >= raidPtrs[unit]->numCol)
+		if (rr->row < 0 || rr->row >= raidPtrs[unit]->numRow ||
+		    rr->col < 0 || rr->col >= raidPtrs[unit]->numCol)
 			return (EINVAL);
 
 		printf("Failing the disk: row: %d col: %d\n",rr->row,rr->col);
@@ -1130,7 +954,7 @@ raidioctl(dev, cmd, data, flag, p)
 		 */
 		RF_Malloc(rrcopy, sizeof(*rrcopy), (struct rf_recon_req *));
 		bcopy(rr, rrcopy, sizeof(*rr));
-		rrcopy->raidPtr = (void *) raidPtrs[unit];
+		rrcopy->raidPtr = (void *)raidPtrs[unit];
 
 		LOCK_RECON_Q_MUTEX();
 		rrcopy->next = recon_queue;
@@ -1177,7 +1001,7 @@ raidioctl(dev, cmd, data, flag, p)
 		 */
 		RF_LOCK_MUTEX(rf_sparet_wait_mutex);
 		while (!rf_sparet_wait_queue)
-			mpsleep(&rf_sparet_wait_queue, (PZERO+1)|PCATCH,
+			mpsleep(&rf_sparet_wait_queue, (PZERO + 1) | PCATCH,
 			    "sparet wait", 0,
 			    (void *)simple_lock_addr(rf_sparet_wait_mutex),
 			    MS_LOCK_SIMPLE);
@@ -1195,7 +1019,7 @@ raidioctl(dev, cmd, data, flag, p)
 		 * Wakes up a process waiting on SPARET_WAIT and puts an
 		 * error code in it that will cause the dameon to exit.
 		 */
-		RF_Malloc(waitreq, sizeof(*waitreq), (RF_SparetWait_t *));
+		RF_Malloc(waitreq, sizeof (*waitreq), (RF_SparetWait_t *));
 		waitreq->fcol = -1;
 		RF_LOCK_MUTEX(rf_sparet_wait_mutex);
 		waitreq->next = rf_sparet_wait_queue;
@@ -1211,7 +1035,7 @@ raidioctl(dev, cmd, data, flag, p)
 		 */
 		
 		/* Install the spare table */
-		retcode = rf_SetSpareTable(raidPtrs[unit],*(void **) data);
+		retcode = rf_SetSpareTable(raidPtrs[unit],*(void **)data);
 		
 		/*
 		 * Respond to the requestor.  the return status of the
@@ -1359,7 +1183,7 @@ rf_boot()
 	rf_sparet_wait_queue = rf_sparet_resp_queue = NULL;
 	recon_queue = NULL;
 	rf_async_done_qh = rf_async_done_qt = NULL;
-	for (i=0; i<numraid; i++)
+	for (i = 0; i < numraid; i++)
 		raidPtrs[i] = NULL;
 	rc = rf_BootRaidframe();
 	if (rc == 0)
@@ -1389,9 +1213,10 @@ rf_ReconKernelThread()
 		/* grab the next reconstruction request from the queue */
 		LOCK_RECON_Q_MUTEX();
 		while (!recon_queue) {
-		  UNLOCK_RECON_Q_MUTEX();
-		  tsleep(&recon_queue, PRIBIO | PCATCH, "raidframe recon", 0);
-		  LOCK_RECON_Q_MUTEX();
+			UNLOCK_RECON_Q_MUTEX();
+			tsleep(&recon_queue, PRIBIO | PCATCH,
+			    "raidframe recon", 0);
+			LOCK_RECON_Q_MUTEX();
 		}
 		req = recon_queue;
 		recon_queue = recon_queue->next;
@@ -1402,10 +1227,10 @@ rf_ReconKernelThread()
 		 * will not return until reconstruction completes, fails, or
 		 * is aborted.
 		 */
-		rf_FailDisk((RF_Raid_t *) req->raidPtr, req->row, req->col,
+		rf_FailDisk((RF_Raid_t *)req->raidPtr, req->row, req->col,
 		    ((req->flags&RF_FDFLAGS_RECON) ? 1 : 0));
 
-		RF_Free(req, sizeof(*req));
+		RF_Free(req, sizeof *req);
 	}
 }
 
@@ -1434,7 +1259,7 @@ rf_GetSpareTableFromDaemon(req)
 		    "raidframe getsparetable", 0);
 #if 0
 		mpsleep(&rf_sparet_resp_queue, PZERO, "sparet resp", 0,
-		    (void *) simple_lock_addr(rf_sparet_wait_mutex),
+		    (void *)simple_lock_addr(rf_sparet_wait_mutex),
 		    MS_LOCK_SIMPLE);
 #endif
 	}
@@ -1444,7 +1269,7 @@ rf_GetSpareTableFromDaemon(req)
 
 	retcode = req->fcol;
 	/* this is not the same req as we alloc'd */
-	RF_Free(req, sizeof(*req));
+	RF_Free(req, sizeof *req);
 	return (retcode);
 }
 
@@ -1457,11 +1282,11 @@ rf_GetSpareTableFromDaemon(req)
  */
 int
 rf_DoAccessKernel(raidPtr, bp, flags, cbFunc, cbArg)
-	RF_Raid_t	       *raidPtr;
-	struct buf	       *bp;
-	RF_RaidAccessFlags_t	flags;
-	void		      (*cbFunc)(struct buf *);
-	void		       *cbArg;
+	RF_Raid_t *raidPtr;
+	struct buf *bp;
+	RF_RaidAccessFlags_t flags;
+	void (*cbFunc)(struct buf *);
+	void *cbArg;
 {
 	RF_SectorCount_t num_blocks, pb, sum;
 	RF_RaidAddr_t raid_addr;
@@ -1547,8 +1372,8 @@ rf_DoAccessKernel(raidPtr, bp, flags, cbFunc, cbArg)
 
 int
 rf_DispatchKernelIO(queue, req)
-	RF_DiskQueue_t	    *queue;
-	RF_DiskQueueData_t  *req;
+	RF_DiskQueue_t *queue;
+	RF_DiskQueueData_t *req;
 {
 	int op = (req->type == RF_IO_TYPE_READ) ? B_READ : B_WRITE;
 	struct buf *bp;
@@ -1812,7 +1637,6 @@ rf_InitBP(bp, b_vp, rw_flag, dev, startSect, numSect, buf, cbFunc, cbArg,
 	bp->b_iodone = cbFunc;
 	bp->b_vp = b_vp;
 }
-#endif /* KERNEL */
 
 /* Extras... */
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_sys.h,v 1.1 1999/01/11 14:29:53 niklas Exp $	*/
-/*	$NetBSD: rf_sys.h,v 1.1 1998/11/13 04:20:35 oster Exp $	*/
+/*	$OpenBSD: rf_sys.h,v 1.2 1999/02/16 00:03:31 niklas Exp $	*/
+/*	$NetBSD: rf_sys.h,v 1.3 1999/02/05 00:06:18 oster Exp $	*/
 /*
  * rf_sys.h
  *
@@ -37,33 +37,6 @@
 
 #include "rf_types.h"
 
-int rf_ConfigureEtimer(RF_ShutdownList_t **listp);
+int     rf_ConfigureEtimer(RF_ShutdownList_t ** listp);
 
-#if defined(__osf__) && !defined(KERNEL)
-int rf_get_cpu_ticks_per_sec(long *ticksp);
-#endif /* __osf__ && !KERNEL */
-
-#ifdef AIX
-#include <nlist.h>
-#include <sys/time.h>
-#if RF_AIXVers == 3
-int gettimeofday(struct timeval *tp, struct timezone *tzp);
-#endif /* RF_AIXVers == 3 */
-int knlist(struct nlist *namelist, int nel, int size);
-int ffs(int index);
-#endif /* AIX */
-
-#ifdef sun
-#define bcopy(a,b,n) memcpy(b,a,n)
-#define bzero(b,n)   memset(b,0,n)
-#define bcmp(a,b,n)  memcmp(a,b,n)
-#endif /* sun */
-
-#ifdef __GNUC__
-/* we use gcc -Wall to check our anal-retentiveness level, occasionally */
-#if defined(DEC_OSF) && !defined(KERNEL)
-extern int ioctl(int fd, int req, ...);
-#endif /* DEC_OSF && !KERNEL */
-#endif /* __GNUC__ */
-
-#endif /* !_RF__RF_SYS_H_ */
+#endif				/* !_RF__RF_SYS_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_dagdegrd.h,v 1.1 1999/01/11 14:29:07 niklas Exp $	*/
-/*	$NetBSD: rf_dagdegrd.h,v 1.1 1998/11/13 04:20:27 oster Exp $	*/
+/*	$OpenBSD: rf_dagdegrd.h,v 1.2 1999/02/16 00:02:29 niklas Exp $	*/
+/*	$NetBSD: rf_dagdegrd.h,v 1.3 1999/02/05 00:06:07 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,62 +27,38 @@
  * rights to redistribute these changes.
  */
 
-/* 
- * :  
- * Log: rf_dagdegrd.h,v 
- * Revision 1.6  1996/07/31 16:29:06  jimz
- * asm/asmap re-fix (EO merge)
- *
- * Revision 1.5  1996/07/31  15:34:40  jimz
- * evenodd changes; bugfixes for double-degraded archs, generalize
- * some formerly PQ-only functions
- *
- * Revision 1.4  1996/07/22  19:52:16  jimz
- * switched node params to RF_DagParam_t, a union of
- * a 64-bit int and a void *, for better portability
- * attempted hpux port, but failed partway through for
- * lack of a single C compiler capable of compiling all
- * source files
- *
- * Revision 1.3  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.2  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.1  1996/05/03  19:22:06  wvcii
- * Initial revision
- *
- */
-
 #ifndef _RF__RF_DAGDEGRD_H_
 #define _RF__RF_DAGDEGRD_H_
 
 #include "rf_types.h"
 
 /* degraded read DAG creation routines */
-void rf_CreateRaidFiveDegradedReadDAG(RF_Raid_t *raidPtr,
-	RF_AccessStripeMap_t *asmap, RF_DagHeader_t *dag_h, void *bp,
-	RF_RaidAccessFlags_t flags, RF_AllocListElem_t *allocList);
-void rf_CreateRaidOneDegradedReadDAG(RF_Raid_t *raidPtr,
-	RF_AccessStripeMap_t *asmap, RF_DagHeader_t *dag_h, void *bp,
-	RF_RaidAccessFlags_t flags, RF_AllocListElem_t *allocList);
-void rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr,
-	RF_AccessStripeMap_t *asmap, RF_DagHeader_t *dag_h, void *bp,
-	RF_RaidAccessFlags_t flags, RF_AllocListElem_t *allocList,
-	RF_RedFuncs_t *recFunc);
-void rf_CreateRaidCDegradedReadDAG(RF_Raid_t *raidPtr,
-	RF_AccessStripeMap_t *asmap, RF_DagHeader_t *dag_h, void *bp,
-	RF_RaidAccessFlags_t flags, RF_AllocListElem_t *allocList);
-void rf_DD_GenerateFailedAccessASMs(RF_Raid_t *raidPtr,
-	RF_AccessStripeMap_t *asmap, RF_PhysDiskAddr_t **pdap,
-	int *nNodep, RF_PhysDiskAddr_t **pqpdap, int *nPQNodep,
-	RF_AllocListElem_t *allocList);
-void rf_DoubleDegRead(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
-	RF_DagHeader_t *dag_h, void *bp, RF_RaidAccessFlags_t flags,
-	RF_AllocListElem_t *allocList, char *redundantReadNodeName,
-	char *recoveryNodeName, int (*recovFunc)(RF_DagNode_t *));
+void 
+rf_CreateRaidFiveDegradedReadDAG(RF_Raid_t * raidPtr,
+    RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
+    RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList);
+void 
+rf_CreateRaidOneDegradedReadDAG(RF_Raid_t * raidPtr,
+    RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
+    RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList);
+void 
+rf_CreateDegradedReadDAG(RF_Raid_t * raidPtr,
+    RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
+    RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList,
+    RF_RedFuncs_t * recFunc);
+void 
+rf_CreateRaidCDegradedReadDAG(RF_Raid_t * raidPtr,
+    RF_AccessStripeMap_t * asmap, RF_DagHeader_t * dag_h, void *bp,
+    RF_RaidAccessFlags_t flags, RF_AllocListElem_t * allocList);
+void 
+rf_DD_GenerateFailedAccessASMs(RF_Raid_t * raidPtr,
+    RF_AccessStripeMap_t * asmap, RF_PhysDiskAddr_t ** pdap,
+    int *nNodep, RF_PhysDiskAddr_t ** pqpdap, int *nPQNodep,
+    RF_AllocListElem_t * allocList);
+void 
+rf_DoubleDegRead(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
+    RF_DagHeader_t * dag_h, void *bp, RF_RaidAccessFlags_t flags,
+    RF_AllocListElem_t * allocList, char *redundantReadNodeName,
+    char *recoveryNodeName, int (*recovFunc) (RF_DagNode_t *));
 
-#endif /* !_RF__RF_DAGDEGRD_H_ */
+#endif				/* !_RF__RF_DAGDEGRD_H_ */

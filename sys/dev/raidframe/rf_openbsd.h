@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_openbsd.h,v 1.1 1999/01/11 14:29:32 niklas Exp $	*/
+/*	$OpenBSD: rf_openbsd.h,v 1.2 1999/02/16 00:03:01 niklas Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,19 +76,21 @@
 #ifndef _RF__RF_OPENBSD_H_
 #define _RF__RF_OPENBSD_H_
 
+#ifdef _KERNEL
 #include <sys/fcntl.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 
 struct raidcinfo {
-	struct vnode	*ci_vp;			/* device's vnode */
-	dev_t		ci_dev;			/* XXX: device's dev_t */
+	struct vnode *ci_vp;		/* device's vnode */
+	dev_t	ci_dev;			/* XXX: device's dev_t */
 #if 0
-	size_t		ci_size; 		/* size */
-	char		*ci_path;		/* path to component */
-	size_t		ci_pathlen;		/* length of component path */
+	size_t	ci_size; 		/* size */
+	char   *ci_path;		/* path to component */
+	size_t	ci_pathlen;		/* length of component path */
 #endif
 };
 
-#endif /*  _RF__RF_OPENBSD_H_ */
+#endif	/* _KERNEL */
+#endif	/* _RF__RF_OPENBSD_H_ */

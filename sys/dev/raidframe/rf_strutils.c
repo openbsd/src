@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_strutils.c,v 1.1 1999/01/11 14:29:51 niklas Exp $	*/
-/*	$NetBSD: rf_strutils.c,v 1.1 1998/11/13 04:20:35 oster Exp $	*/
+/*	$OpenBSD: rf_strutils.c,v 1.2 1999/02/16 00:03:29 niklas Exp $	*/
+/*	$NetBSD: rf_strutils.c,v 1.3 1999/02/05 00:06:18 oster Exp $	*/
 /*
  * rf_strutils.c
  *
@@ -36,27 +36,21 @@
  * I put them in a file by themselves because they're needed in
  * setconfig, in the user-level driver, and in the kernel.
  *
- * :  
- * Log: rf_strutils.c,v 
- * Revision 1.2  1996/06/02 17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
  */
 
 #include "rf_utils.h"
 
 /* finds a non-white character in the line */
-char *rf_find_non_white(char *p)
+char   *
+rf_find_non_white(char *p)
 {
-  for (; *p != '\0' && (*p == ' ' || *p == '\t'); p++);
-  return(p);
+	for (; *p != '\0' && (*p == ' ' || *p == '\t'); p++);
+	return (p);
 }
-
 /* finds a white character in the line */
-char *rf_find_white(char *p)
+char   *
+rf_find_white(char *p)
 {
-  for (; *p != '\0' && (*p != ' ' && *p != '\t'); p++);
-  return(p);
+	for (; *p != '\0' && (*p != ' ' && *p != '\t'); p++);
+	return (p);
 }

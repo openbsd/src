@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_netbsd.h,v 1.1 1999/01/11 14:29:30 niklas Exp $	*/
-/*	$NetBSD: rf_netbsd.h,v 1.1 1998/11/13 04:20:31 oster Exp $	*/
+/*	$OpenBSD: rf_netbsd.h,v 1.2 1999/02/16 00:02:57 niklas Exp $	*/
+/*	$NetBSD: rf_netbsd.h,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -76,6 +76,7 @@
 #ifndef _RF__RF_NETBSDSTUFF_H_
 #define _RF__RF_NETBSDSTUFF_H_
 
+#ifdef _KERNEL
 #include <sys/fcntl.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -83,16 +84,14 @@
 
 
 
-#if defined(__NetBSD__) && defined(_KERNEL)
 struct raidcinfo {
-	struct vnode	*ci_vp;			/* device's vnode */
-	dev_t		ci_dev;			/* XXX: device's dev_t */
+	struct vnode *ci_vp;	/* device's vnode */
+	dev_t   ci_dev;		/* XXX: device's dev_t */
 #if 0
-	size_t		ci_size; 		/* size */
-	char		*ci_path;		/* path to component */
-	size_t		ci_pathlen;		/* length of component path */
+	size_t  ci_size;	/* size */
+	char   *ci_path;	/* path to component */
+	size_t  ci_pathlen;	/* length of component path */
 #endif
 };
-#endif
-
-#endif /*  _RF__RF_NETBSDSTUFF_H_ */
+#endif				/* _KERNEL */
+#endif				/* _RF__RF_NETBSDSTUFF_H_ */

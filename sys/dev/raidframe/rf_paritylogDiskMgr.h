@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_paritylogDiskMgr.h,v 1.1 1999/01/11 14:29:35 niklas Exp $	*/
-/*	$NetBSD: rf_paritylogDiskMgr.h,v 1.1 1998/11/13 04:20:32 oster Exp $	*/
+/*	$OpenBSD: rf_paritylogDiskMgr.h,v 1.2 1999/02/16 00:03:06 niklas Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.h,v 1.3 1999/02/05 00:06:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,27 +29,6 @@
 
 /* header file for parity log disk mgr code
  *
- * :  
- * Log: rf_paritylogDiskMgr.h,v 
- * Revision 1.5  1996/06/02 17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.4  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.3  1995/12/06  20:56:39  wvcii
- * added prototypes
- *
- * Revision 1.2  1995/11/30  16:06:21  wvcii
- * added copyright info
- *
- * Revision 1.1  1995/09/06  19:25:29  wvcii
- * Initial revision
- *
- *
  */
 
 #ifndef _RF__RF_PARITYLOGDISKMGR_H_
@@ -57,7 +36,7 @@
 
 #include "rf_types.h"
 
-int rf_ShutdownLogging(RF_Raid_t *raidPtr);
-int rf_ParityLoggingDiskManager(RF_Raid_t *raidPtr);
+int     rf_ShutdownLogging(RF_Raid_t * raidPtr);
+int     rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr);
 
-#endif /* !_RF__RF_PARITYLOGDISKMGR_H_ */
+#endif				/* !_RF__RF_PARITYLOGDISKMGR_H_ */

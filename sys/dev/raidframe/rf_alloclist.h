@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_alloclist.h,v 1.1 1999/01/11 14:28:59 niklas Exp $	*/
-/*	$NetBSD: rf_alloclist.h,v 1.1 1998/11/13 04:20:26 oster Exp $	*/
+/*	$OpenBSD: rf_alloclist.h,v 1.2 1999/02/16 00:02:23 niklas Exp $	*/
+/*	$NetBSD: rf_alloclist.h,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,29 +33,6 @@
  *
  ***************************************************************************/
 
-/* :  
- * Log: rf_alloclist.h,v 
- * Revision 1.11  1996/07/18 22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.10  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.9  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.8  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.7  1995/11/30  16:27:13  wvcii
- * added copyright info
- *
- */
-
 #ifndef _RF__RF_ALLOCLIST_H_
 #define _RF__RF_ALLOCLIST_H_
 
@@ -64,21 +41,20 @@
 #define RF_POINTERS_PER_ALLOC_LIST_ELEMENT 20
 
 struct RF_AllocListElem_s {
-  void                *pointers[RF_POINTERS_PER_ALLOC_LIST_ELEMENT];
-  int                  sizes[RF_POINTERS_PER_ALLOC_LIST_ELEMENT];
-  int                  numPointers;
-  RF_AllocListElem_t  *next;
+	void   *pointers[RF_POINTERS_PER_ALLOC_LIST_ELEMENT];
+	int     sizes[RF_POINTERS_PER_ALLOC_LIST_ELEMENT];
+	int     numPointers;
+	RF_AllocListElem_t *next;
 };
-
 #define rf_MakeAllocList(_ptr_) _ptr_ = rf_real_MakeAllocList(1);
 #define rf_AddToAllocList(_l_,_ptr_,_sz_) rf_real_AddToAllocList((_l_), (_ptr_), (_sz_), 1)
 
-int rf_ConfigureAllocList(RF_ShutdownList_t **listp);
+int     rf_ConfigureAllocList(RF_ShutdownList_t ** listp);
 
 #if RF_UTILITY == 0
-void rf_real_AddToAllocList(RF_AllocListElem_t *l, void *p, int size, int lockflag);
-void rf_FreeAllocList(RF_AllocListElem_t *l);
+void    rf_real_AddToAllocList(RF_AllocListElem_t * l, void *p, int size, int lockflag);
+void    rf_FreeAllocList(RF_AllocListElem_t * l);
 RF_AllocListElem_t *rf_real_MakeAllocList(int lockflag);
-#endif /* RF_UTILITY == 0 */
+#endif				/* RF_UTILITY == 0 */
 
-#endif /* !_RF__RF_ALLOCLIST_H_ */
+#endif				/* !_RF__RF_ALLOCLIST_H_ */

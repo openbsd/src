@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_cpuutil.h,v 1.1 1999/01/11 14:29:03 niklas Exp $	*/
-/*	$NetBSD: rf_cpuutil.h,v 1.1 1998/11/13 04:20:27 oster Exp $	*/
+/*	$OpenBSD: rf_cpuutil.h,v 1.2 1999/02/16 00:02:27 niklas Exp $	*/
+/*	$NetBSD: rf_cpuutil.h,v 1.2 1999/02/05 00:06:07 oster Exp $	*/
 /*
  * rf_cpuutil.h
  */
@@ -30,8 +30,8 @@
  * rights to redistribute these changes.
  */
 /*
- * :  
- * Log: rf_cpuutil.h,v 
+ * :
+ * Log: rf_cpuutil.h,v
  * Revision 1.3  1996/07/18 22:57:14  jimz
  * port simulator to AIX
  *
@@ -49,9 +49,9 @@
 
 #include "rf_types.h"
 
-int  rf_ConfigureCpuMonitor(RF_ShutdownList_t **listp);
-void rf_start_cpu_monitor(void);
-void rf_stop_cpu_monitor(void);
-void rf_print_cpu_util(char *s);
+int     rf_ConfigureCpuMonitor(RF_ShutdownList_t ** listp);
+void    rf_start_cpu_monitor(void);
+void    rf_stop_cpu_monitor(void);
+void    rf_print_cpu_util(char *s);
 
-#endif /* !_RF__RF_CPUUTIL_H_ */
+#endif				/* !_RF__RF_CPUUTIL_H_ */

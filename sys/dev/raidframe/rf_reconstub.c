@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_reconstub.c,v 1.1 1999/01/11 14:29:47 niklas Exp $	*/
-/*	$NetBSD: rf_reconstub.c,v 1.1 1998/11/13 04:20:34 oster Exp $	*/
+/*	$OpenBSD: rf_reconstub.c,v 1.2 1999/02/16 00:03:23 niklas Exp $	*/
+/*	$NetBSD: rf_reconstub.c,v 1.3 1999/02/05 00:06:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -40,49 +40,64 @@
  *
  **************************************************************************/
 
-/* :  
- * Log: rf_reconstub.c,v 
- * Revision 1.9  1996/05/24 01:59:45  jimz
- * another checkpoint in code cleanup for release
- * time to sync kernel tree
- *
- * Revision 1.8  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.7  1996/04/03  23:25:33  jimz
- * make inclusion of raidframe_recon.h #ifdef KERNEL
- *
- * Revision 1.6  1995/12/06  15:06:54  root
- * added copyright info
- *
- */
-
-#ifdef KERNEL
-#include <raidframe_recon.h>
-#endif /* KERNEL */
 #include <sys/errno.h>
 
 #if RAIDFRAME_RECON == 0
 
-int rf_ConfigureReconstruction() { return(0); }
-int rf_ConfigureReconEvent()     { return(0); }
-int rf_ConfigurePSStatus()       { return(0); }
-int rf_ConfigureNWayXor()        { return(0); }
-int rf_ConfigureCopyback()       { return(0); }
-int rf_ShutdownCopyback()        { return(0); }
-int rf_ShutdownReconstruction()  { return(0); }
-int rf_ShutdownReconEvent()      { return(0); }
-int rf_ShutdownPSStatus()        { return(0); }
-int rf_ShutdownNWayXor()         { return(0); }
+int     rf_ConfigureReconstruction() {
+	return (0);
+}
+int     rf_ConfigureReconEvent() {
+	return (0);
+}
+int     rf_ConfigurePSStatus() {
+	return (0);
+}
+int     rf_ConfigureNWayXor() {
+	return (0);
+}
+int     rf_ConfigureCopyback() {
+	return (0);
+}
+int     rf_ShutdownCopyback() {
+	return (0);
+}
+int     rf_ShutdownReconstruction() {
+	return (0);
+}
+int     rf_ShutdownReconEvent() {
+	return (0);
+}
+int     rf_ShutdownPSStatus() {
+	return (0);
+}
+int     rf_ShutdownNWayXor() {
+	return (0);
+}
 
-int rf_ForceOrBlockRecon()       { return(0); }
-int rf_UnblockRecon()            { return(0); }
-int rf_ReconstructFailedDisk()   { return(ENOTTY); }
-int rf_CheckRUReconstructed()    { return(0); }
+int     rf_ForceOrBlockRecon() {
+	return (0);
+}
+int     rf_UnblockRecon() {
+	return (0);
+}
+int     rf_ReconstructFailedDisk() {
+	return (ENOTTY);
+}
+int     rf_CheckRUReconstructed() {
+	return (0);
+}
 
-void rf_start_cpu_monitor()  {}
-void rf_stop_cpu_monitor()   {}
-void rf_print_cpu_util()     {}
-
-#endif /* RAIDFRAME_RECON == 0 */
+void 
+rf_start_cpu_monitor()
+{
+}
+void 
+rf_stop_cpu_monitor()
+{
+}
+void 
+rf_print_cpu_util()
+{
+}
+#endif				/* RAIDFRAME_RECON == 0 */

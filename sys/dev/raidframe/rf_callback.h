@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_callback.h,v 1.1 1999/01/11 14:29:00 niklas Exp $	*/
-/*	$NetBSD: rf_callback.h,v 1.1 1998/11/13 04:20:26 oster Exp $	*/
+/*	$OpenBSD: rf_callback.h,v 1.2 1999/02/16 00:02:24 niklas Exp $	*/
+/*	$NetBSD: rf_callback.h,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,51 +42,24 @@
  *
  ****************************************************************************************/
 
-/* :  
- * Log: rf_callback.h,v 
- * Revision 1.8  1996/08/01 15:57:28  jimz
- * minor cleanup
- *
- * Revision 1.7  1996/07/27  23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.6  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.5  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.4  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.3  1996/05/17  16:30:46  jimz
- * add prototypes
- *
- * Revision 1.2  1995/12/01  15:15:55  root
- * added copyright info
- *
- */
-
 #ifndef _RF__RF_CALLBACK_H_
 #define _RF__RF_CALLBACK_H_
 
 #include "rf_types.h"
 
 struct RF_CallbackDesc_s {
-  void              (*callbackFunc)(RF_CBParam_t); /* function to call */
-  RF_CBParam_t        callbackArg;     /* args to give to function, or just info about this callback  */
-  RF_CBParam_t        callbackArg2;
-  RF_RowCol_t         row;             /* disk row and column IDs to give to the callback func */
-  RF_RowCol_t         col;
-  RF_CallbackDesc_t  *next;            /* next entry in list */
+	void    (*callbackFunc) (RF_CBParam_t);	/* function to call */
+	RF_CBParam_t callbackArg;	/* args to give to function, or just
+					 * info about this callback  */
+	RF_CBParam_t callbackArg2;
+	RF_RowCol_t row;	/* disk row and column IDs to give to the
+				 * callback func */
+	RF_RowCol_t col;
+	RF_CallbackDesc_t *next;/* next entry in list */
 };
 
-int                 rf_ConfigureCallback(RF_ShutdownList_t **listp);
-RF_CallbackDesc_t  *rf_AllocCallbackDesc(void);
-void                rf_FreeCallbackDesc(RF_CallbackDesc_t *p);
+int     rf_ConfigureCallback(RF_ShutdownList_t ** listp);
+RF_CallbackDesc_t *rf_AllocCallbackDesc(void);
+void    rf_FreeCallbackDesc(RF_CallbackDesc_t * p);
 
-#endif /* !_RF__RF_CALLBACK_H_ */
+#endif				/* !_RF__RF_CALLBACK_H_ */

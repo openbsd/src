@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_evenodd_dags.h,v 1.1 1999/01/11 14:29:22 niklas Exp $	*/
-/*	$NetBSD: rf_evenodd_dags.h,v 1.1 1998/11/13 04:20:29 oster Exp $	*/
+/*	$OpenBSD: rf_evenodd_dags.h,v 1.2 1999/02/16 00:02:45 niklas Exp $	*/
+/*	$NetBSD: rf_evenodd_dags.h,v 1.2 1999/02/05 00:06:11 oster Exp $	*/
 /*
  * rf_evenodd_dags.h
  */
@@ -59,6 +59,6 @@ RF_CREATE_DAG_FUNC_DECL(rf_EO_DoubleDegRead);
 RF_CREATE_DAG_FUNC_DECL(rf_EOCreateSmallWriteDAG);
 RF_CREATE_DAG_FUNC_DECL(rf_EOCreateLargeWriteDAG);
 RF_CREATE_DAG_FUNC_DECL(rf_EO_200_CreateWriteDAG);
-#endif /* RF_UTILITY == 0 */
+#endif				/* RF_UTILITY == 0 */
 
-#endif /* !_RF__RF_EVENODD_DAGS_H_ */
+#endif				/* !_RF__RF_EVENODD_DAGS_H_ */

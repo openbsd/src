@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_revent.h,v 1.1 1999/01/11 14:29:48 niklas Exp $	*/
-/*	$NetBSD: rf_revent.h,v 1.1 1998/11/13 04:20:34 oster Exp $	*/
+/*	$OpenBSD: rf_revent.h,v 1.2 1999/02/16 00:03:25 niklas Exp $	*/
+/*	$NetBSD: rf_revent.h,v 1.3 1999/02/05 00:06:17 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,50 +33,20 @@
  *
  *******************************************************************/
 
-/* :  
- * Log: rf_revent.h,v 
- * Revision 1.7  1996/07/15 05:40:41  jimz
- * some recon datastructure cleanup
- * better handling of multiple failures
- * added undocumented double-recon test
- *
- * Revision 1.6  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.5  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.4  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.3  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.2  1995/12/06  15:04:20  root
- * added copyright info
- *
- */
-
 #ifndef _RF__RF_REVENT_H_
 #define _RF__RF_REVENT_H_
 
 #include "rf_types.h"
 
-int rf_ConfigureReconEvent(RF_ShutdownList_t **listp);
+int     rf_ConfigureReconEvent(RF_ShutdownList_t ** listp);
 
-RF_ReconEvent_t *rf_GetNextReconEvent(RF_RaidReconDesc_t *reconDesc,
-	RF_RowCol_t row, void (*continueFunc)(void *), void *continueArg);
+RF_ReconEvent_t *
+rf_GetNextReconEvent(RF_RaidReconDesc_t * reconDesc,
+    RF_RowCol_t row, void (*continueFunc) (void *), void *continueArg);
 
-void rf_CauseReconEvent(RF_Raid_t *raidPtr, RF_RowCol_t row, RF_RowCol_t col,
-	void *arg, RF_Revent_t type);
+	void    rf_CauseReconEvent(RF_Raid_t * raidPtr, RF_RowCol_t row, RF_RowCol_t col,
+            void *arg, RF_Revent_t type);
 
-void rf_FreeReconEventDesc(RF_ReconEvent_t *event);
+	void    rf_FreeReconEventDesc(RF_ReconEvent_t * event);
 
-#endif /* !_RF__RF_REVENT_H_ */
+#endif				/* !_RF__RF_REVENT_H_ */

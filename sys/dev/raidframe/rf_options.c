@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_options.c,v 1.1 1999/01/11 14:29:33 niklas Exp $	*/
-/*	$NetBSD: rf_options.c,v 1.1 1998/11/13 04:20:31 oster Exp $	*/
+/*	$OpenBSD: rf_options.c,v 1.2 1999/02/16 00:03:02 niklas Exp $	*/
+/*	$NetBSD: rf_options.c,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
 /*
  * rf_options.c
  */
@@ -30,15 +30,6 @@
  * rights to redistribute these changes.
  */
 
-#ifdef _KERNEL
-#define KERNEL
-#endif
-
-#ifdef KERNEL
-#if !defined(__NetBSD__) && !defined(__OpenBSD__)
-#include <dfstrace.h>
-#endif /* !__NetBSD__ && !__OpenBSD__ */
-#endif /* KERNEL */
 
 #include "rf_threadstuff.h"
 #include "rf_types.h"
@@ -48,13 +39,13 @@
 
 #ifdef RF_DBG_OPTION
 #undef RF_DBG_OPTION
-#endif /* RF_DBG_OPTION */
+#endif				/* RF_DBG_OPTION */
 
 #ifdef __STDC__
 #define RF_DBG_OPTION(_option_,_defval_) long rf_##_option_ = _defval_;
-#else /* __STDC__ */
+#else				/* __STDC__ */
 #define RF_DBG_OPTION(_option_,_defval_) long rf_/**/_option_ = _defval_;
-#endif /* __STDC__ */
+#endif				/* __STDC__ */
 
 #include "rf_optnames.h"
 
@@ -62,24 +53,24 @@
 
 #ifdef __STDC__
 #define RF_DBG_OPTION(_option_,_defval_) { RF_STRING(_option_), &rf_##_option_ },
-#else /* __STDC__ */
+#else				/* __STDC__ */
 #define RF_DBG_OPTION(_option_,_defval_) { RF_STRING(_option_), &rf_/**/_option_ },
-#endif /* __STDC__ */
+#endif				/* __STDC__ */
 
 RF_DebugName_t rf_debugNames[] = {
 #include "rf_optnames.h"
 	{NULL, NULL}
 };
-
 #undef RF_DBG_OPTION
 
 #ifdef __STDC__
 #define RF_DBG_OPTION(_option_,_defval_) rf_##_option_  = _defval_ ;
-#else /* __STDC__ */
+#else				/* __STDC__ */
 #define RF_DBG_OPTION(_option_,_defval_) rf_/**/_option_ = _defval_ ;
-#endif /* __STDC__ */
+#endif				/* __STDC__ */
 
-void rf_ResetDebugOptions()
+void 
+rf_ResetDebugOptions()
 {
 #include "rf_optnames.h"
 }

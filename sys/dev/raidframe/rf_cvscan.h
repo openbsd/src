@@ -1,5 +1,5 @@
-/*	$OpenBSD: rf_cvscan.h,v 1.1 1999/01/11 14:29:06 niklas Exp $	*/
-/*	$NetBSD: rf_cvscan.h,v 1.1 1998/11/13 04:20:27 oster Exp $	*/
+/*	$OpenBSD: rf_cvscan.h,v 1.2 1999/02/16 00:02:28 niklas Exp $	*/
+/*	$NetBSD: rf_cvscan.h,v 1.3 1999/02/05 00:06:07 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,50 +48,38 @@
 **	share the same, highest priority level.
 */
 
-/* :  
- * Log: rf_cvscan.h,v 
- * Revision 1.3  1996/06/07 22:26:27  jimz
- * type-ify which_ru (RF_ReconUnitNum_t)
- *
- * Revision 1.2  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.1  1996/06/05  19:17:40  jimz
- * Initial revision
- *
- */
-
 #ifndef _RF__RF_CVSCAN_H_
 #define _RF__RF_CVSCAN_H_
 
 #include "rf_diskqueue.h"
 
 typedef enum RF_CvscanArmDir_e {
-  rf_cvscan_LEFT,
-  rf_cvscan_RIGHT
-} RF_CvscanArmDir_t;
+	rf_cvscan_LEFT,
+	rf_cvscan_RIGHT
+}       RF_CvscanArmDir_t;
 
 typedef struct RF_CvscanHeader_s {
-	long		range_for_avg;	/* CVSCAN param N */
-	long		change_penalty;	/* CVSCAN param R */
-	RF_CvscanArmDir_t	direction;
-	RF_SectorNum_t		cur_block;
-	int		nxt_priority;
-	RF_DiskQueueData_t	*left;
-	int		left_cnt;
-	RF_DiskQueueData_t	*right;
-	int		right_cnt;
-	RF_DiskQueueData_t	*burner;
-} RF_CvscanHeader_t;
+	long    range_for_avg;	/* CVSCAN param N */
+	long    change_penalty;	/* CVSCAN param R */
+	RF_CvscanArmDir_t direction;
+	RF_SectorNum_t cur_block;
+	int     nxt_priority;
+	RF_DiskQueueData_t *left;
+	int     left_cnt;
+	RF_DiskQueueData_t *right;
+	int     right_cnt;
+	RF_DiskQueueData_t *burner;
+}       RF_CvscanHeader_t;
 
-int rf_CvscanConfigure(void);
-void *rf_CvscanCreate(RF_SectorCount_t sect_per_disk,
-	RF_AllocListElem_t *cl_list, RF_ShutdownList_t **listp);
-void rf_CvscanEnqueue(void *qptr, RF_DiskQueueData_t *req, int priority);
+int     rf_CvscanConfigure(void);
+void   *
+rf_CvscanCreate(RF_SectorCount_t sect_per_disk,
+    RF_AllocListElem_t * cl_list, RF_ShutdownList_t ** listp);
+void    rf_CvscanEnqueue(void *qptr, RF_DiskQueueData_t * req, int priority);
 RF_DiskQueueData_t *rf_CvscanDequeue(void *qptr);
 RF_DiskQueueData_t *rf_CvscanPeek(void *qptr);
-int rf_CvscanPromote(void *qptr, RF_StripeNum_t parityStripeID,
-	RF_ReconUnitNum_t which_ru);
+int 
+rf_CvscanPromote(void *qptr, RF_StripeNum_t parityStripeID,
+    RF_ReconUnitNum_t which_ru);
 
-#endif /* !_RF__RF_CVSCAN_H_ */
+#endif				/* !_RF__RF_CVSCAN_H_ */
