@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.110 2004/04/26 01:59:26 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.111 2004/04/26 04:13:59 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -153,10 +153,14 @@ struct peer_ipsec {
 	u_int8_t	auth_alg_out;
 	char		auth_key_in[IPSEC_AUTH_KEY_LEN];
 	char		auth_key_out[IPSEC_AUTH_KEY_LEN];
+	u_int8_t	auth_keylen_in;
+	u_int8_t	auth_keylen_out;
 	u_int8_t	enc_alg_in;
 	u_int8_t	enc_alg_out;
 	char		enc_key_in[IPSEC_ENC_KEY_LEN];
 	char		enc_key_out[IPSEC_ENC_KEY_LEN];
+	u_int8_t	enc_keylen_in;
+	u_int8_t	enc_keylen_out;
 };
 
 struct peer_config {
