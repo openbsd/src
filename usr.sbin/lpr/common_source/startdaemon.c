@@ -1,4 +1,4 @@
-/*	$OpenBSD: startdaemon.c,v 1.8 2002/06/08 01:53:43 millert Exp $	*/
+/*	$OpenBSD: startdaemon.c,v 1.9 2002/07/27 22:30:00 deraadt Exp $	*/
 /*	$NetBSD: startdaemon.c,v 1.10 1998/07/18 05:04:39 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)startdaemon.c	8.2 (Berkeley) 4/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: startdaemon.c,v 1.8 2002/06/08 01:53:43 millert Exp $";
+static const char rcsid[] = "$OpenBSD: startdaemon.c,v 1.9 2002/07/27 22:30:00 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,8 +96,8 @@ startdaemon(char *printer)
 	}
 	PRIV_END;
 	siginterrupt(SIGINT, 0);
-	n = snprintf(buf, sizeof(buf), "\1%s\n", printer);
-	if (n >= sizeof(buf) || n == -1) {
+	if ((n = snprintf(buf, sizeof(buf), "\1%s\n", printer)) >= sizeof(buf) ||
+	    n == -1) {
 		close(s);
 		return (0);
 	}
