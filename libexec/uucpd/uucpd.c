@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: uucpd.c,v 1.8 1997/02/06 13:34:45 deraadt Exp $";
+static char rcsid[] = "$Id: uucpd.c,v 1.9 1997/06/02 06:28:13 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -169,11 +169,13 @@ struct sockaddr_in *sinp;
 	struct passwd *pw, *getpwnam();
 
 	alarm(60);
-	printf("login: "); fflush(stdout);
-	if (readline(user, sizeof user) < 0) {
-		fprintf(stderr, "user read\n");
-		return;
-	}
+	do {
+		printf("login: "); fflush(stdout);
+		if (readline(user, sizeof user) < 0) {
+			fprintf(stderr, "user read\n");
+			return;
+		}
+	} while (user[0] == '\0');
 	/* truncate username to 8 characters */
 	user[8] = '\0';
 	pw = getpwnam(user);
