@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.12 2004/03/11 14:22:23 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.13 2004/03/11 17:34:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -125,7 +125,8 @@ pt_shutdown(void)
 	for (i = MIN_PREFIX; i <= MAX_PREFIX; i++) {
 		for (j = 0; j < pthashsize[i]; j++)
 			if (!LIST_EMPTY(&pttable[i].pt_hashtbl[j]))
-				log_warnx("pt_free: free non-free table [%d][%d]", i, j);
+				log_warnx("pt_free: free non-free table "
+				    "[%d][%d]", i, j);
 		free(pttable[i].pt_hashtbl);
 	}
 }

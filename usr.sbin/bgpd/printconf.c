@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.9 2004/03/11 17:12:51 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.10 2004/03/11 17:34:01 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -250,7 +250,7 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 			printf("* ");
 		else
 			printf("%d ", r->match.community.type);
-	} 
+	}
 
 	print_set(&r->set);
 
