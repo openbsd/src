@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tftp.1,v 1.9 2003/09/29 11:23:38 jmc Exp $
+.\"	$OpenBSD: tftp.1,v 1.10 2004/04/10 09:22:19 jmc Exp $
 .\"	$NetBSD: tftp.1,v 1.5 1995/08/18 14:45:44 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -58,7 +58,7 @@ command below).
 Once
 .Nm
 is running, it issues the prompt
-.Ql tftp>
+.Ql tftp\*(Gt
 and recognizes the following commands:
 .Pp
 .Bl -tag -width verbose -compact
@@ -97,16 +97,16 @@ or
 commands.
 .Pp
 .It Xo
-.Ic get Oo Ar host Ns : Oc Ns
+.Ic get Oo Ar host : Oc Ns
 .Ar file Op Ar localname
 .Xc
 .It Xo
-.Ic get Oo Ar host1 Ns : Oc Ns
+.Ic get Oo Ar host1 : Oc Ns
 .Ar file1
-.Oo Ar host2 Ns : Oc Ns
+.Oo Ar host2 : Oc Ns
 .Ar file2
 .Ar ...
-.Oo Ar hostN Ns : Oc Ns
+.Oo Ar hostN : Oc Ns
 .Ar fileN
 .Xc
 Get a file or set of files from the remote host.
@@ -138,12 +138,12 @@ The default is
 .Pp
 .It Xo
 .Ic put Ar file
-.Oo Oo Ar host Ns : Oc Ns
+.Oo Oo Ar host : Oc Ns
 .Ar remotename Oc
 .Xc
 .It Xo
 .Ic put Ar file1 file2 ... fileN
-.Oo Oo Ar host Ns : Oc Ns
+.Oo Oo Ar host : Oc Ns
 .Ar remote-directory Oc
 .Xc
 Put a file or set of files to the remote host.
@@ -171,7 +171,7 @@ for further details.
 .Pp
 .It Ic quit
 Exit
-.Nm tftp .
+.Nm .
 An end-of-file also exits.
 .Pp
 .It Ic rexmt Ar retransmission-timeout
@@ -206,7 +206,10 @@ sort of file access restrictions in place.
 The exact methods are specific to each site and therefore
 difficult to document here.
 .Pp
-Files larger than 33488896 octets (65535 blocks) cannot be transferred
-without client and server supporting blocksize negotiation (RFC 1783).
-.Pp
-Many tftp clients will not transfer files over 16744448 octets (32767 blocks).
+This implementation of
+.Nm
+does not support blocksize negotiation
+.Pq RFC 1783 ,
+so files larger than 33488896 octets
+.Pq 65535 blocks
+cannot be transferred.
