@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.15 2003/07/10 00:00:57 david Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.16 2004/05/09 03:21:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -151,7 +151,7 @@ kbd_show_enc(kvm_t *kd, int idx)
 void
 kbd_list(void)
 {
-	int	fd, i, kbtype, ret;
+	int	fd, i, kbtype;
 	kvm_t	*kd;
 	char	device[MAXPATHLEN];
 	char	errbuf[_POSIX2_LINE_MAX];
@@ -195,10 +195,10 @@ kbd_list(void)
 	}
 
 #ifndef NOKVM
-	if ((kd = kvm_openfiles(NULL,NULL,NULL,O_RDONLY, errbuf)) == 0)
+	if ((kd = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf)) == 0)
 		errx(1, "kvm_openfiles: %s", errbuf);
 
-	if ((ret = kvm_nlist(kd, nl)) == -1)
+	if (kvm_nlist(kd, nl) == -1)
 		errx(1, "kvm_nlist: %s", kvm_geterr(kd));
 
 	if (pc_kbd > 0)
