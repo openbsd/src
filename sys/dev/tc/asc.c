@@ -1187,9 +1187,10 @@ again:
 				    &asc_scripts[SCRIPT_RESUME_NO_DATA];
 		} else if (state->flags & DMA_OUT) {
 			if (len) {
+#ifdef DEBUG
 				printf("asc_intr: 2: len %d (fifo %d)\n", len,
 					fifo); /* XXX */
-				goto abort;
+#endif
 			}
 			/*
 			 * If this is the last chunk, the next expected
