@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.9 2002/07/07 23:14:43 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.10 2002/07/09 13:07:42 dhartmei Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -416,7 +416,7 @@ intercept_get_string(int fd, pid_t pid, void *addr)
 		if (strlen(name) < off)
 			done = 1;
 
-	} while (!done && off < sizeof(name));
+	} while (!done && off + 5 < sizeof(name));
 
 	if (!done) {
 		warnx("%s: string too long", __func__);
