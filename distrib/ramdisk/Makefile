@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2002/04/30 07:24:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.23 2002/05/19 08:56:58 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -61,7 +61,7 @@ ${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
 	disklabel -w ${RAWLABEL} ${VND} ${FLOPPYTYPE}
 	newfs ${NEWFSOPTS_FD} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp ${BOOT} ${MOUNT_POINT}$/
+	cp ${BOOT} ${MOUNT_POINT}/
 	cp bsd.gz ${MOUNT_POINT}/bsd
 	${INSTALLBOOT} -v ${BOOTIN} ${BOOTXX} \
 		`echo ${VND_RDEV} | sed -e 's/a$$/c/'`

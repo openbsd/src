@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2002/05/07 18:44:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2002/05/19 08:56:58 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -62,7 +62,7 @@ ${FLOPPY}:	bsd.gz ${BOOT} /usr/
 	disklabel -w ${RAWLABEL} ${VND} ${FLOPPYTYPE}
 	newfs ${NEWFSOPTS_FD} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp ${DESTDIR}/usr/mdec/ofwboot ${MOUNT_POINT}$/
+	cp ${DESTDIR}/usr/mdec/ofwboot ${MOUNT_POINT}/
 	cp bsd.gz ${MOUNT_POINT}/bsd
 	${INSTALLBOOT} -v ${DESTDIR}/usr/mdec/bootblk \
 		`echo ${VND_RDEV} | sed -e 's/a$$/c/'`
