@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.133 2001/08/19 20:25:22 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.134 2001/08/21 01:54:17 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2577,24 +2577,33 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 		/* Fall through to PASS packet */
 
-	} else if (dst->state < TCPS_SYN_SENT &&
+	} else if ((dst->state < TCPS_SYN_SENT ||
+		dst->state >= TCPS_FIN_WAIT_2 ||
+		src->state >= TCPS_FIN_WAIT_2) &&
 	    SEQ_GEQ(src->seqhi + MAXACKWINDOW, end) &&
 	    /* Within a window forward of the originating packet */
 	    SEQ_GEQ(seq, src->seqlo - MAXACKWINDOW)) {
 	    /* Within a window backward of the originating packet */
 
 		/*
-		 * This is the check for stupid stacks that shotgun SYNs before
-		 * their peer replies.  It also handles the case when PF
-		 * catches an already established stream (the firewall
-		 * rebooted, the state table was flushed, routes changed...)
+		 * This currently handles three situations:
+		 *  1) Stupid stacks will shotgun SYNs before their peer
+		 *     replies.
+		 *  2) When PF catches an already established stream (the
+		 *     firewall rebooted, the state table was flushed, routes
+		 *     changed...)
+		 *  3) Packets get funky immediately after the connection
+		 *     closes (this should catch Solaris spurious ACK|FINs
+		 *     that web servers like to spew after a close)
 		 *
 		 * This must be a little more careful than the above code
-		 * since packet floods will also be caught by the stupid stack
-		 * check.  We won't update the ttl here to mitigate the
-		 * damage of a packet flood -- the ttl will be updated when
-		 * the peer ACKs (then we'll just assume the connection is
-		 * valid)
+		 * since packet floods will also be caught here.  We don't
+		 * update the TTL here to mitigate the damage of a packet
+		 * flood and so the same code can handle awkward establishment
+		 * and a loosened connection close.
+		 * In the establishment case, a correct peer response will
+		 * validate the connection, go through the normal state code
+		 * and keep updating the state TTL.
 		 */
 
 		(*state)->packets++;
