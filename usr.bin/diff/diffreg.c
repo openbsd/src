@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.40 2003/07/22 00:20:40 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.41 2003/07/22 01:16:01 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.40 2003/07/22 00:20:40 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.41 2003/07/22 01:16:01 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -209,7 +209,7 @@ static void unsort(struct line *, int, int *);
 static void change(char *, FILE *, char *, FILE *, int, int, int, int);
 static void sort(struct line *, int);
 static int  asciifile(FILE *);
-static int  fetch(long *, int, int, FILE *, char *, int);
+static int  fetch(long *, int, int, FILE *, int, int);
 static int  newcand(int, int, int);
 static int  search(int *, int, int);
 static int  skipline(FILE *);
@@ -947,10 +947,16 @@ restart:
 			/*
 			 * Print the context/unidiff header first time through.
 			 */
-			printf("%s %s	%s", format == D_CONTEXT ? "***" : "---",
-			   file1, ctime(&stb1.st_mtime));
-			printf("%s %s	%s", format == D_CONTEXT ? "---" : "+++",
-			    file2, ctime(&stb2.st_mtime));
+			if (label != NULL)
+				printf("%s %s\n",
+				    format == D_CONTEXT ? "***" : "---", label);
+			else
+				printf("%s %s	%s",
+				    format == D_CONTEXT ? "***" : "---", file1,
+				    ctime(&stb1.st_mtime));
+			printf("%s %s	%s",
+			    format == D_CONTEXT ? "---" : "+++", file2,
+			    ctime(&stb2.st_mtime));
 			anychange = 1;
 		} else if (a > context_vec_ptr->b + (2 * context) &&
 		    c > context_vec_ptr->d + (2 * context)) {
@@ -999,11 +1005,11 @@ restart:
 		break;
 	}
 	if (format == D_NORMAL || format == D_IFDEF) {
-		fetch(ixold, a, b, f1, "< ", 1);
+		fetch(ixold, a, b, f1, '<', 1);
 		if (a <= b && c <= d && format == D_NORMAL)
 			puts("---");
 	}
-	i = fetch(ixnew, c, d, f2, format == D_NORMAL ? "> " : "", 0);
+	i = fetch(ixnew, c, d, f2, format == D_NORMAL ? '>' : '\0', 0);
 	if (i != 0 && format == D_EDIT) {
 		/*
 		 * A non-zero return value for D_EDIT indicates that the
@@ -1027,7 +1033,7 @@ restart:
 }
 
 static int
-fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
+fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 {
 	int i, j, c, lastc, col, nc;
 
@@ -1059,8 +1065,14 @@ fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 	for (i = a; i <= b; i++) {
 		fseek(lb, f[i - 1], SEEK_SET);
 		nc = f[i] - f[i - 1];
-		if (format != D_IFDEF)
-			fputs(s, stdout);
+		if (format != D_IFDEF && ch != '\0') {
+			putchar(ch);
+			if (Tflag && (format == D_NORMAL || format == D_CONTEXT
+			    || format == D_UNIFIED))
+				putchar('\t');
+			else if (format != D_UNIFIED)
+				putchar(' ');
+		}
 		col = 0;
 		for (j = 0, lastc = '\0'; j < nc; j++, lastc = c) {
 			if ((c = getc(lb)) == EOF) {
@@ -1230,16 +1242,16 @@ dump_context_vec(FILE *f1, FILE *f2)
 				ch = (a <= b) ? 'd' : 'a';
 
 			if (ch == 'a')
-				fetch(ixold, lowa, b, f1, "  ", 0);
+				fetch(ixold, lowa, b, f1, ' ', 0);
 			else {
-				fetch(ixold, lowa, a - 1, f1, "  ", 0);
+				fetch(ixold, lowa, a - 1, f1, ' ', 0);
 				fetch(ixold, a, b, f1,
-				    ch == 'c' ? "! " : "- ", 0);
+				    ch == 'c' ? '!' : '-', 0);
 			}
 			lowa = b + 1;
 			cvp++;
 		}
-		fetch(ixold, b + 1, upb, f1, "  ", 0);
+		fetch(ixold, b + 1, upb, f1, ' ', 0);
 	}
 	/* output changes to the "new" file */
 	printf("--- ");
@@ -1266,16 +1278,16 @@ dump_context_vec(FILE *f1, FILE *f2)
 				ch = (a <= b) ? 'd' : 'a';
 
 			if (ch == 'd')
-				fetch(ixnew, lowc, d, f2, "  ", 0);
+				fetch(ixnew, lowc, d, f2, ' ', 0);
 			else {
-				fetch(ixnew, lowc, c - 1, f2, "  ", 0);
+				fetch(ixnew, lowc, c - 1, f2, ' ', 0);
 				fetch(ixnew, c, d, f2,
-				    ch == 'c' ? "! " : "+ ", 0);
+				    ch == 'c' ? '!' : '+', 0);
 			}
 			lowc = d + 1;
 			cvp++;
 		}
-		fetch(ixnew, d + 1, upd, f2, "  ", 0);
+		fetch(ixnew, d + 1, upd, f2, ' ', 0);
 	}
 	context_vec_ptr = context_vec_start - 1;
 }
@@ -1326,23 +1338,23 @@ dump_unified_vec(FILE *f1, FILE *f2)
 
 		switch (ch) {
 		case 'c':
-			fetch(ixold, lowa, a - 1, f1, " ", 0);
-			fetch(ixold, a, b, f1, "-", 0);
-			fetch(ixnew, c, d, f2, "+", 0);
+			fetch(ixold, lowa, a - 1, f1, ' ', 0);
+			fetch(ixold, a, b, f1, '-', 0);
+			fetch(ixnew, c, d, f2, '+', 0);
 			break;
 		case 'd':
-			fetch(ixold, lowa, a - 1, f1, " ", 0);
-			fetch(ixold, a, b, f1, "-", 0);
+			fetch(ixold, lowa, a - 1, f1, ' ', 0);
+			fetch(ixold, a, b, f1, '-', 0);
 			break;
 		case 'a':
-			fetch(ixnew, lowc, c - 1, f2, " ", 0);
-			fetch(ixnew, c, d, f2, "+", 0);
+			fetch(ixnew, lowc, c - 1, f2, ' ', 0);
+			fetch(ixnew, c, d, f2, '+', 0);
 			break;
 		}
 		lowa = b + 1;
 		lowc = d + 1;
 	}
-	fetch(ixnew, d + 1, upd, f2, " ", 0);
+	fetch(ixnew, d + 1, upd, f2, ' ', 0);
 
 	context_vec_ptr = context_vec_start - 1;
 }

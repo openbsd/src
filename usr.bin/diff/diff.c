@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.32 2003/07/21 23:02:35 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.33 2003/07/22 01:16:01 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.32 2003/07/21 23:02:35 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.33 2003/07/22 01:16:01 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -39,13 +39,14 @@ static const char rcsid[] = "$OpenBSD: diff.c,v 1.32 2003/07/21 23:02:35 millert
 
 #include "diff.h"
 
-int	 aflag, bflag, iflag, lflag, Nflag, Pflag, rflag, sflag, tflag, wflag;
+int	 aflag, bflag, iflag, lflag, Nflag, Pflag, rflag, sflag, tflag, Tflag,
+	 wflag;
 int	 format, context, status;
-char	*start, *ifdefname, *diffargs;
+char	*start, *ifdefname, *diffargs, *label;
 struct stat stb1, stb2;
 struct excludes *excludes_list;
 
-#define	OPTIONS	"abC:cD:efhilnNPqrS:stU:uwX:x:"
+#define	OPTIONS	"abC:cD:efhiL:lnNPqrS:sTtU:uwX:x:"
 static struct option longopts[] = {
 	{ "text",			no_argument,		0,	'a' },
 	{ "ignore-space-change",	no_argument,		0,	'b' },
@@ -55,6 +56,7 @@ static struct option longopts[] = {
 	{ "forward-ed",			no_argument,		0,	'f' },
 	{ "ignore-case",		no_argument,		0,	'i' },
 	{ "paginate",			no_argument,		0,	'l' },
+	{ "label",			required_argument,	0,	'L' },
 	{ "new-file",			no_argument,		0,	'N' },
 	{ "rcs",			no_argument,		0,	'n' },
 	{ "unidirectional-new-file",	no_argument,		0,	'P' },
@@ -63,6 +65,7 @@ static struct option longopts[] = {
 	{ "report-identical-files",	no_argument,		0,	's' },
 	{ "starting-file",		required_argument,	0,	'S' },
 	{ "expand-tabs",		no_argument,		0,	't' },
+	{ "intial-tab",			no_argument,		0,	'T' },
 	{ "unified",			optional_argument,	0,	'U' },
 	{ "ignore-all-space",		no_argument,		0,	'w' },
 	{ "exclude",			required_argument,	0,	'x' },
@@ -119,6 +122,9 @@ main(int argc, char **argv)
 		case 'i':
 			iflag = 1;
 			break;
+		case 'L':
+			label = optarg;
+			break;
 		case 'l':
 			lflag = 1;
 			signal(SIGPIPE, SIG_IGN);
@@ -143,6 +149,9 @@ main(int argc, char **argv)
 			break;
 		case 's':
 			sflag = 1;
+			break;
+		case 'T':
+			Tflag = 1;
 			break;
 		case 't':
 			tflag = 1;
@@ -351,12 +360,12 @@ __dead void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: diff [-biqtw] [-c | -e | -f | -n | -u ] file1 file2\n"
-	    "       diff [-biqtw] -C number file1 file2\n"
-	    "       diff [-biqtw] -D string file1 file2\n"
-	    "       diff [-biqtw] -U number file1 file2\n"
-	    "       diff [-biNPqwt] [-c | -e | -f | -n | -u ] [-r] [-s] [-S name]"
-	    " [-X file]\n            [-x pattern] dir1 dir2\n");
+	    "usage: diff [-bilqtTw] [-c | -e | -f | -n | -u] [-L label] file1 file2\n"
+	    "       diff [-bilqtTw] [-L label] -C number file1 file2\n"
+	    "       diff [-bilqtw] -D string file1 file2\n"
+	    "       diff [-bilqtTw] [-L label] -U number file1 file2\n"
+	    "       diff [-bilNPqwtT] [-c | -e | -f | -n | -u ] [-L label] [-r] [-s] [-S name]\n"
+	    "            [-X file] [-x pattern] dir1 dir2\n");
 
 	exit(2);
 }
