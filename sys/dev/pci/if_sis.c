@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.10 2001/02/20 19:39:45 mickey Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.11 2001/03/12 05:51:18 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -129,6 +129,9 @@ void sis_delay		__P((struct sis_softc *));
 void sis_eeprom_idle	__P((struct sis_softc *));
 void sis_eeprom_putbyte	__P((struct sis_softc *, int));
 void sis_eeprom_getword	__P((struct sis_softc *, int, u_int16_t *));
+#ifdef __i386__
+void sis_read_cmos	__P((struct sis_softc *, struct pci_attach_args *, caddr_t, int, int));
+#endif
 void sis_read_eeprom	__P((struct sis_softc *, caddr_t, int, int, int));
 
 int sis_miibus_readreg	__P((struct device *, int, int));
@@ -309,6 +312,31 @@ void sis_read_eeprom(sc, dest, off, cnt, swap)
 
 	return;
 }
+
+#ifdef __i386__
+void sis_read_cmos(sc, pa, dest, off, cnt)
+	struct sis_softc *sc;
+	struct pci_attach_args *pa;
+	caddr_t dest;
+	int off, cnt;
+{
+	bus_space_tag_t btag;
+	u_int32_t reg;
+	int i;
+
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x48);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, 0x48, reg | 0x40);
+
+	btag = I386_BUS_SPACE_IO;
+
+	for (i = 0; i < cnt; i++) {
+		bus_space_write_1(btag, 0x0, 0x70, i + off);
+		*(dest + i) = bus_space_read_1(btag, 0x0, 0x71);
+	}
+
+	pci_conf_write(pa->pa_pc, pa->pa_tag, 0x48, reg & ~0x40);
+}
+#endif
 
 int sis_miibus_readreg(self, phy, reg)
 	struct device		*self;
@@ -739,8 +767,33 @@ void sis_attach(parent, self, aux)
 		break;
 	case PCI_VENDOR_SIS:
 	default:
-		sis_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
-		    SIS_EE_NODEADDR, 3, 0);
+#ifdef __i386__
+		/*
+		 * If this is a SiS 630E chipset with an embedded
+		 * SiS 900 controller, we have to read the MAC address
+		 * from the APC CMOS RAM. Our method for doing this
+		 * is very ugly since we have to reach out and grab
+		 * ahold of hardware for which we cannot properly
+		 * allocate resources. This code is only compiled on
+		 * the i386 architecture since the SiS 630E chipset
+		 * is for x86 motherboards only. Note that there are
+		 * a lot of magic numbers in this hack. These are
+		 * taken from SiS's Linux driver. I'd like to replace
+		 * them with proper symbolic definitions, but that
+		 * requires some datasheets that I don't have access
+		 * to at the moment.
+		 */
+		command = pci_conf_read(pc, pa->pa_tag,
+		    PCI_CLASS_REG) & 0x000000ff;
+		if (command == SIS_REV_630S ||
+		    command == SIS_REV_630E ||
+		    command == SIS_REV_630EA1)
+		        sis_read_cmos(sc, pa, (caddr_t)&sc->arpcom.ac_enaddr,
+			    0x9, 6);
+		else
+#endif
+			sis_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
+			    SIS_EE_NODEADDR, 3, 0);
 		break;
 	}
 

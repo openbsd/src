@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.4 2000/12/06 15:48:28 mickey Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.5 2001/03/12 05:51:18 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -355,6 +355,14 @@ struct sis_ring_data {
  */
 #define SIS_DEVICEID_900	0x0900
 #define SIS_DEVICEID_7016	0x7016
+
+
+/*
+ * SiS 900 PCI revision codes.
+ */
+#define SIS_REV_630E		0x0081
+#define SIS_REV_630S		0x0082
+#define SIS_REV_630EA1		0x0083
 
 struct sis_type {
 	u_int16_t		sis_vid;
