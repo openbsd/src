@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.38 2000/10/17 17:44:38 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.39 2000/11/16 20:29:55 provos Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -42,7 +42,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	getpgrp.o getpid.o getppid.o getpriority.o getrlimit.o getrusage.o \
 	getsid.o \
 	getsockname.o getsockopt.o gettimeofday.o getuid.o issetugid.o \
-	ioctl.o kill.o \
+	ioctl.o kill.o kevent.o kqueue.o \
 	ktrace.o lchown.o lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o \
 	link.o listen.o lstat.o madvise.o mincore.o minherit.o mkdir.o \
 	mkfifo.o mknod.o mlock.o \
@@ -172,7 +172,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	getgid.2 getgroups.2 getitimer.2 getlogin.2 getpeername.2 getpgrp.2 \
 	getpid.2 getpriority.2 getrlimit.2 getrusage.2 getsid.2 getsockname.2 \
 	getsockopt.2 gettimeofday.2 getuid.2 intro.2 issetugid.2 ioctl.2 \
-	kill.2 ktrace.2 link.2 \
+	kill.2 kqueue.2 ktrace.2 link.2 \
 	listen.2 lseek.2 mkdir.2 mkfifo.2 mknod.2 madvise.2 mincore.2 \
 	minherit.2 mlock.2 \
 	mmap.2 mount.2 mprotect.2 msync.2 munmap.2 nanosleep.2 \
@@ -208,6 +208,7 @@ MLINKS+=getrlimit.2 setrlimit.2
 MLINKS+=getsockopt.2 setsockopt.2
 MLINKS+=gettimeofday.2 settimeofday.2
 MLINKS+=getuid.2 geteuid.2
+MLINKS+=kqueue.2 kevent.2
 MLINKS+=intro.2 errno.2
 MLINKS+=mlock.2 munlock.2
 MLINKS+=mount.2 unmount.2
