@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_writev.c,v 1.9 2004/11/30 00:14:51 pat Exp $	*/
+/*	$OpenBSD: uthread_writev.c,v 1.10 2004/12/12 21:56:07 brad Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -141,7 +141,9 @@ writev(int fd, const struct iovec * iov, int iovcnt)
 						 * for the next write:
 						 */
 						p_iov[idx].iov_len -= cnt;
-						(char *)p_iov[idx].iov_base += cnt;
+						p_iov[idx].iov_base =
+						    (char *)p_iov[idx].iov_base
+						    + cnt;
 						cnt = 0;
 					}
 				}
