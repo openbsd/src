@@ -1,4 +1,4 @@
-/*	$OpenBSD: dl_printf.c,v 1.1.1.1 2000/06/13 03:33:55 rahnds Exp $	*/
+/*	$OpenBSD: dl_printf.c,v 1.2 2001/06/06 12:38:44 art Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -75,8 +75,7 @@ static void sputchar __P((int));
 static char *sbuf;
 
 static void
-putchar(c)
-	int c;
+putchar(int c)
 {
 	char b;
 	b = c;
@@ -84,48 +83,29 @@ putchar(c)
 }
 
 static void
-sputchar(c)
-	int c;
+sputchar(int c)
 {
 	*sbuf++ = c;
 }
 
 void
-#ifdef __STDC__
 _dl_sprintf(char *buf, const char *fmt, ...)
-#else
-_dl_sprintf(buf, fmt, va_alist)
-	char *buf, *fmt;
-#endif
 {
 	va_list ap;
 
 	sbuf = buf;
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	kdoprnt(sputchar, fmt, ap);
 	va_end(ap);
 	*sbuf = '\0';
 }
 
 void
-#ifdef __STDC__
 _dl_printf(const char *fmt, ...)
-#else
-_dl_printf(fmt, va_alist)
-	char *fmt;
-#endif
 {
 	va_list ap;
 
-#ifdef __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	kdoprnt(putchar, fmt, ap);
 	va_end(ap);
 }
@@ -137,10 +117,7 @@ _dl_vprintf(const char *fmt, va_list ap)
 }
 
 static void
-kdoprnt(put, fmt, ap)
-	void (*put)__P((int));
-	const char *fmt;
-	va_list ap;
+kdoprnt(void (*put)(int), const char *fmt, va_list ap)
 {
 	char *p;
 	int ch;
@@ -154,7 +131,8 @@ kdoprnt(put, fmt, ap)
 			put(ch);
 		}
 		lflag = 0;
-reswitch:	switch (ch = *fmt++) {
+reswitch:
+		switch (ch = *fmt++) {
 		case 'l':
 			lflag = 1;
 			goto reswitch;
@@ -235,10 +213,7 @@ reswitch:	switch (ch = *fmt++) {
 }
 
 static void
-kprintn(put, ul, base)
-	void (*put)__P((int));
-	unsigned long ul;
-	int base;
+kprintn(void (*put)(int), unsigned long ul, int base)
 {
 					/* hold a long in base 8 */
 	char *p, buf[(sizeof(long) * NBBY / 3) + 1];
