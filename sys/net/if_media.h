@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.2 1999/07/21 19:55:59 jason Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.3 2000/01/08 05:28:38 jason Exp $	*/
 /*	$NetBSD: if_media.h,v 1.11 1998/08/12 23:23:29 thorpej Exp $	*/
 
 /*-
@@ -137,6 +137,10 @@ void	ifmedia_set __P((struct ifmedia *ifm, int mword));
 /* Common ioctl function for getting/setting media, called by driver. */
 int	ifmedia_ioctl __P((struct ifnet *ifp, struct ifreq *ifr,
 	    struct ifmedia *ifm, u_long cmd));
+
+/* Locate a media entry */
+struct	ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm,
+	     int flags, int mask));
 
 #endif /*_KERNEL */
 

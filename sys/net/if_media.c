@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.1 1998/09/03 06:24:20 jason Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.2 2000/01/08 05:28:38 jason Exp $	*/
 /*	$NetBSD: if_media.c,v 1.3 1998/08/30 07:39:39 enami Exp $	*/
 
 /*-
@@ -100,9 +100,6 @@
  *	turn on implementation-level debug printfs.
  * 	Useful for debugging newly-ported  drivers.
  */
-
-struct ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm,
-    int flags, int mask));
 
 #ifdef IFMEDIA_DEBUG
 int	ifmedia_debug = 0;
