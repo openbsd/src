@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.12 1997/05/04 03:25:03 tholo Exp $
+#	$OpenBSD: install.sub,v 1.13 1997/05/04 04:50:22 tholo Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -681,11 +681,13 @@ install_from_mounted_fs() {
 	if dir_has_sets $1 $THESETS; then
 		for _f in $THESETS ; do
 			if [ "X${_f}" = "Xkernel" ]; then
-				_kernel=bsd
-			elif [ -f $1/${_f}.tar.gz ]; then
-				_sets="$_sets ${_f}.tar.gz"
-			elif [ -f $1/${_f}.tgz ]; then
-				_sets="$_sets ${_f}.tgz"
+				if [ -f $1/bsd ]; then
+					_kernel=bsd
+				fi
+			elif [ -f $1/${_f}${VERSION}.tar.gz ]; then
+				_sets="$_sets ${_f}${VERSION}.tar.gz"
+			elif [ -f $1/${_f}${VERSION}.tgz ]; then
+				_sets="$_sets ${_f}${VERSION}.tgz"
 			fi
 		done
 	else
