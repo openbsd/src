@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.3 1997/10/16 01:47:11 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.4 1997/10/16 02:29:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -88,7 +88,7 @@ again:
 			errx(1, "eof");
 		lbuf[strlen(lbuf)-1] = '\0';
 
-		if (lbuf[0] == '?') {
+		if (help && lbuf[0] == '?') {
 			(*help)();
 			goto again;
 		}
