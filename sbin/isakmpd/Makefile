@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 2001/03/22 15:16:44 markus Exp $
+#	$OpenBSD: Makefile,v 1.34 2001/03/23 16:14:34 markus Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -49,6 +49,7 @@ OS=		openbsd
 #OS=		netbsd
 #OS=		freebsd
 #OS=		linux
+#OS=		bsdi
 
 # Compile-time configuration of otherwise optional features
 #FEATURES=	tripledes des blowfish cast policy x509 ec aggressive debug gmp
