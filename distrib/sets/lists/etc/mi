@@ -30,8 +30,6 @@
 ./etc/hosts.equiv
 ./etc/hosts.lpd
 ./etc/inetd.conf
-./etc/ipf.rules
-./etc/ipnat.rules
 ./etc/kerberosIV/README
 ./etc/kerberosIV/krb.conf
 ./etc/kerberosIV/krb.equiv
@@ -135,7 +133,6 @@
 ./var/log/authlog
 ./var/log/daemon
 ./var/log/ftpd
-./var/log/ipflog
 ./var/log/lastlog
 ./var/log/lpd-errs
 ./var/log/maillog
