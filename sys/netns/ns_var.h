@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_var.h,v 1.3 1996/04/24 08:46:20 mickey Exp $	*/
+/*	$OpenBSD: ns_var.h,v 1.4 1996/05/07 05:53:40 deraadt Exp $	*/
 
 #ifdef _KERNEL
 struct socket;
@@ -11,6 +11,7 @@ struct ns_addr;
 struct route;
 struct ifnet_en;
 struct in_addr;
+struct sockaddr;
 
 /* ns.c */
 int ns_control __P((struct socket *, u_long, caddr_t, struct ifnet *));
