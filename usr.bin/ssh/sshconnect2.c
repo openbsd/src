@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect2.c,v 1.21 2000/09/27 21:41:34 markus Exp $");
+RCSID("$OpenBSD: sshconnect2.c,v 1.22 2000/10/11 04:02:17 provos Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
@@ -52,6 +52,9 @@ RCSID("$OpenBSD: sshconnect2.c,v 1.21 2000/09/27 21:41:34 markus Exp $");
 #include "dispatch.h"
 #include "authfd.h"
 
+void ssh_dh1_client(Kex *, char *, struct sockaddr *, Buffer *, Buffer *);
+void ssh_dhgex_client(Kex *, char *, struct sockaddr *, Buffer *, Buffer *);
+
 /* import */
 extern char *client_version_string;
 extern char *server_version_string;
@@ -65,8 +68,89 @@ unsigned char *session_id2 = NULL;
 int session_id2_len = 0;
 
 void
-ssh_kex_dh(Kex *kex, char *host, struct sockaddr *hostaddr,
-    Buffer *client_kexinit, Buffer *server_kexinit)
+ssh_kex2(char *host, struct sockaddr *hostaddr)
+{
+	int i, plen;
+	Kex *kex;
+	Buffer *client_kexinit, *server_kexinit;
+	char *sprop[PROPOSAL_MAX];
+
+	if (options.ciphers != NULL) {
+		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
+		myproposal[PROPOSAL_ENC_ALGS_STOC] = options.ciphers;
+	} else if (options.cipher == SSH_CIPHER_3DES) {
+		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
+		myproposal[PROPOSAL_ENC_ALGS_STOC] =
+		    (char *) cipher_name(SSH_CIPHER_3DES_CBC);
+	} else if (options.cipher == SSH_CIPHER_BLOWFISH) {
+		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
+		myproposal[PROPOSAL_ENC_ALGS_STOC] =
+		    (char *) cipher_name(SSH_CIPHER_BLOWFISH_CBC);
+	}
+	if (options.compression) {
+		myproposal[PROPOSAL_COMP_ALGS_CTOS] = "zlib";
+		myproposal[PROPOSAL_COMP_ALGS_STOC] = "zlib";
+	} else {
+		myproposal[PROPOSAL_COMP_ALGS_CTOS] = "none";
+		myproposal[PROPOSAL_COMP_ALGS_STOC] = "none";
+	}
+
+	/* buffers with raw kexinit messages */
+	server_kexinit = xmalloc(sizeof(*server_kexinit));
+	buffer_init(server_kexinit);
+	client_kexinit = kex_init(myproposal);
+
+	/* algorithm negotiation */
+	kex_exchange_kexinit(client_kexinit, server_kexinit, sprop);
+	kex = kex_choose_conf(myproposal, sprop, 0);
+	for (i = 0; i < PROPOSAL_MAX; i++)
+		xfree(sprop[i]);
+
+	/* server authentication and session key agreement */
+	switch(kex->kex_type) {
+	case DH_GRP1_SHA1:
+		ssh_dh1_client(kex, host, hostaddr,
+			       client_kexinit, server_kexinit);
+		break;
+	case DH_GEX_SHA1:
+		ssh_dhgex_client(kex, host, hostaddr, client_kexinit,
+				 server_kexinit);
+		break;
+	default:
+		fatal("Unsupported key exchange %d", kex->kex_type);
+	}
+
+	buffer_free(client_kexinit);
+	buffer_free(server_kexinit);
+	xfree(client_kexinit);
+	xfree(server_kexinit);
+
+	debug("Wait SSH2_MSG_NEWKEYS.");
+	packet_read_expect(&plen, SSH2_MSG_NEWKEYS);
+	packet_done();
+	debug("GOT SSH2_MSG_NEWKEYS.");
+
+	debug("send SSH2_MSG_NEWKEYS.");
+	packet_start(SSH2_MSG_NEWKEYS);
+	packet_send();
+	packet_write_wait();
+	debug("done: send SSH2_MSG_NEWKEYS.");
+
+#ifdef DEBUG_KEXDH
+	/* send 1st encrypted/maced/compressed message */
+	packet_start(SSH2_MSG_IGNORE);
+	packet_put_cstring("markus");
+	packet_send();
+	packet_write_wait();
+#endif
+	debug("done: KEX2.");
+}
+
+/* diffie-hellman-group1-sha1 */
+
+void
+ssh_dh1_client(Kex *kex, char *host, struct sockaddr *hostaddr, 
+	       Buffer *client_kexinit, Buffer *server_kexinit)
 {
 #ifdef DEBUG_KEXDH
 	int i;
@@ -116,7 +200,7 @@ ssh_kex_dh(Kex *kex, char *host, struct sockaddr *hostaddr,
 		fatal("cannot decode server_host_key_blob");
 
 	check_host_key(host, hostaddr, server_host_key,
-	    options.user_hostfile2, options.system_hostfile2);
+		       options.user_hostfile2, options.system_hostfile2);
 
 	/* DH paramter f, server public DH key */
 	dh_server_pub = BN_new();
@@ -186,72 +270,175 @@ ssh_kex_dh(Kex *kex, char *host, struct sockaddr *hostaddr,
 	memcpy(session_id2, hash, session_id2_len);
 }
 
-void
-ssh_kex2(char *host, struct sockaddr *hostaddr)
+/* diffie-hellman-group-exchange-sha1 */
+
+/*
+ * Estimates the group order for a Diffie-Hellman group that has an
+ * attack complexity approximately the same as O(2**bits).  Estimate
+ * with:  O(exp(1.9223 * (ln q)^(1/3) (ln ln q)^(2/3)))
+ */
+
+int
+dh_estimate(int bits)
 {
-	int i, plen;
-	Kex *kex;
-	Buffer *client_kexinit, *server_kexinit;
-	char *sprop[PROPOSAL_MAX];
+	
+	if (bits < 64)
+		return (512);	/* O(2**63) */
+	if (bits < 128)
+		return (1024);	/* O(2**86) */
+	if (bits < 192)
+		return (2048);	/* O(2**116) */
+	return (4096);		/* O(2**156) */
+}
 
-	if (options.ciphers != NULL) {
-		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
-		myproposal[PROPOSAL_ENC_ALGS_STOC] = options.ciphers;
-	} else if (options.cipher == SSH_CIPHER_3DES) {
-		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
-		myproposal[PROPOSAL_ENC_ALGS_STOC] =
-		    (char *) cipher_name(SSH_CIPHER_3DES_CBC);
-	} else if (options.cipher == SSH_CIPHER_BLOWFISH) {
-		myproposal[PROPOSAL_ENC_ALGS_CTOS] =
-		myproposal[PROPOSAL_ENC_ALGS_STOC] =
-		    (char *) cipher_name(SSH_CIPHER_BLOWFISH_CBC);
-	}
-	if (options.compression) {
-		myproposal[PROPOSAL_COMP_ALGS_CTOS] = "zlib";
-		myproposal[PROPOSAL_COMP_ALGS_STOC] = "zlib";
-	} else {
-		myproposal[PROPOSAL_COMP_ALGS_CTOS] = "none";
-		myproposal[PROPOSAL_COMP_ALGS_STOC] = "none";
-	}
+void
+ssh_dhgex_client(Kex *kex, char *host, struct sockaddr *hostaddr,
+		 Buffer *client_kexinit, Buffer *server_kexinit)
+{
+#ifdef DEBUG_KEXDH
+	int i;
+#endif
+	int plen, dlen;
+	unsigned int klen, kout;
+	char *signature = NULL;
+	unsigned int slen, nbits;
+	char *server_host_key_blob = NULL;
+	Key *server_host_key;
+	unsigned int sbloblen;
+	DH *dh;
+	BIGNUM *dh_server_pub = 0;
+	BIGNUM *shared_secret = 0;
+	BIGNUM *p = 0, *g = 0;
+	unsigned char *kbuf;
+	unsigned char *hash;
 
-	/* buffers with raw kexinit messages */
-	server_kexinit = xmalloc(sizeof(*server_kexinit));
-	buffer_init(server_kexinit);
-	client_kexinit = kex_init(myproposal);
+	nbits = dh_estimate(kex->enc[MODE_OUT].key_len * 8);
 
-	/* algorithm negotiation */
-	kex_exchange_kexinit(client_kexinit, server_kexinit, sprop);
-	kex = kex_choose_conf(myproposal, sprop, 0);
-	for (i = 0; i < PROPOSAL_MAX; i++)
-		xfree(sprop[i]);
-
-	/* server authentication and session key agreement */
-	ssh_kex_dh(kex, host, hostaddr, client_kexinit, server_kexinit);
-
-	buffer_free(client_kexinit);
-	buffer_free(server_kexinit);
-	xfree(client_kexinit);
-	xfree(server_kexinit);
-
-	debug("Wait SSH2_MSG_NEWKEYS.");
-	packet_read_expect(&plen, SSH2_MSG_NEWKEYS);
-	packet_done();
-	debug("GOT SSH2_MSG_NEWKEYS.");
-
-	debug("send SSH2_MSG_NEWKEYS.");
-	packet_start(SSH2_MSG_NEWKEYS);
+	debug("Sending SSH2_MSG_KEX_DH_GEX_REQUEST.");
+	packet_start(SSH2_MSG_KEX_DH_GEX_REQUEST);
+	packet_put_int(nbits);
 	packet_send();
 	packet_write_wait();
-	debug("done: send SSH2_MSG_NEWKEYS.");
 
 #ifdef DEBUG_KEXDH
-	/* send 1st encrypted/maced/compressed message */
-	packet_start(SSH2_MSG_IGNORE);
-	packet_put_cstring("markus");
+	fprintf(stderr, "\nnbits = %d", nbits);
+#endif
+
+	debug("Wait SSH2_MSG_KEX_DH_GEX_GROUP.");
+
+	packet_read_expect(&plen, SSH2_MSG_KEX_DH_GEX_GROUP);
+
+	debug("Got SSH2_MSG_KEX_DH_GEX_GROUP.");
+
+	if ((p = BN_new()) == NULL)
+		fatal("BN_new");
+	packet_get_bignum2(p, &dlen);
+	if ((g = BN_new()) == NULL)
+		fatal("BN_new");
+	packet_get_bignum2(g, &dlen);
+	if ((dh = dh_new_group(g, p)) == NULL)
+		fatal("dh_new_group");
+
+#ifdef DEBUG_KEXDH
+	fprintf(stderr, "\np= ");
+	BN_print_fp(stderr, dh->p);
+	fprintf(stderr, "\ng= ");
+	BN_print_fp(stderr, dh->g);
+	fprintf(stderr, "\npub= ");
+	BN_print_fp(stderr, dh->pub_key);
+	fprintf(stderr, "\n");
+	DHparams_print_fp(stderr, dh);
+#endif
+
+	debug("Sending SSH2_MSG_KEX_DH_GEX_INIT.");
+	/* generate and send 'e', client DH public key */
+	packet_start(SSH2_MSG_KEX_DH_GEX_INIT);
+	packet_put_bignum2(dh->pub_key);
 	packet_send();
 	packet_write_wait();
+
+	debug("Wait SSH2_MSG_KEX_DH_GEX_REPLY.");
+
+	packet_read_expect(&plen, SSH2_MSG_KEX_DH_GEX_REPLY);
+
+	debug("Got SSH2_MSG_KEXDH_REPLY.");
+
+	/* key, cert */
+	server_host_key_blob = packet_get_string(&sbloblen);
+	server_host_key = dsa_key_from_blob(server_host_key_blob, sbloblen);
+	if (server_host_key == NULL)
+		fatal("cannot decode server_host_key_blob");
+
+	check_host_key(host, hostaddr, server_host_key,
+		       options.user_hostfile2, options.system_hostfile2);
+
+	/* DH paramter f, server public DH key */
+	dh_server_pub = BN_new();
+	if (dh_server_pub == NULL)
+		fatal("dh_server_pub == NULL");
+	packet_get_bignum2(dh_server_pub, &dlen);
+
+#ifdef DEBUG_KEXDH
+	fprintf(stderr, "\ndh_server_pub= ");
+	BN_print_fp(stderr, dh_server_pub);
+	fprintf(stderr, "\n");
+	debug("bits %d", BN_num_bits(dh_server_pub));
 #endif
-	debug("done: KEX2.");
+
+	/* signed H */
+	signature = packet_get_string(&slen);
+	packet_done();
+
+	if (!dh_pub_is_valid(dh, dh_server_pub))
+		packet_disconnect("bad server public DH value");
+
+	klen = DH_size(dh);
+	kbuf = xmalloc(klen);
+	kout = DH_compute_key(kbuf, dh_server_pub, dh);
+#ifdef DEBUG_KEXDH
+	debug("shared secret: len %d/%d", klen, kout);
+	fprintf(stderr, "shared secret == ");
+	for (i = 0; i< kout; i++)
+		fprintf(stderr, "%02x", (kbuf[i])&0xff);
+	fprintf(stderr, "\n");
+#endif
+	shared_secret = BN_new();
+
+	BN_bin2bn(kbuf, kout, shared_secret);
+	memset(kbuf, 0, klen);
+	xfree(kbuf);
+
+	/* calc and verify H */
+	hash = kex_hash_gex(
+	    client_version_string,
+	    server_version_string,
+	    buffer_ptr(client_kexinit), buffer_len(client_kexinit),
+	    buffer_ptr(server_kexinit), buffer_len(server_kexinit),
+	    server_host_key_blob, sbloblen,
+	    nbits, dh->p, dh->g, 
+	    dh->pub_key,
+	    dh_server_pub,
+	    shared_secret
+	);
+	xfree(server_host_key_blob);
+	DH_free(dh);
+#ifdef DEBUG_KEXDH
+	fprintf(stderr, "hash == ");
+	for (i = 0; i< 20; i++)
+		fprintf(stderr, "%02x", (hash[i])&0xff);
+	fprintf(stderr, "\n");
+#endif
+	if (dsa_verify(server_host_key, (unsigned char *)signature, slen, hash, 20) != 1)
+		fatal("dsa_verify failed for server_host_key");
+	key_free(server_host_key);
+
+	kex_derive_keys(kex, hash, shared_secret);
+	packet_set_kex(kex);
+
+	/* save session id */
+	session_id2_len = 20;
+	session_id2 = xmalloc(session_id2_len);
+	memcpy(session_id2, hash, session_id2_len);
 }
 
 /*

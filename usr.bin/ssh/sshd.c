@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.128 2000/09/17 15:38:59 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.129 2000/10/11 04:02:17 provos Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -63,6 +63,7 @@ RCSID("$OpenBSD: sshd.c,v 1.128 2000/09/17 15:38:59 markus Exp $");
 #include <openssl/rsa.h>
 #include "key.h"
 #include "dsa.h"
+#include "dh.h"
 
 #include "auth.h"
 #include "myproposal.h"
@@ -166,6 +167,9 @@ unsigned int utmp_len = MAXHOSTNAMELEN;
 /* Prototypes for various functions defined later in this file. */
 void do_ssh1_kex();
 void do_ssh2_kex();
+
+void ssh_dh1_server(Kex *, Buffer *_kexinit, Buffer *);
+void ssh_dhgex_server(Kex *, Buffer *_kexinit, Buffer *);
 
 /*
  * Close all listening sockets
@@ -1277,18 +1281,8 @@ do_ssh2_kex()
 {
 	Buffer *server_kexinit;
 	Buffer *client_kexinit;
-	int payload_len, dlen;
-	int slen;
-	unsigned int klen, kout;
-	unsigned char *signature = NULL;
-	unsigned char *server_host_key_blob = NULL;
-	unsigned int sbloblen;
-	DH *dh;
-	BIGNUM *dh_client_pub = 0;
-	BIGNUM *shared_secret = 0;
+	int payload_len;
 	int i;
-	unsigned char *kbuf;
-	unsigned char *hash;
 	Kex *kex;
 	char *cprop[PROPOSAL_MAX];
 
@@ -1308,8 +1302,60 @@ do_ssh2_kex()
 	for (i = 0; i < PROPOSAL_MAX; i++)
 		xfree(cprop[i]);
 
-/* KEXDH */
+	switch (kex->kex_type) {
+	case DH_GRP1_SHA1:
+		ssh_dh1_server(kex, client_kexinit, server_kexinit);
+		break;
+	case DH_GEX_SHA1:
+		ssh_dhgex_server(kex, client_kexinit, server_kexinit);
+		break;
+	default:
+		fatal("Unsupported key exchange %d", kex->kex_type);
+	}
 
+	debug("send SSH2_MSG_NEWKEYS.");
+	packet_start(SSH2_MSG_NEWKEYS);
+	packet_send();
+	packet_write_wait();
+	debug("done: send SSH2_MSG_NEWKEYS.");
+
+	debug("Wait SSH2_MSG_NEWKEYS.");
+	packet_read_expect(&payload_len, SSH2_MSG_NEWKEYS);
+	debug("GOT SSH2_MSG_NEWKEYS.");
+
+#ifdef DEBUG_KEXDH
+	/* send 1st encrypted/maced/compressed message */
+	packet_start(SSH2_MSG_IGNORE);
+	packet_put_cstring("markus");
+	packet_send();
+	packet_write_wait();
+#endif
+
+	debug("done: KEX2.");
+}
+
+/*
+ * SSH2 key exchange
+ */
+
+/* diffie-hellman-group1-sha1 */
+
+void
+ssh_dh1_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
+{
+	int payload_len, dlen;
+	int slen;
+	unsigned char *signature = NULL;
+	unsigned char *server_host_key_blob = NULL;
+	unsigned int sbloblen;
+	unsigned int klen, kout;
+	unsigned char *kbuf;
+	unsigned char *hash;
+	BIGNUM *shared_secret = 0;
+	DH *dh;
+	BIGNUM *dh_client_pub = 0;
+
+/* KEXDH */
 	debug("Wait SSH2_MSG_KEXDH_INIT.");
 	packet_read_expect(&payload_len, SSH2_MSG_KEXDH_INIT);
 
@@ -1360,7 +1406,8 @@ do_ssh2_kex()
 	xfree(kbuf);
 
 	/* XXX precompute? */
-	dsa_make_key_blob(sensitive_data.dsa_host_key, &server_host_key_blob, &sbloblen);
+	dsa_make_key_blob(sensitive_data.dsa_host_key,
+			  &server_host_key_blob, &sbloblen);
 
 	/* calc H */			/* XXX depends on 'kex' */
 	hash = kex_hash(
@@ -1410,23 +1457,136 @@ do_ssh2_kex()
 
 	/* have keys, free DH */
 	DH_free(dh);
+}
 
-	debug("send SSH2_MSG_NEWKEYS.");
-	packet_start(SSH2_MSG_NEWKEYS);
+/* diffie-hellman-group-exchange-sha1 */
+
+void
+ssh_dhgex_server(Kex *kex, Buffer *client_kexinit, Buffer *server_kexinit)
+{
+	int payload_len, dlen;
+	int slen, nbits;
+	unsigned char *signature = NULL;
+	unsigned char *server_host_key_blob = NULL;
+	unsigned int sbloblen;
+	unsigned int klen, kout;
+	unsigned char *kbuf;
+	unsigned char *hash;
+	BIGNUM *shared_secret = 0;
+	DH *dh;
+	BIGNUM *dh_client_pub = 0;
+
+/* KEXDHGEX */
+	debug("Wait SSH2_MSG_KEX_DH_GEX_REQUEST.");
+	packet_read_expect(&payload_len, SSH2_MSG_KEX_DH_GEX_REQUEST);
+	nbits = packet_get_int();
+	dh = choose_dh(nbits);
+
+	debug("Sending SSH2_MSG_KEX_DH_GEX_GROUP.");
+	packet_start(SSH2_MSG_KEX_DH_GEX_GROUP);
+	packet_put_bignum2(dh->p);
+	packet_put_bignum2(dh->g);
 	packet_send();
 	packet_write_wait();
-	debug("done: send SSH2_MSG_NEWKEYS.");
 
-	debug("Wait SSH2_MSG_NEWKEYS.");
-	packet_read_expect(&payload_len, SSH2_MSG_NEWKEYS);
-	debug("GOT SSH2_MSG_NEWKEYS.");
+	debug("Wait SSH2_MSG_KEX_DH_GEX_INIT.");
+	packet_read_expect(&payload_len, SSH2_MSG_KEX_DH_GEX_INIT);
+
+	/* key, cert */
+	dh_client_pub = BN_new();
+	if (dh_client_pub == NULL)
+		fatal("dh_client_pub == NULL");
+	packet_get_bignum2(dh_client_pub, &dlen);
 
 #ifdef DEBUG_KEXDH
-	/* send 1st encrypted/maced/compressed message */
-	packet_start(SSH2_MSG_IGNORE);
-	packet_put_cstring("markus");
-	packet_send();
-	packet_write_wait();
+	fprintf(stderr, "\ndh_client_pub= ");
+	BN_print_fp(stderr, dh_client_pub);
+	fprintf(stderr, "\n");
+	debug("bits %d", BN_num_bits(dh_client_pub));
 #endif
-	debug("done: KEX2.");
+
+#ifdef DEBUG_KEXDH
+	fprintf(stderr, "\np= ");
+	BN_print_fp(stderr, dh->p);
+	fprintf(stderr, "\ng= ");
+	bn_print(dh->g);
+	fprintf(stderr, "\npub= ");
+	BN_print_fp(stderr, dh->pub_key);
+	fprintf(stderr, "\n");
+        DHparams_print_fp(stderr, dh);
+#endif
+	if (!dh_pub_is_valid(dh, dh_client_pub))
+		packet_disconnect("bad client public DH value");
+
+	klen = DH_size(dh);
+	kbuf = xmalloc(klen);
+	kout = DH_compute_key(kbuf, dh_client_pub, dh);
+
+#ifdef DEBUG_KEXDH
+	debug("shared secret: len %d/%d", klen, kout);
+	fprintf(stderr, "shared secret == ");
+	for (i = 0; i< kout; i++)
+		fprintf(stderr, "%02x", (kbuf[i])&0xff);
+	fprintf(stderr, "\n");
+#endif
+	shared_secret = BN_new();
+
+	BN_bin2bn(kbuf, kout, shared_secret);
+	memset(kbuf, 0, klen);
+	xfree(kbuf);
+
+	/* XXX precompute? */
+	dsa_make_key_blob(sensitive_data.dsa_host_key,
+			  &server_host_key_blob, &sbloblen);
+
+	/* calc H */			/* XXX depends on 'kex' */
+	hash = kex_hash_gex(
+	    client_version_string,
+	    server_version_string,
+	    buffer_ptr(client_kexinit), buffer_len(client_kexinit),
+	    buffer_ptr(server_kexinit), buffer_len(server_kexinit),
+	    (char *)server_host_key_blob, sbloblen,
+	    nbits, dh->p, dh->g,
+	    dh_client_pub,
+	    dh->pub_key,
+	    shared_secret
+	);
+	buffer_free(client_kexinit);
+	buffer_free(server_kexinit);
+	xfree(client_kexinit);
+	xfree(server_kexinit);
+#ifdef DEBUG_KEXDH
+	fprintf(stderr, "hash == ");
+	for (i = 0; i< 20; i++)
+		fprintf(stderr, "%02x", (hash[i])&0xff);
+	fprintf(stderr, "\n");
+#endif
+	/* save session id := H */
+	/* XXX hashlen depends on KEX */
+	session_id2_len = 20;
+	session_id2 = xmalloc(session_id2_len);
+	memcpy(session_id2, hash, session_id2_len);
+
+	/* sign H */
+	/* XXX hashlen depends on KEX */
+	dsa_sign(sensitive_data.dsa_host_key, &signature, &slen, hash, 20);
+
+	destroy_sensitive_data();
+
+	/* send server hostkey, DH pubkey 'f' and singed H */
+	packet_start(SSH2_MSG_KEX_DH_GEX_REPLY);
+	packet_put_string((char *)server_host_key_blob, sbloblen);
+	packet_put_bignum2(dh->pub_key);	/* f */
+	packet_put_string((char *)signature, slen);
+	packet_send();
+	xfree(signature);
+	xfree(server_host_key_blob);
+	packet_write_wait();
+
+	kex_derive_keys(kex, hash, shared_secret);
+	packet_set_kex(kex);
+
+	/* have keys, free DH */
+	DH_free(dh);
 }
+

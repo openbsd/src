@@ -12,7 +12,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/* RCSID("$OpenBSD: ssh.h,v 1.51 2000/09/12 20:53:10 markus Exp $"); */
+/* RCSID("$OpenBSD: ssh.h,v 1.52 2000/10/11 04:02:17 provos Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -81,6 +81,7 @@
 #define SERVER_CONFIG_FILE	ETCDIR "/sshd_config"
 #define HOST_CONFIG_FILE	ETCDIR "/ssh_config"
 #define HOST_DSA_KEY_FILE	ETCDIR "/ssh_host_dsa_key"
+#define DH_PRIMES		ETCDIR "/primes"
 
 #define SSH_PROGRAM		"/usr/bin/ssh"
 
