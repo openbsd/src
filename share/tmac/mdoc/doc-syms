@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-syms,v 1.40 2002/05/06 17:24:32 nate Exp $
+.\"	$OpenBSD: doc-syms,v 1.41 2002/05/11 15:26:45 millert Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -316,7 +316,7 @@
 .de St
 .if \\n(aC==0 \{\
 .	ie \\n(.$==0 \{\
-.tm Usage: .St [-p1003.1-88 | -p1003.1-90 | -p1003.2 | -p1003.1b | -p1003.1b-93 | -p1387.2-95 | -p1387.2 | -ansiC-89 | -ieee754 | -iso | -xpg3 | -xpg4 | -xpg4.2 | -susv2 ] \\*(Pu ... (#\\n(.c)
+.tm Usage: .St [-p1003.1-88 | -p1003.1-90 | -p1003.2 | -p1003.1b | -p1003.1b-93 | -p1387.2-95 | -p1387.2 | -ansiC-89 | -ieee754 | -iso | -xpg3 | -xpg4 | -xpg4.2 | -xpg4.3 | -susv2 | -susv3 ] \\*(Pu ... (#\\n(.c)
 .	\}
 .	el \{\
 .		ds mN St
@@ -444,6 +444,11 @@
 .	\}
 .	if "\\*(A\\n(aP"-susv2" \{\
 .		ds b1 \&Version 2 of the Single\\*(aa\\*(sV
+.		as b1 \&\\*(tNUNIX\\*(aa\\*(sV
+.		as b1 \&Specification\\*(aa
+.	\}
+.	if "\\*(A\\n(aP"-susv3" \{\
+.		ds b1 \&Version 3 of the Single\\*(aa\\*(sV
 .		as b1 \&\\*(tNUNIX\\*(aa\\*(sV
 .		as b1 \&Specification\\*(aa
 .	\}
