@@ -106,6 +106,7 @@ void list_supported_targets PARAMS ((const char *, FILE *));
 void print_arelt_descr PARAMS ((FILE *file, bfd *abfd, boolean verbose));
 
 char *make_tempname PARAMS ((char *));
+char *make_tempdir PARAMS ((char *));
 
 bfd_vma parse_vma PARAMS ((const char *, const char *));
 

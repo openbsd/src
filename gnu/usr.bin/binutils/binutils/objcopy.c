@@ -881,13 +881,13 @@ copy_archive (ibfd, obfd, output_target)
     } *list, *l;
   bfd **ptr = &obfd->archive_head;
   bfd *this_element;
-  char *dir = make_tempname (bfd_get_filename (obfd));
+  char *dir = make_tempdir (bfd_get_filename (obfd));
 
   /* Make a temp directory to hold the contents.  */
-  if (mkdir (dir, 0700) != 0)
+  if (dir == 0)
     {
-      fatal ("cannot mkdir %s for archive copying (error: %s)",
-	     dir, strerror (errno));
+      fatal ("cannot create tempdir for archive copying (error: %s)",
+	     strerror (errno));
     }
   obfd->has_armap = ibfd->has_armap;
 

@@ -1,5 +1,5 @@
 /* bucomm.c -- Bin Utils COMmon code.
-   Copyright (C) 1991, 92, 93, 94, 95, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1991, 92, 93, 94 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -15,8 +15,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
-   02111-1307, USA.  */
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 /* We might put this in a library someday so it could be dynamically
    loaded, but for now it's not necessary.  */
@@ -97,30 +96,9 @@ fatal (va_alist)
 }
 #endif
 
-/* Set the default BFD target based on the configured target.  Doing
-   this permits the binutils to be configured for a particular target,
-   and linked against a shared BFD library which was configured for a
-   different target.  */
-
-void
-set_default_bfd_target ()
-{
-  /* The macro TARGET is defined by Makefile.  */
-  const char *target = TARGET;
-
-  if (! bfd_set_default_target (target))
-    {
-      char *errmsg;
-
-      errmsg = (char *) xmalloc (100 + strlen (target));
-      sprintf (errmsg, "can't set BFD default target to `%s'", target);
-      bfd_fatal (errmsg);
-    }
-}
-
 /* After a false return from bfd_check_format_matches with
-   bfd_get_error () == bfd_error_file_ambiguously_recognized, print
-   the possible matching targets.  */
+   bfd_get_error () == bfd_error_file_ambiguously_recognized, print the possible
+   matching targets.  */
 
 void
 list_matching_formats (p)
@@ -187,13 +165,15 @@ print_arelt_descr (file, abfd, verbose)
   fprintf (file, "%s\n", bfd_get_filename (abfd));
 }
 
-/* Return the name of a temporary file in the same directory as FILENAME.  */
+/* Return the name of a created temporary file in the same directory as 
+ FILENAME.  */
 
 char *
 make_tempname (filename)
      char *filename;
 {
-  static char template[] = "stXXXXXX";
+  static char template[] = "stXXXXXXXXXX";
+  int fd;
   char *tmpname;
   char *slash = strrchr (filename, '/');
 
@@ -204,14 +184,48 @@ make_tempname (filename)
       strcpy (tmpname, filename);
       strcat (tmpname, "/");
       strcat (tmpname, template);
-      mktemp (tmpname);
+      fd = mkstemp (tmpname);
       *slash = '/';
     }
   else
     {
       tmpname = xmalloc (sizeof (template));
       strcpy (tmpname, template);
-      mktemp (tmpname);
+      fd = mkstemp (tmpname);
+    }
+  if (fd == -1) 
+    return NULL;
+  else
+    close(fd);
+  return tmpname;
+}
+
+/* Return the name of a created temporary dir in the same directory as 
+ FILENAME.  */
+
+char *
+make_tempdir (filename)
+     char *filename;
+{
+  static char template[] = "stXXXXXXXXXX";
+  char *tmpname;
+  char *slash = strrchr (filename, '/');
+
+  if (slash != (char *) NULL)
+    {
+      *slash = 0;
+      tmpname = xmalloc (strlen (filename) + sizeof (template) + 1);
+      strcpy (tmpname, filename);
+      strcat (tmpname, "/");
+      strcat (tmpname, template);
+      mkdtemp (tmpname);
+      *slash = '/';
+    }
+  else
+    {
+      tmpname = xmalloc (sizeof (template));
+      strcpy (tmpname, template);
+      mkdtemp (tmpname);
     }
   return tmpname;
 }

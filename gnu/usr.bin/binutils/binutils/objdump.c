@@ -2169,7 +2169,7 @@ display_target_list ()
   char *dummy_name;
   int t;
 
-  dummy_name = choose_temp_base ();
+  dummy_name = make_temp_file (NULL);
   for (t = 0; bfd_target_vector[t]; t++)
     {
       bfd_target *p = bfd_target_vector[t];
@@ -2221,7 +2221,7 @@ display_info_table (first, last)
     printf ("%s ", bfd_target_vector[t]->name);
   putchar ('\n');
 
-  dummy_name = choose_temp_base ();
+  dummy_name = make_temp_file (NULL);
   for (a = (int) bfd_arch_obscure + 1; a < (int) bfd_arch_last; a++)
     if (strcmp (bfd_printable_arch_mach (a, 0), "UNKNOWN!") != 0)
       {
