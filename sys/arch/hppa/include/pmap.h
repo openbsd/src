@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.25 2002/10/28 20:49:16 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.26 2002/11/07 19:22:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -107,8 +107,6 @@ extern struct pdc_hwtlb pdc_hwtlb;
 #define pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_update(pm)			(void)(pm)
-#define	pmap_activate(pm)		(void)(pm)
-#define	pmap_deactivate(pm)		(void)(pm)
 #define pmap_copy(dpmap,spmap,da,len,sa)
 
 #define pmap_clear_modify(pg)	pmap_changebit(pg, 0, PTE_PROT(TLB_DIRTY))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.89 2002/11/07 19:18:18 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.90 2002/11/07 19:22:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -1063,6 +1063,22 @@ pmap_extract(pmap, va, pap)
 	}
 
 	return (FALSE);
+}
+
+void
+pmap_activate(struct proc *p)
+{
+	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+	struct pcb *pcb = &p->p_addr->u_pcb;;
+
+	pcb->pcb_space = pmap->pm_space;
+	pcb->pcb_uva = (vaddr_t)p->p_addr;
+}
+
+void
+pmap_deactivate(struct proc *p)
+{
+
 }
 
 static __inline void
