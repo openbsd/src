@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.23 2000/07/06 04:15:08 aaron Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.24 2000/07/18 22:02:52 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -371,7 +371,7 @@ is installed, even if the user might change it with the
 flag to
 .Cm pkg_add .
 .Sh ENVIRONMENT
-.Bl -tag -width PKG_DBDIR
+.Bl -tag -width PKG_TMPDIR
 .It Ev PKG_PATH
 If a given package name cannot be found,
 the directories named by
@@ -386,6 +386,9 @@ period
 .It Ev PKG_DBDIR
 Where to register packages instead of
 .Pa /var/db/pkg .
+.It Ev PKG_TMPDIR
+Temporary area where packages will be extracted, instead of
+.Pa /var/tmp .
 .El
 .Sh SEE ALSO
 .Xr pkg_create 1 ,
@@ -401,6 +404,24 @@ Initial work and ongoing development.
 .It "John Kohl"
 NetBSD refinements.
 .El
+.Sh CAVEATS
+Package extraction does need a temporary area that
+.Bl -bullet -compact
+.It
+is big enough to hold the complete extracted package,
+.It
+can hold executable scripts.
+.El
+.Pp
+.Nm
+looks through ${PKG_TMPDIR}, ${TMPDIR}, /var/tmp, /tmp, /usr/tmp
+for such an area, in sequence.
+.Pp
+If ${TMPDIR} and /var/tmp are mounted noexec, you must set PKG_TMPDIR
+to a suitable area, as
+.Nm
+has no way to check for noexec status except by failing to run installation
+scripts.
 .Sh BUGS
 Hard links between files in a distribution are only preserved if either
 (1) the staging area is on the same file system as the target directory of
