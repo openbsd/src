@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.304 2003/02/03 14:51:36 cedric Exp $	*/
+/*	$OpenBSD: parse.y,v 1.305 2003/02/03 15:44:52 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2586,26 +2586,38 @@ dport		: /* empty */			{
 		;
 
 route_host	: STRING			{
+			struct node_host	*n;
+
 			$$ = calloc(1, sizeof(struct node_host));
 			if ($$ == NULL)
 				err(1, "route_host: calloc");
 			if (($$->ifname = strdup($1)) == NULL)
 				err(1, "routeto: strdup");
-			if (ifa_exists($$->ifname) == NULL) {
+			if ((n = ifa_exists($$->ifname)) == NULL) {
 				yyerror("routeto: unknown interface %s",
 				    $$->ifname);
+				YYERROR;
+			} else if (n->ifa_flags & IFF_LOOPBACK) {
+				yyerror("routeto: loopback interface %s not "
+				    "supported", $$->ifname);
 				YYERROR;
 			}
 			$$->next = NULL;
 			$$->tail = $$;
 		}
 		| '(' STRING host ')'		{
+			struct node_host	*n;
+
 			$$ = $3;
 			if (($$->ifname = strdup($2)) == NULL)
 				err(1, "routeto: strdup");
-			if (ifa_exists($$->ifname) == NULL) {
+			if ((n = ifa_exists($$->ifname)) == NULL) {
 				yyerror("routeto: unknown interface %s",
 				    $$->ifname);
+				YYERROR;
+			} else if (n->ifa_flags & IFF_LOOPBACK) {
+				yyerror("routeto: loopback interface %s not "
+				    "supported", $$->ifname);
 				YYERROR;
 			}
 			if (disallow_table($3, "invalid use of table <%s> in "

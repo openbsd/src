@@ -1,8 +1,8 @@
-pass in on lo0 route-to { (lo0 127.0.0.1), (lo0 127.0.0.2) } all
-pass out on lo0 route-to { (lo0 127.0.0.1), (lo0 127.0.0.2) } round-robin all
-pass in on lo0 route-to (lo0 127.0.0.1/24) bitmask all
-pass out on lo0 dup-to (lo0 127.0.0.1/24) random all
-pass in on lo0 reply-to { lo0, lo0 } round-robin inet6 all
-pass in on lo0 reply-to (lo0 127.0.0.0/28) source-hash 0x0123456789ABCDEF0123456789abcdef inet all 
-pass out on lo0 route-to (lo0 127.0.0.1/24) source-hash foobarlicious all 
-pass in on lo0 dup-to (lo0 127.0.0.1/24) round-robin all
+pass in on lo0 route-to { (pflog0 127.0.0.1), (pflog0 127.0.0.2) } all
+pass out on lo0 route-to { (pflog0 127.0.0.1), (pflog0 127.0.0.2) } round-robin all
+pass in on lo0 route-to (pflog0 127.0.0.1/24) bitmask all
+pass out on lo0 dup-to (pflog0 127.0.0.1/24) random all
+pass in on lo0 reply-to { pflog0, pflog0 } round-robin inet6 all
+pass in on lo0 reply-to (pflog0 127.0.0.0/28) source-hash 0x0123456789ABCDEF0123456789abcdef inet all 
+pass out on lo0 route-to (pflog0 127.0.0.1/24) source-hash foobarlicious all 
+pass in on lo0 dup-to (pflog0 127.0.0.1/24) round-robin all
