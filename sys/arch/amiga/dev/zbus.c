@@ -1,4 +1,4 @@
-/*	$OpenBSD: zbus.c,v 1.4 1996/04/21 22:15:50 deraadt Exp $	*/
+/*	$OpenBSD: zbus.c,v 1.5 1996/05/07 10:10:19 niklas Exp $	*/
 /*	$NetBSD: zbus.c,v 1.17 1996/03/28 18:41:49 is Exp $	*/
 
 /*
