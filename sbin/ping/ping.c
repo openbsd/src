@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.54 2002/06/22 22:47:45 jakob Exp $	*/
+/*	$OpenBSD: ping.c,v 1.55 2002/06/29 07:56:44 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.54 2002/06/22 22:47:45 jakob Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.55 2002/06/29 07:56:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -188,7 +188,6 @@ main(argc, argv)
 	struct timeval timeout;
 	struct hostent *hp;
 	struct sockaddr_in *to;
-	struct protoent *proto;
 	struct in_addr saddr;
 	int i;
 	int ch, hold = 1, packlen, preload;
@@ -202,9 +201,7 @@ main(argc, argv)
 #endif
 	fd_set *fdmaskp;
 
-	if (!(proto = getprotobyname("icmp")))
-		errx(1, "unknown protocol icmp");
-	if ((s = socket(AF_INET, SOCK_RAW, proto->p_proto)) < 0)
+	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(1, "socket");
 
 	/* revoke privs */
@@ -404,7 +401,7 @@ main(argc, argv)
 		ip->ip_id = 0;
 		ip->ip_off = htons(df?IP_DF:0);
 		ip->ip_ttl = ttl;
-		ip->ip_p = proto->p_proto;
+		ip->ip_p = IPPROTO_ICMP;
 		ip->ip_src.s_addr = INADDR_ANY;
 		ip->ip_dst = to->sin_addr;
 	}

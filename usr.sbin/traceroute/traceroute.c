@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.45 2002/06/29 07:46:29 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.46 2002/06/29 07:56:44 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.45 2002/06/29 07:46:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.46 2002/06/29 07:56:44 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -304,7 +304,6 @@ main(argc, argv)
 	char *argv[];
 {
 	struct hostent *hp;
-	struct protoent *pe;
 	struct sockaddr_in from, to;
 	int ch, i, lsrr, on, probe, seq, tos, ttl;
 	int ttl_flag, incflag = 1, protoset = 0;
@@ -314,11 +313,7 @@ main(argc, argv)
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
 	size_t size = sizeof(max_ttl);
 
-	if ((pe = getprotobyname("icmp")) == NULL) {
-		fprintf(stderr, "icmp: unknown protocol\n");
-		exit(10);
-	}
-	if ((s = socket(AF_INET, SOCK_RAW, pe->p_proto)) < 0)
+	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(5, "icmp socket");
 	if ((sndsock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
 		err(5, "raw socket");
