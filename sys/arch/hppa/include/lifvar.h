@@ -1,4 +1,4 @@
-/*	$OpenBSD: lifvar.h,v 1.1 1998/07/27 15:39:01 mickey Exp $	*/
+/*	$OpenBSD: lifvar.h,v 1.2 1998/09/29 07:32:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -84,9 +84,16 @@ struct load {
 
 #define VOL_ID		-32768
 #define VOL_OCT		4096
-#define	DIR_TYPE	-5822
-#define	DIR_ISL		-12800
-#define	DIR_FS		-13000
+#define DIR_SWAP	0x5243
+#define	DIR_FS		0xcd38
+#define	DIR_IOMAP	0xcd60
+#define	DIR_HPUX	0xcd80
+#define	DIR_ISL		0xce00
+#define	DIR_PAD		0xcffe
+#define	DIR_AUTO	0xcfff
+#define	DIR_EST		0xd001
+#define	DIR_TYPE	0xe942
+
 #define DIR_FLAG	0x8001	/* dont ask me! */
 #define	SECTSIZE	256
 
