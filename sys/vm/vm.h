@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.h,v 1.13 2001/06/27 04:52:39 art Exp $	*/
+/*	$OpenBSD: vm.h,v 1.14 2001/07/05 07:25:54 art Exp $	*/
 /*	$NetBSD: vm.h,v 1.13 1994/06/29 06:47:52 cgd Exp $	*/
 
 /*
@@ -63,7 +63,6 @@ typedef struct vm_page  *vm_page_t;
 #include <vm/vm_page.h>
 #include <vm/vm_pager.h>
 #include <vm/pmap.h>
-#include <vm/vm_object.h>
 #include <vm/vm_extern.h>
 
 /*
