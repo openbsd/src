@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.81 2001/10/04 21:46:03 gluk Exp $	*/
+/*	$OpenBSD: conf.c,v 1.82 2001/11/06 23:46:05 drahn Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -216,6 +216,8 @@ cdev_decl(ulpt);
 cdev_decl(urio);
 #include "ucom.h"
 cdev_decl(ucom);
+#include "uscanner.h"
+cdev_decl(uscanner);
 #include "cz.h"
 cdev_decl(cztty);
 #include "radio.h"
@@ -348,6 +350,7 @@ struct cdevsw	cdevsw[] =
 	cdev_altq_init(NALTQ,altq),	/* 74: ALTQ control interface */
 	cdev_iop_init(NIOP,iop),	/* 75: I2O IOP control interface */
 	cdev_radio_init(NRADIO, radio), /* 76: generic radio I/O */
+	cdev_ugen_init(NUSCANNER,uscanner),	/* 77: USB generic driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

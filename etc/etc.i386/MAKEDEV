@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.104 2001/10/04 22:38:13 gluk Exp $
+#	$OpenBSD: MAKEDEV,v 1.105 2001/11/06 23:46:05 drahn Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -221,7 +221,7 @@ usbs)
 	sh $this usb0 usb1
 	sh $this uhid0 uhid1 uhid2 uhid3
 	sh $this ulpt0 ulpt1
-	sh $this urio0
+	sh $this urio0 uscanner0
 	sh $this utty0 utty1
 	;;
 
@@ -280,6 +280,13 @@ urio*)
 	mknod urio$unit c 65 $unit
 	chown root.wheel urio$unit
 	chmod 660 urio$unit
+	;;
+
+uscanner*)
+	rm -f uscanner$unit
+	mknod uscanner$unit c 77 $unit
+	chown root.wheel uscanner$unit
+	chmod 660 uscanner$unit
 	;;
 
 ugen*)
