@@ -8,9 +8,9 @@
 ./usr/include/alpha
 ./usr/include/readline
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.3
-./usr/lib/gcc-lib/alpha-unknown-openbsd2.3/2.8.0
-./usr/lib/gcc-lib/alpha-unknown-openbsd2.3/2.8.0/include
-./usr/lib/gcc-lib/alpha-unknown-openbsd2.3/2.8.0/include/objc
+./usr/lib/gcc-lib/alpha-unknown-openbsd2.3/2.8.1
+./usr/lib/gcc-lib/alpha-unknown-openbsd2.3/2.8.1/include
+./usr/lib/gcc-lib/alpha-unknown-openbsd2.3/2.8.1/include/objc
 ./usr/lib/perl5/alpha-openbsd
 ./usr/lib/perl5/alpha-openbsd/5.00404
 ./usr/lib/perl5/alpha-openbsd/5.00404/CORE
