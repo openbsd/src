@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.80 2003/08/21 19:12:08 frantzen Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.81 2003/08/22 21:50:34 david Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1251,7 +1251,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		key.proto = pnl->proto;
 
 		/*
-		 * userland gives us source and dest of connetion, reverse
+		 * userland gives us source and dest of connection, reverse
 		 * the lookup so we ask for what happens with the return
 		 * traffic, enabling us to find it in the state tree.
 		 */

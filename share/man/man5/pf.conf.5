@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.266 2003/08/22 18:28:14 frantzen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.267 2003/08/22 21:50:34 david Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -562,7 +562,7 @@ And spoofing TCP packets into a connection requires knowing or guessing
 valid timestamps.
 Timestamps merely need to be monotonically increasing and not derived off a
 guessable base time.
-.Ar reassemple tcp
+.Ar reassemble tcp
 will cause
 .Ar scrub
 to modulate the TCP timestamps with a random number.

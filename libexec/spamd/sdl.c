@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.7 2003/07/06 21:57:27 deraadt Exp $ */
+/*	$OpenBSD: sdl.c,v 1.8 2003/08/22 21:50:34 david Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -101,7 +101,7 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 
 	/*
 	 * Cycle through addrs, converting. We assume they are correctly
-	 * formatted v4 and v6 addrs, if they don't all convert correcly, the
+	 * formatted v4 and v6 addrs, if they don't all convert correctly, the
 	 * add fails. Each address should be address/maskbits
 	 */
 	blacklists[index].addrs = malloc(addrc * sizeof(struct sdentry));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.20 2003/05/14 08:56:12 canacar Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.21 2003/08/22 21:50:34 david Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -198,7 +198,7 @@ reset_dump(void)
 	}
 
 	/*
-	 * Basically reimpliment pcap_dump_open() because it truncates
+	 * Basically reimplement pcap_dump_open() because it truncates
 	 * files and duplicates headers and such.
 	 */
 	fp = fopen(filename, "a+");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.2 2003/08/22 15:17:03 henning Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.3 2003/08/22 21:50:34 david Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -369,7 +369,7 @@ pfctl_get_fingerprint(const char *name)
 		 * We'll do some fuzzy matching to pick up things like:
 		 *   Linux 2.2.14 (version=2.2 subtype=14)
 		 *   FreeBSD 4.0-STABLE (version=4.0 subtype=STABLE)
-		 *   Windows 2000 SP2	(versoin=2000 subtype=SP2)
+		 *   Windows 2000 SP2	(version=2000 subtype=SP2)
 		 */
 #define CONNECTOR(x)	((x) == '.' || (x) == ' ' || (x) == '\t' || (x) == '-')
 		wr_len = strlen(ptr);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.169 2003/08/22 15:19:23 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.170 2003/08/22 21:50:34 david Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -864,7 +864,7 @@ struct pf_altq {
 
 	/* scheduler spec */
 	u_int8_t		 scheduler;	/* scheduler type */
-	u_int16_t		 tbrsize;	/* tokenbuket regulator size */
+	u_int16_t		 tbrsize;	/* tokenbucket regulator size */
 	u_int32_t		 ifbandwidth;	/* interface bandwidth */
 
 	/* queue spec */

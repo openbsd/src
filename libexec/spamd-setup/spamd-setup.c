@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.13 2003/07/29 18:39:23 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.14 2003/08/22 21:50:34 david Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -327,7 +327,7 @@ open_file(char *method, char *file)
  * fix_quoted_colons walks through a buffer returned by cgetent.  We
  * look for quoted strings, to escape colons (:) in quoted strings for
  * getcap by replacing them with \C so cgetstr() deals with it correctly
- * without having to see the \C bletchery in a configuration file tha
+ * without having to see the \C bletchery in a configuration file that
  * needs to have urls in it. Frees the buffer passed to it, passes back
  * another larger one, with can be used with cgetxxx(), like the original
  * buffer, it must be freed by the caller.
@@ -528,8 +528,8 @@ cmpbl(const void *a, const void *b)
 }
 
 /*
- * collapse_blacklist takes blacklist/whitelist enties sorts, removes
- * ovelaps and whitelist portions, and returns netblocks to blacklis
+ * collapse_blacklist takes blacklist/whitelist entries sorts, removes
+ * overlaps and whitelist portions, and returns netblocks to blacklist
  * as lists of nonoverlapping cidr blocks suitable for feeding in
  * printable form to pfctl or spamd.
  */

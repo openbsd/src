@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.h,v 1.7 2003/08/20 12:33:17 henning Exp $	*/
+/*	$OpenBSD: altq_rmclass.h,v 1.8 2003/08/22 21:50:34 david Exp $	*/
 /*	$KAME: altq_rmclass.h,v 1.6 2000/12/09 09:22:44 kjc Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ struct rm_class {
  */
 struct rm_ifdat {
 	int		queued_;	/* # pkts queued downstream */
-	int		efficient_;	/* Link Efficency bit */
+	int		efficient_;	/* Link Efficiency bit */
 	int		wrr_;		/* Enable Weighted Round-Robin */
 	u_long		ns_per_byte_;	/* Link byte speed. */
 	int		maxqueued_;	/* Max packets to queue */

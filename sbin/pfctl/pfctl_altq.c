@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.76 2003/08/20 13:03:35 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.77 2003/08/22 21:50:34 david Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -871,7 +871,7 @@ print_hfsc_opts(const struct pf_altq *a, const struct node_queue_opt *qopts)
  */
 #define	INFINITY	HUGE_VAL  /* positive infinity defined in <math.h> */
 
-/* add a new service curve to a generilized service curve */
+/* add a new service curve to a generalized service curve */
 static void
 gsc_add_sc(struct gen_sc *gsc, struct service_curve *sc)
 {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.35 2003/08/21 19:12:59 frantzen Exp $
+.\"	$OpenBSD: pf.4,v 1.36 2003/08/22 21:50:34 david Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -620,7 +620,7 @@ Get the passive OS fingerprint number
 .Va fp_getnum
 from the kernels fingerprint list.
 The rest of the structure members will come back filled.
-Get the whole list by repeatadly incrementing the
+Get the whole list by repeatedly incrementing the
 .Va fp_getnum
 number until the ioctl returns EBUSY.
 .El

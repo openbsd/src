@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.c,v 1.9 2003/03/13 16:42:52 kjc Exp $	*/
+/*	$OpenBSD: altq_rmclass.c,v 1.10 2003/08/22 21:50:34 david Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.10 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -783,7 +783,7 @@ rmc_queue_packet(struct rm_class *cl, mbuf_t *m)
 /*
  * void
  * rmc_tl_satisfied(struct rm_ifdat *ifd, struct timeval *now) - Check all
- *	classes to see if there are satified.
+ *	classes to see if they are satisfied.
  */
 
 static void
@@ -1426,7 +1426,7 @@ void rmc_dropall(struct rm_class *cl)
  * void
  * rmc_delay_action(struct rm_class *cl) - This function is the generic CBQ
  *	delay action routine.  It is invoked via rmc_under_limit when the
- *	packet is discoverd to be overlimit.
+ *	packet is discovered to be overlimit.
  *
  *	If the delay action is result of borrow class being overlimit, then
  *	delay for the offtime of the borrowing class that is overlimit.

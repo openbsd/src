@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.409 2003/08/21 19:12:08 frantzen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.410 2003/08/22 21:50:34 david Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3590,7 +3590,7 @@ expand_queue(struct pf_altq *a, struct node_if *interfaces,
 			    tqueue->ifname, IFNAMSIZ)) ||
 			    (interface->not && strncmp(interface->ifname,
 			    tqueue->ifname, IFNAMSIZ)))) {
-				/* found ourselve in queues */
+				/* found ourself in queues */
 				found++;
 
 				memcpy(&pa, a, sizeof(struct pf_altq));

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.98 2003/08/21 19:12:08 frantzen Exp $
+.\" $OpenBSD: pfctl.8,v 1.99 2003/08/22 21:50:34 david Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -418,7 +418,7 @@ The flags are defined as follows:
 For constant tables, which cannot be altered outside
 .Xr pf.conf 5 .
 .It p
-For persistant tables, which don't get automatically flushed when no rules
+For persistent tables, which don't get automatically flushed when no rules
 refer to them.
 .It a
 For tables which are part of the
@@ -458,7 +458,7 @@ Generate debug messages only for serious errors.
 .It Fl x Ar misc
 Generate debug messages for various errors.
 .It Fl x Ar loud
-Generate debug messages for common conditons.
+Generate debug messages for common conditions.
 .El
 .It Fl z
 Clear per-rule statistics.
