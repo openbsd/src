@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.20 1999/10/27 03:41:48 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.21 1999/11/04 05:13:14 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -237,52 +237,54 @@ bridge_ioctl(ifp, cmd, data)
 			error = EBUSY;
 			break;
 		}
-		if (ifs->if_type != IFT_ETHER) {
+
+		if (ifs->if_type == IFT_ETHER) {
+			if ((ifs->if_flags & IFF_UP) == 0) {
+				/*
+				 * Bring interface up long enough to set
+				 * promiscuous flag, then shut it down again.
+				 */
+				strncpy(ifreq.ifr_name, req->ifbr_ifsname,
+				    sizeof(ifreq.ifr_name) - 1);
+				ifreq.ifr_name[sizeof(ifreq.ifr_name) - 1] = '\0';
+				ifs->if_flags |= IFF_UP;
+				ifreq.ifr_flags = ifs->if_flags;
+				error = (*ifs->if_ioctl)(ifs, SIOCSIFFLAGS,
+				    (caddr_t)&ifreq);
+				if (error != 0)
+					break;
+
+				error = ifpromisc(ifs, 1);
+				if (error != 0)
+					break;
+
+				strncpy(ifreq.ifr_name, req->ifbr_ifsname,
+				    sizeof(ifreq.ifr_name) - 1);
+				ifreq.ifr_name[sizeof(ifreq.ifr_name) - 1] = '\0';
+				ifs->if_flags &= ~IFF_UP;
+				ifreq.ifr_flags = ifs->if_flags;
+				error = (*ifs->if_ioctl)(ifs, SIOCSIFFLAGS,
+				    (caddr_t)&ifreq);
+				if (error != 0) {
+					ifpromisc(ifs, 0);
+					break;
+				}
+			} else {
+				error = ifpromisc(ifs, 1);
+				if (error != 0)
+					break;
+			}
+		}
+		else if (ifs->if_type != IFT_ENC) {
 			error = EINVAL;
 			break;
 		}
 
-		if ((ifs->if_flags & IFF_UP) == 0) {
-			/*
-			 * Bring interface up long enough to set
-			 * promiscuous flag, then shut it down again.
-			 */
-			strncpy(ifreq.ifr_name, req->ifbr_ifsname,
-			    sizeof(ifreq.ifr_name) - 1);
-			ifreq.ifr_name[sizeof(ifreq.ifr_name) - 1] = '\0';
-			ifs->if_flags |= IFF_UP;
-			ifreq.ifr_flags = ifs->if_flags;
-			error = (*ifs->if_ioctl)(ifs, SIOCSIFFLAGS,
-			    (caddr_t)&ifreq);
-			if (error != 0)
-				break;
-
-			error = ifpromisc(ifs, 1);
-			if (error != 0)
-				break;
-
-			strncpy(ifreq.ifr_name, req->ifbr_ifsname,
-			    sizeof(ifreq.ifr_name) - 1);
-			ifreq.ifr_name[sizeof(ifreq.ifr_name) - 1] = '\0';
-			ifs->if_flags &= ~IFF_UP;
-			ifreq.ifr_flags = ifs->if_flags;
-			error = (*ifs->if_ioctl)(ifs, SIOCSIFFLAGS,
-			    (caddr_t)&ifreq);
-			if (error != 0) {
-				ifpromisc(ifs, 0);
-				break;
-			}
-		} else {
-			error = ifpromisc(ifs, 1);
-			if (error != 0)
-				break;
-		}
-
 		p = (struct bridge_iflist *) malloc(
 		    sizeof(struct bridge_iflist), M_DEVBUF, M_NOWAIT);
-		if (p == NULL) {			/* list alloc failed */
+		if (p == NULL && ifs->if_type == IFT_ETHER) {
 			error = ENOMEM;
-			ifpromisc(ifs, 0);		/* decr promisc cnt */
+			ifpromisc(ifs, 0);
 			break;
 		}
 
@@ -546,7 +548,7 @@ bridge_stop(sc)
 
 /*
  * Send output from the bridge.  The mbuf has the ethernet header
- * already attached.  We must free the mbuf before exitting.
+ * already attached.  We must enqueue or free the mbuf before exiting.
  */
 int
 bridge_output(ifp, m, sa, rt)
@@ -558,7 +560,6 @@ bridge_output(ifp, m, sa, rt)
 	struct ether_header *eh;
 	struct ifnet *dst_if;
 	struct ether_addr *src, *dst;
-	struct arpcom *ac = (struct arpcom *)ifp;
 	struct bridge_softc *sc;
 	struct bridge_iflist *p;
 	struct mbuf *mc;
@@ -588,7 +589,7 @@ bridge_output(ifp, m, sa, rt)
 
 	/*
 	 * If the packet is a broadcast or we don't know a better way to
-	 * get there.
+	 * get there, send to all interfaces.
 	 */
 	dst_if = bridge_rtlookup(sc, dst);
 	if (dst_if == NULL || eh->ether_dhost[0] & 1) {
@@ -618,8 +619,6 @@ bridge_output(ifp, m, sa, rt)
 		splx(s);
 		return (0);
 	}
-
-	bcopy(ac->ac_enaddr, src, ETHER_ADDR_LEN);
 
 sendunicast:
 	if ((dst_if->if_flags & IFF_RUNNING) == 0) {
@@ -837,7 +836,8 @@ bridge_input(ifp, eh, m)
 		return (m);
 
 	if (m->m_flags & (M_BCAST | M_MCAST)) {
-		/* make a copy of 'm' with 'eh' tacked on to the
+		/*
+		 * make a copy of 'm' with 'eh' tacked on to the
 		 * beginning.  Return 'm' for local processing
 		 * and enqueue the copy.  Schedule netisr.
 		 */
@@ -860,9 +860,13 @@ bridge_input(ifp, eh, m)
 		schednetisr(NETISR_BRIDGE);
 		return (m);
 	}
-	else {
-		ifl = LIST_FIRST(&sc->sc_iflist);
-		while (ifl != NULL) {
+
+	/*
+	 * Unicast, make sure it's not for us.
+	 */
+	ifl = LIST_FIRST(&sc->sc_iflist);
+	while (ifl != NULL) {
+		if (ifl->ifp->if_type == IFT_ETHER) {
 			ac = (struct arpcom *)ifl->ifp;
 			if (bcmp(ac->ac_enaddr, eh->ether_dhost,
 			    ETHER_ADDR_LEN) == 0) {
@@ -871,24 +875,29 @@ bridge_input(ifp, eh, m)
 				    ifp, 0, IFBAF_DYNAMIC);
 				return (m);
 			}
-			ifl = LIST_NEXT(ifl, next);
+			if (bcmp(ac->ac_enaddr, eh->ether_shost,
+			    ETHER_ADDR_LEN) == 0) {
+				m_freem(m);
+				return (NULL);
+			}
 		}
-		M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
-		if (m == NULL)
-			return (NULL);
-		neh = mtod(m, struct ether_header *);
-		bcopy(eh, neh, sizeof(struct ether_header));
-		s = splimp();
-		if (IF_QFULL(&sc->sc_if.if_snd)) {
-			m_freem(m);
-			splx(s);
-			return (NULL);
-		}
-		IF_ENQUEUE(&sc->sc_if.if_snd, m);
+		ifl = LIST_NEXT(ifl, next);
+	}
+	M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
+	if (m == NULL)
+		return (NULL);
+	neh = mtod(m, struct ether_header *);
+	bcopy(eh, neh, sizeof(struct ether_header));
+	s = splimp();
+	if (IF_QFULL(&sc->sc_if.if_snd)) {
+		m_freem(m);
 		splx(s);
-		schednetisr(NETISR_BRIDGE);
 		return (NULL);
 	}
+	IF_ENQUEUE(&sc->sc_if.if_snd, m);
+	splx(s);
+	schednetisr(NETISR_BRIDGE);
+	return (NULL);
 }
 
 /*
