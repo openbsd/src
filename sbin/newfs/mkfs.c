@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.22 2002/06/09 08:13:08 todd Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.23 2003/02/19 00:57:14 millert Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.22 2002/06/09 08:13:08 todd Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.23 2003/02/19 00:57:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -371,9 +371,8 @@ recalc:
 		if (mincpc == 1 || sblock.fs_frag == 1 ||
 		    sblock.fs_bsize == MINBSIZE)
 			break;
-		printf("With a block size of %ld %s %ld\n",
-		    (long)sblock.fs_bsize,
-		    "minimum bytes per inode is",
+		printf("With a block size of %d %s %ld\n",
+		    sblock.fs_bsize, "minimum bytes per inode is",
 		    (mincpg * bpcg - used) / MAXIPG(&sblock) + 1);
 		sblock.fs_bsize >>= 1;
 		sblock.fs_frag >>= 1;
@@ -1187,22 +1186,14 @@ rdfs(bno, size, bf)
 	void *bf;
 {
 	int n;
-	off_t offset;
 
 	if (mfs) {
 		memcpy(bf, membase + bno * sectorsize, size);
 		return;
 	}
-	offset = bno;
-	offset *= sectorsize;
-	if (lseek(fsi, offset, SEEK_SET) < 0) {
-		printf("seek error: %lld\n", (long long)bno);
-		perror("rdfs");
-		exit(33);
-	}
-	n = read(fsi, bf, size);
+	n = pread(fsi, bf, size, (off_t)bno * sectorsize);
 	if (n != size) {
-		printf("read error: %lld\n", (long long)bno);
+		printf("read error: %d\n", bno);
 		perror("rdfs");
 		exit(34);
 	}
@@ -1218,7 +1209,6 @@ wtfs(bno, size, bf)
 	void *bf;
 {
 	int n;
-	off_t offset;
 
 	if (mfs) {
 		memcpy(membase + bno * sectorsize, bf, size);
@@ -1226,16 +1216,9 @@ wtfs(bno, size, bf)
 	}
 	if (Nflag)
 		return;
-	offset = bno;
-	offset *= sectorsize;
-	if (lseek(fso, offset, SEEK_SET) < 0) {
-		printf("seek error: %lld\n", (long long)bno);
-		perror("wtfs");
-		exit(35);
-	}
-	n = write(fso, bf, size);
+	n = pwrite(fso, bf, size, (off_t)bno * sectorsize);
 	if (n != size) {
-		printf("write error: %lld\n", (long long)bno);
+		printf("write error: %d\n", bno);
 		perror("wtfs");
 		exit(36);
 	}
