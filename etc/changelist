@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.19 2001/06/23 02:51:05 provos Exp $
+#	$OpenBSD: changelist,v 1.20 2001/07/02 02:36:14 angelos Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -44,12 +44,14 @@
 /etc/mygate
 /etc/myname
 /etc/named.boot
+/etc/nat.conf
 /etc/netgroup
 /etc/netstart
 /etc/networks
 /etc/newsyslog.conf
 /etc/passwd
 /etc/passwd.conf
+/etc/pf.conf
 /etc/printcap
 /etc/protocols
 /etc/rbootd.conf
