@@ -1451,6 +1451,7 @@ xprintf("%s: %s\n", name, strerror(errno));
 	if (load_subs(smp) != 0)
 		return NULL;
 
+	LM_PRIVATE(smp)->spd_flags |= RTLD_DL;
 	init_maps(smp);
 	return smp;
 }
