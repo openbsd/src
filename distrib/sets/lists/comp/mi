@@ -1867,6 +1867,7 @@
 ./usr/share/man/cat3/list_remove.0
 ./usr/share/man/cat3/localeconv.0
 ./usr/share/man/cat3/localtime.0
+./usr/share/man/cat3/lockf.0
 ./usr/share/man/cat3/log.0
 ./usr/share/man/cat3/log10.0
 ./usr/share/man/cat3/log1p.0

@@ -11,7 +11,7 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.2/2.7.2.1/include
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.2/2.7.2.1/include/objc
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.17.5
+./usr/lib/libc.so.17.6
 ./usr/lib/libcurses.so.4.1
 ./usr/lib/libdes.so.6.0
 ./usr/lib/libedit.so.0.0
