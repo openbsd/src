@@ -2,7 +2,7 @@
 PROG=	mkctm
 SRCS=	mkctm.c
 LDADD= -lmd
-CFLAGS= -g -Wall
+CFLAGS+= -Wall
 
 test:	mkctm
 	rm -f tst.out*
