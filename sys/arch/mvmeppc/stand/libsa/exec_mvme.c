@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_mvme.c,v 1.7 2004/01/28 23:46:40 miod Exp $	*/
+/*	$OpenBSD: exec_mvme.c,v 1.8 2004/01/29 21:30:04 miod Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -79,17 +79,18 @@ exec_mvme(file, flag)
 			mvmeprom_return();
 
 		bootdev = (bugargs.ctrl_lun << 8) | (bugargs.dev_lun & 0xFF);
-		/* arguments to start
+		/*
+		 * Arguments to start on mvmeppc:
 		 * r1 - stack provided by firmware/bootloader
-		 * r3 - unused
-		 * r4 - unused
+		 * r3 - boot flags
+		 * r4 - boot device
 		 * r5 - firmware pointer (NULL for PPC1bug)
-		 * r6 - arg list (currently empty)
+		 * r6 - arg list
 		 * r7 - arg list length
 		 * r8 - end of symbol table
 		 */
 		/*       r3                 r4       r5    r6    r7 r8 */
-	 	(*entry)(bugargs.ctrl_addr, bootdev, NULL, NULL, 0, esym);
+	 	(*entry)(flag, bootdev, NULL, NULL, 0, esym);
 
 		printf("exec: kernel returned!\n");
 	} else {

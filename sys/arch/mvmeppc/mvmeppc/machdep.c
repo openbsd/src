@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.43 2004/01/28 23:50:19 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.44 2004/01/29 21:30:02 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -144,9 +144,6 @@ int ppc_malloc_ok;
 #endif
 
 int system_type = SYS_TYPE;	/* XXX Hardwire it for now */
-
-char *bootpath;
-char bootpathbuf[512];
 
 struct firmware *fw = NULL;
 extern struct firmware ppc1_firmware;
@@ -325,36 +322,6 @@ initppc(startkernel, endkernel, args)
 	 */
 	initmsgbuf(msgbuf_addr, MSGBUFSIZE);
 
-	/*
-	 * Parse arg string.
-	 */
-
-	/* make a copy of the args! */
-	strncpy(bootpathbuf, args, 512);
-	bootpath= &bootpathbuf[0];
-	args = bootpath;
-	while ( *++args && *args != ' ');
-	if (*args) {
-		*args++ = 0;
-		while (*args) {
-			switch (*args++) {
-			case 'a':
-				boothowto |= RB_ASKNAME;
-				break;
-			case 's':
-				boothowto |= RB_SINGLE;
-				break;
-			case 'd':
-				boothowto |= RB_KDB;
-				break;
-			case 'c':
-				boothowto |= RB_CONFIG;
-				break;
-			}
-		}
-	}
-	bootpath= &bootpathbuf[0];
-
 #ifdef DDB
 	ddb_init();
 #endif
@@ -431,8 +398,7 @@ cpu_startup()
 	caddr_t v;
 	vm_offset_t minaddr, maxaddr;
 	int base, residual;
-	v = (caddr_t)proc0paddr + USPACE;
-	
+
 	proc0.p_addr = proc0paddr;
 
 	printf("%s", version);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.5 2004/01/28 23:57:48 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.6 2004/01/29 21:30:02 miod Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -58,13 +58,14 @@ idle_u:			.long	0	/* fake uarea during idle after exit */
  */
 _ENTRY(_C_LABEL(kernel_text))
 _ENTRY(_ASM_LABEL(start))
-/* arguments to start
+/*
+ * Arguments to start for mvmeppc
  * r1 - stack provided by firmware/bootloader
- * r3 - unused	(controller address for PPC1bug)
- * r4 - unused	(bootdev for PPC1bug)
+ * r3 - boot flags
+ * r4 - boot device
  * r5 - firmware pointer (NULL for PPC1bug)
- * r6 - arg list
- * r7 - length
+ * r6 - arg list (NULL)
+ * r7 - length (0)
  * r8 - end of symbol table
  */
 	.globl	start
@@ -73,6 +74,12 @@ start:
 	li	0,0 /*(PSL_FP)*/
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
 	isync
+
+	/* save boot device and flags */
+	lis	%r9, _C_LABEL(boothowto)@ha
+	stw	%r3, _C_LABEL(boothowto)@l(%r9)
+	lis	%r9, _C_LABEL(bootdev)@ha
+	stw	%r4, _C_LABEL(bootdev)@l(%r9)
 
 /* compute end of kernel memory */
 #if defined(DDB) || defined(KERNFS)

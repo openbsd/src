@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 2004/01/29 10:57:09 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 2004/01/29 21:30:02 miod Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.8 2004/01/29 10:57:09 miod Exp $
+ *      $Id: autoconf.c,v 1.9 2004/01/29 21:30:02 miod Exp $
  */
 
 /*
@@ -65,11 +65,8 @@ void	swapconf(void);
 extern void	dumpconf(void);
 int findblkmajor(struct device *);
 char *findblkname(int);
-static struct device * getdisk(char *, int, int, dev_t *);
+struct device * getdisk(char *, int, int, dev_t *);
 struct device * getdevunit(char *, int);
-static struct devmap * findtype(char **);
-void makebootdev(char *cp);
-int getpno(char **);
 void diskconf(void);
 void calc_delayconst(void);	/* clock.c */
 
@@ -79,7 +76,7 @@ void calc_delayconst(void);	/* clock.c */
  * the machine.
  */
 int	cold = 1;	/* if 1, still working on cold-start */
-char	bootdev[16];	/* to hold boot dev name */
+int	bootdev;	/* boot device as provided by locore */
 struct device *bootdv = NULL;
 
 /*
@@ -137,8 +134,8 @@ diskconf()
 void
 swapconf()
 {
-	register struct swdevt *swp;
-	register int nblks;
+	struct swdevt *swp;
+	int nblks;
 
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 		if (bdevsw[major(swp->sw_dev)].d_psize) {
@@ -201,7 +198,7 @@ dumpconf()
 }
 #endif
 
-static	struct nam2blk {
+const struct nam2blk {
 	char *name;
 	int  maj;
 } nam2blk[] = {
@@ -236,13 +233,13 @@ findblkname(maj)
 	return (NULL);
 }
 
-static struct device *
+struct device *
 getdisk(str, len, defpart, devp)
 	char *str;
 	int len, defpart;
 	dev_t *devp;
 {
-	register struct device *dv;
+	struct device *dv;
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
@@ -266,8 +263,8 @@ parsedisk(str, len, defpart, devp)
 	int len, defpart;
 	dev_t *devp;
 {
-	register struct device *dv;
-	register char *cp, c;
+	struct device *dv;
+	char *cp, c;
 	int majdev, part;
 
 	if (len == 0)
@@ -314,21 +311,15 @@ parsedisk(str, len, defpart, devp)
 void
 setroot()
 {
-	int  majdev, mindev, unit, part, len;
+	int  majdev, unit, part, len;
 	dev_t temp;
 	struct swdevt *swp;
 	struct device *dv;
 	dev_t nrootdev, nswapdev = NODEV;
 	char buf[128];
-
 #if defined(NFSCLIENT)
 	extern char *nfsbootdevname;
 #endif
-
-	printf("bootpath: '%s'\n", bootpath);
-	makebootdev(bootpath);
-	if(boothowto & RB_DFLTROOT)
-		return;		/* Boot compiled in */
 
 	/*
 	 * (raid) device auto-configuration could have returned
@@ -347,27 +338,23 @@ setroot()
 		bootdv = getdisk(buf, len, part, &rootdev);
 	}
 
-	/* Lookup boot device from boot if not set by configuration */
-	if(bootdv == NULL) {
-		bootdv = parsedisk(bootdev, strlen(bootdev), 0, &temp);
-	}
-	if(bootdv == NULL) {
-		printf("boot device: lookup '%s' failed.\n", bootdev);
-		boothowto |= RB_ASKNAME; /* Don't Panic :-) */
-		/* boothowto |= RB_SINGLE; */
-	}
-	else {
-		printf("boot device: %s.\n", bootdv->dv_xname);
-	}
+	printf("boot device: %s\n",
+	    (bootdv != NULL) ? bootdv->dv_xname : "<unknown>");
+
+	/*
+	 * If 'swap generic' and we couldn't determine the boot device,
+	 * ask the user.
+	 */
+	if (mountroot == NULL && bootdv == NULL)
+		boothowto |= RB_ASKNAME;
 
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
 			printf("root device ");
 			if (bootdv != NULL)
-				 printf("(default %s%c)",
-					bootdv->dv_xname,
-					bootdv->dv_class == DV_DISK
-						? 'a' : ' ');
+				printf("(default %s%c)",
+				    bootdv->dv_xname,
+				    bootdv->dv_class == DV_DISK ? 'a' : ' ');
 			printf(": ");
 			len = getsn(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
@@ -389,6 +376,7 @@ setroot()
 				break;
 			}
 		}
+
 		/*
 		 * because swap must be on same device as root, for
 		 * network devices this is easy.
@@ -400,8 +388,8 @@ setroot()
 			printf("swap device ");
 			if (bootdv != NULL)
 				printf("(default %s%c)",
-					bootdv->dv_xname,
-					bootdv->dv_class == DV_DISK?'b':' ');
+				    bootdv->dv_xname,
+				    bootdv->dv_class == DV_DISK ? 'b' : ' ');
 			printf(": ");
 			len = getsn(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
@@ -434,8 +422,7 @@ gotswap:
 		dumpdev = nswapdev;
 		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
-	}
-	else if(mountroot == NULL) {
+	} else if (mountroot == NULL) {
 		/*
 		 * `swap generic': Use the device the ROM told us to use.
 		 */
@@ -443,7 +430,6 @@ gotswap:
 			panic("boot device not known");
 
 		majdev = findblkmajor(bootdv);
-
 		if (majdev >= 0) {
 			/*
 			 * Root and Swap are on disk.
@@ -452,8 +438,7 @@ gotswap:
 			rootdev = MAKEDISKDEV(majdev, bootdv->dv_unit, 0);
 			nswapdev = MAKEDISKDEV(majdev, bootdv->dv_unit, 1);
 			dumpdev = nswapdev;
-		}
-		else {
+		} else {
 			/*
 			 *  Root and Swap are on net.
 			 */	
@@ -461,9 +446,7 @@ gotswap:
 		}
 		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
-
 	} else {
-
 		/*
 		 * `root DEV swap DEV': honour rootdev/swdevt.
 		 * rootdev/swdevt/mountroot already properly set.
@@ -478,21 +461,22 @@ gotswap:
 		nfsbootdevname = bootdv->dv_xname;
 		return;
 #endif
+#if defined(FFS)
 	case DV_DISK:
 		mountroot = dk_mountroot;
 		majdev = major(rootdev);
-		mindev = minor(rootdev);
 		unit = DISKUNIT(rootdev);
-		part = DISKPART(rootdev);
-		printf("root on %s%c\n", bootdv->dv_xname, part + 'a');
+		printf("root on %s%c\n", bootdv->dv_xname,
+		    DISKPART(rootdev) + 'a');
 		break;
+#endif
 	default:
 		printf("can't figure root, hope your kernel is right\n");
 		return;
 	}
 
 	/*
-	 * XXX: What is this doing?
+	 * Make the swap partition on the root drive the primary swap.
 	 */
 	temp = NODEV;
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
@@ -541,101 +525,4 @@ getdevunit(name, unit)
 			return NULL;
 	}
 	return dev;
-}
-
-struct devmap {
-	char *att;
-	char *dev;
-	int   type;
-};
-#define	T_IFACE	0x10
-
-#define	T_BUS	0x00
-#define	T_SCSI	0x11
-#define	T_IDE	0x12
-#define	T_DISK	0x21
-
-static struct devmap *
-findtype(s)
-	char **s;
-{
-	static struct devmap devmap[] = {
-		{ "/pci@",	NULL, T_BUS },
-		{ "/pci",	NULL, T_BUS },
-		{ "/mac-io@",	NULL, T_BUS },
-		{ "/mac-io",	NULL, T_BUS },
-		{ "/@",		NULL, T_BUS },
-		{ "/scsi@",	"sd", T_SCSI },
-		{ "/ide",	"wd", T_IDE },
-		{ "/ata",	"wd", T_IDE },
-		{ "/disk@",	"sd", T_DISK },
-		{ "/disk",	"wd", T_DISK },
-		{ NULL, NULL }
-	};
-	struct devmap *dp = &devmap[0];
-
-	while (dp->att) {
-		if (strncmp (*s, dp->att, strlen(dp->att)) == 0) {
-			*s += strlen(dp->att);
-			break;
-		}
-		dp++;
-	}
-	if (dp->att == NULL) {
-		printf("string [%s]not found\n", *s);
-	}
-	return(dp);
-}
-
-/*
- * Look at the string 'bp' and decode the boot device.
- * Boot names look like: '/pci/scsi@c/disk@0,0/bsd'
- *                       '/pci/mac-io/ide@20000/disk@0,0/bsd
- *                       '/pci/mac-io/ide/disk/bsd
- */
-void
-makebootdev(bp)
-	char *bp;
-{
-	int	unit;
-	char   *dev, *cp;
-	struct devmap *dp;
-
-	cp = bp;
-	do {
-		while(*cp && *cp != '/') {
-			cp++;
-		}
-		dp = findtype(&cp);
-		if (!dp->att) {
-			printf("Warning: boot device unrecognized: %s\n", bp);
-			return;
-		}
-	} while((dp->type & T_IFACE) == 0);
-
-	dev = dp->dev;
-	while(*cp && *cp != '/')
-		cp++;
-	dp = findtype(&cp);
-	if (!dp->att || dp->type != T_DISK) {
-		printf("Warning: boot device unrecognized: %s\n", bp);
-		return;
-	}
-	unit = getpno(&cp);
-	snprintf(bootdev, sizeof bootdev, "%s%d%c", dev, unit, 'a');
-}
-
-int
-getpno(cp)
-	char **cp;
-{
-	int val = 0;
-	char *cx = *cp;
-
-	while(*cx && *cx >= '0' && *cx <= '9') {
-		val = val * 10 + *cx - '0';
-		cx++;
-	}
-	*cp = cx;
-	return val;
 }
