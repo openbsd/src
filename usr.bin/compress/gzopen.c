@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.6 2003/06/03 21:08:36 mickey Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.7 2003/06/22 15:22:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -59,7 +59,7 @@
 */
 
 const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.6 2003/06/03 21:08:36 mickey Exp $";
+    "$OpenBSD: gzopen.c,v 1.7 2003/06/22 15:22:43 deraadt Exp $";
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -100,17 +100,14 @@ static int get_header(gz_stream *);
 static int get_byte(gz_stream *);
 
 int
-gz_check_header(fd, sb, ofn)
-	int fd;
-	struct stat *sb;
-	const char *ofn;
+gz_check_header(int fd, struct stat *sb, const char *ofn)
 {
 	int f;
 	u_char buf[sizeof(gz_magic)];
 	off_t off = lseek(fd, 0, SEEK_CUR);
 
 	f = (read(fd, buf, sizeof(buf)) == sizeof(buf) &&
-	     !memcmp(buf, gz_magic, sizeof(buf)));
+	    !memcmp(buf, gz_magic, sizeof(buf)));
 
 	lseek (fd, off, SEEK_SET);
 
@@ -118,10 +115,7 @@ gz_check_header(fd, sb, ofn)
 }
 
 void *
-gz_open (fd, mode, bits)
-	int fd;
-	const char *mode;
-	int  bits;
+gz_open(int fd, const char *mode, int bits)
 {
 	gz_stream *s;
 
@@ -192,8 +186,7 @@ gz_open (fd, mode, bits)
 }
 
 int
-gz_close (cookie)
-	void *cookie;
+gz_close(void *cookie)
 {
 	gz_stream *s = (gz_stream*)cookie;
 	int err = 0;
@@ -219,9 +212,7 @@ gz_close (cookie)
 }
 
 int
-gz_flush (cookie, flush)
-    void *cookie;
-    int flush;
+gz_flush(void *cookie, int flush)
 {
 	gz_stream *s = (gz_stream*)cookie;
 	size_t len;
@@ -259,9 +250,7 @@ gz_flush (cookie, flush)
 }
 
 static int
-put_int32 (s, x)
-	gz_stream *s;
-	u_int32_t x;
+put_int32(gz_stream *s, u_int32_t x)
 {
 	if (write(s->z_fd, &x, 1) != 1)
 		return Z_ERRNO;
@@ -278,8 +267,7 @@ put_int32 (s, x)
 }
 
 static int
-get_byte(s)
-	gz_stream *s;
+get_byte(gz_stream *s)
 {
 	if (s->z_eof)
 		return EOF;
@@ -298,8 +286,7 @@ get_byte(s)
 }
 
 static u_int32_t
-get_int32 (s)
-	gz_stream *s;
+get_int32(gz_stream *s)
 {
 	u_int32_t x;
 
@@ -311,8 +298,7 @@ get_int32 (s)
 }
 
 static int
-get_header(s)
-	gz_stream *s;
+get_header(gz_stream *s)
 {
 	int method; /* method byte */
 	int flags;  /* flags byte */
@@ -368,10 +354,7 @@ get_header(s)
 }
 
 int
-gz_read(cookie, buf, len)
-	void *cookie;
-	char *buf;
-	int len;
+gz_read(void *cookie, char *buf, int len)
 {
 	gz_stream *s = (gz_stream*)cookie;
 	u_char *start = buf; /* starting point for crc computation */
@@ -385,7 +368,7 @@ gz_read(cookie, buf, len)
 
 			errno = 0;
 			if ((s->z_stream.avail_in =
-			     read(s->z_fd, s->z_buf, Z_BUFSIZE)) == 0)
+			    read(s->z_fd, s->z_buf, Z_BUFSIZE)) == 0)
 				s->z_eof = 1;
 			s->z_stream.next_in = s->z_buf;
 		}
@@ -393,12 +376,12 @@ gz_read(cookie, buf, len)
 		if (inflate(&(s->z_stream), Z_NO_FLUSH) == Z_STREAM_END) {
 			/* Check CRC and original size */
 			s->z_crc = crc32(s->z_crc, start,
-				       (uInt)(s->z_stream.next_out - start));
+			    (uInt)(s->z_stream.next_out - start));
 			start = s->z_stream.next_out;
 
 			if (get_int32(s) != s->z_crc ||
 			    get_int32(s) != s->z_stream.total_out) {
-			        errno = EIO;
+				errno = EIO;
 				return -1;
 			}
 			s->z_eof = 1;
@@ -406,16 +389,13 @@ gz_read(cookie, buf, len)
 		}
 	}
 	s->z_crc = crc32(s->z_crc, start,
-			 (uInt)(s->z_stream.next_out - start));
+	    (uInt)(s->z_stream.next_out - start));
 
 	return (int)(len - s->z_stream.avail_out);
 }
 
 int
-gz_write(cookie, buf, len)
-	void *cookie;
-	const char *buf;
-	int len;
+gz_write(void *cookie, const char *buf, int len)
 {
 	gz_stream *s = (gz_stream*)cookie;
 
@@ -423,9 +403,7 @@ gz_write(cookie, buf, len)
 	s->z_stream.avail_in = len;
 
 	while (s->z_stream.avail_in != 0) {
-
 		if (s->z_stream.avail_out == 0) {
-
 			if (write(s->z_fd, s->z_buf, Z_BUFSIZE) != Z_BUFSIZE)
 				break;
 			s->z_stream.next_out = s->z_buf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.24 2003/06/10 22:20:45 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 2003/06/22 15:22:43 deraadt Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.24 2003/06/10 22:20:45 deraadt Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.25 2003/06/22 15:22:43 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,8 +89,10 @@ const struct compressor {
 int permission(const char *);
 void setfile(const char *, struct stat *);
 void usage(void);
-int compress(const char *, const char *, const struct compressor *, int, struct stat *);
-int decompress(const char *, const char *, const struct compressor *, int, struct stat *);
+int compress(const char *, const char *, const struct compressor *,
+    int, struct stat *);
+int decompress(const char *, const char *, const struct compressor *,
+    int, struct stat *);
 const struct compressor *check_method(int, struct stat *, const char *);
 
 #define	OPTSTRING	"123456789ab:cdfghlLnNOo:qrS:tvV"
@@ -381,7 +383,7 @@ main(int argc, char *argv[])
 			    osb.st_size >= entry->fts_statp->st_size) {
 				if (verbose > 0)
 					fprintf(stderr, "file would grow; "
-						     "left unmodified\n");
+					    "left unmodified\n");
 				error = 1;
 				rc = rc ? rc : 2;
 			} else {
@@ -397,7 +399,7 @@ main(int argc, char *argv[])
 					fprintf(stderr, "%u", ratio / 10);
 					if (ratio % 10)
 						fprintf(stderr, ".%u",
-						        ratio % 10);
+						    ratio % 10);
 					fputc('%', stderr);
 					fputc(' ', stderr);
 				}
@@ -445,7 +447,7 @@ compress(const char *in, const char *out, const struct compressor *method,
 	if (method != M_COMPRESS && !force && isatty(ofd)) {
 		if (verbose >= 0)
 			warnx("%s: won't write compressed data to terminal",
-			      out);
+			    out);
 		return (-1);
 	}
 
@@ -488,8 +490,8 @@ check_method(int fd, struct stat *sb, const char *out)
 	const struct compressor *method;
 
 	for (method = &c_table[0];
-	     method->name != NULL && !(*method->check_header)(fd, sb, out);
-	     method++)
+	    method->name != NULL && !(*method->check_header)(fd, sb, out);
+	    method++)
 		;
 
 	if (method->name == NULL)
@@ -519,7 +521,7 @@ decompress(const char *in, const char *out, const struct compressor *method,
 	if (!force && isatty(ifd)) {
 		if (verbose >= 0)
 			warnx("%s: won't read compressed data from terminal",
-			      in);
+			    in);
 		close (ifd);
 		return -1;
 	}

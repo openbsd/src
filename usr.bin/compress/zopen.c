@@ -1,4 +1,4 @@
-/*	$OpenBSD: zopen.c,v 1.10 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: zopen.c,v 1.11 2003/06/22 15:22:43 deraadt Exp $	*/
 /*	$NetBSD: zopen.c,v 1.5 1995/03/26 09:44:53 glass Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
 const char z_rcsid[] =
-	"$OpenBSD: zopen.c,v 1.10 2003/06/03 02:56:07 millert Exp $";
+	"$OpenBSD: zopen.c,v 1.11 2003/06/22 15:22:43 deraadt Exp $";
 #endif
 
 /*-
@@ -214,10 +214,7 @@ static int	output(struct s_zstate *, code_int);
  * questions about this implementation to ames!jaw.
  */
 int
-zwrite(cookie, wbp, num)
-	void *cookie;
-	const char *wbp;
-	int num;
+zwrite(void *cookie, const char *wbp, int num)
 {
 	code_int i;
 	int c, disp;
@@ -259,7 +256,7 @@ zwrite(cookie, wbp, num)
 
 		zs->zs_hshift = 0;
 		for (zs->zs_fcode = (long)zs->zs_hsize; zs->zs_fcode < 65536L;
-		     zs->zs_fcode *= 2L)
+		    zs->zs_fcode *= 2L)
 			zs->zs_hshift++;
 		/* Set hash code range bound. */
 		zs->zs_hshift = 8 - zs->zs_hshift;
@@ -273,7 +270,7 @@ zwrite(cookie, wbp, num)
 			c = *bp++;
 			zs->zs_in_count++;
 			zs->zs_fcode = (long)(((long)c << zs->zs_maxbits) +
-					      zs->zs_ent);
+			    zs->zs_ent);
 			/* Xor hashing. */
 			i = ((c << zs->zs_hshift) ^ zs->zs_ent);
 
@@ -314,8 +311,7 @@ nomatch:		if (output(zs, (code_int) zs->zs_ent) == -1)
 }
 
 int
-zclose(cookie)
-	void *cookie;
+zclose(void *cookie)
 {
 	struct s_zstate *zs;
 	int rval;
@@ -360,9 +356,7 @@ static const u_char rmask[9] =
 	{0x00, 0x01, 0x03, 0x07, 0x0f, 0x1f, 0x3f, 0x7f, 0xff};
 
 static int
-output(zs, ocode)
-	struct s_zstate *zs;
-	code_int ocode;
+output(struct s_zstate *zs, code_int ocode)
 {
 	int bits;
 
@@ -403,10 +397,10 @@ output(zs, ocode)
 		 */
 		if (zs->zs_free_ent > zs->zs_maxcode ||
 		    (zs->zs_clear_flg > 0)) {
-		       /*
-			* Write the whole buffer, because the input side won't
-			* discover the size increase until after it has read it
-			*/
+			/*
+			 * Write the whole buffer, because the input side won't
+			 * discover the size increase until after it has read it
+			 */
 			if (zs->zs_offset > 0) {
 				zs->zs_bp += zs->zs_n_bits;
 				zs->zs_offset = 0;
@@ -458,10 +452,7 @@ output(zs, ocode)
  * compress() routine.  See the definitions above.
  */
 int
-zread(cookie, rbp, num)
-	void *cookie;
-	char *rbp;
-	int num;
+zread(void *cookie, char *rbp, int num)
 {
 	u_int count;
 	struct s_zstate *zs;
@@ -519,7 +510,7 @@ zread(cookie, rbp, num)
 
 		if ((zs->zs_code == CLEAR) && zs->zs_block_compress) {
 			for (zs->zs_code = 255; zs->zs_code >= 0;
-			     zs->zs_code--)
+			    zs->zs_code--)
 				tab_prefixof(zs->zs_code) = 0;
 			zs->zs_clear_flg = 1;
 			zs->zs_free_ent = FIRST - 1;
@@ -570,8 +561,7 @@ eof:	return (num - count);
  *	code or -1 is returned.
  */
 static code_int
-getcode(zs)
-	struct s_zstate *zs;
+getcode(struct s_zstate *zs)
 {
 	code_int gcode;
 	int r_off, bits;
@@ -588,9 +578,10 @@ getcode(zs)
 		 */
 		if (zs->zs_free_ent > zs->zs_maxcode) {
 			zs->zs_n_bits++;
-			if (zs->zs_n_bits == zs->zs_maxbits)	/* Won't get any bigger now. */
+			if (zs->zs_n_bits == zs->zs_maxbits) {
+				/* Won't get any bigger now. */
 				zs->zs_maxcode = zs->zs_maxmaxcode;
-			else
+			} else
 				zs->zs_maxcode = MAXCODE(zs->zs_n_bits);
 		}
 		if (zs->zs_clear_flg > 0) {
@@ -643,9 +634,9 @@ getcode(zs)
 	return (gcode);
 }
 
+/* Table clear for block compress. */
 static int
-cl_block(zs)			/* Table clear for block compress. */
-	struct s_zstate *zs;
+cl_block(struct s_zstate *zs)
 {
 	long rat;
 
@@ -657,8 +648,10 @@ cl_block(zs)			/* Table clear for block compress. */
 			rat = 0x7fffffff;
 		else
 			rat = zs->zs_in_count / rat;
-	} else
-		rat = (zs->zs_in_count << 8) / zs->zs_bytes_out;	/* 8 fractional bits. */
+	} else {
+		/* 8 fractional bits. */
+		rat = (zs->zs_in_count << 8) / zs->zs_bytes_out;
+	}
 	if (rat > zs->zs_ratio)
 		zs->zs_ratio = rat;
 	else {
@@ -672,10 +665,9 @@ cl_block(zs)			/* Table clear for block compress. */
 	return (0);
 }
 
+/* Reset code table. */
 static void
-cl_hash(zs, cl_hsize)			/* Reset code table. */
-	struct s_zstate *zs;
-	count_int cl_hsize;
+cl_hash(struct s_zstate *zs, count_int cl_hsize)
 {
 	count_int *htab_p;
 	long i, m1;
@@ -707,29 +699,23 @@ cl_hash(zs, cl_hsize)			/* Reset code table. */
 }
 
 FILE *
-zopen(name, mode, bits)
-	const char *name;
-	const char *mode;
-	int bits;
+zopen(const char *name, const char *mode, int bits)
 {
 	int fd;
 	void *cookie;
 	if ((fd = open(name, (*mode=='r'? O_RDONLY:O_WRONLY|O_CREAT),
-		       S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) == -1)
+	    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)) == -1)
 		return NULL;
 	if ((cookie = z_open(fd, mode, bits)) == NULL) {
 		close(fd);
 		return NULL;
 	}
 	return funopen(cookie, (*mode == 'r'?zread:NULL),
-		       (*mode == 'w'?zwrite:NULL), NULL, zclose);
+	    (*mode == 'w'?zwrite:NULL), NULL, zclose);
 }
 
 void *
-z_open(fd, mode, bits)
-	int fd;
-	const char *mode;
-	int bits;
+z_open(int fd, const char *mode, int bits)
 {
 	struct s_zstate *zs;
 
@@ -765,17 +751,14 @@ z_open(fd, mode, bits)
 }
 
 int
-z_check_header(fd, sb, ofn)
-	int fd;
-	struct stat *sb;
-	const char *ofn;
+z_check_header(int fd, struct stat *sb, const char *ofn)
 {
 	int f;
 	u_char buf[sizeof(z_magic)];
 	off_t off = lseek(fd, 0, SEEK_CUR);
 
 	f = (read(fd, buf, sizeof(buf)) == sizeof(buf) &&
-	     !memcmp(buf, z_magic, sizeof(buf)));
+	    !memcmp(buf, z_magic, sizeof(buf)));
 
 	lseek (fd, off, SEEK_SET);
 
