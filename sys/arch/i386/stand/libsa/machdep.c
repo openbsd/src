@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1 1997/07/18 00:37:15 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.2 1997/07/18 01:03:55 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -54,6 +54,7 @@ machdep()
 #ifdef DEBUG
 	*(u_int16_t*)0xb8148 = 0x4f31;
 #endif
+#if 0
 	printf("apm_init: ");
 	switch(apminfo.apm_detail = apm_init()) {
 	case APMINI_CANTFIND:
@@ -97,4 +98,5 @@ machdep()
 #endif
 	}
 	putchar('\n');
+#endif
 }
