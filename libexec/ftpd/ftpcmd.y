@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.22 2000/11/13 15:39:08 itojun Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.23 2000/11/13 16:14:44 itojun Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.22 2000/11/13 15:39:08 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.23 2000/11/13 16:14:44 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ char	*fromname;
 %token	<s> ALL
 %token	<i> NUMBER
 
-%type	<i> check_login check_epsvall octal_number byte_size
+%type	<i> check_login check_login_epsvall octal_number byte_size
 %type	<i> struct_code mode_code type_code form_code
 %type	<s> pathstring pathname password username
 %type	<i> host_port host_long_port4 host_long_port6
@@ -166,10 +166,10 @@ cmd
 			memset($3, 0, strlen($3));
 			free($3);
 		}
-	| PORT check_login check_epsvall SP host_port CRLF
+	| PORT check_login_epsvall SP host_port CRLF
 		{
-			if ($2 && $3) {
-				if ($5) {
+			if ($2) {
+				if ($4) {
 					usedefault = 1;
 					reply(500,	
 					    "Illegal PORT rejected (range errors).");
@@ -195,11 +195,11 @@ cmd
 				}
 			}
 		}
-	| LPRT check_login check_epsvall SP host_long_port4 CRLF
+	| LPRT check_login_epsvall SP host_long_port4 CRLF
 		{
-			if ($2 && $3) {
+			if ($2) {
 				/* reject invalid host_long_port4 */
-				if ($5) {
+				if ($4) {
 					reply(500,
 					    "Illegal LPRT command rejected");
 					usedefault = 1;
@@ -214,11 +214,11 @@ cmd
 			}
 		}
 
-	| LPRT check_login check_epsvall SP host_long_port6 CRLF
+	| LPRT check_login_epsvall SP host_long_port6 CRLF
 		{
-			if ($2 && $3) {
+			if ($2) {
 				/* reject invalid host_long_port6 */
-				if ($5) {
+				if ($4) {
 					reply(500,
 					    "Illegal LPRT command rejected");
 					usedefault = 1;
@@ -233,7 +233,7 @@ cmd
 			}
 		}
 
-	| EPRT check_login check_epsvall SP STRING CRLF
+	| EPRT check_login_epsvall SP STRING CRLF
 		{
 			char *tmp = NULL;
 			char *result[3];
@@ -243,7 +243,7 @@ cmd
 			struct addrinfo *res;
 			int i;
 
-			if ($2 && $3) { /* XXX indentation */
+			if ($2) { /* XXX indentation */
 
 			if (epsvall) {
 				reply(501, "EPRT disallowed after EPSV ALL");
@@ -257,7 +257,7 @@ cmd
 
 			/*XXX checks for login */
 
-			tmp = strdup($5);
+			tmp = strdup($4);
 			if (!tmp) {
 				fatal("not enough core.");
 				/*NOTREACHED*/
@@ -324,14 +324,14 @@ cmd
 			}
 		}
 
-	| PASV check_login check_epsvall CRLF
+	| PASV check_login_epsvall CRLF
 		{
-			if ($2 && $3)
+			if ($2)
 				passive();
 		}
-	| LPSV check_login check_epsvall CRLF
+	| LPSV check_login_epsvall CRLF
 		{
-			if ($2 && $3)
+			if ($2)
 				long_passive("LPSV", PF_UNSPEC);
 		}
 	| EPSV check_login SP NUMBER CRLF
@@ -1056,10 +1056,13 @@ check_login
 		}
 	;
 
-check_epsvall
+check_login_epsvall
 	: /* empty */
 		{
-			if (epsvall) {
+			if (!logged_in) {
+				reply(530, "Please login with USER and PASS.");
+				$$ = 0;
+			} else if (epsvall) {
 				reply(501, "the command is disallowed "
 				    "after EPSV ALL");
 				usedefault = 1;
