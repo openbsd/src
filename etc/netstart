@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.62 2000/01/02 06:50:09 deraadt Exp $
+#	$OpenBSD: netstart,v 1.63 2000/01/10 02:04:07 todd Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -86,10 +86,15 @@ for hn in /etc/hostname.*; do
 	    # read the next line or exit the while loop
 	    read af name mask bcaddr ext1 ext2 || break
 	fi
-	# skip comments
-	[ "${af#*#}" = "${af}" ] || continue
-	# $af can be either "dhcp", "up" or an address family.
+	# $af can be "dhcp", "up", "rtsol", an address family, commands, or
+	# a comment.
 	case "$af" in
+	"#"*) # skip comments
+	    continue
+	    ;;
+	"!"*) # parse commands
+	    cmd="${af#*!} ${name} ${mask} ${bcaddr} ${ext1} ${ext2}"
+	    ;;
 	"bridge")
 	    cmd="echo ${hn}: bridges now supported via bridgename.* files"
 	    ;;
