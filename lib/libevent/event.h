@@ -1,7 +1,7 @@
-/*	$OpenBSD: event.h,v 1.4 2002/07/12 18:50:48 provos Exp $	*/
+/*	$OpenBSD: event.h,v 1.5 2004/04/28 06:53:12 brad Exp $	*/
 
 /*
- * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
+ * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Niels Provos.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -34,6 +31,10 @@
 
 #ifdef __cplusplus
 extern "C" {
+#endif
+
+#ifdef WIN32
+#include <windows.h>
 #endif
 
 #define EVLIST_TIMEOUT	0x01
@@ -77,7 +78,12 @@ struct event {
 	TAILQ_ENTRY (event) ev_signal_next;
 	RB_ENTRY (event) ev_timeout_node;
 
+#ifdef WIN32
+	HANDLE ev_fd;
+	OVERLAPPED overlap;
+#else
 	int ev_fd;
+#endif
 	short ev_events;
 	short ev_ncalls;
 	short *ev_pncalls;	/* Allows deletes in callback */
@@ -91,8 +97,8 @@ struct event {
 	int ev_flags;
 };
 
-#define EVENT_SIGNAL(ev)	ev->ev_fd
-#define EVENT_FD(ev)		ev->ev_fd
+#define EVENT_SIGNAL(ev)	(int)ev->ev_fd
+#define EVENT_FD(ev)		(int)ev->ev_fd
 
 #ifdef _EVENT_DEFINED_TQENTRY
 #undef TAILQ_ENTRY
@@ -122,6 +128,7 @@ int event_dispatch(void);
 #define EVLOOP_ONCE	0x01
 #define EVLOOP_NONBLOCK	0x02
 int event_loop(int);
+int event_loopexit(struct timeval *);	/* Causes the loop to exit */
 
 int timeout_next(struct timeval *);
 void timeout_correct(struct timeval *);
@@ -133,6 +140,12 @@ void timeout_process(void);
 #define evtimer_pending(ev, tv)		event_pending(ev, EV_TIMEOUT, tv)
 #define evtimer_initialized(ev)		((ev)->ev_flags & EVLIST_INIT)
 
+#define timeout_add(ev, tv)		event_add(ev, tv)
+#define timeout_set(ev, cb, arg)	event_set(ev, -1, 0, cb, arg)
+#define timeout_del(ev)			event_del(ev)
+#define timeout_pending(ev, tv)		event_pending(ev, EV_TIMEOUT, tv)
+#define timeout_initialized(ev)		((ev)->ev_flags & EVLIST_INIT)
+
 #define signal_add(ev, tv)		event_add(ev, tv)
 #define signal_set(ev, x, cb, arg)	\
 	event_set(ev, x, EV_SIGNAL|EV_PERSIST, cb, arg)
@@ -141,13 +154,95 @@ void timeout_process(void);
 #define signal_initialized(ev)		((ev)->ev_flags & EVLIST_INIT)
 
 void event_set(struct event *, int, short, void (*)(int, short, void *), void *);
+int event_once(int, short, void (*)(int, short, void *), void *, struct timeval *);
+
 int event_add(struct event *, struct timeval *);
 int event_del(struct event *);
 void event_active(struct event *, int, short);
 
 int event_pending(struct event *, short, struct timeval *);
 
+#ifdef WIN32
+#define event_initialized(ev)		((ev)->ev_flags & EVLIST_INIT && (ev)->ev_fd != INVALID_HANDLE_VALUE)
+#else
 #define event_initialized(ev)		((ev)->ev_flags & EVLIST_INIT)
+#endif
+
+/* These functions deal with buffering input and output */
+
+struct evbuffer {
+	u_char *buffer;
+
+	size_t totallen;
+	size_t off;
+
+	void (*cb)(struct evbuffer *, size_t, size_t, void *);
+	void *cbarg;
+};
+
+/* Just for error reporting - use other constants otherwise */
+#define EVBUFFER_READ		0x01
+#define EVBUFFER_WRITE		0x02
+#define EVBUFFER_EOF		0x10
+#define EVBUFFER_ERROR		0x20
+#define EVBUFFER_TIMEOUT	0x40
+
+struct bufferevent;
+typedef void (*evbuffercb)(struct bufferevent *, void *);
+typedef void (*everrorcb)(struct bufferevent *, short what, void *);
+
+struct event_watermark {
+	size_t low;
+	size_t high;
+};
+
+struct bufferevent {
+	struct event ev_read;
+	struct event ev_write;
+
+	struct evbuffer *input;
+	struct evbuffer *output;
+
+	struct event_watermark wm_read;
+	struct event_watermark wm_write;
+
+	evbuffercb readcb;
+	evbuffercb writecb;
+	everrorcb errorcb;
+	void *cbarg;
+
+	int timeout_read;	/* in seconds */
+	int timeout_write;	/* in seconds */
+
+	short enabled;	/* events that are currently enabled */
+};
+
+struct bufferevent *bufferevent_new(int fd,
+    evbuffercb readcb, evbuffercb writecb, everrorcb errorcb, void *cbarg);
+void bufferevent_free(struct bufferevent *bufev);
+int bufferevent_write(struct bufferevent *bufev, void *data, size_t size);
+int bufferevent_write_buffer(struct bufferevent *bufev, struct evbuffer *buf);
+size_t bufferevent_read(struct bufferevent *bufev, void *data, size_t size);
+int bufferevent_enable(struct bufferevent *bufev, short event);
+int bufferevent_disable(struct bufferevent *bufev, short event);
+void bufferevent_settimeout(struct bufferevent *bufev,
+    int timeout_read, int timeout_write);
+
+#define EVBUFFER_LENGTH(x)	(x)->off
+#define EVBUFFER_DATA(x)	(x)->buffer
+#define EVBUFFER_INPUT(x)	(x)->input
+#define EVBUFFER_OUTPUT(x)	(x)->output
+
+struct evbuffer *evbuffer_new(void);
+void evbuffer_free(struct evbuffer *);
+int evbuffer_add(struct evbuffer *, u_char *, size_t);
+int evbuffer_add_buffer(struct evbuffer *, struct evbuffer *);
+int evbuffer_add_printf(struct evbuffer *, char *fmt, ...);
+void evbuffer_drain(struct evbuffer *, size_t);
+int evbuffer_write(struct evbuffer *, int);
+int evbuffer_read(struct evbuffer *, int, int);
+u_char *evbuffer_find(struct evbuffer *, u_char *, size_t);
+void evbuffer_setcb(struct evbuffer *, void (*)(struct evbuffer *, size_t, size_t, void *), void *);
 
 #ifdef __cplusplus
 }

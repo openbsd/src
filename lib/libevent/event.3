@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.10 2003/09/23 08:52:04 markus Exp $
+.\"	$OpenBSD: event.3,v 1.11 2004/04/28 06:53:12 brad Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -30,9 +30,11 @@
 .Nm event_init ,
 .Nm event_dispatch ,
 .Nm event_loop ,
+.Nm event_loopexit ,
 .Nm event_set ,
 .Nm event_add ,
 .Nm event_del ,
+.Nm event_once ,
 .Nm event_pending ,
 .Nm event_initialized ,
 .Nm evtimer_set ,
@@ -44,7 +46,24 @@
 .Nm signal_add ,
 .Nm signal_del ,
 .Nm signal_pending ,
-.Nm signal_initialized
+.Nm signal_initialized ,
+.Nm bufferevent_new ,
+.Nm bufferevent_free ,
+.Nm bufferevent_write ,
+.Nm bufferevent_write_buffer ,
+.Nm bufferevent_read ,
+.Nm bufferevent_enable ,
+.Nm bufferevent_disable ,
+.Nm bufferevent_settimeout ,
+.Nm evbuffer_new ,
+.Nm evbuffer_free ,
+.Nm evbuffer_add ,
+.Nm evbuffer_add_buffer ,
+.Nm evbuffer_add_printf ,
+.Nm evbuffer_drain ,
+.Nm evbuffer_write ,
+.Nm evbuffer_read ,
+.Nm evbuffer_find
 .Nd execute a function when a specific event occurs
 .Sh SYNOPSIS
 .Fd #include <sys/time.h>
@@ -55,12 +74,16 @@
 .Fn "event_dispatch"
 .Ft int
 .Fn "event_loop" "int flags"
+.Ft int
+.Fn "event_loopexit" "struct timeval *tv"
 .Ft void
 .Fn "event_set" "struct event *ev" "int fd" "short event" "void (*fn)(int, short, void *)" "void *arg"
 .Ft int
 .Fn "event_add" "struct event *ev" "struct timeval *tv"
 .Ft int
 .Fn "event_del" "struct event *ev"
+.Ft int
+.Fn "event_once" "int fd" "short event" "void (*fn)(int, short, void *)" "void *arg" "struct timeval *tv"
 .Ft int
 .Fn "event_pending" "struct event *ev" "short event" "struct timeval *tv"
 .Ft int
@@ -85,6 +108,40 @@
 .Fn "signal_pending" "struct event *ev" "struct timeval *tv"
 .Ft int
 .Fn "signal_initialized" "struct event *ev"
+.Ft "struct bufferevent *"
+.Fn "bufferevent_new" "int fd" "evbuffercb readcb" "evbuffercb writecb" "everrorcb" "void *cbarg"
+.Ft void
+.Fn "bufferevent_free" "struct bufferevent *bufev"
+.Ft int
+.Fn "bufferevent_write" "struct bufferevent *bufev" "void *data" "size_t size"
+.Ft int
+.Fn "bufferevent_write_buffer" "struct bufferevent *bufev" "struct evbuffer *buf"
+.Ft size_t
+.Fn "bufferevent_read" "struct bufferevent *bufev" "void *data" "size_t size"
+.Ft int
+.Fn "bufferevent_enable" "struct bufferevent *bufev" "short event"
+.Ft int
+.Fn "bufferevent_disable" "struct bufferevent *bufev" "short event"
+.Ft void
+.Fn "bufferevent_settimeout" "struct bufferevent *bufev" "int timeout_read" "int timeout_write"
+.Ft "struct evbuffer *"
+.Fn "evbuffer_new" "void"
+.Ft void
+.Fn "evbuffer_free" "struct evbuffer *buf"
+.Ft int
+.Fn "evbuffer_add" "struct evbuffer *buf" "u_char *data" "size_t size"
+.Ft int
+.Fn "evbuffer_add_buffer" "struct evbuffer *dst" "struct evbuffer *src"
+.Ft int
+.Fn "evbuffer_add_printf" "struct evbuffer *buf" "char *fmt" "..."
+.Ft void
+.Fn "evbuffer_drain" "struct evbuffer *buf" "size_t size"
+.Ft int
+.Fn "evbuffer_write" "struct evbuffer *buf" "int fd"
+.Ft int
+.Fn "evbuffer_read" "struct evbuffer *buf" "int fd" "int size"
+.Ft "u_char *"
+.Fn "evbuffer_find" "struct evbuffer *buf" "u_char *data" "size_t size"
 .Ft int
 .Fa (*event_sigcb)(void) ;
 .Ft int
@@ -142,6 +199,11 @@ The flags
 and
 .Va EVLOOP_NONBLOCK
 are recognized.
+The
+.Nm event_loopexit
+function allows the loop to be terminated after some amount of time
+has passed.
+The parameter indicates the time after which the loop should terminate.
 .Pp
 It is the responsibility of the caller to provide these functions with
 pre-allocated event structures.
@@ -233,6 +295,20 @@ will cancel the event in the argument
 If the event has already executed or has never been added
 the call will have no effect.
 .Pp
+The function
+.Fn event_once
+is similiar to
+.Fn event_set .
+However, it schedules a callback to be called exactly once and does not
+require the caller to prepare an
+.Fa event
+structure.
+This function supports
+.Fa EV_TIMEOUT ,
+.Fa EV_READ
+and
+.Fa EV_WRITE .
+.Pp
 The
 .Fn event_pending
 function can be used to check if the event specified by
@@ -278,19 +354,58 @@ adds
 .Va EV_PERSIST .
 .Pp
 It is possible to disable support for
-.Xr kqueue 2 ,
-.Xr poll 2 ,
+.Va epoll , kqueue , poll
 or
-.Xr select 2
+.Va select
 by setting the environment variable
-.Va EVENT_NOKQUEUE ,
-.Va EVENT_NOPOLL ,
+.Va EVENT_NOEPOLL , EVENT_NOKQUEUE , EVENT_NOPOLL
 or
 .Va EVENT_NOSELECT .
 By setting the environment variable
 .Va EVENT_SHOW_METHOD ,
 .Nm libevent
 displays the kernel notification method that it uses.
+.Pp
+.Sh BUFFERED EVENTS
+.Nm libevent
+provides an abstraction on top of the regular event callbacks.
+This abstraction is called a
+.Va "buffered event" .
+A buffered event provides input and output buffer that get filled
+and drained automatically.
+The user of a buffered event no longer deals directly with the IO,
+but instead is reading from input and writing to output buffers.
+.Pp
+A new bufferevent is created by
+.Fn bufferevent_new .
+The parameter
+.Fa "fd"
+specifies the file descriptor from which data is read and written to.
+This file descriptor is not allowed to be a 
+.Xr pipe 2 .
+The next three parameters are callbacks.
+The read and write callback have the following form
+.Ft void
+.Fn "(*cb)" "struct bufferevent *bufev" "void *arg"
+The argument is specified by the fourth parameter
+.Fa "cbarg" .
+.Pp
+By default the buffered event is read enabled and will try to read
+from the file descriptor.
+The write callback is executed whenever the output buffer is drained
+below the write low watermark which is
+.Va 0
+by default.
+.Pp
+The
+.Fn bufferevent_write
+function can be used to write data to the file descriptor.
+The data is appended to the output buffer and written to the descriptor
+automatically as it becomes available for writing.
+The
+.Fn bufferevent_read
+function is used to read data from the input buffer.
+Both functions return the amount of data written or read.
 .Pp
 .Sh RETURN VALUES
 Upon successful completion
@@ -311,7 +426,18 @@ The
 API manpage is based on the
 .Xr timeout 9
 manpage by Artur Grabowski.
+The port of
+.Nm libevent
+to Windows is due to Michael A. Davis.
+Support for real-time signals is due to Taral.
 .Sh AUTHORS
 The
 .Nm event
 library was written by Niels Provos.
+.Pp
+.Sh BUGS
+This documentation is neither complete nor authorative.
+If you are in doubt about the usage of this API then
+check the source code to find out how it works, write
+up the missing piece of documentation and send it to
+me for inclusion in this man page.

@@ -1,7 +1,7 @@
-/*	$OpenBSD: event.c,v 1.4 2003/07/09 10:54:38 markus Exp $	*/
+/*	$OpenBSD: event.c,v 1.5 2004/04/28 06:53:12 brad Exp $	*/
 
 /*
- * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
+ * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Niels Provos.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -33,6 +30,12 @@
 #include "config.h"
 #endif
 
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#undef WIN32_LEAN_AND_MEAN
+#include "misc.h"
+#endif
 #include <sys/types.h>
 #include <sys/tree.h>
 #ifdef HAVE_SYS_TIME_H
@@ -43,7 +46,9 @@
 #include <sys/queue.h>
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include <errno.h>
 #include <string.h>
 #include <err.h>
@@ -62,13 +67,19 @@
 extern const struct eventop selectops;
 #endif
 #ifdef HAVE_POLL
-extern struct eventop pollops;
+extern const struct eventop pollops;
+#endif
+#ifdef HAVE_RTSIG
+extern const struct eventop rtsigops;
 #endif
 #ifdef HAVE_EPOLL
-extern struct eventop epollops;
+extern const struct eventop epollops;
 #endif
 #ifdef HAVE_WORKING_KQUEUE
 extern const struct eventop kqops;
+#endif
+#ifdef WIN32
+extern const struct eventop win32ops;
 #endif
 
 /* In order of preference */
@@ -79,11 +90,17 @@ const struct eventop *eventops[] = {
 #ifdef HAVE_EPOLL
 	&epollops,
 #endif
+#ifdef HAVE_RTSIG
+	&rtsigops,
+#endif
 #ifdef HAVE_POLL
 	&pollops,
 #endif
 #ifdef HAVE_SELECT
 	&selectops,
+#endif
+#ifdef WIN32
+	&win32ops,
 #endif
 	NULL
 };
@@ -91,13 +108,17 @@ const struct eventop *eventops[] = {
 const struct eventop *evsel;
 void *evbase;
 
-/* Handle signals */
+/* Handle signals - This is a deprecated interface */
 int (*event_sigcb)(void);	/* Signal callback when gotsig is set */
 int event_gotsig;		/* Set in signal handler */
+int event_gotterm;		/* Set to terminate loop */
 
 /* Prototypes */
-void	event_queue_insert(struct event *, int);
-void	event_queue_remove(struct event *, int);
+void		event_queue_insert(struct event *, int);
+void		event_queue_remove(struct event *, int);
+int		event_haveevents(void);
+
+static void	event_process_active(void);
 
 static RB_HEAD(event_tree, event) timetree;
 static struct event_list activequeue;
@@ -111,6 +132,10 @@ compare(struct event *a, struct event *b)
 	if (timercmp(&a->ev_timeout, &b->ev_timeout, <))
 		return (-1);
 	else if (timercmp(&a->ev_timeout, &b->ev_timeout, >))
+		return (1);
+	if (a < b)
+		return (-1);
+	if (a > b)
 		return (1);
 	return (0);
 }
@@ -160,7 +185,7 @@ event_haveevents(void)
 	    TAILQ_FIRST(&signalqueue) || TAILQ_FIRST(&activequeue));
 }
 
-void
+static void
 event_process_active(void)
 {
 	struct event *ev;
@@ -176,15 +201,31 @@ event_process_active(void)
 		while (ncalls) {
 			ncalls--;
 			ev->ev_ncalls = ncalls;
-			(*ev->ev_callback)(ev->ev_fd, ev->ev_res, ev->ev_arg);
+			(*ev->ev_callback)((int)ev->ev_fd, ev->ev_res, ev->ev_arg);
 		}
 	}
 }
+
+/*
+ * Wait continously for events.  We exit only if no events are left.
+ */
 
 int
 event_dispatch(void)
 {
 	return (event_loop(0));
+}
+
+static void
+event_loopexit_cb(int fd, short what, void *arg)
+{
+	event_gotterm = 1;
+}
+
+int
+event_loopexit(struct timeval *tv)
+{
+	return (event_once(-1, EV_TIMEOUT, event_loopexit_cb, NULL, tv));
 }
 
 int
@@ -199,6 +240,12 @@ event_loop(int flags)
 
 	done = 0;
 	while (!done) {
+		/* Terminate the loop if we have been asked to */
+		if (event_gotterm) {
+			event_gotterm = 0;
+			break;
+		}
+
 		while (event_gotsig) {
 			event_gotsig = 0;
 			if (event_sigcb) {
@@ -214,7 +261,7 @@ event_loop(int flags)
 		gettimeofday(&tv, NULL);
 		if (timercmp(&tv, &event_tv, <)) {
 			struct timeval off;
-			LOG_DBG((LOG_MIST, 10,
+			LOG_DBG((LOG_MISC, 10,
 				    "%s: time is running backwards, corrected",
 				    __func__));
 
@@ -253,13 +300,78 @@ event_loop(int flags)
 	return (0);
 }
 
+/* Sets up an event for processing once */
+
+struct event_once {
+	struct event ev;
+
+	void (*cb)(int, short, void *);
+	void *arg;
+};
+
+/* One-time callback, it deletes itself */
+
+static void
+event_once_cb(int fd, short events, void *arg)
+{
+	struct event_once *eonce = arg;
+
+	(*eonce->cb)(fd, events, eonce->arg);
+	free(eonce);
+}
+
+/* Schedules an event once */
+
+int
+event_once(int fd, short events,
+    void (*callback)(int, short, void *), void *arg, struct timeval *tv)
+{
+	struct event_once *eonce;
+	struct timeval etv;
+
+	/* We cannot support signals that just fire once */
+	if (events & EV_SIGNAL)
+		return (-1);
+
+	if ((eonce = calloc(1, sizeof(struct event_once))) == NULL)
+		return (-1);
+
+	if (events == EV_TIMEOUT) {
+		if (tv == NULL) {
+			timerclear(&etv);
+			tv = &etv;
+		}
+
+		eonce->cb = callback;
+		eonce->arg = arg;
+
+		evtimer_set(&eonce->ev, event_once_cb, eonce);
+	} else if (events & (EV_READ|EV_WRITE)) {
+		events &= EV_READ|EV_WRITE;
+
+		event_set(&eonce->ev, fd, events, event_once_cb, eonce);
+	} else {
+		/* Bad event combination */
+		return (-1);
+	}
+
+	event_add(&eonce->ev, tv);
+
+	return (0);
+}
+
 void
 event_set(struct event *ev, int fd, short events,
 	  void (*callback)(int, short, void *), void *arg)
 {
 	ev->ev_callback = callback;
 	ev->ev_arg = arg;
+#ifdef WIN32
+	ev->ev_fd = (HANDLE)fd;
+	ev->overlap.hEvent = ev;
+#else
 	ev->ev_fd = fd;
+#endif
 	ev->ev_events = events;
 	ev->ev_flags = EVLIST_INIT;
 	ev->ev_ncalls = 0;
@@ -281,8 +393,10 @@ event_pending(struct event *ev, short event, struct timeval *tv)
 		flags |= ev->ev_res;
 	if (ev->ev_flags & EVLIST_TIMEOUT)
 		flags |= EV_TIMEOUT;
+	if (ev->ev_flags & EVLIST_SIGNAL)
+		flags |= EV_SIGNAL;
 
-	event &= (EV_TIMEOUT|EV_READ|EV_WRITE);
+	event &= (EV_TIMEOUT|EV_READ|EV_WRITE|EV_SIGNAL);
 
 	/* See if there is a timeout that we should report */
 	if (tv != NULL && (flags & event & EV_TIMEOUT))
@@ -420,6 +534,9 @@ timeout_next(struct timeval *tv)
 
 	timersub(&ev->ev_timeout, &now, tv);
 
+	assert(tv->tv_sec >= 0);
+	assert(tv->tv_usec >= 0);
+
 	LOG_DBG((LOG_MISC, 60, "timeout_next: in %d seconds", tv->tv_sec));
 	return (0);
 }
@@ -458,31 +575,6 @@ timeout_process(void)
 			 ev->ev_callback));
 		event_active(ev, EV_TIMEOUT, 1);
 	}
-}
-
-void
-timeout_insert(struct event *ev)
-{
-	struct event *tmp;
-
-	tmp = RB_FIND(event_tree, &timetree, ev);
-
-	if (tmp != NULL) {
-		struct timeval tv;
-		struct timeval add = {0,1};
-
-		/* Find unique time */
-		tv = ev->ev_timeout;
-		do {
-			timeradd(&tv, &add, &tv);
-			tmp = RB_NEXT(event_tree, &timetree, tmp);
-		} while (tmp != NULL && timercmp(&tmp->ev_timeout, &tv, ==));
-
-		ev->ev_timeout = tv;
-	}
-
-	tmp = RB_INSERT(event_tree, &timetree, ev);
-	assert(tmp == NULL);
 }
 
 void
@@ -526,9 +618,11 @@ event_queue_insert(struct event *ev, int queue)
 	case EVLIST_SIGNAL:
 		TAILQ_INSERT_TAIL(&signalqueue, ev, ev_signal_next);
 		break;
-	case EVLIST_TIMEOUT:
-		timeout_insert(ev);
+	case EVLIST_TIMEOUT: {
+		struct event *tmp = RB_INSERT(event_tree, &timetree, ev);
+		assert(tmp == NULL);
 		break;
+	}
 	case EVLIST_INSERTED:
 		TAILQ_INSERT_TAIL(&eventqueue, ev, ev_next);
 		break;

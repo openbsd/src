@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.2 2003/07/10 07:48:42 markus Exp $	*/
+/*	$OpenBSD: signal.c,v 1.3 2004/04/28 06:53:12 brad Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Niels Provos.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -56,6 +53,7 @@
 #endif
 
 #include "event.h"
+#include "evsignal.h"
 
 extern struct event_list signalqueue;
 
@@ -76,12 +74,12 @@ evsignal_init(sigset_t *evsigmask)
 int
 evsignal_add(sigset_t *evsigmask, struct event *ev)
 {
-	int signal;
+	int evsignal;
 	
 	if (ev->ev_events & (EV_READ|EV_WRITE))
 		errx(1, "%s: EV_SIGNAL incompatible use", __func__);
-	signal = EVENT_SIGNAL(ev);
-	sigaddset(evsigmask, signal);
+	evsignal = EVENT_SIGNAL(ev);
+	sigaddset(evsigmask, evsignal);
 	
 	return (0);
 }
@@ -93,10 +91,10 @@ evsignal_add(sigset_t *evsigmask, struct event *ev)
 int
 evsignal_del(sigset_t *evsigmask, struct event *ev)
 {
-	int signal;
+	int evsignal;
 
-	signal = EVENT_SIGNAL(ev);
-	sigdelset(evsigmask, signal);
+	evsignal = EVENT_SIGNAL(ev);
+	sigdelset(evsigmask, evsignal);
 	needrecalc = 1;
 
 	return (sigaction(EVENT_SIGNAL(ev),(struct sigaction *)SIG_DFL, NULL));

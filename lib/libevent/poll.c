@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.c,v 1.2 2003/10/01 09:10:30 markus Exp $	*/
+/*	$OpenBSD: poll.c,v 1.3 2004/04/28 06:53:12 brad Exp $	*/
 
 /*
  * Copyright 2000-2003 Niels Provos <provos@citi.umich.edu>
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Niels Provos.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -68,7 +65,7 @@ struct pollop {
 	struct pollfd *event_set;
 	struct event **event_back;
 	sigset_t evsigmask;
-} pop;
+} pollop;
 
 void *poll_init	(void);
 int poll_add		(void *, struct event *);
@@ -92,11 +89,11 @@ poll_init(void)
 	if (!issetugid() && getenv("EVENT_NOPOLL"))
 		return (NULL);
 
-	memset(&pop, 0, sizeof(pop));
+	memset(&pollop, 0, sizeof(pollop));
 
-	evsignal_init(&pop.evsigmask);
+	evsignal_init(&pollop.evsigmask);
 
-	return (&pop);
+	return (&pollop);
 }
 
 /*
@@ -192,13 +189,18 @@ poll_dispatch(void *arg, struct timeval *tv)
 		return (0);
 
 	for (i = 0; i < nfds; i++) {
+                int what = pop->event_set[i].revents;
+		
 		res = 0;
+
 		/* If the file gets closed notify */
-		if (pop->event_set[i].revents & POLLHUP)
-			pop->event_set[i].revents = POLLIN|POLLOUT;
-		if (pop->event_set[i].revents & POLLIN)
+		if (what & POLLHUP)
+			what |= POLLIN|POLLOUT;
+                if (what & POLLERR) 
+                        what |= POLLIN|POLLOUT;
+		if (what & POLLIN)
 			res |= EV_READ;
-		if (pop->event_set[i].revents & POLLOUT)
+		if (what & POLLOUT)
 			res |= EV_WRITE;
 		if (res == 0)
 			continue;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.11 2004/01/05 19:20:18 markus Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.12 2004/04/28 06:53:12 brad Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Niels Provos.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -59,7 +56,7 @@
 #define log_error	warn
 #endif
 
-#ifdef HAVE_INTTYPES_H
+#if defined(HAVE_INTTYPES_H) && !defined(__OpenBSD__)
 #define INTPTR(x)	(intptr_t)x
 #else
 #define INTPTR(x)	x
@@ -81,13 +78,14 @@ struct kqop {
 	struct kevent *events;
 	int nevents;
 	int kq;
-} kqop;
+} kqueueop;
 
 void *kq_init	(void);
 int kq_add	(void *, struct event *);
 int kq_del	(void *, struct event *);
 int kq_recalc	(void *, int);
 int kq_dispatch	(void *, struct timeval *);
+int kq_insert	(struct kqop *, struct kevent *);
 
 const struct eventop kqops = {
 	"kqueue",
@@ -107,29 +105,29 @@ kq_init(void)
 	if (!issetugid() && getenv("EVENT_NOKQUEUE"))
 		return (NULL);
 
-	memset(&kqop, 0, sizeof(kqop));
+	memset(&kqueueop, 0, sizeof(kqueueop));
 
-	/* Initialize the kernel queue */
+	/* Initalize the kernel queue */
 	
 	if ((kq = kqueue()) == -1) {
 		log_error("kqueue");
 		return (NULL);
 	}
 
-	kqop.kq = kq;
+	kqueueop.kq = kq;
 
-	/* Initialize fields */
-	kqop.changes = malloc(NEVENT * sizeof(struct kevent));
-	if (kqop.changes == NULL)
+	/* Initalize fields */
+	kqueueop.changes = malloc(NEVENT * sizeof(struct kevent));
+	if (kqueueop.changes == NULL)
 		return (NULL);
-	kqop.events = malloc(NEVENT * sizeof(struct kevent));
-	if (kqop.events == NULL) {
-		free (kqop.changes);
+	kqueueop.events = malloc(NEVENT * sizeof(struct kevent));
+	if (kqueueop.events == NULL) {
+		free (kqueueop.changes);
 		return (NULL);
 	}
-	kqop.nevents = NEVENT;
+	kqueueop.nevents = NEVENT;
 
-	return (&kqop);
+	return (&kqueueop);
 }
 
 int
@@ -157,7 +155,7 @@ kq_insert(struct kqop *kqop, struct kevent *kev)
 		}
 		kqop->changes = newchange;
 
-		newresult = realloc(kqop->changes,
+		newresult = realloc(kqop->events,
 				    nevents * sizeof(struct kevent));
 
 		/*
@@ -168,7 +166,7 @@ kq_insert(struct kqop *kqop, struct kevent *kev)
 			log_error("%s: malloc", __func__);
 			return (-1);
 		}
-		kqop->events = newchange;
+		kqop->events = newresult;
 
 		kqop->nevents = nevents;
 	}
@@ -292,9 +290,11 @@ kq_add(void *arg, struct event *ev)
  		memset(&kev, 0, sizeof(kev));
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_READ;
-		kev.flags = EV_ADD;
+#ifdef NOTE_EOF
 		/* Make it behave like select() and poll() */
 		kev.fflags = NOTE_EOF;
+#endif
+		kev.flags = EV_ADD;
 		if (!(ev->ev_events & EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
 		kev.udata = INTPTR(ev);
