@@ -1,9 +1,10 @@
-/*	$OpenBSD: net_osdep.h,v 1.1 1999/12/08 06:50:18 itojun Exp $	*/
+/*	$OpenBSD: net_osdep.h,v 1.2 2000/08/19 09:17:35 itojun Exp $	*/
+/*	$KAME: net_osdep.h,v 1.23 2000/08/19 00:58:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -35,10 +36,24 @@
 /*
  * OS dependencies:
  *
+ * - struct rt_addrinfo
+ *   all *BSDs except bsdi4 only have two members; rti_addrs and rti_info[].
+ *   bsdi4 has additional members; rti_flags, rti_ifa, rti_ifp, and rti_rtm.
+ *
+ * - side effects of rtrequest[1](RTM_DELETE)
+ *	BSDI[34]: delete all cloned routes underneath the route.
+ *	FreeBSD[234]: delete all protocol-cloned routes underneath the route.
+ *		      note that cloned routes from an interface direct route
+ *		      still remain.
+ *	NetBSD, OpenBSD: no side effects.
  * - privileged process
  *	NetBSD, FreeBSD 3
  *		struct proc *p;
  *		if (p && !suser(p->p_ucred, &p->p_acflag))
+ *			privileged;
+ *	FreeBSD 4
+ *		struct proc *p;
+ *		if (p && !suser(p))
  *			privileged;
  *	OpenBSD, BSDI [34], FreeBSD 2
  *		struct socket *so;
@@ -64,7 +79,7 @@
  *	BSDI [34]	no		old standard	if_name+unit
  * - usrreq
  *	NetBSD, OpenBSD, BSDI [34], FreeBSD 2
- *		single function with PRU_xx, arguments are mbuf 
+ *		single function with PRU_xx, arguments are mbuf
  *	FreeBSD 3
  *		separates functions, non-mbuf arguments
  * - {set,get}sockopt
@@ -76,7 +91,7 @@
  *	NetBSD, OpenBSD, BSDI [34], FreeBSD 2
  *		timeout() is a void function
  *	FreeBSD 3
- *		timeout() is non-void, must keep returned value for untimeuot()
+ *		timeout() is non-void, must keep returned value for untimeout()
  * - sysctl
  *	NetBSD, OpenBSD
  *		foo_sysctl()
@@ -114,6 +129,34 @@
  *
  *	odd thing is that many of them refers loif as ifnet *loif,
  *	not loif[NLOOP], from outside of if_loop.c.
+ *
+ * - number of bpf pseudo devices
+ *	others: bpfilter.h, NBPFILTER
+ *	FreeBSD4: bpf.h, NBPF
+ *	solution:
+ *		#if defined(__FreeBSD__) && __FreeBSD__ >= 4
+ *		#include "bpf.h"
+ *		#define NBPFILTER	NBPF
+ *		#else
+ *		#include "bpfilter.h"
+ *		#endif
+ *
+ * - protosw for IPv4 (sys/netinet)
+ *	FreeBSD4: struct ipprotosw in netinet/ipprotosw.h
+ *	others: struct protosw in sys/protosw.h
+ *
+ * - header files with defopt (opt_xx.h)
+ *	FreeBSD3: opt_{inet,ipsec,ip6fw,altq}.h
+ *	FreeBSD4: opt_{inet,inet6,ipsec,ip6fw,altq}.h
+ *	NetBSD: opt_{inet,ipsec,altq}.h
+ *	others: does not use defopt
+ *
+ * - IN_MULTICAST/IN_CLASS[A-D] macro.
+ *	OpenBSD and NetBSD: net endian (kernel) or host endian (userland)
+ *	others: always host endian
+ *
+ * - (m->m_flags & M_EXT) != 0 does *not* mean that the max data length of
+ *   the mbuf == MCLBYTES.
  */
 
 #ifndef __NET_NET_OSDEP_H_DEFINED_
