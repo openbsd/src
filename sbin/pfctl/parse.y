@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.241 2002/12/07 20:25:40 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.242 2002/12/07 21:16:26 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -54,17 +54,18 @@
 #include "pfctl_parser.h"
 #include "pfctl_altq.h"
 
-static struct pfctl *pf = NULL;
-static FILE *fin = NULL;
-static int debug = 0;
-static int lineno = 1;
-static int errors = 0;
-static int rulestate = 0;
-static u_int16_t returnicmpdefault =  (ICMP_UNREACH << 8) | ICMP_UNREACH_PORT;
-static u_int16_t returnicmp6default = (ICMP6_DST_UNREACH << 8) |
-    ICMP6_DST_UNREACH_NOPORT;
-static int blockpolicy = PFRULE_DROP;
-static int require_order = 1;
+static struct pfctl	*pf = NULL;
+static FILE		*fin = NULL;
+static int		 debug = 0;
+static int		 lineno = 1;
+static int		 errors = 0;
+static int		 rulestate = 0;
+static u_int16_t	 returnicmpdefault =
+			    (ICMP_UNREACH << 8) | ICMP_UNREACH_PORT;
+static u_int16_t	 returnicmp6default =
+			    (ICMP6_DST_UNREACH << 8) | ICMP6_DST_UNREACH_NOPORT;
+static int		 blockpolicy = PFRULE_DROP;
+static int		 require_order = 1;
 
 enum {
 	PFCTL_STATE_NONE = 0,
