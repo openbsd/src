@@ -1,4 +1,5 @@
-/* $NetBSD: if_pppoe.h,v 1.5 2003/11/28 08:56:48 keihan Exp $ */
+/*	$OpenBSD: if_pppoe.h,v 1.3 2004/11/30 11:44:18 markus Exp $ */
+/*	$NetBSD: if_pppoe.h,v 1.5 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
