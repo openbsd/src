@@ -44,6 +44,7 @@ _tcpdump:*:76:
 _dhcp:*:77:
 _mopd:*:78:
 _tftpd:*:79:
+_rbootd:*:80:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:

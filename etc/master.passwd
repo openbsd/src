@@ -26,4 +26,5 @@ _tcpdump:*:76:76::0:0:tcpdump privsep:/var/empty:/sbin/nologin
 _dhcp:*:77:77::0:0:DHCP programs:/var/empty:/sbin/nologin
 _mopd:*:78:78::0:0:MOP Daemon:/var/empty:/sbin/nologin
 _tftpd:*:79:79::0:0:TFTP Daemon:/var/empty:/sbin/nologin
+_rbootd:*:80:80::0:0:rbootd Daemon:/var/empty:/sbin/nologin
 nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin
