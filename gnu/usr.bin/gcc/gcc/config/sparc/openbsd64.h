@@ -64,11 +64,8 @@ Boston, MA 02111-1307, USA.  */
 #undef WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
-#undef LONG_DOUBLE_TYPE_SIZE
-#define LONG_DOUBLE_TYPE_SIZE 128
-
 #undef	WINT_TYPE
-#define	WINT_TYPE "long int"
+#define	WINT_TYPE "int"
 
 #undef	WINT_TYPE_SIZE
 #define	WINT_TYPE_SIZE 32
