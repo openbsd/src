@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.4 1997/03/21 00:48:43 niklas Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.5 1997/07/06 16:20:23 niklas Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.2 1996/07/11 05:31:31 cgd Exp $	*/
 
 /*
@@ -53,5 +53,34 @@ db_regs_t		ddb_regs;	/* register state */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
 #define	FIXUP_PC_AFTER_BREAK(regs) ((regs)->tf_regs[FRAME_PC] -= BKPT_SIZE)
+
+#define	IS_BREAKPOINT_TRAP(type, code)	0
+#define	IS_WATCHPOINT_TRAP(type, code)	0
+
+#define SOFTWARE_SSTEP
+
+/* Hack to skip GCC "unused" warnings. */
+#ifdef __GNUC__
+#define	inst_trap_return(ins)	({(ins); 0;})
+#define	inst_return(ins)	({(ins); 0;})
+#define	inst_call(ins)		({(ins); 0;})
+#define	inst_branch(ins)	({(ins); 0;})
+#define inst_load(ins)		({(ins); 0;})
+#define inst_store(ins)		({(ins); 0;})
+#else
+#define	inst_trap_return(ins)	0
+#define	inst_return(ins)	0
+#define	inst_call(ins)		0
+#define	inst_branch(ins)	0
+#define inst_load(ins)		0
+#define inst_store(ins)		0
+#endif
+
+#define next_instr_address(pc, bd)	(pc + 4)
+
+/* XXX temporary hack until we implement singlestepping */
+#define branch_taken(a, b, c, d)	0
+
+int kdb_trap __P((int, int, db_regs_t *));
 
 #endif	/* _ALPHA_DB_MACHDEP_H_ */
