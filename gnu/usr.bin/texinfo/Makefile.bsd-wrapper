@@ -1,4 +1,4 @@
-#	$Id: Makefile.bsd-wrapper,v 1.14 1997/07/24 15:46:17 kstailey Exp $
+#	$Id: Makefile.bsd-wrapper,v 1.15 1997/07/24 16:00:50 kstailey Exp $
 
 INFODIR=	infodir=${DESTDIR}/usr/share/info
 INFOPATH=	DEFAULT_INFOPATH=/usr/local/info:/usr/share/info:.
@@ -24,7 +24,7 @@ all:	config.status
 
 config: .FORCE
 	-rm -f config.cache
-	/bin/sh ${.CURDIR}/configure --prefix=/usr
+	INSTALL_PROGRAM=$(INST_PROG) /bin/sh ${.CURDIR}/configure --prefix=/usr
 
 config.status:
 	INSTALL_PROGRAM=$(INST_PROG) /bin/sh ${.CURDIR}/configure --prefix=/usr
