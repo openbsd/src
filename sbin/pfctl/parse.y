@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.91 2002/06/10 02:09:59 kjell Exp $	*/
+/*	$OpenBSD: parse.y,v 1.92 2002/06/10 16:51:37 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -103,8 +103,8 @@ struct node_icmp {
 	struct node_icmp	*next;
 };
 
+enum	{ PF_STATE_OPT_MAX=0, PF_STATE_OPT_TIMEOUT=1 };
 struct node_state_opt {
-	enum	{ PF_STATE_OPT_MAX=0, PF_STATE_OPT_TIMEOUT=1 };
 	int			 type;
 	union {
 		u_int32_t	 max_states;
