@@ -1,3 +1,4 @@
+/*	$OpenBSD: dlreg.h,v 1.2 1998/05/11 14:59:06 niklas Exp $	*/
 /*	$NetBSD: dlreg.h,v 1.1 1997/02/04 19:13:19 ragge Exp $	*/
 /*
  * Copyright (c) 1997  Ben Harris.  All rights reserved.
