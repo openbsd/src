@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.41 2002/07/24 04:11:10 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.42 2002/07/27 13:19:26 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -347,7 +347,7 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 			continue;
 		dl_data[auxstack->au_id] = auxstack->au_v;
 	}
-#ifdef __sparc64__
+#if defined(__sparc64__) || defined(__sparc__)
 	loff = dl_data[AUX_base];
 #endif
 
@@ -359,7 +359,7 @@ _dl_boot_bind(const long sp, long loff, Elf_Dyn *dynamicp, long *dl_data)
 	 * Cache the data for easier access.
 	 */
 
-#if defined(__sparc64__)
+#if defined(__sparc64__) || defined(__sparc__)
 	dynp = (Elf_Dyn *)((long)_DYNAMIC + loff);
 #elif defined(__powerpc__) || defined(__alpha__)
 	dynp = dynamicp;

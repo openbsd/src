@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2002/07/12 20:18:30 drahn Exp $
+#	$OpenBSD: Makefile,v 1.16 2002/07/27 13:19:26 art Exp $
 
 SUBDIR=ldconfig ldd
 VPATH=${.CURDIR}/../../lib/libc/string:${.CURDIR}/../../sys/lib/libsa
@@ -22,6 +22,14 @@ CFLAGS += -fpic -msoft-float
 CFLAGS += -fpic -mno-fp-regs
 LIBCSRCDIR=${.CURDIR}/../../lib/libc
 .include "${LIBCSRCDIR}/arch/alpha/Makefile.inc"
+.endif
+.if (${MACHINE_ARCH} == "sparc")
+CFLAGS += -fpic -msoft-float -I${LIBCSRCDIR}/arch/sparc
+AFLAGS = ${CFLAGS}
+LIBCSRCDIR=${.CURDIR}/../../lib/libc
+.include "${LIBCSRCDIR}/arch/sparc/Makefile.inc"
+.PATH: ${LIBCSRCDIR}/arch/sparc/gen/
+SRCS+=umul.S
 .endif
 
 #CFLAGS += -Werror -Wall -Wno-uninitialized
