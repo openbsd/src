@@ -1,4 +1,4 @@
-/*	$OpenBSD: state.c,v 1.4 1996/08/16 23:32:44 deraadt Exp $	*/
+/*	$OpenBSD: state.c,v 1.5 1996/08/24 09:03:42 deraadt Exp $	*/
 /*	$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: state.c,v 1.4 1996/08/16 23:32:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: state.c,v 1.5 1996/08/24 09:03:42 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1056,17 +1056,45 @@ int env_ovalue = -1;
 # define env_ovalue OLD_ENV_VALUE
 #endif	/* ENV_HACK */
 
+/*
+ * variables not to let through.
+ * if name ends in =, it is complete variable name
+ * if it does not end in =, all variables starting with this name
+ * should be dropped.
+ */
+char *badenv_table[] = {
+	"IFS=",
+	"LD_",
+	"_RLD_",
+	"SHLIB_PATH=",
+	"LIBPATH=",
+	"KRB_CONF",
+	"ENV=",
+	"BASH_ENV=",
+	NULL,
+};
+
 /* envvarok(char*) */
 /* check that variable is safe to pass to login or shell */
 static int
 envvarok(varp)
 	char *varp;
 {
-	return (strncmp(varp, "LD_", strlen("LD_")) &&
-		strncmp(varp, "_RLD_", strlen("_RLD_")) &&
-		strcmp(varp, "LIBPATH") &&
-		strcmp(varp, "ENV") &&
-		strcmp(varp, "IFS"));
+	int i;
+	int len;
+
+	if (strchr(varp, '='))
+		return (0);
+	for (i = 0; badenv_table[i]; i++) {
+		len = strlen(badenv_table[i]);
+		if (badenv_table[i][len-1] == '=' &&
+		    !strncmp(badenv_table[i], varp, len-1) &&
+		    varp[len-2] == '\0')
+			return (0);
+		if (!strncmp(badenv_table[i], varp, len-1))
+			return (0);
+	}
+	return (1);
 }
 
 /*
