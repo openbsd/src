@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.8 1996/08/04 01:27:46 niklas Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.9 1997/03/21 00:44:18 niklas Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /* 
@@ -43,6 +43,7 @@
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_var.h>
 #include <ddb/db_extern.h>
 
 #include <lib/libkern/libkern.h>
@@ -200,7 +201,6 @@ db_print_position()
 /*
  * Printing
  */
-extern int	db_radix;
 
 /*VARARGS1*/
 int
