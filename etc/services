@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.27 2001/02/26 19:29:49 aaron Exp $
+#	$OpenBSD: services,v 1.28 2001/03/08 13:11:06 jakob Exp $
 #
 # Network services, Internet style
 #
@@ -191,7 +191,7 @@ ekshell		545/tcp		     # Kerberos encrypted remote shell -kfall
 ekshell2	2106/tcp	     # What U of Colorado @ Boulder uses?
 kerberos-adm	749/tcp				# Kerberos `kadmin' (v5)
 kerberos-iv	750/udp		kdc kerberos	# Kerberos authentication--udp
-kerberos-iv	750/tcp		kdc kerberos	# Kerberos authentication--tdp
+kerberos-iv	750/tcp		kdc kerberos	# Kerberos authentication--tcp
 kerberos_master	751/udp		kerberos-master	# Kerberos authentication
 kerberos_master	751/tcp		kerberos-master # Kerberos authentication
 krb_prop	754/tcp				# Kerberos slave propagation
