@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.105 2004/09/18 20:26:00 deraadt Exp $
+$OpenBSD: usbdevs,v 1.106 2004/09/20 06:01:04 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -683,6 +683,7 @@ product ELECOM LDUSBTX1		0x4002	LD-USB/TX
 product ELECOM LDUSBLTX		0x4005	LD-USBL/TX
 product ELECOM LDUSBTX2		0x400b	LD-USB/TX
 product ELECOM UCSGT		0x5003	UC-SGT Serial
+product ELECOM UCSGT0		0x5004	UC-SGT0 Serial
 product ELECOM LDUSBTX3		0xabc1	LD-USB/TX
 
 /* Elsa products */
