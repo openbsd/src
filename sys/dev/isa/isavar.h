@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.25 1997/12/25 12:06:49 downsj Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.26 1997/12/25 13:18:07 downsj Exp $	*/
 /*	$NetBSD: isavar.h,v 1.24 1996/10/21 22:41:11 thorpej Exp $	*/
 /*	$NetBSD: isapnpvar.h,v 1.5.4.2 1997/10/29 00:40:49 thorpej Exp $	*/
 
@@ -289,12 +289,18 @@ struct isa_softc {
 /*
  * Macros for sc_drq access.
  */
+#ifdef DIAGNOSTIC
+void isa_drq_alloc __P((void *, int));
+void isa_drq_free __P((void *, int));
+int isa_drq_isfree __P((void *, int));
+#else
 #define isa_drq_alloc(_sc, _drq)	\
 	(((struct isa_softc *)(_sc))->sc_drq |= (1 << (_drq)))
 #define isa_drq_free(_sc, _drq)		\
 	(((struct isa_softc *)(_sc))->sc_drq &= ~(1 << (_drq)))
 #define isa_drq_isfree(_sc, _drq)	\
 	!((((struct isa_softc *)(_sc))->sc_drq << (_drq)) & 1)
+#endif	/* DIAGNOSTIC */
 
 #define		cf_iobase		cf_loc[0]
 #define		cf_iosize		cf_loc[1]
