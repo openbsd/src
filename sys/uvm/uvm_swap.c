@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.7 1999/06/24 11:37:02 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.8 1999/07/08 00:54:28 deraadt Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.23 1998/12/26 06:25:59 marc Exp $	*/
 
 /*
@@ -825,9 +825,9 @@ swap_on(p, sdp)
 #ifdef SWAP_TO_FILES
 	struct vattr va;
 #endif
-#ifdef NFS
+#if defined(NFSSERVER) || defined(NFSCLIENT)
 	extern int (**nfsv2_vnodeop_p) __P((void *));
-#endif /* NFS */
+#endif /* defined(NFSSERVER) || defined(NFSCLIENT) */
 	dev_t dev;
 	char *name;
 	UVMHIST_FUNC("swap_on"); UVMHIST_CALLED(pdhist);
@@ -888,11 +888,11 @@ swap_on(p, sdp)
 		 * limit the max # of outstanding I/O requests we issue
 		 * at any one time.   take it easy on NFS servers.
 		 */
-#ifdef NFS
+#if defined(NFSSERVER) || defined(NFSCLIENT)
 		if (vp->v_op == nfsv2_vnodeop_p)
 			sdp->swd_maxactive = 2; /* XXX */
 		else
-#endif /* NFS */
+#endif /* defined(NFSSERVER) || defined(NFSCLIENT) */
 			sdp->swd_maxactive = 8; /* XXX */
 		break;
 #endif
