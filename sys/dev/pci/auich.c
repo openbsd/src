@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.44 2005/01/17 20:07:44 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.45 2005/01/17 20:37:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -66,6 +66,13 @@
 #define	AUICH_NAMBAR	0x10
 /* 12.1.11 NABMBAR - native audio bus mastering base address register */
 #define	AUICH_NABMBAR	0x14
+#define	AUICH_CFG	0x41
+#define	AUICH_CFG_IOSE	0x01
+/* ICH4/ICH5 native audio mixer BAR */
+#define	AUICH_MMBAR	0x18
+/* ICH4/ICH5 native bus mastering BAR */
+#define	AUICH_MBBAR	0x1c
+#define	AUICH_S2CR	0x10000000	/* tertiary codec ready */
 
 /* table 12-3. native audio bus master control registers */
 #define	AUICH_BDBAR	0x00	/* 8-byte aligned address */
@@ -347,17 +354,51 @@ auich_attach(parent, self, aux)
 		sc->sc_sts_reg = AUICH_STS;
 		sc->sc_sample_size = 2;
 	}
-	    
-	if (pci_mapreg_map(pa, AUICH_NAMBAR, PCI_MAPREG_TYPE_IO, 0,
-			   &sc->iot, &sc->mix_ioh, NULL, &mix_size, 0)) {
-		printf(": can't map codec i/o space\n");
-		return;
-	}
-	if (pci_mapreg_map(pa, AUICH_NABMBAR, PCI_MAPREG_TYPE_IO, 0,
-			   &sc->iot, &sc->aud_ioh, NULL, &aud_size, 0)) {
-		printf(": can't map device i/o space\n");
-		bus_space_unmap(sc->iot, sc->mix_ioh, mix_size);
-		return;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801DB_ACA ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801EB_ACA)) {
+		/*
+		 * Use native mode for ICH4/ICH5
+		 */
+		if (pci_mapreg_map(pa, AUICH_MMBAR, PCI_MAPREG_TYPE_MEM, 0,
+		    &sc->iot, &sc->mix_ioh, NULL, &mix_size, 0)) {
+			csr = pci_conf_read(pa->pa_pc, pa->pa_tag, AUICH_CFG);
+			pci_conf_write(pa->pa_pc, pa->pa_tag, AUICH_CFG,
+			    csr | AUICH_CFG_IOSE);
+			if (pci_mapreg_map(pa, AUICH_NAMBAR, PCI_MAPREG_TYPE_IO,
+			    0, &sc->iot, &sc->mix_ioh, NULL, &mix_size, 0)) {
+				printf(": can't map codec mem/io space\n");
+				return;
+			}
+		}
+
+		if (pci_mapreg_map(pa, AUICH_MBBAR, PCI_MAPREG_TYPE_MEM, 0,
+		    &sc->iot, &sc->aud_ioh, NULL, &aud_size, 0)) {
+			csr = pci_conf_read(pa->pa_pc, pa->pa_tag, AUICH_CFG);
+			pci_conf_write(pa->pa_pc, pa->pa_tag, AUICH_CFG,
+			    csr | AUICH_CFG_IOSE);
+			if (pci_mapreg_map(pa, AUICH_NABMBAR,
+			    PCI_MAPREG_TYPE_IO, 0, &sc->iot,
+			    &sc->aud_ioh, NULL, &aud_size, 0)) {
+				printf(": can't map device mem/io space\n");
+				bus_space_unmap(sc->iot, sc->mix_ioh, mix_size);
+				return;
+			}
+		}
+	} else {
+		if (pci_mapreg_map(pa, AUICH_NAMBAR, PCI_MAPREG_TYPE_IO,
+		    0, &sc->iot, &sc->mix_ioh, NULL, &mix_size, 0)) {
+			printf(": can't map codec i/o space\n");
+			return;
+		}
+
+		if (pci_mapreg_map(pa, AUICH_NABMBAR, PCI_MAPREG_TYPE_IO,
+		    0, &sc->iot, &sc->aud_ioh, NULL, &aud_size, 0)) {
+			printf(": can't map device i/o space\n");
+			bus_space_unmap(sc->iot, sc->mix_ioh, mix_size);
+			return;
+		}
 	}
 	sc->dmat = pa->pa_dmat;
 
@@ -428,7 +469,7 @@ auich_attach(parent, self, aux)
 	sc->host_if.write = auich_write_codec;
 	sc->host_if.reset = auich_reset_codec;
 	sc->host_if.flags = auich_flags_codec;
-	if (sc->sc_dev.dv_cfdata->cf_flags & 0x0001) 
+	if (sc->sc_dev.dv_cfdata->cf_flags & 0x0001)
 		sc->flags = AC97_HOST_SWAPPED_CHANNELS;
 
 	if (ac97_attach(&sc->host_if) != 0) {
@@ -1284,8 +1325,8 @@ auich_trigger_input(v, start, end, blksize, intr, arg, param)
 
 void
 auich_powerhook(why, self)
-       int why;
-       void *self;
+	int why;
+	void *self;
 {
 	struct auich_softc *sc = (struct auich_softc *)self;
 
