@@ -1,4 +1,4 @@
-/*	$OpenBSD: natm.c,v 1.2 1996/07/03 17:24:29 chuck Exp $	*/
+/*	$OpenBSD: natm.c,v 1.3 1996/11/09 03:28:59 chuck Exp $	*/
 
 /*
  *
@@ -274,7 +274,7 @@ struct proc *p;
       bcopy(npcb->npcb_ifp->if_xname, snatm->snatm_if, sizeof(snatm->snatm_if));
 #elif defined(__FreeBSD__)
       sprintf(snatm->snatm_if, "%s%d", npcb->npcb_ifp->if_name,
-			npcb->npcb_ifp->if_unit);
+	npcb->npcb_ifp->if_unit);
 #endif
       snatm->snatm_vci = npcb->npcb_vci;
       snatm->snatm_vpi = npcb->npcb_vpi;
@@ -361,7 +361,7 @@ next:
 
 #ifdef DIAGNOSTIC
   if ((m->m_flags & M_PKTHDR) == 0)
-    panic("ipintr no HDR");
+    panic("natmintr no HDR");
 #endif
 
   npcb = (struct natmpcb *) m->m_pkthdr.rcvif; /* XXX: overloaded */
@@ -397,7 +397,7 @@ m->m_pkthdr.rcvif = NULL;	/* null it out to be safe */
     natm_sookcnt++;
     natm_sookbytes += m->m_pkthdr.len;
 #endif
-    sbappend(&so->so_rcv, m);
+    sbappendrecord(&so->so_rcv, m);
     sorwakeup(so);
   } else {
 #ifdef NATM_STAT
