@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.54 2004/02/08 00:38:08 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.55 2004/02/22 16:06:26 krw Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.54 2004/02/08 00:38:08 krw Exp $
+ * $Id: aic7xxx.c,v 1.55 2004/02/22 16:06:26 krw Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -5486,7 +5486,7 @@ ahc_search_qinfifo(struct ahc_softc *ahc, int target, char channel,
 				if (cstat != CAM_REQ_CMP)
 					ahc_freeze_scb(scb);
 				if ((scb->flags & SCB_ACTIVE) == 0)
-					printf("Inactive SCB in Waiting List\n");
+					printf("Inactive SCB in Wait List\n");
 				ahc_done(ahc, scb);
 				/* FALLTHROUGH */
 			}
@@ -5592,8 +5592,6 @@ ahc_search_untagged_queues(struct ahc_softc *ahc, struct scsi_xfer *xs,
 				cstat = ahc_get_transaction_status(scb);
 				if (cstat != CAM_REQ_CMP)
 					ahc_freeze_scb(scb);
-				if ((scb->flags & SCB_ACTIVE) == 0)
-					printf("Inactive SCB in untaggedQ\n");
 				ahc_done(ahc, scb);
 				break;
 			}
