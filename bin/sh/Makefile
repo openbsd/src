@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1996/09/16 10:51:33 downsj Exp $
+#	$OpenBSD: Makefile,v 1.6 1996/10/12 01:12:02 deraadt Exp $
 #	$NetBSD: Makefile,v 1.23 1996/02/18 12:29:18 mycroft Exp $
 
 STATIC=	-static
@@ -31,7 +31,7 @@ init.c: mkinit ${SRCS}
 	./mkinit ${.ALLSRC:S/^mkinit$//}
 
 mkinit: ${.CURDIR}/mkinit.c
-	${CC} ${CFLAGS} ${.CURDIR}/mkinit.c -o $@
+	${HOSTCC} ${CFLAGS} ${.CURDIR}/mkinit.c -o $@
 
 nodes.c nodes.h: mknodes ${.CURDIR}/nodetypes ${.CURDIR}/nodes.c.pat
 	./mknodes ${.CURDIR}/nodetypes ${.CURDIR}/nodes.c.pat
