@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.11 1999/07/21 20:17:54 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.12 2000/04/18 20:16:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -229,6 +229,10 @@
 #define	PDC_SOFT_POWER_INFO	0	/* get info about soft power switch */
 #define	PDC_SOFT_POWER_ENABLE	1	/* enable/disable soft power switch */
 
+#define	PDC_PAT_IO		71	/* online services for IO modules */
+#define	PDC_PAT_IO_GET_PCI_RTSZ	15
+#define	PDC_PAT_IO_GET_PCI_RT	16
+
 #define	PDC_MEMMAP		128	/* hp700: return page information */
 #define	PDC_MEMMAP_HPA		0	/* map module # to HPA */
 
@@ -240,6 +244,10 @@
 
 #define	PDC_LAN_STATION_ID	138     /* Hversion dependent mechanism for */
 #define	PDC_LAN_STATION_ID_READ	0       /* getting the lan station address  */
+
+#define	PDC_PCI_INDEX		147	/* PCI rt access */
+#define	PDC_PCI_GET_INT_TBL_SZ	13
+#define	PDC_PCI_GET_INT_TBL	14
 
 #define	PDC_ERR_OK		0	/* operation complete */
 #define	PDC_ERR_WARNING		3	/* OK, but warning */
@@ -429,6 +437,11 @@ struct pdc_hwtlb {	/* PDC_TLB */
 	u_int	min_size;	/* What do these mean? */
 	u_int	max_size;
 	u_int	filler[30];
+};
+
+struct pdc_pat_io_num {	/* PDC_PAT_IO */
+	u_int	num;
+	u_int	filler[31];
 };
 
 struct pdc_memmap {	/* PDC_MEMMAP */
