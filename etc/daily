@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.29 2000/04/24 04:23:13 todd Exp $
+#	$OpenBSD: daily,v 1.30 2000/04/28 00:47:55 itojun Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -158,7 +158,7 @@ fi
 
 echo ""
 echo "network:"
-netstat -i
+netstat -iv
 echo ""
 
 t=/var/rwho/*
