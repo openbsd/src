@@ -32,7 +32,7 @@
  */
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static char rcsid[] = "$OpenBSD: gmon.c,v 1.5 1996/08/19 08:28:02 tholo Exp $";
+static char rcsid[] = "$OpenBSD: gmon.c,v 1.6 1996/09/05 12:29:12 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -143,7 +143,7 @@ _mcleanup()
 	char  buf[PATH_MAX];
 #ifdef DEBUG
 	int log, len;
-	char buf[200];
+	char dbuf[200];
 #endif
 
 	if (p->state == GMON_PROF_ERROR)
@@ -166,9 +166,9 @@ _mcleanup()
 
 	moncontrol(0);
 
-	if ((profdir = getenv("PROFDIR")) != NULL) {
+	if (issetugid() == 0 && (profdir = getenv("PROFDIR")) != NULL) {
 		extern char *__progname;
-		char *s, *t;
+		char *s, *t, *limit;
 		pid_t pid;
 		long divisor;
 
@@ -178,9 +178,11 @@ _mcleanup()
 			return;
 		}
 		
+		limit = buf + sizeof buf - 1 - 10 - 1 -
+		    strlen(__progname) - 1;
 		t = buf;
 		s = profdir;
-		while((*t = *s) != '\0') {
+		while((*t = *s) != '\0' && t < limit) {
 			t++;
 			s++;
 		}
@@ -220,9 +222,9 @@ _mcleanup()
 		perror("mcount: gmon.log");
 		return;
 	}
-	len = sprintf(buf, "[mcleanup1] kcount 0x%x ssiz %d\n",
+	len = sprintf(dbuf, "[mcleanup1] kcount 0x%x ssiz %d\n",
 	    p->kcount, p->kcountsize);
-	write(log, buf, len);
+	write(log, dbuf, len);
 #endif
 	hdr = (struct gmonhdr *)&gmonhdr;
 	hdr->lpc = p->lowpc;
@@ -242,11 +244,11 @@ _mcleanup()
 		for (toindex = p->froms[fromindex]; toindex != 0;
 		     toindex = p->tos[toindex].link) {
 #ifdef DEBUG
-			len = sprintf(buf,
+			len = sprintf(dbuf,
 			"[mcleanup2] frompc 0x%x selfpc 0x%x count %d\n" ,
 				frompc, p->tos[toindex].selfpc,
 				p->tos[toindex].count);
-			write(log, buf, len);
+			write(log, dbuf, len);
 #endif
 			rawarc.raw_frompc = frompc;
 			rawarc.raw_selfpc = p->tos[toindex].selfpc;
