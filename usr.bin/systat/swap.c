@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.4 1995/08/31 22:20:19 jtc Exp $	*/
+/*	$NetBSD: swap.c,v 1.5 1996/05/10 23:16:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$NetBSD: swap.c,v 1.4 1995/08/31 22:20:19 jtc Exp $";
+static char rcsid[] = "$NetBSD: swap.c,v 1.5 1996/05/10 23:16:38 thorpej Exp $";
 #endif /* not lint */
 
 /*
@@ -63,8 +63,6 @@ static char rcsid[] = "$NetBSD: swap.c,v 1.4 1995/08/31 22:20:19 jtc Exp $";
 
 extern char *getbsize __P((int *headerlenp, long *blocksizep));
 void showspace __P((char *header, int hlen, long blocksize));
-
-extern kvm_t	*kd;
 
 struct nlist syms[] = {
 	{ "_swapmap" },	/* list of free swap areas */

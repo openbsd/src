@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.7 1995/07/28 07:01:32 phil Exp $	*/
+/*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$NetBSD: chpass.c,v 1.7 1995/07/28 07:01:32 phil Exp $";
+static char rcsid[] = "$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,10 +61,7 @@ static char rcsid[] = "$NetBSD: chpass.c,v 1.7 1995/07/28 07:01:32 phil Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <pw_scan.h>
-#include <pw_util.h>
-#include "pw_copy.h"
+#include <util.h>
 
 #include "chpass.h"
 #include "pathnames.h"
@@ -89,8 +86,8 @@ main(argc, argv)
 {
 	enum { NEWSH, LOADENTRY, EDITENTRY } op;
 	struct passwd *pw, lpw;
-	int ch, pfd, tfd;
-	char *arg;
+	int ch, pfd, tfd, dfd;
+	char *arg, tempname[] = "/etc/pw.XXXXXX";
 
 #ifdef	YP
 	use_yp = _yp_check(NULL);
@@ -178,45 +175,27 @@ main(argc, argv)
 			exit(1);
 	}
 
-	/*
-	 * The temporary file/file descriptor usage is a little tricky here.
-	 * 1:	We start off with two fd's, one for the master password
-	 *	file (used to lock everything), and one for a temporary file.
-	 * 2:	Display() gets an fp for the temporary file, and copies the
-	 *	user's information into it.  It then gives the temporary file
-	 *	to the user and closes the fp, closing the underlying fd.
-	 * 3:	The user edits the temporary file some number of times.
-	 * 4:	Verify() gets an fp for the temporary file, and verifies the
-	 *	contents.  It can't use an fp derived from the step #2 fd,
-	 *	because the user's editor may have created a new instance of
-	 *	the file.  Once the file is verified, its contents are stored
-	 *	in a password structure.  The verify routine closes the fp,
-	 *	closing the underlying fd.
-	 * 5:	Delete the temporary file.
-	 * 6:	Get a new temporary file/fd.  Pw_copy() gets an fp for it
-	 *	file and copies the master password file into it, replacing
-	 *	the user record with a new one.  We can't use the first
-	 *	temporary file for this because it was owned by the user.
-	 *	Pw_copy() closes its fp, flushing the data and closing the
-	 *	underlying file descriptor.  We can't close the master
-	 *	password fp, or we'd lose the lock.
-	 * 7:	Call pw_mkdb() (which renames the temporary file) and exit.
-	 *	The exit closes the master passwd fp/fd.
-	 */
+	/* Get the passwd lock file and open the passwd file for reading. */
 	pw_init();
-	pfd = pw_lock();
-	tfd = pw_tmp();
+	tfd = pw_lock(0);
+	if (tfd < 0)
+		errx(1, "the passwd file is busy.");
+	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
+	if (pfd < 0)
+		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
+	/* Edit the user passwd information if requested. */
 	if (op == EDITENTRY) {
-		display(tfd, pw);
-		edit(pw);
+		dfd = mkstemp(tempname);
+		if (dfd < 0)
+			pw_error(tempname, 1, 1);
+		display(tempname, dfd, pw);
+		edit(tempname, pw);
 		(void)unlink(tempname);
-		tfd = pw_tmp();
 	}
-		
+
 #ifdef	YP
 	if (use_yp) {
-		(void)unlink(tempname);
 		if (pw_yp(pw, uid))
 			pw_error((char *)NULL, 0, 1);
 		else
@@ -224,9 +203,12 @@ main(argc, argv)
 	}
 	else
 #endif	/* YP */
+
+	/* Copy the passwd file to the lock file, updating pw. */
 	pw_copy(pfd, tfd, pw);
 
-	if (!pw_mkdb())
+	/* Now finish the passwd file update. */
+	if (pw_mkdb() < 0)
 		pw_error((char *)NULL, 0, 1);
 
 	exit(0);

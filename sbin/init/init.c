@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.21 1995/10/05 06:11:24 mycroft Exp $	*/
+/*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 7/15/93";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.21 1995/10/05 06:11:24 mycroft Exp $";
+static char rcsid[] = "$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ static char rcsid[] = "$NetBSD: init.c,v 1.21 1995/10/05 06:11:24 mycroft Exp $"
 #include <time.h>
 #include <ttyent.h>
 #include <unistd.h>
+#include <util.h>
 
 #ifdef __STDC__
 #include <stdarg.h>
@@ -77,13 +78,6 @@ static char rcsid[] = "$NetBSD: init.c,v 1.21 1995/10/05 06:11:24 mycroft Exp $"
 #endif
 
 #include "pathnames.h"
-
-/*
- * Until the mythical util.h arrives...
- */
-extern int login_tty __P((int));
-extern int logout __P((const char *));
-extern void logwtmp __P((const char *, const char *, const char *));
 
 /*
  * Sleep times; used to prevent thrashing.

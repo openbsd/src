@@ -1,7 +1,7 @@
-/*	$NetBSD: chpass.h,v 1.4 1996/05/15 21:50:44 jtc Exp $	*/
+/*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
-/*
- * Copyright (c) 1988, 1993, 1994
+/*-
+ * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,42 +31,37 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)chpass.h	8.4 (Berkeley) 4/2/94
  */
 
-struct passwd;
+#ifndef _UTIL_H_
+#define _UTIL_H_
 
-typedef struct _entry {
-	char *prompt;
-	int (*func)(), restricted, len;
-	char *except, *save;
-} ENTRY;
+#include <pwd.h>
+#include <utmp.h>
+#include <termios.h>
+#include <sys/ttycom.h>
+#include <sys/types.h>
+#include <sys/cdefs.h>
 
-/* Field numbers. */
-#define	E_BPHONE	8
-#define	E_HPHONE	9
-#define	E_LOCATE	10
-#define	E_NAME		7
-#define	E_SHELL		12
+__BEGIN_DECLS
+void	login __P((struct utmp *));
+int	login_tty __P((int));
+int	logout __P((const char *));
+void	logwtmp __P((const char *, const char *, const char *));
+int	pw_lock __P((int retries));
+int	pw_mkdb __P((void));
+int	pw_abort __P((void));
+void	pw_init __P((void));
+void	pw_edit __P((int notsetuid, const char *filename));
+void	pw_prompt __P((void));
+void	pw_copy __P((int ffd, int tfd, struct passwd *pw));
+int	pw_scan __P((char *bp, struct passwd *pw, int *flags));
+void	pw_error __P((const char *name, int err, int eval));
+int	openpty __P((int *, int *, char *, struct termios *,
+		     struct winsize *));
+pid_t	forkpty __P((int *, char *, struct termios *, struct winsize *));
+int	getmaxpartitions __P((void));
+int	getrawpartition __P((void));
+__END_DECLS
 
-extern ENTRY list[];
-extern uid_t uid;
-
-int	 atot __P((char *, time_t *));
-void	 display __P((char *, int, struct passwd *));
-void	 edit __P((char *, struct passwd *));
-char    *ok_shell __P((char *));
-int	 p_change __P((char *, struct passwd *, ENTRY *));
-int	 p_class __P((char *, struct passwd *, ENTRY *));
-int	 p_expire __P((char *, struct passwd *, ENTRY *));
-int	 p_gecos __P((char *, struct passwd *, ENTRY *));
-int	 p_gid __P((char *, struct passwd *, ENTRY *));
-int	 p_hdir __P((char *, struct passwd *, ENTRY *));
-int	 p_login __P((char *, struct passwd *, ENTRY *));
-int	 p_login __P((char *, struct passwd *, ENTRY *));
-int	 p_passwd __P((char *, struct passwd *, ENTRY *));
-int	 p_shell __P((char *, struct passwd *, ENTRY *));
-int	 p_uid __P((char *, struct passwd *, ENTRY *));
-char    *ttoa __P((time_t));
-int	 verify __P((char *, struct passwd *));
+#endif /* !_UTIL_H_ */

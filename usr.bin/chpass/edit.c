@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.5 1995/07/28 07:03:41 phil Exp $	*/
+/*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: edit.c,v 1.5 1995/07/28 07:03:41 phil Exp $";
+static char rcsid[] = "$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,16 +53,13 @@ static char rcsid[] = "$NetBSD: edit.c,v 1.5 1995/07/28 07:03:41 phil Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include <pw_scan.h>
-#include <pw_util.h>
+#include <util.h>
 
 #include "chpass.h"
 
-extern char *tempname;
-
 void
-edit(pw)
+edit(tempname, pw)
+	char *tempname;
 	struct passwd *pw;
 {
 	struct stat begin, end;
@@ -70,14 +67,15 @@ edit(pw)
 	for (;;) {
 		if (stat(tempname, &begin))
 			pw_error(tempname, 1, 1);
-		pw_edit(1);
+		pw_edit(1, tempname);
 		if (stat(tempname, &end))
 			pw_error(tempname, 1, 1);
 		if (begin.st_mtime == end.st_mtime) {
 			warnx("no changes made");
+			unlink(tempname);
 			pw_error(NULL, 0, 0);
 		}
-		if (verify(pw))
+		if (verify(tempname, pw))
 			break;
 		pw_prompt();
 	}
@@ -89,7 +87,8 @@ edit(pw)
  *	set conditional flag if the user gets to edit the shell.
  */
 void
-display(fd, pw)
+display(tempname, fd, pw)
+	char *tempname;
 	int fd;
 	struct passwd *pw;
 {
@@ -140,7 +139,8 @@ display(fd, pw)
 }
 
 int
-verify(pw)
+verify(tempname, pw)
+	char *tempname;
 	struct passwd *pw;
 {
 	ENTRY *ep;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.3 1995/08/31 22:20:18 jtc Exp $	*/
+/*	$NetBSD: cmds.c,v 1.4 1996/05/10 23:16:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$NetBSD: cmds.c,v 1.3 1995/08/31 22:20:18 jtc Exp $";
+static char rcsid[] = "$NetBSD: cmds.c,v 1.4 1996/05/10 23:16:32 thorpej Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -110,7 +110,9 @@ command(cmd)
         }
 	p = lookup(cmd);
 	if (p == (struct cmdtab *)-1) {
-		error("%s: Ambiguous command.", cmd);
+		/* if not a primary command, try a display specific one */
+		if (curcmd->c_cmd == 0 || !(*curcmd->c_cmd)(cmd, cp))
+			error("%s: Ambiguous command.", cmd);
 		goto done;
 	}
         if (p) {
@@ -140,8 +142,6 @@ command(cmd)
                 status();
 		goto done;
         }
-	if (curcmd->c_cmd == 0 || !(*curcmd->c_cmd)(cmd, cp))
-		error("%s: Unknown command.", cmd);
 done:
 	sigsetmask(omask);
 }

@@ -1,7 +1,7 @@
-/*	$OpenBSD: dkstats.h,v 1.1 1996/03/03 02:51:21 tholo Exp $	*/
+/*	$NetBSD: dkstats.h,v 1.1 1996/05/10 23:19:28 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1996 John M. Vinopal (banshee@resort.com)
+ * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,4 +47,3 @@ struct _disk {
 	long	tk_nout;		/* TTY Chars out. */
 	long	cp_time[CPUSTATES];	/* System timer ticks. */
 };
-

@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)login.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: login.c,v 1.1.1.1 1995/10/18 08:43:13 deraadt Exp $";
+static char *rcsid = "$Id: login.c,v 1.2 1996/05/22 11:35:05 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -43,8 +43,7 @@ static char *rcsid = "$Id: login.c,v 1.1.1.1 1995/10/18 08:43:13 deraadt Exp $";
 #include <stdlib.h>
 #include <utmp.h>
 #include <stdio.h>
-
-void login __P((struct utmp *));
+#include <util.h>
 
 void
 login(ut)

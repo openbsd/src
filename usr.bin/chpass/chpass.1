@@ -1,4 +1,4 @@
-.\"	$NetBSD: chpass.1,v 1.6 1995/09/14 06:10:53 jtc Exp $
+.\"	$NetBSD: chpass.1,v 1.7 1996/05/15 21:50:40 jtc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -205,8 +205,10 @@ with the user.
 The user database
 .It Pa /etc/passwd
 A Version 7 format password file
-.It Pa /etc/chpass.XXXXXX
-Temporary copy of the password file
+.It Pa /etc/ptmp
+Lock file for the passwd database
+.It Pa /etc/pw.XXXXXX
+Temporary copy of the user passwd information
 .It Pa /etc/shells
 The list of approved shells
 .El

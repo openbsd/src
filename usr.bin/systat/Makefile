@@ -1,16 +1,15 @@
-#	$NetBSD: Makefile,v 1.3 1995/03/22 15:26:42 mycroft Exp $
-#	@(#)Makefile	8.1 (Berkeley) 6/6/93
+#	$OpenBSD: Makefile,v 1.3 1996/05/22 11:35:28 deraadt Exp $
+#	$NetBSD: Makefile,v 1.5 1996/05/10 23:16:30 thorpej Exp $
 
 PROG=	systat
-.if (${MACHINE_ARCH} == "m68k")
-CFLAGS+=-D${MACHINE}
-.endif
-CFLAGS+=-I${.CURDIR}/../../sys/arch -I${.CURDIR}/../vmstat
 
-SRCS=	cmds.c cmdtab.c disks.c fetch.c iostat.c keyboard.c main.c mbufs.c \
-	netcmds.c netstat.c pigs.c swap.c vmstat.c
-LDADD=	-lcurses -ltermcap -lm -lkvm
+.PATH:	${.CURDIR}/../../usr.bin/vmstat
+
+CFLAGS+=-I${.CURDIR}/../../usr.bin/vmstat
+SRCS=	cmds.c cmdtab.c disks.c dkstats.c fetch.c iostat.c keyboard.c \
+	main.c mbufs.c netcmds.c netstat.c pigs.c swap.c vmstat.c
 DPADD=	${LIBCURSES} ${LIBTERMCAP} ${LIBM} ${LIBKVM}
+LDADD=	-lcurses -ltermcap -lm -lkvm
 BINGRP=	kmem
 BINMODE=2555
 

@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)pty.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: pty.c,v 1.1.1.1 1995/10/18 08:43:13 deraadt Exp $";
+static char *rcsid = "$Id: pty.c,v 1.2 1996/05/22 11:35:11 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/cdefs.h>
@@ -47,10 +47,14 @@ static char *rcsid = "$Id: pty.c,v 1.1.1.1 1995/10/18 08:43:13 deraadt Exp $";
 #include <stdio.h>
 #include <string.h>
 #include <grp.h>
+#include <util.h>
 
-int login_tty __P((int));
-int openpty __P((int *, int *, char *, struct termios *, struct winsize *));
-pid_t forkpty __P((int *, char *, struct termios *, struct winsize *));
+#ifdef i386
+/* PCVT conflicts with ttyv*. */
+#define TTY_LETTERS "pqrstuwxyzPQRST"
+#else
+#define TTY_LETTERS "pqrstuvwxyzPQRST"
+#endif
 
 int
 openpty(amaster, aslave, name, termp, winp)
@@ -69,7 +73,7 @@ openpty(amaster, aslave, name, termp, winp)
 	else
 		ttygid = -1;
 
-	for (cp1 = "pqrstuvwxyzPQRST"; *cp1; cp1++) {
+	for (cp1 = TTY_LETTERS; *cp1; cp1++) {
 		line[8] = *cp1;
 		for (cp2 = "0123456789abcdef"; *cp2; cp2++) {
 			line[9] = *cp2;

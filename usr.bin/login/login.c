@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.12 1994/12/23 06:53:01 jtc Exp $	*/
+/*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: login.c,v 1.12 1994/12/23 06:53:01 jtc Exp $";
+static char rcsid[] = "$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -72,6 +72,7 @@ static char rcsid[] = "$NetBSD: login.c,v 1.12 1994/12/23 06:53:01 jtc Exp $";
 #include <tzfile.h>
 #include <unistd.h>
 #include <utmp.h>
+#include <util.h>
 
 #include "pathnames.h"
 

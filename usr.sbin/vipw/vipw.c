@@ -1,4 +1,4 @@
-/*	$NetBSD: vipw.c,v 1.3 1995/01/20 19:19:57 mycroft Exp $	*/
+/*	$NetBSD: vipw.c,v 1.4 1996/05/15 23:23:50 jtc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -52,10 +52,8 @@ static char sccsid[] = "@(#)vipw.c	8.3 (Berkeley) 4/2/94";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "pw_util.h"
-
-char *tempname;
+#include <fcntl.h>
+#include <util.h>
 
 void	copyfile __P((int, int));
 void	usage __P((void));
@@ -83,22 +81,26 @@ main(argc, argv)
 		usage();
 
 	pw_init();
-	pfd = pw_lock();
-	tfd = pw_tmp();
+	tfd = pw_lock(0);
+	if (tfd < 0)
+		errx(1, "the passwd file is busy.");
+	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
+	if (pfd < 0)
+		pw_error(_PATH_MASTERPASSWD, 1, 1);
 	copyfile(pfd, tfd);
 	(void)close(tfd);
 
 	for (;;) {
-		if (stat(tempname, &begin))
-			pw_error(tempname, 1, 1);
-		pw_edit(0);
-		if (stat(tempname, &end))
-			pw_error(tempname, 1, 1);
+		if (stat(_PATH_MASTERPASSWD_LOCK, &begin))
+			pw_error(_PATH_MASTERPASSWD_LOCK, 1, 1);
+		pw_edit(0, NULL);
+		if (stat(_PATH_MASTERPASSWD_LOCK, &end))
+			pw_error(_PATH_MASTERPASSWD_LOCK, 1, 1);
 		if (begin.st_mtime == end.st_mtime) {
 			warnx("no changes made");
 			pw_error((char *)NULL, 0, 0);
 		}
-		if (pw_mkdb())
+		if (pw_mkdb() == 0)
 			break;
 		pw_prompt();
 	}
@@ -115,7 +117,7 @@ copyfile(from, to)
 	while ((nr = read(from, buf, sizeof(buf))) > 0)
 		for (off = 0; off < nr; nr -= nw, off += nw)
 			if ((nw = write(to, buf + off, nr)) < 0)
-				pw_error(tempname, 1, 1);
+				pw_error(_PATH_MASTERPASSWD_LOCK, 1, 1);
 	if (nr < 0)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: systat.1,v 1.5 1995/09/27 19:46:12 jtc Exp $
+.\"	$NetBSD: systat.1,v 1.6 1996/05/10 23:16:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,10 @@
 .Nd display system statistics on a crt
 .Sh SYNOPSIS
 .Nm systat
-.Op Fl display
+.Op Fl M Ar core
+.Op Fl N Ar system
+.Op Fl w Ar wait
+.Op Ar display
 .Op Ar refresh-interval
 .Sh DESCRIPTION
 .Nm Systat
@@ -78,12 +81,20 @@ allows each display to have certain display-specific commands.
 .Pp
 Command line options:
 .Bl -tag -width "refresh_interval"
-.It Fl Ns Ar display
+.It Fl M Ar core
+Extract values associated with the name list from
+.Ar core
+instead of the default
+.Pa /dev/mem .
+.It Fl N Ar system
+Extracr the name list from
+.Ar system
+instead of the default
+.Pa /netbsd .
+.It Ar display
 The
-.Fl
-flag expects
 .Ar display
-to be one of:
+argument expects to be one of:
 .Ic pigs ,
 .Ic iostat ,
 .Ic swap ,
@@ -91,14 +102,17 @@ to be one of:
 .Ic vmstat
 or
 .Ic netstat .
-These displays can also be requested interactively (without the
-.Dq Fl )
-and are described in
+These displays can also be requested interactively and are described in
 full detail below.
 .It Ar refresh-interval
 The
-.Ar refresh-value
-specifies the screen refresh time interval in seconds.
+.Ar refresh-interval
+specifies the screen refresh time interval in seconds.  This is provided
+for backwards compatibility, and overrides the
+.Ar refresh-interval
+specified with the
+.Fl w
+flag.
 .El
 .Pp
 Certain characters cause immediate action by
@@ -162,7 +176,7 @@ bar graphs of the amount of time executing in user mode (``user''),
 in user mode running low priority processes (``nice''), in
 system mode (``system''), and idle (``idle'').  Statistics
 on disk throughput show, for each drive, kilobytes of data transferred,
-number of disk transactions performed, and average seek time
+number of disk transactions performed, and time spent in disk accesses
 (in milliseconds).  This information may be displayed as
 bar graphs or as rows of numbers which scroll downward.  Bar
 graphs are shown by default;
@@ -181,9 +195,9 @@ displayed in numeric columns which scroll downward.
 Show the disk
 .Tn I/O
 statistics in bar graph form (default).
-.It Cm msps
-Toggle the display of average seek time (the default is to
-not display seek times).
+.It Cm secs
+Toggle the display of time in disk activity (the default is to
+not display time).
 .El
 .It Ic swap
 Show information about swap space usage on all the 
@@ -226,10 +240,10 @@ Finally the last column shows the number of physical pages
 on the free list.
 .Pp
 Below the memory display is the disk usage display.
-It reports the number of seeks, transfers, and number
+It reports the number of seeks, transfers, number
 of kilobyte blocks transferred per second averaged over the
-refresh period of the display (by default, five seconds).
-For some disks it also reports the average milliseconds per seek.
+refresh period of the display (by default, five seconds), and
+the time spent in disk accesses.
 Note that the system only keeps statistics on at most four disks.
 .Pp
 Below the disk display is a list of the

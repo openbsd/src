@@ -1,8 +1,8 @@
-/*	$OpenBSD: iostat.c,v 1.2 1996/03/03 02:52:34 tholo Exp $	*/
-/*	$NetBSD: iostat.c,v 1.8 1995/11/28 20:16:31 thorpej Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.3 1996/05/22 11:35:49 deraadt Exp $ */
+/*	$NetBSD: iostat.c,v 1.9 1996/05/10 23:20:29 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1996 John M. Vinopal (banshee@resort.com)
+ * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -76,7 +76,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)iostat.c    8.2 (Berkeley) 1/26/94";
 #else
-static char *rcsid = "$NetBSD: iostat.c,v 1.8 1995/11/28 20:16:31 thorpej Exp $"
+static char *rcsid = "$NetBSD: iostat.c,v 1.9 1996/05/10 23:20:29 thorpej Exp $"
 ;
 #endif
 #endif /* not lint */
@@ -98,8 +98,8 @@ static char *rcsid = "$NetBSD: iostat.c,v 1.8 1995/11/28 20:16:31 thorpej Exp $"
 extern struct _disk cur;
 extern int  	dk_ndrive;
 
-char	*nlistf = NULL;
-char	*memf = NULL;
+/* Namelist and memory files. */
+char	*nlistf, *memf;
 
 int		hz, reps, interval;
 static int	todo = 0;

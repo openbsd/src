@@ -1,7 +1,7 @@
-/*	$OpenBSD: dkstats.c,v 1.1 1996/03/03 02:51:20 tholo Exp $	*/
+/*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1996 John M. Vinopal (banshee@resort.com)
+ * Copyright (c) 1996 John M. Vinopal
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -99,7 +99,7 @@ char		**dr_name;
 void dkswap __P((void));
 void dkreadstats __P((void));
 int dkinit __P((int));
-static void deref_kptr __P(( void *, void *, size_t));
+static void deref_kptr __P((void *, void *, size_t));
 
 /*
  * Take the delta between the present values and the last recorded
@@ -265,7 +265,7 @@ deref_kptr(kptr, ptr, len)
 	if (kvm_read(kd, (u_long)kptr, (char *)ptr, len) != len) {
 		bzero(buf, sizeof(buf));
 		snprintf(buf, (sizeof(buf) - 1),
-		     "can't dereference kptr 0x%x", (uint)kptr);
+		     "can't dereference kptr 0x%lx", (u_long)kptr);
 		KVM_ERROR(buf);
 	}
 }

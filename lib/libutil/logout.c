@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)logout.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: logout.c,v 1.1.1.1 1995/10/18 08:43:13 deraadt Exp $";
+static char *rcsid = "$Id: logout.c,v 1.2 1996/05/22 11:35:07 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -44,16 +44,16 @@ static char *rcsid = "$Id: logout.c,v 1.1.1.1 1995/10/18 08:43:13 deraadt Exp $"
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <util.h>
 
 typedef struct utmp UTMP;
 
 int
 logout(line)
-	register char *line;
+	const char *line;
 {
-	register int fd;
+	int fd, rval;
 	UTMP ut;
-	int rval;
 
 	if ((fd = open(_PATH_UTMP, O_RDWR, 0)) < 0)
 		return(0);

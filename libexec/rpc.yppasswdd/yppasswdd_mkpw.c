@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.2 1995/11/01 17:40:35 deraadt Exp $";
+static char rcsid[] = "$Id: yppasswdd_mkpw.c,v 1.3 1996/05/22 11:36:01 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -64,8 +64,7 @@ make_passwd(argp)
 		return (1);
 
 	pw_init();
-	pfd = pw_lock();
-	tfd = pw_tmp();
+	tfd = pw_lock(0);
 
 	/*
 	 * Get the new password.  Reset passwd change time to zero; when

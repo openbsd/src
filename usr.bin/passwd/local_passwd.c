@@ -33,14 +33,18 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$Id: local_passwd.c,v 1.1.1.1 1995/10/18 08:45:54 deraadt Exp $";
+static char rcsid[] = "$Id: local_passwd.c,v 1.2 1996/05/22 11:35:27 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <pwd.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <util.h>
 
 uid_t uid;
 
@@ -70,8 +74,12 @@ local_passwd(uname)
 	}
 
 	pw_init();
-	pfd = pw_lock();
-	tfd = pw_tmp();
+	tfd = pw_lock(0);
+	if (tfd < 0)
+		errx(1, "the passwd file is busy.");
+	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
+	if (pfd < 0)
+		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
 	/*
 	 * Get the new password.  Reset passwd change time to zero; when
@@ -82,7 +90,7 @@ local_passwd(uname)
 	pw->pw_change = 0;
 	pw_copy(pfd, tfd, pw);
 
-	if (!pw_mkdb())
+	if (pw_mkdb() < 0)
 		pw_error((char *)NULL, 0, 1);
 	return(0);
 }

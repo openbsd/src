@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.19 1995/06/28 02:21:02 thorpej Exp $	*/
+/*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: newfs.c,v 1.19 1995/06/28 02:21:02 thorpej Exp $";
+static char rcsid[] = "$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ static char rcsid[] = "$NetBSD: newfs.c,v 1.19 1995/06/28 02:21:02 thorpej Exp $
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <util.h>
 
 #if __STDC__
 #include <stdarg.h>
@@ -89,8 +90,6 @@ void	fatal(const char *fmt, ...);
 #else
 void	fatal();
 #endif
-
-int	getmaxpartitions __P((void));
 
 #define	COMPAT			/* allow non-labeled disks */
 
@@ -679,21 +678,6 @@ fatal(fmt, va_alist)
 	va_end(ap);
 	exit(1);
 	/*NOTREACHED*/
-}
-
-int
-getmaxpartitions()
-{
-	int maxpart, mib[2];
-	size_t varlen;
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_MAXPARTITIONS;
-	varlen = sizeof(maxpart);
-	if (sysctl(mib, 2, &maxpart, &varlen, NULL, 0) < 0)
-		fatal("getmaxpartitions: %s", strerror(errno));
-
-	return (maxpart);
 }
 
 usage()

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ccdconfig.c,v 1.3 1996/03/21 00:15:24 niklas Exp $	*/
-/*	$NetBSD: ccdconfig.c,v 1.5 1996/02/28 01:01:18 thorpej Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.4 1996/05/22 11:34:48 deraadt Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include <dev/ccdvar.h>
 
@@ -98,8 +99,6 @@ static	int do_io __P((char *, u_long, struct ccd_ioctl *));
 static	int do_single __P((int, char **, int));
 static	int do_all __P((int));
 static	int dump_ccd __P((int, char **));
-static	int getmaxpartitions __P((void));
-static	int getrawpartition __P((void));
 static	int flags_to_val __P((char *));
 static	int pathtodevt __P((char *, dev_t *));
 static	void print_ccd_info __P((struct ccd_softc *, kvm_t *));
@@ -623,36 +622,6 @@ print_ccd_info(cs, kd)
 
  done:
 	free(cip);
-}
-
-static int
-getmaxpartitions()
-{
-	int maxpart, mib[2];
-	size_t varlen;
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_MAXPARTITIONS;
-	varlen = sizeof(maxpart);
-	if (sysctl(mib, 2, &maxpart, &varlen, NULL, 0) < 0)
-		return (-1);
-
-	return (maxpart);
-}
-
-static int
-getrawpartition()
-{
-	int rawpart, mib[2];
-	size_t varlen;
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_RAWPARTITION;
-	varlen = sizeof(rawpart);
-	if (sysctl(mib, 2, &rawpart, &varlen, NULL, 0) < 0)
-		return (-1);
-
-	return (rawpart);
 }
 
 static int

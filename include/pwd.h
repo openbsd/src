@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.8 1995/07/28 05:30:52 phil Exp $	*/
+/*	$NetBSD: pwd.h,v 1.9 1996/05/15 21:36:45 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -49,6 +49,7 @@
 #ifndef _POSIX_SOURCE
 #define	_PATH_PASSWD		"/etc/passwd"
 #define	_PATH_MASTERPASSWD	"/etc/master.passwd"
+#define	_PATH_MASTERPASSWD_LOCK	"/etc/ptmp"
 
 #define	_PATH_MP_DB		"/etc/pwd.db"
 #define	_PATH_SMP_DB		"/etc/spwd.db"
