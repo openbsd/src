@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.c,v 1.3 1997/03/14 05:13:05 millert Exp $	*/
+/*	$OpenBSD: term.c,v 1.4 1997/07/03 14:25:29 niklas Exp $	*/
 /*	$NetBSD: term.c,v 1.8 1997/01/23 14:02:49 mrg Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: term.c,v 1.3 1997/03/14 05:13:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: term.c,v 1.4 1997/07/03 14:25:29 niklas Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -318,7 +318,7 @@ term_init(el)
     el->el_term.t_str = (char **) el_malloc(T_str * sizeof(char*));
     (void)memset(el->el_term.t_str, 0, T_str * sizeof(char*));
     el->el_term.t_val = (int *)   el_malloc(T_val * sizeof(int));
-    (void)memset(el->el_term.t_val, 0, T_val * sizeof(char*));
+    (void)memset(el->el_term.t_val, 0, T_val * sizeof(int));
     term_outfile = el->el_outfile;
     (void)term_set(el, NULL);
     term_init_arrow(el);
