@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.77 2001/07/02 02:28:35 deraadt Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.78 2001/07/18 20:48:33 markus Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1849,18 +1849,18 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
   addr = 0;
 
   /* Setup the POLICY extension.  */
-  policy_buf = (u_int8_t *)calloc (1, sizeof *policy + sizeof *ipsecrequest +
-				   2 * sockaddr_len (src));
+  len = sizeof *policy + sizeof *ipsecrequest +
+    2 * PF_KEY_V2_ROUND (src->sa_len);
+  policy_buf = (u_int8_t *)calloc (1, len);
   if (!policy_buf)
     {
-      log_error ("pf_key_v2_flow: calloc %d failed", sizeof *policy +
-		 sizeof *ipsecrequest + 2 * sockaddr_len (src));
+      log_error ("pf_key_v2_flow: calloc %d failed", len);
       goto cleanup;
     }
 
   policy = (struct sadb_x_policy *)policy_buf;
   policy->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
-  policy->sadb_x_policy_len = sizeof policy_buf / PF_KEY_V2_CHUNK;
+  policy->sadb_x_policy_len = len / PF_KEY_V2_CHUNK;
   policy->sadb_x_policy_type = IPSEC_POLICY_IPSEC;
   if (ingress)
   	policy->sadb_x_policy_dir = IPSEC_DIR_INBOUND;
@@ -1870,8 +1870,7 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
 
   /* Setup the IPSECREQUEST extension part.  */
   ipsecrequest = (struct sadb_x_ipsecrequest *)(policy + 1);
-  ipsecrequest->sadb_x_ipsecrequest_len
-    = sizeof *ipsecrequest + 2 * sockaddr_len (src);
+  ipsecrequest->sadb_x_ipsecrequest_len = len - sizeof *policy;
   switch (proto)
     {
     case IPSEC_PROTO_IPSEC_ESP:
