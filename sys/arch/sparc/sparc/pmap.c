@@ -1,3 +1,4 @@
+/*	$OpenBSD: pmap.c,v 1.14 1997/06/25 14:30:23 downsj Exp $	*/
 /*	$NetBSD: pmap.c,v 1.60.4.1 1996/06/12 20:36:30 pk Exp $ */
 
 /*
@@ -2207,7 +2208,7 @@ pv_unlink4_4c(pv, pm, va)
 			free(npv, M_VMPVENT);
 		} else {
 			pv->pv_pmap = NULL;
-			pv->pv_va == NULL;
+			pv->pv_va = NULL;
 			return;
 		}
 	} else {
@@ -2471,7 +2472,7 @@ pv_unlink4m(pv, pm, va)
 			free(npv, M_VMPVENT);
 		} else {
 			pv->pv_pmap = NULL;
-			pv->pv_va == NULL;
+			pv->pv_va = NULL;
 			return;
 		}
 	} else {
