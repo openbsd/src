@@ -500,8 +500,8 @@ struct sysent sysent[] = {
 	    sys_undelete },			/* 205 = undelete */
 	{ 2, s(struct sys_futimes_args),
 	    sys_futimes },			/* 206 = futimes */
-	{ 0, 0,
-	    sys_nosys },			/* 207 = unimplemented */
+	{ 1, s(struct sys_getpgid_args),
+	    sys_getpgid },			/* 207 = getpgid */
 	{ 0, 0,
 	    sys_nosys },			/* 208 = unimplemented */
 	{ 0, 0,

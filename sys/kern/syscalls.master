@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.14 1997/04/20 20:48:27 tholo Exp $
+	$OpenBSD: syscalls.master,v 1.15 1997/05/30 21:43:33 kstailey Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -365,7 +365,7 @@
 204	STD		{ int sys_munlock(caddr_t addr, size_t len); }
 205	STD		{ int sys_undelete(char *path); }
 206	STD		{ int sys_futimes(int fd, struct timeval *tptr); }
-207	UNIMPL
+207	STD		{ int sys_getpgid(pid_t pid); }
 208	UNIMPL
 209	UNIMPL
 ;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.8 1997/03/29 08:58:03 tholo Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.9 1997/05/30 21:43:34 kstailey Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -95,6 +95,28 @@ sys_getpgrp(p, v, retval)
 
 	*retval = p->p_pgrp->pg_id;
 	return (0);
+}
+
+/*
+ * SysVR.4 compatible getpgid()
+ */
+int
+sys_getpgid(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_getpgid_args /* {
+		syscallarg(pid_t) pid;
+	} */ *uap = v;
+
+	if (SCARG(uap, pid) == 0)
+		goto found;
+	if ((p = pfind(SCARG(uap, pid))) == 0)
+		return (ESRCH);
+found:
+	*retval = p->p_pgid;
+	return 0;
 }
 
 /* ARGSUSED */

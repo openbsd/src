@@ -882,6 +882,10 @@ struct sys_futimes_args {
 	syscallarg(struct timeval *) tptr;
 };
 
+struct sys_getpgid_args {
+	syscallarg(pid_t) pid;
+};
+
 struct sys___semctl_args {
 	syscallarg(int) semid;
 	syscallarg(int) semnum;
@@ -1206,6 +1210,7 @@ int	sys_mlock	__P((struct proc *, void *, register_t *));
 int	sys_munlock	__P((struct proc *, void *, register_t *));
 int	sys_undelete	__P((struct proc *, void *, register_t *));
 int	sys_futimes	__P((struct proc *, void *, register_t *));
+int	sys_getpgid	__P((struct proc *, void *, register_t *));
 #ifdef LKM
 int	sys_lkmnosys	__P((struct proc *, void *, register_t *));
 int	sys_lkmnosys	__P((struct proc *, void *, register_t *));

@@ -253,7 +253,7 @@ char *syscallnames[] = {
 	"munlock",			/* 204 = munlock */
 	"undelete",			/* 205 = undelete */
 	"futimes",			/* 206 = futimes */
-	"#207 (unimplemented)",		/* 207 = unimplemented */
+	"getpgid",			/* 207 = getpgid */
 	"#208 (unimplemented)",		/* 208 = unimplemented */
 	"#209 (unimplemented)",		/* 209 = unimplemented */
 #ifdef LKM
