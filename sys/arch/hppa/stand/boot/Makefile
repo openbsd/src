@@ -1,17 +1,19 @@
-#	$OpenBSD: Makefile,v 1.9 1999/12/23 02:42:23 mickey Exp $
+#	$OpenBSD: Makefile,v 1.10 2000/05/31 19:56:51 mickey Exp $
 
+MAN=	boot.8
+MANSUBDIR=/hppa
+MLINKS=	boot.8 boot.conf.8
+S	=${.CURDIR}/../../../..
+CLEANFILES+=	boot.gdb boot.map boot.lif bsd
+
+.if ${MACHINE} == "hppa"
 PROG=	boot
 SRCS=	srt0.S boot.c cmd.c vars.c bootarg.c conf.c
 LD?=	ld
 LDFLAGS+=-Bstatic -nostartfiles -nostdlib -N -Ttext $(LINKADDR)
 LDFLAGS+=-T ${.CURDIR}/ld.script -Map boot.map
 SIZE?=	size
-MAN=	boot.8
-MANSUBDIR=/hppa
-MLINKS=	boot.8 boot.conf.8
-S	=${.CURDIR}/../../../..
 SADIR=	${.CURDIR}/..
-CLEANFILES+=	boot.gdb boot.map boot.lif bsd
 
 LDADD=	${LIBSA} ${LIBZ} ${LIBKERN}
 DPADD=	${LIBSA} ${LIBZ} ${LIBKERN}
@@ -23,13 +25,13 @@ all:	boot.lif
 # enable this when SHEPHERD dies
 #.if exists(${.CURDIR}/../../compile/DISKLESS/bsd)
 #bsd: ${.CURDIR}/../../compile/DISKLESS/bsd
-#	gzip -9c ${.CURDIR}/../../compile/DISKLESS/bsd > bsd
+#	gzip -9 -c ${.CURDIR}/../../compile/DISKLESS/bsd > bsd
 #ADDBOOT+=bsd
 #.endif
 
 .if exists(${.CURDIR}/../../compile/SHEPHERD_PIE/bsd)
 bsd: ${.CURDIR}/../../compile/SHEPHERD_PIE/bsd
-	gzip -9c ${.CURDIR}/../../compile/SHEPHERD_PIE/bsd > bsd
+	gzip -9 -c ${.CURDIR}/../../compile/SHEPHERD_PIE/bsd > bsd
 ADDBOOT+=bsd
 .endif
 
@@ -42,6 +44,9 @@ boot.lif:	${PROG} ${ADDBOOT}
 ${PROG}: $(OBJS) $(DPADD)
 	$(LD) $(LDFLAGS) -o $(PROG) $(OBJS) $(LDADD)
 	@${SIZE} $(PROG)
+.else
+NOPROG=
+.endif
 
 .include <bsd.prog.mk>
 
