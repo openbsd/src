@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.4 2003/12/20 21:49:04 miod Exp $	*/
+/*	$OpenBSD: power.c,v 1.5 2004/06/11 12:53:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -132,7 +132,7 @@ power_thread_create(void *v)
 	struct power_softc *sc = v;
 
 	if (kthread_create(sc->sc_kicker, sc, &sc->sc_thread,
-	    "powerbutton"))
+	    sc->sc_dev.dv_xname))
 		printf("WARNING: failed to create kernel power thread\n");
 }
 
