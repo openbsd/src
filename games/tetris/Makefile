@@ -4,7 +4,7 @@
 PROG=	tetris
 SRCS=	input.c screen.c shapes.c scores.c tetris.c
 MAN=	tetris.6
-DPADD=	${LIBTERM}
+DPADD=	${LIBTERMCAP}
 LDADD=	-ltermcap
 HIDEGAME=hidegame
 

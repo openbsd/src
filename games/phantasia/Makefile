@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.3 1996/03/09 09:16:46 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/06/02 05:44:18 tholo Exp $
 #	$NetBSD: Makefile,v 1.4 1995/03/24 03:58:22 cgd Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	phantasia
 SRCS=	main.c fight.c io.c interplayer.c gamesupport.c misc.c phantglobs.c
-DPADD=	${LIBM} ${LIBCURSES} ${LIBTERM} ${LIBCOMPAT}
+DPADD=	${LIBM} ${LIBCURSES} ${LIBTERMLIB} ${LIBCOMPAT}
 LDADD=	-lm -lcurses -ltermlib -lcompat
 HIDEGAME=hidegame
 MAN=	phantasia.6

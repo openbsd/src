@@ -3,7 +3,7 @@
 
 PROG=	rain
 MAN=	rain.6
-DPADD=	${LIBTERM} ${LIBCOMPAT}
+DPADD=	${LIBTERMCAP} ${LIBCOMPAT}
 LDADD=	-ltermcap -lcompat
 
 .include <bsd.prog.mk>

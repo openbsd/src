@@ -6,8 +6,8 @@ CFLAGS+=-DBSD -I${.CURDIR} -I.
 SRCS=	extern.c grammar.c graphics.c input.c lex.c list.c log.c \
 	main.c tunable.c update.c
 MAN=	atc.6
-LDADD=	-ll -lm -lcurses -ltermcap
-DPADD=	${LIBL} ${LIBM} ${LIBTERM} ${LIBCURSES}
+LDADD=	-ll -lm -lcurses -ltermlib
+DPADD=	${LIBL} ${LIBM} ${LIBTERMLIB} ${LIBCURSES}
 GAMES=	ATC_scores Game_List Killer crossover default easy game_2 \
 	Atlantis OHare Tic-Tac-Toe airports box crosshatch game_3 \
 	game_4 novice two-corners

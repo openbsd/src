@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/03/09 01:33:28 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/06/02 05:44:16 tholo Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	hack
@@ -16,7 +16,7 @@ SRCS+=	alloc.c hack.Decl.c hack.apply.c hack.bones.c hack.c hack.cmd.c \
 	hack.u_init.c hack.unix.c hack.vault.c hack.version.c hack.wield.c \
 	hack.wizard.c hack.worm.c hack.worn.c hack.zap.c rnd.c
 MAN=	hack.6
-DPADD+=	${LIBTERM} ${LIBCOMPAT}
+DPADD+=	${LIBTERMCAP} ${LIBCOMPAT}
 LDADD+=	-ltermcap -lcompat
 HIDEGAME=hidegame
 CLEANFILES+=hack.onames.h makedefs

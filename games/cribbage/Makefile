@@ -2,7 +2,7 @@
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	cribbage
-DPADD=	${LIBCURSES} ${LIBTERM}
+DPADD=	${LIBCURSES} ${LIBTERMLIB}
 LDADD=	-lcurses -ltermlib
 SRCS=	extern.c crib.c cards.c instr.c io.c score.c support.c
 MAN=	cribbage.6
