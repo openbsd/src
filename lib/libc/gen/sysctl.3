@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.38 2000/01/11 00:44:44 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.39 2000/01/19 12:31:21 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -776,6 +776,16 @@ The variables are as follows:
 .It Li ip6.forwarding
 Returns 1 when IPv6 forwarding is enabled for the node,
 meaning that the node is acting as a router.
+Returns 0 when IPv6 forwarding is disabled for the node,
+meaning that the node is acting as a host.
+IPv6 specification defines node behavior for
+.Dq router
+case and
+.Dq host
+case quite differently, and changing this variable during operation
+may cause serious trouble.
+It is recommended to configure the variable at bootstrap time,
+and bootstrap time only.
 .It Li ip6.redirect
 Returns 1 when ICMPv6 redirects may be sent by the node.
 This option is ignored unless the node is routing IP packets,
