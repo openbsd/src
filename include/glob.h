@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.h,v 1.8 2003/06/02 19:34:12 millert Exp $	*/
+/*	$OpenBSD: glob.h,v 1.9 2004/10/07 16:56:11 millert Exp $	*/
 /*	$NetBSD: glob.h,v 1.5 1994/10/26 00:55:56 cgd Exp $	*/
 
 /*
@@ -69,6 +69,7 @@ typedef struct {
 #define	GLOB_MARK	0x0008	/* Append / to matching directories. */
 #define	GLOB_NOCHECK	0x0010	/* Return pattern itself if nothing matches. */
 #define	GLOB_NOSORT	0x0020	/* Don't sort. */
+#define	GLOB_NOESCAPE	0x1000	/* Disable backslash escaping. */
 
 #ifndef _POSIX_SOURCE
 #define	GLOB_ALTDIRFUNC	0x0040	/* Use alternately specified directory funcs. */
@@ -77,7 +78,6 @@ typedef struct {
 #define	GLOB_NOMAGIC	0x0200	/* GLOB_NOCHECK without magic chars (csh). */
 #define	GLOB_QUOTE	0x0400	/* Quote special chars with \. */
 #define	GLOB_TILDE	0x0800	/* Expand tilde names from the passwd file. */
-#define	GLOB_NOESCAPE	0x1000	/* Disable backslash escaping. */
 #define GLOB_LIMIT	0x2000	/* Limit pattern match output to ARG_MAX */
 #endif
 
