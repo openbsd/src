@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.50 2001/06/26 02:37:28 mickey Exp $
+#	$OpenBSD: files.alpha,v 1.51 2001/10/26 01:28:06 nate Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -132,6 +132,11 @@ major { wd = 0 }
 #
 
 file	arch/alpha/isa/isa_machdep.c	isa
+define isadma_bounce
+file arch/alpha/isa/isadmabounce.c	isadma_bounce
+
+device isabeep
+attach isabeep at pcppi
 
 include "dev/pckbc/files.pckbc"
 
@@ -143,6 +148,17 @@ attach	ed at isa with ed_isa
 attach	ed at pcmcia with ed_pcmcia
 attach	ed at pci with ed_pci
 file	dev/isa/if_ed.c			ed & (ed_isa | ed_pcmcia | ed_pci) needs-flag
+
+# Floppy disk controller
+#device	fdc {drive = -1}: isa_dma
+device	fdc {drive = -1}
+attach	fdc at isa
+file	dev/isa/fdc.c	fdc needs-flag
+
+device	fd: disk, isa_dma
+attach	fd at fdc
+file	dev/isa/fd.c	fd needs-flag
+major	{fd = 4}
 
 #
 # EISA Bus support

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.42 2001/03/06 13:55:02 ho Exp $	*/
+/*	$OpenBSD: fd.c,v 1.43 2001/10/26 01:28:06 nate Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -255,6 +255,13 @@ fdattach(parent, self, aux)
 		case 6:	/* 1.2 MB japanese format */
 			type = &fd_types[8];
 			break;
+#ifdef __alpha__
+		default:
+			/* 1.44MB, how to detect others?
+			 * idea from NetBSD -- jay@rootaction.net
+                         */
+			type = &fd_types[0];
+#endif
 		}
 	}
 
@@ -296,6 +303,12 @@ fd_nvtotype(fdc, nvraminfo, drive)
 	char *fdc;
 	int nvraminfo, drive;
 {
+#ifdef __alpha__
+	/* Alpha:  assume 1.44MB, idea from NetBSD sys/dev/isa/fd.c
+	 * -- jay@rootaction.net
+	 */
+	return &fd_types[0]; /* 1.44MB */
+#else
 	int type;
 
 	type = (drive == 0 ? nvraminfo : nvraminfo << 4) & 0xf0;
@@ -318,6 +331,7 @@ fd_nvtotype(fdc, nvraminfo, drive)
 		    fdc, drive, type);
 		return NULL;
 	}
+#endif
 }
 
 __inline struct fd_type *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_pic.c,v 1.18 2001/08/17 22:26:58 mickey Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.19 2001/10/26 01:28:06 nate Exp $	*/
 /* $NetBSD: sio_pic.c,v 1.28 2000/06/06 03:10:13 thorpej Exp $ */
 
 /*-
@@ -123,6 +123,7 @@ u_int8_t initial_elcr[2];
 #endif
 
 void		sio_setirqstat __P((int, int, int));
+int		sio_intr_alloc __P((void *, int, int, int *));
 
 u_int8_t	(*sio_read_elcr) __P((int));
 void		(*sio_write_elcr) __P((int, u_int8_t));
@@ -565,7 +566,6 @@ sio_iointr(framep, vec)
 
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
 
-#ifdef notyet
 int
 sio_intr_alloc(v, mask, type, irq)
 	void *v;
@@ -638,7 +638,6 @@ sio_intr_alloc(v, mask, type, irq)
 
 	return (0);
 }
-#endif
 
 static void
 specific_eoi(irq)

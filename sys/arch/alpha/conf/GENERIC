@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.90 2001/10/26 00:49:20 nate Exp $
+#	$OpenBSD: GENERIC,v 1.91 2001/10/26 01:28:06 nate Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -205,6 +205,8 @@ ukphy*	at mii? phy ?			# "unknown" PHYs
 isa*	at	pceb?
 eisa*	at	pceb?
 isa*	at	sio?
+isadma0	at	isa?
+isapnp0	at	isa?
 
 # ISA devices
 mcclock* at	isa? port 0x70
@@ -227,6 +229,8 @@ ep*	at	isa? port ? irq ?		# 3C509 ethernet cards
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 
 cy0	at	isa? iomem 0xd4000 irq 12	# ISA cyclom card
+fdc0	at	isa? port 0x3f0 irq 6 drq 2     # floppy controller
+fd*	at	fdc? drive ?
 
 #aic0	at	isa? port 0x340 irq 11		# Adaptec 152[02] SCSI
 #scsibus* at aic?

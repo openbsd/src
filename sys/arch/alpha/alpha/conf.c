@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.33 2001/10/26 00:41:46 nate Exp $	*/
+/*	$OpenBSD: conf.c,v 1.34 2001/10/26 01:28:06 nate Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -46,6 +46,8 @@
 
 #include "wd.h"
 bdev_decl(wd);
+#include "fd.h"
+bdev_decl(fd);
 #include "st.h"
 #include "cd.h"
 #include "sd.h"
@@ -62,7 +64,7 @@ struct bdevsw	bdevsw[] =
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_tape_init(NST,st),		/* 2: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
-	bdev_notdef(),			/* 4 */
+	bdev_disk_init(NFD,fd),		/* 4: Floppy disk */
 	bdev_notdef(),			/* 5 */
 	bdev_disk_init(NRD,rd),		/* 6: ram disk driver */
 	bdev_disk_init(NCCD,ccd),	/* 7: concatenated disk driver */
@@ -105,6 +107,7 @@ cdev_decl(com);
 cdev_decl(lpt);
 cdev_decl(prom);			/* XXX XXX XXX */
 cdev_decl(wd);
+cdev_decl(fd);
 #include "cy.h"
 cdev_decl(cy);
 #ifdef XFS
@@ -174,7 +177,7 @@ struct cdevsw	cdevsw[] =
 	cdev_random_init(1,random),	/* 34: random data source */
 	cdev_pf_init(NPF, pf),		/* 35: packet filter */
 	cdev_disk_init(NWD,wd), 	/* 36: ST506/ESDI/IDE disk */
-	cdev_notdef(),			/* 37 */
+	cdev_disk_init(NFD,fd),		/* 37: Floppy disk */
         cdev_tty_init(NCY,cy),          /* 38: Cyclom serial port */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 39: Kernel symbols device */
 	cdev_notdef(),			/* 40 */
@@ -284,7 +287,7 @@ static int chrtoblktbl[] = {
 	/* 34 */	NODEV,
 	/* 35 */	NODEV,
 	/* 36 */	0,
-	/* 37 */	4,
+	/* 37 */	4,		/* fd */
 	/* 38 */	NODEV,
 	/* 39 */	NODEV,
 	/* 40 */	NODEV,
