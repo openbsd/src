@@ -699,7 +699,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wscons/wsmousevar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wscons/wsmuxvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wsfont
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wsfont/bold8x16-iso1.p
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wsfont/bold8x16-iso1.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wsfont/bold8x16.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wsfont/gallant12x22.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wsfont/lucida16x29.ph
