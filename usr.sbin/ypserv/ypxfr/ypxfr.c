@@ -28,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypxfr.c,v 1.1 1995/11/01 16:56:43 deraadt Exp $";
+static char rcsid[] = "$Id: ypxfr.c,v 1.2 1996/01/20 00:38:49 chuck Exp $";
 #endif
 
 #include <stdio.h>
@@ -206,7 +206,7 @@ char *temp_map;
 
 	return db;
 
-	yplog_str("Open DB "); yplog_cat(db_temp); yplog_cat("\n");
+	yplog("Open DB %s", db_temp);
 }
 
 int
@@ -488,29 +488,19 @@ char *argv[];
 	}
 
 	if (status > 0) {
-		yplog_init(progname);
+		ypopenlog();
 
-		yplog_date("Arguments:");
-		yplog_str("YP clear to local: ");
-		if (cflag) {
-		  yplog_cat("no\n");
-		} else {
-		  yplog_cat("yes\n");
-		}
-		yplog_str("   Force transfer: ");
-		if (fflag) {
-		  yplog_cat("yes\n");
-		} else {
-		  yplog_cat("no\n");
-		}
-		yplog_str("           domain: "); yplog_cat(domain); yplog_cat("\n");
-		yplog_str("             host: "); yplog_cat(host); yplog_cat("\n");
-		yplog_str("    source domain: "); yplog_cat(srcdomain); yplog_cat("\n");
-		yplog_str("          transid: "); yplog_cat(tid); yplog_cat("\n");
-		yplog_str("             prog: "); yplog_cat(prog); yplog_cat("\n");
-		yplog_str("             port: "); yplog_cat(port); yplog_cat("\n");
-		yplog_str("            ipadd: "); yplog_cat(ipadd); yplog_cat("\n");
-		yplog_str("              map: "); yplog_cat(map); yplog_cat("\n\n");
+		yplog("ypxfr: Arguments:");
+		yplog("YP clear to local: %s", (cflag) ? "no" : "yes");
+		yplog("   Force transfer: %s", (fflag) ? "yes" : "no");
+		yplog("           domain: %s", domain); 
+		yplog("             host: %s", host);
+		yplog("    source domain: %s", srcdomain);
+		yplog("          transid: %s", tid);
+		yplog("             prog: %s", prog);
+		yplog("             port: %s", port);
+		yplog("            ipadd: %s", ipadd);
+		yplog("              map: %s", map);
 
 		if(fflag != 0) {
 			ordernum = 0;
@@ -521,7 +511,7 @@ char *argv[];
 
 	if (status > 0) {
 
-	        yplog_str("Get Master\n");
+	        yplog("Get Master");
 
 		if (host == NULL) {
 			if (srcdomain == NULL) {
@@ -539,7 +529,7 @@ char *argv[];
 
 	if (status > 0) {
 	  	
-	        yplog_str("Connect host: "); yplog_cat(host); yplog_cat("\n");
+	        yplog("Connect host: %s", host); 
 
 		client = yp_bind_host(host,YPPROG,YPVERS,0);
 		
