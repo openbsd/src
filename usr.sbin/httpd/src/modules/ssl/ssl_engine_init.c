@@ -257,11 +257,7 @@ void ssl_init_Module(server_rec *s, pool *p)
 #ifdef __OpenBSD__
     for (s2 = s; s2 != NULL; s2 = s2->next) {
         sc = mySrvConfig(s2);
-        /*
-         * Either now skip this server when SSL is disabled for
-         * it or give out some information about what we're
-         * configuring.
-         */
+	/* find out if anyone's actually doing ssl */
         if (sc->bEnabled)
             SSLenabled = 1;
     }
