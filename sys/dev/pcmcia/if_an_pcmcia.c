@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.2 2000/04/24 19:43:35 niklas Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.3 2000/06/23 16:12:35 aaron Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -58,16 +58,16 @@ void an_pcmcia_attach        __P((struct device *, struct device *, void *));
 int  an_pcmcia_detach        __P((struct device *, int));
 int  an_pcmcia_activate      __P((struct device *, enum devact));
 
-struct	an_pcmcia_softc {
+struct an_pcmcia_softc {
 	struct an_softc sc_an;
 
 	struct pcmcia_io_handle sc_pcioh;
-	struct pcmcia_function *sc_pf;
 	int sc_io_window;
+	struct pcmcia_function *sc_pf;
 };
 
 struct cfattach an_pcmcia_ca = {   
-	sizeof (struct an_softc), an_pcmcia_match, an_pcmcia_attach,
+	sizeof(struct an_pcmcia_softc), an_pcmcia_match, an_pcmcia_attach,
 	an_pcmcia_detach, an_pcmcia_activate
 };
 
@@ -170,7 +170,7 @@ an_pcmcia_activate(dev, act)
 	enum devact act;
 {
 	struct an_pcmcia_softc *psc = (struct an_pcmcia_softc *)dev;
-	struct an_softc *sc = (struct an_softc *)dev;
+	struct an_softc *sc = &psc->sc_an;
 	struct ifnet *ifp = &sc->arpcom.ac_if;
 	int s;
 
