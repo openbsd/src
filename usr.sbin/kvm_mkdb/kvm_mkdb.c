@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.2 1997/01/15 22:08:15 millert Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.3 1998/08/19 06:47:53 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,9 +41,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "from: @(#)kvm_mkdb.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.2 1997/01/15 22:08:15 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.3 1998/08/19 06:47:53 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,10 +54,12 @@ static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.2 1997/01/15 22:08:15 millert Exp
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <libgen.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "extern.h"
 
@@ -78,11 +80,14 @@ main(argc, argv)
 	char *argv[];
 {
 	DB *db;
-	int ch;
-	char *p, *nlistpath, *nlistname, dbtemp[MAXPATHLEN], dbname[MAXPATHLEN];
+	int ch, verbose = 0;
+	char *nlistpath, *nlistname, dbtemp[MAXPATHLEN], dbname[MAXPATHLEN];
 
-	while ((ch = getopt(argc, argv, "")) != -1)
+	while ((ch = getopt(argc, argv, "v")) != -1)
 		switch (ch) {
+		case 'v':
+			verbose = 1;
+			break;
 		case '?':
 		default:
 			usage();
@@ -93,11 +98,6 @@ main(argc, argv)
 	if (argc > 1)
 		usage();
 
-	/* If the existing db file matches the currently running kernel, exit */
-	if (testdb())
-		exit(0);
-
-#define	basename(cp)	((p = strrchr((cp), '/')) != NULL ? p + 1 : (cp))
 	nlistpath = argc > 0 ? argv[0] : _PATH_UNIX;
 	nlistname = basename(nlistpath);
 
@@ -105,6 +105,13 @@ main(argc, argv)
 	    _PATH_VARDB, nlistname);
 	(void)snprintf(dbname, sizeof(dbname), "%skvm_%s.db",
 	    _PATH_VARDB, nlistname);
+
+	/* If the existing db file matches the currently running kernel, exit */
+	if (testdb(dbname))
+		exit(0);
+	else if (verbose)
+		warnx("rebuilding %s", dbname);
+
 	(void)umask(0);
 	db = dbopen(dbtemp, O_CREAT | O_EXLOCK | O_TRUNC | O_RDWR,
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, DB_HASH, &openinfo);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: testdb.c,v 1.2 1997/01/15 22:08:17 millert Exp $	*/
+/*	$OpenBSD: testdb.c,v 1.3 1998/08/19 06:47:55 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)testdb.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: testdb.c,v 1.2 1997/01/15 22:08:17 millert Exp $";
+static char *rcsid = "$OpenBSD: testdb.c,v 1.3 1998/08/19 06:47:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,14 +56,14 @@ static char *rcsid = "$OpenBSD: testdb.c,v 1.2 1997/01/15 22:08:17 millert Exp $
 
 /* Return true if the db file is valid, else false */
 int
-testdb()
+testdb(dbname)
+	char *dbname;
 {
 	register DB *db;
 	register int cc, kd, ret, dbversionlen;
-	register char *cp, *uf;
 	DBT rec;
 	struct nlist nitem;
-	char dbname[MAXPATHLEN], dbversion[_POSIX2_LINE_MAX];
+	char dbversion[_POSIX2_LINE_MAX];
 	char kversion[_POSIX2_LINE_MAX];
 
 	ret = 0;
@@ -72,10 +72,6 @@ testdb()
 	if ((kd = open(_PATH_KMEM, O_RDONLY, 0)) < 0)
 		goto close;
 
-	uf = _PATH_UNIX;
-	if ((cp = strrchr(uf, '/')) != 0)
-		uf = cp + 1;
-	(void)snprintf(dbname, sizeof(dbname), "%skvm_%s.db", _PATH_VARDB, uf);
 	if ((db = dbopen(dbname, O_RDONLY, 0, DB_HASH, NULL)) == NULL)
 		goto close;
 

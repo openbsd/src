@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.7 1997/12/15 10:15:39 deraadt Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.8 1998/08/19 06:47:54 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.7 1997/12/15 10:15:39 deraadt Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.8 1998/08/19 06:47:54 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ static char *rcsid = "$OpenBSD: nlist.c,v 1.7 1997/12/15 10:15:39 deraadt Exp $"
 #include <sys/stat.h>
 #include <sys/file.h>
 
-#ifdef DO_ELF
+#ifdef _NLIST_DO_ELF
 #include <elf_abi.h>
 #endif
 
@@ -71,8 +71,9 @@ typedef struct nlist NLIST;
 
 #define	badfmt(str)	errx(1, "%s: %s: %s", kfile, str, strerror(EFTYPE))
 static char *kfile;
+static char *fmterr;
 
-#if defined(DO_AOUT)
+#if defined(_NLIST_DO_AOUT)
 
 static void badread __P((int, char *));
 static u_long get_kerntext __P((char *kfn, u_int magic));
@@ -93,17 +94,22 @@ __aout_knlist(name, db)
 
 	kfile = name;
 	if ((fd = open(name, O_RDONLY, 0)) < 0)
-		err(1, "%s", name);
+		err(1, "can't open %s", name);
 
 	/* Read in exec structure. */
 	nr = read(fd, &ebuf, sizeof(struct exec));
-	if (nr != sizeof(struct exec))
-		return(-1);
+	if (nr != sizeof(struct exec)) {
+		fmterr = "no exec header";
+		return (-1);
+	}
 
 	/* Check magic number and symbol count. */
-	if (N_BADMAG(ebuf))
-		return(-1);
+	if (N_BADMAG(ebuf)) {
+		fmterr = "bad magic number";
+		return (-1);
+	}
 
+	/* Must have a symbol table. */
 	if (!ebuf.a_syms)
 		badfmt("stripped");
 
@@ -119,7 +125,7 @@ __aout_knlist(name, db)
 	/* Read in the string table. */
 	strsize -= sizeof(strsize);
 	if (!(strtab = malloc(strsize)))
-		err(1, NULL);
+		errx(1, "cannot allocate memory");
 	if ((nr = read(fd, strtab, strsize)) != strsize)
 		badread(nr, "corrupted symbol table");
 
@@ -190,7 +196,7 @@ __aout_knlist(name, db)
 		}
 	}
 	(void)fclose(fp);
-	return(0);
+	return (0);
 }
 
 /*
@@ -219,8 +225,6 @@ get_kerntext(name, magic)
 	if (nlist(name, nl) != 0)
 		return (KERNTEXTOFF);
 
-	if (magic == ZMAGIC || magic == QMAGIC)
-		return (nl[0].n_value - sizeof(struct exec));
 	return (nl[0].n_value);
 }
 
@@ -234,9 +238,9 @@ badread(nr, p)
 	badfmt(p);
 }
 
-#endif /* DO_AOUT */
+#endif /* _NLIST_DO_AOUT */
 
-#ifdef DO_ELF
+#ifdef _NLIST_DO_ELF
 int
 __elf_knlist(name, db)
 	char *name;
@@ -266,9 +270,11 @@ __elf_knlist(name, db)
 	if (fseek(fp, (off_t)0, SEEK_SET) == -1 ||
 	    fread(&eh, sizeof(eh), 1, fp) != 1 ||
 	    !IS_ELF(eh))
-		return(-1);
+		return (-1);
 
 	sh = (Elf32_Shdr *)malloc(sizeof(Elf32_Shdr) * eh.e_shnum);
+	if (sh == NULL)
+		errx(1, "cannot allocate memory");
 
 	if (fseek (fp, eh.e_shoff, SEEK_SET) < 0)
 		badfmt("no exec header");
@@ -277,6 +283,8 @@ __elf_knlist(name, db)
 		badfmt("no exec header");
 
 	shstr = (char *)malloc(sh[eh.e_shstrndx].sh_size);
+	if (shstr == NULL)
+		errx(1, "cannot allocate memory");
 	if (fseek (fp, sh[eh.e_shstrndx].sh_offset, SEEK_SET) < 0)
 		badfmt("corrupt file");
 	if (fread(shstr, sh[eh.e_shstrndx].sh_size, 1, fp) != 1)
@@ -396,11 +404,11 @@ __elf_knlist(name, db)
 	}
 	munmap(strtab, symstrsize);
 	(void)fclose(fp);
-	return(0);
+	return (0);
 }
-#endif /* DO_ELF */
+#endif /* _NLIST_DO_ELF */
 
-#ifdef DO_ECOFF
+#ifdef _NLIST_DO_ECOFF
 int
 __ecoff_knlist(name, db)
 	char *name;
@@ -408,18 +416,18 @@ __ecoff_knlist(name, db)
 {
 	return (-1);
 }
-#endif /* DO_ECOFF */
+#endif /* _NLIST_DO_ECOFF */
 
 static struct knlist_handlers {
 	int	(*fn) __P((char *name, DB *db));
 } nlist_fn[] = {
-#ifdef DO_AOUT
+#ifdef _NLIST_DO_AOUT
 	{ __aout_knlist },
 #endif
-#ifdef DO_ELF
+#ifdef _NLIST_DO_ELF
 	{ __elf_knlist },
 #endif
-#ifdef DO_ECOFF
+#ifdef _NLIST_DO_ECOFF
 	{ __ecoff_knlist },
 #endif
 };
@@ -429,11 +437,15 @@ create_knlist(name, db)
 	char *name;
 	DB *db;
 {
-	int n, i;
+	int i, error;
 
 	for (i = 0; i < sizeof(nlist_fn)/sizeof(nlist_fn[0]); i++) {
-		n = (nlist_fn[i].fn)(name, db);
-		if (n != -1)
+		fmterr = NULL;
+		if ((error = (nlist_fn[i].fn)(name, db)) == 0)
 			break;
 	}
+	if (fmterr != NULL)
+		badfmt(fmterr);
+	if (error)
+		errx(1, "cannot determine executable type of %s", name);
 }
