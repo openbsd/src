@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.2 1997/06/30 06:06:00 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.3 1999/06/06 15:34:44 deraadt Exp $	*/
 
  /*
   * Misc routines that are used by tcpd and by tcpdchk.
@@ -10,7 +10,7 @@
 #if 0
 static char sccsic[] = "@(#) misc.c 1.2 96/02/11 17:01:29";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.2 1997/06/30 06:06:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.3 1999/06/06 15:34:44 deraadt Exp $";
 #endif
 #endif
 
@@ -67,16 +67,16 @@ int     delimiter;
     return (cp);
 }
 
-/* dot_quad_addr - convert dotted quad to internal form */
-
-in_addr_t dot_quad_addr(str)
+/* dot_quad_addr_new - convert dotted quad to internal form */
+int
+dot_quad_addr_new(str, ap)
 char   *str;
+in_addr_t *ap;
 {
-    int     in_run = 0;
-    int     runs = 0;
-    char   *cp = str;
-
-    /* Count the number of runs of non-dot characters. */
+    struct in_addr a;
+    int in_run = 0;
+    int runs = 0;
+    char *cp = str;
 
     while (*cp) {
 	if (*cp == '.') {
@@ -87,5 +87,23 @@ char   *str;
 	}
 	cp++;
     }
-    return (runs == 4 ? inet_addr(str) : INADDR_NONE);
+    if (runs != 4)
+	return 0;
+
+    if (!inet_aton(str, &a))
+	return 0;
+    if (ap)
+	*ap = a.s_addr;
+    return 1;
+}
+
+/* dot_quad_addr - convert dotted quad to internal form */
+in_addr_t
+dot_quad_addr(str)
+char   *str;
+{
+    in_addr_t addr;
+
+    (void) dot_quad_addr_new(str, &addr);
+    return addr;
 }

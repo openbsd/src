@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpd.h,v 1.5 1999/04/26 04:11:02 downsj Exp $	*/
+/*	$OpenBSD: tcpd.h,v 1.6 1999/06/06 15:34:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -114,6 +114,7 @@ extern void refuse __P((struct request_info *));
 extern char *xgets __P((char *, int, FILE *));
 #endif	/* _STDIO_H_ */
 extern char *split_at __P((char *, int));
+extern int dot_quad_addr_new __P((char *, in_addr_t *));
 extern in_addr_t dot_quad_addr __P((char *));
 
 /* Global variables. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hosts_access.c,v 1.3 1997/06/30 06:05:59 deraadt Exp $	*/
+/*	$OpenBSD: hosts_access.c,v 1.4 1999/06/06 15:34:44 deraadt Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -23,7 +23,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-static char rcsid[] = "$OpenBSD: hosts_access.c,v 1.3 1997/06/30 06:05:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hosts_access.c,v 1.4 1999/06/06 15:34:44 deraadt Exp $";
 #endif
 #endif
 
@@ -328,10 +328,10 @@ char   *string;
      * access control language. John P. Rouillard <rouilj@cs.umb.edu>.
      */
 
-    if ((addr = dot_quad_addr(string)) == INADDR_NONE)
+    if (!dot_quad_addr_new(string, &addr))
 	return (NO);
-    if ((net = dot_quad_addr(net_tok)) == INADDR_NONE
-	|| (mask = dot_quad_addr(mask_tok)) == INADDR_NONE) {
+    if (!dot_quad_addr_new(net_tok, &net) ||
+	!dot_quad_addr_new(mask_tok, &mask)) {
 	tcpd_warn("bad net/mask expression: %s/%s", net_tok, mask_tok);
 	return (NO);				/* not tcpd_jump() */
     }
