@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.26 2004/08/20 06:17:05 deraadt Exp $
+.\"	$OpenBSD: sk.4,v 1.27 2004/09/22 20:07:09 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -100,10 +100,6 @@ driver configures dual port SysKonnect adapters such that each XMAC
 is treated as a separate logical network interface.
 Both ports can operate independently of each other and can be connected
 to separate networks.
-The SysKonnect driver software currently only uses the second port on
-dual port adapters for failover purposes: if the link
-on the primary port fails, the SysKonnect driver will automatically
-switch traffic onto the second port.
 .Pp
 The XaQti XMAC II supports full and half duplex operation with
 autonegotiation.
