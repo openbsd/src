@@ -1365,8 +1365,11 @@
 ./usr/share/ipf/example.9
 ./usr/share/ipf/firewall.1
 ./usr/share/ipf/firewall.2
+./usr/share/ipf/firewall.3
+./usr/share/ipf/firewall.4
 ./usr/share/ipf/nat.1
 ./usr/share/ipf/nat.2
+./usr/share/ipf/nat.3
 ./usr/share/ipsec
 ./usr/share/ipsec/attributes.conf
 ./usr/share/ipsec/photuris.conf
@@ -2675,3 +2678,4 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
+./usr/sbin/rip6query

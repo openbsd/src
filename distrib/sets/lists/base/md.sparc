@@ -683,8 +683,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/machine/fgaio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/machine/scfio.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_sppp.ph
-./usr/lib/gcc-lib/sparc-unknown-openbsd2.6/2.95.1
-./usr/lib/gcc-lib/sparc-unknown-openbsd2.6/2.95.1/include
+./usr/lib/gcc-lib/sparc-unknown-openbsd2.6/2.95.2
+./usr/lib/gcc-lib/sparc-unknown-openbsd2.6/2.95.2/include
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/sched.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/stdbool.ph
 ./usr/lib/apache/modules/libproxy.so

@@ -776,7 +776,6 @@
 ./usr/include/netinet6/in6.h
 ./usr/include/netinet6/in6_gif.h
 ./usr/include/netinet6/in6_ifattach.h
-./usr/include/netinet6/in6_pcb.h
 ./usr/include/netinet6/in6_prefix.h
 ./usr/include/netinet6/in6_var.h
 ./usr/include/netinet6/ip6.h

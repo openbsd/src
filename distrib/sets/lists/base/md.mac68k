@@ -657,8 +657,8 @@
 ./usr/libdata/perl5/m68k-openbsd/5.00503/.packlist
 ./usr/local/libdata/perl5/site_perl/m68k-openbsd
 ./usr/libexec/ld.so
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.6/2.95.1
-./usr/lib/gcc-lib/m68k-unknown-openbsd2.6/2.95.1/include
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.6/2.95.2
+./usr/lib/gcc-lib/m68k-unknown-openbsd2.6/2.95.2/include
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/sched.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/stdbool.ph
 ./usr/lib/apache/modules/libproxy.so

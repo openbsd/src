@@ -8,8 +8,8 @@
 ./usr/include/alpha
 ./usr/include/readline
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.6
-./usr/lib/gcc-lib/alpha-unknown-openbsd2.6/2.95.1
-./usr/lib/gcc-lib/alpha-unknown-openbsd2.6/2.95.1/include
+./usr/lib/gcc-lib/alpha-unknown-openbsd2.6/2.95.2
+./usr/lib/gcc-lib/alpha-unknown-openbsd2.6/2.95.2/include
 ./usr/libdata/perl5/alpha-openbsd
 ./usr/libdata/perl5/alpha-openbsd/5.00503
 ./usr/libdata/perl5/alpha-openbsd/5.00503/.packlist

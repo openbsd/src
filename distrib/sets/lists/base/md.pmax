@@ -4,8 +4,8 @@
 ./usr/include/mips
 ./usr/include/readline
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6/2.95.1
-./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6/2.95.1/include
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6/2.95.2
+./usr/lib/gcc-lib/mipsel-unknown-openbsd2.6/2.95.2/include
 ./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.24.0
 ./usr/lib/libc_r.so.2.0
