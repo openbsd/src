@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.6 1996/12/04 08:38:59 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.7 1996/12/04 08:52:18 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.6 1996/12/04 08:38:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.7 1996/12/04 08:52:18 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -752,8 +752,9 @@ usage()
 	fprintf(stderr, "\t-n number of distinguished rotational positions\n");
 	fprintf(stderr, "\t-o optimization preference (`space' or `time')\n");
 	fprintf(stderr, "\t-p spare sectors per track\n");
-	fprintf(stderr, "\t-s file system size (sectors)\n");
 	fprintf(stderr, "\t-r revolutions/minute\n");
+	fprintf(stderr, "\t-s file system size (sectors)\n");
+	fprintf(stderr, "\t-t file system type\n");
 	fprintf(stderr, "\t-u sectors/track\n");
 	fprintf(stderr, "\t-x spare sectors per cylinder\n");
 	fprintf(stderr, "\t-z tracks/cylinder\n");
