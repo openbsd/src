@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.90 2002/03/31 15:30:42 krw Exp $
+#	$OpenBSD: install.sh,v 1.91 2002/04/02 01:25:34 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -130,9 +130,6 @@ echo
 
 # Deal with terminal issues
 md_set_term
-
-# Get timezone info
-get_timezone
 
 if [ ! -f /etc/fstab ]; then
 	# Install the shadowed disktab file; lets us write to it for temporary
@@ -364,10 +361,22 @@ md_questions
 install_sets $THESETS
 
 # Copy in configuration information and make devices in target root.
+cfgfiles="fstab hostname.* hosts myname mygate resolv.conf"
+
 echo
+if [ -f /etc/dhclient.conf ]; then
+	echo -n "Saving dhclient configuration..."
+	cat /etc/dhclient.conf >> /mnt/etc/dhclient.conf
+	echo "lookup file bind" > /mnt/etc/resolv.conf.tail
+	cp /var/db/dhclient.leases /mnt/var/db/.
+	# Don't install mygate for dhcp installations
+	cfgfiles=`echo $cfgfiles | sed -e 's/ mygate//'`
+	echo "done."
+fi
+
 cd /tmp
-echo -n "Copying "
-for file in fstab hostname.* hosts myname mygate resolv.conf; do
+echo -n "Copying... "
+for file in $cfgfiles; do
 	if [ -f $file ]; then
 		echo -n "$file "
 		cp $file /mnt/etc/$file
@@ -376,27 +385,10 @@ for file in fstab hostname.* hosts myname mygate resolv.conf; do
 done
 echo "...done."
 
-if [ -f /etc/dhclient.conf ]; then
-	echo -n "Saving dhclient configuration..."
-	cat /etc/dhclient.conf >> /mnt/etc/dhclient.conf
-	echo "lookup file bind" > /mnt/etc/resolv.conf.tail
-	cp /var/db/dhclient.leases /mnt/var/db/.
-	echo "done."
-fi
+# Get timezone info
+get_timezone
 
-# If no zoneinfo on the installfs, give them a second chance
-if [ ! -e /usr/share/zoneinfo ]; then
-	get_timezone
-fi
-if [ ! -e /mnt/usr/share/zoneinfo ]; then
-	echo "Cannot install timezone link."
-else
-	echo "Installing timezone link."
-	rm -f /mnt/etc/localtime
-	ln -s /usr/share/zoneinfo/$TZ /mnt/etc/localtime
-fi
-
-
+# Make devices
 if [ ! -x /mnt/dev/MAKEDEV ]; then
 	echo "No /dev/MAKEDEV installed, something is wrong here..."
 	exit

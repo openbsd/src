@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.27 2002/03/31 15:30:42 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.28 2002/04/02 01:25:34 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -251,10 +251,6 @@ get_timezone
 
 # Copy in configuration information and make devices in target root.
 (
-	echo "Installing timezone link."
-	rm -f /mnt/etc/localtime
-	ln -s /usr/share/zoneinfo/$TZ /mnt/etc/localtime
-
 	if [ -f /mnt/etc/sendmail.cf -a ! -f /mnt/etc/mail/sendmail.cf ]; then
 		echo "Moving /etc/sendmail.cf -> /etc/mail/sendmail.cf"
 		test -d /mnt/etc/mail || mkdir /mnt/etc/mail

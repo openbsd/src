@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.196 2002/03/31 15:30:42 krw Exp $
+#	$OpenBSD: install.sub,v 1.197 2002/04/02 01:25:34 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -156,7 +156,7 @@ cutword () {
 	_n=$1
 	while read _a; do
 		set -- $_a
-		test "$1" = "" && break
+		test -z "$1" && break
 		eval echo \$$_n
 	done
 	IFS=$_oifs
@@ -1762,21 +1762,12 @@ echo "Extraction complete."
 }
 
 get_timezone() {
-local _a _zonepath
+local _zoneroot=/mnt/usr/share/zoneinfo/ _zonepath
 
-#
-# If the zoneinfo is not on the installation medium or on the
-# installed filesystem, set TZ to GMT and return immediatly.
-#
-if [ ! -e /usr/share/zoneinfo -a ! -e /mnt/usr/share/zoneinfo ]; then
-	TZ=GMT
-	return
-fi
-if [ ! -d /usr/share/zoneinfo ]; then
-	_zonepath=/mnt
-else
-	_zonepath=
-fi
+# If the timezone directory structure is not
+# available, return immediately.
+
+[ ! -d $_zoneroot ] && return
 
 cat << __EOT
 
@@ -1786,47 +1777,48 @@ be selected by entering a token like "CET" or "GMT-6".  Other zones are
 grouped by continent or country, with detailed zone information separated by
 a slash ("/"), e.g. "US/Pacific" or "Canada/Mountain".
 
-To get a listing of what's available in /usr/share/zoneinfo, enter "?"
-at the prompts below.
-
 __EOT
-if [ X$TZ = X ]; then
+
+if [ -L /mnt/etc/localtime ]; then
 	TZ=`ls -l /mnt/etc/localtime 2>/dev/null | cutlast`
-	TZ=${TZ#/usr/share/zoneinfo/}
+	TZ=${TZ#${_zoneroot#/mnt}}
 fi
+
+[ -z $TZ ] && TZ=GMT
+
 while : ; do
+	_zonepath=$_zoneroot
+
 	echo -n	"What timezone are you in? (\`?' for list) [$TZ] "
 	getresp "$TZ"
-	case $resp in
-	"")	echo "Timezone defaults to GMT"
-		TZ=GMT
-		break
-		;;
-	"?")	ls -F ${_zonepath}/usr/share/zoneinfo
-		;;
-	*)	_a=$resp
-		while [ -d ${_zonepath}/usr/share/zoneinfo/$_a ]; do
-			echo -n "There are several timezones available"
-			echo " within zone '$_a'"
-			echo -n "Select a sub-timezone (\`?' for list): "
-			getresp
-			case $resp in
-			"?")	ls -F ${_zonepath}/usr/share/zoneinfo/$_a ;;
-			*)	_a=${_a}/${resp}
-				if [ -f ${_zonepath}/usr/share/zoneinfo/$_a ]; then
-					break
-				fi
-				;;
-			esac
-		done
-		if [ -f ${_zonepath}/usr/share/zoneinfo/$_a ]; then
-			TZ=$_a
-			echo "You have selected timezone \"$_a\"".
-			return
+
+	if [ "$resp" = "?" ]; then
+		ls -F ${_zonepath}
+		continue;
+	fi
+
+	_zonepath=${_zonepath}${resp}
+
+	while [ -d ${_zonepath} ]; do
+		echo -n "Select a sub-timezone of "
+		echo -n "'${_zonepath#$_zoneroot}' (\`?' for list): "
+		getresp
+		if [ "$resp" = "?" ]; then
+			ls -F ${_zonepath}
+		else
+			_zonepath=${_zonepath}/${resp}
 		fi
-		echo "'/usr/share/zoneinfo/$_a' is not a valid timezone on this system."
-		;;
-	esac
+	done
+
+	if [ -f ${_zonepath} ]; then
+		TZ=${_zonepath#$_zoneroot}
+		echo "You have selected timezone '$TZ'".
+		ln -sf /usr/share/zoneinfo/$TZ /mnt/etc/localtime
+		return
+	fi
+
+	echo -n "'${_zonepath#$_zoneroot}'"
+	echo " is not a valid timezone on this system."
 done
 }
 
@@ -2159,7 +2151,7 @@ donetconfig() {
 
 	resp=`route -n show |
 		grep '^default' |
-		sed -e 's/^default          //' -e 's/ .*//'`
+		sed -e 's/^default *//' -e 's/ .*//'`
 	if [ "X${resp}" = "X" ]; then
 		resp=none
 		if [ -f /tmp/mygate ]; then
