@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.23 2000/11/26 19:35:46 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.24 2001/06/07 16:21:49 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.23 2000/11/26 19:35:46 millert Exp $";
+static char *rcsid = "$OpenBSD: pwd_mkdb.c,v 1.24 2001/06/07 16:21:49 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,7 @@ main(argc, argv)
 		data.data = (u_char *)NULL;
 		data.size = 0;
 
-		if ((dp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
+		if ((edp->put)(edp, &key, &data, R_NOOVERWRITE) == -1)
 			error("put");
 		if ((dp->put)(dp, &key, &data, R_NOOVERWRITE) == -1)
 			error("put");
@@ -538,7 +538,7 @@ db_store(fp, oldfp, edp, dp, pw, keytype, username, olduid)
 				tbuf[0] = _PW_KEYBYUID;
 				memcpy(tbuf + 1, &olduid, sizeof(olduid));
 				key.size = sizeof(olduid) + 1;
-				(edp->del)(dp, &key, 0);
+				(edp->del)(edp, &key, 0);
 				(dp->del)(dp, &key, 0);
 			}
 			/* XXX - should check to see if line number changed. */
@@ -586,7 +586,7 @@ db_store(fp, oldfp, edp, dp, pw, keytype, username, olduid)
 		data.size = p - buf;
 
 		/* Write the secure record. */
-		if ((dp->put)(edp, &key, &data, dbmode) == -1)
+		if ((edp->put)(edp, &key, &data, dbmode) == -1)
 			error("put");
 
 		/* Star out password to make insecure record. */
@@ -594,7 +594,8 @@ db_store(fp, oldfp, edp, dp, pw, keytype, username, olduid)
 		len = strlen(pw->pw_passwd);
 		memset(p, 0, len);			/* zero pw_passwd */
 		t = p + len + 1;			/* skip pw_passwd */
-		*p++ = '*';
+		if (len != 0)
+			*p++ = '*';
 		*p++ = '\0';
 		memmove(p, t, data.size - (t - buf));
 		data.size -= len - 1;
