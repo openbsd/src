@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.10 1997/03/25 20:30:41 niklas Exp $	*/
+/*	$OpenBSD: exec.c,v 1.11 1997/03/27 18:13:32 weingart Exp $	*/
 /*	$NetBSD: exec.c,v 1.15 1996/10/13 02:29:01 christos Exp $	*/
 
 /*-
@@ -85,23 +85,30 @@ exec(path, loadaddr, howto)
 		return;
 	}
 
+#ifdef EXEC_DEBUG
+	printf("\nstruct exec {%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx}\n",
+		x.a_midmag, x.a_text, x.a_data, x.a_bss, x.a_syms,
+		x.a_entry, x.a_trsize, x.a_drsize);
+#endif
+
         /* Text */
 	printf("%ld", x.a_text);
 	addr = loadaddr;
-#ifdef NO_LSEEK
-	if (N_GETMAGIC(x) == ZMAGIC && read(io, (char *)addr,
-	    (0x400 - sizeof(x))) == -1)
-#else
-	if (N_GETMAGIC(x) == ZMAGIC && lseek(io, 0x400, SEEK_SET) == -1)
-#endif
+	i = x.a_text;
+	if (N_GETMAGIC(x) == ZMAGIC) {
+		bcopy((char *)&x, addr, sizeof x);
+		addr += sizeof x;
+		i -= sizeof x;
+	}
+	if (read(io, (char *)addr, i) != i)
 		goto shread;
-	if (read(io, (char *)addr, x.a_text) != x.a_text)
-		goto shread;
-	addr += x.a_text;
+	addr += i;
 #ifdef EXEC_DEBUG
+	printf("\ntext {%x, %x, %x, %x}\n",
+		addr[0], addr[1], addr[2], addr[3]);
 	etxt = addr;
 #endif
-	if (N_GETMAGIC(x) == ZMAGIC || N_GETMAGIC(x) == NMAGIC)
+	if (N_GETMAGIC(x) == NMAGIC)
 		while ((long)addr & (N_PAGSIZ(x) - 1))
 			*addr++ = 0;
 
@@ -153,12 +160,18 @@ exec(path, loadaddr, howto)
 	/* and note the end address of all this	*/
 	printf(" total=0x%lx", (u_long)addr);
 
+/* XXX - Hack alert!
+   This is no good, loadaddr is passed into
+   machdep_start(), and it should do whatever
+   is needed.
+
 	x.a_entry += (long)loadaddr;
+*/
 	printf(" start=0x%lx\n", x.a_entry);
 
 #ifdef EXEC_DEBUG
-        printf("loadaddr = 0x%x etxt = 0x%x daddr = 0x%x ssym=0x%x esym=0x%x\n",
-	    loadaddr, etxt, daddr, ssym, esym);
+        printf("loadaddr=%p etxt=%p daddr=%p ssym=%p esym=%p\n",
+	    	loadaddr, etxt, daddr, ssym, esym);
         printf("\n\nReturn to boot...\n");
         getchar();
 #endif
