@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.7 1997/03/25 09:30:22 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.8 1997/04/02 00:31:58 millert Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.7 1997/03/25 09:30:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.8 1997/04/02 00:31:58 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -502,6 +502,16 @@ tar_rd(arcn, buf)
 		 * we set something for printing only.
 		 */
 		arcn->sb.st_mode |= S_IFREG;
+		break;
+	case DIRTYPE:
+		/*
+		 * It is a directory, set the mode for -v printing
+		 */
+		arcn->type = PAX_DIR;
+		arcn->sb.st_mode |= S_IFDIR;
+		arcn->sb.st_nlink = 2;
+		arcn->ln_name[0] = '\0';
+		arcn->ln_nlen = 0;
 		break;
 	case AREGTYPE:
 	case REGTYPE:
