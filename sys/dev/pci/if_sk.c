@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.47 2004/10/14 15:27:39 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.48 2004/11/11 19:08:00 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1528,18 +1528,15 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 			goto fail;
 			break;
 		}
-
-		DPRINTFN(2, ("skc_attach: ramsize=%d(%dk), rboff=%d\n",
-			     sc->sk_ramsize, sc->sk_ramsize / 1024,
-			     sc->sk_rboff));
 	} else {
-		sc->sk_ramsize = 0x20000;
+		u_int8_t val = sk_win_read_1(sc, SK_EPROM0);
+		sc->sk_ramsize =  ( val == 0 ) ?  0x20000 : (( val * 4 )*1024);
 		sc->sk_rboff = SK_RBOFF_0;
-
-		DPRINTFN(2, ("skc_attach: ramsize=%dk (%d), rboff=%d\n",
-			     sc->sk_ramsize / 1024, sc->sk_ramsize,
-			     sc->sk_rboff));
 	}
+
+	DPRINTFN(2, ("skc_attach: ramsize=%d (%dk), rboff=%d\n",
+		     sc->sk_ramsize, sc->sk_ramsize / 1024,
+		     sc->sk_rboff));
 
 	/* Read and save physical media type */
 	switch(sk_win_read_1(sc, SK_PMDTYPE)) {
@@ -1949,8 +1946,11 @@ sk_txeof(struct sk_if_softc *sc_if)
 		}
 		sc_if->sk_cdata.sk_tx_cnt--;
 		SK_INC(idx, SK_TX_RING_CNT);
-		ifp->if_timer = 0;
 	}
+	if (sc_if->sk_cdata.sk_tx_cnt == 0)
+		ifp->if_timer = 0;
+	else /* nudge chip to keep tx ring moving */
+		CSR_WRITE_4(sc, sc_if->sk_tx_bmu, SK_TXBMU_TX_START);
 
 	sc_if->sk_cdata.sk_tx_cons = idx;
 
