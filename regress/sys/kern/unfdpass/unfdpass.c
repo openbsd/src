@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.9 2004/02/28 03:29:16 deraadt Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.10 2004/04/27 18:51:17 millert Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 /*
- * Test passing of file descriptors and credentials over Unix domain sockets.
+ * Test passing of file descriptors over Unix domain sockets and socketpairs.
  */
 
 #include <sys/param.h>
@@ -59,29 +59,38 @@
 #define	SOCK_NAME	"test-sock"
 
 int	main(int, char *[]);
-void	child(void);
+void	child(int);
 void	catch_sigchld(int);
 
 /* ARGSUSED */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct msghdr msg;
-	int listensock, sock, fd, i, status;
+	int listensock, sock, pfd[2], fd, i;
 	char fname[16], buf[64];
 	struct cmsghdr *cmp;
 	int *files = NULL;
-	struct sockcred *sc = NULL;
 	struct sockaddr_un sun, csun;
 	int csunlen;
-	fd_set oob;
 	pid_t pid;
 	void *message;
-	int msglen;
+	int msglen, pflag;
+	extern char *__progname;
 
-	msglen = CMSG_LEN(MAX(sizeof(int) * 2, SOCKCREDSIZE(NGROUPS)));
+	pflag = 0;
+	while ((i = getopt(argc, argv, "p")) != -1) {
+		switch (i) {
+		case 'p':
+			pflag = 1;
+			break;
+		default:
+			fprintf(stderr, "usage: %s [-p]\n", __progname);
+			exit(1);
+		}
+	}
+
+	msglen = CMSG_LEN(sizeof(int) * 2);
 	if ((message = malloc(msglen)) == NULL)
 		err(1, "malloc");
 
@@ -98,29 +107,32 @@ main(argc, argv)
 		(void) close(fd);
 	}
 
-	/*
-	 * Create the listen socket.
-	 */
-	if ((listensock = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1)
-		err(1, "socket");
+	if (pflag) {
+		/*
+		 * Create the socketpair
+		 */
+		if (socketpair(PF_LOCAL, SOCK_STREAM, 0, pfd) == -1)
+			err(1, "socketpair");
+	} else {
+		/*
+		 * Create the listen socket.
+		 */
+		if ((listensock = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1)
+			err(1, "socket");
 
-	(void) unlink(SOCK_NAME);
-	(void) memset(&sun, 0, sizeof(sun));
-	sun.sun_family = AF_LOCAL;
-	(void) strlcpy(sun.sun_path, SOCK_NAME, sizeof sun.sun_path);
-	sun.sun_len = SUN_LEN(&sun);
+		(void) unlink(SOCK_NAME);
+		(void) memset(&sun, 0, sizeof(sun));
+		sun.sun_family = AF_LOCAL;
+		(void) strlcpy(sun.sun_path, SOCK_NAME, sizeof sun.sun_path);
+		sun.sun_len = SUN_LEN(&sun);
 
-	i = 1;
-#if 0
-	if (setsockopt(listensock, 0, LOCAL_CREDS, &i, sizeof(i)) == -1)
-		err(1, "setsockopt");
-#endif
+		if (bind(listensock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
+			err(1, "bind");
 
-	if (bind(listensock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
-		err(1, "bind");
-
-	if (listen(listensock, 1) == -1)
-		err(1, "listen");
+		if (listen(listensock, 1) == -1)
+			err(1, "listen");
+		pfd[0] = pfd[1] = -1;
+	}
 
 	/*
 	 * Create the sender.
@@ -133,16 +145,23 @@ main(argc, argv)
 		/* NOTREACHED */
 
 	case 0:
-		child();
+		if (pfd[0] != -1)
+			close(pfd[0]);
+		child(pfd[1]);
 		/* NOTREACHED */
 	}
 
-	/*
-	 * Wait for the sender to connect.
-	 */
-	if ((sock = accept(listensock, (struct sockaddr *)&csun,
-	    &csunlen)) == -1)
+	if (pfd[0] != -1) {
+		close(pfd[1]);
+		sock = pfd[0];
+	} else {
+		/*
+		 * Wait for the sender to connect.
+		 */
+		if ((sock = accept(listensock, (struct sockaddr *)&csun,
+		    &csunlen)) == -1)
 		err(1, "accept");
+	}
 
 	/*
 	 * Give sender a chance to run.  We will get going again
@@ -151,7 +170,7 @@ main(argc, argv)
 	(void) sleep(10);
 
 	/*
-	 * Grab the descriptors and credentials passed to us.
+	 * Grab the descriptors passed to us.
 	 */
 	(void) memset(&msg, 0, sizeof(msg));
 	msg.msg_control = (caddr_t) message;
@@ -184,13 +203,6 @@ main(argc, argv)
 			files = (int *)CMSG_DATA(cmp);
 			break;
 
-		case SCM_CREDS:
-			if (cmp->cmsg_len < sizeof(struct sockcred))
-				errx(1, "bad cred control message length");
-
-			sc = (struct sockcred *)CMSG_DATA(cmp);
-			break;
-
 		default:
 			errx(1, "unexpected control message");
 			/* NOTREACHED */
@@ -211,25 +223,6 @@ main(argc, argv)
 		}
 	}
 
-#if 0	/* XXX - OpenBSD doesn't implement this yet. */
-	/*
-	 * Double-check credentials.
-	 */
-	if (sc == NULL)
-		warnx("didn't get cred control message");
-	else {
-		if (sc->sc_uid == getuid() &&
-		    sc->sc_euid == geteuid() &&
-		    sc->sc_gid == getgid() &&
-		    sc->sc_egid == getegid())
-			printf("Credentials match.\n");
-		else
-			printf("Credentials do NOT match.\n");
-	}
-#else
-	printf("Credentials match.\n");
-#endif
-
 	/*
 	 * All done!
 	 */
@@ -248,12 +241,12 @@ catch_sigchld(sig)
 }
 
 void
-child()
+child(int sock)
 {
 	struct msghdr msg;
-	char fname[16], buf[64];
+	char fname[16];
 	struct cmsghdr *cmp;
-	int i, fd, sock;
+	int i, fd;
 	struct sockaddr_un sun;
 	struct cmsghdr *cmpf;
 	int *files;
@@ -263,18 +256,20 @@ child()
 	files = (int *)CMSG_DATA(cmpf);
 
 	/*
-	 * Create socket and connect to the receiver.
+	 * Create socket if needed and connect to the receiver.
 	 */
-	if ((sock = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1)
-		errx(1, "child socket");
+	if (sock == -1) {
+		if ((sock = socket(PF_LOCAL, SOCK_STREAM, 0)) == -1)
+			err(1, "child socket");
 
-	(void) memset(&sun, 0, sizeof(sun));
-	sun.sun_family = AF_LOCAL;
-	(void) strlcpy(sun.sun_path, SOCK_NAME, sizeof sun.sun_path);
-	sun.sun_len = SUN_LEN(&sun);
+		(void) memset(&sun, 0, sizeof(sun));
+		sun.sun_family = AF_LOCAL;
+		(void) strlcpy(sun.sun_path, SOCK_NAME, sizeof sun.sun_path);
+		sun.sun_len = SUN_LEN(&sun);
 
-	if (connect(sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
-		err(1, "child connect");
+		if (connect(sock, (struct sockaddr *)&sun, sizeof(sun)) == -1)
+			err(1, "child connect");
+	}
 
 	/*
 	 * Open the files again, and pass them to the child over the socket.

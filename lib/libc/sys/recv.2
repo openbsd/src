@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.29 2004/04/15 19:52:18 jmc Exp $
+.\"	$OpenBSD: recv.2,v 1.30 2004/04/27 18:51:17 millert Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -195,7 +195,9 @@ call.
 .Pp
 Open file descriptors are now passed as ancillary data for
 .Dv AF_UNIX
-domain sockets, with
+domain and
+.Xr socketpair 2
+sockets, with
 .Fa cmsg_level
 set to
 .Dv SOL_SOCKET
@@ -311,7 +313,8 @@ was less than 0 or larger than
 .Xr poll 2 ,
 .Xr read 2 ,
 .Xr select 2 ,
-.Xr socket 2
+.Xr socket 2 ,
+.Xr socketpair 2
 .Sh HISTORY
 The
 .Fn recv
