@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.33 2001/08/31 12:22:19 ho Exp $
+.\" $OpenBSD: isakmpd.8,v 1.34 2001/12/10 03:45:03 ho Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -96,6 +96,8 @@ option specifies an alternate configuration file instead of
 .Pa /etc/isakmpd/isakmpd.conf .
 As this file may contain sensitive information, it must be readable
 only by the user running the daemon.
+.Nm
+will reread the configuration file when sent a SIGHUP signal.
 .It Fl d
 The
 .Fl d
