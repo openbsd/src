@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.215 2000/02/07 00:33:03 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.216 2000/02/08 00:33:43 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -3313,6 +3313,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "NVidia/SGS-Thomson",
 	    "Velocity128",
+	},
+	{
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_HME,
+	    0,
+	    "Sun Microsystems",
+	    "HME",
 	},
 	{
 	    PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201,

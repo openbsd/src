@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.215 2000/02/07 00:33:03 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.216 2000/02/08 00:33:43 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -41,7 +41,7 @@
 /*
  * NOTE: a fairly complete list of PCI codes can be found at:
  *
- *	http://www.halcyon.com/scripts/jboemler/pci/pcicode
+ *	http://www.yourvote.com/pci/
  *	http://members.hyperlink.net.au/~chart/pci.htm
  */
 
@@ -1327,6 +1327,9 @@
 
 /* STB products */
 #define	PCI_PRODUCT_STB2_RIVA128	0x0018		/* Velocity128 */
+
+/* Sun */
+#define	PCI_PRODUCT_SUN_HME	0x1001		/* HME */
 
 /* Sundance products */
 #define	PCI_PRODUCT_SUNDANCE_ST201	0x0201		/* ST201 */
