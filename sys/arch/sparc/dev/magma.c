@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.10 2002/01/25 02:37:43 jason Exp $	*/
+/*	$OpenBSD: magma.c,v 1.11 2002/03/14 03:48:56 jason Exp $	*/
 /*
  * magma.c
  *
@@ -362,11 +362,17 @@ struct confargs *ca = args;
 struct romaux *ra = &ca->ca_ra;
 struct magma_softc *sc = (struct magma_softc *)dev;
 struct magma_board_info *card;
-char *magma_prom, *clockstr;
-int chip, cd_clock;
+char magma_prom[40], *clockstr;
+int chip, cd_clock, len;
 void *base;
 
-	magma_prom = getpropstring(ra->ra_node, "magma_prom");
+
+	len = getprop(ra->ra_node, "magma_prom",
+	    magma_prom, sizeof(magma_prom) - 1);
+	if (len == -1)
+		len = 0;
+	magma_prom[len] = '\0';
+
 	for (card = supported_cards; card->mb_name != NULL; card++) {
 		if (strcmp(ra->ra_name, card->mb_sbusname) != 0)
 			continue;
