@@ -1,5 +1,5 @@
-/*	$OpenBSD: pmap.c,v 1.8 1997/01/16 09:23:26 niklas Exp $	*/
-/*	$NetBSD: pmap.c,v 1.34.4.1 1996/08/03 00:53:58 jtc Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.9 1997/09/09 11:05:00 niklas Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 1997/06/10 18:26:41 veego Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -314,7 +314,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	avail_end = maxmem << PGSHIFT;
 
 	/* XXX: allow for msgbuf */
-	avail_end -= amiga_round_page(sizeof(struct msgbuf));
+	avail_end -= m68k_round_page(sizeof(struct msgbuf));
 #ifdef MACHINE_NONCONTIG
 	/*
 	 * first segment of memory is always the one loadbsd found
@@ -683,7 +683,7 @@ pmap_page_index(pa)
 
 	while (sep->start) {
 		if (pa >= sep->start && pa < sep->end)
-			return (amiga_btop(pa - sep->start) + sep->first_page);
+			return (m68k_btop(pa - sep->start) + sep->first_page);
 		++sep;
 	}
 	return -1;
@@ -1026,9 +1026,9 @@ pmap_remove(pmap, sva, eva)
 		 */
 		if (!pmap_ste_v(pmap, va)) {
 			/* XXX: avoid address wrap around */
-			if (va >= amiga_trunc_seg((vm_offset_t)-1))
+			if (va >= m68k_trunc_seg((vm_offset_t)-1))
 				break;
-			va = amiga_round_seg(va + PAGE_SIZE) - PAGE_SIZE;
+			va = m68k_round_seg(va + PAGE_SIZE) - PAGE_SIZE;
 			continue;
 		}
 		pte = pmap_pte(pmap, va);
@@ -1329,9 +1329,9 @@ pmap_protect(pmap, sva, eva, prot)
 		 */
 		if (!pmap_ste_v(pmap, va)) {
 			/* XXX: avoid address wrap around */
-			if (va >= amiga_trunc_seg((vm_offset_t)-1))
+			if (va >= m68k_trunc_seg((vm_offset_t)-1))
 				break;
-			va = amiga_round_seg(va + PAGE_SIZE) - PAGE_SIZE;
+			va = m68k_round_seg(va + PAGE_SIZE) - PAGE_SIZE;
 			pte = pmap_pte(pmap, va);
 			pte++;
 			continue;
