@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.18 2000/10/26 20:50:43 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.19 2000/10/30 18:20:14 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -38,7 +38,7 @@
  * DEC "tulip" clone ethernet driver. Supports the DEC/Intel 21143
  * series chips and several workalikes including the following:
  *
- * Macronix 98713/98715/98725 PMAC (www.macronix.com)
+ * Macronix 98713/98715/98725/98727/98732 PMAC (www.macronix.com)
  * Macronix/Lite-On 82c115 PNIC II (www.macronix.com)
  * Lite-On 82c168/82c169 PNIC (www.litecom.com)
  * ASIX Electronics AX88140A (www.asix.com.tw)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.9 2000/10/27 18:20:02 aaron Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.10 2000/10/30 18:20:18 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -91,6 +91,7 @@ struct dc_type dc_devs[] = {
 	{ PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A },
 	{ PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713 },
 	{ PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98715 },
+	{ PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98727 },
 	{ PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_98713 },
 	{ PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNIC },
 	{ PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNICII },
@@ -315,6 +316,12 @@ void dc_pci_attach(parent, self, aux)
 			if (revision >= DC_REVISION_98715AEC_C &&
 			    revision < DC_REVISION_98725)
 				sc->dc_flags |= DC_128BIT_HASH;
+			sc->dc_type = DC_TYPE_987x5;
+			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
+			sc->dc_flags |= DC_REDUCED_MII_POLL|DC_21143_NWAY;
+		}
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MACRONIX_MX98727) {
+			found = 1;
 			sc->dc_type = DC_TYPE_987x5;
 			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_REDUCED_MII_POLL|DC_21143_NWAY;
