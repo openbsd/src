@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.149 1999/06/03 20:07:31 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.150 1999/06/14 06:50:22 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2647,6 +2647,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Symphony Labs (2nd ID)",
 	    "82C101",
+	},
+	{
+	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_82C565,
+	    0,
+	    "Symphony Labs",
+	    "82C565 PCI-ISA",
 	},
 	{
 	    PCI_VENDOR_TEKRAM, PCI_PRODUCT_TEKRAM_DC290,
