@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_pci.c,v 1.20 2003/06/02 23:28:03 millert Exp $	*/
+/*	$OpenBSD: if_le_pci.c,v 1.21 2003/08/11 04:52:40 mickey Exp $	*/
 /*	$NetBSD: if_le_pci.c,v 1.13 1996/10/25 21:33:32 cgd Exp $	*/
 
 /*-
@@ -209,7 +209,22 @@ le_pci_attach(parent, self, aux)
 	sc->sc_mem = kva;
 	bzero(sc->sc_mem, PCNET_MEMSIZE);
 
-	printf("\n");
+	/* Map and establish the interrupt. */
+	if (pci_intr_map(pa, &ih)) {
+		printf(": couldn't map interrupt\n");
+		return;
+	}
+	intrstr = pci_intr_string(pc, ih);
+	lesc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, am7990_intr, sc,
+	    sc->sc_dev.dv_xname);
+	if (lesc->sc_ih == NULL) {
+		printf(": couldn't establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	printf(": %s\n", intrstr);
 
 	lesc->sc_iot = iot;
 	lesc->sc_ioh = ioh;
@@ -237,22 +252,4 @@ le_pci_attach(parent, self, aux)
 	    PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    csr | PCI_COMMAND_MASTER_ENABLE);
-
-	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
-		return;
-	}
-	intrstr = pci_intr_string(pc, ih);
-	lesc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, am7990_intr, sc,
-	    sc->sc_dev.dv_xname);
-	if (lesc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
-	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 }
