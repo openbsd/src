@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.26 2002/08/26 03:03:27 pvalchev Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.27 2003/01/20 19:51:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.26 2002/08/26 03:03:27 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.27 2003/01/20 19:51:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	openlog("portmap", debugging ? LOG_PID | LOG_PERROR : LOG_PID,
+	openlog("portmap", LOG_NDELAY | (debugging ? LOG_PID | LOG_PERROR : LOG_PID),
 	    LOG_DAEMON);
 
 	bzero((char *)&addr, sizeof addr);

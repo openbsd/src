@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstatd.c,v 1.13 2002/09/06 19:43:54 deraadt Exp $	*/
+/*	$OpenBSD: rstatd.c,v 1.14 2003/01/20 19:51:36 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rstatd.c,v 1.13 2002/09/06 19:43:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rstatd.c,v 1.14 2003/01/20 19:51:36 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -88,6 +88,8 @@ main(int argc, char *argv[])
 	struct sockaddr_in from;
 	SVCXPRT *transp;
 
+	openlog("rpc.rstatd", LOG_NDELAY|LOG_CONS|LOG_PID, LOG_DAEMON);
+
 	pw = getpwnam("_rstatd");
 	if (!pw)
 		pw = getpwnam("nobody");
@@ -131,8 +133,6 @@ main(int argc, char *argv[])
 		(void) signal(SIGTERM, getsig);
 		(void) signal(SIGHUP, getsig);
 	}
-
-	openlog("rpc.rstatd", LOG_CONS|LOG_PID, LOG_DAEMON);
 
 	transp = svcudp_create(sock);
 	if (transp == NULL) {

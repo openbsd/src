@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusersd.c,v 1.11 2002/09/06 19:43:54 deraadt Exp $	*/
+/*	$OpenBSD: rusersd.c,v 1.12 2003/01/20 19:51:36 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusersd.c,v 1.11 2002/09/06 19:43:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rusersd.c,v 1.12 2003/01/20 19:51:36 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -75,6 +75,8 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	openlog("rpc.rusersd", LOG_NDELAY|LOG_CONS|LOG_PID, LOG_DAEMON);
+
 	pw = getpwnam("_rusersd");
 	if (!pw)
 		pw = getpwnam("nobody");
@@ -113,8 +115,6 @@ main(int argc, char *argv[])
 		(void) signal(SIGTERM, cleanup);
 		(void) signal(SIGHUP, cleanup);
 	}
-
-	openlog("rpc.rusersd", LOG_CONS|LOG_PID, LOG_DAEMON);
 
 	transp = svcudp_create(sock);
 	if (transp == NULL) {
