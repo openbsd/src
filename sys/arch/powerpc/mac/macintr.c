@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.2 2000/03/20 07:26:50 rahnds Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.3 2000/03/31 05:14:37 rahnds Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -481,6 +481,7 @@ printf("mac_intr \n");
 
 start:
 	irq = 31 - cntlzw(int_state);
+	intrcnt[hwirq[irq]]++;
 
 	o_imen = imen;
 	r_imen = 1 << irq;
