@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.c,v 1.5 2001/05/05 00:31:34 angelos Exp $	*/
+/*	$OpenBSD: xform.c,v 1.6 2001/06/13 13:43:34 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -91,7 +91,7 @@ int RMD160Update_int(void *, u_int8_t *, u_int16_t);
 struct enc_xform enc_xform_des =
 {
     CRYPTO_DES_CBC, "DES",
-    8, 8, 8, 8,
+    8, 8, 8,
     des1_encrypt,
     des1_decrypt,
     des1_setkey,
@@ -101,7 +101,7 @@ struct enc_xform enc_xform_des =
 struct enc_xform enc_xform_3des =
 {
     CRYPTO_3DES_CBC, "3DES",
-    8, 24, 24, 8,
+    8, 24, 24,
     des3_encrypt,
     des3_decrypt,
     des3_setkey,
@@ -111,7 +111,7 @@ struct enc_xform enc_xform_3des =
 struct enc_xform enc_xform_blf =
 {
     CRYPTO_BLF_CBC, "Blowfish",
-    8, 5, 56 /* 448 bits, max key */, 8,
+    8, 5, 56 /* 448 bits, max key */,
     blf_encrypt,
     blf_decrypt,
     blf_setkey,
@@ -121,7 +121,7 @@ struct enc_xform enc_xform_blf =
 struct enc_xform enc_xform_cast5 =
 {
     CRYPTO_CAST_CBC, "CAST-128",
-    8, 5, 16, 8,
+    8, 5, 16,
     cast5_encrypt,
     cast5_decrypt,
     cast5_setkey,
@@ -131,7 +131,7 @@ struct enc_xform enc_xform_cast5 =
 struct enc_xform enc_xform_skipjack =
 {
     CRYPTO_SKIPJACK_CBC, "Skipjack",
-    8, 10, 10, 8,
+    8, 10, 10,
     skipjack_encrypt,
     skipjack_decrypt,
     skipjack_setkey,
@@ -141,7 +141,7 @@ struct enc_xform enc_xform_skipjack =
 struct enc_xform enc_xform_rijndael128 =
 {
     CRYPTO_RIJNDAEL128_CBC, "Rijndael-128/AES",
-    16, 8, 32, 16,
+    16, 8, 32,
     rijndael128_encrypt,
     rijndael128_decrypt,
     rijndael128_setkey,

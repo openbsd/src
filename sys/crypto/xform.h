@@ -1,4 +1,4 @@
-/*	$OpenBSD: xform.h,v 1.3 2001/05/13 16:52:33 jason Exp $	*/
+/*	$OpenBSD: xform.h,v 1.4 2001/06/13 13:43:35 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -48,7 +48,6 @@ struct enc_xform
     char *name;
     u_int16_t blocksize;
     u_int16_t minkey, maxkey;
-    u_int32_t ivmask;           /* Or all possible modes, zero iv = 1 */ 
     void (*encrypt) (caddr_t, u_int8_t *);
     void (*decrypt) (caddr_t, u_int8_t *);
     void (*setkey) (u_int8_t **, u_int8_t *, int len);
