@@ -5037,14 +5037,17 @@
 ./usr/share/man/cat9/splclock.0
 ./usr/share/man/cat9/splhigh.0
 ./usr/share/man/cat9/splimp.0
+./usr/share/man/cat9/spllowersoftclock.0
 ./usr/share/man/cat9/splnet.0
 ./usr/share/man/cat9/splsched.0
 ./usr/share/man/cat9/splserial.0
 ./usr/share/man/cat9/splsoftclock.0
 ./usr/share/man/cat9/splsoftnet.0
 ./usr/share/man/cat9/splsoftserial.0
+./usr/share/man/cat9/splsofttty.0
 ./usr/share/man/cat9/splstatclock.0
 ./usr/share/man/cat9/spltty.0
+./usr/share/man/cat9/splvm.0
 ./usr/share/man/cat9/splx.0
 ./usr/share/man/cat9/sprintf.0
 ./usr/share/man/cat9/srandom.0
