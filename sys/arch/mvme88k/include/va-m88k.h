@@ -1,4 +1,4 @@
-/*	$OpenBSD: va-m88k.h,v 1.8 2003/01/03 01:46:10 miod Exp $	*/
+/*	$OpenBSD: va-m88k.h,v 1.9 2003/01/04 00:13:52 miod Exp $	*/
 
 /* This file has local changes by MOTOROLA
 Thu Sep  9 09:06:29 CDT 1993 Dale Rahn (drahn@pacific)
@@ -65,19 +65,10 @@ typedef __va_list __gnuc_va_list;
 #define va_end(AP)
 
 /* Copy __gnuc_va_list into another variable of this type.  */
-#if __GNUC_MAJOR__ > 2 || __GNUC_MINOR > 8
-#define __va_copy(dest, src) \
-  __extension__ ({ \
-    (dest) =  \
-      (__gnuc_va_list *)__builtin_alloca(sizeof(__gnuc_va_list)); \
-    *(dest) = *(src);\
-  })
-#else
-#define __va_copy(dest, src) *(dest) = *(src)
-#endif
+#define __va_copy(dest, src) 	(dest) = (src)
 
 #if !defined(_ANSI_SOURCE) && \
-    (defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
+    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
 	defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
 #define va_copy(dest, src) __va_copy(dest, src)
 #endif
