@@ -1,4 +1,4 @@
-/*	$OpenBSD: getnetnamadr.c,v 1.10 1997/12/02 01:34:05 deraadt Exp $	*/
+/*	$OpenBSD: getnetnamadr.c,v 1.11 1999/05/30 14:06:08 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "$From: getnetnamadr.c,v 8.7 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.10 1997/12/02 01:34:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getnetnamadr.c,v 1.11 1999/05/30 14:06:08 niklas Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -192,7 +192,11 @@ getnetanswer(answer, anslen, net_i)
 		GETSHORT(n, cp);
 		if (class == C_IN && type == T_PTR) {
 			n = dn_expand(answer->buf, eom, cp, bp, buflen);
+#ifdef USE_RESOLV_NAME_OK
 			if ((n < 0) || !res_hnok(bp)) {
+#else
+			if ((n < 0) || !_hokchar(bp)) {
+#endif
 				cp += n;
 				return (NULL);
 			}

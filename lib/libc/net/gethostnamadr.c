@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.32 1999/04/28 19:13:35 niklas Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.33 1999/05/30 14:06:07 niklas Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -282,7 +282,11 @@ getanswer(answer, anslen, qname, qtype)
 		}
 		if (qtype == T_PTR && type == T_CNAME) {
 			n = dn_expand(answer->buf, eom, cp, tbuf, sizeof tbuf);
+#ifdef USE_RESOLV_NAME_OK
 			if ((n < 0) || !res_hnok(tbuf)) {
+#else
+			if ((n < 0) || !_hokchar(tbuf)) {
+#endif
 				had_error++;
 				continue;
 			}
@@ -316,7 +320,11 @@ getanswer(answer, anslen, qname, qtype)
 				continue;	/* XXX - had_error++ ? */
 			}
 			n = dn_expand(answer->buf, eom, cp, bp, buflen);
+#ifdef USE_RESOLV_NAME_OK
 			if ((n < 0) || !res_hnok(bp)) {
+#else
+			if ((n < 0) || !_hokchar(bp)) {
+#endif
 				had_error++;
 				break;
 			}
