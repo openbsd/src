@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_2100_a50.c,v 1.14 2001/08/17 22:26:58 mickey Exp $	*/
+/*	$OpenBSD: pci_2100_a50.c,v 1.15 2001/08/17 22:43:19 mickey Exp $	*/
 /*	$NetBSD: pci_2100_a50.c,v 1.12 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -222,7 +222,7 @@ dec_2100_a50_intr_string(acv, ih)
 	return sio_intr_string(NULL /*XXX*/, ih);
 }
 
-const char *
+int
 dec_2100_a50_intr_line(acv, ih)
 	void *acv;
 	pci_intr_handle_t ih;
