@@ -2,7 +2,7 @@
 
 PROG=	praliases
 CFLAGS+=-I${.CURDIR}/../src
-NOMAN=	noman
+MAN=	praliases.1
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
