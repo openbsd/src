@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.10 1998/08/24 05:30:05 millert Exp $	*/
+/*	$OpenBSD: conf.h,v 1.11 1999/07/30 20:19:04 deraadt Exp $	*/
 /*	$NetBSD: conf.h,v 1.4 1996/11/30 01:13:07 is Exp $	*/
 
 /*
@@ -29,9 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-bdev_decl(acd);
-cdev_decl(acd);
 
 cdev_decl(com);
 
