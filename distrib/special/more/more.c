@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.14 2003/05/28 22:14:49 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.15 2003/06/02 19:32:31 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -43,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.14 2003/05/28 22:14:49 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.15 2003/06/02 19:32:31 millert Exp $";
 #endif
 #endif /* not lint */
 
