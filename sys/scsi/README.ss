@@ -1,4 +1,4 @@
-$OpenBSD: README.ss,v 1.2 1997/03/08 21:23:42 kstailey Exp $
+$OpenBSD: README.ss,v 1.3 1997/03/10 02:28:46 kstailey Exp $
 
 If you think SCSI tape drives are quirky you haven't seen anything.
 
@@ -31,3 +31,14 @@ use MODE_SELECT and not SET_WINDOW to send parameter data.  However it is
 possible that too much code was farmed out to ss_mustek.c; it may be that
 common code for ssread() in ss.c could be used.
 
+Other Considerations
+
+The image data from the scanner driver is currently supposed to resemble
+headerless PBM "rawbits".  Depending on this is probably a bad idea
+especially because it cannot always be attained.  The Fujutisu M3096G
+grayscale data is photo-negative with repect to PBM and this cannot be
+changed.  It would be better to extend the ioctl() interface to be able
+to describe the kind of data that is available.
+
+Halftone control of scanners is missing, save for one pre-defined
+selection.  This also should be in the ioctl() interface.
