@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.20 2001/12/09 14:57:45 miod Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.21 2001/12/09 20:48:17 mickey Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -45,6 +45,7 @@
 #include <string.h>
 #include <signal.h>
 #include <errno.h>
+#include <err.h>
 #include <machine/apmvar.h>
 #include "pathnames.h"
 #include "apm-proto.h"
@@ -166,10 +167,8 @@ bind_socket(const char *sockname)
 	int sock;
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (sock == -1) {
-		syslog(LOG_ERR, "cannot create local socket: %m");
-		exit(1);
-	}
+	if (sock == -1)
+		err(1, "cannot create local socket");
 
 	s_un.sun_family = AF_UNIX;
 	strncpy(s_un.sun_path, sockname, sizeof(s_un.sun_path));
@@ -179,15 +178,10 @@ bind_socket(const char *sockname)
 	(void) remove(sockname);
 	umask (077);
 
-	if (bind(sock, (struct sockaddr *)&s_un, s_un.sun_len) == -1) {
-		syslog(LOG_ERR, "cannot connect to APM socket: %m");
-		exit(1);
-	}
-	if (chmod(sockname, 0660) == -1 || chown(sockname, 0, 0) == -1) {
-		syslog(LOG_ERR,
-		    "cannot set socket mode/owner/group to 660/0/0: %m");
-		exit(1);
-	}
+	if (bind(sock, (struct sockaddr *)&s_un, s_un.sun_len) == -1)
+		err(1, "cannot connect to APM socket");
+	if (chmod(sockname, 0660) == -1 || chown(sockname, 0, 0) == -1)
+		err(1, "cannot set socket mode/owner/group to 660/0/0");
 
 	listen(sock, 1);
 	socketname = strdup(sockname);
@@ -367,10 +361,10 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	if ((ctl_fd = open(fname, O_RDWR)) == -1) {
-		syslog(LOG_ERR, "cannot open device file `%s': %m", fname);
-		exit(1);
-	}
+	if ((ctl_fd = open(fname, O_RDWR)) == -1)
+		err(1, "cannot open device file `%s'", fname);
+
+	sock_fd = bind_socket(sockname);
 
 	if (debug)
 		openlog(__progname, LOG_CONS, LOG_LOCAL1);
@@ -379,6 +373,10 @@ main(int argc, char *argv[])
 		setlogmask(LOG_UPTO(LOG_NOTICE));
 		daemon(0, 0);
 	}
+
+	(void) signal(SIGTERM, sigexit);
+	(void) signal(SIGHUP, sigexit);
+	(void) signal(SIGINT, sigexit);
 
 	power_status(ctl_fd, 1, 0);
 
@@ -398,11 +396,6 @@ main(int argc, char *argv[])
 	if (!messages)
 		set_driver_messages(ctl_fd, APM_PRINT_OFF);
 
-	(void) signal(SIGTERM, sigexit);
-	(void) signal(SIGHUP, sigexit);
-	(void) signal(SIGINT, sigexit);
-
-	sock_fd = bind_socket(sockname);
 	kq = kqueue();
 	if (kq <= 0) {
 		syslog(LOG_ERR, "kqueue: %m");
@@ -511,7 +504,7 @@ main(int argc, char *argv[])
 				break;
 			}
 	}
-	syslog(LOG_ERR, "kevent failed: %m");
+	syslog(LOG_ERR, "kevent: %m");
 
 	return 1;
 }
