@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.82 2004/12/15 01:07:10 espie Exp $
+# $OpenBSD: pkg_delete,v 1.83 2004/12/27 22:44:29 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -155,7 +155,11 @@ if (keys(%extra_rm) != 0) {
 	print "Can't remove ", join(' ', @ARGV), " without also removing:\n",
 	    join(' ', keys(%extra_rm)), "\n";
 	if ($forced{dependencies}) {
-		print "(removing them as well)\n";
+		if (keys(%extra_rm) > 1) {
+			print "(removing them as well)\n";
+		} else {
+			print "(removing it as well)\n";
+		}
 		push(@realnames, keys(%extra_rm));
 	} else {
 		$bad = 1;
