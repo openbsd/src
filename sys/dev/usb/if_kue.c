@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.23 2003/05/07 04:33:33 deraadt Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.24 2003/12/15 23:36:14 cedric Exp $ */
 /*	$NetBSD: if_kue.c,v 1.50 2002/07/16 22:00:31 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -186,7 +186,7 @@ Static const struct usb_devno kue_devs[] = {
 };
 #define kue_lookup(v, p) (usb_lookup(kue_devs, v, p))
 
-USB_DECLARE_DRIVER(kue);
+USB_DECLARE_DRIVER_CLASS(kue, DV_IFNET);
 
 Static int kue_tx_list_init(struct kue_softc *);
 Static int kue_rx_list_init(struct kue_softc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.11 2003/05/07 04:33:33 deraadt Exp $ */
+/*	$OpenBSD: if_url.c,v 1.12 2003/12/15 23:36:14 cedric Exp $ */
 /*	$NetBSD: if_url.c,v 1.6 2002/09/29 10:19:21 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -115,7 +115,7 @@
 
 
 /* Function declarations */
-USB_DECLARE_DRIVER(url);
+USB_DECLARE_DRIVER_CLASS(url, DV_IFNET);
 
 Static int url_openpipes(struct url_softc *);
 Static int url_rx_list_init(struct url_softc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.18 2003/05/07 04:33:33 deraadt Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.19 2003/12/15 23:36:14 cedric Exp $ */
 /*	$NetBSD: if_cue.c,v 1.40 2002/07/11 21:14:26 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -143,7 +143,7 @@ Static struct usb_devno cue_devs[] = {
 };
 #define cue_lookup(v, p) (usb_lookup(cue_devs, v, p))
 
-USB_DECLARE_DRIVER(cue);
+USB_DECLARE_DRIVER_CLASS(cue, DV_IFNET);
 
 Static int cue_open_pipes(struct cue_softc *);
 Static int cue_tx_list_init(struct cue_softc *);

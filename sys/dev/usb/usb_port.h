@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.45 2003/09/23 16:51:12 millert Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.46 2003/12/15 23:36:14 cedric Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -328,14 +328,14 @@ typedef struct timeout usb_callout_t;
 
 #define usb_lockmgr(l, f, sl, p) lockmgr((l), (f), (sl), (p))
 
-#define USB_DECLARE_DRIVER(dname)  \
+#define USB_DECLARE_DRIVER_CLASS(dname, devclass)  \
 int __CONCAT(dname,_match)(struct device *, void *, void *); \
 void __CONCAT(dname,_attach)(struct device *, struct device *, void *); \
 int __CONCAT(dname,_detach)(struct device *, int); \
 int __CONCAT(dname,_activate)(struct device *, enum devact); \
 \
 struct cfdriver __CONCAT(dname,_cd) = { \
-	NULL, #dname, DV_DULL \
+	NULL, #dname, devclass \
 }; \
 \
 const struct cfattach __CONCAT(dname,_ca) = { \
@@ -345,6 +345,8 @@ const struct cfattach __CONCAT(dname,_ca) = { \
 	__CONCAT(dname,_detach), \
 	__CONCAT(dname,_activate), \
 }
+
+#define USB_DECLARE_DRIVER(dname) USB_DECLARE_DRIVER_CLASS(dname, DV_DULL)
 
 #define USB_MATCH(dname) \
 int \
