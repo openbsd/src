@@ -1,4 +1,4 @@
-/*	$OpenBSD: cats_machdep.c,v 1.3 2004/02/12 02:32:34 drahn Exp $	*/
+/*	$OpenBSD: cats_machdep.c,v 1.4 2004/02/12 04:21:58 drahn Exp $	*/
 /*	$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $	*/
 
 /*
@@ -206,7 +206,7 @@ extern void configure(void);
 #endif
 
 #ifndef CONSDEVNAME
-#define CONSDEVNAME "fcom"
+#define CONSDEVNAME "vga"
 #endif
 
 #define CONSPEED B38400
@@ -931,38 +931,37 @@ again:
 		++args;
 	boot_args = args;
 
-	while (*args) {
-		switch (*args++) {
-		case 'a':
-			boothowto |= RB_ASKNAME;
-			break;
-		case 's':
-			boothowto |= RB_SINGLE;
-			break;
-		case 'd':
-			boothowto |= RB_KDB;
-			break;
-		case 'c':
-			boothowto |= RB_CONFIG;
-			break;
-		case 'v':
-			console = "vga";
-			break;
-		case 'f':
-			console = "fcom";
-			break;
-		default:
-			break;
+	if (*args == '-') {
+		while (*args) {
+			switch (*args++) {
+			case 'a':
+				boothowto |= RB_ASKNAME;
+				break;
+			case 's':
+				boothowto |= RB_SINGLE;
+				break;
+			case 'd':
+				boothowto |= RB_KDB;
+				break;
+			case 'c':
+				boothowto |= RB_CONFIG;
+				break;
+			case 'v':
+				console = "vga";
+				break;
+			case 'f':
+				console = "fcom";
+				break;
+			default:
+				break;
+			}
 		}
 	}
 
 
+	/* XXX too early for console */
 	printf("bootfile: %s\n", boot_file);
 	printf("bootargs: %s\n", boot_args);
-
-#if 0
-	parse_mi_bootargs(boot_args);
-#endif
 }
 
 extern struct bus_space footbridge_pci_io_bs_tag;
@@ -995,11 +994,16 @@ consinit(void)
 	}
 #if (NVGA > 0)
 	else if (strncmp(console, "vga", 3) == 0) {
-		vga_cnattach(&footbridge_pci_io_bs_tag,
-		    &footbridge_pci_mem_bs_tag, - 1, 0);
+		if (0 == vga_cnattach(&footbridge_pci_io_bs_tag,
+		    &footbridge_pci_mem_bs_tag, - 1, 1)) {
 #if (NPCKBC > 0)
 		pckbc_cnattach(&isa_io_bs_tag, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
 #endif	/* NPCKBC */
+		} else {
+			/* fall back to serial if no video present */
+			fcomcnattach(DC21285_ARMCSR_VBASE, comcnspeed,
+			    comcnmode);
+		}
 	}
 #endif	/* NVGA */
 #if (NCOM > 0)
