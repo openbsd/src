@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.8 1997/09/05 04:32:45 millert Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.9 1997/09/28 21:44:37 millert Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -26,7 +26,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.28 1997/04/30 05:57:46 paulus Exp";
 #else
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.8 1997/09/05 04:32:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.9 1997/09/28 21:44:37 millert Exp $";
 #endif
 #endif
 
@@ -1062,6 +1062,7 @@ sifaddr(u, o, h, m)
     u_int32_t o, h, m;
 {
     struct ifaliasreq ifra;
+    struct ifreq ifr;
 
     strncpy(ifra.ifra_name, ifname, sizeof(ifra.ifra_name) - 1);
     ifra.ifra_name[sizeof(ifra.ifra_name) - 1] = '\0';
@@ -1074,6 +1075,13 @@ sifaddr(u, o, h, m)
 	((struct sockaddr_in *) &ifra.ifra_mask)->sin_addr.s_addr = m;
     } else
 	BZERO(&ifra.ifra_mask, sizeof(ifra.ifra_mask));
+    BZERO(&ifr, sizeof(ifr));
+    strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name) - 1);
+    ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
+    if (ioctl(sockfd, SIOCDIFADDR, (caddr_t) &ifr) < 0) {
+	if (errno != EADDRNOTAVAIL)
+	    syslog(LOG_WARNING, "Couldn't remove interface address: %m");
+    }
     if (ioctl(sockfd, SIOCAIFADDR, (caddr_t) &ifra) < 0) {
 	if (errno != EEXIST) {
 	    syslog(LOG_ERR, "Couldn't set interface address: %m");
