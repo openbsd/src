@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.14 2004/06/22 04:04:19 canacar Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.15 2004/12/17 15:56:58 reyk Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -59,8 +59,8 @@ struct bpf_d {
 	caddr_t		bd_sbuf;	/* store slot */
 	caddr_t		bd_hbuf;	/* hold slot */
 	caddr_t		bd_fbuf;	/* free slot */
-	int 		bd_slen;	/* current length of store buffer */
-	int 		bd_hlen;	/* current length of hold buffer */
+	int		bd_slen;	/* current length of store buffer */
+	int		bd_hlen;	/* current length of hold buffer */
 
 	int		bd_bufsize;	/* absolute length of buffers */
 

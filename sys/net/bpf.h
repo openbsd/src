@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.28 2004/06/22 04:04:19 canacar Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.29 2004/12/17 15:56:58 reyk Exp $	*/
 /*	$NetBSD: bpf.h,v 1.15 1996/12/13 07:57:33 mikel Exp $	*/
 
 /*
@@ -152,28 +152,28 @@ struct bpf_hdr {
 /*
  * Data-link level type codes.
  */
-#define DLT_NULL	0	/* no link-layer encapsulation */
-#define DLT_EN10MB	1	/* Ethernet (10Mb) */
-#define DLT_EN3MB	2	/* Experimental Ethernet (3Mb) */
-#define DLT_AX25	3	/* Amateur Radio AX.25 */
-#define DLT_PRONET	4	/* Proteon ProNET Token Ring */
-#define DLT_CHAOS	5	/* Chaos */
-#define DLT_IEEE802	6	/* IEEE 802 Networks */
-#define DLT_ARCNET	7	/* ARCNET */
-#define DLT_SLIP	8	/* Serial Line IP */
-#define DLT_PPP		9	/* Point-to-point Protocol */
-#define DLT_FDDI	10	/* FDDI */
-#define DLT_ATM_RFC1483	11	/* LLC/SNAP encapsulated atm */
-#define DLT_LOOP	12	/* loopback type (af header) */
-#define DLT_ENC		13	/* IPSEC enc type (af header, spi, flags) */
-#define DLT_RAW		14	/* raw IP */
-#define DLT_SLIP_BSDOS	15	/* BSD/OS Serial Line IP */
-#define DLT_PPP_BSDOS	16	/* BSD/OS Point-to-point Protocol */
-#define DLT_OLD_PFLOG	17	/* Packet filter logging, old (XXX remove?) */
-#define DLT_PFSYNC	18	/* Packet filter state syncing */
-#define DLT_PPP_ETHER	51	/* PPP over Ethernet; session only, w/o ether header */
-#define DLT_IEEE802_11	105	/* IEEE 802.11 wireless */
-#define DLT_PFLOG	117	/* Packet filter logging, by pcap people */
+#define DLT_NULL		0	/* no link-layer encapsulation */
+#define DLT_EN10MB		1	/* Ethernet (10Mb) */
+#define DLT_EN3MB		2	/* Experimental Ethernet (3Mb) */
+#define DLT_AX25		3	/* Amateur Radio AX.25 */
+#define DLT_PRONET		4	/* Proteon ProNET Token Ring */
+#define DLT_CHAOS		5	/* Chaos */
+#define DLT_IEEE802		6	/* IEEE 802 Networks */
+#define DLT_ARCNET		7	/* ARCNET */
+#define DLT_SLIP		8	/* Serial Line IP */
+#define DLT_PPP			9	/* Point-to-point Protocol */
+#define DLT_FDDI		10	/* FDDI */
+#define DLT_ATM_RFC1483		11	/* LLC/SNAP encapsulated atm */
+#define DLT_LOOP		12	/* loopback type (af header) */
+#define DLT_ENC			13	/* IPSEC enc type (af header, spi, flags) */
+#define DLT_RAW			14	/* raw IP */
+#define DLT_SLIP_BSDOS		15	/* BSD/OS Serial Line IP */
+#define DLT_PPP_BSDOS		16	/* BSD/OS Point-to-point Protocol */
+#define DLT_OLD_PFLOG		17	/* Packet filter logging, old (XXX remove?) */
+#define DLT_PFSYNC		18	/* Packet filter state syncing */
+#define DLT_PPP_ETHER		51	/* PPP over Ethernet; session only w/o ether header */
+#define DLT_IEEE802_11		105	/* IEEE 802.11 wireless */
+#define DLT_PFLOG		117	/* Packet filter logging, by pcap people */
 
 /*
  * The instruction encodings.
@@ -195,7 +195,7 @@ struct bpf_hdr {
 #define		BPF_H		0x08
 #define		BPF_B		0x10
 #define BPF_MODE(code)	((code) & 0xe0)
-#define		BPF_IMM 	0x00
+#define		BPF_IMM		0x00
 #define		BPF_ABS		0x20
 #define		BPF_IND		0x40
 #define		BPF_MEM		0x60
@@ -235,10 +235,10 @@ struct bpf_hdr {
  * The instruction data structure.
  */
 struct bpf_insn {
-	u_int16_t code;
-	u_char 	  jt;
-	u_char 	  jf;
-	u_int32_t k;
+	u_int16_t	code;
+	u_char		jt;
+	u_char		jf;
+	u_int32_t	k;
 };
 
 /*
