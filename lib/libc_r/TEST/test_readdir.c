@@ -20,7 +20,7 @@ main()
 	DIR * dot_dir;
 	int found = 0;
 
-	CHECKen(dot_dir = opendir("."));
+	CHECKn(dot_dir = opendir("."));
 	while ((file = readdir(dot_dir)) != NULL)
 		if (strcmp("test_readdir", file->d_name) == 0)
 			found = 1;

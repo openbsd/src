@@ -9,7 +9,7 @@ main()
 {
 	struct passwd *pw;
 
-	CHECKen(pw = getpwuid(getuid()));
+	CHECKn(pw = getpwuid(getuid()));
 	printf("getpwuid(%d) => %p\n", getuid(), pw);
 	printf(" name: %s\n  uid: %d\n  gid: %d\n"
 	    "class: %s\ngecos: %s\n  dir: %s\nshell: %s\n",

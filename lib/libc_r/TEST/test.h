@@ -100,7 +100,6 @@ __panic(type, errstr, filenm, lineno, fmt)
 #define CHECKe(x) _CHECK(x, != -1, strerror(errno))
 #define CHECKn(x) _CHECK(x, != 0, strerror(errno))
 #define CHECKhn(x) _CHECK(x, != 0, hstrerror(h_errno))
-#define CHECKen(x) _CHECK(x, != 0, strerror(errno))
 
 #define SUCCEED 	exit(0)
 
