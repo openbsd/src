@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.24 2001/04/04 22:06:39 gluk Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.25 2001/04/05 00:50:07 gluk Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.24 2001/04/04 22:06:39 gluk Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.25 2001/04/05 00:50:07 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -394,9 +394,11 @@ main(argc, argv)
 		/*
 		 * No path prefix; try /dev/r%s then /dev/%s.
 		 */
-		(void)sprintf(device, "%sr%s", _PATH_DEV, special);
+		(void)snprintf(device, sizeof(device), "%sr%s",
+			       _PATH_DEV, special);
 		if (stat(device, &st) == -1)
-			(void)sprintf(device, "%s%s", _PATH_DEV, special);
+			(void)snprintf(device, sizeof(device), "%s%s",
+				       _PATH_DEV, special);
 		special = device;
 	}
 	if (Nflag) {
@@ -654,7 +656,8 @@ rewritelabel(s, fd, lp)
 		/*
 		 * Make name for 'c' partition.
 		 */
-		strcpy(specname, s);
+		strncpy(specname, s, sizeof(specname) - 1);
+		specname[sizeof(specname) - 1] = '\0';
 		cp = specname + strlen(specname) - 1;
 		if (!isdigit(*cp))
 			*cp = 'c';
