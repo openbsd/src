@@ -1,18 +1,18 @@
-# $OpenBSD: Makefile,v 1.3 2001/06/05 10:38:31 hin Exp $
+# $OpenBSD: Makefile,v 1.4 2001/06/22 23:26:30 hin Exp $
 
 LIB=	asn1
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
 
-INCLUDE_FILES=	asn1.h asn1_err.h ${KRB5SRC}/lib/asn1/{der.h,asn1-common.h}
+INCLUDE_FILES=	krb5_asn1.h asn1_err.h ${KRB5SRC}/lib/asn1/{der.h,asn1-common.h}
 
-includes:	asn1.h asn1_err.h
+includes:	krb5_asn1.h asn1_err.h
 
 .PATH:	${KRB5SRC}/lib/asn1
 
 gen_files= \
-	asn1.h \
+	krb5_asn1.h \
 	asn1_APOptions.c                \
 	asn1_AP_REP.c                   \
 	asn1_AP_REQ.c                   \
@@ -20,7 +20,7 @@ gen_files= \
 	asn1_AS_REQ.c                   \
 	asn1_Authenticator.c            \
 	asn1_AuthorizationData.c        \
-	asn1_CKSUMTYPE.c			\
+	asn1_CKSUMTYPE.c		\
 	asn1_Checksum.c                 \
 	asn1_ETYPE_INFO.c		\
 	asn1_ETYPE_INFO_ENTRY.c		\
@@ -82,10 +82,10 @@ CFLAGS+=	-I${KRB5SRC}/lib/asn1 -I.
 asn1_err.h asn1_err.c:	${KRB5SRC}/lib/asn1/asn1_err.et
 	compile_et ${KRB5SRC}/lib/asn1/asn1_err.et
 
-${gen_files} asn1.h: asn1_files
+${gen_files} krb5_asn1.h: asn1_files
 
 asn1_files:	${KRB5SRC}/lib/asn1/k5.asn1
-	asn1_compile ${KRB5SRC}/lib/asn1/k5.asn1
+	asn1_compile ${KRB5SRC}/lib/asn1/k5.asn1 krb5_asn1
 	for f in *.x; do mv $$f `echo $$f | sed s,.x$$,.c,g`; done
 
 .include <bsd.lib.mk>

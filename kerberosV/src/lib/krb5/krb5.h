@@ -43,7 +43,7 @@
 #include <kerberosV/krb5_err.h>
 #include <kerberosV/heim_err.h>
 
-#include <kerberosV/asn1.h>
+#include <kerberosV/krb5_asn1.h>
 
 /* simple constants */
 
