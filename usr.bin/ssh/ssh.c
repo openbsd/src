@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.86 2001/01/31 20:37:23 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.87 2001/02/04 15:14:14 deraadt Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -915,7 +915,7 @@ ssh_session2_callback(int id, void *arg)
 	int len;
 	int interactive = 0;
 
-	debug("client_init id %d arg %d", id, (int)arg);
+	debug("client_init id %d arg %ld", id, (long)arg);
 
 	if (no_shell_flag)
 		goto done;
