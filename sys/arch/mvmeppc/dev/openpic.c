@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.13 2004/02/01 22:30:42 miod Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.14 2004/05/08 20:10:12 miod Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -125,14 +125,18 @@ struct cfdriver openpic_cd = {
 	NULL, "openpic", DV_DULL
 };
 
+/*
+ * ISA IRQ for PCI IRQ to MPIC IRQ routing.
+ * From MVME2600APG tables 5.2 and 5.3
+ */
 const struct pci_route {
 	int pci;
 	int openpic;
 } pci_routes[] = {
 	{ 10, 2 },
-	{ 11, 4 },
+	{ 11, 5 },
 	{ 14, 3 },
-	{ 15, 5 },
+	{ 15, 4 },
 	{ 0, 0 }
 };
 
