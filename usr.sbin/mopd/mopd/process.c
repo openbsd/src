@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.9 2002/07/13 10:13:27 deraadt Exp $ */
+/*	$OpenBSD: process.c,v 1.10 2002/09/07 07:58:21 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: process.c,v 1.9 2002/07/13 10:13:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: process.c,v 1.10 2002/09/07 07:58:21 maja Exp $";
 #endif
 
 #include "os.h"
@@ -50,8 +50,6 @@ extern u_char	buf[];
 extern int	DebugFlag;
 
 struct dllist dllist[MAXDL];		/* dump/load list		*/
-extern char	dl_mcst[];		/* Dump/Load Multicast		*/
-extern char	rc_mcst[];		/* Remote Console Multicast	*/
 
 void
 mopProcessInfo(pkt,index,moplen,dl_rpr,trans)
@@ -389,7 +387,7 @@ mopNextLoad(dst, src, new_count, trans)
 			mopPutChar (pkt,&index,dllist[slot].count);
 			mopPutChar (pkt,&index,MOP_K_PLTP_HSN);
  			mopPutChar (pkt,&index,3);
-			mopPutMulti(pkt,&index,"ipc",3);
+			mopPutMulti(pkt,&index,(u_char *) "ipc",3);
 			mopPutChar (pkt,&index,MOP_K_PLTP_HSA);
 			mopPutChar (pkt,&index,6);
 			mopPutMulti(pkt,&index,src,6);
@@ -502,7 +500,7 @@ mopProcessDL(fd, ii, pkt, index, dst, src, trans, len)
 			/* to ask. My solution is to use the ethernet addr */
 			/* as filename. Implementing a database would be   */
 			/* overkill.					   */
-			snprintf(pfile,sizeof pfile,
+			snprintf((char *)pfile,sizeof pfile,
 			    "%02x%02x%02x%02x%02x%02x%c",
 			    src[0],src[1],src[2],src[3],src[4],src[5],0);
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.4 2001/08/12 12:03:03 heko Exp $ */
+/*	$OpenBSD: file.c,v 1.5 2002/09/07 07:58:21 maja Exp $ */
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: file.c,v 1.4 2001/08/12 12:03:03 heko Exp $";
+static char rcsid[] = "$OpenBSD: file.c,v 1.5 2002/09/07 07:58:21 maja Exp $";
 #endif
 
 #include "os.h"
@@ -578,6 +578,7 @@ GetAOutFileInfo(fd, load, xfr, a_text, a_text_fill,
 		break;
 #endif
 	default:
+		break;
 	}
 	printf(") Magic: ");
 	switch (N_GETMAGIC (ex)) {

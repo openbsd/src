@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopdef.c,v 1.2 1996/09/21 19:11:40 maja Exp $ */
+/*	$OpenBSD: mopdef.c,v 1.3 2002/09/07 07:58:21 maja Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson.  All rights reserved.
@@ -30,17 +30,19 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mopdef.c,v 1.2 1996/09/21 19:11:40 maja Exp $";
+static char rcsid[] = "$OpenBSD: mopdef.c,v 1.3 2002/09/07 07:58:21 maja Exp $";
 #endif
+
+#include <sys/types.h>
 
 #define MOPDEF_SURPESS_EXTERN
 #include "common/mopdef.h"
 
-char dl_mcst[6] = MOP_DL_MULTICAST;	/* Dump/Load Multicast         */
-char rc_mcst[6] = MOP_RC_MULTICAST;	/* Remote Console Multicast    */
-char dl_802_proto[5] = MOP_K_PROTO_802_DL; /* MOP Dump/Load 802.2      */
-char rc_802_proto[5] = MOP_K_PROTO_802_RC; /* MOP Remote Console 802.2 */
-char lp_802_proto[5] = MOP_K_PROTO_802_LP; /* Loopback 802.2           */
+u_char dl_mcst[6] = MOP_DL_MULTICAST;	/* Dump/Load Multicast         */
+u_char rc_mcst[6] = MOP_RC_MULTICAST;	/* Remote Console Multicast    */
+u_char dl_802_proto[5] = MOP_K_PROTO_802_DL; /* MOP Dump/Load 802.2      */
+u_char rc_802_proto[5] = MOP_K_PROTO_802_RC; /* MOP Remote Console 802.2 */
+u_char lp_802_proto[5] = MOP_K_PROTO_802_LP; /* Loopback 802.2           */
 
 int
 mopdef_dummy()

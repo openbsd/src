@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopdef.h,v 1.3 2001/08/12 12:03:03 heko Exp $ */
+/*	$OpenBSD: mopdef.h,v 1.4 2002/09/07 07:58:21 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$OpenBSD: mopdef.h,v 1.3 2001/08/12 12:03:03 heko Exp $
+ *	$OpenBSD: mopdef.h,v 1.4 2002/09/07 07:58:21 maja Exp $
  *
  */
 
@@ -188,11 +188,11 @@
 #define L_BBLK			0xf0	/* RSX header block count */
 
 #ifndef MOPDEF_SUPRESS_EXTERN
-extern char dl_mcst[];
-extern char rc_mcst[];
-extern char dl_802_proto[];
-extern char rc_802_proto[];
-extern char lp_802_proto[];
+extern u_char dl_mcst[];
+extern u_char rc_mcst[];
+extern u_char dl_802_proto[];
+extern u_char rc_802_proto[];
+extern u_char lp_802_proto[];
 #endif /* MOPDEF_SUPRESS_EXTERN */
 
 #endif /* _MOPDEF_H_ */

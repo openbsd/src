@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.3 1999/03/27 14:31:21 maja Exp $ */
+/*	$OpenBSD: print.c,v 1.4 2002/09/07 07:58:21 maja Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: print.c,v 1.3 1999/03/27 14:31:21 maja Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.4 2002/09/07 07:58:21 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -76,7 +76,7 @@ mopPrintBPTY(fd, bpty)
 		(void)fprintf(fd, "Unknown");
 		break;
 	};
-};
+}
 
 void
 mopPrintPGTY(fd, pgty)
