@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka48.c,v 1.4 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: ka48.c,v 1.5 2001/10/01 12:57:19 hugh Exp $	*/
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -94,7 +94,7 @@ ka48_conf()
 		cpuname = "KA48";
 		break;
 	default:
-		cpuname = "unknown SOC";
+		cpuname = "Unknown SOC";
 	}
 	printf("cpu: %s\n", cpuname);
 	ka48_cpu = (void *)vax_map_physmem(VS_REGS, 1);
