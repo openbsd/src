@@ -1,4 +1,5 @@
-/*	$OpenBSD: icmp6.h,v 1.3 2000/02/28 11:55:20 itojun Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.4 2000/02/28 14:05:59 itojun Exp $	*/
+/*	$KAME: icmp6.h,v 1.8 2000/02/28 10:59:30 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -322,6 +323,13 @@ struct icmp6_nodeinfo {
 #if BYTE_ORDER == BIG_ENDIAN
 #define NI_SUPTYPE_FLAG_COMPRESS	0x1
 #define NI_FQDN_FLAG_VALIDTTL		0x1
+#elif BYTE_ORDER == LITTLE_ENDIAN
+#define NI_SUPTYPE_FLAG_COMPRESS	0x0100
+#define NI_FQDN_FLAG_VALIDTTL		0x0100
+#endif
+
+#ifdef NAME_LOOKUPS_04
+#if BYTE_ORDER == BIG_ENDIAN
 #define NI_NODEADDR_FLAG_LINKLOCAL	0x1
 #define NI_NODEADDR_FLAG_SITELOCAL	0x2
 #define NI_NODEADDR_FLAG_GLOBAL		0x4
@@ -329,14 +337,31 @@ struct icmp6_nodeinfo {
 #define NI_NODEADDR_FLAG_TRUNCATE	0x10
 #define NI_NODEADDR_FLAG_ANYCAST	0x20 /* just experimental. not in spec */
 #elif BYTE_ORDER == LITTLE_ENDIAN
-#define NI_SUPTYPE_FLAG_COMPRESS	0x0100
-#define NI_FQDN_FLAG_VALIDTTL		0x0100
 #define NI_NODEADDR_FLAG_LINKLOCAL	0x0100
 #define NI_NODEADDR_FLAG_SITELOCAL	0x0200
 #define NI_NODEADDR_FLAG_GLOBAL		0x0400
 #define NI_NODEADDR_FLAG_ALL		0x0800
 #define NI_NODEADDR_FLAG_TRUNCATE	0x1000
 #define NI_NODEADDR_FLAG_ANYCAST	0x2000 /* just experimental. not in spec */
+#endif
+#else  /* draft-ietf-ipngwg-icmp-name-lookups-05 (and later?) */
+#if BYTE_ORDER == BIG_ENDIAN
+#define NI_NODEADDR_FLAG_TRUNCATE	0x1
+#define NI_NODEADDR_FLAG_ALL		0x2
+#define NI_NODEADDR_FLAG_COMPAT		0x4
+#define NI_NODEADDR_FLAG_LINKLOCAL	0x8
+#define NI_NODEADDR_FLAG_SITELOCAL	0x10
+#define NI_NODEADDR_FLAG_GLOBAL		0x20
+#define NI_NODEADDR_FLAG_ANYCAST	0x40 /* just experimental. not in spec */
+#elif BYTE_ORDER == LITTLE_ENDIAN
+#define NI_NODEADDR_FLAG_TRUNCATE	0x0100
+#define NI_NODEADDR_FLAG_ALL		0x0200
+#define NI_NODEADDR_FLAG_COMPAT		0x0400
+#define NI_NODEADDR_FLAG_LINKLOCAL	0x0800
+#define NI_NODEADDR_FLAG_SITELOCAL	0x1000
+#define NI_NODEADDR_FLAG_GLOBAL		0x2000
+#define NI_NODEADDR_FLAG_ANYCAST	0x4000 /* just experimental. not in spec */
+#endif
 #endif
 
 struct ni_reply_fqdn {
