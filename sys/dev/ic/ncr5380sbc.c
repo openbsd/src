@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.1 1996/01/01 22:24:37 thorpej Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.2 1996/01/23 19:47:00 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -130,7 +130,7 @@ int Debugger();
 
 #define	NCR_DBG_BREAK	1
 #define	NCR_DBG_CMDS	2
-int ncr5380_debug = NCR_DBG_BREAK;
+int ncr5380_debug = 0;
 #define	NCR_BREAK() \
 	do { if (ncr5380_debug & NCR_DBG_BREAK) Debugger(); } while (0)
 static void ncr5380_show_scsi_cmd __P((struct scsi_xfer *));
@@ -1071,6 +1071,8 @@ ncr5380_reselect(sc)
 	 * then raise SEL, and finally drop BSY.  Only then is the
 	 * data bus required to have valid selection ID bits set.
 	 * Wait for: SEL==1, BSY==0 before reading the data bus.
+	 * While this theoretically can happen, we are aparently
+	 * never fast enough to get here before BSY drops.
 	 */
 	timo = ncr5380_wait_nrq_timo;
 	for (;;) {
@@ -1084,7 +1086,7 @@ ncr5380_reselect(sc)
 			ncr5380_reset_scsibus(sc);
 			return;
 		}
-		delay(10);
+		delay(2);
 		bus = *(sc->sci_bus_csr);
 		/* If SEL went away, forget it. */
 		if ((bus & SCI_BUS_SEL) == 0)
@@ -1100,7 +1102,7 @@ ncr5380_reselect(sc)
 	 */
 	delay(2);
 	data = *(sc->sci_data) & 0xFF;
-	/* XXX - Should check parity... */
+	/* Parity check is implicit in data validation below. */
 
 	/*
 	 * Is this a reselect (I/O == 1) or have we been
@@ -1290,11 +1292,12 @@ ncr5380_select(sc, sr)
 	 * in the output data register and set MODE_ARB.  The
 	 * 5380 watches for the required "bus free" period.
 	 * If and when the "bus free" period is detected, the
-	 * 5380 then drives BSY, drives the data bus, and sets
-	 * the "arbitration in progress" (AIP) bit to let us
-	 * know arbitration has started.  We then wait for one
-	 * arbitration delay (2.2uS) and check the ICMD_LST bit,
-	 * which will be set if someone else drives SEL.
+	 * 5380 drives BSY, drives the data bus, and sets the
+	 * "arbitration in progress" (AIP) bit to let us know
+	 * arbitration has started (and that it asserts BSY).
+	 * We then wait for one arbitration delay (2.2uS) and
+	 * check the ICMD_LST bit, which will be set if some
+	 * other target drives SEL during arbitration.
 	 */
 	*(sc->sci_odata) = 0x80;	/* OUR_ID */
 	*(sc->sci_mode) = SCI_MODE_ARB;
@@ -2030,7 +2033,7 @@ ncr5380_data_xfer(sc, phase)
 		(sc->sc_datalen >= sc->sc_min_dma_len))
 	{
 		/*
-		 * OK, really start DMA.  Note, the MI start function
+		 * OK, really start DMA.  Note, the MD start function
 		 * is responsible for setting the TCMD register, etc.
 		 * (Acknowledge the phase change there, not here.)
 		 */
@@ -2040,14 +2043,17 @@ ncr5380_data_xfer(sc, phase)
 		return ACT_WAIT_DMA;
 	}
 
+	/*
+	 * Doing PIO for data transfer.  (Possibly "Pseudo DMA")
+	 * XXX:  Do PDMA functions need to set tcmd later?
+	 */
 	NCR_TRACE("data_xfer: doing PIO, len=%d\n", sc->sc_datalen);
-
 	/* acknowledge phase change */
-	*sc->sci_tcmd = phase;
+	*sc->sci_tcmd = phase;	/* XXX: OK for PDMA? */
 	if (phase == PHASE_DATA_OUT) {
-		len = ncr5380_pio_out(sc, phase, sc->sc_datalen, sc->sc_dataptr);
+		len = (*sc->sc_pio_out)(sc, phase, sc->sc_datalen, sc->sc_dataptr);
 	} else {
-		len = ncr5380_pio_in (sc, phase, sc->sc_datalen, sc->sc_dataptr);
+		len = (*sc->sc_pio_in) (sc, phase, sc->sc_datalen, sc->sc_dataptr);
 	}
 	sc->sc_dataptr += len;
 	sc->sc_datalen -= len;
