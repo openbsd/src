@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.3 2005/03/30 00:37:13 pedro Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.4 2005/03/30 01:10:00 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -494,6 +494,7 @@ udf_transname(char *cs0string, char *destname, int len, struct udf_mnt *udfmp)
 		return (0);
 	}
 
+	/* Pack it back to 8-bit Unicode. */
 	for (i = 0; i < unilen ; i++)
 		if (transname[i] & 0xff00)
 			destname[i] = '.';	/* Fudge the 16bit chars */
