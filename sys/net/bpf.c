@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.15 1999/04/22 20:02:42 art Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.16 1999/05/26 19:26:11 brad Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -168,6 +168,7 @@ bpf_movein(uio, linktype, mp, sockp)
 		hlen = 24;
 		break;
 
+	case DLT_RAW:
 	case DLT_NULL:
 		sockp->sa_family = AF_UNSPEC;
 		hlen = 0;
