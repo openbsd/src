@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.9 1998/04/07 04:17:52 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 1998/09/07 22:30:15 marc Exp $	*/
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.9 1998/04/07 04:17:52 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.10 1998/09/07 22:30:15 marc Exp $";
 #endif
 
 /*
@@ -25,24 +25,26 @@ static char *rcsid = "$OpenBSD: main.c,v 1.9 1998/04/07 04:17:52 deraadt Exp $";
  *
  */
 
+#include <err.h>
 #include "lib.h"
 #include "info.h"
 
-static char Options[] = "acdDe:fikrRpLqImvhl:";
+static char Options[] = "acDde:fIikLl:mpqRrvh";
 
 int	Flags		= 0;
 Boolean AllInstalled	= FALSE;
 Boolean Quiet		= FALSE;
-char	*InfoPrefix	= "";
-char 	PlayPen[FILENAME_MAX];
-char 	*CheckPkg	= NULL;
+char *InfoPrefix	= "";
+char PlayPen[FILENAME_MAX];
+char *CheckPkg		= NULL;
+
+static void usage __P((void));
 
 int
 main(int argc, char **argv)
 {
     int ch;
     char **pkgs, **start;
-    char *prog_name = argv[0];
 
     pkgs = start = argv;
     while ((ch = getopt(argc, argv, Options)) != -1)
@@ -51,35 +53,28 @@ main(int argc, char **argv)
 	    AllInstalled = TRUE;
 	    break;
 
-	case 'v':
-	    Verbose = TRUE;
-	    /* Reasonable definition of 'everything' */
-	    Flags = SHOW_COMMENT | SHOW_DESC | SHOW_PLIST | SHOW_INSTALL |
-		SHOW_DEINSTALL | SHOW_REQUIRE | SHOW_DISPLAY | SHOW_MTREE;
-	    break;
-
-	case 'I':
-	    Flags |= SHOW_INDEX;
-	    break;
-
-	case 'p':
-	    Flags |= SHOW_PREFIX;
-	    break;
-
 	case 'c':
 	    Flags |= SHOW_COMMENT;
-	    break;
-
-	case 'd':
-	    Flags |= SHOW_DESC;
 	    break;
 
 	case 'D':
 	    Flags |= SHOW_DISPLAY;
 	    break;
 
+	case 'd':
+	    Flags |= SHOW_DESC;
+	    break;
+
+	case 'e':
+	    CheckPkg = optarg;
+	    break;
+
 	case 'f':
 	    Flags |= SHOW_PLIST;
+	    break;
+
+	case 'I':
+	    Flags |= SHOW_INDEX;
 	    break;
 
 	case 'i':
@@ -90,76 +85,78 @@ main(int argc, char **argv)
 	    Flags |= SHOW_DEINSTALL;
 	    break;
 
-	case 'r':
-	    Flags |= SHOW_REQUIRE;
-	    break;
-
-	case 'R':
-	    Flags |= SHOW_REQBY;
-	    break;
-
 	case 'L':
 	    Flags |= SHOW_FILES;
-	    break;
-
-	case 'm':
-	    Flags |= SHOW_MTREE;
 	    break;
 
 	case 'l':
 	    InfoPrefix = optarg;
 	    break;
 
+	case 'm':
+	    Flags |= SHOW_MTREE;
+	    break;
+
+	case 'p':
+	    Flags |= SHOW_PREFIX;
+	    break;
+
 	case 'q':
 	    Quiet = TRUE;
 	    break;
 
-	case 't':
-	    strncpy(PlayPen, optarg, FILENAME_MAX);
+	case 'R':
+	    Flags |= SHOW_REQBY;
 	    break;
 
-	case 'e':
-	    CheckPkg = optarg;
+	case 'r':
+	    Flags |= SHOW_REQUIRE;
+	    break;
+
+	case 'v':
+	    Verbose = TRUE;
+	    /* Reasonable definition of 'everything' */
+	    Flags = SHOW_COMMENT | SHOW_DESC | SHOW_PLIST | SHOW_INSTALL |
+		SHOW_DEINSTALL | SHOW_REQUIRE | SHOW_DISPLAY | SHOW_MTREE;
 	    break;
 
 	case 'h':
 	case '?':
 	default:
-	    usage(prog_name, NULL);
-	    break;
+	    usage();
+	    /* NOTREACHED */
 	}
 
     argc -= optind;
     argv += optind;
 
+    if (argc == 0 && !Flags) {
+	/* No argument or flags specified - assume -Ia */
+	Flags = SHOW_INDEX;
+	AllInstalled = TRUE;
+    }
+
+    /* Set some reasonable defaults */
+    if (!Flags)
+	Flags = SHOW_COMMENT | SHOW_DESC | SHOW_REQBY;
+
     /* Get all the remaining package names, if any */
     while (*argv)
 	*pkgs++ = *argv++;
 
-    /* Set some reasonable defaults */
-    if (!Flags) {
-	Flags |= SHOW_INDEX;
-	if (pkgs == start)
-	    AllInstalled = TRUE;
-    }
+    /* If no packages, yelp */
+    if (pkgs == start && !AllInstalled && !CheckPkg)
+	warnx("missing package name(s)"), usage();
     *pkgs = NULL;
     return pkg_perform(start);
 }
 
-void
-usage(const char *name, const char *fmt, ...)
+static void
+usage()
 {
-    va_list args;
-
-    va_start(args, fmt);
-    if (fmt) {
-	fprintf(stderr, "%s: ", name);
-	vfprintf(stderr, fmt, args);
-	fprintf(stderr, "\n");
-    }
-    va_end(args);
-    fprintf(stderr,
-	"usage: %s [-a] [-cdDikrRpLqImv] [-e package] [-l prefix] pkg ...\n",
-	name);
+    fprintf(stderr, "%s\n%s\n%s\n",
+	"usage: pkg_info [-cDdfIikLmpqRrvh] [-e package] [-l prefix]",
+	"                pkg-name [pkg-name ...]",
+	"       pkg_info -a [flags]");
     exit(1);
 }

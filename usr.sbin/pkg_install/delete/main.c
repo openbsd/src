@@ -1,7 +1,8 @@
-/*	$OpenBSD: main.c,v 1.6 1998/04/07 04:17:51 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1998/09/07 22:30:15 marc Exp $	*/
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.6 1998/04/07 04:17:51 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.7 1998/09/07 22:30:15 marc Exp $";
 #endif
 
 /*
@@ -25,6 +26,7 @@ static char *rcsid = "$OpenBSD: main.c,v 1.6 1998/04/07 04:17:51 deraadt Exp $";
  *
  */
 
+#include <err.h>
 #include "lib.h"
 #include "delete.h"
 
@@ -33,14 +35,14 @@ static char Options[] = "hvDdnfp:";
 char	*Prefix		= NULL;
 Boolean	NoDeInstall	= FALSE;
 Boolean	CleanDirs	= FALSE;
-Boolean	Force		= FALSE;
+
+static void usage __P((void));
 
 int
 main(int argc, char **argv)
 {
     int ch, error;
     char **pkgs, **start;
-    char *prog_name = argv[0];
 
     pkgs = start = argv;
     while ((ch = getopt(argc, argv, Options)) != -1)
@@ -73,7 +75,7 @@ main(int argc, char **argv)
 	case 'h':
 	case '?':
 	default:
-	    usage(prog_name, NULL);
+	    usage();
 	    break;
 	}
 
@@ -87,31 +89,22 @@ main(int argc, char **argv)
 
     /* If no packages, yelp */
     if (pkgs == start)
-	usage(prog_name, "Missing package name(s)");
+	warnx("missing package name(s)"), usage();
     *pkgs = NULL;
     if (!Fake && getuid() != 0)
-	errx(1, "You must be root to delete packages.");
+	errx(1, "you must be root to delete packages");
     if ((error = pkg_perform(start)) != 0) {
 	if (Verbose)
-	    fprintf(stderr, "%d package deletion(s) failed.\n", error);
+	    warnx("%d package deletion(s) failed", error);
 	return error;
     }
     else
 	return 0;
 }
 
-void
-usage(const char *name, const char *fmt, ...)
+static void
+usage()
 {
-    va_list args;
-
-    va_start(args, fmt);
-    if (fmt) {
-	fprintf(stderr, "%s: ", name);
-	vfprintf(stderr, fmt, args);
-	fprintf(stderr, "\n");
-    }
-    va_end(args);
-    fprintf(stderr, "usage: %s [-vDdnf] [-p prefix] pkg ...\n", name);
+    fprintf(stderr, "usage: pkg_delete [-vDdnf] [-p prefix] pkg-name ...\n");
     exit(1);
 }

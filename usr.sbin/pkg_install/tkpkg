@@ -1,32 +1,6 @@
 #!/usr/local/bin/wish -f
-#$OpenBSD: tkpkg,v 1.1 1996/06/04 07:56:02 niklas Exp $
-#
-#$Log: tkpkg,v $
-#Revision 1.1  1996/06/04 07:56:02  niklas
-#add package tools from FreeBSD
-#
-#Revision 1.2  1994/12/06 00:51:21  jkh
-#Many of John T. Kohl's patches from NetBSD.  Thanks, John!
-#Submitted by:	jkohl
-#
-# Revision 1.1  1994/01/06  08:16:20  jkh
-# Cleaning house.
-#
-# Revision 1.1  1993/09/04  17:06:09  jkh
-# Added Rich's wish front-end.
-#
-# Revision 1.6  1993/09/03  23:37:22  rich
-# warn user if no tar archives are found in the current directory.
-# removed the revision string from the lower text frame.
-#
-# Revision 1.5  1993/09/03  15:48:04  rich
-# glob for .tar.gz, .tar.z and .tar.Z looking for archives
-#
-# Revision 1.4  1993/08/28  15:53:59  rich
-# added version and date info to lower text window.
-#
-# Revision 1.3  1993/08/28  15:47:12  rich
-# filtered out ^Ls in pkg_* output.
+#$OpenBSD: tkpkg,v 1.2 1998/09/07 22:30:12 marc Exp $
+# from FreeBSD Id: tkpkg,v 1.4 1997/02/22 16:09:13 peter Exp
 #
 #
 set pkgname ""
@@ -57,7 +31,7 @@ scrollbar .f.s -relief sunken -command ".f.t yview"
 pack append .f .f.s {right filly} .f.t {left expand fill}
 
 bind .frame.list <Double-Button-1> \
-    {foreach i [selection get] {do_description $i}}
+    { do_description [selection get] }
 pack append .  .menu {top fill} \
    .f {bottom expand fill} \
    .frame {bottom expand fill}

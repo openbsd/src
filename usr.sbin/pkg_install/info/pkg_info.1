@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.2 1996/10/08 01:21:03 michaels Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.3 1998/09/07 22:30:16 marc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -17,103 +17,153 @@
 .\"
 .\"     @(#)pkg_info.1
 .\"
-.Dd November 25, 1994
-.Dt pkg_info 1
-.Os
+.Dd August 22, 1998
+.Dt PKG_INFO 1
+.Os FreeBSD
 .Sh NAME
 .Nm pkg_info
-.Nd a utility for displaying information on software packages.
+.Nd a utility for displaying information on software packages
 .Sh SYNOPSIS
 .Nm pkg_info
-.Op Fl cdDikrRpLqImv
+.Op Fl cDdfIikLmpqRrvh
 .Op Fl e Ar package
 .Op Fl l Ar prefix
 .Ar pkg-name [pkg-name ...]
 .Nm pkg_info
-.Fl a
-.Op Ar flags
+.Op Fl a Ar flags
 .Sh DESCRIPTION
 The
 .Nm
-command is used to dump out information for packages, either packed up in
-files or already installed on the system
-with the
+command is used to dump out information for packages, which may be either
+packed up in files or already installed on the system with the
 .Xr pkg_create 1
 command.
-.Sh OPTIONS
-The following command line options are supported.
+.Pp
+The
+.Ar pkg-name
+may be the name of an installed package, the pathname to a package
+distribution file, or a URL to an ftp-available package.
+.Pp
+The following command-line options are supported:
 .Bl -tag -width indent
-.It Ar pkg-name ...
-The named packages are described.  A package name may either be the name of
-an installed package, the pathname to a package distribution file or a
-URL to an ftp available package.
 .It Fl a
-Show all currently installed packages.
-.It Fl v
-Turns on verbose output.
+Show information for all currently installed packages.
+.It Fl c
+Show the one-line comment field for each package.
+.It Fl D
+Show the install-message file (if any) for each package.
+.It Fl d
+Show the long-description field for each package.
+.It Fl e Ar pkg-name
+If the package identified by
+.Ar pkg-name
+is currently installed, return 0, otherwise return 1.
+If the given pkg-name contains a
+shell metacharacter, it will be matched against all installed
+packages using
+.Xr fnmatch 3 ,
+and any packages found installed are printed to stdout, one name per
+line.
+.Xr csh 1
+style {,} alternates have also been implemented.
+Dewey decimal numbers can also be matched in a relational manner,
+using the
+.Pa >=, <=, >
+and
+.Pa <
+operators.
+For example,
+.Pa pkg_info -e 'name>=1.3'
+will match versions 1.3 and later of the
+.Pa name
+package.
+This printing can be turned off using the
+.Fl q
+option.
+This option
+allows you to test for the presence of another (perhaps
+prerequisite) package from a script.
+.It Fl f
+Show the packing list instructions for each package.
+.It Fl I
+Show the index entry for each package.
+.It Fl i
+Show the install script (if any) for each package.
+.It Fl k
+Show the de-install script (if any) for each package.
+.It Fl L
+Show the files within each package.  This is different from just
+viewing the packing list, since full pathnames for everything
+are generated.
+.It Fl l Ar str
+Prefix each information category header (see
+.Fl q )
+shown with
+.Ar str .
+This is primarily of use to front-end programs that want to request a
+lot of different information fields at once for a package, but don't
+necessary want the output intermingled in such a way that they can't
+organize it.  This lets you add a special token to the start of
+each field.
+.It Fl m
+Show the mtree file (if any) for each package.
 .It Fl p
 Show the installation prefix for each package.
 .It Fl q
 Be ``quiet'' in emitting report headers and such, just dump the
 raw info (basically, assume a non-human reading).
-.It Fl c
-Show the comment (one liner) field for each package.
-.It Fl d
-Show the long description field for each package.
-.It Fl D
-Show the install-message file for each package.
-.It Fl f
-Show the packing list instructions for each package.
-.It Fl i
-Show the install script (if any) for each package.
-.It Fl k
-Show the de-install script (if any) for each package.
+.It Fl R
+Show which packages are required by each package.
 .It Fl r
 Show the requirements script (if any) for each package.
-.It Fl m
-Show the mtree file (if any) for each package.
-.It Fl L
-Show the files within each package.  This is different from just
-viewing the packing list, since full pathnames for everything
-are generated.
-.It Fl e Ar pkg-name
-If the package identified by
+.It Fl v
+Turn on verbose output.
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width PKG_DBDIR
+.It Ev PKG_DBDIR
+The standard package database directory,
+.Pa /var/db/pkg ,
+can be overridden by specifying an alternative directory in the
+.Ev PKG_DBDIR
+environment variable.
+.It Ev PKG_PATH
+This can be used to specify a colon-separated list of paths to search for
+package files.  The current directory is always searched first, even if
+.Ev PKG_PATH
+is set.  If
+.Ev PKG_PATH
+is used, the suffix
+.Pa .tgz
+is automatically appended to the
+.Ar pkg-name ,
+whereas searching in the current directory uses
 .Ar pkg-name
-is currently installed, return 0, otherwise return 1.  This option
-allows you to easily test for the presence of another (perhaps
-prerequisite) package from a script.
-.It Fl l Ar str
-Prefix each information catagory header (see
-.Fl q )
-shown with
-.Ar str .
-This is primarily of use to front-end programs who want to request a
-lot of different information fields at once for a package, but don't
-necessary want the output intermingled in such a way that they can't
-organize it.  This lets you add a special token to the start of
-each field.
-.It Fl t Ar template
-Use
-.Ar template
-as the input to 
-.Xr mktemp 3 
-when creating a ``staging area.''
-By default, this is the string
-.Pa /tmp/instmp.XXXXXX ,
-but it may be necessary to override it in the situation where
-space in your
-.Pa /tmp
-directory is limited. Be sure to leave some number of `X' characters
-for
-.Xr mktemp 3
-to fill in with a unique ID.
-.Bd -filled -offset indent -compact
-Note:  This should really not be necessary with pkg_info,
-since very little information is extracted from each package
-and one would have to have a very small 
-.Pa /tmp
-indeed to overflow it.
-.Ed
+literally.
+.It Ev PKG_TMPDIR , Ev TMPDIR
+These are tried in turn (if set) as candidate directories in which
+to create a ``staging area'' for any files extracted by
+.Nm
+from package files.  If neither
+.Ev PKG_TMPDIR
+nor
+.Ev TMPDIR
+yields a suitable scratch directory,
+.Pa /var/tmp ,
+.Pa /tmp ,
+and
+.Pa /usr/tmp
+are tried in turn.  Note that
+.Pa /usr/tmp
+may be created, if it doesn't already exist.
+.Pp
+Since
+.Nm
+requires very little information to be extracted from any package
+files examined, it is unlikely that these environment variables would
+ever need to be used to work around limited available space in the
+default locations.
+.El
 .Sh TECHNICAL DETAILS
 Package info is either extracted from package files named on the
 command line, or from already installed package information

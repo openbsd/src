@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.5 1998/09/06 22:23:18 aaron Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.6 1998/09/07 22:30:14 marc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -22,7 +22,7 @@
 .Os
 .Sh NAME
 .Nm pkg_add
-.Nd a utility for installing software package distributions.
+.Nd a utility for installing software package distributions
 .Sh SYNOPSIS
 .Nm
 .Op Fl vInfRMS
@@ -65,33 +65,35 @@ command to examine the package file.
 .Ef
 
 .Sh OPTIONS
-The following command line arguments are supported.
+The following command line arguments are supported:
 .Bl -tag -width indent
 .It Ar pkg-name [... pkg-name]
 The named packages are installed.  A package name of - will cause
 .Nm
-to read from stdin.
+to read from stdin. If the packages are not found in the current
+working directory, 
+.Nm
+will search them in each directory named by
+.Ev PKG_PATH .
 .It Fl v
-Turns on verbose output.
-.Em "Optional."
+Turn on verbose output.
 .It Fl I
 If an installation script exists for a given package, do not execute it.
-.Em "Optional."
 .It Fl n
 Don't actually install a package, just report the steps that
 would be taken if it was.
-.Em "Optional."
 .It Fl R
 Do not record the installation of a package.  This means
 that you cannot deinstall it later, so only use this option if
 you know what you are doing!
-.Em "Optional."
 .It Fl f
-Forces installation to proceed even if prerequisite packages are not
-installed or the requirements script fails.
-.Em "Optional."
+Force installation to proceed even if prerequisite packages are not
+installed or the requirements script fails.  Although
+.Nm
+will still try to find and auto-install missing prerequisite packages,
+a failure to find one will not be fatal.
 .It Fl p Ar prefix
-Sets
+Set
 .Ar prefix
 as the directory in which to extract files from a package.
 If a package has set its default directory, it will be overridden
@@ -100,9 +102,10 @@ by this flag.  Note that only the first
 directive will be replaced, since
 .Nm
 has no way of knowing which directory settings are relative and
-which are absolute.  It is rare, in any case, to see more than one
-directory transition made, but when such is the case you
-may then wish to look into the use of the
+which are absolute.  It is rare in any case to see more than one
+directory transition made, but when such does happen and you wish
+to have control over *all* directory transitions, then you
+may then wish to look into the use of
 .Cm MASTER
 and
 .Cm SLAVE
@@ -111,7 +114,6 @@ modes (see the
 and
 .Fl S
 options).
-.Em "Optional."
 .It Fl t Ar template
 Use
 .Ar template
@@ -122,7 +124,7 @@ By default, this is the string
 .Pa /var/tmp/instmp.XXXXXX ,
 but it may be necessary to override it in the situation where
 space in your
-.Pa /tmp
+.Pa /var/tmp
 directory is limited.  Be sure to leave some number of `X' characters
 for
 .Xr mkdtemp 3
@@ -133,7 +135,6 @@ You can get a performance boost by setting the staging area
 to reside on the same disk partition as target directories for package
 file installation; often this is
 .Pa /usr .
-.Em "Optional."
 .It Fl M
 Run in
 .Cm MASTER
@@ -177,7 +178,6 @@ URL pointing at a file available on an ftp site.  Thus you may
 extract files directly from their anonymous ftp locations (e.g.
 .Nm
 ftp://ftp.freebsd.org/pub/FreeBSD/packages/shells/bash-1.14.4.tgz).
-.Pp
 Note:  If you wish to use
 .Bf -emphasis
 active mode
@@ -213,29 +213,42 @@ passive mode
 .Ef
 connection.
 .Sh TECHNICAL DETAILS
-.Nm
-is fairly simple.  It extracts each packages' "packing list"
-into a special staging directory in /tmp (or $PKG_TMPDIR), parses it,
-then runs through the following sequence to fully extract the contents:
+.Nm 
+extracts each package's "packing list"
+into a special staging directory in /tmp (or $PKG_TMPDIR if set)
+and then runs through the following sequence to fully extract the contents
+of the package:
 .Bl -enum -indent indent
 .It
-Check if the package is already recorded as installed.  If so,
-terminate installation.
+A check is made to determine if the package is already recorded as installed.
+If it is,
+installation is terminated.
 .It
-Scan all the package dependencies (from
+A check is made to determine if the package conflicts (from
+.Cm @pkgcfl
+directives, see
+.Xr pkg_create 1 )
+with an already recorded as installed package. If it is,
+installation is terminated.
+.It
+All package dependencies (from
 .Cm @pkgdep
 directives, see
 .Xr pkg_create 1 )
-and make sure each one is met. If not, print the missing dependencies and
-terminate the installation.
+are read from the packing list.
+If any of these required packages is not currently installed,
+an attempt is made to find and install it;
+if the missing package cannot be found or installed,
+the installation is terminated.
 .It
-Search for any
+A search is made for any
 .Cm @option
 directives which control how the package is added to the system.
-At the time of this writing, the only currently implemented option is
-.Cm @option extract-in-place
-which will cause the package to be extracted direcly into its
-prefix directory without moving through a staging area in /tmp.
+The only currently implemented option is
+.Cm @option extract-in-place ,
+which causes the package to be extracted directly into its
+prefix directory rather than moving it through a staging area in
+.Pa /tmp .
 .It
 If
 .Cm @option extract-in-place
@@ -244,46 +257,48 @@ final location, otherwise it is extracted into the staging area.
 .It
 If the package contains a
 .Ar require
-file (see 
+script (see 
 .Xr pkg_create 1 ),
-then execute it with the following arguments:
-.Bd -filled -offset indent -compact
-.Ar <pkg-name>
-.Ar INSTALL
-.Ed
-where
-.Ar <pkg-name>
-is the name of the package in question and
-.Ar INSTALL
-is simply a keyword denoting that this is an installation requirements check.
+it is executed with the following arguments:
+.Bl -tag -width indentindent
+.It Ar pkg-name
+The name of the package being installed
+.It Cm INSTALL
+Keyword denoting to the script that it is to run an installation requirements
+check.
+(The keyword is useful only to scripts which serve multiple functions).
+.El
+.Pp
+If the
+.Ar require
+script exits with a non-zero status code, the installation is terminated.
 .It
-If an
+If the package contains an
 .Ar install
-script exists for the package, it is then executed with the following arguments:
-.Bd -filled -offset indent -compact
-.Ar <pkg-name>
-.Ar PRE-INSTALL 
-.Ed
-where
-.Ar <pkg-name>
-is the name of the package in question and
-.Ar PRE-INSTALL
-is a keyword denoting that this is the preinstallation phase.
+script, it is executed with the following arguments:
+.Bl -tag -width indentindent
+.It Ar pkg-name
+The name of the package being installed.
+.It Cm PRE-INSTALL
+Keyword denoting that the script is to perform any actions needed before
+the package is installed.
+.El
+.Pp
+If the
+.Ar install
+script exits with a non-zero status code, the installation is terminated.
 .It
 If
 .Cm @option extract-in-place
-is not used, then the packing list (this is the
-.Pa +CONTENTS
-file) is now used as a guide for moving (or copying, as necessary) files from
+is not present in the packing list,
+then it is used as a guide for moving (or copying, as necessary) files from
 the staging area into their final locations.
 .It
 If the package contains an
 .Ar mtreefile
-file (see the
-.Fl m
-option to
+file (see
 .Xr pkg_create 1 ),
-then mtree is invoked as
+then mtree is invoked as:
 .Bd -filled -offset indent -compact
 .Cm mtree
 .Fl u 
@@ -306,15 +321,14 @@ directive within this package.
 .It
 If an
 .Ar install
-script exists for the package, it is then executed as 
-.Bd -filled -offset indent -compact
-.Cm <script>
-.Ar <pkg-name>
-.Ar POST-INSTALL 
-.Ed
-This all allows you to write a single
-.Ar install
-script that does both ``before and after'' actions.
+script exists for the package, it is executed with the following arguments:
+.Bl -tag -width indentindent
+.It Ar pkg_name
+The name of the package being installed.
+.It Cm POST-INSTALL
+Keyword denoting that the script is to perform any actions needed
+after the package has been installed.
+.El
 .It
 After installation is complete, a copy of the packing list,
 .Ar deinstall
@@ -332,7 +346,11 @@ path shown above).
 Finally, the staging area is deleted and the program terminates.
 .El
 .Pp
-All the scripts are called with the environment variable
+The
+.Ar install
+and
+.Ar require
+scripts are called with the environment variable
 .Ev PKG_PREFIX
 set to the installation prefix (see the
 .Fl p
@@ -342,20 +360,33 @@ is installed, even if the user might change it with the
 .Fl p
 flag to
 .Cm pkg_add .
+.Sh ENVIRONMENT
+.Ss PKG_PATH
+The value of the
+.Ev PKG_PATH
+is used if a given package can't be found, it's usually set to
+.Pa /usr/pkgsrc/packages/All .
+The environment variable
+should be a series of entries seperated by colons.  Each entry
+consists of a directory name. The current directory may be indicated
+implicitly by an empty directory name, or explicitly by a single
+period.
+.Ss PKG_DBDIR
+Where to register packages instead of
+.Pa /var/db/pkg .
 .Sh SEE ALSO
-.Xr ftp 1 ,
+.Xr pkg_create 1 ,
+.Xr pkg_delete 1 ,
 .Xr pkg_info 1 ,
 .Xr mkdtemp 3 ,
 .Xr sysconf 3 ,
-.Xr mtree 8 ,
-.Xr pkg_create 1 ,
-.Xr pkg_delete 1 .
+.Xr mtree 8
 .Sh AUTHORS
 .Bl -tag -width indent -compact
 .It "Jordan Hubbard"
-most of the work
+Initial work and ongoing development.
 .It "John Kohl"
-refined it for NetBSD
+NetBSD refinements.
 .El
 .Sh BUGS
 Hard links between files in a distribution are only preserved if either

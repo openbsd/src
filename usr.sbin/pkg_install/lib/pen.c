@@ -1,7 +1,7 @@
-/*	$OpenBSD: pen.c,v 1.6 1998/04/25 05:09:07 millert Exp $	*/
+/*	$OpenBSD: pen.c,v 1.7 1998/09/07 22:30:17 marc Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: pen.c,v 1.6 1998/04/25 05:09:07 millert Exp $";
+static const char *rcsid = "$OpenBSD: pen.c,v 1.7 1998/09/07 22:30:17 marc Exp $";
 #endif
 
 /*
@@ -24,6 +24,7 @@ static const char *rcsid = "$OpenBSD: pen.c,v 1.6 1998/04/25 05:09:07 millert Ex
  *
  */
 
+#include <err.h>
 #include "lib.h"
 #include <sys/signal.h>
 #include <sys/param.h>
@@ -59,9 +60,11 @@ find_play_pen(char *pen, size_t sz)
     else if ((stat("/usr/tmp", &sb) == SUCCESS || mkdir("/usr/tmp", 01777) == SUCCESS) && min_free("/usr/tmp") >= sz)
 	strcpy(pen, "/usr/tmp/instmp.XXXXXXXXXX");
     else {
-	barf("Can't find enough temporary space to extract the files, please set\n"
-	     "your PKG_TMPDIR environment variable to a location with at least %d bytes\n"
-	     "free.", sz);
+	cleanup(0);
+	errx(2,
+"can't find enough temporary space to extract the files, please set your\n"
+"PKG_TMPDIR environment variable to a location with at least %lu bytes\n"
+"free", (u_long)sz);
 	return NULL;
     }
     return pen;
@@ -74,29 +77,27 @@ find_play_pen(char *pen, size_t sz)
 char *
 make_playpen(char *pen, size_t sz)
 {
+    if (!find_play_pen(pen, sz))
+	return NULL;
 
-    if (!find_play_pen(pen, sz)) {
-	return NULL;
-    }
     if (!mkdtemp(pen)) {
-	barf("Can't mkdtemp '%s'.", pen);
-	return NULL;
+	cleanup(0);
+	errx(2, "can't mkdtemp '%s'", pen);
     }
     if (chmod(pen, 0755) == FAIL) {
-	barf("Can't chmod 0755 '%s'.", pen);
-	return NULL;
+	cleanup(0);
+	errx(2, "can't chmod '%s'", pen);
     }
-
     if (Verbose) {
 	if (sz)
-	    fprintf(stderr, "Requested space: %d bytes, free space: %d bytes in %s\n", (int)sz, min_free(pen), pen);
+	    fprintf(stderr, "Requested space: %lu bytes, free space: %qd bytes in %s\n", (u_long)sz, (long long)min_free(pen), pen);
     }
     if (min_free(pen) < sz) {
 	rmdir(pen);
-	barf("Not enough free space to create: `%s'\n"
+	cleanup(0);
+	errx(2, "not enough free space to create '%s'.\n"
 	     "Please set your PKG_TMPDIR environment variable to a location\n"
-	     "with more space and\ntry the command again.", pen);
-        return NULL;
+	     "with more space and\ntry the command again", pen);
     }
     if (Current[0])
 	strcpy(Previous, Current);
@@ -104,8 +105,10 @@ make_playpen(char *pen, size_t sz)
 	upchuck("getcwd");
 	return NULL;
     }
-    if (chdir(pen) == FAIL)
-	barf("Can't chdir to '%s'.", pen);
+    if (chdir(pen) == FAIL) {
+	cleanup(0);
+	errx(2, "can't chdir to '%s'", pen);
+    }
     strcpy(Current, pen);
     return Previous;
 }
@@ -118,11 +121,16 @@ leave_playpen(char *save)
 
     /* Don't interrupt while we're cleaning up */
     oldsig = signal(SIGINT, SIG_IGN);
-    if (Previous[0] && chdir(Previous) == FAIL)
-	barf("Can't chdir back to '%s'.", Previous);
-    else if (Current[0] && strcmp(Current, Previous)) {
+    if (Previous[0] && chdir(Previous) == FAIL) {
+	cleanup(0);
+	errx(2, "can't chdir back to '%s'", Previous);
+    } else if (Current[0] && strcmp(Current, Previous)) {
+        if (strcmp(Current,"/")==0) {
+            fprintf(stderr,"PANIC: About to rm -rf / (not doing so, aborting)\n");
+            abort();
+        }
 	if (vsystem("rm -rf %s", Current))
-	    whinge("Couldn't remove temporary dir '%s'", Current);
+	    warnx("couldn't remove temporary dir '%s'", Current);
 	strcpy(Current, Previous);
     }
     if (save)
@@ -132,14 +140,14 @@ leave_playpen(char *save)
     signal(SIGINT, oldsig);
 }
 
-size_t
+off_t
 min_free(char *tmpdir)
 {
     struct statfs buf;
 
     if (statfs(tmpdir, &buf) != 0) {
-	perror("Error in statfs");
+	warn("statfs");
 	return -1;
     }
-    return buf.f_bavail * buf.f_bsize;
+    return (off_t)buf.f_bavail * (off_t)buf.f_bsize;
 }

@@ -1,7 +1,7 @@
-/*	$OpenBSD: msg.c,v 1.2 1996/06/04 08:43:44 niklas Exp $	*/
+/*	$OpenBSD: msg.c,v 1.3 1998/09/07 22:30:17 marc Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: msg.c,v 1.2 1996/06/04 08:43:44 niklas Exp $";
+static const char *rcsid = "$OpenBSD: msg.c,v 1.3 1998/09/07 22:30:17 marc Exp $";
 #endif
 
 /*
@@ -25,42 +25,15 @@ static const char *rcsid = "$OpenBSD: msg.c,v 1.2 1996/06/04 08:43:44 niklas Exp
  *
  */
 
+#include <err.h>
 #include "lib.h"
 
 /* Die a relatively simple death */
 void
-upchuck(const char *err)
+upchuck(const char *errstr)
 {
-    fprintf(stderr, "Fatal error during execution: ");
-    perror(err);
     cleanup(0);
-    exit(1);
-}
-
-/* Die a more complex death */
-void
-barf(const char *err, ...)
-{
-    va_list args;
-
-    va_start(args, err);
-    vfprintf(stderr, err, args);
-    fputc('\n', stderr);
-    va_end(args);
-    cleanup(0);
-    exit(2);
-}
-
-/* Get annoyed about something but don't go to pieces over it */
-void
-whinge(const char *err, ...)
-{
-    va_list args;
-
-    va_start(args, err);
-    vfprintf(stderr, err, args);
-    fputc('\n', stderr);
-    va_end(args);
+    err(1, "fatal error during execution: %s", errstr);
 }
 
 /*
@@ -80,8 +53,10 @@ y_or_n(Boolean def, const char *msg, ...)
      * collected on stdin
      */
     tty = fopen("/dev/tty", "r");
-    if (!tty)
-	barf("Can't open /dev/tty!\n");
+    if (!tty) {
+	cleanup(0);
+	errx(1, "can't open /dev/tty!");
+    }
     while (ch != 'Y' && ch != 'N') {
 	vfprintf(stderr, msg, args);
 	if (def)

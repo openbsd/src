@@ -1,7 +1,7 @@
-/*	$OpenBSD: futil.c,v 1.3 1997/01/17 07:14:11 millert Exp $	*/
+/*	$OpenBSD: futil.c,v 1.4 1998/09/07 22:30:13 marc Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: futil.c,v 1.3 1997/01/17 07:14:11 millert Exp $";
+static const char *rcsid = "$OpenBSD: futil.c,v 1.4 1998/09/07 22:30:13 marc Exp $";
 #endif
 
 /*
@@ -24,6 +24,7 @@ static const char *rcsid = "$OpenBSD: futil.c,v 1.3 1997/01/17 07:14:11 millert 
  *
  */
 
+#include <err.h>
 #include "lib.h"
 #include "add.h"
 
@@ -45,7 +46,7 @@ make_hierarchy(char *dir)
 	if ((cp2 = strchr(cp1, '/')) !=NULL )
 	    *cp2 = '\0';
 	if (fexists(dir)) {
-	    if (!isdir(dir))
+	    if (!(isdir(dir) || islinktodir(dir)))
 		return FAIL;
 	}
 	else {
@@ -75,22 +76,19 @@ apply_perms(char *dir, char *arg)
 
     if (Mode)
 	if (vsystem("cd %s && chmod -R %s %s", cd_to, Mode, arg))
-	    whinge("Couldn't change modes of '%s' to '%s'.",
-		   arg, Mode);
+	    warnx("couldn't change modes of '%s' to '%s'", arg, Mode);
     if (Owner && Group) {
 	if (vsystem("cd %s && chown -R %s.%s %s", cd_to, Owner, Group, arg))
-	    whinge("Couldn't change owner/group of '%s' to '%s.%s'.",
+	    warnx("couldn't change owner/group of '%s' to '%s.%s'",
 		   arg, Owner, Group);
 	return;
     }
     if (Owner) {
 	if (vsystem("cd %s && chown -R %s %s", cd_to, Owner, arg))
-	    whinge("Couldn't change owner of '%s' to '%s'.",
-		   arg, Owner);
+	    warnx("couldn't change owner of '%s' to '%s'", arg, Owner);
 	return;
     } else if (Group)
 	if (vsystem("cd %s && chgrp -R %s %s", cd_to, Group, arg))
-	    whinge("Couldn't change group of '%s' to '%s'.",
-		   arg, Group);
+	    warnx("couldn't change group of '%s' to '%s'", arg, Group);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: lib.h,v 1.1 1996/06/04 07:56:13 niklas Exp $ */
+/* $OpenBSD: lib.h,v 1.2 1998/09/07 22:30:16 marc Exp $ */
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -24,16 +24,17 @@
 #define _INST_LIB_LIB_H_
 
 /* Includes */
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/file.h>
+
+#include <ctype.h>
+#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
-#include <ctype.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/file.h>
 
 /* Macros */
 #define SUCCESS	(0)
@@ -62,27 +63,27 @@
 #define PKG_DBDIR		"PKG_DBDIR"
 
 /* The names of our "special" files */
-#define CONTENTS_FNAME	"+CONTENTS"
-#define COMMENT_FNAME	"+COMMENT"
-#define DESC_FNAME	"+DESC"
-#define INSTALL_FNAME	"+INSTALL"
-#define DEINSTALL_FNAME	"+DEINSTALL"
-#define REQUIRE_FNAME	"+REQUIRE"
+#define CONTENTS_FNAME		"+CONTENTS"
+#define COMMENT_FNAME		"+COMMENT"
+#define DESC_FNAME		"+DESC"
+#define INSTALL_FNAME		"+INSTALL"
+#define DEINSTALL_FNAME		"+DEINSTALL"
+#define REQUIRE_FNAME		"+REQUIRE"
 #define REQUIRED_BY_FNAME	"+REQUIRED_BY"
-#define DISPLAY_FNAME	"+DISPLAY"
-#define MTREE_FNAME	"+MTREE_DIRS"
+#define DISPLAY_FNAME		"+DISPLAY"
+#define MTREE_FNAME		"+MTREE_DIRS"
 
-#define CMD_CHAR	'@'	/* prefix for extended PLIST cmd */
+#define CMD_CHAR		'@'	/* prefix for extended PLIST cmd */
 
 /* The name of the "prefix" environment variable given to scripts */
 #define PKG_PREFIX_VNAME	"PKG_PREFIX"
 
 enum _plist_t {
     PLIST_FILE, PLIST_CWD, PLIST_CMD, PLIST_CHMOD,
-    PLIST_CHOWN, PLIST_CHGRP, PLIST_COMMENT,
-    PLIST_IGNORE, PLIST_NAME, PLIST_UNEXEC, PLIST_SRC, PLIST_DISPLAY,
+    PLIST_CHOWN, PLIST_CHGRP, PLIST_COMMENT, PLIST_IGNORE,
+    PLIST_NAME, PLIST_UNEXEC, PLIST_SRC, PLIST_DISPLAY,
     PLIST_PKGDEP, PLIST_MTREE, PLIST_DIR_RM, PLIST_IGNORE_INST,
-    PLIST_OPTION
+    PLIST_OPTION, PLIST_PKGCFL
 };
 typedef enum _plist_t plist_t;
 
@@ -109,7 +110,7 @@ void		cleanup(int);
 char		*make_playpen(char *, size_t);
 char		*where_playpen(void);
 void		leave_playpen(char *);
-size_t		min_free(char *);
+off_t		min_free(char *);
 
 /* String */
 char 		*get_dash_string(char **);
@@ -123,6 +124,9 @@ char		*strconcat(char *, char *);
 /* File */
 Boolean		fexists(char *);
 Boolean		isdir(char *);
+Boolean		islinktodir(char *);
+Boolean		isemptydir(char *fname);
+Boolean		isemptyfile(char *fname);
 Boolean         isfile(char *);
 Boolean		isempty(char *);
 Boolean		isURL(char *);
@@ -131,6 +135,7 @@ char		*fileURLFilename(char *, char *, int);
 char		*fileURLHost(char *, char *, int);
 char		*fileFindByPath(char *, char *);
 char		*fileGetContents(char *);
+Boolean		make_preserve_name(char *, int, char *, char *);
 void		write_file(char *, char *);
 void		copy_file(char *, char *, char *);
 void		move_file(char *, char *, char *);
@@ -156,18 +161,19 @@ void		mark_plist(Package *);
 void		csum_plist_entry(char *, PackingList);
 void		add_plist(Package *, plist_t, char *);
 void		add_plist_top(Package *, plist_t, char *);
+void		delete_plist(Package *pkg, Boolean all, plist_t type, char *name);
 void		write_plist(Package *, FILE *);
 void		read_plist(Package *, FILE *);
 int		plist_cmd(char *, char **);
 int		delete_package(Boolean, Boolean, Package *);
 
 /* For all */
-void		usage(const char *, const char *, ...);
 int		pkg_perform(char **);
 
 /* Externs */
 extern Boolean	Verbose;
 extern Boolean	Fake;
+extern Boolean  Force;
 extern int	AutoAnswer;
 
 #endif /* _INST_LIB_LIB_H_ */

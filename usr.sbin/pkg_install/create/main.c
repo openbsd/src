@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.6 1998/04/07 04:17:49 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1998/09/07 22:30:14 marc Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: main.c,v 1.6 1998/04/07 04:17:49 deraadt Exp $";
+static const char *rcsid = "$OpenBSD: main.c,v 1.7 1998/09/07 22:30:14 marc Exp $";
 #endif
 
 /*
@@ -15,32 +15,36 @@ static const char *rcsid = "$OpenBSD: main.c,v 1.6 1998/04/07 04:17:49 deraadt E
  *
  */
 
+#include <err.h>
 #include "lib.h"
 #include "create.h"
 
-static char Options[] = "YNOhvf:p:P:c:d:i:k:r:t:X:D:m:";
+static char Options[] = "YNOhvf:p:P:C:c:d:i:k:r:t:X:D:m:s:";
 
 char	*Prefix		= NULL;
 char	*Comment        = NULL;
 char	*Desc		= NULL;
+char	*SrcDir		= NULL;
 char	*Display	= NULL;
 char	*Install	= NULL;
 char	*DeInstall	= NULL;
 char	*Contents	= NULL;
 char	*Require	= NULL;
-char	PlayPen[FILENAME_MAX];
 char	*ExcludeFrom	= NULL;
 char	*Mtree		= NULL;
 char	*Pkgdeps	= NULL;
+char	*Pkgcfl		= NULL;
+char	PlayPen[FILENAME_MAX];
 int	Dereference	= 0;
 int	PlistOnly	= 0;
+
+static void usage __P((void));
 
 int
 main(int argc, char **argv)
 {
     int ch;
     char **pkgs, **start;
-    char *prog_name = argv[0];
 
     pkgs = start = argv;
     while ((ch = getopt(argc, argv, Options)) != -1)
@@ -63,6 +67,10 @@ main(int argc, char **argv)
 
 	case 'p':
 	    Prefix = optarg;
+	    break;
+
+	case 's':
+	    SrcDir = optarg;
 	    break;
 
 	case 'f':
@@ -117,9 +125,13 @@ main(int argc, char **argv)
 	    Pkgdeps = optarg;
 	    break;
 
+	case 'C':
+		Pkgcfl = optarg;
+		break;
+
 	case '?':
 	default:
-	    usage(prog_name, NULL);
+	    usage();
 	    break;
 	}
 
@@ -132,36 +144,27 @@ main(int argc, char **argv)
 
     /* If no packages, yelp */
     if (pkgs == start)
-	usage(prog_name, "Missing package name");
+	warnx("missing package name"), usage();
     *pkgs = NULL;
     if (start[1])
-	usage(prog_name, "Only one package name allowed\n\t('%s' extraneous)",
-	      start[1]);
+	warnx("only one package name allowed ('%s' extraneous)", start[1]),
+	usage();
     if (!pkg_perform(start)) {
 	if (Verbose)
-	    fprintf(stderr, "Package creation failed.\n");
+	    warnx("package creation failed");
 	return 1;
     }
     else
 	return 0;
 }
 
-void
-usage(const char *name, const char *fmt, ...)
+static void
+usage()
 {
-    va_list args;
-
-    va_start(args, fmt);
-    if (fmt) {
-	fprintf(stderr, "%s: ", name);
-	vfprintf(stderr, fmt, args);
-	fprintf(stderr, "\n");
-    }
-    va_end(args);
-    fprintf(stderr,
-	"usage: %s [-YNOhv] [-P pkgs] [-p prefix] [-f contents] [-i iscript]\n"
-	"       [-k dscript] [-r rscript] [-t template] [-X excludefile]\n"
-	"       [-D displayfile] [-m mtreefile] -d description -f packlist] pkg\n",
-	name);
+    fprintf(stderr, "%s\n%s\n%s\n%s\n",
+"usage: pkg_create [-YNOhv] [-P dpkgs] [-C cpkgs] [-p prefix] [-f contents]",
+"                  [-i iscript] [-k dscript] [-r rscript] [-t template]",
+"                  [-X excludefile] [-D displayfile] [-m mtreefile]",
+"                  -c comment -d description -f packlist pkg-name");
     exit(1);
 }

@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.5 1998/04/07 07:11:33 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.6 1998/09/07 22:30:16 marc Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: file.c,v 1.5 1998/04/07 07:11:33 deraadt Exp $";
+static const char *rcsid = "$OpenBSD: file.c,v 1.6 1998/09/07 22:30:16 marc Exp $";
 #endif
 
 /*
@@ -25,9 +25,16 @@ static const char *rcsid = "$OpenBSD: file.c,v 1.5 1998/04/07 07:11:33 deraadt E
  */
 
 #include "lib.h"
-#include "ftp.h"
+
+#include <sys/wait.h>
+
+#include <err.h>
+#include <netdb.h>
 #include <pwd.h>
 #include <time.h>
+
+FILE *
+ftpGetURL(char *url, char *user, char *passwd, int *retcode);
 
 /* Quick check to see if a file exists */
 Boolean
@@ -45,17 +52,32 @@ isdir(char *fname)
 {
     struct stat sb;
 
-    if (stat(fname, &sb) != FAIL && S_ISDIR(sb.st_mode))
+    if (lstat(fname, &sb) != FAIL && S_ISDIR(sb.st_mode))
 	return TRUE;
     else
 	return FALSE;
+}
+
+/* Check if something is a link to a directory */
+Boolean
+islinktodir(char *fname)
+{
+    struct stat sb;
+
+    if (lstat(fname, &sb) != FAIL && S_ISLNK(sb.st_mode))
+        if (stat(fname, &sb) != FAIL && S_ISDIR(sb.st_mode))
+	    return TRUE; /* link to dir! */
+        else
+	    return FALSE; /* link to non-dir */
+    else
+        return FALSE;  /* non-link */
 }
 
 /* Check to see if file is a dir, and is empty */
 Boolean
 isemptydir(char *fname)
 {
-    if (isdir(fname)) {
+    if (isdir(fname) || islinktodir(fname)) {
 	DIR *dirp;
 	struct dirent *dp;
 
@@ -125,7 +147,7 @@ fileURLHost(char *fname, char *where, int max)
     /* Don't ever call this on a bad URL! */
     fname += strlen("ftp://");
     /* Do we have a place to stick our work? */
-    if (ret = where) {
+    if ((ret = where) != NULL) {
 	while (*fname && *fname != '/' && max--)
 	    *where++ = *fname++;
 	*where = '\0';
@@ -150,7 +172,7 @@ fileURLFilename(char *fname, char *where, int max)
     /* Don't ever call this on a bad URL! */
     fname += strlen("ftp://");
     /* Do we have a place to stick our work? */
-    if (ret = where) {
+    if ((ret = where) != NULL) {
 	while (*fname && *fname != '/')
 	    ++fname;
 	if (*fname == '/') {
@@ -166,7 +188,6 @@ fileURLFilename(char *fname, char *where, int max)
     return fname;
 }
 
-#define HOSTNAME_MAX	64
 /*
  * Try and fetch a file by URL, returning the directory name for where
  * it's unpacked, if successful.
@@ -174,24 +195,20 @@ fileURLFilename(char *fname, char *where, int max)
 char *
 fileGetURL(char *base, char *spec)
 {
-    char host[HOSTNAME_MAX], file[FILENAME_MAX], dir[FILENAME_MAX];
-    char pword[HOSTNAME_MAX + 40], *uname, *cp, *rp, *tmp;
+    char host[MAXHOSTNAMELEN], file[FILENAME_MAX];
+    char pword[MAXHOSTNAMELEN + 40], *uname, *cp, *rp;
     char fname[FILENAME_MAX];
     char pen[FILENAME_MAX];
     struct passwd *pw;
-    FTP_t ftp;
+    FILE *ftp;
     pid_t tpid;
-    int fd, fd2, i, len = 0;
-    char ch;
-    time_t start, stop;
+    int i, status;
     char *hint;
 
     rp = NULL;
     /* Special tip that sysinstall left for us */
     hint = getenv("PKG_ADD_BASE");
     if (!isURL(spec)) {
-	int len;
-
 	if (!base && !hint)
 	    return NULL;
 	/* We've been given an existing URL (that's known-good) and now we need
@@ -209,6 +226,7 @@ fileGetURL(char *base, char *spec)
 		*(cp + 1) = '\0';
 		strcat(cp, "All/");
 		strcat(cp, spec);
+		strcat(cp, ".tgz");
 	    }
 	    else
 		return NULL;
@@ -221,16 +239,15 @@ fileGetURL(char *base, char *spec)
     }
     else
 	strcpy(fname, spec);
-    ftp = FtpInit();
-    cp = fileURLHost(fname, host, HOSTNAME_MAX);
+    cp = fileURLHost(fname, host, MAXHOSTNAMELEN);
     if (!*cp) {
-	whinge("URL `%s' has bad host part!", fname);
+	warnx("URL `%s' has bad host part!", fname);
 	return NULL;
     }
 
     cp = fileURLFilename(fname, file, FILENAME_MAX);
     if (!*cp) {
-	whinge("URL `%s' has bad filename part!", fname);
+	warnx("URL `%s' has bad filename part!", fname);
 	return NULL;
     }
 
@@ -240,59 +257,49 @@ fileGetURL(char *base, char *spec)
     /* Make up a convincing "password" */
     pw = getpwuid(getuid());
     if (!pw) {
-	whinge("Can't get user name for ID %d\n.", getuid());
+	warnx("can't get user name for ID %d", getuid());
 	strcpy(pword, "joe@");
     }
-    else
-	snprintf(pword, HOSTNAME_MAX + 40, "%s@%s", pw->pw_name, host);
+    else {
+	char me[MAXHOSTNAMELEN + 1];
 
-    if (Verbose)
-	printf("Trying to log into %s as %s.\n", host, uname);
-    FtpOpen(ftp, host, uname, pword);
-    if (getenv("FTP_ACTIVE_MODE") == NULL)
-	FtpPassive(ftp, TRUE);
-
-    strcpy(dir, file);
-    for (i = strlen(dir); i && dir[i] != '/'; i--);
-    dir[i] = '\0';
-
-    if (dir[0]) {
-	if (Verbose) printf("FTP: chdir to %s\n", dir);
-	FtpChdir(ftp, dir);
+	gethostname(me, sizeof me);
+	me[sizeof(me) - 1] = '\0';
+	snprintf(pword, sizeof pword, "%s@%s", pw->pw_name, me);
     }
-    FtpBinary(ftp, TRUE);
-    if (Verbose) printf("FTP: trying to get %s\n", basename_of(file));
-    tmp = basename_of(file);
-    if (!strstr(tmp, ".tgz"))
-	tmp = strconcat(tmp, ".tgz");
-    fd = FtpGet(ftp, tmp);
-    if (fd >= 0) {
+    if (Verbose)
+	printf("Trying to fetch %s.\n", fname);
+    ftp = ftpGetURL(fname, uname, pword, &status);
+    if (ftp) {
 	pen[0] = '\0';
-	if (rp = make_playpen(pen, 0)) {
+	if ((rp = make_playpen(pen, 0)) != NULL) {
+            rp=pen; /* XXX - pen is dynamic; make static? */
 	    if (Verbose)
 		printf("Extracting from FTP connection into %s\n", pen);
 	    tpid = fork();
 	    if (!tpid) {
-		dup2(fd, 0);
+		dup2(fileno(ftp), 0);
 		i = execl("/bin/tar", "tar", Verbose ? "-xzvf" : "-xzf", "-", 0);
-		if (Verbose)
-		    printf("tar command returns %d status\n", i);
 		exit(i);
 	    }
 	    else {
 		int pstat;
 
-		close(fd);
+		fclose(ftp);
 		tpid = waitpid(tpid, &pstat, 0);
+		if (Verbose)
+		    printf("tar command returns %d status\n", WEXITSTATUS(pstat));
 	    }
 	}
 	else
 	    printf("Error: Unable to construct a new playpen for FTP!\n");
+	fclose(ftp);
     }
     else
-	printf("Error: FTP Unable to get %s\n", basename_of(file));
-    FtpEOF(ftp);
-    FtpClose(ftp);
+	printf("Error: FTP Unable to get %s: %s\n",
+	       fname,
+	       status ? "Error while performing FTP" :
+	       hstrerror(h_errno));
     return rp;
 }
 
@@ -309,15 +316,16 @@ fileFindByPath(char *base, char *fname)
     if (base) {
 	strcpy(tmp, base);
 
-	cp = strrchr(fname, '/');
+	cp = strrchr(tmp, '/');
 	if (cp) {
 	    *cp = '\0';	/* chop name */
-	    cp = strrchr(fname, '/');
+	    cp = strrchr(tmp, '/');
 	}
 	if (cp) {
 	    *(cp + 1) = '\0';
 	    strcat(cp, "All/");
 	    strcat(cp, fname);
+	    strcat(cp, ".tgz");
 	    if (fexists(tmp))
 		return tmp;
 	}
@@ -341,18 +349,59 @@ fileGetContents(char *fname)
     struct stat sb;
     int fd;
 
-    if (stat(fname, &sb) == FAIL)
-	barf("Can't stat '%s'.", fname);
+    if (stat(fname, &sb) == FAIL) {
+	cleanup(0);
+	errx(2, "can't stat '%s'", fname);
+    }
 
     contents = (char *)malloc(sb.st_size + 1);
     fd = open(fname, O_RDONLY, 0);
-    if (fd == FAIL)
-	barf("Unable to open '%s' for reading.", fname);
-    if (read(fd, contents, sb.st_size) != sb.st_size)
-	barf("Short read on '%s' - did not get %qd bytes.", fname, sb.st_size);
+    if (fd == FAIL) {
+	cleanup(0);
+	errx(2, "unable to open '%s' for reading", fname);
+    }
+    if (read(fd, contents, sb.st_size) != sb.st_size) {
+	cleanup(0);
+	errx(2, "short read on '%s' - did not get %qd bytes",
+			fname, (long long)sb.st_size);
+    }
     close(fd);
     contents[sb.st_size] = '\0';
     return contents;
+}
+
+/* Takes a filename and package name, returning (in "try") the canonical "preserve"
+ * name for it.
+ */
+Boolean
+make_preserve_name(char *try, int max, char *name, char *file)
+{
+    int len, i;
+
+    if ((len = strlen(file)) == 0)
+	return FALSE;
+    else
+	i = len - 1;
+    strncpy(try, file, max);
+    if (try[i] == '/') /* Catch trailing slash early and save checking in the loop */
+	--i;
+    for (; i; i--) {
+	if (try[i] == '/') {
+	    try[i + 1]= '.';
+	    strncpy(&try[i + 2], &file[i + 1], max - i - 2);
+	    break;
+	}
+    }
+    if (!i) {
+	try[0] = '.';
+	strncpy(try + 1, file, max - 1);
+    }
+    /* I should probably be called rude names for these inline assignments */
+    strncat(try, ".",  max -= strlen(try));
+    strncat(try, name, max -= strlen(name));
+    strncat(try, ".",  max--);
+    strncat(try, "backup", max -= 6);
+    return TRUE;
 }
 
 /* Write the contents of "str" to a file */
@@ -363,13 +412,20 @@ write_file(char *name, char *str)
     int len;
 
     fp = fopen(name, "w");
-    if (!fp)
-	barf("Can't fopen '%s' for writing.", name);
+    if (!fp) {
+	cleanup(0);
+	errx(2, "cannot fopen '%s' for writing", name);
+    }
     len = strlen(str);
-    if (fwrite(str, 1, len, fp) != len)
-	barf("Short fwrite on '%s', tried to write %d bytes.", name, len);
-    if (fclose(fp))
-	barf("failure to fclose '%s'.", name);
+    if (fwrite(str, 1, len, fp) != len) {
+	cleanup(0);
+	errx(2, "short fwrite on '%s', tried to write %d bytes",
+			name, len);
+    }
+    if (fclose(fp)) {
+	cleanup(0);
+	errx(2, "failure to fclose '%s'", name);
+    }
 }
 
 void
@@ -381,8 +437,10 @@ copy_file(char *dir, char *fname, char *to)
 	snprintf(cmd, FILENAME_MAX, "cp -p -r %s %s", fname, to);
     else
 	snprintf(cmd, FILENAME_MAX, "cp -p -r %s/%s %s", dir, fname, to);
-    if (vsystem(cmd))
-	barf("Couldn't perform '%s'", cmd);
+    if (vsystem(cmd)) {
+	cleanup(0);
+	errx(2, "could not perform '%s'", cmd);
+    }
 }
 
 void
@@ -394,8 +452,10 @@ move_file(char *dir, char *fname, char *to)
 	snprintf(cmd, FILENAME_MAX, "mv %s %s", fname, to);
     else
 	snprintf(cmd, FILENAME_MAX, "mv %s/%s %s", dir, fname, to);
-    if (vsystem(cmd))
-	barf("Couldn't perform '%s'", cmd);
+    if (vsystem(cmd)) {
+	cleanup(0);
+	errx(2, "could not perform '%s'", cmd);
+    }
 }
 
 /*
@@ -424,8 +484,10 @@ copy_hierarchy(char *dir, char *fname, Boolean to)
 #ifdef DEBUG
     printf("Using '%s' to copy trees.\n", cmd);
 #endif
-    if (system(cmd))
-	barf("copy_file: Couldn't perform '%s'", cmd);
+    if (system(cmd)) {
+	cleanup(0);
+	errx(2, "copy_file: could not perform '%s'", cmd);
+    }
 }
 
 /* Unpack a tar file */
@@ -451,7 +513,7 @@ unpack(char *pkg, char *flist)
 	strcpy(args, "z");
     strcat(args, "xpf");
     if (vsystem("tar %s %s %s", args, pkg, flist ? flist : "")) {
-	whinge("Tar extract of %s failed!", pkg);
+	warnx("tar extract of %s failed!", pkg);
 	return 1;
     }
     return 0;
@@ -514,4 +576,50 @@ format_cmd(char *buf, char *fmt, char *dir, char *name)
 	    *buf++ = *fmt++;
     }
     *buf = '\0';
+}
+
+
+/* This is as ftpGetURL from FreeBSD's ftpio.c, except that it uses
+ * OpenBSD's ftp command to do all FTP, which will DTRT for proxies,
+ * etc.
+ */
+FILE *
+ftpGetURL(char *url, char *user, char *passwd, int *retcode)
+{
+  FILE *ftp;
+  pid_t pid_ftp;
+  int p[2];
+
+  *retcode=0;
+
+  if( pipe(p) < 0){
+    *retcode = 1;
+    return NULL;
+  }
+
+  pid_ftp = fork();
+  if(pid_ftp < 0){
+    *retcode = 1;
+    return NULL;
+  }
+  if(pid_ftp == 0){
+    /* child */
+    dup2(p[1],1);
+    close(p[1]);
+
+    execl("/usr/bin/ftp","ftp","-V","-o","-",url,NULL);
+    exit(1);
+  }else{
+    /* parent */
+    ftp = fdopen(p[0],"r");
+
+    close(p[1]);
+    
+    if(ftp < 0){
+      *retcode = 1;
+      return NULL;
+    }
+  }
+  
+  return ftp;
 }

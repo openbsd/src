@@ -1,3 +1,6 @@
+# $OpenBSD: README,v 1.2 1998/09/07 22:30:12 marc Exp $
+# (Original from FreeBSD)
+
 This is the pkg_install suite of tools for doing maintainance of
 software "packages".  More documentation is available in the man pages
 for each individual command.

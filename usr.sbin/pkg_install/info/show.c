@@ -1,7 +1,7 @@
-/*	$OpenBSD: show.c,v 1.2 1996/06/04 08:43:40 niklas Exp $	*/
+/*	$OpenBSD: show.c,v 1.3 1998/09/07 22:30:16 marc Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: show.c,v 1.2 1996/06/04 08:43:40 niklas Exp $";
+static const char *rcsid = "$OpenBSD: show.c,v 1.3 1998/09/07 22:30:16 marc Exp $";
 #endif
 
 /*
@@ -24,6 +24,8 @@ static const char *rcsid = "$OpenBSD: show.c,v 1.2 1996/06/04 08:43:40 niklas Ex
  *
  */
 
+#include <err.h>
+
 #include "lib.h"
 #include "info.h"
 
@@ -40,7 +42,7 @@ show_file(char *title, char *fname)
     if (!fp)
 	printf("ERROR: show_file: Can't open '%s' for reading!\n", fname);
     else {
-	while (n = fread(line, 1, 1024, fp))
+	while ((n = fread(line, 1, 1024, fp)) != 0)
 	    fwrite(line, 1, n, stdout);
 	fclose(fp);
     }
@@ -52,13 +54,12 @@ show_index(char *title, char *fname)
 {
     FILE *fp;
     char line[MAXINDEXSIZE+2];
-    int i,n;
 
     if (!Quiet)
         printf("%s%s", InfoPrefix, title);
     fp = fopen(fname, "r");
     if (!fp) {
-        whinge("show_file: Can't open '%s' for reading.", fname);
+        warnx("show_file: can't open '%s' for reading", fname);
         return;
     }
     if(fgets(line, MAXINDEXSIZE+1, fp)) {
@@ -105,6 +106,10 @@ show_plist(char *title, Package *plist, plist_t type)
 
 	case PLIST_CMD:
 	    printf(Quiet ? "@exec %s\n" : "\tEXEC '%s'\n", p->name);
+	    break;
+
+	case PLIST_UNEXEC:
+	    printf(Quiet ? "@unexec %s\n" : "\tUNEXEC '%s'\n", p->name);
 	    break;
 
 	case PLIST_CHMOD:
@@ -157,7 +162,8 @@ show_plist(char *title, Package *plist, plist_t type)
 	    break;
 
 	default:
-	    barf("Unknown command type %d (%s)\n", p->type, p->name);
+	    cleanup(0);
+	    errx(2, "unknown command type %d (%s)", p->type, p->name);
 	    break;
 	}
 	p = p->next;
@@ -189,6 +195,9 @@ show_files(char *title, Package *plist)
 
 	case PLIST_IGNORE:
 	    ign = TRUE;
+	    break;
+
+	default:
 	    break;
 	}
 	p = p->next;

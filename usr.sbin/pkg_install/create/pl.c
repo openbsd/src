@@ -1,7 +1,7 @@
-/*	$OpenBSD: pl.c,v 1.3 1998/06/23 23:17:22 millert Exp $	*/
+/*	$OpenBSD: pl.c,v 1.4 1998/09/07 22:30:14 marc Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: pl.c,v 1.3 1998/06/23 23:17:22 millert Exp $";
+static const char *rcsid = "$OpenBSD: pl.c,v 1.4 1998/09/07 22:30:14 marc Exp $";
 #endif
 
 /*
@@ -27,13 +27,13 @@ static const char *rcsid = "$OpenBSD: pl.c,v 1.3 1998/06/23 23:17:22 millert Exp
 #include "lib.h"
 #include "create.h"
 #include <errno.h>
+#include <err.h>
+#include <md5.h>
 
 /* Check a list for files that require preconversion */
 void
 check_list(char *home, Package *pkg)
 {
-    char cmd[FILENAME_MAX];
-    char name[FILENAME_MAX];
     char *where = home;
     char *there = NULL;
     PackingList p = pkg->head;
@@ -47,15 +47,18 @@ check_list(char *home, Package *pkg)
 	    there = p->name;
 	}
 	else if (p->type == PLIST_FILE) {
-	    cmd[0] = '\0';
-	    sprintf(name, "%s/%s", there ? there : where, p->name);
+	    char *cp, name[FILENAME_MAX], buf[33];
 
-	    if (*cmd) {
-		if (Verbose)
-		    printf("Uncompressing-> %s\n", cmd);
-		if (system(cmd))
-		    barf("%s failed!", cmd);
-		nuke_suffix(p->name);
+	    sprintf(name, "%s/%s", there ? there : where, p->name);
+	    if ((cp = MD5File(name, buf)) != NULL) {
+		PackingList tmp = new_plist_entry();
+
+		tmp->name = copy_string(strconcat("MD5:", cp));
+		tmp->type = PLIST_COMMENT;
+		tmp->next = p->next;
+		tmp->prev = p;
+		p->next = tmp;
+		p = tmp;
 	    }
 	}
 	p = p->next;
@@ -84,7 +87,7 @@ trylink(const char *from, const char *to)
 	if (where_count > sizeof(STARTSTRING)-1) { \
 		    strcat(where_args, "|tar xpf -"); \
 		    if (system(where_args)) \
-			barf("can't invoke tar pipeline"); \
+			cleanup(0), errx(2, "can't invoke tar pipeline"); \
 		    memset(where_args, 0, maxargs); \
  		    last_chdir = NULL; \
 		    strcpy(where_args, STARTSTRING); \
@@ -111,7 +114,7 @@ copy_plist(char *home, Package *plist)
 					   and sh -c */
     where_args = malloc(maxargs);
     if (!where_args)
-	barf("can't get argument list space");
+	cleanup(0), errx(2, "can't get argument list space");
 
     memset(where_args, 0, maxargs);
     strcpy(where_args, STARTSTRING);
@@ -171,8 +174,8 @@ copy_plist(char *home, Package *plist)
 					 p->name);
 		    last_chdir = home;
 		}
-		if (add_count >= maxargs - where_count)
-		    barf("oops, miscounted strings!");
+		if (add_count > maxargs - where_count)
+		    cleanup(0), errx(2, "oops, miscounted strings!");
 		where_count += add_count;
 	    }
 	    /*
@@ -205,8 +208,8 @@ copy_plist(char *home, Package *plist)
 					 " -C %s %s",
 					 mythere ? mythere : where,
 					 p->name);
-		if (add_count >= maxargs - where_count)
-		    barf("oops, miscounted strings!");
+		if (add_count > maxargs - where_count)
+		    cleanup(0), errx(2, "oops, miscounted strings!");
 		where_count += add_count;
 		last_chdir = (mythere ? mythere : where);
 	    }
