@@ -350,6 +350,7 @@
 ./usr/share/man/cat1/mv.0
 ./usr/share/man/cat1/nawk.0
 ./usr/share/man/cat1/nc.0
+./usr/share/man/cat1/neqn.0
 ./usr/share/man/cat1/netstat.0
 ./usr/share/man/cat1/newaliases.0
 ./usr/share/man/cat1/nfsstat.0
@@ -976,6 +977,11 @@
 ./usr/share/man/cat4/mii.0
 ./usr/share/man/cat4/mtdphy.0
 ./usr/share/man/cat4/mtio.0
+./usr/share/man/cat4/mvme68k/console.0
+./usr/share/man/cat4/mvme68k/intro.0
+./usr/share/man/cat4/mvme68k/kmem.0
+./usr/share/man/cat4/mvme68k/le.0
+./usr/share/man/cat4/mvme68k/mem.0
 ./usr/share/man/cat4/ncr.0
 ./usr/share/man/cat4/ne.0
 ./usr/share/man/cat4/netintro.0
@@ -1476,6 +1482,7 @@
 ./usr/share/man/cat8/restore.0
 ./usr/share/man/cat8/revnetgroup.0
 ./usr/share/man/cat8/rexecd.0
+./usr/share/man/cat8/rip6query.0
 ./usr/share/man/cat8/rlogind.0
 ./usr/share/man/cat8/rmail.0
 ./usr/share/man/cat8/rmgroup.0
@@ -1643,5 +1650,3 @@
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc
-./usr/share/man/cat1/neqn.0
-./usr/share/man/cat8/rip6query.0
