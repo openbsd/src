@@ -46,6 +46,6 @@ floppyhd|floppy3hd|3inhd|Atari 3.5in High Density Floppy:\
 floppybt|miniroot|Atari 3.5in Boot Floppy:\
 	:ty=floppy:se#512:nt#2:rm#300:ns#18:nc#60:\
 	:ts=3500:\
-	:ta=4.4BSD:pa#2160:oa#0:ba#4096:fa#512:\
+	:ta=4.2BSD:pa#2160:oa#0:ba#4096:fa#512:\
 	:pb#0:ob#0:\
 	:pc#2160:oc#0:
