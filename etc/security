@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.64 2003/07/07 15:35:55 millert Exp $
+#	$OpenBSD: security,v 1.65 2003/11/28 07:32:12 sturm Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -108,7 +108,7 @@ awk -F: '{
 		next;
 	if (NF != 4)
 		printf("Line %d has the wrong number of fields:\n%s\n", NR, $0);
-	if ($1 !~ /^[A-za-z0-9][A-za-z0-9_-]*$/)
+	if ($1 !~ /^[A-Za-z0-9_][A-Za-z0-9_\-\.]*$/)
 		printf("Group %s has non-alphanumeric characters.\n", $1);
 	if (length($1) > 31)
 		printf("Group %s has more than 31 characters.\n", $1);
