@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.1 2005/03/23 19:48:05 drahn Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.2 2005/04/05 19:29:09 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -40,6 +40,12 @@
 #include "sod.h"
 
 #define DEFAULT_PATH "/usr/lib"
+
+static void _dl_unload_dlopen_recurse(struct dep_node *node);
+
+/* STATIC DATA */
+static struct dep_node *_dlopened_first_child;
+static struct dep_node *_dlopened_last_child;
 
 /*
  * _dl_match_file()
@@ -325,6 +331,83 @@ again:
 	_dl_free((char *)sod.sod_name);
 	_dl_errno = DL_NOT_FOUND;
 	return(0);
+}
+
+
+void
+_dl_link_dlopen(elf_object_t *dep)
+{
+	struct dep_node *n;
+
+	n = _dl_malloc(sizeof *n);
+	if (n == NULL)
+		_dl_exit(5);
+
+	n->data = dep;
+	n->next_sibling = NULL;
+	if (_dlopened_first_child) {
+		_dlopened_last_child->next_sibling = n;
+		_dlopened_last_child = n;
+	} else
+		_dlopened_first_child = _dlopened_last_child = n;
+
+	DL_DEB(("linking %s as dlopen()ed\n", dep->load_name));
+}
+
+void
+_dl_unlink_dlopen(elf_object_t *dep)
+{
+	struct dep_node **dnode;
+	struct dep_node *pnode;
+	struct dep_node *next;
+
+	dnode = &_dlopened_first_child;
+
+	if (_dlopened_first_child == NULL)
+		return;
+
+	if (_dlopened_first_child->data == dep) {
+		next = _dlopened_first_child->next_sibling;
+		_dl_free(_dlopened_first_child);
+		_dlopened_first_child = next;
+		return;
+	}
+	pnode = _dlopened_first_child;
+
+	while (pnode->next_sibling != NULL) {
+		if (pnode->next_sibling->data == dep) {
+			next = pnode->next_sibling->next_sibling;
+			if (pnode->next_sibling == _dlopened_last_child)
+				_dlopened_last_child = pnode;
+			_dl_free(pnode->next_sibling);
+			pnode->next_sibling = next;
+			break;
+		}
+		pnode = pnode->next_sibling;
+	}
+}
+
+void
+_dl_unload_dlopen(void)
+{
+	if (_dlopened_first_child != NULL)
+		_dl_unload_dlopen_recurse(_dlopened_first_child);
+}
+
+/*
+ * is recursion here a good thing? 
+ */
+void
+_dl_unload_dlopen_recurse(struct dep_node *node)
+{
+	if (node->next_sibling != NULL) {
+		_dl_unload_dlopen_recurse(node->next_sibling);
+	}
+	_dl_notify_unload_shlib(node->data);
+	_dl_run_all_dtors();
+	if (_dl_exiting == 0)
+		_dl_unload_shlib(node->data);
+	_dl_free(node);
 }
 
 

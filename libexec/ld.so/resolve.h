@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.33 2005/03/23 19:48:05 drahn Exp $ */
+/*	$OpenBSD: resolve.h,v 1.34 2005/04/05 19:29:09 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -99,9 +99,11 @@ typedef struct elf_object {
 	struct elf_object *dep_next;	/* Shadow objects for resolve search */
 
 	int		status;
-#define	STAT_RELOC_DONE	1
-#define	STAT_GOT_DONE	2
-#define	STAT_INIT_DONE	4
+#define	STAT_RELOC_DONE	0x01
+#define	STAT_GOT_DONE	0x02
+#define	STAT_INIT_DONE	0x04
+#define	STAT_FINI_DONE	0x08
+#define	STAT_FINI_READY	0x10
 
 	Elf_Phdr	*phdrp;
 	int		phdrc;
@@ -118,7 +120,7 @@ typedef struct elf_object {
 	u_int32_t	nbuckets;
 	Elf_Word	*chains;
 	u_int32_t	nchains;
-	Elf_Dyn	*dynamic;
+	Elf_Dyn		*dynamic;
 
 	struct dep_node *first_child;
 	struct dep_node *last_child;
@@ -180,14 +182,22 @@ Elf_Addr _dl_find_symbol_bysym(elf_object_t *req_obj, unsigned int symidx,
 void _dl_rtld(elf_object_t *object);
 void _dl_call_init(elf_object_t *object);
 void _dl_link_sub(elf_object_t *dep, elf_object_t *p);
+void _dl_link_dlopen(elf_object_t *dep);
+void _dl_unlink_dlopen(elf_object_t *dep);
+void _dl_notify_unload_shlib(elf_object_t *object);
+void _dl_unload_dlopen(void);
 
 void _dl_run_dtors(elf_object_t *object);
+void _dl_run_all_dtors(void);
 
 Elf_Addr _dl_bind(elf_object_t *object, int index);
 
 int	_dl_match_file(struct sod *sodp, char *name, int namelen);
 char	*_dl_find_shlib(struct sod *sodp, const char *searchpath, int nohints);
 void	_dl_load_list_free(struct load_list *load_list);
+
+void	_dl_thread_kern_go(void);
+void	_dl_thread_kern_stop(void);
 
 extern elf_object_t *_dl_objects;
 extern elf_object_t *_dl_last_object;
@@ -197,6 +207,7 @@ extern struct r_debug *_dl_debug_map;
 
 extern int  _dl_pagesz;
 extern int  _dl_errno;
+extern int  _dl_exiting;
 
 extern char *_dl_libpath;
 extern char *_dl_preload;
