@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.4 1996/07/07 22:02:20 maja Exp $	*/
+/*	$OpenBSD: gram.y,v 1.5 1996/09/12 07:51:17 mickey Exp $	*/
 /*	$NetBSD: gram.y,v 1.7 1996/03/17 13:18:18 cgd Exp $	*/
 
 /*
@@ -126,6 +126,9 @@ static	void	setmaxpartitions __P((int));
 %type	<str>	value
 %type	<val>	major_minor signed_number npseudo
 %type	<val>	flags_opt
+
+%left	'|'
+%left	'&'
 
 %%
 
