@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.h,v 1.10 2000/11/08 14:31:37 art Exp $	*/
+/*	$OpenBSD: vm.h,v 1.11 2001/03/23 23:36:39 millert Exp $	*/
 /*	$NetBSD: vm.h,v 1.13 1994/06/29 06:47:52 cgd Exp $	*/
 
 /*
@@ -89,7 +89,9 @@ typedef struct lock		*lock_t;
  */
 struct vmspace {
 	struct	vm_map vm_map;	/* VM address map */
+#ifndef UVM
 	struct	pmap vm_pmap;	/* private physical map */
+#endif
 	int	vm_refcnt;	/* number of references */
 	caddr_t	vm_shm;		/* SYS5 shared memory private data XXX */
 /* we copy from vm_startcopy to the end of the structure on fork */
