@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.3 2004/11/03 16:40:46 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.4 2004/11/06 03:05:20 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -50,35 +50,40 @@ ieee80211_regchannel ar5k_2ghz_channels[] = IEEE80211_CHANNELS_2GHZ;
 static const struct {
 	u_int16_t	vendor;
 	u_int16_t	device;
-	const char *	name;
 	ar5k_attach_t	(*attach);
 } ar5k_known_products[] = {
 	/*
 	 * From pcidevs_data.h
 	 */
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5210,
-	  "AR5210 Wireless LAN", ar5k_ar5210_attach },
+	  ar5k_ar5210_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5210_AP,
-	  "AR5210 Wireless LAN (AP11)", ar5k_ar5210_attach },
+	  ar5k_ar5210_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5210_DEFAULT,
-	  "AR5210 Wireless LAN (no eeprom)", ar5k_ar5210_attach },
+	  ar5k_ar5210_attach },
 #ifdef notyet
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211,
-	  "AR5211 Wireless LAN", ar5k_ar5211_attach },
+	  ar5k_ar5211_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_DEFAULT,
-	  "AR5211 Wireless LAN (no eeprom)", ar5k_ar5211_attach },
+	  ar5k_ar5211_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5311,
-	  "AR5211 Wireless LAN", ar5k_ar5211_attach },
+	  ar5k_ar5211_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_FPGA11B,
-	  "AR5211 Wireless LAN Reference Card", ar5k_ar5211_attach },
+	  ar5k_ar5211_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_LEGACY,
-	  "AR5211 Wireless LAN Reference Card", ar5k_ar5211_attach },
+	  ar5k_ar5211_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212,
-	  "AR5212 Wireless LAN", ar5k_ar5212_attach },
+	  ar5k_ar5212_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_DEFAULT,
-	  "AR5212 Wireless LAN (no eeprom)", ar5k_ar5212_attach },
+	  ar5k_ar5212_attach },
 	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_FPGA,
-	  "AR5212 Wireless LAN Reference Card", ar5k_ar5212_attach },
+	  ar5k_ar5212_attach },
+	{ PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_IBM,
+	  ar5k_ar5212_attach },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRDAG675,
+	  ar5k_ar5212_attach },
+	{ PCI_VENDOR_3COM2, PCI_PRODUCT_3COM2_3CRPAG175,
+	  ar5k_ar5212_attach },
 #endif
 };
 
@@ -98,7 +103,7 @@ ath_hal_probe(vendor, device)
 	for (i = 0; i < AR5K_ELEMENTS(ar5k_known_products); i++) {
 		if (vendor == ar5k_known_products[i].vendor &&
 		    device == ar5k_known_products[i].device)
-			return (ar5k_known_products[i].name);
+			return ("");
 	}
 
 	return (NULL);
