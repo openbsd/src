@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.32 2000/06/17 20:30:34 provos Exp $	*/
+/*	$OpenBSD: if.c,v 1.33 2000/06/17 20:36:36 provos Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -584,7 +584,7 @@ if_down(ifp)
 	rt_ifmsg(ifp);
 
 	/*
-	 * Find and remove all routes which is using this interface.
+	 * Find and mark as ignore all routes which are using this interface.
 	 * XXX Factor out into a route.c function?
 	 */
 	for (i = 1; i <= AF_MAX; i++) {
@@ -622,7 +622,7 @@ if_up(ifp)
 #endif
 
 	/*
-	 * Find and remove all routes which is using this interface.
+	 * Find and unignore all routes which are using this interface.
 	 * XXX Factor out into a route.c function?
 	 */
 	for (i = 1; i <= AF_MAX; i++) {
