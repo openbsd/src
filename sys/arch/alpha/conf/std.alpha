@@ -1,4 +1,4 @@
-#	$OpenBSD: std.alpha,v 1.6 1997/06/02 13:21:19 deraadt Exp $
+#	$OpenBSD: std.alpha,v 1.7 1997/06/02 13:23:17 deraadt Exp $
 #	$NetBSD: std.alpha,v 1.11 1996/11/15 19:37:34 cgd Exp $
 #
 # Standard/required configuration info for OpenBSD/alpha.
@@ -12,7 +12,6 @@ makeoptions	DEBUG="-g"
 # Executable support: once transitioned to ELF, EXEC_ECOFF will become optional
 options		EXEC_ECOFF	# (native) ECOFF binary support
 options		EXEC_ELF64	# (native) ELF64 binary support
-options		EXEC_SCRIPT	# shell script support
 
 # VM pager support
 options		SWAPPAGER	# paging; REQUIRED
