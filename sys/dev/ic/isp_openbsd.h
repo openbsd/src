@@ -1,4 +1,4 @@
-/*      $OpenBSD: isp_openbsd.h,v 1.23 2003/03/06 07:45:59 mjacob Exp $ */
+/*      $OpenBSD: isp_openbsd.h,v 1.24 2003/03/30 16:57:42 krw Exp $ */
 /*
  * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -306,7 +306,6 @@ void isp_uninit(struct ispsoftc *);
 
 static INLINE void isp_lock(struct ispsoftc *);
 static INLINE void isp_unlock(struct ispsoftc *);
-static INLINE char *strncat(char *, const char *, size_t);
 static INLINE u_int64_t
 isp_microtime_sub(struct timeval *, struct timeval *);
 static void isp_wait_complete(struct ispsoftc *);
@@ -363,24 +362,6 @@ isp_unlock(struct ispsoftc *isp)
 		isp->isp_osinfo.islocked = 0;
 		splx(isp->isp_osinfo.splsaved);
 	}
-}
-
-static INLINE char *
-strncat(char *d, const char *s, size_t c)
-{
-        char *t = d;
-
-        if (c) {
-                while (*d)
-                        d++;
-                while ((*d++ = *s++)) {
-                        if (--c == 0) {
-                                *d = '\0';
-                                break;
-                        }
-                }
-        }
-        return (t);
 }
 
 static INLINE u_int64_t
