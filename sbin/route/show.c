@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.26 2003/08/26 08:33:12 itojun Exp $	*/
+/*	$OpenBSD: show.c,v 1.27 2004/06/06 17:08:23 cedric Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.26 2003/08/26 08:33:12 itojun Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.27 2004/06/06 17:08:23 cedric Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ static char *rcsid = "$OpenBSD: show.c,v 1.26 2003/08/26 08:33:12 itojun Exp $";
 extern char *routename(struct sockaddr *);
 extern char *netname(struct sockaddr *);
 extern char *ns_print(struct sockaddr_ns *);
-extern int nflag;
+extern int nflag, Sflag;
 
 #define ROUNDUP(a) \
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
@@ -97,13 +97,14 @@ static const struct bits bits[] = {
 	{ RTF_PROTO2,	'2' },
 	{ RTF_PROTO3,	'3' },
 	{ RTF_CLONED,	'c' },
+	{ RTF_SOURCE,	's' },
 	{ 0 }
 };
 
 static void p_rtentry(struct rt_msghdr *);
 static void p_sockaddr(struct sockaddr *, int, int);
 static void p_flags(int, char *);
-static void pr_rthdr(void);
+static void pr_rthdr(int);
 static void pr_family(int);
 
 int	keyword(char *);
@@ -193,18 +194,27 @@ bad:                    usage(*argv);
 
 /* column widths; each followed by one space */
 #define	WID_DST		16	/* width of destination column */
+#define WID_SRC		16	/* width of source column */
 #define	WID_GW		18	/* width of gateway column */
 
 /*
  * Print header for routing table columns.
  */
 static void
-pr_rthdr()
+pr_rthdr(int af)
 {
-	printf("%-*.*s %-*.*s %-6.6s\n",
-	    WID_DST, WID_DST, "Destination",
-	    WID_GW, WID_GW, "Gateway",
-	    "Flags");
+	if (af == AF_INET && Sflag) {
+		printf("%-*.*s %-*.*s %-*.*s %-6.6s\n",
+		    WID_SRC, WID_SRC, "Source",
+		    WID_DST, WID_DST, "Destination",
+		    WID_GW, WID_GW, "Gateway",
+		    "Flags");
+	} else {
+		printf("%-*.*s %-*.*s %-6.6s\n",
+		    WID_DST, WID_DST, "Destination",
+		    WID_GW, WID_GW, "Gateway",
+		    "Flags");
+	}
 }
 
 /*
@@ -214,12 +224,13 @@ static void
 p_rtentry(rtm)
 	struct rt_msghdr *rtm;
 {
-	struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
+	struct sockaddr *sa = (struct sockaddr *)(rtm + 1), *sa2;
 #ifdef notdef
 	static int masks_done, banner_printed;
 #endif
 	static int old_af;
-	int af = 0, interesting = RTF_UP | RTF_GATEWAY | RTF_HOST | RTF_MASK;
+	int i, af = 0, interesting = RTF_UP | RTF_GATEWAY | RTF_HOST |
+	    RTF_MASK | RTF_SOURCE;
 
 #ifdef notdef
 	/* for the moment, netmasks are skipped over */
@@ -238,9 +249,19 @@ p_rtentry(rtm)
 	if (old_af != af) {
 		old_af = af;
 		pr_family(af);
-		pr_rthdr();
+		pr_rthdr(af);
 	}
-	if (rtm->rtm_addrs == RTA_DST)
+	if (af == AF_INET && Sflag) {
+		if (rtm->rtm_addrs & RTA_SRC) {
+			for (sa2 = sa, i = 1; i < RTA_SRC; i <<= 1)
+				if (rtm->rtm_addrs & i)
+					sa2 = (struct sockaddr *)(ROUNDUP(
+					    sa2->sa_len) + (char *)sa2);
+			p_sockaddr(sa2, 0, 16);
+		} else
+			printf("%-*s ", 16, "default");
+	}
+	if (!(rtm->rtm_addrs & RTA_GATEWAY))
 		p_sockaddr(sa, 0, 36);
 	else {
 		p_sockaddr(sa, rtm->rtm_flags, 16);

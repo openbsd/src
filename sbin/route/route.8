@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.30 2003/08/31 07:03:29 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.31 2004/06/06 17:08:23 cedric Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -73,6 +73,10 @@ to forgo this, especially when attempting to repair networking operations.)
 (verbose) Print additional details.
 .It Fl q
 Suppress all output.
+.It Fl S
+Makes the
+.Cm show
+command display the source selector part of the routes.
 .El
 .Pp
 The
@@ -269,6 +273,38 @@ meta-modifier, or one can
 specify that all ensuing metrics may be locked by the
 .Fl lockrest
 meta-modifier.
+.Pp
+The
+.Fl src
+and
+.Fl srcmask
+modifiers can be used to specify the source selector of the route,
+which will match the source IP address of outgoing packets.
+.Fl src
+and
+.Fl srcmask
+work in a similar way than
+.Fl dst
+and
+.Fl netmask .
+For example:
+.Pp
+.Bd -filled -offset indent -compact
+.Nm route
+.Cm add
+.Fl src
+180.83.46.98
+180.83.46.97
+.Ed
+.Bd -filled -offset indent -compact
+.Nm route
+.Cm add
+.Fl src
+192.168.10.0/24
+.Fl dst
+10.5.1.0/24
+180.83.46.97
+.Ed
 .Pp
 In a
 .Cm change
