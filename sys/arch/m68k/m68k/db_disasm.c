@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.7 2001/05/15 01:43:15 millert Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.8 2001/12/06 23:45:23 miod Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.19 1996/10/30 08:22:39 is Exp $	*/
 
 /*
@@ -647,6 +647,10 @@ opcode_misc(dbuf, opc)
 			get_modregstr(dbuf, 2, AR_DIR, 0, 0);
 		}
 		return;
+	case SWAP_INST:
+		addstr(dbuf, "swap\t");
+		get_modregstr(dbuf, 2, DR_DIR, 0, 0);
+		return;
 	case UNLK_INST:
 		addstr(dbuf, "unlk\t");
 		get_modregstr(dbuf, 2, AR_DIR, 0, 0);
@@ -907,11 +911,11 @@ opcode_addsub(dbuf, opc)
 		}
 	}
 	
-	if (IS_INST(ADDX,opc) || IS_INST(SUBX,opc)) {
+	if (!amode && (IS_INST(ADDX,opc) || IS_INST(SUBX,opc))) {
 		if (IS_INST(ADDX,opc))
 			addstr(dbuf,"addx");
 		else
-			addstr(dbuf,"addx");
+			addstr(dbuf,"subx");
 
 		addchar(ch);
 		addchar('\t');
@@ -2095,6 +2099,9 @@ print_reglist(dbuf, mod, rl)
 			}
 		}
 	}
+	if (list > 1)
+		addstr(dbuf, regs[15]);
+
 	if (dbuf->casm[-1] == '/' || dbuf->casm[-1] == '-')
 		dbuf->casm--;
 	*dbuf->casm = 0;
