@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.6 2002/01/24 03:38:56 jason Exp $	*/
+/*	$OpenBSD: zs.c,v 1.7 2002/01/25 03:36:25 jason Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -293,9 +293,6 @@ zs_attach(zsc, zsd, pri)
 	for (channel = 0; channel < 2; channel++) {
 		struct zschan *zc;
 		struct device *child;
-#if (NKBD > 0) || (NMS > 0)
-		extern struct cfdriver zstty_cd; /* in ioconf.c */
-#endif
 
 		zsc_args.type = "serial";
 		if (getproplen(zsc->zsc_node, "keyboard") == 0) {
@@ -372,43 +369,6 @@ zs_attach(zsc, zsd, pri)
 			zs_write_reg(cs,  9, reset);
 			splx(s);
 		} 
-#if (NKBD > 0) || (NMS > 0)
-		/* 
-		 * If this was a zstty it has a keyboard
-		 * property on it we need to attach the
-		 * sunkbd and sunms line disciplines.
-		 */
-		if (child 
-		    && (child->dv_cfdata->cf_driver == &zstty_cd) 
-		    && (getproplen(zsc->zsc_node, "keyboard") == 0)) {
-			struct kbd_ms_tty_attach_args kma;
-			struct zstty_softc {	
-				/* The following are the only fields we need here */
-				struct	device zst_dev;
-				struct  tty *zst_tty;
-				struct	zs_chanstate *zst_cs;
-			} *zst = (struct zstty_softc *)child;
-			struct tty *tp;
-
-			kma.kmta_tp = tp = zst->zst_tty;
-			kma.kmta_dev = tp->t_dev;
-			kma.kmta_consdev = zsc_args.consdev;
-
-			/* Attach 'em if we got 'em. */
-#if (NKBD > 0)
-			if (channel == 0) {
-				kma.kmta_name = "keyboard";
-				config_found(child, (void *)&kma, NULL);
-			}
-#endif
-#if (NMS > 0)
-			if (channel == 1) {
-				kma.kmta_name = "mouse";
-				config_found(child, (void *)&kma, NULL);
-			}
-#endif
-		}
-#endif
 	}
 
 	/*

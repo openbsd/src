@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.7 2002/01/10 00:06:17 nordin Exp $	*/
+/*	$OpenBSD: clock.c,v 1.8 2002/01/25 03:36:25 jason Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -872,11 +872,6 @@ tickintr(cap)
 	void *cap;
 {
 	int s;
-
-#if	NKBD	> 0
-	extern int cnrom __P((void));
-	extern int rom_console_input;
-#endif
 
 	hardclock((struct clockframe *)cap);
 	if (poll_console)

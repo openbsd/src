@@ -1,4 +1,4 @@
-/*	$OpenBSD: consinit.c,v 1.5 2002/01/03 22:49:35 jason Exp $	*/
+/*	$OpenBSD: consinit.c,v 1.6 2002/01/25 03:36:25 jason Exp $	*/
 /*	$NetBSD: consinit.c,v 1.9 2000/10/20 05:32:35 mrg Exp $	*/
 
 /*-
@@ -223,9 +223,6 @@ consinit()
 	DBPRINT(("stdout package = %x\r\n", fbnode));
 	
 	if (stdinnode && (OF_getproplen(stdinnode,"keyboard") >= 0)) {
-#if NKBD > 0		
-		printf("cninit: kdb/display not configured\n");
-#endif
 		consname = "keyboard/display";
 	} else if (fbnode && 
 		   (OF_instance_to_path(stdin, buffer, sizeof(buffer)) >= 0)) {
