@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.5 2002/09/06 14:24:35 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.6 2002/09/15 02:02:43 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ fwargsave:
 			.long 0
 			.long 0
 	.globl _C_LABEL(where)
-	.type  _C_LABEL(where),@object
+	.type	_C_LABEL(where),@object
 _C_LABEL(where):	.long	0
 
 /*
@@ -67,7 +67,7 @@ _C_LABEL(where):	.long	0
  */
 _ENTRY(_C_LABEL(kernel_text))
 _ENTRY(_ASM_LABEL(start))
-/* arguments to start 
+/* arguments to start
  * r1 - stack provided by firmware/bootloader
  * r3 - unused
  * r4 - unused
@@ -82,7 +82,7 @@ start:
 	stw	6, fwargsave@l(3)
 	stw	7, fwargsave@l+4(3)
 #ifdef SUPPORT_PPC1BUG
-	mr 	0,5
+	mr	0,5
 	cmpwi	0,0,0
 	bne	1f
 	/* need additional tests for other systems??? */
@@ -107,7 +107,7 @@ start:
 	beq	1f
 	add	9,6,7
 	lwz	9, -4(9)
-	cmpwi   9,0
+	cmpwi	9,0
 	beq	1f
 	lis	8,_C_LABEL(esym)@ha
 	stw	9,_C_LABEL(esym)@l(8)
@@ -126,7 +126,7 @@ start:
 	mr	4,1			/* end of mem reserved for kernel */
 	xor	0,0,0
 	stwu	0,-16(1)		/* end of stack chain */
-	
+
 	li	0, 2
 	lis	9,_C_LABEL(where)@ha
 	stw	0,_C_LABEL(where)@l(9)
@@ -189,7 +189,7 @@ _C_LABEL(idle):
 
 	or.	9,9,9
 	bne-	_C_LABEL(sw1)			/* at least one queue non-empty */
-	
+
 	ori	3,3,PSL_EE		/* reenable ints again */
 	mtmsr	3
 	isync
@@ -199,7 +199,7 @@ _C_LABEL(idle):
 	oris	3, 3, PSL_POW@h
 	mtmsr	3
 	isync
-	
+
 /* May do some power saving here? */
 
 	b	_C_LABEL(idle)
@@ -219,12 +219,12 @@ _ENTRY(_C_LABEL(switchexit))
 	 * Schedule the vmspace and stack to be freed (the proc arg is
 	 * already in r3).
 	 */
-	bl      _C_LABEL(exit2)
+	bl	_C_LABEL(exit2)
 
 	/* Fall through to cpu_switch to actually select another proc */
-	li      3,0                     /* indicate exited process */
+	li	3,0			/* indicate exited process */
 
-	
+
 /* Fall through to cpu_switch to actually select another proc */
 
 /*
@@ -267,7 +267,7 @@ _C_LABEL(sw1):
 	addi	4,4,_C_LABEL(qs)@l
 	slwi	3,10,3
 	add	3,3,4			/* select queue */
-	
+
 	lwz	31,P_FORW(3)		/* unlink first proc from queue */
 	lwz	4,P_FORW(31)
 	stw	4,P_FORW(3)
@@ -372,7 +372,7 @@ switch_return:
 	.data
 intstk:	.space	INTSTK			/* interrupt stack */
 	.global _C_LABEL(intr_depth)
-	.type  _C_LABEL(intr_depth),@object
+	.type	_C_LABEL(intr_depth),@object
 _C_LABEL(intr_depth):
 	.long	-1			/* in-use marker */
 #define	SPILLSTK 1024			/* 1K spill stack */
@@ -406,24 +406,24 @@ _C_LABEL(trapsize) =	.-_C_LABEL(trapcode)
 /*
  * For ALI: has to save DSISR and DAR
  */
-	.globl  _C_LABEL(alitrap),_C_LABEL(alisize)
+	.globl	_C_LABEL(alitrap),_C_LABEL(alisize)
 _C_LABEL(alitrap):
-	mtsprg  1,1                     /* save SP */
-	stmw    28,tempsave(0)          /* free r28-r31 */
-	mfdar   30
-	mfdsisr 31
-	stmw    30,tempsave+16(0)
-	mflr    28                      /* save LR */
-	mfcr    29                      /* save CR */
+	mtsprg	1,1			/* save SP */
+	stmw	28,tempsave(0)		/* free r28-r31 */
+	mfdar	30
+	mfdsisr	31
+	stmw	30,tempsave+16(0)
+	mflr	28			/* save LR */
+	mfcr	29			/* save CR */
 /* Test whether we already had PR set */
-	mfsrr1  31
-	mtcr    31
-	bc      4,17,1f                 /* branch if PSL_PR is clear */
-	lis     1,_C_LABEL(curpcb)@ha
-	lwz     1,_C_LABEL(curpcb)@l(1)
-	addi    1,1,USPACE              /* stack is top of user struct */
+	mfsrr1	31
+	mtcr	31
+	bc	4,17,1f			/* branch if PSL_PR is clear */
+	lis	1,_C_LABEL(curpcb)@ha
+	lwz	1,_C_LABEL(curpcb)@l(1)
+	addi	1,1,USPACE		/* stack is top of user struct */
 1:
-	bla     s_trap
+	bla	s_trap
 _C_LABEL(alisize) = .-_C_LABEL(alitrap)
 
 /*
@@ -753,24 +753,24 @@ _C_LABEL(tlbdsmiss):
 _C_LABEL(tlbdsmsize) =	.-_C_LABEL(tlbdsmiss)
 
 #ifdef DDB
-#define ddbsave 0xde0           /* primary save area for DDB */
+#define ddbsave 0xde0			/* primary save area for DDB */
 /*
  * In case of DDB we want a separate trap catcher for it
  */
-	.local  ddbstk
-	.comm   ddbstk,INTSTK,8         /* ddb stack */
- 
-	.globl  _C_LABEL(ddblow),_C_LABEL(ddbsize)
+	.local	ddbstk
+	.comm	ddbstk,INTSTK,8		/* ddb stack */
+
+	.globl	_C_LABEL(ddblow),_C_LABEL(ddbsize)
 _C_LABEL(ddblow):
-	mtsprg  1,1                     /* save SP */
-	stmw    28,ddbsave(0)           /* free r28-r31 */
-	mflr    28                      /* save LR */
-	mfcr    29                      /* save CR */ 
-	lis     1,ddbstk+INTSTK@ha      /* get new SP */
-	addi    1,1,ddbstk+INTSTK@l
-	bla     ddbtrap
+	mtsprg	1,1			/* save SP */
+	stmw	28,ddbsave(0)		/* free r28-r31 */
+	mflr	28			/* save LR */
+	mfcr	29			/* save CR */
+	lis	1,ddbstk+INTSTK@ha	/* get new SP */
+	addi	1,1,ddbstk+INTSTK@l
+	bla	ddbtrap
 _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
-#endif  /* DDB */
+#endif	/* DDB */
 
 
 #if NIPKDB > 0
@@ -982,7 +982,7 @@ s_dsitrap:
 	mflr	30			/* save trap type */
 	mfctr	31			/* & CTR */
 	mfdar	3
-	mfsrr1  4
+	mfsrr1	4
 	mfdsisr	5
 	li	6, 0
 s_pte_spill:
@@ -1037,7 +1037,7 @@ s_isitrap:
 	mflr	30			/* save trap type */
 	mfctr	31			/* & ctr */
 	mfsrr0	3
-	mfsrr1  4
+	mfsrr1	4
 	li	5, 0
 	li	6, 1
 	b	s_pte_spill		/* above */
@@ -1173,7 +1173,7 @@ decrintr:
 	.globl	_C_LABEL(ipkdb_trap)
 	.type	_C_LABEL(ipkdb_trap),@function
 _C_LABEL(ipkdb_trap):
-	
+
 	mtsprg	2,2
 	mfmsr	3
 	mtsrr1	3
@@ -1277,10 +1277,10 @@ _C_LABEL(ipkdbsbyte):
 	stw	5,0(9)			/* restore previous fault handler */
 	dcbst	0,9			/* and flush data... */
 	sync
-	icbi	0,9			/* and instruction caches */	
+	icbi	0,9			/* and instruction caches */
 	blr
 #endif	/* NIPKDB > 0 */
-	
+
 /*
  * int setfault()
  *
@@ -1328,10 +1328,10 @@ _C_LABEL(esigcode):
 
 
 	.data
-	.globl   _C_LABEL(intrnames)
-	.type   _C_LABEL(intrnames),@object
-	.globl   _C_LABEL(eintrnames)
-	.type   _C_LABEL(eintrnames),@object
+	.globl	_C_LABEL(intrnames)
+	.type	_C_LABEL(intrnames),@object
+	.globl	_C_LABEL(eintrnames)
+	.type	_C_LABEL(eintrnames),@object
 _C_LABEL(intrnames):
 	.string "irq0" "irq1" "irq2" "irq3"
 	.string "irq4" "irq5" "irq6" "irq7"
@@ -1349,14 +1349,14 @@ _C_LABEL(intrnames):
 	.string "irq52" "irq53" "irq54" "irq55"
 	.string "irq56" "irq57" "irq58" "irq59"
 	.string "irq60" "irq61" "irq62" "irq63"
-	.string "clock" 
+	.string "clock"
 	.space 512
 _C_LABEL(eintrnames):
 	.align 4
-	.globl   _C_LABEL(intrcnt)
-	.type   _C_LABEL(intrcnt),@object
-	.globl   _C_LABEL(eintrcnt)
-	.type   _C_LABEL(eintrcnt),@object
+	.globl	_C_LABEL(intrcnt)
+	.type	_C_LABEL(intrcnt),@object
+	.globl	_C_LABEL(eintrcnt)
+	.type	_C_LABEL(eintrcnt),@object
 _C_LABEL(intrcnt):
 	.long 0,0,0,0
 	.long 0,0,0,0
@@ -1377,24 +1377,24 @@ _C_LABEL(intrcnt):
 	.long 0
 _C_LABEL(eintrcnt):
 
-#ifdef DDB   
+#ifdef DDB
 /*
  * Deliberate entry to ddbtrap
  */
-	.globl  _C_LABEL(ddb_trap)
+	.globl	_C_LABEL(ddb_trap)
 _C_LABEL(ddb_trap):
-	mtsprg  1,1
-	mfmsr   3
-	mtsrr1  3
-	andi.   3,3,~(PSL_EE|PSL_ME)@l
-	mtmsr   3                       /* disable interrupts */
+	mtsprg	1,1
+	mfmsr	3
+	mtsrr1	3
+	andi.	3,3,~(PSL_EE|PSL_ME)@l
+	mtmsr	3			/* disable interrupts */
 	isync
-	stmw    28,ddbsave(0)
-	mflr    28
-	li      29,EXC_BPT
-	mtlr    29
-	mfcr    29
-	mtsrr0  28
+	stmw	28,ddbsave(0)
+	mflr	28
+	li	29,EXC_BPT
+	mtlr	29
+	mfcr	29
+	mtsrr0	28
 
 /*
  * Now the ddb trap catching code.
@@ -1402,21 +1402,21 @@ _C_LABEL(ddb_trap):
 ddbtrap:
 	FRAME_SETUP(ddbsave)
 /* Call C trap code: */
-	addi    3,1,8
-	bl      _C_LABEL(ddb_trap_glue)
-	or.     3,3,3
-	bne     ddbleave
+	addi	3,1,8
+	bl	_C_LABEL(ddb_trap_glue)
+	or.	3,3,3
+	bne	ddbleave
 /* This wasn't for DDB, so switch to real trap: */
-	lwz     3,FRAME_EXC+8(1)        /* save exception */
-	stw     3,ddbsave+8(0)
+	lwz	3,FRAME_EXC+8(1)	/* save exception */
+	stw	3,ddbsave+8(0)
 	FRAME_LEAVE(ddbsave)
-	mtsprg  1,1                     /* prepare for entrance to realtrap */
-	stmw    28,tempsave(0)
-	mflr    28
-	mfcr    29
-	lwz     31,ddbsave+8(0)
-	mtlr    31
-	b       realtrap
+	mtsprg	1,1			/* prepare for entrance to realtrap */
+	stmw	28,tempsave(0)
+	mflr	28
+	mfcr	29
+	lwz	31,ddbsave+8(0)
+	mtlr	31
+	b	realtrap
 ddbleave:
 	FRAME_LEAVE(ddbsave)
 	rfi

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.5 2002/03/14 00:42:24 miod Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.6 2002/09/15 02:02:44 deraadt Exp $	*/
 /*	$NetBSD: process_machdep.c,v 1.1 1996/09/30 16:34:53 ws Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ process_read_regs(p, regs)
 
 	bcopy(&(tf->fixreg[0]), &(regs->gpr[0]), sizeof(regs->gpr));
 	bzero(&(regs->fpr[0]), sizeof(regs->fpr));
-	/* 
+	/*
 	 * need to do floating point here
 	 */
 	regs->pc  = tf->srr0;
@@ -71,7 +71,7 @@ process_set_pc(p, addr)
 	caddr_t addr;
 {
 	struct trapframe *tf = trapframe(p);
-	
+
 	tf->srr0 = (int)addr;
 	return 0;
 }
@@ -82,7 +82,7 @@ process_sstep(p, sstep)
 	int sstep;
 {
 	struct trapframe *tf = trapframe(p);
-	
+
 	if (sstep)
 		tf->srr1 |= PSL_SE;
 	else
@@ -98,7 +98,7 @@ process_write_regs(p, regs)
 	struct trapframe *tf = trapframe(p);
 
 	bcopy(&(regs->gpr[0]), &(tf->fixreg[0]), sizeof(regs->gpr));
-	/* 
+	/*
 	 * need to do floating point here
 	 */
 	tf->srr0 = regs->pc;

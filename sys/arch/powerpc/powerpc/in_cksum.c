@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.3 2001/06/24 05:08:11 drahn Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.4 2002/09/15 02:02:44 deraadt Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.1 1996/09/30 16:34:47 ws Exp $	*/
 
 /*
@@ -56,7 +56,7 @@ in_cksum(m, len)
 	u_int sum = 0;
 	int mlen;
 	int byte_swapped = 0;
-	
+
 	for (; m && len; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;

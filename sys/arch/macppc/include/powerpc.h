@@ -1,4 +1,4 @@
-/*	$OpenBSD: powerpc.h,v 1.4 2002/08/20 02:50:43 drahn Exp $	*/
+/*	$OpenBSD: powerpc.h,v 1.5 2002/09/15 02:02:43 deraadt Exp $	*/
 /*	$NetBSD: powerpc.h,v 1.1 1996/09/30 16:34:30 ws Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ struct firmware {
 	exit_f		*exit;
 	boot_f		*boot;
 	vmon_f		*vmon;
-	
+
 #ifdef FW_HAS_PUTC
 	boot_f		*putc;
 #endif

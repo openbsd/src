@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.6 2002/07/09 11:00:27 fgsch Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.7 2002/09/15 02:05:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -87,7 +87,6 @@ struct cfattach wi_obio_ca = {
 	wi_obio_detach, wi_obio_activate
 };
 
-
 int
 wi_obio_match(parent, match, aux)
 	struct device *parent;
@@ -113,7 +112,8 @@ wi_obio_attach(parent, self, aux)
 
 	sc->wi_btag = ca->ca_iot;
 	ca->ca_reg[0] += ca->ca_baseaddr;
-	if (bus_space_map(sc->wi_btag, ca->ca_reg[0], ca->ca_reg[1], 0, &sc->wi_bhandle)) {
+	if (bus_space_map(sc->wi_btag, ca->ca_reg[0], ca->ca_reg[1], 0,
+	    &sc->wi_bhandle)) {
 		printf("can't map i/o space\n");
 	}
 	/* FSCKING hackery */
@@ -121,7 +121,7 @@ wi_obio_attach(parent, self, aux)
 
 	/* Establish the interrupt. */
 	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_NET,
-		wi_intr, psc, "wi_obio");
+	    wi_intr, psc, "wi_obio");
 
 	/* Make sure interrupts are disabled. */
 	CSR_WRITE_2(sc, WI_INT_EN, 0);

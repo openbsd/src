@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.40 2002/09/11 22:29:47 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.41 2002/09/15 02:02:43 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -249,12 +249,10 @@ where = 3;
 	 */
 	/* IBAT0 used for initial 256 MB segment */
 	__asm__ volatile ("mtibatl 0,%0; mtibatu 0,%1"
-		      :: "r"(battable[0].batl), "r"(battable[0].batu));
+	    :: "r"(battable[0].batl), "r"(battable[0].batu));
 	/* DBAT0 used similar */
 	__asm__ volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
-		      :: "r"(battable[0].batl), "r"(battable[0].batu));
-
-
+	    :: "r"(battable[0].batl), "r"(battable[0].batu));
 
 	/*
 	 * Set up trap vectors
@@ -315,9 +313,7 @@ where = 3;
 	 * should be a 'ba 0xf20 written' at address 0xf00, but we
 	 * do not generate EXC_PERF exceptions...
 	 */
-
 	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
-
 
 	uvmexp.pagesize = 4096;
 	uvm_setpagesize();
@@ -330,18 +326,18 @@ where = 3;
 	/* use BATs to map 1GB memory, no pageable BATs now */
 	if (physmem > btoc(0x10000000)) {
 		__asm__ volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
-			      :: "r"(BATL(0x10000000, BAT_M)),
-			      "r"(BATU(0x10000000)));
+		    :: "r"(BATL(0x10000000, BAT_M)),
+		    "r"(BATU(0x10000000)));
 	}
 	if (physmem > btoc(0x20000000)) {
 		__asm__ volatile ("mtdbatl 2,%0; mtdbatu 2,%1"
-			      :: "r"(BATL(0x20000000, BAT_M)),
-			      "r"(BATU(0x20000000)));
+		    :: "r"(BATL(0x20000000, BAT_M)),
+		    "r"(BATU(0x20000000)));
 	}
 	if (physmem > btoc(0x30000000)) {
 		__asm__ volatile ("mtdbatl 3,%0; mtdbatu 3,%1"
-			      :: "r"(BATL(0x30000000, BAT_M)),
-			      "r"(BATU(0x30000000)));
+		    :: "r"(BATL(0x30000000, BAT_M)),
+		    "r"(BATU(0x30000000)));
 	}
 #if 0
 	/* now that we know physmem size, map physical memory with BATs */
@@ -381,7 +377,7 @@ where = 3;
 	(fw->vmon)();
 
 	__asm__ volatile ("eieio; mfmsr %0; ori %0,%0,%1; mtmsr %0; sync;isync"
-		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
+	    : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
 
 	/*
 	 * use the memory provided by pmap_bootstrap for message buffer
@@ -404,9 +400,10 @@ where = 3;
 	 */
 
 	/* make a copy of the args! */
-	strncpy(bootpathbuf, args, 512);
-	bootpath= &bootpathbuf[0];
-	while ( *++bootpath && *bootpath != ' ');
+	strncpy(bootpathbuf, args, sizeof bootpathbuf);
+	bootpath = &bootpathbuf[0];
+	while (*++bootpath && *bootpath != ' ')
+		;
 	if (*bootpath) {
 		*bootpath++ = 0;
 		while (*bootpath) {
@@ -453,8 +450,8 @@ where = 3;
 	 */
 
 	devio_ex = extent_create("devio", 0x80000000, 0xffffffff, M_DEVBUF,
-		(caddr_t)devio_ex_storage, sizeof(devio_ex_storage),
-		EX_NOCOALESCE|EX_NOWAIT);
+	    (caddr_t)devio_ex_storage, sizeof(devio_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
 
 	/*
 	 * Now we can set up the console as mapping is enabled.
@@ -493,15 +490,16 @@ where = 3;
 	 */
 	(void)power4e_get_eth_addr();
 
-        pool_init(&ppc_vecpl, sizeof(struct vreg), 16, 0, 0, "ppcvec", NULL);
+	pool_init(&ppc_vecpl, sizeof(struct vreg), 16, 0, 0, "ppcvec", NULL);
 
 }
-void ofw_dbg(char *str)
+
+void
+ofw_dbg(char *str)
 {
 	int i = strlen (str);
 	OF_write(OF_stdout, str, i);
 }
-
 
 void
 install_extint(handler)
@@ -518,7 +516,7 @@ install_extint(handler)
 		panic("install_extint: too far away");
 #endif
 	__asm__ volatile ("mfmsr %0; andi. %1, %0, %2; mtmsr %1"
-		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
+	    : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
 	extint_call = (extint_call & 0xfc000003) | offset;
 	bcopy(&extint, (void *)EXC_EXI, (size_t)&extsize);
 	syncicache((void *)&extint_call, sizeof extint_call);
@@ -560,9 +558,9 @@ cpu_startup()
 	 */
 	sz = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(sz),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)))
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+	    UVM_ADV_NORMAL, 0)))
 		panic("cpu_startup: cannot allocate VM for buffers");
 	/*
 	addr = (vaddr_t)buffers;
@@ -585,9 +583,9 @@ cpu_startup()
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for"
-					" buffer cache");
+				    " buffer cache");
 			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-					VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -745,11 +743,10 @@ sendsig(catcher, sig, mask, code, type, val)
 	/*
 	 * Allocate stack space for signal handler.
 	 */
-	if ((psp->ps_flags & SAS_ALTSTACK)
-	    && !oldonstack
-	    && (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp
-					 + psp->ps_sigstk.ss_size);
+	if ((psp->ps_flags & SAS_ALTSTACK) &&
+	    !oldonstack && (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
+		    psp->ps_sigstk.ss_size);
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)tf->fixreg[1];
@@ -833,11 +830,11 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	switch (name[0]) {
 	case CPU_ALLOWAPERTURE:
 #ifdef APERTURE
-		if (securelevel > 0) 
-			return (sysctl_rdint(oldp, oldlenp, newp, 
+		if (securelevel > 0)
+			return (sysctl_rdint(oldp, oldlenp, newp,
 			    allowaperture));
 		else
-			return (sysctl_int(oldp, oldlenp, newp, newlen, 
+			return (sysctl_int(oldp, oldlenp, newp, newlen,
 			    &allowaperture));
 #else
 		return (sysctl_rdint(oldp, oldlenp, newp, 0));
@@ -856,7 +853,7 @@ dumpsys()
 volatile int cpl, ipending, astpending, tickspending;
 int imask[7];
 
-/* 
+/*
  * this is a hack interface to allow zs to work better until
  * a true soft interrupt mechanism is created.
  */
@@ -953,7 +950,8 @@ boot(howto)
 	OF_exit();
 	(fw->boot)(str);
 	printf("boot failed, spinning\n");
-	while(1) /* forever */;
+	while (1)
+		/* forever */;
 }
 
 /*
@@ -966,10 +964,10 @@ power4e_get_eth_addr()
 	char name[32];
 
 	for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
-		if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0
-		    && !strcmp(name, "network")
-		    && OF_getprop(qhandle, "local-mac-address",
-				  &ofw_eth_addr, sizeof ofw_eth_addr) >= 0) {
+		if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0 &&
+		    !strcmp(name, "network") &&
+		    OF_getprop(qhandle, "local-mac-address",
+		    &ofw_eth_addr, sizeof ofw_eth_addr) >= 0) {
 			return(0);
 		}
 		if ((phandle = OF_child(qhandle)))
@@ -1021,18 +1019,17 @@ systype(char *name)
 		{ NULL,"",0}
 	};
 	for (i = 0; systypes[i].name != NULL; i++) {
-		if (strncmp( name , systypes[i].name,
-			strlen (systypes[i].name)) == 0)
-		{
+		if (strncmp(name, systypes[i].name,
+		    strlen(systypes[i].name)) == 0) {
 			system_type = systypes[i].type;
 			printf("recognized system type of %s as %s\n",
-				name, systypes[i].systypename);
+			    name, systypes[i].systypename);
 			break;
 		}
 	}
 	if (system_type == OFWMACH) {
-		printf("System type %snot recognized, good luck\n",
-			name);
+		printf("System type %s not recognized, good luck\n",
+		    name);
 	}
 }
 
@@ -1064,7 +1061,7 @@ ppc_intr_establish(lcv, ih, type, level, func, arg, name)
 		ppc_configed_intr_cnt++;
 	} else {
 		panic("ppc_intr_establish called before interrupt controller"
-			" configured: driver %s too many interrupts\n", name);
+		    " configured: driver %s too many interrupts\n", name);
 	}
 	/* disestablish is going to be tricky to supported for these :-) */
 	return (void *)ppc_configed_intr_cnt;
@@ -1124,8 +1121,7 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 	}
 	bpa |= POWERPC_BUS_TAG_BASE(t);
 	if ((error = extent_alloc_region(devio_ex, bpa, size, EX_NOWAIT |
-		(ppc_malloc_ok ? EX_MALLOCOK : 0))))
-	{
+	    (ppc_malloc_ok ? EX_MALLOCOK : 0)))) {
 		return error;
 	}
 	if ((bpa >= 0x80000000) && ((bpa+size) < 0xb0000000)) {
@@ -1136,19 +1132,19 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 	}
 	if ((error  = bus_mem_add_mapping(bpa, size, cacheable, bshp))) {
 		if (extent_free(devio_ex, bpa, size, EX_NOWAIT |
-			(ppc_malloc_ok ? EX_MALLOCOK : 0)))
-		{
+		    (ppc_malloc_ok ? EX_MALLOCOK : 0))) {
 			printf("bus_space_map: pa 0x%x, size 0x%x\n",
-				bpa, size);
+			    bpa, size);
 			printf("bus_space_map: can't free region\n");
 		}
 	}
 	return 0;
 }
 bus_addr_t bus_space_unmap_p(bus_space_tag_t t, bus_space_handle_t bsh,
-			  bus_size_t size);
+    bus_size_t size);
 void bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh,
-			  bus_size_t size);
+    bus_size_t size);
+
 bus_addr_t
 bus_space_unmap_p(t, bsh, size)
 	bus_space_tag_t t;
@@ -1178,17 +1174,15 @@ bus_space_unmap(t, bsh, size)
 
 	if (pmap_extract(pmap_kernel(), sva, &bpa) == TRUE) {
 		if (extent_free(devio_ex, bpa | (bsh & PAGE_MASK), size, EX_NOWAIT |
-			(ppc_malloc_ok ? EX_MALLOCOK : 0)))
-		{
+		    (ppc_malloc_ok ? EX_MALLOCOK : 0))) {
 			printf("bus_space_map: pa 0x%x, size 0x%x\n",
-				bpa, size);
+			    bpa, size);
 			printf("bus_space_map: can't free region\n");
 		}
 	}
 	/* do not free memory which was stolen from the vm system */
 	if (ppc_malloc_ok &&
-	  ((sva >= VM_MIN_KERNEL_ADDRESS) && (sva < VM_MAX_KERNEL_ADDRESS)) )
-	{
+	    ((sva >= VM_MIN_KERNEL_ADDRESS) && (sva < VM_MAX_KERNEL_ADDRESS))) {
 		uvm_km_free(phys_map, sva, len);
 	} else {
 		pmap_remove(vm_map_pmap(phys_map), sva, sva+len);
@@ -1241,8 +1235,8 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 #endif
 	for (; len > 0; len -= PAGE_SIZE) {
 		pmap_kenter_cache(vaddr, spa,
-			VM_PROT_READ | VM_PROT_WRITE,
-			cacheable ? PMAP_CACHE_WT : PMAP_CACHE_DEFAULT);
+		    VM_PROT_READ | VM_PROT_WRITE,
+		    cacheable ? PMAP_CACHE_WT : PMAP_CACHE_DEFAULT);
 		spa += PAGE_SIZE;
 		vaddr += PAGE_SIZE;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.8 2002/05/22 21:00:03 miod Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.9 2002/09/15 02:02:44 deraadt Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -57,10 +57,10 @@
 #define PCI_CHIPID(x)   (((x) >> 16) & 0xFFFF)
 
 struct vgafb_pci_softc {
-	struct device sc_dev; 
- 
+	struct device sc_dev;
+
 	pcitag_t sc_pcitag;		/* PCI tag, in case we need it. */
-	struct vgafb_config *sc_vc;	/* VGA configuration */ 
+	struct vgafb_config *sc_vc;	/* VGA configuration */
 	int nscreens;
 };
 
@@ -108,13 +108,13 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 	for (i = PCI_MAPREG_START; i <= PCI_MAPREG_PPB_END; i += 4) {
 #ifdef DEBUG_VGAFB
 		printf("vgafb confread %x %x\n",
-			i, pci_conf_read(pc, pa->pa_tag, i));
+		    i, pci_conf_read(pc, pa->pa_tag, i));
 #endif
 		/* need to check more than just two base addresses? */
 		if (PCI_MAPREG_TYPE(pci_conf_read(pc, pa->pa_tag, i)) ==
 		    PCI_MAPREG_TYPE_IO) {
 			retval = pci_io_find(pc, pa->pa_tag, i,
-				&addr, &size);
+			    &addr, &size);
 #ifdef DEBUG_VGAFB
 	printf("vgafb_pci_probe: io %x addr %x size %x\n", i, addr, size);
 #endif
@@ -129,7 +129,7 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 
 		} else {
 			retval = pci_mem_find(pc, pa->pa_tag, i,
-				&addr, &size, &tcacheable);
+			    &addr, &size, &tcacheable);
 #ifdef DEBUG_VGAFB
 	printf("vgafb_pci_probe: mem %x addr %x size %x\n", i, addr, size);
 #endif
@@ -142,7 +142,7 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 			} else if (size <= (1024 * 1024)) {
 #ifdef DEBUG_VGAFB
 	printf("vgafb_pci_probe: mem %x addr %x size %x iosize %x\n",
-		i, addr, size, *iosize);
+	    i, addr, size, *iosize);
 #endif
 				if (*mmiosize == 0) {
 					/* this is mmio, not memory */
@@ -164,8 +164,9 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 		}
 	}
 #ifdef DEBUG_VGAFB
-	printf("vgafb_pci_probe: id %x ioaddr %x, iosize %x, memaddr %x,\n memsize %x, mmioaddr %x, mmiosize %x\n",
-		id, *ioaddr, *iosize, *memaddr, *memsize, *mmioaddr, *mmiosize);
+	printf("vgafb_pci_probe: id %x ioaddr %x, iosize %x, memaddr %x,\n"
+	    " memsize %x, mmioaddr %x, mmiosize %x\n",
+	    id, *ioaddr, *iosize, *memaddr, *memsize, *mmioaddr, *mmiosize);
 #endif
 	if (*iosize == 0) {
 		if (id == 0) {
@@ -173,7 +174,7 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 			/* this is only used if on openfirmware system and
 			 * the device does not have a iobase config register,
 			 * eg CirrusLogic 5434 VGA.  (they hardcode iobase to 0
-			 * thus giving standard PC addresses for the registers) 
+			 * thus giving standard PC addresses for the registers)
 			 */
 			int s;
 			u_int32_t sizedata;
@@ -186,13 +187,13 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 			 */
 			s = splhigh();
 			sizedata = pci_conf_read(pc, pa->pa_tag,
-				PCI_COMMAND_STATUS_REG);
+			    PCI_COMMAND_STATUS_REG);
 			sizedata |= (PCI_COMMAND_MASTER_ENABLE |
-				     PCI_COMMAND_IO_ENABLE |
-				     PCI_COMMAND_PARITY_ENABLE |
-				     PCI_COMMAND_SERR_ENABLE);
+			    PCI_COMMAND_IO_ENABLE |
+			    PCI_COMMAND_PARITY_ENABLE |
+			    PCI_COMMAND_SERR_ENABLE);
 			pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-				sizedata);
+			    sizedata);
 			splx(s);
 
 #endif
@@ -208,8 +209,9 @@ vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, m
 		}
 	}
 #ifdef DEBUG_VGAFB
-	printf("vgafb_pci_probe: id %x ioaddr %x, iosize %x, memaddr %x,\n memsize %x, mmioaddr %x, mmiosize %x\n",
-		id, *ioaddr, *iosize, *memaddr, *memsize, *mmioaddr, *mmiosize);
+	printf("vgafb_pci_probe: id %x ioaddr %x, iosize %x, memaddr %x,\n"
+	    " memsize %x, mmioaddr %x, mmiosize %x\n",
+	    id, *ioaddr, *iosize, *memaddr, *memsize, *mmioaddr, *mmiosize);
 #endif
 	return 1;
 }
@@ -245,10 +247,10 @@ vgafb_pci_match(parent, match, aux)
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_PREHISTORIC_VGA)
 		potential = 1;
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
-	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA)
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA)
 		potential = 1;
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
-	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_MISC)
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_MISC)
 		potential = 1;
 
 	if (!potential)
@@ -262,30 +264,31 @@ vgafb_pci_match(parent, match, aux)
 
 #ifdef DEBUG_VGAFB
 	{
-	int i;
+		int i;
 		pci_chipset_tag_t pc = pa->pa_pc;
+
 		for (i = 0x10; i < 0x24; i+=4) {
 			printf("vgafb confread %x %x\n",
-				i, pci_conf_read(pc, pa->pa_tag, i));
+			    i, pci_conf_read(pc, pa->pa_tag, i));
 		}
 	}
 #endif
 
-	memaddr=0xb8000; /* default to isa addresses? */
-	ioaddr = 0; 	 /* default to isa addresses? */
+	memaddr=0xb8000;	/* default to isa addresses? */
+	ioaddr = 0;		/* default to isa addresses? */
 
 	retval = vgafb_pci_probe(pa, myid, &ioaddr, &iosize,
-		&memaddr, &memsize, &cacheable, &mmioaddr, &mmiosize);
+	    &memaddr, &memsize, &cacheable, &mmioaddr, &mmiosize);
 	if (retval == 0) {
 		return 0;
 	}
 #if 1
 	printf("ioaddr %x, iosize %x, memaddr %x, memsize %x mmioaddr %x mmiosize %x\n",
-		ioaddr, iosize, memaddr, memsize, mmioaddr, mmiosize);
+	    ioaddr, iosize, memaddr, memsize, mmioaddr, mmiosize);
 #endif
 
-	if (!vgafb_common_probe(pa->pa_iot, pa->pa_memt, ioaddr, iosize, memaddr, memsize, mmioaddr, mmiosize))
-	{
+	if (!vgafb_common_probe(pa->pa_iot, pa->pa_memt, ioaddr, iosize,
+	    memaddr, memsize, mmioaddr, mmiosize)) {
 		printf("vgafb_pci_match: common_probe failed\n");
 		return (0);
 	}
@@ -312,7 +315,7 @@ vgafb_pci_attach(parent, self, aux)
 	myid = id;
 
 	vgafb_pci_probe(pa, myid, &ioaddr, &iosize,
-		&memaddr, &memsize, &cacheable, &mmioaddr, &mmiosize);
+	    &memaddr, &memsize, &cacheable, &mmioaddr, &mmiosize);
 
 
 	console = (!bcmp(&pa->pa_tag, &vgafb_pci_console_tag, sizeof(pa->pa_tag)));
@@ -323,8 +326,8 @@ vgafb_pci_attach(parent, self, aux)
 		    malloc(sizeof(struct vgafb_config), M_DEVBUF, M_WAITOK);
 
 		/* set up bus-independent VGA configuration */
-		vgafb_common_setup(pa->pa_iot, pa->pa_memt, vc, 
-		ioaddr, iosize, memaddr, memsize, mmioaddr, mmiosize);
+		vgafb_common_setup(pa->pa_iot, pa->pa_memt, vc,
+		    ioaddr, iosize, memaddr, memsize, mmioaddr, mmiosize);
 	}
 	vc->vc_mmap = vgafbpcimmap;
 	vc->vc_ioctl = vgafbpciioctl;
@@ -336,10 +339,10 @@ vgafb_pci_attach(parent, self, aux)
 	sc->sc_pcitag = pa->pa_tag;
 
 	if (iosize == 0) {
-		printf (", no io");
+		printf(", no io");
 	}
 	if (mmiosize != 0) {
-		printf (", mmio");
+		printf(", mmio");
 	}
 	printf("\n");
 
@@ -368,7 +371,7 @@ vgafb_pci_console(iot, ioaddr, iosize, memt, memaddr, memsize,
 	pa->pa_iot = iot;
 	pa->pa_memt = memt;
 	pa->pa_tag = vgafb_pci_console_tag;
-	/* 
+	/*
 	pa->pa_pc = XXX;
 	 */
 
@@ -378,13 +381,13 @@ vgafb_pci_console(iot, ioaddr, iosize, memt, memaddr, memsize,
 	mmiosize =0;
 #if 0
 	vgafb_pci_probe(pa, 0, &ioaddr, &iosize,
-		&memaddr, &memsize, &cacheable, mmioaddr, mmiosize);
+	    &memaddr, &memsize, &cacheable, mmioaddr, mmiosize);
 #endif
 
 
 	/* set up bus-independent VGA configuration */
 	vgafb_common_setup(iot, memt, vc,
-		ioaddr, iosize, memaddr, memsize, mmioaddr, mmiosize);
+	    ioaddr, iosize, memaddr, memsize, mmioaddr, mmiosize);
 
 	vgafb_cnattach(iot, memt, pc, bus, device, function);
 }
@@ -426,17 +429,17 @@ vgafb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 
 	if (sc->nscreens > 0)
 		return (ENOMEM);
-  
+
 	*cookiep = &sc->sc_vc->dc_rinfo; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
 	sc->sc_vc->dc_rinfo.ri_ops.alloc_attr(&sc->sc_vc->dc_rinfo,
 	    0, 0, 0, &defattr);
 	*attrp = defattr;
-	sc->nscreens++; 
+	sc->nscreens++;
 	return (0);
 }
-  
+
 void
 vgafb_free_screen(v, cookie)
 	void *v;
@@ -449,7 +452,7 @@ vgafb_free_screen(v, cookie)
 
 	sc->nscreens--;
 }
-        
+
 int
 vgafb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;

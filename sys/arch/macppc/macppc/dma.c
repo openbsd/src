@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.13 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: dma.c,v 1.14 2002/09/15 02:02:43 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -187,10 +187,10 @@ _dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
-			     map->_dm_maxsegsz &&
+			    map->_dm_maxsegsz &&
 			    (map->_dm_boundary == 0 ||
-			     (map->dm_segs[seg].ds_addr & bmask) ==
-			     (curaddr & bmask)))
+			    (map->dm_segs[seg].ds_addr & bmask) ==
+			    (curaddr & bmask)))
 				map->dm_segs[seg].ds_len += sgsize;
 			else {
 				if (++seg >= map->_dm_segcnt)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.6 2002/03/14 23:51:47 drahn Exp $	*/
+/*	$OpenBSD: reg.h,v 1.7 2002/09/15 02:02:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,7 +61,7 @@ struct reg {
 };
 
 struct vreg {
-        u_int32_t vreg[32][4];
+	u_int32_t vreg[32][4];
 	u_int64_t vscr;
 	u_int32_t vrsave;
 	u_int32_t pad;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.5 2002/06/09 04:13:13 drahn Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.6 2002/09/15 02:02:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -124,7 +124,7 @@ mbattach(parent, self, aux)
 			    sizeof(name)) <= 0) {
 				if (OF_getprop(node, "name", name,
 				    sizeof(name)) <= 0)
-					printf ("name not found on node %x\n",
+					printf("name not found on node %x\n",
 					    node);
 					continue;
 			}

@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.5 2002/03/21 03:02:32 drahn Exp $
+#	$OpenBSD: genassym.cf,v 1.6 2002/09/15 02:02:43 deraadt Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -39,7 +39,7 @@ include <sys/time.h>
 include <sys/proc.h>
 include <uvm/uvm_extern.h>
 
-include <machine/pcb.h>               
+include <machine/pcb.h>
 include <machine/pmap.h>
 
 export	FRAMELEN

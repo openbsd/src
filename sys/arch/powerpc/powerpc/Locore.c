@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.6 2001/06/24 04:46:25 drahn Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.7 2002/09/15 02:02:44 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -53,7 +53,7 @@ setrunqueue(p)
 	struct  prochd *q;
 	struct proc *oldlast;
 	int which = p->p_priority >> 2;
-	
+
 #ifdef	DIAGNOSTIC
 	if (p->p_back)
 		panic("setrunqueue");
@@ -77,7 +77,7 @@ remrunqueue(p)
 	int which = p->p_priority >> 2;
 	struct prochd *q;
 
-#ifdef	DIAGNOSTIC	
+#ifdef	DIAGNOSTIC
 	if (!(whichqs & (0x80000000 >> which)))
 		panic("remrunqueue");
 #endif

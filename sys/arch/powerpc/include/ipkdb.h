@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipkdb.h,v 1.4 2001/09/01 15:49:05 drahn Exp $	*/
+/*	$OpenBSD: ipkdb.h,v 1.5 2002/09/15 02:02:44 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,7 +50,7 @@ ipkdbcopy(s,d,n)
 	int n;
 {
 	char *sp = s, *dp = d;
-	
+
 	while (--n >= 0)
 		*dp++ = *sp++;
 }
@@ -61,7 +61,7 @@ ipkdbzero(d,n)
 	int n;
 {
 	char *dp = d;
-	
+
 	while (--n >= 0)
 		*dp++ = 0;
 }
@@ -71,7 +71,7 @@ ipkdbcmp(s,d,n)
 	void *s, *d;
 {
 	char *sp = s, *dp = d;
-	
+
 	while (--n >= 0)
 		if (*sp++ != *dp++)
 			return *--dp - *--sp;

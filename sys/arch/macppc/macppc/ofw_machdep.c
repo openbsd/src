@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.14 2002/09/11 22:35:01 drahn Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.15 2002/09/15 02:02:44 deraadt Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -92,17 +92,15 @@ ofw_mem_regions(memp, availp)
 	struct mem_region **memp, **availp;
 {
 	int phandle;
-	
+
 	/*
 	 * Get memory.
 	 */
-	if ((phandle = OF_finddevice("/memory")) == -1
-	    || OF_getprop(phandle, "reg",
-			  OFmem, sizeof OFmem[0] * OFMEM_REGIONS)
-	       <= 0
-	    || OF_getprop(phandle, "available",
-			  OFavail, sizeof OFavail[0] * OFMEM_REGIONS)
-	       <= 0)
+	if ((phandle = OF_finddevice("/memory")) == -1 ||
+	    OF_getprop(phandle, "reg", OFmem,
+	    sizeof OFmem[0] * OFMEM_REGIONS) <= 0 ||
+	    OF_getprop(phandle, "available", OFavail,
+	    sizeof OFavail[0] * OFMEM_REGIONS) <= 0)
 		panic("no memory?");
 	*memp = OFmem;
 	/* HACK */
@@ -150,8 +148,8 @@ save_ofw_mapping()
 		return 0;
 	}
 	OF_stdin = stdin;
-	if (OF_getprop(chosen, "stdout", &stdout, sizeof stdout)
-	    != sizeof stdout) {
+	if (OF_getprop(chosen, "stdout", &stdout, sizeof stdout) !=
+	    sizeof stdout) {
 		return 0;
 	}
 	if (stdout == 0) {
@@ -217,7 +215,7 @@ ofrootfound()
 {
 	int node;
 	struct ofprobe probe;
-		
+
 	if (!(node = OF_peer(0)))
 		panic("No PROM root");
 	probe.phandle = node;
@@ -276,7 +274,7 @@ ofw_do_pending_int()
 	int emsr, dmsr;
 	static int processing;
 
-	if(processing)
+	if (processing)
 		return;
 
 	processing = 1;
@@ -286,11 +284,11 @@ ofw_do_pending_int()
 
 
 	pcpl = splhigh();		/* Turn off all */
-	if((ipending & SINT_CLOCK) && ((pcpl & imask[IPL_CLOCK]) == 0)) {
+	if ((ipending & SINT_CLOCK) && ((pcpl & imask[IPL_CLOCK]) == 0)) {
 		ipending &= ~SINT_CLOCK;
 		softclock();
 	}
-	if((ipending & SINT_NET) && ((pcpl & imask[IPL_NET]) == 0) ) {
+	if ((ipending & SINT_NET) && ((pcpl & imask[IPL_NET]) == 0) ) {
 		extern int netisr;
 		int pisr = netisr;
 		netisr = 0;
@@ -308,21 +306,21 @@ ofw_do_pending_int()
 static pcitag_t ofw_make_tag( void *cpv, int bus, int dev, int fnc);
 
 /* ARGSUSED */
-static pcitag_t 
+static pcitag_t
 ofw_make_tag(cpv, bus, dev, fnc)
-        void *cpv;
-        int bus, dev, fnc;
+	void *cpv;
+	int bus, dev, fnc;
 {
-        return (bus << 16) | (dev << 11) | (fnc << 8);
+	return (bus << 16) | (dev << 11) | (fnc << 8);
 }
 
-#define       OFW_PCI_PHYS_HI_BUSMASK         0x00ff0000
-#define       OFW_PCI_PHYS_HI_BUSSHIFT        16
-#define       OFW_PCI_PHYS_HI_DEVICEMASK      0x0000f800
-#define       OFW_PCI_PHYS_HI_DEVICESHIFT     11
-#define       OFW_PCI_PHYS_HI_FUNCTIONMASK    0x00000700
-#define       OFW_PCI_PHYS_HI_FUNCTIONSHIFT   8
-   
+#define OFW_PCI_PHYS_HI_BUSMASK         0x00ff0000
+#define OFW_PCI_PHYS_HI_BUSSHIFT        16
+#define OFW_PCI_PHYS_HI_DEVICEMASK      0x0000f800
+#define OFW_PCI_PHYS_HI_DEVICESHIFT     11
+#define OFW_PCI_PHYS_HI_FUNCTIONMASK    0x00000700
+#define OFW_PCI_PHYS_HI_FUNCTIONSHIFT   8
+
 #define pcibus(x) \
 	(((x) & OFW_PCI_PHYS_HI_BUSMASK) >> OFW_PCI_PHYS_HI_BUSSHIFT)
 #define pcidev(x) \
@@ -345,7 +343,7 @@ int cons_backlight_available;
 #include "vgafb_pci.h"
 
 struct usb_kbd_ihandles {
-        struct usb_kbd_ihandles *next;
+	struct usb_kbd_ihandles *next;
 	int ihandle;
 };
 
@@ -362,7 +360,7 @@ ofwconprobe()
 	/* handle different types of console */
 
 	bzero(type, sizeof(type));
-	if (OF_getprop(stdout_node,  "device_type", type, sizeof(type)) == -1) {
+	if (OF_getprop(stdout_node, "device_type", type, sizeof(type)) == -1) {
 		return; /* XXX */
 	}
 	if (strcmp(type, "display") == 0) {
@@ -384,7 +382,7 @@ ofwconprobe()
 
 	return;
 }
-	
+
 #define DEVTREE_UNKNOWN 0
 #define DEVTREE_USB	1
 #define DEVTREE_ADB	2
@@ -468,7 +466,7 @@ ofw_find_keyboard()
 #if NUKBD > 0
 		printf("USB and ADB found, using USB\n");
 		ukbd_cnattach();
-#else 		
+#else
 		ofw_have_kbd = OFW_HAVE_ADBKBD; /* ??? */
 #endif
 	}
@@ -481,7 +479,7 @@ ofw_find_keyboard()
 #if NAKBD >0
 		printf("ADB found\n");
 		akbd_cnattach();
-#endif 
+#endif
 	}
 }
 
@@ -583,7 +581,7 @@ of_display_console()
 
 		vgafb_pci_console(cons_membus,
 			addr[1].phys_lo, addr[1].size_lo,
-			cons_membus, 
+			cons_membus,
 			cons_addr, addr[0].size_lo,
 			&pa, pcibus(addr[1].phys_hi), pcidev(addr[1].phys_hi),
 			pcifunc(addr[1].phys_hi));
@@ -628,41 +626,42 @@ of_setbrightness(brightness)
 
 cons_decl(ofw);
 
-/*   
+/*
  * Console support functions
  */
 void
 ofwcnprobe(cd)
-        struct consdev *cd;
+	struct consdev *cd;
 {
 	cd->cn_pri = CN_DEAD;
 }
 
 void
 ofwcninit(cd)
-        struct consdev *cd;
+	struct consdev *cd;
 {
 }
+
 void
 ofwcnputc(dev, c)
 	dev_t dev;
 	int c;
 {
 	char ch = c;
- 
+
 	OF_write(OF_stdout, &ch, 1);
 }
 int
 ofwcngetc(dev)
 	dev_t dev;
 {
-        unsigned char ch = '\0';
-        int l;
+	unsigned char ch = '\0';
+	int l;
 
-        while ((l = OF_read(OF_stdin, &ch, 1)) != 1)
-                if (l != -2 && l != 0)
-                        return -1;
-        return ch;
+	while ((l = OF_read(OF_stdin, &ch, 1)) != 1)
+		if (l != -2 && l != 0)
+		return -1;
+	return ch;
 }
 
 void
@@ -673,12 +672,12 @@ ofwcnpollc(dev, on)
 }
 
 struct consdev consdev_ofw = {
-        ofwcnprobe,
-        ofwcninit,
-        ofwcngetc,
-        ofwcnputc,
-        ofwcnpollc,
-        NULL,
+	ofwcnprobe,
+	ofwcninit,
+	ofwcngetc,
+	ofwcnputc,
+	ofwcnpollc,
+	NULL,
 };
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.11 2002/07/30 01:22:00 millert Exp $	*/
+/*	$OpenBSD: limits.h,v 1.12 2002/09/15 02:02:44 deraadt Exp $	*/
 /*	$NetBSD: limits.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 
 #if !defined(_ANSI_SOURCE)
 #define	SIZE_MAX	UINT_MAX	/* max value for a size_t */
-#define SSIZE_MAX	INT_MAX		/* max value for a ssize_t */  
+#define SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
 
 #if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.4 2002/09/06 01:17:12 drahn Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.5 2002/09/15 02:02:44 deraadt Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -204,9 +204,8 @@ read_mac_label(devp, buf, lp)
 	int i;
 	char *s;
 
-	if ((strategy(devp, F_READ, 1, DEV_BSIZE, buf, &read) != 0)
-	   || (read != DEV_BSIZE))
-	{
+	if (strategy(devp, F_READ, 1, DEV_BSIZE, buf, &read) != 0 ||
+	    read != DEV_BSIZE) {
 		return ERDLAB;
 	}
 	part = (struct part_map_entry *)buf;
@@ -225,9 +224,8 @@ read_mac_label(devp, buf, lp)
 	 */
 	for (i = 0; i < part_cnt; i++) {
 		/* read the appropriate block */
-		if ((strategy(devp, F_READ, 1+i, DEV_BSIZE, buf, &read) != 0)
-		   || (read != DEV_BSIZE))
-		{
+		if (strategy(devp, F_READ, 1+i, DEV_BSIZE, buf, &read) != 0 ||
+		    read != DEV_BSIZE) {
 			return ERDLAB;
 		}
 		part = (struct part_map_entry *)buf;
@@ -238,10 +236,9 @@ read_mac_label(devp, buf, lp)
 		if (0 == strcmp(part->pmPartType, PART_TYPE_OPENBSD)) {
 			/* FOUND OUR PARTITION!!! */
 			printf("found OpenBSD DPME partition\n");
-			if(strategy(devp, F_READ, part->pmPyPartStart,
-				DEV_BSIZE, buf, &read) == 0
-				&& read == DEV_BSIZE)
-			{
+			if (strategy(devp, F_READ, part->pmPyPartStart,
+			    DEV_BSIZE, buf, &read) == 0 &&
+			    read == DEV_BSIZE) {
 				if (!getdisklabel(buf, lp)) {
 					return 0;
 				}
@@ -278,8 +275,8 @@ search_label(devp, off, buf, lp, off0)
 	u_long poff;
 	static int recursion;
 
-	if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read)
-	    || read != DEV_BSIZE)
+	if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read) ||
+	    read != DEV_BSIZE)
 		return ERDLAB;
 
 	if (buf[510] != 0x55 || buf[511] != 0xaa)
@@ -288,20 +285,20 @@ search_label(devp, off, buf, lp, off0)
 	if (recursion++ <= 1)
 		off0 += off;
 	for (p = (struct dos_partition *)(buf + DOSPARTOFF), i = 4;
-	     --i >= 0; p++) {
+	    --i >= 0; p++) {
 		if (p->dp_typ == DOSPTYP_OPENBSD ||
 		    p->dp_typ == DOSPTYP_NETBSD) {
 			poff = get_long(&p->dp_start) + off0;
 			if (strategy(devp, F_READ, poff + LABELSECTOR,
-				     DEV_BSIZE, buf, &read) == 0
-			    && read == DEV_BSIZE) {
+			    DEV_BSIZE, buf, &read) == 0 &&
+			    read == DEV_BSIZE) {
 				if (!getdisklabel(buf, lp)) {
 					recursion--;
 					return 0;
 				}
 			}
-			if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read)
-			    || read != DEV_BSIZE) {
+			if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read) ||
+			    read != DEV_BSIZE) {
 				recursion--;
 				return ERDLAB;
 			}
@@ -311,8 +308,8 @@ search_label(devp, off, buf, lp, off0)
 				recursion--;
 				return 0;
 			}
-			if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read)
-			    || read != DEV_BSIZE) {
+			if (strategy(devp, F_READ, off, DEV_BSIZE, buf, &read) ||
+			    read != DEV_BSIZE) {
 				recursion--;
 				return ERDLAB;
 			}
@@ -385,9 +382,9 @@ devopen(of, name, file)
 		ofdev.bsize = DEV_BSIZE;
 		/* First try to find a disklabel without MBR partitions */
 		if (strategy(&ofdev, F_READ,
-			     LABELSECTOR, DEV_BSIZE, buf, &read) != 0
-		    || read != DEV_BSIZE
-		    || getdisklabel(buf, &label)) {
+		    LABELSECTOR, DEV_BSIZE, buf, &read) != 0 ||
+		    read != DEV_BSIZE ||
+		    getdisklabel(buf, &label)) {
 			/* Else try MBR partitions */
 			error = read_mac_label(&ofdev, buf, &label);
 			if (error == ERDLAB) {

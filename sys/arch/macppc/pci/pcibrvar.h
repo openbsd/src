@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibrvar.h,v 1.3 2002/07/23 17:53:25 drahn Exp $ */
+/*	$OpenBSD: pcibrvar.h,v 1.4 2002/09/15 02:02:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -45,7 +45,7 @@ struct pcibr_config {
 	int	config_type;
 	int	bus;
 	int	pci_init_done;
-	int     node;
+	int	node;
 };
 
 struct pcibr_softc {

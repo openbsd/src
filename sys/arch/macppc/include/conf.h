@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.6 2002/07/10 22:21:30 mickey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.7 2002/09/15 02:02:43 deraadt Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -38,8 +38,8 @@ cdev_decl(mm);
 
 /* open, close, write, ioctl, kqueue */
 #define cdev_apm_init(c,n) { \
-        dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, (dev_type_select((*))) enodev, \
 	(dev_type_mmap((*))) enodev, D_KQFILTER, dev_init(c,n,kqfilter) }
 

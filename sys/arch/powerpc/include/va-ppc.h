@@ -1,4 +1,4 @@
-/*	$OpenBSD: va-ppc.h,v 1.6 2001/03/29 18:52:19 drahn Exp $	*/
+/*	$OpenBSD: va-ppc.h,v 1.7 2002/09/15 02:02:44 deraadt Exp $	*/
 /* GNU C varargs support for the PowerPC with either the V.4 or Windows NT calling sequences */
 
 #ifndef _WIN32
@@ -249,7 +249,6 @@ __extension__ ({ \
            (struct __va_list_tag *)__builtin_alloca(sizeof(__gnuc_va_list)); \
         *(dest) = *(src);\
   })
-   
 
 
 #endif /* __VA_PPC_H__ */

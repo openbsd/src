@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.4 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.5 2002/09/15 02:02:43 deraadt Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -194,7 +194,7 @@ struct cfattach mesh_ca = {
 };
 
 
-struct cfdriver mesh_cd = {         
+struct cfdriver mesh_cd = {
         NULL, "mesh", DV_DULL
 };
 
@@ -229,7 +229,7 @@ mesh_attach(parent, self, aux)
 	struct confargs *ca = aux;
 	int i, error;
 	u_int *reg;
-	
+
 	printf("MESH_ATTACH called\n");
 
 	reg = ca->ca_reg;
@@ -431,10 +431,10 @@ mesh_intr(arg)
 		break;
 	case MESH_MSGIN:
 		mesh_msgin(sc, scb);
-		printf("mesh_intr:case MESH_MSGIN\n");   
+		printf("mesh_intr:case MESH_MSGIN\n");
 		break;
 	case MESH_COMPLETE:
-		printf("mesh_intr:case MESH_COMPLETE\n"); 
+		printf("mesh_intr:case MESH_COMPLETE\n");
 		mesh_done(sc, scb);
 		break;
 
@@ -955,7 +955,7 @@ mesh_scsi_cmd(xs)
 
 	scb->target = sc_link->target;
 	sc->sc_imsglen = 0;	/* XXX ? */
-	
+
 	printf("messh_scsi_cmd,scb->target=%d\n",scb->target);
 
 	if (flags & SCSI_POLL){
@@ -993,7 +993,7 @@ mesh_scsi_cmd(xs)
 		if (mesh_poll(sc, xs))
 			printf("mesh: timeout again\n");
 	}
-	printf("mesh_scsi_cmd: returning COMPLETE\n"); 
+	printf("mesh_scsi_cmd: returning COMPLETE\n");
 	return COMPLETE;
 }
 
@@ -1031,7 +1031,7 @@ mesh_poll(sc, xs)
 {
 	int count = xs->timeout;
 	printf("in mesh_poll,timeout=%d\n",xs->timeout);
-	
+
 
 	while (count) {
 		if (mesh_read_reg(sc, MESH_INTERRUPT))
@@ -1105,12 +1105,12 @@ mesh_timeout(arg)
 
 	printf("mesh: timeout state=%x\n", sc->sc_nextstate);
 	intr = mesh_read_reg(sc, MESH_INTERRUPT);
-	
+
 
 	exception = mesh_read_reg(sc, MESH_EXCEPTION);
-	
+
 	error = mesh_read_reg(sc, MESH_ERROR);
-	
+
 	status0 = mesh_read_reg(sc, MESH_BUS_STATUS0);
 
 	status1 = mesh_read_reg(sc, MESH_BUS_STATUS1);
@@ -1120,7 +1120,7 @@ printf("intr 0x%02x, except 0x%02x, err 0x%02x\n", intr, exception, error);
 #endif
 
 	s = splbio();
-		
+
 	if (sc->sc_flags & MESH_DMA_ACTIVE) {
 		printf("mesh: resetting dma\n");
 		dbdma_reset(sc->sc_dmareg);
@@ -1128,7 +1128,7 @@ printf("intr 0x%02x, except 0x%02x, err 0x%02x\n", intr, exception, error);
 	scb->xs->error = XS_TIMEOUT;
 
 	mesh_set_reg(sc, MESH_SEQUENCE, MESH_CMD_BUSFREE);
-	
+
 	sc->sc_nextstate = MESH_COMPLETE;
 
 	splx(s);

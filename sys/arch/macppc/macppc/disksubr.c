@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.3 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.4 2002/09/15 02:02:43 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -130,11 +130,11 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 
 	part = (struct part_map_entry *)bp->b_data;
 	/* if first partition is not valid, assume not HFS/DPME partitioned */
-        if (part->pmSig != PART_ENTRY_MAGIC) {
+	if (part->pmSig != PART_ENTRY_MAGIC) {
 		msg = "DPME partition invalid";
 		osdep->macparts[0].pmSig = 0; /* make invalid */
 		goto hfs_done;
-        }
+	}
 	osdep->macparts[0] = *part;
 	part_cnt = part->pmMapBlkCnt;
 	n = 0;
@@ -201,7 +201,7 @@ hfs_done:
 	dospartoff = 0;
 	cyl = LABELSECTOR / lp->d_secpercyl;
 	if (dp) {
-	        daddr_t part_blkno = DOSBBSECTOR;
+		daddr_t part_blkno = DOSBBSECTOR;
 		unsigned long extoff = 0;
 		int wander = 1, loop = 0;
 		n = 0;
@@ -211,7 +211,7 @@ hfs_done:
 		 * Map the partitions to disklabel entries i-p
 		 */
 		while (wander && n < 8 && loop < 8) {
-		        loop++;
+			loop++;
 			wander = 0;
 			if (part_blkno < extoff)
 				part_blkno = extoff;
@@ -222,7 +222,7 @@ hfs_done:
 			bp->b_flags = B_BUSY | B_READ;
 			bp->b_cylin = part_blkno / lp->d_secpercyl;
 			(*strat)(bp);
-		     
+
 			/* if successful, wander through dos partition table */
 			if (biowait(bp)) {
 				msg = "dos partition I/O error";
@@ -364,7 +364,7 @@ found_disklabel:
 			if (msg == NULL)
 				msg = "no disk label";
 		} else if (dlp->d_npartitions > MAXPARTITIONS ||
-			   dkcksum(dlp) != 0)
+		    dkcksum(dlp) != 0)
 			msg = "disk label corrupted";
 		else {
 			*lp = *dlp;

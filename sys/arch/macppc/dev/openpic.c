@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.16 2002/03/14 03:15:55 millert Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.17 2002/09/15 02:02:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -498,7 +498,7 @@ openpic_do_pending_int()
 		irq = 31 - cntlzw(hwpend);
 		hwpend &= ~(1L << irq);
 		ih = o_intrhand[irq];
-		while(ih) {
+		while (ih) {
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
@@ -509,18 +509,18 @@ openpic_do_pending_int()
 	/*out32rb(INT_ENABLE_REG, ~imen_o);*/
 
 	do {
-		if((ipending & SINT_CLOCK) & ~pcpl) {
+		if ((ipending & SINT_CLOCK) & ~pcpl) {
 			ipending &= ~SINT_CLOCK;
 			softclock();
 		}
-		if((ipending & SINT_NET) & ~pcpl) {
+		if ((ipending & SINT_NET) & ~pcpl) {
 			extern int netisr;
 			int pisr = netisr;
 			netisr = 0;
 			ipending &= ~SINT_NET;
 			softnet(pisr);
 		}
-		if((ipending & SINT_TTY) & ~pcpl) {
+		if ((ipending & SINT_TTY) & ~pcpl) {
 			ipending &= ~SINT_TTY;
 			softtty();
 		}

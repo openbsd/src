@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd.c,v 1.12 2002/06/23 23:19:46 itojun Exp $	*/
+/*	$OpenBSD: akbd.c,v 1.13 2002/09/15 02:02:43 deraadt Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -266,7 +266,7 @@ akbdattach(parent, self, aux)
  * Handle putting the keyboard data received from the ADB into
  * an ADB event record.
  */
-void 
+void
 kbd_adbcomplete(buffer, data_area, adb_command)
 	caddr_t buffer;
 	caddr_t data_area;
@@ -307,18 +307,18 @@ kbd_adbcomplete(buffer, data_area, adb_command)
 }
 
 /*
- * Given a keyboard ADB event, record the keycodes and call the key 
+ * Given a keyboard ADB event, record the keycodes and call the key
  * repeat handler, optionally passing the event through the mouse
  * button emulation handler first.
  */
 static void
 kbd_processevent(event, ksc)
-        adb_event_t *event;
-        struct akbd_softc *ksc;
+	adb_event_t *event;
+	struct akbd_softc *ksc;
 {
-        adb_event_t new_event;
+	adb_event_t new_event;
 
-        new_event = *event;
+	new_event = *event;
 	new_event.u.k.key = event->bytes[0];
 	new_event.bytes[1] = 0xff;
 	akbd_intr(&new_event);
@@ -362,11 +362,11 @@ getleds(addr)
 
 /*
  * Set the keyboard LED's.
- * 
+ *
  * Automatically translates from ioctl/softc format to the
  * actual keyboard register format
  */
-static int 
+static int
 setleds(ksc, leds)
 	struct akbd_softc *ksc;
 	u_char	leds;
@@ -401,13 +401,13 @@ setleds(ksc, leds)
 	if ((buffer[2] & 0xf8) != leds)
 		return (EIO);
 	else
-		return (0); 
+		return (0);
 }
 
 /*
  * Toggle all of the LED's on and off, just for show.
  */
-static void 
+static void
 blinkleds(ksc)
 	struct akbd_softc *ksc;
 {
@@ -427,7 +427,7 @@ blinkleds(ksc)
 	i = 10;
 	do {
 		(void)setleds(ksc, (u_char)0x00);
-	} while (setleds(ksc, (u_char)0x00) && (i-- > 0)); 
+	} while (setleds(ksc, (u_char)0x00) && (i-- > 0));
 
 	return;
 }
@@ -490,7 +490,7 @@ akbd_rawrepeat(void *v)
 	struct akbd_softc *sc = v;
 	int s;
 
-	s = spltty();   
+	s = spltty();
 	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
 	splx(s);
 	timeout_add(&sc->sc_rawrepeat_ch, hz * REP_DELAYN / 1000);
@@ -554,7 +554,7 @@ akbd_intr(event)
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	} else if (sc->sc_rawkbd) {
 		char cbuf[MAXKEYS *2];
-		int c, j, s; 
+		int c, j, s;
 		int npress;
 
 		j = npress = 0;
