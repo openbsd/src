@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.16 2004/12/08 21:01:33 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.17 2004/12/08 21:04:44 dlg Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -32,7 +32,7 @@
  *
  */
 
-/* $ATUWI: $Id: if_atureg.h,v 1.16 2004/12/08 21:01:33 dlg Exp $ */
+/* $ATUWI: $Id: if_atureg.h,v 1.17 2004/12/08 21:04:44 dlg Exp $ */
 
 /************ 		driver options 		************/
 
@@ -277,11 +277,6 @@ struct atu_softc {
 	u_int8_t		atu_bssid[ETHER_ADDR_LEN];
 	enum atu_radio_type	atu_radio;
 	u_int16_t		atu_quirk;
-	
-	/* used for debug : FLAG_SIGNAL */
-	u_int8_t		atu_signalarr[ATU_AVG_TIME];
-	u_int8_t		atu_signalptr;
-	u_int16_t		atu_signaltotal;
 	
 	u_int8_t		atu_ssid[MAX_SSID_LEN];
 	u_int8_t		atu_ssidlen;

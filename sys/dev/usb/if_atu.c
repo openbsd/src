@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.40 2004/12/06 11:33:30 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.41 2004/12/08 21:04:44 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1351,10 +1351,6 @@ USB_ATTACH(atu)
 	printf("%s: address %s\n", USBDEVNAME(sc->atu_dev),
 	    ether_sprintf(ic->ic_myaddr));
 
-	for (i=0; i<ATU_AVG_TIME; i++)
-		sc->atu_signalarr[i] = 0;
-	sc->atu_signaltotal = 0;
-	sc->atu_signalptr = 0;
 	sc->atu_cdata.atu_tx_inuse = 0;
 	sc->atu_encrypt = ATU_WEP_OFF;
 	sc->atu_wepkeylen = ATU_WEP_104BITS;
