@@ -1,7 +1,8 @@
-/*	$OpenBSD: sensorsd.c,v 1.11 2004/09/14 23:24:41 deraadt Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.12 2005/04/01 22:10:23 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -55,6 +56,7 @@ struct limits_t {
 	enum sensor_type	type;			/* sensor type */
 	int64_t			lower;			/* lower limit */
 	int64_t			upper;			/* upper limit */
+	char			*command;		/* failure command */
 	enum sensor_status	status;			/* last status */
 	time_t			status_changed;
 	int64_t			last_val;
@@ -64,6 +66,15 @@ TAILQ_HEAD(limits, limits_t) limits = TAILQ_HEAD_INITIALIZER(limits);
 
 char			 *configfile;
 volatile sig_atomic_t	  reload = 0;
+int			  debug = 0;
+
+void
+usage(void)
+{
+	extern char *__progname;
+	fprintf(stderr, "usage: %s [-d]\n", __progname);
+	exit(1);
+}
 
 int
 main(int argc, char *argv[])
@@ -75,6 +86,17 @@ main(int argc, char *argv[])
 	time_t		 next_check;
 	int		 mib[3];
 	int		 i, sleeptime, watch_cnt;
+	int 		 ch;
+
+	while ((ch = getopt(argc, argv, "d")) != -1) {
+		switch (ch) {
+		case 'd':
+			debug = 1;
+			break;
+		default:
+			usage();
+		}
+	}
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_SENSORS;
@@ -109,10 +131,11 @@ main(int argc, char *argv[])
 	if (watch_cnt == 0)
 		errx(1, "no watches defined");
 
-	if (daemon(0, 0) == -1)
+	if (debug == 0 && daemon(0, 0) == -1)
 		err(1, "unable to fork");
 
 	signal(SIGHUP, reparse_cfg);
+	signal(SIGCHLD, SIG_IGN);
 
 	syslog(LOG_INFO, "startup, %d watches for %d sensors", watch_cnt, i);
 
@@ -181,25 +204,96 @@ check_sensors(void)
 }
 
 void
+execute(char *command)
+{
+	char *argp[] = {"sh", "-c", command, NULL};
+	
+	switch (fork ()) {
+	case -1:
+		syslog(LOG_CRIT, "execute: fork() failed");
+		break;
+	case 0:
+		execv("/bin/sh", argp);
+		_exit(1);
+		/* NOTREACHED */
+	default:
+		break;
+	}
+}
+
+void
 report(time_t last_report)
 {
 	struct limits_t	*limit = NULL;
 
-	TAILQ_FOREACH(limit, &limits, entries)
-		if (limit->status_changed > last_report) {
-			if (limit->status == STATUS_FAIL)
-				syslog(LOG_ALERT,
-				    "failure for hw.sensors.%d: "
-				    "%s not within limits",
-				    limit->num,
-				    print_sensor(limit->type, limit->last_val));
-			else
-				syslog(LOG_ALERT,
-				    "hw.sensors.%d within limits again, "
-				    "current value %s",
-				    limit->num,
-				    print_sensor(limit->type, limit->last_val));
+	TAILQ_FOREACH(limit, &limits, entries) {
+		if (limit->status_changed <= last_report)
+			continue;
+
+		syslog(LOG_ALERT, "hw.sensors.%d: %s limits, value: %s",
+		    limit->num,
+		    (limit->status == STATUS_FAIL) ? "exceed" : "within",
+		    print_sensor(limit->type, limit->last_val));
+		if (limit->command) {
+			int i = 0, n = 0, r;
+			char *cmd = limit->command;
+			char buf[BUFSIZ];
+			int len = sizeof(buf);
+
+			buf[0] = '\0';
+			for (i = n = 0; n < len; ++i) {
+				if (cmd[i] == '\0') {
+					buf[n++] = '\0';
+					break;
+				}
+				if (cmd[i] != '%') {
+					buf[n++] = limit->command[i];
+					continue;
+				}
+				i++;
+				if (cmd[i] == '\0') {
+					buf[n++] = '\0'; 
+					break;
+				}
+
+				switch (cmd[i]) {
+				case '1':
+					r = snprintf(&buf[n], len, "%d",
+					    limit->num);
+					break;
+				case '2':
+					r = snprintf(&buf[n], len, "%s",
+					    print_sensor(limit->type,
+					    limit->last_val));
+					break;
+				case '3':
+					r = snprintf(&buf[n], len, "%s",
+					    print_sensor(limit->type,
+					    limit->lower));
+					break;
+				case '4':
+					r = snprintf(&buf[n], len, "%s",
+					    print_sensor(limit->type,
+					    limit->upper));
+					break;
+				default:
+					r = snprintf(&buf[n], len, "%%%c",
+					    cmd[i]);
+					break;
+				}
+				if (r > len) {
+					buf[n] = '\0';
+					break;
+				}
+				if (r > 0) {
+					len -= r;
+					n += r;
+				}
+			}
+			if (buf[0])
+				execute(buf);
 		}
+	}
 }
 
 static char *
@@ -260,6 +354,10 @@ parse_config(char *cf)
 			if (cgetstr(buf, "high", &ebuf) < 0)
 				ebuf = NULL;
 			p->upper = get_val(ebuf, 1, p->type);
+			if (cgetstr(buf, "command", &ebuf) < 0)
+				ebuf = NULL;
+			if (ebuf)
+				asprintf(&(p->command), "%s", ebuf);
 			free(buf);
 			buf = NULL;
 		}

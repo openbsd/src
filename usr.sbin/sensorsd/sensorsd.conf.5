@@ -1,6 +1,7 @@
-.\"	$OpenBSD: sensorsd.conf.5,v 1.1 2003/09/24 20:32:49 henning Exp $
+.\"	$OpenBSD: sensorsd.conf.5,v 1.2 2005/04/01 22:10:23 hshoexer Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
+.\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd September 20, 2003
+.Dd March 15, 2005
 .Dt SENSORSD.CONF 5
 .Os
 .Sh NAME
@@ -30,9 +31,10 @@ file is read by
 .Xr sensorsd 8
 to configure hardware sensor monitoring.
 Each entry represents one sensor and may specify high and low limits.
-If the sensor data is out of range of the low and the high limits,
+If the limits are crossed,
 .Xr sensorsd 8 's
-alert functionality is triggered.
+alert functionality is triggered and the command, if specified, is
+executed.
 .Pp
 .Nm
 follows the syntax of configuration databases as documented in
@@ -40,7 +42,7 @@ follows the syntax of configuration databases as documented in
 .Pp
 Example:
 .Bd -literal -offset indent
-hw.sensors.0:high=80C
+hw.sensors.0:high=80C:command=/etc/sensorsd/log_warning %1 %2
 hw.sensors.1:high=170F
 hw.sensors.2:low=4.8V:high=5.2V
 hw.sensors.3:low=1000:high=8000
@@ -49,6 +51,11 @@ hw.sensors.3:low=1000:high=8000
 The values for temperature sensors can be given in degrees Celsius or
 Fahrenheit, for voltage sensors in volts, and fan speed sensors take a
 unit-less number representing RPM.
+.Pp
+The command is executed on transitions out of, and back into, given
+limits. Tokens in the command are substituted as follows: %1 with
+the sensor number, %2 with the sensor's current value, %3 with the
+sensor's low limit, and %4 with the sensor's high limit. 
 .Sh FILES
 .Bl -tag -width "/etc/sensorsd.conf"
 .It /etc/sensorsd.conf

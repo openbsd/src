@@ -1,6 +1,7 @@
-.\"	$OpenBSD: sensorsd.8,v 1.4 2004/06/27 22:48:27 jmc Exp $
+.\"	$OpenBSD: sensorsd.8,v 1.5 2005/04/01 22:10:23 hshoexer Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
+.\" Copyright (c) 2005 Matthew Gream <matthew.gream@pobox.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd September 20, 2003
+.Dd March 15, 2005
 .Dt SENSORSD 8
 .Os
 .Sh NAME
@@ -28,11 +29,11 @@ The
 utility retrieves hardware sensor monitoring data like fan speeds,
 temperatures and voltages, via
 .Xr sysctl 3 .
-It uses
+If the data is out of given limits, an alert is sent using
 .Xr syslog 3
-to send an alert if they are out of the given limits.
+and a command, if specified, is executed.
 .Pp
-Limits for a particular sensor may be specified in the
+Limit and command values for a particular sensor may be specified in the
 .Xr sensorsd.conf 5
 configuration file.
 .Sh FILES
