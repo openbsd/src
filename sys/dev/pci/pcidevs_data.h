@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.229 2000/03/24 18:44:24 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.230 2000/03/26 22:38:22 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1905,7 +1905,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82437FX (Triton) PCI/Cache/DRAM",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371FB_ISA,
 	    0,
 	    "Intel",
 	    "82371FB (Triton) PCI-ISA",
@@ -2037,7 +2037,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82801AB Hub-to-PCI",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA,
 	    0,
 	    "Intel",
 	    "82371SB (Triton II) PCI-ISA",
@@ -2067,7 +2067,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82439TX System (MTXC)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_ISA,
 	    0,
 	    "Intel",
 	    "82371AB PIIX4 ISA",
@@ -4005,7 +4005,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C585 (Apollo) PCI-ISA",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_ISA,
 	    0,
 	    "VIA",
 	    "VT82C586 (Apollo VP) PCI-ISA",
