@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.11 1996/05/07 07:47:34 deraadt Exp $ */
+/*	$OpenBSD: cl.c,v 1.12 1996/05/10 16:54:54 rahnds Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -977,8 +977,14 @@ clcngetc(dev)
 {
 	u_char val, reoir, licr, isrl, data, status, fifo_cnt;
 	int got_char = 0;
+	u_char ier_old = 0xff;
 	struct clreg *cl_reg = cl_cons.cl_vaddr;
 	volatile struct pcctworeg *pcc2_base = cl_cons.pcctwoaddr;
+	cl_reg->cl_car = 0;
+	if (!(cl_reg->cl_ier & 0x08)) {
+		ier_old = cl_reg->cl_ier;
+		cl_reg->cl_ier	= 0x08;
+	}
 	while (got_char == 0) {
 		val = cl_reg->cl_rir;
 		/* if no receive interrupt pending wait */
@@ -1009,6 +1015,9 @@ clcngetc(dev)
 #endif
 			fifo_cnt = cl_reg->cl_rfoc;
 			data = cl_reg->cl_rdr;
+			if (ier_old != 0xff) {
+				cl_reg->cl_ier  = ier_old;
+			}
 			got_char = 1;
 			cl_reg->cl_teoir = 0x00;
 		} else {
@@ -1491,6 +1500,7 @@ cl_txintr(sc)
 
 	tp = sc->sc_cl[channel].tty;
 	if (tp == NULL || (tp->t_state & TS_ISOPEN) == 0) {
+		sc->cl_reg->cl_ier = sc->cl_reg->cl_ier & ~0x3;
 		sc->cl_reg->cl_teoir = 0x08;
 		return 1;
 	}
@@ -1728,6 +1738,14 @@ channel, nbuf, cnt, status);
 		tp = sc->sc_cl[channel].tty;
 		for (i = 0; i < fifocnt; i++) {
 			buffer[i] = sc->cl_reg->cl_rdr;
+		}
+		if (NULL == tp) {
+			/* if the channel is not configured,
+			 * dont send characters upstream.
+			 * also fix problem with NULL dereference
+			 */
+			reoir = 0x00;
+			break;
 		}
 
 		sc->cl_reg->cl_reoir = reoir;
