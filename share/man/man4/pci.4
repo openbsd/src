@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.76 2003/06/19 20:29:51 deraadt Exp $
+.\"	$OpenBSD: pci.4,v 1.77 2003/08/12 19:03:05 jason Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -266,6 +266,8 @@ Hifn 6500 crypto accelerator.
 NetOctave NSP2000 crypto accelerator.
 .It Xr nofn 4
 Hifn 7814, 7851 and 7854 crypto processor.
+.It Xr safe 4
+Safenet SafeXcel 1141/1741 crypto accelerator.
 .It Xr ubsec 4
 Broadcom Bluesteelnet uBsec 5501, 5601, 5805, 5820, and 5821.
 .El
@@ -498,6 +500,7 @@ driver.
 .Xr puc 4 ,
 .Xr rl 4 ,
 .\" no manpage .Xr tsp 4
+.Xr safe 4 ,
 .Xr schizo 4 ,
 .Xr sf 4 ,
 .Xr siop 4 ,
