@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.55 2002/06/29 07:56:44 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.56 2002/07/03 09:39:28 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.55 2002/06/29 07:56:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.56 2002/07/03 09:39:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,21 +169,22 @@ quad_t tsumsq = 0;		/* sum of all times squared, for std. dev. */
 int bufspace = IP_MAXPACKET;
 
 void fill(char *, char *);
-void catcher(), prtsig(), finish(), summary(int, int);
+void catcher(int signo);
+void prtsig(int signo);
+void finish(int signo);
+void summary(int, int);
 int in_cksum(u_short *, int);
-void pinger();
+void pinger(void);
 char *pr_addr(in_addr_t);
 int check_icmph(struct ip *);
 void pr_icmph(struct icmp *);
 void pr_pack(char *, int, struct sockaddr_in *);
 void pr_retip(struct ip *);
 quad_t qsqrt(quad_t);
-void usage();
+void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct timeval timeout;
 	struct hostent *hp;
@@ -249,7 +250,8 @@ main(argc, argv)
 
 			if (interval < 1)
 				if (getuid())
-					errx(1, "%s: only root may use interval < 1s", strerror(EPERM));
+					errx(1, "%s: only root may use interval < 1s",
+					    strerror(EPERM));
 
 			if (interval < 0.01)
 				interval = 0.01;
@@ -480,7 +482,7 @@ main(argc, argv)
 		pinger();
 
 	if ((options & F_FLOOD) == 0)
-		catcher();		/* start things going */
+		catcher(0);		/* start things going */
 
 	fdmasks = howmany(s+1, NFDBITS) * sizeof(fd_mask);
 	if ((fdmaskp = (fd_set *)malloc(fdmasks)) == NULL)
@@ -518,7 +520,7 @@ main(argc, argv)
 			break;
 	}
 	free(fdmaskp);
-	finish();
+	finish(0);
 	/* NOTREACHED */
 	exit(0);	/* Make the compiler happy */
 }
@@ -534,7 +536,7 @@ main(argc, argv)
  * quality of the delay and loss statistics.
  */
 void
-catcher()
+catcher(int signo)
 {
 	int save_errno = errno;
 	int waittime;
@@ -561,7 +563,7 @@ catcher()
  * XXX not race safe
  */
 void
-prtsig()
+prtsig(int signo)
 {
 	int save_errno = errno;
 
@@ -578,7 +580,7 @@ prtsig()
  * byte-order, to compute the round-trip time.
  */
 void
-pinger()
+pinger(void)
 {
 	struct icmp *icp;
 	char buf[8192];
@@ -640,10 +642,7 @@ pinger()
  * program to be run without having intermingled output (or statistics!).
  */
 void
-pr_pack(buf, cc, from)
-	char *buf;
-	int cc;
-	struct sockaddr_in *from;
+pr_pack(char *buf, int cc, struct sockaddr_in *from)
 {
 	struct icmp *icp;
 	in_addr_t l;
@@ -862,9 +861,7 @@ pr_pack(buf, cc, from)
  *	Checksum routine for Internet Protocol family headers (C Version)
  */
 int
-in_cksum(addr, len)
-	u_short *addr;
-	int len;
+in_cksum(u_short *addr, int len)
 {
 	int nleft = len;
 	u_short *w = addr;
@@ -895,8 +892,7 @@ in_cksum(addr, len)
 }
 
 void
-summary(header, sig)
-	int header, sig;
+summary(int header, int sig)
 {
 	char buf[8192], buft[8192];
 
@@ -973,12 +969,15 @@ qsqrt(quad_t qdev)
  *	Print out statistics, and give up.
  */
 void
-finish()
+finish(int signo)
 {
 	(void)signal(SIGINT, SIG_IGN);
 
 	summary(1, 0);
-	exit(nreceived ? 0 : 1);
+	if (signo)
+		_exit(nreceived ? 0 : 1);
+	else
+		exit(nreceived ? 0 : 1);
 }
 
 #ifdef notdef
@@ -1002,8 +1001,7 @@ static char *ttab[] = {
  *	Print a descriptive string about an ICMP header.
  */
 void
-pr_icmph(icp)
-	struct icmp *icp;
+pr_icmph(struct icmp *icp)
 {
 	switch(icp->icmp_type) {
 	case ICMP_ECHOREPLY:
@@ -1198,8 +1196,7 @@ pr_icmph(icp)
  *	Print an IP header with options.
  */
 void
-pr_iph(ip)
-	struct ip *ip;
+pr_iph(struct ip *ip)
 {
 	int hlen;
 	u_char *cp;
@@ -1250,8 +1247,7 @@ pr_addr(a)
  *	Dump some info on a returned (via ICMP) IP packet.
  */
 void
-pr_retip(ip)
-	struct ip *ip;
+pr_retip(struct ip *ip)
 {
 	int hlen;
 	u_char *cp;
@@ -1269,8 +1265,7 @@ pr_retip(ip)
 }
 
 void
-fill(bp, patp)
-	char *bp, *patp;
+fill(char *bp, char *patp)
 {
 	int ii, jj, kk;
 	int pat[16];
@@ -1305,8 +1300,7 @@ fill(bp, patp)
  * of ping, and not say, a refused finger connection or something
  */
 int
-check_icmph(iph)
-	struct ip *iph;
+check_icmph(struct ip *iph)
 {
 	struct icmp *icmph;
 
@@ -1332,7 +1326,7 @@ check_icmph(iph)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: ping [-DdfLnqRrv] [-c count] [-I ifaddr] [-i wait]\n"
