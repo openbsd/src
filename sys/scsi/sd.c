@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.64 2004/01/25 00:52:49 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.65 2004/01/25 21:51:18 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -234,7 +234,7 @@ sdattach(parent, self, aux)
 		result = SDGP_RESULT_OFFLINE;
 	else
 		result = (*sd->sc_ops->sdo_get_parms)(sd, &sd->params,
-		    scsi_autoconf | SCSI_IGNORE_MEDIA_CHANGE);
+		    scsi_autoconf | SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE);
 
 	printf("%s: ", sd->sc_dev.dv_xname);
 	switch (result) {
