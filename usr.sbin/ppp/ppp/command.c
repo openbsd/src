@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: command.c,v 1.51 2000/08/30 22:04:35 brian Exp $
+ * $OpenBSD: command.c,v 1.52 2000/09/06 21:03:38 brian Exp $
  *
  */
 #include <sys/param.h>
@@ -2641,9 +2641,9 @@ RunListCommand(struct cmdargs const *arg)
   if (arg->cmd->args == NatCommands &&
       tolower(*arg->argv[arg->argn - 1]) == 'a') {
     if (arg->prompt)
-      prompt_Printf(arg->prompt, "The alias command is depricated\n");
+      prompt_Printf(arg->prompt, "The alias command is deprecated\n");
     else
-      log_Printf(LogWARN, "The alias command is depricated\n");
+      log_Printf(LogWARN, "The alias command is deprecated\n");
   }
 #endif
 
