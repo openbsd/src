@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.4 1997/08/13 15:17:04 mickey Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.5 1997/08/21 21:52:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -90,7 +90,7 @@ pc_putc(dev, c)
 	dev_t dev;
 	int c;
 {
-	__asm __volatile(DOINT(0x10) : : "a" (c | 0xe00), "b" (0) :
+	__asm __volatile(DOINT(0x10) : : "a" (c | 0xe00), "b" (1) :
 	    "%ecx", "%edx", "cc" );
 }
 
