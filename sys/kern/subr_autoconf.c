@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.17 1998/01/20 19:05:02 niklas Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.18 1998/01/20 20:12:11 niklas Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -202,8 +202,8 @@ config_search(fn, parent, aux)
 	}
 	if (autoconf_verbose)
 		printf(">>> probe for %s%d won\n",
-		    ((struct cfdata *)match)->cf_driver->cd_name,
-		    ((struct cfdata *)match)->cf_unit);
+		    ((struct cfdata *)m.match)->cf_driver->cd_name,
+		    ((struct cfdata *)m.match)->cf_unit);
 	return (m.match);
 }
 
@@ -302,7 +302,7 @@ config_found_sm(parent, aux, print, submatch)
 {
 	void *match;
 
-	if ((match = config_search(submatch, parent, aux)) != NULL) {
+	if ((match = config_search(submatch, parent, aux)) != NULL)
 		return (config_attach(parent, match, aux, print));
 	if (print)
 		printf(msgs[(*print)(aux, parent->dv_xname)]);
