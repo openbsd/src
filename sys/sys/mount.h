@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.46 2002/03/15 01:20:04 millert Exp $	*/
+/*	$OpenBSD: mount.h,v 1.47 2002/04/23 18:54:12 espie Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ struct export_args {
  */
 struct ufs_args {
 	char	*fspec;			/* block special device to mount */
-	struct	export_args export;	/* network export information */
+	struct	export_args export_info;/* network export information */
 };
 
 /*
@@ -85,7 +85,7 @@ struct ufs_args {
  */
 struct mfs_args {
 	char	*fspec;			/* name to export for statfs */
-	struct	export_args export;	/* if exported MFSes are supported */
+	struct	export_args export_info;/* if exported MFSes are supported */
 	caddr_t	base;			/* base of file system in memory */
 	u_long	size;			/* size of file system */
 };
@@ -95,7 +95,7 @@ struct mfs_args {
  */
 struct iso_args {
 	char	*fspec;			/* block special device to mount */
-	struct	export_args export;	/* network export info */
+	struct	export_args export_info;/* network export info */
 	int	flags;			/* mounting flags, see below */
 };
 #define	ISOFSMNT_NORRIP	0x00000001	/* disable Rock Ridge Ext.*/
@@ -208,7 +208,8 @@ struct nfs_args3 {
  */
 struct msdosfs_args {
 	char	*fspec;		/* blocks special holding the fs to mount */
-	struct	export_args export;	/* network export information */
+	struct	export_args export_info;
+				/* network export information */
 	uid_t	uid;		/* uid that owns msdosfs files */
 	gid_t	gid;		/* gid that owns msdosfs files */
 	mode_t  mask;		/* mask to be applied for msdosfs perms */
@@ -228,7 +229,8 @@ struct msdosfs_args {
  */
 struct adosfs_args {
 	char	*fspec;		/* blocks special holding the fs to mount */
-	struct	export_args export;	/* network export information */
+	struct	export_args export_info;
+				/* network export information */
 	uid_t	uid;		/* uid that owns adosfs files */
 	gid_t	gid;		/* gid that owns adosfs files */
 	mode_t	mask;		/* mask to be applied for adosfs perms */

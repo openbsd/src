@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.32 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.33 2002/04/23 18:54:12 espie Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.32 2002/02/19 19:39:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.33 2002/04/23 18:54:12 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -591,11 +591,11 @@ havelabel:
 
 		sprintf(buf, "mfs:%d", getpid());
 		args.fspec = buf;
-		args.export.ex_root = -2;
+		args.export_info.ex_root = -2;
 		if (mntflags & MNT_RDONLY)
-			args.export.ex_flags = MNT_EXRDONLY;
+			args.export_info.ex_flags = MNT_EXRDONLY;
 		else
-			args.export.ex_flags = 0;
+			args.export_info.ex_flags = 0;
 		args.base = membase;
 		args.size = fssize * sectorsize;
 		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0)

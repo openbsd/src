@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_vfsops.c,v 1.15 2002/03/14 01:27:15 millert Exp $	*/
+/*	$OpenBSD: lfs_vfsops.c,v 1.16 2002/04/23 18:54:12 espie Exp $	*/
 /*	$NetBSD: lfs_vfsops.c,v 1.11 1996/03/25 12:53:35 pk Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ lfs_mount(mp, path, data, ndp, p)
 		return (error);
 
 	/* Until LFS can do NFS right.		XXX */
-	if (args.export.ex_flags & MNT_EXPORTED)
+	if (args.export_info.ex_flags & MNT_EXPORTED)
 		return (EINVAL);
 
 	/*
@@ -144,7 +144,8 @@ lfs_mount(mp, path, data, ndp, p)
 			/*
 			 * Process export requests.
 			 */
-			return (vfs_export(mp, &ump->um_export, &args.export));
+			return (vfs_export(mp, &ump->um_export, 
+			    &args.export_info));
 		}
 	}
 	/*

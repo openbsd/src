@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.52 2002/03/14 01:27:14 millert Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.53 2002/04/23 18:54:12 espie Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -309,7 +309,8 @@ ffs_mount(mp, path, data, ndp, p)
 			/*
 			 * Process export requests.
 			 */
-			error = vfs_export(mp, &ump->um_export, &args.export);
+			error = vfs_export(mp, &ump->um_export, 
+			    &args.export_info);
 			if (error)
 				goto error_1;
 			else

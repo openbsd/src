@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.19 2002/03/14 01:27:15 millert Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.20 2002/04/23 18:54:12 espie Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -205,7 +205,8 @@ mfs_mount(mp, path, data, ndp, p)
 			fs->fs_ronly = 0;
 #ifdef EXPORTMFS
 		if (args.fspec == 0)
-			return (vfs_export(mp, &ump->um_export, &args.export));
+			return (vfs_export(mp, &ump->um_export, 
+			    &args.export_info));
 #endif
 		return (0);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_cd9660.c,v 1.12 2002/02/16 21:27:36 millert Exp $	*/
+/*	$OpenBSD: mount_cd9660.c,v 1.13 2002/04/23 18:54:12 espie Exp $	*/
 /*	$NetBSD: mount_cd9660.c,v 1.3 1996/04/13 01:31:08 jtc Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.4 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_cd9660.c,v 1.12 2002/02/16 21:27:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_cd9660.c,v 1.13 2002/04/23 18:54:12 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,15 +116,15 @@ main(argc, argv)
 
 #define DEFAULT_ROOTUID	-2
 	args.fspec = dev;
-	args.export.ex_root = DEFAULT_ROOTUID;
+	args.export_info.ex_root = DEFAULT_ROOTUID;
 
 #if 1
 	mntflags |= MNT_RDONLY;
 #endif
 	if (mntflags & MNT_RDONLY)
-		args.export.ex_flags = MNT_EXRDONLY;
+		args.export_info.ex_flags = MNT_EXRDONLY;
 	else
-		args.export.ex_flags = 0;
+		args.export_info.ex_flags = 0;
 	args.flags = opts;
 
 	if (mount(MOUNT_CD9660, dir, mntflags, &args) < 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: advfsops.c,v 1.23 2002/03/14 03:15:49 millert Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.24 2002/04/23 18:54:12 espie Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
@@ -99,7 +99,8 @@ adosfs_mount(mp, path, data, ndp, p)
 	if (mp->mnt_flag & MNT_UPDATE) {
 		amp = VFSTOADOSFS(mp);
 		if (args.fspec == 0)
-			return (vfs_export(mp, &amp->export, &args.export));
+			return (vfs_export(mp, &amp->export, 
+			    &args.export_info));
 	}
 	/*
 	 * Not an update, or updating the name: look up the name

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.44 2002/04/04 20:57:17 millert Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.45 2002/04/23 18:54:12 espie Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -768,7 +768,7 @@ get_exportlist()
 		    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN)) {
 			bzero((char *)&targs, sizeof(targs));
 			targs.ua.fspec = NULL;
-			targs.ua.export.ex_flags = MNT_DELEXPORT;
+			targs.ua.export_info.ex_flags = MNT_DELEXPORT;
 			if (mount(fsp->f_fstypename, fsp->f_mntonname,
 			    fsp->f_flags | MNT_UPDATE, &targs) < 0)
 				syslog(LOG_ERR, "Can't delete exports for %s: %m",
@@ -1599,8 +1599,8 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	in_addr_t net;
 
 	args.ua.fspec = 0;
-	args.ua.export.ex_flags = exflags;
-	args.ua.export.ex_anon = *anoncrp;
+	args.ua.export_info.ex_flags = exflags;
+	args.ua.export_info.ex_anon = *anoncrp;
 	memset(&sin, 0, sizeof(sin));
 	memset(&imask, 0, sizeof(imask));
 	sin.sin_family = AF_INET;
@@ -1616,21 +1616,21 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	while (!done) {
 		switch (grp->gr_type) {
 		case GT_HOST:
-			args.ua.export.ex_addr = (struct sockaddr *)&sin;
-			args.ua.export.ex_masklen = 0;
+			args.ua.export_info.ex_addr = (struct sockaddr *)&sin;
+			args.ua.export_info.ex_masklen = 0;
 			if (!addrp) {
-				args.ua.export.ex_addrlen = 0;
+				args.ua.export_info.ex_addrlen = 0;
 				break;
 			}
 			sin.sin_addr.s_addr = **addrp;
-			args.ua.export.ex_addrlen = sizeof(sin);
+			args.ua.export_info.ex_addrlen = sizeof(sin);
 			break;
 		case GT_NET:
 			sin.sin_addr.s_addr = grp->gr_ptr.gt_net.nt_net;
-			args.ua.export.ex_addr = (struct sockaddr *)&sin;
-			args.ua.export.ex_addrlen = sizeof (sin);
-			args.ua.export.ex_mask = (struct sockaddr *)&imask;
-			args.ua.export.ex_masklen = sizeof (imask);
+			args.ua.export_info.ex_addr = (struct sockaddr *)&sin;
+			args.ua.export_info.ex_addrlen = sizeof (sin);
+			args.ua.export_info.ex_mask = (struct sockaddr *)&imask;
+			args.ua.export_info.ex_masklen = sizeof (imask);
 			if (grp->gr_ptr.gt_net.nt_mask) {
 				imask.sin_addr.s_addr = grp->gr_ptr.gt_net.nt_mask;
 				break;
