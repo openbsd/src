@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.8 2004/02/27 17:30:50 henning Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.9 2004/03/15 16:10:07 drahn Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -362,6 +362,7 @@ USB_DETACH(wi_usb)
 	struct ifnet		*ifp = WI_GET_IFP(sc);
 	struct wi_softc		*wsc = &sc->sc_wi;
 	int s;
+	int err;
 
 	sc->wi_usb_dying = 1;
 	if (sc->wi_thread_info != NULL) {
@@ -408,12 +409,45 @@ USB_DETACH(wi_usb)
 		sc->wi_usb_txmem[sc->wi_usb_nummem] = NULL;
 	}
 
-	if (sc->wi_usb_ep[WI_USB_ENDPT_INTR] != NULL);
-		usbd_abort_pipe(sc->wi_usb_ep[WI_USB_ENDPT_INTR]);
-	if (sc->wi_usb_ep[WI_USB_ENDPT_TX] != NULL);
+	if (sc->wi_usb_ep[WI_USB_ENDPT_INTR] != NULL) {
+		err = usbd_abort_pipe(sc->wi_usb_ep[WI_USB_ENDPT_INTR]);
+		if (err) {
+			printf("%s: abort intr pipe failed: %s\n",
+			    USBDEVNAME(sc->wi_usb_dev), usbd_errstr(err));
+		}
+		err = usbd_close_pipe(sc->wi_usb_ep[WI_USB_ENDPT_INTR]);
+		if (err) {
+			printf("%s: close intr pipe failed: %s\n",
+			    USBDEVNAME(sc->wi_usb_dev), usbd_errstr(err));
+		}
+		sc->wi_usb_ep[WI_USB_ENDPT_INTR] = NULL;
+	}
+	if (sc->wi_usb_ep[WI_USB_ENDPT_TX] != NULL) {
 		usbd_abort_pipe(sc->wi_usb_ep[WI_USB_ENDPT_TX]);
-	if (sc->wi_usb_ep[WI_USB_ENDPT_RX] != NULL);
+		if (err) {
+			printf("%s: abort tx pipe failed: %s\n",
+			    USBDEVNAME(sc->wi_usb_dev), usbd_errstr(err));
+		}
+		err = usbd_close_pipe(sc->wi_usb_ep[WI_USB_ENDPT_TX]);
+		if (err) {
+			printf("%s: close tx pipe failed: %s\n",
+			    USBDEVNAME(sc->wi_usb_dev), usbd_errstr(err));
+		}
+		sc->wi_usb_ep[WI_USB_ENDPT_TX] = NULL;
+	}
+	if (sc->wi_usb_ep[WI_USB_ENDPT_RX] != NULL) {
 		usbd_abort_pipe(sc->wi_usb_ep[WI_USB_ENDPT_RX]);
+		if (err) {
+			printf("%s: abort rx pipe failed: %s\n",
+			    USBDEVNAME(sc->wi_usb_dev), usbd_errstr(err));
+		}
+		err = usbd_close_pipe(sc->wi_usb_ep[WI_USB_ENDPT_RX]);
+		if (err) {
+			printf("%s: close rx pipe failed: %s\n",
+			    USBDEVNAME(sc->wi_usb_dev), usbd_errstr(err));
+		}
+		sc->wi_usb_ep[WI_USB_ENDPT_RX] = NULL;
+	}
 
 	splx(s);
 
