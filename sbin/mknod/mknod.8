@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mknod.8,v 1.7 1999/04/18 19:40:41 millert Exp $
+.\"	$OpenBSD: mknod.8,v 1.8 1999/07/21 12:32:18 aaron Exp $
 .\"	$NetBSD: mknod.8,v 1.9 1995/08/10 23:47:32 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -61,6 +61,21 @@ is used to create special files for commonly known devices; it executes
 with the appropriate arguments and can make all the files required for the
 device.
 .Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl m Ar mode
+Set the file mode.
+.Ar mode
+may be absolute or symbolic, as described in
+.Xr chmod 1 .
+In symbolic mode strings, the
+.Ql +
+and
+.Ql -
+operators are interpreted relative to an assumed initial mode of
+.Dq a=rw .
+.El
+.Pp
 To make nodes manually, the arguments are:
 .Bl -tag -width majorx
 .It Ar name
@@ -101,6 +116,7 @@ indicates a hexadecimal number, and a leading
 will cause the number to be interpreted as octal.
 .El
 .Sh SEE ALSO
+.Xr chmod 1 ,
 .Xr mkfifo 1 ,
 .Xr mkfifo 2 ,
 .Xr mknod 2 ,
