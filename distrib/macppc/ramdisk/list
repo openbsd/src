@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.21 2004/10/02 16:10:38 krw Exp $
+#	$OpenBSD: list,v 1.22 2004/11/22 09:04:51 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS gnu/usr.bin usr.bin bin sbin usr.sbin
@@ -72,6 +72,10 @@ SYMLINK	/tmp/fstab.shadow			etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
 SYMLINK	/tmp/hosts				etc/hosts
 TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
+
+# firmwares that might need loading
+COPY	${DESTDIR}/etc/firmware/tigon1		etc/firmware/tigon1
+COPY	${DESTDIR}/etc/firmware/tigon2		etc/firmware/tigon2
 
 # dhcp things
 SCRIPT    ${DESTDIR}/sbin/dhclient-script	sbin/dhclient-script
