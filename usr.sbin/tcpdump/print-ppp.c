@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ppp.c,v 1.14 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.15 2004/05/21 05:48:50 brad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ppp.c,v 1.14 2002/02/19 19:39:40 millert Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ppp.c,v 1.15 2004/05/21 05:48:50 brad Exp $ (LBL)";
 #endif
 
 #ifdef PPP
@@ -563,6 +563,115 @@ out:
 	putchar('\n');
 }
 
+void
+ppp_ether_if_print(user, h, p)
+	u_char *user;
+	const struct pcap_pkthdr *h;
+	register const u_char *p;
+{
+	u_int16_t pppoe_sid, pppoe_len;
+	u_int caplen = h->caplen;
+	u_int16_t length = h->len;
+	u_int16_t proto;
+	int i;
+
+	ts_print(&h->ts);
+
+	packetp = p;
+	snapend = p + caplen;
+
+	if (eflag)
+		printf("PPPoE ");
+
+	if (caplen < sizeof(struct pppoe_header)) {
+		printf("[|pppoe]");
+		return;
+	}
+
+	if(eflag)
+	{
+		printf("\n\tcode ");
+		switch (p[1]) {
+		case PPPOE_CODE_PADI:
+			printf("Initiation");
+			break;
+		case PPPOE_CODE_PADO:
+			printf("Offer");
+			break;
+		case PPPOE_CODE_PADR:
+			printf("Request");
+			break;
+		case PPPOE_CODE_PADS:
+			printf("Confirm");
+			break;
+		case PPPOE_CODE_PADT:
+			printf("Terminate");
+			break;
+		case PPPOE_CODE_SESSION:
+			printf("Session");
+			break;
+		default:
+			printf("Unknown(0x%02x)", p[1]);
+			break;
+		}
+	}
+
+	pppoe_sid = EXTRACT_16BITS(p + 2);
+	pppoe_len = EXTRACT_16BITS(p + 4);
+
+	if(eflag)
+	    printf(", version %d, type %d, id 0x%04x, length %d",
+		    (p[0] & 0xf), (p[0] & 0xf0) >> 4, pppoe_sid, pppoe_len);
+
+	length -= sizeof(struct pppoe_header);
+	caplen -= sizeof(struct pppoe_header);
+	p += sizeof(struct pppoe_header);
+
+	if (pppoe_len > caplen)
+		pppoe_len = caplen;
+
+	if (pppoe_len < 2) {
+		printf("[|pppoe]");
+		return;
+	}
+	proto = EXTRACT_16BITS(p);
+
+	for (i = sizeof(protonames)/sizeof(protonames[0]) - 1; i >= 0; i--) {
+		if (proto == protonames[i].protocol) {
+			if (eflag)
+				printf("\n\t%s: ", protonames[i].name);
+			switch (proto) {
+			case PPP_LCP:
+				handle_lcp(p - 2, length + 2);
+				break;
+			case PPP_CHAP:
+				handle_chap(p - 2, length + 2);
+				break;
+			case PPP_PAP:
+				handle_pap(p - 2, length + 2);
+				break;
+			case PPP_IPCP:
+				handle_ipcp(p - 2, length + 2);
+				break;
+			case PPP_IP:
+				ip_print(p + 2, length - 2);
+				break;
+			case PPP_IPX:
+				ipx_print(p + 2, length - 2);
+			}
+			break;
+		}
+	}
+	if (i < 0)
+		printf("\n\t%04x: ", proto);
+
+	if (xflag)
+	    default_print((const u_char *)
+		(p + sizeof(struct pppoe_header)),
+		 caplen - sizeof(struct pppoe_header));
+	putchar('\n');
+}
+
 int
 pppoe_if_print(ethertype, p, length, caplen)
 	u_short ethertype;
@@ -576,7 +685,7 @@ pppoe_if_print(ethertype, p, length, caplen)
 	else
 		printf("PPPoE-Session");
 
-	if (length < sizeof(sizeof(struct pppoe_header))) {
+	if (caplen < sizeof(struct pppoe_header)) {
 		printf("[|pppoe]");
 		return (1);
 	}
@@ -702,22 +811,22 @@ pppoe_if_print(ethertype, p, length, caplen)
 				printf("\n\t%s: ", protonames[i].name);
 				switch (proto) {
 				case PPP_LCP:
-					handle_lcp(p - 2, pppoe_len + 2);
+					handle_lcp(p - 2, length + 2);
 					break;
 				case PPP_CHAP:
-					handle_chap(p - 2, pppoe_len + 2);
+					handle_chap(p - 2, length + 2);
 					break;
 				case PPP_PAP:
-					handle_pap(p - 2, pppoe_len + 2);
+					handle_pap(p - 2, length + 2);
 					break;
 				case PPP_IPCP:
-					handle_ipcp(p - 2, pppoe_len + 2);
+					handle_ipcp(p - 2, length + 2);
 					break;
 				case PPP_IP:
-					ip_print(p + 2, pppoe_len - 2);
+					ip_print(p + 2, length - 2);
 					break;
 				case PPP_IPX:
-					ipx_print(p + 2, pppoe_len - 2);
+					ipx_print(p + 2, length - 2);
 				}
 				break;
 			}
