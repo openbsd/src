@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.439 2004/04/25 18:09:29 pb Exp $ */
+/*	$OpenBSD: pf.c,v 1.440 2004/04/25 18:45:57 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4933,17 +4933,14 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	if (ifp == NULL)
 		goto bad;
 
-	mtag = m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL);
-	if (mtag == NULL) {
-		struct m_tag *mtag;
+	if (m_tag_find(m0, PACKET_TAG_PF_ROUTED, NULL) != NULL)
+		goto bad;
+	mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0, M_NOWAIT);
+	if (mtag == NULL)
+		goto bad;
+	m_tag_prepend(m0, mtag);
 
-		mtag = m_tag_get(PACKET_TAG_PF_ROUTED, 0, M_NOWAIT);
-		if (mtag == NULL)
-			goto bad;
-		m_tag_prepend(m0, mtag);
-	}
-
-	if (oifp != ifp && mtag == NULL) {
+	if (oifp != ifp) {
 		if (pf_test(PF_OUT, ifp, &m0) != PF_PASS)
 			goto bad;
 		else if (m0 == NULL)
