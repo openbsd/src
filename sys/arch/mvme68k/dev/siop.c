@@ -1,4 +1,4 @@
-/*	$Id: siop.c,v 1.3 1995/11/30 09:51:26 deraadt Exp $ */
+/*	$Id: siop.c,v 1.4 1996/02/03 18:31:10 chuck Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -49,6 +49,7 @@
 #include <sys/disklabel.h>
 #include <sys/dkstat.h>
 #include <sys/buf.h>
+#include <sys/malloc.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 #include <machine/autoconf.h>
@@ -483,11 +484,20 @@ siopinitialize(sc)
 {
 	/*
 	 * Need to check that scripts is on a long word boundary
-	 * and that DS is on a long word boundary.
 	 * Also should verify that dev doesn't span non-contiguous
 	 * physical pages.
 	 */
 	sc->sc_scriptspa = kvtop(scripts);
+
+	/*
+	 * malloc sc_acb to ensure that DS is on a long word boundary.
+	 */
+
+	MALLOC(sc->sc_acb, struct siop_acb *, 
+		sizeof(struct siop_acb) * SIOP_NACB, M_DEVBUF, M_NOWAIT);
+	if (sc->sc_acb == NULL) 
+		panic("siopinitialize: ACB malloc failed!");
+
 	sc->sc_tcp[1] = 1000 / sc->sc_clock_freq;
 	sc->sc_tcp[2] = 1500 / sc->sc_clock_freq;
 	sc->sc_tcp[3] = 2000 / sc->sc_clock_freq;
@@ -574,8 +584,8 @@ siopreset(sc)
 		TAILQ_INIT(&sc->free_list);
 		sc->sc_nexus = NULL;
 		acb = sc->sc_acb;
-		bzero(acb, sizeof(sc->sc_acb));
-		for (i = 0; i < sizeof(sc->sc_acb) / sizeof(*acb); i++) {
+		bzero(acb, sizeof(struct siop_acb) * SIOP_NACB);
+		for (i = 0; i < SIOP_NACB; i++) {
 			TAILQ_INSERT_TAIL(&sc->free_list, acb, chain);
 			acb++;
 		}
@@ -737,7 +747,7 @@ siop_start (sc, target, lun, cbuf, clen, buf, len)
 #endif
 
 	/* push data cache for all data the 53c710 needs to access */
-	dma_cachectl (sc, sizeof (struct siop_softc));
+	dma_cachectl (acb, sizeof (struct siop_acb));
 	dma_cachectl (cbuf, clen);
 	if (buf != NULL && len != 0)
 		dma_cachectl (buf, len);
