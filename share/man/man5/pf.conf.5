@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.41 2002/04/30 16:23:01 mpech Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.42 2002/05/08 18:54:14 jasoni Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -64,6 +64,9 @@ return         = "return-rst" |
                      [ "(" ( icmp-code-name | icmp-code-number ) ")" ] .
 
 interface-list = interface-name [ "," interface-list ] .
+route          = "fastroute" |
+                 "route-to" interface-name[":"address] |
+                 "dup-to" interface-name[":"address]
 af	       = "inet" | "inet6" .
 proto-list     = ( proto-name | proto-number ) [ "," proto-list ] .
 
@@ -91,10 +94,6 @@ ipv6-icmp-type = "ipv6-icmp-type" ( icmp-type-code | "{" icmp-list "}" ) .
 icmp-type-code = ( icmp-type-name | icmp-type-number )
                  [ "code" ( icmp-code-name | icmp-code-number ) ] .
 icmp-list      = icmp-type-code [ "," icmp-list ] . 
-
-route          = "fastroute" |
-                 "route-to" interface-name[":"address] |
-                 "dup-to" interface-name[":"address]
 
 .Ed
 .Sh FILTER RULES
