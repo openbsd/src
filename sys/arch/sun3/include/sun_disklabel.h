@@ -1,3 +1,4 @@
+/*	$OpenBSD: sun_disklabel.h,v 1.3 1997/09/21 04:21:23 niklas Exp $	*/
 /*	$NetBSD: sun_disklabel.h,v 1.4 1996/11/20 18:57:19 gwr Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: saio.h,v 1.3 1997/09/21 04:21:22 niklas Exp $	*/
 /*	$NetBSD: saio.h,v 1.3 1996/11/20 18:57:19 gwr Exp $	*/
 
 /*-

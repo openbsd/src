@@ -1,3 +1,4 @@
+/*	$OpenBSD: kbio.h,v 1.3 1997/09/21 04:21:13 niklas Exp $	*/
 /*	$NetBSD: kbio.h,v 1.4 1996/01/24 22:40:43 gwr Exp $	*/
 
 /*
