@@ -1,7 +1,7 @@
 #
 # Internet (IP) protocols
 #
-#	$OpenBSD: protocols,v 1.8 1998/08/01 05:34:51 angelos Exp $
+#	$OpenBSD: protocols,v 1.9 2000/01/07 21:33:00 angelos Exp $
 #
 # Updated based on RFC 1340, Assigned Numbers (July 1992).
 # See also http://www.iana.org/in-notes/iana/assignments/protocol-numbers
@@ -61,6 +61,7 @@ ah	51	IPSEC-AH	# Authentication Header
 i-nlsp	52	I-NLSP		# Integrated Net Layer Security TUBA
 swipe	53	SWIPE		# IP with Encryption
 nhrp	54	NHRP		# NBMA Next Hop Resolution Protocol
+mobileip 55	MOBILEIP	# MobileIP encapsulation
 skip	57	SKIP		# SKIP
 any	61	any		# host internal protocol
 cftp	62	CFTP		# CFTP
