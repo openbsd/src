@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.22 2002/07/25 19:01:19 miod Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.23 2003/02/05 19:20:22 mickey Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -254,6 +254,7 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_DCPVR	24	/* Dreamcast PowerVR */
 #define		WSDISPLAY_TYPE_SUN24	25	/* Sun 24 bit framebuffers */
 #define		WSDISPLAY_TYPE_SUNBW	26	/* Sun black and white fb */
+#define		WSDISPLAY_TYPE_STI	27	/* HP STI frambuffers */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
