@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: mdXhl.c,v 1.6 1997/03/18 06:36:51 flipk Exp $";
+static char rcsid[] = "$OpenBSD: mdXhl.c,v 1.7 1997/07/12 20:30:57 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -18,7 +18,7 @@ static char rcsid[] = "$OpenBSD: mdXhl.c,v 1.6 1997/03/18 06:36:51 flipk Exp $";
 #include <sys/types.h>
 #include <sys/uio.h>
 #include <unistd.h>
-#include "mdX.h"
+#include <mdX.h>
 
 /* ARGSUSED */
 char *
