@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.7 2001/08/29 17:42:28 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.8 2001/10/10 14:30:08 mpech Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -317,6 +317,8 @@ main(int argc, char **argv)
 			fclose(fp);
 		}
 	}
+
+	(void)umask(S_IRWXG | S_IRWXO);
 
 	signal(SIGTERM, sig_close);
 	signal(SIGINT, sig_close);
