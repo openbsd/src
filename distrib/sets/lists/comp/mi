@@ -172,6 +172,7 @@
 ./usr/include/dev/pci/if_fxpvar.h
 ./usr/include/dev/pci/if_levar.h
 ./usr/include/dev/pci/ncr_reg.h
+./usr/include/dev/pci/ncrreg.h
 ./usr/include/dev/pci/pcidevs.h
 ./usr/include/dev/pci/pcidevs_data.h
 ./usr/include/dev/pci/pcireg.h

@@ -12,7 +12,7 @@
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.2/2.7.2.1
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.2/2.7.2.1/include
 ./usr/lib/gcc-lib/i386-unknown-openbsd2.2/2.7.2.1/include/objc
-./usr/lib/libacl.so.4.0
+./usr/lib/libacl.so.4.1
 ./usr/lib/libc.so.17.5
 ./usr/lib/libcurses.so.4.0
 ./usr/lib/libdes.so.6.0
@@ -21,9 +21,9 @@
 ./usr/lib/libg++.so.27.1
 ./usr/lib/libi386.so.0.2
 ./usr/lib/libiberty.so.0.0
-./usr/lib/libkadm.so.4.0
+./usr/lib/libkadm.so.5.0
 ./usr/lib/libkafs.so.5.0
-./usr/lib/libkdb.so.4.1
+./usr/lib/libkdb.so.5.0
 ./usr/lib/libkrb.so.6.0
 ./usr/lib/libkvm.so.4.1
 ./usr/lib/libm.so.0.1
