@@ -1,4 +1,0 @@
-1. It appears that trap() assumes instruction access or data access
-   faults can only be caused by page faults. Could do better by
-   checking PFSR in the CMMU and handling parity errors, page faults,
-   segmentation faults and protection faults appropriately.
