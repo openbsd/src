@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.55 2002/07/29 03:31:10 nate Exp $
+$OpenBSD: usbdevs,v 1.56 2002/09/27 18:41:57 nate Exp $
 /* $NetBSD: usbdevs,v 1.261 2002/07/16 09:19:29 abs Exp $ */
 
 /*
@@ -1008,6 +1008,7 @@ product NETCHIP CLIK40		0xa140	Clik! 40
 /* Netgear products */
 product NETGEAR EA101		0x1001	Ethernet
 product NETGEAR EA101X		0x1002	Ethernet
+product NETGEAR FA101		0x1020	10/100 Ethernet
 
 /* Nikon products */
 product NIKON E990		0x0102	Digital Camera E990
