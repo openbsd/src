@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.11 2003/03/21 15:56:55 drahn Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.12 2003/05/19 05:15:39 art Exp $	*/
 /*	$NetBSD: nlist.c,v 1.11 1995/03/21 09:08:03 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.11 2003/03/21 15:56:55 drahn Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.12 2003/05/19 05:15:39 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ donlist()
 		mib[0] = CTL_HW;
 		mib[1] = HW_PHYSMEM;
 		if (sysctl(mib, 2, &mempages, &siz, NULL, 0) < 0) {
-			warnx("avail_start: failed to get hw.physmem");
+			warnx("physmem: failed to get hw.physmem");
 			eval = rval = 1;
 		}
 		mempages /= getpagesize(); /* translate bytes into page count */
