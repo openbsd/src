@@ -1,5 +1,5 @@
-#	$OpenBSD: shlib_version,v 1.2 2002/04/24 21:59:53 espie Exp $
+#	$OpenBSD: shlib_version,v 1.3 2002/12/03 06:39:39 millert Exp $
 #	$NetBSD: shlib_version,v 1.4 1998/01/05 07:41:13 perry Exp $
 #
-major=1
+major=2
 minor=0
