@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.12 2001/05/03 19:21:51 hin Exp $
+# $OpenBSD: Makefile.inc,v 1.13 2001/06/28 04:53:44 hin Exp $
 
 KRBDIR	= ${.CURDIR}/${KRBDEPTH}
 KRBSRC	= ${.CURDIR}/${KRBDEPTH}/src
@@ -7,6 +7,7 @@ CFLAGS	+= -DHAVE_CONFIG_H -DBINDIR=\"/usr/bin\" -DSBINDIR=\"/usr/sbin\" \
 	   -I${DESTDIR}/usr/include/kerberosIV \
 	   -I${KRBSRC}/include -I${KRBSRC}/lib/roken \
 	   -I${KRBDIR}/lib/roken -I${KRBSRC}/lib/sl 
+CFLAGS+=-Wall
 
 LIBROKEN= -L${KRBDEPTH}/lib/roken -lroken
 LIBSL	= -L${KRBDEPTH}/lib/sl -lsl
