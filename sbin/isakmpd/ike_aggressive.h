@@ -1,4 +1,5 @@
-/*	$Id: ike_aggressive.h,v 1.1 1999/04/19 19:59:53 niklas Exp $	*/
+/*	$OpenBSD: ike_aggressive.h,v 1.2 1999/05/02 05:54:49 niklas Exp $	*/
+/*	$EOM: ike_aggressive.h,v 1.1 1999/04/16 21:24:43 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
