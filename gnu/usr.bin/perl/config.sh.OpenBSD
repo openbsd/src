@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: config.sh.OpenBSD,v 1.5 1997/01/02 14:05:25 graichen Exp $
+# $OpenBSD: config.sh.OpenBSD,v 1.6 1997/01/02 16:06:50 rahnds Exp $
 #
 # This file was produced by running the Configure script. It holds all the
 # definitions figured out by Configure. Should you modify one of these values,
@@ -19,6 +19,7 @@ case "`machine`" in
 "alpha")	_dynaload=0;;
 "arc")		_dynaload=0;;
 "pmax")		_dynaload=0;;
+"powerpc")	_dynaload=0;;
 *)		_dynaload=1;;
 esac
 
