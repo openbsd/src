@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.46 1999/06/06 23:17:24 deraadt Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.47 1999/12/02 22:12:13 millert Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -167,10 +167,11 @@
 **    The maximum number of jobs scheduled for starting.
 **    There should be one slot per target, and one slot
 **    for each tag of each target in use.
-**    The calculation below is actually quite silly ...
 */
 
-#define MAX_START   (MAX_TARGET + (MAX_TARGET - 1) * SCSI_NCR_DFLT_TAGS)
+#ifndef MAX_START
+#define MAX_START   (256)
+#endif
 
 /*
 **    The maximum number of segments a transfer is split into.
@@ -1465,7 +1466,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.46 1999/06/06 23:17:24 deraadt Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.47 1999/12/02 22:12:13 millert Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3552,8 +3553,8 @@ ncr_probe(parent, match, aux)
 #endif
 	void *aux;
 {
-	struct pci_attach_args *pa = aux;
-	u_char rev = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CLASS_REG) & 0xff;
+	struct pci_attach_args * const pa = aux;
+	u_char rev = PCI_REVISION(pa->pa_class);
 #if 0
 	struct cfdata *cf = match;
 
@@ -3571,7 +3572,7 @@ ncr_probe(parent, match, aux)
 
 static	char* ncr_probe (pcici_t tag, pcidi_t type)
 {
-	u_char rev = pci_conf_read (tag, PCI_CLASS_REG) & 0xff;
+	u_char rev = PCI_REVISION(pa->pa_class);
 	int i;
 
 	i = ncr_chip_lookup(type, rev);
@@ -3653,23 +3654,24 @@ ncr_attach(parent, self, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	bus_space_tag_t memt = pa->pa_memt;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	bus_size_t memsize;
-	int retval, cacheable;
+	int retval;
 	pci_intr_handle_t intrhandle;
 	const char *intrstr;
 	ncb_p np = (void *)self;
 	u_long	period;
 	int	i;
-	u_char rev = pci_conf_read(pc, pa->pa_tag, PCI_CLASS_REG) & 0xff;
+	u_char rev = PCI_REVISION(pa->pa_class);
+	bus_space_tag_t iot, memt;
+	bus_space_handle_t ioh, memh;
+	bus_addr_t ioaddr, memaddr;
+	int ioh_valid, memh_valid;
 
 #if defined(__mips__)
 	pci_sync_cache(pc, (vm_offset_t)np, sizeof (struct ncb));
 	np = (struct ncb *)PHYS_TO_UNCACHED(NCR_KVATOPHYS(np, np));
 #endif /*__mips__*/
 
-	np->sc_st = memt;
 	np->sc_pc = pc;
 	np->ccb = (ccb_p) malloc (sizeof (struct ccb), M_DEVBUF, M_WAITOK);
 	if (!np->ccb) return;
@@ -3684,17 +3686,40 @@ ncr_attach(parent, self, aux)
 	**	virtual and physical memory.
 	*/
 
-	retval = pci_mem_find(pc, pa->pa_tag, 0x14, &np->paddr,
-	    &memsize, &cacheable);
-	if (retval) {
-		printf(": couldn't find memory region\n");
-		return;
-	}
+	ioh_valid = (pci_mapreg_map(pa, 0x10,
+	    PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, &ioaddr, NULL) == 0);
+	memh_valid = (pci_mapreg_map(pa, 0x14,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &memt, &memh, &memaddr, NULL) == 0);
 
-	/* Map the memory.  Note that we never want it to be cacheable. */
-	retval = bus_space_map(pa->pa_memt, np->paddr, memsize, 0, &np->sc_sh);
-	if (retval) {
-		printf(": couldn't map memory region\n");
+#if defined(NCR_IOMAPPED)
+	if (ioh_valid) {
+		np->sc_st = iot;
+		np->sc_sh = ioh;
+		np->paddr = ioaddr;
+		np->sc_iomapped = 1;
+	} else if (memh_valid) {
+		np->sc_st = memt;
+		np->sc_sh = memh;
+		np->paddr = memaddr;
+		np->sc_iomapped = 0;
+	}
+#else /* defined(NCR_IOMAPPED) */
+	if (memh_valid) {
+		np->sc_st = memt;
+		np->sc_sh = memh;
+		np->paddr = memaddr;
+		np->sc_iomapped = 0;
+	} else if (ioh_valid) {
+		np->sc_st = iot;
+		np->sc_sh = ioh;
+		np->paddr = ioaddr;
+		np->sc_iomapped = 1;
+	}
+#endif /* defined(NCR_IOMAPPED) */
+	else {
+		printf(": unable to map device registers\n");
 		return;
 	}
 
@@ -3970,7 +3995,20 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	/*
 	**	Get on-chip SRAM address, if supported
 	*/
-#ifndef __OpenBSD__
+#ifdef __OpenBSD__
+	if ((np->features & FE_RAM) && sizeof(struct script) <= 4096) {
+		if (pci_mapreg_map(pa, 0x18,
+		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+		    &memt, &memh, &memaddr, NULL) == 0) {
+			np->ram_tag = memt;
+			np->ram_handle = memh;
+			np->paddr2 = memaddr;
+			np->scriptmapped = 1;
+		} else {
+			np->scriptmapped = 0;
+		}
+	}
+#else /* !__OpenBSD__ */
 	if ((np->features & FE_RAM) && sizeof(struct script) <= 4096)
 		(void)(!pci_map_mem (config_id,0x18, &np->vaddr2, &np->paddr2));
 #endif	/* __OpenBSD__ */
@@ -4311,7 +4349,7 @@ static int32_t ncr_start (struct scsi_xfer * xp)
 	lcb_p lp;
 	tcb_p tp = &np->target[xp->sc_link->target];
 
-	int	i, oldspl, segments, flags = xp->flags;
+	int	i, oldspl, segments, flags = xp->flags, pollmode;
 	u_char	qidx, nego, idmsg, *msgptr;
 	u_long  msglen, msglen2;
 
@@ -4789,6 +4827,11 @@ static int32_t ncr_start (struct scsi_xfer * xp)
 	/*
 	**	and reenable interrupts
 	*/
+#ifdef __OpenBSD__
+	pollmode = flags & SCSI_POLL;
+#else
+	pollmode = flags & SCSI_NOMASK;
+#endif
 	splx (oldspl);
 
 	/*
@@ -4796,15 +4839,9 @@ static int32_t ncr_start (struct scsi_xfer * xp)
 	**	Command is successfully queued.
 	*/
 
-#ifdef __OpenBSD__
-	if (!(flags & SCSI_POLL)) {
-#else /* !__OpenBSD__ */
-	if (!(flags & SCSI_NOMASK)) {
-#endif /* __OpenBSD__ */
-		if (np->lasttime) {
-			if(DEBUG_FLAGS & DEBUG_TINY) printf ("Q");
-			return(SUCCESSFULLY_QUEUED);
-		};
+	if (!pollmode) {
+		if(DEBUG_FLAGS & DEBUG_TINY) printf ("Q");
+		return(SUCCESSFULLY_QUEUED);
 	};
 
 	/*----------------------------------------------------
@@ -4849,12 +4886,6 @@ static int32_t ncr_start (struct scsi_xfer * xp)
 		printf ("%s: result: %x %x.\n",
 			ncr_name (np), cp->host_status, cp->scsi_status);
 	};
-#ifdef __OpenBSD__
-	if (!(flags & SCSI_POLL))
-#else /* !__OpenBSD__ */
-	if (!(flags & SCSI_NOMASK))
-#endif /* __OpenBSD__ */
-		return (SUCCESSFULLY_QUEUED);
 	switch (xp->error) {
 	case  0     : return (COMPLETE);
 	case XS_BUSY: return (TRY_AGAIN_LATER);
@@ -4923,7 +4954,7 @@ void ncr_complete (ncb_p np, ccb_p cp)
 	}
 #endif
 	/*
-	**	We donnot queue more than 1 ccb per target
+	**	We do not queue more than 1 ccb per target
 	**	with negotiation at any time. If this ccb was
 	**	used for negotiation, clear this info in the tcb.
 	*/
@@ -5870,7 +5901,7 @@ static void ncr_timeout (void *arg)
 **		si:	sist
 **
 **	SCSI bus lines:
-**		so:	control lines as driver by NCR.
+**		so:	control lines as driven by NCR.
 **		si:	control lines as seen by NCR.
 **		sd:	scsi data lines as seen by NCR.
 **
@@ -7568,6 +7599,7 @@ static int ncr_snooptest (struct ncb* np)
 {
 	volatile u_int32_t ncr_rd, ncr_wr, ncr_bk, host_rd, host_wr, pc;
 	int	i, err=0;
+
 #if !defined(NCR_IOMAPPED) || defined(__OpenBSD__)
 #ifdef __OpenBSD__
 	if (!np->sc_iomapped)
