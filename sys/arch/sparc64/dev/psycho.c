@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.29 2003/03/06 08:26:08 henric Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.30 2003/03/25 22:10:19 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -1113,6 +1113,10 @@ psycho_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 		*intrmapptr = intrmap;
 		DPRINTF(PDB_INTR, ("; reread intrmap = %016qx",
 			(unsigned long long)(intrmap = *intrmapptr)));
+	}
+	if (intrclrptr) {
+		/* set state to IDLE */
+		*intrclrptr = 0;
 	}
 	return (ih);
 }
