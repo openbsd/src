@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.22 2000/02/25 17:23:40 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.44 2000/02/20 19:58:37 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.23 2000/02/28 23:59:14 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.45 2000/02/28 23:59:40 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -629,7 +629,6 @@ rsa_sig_decode_hash (struct message *msg)
 static int
 pre_shared_encode_hash (struct message *msg)
 {
-#ifdef USE_X509
   struct exchange *exchange = msg->exchange;
   struct ipsec_exch *ie = exchange->data;
   size_t hashsize = ie->hash->hashsize;
@@ -648,9 +647,6 @@ pre_shared_encode_hash (struct message *msg)
 	    initiator ? 'I' : 'R');
   LOG_DBG_BUF ((LOG_MISC, 80, header, buf + ISAKMP_HASH_DATA_OFF, hashsize));
   return 0;
-#else
-  return -1;
-#endif
 }
 
 /* Encrypt the HASH into a SIG type.  */
