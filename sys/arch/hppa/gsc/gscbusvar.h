@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscbusvar.h,v 1.1 1998/11/04 17:05:15 mickey Exp $	*/
+/*	$OpenBSD: gscbusvar.h,v 1.2 1999/02/25 21:07:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -34,34 +34,50 @@ struct gscbus_ic {
 	enum {gsc_unknown = 0, gsc_lasi, gsc_wax, gsc_asp} gsc_type;
 	void *gsc_dv;
 
-	void *(*gsc_intr_establish) __P((struct gscbus_ic *ic, int pri,
-					 int (*handler) __P((void *)), void *,
-					 const char *));
-	void (*gsc_intr_disestablish) __P((void *v));
-	int (*gsc_intack) __P((void *v));
+	void (*gsc_intr_establish) __P((void *v, u_int32_t mask));
+	void (*gsc_intr_disestablish) __P((void *v, u_int32_t mask));
+	u_int32_t (*gsc_intr_check) __P((void *v));
+	void (*gsc_intr_ack) __P((void *v, u_int32_t mask));
 };
 
 struct gsc_attach_args {
 	struct confargs ga_ca;
-#define	ga_name	ga_ca.ca_name
-#define	ga_iot	ga_ca.ca_iot
-#define	ga_mod	ga_ca.ca_mod
-#define	ga_type	ga_ca.ca_type
-#define	ga_hpa	ga_ca.ca_hpa
+#define	ga_name		ga_ca.ca_name
+#define	ga_iot		ga_ca.ca_iot
+#define	ga_mod		ga_ca.ca_mod
+#define	ga_type		ga_ca.ca_type
+#define	ga_hpa		ga_ca.ca_hpa
+#define	ga_dmatag	ga_ca.ca_dmatag
+#define	ga_irq		ga_ca.ca_irq
 /*#define	ga_pdc_iodc_read	ga_ca.ca_pdc_iodc_read */
 	struct gscbus_ic *ga_ic;	/* IC pointer */
 }; 
 
+struct gscbus_intr {
+	int pri;
+	int (*handler) __P((void *));
+	void *arg;
+	struct evcnt evcnt;
+};
+
 struct gsc_softc {
 	struct  device sc_dev;
+	void *sc_ih;
 
 	bus_space_tag_t sc_iot;
 	struct gscbus_ic *sc_ic;
+	struct hppa_bus_dma_tag sc_dmatag;
+
+	/* interrupt vectors */
+	struct gscbus_intr sc_intrvs[32];
+	u_int32_t sc_intrmask;
 };
 
-#define	gsc_intr_establish(ic,pri,h,c,s) \
-	((ic)->gsc_intr_establish((ic), (pri), (h), (c), (s)))
-#define	gsc_intr_disestablish(ic,v) \
-	(ic)->gsc_intr_disestablish((ic), (v))
-#define	gsc_intr_intack(ic,v) \
-	((ic)->gsc_intr_disestablish((ic), (v)))
+void *gsc_intr_establish __P((struct gsc_softc *sc, int pri, int irq,
+			       int (*handler) __P((void *v)), void *arg,
+			       const char *name));
+void gsc_intr_disestablish __P((struct gsc_softc *sc, void *v));
+int gsc_intr __P((void *));
+
+int gscprint __P((void *, const char *));
+
