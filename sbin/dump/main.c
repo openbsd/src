@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.36 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.37 2004/11/04 20:10:07 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 4/15/94";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.36 2003/08/25 23:28:15 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.37 2004/11/04 20:10:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -200,6 +200,7 @@ main(int argc, char *argv[])
 		case 'w':
 			lastdump(ch);
 			exit(X_FINOK);	/* do nothing else */
+			break;
 
 		case 'a':		/* `auto-size', Write to EOM. */
 			unlimited = 1;

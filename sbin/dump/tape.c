@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.20 2003/07/29 18:38:35 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.21 2004/11/04 20:10:07 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: tape.c,v 1.20 2003/07/29 18:38:35 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tape.c,v 1.21 2004/11/04 20:10:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -202,6 +202,7 @@ dumpblock(daddr_t blkno, int size)
 
 int	nogripe = 0;
 
+/* ARGSUSED */
 void
 tperror(int signo)
 {
@@ -223,6 +224,7 @@ tperror(int signo)
 	Exit(X_REWRITE);
 }
 
+/* ARGSUSED */
 void
 sigpipe(int signo)
 {
@@ -260,8 +262,9 @@ do_stats(void)
  *	(derived from optr.c::timeest())
  * XXX not safe
  */
+/* ARGSUSED */
 void
-statussig(int notused)
+statussig(int signo)
 {
 	time_t	tnow, deltat;
 	char	msgbuf[128];
@@ -552,7 +555,7 @@ startnewtape(int top)
 	int	parentpid;
 	int	childpid;
 	int	status;
-	int	waitpid;
+	int	waitingpid;
 	char	*p;
 #ifdef sunos
 	void	(*interrupt_save)();
@@ -587,9 +590,9 @@ restore_check_point:
 		msg("Tape: %d; parent process: %d child process %d\n",
 			tapeno+1, parentpid, childpid);
 #endif /* TDEBUG */
-		while ((waitpid = wait(&status)) != childpid)
+		while ((waitingpid = wait(&status)) != childpid)
 			msg("Parent %d waiting for child %d has another child %d return\n",
-				parentpid, childpid, waitpid);
+				parentpid, childpid, waitingpid);
 		if (status & 0xFF) {
 			msg("Child %d returns LOB status %o\n",
 				childpid, status&0xFF);
@@ -615,8 +618,10 @@ restore_check_point:
 		switch(status) {
 			case X_FINOK:
 				Exit(X_FINOK);
+				break;
 			case X_ABORT:
 				Exit(X_ABORT);
+				break;
 			case X_REWRITE:
 				goto restore_check_point;
 			default:
@@ -683,6 +688,7 @@ restore_check_point:
 	}
 }
 
+/* ARGSUSED */
 void
 dumpabort(int signo)
 {
@@ -713,6 +719,7 @@ Exit(int status)
 /*
  * proceed - handler for SIGUSR2, used to synchronize IO between the slaves.
  */
+/* ARGSUSED */
 void
 proceed(int signo)
 {

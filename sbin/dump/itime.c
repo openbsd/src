@@ -1,4 +1,4 @@
-/*	$OpenBSD: itime.c,v 1.11 2003/07/28 06:13:26 tedu Exp $	*/
+/*	$OpenBSD: itime.c,v 1.12 2004/11/04 20:10:07 deraadt Exp $	*/
 /*	$NetBSD: itime.c,v 1.4 1997/04/15 01:09:50 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: itime.c,v 1.11 2003/07/28 06:13:26 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: itime.c,v 1.12 2004/11/04 20:10:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -213,7 +213,7 @@ putdumptime(void)
 	}
 	if (fflush(df))
 		quit("%s: %s\n", dumpdates, strerror(errno));
-	if (ftruncate(fd, ftell(df)))
+	if (ftruncate(fd, ftello(df)))
 		quit("ftruncate (%s): %s\n", dumpdates, strerror(errno));
 	(void) fclose(df);
 	msg("level %c dump on %s", level,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.27 2003/07/29 18:38:35 deraadt Exp $	*/
+/*	$OpenBSD: optr.c,v 1.28 2004/11/04 20:10:07 deraadt Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static const char rcsid[] = "$OpenBSD: optr.c,v 1.27 2003/07/29 18:38:35 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: optr.c,v 1.28 2004/11/04 20:10:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,6 +132,7 @@ char lastmsg[BUFSIZ];
  *	sleep for 2 minutes in case nobody comes to satisfy dump
  * XXX not safe
  */
+/* ARGSUSED */
 void
 alarmcatch(int signo)
 {
@@ -161,6 +162,7 @@ alarmcatch(int signo)
 /*
  *	Here if an inquisitive operator interrupts the dump program
  */
+/* ARGSUSED */
 void
 interrupt(int signo)
 {

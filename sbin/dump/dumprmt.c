@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.22 2003/07/28 06:13:26 tedu Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.23 2004/11/04 20:10:06 deraadt Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: dumprmt.c,v 1.22 2003/07/28 06:13:26 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: dumprmt.c,v 1.23 2004/11/04 20:10:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -104,6 +104,7 @@ rmthost(char *host)
 	return (1);
 }
 
+/* ARGSUSED */
 static void
 rmtconnaborted(int signo)
 {
