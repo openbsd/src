@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.33 2000/05/26 17:44:33 marc Exp $
+#	$OpenBSD: daily,v 1.34 2001/01/04 06:27:45 angelos Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -144,7 +144,7 @@ dump W
 echo ""
 
 mailq > $TMP
-if ! grep -q "^Mail queue is empty$" $TMP; then
+if ! grep -q "^/var/spool/mqueue is empty$" $TMP; then
 	echo ""
 	echo "mail:"
 	cat $TMP
