@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apply.1,v 1.9 1999/07/04 11:53:50 aaron Exp $
+.\"	$OpenBSD: apply.1,v 1.10 1999/12/05 22:21:39 aaron Exp $
 .\"	$NetBSD: apply.1,v 1.4 1996/03/18 23:16:57 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -44,14 +44,14 @@
 .Nm apply
 .Op Fl a Ns Ar c
 .Op Fl Ns Ar #
+.Op Fl d
 .Ar command argument
 .Op Ar ...
 .Sh DESCRIPTION
 .Nm
 runs the named
 .Ar command
-on each
-argument
+on each given
 .Ar argument
 in turn.
 .Pp
@@ -60,7 +60,7 @@ Character sequences of the form
 in
 .Ar command ,
 where
-.Sq Li d
+.Sq d
 is a digit from 1 to 9, are replaced by the
 .Li d Ns \'th
 following unused
@@ -90,10 +90,13 @@ the
 option is ignored.
 .It Fl a Ns Ar c
 The use of the character
-.Sq Li %
+.Ql %
 as a magic character may be changed with the
 .Fl a
 option.
+.It Fl d
+Debug mode.
+Print commands to the standard output but do not actually execute them.
 .El
 .Sh ENVIRONMENT
 The following environment variable affects the execution of
@@ -109,7 +112,10 @@ If this variable is not defined, the Bourne shell is used.
 is similar to
 .Xr ls 1 ;
 .It Li "apply \-2 cmp a1 b1 a2 b2 a3 b3"
-compares the `a' files to the `b' files;
+compares the
+.Sq a
+files to the
+.Sq b files;
 .It Li "apply \-0 who 1 2 3 4 5"
 runs
 .Xr who 1
@@ -123,6 +129,8 @@ links all files in the current directory to the directory
 .It Pa /bin/sh
 default shell
 .El
+.Sh SEE ALSO
+.Xr xargs 1
 .Sh AUTHOR
 Rob Pike
 .Sh BUGS
