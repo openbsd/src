@@ -1,3 +1,4 @@
+/* $OpenBSD: egavar.h,v 1.2 2001/02/02 20:25:39 aaron Exp $ */
 /* $NetBSD: egavar.h,v 1.1 1999/12/13 16:28:57 drochner Exp $ */
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: pcdisplay.h,v 1.2 2001/02/02 20:25:39 aaron Exp $ */
 /*	$NetBSD: pcdisplay.h,v 1.1 1998/05/14 23:11:03 drochner Exp $	*/
 
 /*

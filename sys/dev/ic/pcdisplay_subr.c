@@ -1,3 +1,4 @@
+/* $OpenBSD: pcdisplay_subr.c,v 1.2 2001/02/02 20:25:39 aaron Exp $ */
 /* $NetBSD: pcdisplay_subr.c,v 1.16 2000/06/08 07:01:19 cgd Exp $ */
 
 /*

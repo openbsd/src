@@ -1,3 +1,4 @@
+/* $OpenBSD: ega.c,v 1.2 2001/02/02 20:25:39 aaron Exp $ */
 /* $NetBSD: ega.c,v 1.4.4.1 2000/06/30 16:27:47 simonb Exp $ */
 
 /*

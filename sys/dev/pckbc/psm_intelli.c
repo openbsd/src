@@ -1,3 +1,4 @@
+/* $OpenBSD: psm_intelli.c,v 1.2 2001/02/02 20:25:39 aaron Exp $ */
 /* $NetBSD: psm_intelli.c,v 1.8 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-

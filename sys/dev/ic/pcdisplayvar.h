@@ -1,3 +1,4 @@
+/* $OpenBSD: pcdisplayvar.h,v 1.2 2001/02/02 20:25:39 aaron Exp $ */
 /* $NetBSD: pcdisplayvar.h,v 1.8 2000/01/25 02:44:03 ad Exp $ */
 
 /*

@@ -1,3 +1,4 @@
+/* $OpenBSD: pcdisplay_chars.c,v 1.2 2001/02/02 20:25:39 aaron Exp $ */
 /* $NetBSD: pcdisplay_chars.c,v 1.5 2000/06/08 07:01:19 cgd Exp $ */
 
 /*
