@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.23 2002/01/11 01:31:21 nordin Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.24 2002/02/17 05:12:56 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -82,6 +82,7 @@
  * Various supported device vendors/types and their names.
  */
 struct dc_type dc_devs[] = {
+	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21140 },
 	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142 },
 	{ PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9100 },
 	{ PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102 },
@@ -119,11 +120,22 @@ dc_pci_match(parent, match, aux)
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	struct dc_type *t;
 
+        if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DEC &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_21142 &&
+	    PCI_REVISION(pa->pa_class) == 0x21)
+		return (1);
+
 	for (t = dc_devs; t->dc_vid != 0; t++) {
 		if ((PCI_VENDOR(pa->pa_id) == t->dc_vid) &&
-		    (PCI_PRODUCT(pa->pa_id) == t->dc_did))
+		    (PCI_PRODUCT(pa->pa_id) == t->dc_did)) {
+#if defined(__alpha__)
 			return (1);
+#else
+			return (2);
+#endif
+		}
 	}
+
 	return (0);
 }
 
@@ -261,7 +273,8 @@ void dc_pci_attach(parent, self, aux)
 
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_DEC:
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_21142) {
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_21140 ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_21142) {
 			found = 1;
 			sc->dc_type = DC_TYPE_21143;
 			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
