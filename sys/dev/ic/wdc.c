@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.79 2003/11/17 22:44:55 grange Exp $     */
+/*      $OpenBSD: wdc.c,v 1.80 2003/11/19 21:30:43 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -600,9 +600,18 @@ retry:
 
 
 /*
-   Test to see controller with at least one attached drive is there.
-   Returns a bit for each possible drive found (0x01 for drive 0,
-   0x02 for drive 1).
+ * Test to see controller with at least one attached drive is there.
+ * Returns a bit for each possible drive found (0x01 for drive 0,
+ * 0x02 for drive 1).
+ * Logic:
+ * - If a status register is at 0x7f or 0xff, assume there is no drive here
+ *   (ISA has pull-up resistors).  Similarly if the status register has
+ *   the value we last wrote to the bus (for IDE interfaces without pullups).
+ *   If no drive at all -> return.
+ * - reset the controller, wait for it to complete (may take up to 31s !).
+ *   If timeout -> return.
+ * - test ATA/ATAPI signatures. If at last one drive found -> return.
+ * - try an ATA command on the master.
  */
 
 int
@@ -645,13 +654,9 @@ wdcprobe(chp)
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
 		    chp->channel, st0, st1), DEBUG_PROBE);
 
-		/*
-		   If the status is 0x7f or 0xff, then it's
-		   an empty channel with pull-up resistors.
-		*/
-		if ((st0 & 0x7f) == 0x7f)
+		if ((st0 & 0x7f) == 0x7f || st0 == WDSD_IBM)
 			ret_value &= ~0x01;
-		if ((st1 & 0x7f) == 0x7f)
+		if ((st1 & 0x7f) == 0x7f || st1 == (WDSD_IBM | 0x10))
 			ret_value &= ~0x02;
 		if (ret_value == 0)
 			return 0;
