@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_var.h,v 1.4 1996/05/07 05:53:40 deraadt Exp $	*/
+/*	$OpenBSD: ns_var.h,v 1.5 1996/10/21 10:58:20 mickey Exp $	*/
 
 #ifdef _KERNEL
 struct socket;
@@ -44,7 +44,8 @@ void ns_watch_output __P((struct mbuf *, struct ifnet *));
 struct ifnet_en *nsipattach __P((void));
 int nsipioctl __P((struct ifnet *, u_long, caddr_t));
 void idpip_input __P((struct mbuf *, ...));
-int nsipoutput __P((struct ifnet_en *, struct mbuf *, struct sockaddr *));
+int nsipoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,     
+		struct rtentry *));
 void nsipstart __P((struct ifnet *));
 int nsip_route __P((struct mbuf *));
 int nsip_free __P((struct ifnet *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns_ip.c,v 1.6 1996/05/22 12:02:43 deraadt Exp $	*/
+/*	$OpenBSD: ns_ip.c,v 1.7 1996/10/21 10:58:19 mickey Exp $	*/
 /*	$NetBSD: ns_ip.c,v 1.16 1996/05/09 22:29:40 scottr Exp $	*/
 
 /*
@@ -65,6 +65,7 @@
 
 #include <netns/ns.h>
 #include <netns/ns_if.h>
+#include <netns/ns_var.h>
 #include <netns/idp.h>
 
 #include <machine/stdarg.h>
@@ -77,9 +78,6 @@ struct ifnet_en {
 	struct ifnet_en *ifen_next;
 };
 
-int	nsipoutput(), nsipioctl();
-void	nsipstart();
-void	nsip_rtchange __P((register struct in_addr *dst));
 #define LOMTU	(1024+512);
 
 int	nsipif_unit;			/* XXX */
@@ -132,6 +130,7 @@ nsipattach()
  * Process an ioctl request.
  */
 /* ARGSUSED */
+int
 nsipioctl(ifp, cmd, data)
 	register struct ifnet *ifp;
 	u_long cmd;
@@ -241,7 +240,6 @@ idpip_input(struct mbuf *m, ...)
 	s = splimp();
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
-bad:
 		m_freem(m);
 		splx(s);
 		return;
@@ -253,21 +251,25 @@ bad:
 }
 
 /* ARGSUSED */
-nsipoutput(ifn, m, dst)
-	struct ifnet_en *ifn;
+int
+nsipoutput(ifp, m, dst, rt)
+	struct ifnet *ifp;
 	register struct mbuf *m;
 	struct sockaddr *dst;
+	struct rtentry *rt;
 {
 
 	register struct ip *ip;
-	register struct route *ro = &(ifn->ifen_route);
 	register int len = 0;
 	register struct idp *idp = mtod(m, struct idp *);
+	struct ifnet_en *ifn = (struct ifnet_en *)ifp;
+	struct route ro;
 	int error;
 
 	ifn->ifen_ifnet.if_opackets++;
 	nsipif.if_opackets++;
-
+	ro.ro_rt = rt;
+	ro.ro_dst = *dst;
 
 	/*
 	 * Calculate data length and make space
@@ -308,15 +310,12 @@ nsipoutput(ifn, m, dst)
 	/*
 	 * Output final datagram.
 	 */
-	error =  (ip_output(m, (struct mbuf *)0, ro, SO_BROADCAST, NULL));
+	error =  (ip_output(m, (struct mbuf *)0, &ro, SO_BROADCAST, NULL));
 	if (error) {
 		ifn->ifen_ifnet.if_oerrors++;
 		ifn->ifen_ifnet.if_ierrors = error;
 	}
 	return (error);
-bad:
-	m_freem(m);
-	return (ENETUNREACH);
 }
 
 void
@@ -328,6 +327,7 @@ nsipstart(ifp)
 
 struct ifreq ifr = {"nsip0"};		/* XXX */
 
+int
 nsip_route(m)
 	register struct mbuf *m;
 {
@@ -425,16 +425,15 @@ nsip_ctlinput(cmd, sa, v)
 	struct sockaddr *sa;
 	void *v;
 {
-	extern u_char inetctlerrmap[];
 	struct sockaddr_in *sin;
 
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return;
+		return NULL;
 	if (sa->sa_family != AF_INET && sa->sa_family != AF_IMPLINK)
-		return;
+		return NULL;
 	sin = satosin(sa);
 	if (sin->sin_addr.s_addr == INADDR_ANY)
-		return;
+		return NULL;
 
 	switch (cmd) {
 
@@ -449,7 +448,7 @@ nsip_ctlinput(cmd, sa, v)
 	return NULL;
 }
 
-void
+int
 nsip_rtchange(dst)
 	register struct in_addr *dst;
 {
@@ -462,5 +461,6 @@ nsip_rtchange(dst)
 				ifn->ifen_route.ro_rt = 0;
 		}
 	}
+	return 0;
 }
 #endif
