@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.10 1997/11/06 05:58:04 csapuntz Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.11 1997/11/13 06:37:49 deraadt Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -510,6 +510,23 @@ linux_sys_mmap(p, v, retval)
 	SCARG(&cma,pos) = lmap.lm_pos;
 
 	return sys_mmap(p, &cma, retval);
+}
+
+int
+linux_sys_mremap(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+#ifdef notyet
+	struct linux_sys_mremap_args /* {
+		syscallarg(void *) old_address;
+		syscallarg(size_t) old_size;
+		syscallarg(size_t) new_size;
+		syscallarg(u_long) flags;
+	} */ *uap = v;
+#endif
+	return (ENOMEM);
 }
 
 int
