@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_osfp.c,v 1.1 2004/01/28 19:44:55 canacar Exp $ */
+/*	$OpenBSD: pfctl_osfp.c,v 1.2 2004/12/19 13:27:25 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@openbsd.org>
@@ -341,7 +341,7 @@ pfctl_get_fingerprint(const char *name)
 
 		if ((wr_name = strdup(name)) == NULL)
 			err(1, "malloc");
-		if ((ptr = index(wr_name, ' ')) == NULL) {
+		if ((ptr = strchr(wr_name, ' ')) == NULL) {
 			free(wr_name);
 			return (PF_OSFP_NOMATCH);
 		}
@@ -501,9 +501,9 @@ found:
 		strlcat(buf, " ", len);
 		strlcat(buf, version_name, len);
 		if (subtype_name) {
-			if (index(version_name, ' '))
+			if (strchr(version_name, ' '))
 				strlcat(buf, " ", len);
-			else if (index(version_name, '.') &&
+			else if (strchr(version_name, '.') &&
 			    isdigit(*subtype_name))
 				strlcat(buf, ".", len);
 			else

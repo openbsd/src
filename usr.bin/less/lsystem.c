@@ -431,7 +431,7 @@ FILE *popen(name, mode)
     while (*cp == ' ')
         cp++;
     strlcpy(cmd_path, cp, sizeof(cmd_path));
-    if (cp = index(cmd_path, ' '))
+    if (cp = strchr(cmd_path, ' '))
         *cp++ = '\0';
     strlcpy(cmd, "ex ", sizeof(cmd));
     strlcat(cmd, cmd_path, sizeof(cmd));
