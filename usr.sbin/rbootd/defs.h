@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.2 2001/01/17 00:33:03 pjanzen Exp $	*/
+/*	$OpenBSD: defs.h,v 1.3 2001/12/01 23:27:23 miod Exp $	*/
 /*	$NetBSD: defs.h,v 1.5 1995/10/06 05:12:14 thorpej Exp $	*/
 
 /*
@@ -130,14 +130,12 @@ typedef struct rmpconn_s {
  *  All these variables are defined in "conf.c".
  */
 extern	char	MyHost[];		/* this hosts' name */
-extern	pid_t	MyPid;			/* this processes' ID */
 extern	int	DebugFlg;		/* set true if debugging */
 extern	int	BootAny;		/* set true if we can boot anyone */
 
 extern	char	*ConfigFile;		/* configuration file */
 extern	char	*DfltConfig;		/* default configuration file */
 extern	char	*DbgFile;		/* debug output file */
-extern	char	*PidFile;		/* file containing pid of server */
 extern	char	*BootDir;		/* directory w/boot files */
 
 extern	FILE	*DbgFp;			/* debug file pointer */

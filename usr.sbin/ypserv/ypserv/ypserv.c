@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.16 2001/11/19 09:03:06 deraadt Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.17 2001/12/01 23:27:24 miod Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv.c,v 1.16 2001/11/19 09:03:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv.c,v 1.17 2001/12/01 23:27:24 miod Exp $";
 #endif
 
 #include <sys/types.h>
@@ -497,13 +497,7 @@ main(argc, argv)
 	
 	(void)signal(SIGCHLD, sig_child);
 	(void)signal(SIGHUP, sig_hup);
-	{
-		FILE *pidfile = fopen(YPSERV_PID_PATH, "w");
-		if (pidfile != NULL) {
-			fprintf(pidfile, "%d\n", getpid());
-			fclose(pidfile);
-		}
-	}
+	pidfile(NULL);
 
 	if ((_rpcfdtype == 0) || (_rpcfdtype == SOCK_DGRAM)) {
 		transp = svcudp_create(sock);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.8 2001/10/10 14:30:08 mpech Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.9 2001/12/01 23:27:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -44,6 +44,7 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <fcntl.h>
+#include <util.h>
 
 #define DEF_SNAPLEN 96		/* default plus allow for larger header of pflog */
 #define PCAP_TO_MS 500		/* pcap read timeout (ms) */
@@ -51,7 +52,6 @@
 #define PCAP_OPT_FIL 0		/* filter optimization */
 #define FLUSH_DELAY 60		/* flush delay */
 
-#define PFLOGD_PID_FILE		"/var/run/pflogd.pid"
 #define PFLOGD_LOG_FILE		"/var/log/pflog"
 #define PFLOGD_DEFAULT_IF	"pflog0"
 
@@ -64,7 +64,6 @@ int gotsig_close, gotsig_alrm, gotsig_hup;
 
 char *filename = PFLOGD_LOG_FILE;
 char *interface = PFLOGD_DEFAULT_IF;
-char *pidfile = PFLOGD_PID_FILE;
 char *filter = 0;
 
 char errbuf[PCAP_ERRBUF_SIZE];
@@ -275,7 +274,6 @@ main(int argc, char **argv)
 {
 	struct pcap_stat pstat;
 	int ch, np;
-	FILE *fp;
 
 	while ((ch = getopt(argc, argv, "Dd:s:f:")) != -1) {
 		switch (ch) {
@@ -311,11 +309,7 @@ main(int argc, char **argv)
 			logmsg(LOG_WARNING, "Failed to become deamon: %s",
 				strerror(errno));
 		}
-		fp = fopen(pidfile, "w");
-		if (fp != NULL) {
-			fprintf(fp, "%d\n", getpid());
-			fclose(fp);
-		}
+		pidfile(NULL);
 	}
 
 	(void)umask(S_IRWXG | S_IRWXO);

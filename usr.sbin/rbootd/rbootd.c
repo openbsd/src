@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbootd.c,v 1.8 2001/09/04 23:35:59 millert Exp $	*/
+/*	$OpenBSD: rbootd.c,v 1.9 2001/12/01 23:27:23 miod Exp $	*/
 /*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: rbootd.c,v 1.8 2001/09/04 23:35:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: rbootd.c,v 1.9 2001/12/01 23:27:23 miod Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -174,20 +174,11 @@ main(argc, argv)
 	}
 	MyHost[MAXHOSTNAMELEN] = '\0';
 
-	MyPid = getpid();
-
 	/*
 	 *  Write proc's pid to a file.
 	 */
-	{
-		FILE *fp;
-
-		if ((fp = fopen(PidFile, "w")) != NULL) {
-			(void) fprintf(fp, "%d\n", (int) MyPid);
-			(void) fclose(fp);
-		} else {
-			syslog(LOG_WARNING, "fopen: failed (%s)", PidFile);
-		}
+	if (pidfile(NULL) < 0) {
+		syslog(LOG_WARNING, "pidfile: failed");
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.2 2001/01/17 00:33:03 pjanzen Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.3 2001/12/01 23:27:23 miod Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1995/08/21 17:05:15 thorpej Exp $	*/
 
 /*
@@ -51,4 +51,3 @@
 #define	_PATH_RBOOTDCONF	"/etc/rbootd.conf"
 #define	_PATH_RBOOTDDBG		"/tmp/rbootd.dbg"
 #define	_PATH_RBOOTDLIB		"/usr/mdec/rbootd"
-#define	_PATH_RBOOTDPID		"/var/run/rbootd.pid"

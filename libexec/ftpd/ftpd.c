@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.107 2001/11/17 19:54:56 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.108 2001/12/01 23:27:20 miod Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.107 2001/11/17 19:54:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.108 2001/12/01 23:27:20 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -443,13 +443,8 @@ main(argc, argv, envp)
 			exit(1);
 		}
 		/* Stash pid in pidfile */
-		if ((fp = fopen(_PATH_FTPDPID, "w")) == NULL)
-			syslog(LOG_ERR, "can't open %s: %m", _PATH_FTPDPID);
-		else {
-			fprintf(fp, "%d\n", getpid());
-			fchmod(fileno(fp), S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
-			fclose(fp);
-		}
+		if (pidfile(NULL))
+			syslog(LOG_ERR, "can't open pidfile: %m");
 		/*
 		 * Loop forever accepting connection requests and forking off
 		 * children to handle them.

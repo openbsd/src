@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.11 2001/12/01 19:27:28 deraadt Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.12 2001/12/01 23:27:23 miod Exp $	*/
 /*	$KAME: rtadvd.c,v 1.50 2001/02/04 06:15:15 itojun Exp $	*/
 
 /*
@@ -55,6 +55,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <syslog.h>
+#include <util.h>
+
 #include "rtadvd.h"
 #include "rrenum.h"
 #include "advcap.h"
@@ -77,7 +79,6 @@ struct sockaddr_in6 from;
 struct sockaddr_in6 sin6_allnodes = {sizeof(sin6_allnodes), AF_INET6};
 struct in6_addr in6a_site_allrouters;
 static char *dumpfilename = "/var/run/rtadvd.dump"; /* XXX: should be configurable */
-static char *pidfilename = "/var/run/rtadvd.pid"; /* should be configurable */
 static char *mcastif;
 int sock;
 int rtsock = -1;
@@ -155,8 +156,6 @@ main(argc, argv)
 	struct timeval *timeout;
 	int i, ch;
 	int fflag = 0;
-	FILE *pidfp;
-	pid_t pid;
 
 	openlog("rtadvd", LOG_NDELAY|LOG_PID, LOG_DAEMON);
 
@@ -241,14 +240,10 @@ main(argc, argv)
 		daemon(1, 0);
 
 	/* record the current PID */
-	pid = getpid();
-	if ((pidfp = fopen(pidfilename, "w")) == NULL)
+	if (pidfile(NULL) < 0) {
 		syslog(LOG_ERR,
-		       "<%s> failed to open a log file(%s), run anyway.",
-		       __FUNCTION__, pidfilename);
-	else {
-		fprintf(pidfp, "%d\n", pid);
-		fclose(pidfp);
+		       "<%s> failed to open the pid log file, run anyway.",
+		       __FUNCTION__);
 	}
 
 	FD_ZERO(&fdset);

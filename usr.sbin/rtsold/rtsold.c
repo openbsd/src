@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.12 2001/12/01 19:27:28 deraadt Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.13 2001/12/01 23:27:24 miod Exp $	*/
 /*	$KAME: rtsold.c,v 1.32 2001/07/09 22:34:07 itojun Exp $	*/
 
 /*
@@ -50,6 +50,8 @@
 #include <err.h>
 #include <stdarg.h>
 #include <ifaddrs.h>
+#include <util.h>
+
 #include "rtsold.h"
 
 struct ifinfo *iflist;
@@ -87,7 +89,6 @@ int main __P((int argc, char *argv[]));
 static int mobile_node = 0;
 volatile sig_atomic_t do_dump;
 static char *dumpfilename = "/var/run/rtsold.dump"; /* XXX: should be configurable */
-static char *pidfilename = "/var/run/rtsold.pid"; /* should be configurable */
 
 static int ifconfig __P((char *ifname));
 #if 0
@@ -259,16 +260,10 @@ main(argc, argv)
 
 	/* dump the current pid */
 	if (!once) {
-		pid_t pid = getpid();
-		FILE *fp;
-
-		if ((fp = fopen(pidfilename, "w")) == NULL)
+		if (pidfile(NULL) < 0) {
 			warnmsg(LOG_ERR, __FUNCTION__,
-				"failed to open a log file(%s): %s",
-				pidfilename, strerror(errno));
-		else {
-			fprintf(fp, "%d\n", pid);
-			fclose(fp);
+				"failed to open a pid log file: %s",
+				strerror(errno));
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.30 2001/06/13 20:13:29 markus Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.31 2001/12/01 23:27:23 miod Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.30 2001/06/13 20:13:29 markus Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.31 2001/12/01 23:27:23 miod Exp $";
 #endif
 
 
@@ -59,11 +59,10 @@ static char rcsid[] = "$OpenBSD: rarpd.c,v 1.30 2001/06/13 20:13:29 markus Exp $
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <dirent.h>
+#include <util.h>
 #ifdef HAVE_IFADDRS_H
 #include <ifaddrs.h>
 #endif
-
-#include "pathnames.h"
 
 #define FATAL		1	/* fatal error occurred */
 #define NONFATAL	0	/* non fatal error occurred */
@@ -175,10 +174,7 @@ main(argc, argv)
 			}
 
 		/* write pid file */
-		if ((fp = fopen(_PATH_RARPDPID, "w")) != NULL) {
-			fprintf(fp, "%u\n", getpid());
-			(void)fclose(fp);
-		}
+		pidfile(NULL);
 
 		/* Fade into the background */
 		f = open("/dev/tty", O_RDWR);
@@ -1017,7 +1013,6 @@ va_dcl
 	vsyslog(LOG_ERR, fmt, ap);
 	va_end(ap);
 	if (fatal) {
-		unlink(_PATH_RARPDPID);
 		exit(1);
 	}
 	/* NOTREACHED */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.20 2001/11/17 19:49:00 deraadt Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.21 2001/12/01 23:27:23 miod Exp $	*/
 /*	$KAME: route6d.c,v 1.73 2001/09/05 01:12:34 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.20 2001/11/17 19:49:00 deraadt Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.21 2001/12/01 23:27:23 miod Exp $";
 #endif
 
 #include <stdio.h>
@@ -50,6 +50,7 @@ static char _rcsid[] = "$OpenBSD: route6d.c,v 1.20 2001/11/17 19:49:00 deraadt E
 #include <stddef.h>
 #include <errno.h>
 #include <err.h>
+#include <util.h>
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -283,7 +284,6 @@ main(argc, argv)
 	int	error = 0;
 	struct	ifc *ifcp;
 	sigset_t mask, omask;
-	FILE	*pidfile;
 	char *progname;
 	char *ep;
 
@@ -399,11 +399,7 @@ main(argc, argv)
 		}
 #endif
 	}
-	pid = getpid();
-	if ((pidfile = fopen(ROUTE6D_PID, "w")) != NULL) {
-		fprintf(pidfile, "%d\n", pid);
-		fclose(pidfile);
-	}
+	pidfile(NULL);
 
 	if ((ripbuf = (struct rip6 *)malloc(RIP6_MAXMTU)) == NULL) {
 		fatal("malloc");
