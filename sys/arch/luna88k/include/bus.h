@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.1.1.1 2004/04/21 15:23:56 aoyama Exp $	*/
+/*	$OpenBSD: bus.h,v 1.2 2004/08/11 06:09:07 miod Exp $	*/
 /*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
 
 /*-
@@ -193,10 +193,10 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r11, r0, %1				;	\
 		or	r12, r0, %2				;	\
 	1:	ld.bu	r13, r10, 0				;	\
+		sub	r12, r12, 1				;	\
 		st.b	r13, r11, 0				;	\
-		add	r11, r11, 1				;	\
 		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		 add	r11, r11, 1"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
 		    "r10", "r11", "r12", "r13");			\
@@ -209,10 +209,10 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r11, r0, %1				;	\
 		or	r12, r0, %2				;	\
 	1:	ld.hu	r13, r10, 0				;	\
+		sub	r12, r12, 1				;	\
 		st.hu	r13, r11, 0				;	\
-		add	r11, r11, 2				;	\
 		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		 add	r11, r11, 2"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
 		    "r10", "r11", "r12", "r13");			\
@@ -225,10 +225,10 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r11, r0, %1				;	\
 		or	r12, r0, %2				;	\
 	1:	ld	r13, r10, 0				;	\
+		sub	r12, r12, 1				;	\
 		st	r13, r11, 0				;	\
-		add	r11, r11, 4				;	\
 		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		 add	r11, r11, 4"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
 		    "r10", "r11", "r12", "r13");			\
@@ -256,10 +256,10 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r12, r0, %2				;	\
 	1:	ld.bu	r13, r10, 0				;	\
 		st.b	r13, r11, 0				;	\
+		sub	r12, r12, 1				;	\
 		add	r10, r10, 4				;	\
-		add	r11, r11, 1				;	\
 		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		 add	r11, r11, 1"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
 		    "r10", "r11", "r12", "r13");			\
@@ -273,10 +273,10 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r12, r0, %2				;	\
 	1:	ld.hu	r13, r10, 0				;	\
 		st.hu	r13, r11, 0				;	\
+		sub	r12, r12, 1				;	\
 		add	r10, r10, 4				;	\
-		add	r11, r11, 2				;	\
 		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		 add	r11, r11, 2"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
 		    "r10", "r11", "r12", "r13");			\
@@ -290,10 +290,10 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r12, r0, %2				;	\
 	1:	ld	r13, r10, 0				;	\
 		st	r13, r11, 0				;	\
+		sub	r12, r12, 1				;	\
 		add	r10, r10, 4				;	\
-		add	r11, r11, 4				;	\
 		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		 add	r11, r11, 4"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
 		    "r10", "r11", "r12", "r13");			\
@@ -341,10 +341,10 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r11, r0, %1				;	\
 		or	r12, r0, %2				;	\
 	1:	ld.bu	r13, r11, 0				;	\
+		sub	r12, r12, 1				;	\
 		st.b	r13, r10, 0				;	\
-		add	r11, r11, 1				;	\
 		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		 add	r11, r11, 1"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
 		    "r10", "r11", "r12", "r13");			\
@@ -357,10 +357,10 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r11, r0, %1				;	\
 		or	r12, r0, %2				;	\
 	1:	ld.hu	r13, r11, 0				;	\
+		sub	r12, r12, 1				;	\
 		st.hu	r13, r10, 0				;	\
-		add	r11, r11, 2				;	\
 		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		 add	r11, r11, 2"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
 		    "r10", "r11", "r12", "r13");			\
@@ -373,10 +373,10 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r11, r0, %1				;	\
 		or	r12, r0, %2				;	\
 	1:	ld	r13, r11, 0				;	\
+		sub	r12, r12, 1				;	\
 		st	r13, r10, 0				;	\
-		add	r11, r11, 4				;	\
 		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		 add	r11, r11, 4"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
 		    "r10", "r11", "r12", "r13");			\
@@ -403,11 +403,11 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r11, r0, %1				;	\
 		or	r12, r0, %2				;	\
 	1:	ld.bu	r13, r11, 0				;	\
+		sub	r12, r12, 1				;	\
 		st.b	r13, r10, 0				;	\
 		add	r10, r10, 4				;	\
-		add	r11, r11, 1				;	\
 		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		 add	r11, r11, 1"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
 		    "r10", "r11", "r12", "r13");			\
@@ -420,11 +420,11 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r11, r0, %1				;	\
 		or	r12, r0, %2				;	\
 	1:	ld.hu	r13, r11, 0				;	\
+		sub	r12, r12, 1				;	\
 		st.hu	r13, r10, 0				;	\
 		add	r10, r10, 4				;	\
-		add	r11, r11, 2				;	\
 		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		 add	r11, r11, 2"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
 		    "r10", "r11", "r12", "r13");			\
@@ -437,11 +437,11 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r11, r0, %1				;	\
 		or	r12, r0, %2				;	\
 	1:	ld	r13, r11, 0				;	\
+		sub	r12, r12, 1				;	\
 		st	r13, r10, 0				;	\
 		add	r10, r10, 4				;	\
-		add	r11, r11, 4				;	\
 		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		 add	r11, r11, 4"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (a), "r" (c)	:	\
 		    "r10", "r11", "r12", "r13");			\
@@ -468,8 +468,8 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r11, r0, %1				;	\
 		or	r12, r0, %2				;	\
 	1:	st.b	r11, r10, 0				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		sub	r12, r12, 1				;	\
+		bcnd	ne0, r12, 1b"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (val), "r" (c)	:	\
 		    "r10", "r11", "r12");				\
@@ -482,8 +482,8 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r11, r0, %1				;	\
 		or	r12, r0, %2				;	\
 	1:	st.hu	r11, r10, 0				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		sub	r12, r12, 1				;	\
+		bcnd	ne0, r12, 1b"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (val), "r" (c)	:	\
 		    "r10", "r11", "r12");				\
@@ -496,8 +496,8 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r11, r0, %1				;	\
 		or	r12, r0, %2				;	\
 	1:	st	r11, r10, 0				;	\
-		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		sub	r12, r12, 1				;	\
+		bcnd	ne0, r12, 1b"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (val), "r" (c)	:	\
 		    "r10", "r11", "r12");				\
@@ -524,9 +524,9 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r11, r0, %1				;	\
 		or	r12, r0, %2				;	\
 	1:	st.b	r11, r10, 0				;	\
-		add	r10, r10, 4
+		sub	r12, r12, 1				;	\
 		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		 add	r10, r10, 4"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (val), "r" (c)	:	\
 		    "r10", "r11", "r12");				\
@@ -539,9 +539,9 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r11, r0, %1				;	\
 		or	r12, r0, %2				;	\
 	1:	st.hu	r11, r10, 0				;	\
-		add	r10, r10, 4
+		sub	r12, r12, 1				;	\
 		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		 add	r10, r10, 4"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (val), "r" (c)	:	\
 		    "r10", "r11", "r12");				\
@@ -554,9 +554,9 @@ int	luna88k_bus_space_probe(bus_space_tag_t t,
 		or	r11, r0, %1				;	\
 		or	r12, r0, %2				;	\
 	1:	st	r11, r10, 0				;	\
-		add	r10, r10, 4
+		sub	r12, r12, 1				;	\
 		bcnd.n	ne0, r12, 1b				;	\
-		 sub	r12, r12, 1"				:	\
+		 add	r10, r10, 4"				:	\
 								:	\
 		    "r" ((h) + 4 * (o)), "r" (val), "r" (c)	:	\
 		    "r10", "r11", "r12");				\
