@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.31 1997/02/06 10:02:54 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.32 1997/04/03 21:01:07 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -234,8 +234,8 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),			/* 43 */
 #endif
-	cdev_gen_ipf(NIPF,ipl),         /* 44 ip filtering */
-	cdev_random_init(1,random),	/* 45 random data source */
+	cdev_gen_ipf(NIPF,ipl),         /* 44: ip filtering */
+	cdev_random_init(1,random),	/* 45: random data source */
 	cdev_uk_init(NPCTR,pctr),	/* 46: pentium performance counters */
 	cdev_disk_init(NRD,rd),		/* 47: ram disk driver */
 };
