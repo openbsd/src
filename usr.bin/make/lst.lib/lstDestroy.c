@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstDestroy.c,v 1.9 2000/06/17 14:38:21 espie Exp $	*/
+/*	$OpenBSD: lstDestroy.c,v 1.10 2000/06/17 14:43:38 espie Exp $	*/
 /*	$NetBSD: lstDestroy.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstDestroy.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstDestroy.c,v 1.9 2000/06/17 14:38:21 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstDestroy.c,v 1.10 2000/06/17 14:43:38 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,16 +51,6 @@ static char rcsid[] = "$OpenBSD: lstDestroy.c,v 1.9 2000/06/17 14:38:21 espie Ex
  */
 
 #include	"lstInt.h"
-
-void
-Lst_Delete(l, freeProc)
-    Lst l;
-    SimpleProc freeProc;
-{
-    if (l != NULL)
-	Lst_Destroy(l, freeProc);
-    free(l);
-}
 
 /*-
  *-----------------------------------------------------------------------

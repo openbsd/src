@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.17 2000/06/17 14:38:18 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.18 2000/06/17 14:43:36 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: make.c,v 1.17 2000/06/17 14:38:18 espie Exp $";
+static char rcsid[] = "$OpenBSD: make.c,v 1.18 2000/06/17 14:43:36 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -329,7 +329,7 @@ Make_HandleUse(cgn, pgn)
 	     * .USE or transformation and target has no commands -- append
 	     * the child's commands to the parent.
 	     */
-	    Lst_Concat(&pgn->commands, &cgn->commands, LST_CONCNEW);
+	    Lst_Concat(&pgn->commands, &cgn->commands);
 	}
 
 	if (Lst_Open(&cgn->children) == SUCCESS) {
@@ -792,12 +792,12 @@ Make_Run(targs)
     Lst             targs;	/* the initial list of targets */
 {
     register GNode  *gn;	/* a temporary pointer */
-    register Lst    examine; 	/* List of targets to examine */
+    LIST    examine; 		/* List of targets to examine */
     int	    	    errors; 	/* Number of errors the Job module reports */
 
     Lst_Init(&toBeMade);
 
-    examine = Lst_Duplicate(targs, NOCOPY);
+    Lst_Clone(&examine, targs, NOCOPY);
     numNodes = 0;
 
     /*
@@ -808,7 +808,7 @@ Make_Run(targs)
      * be looked at in a minute, otherwise we add its children to our queue
      * and go on about our business.
      */
-    while ((gn = (GNode *)Lst_DeQueue(examine)) != NULL) {
+    while ((gn = (GNode *)Lst_DeQueue(&examine)) != NULL) {
 
 	if (!gn->make) {
 	    gn->make = TRUE;
@@ -822,14 +822,14 @@ Make_Run(targs)
 	    Suff_FindDeps (gn);
 
 	    if (gn->unmade != 0) {
-		Lst_ForEach(&gn->children, MakeAddChild, examine);
+		Lst_ForEach(&gn->children, MakeAddChild, &examine);
 	    } else {
 		Lst_EnQueue(&toBeMade, gn);
 	    }
 	}
     }
 
-    Lst_Delete(examine, NOFREE);
+    Lst_Destroy(&examine, NOFREE);
 
     if (queryFlag) {
 	/*

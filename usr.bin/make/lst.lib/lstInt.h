@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInt.h,v 1.10 2000/06/17 14:34:09 espie Exp $	*/
+/*	$OpenBSD: lstInt.h,v 1.11 2000/06/17 14:43:40 espie Exp $	*/
 /*	$NetBSD: lstInt.h,v 1.7 1996/11/06 17:59:44 christos Exp $	*/
 
 /*
@@ -60,12 +60,6 @@
  *	Allocate a pointer-typedef structure 'ptype' into the variable 'var'
  */
 #define	PAlloc(var,ptype)	var = (ptype) emalloc (sizeof (*var))
-
-/*
- * LstValid (l) --
- *	Return TRUE if the list l is valid
- */
-#define LstValid(l)	((l) == NULL ? FALSE : TRUE)
 
 /*
  * LstNodeValid (ln, l) --

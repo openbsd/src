@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstAppend.c,v 1.9 2000/06/17 14:34:05 espie Exp $	*/
+/*	$OpenBSD: lstAppend.c,v 1.10 2000/06/17 14:43:38 espie Exp $	*/
 /*	$NetBSD: lstAppend.c,v 1.5 1996/11/06 17:59:31 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstAppend.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.9 2000/06/17 14:34:05 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.10 2000/06/17 14:43:38 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,13 +76,11 @@ Lst_Append(l, ln, d)
 {
     LstNode	nLNode;
 
-    if (LstValid(l) && (ln == NULL && LstIsEmpty(l))) {
+    if (ln == NULL && LstIsEmpty(l))
 	goto ok;
-    }
 
-    if (!LstValid(l) || LstIsEmpty(l)  || ! LstNodeValid(ln, l)) {
+    if (LstIsEmpty(l)  || ! LstNodeValid(ln, l))
 	return;
-    }
     ok:
 
     PAlloc(nLNode, LstNode);

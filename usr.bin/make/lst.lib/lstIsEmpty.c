@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstIsEmpty.c,v 1.5 1999/12/18 21:53:34 espie Exp $	*/
+/*	$OpenBSD: lstIsEmpty.c,v 1.6 2000/06/17 14:43:40 espie Exp $	*/
 /*	$NetBSD: lstIsEmpty.c,v 1.5 1996/11/06 17:59:47 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstIsEmpty.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstIsEmpty.c,v 1.5 1999/12/18 21:53:34 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstIsEmpty.c,v 1.6 2000/06/17 14:43:40 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,21 +56,12 @@ static char rcsid[] = "$OpenBSD: lstIsEmpty.c,v 1.5 1999/12/18 21:53:34 espie Ex
  *-----------------------------------------------------------------------
  * Lst_IsEmpty --
  *	Return TRUE if the given list is empty.
- *
- * Results:
- *	TRUE if the list is empty, FALSE otherwise.
- *
- * Side Effects:
- *	None.
- *
- *	A list is considered empty if its firstPtr == NULL (or if
- *	the list itself is NULL).
  *-----------------------------------------------------------------------
  */
 Boolean
-Lst_IsEmpty (l)
+Lst_IsEmpty(l)
     Lst	l;
 {
-    return ( ! LstValid (l) || LstIsEmpty(l));
+    return LstIsEmpty(l);
 }
 

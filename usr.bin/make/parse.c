@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.44 2000/06/17 14:40:29 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.45 2000/06/17 14:43:36 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.44 2000/06/17 14:40:29 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.45 2000/06/17 14:43:36 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,12 +115,12 @@ static LIST	    fileNames;	/* file names to free at end */
  */
 #define	CONTINUE	1
 #define	DONE		0
-static Lst     	    targets;	/* targets we're working on */
+static LIST    		targets;	/* targets we're working on */
 #ifdef CLEANUP
-static LIST    	    targCmds;	/* command lines for targets */
+static LIST    	    	targCmds;	/* command lines for targets */
 #endif
-static Boolean	    inLine;	/* true if currently in a dependency
-				 * line or its commands */
+static Boolean	    	inLine;		/* true if currently in a dependency
+				 	 * line or its commands */
 typedef struct {
     char *str;
     char *ptr;
@@ -507,7 +507,7 @@ ParseDoOp (gnp, opp)
 	/*
 	 * Replace the node in the targets list with the new copy
 	 */
-	ln = Lst_Member(targets, gn);
+	ln = Lst_Member(&targets, gn);
 	Lst_Replace(ln, cohort);
 	gn = cohort;
     }
@@ -590,7 +590,7 @@ ParseDoSrc (tOp, src, allsrc)
 	if (keywd != -1) {
 	    int op = parseKeywords[keywd].op;
 	    if (op != 0) {
-		Lst_Find(targets, ParseDoOp, &op);
+		Lst_Find(&targets, ParseDoOp, &op);
 		return;
 	    }
 	    if (parseKeywords[keywd].spec == Wait) {
@@ -650,7 +650,7 @@ ParseDoSrc (tOp, src, allsrc)
 	if (tOp) {
 	    gn->type |= tOp;
 	} else {
-	    Lst_ForEach(targets, ParseLinkSrc, gn);
+	    Lst_ForEach(&targets, ParseLinkSrc, gn);
 	}
 	if ((gn->type & OP_OPMASK) == OP_DOUBLEDEP) {
 	    register GNode  	*cohort;
@@ -661,7 +661,7 @@ ParseDoSrc (tOp, src, allsrc)
 		if (tOp) {
 		    cohort->type |= tOp;
 		} else {
-		    Lst_ForEach(targets, ParseLinkSrc, cohort);
+		    Lst_ForEach(&targets, ParseLinkSrc, cohort);
 		}
 	    }
 	}
@@ -781,7 +781,7 @@ ParseDoDependency (line)
     GNode 	   *gn;		/* a general purpose temporary node */
     int             op;		/* the operator on the line */
     char            savec;	/* a place to save a character */
-    Lst    	    paths;   	/* List of search paths to alter when parsing
+    LIST    	    paths;   	/* List of search paths to alter when parsing
 				 * a list of .PATH targets */
     int	    	    tOp;    	/* operator from special target */
     LIST 	    curTargs;	/* list of target names to be found and added
@@ -792,7 +792,7 @@ ParseDoDependency (line)
 
     specType = Not;
     waiting = 0;
-    paths = (Lst)NULL;
+    Lst_Init(&paths);
 
     Lst_Init(&curTargs);
     Lst_Init(&curSrcs);
@@ -858,7 +858,7 @@ ParseDoDependency (line)
 	     * went well and FAILURE if there was an error in the
 	     * specification. On error, line should remain untouched.
 	     */
-	    if (Arch_ParseArchive (&line, targets, VAR_CMD) != SUCCESS) {
+	    if (Arch_ParseArchive(&line, &targets, VAR_CMD) != SUCCESS) {
 		Parse_Error (PARSE_FATAL,
 			     "Error in archive specification: \"%s\"", line);
 		return;
@@ -927,9 +927,7 @@ ParseDoDependency (line)
 		 */
 		switch (specType) {
 		    case ExPath:
-			if (paths == NULL)
-			    paths = Lst_New();
-			Lst_AtEnd(paths, &dirSearchPath);
+			Lst_AtEnd(&paths, &dirSearchPath);
 			break;
 		    case Main:
 			if (!Lst_IsEmpty(&create)) {
@@ -941,12 +939,12 @@ ParseDoDependency (line)
 		    case Interrupt:
 			gn = Targ_FindNode(line, TARG_CREATE);
 			gn->type |= OP_NOTMAIN;
-			Lst_AtEnd(targets, gn);
+			Lst_AtEnd(&targets, gn);
 			break;
 		    case Default:
 			gn = Targ_NewGN(".DEFAULT");
 			gn->type |= (OP_NOTMAIN|OP_TRANSFORM);
-			Lst_AtEnd(targets, gn);
+			Lst_AtEnd(&targets, gn);
 			DEFAULT = gn;
 			break;
 		    case NotParallel:
@@ -974,17 +972,14 @@ ParseDoDependency (line)
 		Lst 	path;
 
 		specType = ExPath;
-		path = Suff_GetPath (&line[5]);
+		path = Suff_GetPath(&line[5]);
 		if (path == NULL) {
-		    Parse_Error (PARSE_FATAL,
+		    Parse_Error(PARSE_FATAL,
 				 "Suffix '%s' not defined (yet)",
 				 &line[5]);
 		    return;
-		} else {
-		    if (paths == NULL)
-			paths = Lst_New();
-		    Lst_AtEnd(paths, path);
-		}
+		} else
+		    Lst_AtEnd(&paths, path);
 	    }
 	}
 
@@ -1025,7 +1020,7 @@ ParseDoDependency (line)
 		}
 
 		if (gn != NULL)
-		    Lst_AtEnd(targets, gn);
+		    Lst_AtEnd(&targets, gn);
 	    }
 	} else if (specType == ExPath && *line != '.' && *line != '\0') {
 	    Parse_Error(PARSE_WARNING, "Extra target (%s) ignored", line);
@@ -1059,7 +1054,7 @@ ParseDoDependency (line)
     /* Don't need the list of target names any more */
     Lst_Destroy(&curTargs, NOFREE);
 
-    if (!Lst_IsEmpty(targets)) {
+    if (!Lst_IsEmpty(&targets)) {
 	switch(specType) {
 	    default:
 		Parse_Error(PARSE_WARNING, "Special and mundane targets don't mix. Mundane ones ignored");
@@ -1100,7 +1095,7 @@ ParseDoDependency (line)
 
     cp++;			/* Advance beyond operator */
 
-    Lst_Find(targets, ParseDoOp, &op);
+    Lst_Find(&targets, ParseDoOp, &op);
 
     /*
      * Get to the first source
@@ -1134,7 +1129,7 @@ ParseDoDependency (line)
 		beSilent = TRUE;
 		break;
 	    case ExPath:
-		Lst_Every(paths, ParseClearPath);
+		Lst_Every(&paths, ParseClearPath);
 		break;
 	    default:
 		break;
@@ -1200,7 +1195,7 @@ ParseDoDependency (line)
 		    Suff_AddSuffix (line);
 		    break;
 		case ExPath:
-		    Lst_ForEach(paths, ParseAddDir, line);
+		    Lst_ForEach(&paths, ParseAddDir, line);
 		    break;
 		case Includes:
 		    Suff_AddInclude (line);
@@ -1223,8 +1218,7 @@ ParseDoDependency (line)
 	    }
 	    line = cp;
 	}
-	if (paths)
-	    Lst_Delete(paths, NOFREE);
+	Lst_Destroy(&paths, NOFREE);
     } else {
 	while (*line) {
 	    /*
@@ -1284,7 +1278,7 @@ ParseDoDependency (line)
 	 * the first dependency line that is actually a real target
 	 * (i.e. isn't a .USE or .EXEC rule) to be made.
 	 */
-	Lst_Find(targets, ParseFindMain, NULL);
+	Lst_Find(&targets, ParseFindMain, NULL);
     }
 
     /* Finally, destroy the list of sources.  */
@@ -2406,9 +2400,9 @@ static void
 ParseFinishLine()
 {
     if (inLine) {
-	Lst_Every(targets, Suff_EndTransform);
-	Lst_Delete(targets, ParseHasCommands);
-	targets = NULL;
+	Lst_Every(&targets, Suff_EndTransform);
+	Lst_Destroy(&targets, ParseHasCommands);
+	Lst_Init(&targets);
 	inLine = FALSE;
     }
 }
@@ -2499,7 +2493,7 @@ Parse_File(name, stream)
 			 * in a dependency spec, add the command to the list of
 			 * commands of all targets in the dependency spec
 			 */
-			Lst_ForEach(targets, ParseAddCmd, cp);
+			Lst_ForEach(&targets, ParseAddCmd, cp);
 #ifdef CLEANUP
 			Lst_AtEnd(&targCmds, line);
 #endif
@@ -2571,13 +2565,9 @@ Parse_File(name, stream)
 		    free (line);
 		    line = cp;
 
-		    /*
-		     * Need a non-circular list for the target nodes
-		     */
-		    if (targets)
-			Lst_Delete(targets, NOFREE);
-
-		    targets = Lst_New();
+		    /* Need a new list for the target nodes */
+		    Lst_Destroy(&targets, NOFREE);
+		    Lst_Init(&targets);
 		    inLine = TRUE;
 
 		    ParseDoDependency (line);
@@ -2622,6 +2612,7 @@ Parse_Init()
     Lst_Init(&parseIncPath);
     Lst_Init(&sysIncPath);
     Lst_Init(&includes);
+    Lst_Init(&targets);
 #ifdef CLEANUP
     Lst_Init(&targCmds);
     Lst_Init(&fileNames);
@@ -2634,8 +2625,7 @@ Parse_End()
 #ifdef CLEANUP
     Lst_Destroy(&targCmds, (SimpleProc)free);
     Lst_Destroy(&fileNames, (void (*) __P((ClientData))) free);
-    if (targets)
-	Lst_Delete(targets, NOFREE);
+    Lst_Delete(&targets, NOFREE);
     Lst_Destroy(&sysIncPath, Dir_Destroy);
     Lst_Destroy(&parseIncPath, Dir_Destroy);
     Lst_Destroy(&includes, NOFREE);	/* Should be empty now */
@@ -2664,7 +2654,7 @@ Parse_MainName(listmain)
     	/*NOTREACHED*/
     else if (mainNode->type & OP_DOUBLEDEP) {
 	Lst_AtEnd(listmain, mainNode);
-	Lst_Concat(listmain, &mainNode->cohorts, LST_CONCNEW);
+	Lst_Concat(listmain, &mainNode->cohorts);
     }
     else
 	Lst_AtEnd(listmain, mainNode);

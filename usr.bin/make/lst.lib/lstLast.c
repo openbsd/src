@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstLast.c,v 1.6 2000/06/17 14:34:09 espie Exp $	*/
+/*	$OpenBSD: lstLast.c,v 1.7 2000/06/17 14:43:40 espie Exp $	*/
 /*	$NetBSD: lstLast.c,v 1.5 1996/11/06 17:59:48 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstLast.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstLast.c,v 1.6 2000/06/17 14:34:09 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstLast.c,v 1.7 2000/06/17 14:43:40 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,9 +65,6 @@ LstNode
 Lst_Last(l)
     Lst	    l;
 {
-    if (!LstValid(l) || LstIsEmpty(l)) 
-	return NULL;
-    else
-	return (LstNode)(l->lastPtr);
+    return l->lastPtr;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstDupl.c,v 1.11 2000/06/17 14:38:22 espie Exp $	*/
+/*	$OpenBSD: lstDupl.c,v 1.12 2000/06/17 14:43:39 espie Exp $	*/
 /*	$NetBSD: lstDupl.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstDupl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstDupl.c,v 1.11 2000/06/17 14:38:22 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstDupl.c,v 1.12 2000/06/17 14:43:39 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,31 +55,26 @@ static char rcsid[] = "$OpenBSD: lstDupl.c,v 1.11 2000/06/17 14:38:22 espie Exp 
 
 /*-
  *-----------------------------------------------------------------------
- * Lst_Duplicate --
+ * Lst_Clone --
  *	Duplicate an entire list. If a function to copy a void * is
  *	given, the individual client elements will be duplicated as well.
  *
  * Results:
- *	The new Lst structure or NULL if failure.
+ *	Returns the new list.
  *
  * Side Effects:
- *	A new list is created.
+ *	The new list is created.
  *-----------------------------------------------------------------------
  */
 Lst
-Lst_Duplicate(l, copyProc)
+Lst_Clone(nl, l, copyProc)
+    Lst		  nl;
     Lst     	  l;	    	 
     DuplicateProc copyProc;
 {
-    Lst 	nl;
     LstNode  	ln;
 
-    if (!LstValid(l))
-	return NULL;
-
-    nl = Lst_New();
-    if (nl == NULL)
-	return NULL;
+    Lst_Init(nl);
 
     for (ln = l->firstPtr; ln != NULL; ln = ln->nextPtr) {
     	if (copyProc != NOCOPY)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstOpen.c,v 1.6 2000/06/17 14:34:10 espie Exp $	*/
+/*	$OpenBSD: lstOpen.c,v 1.7 2000/06/17 14:43:40 espie Exp $	*/
 /*	$NetBSD: lstOpen.c,v 1.5 1996/11/06 17:59:50 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstOpen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstOpen.c,v 1.6 2000/06/17 14:34:10 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstOpen.c,v 1.7 2000/06/17 14:43:40 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,9 +62,6 @@ static char rcsid[] = "$OpenBSD: lstOpen.c,v 1.6 2000/06/17 14:34:10 espie Exp $
  *	Open a list for sequential access. A list can still be searched,
  *	etc., without confusing these functions.
  *
- * Results:
- *	SUCCESS or FAILURE.
- *
  * Side Effects:
  *	isOpen is set TRUE and curPtr is set to NULL so the
  *	other sequential functions no it was just opened and can choose
@@ -76,12 +73,9 @@ ReturnStatus
 Lst_Open(l)
 	Lst	l;
 {
-	if (LstValid(l) == FALSE)
-	    return FAILURE;
 	l->isOpen = TRUE;
 	l->atEnd = LstIsEmpty(l) ? Head : Unknown;
 	l->curPtr = NULL;
-
 	return SUCCESS;
 }
 

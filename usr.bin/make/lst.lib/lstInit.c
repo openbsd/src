@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInit.c,v 1.8 2000/06/17 14:38:22 espie Exp $	*/
+/*	$OpenBSD: lstInit.c,v 1.9 2000/06/17 14:43:39 espie Exp $	*/
 /*	$NetBSD: lstInit.c,v 1.5 1996/11/06 17:59:43 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstInit.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstInit.c,v 1.8 2000/06/17 14:38:22 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstInit.c,v 1.9 2000/06/17 14:43:39 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,22 +52,6 @@ static char rcsid[] = "$OpenBSD: lstInit.c,v 1.8 2000/06/17 14:38:22 espie Exp $
 
 #include	"lstInt.h"
 
-/*-
- *-----------------------------------------------------------------------
- * Lst_New --
- *	Create and initialize a new list.
- *-----------------------------------------------------------------------
- */
-Lst
-Lst_New()
-{
-    register Lst	nList;
-
-    PAlloc(nList, Lst);
-    Lst_Init(nList);
-
-    return nList;
-}
 /*-
  *-----------------------------------------------------------------------
  * Lst_Init --

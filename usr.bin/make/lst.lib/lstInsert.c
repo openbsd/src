@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInsert.c,v 1.9 2000/06/17 14:34:09 espie Exp $	*/
+/*	$OpenBSD: lstInsert.c,v 1.10 2000/06/17 14:43:39 espie Exp $	*/
 /*	$NetBSD: lstInsert.c,v 1.5 1996/11/06 17:59:44 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstInsert.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstInsert.c,v 1.9 2000/06/17 14:34:09 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstInsert.c,v 1.10 2000/06/17 14:43:39 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,10 +76,10 @@ Lst_Insert(l, ln, d)
     /*
      * check validity of arguments
      */
-    if (LstValid(l) && (LstIsEmpty(l) && ln == NULL))
+    if (LstIsEmpty(l) && ln == NULL)
 	goto ok;
 
-    if (!LstValid(l) || LstIsEmpty(l) || !LstNodeValid(ln, l))
+    if (LstIsEmpty(l) || !LstNodeValid(ln, l))
 	return;
 
     ok:

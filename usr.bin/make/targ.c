@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.20 2000/06/17 14:40:30 espie Exp $	*/
+/*	$OpenBSD: targ.c,v 1.21 2000/06/17 14:43:37 espie Exp $	*/
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-static char *rcsid = "$OpenBSD: targ.c,v 1.20 2000/06/17 14:40:30 espie Exp $";
+static char *rcsid = "$OpenBSD: targ.c,v 1.21 2000/06/17 14:43:37 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -313,7 +313,7 @@ Targ_FindList(nodes, names)
 	 */
 	Lst_AtEnd(nodes, gn);
 	if (gn->type & OP_DOUBLEDEP)
-	    Lst_Concat(nodes, &gn->cohorts, LST_CONCNEW);
+	    Lst_Concat(nodes, &gn->cohorts);
     }
 }
 

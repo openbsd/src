@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstIsAtEnd.c,v 1.5 2000/06/17 14:34:09 espie Exp $	*/
+/*	$OpenBSD: lstIsAtEnd.c,v 1.6 2000/06/17 14:43:40 espie Exp $	*/
 /*	$NetBSD: lstIsAtEnd.c,v 1.5 1996/11/06 17:59:45 christos Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lstIsAtEnd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: lstIsAtEnd.c,v 1.5 2000/06/17 14:34:09 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstIsAtEnd.c,v 1.6 2000/06/17 14:43:40 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,6 @@ Boolean
 Lst_IsAtEnd(l)
     Lst	    l;
 {
-    return !LstValid(l) || !l->isOpen || l->atEnd == Head || l->atEnd == Tail;
+    return !l->isOpen || l->atEnd == Head || l->atEnd == Tail;
 }
 

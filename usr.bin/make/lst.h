@@ -1,4 +1,4 @@
-/*	$OpenBSD: lst.h,v 1.15 2000/06/17 14:38:17 espie Exp $	*/
+/*	$OpenBSD: lst.h,v 1.16 2000/06/17 14:43:36 espie Exp $	*/
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $	*/
 
 /*
@@ -98,27 +98,22 @@ typedef void * (*DuplicateProc) __P((void *));
 /*
  * NOFREE can be used as the freeProc to Lst_Destroy when the elements are
  *	not to be freed.
- * NOCOPY performs similarly when given as the copyProc to Lst_Duplicate.
+ * NOCOPY performs similarly when given as the copyProc to Lst_Clone.
  */
 #define NOFREE		((SimpleProc)0)
 #define NOCOPY		((DuplicateProc)0)
-
-#define LST_CONCNEW	0   /* create new LstNode's when using Lst_Concat */
-#define LST_CONCLINK	1   /* relink LstNode's when using Lst_Concat */
 
 /*
  * Creation/destruction functions
  */
 /* CTOR/DTOR, ala C++ */
+/* Create a new list */
 void		Lst_Init __P((Lst));
+/* Destroy an old one */
 void		Lst_Destroy __P((Lst, SimpleProc));
 
-/* Create a new list */
-Lst		Lst_New __P((void));
-/* Destroy an old one */
-void		Lst_Delete __P((Lst, SimpleProc));
 /* Duplicate an existing list */
-Lst		Lst_Duplicate __P((Lst, DuplicateProc));
+Lst		Lst_Clone __P((Lst, Lst, DuplicateProc));
 /* True if list is empty */
 Boolean		Lst_IsEmpty __P((Lst));
 
@@ -137,8 +132,10 @@ void		Lst_AtEnd __P((Lst, void *));
 void		Lst_Remove __P((Lst, LstNode));
 /* Replace a node with a new value */
 void		Lst_Replace __P((LstNode, void *));
-/* Concatenate two lists */
-void		Lst_Concat __P((Lst, Lst, int));
+/* Concatenate two lists, destructive.  */
+void		Lst_ConcatDestroy __P((Lst, Lst));
+/* Concatenate two lists, non destructive */
+void		Lst_Concat __P((Lst, Lst));
 
 /*
  * Node-specific functions
