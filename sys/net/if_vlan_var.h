@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan_var.h,v 1.7 2001/06/24 22:52:08 jason Exp $	*/
+/*	$OpenBSD: if_vlan_var.h,v 1.8 2002/06/12 01:42:29 chris Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -35,9 +35,14 @@
 #define _NET_IF_VLAN_VAR_H_
 
 #ifdef _KERNEL
+#define mc_enm	mc_u.mcu_enm
+
 struct vlan_mc_entry {
+	LIST_ENTRY(vlan_mc_entry)	mc_entries;
+	union {
+		struct ether_multi	*mcu_enm;
+	} mc_u;
 	struct ether_addr		mc_addr;
-	SLIST_ENTRY(vlan_mc_entry)	mc_entries;
 };
 
 struct	ifvlan {
@@ -48,9 +53,10 @@ struct	ifvlan {
 		u_int16_t ifvm_proto; /* encapsulation ethertype */
 		u_int16_t ifvm_tag; /* tag to apply on packets leaving if */
 	}	ifv_mib;
-	SLIST_HEAD(__vlan_mchead, vlan_mc_entry)	vlan_mc_listhead;
+	LIST_HEAD(__vlan_mchead, vlan_mc_entry)	vlan_mc_listhead;
 	int ifv_flags;
 };
+
 #define	ifv_if		ifv_ac.ac_if
 #define	ifv_tag		ifv_mib.ifvm_tag
 #define	IFVF_PROMISC	0x01
