@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmd.3,v 1.13 1999/07/05 04:41:00 aaron Exp $
+.\"	$OpenBSD: rcmd.3,v 1.14 1999/12/16 21:30:34 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,6 +47,8 @@
 .Ft int
 .Fn rresvport "int *port"
 .Ft int
+.Fn rresvport_af "int *port" "int af"
+.Ft int
 .Fn iruserok "u_int32_t raddr" "int superuser" "const char *ruser" "const char *luser"
 .Ft int
 .Fn ruserok "const char *rhost" "int superuser" "const char *ruser" "const char *luser"
@@ -73,8 +75,10 @@ to run the command via
 .Xr rsh 1 .
 The
 .Fn rresvport
-function
-returns a descriptor to a socket
+and
+.Fn rresvport_af
+functions
+return a descriptor to a socket
 with an address in the privileged port space.
 The
 .Fn iruserok
@@ -142,7 +146,9 @@ The protocol is described in detail in
 .Pp
 The
 .Fn rresvport
-function is used to obtain a socket with a privileged
+and
+.Fn rresvport_af
+functions are used to obtain a socket with a privileged
 address bound to it.  This socket is suitable for use
 by
 .Fn rcmd
@@ -150,8 +156,10 @@ and several other functions.  Privileged Internet ports are those
 in the range 0 to 1023.  Only the super-user
 is allowed to bind an address of this sort to a socket.
 .Fn rresvport
-needs to be seeded with a port number; if that port
-is not available it will find another.
+and
+.Fn rresvport_af
+need to be seeded with a port number; if that port
+is not available these functions will find another.
 .Pp
 The
 .Fn iruserok
@@ -200,8 +208,10 @@ It returns \-1 on error and prints a diagnostic message on the standard error.
 .Pp
 The
 .Fn rresvport
-function
-returns a valid, bound socket descriptor on success.
+and
+.Fn rresvport_af
+functions
+return a valid, bound socket descriptor on success.
 It returns \-1 on error with the global value
 .Va errno
 set according to the reason for failure.
@@ -214,6 +224,7 @@ is overloaded to mean
 .Xr rsh 1 ,
 .Xr intro 2 ,
 .Xr bindresvport 3 ,
+.Xr bindresvport_af 3 ,
 .Xr rcmdsh 3 ,
 .Xr rexec 3 ,
 .Xr rexecd 8 ,

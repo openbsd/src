@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bindresvport.3,v 1.11 1999/07/09 13:35:22 aaron Exp $
+.\"	$OpenBSD: bindresvport.3,v 1.12 1999/12/16 21:30:35 deraadt Exp $
 .\"
 .Dd August 9, 1997
 .Dt BINDRESVPORT 3
@@ -11,9 +11,13 @@
 .Fd #include <netinet/in.h>
 .Ft int
 .Fn bindresvport "int sd" "struct sockaddr_in *sin"
+.Ft int
+.Fn bindresvport_af "int sd" "struct sockaddr *sa" "int af"
 .Sh DESCRIPTION
 .Fn bindresvport
-is used to bind a socket descriptor to a privileged
+and
+.Fn bindresvport_af
+are used to bind a socket descriptor to a privileged
 .Tn IP
 port, that is, a port number in the range 0-1023.
 .Fa sd
@@ -23,10 +27,17 @@ is a socket descriptor that was returned by a call to
 Only root can bind to a privileged port; this call will fail for any
 other users.
 .Pp
-If the value of sin->sin_port is non-zero,
+If the value of
+.Va sin->sin_port
+is non-zero,
 .Fn bindresvport
 attempts to use the specified port.  If that fails, it
 chooses another privileged port number automatically.
+.Pp
+.Fn bindresvport_af
+acts in a similar way, but supports other protocols as well, such
+as
+.Va AF_INET6 .
 .Sh RETURN VALUES
 .Fn bindresvport
 returns 0 if it is successful, otherwise \-1 is returned and
@@ -67,4 +78,5 @@ system or no implementation for it exists.
 .Sh SEE ALSO
 .Xr bind 2 ,
 .Xr socket 2 ,
-.Xr rresvport 3
+.Xr rresvport 3 ,
+.Xr rresvport_af 3

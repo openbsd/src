@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.27 1999/09/17 13:13:46 espie Exp $ */
+/*	$OpenBSD: unistd.h,v 1.28 1999/12/16 21:30:34 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -158,6 +158,7 @@ int	 reboot __P((int));
 int	 revoke __P((const char *));
 int	 rfork __P((int opts));
 int	 rresvport __P((int *));
+int	 rresvport_af __P((int *, int));
 int	 ruserok __P((const char *, int, const char *, const char *));
 int	 quotactl __P((const char *, int, int, char *));
 char	*sbrk __P((int));

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.26 1999/12/11 08:09:11 itojun Exp $
+#	$OpenBSD: Makefile.inc,v 1.27 1999/12/16 21:30:34 deraadt Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -15,7 +15,7 @@ SRCS+=	base64.c freeaddrinfo.c gai_strerror.c getaddrinfo.c gethostnamadr.c \
 	ipx_addr.c ipx_ntoa.c iso_addr.c linkaddr.c ns_addr.c ns_ntoa.c \
 	nsap_addr.c \
 	net_addrcmp.c \
-	rcmd.c recv.c res_comp.c res_data.c res_debug.c \
+	rcmd.c rresvport.c recv.c res_comp.c res_data.c res_debug.c \
 	res_init.c res_mkquery.c res_query.c res_random.c res_send.c send.c \
 	sethostent.c ethers.c rcmdsh.c
 
@@ -64,7 +64,8 @@ MLINKS+=iso_addr.3 iso_ntoa.3
 MLINKS+=link_addr.3 link_ntoa.3
 MLINKS+=ipx.3 ipx_addr.3 ipx.3 ipx_ntoa.3
 MLINKS+=ns.3 ns_addr.3 ns.3 ns_ntoa.3
-MLINKS+=rcmd.3 iruserok.3 rcmd.3 rresvport.3 rcmd.3 ruserok.3
+MLINKS+=rcmd.3 iruserok.3 rcmd.3 rresvport.3 rcmd.3 ruserok.3 \
+	rcmd.3 rresvport_af.3
 MLINKS+=resolver.3 dn_comp.3 resolver.3 dn_expand.3 resolver.3 res_init.3 \
 	resolver.3 res_mkquery.3 resolver.3 res_send.3 resolver.3 res_query.3 \
 	resolver.3 res_search.3

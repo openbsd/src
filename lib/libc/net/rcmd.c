@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.31 1998/03/19 00:30:05 millert Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.32 1999/12/16 21:30:34 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -251,38 +251,6 @@ bad:
 	(void)close(s);
 	sigsetmask(oldmask);
 	return (-1);
-}
-
-int
-rresvport(alport)
-	int *alport;
-{
-	struct sockaddr_in sin;
-	int s;
-
-	bzero(&sin, sizeof sin);
-	sin.sin_len = sizeof(struct sockaddr_in);
-	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = INADDR_ANY;
-	s = socket(AF_INET, SOCK_STREAM, 0);
-	if (s < 0)
-		return (-1);
-	sin.sin_port = htons((in_port_t)*alport);
-	if (*alport < IPPORT_RESERVED - 1) {
-		if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
-			return (s);
-		if (errno != EADDRINUSE) {
-			(void)close(s);
-			return (-1);
-		}
-	}
-	sin.sin_port = 0;
-	if (bindresvport(s, &sin) == -1) {
-		(void)close(s);
-		return (-1);
-	}
-	*alport = (int)ntohs(sin.sin_port);
-	return (s);
 }
 
 int	__check_rhosts_file = 1;

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: bindresvport.c,v 1.9 1996/09/15 09:31:30 tholo Exp $";
+static char *rcsid = "$OpenBSD: bindresvport.c,v 1.10 1999/12/16 21:30:35 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -51,50 +51,79 @@ bindresvport(sd, sin)
 	int sd;
 	struct sockaddr_in *sin;
 {
-	int on, old, error;
-	struct sockaddr_in myaddr;
-	int sinlen = sizeof(struct sockaddr_in);
+	return bindresvport_af(sd, (struct sockaddr *)sin, AF_INET);
+}
 
-	if (sin == (struct sockaddr_in *)0) {
-		sin = &myaddr;
-		memset(sin, 0, sinlen);
-		sin->sin_len = sinlen;
-		sin->sin_family = AF_INET;
-	} else if (sin->sin_family != AF_INET) {
+/*
+ * Bind a socket to a privileged IP port
+ */
+int
+bindresvport_af(sd, sa, af)
+	int sd;
+	struct sockaddr *sa;
+	int af;
+{
+	int old, error;
+	struct sockaddr_storage myaddr;
+	struct sockaddr_in *sin;
+	struct sockaddr_in6 *sin6;
+	int proto, portrange, portlow;
+	u_int16_t *portp;
+	int salen;
+
+	if (sa == NULL) {
+		memset(&myaddr, 0, sizeof(myaddr));
+		sa = (struct sockaddr *)&myaddr;
+	}
+
+	if (af == AF_INET) {
+		proto = IPPROTO_IP;
+		portrange = IP_PORTRANGE;
+		portlow = IP_PORTRANGE_LOW;
+		sin = (struct sockaddr_in *)sa;
+		salen = sizeof(struct sockaddr_in);
+		portp = &sin->sin_port;
+	} else if (af == AF_INET6) {
+		proto = IPPROTO_IPV6;
+		portrange = IPV6_PORTRANGE;
+		portlow = IPV6_PORTRANGE_LOW;
+		sin6 = (struct sockaddr_in6 *)sa;
+		salen = sizeof(struct sockaddr_in6);
+		portp = &sin6->sin6_port;
+	} else {
 		errno = EPFNOSUPPORT;
 		return (-1);
 	}
+	sa->sa_family = af;
 
-	if (sin->sin_port == 0) {
+	if (*portp == 0) {
 		int oldlen = sizeof(old);
-		error = getsockopt(sd, IPPROTO_IP, IP_PORTRANGE,
-				   &old, &oldlen);
+
+		error = getsockopt(sd, proto, portrange, &old, &oldlen);
 		if (error < 0)
 			return(error);
 
-		on = IP_PORTRANGE_LOW;
-		error = setsockopt(sd, IPPROTO_IP, IP_PORTRANGE,
-		           	   &on, sizeof(on));
+		error = setsockopt(sd, proto, portrange, &portlow,
+		    sizeof(portlow));
 		if (error < 0)
 			return(error);
 	}
 
-	error = bind(sd, (struct sockaddr *)sin, sinlen);
+	error = bind(sd, sa, salen);
 
-	if (sin->sin_port == 0) {
+	if (*portp == 0) {
 		int saved_errno = errno;
 
 		if (error) {
-			if (setsockopt(sd, IPPROTO_IP, IP_PORTRANGE,
-			    &old, sizeof(old)) < 0)
+			if (setsockopt(sd, proto, portrange, &old,
+			    sizeof(old)) < 0)
 				errno = saved_errno;
 			return (error);
 		}
 
-		if (sin != &myaddr) {
+		if (sa != (struct sockaddr *)&myaddr) {
 			/* Hmm, what did the kernel assign... */
-			if (getsockname(sd, (struct sockaddr *)sin,
-			    &sinlen) < 0)
+			if (getsockname(sd, sa, &salen) < 0)
 				errno = saved_errno;
 			return (error);
 		}
