@@ -1,7 +1,7 @@
-/*	$OpenBSD: extract.c,v 1.8 1999/07/26 14:40:07 aaron Exp $	*/
+/*	$OpenBSD: extract.c,v 1.9 2000/03/24 00:20:04 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: extract.c,v 1.8 1999/07/26 14:40:07 aaron Exp $";
+static const char *rcsid = "$OpenBSD: extract.c,v 1.9 2000/03/24 00:20:04 espie Exp $";
 #endif
 
 /*
@@ -205,11 +205,14 @@ extract_plist(char *home, package_t *pkg)
 	    break;
 
 	case PLIST_CMD:
-	    if (last_file == NULL) {
+	    if (!format_cmd(cmd, sizeof(cmd), p->name, Directory, last_file)) {
 		cleanup(0);
-		errx(2, "no last file specified for '%s' command", p->name);
+		if (last_file == NULL)
+		    errx(2, "no last file specified for '%s' command", p->name);
+		else 
+		    errx(2, "'%s' command could not expand", p->name);
 	    }
-	    format_cmd(cmd, sizeof(cmd), p->name, Directory, last_file);
+	    
 	    PUSHOUT(Directory);
 	    if (Verbose)
 		printf("extract: execute '%s'\n", cmd);

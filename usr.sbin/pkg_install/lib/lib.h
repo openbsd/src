@@ -1,4 +1,4 @@
-/* $OpenBSD: lib.h,v 1.5 1999/10/09 20:35:46 beck Exp $ */
+/* $OpenBSD: lib.h,v 1.6 2000/03/24 00:20:04 espie Exp $ */
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -181,7 +181,8 @@ void		move_file(char *, char *, char *);
 void		copy_hierarchy(char *, char *, Boolean);
 int		delete_hierarchy(char *, Boolean, Boolean);
 int		unpack(char *, char *);
-void		format_cmd(char *, size_t , char *, char *, char *);
+int		format_cmd(char *, size_t , const char *, const char *,
+    const char *);
 
 /* Packing list */
 plist_t		*new_plist_entry(void);

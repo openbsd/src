@@ -1,6 +1,6 @@
-/*	$OpenBSD: plist.c,v 1.5 1998/10/13 23:09:54 marc Exp $	*/
+/*	$OpenBSD: plist.c,v 1.6 2000/03/24 00:20:04 espie Exp $	*/
 #ifndef lint
-static const char *rcsid = "$OpenBSD: plist.c,v 1.5 1998/10/13 23:09:54 marc Exp $";
+static const char *rcsid = "$OpenBSD: plist.c,v 1.6 2000/03/24 00:20:04 espie Exp $";
 #endif
 
 /*
@@ -315,12 +315,16 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 	    break;
 
 	case PLIST_UNEXEC:
-	    format_cmd(tmp, sizeof(tmp), p->name, Where, last_file);
-	    if (Verbose)
-		printf("Execute `%s'\n", tmp);
-	    if (!Fake && system(tmp)) {
-		warnx("unexec command for `%s' failed", tmp);
+	    if (!format_cmd(tmp, sizeof(tmp), p->name, Where, last_file)) {
+	    	warnx("unexec command `%s' could not expand", p->name);
 		fail = FAIL;
+	    } else {
+		if (Verbose)
+		    printf("Execute `%s'\n", tmp);
+		if (!Fake && system(tmp)) {
+		    warnx("unexec command for `%s' failed", tmp);
+		    fail = FAIL;
+		}
 	    }
 	    break;
 

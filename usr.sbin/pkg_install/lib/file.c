@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.9 1999/10/09 20:35:46 beck Exp $	*/
+/*	$OpenBSD: file.c,v 1.10 2000/03/24 00:20:04 espie Exp $	*/
 
 #ifndef lint
-static const char *rcsid = "$OpenBSD: file.c,v 1.9 1999/10/09 20:35:46 beck Exp $";
+static const char *rcsid = "$OpenBSD: file.c,v 1.10 2000/03/24 00:20:04 espie Exp $";
 #endif
 
 /*
@@ -624,56 +624,88 @@ unpack(char *pkg, char *flist)
  * %B	Return the directory part ("base") of %D/%F
  * %f	Return the filename part of %D/%F
  * 
- * Check that no overflows can occur.
  */
-void
-format_cmd(char *buf, size_t size, char *fmt, char *dir, char *name)
+int
+format_cmd(char *buf, size_t size, const char *fmt, 
+	const char *dir, const char *name)
 {
-	char	scratch[FILENAME_MAX * 2];
-	char   *bufp;
-	char   *cp;
+	char *pos;
+	size_t len;
 
-	for (bufp = buf ; (int)(bufp - buf) < size && *fmt ; ) {
+	while (*fmt != 0 && size != 0) {
 		if (*fmt == '%') {
-			switch (*++fmt) {
-			case 'F':
-				strnncpy(bufp, size - (int)(bufp - buf), name, strlen(name));
-				bufp += strlen(bufp);
-				break;
-
-			case 'D':
-				strnncpy(bufp, size - (int)(bufp - buf), dir, strlen(dir));
-				bufp += strlen(bufp);
-				break;
-
-			case 'B':
-				(void) snprintf(scratch, sizeof(scratch), "%s/%s", dir, name);
-				if ((cp = strrchr(scratch, '/')) == (char *) NULL) {
-					cp = scratch;
-				}
-				strnncpy(bufp, size - (int)(bufp - buf), scratch, (size_t)(cp - scratch));
-				bufp += strlen(bufp);
-				break;
-
+			switch(fmt[1]) {
 			case 'f':
-				(void) snprintf(scratch, sizeof(scratch), "%s/%s", dir, name);
-				if ((cp = strrchr(scratch, '/')) == (char *) NULL) {
-					cp = scratch;
-				} else {
-					cp++;
+				if (name == NULL)
+					return 0;
+				pos = strrchr(name, '/');
+				if (pos != NULL) {
+					len = strlen(name) - (pos-name);
+					if (len >= size)
+						return 0;
+					memcpy(buf, pos, len);
+					buf += len;
+					size -= len;
+					fmt += 2;
+					continue;
 				}
-				strnncpy(bufp, size - (int)(bufp - buf), cp, strlen(cp));
-				bufp += strlen(bufp);
-				break;
-
+				/* FALLTHRU */
+			case 'F':
+				if (name == NULL)
+					return 0;
+				len = strlen(name);
+				if (len >= size)
+					return 0;
+				memcpy(buf, name, len);
+				buf += len;
+				size -= len;
+				fmt += 2;
+				continue;
+			case 'D':
+				if (dir == NULL)
+					return 0;
+				len = strlen(dir);
+				if (len >= size)
+					return 0;
+				memcpy(buf, dir, len);
+				buf += len;
+				size -= len;
+				fmt += 2;
+				continue;
+			case 'B':
+				if (dir == NULL || name == NULL)
+					return 0;
+				len = strlen(dir);
+				if (len >= size)
+					return 0;
+				memcpy(buf, dir, len);
+				buf += len;
+				size -= len;
+				if ((pos = strrchr(name, '/')) != NULL) {
+					*buf++ = '/';
+					size--;
+					if (pos - name >= size)
+						return 0;
+					memcpy(buf, name, pos-name);
+					buf += pos-name;
+					size -= pos-name;
+				}
+				fmt += 2;
+				continue;
+			case '%':
+				fmt++;	
 			default:
-				*bufp++ = *fmt;
 				break;
+			    
 			}
-			++fmt;
-		} else {
-			*bufp++ = *fmt++;
 		}
+		*buf++ = *fmt++;
+		size--;
 	}
-	*bufp = '\0';
+	if (size == 0)
+		return 0;
+	else 
+	    *buf = '\0';
+	return 1;
 }
+			
