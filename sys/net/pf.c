@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.111 2001/07/13 23:44:08 fgsch Exp $ */
+/*	$OpenBSD: pf.c,v 1.112 2001/07/14 10:36:53 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -78,7 +78,7 @@ struct pf_tree_node {
 	struct pf_tree_node	*parent;
 	struct pf_tree_node	*left;
 	struct pf_tree_node	*right;
-	signed char		 balance;
+	int			 balance;
 };
 
 struct pf_frent {
