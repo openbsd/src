@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.147 2001/01/30 00:00:31 aaron Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.148 2001/02/04 17:28:17 aaron Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2414,7 +2414,8 @@ consinit()
 dokbd:
 #if (NPCKBC > 0)
 	pckbc_cnattach(I386_BUS_SPACE_IO, IO_KBD, KBCMDP, PCKBC_KBD_SLOT);
-#endif	/* PC | VT | VGA | PCDISPLAY */
+#endif
+#endif	/* PC | VGA | EGA | PCDISPLAY */
 }
 
 #if (NPCKBC > 0) && (NPCKBD == 0)
@@ -2433,7 +2434,6 @@ pckbc_machdep_cnattach(kbctag, kbcslot)
 	return (ENXIO);
 #endif
 }
-#endif
 #endif
 
 #ifdef KGDB
