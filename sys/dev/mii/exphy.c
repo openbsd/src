@@ -1,4 +1,4 @@
-/*	$OpenBSD: exphy.c,v 1.6 1999/12/07 22:01:28 jason Exp $	*/
+/*	$OpenBSD: exphy.c,v 1.7 2000/02/16 05:06:01 jason Exp $	*/
 /*	$NetBSD: exphy.c,v 1.15.6.1 1999/04/23 15:39:33 perry Exp $	*/
 
 /*-
@@ -110,8 +110,10 @@ exphymatch(parent, match, aux)
 	/*
 	 * Argh, 3Com PHY reports oui == 0 model == 0!
 	 */
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) != 0 &&
-	    MII_MODEL(ma->mii_id2) != 0)
+	if ((MII_OUI(ma->mii_id1, ma->mii_id2) != 0 ||
+	     MII_MODEL(ma->mii_id2) != 0) &&
+	    (MII_OUI(ma->mii_id1, ma->mii_id2) != MII_OUI_BROADCOM ||
+	     MII_MODEL(ma->mii_id2) != MII_MODEL_BROADCOM_3C905C))
 		return (0);
 
 	/*
@@ -132,7 +134,15 @@ exphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": 3Com internal media interface\n");
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == 0 &&
+	    MII_MODEL(ma->mii_id2) == 0)
+		printf(": 3Com internal media interface\n");
+	else if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_3C905C)
+		printf(": %s, rev. %d\n", MII_STR_BROADCOM_3C905C,
+		    MII_REV(ma->mii_id2));
+	else
+		printf(": unknown phy\n");
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
