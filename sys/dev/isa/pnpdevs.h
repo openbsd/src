@@ -60,6 +60,8 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "GWY0038", "pccom" },
 	{ "USR0006", "com" },
 	{ "USR0006", "pccom" },
+	{ "SUP1380", "com" },
+	{ "SUP1380", "pccom" },
 	{ "ADS7150", "sb" },
 	{ "ADS7180", "sb" },
 	{ "CTL0001", "sb" },

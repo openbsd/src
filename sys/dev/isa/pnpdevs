@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.22 1998/10/13 06:52:34 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.23 1998/10/21 00:56:58 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -363,6 +363,8 @@ com	GWY0038 #Telepath with v.90
 pccom	GWY0038	#Telepath with v.90
 com	USR0006 #USR modem
 pccom	USR0006 #USR modem
+com	SUP1380 #SupraExpress 288i PnP Voice Modem
+pccom	SUP1380 #SupraExpress 288i PnP Voice Modem
 
 # Ethernet:
 #le	BRI1001	#BOCALANcard COMBO	(PNP8200)
