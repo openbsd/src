@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.56 2003/04/13 20:41:37 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.57 2003/04/14 14:50:46 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -142,6 +142,10 @@ int	eval_pfaltq(struct pfctl *, struct pf_altq *, struct node_queue_bw *,
 	    struct node_queue_opt *);
 int	eval_pfqueue(struct pfctl *, struct pf_altq *, struct node_queue_bw *,
 	    struct node_queue_opt *);
+
+void	 print_altq(const struct pf_altq *, unsigned, struct node_queue_bw *);
+void	 print_queue(const struct pf_altq *, unsigned, struct node_queue_bw *,
+	     int);
 
 void	pfctl_begin_table(void);
 void	pfctl_append_addr(char *, int, int);

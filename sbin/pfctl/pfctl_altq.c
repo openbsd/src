@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.64 2003/04/13 23:22:05 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.65 2003/04/14 14:50:46 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -161,10 +161,10 @@ qname_to_qid(const char *qname)
 }
 
 void
-print_altq(const struct pf_altq *a, unsigned level, u_int16_t bwpercent)
+print_altq(const struct pf_altq *a, unsigned level, struct node_queue_bw *bw)
 {
 	if (a->qname[0] != NULL) {
-		print_queue(a, level, bwpercent, 0);
+		print_queue(a, level, bw, 0);
 		return;
 	}
 
@@ -185,18 +185,19 @@ print_altq(const struct pf_altq *a, unsigned level, u_int16_t bwpercent)
 		break;
 	}
 
-	if (bwpercent > 0) {
-		if (bwpercent < 100)
-			printf("bandwidth %u%% ", bwpercent);
+	if (bw != NULL && bw->bw_percent > 0) {
+		if (bw->bw_percent < 100)
+			printf("bandwidth %u%% ", bw->bw_percent);
 	} else
 		printf("bandwidth %s ", rate2str((double)a->ifbandwidth));
+
 	if (a->qlimit != DEFAULT_QLIMIT)
 		printf("qlimit %u ", a->qlimit);
 	printf("tbrsize %u ", a->tbrsize);
 }
 
 void
-print_queue(const struct pf_altq *a, unsigned level, u_int16_t bwpercent,
+print_queue(const struct pf_altq *a, unsigned level, struct node_queue_bw *bw,
     int print_interface)
 {
 	unsigned	i;
@@ -208,9 +209,9 @@ print_queue(const struct pf_altq *a, unsigned level, u_int16_t bwpercent,
 	if (print_interface)
 		printf("on %s ", a->ifname);
 	if (a->scheduler == ALTQT_CBQ || a->scheduler == ALTQT_HFSC) {
-		if (bwpercent > 0) {
-			if (bwpercent < 100)
-				printf("bandwidth %u%% ", bwpercent);
+		if (bw != NULL && bw->bw_percent > 0) {
+			if (bw->bw_percent < 100)
+				printf("bandwidth %u%% ", bw->bw_percent);
 		} else
 			printf("bandwidth %s ", rate2str((double)a->bandwidth));
 	}
