@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.178 2002/10/30 11:55:19 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.179 2002/11/02 14:13:42 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1957,7 +1957,7 @@ expand_label_addr(const char *name, char *label, sa_family_t af,
 			a[0] = 0;
 			if ((af == AF_INET && bits < 32) ||
 			    (af == AF_INET6 && bits < 128))
-				snprintf(a, sizeof(a), "/%u", bits);
+				snprintf(a, sizeof(a), "/%i", bits);
 			strlcat(tmp, a, PF_RULE_LABEL_SIZE);
 		}
 		strlcat(tmp, p+strlen(name), PF_RULE_LABEL_SIZE);
