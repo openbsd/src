@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.22 1998/01/02 08:34:31 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.23 1998/01/03 08:15:12 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -843,10 +843,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82378IB PCI-ISA Bridge (System I/O)",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCIB,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82426EX,
 	    0,
 	    "Intel",
-	    "82426EX PCI-ISA Bridge",
+	    "82426EX PCI-to-ISA Bridge (PCIB)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCMC,
@@ -927,10 +927,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82440FX (Natoma) PCI and Memory Controller",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82380AB,
 	    0,
 	    "Intel",
-	    "82439 (Triton II) TXC Host Bridge",
+	    "82380AB Mobile PCI-to-ISA Bridge (MISA)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82380FB,
+	    0,
+	    "Intel",
+	    "82380FB Mobile PCI-to-PCI Bridge (MPCI2)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439HX,
+	    0,
+	    "Intel",
+	    "82439HX (Triton II) TXC Host Bridge",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB,
@@ -957,10 +969,40 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82430VX (Triton VX) Host Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439TX,
+	    0,
+	    "Intel",
+	    "82439TX System Controller (MTXC)",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB,
 	    0,
 	    "Intel",
 	    "82371AB PIIX4 ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_IDE,
+	    0,
+	    "Intel",
+	    "82371AB IDE controller (PIIX4)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_USB,
+	    0,
+	    "Intel",
+	    "82371AB USB Host Controller (PIIX4)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_PMC,
+	    0,
+	    "Intel",
+	    "82371AB Power Management Controller (PIIX4)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX,
+	    0,
+	    "Intel",
+	    "82443LX PCI AGP Controller (PAC)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_PB,

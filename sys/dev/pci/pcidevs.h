@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.22 1998/01/02 08:34:31 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.23 1998/01/03 08:15:12 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -728,7 +728,7 @@
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB PCI-EISA Bridge */
 #define	PCI_PRODUCT_INTEL_CDC	0x0483		/* 82424ZX (Saturn) Cache and DRAM controller */
 #define	PCI_PRODUCT_INTEL_SIO	0x0484		/* 82378IB PCI-ISA Bridge (System I/O) */
-#define	PCI_PRODUCT_INTEL_PCIB	0x0486		/* 82426EX PCI-ISA Bridge */
+#define	PCI_PRODUCT_INTEL_82426EX	0x0486		/* 82426EX PCI-to-ISA Bridge (PCIB) */
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX (Mercury/Neptune) PCI, Cache, and DRAM Controller */
 #define	PCI_PRODUCT_INTEL_82092AA	0x1222		/* 82092AA IDE controller */
 #define	PCI_PRODUCT_INTEL_SAA7116	0x1223		/* SAA7116 */
@@ -742,12 +742,19 @@
 #define	PCI_PRODUCT_INTEL_82371MX	0x1234		/* 82371 (Triton MX) PCI-ISA Bridge and IDE Controller */
 #define	PCI_PRODUCT_INTEL_82437MX	0x1235		/* 82437 (Triton MX) PCI, Cache, and DRAM Controller */
 #define	PCI_PRODUCT_INTEL_82440FX	0x1237		/* 82440FX (Natoma) PCI and Memory Controller */
-#define	PCI_PRODUCT_INTEL_82439	0x1250		/* 82439 (Triton II) TXC Host Bridge */
+#define	PCI_PRODUCT_INTEL_82380AB	0x123c		/* 82380AB Mobile PCI-to-ISA Bridge (MISA) */
+#define	PCI_PRODUCT_INTEL_82380FB	0x124b		/* 82380FB Mobile PCI-to-PCI Bridge (MPCI2) */
+#define	PCI_PRODUCT_INTEL_82439HX	0x1250		/* 82439HX (Triton II) TXC Host Bridge */
 #define	PCI_PRODUCT_INTEL_82371SB	0x7000		/* 82371SB (Triton II) PCI-ISA Bridge */
 #define	PCI_PRODUCT_INTEL_82371IDE	0x7010		/* 82371SB (Triton II) IDE controller */
 #define	PCI_PRODUCT_INTEL_82371USB	0x7020		/* 82371SB (Triton II) USB Interface */
 #define	PCI_PRODUCT_INTEL_82430VX	0x7030		/* 82430VX (Triton VX) Host Bridge */
+#define	PCI_PRODUCT_INTEL_82439TX	0x7100		/* 82439TX System Controller (MTXC) */
 #define	PCI_PRODUCT_INTEL_82371AB	0x7110		/* 82371AB PIIX4 ISA Bridge */
+#define	PCI_PRODUCT_INTEL_82371AB_IDE	0x7111		/* 82371AB IDE controller (PIIX4) */
+#define	PCI_PRODUCT_INTEL_82371AB_USB	0x7112		/* 82371AB USB Host Controller (PIIX4) */
+#define	PCI_PRODUCT_INTEL_82371AB_PMC	0x7113		/* 82371AB Power Management Controller (PIIX4) */
+#define	PCI_PRODUCT_INTEL_82443LX	0x7180		/* 82443LX PCI AGP Controller (PAC) */
 #define	PCI_PRODUCT_INTEL_PCI450_PB	0x84c4		/* 450 PCIset (Orion) Host-PCI bridge */
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 450 PCIset (Orion) Memory Controller */
 
