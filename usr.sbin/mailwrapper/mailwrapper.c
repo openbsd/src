@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailwrapper.c,v 1.3 1999/08/02 20:42:24 jakob Exp $	*/
+/*	$OpenBSD: mailwrapper.c,v 1.4 1999/08/02 21:13:22 jakob Exp $	*/
 /*	$NetBSD: mailwrapper.c,v 1.2 1999/02/20 22:10:07 thorpej Exp $	*/
 
 /*
@@ -36,10 +36,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <syslog.h>
 #include <unistd.h>
 #include <util.h>
 
 #define _PATH_MAILERCONF	"/etc/mailer.conf"
+#define _PATH_DEFAULTMTA	"/usr/libexec/sendmail/sendmail"
 
 struct arglist {
 	size_t argc, maxc;
@@ -119,8 +121,17 @@ main(argc, argv, envp)
 	for (len = 0; len < argc; len++)
 		addarg(&al, argv[len], 0);
 
-	if ((config = fopen(_PATH_MAILERCONF, "r")) == NULL)
-		err(1, "mailwrapper: can't open %s", _PATH_MAILERCONF);
+	if ((config = fopen(_PATH_MAILERCONF, "r")) == NULL) {
+		openlog("mailwrapper", LOG_PID, LOG_MAIL);
+		syslog(LOG_INFO, "can't open %s, using %s as default MTA",
+		    _PATH_MAILERCONF, _PATH_DEFAULTMTA);
+		closelog();
+		execve(_PATH_DEFAULTMTA, al.argv, envp);
+		freearg(&al, 0);
+		free(line);
+		err(1, "mailwrapper: execing %s", to);
+		/*NOTREACHED*/
+	}
 
 	for (;;) {
 		if ((line = fparseln(config, &len, &lineno, NULL, 0)) == NULL) {
