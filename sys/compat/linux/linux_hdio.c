@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_hdio.c,v 1.3 2002/02/08 00:03:46 art Exp $	*/
+/*	$OpenBSD: linux_hdio.c,v 1.4 2002/02/13 19:08:06 art Exp $	*/
 /*	$NetBSD: linux_hdio.c,v 1.1 2000/12/10 14:12:17 fvdl Exp $	*/
 
 /*
@@ -80,6 +80,7 @@ linux_ioctl_hdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
+	FREF(fp);
 	com = SCARG(uap, com);
 	ioctlf = fp->f_ops->fo_ioctl;
 	retval[0] = error = 0;
@@ -104,8 +105,10 @@ linux_ioctl_hdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 		error = ioctlf(fp, ATAIOCCOMMAND, (caddr_t)&req, p);
 		if (error != 0)
 			break;
-		if (req.retsts != ATACMD_OK)
-			return EIO;
+		if (req.retsts != ATACMD_OK) {
+			error = EIO;
+			break;
+		}
 		error = copyin(atap, &ata, sizeof ata);
 		if (error != 0)
 			break;
@@ -175,5 +178,6 @@ linux_ioctl_hdio(struct proc *p, struct linux_sys_ioctl_args *uap,
 		error = EINVAL;
 	}
 
+	FRELE(fp);
 	return error;
 }

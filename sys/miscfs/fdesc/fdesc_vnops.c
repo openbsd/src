@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.29 2002/02/12 18:41:21 art Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.30 2002/02/13 19:08:06 art Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -483,7 +483,9 @@ fdesc_getattr(v)
 		if ((fp = fd_getfile(fdp, fd)) == NULL)
 			return (EBADF);
 		memset(&stb, 0, sizeof(stb));
+		FREF(fp);
 		error = (*fp->f_ops->fo_stat)(fp, &stb, ap->a_p);
+		FRELE(fp);
 		if (error != 0)
 			break;
 		vattr_null(vap);

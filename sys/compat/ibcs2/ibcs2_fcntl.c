@@ -1,4 +1,4 @@
-/*	$OpenBSD: ibcs2_fcntl.c,v 1.7 2002/02/02 16:05:58 art Exp $	*/
+/*	$OpenBSD: ibcs2_fcntl.c,v 1.8 2002/02/13 19:08:06 art Exp $	*/
 /*	$NetBSD: ibcs2_fcntl.c,v 1.6 1996/05/03 17:05:20 christos Exp $	*/
 
 /*
@@ -189,8 +189,10 @@ ibcs2_sys_open(p, v, retval)
 
 		if ((fp = fd_getfile(fdp, *retval)) == NULL)
 			return EBADF;
+		FREF(fp);
 		if (fp->f_type == DTYPE_VNODE)
 			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t) 0, p);
+		FRELE(fp);
 	}
 	return ret;
 }

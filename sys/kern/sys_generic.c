@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.36 2002/02/08 19:58:03 art Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.37 2002/02/13 19:08:06 art Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -504,16 +504,16 @@ sys_ioctl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_ioctl_args /* {
+	struct sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
-	register struct file *fp;
-	register struct filedesc *fdp;
-	register u_long com;
-	register int error;
-	register u_int size;
+	struct file *fp;
+	struct filedesc *fdp;
+	u_long com;
+	int error;
+	u_int size;
 	caddr_t data, memp;
 	int tmp;
 #define STK_PARAMS	128
@@ -542,6 +542,7 @@ sys_ioctl(p, v, retval)
 	size = IOCPARM_LEN(com);
 	if (size > IOCPARM_MAX)
 		return (ENOTTY);
+	FREF(fp);
 	memp = NULL;
 	if (size > sizeof (stkbuf)) {
 		memp = (caddr_t)malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
@@ -552,9 +553,7 @@ sys_ioctl(p, v, retval)
 		if (size) {
 			error = copyin(SCARG(uap, data), data, (u_int)size);
 			if (error) {
-				if (memp)
-					free(memp, M_IOCTLOPS);
-				return (error);
+				goto out;
 			}
 		} else
 			*(caddr_t *)data = SCARG(uap, data);
@@ -630,6 +629,8 @@ sys_ioctl(p, v, retval)
 			error = copyout(data, SCARG(uap, data), (u_int)size);
 		break;
 	}
+out:
+	FRELE(fp);
 	if (memp)
 		free(memp, M_IOCTLOPS);
 	return (error);
@@ -789,10 +790,12 @@ selscan(p, ibits, obits, nfd, retval)
 				bits &= ~(1 << j);
 				if ((fp = fd_getfile(fdp, fd)) == NULL)
 					return (EBADF);
+				FREF(fp);
 				if ((*fp->f_ops->fo_select)(fp, flag[msk], p)) {
 					FD_SET(fd, pobits);
 					n++;
 				}
+				FRELE(fp);
 			}
 		}
 	}
@@ -892,6 +895,7 @@ pollscan(p, pl, nfd, retval)
 			n++;
 			continue;
 		}
+		FREF(fp);
 		for (x = msk = 0; msk < 3; msk++) {
 			if (pl[i].events & pflag[msk]) {
 				if ((*fp->f_ops->fo_select)(fp, flag[msk], p)) {
@@ -901,6 +905,7 @@ pollscan(p, pl, nfd, retval)
 				}
 			}
 		}
+		FRELE(fp);
 		if (x)
 			n++;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_pathname.c,v 1.6 2002/02/12 18:41:21 art Exp $	*/
+/*	$OpenBSD: ultrix_pathname.c,v 1.7 2002/02/13 19:08:06 art Exp $	*/
 /*	$NetBSD: ultrix_pathname.c,v 1.2 1996/04/07 17:23:07 jonathan Exp $	*/
 
 /*
@@ -189,9 +189,11 @@ ultrix_sys_open(p, v, retval)
 
 		if ((fd = fd_getfile(fdp, *retval)) == NULL)
 			return (EBADF);
+		FREF(fp);
 		/* ignore any error, just give it a try */
 		if (fp->f_type == DTYPE_VNODE)
 			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t)0, p);
+		FRELE(fp);
 	}
 	return ret;
 }

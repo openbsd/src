@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.17 2002/02/12 18:41:20 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.18 2002/02/13 19:08:06 art Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -185,20 +185,22 @@ compat_43_sys_fstat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct compat_43_sys_fstat_args /* {
+	struct compat_43_sys_fstat_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct ostat *) sb;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
 	struct stat ub;
 	struct ostat oub;
 	int error;
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
+	FREF(fp);
 	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
+	FRELE(fp);
 	cvtstat(&ub, &oub);
 	if (error == 0)
 		error = copyout((caddr_t)&oub, (caddr_t)SCARG(uap, sb),

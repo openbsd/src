@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file.c,v 1.19 2002/02/02 16:05:58 art Exp $	*/
+/*	$OpenBSD: linux_file.c,v 1.20 2002/02/13 19:08:06 art Exp $	*/
 /*	$NetBSD: linux_file.c,v 1.15 1996/05/20 01:59:09 fvdl Exp $	*/
 
 /*
@@ -196,8 +196,10 @@ linux_sys_open(p, v, retval)
 
 		if ((fp = fd_getfile(fdp, *retval)) == NULL)
 			return (EBADF);
+		FREF(fp);
                 if (fp->f_type == DTYPE_VNODE)
                         (fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, (caddr_t) 0, p);
+		FRELE(fp);
         }
 	return 0;
 }
@@ -400,7 +402,10 @@ linux_sys_fcntl(p, v, retval)
 		vp = (struct vnode *)fp->f_data;
 		if (vp->v_type != VCHR)
 			return EINVAL;
-		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
+		FREF(fp);
+		error = VOP_GETATTR(vp, &va, p->p_ucred, p);
+		FRELE(fp);
+		if (error)
 			return error;
 		d_tty = cdevsw[major(va.va_rdev)].d_tty;
 		if (!d_tty || (!(tp = (*d_tty)(va.va_rdev))))

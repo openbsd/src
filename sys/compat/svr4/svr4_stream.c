@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stream.c,v 1.14 2001/10/26 12:03:27 art Exp $	 */
+/*	$OpenBSD: svr4_stream.c,v 1.15 2002/02/13 19:08:06 art Exp $	 */
 /*	$NetBSD: svr4_stream.c,v 1.19 1996/12/22 23:00:03 fvdl Exp $	 */
 
 /*
@@ -1421,9 +1421,6 @@ svr4_sys_putmsg(p, v, retval)
 	int error;
 	caddr_t sg;
 
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
-		return EBADF;
-
 #ifdef DEBUG_SVR4
 	show_msg(">putmsg", SCARG(uap, fd), SCARG(uap, ctl),
 		 SCARG(uap, dat), SCARG(uap, flags));
@@ -1569,9 +1566,6 @@ svr4_sys_getmsg(p, v, retval)
 	int *flen;
 	int fl;
 	caddr_t sg;
-
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
-		return EBADF;
 
 	bzero(&sc, sizeof(sc));
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_blkio.c,v 1.3 2002/02/08 00:03:46 art Exp $	*/
+/*	$OpenBSD: linux_blkio.c,v 1.4 2002/02/13 19:08:06 art Exp $	*/
 /*	$NetBSD: linux_blkio.c,v 1.3 2001/01/18 17:48:04 tv Exp $	*/
 
 /*
@@ -71,6 +71,7 @@ linux_ioctl_blkio(struct proc *p, struct linux_sys_ioctl_args *uap,
         fdp = p->p_fd;
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
+	FREF(fp);
 	error = 0;
 	ioctlf = fp->f_ops->fo_ioctl;
 	com = SCARG(uap, com);
@@ -115,5 +116,6 @@ linux_ioctl_blkio(struct proc *p, struct linux_sys_ioctl_args *uap,
 		error = ENOTTY;
 	}
 
+	FRELE(fp);
 	return error;
 }

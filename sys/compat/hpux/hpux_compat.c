@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.15 2001/11/05 19:47:03 art Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.16 2002/02/13 19:08:06 art Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
@@ -839,6 +839,7 @@ hpux_sys_ioctl(p, v, retval)
 	size = IOCPARM_LEN(com);
 	if (size > IOCPARM_MAX)
 		return (ENOTTY);
+	FREF(fp);
 	if (size > sizeof (stkbuf)) {
 		memp = (caddr_t)malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
 		dt = memp;
@@ -847,9 +848,7 @@ hpux_sys_ioctl(p, v, retval)
 		if (size) {
 			error = copyin(SCARG(uap, data), dt, (u_int)size);
 			if (error) {
-				if (memp)
-					free(memp, M_IOCTLOPS);
-				return (error);
+				goto out;
 			}
 		} else
 			*(caddr_t *)dt = SCARG(uap, data);
@@ -937,6 +936,9 @@ hpux_sys_ioctl(p, v, retval)
 	 */
 	if (error == 0 && (com&IOC_OUT) && size)
 		error = copyout(dt, SCARG(uap, data), (u_int)size);
+
+out:
+	FRELE(fp);
 	if (memp)
 		free(memp, M_IOCTLOPS);
 	return (error);

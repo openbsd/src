@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_tty.c,v 1.6 2002/02/02 16:05:58 art Exp $	*/
+/*	$OpenBSD: hpux_tty.c,v 1.7 2002/02/13 19:08:06 art Exp $	*/
 /*	$NetBSD: hpux_tty.c,v 1.14 1997/04/01 19:59:05 scottr Exp $	*/
 
 /*
@@ -85,6 +85,7 @@ hpux_termio(fd, com, data, p)
 
 	if ((fp = fd_getfile(p->p_fd, fd)) == NULL)
 		return (EBADF);
+	FREF(fp);
 	ioctlrout = fp->f_ops->fo_ioctl;
 	switch (com) {
 	case HPUXTCGETATTR:
@@ -377,6 +378,7 @@ hpux_termio(fd, com, data, p)
 		error = EINVAL;
 		break;
 	}
+	FRELE(fp);
 	return(error);
 }
 
@@ -522,9 +524,10 @@ getsettty(p, fdes, com, cmarg)
 		return (EBADF);
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0)
 		return (EBADF);
+	FREF(fp);
 	if (com == HPUXTIOCSETP) {
 		if ((error = copyin(cmarg, (caddr_t)&hsb, sizeof hsb)))
-			return (error);
+			goto bad;
 		sb.sg_ispeed = hsb.sg_ispeed;
 		sb.sg_ospeed = hsb.sg_ospeed;
 		sb.sg_erase = hsb.sg_erase;
@@ -551,5 +554,7 @@ getsettty(p, fdes, com, cmarg)
 			hsb.sg_flags |= V7_XTABS;
 		error = copyout((caddr_t)&hsb, cmarg, sizeof hsb);
 	}
+bad:
+	FRELE(fp);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.52 2002/02/09 00:27:49 art Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.53 2002/02/13 19:08:06 art Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -577,7 +577,7 @@ sys_close(p, v, retval)
 		syscallarg(int) fd;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct filedesc *fdp = p->p_fd;
+	struct filedesc *fdp = p->p_fd;
 
 	if (fd_getfile(fdp, fd) == NULL)
 		return (EBADF);
@@ -606,7 +606,9 @@ sys_fstat(p, v, retval)
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
+	FREF(fp);
 	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
+	FRELE(fp);
 	if (error == 0) {
 		/* Don't let non-root see generation numbers
 		   (for NFS security) */
@@ -628,7 +630,7 @@ sys_fpathconf(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_fpathconf_args /* {
+	struct sys_fpathconf_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) name;
 	} */ *uap = v;
@@ -636,25 +638,34 @@ sys_fpathconf(p, v, retval)
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct vnode *vp;
+	int error;
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
+	FREF(fp);
 	switch (fp->f_type) {
 	case DTYPE_PIPE:
 	case DTYPE_SOCKET:
-		if (SCARG(uap, name) != _PC_PIPE_BUF)
-			return (EINVAL);
+		if (SCARG(uap, name) != _PC_PIPE_BUF) {
+			error = EINVAL;
+			break;
+		}
 		*retval = PIPE_BUF;
+		error = 0;
+		break;
 		return (0);
 
 	case DTYPE_VNODE:
 		vp = (struct vnode *)fp->f_data;
-		return (VOP_PATHCONF(vp, SCARG(uap, name), retval));
+		error = VOP_PATHCONF(vp, SCARG(uap, name), retval);
+		break;
 
 	default:
-		return (EOPNOTSUPP);
+		error = EOPNOTSUPP;
+		break;
 	}
-	/*NOTREACHED*/
+	FRELE(fp);
+	return (error);
 }
 
 /*
@@ -1111,16 +1122,17 @@ sys_flock(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_flock_args /* {
+	struct sys_flock_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) how;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
 	int how = SCARG(uap, how);
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
 	struct vnode *vp;
 	struct flock lf;
+	int error;
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
@@ -1133,18 +1145,24 @@ sys_flock(p, v, retval)
 	if (how & LOCK_UN) {
 		lf.l_type = F_UNLCK;
 		fp->f_flag &= ~FHASLOCK;
-		return (VOP_ADVLOCK(vp, (caddr_t)fp, F_UNLCK, &lf, F_FLOCK));
+		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_UNLCK, &lf, F_FLOCK);
+		goto out;
 	}
 	if (how & LOCK_EX)
 		lf.l_type = F_WRLCK;
 	else if (how & LOCK_SH)
 		lf.l_type = F_RDLCK;
-	else
-		return (EINVAL);
+	else {
+		error = EINVAL;
+		goto out;
+	}
 	fp->f_flag |= FHASLOCK;
 	if (how & LOCK_NB)
-		return (VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, F_FLOCK));
-	return (VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, F_FLOCK|F_WAIT));
+		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, F_FLOCK);
+	else
+		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, F_FLOCK|F_WAIT);
+out:
+	return (error);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.33 2002/02/12 18:41:21 art Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.34 2002/02/13 19:08:06 art Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -704,9 +704,11 @@ sunos_sys_open(p, v, retval)
 
 		if ((fp = fd_getfile(fdp, *retval)) == NULL)
 			return (EBADF);
+		FREF(fp);
 		/* ignore any error, just give it a try */
 		if (fp->f_type == DTYPE_VNODE)
 			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t)0, p);
+		FRELE(fp);
 	}
 	return ret;
 }
