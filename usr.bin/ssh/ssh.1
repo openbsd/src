@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.5 1999/09/30 08:52:34 deraadt Exp $
+.\" $Id: ssh.1,v 1.6 1999/09/30 16:49:00 deraadt Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
@@ -25,7 +25,7 @@
 .Pp
 .Nm ssh
 .Op Fl agknqtvxXC
-.Op Fl c Ar blowfish|3des|none
+.Op Fl c Ar blowfish|3des
 .Op Fl e Ar escape_char
 .Op Fl i Ar identity_file
 .Op Fl l Ar login_name
@@ -253,7 +253,7 @@ host key is not known or has changed.
 .It Fl a
 Disables forwarding of the authentication agent connection. This may
 also be specified on a per-host basis in the configuration file.
-.It Fl c Ar blowfish|3des|none
+.It Fl c Ar blowfish|3des
 Selects the cipher to use for encrypting the session. 
 .Ar 3des
 is used by default.  It is believed to be secure. 
@@ -265,9 +265,6 @@ cipher which is no longer supported in ssh.
 .Ar blowfish
 is a fast block cipher, it appears very secure and is much faster than
 .Ar 3des .  
-.Ar none
-disables encryption entirely; it is only intended for debugging, and
-it renders the connection insecure.
 .It Fl e Ar ch|^ch|none
 Sets the escape character for sessions with a pty (default:
 .Ql ~ ) .
