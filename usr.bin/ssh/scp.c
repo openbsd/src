@@ -42,11 +42,11 @@ and ssh has the necessary privileges.)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.9 1999/10/03 20:43:12 deraadt Exp $
+ *	$Id: scp.c,v 1.10 1999/10/04 01:59:56 deraadt Exp $
  */
 
 #include "includes.h"
-RCSID("$Id: scp.c,v 1.9 1999/10/03 20:43:12 deraadt Exp $");
+RCSID("$Id: scp.c,v 1.10 1999/10/04 01:59:56 deraadt Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -961,7 +961,7 @@ run_err(const char *fmt, ...)
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: scp.c,v 1.9 1999/10/03 20:43:12 deraadt Exp $
+ *	$Id: scp.c,v 1.10 1999/10/04 01:59:56 deraadt Exp $
  */
 
 char *
@@ -1052,6 +1052,31 @@ lostconn(signo)
 	exit(1);
 }
 
+/*
+ * ensure all of data on socket comes through. f==read || f==write
+ */
+int
+atomicio(f, fd, s, n)
+int (*f)();
+char *s;
+{
+	int res, pos = 0;
+
+	while (n>pos) {
+		res = (f)(fd, s+pos, n-pos);
+		switch (res) {
+		case -1:
+			if (errno==EINTR || errno==EAGAIN)
+				continue;
+		case 0:
+			return (res);
+		default:
+			pos += res;
+		}
+	}
+	return (pos);
+}
+
 void
 alarmtimer(int wait)
 {
@@ -1112,8 +1137,8 @@ progressmeter(int flag)
 		abbrevsize >>= 10;
 	}
 	snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), " %5qd %c%c ",
-		(quad_t)abbrevsize, prefixes[i], prefixes[i] == ' ' ? ' ' :
-		'B');
+	    (quad_t)abbrevsize, prefixes[i], prefixes[i] == ' ' ? ' ' :
+	    'B');
 
 	timersub(&now, &lastupdate, &wait);
 	if (cursize > lastsize) {
@@ -1131,33 +1156,32 @@ progressmeter(int flag)
 
 	if (statbytes <= 0 || elapsed <= 0.0 || cursize > totalbytes) {
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-			"   --:-- ETA");
+		    "   --:-- ETA");
 	} else if (wait.tv_sec >= STALLTIME) {
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-			" - stalled -");
+		    " - stalled -");
 	} else {
 		remaining = (int)(totalbytes / (statbytes / elapsed) - elapsed);
 		i = elapsed / 3600;
 		if (i)
 			snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-				"%2d:", i);
+			    "%2d:", i);
 		else
 			snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-				"   ");
+			    "   ");
 		i = remaining % 3600;
 		snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf),
-			"%02d:%02d ETA", i / 60, i % 60);
+		    "%02d:%02d ETA", i / 60, i % 60);
 	}
-	write(fileno(stdout), buf, strlen(buf));
+	atomicio(write, fileno(stdout), buf, strlen(buf));
 
 	if (flag == -1) {
 		signal(SIGALRM, (void *)updateprogressmeter);
 		alarmtimer(1);
 	} else if (flag == 1) {
-			alarmtimer(0);
-			putc('\n', stdout);
+		alarmtimer(0);
+		write(fileno(stdout), "\n", 1);
 	}
-	fflush(stdout);
 }
 
 int
