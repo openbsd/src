@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.49 2002/05/15 23:17:53 art Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.50 2002/06/08 22:24:47 art Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -168,7 +168,8 @@ struct ctlname {
 #define KERN_USERCRYPTO		52	/* int: usercrypto */
 #define KERN_CRYPTODEVALLOWSOFT	53	/* int: cryptodevallowsoft */
 #define KERN_SPLASSERT		54	/* int: splassert */
-#define	KERN_MAXID		55	/* number of valid kern ids */
+#define KERN_PROC_ARGS		55	/* node: proc args and env */
+#define	KERN_MAXID		56	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -246,6 +247,14 @@ struct ctlname {
 #define KERN_SYSVIPC_MSG_INFO	1	/* msginfo and msqid_ds */
 #define KERN_SYSVIPC_SEM_INFO	2	/* seminfo and semid_ds */
 #define KERN_SYSVIPC_SHM_INFO	3	/* shminfo and shmid_ds */
+
+/*
+ * KERN_PROC_ARGS subtypes
+ */
+#define KERN_PROC_ARGV		1
+#define KERN_PROC_NARGV		2
+#define KERN_PROC_ENV		3
+#define KERN_PROC_NENV		4
 
 /*
  * KERN_PROC subtype ops return arrays of augmented proc structures:
