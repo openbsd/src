@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.44 2000/09/21 02:38:32 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.45 2000/09/29 19:00:13 angelos Exp $ */
 /*
 %%% copyright-nrl-97
 This software is Copyright 1997-1998 by Randall Atkinson, Ronald Lee,
@@ -1475,7 +1475,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    u_int8_t transproto = 0;
 	    u_int8_t direction;
 	    int exists = 0;
-	    struct tdb *ktdb = NULL;
 
 	    direction = (((struct sadb_protocol *) headers[SADB_X_EXT_FLOW_TYPE])->sadb_protocol_direction);
             if ((direction != IPSP_DIRECTION_IN) &&
@@ -1484,8 +1483,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		rval = EINVAL;
 		goto ret;
             }
-
-	    ssa = (struct sadb_sa *) headers[SADB_EXT_SA];
 
             /* If the security protocol wasn't specified, pretend it was ESP */
             if (smsg->sadb_msg_satype == 0)
@@ -1649,39 +1646,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		      sizeof(struct sockaddr_encap));
 		bcopy(&encapnetmask, &ipo->ipo_mask,
 		      sizeof(struct sockaddr_encap));
-	    }
-
-	    /*
-	     * A direct "hint" was provided, try to locate TDB. If we
-	     * don't find it, return an error, since it was expected
-	     * that we'd be able to find the TDB. Be careful with any
-	     * previously pointed to TDB.
-	     */
-	    if (ssa && ssa->sadb_sa_spi && sunionp)
-	    {
-		ktdb = ipo->ipo_tdb; /* Hold for now */
-
-		s = spltdb();
-		ipo->ipo_tdb = gettdb(ssa->sadb_sa_spi, sunionp,
-				      SADB_GETSPROTO(smsg->sadb_msg_satype));
-		if (ipo->ipo_tdb == NULL)
-		{
-                    if (!exists)
-                      FREE(ipo, M_TDB);
-                    else
-		      ipsec_delete_policy(ipo);
-		    rval = ESRCH;
-		    goto splxret;
-		}
-		else
-		{
-                    if (ktdb)
-		      TAILQ_REMOVE(&ktdb->tdb_policy_head, ipo, ipo_tdb_next);
-		    TAILQ_INSERT_HEAD(&ipo->ipo_tdb->tdb_policy_head, ipo,
-				      ipo_tdb_next);
-		}
-
-		splx(s);
 	    }
 
 	    switch (((struct sadb_protocol *) headers[SADB_X_EXT_FLOW_TYPE])->sadb_protocol_proto)
