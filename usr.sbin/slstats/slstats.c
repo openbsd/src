@@ -1,9 +1,9 @@
-/*	$OpenBSD: slstats.c,v 1.18 2004/07/09 16:08:05 deraadt Exp $	*/
+/*	$OpenBSD: slstats.c,v 1.19 2004/09/21 21:17:02 jaredy Exp $	*/
 /*	$NetBSD: slstats.c,v 1.6.6.1 1996/06/07 01:42:30 thorpej Exp $	*/
 
 /*
  * print serial line IP statistics:
- *	slstats [-i interval] [-v] [interface] [system [core]]
+ *	slstats [-i interval] [-v] [interface]
  *
  * Contributed by Van Jacobson (van@ee.lbl.gov), Dec 31, 1989.
  *
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: slstats.c,v 1.18 2004/07/09 16:08:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: slstats.c,v 1.19 2004/09/21 21:17:02 jaredy Exp $";
 #endif
 
 #define INET
@@ -74,7 +74,6 @@ extern	char *__progname;	/* from crt0.o */
 
 int	vflag;
 u_int	interval = 5;
-int	unit;
 int	s;
 char    interface[IFNAMSIZ];
 
@@ -86,7 +85,7 @@ int
 main(int argc, char *argv[])
 {
 	struct ifreq ifr;
-	int ch;
+	int ch, unit;
 
 	(void)strlcpy(interface, "sl0", sizeof(interface));
 
@@ -97,13 +96,12 @@ main(int argc, char *argv[])
 			if (interval <= 0)
 				usage();
 			break;
-
 		case 'v':
 			++vflag;
 			break;
-
 		default:
 			usage();
+			/* NOTREACHED */
 		}
 	}
 	argc -= optind;
@@ -122,7 +120,7 @@ main(int argc, char *argv[])
 	if (s < 0)
 		err(1, "couldn't create IP socket");
 	(void)strlcpy(ifr.ifr_name, interface, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0)
+	if (ioctl(s, SIOCGIFFLAGS, &ifr) < 0)
 		errx(1, "nonexistent interface '%s' specified", interface);
 
 	intpr();
@@ -135,8 +133,8 @@ void
 usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-v] %s",
-	    __progname, "[-i interval] [unit-number]\n");
+	fprintf(stderr, "usage: %s [-v] [-i interval] [interface]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -228,6 +226,7 @@ intpr(void)
  * Called if an interval expires before sidewaysintpr has completed a loop.
  * Sets a flag to not wait for the alarm.
  */
+/* ARGSUSED */
 void
 catchalarm(int signo)
 {
