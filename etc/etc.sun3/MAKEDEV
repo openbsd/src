@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.32 2000/06/21 21:16:28 miod Exp $
+#	$OpenBSD: MAKEDEV,v 1.33 2001/02/15 01:41:49 todd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -209,7 +209,7 @@ std)
 	mknod tty		c 2 0	; chmod 666 tty
 	mknod kmem		c 3 1	; chmod 640 kmem ; chown root.kmem kmem
 	mknod mem		c 3 0	; chmod 640 mem ; chown root.kmem mem
-	mknod null		c 3 2
+	mknod null		c 3 2	; chmod 666 null
 	mknod vme16d16		c 3 5	; chmod 600 vme16d16
 	ln -s vme16d16 vme16
 	mknod vme24d16		c 3 6	; chmod 600 vme24d16
