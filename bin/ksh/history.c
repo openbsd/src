@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.20 2003/05/16 19:58:57 jsyn Exp $	*/
+/*	$OpenBSD: history.c,v 1.21 2003/05/17 00:10:52 fgsch Exp $	*/
 
 /*
  * command history
@@ -862,7 +862,7 @@ hist_init(s)
 		 * check on its validity
 		 */
 		if (base == MAP_FAILED || *base != HMAGIC1 || base[1] != HMAGIC2) {
-			if (base != (unsigned char *)-1)
+			if (base != MAP_FAILED)
 				munmap((caddr_t)base, hsize);
 			hist_finish();
 			unlink(hname);
