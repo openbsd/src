@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.38 2000/09/14 13:46:45 espie Exp $	*/
+/*	$OpenBSD: suff.c,v 1.39 2000/11/22 17:22:28 espie Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -101,7 +101,7 @@
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: suff.c,v 1.38 2000/09/14 13:46:45 espie Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.39 2000/11/22 17:22:28 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1460,6 +1460,7 @@ SuffApplyTransform(tGn, sGn, t, s)
     Suff    	*s; 	    /* Source suffix */
 {
     LstNode 	ln; 	    /* General node */
+    LstNode	np;	    /* Next node for loop */
     char    	*tname;	    /* Name of transformation rule */
     GNode   	*gn;	    /* Node for same */
 
@@ -1529,8 +1530,10 @@ SuffApplyTransform(tGn, sGn, t, s)
     /*
      * Deal with wildcards and variables in any acquired sources
      */
-    ln = Lst_Succ(ln);
-    Lst_ForEachFrom(ln, SuffExpandChildren, tGn);
+    for (ln = Lst_Succ(ln); ln != NULL; ln = np) {
+    	np = Lst_Adv(ln);
+	SuffExpandChildren(Lst_Datum(ln), tGn);
+    }
 
     /*
      * Keep track of another parent to which this beast is transformed so
@@ -1691,6 +1694,7 @@ SuffFindNormalDeps(gn, slst)
     char    	*eoname;    /* End of name */
     char    	*sopref;    /* Start of prefix */
     LstNode 	ln; 	    /* Next suffix node to check */
+    LstNode	np;
     LIST    	srcs;	    /* List of sources at which to look */
     LIST    	targs;	    /* List of targets to which things can be
 			     * transformed. They all have the same file,
@@ -1849,7 +1853,10 @@ SuffFindNormalDeps(gn, slst)
      * Now we've got the important local variables set, expand any sources
      * that still contain variables or wildcards in their names.
      */
-    Lst_ForEach(&gn->children, SuffExpandChildren, gn);
+    for (ln = Lst_First(&gn->children); ln != NULL; ln = np) {
+    	np = Lst_Adv(ln);
+	SuffExpandChildren(Lst_Datum(ln), gn);
+    }
 
     if (targ == NULL) {
 	if (DEBUG(SUFF)) {
