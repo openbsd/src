@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.15 1998/07/03 14:49:43 deraadt Exp $
+.\"	$OpenBSD: options.4,v 1.16 1998/07/13 00:23:12 marc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -61,6 +61,16 @@ the sparc, and i386.  Possibly the most widely-known operating system
 based on this binary architecture is Sun's Solaris 2.x.
 See
 .Xr compat_svr4 8 .
+.It Cd option COMPAT_BSDOS
+On those architectures that support it, this enables binary
+compatibility with
+.Em BSD/OS
+applications.  This option is supported on the i386 architecture.
+See
+.Xr compat_bsdos 8 .
+Requires
+.Sq option COMPAT_43
+also be used for proper operation.
 .It Cd option COMPAT_LINUX
 On those architectures that support it, this enables binary
 compatibility with
