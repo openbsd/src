@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.28 1999/12/07 00:49:07 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.29 2000/01/31 16:06:58 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -1734,7 +1734,9 @@ memfault_sun4:
 	/* memory error = death for now XXX */
 	clr	%o3
 	clr	%o4
-	call	_memerr			! (0, ser, sva, 0, 0)
+	set     CPUINFO_VA+CPUINFO_MEMERR, %o0
+	ld      [%o0], %o0
+	jmpl    %o0, %o7		! memerr(0, ser, sva, 0, 0)
 	 clr	%o0
 	call	_callrom
 	 nop
@@ -1835,7 +1837,9 @@ memfault_sun4c:
 	 */
 	wr	%l0, PSR_ET, %psr
 	nop
-	call	_memerr			! memerr(0, ser, sva, aer, ava)
+	set     CPUINFO_VA+CPUINFO_MEMERR, %o0
+	ld      [%o0], %o0
+	jmpl    %o0, %o7		! memerr(0, ser, sva, 0, 0)
 	 clr	%o0
 
 	ld	[%sp + CCFSZ + 20], %g1	! restore g1 through g7
@@ -1855,7 +1859,9 @@ memfault_sun4c:
 	 * %o1 through %o4 still hold the error reg contents.
 	 */
 1:
-	call	_memerr			! memerr(1, ser, sva, aer, ava)
+	set     CPUINFO_VA+CPUINFO_MEMERR, %o0
+	ld      [%o0], %o0
+	jmpl    %o0, %o7		! memerr(0, ser, sva, 0, 0)
 	 mov	1, %o0
 
 	ld	[%sp + CCFSZ + 20], %g1	! restore g1 through g7
@@ -2560,8 +2566,10 @@ nmi_sun4c:
 
 nmi_common:
 	! and call C code
-	call	_memerr			! memerr(0, ser, sva, aer, ava)
-	clr	%o0
+	set     CPUINFO_VA+CPUINFO_MEMERR, %o0
+	ld      [%o0], %o0
+	jmpl    %o0, %o7		! memerr(0, ser, sva, 0, 0)
+	 clr	%o0
 
 	mov	%l5, %g1		! restore g1 through g7
 	ldd	[%sp + CCFSZ + 0], %g2
@@ -2617,7 +2625,9 @@ nmi_sun4m:
 	mov	%g7, %l7
 	clr	%o5
 
-	call	_memerr4m		! memerr4m(0, sfsr, sfva, afsr, afva)
+	set     CPUINFO_VA+CPUINFO_MEMERR, %o0
+	ld      [%o0], %o0
+	jmpl    %o0, %o7		! memerr(0, ser, sva, 0, 0)
 	 clr	%o0
 
 	mov	%l5, %g1		! restore g1 through g7
