@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.70 2003/12/02 23:16:29 markus Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.71 2004/02/17 12:07:45 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -86,6 +86,10 @@ void *ipsec_common_ctlinput(int, struct sockaddr *, void *, int);
 int esp_enable = 1;
 int ah_enable = 1;
 int ipcomp_enable = 0;
+
+int *espctl_vars[ESPCTL_MAXID] = ESPCTL_VARS;
+int *ahctl_vars[AHCTL_MAXID] = AHCTL_VARS;
+int *ipcompctl_vars[IPCOMPCTL_MAXID] = IPCOMPCTL_VARS;
 
 #ifdef INET6
 extern struct ip6protosw inet6sw[];
@@ -640,58 +644,33 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 }
 
 int
-esp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlen, void *newp,
+esp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return ENOTDIR;
-
-	switch (name[0]) {
-	case ESPCTL_ENABLE:
-		return sysctl_int(oldp, oldlen, newp, newlen, &esp_enable);
-	case ESPCTL_UDPENCAP_ENABLE:
-		return sysctl_int(oldp, oldlen, newp, newlen, &udpencap_enable);
-	case ESPCTL_UDPENCAP_PORT:
-		return sysctl_int(oldp, oldlen, newp, newlen, &udpencap_port);
-	default:
-		return ENOPROTOOPT;
-	}
-	/* NOTREACHED */
+	if (name[0] < ESPCTL_MAXID)
+		return (sysctl_int_arr(espctl_vars, name, namelen,
+		    oldp, oldlenp, newp, newlen));
+	return (ENOPROTOOPT);
 }
 
 int
-ah_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlen, void *newp,
+ah_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return ENOTDIR;
-
-	switch (name[0]) {
-	case AHCTL_ENABLE:
-		return sysctl_int(oldp, oldlen, newp, newlen, &ah_enable);
-	default:
-		return ENOPROTOOPT;
-    }
-    /* NOTREACHED */
+	if (name[0] < AHCTL_MAXID)
+		return (sysctl_int_arr(ahctl_vars, name, namelen,
+		    oldp, oldlenp, newp, newlen));
+	return (ENOPROTOOPT);
 }
 
 int
-ipcomp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlen, void *newp,
+ipcomp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
     size_t newlen)
 {
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return ENOTDIR;
-
-	switch (name[0]) {
-	case IPCOMPCTL_ENABLE:
-		return sysctl_int(oldp, oldlen, newp, newlen, &ipcomp_enable);
-	default:
-		return ENOPROTOOPT;
-	}
-	/* NOTREACHED */
+	if (name[0] < IPCOMPCTL_MAXID)
+		return (sysctl_int_arr(ipcompctl_vars, name, namelen,
+		    oldp, oldlenp, newp, newlen));
+	return (ENOPROTOOPT);
 }
 
 #ifdef INET

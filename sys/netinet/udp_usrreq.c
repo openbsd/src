@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.97 2004/01/07 09:56:13 markus Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.98 2004/02/17 12:07:45 markus Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -108,6 +108,12 @@ extern int ip6_defhlim;
  * Per RFC 768, August, 1980.
  */
 int	udpcksum = 1;
+
+u_int	udp_sendspace = 9216;		/* really max datagram size */
+u_int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
+					/* 40 1K datagrams */
+
+int *udpctl_vars[UDPCTL_MAXID] = UDPCTL_VARS;
 
 struct	inpcbtable udbtable;
 struct	udpstat udpstat;
@@ -1009,10 +1015,6 @@ release:
 	return (error);
 }
 
-u_int	udp_sendspace = 9216;		/* really max datagram size */
-u_int	udp_recvspace = 40 * (1024 + sizeof(struct sockaddr_in));
-					/* 40 1K datagrams */
-
 #ifdef INET6
 /*ARGSUSED*/
 int
@@ -1261,16 +1263,13 @@ udp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return (ENOTDIR);
 
 	switch (name[0]) {
-	case UDPCTL_CHECKSUM:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &udpcksum));
 	case UDPCTL_BADDYNAMIC:
 		return (sysctl_struct(oldp, oldlenp, newp, newlen,
 		    baddynamicports.udp, sizeof(baddynamicports.udp)));
-	case UDPCTL_RECVSPACE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,&udp_recvspace));
-	case UDPCTL_SENDSPACE:
-		return (sysctl_int(oldp, oldlenp, newp, newlen,&udp_sendspace));
 	default:
+		if (name[0] < UDPCTL_MAXID)
+			return (sysctl_int_arr(udpctl_vars, name, namelen,
+			    oldp, oldlenp, newp, newlen));
 		return (ENOPROTOOPT);
 	}
 	/* NOTREACHED */
