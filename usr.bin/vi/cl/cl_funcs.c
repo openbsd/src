@@ -214,13 +214,20 @@ cl_bell(sp)
 		(void)write(STDOUT_FILENO, "\07", 1);		/* \a */
 	else {
 		/*
-		 * Vi has an edit option which determines if the terminal
-		 * should be beeped or the screen flashed.
+		 * If the screen has not been setup we cannot call
+		 * curses routines yet.
 		 */
-		if (O_ISSET(sp, O_FLASH))
-			(void)flash();
-		else
-			(void)beep();
+		if (F_ISSET(sp, SC_SCR_VI)) {
+			/*
+			 * Vi has an edit option which determines if the
+			 * terminal should be beeped or the screen flashed.
+			 */
+			if (O_ISSET(sp, O_FLASH))
+				(void)flash();
+			else
+				(void)beep();
+		} else if (!O_ISSET(sp, O_FLASH))
+			(void)write(STDOUT_FILENO, "\07", 1);
 	}
 	return (0);
 }
