@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.153 2004/09/21 08:36:47 grange Exp $
+.\"	$OpenBSD: options.4,v 1.154 2004/12/03 14:17:18 martin Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -589,7 +589,9 @@ Makes the boot process more verbose for EISA peripherals.
 .It Cd option PCMCIAVERBOSE
 Makes the boot process more verbose for PCMCIA peripherals.
 .It Cd option MACOBIOVERBOSE
-Makes the boot process more verbose for Mac OBIO peripherals.
+Makes the boot process more verbose for OBIO peripherals on the
+.Va macppc
+architecture.
 .It Cd option APERTURE
 Provide in-kernel support for controlling VGA framebuffer mapping
 and PCI configuration registers by user-processes
