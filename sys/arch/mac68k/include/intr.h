@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.6 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: intr.h,v 1.7 2002/04/29 07:35:19 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 1997/11/07 07:33:18 scottr Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
 /*
  * spl functions; all but spl0 are done in-line
  */
+
+/* SPL asserts */
+#define	splassert(wantipl)	/* nothing */
 
 #define _spl(s)								\
 ({									\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.4 2002/03/14 03:16:01 millert Exp $	*/
+/*	$OpenBSD: psl.h,v 1.5 2002/04/29 07:35:23 miod Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -261,6 +261,9 @@ static __inline void setcwp(int);
 static __inline void splx(int);
 #endif
 static __inline u_int64_t getver(void);
+
+/* SPL asserts */
+#define	splassert(wantipl)	/* nothing */
 
 /*
  * GCC pseudo-functions for manipulating privileged registers

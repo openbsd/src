@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.8 2002/03/14 03:15:52 millert Exp $	*/
+/*	$OpenBSD: intr.h,v 1.9 2002/04/29 07:35:17 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -87,6 +87,9 @@ struct isr {
 /*
  * spl functions; all but spl0 are done in-line
  */
+
+/* SPL asserts */
+#define	splassert(wantipl)	/* nothing */
 
 #define	_spl(s)								\
 ({									\

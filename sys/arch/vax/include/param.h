@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.22 2002/03/14 01:26:48 millert Exp $ */
+/*	$OpenBSD: param.h,v 1.23 2002/04/29 07:35:24 miod Exp $ */
 /*      $NetBSD: param.h,v 1.39 1999/10/22 21:14:34 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -164,6 +164,10 @@
 #define       ovbcopy(x,y,z)  bcopy(x, y, z)
 
 #ifdef _KERNEL
+
+/* SPL asserts */
+#define	splassert(wantipl)	/* nothing */
+
 #ifndef lint
 #define splx(reg)						\
 ({								\

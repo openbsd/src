@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.12 2002/02/05 05:12:27 mickey Exp $	*/
+/*	$OpenBSD: intr.h,v 1.13 2002/04/29 07:35:18 miod Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1992,1994 The University of Utah and
@@ -46,6 +46,10 @@
 #define	IST_LEVEL	3
 
 #if !defined(_LOCORE)
+
+/* SPL asserts */
+#define	splassert(wantipl)	/* nothing */
+
 /*
  * Define the machine-independent SPL routines in terms of splx().
  */

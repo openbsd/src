@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.17 2002/03/14 01:26:42 millert Exp $ */
+/*	$OpenBSD: intr.h,v 1.18 2002/04/29 07:35:22 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -66,6 +66,9 @@ void do_pending_int(void);
 
 volatile extern int cpl, ipending, astpending, tickspending;
 extern int imask[7];
+
+/* SPL asserts */
+#define	splassert(wantipl)	/* nothing */
 
 /*
  * Reorder protection in the following inline functions is
