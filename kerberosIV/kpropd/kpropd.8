@@ -1,0 +1,79 @@
+.\"
+.\"
+.\"
+.TH KPROPD 8 "Kerberos Version 4.0" "MIT Project Athena"
+.SH NAME
+kpropd \- network utility for Kerberos database propagation
+.SH SYNOPSIS
+.B kpropd [-r realm] [-s srvtab] [-d database_file] [-l logfile] [-p kdb_util_path] output_file
+.SH DESCRIPTION
+This daemon runs on a Kerberos slave and waits to receive the
+Kerberos database propagated from a
+.I kprop
+process on a Kerberos master.
+The first parameter,
+.BR output_file ,
+that you must supply to the daemon is the name of a text file in which
+data will be placed when it comes over the network.
+
+This utility executes the
+.I kdb_util
+utility, which loads the database
+from the file specified in
+.BR output_file ,
+puts it in
+.I db(3)
+format, and copies it into the Kerberos database in the directory
+.IR /etc/kerberosIV .
+.SH OPTIONS
+.TP 7
+.B \-r
+Specifies the reciever realm for which data is accepted;
+.I /etc/krb.conf
+specifies the default.
+.TP
+.B \-s
+Specifies the service table file from which to read the password
+of the daemon, because a password cannot be entered manually when
+running as a daemon.  The default is:
+.IR /etc/kerberosIV/srvtab .
+.TP
+.B \-d
+Specifies the primary Kerberos database file of a
+Kerberos slave.
+This file receives a new or updated
+database propagated from the Kerberos master.
+The default is the database in the directory
+.IR /etc/kerberosIV ,
+The file is:
+.IR principal.db .
+.TP
+.B \-l
+Specifies the name of the log file to be used.  The default is:
+.IR /var/log/kpropd.log .
+.TP
+.B \-p
+Specificies the full path (with directory and command) to the program
+.IR kdb_util .
+The default is just:
+.I kdb_util
+which relies on the PATH environment variable to be searched to find it.
+.TP
+.B \-P
+Synonym for
+.BR \-p .
+.SH BUGS
+This utility does not support the transfer of encrypted data.
+
+If the
+.B \-P
+or 
+.B \-p
+options are not specified and the PATH environment variable does not
+contain the directory with
+.IR kdb_util ,
+this program will fail.
+.SH "SEE ALSO"
+kerberos(1), kprop(8)
+.br
+``A Subsystem Utilities Package for UNIX'' by Ken Raeburn
