@@ -1,9 +1,9 @@
-/*	$OpenBSD: conf.c,v 1.37 2002/03/01 14:54:20 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.38 2002/04/22 12:52:39 ho Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
- * Copyright (c) 2000, 2001 Håkan Olsson.  All rights reserved.
+ * Copyright (c) 2000, 2001, 2002 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -223,7 +223,7 @@ conf_set_now (char *section, char *tag, char *value, int override,
 static void
 conf_parse_line (int trans, char *line, size_t sz)
 {
-  char *cp = line;
+  char *val;
   int i;
   static char *section = 0;
   static int ln = 0;
@@ -240,6 +240,8 @@ conf_parse_line (int trans, char *line, size_t sz)
       for (i = 1; i < sz; i++)
 	if (line[i] == ']')
 	  break;
+      if (section)
+	free (section);
       if (i == sz)
 	{
 	  log_print ("conf_parse_line: %d:"
@@ -247,16 +249,19 @@ conf_parse_line (int trans, char *line, size_t sz)
 	  section = 0;
 	  return;
 	}
-      if (section)
-	free (section);
       section = malloc (i);
+      if (!section)
+	{
+	  log_print ("conf_parse_line: %d: malloc (%d) failed", ln, i);
+	  return;
+	}
       strlcpy (section, line + 1, i);
       return;
     }
 
   /* Deal with assignments.  */
   for (i = 0; i < sz; i++)
-    if (cp[i] == '=')
+    if (line[i] == '=')
       {
 	/* If no section, we are ignoring the lines.  */
 	if (!section)
@@ -266,9 +271,13 @@ conf_parse_line (int trans, char *line, size_t sz)
 	    return;
 	  }
 	line[strcspn (line, " \t=")] = '\0';
+	val = line + i + 1 + strspn (line + i + 1, " \t");
+	/* Skip trailing whitespace, if any */
+	i = strcspn (val, " \t\r");
+	if (i)
+	  val[i] = '\0';
 	/* XXX Perhaps should we not ignore errors?  */
-	conf_set (trans, section, line,
-		  line + i + 1 + strspn (line + i + 1, " \t"), 0, 0);
+	conf_set (trans, section, line, val, 0, 0);
 	return;
       }
 
