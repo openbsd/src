@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.60 2004/10/31 11:33:51 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.61 2004/11/06 12:19:17 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -243,7 +243,7 @@ our @ISA=qw(OpenBSD::PackingElement::Meta);
 package OpenBSD::PackingElement::FileBase;
 our @ISA=qw(OpenBSD::PackingElement::FileObject);
 
-use File::Spec;
+use File::Basename;
 
 sub write
 {
@@ -262,6 +262,9 @@ sub write
 	}
 	if (defined $self->{link}) {
 		print $fh "\@link ", $self->{link}, "\n";
+	}
+	if (defined $self->{tempname}) {
+		print $fh "\@temp ", basename($self->{tempname}), "\n";
 	}
 }
 
@@ -306,6 +309,12 @@ sub make_hardlink
 {
 	my ($self, $linkname) = @_;
 	$self->{link} = $linkname;
+}
+
+sub set_tempname
+{
+	my ($self, $tempname) = @_;
+	$self->{temp} = $tempname;
 }
 
 sub IsFile() { 1 }
@@ -535,6 +544,18 @@ sub add
 	my ($class, $plist, @args) = @_;
 
 	$plist->{state}->{lastfile}->make_hardlink(@args);
+	return undef;
+}
+
+package OpenBSD::PackingElement::temp;
+our @ISA=qw(OpenBSD::PackingElement::Annotation);
+
+__PACKAGE__->setKeyword('temp');
+
+sub add
+{
+	my ($class, $plist, @args) = @_;
+	$plist->{state}->{lastfile}->set_tempname(@args);
 	return undef;
 }
 

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.9 2004/11/02 23:53:21 espie Exp $
+# $OpenBSD: Update.pm,v 1.10 2004/11/06 12:19:17 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -54,7 +54,6 @@ sub extract
 	my $file = $self->prepare_to_extract($state);
 
 	if (defined $self->{link} || defined $self->{symlink}) {
-		$self->{tempname} = 1;
 		return;
 	}
 	my ($fh, $tempname) = tempfile(DIR => dirname($file->{destdir}.$file->{name}));
