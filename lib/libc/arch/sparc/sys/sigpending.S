@@ -37,12 +37,12 @@
 
 #if defined(SYSLIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: sigpending.S,v 1.2 1996/08/19 08:18:12 tholo Exp $"
+	.asciz "$OpenBSD: sigpending.S,v 1.3 1999/05/28 07:39:41 deraadt Exp $"
 #endif /* SYSLIBC_SCCS */
 
 #include "SYS.h"
 
-ENTRY(sigpending)
+SYSENTRY(sigpending)
 	mov	%o0, %o2		! save pointer
 	mov	SYS_sigpending, %g1
 	t	ST_SYSCALL		! sigpending()
