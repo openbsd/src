@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 1997/01/02 23:14:13 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.33 1997/01/03 03:19:17 etheisen Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -109,6 +109,10 @@ distribution-etc-root-var: distrib-dirs
 	install -c -o nobody -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/db/locate.database
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+		${DESTDIR}/var/log/authlog
+	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+		${DESTDIR}/var/log/daemon
+	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/lastlog
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/lpd-errs
@@ -119,7 +123,11 @@ distribution-etc-root-var: distrib-dirs
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/ftpd
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+		${DESTDIR}/var/log/secure
+	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
 		${DESTDIR}/var/log/wtmp
+	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+		${DESTDIR}/var/log/xferlog
 	install -c -o daemon -g staff -m 664 /dev/null \
 		${DESTDIR}/var/msgs/bounds
 	install -c -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
