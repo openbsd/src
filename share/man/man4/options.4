@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.105 2002/07/10 18:30:22 danh Exp $
+.\"	$OpenBSD: options.4,v 1.106 2002/07/12 21:44:48 mickey Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -651,6 +651,16 @@ It's used by the
 server on some architectures.
 See
 .Xr pci 4
+for details.
+.It Cd option PCIAGP
+Enables
+.Xr ioctl 2
+access to the AGP GART on the supported chipsets.
+It's used by the
+.Xr XFree86 1
+server on some architectures.
+See
+.Xr vga 4
 for details.
 .El
 .Ss Networking Options

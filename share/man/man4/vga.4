@@ -1,4 +1,4 @@
-.\" $OpenBSD: vga.4,v 1.4 2002/06/30 21:45:25 deraadt Exp $
+.\" $OpenBSD: vga.4,v 1.5 2002/07/12 21:44:48 mickey Exp $
 .\" $NetBSD: vga.4,v 1.2.4.1 2000/08/09 07:48:40 drochner Exp $
 .\"
 .Dd March 20, 1999
@@ -11,6 +11,7 @@
 .Cd "vga0 at isa?"
 .Cd "vga* at pci?"
 .Cd "wsdisplay* at vga? console ?"
+.Cd "option PCIAGP"
 .Sh DESCRIPTION
 This driver handles VGA graphics hardware within the
 .Xr wscons 4
@@ -92,6 +93,13 @@ This is only useful with the
 .Dq *bf
 screen types; a font containing the ASCII
 range of characters must be available too on this screen.
+.Pp
+.Em option PCIAGP
+enables support for the AGP GART programming through the
+.Xr ioctl 2 ,
+for use by the
+.Xr XFree86 1
+on some architectures.
 .Sh SEE ALSO
 .Xr isa 4 ,
 .Xr pcdisplay 4 ,
