@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.38 2004/03/17 17:50:31 njl Exp $*/
-/* $OpenBSD: if_em.c,v 1.30 2004/09/30 21:53:15 jason Exp $ */
+/* $OpenBSD: if_em.c,v 1.31 2004/10/01 19:08:04 grange Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2033,7 +2033,7 @@ em_allocate_pci_resources(struct em_softc * sc)
 
 	if (sc->hw.mac_type > em_82543) {
 		/* Figure our where our IO BAR is ? */
-		for (rid = PCI_MAPREG_START; rid <= PCI_MAPREG_END;) {
+		for (rid = PCI_MAPREG_START; rid < PCI_MAPREG_END;) {
 			val = pci_conf_read(pa->pa_pc, pa->pa_tag, rid);
 			if (PCI_MAPREG_TYPE(val) == PCI_MAPREG_TYPE_IO) {
 				sc->io_rid = rid;
