@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.33 2004/04/16 22:50:23 deraadt Exp $	*/
+/*	$OpenBSD: tar.c,v 1.34 2004/10/23 19:34:14 otto Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: tar.c,v 1.33 2004/04/16 22:50:23 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tar.c,v 1.34 2004/10/23 19:34:14 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,11 @@ static int ul_oct(u_long, char *, int, int);
 #ifndef LONG_OFF_T
 static int uqd_oct(u_quad_t, char *, int, int);
 #endif
+
+static uid_t uid_nobody;
+static uid_t uid_warn;
+static gid_t gid_nobody;
+static gid_t gid_warn;
 
 /*
  * Routines common to all versions of tar
@@ -1026,9 +1031,35 @@ ustar_wr(ARCHD *arcn)
 	 * set the remaining fields. Some versions want all 16 bits of mode
 	 * we better humor them (they really do not meet spec though)....
 	 */
+	if (ul_oct((u_long)arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 3)) {
+		if (uid_nobody == 0) {
+			if (uid_name("nobody", &uid_nobody) == -1)
+				goto out;
+		}
+		if (uid_warn != arcn->sb.st_uid) {
+			uid_warn = arcn->sb.st_uid;
+			paxwarn(1,
+			    "Ustar header field is too small for uid %lu, "
+			    "using nobody", (u_long)arcn->sb.st_uid);
+		}
+		if (ul_oct((u_long)uid_nobody, hd->uid, sizeof(hd->uid), 3))
+			goto out;
+	}
+	if (ul_oct((u_long)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 3)) {
+		if (gid_nobody == 0) {
+			if (gid_name("nobody", &gid_nobody) == -1)
+				goto out;
+		}
+		if (gid_warn != arcn->sb.st_gid) {
+			gid_warn = arcn->sb.st_gid;
+			paxwarn(1,
+			    "Ustar header field is too small for gid %lu, "
+			    "using nobody", (u_long)arcn->sb.st_gid);
+		}
+		if (ul_oct((u_long)gid_nobody, hd->gid, sizeof(hd->gid), 3))
+			goto out;
+	}
 	if (ul_oct((u_long)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 3) ||
-	    ul_oct((u_long)arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 3)  ||
-	    ul_oct((u_long)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 3) ||
 	    ul_oct((u_long)arcn->sb.st_mtime,hd->mtime,sizeof(hd->mtime),3))
 		goto out;
 	strncpy(hd->uname, name_uid(arcn->sb.st_uid, 0), sizeof(hd->uname));
