@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.33 2003/03/30 20:52:43 krw Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.34 2003/04/19 19:08:53 krw Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -419,7 +419,6 @@ config_make_softc(parent, cf)
 	register struct device *dev;
 	register struct cfdriver *cd;
 	register struct cfattach *ca;
-	register size_t lname;
 
 	cd = cf->cf_driver;
 	ca = cf->cf_attach;
@@ -445,11 +444,9 @@ config_make_softc(parent, cf)
 	} else
 		dev->dv_unit = cf->cf_unit;
 
-	/* compute length of name and decimal expansion of unit number */
-
-	lname = snprintf(dev->dv_xname, sizeof(dev->dv_xname), "%s%d",
-		    cd->cd_name, dev->dv_unit);
-	if (lname >= sizeof(dev->dv_xname))
+	/* Build the device name into dv_xname. */
+	if (snprintf(dev->dv_xname, sizeof(dev->dv_xname), "%s%d",
+	    cd->cd_name, dev->dv_unit) >= sizeof(dev->dv_xname))
 		panic("config_make_softc: device name too long");
 	dev->dv_parent = parent;
 
