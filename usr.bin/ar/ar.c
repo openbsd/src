@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar.c,v 1.3 1997/01/15 23:42:11 millert Exp $	*/
+/*	$OpenBSD: ar.c,v 1.4 1997/08/19 07:22:08 denny Exp $	*/
 /*	$NetBSD: ar.c,v 1.5 1995/03/26 03:27:44 glass Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ar.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ar.c,v 1.3 1997/01/15 23:42:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar.c,v 1.4 1997/08/19 07:22:08 denny Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ main(argc, argv)
 		argv[1] = p;
 	}
 
-	while ((c = getopt(argc, argv, "abcdilmopqrTtuvx")) != -1) {
+	while ((c = getopt(argc, argv, "abcCdilmopqrTtuvx")) != -1) {
 		switch(c) {
 		case 'a':
 			options |= AR_A;
@@ -112,6 +112,9 @@ main(argc, argv)
 			break;
 		case 'c':
 			options |= AR_C;
+			break;
+		case 'C':
+			options |= AR_CC;
 			break;
 		case 'd':
 			options |= AR_D;
@@ -201,7 +204,7 @@ main(argc, argv)
 	if (options & AR_T && options & ~(AR_T|AR_TR|AR_V))
 		badoptions("-t");
 	/* -x only valid with -ouTv. */
-	if (options & AR_X && options & ~(AR_O|AR_U|AR_TR|AR_V|AR_X))
+	if (options & AR_X && options & ~(AR_O|AR_U|AR_TR|AR_V|AR_X|AR_CC))
 		badoptions("-x");
 
 	if (!(archive = *argv++)) {
