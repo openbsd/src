@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1tbl,v 1.24 2001/07/31 10:35:10 hugh Exp $
+.\"	$OpenBSD: sh.1tbl,v 1.25 2001/08/03 19:19:01 aaron Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -2104,7 +2104,7 @@ special and regular commands.
 Once the type of the command has been determined, any command-line parameter
 assignments are performed and exported for the duration of the command.
 .Pp
-The following described the special and regular built-in commands:
+The following describes the special and regular built-in commands:
 .Bl -tag -width Ds
 .It Ic \&. Ar file Op Ar arg1 ...
 Execute the commands in
