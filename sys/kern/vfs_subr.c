@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.86 2002/06/16 16:54:25 miod Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.87 2002/07/12 14:02:22 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -146,39 +146,44 @@ vntblinit()
 	vn_initialize_syncerd();
 }
 
-
 /*
  * Mark a mount point as busy. Used to synchronize access and to delay
  * unmounting. Interlock is not released on failure.
+ *
+ * historical behavior:
+ *  - LK_NOWAIT means that we should just ignore the mount point if it's
+ *     being unmounted.
+ *  - no flags means that we should sleep on the mountpoint and then
+ *     fail.
  */
 
 int
-vfs_busy(mp, flags, interlkp, p)
-	struct mount *mp;
-	int flags;
-	struct simplelock *interlkp;
-	struct proc *p;
+vfs_busy(struct mount *mp, int flags, struct simplelock *interlkp,
+    struct proc *p)
 {
 	int lkflags;
 
-	if (mp->mnt_flag & MNT_UNMOUNT) {
-		if (flags & LK_NOWAIT)
-			return (ENOENT);
-		mp->mnt_flag |= MNT_MWAIT;
-		/*
-		 * Since all busy locks are shared except the exclusive
-		 * lock granted when unmounting, the only place that a
-		 * wakeup needs to be done is at the release of the
-		 * exclusive lock at the end of dounmount.
-		 */
-		ltsleep(mp, PVFS, "vfs_bsy", 0, interlkp);
-		return (ENOENT);
+	switch (flags) {
+	case LK_NOWAIT:
+		lkflags = LK_SHARED|LK_NOWAIT;
+		break;
+	case 0:
+		lkflags = LK_SHARED;
+		break;
+	default:
+		lkflags = flags;
 	}
-	lkflags = LK_SHARED;
+
+	/*
+	 * Always sleepfail. We will only sleep for an exclusive lock
+	 * and the exclusive lock will only be acquired when unmounting.
+	 */
+	lkflags |= LK_SLEEPFAIL;
+
 	if (interlkp)
 		lkflags |= LK_INTERLOCK;
 	if (lockmgr(&mp->mnt_lock, lkflags, interlkp, p))
-		panic("vfs_busy: unexpected lock failure");
+		return (ENOENT);
 	return (0);
 }
 
@@ -187,9 +192,7 @@ vfs_busy(mp, flags, interlkp, p)
  * Free a busy file system
  */
 void
-vfs_unbusy(mp, p)
-	struct mount *mp;
-	struct proc *p;
+vfs_unbusy(struct mount *mp, struct proc *p)
 {
 	lockmgr(&mp->mnt_lock, LK_RELEASE, NULL, p);
 }
@@ -1747,16 +1750,19 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
  * will avoid needing to worry about dependencies.
  */
 void
-vfs_unmountall()
+vfs_unmountall(void)
 {
-	register struct mount *mp, *nmp;
+	struct mount *mp, *nmp;
 	int allerror, error, again = 1;
+	struct proc *p = curproc;
 
  retry:
 	allerror = 0;
 	for (mp = CIRCLEQ_LAST(&mountlist); mp != CIRCLEQ_END(&mountlist);
 	    mp = nmp) {
 		nmp = CIRCLEQ_PREV(mp, mnt_list);
+		if ((vfs_busy(mp, LK_EXCLUSIVE|LK_NOWAIT, NULL, p)) != 0)
+			continue;
 		if ((error = dounmount(mp, MNT_FORCE, curproc)) != 0) {
 			printf("unmount of %s failed with error %d\n",
 			    mp->mnt_stat.f_mntonname, error);

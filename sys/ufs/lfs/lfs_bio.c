@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_bio.c,v 1.7 2001/08/19 15:07:34 miod Exp $	*/
+/*	$OpenBSD: lfs_bio.c,v 1.8 2002/07/12 14:02:23 art Exp $	*/
 /*	$NetBSD: lfs_bio.c,v 1.5 1996/02/09 22:28:49 christos Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ lfs_flush()
 	     mp = mp->mnt_list.cqe_next) {
 		/* The lock check below is to avoid races with unmount. */
 		if (!strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS, MFSNAMELEN) &&
-		    (mp->mnt_flag & (MNT_MLOCK|MNT_RDONLY|MNT_UNMOUNT)) == 0 &&
+		    (mp->mnt_flag & (MNT_RDONLY)) == 0 &&
 		    !((((struct ufsmount *)mp->mnt_data))->ufsmount_u.lfs)->lfs_dirops ) {
 			/*
 			 * We set the queue to 0 here because we are about to

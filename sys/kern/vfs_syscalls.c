@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.95 2002/03/14 01:27:06 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.96 2002/07/12 14:02:22 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -167,6 +167,10 @@ sys_mount(p, v, retval)
 			}
 			SCARG(uap, flags) |= MNT_NOSUID | MNT_NODEV;
 		}
+		if ((error = vfs_busy(mp, LK_NOWAIT, 0, p)) != 0) {
+			vput(vp);
+			return (error);
+		}
 		VOP_UNLOCK(vp, 0, p);
 		goto update;
 	}
@@ -244,7 +248,9 @@ sys_mount(p, v, retval)
 		M_MOUNT, M_WAITOK);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
-	vfs_busy(mp, LK_NOWAIT, 0, p);
+	/* This error never happens, but it makes auditing easier */
+	if ((error = vfs_busy(mp, LK_NOWAIT, 0, p)))
+		return (error);
 	mp->mnt_op = vfsp->vfc_vfsops;
 	mp->mnt_vfc = vfsp;
 	mp->mnt_flag |= (vfsp->vfc_flags & MNT_VISFLAGMASK);
@@ -421,7 +427,7 @@ sys_unmount(p, v, retval)
 	}
 	vput(vp);
 
-	if (vfs_busy(mp, 0, NULL, p))
+	if (vfs_busy(mp, LK_EXCLUSIVE, NULL, p))
 		return (EBUSY);
 
 	return (dounmount(mp, SCARG(uap, flags), p));
@@ -431,18 +437,11 @@ sys_unmount(p, v, retval)
  * Do the actual file system unmount.
  */
 int
-dounmount(mp, flags, p)
-	register struct mount *mp;
-	int flags;
-	struct proc *p;
+dounmount(struct mount *mp, int flags, struct proc *p)
 {
 	struct vnode *coveredvp;
 	int error;
 
-	simple_lock(&mountlist_slock);
-	mp->mnt_flag |= MNT_UNMOUNT;
-	vfs_unbusy(mp, p);
-	lockmgr(&mp->mnt_lock, LK_DRAIN | LK_INTERLOCK, &mountlist_slock, p);
  	mp->mnt_flag &=~ MNT_ASYNC;
  	cache_purgevfs(mp);	/* remove cache entries for this file sys */
  	if (mp->mnt_syncer != NULL)
@@ -455,12 +454,8 @@ dounmount(mp, flags, p)
  	if (error) {
  		if ((mp->mnt_flag & MNT_RDONLY) == 0 && mp->mnt_syncer == NULL)
  			(void) vfs_allocate_syncvnode(mp);
-		mp->mnt_flag &= ~MNT_UNMOUNT;
-		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
+		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK,
 		    &mountlist_slock, p);
-		if (mp->mnt_flag & MNT_MWAIT)
-			wakeup((caddr_t)mp);
-		mp->mnt_flag &= ~MNT_MWAIT;
 		return (error);
 	}
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
@@ -472,8 +467,6 @@ dounmount(mp, flags, p)
 	if (mp->mnt_vnodelist.lh_first != NULL)
 		panic("unmount: dangling vnode");
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock, p);
-	if (mp->mnt_flag & MNT_MWAIT)
-		wakeup((caddr_t)mp);
 	free((caddr_t)mp, M_MOUNT);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.47 2002/04/23 18:54:12 espie Exp $	*/
+/*	$OpenBSD: mount.h,v 1.48 2002/07/12 14:02:23 art Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -384,20 +384,11 @@ struct mount {
 
 /*
  * filesystem control flags.
- *
- * MNT_MLOCK lock the mount entry so that name lookup cannot proceed
- * past the mount point.  This keeps the subtree stable during mounts
- * and unmounts.
  */
 #define	MNT_UPDATE	0x00010000	/* not a real mount, just an update */
 #define	MNT_DELEXPORT	0x00020000	/* delete export host lists */
 #define	MNT_RELOAD	0x00040000	/* reload filesystem data */
 #define	MNT_FORCE	0x00080000	/* force unmount or readonly change */
-#define	MNT_MLOCK	0x00100000	/* lock so that subtree is stable */
-#define	MNT_MWAIT	0x00200000	/* someone is waiting for lock */
-#define MNT_MPBUSY	0x00400000	/* scan of mount point in progress */
-#define MNT_MPWANT	0x00800000	/* waiting for mount point */
-#define MNT_UNMOUNT	0x01000000	/* unmount in progress */
 #define MNT_WANTRDWR	0x02000000	/* want upgrade to read/write */
 #define MNT_SOFTDEP     0x04000000      /* soft dependencies being done */
 /*

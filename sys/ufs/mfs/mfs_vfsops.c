@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.21 2002/06/21 00:40:08 art Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.22 2002/07/12 14:02:23 art Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -258,10 +258,10 @@ mfs_start(mp, flags, p)
 	int flags;
 	struct proc *p;
 {
-	register struct vnode *vp = VFSTOUFS(mp)->um_devvp;
-	register struct mfsnode *mfsp = VTOMFS(vp);
-	register struct buf *bp;
-	register caddr_t base;
+	struct vnode *vp = VFSTOUFS(mp)->um_devvp;
+	struct mfsnode *mfsp = VTOMFS(vp);
+	struct buf *bp;
+	caddr_t base;
 	int sleepreturn = 0;
 
 	base = mfsp->mfs_baseoff;
@@ -278,7 +278,7 @@ mfs_start(mp, flags, p)
 		 * EINTR/ERESTART.
 		 */
 		if (sleepreturn != 0) {
-			if (vfs_busy(mp, LK_NOWAIT, NULL, p) ||
+			if (vfs_busy(mp, LK_EXCLUSIVE|LK_NOWAIT, NULL, p) ||
 			    dounmount(mp, 0, p))
 				CLRSIG(p, CURSIG(p));
 			sleepreturn = 0;
