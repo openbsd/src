@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.37 2003/07/29 00:24:15 deraadt Exp $	*/
+/*	$OpenBSD: df.c,v 1.38 2004/09/14 22:47:18 deraadt Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.37 2003/07/29 00:24:15 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.38 2004/09/14 22:47:18 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -394,7 +394,6 @@ void
 posixprint(struct statfs *mntbuf, long mntsize, int maxwidth)
 {
 	int i;
-	int blocklen;
 	int blocksize;
 	char *blockstr;
 	struct statfs *sfsp;
@@ -408,11 +407,10 @@ posixprint(struct statfs *mntbuf, long mntsize, int maxwidth)
 		blocksize = 512;
 		blockstr = " 512-blocks";
 	}
-	blocklen = strlen(blockstr);
 
 	(void)printf(
-		"%-*.*s %s       Used   Available Capacity Mounted on\n",
-		maxwidth, maxwidth, "Filesystem", blockstr);
+	    "%-*.*s %s       Used   Available Capacity Mounted on\n",
+	    maxwidth, maxwidth, "Filesystem", blockstr);
 
 	for (i = 0; i < mntsize; i++) {
 		sfsp = &mntbuf[i];
