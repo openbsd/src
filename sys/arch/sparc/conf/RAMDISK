@@ -53,7 +53,6 @@ config		bsd	root on rd0a
 
 # Main bus and CPU .. all systems.
 mainbus0 at root
-cpu0	at mainbus0
 
 # Bus types found on SPARC systems.
 sbus0	at mainbus0				# sun4c

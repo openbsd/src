@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.19 1997/09/17 06:47:03 downsj Exp $
+#	$OpenBSD: GENERIC,v 1.20 1998/02/26 08:05:47 jason Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -30,7 +30,6 @@ config		bsd	swap generic
 
 # Main bus and CPU .. all systems.
 mainbus0 at root
-cpu0	at mainbus0
 
 # Bus types found on SPARC systems.
 sbus0	at mainbus0				# sun4c

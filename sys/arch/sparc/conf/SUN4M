@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.15 1997/09/17 06:47:04 downsj Exp $
+#	$OpenBSD: SUN4M,v 1.16 1998/02/26 08:05:54 jason Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -25,7 +25,6 @@ config		bsd	swap generic
 
 # Main bus and CPU .. all systems.
 mainbus0 at root
-cpu0	at mainbus0
 
 # Bus types found on SPARC systems.
 obio0	at mainbus0				# sun4 and sun4m
