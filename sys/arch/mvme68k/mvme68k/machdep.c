@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.14 1997/01/27 22:48:16 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.15 1997/01/28 09:01:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -665,6 +665,7 @@ struct hpuxsigframe {
 	int	hsf_signum;
 	int	hsf_code;
 	struct	sigcontext *hsf_scp;
+	int	hsf_nothing;
 	struct	hpuxsigcontext hsf_sc;
 	int	hsf_regs[15];
 };
