@@ -53,6 +53,7 @@ static char rcsid[] = "$NetBSD: fixsfdi.c,v 1.2 1995/02/27 17:29:56 cgd Exp $";
  *
  * N.B.: must use new ANSI syntax (sorry).
  */
+/* LONGLONG */
 long long
 __fixsfdi(float x)
 {
