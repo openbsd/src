@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.20 1999/12/19 02:54:29 itojun Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.21 2000/09/19 03:20:59 angelos Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -68,10 +68,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_icmp.h>
-
-#ifdef IPSEC
-extern int     	check_ipsec_policy  __P((struct inpcb *, u_int32_t));
-#endif
 
 #include <machine/stdarg.h>
 
@@ -448,7 +444,7 @@ rip_usrreq(so, req, m, nam, control)
 			dst = mtod(nam, struct sockaddr_in *)->sin_addr.s_addr;
 		}
 #ifdef IPSEC
-		if (!(error = check_ipsec_policy(inp, dst)))
+		/* XXX Find an IPsec TDB */
 #endif
 		error = rip_output(m, so, dst);
 		m = NULL;

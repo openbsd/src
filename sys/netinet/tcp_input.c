@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.71 2000/09/18 23:59:39 fgsch Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.72 2000/09/19 03:20:59 angelos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -89,6 +89,8 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/tcpipv6.h>
 #include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
+
+#define PI_MAGIC 0xdeadbeef  /* XXX the horror! */
 
 struct	tcpiphdr tcp_saveti;
 struct  tcpipv6hdr tcp_saveti6;
@@ -384,14 +386,22 @@ tcp_input(m, va_alist)
 	int iphlen;
 	va_list ap;
 	register struct tcphdr *th;
-#ifdef IPSEC
-	struct tdb *tdb = NULL;
-#endif /* IPSEC */
 #ifdef INET6
 	struct in6_addr laddr6;
 	struct ip6_hdr *ipv6 = NULL;
 #endif /* INET6 */
+#ifdef IPSEC
+	struct tdb_ident *tdbi;
+	struct tdb *tdb;
+	int error, s;
+#endif /* IPSEC */
 	int af;
+
+#ifdef IPSEC
+	tdbi = (struct tdb_ident *) m->m_pkthdr.tdbi;
+	if (tdbi == (void *) PI_MAGIC)
+	        tdbi = NULL;
+#endif /* IPSEC */
 
 	va_start(ap, m);
 	iphlen = va_arg(ap, int);
@@ -399,17 +409,6 @@ tcp_input(m, va_alist)
 
 	tcpstat.tcps_rcvtotal++;
 
-#ifdef IPSEC
-	/* Save the last SA which was used to process the mbuf */
-	if ((m->m_flags & (M_CONF|M_AUTH)) && m->m_pkthdr.tdbi) {
-		struct tdb_ident *tdbi = m->m_pkthdr.tdbi;
-		/* XXX gettdb() should really be called at spltdb().      */
-		/* XXX this is splsoftnet(), currently they are the same. */
-		tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
-		free(m->m_pkthdr.tdbi, M_TEMP);
-		m->m_pkthdr.tdbi = NULL;
-	}
-#endif /* IPSEC */
 	/*
 	 * Before we do ANYTHING, we have to figure out if it's TCP/IPv6 or
 	 * TCP/IPv4.
@@ -424,6 +423,10 @@ tcp_input(m, va_alist)
 		af = AF_INET;
 		break;
 	default:
+#ifdef IPSEC
+	        if (tdbi)
+		        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 		m_freem(m);
 		return;	/*EAFNOSUPPORT*/
 	}
@@ -436,6 +439,10 @@ tcp_input(m, va_alist)
 	case AF_INET:
 #ifdef DIAGNOSTIC
 		if (iphlen < sizeof(struct ip)) {
+#ifdef IPSEC
+		        if (tdbi)
+			        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 			m_freem(m);
 			return;
 		}
@@ -446,6 +453,10 @@ tcp_input(m, va_alist)
 			iphlen = sizeof(struct ip);
 #else
 			printf("extension headers are not allowed\n");
+#ifdef IPSEC
+		        if (tdbi)
+			        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 			m_freem(m);
 			return;
 #endif
@@ -456,6 +467,10 @@ tcp_input(m, va_alist)
 #ifdef DIAGNOSTIC
 		if (iphlen < sizeof(struct ip6_hdr)) {
 			m_freem(m);
+#ifdef IPSEC
+			if (tdbi)
+			        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 			return;
 		}
 #endif /* DIAGNOSTIC */
@@ -465,6 +480,10 @@ tcp_input(m, va_alist)
 			iphlen = sizeof(struct ip6_hdr);
 #else
 			printf("extension headers are not allowed\n");
+#ifdef IPSEC
+		        if (tdbi)
+			        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 			m_freem(m);
 			return;
 #endif
@@ -472,6 +491,10 @@ tcp_input(m, va_alist)
 		break;
 #endif
 	default:
+#ifdef IPSEC
+	        if (tdbi)
+		        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 		m_freem(m);
 		return;
 	}
@@ -480,6 +503,10 @@ tcp_input(m, va_alist)
 		m = m_pullup2(m, iphlen + sizeof(struct tcphdr));
 		if (m == 0) {
 			tcpstat.tcps_rcvshort++;
+#ifdef IPSEC
+		        if (tdbi)
+			        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 			return;
 		}
 	}
@@ -567,6 +594,10 @@ tcp_input(m, va_alist)
 		if (m->m_len < iphlen + off) {
 			if ((m = m_pullup2(m, iphlen + off)) == 0) {
 				tcpstat.tcps_rcvshort++;
+#ifdef IPSEC
+				if (tdbi)
+			                free(tdbi, M_TEMP);
+#endif /* IPSEC */
 				return;
 			}
 			switch (af) {
@@ -779,30 +810,24 @@ findpcb:
 	}
 
 #ifdef IPSEC
-	/* Check if this socket requires security for incoming packets */
-	if ((inp->inp_seclevel[SL_AUTH] >= IPSEC_LEVEL_REQUIRE &&
-	     !(m->m_flags & M_AUTH)) ||
-	    (inp->inp_seclevel[SL_ESP_TRANS] >= IPSEC_LEVEL_REQUIRE &&
-	     !(m->m_flags & M_CONF))) {
-#ifdef notyet
-		switch (af) {
-#ifdef INET6
-		case AF_INET6:
-			icmp6_error(m, ICMPV6_BLAH, ICMPV6_BLAH, 0);
-			break;
-#endif /* INET6 */
-		case AF_INET:
-			icmp_error(m, ICMP_BLAH, ICMP_BLAH, 0, 0);
-			break;
-		}
-#endif /* notyet */
-		tcpstat.tcps_rcvnosec++;
+        s = splnet();
+        if (tdbi == NULL)
+                tdb = NULL;
+        else
+	        tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+
+	ipsp_spd_lookup(m, af, iphlen, &error, IPSP_DIRECTION_IN,
+			tdb, inp);
+        splx(s);
+
+	if (tdbi)
+	        free(tdbi, M_TEMP);
+	tdbi = NULL;
+
+	/* Error or otherwise drop-packet indication */
+	if (error)
 		goto drop;
-	}
-	/* Use tdb_bind_out for this inp's outbound communication */
-	if (tdb)
-		tdb_add_inp(tdb, inp);
-#endif /*IPSEC */
+#endif /* IPSEC */
 
 	/*
 	 * Segment received on connection.
@@ -2080,6 +2105,9 @@ dropwithreset:
 	return;
 
 drop:
+	if (tdbi)
+	        free(tdbi, M_TEMP);
+
 	/*
 	 * Drop space held by incoming segment and return.
 	 */

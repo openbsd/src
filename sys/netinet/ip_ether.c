@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.9 2000/04/18 21:37:29 angelos Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.10 2000/09/19 03:20:58 angelos Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -154,10 +154,6 @@ va_dcl
 
     /* Copy ethernet header */
     m_copydata(m, 0, sizeof(eh), (void *) &eh);
-
-    /* tdbi is only set in ESP or AH, if next protocol is UDP or TCP */
-    if (m->m_flags & (M_CONF|M_AUTH))
-	m->m_pkthdr.tdbi = NULL;
 
     m->m_flags &= ~(M_BCAST|M_MCAST);
     if (eh.ether_dhost[0] & 1)

@@ -1,12 +1,12 @@
-/*	$OpenBSD: ip_ah.c,v 1.43 2000/08/03 08:20:59 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.44 2000/09/19 03:20:58 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
  * Niels Provos (provos@physnet.uni-hamburg.de).
  *
- * This code was written by John Ioannidis for BSD/OS in Athens, Greece, 
- * in November 1995.
+ * The original version of this code was written by John Ioannidis
+ * for BSD/OS in Athens, Greece, in November 1995.
  *
  * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
  * by Angelos D. Keromytis.
@@ -14,11 +14,12 @@
  * Additional transforms and features in 1997 and 1998 by Angelos D. Keromytis
  * and Niels Provos.
  *
- * Additional features in 1999 by Angelos D. Keromytis.
+ * Additional features in 1999 by Angelos D. Keromytis and Niklas Hallqvist.
  *
- * Copyright (C) 1995, 1996, 1997, 1998, 1999 by John Ioannidis,
+ * Copyright (c) 1995, 1996, 1997, 1998, 1999 by John Ioannidis,
  * Angelos D. Keromytis and Niels Provos.
- *	
+ * Copyright (c) 1999 Niklas Hallqvist.
+ *
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
  * all copies of any software which is or includes a copy or
@@ -234,17 +235,17 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 		HTONS(ip->ip_len);
 		HTONS(ip->ip_id);
 
-                if ((alg == CRYPTO_MD5_KPDK) || (alg == CRYPTO_SHA1_KPDK))
-                  ip->ip_off = htons(ip->ip_off & IP_DF);
-                else
-                  ip->ip_off = 0;
-            }
+	        if ((alg == CRYPTO_MD5_KPDK) || (alg == CRYPTO_SHA1_KPDK))
+	          ip->ip_off = htons(ip->ip_off & IP_DF);
+	        else
+	          ip->ip_off = 0;
+	    }
             else
-            { 
-                if ((alg == CRYPTO_MD5_KPDK) || (alg == CRYPTO_SHA1_KPDK))
-                  ip->ip_off = htons(ntohs(ip->ip_off) & IP_DF);
-                else
-                  ip->ip_off = 0;
+            {
+	        if ((alg == CRYPTO_MD5_KPDK) || (alg == CRYPTO_SHA1_KPDK))
+	          ip->ip_off = htons(ntohs(ip->ip_off) & IP_DF);
+	        else
+	          ip->ip_off = 0;
             }
 
 	    ptr = mtod(m, unsigned char *) + sizeof(struct ip);
@@ -553,7 +554,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
       {
 	  pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
-	  tdb_delete(tdb, 0, TDBEXP_TIMEOUT);
+	  tdb_delete(tdb, TDBEXP_TIMEOUT);
 	  m_freem(m);
 	  return ENXIO;
       }
@@ -933,7 +934,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
       {
 	  pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
-	  tdb_delete(tdb, 0, TDBEXP_TIMEOUT);
+	  tdb_delete(tdb, TDBEXP_TIMEOUT);
 	  m_freem(m);
 	  return EINVAL;
       }

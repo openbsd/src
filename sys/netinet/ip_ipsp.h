@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.69 2000/06/18 19:05:49 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.70 2000/09/19 03:20:59 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -6,8 +6,8 @@
  * Niels Provos (provos@physnet.uni-hamburg.de) and
  * Niklas Hallqvist (niklas@appli.se).
  *
- * This code was written by John Ioannidis for BSD/OS in Athens, Greece, 
- * in November 1995.
+ * The original version of this code was written by John Ioannidis
+ * for BSD/OS in Athens, Greece, in November 1995.
  *
  * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
  * by Angelos D. Keromytis.
@@ -55,9 +55,6 @@ union sockaddr_union
     struct sockaddr_in6 sin6;
 };
 
-#define FLOW_EGRESS             0
-#define FLOW_INGRESS            1
-
 /* HMAC key sizes */
 #define MD5HMAC96_KEYSIZE       16
 #define SHA1HMAC96_KEYSIZE      20
@@ -91,6 +88,7 @@ union sockaddr_union
 #define IPSEC_DEFAULT_EXP_FIRST_USE             7200
 #define IPSEC_DEFAULT_DEF_ENC                   "3des"
 #define IPSEC_DEFAULT_DEF_AUTH                   "hmac-sha1"
+#define IPSEC_DEFAULT_EXPIRE_ACQUIRE            30
 
 struct sockaddr_encap
 {
@@ -99,45 +97,32 @@ struct sockaddr_encap
     u_int16_t	sen_type;		/* see SENT_* */
     union
     {
-	u_int8_t	Data[16];	/* other stuff mapped here */
-
 	struct				/* SENT_IP4 */
 	{
+	    u_int8_t Direction;
 	    struct in_addr Src;
 	    struct in_addr Dst;
+	    u_int8_t Proto;
 	    u_int16_t Sport;
 	    u_int16_t Dport;
-	    u_int8_t Proto;
-	    u_int8_t Filler[3];
 	} Sip4;
 
 	struct				/* SENT_IP6 */
 	{
+	    u_int8_t Direction;
 	    struct in6_addr Src;
 	    struct in6_addr Dst;
+	    u_int8_t Proto;
 	    u_int16_t Sport;
 	    u_int16_t Dport;
-	    u_int8_t Proto;
-	    u_int8_t Filler[3];
 	} Sip6;
 
-	struct				/* SENT_IPSP */
-	{
-	    struct in_addr Dst;
-	    u_int32_t Spi;
-	    u_int8_t Sproto;
-	    u_int8_t Filler[7];
-	} Sipsp;
-
-	struct				/* SENT_IPSP6 */
-	{
-	    struct in6_addr Dst;
-	    u_int32_t Spi;
-	    u_int8_t Sproto;
-	    u_int8_t Filler[7];
-	} Sipsp6;
+	struct ipsec_policy *PolicyHead;  /* SENT_IPSP */
     } Sen;
 };
+
+#define IPSP_DIRECTION_IN     0x1
+#define IPSP_DIRECTION_OUT    0x2
 
 #define sen_data	  Sen.Data
 #define sen_ip_src	  Sen.Sip4.Src
@@ -145,17 +130,14 @@ struct sockaddr_encap
 #define sen_proto	  Sen.Sip4.Proto
 #define sen_sport	  Sen.Sip4.Sport
 #define sen_dport	  Sen.Sip4.Dport
+#define sen_direction     Sen.Sip4.Direction
 #define sen_ip6_src	  Sen.Sip6.Src
 #define sen_ip6_dst	  Sen.Sip6.Dst
 #define sen_ip6_proto	  Sen.Sip6.Proto
 #define sen_ip6_sport	  Sen.Sip6.Sport
 #define sen_ip6_dport	  Sen.Sip6.Dport
-#define sen_ipsp_dst	  Sen.Sipsp.Dst
-#define sen_ipsp_spi	  Sen.Sipsp.Spi
-#define sen_ipsp_sproto	  Sen.Sipsp.Sproto
-#define sen_ipsp6_dst	  Sen.Sipsp6.Dst
-#define sen_ipsp6_spi	  Sen.Sipsp6.Spi
-#define sen_ipsp6_sproto  Sen.Sipsp6.Sproto
+#define sen_ip6_direction Sen.Sip6.Direction
+#define sen_ipsp          Sen.PolicyHead
 
 /*
  * The "type" is really part of the address as far as the routing
@@ -168,27 +150,53 @@ struct sockaddr_encap
 #define SENT_IP4	0x0001		/* data is two struct in_addr */
 #define SENT_IPSP	0x0002		/* data as in IP4/6 plus SPI */
 #define SENT_IP6        0x0004
-#define SENT_IPSP6      0x0008
 
-/*
- * SENT_HDRLEN is the length of the "header"
- * SENT_*_LEN are the lengths of various forms of sen_data
- * SENT_*_OFF are the offsets in the sen_data array of various fields
- */
+#define SENT_LEN        sizeof(struct sockaddr_encap)
 
-#define SENT_HDRLEN	(2 * sizeof(u_int8_t) + sizeof(u_int16_t))
+struct ipsec_acquire
+{
+    union sockaddr_union ipa_addr;
+    u_int64_t            ipa_expire;
+    TAILQ_ENTRY(ipsec_acquire) ipa_next;
+};
 
-#define SENT_IP4_SRCOFF	(0)
-#define SENT_IP4_DSTOFF (sizeof (struct in_addr))
+struct ipsec_policy
+{
+    struct sockaddr_encap ipo_addr;
+    struct sockaddr_encap ipo_mask;
 
-#define SENT_IP6_SRCOFF (0)
-#define SENT_IP6_DSTOFF (sizeof (struct in6_addr))
+    union sockaddr_union ipo_src;   /* Local address to use */
+    union sockaddr_union ipo_dst;   /* Remote gateway -- if it's zeroed:
+				     * - on output, we try to contact the
+				     * remote host directly (if needed).
+				     * - on input, we accept on if the
+				     * inner source is the same as the
+				     * outer source address, or if transport
+				     * mode was used.
+				     */
 
-#define SENT_IP4_LEN	20
-#define SENT_IPSP_LEN	20
-#define SENT_IP6_LEN    44
-#define SENT_IPSP6_LEN  32
+    u_int64_t            ipo_last_searched; /* Timestamp of last lookup */
 
+    u_int8_t             ipo_flags; /* See IPSP_POLICY_* definitions */
+    u_int8_t             ipo_type;  /* USE/ACQUIRE/... */
+    u_int8_t             ipo_sproto;/* ESP, AH; if zero we use system dflts */
+
+    struct tdb          *ipo_tdb;   /* Cached entry */
+
+    TAILQ_ENTRY(ipsec_policy) ipo_tdb_next; /* List of policies on TDB */
+    TAILQ_ENTRY(ipsec_policy) ipo_list; /* List of all policy entries */
+};
+
+#define IPSP_POLICY_NONE    0x0000  /* No flags set */
+
+#define IPSP_IPSEC_USE      0 /* Use if existing, don't bother establishing */
+#define IPSP_IPSEC_ACQUIRE  1 /* Try to acquire in parallel but let packet */
+#define IPSP_IPSEC_REQUIRE  2 /* Require SA */
+#define IPSP_PERMIT         3 /* Permit traffic through */
+#define IPSP_DENY           4 /* Deny traffic */
+#define IPSP_IPSEC_DONTACQ  5 /* Require, but don't acquire */
+
+/* Notification types */
 #define NOTIFY_SOFT_EXPIRE      0       /* Soft expiration of SA */
 #define NOTIFY_HARD_EXPIRE      1       /* Hard expiration of SA */
 #define NOTIFY_REQUEST_SA       2       /* Establish an SA */
@@ -208,24 +216,19 @@ struct route_enc {
     struct sockaddr_encap re_dst;
 };
 
-struct flow
-{
-    struct flow          *flow_next;	/* Next in flow chain */
-    struct flow          *flow_prev;	/* Previous in flow chain */
-    struct tdb           *flow_sa;	/* Pointer to the SA */
-    union sockaddr_union  flow_src;   	/* Source address */
-    union sockaddr_union  flow_srcmask; /* Source netmask */
-    union sockaddr_union  flow_dst;	/* Destination address */
-    union sockaddr_union  flow_dstmask;	/* Destination netmask */
-    u_int8_t	          flow_proto;	/* Transport protocol, if applicable */
-    u_int8_t	          foo[3];	/* Alignment */
-};
-
 struct tdb				/* tunnel descriptor block */
 {
-    struct tdb	     *tdb_hnext;  	/* Next in hash chain */
-    struct tdb	     *tdb_onext;        /* Next in output */
-    struct tdb	     *tdb_inext;        /* Previous in output */
+    /*
+     * Each TDB is on three hash tables: one keyed on dst/spi/sproto,
+     * one keyed on dst/sproto, and one keyed on src/sproto. The first
+     * is used for finding a specific TDB, the second for finding TDBs
+     * TDBs for outgoing policy matching, and the third for incoming
+     * policy matching. The following three fields maintain the hash
+     * queues in those three tables.
+     */
+    struct tdb	     *tdb_hnext;   /* dst/spi/sproto table */
+    struct tdb       *tdb_anext;   /* dst/sproto table */
+    struct tdb       *tdb_snext;   /* src/sproto table */
 
     struct xformsw   *tdb_xform;	/* Transformation to use */
     struct enc_xform *tdb_encalgxform;  /* Encryption algorithm xform */
@@ -301,13 +304,9 @@ struct tdb				/* tunnel descriptor block */
     u_int8_t          tdb_iv[4];        /* Used for HALF-IV ESP */
 
     caddr_t           tdb_interface;
-    struct flow	     *tdb_flow; 	/* Which outboind flows use this SA */
-    struct flow	     *tdb_access;	/* Ingress access control */
 
-    struct tdb       *tdb_bind_out;	/* Outgoing SA to use */
-    TAILQ_HEAD(tdb_bind_head, tdb) tdb_bind_in;
-    TAILQ_ENTRY(tdb)  tdb_bind_in_next;	/* Refering Incoming SAs */
     TAILQ_HEAD(tdb_inp_head, inpcb) tdb_inp;
+    TAILQ_HEAD(tdb_policy_head, ipsec_policy) tdb_policy_head;
 };
 
 struct tdb_ident {
@@ -396,7 +395,9 @@ extern int encdebug;
 extern int ipsec_acl;
 extern int ipsec_keep_invalid;
 extern int ipsec_in_use;
+extern u_int64_t ipsec_last_added;
 extern int ipsec_require_pfs;
+extern int ipsec_expire_acquire;
 
 extern int ipsec_soft_allocations;
 extern int ipsec_exp_allocations;
@@ -421,6 +422,8 @@ extern struct auth_hash auth_hash_hmac_ripemd_160_96;
 
 extern TAILQ_HEAD(expclusterlist_head, tdb) expclusterlist;
 extern TAILQ_HEAD(explist_head, tdb) explist;
+extern TAILQ_HEAD(ipsec_policy_head, ipsec_policy) ipsec_policy_head;
+extern TAILQ_HEAD(ipsec_acquire_head, ipsec_acquire) ipsec_acquire_head;
 
 extern struct xformsw xformsw[], *xformswNXFORMSW;
 
@@ -446,7 +449,6 @@ extern struct xformsw xformsw[], *xformswNXFORMSW;
 
 /* Misc. */
 extern char *inet_ntoa4(struct in_addr);
-
 extern char *ipsp_address(union sockaddr_union);
 
 /* TDB management routines */
@@ -454,8 +456,12 @@ extern void tdb_add_inp(struct tdb *tdb, struct inpcb *inp);
 extern u_int32_t reserve_spi(u_int32_t, u_int32_t, union sockaddr_union *,
 			     union sockaddr_union *, u_int8_t, int *);
 extern struct tdb *gettdb(u_int32_t, union sockaddr_union *, u_int8_t);
+extern struct tdb *gettdbbyaddr(union sockaddr_union *, u_int8_t,
+				struct mbuf *, int);
+extern struct tdb *gettdbbysrc(union sockaddr_union *, u_int8_t,
+			       struct mbuf *, int);
 extern void puttdb(struct tdb *);
-extern void tdb_delete(struct tdb *, int, int);
+extern void tdb_delete(struct tdb *, int);
 extern int tdb_init(struct tdb *, u_int16_t, struct ipsecinit *);
 extern void tdb_expiration(struct tdb *, int);
 /* Flag values for the last argument of tdb_expiration().  */
@@ -463,18 +469,6 @@ extern void tdb_expiration(struct tdb *, int);
 #define TDBEXP_TIMEOUT	2	/* Maintain expiration timeout.  */
 extern int tdb_walk(int (*)(struct tdb *, void *), void *);
 extern void handle_expirations(void *);
-
-/* Flow management routines */
-extern struct flow *get_flow(void);
-extern void put_flow(struct flow *, struct tdb *, int);
-extern void delete_flow(struct flow *, struct tdb *, int);
-extern struct flow *find_flow(union sockaddr_union *, union sockaddr_union *,
-			      union sockaddr_union *, union sockaddr_union *,
-			      u_int8_t, struct tdb *, int);
-extern struct flow *find_global_flow(union sockaddr_union *,
-				     union sockaddr_union *,
-				     union sockaddr_union *,
-				     union sockaddr_union *, u_int8_t);
 
 /* XF_IP4 */
 extern int ipe4_attach(void);
@@ -549,7 +543,7 @@ extern int tcp_signature_tdb_output __P((struct mbuf *, struct tdb *,
 					 struct mbuf **, int, int));
 
 /* Padding */
-extern caddr_t m_pad(struct mbuf *, int, int);
+extern caddr_t m_pad(struct mbuf *, int);
 
 /* Replay window */
 extern int checkreplaywindow32(u_int32_t, u_int32_t, u_int32_t *, u_int32_t,
@@ -560,8 +554,17 @@ extern unsigned char ipseczeroes[];
 /* Packet processing */
 extern int ipsp_process_packet(struct mbuf *, struct tdb *, int, int);
 extern int ipsp_process_done(struct mbuf *, struct tdb *);
-extern struct tdb *ipsp_spd_lookup(struct mbuf *, int, int, int *);
+extern struct tdb *ipsp_spd_lookup(struct mbuf *, int, int, int *, int,
+                                   struct tdb *, struct inpcb *);
 extern int ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int);
-extern int ipsp_acquire_sa(struct tdb *);
+extern int ipsp_acquire_sa(struct ipsec_policy *, union sockaddr_union *,
+			   union sockaddr_union *);
+extern struct ipsec_policy *ipsec_add_policy(struct sockaddr_encap *,
+					     struct sockaddr_encap *,
+					     union sockaddr_union *, int, int);
+extern int ipsp_match_policy(struct tdb *, struct ipsec_policy *,
+			     struct mbuf *, int);
+extern void ipsp_acquire_expirations(void *);
+extern int ipsec_delete_policy(struct ipsec_policy *);
 #endif /* _KERNEL */
 #endif /* _NETINET_IPSP_H_ */

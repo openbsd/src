@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.57 2000/09/18 22:06:37 provos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.58 2000/09/19 03:20:58 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -66,6 +66,10 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_ipsp.h>
 
+#ifdef IPSEC
+#include <netinet/ip_ipsp.h>
+#endif /* IPSEC */
+
 #ifndef	IPFORWARDING
 #ifdef GATEWAY
 #define	IPFORWARDING	1	/* forward IP packets not for us */
@@ -76,6 +80,9 @@
 #ifndef	IPSENDREDIRECTS
 #define	IPSENDREDIRECTS	1
 #endif
+
+#define PI_MAGIC 0xdeadbeef  /* XXX the horror! */
+
 #ifndef IPMTUDISC
 #define IPMTUDISC	0
 #endif
@@ -84,7 +91,6 @@
 #endif
 
 int encdebug = 0;
-int ipsec_acl = 1;
 int ipsec_keep_invalid = IPSEC_DEFAULT_EMBRYONIC_SA_TIMEOUT;
 int ipsec_require_pfs = IPSEC_DEFAULT_PFS;
 int ipsec_soft_allocations = IPSEC_DEFAULT_SOFT_ALLOCATIONS;
@@ -95,6 +101,7 @@ int ipsec_soft_timeout = IPSEC_DEFAULT_SOFT_TIMEOUT;
 int ipsec_exp_timeout = IPSEC_DEFAULT_EXP_TIMEOUT;
 int ipsec_soft_first_use = IPSEC_DEFAULT_SOFT_FIRST_USE;
 int ipsec_exp_first_use = IPSEC_DEFAULT_EXP_FIRST_USE;
+int ipsec_expire_acquire = IPSEC_DEFAULT_EXPIRE_ACQUIRE;
 char ipsec_def_enc[20];
 char ipsec_def_auth[20];
 
@@ -293,13 +300,29 @@ ipv4_input(struct mbuf *m, ...)
 	int hlen, mff;
 	va_list ap;
 	int extra;
+#ifdef IPSEC
+	int error, s;
+	struct tdb *tdb;
+	struct tdb_ident *tdbi;
+#endif /* IPSEC */
 
 	va_start(ap, m);
 	extra = va_arg(ap, int);
 	va_end(ap);
 
+#ifdef IPSEC
+	tdbi = (struct tdb_ident *) m->m_pkthdr.tdbi;
+	if (tdbi == (void *) PI_MAGIC)
+	        tdbi = NULL;
+#endif /* IPSEC */
+
 	if (extra) {
 		struct mbuf *newpacket;
+
+#ifdef IPSEC
+		if (tdbi)
+		        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 
 		if (!(newpacket = m_split(m, extra, M_NOWAIT))) {
 			m_freem(m);
@@ -322,6 +345,10 @@ ipv4_input(struct mbuf *m, ...)
 	if (m->m_len < sizeof (struct ip) &&
 	    (m = m_pullup(m, sizeof (struct ip))) == 0) {
 		ipstat.ips_toosmall++;
+#ifdef IPSEC
+		if (tdbi)
+		        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 		return;
 	}
 	ip = mtod(m, struct ip *);
@@ -337,6 +364,10 @@ ipv4_input(struct mbuf *m, ...)
 	if (hlen > m->m_len) {
 		if ((m = m_pullup(m, hlen)) == 0) {
 			ipstat.ips_badhlen++;
+#ifdef IPSEC
+			if (tdbi)
+			        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 			return;
 		}
 		ip = mtod(m, struct ip *);
@@ -382,8 +413,13 @@ ipv4_input(struct mbuf *m, ...)
 	 */
 	{
 		struct mbuf *m0 = m;
-		if (fr_checkp && (*fr_checkp)(ip, hlen, m->m_pkthdr.rcvif, 0, &m0))
+		if (fr_checkp && (*fr_checkp)(ip, hlen, m->m_pkthdr.rcvif, 0, &m0)) {
+#ifdef IPSEC
+			if (tdbi)
+			        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 			return;
+		}
 		ip = mtod(m = m0, struct ip *);
 	}
 #endif
@@ -395,8 +431,13 @@ ipv4_input(struct mbuf *m, ...)
 	 * to be sent and the original packet to be freed).
 	 */
 	ip_nhops = 0;		/* for source routed packets */
-	if (hlen > sizeof (struct ip) && ip_dooptions(m))
-		return;
+	if (hlen > sizeof (struct ip) && ip_dooptions(m)) {
+#ifdef IPSEC
+	        if (tdbi)
+		        free(tdbi, M_TEMP);
+#endif /* IPSEC */
+	        return;
+	}
 
 	/*
 	 * Check our list of addresses, to see if the packet is for us.
@@ -413,6 +454,10 @@ ipv4_input(struct mbuf *m, ...)
 		if (m->m_flags & M_EXT) {
 			if ((m = m_pullup(m, hlen)) == 0) {
 				ipstat.ips_toosmall++;
+#ifdef IPSEC
+				if (tdbi)
+				        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 				return;
 			}
 			ip = mtod(m, struct ip *);
@@ -434,6 +479,10 @@ ipv4_input(struct mbuf *m, ...)
 			ip->ip_id = htons(ip->ip_id);
 			if (ip_mforward(m, m->m_pkthdr.rcvif) != 0) {
 				ipstat.ips_cantforward++;
+#ifdef IPSEC
+				if (tdbi)
+				        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 				m_freem(m);
 				return;
 			}
@@ -457,6 +506,10 @@ ipv4_input(struct mbuf *m, ...)
 		if (inm == NULL) {
 			ipstat.ips_cantforward++;
 			m_freem(m);
+#ifdef IPSEC
+			if (tdbi)
+			        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 			return;
 		}
 		goto ours;
@@ -470,9 +523,41 @@ ipv4_input(struct mbuf *m, ...)
 	 */
 	if (ipforwarding == 0) {
 		ipstat.ips_cantforward++;
+#ifdef IPSEC
+		if (tdbi)
+		        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 		m_freem(m);
-	} else
+	} else {
+#ifdef IPSEC
+	        /* IPsec policy check for forwarded packets */
+                s = splnet();
+                if (tdbi == NULL)
+                  tdb = NULL;
+                else
+                  tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+
+	        ipsp_spd_lookup(m, AF_INET, hlen, &error,
+		  	        IPSP_DIRECTION_IN, tdb, NULL);
+                splx(s);
+
+		/* Error or otherwise drop-packet indication */
+		if (error) {
+			ipstat.ips_cantforward++;
+			m_freem(m);
+			return;
+		}
+
+		if (tdbi) {
+		        free(tdbi, M_TEMP);
+			m->m_pkthdr.tdbi = NULL;
+		}
+
+		/* Fall through, forward packet */
+#endif /* IPSEC */
+
 		ip_forward(m, 0);
+	}
 	return;
 
 ours:
@@ -487,6 +572,10 @@ ours:
 		if (m->m_flags & M_EXT) {		/* XXX */
 			if ((m = m_pullup(m, hlen)) == 0) {
 				ipstat.ips_toosmall++;
+#ifdef IPSEC
+				if (tdbi) 
+				        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 				return;
 			}
 			ip = mtod(m, struct ip *);
@@ -553,6 +642,10 @@ found:
 			ip = ip_reass(ipqe, fp);
 			if (ip == 0) {
 				ipq_unlock();
+#ifdef IPSEC
+				if (tdbi) 
+				        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 				return;
 			}
 			ipstat.ips_reassembled++;
@@ -565,6 +658,66 @@ found:
 	} else
 		ip->ip_len -= hlen;
 
+#ifdef IPSEC
+        /*
+         * If it's a protected packet for us, skip the policy check.
+         * That's because we really only care about the properties of
+         * the protected packet, and not the intermediate versions.
+         * While this is not the most paranoid setting, it allows
+         * some flexibility in handling of nested tunnels etc.
+         */
+        if ((ip->ip_p == IPPROTO_ESP) || (ip->ip_p == IPPROTO_AH))
+          goto skipipsec;
+
+	/*
+	 * If the protected packet was tunneled, then we need to
+	 * verify the protected packet's information, not the
+	 * external headers. Thus, skip the policy lookup for the
+	 * external packet, and keep the IPsec information linked on
+	 * the packet header (the encapsulation routines know how
+	 * to deal with that).
+	 */
+	if ((ip->ip_p == IPPROTO_IPIP) || (ip->ip_p == IPPROTO_IPV6))
+	  goto skipipsec2;
+
+	/*
+	 * If the protected packet is TCP or UDP, we'll do the
+	 * policy check in the respective input routine, so we can
+	 * check for bypass sockets.
+	 */
+	if ((ip->ip_p == IPPROTO_TCP) || (ip->ip_p == IPPROTO_UDP))
+	  goto skipipsec2;
+
+	/* IPsec policy check for local-delivery packets */
+        s = splnet();
+        if (tdbi == NULL)
+                tdb = NULL;
+        else
+	        tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+
+	ipsp_spd_lookup(m, AF_INET, hlen, &error, IPSP_DIRECTION_IN,
+			tdb, NULL);
+        splx(s);
+
+	/* Error or otherwise drop-packet indication */
+	if (error) {
+	        ipstat.ips_cantforward++;
+                if (tdbi)
+                        free(tdbi, M_TEMP);
+		m_freem(m);
+		return;
+	}
+
+ skipipsec:
+	if (tdbi) {
+	        free(tdbi, M_TEMP);
+		m->m_pkthdr.tdbi = NULL;
+	}
+
+ skipipsec2:
+	/* Otherwise, just fall through and deliver the packet */
+#endif /* IPSEC */
+
 	/*
 	 * Switch out to protocol's input routine.
 	 */
@@ -572,6 +725,10 @@ found:
 	(*inetsw[ip_protox[ip->ip_p]].pr_input)(m, hlen, NULL, 0);
 	return;
 bad:
+#ifdef IPSEC
+	if (tdbi)
+	        free(tdbi, M_TEMP);
+#endif /* IPSEC */
 	m_freem(m);
 }
 
@@ -1546,8 +1703,6 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		    &ip_maxqueue));
 	case IPCTL_ENCDEBUG:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &encdebug));
-	case IPCTL_IPSEC_ACL:
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &ipsec_acl));
 	case IPCTL_IPSEC_EMBRYONIC_SA_TIMEOUT:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 				   &ipsec_keep_invalid));
@@ -1585,6 +1740,9 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	        return (sysctl_tstring(oldp, oldlenp, newp, newlen,
 				       ipsec_def_auth,
 				       sizeof(ipsec_def_auth)));
+	case IPCTL_IPSEC_EXPIRE_ACQUIRE:
+	        return (sysctl_int(oldp, oldlenp, newp, newlen,
+				   &ipsec_expire_acquire));
 	default:
 		return (EOPNOTSUPP);
 	}

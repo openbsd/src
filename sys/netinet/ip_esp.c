@@ -1,12 +1,12 @@
-/*	$OpenBSD: ip_esp.c,v 1.48 2000/06/18 08:23:48 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.49 2000/09/19 03:20:58 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
  * Niels Provos (provos@physnet.uni-hamburg.de).
  *
- * This code was written by John Ioannidis for BSD/OS in Athens, Greece, 
- * in November 1995.
+ * The original version of this code was written by John Ioannidis
+ * for BSD/OS in Athens, Greece, in November 1995.
  *
  * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
  * by Angelos D. Keromytis.
@@ -355,7 +355,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
     {
 	pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
-	tdb_delete(tdb, 0, TDBEXP_TIMEOUT);
+	tdb_delete(tdb, TDBEXP_TIMEOUT);
 	m_freem(m);
 	return ENXIO;
     }
@@ -807,7 +807,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
     {
 	pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
-	tdb_delete(tdb, 0, TDBEXP_TIMEOUT);
+	tdb_delete(tdb, TDBEXP_TIMEOUT);
 	m_freem(m);
 	return EINVAL;
     }
@@ -878,8 +878,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
      * Add padding -- better to do it ourselves than use the crypto engine,
      * although if/when we support compression, we'd have to do that.
      */
-    pad = (u_char *) m_pad(m, padding + alen,
-			   tdb->tdb_flags & TDBF_RANDOMPADDING);
+    pad = (u_char *) m_pad(m, padding + alen);
     if (pad == NULL)
     {
         DPRINTF(("esp_output(): m_pad() failed for SA %s/%08x\n",
@@ -892,6 +891,10 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     {
 	for (ilen = 0; ilen < padding - 2; ilen++)
 	  pad[ilen] = ilen + 1;
+    }
+    else
+    {
+        get_random_bytes((void *) pad, padding - 2); /* Random padding */
     }
 
     /* Fix padding length and Next Protocol in padding itself */
@@ -1116,12 +1119,11 @@ checkreplaywindow32(u_int32_t seq, u_int32_t initial, u_int32_t *lastseq,
 /*
  * m_pad(m, n) pads <m> with <n> bytes at the end. The packet header
  * length is updated, and a pointer to the first byte of the padding
- * (which is guaranteed to be all in one mbuf) is returned. The third
- * argument specifies whether we need randompadding or not.
+ * (which is guaranteed to be all in one mbuf) is returned.
  */
 
 caddr_t
-m_pad(struct mbuf *m, int n, int randompadding)
+m_pad(struct mbuf *m, int n)
 {
     register struct mbuf *m0, *m1;
     register int len, pad;
@@ -1175,9 +1177,6 @@ m_pad(struct mbuf *m, int n, int randompadding)
     retval = m0->m_data + m0->m_len;
     m0->m_len += pad;
     m->m_pkthdr.len += pad;
-
-    if (randompadding)
-	  get_random_bytes((void *) retval, n);
 
     return retval;
 }

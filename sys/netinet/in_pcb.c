@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.43 2000/09/18 22:06:37 provos Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.44 2000/09/19 03:20:57 angelos Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -78,8 +78,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 #ifdef IPSEC
 #include <netinet/ip_ipsp.h>
-
-extern int	check_ipsec_policy  __P((struct inpcb *, u_int32_t));
 #endif
 
 #if 0 /*KAME IPSEC*/
@@ -499,7 +497,8 @@ in_pcbconnect(v, nam)
 	inp->inp_fport = sin->sin_port;
 	in_pcbrehash(inp);
 #ifdef IPSEC
-	return (check_ipsec_policy(inp, 0));
+        /* XXX Find IPsec TDB */
+        return (0);
 #else
 	return (0);
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.46 2000/07/11 16:53:22 provos Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.47 2000/09/19 03:20:59 angelos Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -81,10 +81,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 #include <dev/rndvar.h>
-
-#ifdef IPSEC
-extern int	check_ipsec_policy __P((struct inpcb *, u_int32_t));
-#endif
 
 /*
  * TCP protocol interface to socket abstraction.
@@ -393,9 +389,7 @@ tcp_usrreq(so, req, m, nam, control)
 	 */
 	case PRU_SEND:
 #ifdef IPSEC
-		error = check_ipsec_policy(inp, 0);
-		if (error)
-			break;
+	    /* XXX Find IPsec TDB */
 #endif
 		sbappend(&so->so_snd, m);
 		error = tcp_output(tp);

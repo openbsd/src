@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.41 2000/09/18 22:06:36 provos Exp $	*/
+/*	$OpenBSD: in.h,v 1.42 2000/09/19 03:20:57 angelos Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -259,8 +259,6 @@ struct ip_opts {
 #define IP_ESP_TRANS_LEVEL	21   /* int; transport encryption */
 #define IP_ESP_NETWORK_LEVEL	22   /* int; full-packet encryption */
 
-#define IPSEC_OUTSA		39   /* set the outbound SA for a socket */
-
 /*
  * Security levels - IPsec, not IPSO
  */
@@ -434,7 +432,7 @@ struct ip_mreq {
 #ifdef notdef	/*obsolete*/
 #define IPCTL_GIF_TTL		13	/* default TTL for gif encap packet */
 #endif
-#define IPCTL_IPSEC_ACL		14	/* ingress IPsec access control */
+#define IPCTL_IPSEC_EXPIRE_ACQUIRE 14   /* How long to wait for key mgmt. */
 #define IPCTL_IPSEC_EMBRYONIC_SA_TIMEOUT	15 /* new SA lifetime */
 #define IPCTL_IPSEC_REQUIRE_PFS 16
 #define IPCTL_IPSEC_SOFT_ALLOCATIONS            17
@@ -466,7 +464,7 @@ struct ip_mreq {
 	{ "maxqueue", CTLTYPE_INT }, \
 	{ "encdebug", CTLTYPE_INT }, \
 	{ 0, 0 }, \
-	{ "ipsec-acl", CTLTYPE_INT }, \
+	{ "ipsec-expire-acquire", CTLTYPE_INT }, \
 	{ "ipsec-invalid-life", CTLTYPE_INT }, \
 	{ "ipsec-pfs", CTLTYPE_INT }, \
 	{ "ipsec-soft-allocs", CTLTYPE_INT }, \

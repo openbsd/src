@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.80 2000/09/18 22:06:37 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.81 2000/09/19 03:20:59 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -130,7 +130,6 @@ ip_output(m0, va_alist)
 	union sockaddr_union sdst;
 	u_int32_t sspi;
 
-	u_int8_t sa_require = 0, sa_have = 0;
 	struct inpcb *inp;
 	struct tdb *tdb;
 	int s;
@@ -285,7 +284,8 @@ ip_output(m0, va_alist)
 		  &ip->ip_dst, sizeof(ip->ip_dst)))
 	        tdb = inp->inp_tdb;
 	else
-	        tdb = ipsp_spd_lookup(m, AF_INET, hlen, &error);
+	        tdb = ipsp_spd_lookup(m, AF_INET, hlen, &error,
+				      IPSP_DIRECTION_OUT, NULL, inp);
 
 	if (tdb == NULL) {
 	        splx(s);
@@ -317,38 +317,20 @@ ip_output(m0, va_alist)
 		sproto = tdb->tdb_sproto;
 
 		/*
-		 * If the socket has set the bypass flags and SA destination
-		 * matches the IP destination, skip IPsec. This allows
-		 * IKE packets to travel through IPsec tunnels.
+		 * If the socket has set the bypass flags and SA
+		 * destination matches the IP destination, skip
+		 * IPsec. This allows IKE packets to travel through
+		 * IPsec tunnels.
 		 */
-		if (inp != NULL && 
-		    inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS &&
-		    inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS &&
-		    inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS &&
-		    sdst.sa.sa_family == AF_INET &&
-		    !bcmp(&sdst.sin.sin_addr.s_addr, &ip->ip_dst.s_addr,
-			  sizeof(ip->ip_dst.s_addr))) {
+		if ((inp != NULL) &&
+		    (inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS) &&
+		    (inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS) &&
+		    (inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS)
+		    && (sdst.sa.sa_family == AF_INET) &&
+		    (sdst.sin.sin_addr.s_addr == ip->ip_dst.s_addr)) {
 		        splx(s);
-		        sproto = 0; /* mark as no-IPsec-needed */
+			sproto = 0; /* mark as no-IPsec-needed */
 			goto done_spd;
-		}
-
-		/* What are the socket (or default) security requirements ? */
-		if (inp == NULL)
-		        sa_require = get_sa_require(NULL);
-		else
-		        sa_require = inp->inp_secrequire;
-
-		/*
-		 * Now we check if this tdb has all the transforms which
-		 * are required by the socket or our default policy.
-		 */
-		SPI_CHAIN_ATTRIB(sa_have, tdb_onext, tdb);
-		splx(s);
-		if (sa_require & ~sa_have) {
-			error = EHOSTUNREACH;
-			m_freem(m);
-			goto done;
 		}
 
 		/* If it's not a multicast packet, try to fast-path */
@@ -570,7 +552,6 @@ sendit:
 		/* Massage the IP header for use by the IPsec code */
 		ip->ip_len = htons((u_short) ip->ip_len);
 		ip->ip_off = htons((u_short) ip->ip_off);
-		ip->ip_sum = 0;
 
 		/*
 		 * Clear these -- they'll be set in the recursive invocation
@@ -816,9 +797,6 @@ ip_ctloutput(op, so, level, optname, mp)
 	register int optval = 0;
 #ifdef IPSEC
 	struct proc *p = curproc; /* XXX */
-	struct tdb *tdb;
-	struct tdb_ident *tdbip, tdbi;
-	int s;
 #endif
 	int error = 0;
 
@@ -916,26 +894,6 @@ ip_ctloutput(op, so, level, optname, mp)
 				}
 			}
 			break;
-		case IPSEC_OUTSA:
-#ifndef IPSEC
-			error = EINVAL;
-#else
-			s = spltdb();
-			if (m == 0 || m->m_len != sizeof(struct tdb_ident)) {
-				error = EINVAL;
-			} else {
-				tdbip = mtod(m, struct tdb_ident *);
-				tdb = gettdb(tdbip->spi, &tdbip->dst,
-				    tdbip->proto);
-				if (tdb == NULL)
-					error = ESRCH;
-				else
-					tdb_add_inp(tdb, inp);
-			}
-			splx(s);
-#endif /* IPSEC */
-			break;
-
 		case IP_AUTH_LEVEL:
 		case IP_ESP_TRANS_LEVEL:
 		case IP_ESP_NETWORK_LEVEL:
@@ -1062,26 +1020,6 @@ ip_ctloutput(op, so, level, optname, mp)
 				optval = 0;
 
 			*mtod(m, int *) = optval;
-			break;
-
-		case IPSEC_OUTSA:
-#ifndef IPSEC
-			error = EINVAL;
-#else
-			s = spltdb();
-			if (inp->inp_tdb == NULL) {
-				error = ENOENT;
-			} else {
-				tdbi.spi = inp->inp_tdb->tdb_spi;
-				tdbi.dst = inp->inp_tdb->tdb_dst;
-				tdbi.proto = inp->inp_tdb->tdb_sproto;
-				*mp = m = m_get(M_WAIT, MT_SOOPTS);
-				m->m_len = sizeof(tdbi);
-				bcopy((caddr_t)&tdbi, mtod(m, caddr_t),
-				    (unsigned)m->m_len);
-			}
-			splx(s);
-#endif /* IPSEC */
 			break;
 
 		case IP_AUTH_LEVEL:

@@ -1,12 +1,12 @@
-/*	$OpenBSD: ip_ah.h,v 1.25 2000/03/17 10:25:22 angelos Exp $	*/
+/*	$OpenBSD: ip_ah.h,v 1.26 2000/09/19 03:20:58 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
  * Niels Provos (provos@physnet.uni-hamburg.de).
  *
- * This code was written by John Ioannidis for BSD/OS in Athens, Greece, 
- * in November 1995.
+ * The original version of this code was written by John Ioannidis
+ * for BSD/OS in Athens, Greece, in November 1995.
  *
  * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
  * by Angelos D. Keromytis.
