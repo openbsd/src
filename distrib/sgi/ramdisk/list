@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.13 2004/08/06 22:30:02 pefo Exp $
+#	$OpenBSD: list,v 1.1 2004/08/06 22:33:27 deraadt Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
