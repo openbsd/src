@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.151 2003/05/19 20:25:45 henning Exp $
+# $OpenBSD: Makefile,v 1.152 2003/05/19 20:30:30 henning Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -171,10 +171,7 @@ pfsetup${n}-update:
 pfsetup:	${PFSETUP_TARGETS}
 pfsetup-update:	${PFSETUP_UPDATES}
 
-.ifdef DO_PFSETUP
-REGRESS_TARGETS+=pfsetup
-UPDATE_TARGETS+=pfsetup-update
-.endif
+NODEFAULT_TARGETS+=pfsetup
 
 .for n in ${PFALTQ}
 PFALTQ_TARGETS+=pfaltq${n}
@@ -200,7 +197,11 @@ pfaltq${n}-update:
 pfaltq:		${PFALTQ_TARGETS}
 pfaltq-update:	${PFALTQ_UPDATES}
 
+NODEFAULT_TARGETS+=pfaltq
+
 update:	${UPDATE_TARGETS}
+
+alltests: ${REGRESS_TARGETS} ${NODEFAULT_TARGETS}
 
 .PHONY: ${REGRESS_TARGETS}
 
