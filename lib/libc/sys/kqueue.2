@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.13 2003/12/17 12:03:05 jmc Exp $
+.\"	$OpenBSD: kqueue.2,v 1.14 2004/07/22 21:31:21 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -317,7 +317,7 @@ address of the kevent structure placed in the
 .Va aio_lio_opcode
 field of the AIO request.
 However, this approach will not work on architectures with 64-bit pointers,
-and should be considered depreciated.
+and should be considered deprecated.
 .It Dv EVFILT_VNODE
 Takes a file descriptor as the identifier and the events to watch for in
 .Va fflags ,
