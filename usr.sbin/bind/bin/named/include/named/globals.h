@@ -106,6 +106,8 @@ EXTERN const char *		ns_g_defaultpidfile 	INIT(NS_LOCALSTATEDIR
 							     "/run/named.pid");
 EXTERN const char *		lwresd_g_defaultpidfile INIT(NS_LOCALSTATEDIR
 							    "/run/lwresd.pid");
+EXTERN const char *		ns_g_pidfile		INIT(NS_LOCALSTATEDIR
+							     "/run/named.pid");
 EXTERN const char *		ns_g_username		INIT("named");
 
 #undef EXTERN

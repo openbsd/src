@@ -47,6 +47,9 @@ void
 ns_os_minprivs(void);
 
 void
+ns_os_preopenpidfile(const char *filename);
+
+void
 ns_os_writepidfile(const char *filename, isc_boolean_t first_time);
 
 void

@@ -228,7 +228,7 @@ usage(void) {
 	fprintf(stderr,
 		"usage: named [-c conffile] [-d debuglevel] "
 		"[-f|-g] [-n number_of_cpus]\n"
-		"             [-p port] [-s] [-t chrootdir] [-u username]\n");
+		"             [-p port] [-s] [-t chrootdir] [-u username] [-i pidfile]\n");
 }
 
 static void
@@ -325,9 +325,8 @@ parse_command_line(int argc, char *argv[]) {
 			ns_g_foreground = ISC_TRUE;
 			ns_g_logstderr = ISC_TRUE;
 			break;
-		/* XXXBEW -i should be removed */
 		case 'i':
-			lwresd_g_defaultpidfile = isc_commandline_argument;
+			ns_g_pidfile = isc_commandline_argument;
 			break;
 		case 'l':
 			ns_g_lwresdonly = ISC_TRUE;
@@ -455,6 +454,12 @@ destroy_managers(void) {
 static void
 setup(void) {
 	isc_result_t result;
+
+        /*
+	 * Write pidfile before chroot if specified on the command line
+	 */
+	if (ns_g_pidfile != NULL)
+		ns_os_preopenpidfile(ns_g_pidfile);
 
 	/*
 	 * Get the user and group information before changing the root
