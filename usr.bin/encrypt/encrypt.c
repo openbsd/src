@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.2 1996/08/08 04:37:02 downsj Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.3 1996/08/26 08:41:26 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <err.h>
+#include <errno.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -36,13 +37,14 @@
  * line.  Useful for scripts and such.
  */
 
-extern char *__progname;
 extern char *optarg;
 extern int optind;
 
+char *progname;
+
 void usage()
 {
-    errx(1, "usage: %s [-m] [-s salt] [string]", __progname);
+    errx(1, "usage: %s [-k] [-m] [-s salt] [string]", progname);
 }
 
 char *trim(line)
@@ -67,10 +69,22 @@ int main(argc, argv)
 {
     int opt;
     int do_md5 = 0;
+    int do_makekey = 0;
     char *salt = (char *)NULL;
 
-    while ((opt = getopt(argc, argv, "ms:")) != -1) {
+    if ((progname = strrchr(argv[0], '/')))
+	progname++;
+    else
+	progname = argv[0];
+
+    if (strcmp(progname, "makekey") == 0)
+    	do_makekey = 1;
+
+    while ((opt = getopt(argc, argv, "kms:")) != -1) {
     	switch (opt) {
+	case 'k':
+	    do_makekey = 1;
+	    break;
 	case 'm':
 	    do_md5 = 1;
 	    break;
@@ -82,14 +96,17 @@ int main(argc, argv)
 	}
     }
 
-    if (do_md5 && (salt != (char *)NULL))
+    if (do_md5 && !do_makekey && (salt != (char *)NULL))
 	usage();
 
-    if (!do_md5 && (salt == (char *)NULL))
+    if (!do_md5 && !do_makekey && (salt == (char *)NULL))
 	usage();
+
+    if (do_makekey && (do_md5 || (salt != (char *)NULL)))
+        usage();
 
     if ((argc - optind) < 1) {
-    	char line[BUFSIZ], *string;
+    	char line[BUFSIZ], *string, msalt[3];
 
     	/* Encrypt stdin to stdout. */
 	while (!feof(stdin) && (fgets(line, sizeof(line), stdin) != NULL)) {
@@ -97,8 +114,24 @@ int main(argc, argv)
 	    string = trim(line);
 	    if (*string == '\0')
 	    	continue;
+	    if (do_makekey) {
+	    	/*
+		 * makekey mode: parse string into seperate DES key and salt.
+		 */
+		if (strlen(string) != 10) {
+		    /* To be compatible... */
+		    fprintf (stderr, "%s: %s\n", progname, strerror(EFTYPE));
+		    exit (1);
+		}
+		strcpy(msalt, &string[8]);
+		salt = msalt;
+	    }
 
 	    fputs(crypt(string, (do_md5 ? "$1$" : salt)), stdout);
+	    if (do_makekey) {
+	        fflush(stdout);
+		break;
+	    }
 	    fputc('\n', stdout);
 	}
     } else {
