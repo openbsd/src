@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.5 1996/08/06 20:41:32 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.6 1996/08/12 02:28:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -91,7 +91,7 @@ time_t		uptime;		/* time of last reboot & elapsed time since */
 int		ttywidth;	/* width of tty */
 int		argwidth;	/* width of tty */
 int		header = 1;	/* true if -h flag: don't print heading */
-int		nflag;		/* true if -n flag: don't convert addrs */
+int		nflag = 1;	/* true if -n flag: don't convert addrs */
 int		sortidle;	/* sort bu idle time */
 char	       *sel_user;	/* login of particular user selected */
 char		domain[MAXHOSTNAMELEN];
@@ -137,7 +137,7 @@ main(argc, argv)
 		p = "";
 	} else {
 		wcmd = 1;
-		p = "hiflM:N:nsuw";
+		p = "hiflM:N:asuw";
 	}
 
 	memf = nlistf = NULL;
@@ -156,8 +156,8 @@ main(argc, argv)
 		case 'N':
 			nlistf = optarg;
 			break;
-		case 'n':
-			nflag = 1;
+		case 'a':
+			nflag = 0;
 			break;
 		case 'f': case 'l': case 's': case 'u': case 'w':
 			warnx("[-flsuw] no longer supported");
