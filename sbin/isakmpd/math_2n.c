@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_2n.c,v 1.10 2002/06/09 08:13:06 todd Exp $	*/
+/*	$OpenBSD: math_2n.c,v 1.11 2002/07/05 11:08:13 ho Exp $	*/
 /*	$EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	*/
 
 /*
@@ -455,7 +455,8 @@ b2n_lshift (b2n_ptr d, b2n_ptr n, unsigned int s)
   for (i = d->chunks - 2; i >= maj; i--)
     {
       op--;
-      *p-- = (*p << min) | (*op >> (CHUNK_BITS - min));
+      *p = (*p << min) | (*op >> (CHUNK_BITS - min));
+      p--;
     }
   *p <<= min;
 

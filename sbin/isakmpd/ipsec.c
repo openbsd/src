@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.68 2002/06/14 12:43:11 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.69 2002/07/05 11:08:13 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -377,8 +377,8 @@ ipsec_finalize_exchange (struct message *msg)
 	      LOG_DBG ((LOG_EXCHANGE, 50,
 			"ipsec_finalize_exchange: "
 			"src %s %s dst %s %s tproto %u sport %u dport %u",
-			addr1 ? addr1 : "<???>" , mask1 ? mask1 : "<???>",
-			addr2 ? addr2 : "<???>" , mask2 ? mask2 : "<???>",
+			addr1 ? addr1 : "<??\?>" , mask1 ? mask1 : "<??\?>",
+			addr2 ? addr2 : "<??\?>" , mask2 ? mask2 : "<??\?>",
 			isa->tproto, ntohs (isa->sport), ntohs (isa->dport)));
 
 	      if (addr1)
