@@ -2,31 +2,31 @@
 # pass list 
 regress
 # pass list -v
--pa--	regress
+-pa---	regress
 # pass load table <regress.1> const
 # pass list 
 regress
 # pass list -v
--pa--	regress
+-pa---	regress
 # pass load table <regress.1> persist const
 # pass list 
 regress
 regress.1
 # pass list -v
--pa--	regress
-cpa--	regress.1
+-pa---	regress
+cpa---	regress.1
 # pass load table <regress.1> persist
 # pass list 
 regress
 regress.1
 # pass list -v
--pa--	regress
--pa--	regress.1
+-pa---	regress
+-pa---	regress.1
 # pass load table <regress.1>
 # pass list 
 regress
 # pass list -v
--pa--	regress
+-pa---	regress
 # pass load table <regress> persist { 1.2.3.4 1.2.3.4 4.3.2.1 }
 # pass show 
    1.2.3.4

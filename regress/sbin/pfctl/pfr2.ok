@@ -55,7 +55,7 @@ A  ::2
 # pass list 
 regress
 # pass list -v
--pa--	regress
+-pa---	regress
 # kill
 1 table deleted.
 ktable: 12 allocated, 12 released, 0 leaked.
