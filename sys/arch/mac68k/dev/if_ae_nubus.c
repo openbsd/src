@@ -1,5 +1,5 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.11 1997/03/19 08:04:39 scottr Exp $	*/
-/*	$OpenBSD: if_ae_nubus.c,v 1.6 1997/04/24 02:17:56 gene Exp $	*/
+/*	$OpenBSD: if_ae_nubus.c,v 1.7 1997/05/01 18:32:49 briggs Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.17 1997/05/01 18:17:16 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -355,6 +355,7 @@ ae_nb_card_vendor(na)
 	case NUBUS_DRSW_3COM:
 		switch (na->drhw) {
 		case NUBUS_DRHW_APPLE_SN:
+		case NUBUS_DRHW_APPLE_SNT:
 			vendor = AE_VENDOR_UNKNOWN;
 			break;
 		default:	/* Apple, others, supported by AE */

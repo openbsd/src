@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_sn_nubus.c,v 1.10 1997/04/22 13:37:56 briggs Exp $	*/
+/*	$OpenBSD: if_sn_nubus.c,v 1.11 1997/05/01 18:32:48 briggs Exp $	*/
+/*	$NetBSD: if_sn_nubus.c,v 1.12 1997/05/01 18:17:13 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -216,6 +217,7 @@ sn_nb_card_vendor(na)
 	case NUBUS_DRSW_3COM:
 		switch (na->drhw) {
 		case NUBUS_DRHW_APPLE_SN:
+		case NUBUS_DRHW_APPLE_SNT:
 			vendor = AE_VENDOR_APPLE;
 			break;
 		default:

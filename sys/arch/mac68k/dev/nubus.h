@@ -1,5 +1,5 @@
-/*	$OpenBSD: nubus.h,v 1.13 1997/05/01 03:35:53 briggs Exp $	*/
-/*	$NetBSD: nubus.h,v 1.17 1997/02/24 06:20:07 scottr Exp $	*/
+/*	$OpenBSD: nubus.h,v 1.14 1997/05/01 18:32:50 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.24 1997/05/01 18:17:18 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -79,6 +79,7 @@
 #define    NUBUS_DRHW_KINETICS	0x0106
 #define    NUBUS_DRHW_CABLETRON	0x0109
 #define    NUBUS_DRHW_SONIC	0x0110
+#define    NUBUS_DRHW_APPLE_SNT	0x0118
 #define    NUBUS_DRHW_APPLE_SN	0x0119
 
 #define NUBUS_CATEGORY_COMMUNICATIONS	0x0006
