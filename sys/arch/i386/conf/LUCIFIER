@@ -1,8 +1,8 @@
-#	$OpenBSD: LUCIFIER,v 1.19 1999/02/13 06:42:06 mickey Exp $
+#	$OpenBSD: LUCIFIER,v 1.20 1999/02/18 13:10:55 mickey Exp $
 #
 
-source	/sys
-build	/usr/obj/sys/arch/i386/compile/LUCIFIER
+#source	/sys
+#build	/usr/obj/sys/arch/i386/compile/LUCIFIER
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -204,8 +204,11 @@ pseudo-device	strip	1	# Starmode Radio IP interface
 
 pseudo-device	pty	64	# pseudo-terminals
 pseudo-device	tb	1	# tablet line discipline
+
 pseudo-device	vnd	4	# paging to files
 pseudo-device	ccd	2	# concatenated disk devices
-pseudo-device	ksyms	1	# kernel symbol table
+pseudo-device	raid	10	# RAID volumes
 
+pseudo-device	ksyms	1	# kernel symbol table
+pseudo-device	sequencer
 #pseudo-device	pctr
