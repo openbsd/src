@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.28 2003/07/19 11:48:57 sturm Exp $	*/
+/*	$OpenBSD: filter.c,v 1.29 2003/08/04 18:15:11 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -698,13 +698,14 @@ filter_expand(char *data)
 char *
 filter_dynamicexpand(struct intercept_pid *icpid, char *data)
 {
+	extern char cwd[];
 	static char expand[2*MAXPATHLEN];
 
 	strlcpy(expand, data, sizeof(expand));
 
 	filter_replace(expand, sizeof(expand), "$HOME", icpid->home);
 	filter_replace(expand, sizeof(expand), "$USER", icpid->username);
-	filter_replace(expand, sizeof(expand), "$CWD", icpid->cwd);
+	filter_replace(expand, sizeof(expand), "$CWD", cwd);
 
 	return (expand);
 }

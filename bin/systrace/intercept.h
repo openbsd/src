@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.h,v 1.17 2003/06/16 06:36:40 itojun Exp $	*/
+/*	$OpenBSD: intercept.h,v 1.18 2003/08/04 18:15:11 sturm Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -100,7 +100,6 @@ struct intercept_pid {
 
 	char username[MAXLOGNAME];
 	char home[MAXPATHLEN];	/* current home dir for uid */
-	char cwd[MAXPATHLEN];	/* current working directory */
 
 	void *data;
 
@@ -185,6 +184,7 @@ struct intercept_pid *intercept_getpid(pid_t);
 int intercept_existpids(void);
 
 char *intercept_get_string(int, pid_t, void *);
+char *normalize_filename(int, pid_t, char *, int);
 char *intercept_filename(int, pid_t, void *, int);
 void intercept_syscall(int, pid_t, u_int16_t, int, const char *, int,
     const char *, void *, int);
