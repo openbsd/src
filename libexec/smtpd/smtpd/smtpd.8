@@ -1,4 +1,4 @@
-.\"	$Id: smtpd.8,v 1.15 2000/04/15 02:15:30 aaron Exp $
+.\"	$Id: smtpd.8,v 1.16 2000/08/02 13:53:01 aaron Exp $
 .Dd December 10, 1997
 .Dt SMTPD 8
 .Os
@@ -19,103 +19,103 @@ Obtuse Systems SMTPD message storing daemon
 .Op Fl p Ar listenport
 .Op Fl i Ar pidfile
 .Sh DESCRIPTION
-.Nm smtpd
+.Nm
 talks the Simple Mail Transfer Protocol (SMTP) with
 other SMTP daemons to receive mail from them, and saves it into a spool
 directory for later processing. It is the store portion of an SMTP
 store and forward proxy. The symbiotic companion program
 .Xr smtpfwdd 8
 is used to forward the spooled mail on to its eventual destination.
-.Nm smtpd
+.Nm
 is normally invoked from a super-server such as
 .Xr inetd 8 .
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width Ds
-.It Fl c
+.It Fl c Ar chrootdir
 Specify a different
 .Ar chrootdir
 directory to chroot into on startup. The default is
 .Pa /var/spool/smtpd .
 This directory should be readable and writable only to the user that
-.Nm smtpd
+.Nm
 runs as.
-.It Fl d
-Specify a different spool
-.Ar directory
-within the chrooted subtree. The default is ".", making
-.Nm smtpd
+.It Fl d Ar spooldir
+Specify a different spool directory within the chrooted subtree.
+The default is ".", making
+.Nm
 spool files to the directory it chroots itself to.
 .It Fl D
 Tells
-.Nm smtpd
+.Nm
 to run as a daemon, listening on port 25.
 The default is not to run as a daemon.
-.It Fl g
+.It Fl g Ar group
 Specify a
 .Ar group
 to run as.
 .It Fl H
 Disable host checking against the DNS. By default
-.Nm smtpd
+.Nm
 checks and will complain in the syslogs if the DNS information for
 a host seems to indicate a possible spoof or misconfiguration.
-.It Fl i
+.It Fl i Ar pidfile
 Specify a filename that
-.Nm smtpd
-should lock and write its pid to when running as a daemon.
+.Nm
+should lock and write its PID to when running as a daemon.
 Doesn't do anything if running from inetd. Default pid file
 in daemon mode is
 .Pa /var/run/smtpd.pid
 on BSD systems, or
 .Pa /usr/spool/smtpd/smtpd.pid
 on non-BSD systems.
-.It Fl l
-Specify an ip address in dotted quad format for
-.Nm smtpd
+.It Fl l Ar listenip
+Specify an IP address in dotted quad format for
+.Nm
 to accept connections to. In daemon mode this limits the address
 that
-.Nm smtpd
+.Nm
 listens on. In inetd mode, smtpd will issue a 521 error
 code and exit if connected to an address other than the specified
 one. By default,
-.Nm smtpd
+.Nm
 accepts a connection no matter what address it is connected to.
 .It Fl L
 Suppress children in daemon mode (above) from doing an
 openlog() call. This means your syslogs won't have pid
 information, but is useful if you don't want to have to set up
 your chroot jail for
-.Nm smtpd
+.Nm
 in a manner that an openlog() call will work in it.
-.It Fl m
+.It Fl m Ar myname
 Specify
 .Ar myname ,
 the hostname the daemon should announce itself
 as. The default is whatever gethostname() returns.
-.It Fl p
+.It Fl p Ar listenport
 Specify a decimal port number for
-.Nm smtpd
+.Nm
 to listen when running as a daemon. Doesn't do anything if running
 from inetd.
 .It Fl P
 Enable paranoid mode of operation. In this mode connections are
 dropped from any client feeding
-.Nm smtpd
+.Nm
 a suspicious hostname, FROM: or RCPT: lines containing characters
 indicative of an attempt to do something evil, or any message headers
 that aren't 8-bit clean. The default is to log such occurrences and
 substitute for the offending characters, but not drop the connection.
 .It Fl q
 Tell
-.Nm smtpd
+.Nm
 to be quieter. By default smtpd emits very verbose syslog messages. With
 this option it will emit one line of log for each normal message exchange.
-.It Fl s
+.It Fl s Ar maxsize
 Specify
-.Ar maxsize
+.Ar maxsize ,
 the maximum size (in bytes) of mail message the
 daemon should accept. The default is not to have a maximum size.
-.It Fl u
+.It Fl u Ar user
 Specify a
 .Ar user
 to run as. This user must not be root but
