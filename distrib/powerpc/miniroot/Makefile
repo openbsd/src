@@ -45,7 +45,7 @@ do_prep: ${CBIN} do_unconfig
 	disklabel -w ${CDEV} ${DISKTYPE}
 	
 do_mount:
-	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
+	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV}
 	mount ${BDEV} ${MOUNT_POINT}
  
 do_umount_copy:

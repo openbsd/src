@@ -27,7 +27,7 @@ all:	bsd.rd
 #	dd if=/dev/zero of=${REALIMAGE} count=4096
 #	vnconfig -v -c ${VND} ${REALIMAGE}
 #	disklabel -w ${VND} rdroot
-#	newfs -m 0 -o space -i 8192 -c 80 ${VND_RDEV} rdroot
+#	newfs -m 0 -o space -i 8192 -c 80 ${VND_RDEV}
 #	mount ${VND_DEV} ${MOUNT_POINT}
 #	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 #	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTFLOPPY}
@@ -63,7 +63,7 @@ rd_setup: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} bs=512 count=${NBLKS}
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w ${VND} ${DISKTYPE}
-	newfs ${NEWFSARGS} ${VND_RDEV} ${DISKTYPE}
+	newfs ${NEWFSARGS} ${VND_RDEV}
 	fsck ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 

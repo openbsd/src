@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1997/09/21 11:46:01 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 1997/09/26 02:20:45 millert Exp $
 
 # Revision is 2.1
 REV=		21
@@ -58,7 +58,7 @@ ${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
 	dd if=/dev/zero of=${REALIMAGE} count=${FLOPPYSIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w ${RAWLABEL} ${VND} ${FLOPPYTYPE}
-	newfs ${NEWFSOPTS_FD} ${VND_RDEV} ${FLOPPYTYPE}
+	newfs ${NEWFSOPTS_FD} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	cp ${BOOT} ${MOUNT_POINT}/boot
 	cp bsd.gz ${MOUNT_POINT}/bsd
@@ -93,7 +93,7 @@ ${IMAGE}: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
 	vnconfig -v -c ${VND} ${REALIMAGE}
 	disklabel -w ${RAWLABEL} ${VND} ${DISKTYPE}
-	newfs ${NEWFSOPTS_RD} ${VND_RDEV} ${DISKTYPE} || ${NEWFS_WILL_FAIL}
+	newfs ${NEWFSOPTS_RD} ${VND_RDEV} || ${NEWFS_WILL_FAIL}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	REV=${REV} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1997/09/05 21:16:44 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/09/26 02:20:39 millert Exp $
 
 .include "../Makefile.inc"
 
@@ -21,9 +21,9 @@ bsd:
 
 all:	bsd
 	dd if=/dev/zero of=${REALIMAGE} bs=10k count=144
-	vnconfig -v -c ${VND_DEV} ${REALIMAGE}
-	#disklabel -w ${VND_RDEV} floppy
-	newfs -O -m 0 -o space -i 8192 -c 80 ${VND_RDEV} floppy
+	vnconfig -v -c ${VND} ${REALIMAGE}
+	disklabel -w ${VND} floppy
+	newfs -O -m 0 -o space -i 8192 -c 80 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${.CURDIR}/.. CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${.CURDIR}/../runlist.sh ${LISTS}
