@@ -1,4 +1,4 @@
-/*	$OpenBSD: anddi3.c,v 1.3 2003/06/02 23:28:07 millert Exp $	*/
+/*	$OpenBSD: anddi3.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $	*/
 /*	$NetBSD: anddi3.c,v 1.5 1995/10/07 09:26:15 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)anddi3.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: anddi3.c,v 1.3 2003/06/02 23:28:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: anddi3.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,8 +48,7 @@ static char rcsid[] = "$OpenBSD: anddi3.c,v 1.3 2003/06/02 23:28:07 millert Exp 
  * Return a & b, in quad.
  */
 quad_t
-__anddi3(a, b)
-	quad_t a, b;
+__anddi3(quad_t a, quad_t b)
 {
 	union uu aa, bb;
 

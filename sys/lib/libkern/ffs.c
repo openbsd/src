@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.5 2000/07/02 03:09:44 mickey Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.6 2004/08/07 00:38:32 deraadt Exp $	*/
 
 /*
  * Public domain.
@@ -6,7 +6,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: ffs.c,v 1.5 2000/07/02 03:09:44 mickey Exp $";
+static char *rcsid = "$OpenBSD: ffs.c,v 1.6 2004/08/07 00:38:32 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -19,11 +19,10 @@ static char *rcsid = "$OpenBSD: ffs.c,v 1.5 2000/07/02 03:09:44 mickey Exp $";
  * ffs -- vax ffs instruction
  */
 int
-ffs(mask)
-	register int mask;
+ffs(int mask)
 {
-	register int bit;
-	register unsigned int r = mask;
+	int bit;
+	unsigned int r = mask;
 	static const signed char t[16] = {
 		-28, 1, 2, 1,
 		  3, 1, 2, 1,

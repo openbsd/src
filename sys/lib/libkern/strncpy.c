@@ -1,4 +1,4 @@
-/*	$OpenBSD: strncpy.c,v 1.5 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: strncpy.c,v 1.6 2004/08/07 00:38:33 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strncpy.c	5.6 (Berkeley) 1/26/91";*/
-static char *rcsid = "$OpenBSD: strncpy.c,v 1.5 2003/06/02 23:28:08 millert Exp $";
+static char *rcsid = "$OpenBSD: strncpy.c,v 1.6 2004/08/07 00:38:33 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -48,14 +48,11 @@ static char *rcsid = "$OpenBSD: strncpy.c,v 1.5 2003/06/02 23:28:08 millert Exp 
  * Return dst.
  */
 char *
-strncpy(dst, src, n)
-	char *dst;
-	const char *src;
-	register size_t n;
+strncpy(char *dst, const char *src, size_t n)
 {
 	if (n != 0) {
-		register char *d = dst;
-		register const char *s = src;
+		char *d = dst;
+		const char *s = src;
 
 		do {
 			if ((*d++ = *s++) == 0) {

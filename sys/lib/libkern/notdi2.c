@@ -1,4 +1,4 @@
-/*	$OpenBSD: notdi2.c,v 1.3 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: notdi2.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $	*/
 /*	$NetBSD: notdi2.c,v 1.5 1995/10/07 09:26:36 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)notdi2.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: notdi2.c,v 1.3 2003/06/02 23:28:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: notdi2.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,8 +49,7 @@ static char rcsid[] = "$OpenBSD: notdi2.c,v 1.3 2003/06/02 23:28:08 millert Exp 
  * than `not'.
  */
 quad_t
-__one_cmpldi2(a)
-	quad_t a;
+__one_cmpldi2(quad_t a)
 {
 	union uu aa;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcmp.c,v 1.7 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: strcmp.c,v 1.8 2004/08/07 00:38:33 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strcmp.c	5.5 (Berkeley) 1/26/91";*/
-static char *rcsid = "$OpenBSD: strcmp.c,v 1.7 2003/06/02 23:28:08 millert Exp $";
+static char *rcsid = "$OpenBSD: strcmp.c,v 1.8 2004/08/07 00:38:33 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -48,8 +48,8 @@ static char *rcsid = "$OpenBSD: strcmp.c,v 1.7 2003/06/02 23:28:08 millert Exp $
  * Compare strings.
  */
 int
-strcmp(s1, s2)
-	register const char *s1, *s2;
+strcmp(const char *s1, const char *s2)
+	
 {
 	while (*s1 == *s2++)
 		if (*s1++ == 0)

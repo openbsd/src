@@ -1,4 +1,4 @@
-/*	$OpenBSD: libkern.h,v 1.21 2004/06/21 22:55:04 itojun Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.22 2004/08/07 00:38:32 deraadt Exp $	*/
 /*	$NetBSD: libkern.h,v 1.7 1996/03/14 18:52:08 christos Exp $	*/
 
 /*-
@@ -151,13 +151,14 @@ abs(j)
 void	 __assert(const char *, const char *, int, const char *)
 	    __attribute__ ((__noreturn__));
 int	 bcmp(const void *, const void *, size_t);
+void	 bzero(void *, size_t);
 int	 ffs(int);
 int	 locc(int, char *, u_int);
 void	*memchr(const void *, int, size_t);
 int	 memcmp(const void *, const void *, size_t);
 u_long	 random(void);
 void	 srandom(u_long);
-int	 scanc(u_int, const u_char *, const u_char *, int);
+int	 scanc(u_int, const u_char *, const u_char [], int);
 int	 skpc(int, size_t, u_char *);
 size_t	 strlen(const char *);
 char	*strncpy(char *, const char *, size_t)

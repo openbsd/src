@@ -1,4 +1,4 @@
-/*	$OpenBSD: divdi3.c,v 1.3 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: divdi3.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $	*/
 /*	$NetBSD: divdi3.c,v 1.5 1995/10/07 09:26:24 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)divdi3.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: divdi3.c,v 1.3 2003/06/02 23:28:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: divdi3.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,8 +49,7 @@ static char rcsid[] = "$OpenBSD: divdi3.c,v 1.3 2003/06/02 23:28:08 millert Exp 
  * ??? if -1/2 should produce -1 on this machine, this code is wrong
  */
 quad_t
-__divdi3(a, b)
-	quad_t a, b;
+__divdi3(quad_t a, quad_t b)
 {
 	u_quad_t ua, ub, uq;
 	int neg;

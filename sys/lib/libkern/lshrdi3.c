@@ -1,4 +1,4 @@
-/*	$OpenBSD: lshrdi3.c,v 1.3 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: lshrdi3.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $	*/
 /*	$NetBSD: lshrdi3.c,v 1.5 1995/10/07 09:26:30 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lshrdi3.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: lshrdi3.c,v 1.3 2003/06/02 23:28:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: lshrdi3.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,9 +48,7 @@ static char rcsid[] = "$OpenBSD: lshrdi3.c,v 1.3 2003/06/02 23:28:08 millert Exp
  * Shift an (unsigned) quad value right (logical shift right).
  */
 quad_t
-__lshrdi3(a, shift)
-	quad_t a;
-	qshift_t shift;
+__lshrdi3(quad_t a, qshift_t shift)
 {
 	union uu aa;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imin.c,v 1.3 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: imin.c,v 1.4 2004/08/07 00:38:32 deraadt Exp $	*/
 /*	$NetBSD: imin.c,v 1.3 1996/03/14 18:52:07 christos Exp $	*/
 
 /*
@@ -36,8 +36,7 @@
 #include <lib/libkern/libkern.h>
 
 int
-imin(a, b)
-	int a, b;
+imin(int a, int b)
 {
 	return (a < b ? a : b);
 }

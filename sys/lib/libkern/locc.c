@@ -1,4 +1,4 @@
-/*	$OpenBSD: locc.c,v 1.4 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: locc.c,v 1.5 2004/08/07 00:38:32 deraadt Exp $	*/
 /*	$NetBSD: locc.c,v 1.2 1994/10/26 06:42:29 cgd Exp $	*/
 
 /*
@@ -36,12 +36,9 @@
 #include <lib/libkern/libkern.h>
 
 int
-locc(mask, cp, size)
-	register int mask;
-	u_int size;
-	register char *cp;
+locc(int mask, char *cp, u_int size)
 {
-	register char *end = &cp[size];
+	char *end = &cp[size];
 
 	while (cp < end && *cp != mask)
 		cp++;

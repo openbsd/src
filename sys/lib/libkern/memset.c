@@ -1,4 +1,4 @@
-/*	$OpenBSD: memset.c,v 1.4 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: memset.c,v 1.5 2004/08/07 00:38:32 deraadt Exp $	*/
 /*	$NetBSD: memset.c,v 1.6 1998/03/27 05:35:47 cgd Exp $	*/
 
 /*-
@@ -62,19 +62,14 @@ __RCSID("$NetBSD: memset.c,v 1.6 1998/03/27 05:35:47 cgd Exp $");
 #define	WIDEVAL	0
 
 void
-bzero(dst0, length)
-	void *dst0;
-	size_t length;
+bzero(void *dst0, size_t length)
 #else
 #define	RETURN	return (dst0)
 #define	VAL	c0
 #define	WIDEVAL	c
 
 void *
-memset(dst0, c0, length)
-	void *dst0;
-	int c0;
-	size_t length;
+memset(void *dst0, int c0, size_t length)
 #endif
 {
 	size_t t;

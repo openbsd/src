@@ -1,4 +1,4 @@
-/*	$OpenBSD: muldi3.c,v 1.5 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: muldi3.c,v 1.6 2004/08/07 00:38:32 deraadt Exp $	*/
 /*	$NetBSD: muldi3.c,v 1.5 1995/10/07 09:26:33 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)muldi3.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: muldi3.c,v 1.5 2003/06/02 23:28:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: muldi3.c,v 1.6 2004/08/07 00:38:32 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -104,12 +104,11 @@ static char rcsid[] = "$OpenBSD: muldi3.c,v 1.5 2003/06/02 23:28:08 millert Exp 
 static quad_t __lmulq(u_long, u_long);
 
 quad_t
-__muldi3(a, b)
-	quad_t a, b;
+__muldi3(quad_t a, quad_t b)
 {
 	union uu u, v, low, prod;
-	register u_long high, mid, udiff, vdiff;
-	register int negall, negmid;
+	u_long high, mid, udiff, vdiff;
+	int negall, negmid;
 #define	u1	u.ul[H]
 #define	u0	u.ul[L]
 #define	v1	v.ul[H]

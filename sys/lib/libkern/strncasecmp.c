@@ -1,4 +1,4 @@
-/*	$OpenBSD: strncasecmp.c,v 1.3 1998/06/27 01:21:09 mickey Exp $	*/
+/*	$OpenBSD: strncasecmp.c,v 1.4 2004/08/07 00:38:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: strncasecmp.c,v 1.3 1998/06/27 01:21:09 mickey Exp $";
+static char *rcsid = "$Id: strncasecmp.c,v 1.4 2004/08/07 00:38:33 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -40,10 +40,7 @@ static char *rcsid = "$Id: strncasecmp.c,v 1.3 1998/06/27 01:21:09 mickey Exp $"
 #endif
 
 int
-strncasecmp(s1, s2, n)
-	const char *s1;
-	const char *s2;
-	size_t n;
+strncasecmp(const char *s1, const char *s2, size_t n)
 {
 	if (n == 0)
 		return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcat.c,v 1.7 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: strcat.c,v 1.8 2004/08/07 00:38:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strcat.c	5.6 (Berkeley) 2/24/91";*/
-static char *rcsid = "$OpenBSD: strcat.c,v 1.7 2003/06/02 23:28:08 millert Exp $";
+static char *rcsid = "$OpenBSD: strcat.c,v 1.8 2004/08/07 00:38:33 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -43,13 +43,13 @@ static char *rcsid = "$OpenBSD: strcat.c,v 1.7 2003/06/02 23:28:08 millert Exp $
 __warn_references(strcat, "warning: strcat() is often misused, please use strlcpy()");
 
 char *
-strcat(s, append)
-	register char *s;
-	register const char *append;
+strcat(char *s, const char *append)
 {
 	char *save = s;
 
-	for (; *s; ++s);
-	while ((*s++ = *append++) != '\0');
+	for (; *s; ++s)
+		;
+	while ((*s++ = *append++) != '\0')
+		;
 	return(save);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: random.c,v 1.6 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: random.c,v 1.7 2004/08/07 00:38:33 deraadt Exp $	*/
 /*	$NetBSD: random.c,v 1.2 1994/10/26 06:42:42 cgd Exp $	*/
 
 /*-
@@ -44,9 +44,9 @@
 u_long _randseed = 1;
 
 u_long
-random()
+random(void)
 {
-	register long x, hi, lo, t;
+	long x, hi, lo, t;
 
 	/*
 	 * Compute x[n + 1] = (7^5 * x[n]) mod (2^31 - 1).

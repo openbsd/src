@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcount.c,v 1.7 2004/07/22 16:06:34 art Exp $	*/
+/*	$OpenBSD: mcount.c,v 1.8 2004/08/07 00:38:32 deraadt Exp $	*/
 /*	$NetBSD: mcount.c,v 1.3.6.1 1996/06/12 04:23:01 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: mcount.c,v 1.7 2004/07/22 16:06:34 art Exp $";
+static char rcsid[] = "$OpenBSD: mcount.c,v 1.8 2004/08/07 00:38:32 deraadt Exp $";
 #endif
 #endif
 
@@ -61,8 +61,7 @@ static char rcsid[] = "$OpenBSD: mcount.c,v 1.7 2004/07/22 16:06:34 art Exp $";
  *       stubs.
  */
 _MCOUNT_DECL(u_long frompc, u_long selfpc) __attribute__((unused));
-_MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
-	register u_long frompc, selfpc;
+_MCOUNT_DECL(u_long frompc, u_long selfpc)	/* _mcount; may be static, inline, etc */
 {
 	u_short *frompcindex;
 	struct tostruct *top, *prevtop;

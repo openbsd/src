@@ -1,4 +1,4 @@
-/*	$OpenBSD: qdivrem.c,v 1.5 2003/06/02 23:28:08 millert Exp $	*/
+/*	$OpenBSD: qdivrem.c,v 1.6 2004/08/07 00:38:33 deraadt Exp $	*/
 /*	$NetBSD: qdivrem.c,v 1.5 1995/10/07 09:26:40 mycroft Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #ifdef notdef
 static char sccsid[] = "@(#)qdivrem.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$OpenBSD: qdivrem.c,v 1.5 2003/06/02 23:28:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: qdivrem.c,v 1.6 2004/08/07 00:38:33 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -71,12 +71,11 @@ static void shl(digit *p, int len, int sh);
  * leading zeros).
  */
 u_quad_t
-__qdivrem(uq, vq, arq)
-	u_quad_t uq, vq, *arq;
+__qdivrem(u_quad_t uq, u_quad_t vq, u_quad_t *arq)
 {
 	union uu tmp;
 	digit *u, *v, *q;
-	register digit v1, v2;
+	digit v1, v2;
 	u_long qhat, rhat, t;
 	int m, n, d, j, i;
 	digit uspace[5], vspace[5], qspace[5];
@@ -186,7 +185,7 @@ __qdivrem(uq, vq, arq)
 	v1 = v[1];	/* for D3 -- note that v[1..n] are constant */
 	v2 = v[2];	/* for D3 */
 	do {
-		register digit uj0, uj1, uj2;
+		digit uj0, uj1, uj2;
 		
 		/*
 		 * D3: Calculate qhat (\^q, in TeX notation).
@@ -273,12 +272,9 @@ __qdivrem(uq, vq, arq)
  * We may assume len >= 0.  NOTE THAT THIS WRITES len+1 DIGITS.
  */
 static void
-shl(p, len, sh)
-	register digit *p;
-	register int len;
-	register int sh;
+shl(digit *p, int len, int sh)
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < len; i++)
 		p[i] = LHALF(p[i] << sh) | (p[i + 1] >> (HALF_BITS - sh));
