@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stat.1,v 1.3 2005/04/02 17:52:48 otto Exp $
+.\"	$OpenBSD: stat.1,v 1.4 2005/04/02 21:40:50 jmc Exp $
 .\"	$NetBSD: stat.1,v 1.11 2003/05/08 13:07:10 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -92,8 +92,9 @@ implies
 .Fl l .
 .It Fl f Ar format
 Display information using the specified format.
-See the FORMATS section
-for a description of valid formats.
+See the
+.Sx FORMATS
+section for a description of valid formats.
 .It Fl L
 Use
 .Xr stat 2
@@ -134,8 +135,7 @@ This format is
 passed directly to
 .Xr strftime 3 .
 .It Fl x
-Display information in a more verbose way as known from some Linux
-distributions.
+Display information in a more verbose way.
 .El
 .Ss FORMATS
 Format strings are similar to
