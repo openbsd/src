@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.240 2000/04/11 13:56:40 ho Exp $
+	$OpenBSD: pcidevs,v 1.241 2000/04/12 06:02:28 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -390,7 +390,7 @@ vendor OALAB		0x1162	OA Laboratory
 vendor SYNEMA		0x1163	Synema
 vendor APT		0x1164	Advanced Peripherals Technologies
 vendor IMAGRAPH		0x1165	Imagraph
-vendor PEQUR		0x1166	Pequr Technology
+vendor RCC		0x1166	Reliance Computer
 vendor MUTOH		0x1167	Mutoh Industries
 vendor THINE		0x1168	Thine Electronics
 vendor CDAC		0x1169	Centre for Dev. of Advanced Computing
@@ -1239,7 +1239,9 @@ product OPTI RM861HA		0xc861	RM861HA
 product PCTECH RZ1000		0x1000	RZ1000
 
 /* Pequr products */
-product PEQUR PCIBRIDGE		0x0200	PCI
+product RCC PCIBRIDGE		0x0200	PCI
+product RCC CNB20HE		0x0008	CNB20HE
+product RCC CNB20HE		0x0009	CNB20LE
 
 /* PLX products */
 product PLX	1076		0x1076	I/O
