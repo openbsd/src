@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)bad144.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: bad144.c,v 1.2 1997/06/29 07:15:29 deraadt Exp $";
+static char *rcsid = "$Id: bad144.c,v 1.3 1997/07/27 02:33:35 deraadt Exp $";
 #endif not lint
 
 /*
@@ -69,11 +69,6 @@ static char *rcsid = "$Id: bad144.c,v 1.2 1997/06/29 07:15:29 deraadt Exp $";
 #include <paths.h>
 
 #define RETRIES	10		/* number of retries on reading old sectors */
-#ifdef i386 /* XXX */
-#define	RAWPART	"d"		/* disk partition containing badsector tables */
-#else
-#define	RAWPART	"c"		/* disk partition containing badsector tables */
-#endif
 
 int	fflag, add, copy, verbose, nflag;
 int	dups;
@@ -154,7 +149,8 @@ usage:
 		exit(1);
 	}
 	if (argv[0][0] != '/')
-		(void)sprintf(name, "%sr%s%s", _PATH_DEV, argv[0], RAWPART);
+		(void)sprintf(name, "%sr%s%c", _PATH_DEV, argv[0],
+		    'a' + RAW_PART);
 	else
 		strcpy(name, argv[0]);
 	f = open(name, argc == 1? O_RDONLY : O_RDWR);
