@@ -1,4 +1,4 @@
-
+/*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.85 2000/02/05 10:13:12 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.86 2000/02/06 10:18:58 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
