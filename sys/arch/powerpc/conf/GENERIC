@@ -9,15 +9,18 @@ maxusers	32
 # Standard system options (should go into std.powerpc?)
 options		SWAPPAGER, VNODEPAGER, DEVPAGER
 options		MACHINE_NONCONTIG
-options		EXEC_AOUT
+options		EXEC_ELF
 options		EXEC_SCRIPT
 
 # various hacks due to bugs in Openfirmware implementation
 options		FIREPOWERBUGS
 
-options		IPKDBUSERHACK
-makeoptions	DEBUG="-g"
+#options		IPKDBUSERHACK
+#makeoptions	DEBUG="-g"
 
+#options		DDB
+#options		KTRACE
+#options		SYSCALL_DEBUG
 options		TCP_COMPAT_42
 options		COMPAT_43
 options		COMPAT_09
@@ -44,6 +47,9 @@ options		UNION
 options		INET
 options		NMBCLUSTERS=1024
 
+options		MAXUSERS=20
+#options		TARGET_ELF
+
 config		bsd	swap generic
 
 ofroot*		at root
@@ -53,7 +59,7 @@ ofbus*		at openfirm?
 ofdisk*		at openfirm?
 
 ofnet*		at openfirm?
-ipkdbif0	at ofnet?
+#ipkdbif0	at ofnet?
 
 ofcons*		at openfirm?
 
@@ -61,3 +67,6 @@ ofrtc*		at openfirm?
 
 pseudo-device	loop
 pseudo-device	pty	64
+pseudo-device	random	1
+pseudo-device	rd
+pseudo-device	vnd	1
