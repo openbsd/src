@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxkivar.h,v 1.4 2002/06/03 21:13:20 mickey Exp $	*/
+/*	$OpenBSD: emuxkivar.h,v 1.5 2003/02/18 14:32:13 jmc Exp $	*/
 /*	$NetBSD: emuxkivar.h,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -99,7 +99,7 @@ struct emuxki_chanparms_fxsend {
 };
 
 struct emuxki_chanparms_pitch {
-	u_int16_t       intial;	/* 4 bits of octave, 12 bits of fractional
+	u_int16_t       initial;/* 4 bits of octave, 12 bits of fractional
 				 * octave */
 	u_int16_t       current;/* 0x4000 == unity pitch shift */
 	u_int16_t       target;	/* 0x4000 == unity pitch shift */
