@@ -1,4 +1,4 @@
-/* $OpenBSD: parse_assertion.c,v 1.7 1999/11/03 19:52:22 angelos Exp $ */
+/* $OpenBSD: parse_assertion.c,v 1.8 2000/02/12 14:28:00 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -420,6 +420,7 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 	if (as->as_startofsignature == (char *) NULL)
 	  as->as_startofsignature = ks;
 
+	/* This catches comments at the begining of an assertion only */
 	if (as->as_buf[i] == '#')	/* Comment */
 	{
 	    seen_field = 1;
@@ -428,6 +429,7 @@ keynote_parse_assertion(char *buf, int len, int assertion_flags)
 	    while ((i< j) && as->as_buf[++i] != '\n')
 	      ;
 
+	    i++;
 	    continue;  /* Loop */
 	}
 
