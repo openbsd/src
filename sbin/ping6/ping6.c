@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.56 2003/07/25 06:01:42 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.57 2004/01/25 03:39:15 deraadt Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -1327,11 +1327,12 @@ pinger(void)
 		icp->icmp6_seq = ntohs(seq);
 		if (timing) {
 			struct timeval tv;
-			struct tv32 *tv32;
+			struct tv32 tv32;
+
 			(void)gettimeofday(&tv, NULL);
-			tv32 = (struct tv32 *)&outpack[ICMP6ECHOLEN];
-			tv32->tv32_sec = htonl(tv.tv_sec);
-			tv32->tv32_usec = htonl(tv.tv_usec);
+			tv32.tv32_sec = htonl(tv.tv_sec);
+			tv32.tv32_usec = htonl(tv.tv_usec);
+			bcopy(&tv32, &outpack[ICMP6ECHOLEN], sizeof tv32);
 		}
 		cc = ICMP6ECHOLEN + datalen;
 	}
@@ -1462,7 +1463,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 	u_char *cp = NULL, *dp, *end = buf + cc;
 	struct in6_pktinfo *pktinfo = NULL;
 	struct timeval tv, tp;
-	struct tv32 *tpp;
+	struct tv32 tv32;
 	double triptime = 0;
 	int dupflag;
 	size_t off;
@@ -1504,9 +1505,9 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 		seq = ntohs(icp->icmp6_seq);
 		++nreceived;
 		if (timing) {
-			tpp = (struct tv32 *)(icp + 1);
-			tp.tv_sec = ntohl(tpp->tv32_sec);
-			tp.tv_usec = ntohl(tpp->tv32_usec);
+			bcopy(icp + 1, &tv32, sizeof tv32);
+			tp.tv_sec = ntohl(tv32.tv32_sec);
+			tp.tv_usec = ntohl(tv32.tv32_usec);
 			tvsub(&tv, &tp);
 			triptime = ((double)tv.tv_sec) * 1000.0 +
 			    ((double)tv.tv_usec) / 1000.0;
