@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.6 1995/05/31 00:25:06 jonathan Exp $	*/
+/*      $OpenBSD: profile.h,v 1.5 1997/04/12 19:56:07 graichen Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,42 +35,44 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)profile.h	8.1 (Berkeley) 6/10/93
+ *	from: @(#)profile.h	8.1 (Berkeley) 6/10/93
  */
 
-#define	_MCOUNT_DECL static void __mcount
+#define	_MCOUNT_DECL static void ___mcount
 
 #define	MCOUNT \
-	asm(".globl _mcount;" \
-	"_mcount:;" \
-	".set noreorder;" \
-	".set noat;" \
-	"sw $4,8($29);" \
-	"sw $5,12($29);" \
-	"sw $6,16($29);" \
-	"sw $7,20($29);" \
-	"sw $1,0($29);" \
-	"sw $31,4($29);" \
-	"move $5,$31;" \
-	"jal ___mcount;" \
-	"move $4,$1;" \
-	"lw $4,8($29);" \
-	"lw $5,12($29);" \
-	"lw $6,16($29);" \
-	"lw $7,20($29);" \
-	"lw $31,4($29);" \
-	"lw $1,0($29);" \
-	"addu $29,$29,8;" \
-	"j $31;" \
-	"move $31,$1;" \
-	".set reorder;" \
+	__asm(".globl _mcount;"		\
+	".type _mcount,@function;"	\
+	"_mcount:;"			\
+	".set noreorder;"		\
+	".set noat;"			\
+	".cpload $25;"			\
+	"sw $4,8($29);"			\
+	"sw $5,12($29);"		\
+	"sw $6,16($29);"		\
+	"sw $7,20($29);"		\
+	"sw $1,0($29);"			\
+	"sw $31,4($29);"		\
+	"move $5,$31;"			\
+	"jal ___mcount;"		\
+	"move $4,$1;"			\
+	"lw $4,8($29);"			\
+	"lw $5,12($29);"		\
+	"lw $6,16($29);"		\
+	"lw $7,20($29);"		\
+	"lw $31,4($29);"		\
+	"lw $1,0($29);"			\
+	"addu $29,$29,8;"		\
+	"j $31;"			\
+	"move $31,$1;"			\
+	".set reorder;"			\
 	".set at");
 
 #ifdef _KERNEL
 /*
  * The following two macros do splhigh and splx respectively.
  * They have to be defined this way because these are real
- * functions on the PMAX, and we do not want to invoke mcount
+ * functions on the MIPS, and we do not want to invoke mcount
  * recursively.
  */
 #define	MCOUNT_ENTER	s = _splhigh()
