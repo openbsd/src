@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.4 1999/12/08 00:29:26 aaron Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.5 1999/12/08 00:38:08 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -119,14 +119,6 @@ u_int8_t ste_calchash	__P((caddr_t));
 void ste_setmulti	__P((struct ste_softc *));
 int ste_init_rx_list	__P((struct ste_softc *));
 void ste_init_tx_list	__P((struct ste_softc *));
-
-#ifdef STE_USEIOSPACE
-#define STE_RES			SYS_RES_IOPORT
-#define STE_RID			STE_PCI_LOIO
-#else
-#define STE_RES			SYS_RES_MEMORY
-#define STE_RID			STE_PCI_LOMEM
-#endif
 
 #define STE_SETBIT4(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg, CSR_READ_4(sc, reg) | x)

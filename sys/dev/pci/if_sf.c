@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.3 1999/12/08 00:29:26 aaron Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.4 1999/12/08 00:38:07 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -161,14 +161,6 @@ void sf_miibus_statchg	__P((struct device *));
 
 u_int32_t csr_read_4	__P((struct sf_softc *, int));
 void csr_write_4	__P((struct sf_softc *, int, u_int32_t));
-
-#ifdef SF_USEIOSPACE
-#define SF_RES			SYS_RES_IOPORT
-#define SF_RID			SF_PCI_LOIO
-#else
-#define SF_RES			SYS_RES_MEMORY
-#define SF_RID			SF_PCI_LOMEM
-#endif
 
 #define SF_SETBIT(sc, reg, x)	\
 	csr_write_4(sc, reg, csr_read_4(sc, reg) | x)

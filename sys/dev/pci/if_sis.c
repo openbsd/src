@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.1 1999/12/04 20:27:36 aaron Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.2 1999/12/08 00:38:08 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -135,14 +135,6 @@ u_int32_t sis_calchash	__P((caddr_t));
 void sis_reset		__P((struct sis_softc *));
 int sis_list_rx_init	__P((struct sis_softc *));
 int sis_list_tx_init	__P((struct sis_softc *));
-
-#ifdef SIS_USEIOSPACE
-#define SIS_RES			SYS_RES_IOPORT
-#define SIS_RID			SIS_PCI_LOIO
-#else
-#define SIS_RES			SYS_RES_MEMORY
-#define SIS_RID			SIS_PCI_LOMEM
-#endif
 
 #define SIS_SETBIT(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg,				\

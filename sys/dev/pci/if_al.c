@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_al.c,v 1.3 1999/11/28 16:43:47 aaron Exp $ */
+/*	$OpenBSD: if_al.c,v 1.4 1999/12/08 00:38:07 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -148,14 +148,6 @@ void al_setmulti	__P((struct al_softc *));
 void al_reset		__P((struct al_softc *));
 int al_list_rx_init	__P((struct al_softc *));
 int al_list_tx_init	__P((struct al_softc *));
-
-#ifdef AL_USEIOSPACE
-#define AL_RES			SYS_RES_IOPORT
-#define AL_RID			AL_PCI_LOIO
-#else
-#define AL_RES			SYS_RES_MEMORY
-#define AL_RID			AL_PCI_LOMEM
-#endif
 
 #define AL_SETBIT(sc, reg, x)				\
 	CSR_WRITE_4(sc, reg,				\
