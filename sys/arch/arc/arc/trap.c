@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.11 1997/04/19 17:19:48 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.12 1997/07/23 07:00:39 denny Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.11 1997/04/19 17:19:48 pefo Exp $
+ *      $Id: trap.c,v 1.12 1997/07/23 07:00:39 denny Exp $
  */
 
 #include "ppp.h"
@@ -912,6 +912,12 @@ interrupt(statusReg, causeReg, pc, what, args)
 		if (netisr & (1 << NETISR_IP)) {
 			netisr &= ~(1 << NETISR_IP);
 			ipintr();
+		}
+#endif
+#ifdef NETATALK
+		if (netisr & (1 << NETISR_ATALK)) {
+			netisr &= ~(1 << NETISR_ATALK);
+			atintr();
 		}
 #endif
 #ifdef NS

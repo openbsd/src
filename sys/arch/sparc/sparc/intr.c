@@ -145,6 +145,10 @@ soft01intr(fp)
 			if (n & (1 << NETISR_IP))
 				ipintr();
 #endif
+#ifdef NETATALK
+			if (n & (1 << NETISR_ATALK))
+				atintr();
+#endif
 #ifdef NS
 			if (n & (1 << NETISR_NS))
 				nsintr();

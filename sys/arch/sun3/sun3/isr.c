@@ -1,4 +1,4 @@
-/*	$OpenBSD: isr.c,v 1.6 1997/01/16 04:04:24 kstailey Exp $	*/
+/*	$OpenBSD: isr.c,v 1.7 1997/07/23 06:58:30 denny Exp $	*/
 /*	$NetBSD: isr.c,v 1.25 1996/11/20 18:57:32 gwr Exp $	*/
 
 /*-
@@ -100,6 +100,7 @@ isr_add_custom(level, handler)
  */
 void arpintr __P((void));
 void ipintr __P((void));
+void atintr __P((void));
 void nsintr __P((void));
 void clnlintr __P((void));
 void ccittintr __P((void));
@@ -122,6 +123,10 @@ netintr()
 #ifdef INET
 	if (n & (1 << NETISR_IP))
 		ipintr();
+#endif
+#ifdef NETATALK
+	if (n & (1 << NETISR_ATALK))
+		atintr();
 #endif
 #ifdef NS
 	if (n & (1 << NETISR_NS))

@@ -1087,6 +1087,12 @@ netintr()
 		ipintr();
 	}
 #endif
+#ifdef NETATALK
+	if (netisr & (1 << NETISR_ATALK)) {
+		netisr &= ~(1 << NETISR_ATALK);
+		atintr();
+	}
+#endif
 #ifdef NS
 	if (netisr & (1 << NETISR_NS)) {
 		netisr &= ~(1 << NETISR_NS);

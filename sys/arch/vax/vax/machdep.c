@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.12 1997/05/28 23:27:33 niklas Exp $ */
+/* $OpenBSD: machdep.c,v 1.13 1997/07/23 06:58:31 denny Exp $ */
 /* $NetBSD: machdep.c,v 1.35 1997/01/11 11:31:26 ragge Exp $  */
 
 /*
@@ -645,6 +645,12 @@ netintr()
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
+	}
+#endif
+#ifdef NETATALK
+	if (netisr & (1 << NETISR_ATALK)) {
+		netisr &= ~(1 << NETISR_ATALK);
+		atintr();
 	}
 #endif
 #ifdef NS
