@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.11 1996/06/17 07:55:59 downsj Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.12 1996/06/19 13:22:57 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.11 1996/06/17 07:55:59 downsj Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.12 1996/06/19 13:22:57 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -913,10 +913,12 @@ edit(lp, f)
 int
 editit()
 {
+	int pstat;
 	int pid, xpid;
 	int stat;
 	extern char *getenv();
 	sigset_t sigset, osigset;
+	char *argp[] = {"sh", "-c", NULL, NULL};
 	char *ed, *p;
 
 	if ((ed = getenv("EDITOR")) == (char *)0)
@@ -927,6 +929,7 @@ editit()
 		return (0);
 	}
 	sprintf(p, "%s %s", ed, tmpfil);
+	argp[2] = p;
 
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGINT);
@@ -934,10 +937,10 @@ editit()
 	sigaddset(&sigset, SIGHUP);
 	sigprocmask(SIG_BLOCK, &sigset, &osigset);
 	while ((pid = fork()) < 0) {
-		free(p);
 		if (errno != EAGAIN) {
 			sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 			warn("fork");
+			free(p);
 			return (0);
 		}
 		sleep(1);
@@ -946,16 +949,19 @@ editit()
 		sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 		setgid(getgid());
 		setuid(getuid());
-		if (system(p) == -1)
-			perror(ed);
-		exit(1);
+		execv(_PATH_BSHELL, argp);
+		_exit(127);
 	}
 	free(p);
-	while ((xpid = wait(&stat)) >= 0)
-		if (xpid == pid)
+	for (;;) {
+		xpid = waitpid(pid, (int *)&pstat, WUNTRACED);
+		if (WIFSTOPPED(pstat))
+			raise(WSTOPSIG(pstat));
+		else if (WIFEXITED(pstat))
 			break;
+	}
 	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
-	return(!stat);
+	return (!stat);
 }
 
 char *
