@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.17 2000/05/01 22:25:46 maja Exp $
+#	$OpenBSD: GENERIC,v 1.18 2000/09/13 21:03:36 maja Exp $
 #
 # GENERIC kernel for the distribition simpleroot
 #
@@ -69,6 +69,8 @@ option		KERNFS			# kernel data-structure filesystem
 #option		ISO			# osi networking
 #option		TPIP
 #option		EON
+option		IPFILTER		# IP packet filter for security
+option		IPFILTER_LOG		# use /dev/ipl to log IPF
 # i think this is not required for us - NetBSD backwards compatibility
 #option		COMPAT_10		# NetBSD 1.0
 #option		COMPAT_11		# NetBSD 1.1
