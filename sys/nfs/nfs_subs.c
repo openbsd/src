@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.14 1996/12/17 03:46:38 dm Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.15 1996/12/18 18:30:58 niklas Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -79,6 +79,14 @@
 #ifdef ISO
 #include <netiso/iso.h>
 #endif
+
+#ifdef __GNUC__
+#define INLINE __inline
+#else
+#define INLINE
+#endif
+
+int	nfs_attrtimeo __P((struct nfsnode *np));
 
 /*
  * Data items converted to xdr at startup, since they are constant
@@ -1321,8 +1329,9 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 	return (0);
 }
 
-inline int
-nfs_attrtimeo (struct nfsnode *np)
+INLINE int
+nfs_attrtimeo (np)
+	struct nfsnode *np;
 {
 	struct vnode *vp = np->n_vnode;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
