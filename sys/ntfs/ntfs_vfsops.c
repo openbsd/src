@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.7 2005/02/01 11:29:59 pedro Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.8 2005/03/08 15:45:20 pat Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -1122,7 +1122,6 @@ ntfs_vgetex(
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 	genfs_node_init(vp, &ntfs_genfsops);
 #endif
-	VREF(ip->i_devvp);
 	*vpp = vp;
 	return (0);
 }

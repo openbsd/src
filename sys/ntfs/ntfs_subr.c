@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.3 2003/05/20 03:36:42 tedu Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.4 2005/03/08 15:45:20 pat Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -376,7 +376,7 @@ out:
 	free(mfrp, M_TEMP);
 	return (error);
 }
-		
+
 /*
  * Routine locks ntnode and increase usecount, just opposite of
  * ntfs_ntput().
@@ -455,6 +455,7 @@ ntfs_ntlookup(
 	ip->i_mp = ntmp;
 
 	LIST_INIT(&ip->i_fnlist);
+	VREF(ip->i_devvp);
 
 	/* init lock and lock the newborn ntnode */
 	lockinit(&ip->i_lock, PINOD, "ntnode", 0, LK_EXCLUSIVE);
@@ -510,28 +511,29 @@ ntfs_ntput(
 	}
 #endif
 
+	if (ip->i_usecount > 0) {
 #ifndef __OpenBSD__
-	lockmgr(&ip->i_lock, LK_RELEASE|LK_INTERLOCK, &ip->i_interlock);
+		lockmgr(&ip->i_lock, LK_RELEASE|LK_INTERLOCK, &ip->i_interlock);
 #else
-	lockmgr(&ip->i_lock, LK_RELEASE|LK_INTERLOCK, &ip->i_interlock, p);
+		lockmgr(&ip->i_lock, LK_RELEASE|LK_INTERLOCK, &ip->i_interlock, p);
 #endif
-
-	if (ip->i_usecount == 0) {
-		dprintf(("ntfs_ntput: deallocating ntnode: %d\n",
-			ip->i_number));
-
-		if (ip->i_fnlist.lh_first)
-			panic("ntfs_ntput: ntnode has fnodes");
-
-		ntfs_nthashrem(ip);
-
-		while (ip->i_valist.lh_first != NULL) {
-			vap = ip->i_valist.lh_first;
-			LIST_REMOVE(vap,va_list);
-			ntfs_freentvattr(vap);
-		}
-		FREE(ip, M_NTFSNTNODE);
+		return;
 	}
+
+	dprintf(("ntfs_ntput: deallocating ntnode: %d\n", ip->i_number));
+
+	if (LIST_FIRST(&ip->i_fnlist))
+		panic("ntfs_ntput: ntnode has fnodes");
+
+	ntfs_nthashrem(ip);
+
+	while ((vap = LIST_FIRST(&ip->i_valist)) != NULL) {
+		LIST_REMOVE(vap, va_list);
+		ntfs_freentvattr(vap);
+	}
+
+	vrele(ip->i_devvp);
+	FREE(ip, M_NTFSNTNODE);
 }
 
 /*
