@@ -1,4 +1,5 @@
-/*	$NetBSD: displayq.c,v 1.5.2.1 1995/11/19 00:41:30 pk Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.6 1997/01/17 16:10:52 millert Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +34,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
+#else
+static char rcsid[] = "$OpenBSD: displayq.c,v 1.6 1997/01/17 16:10:52 millert Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -324,8 +329,10 @@ inform(cf)
 		default: /* some format specifer and file name? */
 			if (line[0] < 'a' || line[0] > 'z')
 				continue;
-			if (j == 0 || strcmp(file, line+1) != 0)
-				(void) strcpy(file, line+1);
+			if (j == 0 || strcmp(file, line+1) != 0) {
+				(void) strncpy(file, line+1, sizeof(file) - 1);
+				file[sizeof(file) - 1] = '\0';
+			}
 			j++;
 			continue;
 		case 'N':
