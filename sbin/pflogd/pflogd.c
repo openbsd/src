@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.13 2002/09/03 18:28:49 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.14 2002/10/17 09:12:04 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -65,7 +65,7 @@ volatile sig_atomic_t gotsig_close, gotsig_alrm, gotsig_hup;
 
 char *filename = PFLOGD_LOG_FILE;
 char *interface = PFLOGD_DEFAULT_IF;
-char *filter = 0;
+char *filter = NULL;
 
 char errbuf[PCAP_ERRBUF_SIZE];
 
@@ -82,23 +82,23 @@ copy_argv(char * const *argv)
 	char *buf;
 
 	if (argv == NULL)
-		return NULL;
+		return (NULL);
 
 	for (n = 0; argv[n]; n++)
 		len += strlen(argv[n])+1;
 	if (len <= 0)
-		return NULL;
+		return (NULL);
 
 	buf = malloc(len);
 	if (buf == NULL)
-		return NULL;
+		return (NULL);
 
 	strlcpy(buf, argv[0], len);
 	for (n = 1; argv[n]; n++) {
 		strlcat(buf, " ", len);
 		strlcat(buf, argv[n], len);
 	}
-	return buf;
+	return (buf);
 }
 
 void
@@ -153,11 +153,12 @@ init_pcap(void)
 		return (-1);
 	}
 
-	if (filter) {
+	if (filter != NULL) {
 		if (pcap_compile(hpcap, &bprog, filter, PCAP_OPT_FIL, 0) < 0)
 			logmsg(LOG_WARNING, "%s\n", pcap_geterr(hpcap));
 		else if (pcap_setfilter(hpcap, &bprog) < 0)
 			logmsg(LOG_WARNING, "%s\n", pcap_geterr(hpcap));
+		free(filter);
 	}
 
 	if (pcap_datalink(hpcap) != DLT_PFLOG) {
@@ -185,7 +186,7 @@ reset_dump(void)
 	FILE *fp;
 
 	if (hpcap == NULL)
-		return 1;
+		return (1);
 	if (dpcap) {
 		pcap_dump_close(dpcap);
 		dpcap = 0;
@@ -200,13 +201,13 @@ reset_dump(void)
 		snprintf(hpcap->errbuf, PCAP_ERRBUF_SIZE, "%s: %s",
 		    filename, pcap_strerror(errno));
 		logmsg(LOG_ERR, "Error: %s\n", pcap_geterr(hpcap));
-		return 1;
+		return (1);
 	}
 	if (fstat(fileno(fp), &st) == -1) {
 		snprintf(hpcap->errbuf, PCAP_ERRBUF_SIZE, "%s: %s",
 		    filename, pcap_strerror(errno));
 		logmsg(LOG_ERR, "Error: %s\n", pcap_geterr(hpcap));
-		return 1;
+		return (1);
 	}
 
 	dpcap = (pcap_dumper_t *)fp;
@@ -324,7 +325,7 @@ main(int argc, char **argv)
 
 	if (argc) {
 		filter = copy_argv(argv);
-		if (filter == 0)
+		if (filter == NULL)
 			logmsg(LOG_NOTICE, "Failed to form filter expression");
 	}
 
@@ -376,5 +377,5 @@ main(int argc, char **argv)
 	pcap_close(hpcap);
 	if (!Debug)
 		closelog();
-	return 0;
+	return (0);
 }
