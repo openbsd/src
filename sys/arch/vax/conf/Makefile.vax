@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.25 2003/07/22 19:39:50 otto Exp $
+#	$OpenBSD: Makefile.vax,v 1.26 2003/11/24 16:11:25 espie Exp $
 #	$NetBSD: Makefile.vax,v 1.49 1999/07/26 05:20:49 cgd Exp $
 
 # Makefile for OpenBSD/vax
@@ -70,6 +70,7 @@ CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 .if ${IDENT:M-DNO_PROPOLICE}
 CMACHFLAGS+=	-fno-stack-protector
 .endif
+CMACHFLAGS+=	-fno-builtin-printf -fno-builtin-log
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -Ttext 80000000 -e start
