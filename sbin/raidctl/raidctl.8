@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.30 2003/06/03 13:16:09 jmc Exp $
+.\"	$OpenBSD: raidctl.8,v 1.31 2003/09/18 09:21:49 jmc Exp $
 .\"     $NetBSD: raidctl.8,v 1.24 2001/07/10 01:30:52 lukem Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@
 .Nd configuration utility for the RAIDframe disk driver
 .Sh SYNOPSIS
 .Nm raidctl
+.Bk -words
 .Op Fl v
 .Op Fl afFgrR Ar component
 .Op Fl BGipPsSu
@@ -76,6 +77,7 @@
 .Op Fl A Op yes | no | root
 .Op Fl I Ar serial_number
 .Ar dev
+.Ek
 .Sh DESCRIPTION
 .Nm
 is the user-land control program for
