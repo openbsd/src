@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.51 2002/06/08 23:16:03 angelos Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.52 2002/06/08 23:32:14 angelos Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -170,7 +170,9 @@ struct ctlname {
 #define KERN_SPLASSERT		54	/* int: splassert */
 #define KERN_PROC_ARGS		55	/* node: proc args and env */
 #define	KERN_NFILES		56	/* int: number of open files */
-#define	KERN_MAXID		57	/* number of valid kern ids */
+#define	KERN_TTYCOUNT		57	/* int: number of tty devices */
+#define KERN_NUMVNODES		58	/* int: number of vnodes in use */
+#define	KERN_MAXID		59	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -230,6 +232,8 @@ struct ctlname {
 	{ "splassert", CTLTYPE_INT }, \
 	{ "procargs", CTLTYPE_NODE }, \
 	{ "nfiles", CTLTYPE_INT }, \
+	{ "ttycount", CTLTYPE_INT }, \
+	{ "numvnodes", CTLTYPE_INT }, \
 }
 
 /*
