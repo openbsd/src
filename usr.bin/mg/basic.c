@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.13 2002/03/11 13:08:51 vincent Exp $	*/
+/*	$OpenBSD: basic.c,v 1.14 2003/05/16 19:28:59 vincent Exp $	*/
 
 /*
  *		Basic cursor motion commands.
@@ -11,7 +11,7 @@
  */
 #include "def.h"
 
-void setgoal(void);
+#include <ctype.h>
 
 /*
  * Go to beginning of line.
@@ -142,7 +142,7 @@ forwline(int f, int n)
 
 	if (n < 0)
 		return backline(f | FFRAND, -n);
-	if ((lastflag & CFCPCN) == 0)	/* Fix goal.		 */
+	if ((lastflag & CFCPCN) == 0)	/* Fix goal. */
 		setgoal();
 	thisflag |= CFCPCN;
 	if (n == 0)
@@ -188,7 +188,7 @@ backline(int f, int n)
 
 	if (n < 0)
 		return forwline(f | FFRAND, -n);
-	if ((lastflag & CFCPCN) == 0)	/* Fix goal.		 */
+	if ((lastflag & CFCPCN) == 0)	/* Fix goal. */
 		setgoal();
 	thisflag |= CFCPCN;
 	dlp = curwp->w_dotp;
@@ -208,8 +208,7 @@ backline(int f, int n)
 void
 setgoal(void)
 {
-
-	curgoal = getcolpos() - 1;	/* Get the position.	 */
+	curgoal = getcolpos();		/* Get the position.     */
 	/* we can now display past end of display, don't chop! */
 }
 
@@ -223,31 +222,30 @@ setgoal(void)
 int
 getgoal(LINE *dlp)
 {
-	int    c;
-	int    col;
-	int    newcol;
-	int    dbo;
+	int c, i, col = 0;
 
-	col = 0;
-	dbo = 0;
-	while (dbo != llength(dlp)) {
-		c = lgetc(dlp, dbo);
-		newcol = col;
+	for (i = 0; i < llength(dlp); i++) {
+		c = lgetc(dlp, i);
 		if (c == '\t'
 #ifdef	NOTAB
 		    && !(curbp->b_flag & BFNOTAB)
 #endif
-			)
-			newcol |= 0x07;
-		else if (ISCTRL(c) != FALSE)
-			++newcol;
-		++newcol;
-		if (newcol > curgoal)
+			) {
+			col |= 0x07;
+			col++;
+		} else if (ISCTRL(c) != FALSE) {
+			col += 2;
+		} else if (isprint(c))
+			col++;
+		else {
+			char tmp[5];
+			col += snprintf(tmp, sizeof tmp, "\\%o",
+			    c);
+		}
+		if (col > curgoal)
 			break;
-		col = newcol;
-		++dbo;
 	}
-	return (dbo);
+	return (i);
 }
 
 /*
@@ -379,7 +377,6 @@ pagenext(int f, int n)
 void
 isetmark(void)
 {
-
 	curwp->w_markp = curwp->w_dotp;
 	curwp->w_marko = curwp->w_doto;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.8 2002/05/30 16:07:57 vincent Exp $	*/
+/*	$OpenBSD: util.c,v 1.9 2003/05/16 19:28:59 vincent Exp $	*/
 
 /*
  *		Assorted commands.
@@ -8,6 +8,7 @@
  */
 
 #include "def.h"
+#include <ctype.h>
 
 /*
  * Display a bunch of useful information about the current location of dot.
@@ -71,12 +72,12 @@ showcpos(f, n)
 }
 
 int
-getcolpos()
+getcolpos(void)
 {
 	int	col, i, c;
 
 	/* determine column */
-	col = 1;
+	col = 0;
 
 	for (i = 0; i < curwp->w_doto; ++i) {
 		c = lgetc(curwp->w_dotp, i);
@@ -86,10 +87,17 @@ getcolpos()
 #endif /* NOTAB */
 			) {
 			col |= 0x07;
-			++col;
+			col++;
 		} else if (ISCTRL(c) != FALSE)
-			++col;
-		++col;
+			col += 2;
+		else if (isprint(c))
+			col++;
+		else {
+			char tmp[5];
+			snprintf(tmp, sizeof tmp, "\\%o", c);
+			col += strlen(tmp);
+		}
+
 	}
 	return col;
 }
