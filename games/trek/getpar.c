@@ -1,4 +1,4 @@
-/*	$OpenBSD: getpar.c,v 1.5 2002/02/16 21:27:12 millert Exp $	*/
+/*	$OpenBSD: getpar.c,v 1.6 2002/02/24 09:07:46 pvalchev Exp $	*/
 /*	$NetBSD: getpar.c,v 1.4 1995/04/24 12:25:57 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getpar.c,v 1.5 2002/02/16 21:27:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: getpar.c,v 1.6 2002/02/24 09:07:46 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -241,7 +241,7 @@ getstrpar(s, r, l, t)
 int
 testnl()
 {
-	register char		c;
+	int	c;
 
 	while ((c = getchar()) != '\n')
 		if ((c >= '0' && c <= '9') || c == '.' || c == '!' ||
@@ -262,7 +262,7 @@ testnl()
 
 void
 skiptonl(c)
-	char	c;
+	int	c;
 {
 	while (c != '\n')
 		if (!(c = getchar()))
@@ -279,7 +279,7 @@ skiptonl(c)
 static int
 testterm()
 {
-	char		c;
+	int	c;
 
 	if (!(c = getchar()))
 		return (1);
@@ -301,9 +301,9 @@ testterm()
 
 int
 readdelim(d)
-	char	d;
+	int	d;
 {
-	register char	c;
+	int	c;
 
 	while ((c = getchar()))
 	{
