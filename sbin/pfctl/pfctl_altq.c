@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.62 2003/04/13 21:44:42 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.63 2003/04/13 22:03:18 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -251,7 +251,7 @@ eval_pfaltq(struct pfctl *pf, struct pf_altq *pa, struct node_queue_bw *bw,
 		} else if ((pa->ifbandwidth = eval_bwspec(bw, rate)) == 0)
 			pa->ifbandwidth = rate;
 
-	errors += eval_queue_opts(pa, opts, rate);
+	errors += eval_queue_opts(pa, opts, pa->ifbandwidth);
 
 	/* if tbrsize is not specified, use heuristics */
 	if (pa->tbrsize == 0) {
