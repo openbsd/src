@@ -1,4 +1,4 @@
-.\" $Id: iwicontrol.8,v 1.2 2004/10/20 21:01:37 deraadt Exp $
+.\" $Id: iwicontrol.8,v 1.3 2004/10/20 21:26:43 deraadt Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -33,8 +33,8 @@
 .Nd configure Intel(R) PRO/Wireless 2200BG/2915ABG network adapters
 .Sh SYNOPSIS
 .Nm
-.Op Fl i Ar interface
-.OP Fl d Ar directory
+.Op Ar interface
+.Op Fl d Ar directory
 .Op Fl m Ar bss|ibss
 .Op Fl k
 .Op Fl r
@@ -54,10 +54,12 @@ The options are as follows:
 .Bl -tag -width indent
 .It Fl i Ar interface
 Displays adapter's internal statistics.
-.It Fl d Ar directory Fl m Ar bss|ibss
+.It Fl d Ar directory
 Download firmware binary image to the adapter. The image is read from the
 .Ar directory
-directory. By default, the firmware binary image for BSS (aka infrastructure
+directory.
+.It Fl m Ar bss|ibss
+By default, the firmware binary image for BSS (aka infrastructure
 mode) mode is downloaded unless the
 .Fl m
 flag is given.

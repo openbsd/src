@@ -1,4 +1,4 @@
-/*	$Id: ipwcontrol.c,v 1.2 2004/10/20 21:01:38 deraadt Exp $	*/
+/*	$Id: ipwcontrol.c,v 1.3 2004/10/20 21:26:43 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ipwcontrol.c,v 1.2 2004/10/20 21:01:38 deraadt Exp $";
+static char rcsid[] = "$Id: ipwcontrol.c,v 1.3 2004/10/20 21:26:43 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -76,6 +76,8 @@ main(int argc, char **argv)
 		iface = "ipw0";
 	else if (argc > 1 && argv[1][0] != '-') {
 		iface = argv[1];
+		memcpy(&argv[1], &argv[2], argc * sizeof(char *));
+		argc--;
 	}
 
 	while ((ch = getopt(argc, argv, "f:kr")) != -1) {
@@ -108,7 +110,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [interface] [-i interface] [-f firmware] [-kr]\n",
+	    "usage: %s [interface] [-f firmware] [-kr]\n",
 	    __progname);
 
 	exit(EX_USAGE);
