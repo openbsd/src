@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.56 2002/09/11 09:50:44 ho Exp $	*/
+/*	$OpenBSD: policy.c,v 1.57 2002/11/14 16:38:05 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -908,7 +908,7 @@ policy_callback (char *name)
 #endif
 
  	default:
-	  snprintf (remote_id_proto_num, 3, "%2d", id[1]);
+	  snprintf (remote_id_proto_num, 3, "%d", id[1]);
 	  remote_id_proto = remote_id_proto_num;
 	  break;
 	}
@@ -1183,7 +1183,7 @@ policy_callback (char *name)
 #endif
 
  	    default:
-	      snprintf (remote_filter_proto_num, 3, "%2d",
+	      snprintf (remote_filter_proto_num, 3, "%d",
 		       idremote[ISAKMP_GEN_SZ + 1]);
 	      remote_filter_proto = remote_filter_proto_num;
 	      break;
@@ -1475,7 +1475,7 @@ policy_callback (char *name)
 #endif
 
  	    default:
-	      snprintf (local_filter_proto_num, 3, "%2d",
+	      snprintf (local_filter_proto_num, 3, "%d",
 		       idlocal[ISAKMP_GEN_SZ + 1]);
 	      local_filter_proto = local_filter_proto_num;
 	      break;
