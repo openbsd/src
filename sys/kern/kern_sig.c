@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.9 1996/10/26 07:28:13 tholo Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.10 1996/10/27 02:26:55 tholo Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ void killproc __P((struct proc *, char *));
 #define CANSIGNAL(p, pc, q, signum) \
 	((pc)->pc_ucred->cr_uid == 0 || \
 	    (pc)->p_ruid == (q)->p_cred->p_ruid || \
-	    (pc)->p_ruid == (q)->p_cred->p_svuid || \
+	    (pc)->pc_ucred->cr_uid == (q)->p_cred->p_svuid || \
 	    (pc)->pc_ucred->cr_uid == (q)->p_cred->p_ruid || \
 	    (pc)->p_ruid == (q)->p_ucred->cr_uid || \
 	    (pc)->pc_ucred->cr_uid == (q)->p_ucred->cr_uid || \
