@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.17 1996/01/07 22:02:12 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.18 1996/01/10 20:54:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -231,8 +231,16 @@ rdmatch(hd)
 	rs->sc_hd = hd;
 	rs->sc_punit = rdpunit(hd->hp_flags);
 	rs->sc_type = rdident(rs, hd, 0);
-	if (rs->sc_type < 0)
-		return(0);
+	if (rs->sc_type < 0) {
+		/*
+		 * XXX Some ancient drives may be slow to respond, so
+		 * probe them again.
+		 */
+		DELAY(10000);
+		rs->sc_type = rdident(rs, hd, 0);
+		if (rs->sc_type < 0)
+			return (0);
+	}
 
 	/* XXX set up the external name */
 	bzero(rs->sc_xname, sizeof(rs->sc_xname));
