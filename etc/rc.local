@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.local,v 1.25 1999/05/30 01:37:56 angelos Exp $
+#	$OpenBSD: rc.local,v 1.26 1999/06/12 21:17:23 angelos Exp $
 
 # site-specific startup actions, daemons, and other things which
 # can be done AFTER your system goes into securemode.  For actions
@@ -36,7 +36,7 @@ fi
 echo '.'
 
 # Netatalk stuff
-if [ -f /etc/netatalk/rc.conf ]; then
+if [ -f /etc/netatalk/rc.atalk ]; then
 	. /etc/netatalk/rc.atalk
 fi
 
