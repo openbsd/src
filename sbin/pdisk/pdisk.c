@@ -122,6 +122,7 @@ void do_display_entry(partition_map_header *map);
 void do_examine_patch_partition(partition_map_header *map);
 int do_expert(partition_map_header *map, char *name);
 void do_rename_partition(partition_map_header *map);
+void do_change_type(partition_map_header *map);
 void do_reorder(partition_map_header *map);
 void do_write_partition_map(partition_map_header *map);
 void edit(char *name, int ask_logical_size);
@@ -559,11 +560,12 @@ edit(char *name, int ask_logical_size)
 	    printf("  P    (print ordered by base address)\n");
 	    printf("  i    initialize partition map\n");
 	    printf("  s    change size of partition map\n");
-	    printf("  c    create new partition (standard MkLinux type)\n");
+	    printf("  c    create new partition (standard OpenBSD type)\n");
 	    printf("  C    (create with type also specified)\n");
 	    printf("  n    (re)name a partition\n");
 	    printf("  d    delete a partition\n");
 	    printf("  r    reorder partition entry in map\n");
+	    printf("  t    change a partition's type\n");
 	    if (!rflag) {
 		printf("  w    write the partition table\n");
 	    }
@@ -608,6 +610,10 @@ edit(char *name, int ask_logical_size)
 	case 'S':
 	case 's':
 	    do_change_map_size(map);
+	    break;
+	case 'T':
+	case 't':
+	    do_change_type(map);
 	    break;
 	case 'X':
 	case 'x':
@@ -780,6 +786,49 @@ do_rename_partition(partition_map_header *map)
 	map->changed = 1;
     }
     free(name);
+    return;
+}
+
+void
+do_change_type(partition_map_header *map)
+{
+    partition_map * entry;
+    long index;
+    char *type = NULL;
+
+    if (map == NULL) {
+	bad_input("No partition map exists");
+	return;
+    }
+
+    if (!rflag && map->writeable == 0) {
+	printf("The map is not writeable.\n");
+    }
+
+    if (get_number_argument("Partition number: ", &index, kDefault) == 0) {
+	bad_input("Bad partition number");
+	return;
+    }
+
+    entry = find_entry_by_disk_address(index, map);
+
+    if (entry == NULL ) {
+        printf("No such partition\n");
+	goto out;
+    }
+
+    printf("Existing partition type ``%s''.\n", entry->data->dpme_type);
+    if (get_string_argument("New type of partition: ", &type, 1) == 0) {
+	bad_input("Bad type");
+	goto out;
+    }
+
+    strncpy(entry->data->dpme_type, type, DPISTRLEN);
+    map->changed = 1;
+
+out:
+    if (type)
+        free(type);
     return;
 }
 
