@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.1,v 1.26 2003/08/16 23:43:06 millert Exp $
+.\"	$OpenBSD: compress.1,v 1.27 2003/09/05 04:46:35 tedu Exp $
 .\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
@@ -178,6 +178,15 @@ Force compression of
 .Ar file ,
 even if it is not actually reduced in size.
 Additionally, files are overwritten without prompting for confirmation.
+If the input data is not in a format recognized by
+.Nm
+and if the option
+.Fl c
+is also given, copy the input data without change
+to the standard ouput: let
+.Nm zcat
+behave as
+.Nm cat .
 .It Fl g
 Use deflate scheme which reportedly provides better compression rates (force
 .Nm gzip

@@ -1,10 +1,11 @@
-/*	$OpenBSD: main.c,v 1.44 2003/08/05 18:22:17 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.45 2003/09/05 04:46:35 tedu Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n"
 "Copyright (c) 1997-2002 Michael Shalayeff\n";
 
+#ifndef SMALL
 static const char license[] =
 "\n"
 " Redistribution and use in source and binary forms, with or without\n"
@@ -30,12 +31,13 @@ static const char license[] =
 " STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING\n"
 " IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF\n"
 " THE POSSIBILITY OF SUCH DAMAGE.\n";
+#endif /* SMALL */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.44 2003/08/05 18:22:17 deraadt Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.45 2003/09/05 04:46:35 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -72,10 +74,12 @@ const struct compressor {
 	int (*write)(void *, const char *, int);
 	int (*close)(void *, struct z_info *);
 } c_table[] = {
-#define M_COMPRESS (&c_table[0])
-  { "compress", ".Z", "\037\235", z_open,  zread,   zwrite,   z_close },
-#define M_DEFLATE (&c_table[1])
+#define M_DEFLATE (&c_table[0])
   { "deflate", ".gz", "\037\213", gz_open, gz_read, gz_write, gz_close },
+#define M_COMPRESS (&c_table[1])
+#ifndef SMALL
+  { "compress", ".Z", "\037\235", z_open,  zread,   zwrite,   z_close },
+#endif /* SMALL */
 #if 0
 #define M_LZH (&c_table[2])
   { "lzh", ".lzh", "\037\240", lzh_open, lzh_read, lzh_write, lzh_close },
@@ -86,6 +90,11 @@ const struct compressor {
 #endif
   { NULL }
 };
+
+#ifndef SMALL
+const struct compressor null_method =
+{ "null", ".nul", "XX", null_open, null_read, null_write, null_close };
+#endif /* SMALL */
 
 int permission(const char *);
 void setfile(const char *, struct stat *);
@@ -102,6 +111,7 @@ void verbose_info(const char *, off_t, off_t, u_int32_t);
 
 #define	OPTSTRING	"123456789ab:cdfghlLnNOo:qrS:tvV"
 const struct option longopts[] = {
+#ifndef SMALL
 	{ "ascii",	no_argument,		0, 'a' },
 	{ "stdout",	no_argument,		0, 'c' },
 	{ "to-stdout",	no_argument,		0, 'c' },
@@ -121,6 +131,7 @@ const struct option longopts[] = {
 	{ "version",	no_argument,		0, 'V' },
 	{ "fast",	no_argument,		0, '1' },
 	{ "best",	no_argument,		0, '9' },
+#endif /* SMALL */
 	{ NULL }
 };
 
@@ -145,7 +156,11 @@ main(int argc, char *argv[])
 		bits = 6;
 		p++;
 	} else
+#ifdef SMALL
+		method = M_DEFLATE;
+#else
 		method = M_COMPRESS;
+#endif /* SMALL */
 
 	decomp = 0;
 	if (!strcmp(p, "zcat")) {
@@ -235,10 +250,12 @@ main(int argc, char *argv[])
 		case 'N':
 			nosave = 0;
 			break;
+#ifndef SMALL
 		case 'O':
 			method = M_COMPRESS;
 			strlcpy(suffix, method->suffix, sizeof(suffix));
 			break;
+#endif /* SMALL */
 		case 'o':
 			if (strlcpy(outfile, optarg,
 			    sizeof(outfile)) >= sizeof(outfile))
@@ -261,14 +278,19 @@ main(int argc, char *argv[])
 			break;
 		case 'V':
 			printf("%s\n%s\n%s\n", main_rcsid,
-			    z_rcsid, gz_rcsid);
+#ifndef SMALL
+			    z_rcsid,
+#endif
+			    gz_rcsid);
 			exit (0);
 		case 'v':
 			verbose++;
 			break;
 		case 'L':
 			fputs(copyright, stderr);
+#ifndef SMALL
 			fputs(license, stderr);
+#endif
 			exit (0);
 		case 'r':
 			recurse++;
@@ -528,6 +550,13 @@ check_method(int fd)
 		    magic[1] == method->magic[1])
 			return (method);
 	}
+#ifndef SMALL
+	if (force && cat) {
+		null_magic[0] = magic[0];
+		null_magic[1] = magic[1];
+		return (&null_method);
+	}
+#endif /* SMALL */
 	return (NULL);
 }
 
