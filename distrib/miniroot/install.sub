@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.197 2002/04/02 01:25:34 krw Exp $
+#	$OpenBSD: install.sub,v 1.198 2002/04/05 02:51:59 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -66,7 +66,23 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-#	OpenBSD installation/upgrade script - common subroutines.
+# include machine-dependent functions
+# The following functions must be provided:
+#	md_get_diskdevs()	- return available disk devices
+#	md_get_cddevs()		- return available CD-ROM devices
+#	md_get_partition_range() - return range of valid partition letters
+#	md_installboot()	- install boot-blocks on disk
+#	md_prep_disklabel()	- label the root disk
+#	md_welcome_banner()	- display friendly message
+#	md_not_going_to_install() - display friendly message
+#	md_congrats()		- display friendly message
+#	md_native_fstype()	- native filesystem type for disk installs
+#	md_native_fsopts()	- native filesystem options for disk installs
+
+# include machine dependent subroutines
+. install.md
+
+# OpenBSD install/upgrade script common subroutines and initialization code
 
 getresp() {
 	local _no_shell=0
@@ -368,8 +384,7 @@ __EOT
 	elif isin $resp $_DKDEVS ; then
 		DISK=$resp
 	else
-		echo
-		echo "The disk $resp does not exist."
+		echo "\nThe disk $resp does not exist."
 		DISK=
 	fi
 }
@@ -397,8 +412,7 @@ __EOT
 	if isin $resp $_DKDEVS ; then
 		ROOTDISK=$resp
 	else
-		echo
-		echo "The disk '$resp' does not exist."
+		echo "\nThe disk '$resp' does not exist."
 		ROOTDISK=
 	fi
 }
@@ -509,8 +523,7 @@ configure_ifs() {
 	fi
 
 	if [ ! -x /sbin/dhclient ]; then
-		echo "DHCP install not supported"
-		echo
+		echo "DHCP install not supported\n"
 	else
 		_dhcp_prompt=" (or 'dhcp')"
 	fi
@@ -549,8 +562,10 @@ configure_ifs() {
 	fi
 
 	if [ -n "`ifconfig -m ${_if_name} | sed -n '/media/p'`" ]; then
-		echo "Your use of the network interface may require non-default"
-		echo "media directives.  The default media is:"
+		cat << __EOT
+Your use of the network interface may require non-default
+media directives.  The default media is:
+__EOT
 		ifconfig -m ${_if_name} | sed -n '
 			/supported/D
 			/media:/p'
@@ -559,8 +574,10 @@ configure_ifs() {
 			/media:/D
 			s/^	//
 			/media/p'
-		echo "If the default is not satisfactory, and you wish to use another"
-		echo "media, copy that line from above (e.g. \"media 100baseTX\")"
+		cat << __EOT
+If the default is not satisfactory, and you wish to use another
+media, copy that line from above (e.g. \"media 100baseTX\")
+__EOT
 		echo -n "Media directives? [$_if_extra] "
 		getresp "$_if_extra"
 		if [ "X${resp}" != X"" ]; then
@@ -807,7 +824,6 @@ get_selection() {
 	for _f in $_sets ; do
 		if isin $_f $_setsdone ; then
 			echo -n "	[X] "
-			_next=
 		else
 			echo -n "	[ ] "
 			if [ -z "$_next" ]; then
@@ -876,9 +892,47 @@ __EOT
 	rm -f $_tfile
 
 	if [ $_matched -eq 0 ]; then
-		echo "File $_parent_dir/$_selection does not exist.  Check to make"
-		echo "sure you entered the information properly or enter 'list' for a file list."
+		cat << __EOT
+File $_parent_dir/$_selection does not exist.  Check to make
+sure you entered the information properly or enter 'list' for a file list.
+__EOT
 	fi
+}
+
+display_failure_msg() {
+		cat << __EOT
+
+The following files failed to extract correctly.
+Choose which one(s) to retry or 'done' to exit selector.
+You may de-select a file by prepending a '-' to its name.
+
+__EOT
+}
+
+display_selection_msg() {
+	cat << __EOT
+
+The following sets are available. Enter a filename, 'list' for a list of
+all files, 'all' to select all the sets, or 'done'. You may de-select
+a set by prepending a '-' to its name.
+
+__EOT
+}
+
+display_extract_msg() {
+
+	cat << __EOT
+
+You will now be asked for files to extract. In addition to the files
+listed, you may select any .tgz or .tar.gz archive located at
+
+    $1
+
+Some of these sets are required for your ${MODE} and some are
+optional. You will want at least the base and bsd sets. Consult the
+installation notes if you are not sure which sets are required!
+__EOT
+
 }
 
 encode_for_url() {
@@ -910,10 +964,12 @@ case $1 in
 -http)	_url_type=http ;;
 esac
 
-echo
-echo "This is an automated ${_url_type}-based installation process.  You will be asked"
-echo "questions and then the files will be retrieved iteratively via ${_url_type}."
-echo
+cat << __EOT
+
+This is an automated ${_url_type}-based installation process. You will be asked
+questions and then the files will be retrieved iteratively via ${_url_type}.
+
+__EOT
 
 # Proxy the connections?
 if [ "X${_proxy_host}" = X"" ]; then
@@ -934,10 +990,13 @@ if [ "${_url_type}" = "ftp" -a "X$ftp_proxy" = "X" ]; then
 	-A)	resp=y ;;
 	*)	resp=n ;;
 	esac
-	echo "By default, ftp will attempt a passive connection and fall back to a normal"
-	echo "(active) connection if that doesn't work.  However, there are some very"
-	echo "old ftp servers that claim to support passive mode, but really do not."
-	echo "In this case, you should explicitly request an active session."
+
+	cat << __EOT
+By default, ftp will attempt a passive connection and fall back to a normal
+(active) connection if that doesn't work.  However, there are some very
+old ftp servers that claim to support passive mode, but really do not.
+In this case, you should explicitly request an active session.
+__EOT
 	echo -n "Do you want to use active ftp? [${resp}] "
 	getresp "$resp"
 	case $resp in
@@ -1108,25 +1167,15 @@ else
 		case $resp in
 		n*|N*)	return ;;
 		esac
-		echo
-		echo "${_file_list}"
-		echo
+		echo "\n${_file_list}\n"
 		return
 	else
 		echo "Adding *.tar.gz and *.tgz files to selector."
 	fi
 fi
 
-# Yes, all those blackslashes really are necessary...
-eval echo "\\\\n"\
-"You will now be asked for files to extract. In addition to the files listed,\\\\n"\
-"you may select any file located at\\\\n"\
-"	\$_${_url_type}_server_ip:\$_${_url_type}_server_dir\\\\n"\
-"You can also enter \'all\' to install all the standard sets, or \'list\' to list\\\\n"\
-"the files available.  When you are done selecting files, enter \'done\'. Some of\\\\n"\
-"these sets are required for your ${MODE} and some are optional -- you will want\\\\n"\
-"at least the base and bsd sets.  Consult the installation notes if you are not\\\\n"\
-"sure which sets are required!"
+	display_extract_msg "$(eval echo ${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir)"
+
 _osetsdone=$_setsdone
 # Set the minimal default
 for _f in $_sets $_kernel; do
@@ -1144,18 +1193,15 @@ done
 
 # Allow the user to select/de-select additional sets
 while : ; do
-	echo
-	echo "The following sets are available for extraction."
-	echo "Enter filename, \`list', \`all', or \`done'."
-	echo "You may de-select a set by prepending a '-' to its name."
-	echo
+    
+	display_selection_msg
+
 	get_selection "$_sets $_kernel"
 
 	if [ "X${resp}" = X"done" ]; then
 		break
 	elif [ "X${resp}" = X"list" ]; then
-		echo
-		eval echo "\$_${_url_type}_server_dir:"
+		eval echo "\n\$_${_url_type}_server_dir:"
 		echo "${_file_list}"
 		continue
 	fi
@@ -1171,8 +1217,7 @@ fi
 # Stash the fact that we configured and downloaded via this url method
 eval _installed_via_${_url_type}=1
 
-echo
-echo "Fetching files via ${_url_type} may take a long time, especially over a slow network"
+echo "\nFetching files via ${_url_type} may take a long time, especially over a slow network"
 echo -n "connection. Ready to download files? [y] "
 getresp y
 case $resp in
@@ -1203,20 +1248,15 @@ while test -n "${_get_files}" ; do
 	# Give them the option of refetching failed files.
 	_get_files=
 	while test -n "${_failed_files}" ; do
-		echo
-		echo "The following files failed to transfer and extract correctly:"
-		echo "Choose which one(s) to refetch or 'done' to exit selector."
-		echo "You may de-select a file by prepending a '-' to its name."
-		echo
+		display_failure_msg
+
 		get_selection "$_failed_files"
 
 		if [ "X${resp}" = X"done" ]; then
 			break
 		elif [ "X${resp}" = X"list" ]; then
-			echo
-			eval echo "\$_${_url_type}_server_dir:"
-			echo "${_file_list}"
-			echo
+			eval echo "\n\$_${_url_type}_server_dir:"
+			echo "${_file_list}\n"
 			continue
 		fi
 
@@ -1273,15 +1313,8 @@ else
 	fi
 fi
 
-echo "\n"\
-"You will now be asked for files to extract.  In addition to the\n"\
-"files listed in the selector you may enter any file located in\n"\
-"$1.  You can also enter 'all' to install all the standard\n"\
-"sets, or 'list' to list the files avilable in $1.\n"\
-"When you are done selecting files, enter 'done'.\n"\
-"Some of these sets are required for your ${MODE} and some are optional --\n"\
-"You will want at least the base and bsd sets.\n"\
-"Consult the installation notes if you are not sure which sets are required!"
+display_extract_msg "$1"
+
 _osetsdone=$_setsdone
 # Set a minimal default
 for _f in $_sets $_kernel; do
@@ -1299,18 +1332,15 @@ done
 
 # Allow the user to select/de-select additional sets
 while : ; do
-	echo
-	echo "The following sets are available for extraction."
-	echo "Enter filename, \`list', \`all', or \`done'."
-	echo "You may de-select a set by prepending a '-' to its name."
-	echo
+
+	display_selection_msg
+
 	get_selection "$_sets $_kernel"
 
 	if [ "X${resp}" = X"done" ]; then
 		break
 	elif [ "X${resp}" = X"list" ]; then
-		echo
-		echo "${1}:"
+		echo "\n${1}:"
 		( cd $1 && ls )
 		continue
 	fi
@@ -1323,8 +1353,7 @@ if [ "X${_get_files}" = X"" ]; then
 	return
 fi
 
-echo
-echo -n "Ready to extract selected file sets? [y] "
+echo -n "\nReady to extract selected file sets? [y] "
 getresp y
 case $resp in
 y*|Y*)	;;
@@ -1354,18 +1383,14 @@ while test -n "${_get_files}" ; do
 	# Give them the option of retrying failed files.
 	_get_files=
 	while test -n "${_failed_files}" ; do
-		echo
-		echo "The following files failed to extract correctly:"
-		echo "Choose which one(s) to retry or 'done' to exit selector."
-		echo "You may de-select a file by prepending a '-' to its name."
-		echo
+		display_failure_msg
+
 		get_selection "$_failed_files"
 
 		if [ "X${resp}" = X"done" ]; then
 			break
 		elif [ "X${resp}" = X"list" ]; then
-			echo
-			echo "${1}:"
+			echo "\n${1}:"
 			( cd $1 && ls )
 			echo
 			continue
@@ -1404,9 +1429,7 @@ abort)	echo "Aborting."
 *)	if isin $resp $_CDDEVS ; then
 		_drive=$resp
 	else
-		echo
-		echo "The CD-ROM $resp does not exist."
-		echo "Aborting."
+		echo "\nThe CD-ROM $resp does not exist.\nAborting."
 		return
 	fi
 	;;
@@ -1521,9 +1544,7 @@ abort)	echo "Aborting."
 *)	if isin $resp $_DKDEVS ; then
 		_drive=$resp
 	else
-		echo
-		echo "The disk $resp does not exist."
-		echo "Aborting."
+		echo "\nThe disk $resp does not exist.\nAborting."
 		return 0
 	fi
 	;;
@@ -1837,10 +1858,16 @@ You still do not have a /bin/cat in your filesystem (i.e. a sample random file
 which you probably want).  This seems to indicate that you are still missing
 important distribution files.
 __EOT
+	elif [ ! -x /mnt/dev/MAKEDEV ]; then
+		cat << __EOT
+
+No /dev/MAKEDEV has been installed yet.
+__EOT
+
 	elif [ ! -d /mnt/etc -o ! -d /mnt/usr/share/zoneinfo -o ! -d /mnt/dev ]; then
 		cat << __EOT
 
-Something needed to complete the installation seems to be missing, did you
+One or more of /etc, /usr/share/zoneinfo or /dev is missing. Did you
 forget to extract a required set?
 __EOT
 	else
@@ -1930,8 +1957,7 @@ while [ X"${resp}" = X ]; do
 	if sane_install; then
 		# Give the user the opportunity to extract more sets. They
 		# don't necessarily have to come from the same media.
-		echo
-		echo -n	"Extract more sets? [n] "
+		echo -n	"\nExtract more sets? [n] "
 		getresp n
 		case $resp in
 		y*|Y*)	# Force loop to repeat
@@ -2123,11 +2149,13 @@ donetconfig() {
 	# a nameserver during installation.
 	rm -f /tmp/resolv.conf.shadow
 
-	echo
-	echo "If any interfaces will be configured using a DHCP server"
-	echo "it is recommended that you do not enter a DNS domain name,"
-	echo "a default route, or any name servers."
-	echo
+	cat << __EOT
+
+If any interfaces will be configured using a DHCP server
+it is recommended that you do not enter a DNS domain name,
+a default route, or any name servers.
+
+__EOT
 
 	FQDN=
 	get_fqdn /tmp/resolv.conf
@@ -2201,9 +2229,7 @@ donetconfig() {
 	fi
 
 	if [ ! -f /tmp/resolv.conf.shadow ]; then
-		echo
-		echo "The host table is as follows:"
-		echo
+		echo "\nThe host table is as follows:\n"
 		cat /tmp/hosts
 	cat << __EOT
 
@@ -2241,7 +2267,34 @@ populateusrlocal() {
 	fi
 }
 
-# Actions common to both installs and upgrades.
+finish_up() {
+	# Get timezone info
+	get_timezone
+
+	echo -n "Making all device nodes (by running /dev/MAKEDEV all) ..."
+	cd /mnt/dev
+	sh MAKEDEV all
+	echo "... done."
+	cd /
+
+	md_installboot ${ROOTDISK}
+
+	populateusrlocal
+	test -x /mnt/${MODE}.site && /mnt/usr/sbin/chroot /mnt /${MODE}.site
+
+	# Unmount filesystems, etc. Disable trap that would do same on exit.
+	# Do this manually rather than through the trap so md_congrats is
+	# the last message printed.
+	trap - HUP INT QUIT TERM EXIT
+	cleanup_on_exit
+
+	# Pat on the back.
+	md_congrats
+
+	exit 0
+}
+
+# Initial actions common to both installs and upgrades.
 #
 # Some may require machine dependend routines, which may
 # call functions defined above, so it's easiest to put this
@@ -2272,3 +2325,41 @@ if [ "X$EDITOR" = X ]; then
 	fi
 	export EDITOR
 fi
+
+# Cleanup when the script exits.
+trap 'cleanup_on_exit' EXIT
+trap 'exit 2' HUP INT QUIT TERM
+
+# Good {morning,afternoon,evening,night}.
+echo
+md_welcome_banner
+
+if [ -f /etc/fstab -a "${MODE}" = "install" ]; then
+	cat << __EOT
+You seem to be trying to restart an interrupted installation!
+You can skip the disk preparation steps and continue,
+or you can reboot and start over.
+
+__EOT
+	echo -n "Skip disk initialization and "
+
+fi
+	
+echo -n "Proceed with ${MODE}? [n] "
+getresp n
+case $resp in
+y*|Y*)	echo "\nCool!  Let's get to it...\n"
+	;;
+*)	md_not_going_to_install
+	exit
+	;;
+esac
+
+# Deal with terminal issues
+md_set_term
+
+cat << __EOT
+
+At any prompt except password prompts you can run a shell command by
+typing '!foo', or escape to a shell by typing '!'.
+__EOT

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.91 2002/04/02 01:25:34 krw Exp $
+#	$OpenBSD: install.sh,v 1.92 2002/04/05 02:51:59 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -77,59 +77,11 @@ FILESYSTEMS=/tmp/filesystems
 # The Fully Qualified Domain Name
 FQDN=
 
+# install.sub needs to know the MODE
 MODE=install
 
-# include machine-dependent functions
-# The following functions must be provided:
-#	md_get_diskdevs()	- return available disk devices
-#	md_get_cddevs()		- return available CD-ROM devices
-#	md_get_partition_range() - return range of valid partition letters
-#	md_installboot()	- install boot-blocks on disk
-#	md_prep_disklabel()	- label the root disk
-#	md_welcome_banner()	- display friendly message
-#	md_not_going_to_install() - display friendly message
-#	md_congrats()		- display friendly message
-#	md_native_fstype()	- native filesystem type for disk installs
-#	md_native_fsopts()	- native filesystem options for disk installs
-
-# include machine dependent subroutines
-. install.md
-
-# include common subroutines
+# include common subroutines and initialization code
 . install.sub
-
-# Cleanup when the script exits.
-trap 'cleanup_on_exit' EXIT
-trap 'exit 2' HUP INT QUIT TERM
-
-if [ ! -f /etc/fstab ]; then
-	# Good {morning,afternoon,evening,night}.
-	echo ==================================================
-	md_welcome_banner
-else
-	echo "You seem to be trying to restart an interrupted installation!"
-	echo
-	echo "You can try to skip the disk preparation steps and continue,"
-	echo "otherwise you should reboot the miniroot and start over..."
-	echo -n "Skip disk initialization? [n] "
-	getresp n
-	case $resp in
-	y*|Y*)	echo
-		echo "Cool!  Let's get to it..."
-		echo
-		;;
-	*)	md_not_going_to_install
-		exit
-		;;
-	esac
-fi
-
-echo "You can run a shell command at any prompt via '!foo'"
-echo "or escape to a shell by simply typing '!'."
-echo
-
-# Deal with terminal issues
-md_set_term
 
 if [ ! -f /etc/fstab ]; then
 	# Install the shadowed disktab file; lets us write to it for temporary
@@ -171,11 +123,13 @@ partition or "done" when you are finished.
 __EOT
 
 		if [ "${DISK}" = "${ROOTDISK}" ]; then
-			echo
-			echo	"The following partitions will be used for the root filesystem and swap:"
-			echo	"	${ROOTDISK}a	/"
-			echo	"	${ROOTDISK}b	swap"
+			cat << __EOT
 
+The following partitions will be used for the root filesystem and swap:
+	${ROOTDISK}a    /
+	${ROOTDISK}b	swap
+
+__EOT
 			echo	"${ROOTDISK}a /" > ${FILESYSTEMS}
 		fi
 
@@ -243,13 +197,15 @@ __EOT
 		rm -f /tmp/fstab.${DISK}
 	done
 
-	echo
-	echo	"You have configured the following devices and mount points:"
-	echo
-	cat ${FILESYSTEMS}
-	echo
-	echo "============================================================"
-	echo "The next step will overwrite any existing data on:"
+	cat << __EOT
+
+You have configured the following devices and mount points:
+
+$(<${FILESYSTEMS})
+
+============================================================
+The next step will overwrite any existing data on:
+__EOT
 	(
 		echo -n "	"
 		while read _device_name _junk; do
@@ -257,9 +213,8 @@ __EOT
 		done
 		echo
 	) < ${FILESYSTEMS}
-	echo
 
-	echo -n	"Are you really sure that you're ready to proceed? [n] "
+	echo -n	"\nAre you really sure that you're ready to proceed? [n] "
 	getresp n
 	case $resp in
 	y*|Y*)	;;
@@ -331,8 +286,7 @@ mount | while read line; do
 	fi
 done
 
-echo
-echo 'Please enter the initial password that the root account will have.'
+echo '\nPlease enter the initial password that the root account will have.'
 _oifs=$IFS
 IFS=
 resp=
@@ -385,23 +339,7 @@ for file in $cfgfiles; do
 done
 echo "...done."
 
-# Get timezone info
-get_timezone
-
-# Make devices
-if [ ! -x /mnt/dev/MAKEDEV ]; then
-	echo "No /dev/MAKEDEV installed, something is wrong here..."
-	exit
-fi
-
-echo -n "Making all device nodes (by running /dev/MAKEDEV all) ..."
-cd /mnt/dev
-sh MAKEDEV all
-echo "... done."
-cd /
-
 remount_fs
-md_installboot ${ROOTDISK}
 
 _encr=`/mnt/usr/bin/encrypt -b 7 "${_password}"`
 echo "1,s@^root::@root:${_encr}:@
@@ -411,17 +349,6 @@ q" | ed /mnt/etc/master.passwd 2> /dev/null
 
 dd if=/mnt/dev/urandom of=/mnt/var/db/host.random bs=1024 count=64 >/dev/null 2>&1
 chmod 600 /mnt/var/db/host.random >/dev/null 2>&1
-populateusrlocal
-test -x /mnt/install.site && /mnt/usr/sbin/chroot /mnt /install.site
 
-# Unmount filesystems, etc. and disable trap that would do same on exit.
-# Do this manually rather than through the trap so md_congrats is
-# the last message printed.
-trap - HUP INT QUIT TERM EXIT
-cleanup_on_exit
-
-# Pat on the back.
-md_congrats
-
-# ALL DONE!
-exit 0
+# Perform final steps common to both an install and an upgrade.
+finish_up

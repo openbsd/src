@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.28 2002/04/02 01:25:34 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.29 2002/04/05 02:51:59 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -44,47 +44,15 @@
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
+# install.sub needs to know the MODE
 MODE=upgrade
 
-# include machine-dependent functions
-# The following functions must be provided:
-#	md_get_diskdevs()	- return available disk devices
-#	md_get_cddevs()		- return available CD-ROM devices
-#	md_get_partition_range() - return range of valid partition letters
-#	md_installboot()	- install boot-blocks on disk
-#	md_labeldisk()		- put label on a disk
-#	md_welcome_banner()	- display friendly message
-#	md_not_going_to_install() - display friendly message
-#	md_congrats()		- display friendly message
-
-# include machine dependent subroutines
-. install.md
-
-# include common subroutines
+# include common subroutines and initialization code
 . install.sub
-
-# Make sure to cleanup when the script terminates:
-trap 'cleanup_on_exit' EXIT
-trap 'exit 2' HUP INT QUIT TERM
 
 # Remove 'etc' set from THESETS. It should be installed
 # manually, after the upgrade.
 THESETS=`echo $THESETS | sed -e 's/ etc / /'`
-
-# Good {morning,afternoon,evening,night}.
-md_welcome_banner
-echo -n "Proceed with upgrade? [n] "
-getresp n
-case $resp in
-y*|Y*)	echo	"Cool!  Let's get to it..."
-	;;
-*)	md_not_going_to_install
-	exit
-	;;
-esac
-
-# Deal with terminal issues
-md_set_term
 
 # XXX Work around vnode aliasing bug (thanks for the tip, Chris...)
 ls -l /dev > /dev/null 2>&1
@@ -122,19 +90,14 @@ else
 	exit 1
 fi
 
-# Grab the fstab so we can munge it for our own use.
-if [ ! -f /mnt/etc/fstab ]; then
-	echo	"ERROR: no /etc/fstab!"
-	exit 1
-fi
-cp /mnt/etc/fstab /tmp/fstab
-
-# Grab the hosts table so we can use it.
-if [ ! -f /mnt/etc/hosts ]; then
-	echo	"ERROR: no /etc/hosts!"
-	exit 1
-fi
-cp /mnt/etc/hosts /tmp/hosts
+# fstab and hosts are required for upgrade
+for _file in fstab hosts; do
+	if [ ! -f /mnt/etc/$_file ]; then
+		echo "ERROR: no /etc/${_file}!"
+		exit 1
+	fi
+	cp /mnt/etc/$_file /tmp/$_file
+done
 
 # Start up the network in same/similar configuration as the installed system
 # uses.
@@ -246,9 +209,6 @@ esac
 # Install sets.
 install_sets $THESETS
 
-# Get timezone info
-get_timezone
-
 # Copy in configuration information and make devices in target root.
 (
 	if [ -f /mnt/etc/sendmail.cf -a ! -f /mnt/etc/mail/sendmail.cf ]; then
@@ -261,25 +221,7 @@ w
 q
 __EOT
 	fi
-
-	echo -n "Making devices..."
-	cd /mnt/dev
-	sh MAKEDEV all
-	echo "done."
-
-	md_installboot ${ROOTDISK}
 )
-populateusrlocal
-test -x /mnt/upgrade.site && /mnt/usr/sbin/chroot /mnt /upgrade.site
 
-# Unmount filesystems, etc. and disable trap to do same on exit.
-# Do this manually rather than through the trap so md_congrats is
-# the last message printed.
-trap - HUP INT QUIT TERM EXIT
-cleanup_on_exit
-
-# Pat on the back.
-md_congrats
-
-# ALL DONE!
-exit 0
+# Perform final steps common to both an install and an upgrade.
+finish_up
