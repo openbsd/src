@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.13 2004/12/21 18:32:10 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.14 2005/01/13 07:04:16 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -136,7 +136,7 @@ int
 cvs_update_file(CVSFILE *cf, void *arg)
 {
 	int ret;
-	char *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	char *fname, *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
 	struct cvsroot *root;
 	struct cvs_ent *entp;
@@ -145,6 +145,7 @@ cvs_update_file(CVSFILE *cf, void *arg)
 	rf = NULL;
 	root = CVS_DIR_ROOT(cf);
 	repo = CVS_DIR_REPO(cf);
+	fname = CVS_FILE_NAME(cf);
 
 	if (cf->cf_type == DT_DIR) {
 		if (root->cr_method != CVS_METHOD_LOCAL) {
@@ -169,17 +170,15 @@ cvs_update_file(CVSFILE *cf, void *arg)
 
 		switch (cf->cf_cvstat) {
 		case CVS_FST_UNKNOWN:
-			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    CVS_FILE_NAME(cf));
+			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE, fname);
 			break;
 		case CVS_FST_UPTODATE:
-			ret = cvs_sendreq(root, CVS_REQ_UNCHANGED,
-			    CVS_FILE_NAME(cf));
+			ret = cvs_sendreq(root, CVS_REQ_UNCHANGED, fname);
 			break;
 		case CVS_FST_ADDED:
 		case CVS_FST_MODIFIED:
-			ret = cvs_sendreq(root, CVS_REQ_MODIFIED,
-			    CVS_FILE_NAME(cf));
+			cvs_log(LP_TRACE, "Sending file `%s' to server", fname);
+			ret = cvs_sendreq(root, CVS_REQ_MODIFIED, fname);
 			if (ret == 0)
 				ret = cvs_sendfile(root, fpath);
 			break;
