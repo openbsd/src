@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: mklocatedb.sh,v 1.6 1997/12/13 20:06:13 deraadt Exp $
+#	$OpenBSD: mklocatedb.sh,v 1.7 2002/10/04 17:30:42 mickey Exp $
 #
 # Copyright (c) September 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -30,7 +30,7 @@
 # 
 # usage: mklocatedb [-presort] < filelist > database
 #
-# $Id: mklocatedb.sh,v 1.6 1997/12/13 20:06:13 deraadt Exp $
+# $Id: mklocatedb.sh,v 1.7 2002/10/04 17:30:42 mickey Exp $
 
 
 # The directory containing locate subprograms
@@ -51,7 +51,7 @@ fi
 : ${sort=sort}
 
 sortopt="-u -T $TMPDIR"
-sortcmd=$sort
+sortcmd="$sort -H"
 
 # Input already sorted
 case X"$1" in 
