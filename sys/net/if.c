@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.22 1999/10/27 16:36:25 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.23 1999/11/09 17:49:01 millert Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -621,8 +621,11 @@ ifioctl(so, cmd, data, p)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+	case SIOCSIFMEDIA:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
+		/* FALLTHROUGH */
+	case SIOCGIFMEDIA:
 		if (ifp->if_ioctl == 0)
 			return (EOPNOTSUPP);
 		return ((*ifp->if_ioctl)(ifp, cmd, data));
