@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.9 1997/09/28 22:54:29 deraadt Exp $	*/
+/*	$OpenBSD: mv.c,v 1.10 1998/05/18 19:11:45 deraadt Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: mv.c,v 1.9 1997/09/28 22:54:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mv.c,v 1.10 1998/05/18 19:11:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ main(argc, argv)
 	register char *p, *endp;
 	struct stat sb;
 	int ch;
-	char path[MAXPATHLEN + 1];
+	char path[MAXPATHLEN];
 
 	while ((ch = getopt(argc, argv, "if")) != -1)
 		switch (ch) {
@@ -120,6 +120,8 @@ main(argc, argv)
 	}
 
 	/* It's a directory, move each file into it. */
+	if (strlen(argv[argc - 1]) > sizeof path - 1)
+		errx(1, "%s: destination pathname too long", *argv);
 	(void)strcpy(path, argv[argc - 1]);
 	baselen = strlen(path);
 	endp = &path[baselen];
