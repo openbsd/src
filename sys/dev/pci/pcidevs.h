@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.82 1998/09/02 03:01:04 jason Exp 
+ *	OpenBSD: pcidevs,v 1.83 1998/09/04 00:09:42 todd Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1132,6 +1132,7 @@
 #define	PCI_PRODUCT_WD_WD7197	0x3197		/* WD7197 */
 #define	PCI_PRODUCT_WD_WD33C296A	0x3296		/* WD33C296A */
 #define	PCI_PRODUCT_WD_WD34C296	0x4296		/* WD34C296 */
+#define	PCI_PRODUCT_WD_WD9710	0x9710		/* WD9610 */
 #define	PCI_PRODUCT_WD_90C	0xC24A		/* 90C */
 
 /* Winbond Electronics products */

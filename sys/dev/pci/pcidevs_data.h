@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.82 1998/09/02 03:01:04 jason Exp 
+ *	OpenBSD: pcidevs,v 1.83 1998/09/04 00:09:42 todd Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2491,6 +2491,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Western Digital",
 	    "WD34C296",
+	},
+	{
+	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD9710,
+	    0,
+	    "Western Digital",
+	    "WD9610",
 	},
 	{
 	    PCI_VENDOR_WD, PCI_PRODUCT_WD_90C,
