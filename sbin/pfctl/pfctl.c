@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.114 2002/12/31 19:27:08 mcbride Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.115 2003/01/01 00:58:10 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -326,7 +326,7 @@ pfctl_kill_states(int dev, int opts)
 	memset(&last_dst, 0xff, sizeof(last_dst));
 
 	if ((ret_ga = getaddrinfo(state_kill[0], NULL, NULL, &res[0]))) {
-		errx(1, "%s", gai_strerror(ret_ga));
+		errx(1, "getaddrinfo: %s", gai_strerror(ret_ga));
 		/* NOTREACHED */
 	}
 	for (resp[0] = res[0]; resp[0]; resp[0] = resp[0]->ai_next) {
@@ -357,7 +357,7 @@ pfctl_kill_states(int dev, int opts)
 			memset(&last_dst, 0xff, sizeof(last_dst));
 			if ((ret_ga = getaddrinfo(state_kill[1], NULL, NULL,
 			    &res[1]))) {
-				errx(1, "%s", gai_strerror(ret_ga));
+				errx(1, "getaddrinfo: %s", gai_strerror(ret_ga));
 				/* NOTREACHED */
 			}
 			for (resp[1] = res[1]; resp[1];
@@ -875,7 +875,7 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 		rs_num = PF_RULESET_BINAT;
 		break;
 	default:
-		err(1, "Invalid rule type");
+		errx(1, "Invalid rule type");
 		break;
 	}
 
