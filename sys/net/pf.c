@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.156 2001/09/23 04:07:07 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.157 2001/09/27 14:02:44 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2383,7 +2383,7 @@ pf_send_reset(int off, struct tcphdr *th, struct pf_pdesc *pd, int af)
 		th2->th_seq = th->th_ack;
 		th2->th_flags = TH_RST;
 	} else {
-		int tlen = pd->p_len - off - (th->th_off << 2);
+		int tlen = pd->p_len;
 		if (th->th_flags & TH_SYN)
 			tlen++;
 		if (th->th_flags & TH_FIN)
