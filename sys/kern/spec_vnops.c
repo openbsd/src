@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.14 1997/12/28 19:34:49 csapuntz Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.15 1998/02/23 17:40:58 niklas Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -435,13 +435,10 @@ spec_ioctl(v)
 		    ap->a_fflag, ap->a_p));
 
 	case VBLK:
-		if (ap->a_command == 0 && (long)ap->a_data == B_TAPE)
-			if (bdevsw[maj].d_type == D_TAPE)
-				return (0);
-			else
-				return (1);
+		if (ap->a_command == 0 && (long)ap->a_data == B_TAPE) 
+			return ((bdevsw[maj].d_type == D_TAPE) ? 0 : 1);
 		return ((*bdevsw[maj].d_ioctl)(dev, ap->a_command, ap->a_data,
-		   ap->a_fflag, ap->a_p));
+		    ap->a_fflag, ap->a_p));
 
 	default:
 		panic("spec_ioctl");
