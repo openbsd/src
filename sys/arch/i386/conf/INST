@@ -1,4 +1,4 @@
-#	$OpenBSD: INST,v 1.8 1996/06/29 19:17:23 deraadt Exp $
+#	$OpenBSD: INST,v 1.9 1996/08/22 10:47:47 downsj Exp $
 #	$NetBSD: INSTADP,v 1.17 1996/05/20 03:32:19 thorpej Exp $
 #
 #       Install kernels no longer support X.
@@ -122,6 +122,9 @@ fd*	at fdc? drive ?
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15
 wd*	at wdc? drive ?
+
+atapibus* at wdc?
+acd*	at atapibus? drive?
 
 wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
