@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_auth_dbm.c,v 1.9 2002/08/15 16:06:11 henning Exp $ */
+/*	$OpenBSD: mod_auth_dbm.c,v 1.10 2003/07/18 21:16:37 david Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -76,6 +76,7 @@
 #include "http_config.h"
 #include "http_core.h"
 #include "http_log.h"
+#include "http_main.h"
 #include "http_protocol.h"
 #if (defined(WIN32) || defined(NETWARE))
 #include <sdbm.h>

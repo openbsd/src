@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_rewrite.c,v 1.17 2003/04/08 20:40:56 henning Exp $ */
+/*	$OpenBSD: mod_rewrite.c,v 1.18 2003/07/18 21:16:37 david Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -93,6 +93,7 @@
 
 
 #include "mod_rewrite.h"
+#include "http_main.h"
 #include "fdcache.h"
 
 #ifndef NO_WRITEV

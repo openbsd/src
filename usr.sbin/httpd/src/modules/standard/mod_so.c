@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_so.c,v 1.10 2003/04/30 23:08:18 avsm Exp $ */
+/*	$OpenBSD: mod_so.c,v 1.11 2003/07/18 21:16:37 david Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -132,6 +132,7 @@
 #include "httpd.h"
 #include "http_config.h"
 #include "http_log.h"
+#include "http_main.h"
 
 module MODULE_VAR_EXPORT so_module;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdcache.c,v 1.9 2003/05/12 17:35:44 henning Exp $ */
+/*	$OpenBSD: fdcache.c,v 1.10 2003/07/18 21:16:37 david Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Henning Brauer
@@ -33,6 +33,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>

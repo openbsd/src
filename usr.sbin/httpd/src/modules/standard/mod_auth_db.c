@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_auth_db.c,v 1.10 2002/10/07 20:23:06 henning Exp $ */
+/*	$OpenBSD: mod_auth_db.c,v 1.11 2003/07/18 21:16:37 david Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -97,6 +97,7 @@
 #include "http_config.h"
 #include "http_core.h"
 #include "http_log.h"
+#include "http_main.h"
 #include "http_protocol.h"
 #include <db.h>
 

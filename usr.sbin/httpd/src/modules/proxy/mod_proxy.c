@@ -61,6 +61,7 @@
 #define CORE_PRIVATE
 
 #include "http_log.h"
+#include "http_main.h"
 #include "http_vhost.h"
 #include "http_request.h"
 

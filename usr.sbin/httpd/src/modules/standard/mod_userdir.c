@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_userdir.c,v 1.9 2002/08/15 16:06:11 henning Exp $ */
+/*	$OpenBSD: mod_userdir.c,v 1.10 2003/07/18 21:16:37 david Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -95,6 +95,7 @@
 
 #include "httpd.h"
 #include "http_config.h"
+#include "http_main.h"
 
 module userdir_module;
 

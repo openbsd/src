@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_log_agent.c,v 1.5 2002/07/17 12:55:15 henning Exp $ */
+/*	$OpenBSD: mod_log_agent.c,v 1.6 2003/07/18 21:16:37 david Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -62,6 +62,7 @@
 #include "httpd.h"
 #include "http_config.h"
 #include "http_log.h"
+#include "http_main.h"
 #include "fdcache.h"
 
 module agent_log_module;
