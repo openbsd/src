@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.188 2002/11/18 22:55:39 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.189 2002/11/18 23:13:32 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1602,11 +1602,11 @@ natrule		: no NAT interface af proto fromto redirection
 			nat.af = $4;
 
 			if (!nat.af) {
-				if ($6.src.host && $6.src.host->af
-				    && !$6.src.host->ifindex)
+				if ($6.src.host && $6.src.host->af &&
+				    !$6.src.host->ifindex)
 					nat.af = $6.src.host->af;
-				else if ($6.dst.host && $6.dst.host->af
-				    && !$6.dst.host->ifindex)
+				else if ($6.dst.host && $6.dst.host->af &&
+				    !$6.dst.host->ifindex)
 					nat.af = $6.dst.host->af;
 			}
 
@@ -3176,8 +3176,8 @@ ifa_lookup(char *ifa_name, enum pfctl_iflookup_mode mode)
 		ifa_load();
 
 	for (p = iftab; p; p = p->next) {
-		if (!((p->af == AF_INET || p->af == AF_INET6)
-		    && (!strncmp(p->ifname, ifa_name, IFNAMSIZ) || return_all)))
+		if (!((p->af == AF_INET || p->af == AF_INET6) &&
+		    (!strncmp(p->ifname, ifa_name, IFNAMSIZ) || return_all)))
 			continue;
 		if (mode == PFCTL_IFLOOKUP_BCAST && p->af != AF_INET)
 			continue;

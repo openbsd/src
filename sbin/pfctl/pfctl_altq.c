@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.2 2002/11/18 22:55:39 deraadt Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.3 2002/11/18 23:13:32 deraadt Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -73,8 +73,8 @@ pfaltq_free(struct pf_altq *a)
 	struct pf_altq *altq;
 
 	TAILQ_FOREACH(altq, &altqs, entries) {
-		if (strncmp(a->ifname, altq->ifname, IFNAMSIZ) == 0
-		    && strncmp(a->qname, altq->qname, PF_QNAME_SIZE) == 0) {
+		if (strncmp(a->ifname, altq->ifname, IFNAMSIZ) == 0 &&
+		    strncmp(a->qname, altq->qname, PF_QNAME_SIZE) == 0) {
 			TAILQ_REMOVE(&altqs, altq, entries);
 			free(altq);
 			return;
@@ -88,8 +88,8 @@ pfaltq_lookup(const char *ifname)
 	struct pf_altq *altq;
 
 	TAILQ_FOREACH(altq, &altqs, entries) {
-		if (strncmp(ifname, altq->ifname, IFNAMSIZ) == 0
-		    && altq->qname[0] == 0)
+		if (strncmp(ifname, altq->ifname, IFNAMSIZ) == 0 &&
+		    altq->qname[0] == 0)
 			return (altq);
 	}
 	return (NULL);
