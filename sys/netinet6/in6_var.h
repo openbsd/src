@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.22 2003/10/15 23:35:42 itojun Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.23 2004/01/13 06:28:16 mcbride Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -593,6 +593,8 @@ int	in6_matchlen(struct in6_addr *, struct in6_addr *);
 int	in6_are_prefix_equal(struct in6_addr *, struct in6_addr *, int);
 void	in6_prefixlen2mask(struct in6_addr *, int);
 void	in6_purgeprefix(struct ifnet *);
+void	in6_ifaddloop(struct ifaddr *);
+void	in6_ifremloop(struct ifaddr *);
 
 int	in6_is_addr_deprecated(struct sockaddr_in6 *);
 struct inpcb;
