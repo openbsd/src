@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 1996/08/10 21:37:46 briggs Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 1996/09/21 04:03:58 briggs Exp $	*/
 /*	$NetBSD: machdep.c,v 1.114 1996/08/06 04:03:33 scottr Exp $	*/
 
 /*
@@ -2218,9 +2218,10 @@ setmachdep()
 
 	/*
 	 * Get the console buffer physical address.  If we can't, we
-	 * punt and set it to 0.
+	 * punt and set it to 0.  Note that get_physical doesn't yet
+	 * work on the '040.
 	 */
-	if (!get_physical(videoaddr, &conspa))
+	if ((mmutype == MMU_68040) || !get_physical(videoaddr, &conspa))
 		conspa = 0;
 
 	/*
@@ -2275,6 +2276,10 @@ setmachdep()
 		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+		if (cpui->machineid == MACH_MACQ700) {
+			mac68k_vidlog = mac68k_vidphys = 0xf9000000;
+			mac68k_vidlen = 2 * 1024 * 1024;
+		}
 		break;
 	case MACH_CLASSIIci:
 		VIA2 = 0x13;
@@ -2423,6 +2428,10 @@ get_physical(u_int addr, u_long * phys)
 	u_short psr;
 	int     i, numbits;
 	extern u_int macos_tc;
+
+	/* This can not work for the 040, yet */
+	if (mmutype == MMU_68040)
+		return 0;
 
 	i = get_pte(addr, pte, &psr);
 
