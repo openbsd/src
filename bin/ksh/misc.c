@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.3 1996/12/22 02:57:49 tholo Exp $	*/
+/*	$OpenBSD: misc.c,v 1.4 1997/01/02 09:34:07 downsj Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -161,6 +161,7 @@ const struct option options[] = {
 	{ "posix",	  0,		OF_ANY }, /* non-standard */
 	{ "privileged",	'p',		OF_ANY },
 	{ "restricted",	'r',	    OF_CMDLINE },
+	{ "sh",		  0,		OF_ANY }, /* non-standard */
 	{ "stdin",	's',	    OF_CMDLINE }, /* pseudo non-standard */
 	{ "trackall",	'h',		OF_ANY },
 	{ "verbose",	'v',		OF_ANY },

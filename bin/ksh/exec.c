@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.5 1996/11/21 07:59:28 downsj Exp $	*/
+/*	$OpenBSD: exec.c,v 1.6 1997/01/02 09:33:56 downsj Exp $	*/
 
 /*
  * execute command tree
@@ -457,13 +457,14 @@ comexec(t, tp, ap, flags)
 	int type_flags;
 	int keepasn_ok;
 	int fcflags = FC_BI|FC_FUNC|FC_PATH;
+	volatile int underscore = (!Flag(FSH) || Flag(FTALKING));
 
 	/* snag the last argument for $_ XXX not the same as at&t ksh,
 	 * which only seems to set $_ after a newline (but not in
 	 * functions/dot scripts, but in interactive and scipt) -
 	 * perhaps save last arg here and set it in shell()?.
 	 */
-	if (*(lastp = ap)) {
+	if (underscore && *(lastp = ap)) {
 		while (*++lastp)
 			;
 		setstr(typeset("_", LOCAL, 0, 0, 0), *--lastp);
@@ -698,8 +699,10 @@ comexec(t, tp, ap, flags)
 			break;
 		}
 
-		/* set $_ to program's full path */
-		setstr(typeset("_", LOCAL|EXPORT, 0, 0, 0), tp->val.s);
+		if (underscore) {
+			/* set $_ to program's full path */
+			setstr(typeset("_", LOCAL|EXPORT, 0, 0, 0), tp->val.s);
+		}
 
 		if (flags&XEXEC) {
 			j_exit();
