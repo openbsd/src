@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcireg.h,v 1.7 2004/07/05 03:09:57 deraadt Exp $ */
+/*	$OpenBSD: ehcireg.h,v 1.8 2004/07/07 00:58:05 deraadt Exp $ */
 /*	$NetBSD: ehcireg.h,v 1.14 2003/10/13 00:05:10 enami Exp $	*/
 
 /*
@@ -305,7 +305,7 @@ typedef struct {
 #define EHCI_QTD_SET_BYTES(x)	((x) << 16)
 #define EHCI_QTD_GET_TOGGLE(x)	(((x) >> 31) &  0x1)
 #define EHCI_QTD_SET_TOGGLE(x)	((x) << 31)
-#define EHCI_QTD_TOGGLE		0x80000000
+#define EHCI_QTD_TOGGLE_MASK	0x80000000
 	ehci_physaddr_t	qtd_buffer[EHCI_QTD_NBUFFERS];
 	ehci_physaddr_t qtd_buffer_hi[EHCI_QTD_NBUFFERS];
 } ehci_qtd_t;

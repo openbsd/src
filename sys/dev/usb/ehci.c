@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.12 2004/07/06 02:51:46 deraadt Exp $ */
+/*	$OpenBSD: ehci.c,v 1.13 2004/07/07 00:58:05 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.54 2004/01/17 13:15:05 jdolecek Exp $	*/
 
 /*
@@ -2211,7 +2211,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 		   qtd */
 		if (((curlen + mps - 1) / mps) & 1) {
 			tog ^= 1;
-			qtdstatus ^= htole32(EHCI_QTD_TOGGLE);
+			qtdstatus ^= htole32(EHCI_QTD_TOGGLE_MASK);
 		}
 		if (len == 0)
 			break;
