@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sk.4,v 1.18 2003/08/01 04:47:05 nate Exp $
+.\"	$OpenBSD: sk.4,v 1.19 2003/08/01 15:22:25 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -70,16 +70,17 @@ SK-9843 V2.0 single port, copper adapter
 .El
 .Pp
 The SysKonnect based adapters consist of two main components: the
-XaQti Corp.  XMAC II Gigabit MAC (sk) and the SysKonnect GEnesis
-controller ASIC (skc).  The XMAC provides the Gigabit MAC and PHY
-support while the GEnesis provides an interface to the PCI bus, DMA
-support, packet buffering and arbitration.
+XaQti Corp.
+XMAC II Gigabit MAC (sk) and the SysKonnect GEnesis controller ASIC (skc).
+The XMAC provides the Gigabit MAC and PHY support
+while the GEnesis provides an interface to the PCI bus, DMA support,
+packet buffering and arbitration.
 The GEnesis can control up to two XMACs simultaneously,
 allowing dual-port NIC configurations.
 .Pp
 The Marvell based adapters are a single integrated circuit, but are
-still presented as a separate MAC (sk) and controller ASIC (skc).  At
-this time, there are no dual-port Marvell based NICs.
+still presented as a separate MAC (sk) and controller ASIC (skc).
+At this time, there are no dual-port Marvell based NICs.
 .Pp
 The
 .Nm
@@ -107,7 +108,6 @@ Hardware TCP/IP checksum offloading for IPv4 is supported.
 The following media types and options (as given to
 .Xr ifconfig 8 )
 are supported:
-.Pp
 .Bl -tag -width xxx -offset indent
 .It Cm media No autoselect
 Enable autoselection of the media type and options.
