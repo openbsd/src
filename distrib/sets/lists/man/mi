@@ -1280,6 +1280,8 @@
 ./usr/share/man/cat4/mac68k/mem.0
 ./usr/share/man/cat4/mac68k/obio.0
 ./usr/share/man/cat4/mac68k/sn.0
+./usr/share/man/cat4/mac68k/zsc.0
+./usr/share/man/cat4/mac68k/zstty.0
 ./usr/share/man/cat4/macppc
 ./usr/share/man/cat4/macppc/abtn.0
 ./usr/share/man/cat4/macppc/adb.0
@@ -1804,6 +1806,7 @@
 ./usr/share/man/cat8/amd64/biosboot.0
 ./usr/share/man/cat8/amd64/boot.0
 ./usr/share/man/cat8/amd64/boot.conf.0
+./usr/share/man/cat8/amd64/boot_amd64.0
 ./usr/share/man/cat8/amd64/fdisk.0
 ./usr/share/man/cat8/amd64/installboot.0
 ./usr/share/man/cat8/amd64/kbd.0
