@@ -200,7 +200,7 @@ log_dis_mkdir(struct vcache *pvc, struct vcache *dvc,
     mkdir->md_vattr = *attrs;
     
     /* save the name */
-    strcpy((char *) mkdir->md_name, name);
+    strlcpy((char *) mkdir->md_name, name, sizeof mkdir->md_name);
     
     /* calculate the length of this record */
     mkdir->log_len = ((char *) mkdir->md_name - (char *) mkdir)
@@ -233,7 +233,7 @@ log_dis_create(struct vcache *parent, struct vcache *child, char *name)
     create->cr_origdv = ch->DataVersion;
     create->cred = parent->cred;
     
-    strcpy((char *) create->cr_name, name);
+    strlcpy((char *) create->cr_name, name, sizeof create->cr_name);
     
     create->log_len = ((char *) create->cr_name - (char *) create) +
 	strlen(name) + 1;
@@ -258,7 +258,7 @@ log_dis_remove(struct vcache *avc, FCacheEntry *childentry, char *name)
     remove->rm_origdv = avc->DataVersion;
     remove->rm_chentry = childentry;
     
-    strcpy((char *) remove->rm_name, name);
+    strlcpy((char *) remove->rm_name, name, sizeof remove->rm_name);
     
     remove->log_len = ((char *) remove->rm_name - (char *) remove) +
 	strlen(name) + 1;
@@ -289,7 +289,7 @@ log_dis_rmdir(struct vcache *dir, FCacheEntry *cce, const char *name)
     rmdir->rd_parentfid = dir->fid;
     rmdir->rd_direntry = cce;
     
-    strcpy((char *) rmdir->rd_name, name);
+    strlcpy((char *) rmdir->rd_name, name, sizeof rmdir->rd_name);
     
     rmdir->log_len = ((char *) rmdir->rd_name - (char *) rmdir) +
 	strlen(name) + 1;
@@ -317,10 +317,10 @@ log_dis_rename(struct vcache *old_dir, char *old_name,
     rename->rn_overdv = new_dir->DataVersion;
     rename->cred = old_dir->cred;
     
-    strcpy((char *) rename->rn_names, old_name);
+    strlcpy((char *) rename->rn_names, old_name, MAX_NAME);
     cp = (char *) rename->rn_names + strlen(old_name) + 1;
     
-    strcpy((char *) cp, new_name);
+    strlcpy((char *) cp, new_name, MAX_NAME);
     cp += strlen(new_name) + 1;
     
     rename->log_len = (char *) cp - (char *) rename;
@@ -349,7 +349,7 @@ log_dis_link(struct vcache *pvc, struct vcache *lvc, char *name)
     link->ln_parentfid = pvc->fid;
     
     /* save the name */
-    strcpy((char *) link->ln_name, name);
+    strlcpy((char *) link->ln_name, name, sizeof link->ln_name);
     /* calculate the length of this record */
     link->log_len = ((char *) link->ln_name - (char *) link) +
 	strlen(name) + 1;
@@ -377,8 +377,8 @@ log_dis_symlink(struct vcache *pvc, struct vcache *cvc,
     slink->cred = pvc->cred;
     
     /* copy in the link name */
-    strcpy((char *) slink->sy_name, linkname);
-    strcpy((char *) slink->sy_content, content);
+    strlcpy((char *) slink->sy_name, linkname, sizeof slink->sy_name);
+    strlcpy((char *) slink->sy_content, content, sizeof slink->sy_content);
     
     /* calculate the length of this record */
     slink->log_len = ( (char *) slink->sy_content -
