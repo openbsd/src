@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.31 1998/05/20 05:07:30 gene Exp $
+#	$OpenBSD: GENERIC,v 1.32 1998/06/08 17:28:11 deraadt Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -13,7 +13,7 @@ option		SWAPPAGER	# paging; REQUIRED
 option		DEVPAGER	# mmap() of devices
 
 option		DDB		# in-kernel debugger
-#makeoption	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG="-g"	# compile full symbol table
 option		DIAGNOSTIC	# internal consistency checks
 option		KTRACE		# system call tracing, a la ktrace(1)
 
