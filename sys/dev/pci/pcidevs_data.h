@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.83 1998/09/04 00:09:42 todd Exp 
+ *	OpenBSD: pcidevs,v 1.84 1998/09/07 23:31:23 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -51,6 +51,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "3c900 10Mbps-Combo",
 	},
 	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900B,
+	    0,
+	    "3Com",
+	    "3c900B 10Mbps",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900BCOMBO,
+	    0,
+	    "3Com",
+	    "3c900B 10Mbps-Combo",
+	},
+	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905TX,
 	    0,
 	    "3Com",
@@ -66,13 +78,13 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905BTX,
 	    0,
 	    "3Com",
-	    "3c905B 10/100BaseTX",
+	    "3c905B 100Base-TX",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905BT4,
 	    0,
 	    "3Com",
-	    "3c905B 10/100BaseT4",
+	    "3c905B 100Base-T4",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C980TX,
