@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.139 2005/03/03 19:30:36 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.140 2005/03/07 16:43:54 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -6071,13 +6071,12 @@ kvm_setcache(va, npages, cached)
 	int npages;
 	int cached;
 {
-	int pte;
+	int pte, ctx;
 	struct pvlist *pv;
 
 	if (CPU_ISSUN4M) {
 #if defined(SUN4M)
-		int ctx = getcontext4m();
-
+		ctx = getcontext4m();
 		setcontext4m(0);
 		for (; --npages >= 0; va += NBPG) {
 			int *ptep;
@@ -6111,6 +6110,8 @@ kvm_setcache(va, npages, cached)
 #endif
 	} else {
 #if defined(SUN4) || defined(SUN4C)
+		ctx = getcontext4();
+		setcontext4(0);
 		for (; --npages >= 0; va += NBPG) {
 			pte = getpte4(va);
 			if ((pte & PG_V) == 0)
@@ -6129,9 +6130,11 @@ kvm_setcache(va, npages, cached)
 			else
 				pte |= PG_NC;
 			setpte4(va, pte);
+
 			if ((pte & PG_TYPE) == PG_OBMEM)
 				cache_flush_page((int)va);
 		}
+		setcontext4(ctx);
 #endif
 	}
 }
