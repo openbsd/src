@@ -1,4 +1,4 @@
-/*	$OpenBSD: genassym.c,v 1.4 1999/02/09 06:36:28 smurph Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.5 1999/09/27 19:13:22 smurph Exp $	*/
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.4 1999/02/09 06:36:28 smurph Exp $
+ *	$Id: genassym.c,v 1.5 1999/09/27 19:13:22 smurph Exp $
  */
 
 #ifndef KERNEL
@@ -110,6 +110,8 @@ main()
 	pair("EF_EPSR",	int_offset_of_element(ss->epsr));
 	pair("EF_SXIP",	int_offset_of_element(ss->sxip));
 	pair("EF_SFIP",	int_offset_of_element(ss->sfip));
+	pair("EF_EXIP",	int_offset_of_element(ss->sxip)); /* MVME197 */
+	pair("EF_EFIP",	int_offset_of_element(ss->sfip)); /* MVME197 */
 	pair("EF_SNIP",	int_offset_of_element(ss->snip));
 	pair("EF_SSBR",	int_offset_of_element(ss->ssbr));
 	pair("EF_DMT0",	int_offset_of_element(ss->dmt0));
@@ -122,6 +124,8 @@ main()
 	pair("EF_DMD2",	int_offset_of_element(ss->dmd2));
 	pair("EF_DMA2",	int_offset_of_element(ss->dma2));
 	pair("EF_FPECR",	int_offset_of_element(ss->fpecr));
+	pair("EF_FPCR",	int_offset_of_element(ss->fpcr)); /* MVME197 */
+	pair("EF_FPSR",	int_offset_of_element(ss->fpsr)); /* MVME197 */
 	pair("EF_FPHS1",	int_offset_of_element(ss->fphs1));
 	pair("EF_FPLS1",	int_offset_of_element(ss->fpls1));
 	pair("EF_FPHS2",	int_offset_of_element(ss->fphs2));
@@ -137,7 +141,16 @@ main()
 	pair("EF_RET",	int_offset_of_element(ss->scratch1));
 	pair("EF_IPFSR",int_offset_of_element(ss->ipfsr));
 	pair("EF_DPFSR",int_offset_of_element(ss->dpfsr));
+	pair("EF_DSR",int_offset_of_element(ss->dsr)); /* MVME197 */
+	pair("EF_DLAR",int_offset_of_element(ss->dlar)); /* MVME197 */
+	pair("EF_DPAR",int_offset_of_element(ss->dpar)); /* MVME197 */
+	pair("EF_ISR",int_offset_of_element(ss->dsr)); /* MVME197 */
+	pair("EF_ILAR",int_offset_of_element(ss->ilar)); /* MVME197 */
+	pair("EF_IPAR",int_offset_of_element(ss->ipar)); /* MVME197 */
+	pair("EF_SRX",int_offset_of_element(ss->dpfsr));
 	pair("EF_NREGS",	sizeof(*ss)/sizeof(int));
+
+/* end MVME197 only */
 
 	/* make a sanity check */
 	if (sizeof(*ss) & 7)

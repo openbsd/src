@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 1999/05/29 04:41:46 smurph Exp $	*/
+/*	$OpenBSD: conf.c,v 1.12 1999/09/27 19:13:21 smurph Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -134,10 +134,9 @@ cdev_decl(ptc);
 cdev_decl(log);
 cdev_decl(fd);
 
-#if notyet
-#include "zs.h"
-cdev_decl(zs);
-#endif /* notyet */
+#include "dart.h"
+cdev_decl(dart);
+
 #include "cl.h"
 cdev_decl(cl);
 
@@ -203,76 +202,75 @@ cdev_decl(lkm);
 
 struct cdevsw	cdevsw[] =
 {
-	cdev_cn_init(1,cn),		/* 0: virtual console */
-	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
-	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
-	cdev_swap_init(1,sw),		/* 3: /dev/drum (swap pseudo-device) */
-	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
-	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
-	cdev_log_init(1,log),		/* 6: /dev/klog */
-	cdev_mdev_init(NSRAM,sram),	/* 7: /dev/sramX */
-	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
-	cdev_disk_init(NCD,cd),		/* 9: SCSI CD-ROM */
-	cdev_mdev_init(NNVRAM,nvram),	/* 10: /dev/nvramX */
+	cdev_cn_init(1,cn),              /* 0: virtual console */
+	cdev_ctty_init(1,ctty),          /* 1: controlling terminal */
+	cdev_mm_init(1,mm),              /* 2: /dev/{null,mem,kmem,...} */
+	cdev_swap_init(1,sw),            /* 3: /dev/drum (swap pseudo-device) */
+	cdev_tty_init(NPTY,pts),         /* 4: pseudo-tty slave */
+	cdev_ptc_init(NPTY,ptc),         /* 5: pseudo-tty master */
+	cdev_log_init(1,log),            /* 6: /dev/klog */
+	cdev_mdev_init(NSRAM,sram),      /* 7: /dev/sramX */
+	cdev_disk_init(NSD,sd),          /* 8: SCSI disk */
+	cdev_disk_init(NCD,cd),          /* 9: SCSI CD-ROM */
+	cdev_mdev_init(NNVRAM,nvram),    /* 10: /dev/nvramX */
 
 #if notyet
-	cdev_mdev_init(NFLASH,flash),	/* 11: /dev/flashX */
-	cdev_tty_init(NZS,zs),		/* 12: SCC serial (tty[a-d]) */
+	cdev_mdev_init(NFLASH,flash),    /* 11: /dev/flashX */
 #else
-	cdev_notdef(),			/* 11: */
-	cdev_notdef(),			/* 12: SCC serial (tty[a-d]) */
+	cdev_notdef(),                   /* 11: */
 #endif /* notyet */
-	cdev_tty_init(NCL,cl),		/* 13: CL-CD1400 serial (tty0[0-3]) */
-	cdev_tty_init(NBUGTTY,bugtty),	/* 14: BUGtty (ttyB) */
-	cdev_tty_init(NVX,vx),			/* 15: MVME332XT serial/lpt ttyv[0-7][a-i] */
-	cdev_notdef(),			/* 16 */
-	cdev_notdef(),			/* 17: concatenated disk */
-	cdev_disk_init(NRD,rd),		/* 18: ramdisk disk */
-	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
-	cdev_tape_init(NST,st),		/* 20: SCSI tape */
-	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-dev */
-	cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */
-	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
-	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
-	cdev_notdef(),			/* 25 */
+	cdev_tty_init(NDART,dart),       /* 12: MVME188 serial (tty[a-b]) */
+	cdev_tty_init(NCL,cl),           /* 13: CL-CD1400 serial (tty0[0-3]) */
+	cdev_tty_init(NBUGTTY,bugtty),   /* 14: BUGtty (ttyB) */
+	cdev_tty_init(NVX,vx),           /* 15: MVME332XT serial/lpt ttyv[0-7][a-i] */
+	cdev_notdef(),                   /* 16 */
+	cdev_notdef(),                   /* 17: concatenated disk */
+	cdev_disk_init(NRD,rd),          /* 18: ramdisk disk */
+	cdev_disk_init(NVND,vnd),        /* 19: vnode disk */
+	cdev_tape_init(NST,st),          /* 20: SCSI tape */
+	cdev_fd_init(1,filedesc),        /* 21: file descriptor pseudo-dev */
+	cdev_bpftun_init(NBPFILTER,bpf), /* 22: berkeley packet filter */
+	cdev_bpftun_init(NTUN,tun),      /* 23: network tunnel */
+	cdev_lkm_init(NLKM,lkm),         /* 24: loadable module driver */
+	cdev_notdef(),                   /* 25 */
 #if notyet
-	cdev_disk_init(NXD,xd),		/* 26: XD disk */
+	cdev_disk_init(NXD,xd),          /* 26: XD disk */
 #else
-	cdev_notdef(),			/* 26: XD disk */
+	cdev_notdef(),                   /* 26: XD disk */
 #endif /* notyet */
-	cdev_notdef(),			/* 27 */
+	cdev_notdef(),                   /* 27 */
 #if notyet
-	cdev_lp_init(NLP,lp),		/* 28: lp */
-	cdev_lp_init(NLPTWO,lptwo),	/* 29: lptwo */
+	cdev_lp_init(NLP,lp),            /* 28: lp */
+	cdev_lp_init(NLPTWO,lptwo),      /* 29: lptwo */
 #else                      
-	cdev_notdef(),			/* 28: lp */
-	cdev_notdef(),			/* 29: lptwo */
+	cdev_notdef(),                   /* 28: lp */
+	cdev_notdef(),                   /* 29: lptwo */
 #endif /* notyet */
-	cdev_notdef(),			/* 30 */
-	cdev_mdev_init(NVMEL,vmel),	/* 31: /dev/vmelX */
-	cdev_mdev_init(NVMES,vmes),	/* 32: /dev/vmesX */
-	cdev_lkm_dummy(),		/* 33 */
-	cdev_lkm_dummy(),		/* 34 */
-	cdev_lkm_dummy(),		/* 35 */
-	cdev_lkm_dummy(),		/* 36 */
-	cdev_lkm_dummy(),		/* 37 */
-	cdev_lkm_dummy(),		/* 38 */
-	cdev_gen_ipf(NIPF,ipl),         /* 39: IP filter */
-	cdev_notdef(),			/* 40 */
-	cdev_notdef(),			/* 41 */
-	cdev_notdef(),			/* 42 */
-	cdev_notdef(),			/* 43 */
-	cdev_notdef(),			/* 44 */
-	cdev_notdef(),			/* 45 */
-	cdev_notdef(),			/* 46 */
-	cdev_notdef(),			/* 47 */
-	cdev_notdef(),			/* 48 */
-	cdev_notdef(),			/* 49 */
-	cdev_notdef(),			/* 50 */
+	cdev_notdef(),                   /* 30 */
+	cdev_mdev_init(NVMEL,vmel),      /* 31: /dev/vmelX */
+	cdev_mdev_init(NVMES,vmes),      /* 32: /dev/vmesX */
+	cdev_lkm_dummy(),                /* 33 */
+	cdev_lkm_dummy(),                /* 34 */
+	cdev_lkm_dummy(),                /* 35 */
+	cdev_lkm_dummy(),                /* 36 */
+	cdev_lkm_dummy(),                /* 37 */
+	cdev_lkm_dummy(),                /* 38 */
+	cdev_gen_ipf(NIPF,ipl),          /* 39: IP filter */
+	cdev_notdef(),                   /* 40 */
+	cdev_notdef(),                   /* 41 */
+	cdev_notdef(),                   /* 42 */
+	cdev_notdef(),                   /* 43 */
+	cdev_notdef(),                   /* 44 */
+	cdev_notdef(),                   /* 45 */
+	cdev_notdef(),                   /* 46 */
+	cdev_notdef(),                   /* 47 */
+	cdev_notdef(),                   /* 48 */
+	cdev_notdef(),                   /* 49 */
+	cdev_notdef(),                   /* 50 */
 #ifdef XFS
-	cde_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
+	cde_xfs_init(NXFS,xfs_dev),      /* 51: xfs communication device */
 #else
-	cdev_notdef(),			/* 51 */
+	cdev_notdef(),                   /* 51 */
 #endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -321,8 +319,8 @@ static int chrtoblktbl[] = {
 	/*  5 */	NODEV,
 	/*  6 */	NODEV,
 	/*  7 */	NODEV,
-	/*  8 */	4,		/* SCSI disk */
-	/*  9 */	6,		/* SCSI CD-ROM */
+	/*  8 */	4,    /* SCSI disk */
+	/*  9 */	6,    /* SCSI CD-ROM */
 	/* 10 */	NODEV,
 	/* 11 */	NODEV,
 	/* 12 */	NODEV,
@@ -331,15 +329,15 @@ static int chrtoblktbl[] = {
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
-	/* 18 */	7,		/* ram disk */
-	/* 19 */	8,		/* vnode disk */
+	/* 18 */	7,    /* ram disk */
+	/* 19 */	8,    /* vnode disk */
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
 	/* 23 */	NODEV,
 	/* 24 */	NODEV,
 	/* 25 */	NODEV,
-	/* 26 */	10,		/* XD disk */
+	/* 26 */	10,   /* XD disk */
 };
 
 /*
@@ -385,16 +383,16 @@ blktochr(dev)
  */
 #include <dev/cons.h>
 
-#define zscnpollc      nullcnpollc
-cons_decl(zs);
+#define dartcnpollc      nullcnpollc
+cons_decl(dart);
 #define clcnpollc      nullcnpollc
 cons_decl(cl);
 #define bugttycnpollc      nullcnpollc
 cons_decl(bugtty);
 
 struct	consdev constab[] = {
-#if NZS > 0
-	cons_init(zs),
+#if NDART > 0
+	cons_init(dart),
 #endif
 #if NCL > 0
 	cons_init(cl),

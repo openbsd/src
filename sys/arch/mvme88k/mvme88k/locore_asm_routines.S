@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_asm_routines.S,v 1.6 1999/02/09 06:36:28 smurph Exp $	*/
+/* $OpenBSD: locore_asm_routines.S,v 1.7 1999/09/27 19:13:22 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -42,10 +42,10 @@
 
 #include "assym.s"
 #include <machine/trap.h>
+#include <machine/cpu_number.h>
 #include <machine/board.h>
 #include <machine/asm.h>
 #include <sys/errno.h>
-
 
 /*****************************************************************************
  * DO_LOAD_ADDRESS
@@ -179,6 +179,249 @@ ENTRY(do_xmem_byte)	/* do_xmem_byte(address, data, supervisor) */
 1:	xmem.bu	r3,r2,r0
 2:	jmp	r1
 
+ENTRY(ff1)
+	jmp.n	r1
+	ff1	r2, r2
+
+
+   .data
+
+/*
+ * reserve MAX_CPUS words for lockinit and lockeach;
+ * counters for simple_lock_init calls and lock acquisition calls.
+ */
+
+LABEL(lockinit)
+   zero 4*MAX_CPUS
+
+LABEL(lockuse)
+   zero 4*MAX_CPUS
+
+LABEL(lockpause)
+   zero 4*MAX_CPUS
+
+   .text
+
+/*************************************************************************/
+/******************  SIMPLE LOCK OPERATIONS  *****************************/
+/*************************************************************************/
+
+#ifdef done_in_kernel
+/*************************************************************
+ *************************************************************
+ **
+ **  	void simple_lock_init(int *lock_data)
+ **	{
+ **		*lock_data = 0;
+ **	}
+ **
+ **  	void simple_unlock(simple_lock_t *)
+ **	{
+ **		*lock_data = 0;
+ **	}
+ **/
+#undef simple_unlock
+ENTRY(simple_lock_init)
+	st      r0, r2, 0               /* init */
+        ldcr    r2, SR1                               /* extract cpu number*/
+        clr     r2, r2, 0<FLAG_CPU_FIELD_WIDTH>
+        mask    r2, r2, 3               /* play it safe */
+        or.u    r3, r0, hi16(lockinit)
+        or      r3, r3, lo16(lockinit)
+        ld      r4, r3[r2]
+        addu    r4, r4, 1
+        jmp.n   r1
+        st      r4, r3[r2]
+        
+ENTRY(simple_unlock)
+        jmp.n   r1
+        st      r0, r2, 0
+
+#if DDB
+/* version of simple_unlock for the debugger - should be identical to
+   simple_unlock, but should never have breakpoints inserted on it */
+ENTRY(db_simple_unlock)
+   jmp.n r1
+   st    r0, r2, 0
+#endif       
+
+/**
+ **     Simple_lock
+ **
+ **	Returns when the lock is taken. It also increments lockuse[cpu]
+ **/
+ENTRY(simple_lock)
+   /* do r3 = test_and_set(r2, 1) */
+   or    r3, r0, 1
+   xmem  r3, r2, r0
+   bcnd  ne0, r3, 1f
+#if 0
+   ldcr  r5, SR1                               /* extract cpu number */
+   clr   r5, r5, 0<FLAG_CPU_FIELD_WIDTH>
+   mask  r5, r5, 3               /* play it safe */
+   or.u  r3, r0, hi16(lockuse)
+   or    r3, r3, lo16(lockuse)
+   ld    r4, r3[r5]
+   addu  r4, r4, 1
+   st    r4, r3[r5]
+#endif
+   jmp     r1
+	
+1:
+	/* wait until the lock appears to be free */
+   or.u  r4, r0, 0x0300
+2:
+   subu  r4, r4, 1
+   bcnd  eq0, r4, _simple_lock_too_long
+   ld    r3, r2, 0       /* check lock */
+   bcnd  ne0, r3, 2b
+   br    _simple_lock	/* looks free... check again with the xmem */
+
+ENTRY(simple_lock_too_long)
+#ifdef JEFF_DEBUG
+	/* just want to break here.... */
+   tb0   0, r0 , 0x84 /* gimmeabreak */
+#else
+	/* waited too long */
+   subu  r31, r31, 0x40
+   st    r1, r31, 0x30
+   st    r30, r31, 0x34
+   st    r2, r31, 0x38
+   or    r3, r0, r1
+#if 0
+   bsr   _report_lock_info
+#endif 
+   ld    r2, r31, 0x38
+   ld    r30, r31, 0x34
+   ld    r1, r31, 0x30
+   addu  r31, r31, 0x40
+   br    _simple_lock
+#endif /* JEFF_DEBUG */
+
+
+#if DDB
+/*
+ * Version of simple_lock for the kernel debugger; should never have
+ * breakpoints set on it. Should be kept consistent with simple_lock.
+ */
+ENTRY(db_simple_lock)
+   /* do r10 = test_and_set(r2, 1) */
+   or    r10, r0, 1
+   xmem  r10, r2, r0
+   bcnd  ne0, r10, db_simple_lock_watch
+   ldcr  r2, SR1                               /* extract cpu number*/
+   clr   r2, r2, 0<FLAG_CPU_FIELD_WIDTH>
+   mask  r2, r2, 3               /* play it safe*/
+   or.u  r3, r0, hi16(lockuse)
+   or    r3, r3, lo16(lockuse)
+   ld    r4, r3[r2]
+   addu  r4, r4, 1
+   jmp.n r1
+   st    r4, r3[r2]
+	
+db_simple_lock_watch:
+	/* wait until the lock appears to be free */
+3:
+   ld    r10, r2, 0
+   bcnd  ne0, r10, 3b
+   br    _db_simple_lock	/* looks free... check again with the xmem */
+#endif /* DDB */
+
+/*************************************************************
+ *************************************************************
+ **
+ ** 	boolean_t simple_try_lock(simple_lock_t *);
+ **
+ **	Grab the lock if it's free.  Return zero if the lock was
+ **	busy, non-zero if the lock has been taken.
+ **/
+ENTRY(simple_lock_try)
+   or    r3, r0, 1	/* r3 := test_and_set(r2, 1) */
+   xmem  r3, r2, r0
+   /* If r3 is now zero, we hold the lock -- return non-zero.  */
+   /* If r3 is now one,  we didn't get it -- return zero.	     */
+   /* Thus, we want to "return(!r3)"			     */
+   cmp   r4, r3, r0
+   jmp.n r1
+   extu  r2, r4, 1<2>
+
+#if DDB
+/* version for the kernel debugger - keep consistent with above */
+ENTRY(db_simple_lock_try)
+   or    r3, r0, 1	/* r3 := test_and_set(r2, 1) */
+   xmem  r3, r2, r0
+   /* If r3 is now zero, we hold the lock -- return non-zero.  */
+   /* If r3 is now one,  we didn't get it -- return zero.	     */
+   /* Thus, we want to "return(!r3)"			     */
+   cmp   r4, r3, r0
+   jmp.n r1
+   extu  r2, r4, 1<2>
+#endif
+
+#if DDB  /* version for the debugger */
+ENTRY(db_simple_lock_held)
+   jmp.n r1
+   ld    r2, r2, 0
+#endif
+
+/*
+ * void simple_lock_pause(void). 
+ *
+ * This routine is called when we find a simple lock held that we wish to
+ * acquire, but cannot spin on because we are holding a lock that is in the
+ * wrong order to it with respect to the locking hierarchy. Once we drop the
+ * lock we are holding, however, we cannot assume the lock we were trying to 
+ * acquire is not deallocated. Consequently, we drop the lock we are holding 
+ * and wait for a while, then retry. This is the wait for a while routine. 
+ *
+ * We define a array of counters[cpus], lockpause
+ * to tell use how many times this routine is called.
+ * We currently wait 128 cycles per call.
+ */
+
+ENTRY(simple_lock_pause)
+        ldcr    r2, SR1                         /* extract cpu number*/
+        clr     r2, r2, FLAG_CPU_FIELD_WIDTH
+        mask    r2, r2, 3                       /* play it safe */
+        or.u    r3, r0, hi16(lockpause)
+        or      r3, r3, lo16(lockpause)
+        ld      r4, r3[r2]
+        or      r5, r0, 128                     /* initialize counters*/
+1:      subu    r5, r5, 1                       /* count down */
+        bcnd    ne0, r5, 1b
+        addu    r4, r4, 1
+	jmp.n	r1                              /* return*/
+  	st	r4, r3[r2]
+
+#endif /* done_in_kernel */
+
+#ifdef now_in_c
+/*************************************************************************
+ *************************************************************************
+ **
+ **	void get_psr(unsigned psr)
+ **
+ **	Enables processor interrupts (for the executing cpu).
+ **/
+#undef get_psr
+ENTRY(get_psr)
+	ldcr	r2, PSR
+	jmp	r1
+
+/*************************************************************************
+ *************************************************************************
+ **
+ **	void set_psr(unsigned psr)
+ **
+ **	Enables processor interrupts (for the executing cpu).
+ **/
+
+#undef set_psr
+ENTRY(set_psr)
+	stcr	r2, PSR
+        FLUSH_PIPELINE
+	jmp	r1
+
 /*************************************************************************
  *************************************************************************
  **
@@ -225,10 +468,6 @@ ENTRY(disable_interrupt)
         FLUSH_PIPELINE
 	jmp	r1
 
-/* a version of disable_interrupt for the kernel debugger. Should never
-   have breakpoints set in it. Make sure it stays consistent with 
-   disable_interrupt */
-
 #if DDB
 ENTRY(db_disable_interrupt)
 	ldcr	r2, PSR
@@ -238,15 +477,23 @@ ENTRY(db_disable_interrupt)
 	jmp	r1
 #endif /* DDB */
 
-/* version for the debugger */
+#endif /* now_in_c */
 
+ENTRY(are_interrupts_disabled)
+	ldcr	r2, PSR                   /* get the processor status word */
+	set  	r3, r0, 1<PSR_INTERRUPT_DISABLE_BIT>   /* set mask */
+	jmp.n 	r1                                     /* delayed return */
+	and 	r2, r2, r3                            /* r2 = r3 & r2 */
+
+
+/* version for the debugger */
 #if DDB
 
 ENTRY(db_are_interrupts_disabled)
-     ldcr	r2, PSR                   /* get the processor status word */
-     set  	r3, r0, 1<PSR_INTERRUPT_DISABLE_BIT>   /* set mask */
-     jmp.n 	r1                                     /* delayed return */
-     and 	r2, r2, r3                            /* r2 = r3 & r2 */
+	ldcr	r2, PSR                   /* get the processor status word */
+	set  	r3, r0, 1<PSR_INTERRUPT_DISABLE_BIT>   /* set mask */
+	jmp.n 	r1                                     /* delayed return */
+	and 	r2, r2, r3                             /* r2 = r3 & r2 */
 #endif /* DDB */
 
 LABEL(_FAULT_ERROR)
@@ -262,89 +509,89 @@ LABEL(_FAULT_ERROR)
 
 ENTRY(fuword)
 ENTRY(fuiword)
-	or.u		r5,   r0,   hi16(_curpcb)	
-	ld		r6,   r5,   lo16(_curpcb)
-	or.u		r5,   r0,   hi16(fusu_fault)
-	or		r5,   r5,   lo16(fusu_fault)
-	st		r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
+	or.u	r5,   r0,   hi16(_curpcb)	
+	ld	r6,   r5,   lo16(_curpcb)
+	or.u	r5,   r0,   hi16(fusu_fault)
+	or	r5,   r5,   lo16(fusu_fault)
+	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
 #if  ERRATA__XXX_USR
 	NOP
-	ld.usr   	r5,   r0,  r2
+	ld.usr	r5,   r0,  r2
 	NOP
 	NOP
 	NOP
 #else
-	ld.usr   	r5,   r0,  r2
+	ld.usr  r5,   r0,  r2
 #endif
-	or		r2,   r0,  r5
-	br		fusu_ret
+	or	r2,   r0,  r5
+	br	fusu_ret
 fusu_fault:
-	subu		r2,   r0,  1	
+	subu	r2,   r0,  1	
 fusu_ret:
-	or.u		r5,   r0,   hi16(_curpcb)	
-	ld		r6,   r5,   lo16(_curpcb)
-	st		r0,   r6,   PCB_ONFAULT	/* pcb_onfault = 0 */
+	or.u	r5,   r0,   hi16(_curpcb)	
+	ld	r6,   r5,   lo16(_curpcb)
+	st	r0,   r6,   PCB_ONFAULT	/* pcb_onfault = 0 */
 
-	jmp		r1
+	jmp	r1
 		
 ENTRY(fusword)
-	or.u		r5,   r0,   hi16(_curpcb)	
-	ld		r6,   r5,   lo16(_curpcb)
-	or.u		r5,   r0,   hi16(fusu_fault)
-	or		r5,   r5,   lo16(fusu_fault)
-	st		r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
+	or.u	r5,   r0,   hi16(_curpcb)	
+	ld	r6,   r5,   lo16(_curpcb)
+	or.u	r5,   r0,   hi16(fusu_fault)
+	or	r5,   r5,   lo16(fusu_fault)
+	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
 #if  ERRATA__XXX_USR
 	NOP
-	ld.h.usr   	r5,   r0,  r2
+	ld.h.usr r5,   r0,  r2
 	NOP
 	NOP
 	NOP
 #else
-	ld.h.usr   	r5,   r0,  r2
+	ld.h.usr r5,   r0,  r2
 #endif
-	or		r2,   r0,  r5
-	br		fusu_ret
+	or	r2,   r0,  r5
+	br	fusu_ret
 	
 ENTRY(fubyte)
 ENTRY(fuibyte)
-	or.u		r5,   r0,   hi16(_curpcb)	
-	ld		r6,   r5,   lo16(_curpcb)
-	or.u		r5,   r0,   hi16(fusu_fault)
-	or		r5,   r5,   lo16(fusu_fault)
-	st		r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
+	or.u	r5,   r0,   hi16(_curpcb)	
+	ld	r6,   r5,   lo16(_curpcb)
+	or.u	r5,   r0,   hi16(fusu_fault)
+	or	r5,   r5,   lo16(fusu_fault)
+	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
 #if  ERRATA__XXX_USR
 	NOP
-	ld.b.usr   	r5,   r0,  r2
+	ld.b.usr r5,   r0,  r2
 	NOP
 	NOP
 	NOP
 #else
-	ld.b.usr   	r5,   r0,  r2
+	ld.b.usr r5,   r0,  r2
 #endif
-	or		r2,   r0,  r5
-	br		fusu_ret
+	or	r2,   r0,  r5
+	br	fusu_ret
 
 ENTRY(fuswintr)
-	or.u		r5,   r0,   hi16(_curpcb)	
-	ld		r6,   r5,   lo16(_curpcb)
-	or.u		r5,   r0,   hi16(_fubail)
-	or		r5,   r5,   lo16(_fubail)
-	st		r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fubail */
+	or.u	r5,   r0,   hi16(_curpcb)	
+	ld	r6,   r5,   lo16(_curpcb)
+	or.u	r5,   r0,   hi16(_fubail)
+	or	r5,   r5,   lo16(_fubail)
+	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fubail */
 #if  ERRATA__XXX_USR
 	NOP
-	ld.h.usr	r5,   r2, r0
+	ld.h.usr r5,   r2, r0
 	NOP
 	NOP
 	NOP
 #else
-	ld.h.usr	r5,   r2, r0
+	ld.h.usr r5,   r2, r0
 #endif
-	or		r2,   r0, r5
-	br		fusu_ret
+	or	r2,   r0, r5
+	br	fusu_ret
 
 ENTRY(fubail)
-	subu		r2,   r0, 1
-	br		fusu_ret
+	subu	r2,   r0, 1
+	br	fusu_ret
 
 /*
  * store to user space.
@@ -354,81 +601,81 @@ ENTRY(fubail)
 
 ENTRY(suword)
 ENTRY(suiword)
-	or.u		r5,   r0,   hi16(_curpcb)	
-	ld		r6,   r5,   lo16(_curpcb)
-	or.u		r5,   r0,   hi16(fusu_fault)
-	or		r5,   r5,   lo16(fusu_fault)
-	st		r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
+	or.u	r5,   r0,   hi16(_curpcb)	
+	ld	r6,   r5,   lo16(_curpcb)
+	or.u	r5,   r0,   hi16(fusu_fault)
+	or	r5,   r5,   lo16(fusu_fault)
+	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
 #if  ERRATA__XXX_USR
 	NOP
-	st.usr		r3,   r2, r0
+	st.usr	r3,   r2, r0
 	NOP
 	NOP
 	NOP
 #else
-	st.usr		r3,   r2, r0
+	st.usr	r3,   r2, r0
 #endif
-	or		r2,   r0, r0		/* return success */
-	br		fusu_ret
+	or	r2,   r0, r0		/* return success */
+	br	fusu_ret
 
 ENTRY(susword)
-	or.u		r5,   r0,   hi16(_curpcb)	
-	ld		r6,   r5,   lo16(_curpcb)
-	or.u		r5,   r0,   hi16(fusu_fault)
-	or		r5,   r5,   lo16(fusu_fault)
-	st		r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
+	or.u	r5,   r0,   hi16(_curpcb)	
+	ld	r6,   r5,   lo16(_curpcb)
+	or.u	r5,   r0,   hi16(fusu_fault)
+	or	r5,   r5,   lo16(fusu_fault)
+	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
 #if  ERRATA__XXX_USR
 	NOP
-	st.h.usr	r3,   r2, r0
+	st.h.usr r3,   r2, r0
 	NOP
 	NOP
 	NOP
 #else
-	st.h.usr	r3,   r2, r0
+	st.h.usr r3,   r2, r0
 #endif
-	or		r2,   r0, r0		/* return success */
-	br		fusu_ret
+	or	r2,   r0, r0		/* return success */
+	br	fusu_ret
 
 ENTRY(subyte)
 ENTRY(suibyte)
-	or.u		r5,   r0,   hi16(_curpcb)	
-	ld		r6,   r5,   lo16(_curpcb)
-	or.u		r5,   r0,   hi16(fusu_fault)
-	or		r5,   r5,   lo16(fusu_fault)
-	st		r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
+	or.u	r5,   r0,   hi16(_curpcb)	
+	ld	r6,   r5,   lo16(_curpcb)
+	or.u	r5,   r0,   hi16(fusu_fault)
+	or	r5,   r5,   lo16(fusu_fault)
+	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = fusu_fault */
 #if  ERRATA__XXX_USR
 	NOP
-	st.b.usr	r3,   r2, r0
+	st.b.usr r3,   r2, r0
 	NOP
 	NOP
 	NOP
 #else
-	st.b.usr	r3,   r2, r0
+	st.b.usr r3,   r2, r0
 #endif
-	or		r2,   r0, r0		/* return success */
-	br		fusu_ret
+	or	r2,   r0, r0		/* return success */
+	br	fusu_ret
 
 ENTRY(suswintr)
-	or.u		r5,   r0,   hi16(_curpcb)	
-	ld		r6,   r5,   lo16(_curpcb)
-	or.u		r5,   r0,   hi16(_subail)
-	or		r5,   r5,   lo16(_subail)
-	st		r5,   r6,   PCB_ONFAULT	/* pcb_onfault = subail */
+	or.u	r5,   r0,   hi16(_curpcb)	
+	ld	r6,   r5,   lo16(_curpcb)
+	or.u	r5,   r0,   hi16(_subail)
+	or	r5,   r5,   lo16(_subail)
+	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = subail */
 #if  ERRATA__XXX_USR
 	NOP
-	st.h.usr	r3,   r2, r0
+	st.h.usr r3,   r2, r0
 	NOP
 	NOP
 	NOP
 #else
-	st.h.usr	r3,   r2, r0
+	st.h.usr r3,   r2, r0
 #endif
-	or		r2,   r0, r0		/* return success */
-	br		fusu_ret
+	or	r2,   r0, r0		/* return success */
+	br	fusu_ret
 
 ENTRY(subail)
-	subu		r2,   r0, 1
-	br		fusu_ret
+	subu	r2,   r0, 1
+	br	fusu_ret
 
 #if 0
 /*
@@ -479,172 +726,172 @@ Lcsdone:
 
 ENTRY(copyin)
 	/* set up fault handler */
-	or.u		r5,   r0,   hi16(_curpcb)	
-	ld		r6,   r5,   lo16(_curpcb)
-	or.u		r5,   r0,   hi16(.Lciflt)
-	or		r5,   r5,   lo16(.Lciflt)
-	st		r5,   r6,   PCB_ONFAULT	/* pcb_onfault = .Lciflt */
+	or.u	r5,   r0,   hi16(_curpcb)	
+	ld	r6,   r5,   lo16(_curpcb)
+	or.u	r5,   r0,   hi16(.Lciflt)
+	or	r5,   r5,   lo16(.Lciflt)
+	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = .Lciflt */
 	
-	/*bcnd		ne0,  LEN,  1f ; XXX optimize len = 0 case */
-	/*;or		r2,   r0,   0 */
-	/*;br		.Lcidone */
+	/*bcnd	ne0,  LEN,  1f ; XXX optimize len = 0 case */
+	/*;or	r2,   r0,   0 */
+	/*;br	.Lcidone */
     /*;1: ;bcnd		lt0,  LEN,  .Lciflt ; EFAULT if len < 0  */
         
 	/* If it's a small length (less than 8), then do byte-by-byte */
-	cmp		r9,   LEN,  8
-	bb1		lt,   r9,   copyin_byte_only
+	cmp	r9,   LEN,  8
+	bb1	lt,   r9,   copyin_byte_only
 
 	/* If they're not aligned similiarly, use byte only... */
-	xor		r9,   SRC,  DEST
-	mask		r8,   r9,   0x3
-	bcnd		ne0,  r8,   copyin_byte_only
+	xor	r9,   SRC,  DEST
+	mask	r8,   r9,   0x3
+	bcnd	ne0,  r8,   copyin_byte_only
 
 	/*
 	 * At this point, we don't know if they're word aligned or not,
 	 * but we know that what needs to be done to one to align
 	 * it is what's needed for the other.
 	 */
-	bb1		0,    SRC,  copyin_left_align_to_halfword
+	bb1	0,    SRC,  copyin_left_align_to_halfword
 copyin_left_aligned_to_halfword:
-	bb1		1,    SRC,  copyin_left_align_to_word
+	bb1	1,    SRC,  copyin_left_align_to_word
 copyin_left_aligned_to_word:
-	bb1		0,    LEN,  copyin_right_align_to_halfword
+	bb1	0,    LEN,  copyin_right_align_to_halfword
 copyin_right_aligned_to_halfword:
-	bb1		1,    LEN,  copyin_right_align_to_word
+	bb1	1,    LEN,  copyin_right_align_to_word
 copyin_right_aligned_to_word:
 
 	/* At this point, both SRC and DEST are aligned to a word */
 	/* boundry, and LEN is an even multiple of 4.             */
-	bb1.n		2,    LEN,  copyin_right_align_to_doubleword
-	or		r7,   r0,   4
+	bb1.n	2,    LEN,  copyin_right_align_to_doubleword
+	or	r7,   r0,   4
 
 copyin_right_aligned_to_doubleword:
 #if  ERRATA__XXX_USR
 	NOP
-	ld.usr 		r5,   SRC,  r0
+	ld.usr 	r5,   SRC,  r0
 	NOP
 	NOP
 	NOP
-	ld.usr    	r6,   SRC,  r7
+	ld.usr  r6,   SRC,  r7
 	NOP
 	NOP
 	NOP
 #else
-	ld.usr 		r5,   SRC,  r0
-	ld.usr    	r6,   SRC,  r7
+	ld.usr 	r5,   SRC,  r0
+	ld.usr  r6,   SRC,  r7
 #endif
-	subu		LEN,  LEN,  8
-	st		r5,   DEST, r0
-	addu		SRC,  SRC,  8
-	st		r6,   DEST, r7
-	bcnd.n		ne0,  LEN,  copyin_right_aligned_to_doubleword
-	addu		DEST, DEST, 8
-   	or		r2, r0, r0	/* successful return */
-	br		.Lcidone
+	subu	LEN,  LEN,  8
+	st	r5,   DEST, r0
+	addu	SRC,  SRC,  8
+	st	r6,   DEST, r7
+	bcnd.n	ne0,  LEN,  copyin_right_aligned_to_doubleword
+	addu	DEST, DEST, 8
+   	or	r2, r0, r0	/* successful return */
+	br	.Lcidone
 
         /***************************************************/
 
 copyin_left_align_to_halfword:
 #if  ERRATA__XXX_USR
 	NOP
-	ld.b.usr   	r5,   SRC,  r0
+	ld.b.usr r5,   SRC,  r0
 	NOP
 	NOP
 	NOP
 #else
-	ld.b.usr   	r5,   SRC,  r0
+	ld.b.usr r5,   SRC,  r0
 #endif
-	subu		LEN,  LEN,  1
-	st.b		r5,   DEST, r0
-	addu		SRC,  SRC,  1
-	br.n		copyin_left_aligned_to_halfword
-	addu		DEST, DEST, 1
+	subu	LEN,  LEN,  1
+	st.b	r5,   DEST, r0
+	addu	SRC,  SRC,  1
+	br.n	copyin_left_aligned_to_halfword
+	addu	DEST, DEST, 1
 
 copyin_left_align_to_word:
 #if  ERRATA__XXX_USR
 	NOP
-	ld.h.usr   	r5,   SRC,  r0
+	ld.h.usr r5,   SRC,  r0
 	NOP
 	NOP
 	NOP
 #else
-	ld.h.usr   	r5,   SRC,  r0
+	ld.h.usr r5,   SRC,  r0
 #endif
-	subu      	LEN,  LEN,  2
-	st.h		r5,   DEST, r0
-	addu		SRC,  SRC,  2
-	br.n		copyin_left_aligned_to_word
-	addu		DEST, DEST, 2
+	subu    LEN,  LEN,  2
+	st.h	r5,   DEST, r0
+	addu	SRC,  SRC,  2
+	br.n	copyin_left_aligned_to_word
+	addu	DEST, DEST, 2
 
 copyin_right_align_to_halfword:
-	subu		LEN,  LEN,  1
+	subu	LEN,  LEN,  1
 #if  ERRATA__XXX_USR
 	NOP
-	ld.b.usr   	r5,   SRC,  LEN
+	ld.b.usr r5,   SRC,  LEN
 	NOP
 	NOP
 	NOP
 #else
-	ld.b.usr   	r5,   SRC,  LEN
+	ld.b.usr r5,   SRC,  LEN
 #endif
-	br.n		copyin_right_aligned_to_halfword
-	st.b		r5,   DEST, LEN
+	br.n	copyin_right_aligned_to_halfword
+	st.b	r5,   DEST, LEN
 
 copyin_right_align_to_word:
-	subu		LEN,  LEN,  2
+	subu	LEN,  LEN,  2
 #if  ERRATA__XXX_USR
 	NOP
-	ld.h.usr   	r5,   SRC,  LEN
+	ld.h.usr r5,   SRC,  LEN
 	NOP
 	NOP
 	NOP
 #else
-	ld.h.usr   	r5,   SRC,  LEN
+	ld.h.usr r5,   SRC,  LEN
 #endif
-	br.n		copyin_right_aligned_to_word
-	st.h		r5,   DEST, LEN
+	br.n	copyin_right_aligned_to_word
+	st.h	r5,   DEST, LEN
 
 copyin_right_align_to_doubleword:
-	subu		LEN,  LEN,  4
+	subu	LEN,  LEN,  4
 #if  ERRATA__XXX_USR
 	NOP
-	ld.usr		r5,   SRC,  LEN
+	ld.usr	r5,   SRC,  LEN
 	NOP
 	NOP
 	NOP
 #else
-	ld.usr		r5,   SRC,  LEN
+	ld.usr	r5,   SRC,  LEN
 #endif
-	bcnd.n		ne0,  LEN, copyin_right_aligned_to_doubleword
-	st		r5,   DEST, LEN
-   	or		r2, r0, r0	/* successful return */
-	br		.Lcidone
+	bcnd.n	ne0,  LEN, copyin_right_aligned_to_doubleword
+	st	r5,   DEST, LEN
+   	or	r2, r0, r0	/* successful return */
+	br	.Lcidone
 
 copyin_byte_only:
-	bcnd		eq0, LEN, 2f
+	bcnd	eq0, LEN, 2f
    1:
-	subu		LEN, LEN, 1
+	subu	LEN, LEN, 1
 #if  ERRATA__XXX_USR
 	NOP
-	ld.b.usr   	r5, SRC, LEN
+	ld.b.usr r5, SRC, LEN
 	NOP
 	NOP
 	NOP
 #else
-	ld.b.usr   	r5, SRC, LEN
+	ld.b.usr r5, SRC, LEN
 #endif
-	bcnd.n		ne0, LEN, 1b
-	st.b		r5, DEST, LEN
-   2:	or		r2, r0, r0	/* successful return */
-	br		.Lcidone
+	bcnd.n	ne0, LEN, 1b
+	st.b	r5, DEST, LEN
+   2:	or	r2, r0, r0	/* successful return */
+	br	.Lcidone
 .Lcidone:
-	or.u		r5,r0,hi16(_curpcb)
-	ld		r6,r5,lo16(_curpcb)
-	st		r0,r6,PCB_ONFAULT
-	jmp		r1
+	or.u	r5,r0,hi16(_curpcb)
+	ld	r6,r5,lo16(_curpcb)
+	st	r0,r6,PCB_ONFAULT
+	jmp	r1
 .Lciflt:
-	or		r2, r0, EFAULT	/* return fault */
-	br		.Lcidone
+	or	r2, r0, EFAULT	/* return fault */
+	br	.Lcidone
 
 #undef SRC
 #undef DEST
@@ -668,47 +915,48 @@ copyin_byte_only:
 #define CNT	r4
 #define LEN	r5
 
-ENTRY(copyinstr)
+ENTRY(copyinstr)                
+
 	/* setup fault handler */
-	or.u		r6,   r0,   hi16(_curpcb)	
-	ld		r7,   r6,   lo16(_curpcb)
-	or.u		r6,   r0,   hi16(.Lcisflt)
-	or		r6,   r6,   lo16(.Lcisflt)
-	st		r6,   r7,   PCB_ONFAULT
-	bcnd		lt0,  CNT,   .Lcisflt
-	bcnd		eq0,  CNT,   .Lcisdone
-	or		r6,   r0,   0
+	or.u	r6,   r0,   hi16(_curpcb)	
+	ld	r7,   r6,   lo16(_curpcb)
+	or.u	r6,   r0,   hi16(.Lcisflt)
+	or	r6,   r6,   lo16(.Lcisflt)
+	st	r6,   r7,   PCB_ONFAULT
+	bcnd	lt0,  CNT,   .Lcisflt
+	bcnd	eq0,  CNT,   .Lcisdone
+	or	r6,   r0,   0
    1:	
 #if  ERRATA__XXX_USR
 	NOP
-	ld.bu.usr   	r7,   SRC,  r6
+	ld.bu.usr  	r7,   SRC,  r6
 	NOP
 	NOP
 	NOP
 #else
 	ld.bu.usr	r7,   SRC,  r6
 #endif
-	st.b		r7,   DEST, r6
-	bcnd.n		eq0,  r7, 2f		/* all done */
-	addu		r6,   r6, 1
-	cmp		r7,   r6, CNT
-	bb1		lt,   r7, 1b
-	or		r2,   r0, ENAMETOOLONG	/* over flow */
-	br		.Lcisdone
+	st.b	r7,   DEST, r6
+	bcnd.n	eq0,  r7, 2f		/* all done */
+	addu	r6,   r6, 1
+	cmp	r7,   r6, CNT
+	bb1	lt,   r7, 1b
+	or	r2,   r0, ENAMETOOLONG	/* over flow */
+	br	.Lcisdone
    2:   					/* all done */
-	or		r2,   r0, 0
-	br		.Lcisdone
+	or	r2,   r0, 0
+	br	.Lcisdone
 
 .Lcisdone:
-        bcnd		eq0, LEN, 3f		
-	st		r6, r0, LEN
-   3:	or.u		r5,r0,hi16(_curpcb)
-	ld		r6,r5,lo16(_curpcb)
-	st		r0,r6,PCB_ONFAULT	/* clear the handler */
-	jmp		r1
+        bcnd	eq0, LEN, 3f		
+	st	r6, r0, LEN
+   3:	or.u	r5,r0,hi16(_curpcb)
+	ld	r6,r5,lo16(_curpcb)
+	st	r0,r6,PCB_ONFAULT	/* clear the handler */
+	jmp	r1
 .Lcisflt:
-	or		r2, r0, EFAULT	/* return fault */
-	br		.Lcisdone
+	or	r2, r0, EFAULT	/* return fault */
+	br	.Lcisdone
 
 #undef SRC
 #undef DEST
@@ -730,181 +978,182 @@ ENTRY(copyinstr)
 ENTRY(copyout)
 	/* setup fault handler */
 /*	tb0 0, r0, 132     entry trap */
-	or.u		r5,   r0,   hi16(_curpcb)	
-	ld		r6,   r5,   lo16(_curpcb)
-	or.u		r5,   r0,   hi16(.Lcoflt)
-	or		r5,   r5,   lo16(.Lcoflt)
-	st		r5,   r6,   PCB_ONFAULT	/* pcb_onfault = .Lcoflt */
-/*	;bcnd		ne0,  LEN,  1f ; XXX optimize len = 0 case */
-/*	;or		r2,   r0,   0 */
-/*	;br		.Lcodone */
-    /*;1: ;bcnd		lt0,  LEN,  .Lcoflt ; EFAULT if len < 0  */
+/*	SET_PCB_ONFAULT(r5, r6, .Lcoflt)*/
+	or.u	r5,   r0,   hi16(_curpcb)	
+	ld	r6,   r5,   lo16(_curpcb)
+	or.u	r5,   r0,   hi16(.Lcoflt)
+	or	r5,   r5,   lo16(.Lcoflt)
+	st	r5,   r6,   PCB_ONFAULT	/* pcb_onfault = .Lcoflt */
+/*	;bcnd	ne0,  LEN,  1f ; XXX optimize len = 0 case */
+/*	;or	r2,   r0,   0 */
+/*	;br	.Lcodone */
+    /*;1: ;bcnd	lt0,  LEN,  .Lcoflt ; EFAULT if len < 0  */
 	/* If it's a small length (less than 8), then do byte-by-byte */
-	cmp		r9,   LEN,  8 
-	bb1		lt,   r9,   copyout_byte_only 
+	cmp	r9,   LEN,  8 
+	bb1	lt,   r9,   copyout_byte_only 
 
 	/* If they're not aligned similiarly, use byte only... */
-	xor		r9,   SRC,  DEST 
-	mask		r8,   r9,   0x3 
-	bcnd		ne0,  r8,   copyout_byte_only 
+	xor	r9,   SRC,  DEST 
+	mask	r8,   r9,   0x3 
+	bcnd	ne0,  r8,   copyout_byte_only 
 
 	/*
 	 * At this point, we don't know if they're word aligned or not,
 	 * but we know that what needs to be done to one to align
 	 * it is what's needed for the other.
 	 */
-	bb1		0,    SRC,  copyout_left_align_to_halfword
+	bb1	0,    SRC,  copyout_left_align_to_halfword
 copyout_left_aligned_to_halfword:
-	bb1		1,    SRC,  copyout_left_align_to_word
+	bb1	1,    SRC,  copyout_left_align_to_word
 copyout_left_aligned_to_word:
-	bb1		0,    LEN,  copyout_right_align_to_halfword
+	bb1	0,    LEN,  copyout_right_align_to_halfword
 copyout_right_aligned_to_halfword:
-	bb1		1,    LEN,  copyout_right_align_to_word
+	bb1	1,    LEN,  copyout_right_align_to_word
 copyout_right_aligned_to_word:
 
 	/*
 	 * At this point, both SRC and DEST are aligned to a word
 	 * boundry, and LEN is an even multiple of 4.
 	 */
-	bb1.n		2,    LEN,  copyout_right_align_to_doubleword
-	or		r7,   r0,   4
+	bb1.n	2,    LEN,  copyout_right_align_to_doubleword
+	or	r7,   r0,   4
 
 copyout_right_aligned_to_doubleword:
-	ld 		r5,   SRC,  r0
-	ld    		r6,   SRC,  r7
-	subu		LEN,  LEN,  8
+	ld 	r5,   SRC,  r0
+	ld    	r6,   SRC,  r7
+	subu	LEN,  LEN,  8
 #if  ERRATA__XXX_USR
 	NOP
-	st.usr		r5,   DEST, r0
+	st.usr	r5,   DEST, r0
 	NOP
 	NOP
 	NOP
 #else
-	st.usr		r5,   DEST, r0
+	st.usr	r5,   DEST, r0
 #endif
-	addu		SRC,  SRC,  8
+	addu	SRC,  SRC,  8
 #if  ERRATA__XXX_USR
 	NOP
-	st.usr		r6,   DEST, r7
+	st.usr	r6,   DEST, r7
 	NOP
 	NOP
 	NOP
 #else
-	st.usr		r6,   DEST, r7
+	st.usr	r6,   DEST, r7
 #endif
-	bcnd.n		ne0,  LEN,  copyout_right_aligned_to_doubleword
-	addu		DEST, DEST, 8
-   	or		r2, r0, r0	/* successful return */
-	br		.Lcodone
+	bcnd.n	ne0,  LEN,  copyout_right_aligned_to_doubleword
+	addu	DEST, DEST, 8
+   	or	r2, r0, r0	/* successful return */
+	br	.Lcodone
 
 	/***************************************************/
 copyout_left_align_to_halfword:
-	ld.b   		r5,   SRC,  r0
-	subu		LEN,  LEN,  1
+	ld.b   	r5,   SRC,  r0
+	subu	LEN,  LEN,  1
 #if  ERRATA__XXX_USR
 	NOP
-	st.b.usr	r5,   DEST, r0
+	st.b.usr r5,   DEST, r0
 	NOP
 	NOP
 	NOP
 #else
-	st.b.usr	r5,   DEST, r0
+	st.b.usr r5,   DEST, r0
 #endif
-	addu		SRC,  SRC,  1
-	br.n		copyout_left_aligned_to_halfword
-	addu		DEST, DEST, 1
+	addu	SRC,  SRC,  1
+	br.n	copyout_left_aligned_to_halfword
+	addu	DEST, DEST, 1
 
 copyout_left_align_to_word:
-	ld.h   		r5,   SRC,  r0
-	subu      	LEN,  LEN,  2
+	ld.h   	r5,   SRC,  r0
+	subu    LEN,  LEN,  2
 #if  ERRATA__XXX_USR
 	NOP
-	st.h.usr	r5,   DEST, r0
+	st.h.usr r5,   DEST, r0
 	NOP
 	NOP
 	NOP
 #else
-	st.h.usr	r5,   DEST, r0
+	st.h.usr r5,   DEST, r0
 #endif
-	addu		SRC,  SRC,  2
-	br.n		copyout_left_aligned_to_word
-	addu		DEST, DEST, 2
+	addu	SRC,  SRC,  2
+	br.n	copyout_left_aligned_to_word
+	addu	DEST, DEST, 2
 
 copyout_right_align_to_halfword:
-	subu		LEN,  LEN,  1
-	ld.b   		r5,   SRC,  LEN
+	subu	LEN,  LEN,  1
+	ld.b   	r5,   SRC,  LEN
 #if  ERRATA__XXX_USR
+	NOP     
+	st.b.usr r5,   DEST, LEN
 	NOP
-	st.b.usr	r5,   DEST, LEN
 	NOP
 	NOP
-	NOP
-	br		copyout_right_aligned_to_halfword
+	br	copyout_right_aligned_to_halfword
 #else
-	br.n		copyout_right_aligned_to_halfword
-	st.b.usr	r5,   DEST, LEN
+	br.n	copyout_right_aligned_to_halfword
+	st.b.usr r5,   DEST, LEN
 #endif
 
 copyout_right_align_to_word:
-	subu		LEN,  LEN,  2
-	ld.h   		r5,   SRC,  LEN
+	subu	LEN,  LEN,  2
+	ld.h   	r5,   SRC,  LEN
 #if  ERRATA__XXX_USR
+	NOP     
+	st.h.usr r5,   DEST, LEN
 	NOP
-	st.h.usr	r5,   DEST, LEN
 	NOP
 	NOP
-	NOP
-	br		copyout_right_aligned_to_word
-#else
-	br.n		copyout_right_aligned_to_word
-	st.h.usr	r5,   DEST, LEN
+	br	copyout_right_aligned_to_word
+#else           
+	br.n	copyout_right_aligned_to_word
+	st.h.usr r5,   DEST, LEN
 #endif
 
 copyout_right_align_to_doubleword:
-	subu		LEN,  LEN,  4
-	ld		r5,   SRC,  LEN
+	subu	LEN,  LEN,  4
+	ld	r5,   SRC,  LEN
 #if  ERRATA__XXX_USR
 	NOP
-	st.usr		r5,   DEST, LEN
+	st.usr	r5,   DEST, LEN
 	NOP
 	NOP
 	NOP
-	bcnd		ne0,  LEN, copyout_right_aligned_to_doubleword
+	bcnd	ne0,  LEN, copyout_right_aligned_to_doubleword
 #else
-	bcnd.n		ne0,  LEN, copyout_right_aligned_to_doubleword
-	st.usr		r5,   DEST, LEN
+	bcnd.n	ne0,  LEN, copyout_right_aligned_to_doubleword
+	st.usr	r5,   DEST, LEN
 #endif
-   	or		r2, r0, r0	/* successful return */
-	br		.Lcodone
+   	or	r2, r0, r0	/* successful return */
+	br	.Lcodone
 
 _LABEL(copyout_byte_only)
-	bcnd		eq0, LEN, 2f
+	bcnd	eq0, LEN, 2f
    1:
-	subu		LEN, LEN, 1
-	ld.b   		r5, SRC, LEN
+	subu	LEN, LEN, 1
+	ld.b   	r5, SRC, LEN
 #if  ERRATA__XXX_USR
 	NOP
-	st.b.usr	r5, DEST, LEN
+	st.b.usr r5, DEST, LEN
 	NOP
 	NOP
 	NOP
-	bcnd		ne0, LEN, 1b
+	bcnd	ne0, LEN, 1b
 #   else
-	bcnd.n		ne0, LEN, 1b
-	st.b.usr	r5, DEST, LEN
+	bcnd.n	ne0, LEN, 1b
+	st.b.usr r5, DEST, LEN
 #   endif
 
-   2:	or		r2, r0, r0	/* successful return */
-	br		.Lcodone
+   2:	or	r2, r0, r0	/* successful return */
+	br	.Lcodone
 
 .Lcodone:
-	or.u		r5,r0,hi16(_curpcb)
-	ld		r6,r5,lo16(_curpcb)
-	st		r0,r6,PCB_ONFAULT	/* clear the handler */
-	jmp		r1
+	or.u	r5,r0,hi16(_curpcb)
+	ld	r6,r5,lo16(_curpcb)
+	st	r0,r6,PCB_ONFAULT	/* clear the handler */
+	jmp	r1
 .Lcoflt:
-	or		r2, r0, EFAULT	/* return fault */
-	br		.Lcodone
+	or	r2, r0, EFAULT	/* return fault */
+	br	.Lcodone
 
 #undef SRC
 #undef DEST
@@ -928,46 +1177,46 @@ _LABEL(copyout_byte_only)
 
 ENTRY(copyoutstr)
 	/* setup fault handler */
-	or.u		r6,   r0,   hi16(_curpcb)	
-	ld		r7,   r6,   lo16(_curpcb)
-	or.u		r6,   r0,   hi16(.Lcosflt)
-	or		r6,   r6,   lo16(.Lcosflt)
-	st		r6,   r7,   PCB_ONFAULT
-	bcnd		lt0,  CNT,   .Lcosflt
-	bcnd		eq0,  CNT,   .Lcosdone
-	or		r6,   r0,   0
+	or.u	r6,   r0,   hi16(_curpcb)	
+	ld	r7,   r6,   lo16(_curpcb)
+	or.u	r6,   r0,   hi16(.Lcosflt)
+	or	r6,   r6,   lo16(.Lcosflt)
+	st	r6,   r7,   PCB_ONFAULT
+	bcnd	lt0,  CNT,   .Lcosflt
+	bcnd	eq0,  CNT,   .Lcosdone
+	or	r6,   r0,   0
    1:	
-	ld.bu		r7,   SRC,  r6
+	ld.bu	r7,   SRC,  r6
 #if  ERRATA__XXX_USR
 	NOP
-	st.b.usr   	r7,   DEST,  r6
+	st.b.usr r7,   DEST,  r6
 	NOP
 	NOP
 	NOP
 #else
-	st.b.usr	r7,   DEST,  r6
+	st.b.usr r7,   DEST,  r6
 #endif
-	bcnd.n		eq0,  r7, 2f		/* all done */
-	addu		r6,   r6, 1
-	cmp		r7,   r6, CNT
-	bb1		lt,   r7, 1b
-	or		r2,   r0, ENAMETOOLONG	/* over flow */
-	br		.Lcosdone
+	bcnd.n	eq0,  r7, 2f		/* all done */
+	addu	r6,   r6, 1
+	cmp	r7,   r6, CNT
+	bb1	lt,   r7, 1b
+	or	r2,   r0, ENAMETOOLONG	/* over flow */
+	br	.Lcosdone
    2:   					/* all done */
-	or		r2,   r0, 0
-	br		.Lcosdone
+	or	r2,   r0, 0
+	br	.Lcosdone
 
 .Lcosflt:
-	or		r2, r0, EFAULT	/* return fault */
-	br		.Lcosdone
+	or	r2, r0, EFAULT	/* return fault */
+	br	.Lcosdone
 
 .Lcosdone:
-        bcnd		eq0, LEN, 3f		
-	st		r6, r0, LEN
-   3:	or.u		r5,r0,hi16(_curpcb)
-	ld		r6,r5,lo16(_curpcb)
-	st		r0,r6,PCB_ONFAULT	/* clear the handler */
-	jmp		r1
+        bcnd	eq0, LEN, 3f		
+	st	r6, r0, LEN
+   3:	or.u	r5,r0,hi16(_curpcb)
+	ld	r6,r5,lo16(_curpcb)
+	st	r0,r6,PCB_ONFAULT	/* clear the handler */
+	jmp	r1
 
 #undef SRC
 #undef DEST
@@ -1338,7 +1587,7 @@ ENTRY(bzero)
 	or	R_mark_address, R_mark_address, lo16(mark)
 	
    top_of_main_loop:
-#	define MAX_AT_ONE_TIME 128
+#define MAX_AT_ONE_TIME 128
 	/*
 	 * Now we find out how many words we can zero-fill in a row.
 	 * We do this by doing something like:
@@ -1361,20 +1610,20 @@ ENTRY(bzero)
 	cmp	R_temp, R_bytes, MAX_AT_ONE_TIME
 	bb1	lt, R_temp, 1f
 
-		/*
-		 * Since we're doing the max, we know exactly where we're
-	 	 * jumping (the first one in the list!), so we can jump
-		 * right there.  However, we've still got to adjust
-		 * the length, so we'll jump to where we ajust the length
-	 	 * which just happens to fall through to the first store zero
-		 * in the list.
-		 *
-	 	 * Note, however, that we're jumping to an instruction that
-		 * would be in the delay slot for the jump in front of it,
-		 * so if you change things here, WATCH OUT.
-		 */
-		br.n	do_max
-		or	R_bytes, r0, MAX_AT_ONE_TIME
+	/*
+	 * Since we're doing the max, we know exactly where we're
+	 * jumping (the first one in the list!), so we can jump
+	 * right there.  However, we've still got to adjust
+	 * the length, so we'll jump to where we ajust the length
+	 * which just happens to fall through to the first store zero
+	 * in the list.
+	 *
+	 * Note, however, that we're jumping to an instruction that
+	 * would be in the delay slot for the jump in front of it,
+	 * so if you change things here, WATCH OUT.
+	 */
+	br.n	do_max
+	or	R_bytes, r0, MAX_AT_ONE_TIME
 	
      1:
 
@@ -1551,6 +1800,21 @@ ENTRY(getsp)
 	jmp	r1
 
 /*
+ *       invalidate_pte(pte)
+ *
+ *       This function will invalidate specified pte indivisibly
+ *       to avoid the write-back of used-bit and/or modify-bit into
+ *       that pte.  It also returns the pte found in the table.
+ */
+ENTRY(invalidate_pte)
+        or      r3,r0,r0
+        xmem    r3,r2,r0
+	tb1     0,r0,0
+        jmp.n   r1
+        or      r2,r3,r0
+
+#ifdef now_in_c
+/*
  * This has to be cleaned - we should not use INT_MASK_LEVEL. Should
  * use pcc2_int_lvl instead. XXX nivas
  */
@@ -1566,20 +1830,39 @@ ENTRY(getsp)
 ENTRY(spln)
 	ldcr	r10,PSR
 	or	r11,r0,r10
-	or	r5,r2,r0
+	or	r5,r2,r0 /* copy of r2 */
 	bb1	PSR_INTERRUPT_DISABLE_BIT,r10,1f
 	set	r10,r10,1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r10,PSR
         FLUSH_PIPELINE
     1:
+#ifdef MVME188
+	/* check if it's a mvme188 */
+	or.u	r4, r0, hi16(_cputyp)
+	ld	r3, r4, lo16(_cputyp)
+	cmp	r4, r3, 0x188
+	bb1	ne, r4, 2f
+	or.u	r2, r0, hi16(IEN0_REG)
+	bsr.n	_m188_get_mask
+	or	r2, r2, lo16(IEN0_REG)
+	or	r4,r2,r0 /* old mask in r4 */
+	or	r3,r5,r0 /* new mask in r3 */
+	or.u	r2, r0, hi16(IEN0_REG)
+	bsr.n	_m188_set_mask
+	or	r2, r2, lo16(IEN0_REG)
+	or	r2,r4,r0 /* old mask in r2 */
+	br	m188_spln_done
+#endif /* MVME188 */    
+    2:		
 	or.u	r3,r0,hi16(INT_MASK_LEVEL)
 	or	r3,r3,lo16(INT_MASK_LEVEL)
 	xmem.bu	r2,r3,r0
-	bcnd	ne0, r5, 2f
+m188_spln_done:
+	bcnd	ne0, r5, 3f
 	clr	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r11,PSR
         FLUSH_PIPELINE
-    2:
+    3:
 	jmp	r1
 
 ENTRY(getipl)
@@ -1591,8 +1874,23 @@ ENTRY(spl)
 	stcr	r10,PSR
         FLUSH_PIPELINE
       1:
+#ifdef MVME188
+	/* check if it's a mvme188 */
+	or.u	r4, r0, hi16(_cputyp)
+	ld	r3, r4, lo16(_cputyp)
+	cmp	r4, r3, 0x188
+	bb1	ne, r4, 2f
+	/* get the current mask value mvme188 */
+	or.u	r2, r0, hi16(IEN0_REG)
+	bsr.n	_m188_get_mask
+	or	r2, r2, lo16(IEN0_REG)
+	br 	m188_spl_done
+#endif	/* MVME188 */
+      2:	
+	/* get the current mask value mvme1x7 */
 	or.u	r3,r0,hi16(INT_MASK_LEVEL)
 	ld.b	r2,r3,lo16(INT_MASK_LEVEL)
+m188_spl_done:	
 	stcr	r11,PSR
         FLUSH_PIPELINE
 	jmp	r1
@@ -1610,50 +1908,104 @@ ENTRY(setipl)
 	bb1	PSR_INTERRUPT_DISABLE_BIT, r10, 1f
 	set	r10,r10,1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r10,PSR 			/* disable ints, if needed */
-        FLUSH_PIPELINE
-     1:
-	/* get the current mask value */
+   FLUSH_PIPELINE
+1:
+#ifdef MVME188
+	/* check if it's a mvme188 */
+	or.u	r4, r0, hi16(_cputyp)
+	ld	r3, r4, lo16(_cputyp)
+	cmp	r4, r3, 0x188
+	bb1	ne, r4, 2f
+	or	r3, r0, r2 			/* r3 now new mask value */
+	/* get the current mask value mvme188 */
+	or.u	r2,r0,hi16(IEN0_REG)
+	bsr.n	_m188_get_mask
+	or	r2,r2,lo16(IEN0_REG)
+	or	r4, r0, r2 			/* r4 now current mask value */
+	or.u	r2,r0,hi16(IEN0_REG)
+	bsr.n	_m188_set_mask
+	or	r2,r2,lo16(IEN0_REG)
+	or	r2, r0, r4			/* r2 now the old value */
+	br	m188_setipl_done     
+#endif	/* MVME188 */
+     2:	
+	/* get the current mask value mvme1x7 */
 	or.u	r3,r0,hi16(INT_MASK_LEVEL)
 	or	r3,r3,lo16(INT_MASK_LEVEL)
 	xmem.bu	r2,r3,r0			/* xchng the new mask value */
+m188_setipl_done:
         FLUSH_PIPELINE
 	stcr	r11,PSR				/* restore psr */
         FLUSH_PIPELINE
 	jmp	r1				/* and return the old value */
 
-/*
- *       invalidate_pte(pte)
- *
- *       This function will invalidate specified pte indivisibly
- *       to avoid the write-back of used-bit and/or modify-bit into
- *       that pte.  It also returns the pte found in the table.
- */
-ENTRY(invalidate_pte)
-        or      r3,r0,r0
-        xmem    r3,r2,r0
-	tb1     0,r0,0
-        jmp.n   r1
-        or      r2,r3,r0
-
 #if DDB
-
 ENTRY(db_spln)
 	ldcr	r10,PSR
 	or	r11,r0,r10
-	or	r5,r2,r0
+	or	r5,r2,r0 /* copy of r2 */
 	bb1	PSR_INTERRUPT_DISABLE_BIT,r10,1f
 	set	r10,r10,1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r10,PSR
         FLUSH_PIPELINE
     1:
+#ifdef MVME188
+	/* check if it's a mvme188 */
+	or.u	r4, r0, hi16(_cputyp)
+	ld	r3, r4, lo16(_cputyp)
+	cmp	r4, r3, 0x188
+	bb1	ne, r4, 2f
+	or.u	r2,r0,hi16(IEN0_REG)
+	bsr.n	_m188_get_mask
+	or	r2,r2,lo16(IEN0_REG)
+	or	r4,r2,r0 /* old mask in r4 */
+	or	r3,r5,r0 /* new mask in r3 */
+	or.u	r2,r0,hi16(IEN0_REG)
+	bsr.n	_m188_set_mask
+	or	r2,r2,lo16(IEN0_REG)
+	or	r2,r4,r0 /* old mask in r2 */
+	br	m188_db_spln_done
+#endif /* MVME188 */    
+    2:		
 	or.u	r3,r0,hi16(INT_MASK_LEVEL)
 	or	r3,r3,lo16(INT_MASK_LEVEL)
 	xmem.bu	r2,r3,r0
-	bcnd	ne0, r5, 2f
+m188_db_spln_done:
+	bcnd	ne0, r5, 3f
 	clr	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
 	stcr	r11,PSR
         FLUSH_PIPELINE
-    2:
+    3:
+	jmp	r1
+
+ENTRY(db_getipl)
+ENTRY(db_spl)
+	ldcr	r10,PSR
+	or	r11,r0,r10
+	bb1	PSR_INTERRUPT_DISABLE_BIT, r10, 1f
+	set	r10,r10,1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	r10,PSR
+        FLUSH_PIPELINE
+      1:
+#ifdef MVME188
+	/* check if it's a mvme188 */
+	or.u	r4, r0, hi16(_cputyp)
+	ld	r3, r4, lo16(_cputyp)
+	cmp	r4, r3, 0x188
+	bb1	ne, r4, 2f
+	/* get the current mask value mvme188 */
+	or.u	r2,r0,hi16(IEN0_REG)
+	bsr.n	_m188_get_mask
+	or	r2,r2,lo16(IEN0_REG)
+	br 	m188_db_spl_done
+#endif /* MVME188 */      
+      2:	
+	/* get the current mask value mvme1x7 */
+	or.u	r3,r0,hi16(INT_MASK_LEVEL)
+	ld.b	r2,r3,lo16(INT_MASK_LEVEL)
+m188_db_spl_done:	
+	stcr	r11,PSR
+        FLUSH_PIPELINE
 	jmp	r1
 
 ENTRY(db_setipl)
@@ -1664,29 +2016,38 @@ ENTRY(db_setipl)
 	stcr	r10,PSR 			/* disable ints, if needed */
         FLUSH_PIPELINE
      1:
-	/* get the current mask value */
+#ifdef MVME188
+	/* check if it's a mvme188 */
+	or.u	r4, r0, hi16(_cputyp)
+	ld	r3, r4, lo16(_cputyp)
+	cmp	r4, r3, 0x188
+	bb1	ne, r4, 2f
+	or	r3, r0, r2 			/* r3 now new mask value */
+	/* get the current mask value mvme188 */
+	or.u	r2,r0,hi16(IEN0_REG)
+	bsr.n	_m188_get_mask
+	or	r2,r2,lo16(IEN0_REG)
+	or	r4, r0, r2 			/* r4 now current mask value */
+	or.u	r2,r0,hi16(IEN0_REG)
+	bsr.n	_m188_set_mask
+	or	r2,r2,lo16(IEN0_REG)
+	or	r2, r0, r4			/* r2 now the old value */
+	br	m188_db_setipl_done     
+#endif /* MVME188 */	
+     2:	
+	/* get the current mask value mvme1x7 */
 	or.u	r3,r0,hi16(INT_MASK_LEVEL)
 	or	r3,r3,lo16(INT_MASK_LEVEL)
 	xmem.bu	r2,r3,r0			/* xchng the new mask value */
+m188_db_setipl_done:
         FLUSH_PIPELINE
 	stcr	r11,PSR				/* restore psr */
         FLUSH_PIPELINE
 	jmp	r1				/* and return the old value */
+#endif /* DDB */	
+#endif /* now_in_c */
 
-ENTRY(db_getipl)
-ENTRY(db_spl)
-	ldcr	r10,PSR
-	or	r11,r0,r10
-	bb1	PSR_INTERRUPT_DISABLE_BIT, r10, 1f
-	set	r10,r10,1<PSR_INTERRUPT_DISABLE_BIT>
-	stcr	r10,PSR
-      1:
-	or.u	r3,r0,hi16(INT_MASK_LEVEL)
-	ld.b	r2,r3,lo16(INT_MASK_LEVEL)
-	stcr	r11,PSR
-        FLUSH_PIPELINE
-	jmp	r1
-
+#if DDB
 ENTRY(db_flush_pipeline)
         FLUSH_PIPELINE
 	jmp	r1
@@ -1738,3 +2099,78 @@ ENTRY(guarded_access_bad)
 ENTRY(guarded_access_end)
 	jmp.n	 r1
 	or	 r2,r0,0
+
+#if 0  /* There is an inline version of this in 
+machine/cpu_number.h but it doesn't work right for some reason.
+/*************************************************************************
+ *************************************************************************
+ **
+ ** 	int cpu_number(void)
+ **
+ **	Returns the number of the current cpu. 
+ **/
+#undef cpu_number
+ENTRY(cpu_number)
+        or      r2, r0, r0                      /* clear return value */
+#ifdef MVME188
+	/* check if it's a mvme188 */
+	or.u	r4, r0, hi16(_cputyp)
+	ld	r3, r4, lo16(_cputyp)
+	cmp	r4, r3, 0x188
+	bb1	ne, r4, 1f
+        ldcr    r2, SR1
+#endif /* MVME188 */	
+1:    
+        jmp.n   r1
+        clr	r2, r2, 28<FLAG_CPU_FIELD_WIDTH>/* clears all but the CPU num */
+#endif
+	
+/*************************************************************************
+ *************************************************************************
+ **
+ ** void set_cpu_number(unsigned number);
+ **
+ ** Sets the kernel cpu number for this cpu to the given value.
+ **
+ ** Input:
+ **	r1	return address
+ **	r2 	the number (should be 0, 1, 2, or 3).
+ **
+ ** Other registers used:
+ **	r3	temp
+ **	r4	original PSR
+ **	r5	temporary new PSR
+ **
+ ** Output:
+ **	none
+ **/
+ENTRY(set_cpu_number)
+	/* make sure the CPU number is valid */
+	clr	r3, r2, FLAG_CPU_FIELD_WIDTH<0>
+	bcnd	ne0, r3, 1f	/* bad cpu number */
+
+	/* going to change a control register -- disable interrupts */
+	ldcr	r4, PSR
+	set	r5, r4, 1<PSR_INTERRUPT_DISABLE_BIT>
+	stcr	r5, PSR
+	tcnd	ne0,r0,10 /* make sure interrupts are really disabled */
+			  /* if they are not, branch to error_handler() */
+	/* put in the cpu number */
+	ldcr	r3, SR1				/* get the flags */
+	clr	r3, r3, FLAG_CPU_FIELD_WIDTH<0>	/* clean the slate */
+	or	r3, r3, r2			/* add the cpu number */
+	stcr	r3, SR1				/* put back */
+	
+	/* put back the PSR to what it was before and return */
+	stcr	r4, PSR
+	jmp	r1
+
+     1: /* bad cpu number*/
+	or.u	r2, r0, hi16(1f)
+	bsr.n	_panic
+	or	r2, r2, lo16(1f)
+	1: string "bad CPU number\0"
+	align   4
+	/* will not return */
+
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.8 1999/05/29 04:41:46 smurph Exp $	*/
+/*	$OpenBSD: locore.S,v 1.9 1999/09/27 19:13:22 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -89,18 +89,24 @@ LABEL(_kernel_text)
 LABEL(_start)
 LABEL(start)
 	br	_start_text
-#if 0
-	.align 4096		  /* VBR points to page aligned list */
-    LABEL(_vector_list)	  /* references memory BELOW this line */
-	#include "machine/exception_vectors.h"
-	word	END_OF_VECTOR_LIST
-
-#endif
+	br	_start_text
+	br	_start_text
+	br	_start_text
 
 ENTRY(doboot)
 	/*
 	 *	Try hitting the SRST bit in VMEchip2 to reset the system.
 	 */
+#ifdef MVME188
+	/* check if it's a mvme188 */
+	or.u	r4, r0, hi16(_cputyp)
+	ld	r3, r4, lo16(_cputyp)
+	cmp	r4, r3, 0x188
+	bb1	ne, r4, 1f
+	bsr	_m188_reset
+	br	m188_doboot_fail
+#endif	/* MVME188 */
+1:	
 	or.u	r3,r0, 0xfff4
 	ld	r4,r3, 0x0060		/* read offset (LCSR +0x60) */
 	set	r4,r4,1<23>		/* set SYSRST bit - bit 23 */	
@@ -117,6 +123,7 @@ ENTRY(doboot)
 	 */
 
 	/* Should we use idle_u instead? XXX nivas */
+m188_doboot_fail:
 	or.u	r31, r0,  hi16(_intstack_end)
 	or	r31, r31, lo16(_intstack_end)
 	clr	r31, r31, 3<0>	/* round down to 8-byte boundary */
@@ -126,28 +133,6 @@ ENTRY(doboot)
 
 /**************************************************************************/
 LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
-#ifdef OLD_BOOT_LOADER
-	/*
-	 * Args passed by boot loader
-	 * 	r2 howto
-	 *	r3 first_addr (first available address)
-	 *	r4 ((Clun << 8) ; Dlun & FF) -> bootdev
-	 *	r5 esym
-	 *	r6 miniroot
-	 */
-	or.u	r13, r0,  hi16(_boothowto)
-	st	r2,  r13, lo16(_boothowto)
-	or.u	r13, r0,  hi16(_first_addr)
-	st	r3,  r13, lo16(_first_addr)
-#if 0
-	or.u	r13, r0,  hi16(_bootdev)
-	st	r4,  r13, lo16(_bootdev)
-#endif
-	or.u	r13, r0,  hi16(_esym)
-	st	r5,  r13, lo16(_esym)
-	or.u	r13, r0,  hi16(_miniroot)
-	st	r6,  r13, lo16(_miniroot)
-#else /* OLD_BOOT_LOADER */
 	/*
 	 * Args passed by boot loader
 	 * 	r2 howto
@@ -155,7 +140,13 @@ LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
 	 *	r4 esym
 	 *	r5 start of mini
 	 *	r6 end miniroot
+	 *	r7 ((Clun << 8) ; Dlun & FF) -> bootdev
+	 *	r8 cpu type (0x187, 0x188, 1x197)
 	 */
+/*
+ *	(*entry)(flag, bugargs.ctrl_addr, cp, kernel.smini, 
+ *               kernel.emini, bootdev, cputyp); 
+ */ 
 	or.u	r13, r0,  hi16(_boothowto)
 	st	r2,  r13, lo16(_boothowto)
 	or.u	r13, r0,  hi16(_bootaddr)
@@ -166,7 +157,11 @@ LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
 	st	r4,  r13, lo16(_esym)
 	or.u	r13, r0,  hi16(_miniroot)
 	st	r5,  r13, lo16(_miniroot)
-#endif /* OLD_BOOT_LOADER */
+	or.u	r13, r0,  hi16(_bootdev)
+	st	r7,  r13, lo16(_bootdev)
+	or.u	r13, r0,  hi16(_cputyp)
+	st	r8,  r13, lo16(_cputyp)
+	
 	/*
 	 * CPU Initialization
 	 *
@@ -201,51 +196,23 @@ LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
 	 *
 	 *	jfriedl@omron.co.jp
 	 */
+	cmp	r2, r8, 0x197	/* r8 contains cputyp */
+	bb1	eq, r2, 1f	/* if it's a '197, skip SSBR */
 	stcr	r0, SSBR	/* clear this for later */
-#if 0
+1:
 	stcr	r0, SR0		/* clear "current thread" */
 	stcr	r0, SR1		/* clear the CPU flags */
-#define PSR_SHADOW_FREEZE_BIT		 0
-#define PSR_INTERRUPT_DISABLE_BIT	 1
-#define PSR_FPU_DISABLE_BIT		 3
-#define PSR_BIG_ENDIAN_MODE		30
-#define PSR_SUPERVISOR_MODE_BIT		31
-	set     r11, r11, 1<PSR_SHADOW_FREEZE_BIT>
-	set     r11, r11, 1<PSR_FPU_DISABLE_BIT>
-#endif
-#define PSR_MXM_DISABLE_BIT		 2
-
+	
 	set	r11, r0,  1<PSR_SUPERVISOR_MODE_BIT>
 	set	r11, r11, 1<PSR_INTERRUPT_DISABLE_BIT>
-	set	r11, r11, 1<PSR_MXM_DISABLE_BIT> /* a cheat! for now... */
+	set	r11, r11, 1<4>
+	set	r11, r11, 1<29>
+	set	r11, r11, 1<25>
 	stcr	r11, PSR
-        FLUSH_PIPELINE
-
-#if 0
-	or.u	r11, r0,  hi16(_vector_table)
-	or	r11, r11, lo16(_vector_table)
-	stcr	r11, VBR
-#else
-	stcr	r0, VBR
-#endif /* 0 */
-
-	/*
-	 * Switch to interrupt stack
-	 * Use idle_u's stack instead?
-	 */
-	or.u	r31, r0,  hi16(_intstack_end)
-	or	r31, r31, lo16(_intstack_end)
-	clr	r31, r31, 3<0>	/* round down to 8-byte boundary */
-
-	/*
-	 * Want to make the call:
-	 * 	vector_init(VBR, vector_list)
-	 */
-	or.u	r3, r0, hi16(_vector_list)
-	or	r3, r3, lo16(_vector_list)
-	bsr.n	_vector_init
-	ldcr	r2, VBR		
-	
+	stcr	r0,  VBR     /* set Vector Base Register to 0, ALWAYS! */
+	FLUSH_PIPELINE
+	cmp	r2, r8, 0x197	/* r8 contains cputyp */
+	bb1	eq, r2, master_start	/* if it's a '197, skip to master_start */
 #if 0
 	/* clear BSS. Boot loader might have already done this... */
 	or.u	r2, r0, hi16(_edata)
@@ -255,37 +222,129 @@ LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
 	bsr.n	_bzero		/* bzero(edata, end-edata) */
 	subu	r3, r4, r2
 #endif
+	/*
+	 * First time to count how many CPUs to attach
+	 */
+	or.u	r11, r0,  hi16(initialized_cpu_lock)
+	or	r11, r11, lo16(initialized_cpu_lock)
+_LABEL(check_init_lock)
+	FLUSH_PIPELINE
+	or	r22, r0,  1
+	xmem    r22, r11, r0	  	/* If r22 gets 0, we have the lock.. */
+	bcnd	eq0, r22, have_init_lock/* ..but if not, we must wait */
 
+_LABEL(wait_for_init_lock)
+	/* just watch the lock until it looks clear */
+	ld	r22, r11, r0
+	bcnd	eq0, r22, check_init_lock
+	br	wait_for_init_lock	/* looks clear -- try to grab */
+
+_LABEL(have_init_lock)
+	FLUSH_PIPELINE
+	or.u	r11, r0,  hi16(_initialized_cpus)
+	ld	r22, r11, lo16(_initialized_cpus)
+	add	r23, r22, 1
+	st	r23, r11, lo16(_initialized_cpus)
+
+	or.u	r11, r0,  hi16(initialized_cpu_lock)
+	st	r0,  r11, lo16(initialized_cpu_lock)
+	/*
+ 	 * Now we vie with any other processors to see who's the master.
+ 	 * We first try to obtain a lock to see who's allowed
+	 * to check/set the master lock.
+	 */
+	or.u	r11, r0,  hi16(_inter_processor_lock)
+	or	r11, r11, lo16(_inter_processor_lock)
+_LABEL(check_ip_lock)
+	FLUSH_PIPELINE
+	or	r22, r0,  1
+	xmem	r22, r11, r0            /* If r22 gets 0, we have the lock.. */ 
+	bcnd	eq0, r22, have_ip_lock  /* ..but if not, we must wait */
+_LABEL(wait_for_ip_lock)
+	/* just watch the lock until it looks clear */
+	ld	r22, r11, r0
+	bcnd	ne0, r22, wait_for_ip_lock
+	/* since we can be here with caches off, add a few nops to 
+	keep the bus from getting overloaded */
+	or	r2, r0, lo16(1000)
+_LABEL(ip_loop)
+	subu	r2, r2, 1
+	bcnd	eq0, r2, ip_loop
+	br	check_ip_lock           /* looks clear -- try to grab */
+
+_LABEL(have_ip_lock)
+	/* now try to grab the master_processor_chosen prize */
+	FLUSH_PIPELINE
+	or.u	r11, r0,  hi16(master_processor_chosen)
+	or	r11, r11, lo16(master_processor_chosen)
+	or	r22, r0,  1
+	xmem	r22, r11, r0
+
+	/*
+	 * If r22 is not clear we're a slave,
+	 * otherwise we're first and the master.
+	 *
+	 * Note that we haven't released the interprocessor lock....
+	 * We'll do that when we're ready for another CPU to go.
+	 * (if we're the master, we'll do that in master_start below.
+	 *  if we're a slave, we'll do it in slave_start below).
+	 */
+	bcnd	ne0, r22, slave_start
+	/* fall through to master start if that's appropriate */
+
+_LABEL(master_start)
+	/*
+	 * Switch to interrupt stack
+	 * Use idle_u's stack instead?
+	 */
+	or.u	r31, r0,  hi16(_intstack_end)
+	or	r31, r31, lo16(_intstack_end)
+	clr	r31, r31, 3<0>	/* round down to 8-byte boundary */
+
+#ifdef MVME197
+	cmp	r2, r8, 0x197	/* r8 contains cputyp */
+	bb1	ne, r2, 1f	/* if it's a '197, use different vectors */ 
+	or.u	r3, r0, hi16(_m197_vector_list)
+	or	r3, r3, lo16(_m197_vector_list)
+	bsr.n	_vector_init
+	ldcr	r2, VBR
+	br	2f
+#endif /* MVME197 */
+1:
+#if defined(MVME187) || defined(MVME188)	
+	/*
+	 * Want to make the call:
+	 * 	vector_init(VBR, vector_list)
+	 */
+	or.u	r3, r0, hi16(_vector_list)
+	or	r3, r3, lo16(_vector_list)
+	bsr.n	_vector_init
+	ldcr	r2, VBR		
+#endif /* defined(MVME187) || defined(MVME188) */
+2:	
 	/* still on int stack */
-	bsr.n	_m187_bootstrap
+	bsr.n	_mvme_bootstrap
 	subu	r31, r31, 40
 	addu	r31, r31, 40
 	
-	/* switch to proc0 uarea */
+	/* we now know our cpu number, so we
+	 * can set interrupt_stack[cpu_number()] = _intstack
+	 */
+	ldcr  	r10, SR1
+	mak   	r10, r10, FLAG_CPU_FIELD_WIDTH<0>    /* r10 <-- CPU# */
 	
+	/* figure interrupt_stack[cpu_number()] */
+	or.u	r11,  r0, hi16(_interrupt_stack)  
+	or	r11, r11, lo16(_interrupt_stack)
+	or.u	r12, r0,  hi16(_intstack)
+	or	r12, r12,  lo16(_intstack)
+	st	r12, r11 [r10]
+
+	/* switch to proc0 uarea */
 	or.u	r10, r0, hi16(UADDR)
 	or	r31, r10,lo16(UADDR)
 	addu	r31, r31, USIZE - 8
 
-	/*
-	 * Block clock interrupts for now. There is a problem with
-	 * clock interrupts when the first clock interrupt is received.
-	 * Hardclock() sees the base priority to be 0 and drops IPL to
-	 * splsofclock() before calling softclock(). This opens up other
-	 * clock interrupts to be received before the first one is ever
-	 * finished. Also, the first entry on calltodo list is stuck for
-	 * ever. As a work around, I will set the IPL to softclock so
-	 * that the CLKF_BASEPRI() check in hardclock() will return false.
-	 * XXX nivas
-	 */
-	 
-#if XXX
-	bsr.n	_setipl
-	or	r2, r0, IPL_SOFTCLOCK
-	bsr	_enable_interrupt
-	bsr.n	_setipl
-	or	r2, r0, IPL_HIGH
-#endif
 	/* make the call: main() */
 	or.u	r2, r0, hi16(UADDR)
 	or	r2, r2,lo16(UADDR)
@@ -295,29 +354,97 @@ LABEL(_start_text)	/* This is the *real* start upon poweron or reset */
 	addu	r31, r31, 40
 	bsr	_panic
 
+/***********************************************************************
+ *	slave CPUs starts here
+ */
+_LABEL(slave_start)
+	/* while holding the inter_processor_lock, the slave cpu
+	   can find use the slavestack to call slave_pre_main and
+	   determine its cpu number. After that, however, it should
+	   switch over to the interrupt stack associated with its
+           cpu */
+
+	/* r31 <-- slavestack */
+	or.u	r31, r0, hi16(_slavestack_end)
+	or	r31, r31, lo16(_slavestack_end)
+	clr	r31, r31, 3<0>	/* round down to 8-byte boundary */
+
+	bsr.n	_slave_pre_main /* set cpu number */
+	subu	r31, r31, 48    /* allocate frame */
+
+	bsr	_get_slave_stack
+	addu	r31, r2, INTSTACK_SIZE + 4096
+
+	/* SR1 now contains our cpu number. We can now release
+	   the inter_processor_lock, as we are done with the 
+	   slavestack.  We also have an interrupt stack  */
+
+	or.u	r10, r0, hi16(_inter_processor_lock)
+	st	r0, r10, lo16(_inter_processor_lock)	
+
+	br.n	_slave_main     /* does not return */
+	subu	r31, r31, 40    /* allocate frame */
+	
+_LABEL(_spin_cpu)
+        or.u	r3,   r0,  hi16(_start_text)
+	or	r3,   r3,  lo16(_start_text)
+	or	r9,   r0,  0x100		/* .FORKMPU */
+	tb0	0,    r0,  0x200-16		/* call 188Bug */
+        jmp     r1
+        
 /*****************************************************************************/
 
 	data
 	.align 4096		  /* VBR points to page aligned list */
-LABEL(_vector_list)		  /* references memory BELOW this line */
+	global _vector_list, _vector_list_end
+#if defined(MVME187) || defined(MVME188)	
+_vector_list:     		  /* references memory BELOW this line */
 #include "machine/exception_vectors.h"
-	word	END_OF_VECTOR_LIST
-
+_vector_list_end:
+	word END_OF_VECTOR_LIST
+#endif /* defined(MVME187) || defined(MVME188) */	
+#ifdef MVME197	
+	global _vector_list, _vector_list_end
+_m197_vector_list:     		  /* references memory BELOW this line */
+#include "machine/exception_vectors2.h"
+_m197_vector_list_end:
+	word END_OF_VECTOR_LIST
+#endif /* MVME197 */	
 	.align 4096		  /* Vector table is a page aligned list */
 LABEL(_vector_table)		  /* new vector table location, was addr 0 */
-	space	(0x1000)	/* 16K */
+	space	(0x1000)	  /* 16K */
+	
+	.align 4096		  /* SDT (segment descriptor table */
+	global _kernel_sdt
+_kernel_sdt:	
+	space	(0x2000)	  /* 8K - 4K phys, 4K virt*/
 	global _ret_addr
 _ret_addr:
 	word 0
 	global _msgsw
 _msgsw:
 	word 0 			 /* Bits here turn on/off debugging somewhere */
+_LABEL(initialized_cpu_lock)
+   /* XMEM spin lock -- to count CPUs */
+	word 0
+LABEL(_initialized_cpus)
+   /* CPU counter to initialize */
+	word 0
+_LABEL(master_processor_chosen)
+   /* The first processor that XMEMs this becomes the master */
+	word 0
+LABEL(_inter_processor_lock)
+   /* XMEM spin lock -- controls access to master_processor_chosen */
+	word 0
+	
 	.align 4096
-	global	_intstack
-	global	_intstack_end
+	global	_intstack, _intstack_end, _slavestack, _slavestack_end
 _intstack:
-	space	(4 * NBPG)	/* 16K, just to be safe*/
+	space (4 * NBPG)	/* 16K, just to be safe */
 _intstack_end:
+_slavestack:
+	space (NBPG)      /* 4K, small, interim stack */
+_slavestack_end:
 
 /*
  * When a process exits and its u. area goes away, we set curpcb to point

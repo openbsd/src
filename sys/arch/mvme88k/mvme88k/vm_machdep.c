@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.10 1999/09/03 18:01:33 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.11 1999/09/27 19:13:24 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -42,7 +42,7 @@
  *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  *	vm_machdep.c,v 1.3 1993/07/07 07:09:32 cgd Exp
- *	$Id: vm_machdep.c,v 1.10 1999/09/03 18:01:33 art Exp $
+ *	$Id: vm_machdep.c,v 1.11 1999/09/27 19:13:24 smurph Exp $
  */
 
 #include <sys/param.h>
@@ -59,6 +59,7 @@
 #include <vm/vm_map.h>
 
 #include <machine/cpu.h>
+#include <machine/cpu_number.h>
 #include <machine/pte.h>
 
 extern struct map *iomap;
@@ -73,6 +74,7 @@ extern vm_map_t   iomap_map;
  * address in each process; in the future we will probably relocate
  * the frame pointers on the stack after copying.
  */
+#undef pcb_sp
 
 #ifdef __FORK_BRAINDAMAGE
 int
@@ -83,6 +85,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 {
 	struct switchframe *p2sf;
 	int off, ssz;
+   int cpu;
 	struct ksigframe {
 		void (*func)(struct proc *);
 		void *proc;
@@ -90,7 +93,8 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 	extern void proc_do_uret(), child_return();
 	extern void proc_trampoline();
 	
-	savectx(p1->p_addr);
+	cpu = cpu_number();
+   savectx(p1->p_addr);
 
 	bcopy((void *)&p1->p_addr->u_pcb, (void *)&p2->p_addr->u_pcb, sizeof(struct pcb));
 	p2->p_addr->u_pcb.kernel_state.pcb_ipl = 0;
@@ -100,7 +104,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 	/*XXX these may not be necessary nivas */
 	save_u_area(p2, p2->p_addr);
 #ifdef notneeded 
-	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, &p2->p_addr->u_pcb, 0);
+	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, &p2->p_addr->u_pcb, cpu);
 #endif /* notneeded */
 
 	/*
@@ -116,7 +120,7 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, size_t stacksize)
 	 * If specified, give the child a different stack.
 	 */
 	if (stack != NULL)
-		USER_REGS(p2)->pcb_sp = (u_int)stack + stacksize;
+		USER_REGS(p2)->r[31] = (u_int)stack + stacksize;
 
 	ksfp = (struct ksigframe *)p2->p_addr->u_pcb.kernel_state.pcb_sp - 1;
 
@@ -332,11 +336,11 @@ iomap_mapin(vm_offset_t pa, vm_size_t len, boolean_t canwait)
    ppa = trunc_page(ppa);
 
 #ifndef NEW_MAPPING
-   tva = iova;
+	tva = iova;
 #else
    tva = ppa;
 #endif 
-   
+
    while (len>0) {
 		pmap_enter(vm_map_pmap(iomap_map), tva, ppa,
 		    	VM_PROT_WRITE|VM_PROT_READ|(CACHE_INH << 16), 1, 0);
@@ -437,18 +441,10 @@ int
 badvaddr(vm_offset_t va, int size)
 {
 	register int 	x;
-	int i;
-	int ret = 0;
-	
-	for (i=0; i<5; i++){
-	    ret = badaddr(va, size);
-	    if (ret) 
-		delay(500);
-	    else
-		break;
+
+	if (badaddr(va, size)) {
+		return -1;
 	}
-	if (ret) 
-	    return -1;
 
 	switch (size) {
 	case 1:
