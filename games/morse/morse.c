@@ -1,4 +1,4 @@
-/*	$OpenBSD: morse.c,v 1.6 1998/03/12 09:09:20 pjanzen Exp $	*/
+/*	$OpenBSD: morse.c,v 1.7 1998/12/13 07:53:03 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: morse.c,v 1.6 1998/03/12 09:09:20 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: morse.c,v 1.7 1998/12/13 07:53:03 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,10 +93,34 @@ static char
 	"--..",
 };
 
+struct punc {
+	char c;
+	char *morse;
+} other[] = {
+	{ ',', "--..--" },
+	{ '.', ".-.-.-" },
+	{ '?', "..--.." },
+	{ '/', "-..-." },
+	{ '-', "-....-" },
+	{ ':', "---..." },
+	{ ';', "-.-.-." },
+	{ '(', "-.--.-." },	/* When converting from Morse, can't tell */
+	{ ')', "-.--.-." },	/* '(' and ')' apart                      */
+	{ '"', ".-..-." },
+	{ '`', ".-..-." },
+	{ '\'', ".----." },
+	{ '+', ".-.-." },	/* AR */
+	{ '=', "-...-" },	/* BT */
+	{ '@', "...-.-" },	/* SK */
+	{ '\0', NULL }
+};
+
 void	morse __P((int));
+void	decode __P((char *));
 void	show __P((char *));
 
 static int sflag = 0;
+static int dflag = 0;
 
 int
 main(argc, argv)
@@ -110,28 +134,73 @@ main(argc, argv)
 	setegid(getgid());
 	setgid(getgid());
 
-	while ((ch = getopt(argc, argv, "hs")) != -1)
+	while ((ch = getopt(argc, argv, "dsh")) != -1)
 		switch((char)ch) {
+		case 'd':
+			dflag = 1;
+			break;
 		case 's':
 			sflag = 1;
 			break;
 		case '?': case 'h':
 		default:
-			fprintf(stderr, "usage: morse [-s] [string ...]");
+			fprintf(stderr, "usage: morse [-ds] [string ...]\n");
 			exit(1);
 		}
 	argc -= optind;
 	argv += optind;
 
-	if (*argv)
-		do {
-			for (p = *argv; *p; ++p)
-				morse((int)*p);
-			show("");
-		} while (*++argv);
-	else while ((ch = getchar()) != EOF)
-		morse(ch);
-	show("...-.-");	/* SK */
+	if (dflag) {
+		if (*argv) {
+			do {
+				decode(*argv);
+			} while (*++argv);
+		} else {
+			char foo[10];	/* All morse chars shorter than this */
+			int isblank, i;
+
+			i = 0;
+			isblank = 0;
+			while ((ch = getchar()) != EOF) {
+				if (ch == '-' || ch == '.') {
+					foo[i++] = ch;
+					if (i == 10) {
+						/* overrun means gibberish--print 'x' and
+						 * advance */
+						i = 0;
+						putchar('x');
+						while ((ch = getchar()) != EOF &&
+						    (ch == '.' || ch == '-'))
+							;
+						isblank = 1;
+					}
+				} else if (i) {
+					foo[i] = '\0';
+					decode(foo);
+					i = 0;
+					isblank = 0;
+				} else if (isspace(ch)) {
+					if (isblank) {
+						/* print whitespace for each double blank */
+						putchar(' ');
+						isblank = 0;
+					} else
+						isblank = 1;
+				}
+			}
+		}
+		putchar('\n');
+	} else {
+		if (*argv)
+			do {
+				for (p = *argv; *p; ++p)
+					morse((int)*p);
+				show("");
+			} while (*++argv);
+		else while ((ch = getchar()) != EOF)
+			morse(ch);
+		show("...-.-");	/* SK */
+	}
 	exit(0);
 }
 
@@ -139,54 +208,55 @@ void
 morse(c)
 	int c;
 {
+	int i;
+
 	if (isalpha(c))
 		show(alph[c - (isupper(c) ? 'A' : 'a')]);
 	else if (isdigit(c))
 		show(digit[c - '0']);
 	else if (isspace(c))
 		show("");  /* could show BT for a pause */
-	else switch((char)c) {
-		case ',':
-			show("--..--");
-			break;
-		case '.':
-			show(".-.-.-");
-			break;
-		case '?':
-			show("..--..");
-			break;
-		case '/':
-			show("-..-.");
-			break;
-		case '-':
-			show("-....-");
-			break;
-		case ':':
-			show("---...");
-			break;
-		case ';':
-			show("-.-.-.");
-			break;
-		case '(':	case ')':
-			show("-.--.-.");
-			break;
-		case '`': case '"':
-			show(".-..-.");
-			break;
-		case '\'':
-			show(".----.");
-			break;
-		case '+':   /* AR */
-			show(".-.-.");
-			break;
-		case '=':   /* BT */
-			show("-...-");
-			break;
-		case '@':   /* SK */
-			show("...-.-");
-			break;
+	else {
+		i = 0;
+		while (other[i].c) {
+			if (other[i].c == c) {
+				show(other[i].morse);
+				break;
+			}
+			i++;
 		}
+	}
 }
+
+void
+decode(s)
+	char *s;
+{
+	int i;
+	
+	for (i = 0; i < 10; i++)
+		if (strcmp(digit[i], s) == 0) {
+			putchar('0' + i);
+			return;
+		}
+	
+	for (i = 0; i < 26; i++)
+		if (strcmp(alph[i], s) == 0) {
+			putchar('A' + i);
+			return;
+		}
+	i = 0;
+	while (other[i].c) {
+		if (strcmp(other[i].morse, s) == 0) {
+			putchar(other[i].c);
+			return;
+		}
+		i++;
+	}
+	putchar('x');	/* line noise */
+}
+
+
 
 void
 show(s)
