@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.20 2004/08/15 15:31:46 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.21 2004/12/06 10:38:19 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -349,11 +349,14 @@ void
 pfi_dynaddr_update(void *p)
 {
 	struct pfi_dynaddr	*dyn = (struct pfi_dynaddr *)p;
-	struct pfi_kif		*kif = dyn->pfid_kif;
-	struct pfr_ktable	*kt = dyn->pfid_kt;
+	struct pfi_kif		*kif;
+	struct pfr_ktable	*kt;
 
-	if (dyn == NULL || kif == NULL || kt == NULL)
+	if (dyn == NULL || dyn->pfid_kif == NULL || dyn->pfid_kt == NULL)
 		panic("pfi_dynaddr_update");
+
+	kif = dyn->pfid_kif;
+	kt = dyn->pfid_kt;
 	if (kt->pfrkt_larg != pfi_update) {
 		/* this table needs to be brought up-to-date */
 		pfi_table_update(kt, kif, dyn->pfid_net, dyn->pfid_iflags);
