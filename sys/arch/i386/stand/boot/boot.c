@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.11 1997/07/21 15:36:17 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.12 1997/08/06 18:45:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -67,12 +67,12 @@ boot(bootdev)
 	cmd.timeout = 5;
 	devboot(bootdev, cmd.bootdev);
 
-	f = read_conf(&cmd);
+	f = read_conf();
 	while (1) {
 		if (f <= 0) /* no boot.conf, or no boot cmd in there */
 			do {
 				printf("boot> ");
-			} while(!getcmd(&cmd));
+			} while(!getcmd());
 		f = 0;
 
 		printf("booting %s: ", cmd.path);

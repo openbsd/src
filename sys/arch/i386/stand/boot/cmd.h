@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.5 1997/04/26 17:50:07 mickey Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.6 1997/08/06 18:45:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -46,7 +46,8 @@ struct cmd_state {
 	int argc;
 	char *argv[8];	/* XXX i hope this is enough */
 };
+extern struct cmd_state cmd;
 
-int getcmd __P((register struct cmd_state *));
-int read_conf __P((register struct cmd_state *));
+int getcmd __P((void));
+int read_conf __P((void));
 

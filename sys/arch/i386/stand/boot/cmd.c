@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.18 1997/07/01 20:02:22 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.19 1997/08/06 18:45:02 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -45,29 +45,30 @@ extern int debug;
 
 #define CTRL(c)	((c)&0x1f)
 
-static int Xaddr __P((register struct cmd_state *));
-static int Xboot __P((register struct cmd_state *));
-static int Xcd __P((register struct cmd_state *));
-static int Xcp __P((register struct cmd_state *));
-static int Xdevice __P((register struct cmd_state *));
+static int Xaddr __P((void));
+static int Xboot __P((void));
+static int Xcd __P((void));
+static int Xcp __P((void));
+static int Xdevice __P((void));
 #ifdef DEBUG
-static int Xdebug __P((register struct cmd_state *));
+static int Xdebug __P((void));
 #endif
-static int Xhelp __P((register struct cmd_state *));
-static int Ximage __P((register struct cmd_state *));
-static int Xls __P((register struct cmd_state *));
-static int Xnope __P((register struct cmd_state *));
-static int Xreboot __P((register struct cmd_state *));
-static int Xregs __P((register struct cmd_state *));
-static int Xset __P((register struct cmd_state *));
-static int Xhowto __P((register struct cmd_state *));
-static int Xtty __P((register struct cmd_state *));
-static int Xtime __P((register struct cmd_state *));
-static int Xdmesg __P((register struct cmd_state *));
+static int Xhelp __P((void));
+static int Ximage __P((void));
+static int Xls __P((void));
+static int Xnope __P((void));
+static int Xreboot __P((void));
+static int Xregs __P((void));
+static int Xset __P((void));
+static int Xhowto __P((void));
+static int Xtty __P((void));
+static int Xtime __P((void));
+static int Xdmesg __P((void));
+static int Xecho __P((void));
 
 struct cmd_table {
 	char *cmd_name;
-	int (*cmd_exec) __P((register struct cmd_state *));
+	int (*cmd_exec) __P((void));
 	const struct cmd_table *cmd_table;
 };
 
@@ -88,6 +89,7 @@ static const struct cmd_table cmd_table[] = {
 	{"cd",     Xcd},
 	{"cp",     Xcp},
 	{"dmesg",  Xdmesg},
+	{"echo",   Xecho},
 	{"help",   Xhelp},
 	{"ls",     Xls},
 	{"nope",   Xnope},
@@ -102,38 +104,36 @@ extern const char version[];
 static void ls __P((char *, register struct stat *));
 static int readline __P((register char *, int));
 char *nextword __P((register char *));
-static int bootparse __P((register struct cmd_state *, int));
+static int bootparse __P((int));
 static char *whatcmd
-	__P((register const struct cmd_table **, register char *));
-static int docmd __P((register struct cmd_state *));
-static char *qualify __P((register struct cmd_state *, char *));
+	__P((register const struct cmd_table **ct, register char *));
+static int docmd __P((void));
+static char *qualify __P((char *));
 
 static char cmd_buf[133];
 
 int
-getcmd(cmd)
-	register struct cmd_state *cmd;
+getcmd()
 {
-	cmd->cmd = NULL;
+	cmd.cmd = NULL;
 
-	if (!readline(cmd_buf, cmd->timeout))
-		cmd->cmd = cmd_table;
+	if (!readline(cmd_buf, cmd.timeout))
+		cmd.cmd = cmd_table;
 
-	return docmd(cmd);
+	return docmd();
 }
 
 int
-read_conf(cmd)
-	register struct cmd_state *cmd;
+read_conf()
 {
 #ifndef INSECURE
 	struct stat sb;
 #endif
 	int fd, eof = 0;
 
-	if ((fd = open(qualify(cmd, cmd->conf), 0)) < 0) {
+	if ((fd = open(qualify(cmd.conf), 0)) < 0) {
 		if (errno != ENOENT && errno != ENXIO) {
-			printf("open(%s): %s\n", cmd->path, strerror(errno));
+			printf("open(%s): %s\n", cmd.path, strerror(errno));
 			return 0;
 		}
 		return -1;
@@ -142,7 +142,7 @@ read_conf(cmd)
 #ifndef INSECURE
 	(void) fstat(fd, &sb);
 	if (sb.st_uid || (sb.st_mode & 2)) {
-		printf("non-secure %s, will not proceed\n", cmd->path);
+		printf("non-secure %s, will not proceed\n", cmd.path);
 		close(fd);
 		return -1;
 	}
@@ -151,32 +151,31 @@ read_conf(cmd)
 	do {
 		register char *p = cmd_buf;
 
-		cmd->cmd = NULL;
+		cmd.cmd = NULL;
 
 		do
 			eof = read(fd, p, 1);
 		while (eof > 0 && *p++ != '\n');
 
 		if (eof < 0)
-			printf("%s: %s\n", cmd->path, strerror(errno));
+			printf("%s: %s\n", cmd.path, strerror(errno));
 		else
 			*--p = '\0';
 
-	} while (eof > 0 && !(eof = docmd(cmd)));
+	} while (eof > 0 && !(eof = docmd()));
 
 	close(fd);
 	return eof;
 }
 
 static int
-docmd(cmd)
-	register struct cmd_state *cmd;
+docmd()
 {
 	const struct cmd_table *ct;
 	register char *p = NULL;
 
-	cmd->argc = 1;
-	if (cmd->cmd == NULL) {
+	cmd.argc = 1;
+	if (cmd.cmd == NULL) {
 
 		/* command */
 		for (p = cmd_buf; *p && (*p == ' ' || *p == '\t'); p++)
@@ -188,10 +187,10 @@ docmd(cmd)
 			return 0;
 		}
 		ct = cmd_table;
-		cmd->argv[cmd->argc] = p; /* in case it's shortcut boot */
+		cmd.argv[cmd.argc] = p; /* in case it's shortcut boot */
 		p = whatcmd(&ct, p);
 		if (ct == NULL) {
-			cmd->argc++;
+			cmd.argc++;
 			ct = cmd_table;
 		} else if (ct->cmd_table != NULL && p != NULL) {
 			const struct cmd_table *cs = ct->cmd_table;
@@ -202,17 +201,17 @@ docmd(cmd)
 			}
 			ct = cs;
 		}
-		cmd->cmd = ct;
+		cmd.cmd = ct;
 	}
 
-	cmd->argv[0] = ct->cmd_name;
-	while (p && cmd->argc+1 < sizeof(cmd->argv) / sizeof(cmd->argv[0])) {
-		cmd->argv[cmd->argc++] = p;
+	cmd.argv[0] = ct->cmd_name;
+	while (p && cmd.argc+1 < sizeof(cmd.argv) / sizeof(cmd.argv[0])) {
+		cmd.argv[cmd.argc++] = p;
 		p = nextword(p);
 	}
-	cmd->argv[cmd->argc] = NULL;
+	cmd.argv[cmd.argc] = NULL;
 
-	return (*cmd->cmd->cmd_exec)(cmd);
+	return (*cmd.cmd->cmd_exec)();
 }
 
 static char *
@@ -309,22 +308,20 @@ nextword(p)
 
 #ifdef DEBUG
 static int
-Xdebug(cmd)
-	struct cmd_state *cmd;
+Xdebug()
 {
-	if (cmd->argc !=2)
-		printf("debug=%s\n", (debug? "on": "off"));
+	if (cmd.argc !=2)
+		printf("debug\t%s\n", (debug? "on": "off"));
 	else
-		debug = (cmd->argv[1][0] == '0' ||
-			 (cmd->argv[1][0] == 'o' && cmd->argv[1][1] == 'f'))?
+		debug = (cmd.argv[1][0] == '0' ||
+			 (cmd.argv[1][0] == 'o' && cmd.argv[1][1] == 'f'))?
 			 0: 1;
 	return 0;
 }
 #endif
 
 static int
-Xhelp(cmd)
-	register struct cmd_state *cmd;
+Xhelp()
 {
 	register const struct cmd_table *ct;
 
@@ -336,54 +333,60 @@ Xhelp(cmd)
 	return 0;
 }
 
+static int
+Xecho()
+{
+	register int i;
+	for (i = 1; i < cmd.argc; i++)
+		printf(cmd.argv[i]), putchar(' ');
+	putchar('\n');
+	return 0;
+}
+
 /* called only w/ no arguments */
 static int
-Xset(cmd)
-	register struct cmd_state *cmd;
+Xset()
 {
 	register const struct cmd_table *ct;
 
 	printf("OpenBSD boot[%s]\n", version);
-	printf("cwd=%s\n", cmd->cwd);
+	printf("cwd\t%s\n", cmd.cwd);
 	for (ct = cmd_set; ct->cmd_name != NULL; ct++)
-		(*ct->cmd_exec)(cmd);
+		(*ct->cmd_exec)();
 	return 0;
 }
 
 static int
-Xdevice(cmd)
-	register struct cmd_state *cmd;
+Xdevice()
 {
-	if (cmd->argc != 2)
-		printf("device=%s\n", cmd->bootdev);
+	if (cmd.argc != 2)
+		printf("device\t%s\n", cmd.bootdev);
 	else
-		strncpy(cmd->bootdev, cmd->argv[1], sizeof(cmd->bootdev));
+		strncpy(cmd.bootdev, cmd.argv[1], sizeof(cmd.bootdev));
 	return 0;
 }
 
 static int
-Ximage(cmd)
-	register struct cmd_state *cmd;
+Ximage()
 {
-	if (cmd->argc != 2)
-		printf("image=%s\n", cmd->image);
+	if (cmd.argc != 2)
+		printf("image\t%s\n", cmd.image);
 	else
-		strncpy(cmd->image, cmd->argv[1], sizeof(cmd->image));
+		strncpy(cmd.image, cmd.argv[1], sizeof(cmd.image));
 	return 0;
 }
 
 static int
-Xaddr(cmd)
-	register struct cmd_state *cmd;
+Xaddr()
 {
 	register char *p;
 
-	if (cmd->argc != 2)
-		printf("addr=%p\n", cmd->addr);
+	if (cmd.argc != 2)
+		printf("addr\t%p\n", cmd.addr);
 	else {
 		register u_long a;
 
-		p = cmd->argv[1];
+		p = cmd.argv[1];
 		if (p[0] == '0' && p[1] == 'x')
 			p += 2;
 		for (a = 0; *p != '\0'; p++) {
@@ -391,17 +394,16 @@ Xaddr(cmd)
 			a |= (isdigit(*p)? *p - '0':
 			      10 + tolower(*p) - 'a') & 0xf;
 		}
-		cmd->addr = (void *)a;
+		cmd.addr = (void *)a;
 	}
 	return 0;
 }
 
 static int
-Xtty(cmd)
-	register struct cmd_state *cmd;
+Xtty()
 {
-	if (cmd->argc == 1)
-		printf("tty=%s\n", ttyname(0));
+	if (cmd.argc == 1)
+		printf("tty\t%s\n", ttyname(0));
 	else {
 	}
 
@@ -409,10 +411,9 @@ Xtty(cmd)
 }
 
 static int
-Xtime(cmd)
-	register struct cmd_state *cmd;
+Xtime()
 {
-	if (cmd->argc == 1)
+	if (cmd.argc == 1)
 		time_print();
 	else {
 	}
@@ -421,43 +422,41 @@ Xtime(cmd)
 }
 
 static int
-Xdmesg(cmd)
-	register struct cmd_state *cmd;
+Xdmesg()
 {
 	return 0;
 }
 
 static int
-Xls(cmd)
-	register struct cmd_state *cmd;
+Xls()
 {
 	struct stat sb;
 	register char *p;
 	int fd;
 
-	if (stat(qualify(cmd, (cmd->argv[1]? cmd->argv[1]: "/.")), &sb) < 0) {
-		printf("stat(%s): %s\n", cmd->path, strerror(errno));
+	if (stat(qualify((cmd.argv[1]? cmd.argv[1]: "/.")), &sb) < 0) {
+		printf("stat(%s): %s\n", cmd.path, strerror(errno));
 		return 0;
 	}
 
 	if ((sb.st_mode & S_IFMT) != S_IFDIR)
-		ls(cmd->path, &sb);
+		ls(cmd.path, &sb);
 	else {
-		if ((fd = opendir(cmd->path)) < 0) {
-			printf ("opendir(%s): %s\n", cmd->path,
+		if ((fd = opendir(cmd.path)) < 0) {
+			printf ("opendir(%s): %s\n", cmd.path,
 				strerror(errno));
 			return 0;
 		}
 
 		/* no strlen in lib !!! */
-		for (p = cmd->path; *p; p++);
+		for (p = cmd.path; *p; p++);
 		*p++ = '/';
 		*p = '\0';
 
 		while(readdir(fd, p) >= 0) {
-			if (stat(cmd->path, &sb) < 0)
-				printf("stat(%s): %s\n", cmd->path,
-					strerror(errno));
+			if (stat(cmd.path, &sb) < 0)
+				printf("stat(%s): %s\n", cmd.path,
+				       strerror(errno));
 			else
 				ls(p, &sb);
 		}
@@ -487,10 +486,9 @@ ls(name, sb)
 #undef lsrwx
 
 static int
-Xhowto(cmd)
-	register struct cmd_state *cmd;
+Xhowto()
 {
-	if (cmd->argc < 2) {
+	if (cmd.argc < 2) {
 		printf("boothowto=");
 		if (boothowto) {
 			putchar('-');
@@ -507,23 +505,21 @@ Xhowto(cmd)
 		}
 		putchar('\n');
 	} else
-		bootparse(cmd, 1);
+		bootparse(1);
 	return 0;
 }
 
 static int
-Xboot(cmd)
-	register struct cmd_state *cmd;
+Xboot()
 {
-	if (cmd->argc > 1 && cmd->argv[1][0] != '-') {
-		qualify(cmd, (cmd->argv[1]? cmd->argv[1]: cmd->image));
-		if (bootparse(cmd, 2))
+	if (cmd.argc > 1 && cmd.argv[1][0] != '-') {
+		qualify((cmd.argv[1]? cmd.argv[1]: cmd.image));
+		if (bootparse(2))
 			return 0;
 	} else {
-		if (bootparse(cmd, 1))
+		if (bootparse(1))
 			return 0;
-		sprintf(cmd->path, "%s:%s%s", cmd->bootdev,
-			cmd->cwd, cmd->image);
+		sprintf(cmd.path, "%s:%s%s", cmd.bootdev, cmd.cwd, cmd.image);
 	}
 
 	return 1;
@@ -534,8 +530,7 @@ Xboot(cmd)
  */
 
 static char *
-qualify(cmd, name)
-	register struct cmd_state *cmd;
+qualify(name)
 	char *name;
 {
 	register char *p;
@@ -545,26 +540,25 @@ qualify(cmd, name)
 			break;
 	if (*p == ':')
 		if (p[1] == '/')
-			sprintf(cmd->path, "%s", name);
+			sprintf(cmd.path, "%s", name);
 		else
-			sprintf(cmd->path, "%s%s%s", name, cmd->cwd, name);
+			sprintf(cmd.path, "%s%s%s", name, cmd.cwd, name);
 	else if (name[0] == '/')
-		sprintf(cmd->path, "%s:%s", cmd->bootdev, name);
+		sprintf(cmd.path, "%s:%s", cmd.bootdev, name);
 	else
-		sprintf(cmd->path, "%s:%s%s", cmd->bootdev, cmd->cwd, name);
-	return cmd->path;
+		sprintf(cmd.path, "%s:%s%s", cmd.bootdev, cmd.cwd, name);
+	return cmd.path;
 }
 
 static int
-bootparse(cmd, i)
-	register struct cmd_state *cmd;
+bootparse(i)
 	int i;
 {
 	register char *cp;
 	int howto = boothowto;
 
-	for (; i < cmd->argc; i++) {
-		cp = cmd->argv[i];
+	for (; i < cmd.argc; i++) {
+		cp = cmd.argv[i];
 		if (*cp == '-') {
 			while (*++cp) {
 				switch (*cp) {
@@ -589,7 +583,7 @@ bootparse(cmd, i)
 				}
 			}
 		} else {
-			printf("boot: illegal argument %s\n", cmd->argv[i]);
+			printf("boot: illegal argument %s\n", cmd.argv[i]);
 			return 1;
 		}
 	}
@@ -598,50 +592,48 @@ bootparse(cmd, i)
 }
 
 static int
-Xcd(cmd)
-	register struct cmd_state *cmd;
+Xcd()
 {
 	register char *p, *q;
 	struct stat sb;
 
 	/* cd home */
-	if (cmd->argc == 1) {
-		cmd->cwd[0] = '/';
-		cmd->cwd[1] = '\0';
+	if (cmd.argc == 1) {
+		cmd.cwd[0] = '/';
+		cmd.cwd[1] = '\0';
 		return 0;
 	}
 
 	/* cd '.' */
-	if (cmd->argv[1][0] == '.' && cmd->argv[1][1] == '\0')
+	if (cmd.argv[1][0] == '.' && cmd.argv[1][1] == '\0')
 		return 0;
 
 	/* cd '..' */
-	if (cmd->argv[1][0] == '.' && cmd->argv[1][1] == '.'
-	    && cmd->argv[1][2] == '\0') {
-		/* strrchr(cmd->cwd, '/'); */
-		for (p = cmd->cwd; *++p;);
+	if (cmd.argv[1][0] == '.' && cmd.argv[1][1] == '.'
+	    && cmd.argv[1][2] == '\0') {
+		/* strrchr(cmd.cwd, '/'); */
+		for (p = cmd.cwd; *++p;);
 		for (p--; *--p != '/';);
 		p[1] = '\0';
 		return 0;
 	}
 
 	/* cd dir */
-	sprintf(cmd->path, "%s:%s%s",
-		cmd->bootdev, cmd->cwd, cmd->argv[1]);
+	sprintf(cmd.path, "%s:%s%s", cmd.bootdev, cmd.cwd, cmd.argv[1]);
 
-	if (stat(cmd->path, &sb) < 0) {
-		printf("stat(%s): %s\n", cmd->argv[1], strerror(errno));
+	if (stat(cmd.path, &sb) < 0) {
+		printf("stat(%s): %s\n", cmd.argv[1], strerror(errno));
 		return 0;
 	}
 
 	if (!S_ISDIR(sb.st_mode)) {
-		printf("boot: %s: not a dir\n", cmd->argv[1]);
+		printf("boot: %s: not a dir\n", cmd.argv[1]);
 		return 0;
 	}
 
 	/* change dir */
-	for (p = cmd->cwd; *p; p++);
-	for (q = cmd->argv[1]; (*p++ = *q++) != '\0';);
+	for (p = cmd.cwd; *p; p++);
+	for (q = cmd.argv[1]; (*p++ = *q++) != '\0';);
 	if (p[-2] != '/') {
 		p[-1] = '/';
 		p[0] = '\0';
@@ -651,8 +643,7 @@ Xcd(cmd)
 }
 
 static int
-Xreboot(cmd)
-	register struct cmd_state *cmd;
+Xreboot()
 {
 	printf("Rebooting...\n");
 	exit();
@@ -660,23 +651,20 @@ Xreboot(cmd)
 }
 
 static int
-Xregs(cmd)
-	register struct cmd_state *cmd;
+Xregs()
 {
 	DUMP_REGS;
 	return 0;
 }
 
 static int
-Xnope(cmd)
-	register struct cmd_state *cmd;
+Xnope()
 {
 	return 0;
 }
 
 static int
-Xcp(cmd)
-	register struct cmd_state *cmd;
+Xcp()
 {
 	printf("cp: no writable filesystems\n");
 	return 0;
