@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.h,v 1.9 2000/01/13 04:36:40 fgsch Exp $	*/
+/*	$OpenBSD: ipx.h,v 1.10 2000/01/13 06:48:21 fgsch Exp $	*/
 
 /*-
  *
@@ -53,7 +53,6 @@
 #define IPXPROTO_UNKWN	0		/* Unknown */
 #define IPXPROTO_RI	1		/* RIP Routing Information */
 #define IPXPROTO_ECHO	2		/* Echo Protocol */
-#define IPXPROTO_ERROR	3		/* Error Protocol */
 #define IPXPROTO_PXP	4		/* PXP Packet Exchange */
 #define IPXPROTO_SPX	5		/* SPX Sequenced Packet */
 #define IPXPROTO_NCP	17		/* NCP NetWare Core */

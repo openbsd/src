@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_proto.c,v 1.3 1996/11/25 08:20:00 mickey Exp $	*/
+/*	$OpenBSD: ipx_proto.c,v 1.4 2000/01/13 06:48:21 fgsch Exp $	*/
 
 /*-
  *
@@ -79,11 +79,6 @@ struct protosw ipxsw[] = {
 },
 { SOCK_RAW,	&ipxdomain,	IPXPROTO_RAW,	PR_ATOMIC|PR_ADDR,
   ipx_input,	ipx_output,	0,		ipx_ctloutput,
-  ipx_raw_usrreq,
-  0,		0,		0,		0,	ipx_sysctl
-},
-{ SOCK_RAW,	&ipxdomain,	IPXPROTO_ERROR,	PR_ATOMIC|PR_ADDR,
-  0,		ipx_output,	ipx_ctlinput,		ipx_ctloutput,
   ipx_raw_usrreq,
   0,		0,		0,		0,	ipx_sysctl
 },
