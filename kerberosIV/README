@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.2 2000/08/31 19:54:45 hin Exp $
+$OpenBSD: README,v 1.3 2000/12/29 14:20:49 hin Exp $
 
 This version is based on version 1.0.2 of the Kerberos IV distribution
 from KTH, which is available from ftp://ftp.pdc.kth.se/pub/krb4/src/.
@@ -9,7 +9,7 @@ UPGRADING
 ---------
 
 1. Import the distribution into src/kerberosIV/src. Dont forget to change
-   all '$Id: README,v 1.2 2000/08/31 19:54:45 hin Exp $' tags etc. to '$KTH: ... $'.
+   all '$Id: README,v 1.3 2000/12/29 14:20:49 hin Exp $' tags etc. to '$KTH: ... $'.
 2. mkdir /tmp/krb 
    cd /tmp/krb 
    /usr/src/kerberosIV/src/configure --disable-otp
@@ -33,6 +33,10 @@ UPGRADING
 8. Update the kafs.h include file with a newer from Arla, this is
    needed for the afs client. *yuk*
 9. Update any other utilities that may need to be changed.
+10. Remember to update version number in these files:
+	lib/roken/print_version.h, src/include/version.h
+11. If necessary, bump version number on any shared libraries that have
+    changed.
 
 OTP
 ---
