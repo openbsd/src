@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.39 2000/12/08 14:44:57 millert Exp $     */
+/*      $OpenBSD: pciide.c,v 1.40 2001/01/08 19:54:09 jeremy Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -378,19 +378,19 @@ const struct pciide_product_desc pciide_acer_products[] =  {
 
 const struct pciide_product_desc pciide_promise_products[] =  {
 	{ PCI_PRODUCT_PROMISE_PDC20246,
-	IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
+	IDE_PCI_CLASS_OVERRIDE,
 	pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20262,
-	IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
+	IDE_PCI_CLASS_OVERRIDE,
 	pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20265,
-	IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
+	IDE_PCI_CLASS_OVERRIDE,
 	pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_PDC20267,
-	IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
+	IDE_PCI_CLASS_OVERRIDE,
 	pdc202xx_chip_map,
 	}
 };
@@ -1396,8 +1396,10 @@ piix_chip_map(sc, pa)
 	sc->sc_wdcdev.DMA_cap = 2;
 	switch (sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_INTEL_82801AA_IDE:
-	case PCI_PRODUCT_INTEL_82801BA_IDE:
 		sc->sc_wdcdev.UDMA_cap = 4;
+		break;
+	case PCI_PRODUCT_INTEL_82801BA_IDE:
+		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	default:
 		sc->sc_wdcdev.UDMA_cap = 2;
@@ -1640,8 +1642,25 @@ piix3_4_setup_channel(chp)
 		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ) {
 		    ideconf |= PIIX_CONFIG_PINGPONG;
 		}
-		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE ) {
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE) {
+			/* setup Ultra/100 */
+		if (drvp->UDMA_mode > 2 &&
+			    (ideconf & PIIX_CONFIG_CR(channel, drive)) == 0)
+				drvp->UDMA_mode = 2;
+			if (drvp->UDMA_mode > 4) {
+				ideconf |= PIIX_CONFIG_UDMA100(channel, drive);
+			} else {
+				ideconf &= ~PIIX_CONFIG_UDMA100(channel, drive);
+				if (drvp->UDMA_mode > 2) {
+					ideconf |= PIIX_CONFIG_UDMA66(channel,
+					    drive);
+				} else {
+					ideconf &= ~PIIX_CONFIG_UDMA66(channel,
+					    drive);
+				}
+			}
+                }
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ) {
 			/* setup Ultra/66 */
 			if (drvp->UDMA_mode > 2 &&
 			    (ideconf & PIIX_CONFIG_CR(channel, drive)) == 0)
@@ -1957,7 +1976,7 @@ apollo_chip_map(sc, pa)
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
         pcireg_t rev = PCI_REVISION(pa->pa_class);
 	int channel;
-	u_int32_t ideconf;
+	u_int32_t ideconf, udma_conf, old_udma_conf;
 	bus_size_t cmdsize, ctlsize;
 
 	if (pciide_chipen(sc, pa) == 0)
@@ -1981,14 +2000,37 @@ apollo_chip_map(sc, pa)
 
 	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
 	
+	old_udma_conf = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA);
 	WDCDEBUG_PRINT(("apollo_chip_map: old APO_IDECONF=0x%x, "
 	    "APO_CTLMISC=0x%x, APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_IDECONF),
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_CTLMISC),
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_DATATIM),
-	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA)),
+	    old_udma_conf),
 	    DEBUG_PROBE);
 
+	pci_conf_write(sc->sc_pc, sc->sc_tag,
+	    old_udma_conf | (APO_UDMA_PIO_MODE(0, 0) | APO_UDMA_EN(0, 0) |
+	    APO_UDMA_EN_MTH(0, 0) | APO_UDMA_CLK66(0)),
+	    APO_UDMA);
+	udma_conf = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA);
+	WDCDEBUG_PRINT(("apollo_chip_map: APO_UDMA now 0x%x\n", udma_conf),
+	    DEBUG_PROBE);
+	if ((udma_conf & (APO_UDMA_PIO_MODE(0, 0) | APO_UDMA_EN(0, 0) |
+	    APO_UDMA_EN_MTH(0, 0))) ==
+	    (APO_UDMA_PIO_MODE(0, 0) | APO_UDMA_EN(0, 0) |
+	    APO_UDMA_EN_MTH(0, 0))) {
+		if ((udma_conf & APO_UDMA_CLK66(0)) ==
+		    APO_UDMA_CLK66(0)) {
+			printf("%s: Ultra/66 capable\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname);
+			sc->sc_wdcdev.UDMA_cap = 4;
+		}
+	} else {
+		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_UDMA;
+	}
+	pci_conf_write(sc->sc_pc, sc->sc_tag, old_udma_conf, APO_UDMA);
+ 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
@@ -2040,6 +2082,24 @@ apollo_setup_channel(chp)
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
 
+	/*
+	 * We can't mix Ultra/33 and Ultra/66 on the same channel, so
+	 * downgrade to Ultra/33 if needed
+	 */
+	if ((chp->ch_drive[0].drive_flags & DRIVE_UDMA) &&
+	    (chp->ch_drive[1].drive_flags & DRIVE_UDMA)) {
+		/* both drives UDMA */
+		if (chp->ch_drive[0].UDMA_mode > 2 && 
+		    chp->ch_drive[1].UDMA_mode <= 2) {
+			/* drive 0 Ultra/66, drive 1 Ultra/33 */
+			chp->ch_drive[0].UDMA_mode = 2;
+		} else if (chp->ch_drive[1].UDMA_mode > 2 &&
+		    chp->ch_drive[0].UDMA_mode <= 2) {
+			/* drive 1 Ultra/66, drive 0 Ultra/33 */
+			chp->ch_drive[1].UDMA_mode = 2;
+		}
+	}
+
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
 		/* If no drive, skip */
@@ -2059,6 +2119,9 @@ apollo_setup_channel(chp)
 			    APO_UDMA_EN_MTH(chp->channel, drive) |
 			    APO_UDMA_TIME(chp->channel, drive,
 				apollo_udma_tim[drvp->UDMA_mode]);
+			if (drvp->UDMA_mode > 2)
+				udmatim_reg |=
+				    APO_UDMA_CLK66(chp->channel);
 			/* can use PIO timings, MW DMA unused */
 			mode = drvp->PIO_mode;
 		} else {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_piix_reg.h,v 1.2 1999/10/04 22:54:18 deraadt Exp $	*/
+/*	$OpenBSD: pciide_piix_reg.h,v 1.3 2001/01/08 19:54:09 jeremy Exp $	*/
 /*	$NetBSD: pciide_piix_reg.h,v 1.2 1998/10/12 16:09:21 bouyer Exp $	*/
 
 /*
@@ -100,13 +100,15 @@
 	(((x) << ((channel * 8) + (drive * 4))) << PIIX_UDMATIM_SHIFT)
 
 /*
- * IDE config register (ICH/ICH0 only)
+ * IDE config register (ICH/ICH0/ICH2 only)
  */
 #define PIIX_CONFIG	0x54
 #define PIIX_CONFIG_PINGPONG	0x0400
-/* The following are only for 82801AA (ICH) */
+/* The following are only for 82801AA (ICH) and 82801BA (ICH2) */
 #define PIIX_CONFIG_CR(channel, drive) (0x0010 << ((channel) * 2 + (drive)))
 #define PIIX_CONFIG_UDMA66(channel, drive) (0x0001 << ((channel) * 2 + (drive)))
+/* The following are only for the 82801BA (ICH2) */
+#define PIIX_CONFIG_UDMA100(channel, drive) (0x1000 << ((channel) * 2 + (drive)))
 
 /*
  * these tables define the differents values to upload to the
@@ -117,5 +119,5 @@ static int8_t piix_isp_pio[] = {0x00, 0x00, 0x01, 0x02, 0x02};
 static int8_t piix_rtc_pio[] = {0x00, 0x00, 0x00, 0x01, 0x03};
 static int8_t piix_isp_dma[] = {0x00, 0x02, 0x02};
 static int8_t piix_rtc_dma[] = {0x00, 0x02, 0x03};
-static int8_t piix4_sct_udma[] = {0x00, 0x01, 0x02, 0x01, 0x02};
+static int8_t piix4_sct_udma[] = {0x00, 0x01, 0x02, 0x01, 0x02, 0x01};
 
