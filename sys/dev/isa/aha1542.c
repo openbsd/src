@@ -760,8 +760,6 @@ aha_free_ccb(aha, ccb, flags)
 		}
 		hashccb = &(*hashccb)->nexthash;
  	}
- 
-	}
 
 	ccb->flags = CCB_FREE;
 	TAILQ_INSERT_HEAD(&aha->free_ccb, ccb, chain);
