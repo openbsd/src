@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.11 1999/02/05 00:40:23 deraadt Exp $
+.\"	$OpenBSD: recv.2,v 1.12 1999/02/15 19:04:21 millert Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd July 27, 1998
+.Dd February 15, 1999
 .Dt RECV 2
 .Os BSD 4.3r
 .Sh NAME
@@ -48,7 +48,7 @@
 .Ft ssize_t
 .Fn recv "int s" "void *buf" "size_t len" "int flags"
 .Ft ssize_t
-.Fn recvfrom "int s" "void *buf" "size_t len" "int flags" "struct sockaddr *from" "int *fromlen"
+.Fn recvfrom "int s" "void *buf" "size_t len" "int flags" "struct sockaddr *from" "socklen_t *fromlen"
 .Ft ssize_t
 .Fn recvmsg "int s" "struct msghdr *msg" "int flags"
 .Sh DESCRIPTION

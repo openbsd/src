@@ -1,4 +1,4 @@
-.\"	$OpenBSD: connect.2,v 1.9 1998/08/17 17:35:08 deraadt Exp $
+.\"	$OpenBSD: connect.2,v 1.10 1999/02/15 19:04:19 millert Exp $
 .\"	$NetBSD: connect.2,v 1.8 1995/10/12 15:40:48 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)connect.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd February 15, 1999
 .Dt CONNECT 2
 .Os BSD 4.2
 .Sh NAME
@@ -44,7 +44,7 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
-.Fn connect "int s" "const struct sockaddr *name" "int namelen"
+.Fn connect "int s" "const struct sockaddr *name" "socklen_t namelen"
 .Sh DESCRIPTION
 The parameter
 .Fa s

@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.21 1999/02/05 00:40:22 deraadt Exp $	*/
+/*	$OpenBSD: socket.h,v 1.22 1999/02/15 19:04:15 millert Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -196,6 +196,24 @@ struct sockproto {
 #define	SHUT_RDWR	2
 
 /*
+ * Socket credentials.
+ */
+struct sockcred {
+	uid_t	sc_uid;			/* real user id */
+	uid_t	sc_euid;		/* effective user id */
+	gid_t	sc_gid;			/* real group id */
+	gid_t	sc_egid;		/* effective group id */
+	int	sc_ngroups;		/* number of supplemental groups */
+	gid_t	sc_groups[1];		/* variable length */
+};
+
+/*
+ * Compute size of a sockcred structure with groups.
+ */
+#define SOCKCREDSIZE(ngrps) \
+	(sizeof(struct sockcred) + (sizeof(gid_t) * ((ngrps) - 1)))
+
+/*
  * Definitions for network related sysctl, CTL_NET.
  *
  * Second level is protocol family.
@@ -325,6 +343,7 @@ struct cmsghdr {
 
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
+#define SCM_CREDS	0x02		/* credientials (struct sockcred) */
 
 /*
  * 4.3 compat sockaddr, move to compat file later
@@ -351,21 +370,21 @@ struct omsghdr {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	accept __P((int, struct sockaddr *, int *));
-int	bind __P((int, const struct sockaddr *, int));
-int	connect __P((int, const struct sockaddr *, int));
-int	getpeername __P((int, struct sockaddr *, int *));
-int	getsockname __P((int, struct sockaddr *, int *));
-int	getsockopt __P((int, int, int, void *, int *));
+int	accept __P((int, struct sockaddr *, socklen_t *));
+int	bind __P((int, const struct sockaddr *, socklen_t));
+int	connect __P((int, const struct sockaddr *, socklen_t));
+int	getpeername __P((int, struct sockaddr *, socklen_t *));
+int	getsockname __P((int, struct sockaddr *, socklen_t *));
+int	getsockopt __P((int, int, int, void *, socklen_t *));
 int	listen __P((int, int));
 ssize_t	recv __P((int, void *, size_t, int));
-ssize_t	recvfrom __P((int, void *, size_t, int, struct sockaddr *, int *));
+ssize_t	recvfrom __P((int, void *, size_t, int, struct sockaddr *, socklen_t *));
 ssize_t	recvmsg __P((int, struct msghdr *, int));
 ssize_t	send __P((int, const void *, size_t, int));
 ssize_t	sendto __P((int, const void *,
 	    size_t, int, const struct sockaddr *, int));
 ssize_t	sendmsg __P((int, const struct msghdr *, int));
-int	setsockopt __P((int, int, int, const void *, int));
+int	setsockopt __P((int, int, int, const void *, socklen_t));
 int	shutdown __P((int, int));
 int	socket __P((int, int, int));
 int	socketpair __P((int, int, int, int *));

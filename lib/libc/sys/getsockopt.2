@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.6 1998/08/17 17:35:11 deraadt Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.7 1999/02/15 19:04:21 millert Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd April 19, 1994
+.Dd February 15, 1999
 .Dt GETSOCKOPT 2
 .Os BSD 4.3r
 .Sh NAME
@@ -45,9 +45,9 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
-.Fn getsockopt "int s" "int level" "int optname" "void *optval" "int *optlen"
+.Fn getsockopt "int s" "int level" "int optname" "void *optval" "socklen_t *optlen"
 .Ft int
-.Fn setsockopt "int s" "int level" "int optname" "const void *optval" "int optlen"
+.Fn setsockopt "int s" "int level" "int optname" "const void *optval" "socklen_t optlen"
 .Sh DESCRIPTION
 .Fn Getsockopt
 and

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: accept.2,v 1.4 1998/08/17 17:35:07 deraadt Exp $
+.\"	$OpenBSD: accept.2,v 1.5 1999/02/15 19:04:19 millert Exp $
 .\"	$NetBSD: accept.2,v 1.7 1996/01/31 20:14:42 mycroft Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)accept.2	8.2 (Berkeley) 12/11/93
 .\"
-.Dd December 11, 1993
+.Dd February 15, 1999
 .Dt ACCEPT 2
 .Os BSD 4.2
 .Sh NAME
@@ -44,7 +44,7 @@
 .Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Ft int
-.Fn accept "int s" "struct sockaddr *addr" "int *addrlen"
+.Fn accept "int s" "struct sockaddr *addr" "socklen_t *addrlen"
 .Sh DESCRIPTION
 The argument
 .Fa s
