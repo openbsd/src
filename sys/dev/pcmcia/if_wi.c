@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.8 2000/02/03 00:56:45 angelos Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.9 2000/03/27 18:34:58 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -133,9 +133,9 @@ u_int32_t	widebug = WIDEBUG;
 #define DPRINTF(mask,args)
 #endif	/* WIDEBUG */
 
-#if !defined(lint)
+#if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.8 2000/02/03 00:56:45 angelos Exp $";
+	"$OpenBSD: if_wi.c,v 1.9 2000/03/27 18:34:58 jason Exp $";
 #endif	/* lint */
 
 #ifdef foo
