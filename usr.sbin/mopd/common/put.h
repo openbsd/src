@@ -1,3 +1,5 @@
+/*	$OpenBSD: put.h,v 1.2 1996/09/21 19:12:03 maja Exp $ */
+
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
  *
@@ -26,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: put.h,v 1.1.1.1 1996/09/21 13:49:16 maja Exp $
+ *	$OpenBSD: put.h,v 1.2 1996/09/21 19:12:03 maja Exp $
  *
  */
 

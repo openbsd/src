@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1.1.1 1996/09/21 13:49:17 maja Exp $
+#	$OpenBSD: Makefile,v 1.2 1996/09/21 19:12:21 maja Exp $
 
 PROG=	mopd
 SRCS=	mopd.c process.c print.c cmp.c get.c put.c mopdef.c nma.c device.c \

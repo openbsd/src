@@ -1,7 +1,7 @@
 #  Copyright (c) 1993-1994 Mats O Jansson, Stockholm, Sweden
 #  All rights reserved.
 #
-# @(#) $Id: Makefile,v 1.1.1.1 1996/09/21 13:49:17 maja Exp $
+# @(#) $OpenBSD: Makefile,v 1.2 1996/09/21 19:12:42 maja Exp $
 
 # Script (or program) that returns the machine and os types,
 # or jsut edit in the name yourself.

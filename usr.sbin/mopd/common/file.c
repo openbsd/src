@@ -1,3 +1,5 @@
+/*	$OpenBSD: file.c,v 1.2 1996/09/21 19:11:31 maja Exp $ */
+
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
  *
@@ -28,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: file.c,v 1.1.1.1 1996/09/21 13:49:16 maja Exp $";
+static char rcsid[] = "$OpenBSD: file.c,v 1.2 1996/09/21 19:11:31 maja Exp $";
 #endif
 
 #include "os.h"
