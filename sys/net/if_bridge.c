@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.38 2000/10/18 16:30:28 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.39 2000/10/18 18:48:21 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -210,7 +210,7 @@ bridgeattach(unused)
 		ifp->if_ioctl = bridge_ioctl;
 		ifp->if_output = bridge_output;
 		ifp->if_start = bridge_start;
-		ifp->if_type = IFT_PROPVIRTUAL;
+		ifp->if_type = IFT_BRIDGE;
 		ifp->if_snd.ifq_maxlen = ifqmaxlen;
 		ifp->if_hdrlen = sizeof(struct ether_header);
 		if_attach(ifp);
@@ -806,6 +806,8 @@ bridge_output(ifp, m, sa, rt)
 
 			sc->sc_if.if_opackets++;
 			sc->sc_if.if_obytes += m->m_pkthdr.len;
+			p->ifp->if_lastchange = time;
+			p->ifp->if_obytes += m->m_pkthdr.len;
 			IF_ENQUEUE(&p->ifp->if_snd, mc);
 			if ((p->ifp->if_flags & IFF_OACTIVE) == 0)
 				(*p->ifp->if_start)(p->ifp);
@@ -830,6 +832,8 @@ sendunicast:
 	}
 	sc->sc_if.if_opackets++;
 	sc->sc_if.if_obytes += m->m_pkthdr.len;
+	dst_if->if_lastchange = time;
+	dst_if->if_obytes += m->m_pkthdr.len;
 	IF_ENQUEUE(&dst_if->if_snd, m);
 	if ((dst_if->if_flags & IFF_OACTIVE) == 0)
 		(*dst_if->if_start)(dst_if);
@@ -1026,6 +1030,8 @@ bridgeintr_frame(sc, m)
 	}
 	sc->sc_if.if_opackets++;
 	sc->sc_if.if_obytes += m->m_pkthdr.len;
+	dst_if->if_lastchange = time;
+	dst_if->if_obytes += m->m_pkthdr.len;
 	IF_ENQUEUE(&dst_if->if_snd, m);
 	if ((dst_if->if_flags & IFF_OACTIVE) == 0)
 		(*dst_if->if_start)(dst_if);
