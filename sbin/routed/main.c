@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2001/07/07 18:26:20 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2002/02/16 20:25:02 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ char copyright[] =
 #if !defined(lint)
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.12 2001/07/07 18:26:20 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.13 2002/02/16 20:25:02 millert Exp $";
 #endif
 
 #include "defs.h"
@@ -276,7 +276,6 @@ usage:
 	}
 
 	mypid = getpid();
-	srandom((int)(clk.tv_sec ^ clk.tv_usec ^ mypid));
 
 	/* prepare socket connected to the kernel.
 	 */
@@ -771,8 +770,8 @@ intvl_random(struct timeval *tp,	/* put value here */
 {
 	tp->tv_sec = (time_t)(hi == lo
 			      ? lo
-			      : (lo + random() % ((hi - lo))));
-	tp->tv_usec = random() % 1000000;
+			      : (lo + arc4random() % ((hi - lo))));
+	tp->tv_usec = arc4random() % 1000000;
 }
 
 
