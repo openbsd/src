@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_vidattr.c,v 1.4 1998/07/23 21:19:47 millert Exp $	*/
+/*	$OpenBSD: lib_vidattr.c,v 1.5 1998/08/03 17:02:46 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -66,7 +66,7 @@
 #include <curses.priv.h>
 #include <term.h>
 
-MODULE_ID("$From: lib_vidattr.c,v 1.20 1998/02/11 12:13:56 tom Exp $")
+MODULE_ID("$From: lib_vidattr.c,v 1.21 1998/08/01 22:21:19 tom Exp $")
 
 #define doPut(mode) TPUTS_TRACE(#mode); tputs(mode, 1, outc)
 
@@ -76,11 +76,22 @@ MODULE_ID("$From: lib_vidattr.c,v 1.20 1998/02/11 12:13:56 tom Exp $")
 #define TurnOff(mask,mode) \
 	if ((turn_off & mask) && mode) { doPut(mode); turn_off &= ~mask; }
 
+	/* if there is no current screen, assume we *can* do color */
+#define SetColorsIf(why,old_attr) \
+	if ((!SP || SP->_coloron) && (why)) { \
+		int old_pair = PAIR_NUMBER(old_attr); \
+		T(("old pair = %d -- new pair = %d", old_pair, pair)); \
+		if ((pair != old_pair) \
+		 || (reverse ^ ((old_attr & A_REVERSE) != 0))) { \
+			_nc_do_color(pair, reverse, outc); \
+		} \
+	}
+
 int vidputs(attr_t newmode, int  (*outc)(int))
 {
 static attr_t previous_attr = A_NORMAL;
 attr_t turn_on, turn_off;
-int pair, current_pair;
+int pair;
 bool reverse = FALSE;
 bool used_ncv = FALSE;
 
@@ -134,26 +145,15 @@ bool used_ncv = FALSE;
 		returnCode(OK);
 
 	pair = PAIR_NUMBER(newmode);
-	current_pair = PAIR_NUMBER(previous_attr);
 
 	if (reverse) {
 		newmode &= ~A_REVERSE;
-		pair = -pair;
 	}
-	if (previous_attr & A_REVERSE)
-		current_pair = -current_pair;
 
 	turn_off = (~newmode & previous_attr) & ALL_BUT_COLOR;
 	turn_on  = (newmode & ~previous_attr) & ALL_BUT_COLOR;
 
-	/* if there is no current screen, assume we *can* do color */
-	if ((!SP || SP->_coloron) && pair == 0) {
-		T(("old pair = %d -- new pair = %d", current_pair, pair));
-		if (pair != current_pair) {
-			_nc_do_color(pair, reverse, outc);
-			previous_attr &= ~A_COLOR;
-		}
-	}
+	SetColorsIf(pair == 0, previous_attr);
 
 	if (newmode == A_NORMAL) {
 		if((previous_attr & A_ALTCHARSET) && exit_alt_charset_mode) {
@@ -165,6 +165,7 @@ bool used_ncv = FALSE;
 			previous_attr &= ~A_COLOR;
 		}
 
+		SetColorsIf(pair != 0, previous_attr);
 	} else if (set_attributes && !used_ncv) {
 		if (turn_on || turn_off) {
 			TPUTS_TRACE("set_attributes");
@@ -180,6 +181,7 @@ bool used_ncv = FALSE;
 				(newmode & A_ALTCHARSET) != 0), 1, outc);
 			previous_attr &= ~A_COLOR;
 		}
+		SetColorsIf(pair != 0, previous_attr);
 	} else {
 
 		T(("turning %s off", _traceattr(turn_off)));
@@ -193,6 +195,7 @@ bool used_ncv = FALSE;
 			turn_on  |= (newmode & (chtype)(~A_COLOR));
 			previous_attr &= ~A_COLOR;
 		}
+		SetColorsIf(pair != 0, previous_attr);
 
 		T(("turning %s on", _traceattr(turn_on)));
 
@@ -211,15 +214,6 @@ bool used_ncv = FALSE;
 		TurnOn (A_RIGHT,      enter_right_hl_mode);
 		TurnOn (A_TOP,        enter_top_hl_mode);
 		TurnOn (A_VERTICAL,   enter_vertical_hl_mode);
-	}
-
-	/* if there is no current screen, assume we *can* do color */
-	if ((!SP || SP->_coloron) && pair != 0) {
-		current_pair = PAIR_NUMBER(previous_attr);
-		T(("old pair = %d -- new pair = %d", current_pair, pair));
-		if (pair != current_pair) {
-			_nc_do_color(pair, reverse, outc);
-		}
 	}
 
 	if (reverse)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_error.c,v 1.1 1998/07/23 21:17:25 millert Exp $	*/
+/*	$OpenBSD: comp_error.c,v 1.2 1998/08/03 17:02:37 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -43,7 +43,7 @@
 
 #include <tic.h>
 
-MODULE_ID("$From: comp_error.c,v 1.15 1998/07/18 00:04:00 tom Exp $")
+MODULE_ID("$From: comp_error.c,v 1.16 1998/08/01 23:39:51 tom Exp $")
 
 bool	_nc_suppress_warnings;
 int	_nc_curr_line;		/* current line # in input */
@@ -124,7 +124,7 @@ va_list argp;
 	/* If we're debugging, try to show where the problem occurred - this
 	 * will dump core.
 	 */
-#if defined(TRACE) || defined(NDEBUG)
+#if defined(TRACE) || !defined(NDEBUG)
 	abort();
 #else
 	/* Dumping core in production code is not a good idea.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: write_entry.c,v 1.2 1998/07/27 03:37:37 millert Exp $	*/
+/*	$OpenBSD: write_entry.c,v 1.3 1998/08/03 17:02:47 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -51,7 +51,7 @@
 #define S_ISDIR(mode) ((mode & S_IFMT) == S_IFDIR)
 #endif
 
-MODULE_ID("$From: write_entry.c,v 1.28 1998/07/25 20:11:51 tom Exp $")
+MODULE_ID("$From: write_entry.c,v 1.30 1998/08/01 23:46:32 tom Exp $")
 
 static int total_written;
 
@@ -215,6 +215,7 @@ char		symlinkname[PATH_MAX];
 #endif /* USE_SYMLINKS */
 static int	call_count;
 static time_t	start_time;		/* time at start of writes */
+int		code;
 
 	if (call_count++ == 0) {
 		start_time = 0;
@@ -314,17 +315,35 @@ static time_t	start_time;		/* time at start of writes */
 			symlinkname[sizeof(symlinkname) - 1] = '\0';
 #endif /* USE_SYMLINKS */
 #if HAVE_REMOVE
-			remove(linkname);
+			code = remove(linkname);
 #else
-			unlink(linkname);
+			code = unlink(linkname);
 #endif
+			if (code != 0 && errno == ENOENT)
+				code = 0;
 #if USE_SYMLINKS
 			if (symlink(symlinkname, linkname) < 0)
 #else
 			if (link(filename, linkname) < 0)
 #endif /* USE_SYMLINKS */
-			    _nc_syserr_abort("can't link %s to %s", filename, linkname);
-			DEBUG(1, ("Linked %s", linkname));
+			{
+			    /*
+			     * If there wasn't anything there, and we cannot
+			     * link to the target because it is the same as the
+			     * target, then the source must be on a filesystem
+			     * that uses caseless filenames, such as Win32, etc.
+			     */
+			    if (code == 0 && errno == EEXIST)
+				_nc_warning("can't link %s to %s", filename, linkname);
+			    else if (code == 0 && errno == EPERM)
+				write_file(linkname, tp);
+			    else
+				_nc_syserr_abort("can't link %s to %s", filename, linkname);
+			}
+			else
+			{
+			    DEBUG(1, ("Linked %s", linkname));
+			}
 		}
 #else /* just make copies */
 		write_file(linkname, tp);

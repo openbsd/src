@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_color.c,v 1.5 1998/07/23 21:18:36 millert Exp $	*/
+/*	$OpenBSD: lib_color.c,v 1.6 1998/08/03 17:02:45 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -43,7 +43,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: lib_color.c,v 1.30 1998/06/28 00:10:19 tom Exp $")
+MODULE_ID("$From: lib_color.c,v 1.31 1998/08/01 22:21:29 tom Exp $")
 
 /*
  * These should be screen structure members.  They need to be globals for
@@ -365,9 +365,6 @@ int pair_content(short pair, short *f, short *b)
 void _nc_do_color(int pair, bool reverse, int (*outc)(int))
 {
     short fg, bg;
-
-    if (reverse)
-    	pair = -pair;
 
     if (pair == 0)
     {
