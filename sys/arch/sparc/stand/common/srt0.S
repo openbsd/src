@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.1 1997/09/17 10:46:20 downsj Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.2 2002/08/11 12:20:43 art Exp $	*/
 /*	$NetBSD: srt0.S,v 1.5.4.2 1996/07/17 01:51:46 jtc Exp $	*/
 
 /*
@@ -33,20 +33,22 @@
 
 #include <machine/param.h>
 #include <machine/psl.h>
+#include <machine/asm.h>
 
 #define	CCFSZ	96
 
 	.file	"str0.s"
 
 	.data
-	.global	_cputyp, _nbpg, _pgofset, _pgshift
-_cputyp:
+	.global	_C_LABEL(cputyp), _C_LABEL(nbpg), _C_LABEL(pgofset)
+	.global _C_LABEL(pgshift)
+_C_LABEL(cputyp):
 	.word	1
-_nbpg:
+_C_LABEL(nbpg):
 	.word	1
-_pgofset:
+_C_LABEL(pgofset):
 	.word	1
-_pgshift:
+_C_LABEL(pgshift):
 	.word	1
 
 	.text	
@@ -66,7 +68,7 @@ start:
 	 nop
 2:	add	%o7, (start-1b), %l0
 	set	start, %l1
-	set	_end, %o0
+	set	_C_LABEL(end), %o0
 	sub	%o0, %l1, %l2		! length
 3:	ld	[%l0], %o0
 	add	%l0, 4, %l0
@@ -98,9 +100,9 @@ start:
 	/*
 	 * Clear BSS
 	 */
-	set     _edata, %o0             ! bzero(edata, end - edata)
-	set     _end, %o1
-	call    _bzero
+	set     _C_LABEL(edata), %o0	! bzero(edata, end - edata)
+	set     _C_LABEL(end), %o1
+	call    _C_LABEL(bzero)
 	 sub    %o1, %o0, %o1
 
 	/*
@@ -115,7 +117,7 @@ start:
 	/*
 	 * Set CPU type that we are running on.
 	 */
-	sethi	%hi(_cputyp), %o0
+	sethi	%hi(_C_LABEL(cputyp)), %o0
 	set	0x4000, %g7
 	cmp	%i0, %g7
 	beq	5f
@@ -124,8 +126,8 @@ start:
 	/*
 	 * Save address of PROM vector (passed in %i0).
 	 */
-	sethi	%hi(_promvec), %o1
-	st	%i0, [%o1 + %lo(_promvec)]
+	sethi	%hi(_C_LABEL(promvec)), %o1
+	st	%i0, [%o1 + %lo(_C_LABEL(promvec))]
 
 	mov	CPU_SUN4C, %g4
 	mov	SUN4CM_PGSHIFT, %g5
@@ -136,20 +138,20 @@ start:
 	mov	SUN4_PGSHIFT, %g5
 
 6:
-	st	%g4, [%o0 + %lo(_cputyp)]
-	sethi	%hi(_pgshift), %o0	! pgshift = log2(nbpg)
-	st	%g5, [%o0 + %lo(_pgshift)]
+	st	%g4, [%o0 + %lo(_C_LABEL(cputyp))]
+	sethi	%hi(_C_LABEL(pgshift)), %o0	! pgshift = log2(nbpg)
+	st	%g5, [%o0 + %lo(_C_LABEL(pgshift))]
 
-	mov	1, %o0			! nbpg = 1 << pgshift
+	mov	1, %o0				! nbpg = 1 << pgshift
 	sll	%o0, %g5, %g5
-	sethi	%hi(_nbpg), %o0		! nbpg = bytes in a page
-	st	%g5, [%o0 + %lo(_nbpg)]
+	sethi	%hi(_C_LABEL(nbpg)), %o0	! nbpg = bytes in a page
+	st	%g5, [%o0 + %lo(_C_LABEL(nbpg))]
 
 	sub	%g5, 1, %g5
-	sethi	%hi(_pgofset), %o0	! page offset = bytes in a page - 1
-	st	%g5, [%o0 + %lo(_pgofset)]
+	sethi	%hi(_C_LABEL(pgofset)), %o0	! page offset = bytes in a page - 1
+	st	%g5, [%o0 + %lo(_C_LABEL(pgofset))]
 
-	call	_main
+	call	_C_LABEL(main)
 	 mov	%i0, %o0
 
 	ret
