@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.18 2001/08/30 17:38:13 millert Exp $ */
+/*	$OpenBSD: lpd.c,v 1.19 2001/08/30 23:24:46 millert Exp $ */
 /*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.18 2001/08/30 17:38:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.19 2001/08/30 23:24:46 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -288,8 +288,10 @@ main(argc, argv)
 			signal(SIGTERM, SIG_IGN);
 			(void) close(funix);
 			(void) close(finet);
-			dup2(s, 1);
-			(void) close(s);
+			if (s != STDOUT_FILENO) {
+				dup2(s, STDOUT_FILENO);
+				(void) close(s);
+			}
 			if (domain == AF_INET) {
 				from_remote = 1;
 				chkhost(&frominet);
