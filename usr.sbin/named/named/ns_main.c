@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.8 1998/03/20 03:06:51 angelos Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.9 1998/04/18 08:12:34 deraadt Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.24 1996/11/26 10:11:22 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.8 1998/03/20 03:06:51 angelos Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.9 1998/04/18 08:12:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,8 @@ static	const int		rbufsize = 8 * 1024,
 static	struct sockaddr_in	nsaddr;
 static	u_int16_t		local_ns_port,		/* our service port */
 				nsid_state;
-static	fd_set			mask;			/* open descriptors */
+static	fd_set			*mask;			/* open descriptors */
+static	size_t			mask_size;
 static	char			**Argv = NULL;
 static	char			*LastArg = NULL;	/* end of argv */
 
@@ -185,7 +186,7 @@ main(argc, argv, envp)
 #ifdef NeXT
 	int old_sigmask;
 #endif
-	fd_set tmpmask;
+	fd_set *tmpmask;
 	struct timeval t, *tp;
 	struct qstream *candidate = QSTREAM_NULL;
 	char **argp;
@@ -321,9 +322,9 @@ main(argc, argv, envp)
 #endif
 
 #ifdef	RLIMIT_NOFILE
-	rl.rlim_cur = rl.rlim_max = FD_SETSIZE;
+	rl.rlim_cur = rl.rlim_max = RLIM_INFINITY;
 	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
-		syslog(LOG_ERR, "setrlimit(RLIMIT_FSIZE,FD_SETSIZE): %m");
+		syslog(LOG_ERR, "setrlimit(RLIMIT_FSIZE,RLIM_INFINITY): %m");
 #endif
 	/* check that udp checksums are on */
 	ns_udp();
@@ -431,8 +432,23 @@ main(argc, argv, envp)
 	/*
 	 * Get list of local addresses and set up datagram sockets.
 	 */
-	FD_ZERO(&mask);
-	FD_SET(vs, &mask);
+	nfds = getdtablesize();       /* get the number of file descriptors */
+	mask_size = howmany(nfds, NFDBITS) * sizeof(fd_mask);
+	mask = (fd_set *) malloc(mask_size);
+	if (mask == NULL) {
+		syslog(LOG_ERR, "malloc(%d) for fd_set: %m - exiting",
+			mask_size);
+		exit(1);
+	}
+	memset ((void *)mask, 0, mask_size);
+	tmpmask = (fd_set *) malloc(mask_size);
+	if (tmpmask == NULL) {
+		syslog(LOG_ERR, "malloc(%d) for fd_set: %m - exiting",
+			mask_size);
+		exit(1);
+	}
+	memset ((void *)tmpmask, 0, mask_size);
+	FD_SET(vs, mask);
 	getnetconf();
 
 	/*
@@ -567,11 +583,6 @@ main(argc, argv, envp)
 
 	syslog(LOG_NOTICE, "Ready to answer queries.\n");
 	prime_cache();
-	nfds = getdtablesize();       /* get the number of file descriptors */
-	if (nfds > FD_SETSIZE) {
-		nfds = FD_SETSIZE;	/* Bulletproofing */
-		syslog(LOG_NOTICE, "Return from getdtablesize() > FD_SETSIZE");
-	}
 #ifdef NeXT
 	old_sigmask = sigblock(sigmask(SIGCHLD));
 #endif
@@ -636,11 +647,11 @@ main(argc, argv, envp)
 			tp = &t;
 		} else
 			tp = NULL;
-		tmpmask = mask;
+		memcpy ((void *)tmpmask, (void *)mask, mask_size);
 #ifdef NeXT
 		sigsetmask(old_sigmask);	/* Let queued signals run. */
 #endif
-		n = select(nfds, &tmpmask, (fd_set *)NULL, (fd_set *)NULL, tp);
+		n = select(nfds, tmpmask, (fd_set *)NULL, (fd_set *)NULL, tp);
 #ifdef NeXT
 		old_sigmask = sigblock(sigmask(SIGCHLD));
 #endif
@@ -654,7 +665,7 @@ main(argc, argv, envp)
 		for (dqp = datagramq;
 		     dqp != QDATAGRAM_NULL;
 		     dqp = dqp->dq_next) {
-		    if (FD_ISSET(dqp->dq_dfd, &tmpmask))
+		    if (FD_ISSET(dqp->dq_dfd, tmpmask))
 		        for (udpcnt = 0; udpcnt < 42; udpcnt++) {  /*XXX*/
 			    int from_len = sizeof(from_addr);
 
@@ -700,7 +711,7 @@ main(argc, argv, envp)
 		** Note that a "continue" in here takes us back to the select()
 		** which, if our accept() failed, will bring us back here.
 		*/
-		if (FD_ISSET(vs, &tmpmask)) {
+		if (FD_ISSET(vs, tmpmask)) {
 			int from_len = sizeof(from_addr);
 
 			rfd = accept(vs,
@@ -815,8 +826,8 @@ main(argc, argv, envp)
 			sp->s_time = tt.tv_sec;	/* last transaction time */
 			sp->s_from = from_addr;	/* address to respond to */
 			sp->s_bufp = (u_char *)&sp->s_tempsize;
-			FD_SET(rfd, &mask);
-			FD_SET(rfd, &tmpmask);
+			FD_SET(rfd, mask);
+			FD_SET(rfd, tmpmask);
 #ifdef DEBUG
 			if (debug)
 				syslog(LOG_DEBUG,
@@ -829,7 +840,7 @@ main(argc, argv, envp)
 				    (u_long)streamq));
 		for (sp = streamq;  sp != QSTREAM_NULL;  sp = nextsp) {
 			nextsp = sp->s_next;
-			if (!FD_ISSET(sp->s_rfd, &tmpmask))
+			if (!FD_ISSET(sp->s_rfd, tmpmask))
 				continue;
 			dprintf(5, (ddt,
 				  "sp x%lx rfd %d size %d time %d next x%lx\n",
@@ -978,15 +989,27 @@ getnetconf()
 	struct ifreq ifreq, *ifr;
 	struct qdatagram *dqp;
 	static int first = 1;
-	char buf[32768], *cp, *cplim;
+	char *buf = NULL, *cp, *cplim;
+	int len = 8192;
 	u_int32_t nm;
 	time_t my_generation = time(NULL);
 
-	ifc.ifc_len = sizeof buf;
-	ifc.ifc_buf = buf;
-	if (ioctl(vs, SIOCGIFCONF, (char *)&ifc) < 0) {
-		syslog(LOG_ERR, "get interface configuration: %m - exiting");
-		exit(1);
+	while (1) {
+		ifc.ifc_len = len;
+		ifc.ifc_buf = buf = realloc(buf, len);
+		if (buf == NULL) {
+			syslog(LOG_ERR,
+				"get interface config, malloc: %m - exiting");
+			exit(1);
+		}
+		if (ioctl(vs, SIOCGIFCONF, &ifc) < 0) {
+			syslog(LOG_ERR,
+				"get interface configuration: %m - exiting");
+			exit(1);
+		}
+		if (ifc.ifc_len + sizeof(ifreq) < len)
+			break;
+		len *= 2;
 	}
 	ntp = NULL;
 #if defined(AF_LINK) && \
@@ -1134,6 +1157,7 @@ getnetconf()
 	}
 	if (ntp)
 		free((char *)ntp);
+	free(buf);
 
 	/*
 	 * now go through the datagramq and delete anything that
@@ -1283,7 +1307,7 @@ opensocket(dqp)
 		exit(1);
 #endif
 	}
-	FD_SET(dqp->dq_dfd, &mask);
+	FD_SET(dqp->dq_dfd, mask);
 }
 
 /*
@@ -1531,7 +1555,7 @@ sqrm(qp)
 
 	if (qp->s_bufsize != 0)
 		free(qp->s_buf);
-	FD_CLR(qp->s_rfd, &mask);
+	FD_CLR(qp->s_rfd, mask);
 	(void) my_close(qp->s_rfd);
 	if (qp == streamq) {
 		streamq = qp->s_next;
@@ -1596,7 +1620,7 @@ dqflush(gen)
 			syslog(LOG_NOTICE, "interface [%s] missing; deleting",
 			       inet_ntoa(this->dq_addr));
 		}
-		FD_CLR(this->dq_dfd, &mask);
+		FD_CLR(this->dq_dfd, mask);
 		my_close(this->dq_dfd);
 		free(this);
 		if (prev == NULL)
@@ -1633,7 +1657,7 @@ sq_query(sp)
 	register struct qstream *sp;
 {
 	sp->s_refcnt++;
-	FD_CLR(sp->s_rfd, &mask);
+	FD_CLR(sp->s_rfd, mask);
 }
 
 /*
@@ -1647,7 +1671,7 @@ sq_done(sp)
 
 	sp->s_refcnt = 0;
 	sp->s_time = tt.tv_sec;
-	FD_SET(sp->s_rfd, &mask);
+	FD_SET(sp->s_rfd, mask);
 }
 
 void
