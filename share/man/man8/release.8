@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.20 2001/12/25 01:37:29 miod Exp $
+.\"	$OpenBSD: release.8,v 1.21 2002/01/04 15:43:57 deraadt Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -167,8 +167,8 @@ If the system does not come up you can boot using
 .Pa bsd.old .
 .Ss "3. Build a new system"
 Now that you are running using your new kernel you can build a new system.
-It's safer (but slower) to remove and re-build your object directories
-and re-building them before the build.
+It's safer (but slower) to remove your object directories and re-create
+them before the build.
 The steps are:
 .Pp
 .Bl -bullet -offset indent -compact
