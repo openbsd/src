@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.58 2001/03/22 00:31:56 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.59 2001/04/29 20:42:45 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -717,10 +717,6 @@ vref(vp)
 }
 #endif /* DIAGNOSTIC */
 
-
-/*
- * Must be called at splbio
- */
 static __inline__ void
 vputonfreelist(vp)
         struct vnode *vp;
@@ -735,11 +731,10 @@ vputonfreelist(vp)
 		panic("Use count is not zero!");
 	
 	if (vp->v_bioflag & VBIOONFREELIST) {
-		vprint ("vnode already on free list: ", vp);
-		panic ("vnode already on free list");
+		vprint("vnode already on free list: ", vp);
+		panic("vnode already on free list");
 	}
 #endif
-
 
 	vp->v_bioflag |= VBIOONFREELIST;
 
@@ -747,7 +742,6 @@ vputonfreelist(vp)
 		lst = &vnode_hold_list;
 	else
 		lst = &vnode_free_list;
-
 	
 	if (vp->v_type == VBAD)
 		TAILQ_INSERT_HEAD(lst, vp, v_freelist);
