@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.19 2001/09/10 16:44:52 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.20 2001/09/18 13:59:23 drahn Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -60,6 +60,14 @@ typedef int pmapv_t;
 #define VP_IDX2_SIZE	32
 #define VP_IDX2_MASK	(VP_IDX2_SIZE-1)
 #define VP_IDX2_POS 	12
+
+void pmap_kenter_cache( vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
+
+/* cache flags */
+#define PMAP_CACHE_DEFAULT	0 	/* WB cache managed mem, devices not */
+#define PMAP_CACHE_CI		1 	/* cache inhibit */
+#define PMAP_CACHE_WT		2 	/* writethru */
+#define PMAP_CACHE_WB		3	/* writeback */
 
 /*
  * Pmap stuff

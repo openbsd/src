@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.43 2001/09/15 13:21:06 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.44 2001/09/18 13:59:23 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -1186,6 +1186,10 @@ pmap_remove_pv(pm, pteidx, va, pte_lo)
 	}
 }
 
+int
+pmap_enter_c_pv(struct pmap *pm, vm_offset_t va, vm_offset_t pa,
+	vm_prot_t prot, int flags, int cacheable, int pv);
+
 /*
  * Insert physical page at pa into the given pmap at virtual address va.
  */
@@ -1195,6 +1199,18 @@ pmap_enter(pm, va, pa, prot, flags)
 	vm_offset_t va, pa;
 	vm_prot_t prot;
 	int flags;
+{
+	return pmap_enter_c_pv(pm, va, pa, prot, flags, PMAP_CACHE_DEFAULT,
+		TRUE);
+}
+int
+pmap_enter_c_pv(pm, va, pa, prot, flags, cacheable, pv)
+	struct pmap *pm;
+	vm_offset_t va, pa;
+	vm_prot_t prot;
+	int flags;
+	int cacheable;
+	int pv;
 {
 	sr_t sr;
 	int idx, s;
@@ -1225,12 +1241,22 @@ pmap_enter(pm, va, pa, prot, flags)
 	 */
 	pte.pte_hi = ((sr & SR_VSID) << PTE_VSID_SHFT)
 		| ((va & ADDR_PIDX) >> ADDR_API_SHFT);
-	pte.pte_lo = (pa & PTE_RPGN) | PTE_M | PTE_I | PTE_G;
-	for (mp = mem; mp->size; mp++) {
-		if (pa >= mp->start && pa < mp->start + mp->size) {
-			pte.pte_lo &= ~(PTE_I | PTE_G);
-			break;
+	if (cacheable == PMAP_CACHE_DEFAULT) {
+		pte.pte_lo = (pa & PTE_RPGN) | PTE_M | PTE_I | PTE_G;
+		for (mp = mem; mp->size; mp++) {
+			if (pa >= mp->start && pa < mp->start + mp->size) {
+				pte.pte_lo &= ~(PTE_I | PTE_G);
+				break;
+			}
 		}
+	} else if (cacheable == PMAP_CACHE_CI) {
+		pte.pte_lo = (pa & PTE_RPGN) | PTE_M | PTE_I | PTE_G;
+	} else if (cacheable == PMAP_CACHE_WT) {
+		pte.pte_lo = (pa & PTE_RPGN) | PTE_M | PTE_W | PTE_G;
+	} else if (cacheable == PMAP_CACHE_WB) {
+		pte.pte_lo = (pa & PTE_RPGN) | PTE_M;
+	} else {
+		panic("pmap_enter_c_pv: invalid cacheable %x\n", cacheable);
 	}
 	if (prot & VM_PROT_WRITE)
 		pte.pte_lo |= PTE_RW;
@@ -1240,11 +1266,13 @@ pmap_enter(pm, va, pa, prot, flags)
 	/*
 	 * Now record mapping for later back-translation.
 	 */
-	if (pmap_enter_pv(pm, idx, va, pa)) {
-		/* 
-		 * Flush the real memory from the cache.
-		 */
-		syncicache((void *)pa, NBPG);
+	if (pv == TRUE) {
+		if (pmap_enter_pv(pm, idx, va, pa)) {
+			/* 
+			 * Flush the real memory from the cache.
+			 */
+			syncicache((void *)pa, NBPG);
+		}
 	}
 	
 	s = splimp();
@@ -1269,13 +1297,26 @@ pmap_enter(pm, va, pa, prot, flags)
 	return (KERN_SUCCESS);
 }
 
+#define KERN_MAP_PV TRUE
+
+void
+pmap_kenter_cache(va, pa, prot, cacheable)
+	vaddr_t va;
+	paddr_t pa;
+	vm_prot_t prot;
+	int cacheable;
+{
+	pmap_enter_c_pv(pmap_kernel(), va, pa, prot, PMAP_WIRED, cacheable,
+		KERN_MAP_PV);
+}
 void
 pmap_kenter_pa(va, pa, prot)
 	vaddr_t va;
 	paddr_t pa;
 	vm_prot_t prot;
 {
-	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
+	pmap_enter_c_pv(pmap_kernel(), va, pa, prot, PMAP_WIRED,
+		PMAP_CACHE_DEFAULT, KERN_MAP_PV);
 }
 
 void
@@ -1287,18 +1328,21 @@ pmap_kenter_pgs(va, pgs, npgs)
 	int i;
 
 	for (i = 0; i < npgs; i++, va += PAGE_SIZE) {
-		pmap_enter(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
-				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		pmap_enter_c_pv(pmap_kernel(), va, VM_PAGE_TO_PHYS(pgs[i]),
+				VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED,
+				PMAP_CACHE_DEFAULT, KERN_MAP_PV);
 	}
 }
 
+void pmap_remove_pvl( struct pmap *pm, vm_offset_t va, vm_offset_t endva,
+	int pv);
 void
 pmap_kremove(va, len)
 	vaddr_t va;
 	vsize_t len;
 {
 	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
-		pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+		pmap_remove_pvl(pmap_kernel(), va, va + PAGE_SIZE, KERN_MAP_PV);
 	}
 }
 
@@ -1321,6 +1365,15 @@ pmap_remove(pm, va, endva)
 	struct pmap *pm;
 	vm_offset_t va, endva;
 {
+	pmap_remove_pvl(pm, va, endva, TRUE);
+}
+
+void
+pmap_remove_pvl(pm, va, endva, pv)
+	struct pmap *pm;
+	vm_offset_t va, endva;
+	int pv;
+{
 	int idx, i, s;
 	int found; /* if found, we are done, only one mapping per va */
 	sr_t sr;
@@ -1341,7 +1394,10 @@ pmap_remove(pm, va, endva)
 		for (ptp = ptable + idx * 8, i = 8; --i >= 0; ptp++)
 			if (ptematch(ptp, sr, va, PTE_VALID)) {
 				pmap_pte_invalidate(va, ptp);
-				pmap_remove_pv(pm, idx, va, ptp->pte_lo);
+				if (pv == TRUE) {
+					pmap_remove_pv(pm, idx, va,
+						ptp->pte_lo);
+				}
 				pm->pm_stats.resident_count--;
 				found = 1;
 				break;
@@ -1352,7 +1408,10 @@ pmap_remove(pm, va, endva)
 		for (ptp = ptable + (idx ^ ptab_mask) * 8, i = 8; --i >= 0; ptp++)
 			if (ptematch(ptp, sr, va, PTE_VALID | PTE_HID)) {
 				pmap_pte_invalidate(va, ptp);
-				pmap_remove_pv(pm, idx, va, ptp->pte_lo);
+				if (pv == TRUE) {
+					pmap_remove_pv(pm, idx, va,
+						ptp->pte_lo);
+				}
 				pm->pm_stats.resident_count--;
 				found = 1;
 				break;
@@ -1363,7 +1422,10 @@ pmap_remove(pm, va, endva)
 		for (po = potable[idx].lh_first; po; po = npo) {
 			npo = po->po_list.le_next;
 			if (ptematch(&po->po_pte, sr, va, 0)) {
-				pmap_remove_pv(pm, idx, va, po->po_pte.pte_lo);
+				if (pv == TRUE) {
+					pmap_remove_pv(pm, idx, va,
+						po->po_pte.pte_lo);
+				}
 				LIST_REMOVE(po, po_list);
 				pofree(po, 1);
 				pm->pm_stats.resident_count--;
