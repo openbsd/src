@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2001/01/09 02:41:19 angelos Exp $
+# $OpenBSD: Makefile,v 1.4 2001/07/01 21:47:13 deraadt Exp $
 
 PROG	= afslog
 
@@ -8,7 +8,7 @@ KRBDEPTH=../..
 .PATH:	${KRBSRC}/appl/afsutil
 
 CFLAGS	+= -I.
-LDADD	+= ${LIBROKEN} -lkafs -lkrb -ldes
+LDADD	+= -lkafs -lkrb5 -lkrb -ldes -lcrypto -lasn1 ${LIBROKEN}
 
 SRCS	= aklog.c
 
