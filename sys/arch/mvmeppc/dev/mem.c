@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1 2001/06/26 21:57:41 smurph Exp $	*/
+/*	$OpenBSD: mem.c,v 1.2 2001/08/21 22:10:10 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -111,7 +111,7 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			c = uio->uio_resid;
 			/* This doesn't allow device mapping!	XXX */
-			pmap_real_memory(&v, &c);
+			pmap_real_memory(&v, (vm_size_t *)&c);
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
