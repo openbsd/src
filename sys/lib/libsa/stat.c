@@ -1,3 +1,4 @@
+/*	$OpenBSD: stat.c,v 1.3 1996/09/23 14:19:05 mickey Exp $	*/
 /*	$NetBSD: stat.c,v 1.3 1994/10/26 05:45:07 cgd Exp $	*/
 
 /*-

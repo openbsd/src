@@ -1,3 +1,4 @@
+/*	$OpenBSD: globals.c,v 1.3 1996/09/23 14:18:54 mickey Exp $	*/
 /*	$NetBSD: globals.c,v 1.3 1995/09/18 21:19:27 pk Exp $	*/
 
 /*

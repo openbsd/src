@@ -1,3 +1,4 @@
+/*	$OpenBSD: saerrno.h,v 1.3 1996/09/23 14:19:03 mickey Exp $	*/
 /*	$NetBSD: saerrno.h,v 1.6 1995/09/18 21:19:45 pk Exp $	*/
 
 /*

@@ -1,3 +1,4 @@
+/*	$OpenBSD: rpc.h,v 1.2 1996/09/23 14:19:03 mickey Exp $	*/
 /*	$NetBSD: rpc.h,v 1.7 1995/09/23 03:36:12 gwr Exp $	*/
 
 /*

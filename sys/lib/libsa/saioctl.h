@@ -1,3 +1,4 @@
+/*	$OpenBSD: saioctl.h,v 1.2 1996/09/23 14:19:04 mickey Exp $	*/
 /*	$NetBSD: saioctl.h,v 1.2 1994/10/26 05:45:04 cgd Exp $	*/
 
 /*-

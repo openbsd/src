@@ -1,3 +1,4 @@
+/*	$OpenBSD: bcopy.c,v 1.4 1996/09/23 14:18:47 mickey Exp $	*/
 /*	$NetBSD: bcopy.c,v 1.5 1995/04/22 13:46:50 cgd Exp $	*/
 
 /*-

@@ -1,3 +1,4 @@
+/*	$OpenBSD: gets.c,v 1.2 1996/09/23 14:18:54 mickey Exp $	*/
 /*	$NetBSD: gets.c,v 1.5.2.1 1995/10/13 19:54:26 pk Exp $	*/
 
 /*-

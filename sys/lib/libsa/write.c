@@ -1,3 +1,4 @@
+/*	$OpenBSD: write.c,v 1.2 1996/09/23 14:19:07 mickey Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/09/14 23:45:41 pk Exp $	*/
 
 /*-
