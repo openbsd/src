@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.7 2004/12/08 21:11:07 djm Exp $	*/
+/*	$OpenBSD: buf.c,v 1.8 2004/12/08 22:22:38 jfb Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -47,7 +47,7 @@ struct cvs_buf {
 	u_int    cb_flags;
 
 	/* buffer handle and size */
-	void    *cb_buf;
+	u_char  *cb_buf;
 	size_t   cb_size;
 
 	/* start and length of valid data in buffer */
@@ -57,7 +57,7 @@ struct cvs_buf {
 
 
 
-#define SIZE_LEFT(b)  ((size_t)((u_char *)b->cb_buf - b->cb_cur) + b->cb_size)
+#define SIZE_LEFT(b)  ((size_t)(b->cb_buf - b->cb_cur) + b->cb_size)
 
 
 static ssize_t   cvs_buf_grow (BUF *, size_t);
@@ -92,7 +92,7 @@ cvs_buf_alloc(size_t len, u_int flags)
 
 	b->cb_flags = flags;
 	b->cb_size = len;
-	b->cb_cur = (u_char *)b->cb_buf;
+	b->cb_cur = b->cb_buf;
 	b->cb_len = 0;
 
 	return (b);
@@ -112,7 +112,7 @@ cvs_buf_load(const char *path, u_int flags)
 	int fd;
 	ssize_t ret;
 	size_t len;
-	void *bp;
+	u_char *bp;
 	struct stat st;
 	BUF *buf;
 
@@ -140,7 +140,7 @@ cvs_buf_load(const char *path, u_int flags)
 		if (ret == -1) {
 			cvs_log(LP_ERRNO, "read failed from buffer source");
 			(void)close(fd);
-			cvs_buf_free(bp);
+			cvs_buf_free(buf);
 			return (NULL);
 		} else if (ret == 0)
 			break;
@@ -177,7 +177,7 @@ cvs_buf_free(BUF *b)
 void*
 cvs_buf_release(BUF *b)
 {
-	void *tmp;
+	u_char *tmp;
 
 	tmp = b->cb_buf;
 	free(b);
@@ -193,7 +193,7 @@ cvs_buf_release(BUF *b)
 void
 cvs_buf_empty(BUF *b)
 {
-	b->cb_cur = (u_char *)b->cb_buf;
+	b->cb_cur = b->cb_buf;
 	b->cb_len = 0;
 }
 
@@ -294,7 +294,7 @@ ssize_t
 cvs_buf_append(BUF *b, const void *data, size_t len)
 {
 	size_t left, rlen;
-	void *bp, *bep;
+	u_char *bp, *bep;
 
 	bp = b->cb_cur + b->cb_len;
 	bep = b->cb_buf + b->cb_size;
@@ -474,7 +474,7 @@ cvs_buf_grow(BUF *b, size_t len)
 	void *tmp;
 	size_t diff;
 
-	diff = b->cb_cur - (u_char *)b->cb_buf;
+	diff = b->cb_cur - b->cb_buf;
 	tmp = realloc(b->cb_buf, b->cb_size + len);
 	if (tmp == NULL) {
 		cvs_log(LP_ERRNO, "failed to grow buffer");
