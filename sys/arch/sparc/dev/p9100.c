@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.13 2003/05/16 18:40:32 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.14 2003/05/17 03:54:34 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -216,7 +216,7 @@ struct p9100_ctl {
 /*
  * Select the appropriate register group within the control registers
  * (must be done before any write to a register within the group, but
- * subsquent writes to the same group do not need to reselect).
+ * subsequent writes to the same group do not need to reselect).
  */
 #define	P9100_SELECT_SCR(sc)	((sc)->sc_junk = (sc)->sc_ctl->ctl_scr.scr)
 #define	P9100_SELECT_VCR(sc)	((sc)->sc_junk = (sc)->sc_ctl->ctl_vcr.hcr)
@@ -340,17 +340,10 @@ p9100attach(parent, self, args)
 	p9100_burner(sc, 1, 0);
 
 	if (isconsole) {
-		switch (sc->sc_sunfb.sf_width) {
-		case 640:
-			row = p9100_stdscreen.nrows - 1;
-			break;
-		case 800:
+		if (sc->sc_sunfb.sf_width == 800)
 			row = 0;	/* screen has been cleared above */
-			break;
-		default:
+		else
 			row = -1;
-			break;
-		}
 
 		fbwscons_console_init(&sc->sc_sunfb, &p9100_stdscreen, row,
 		    p9100_burner);
