@@ -1,5 +1,5 @@
-/*	$OpenBSD: midway.c,v 1.18 1996/11/21 20:53:04 chuck Exp $	*/
-/*	(sync'd to midway.c 1.64)	*/
+/*	$OpenBSD: midway.c,v 1.19 1997/01/24 20:57:52 chuck Exp $	*/
+/*	(sync'd to midway.c 1.65)	*/
 
 /*
  *
@@ -2443,8 +2443,8 @@ defer:					/* defer processing */
 	pdu -= (EN_RXSZ*1024);
       pdu = EN_READ(sc, pdu);		/* READ swaps to proper byte order */
       fill = tlen - MID_RBD_SIZE - MID_PDU_LEN(pdu);
-      if (fill < 0) {
-        printf("%s: invalid AAL5 PDU length detected, dropping frame\n", 
+      if (fill < 0 || (rbd & MID_RBD_CRCERR) != 0) {
+        printf("%s: invalid AAL5 PDU length or CRC detected, dropping frame\n", 
 						sc->sc_dev.dv_xname);
         printf("%s: got %d cells (%d bytes), AAL5 len is %d bytes (pdu=0x%x)\n",
 	  sc->sc_dev.dv_xname, MID_RBD_CNT(rbd), tlen - MID_RBD_SIZE,
