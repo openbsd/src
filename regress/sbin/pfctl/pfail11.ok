@@ -5,5 +5,3 @@ pfctl: Syntax error in file: pf rules not loaded
 set optimization aggressive
 set timeout tcp.closing 6
 pass in all 
-set limit states 1000
-set loginterface lo0
