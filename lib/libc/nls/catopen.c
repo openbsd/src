@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: catopen.c,v 1.10 2002/02/16 21:27:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: catopen.c,v 1.11 2005/03/23 21:13:28 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define _NLS_PRIVATE
@@ -58,9 +58,7 @@ static nl_catd load_msgcat(const char *);
 
 /* ARGSUSED */
 nl_catd
-_catopen(name, oflag)
-	const char *name;
-	int oflag;
+_catopen(const char *name, int oflag)
 {
 	char tmppath[PATH_MAX];
 	char *nlspath;
@@ -126,8 +124,7 @@ _catopen(name, oflag)
 }
 
 static nl_catd
-load_msgcat(path)
-	const char *path;
+load_msgcat(const char *path)
 {
 	struct stat st;
 	nl_catd catd;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setlocale.c,v 1.11 2003/06/02 20:18:35 millert Exp $	*/
+/*	$OpenBSD: setlocale.c,v 1.12 2005/03/23 21:13:28 otto Exp $	*/
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: setlocale.c,v 1.11 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: setlocale.c,v 1.12 2005/03/23 21:13:28 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -83,9 +83,7 @@ static char	*loadlocale(int);
 static const char *__get_locale_env __P((int));
 
 char *
-setlocale(category, locale)
-	int category;
-	const char *locale;
+setlocale(int category, const char *locale)
 {
 	int i, loadlocale_success;
 	size_t len;
@@ -180,7 +178,7 @@ setlocale(category, locale)
 }
 
 static char *
-currentlocale()
+currentlocale(void)
 {
 	int i;
 
@@ -200,8 +198,7 @@ currentlocale()
 }
 
 static char *
-loadlocale(category)
-	int category;
+loadlocale(int category)
 {
 	char name[PATH_MAX];
 
@@ -245,8 +242,7 @@ loadlocale(category)
 }
 
 static const char *
-__get_locale_env(category)
-	int category;
+__get_locale_env(int category)
 {
 	const char *env;
 
