@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 2001/09/01 15:44:20 drahn Exp $ */
+/*	$OpenBSD: conf.c,v 1.2 2001/09/27 17:30:56 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -97,8 +97,9 @@ cdev_decl(pts);
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
 cdev_decl(log);
-#include "com.h"
-cdev_decl(com);
+
+#include "zstty.h"
+cdev_decl(zs);
 
 #include "ofcons.h"
 cdev_decl(ofc);
@@ -197,7 +198,7 @@ struct cdevsw cdevsw[] = {
         cdev_tty_init(NPTY,pts),        /* 4: pseudo-tty slave */
         cdev_ptc_init(NPTY,ptc),        /* 5: pseudo-tty master */
         cdev_log_init(1,log),           /* 6: /dev/klog */
-	cdev_tty_init(NCOM,com),	/* 7: Serial ports */
+        cdev_tty_init(NZSTTY,zs),    /* 7: mac onboard serial ports */ 
         cdev_disk_init(NSD,sd),         /* 8: SCSI disk */
         cdev_disk_init(NCD,cd),         /* 9: SCSI CD-ROM */
         cdev_notdef(),                  /* 10: SCSI changer */
