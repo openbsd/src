@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.46 2002/01/23 00:39:47 art Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.47 2002/01/23 17:35:57 art Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -95,7 +95,7 @@
 struct	pool mbpool;		/* mbuf pool */
 struct	pool mclpool;		/* mbuf cluster pool */
 
-extern	struct vm_map *mb_map;
+struct vm_map *mb_map;
 int	needqueuedrain;
 
 void	*mclpool_alloc __P((struct pool *, int));

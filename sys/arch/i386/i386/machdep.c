@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.192 2002/01/16 20:50:16 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.193 2002/01/23 17:35:56 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -242,7 +242,6 @@ bootarg_t *bootargp;
 vm_offset_t avail_end;
 
 struct vm_map *exec_map = NULL;
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int kbd_reset;

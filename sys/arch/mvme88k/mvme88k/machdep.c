@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.86 2002/01/16 20:50:17 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.87 2002/01/23 17:35:56 art Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -188,7 +188,6 @@ int longformat = 1;  /* for regdump() */
 int   safepri = PSR_SUPERVISOR;
 
 struct vm_map *exec_map = NULL;
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 /*

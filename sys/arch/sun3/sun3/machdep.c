@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.48 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.49 2002/01/23 17:35:56 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -102,7 +102,6 @@ label_t *nofault;
 vm_offset_t vmmap;
 
 struct vm_map *exec_map = NULL;
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 /*

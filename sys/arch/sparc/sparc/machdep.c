@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.76 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.77 2002/01/23 17:35:56 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -110,7 +110,6 @@
 #endif
 
 struct vm_map *exec_map = NULL;
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 /*

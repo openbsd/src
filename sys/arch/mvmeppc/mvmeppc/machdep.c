@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 2002/01/23 17:35:56 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -133,7 +133,6 @@ int bufpages = 0;
 struct bat battable[16];
 
 struct vm_map *exec_map = NULL;
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 int astpending;

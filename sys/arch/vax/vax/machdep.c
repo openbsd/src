@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.50 2002/01/18 02:10:00 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.51 2002/01/23 17:35:56 art Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -163,7 +163,6 @@ struct extent *extio;
 extern vaddr_t iospace;
 
 struct vm_map *exec_map = NULL;
-struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 #ifdef DEBUG
