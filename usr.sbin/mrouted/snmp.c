@@ -216,7 +216,8 @@ o_scalar(vp, name, length, exact, var_len, write_method)
     case dvmrpVersion: {
        static char buff[15];
 
-       sprintf(buff, "mrouted%d.%d", PROTOCOL_VERSION, MROUTED_VERSION);
+       snprintf(buff, sizeof buff, "mrouted%d.%d",
+	    PROTOCOL_VERSION, MROUTED_VERSION);
        *var_len = strlen(buff);
        return (u_char *)buff;
     }
@@ -498,7 +499,7 @@ o_dvmrpNeighborTable(vp, name, length, exact, var_len, write_method)
    case dvmrpNeighborVersion: {
        static char buff[15];
 
-       sprintf(buff, "%d.%d", neighbor->al_pv, neighbor->al_mv);
+       snprintf(buff, sizeof buff, "%d.%d", neighbor->al_pv, neighbor->al_mv);
        *var_len = strlen(buff);
        return (u_char *)buff;
    }
