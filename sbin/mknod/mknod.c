@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.6 1999/04/18 19:40:41 millert Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.7 2000/01/03 22:05:54 millert Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mknod.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: mknod.c,v 1.6 1999/04/18 19:40:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: mknod.c,v 1.7 2000/01/03 22:05:54 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ main(argc, argv)
 			 * interpreted relative to an assumed initial mode of
 			 * a=rw.
 			 */
-			mode = getmode (set, 0666);
+			mode = getmode (set, DEFFILEMODE);
 			free(set);
 			break;
 		case '?':
@@ -116,10 +116,17 @@ main(argc, argv)
 		}
 	}
 
-	/* The default mode is the value of the bitwise inclusive or of
-	   S_IRUSR, S_IWUSR, S_IRGRP, S_IWGRP, S_IROTH, and S_IWOTH */
-	if (!set)
-		mode = 0666;
+	/*
+	 * If the user specified a mode via `-m', don't allow the umask
+	 * to modified it.  If no `-m' flag was specified, the default
+	 * mode is the value of the bitwise inclusive or of S_IRUSR,
+	 * S_IWUSR, S_IRGRP, S_IWGRP, S_IROTH, and S_IWOTH as modified by
+	 * the umask.
+	 */
+	if (set)
+		(void)umask(0);
+	else
+		mode = DEFFILEMODE;
 
 	if (ismkfifo)
 		exit(domkfifo(argc, argv, mode));
