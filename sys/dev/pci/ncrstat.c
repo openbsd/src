@@ -1,10 +1,11 @@
+/*	$OpenBSD: ncrstat.c,v 1.3 1997/02/23 06:06:25 millert Exp $	*/
 /*	$NetBSD: ncrstat.c,v 1.7 1996/03/17 00:55:36 thorpej Exp $	*/
 
 /**************************************************************************
 **
 **  Utility for NCR 53C810 device driver.
 **
-**  386bsd / FreeBSD / NetBSD
+**  FreeBSD / NetBSD / OpenBSD
 **
 **-------------------------------------------------------------------------
 **
@@ -47,7 +48,7 @@
 
 #include <sys/file.h>
 #include <sys/types.h>
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #endif
 #include <nlist.h>
@@ -62,7 +63,7 @@
 **	used external functions
 */
 
-#if defined(__NetBSD__) || (__FreeBSD__ >= 2)
+#if defined(__NetBSD__) || defined(__OpenBSD__) || (__FreeBSD__ >= 2)
 kvm_t	*kvm;
 #define	KVM_NLIST(n)		(kvm_nlist(kvm, (n)) >= 0)
 #define	KVM_READ(o, p, l)	(kvm_read(kvm, (o), (void*)(p), (l)) == (l))
@@ -90,7 +91,7 @@ u_long  wizard;
 struct nlist nl[] = {
 #define	N_NCR_VERSION	0
 	{ "_ncr_version" },
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define	N_NCRCD	1
 	{ "_ncr_cd" },
 #else
@@ -113,7 +114,7 @@ u_long	lcb_base;
 u_long	ccb_base;
 
 u_long  ncr_unit;
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 struct	cfdriver ncr_cd;
 #else
 u_long	ncr_units;
@@ -174,13 +175,13 @@ void open_kvm(int flags)
 {
 	int i;
 	u_long	kernel_version;
-#if defined(__NetBSD__) || (__FreeBSD__ >= 2)
+#if defined(__NetBSD__) || defined(__OpenBSD__) || (__FreeBSD__ >= 2)
 	char 	errbuf[_POSIX2_LINE_MAX];
 #endif
 
 	if (kvm_isopen) return;
 
-#if defined(__NetBSD__) || (__FreeBSD__ >= 2)
+#if defined(__NetBSD__) || defined(__OpenBSD__) || (__FreeBSD__ >= 2)
 	kvm = kvm_openfiles(vmunix, kmemf, NULL, flags, errbuf);
 	if (kvm == NULL) {
 		fprintf(stderr, "%s: kvm_openfiles: %s\n", prog, errbuf);
@@ -220,7 +221,7 @@ void open_kvm(int flags)
 		exit (1);
 	};
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 
 	if (!KVM_READ (
 		nl[N_NCRCD].n_value,
@@ -250,7 +251,7 @@ void open_kvm(int flags)
 		exit (1);
 	};
 
-#else /* !__NetBSD__ */
+#else /* !(__NetBSD__ || __OpenBSD__) */
 
 	if (!KVM_READ (
 		nl[N_NNCR].n_value,
@@ -280,7 +281,7 @@ void open_kvm(int flags)
 		exit (1);
 	};
 
-#endif /* !__NetBSD__ */
+#endif /* !(__NetBSD__ || __OpenBSD__) */
 
 	read_ncr();
 
@@ -476,7 +477,7 @@ do_info(void)
 		printf ("\n");
 	};
 	printf ("\n");
-#ifndef __NetBSD__
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 	if (ncr.imask) {
 		int v;
 		printf ("Interrupt vector is");
@@ -1375,7 +1376,7 @@ static void dump_ncr (void)
 	printf ("       ticks: %d ms\n", ncr.ticks * 10);
 	printf ("   heartbeat: %s", ctime ((time_t*)&ncr.heartbeat));
 	printf ("    lasttime: %s", ctime ((time_t*)&ncr.lasttime));
-#ifndef __NetBSD__
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 	printf ("imask/mcount: %x / %d\n", ncr.imask, ncr.mcount);
 #endif
 	printf ("\n");
