@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsconsctl.8,v 1.5 2001/03/09 16:07:20 aaron Exp $
+.\" $OpenBSD: wsconsctl.8,v 1.6 2001/06/30 02:12:57 mickey Exp $
 .\" $NetBSD: wsconsctl.8,v 1.5 1999/09/12 18:47:11 kleink Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,24 +43,16 @@
 .Nd get or set wscons state
 .Sh SYNOPSIS
 .Nm wsconsctl
-.Op Fl kdm
-.Op Fl f Ar file
 .Op Fl n
 .Fl a
 .Nm wsconsctl
-.Op Fl kdm
-.Op Fl f Ar file
 .Op Fl n
 .Ar name ...
 .Nm wsconsctl
-.Op Fl kdm
-.Op Fl f Ar file
 .Op Fl n
 .Fl w
 .Ar name=value ...
 .Nm wsconsctl
-.Op Fl kdm
-.Op Fl f Ar file
 .Op Fl n
 .Fl w
 .Ar name+=value ...
@@ -90,16 +82,8 @@ symbol.
 See the
 .Sx EXAMPLES
 section for more details.
-.It Fl f Ar file
-Specify an alternative control device.
 .It Fl n
 Suppress printing of the variable name in the output.
-.It Fl k
-Selects the keyboard portion of the device (this is the default).
-.It Fl d
-Selects the display portion of the device.
-.It Fl m
-Selects the mouse portion of the device.
 .El
 .Pp
 The
@@ -127,11 +111,11 @@ Use the
 utility to determine which keyboard encodings are available for your
 country.
 .Sh EXAMPLES
-.Cm wsconsctl -w encoding=uk
+.Cm wsconsctl -w keyboard.encoding=uk
 .Pp
 Sets a UK keyboard encoding.
 .Pp
-.Cm wsconsctl -w map+="keysym Caps_Lock = Control_L"
+.Cm wsconsctl -w keyboard.map+="keysym Caps_Lock = Control_L"
 .Pp
 Modifies the current keyboard encoding so that, when the
 .Ar Caps Lock
@@ -143,7 +127,7 @@ to the
 .Ar /usr/include/dev/wscons/wsksymdef.h
 file.
 .Pp
-.Cm wsconsctl -w encoding=us.swapctrlcaps
+.Cm wsconsctl -w keyboard.encoding=us.swapctrlcaps
 .Pp
 Sets a US keyboard encoding, with the
 .Ar Caps Lock
@@ -158,11 +142,11 @@ by the
 .Ar Caps Lock
 key is enough - see the previous example for details.
 .Pp
-.Cm wsconsctl -w bell.pitch=1200
+.Cm wsconsctl -w keyboard.bell.pitch=1200
 .Pp
 Sets the bell pitch to be 1200.
 .Pp
-.Cm wsconsctl -w bell.pitch+=200
+.Cm wsconsctl -w keyboard.bell.pitch+=200
 .Pp
 Adds 200 to the current pitch of the bell.
 .Sh FILES

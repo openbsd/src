@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyboard.c,v 1.1 2000/07/01 23:52:45 mickey Exp $	*/
+/*	$OpenBSD: keyboard.c,v 1.2 2001/06/30 02:12:57 mickey Exp $	*/
 /*	$NetBSD: keyboard.c 1.1 1998/12/28 14:01:17 hannken Exp $ */
 
 /*-
@@ -70,151 +70,151 @@ struct field keyboard_field_tab[] = {
     { "repeat.deln.default",	&dfrepeat.delN,	FMT_UINT,	FLG_MODIFY },
     { "ledstate",		&ledstate,	FMT_UINT,	0 },
     { "encoding",		&kbdencoding,	FMT_KBDENC,	FLG_MODIFY },
+    { NULL }
 };
 
-int keyboard_field_tab_len = sizeof(keyboard_field_tab)/
-			      sizeof(keyboard_field_tab[0]);
-
 void
-keyboard_get_values(fd)
+keyboard_get_values(pre, fd)
+	const char *pre;
 	int fd;
 {
-	if (field_by_value(&kbtype)->flags & FLG_GET)
+	if (field_by_value(keyboard_field_tab, &kbtype)->flags & FLG_GET)
 		if (ioctl(fd, WSKBDIO_GTYPE, &kbtype) < 0)
 			err(1, "WSKBDIO_GTYPE");
 
 	bell.which = 0;
-	if (field_by_value(&bell.pitch)->flags & FLG_GET)
+	if (field_by_value(keyboard_field_tab, &bell.pitch)->flags & FLG_GET)
 		bell.which |= WSKBD_BELL_DOPITCH;
-	if (field_by_value(&bell.period)->flags & FLG_GET)
+	if (field_by_value(keyboard_field_tab, &bell.period)->flags & FLG_GET)
 		bell.which |= WSKBD_BELL_DOPERIOD;
-	if (field_by_value(&bell.volume)->flags & FLG_GET)
+	if (field_by_value(keyboard_field_tab, &bell.volume)->flags & FLG_GET)
 		bell.which |= WSKBD_BELL_DOVOLUME;
 	if (bell.which != 0 && ioctl(fd, WSKBDIO_GETBELL, &bell) < 0)
 		err(1, "WSKBDIO_GETBELL");
 
 	dfbell.which = 0;
-	if (field_by_value(&dfbell.pitch)->flags & FLG_GET)
+	if (field_by_value(keyboard_field_tab, &dfbell.pitch)->flags & FLG_GET)
 		dfbell.which |= WSKBD_BELL_DOPITCH;
-	if (field_by_value(&dfbell.period)->flags & FLG_GET)
+	if (field_by_value(keyboard_field_tab, &dfbell.period)->flags & FLG_GET)
 		dfbell.which |= WSKBD_BELL_DOPERIOD;
-	if (field_by_value(&dfbell.volume)->flags & FLG_GET)
+	if (field_by_value(keyboard_field_tab, &dfbell.volume)->flags & FLG_GET)
 		dfbell.which |= WSKBD_BELL_DOVOLUME;
 	if (dfbell.which != 0 &&
 	    ioctl(fd, WSKBDIO_GETDEFAULTBELL, &dfbell) < 0)
 		err(1, "WSKBDIO_GETDEFAULTBELL");
 
-	if (field_by_value(&kbmap)->flags & FLG_GET) {
+	if (field_by_value(keyboard_field_tab, &kbmap)->flags & FLG_GET) {
 		kbmap.maplen = KS_NUMKEYCODES;
 		if (ioctl(fd, WSKBDIO_GETMAP, &kbmap) < 0)
 			err(1, "WSKBDIO_GETMAP");
 	}
 
 	repeat.which = 0;
-	if (field_by_value(&repeat.del1)->flags & FLG_GET)
+	if (field_by_value(keyboard_field_tab, &repeat.del1)->flags & FLG_GET)
 		repeat.which |= WSKBD_KEYREPEAT_DODEL1;
-	if (field_by_value(&repeat.delN)->flags & FLG_GET)
+	if (field_by_value(keyboard_field_tab, &repeat.delN)->flags & FLG_GET)
 		repeat.which |= WSKBD_KEYREPEAT_DODELN;
 	if (repeat.which != 0 &&
 	    ioctl(fd, WSKBDIO_GETKEYREPEAT, &repeat) < 0)
 		err(1, "WSKBDIO_GETKEYREPEAT");
 
 	dfrepeat.which = 0;
-	if (field_by_value(&dfrepeat.del1)->flags & FLG_GET)
+	if (field_by_value(keyboard_field_tab, &dfrepeat.del1)->flags & FLG_GET)
 		dfrepeat.which |= WSKBD_KEYREPEAT_DODEL1;
-	if (field_by_value(&dfrepeat.delN)->flags & FLG_GET)
+	if (field_by_value(keyboard_field_tab, &dfrepeat.delN)->flags & FLG_GET)
 		dfrepeat.which |= WSKBD_KEYREPEAT_DODELN;
 	if (dfrepeat.which != 0 &&
 	    ioctl(fd, WSKBDIO_GETKEYREPEAT, &dfrepeat) < 0)
 		err(1, "WSKBDIO_GETKEYREPEAT");
 
-	if (field_by_value(&ledstate)->flags & FLG_GET)
+	if (field_by_value(keyboard_field_tab, &ledstate)->flags & FLG_GET)
 		if (ioctl(fd, WSKBDIO_GETLEDS, &ledstate) < 0)
 			err(1, "WSKBDIO_GETLEDS");
 
-	if (field_by_value(&kbdencoding)->flags & FLG_GET)
+	if (field_by_value(keyboard_field_tab, &kbdencoding)->flags & FLG_GET)
 		if (ioctl(fd, WSKBDIO_GETENCODING, &kbdencoding) < 0)
 			err(1, "WSKBDIO_GETENCODING");
 }
 
 void
-keyboard_put_values(fd)
+keyboard_put_values(pre, fd)
+	const char *pre;
 	int fd;
 {
 	bell.which = 0;
-	if (field_by_value(&bell.pitch)->flags & FLG_SET)
+	if (field_by_value(keyboard_field_tab, &bell.pitch)->flags & FLG_SET)
 		bell.which |= WSKBD_BELL_DOPITCH;
-	if (field_by_value(&bell.period)->flags & FLG_SET)
+	if (field_by_value(keyboard_field_tab, &bell.period)->flags & FLG_SET)
 		bell.which |= WSKBD_BELL_DOPERIOD;
-	if (field_by_value(&bell.volume)->flags & FLG_SET)
+	if (field_by_value(keyboard_field_tab, &bell.volume)->flags & FLG_SET)
 		bell.which |= WSKBD_BELL_DOVOLUME;
 	if (bell.which != 0 && ioctl(fd, WSKBDIO_SETBELL, &bell) < 0)
 		err(1, "WSKBDIO_SETBELL");
 	if (bell.which & WSKBD_BELL_DOPITCH)
-		pr_field(field_by_value(&bell.pitch), " -> ");
+		pr_field(pre, field_by_value(keyboard_field_tab, &bell.pitch), " -> ");
 	if (bell.which & WSKBD_BELL_DOPERIOD)
-		pr_field(field_by_value(&bell.period), " -> ");
+		pr_field(pre, field_by_value(keyboard_field_tab, &bell.period), " -> ");
 	if (bell.which & WSKBD_BELL_DOVOLUME)
-		pr_field(field_by_value(&bell.volume), " -> ");
+		pr_field(pre, field_by_value(keyboard_field_tab, &bell.volume), " -> ");
 
 	dfbell.which = 0;
-	if (field_by_value(&dfbell.pitch)->flags & FLG_SET)
+	if (field_by_value(keyboard_field_tab, &dfbell.pitch)->flags & FLG_SET)
 		dfbell.which |= WSKBD_BELL_DOPITCH;
-	if (field_by_value(&dfbell.period)->flags & FLG_SET)
+	if (field_by_value(keyboard_field_tab, &dfbell.period)->flags & FLG_SET)
 		dfbell.which |= WSKBD_BELL_DOPERIOD;
-	if (field_by_value(&dfbell.volume)->flags & FLG_SET)
+	if (field_by_value(keyboard_field_tab, &dfbell.volume)->flags & FLG_SET)
 		dfbell.which |= WSKBD_BELL_DOVOLUME;
 	if (dfbell.which != 0 &&
 	    ioctl(fd, WSKBDIO_SETDEFAULTBELL, &dfbell) < 0)
 		err(1, "WSKBDIO_SETDEFAULTBELL");
 	if (dfbell.which & WSKBD_BELL_DOPITCH)
-		pr_field(field_by_value(&dfbell.pitch), " -> ");
+		pr_field(pre, field_by_value(keyboard_field_tab, &dfbell.pitch), " -> ");
 	if (dfbell.which & WSKBD_BELL_DOPERIOD)
-		pr_field(field_by_value(&dfbell.period), " -> ");
+		pr_field(pre, field_by_value(keyboard_field_tab, &dfbell.period), " -> ");
 	if (dfbell.which & WSKBD_BELL_DOVOLUME)
-		pr_field(field_by_value(&dfbell.volume), " -> ");
+		pr_field(pre, field_by_value(keyboard_field_tab, &dfbell.volume), " -> ");
 
-	if (field_by_value(&kbmap)->flags & FLG_SET) {
+	if (field_by_value(keyboard_field_tab, &kbmap)->flags & FLG_SET) {
 		if (ioctl(fd, WSKBDIO_SETMAP, &kbmap) < 0)
 			err(1, "WSKBDIO_SETMAP");
-		pr_field(field_by_value(&kbmap), " -> ");
+		pr_field(pre, field_by_value(keyboard_field_tab, &kbmap), " -> ");
 	}
 
 	repeat.which = 0;
-	if (field_by_value(&repeat.del1)->flags & FLG_SET)
+	if (field_by_value(keyboard_field_tab, &repeat.del1)->flags & FLG_SET)
 		repeat.which |= WSKBD_KEYREPEAT_DODEL1;
-	if (field_by_value(&repeat.delN)->flags & FLG_SET)
+	if (field_by_value(keyboard_field_tab, &repeat.delN)->flags & FLG_SET)
 		repeat.which |= WSKBD_KEYREPEAT_DODELN;
 	if (repeat.which != 0 &&
 	    ioctl(fd, WSKBDIO_SETKEYREPEAT, &repeat) < 0)
 		err(1, "WSKBDIO_SETKEYREPEAT");
 	if (repeat.which & WSKBD_KEYREPEAT_DODEL1)
-		pr_field(field_by_value(&repeat.del1), " -> ");
+		pr_field(pre, field_by_value(keyboard_field_tab, &repeat.del1), " -> ");
 	if (repeat.which & WSKBD_KEYREPEAT_DODELN)
-		pr_field(field_by_value(&repeat.delN), " -> ");
+		pr_field(pre, field_by_value(keyboard_field_tab, &repeat.delN), " -> ");
 
 	dfrepeat.which = 0;
-	if (field_by_value(&dfrepeat.del1)->flags & FLG_SET)
+	if (field_by_value(keyboard_field_tab, &dfrepeat.del1)->flags & FLG_SET)
 		dfrepeat.which |= WSKBD_KEYREPEAT_DODEL1;
-	if (field_by_value(&dfrepeat.delN)->flags & FLG_SET)
+	if (field_by_value(keyboard_field_tab, &dfrepeat.delN)->flags & FLG_SET)
 		dfrepeat.which |= WSKBD_KEYREPEAT_DODELN;
 	if (dfrepeat.which != 0 &&
 	    ioctl(fd, WSKBDIO_SETDEFAULTKEYREPEAT, &dfrepeat) < 0)
 		err(1, "WSKBDIO_SETDEFAULTKEYREPEAT");
 	if (dfrepeat.which &WSKBD_KEYREPEAT_DODEL1)
-		pr_field(field_by_value(&dfrepeat.del1), " -> ");
+		pr_field(pre, field_by_value(keyboard_field_tab, &dfrepeat.del1), " -> ");
 	if (dfrepeat.which & WSKBD_KEYREPEAT_DODELN)
-		pr_field(field_by_value(&dfrepeat.delN), " -> ");
+		pr_field(pre, field_by_value(keyboard_field_tab, &dfrepeat.delN), " -> ");
 
-	if (field_by_value(&ledstate)->flags & FLG_SET) {
+	if (field_by_value(keyboard_field_tab, &ledstate)->flags & FLG_SET) {
 		if (ioctl(fd, WSKBDIO_SETLEDS, &ledstate) < 0)
 			err(1, "WSKBDIO_SETLEDS");
-		pr_field(field_by_value(&ledstate), " -> ");
+		pr_field(pre, field_by_value(keyboard_field_tab, &ledstate), " -> ");
 	}
 
-	if (field_by_value(&kbdencoding)->flags & FLG_SET) {
+	if (field_by_value(keyboard_field_tab, &kbdencoding)->flags & FLG_SET) {
 		if (ioctl(fd, WSKBDIO_SETENCODING, &kbdencoding) < 0)
 			err(1, "WSKBDIO_SETENCODING");
-		pr_field(field_by_value(&kbdencoding), " -> ");
+		pr_field(pre, field_by_value(keyboard_field_tab, &kbdencoding), " -> ");
 	}
 }

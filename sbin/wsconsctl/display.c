@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.2 2001/05/08 22:31:09 mickey Exp $	*/
+/*	$OpenBSD: display.c,v 1.3 2001/06/30 02:12:57 mickey Exp $	*/
 /*	$NetBSD: display.c,v 1.1 1998/12/28 14:01:16 hannken Exp $ */
 
 /*-
@@ -44,104 +44,120 @@
 #include "wsconsctl.h"
 
 int dpytype;
+int focus;
 int burnon, burnoff, vblank, kbdact, msact, outact;
 
 struct field display_field_tab[] = {
     { "type",			&dpytype,	FMT_DPYTYPE,	FLG_RDONLY },
+    { "focus",			&focus,		FMT_UINT,	FLG_MODIFY },
     { "screen_on",		&burnon,	FMT_UINT,	FLG_MODIFY },
     { "screen_off",		&burnoff,	FMT_UINT,	FLG_MODIFY },
     { "vblank",			&vblank,	FMT_BOOL,	FLG_MODIFY },
     { "kbdact",			&kbdact,	FMT_BOOL,	FLG_MODIFY },
     { "msact",			&msact,		FMT_BOOL,	FLG_MODIFY },
     { "outact",			&outact,	FMT_BOOL,	FLG_MODIFY },
+    { NULL }
 };
 
-int display_field_tab_len = sizeof(display_field_tab)/
-			     sizeof(display_field_tab[0]);
-
 void
-display_get_values(fd)
+display_get_values(pre, fd)
+	const char *pre;
 	int fd;
 {
-	if (field_by_value(&dpytype)->flags & FLG_GET)
+	struct wsdisplay_addscreendata gscr;
+
+	if (field_by_value(display_field_tab, &dpytype)->flags & FLG_GET)
 		if (ioctl(fd, WSDISPLAYIO_GTYPE, &dpytype) < 0)
 			err(1, "WSDISPLAYIO_GTYPE");
-	if (field_by_value(&burnon)->flags & FLG_GET ||
-	    field_by_value(&burnoff)->flags & FLG_GET ||
-	    field_by_value(&vblank)->flags & FLG_GET ||
-	    field_by_value(&kbdact)->flags & FLG_GET ||
-	    field_by_value(&msact )->flags & FLG_GET ||
-	    field_by_value(&outact)->flags & FLG_GET) {
+
+	gscr.idx = -1;
+	if (field_by_value(display_field_tab, &focus)->flags & FLG_GET)
+		if (ioctl(fd, WSDISPLAYIO_GETSCREEN, &gscr) < 0)
+			err(1, "WSDISPLAYIO_GETSCREEN");
+	else
+		focus = gscr.idx;
+
+	if (field_by_value(display_field_tab, &burnon)->flags & FLG_GET ||
+	    field_by_value(display_field_tab, &burnoff)->flags & FLG_GET ||
+	    field_by_value(display_field_tab, &vblank)->flags & FLG_GET ||
+	    field_by_value(display_field_tab, &kbdact)->flags & FLG_GET ||
+	    field_by_value(display_field_tab, &msact )->flags & FLG_GET ||
+	    field_by_value(display_field_tab, &outact)->flags & FLG_GET) {
 
 		struct wsdisplay_burner burners;
 
 		if (ioctl(fd, WSDISPLAYIO_GBURNER, &burners) < 0)
 			err(1, "WSDISPLAYIO_GBURNER");
 
-		if (field_by_value(&burnon)->flags & FLG_GET)
+		if (field_by_value(display_field_tab, &burnon)->flags & FLG_GET)
 			burnon = burners.on;
 
-		if (field_by_value(&burnoff)->flags & FLG_GET)
+		if (field_by_value(display_field_tab, &burnoff)->flags & FLG_GET)
 			burnoff = burners.off;
 
-		if (field_by_value(&vblank)->flags & FLG_GET)
+		if (field_by_value(display_field_tab, &vblank)->flags & FLG_GET)
 			vblank = burners.flags & WSDISPLAY_BURN_VBLANK;
 
-		if (field_by_value(&kbdact)->flags & FLG_GET)
+		if (field_by_value(display_field_tab, &kbdact)->flags & FLG_GET)
 			kbdact = burners.flags & WSDISPLAY_BURN_KBD;
 
-		if (field_by_value(&msact )->flags & FLG_GET)
+		if (field_by_value(display_field_tab, &msact )->flags & FLG_GET)
 			msact = burners.flags & WSDISPLAY_BURN_MOUSE;
 
-		if (field_by_value(&outact)->flags & FLG_GET)
+		if (field_by_value(display_field_tab, &outact)->flags & FLG_GET)
 			outact = burners.flags & WSDISPLAY_BURN_OUTPUT;
 	}
 }
 
 void
-display_put_values(fd)
+display_put_values(pre, fd)
+	const char *pre;
 	int fd;
 {
-	if (field_by_value(&burnon)->flags & FLG_SET ||
-	    field_by_value(&burnoff)->flags & FLG_SET ||
-	    field_by_value(&vblank)->flags & FLG_SET ||
-	    field_by_value(&kbdact)->flags & FLG_SET ||
-	    field_by_value(&msact )->flags & FLG_SET ||
-	    field_by_value(&outact)->flags & FLG_SET) {
+	if (field_by_value(display_field_tab, &focus)->flags & FLG_SET)
+		if (ioctl(fd, WSDISPLAYIO_SETSCREEN, &focus) < 0)
+			err(1, "WSDISPLAYIO_SETSCREEN");
+
+	if (field_by_value(display_field_tab, &burnon)->flags & FLG_SET ||
+	    field_by_value(display_field_tab, &burnoff)->flags & FLG_SET ||
+	    field_by_value(display_field_tab, &vblank)->flags & FLG_SET ||
+	    field_by_value(display_field_tab, &kbdact)->flags & FLG_SET ||
+	    field_by_value(display_field_tab, &msact )->flags & FLG_SET ||
+	    field_by_value(display_field_tab, &outact)->flags & FLG_SET) {
 
 		struct wsdisplay_burner burners;
 
 		if (ioctl(fd, WSDISPLAYIO_GBURNER, &burners) < 0)
 			err(1, "WSDISPLAYIO_GBURNER");
 
-		if (field_by_value(&burnon)->flags & FLG_SET)
+		if (field_by_value(display_field_tab, &burnon)->flags & FLG_SET)
 			burners.on = burnon;
 
-		if (field_by_value(&burnoff)->flags & FLG_SET)
+		if (field_by_value(display_field_tab, &burnoff)->flags & FLG_SET)
 			burners.off = burnoff;
 
-		if (field_by_value(&vblank)->flags & FLG_SET) {
+		if (field_by_value(display_field_tab, &vblank)->flags & FLG_SET) {
 			if (vblank)
 				burners.flags |= WSDISPLAY_BURN_VBLANK;
 			else
 				burners.flags &= ~WSDISPLAY_BURN_VBLANK;
 		}
 
-		if (field_by_value(&kbdact)->flags & FLG_SET) {
+		if (field_by_value(display_field_tab, &kbdact)->flags & FLG_SET) {
 			if (kbdact)
 				burners.flags |= WSDISPLAY_BURN_KBD;
 			else
 				burners.flags &= ~WSDISPLAY_BURN_KBD;
 		}
 
-		if (field_by_value(&msact )->flags & FLG_SET) {
+		if (field_by_value(display_field_tab, &msact )->flags & FLG_SET) {
 			if (msact)
 				burners.flags |= WSDISPLAY_BURN_MOUSE;
 			else
 				burners.flags &= ~WSDISPLAY_BURN_MOUSE;
 		}
 
-		if (field_by_value(&outact)->flags & FLG_SET) {
+		if (field_by_value(display_field_tab, &outact)->flags & FLG_SET) {
 			if (outact)
 				burners.flags |= WSDISPLAY_BURN_OUTPUT;
 			else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.4 2001/05/08 22:31:09 mickey Exp $ */
+/*	$OpenBSD: util.c,v 1.5 2001/06/30 02:12:57 mickey Exp $ */
 /*	$NetBSD: util.c,v 1.8 2000/03/14 08:11:53 sato Exp $ */
 
 /*-
@@ -102,44 +102,35 @@ static struct nameint kbdvar_tab[] = {
 	KB_VARTAB
 };
 
-static struct field *field_tab;
-static int field_tab_len;
-
 static char *int2name __P((int, int, struct nameint *, int));
 static int name2int __P((char *, struct nameint *, int));
 static void print_kmap __P((struct wskbd_map_data *));
 
-void
-field_setup(ftab, len)
-	struct field *ftab;
-	int len;
-{
-	field_tab = ftab;
-	field_tab_len = len;
-}
-
 struct field *
-field_by_name(name)
+field_by_name(field_tab, name)
+	struct field *field_tab;
 	char *name;
 {
-	int i;
+	const char *p = strchr(name, '.');
 
-	for (i = 0; i < field_tab_len; i++)
-		if (strcmp(field_tab[i].name, name) == 0)
-			return(field_tab + i);
+	if (!p++)
+		errx(1, "%s: illigale variable name", name);
+
+	for (; field_tab->name; field_tab++)
+		if (strcmp(field_tab->name, p) == 0)
+			return (field_tab);
 
 	errx(1, "%s: not found", name);
 }
 
 struct field *
-field_by_value(addr)
+field_by_value(field_tab, addr)
+	struct field *field_tab;
 	void *addr;
 {
-	int i;
-
-	for (i = 0; i < field_tab_len; i++)
-		if (field_tab[i].valp == addr)
-			return(field_tab + i);
+	for (; field_tab->name; field_tab++)
+		if (field_tab->valp == addr)
+			return (field_tab);
 
 	errx(1, "internal error: field_by_value: not found");
 }
@@ -180,16 +171,17 @@ name2int(val, tab, len)
 }
 
 void
-pr_field(f, sep)
+pr_field(pre, f, sep)
+	const char *pre;
 	struct field *f;
-	char *sep;
+	const char *sep;
 {
 	char *p;
 	u_int flags;
 	int i;
 
 	if (sep)
-		printf("%s%s", f->name, sep);
+		printf("%s.%s%s", pre, f->name, sep);
 
 	switch (f->format) {
 	case FMT_UINT:

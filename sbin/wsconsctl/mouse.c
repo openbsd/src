@@ -1,4 +1,4 @@
-/*	$OpenBSD: mouse.c,v 1.1 2000/07/01 23:52:45 mickey Exp $	*/
+/*	$OpenBSD: mouse.c,v 1.2 2001/06/30 02:12:57 mickey Exp $	*/
 /*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
 
 /*-
@@ -51,36 +51,36 @@ struct field mouse_field_tab[] = {
     { "resolution",		&resolution,	FMT_UINT,	FLG_WRONLY },
     { "samplerate",		&samplerate,	FMT_UINT,	FLG_WRONLY },
     { "type",			&mstype,	FMT_MSTYPE,	FLG_RDONLY },
+    { NULL }
 };
 
-int mouse_field_tab_len = sizeof(mouse_field_tab)/
-			   sizeof(mouse_field_tab[0]);
-
 void
-mouse_get_values(fd)
+mouse_get_values(pre, fd)
+	const char *pre;
 	int fd;
 {
-	if (field_by_value(&mstype)->flags & FLG_GET)
+	if (field_by_value(mouse_field_tab, &mstype)->flags & FLG_GET)
 		if (ioctl(fd, WSMOUSEIO_GTYPE, &mstype) < 0)
 			err(1, "WSMOUSEIO_GTYPE");
 }
 
 void
-mouse_put_values(fd)
+mouse_put_values(pre, fd)
+	const char *pre;
 	int fd;
 {
 	int tmp;
 
-	if (field_by_value(&resolution)->flags & FLG_SET) {
+	if (field_by_value(mouse_field_tab, &resolution)->flags & FLG_SET) {
 		tmp = resolution;
 		if (ioctl(fd, WSMOUSEIO_SRES, &tmp) < 0)
 			err(1, "WSMOUSEIO_SRES");
-		pr_field(field_by_value(&resolution), " -> ");
+		pr_field(pre, field_by_value(mouse_field_tab, &resolution), " -> ");
 	}
-	if (field_by_value(&samplerate)->flags & FLG_SET) {
+	if (field_by_value(mouse_field_tab, &samplerate)->flags & FLG_SET) {
 		tmp = samplerate;
 		if (ioctl(fd, WSMOUSEIO_SRATE, &tmp) < 0)
 			err(1, "WSMOUSEIO_SRES");
-		pr_field(field_by_value(&tmp), " -> ");
+		pr_field(pre, field_by_value(mouse_field_tab, &tmp), " -> ");
 	}
 }
