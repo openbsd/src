@@ -1,0 +1,120 @@
+.\"	$OpenBSD: compat_svr4.8,v 1.1 1996/08/24 22:08:57 deraadt Exp $
+.\"	$NetBSD: compat_svr4.8,v 1.1 1996/07/06 17:14:50 christos Exp $
+.\"
+.\" Copyright (c) 1996 Christos Zoulas
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgment:
+.\"      This product includes software developed for the NetBSD Project
+.\"      by Christos Zoulas
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	Stolen from compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl 
+.\"
+.Dd July 6, 1996
+.Dt COMPAT_SVR4 8
+.Os BSD 4
+.Sh NAME
+.Nm COMPAT_SVR4
+.Nd setup procedure for running SVR4/iBCS2 binaries
+.Sh DESCRIPTION
+OpenBSD supports running SVR4/iBCS2 binaries. This code has been tested on
+i386 and sparc systems. Most programs should work, but not ones that use
+the /proc filesystem, sound, or threads (unfortunately ttsession uses threads).
+.\" XXX: What else?
+
+The SVR4 compatibility feature is active
+for kernels compiled with the
+.Nm COMPAT_SVR4
+option enabled.
+
+Most SVR4 programs are dynamically linked. This means that you will
+also need the shared libraries that the program depends on and the
+runtime linker. Also, you will need to create a "shadow root"
+directory for SVR4 binaries on your OpenBSD system. This directory
+is named /emul/svr4. Any file operations done by SVR4 programs
+run under OpenBSD will look in this directory first. So, if a SVR4
+program opens, for example, /etc/passwd, OpenBSD will
+first try to open /emul/svr4/etc/passwd, and if that does not exist
+open the 'real' /etc/passwd file. It is recommended that you install
+SVR4 packages that include configuration files, etc under /emul/svr4,
+to avoid naming conflicts with possible OpenBSD counterparts. Shared
+libraries should also be installed in the shadow tree.
+.Pp
+The simplest way to setup your system for SVR4 biraries is:
+
+.Bl -tag -width 123 -compact
+.It 1.
+Make the necessary directories:
+.Pp
+.Bl -tag -width 123 -compact -offset indent
+.It (me@openbsd) mkdir -p /emul/svr4/{dev,etc}
+.br
+.It (me@openbsd) mkdir -p /emul/svr4/usr/{bin,lib}
+.br
+.It (me@openbsd) mkdir -p /emul/svr4/usr/openwin/{bin,lib}
+.El
+.Pp
+.It 2.
+Copy files from an svr4 system:
+.Pp
+.Bl -tag -width 123 -compact -offset indent
+.It (me@svr4) cd /usr/lib
+.br
+.It (me@svr4) tar -cf -\ . | \e
+.in +5
+.It rsh openbsd 'cd /emul/svr4/usr/lib; tar -xpf -'
+.in -5
+.El
+.Pp
+If you are running openwindows:
+.Pp
+.Bl -tag -width 123 -compact -offset indent
+.It (me@svr4) cd /usr/openwin/lib
+.br
+.It (me@svr4) tar -cf -\ . | \e
+.in +5
+.It rsh openbsd 'cd /emul/svr4/usr/openwin/lib; tar -xpf -'
+.in -5
+.El
+.Pp
+.It 3.
+Setup the configuration files and devices:
+.Pp
+.Bl -tag -width 123 -compact -offset indent
+.It (me@openbsd) cd /usr/src/etc/etc.svr4
+.br
+.It (me@openbsd) cp netconfig nsswitch.conf /emul/svr4/etc
+.br
+.It (me@openbsd) cp SVR4_MAKEDEV /emul/svr4/dev
+.br
+.It (me@openbsd) cd /emul/svr4/dev; ./SVR4_MAKEDEV all
+.El
+.El
+.Pp
+An alternative method is to mount a whole svr4 partition in /emul/svr4
+and then override with other mounts /emul/svr4/etc and /emul/svr4/dev.
+.Sh BUGS
+Many system calls are still not emulated.
+
