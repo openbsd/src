@@ -64,7 +64,9 @@
 ./usr/include/readline/keymaps.h
 ./usr/include/readline/readline.h
 ./usr/lib/crtbegin.o
+./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o
+./usr/lib/crtendS.o
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/SYSCALLS.c.X
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/cc1
 ./usr/lib/gcc-lib/alpha-unknown-openbsd2.8/2.95.3/cc1obj
@@ -131,5 +133,3 @@
 ./usr/share/man/cat3/kvm_dump_inval.0
 ./usr/share/man/cat3/kvm_dump_mkheader.0
 ./usr/share/man/cat3/kvm_dump_wrtheader.0
-./usr/lib/crtbeginS.o
-./usr/lib/crtendS.o

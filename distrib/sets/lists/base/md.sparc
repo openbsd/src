@@ -254,6 +254,9 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/rtl80x9reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/rtl80x9var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/s3_617.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/siopreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/siopvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/siopvar_common.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/smc90cx6reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/smc91cxxreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/smc91cxxvar.ph
@@ -368,8 +371,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/hifn7751var.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/isesreg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/isesvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/i82365_pcivar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_devar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_levar.ph
@@ -388,6 +389,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_wbreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_wxreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_wxvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/isesreg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/isesvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/maestro_reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/ncrreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/neo-coeff.ph
@@ -409,8 +412,10 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pciidevar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pcireg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pcivar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pcscpreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/ppbreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pucvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/siop_pci_common.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/tgareg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/tgavar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/ti_fw.ph
@@ -531,6 +536,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/tcreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/tc/tcvar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ezload.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/hid.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/if_auereg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/if_cuereg.ph
@@ -540,6 +546,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uaudioreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ucomvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uftdireg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uhcireg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uhcivar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ukbdvar.ph
@@ -555,6 +563,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/usbdi_util.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/usbdivar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/usbhid.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uyap_firmware.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/wscons/ascii.ph
@@ -733,6 +742,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/link.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/login_cap.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/machine
 ./usr/libdata/perl5/site_perl/sparc-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/math.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/md4.ph
@@ -845,11 +855,11 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/ip6.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/ip_ah.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/ip_auth.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/ip_fil_compat.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/ip_ecn.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/ip_esp.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/ip_ether.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/ip_fil.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/ip_fil_compat.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/ip_frag.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/ip_gre.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet/ip_icmp.ph
@@ -970,6 +980,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/objc/typedstream.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/ocurses.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/olf_abi.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/openssl
 ./usr/libdata/perl5/site_perl/sparc-openbsd/panel.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/paths.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/pcap-int.ph
@@ -1227,6 +1238,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/ipc.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/kcore.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/kernel.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/sys/kgdb.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/ktrace.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/lkm.ph
@@ -1761,15 +1773,3 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/screenblank
-./usr/libdata/perl5/site_perl/sparc-openbsd/sys/kgdb.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ezload.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ugraphire_rdesc.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uyap_firmware.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/machine
-./usr/libdata/perl5/site_perl/sparc-openbsd/openssl
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/pcscpreg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/siopreg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/siopvar.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/ic/siopvar_common.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/siop_pci_common.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uftdireg.ph

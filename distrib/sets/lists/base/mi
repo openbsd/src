@@ -395,6 +395,7 @@
 ./usr/bin/sdiff
 ./usr/bin/sed
 ./usr/bin/sendbug
+./usr/bin/sftp
 ./usr/bin/shar
 ./usr/bin/showmount
 ./usr/bin/size
@@ -2553,4 +2554,3 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
-./usr/bin/sftp

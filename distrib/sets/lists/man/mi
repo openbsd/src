@@ -549,6 +549,7 @@
 ./usr/share/man/cat1/sdiff.0
 ./usr/share/man/cat1/sed.0
 ./usr/share/man/cat1/sendbug.0
+./usr/share/man/cat1/sftp.0
 ./usr/share/man/cat1/sh.0
 ./usr/share/man/cat1/sha1.0
 ./usr/share/man/cat1/shar.0
@@ -681,6 +682,7 @@
 ./usr/share/man/cat3/mvme88k
 ./usr/share/man/cat3/pmax
 ./usr/share/man/cat3/powerpc
+./usr/share/man/cat3/rfc1413.0
 ./usr/share/man/cat3/sparc
 ./usr/share/man/cat3/sun3
 ./usr/share/man/cat3/svc_getreqset2.0
@@ -950,6 +952,7 @@
 ./usr/share/man/cat4/bridge.0
 ./usr/share/man/cat4/cac.0
 ./usr/share/man/cat4/cardbus.0
+./usr/share/man/cat4/cbb.0
 ./usr/share/man/cat4/ccd.0
 ./usr/share/man/cat4/cd.0
 ./usr/share/man/cat4/ch.0
@@ -982,6 +985,7 @@
 ./usr/share/man/cat4/faith.0
 ./usr/share/man/cat4/fd.0
 ./usr/share/man/cat4/fdc.0
+./usr/share/man/cat4/fea.0
 ./usr/share/man/cat4/fms.0
 ./usr/share/man/cat4/fpa.0
 ./usr/share/man/cat4/fxp.0
@@ -989,7 +993,6 @@
 ./usr/share/man/cat4/gif.0
 ./usr/share/man/cat4/gre.0
 ./usr/share/man/cat4/hifn.0
-./usr/share/man/cat4/ises.0
 ./usr/share/man/cat4/hp300
 ./usr/share/man/cat4/hp300/autoconf.0
 ./usr/share/man/cat4/hp300/cons.0
@@ -1062,6 +1065,7 @@
 ./usr/share/man/cat4/ipsec.0
 ./usr/share/man/cat4/isa.0
 ./usr/share/man/cat4/isapnp.0
+./usr/share/man/cat4/ises.0
 ./usr/share/man/cat4/iso.0
 ./usr/share/man/cat4/isp.0
 ./usr/share/man/cat4/keynote.0
@@ -1116,6 +1120,7 @@
 ./usr/share/man/cat4/pckbc.0
 ./usr/share/man/cat4/pckbd.0
 ./usr/share/man/cat4/pcmcia.0
+./usr/share/man/cat4/pcscp.0
 ./usr/share/man/cat4/pmax
 ./usr/share/man/cat4/pmax/asc.0
 ./usr/share/man/cat4/pmax/dz.0
@@ -1126,6 +1131,8 @@
 ./usr/share/man/cat4/pmax/scc.0
 ./usr/share/man/cat4/pmax/sii.0
 ./usr/share/man/cat4/pmax/tc.0
+./usr/share/man/cat4/pms.0
+./usr/share/man/cat4/pmsi.0
 ./usr/share/man/cat4/pnp.0
 ./usr/share/man/cat4/powerpc
 ./usr/share/man/cat4/powerpc/com.0
@@ -1145,6 +1152,7 @@
 ./usr/share/man/cat4/sd.0
 ./usr/share/man/cat4/ses.0
 ./usr/share/man/cat4/sf.0
+./usr/share/man/cat4/siop.0
 ./usr/share/man/cat4/sis.0
 ./usr/share/man/cat4/sk.0
 ./usr/share/man/cat4/sl.0
@@ -1162,6 +1170,7 @@
 ./usr/share/man/cat4/sparc/cgtwo.0
 ./usr/share/man/cat4/sparc/esp.0
 ./usr/share/man/cat4/sparc/fd.0
+./usr/share/man/cat4/sparc/fdc.0
 ./usr/share/man/cat4/sparc/fga.0
 ./usr/share/man/cat4/sparc/fvme.0
 ./usr/share/man/cat4/sparc/hme.0
@@ -1170,6 +1179,7 @@
 ./usr/share/man/cat4/sparc/kbd.0
 ./usr/share/man/cat4/sparc/kmem.0
 ./usr/share/man/cat4/sparc/le.0
+./usr/share/man/cat4/sparc/led.0
 ./usr/share/man/cat4/sparc/magma.0
 ./usr/share/man/cat4/sparc/mem.0
 ./usr/share/man/cat4/sparc/ms.0
@@ -1226,6 +1236,7 @@
 ./usr/share/man/cat4/ubsec.0
 ./usr/share/man/cat4/ucom.0
 ./usr/share/man/cat4/udp.0
+./usr/share/man/cat4/uftdi.0
 ./usr/share/man/cat4/ugen.0
 ./usr/share/man/cat4/uhci.0
 ./usr/share/man/cat4/uhid.0
@@ -1238,11 +1249,14 @@
 ./usr/share/man/cat4/umodem.0
 ./usr/share/man/cat4/ums.0
 ./usr/share/man/cat4/unix.0
+./usr/share/man/cat4/upl.0
 ./usr/share/man/cat4/urandom.0
 ./usr/share/man/cat4/urio.0
 ./usr/share/man/cat4/usb.0
 ./usr/share/man/cat4/uscanner.0
+./usr/share/man/cat4/usscanner.0
 ./usr/share/man/cat4/uvisor.0
+./usr/share/man/cat4/uyap.0
 ./usr/share/man/cat4/vax
 ./usr/share/man/cat4/vax/acc.0
 ./usr/share/man/cat4/vax/ad.0
@@ -1273,6 +1287,7 @@
 ./usr/share/man/cat4/vax/il.0
 ./usr/share/man/cat4/vax/intro.0
 ./usr/share/man/cat4/vax/ix.0
+./usr/share/man/cat4/vax/kUmem.0
 ./usr/share/man/cat4/vax/kg.0
 ./usr/share/man/cat4/vax/kmem.0
 ./usr/share/man/cat4/vax/lp.0
@@ -1580,6 +1595,9 @@
 ./usr/share/man/cat8/i386/memconfig.0
 ./usr/share/man/cat8/i386/moused.0
 ./usr/share/man/cat8/i386/wicontrol.0
+./usr/share/man/cat8/i386/wsconscfg.0
+./usr/share/man/cat8/i386/wsconsctl.0
+./usr/share/man/cat8/i386/wsfontload.0
 ./usr/share/man/cat8/i386/zzz.0
 ./usr/share/man/cat8/identd.0
 ./usr/share/man/cat8/ifconfig.0
@@ -1689,7 +1707,9 @@
 ./usr/share/man/cat8/pmax
 ./usr/share/man/cat8/portmap.0
 ./usr/share/man/cat8/powerpc
+./usr/share/man/cat8/powerpc/MAKEDEV.0
 ./usr/share/man/cat8/powerpc/fdisk.0
+./usr/share/man/cat8/powerpc/makedev.0
 ./usr/share/man/cat8/powerpc/wsconscfg.0
 ./usr/share/man/cat8/powerpc/wsconsctl.0
 ./usr/share/man/cat8/ppp.0
@@ -1758,6 +1778,7 @@
 ./usr/share/man/cat8/savecore.0
 ./usr/share/man/cat8/scan_ffs.0
 ./usr/share/man/cat8/scsi.0
+./usr/share/man/cat8/security.0
 ./usr/share/man/cat8/sendmail.0
 ./usr/share/man/cat8/sesd.0
 ./usr/share/man/cat8/setencstat.0
@@ -1857,6 +1878,8 @@
 ./usr/share/man/cat9/alpha
 ./usr/share/man/cat9/amiga
 ./usr/share/man/cat9/arc
+./usr/share/man/cat9/bus_dma.0
+./usr/share/man/cat9/bus_space.0
 ./usr/share/man/cat9/hp300
 ./usr/share/man/cat9/hppa
 ./usr/share/man/cat9/i386
@@ -2023,26 +2046,3 @@
 ./var/www/htdocs/manual/new_features_2_0.html
 ./var/www/htdocs/manual/win_compiling.html
 ./var/www/htdocs/manual/win_service.html
-./usr/share/man/cat8/powerpc/MAKEDEV.0
-./usr/share/man/cat8/powerpc/makedev.0
-./usr/share/man/cat8/security.0
-./usr/share/man/cat4/usscanner.0
-./usr/share/man/cat4/uyap.0
-./usr/share/man/cat4/upl.0
-./usr/share/man/cat8/i386/wsconscfg.0
-./usr/share/man/cat8/i386/wsconsctl.0
-./usr/share/man/cat8/i386/wsfontload.0
-./usr/share/man/cat4/sparc/led.0
-./usr/share/man/cat1/sftp.0
-./usr/share/man/cat4/pcscp.0
-./usr/share/man/cat4/siop.0
-./usr/share/man/cat3/rfc1413.0
-./usr/share/man/cat4/uftdi.0
-./usr/share/man/cat4/pms.0
-./usr/share/man/cat4/pmsi.0
-./usr/share/man/cat9/bus_dma.0
-./usr/share/man/cat9/bus_space.0
-./usr/share/man/cat4/fea.0
-./usr/share/man/cat4/sparc/fdc.0
-./usr/share/man/cat4/vax/kUmem.0
-./usr/share/man/cat4/cbb.0

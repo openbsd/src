@@ -564,6 +564,9 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/rtl80x9reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/rtl80x9var.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/s3_617.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/siopreg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/siopvar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/siopvar_common.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/smc90cx6reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/smc91cxxreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/smc91cxxvar.ph
@@ -675,8 +678,6 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/fmsvar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/hifn7751var.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/isesreg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/isesvar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/i82365_pcivar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/if_devar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/if_levar.ph
@@ -695,6 +696,8 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/if_wbreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/if_wxreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/if_wxvar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/isesreg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/isesvar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/maestro_reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/ncrreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/neo-coeff.ph
@@ -716,8 +719,10 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/pciidevar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/pcireg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/pcivar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/pcscpreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/ppbreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/pucvar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/siop_pci_common.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgareg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/tgavar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/ti_fw.ph
@@ -833,6 +838,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/tc/tcreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/tc/tcvar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/ezload.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/hid.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/if_auereg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/if_cuereg.ph
@@ -842,6 +848,8 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/uaudioreg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/ucomvar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/uftdireg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/uhcireg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/uhcivar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/ukbdvar.ph
@@ -857,6 +865,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/usbdi_util.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/usbdivar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/usbhid.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/uyap_firmware.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/vndioctl.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/wscons
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/wscons/ascii.ph
@@ -1035,6 +1044,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/link.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/locale.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/login_cap.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/machine
 ./usr/libdata/perl5/site_perl/mips-openbsd/malloc.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/math.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/md4.ph
@@ -1186,11 +1196,11 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet/ip6.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet/ip_ah.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet/ip_auth.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/netinet/ip_fil_compat.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet/ip_ecn.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet/ip_esp.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet/ip_ether.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet/ip_fil.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/netinet/ip_fil_compat.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet/ip_frag.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet/ip_gre.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/netinet/ip_icmp.ph
@@ -1311,6 +1321,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/objc/typedstream.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/ocurses.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/olf_abi.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/openssl
 ./usr/libdata/perl5/site_perl/mips-openbsd/panel.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/paths.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/pcap-int.ph
@@ -1566,6 +1577,7 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/ipc.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/kcore.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/kernel.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/sys/kgdb.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/ktrace.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/sys/lkm.ph
@@ -1778,15 +1790,3 @@
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
 ./usr/share/info/ld.info-4
-./usr/libdata/perl5/site_perl/mips-openbsd/sys/kgdb.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/ezload.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/ugraphire_rdesc.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/uyap_firmware.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/machine
-./usr/libdata/perl5/site_perl/mips-openbsd/openssl
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/pcscpreg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/siopreg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/siopvar.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/siopvar_common.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/siop_pci_common.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/uftdireg.ph
