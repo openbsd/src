@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.12 1998/06/29 06:45:06 angelos Exp $
+.\"	$OpenBSD: options.4,v 1.13 1998/06/29 06:51:06 angelos Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -508,8 +508,7 @@ for details.
 .It Cd option MROUTING
 Includes support for IP multicast routers.
 .Em INET
-should be set along with this.
-Multicast routing is controlled by the
+should be set along with this.  Multicast routing is controlled by the
 .Xr mrouted 8
 daemon.
 .It Cd option INET
@@ -751,6 +750,7 @@ between 5% and 10% of total available RAM.
 .Xr quota 1 ,
 .Xr rpc.rquotad 8 ,
 .Xr ktrace 1 ,
+.Xr X 1 ,
 .Xr gdb 1
 .Sh HISTORY
 The
