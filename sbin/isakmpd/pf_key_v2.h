@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_key_v2.h,v 1.5 2001/02/24 03:59:56 angelos Exp $	*/
+/*	$OpenBSD: pf_key_v2.h,v 1.6 2001/05/05 00:50:31 angelos Exp $	*/
 /*	$EOM: pf_key_v2.h,v 1.4 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
@@ -55,6 +55,6 @@ extern int pf_key_v2_group_spis (struct sa *, struct proto *, struct proto *,
 				 int);
 extern void pf_key_v2_handler (int);
 extern int pf_key_v2_open (void);
-extern int pf_key_v2_set_spi (struct sa *, struct proto *, int);
+extern int pf_key_v2_set_spi (struct sa *, struct proto *, int, struct sa *);
 
 #endif /* _PF_KEY_V2_H_ */
