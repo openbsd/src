@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.h,v 1.14 2001/07/04 05:45:34 angelos Exp $	*/
+/*	$OpenBSD: ip_icmp.h,v 1.15 2002/01/12 00:51:59 ericj Exp $	*/
 /*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
 
 /*
@@ -211,6 +211,7 @@ struct icmp {
 #ifdef _KERNEL
 void	icmp_error __P((struct mbuf *, int, int, n_long, struct ifnet *));
 void	icmp_input __P((struct mbuf *, ...));
+void	icmp_init __P((void));
 void	icmp_reflect __P((struct mbuf *));
 void	icmp_send __P((struct mbuf *, struct mbuf *));
 int	icmp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
