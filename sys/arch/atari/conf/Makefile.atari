@@ -128,7 +128,9 @@ autoconf.o: Makefile
 machdep.o sys_machdep.o pmap.o pmap_bootstrap.o trap.o dma.o:	Makefile
 
 # depend on network or filesystem configuration
-uipc_proto.o vfs_conf.o locore.o:	Makefile
+uipc_domain.o uipc_proto.o vfs_conf.o locore.o:	Makefile
+if_tun.o if_loop.o if_ethersubr.o: Makefile
+in_proto.o: Makefile
 
 # depend on maxusers
 assym.s: Makefile

@@ -1,5 +1,5 @@
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.m88k,v 1.2 1996/03/26 15:09:49 mickey Exp $
+#	$Id: Makefile.m88k,v 1.3 1996/04/24 12:05:20 mickey Exp $
 #
 # Makefile for NetBSD
 #
@@ -131,7 +131,9 @@ autoconf.o: Makefile
 machdep.o sys_machdep.o pmap.o pmap_bootstrap.o trap.o dma.o:	Makefile
 
 # depend on network or filesystem configuration
-uipc_proto.o vfs_conf.o locore.o:	Makefile
+uipc_domain.o uipc_proto.o vfs_conf.o locore.o:	Makefile
+if_tun.o if_loop.o if_ethersubr.o: Makefile
+in_proto.o: Makefile
 
 # depend on maxusers
 assym.s: Makefile

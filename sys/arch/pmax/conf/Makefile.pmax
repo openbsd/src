@@ -149,7 +149,9 @@ autoconf.o: Makefile
 clock.o machdep.o autoconf.o conf.o: Makefile
 
 # depend on network configuration
-uipc_proto.o vfs_conf.o: Makefile
+uipc_domain.o uipc_proto.o vfs_conf.o: Makefile
+if_tun.o if_loop.o if_ethersubr.o: Makefile
+in_proto.o: Makefile
 
 assym.h: genassym
 	./genassym >assym.h

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.i386,v 1.7 1996/04/24 10:50:54 niklas Exp $
+#	$OpenBSD: Makefile.i386,v 1.8 1996/04/24 12:05:17 mickey Exp $
 #	$NetBSD: Makefile.i386,v 1.66 1996/02/29 20:56:16 cgd Exp $
 
 # Makefile for OpenBSD
@@ -159,7 +159,9 @@ depend: .depend
 autoconf.o conf.o: Makefile
  
 # depend on network or filesystem configuration 
-uipc_proto.o vfs_conf.o: Makefile 
+uipc_domain.o uipc_proto.o vfs_conf.o: Makefile 
+if_tun.o if_loop.o if_ethersubr.o: Makefile
+in_proto.o: Makefile
 
 # depend on maxusers
 genassym.o machdep.o: Makefile
