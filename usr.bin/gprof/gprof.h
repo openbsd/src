@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.h,v 1.5 2001/03/21 22:27:36 miod Exp $	*/
+/*	$OpenBSD: gprof.h,v 1.6 2001/03/22 05:18:30 mickey Exp $	*/
 /*	$NetBSD: gprof.h,v 1.13 1996/04/01 21:54:06 mark Exp $	*/
 
 /*
@@ -43,13 +43,9 @@
 #include <a.out.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <err.h>
 
 #include "machine.h"
-
-    /*
-     *	who am i, for error messages.
-     */
-char	*whoami;
 
     /*
      * booleans
@@ -239,76 +235,72 @@ struct stringlist	*ktolist;
     /*
      *	function declarations
      */
-/*
-		addarc();
-*/
+void		addarc();
+int		addcycle __P((arctype **, arctype **));
+void		addlist __P((struct stringlist *listp, char *funcname));
 int		arccmp();
 arctype		*arclookup();
-/*
-		asgnsamples();
-		printblurb();
-		cyclelink();
-		dfn();
-*/
+void		asgnsamples();
+void		alignentries();
+void		printblurb();
+int		cycleanalyze __P((void));
+void		cyclelink __P((void));
+void		cycletime __P((void));
+void		compresslist __P((void));
+int		descend __P((nltype *node, arctype **stkstart, arctype **stkp));
+void		dfn();
 bool		dfn_busy();
-/*
-		dfn_findcycle();
-*/
+void		dfn_findcycle();
+void		dfn_init();
 bool		dfn_numbered();
-/*
-		dfn_post_visit();
-		dfn_pre_visit();
-		dfn_self_cycle();
-*/
+void		dfn_post_visit();
+void		dfn_pre_visit();
+void		dfn_self_cycle();
 nltype		**doarcs();
-/*
-		done();
-		findcalls();
-		flatprofheader();
-		flatprofline();
-*/
+void		doflags __P((void));
+void		dotime __P((void));
+void		dumpsum();
+void		findcall __P((nltype *, u_long, u_long));
+void		flatprofheader();
+void		flatprofline();
 bool		funcsymbol();
-/*
-		getnfile();
-		getpfile();
-		getstrtab();
-		getsymtab();
-		gettextspace();
-		gprofheader();
-		gprofline();
-		main();
-*/
+void		getnfile();
+void		getpfile();
+void		getstrtab();
+void		getsymtab();
+void		gettextspace();
+void		gprofheader();
+void		gprofline();
+int		hertz();
+void		inheritflags __P((nltype *childp));
 unsigned long	max();
 int		membercmp();
 unsigned long	min();
 nltype		*nllookup();
+bool		onlist();
 FILE		*openpfile();
 long		operandlength();
 operandenum	operandmode();
 char		*operandname();
-/*
-		printchildren();
-		printcycle();
-		printgprof();
-		printmembers();
-		printname();
-		printparents();
-		printprof();
-		readsamples();
-*/
+void		printchildren();
+void		printcycle();
+void		printgprof();
+void		printindex();
+void		printmembers();
+void		printname();
+void		printparents();
+void		printprof();
+void		readsamples(FILE *);
 unsigned long	reladdr();
-/*
-		sortchildren();
-		sortmembers();
-		sortparents();
-		tally();
-		timecmp();
-		topcmp();
-*/
+void		sortchildren();
+void		sortmembers();
+void		sortparents();
+void		tally();
+int		timecmp();
+void		timepropagate __P((nltype *));
+int		topcmp();
 int		totalcmp();
-/*
-		valcmp();
-*/
+int		valcmp __P((nltype *p1, nltype *p2));
 
 #define	LESSTHAN	-1
 #define	EQUALTO		0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printlist.c,v 1.2 1996/06/26 05:33:59 deraadt Exp $	*/
+/*	$OpenBSD: printlist.c,v 1.3 2001/03/22 05:18:30 mickey Exp $	*/
 /*	$NetBSD: printlist.c,v 1.5 1995/04/19 07:16:23 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)printlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: printlist.c,v 1.2 1996/06/26 05:33:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: printlist.c,v 1.3 2001/03/22 05:18:30 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ struct stringlist	*elist = &ehead;
 struct stringlist	Ehead = { 0 , 0 };
 struct stringlist	*Elist = &Ehead;
 
+void
 addlist( listp , funcname )
     struct stringlist	*listp;
     char		*funcname;
@@ -70,10 +71,8 @@ addlist( listp , funcname )
     struct stringlist	*slp;
 
     slp = (struct stringlist *) malloc( sizeof(struct stringlist));
-    if ( slp == (struct stringlist *) 0 ) {
-	fprintf( stderr, "gprof: ran out room for printlist\n" );
-	done();
-    }
+    if (slp == (struct stringlist *) 0)
+	errx(0, "ran out room for printlist");
     slp -> next = listp -> next;
     slp -> string = funcname;
     listp -> next = slp;

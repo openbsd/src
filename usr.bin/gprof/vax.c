@@ -1,4 +1,4 @@
-/*	$OpenBSD: vax.c,v 1.3 1996/06/26 05:34:02 deraadt Exp $	*/
+/*	$OpenBSD: vax.c,v 1.4 2001/03/22 05:18:31 mickey Exp $	*/
 /*	$NetBSD: vax.c,v 1.6 1996/04/20 14:56:37 ragge Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vax.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: vax.c,v 1.3 1996/06/26 05:34:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vax.c,v 1.4 2001/03/22 05:18:31 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -212,7 +212,7 @@ reladdr( modep )
     cp += 1;			/* skip over the mode */
     switch ( mode ) {
 	default:
-	    fprintf( stderr , "[reladdr] not relative address\n" );
+	    warnx("[reladdr] not relative address");
 	    return (unsigned long) modep;
 	case byterel:
 	    return (unsigned long) ( cp + sizeof *cp + *cp );
@@ -225,6 +225,7 @@ reladdr( modep )
     }
 }
 
+void
 findcall( parentp , p_lowpc , p_highpc )
     nltype		*parentp;
     unsigned long	p_lowpc;

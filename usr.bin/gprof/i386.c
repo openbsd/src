@@ -1,8 +1,8 @@
-/*	$OpenBSD: i386.c,v 1.3 1996/10/02 02:59:50 tholo Exp $	*/
+/*	$OpenBSD: i386.c,v 1.4 2001/03/22 05:18:30 mickey Exp $	*/
 /*	$NetBSD: i386.c,v 1.5 1995/04/19 07:16:04 cgd Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: i386.c,v 1.3 1996/10/02 02:59:50 tholo Exp $";
+static char rcsid[] = "$OpenBSD: i386.c,v 1.4 2001/03/22 05:18:30 mickey Exp $";
 #endif /* not lint */
 
 #include "gprof.h"
@@ -12,6 +12,7 @@ static char rcsid[] = "$OpenBSD: i386.c,v 1.3 1996/10/02 02:59:50 tholo Exp $";
 /*
  * gprof -c isn't currently supported...
  */
+void
 findcall( parentp , p_lowpc , p_highpc )
     nltype		*parentp;
     unsigned long	p_lowpc;

@@ -1,8 +1,7 @@
-/*	$OpenBSD: powerpc.c,v 1.2 2001/03/22 05:18:30 mickey Exp $	*/
-/*	$NetBSD: m68k.c,v 1.4 1995/04/19 07:16:07 cgd Exp $	*/
+/*	$OpenBSD: hppa.c,v 1.1 2001/03/22 05:18:30 mickey Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: powerpc.c,v 1.2 2001/03/22 05:18:30 mickey Exp $";
+static char rcsid[] = "$OpenBSD: hppa.c,v 1.1 2001/03/22 05:18:30 mickey Exp $";
 #endif /* not lint */
 
 #include "gprof.h"
