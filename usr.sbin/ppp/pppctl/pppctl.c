@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pppctl.c,v 1.11 2003/04/04 20:28:57 deraadt Exp $
+ *	$Id: pppctl.c,v 1.12 2003/04/14 03:14:17 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -380,7 +380,7 @@ main(int argc, char **argv)
     Command[sizeof(Command)-1] = '\0';
     for (arg++; arg < argc; arg++) {
         if (len && len < sizeof(Command)-1) {
-            strcpy(Command+len, " ");
+            strlcpy(Command+len, " ", sizeof Command - len);
 	    len++;
 	}
         strncpy(Command+len, argv[arg], sizeof(Command)-len-1);
