@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.16 2004/12/20 22:07:25 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.17 2004/12/24 22:17:56 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -84,7 +84,7 @@ void	ahd_adapter_req_set_xfer_mode(struct ahd_softc *, struct scb *);
 void    ahd_minphys(struct buf *);
 
 struct cfdriver ahd_cd = {
-	        NULL, "ahd", DV_DULL
+	NULL, "ahd", DV_DULL
 };
 
 static struct scsi_adapter ahd_switch =
@@ -120,23 +120,23 @@ ahd_attach(struct ahd_softc *ahd)
 	/*
 	 * fill in the prototype scsi_links.
 	 */
-        ahd->sc_channel.adapter_target = ahd->our_id;
-        if (ahd->features & AHD_WIDE)
-                ahd->sc_channel.adapter_buswidth = 16;
-        ahd->sc_channel.adapter_softc = ahd;
-        ahd->sc_channel.adapter = &ahd_switch;
-        ahd->sc_channel.openings = 16;
-        ahd->sc_channel.device = &ahd_dev;
+	ahd->sc_channel.adapter_target = ahd->our_id;
+	if (ahd->features & AHD_WIDE)
+		ahd->sc_channel.adapter_buswidth = 16;
+	ahd->sc_channel.adapter_softc = ahd;
+	ahd->sc_channel.adapter = &ahd_switch;
+	ahd->sc_channel.openings = 16;
+	ahd->sc_channel.device = &ahd_dev;
 
 	if (bootverbose) {
-                ahd_controller_info(ahd, ahd_info, sizeof ahd_info);
-                printf("%s: %s\n", ahd->sc_dev.dv_xname, ahd_info);
-        }
+		ahd_controller_info(ahd, ahd_info, sizeof ahd_info);
+		printf("%s: %s\n", ahd->sc_dev.dv_xname, ahd_info);
+	}
 
 	ahd_intr_enable(ahd, TRUE);
 
 	if (ahd->flags & AHD_RESET_BUS_A)
-                ahd_reset_channel(ahd, 'A', TRUE);
+		ahd_reset_channel(ahd, 'A', TRUE);
 
 	ahd->sc_child = config_found((void *)&ahd->sc_dev,
 	    &ahd->sc_channel, scsiprint);
@@ -179,16 +179,16 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 	timeout_del(&xs->stimeout);
 
 	if (xs->datalen) {
-                int op;
+		int op;
 
-                if ((xs->flags & SCSI_DATA_IN) != 0)
-                        op = BUS_DMASYNC_POSTREAD;
-                else
-                        op = BUS_DMASYNC_POSTWRITE;
-                bus_dmamap_sync(ahd->parent_dmat, scb->dmamap, 0,
-                                scb->dmamap->dm_mapsize, op);
-                bus_dmamap_unload(ahd->parent_dmat, scb->dmamap);
-        }
+		if ((xs->flags & SCSI_DATA_IN) != 0)
+			op = BUS_DMASYNC_POSTREAD;
+		else
+			op = BUS_DMASYNC_POSTWRITE;
+		bus_dmamap_sync(ahd->parent_dmat, scb->dmamap, 0,
+		    scb->dmamap->dm_mapsize, op);
+		bus_dmamap_unload(ahd->parent_dmat, scb->dmamap);
+	}
 
 	/*
 	 * If the recovery SCB completes, we have to be
@@ -204,70 +204,70 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 		 */
 		LIST_FOREACH(list_scb, &ahd->pending_scbs, pending_links) {
 			struct scsi_xfer *txs = list_scb->xs;
-                        if (!(txs->flags & SCSI_POLL))
-                                timeout_add(&list_scb->xs->stimeout,
-                                    (list_scb->xs->timeout * hz)/1000);
-                }
+			if (!(txs->flags & SCSI_POLL))
+				timeout_add(&list_scb->xs->stimeout,
+				    (list_scb->xs->timeout * hz)/1000);
+		}
 
 		if (aic_get_transaction_status(scb) != CAM_REQ_INPROG)
-                	aic_set_transaction_status(scb, CAM_CMD_TIMEOUT);
+			aic_set_transaction_status(scb, CAM_CMD_TIMEOUT);
 		ahd_print_path(ahd, scb);
-                printf("%s: no longer in timeout, status = %x\n",
-                       ahd_name(ahd), xs->status);
+		printf("%s: no longer in timeout, status = %x\n",
+		    ahd_name(ahd), xs->status);
 	}
 
 	/* Translate the CAM status code to a SCSI error code. */
 	switch (xs->error) {
 	case CAM_SCSI_STATUS_ERROR:
-        case CAM_REQ_INPROG:
-        case CAM_REQ_CMP:
-                switch (xs->status) {
-                case SCSI_TASKSET_FULL:
-                        /* SCSI Layer won't requeue, so we force infinite
-                         * retries until queue space is available. XS_BUSY
-                         * is dangerous because if the NOSLEEP flag is set
-                         * it can cause the I/O to return EIO. XS_BUSY code
-                         * falls through to XS_TIMEOUT anyway.
-                         */ 
-                        xs->error = XS_TIMEOUT;
-                        xs->retries++;
-                        break;
-                case SCSI_BUSY:
-                        xs->error = XS_BUSY;
-                        break;
-                case SCSI_CHECK:
-                case SCSI_TERMINATED:
-                        if ((scb->flags & SCB_SENSE) == 0) {
-                                /* CHECK on CHECK? */
-                                xs->error = XS_DRIVER_STUFFUP;
-                        } else
-                                xs->error = XS_NOERROR;
-                        break;
-                default:
-                        xs->error = XS_NOERROR;
-                        break;
-                }
-                break;
-        case CAM_BUSY:
-                xs->error = XS_BUSY;
-                break;
-        case CAM_CMD_TIMEOUT:
-                xs->error = XS_TIMEOUT;
-                break;
-        case CAM_BDR_SENT:
-        case CAM_SCSI_BUS_RESET:
-                xs->error = XS_RESET;
-        case CAM_REQUEUE_REQ:
-                xs->error = XS_TIMEOUT;
-                xs->retries++;
-                break;
-        case CAM_SEL_TIMEOUT:
-                xs->error = XS_SELTIMEOUT;
-                break;
-        default:
-                xs->error = XS_DRIVER_STUFFUP;
-                break;
-        }
+	case CAM_REQ_INPROG:
+	case CAM_REQ_CMP:
+		switch (xs->status) {
+		case SCSI_TASKSET_FULL:
+			/* SCSI Layer won't requeue, so we force infinite
+			 * retries until queue space is available. XS_BUSY
+			 * is dangerous because if the NOSLEEP flag is set
+			 * it can cause the I/O to return EIO. XS_BUSY code
+			 * falls through to XS_TIMEOUT anyway.
+			 */ 
+			xs->error = XS_TIMEOUT;
+			xs->retries++;
+			break;
+		case SCSI_BUSY:
+			xs->error = XS_BUSY;
+			break;
+		case SCSI_CHECK:
+		case SCSI_TERMINATED:
+			if ((scb->flags & SCB_SENSE) == 0) {
+				/* CHECK on CHECK? */
+				xs->error = XS_DRIVER_STUFFUP;
+			} else
+				xs->error = XS_NOERROR;
+			break;
+		default:
+			xs->error = XS_NOERROR;
+			break;
+		}
+		break;
+	case CAM_BUSY:
+		xs->error = XS_BUSY;
+		break;
+	case CAM_CMD_TIMEOUT:
+		xs->error = XS_TIMEOUT;
+		break;
+	case CAM_BDR_SENT:
+	case CAM_SCSI_BUS_RESET:
+		xs->error = XS_RESET;
+	case CAM_REQUEUE_REQ:
+		xs->error = XS_TIMEOUT;
+		xs->retries++;
+		break;
+	case CAM_SEL_TIMEOUT:
+		xs->error = XS_SELTIMEOUT;
+		break;
+	default:
+		xs->error = XS_DRIVER_STUFFUP;
+		break;
+	}
 
 	if (xs->error != XS_NOERROR) {
 		/* Don't clobber any existing error state */
@@ -283,9 +283,9 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 		 * copying it into the clients csio.
 		 */
 		memset(&xs->sense, 0, sizeof(struct scsi_sense_data));
-                memcpy(&xs->sense, ahd_get_sense_buf(ahd, scb),
-                    sizeof(struct scsi_sense_data));
-                xs->error = XS_SENSE;
+		memcpy(&xs->sense, ahd_get_sense_buf(ahd, scb),
+		    sizeof(struct scsi_sense_data));
+		xs->error = XS_SENSE;
 	} else if ((scb->flags & SCB_PKT_SENSE) != 0) {
 		struct scsi_status_iu_header *siu;
 		u_int32_t len;
@@ -295,35 +295,31 @@ ahd_done(struct ahd_softc *ahd, struct scb *scb)
 		memset(&xs->sense, 0, sizeof(xs->sense));
 		memcpy(&xs->sense, SIU_SENSE_DATA(siu),
 		    ulmin(len, sizeof(xs->sense)));
-                xs->error = XS_SENSE;
+		xs->error = XS_SENSE;
 	}
-#if 0	/* MU: no such settings in ahc */
-	if (scb->flags & SCB_REQUEUE)
-                xs->error = XS_REQUEUE;
-#endif
+
 	ahd_lock(ahd, &s);
 	ahd_free_scb(ahd, scb);
 	ahd_unlock(ahd, &s);
 
 	xs->flags |= ITSDONE;
-        scsi_done(xs);
+	scsi_done(xs);
 }
 
 void
-ahd_minphys(bp)
-        struct buf *bp;
+ahd_minphys(struct buf *bp)
 {
-        /*
-         * Even though the card can transfer up to 16megs per command
-         * we are limited by the number of segments in the dma segment
-         * list that we can hold.  The worst case is that all pages are
-         * discontinuous physically, hence the "page per segment" limit
-         * enforced here.
-         */
-        if (bp->b_bcount > ((AHD_NSEG - 1) * PAGE_SIZE)) {
-                bp->b_bcount = ((AHD_NSEG - 1) * PAGE_SIZE);
-        }
-        minphys(bp);
+	/*
+	 * Even though the card can transfer up to 16megs per command
+	 * we are limited by the number of segments in the dma segment
+	 * list that we can hold.  The worst case is that all pages are
+	 * discontinuous physically, hence the "page per segment" limit
+	 * enforced here.
+	 */
+	if (bp->b_bcount > ((AHD_NSEG - 1) * PAGE_SIZE)) {
+		bp->b_bcount = ((AHD_NSEG - 1) * PAGE_SIZE);
+	}
+	minphys(bp);
 }
 
 int32_t
@@ -527,7 +523,7 @@ ahd_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 			ahd_scb_devinfo(ahd, &devinfo, scb);
 			ahd_update_neg_request(ahd, &devinfo, tstate, tinfo,
 				AHD_NEG_IF_NON_ASYNC);
-									                        	ahd->inited_target[target] = 1;
+			ahd->inited_target[target] = 1;
 		}
 
 		ahd_unlock(ahd, &s);
@@ -601,26 +597,24 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 
 		error = bus_dmamap_load(ahd->parent_dmat,
 					scb->dmamap, xs->data,
-                                        xs->datalen, NULL,
-                                        ((xs->flags & SCSI_NOSLEEP) ?
-                                         BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
-                                        BUS_DMA_STREAMING |
-                                        ((xs->flags & XS_CTL_DATA_IN) ?
-                                         BUS_DMA_READ : BUS_DMA_WRITE));
+					xs->datalen, NULL,
+					((xs->flags & SCSI_NOSLEEP) ?
+					BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
+					BUS_DMA_STREAMING |
+					((xs->flags & XS_CTL_DATA_IN) ?
+					BUS_DMA_READ : BUS_DMA_WRITE));
 		if (error) {
 #ifdef AHD_DEBUG
-                        printf("%s: in ahd_setup_data(): bus_dmamap_load() "
-                               "= %d\n",
-                               ahd_name(ahd), error);
+			printf("%s: in ahd_setup_data(): bus_dmamap_load() "
+			    "= %d\n", ahd_name(ahd), error);
 #endif
 			xs->error = XS_BUSY;
-                        xs->flags |= ITSDONE;
-                        scsi_done(xs);
-                        return (TRY_AGAIN_LATER);       /* XXX fvdl */
+			xs->flags |= ITSDONE;
+			scsi_done(xs);
+			return (TRY_AGAIN_LATER);       /* XXX fvdl */
 		}
-		error = ahd_execute_scb(scb,
-				scb->dmamap->dm_segs,
-                                scb->dmamap->dm_nsegs);
+		error = ahd_execute_scb(scb, scb->dmamap->dm_segs,
+		    scb->dmamap->dm_nsegs);
 		return error;
 	} else {
 		return ahd_execute_scb(scb, NULL, 0);
@@ -628,18 +622,18 @@ ahd_setup_data(struct ahd_softc *ahd, struct scsi_xfer *xs,
 }
 
 void
-ahd_platform_set_tags(struct ahd_softc *ahd,
-		      struct ahd_devinfo *devinfo, ahd_queue_alg alg)
+ahd_platform_set_tags(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
+    ahd_queue_alg alg)
 {
 	struct ahd_tmode_tstate *tstate;
 
-        ahd_fetch_transinfo(ahd, devinfo->channel, devinfo->our_scsiid,
-                            devinfo->target, &tstate);
+	ahd_fetch_transinfo(ahd, devinfo->channel, devinfo->our_scsiid,
+	    devinfo->target, &tstate);
 
-        if (alg != AHD_QUEUE_NONE) 
-                tstate->tagenable |= devinfo->target_mask;
-        else
-                tstate->tagenable &= ~devinfo->target_mask;
+	if (alg != AHD_QUEUE_NONE) 
+		tstate->tagenable |= devinfo->target_mask;
+	else
+		tstate->tagenable &= ~devinfo->target_mask;
 }
 
 int
@@ -675,16 +669,16 @@ ahd_detach(struct device *self, int flags)
 {
 	int rv = 0;
 
-        struct ahd_softc *ahd = (struct ahd_softc*)self;
+	struct ahd_softc *ahd = (struct ahd_softc*)self;
 
-        if (ahd->sc_child != NULL)
-                rv = config_detach((void *)ahd->sc_child, flags);
+	if (ahd->sc_child != NULL)
+		rv = config_detach((void *)ahd->sc_child, flags);
 
-        shutdownhook_disestablish(ahd->shutdown_hook);
+	shutdownhook_disestablish(ahd->shutdown_hook);
 
-        ahd_free(ahd);
+	ahd_free(ahd);
 
-        return rv;
+	return rv;
 }
 
 void

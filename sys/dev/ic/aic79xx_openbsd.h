@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.h,v 1.13 2004/12/20 20:56:32 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.h,v 1.14 2004/12/24 22:17:56 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -104,8 +104,8 @@
 #define	SCSI_SCSI_ID(ahd, sc_link)	\
 	(ahd->our_id)
 #define BUILD_SCSIID(ahd, sc_link, target_id, our_id) \
-        ((((target_id) << TID_SHIFT) & TID) | (our_id))
-        
+	((((target_id) << TID_SHIFT) & TID) | (our_id))
+
 #ifndef offsetof
 #define offsetof(type, member)  ((size_t)(&((type *)0)->member))
 #endif
