@@ -1,4 +1,4 @@
-/*	$OpenBSD: genassym.c,v 1.6 1997/01/16 04:04:21 kstailey Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.7 1997/02/14 21:13:49 kstailey Exp $	*/
 /*	$NetBSD: genassym.c,v 1.32 1996/10/23 16:39:27 gwr Exp $	*/
 
 /*
@@ -123,6 +123,7 @@ main()
 	def1(PSL_HIGHIPL);
 	def1(PSL_USER);
 	def1(PSL_S);
+	def1(PSL_IPL7);
 	def1(FC_CONTROL);
 	def1(FC_SUPERD);
 	def1(FC_USERD);
