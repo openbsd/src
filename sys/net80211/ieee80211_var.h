@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.1 2004/06/22 22:53:52 millert Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.2 2004/11/02 02:15:49 reyk Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -60,6 +60,7 @@ enum ieee80211_phytype {
 	IEEE80211_T_FH,			/* frequency hopping */
 	IEEE80211_T_OFDM,		/* frequency division multiplexing */
 	IEEE80211_T_TURBO,		/* high rate OFDM, aka turbo mode */
+	IEEE80211_T_XR,		        /* extended range mode */
 };
 #define	IEEE80211_T_CCK	IEEE80211_T_DS	/* more common nomenclature */
 
@@ -237,6 +238,9 @@ struct ieee80211com {
 	void			*ic_wep_ctx;	/* wep crypt context */
 	u_int32_t		ic_iv;		/* initial vector for wep */
 	struct ieee80211_stats	ic_stats;	/* statistics */
+	struct timeval		ic_last_merge_print;	/* for rate-limiting
+							 * IBSS merge print-outs
+							 */
 };
 #ifdef __NetBSD__
 #define	ic_if		ic_ec.ec_if

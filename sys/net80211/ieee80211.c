@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.1 2004/06/22 22:53:51 millert Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.2 2004/11/02 02:15:49 reyk Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -112,8 +112,7 @@ int	ieee80211_inact_max = IEEE80211_INACT_MAX;
 static int ieee80211_inact_max_nodenum;
 #endif
 
-static void ieee80211_set11gbasicrates(struct ieee80211_rateset *,
-		enum ieee80211_phymode);
+static void ieee80211_setbasicrates(struct ieee80211com *);
 
 #if 0
 static const char *ieee80211_phymode_name[] = {
@@ -187,6 +186,7 @@ ieee80211_ifattach(struct ifnet *ifp)
 		ic->ic_curmode = IEEE80211_MODE_AUTO;
 	ic->ic_des_chan = IEEE80211_CHAN_ANYC;	/* any channel is ok */
 
+	ieee80211_setbasicrates(ic);
 	(void) ieee80211_setmode(ic, ic->ic_curmode);
 
 	if (ic->ic_lintval == 0)
@@ -563,12 +563,6 @@ ieee80211_media_change(struct ifnet *ifp)
 			break;
 		case IEEE80211_M_IBSS:
 			ic->ic_flags |= IEEE80211_F_IBSSON;
-#ifdef notdef
-			if (ic->ic_curmode == IEEE80211_MODE_11G)
-				ieee80211_set11gbasicrates(
-					&ic->ic_sup_rates[newphymode],
-					IEEE80211_MODE_11B);
-#endif
 			break;
 		}
 		error = ENETRESET;
@@ -653,24 +647,30 @@ ieee80211_watchdog(struct ifnet *ifp)
  * the basic OFDM rates.
  */
 static void
-ieee80211_set11gbasicrates(struct ieee80211_rateset *rs, enum ieee80211_phymode mode)
+ieee80211_setbasicrates(struct ieee80211com *ic)
 {
 	static const struct ieee80211_rateset basic[] = {
+	    { 0 },				/* IEEE80211_MODE_AUTO */
 	    { 3, { 12, 24, 48 } },		/* IEEE80211_MODE_11A */
-	    { 4, { 2, 4, 11, 22 } },		/* IEEE80211_MODE_11B */
-	    { 7, { 2, 4, 11, 22, 12, 24, 48 } },/* IEEE80211_MODE_11G */
-	    { 0 },				/* IEEE80211_MODE_FH */
+	    { 2, { 2, 4 } },			/* IEEE80211_MODE_11B */
+	    { 4, { 2, 4, 11, 22 } },		/* IEEE80211_MODE_11G */
+	    { 2, { 2, 4 } },			/* IEEE80211_MODE_FH */
 	    { 0 },				/* IEEE80211_MODE_TURBO	*/
 	};
+	enum ieee80211_phymode mode;
+	struct ieee80211_rateset *rs;
 	int i, j;
 
-	for (i = 0; i < rs->rs_nrates; i++) {
-		rs->rs_rates[i] &= IEEE80211_RATE_VAL;
-		for (j = 0; j < basic[mode].rs_nrates; j++)
-			if (basic[mode].rs_rates[j] == rs->rs_rates[i]) {
-				rs->rs_rates[i] |= IEEE80211_RATE_BASIC;
-				break;
-			}
+	for (mode = 0; mode < IEEE80211_MODE_MAX; mode++) {
+		rs = &ic->ic_sup_rates[mode];
+		for (i = 0; i < rs->rs_nrates; i++) {
+			rs->rs_rates[i] &= IEEE80211_RATE_VAL;
+			for (j = 0; j < basic[mode].rs_nrates; j++)
+				if (basic[mode].rs_rates[j] == rs->rs_rates[i]) {
+					rs->rs_rates[i] |= IEEE80211_RATE_BASIC;
+					break;
+				}
+		}
 	}
 }
 
@@ -772,8 +772,6 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	if (mode == IEEE80211_MODE_11G) {
 		if (ic->ic_caps & IEEE80211_C_SHSLOT)
 			ic->ic_flags |= IEEE80211_F_SHSLOT;
-		ieee80211_set11gbasicrates(&ic->ic_sup_rates[mode],
-			IEEE80211_MODE_11G);
 	} else {
 		ic->ic_flags &= ~IEEE80211_F_SHSLOT;
 	}
@@ -805,7 +803,9 @@ ieee80211_chan2mode(struct ieee80211com *ic, struct ieee80211_channel *chan)
 	 * characteristics.  We assume that turbo-only channels
 	 * are not considered when the channel set is constructed.
 	 */
-	if (IEEE80211_IS_CHAN_5GHZ(chan))
+	if (IEEE80211_IS_CHAN_T(chan))
+		return IEEE80211_MODE_TURBO;
+	else if (IEEE80211_IS_CHAN_5GHZ(chan))
 		return IEEE80211_MODE_11A;
 	else if (IEEE80211_IS_CHAN_FHSS(chan))
 		return IEEE80211_MODE_FH;

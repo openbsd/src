@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.1 2004/06/22 22:53:52 millert Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.2 2004/11/02 02:15:49 reyk Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -55,6 +55,23 @@ struct ieee80211_rateset {
 	u_int8_t		rs_rates[IEEE80211_RATE_MAXSIZE];
 };
 
+enum ieee80211_node_state {
+	IEEE80211_STA_CACHE,	/* cached node */
+	IEEE80211_STA_BSS,	/* ic->ic_bss, the network we joined */
+	IEEE80211_STA_AUTH,	/* successfully authenticated */
+	IEEE80211_STA_ASSOC,	/* successfully associated */
+	IEEE80211_STA_COLLECT	/* This node remains in the cache while
+				 * the driver sends a de-auth message;
+				 * afterward it should be freed to make room
+				 * for a new node.
+				 */
+};
+
+#define	ieee80211_node_newstate(__ni, __state)	\
+	do {					\
+		(__ni)->ni_state = (__state);	\
+	} while (0)
+
 /*
  * Node specific information.  Note that drivers are expected
  * to derive from this structure to add device-specific per-node
@@ -110,6 +127,7 @@ struct ieee80211_node {
 	int			ni_fails;	/* failure count to associate */
 	int			ni_inact;	/* inactivity mark count */
 	int			ni_txrate;	/* index to ni_rates[] */
+	int			ni_state;
 	u_int32_t		*ni_challenge;	/* shared-key challenge */
 };
 
