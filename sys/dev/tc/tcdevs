@@ -1,4 +1,4 @@
-$OpenBSD: tcdevs,v 1.4 1998/02/16 06:12:12 deraadt Exp $
+$OpenBSD: tcdevs,v 1.5 1998/06/23 23:26:18 deraadt Exp $
 /*	$NetBSD: tcdevs,v 1.6 1996/08/26 23:39:34 cgd Exp $	*/
 
 /*
@@ -32,10 +32,11 @@ $OpenBSD: tcdevs,v 1.4 1998/02/16 06:12:12 deraadt Exp $
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
++device AV01B-AA        lofi    DecAudio LoFi audio/isdn
 device	DGLTA-FA	otto	DGLTA ATM
 device	FORE_ATM	fa	Fore TCA-100 ATM
 device	KZTSA-AA	tza	TZA FWD SCSI
-device	OTTO		otto	DEC SRC \"OTTO\" ATM
+device	OTTO		otto	DEC SRC OTTO ATM
 device	PMAD-AA		le	LANCE Ethernet
 device	PMAF-AA		fza	DEFZA FDDI
 device	PMAF-F		fta	DEFTA FDDI
