@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.20 1999/10/17 23:09:16 dugsong Exp $
+.\" $Id: sshd.8,v 1.21 1999/10/25 21:35:25 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -402,7 +402,7 @@ directory or files world-writable.  The default is
 Gives the facility code that is used when logging messages from
 .Nm sshd .
 The possible values are: DAEMON, USER, AUTH, LOCAL0, LOCAL1, LOCAL2,
-LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7.  The default is DAEMON.
+LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7.  The default is AUTH.
 .It Cm UseLogin
 Specifies whether
 .Xr login 1

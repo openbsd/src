@@ -12,7 +12,7 @@ Created: Mon Aug 21 15:48:58 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.18 1999/10/17 23:09:16 dugsong Exp $");
+RCSID("$Id: servconf.c,v 1.19 1999/10/25 21:35:25 markus Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -106,7 +106,7 @@ void fill_default_server_options(ServerOptions *options)
   if (options->keepalives == -1)
     options->keepalives = 1;
   if (options->log_facility == (SyslogFacility)(-1))
-    options->log_facility = SYSLOG_FACILITY_DAEMON;
+    options->log_facility = SYSLOG_FACILITY_AUTH;
   if (options->rhosts_authentication == -1)
     options->rhosts_authentication = 0;
   if (options->rhosts_rsa_authentication == -1)
