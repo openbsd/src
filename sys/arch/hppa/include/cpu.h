@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.12 2000/01/25 12:52:51 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.13 2000/02/10 20:05:40 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -26,6 +26,7 @@
 #ifndef	_MACHINE_CPU_H_
 #define	_MACHINE_CPU_H_
 
+#include <machine/trap.h>
 #include <machine/frame.h>
 
 /*
@@ -52,8 +53,9 @@
 #define	clockframe	trapframe
 #define	CLKF_BASEPRI(framep)	((framep)->tf_eiem == ~0U)
 #define	CLKF_PC(framep)		((framep)->tf_iioq_head)
-#define	CLKF_INTR(framep)	(0)	/* XXX */
-#define	CLKF_USERMODE(framep)	(USERMODE((framep)->tf_iioq_head))
+#define	CLKF_INTR(framep)	((framep)->tf_flags & TFF_INTR)
+#define	CLKF_USERMODE(framep)	((framep)->tf_flags & T_USER)
+#define	CLKF_SYSCALL(framep)	((framep)->tf_flags & TFF_SYS)
 
 #define	signotify(p)		(void)(p)
 #define	need_resched()		{(void)1;}

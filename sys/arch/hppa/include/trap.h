@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.7 2000/01/17 00:02:12 mickey Exp $	*/
+/*	$OpenBSD: trap.h,v 1.8 2000/02/10 20:05:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -79,15 +79,17 @@
 #define	TFF_LAST_POS	0
 #define	TFF_ITLB_POS	1
 #define	TFF_SYS_POS	2
+#define	TFF_INTR_POS	3
 
 #define	TFF_LAST	(1 << (31 - TFF_LAST_POS))
 #define	TFF_ITLB	(1 << (31 - TFF_ITLB_POS))
 #define	TFF_SYS		(1 << (31 - TFF_SYS_POS))
+#define	TFF_INTR	(1 << (31 - TFF_INTR_POS))
 
 /*
- * Definre this for pretty printings of trapflags.
+ * Define this for pretty printings of trapflags.
  */
-#define	T_BITS	"\020\07user\037itlb\040last"
+#define	T_BITS	"\020\07user\036intr\037itlb\040last"
 
 /*
  * These are break instruction entry points.
