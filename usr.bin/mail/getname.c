@@ -1,4 +1,4 @@
-/*	$OpenBSD: getname.c,v 1.5 2001/11/21 15:26:39 millert Exp $	*/
+/*	$OpenBSD: getname.c,v 1.6 2002/10/07 22:45:37 vincent Exp $	*/
 /*	$NetBSD: getname.c,v 1.4 1996/06/08 19:48:23 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)getname.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: getname.c,v 1.5 2001/11/21 15:26:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: getname.c,v 1.6 2002/10/07 22:45:37 vincent Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,7 +46,7 @@ static const char rcsid[] = "$OpenBSD: getname.c,v 1.5 2001/11/21 15:26:39 mille
 #include <pwd.h>
 #include "extern.h"
 
-/* Getname / getuserid for those with hashed passwd data base). */
+/* Getname / getuserid for those with hashed passwd data base. */
 
 /*
  * Search the passwd file for a uid.  Return name on success, NULL on failure
