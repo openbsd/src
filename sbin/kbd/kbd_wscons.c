@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.2 2001/05/04 15:49:10 millert Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.3 2001/06/04 20:05:06 maja Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -46,11 +46,13 @@
 #define SA_PCKBD 0
 #define SA_UKBD  1
 #define SA_AKBD	 2
+#define SA_ZSKBD 3
 	
 struct nlist nl[] = {
 	{ "_pckbd_keydesctab" },
 	{ "_ukbd_keydesctab" },
 	{ "_akbd_keydesctab" },
+	{ "_zskbd_keydesctab" },
 	{ NULL },
 };
 
@@ -58,6 +60,7 @@ char *kbtype_tab[] = {
 	"pc-xt/pc-at",
 	"usb",
 	"adb",
+	"lk201",
 };
 
 struct nameint {
@@ -78,6 +81,7 @@ struct nameint kbdvar_tab[] = {
 };
 
 extern char *__progname;
+int rebuild = 0;
 
 void
 kbd_show_enc(kd, idx)
@@ -87,6 +91,8 @@ kbd_show_enc(kd, idx)
 	struct wscons_keydesc r;
 	unsigned long p;
 	struct nameint *n;
+	int found;
+	long variant;
 
 	printf("tables available for %s keyboard:\nencoding\n\n",
 	       kbtype_tab[idx]);
@@ -94,18 +100,31 @@ kbd_show_enc(kd, idx)
 	kvm_read(kd, p, &r, sizeof(r)); 
 	while (r.name != 0) {
 		n = &kbdenc_tab[0];
+		found = 0;
 		while(n->value) {
 			if (n->value == KB_ENCODING(r.name)) {
 				printf("%s",n->name);
+				found++; 
 			}
 			n++;
 		}
+		if (found == 0) {
+			printf("<encoding 0x%04x>",KB_ENCODING(r.name));
+			rebuild++;
+		}
 		n = &kbdvar_tab[0];
+		found = 0;
+		variant = KB_VARIANT(r.name);
 		while(n->value) {
 			if ((n->value & KB_VARIANT(r.name)) == n->value) {
 				printf(".%s",n->name);
+				variant &= ~n->value;
 			}
 			n++;
+		}
+		if (variant != 0) {
+			printf(".<variant 0x%08x>",variant);
+			rebuild++;
 		}
 		printf("\n");
 		p += sizeof(r);
@@ -124,6 +143,7 @@ kbd_list()
 	int	pc_kbd = 0;
 	int	usb_kbd = 0;
 	int	adb_kbd = 0;
+	int	zs_kbd = 0;
 
 	/* Go through all keyboards. */
 	for (i = 0; i < NUM_KBD; i++) {
@@ -141,10 +161,12 @@ kbd_list()
 				usb_kbd++;
 			if (kbtype == WSKBD_TYPE_ADB)
 				adb_kbd++;
+			if (kbtype == WSKBD_TYPE_LK201)
+				zs_kbd++;
 			close(fd);
 		}
 	}
-	
+
 	if ((kd = kvm_openfiles(NULL,NULL,NULL,O_RDONLY, errbuf)) == 0)
 		errx(1, "kvm_openfiles: %s", errbuf);
 
@@ -160,7 +182,14 @@ kbd_list()
 	if (adb_kbd > 0)
 		kbd_show_enc(kd, SA_AKBD);
 
+	if (zs_kbd > 0)
+		kbd_show_enc(kd, SA_ZSKBD);
+
 	kvm_close(kd);
+	
+	if (rebuild > 0) {
+		printf("Unknown encoding or variant. kbd(1) needs to be rebuild.\n");
+	}
 }
 
 void
