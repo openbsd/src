@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.224 2002/05/20 16:53:57 krw Exp $
+#	$OpenBSD: install.sub,v 1.225 2002/05/22 01:48:38 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -158,11 +158,11 @@ __EOT
 }
 
 get_diskdevs() {
-	bsort `sed -ne ${MDDISKDEVS:-'/^[sw]d[0-9][0-9]* /s/ .*//p'} /tmp/dmesg.boot`
+	bsort `sed -ne "${MDDISKDEVS:-/^[sw]d[0-9][0-9]* /s/ .*//p}" /tmp/dmesg.boot`
 }
 
 get_cddevs() {
-	bsort `sed -ne ${MDCDDEVS:-'/^cd[0-9][0-9]* /s/ .*//p'} /tmp/dmesg.boot`
+	bsort `sed -ne "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}" /tmp/dmesg.boot`
 }
 
 # Ask for a password, saving the input in $resp.

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.11 2002/05/20 16:53:57 krw Exp $
+#	$OpenBSD: install.md,v 1.12 2002/05/22 01:48:38 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 # Machine-dependent install sets
 MDSETS=kernel
 MDTERM=sun
-MDDISKDEVS="'/^sd[0-9] /s/ .*//p;/^x[dy][0-9] /s/ .*//p'"
+MDDISKDEVS='/^sd[0-9] /s/ .*//p;/^x[dy][0-9] /s/ .*//p'
 ARCH=ARCH
 
 md_set_term() {
