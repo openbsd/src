@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.52 2001/12/22 00:20:04 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.53 2002/01/28 06:02:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -418,9 +418,13 @@ pmap_free_pv(struct pv_entry *pv)
 		break;
 	case NPVPPG:
 		if (!pvp->pvp_flag) {
+#ifdef notyet
 			pv_nfree -= NPVPPG - 1;
 			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_list);
 			FREE((vaddr_t) pvp, M_VMPVENT);
+#else
+			panic("pmap_free_pv: mallocated pv page");
+#endif
 		}
 		break;
 	}
