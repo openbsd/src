@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.82 2001/06/23 18:54:44 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.83 2001/06/24 18:24:56 provos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1364,9 +1364,7 @@ ip_forward(m, srcrt)
 	struct mbuf *mcopy;
 	n_long dest;
 	struct ifnet *destifp;
-#if 0 /*KAME IPSEC*/
 	struct ifnet dummyifp;
-#endif
 
 	dest = 0;
 #ifdef DIAGNOSTIC
@@ -1485,54 +1483,19 @@ ip_forward(m, srcrt)
 	case EMSGSIZE:
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_NEEDFRAG;
-#if 1 /*KAME IPSEC*/
-		if (ipforward_rt.ro_rt)
-			destifp = ipforward_rt.ro_rt->rt_ifp;
-#else
-		/*
-		 * If the packet is routed over IPsec tunnel, tell the
-		 * originator the tunnel MTU.
-		 *	tunnel MTU = if MTU - sizeof(IP) - ESP/AH hdrsiz
-		 * XXX quickhack!!!
-		 */
+
+#ifdef IPSEC
 		if (ipforward_rt.ro_rt) {
-			struct secpolicy *sp;
-			int ipsecerror;
-			int ipsechdr;
-			struct route *ro;
-
-			sp = ipsec4_getpolicybyaddr(mcopy,
-						    IP_FORWARDING,
-						    &ipsecerror);
-
-			if (sp == NULL)
-				destifp = ipforward_rt.ro_rt->rt_ifp;
-			else {
-				/* count IPsec header size */
-				ipsechdr = ipsec4_hdrsiz(mcopy, NULL);
-
-				/*
-				 * find the correct route for outer IPv4
-				 * header, compute tunnel MTU.
-				 *
-				 * XXX BUG ALERT
-				 * The "dummyifp" code relies upon the fact
-				 * that icmp_error() touches only ifp->if_mtu.
-				 */
-				/*XXX*/
-				destifp = NULL;
-				if (sp->req != NULL
-				 && sp->req->sa != NULL) {
-					ro = &sp->req->sa->saidx->sa_route;
-					if (ro->ro_rt && ro->ro_rt->rt_ifp) {
-						dummyifp.if_mtu =
-						    ro->ro_rt->rt_ifp->if_mtu;
-						dummyifp.if_mtu -= ipsechdr;
-						destifp = &dummyifp;
-					}
-				}
-
-				key_freesp(sp);
+			struct rtentry *rt = ipforward_rt.ro_rt;
+			destifp = ipforward_rt.ro_rt->rt_ifp;
+			/*
+			 * XXX BUG ALERT
+			 * The "dummyifp" code relies upon the fact
+			 * that icmp_error() touches only ifp->if_mtu.
+			 */
+			if (rt->rt_rmx.rmx_mtu) {
+				dummyifp.if_mtu = rt->rt_rmx.rmx_mtu;
+				destifp = &dummyifp;
 			}
 		}
 #endif /*IPSEC*/
