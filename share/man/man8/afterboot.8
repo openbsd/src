@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.84 2003/07/10 04:24:07 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.85 2003/07/25 09:36:20 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -541,8 +541,10 @@ and
 .Xr ftpd 8
 daemons are not enabled in favor of SSH (Secure Shell).
 .Ss Kerberos
-If you are going to use
-.Xr kerberos
+If you are going to use Kerberos
+.Po see\ \&
+.Ql info heimdal
+.Pc
 for authentication, and you already have a
 Kerberos
 master, change directory to
