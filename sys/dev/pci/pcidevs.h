@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.150 1999/06/14 06:50:22 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.151 1999/06/21 09:33:29 maja Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -608,6 +608,7 @@
 #define	PCI_PRODUCT_ALI_M5237	0x5237		/* M5237 USB Host */
 #define	PCI_PRODUCT_ALI_M5243	0x5243		/* M5243 AGP/PCI-PCI */
 #define	PCI_PRODUCT_ALI_M7101	0x7101		/* M7101 Power Management */
+#define	PCI_PRODUCT_ALI_M3309	0x3309		/* M3309 MPEG Accelerator */
 
 /* Adaptec products */
 #define	PCI_PRODUCT_ADP_AIC7810	0x1078		/* AIC-7810 */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.150 1999/06/14 06:50:22 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.151 1999/06/21 09:33:29 maja Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -313,6 +313,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Acer Labs",
 	    "M7101 Power Management",
+	},
+	{
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M3309,
+	    0,
+	    "Acer Labs",
+	    "M3309 MPEG Accelerator",
 	},
 	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7810,
