@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethers.c,v 1.8 1998/03/18 00:15:25 deraadt Exp $	*/
+/*	$OpenBSD: ethers.c,v 1.9 1998/06/21 22:13:44 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Todd C. Miller.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -37,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ethers.c,v 1.8 1998/03/18 00:15:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ethers.c,v 1.9 1998/06/21 22:13:44 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asprintf.c,v 1.3 1998/02/07 20:51:21 tholo Exp $	*/
+/*	$OpenBSD: asprintf.c,v 1.4 1998/06/21 22:13:46 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Todd C. Miller.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -31,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: asprintf.c,v 1.3 1998/02/07 20:51:21 tholo Exp $";
+static char rcsid[] = "$OpenBSD: asprintf.c,v 1.4 1998/06/21 22:13:46 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>

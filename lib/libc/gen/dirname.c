@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirname.c,v 1.1 1997/08/17 21:31:21 millert Exp $	*/
+/*	$OpenBSD: dirname.c,v 1.2 1998/06/21 22:13:40 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Todd C. Miller.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
@@ -31,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: dirname.c,v 1.1 1997/08/17 21:31:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: dirname.c,v 1.2 1998/06/21 22:13:40 millert Exp $";
 #endif /* not lint */
 
 #include <errno.h>
