@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmp_var.h,v 1.3 2001/01/17 00:33:04 pjanzen Exp $	*/
+/*	$OpenBSD: rmp_var.h,v 1.4 2002/12/13 23:14:07 deraadt Exp $	*/
 /*	$NetBSD: rmp_var.h,v 1.7.2.1 1995/11/14 08:45:43 thorpej Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ typedef char	restofpkt;
  *	COPYWORD(w1,w2)	Copy u_word `w1' to `w2'.
  *	GETWORD(w,i)	Copy u_word `w' into int `i'.
  *	PUTWORD(i,w)	Copy int `i' into u_word `w'.
- * 
+ *
  * N.B. Endianness is handled by use of ntohl/htonl
  */
 #if defined(__vax__) || defined(__tahoe__) || defined(__m68k__)

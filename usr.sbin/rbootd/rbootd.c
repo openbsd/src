@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbootd.c,v 1.15 2002/07/16 23:38:52 mickey Exp $	*/
+/*	$OpenBSD: rbootd.c,v 1.16 2002/12/13 23:14:07 deraadt Exp $	*/
 /*	$NetBSD: rbootd.c,v 1.5 1995/10/06 05:12:17 thorpej Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: rbootd.c,v 1.15 2002/07/16 23:38:52 mickey Exp $";
+static char rcsid[] = "$OpenBSD: rbootd.c,v 1.16 2002/12/13 23:14:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -94,9 +94,7 @@ void DoTimeout(void);
 CLIENT *FindClient(RMPCONN *);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int c, fd, maxfds;
 	fd_set rset;
@@ -120,14 +118,14 @@ main(argc, argv)
 	 *  Parse any arguments.
 	 */
 	while ((c = getopt(argc, argv, "adi:")) != -1)
-		switch(c) {
-		    case 'a':
+		switch (c) {
+		case 'a':
 			BootAny++;
 			break;
-		    case 'd':
+		case 'd':
 			DebugFlg++;
 			break;
-		    case 'i':
+		case 'i':
 			IntfName = optarg;
 			break;
 		}
@@ -300,8 +298,8 @@ main(argc, argv)
 					client = NULL;
 				} else if ((client=FindClient(&rconn))==NULL) {
 					syslog(LOG_INFO,
-					       "%s: boot packet ignored",
-					       EnetStr(&rconn));
+					    "%s: boot packet ignored",
+					    EnetStr(&rconn));
 					sigprocmask(SIG_SETMASK, &omask, NULL);
 					continue;
 				}
@@ -327,7 +325,7 @@ main(argc, argv)
 **		- Timed out connections in `RmpConns' will be freed.
 */
 void
-DoTimeout()
+DoTimeout(void)
 {
 	RMPCONN *rtmp;
 	struct timeval now;
@@ -341,7 +339,7 @@ DoTimeout()
 	for (rtmp = RmpConns; rtmp != NULL; rtmp = rtmp->next)
 		if ((rtmp->tstamp.tv_sec + RMP_TIMEOUT) < now.tv_sec) {
 			syslog(LOG_WARNING, "%s: connection timed out (%u)",
-			       EnetStr(rtmp), rtmp->rmp.r_type);
+			    EnetStr(rtmp), rtmp->rmp.r_type);
 			RemoveConn(rtmp);
 		}
 }
@@ -362,16 +360,14 @@ DoTimeout()
 **		- This routine must be called with SIGHUP blocked since
 **		  a reconfigure can invalidate the information returned.
 */
-
 CLIENT *
-FindClient(rconn)
-	RMPCONN *rconn;
+FindClient(RMPCONN *rconn)
 {
 	CLIENT *ctmp;
 
 	for (ctmp = Clients; ctmp != NULL; ctmp = ctmp->next)
 		if (bcmp((char *)&rconn->rmp.hp_hdr.saddr[0],
-		         (char *)&ctmp->addr[0], RMP_ADDRLEN) == 0)
+		    (char *)&ctmp->addr[0], RMP_ADDRLEN) == 0)
 			break;
 
 	return(ctmp);
@@ -390,8 +386,7 @@ FindClient(rconn)
 **		- This process ceases to exist.
 */
 void
-Exit(sig)
-	int sig;
+Exit(int sig)
 {
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 
@@ -400,7 +395,7 @@ Exit(sig)
 }
 
 void
-DoExit()
+DoExit(void)
 {
 	syslog(LOG_ERR, "going down on fatal error");
 	exit(1);
@@ -424,14 +419,13 @@ DoExit()
 **		- This routine must be called with SIGHUP blocked.
 */
 void
-ReConfig(signo)
-	int signo;
+ReConfig(int signo)
 {
 	doreconfig = 1;
 }
 
 void
-DoReConfig()
+DoReConfig(void)
 {
 	syslog(LOG_NOTICE, "reconfiguring boot server");
 
@@ -457,14 +451,13 @@ DoReConfig()
 **		- Debug file is closed.
 */
 void
-DebugOff(signo)
-	int signo;
+DebugOff(int signo)
 {
 	dodebugoff = 1;
 }
 
 void
-DoDebugOff()
+DoDebugOff(void)
 {
 	if (DbgFp != NULL)
 		(void) fclose(DbgFp);
@@ -486,14 +479,13 @@ DoDebugOff()
 **		  otherwise do nothing.
 */
 void
-DebugOn(signo)
-	int signo;
+DebugOn(int signo)
 {
 	dodebugon = 1;
 }
 
 void
-DoDebugOn()
+DoDebugOn(void)
 {
 	if (DbgFp == NULL) {
 		if ((DbgFp = fopen(DbgFile, "w")) == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parseconf.c,v 1.6 2002/03/14 16:44:25 mpech Exp $	*/
+/*	$OpenBSD: parseconf.c,v 1.7 2002/12/13 23:14:07 deraadt Exp $	*/
 /*	$NetBSD: parseconf.c,v 1.4 1995/10/06 05:12:16 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)parseconf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: parseconf.c,v 1.6 2002/03/14 16:44:25 mpech Exp $";
+static char rcsid[] = "$OpenBSD: parseconf.c,v 1.7 2002/12/13 23:14:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -82,16 +82,14 @@ static char rcsid[] = "$OpenBSD: parseconf.c,v 1.6 2002/03/14 16:44:25 mpech Exp
 **		  to create a linked list of default boot files.
 */
 int
-ParseConfig()
+ParseConfig(void)
 {
-	FILE *fp;
-	CLIENT *client;
-	u_int8_t *addr;
-	char line[C_LINELEN];
-	char *cp, *bcp;
-	int i, j;
-	int linecnt = 0;
+	char line[C_LINELEN], *cp, *bcp;
+	int i, j, linecnt = 0;
 	sigset_t mask, omask;
+	u_int8_t *addr;
+	CLIENT *client;
+	FILE *fp;
 
 	if (BootAny)				/* ignore config file */
 		return(1);
@@ -100,7 +98,7 @@ ParseConfig()
 
 	if ((fp = fopen(ConfigFile, "r")) == NULL) {
 		syslog(LOG_ERR, "ParseConfig: can't open config file (%s)",
-		       ConfigFile);
+		    ConfigFile);
 		return(0);
 	}
 
@@ -147,8 +145,8 @@ ParseConfig()
 		 */
 		if ((addr = ParseAddr(bcp)) == NULL) {
 			syslog(LOG_ERR,
-			       "ParseConfig: line %d: cant parse <%s>",
-			       linecnt, bcp);
+			    "ParseConfig: line %d: cant parse <%s>",
+			    linecnt, bcp);
 			continue;
 		}
 
@@ -163,10 +161,10 @@ ParseConfig()
 		 *  list of boot-able files.
 		 */
 		i = 0;
-		if (bcp == cp)				/* no files spec'd */
+		if (bcp == cp) {			/* no files spec'd */
 			for (; i < C_MAXFILE && BootFiles[i] != NULL; i++)
 				client->files[i] = BootFiles[i];
-		else {
+		} else {
 			do {
 				/*
 				 *  For each boot file spec'd, make sure it's
@@ -175,8 +173,9 @@ ParseConfig()
 				 */
 				for (j = 0; ; j++) {
 					if (j==C_MAXFILE||BootFiles[j]==NULL) {
-						syslog(LOG_ERR, "ParseConfig: line %d: no boot file (%s)",
-						       linecnt, bcp);
+						syslog(LOG_ERR,
+						    "ParseConfig: line %d: no boot file (%s)",
+						    linecnt, bcp);
 						break;
 					}
 					if (STREQN(BootFiles[j], bcp)) {
@@ -199,7 +198,7 @@ ParseConfig()
 			 *  the entire record is invalidated.
 			 */
 			if (i == 0) {
-				FreeClient(client);	
+				FreeClient(client);
 				continue;
 			}
 		}
@@ -214,9 +213,7 @@ ParseConfig()
 	}
 
 	(void) fclose(fp);				/* close config file */
-
 	sigprocmask(SIG_SETMASK, &omask, NULL);		/* reset signal mask */
-
 	return(1);					/* return success */
 }
 
@@ -250,13 +247,12 @@ ParseConfig()
 **		  be copied if it's to be saved.
 */
 u_int8_t *
-ParseAddr(str)
-	char *str;
+ParseAddr(char *str)
 {
 	static u_int8_t addr[RMP_ADDRLEN];
-	char *cp;
-	unsigned int i;
 	int part, subpart;
+	unsigned int i;
+	char *cp;
 
 	bzero((char *)&addr[0], RMP_ADDRLEN);	/* zero static buffer */
 
@@ -314,11 +310,11 @@ ParseAddr(str)
 **		  called to re-order it's list of boot file pointers.
 */
 int
-GetBootFiles()
+GetBootFiles(void)
 {
-	DIR *dfd;
 	struct stat statb;
 	struct dirent *dp;
+	DIR *dfd;
 	int i;
 
 	/*

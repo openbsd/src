@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.10 2002/05/29 18:39:00 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.11 2002/12/13 23:14:07 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.5.2.1 1995/11/14 08:45:42 thorpej Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: bpf.c,v 1.10 2002/05/29 18:39:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: bpf.c,v 1.11 2002/12/13 23:14:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@ static u_int8_t *BpfPkt = NULL;
 **		If an error is encountered, the program terminates here.
 */
 int
-BpfOpen()
+BpfOpen(void)
 {
 	struct ifreq ifr;
 	char bpfdev[32];
@@ -125,7 +125,7 @@ BpfOpen()
 	}
 	if (n != DLT_EN10MB) {
 		syslog(LOG_ERR,"bpf: %s: data-link type %d unsupported",
-		       IntfName, n);
+		    IntfName, n);
 		DoExit();
 	}
 
@@ -171,7 +171,7 @@ BpfOpen()
 
 	if (BpfPkt == NULL) {
 		syslog(LOG_ERR, "bpf: out of memory (%u bytes for bpfpkt)",
-		       BpfLen);
+		    BpfLen);
 		DoExit();
 	}
 
@@ -193,7 +193,7 @@ BpfOpen()
 		};
 #undef	RMP
 		static struct bpf_program bpf_pgm = {
-		    sizeof(bpf_insn)/sizeof(bpf_insn[0]), bpf_insn
+			sizeof(bpf_insn)/sizeof(bpf_insn[0]), bpf_insn
 		};
 
 		if (ioctl(BpfFd, BIOCSETF, (caddr_t)&bpf_pgm) < 0) {
@@ -221,8 +221,7 @@ BpfOpen()
 **		None.
 */
 char *
-BpfGetIntfName(errmsg)
-	char **errmsg;
+BpfGetIntfName(char **errmsg)
 {
 	struct ifreq ibuf[8], *ifrp, *ifend, *mp;
 	struct ifconf ifc;
@@ -259,7 +258,7 @@ BpfGetIntfName(errmsg)
 #endif
 	ifrp = ibuf;
 	ifend = (struct ifreq *)((char *)ibuf + ifc.ifc_len);
-	
+
 	mp = 0;
 	minunit = 666;
 	for (; ifrp < ifend; ++ifrp) {
@@ -315,9 +314,7 @@ BpfGetIntfName(errmsg)
 **		None.
 */
 int
-BpfRead(rconn, doread)
-	RMPCONN *rconn;
-	int doread;
+BpfRead(RMPCONN *rconn, int doread)
 {
 	int datlen, caplen, hdrlen;
 	static u_int8_t *bp = NULL, *ep = NULL;
@@ -349,15 +346,15 @@ BpfRead(rconn, doread)
 
 		if (caplen != datlen)
 			syslog(LOG_ERR,
-			       "bpf: short packet dropped (%d of %d bytes)",
-			       caplen, datlen);
+			    "bpf: short packet dropped (%d of %d bytes)",
+			    caplen, datlen);
 		else if (caplen > sizeof(struct rmp_packet))
 			syslog(LOG_ERR, "bpf: large packet dropped (%d bytes)",
-			       caplen);
+			    caplen);
 		else {
 			rconn->rmplen = caplen;
 			bcopy((char *)&bhp->bh_tstamp, (char *)&rconn->tstamp,
-			      sizeof(struct timeval));
+			    sizeof(struct timeval));
 			bcopy((char *)bp + hdrlen, (char *)&rconn->rmp, caplen);
 		}
 		bp += BPF_WORDALIGN(caplen + hdrlen);
@@ -381,8 +378,7 @@ BpfRead(rconn, doread)
 **		None.
 */
 int
-BpfWrite(rconn)
-	RMPCONN *rconn;
+BpfWrite(RMPCONN *rconn)
 {
 	if (write(BpfFd, (char *)&rconn->rmp, rconn->rmplen) < 0) {
 		syslog(LOG_ERR, "write: %s: %m", EnetStr(rconn));
