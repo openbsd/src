@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.46 1999/11/10 22:24:01 markus Exp $");
+RCSID("$Id: sshd.c,v 1.47 1999/11/10 23:36:45 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -60,6 +60,9 @@ int debug_flag = 0;
 
 /* Flag indicating that the daemon is being started from inetd. */
 int inetd_flag = 0;
+
+/* debug goes to stderr unless inetd_flag is set */
+int log_stderr = 0;
 
 /* argv[0] without path. */
 char *av0;
@@ -254,6 +257,7 @@ main(int ac, char **av)
 	  break;
 	case 'd':
 	  debug_flag = 1;
+	  options.log_level = SYSLOG_LEVEL_DEBUG;
 	  break;
 	case 'i':
 	  inetd_flag = 1;
@@ -262,7 +266,7 @@ main(int ac, char **av)
           silentrsa = 1;
 	  break;
 	case 'q':
-	  options.quiet_mode = 1;
+	  options.log_level = SYSLOG_LEVEL_QUIET;
 	  break;
 	case 'b':
 	  options.server_key_bits = atoi(optarg);
@@ -333,9 +337,11 @@ main(int ac, char **av)
     }
 
   /* Initialize the log (it is reinitialized below in case we forked). */
-  log_init(av0, debug_flag && !inetd_flag, 
-	   debug_flag || options.fascist_logging, 
-	   options.quiet_mode, options.log_facility);
+
+  if (debug_flag && !inetd_flag)
+    log_stderr = 1;
+
+  log_init(av0, options.log_level, options.log_facility, log_stderr);
 
   debug("sshd version %.100s", SSH_VERSION);
 
@@ -350,7 +356,8 @@ main(int ac, char **av)
       else
 	{
 	  int err = errno;
-	  log_init(av0, !inetd_flag, 1, 0, options.log_facility);
+ 	  /* force logging */
+          log_init(av0, SYSLOG_LEVEL_DEBUG, options.log_facility, log_stderr);
 	  error("Could not load host key: %.200s: %.100s", 
 		options.host_key_file, strerror(err));
 	}
@@ -380,9 +387,7 @@ main(int ac, char **av)
     }
 
   /* Reinitialize the log (because of the fork above). */
-  log_init(av0, debug_flag && !inetd_flag, 
-	   debug_flag || options.fascist_logging, 
-	   options.quiet_mode, options.log_facility);
+  log_init(av0, options.log_level, options.log_facility, log_stderr);
 
   /* Check that server and host key lengths differ sufficiently.  This is
      necessary to make double encryption work with rsaref.  Oh, I hate
@@ -550,9 +555,7 @@ main(int ac, char **av)
 		  close(listen_sock);
 		  sock_in = newsock;
 		  sock_out = newsock;
-		  log_init(av0, debug_flag && !inetd_flag, 
-			   options.fascist_logging || debug_flag, 
-			   options.quiet_mode, options.log_facility);
+                  log_init(av0, options.log_level, options.log_facility, log_stderr);
 		  break;
 		}
 	    }
@@ -1691,8 +1694,7 @@ void do_exec_no_pty(const char *command, struct passwd *pw,
   if ((pid = fork()) == 0)
     {
       /* Child.  Reinitialize the log since the pid has changed. */
-      log_init(av0, debug_flag && !inetd_flag, debug_flag, 
-	       options.quiet_mode, options.log_facility);
+      log_init(av0, options.log_level, options.log_facility, log_stderr);
 
       /* Create a new session and process group since the 4.4BSD setlogin()
 	 affects the entire process group. */
@@ -1821,8 +1823,7 @@ void do_exec_pty(const char *command, int ptyfd, int ttyfd,
       pid = getpid();
 
       /* Child.  Reinitialize the log because the pid has changed. */
-      log_init(av0, debug_flag && !inetd_flag, debug_flag, options.quiet_mode, 
-	       options.log_facility);
+      log_init(av0, options.log_level, options.log_facility, log_stderr);
 
       /* Close the master side of the pseudo tty. */
       close(ptyfd);
