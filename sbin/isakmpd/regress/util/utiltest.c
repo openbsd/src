@@ -1,4 +1,4 @@
-/*	$OpenBSD: utiltest.c,v 1.1 2001/07/01 19:25:11 niklas Exp $	*/
+/*	$OpenBSD: utiltest.c,v 1.2 2001/07/01 20:51:58 niklas Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -57,9 +57,12 @@ main (int argc, char *argv[])
 int test_1 (char *address, char *port, int ok)
 {
   struct sockaddr *sa;
+#ifdef DEBUG
   struct sockaddr_in *sai;
   struct sockaddr_in6 *sai6;
-  int i, rv;
+  int i;
+#endif
+  int rv;
 
   printf ("test_1 (\"%s\", \"%s\") ", address, port);
   rv = text2sockaddr (address, port, &sa) == ok;
@@ -82,6 +85,6 @@ int test_1 (char *address, char *port, int ok)
 	printf ("%02x", sai6->sin6_addr.s6_addr[i]);
       printf (" port %d\n", ntohs (sai6->sin6_port));
     }
-  return rv;
 #endif
+  return rv;
 }
