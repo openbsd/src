@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.141 2000/06/14 15:50:55 deraadt Exp $
+#	$OpenBSD: rc,v 1.142 2000/06/18 22:58:42 todd Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -158,22 +158,6 @@ if [ "X${named_flags}" != X"NO" -a "X${named_chroot}" != "X" ]; then
 	syslogd_flags="${syslogd_flags} -a ${named_chroot}/dev/log"
 fi
 syslogd ${syslogd_flags}
-
-# /etc/ifaliases, if it exists, contains the names of additional IP
-# addresses for each interface. It is formatted as a series of lines
-# that contain
-#	interface address netmask
-if [ -f /etc/ifaliases ]; then
-(
-	# delete comments and blank lines
-	set -- `stripcom /etc/ifaliases`
-	while [ $# -ge 3 ] ; do
-		ifconfig $1 inet alias $2 netmask $3
-		route -n add -host $2 localhost
-		shift 3
-	done
-)
-fi
 
 # $named_flags, $named_user, and $named_chroot are imported from /etc/rc.conf;
 # if $named_flags != NO, named is run.

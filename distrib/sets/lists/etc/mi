@@ -31,7 +31,6 @@
 ./etc/hosts
 ./etc/hosts.equiv
 ./etc/hosts.lpd
-./etc/ifaliases
 ./etc/inetd.conf
 ./etc/ipf.rules
 ./etc/ipnat.rules
