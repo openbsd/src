@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.11 1997/02/03 21:46:17 kstailey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.12 1997/02/03 23:32:22 kstailey Exp $	*/
 /*	$NetBSD: trap.c,v 1.63-1.65ish 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
@@ -429,11 +429,6 @@ trap(type, code, v, frame)
 		goto douret;
 
 	case T_MMUFLT:		/* kernel mode page fault */
-#ifdef DDB
-		/* Hack to avoid calling VM code from DDB. */
-		if (db_recover != 0)
-			goto dopanic;
-#endif
 		/*
 		 * If we were doing profiling ticks or other user mode
 		 * stuff from interrupt code, Just Say No.
