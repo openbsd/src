@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.20 2001/05/15 07:26:28 art Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.21 2001/05/15 07:49:45 art Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -219,7 +219,7 @@ fdesc_allocvp(ftype, ix, mp, vpp)
 
 	fc = FD_NHASH(ix);
 loop:
-	for (fd = fc->lh_first; fd != 0; fd = fd->fd_hash.le_next) {
+	LIST_FOREACH(fd, fc, fd_hash) {
 		if (fd->fd_ix == ix && fd->fd_vnode->v_mount == mp) {
 			if (vget(fd->fd_vnode, 0, p))
 				goto loop;
@@ -227,7 +227,6 @@ loop:
 			goto out;
 		}
 	}
-
 
 	error = getnewvnode(VT_FDESC, mp, fdesc_vnodeop_p, vpp);
 	if (error)
