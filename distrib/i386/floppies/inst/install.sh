@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.11 1996/09/30 12:22:10 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.12 1996/09/30 15:55:13 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -438,6 +438,7 @@ while [ $part_used -lt $partition ]; do
 		part_used=$partition
 	fi
 done
+echo "" >> $DT
 sync
 
 echo	""
