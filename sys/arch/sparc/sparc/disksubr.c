@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.17 1997/08/08 21:46:52 niklas Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.18 1997/10/01 22:54:20 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -351,7 +351,7 @@ static u_char
 sun_fstypes[16] = {
 	FS_BSDFFS,	/* a */
 	FS_SWAP,	/* b */
-	FS_OTHER,	/* c - whole disk */
+	FS_UNUSED,	/* c - whole disk */
 	FS_BSDFFS,	/* d */
 	FS_BSDFFS,	/* e */
 	FS_BSDFFS,	/* f */
