@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.18 2003/05/21 02:14:18 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.19 2003/08/03 19:03:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -226,8 +226,10 @@ ie_gsc_read16(sc, offset)
 	struct ie_softc *sc;
 	int offset;
 {
-	fdce(0, sc->bh + offset);
-	return *(volatile u_int16_t *)(sc->bh + offset);
+	u_int16_t *addr = (volatile u_int16_t *)(sc->bh + offset);
+
+	asm __volatile ("fdc	0(sr0, %0)" :: "r" (addr));
+	return *addr;
 }
 
 void
@@ -236,8 +238,10 @@ ie_gsc_write16(sc, offset, v)
 	int offset;
 	u_int16_t v;
 {
-	*(volatile u_int16_t *)(sc->bh + offset) = v;
-	fdce(0, sc->bh + offset);
+	u_int16_t *addr = (volatile u_int16_t *)(sc->bh + offset);
+
+	*addr = v;
+	asm __volatile ("fdc	0(sr0, %0)" :: "r" (addr));
 }
 
 void
@@ -246,10 +250,12 @@ ie_gsc_write24(sc, offset, addr)
 	int offset;
 	int addr;
 {
-	*(volatile u_int16_t *)(sc->bh + offset + 0) = (addr      ) & 0xffff;
-	*(volatile u_int16_t *)(sc->bh + offset + 2) = (addr >> 16) & 0xffff;
-	fdce(0, sc->bh + offset + 0);
-	fdce(0, sc->bh + offset + 2);
+	u_int16_t *addr = (volatile u_int16_t *)(sc->bh + offset);
+
+	addr[0] = (addr      ) & 0xffff;
+	addr[1] = (addr >> 16) & 0xffff;
+	asm __volatile ("fdc	0(sr0, %0)" :: "r" (addr+0));
+	asm __volatile ("fdc	0(sr0, %0)" :: "r" (addr+1));
 }
 
 void
