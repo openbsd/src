@@ -1,3 +1,4 @@
+/*	$OpenBSD: ipnat.c,v 1.6 1997/02/07 18:10:07 kstailey Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -49,10 +50,10 @@
 #include "ip_nat.h"
 #include <ctype.h>
 
-
+#if 0
 #ifndef lint
 static  char    sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static	char	rcsid[] = "$Id: ipnat.c,v 1.5 1997/02/07 17:02:50 kstailey Exp $";
+#endif
 #endif
 
 #if	SOLARIS
