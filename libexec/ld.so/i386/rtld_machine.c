@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.15 2004/05/25 18:07:20 mickey Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.16 2004/05/25 21:42:48 mickey Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -76,17 +76,6 @@
 #include "syscall.h"
 #include "archdep.h"
 #include "resolve.h"
-
-void
-_dl_bcopy(const void *src, void *dest, int size)
-{
-	const unsigned char *psrc = src;
-	unsigned char *pdest = dest;
-	int i;
-
-	for (i = 0; i < size; i++)
-		pdest[i] = psrc[i];
-}
 
 /*
  * The following table holds for each relocation type:

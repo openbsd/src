@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.17 2003/11/11 14:51:01 drahn Exp $	*/
+/*	$OpenBSD: util.h,v 1.18 2004/05/25 21:42:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -43,8 +43,6 @@ void _dl_show_objects(void);
 unsigned int _dl_random(void);
 ssize_t _dl_write(int fd, const char* buf, size_t len);
 
-void _dl_bcopy(const void *src, void *dest, int size);
-
 long _dl_strtol(const char *nptr, char **endptr, int base);
 
 /*
@@ -71,6 +69,17 @@ _dl_memset(void *dst, const int c, size_t n)
 		while (--n != 0);
 	}
 	return (dst);
+}
+
+static inline void
+_dl_bcopy(const void *src, void *dest, int size)
+{
+	unsigned const char *psrc = src;
+	unsigned char *pdest = dest;
+	int i;
+
+	for (i = 0; i < size; i++)
+		pdest[i] = psrc[i];
 }
 
 static inline int
