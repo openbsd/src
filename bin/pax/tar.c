@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.3 1996/06/23 14:20:43 deraadt Exp $	*/
+/*	$OpenBSD: tar.c,v 1.4 1996/08/27 03:53:14 tholo Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.3 1996/06/23 14:20:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.4 1996/08/27 03:53:14 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -457,7 +457,7 @@ tar_rd(arcn, buf)
 	 * copy out the name and values in the stat buffer
 	 */
 	hd = (HD_TAR *)buf;
-	arcn->nlen = l_strncpy(arcn->name, hd->name, sizeof(hd->name));
+	arcn->nlen = l_strncpy(arcn->name, hd->name, sizeof(hd->name) - 1);
 	arcn->name[arcn->nlen] = '\0';
 	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode,sizeof(hd->mode),OCT) &
 	    0xfff);
@@ -482,7 +482,7 @@ tar_rd(arcn, buf)
 		 */
 		arcn->type = PAX_SLK;
 		arcn->ln_nlen = l_strncpy(arcn->ln_name, hd->linkname,
-			sizeof(hd->linkname));
+			sizeof(hd->linkname) - 1);
 		arcn->ln_name[arcn->ln_nlen] = '\0';
 		arcn->sb.st_mode |= S_IFLNK;
 		break;
@@ -494,7 +494,7 @@ tar_rd(arcn, buf)
 		arcn->type = PAX_HLK;
 		arcn->sb.st_nlink = 2;
 		arcn->ln_nlen = l_strncpy(arcn->ln_name, hd->linkname,
-			sizeof(hd->linkname));
+			sizeof(hd->linkname) - 1);
 		arcn->ln_name[arcn->ln_nlen] = '\0';
 
 		/*
@@ -625,7 +625,8 @@ tar_wr(arcn)
 	 * a header)
 	 */
 	hd = (HD_TAR *)hdblk;
-	zf_strncpy(hd->name, arcn->name, sizeof(hd->name));
+	zf_strncpy(hd->name, arcn->name, sizeof(hd->name) - 1);
+	arcn->name[sizeof(hd->name) - 1] = '\0';
 	arcn->pad = 0;
 
 	if (arcn->type == PAX_DIR) {
@@ -644,7 +645,8 @@ tar_wr(arcn)
 		 * no data follows this file, so no pad
 		 */
 		hd->linkflag = SYMTYPE;
-		zf_strncpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname));
+		zf_strncpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname) - 1);
+		hd->linkname[sizeof(hd->linkname) - 1] = '\0';
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
 			goto out;
 	} else if ((arcn->type == PAX_HLK) || (arcn->type == PAX_HRG)) {
@@ -652,7 +654,8 @@ tar_wr(arcn)
 		 * no data follows this file, so no pad
 		 */
 		hd->linkflag = LNKTYPE;
-		zf_strncpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname));
+		zf_strncpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname) - 1);
+		hd->linkname[sizeof(hd->linkname) - 1] = '\0';
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
 			goto out;
 	} else {
@@ -830,11 +833,12 @@ ustar_rd(arcn, buf)
 	 */
 	dest = arcn->name;
 	if (*(hd->prefix) != '\0') {
-		cnt = l_strncpy(arcn->name, hd->prefix, sizeof(hd->prefix));
+		cnt = l_strncpy(arcn->name, hd->prefix, sizeof(hd->prefix) - 1);
+		hd->prefix[sizeof(hd->prefix) - 1] = '\0';
 		dest = arcn->name + arcn->nlen;
 		*dest++ = '/';
 	}
-	arcn->nlen = l_strncpy(dest, hd->name, sizeof(hd->name));
+	arcn->nlen = l_strncpy(dest, hd->name, sizeof(hd->name) - 1);
 	arcn->nlen += cnt;
 	arcn->name[arcn->nlen] = '\0';
 
@@ -924,7 +928,7 @@ ustar_rd(arcn, buf)
 		 * copy the link name
 		 */
 		arcn->ln_nlen = l_strncpy(arcn->ln_name, hd->linkname,
-			sizeof(hd->linkname));
+			sizeof(hd->linkname) - 1);
 		arcn->ln_name[arcn->ln_nlen] = '\0';
 		break;
 	case CONTTYPE:
@@ -1006,7 +1010,7 @@ ustar_wr(arcn)
 		 * occur, we remove the / and copy the first part to the prefix
 		 */
 		*pt = '\0';
-		zf_strncpy(hd->prefix, arcn->name, sizeof(hd->prefix));
+		zf_strncpy(hd->prefix, arcn->name, sizeof(hd->prefix) - 1);
 		*pt++ = '/';
 	} else
 		memset(hd->prefix, 0, sizeof(hd->prefix));
@@ -1015,7 +1019,8 @@ ustar_wr(arcn)
 	 * copy the name part. this may be the whole path or the part after
 	 * the prefix
 	 */
-	zf_strncpy(hd->name, pt, sizeof(hd->name));
+	zf_strncpy(hd->name, pt, sizeof(hd->name) - 1);
+	hd->name[sizeof(hd->name) - 1] = '\0';
 
 	/* 
 	 * set the fields in the header that are type dependent
@@ -1058,7 +1063,8 @@ ustar_wr(arcn)
 			hd->typeflag = SYMTYPE;
 		else
 			hd->typeflag = LNKTYPE;
-		zf_strncpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname));
+		zf_strncpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname) - 1);
+		hd->linkname[sizeof(hd->linkname) - 1] = '\0';
 		memset(hd->devmajor, 0, sizeof(hd->devmajor));
 		memset(hd->devminor, 0, sizeof(hd->devminor));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 3))

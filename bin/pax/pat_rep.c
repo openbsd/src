@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.3 1996/06/23 14:20:38 deraadt Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.4 1996/08/27 03:53:16 tholo Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.3 1996/06/23 14:20:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.4 1996/08/27 03:53:16 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -781,6 +781,7 @@ tty_rename(arcn)
 	tty_prnt("Processing continues, name changed to: %s\n", tmpname);
 	res = add_name(arcn->name, arcn->nlen, tmpname);
 	arcn->nlen = l_strncpy(arcn->name, tmpname, PAXPATHLEN+1);
+	arcn->name[PAXPATHLEN] = '\0';
 	if (res < 0)
 		return(-1);
 	return(0);
@@ -1061,6 +1062,7 @@ rep_name(name, nlen, prnt)
 		if (*nname == '\0') 
 			return(1);
 		*nlen = l_strncpy(name, nname, PAXPATHLEN + 1);
+		name[PAXPATHLEN] = '\0';
 	}
 	return(0);
 }

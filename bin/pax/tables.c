@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.3 1996/06/23 14:20:42 deraadt Exp $	*/
+/*	$OpenBSD: tables.c,v 1.4 1996/08/27 03:53:16 tholo Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: tables.c,v 1.3 1996/06/23 14:20:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tables.c,v 1.4 1996/08/27 03:53:16 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -185,6 +185,7 @@ chk_lnk(arcn)
 			 */
 			arcn->ln_nlen = l_strncpy(arcn->ln_name, pt->name,
 				PAXPATHLEN+1);
+			arcn->ln_name[PAXPATHLEN] = '\0';
 			if (arcn->type == PAX_REG)
 				arcn->type = PAX_HRG;
 			else
@@ -660,6 +661,7 @@ sub_name(oname, onamelen)
 			 * and return (we know that oname has enough space)
 			 */
 			*onamelen = l_strncpy(oname, pt->nname, PAXPATHLEN+1);
+			oname[PAXPATHLEN] = '\0';
 			return;
 		}
 		pt = pt->fow;
