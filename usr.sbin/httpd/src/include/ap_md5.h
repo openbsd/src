@@ -93,19 +93,13 @@
 extern "C" {
 #endif
 
-/* MD5.H - header file for MD5C.C */
+#include <md5.h>
 
 #define MD5_DIGESTSIZE 16
 
 /* UINT4 defines a four byte word */
 typedef unsigned int UINT4;
-
-/* MD5 context. */
-typedef struct {
-    UINT4 state[4];		/* state (ABCD) */
-    UINT4 count[2];		/* number of bits, modulo 2^64 (lsb first) */
-    unsigned char buffer[64];	/* input buffer */
-} AP_MD5_CTX;
+#define AP_MD5_CTX MD5_CTX
 
 /*
  * Define the Magic String prefix that identifies a password as being
