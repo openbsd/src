@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 1996/08/08 18:46:58 dm Exp $
+#	$OpenBSD: Makefile,v 1.16 1996/08/08 20:39:39 deraadt Exp $
 #	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
@@ -26,6 +26,8 @@ SUBDIR=	apply apropos arch asa at awk banner basename bdes biff cal calendar \
 SUBDIR+= ar gprof nm ranlib size strip strings
 .endif
 
+.if   make(clean) || make(cleandir) || make(obj)
+SUBDIR+= pctrctl
 .if ${MACHINE_ARCH} == "i386"
 SUBDIR+= pctrctl
 .endif
