@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.4 1997/09/06 00:37:34 deraadt Exp $
+.\"	$OpenBSD: boot.8,v 1.5 1997/09/07 03:12:37 mickey Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -202,8 +202,13 @@ system code
 .Xr fdisk 8 ,
 .Xr installboot 8 ,
 .Xr boot 8 ,
-.Xr gzip 1 ,
-.%B http://quest.jpl.nasa.gov/zlib/ .
+.Xr gzip 1 .
+.Pp
+RFC 1950 describes the zlib library interface.
+.Pp
+The official home page for the version of zlib used in
+.Ox
+operating system see http://quest.jpl.nasa.gov/zlib/ .
 .Sh BUGS
 Well, nobody is perfect.
 .Sh HISTORY
