@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.3 1996/05/04 11:52:55 deraadt Exp $ */
+/*	$OpenBSD: lpr.c,v 1.4 1996/05/06 06:40:13 pefo Exp $ */
 /*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ main(argc, argv)
 		char *p;
 
 		printer = DEFLP;
-		if ((p = getenv("PRINTER"))
+		if ((p = getenv("PRINTER")) == NULL)
 			printer = p;
 	}
 	chkprinter(printer);

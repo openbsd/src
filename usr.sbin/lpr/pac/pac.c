@@ -1,4 +1,4 @@
-/*	$OpenBSD: pac.c,v 1.4 1996/05/04 11:53:05 deraadt Exp $ */
+/*	$OpenBSD: pac.c,v 1.5 1996/05/06 06:41:13 pefo Exp $ */
 /*	$NetBSD: pac.c,v 1.7 1996/03/21 18:21:20 jtc Exp $	*/
 
 /*
@@ -173,7 +173,7 @@ fprintf(stderr,
 		char *p;
 
 		printer = DEFLP;
-		if ((p = getenv("PRINTER"))
+		if ((p = getenv("PRINTER")) == NULL)
 			printer = p;
 	}
 	if (!chkprinter(printer)) {
