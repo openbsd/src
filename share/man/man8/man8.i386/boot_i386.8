@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_i386.8,v 1.9 2003/06/04 04:43:56 deraadt Exp $
+.\"	$OpenBSD: boot_i386.8,v 1.10 2004/04/03 10:15:37 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\"
@@ -165,6 +165,8 @@ system primary stage bootstrap (PBR)
 .It Pa /usr/mdec/boot
 system second stage bootstrap (usually also installed as
 .Pa /boot )
+.It Pa /usr/mdec/pxeboot
+PXE bootstrap
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
@@ -172,6 +174,7 @@ system second stage bootstrap (usually also installed as
 .Xr halt 8 ,
 .Xr init 8 ,
 .Xr installboot 8 ,
+.Xr pxeboot 8 ,
 .Xr reboot 8 ,
 .Xr savecore 8 ,
 .Xr shutdown 8

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.38 2004/01/02 09:17:22 jmc Exp $
+.\"	$OpenBSD: boot.8,v 1.39 2004/04/03 10:15:37 jmc Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -312,6 +312,8 @@ Displays system time and date.
 .Bl -tag -width /usr/mdec/biosbootxx -compact
 .It Pa /usr/mdec/biosboot
 first stage bootstrap
+.It Pa /usr/mdec/pxeboot
+PXE bootstrap
 .It Pa /boot
 system bootstrap
 .It Pa /etc/boot.conf
@@ -364,6 +366,7 @@ option.
 .Xr boot_i386 8 ,
 .Xr fdisk 8 ,
 .Xr installboot 8 ,
+.Xr pxeboot 8 ,
 .Xr reboot 8
 .Pp
 RFC 1950 describes the zlib library interface.
