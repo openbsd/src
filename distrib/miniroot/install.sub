@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.345 2004/07/17 03:26:07 krw Exp $
+#	$OpenBSD: install.sub,v 1.346 2004/07/17 03:46:12 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -319,7 +319,7 @@ isin() {
 # add first argument to list formed by the remaining arguments
 # adds to the tail if the element does not already exist
 addel() {
-	local	_a=$1 _b _seen=false
+	local	_a=$1
 
 	shift
 
