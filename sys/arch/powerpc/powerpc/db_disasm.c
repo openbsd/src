@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.3 1998/09/09 04:37:08 rahnds Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.4 1999/07/05 20:22:16 rahnds Exp $	*/
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -569,8 +569,8 @@ disasm_fields(const struct opcode *popcode, instr_t instr, char *disasm_str)
 		u_int sprl;
 		u_int sprh;
 		char *reg;
-		sprh = extract_field(instr, 31 - 15, 5);
-		sprl = extract_field(instr, 31 - 20, 5);
+		sprl = extract_field(instr, 31 - 15, 5);
+		sprh = extract_field(instr, 31 - 20, 5);
 		spr = sprh << 5 | sprl;
 
 		/* this table could be written better */
@@ -732,8 +732,8 @@ disasm_fields(const struct opcode *popcode, instr_t instr, char *disasm_str)
 		u_int tbrl;
 		u_int tbrh;
 		char *reg;
-		tbrh = extract_field(instr, 31 - 15, 5);
-		tbrl = extract_field(instr, 31 - 20, 5);
+		tbrl = extract_field(instr, 31 - 15, 5);
+		tbrh = extract_field(instr, 31 - 20, 5);
 		tbr = tbrh << 5 | tbrl;
 		switch (tbr) {
 		case 268:
