@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.20 1996/11/24 00:43:23 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.21 1996/12/16 01:07:22 downsj Exp $
 
 MAN=		cccp.1 gcc.1 cp/g++.1 f/g77.1
 MLINKS+=	gcc.1 cc.1
@@ -30,10 +30,12 @@ all:	config.status
 config: .FORCE
 	-rm -f config.cache
 	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
-		--prefix=/usr --gxx-include=${GPP_INC_DIR} ${GCCARCH}
+		--prefix=/usr --local-prefix=/usr \
+		--gxx-include=${GPP_INC_DIR} ${GCCARCH}
 config.status:
 	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
-		--prefix=/usr --gxx-include=${GPP_INC_DIR} ${GCCARCH}
+		--prefix=/usr --local-prefix=/usr \
+		--gxx-include=${GPP_INC_DIR} ${GCCARCH}
 
 install:	maninstall
 	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr \
@@ -47,7 +49,11 @@ install:	maninstall
 	if [ -e ${DESTDIR}/usr/lib/libf2c.a ]; then \
 		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/lib/libf2c.a; \
 		chmod 444 ${DESTDIR}/usr/lib/libf2c.a; \
-	fi; \
+	fi
+	if [ -e ${DESTDIR}/usr/include/f2c.h ]; then \
+		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/f2c.h; \
+		chmod 444 ${DESTDIR}/usr/include/f2c.h; \
+	fi
 	__target=`sed -n '/^target=/s/target=//p' Makefile`; \
 	__version=`sed -n '/^version=/s/version=//p' Makefile`; \
 	ln -fs /usr/lib/gcc-lib/$$__target/$$__version/cpp \
