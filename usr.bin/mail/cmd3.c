@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.17 2001/11/21 15:26:39 millert Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.18 2001/11/21 20:41:55 millert Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: cmd3.c,v 1.17 2001/11/21 15:26:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmd3.c,v 1.18 2001/11/21 20:41:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -265,6 +265,7 @@ char *
 reedit(char *subj)
 {
 	char *newsubj;
+	size_t len;
 
 	if (subj == NULL)
 		return(NULL);
@@ -272,9 +273,10 @@ reedit(char *subj)
 	    (subj[1] == 'e' || subj[1] == 'E') &&
 	    subj[2] == ':')
 		return(subj);
-	newsubj = salloc(strlen(subj) + 5);
-	strcpy(newsubj, "Re: ");
-	strcpy(newsubj + 4, subj);
+	len = strlen(subj) + 5;
+	newsubj = salloc(len);
+	strlcpy(newsubj, "Re: ", len);
+	strlcat(newsubj, subj, len);
 	return(newsubj);
 }
 
@@ -489,7 +491,8 @@ group(void *v)
 	gname = *argv;
 	h = hash(gname);
 	if ((gh = findgroup(gname)) == NULL) {
-		gh = (struct grouphead *)calloc(sizeof(*gh), 1);
+		if ((gh = (struct grouphead *)calloc(sizeof(*gh), 1)) == NULL)
+			errx(1, "Out of memory");
 		gh->g_name = vcopy(gname);
 		gh->g_list = NULL;
 		gh->g_link = groups[h];
@@ -503,7 +506,8 @@ group(void *v)
 	 */
 
 	for (ap = argv+1; *ap != NULL; ap++) {
-		gp = (struct group *)calloc(sizeof(*gp), 1);
+		if ((gp = (struct group *)calloc(sizeof(*gp), 1)) == NULL)
+			errx(1, "Out of memory");
 		gp->ge_name = vcopy(*ap);
 		gp->ge_link = gh->g_list;
 		gh->g_list = gp;
@@ -719,7 +723,7 @@ int
 alternates(void *v)
 {
 	char **namelist = v;
-	char **ap, **ap2, *cp;
+	char **ap, **ap2;
 	int c;
 
 	c = argcount(namelist) + 1;
@@ -733,11 +737,11 @@ alternates(void *v)
 	}
 	if (altnames != 0)
 		(void)free(altnames);
-	altnames = (char **)calloc(c, sizeof(char *));
+	if ((altnames = (char **)calloc(c, sizeof(char *))) == NULL)
+		errx(1, "Out of memory");
 	for (ap = namelist, ap2 = altnames; *ap; ap++, ap2++) {
-		cp = (char *)calloc(strlen(*ap) + 1, sizeof(char));
-		strcpy(cp, *ap);
-		*ap2 = cp;
+		if ((*ap2 = strdup(*ap)) == NULL)
+			errx(1, "Out of memory");
 	}
 	*ap2 = 0;
 	return(0);

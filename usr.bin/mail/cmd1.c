@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.21 2001/11/21 15:26:39 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.22 2001/11/21 20:41:55 millert Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: cmd1.c,v 1.21 2001/11/21 15:26:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmd1.c,v 1.22 2001/11/21 20:41:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -491,9 +491,8 @@ folders(void *v)
 	char dirname[PATHSIZE];
 	char cmd[BUFSIZ];
 
-	if (getfold(dirname, sizeof(dirname)) < 0) {
-		strcpy(dirname, "$HOME");
-	}
+	if (getfold(dirname, sizeof(dirname)) < 0)
+		strlcpy(dirname, "$HOME", sizeof(dirname));
 
 	snprintf(cmd, sizeof(cmd), "cd %s; %s %s", dirname, value("LISTER"),
 		files && *files ? files : "");

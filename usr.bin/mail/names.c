@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.15 2001/11/21 18:43:27 millert Exp $	*/
+/*	$OpenBSD: names.c,v 1.16 2001/11/21 20:41:55 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: names.c,v 1.15 2001/11/21 18:43:27 millert Exp $";
+static const char rcsid[] = "$OpenBSD: names.c,v 1.16 2001/11/21 20:41:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -670,8 +670,7 @@ delname(struct name *np, char *name)
  */
 #if 0
 void
-prettyprint(name)
-	struct name *name;
+prettyprint(struct name *name)
 {
 	struct name *np;
 

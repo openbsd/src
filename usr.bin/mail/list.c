@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.11 2001/11/21 15:26:39 millert Exp $	*/
+/*	$OpenBSD: list.c,v 1.12 2001/11/21 20:41:55 millert Exp $	*/
 /*	$NetBSD: list.c,v 1.7 1997/07/09 05:23:36 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-static const char rcsid[] = "$OpenBSD: list.c,v 1.11 2001/11/21 15:26:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: list.c,v 1.12 2001/11/21 20:41:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -513,7 +513,7 @@ scan(char **sp)
 	int quotec;
 
 	if (regretp >= 0) {
-		strcpy(lexstring, string_stack[regretp]);
+		strlcpy(lexstring, string_stack[regretp], STRINGLEN);
 		lexnumber = numberstack[regretp];
 		return(regretstack[regretp--]);
 	}

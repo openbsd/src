@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.29 2001/11/21 15:26:39 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.30 2001/11/21 20:41:55 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: popen.c,v 1.29 2001/11/21 15:26:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: popen.c,v 1.30 2001/11/21 20:41:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -331,8 +331,11 @@ findchild(pid_t pid, int dont_alloc)
 		if (child_freelist) {
 			*cpp = child_freelist;
 			child_freelist = (*cpp)->link;
-		} else
+		} else {
 			*cpp = (struct child *)malloc(sizeof(struct child));
+			if (*cpp == NULL)
+				errx(1, "Out of memory");
+		}
 		(*cpp)->pid = pid;
 		(*cpp)->done = (*cpp)->free = 0;
 		(*cpp)->link = NULL;

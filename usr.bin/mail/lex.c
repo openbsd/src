@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.26 2001/11/21 15:26:39 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.27 2001/11/21 20:41:55 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: lex.c,v 1.26 2001/11/21 15:26:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lex.c,v 1.27 2001/11/21 20:41:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -132,7 +132,7 @@ setfile(char *name)
 	}
 	shudclob = 1;
 	edit = isedit;
-	strcpy(prevfile, mailname);
+	strlcpy(prevfile, mailname, PATHSIZE);
 	if (name != mailname)
 		strlcpy(mailname, name, sizeof(mailname));
 	mailsize = fsize(ibuf);
@@ -536,12 +536,14 @@ out:
  * lists to message list functions.
  */
 void
-setmsize(int sz)
+setmsize(int n)
 {
+	size_t msize;
 
-	if (msgvec != 0)
-		(void)free(msgvec);
-	msgvec = (int *)calloc(sz + 1, sizeof(*msgvec));
+	msize = (n + 1) * sizeof(*msgvec);
+	if ((msgvec = realloc(msgvec, msize)) == NULL)
+		errx(1, "Out of memory");
+	memset(msgvec, 0, msize);
 }
 
 /*

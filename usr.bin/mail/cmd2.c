@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd2.c,v 1.10 2001/11/21 15:26:39 millert Exp $	*/
+/*	$OpenBSD: cmd2.c,v 1.11 2001/11/21 20:41:55 millert Exp $	*/
 /*	$NetBSD: cmd2.c,v 1.7 1997/05/17 19:55:10 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: cmd2.c,v 1.10 2001/11/21 15:26:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmd2.c,v 1.11 2001/11/21 20:41:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -466,8 +466,11 @@ ignore1(char **list, struct ignoretab *tab, char *which)
 			continue;
 		h = hash(field);
 		igp = (struct ignore *)calloc(1, sizeof(struct ignore));
-		igp->i_field = (char *)calloc(strlen(field) + 1, sizeof(char));
-		strcpy(igp->i_field, field);
+		if (igp == NULL)
+			errx(1, "Out of memory");
+		igp->i_field = strdup(field);
+		if (igp->i_field == NULL)
+			errx(1, "Out of memory");
 		igp->i_link = tab->i_head[h];
 		tab->i_head[h] = igp;
 		tab->i_count++;

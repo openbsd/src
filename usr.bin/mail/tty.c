@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.14 2001/11/21 15:26:39 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.15 2001/11/21 20:41:56 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 4/20/95";
 #else
-static const char rcsid[] = "$OpenBSD: tty.c,v 1.14 2001/11/21 15:26:39 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tty.c,v 1.15 2001/11/21 20:41:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -201,7 +201,7 @@ readtty(char *pr, char *src)
 	}
 #ifndef TIOCSTI
 	if (src != NULL)
-		cp = copy(src, canonb);
+		cp = copy(src, canonb);	/* safe, bounds checked above */
 	else
 		cp = copy("", canonb);
 	fputs(canonb, stdout);
