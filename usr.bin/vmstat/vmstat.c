@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.52 2001/05/11 06:46:40 angelos Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.53 2001/05/11 14:35:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -84,48 +84,38 @@ static char rcsid[] = "$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp 
 #endif
 
 struct nlist namelist[] = {
-#define	X_CPTIME	0
-	{ "_cp_time" },
 #if defined(UVM)
-#define X_UVMEXP	1
+#define X_UVMEXP	0
 	{ "_uvmexp" },
 #else
-#define X_SUM		1
+#define X_SUM		0
 	{ "_cnt" },
 #endif
-#define	X_BOOTTIME	2
+#define	X_BOOTTIME	1
 	{ "_boottime" },
-#define X_HZ		3
-	{ "_hz" },
-#define X_STATHZ	4
-	{ "_stathz" },
-#define X_NCHSTATS	5
+#define X_NCHSTATS	2
 	{ "_nchstats" },
-#define	X_INTRNAMES	6
+#define	X_INTRNAMES	3
 	{ "_intrnames" },
-#define	X_EINTRNAMES	7
+#define	X_EINTRNAMES	4
 	{ "_eintrnames" },
-#define	X_INTRCNT	8
+#define	X_INTRCNT	5
 	{ "_intrcnt" },
-#define	X_EINTRCNT	9
+#define	X_EINTRCNT	6
 	{ "_eintrcnt" },
-#define	X_KMEMSTAT	10
+#define	X_KMEMSTAT	7
 	{ "_kmemstats" },
-#define	X_KMEMBUCKETS	11
+#define	X_KMEMBUCKETS	8
 	{ "_bucket" },
-#define X_ALLEVENTS	12
+#define X_ALLEVENTS	9
 	{ "_allevents" },
-#define	X_FORKSTAT	13
+#define	X_FORKSTAT	10
 	{ "_forkstat" },
-#define X_POOLHEAD	14
+#define X_POOLHEAD	11
 	{ "_pool_head" },
-#define X_NSELCOLL	15
+#define X_NSELCOLL	12
 	{ "_nselcoll" },
-#define X_END		16
-#if defined(__pc532__)
-#define	X_IVT		(X_END)
-	{ "_ivt" },
-#endif
+#define X_END		13
 #if defined(__i386__)
 #define	X_INTRHAND	(X_END)
 	{ "_intrhand" },
@@ -364,7 +354,7 @@ getuptime()
 			mib[1] = KERN_BOOTTIME;
 			if (sysctl(mib, 2, &boottime, &size, NULL, 0) < 0) {
 				printf("Can't get kerninfo: %s\n",
-				       strerror(errno));
+				    strerror(errno));
 				bzero(&boottime, sizeof(boottime));
 			}
 		}
@@ -418,7 +408,7 @@ dovmstat(interval, reps)
 			mib[1] = VM_UVMEXP;
 			if (sysctl(mib, 2, &uvmexp, &size, NULL, 0) < 0) {
 				printf("Can't get kerninfo: %s\n",
-				       strerror(errno));
+				    strerror(errno));
 				bzero(&uvmexp, sizeof(uvmexp));
 			}
 		}
@@ -786,42 +776,7 @@ cpustats()
 	(void)printf("%2.0f", cur.cp_time[CP_IDLE] * pct);
 }
 
-#if defined(__pc532__)
-/* To get struct iv ...*/
-#define _KERNEL
-#include <machine/psl.h>
-#undef _KERNEL
-void
-dointr()
-{
-	register long i, j, inttotal;
-	time_t uptime;
-	static char iname[64];
-	struct iv ivt[32], *ivp = ivt;
-
-	iname[63] = '\0';
-	uptime = getuptime();
-	kread(X_IVT, ivp, sizeof(ivt));
-
-	for (i = 0; i < 2; i++) {
-		(void)printf("%sware interrupts:\n", i ? "\nsoft" : "hard");
-		(void)printf("interrupt         total     rate\n");
-		inttotal = 0;
-		for (j = 0; j < 16; j++, ivp++) {
-			if (ivp->iv_vec && ivp->iv_use && ivp->iv_cnt) {
-				if (kvm_read(kd, (u_long)ivp->iv_use, iname, 63) != 63) {
-					errx(1, "iv_use: %s", kvm_geterr(kd));
-				}
-				(void)printf("%-12s %10ld %8ld\n", iname,
-				    ivp->iv_cnt, ivp->iv_cnt / uptime);
-				inttotal += ivp->iv_cnt;
-			}
-		}
-		(void)printf("Total        %10ld %8ld\n",
-		    inttotal, inttotal / uptime);
-	}
-}
-#elif defined(__i386__)
+#if defined(__i386__)
 /* To get struct intrhand */
 #define _KERNEL
 #include <machine/psl.h>
@@ -860,7 +815,7 @@ dointr()
 	for (i = 0; i < 16; i++)
 		if (intrstray[i]) {
 			printf("Stray irq %-2d     %10lu %8lu\n",
-			       i, intrstray[i], intrstray[i] / uptime);
+			    i, intrstray[i], intrstray[i] / uptime);
 			inttotal += intrstray[i];
 		}
 	printf("Total            %10lu %8lu\n", inttotal, inttotal / uptime);
@@ -940,12 +895,12 @@ domem()
 	char buf[BUFSIZ], *bufp, *ap;
 
 	if (memf == NULL && nlistf == NULL) {
-	        mib[0] = CTL_KERN;
+		mib[0] = CTL_KERN;
 		mib[1] = KERN_MALLOCSTATS;
 		mib[2] = KERN_MALLOC_BUCKETS;
 		siz = sizeof(buf);
 		if (sysctl(mib, 3, buf, &siz, NULL, 0) < 0) {
-		        printf("Could not acquire information on kernel memory bucket sizes.\n");
+			printf("Could not acquire information on kernel memory bucket sizes.\n");
 			return;
 		}
 
@@ -954,17 +909,18 @@ domem()
 		siz = sizeof(struct kmembuckets);
 		i = 0;
 		while ((ap = strsep(&bufp, ",")) != NULL) {
-		        mib[3] = atoi(ap);
+			mib[3] = atoi(ap);
 
 			if (sysctl(mib, 4, &buckets[MINBUCKET + i], &siz,
-				   NULL, 0) < 0) {
-			        printf("Failed to read statistics for bucket %d.\n", mib[3]);
+			    NULL, 0) < 0) {
+				printf("Failed to read statistics for bucket %d.\n",
+				    mib[3]);
 				return;
 			}
 			i++;
 		}
 	} else {
-	        kread(X_KMEMBUCKETS, buckets, sizeof(buckets));
+		kread(X_KMEMBUCKETS, buckets, sizeof(buckets));
 	}
 
 	for (first = 1, i = MINBUCKET, kp = &buckets[i]; i < MINBUCKET + 16;
@@ -998,7 +954,7 @@ domem()
 	if (memf == NULL && nlistf == NULL) {
 		bzero(kmemstats, sizeof(kmemstats));
 		for (i = 0; i < M_LAST; i++) {
-	        	mib[0] = CTL_KERN;
+			mib[0] = CTL_KERN;
 			mib[1] = KERN_MALLOCSTATS;
 			mib[2] = KERN_MALLOC_KMEMSTATS;
 			mib[3] = i;
