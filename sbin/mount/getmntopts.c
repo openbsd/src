@@ -1,4 +1,4 @@
-/*	$OpenBSD: getmntopts.c,v 1.8 2004/06/22 21:12:00 otto Exp $	*/
+/*	$OpenBSD: getmntopts.c,v 1.9 2004/07/05 18:33:38 otto Exp $	*/
 /*	$NetBSD: getmntopts.c,v 1.3 1995/03/18 14:56:58 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntopts.c	8.1 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: getmntopts.c,v 1.8 2004/06/22 21:12:00 otto Exp $";
+static char rcsid[] = "$OpenBSD: getmntopts.c,v 1.9 2004/07/05 18:33:38 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ getmntopt(char **optionp, union mntval *valuep, const struct mntopt *m0,
 	/* Save flag, or fail if option is not recognised. */
 	if (m->m_option) {
 		needval = (m->m_oflags & (MFLAG_INTVAL|MFLAG_STRVAL)) != 0;
-		if (needval != (value != NULL))
+		if (needval != (value != NULL) && !(m->m_oflags & MFLAG_OPT))
 			errx(1, "-o %s: option %s a value", opt,
 			    needval ? "needs" : "does not need");
 		inverse = (m->m_oflags & MFLAG_INVERSE) ? 1 : 0;

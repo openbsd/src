@@ -1,4 +1,4 @@
-/*	$OpenBSD: mntopts.h,v 1.13 2004/06/22 21:12:00 otto Exp $	*/
+/*	$OpenBSD: mntopts.h,v 1.14 2004/07/05 18:33:38 otto Exp $	*/
 /*	$NetBSD: mntopts.h,v 1.3 1995/03/18 14:56:59 cgd Exp $	*/
 
 /*-
@@ -37,6 +37,7 @@
 					   0 => return flag */
 #define MFLAG_STRVAL		0x04	/* option needs a string value */
 #define MFLAG_INTVAL		0x08	/* option needs an int value */
+#define MFLAG_OPT		0x10	/* value is optional */
 
 struct mntopt {
 	const char *m_option;	/* option name */
@@ -60,8 +61,10 @@ union mntval {
 #define MOPT_RDONLY	{ "rdonly",	MNT_RDONLY, MFLAG_SET }
 #define MOPT_SYNC	{ "sync",	MNT_SYNCHRONOUS, MFLAG_SET }
 #define MOPT_UNION	{ "union",	MNT_UNION, MFLAG_SET }
-#define MOPT_USERQUOTA	{ "userquota",	0, MFLAG_SET }
-#define MOPT_GROUPQUOTA	{ "groupquota",	0, MFLAG_SET }
+#define MOPT_USERQUOTA	{ "userquota",	0, MFLAG_SET | MFLAG_STRVAL \
+					    | MFLAG_OPT }
+#define MOPT_GROUPQUOTA	{ "groupquota",	0, MFLAG_SET | MFLAG_STRVAL \
+					    | MFLAG_OPT }
 #define MOPT_SOFTDEP	{ "softdep",	MNT_SOFTDEP, MFLAG_SET }
 
 /* Control flags. */
