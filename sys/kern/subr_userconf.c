@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.7 1996/09/02 02:46:39 deraadt Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.8 1996/09/06 08:53:43 maja Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -42,15 +42,19 @@
 extern char *locnames[];
 extern short locnamp[];
 extern struct cfdata cfdata[];
-extern cfroots[];
+extern short cfroots[];
+extern int cfroots_size;
+extern int pv_size;
+extern short pv[];
 
-int userconf_base = 16;
-int userconf_maxdev = -1;
-int userconf_maxlocnames = -1;
-int userconf_cnt = -1;
-int userconf_lines = 12;
-char userconf_argbuf[40];
-char userconf_cmdbuf[40];
+int userconf_base = 16;				/* Base for "large" numbers */
+int userconf_maxdev = -1;			/* # of used device slots   */
+int userconf_totdev = -1;			/* # of device slots        */
+int userconf_maxlocnames = -1;			/* # of locnames            */
+int userconf_cnt = -1;				/* Line counter for ...     */
+int userconf_lines = 12;			/* ... # of lines per page  */
+char userconf_argbuf[40];			/* Additional input         */
+char userconf_cmdbuf[40];			/* Command line             */
 
 void userconf_init __P((void));
 int userconf_more __P((void));
@@ -70,6 +74,8 @@ void userconf_show __P((void));
 void userconf_show_attr_val __P((short, int *));
 void userconf_show_attr __P((char *));
 void userconf_common_dev __P((char *, int, short, short, char));
+void userconf_add_read __P((char *, char, char *, int, int *));
+void userconf_add __P((char *, int, short, short));
 int userconf_parse __P((char *));
 
 #define UC_CHANGE 'c'
@@ -78,7 +84,7 @@ int userconf_parse __P((char *));
 #define UC_FIND 'f'
 
 char *userconf_cmds[] = {
-/*	"add",		"a", */
+	"add",		"a",
         "base",         "b",
 	"change",	"c",
 	"disable",	"d",
@@ -104,6 +110,7 @@ userconf_init()
 	while(cfdata[i].cf_attach != 0) {
 		
 		userconf_maxdev = i;
+		userconf_totdev = i;
 
 		cd = &cfdata[i];
 		ln=cd->cf_locnames;
@@ -115,6 +122,13 @@ userconf_init()
 		}
 		i++;
 	}
+
+	while(cfdata[i].cf_attach == 0) {
+		userconf_totdev = i;
+		i++;
+	}
+	
+	userconf_totdev = userconf_totdev - 1;
 }
 
 int
@@ -201,6 +215,8 @@ userconf_pdev(devno)
 
 	cd = &cfdata[devno];
 
+	printf("%3d ",devno);
+/*
 	printf("%3d",devno);
 	switch(cd->cf_fstate) {
 	case FSTATE_NOTFOUND:
@@ -216,7 +232,7 @@ userconf_pdev(devno)
 		printf(" ? ");
 		break;
 	}
-		
+*/		
 	userconf_pdevnam(devno);
 	printf(" at");
 	c=' ';
@@ -227,6 +243,19 @@ userconf_pdev(devno)
 		userconf_pdevnam(*p++);
 		c='|';
 	};
+	switch(cd->cf_fstate) {
+	case FSTATE_NOTFOUND:
+        case FSTATE_FOUND:
+        case FSTATE_STAR:
+		break;
+	case FSTATE_DNOTFOUND:
+        case FSTATE_DSTAR:
+		printf(" disable");
+		break;
+        default:
+		printf(" ???");
+		break;
+	}
 	l=cd->cf_loc;
 	ln=cd->cf_locnames;
 	while (locnamp[ln] != -1) {
@@ -505,6 +534,9 @@ userconf_help()
 		case 'L':
 			printf("[count]       number of lines before more");
 			break;
+		case 'a':
+			printf("dev           add a device");
+			break;
 		case 'b':
 			printf("8|10|16       base on large numbers");
 			break;
@@ -725,6 +757,180 @@ userconf_common_dev(dev, len, unit, state, routine)
 
 }
 
+userconf_add_read(prompt,field,dev,len,val)
+	char *prompt;
+	char field;
+	char *dev;
+	int len;
+	int *val;
+{
+	int ok = 0;
+	int a;
+	char *c;
+	int i;
+
+	*val = -1;
+
+	while(!ok) {
+		printf("%s ? ",prompt);
+
+		i = getsn(userconf_argbuf,sizeof(userconf_argbuf));
+
+		c = userconf_argbuf;
+		while (*c == ' ' || *c == '\t' || *c == '\n') c++;
+
+		if (*c != '\000') {
+			if (userconf_number(c,&a) == 0) {
+				if (a >  userconf_maxdev) {
+					printf("Unknown devno (max is %d)\n",
+					       userconf_maxdev);
+				} else if (strncasecmp(dev,
+					   cfdata[a].cf_driver->cd_name,
+					   len) != 0) {
+					printf("Not same device type\n");
+				} else {
+					*val = a;
+					ok = 1;
+				}
+			} else if (*c == '?') {
+				userconf_common_dev(dev,len,0,
+						    FSTATE_FOUND,UC_FIND);
+			} else if (*c == 'q' || *c == 'Q') {
+				ok = 1;
+			} else {
+				printf("Unknown argument\n");
+			}
+		} else {
+			ok = 1;
+		}
+	}
+}
+
+userconf_add(dev,len,unit,state)
+	char *dev;
+	int len;
+	short unit, state;
+{
+	int i = 0, found = 0;
+	struct cfdata new = {0};
+	char cmd;
+	int  val, max_unit;
+
+	if (userconf_maxdev == userconf_totdev) {
+		printf("No more space for new devices.\n");
+		return;
+	}
+
+	if (state == FSTATE_FOUND) {
+		printf("Device not complete number or * is missing/n");
+		return;
+	}
+
+	for (i = 0; cfdata[i].cf_driver; i++)
+		if (strlen(cfdata[i].cf_driver->cd_name) == len &&
+		    strncasecmp(dev,cfdata[i].cf_driver->cd_name,len) == 0)
+			found = 1;
+
+	if (!found) {
+		printf("No device of this type exists.\n");
+		return;
+	}
+	
+	userconf_add_read("Clone Device (DevNo, 'q' or '?')",
+			  'a',dev,len,&val);
+	
+	if (val != -1) {
+
+		new = cfdata[val];
+		new.cf_unit = unit;
+		new.cf_fstate = state;
+
+		userconf_add_read("Insert before Device (DevNo, 'q' or '?')",
+				  'i',dev,len,&val);
+
+	}
+
+	if (val != -1) {
+
+		/* Insert the new record */
+
+		for (i = userconf_maxdev; val <= i; i--) {
+			cfdata[i+1] = cfdata[i];
+		}
+		cfdata[val] = new;
+
+		/* Fix indexs in pv */
+		
+		for (i = 0; i < pv_size; i++) {
+			if ((pv[i] != -1) && (pv[i] >= val)) {
+				pv[i] = pv[i]++;
+			}
+		}
+
+		/* Fix indexs in cfroots */
+		
+		for (i = 0; i < cfroots_size; i++) {
+			if ((cfroots[i] != -1) && (cfroots[i] >= val)) {
+				cfroots[i] = cfroots[i]++;
+			}
+		}
+
+		userconf_maxdev++;
+
+		max_unit = -1;
+
+		/* Find max unit number of the device type */
+		
+		i = 0;
+		while(cfdata[i].cf_attach != 0) {
+			if (strlen(cfdata[i].cf_driver->cd_name) == len &&
+			    strncasecmp(dev,
+					cfdata[i].cf_driver->cd_name,
+					len) == 0) {
+				switch (cfdata[i].cf_fstate) {
+				case FSTATE_NOTFOUND:
+				case FSTATE_DNOTFOUND:
+					if (cfdata[i].cf_unit > max_unit)
+						max_unit = cfdata[i].cf_unit;
+					break;
+				default:
+					break;
+				}
+			}
+			i++;
+		}
+
+		/* For all * entries set unit number to max+1 */
+
+		max_unit++;
+		
+		i = 0;
+		while(cfdata[i].cf_attach != 0) {
+			if (strlen(cfdata[i].cf_driver->cd_name) == len &&
+			    strncasecmp(dev,
+					cfdata[i].cf_driver->cd_name,
+					len) == 0) {
+				switch (cfdata[i].cf_fstate) {
+				case FSTATE_STAR:
+				case FSTATE_DSTAR:
+					cfdata[i].cf_unit = max_unit;
+					break;
+				default:
+					break;
+				}
+			}
+			i++;
+		}
+		
+		userconf_pdev(val);
+
+	}
+
+	/* cf_attach, cf_driver, cf_unit, cf_state, cf_loc, cf_flags,
+	   cf_parents, cf_locnames, cf_locnames and cf_ivstubs */
+
+}
+
 int
 userconf_parse(cmd)
 	char *cmd;
@@ -765,6 +971,15 @@ userconf_parse(cmd)
 				printf("Argument expected\n");
 			} else if (userconf_number(c,&a) == 0) {
 				userconf_lines = a;
+			} else {
+				printf("Unknown argument\n");
+			}
+			break;
+		case 'a':
+			if (*c == '\000') {
+				printf("Dev expected\n");
+			} else if (userconf_device(c,&a,&unit,&state) == 0) {
+				userconf_add(c,a,unit,state);
 			} else {
 				printf("Unknown argument\n");
 			}

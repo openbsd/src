@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.5 1996/07/07 22:02:20 maja Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.6 1996/09/06 08:53:44 maja Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.38 1996/03/17 06:29:27 cgd Exp $	*/
 
 /*
@@ -331,8 +331,11 @@ emitpv(fp)
 {
 	register int i;
 
+	if (fprintf(fp, "\n/* size of parent vectors */\n\
+int pv_size = %d;\n", parents.used) < 0)
+		return (1);
 	if (fprintf(fp, "\n/* parent vectors */\n\
-static short pv[%d] = {", parents.used) < 0)
+short pv[%d] = {", parents.used) < 0)
 		return (1);
 	for (i = 0; i < parents.used; i++)
 		if (fprintf(fp, "%s%d,", SEP(i, 16), parents.vec[i]) < 0)
@@ -422,7 +425,11 @@ struct cfdata cfdata[] = {\n\
 		    vs, v) < 0)
 			return (1);
 	}
-	return (fputs("    {0}\n};\n", fp) < 0);
+	if (fprintf(fp, "    {0},\n    {0},\n    {0},\n    {0},\n") < 0)
+		return (1);
+	if (fprintf(fp, "    {0},\n    {0},\n    {0},\n    {0},\n") < 0)
+		return (1);
+	return (fputs("    {(struct cfattach *)-1}\n};\n", fp) < 0);
 }
 
 /*
@@ -433,6 +440,7 @@ emitroots(fp)
 	register FILE *fp;
 {
 	register struct devi **p, *i;
+	int cnt = 0;
 
 	if (fputs("\nshort cfroots[] = {\n", fp) < 0)
 		return (1);
@@ -447,8 +455,12 @@ emitroots(fp)
 		if (fprintf(fp, "\t%2d /* %s */,\n",
 		    i->i_cfindex, i->i_name) < 0)
 			return (1);
+		cnt++;
 	}
-	return (fputs("\t-1\n};\n", fp) < 0);
+	if (fputs("\t-1\n};\n", fp) < 0)
+		return (1);
+
+	return(fprintf(fp, "\nint cfroots_size = %d;\n", cnt+1) < 0);
 }
 
 /*
