@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_exec.c,v 1.10 1999/11/26 16:44:28 art Exp $	*/
+/*	$OpenBSD: sunos_exec.c,v 1.11 2000/08/15 17:26:05 brad Exp $	*/
 /*	$NetBSD: sunos_exec.c,v 1.11 1996/05/05 12:01:47 briggs Exp $	*/
 
 /*
@@ -54,8 +54,8 @@
 #include <machine/reg.h>
 #include <machine/exec.h>
 
-#include <compat/sunos/exec.h>
 #include <compat/sunos/sunos.h>
+#include <compat/sunos/sunos_exec.h>
 #include <compat/sunos/sunos_syscall.h>
 
 #ifdef __sparc__
