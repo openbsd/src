@@ -1041,6 +1041,10 @@ copy_args_for_protection (void)
 		    MEM_IN_STRUCT_P (temp_rtx) = AGGREGATE_TYPE_P (TREE_TYPE (parms));
 		    MEM_ALIAS_SET (temp_rtx) = get_alias_set (parms);
 
+		    /* move_arg_location may change the contents of
+		       DECL_RTL (parms). to avoid this, copies the contents */
+		    DECL_RTL (parms) = copy_rtx (DECL_RTL (parms));
+
 		    /* generate codes for copying the content */
 		    store_expr (parms, temp_rtx, 0);
 
