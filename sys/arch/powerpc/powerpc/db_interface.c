@@ -1,9 +1,11 @@
-/*	$OpenBSD: db_interface.c,v 1.4 2001/06/24 22:00:13 drahn Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.5 2001/07/01 04:34:24 drahn Exp $	*/
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
 void
 Debugger()
 {

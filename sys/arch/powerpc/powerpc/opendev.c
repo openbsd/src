@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.3 1999/10/28 04:28:03 rahnds Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.4 2001/07/01 04:34:24 drahn Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -37,12 +37,10 @@
 #include <machine/stdarg.h>
 
 #include <dev/ofw/openfirm.h>
+#include <lib/libkern/libkern.h>
 
 extern void ofw_stack __P((void));
 extern void ofbcopy __P((const void *, void *, size_t));
-
-
-
 
 int
 OF_instance_to_package(ihandle)
@@ -273,11 +271,13 @@ OF_read(handle, addr, len)
 			ofbcopy(OF_buf, addr, args.actual);
 			act += args.actual;
 		}
-		if (args.actual < l)
+		if (args.actual < l) {
 			if (act)
 				return act;
 			else
 				return args.actual;
+			
+		}
 	}
 	return act;
 }
