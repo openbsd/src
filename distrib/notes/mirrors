@@ -2,57 +2,60 @@ This is a list of currently known ftp servers as the time of the OSREV release.
 For a more recent list, please refer to http://www.openbsd.org/ftp.html
 
 Main server in Canada:
-    ftp://ftp.openbsd.org/pub/OpenBSD
+    ftp://ftp.openbsd.org/pub/OpenBSD (Alberta)
 
 Australia:
-    ftp://mirror.aarnet.edu.au/pub/OpenBSD (Canberra)
+    ftp://mirror.aarnet.edu.au/pub/OpenBSD (Canberra, .au only)
     ftp://ftp.it.net.au/mirrors/OpenBSD (Perth)
     ftp://ftp.planetmirror.com/pub/OpenBSD (Sydney)
-    ftp://ftp.wiretapped.net/pub/OpenBSD (Sydney)
+    ftp://openbsd.wiretapped.net/pub/OpenBSD (Sydney)
 
 Austria:
     ftp://gd.tuwien.ac.at/opsys/OpenBSD (Vienna)
     ftp://mingus.wu-wien.ac.at/pub/OpenBSD (Vienna)
 
 Belgium:
-    ftp://openbsd.rug.ac.be/pub/OpenBSD (Ghant)
+    ftp://openbsd.rug.ac.be/pub/OpenBSD (Ghent)
 
-Brasil:
+Brazil:
     ftp://ftp.openbsd.org.br/pub/OpenBSD (Curitiba)
 
 Canada:
     ftp://ftp.ca.openbsd.org/pub/OpenBSD (Edmonton)
-    ftp://gulus.usherb.ca/pub/OpenBSD (Sherbrooke)
 
-China (Hong Kong):
-    ftp://ftp.shellhung.org/pub/OpenBSD
+China:
+    ftp://ftp.shellhung.org/pub/OpenBSD (Hong Kong)
 
 Czech Republic:
-    ftp://ftp.openbsd.cz/pub/OpenBSD
+    ftp://ftp.openbsd.cz/pub/OpenBSD (Prague)
 
 Denmark:
-    ftp://sunsite.dk/mirrors/openbsd
+    ftp://sunsite.dk/mirrors/openbsd (Aalborg)
 
 Finland:
     ftp://ftp.fi.debian.org/pub/OpenBSD
     ftp://ftp.jyu.fi/pub/OpenBSD (Jyvaskyla)
 
 France:
-    ftp://ftp.fr.openbsd.org/pub/OpenBSD
-    ftp://ftp.bsdfr.org/pub/OpenBSD
-    ftp://ftp.club-internet.fr/pub/OpenBSD
+    ftp://ftp.bsdfr.org/pub/OpenBSD (Paris)
+    ftp://ftp.club-internet.fr/pub/OpenBSD (Paris)
+    ftp://ftp.fr.openbsd.org/pub/OpenBSD (Paris)
 
 Germany:
-    ftp://ftp.de.openbsd.org/pub/unix/OpenBSD (Berlin)
+    ftp://ftp.de.openbsd.org/unix/OpenBSD (Berlin)
+    ftp://ftp.tu-clausthal.de/pub/OpenBSD (Clausthal)
     ftp://ftp.freenet.de/pub/ftp.openbsd.org/pub/OpenBSD (Duesseldorf)
+    ftp://openbsd.informatik.uni-erlangen.de/pub/OpenBSD (Erlangen)
     ftp://ftp-stud.fht-esslingen.de/pub/OpenBSD (Esslingen)
     ftp://pandemonium.tiscali.de/pub/OpenBSD (Frankfurt)
     ftp://ftp.leo.org/pub/OpenBSD (Muenchen)
+    ftp://mirrors.serveftp.org/openbsd (Nurnberg)
     ftp://ftp.uni-stuttgart.de/pub/OpenBSD (Stuttgart)
     ftp://ftp.fh-wolfenbuettel.de/pub/os/openbsd (Wolfenbuettel)
 
 Greece:
     ftp://filoktitis.noc.uoa.gr/pub/OpenBSD (Athens)
+    ftp://ftp.physics.auth.gr/pub/mirrors/OpenBSD/OpenBSD (Thessaloniki)
     ftp://ftp.duth.gr/pub/OpenBSD (Thrace)
 
 Hungary:
@@ -62,49 +65,43 @@ Ireland:
     ftp://ftp.esat.net/pub/OpenBSD (Dublin)
 
 Italy:
-    ftp://ftp.openbsd.it/pub/OpenBSD (Napoli)
-    ftp://ftp.volftp.mondadori.com/mirror/openbsd
+    ftp://ftp.openbsd.it/pub/Unix/OpenBSD (Napoli)
 
 Japan:
-    ftp://ftp.jp.openbsd.org/pub/OpenBSD (Tokyo)
     ftp://ftp.netlab.is.tsukuba.ac.jp/pub/os/OpenBSD (Ibaraki)
-    ftp://ftp.iij.ad.jp/OpenBSD (Tokyo)
+    ftp://ftp.iij.ad.jp/pub/OpenBSD (Tokyo)
+    ftp://ftp.jp.openbsd.org/pub/OpenBSD (Tokyo)
     ftp://ftp.kddlabs.co.jp/OpenBSD (Tokyo)
 
 Lithuania:
     ftp://ftp.openbsd.lt/pub/OpenBSD
 
 The Netherlands:
-    ftp://ftp.calyx.nl/pub/OpenBSD (Amsterdam)
     ftp://ftp.nl.uu.net/pub/OpenBSD (Amsterdam)
-    ftp://ftp.nluug.nl/pub/OpenBSD (Amsterdam)
+    ftp://ftp.calyx.nl/pub/OpenBSD (Amsterdam)
+    ftp://ftp.nluug.nl/pub/OpenBSD (Utrecht)
 
 Norway:
     ftp://ftp.inet.no/pub/OpenBSD (Oslo)
     ftp://ftp.uninett.no/pub/OpenBSD (Oslo)
 
-Peru:
-    ftp://ftp.sajinet.com.pe/pub/OpenBSD
-
 Poland:
     ftp://sunsite.icm.edu.pl/pub/OpenBSD
 
+Romania:
+    ftp://ftp.physics.uvt.ro/pub/OpenBSD (Timisoara)
+
 Russia:
-    ftp://ftp.chg.ru/pub/OpenBSD (Chernogolovka)
+    ftp://ftp.gamma.ru/pub/OpenBSD (Moscow)
     ftp://ftp.radio-msu.net/pub/OpenBSD (Moscow)
-    ftp://ftp.openbsd.ru/pub/OpenBSD (Novosibirsk)
 
 Saudi Arabia:
     ftp://ftp.isu.net.sa/pub/mirrors/ftp.openbsd.org/pub/OpenBSD
-
-South Korea:
-    ftp://ftp.snu.ac.kr/pub/BSD/OpenBSD (Seoul)
 
 Spain:
     ftp://ftp.rediris.es/mirror/OpenBSD (Madrid)
 
 Sweden:
-    ftp://ftp.luth.se/pub/OpenBSD
     ftp://ftp.stacken.kth.se/pub/OpenBSD (Stockholm)
     ftp://ftp.sunet.se/pub/OpenBSD (Uppsala)
     ftp://mirror.pudas.net/OpenBSD (Uppsala)
@@ -115,13 +112,16 @@ Switzerland:
 Taiwan:
     ftp://openbsd.csie.nctu.edu.tw/pub/OpenBSD
     ftp://openbsd.nsysu.edu.tw/pub/OpenBSD
-    ftp://ftp.tku.edu.tw/pub/OpenBS (TamSui)
+    ftp://ftp.tku.edu.tw/pub/OpenBSD (TamSui)
 
 Thailand:
-    ftp://ftp.kmitl.ac.th/pub/OpenBSD
+    ftp://ftp.kmitl.ac.th/pub/BSD/OpenBSD
 
 Turkey:
     ftp://ftp.linux.org.tr/pub/OpenBSD
+
+Ukraine:
+    ftp://ftp.openbsd.org.ua/pub/OpenBSD (Kiev)
 
 United Kingdom:
     ftp://ftp.plig.org/pub/OpenBSD (London)
@@ -130,15 +130,11 @@ USA:
     ftp://gandalf.neark.org/pub/distributions/OpenBSD (Batesville, AR)
     ftp://ftp5.usa.openbsd.org/pub/OpenBSD (Redwood City, CA)
     ftp://ftp3.usa.openbsd.org/pub/OpenBSD (Boulder, CO)
-    ftp://mirror.csit.fsu.edu/pub/OpenBSD (Tallahassee, FL)
-    ftp://ftp.src.uchicago.edu/pub/OpenBSD (Chicago, IL)
+    ftp://ftp.src.uchicago.edu/pub/openbsd (Chicago, IL)
     ftp://rt.fm/pub/OpenBSD (Lake in the Hills, IL)
-    ftp://archive.progeny.com/OpenBSD (Indianapolis, IN)
     ftp://ftp7.usa.openbsd.org/pub/os/OpenBSD (West Lafayette, IN)
-    ftp://mirrors.netnumina.com/openbsd (Cambridge, MA)
     ftp://ftp.groupbsd.org/pub/OpenBSD (Hillsborough, NC)
     ftp://ftp.cse.buffalo.edu/pub/OpenBSD (Buffalo, NY)
-    ftp://ftp.op.net/pub/OpenBSD (Ambler, PA)
     ftp://carroll.cac.psu.edu/pub/OpenBSD (State College, PA)
     ftp://mirrors.rcn.net/pub/OpenBSD (Fairfax, VA)
     ftp://openbsd.secsup.org/pub/openbsd (Fairfax, VA)
