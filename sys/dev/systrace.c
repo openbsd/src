@@ -669,7 +669,7 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 		break;
 	case SYSTR_POLICY_ASK:
 		/* Puts the current process to sleep, return unlocked */
-		error = systrace_msg_ask(fst,strp, code, callp->sy_argsize, v);
+		error = systrace_msg_ask(fst, strp, code, callp->sy_argsize, v);
 
 		/* We might have detached by now for some reason */
 		fst = NULL;
