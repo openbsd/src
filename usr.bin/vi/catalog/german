@@ -302,7 +302,7 @@ ZeilenX
 Vi wurde nicht mit dem Tcl Interpreter gelinktX
 Datei wurde seit dem letzten Schreiben veraendert.X
 Shell Expansion nicht geklapptX
-Es ist keine %s Edieroption angegebenX
+Es ist keine %s Editieroption angegebenX
 Vi wurde nicht mit einem Perl Interpreter geladenX
 Kein ex Kommando auszufuehrenX
 Druecke <CR> um ein Kommando auszufuehren, :q zum verlassenX

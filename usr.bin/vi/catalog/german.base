@@ -292,7 +292,7 @@
 302 "Vi wurde nicht mit dem Tcl Interpreter gelinkt"
 303 "Datei wurde seit dem letzten Schreiben veraendert."
 304 "Shell Expansion nicht geklappt"
-305 "Es ist keine %s Edieroption angegeben"
+305 "Es ist keine %s Editieroption angegeben"
 306 "Vi wurde nicht mit einem Perl Interpreter geladen"
 307 "Kein ex Kommando auszufuehren"
 308 "Druecke <CR> um ein Kommando auszufuehren, :q zum verlassen"
