@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.134 2003/10/02 21:23:20 fgsch Exp $
+dnl	$OpenBSD: hardware,v 1.135 2003/10/04 00:09:39 henning Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -37,7 +37,7 @@ Supported hardware {:-include-:}:
 			Transmeta TMS3200, TMS5400, TMS5600
 		Everything that is a clone of the 386 or up should work
 		fine. The only CPU that is known to work poorly (due to
-		flawed motherboards designs) is the Cyrix 386DLC.
+		flawed motherboard designs) is the Cyrix 386DLC.
 	Buses
 		All standard ISA, EISA, VLB, and PCI bus based machines,
 		including:
@@ -336,7 +336,7 @@ Supported hardware {:-include-:}:
 		    Phobos P430TX
 		    Znyx ZX346
 		Intel EtherExpress 16 [A] [B] [C]
-		Intel EtherExpross PRO/10 ISA [A] [B] [C]
+		Intel EtherExpress PRO/10 ISA [A] [B] [C]
 		Intel i8255x-based (except the i82556) PCI adapters,
 		including:
 		    Intel EtherExpress PRO/10+
@@ -720,7 +720,7 @@ Supported hardware {:-include-:}:
 		APM power management,
 		Brooktree 8[47][89] based frame grabber and TV tuner cards,
 		including: [G]
-		    Hauppage Wincast TV
+		    Hauppauge Wincast TV
 		    STB TV PCI Television Tuner
 		    Miro PC TV
 		    Intel Smart Video Recorder III
@@ -750,7 +750,7 @@ Support for devices marked with [*] is not included in the GENERIC kernel,
 and will require you to compile a custom kernel to enable it.
 
 
-Hardware the we do NOT currently support, but get many questions
+Hardware that we do NOT currently support, but get many questions
 about:
 	The "Micro Channel" MCA bus used in many IBM PS/2 models
 	NCR 5380-based and 53400-based SCSI host adapters
@@ -870,8 +870,8 @@ configuration.
 Special care for SMC Elite Ultra:
 
 	The Elite Ultra is very sensitive to how its I/O port is treated.
-	Mistreating it can cause a number of effects -- everything from
-	the card not responding when the kernel probes, or the soft
+	Mistreating it can cause a number of effects -- anything from
+	the card not responding when the kernel probes, to the soft
 	configuration being corrupted or wiped completely.
 
 	By default, the kernel ships with device we1 configured for the
@@ -880,8 +880,8 @@ Special care for SMC Elite Ultra:
 	the board as well a common soft config setting.
 
 	Unfortunately, the kernel's autoconfiguration process (specifically,
-	some of the devices it probes for) cause conflicts with the SMC
-	Elite Ultra, and very often cause it to lose its configuration and
+	some of the devices it probes for) causes conflicts with the SMC
+	Elite Ultra, and very often causes it to lose its configuration and
 	fail its own probe.  If this happens, you must boot the computer
 	into DOS, and run the EzSetup program from SMC (if you do not have
 	a copy on the floppy accompanying your board, you can download it
@@ -920,7 +920,8 @@ Special care for SMC Elite Ultra:
 
 Special care for PCI BIOS:
 
-	As all BIOS implementations and subsystems this one has bugs too.
+	As with all BIOS implementations and subsystems this one has bugs
+	too.
 	Sometimes specifications are unclear about interfaces and/or data
 	validation.
 	These all cause our driver for PCI BIOS to misbehave in more or
@@ -953,6 +954,6 @@ Special care for PCI BIOS:
 	Fixing for good
 
 	Try to gather dmesg output from the failing configuration, for
-	example by using serial console (see boot(8)) and send it to
+	example by using a serial console (see boot(8)) and send it to
 	<mickey@OpenBSD.org> along with descriptions of your hardware setup.
 	Alternatively, dig in the code and fix problems.
