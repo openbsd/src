@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: heapsort.c,v 1.5 2003/09/07 18:57:05 jmc Exp $";
+static char *rcsid = "$OpenBSD: heapsort.c,v 1.6 2003/09/08 16:24:05 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -90,7 +90,7 @@ static char *rcsid = "$OpenBSD: heapsort.c,v 1.5 2003/09/07 18:57:05 jmc Exp $";
  * Select the top of the heap and 'heapify'.  Since by far the most expensive
  * action is the call to the compar function, a considerable optimization
  * in the average case can be achieved due to the fact that k, the displaced
- * elememt, is usually quite small, so it would be preferable to first
+ * element, is usually quite small, so it would be preferable to first
  * heapify, always maintaining the invariant that the larger child is copied
  * over its parent's record.
  *
