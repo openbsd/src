@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcwrap.c,v 1.6 1998/09/06 19:48:38 kstailey Exp $	*/
+/*	$OpenBSD: bcwrap.c,v 1.7 1999/07/15 19:21:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -32,14 +32,12 @@
  */
 
 /*
- * GNU bc wants to print it's copyright, if in interactive mode. The
- * copyright demands it. That's stupid, ugly, and I think looks very
- * gross.
- *
- * As a side effect, the special ^C handling in gnubc goes away,
- * bringing us back to the familiar handling.
- *
- * Oh well, with this wrapper it's never in interactive mode.
+ * Some programs want to print their copyright, if they are in
+ * interactive mode.  If the program cannot be modified, this program
+ * can solve the issue.  Suddenly the program is never in interactive
+ * mode.
+ * 
+ * ^C blocking is also done, if wanted.
  */
 
 #include <sys/types.h>
@@ -48,19 +46,21 @@
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <poll.h>
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int pd[2], rfds;
-	int width = 1, off, n, res;
+	int pd[2];
+	struct pollfd pfd[2];
+	int off, n, res;
 	char buf[1024];
 	int pid, stat;
 
 	if (!(isatty(0) && isatty(1)))
-		execv("/usr/bin/gnubc", argv);
+		execv(WRAP, argv);
 
 	/* Ok, we need to go non-interactive */
 	if (pipe(pd) == -1) {
@@ -68,7 +68,9 @@ main(argc, argv)
 		exit(1);
 	}
 
+#ifdef BLOCK
 	signal(SIGINT, SIG_IGN);
+#endif
 
 	pid = fork();
 	switch(pid) {
@@ -80,24 +82,28 @@ main(argc, argv)
 		close(pd[0]);
 
 		close(pd[1]);
-		execv("/usr/bin/gnubc", argv);
+		execv(WRAP, argv);
 		exit(1);
 	default:
 		close(pd[0]);
 		break;
 	}
 
-	width = pd[1];
+	pfd[0].fd = 0;
+	pfd[0].events = POLLIN;
+	pfd[1].fd = pd[1];
+	pfd[1].events = POLLIN;
+
 	while (1) {
 		if (waitpid(pid, &stat, WNOHANG) > 0)
 			exit(WEXITSTATUS(stat));
-		rfds = (1 << 0) || (1 << pd[1]);
-		switch (select(width, (fd_set *)&rfds, NULL, NULL, NULL)) {
+
+		switch (poll(pfd, 2, 0)) {
 		case -1:
 		case 0:
 			break;
 		default:
-			if (rfds & (1<<0) == 0)
+			if (pfd[0].revents == 0)
 				goto done;
 			n = read(0, buf, sizeof buf);
 			if (n == 0)
