@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.28 1996/12/19 22:19:50 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.29 1996/12/21 21:41:40 tholo Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1457,7 +1457,7 @@ ns
 ..
 
 # ./var/games
-games            uname=root gname=games mode=0755
+games            uname=root gname=games mode=0775
 
 # ./var/games/hackdir
 hackdir          uname=root gname=games mode=0775
