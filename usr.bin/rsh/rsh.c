@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.28 2002/06/12 06:07:16 mpech Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.29 2002/07/15 22:11:21 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.28 2002/06/12 06:07:16 mpech Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.29 2002/07/15 22:11:21 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,7 +74,7 @@ char dst_realm_buf[REALM_SZ], *dest_realm;
 void warning(const char *, ...);
 void desrw_set_key(des_cblock *, des_key_schedule *);
 int des_read(int, char *, int);
-int des_write(int, char *, int);
+int des_write(int, void *, int);
 
 int krcmd(char **, u_short, char *, char *, int *, char *);
 int krcmd_mutual(char **, u_short, char *, char *, int *, char *,
@@ -82,6 +82,8 @@ int krcmd_mutual(char **, u_short, char *, char *, int *, char *,
 #endif
 
 void usage(void);
+void sendsig(int);
+char *copyargs(char **argv);
 
 void talk(int, sigset_t *, int, int);
 
@@ -91,9 +93,7 @@ void talk(int, sigset_t *, int, int);
 int rfd2;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
@@ -101,10 +101,8 @@ main(argc, argv)
 	struct servent *sp;
 	sigset_t mask, omask;
 	int argoff, asrsh, ch, dflag, nflag, one, rem, uid;
-	char *p;
-	char *args, *host, *user, *copyargs();
+	char *args, *host, *user, *p;
 	pid_t pid = 0;
-	void sendsig();
 
 	argoff = asrsh = dflag = nflag = 0;
 	one = 1;
@@ -332,11 +330,7 @@ try_connect:
 }
 
 void
-talk(nflag, omask, pid, rem)
-	int nflag;
-	sigset_t *omask;
-	pid_t pid;
-	int rem;
+talk(int nflag, sigset_t *omask, pid_t pid, int rem)
 {
 	int cc, wc;
 	char *bp;
@@ -430,8 +424,7 @@ done:
 }
 
 void
-sendsig(signo)
-	char signo;
+sendsig(int signo)
 {
 	int save_errno = errno;
 
@@ -463,12 +456,10 @@ warning(const char *fmt, ...)
 #endif
 
 char *
-copyargs(argv)
-	char **argv;
+copyargs(char **argv)
 {
+	char **ap, *p, *args;
 	int cc;
-	char **ap, *p;
-	char *args, *malloc();
 
 	cc = 0;
 	for (ap = argv; *ap; ++ap)
