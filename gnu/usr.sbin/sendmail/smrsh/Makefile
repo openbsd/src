@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.2 2000/04/02 19:48:36 millert Exp $
+#	$OpenBSD: Makefile,v 1.3 2000/04/11 07:31:32 form Exp $
 
 PROG=	smrsh
 MAN=	smrsh.8
 ENVDEF+=-DNOT_SENDMAIL -DCMDDIR=\"/usr/libexec/sm.bin\"
+BINDIR=	/usr/libexec
 
 WANT_LIBSMUTIL=1
 
