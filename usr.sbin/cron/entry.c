@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.20 2003/03/10 15:09:20 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.21 2003/03/10 15:13:33 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -23,7 +23,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: entry.c,v 1.20 2003/03/10 15:09:20 millert Exp $";
+static char const rcsid[] = "$OpenBSD: entry.c,v 1.21 2003/03/10 15:13:33 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS'd; rest of log is in RCS file]
@@ -56,7 +56,7 @@ static const char *ecodes[] =
 
 static char	get_list(bitstr_t *, int, int, const char *[], char, FILE *),
 		get_range(bitstr_t *, int, int, const char *[], char, FILE *),
-		get_number(int *, int, const char *[], char, FILE *, const char *);
+		get_number(int *, int, const char *[], char, FILE *);
 static int	set_element(bitstr_t *, int, int, int);
 
 void
@@ -461,8 +461,7 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 		if (ch == EOF)
 			return (EOF);
 	} else {
-		ch = get_number(&num1, low, names, ch, file, ",- \t\n");
-		if (ch == EOF)
+		if (EOF == (ch = get_number(&num1, low, names, ch, file)))
 			return (EOF);
 
 		if (ch != '-') {
@@ -482,7 +481,7 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 
 			/* get the number following the dash
 			 */
-			ch = get_number(&num2, low, names, ch, file, ",- \t\n");
+			ch = get_number(&num2, low, names, ch, file);
 			if (ch == EOF)
 				return (EOF);
 		}
@@ -502,7 +501,7 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 		 * element id, it's a step size.  'low' is
 		 * sent as a 0 since there is no offset either.
 		 */
-		ch = get_number(&num3, 0, PPC_NULL, ch, file, ",- \t\n");
+		ch = get_number(&num3, 0, PPC_NULL, ch, file);
 		if (ch == EOF || num3 == 0)
 			return (EOF);
 	} else {
@@ -526,52 +525,51 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 }
 
 static char
-get_number(int *numptr, int low, const char *names[], char ch, FILE *file,
-    const char *terms) {
+get_number(int *numptr, int low, const char *names[], char ch, FILE *file) {
 	char temp[MAX_TEMPSTR], *pc;
-	int len, i;
+	int len, i, all_digits;
 
+	/* collect alphanumerics into our fixed-size temp array
+	 */
 	pc = temp;
 	len = 0;
-
-	/* first look for a number */
-	while (isdigit((unsigned char)ch)) {
+	all_digits = TRUE;
+	while (isalnum((unsigned char)ch)) {
 		if (++len >= MAX_TEMPSTR)
 			goto bad;
+
 		*pc++ = ch;
+
+		if (!isdigit((unsigned char)ch))
+			all_digits = FALSE;
+
 		ch = get_char(file);
 	}
 	*pc = '\0';
-	if (len != 0) {
-		/* got a number, check for valid terminator */
-		if (!strchr(terms, ch))
-			goto bad;
-		*numptr = atoi(temp);
-		return (ch);
-	}
+	if (len == 0)
+		goto bad;
 
-	/* no numbers, look for a string if we have any */
+	/* try to find the name in the name list
+	 */
 	if (names) {
-		while (isalpha((unsigned char)ch)) {
-			if (++len >= MAX_TEMPSTR)
-				goto bad;
-			*pc++ = ch;
-			ch = get_char(file);
-		}
-		*pc = '\0';
-		if (len != 0 && strchr(terms, ch)) {
-			for (i = 0;  names[i] != NULL;  i++) {
-				Debug(DPARS|DEXT,
-					("get_num, compare(%s,%s)\n", names[i],
-					temp))
-				if (!strcasecmp(names[i], temp)) {
-					*numptr = i+low;
-					return (ch);
-				}
+		for (i = 0;  names[i] != NULL;  i++) {
+			Debug(DPARS|DEXT,
+				("get_num, compare(%s,%s)\n", names[i], temp))
+			if (!strcasecmp(names[i], temp)) {
+				*numptr = i+low;
+				return (ch);
 			}
 		}
 	}
 
+	/* no name list specified, or there is one and our string isn't
+	 * in it.  either way: if it's all digits, use its magnitude.
+	 * otherwise, it's an error.
+	 */
+	if (all_digits) {
+		*numptr = atoi(temp);
+		return (ch);
+	}
 bad:
 	unget_char(ch, file);
 	return (EOF);
