@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.4 2005/01/10 05:09:37 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.5 2005/01/10 05:12:03 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -129,6 +129,7 @@ options KGDB_DEVRATE=115200
 pxapcic0	at pxaip?
 pcmcia*		at pxapcic?
 wi*		at pcmcia?
+ne* 		at pcmcia?
 wdc*		at pcmcia?
 
 # IDE hard drives
