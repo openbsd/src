@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.48 2004/05/13 00:04:20 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.49 2004/05/13 05:49:06 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -179,9 +179,10 @@ int	carp_set_addr6(struct carp_softc *, struct sockaddr_in6 *);
 int	carp_del_addr6(struct carp_softc *, struct sockaddr_in6 *);
 #endif
 int     carp_clone_create(struct if_clone *, int);
+int     carp_clone_destroy(struct ifnet *);
 
 struct if_clone carp_cloner =
-    IF_CLONE_INITIALIZER("carp", carp_clone_create, NULL);
+    IF_CLONE_INITIALIZER("carp", carp_clone_create, carp_clone_destroy);
 
 static __inline u_int16_t
 carp_cksum(struct mbuf *m, int len)
@@ -643,6 +644,33 @@ carp_clone_create(ifc, unit)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(u_int32_t));
 #endif
+	return (0);
+}
+
+int
+carp_clone_destroy(struct ifnet *ifp)
+{
+	struct carp_softc *sc = ifp->if_softc;
+	struct carp_if *cif;
+
+	timeout_del(&sc->sc_ad_tmo);
+	timeout_del(&sc->sc_md_tmo);
+	timeout_del(&sc->sc_md6_tmo);
+
+	if (sc->sc_ifp != NULL) {
+		cif = (struct carp_if *)sc->sc_ifp->if_carp;
+		TAILQ_REMOVE(&cif->vhif_vrs, sc, sc_list);
+		if (!--cif->vhif_nvrs) {
+			sc->sc_ifp->if_carp = NULL;
+			FREE(cif, M_IFADDR);
+		}
+	}
+
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	if_detach(ifp);
+
 	return (0);
 }
 
