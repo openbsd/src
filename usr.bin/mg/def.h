@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.51 2003/11/09 00:20:06 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.52 2003/11/09 01:11:14 vincent Exp $	*/
 
 #include <sys/queue.h>
 
@@ -586,7 +586,6 @@ int	 cntnonmatchlines(int, int);
 void	 free_undo_record(struct undo_rec *);
 int	 undo_dump(int, int);
 int	 undo_enable(int);
-int	 undo_add_custom(int, int, LINE *, int, void *, int);
 int	 undo_add_boundary(void);
 int	 undo_add_insert(LINE *, int, int);
 int	 undo_add_delete(LINE *, int, int);

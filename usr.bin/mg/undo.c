@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.19 2003/10/21 22:48:07 vincent Exp $ */
+/* $OpenBSD: undo.c,v 1.20 2003/11/09 01:11:14 vincent Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque
  * All rights reserved.
@@ -199,39 +199,6 @@ undo_add_boundary(void)
 	rec->type = BOUNDARY;
 
 	LIST_INSERT_HEAD(&curwp->w_undo, rec, next);
-
-	return (TRUE);
-}
-
-/*
- * If asocial is true, we arrange for this record to be let alone.  forever.
- * Yes, this is a bit of a hack...
- */
-int
-undo_add_custom(int asocial,
-    int type, LINE *lp, int offset, void *content, int size)
-{
-	struct undo_rec *rec;
-
-	if (undo_disable_flag)
-		return (TRUE);
-	rec = new_undo_record();
-	if (lp != NULL)
-		rec->pos = find_absolute_dot(lp, offset);
-	else
-		rec->pos = 0;
-	rec->type = type;
-	rec->content = content;
-	rec->region.r_linep = lp;
-	rec->region.r_offset = offset;
-	rec->region.r_size = size;
-
-	if (!last_was_boundary())
-		undo_add_boundary();
-	LIST_INSERT_HEAD(&curwp->w_undo, rec, next);
-	undo_add_boundary();
-	if (asocial)		/* Add a second one */
-		undo_add_boundary();
 
 	return (TRUE);
 }
