@@ -1,0 +1,35 @@
+$NetBSD: README.files,v 1.1 1995/10/16 04:55:16 cgd Exp $
+
+README.files			This list.
+
+Files are organized by release, numbered by year, month, and date, in
+the form: YYMMDD
+
+In each directory:
+
+README				Installation notes; probably incomplete.
+STATUS				Status of NetBSD/Alpha.
+TODO.users			Things that I think users could do to help out.
+
+bin/				Directory with binaries for this snapshot.
+
+	bin.tar.gz		Everything on the disk image except /etc,
+				/usr/X11R6, and the kernel.
+	etc.tar.gz		/etc from the disk image.
+	netbsd.gz		Gzipped GENERIC kernel (also on disk image).
+	netbsd.gdb.gz		Gzipped GENERIC kernel w/debugging symbols.
+	netbsd_nfs.gz		Gzipped GENERIC_NFS kernel.
+	netbsd_nfs.gdb.gz	Gzipped GENERIC_NFS kernel w/debugging symbols.
+	rz25-image.gz		Disk image, of an RZ25, for installation.
+	x11.tar.gz		/usr/X11R6 from the disk image.
+
+src/				Directory with sources for this snapshot.
+
+	X11R6-XF86-3.1.2-diffs.gz
+				Diffs from XFree86 3.1.2 used to make the
+				X11 binaries in the distribution.
+	cygnus.tar.gz		Toolchain (gcc, gas, ld, etc.) sources
+				used to build the compiler toolchain.
+	sys.tar.gz		Kernel sources.
+	userland-diffs.gz	Diffs from the NetBSD-current user-land
+				sources used to build the distribution.
