@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.17 1998/06/12 18:07:57 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.18 1998/09/08 14:59:12 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.17 1998/06/12 18:07:57 millert Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.18 1998/09/08 14:59:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -510,6 +510,8 @@ lex(word)
 	extern const struct cmd cmdtab[];
 	const struct cmd *cp;
 
+	if (word[0] == '#')
+		word = "#";
 	for (cp = &cmdtab[0]; cp->c_name != NULL; cp++)
 		if (isprefix(word, cp->c_name))
 			return(cp);
