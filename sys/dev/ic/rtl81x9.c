@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.38 2005/02/22 08:09:23 pefo Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.39 2005/03/04 19:30:43 brad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -366,9 +366,9 @@ int rl_mii_readreg(sc, frame)
 	/* Check for ack */
 	MII_CLR(RL_MII_CLK);
 	DELAY(1);
+	ack = CSR_READ_2(sc, RL_MII) & RL_MII_DATAIN;
 	MII_SET(RL_MII_CLK);
 	DELAY(1);
-	ack = CSR_READ_2(sc, RL_MII) & RL_MII_DATAIN;
 
 	/*
 	 * Now try reading data bits. If the ack failed, we still
@@ -740,14 +740,13 @@ void rl_txeof(sc)
 
 	ifp = &sc->sc_arpcom.ac_if;
 
-	/* Clear the timeout timer. */
-	ifp->if_timer = 0;
-
 	/*
 	 * Go through our tx list and free mbufs for those
 	 * frames that have been uploaded.
 	 */
 	do {
+		if (RL_LAST_TXMBUF(sc) == NULL)
+			break;
 		txstat = CSR_READ_4(sc, RL_LAST_TXSTAT(sc));
 		if (!(txstat & (RL_TXSTAT_TX_OK|
 		    RL_TXSTAT_TX_UNDERRUN|RL_TXSTAT_TXABRT)))
@@ -755,14 +754,20 @@ void rl_txeof(sc)
 
 		ifp->if_collisions += (txstat & RL_TXSTAT_COLLCNT) >> 24;
 
-		if (RL_LAST_TXMBUF(sc) != NULL) {
-			bus_dmamap_sync(sc->sc_dmat, RL_LAST_TXMAP(sc),
-			    0, RL_LAST_TXMAP(sc)->dm_mapsize,
-			    BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmat, RL_LAST_TXMAP(sc));
-			m_freem(RL_LAST_TXMBUF(sc));
-			RL_LAST_TXMBUF(sc) = NULL;
-		}
+		bus_dmamap_sync(sc->sc_dmat, RL_LAST_TXMAP(sc),
+		    0, RL_LAST_TXMAP(sc)->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(sc->sc_dmat, RL_LAST_TXMAP(sc));
+		m_freem(RL_LAST_TXMBUF(sc));
+		RL_LAST_TXMBUF(sc) = NULL;
+		/*
+		 * If there was a transmit underrun, bump the TX threshold.
+		 * Make sure not to overflow the 63 * 32byte we can address
+		 * with the 6 available bit.
+		 */
+		if ((txstat & RL_TXSTAT_TX_UNDERRUN) &&
+		    (sc->rl_txthresh < 2016))
+			sc->rl_txthresh += 32;
 		if (txstat & RL_TXSTAT_TX_OK)
 			ifp->if_opackets++;
 		else {
@@ -776,17 +781,18 @@ void rl_txeof(sc)
 			/* error recovery */
 			rl_reset(sc);
 			rl_init(sc);
-			/*
-			 * If there was a transmit underrun,
-			 * bump the TX threshold.
-			 */
-			if (txstat & RL_TXSTAT_TX_UNDERRUN)
-				sc->rl_txthresh = oldthresh + 32;
+			/* restore original threshold */
+			sc->rl_txthresh = oldthresh;
 			return;
 		}
 		RL_INC(sc->rl_cdata.last_tx);
 		ifp->if_flags &= ~IFF_OACTIVE;
 	} while (sc->rl_cdata.last_tx != sc->rl_cdata.cur_tx);
+
+	if (RL_LAST_TXMBUF(sc) == NULL)
+		ifp->if_timer = 0;
+	else if (ifp->if_timer == 0)
+		ifp->if_timer = 5;
 }
 
 int rl_intr(arg)
@@ -804,23 +810,20 @@ int rl_intr(arg)
 	CSR_WRITE_2(sc, RL_IMR, 0x0000);
 
 	for (;;) {
-
 		status = CSR_READ_2(sc, RL_ISR);
-		if (status)
+		/* If the card has gone away, the read returns 0xffff. */
+		if (status == 0xffff)
+			break;
+		if (status != 0)
 			CSR_WRITE_2(sc, RL_ISR, status);
-
 		if ((status & RL_INTRS) == 0)
 			break;
-
 		if (status & RL_ISR_RX_OK)
 			rl_rxeof(sc);
-
 		if (status & RL_ISR_RX_ERR)
 			rl_rxeof(sc);
-
 		if ((status & RL_ISR_TX_OK) || (status & RL_ISR_TX_ERR))
 			rl_txeof(sc);
-
 		if (status & RL_ISR_SYSTEM_ERR) {
 			rl_reset(sc);
 			rl_init(sc);
@@ -936,6 +939,11 @@ void rl_start(ifp)
 		    RL_CUR_TXMAP(sc)->dm_segs[0].ds_len);
 
 		RL_INC(sc->rl_cdata.cur_tx);
+
+		/*
+		 * Set a timeout in case the chip goes out to lunch.
+		 */
+		ifp->if_timer = 5;
 	}
 	if (pkts == 0)
 		return;
@@ -947,11 +955,6 @@ void rl_start(ifp)
 	 */
 	if (RL_CUR_TXMBUF(sc) != NULL)
 		ifp->if_flags |= IFF_OACTIVE;
-
-	/*
-	 * Set a timeout in case the chip goes out to lunch.
-	 */
-	ifp->if_timer = 5;
 }
 
 void rl_init(xsc)
