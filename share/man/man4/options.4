@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.53 2000/05/25 16:58:25 aaron Exp $
+.\"	$OpenBSD: options.4,v 1.54 2000/07/06 23:58:25 aaron Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -40,10 +40,12 @@
 .Sh NAME
 .Nm options
 .Nd miscellaneous kernel configuration options
+.Sh SYNOPSIS
+.Cd option ...
 .Sh DESCRIPTION
 This manual page describes a number of miscellaneous kernel
-configuration options that may be specified in a kernel config
-file. See
+configuration options that may be specified in a kernel config file.
+See
 .Xr config 8
 for information on how to configure and build kernels.
 .Em Note:
@@ -56,8 +58,9 @@ flags to the C compiler.
 On those architectures that support it, this enables binary
 compatibility with
 .At V.4
-binaries built for the same architecture.  This currently includes
-the sparc and i386.  Possibly the most widely known operating system
+binaries built for the same architecture.
+This currently includes the sparc and i386.
+Possibly the most widely known operating system
 based on this binary architecture is Sun's Solaris 2.x.
 See
 .Xr compat_svr4 8 .
@@ -65,59 +68,61 @@ See
 On those architectures that support it, this enables binary
 compatibility with
 .Em BSD/OS
-applications.  This option is supported on the i386 architecture.
+applications.
+This option is supported on the i386 architecture.
 See
 .Xr compat_bsdos 8 .
 Requires
-.Sq option COMPAT_43
+.Cm option COMPAT_43
 also be used for proper operation.
 .It Cd option COMPAT_LINUX
 On those architectures that support it, this enables binary
 compatibility with
 .Em Linux
 ELF and a.out
-applications built for the same architecture.  This option is
-supported on the i386 architecture.
+applications built for the same architecture.
+This option is supported on the i386 architecture.
 See
 .Xr compat_linux 8 .
 .It Cd option COMPAT_SUNOS
 On those architectures that support it, this enables binary
 compatibility with
 .Em SunOS 4.x
-applications built for the same architecture.  This option is
-supported on the sparc and most m68k platforms.
+applications built for the same architecture.
+This option is supported on the sparc and most m68k platforms.
 See
 .Xr compat_sunos 8 .
 .It Cd option COMPAT_ULTRIX
 On those architectures that support it, this enables binary
 compatibility with
 .Tn Ultrix
-applications built for the same architecture.  This option is
-available on the little-endian MIPS platforms like the pmax and arc.
+applications built for the same architecture.
+This option is available on the little-endian MIPS platforms like the
+pmax and arc.
 See
 .Xr compat_ultrix 8 .
 .It Cd option COMPAT_FREEBSD
 On those architectures that support it, this enables binary
 compatibility with
 .Em FreeBSD
-applications built for the same architecture.  This option is
-available on the i386 architecture.
+applications built for the same architecture.
+This option is available on the i386 architecture.
 See
 .Xr compat_freebsd 8 .
 .It Cd option COMPAT_HPUX
 On those architectures that support it, this enables binary
 compatibility with
 .Em HP/UX
-applications built for the same architecture.  This option is
-available on some m68k architectures.
+applications built for the same architecture.
+This option is available on some m68k architectures.
 See
 .Xr compat_hpux 8 .
 .It Cd option COMPAT_IBCS2
 On those architectures that support it, this enables binary
 compatibility with
 .Em iBCS2
-applications built for the same architecture.  This option is
-available on the i386 architecture.
+applications built for the same architecture.
+This option is available on the i386 architecture.
 See
 .Xr compat_ibcs2 8 .
 .It Cd option COMPAT_OSF1
@@ -126,53 +131,71 @@ compatibility with
 .Em Digital UNIX
 (formerly
 .Em OSF/1 )
-applications built for the same architecture.  This option is
-available on the alpha architecture.
+applications built for the same architecture.
+This option is available on the alpha architecture.
 See
 .Xr compat_osf1 8 .
 .It Cd option COMPAT_NOMID
 Enable compatibility with a.out executables that lack a machine ID.
 On the i386, this includes NetBSD 0.8's ZMAGIC format, 386BSD and BSDI's
-QMAGIC, NMAGIC, and OMAGIC a.out formats.  On the hp300 and other m68k
-architectures this permits certain old
+QMAGIC, NMAGIC, and OMAGIC a.out formats.
+On the hp300 and other m68k architectures this permits certain old
 .Bx 4.3
 binaries to work, though its use is discouraged now.
 .It Cd option COMPAT_43
-Use of this option is discouraged. It enables compatibility with
+Use of this option is discouraged.
+It enables compatibility with
 .Bx 4.3 .
-It adds an old syscall for lseek as well as ioctls for TIOCGETP and
-TIOCSETP.  The return values for getpid, getgid, and getuid syscalls
-are modified as well, to return the parent's pid and uid as well as
-the current process's.  It also enables the deprecated NTTYDISC terminal
-line discipline. It also provides backwards compatibility with the
+It adds an old syscall for
+.Fn lseek
+as well as ioctls for
+.Dv TIOCGETP
+and
+.Dv TIOCSETP .
+The return values for the
+.Xr getpid 2 ,
+.Xr getgid 2 ,
+and
+.Xr getuid 2
+system calls are modified as well, to return the parent's PID and UID as well
+as the current process's.
+It also enables the deprecated
+.Dv NTTYDISC
+terminal line discipline.
+It provides backwards compatibility with the
 .Dq old
 SIOC[GS]IF{ADDR,DSTADDR,BRDADDR,NETMASK} interface ioctls, including
 binary compatibility for code written before the introduction of the
-sa_len field in sockaddrs.
+.Li sa_len
+field in sockaddrs.
 It also enables support for some older pre BSD 4.4 socket calls.
 .El
 .Ss Debugging Options
 .Bl -ohang
 .It Cd option DDB
-Compiles in a kernel debugger for diagnosing kernel problems. See
+Compiles in a kernel debugger for diagnosing kernel problems.
+See
 .Xr ddb 4
 for details.
-.Em NOTE:
+.Em Note:
 not available on all architectures.
 .It Cd option DDB_SAFE_CONSOLE
-Allows a break into the kernel debugger during boot. Useful when
-debugging problems that can cause init(8) to fail.
+Allows a break into the kernel debugger during boot.
+Useful when debugging problems that can cause init(8) to fail.
 .It Cd option KGDB
 Compiles in a remote kernel debugger stub for diagnosing kernel problems
 using the
 .Dq remote target
-feature of gdb. See
+feature of gdb.
+See
 .Xr gdb 1
 for details.
-.Em NOTE:
+.Em Note:
 not available on all architectures.
 .It Cd makeoptions DEBUG="-g"
-The -g flag causes
+The
+.Fl g
+flag causes
 .Pa bsd.gdb
 to be built in addition to
 .Pa bsd .
@@ -182,8 +205,8 @@ Note that
 .Xr gdb Ns 's
 .Fl k
 flag
-is obsolete and should not be used. Instead, the kernel can be debugged
-by starting
+is obsolete and should not be used.
+Instead, the kernel can be debugged by starting
 .Xr gdb
 with the kernel name as an argument (no core file) and then use the
 .Xr gdb
@@ -191,37 +214,41 @@ command
 .Dq target kcore COREFILE .
 .Pp
 This also turns on
-.Em option DEBUG .
+.Cm option DEBUG .
 .It Cd option DEBUG
-Turns on miscellaneous kernel debugging. Since options are turned into
-preprocessor defines (see above),
-.Em option DEBUG
+Turns on miscellaneous kernel debugging.
+Since options are turned into preprocessor defines (see above),
+.Cm option DEBUG
 is equivalent to doing a
 .Em #define DEBUG
-throughout the kernel. Much of the kernel has
+throughout the kernel.
+Much of the kernel has
 .Em #ifdef DEBUG
-conditional debugging code. Note that many parts of the kernel
-(typically device drivers) include their own
+conditional debugging code.
+Note that many parts of the kernel (typically device drivers) include their own
 .Em #ifdef XXX_DEBUG
 conditionals instead.
-This option also turns on certain other options, notably the
-.Em KMEMSTATS
-option, which may decrease system performance.
+This option also turns on certain other options, notably
+.Cm option KMEMSTATS ,
+which may decrease system performance.
 .It Cd option DIAGNOSTIC
-Adds code to the kernel that does internal consistency checks.  This
-code will cause the kernel to panic if corruption of internal data
+Adds code to the kernel that does internal consistency checks.
+This code will cause the kernel to panic if corruption of internal data
 structures is detected.
 .It Cd option GPROF
 Adds code to the kernel for kernel profiling with
 .Xr kgmon 8 .
 .It Cd makeoptions PROF="-pg"
-The -pg flag causes the kernel to be compiled with support for profiling.
 The
-.Em option GPROF
+.Fl pg
+flag causes the kernel to be compiled with support for profiling.
+The
+.Cm option GPROF
 is required for the kernel compile to succeed.
 .It Cd option KTRACE
 Adds hooks for the system call tracing facility, which allows users to
-watch the system call invocation behavior of processes.  See
+watch the system call invocation behavior of processes.
+See
 .Xr ktrace 1
 for details.
 .El
@@ -235,13 +262,21 @@ Most machines need this if they are not running diskless.
 Includes code implementing the Second Extended File System
 .Em ( EXT2FS ) .
 This is the most commonly used file system on the Linux operating system,
-and is provided here for compatibility.  Some specific features of
+and is provided here for compatibility.
+Some specific features of
 .Em EXT2FS
-like the "behavior on errors" are not implemented.  This file system
-can't be used with uid_t or gid_t values greater than 65535.  Also, the
-filesystem will not function correctly on architectures with differing
-byte-orders.  That is, a big-endian machine will not be able to read an
-ext2fs filesystem created on an i386 or other little-endian machine.  See
+like the "behavior on errors" are not implemented.
+This file system
+can't be used with
+.Li uid_t
+or
+.Li gid_t
+values greater than 65535.
+Also, the filesystem will not function correctly on architectures with
+differing byte-orders.
+That is, a big-endian machine will not be able to read an
+ext2fs filesystem created on an i386 or other little-endian machine.
+See
 .Xr mount_ext2fs 8
 for details.
 .It Cd option MFS
@@ -251,7 +286,8 @@ This file system stores files in swappable memory, and produces
 notable performance improvements when it is used as the file store
 for
 .Pa /tmp
-or similar mount points.  See
+or similar mount points.
+See
 .Xr mount_mfs 8
 for details.
 .It Cd option NFSCLIENT
@@ -260,8 +296,8 @@ Include the client side of the
 (Network File System) remote file sharing protocol.
 Although the bulk of the code implementing
 .Em NFS
-is kernel based, several user level daemons are needed for it to
-work.  See
+is kernel based, several user level daemons are needed for it to work.
+See
 .Xr mount_nfs 8
 for details on NFS.
 .It Cd option CD9660
@@ -287,7 +323,8 @@ for details.
 Includes code for a file system which can be mounted on
 .Pa /dev/fd .
 This filesystem permits access to the per-process file descriptor
-space via special files in the file system.  See
+space via special files in the file system.
+See
 .Xr mount_fdesc 8
 for details.
 Note that this facility is redundant, and thus unneeded on most
@@ -314,33 +351,38 @@ See
 .Xr mount_kernfs 8
 for details.
 .It Cd option NULLFS
-Includes code for a loopback file system.  This permits portions of the
-file hierarchy to be re-mounted in other places.  The code really
-exists to provide an example of a stackable file system layer.  See
+Includes code for a loopback file system.
+This permits portions of the file hierarchy to be re-mounted in other places.
+The code really exists to provide an example of a stackable file system layer.
+See
 .Xr mount_null 8
 for details.
 .It Cd option PORTAL
-Includes the (experimental) portal filesystem.  This permits
-interesting tricks like opening TCP sockets by opening files in the
-file system.  The portal file system is conventionally mounted on
+Includes the (experimental) portal filesystem.
+This permits interesting tricks like opening TCP sockets by opening files in
+the file system.
+The portal file system is conventionally mounted on
 .Pa /p
-and is partially implemented by a special daemon.  See
+and is partially implemented by a special daemon.
+See
 .Xr mount_portal 8
 for details.
 .It Cd option PROCFS
 Includes code for a special file system (conventionally mounted on
 .Pa /proc )
-in which the process space becomes visible in the file system.  Among
-other things, the memory spaces of processes running on the system are
+in which the process space becomes visible in the file system.
+Among other things, the memory spaces of processes running on the system are
 visible as files, and signals may be sent to processes by writing to
 .Pa ctl
-files in the procfs namespace.  See
+files in the procfs namespace.
+See
 .Xr mount_procfs 8
 for details.
 .It Cd option UMAPFS
 Includes a loopback file system in which user and group IDs may be
 remapped -- this can be useful when mounting alien file systems with
-different uids and gids than the local system (eg, remote NFS).  See
+different uids and gids than the local system (eg, remote NFS).
+See
 .Xr mount_umap 8
 for details.
 .It Cd option UNION
@@ -349,8 +391,9 @@ be mounted on top of each other in such a way that both file systems
 remain visible -- this permits tricks like allowing writing (and the
 deleting of files) on a read-only file system like a CD-ROM by
 mounting a local writable file system on top of the read-only file
-system.  This filesystem is still experimental and is known to be
-somewhat unstable. See
+system.
+This filesystem is still experimental and is known to be somewhat unstable.
+See
 .Xr mount_union 8
 for details.
 .El
@@ -358,9 +401,25 @@ for details.
 .Bl -ohang
 .It Cd option FFS_SOFTUPDATES
 Enables a scheme that uses partial ordering of buffer cache operations
-to allow metadata updates in FFS to happen asynchronously.  For more
-details see
-.Xr ffs_softupdates 4 .
+to allow metadata updates in FFS to happen asynchronously, increasing write
+performance significantly.
+Normally, the FFS filesystem writes metadata updates synchronously which exacts
+a performance penalty in favor of filesystem integrity.
+With soft updates, you gain the performance of asynchronous writes while
+retaining the safety of synchronous metadata updates.
+.Pp
+Soft updates must be enabled on a per-filesystem basis.
+To do this, boot into single user mode and run
+.Ic tunefs -s enable special
+on each character special device you want to enable soft updates on, then run
+.Ic reboot -n .
+.Pp
+Processors with a small kernel address space, such as the sun4 and sun4c, do
+not have enough kernel memory to support soft updates.
+Attempts to use this option with these CPUs will cause a kernel hang or panic
+after a short period of use as the kernel will quickly run out of memory.
+This is not related to the amount of physical memory present in the machine --
+it is a limitation of the CPU architecture itself.
 .It Cd option BUFCACHEPERCENT=integer
 Percentage of RAM to use as a file system buffer.
 It defaults to 5.
@@ -371,19 +430,22 @@ Include the server side of the
 Although the bulk of the code implementing
 .Em NFS
 is kernel based, several user level daemons are needed for it to
-work. See
+work.
+See
 .Xr mountd 8
 and
 .Xr nfsd 8
 for details.
 .It Cd option QUOTA
-Enables kernel support for file system quotas. See
+Enables kernel support for file system quotas.
+See
 .Xr quotaon 8 ,
 .Xr edquota 8 ,
 .Xr repquota 8 ,
 and
 .Xr quota 1
-for details. Note that quotas only work on
+for details.
+Note that quotas only work on
 .Dq ffs
 file systems, although
 .Xr rpc.rquotad 8
@@ -392,17 +454,21 @@ permits them to be accessed over
 .It Cd option FIFO
 Adds support for
 .At V
-style FIFOs (i.e.
-.Dq named pipes
-).  This option is recommended in almost all cases as many programs use these.
+style FIFOs (i.e.,
+.Dq named pipes ) .
+This option is recommended in almost all cases as many programs use these.
 .It Cd option NVNODE=integer
 This option sets the size of the cache used by the name-to-inode translation
 routines, (a.k.a. the
 .Fn namei
-cache, though called by many other names in the kernel source).  By default,
-this cache has NPROC (set as 20 + 16 * MAXUSERS) * (80 + NPROC / 8) entries.
-A reasonable way to derive a value of NVNODE, should a large number of
-namei cache misses be noticed with a tool such as
+cache, though called by many other names in the kernel source).
+By default,
+this cache has
+.Dv NPROC
+(set as 20 + 16 * MAXUSERS) * (80 + NPROC / 8) entries.
+A reasonable way to derive a value of
+.Dv NVNODE ,
+should a large number of namei cache misses be noticed with a tool such as
 .Xr systat 1 ,
 is to examine the system's current computed value with
 .Xr sysctl 1 ,
@@ -414,9 +480,10 @@ the namei cache.
 This option changes the behavior of the APPEND and IMMUTABLE flags
 for a file on an
 .Em EXT2FS
-filesystem. Without this option, the superuser or owner of the file
-can set and clear them.  With this option, only the superuser can set
-them, and they can't be cleared if the securelevel is greater than 0.
+filesystem.
+Without this option, the superuser or owner of the file can set and clear them.
+With this option, only the superuser can set them, and they can't be cleared
+if the securelevel is greater than 0.
 See also
 .Xr chflags 1 .
 .El
@@ -431,52 +498,61 @@ Makes the boot process more verbose for EISA peripherals.
 Makes the boot process more verbose for PCMCIA peripherals.
 .It Cd option APERTURE
 Provide in-kernel support for VGA framebuffer mapping by user-processes
-(such as an X windows server).  This option is supported in the i386
-architecture.
+(such as an X windows server).
+This option is supported in the i386 architecture.
 .It Cd option XSERVER
 Support for X windows in the console driver.
 .It Cd option LKM
-Enable support for loadable kernel modules. See
+Enable support for loadable kernel modules.
+See
 .Xr lkm 4
 for details.
-.Em NOTE:
+.Em Note:
 This option is not yet available on all architectures.
 .It Cd option INSECURE
-Hardwires the kernel security level at -1.  This means that the system
-always runs in secure level 0 mode, even when running multiuser.  See
-the manual page for
+Hardwires the kernel security level at \-1.
+This means that the system always runs in securelevel 0 mode, even when
+running multiuser.
+See
 .Xr init 8
-for details on the implications of this.  The kernel secure level may
-be manipulated by the superuser by altering the
+for details on the implications of this.
+The kernel secure level may be manipulated by the superuser by altering the
 .Em kern.securelevel
-sysctl variable. (It should be noted that the secure level may only be
-lowered by a call from process ID 1, i.e.,
-.Em init . )
+sysctl variable.
+(It should be noted that the securelevel may only be lowered by a call from
+process ID 1, i.e.,
+.Xr init 8 . )
 See also
 .Xr sysctl 8
 and
 .Xr sysctl 3 .
 .It Cd option MACHINE_NONCONTIG
 This option changes part of the VM/pmap interface, to allow for
-non-contiguous memory.  On some ports it is not an option.  These
-ports typically only use one of the interfaces.
+non-contiguous memory.
+On some ports it is not an option.
+These ports typically only use one of the interfaces.
 .It Cd option RAM_DISK_HOOKS
 This option allows for some machine dependent functions to be called
-when the ramdisk driver is configured.  This can result in
-automatically loading a ramdisk from floppy on open (among other
-things).
+when the ramdisk driver is configured.
+This can result in automatically loading a ramdisk from floppy on open (among
+other things).
 .It Cd option RAM_DISK_IS_ROOT
-Forces the ramdisk to be the root device.  This can only be overridden
-when the kernel is booted in the 'ask-for-root' mode.
+Forces the ramdisk to be the root device.
+This can only be overridden when the kernel is booted in the
+.Dq ask-for-root
+mode.
 .It Cd option CCDNBUF=integer
 The
 .Xr ccd 4
-device driver uses "component buffers" to distribute I/O requests to
-the components of a concatenated disk.  It keeps a freelist of buffer
+device driver uses
+.Dq component buffers
+to distribute I/O requests to the components of a concatenated disk.
+It keeps a freelist of buffer
 headers in order to reduce use of the kernel memory allocator.
 .Em CCDNBUF
 is the number of buffer headers allocated on the freelist for
-each component buffer.  It defaults to 8.
+each component buffer.
+It defaults to 8.
 .It Cd option KMEMSTATS
 The kernel memory allocator,
 .Xr malloc 9 ,
@@ -486,10 +562,10 @@ Unfortunately, this option therefore essentially disables
 and
 .Fn FREE
 forms of the memory allocator, which are used to enhance the
-performance of certain critical sections of code in the kernel.  This
-option therefore can lead to a significant decrease in the performance
-of certain code in the kernel if enabled.  Examples of such code
-include the
+performance of certain critical sections of code in the kernel.
+This option therefore can lead to a significant decrease in the performance
+of certain code in the kernel if enabled.
+Examples of such code include the
 .Fn namei
 routine, the
 .Xr ccd 4
@@ -508,12 +584,14 @@ Allows modification of kernel settings (i.e., device parameters) before
 booting the system.
 .It Cd option UVM_SWAP_ENCRYPT
 Enables kernel support for encrypting pages that are written out to
-swap storage.  Swap encryption prevents sensitive data from remaining
+swap storage.
+Swap encryption prevents sensitive data from remaining
 on the disk even after the operating system has been shut down.
 This option should be turned on if cryptographic filesystems are used.
 The sysctl variable
-.Em vm.swapencrypt
-controls its behaviour. See
+.Em vm.swapencrypt.enable
+controls its behaviour.
+See
 .Xr sysctl 8
 and
 .Xr sysctl 3
@@ -535,23 +613,27 @@ is not invoked directly.
 .Em GATEWAY
 has no impact on protocols other than IP, such as CLNP or XNS.)
 .It Cd option IPFORWARDING
-Enables IP routing behavior.  With this option enabled, the machine
+Enables IP routing behavior.
+With this option enabled, the machine
 will forward IP datagrams between its interfaces that are destined for
-other machines.  Note that even without this option, the kernel will
+other machines.
+Note that even without this option, the kernel will
 still forward some packets (such as source routed packets) -- removing
 .Em GATEWAY
 and
 .Em IPFORWARDING
 is insufficient to stop all routing through a bastion host on a
-firewall -- source routing is controlled independently.  Note that IP
-forwarding may be turned on and off independently of the setting of
-the
+firewall -- source routing is controlled independently.
+Note that IP
+forwarding may be turned on and off independently of the setting of the
 .Em IPFORWARDING
 option through the use of the
 .Em net.inet.ip.forwarding
-sysctl variable. If
+sysctl variable.
+If
 .Em net.inet.ip.forwarding
-is 1, IP forwarding is on. See
+is 1, IP forwarding is on.
+See
 .Xr sysctl 8
 and
 .Xr sysctl 3
@@ -559,12 +641,14 @@ for details.
 .It Cd option MROUTING
 Includes support for IP multicast routers.
 .Em INET
-should be set along with this.  Multicast routing is controlled by the
+should be set along with this.
+Multicast routing is controlled by the
 .Xr mrouted 8
 daemon.
 .It Cd option INET
 Includes support for the TCP/IP protocol stack.
-This option is currently required.  See
+This option is currently required.
+See
 .Xr inet 4
 for details.
 .It Cd options INET6
@@ -582,33 +666,36 @@ This option requires
 .Em INET
 at this moment, but it should not.
 .It Cd option NS
-Include support for the Xerox XNS protocol stack.  See
+Include support for the Xerox XNS protocol stack.
+See
 .Xr ns 4
 for details.
 .It Cd option ISO,TPIP
-Include support for the ubiquitous OSI protocol stack.  See
+Include support for the ubiquitous OSI protocol stack.
+See
 .Xr iso 4
 for details.
 .It Cd option EON
 Include support for OSI tunneling over IP.
 .It Cd option CCITT,LLC,HDLC
 Include support for the X.25 protocol stack.
-The state of this code is currently unknown.  It probably contains
-bugs.
+The state of this code is currently unknown.
+It probably contains bugs.
 .It Cd option IPX, IPXIP
 Include support for Internetwork Packet Exchange protocol commonly in
 use by
 .Tn Novell NetWare .
 .It Cd option NETATALK
-Include kernel support for the AppleTalk family of protocols.  This suite
-of supporting code is sometimes called
+Include kernel support for the AppleTalk family of protocols.
+This suite of supporting code is sometimes called
 .Em netatalk
 support.
 .It Cd option TCP_COMPAT_42
 Use of this option is
 .Em extremely
-discouraged, so it should not be enabled.  If any other machines on
-the network require enabling this, it's recommended that
+discouraged, so it should not be enabled.
+If any other machines on the network require enabling this, it's
+recommended that
 .Em they
 be disconnected from the network.
 .Pp
@@ -617,48 +704,58 @@ TCP bug compatibility with
 In
 .Bx 4.2 ,
 TCP sequence numbers
-were 32-bit signed values.  Modern implementations of TCP use unsigned
-values.  This option clamps the initial sequence number to start in
-the range 2^31 rather than the full unsigned range of 2^32.  Also, under
+were 32-bit signed values.
+Modern implementations of TCP use unsigned values.
+This option clamps the initial sequence number to start in
+the range 2^31 rather than the full unsigned range of 2^32.
+Also, under
 .Bx 4.2 ,
 keepalive packets must contain at least one byte or else
 the remote end will not respond.
 .It Cd option TCP_SACK
-Turns on selective acknowledgements. Additional information about
+Turns on selective acknowledgements.
+Additional information about
 segments already received can be transmitted back to the sender,
 thus indicating segments that have been lost and allowing for
-a swifter recovery. Both communication endpoints need to support
+a swifter recovery.
+Both communication endpoints need to support
 .Em SACK .
 The fallback behaviour is NewReno fast recovery phase, which allows
-one lost segment to be recovered per round trip time. When more than
-one segment has been dropped per window, the transmission can continue
-without waiting for a retranmission timeout.
+one lost segment to be recovered per round trip time.
+When more then one segment has been dropped per window, the transmission can
+continue without waiting for a retranmission timeout.
 .It Cd option TCP_FACK
 Turns on forward acknowledgements allowing a more precise estimate of
 outstanding data during the fast recovery phase by using
 .Em SACK
-information. This option can only be used together with
+information.
+This option can only be used together with
 .Em TCP_SACK .
 .It Cd option TCP_SIGNATURE
-Turns on support for the TCP MD5 Signature option (RFC 2385). This is used by
+Turns on support for the TCP MD5 Signature option (RFC 2385).
+This is used by
 Internet backbone routers to provide per-packet authentication for the TCP
-packets used to communicate BGP routing information. You will also need a
+packets used to communicate BGP routing information.
+You will also need a
 routing daemon that supports this option in order to actually use it.
 .It Cd option IPFILTER
 This option enables the IP filtering on the packet level using
 Darren Reed's ip-filter package.
 .It Cd option IPFILTER_LOG
 This option, in conjunction with
-.Em IPFILTER ,
+.Cm option IPFILTER ,
 enables logging of IP packets using ip-filter.
 .It Cd option IPFILTER_DEFAULT_BLOCK
 This option sets the default policy of ip-filter to block packets that
-exit the rule-set unmatched. Otherwise they are silently passed. See
-ipf(1) for details.
+exit the rule-set unmatched.
+Otherwise they are silently passed. See
+.Xr ipf 1
+for details.
 .It Cd option PPP_FILTER
 This option turns on
 .Xr pcap 3
-based filtering for ppp connections. This option is used by
+based filtering for ppp connections.
+This option is used by
 .Xr pppd 8
 which needs to be compiled with
 .Em PPP_FILTER
@@ -669,17 +766,20 @@ Enables BSD compressor for PPP connections.
 For use in conjunction with PPP_BSDCOMP; provides an interface to zlib for PPP
 for deflate compression/decompression.
 .It Cd option IPSEC
-This option enables IP security protocol support. See
+This option enables IP security protocol support.
+See
 .Xr ipsec 4
 for more details.
 .It Cd option ENCDEBUG
 This option enables debugging information to be conditionally logged
-in case IPSEC encounters errors.  The option
+in case IPSEC encounters errors.
+The option
 .Em IPSEC
-is required along with this option.  Debug logging can be turned
-on/off through use of the
+is required along with this option.
+Debug logging can be turned on/off through the use of the
 .Em net.ipsec.encap.encdebug
-sysctl variable.  If
+sysctl variable.
+If
 .Em net.ipsec.encap.encdebug
 is 1, debug logging is on.
 See
@@ -688,15 +788,15 @@ and
 .Xr sysctl 3
 for details.
 .It Cd option KEY
-Enables PFKEYv2 (RFC 2367) support.  While not IP specific, this option
-is usually used in conjunction with option
+Enables PFKEYv2 (RFC 2367) support.
+While not IP specific, this option is usually used in conjunction with option
 .Em IPSEC .
 .El
 .Ss SCSI Subsystem Options
 .Bl -ohang
 .It Cd option SCSITERSE
-Terser SCSI error messages.  This omits the table for decoding ASC/ASCQ
-info, saving about 8 bytes or so.
+Terser SCSI error messages.
+This omits the table for decoding ASC/ASCQ info, saving about 8 bytes or so.
 .It Cd option SCSIDEBUG
 Prints extra debugging info for the SCSI subsystem to the console.
 .El
@@ -708,7 +808,8 @@ See
 .It Cd option SYSVMSG
 Includes support for
 .At V
-style message queues.  See
+style message queues.
+See
 .Xr msgctl 2 ,
 .Xr msgget 2 ,
 .Xr msgrcv 2 ,
@@ -716,14 +817,16 @@ style message queues.  See
 .It Cd option SYSVSEM
 Includes support for
 .At V
-style semaphores. See
+style semaphores.
+See
 .Xr semctl 2 ,
 .Xr semget 2 ,
 .Xr semop 2 .
 .It Cd option SYSVSHM
 Includes support for
 .At V
-style shared memory.  See
+style shared memory.
+See
 .Xr shmat 2 ,
 .Xr shmctl 2 ,
 .Xr shmdt 2 ,
@@ -733,24 +836,27 @@ Sets the maximum number of
 .At V
 style shared memory pages that are available through the
 .Xr shmget 2
-system call.  Default value is 1024 on most ports.  See
+system call.
+Default value is 1024 on most ports.
+See
 .Pa /usr/include/machine/vmparam.h
 for the default.
 .El
 .Ss Operation Related Options
 .Bl -ohang
 .It Cd option SWAPPAGER
-Turns on paging.  (To be specific, this enables the virtual memory
-module responsible for handling page faults for
+Turns on paging.
+(To be specific, this enables the virtual memory module responsible for
+handling page faults for
 .Dq anonymous
-objects (i.e. BSS pages)).
+objects (i.e., BSS pages)).
 .Em MANDATORY
 -- the system cannot actually run without this
 .Dq option .
 .It Cd option DEVPAGER
-Support for mmap()ing of devices.  (Specifically, this enables the
-virtual memory module responsible for handling page faults on mapped
-devices
+Support for mmap()ing of devices.
+(Specifically, this enables the virtual memory module responsible for
+handling page faults on mapped devices
 .Pf ( Dq cdev
 vnodes)).
 .Em MANDATORY
@@ -759,20 +865,23 @@ vnodes)).
 .It Cd option NMBCLUSTERS=value
 Size of kernel mbuf cluster map,
 .Em mb_map ,
-in CLBYTES-sized logical pages.  Default on most ports is 256 (512 with
-.Dq option GATEWAY ).
+in CLBYTES-sized logical pages.
+Default on most ports is 256 (512 with
+.Dq option GATEWAY ) .
 See
 .Pa /usr/include/machine/param.h
-for exact default information.  Increase this value if
+for exact default information.
+Increase this value if
 .Dq mb_map full
 messages appear.
 .It Cd option NKMEMCLUSTERS=value
-Size of kernel malloc area in CLBYTES-sized logical pages.  This area
-is covered by the kernel submap
+Size of kernel malloc area in CLBYTES-sized logical pages.
+This area is covered by the kernel submap
 .Em kmem_map .
 See
 .Pa /usr/include/machine/param.h
-for the default value, which is port specific.  Increase this value if
+for the default value, which is port specific.
+Increase this value if
 .Dq out of space in kmem_map
 panics happen.
 .\" , which mean the system has run out of malloc-able kernel memory.
@@ -787,8 +896,8 @@ daemon.
 .Xr xntpd 8
 is available as part of the port collection.
 .It Cd option APM_NOPRINT
-This option is supported on the i386 architecture.  When enabled
-kernel messages regarding the status of the automatic power
+This option is supported on the i386 architecture.
+When enabled kernel messages regarding the status of the automatic power
 management system
 .Tn ( APM )
 are suppressed.
