@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.43 2003/08/15 14:02:22 fgsch Exp $
+	$OpenBSD: syscalls.master,v 1.44 2003/09/01 14:00:23 fgsch Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -386,7 +386,7 @@
 247	UNIMPL		linux_sys_io_getevents
 248	UNIMPL		linux_sys_io_submit
 249	UNIMPL		linux_sys_io_cancel
-250	UNIMPL		linux_sys_fadvise64
+250	NOARGS		{ int linux_sys_fadvise64(void); }
 251	UNIMPL		
 252	NOARGS		linux_exit_group { int sys_exit(int rval); }
 253	UNIMPL		linux_sys_lookup_dcookie
