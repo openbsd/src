@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.40 2001/06/25 23:09:55 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.41 2001/06/26 21:05:56 deraadt Exp $
 #
 # PPC GENERIC config file
 #
@@ -109,7 +109,9 @@ wdc*		at macobio? flags 0x0
 #wd*		at pciide? channel ? drive ?
 #wd*		at wdc? channel ? drive ? flags 0x0000
 wd*		at wdc? drive ? flags 0x0000
+wd*		at pciide? drive ? flags 0x0000
 atapiscsi*	at wdc? channel ? flags 0x0000
+atapiscsi*	at pciide? channel ? flags 0x0000
 scsibus*	at atapiscsi?
 
 # PCI USB Controllers
