@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.38 2002/06/06 16:36:09 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.39 2002/06/09 02:50:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -242,14 +242,14 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	/*
 	 * Build a stack frame for the cpu_switch & co.
 	 */
-	osp = sp;
-	sp += HPPA_FRAME_SIZE + 16*4; /* std frame + calee-save registers */
+	osp = sp + HPPA_FRAME_SIZE;
+	sp += 2*HPPA_FRAME_SIZE + 20*4; /* std frame + calee-save registers */
 	*HPPA_FRAME_CARG(0, sp) = tf->tf_sp;
 	*HPPA_FRAME_CARG(1, sp) = KERNMODE(func);
 	*HPPA_FRAME_CARG(2, sp) = (register_t)arg;
+	*(register_t*)(osp) = 0;
 	*(register_t*)(sp + HPPA_FRAME_PSP) = osp;
-	*(register_t*)(sp + HPPA_FRAME_CRP) =
-		(register_t)switch_trampoline;
+	*(register_t*)(osp + HPPA_FRAME_CRP) = (register_t)&switch_trampoline;
 	tf->tf_sp = sp;
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)p2->p_addr, sp - (vaddr_t)p2->p_addr);
 }

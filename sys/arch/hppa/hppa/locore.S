@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.69 2002/05/20 07:59:11 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.70 2002/06/09 02:50:29 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -2550,6 +2550,23 @@ sw_qnempty
 	ldb	P_STAT(arg1), t1
 	comib,<>,n SRUN, t1, switch_error
 	copy	arg1, t2
+	/*
+	 * Either we must be switching to the same process, or
+	 * the the new process' kernel stack must be reasonable.
+	 */
+	comb,=,n arg1, arg2, kstack_ok
+	ldw     P_MD_REGS(arg1), t1
+	ldw     P_ADDR(arg1), arg0
+	ldw     TF_R30(t1), t1
+	ldo     NBPG(arg0), arg0
+	comb,>>,n arg0, t1, switch_error
+	copy    arg1, t2
+	sub     t1, arg0, t1
+	ldil    L%USPACE, arg0
+	ldo     R%USPACE(arg0), arg0
+	comb,<<=,n arg0, t1, switch_error
+	copy    arg1, t2
+kstack_ok
 #endif
 	ldil	L%curproc, t1
 	stw	arg1, R%curproc(t1)
@@ -2566,16 +2583,15 @@ sw_qnempty
 	 * arg2: old proc
 	 */
 	ldw	P_MD(arg2), t1
-	copy	sp, t2
-	ldo	HPPA_FRAME_SIZE+16*4(sp), sp
-	ldw	TF_R30(t1), t3
-	stw	t2, HPPA_FRAME_PSP(sp)
 	stw	rp, HPPA_FRAME_CRP(sp)
-	stw	t3, HPPA_FRAME_ARG(0)(sp)
+	ldw	TF_R30(t1), t3
+	copy	sp, t2
+	stw,ma	r3, HPPA_FRAME_SIZE+20*4(sp)
 	stw	sp, TF_R30(t1)
+	stw	t2, HPPA_FRAME_PSP(sp)
+	stw	t3, HPPA_FRAME_ARG(0)(sp)	/* real user's stack */
 	fdc	r0(t1)
 	/* save callee-save registers */
-	stw	r3,   0*4(t2)
 	stw	r4,   1*4(t2)
 	stw	r5,   2*4(t2)
 	stw	r6,   3*4(t2)
@@ -2606,13 +2622,11 @@ switch_exited
 	ldw	TF_CR9(t1), t3
 	mtctl	t2, cr30
 	mtctl	t3, pidr2
-	ldw	HPPA_FRAME_ARG(0)(sp), t3
-	ldw	HPPA_FRAME_CRP(sp), rp
 	ldw	HPPA_FRAME_PSP(sp), t2
-	stw	t3, TF_R30(t1)
-	fdc	r0(t1)
-	ldw	HPPA_FRAME_ARG(1)(sp), t3 /* in case we're on trampoline */
+	ldw	HPPA_FRAME_ARG(0)(sp), t3
+	ldw	HPPA_FRAME_ARG(1)(sp), t4 /* in case we're on trampoline */
 	ldw	HPPA_FRAME_ARG(2)(sp), arg0
+	ldw	HPPA_FRAME_CRP(t2), rp
 	ldw	 0*4(t2), r3
 	ldw	 1*4(t2), r4
 	ldw	 2*4(t2), r5
@@ -2629,6 +2643,8 @@ switch_exited
 	ldw	13*4(t2), r16
 	ldw	14*4(t2), r17
 	ldw	15*4(t2), r18
+	stw	t3, TF_R30(t1)
+	fdc	r0(t1)
 	copy	t2, sp
 
 switch_return
@@ -2663,9 +2679,9 @@ ENTRY(switch_exit,0)
 	/* switch onto the temporary stack */
 	ldil	L%exit_stack, t4
 	ldw	R%exit_stack(t4), t4
+	stw	r0, HPPA_FRAME_SIZE+HPPA_FRAME_PSP(t4)
+	stw	r0, HPPA_FRAME_SIZE+HPPA_FRAME_CRP(t4)
 	ldo	HPPA_FRAME_SIZE(t4), sp
-	stw	r0, HPPA_FRAME_PSP(sp)
-	stw	r0, HPPA_FRAME_CRP(sp)
 
 	/* start the stack frame for our callee */
 	copy	sp, r3
@@ -2689,7 +2705,7 @@ EXIT(switch_exit)
 ENTRY(switch_trampoline,0)
 	.call
 	blr	r0, rp
-	bv,n	r0(t3)
+	bv,n	r0(t4)
 	nop
 	ldil	L%curproc, t1
 	ldw	R%curproc(t1), t2
