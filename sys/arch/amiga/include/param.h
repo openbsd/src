@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.6 1996/05/02 06:44:45 niklas Exp $	*/
+/*	$OpenBSD: param.h,v 1.7 1996/05/04 09:29:50 niklas Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1996/04/21 21:13:20 veego Exp $	*/
 
 /*
@@ -144,6 +144,11 @@
 #define amiga_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
 #define amiga_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define amiga_ptob(x)		((unsigned)(x) << PGSHIFT)
+
+/*
+ * spl functions; all are normally done in-line
+ */
+#include <machine/psl.h>
 
 #ifdef _KERNEL
 #ifndef _LOCORE
