@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs.c,v 1.15 2002/08/09 08:36:33 pjanzen Exp $	*/
+/*	$OpenBSD: bs.c,v 1.16 2002/08/09 08:42:30 pjanzen Exp $	*/
 /*
  * bs.c - original author: Bruce Holloway
  *		salvo option by: Chuck A DeGaul
@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bs.c,v 1.15 2002/08/09 08:36:33 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: bs.c,v 1.16 2002/08/09 08:42:30 pjanzen Exp $";
 #endif
 
 /* #define _POSIX_SOURCE  */  /* ( random() ) */
@@ -977,6 +977,7 @@ static void randomfire(int *px, int *py)
 	else if (srchstep > cpulongest)
     {
 	     --srchstep; 
+	     randomfire(px, py);
     }
 	else
     {
