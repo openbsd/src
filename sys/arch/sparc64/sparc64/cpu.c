@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.11 2003/02/12 06:33:00 jason Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.12 2003/05/07 22:33:25 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -94,7 +94,7 @@ struct cfattach cpu_ca = {
 
 extern struct cfdriver cpu_cd;
 
-static char *fsrtoname(int, int, int, char *);
+static char *fsrtoname(int, int, int, char *, size_t);
 
 #define	IU_IMPL(v)	((((u_int64_t)(v))&VER_IMPL) >> VER_IMPL_SHIFT)
 #define	IU_VERS(v)	((((u_int64_t)(v))&VER_MASK) >> VER_MASK_SHIFT)
@@ -154,7 +154,7 @@ cpu_attach(parent, dev, aux)
 	vers = IU_VERS(ver);
 	if (fver != 7) {
 		foundfpu = 1;
-		fpuname = fsrtoname(impl, vers, fver, fpbuf);
+		fpuname = fsrtoname(impl, vers, fver, fpbuf, sizeof fpbuf);
 	} else
 		fpuname = "no";
 
@@ -172,7 +172,7 @@ cpu_attach(parent, dev, aux)
 		cpu_clockrate[0] = clk; /* Tell OS what frequency we run on */
 		cpu_clockrate[1] = clk/1000000;
 	}
-	sprintf(cpu_model, "%s @ %s MHz, %s FPU",
+	snprintf(cpu_model, sizeof cpu_model, "%s @ %s MHz, %s FPU",
 		getpropstring(node, "name"),
 		clockfreq(clk), fpuname);
 	printf(": %s\n", cpu_model);
@@ -329,9 +329,10 @@ static struct info fpu_types[] = {
 };
 
 static char *
-fsrtoname(impl, vers, fver, buf)
+fsrtoname(impl, vers, fver, buf, buflen)
 	register int impl, vers, fver;
 	char *buf;
+	size_t buflen;
 {
 	register struct info *p;
 
@@ -340,7 +341,7 @@ fsrtoname(impl, vers, fver, buf)
 		    (p->iu_vers == vers || p->iu_vers == ANY) &&
 		    (p->fpu_vers == fver))
 			return (p->name);
-	sprintf(buf, "version %x", fver);
+	snprintf(buf, buflen, "version %x", fver);
 	return (buf);
 }
 
