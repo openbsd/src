@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.196 2003/03/04 16:05:42 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.197 2003/03/04 16:16:05 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1168,8 +1168,13 @@ expands to
 The macro expansion for the
 .Ar label
 directive occurs only at configuration file parse time, not during runtime.
-.It Ar queue <string>
+.It Ar queue <queue> | ( <queue> , <queue> ) 
 Packets matching this rule will be assigned to the specified queue.
+If two queues are given, packets which have a
+.Em tos
+of
+.Em lowdelay
+and TCP ACKs with no data payload will be assigned to the second one.
 See
 .Sx QUEUE RULES
 for setup details.
@@ -1177,9 +1182,8 @@ for setup details.
 For example:
 .Pp
 .Bd -literal -offset indent
-.Xo Ic pass in proto tcp from any to any\ 
-.Ic port 25 queue mail
-.Xc
+.Ic pass in proto tcp to port 25 queue mail
+.Ic pass in proto tcp to port 22 queue(ssh_bulk, ssh_prio)
 .Ed
 .Pp
 .Sh ROUTING
