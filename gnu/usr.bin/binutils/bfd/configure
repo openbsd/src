@@ -4572,6 +4572,7 @@ if test "${target}" = "${host}"; then
   sparc-*-netbsd* | sparc-*-openbsd*)
 	COREFILE=netbsd-core.lo
 	;;
+  sparc64-*-openbsd*)	COREFILE=netbsd-core.lo ;;
   tahoe-*-*)
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/tahoe.h"'
