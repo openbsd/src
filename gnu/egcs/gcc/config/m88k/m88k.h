@@ -1320,23 +1320,17 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 	       ? RTX_OK_FOR_BASE_P (_x1)		\
 	       : (GET_CODE (_x1) == SYMBOL_REF		\
 		  || GET_CODE (_x1) == LABEL_REF)))	\
-	  || (REG_P (_x0)				\
-	      && (REG_OK_FOR_BASE_P (_x0)		\
-		  && LEGITIMATE_INDEX_P (_x1, MODE)))	\
-	  || (REG_P (_x1)				\
-	      && (REG_OK_FOR_BASE_P (_x1)		\
-		  && LEGITIMATE_INDEX_P (_x0, MODE))))	\
+	  || (RTX_OK_FOR_BASE_P (_x0)			\
+		  && LEGITIMATE_INDEX_P (_x1, MODE))	\
+	  || (RTX_OK_FOR_BASE_P (_x1)			\
+		  && LEGITIMATE_INDEX_P (_x0, MODE)))	\
 	goto ADDR;					\
     }							\
   else if (GET_CODE (X) == LO_SUM)			\
     {							\
       register rtx _x0 = XEXP (X, 0);			\
       register rtx _x1 = XEXP (X, 1);			\
-      if (((REG_P (_x0)					\
-	    && REG_OK_FOR_BASE_P (_x0))			\
-	   || (GET_CODE (_x0) == SUBREG			\
-	       && REG_P (SUBREG_REG (_x0))		\
-	       && REG_OK_FOR_BASE_P (SUBREG_REG (_x0)))) \
+      if (RTX_OK_FOR_BASE_P (_x0)			\
 	  && CONSTANT_P (_x1))				\
 	goto ADDR;					\
     }							\
