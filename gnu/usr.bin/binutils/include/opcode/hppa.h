@@ -369,6 +369,10 @@ static const struct pa_opcode pa_opcodes[] =
 { "fice",       0x040002c0, 0xfc001fdf, "Zx(S,b)", pa10},
 { "fice",       0x040002c0, 0xfc001fdf, "Zx(b)", pa10},
 { "diag",       0x14000000, 0xfc000000, "D", pa10},
+{ "mtcpu",      0x14001600, 0xfc00ffff, "x,^", pa10},
+{ "mfcpu",      0x14001a00, 0xfc00ffff, "x,^", pa10},
+{ "mtcpu2",     0x14000240, 0xfc00ffff, "x,^", pa10},
+{ "mfcpu2",     0x14000600, 0xfc00ffff, "x,^", pa10},
 
 /* gfw and gfr are not in the HP PA 1.1 manual, but they are in either
    the Timex FPU or the Mustang ERS (not sure which) manual.  */
