@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.17 1999/07/21 07:37:20 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.18 1999/08/03 00:53:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -163,7 +163,7 @@
 #define	PDB_PVDUMP	0x00008000
 #define	PDB_STEAL	0x00010000
 int pmapdebug = 0
-	| PDB_FOLLOW
+/*	| PDB_FOLLOW */
 /*	| PDB_VA */
 /*	| PDB_PV */
 /*	| PDB_INIT */
@@ -876,7 +876,7 @@ pmap_pinit(pmap)
 		 * If all are allocated, there is nothing we can do.
 		 */
 		simple_lock(&sid_pid_lock);
-		if (pid_counter <= HPPA_MAX_PID) {
+		if (pid_counter < HPPA_MAX_PID) {
 			pid = pid_counter;
 			pid_counter += 2;
 		} else
@@ -884,12 +884,8 @@ pmap_pinit(pmap)
 		simple_unlock(&sid_pid_lock);
 
 		if (pid == 0)
-			printf("Warning no more pmap id\n");
+			printf("Warning no more pmap ids\n");
 
-		/* 
-		 * Initialize the sids and pid. This is a user pmap, so 
-		 * sr4, sr5, and sr6 are identical. sr7 is always KERNEL_SID.
-		 */
 		pmap->pmap_pid = pid;
 		simple_lock_init(&pmap->pmap_lock);
 	}
@@ -1572,7 +1568,8 @@ kvtop(va)
 		return (int)pmap_extract(pmap_kernel(), (vaddr_t)va);
 }
 
-#ifdef PMAPDEBUG
+#if defined(PMAPDEBUG) && defined(DDB)
+#include <ddb/db_output.h>
 void
 pmap_hptdump()
 {
@@ -1582,18 +1579,18 @@ pmap_hptdump()
 	mfctl(CR_HPTMASK, ehpt);
 	mfctl(CR_VTOP, hpt);
 	ehpt = (struct hpt_entry *)((int)hpt + (int)ehpt + 1);
-	printf("HPT dump %p-%p:\n", hpt, ehpt);
+	db_printf("HPT dump %p-%p:\n", hpt, ehpt);
 	for (; hpt < ehpt; hpt++)
 		if (hpt->hpt_valid || hpt->hpt_entry) {
-			printf("hpt@%p: %x{%svalid,v=%x:%x}, prot=%x, pa=%x\n",
-			       hpt, *(u_int *)hpt, (hpt->hpt_valid?"":"in"),
-			       hpt->hpt_space, hpt->hpt_vpn,
-			       hpt->hpt_tlbprot, hpt->hpt_tlbpage);
+			db_printf("hpt@%p: %x{%sv=%x:%x}, prot=%x, pa=%x\n",
+				  hpt, *(int *)hpt, (hpt->hpt_valid?"ok,":""),
+				  hpt->hpt_space, hpt->hpt_vpn << 9,
+				  hpt->hpt_tlbprot, hpt->hpt_tlbpage);
 			for (pv = hpt->hpt_entry; pv; pv = pv->pv_hash)
-				printf("    pv={%p,%x:%x,%x,%x}->%p\n",
-				       pv->pv_pmap, pv->pv_space, pv->pv_va,
-				       pv->pv_tlbprot, pv->pv_tlbpage,
-				       pv->pv_hash);
+				db_printf("    pv={%p,%x:%x,%x,%x}->%p\n",
+					  pv->pv_pmap, pv->pv_space, pv->pv_va,
+					  pv->pv_tlbprot, pv->pv_tlbpage,
+					  pv->pv_hash);
 		}
 }
 #endif
