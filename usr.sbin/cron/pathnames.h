@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.3 2001/02/18 19:48:36 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.4 2001/10/24 17:28:16 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -81,4 +81,8 @@
 
 #ifndef _PATH_TMP
 # define _PATH_TMP "/tmp"
+#endif
+
+#ifndef _PATH_DEVNULL
+# define _PATH_DEVNULL "/dev/null"
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.22 2001/08/19 18:30:38 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.23 2001/10/24 17:28:16 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: crontab.c,v 1.22 2001/08/19 18:30:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: crontab.c,v 1.23 2001/10/24 17:28:16 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -303,8 +303,8 @@ edit_cmd(void) {
 		}
 		fprintf(stderr, "no crontab for %s - using an empty one\n",
 			User);
-		if (!(f = fopen("/dev/null", "r"))) {
-			perror("/dev/null");
+		if (!(f = fopen(_PATH_DEVNULL, "r"))) {
+			perror(_PATH_DEVNULL);
 			exit(ERROR_EXIT);
 		}
 	}

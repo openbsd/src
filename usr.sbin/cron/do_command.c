@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.10 2001/02/18 19:48:33 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.11 2001/10/24 17:28:16 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: do_command.c,v 1.10 2001/02/18 19:48:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: do_command.c,v 1.11 2001/10/24 17:28:16 millert Exp $";
 #endif
 
 #include "cron.h"
@@ -139,7 +139,7 @@ child_process(entry *e, user *u) {
 
 	/* fork again, this time so we can exec the user's command.
 	 */
-	switch (vfork()) {
+	switch (fork()) {
 	case -1:
 		log_it("CRON", getpid(), "error", "can't vfork");
 		exit(ERROR_EXIT);
@@ -182,14 +182,15 @@ child_process(entry *e, user *u) {
 		/* grandchild process.  make std{in,out} be the ends of
 		 * pipes opened by our daddy; make stderr go to stdout.
 		 */
-		close(STDIN);	dup2(stdin_pipe[READ_PIPE], STDIN);
-		close(STDOUT);	dup2(stdout_pipe[WRITE_PIPE], STDOUT);
-		close(STDERR);	dup2(STDOUT, STDERR);
-
-		/* close the pipes we just dup'ed.  The resources will remain.
-		 */
-		close(stdin_pipe[READ_PIPE]);
-		close(stdout_pipe[WRITE_PIPE]);
+		if (stdin_pipe[READ_PIPE] != STDIN) {
+			dup2(stdin_pipe[READ_PIPE], STDIN);
+			close(stdin_pipe[READ_PIPE]);
+		}
+		if (stdout_pipe[WRITE_PIPE] != STDOUT) {
+			close(STDOUT);
+			dup2(stdout_pipe[WRITE_PIPE], STDOUT);
+		}
+		dup2(STDOUT, STDERR);
 
 		/* set our directory, uid and gid.  Set gid first, since once
 		 * we set uid, we've lost root privledges.
@@ -483,6 +484,8 @@ child_process(entry *e, user *u) {
 			      (long)getpid(), children))
 		pid = wait(&waiter);
 		if (pid < OK) {
+			if (errno == EINTR)
+				continue;
 			Debug(DPROC,
 			      ("[%ld] no more grandchildren--mail written?\n",
 			       (long)getpid()))

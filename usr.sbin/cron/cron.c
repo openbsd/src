@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.15 2001/08/11 20:47:14 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.16 2001/10/24 17:28:16 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: cron.c,v 1.15 2001/08/11 20:47:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: cron.c,v 1.16 2001/10/24 17:28:16 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -57,6 +57,7 @@ int
 main(int argc, char *argv[]) {
 	cron_db	database;
 	struct sigaction sact;
+	int fd;
 
 	ProgramName = argv[0];
 
@@ -105,6 +106,13 @@ main(int argc, char *argv[]) {
 			/* child process */
 			log_it("CRON",getpid(),"STARTUP","fork ok");
 			(void) setsid();
+			if ((fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
+				(void) dup2(fd, STDIN);
+				(void) dup2(fd, STDOUT);
+				(void) dup2(fd, STDERR);
+				if (fd > STDERR)
+					(void) close(fd);
+			}
 			break;
 		default:
 			/* parent process should just die */
