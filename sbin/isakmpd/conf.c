@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.71 2004/06/25 20:25:34 hshoexer Exp $	 */
+/* $OpenBSD: conf.c,v 1.72 2004/07/29 20:02:02 ho Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -374,7 +374,7 @@ conf_load_defaults_mm(int tr, char *mme, char *mmh, char *mma, char *dhg,
 
 	snprintf(sect, sizeof sect, "%s-%s%s%s", mme_p, mmh, dhg_p, mma_p);
 
-	LOG_DBG((LOG_MISC, 90, "conf_load_defaults_mm: main mode %s", sect));
+	LOG_DBG((LOG_MISC, 95, "conf_load_defaults_mm: main mode %s", sect));
 
 	conf_set(tr, sect, "ENCRYPTION_ALGORITHM", mme, 0, 1);
 	if (strcmp(mme, "BLOWFISH_CBC") == 0)
@@ -411,7 +411,7 @@ conf_load_defaults_qm(int tr, char *qme, char *qmh, char *dhg, char *qme_p,
 	strlcpy(sect, tmp, CONF_SECT_MAX);
 	strlcat(sect, "-SUITE",	CONF_SECT_MAX);
 
-	LOG_DBG((LOG_MISC, 90, "conf_load_defaults_qm: quick mode %s", sect));
+	LOG_DBG((LOG_MISC, 95, "conf_load_defaults_qm: quick mode %s", sect));
 
 	conf_set(tr, sect, "Protocols", tmp, 0, 1);
 	snprintf(sect, sizeof sect, "IPSEC_%s", PROTO(proto));
@@ -665,11 +665,11 @@ conf_match_num(char *section, char *tag, int x)
 	n = sscanf(value, "%d,%d:%d", &val, &min, &max);
 	switch (n) {
 	case 1:
-		LOG_DBG((LOG_MISC, 90, "conf_match_num: %s:%s %d==%d?",
+		LOG_DBG((LOG_MISC, 95, "conf_match_num: %s:%s %d==%d?",
 		    section, tag, val, x));
 		return x == val;
 	case 3:
-		LOG_DBG((LOG_MISC, 90, "conf_match_num: %s:%s %d<=%d<=%d?",
+		LOG_DBG((LOG_MISC, 95, "conf_match_num: %s:%s %d<=%d<=%d?",
 		    section, tag, min, x, max));
 		return min <= x && max >= x;
 	default:
