@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_hout.c,v 1.12 2002/07/05 05:39:42 deraadt Exp $	*/
+/*	$OpenBSD: rpc_hout.c,v 1.13 2003/06/19 20:31:08 deraadt Exp $	*/
 /*	$NetBSD: rpc_hout.c,v 1.4 1995/06/11 21:49:55 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -122,7 +122,7 @@ pxdrfuncdecl(name, pointerp)
 	fprintf(fout, "extern \"C\" bool_t xdr_%s(XDR *, %s%s);\n",
 	    name, name, pointerp ? ("*") : "");
 	fprintf(fout,"#elif defined(__STDC__)\n");
-	fprintf(fout, "extern  bool_t xdr_%s(XDR *, %s%s);\n",
+	fprintf(fout, "extern bool_t xdr_%s(XDR *, %s%s);\n",
 	    name, name, pointerp ? ("*") : "");
 	fprintf(fout,"#else /* Old Style C */\n");
 	fprintf(fout, "bool_t xdr_%s();\n", name);
@@ -281,10 +281,10 @@ pprogramdef(def)
 				ext = "extern \"C\" ";
 			} else if (i==1) {
 				fprintf(fout,"\n#elif defined(__STDC__)\n");
-				ext = "extern  ";
+				ext = "extern ";
 			} else {
 				fprintf(fout,"\n#else /* Old Style C */\n");
-				ext = "extern  ";
+				ext = "extern ";
 			}
 
 			for (proc = vers->procs; proc != NULL; proc = proc->next) {

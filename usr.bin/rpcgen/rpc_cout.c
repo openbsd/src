@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_cout.c,v 1.15 2003/04/06 18:49:18 deraadt Exp $	*/
+/*	$OpenBSD: rpc_cout.c,v 1.16 2003/06/19 20:31:08 deraadt Exp $	*/
 /*	$NetBSD: rpc_cout.c,v 1.6 1996/10/01 04:13:53 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -167,7 +167,7 @@ print_header(def)
 	if (doinline == 0)
 		return;
 	/* May cause lint to complain. but  ... */
-	fprintf(fout, "\tint32_t *buf;\n\n");
+	fprintf(fout, "\tint32_t *buf;\n");
 }
 
 static void
@@ -220,11 +220,9 @@ static void
 print_ifclose(indent)
 	int     indent;
 {
-	fprintf(fout, ")) {\n");
+	fprintf(fout, "))\n");
 	tabify(fout, indent);
 	fprintf(fout, "\treturn (FALSE);\n");
-	tabify(fout, indent);
-	fprintf(fout, "}\n");
 }
 
 static void
@@ -256,12 +254,14 @@ print_ifstat(indent, prefix, type, rel, amax, objname, name)
 		if (alt) {
 			print_ifopen(indent, alt);
 			print_ifarg(objname);
+			print_ifarg(amax);
 		} else {
 			print_ifopen(indent, "vector");
 			print_ifarg("(char *)");
-			fprintf(fout, "%s", objname);
+			fprintf(fout, "%s,\n", objname);
+			tabify(fout, indent);
+			fprintf(fout, "    %s", amax);
 		}
-		print_ifarg(amax);
 		if (!alt) {
 			print_ifsizeof(prefix, type);
 		}
@@ -276,6 +276,7 @@ print_ifstat(indent, prefix, type, rel, amax, objname, name)
 		if (streq(type, "string")) {
 			print_ifopen(indent, alt);
 			print_ifarg(objname);
+			print_ifarg(amax);
 		} else {
 			if (alt) {
 				print_ifopen(indent, alt);
@@ -284,14 +285,14 @@ print_ifstat(indent, prefix, type, rel, amax, objname, name)
 			}
 			print_ifarg("(char **)");
 			if (*objname == '&') {
-				fprintf(fout, "%s.%s_val, (u_int *)%s.%s_len",
+				fprintf(fout, "%s.%s_val,\n\t    (u_int *)%s.%s_len",
 				    objname, name, objname, name);
 			} else {
-				fprintf(fout, "&%s->%s_val, (u_int *)&%s->%s_len",
+				fprintf(fout, "&%s->%s_val,\n\t    (u_int *)&%s->%s_len",
 				    objname, name, objname, name);
 			}
+			fprintf(fout, ",\n\t    %s", amax);
 		}
-		print_ifarg(amax);
 		if (!alt) {
 			print_ifsizeof(prefix, type);
 		}
@@ -309,6 +310,8 @@ static void
 emit_enum(def)
 	definition *def;
 {
+	fprintf(fout, "\n");
+
 	print_ifopen(1, "enum");
 	print_ifarg("(enum_t *)objp");
 	print_ifclose(1);
@@ -346,6 +349,7 @@ emit_union(def)
 	char   *vecformat = "objp->%s_u.%s";
 	char   *format = "&objp->%s_u.%s";
 
+	fprintf(fout, "\n");
 	print_stat(1, &def->def.un.enum_decl);
 	fprintf(fout, "\tswitch (objp->%s) {\n", def->def.un.enum_decl.name);
 	for (cl = def->def.un.cases; cl != NULL; cl = cl->next) {
@@ -359,7 +363,7 @@ emit_union(def)
 
 			object = alloc(len);
 			if (object == NULL) {
-				fprintf(stderr, "Fatal error : no memory\n");
+				fprintf(stderr, "Fatal error: no memory\n");
 				crash();
 			}
 			if (isvectordef(cs->type, cs->rel)) {
@@ -384,7 +388,7 @@ emit_union(def)
 			fprintf(fout, "\tdefault:\n");
 			object = alloc(len);
 			if (object == NULL) {
-				fprintf(stderr, "Fatal error : no memory\n");
+				fprintf(stderr, "Fatal error: no memory\n");
 				crash();
 			}
 			if (isvectordef(dflt->type, dflt->rel)) {
@@ -430,6 +434,8 @@ emit_struct(def)
 			fprintf(fout, "\tint i;\n");
 			break;
 		}
+	fprintf(fout, "\n");
+
 	size = 0;
 	can_inline = 0;
 	for (dl = def->def.st.decls; dl != NULL; dl = dl->next)
@@ -461,7 +467,7 @@ emit_struct(def)
 	flag = PUT;
 	for (j = 0; j < 2; j++) {
 		if (flag == PUT)
-			fprintf(fout, "\n\tif (xdrs->x_op == XDR_ENCODE) {\n");
+			fprintf(fout, "\tif (xdrs->x_op == XDR_ENCODE) {\n");
 		else
 			fprintf(fout, "\t\treturn (TRUE);\n\t} else if (xdrs->x_op == XDR_DECODE) {\n");
 
@@ -484,18 +490,18 @@ emit_struct(def)
 					/* this is required to handle arrays */
 
 					if (sizestr == NULL)
-						plus = " ";
+						plus = "";
 					else
 						plus = "+";
 
 					if (ptr->length != 1)
 						snprintf(ptemp, sizeof ptemp,
-						    " %s %s * %d", plus,
+						    "%s%s* %d", plus,
 						    dl->decl.array_max,
 						    ptr->length);
 					else
 						snprintf(ptemp, sizeof ptemp,
-						    " %s %s ", plus,
+						    "%s%s", plus,
 						    dl->decl.array_max);
 
 					/* now concatenate to sizestr !!!! */
@@ -503,7 +509,7 @@ emit_struct(def)
 						sizestr = strdup(ptemp);
 						if (sizestr == NULL) {
 							fprintf(stderr,
-							    "Fatal error : no memory\n");
+							    "Fatal error: no memory\n");
 							crash();
 						}
 					} else {
@@ -514,7 +520,7 @@ emit_struct(def)
 						sizestr = (char *)realloc(sizestr, len);
 						if (sizestr == NULL) {
 							fprintf(stderr,
-							    "Fatal error : no memory\n");
+							    "Fatal error: no memory\n");
 							crash();
 						}
 						/* build up length of array */
@@ -535,19 +541,18 @@ emit_struct(def)
 						/* were already looking at a
 						 * xdr_inlineable structure */
 						if (sizestr == NULL)
-							fprintf(fout, "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, %d * BYTES_PER_XDR_UNIT);",
-							    size);
-						else
-							if (size == 0)
-								fprintf(fout,
-								    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, %s * BYTES_PER_XDR_UNIT);",
+							fprintf(fout,
+							    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs,\n\t\t    %d * BYTES_PER_XDR_UNIT);", size);
+						else if (size == 0)
+							fprintf(fout,
+							    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs,\n\t\t    %s * BYTES_PER_XDR_UNIT);",
 								    sizestr);
-							else
-								fprintf(fout,
-								    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, (%d + %s)* BYTES_PER_XDR_UNIT);",
-								    size, sizestr);
+						else
+							fprintf(fout,
+							    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs,\n\t\t    (%d + %s) * BYTES_PER_XDR_UNIT);", size, sizestr);
 
-						fprintf(fout, "\n\t\tif (buf == NULL) {\n");
+						fprintf(fout,
+						    "\n\t\tif (buf == NULL) {\n");
 
 						psav = cur;
 						while (cur != dl) {
@@ -562,7 +567,6 @@ emit_struct(def)
 							emit_inline(&cur->decl, flag);
 							cur = cur->next;
 						}
-
 						fprintf(fout, "\t\t}\n");
 					}
 				}
@@ -571,7 +575,6 @@ emit_struct(def)
 				sizestr = NULL;
 				print_stat(2, &dl->decl);
 			}
-
 		}
 		if (i > 0) {
 			if (sizestr == NULL && size < doinline) {
@@ -585,16 +588,16 @@ emit_struct(def)
 				/* were already looking at a xdr_inlineable
 				 * structure */
 				if (sizestr == NULL)
-					fprintf(fout, "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, %d * BYTES_PER_XDR_UNIT);",
+					fprintf(fout, "\t\tbuf = (int32_t *)XDR_INLINE(xdrs,\n\t\t    %d * BYTES_PER_XDR_UNIT);",
 					    size);
 				else
 					if (size == 0)
 						fprintf(fout,
-						    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, %s * BYTES_PER_XDR_UNIT);",
+						    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs,\n\t\t    %s * BYTES_PER_XDR_UNIT);",
 						    sizestr);
 					else
 						fprintf(fout,
-						    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs, (%d + %s)* BYTES_PER_XDR_UNIT);",
+						    "\t\tbuf = (int32_t *)XDR_INLINE(xdrs,\n\t\t    (%d + %s) * BYTES_PER_XDR_UNIT);",
 						    size, sizestr);
 
 				fprintf(fout, "\n\t\tif (buf == NULL) {\n");
@@ -635,6 +638,7 @@ emit_typedef(def)
 	char   *amax = def->def.ty.array_max;
 	relation rel = def->def.ty.rel;
 
+	fprintf(fout, "\n");
 	print_ifstat(1, prefix, type, rel, amax, "objp", def->def_name);
 }
 
