@@ -1,176 +1,440 @@
-
 Installing OpenBSD is a relatively complex process, but if you have
-this document in hand it should not be too difficult.
+this document in hand it shouldn't be too much trouble.
 
-There are several ways to install OpenBSD onto your disk.  If your
-machine has a tape drive the easiest way is "Installing from tape"
-(details below).  If your machine is on a network with a suitable
-NFS server, then "Installing from NFS" is the next best method.
-Otherwise, if you have another Sun machine running SunOS you can
-initialize the disk on that machine and then move the disk.
-(Installing from SunOS is not recommended.)
+There are several ways to install OpenBSD onto a disk. The easiest way
+in terms of preliminary setup is to use the OpenBSD miniroot that can
+be booted off a tape.
 
+If your Sun3 is hooked up in a network and you can find a server to
+arrange for a diskless setup, which is a convenient way to install on a
+machine whose disk does not currently hold a usable operating system.
+This is difficult to get set up correctly the first time, but easy to
+use afterwards.  (see ``Installing using a diskless setup'' below).
 
-* Installing from tape:
-
-Create the OpenBSD/sun3 OSREV boot tape as described in the section
-entitled "Preparing a boot tape" and boot the tape.  At the PROM
-monitor prompt, use one of the commands:
-	>b st()
-	>b st(0,8,0)
-The first example will use the tape on SCSI target 4, where the
-second will use SCSI target 5.  The '>' is the monitor prompt.
-
-After the tape loads, you should see many lines of configuration
-messages, and then the following "welcome" screen:
-
-	Welcome to the OpenBSD/sun3 RAMDISK root!
-
-This environment is designed to do only three things:
-1:  Partition your disk (use the command:  edlabel /dev/rsd0c)
-2:  Copy a miniroot image into the swap partition  (/dev/rsd0b)
-3:  Reboot (using the swap partition, i.e. /dev/sd?b).
-
-Copying the miniroot can be done several ways, allowing
-the source of the miniroot image to be on any of these:
-    boot tape,  NFS server, TFTP server, rsh server
-
-The easiest is loading from tape, which is done as follows:
-	mt -f /dev/nrst0 rewind
-	mt -f /dev/nrst0 fsf 2
-	dd bs=32k if=/dev/nrst0 of=/dev/rsd0b
-(For help with other methods, please see the install notes.)
-
-To reboot using the swap partition, first use "halt",
-then at the PROM monitor prompt use a command like:
-	b sd(,,1) -s
-
-To view this message again, type:  cat /.welcome
-
-[ End of "welcome" screen. ]
-
-Copy the miniroot as described in the welcome message, and
-reboot from that just installed miniroot.  See the section
-entitled "Booting the miniroot" for details.
+It is also possible to install OpenBSD "manually" from a running SunOS
+system, using SunOS tools and gnu tar and gunzip (see ``Installing from SunOS''
+below).
 
 
-* Installing from NFS:
+This section of the install document is really broken into several parts:
 
-Before you can install from NFS, you must have already configured
-your NFS server to support your machine as a diskless client.
-Instructions for configuring the server are found in the section
-entitled "Getting the OpenBSD System onto Useful Media" above.
+	- booting from the installation media
+	- the miniroot install script
+	- after completing an installation
+	- installing from Sun OS
+	- net boot or diskless setup information
 
-First, at the Sun PROM monitor prompt, enter a boot command
-using the network interface as the boot device.  On desktop
-machines this is "le", and "ie" on the others.  Examples:
-
-	>b le() -s
-	>b ie() -s
-
-After the boot program loads the RAMDISK kernel, you should
-see the welcome screen as shown in the "tape boot" section
-above.  You must configure the network interface before you
-can use any network resources.  For example the command:
-
-	ssh> ifconfig le0 inet 192.333.20.198 up
-
-will bring up the network interface with that address.  The next
-step is to copy the miniroot from your server.  This can be done
-using either NFS or remote shell.  (In the examples that follow,
-the server has IP address 192.333.20.195)
-
-To load the miniroot from an NFS file:
-
-	ssh> mount -r 192.333.20.195:/server/path /mnt
-	ssh> dd if=/mnt/miniroot of=/dev/rsd0b bs=8k
-
-To load the miniroot using rsh to the server:
-
-	ssh> run -b dd if=/dev/pipe of=/dev/rsd0b bs=8k
-	ssh> run -o /dev/pipe rsh 192.333.20.195 zcat miniroot.gz
-
-Note that "ssh" does not use "sh" syntax.  It is a very small
-shell designed for the ramdisk kernel.  The first command of the
-above pair runs a "dd" in the background reading /dev/pipe.  The
-second of the pair runs an "rsh" command with its standard output
-redirected to /dev/pipe.  In ssh, the "help" command will show you
-a list of commands and options (there are only a few).
+The first section explains how to run tho install scripts. The second
+section gets you up to the point where you've booted the kernel from
+whatever media or setup described in the previous section, to where you
+have to respond to prompts from the install script.  The next section
+describes the path through the install script, and the remainder are
+notes which might be useful, but outside the bounds of simple "how two"
+instructions.
 
 
-* Booting the miniroot:
 
-If the miniroot was installed on partition 'b' of the disk with
-SCSI target ID=0 then the PROM boot command would be:
-	>b sd(0,0,1) -s
-With SCSI target ID=2, the the PROM is:
-	>b sd(0,10,1) -s
+Booting from the Installation Media:
 
-The numbers in parentheses above are:
-	controller (usually zero)
-	unit number (SCSI ID * 8, in hexadecimal)
-	partition number
+Prior to attempting an installation, you should make sure that everything
+of value on the target system has been backed up.  While installing OpenBSD
+does not necessarily wipe out all the partitions on the hard disk, errors
+during the install process can have unforeseen consequences and you will
+probably render the system unbootable if you start, but do not complete
+the installation.  Have the installation media for the prior installation,
+be it a SunOS or OpenBSD tape is good insurance if you want to be able to
+"go back" for some reason.
 
-Miniroot install program:
-------------------------
+After taking care of all that, bring your system down gracefully using
+the shutdown(8) and/or halt(8) commands.  This will get you to the monitor
+prompt.
+	
+Booting from SCSI tape
 
-The miniroot's install program is very simple to use.  It will guide
-you through the entire process, and is well automated.  Additional
-improvements are planned for future releases.
+Boot the miniroot by typing the appropriate command at the PROM:
 
-The miniroot's install program will:
+	> b st()
+	
+The above instructions assume your tape drive is the default tape drive
+using SCSI id 4. If your drive uses id 5, modify the boot command
+accordingly:
 
-	* Allow you to place disklabels on additional disks.
-	  The disk we are installing on should already have
-	  been partitioned using the RAMDISK kernel.
+	> b st(,28,)
+	
+This will cause the kernel contained in the miniroot to be booted.
+After the initial device probe messages you'll be asked to start the
+install or upgrade procedure. Proceed to the section ``Running the
+installation scripts'' below.
 
-	  Note that partition sizes and offsets are expressed
-	  in sectors.  When you fill out the disklabel, you will
-	  need to specify partition types and filesystem parameters.
-	  If you're unsure what the these values should be, use the
-	  following:
 
-		fstype: 4.2BSD
-		fsize: 1024
-		bsize: 4096
-		cpg: 16
+Installing using a diskless setup
 
-	  If the partition will be a swap partition, use the following:
+First, you must setup a diskless client configuration on a server. If
+you are using a OpenBSD system as the boot-server, have a look at the
+diskless(8) manual page for guidelines on how to proceed with this.
+If the server runs another operating system, you'll have to consult
+documentation that came with it (on SunOS systems, add_client(8) and
+the Sun System/Networks administrators guide constitute a good start).
 
-		fstype: swap
-		fsize: 0 (or blank)
-		bsize: 0 (or blank)
-		cpg: 0 (or blank)
 
-	  The number of partitions is fixed at 8 (by the Sun PROM).
+Boot your workstation from the server by entering the appropriate `boot'
+command at the monitor prompt. Depending on the ethernet chip in your
+machine, this command takes one of the following forms:
 
-	* Create filesystems on target partitions.
+	> b le()bsd.rd		# for sun pizza boxes (3/50, 3/60)
+	> b ie()bsd.rd		# for other sun3s
 
-	* Allow you to set up your system's network configuration.
-	  Remember to specify host names without the domain name
-	  appended to the end.  For example use `foo' instead of
-	  `foo.bar.org'.  If, during the process of configuring
-	  the network interfaces, you make a mistake, you will
-	  be able to re-configure that interface by simply selecting
-	  it for configuration again.
+This will cause the kernel provided by the diskless setup to be booted.
+After the initial probe messages you'll asked to start the install
+or upgrade procedure. Proceed to the section ``Running the installation
+scripts'' below.
 
-	* Mount target filesystems.  You will be given the opportunity
-	  to manually edit the resulting /etc/fstab.
 
-	* Extract binary sets from the media of your choice.
+The miniroot install script:
 
-	* Copy configuration information gathered during the
-	  installation process to your root filesystem.
+The following is a walk-through of the steps you will take while
+getting OpenBSD installed on your hard disk.  If any question has a
+default answer, it will be displayed in brackets ("[]") after the
+question.  If you wish to stop the installation, you may hit Control-C
+at any time, but if you do, you may have to begin the installation
+process again from scratch.  Using Control-Z to suspend the process
+may be a better option. 
 
-	* Make device nodes in your root filesystem.
+	Boot your machine from the installation media as described above.
 
-	* Copy a new kernel onto your root partition.
+	It will take a while to load the kernel especially from a floppy
+	or slow network connection, most likely more than a minute.  If
+	some action doesn't eventually happen, or the spinning cursor has
+	stopped and nothing further has happened, either your boot medias
+	is probably bad, your diskless setup isn't correct or you may have
+	a hardware or configuration problem.
 
-	* Install a new boot block.
+	You will then be presented with the OpenBSD kernel boot
+	messages.  You will want to read them to determine your
+	disk's name and geometry.  Its name will be something like
+	"sd0" or "wd0" and the geometry will be printed on a line that
+	begins with its name.  As mentioned above, you will need your
+	disk's geometry when creating OpenBSD partitions.  You will
+	also need to know the device name to tell the install tools
+	what disk to install on.
 
-	* Check your filesystems for integrity.
+	While booting, you will probably see several warnings.  You
+	may be warned that the kernel can't figure out what device
+	it booted from and that no swap space is present.  Do not be
+	alarmed, these are completely normal.  The first warning
+	occurs because while OpenBSD/sun3 can boot from the floppy
+	drive, the kernel itself lacks a floppy driver for some
+        architectures.
 
-First-time installation on a system through a method other than the
-installation program is possible, but strongly discouraged.
+	When the loading process is complete, the boot floppy will be
+	ejected and you will be prompted to insert a filesystem floppy,
+	just hit return since the filesystem is contained in the kernel
+	image just loaded.  Next there will be a prompt asking you for
+	a shell name, just hit return to start executing the installation
+	setup script.
+
+	You will next be asked for your terminal type.  If you are
+	installing from a keyboard/monitor console, the default of
+	"sun" if correct.  If you are installing from a serial console
+	you should choose the terminal type from amongst those listed.
+	(If your terminal type is xterm, just use vt100).  Next you
+	will be prompted for a choice of which text editor to use at
+	several places in the install script.  You will probably want
+	to use "vi" if your terminal supports this.
+
+	After entering the terminal type you will be greeted by a
+	welcome message and asked if you really want to continue.
+	Assuming you answered yes, the install program will then tell
+	you which disks of that type it can install on, and ask you
+	which it should use.  The name of the disk is typically "sd0".
+	Reply with the name of your disk.
+
+	Next you will have to edit or create a disklabel for the disk
+	OpenBSD is being installed on.  The installation script will
+	invoke the text editor allowing you to do this.  Note that
+	partition 'c' inside this disk label should ALWAYS reflect the
+	entire disk, including any non-OpenBSD portions.  The root file
+	system should be in partition 'a', and swap is usually in partition
+	'b'.  It is recommended that you create separate partitions for
+	root and /usr, you may also want to specify /var and /home
+	partitions.
+
+	The swap partition (usually 'b') should have a type of "swap", all
+	other native OpenBSD partitions should have a type of "4.2BSD".
+	Block and fragment sizes are usually 8192 and 1024 bytes, but can
+	also be 16384 and 2048 bytes.
+
+	The install program will now label your disk and ask which file
+	systems should be created on which partitions.  It will auto-
+	matically select the 'a' partition to be the root file system.
+	Next it will ask for which disk and partition you want a file
+	system created on.  This will be the same as the disk name (eg.
+	"sd0") with the letter identifying the partition (eg. "d")
+	appended (eg. "sd0d").  Then it will ask where this partition is
+	to be mounted, eg. /usr.  This process will be repeated until
+	you type "done".
+
+	At this point you will be asked to confirm that the file system
+	information you have entered is correct, and given an opportunity
+	to change the file system table.  Next it will create the new file
+	systems as specified, OVERWRITING ANY EXISTING DATA.  This is the
+	point of no return.
+
+	After all your file systems have been created, the install program
+	will give you an opportunity to configure the network.  The network
+	configuration you enter (if any) can then be used to do the install
+	from another system using NFS, HTTP or FTP, and will also be the
+	configuration used by the system after the installation is complete.
+
+	If you select to configure the network, the install program will
+	ask you for a name of your system and the DNS domain name to use.
+	Note that the host name should be without the domain part, and that
+	the domain name should NOT {:-include-:} the host name part.
+
+	Next the system will give you a list of network interfaces you can
+	configure.  For each network interface you select to configure, it
+	will ask for the IP address to use, the symbolic host name to use,
+	the netmask to use and any interface-specific flags to set.  The
+	interface-specific flags are usually used to determine which media
+	the network card is to use.  This is driver dependent, but for the
+	sun3 le(4) driver, the flags usually carry meaning:
+
+		-link0 -link1	Use existing setting (only setup by netboot)
+		link0 -link1	Use UTP (twisted pair) port
+		-link0 link1 	Use AUI port
+
+*** IMPORTANT - these are the correct setting for sun3 ethernet cards,
+		the suggestions shown by the install script are generic
+		and may or may not be correct...
+
+	After all network interfaces have been configured the install pro-
+	gram will ask for a default route and IP address of the primary
+	name server to use.  You will also be presented with an opportunity
+	to edit the host table.
+
+	At this point you will be allowed to edit the file system table
+	that will be used for the remainder of the installation and that
+	will be used by the finished system, following which the new file
+	systems will be mounted to complete the installation.
+
+	After these preparatory steps has been completed, you will be
+	able to extract the distribution sets onto your system.  There
+	are several install methods supported; FTP, HTTP, tape, CD-ROM, NFS
+	or a local disk partition.  To install from a tape, the distrib-
+	ution sets must have been written to tape prior to running the
+	installation program, either as tar images or as gzipped tar
+	images.  Note that installation sets on multiple floppies is not
+	currently supported.
+
+OpenBSDFTPInstall
+
+OpenBSDHTTPInstall
+
+OpenBSDTAPEInstall
+
+OpenBSDNFSInstall
+
+OpenBSDDISKInstall({:-"wdN" or -:},{:-only -:})
+
+OpenBSDCommonFS
+		
+OpenBSDCommonURL
+
+After completing an installation:
+
+Now try a reboot.  (If needed, swap your scsi id's first).  Initially
+I'd suggest you "boot sd()bsd -bs", then try multiuser after that.
+if you boot single-user the OpenBSD incantation to make the root
+filesystem writable is
+
+    OpenBSD# mount -u /dev/sd0a /
 
 OpenBSDCongratulations
+
+If you will be running your OpenBSD system from a serial console, you may
+need to edit /etc/ttys and change the terminal type, and getty method from
+"sun" and "console" to "vt100" and "std.9600" or something similar.  Also
+when running from a serial console, you may wish to adjust the eeprom
+settings for input-device, output-device, screen-#columns, and screen-#rows
+as appropriate.  
+
+In order to use 'tip' on OpenBSD/sun3, you'll need to edit /etc/ttys
+and add "local" to the end of the tty configuration line, and run 
+'ttyflags -a' to put your changes into effect.
+
+On installing X11 for OpenBSD/sun3, you may wish to add a line similar to
+'ldconfig /usr/X11R6/lib' to the end of your /etc/rc.local file.  This will
+add the X libraries to your dynamic linking search path at boot time.
+
+If you are unfamiliar with UN*X-like system administration, 
+it's recommended that you buy a book that discusses it.
+
+
+
+Installing from SunOS.
+
+You need a SunOS machine to install OpenBSD.  You also need at
+least the following pieces:
+
+    the *.tgz files you want to install (as a minimum, base{:--:}OSrev.tgz)
+    gunzip (GNU gzip) SunOS binary
+    gtar (GNU tar) SunOS binary
+    a "/boot" file from a SunOS machine
+    a kernel, most likely "/bsd"
+
+All these pieces, except "/boot" and the GNU utilities are supplied in
+the OpenBSD/sun3 distribution.
+
+You need to format and partition the disk using SunOS (since
+OpenBSD/sun3 uses SunOS disk labels.)  Give yourself adequate
+partition sizes.  Here is an example layout:
+
+    partition    size   offset	  will be..
+    sd0a        28140        0	  /
+    sd0b        16170    28140	  swap
+    sd0c       204540        0	  `whole disk'
+    sd0g       160230    44310	  /usr
+
+BTW, These are not recommended sizes.
+
+Use SunOS to newfs the partitions which will have filesystems on them.
+(OpenBSD's filesystem format is identical to SunOS).
+
+    sunos# newfs /dev/rsd0a
+    [... lots of output]
+    sunos# newfs /dev/rsd0g
+    [... lots of output]
+
+NOTE: If you are able to, there is a performance benefit from
+newfs'ing using OpenBSD.  If you newfs using the OpenBSD newfs command,
+be sure to use the -O flag for your / partition, so that newfs will
+use the 4.3BSD filesystem format, rather than the new 4.4BSD filesystem
+format.  If you forget, you will not be able to boot -- the SunOS boot
+blocks do not understand the extended 4.4BSD filesystem format.
+
+Mount those partitions in a tree formation, under /mnt; ie:
+
+    sunos# df
+    Filesystem            kbytes    used   avail capacity  Mounted on
+    [...]
+    /dev/sd0a              11501       0   11501     0%    /mnt
+    /dev/sd0g             179529       0  179529     0%    /mnt/usr
+
+Place a standard SunOS "boot" program in /mnt (your new root
+partition), and use the SunOS command "installboot" to make it work.
+The installboot man page says to do something like this:
+
+    sunos# cp /usr/mdec/sdboot /mnt/boot
+    sunos# sync; sync
+    sunos# /usr/mdec/installboot -vlt /mnt/boot /usr/mdec/bootsd /dev/rsd0a
+
+You can now extract the provided "*.tgz files onto your disk.
+
+    sunos# ls -FC
+    base{:--:}OSrev.tgz   comp{:--:}OSrev.tgz   man{:--:}OSrev.tgz       xfont{:--:}OSrev.tgz
+    bsd             etc{:--:}OSrev.tgz    misc{:--:}OSrev.tgz      xserv{:--:}OSrev.tgz
+    game{:--:}OSrev.tgz   xbase{:--:}OSrev.tgz
+    sunos{:-#-:} gunzip < base{:--:}OSrev.tgz | (cd /mnt; gtar xvpf -)
+    [...] for each set
+
+And finally copy the OpenBSD kernel onto your disk.
+
+    sunos# cp bsd /mnt/bsd
+
+The GNU gunzip and gtar programs are not distributed as part of SunOS,
+but may be present in your /usr/local/bin.  If not, you will need to obtain
+them from a GNU archive and install before proceeding.  The OpenBSD
+tar files are in the "new format" that includes directory information,
+and the standard SunOS tar will not extract from them successfully.
+
+After the files have been extracted, setup /mnt/etc/fstab to match
+your actual disk layout.  (Minus the "/mnt" component of each path, of
+course :-)
+
+Now proceed to reboot the machine and the customize your installation.
+
+
+Net Boot or Diskless Setup Information:
+
+The set up is similar to SunOS diskless setup, but not identical, because
+the Sun setup assumes that the bootblocks load a kernel image, which then
+uses NFS to access the exported root partition, while the OpenBSD bootblocks
+use internal NFS routines to load the kernel image directly from the
+exported root partition.
+
+Please understand that no one gets this right the first try, since
+there is a lot of setup and all the host daemons must be running and
+configured correctly.  If you have problems, extract the diskless(8)
+manpage, find someone who's been through it before and use the host
+syslog and tcpdump(8) to get visibility of what's happening (or not).
+
+Your sun3 expects to be able to download a second stage bootstrap
+program via TFTP after having acquired its IP address through RevARP when
+instructed to boot "over the net". It will look for a filename
+corresponding to the machine's IP address. For example, a sun3 machine
+which has been assigned IP address 130.115.144.11, will make an TFTP
+request for `8273900B'.
+Normally, this file is a symbolic link to an appropriate second-stage
+boot program, which should be located in a place where the TFTP daemon
+can find it (remember, many TFTP daemons run in a chroot'ed environment).
+
+You can find the boot program in `/usr/mdec/boot' in the OpenBSD/sun3
+distribution.
+
+Here's an example to illustrate this whole mess:
+
+    server# cd /<client-root-dir>/usr/mdec
+    server# cp boot /tftpboot/boot.sun3.OpenBSD
+    server# cd /tftpboot
+    server# ln -s boot.sun3.OpenBSD 8273900B
+
+
+After the boot program has been loaded into memory and given control by
+the PROM, it starts locating the machine's remote root directory through
+the BOOTPARAM protocol. First a BOOTPARAM WHOAMI request is broadcast
+on the local net. The answer to this request (if it comes in) contains
+the client's name. This name is used in next step, a BOOTPARAM GETFILE
+request -- sent to the server that responded to the WHOAMI request --
+requesting the name and address of the machine that will serve the client's
+root directory, as well as the path of the client's root on that server.
+
+Finally, this information (if it comes in) is used to issue a REMOTE MOUNT
+request to the client's root filesystem server, asking for an NFS file
+handle corresponding to the root filesystem. If successful, the boot
+program starts reading from the remote root filesystem in search of the
+kernel which is then read into memory.
+
+You will want export the miniroot{:--:}OSrev.fs filesystem to the client.  You
+can dd this filesystem image to some spare partition, mount and export
+that partition or use tar to copy the contents to a more convenient spot.
+
+Alternatively you can build a bootable partition from the distribution sets
+as follows:
+
+Unpack `base{:--:}OSrev.tgz' and `etc{:--:}OSrev.tgz' on the server in the root directory
+for your target machine. If you elect to use a separately NFS-mounted
+filesystem for `/usr' with your diskless setup, make sure the "./usr" base
+files in base{:--:}OSrev.tgz end up in the correct location. One way to do this is
+to temporarily use a loopback mount on the server, re-routing <root>/usr to
+your server's exported OpenBSD "/usr" directory. Also put the kernel and
+the install/upgrade scripts into the root directory.
+
+A few configuration files need to be edited:
+
+	<root>/etc/hosts
+		Add the IP addresses of both server and client.
+
+	<root>/etc/myname
+		This files contains the client's hostname; use the same
+		name as in <root>/etc/hosts.
+
+	<root>/etc/fstab
+		Enter the entries for the remotely mounted filesystems.
+		For example:
+			server:/export/root/client       /     nfs  rw 0 0
+			server:/export/exec/sun3.OpenBSD /usr  nfs  rw 0 0
+
+Now you must populate the the `/dev' directory for your client. For
+this, you can simply change your working directory to `<root>/dev'
+and run the MAKEDEV script: `sh MAKEDEV all'.
+

@@ -1,33 +1,17 @@
 TopPart
 
-		install/	Boot programs, a GENERIC kernel,
-				a stand-alone RAMDISK kernel,
-				and a miniroot filesystem image.
-				see below.
+OpenBSDdistsets
 
-		binary/		sun3 binary distribution sets;
-				see below.
+OpenBSDbsd
 
+OpenBSDrd
 
-The OpenBSD/sun3 "install" distribution contains files that can be
-used to install OpenBSD onto a completely "bare" sun3.  The files
-in the `.../install' directory are described below:
-
-	miniroot.gz	A gzipped copy of the miniroot filesystem.
-			This image is to be un-gzipped and copied
-			into the swap area of a disk.
-
-	bsd-rd.gz	A gzipped copy of the "RAMDISK kernel"
-			for installing the miniroot filesystem.
-
-	bsd-gen.gz	A gzipped GENERIC kernel (for upgrade)
-
-	netboot		A copy of the network boot program.
-			This is useful if you are installing
-			a diskless OpenBSD/sun3 system.
-
-	tapeboot	A copy of the tape boot program, used
-			as the first segment of a boot tape.
+		installboot	The OpenBSD/sun3 boot loader installation
+				program.
+		bootxx		The OpenBSD/sun3 boot block.
+		netboot		The OpenBSD/sun3 network boot loader.
+		tapeboot	The OpenBSD/sun3 tape boot loader.
+		ufsboot		The OpenBSD/sun3 disk boot loader.
 
 These files can be used to make a boot tape suitable for installing
 OpenBSD/sun3.  These files can also be used to configure an NFS server
@@ -36,21 +20,15 @@ the OpenBSD System onto Useful Media" for instructions on either method.
 
 DistributionDescription
 
-OpenBSDbase(7.2M,19M)
+OpenBSDbase(19.4,61.9M)
 
-OpenBSDcomp(4.6M,14.7M)
+OpenBSDcomp(13.1M,40.6M)
 
-OpenBSDetc(64K,348K)
+OpenBSDetc(988K,3.2M)
 
-OpenBSDgame(2.8M,6.8M)
+OpenBSDgame(2.6M,6.4M)
 
-OpenBSDman(850K,3.3M)
+OpenBSDman(4.8M,18.4M)
 
-OpenBSDmisc(1.8M,6.5M)
-
-OpenBSDxbase
-
-OpenBSDxfont
-	
-OpenBSDxserv
+OpenBSDmisc(1.6M,5.5M)
 

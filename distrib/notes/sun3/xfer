@@ -1,125 +1,146 @@
-
 Installation is supported from several media types, including:
-	* Tape
-	* NFS
-	* CD-ROM
-	* FTP
 
-Note that installing on a "bare" machine requires some bootable
-device; either a tape drive or Sun-compatible NFS server.
+	FFS partitions
+	Tape
+	Remote NFS partition
+	FTP
+	HTTP
 
-The procedure for transferring the distribution sets onto
-installation media depends on the type of media.  Instructions
-for each type of media are given below.
+However, you can only boot the installation procedure from tape or
+network. This requires some setup work to prepare a bootable image,
+either a tape, or a compatible net boot server.
 
-In order to create installation media, you will need all the 
-files in these two directories:
-	.../OSREV/sun3/install
-	.../OSREV/sun3/binary
+Although you can access the distribution sets directly from one of the
+FTP mirrors over the internet, you may wish to transfer the sets to a
+local FTP or NFS server, or copy them to a partition on the target
+system's disk or onto a SCSI tape.
 
-* Creating boot/install tapes:
+The variety of options listed may seem confusing, but situations vary
+widely in terms of what peripherals and what sort of network arrangements
+a user has, the intent is to provide some way that will be practical.
 
-Installing from tape is the simplest method of all.
-This method uses two tapes; one called the "boot"
-tape, and another called the "install" tape.
 
-The boot tape is created as follows:
+Creating a network bootable setup using SunOS or other Un*x-like system:
 
-	cd .../OSREV/sun3/install
-	set T = /dev/nrst0
-	mt -f $T rewind
-	dd if=tapeboot of=$T bs=8k conv=sync
-	dd if=bsd-rd of=$T bs=8k conv=sync
-	gzip -d < miniroot.gz | dd of=$T bs=8k
-	mt -f $T rewind
+	The details of setting up a network bootable environment vary
+	considerably, depending on the networks host.  Extract the
+	OpenBSD diskless(8) man page from the man{:--:}OSrev.tgz distribution
+	set or see the copy on the OpenBSD web page.  You will also
+	need to reference the relevant man pages or administrators guide
+	for the host system.
+	
+	Basically, you will need to set up reverse-arp (rarpd) and boot
+	parameter (bootpd) information and make the OpenBSD bootblock,
+	kernel/miniroot partition, and a swap file available as required
+	by the netboot setup.
 
-The install tape is created as follows:
 
-	cd .../OSREV/sun3/install
-	set T = /dev/nrst0
-	mt -f $T rewind
-	foreach f (base etc comp games man misc)
-	  gzip -d < $f.gz | dd of=$T bs=8k
-	end
-	mt -f $T rewind
 
-If the tapes do not work as expected, you may need to explicitly
-set the EOF mark at the end of each tape segment.  It may also be
-necessary to use the `conv=osync' argument to dd(1).  Note that
-this argument is incompatible with the `bs=' argument.  Consult
-the tape-related manual pages on the system where the tapes are
-created for more details.
+The steps necessary to prepare the distribution sets for installation
+depend on which method of installation you choose.  Some methods
+require a bit of setup first that is explained below.
 
-* Boot/Install from NFS server:
+The installation allows installing OpenBSD directly from FTP mirror
+sites over the internet, however you must consider the speed and
+reliability of your internet connection for this option.  It may save
+much time and frustration to use ftp get/reget to transfer the
+distribution sets to a local server or disk and perform the installation
+from there, rather than directly on the internet.
 
-If your machine has a disk and network connection, but no tape drive,
-it may be convenient for you to install OpenBSD over the network.  This
-involves temporarily booting your machine over NFS, just long enough
-so you can initialize its disk.  This method requires that you have
-access to an NFS server on your network so you can configure it to
-support diskless boot for your machine.  Configuring the NFS server
-is normally a task for a system administrator, and is not trivial.
 
-If you are using a OpenBSD system as the boot-server, have a look at
-the diskless(8) manual page for guidelines on how to proceed with
-this.  If the server runs another operating system, consult the
-documentation that came with it (i.e. add_client(8) on SunOS).
+To install or upgrade OpenBSD using a tape, you need to do the following:
 
-Your Sun3 expects to be able to download a second stage bootstrap
-program via TFTP after having acquired its IP address through RARP
-when instructed to boot "over the net".  It will look for a filename
-derived from the machine's IP address expressed in hexadecimal.  For
-example, a sun3 which has been assigned IP address 130.115.144.20
-will make an TFTP request for `8273900B'.  Normally, this file is a
-symbolic link to the OpenBSD/sun3 "netboot" program, which should be
-located in a place where the TFTP daemon can find it (remember, many
-TFTP daemons run in a chroot'ed environment).  The netboot program
-may be found in the install directory of this distribution.
+	To install OpenBSD from a tape, you need to make a tape that
+	contains the distribution set files, each in "tar" format or
+	in "gzipped tar format".  First you will need to transfer the
+	distribution sets to your local system, using ftp.  Then you
+	need to make a tape containing the files.
 
-The netboot program will query a bootparamd server to find the
-NFS server address and path name for its root, and then load a
-kernel from that location.  The server should have a copy of the
-bsd-rd kernel in the root area for your client (no other files
-are needed in the client root) and /etc/bootparams on the server
-should have an entry for your client and its root directory.
-The client will need access to the miniroot image, which can be
-provided using NFS or remote shell.  If using NFS, miniroot.gz
-must be expanded on the server, because there is no gzip program
-in the RAMDISK image.  The unzipped miniroot takes 8MB of space.
+	If you're making the tape on a UN*X-like system, the easiest way
+	to do so is make a shell script along the following lines, call it
+	"/tmp/maketape".
 
-If you will be installing OpenBSD on several clients, it may be useful
-to know that you can use a single NFS root for all the clients as long
-as they only use the bsd-rd kernel.  There will be no conflict
-between clients because the RAM-disk kernel will not use the NFS root.
-No swap file is needed; the RAM-disk kernel does not use that either.
+	#! /bin/sh
+	tape=/dev/nrst0
+	mt -f ${tape} rewind
+	if test $# -lt 1
+	then
+		for file in tapeboot bsd.rd
+		do
+			dd if=${file} of=${tape} obs=8k conv=sync
+		done
+	fi
+	for file in base etc comp game man misc
+	do
+		dd if=${file}OSrev.tgz of=${tape} obs=8k conv=sync
+	done
+	tar cf ${tape} bsd
+	mt -f ${tape} offline
+	# end of script
 
-* Install/Upgrade from CD-ROM:
 
-This method requires that you boot from another device (i.e. tape
-or network, as described above).  You may need to make a boot tape
-on another machine using the files provided on the CD-ROM.  Once
-you have booted bsd-rd (the RAM-disk kernel) and loaded the
-miniroot, you can load any of the distribution sets directly from
-the CD-ROM.  The "install" program in the miniroot automates the
-work required to mount the CD-ROM and extract the files.
+	And then:
 
-* Install/Upgrade via FTP:
+	cd .../OSREV/sun3
+	sh -x /tmp/maketape
 
-This method requires that you boot from another device (i.e. tape
-or network, as described above).  You may need to make a boot tape
-on another machine using the files in .../install (which you get
-via FTP).  Once you have booted bsd-rd (the RAM-disk kernel)
-and loaded the miniroot, you can load any of the distribution sets
-over the net using FTP.  The "install" program in the miniroot
-automates the work required to configure the network interface and
-transfer the files.
+	
+	Note that this script creates a bootable tape. If you only want to
+	fetch the OpenBSD files from tape, but want to boot from another
+	device, you can save time and space creating the tape this way:
 
-This method, of course, requires network access to an FTP server.
-This might be a local system, or it might even be ftp.OpenBSD.ORG
-itself.  If you wish to use ftp.OpenBSD.ORG as your FTP file
-server, you may want to keep the following information handy:
+	cd .../OSREV/sun3
+	sh -x /tmp/maketape noboot
 
-	IP Address: 128.6.190.2
-	Login: anonymous
-	Password: <your e-mail address>
-	Server path: /pub/OpenBSD/OSREV/sun3/bins
+	
+If you're using a system other than OpenBSD or SunOS, the tape name and
+other requirements may change.
+
+
+To install OpenBSD using a remote partition, mounted via
+NFS, you must do the following:
+
+	NOTE:	This method of installation is recommended only for
+		those already familiar with using BSD network
+		configuration and management commands.  If you aren't,
+		this documentation should help, but is not intended to
+		be all-encompassing.
+
+	Place the OpenBSD distribution sets you wish to install into a
+	directory on an NFS server, and make that directory mountable
+	by the machine on which you are installing or upgrading OpenBSD.
+	This will probably require modifying the /etc/exports file on
+	of the NFS server and resetting its mount daemon (mountd).
+	(Both of these actions will probably require superuser
+	privileges on the server.)
+
+	You need to know the the numeric IP address of the NFS server,
+	and, if the server is not on a network directly connected to
+	the machine on which you're installing or upgrading OpenBSD,
+	you need to know the numeric IP address of the router closest
+	to the OpenBSD machine.  Finally, you need to know the numeric
+	IP address of the OpenBSD machine itself.
+
+	Once the NFS server is set up properly and you have the
+	information mentioned above, you can proceed to the next step
+	in the installation or upgrade process.  If you're installing
+	OpenBSD from scratch, go to the section on preparing your hard
+	disk, below.  If you're upgrading an existing installation, go
+	directly to the section on upgrading.
+
+If you are upgrading OpenBSD, you also have the option of installing
+OpenBSD by putting the new distribution sets somewhere in your existing
+file system, and using them from there.  To do that, you must do the
+following:
+
+	Place the distribution sets you wish to upgrade somewhere in
+	your current file system tree.  At a bare minimum, you must
+	upgrade the "base" binary distribution, and so must put the
+	"base{:--:}OSrev" set somewhere in your file system.  If you wish,
+	you can do the other sets, as well, but you should NOT upgrade
+	the "etc" distribution; the "etc" distribution contains system
+	configuration files that you should review and update by hand.
+
+	Once you have done this, you can proceed to the next step in
+	the upgrade process, actually upgrading your system.
+
