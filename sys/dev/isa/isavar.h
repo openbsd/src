@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.22 1997/10/13 14:46:45 pefo Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.23 1997/12/21 14:41:27 downsj Exp $	*/
 /*	$NetBSD: isavar.h,v 1.24 1996/10/21 22:41:11 thorpej Exp $	*/
 
 /*
@@ -102,25 +102,6 @@ struct isa_attach_args {
 	void	*ia_aux;		/* driver specific */
 
 	bus_space_handle_t ia_delaybah;	/* i/o handle for `delay port' */
-
-	/* XXX need fixes, some are duplicated */
-	/* begin isapnp section */
-	int id;				/* logical device ID */
-	int comp_id;			/* compatible device ID */
-	int csn;			/* card selection number */
-	int ldn;			/* logical device number */
-	struct {
-		int num;
-		int type;
-	} irq[2];
-	int drq[2];
-	int port[8];
-	struct {
-		int base;
-		int control;
-		int range;
-	} mem[4];
-	/* end isapnp stuff */
 };
 
 #define	IOBASEUNK	-1		/* i/o address is unknown */
@@ -157,12 +138,6 @@ struct isa_softc {
 	 * via isa_attach_args.
 	 */
 	bus_space_handle_t   sc_delaybah;
-
-	/*
-	 * This points to the isapnp_softc structure that holds
-	 * information of PnP devices on the ISA bus.
-	 */
-	void *pnpsc;
 };
 
 #define		cf_iobase		cf_loc[0]
@@ -171,7 +146,6 @@ struct isa_softc {
 #define		cf_msize		cf_loc[3]
 #define		cf_irq			cf_loc[4]
 #define		cf_drq			cf_loc[5]
-#define		cf_pnpid		cf_loc[6]
 
 /*
  * ISA interrupt handler manipulation.

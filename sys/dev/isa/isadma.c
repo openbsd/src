@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.14 1997/11/04 10:32:51 provos Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.15 1997/12/21 14:41:23 downsj Exp $	*/
 /*	$NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp $	*/
 
 #include <sys/param.h>
@@ -128,6 +128,20 @@ isadma_release(chan)
 	di->inuse = 0;
 }
 
+int
+isadma_isdrqfree(chan)
+	int chan;
+{
+	struct dma_info *di;
+#ifdef DIAGNOSTIC
+	if (chan < 0 || chan > 7)
+		panic("isadma_release: channel out of range");
+#endif
+	di = dma_info + chan;
+
+	return (di->inuse);
+}
+
 /*
  * isadma_cascade(): program 8237 DMA controller channel to accept
  * external dma control by a board.
@@ -136,11 +150,13 @@ void
 isadma_cascade(chan)
 	int chan;
 {
+	struct dma_info *di;
 
 #ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
 		panic("isadma_cascade: impossible request"); 
 #endif
+	di = dma_info + chan;
 
 	/* set dma channel mode, and set dma channel mode */
 	if ((chan & 4) == 0) {
@@ -152,6 +168,10 @@ isadma_cascade(chan)
 		outb(DMA2_MODE, chan | DMA37MD_CASCADE);
 		outb(DMA2_SMSK, chan);
 	}
+
+	/* Mark it as in use, if needed.  XXX */
+	if (!di->inuse)
+		di->inuse = 1;
 }
 
 /*

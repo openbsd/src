@@ -2,10 +2,14 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.2 1997/11/07 08:07:07 niklas Exp 
+ *	#	OpenBSD: pnpdevs,v 1.3 1997/12/21 14:36:44 downsj Exp 
  */
 
-struct pnp_knowndev pnp_knowndevs[] = {
+struct isapnp_knowndev isapnp_knowndevs[] = {
+	{ "PNP0500", "com" },
+	{ "PNP0500", "pccom" },
+	{ "PNP0501", "com" },
+	{ "PNP0501", "pccom" },
 	{ "PNP80d3", "ed" },
 	{ "PNP80d4", "ed" },
 	{ "PNP80d5", "ed" },
@@ -33,5 +37,13 @@ struct pnp_knowndev pnp_knowndevs[] = {
 	{ "PNP828C", "le" },
 	{ "PNP828D", "le" },
 	{ "WUMbeef", "le" },
+	{ "PNPC000", "com" },
+	{ "PNPC000", "pccom" },
+	{ "PNPC001", "com" },
+	{ "PNPC001", "pccom" },
+	{ "MOT1170", "com" },
+	{ "MOT1170", "pccom" },
+	{ "NECE761", "com" },
+	{ "NECE761", "pccom" },
 	{ NULL, NULL, }
 };
