@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.23 2004/04/26 19:00:35 tedu Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.24 2004/05/30 02:01:31 mcbride Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -153,7 +153,6 @@ int sf_setvlan(struct sf_softc *, int, u_int32_t);
 #endif
 
 u_int8_t sf_read_eeprom(struct sf_softc *, int);
-u_int32_t sf_calchash(caddr_t);
 
 int sf_miibus_readreg(struct device *, int, int);
 void sf_miibus_writereg(struct device *, int, int, int);
@@ -210,31 +209,6 @@ void csr_write_4(sc, reg, val)
 	return;
 }
 
-u_int32_t sf_calchash(addr)
-	caddr_t			addr;
-{
-	u_int32_t		crc, carry;
-	int			i, j;
-	u_int8_t		c;
-
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (i = 0; i < 6; i++) {
-		c = *(addr + i);
-		for (j = 0; j < 8; j++) {
-			carry = ((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01);
-			crc <<= 1;
-			c >>= 1;
-			if (carry)
-				crc = (crc ^ 0x04c11db6) | carry;
-		}
-	}
-
-	/* return the filter bit position */
-	return(crc >> 23 & 0x1FF);
-}
-
 /*
  * Copy the address 'mac' into the perfect RX filter entry at
  * offset 'idx.' The perfect filter only has 16 entries so do
@@ -280,7 +254,7 @@ int sf_sethash(sc, mac, prio)
 	if (mac == NULL)
 		return(EINVAL);
 
-	h = sf_calchash(mac);
+	h = (ether_crc32_be(mac, ETHER_ADDR_LEN) >> 23) & 0x1FF;
 
 	if (prio) {
 		SF_SETBIT(sc, SF_RXFILT_HASH_BASE + SF_RXFILT_HASH_PRIOOFF +
@@ -394,6 +368,7 @@ void sf_setmulti(sc)
 	SF_CLRBIT(sc, SF_RXFILT, SF_RXFILT_ALLMULTI);
 
 	/* Now program new ones. */
+allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		SF_SETBIT(sc, SF_RXFILT, SF_RXFILT_ALLMULTI);
 	} else {
@@ -403,6 +378,12 @@ void sf_setmulti(sc)
 
 		/* Now traverse the list backwards. */
 		while (enm != NULL) {
+			if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+			    ETHER_ADDR_LEN)) {
+				ifp->if_flags |= IFF_ALLMULTI;
+				goto allmulti;
+			}
+
 			/* if (enm->enm_addrlo->sa_family != AF_LINK)
 				continue; */
 			/*
@@ -411,14 +392,12 @@ void sf_setmulti(sc)
 			 * use the hash table.
 			 */
 			if (i < SF_RXFILT_PERFECT_CNT) {
-				sf_setperf(sc, i,
-			LLADDR((struct sockaddr_dl *)enm->enm_addrlo));
+				sf_setperf(sc, i, enm->enm_addrlo);
 				i++;
 				continue;
 			}
 
-			sf_sethash(sc,
-			    LLADDR((struct sockaddr_dl *)enm->enm_addrlo), 0);
+			sf_sethash(sc, enm->enm_addrlo, 0);
 			ETHER_NEXT_MULTI(step, enm);
 		}
 	}
