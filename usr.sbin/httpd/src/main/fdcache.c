@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdcache.c,v 1.4 2002/07/17 17:00:25 henning Exp $ */
+/*	$OpenBSD: fdcache.c,v 1.5 2002/08/02 11:52:01 henning Exp $ */
 
 /*
  * Copyright (c) 2002 Henning Brauer
@@ -34,6 +34,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 struct fdcache {
     char *fname;
@@ -77,7 +79,7 @@ fdcache_open(char *fn, int flags, mode_t mode)
 }
 
 void
-fdcache_closeall()
+fdcache_closeall(void)
 {
     struct fdcache *fdcp = NULL, *tmp = NULL;
 
