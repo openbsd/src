@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.10 2003/07/09 10:54:38 markus Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.11 2004/01/05 19:20:18 markus Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -293,6 +293,8 @@ kq_add(void *arg, struct event *ev)
 		kev.ident = ev->ev_fd;
 		kev.filter = EVFILT_READ;
 		kev.flags = EV_ADD;
+		/* Make it behave like select() and poll() */
+		kev.fflags = NOTE_EOF;
 		if (!(ev->ev_events & EV_PERSIST))
 			kev.flags |= EV_ONESHOT;
 		kev.udata = INTPTR(ev);
