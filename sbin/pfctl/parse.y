@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.250 2002/12/12 14:46:26 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.251 2002/12/12 15:06:16 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -487,7 +487,7 @@ varset		: STRING PORTUNARY string		{
 		;
 
 anchorrule	: ANCHOR string	dir interface af proto fromto {
-			struct pf_rule r;
+			struct pf_rule	r;
 
 			if (check_rulestate(PFCTL_STATE_FILTER))
 				YYERROR;
@@ -554,7 +554,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 
 scrubrule	: SCRUB dir interface af fromto nodf minttl maxmss fragcache
 		{
-			struct pf_rule r;
+			struct pf_rule	r;
 
 			if (check_rulestate(PFCTL_STATE_SCRUB))
 				YYERROR;
@@ -588,9 +588,9 @@ scrubrule	: SCRUB dir interface af fromto nodf minttl maxmss fragcache
 		;
 
 antispoof	: ANTISPOOF logquick antispoof_ifspc af {
-			struct pf_rule r;
-			struct node_host *h = NULL;
-			struct node_if *i, *j;
+			struct pf_rule		 r;
+			struct node_host	*h = NULL;
+			struct node_if		*i, *j;
 
 			if (check_rulestate(PFCTL_STATE_FILTER))
 				YYERROR;
@@ -646,7 +646,7 @@ antispoof_iflst	: if_item			{ $$ = $1; }
 		;
 
 altqif		: ALTQ interface queue_opts QUEUE qassign {
-			struct	pf_altq a;
+			struct pf_altq	a;
 
 			if (check_rulestate(PFCTL_STATE_QUEUE))
 				YYERROR;
@@ -671,7 +671,7 @@ altqif		: ALTQ interface queue_opts QUEUE qassign {
 		;
 
 queuespec	: QUEUE STRING queue_opts qassign {
-			struct	pf_altq a;
+			struct pf_altq	a;
 
 			if (check_rulestate(PFCTL_STATE_QUEUE))
 				YYERROR;
@@ -772,8 +772,8 @@ queue_opt	: bandwidth	{
 		;
 
 bandwidth	: BANDWIDTH STRING {
-			double bps;
-			char *cp;
+			double	 bps;
+			char	*cp;
 
 			$$.bw_percent = 0;
 
@@ -878,9 +878,9 @@ qassign_item	: STRING			{
 pfrule		: action dir logquick interface route af proto fromto
 		  filter_opts
 		{
-			struct pf_rule r;
-			struct node_state_opt *o;
-			struct node_proto *proto;
+			struct pf_rule		 r;
+			struct node_state_opt	*o;
+			struct node_proto	*proto;
 
 			if (check_rulestate(PFCTL_STATE_FILTER))
 				YYERROR;
@@ -974,18 +974,20 @@ pfrule		: action dir logquick interface route af proto fromto
 				}
 				if ($5.host->next != NULL) {
 					if (r.rt_pool.opts == PF_POOL_NONE)
-						r.rt_pool.opts = PF_POOL_ROUNDROBIN;
-					if (r.rt_pool.opts != PF_POOL_ROUNDROBIN) {
-						yyerror("r.rt_pool.opts must be "
-						    "PF_POOL_ROUNDROBIN");
+						r.rt_pool.opts =
+						    PF_POOL_ROUNDROBIN;
+					if (r.rt_pool.opts !=
+					    PF_POOL_ROUNDROBIN) {
+						yyerror("r.rt_pool.opts must "
+						    "be PF_POOL_ROUNDROBIN");
 						YYERROR;
 					}
 				}
 			}
 
 			if ($9.label) {
-				if (strlcpy(r.label, $9.label, sizeof(r.label)) >=
-				    PF_RULE_LABEL_SIZE) {
+				if (strlcpy(r.label, $9.label,
+				    sizeof(r.label)) >= PF_RULE_LABEL_SIZE) {
 					yyerror("rule label too long (max "
 					    "%d chars)", PF_RULE_LABEL_SIZE-1);
 					YYERROR;
@@ -994,8 +996,8 @@ pfrule		: action dir logquick interface route af proto fromto
 			}
 
 			if ($9.qname) {
-				if (strlcpy(r.qname, $9.qname, sizeof(r.qname)) >=
-				    PF_QNAME_SIZE) {
+				if (strlcpy(r.qname, $9.qname,
+				    sizeof(r.qname)) >= PF_QNAME_SIZE) {
 					yyerror("rule qname too long (max "
 					    "%d chars)", PF_QNAME_SIZE-1);
 					YYERROR;
@@ -1188,7 +1190,7 @@ if_item_not	: '!' if_item			{ $$ = $2; $$->not = 1; }
 		| if_item			{ $$ = $1; }
 
 if_item		: STRING			{
-			struct node_host *n;
+			struct node_host	*n;
 
 			if ((n = ifa_exists($1)) == NULL) {
 				yyerror("unknown interface %s", $1);
@@ -1301,7 +1303,7 @@ host_list	: xhost				{ $$ = $1; }
 		;
 
 xhost		: '!' host			{
-			struct node_host *n;
+			struct node_host	*n;
 
 			for (n = $2; n != NULL; n = n->next)
 				n->not = 1;
@@ -1323,7 +1325,7 @@ host		: address
 		;
 
 number		: STRING			{
-			u_long ulval;
+			u_long	ulval;
 
 			if (atoul($1, &ulval) == -1) {
 				yyerror("%s is not a number", $1);
@@ -1393,8 +1395,8 @@ port_item	: port				{
 		;
 
 port		: STRING			{
-			struct servent *s = NULL;
-			u_long ulval;
+			struct servent	*s = NULL;
+			u_long		 ulval;
 
 			if (atoul($1, &ulval) == 0) {
 				if (ulval > 65535) {
@@ -1468,7 +1470,7 @@ uid_item	: uid				{
 		;
 
 uid		: STRING			{
-			u_long ulval;
+			u_long	ulval;
 
 			if (atoul($1, &ulval) == -1) {
 				if (!strcmp($1, "unknown"))
@@ -1545,7 +1547,7 @@ gid_item	: gid				{
 		;
 
 gid		: STRING			{
-			u_long ulval;
+			u_long	ulval;
 
 			if (atoul($1, &ulval) == -1) {
 				if (!strcmp($1, "unknown"))
@@ -1570,7 +1572,7 @@ gid		: STRING			{
 		;
 
 flag		: STRING			{
-			int f;
+			int	f;
 
 			if ((f = parse_flags($1)) < 0) {
 				yyerror("bad flags %s", $1);
@@ -1580,8 +1582,8 @@ flag		: STRING			{
 		}
 		;
 
-flags		: FLAGS flag '/' flag		{ $$.b1 = $2.b1; $$.b2 = $4.b1; }
-		| FLAGS '/' flag		{ $$.b1 = 0; $$.b2 = $3.b1; }
+flags		: FLAGS flag '/' flag	{ $$.b1 = $2.b1; $$.b2 = $4.b1; }
+		| FLAGS '/' flag	{ $$.b1 = 0; $$.b2 = $3.b1; }
 		;
 
 icmpspec	: ICMPTYPE icmp_item		{ $$ = $2; }
@@ -1617,8 +1619,8 @@ icmp_item	: icmptype		{
 			$$->tail = $$;
 		}
 		| icmptype CODE STRING	{
-			const struct icmpcodeent *p;
-			u_long ulval;
+			const struct icmpcodeent	*p;
+			u_long				 ulval;
 
 			if (atoul($3, &ulval) == 0) {
 				if (ulval > 255) {
@@ -1655,8 +1657,8 @@ icmp6_item	: icmp6type		{
 			$$->tail = $$;
 		}
 		| icmp6type CODE STRING	{
-			const struct icmpcodeent *p;
-			u_long ulval;
+			const struct icmpcodeent	*p;
+			u_long				 ulval;
 
 			if (atoul($3, &ulval) == 0) {
 				if (ulval > 255) {
@@ -1683,8 +1685,8 @@ icmp6_item	: icmp6type		{
 		;
 
 icmptype	: STRING			{
-			const struct icmptypeent *p;
-			u_long ulval;
+			const struct icmptypeent	*p;
+			u_long				 ulval;
 
 			if (atoul($1, &ulval) == 0) {
 				if (ulval > 255) {
@@ -1703,8 +1705,8 @@ icmptype	: STRING			{
 		;
 
 icmp6type	: STRING			{
-			const struct icmptypeent *p;
-			u_long ulval;
+			const struct icmptypeent	*p;
+			u_long				 ulval;
 
 			if (atoul($1, &ulval) == 0) {
 				if (ulval > 255) {
@@ -1776,7 +1778,7 @@ state_opt_item	: MAXIMUM number		{
 			$$->tail = $$;
 		}
 		| STRING number			{
-			int i;
+			int	i;
 
 			for (i = 0; pf_timeouts[i].name &&
 			    strcmp(pf_timeouts[i].name, $1); ++i)
@@ -1842,7 +1844,7 @@ no		: /* empty */			{ $$ = 0; }
 		;
 
 rport		: STRING			{
-			char *p = strchr($1, ':');
+			char	*p = strchr($1, ':');
 
 			if (p == NULL) {
 				if (($$.a = getservice($1)) == -1)
@@ -1974,7 +1976,7 @@ redirection	: /* empty */			{ $$ = NULL; }
 
 natrule		: no NAT interface af proto fromto redirpool pooltype staticport
 		{
-			struct pf_nat nat;
+			struct pf_nat	nat;
 
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
@@ -2065,7 +2067,7 @@ natrule		: no NAT interface af proto fromto redirpool pooltype staticport
 
 binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 		{
-			struct pf_binat binat;
+			struct pf_binat	binat;
 
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
@@ -2178,7 +2180,7 @@ binatrule	: no BINAT interface af proto FROM host TO ipspec redirection
 
 rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirpool pooltype
 		{
-			struct pf_rdr rdr;
+			struct pf_rdr	rdr;
 
 			if (check_rulestate(PFCTL_STATE_NAT))
 				YYERROR;
@@ -2280,7 +2282,7 @@ dport		: /* empty */			{
 			$$.a = $$.b = $$.t = 0;
 		}
 		| PORT STRING			{
-			char *p = strchr($2, ':');
+			char	*p = strchr($2, ':');
 
 			if (p == NULL) {
 				if (($$.a = getservice($2)) == -1)
@@ -2418,10 +2420,10 @@ comma		: ','
 int
 yyerror(char *fmt, ...)
 {
-	va_list ap;
-	extern char *infile;
-	errors = 1;
+	va_list		 ap;
+	extern char	*infile;
 
+	errors = 1;
 	va_start(ap, fmt);
 	fprintf(stderr, "%s:%d: ", infile, yylval.lineno);
 	vfprintf(stderr, fmt, ap);
@@ -2433,7 +2435,7 @@ yyerror(char *fmt, ...)
 int
 rule_consistent(struct pf_rule *r)
 {
-	int problems = 0;
+	int	problems = 0;
 
 	if (r->proto != IPPROTO_TCP && r->proto != IPPROTO_UDP &&
 	    (r->src.port_op || r->dst.port_op)) {
@@ -2487,8 +2489,8 @@ rule_consistent(struct pf_rule *r)
 int
 nat_consistent(struct pf_nat *r)
 {
-	int problems = 0;
-	struct pf_pooladdr *pa;
+	int			 problems = 0;
+	struct pf_pooladdr	*pa;
 
 	if (!r->af) {
 		TAILQ_FOREACH(pa, &r->rpool.list, entries) {
@@ -2506,8 +2508,8 @@ nat_consistent(struct pf_nat *r)
 int
 rdr_consistent(struct pf_rdr *r)
 {
-	int problems = 0;
-	struct pf_pooladdr *pa;
+	int			 problems = 0;
+	struct pf_pooladdr	*pa;
 
 	if (r->proto != IPPROTO_TCP && r->proto != IPPROTO_UDP &&
 	    (r->dport || r->dport2 || r->rport)) {
@@ -2535,7 +2537,7 @@ rdr_consistent(struct pf_rdr *r)
 
 struct keywords {
 	const char	*k_name;
-	int	 k_val;
+	int		 k_val;
 };
 
 /* macro gore, but you should've seen the prior indentation nightmare... */
@@ -2571,8 +2573,8 @@ struct keywords {
 void
 expand_label_if(const char *name, char *label, const char *ifname)
 {
-	char tmp[PF_RULE_LABEL_SIZE];
-	char *p;
+	char	 tmp[PF_RULE_LABEL_SIZE];
+	char	*p;
 
 	while ((p = strstr(label, name)) != NULL) {
 		tmp[0] = 0;
@@ -2590,8 +2592,8 @@ void
 expand_label_addr(const char *name, char *label, sa_family_t af,
     struct node_host *h)
 {
-	char tmp[PF_RULE_LABEL_SIZE];
-	char *p;
+	char	 tmp[PF_RULE_LABEL_SIZE];
+	char	*p;
 
 	while ((p = strstr(label, name)) != NULL) {
 		tmp[0] = 0;
@@ -2631,9 +2633,9 @@ expand_label_addr(const char *name, char *label, sa_family_t af,
 void
 expand_label_port(const char *name, char *label, struct node_port *port)
 {
-	char tmp[PF_RULE_LABEL_SIZE];
-	char *p;
-	char a1[6], a2[6], op[13];
+	char	 tmp[PF_RULE_LABEL_SIZE];
+	char	*p;
+	char	 a1[6], a2[6], op[13];
 
 	while ((p = strstr(label, name)) != NULL) {
 		tmp[0] = 0;
@@ -2669,9 +2671,9 @@ expand_label_port(const char *name, char *label, struct node_port *port)
 void
 expand_label_proto(const char *name, char *label, u_int8_t proto)
 {
-	char tmp[PF_RULE_LABEL_SIZE];
-	char *p;
-	struct protoent *pe;
+	char		 tmp[PF_RULE_LABEL_SIZE];
+	char		*p;
+	struct protoent	*pe;
 
 	while ((p = strstr(label, name)) != NULL) {
 		tmp[0] = 0;
@@ -2690,8 +2692,8 @@ expand_label_proto(const char *name, char *label, u_int8_t proto)
 void
 expand_label_nr(const char *name, char *label)
 {
-	char tmp[PF_RULE_LABEL_SIZE];
-	char *p;
+	char	 tmp[PF_RULE_LABEL_SIZE];
+	char	*p;
 
 	while ((p = strstr(label, name)) != NULL) {
 		tmp[0] = 0;
@@ -2722,10 +2724,10 @@ int
 expand_altq(struct pf_altq *a, struct node_if *interfaces,
     struct node_queue *nqueues, struct node_queue_bw bwspec)
 {
-	struct	pf_altq pa, pb;
-	char	qname[PF_QNAME_SIZE];
-	struct	node_queue *n;
-	int	errs = 0;
+	struct pf_altq		 pa, pb;
+	char			 qname[PF_QNAME_SIZE];
+	struct node_queue	*n;
+	int			 errs = 0;
 
 	LOOP_THROUGH(struct node_if, interface, interfaces,
 		memcpy(&pa, a, sizeof(struct pf_altq));
@@ -2799,9 +2801,9 @@ int
 expand_queue(struct pf_altq *a, struct node_queue *nqueues,
     struct node_queue_bw bwspec)
 {
-	struct	node_queue *n;
-	u_int8_t	added = 0;
-	u_int8_t	found = 0;
+	struct node_queue	*n;
+	u_int8_t		 added = 0;
+	u_int8_t		 found = 0;
 
 	LOOP_THROUGH(struct node_queue, tqueue, queues,
 		if (!strncmp(a->qname, tqueue->queue, PF_QNAME_SIZE)) {
@@ -2863,13 +2865,13 @@ expand_rule(struct pf_rule *r,
     struct node_port *dst_ports, struct node_uid *uids,
     struct node_gid *gids, struct node_icmp *icmp_types)
 {
-	sa_family_t	af = r->af;
-	int added = 0, error = 0;
-	char	ifname[IF_NAMESIZE];
-	char	label[PF_RULE_LABEL_SIZE];
-	struct pf_pooladdr *pa;
-	struct node_host *h;
-	u_int8_t flags, flagset;
+	sa_family_t		 af = r->af;
+	int			 added = 0, error = 0;
+	char			 ifname[IF_NAMESIZE];
+	char			 label[PF_RULE_LABEL_SIZE];
+	struct pf_pooladdr	*pa;
+	struct node_host	*h;
+	u_int8_t		 flags, flagset;
 
 	strlcpy(label, r->label, sizeof(label));
 	flags = r->flags;
@@ -2996,11 +2998,11 @@ expand_nat(struct pf_nat *n,
     struct node_host *dst_hosts, struct node_port *dst_ports,
     struct node_host *rpool_hosts)
 {
-	char ifname[IF_NAMESIZE];
-	struct pf_pooladdr *pa;
-	struct node_host *h;
-	sa_family_t af = n->af;
-	int added = 0, error = 0;
+	char			 ifname[IF_NAMESIZE];
+	struct pf_pooladdr	*pa;
+	struct node_host	*h;
+	sa_family_t		 af = n->af;
+	int			 added = 0, error = 0;
 
 	LOOP_THROUGH(struct node_if, interface, interfaces,
 	LOOP_THROUGH(struct node_proto, proto, protos,
@@ -3087,11 +3089,11 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
     struct node_proto *protos, struct node_host *src_hosts,
     struct node_host *dst_hosts, struct node_host *rpool_hosts)
 {
-	sa_family_t af = r->af;
-	int added = 0, error = 0;
-	char ifname[IF_NAMESIZE];
-	struct pf_pooladdr *pa;
-	struct node_host *h;
+	sa_family_t		 af = r->af;
+	int			 added = 0, error = 0;
+	char			 ifname[IF_NAMESIZE];
+	struct pf_pooladdr	*pa;
+	struct node_host	*h;
 
 	LOOP_THROUGH(struct node_if, interface, interfaces,
 	LOOP_THROUGH(struct node_proto, proto, protos,
@@ -3269,7 +3271,7 @@ lookup(char *s)
 		{ "user",		USER},
 		{ "yes",		YES},
 	};
-	const struct keywords *p;
+	const struct keywords	*p;
 
 	p = bsearch(s, keywords, sizeof(keywords)/sizeof(keywords[0]),
 	    sizeof(keywords[0]), kw_cmp);
@@ -3288,14 +3290,14 @@ lookup(char *s)
 #define MAXPUSHBACK	128
 
 char	*parsebuf;
-int	parseindex;
-char	pushback_buffer[MAXPUSHBACK];
-int	pushback_index = 0;
+int	 parseindex;
+char	 pushback_buffer[MAXPUSHBACK];
+int	 pushback_index = 0;
 
 int
 lgetc(FILE *f)
 {
-	int c, next;
+	int	c, next;
 
 	if (parsebuf) {
 		/* Read character from the parsebuffer instead of input. */
@@ -3353,7 +3355,7 @@ lungetc(int c)
 int
 findeol(void)
 {
-	int c;
+	int	c;
 
 	parsebuf = NULL;
 	pushback_index = 0;
@@ -3374,9 +3376,10 @@ findeol(void)
 int
 yylex(void)
 {
-	char buf[8096], *p, *val;
-	int endc, c, next;
-	int token;
+	char	 buf[8096];
+	char	*p, *val;
+	int	 endc, c, next;
+	int	 token;
 
 top:
 	p = buf;
@@ -3518,7 +3521,7 @@ top:
 int
 parse_rules(FILE *input, struct pfctl *xpf, int opts)
 {
-	struct sym *sym;
+	struct sym	*sym;
 
 	fin = input;
 	pf = xpf;
@@ -3540,8 +3543,8 @@ parse_rules(FILE *input, struct pfctl *xpf, int opts)
 void
 set_ipmask(struct node_host *h, u_int8_t b)
 {
-	struct pf_addr *m, *n;
-	int i, j = 0;
+	struct pf_addr	*m, *n;
+	int		 i, j = 0;
 
 	m = &h->addr.mask;
 
@@ -3570,7 +3573,7 @@ set_ipmask(struct node_host *h, u_int8_t b)
 int
 symset(const char *nam, const char *val)
 {
-	struct sym *sym;
+	struct sym	*sym;
 
 	sym = calloc(1, sizeof(*sym));
 	if (sym == NULL)
@@ -3595,7 +3598,7 @@ symset(const char *nam, const char *val)
 char *
 symget(const char *nam)
 {
-	struct sym *sym;
+	struct sym	*sym;
 
 	for (sym = symhead; sym; sym = sym->next)
 		if (strcmp(nam, sym->nam) == 0) {
@@ -3612,8 +3615,8 @@ struct node_host *iftab;
 void
 ifa_load(void)
 {
-	struct ifaddrs *ifap, *ifa;
-	struct node_host *n = NULL, *h = NULL;
+	struct ifaddrs		*ifap, *ifa;
+	struct node_host	*n = NULL, *h = NULL;
 
 	if (getifaddrs(&ifap) < 0)
 		err(1, "getifaddrs");
@@ -3688,7 +3691,7 @@ ifa_load(void)
 struct node_host *
 ifa_exists(char *ifa_name)
 {
-	struct node_host *n;
+	struct node_host	*n;
 
 	if (iftab == NULL)
 		ifa_load();
@@ -3703,8 +3706,8 @@ ifa_exists(char *ifa_name)
 struct node_host *
 ifa_lookup(char *ifa_name, enum pfctl_iflookup_mode mode)
 {
-	struct node_host *p = NULL, *h = NULL, *n = NULL;
-	int return_all = 0;
+	struct node_host	*p = NULL, *h = NULL, *n = NULL;
+	int			 return_all = 0;
 
 	if (!strncmp(ifa_name, "self", IFNAMSIZ))
 		return_all = 1;
@@ -3764,7 +3767,7 @@ ifa_lookup(char *ifa_name, enum pfctl_iflookup_mode mode)
 void
 decide_address_family(struct node_host *n, sa_family_t *af)
 {
-	sa_family_t target_af = 0;
+	sa_family_t	target_af = 0;
 
 	while (!*af && n != NULL) {
 		if (n->af) {
@@ -3782,7 +3785,7 @@ decide_address_family(struct node_host *n, sa_family_t *af)
 void
 remove_invalid_hosts(struct node_host **nh, sa_family_t *af)
 {
-	struct node_host *n = *nh, *prev = NULL;
+	struct node_host	*n = *nh, *prev = NULL;
 
 	while (n != NULL) {
 		if (*af && n->af && n->af != *af) {
@@ -3821,11 +3824,11 @@ remove_invalid_hosts(struct node_host **nh, sa_family_t *af)
 struct node_host *
 host(char *s, int mask)
 {
-	struct node_host *h = NULL, *n;
-	struct in_addr ina;
-	struct addrinfo hints, *res0, *res;
-	int bits, error, v4mask, v6mask;
-	char *buf = NULL;
+	struct node_host	*h = NULL, *n;
+	struct in_addr		 ina;
+	struct addrinfo		 hints, *res0, *res;
+	int			 bits, error, v4mask, v6mask;
+	char			*buf = NULL;
 
 	if (ifa_exists(s) || !strncmp(s, "self", IFNAMSIZ)) {
 		/* interface with this name exists */
@@ -3940,8 +3943,8 @@ host(char *s, int mask)
 int
 atoul(char *s, u_long *ulvalp)
 {
-	u_long ulval;
-	char *ep;
+	u_long	 ulval;
+	char	*ep;
 
 	errno = 0;
 	ulval = strtoul(s, &ep, 0);
@@ -3956,8 +3959,8 @@ atoul(char *s, u_long *ulvalp)
 int
 getservice(char *n)
 {
-	struct servent *s;
-	u_long ulval;
+	struct servent	*s;
+	u_long		 ulval;
 
 	if (atoul(n, &ulval) == 0) {
 		if (ulval > 65535) {
@@ -3980,9 +3983,9 @@ getservice(char *n)
 u_int16_t
 parseicmpspec(char *w, sa_family_t af)
 {
-	const struct icmpcodeent *p;
-	u_long ulval;
-	u_int8_t icmptype;
+	const struct icmpcodeent	*p;
+	u_long				 ulval;
+	u_int8_t			 icmptype;
 
 	if (af == AF_INET)
 		icmptype = returnicmpdefault >> 8;
