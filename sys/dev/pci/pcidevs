@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.336 2000/10/23 20:06:42 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.337 2000/10/26 13:39:28 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -601,6 +601,8 @@ product 3DLABS DELTA		0x0003	GLINT Delta
 product 3DLABS PERMEDIA		0x0004	GLINT Permedia
 product 3DLABS 500MX		0x0006	GLINT 500MX
 product 3DLABS PERMEDIA2	0x0007	GLINT Permedia 2
+product 3DLABS OXYGEN_GVX1_CPU	0x0008	Oxygen GVX1
+product 3DLABS OXYGEN_GVX1	0x000a	Oxygen GVX1
 
 /* 3Ware products */
 product TRIWARE ESCALADE	0x1000	Escalade IDE RAID
