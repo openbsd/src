@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.1 2003/12/27 23:58:11 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.2 2003/12/28 19:43:35 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -199,6 +199,7 @@ vle_intr(sc)
 {
 	register struct vlereg1 *reg1 = (struct vlereg1 *)((struct le_softc *)sc)->sc_r1;
 	int rc;
+
 	rc = am7990_intr(sc);
 	ENABLE_INTR;
 	return (rc);
@@ -211,10 +212,8 @@ vle_copytobuf_contig(sc, from, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	volatile caddr_t phys = (caddr_t)sc->sc_addr;
 
 	dma_cachectl((vaddr_t)buf + boff, len, DMA_CACHE_SYNC);
-	dma_cachectl((vaddr_t)phys + boff, len, DMA_CACHE_SYNC);
 	d16_bcopy(from, buf + boff, len);
 }
 
@@ -225,10 +224,8 @@ vle_copyfrombuf_contig(sc, to, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	volatile caddr_t phys = (caddr_t)sc->sc_addr;
 
 	dma_cachectl((vaddr_t)buf + boff, len, DMA_CACHE_SYNC_INVAL);
-	dma_cachectl((vaddr_t)phys + boff, len, DMA_CACHE_SYNC_INVAL);
 	d16_bcopy(buf + boff, to, len);
 }
 
@@ -238,10 +235,8 @@ vle_zerobuf_contig(sc, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	volatile caddr_t phys = (caddr_t)sc->sc_addr;
 
 	dma_cachectl((vaddr_t)buf + boff, len, DMA_CACHE_SYNC);
-	dma_cachectl((vaddr_t)phys + boff, len, DMA_CACHE_SYNC);
 	d16_bzero(buf + boff, len);
 }
 
