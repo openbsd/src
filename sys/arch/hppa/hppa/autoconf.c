@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.16 2002/02/08 03:43:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -389,6 +389,18 @@ pdc_scanbus(self, ca, bus, maxmod)
 		nca.ca_pdc_iodc_read = &pdc_iodc_read;
 		nca.ca_name = hppa_mod_info(nca.ca_type.iodc_type,
 					    nca.ca_type.iodc_sv_model);
+
+		if (autoconf_verbose) {
+			printf(">> probing: flags %b bc %d/%d/%d/%d/%d/%d ",
+			    dp.dp_flags, PZF_BITS,
+			    dp.dp_bc[0], dp.dp_bc[1], dp.dp_bc[2],
+			    dp.dp_bc[3], dp.dp_bc[4], dp.dp_bc[5]);
+			printf("mod %x layers %x/%x/%x/%x/%x/%x\n",
+			    dp.dp_mod,
+			    dp.dp_layers[0], dp.dp_layers[1],
+			    dp.dp_layers[2], dp.dp_layers[3],
+			    dp.dp_layers[4], dp.dp_layers[5]);
+		}
 
 		config_found_sm(self, &nca, mbprint, mbsubmatch);
 	}
