@@ -44,7 +44,7 @@ typedef unsigned long int splay_tree_key;
 typedef unsigned long int splay_tree_value;
 
 /* Forward declaration for a node in the tree.  */
-typedef struct splay_tree_node *splay_tree_node;
+typedef struct splay_tree_node_s *splay_tree_node;
 
 /* The type of a function which compares two splay-tree keys.  The
    function should return values as for qsort.  */
@@ -62,7 +62,7 @@ typedef void (*splay_tree_delete_value_fn) PARAMS((splay_tree_value));
 typedef int (*splay_tree_foreach_fn) PARAMS((splay_tree_node, void*));
 
 /* The nodes in the splay tree.  */
-struct splay_tree_node
+struct splay_tree_node_s
 {
   /* The key.  */
   splay_tree_key key;
@@ -76,7 +76,7 @@ struct splay_tree_node
 };
 
 /* The splay tree itself.  */
-typedef struct splay_tree
+typedef struct splay_tree_s
 {
   /* The root of the tree.  */
   splay_tree_node root;
@@ -95,7 +95,8 @@ extern splay_tree splay_tree_new        PARAMS((splay_tree_compare_fn,
 					        splay_tree_delete_key_fn,
 					        splay_tree_delete_value_fn));
 extern void splay_tree_delete           PARAMS((splay_tree));
-extern void splay_tree_insert           PARAMS((splay_tree,
+extern splay_tree_node splay_tree_insert          
+		                        PARAMS((splay_tree,
 					        splay_tree_key,
 					        splay_tree_value));
 extern splay_tree_node splay_tree_lookup   
