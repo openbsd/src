@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.28 2005/03/23 00:26:06 canacar Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.29 2005/03/24 16:37:52 claudio Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -461,15 +461,17 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ppp_header *h, ht;
 	struct ifqueue *inq = 0;
-	int s;
 	struct sppp *sp = (struct sppp *)ifp;
+	struct timeval tv;
 	int debug = ifp->if_flags & IFF_DEBUG;
+	int s;
 
 	if (ifp->if_flags & IFF_UP) {
 		/* Count received bytes, add hardware framing */
 		ifp->if_ibytes += m->m_pkthdr.len + sp->pp_framebytes;
 		/* Note time of last receive */
-		sp->pp_last_receive = mono_time.tv_sec;
+		getmicrouptime(&tv);
+		sp->pp_last_receive = tv.tv_sec;
 	}
 
 	if (m->m_pkthdr.len <= PPP_HEADER_LEN) {
@@ -548,7 +550,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			if (sp->state[IDX_IPCP] == STATE_OPENED) {
 				schednetisr (NETISR_IP);
 				inq = &ipintrq;
-				sp->pp_last_activity = mono_time.tv_sec;
+				sp->pp_last_activity = tv.tv_sec;
 			}
 			break;
 #endif
@@ -653,12 +655,14 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	struct sppp *sp = (struct sppp*) ifp;
 	struct ppp_header *h;
 	struct ifqueue *ifq = NULL;
+	struct timeval tv;
 	int s, len, rv = 0;
 	u_int16_t protocol;
 
 	s = splimp();
 
-	sp->pp_last_activity = mono_time.tv_sec;
+	getmicrouptime(&tv);
+	sp->pp_last_activity = tv.tv_sec;
 
 	if ((ifp->if_flags & IFF_UP) == 0 ||
 	    (ifp->if_flags & (IFF_RUNNING | IFF_AUTO)) == 0) {
@@ -1909,6 +1913,7 @@ HIDE void
 sppp_lcp_up(struct sppp *sp)
 {
 	STDDCL;
+	struct timeval tv;
 
  	sp->pp_alivecnt = 0;
  	sp->lcp.opts = (1 << LCP_OPT_MAGIC);
@@ -1916,7 +1921,8 @@ sppp_lcp_up(struct sppp *sp)
  	sp->lcp.protos = 0;
  	sp->lcp.mru = sp->lcp.their_mru = PP_MTU;
 
-	sp->pp_last_receive = sp->pp_last_activity = mono_time.tv_sec;
+	getmicrouptime(&tv);
+	sp->pp_last_receive = sp->pp_last_activity = tv.tv_sec;
 
 	/*
 	 * If this interface is passive or dial-on-demand, and we are
@@ -3873,10 +3879,10 @@ sppp_keepalive(void *dummy)
 {
 	struct sppp *sp;
 	int s;
-	time_t now;
+	struct timeval tv;
 
 	s = splimp();
-	now = mono_time.tv_sec;
+	getmicrouptime(&tv);
 	for (sp=spppq; sp; sp=sp->pp_next) {
 		struct ifnet *ifp = &sp->pp_if;
 
@@ -3892,7 +3898,7 @@ sppp_keepalive(void *dummy)
 
 		/* No echo reply, but maybe user data passed through? */
 		if (!(sp->pp_flags & PP_CISCO) &&
-		    (now - sp->pp_last_receive) < NORECV_TIME) {
+		    (tv.tv_sec - sp->pp_last_receive) < NORECV_TIME) {
 			sp->pp_alivecnt = 0;
 			continue;
 		}
