@@ -1,5 +1,5 @@
-/*	$OpenBSD: uaudio.c,v 1.8 2001/01/28 09:43:41 aaron Exp $ */
-/*	$NetBSD: uaudio.c,v 1.29 2000/10/05 01:35:07 augustss Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.9 2001/05/03 02:20:32 aaron Exp $ */
+/*	$NetBSD: uaudio.c,v 1.41 2001/01/23 14:04:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -52,6 +52,7 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/file.h>
+#include <sys/reboot.h>
 #include <sys/select.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
@@ -382,13 +383,13 @@ USB_ATTACH(uaudio)
 
 	for (j = 0; j < sc->sc_nalts; j++) {
 		if (sc->sc_alts[j].ifaceh == NULL) {
-			printf("%s: alt %d missing AS interface(s)\n", USBDEVNAME(sc->sc_dev), j);
+			printf("%s: alt %d missing AS interface(s)\n",
+			    USBDEVNAME(sc->sc_dev), j);
 			USB_ATTACH_ERROR_RETURN;
 		}
 	}
 
-	printf("%s: audio rev %d.%02x\n",
-	       USBDEVNAME(sc->sc_dev),
+	printf("%s: audio rev %d.%02x\n", USBDEVNAME(sc->sc_dev),
 	       sc->sc_audio_rev >> 8, sc->sc_audio_rev & 0xff);
 
 	sc->sc_chan.sc = sc;
@@ -396,15 +397,23 @@ USB_ATTACH(uaudio)
 	if (usbd_get_quirks(sc->sc_udev)->uq_flags & UQ_AU_NO_FRAC)
 		sc->sc_chan.nofrac = 1;
 
+#if defined(__NetBSD__)
+#ifndef UAUDIO_DEBUG
+	if (bootverbose)
+#endif
+#endif
+		printf("%s: %d mixer controls\n", USBDEVNAME(sc->sc_dev),
+		    sc->sc_nctls);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
+
 	DPRINTF(("uaudio_attach: doing audio_attach_mi\n"));
 #if defined(__OpenBSD__)
 	audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
 #else
 	sc->sc_audiodev = audio_attach_mi(&uaudio_hw_if, sc, &sc->sc_dev);
 #endif
-
-	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-			   USBDEV(sc->sc_dev));
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -421,7 +430,7 @@ uaudio_activate(device_ptr_t self, enum devact act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if (sc->sc_audiodev)
+		if (sc->sc_audiodev != NULL)
 			rv = config_deactivate(sc->sc_audiodev);
 		sc->sc_dying = 1;
 		break;
@@ -528,7 +537,7 @@ uaudio_find_iface(char *buf, int size, int *offsp, int subtype)
 		    d->bInterfaceSubClass == subtype)
 			return (d);
 	}
-	return (0);
+	return (NULL);
 }
 
 void
@@ -1086,7 +1095,7 @@ uaudio_process_as(struct uaudio_softc *sc, char *buf, int *offsp,
 	    dir == UE_DIR_IN && type == UE_ISO_ADAPT)
 		type = UE_ISO_ASYNC;
 
-	/* We can't handle endpoints that need a sync pipe. */
+	/* We can't handle endpoints that need a sync pipe yet. */
 	if (dir == UE_DIR_IN ? type == UE_ISO_ADAPT : type == UE_ISO_ASYNC) {
 		printf("%s: ignored %sput endpoint of type %s\n",
 		       USBDEVNAME(sc->sc_dev),

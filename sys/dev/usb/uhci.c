@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhci.c,v 1.19 2001/03/25 04:26:58 csapuntz Exp $	*/
-/*	$NetBSD: uhci.c,v 1.125 2000/09/23 21:00:10 augustss Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.20 2001/05/03 02:20:33 aaron Exp $	*/
+/*	$NetBSD: uhci.c,v 1.135 2001/04/01 14:59:52 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -687,7 +687,7 @@ uhci_power(int why, void *v)
 	int cmd;
 	int s;
 
-	s = splusb();
+	s = splhardusb();
 	cmd = UREAD2(sc, UHCI_CMD);
 
 	DPRINTF(("uhci_power: sc=%p, why=%d (was %d), cmd=0x%x\n", 
@@ -709,6 +709,8 @@ uhci_power(int why, void *v)
 		/* save some state if BIOS doesn't */
 		sc->sc_saved_frnum = UREAD2(sc, UHCI_FRNUM);
 		sc->sc_saved_sof = UREAD1(sc, UHCI_SOF);
+
+		UWRITE2(sc, UHCI_INTR, 0); /* disable intrs */
 
 		UHCICMD(sc, cmd | UHCI_CMD_EGSM); /* enter global suspend */
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
@@ -1168,6 +1170,7 @@ uhci_intr(void *arg)
 	if (sc->sc_suspend != PWR_RESUME) {
 		printf("%s: interrupt while not operating ignored\n",
 		       USBDEVNAME(sc->sc_bus.bdev));
+		UWRITE2(sc, UHCI_STS, status); /* acknowledge the ints */
 		return (0);
 	}
 
@@ -1208,10 +1211,9 @@ uhci_intr(void *arg)
 
 	}
 
-	if (ack)	/* acknowledge the ints */
-		UWRITE2(sc, UHCI_STS, ack);
-	else	/* nothing to acknowledge */
-		return (0);
+	if (!ack)
+		return (0);	/* nothing to acknowledge */
+	UWRITE2(sc, UHCI_STS, ack); /* acknowledge the ints */
 
 	sc->sc_bus.no_intrs++;
 	usb_schedsoftintr(&sc->sc_bus);
@@ -1512,7 +1514,7 @@ uhci_run(uhci_softc_t *sc, int run)
 	u_int16_t cmd;
 
 	run = run != 0;
-	s = splusb();
+	s = splhardusb();
 	DPRINTF(("uhci_run: setting run=%d\n", run));
 	cmd = UREAD2(sc, UHCI_CMD);
 	if (run)

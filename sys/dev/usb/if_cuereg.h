@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cuereg.h,v 1.3 2000/07/04 11:44:21 fgsch Exp $ */
+/*	$OpenBSD: if_cuereg.h,v 1.4 2001/05/03 02:20:32 aaron Exp $ */
 /*	$NetBSD: if_cuereg.h,v 1.11 2000/04/08 20:54:38 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -196,4 +196,7 @@ struct cue_softc {
 	char			cue_attached;
 	u_int			cue_rx_errs;
 	struct timeval		cue_rx_notice;
+
+	struct usb_task		cue_tick_task;
+	struct usb_task		cue_stop_task;
 };

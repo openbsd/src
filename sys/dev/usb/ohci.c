@@ -1,5 +1,5 @@
-/*	$OpenBSD: ohci.c,v 1.20 2001/03/25 07:03:26 csapuntz Exp $ */
-/*	$NetBSD: ohci.c,v 1.93 2000/08/17 23:18:56 augustss Exp $	*/
+/*	$OpenBSD: ohci.c,v 1.21 2001/05/03 02:20:32 aaron Exp $ */
+/*	$NetBSD: ohci.c,v 1.102 2001/04/01 15:00:29 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -857,6 +857,7 @@ ohci_init(ohci_softc_t *sc)
 	sc->sc_bus.pipe_size = sizeof(struct ohci_pipe);
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
+	sc->sc_control = sc->sc_intre = 0;
 	sc->sc_powerhook = powerhook_establish(ohci_power, sc);
 	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
 #endif
@@ -952,26 +953,45 @@ ohci_power(int why, void *v)
 	ohci_dumpregs(sc);
 #endif
 
-	s = splusb();
+	s = splhardusb();
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
 		sc->sc_bus.use_polling++;
-		ctl = OREAD4(sc, OHCI_CONTROL);
-		ctl = (ctl & ~OHCI_HCFS_MASK) | OHCI_HCFS_SUSPEND;
+		ctl = OREAD4(sc, OHCI_CONTROL) & ~OHCI_HCFS_MASK;
+		if (sc->sc_control == 0) {
+			/*
+			 * Preserve register values, in case that APM BIOS
+			 * does not recover them.
+			 */
+			sc->sc_control = ctl;
+			sc->sc_intre = OREAD4(sc, OHCI_INTERRUPT_ENABLE);
+		}
+		ctl |= OHCI_HCFS_SUSPEND;
 		OWRITE4(sc, OHCI_CONTROL, ctl);
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 		sc->sc_bus.use_polling--;
 		break;
 	case PWR_RESUME:
 		sc->sc_bus.use_polling++;
-		ctl = OREAD4(sc, OHCI_CONTROL);
-		ctl = (ctl & ~OHCI_HCFS_MASK) | OHCI_HCFS_RESUME;
+		/* Some broken BIOSes do not recover these values */
+		OWRITE4(sc, OHCI_HCCA, DMAADDR(&sc->sc_hccadma));
+		OWRITE4(sc, OHCI_CONTROL_HEAD_ED, sc->sc_ctrl_head->physaddr);
+		OWRITE4(sc, OHCI_BULK_HEAD_ED, sc->sc_bulk_head->physaddr);
+		if (sc->sc_intre)
+			OWRITE4(sc, OHCI_INTERRUPT_ENABLE,
+				sc->sc_intre & (OHCI_ALL_INTRS | OHCI_MIE));
+		if (sc->sc_control)
+			ctl = sc->sc_control;
+		else
+			ctl = OREAD4(sc, OHCI_CONTROL);
+		ctl |= OHCI_HCFS_RESUME;
 		OWRITE4(sc, OHCI_CONTROL, ctl);
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
 		ctl = (ctl & ~OHCI_HCFS_MASK) | OHCI_HCFS_OPERATIONAL;
 		OWRITE4(sc, OHCI_CONTROL, ctl);
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
+		sc->sc_control = sc->sc_intre = 0;
 		sc->sc_bus.use_polling--;
 		break;
 #if defined(__NetBSD__)
@@ -1083,7 +1103,12 @@ ohci_intr1(ohci_softc_t *sc)
 		     (u_int)eintrs));
 
 	if (eintrs & OHCI_SO) {
-		printf("%s: scheduling overrun\n",USBDEVNAME(sc->sc_bus.bdev));
+		sc->sc_overrun_cnt++;
+		if (usbd_ratecheck(&sc->sc_overrun_ntc)) {
+			printf("%s: %u scheduling overruns\n",
+			    USBDEVNAME(sc->sc_bus.bdev), sc->sc_overrun_cnt);
+			sc->sc_overrun_cnt = 0;
+		}
 		/* XXX do what */
 		intrs &= ~OHCI_SO;
 	}

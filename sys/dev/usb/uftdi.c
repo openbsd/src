@@ -1,5 +1,5 @@
-/*	$OpenBSD: uftdi.c,v 1.2 2001/02/20 04:15:28 nate Exp $ 	*/
-/*	$NetBSD: uftdi.c,v 1.5 2001/01/23 14:04:13 augustss Exp $	*/
+/*	$OpenBSD: uftdi.c,v 1.3 2001/05/03 02:20:33 aaron Exp $ 	*/
+/*	$NetBSD: uftdi.c,v 1.6 2001/01/23 21:56:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -217,6 +217,7 @@ USB_ATTACH(uftdi)
 	uca.iface = iface;
 	uca.methods = &uftdi_methods;
 	uca.arg = sc;
+	uca.info = NULL;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));

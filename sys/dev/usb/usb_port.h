@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_port.h,v 1.24 2001/02/03 07:46:11 mickey Exp $ */
-/*	$NetBSD: usb_port.h,v 1.35 2000/09/23 04:32:23 augustss Exp $	*/
+/*	$OpenBSD: usb_port.h,v 1.25 2001/05/03 02:20:34 aaron Exp $ */
+/*	$NetBSD: usb_port.h,v 1.42 2001/03/28 19:00:39 ichiro Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -60,12 +60,15 @@
 #define UHUB_DEBUG 1
 #define ULPT_DEBUG 1
 #define UCOM_DEBUG 1
+#define UPLCOM_DEBUG 1
+#define UMCT_DEBUG 1
 #define UMODEM_DEBUG 1
 #define UAUDIO_DEBUG 1
 #define AUE_DEBUG 1
 #define CUE_DEBUG 1
 #define KUE_DEBUG 1
 #define UMASS_DEBUG 1
+#define UVISOR_DEBUG 1
 #define UPL_DEBUG 1
 #define UZCOM_DEBUG 1
 #define URIO_DEBUG 1

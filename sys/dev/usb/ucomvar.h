@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucomvar.h,v 1.5 2000/11/08 18:10:38 aaron Exp $ */
+/*	$OpenBSD: ucomvar.h,v 1.6 2001/05/03 02:20:33 aaron Exp $ */
 /*	$NetBSD: ucomvar.h,v 1.8 2000/09/03 19:15:45 augustss Exp $	*/
 
 /*
@@ -103,6 +103,7 @@ struct ucom_attach_args {
 	u_int ibufsizepad;
 	u_int obufsize;
 	u_int opkthdrlen;
+	const char *info;	/* attach message */
 	usbd_device_handle device;
 	usbd_interface_handle iface;
 	struct ucom_methods *methods;

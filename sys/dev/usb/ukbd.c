@@ -1,5 +1,5 @@
-/*	$OpenBSD: ukbd.c,v 1.5 2001/03/07 20:42:38 maja Exp $	*/
-/*      $NetBSD: ukbd.c,v 1.60 2000/06/01 14:29:00 augustss Exp $        */
+/*	$OpenBSD: ukbd.c,v 1.6 2001/05/03 02:20:33 aaron Exp $	*/
+/*      $NetBSD: ukbd.c,v 1.66 2001/04/06 22:54:15 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ struct ukbd_data {
 
 /* Translate USB bitmap to USB keycode. */
 #define NMOD 8
-Static struct {
+Static const struct {
 	int mask, key;
 } ukbd_mods[NMOD] = {
 	{ MOD_CONTROL_L, 224 },
@@ -132,7 +132,7 @@ Static struct {
  * Translate USB keycodes to US keyboard XT scancodes.
  * Scancodes >= 128 represent EXTENDED keycodes.
  */
-Static u_int8_t ukbd_trtab[256] = {
+Static const u_int8_t ukbd_trtab[256] = {
 	  NN,  NN,  NN,  NN,  30,  48,  46,  32, /* 00 - 07 */
 	  18,  33,  34,  35,  23,  36,  37,  38, /* 08 - 0F */
 	  50,  49,  24,  25,  16,  19,  31,  20, /* 10 - 17 */
@@ -412,10 +412,10 @@ USB_ATTACH(ukbd)
 	usbd_delay_ms(uaa->device, 400);
 	ukbd_set_leds(sc, 0);
 
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
-
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+
+	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }

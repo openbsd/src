@@ -1,5 +1,5 @@
-/*	$OpenBSD: umodem.c,v 1.6 2001/01/28 09:43:42 aaron Exp $ */
-/*	$NetBSD: umodem.c,v 1.31 2000/10/22 08:20:09 explorer Exp $	*/
+/*	$OpenBSD: umodem.c,v 1.7 2001/05/03 02:20:34 aaron Exp $ */
+/*	$NetBSD: umodem.c,v 1.40 2001/03/25 23:02:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,6 +114,12 @@ struct umodem_softc {
 
 	u_char			sc_opening;	/* lock during open */
 	u_char			sc_dying;	/* disconnecting */
+
+	int			sc_ctl_notify;	/* Notification endpoint */
+	usbd_pipe_handle	sc_notify_pipe; /* Notification pipe */
+	usb_cdc_notification_t	sc_notify_buf;	/* Notification structure */
+	u_char			sc_lsr;		/* Local status register */
+	u_char			sc_msr;		/* Modem status register */
 };
 
 Static void	*umodem_get_desc(usbd_device_handle dev, int type, int subtype);
@@ -132,14 +138,17 @@ Static void	umodem_break(struct umodem_softc *, int);
 Static void	umodem_set_line_state(struct umodem_softc *);
 Static int	umodem_param(void *, int, struct termios *);
 Static int	umodem_ioctl(void *, int, u_long, caddr_t, int, struct proc *);
+Static int	umodem_open(void *, int portno);
+Static void	umodem_close(void *, int portno);
+Static void	umodem_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 Static struct ucom_methods umodem_methods = {
 	umodem_get_status,
 	umodem_set,
 	umodem_param,
 	umodem_ioctl,
-	NULL,
-	NULL,
+	umodem_open,
+	umodem_close,
 	NULL,
 	NULL,
 };
@@ -210,7 +219,6 @@ USB_ATTACH(umodem)
 	       sc->sc_cm_cap & USB_CDC_CM_OVER_DATA ? "" : "no ",
 	       sc->sc_acm_cap & USB_CDC_ACM_HAS_BREAK ? "" : "no ");
 
-
 	/* Get the data interface too. */
 	for (i = 0; i < uaa->nifaces; i++) {
 		if (uaa->ifaces[i] != NULL) {
@@ -277,6 +285,31 @@ USB_ATTACH(umodem)
 			sc->sc_cm_over_data = 1;
 		}
 	}
+
+	/*
+	 * The standard allows for notification messages (to indicate things
+	 * like a modem hangup) to come in via an interrupt endpoint
+	 * off of the control interface.  Iterate over the endpoints on
+	 * the control interface and see if there are any interrupt
+	 * endpoints; if there are, then register it.
+	 */
+
+	sc->sc_ctl_notify = -1;
+	sc->sc_notify_pipe = NULL;
+
+	for (i = 0; i < id->bNumEndpoints; i++) {
+		ed = usbd_interface2endpoint_descriptor(sc->sc_ctl_iface, i);
+		if (ed == NULL)
+			continue;
+
+		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
+		    (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
+			printf("%s: status change notification available\n",
+			       USBDEVNAME(sc->sc_dev));
+			sc->sc_ctl_notify = ed->bEndpointAddress;
+		}
+	}
+
 	sc->sc_dtr = -1;
 
 	uca.portno = UCOM_UNK_PORTNO;
@@ -289,18 +322,124 @@ USB_ATTACH(umodem)
 	uca.iface = sc->sc_data_iface;
 	uca.methods = &umodem_methods;
 	uca.arg = sc;
-
-	DPRINTF(("umodem_attach: sc=%p\n", sc));
-	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
+	uca.info = NULL;
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+
+	DPRINTF(("umodem_attach: sc=%p\n", sc));
+	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
 
 	USB_ATTACH_SUCCESS_RETURN;
 
  bad:
 	sc->sc_dying = 1;
 	USB_ATTACH_ERROR_RETURN;
+}
+
+Static int
+umodem_open(void *addr, int portno)
+{
+	struct umodem_softc *sc = addr;
+	int err;
+
+	DPRINTF(("umodem_open: sc=%p\n", sc));
+
+	if (sc->sc_ctl_notify != -1 && sc->sc_notify_pipe == NULL) {
+		err = usbd_open_pipe_intr(sc->sc_ctl_iface, sc->sc_ctl_notify,
+		    USBD_SHORT_XFER_OK, &sc->sc_notify_pipe, sc,
+		    &sc->sc_notify_buf, sizeof(sc->sc_notify_buf),
+		    umodem_intr, USBD_DEFAULT_INTERVAL);
+
+		if (err) {
+			DPRINTF(("Failed to establish notify pipe: %s\n",
+				usbd_errstr(err)));
+			return EIO;
+		}
+	}
+
+	return 0;
+}
+
+Static void
+umodem_close(void *addr, int portno)
+{
+	struct umodem_softc *sc = addr;
+	int err;
+
+	DPRINTF(("umodem_close: sc=%p\n", sc));
+
+	if (sc->sc_notify_pipe != NULL) {
+		err = usbd_abort_pipe(sc->sc_notify_pipe);
+		if (err)
+			printf("%s: abort notify pipe failed: %s\n",
+			    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		err = usbd_close_pipe(sc->sc_notify_pipe);
+		if (err)
+			printf("%s: close notify pipe failed: %s\n",
+			    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
+		sc->sc_notify_pipe = NULL;
+	}
+}
+
+Static void
+umodem_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
+{
+	struct umodem_softc *sc = priv;
+	u_char mstatus;
+
+	if (sc->sc_dying)
+		return;
+
+	if (status != USBD_NORMAL_COMPLETION) {
+		if (status == USBD_NOT_STARTED || status == USBD_CANCELLED)
+			return;
+		printf("%s: abnormal status: %s\n", USBDEVNAME(sc->sc_dev),
+		       usbd_errstr(status));
+		return;
+	}
+
+	if (sc->sc_notify_buf.bmRequestType != UCDC_NOTIFICATION) {
+		DPRINTF(("%s: unknown message type (%02x) on notify pipe\n",
+			 USBDEVNAME(sc->sc_dev),
+			 sc->sc_notify_buf.bmRequestType));
+		return;
+	}
+
+	switch (sc->sc_notify_buf.bNotification) {
+	case UCDC_N_SERIAL_STATE:
+		/*
+		 * Set the serial state in ucom driver based on
+		 * the bits from the notify message
+		 */
+		if (UGETW(sc->sc_notify_buf.wLength) != 2) {
+			printf("%s: Invalid notification length! (%d)\n",
+			       USBDEVNAME(sc->sc_dev),
+			       UGETW(sc->sc_notify_buf.wLength));
+			break;
+		}
+		DPRINTF(("%s: notify bytes = %02x%02x\n",
+			 USBDEVNAME(sc->sc_dev),
+			 sc->sc_notify_buf.data[0],
+			 sc->sc_notify_buf.data[1]));
+		/* Currently, lsr is always zero. */
+		sc->sc_lsr = sc->sc_msr = 0;
+		mstatus = sc->sc_notify_buf.data[0];
+
+		if (ISSET(mstatus, UCDC_N_SERIAL_RI))
+			sc->sc_msr |= UMSR_RI;
+		if (ISSET(mstatus, UCDC_N_SERIAL_DSR))
+			sc->sc_msr |= UMSR_DSR;
+		if (ISSET(mstatus, UCDC_N_SERIAL_DCD))
+			sc->sc_msr |= UMSR_DCD;
+		ucom_status_change((struct ucom_softc *)sc->sc_subdev);
+		break;
+	default:
+		DPRINTF(("%s: unknown notify message: %02x\n",
+			 USBDEVNAME(sc->sc_dev),
+			 sc->sc_notify_buf.bNotification));
+		break;
+	}
 }
 
 void
@@ -329,12 +468,14 @@ umodem_get_caps(usbd_device_handle dev, int *cm, int *acm)
 void
 umodem_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
 {
+	struct umodem_softc *sc = addr;
+
 	DPRINTF(("umodem_get_status:\n"));
 
 	if (lsr != NULL)
-		*lsr = 0;	/* XXX */
+		*lsr = sc->sc_lsr;
 	if (msr != NULL)
-		*msr = 0;	/* XXX */
+		*msr = sc->sc_msr;
 }
 
 int

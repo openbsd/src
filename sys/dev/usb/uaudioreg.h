@@ -1,5 +1,5 @@
-/*	$OpenBSD: uaudioreg.h,v 1.6 2001/01/28 09:43:41 aaron Exp $ */
-/*	$NetBSD: uaudioreg.h,v 1.6 2000/05/30 10:10:17 augustss Exp $	*/
+/*	$OpenBSD: uaudioreg.h,v 1.7 2001/05/03 02:20:33 aaron Exp $ */
+/*	$NetBSD: uaudioreg.h,v 1.7 2000/12/28 00:29:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_quirks.c,v 1.8 2001/01/28 09:43:42 aaron Exp $ */
-/*	$NetBSD: usb_quirks.c,v 1.31 2000/10/24 14:57:35 augustss Exp $	*/
+/*	$OpenBSD: usb_quirks.c,v 1.9 2001/05/03 02:20:34 aaron Exp $ */
+/*	$NetBSD: usb_quirks.c,v 1.38 2001/04/15 10:26:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.13 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -51,6 +51,8 @@
 extern int usbdebug;
 #endif
 
+#define ANY 0xffff
+
 Static const struct usbd_quirk_entry {
 	u_int16_t idVendor;
 	u_int16_t idProduct;
@@ -80,6 +82,15 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_TELEX, USB_PRODUCT_TELEX_MIC1,	    0x009, { UQ_AU_NO_FRAC }},
  { USB_VENDOR_SILICONPORTALS, USB_PRODUCT_SILICONPORTALS_YAPPHONE,
    						    0x100, { UQ_AU_INP_ASYNC }},
+ /* XXX These should have a revision number, but I don't know what they are. */
+#ifdef notyet
+ { USB_VENDOR_HP, USB_PRODUCT_HP_895C,		    ANY,  { UQ_BROKEN_BIDIR }},
+ { USB_VENDOR_HP, USB_PRODUCT_HP_880C,		    ANY,  { UQ_BROKEN_BIDIR }},
+ { USB_VENDOR_HP, USB_PRODUCT_HP_815C,		    ANY,  { UQ_BROKEN_BIDIR }},
+ { USB_VENDOR_HP, USB_PRODUCT_HP_810C,		    ANY,  { UQ_BROKEN_BIDIR }},
+ { USB_VENDOR_HP, USB_PRODUCT_HP_830C,		    ANY,  { UQ_BROKEN_BIDIR }},
+#endif
+
  { 0, 0, 0, { 0 } }
 };
 
@@ -89,11 +100,14 @@ const struct usbd_quirks *
 usbd_find_quirk(usb_device_descriptor_t *d)
 {
 	const struct usbd_quirk_entry *t;
+	u_int16_t vendor = UGETW(d->idVendor);
+	u_int16_t product = UGETW(d->idProduct);
+	u_int16_t revision = UGETW(d->bcdDevice);
 
 	for (t = usb_quirks; t->idVendor != 0; t++) {
-		if (t->idVendor  == UGETW(d->idVendor) &&
-		    t->idProduct == UGETW(d->idProduct) &&
-		    t->bcdDevice == UGETW(d->bcdDevice))
+		if (t->idVendor  == vendor &&
+		    t->idProduct == product &&
+		    (t->bcdDevice == ANY || t->bcdDevice == revision))
 			break;
 	}
 #ifdef USB_DEBUG

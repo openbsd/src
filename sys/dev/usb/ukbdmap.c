@@ -1,5 +1,5 @@
-/*	$OpenBSD: ukbdmap.c,v 1.6 2001/03/07 20:42:38 maja Exp $ */
-/*	$NetBSD: ukbdmap.c,v 1.5 2000/04/27 15:26:49 augustss Exp $	*/
+/*	$OpenBSD: ukbdmap.c,v 1.7 2001/05/03 02:20:33 aaron Exp $ */
+/*	$NetBSD: ukbdmap.c,v 1.6 2001/04/04 05:31:57 toshii Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -155,6 +155,29 @@ Static const keysym_t ukbd_keydesc_us[] = {
     KC(229), 			KS_Shift_R,
     KC(230),			KS_Alt_R,	KS_Multi_key,
     KC(231),			KS_Meta_R,
+};
+
+Static const keysym_t ukbd_keydesc_jp[] = {
+/*  pos		command		normal			shifted */
+    KC(31),			KS_2,			KS_quotedbl,
+    KC(35),			KS_6,			KS_ampersand,
+    KC(36),			KS_7,			KS_apostrophe,
+    KC(37),			KS_8,			KS_parenleft,
+    KC(38),			KS_9,			KS_parenright,
+    KC(39),			KS_0,
+    KC(45),			KS_minus,		KS_equal,
+    KC(46),			KS_asciicircum,		KS_asciitilde,
+    KC(47),			KS_at,			KS_grave,
+    KC(48),			KS_bracketleft,		KS_braceleft,
+    KC(50),			KS_bracketright,	KS_braceright,
+    KC(51),			KS_semicolon,		KS_plus,
+    KC(52),			KS_colon,		KS_asterisk,
+    KC(53),			KS_Zenkaku_Hankaku, /* replace grave/tilde */
+    KC(135),			KS_backslash,		KS_underscore,
+    KC(136),			KS_Hiragana_Katakana,
+    KC(137),			KS_backslash,		KS_bar,
+    KC(138),			KS_Henkan,
+    KC(139),			KS_Muhenkan,
 };
 
 Static const keysym_t ukbd_keydesc_swapctrlcaps[] = {
@@ -371,9 +394,13 @@ Static const keysym_t ukbd_keydesc_es[] = {
 
 const struct wscons_keydesc ukbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	ukbd_keydesc_us),
+	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	ukbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_JP,			KB_US,	ukbd_keydesc_jp),
+	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS,KB_JP,	ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_DE,			KB_US,	ukbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	ukbd_keydesc_de_nodead),
 	KBD_MAP(KB_FR,                  KB_US,  ukbd_keydesc_fr),
+	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS, KB_FR, ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_DK,			KB_US,	ukbd_keydesc_dk),
 	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	ukbd_keydesc_dk_nodead),
 	KBD_MAP(KB_IT,			KB_US,	ukbd_keydesc_it),
@@ -382,8 +409,6 @@ const struct wscons_keydesc ukbd_keydesctab[] = {
 	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	ukbd_keydesc_sv_nodead),
 	KBD_MAP(KB_NO,			KB_DK,	ukbd_keydesc_no),
 	KBD_MAP(KB_NO | KB_NODEAD,	KB_NO,	ukbd_keydesc_no_nodead),
-	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	ukbd_keydesc_swapctrlcaps),
-	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS, KB_FR, ukbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_ES ,			KB_US,	ukbd_keydesc_es),
 	{0, 0, 0, 0}
 };

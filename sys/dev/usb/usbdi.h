@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdi.h,v 1.11 2001/01/28 09:43:43 aaron Exp $ */
-/*	$NetBSD: usbdi.h,v 1.44 2000/09/23 21:02:04 augustss Exp $	*/
+/*	$OpenBSD: usbdi.h,v 1.12 2001/05/03 02:20:34 aaron Exp $ */
+/*	$NetBSD: usbdi.h,v 1.52 2001/05/01 16:43:44 lukem Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ typedef enum {		/* keep in sync with usbd_status_msgs */
 	USBD_STALLED,
 	USBD_INTERRUPTED,
 
-	USBD_ERROR_MAX,		/* must be last */
+	USBD_ERROR_MAX		/* must be last */
 } usbd_status;
 
 typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
@@ -85,9 +85,6 @@ typedef void (*usbd_callback)(usbd_xfer_handle, usbd_private_handle,
 #define USBD_SYNCHRONOUS	0x02	/* wait for completion */
 /* in usb.h #define USBD_SHORT_XFER_OK	0x04*/	/* allow short reads */
 #define USBD_FORCE_SHORT_XFER	0x08	/* force last short packet on write */
-
-/* XXX Temporary hack XXX */
-#define USBD_NO_TSLEEP		0x80	/* XXX use busy wait */
 
 #define USBD_NO_TIMEOUT 0
 #define USBD_DEFAULT_TIMEOUT 5000 /* ms = 5 s */
@@ -178,6 +175,23 @@ usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
 usbd_status usbd_reload_device_desc(usbd_device_handle);
 
 int usbd_ratecheck(struct timeval *last);
+
+/*
+ * The usb_task structs form a queue of things to run in the USB event
+ * thread.  Normally this is just device discovery when a connect/disconnect
+ * has been detected.  But it may also be used by drivers that need to
+ * perform (short) tasks that must have a process context.
+ */
+struct usb_task {
+	TAILQ_ENTRY(usb_task) next;
+	void (*fun)(void *);
+	void *arg;
+	char onqueue;
+};
+
+void usb_add_task(usbd_device_handle dev, struct usb_task *task);
+void usb_rem_task(usbd_device_handle dev, struct usb_task *task);
+#define usb_init_task(t, f, a) ((t)->fun = (f), (t)->arg = (a), (t)->onqueue = 0)
 
 /* NetBSD attachment information */
 

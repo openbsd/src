@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kuereg.h,v 1.2 2000/03/28 19:37:48 aaron Exp $ */
+/*	$OpenBSD: if_kuereg.h,v 1.3 2001/05/03 02:20:32 aaron Exp $ */
 /*	$NetBSD: if_kuereg.h,v 1.9 2000/03/24 22:13:24 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -124,6 +124,8 @@ struct kue_ether_desc {
 
 #define KUE_CTL_READ		0x01
 #define KUE_CTL_WRITE		0x02
+
+#define KUE_WARM_REV		0x0202
 
 /*
  * The interrupt endpoint is currently unused

@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_quirks.h,v 1.7 2001/01/28 09:43:42 aaron Exp $ */
-/*	$NetBSD: usb_quirks.h,v 1.15 2000/10/24 14:56:09 augustss Exp $	*/
+/*	$OpenBSD: usb_quirks.h,v 1.8 2001/05/03 02:20:34 aaron Exp $ */
+/*	$NetBSD: usb_quirks.h,v 1.20 2001/04/15 09:38:01 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
 /*
@@ -54,6 +54,7 @@ struct usbd_quirks {
 #define UQ_AU_NO_FRAC	0x0400	/* don't adjust for fractional samples */
 #define UQ_AU_INP_ASYNC	0x0800	/* input is async despite claim of adaptive */
 #define UQ_ASSUME_CM_OVER_DATA 0x1000 /* modem device breaks on cm over data */
+#define UQ_BROKEN_BIDIR	       0x2000	/* printer has broken bidir mode */
 };
 
 extern const struct usbd_quirks usbd_no_quirk;

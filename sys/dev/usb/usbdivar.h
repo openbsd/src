@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdivar.h,v 1.12 2001/01/28 09:43:43 aaron Exp $ */
-/*	$NetBSD: usbdivar.h,v 1.60 2000/12/28 10:40:36 augustss Exp $	*/
+/*	$OpenBSD: usbdivar.h,v 1.13 2001/05/03 02:20:34 aaron Exp $ */
+/*	$NetBSD: usbdivar.h,v 1.63 2001/01/21 19:00:06 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -241,7 +241,7 @@ void		usb_transfer_complete(usbd_xfer_handle xfer);
 void		usb_disconnect_port(struct usbd_port *up, device_ptr_t);
 
 /* Routines from usb.c */
-void		usb_needs_explore(usbd_bus_handle);
+void		usb_needs_explore(usbd_device_handle);
 void		usb_schedsoftintr(struct usbd_bus *);
 
 /*
