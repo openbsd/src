@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmcia.c,v 1.20 1999/08/16 06:21:13 deraadt Exp $	*/
+/*	$OpenBSD: pcmcia.c,v 1.21 1999/08/16 06:46:18 deraadt Exp $	*/
 /*	$NetBSD: pcmcia.c,v 1.9 1998/08/13 02:10:55 eeh Exp $	*/
 
 /*
@@ -297,12 +297,8 @@ pcmcia_print(arg, pnp)
 	int i;
 
 	if (pnp) {
-		printf("\"");
-		for (i = 0; i < 4 && card->cis1_info[i]; i++) {
-			if (i)
-				printf(", ");
-			printf("%s", card->cis1_info[i]);
-		}
+		for (i = 0; i < 4 && card->cis1_info[i]; i++)
+			printf("%s%s", i ? ", " : " \"", card->cis1_info[i]);
 		printf("\"");
 
 		if (card->manufacturer != -1 && card->product != -1) {
@@ -325,12 +321,8 @@ pcmcia_print(arg, pnp)
 	printf(" function %d", pa->pf->number);
 
 	if (!pnp) {
-		printf(" \"");
-		for (i = 0; i < 3 && card->cis1_info[i]; i++) {
-			if (i)
-				printf(" ");
-			printf("%s", card->cis1_info[i]);
-		}
+		for (i = 0; i < 3 && card->cis1_info[i]; i++)
+			printf("%s%s", i ? ", " : " \"", card->cis1_info[i]);
 		printf("\"");
 	}
 
