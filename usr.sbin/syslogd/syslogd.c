@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.87 2004/12/21 23:09:32 danh Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.88 2004/12/22 17:42:00 danh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.87 2004/12/21 23:09:32 danh Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.88 2004/12/22 17:42:00 danh Exp $";
 #endif
 #endif /* not lint */
 
@@ -1257,7 +1257,7 @@ init(void)
 	(p1 == p2 || (p1 != NULL && p2 != NULL && strcmp(p1, p2) == 0))
 
 /*
- * Spot a line with a duplicate file, console or tty target.
+ * Spot a line with a duplicate file, console, tty, or membuf target.
  */
 struct filed *
 find_dup(struct filed *f)
@@ -1272,6 +1272,12 @@ find_dup(struct filed *f)
 		case F_TTY:
 		case F_CONSOLE:
 			if (strcmp(list->f_un.f_fname, f->f_un.f_fname) == 0 &&
+			    progmatches(list->f_program, f->f_program))
+				return (list);
+			break;
+		case F_MEMBUF:
+			if (strcmp(list->f_un.f_mb.f_mname,
+			    f->f_un.f_mb.f_mname) == 0 &&
 			    progmatches(list->f_program, f->f_program))
 				return (list);
 			break;
@@ -1470,15 +1476,10 @@ cfline(char *line, char *prog)
 		}
 
 		/* Make sure buffer name is unique */
-		for (xf = Files; i != 0 && xf != f; xf = xf->f_next) {
-			if (xf->f_type == F_MEMBUF &&
-			    strcmp(xf->f_un.f_mb.f_mname,
-			    f->f_un.f_mb.f_mname) == 0)
-				break;
-		}
+		xf = find_dup(f);
 
 		/* Error on missing or non-unique name, or bad buffer length */
-		if (i == 0 || rb_len > MAX_MEMBUF || xf != f) {
+		if (i == 0 || rb_len > MAX_MEMBUF || xf != NULL) {
 			f->f_type = F_UNUSED;
 			logerror(p);
 			break;
