@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.12 1999/06/22 17:46:38 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.13 1999/06/22 17:56:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -139,11 +139,6 @@ ENTRY($start)
 	ldo	R%$global$(dp),dp
 
 	/*
-	 * clear GCC frame pointer to avoid back-tracing off the end
-	 */
-	copy	r0,r4
-
-	/*
 	 * kernel stack lives here (arg3 is esym)
 	 * arg0 will be available space for hppa_init()
 	 */
@@ -185,29 +180,31 @@ $qisnowon
 	 * load address of interrupt vector table
 	 */
 	ldil	L%$ivaaddr,t2
-	ldo     R%$ivaaddr(t2),t2
-	mtctl   t2,iva
+	ldo	R%$ivaaddr(t2),t2
+	mtctl	t2,iva
 
 	/*
 	 * Create a stack frame for us to call C with. Clear out the previous
 	 * sp marker to mark that this is the first frame on the stack.
 	 */
-	ldo     TF_SIZE(sp),sp
-	stw     r0,FM_PSP(sp)
+	copy	sp, t1
+	stwm	r0, FM_SIZE(sp)
+	copy	sp, r3
+	stwm	t1, FM_SIZE(sp)
 
 	/*
 	 * disable all coprocessors
 	 */
-	mtctl   r0,ccr
+	mtctl	r0, ccr
 
 	/*
 	 * call C routine hppa_init() to initialize VM
 	 */
 	.import hppa_init, code
-	ldil	L%hppa_init,r1
-	ldo	R%hppa_init(r1),r1
+	ldil	L%hppa_init, r1
+	ldo	R%hppa_init(r1), r1
 	.call
-	blr	r0,rp
+	blr	r0, rp
 	bv,n	(r1)
 	nop
 
