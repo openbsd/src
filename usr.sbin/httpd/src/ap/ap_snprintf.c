@@ -1,4 +1,4 @@
-/* $OpenBSD: ap_snprintf.c,v 1.14 2005/03/28 21:03:33 niallo Exp $ */
+/* $OpenBSD: ap_snprintf.c,v 1.15 2005/03/28 21:11:22 niallo Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -829,7 +829,8 @@ ap_vformatter(int (*flush_func)(ap_vformatter_buff *),
 			case 'u':
 				if (var_type == IS_QUAD) {
 					i_quad = va_arg(ap, u_widest_int);
-					s = conv_10_quad(i_quad, 1, &is_negative,
+					s = conv_10_quad(i_quad, 1,
+					    &is_negative,
 					    &num_buf[NUM_BUF_SIZE], &s_len);
 				}
 				else {
