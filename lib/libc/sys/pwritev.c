@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwritev.c,v 1.3 2002/09/17 12:57:50 mickey Exp $	*/
+/*	$OpenBSD: pwritev.c,v 1.4 2002/09/17 21:16:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: pwritev.c,v 1.3 2002/09/17 12:57:50 mickey Exp $";
+static char rcsid[] = "$OpenBSD: pwritev.c,v 1.4 2002/09/17 21:16:01 deraadt Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -53,10 +53,11 @@ pwritev(fd, iovp, iovcnt, offset)
 	int iovcnt;
 	off_t offset;
 {
+	extern off_t __syscall();
 	quad_t q;
 	int rv;
 
-	q = __syscall(SYS_pwritev, fd, iovp, iovcnt, 0, offset);
+	q = __syscall((quad_t)SYS_pwritev, fd, iovp, iovcnt, 0, offset);
 	if (/* LINTED constant */ sizeof (quad_t) == sizeof (register_t) ||
 	    /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
 		rv = (int)q;

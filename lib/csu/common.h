@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.5 2002/09/17 12:53:44 mickey Exp $	*/
+/*	$OpenBSD: common.h,v 1.6 2002/09/17 21:16:01 deraadt Exp $	*/
 /*	$NetBSD: common.h,v 1.3 1995/06/15 21:41:48 pk Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
 
 extern struct _dynamic	_DYNAMIC;
 static void		__load_rtld(struct _dynamic *);
-extern int		__syscall2(int, ...);
+extern int		__syscall(int, ...);
 int			_callmain(void);
 static char		*_strrchr(char *, char);
 #ifdef DEBUG
@@ -65,15 +65,15 @@ static int		_strncmp(char *, char *, int);
 /*
  * We need these system calls, but can't use library stubs
  */
-#define _exit(v)		__syscall2(SYS_exit, (v))
-#define open(name, f, m)	__syscall2(SYS_open, (name), (f), (m))
-#define close(fd)		__syscall2(SYS_close, (fd))
-#define read(fd, s, n)		__syscall2(SYS_read, (fd), (s), (n))
-#define write(fd, s, n)		__syscall2(SYS_write, (fd), (s), (n))
-#define dup(fd)			__syscall2(SYS_dup, (fd))
-#define dup2(fd, fdnew)		__syscall2(SYS_dup2, (fd), (fdnew))
+#define _exit(v)		__syscall(SYS_exit, (v))
+#define open(name, f, m)	__syscall(SYS_open, (name), (f), (m))
+#define close(fd)		__syscall(SYS_close, (fd))
+#define read(fd, s, n)		__syscall(SYS_read, (fd), (s), (n))
+#define write(fd, s, n)		__syscall(SYS_write, (fd), (s), (n))
+#define dup(fd)			__syscall(SYS_dup, (fd))
+#define dup2(fd, fdnew)		__syscall(SYS_dup2, (fd), (fdnew))
 #define mmap(addr, len, prot, flags, fd, off)	\
-    __syscall2(SYS___syscall, (quad_t)SYS_mmap, (addr), (len), (prot), (flags), \
+    __syscall(SYS___syscall, (quad_t)SYS_mmap, (addr), (len), (prot), (flags), \
 	(fd), 0, (off_t)(off))
 
 #define _FATAL(str) \

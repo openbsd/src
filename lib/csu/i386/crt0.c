@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.7 2002/09/17 12:53:44 mickey Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.8 2002/09/17 21:16:01 deraadt Exp $	*/
 /*	$NetBSD: crt0.c,v 1.20 1995/06/03 13:16:08 pk Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: crt0.c,v 1.7 2002/09/17 12:53:44 mickey Exp $";
+static char rcsid[] = "$OpenBSD: crt0.c,v 1.8 2002/09/17 21:16:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -98,7 +98,7 @@ asm ("__callmain:");		/* Defined for the benefit of debuggers */
 }
 
 #ifdef DYNAMIC
-	asm("	___syscall2:");
+	asm("	___syscall:");
 	asm("		popl %ecx");
 	asm("		popl %eax");
 	asm("		pushl %ecx");

@@ -32,12 +32,11 @@
  */
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: lseek.c,v 1.7 2002/09/17 12:57:50 mickey Exp $";
+static char rcsid[] = "$OpenBSD: lseek.c,v 1.8 2002/09/17 21:16:01 deraadt Exp $";
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/syscall.h>
-#include <unistd.h>
 #include "thread_private.h"
 
 /*
@@ -50,12 +49,13 @@ lseek(fd, offset, whence)
 	off_t	offset;
 	int	whence;
 {
+	extern off_t __syscall();
 	off_t retval;
 
 	if (_FD_LOCK(fd, FD_RDWR, NULL) != 0) {
 		retval = -1;
 	} else {
-		retval = __syscall(SYS_lseek, fd, 0, offset, whence);
+		retval = __syscall((quad_t)SYS_lseek, fd, 0, offset, whence);
 		_FD_UNLOCK(fd, FD_RDWR);
 	}
 	return retval;

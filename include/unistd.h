@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.41 2002/09/17 12:57:50 mickey Exp $ */
+/*	$OpenBSD: unistd.h,v 1.42 2002/09/17 21:15:58 deraadt Exp $ */
 /*	$NetBSD: unistd.h,v 1.26.4.1 1996/05/28 02:31:51 mrg Exp $	*/
 
 /*-
@@ -206,9 +206,6 @@ int	 swapctl(int cmd, const void *arg, int misc);
 int	 symlink(const char *, const char *);
 void	 sync(void);
 int	 syscall(int, ...);
-#if !defined(_XOPEN_SOURCE)
-quad_t	 __syscall(quad_t, ...);
-#endif
 int	 truncate(const char *, off_t);
 int	 ttyslot(void);
 unsigned int	 ualarm(unsigned int, unsigned int);
