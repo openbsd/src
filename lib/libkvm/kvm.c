@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.14 1998/07/11 05:57:16 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.15 1998/08/19 18:51:09 millert Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.14 1998/07/11 05:57:16 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.15 1998/08/19 18:51:09 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -720,6 +720,9 @@ kvm_dbopen(kd)
 	kd->db = dbopen(_PATH_KVMDB, O_RDONLY, 0, DB_HASH, NULL);
 	if (kd->db == NULL) {
 		switch (errno) {
+		case ENOENT:
+			/* No kvm_bsd.db, fall back to /bsd silently */
+			break;
 		case EFTYPE:
 			_kvm_err(kd, kd->program,
 			    "file %s is incorrectly formatted", _PATH_KVMDB);
