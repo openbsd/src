@@ -33,7 +33,7 @@
 .\"
 .\"	from: @(#)arp.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd July 14, 1999
 .Dt ARP 8
 .Os
 .Sh NAME
@@ -106,7 +106,9 @@ act as an
 server,
 responding to requests for
 .Ar hostname
-even though the host address is not its own.
+even though the host address is not its own. This behavior has traditionally
+been called
+.Em "proxy arp" .
 .It Fl f
 Causes the file
 .Ar filename
@@ -123,6 +125,31 @@ in the file should be of the form
 .Pp
 with argument meanings as given above.
 .El
+.Sh EXAMPLES
+To view the current
+.Nm
+table:
+.Pp
+.Dl arp -a
+.Pp
+To create a
+.Em permanent
+.Nm entry
+(One that cannot be overwritten by other network traffic):
+.Pp
+.Dl arp -s 10.0.0.2 00:90:27:bb:cc:dd permanent
+.Pp 
+To create
+.Em proxy arp
+entries on an interface, fxp0,
+for the IP Addresses 204.1.2.3 and 204.1.2.4, do a:
+.Pp
+.Bd -unfilled -offset indent -compact
+arp -s 209.1.2.3 00:90:27:bb:cc:dd pub
+arp -s 209.1.2.4 00:90:27:bb:cc:dd pub
+.Ed
+.Pp
+(where 00:90:27:bb:cc:dd is the MAC address of fxp0)
 .Sh SEE ALSO
 .Xr inet 3 ,
 .Xr arp 4 ,
