@@ -1,3 +1,35 @@
+.\"	$OpenBSD: MAKEDEV.8,v 1.3 1997/07/27 08:23:06 downsj Exp $
+.\"
+.\" Copyright (c) 1997, Jason Downs.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jason Downs for the
+.\"      OpenBSD system.
+.\" 4. Neither the name(s) of the author(s) nor the name OpenBSD
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+.\" CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -30,107 +62,100 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)MAKEDEV.8	5.2 (Berkeley) 3/22/91
-.\"	$Id: MAKEDEV.8,v 1.2 1997/07/24 15:01:32 deraadt Exp $
 .\"
-.TH MAKEDEV 8 "March 22, 1991"
-.UC 7
-.SH NAME
-MAKEDEV \- create system and device special files
-.SH SYNOPSIS
-MAKEDEV name ...
-.SH DESCRIPTION
+.Dd July 27, 1997
+.Dt MAKEDEV 8
+.Os OpenBSD
+.Sh NAME
+.Nm MAKEDEV
+.Nd create system and device special files
+.Sh SYNOPSIS
+.Nm MAKEDEV
+.Ar name
+.Ar ...
+.Sh DESCRIPTION
 The shell script
-.IR MAKEDEV ,
-found in the ``/dev'' directory, is used to create the common special
-files.
+.Nm MAKEDEV ,
+found in the 
+.Pa /dev
+directory, is used to create the common special files.
 See
-.IR special (8)
+.Xr special 8
 for a more complete discussion of special files.
-.PP
-.I MAKEDEV
+.Pp
+.Nm MAKEDEV
 takes any number of device names as arguments, where the names are
 the common abbreviation for the device.
-There are two special devices, ``std'' and ``local''.
+There are two special devices,
+.Ar std
+and
+.Ar local .
 The former creates the standard devices for the architecture.
 The latter is for devices specific to the local site, and
-executes the shell file ``MAKEDEV.local''.
-.PP
+executes the shell file
+.Pa MAKEDEV.local .
+.Pp
 The HP300 supports the following devices.
 Where a device name is followed by a hash sign (``#''), the hash sign
 must be replaced by a unit number.
-.TP 10
-std
+.Pp
+.Bl -tag -width XXXXXXXXXX
+.It Ar std
 the standard devices (console, drum, fd/*, klog, kmem, mem, null, stderr,
 stdin, stdout, tty)
-.br
-.ns
-.TP 10
-local
+.It Ar local
 configuration specific devices
-.br
-.ns
-.TP 10
-ct#
+.It Ar ct#
 HP300 HP-IB cartridge tape
-.br
-.ns
-.TP 10
-cd#
+.It Ar ccd#
 ``concatenated'' pseudo-disks
-.br
-.ns
-.TP 10
-rd#
+.It Ar hd#
 HP300 HP-IB disks
-.br
-.ns
-.TP 10
-sd#
+.It Ar mt#
+(Magnetic) 9-track reel tape
+.It Ar sd#
 HP300 SCSI disks
-.br
-.ns
-.TP 10
-vnd#
+.It Ar st#
+HP300 SCSI tape
+.It Ar vnd#
 ``file'' pseudo-disks
-.br
-.ns
-.TP 10
-dca#
+.It Ar dca#
 HP200/300 single port serial interface
-.br
-.ns
-.TP 10
-dcm#
+.It Ar dcm#
 HP200/300 4 port serial mux interface
-.br
-.ns
-.TP 10
-pty#
+.It Ar apci#
+HP400 3 port/keyboard Apollo mux interface
+.It Ar pty#
 set of 16 master and slave pseudo terminals
-.br
-.ns
-.TP 10
-flog#
+.It Ar flog#
 kernel logging device
-.br
-.ns
-.TP 10
-grf#
+.It Ar grf#
 raw interface to HP300 graphics devices
-.br
-.ns
-.TP 10
-ite#
+.It Ar ite#
 terminal emulator interface to HP300 graphics devices
-.br
-.ns
-.TP 10
-hil
+.It Ar hil
 HP300 HIL input devices
-.SH FILES
-/dev		The special file directory.
-.SH SEE ALSO
-.IR mknod (8), 
-.IR intro (4),
-.IR config (8),
-.IR special (8)
+.It Ar ppi#
+HP-IB plotters
+.It Ar bpf#
+packet filter
+.It Ar tun#
+network tunnel driver
+.It Ar lkm
+loadable kernel modules interface
+.It Ar random
+inkernel random number generator
+.El
+.Pp
+.Sh FILES
+.Bl -tag -width XXXX -compact
+.It Pa /dev
+The special file directory.
+.El
+.Pp
+.Sh SEE ALSO
+.Pp
+.Xr mknod 8 , 
+.Xr intro 4 ,
+.Xr config 8 ,
+.Xr special 8 .
