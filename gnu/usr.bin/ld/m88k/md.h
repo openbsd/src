@@ -1,4 +1,4 @@
-/* * $OpenBSD: md.h,v 1.2 2000/02/01 21:01:40 espie Exp $*/
+/* * $OpenBSD: md.h,v 1.3 2001/11/25 04:20:40 miod Exp $*/
 /*
  *	- m68k dependent definitions
  */
@@ -12,7 +12,7 @@
 
 #undef MID_MACHINE
 /* XXX */
-#define MID_MACHINE 151
+#define MID_MACHINE 153
 #endif
 
 #define	MAX_ALIGNMENT		(sizeof (double))
