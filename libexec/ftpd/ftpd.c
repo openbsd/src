@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.105 2001/10/02 17:43:47 wilfried Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.106 2001/11/05 09:51:13 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpd.c,v 1.105 2001/10/02 17:43:47 wilfried Exp $";
+static char rcsid[] = "$OpenBSD: ftpd.c,v 1.106 2001/11/05 09:51:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -620,21 +620,23 @@ static void
 lostconn(signo)
 	int signo;
 {
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
 
 	sigprocmask(SIG_BLOCK, &allsigs, NULL);
 	if (debug)
-		syslog(LOG_DEBUG, "lost connection");
-	dologout(1);
+		syslog_r(LOG_DEBUG, &sdata, "lost connection");
+	dologout(1);	/* XXX signal race? */
 }
 
 static void
 sigquit(signo)
 	int signo;
 {
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
 
 	sigprocmask(SIG_BLOCK, &allsigs, NULL);
-	syslog(LOG_ERR, "got signal %s", sys_signame[signo]);
-	dologout(1);
+	syslog_r(LOG_ERR, &sdata, "got signal %s", sys_signame[signo]);
+	dologout(1);	/* XXX signal race? */
 }
 
 /*
@@ -2111,6 +2113,8 @@ myoob(signo)
 {
 	char *cp;
 	int save_errno = errno;
+
+	/* XXX signal races GALORE */
 
 	/* only process if transfer occurring */
 	if (!transflag)

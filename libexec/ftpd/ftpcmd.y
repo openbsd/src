@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.24 2000/11/14 20:27:01 itojun Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.25 2001/11/05 09:51:13 deraadt Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.24 2000/11/14 20:27:01 itojun Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.25 2001/11/05 09:51:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1164,11 +1164,13 @@ void
 toolong(signo)
 	int signo;
 {
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
 
+	/* XXX signal races */
 	reply(421,
 	    "Timeout (%d seconds): closing control connection.", timeout);
 	if (logging)
-		syslog(LOG_INFO, "User %s timed out after %d seconds",
+		syslog_r(LOG_INFO, &sdata, "User %s timed out after %d seconds",
 		    (pw ? pw -> pw_name : "unknown"), timeout);
 	dologout(1);
 }
