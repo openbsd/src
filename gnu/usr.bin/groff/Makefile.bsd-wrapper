@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1996/09/14 21:41:16 etheisen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1996/09/14 23:21:38 etheisen Exp $
 
 #
 # groff config
@@ -13,7 +13,7 @@ GNUCFLAGS=	CFLAGS="$(CFLAGS)"
 GNUCXXFLAGS=	CCFLAGS="$(CXXFLAGS)"
 
 CLEANFILES=	config.cache config.log pic/pic.cc eqn/eqn.cc \
-		refer/label.cc $(MAN)
+		refer/label.cc pic/pic.tab.h eqn/eqn.tab.h $(MAN)
 
 MAN=	addftinfo/addftinfo.1 groff/groff.1 troff/troff.1 tbl/tbl.1 \
 	pic/pic.1 eqn/eqn.1 grops/grops.1 grotty/grotty.1 grodvi/grodvi.1 \
