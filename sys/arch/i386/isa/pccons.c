@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.19 1996/06/25 18:32:03 tholo Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.20 1996/07/16 10:58:34 deraadt Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -172,7 +172,12 @@ void pccnputc __P((dev_t, char));
 int pccngetc __P((dev_t));
 void pccnpollc __P((dev_t, int));
 
+/* wait 7+ us for keyboard controller; ~1.25us per inb() */
 #define	KBD_DELAY \
+	{ u_char x = inb(0x84); (void) x; } \
+	{ u_char x = inb(0x84); (void) x; } \
+	{ u_char x = inb(0x84); (void) x; } \
+	{ u_char x = inb(0x84); (void) x; } \
 	{ u_char x = inb(0x84); (void) x; } \
 	{ u_char x = inb(0x84); (void) x; } \
 	{ u_char x = inb(0x84); (void) x; } \
