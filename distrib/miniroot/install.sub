@@ -1,7 +1,7 @@
-#	$OpenBSD: install.sub,v 1.358 2005/02/13 06:57:59 david Exp $
+#	$OpenBSD: install.sub,v 1.359 2005/02/16 02:04:31 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
-# Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
+# Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -1260,47 +1260,17 @@ set_timezone() {
 	done
 }
 
-# Check that required sets were successfully installed by checking
-# for the presence of a 'random' selection of their contents.
-#
-# Required sets are:
-#	1) bsd
-#	2) baseXX
-#	3) etcXX
-#
-# If a 'problem' set is found, add it back to DEFAULTSETS.
+# Check with the user that missing required sets were deliberately skipped.
 sane_install() {
-	local _insane
+	local _s _m
 
-	# Check if bsd is installed and >0 bytes in size.
-	if [[ ! -s /mnt/bsd ]]; then
-		_insane=y
-		DEFAULTSETS=$(addel bsd $DEFAULTSETS)
-		cat << __EOT
-+*** 'bsd' must be (re)installed: no kernel found.
-__EOT
-	fi
+	for _s in $SANESETS; do
+		isin $_s $DEFAULTSETS || continue
+		ask_yn "'$_s' was not installed.\nAre you *SURE* your $MODE is complete without '$_s'?"
+		[[ $resp == n ]] && _m="$_m $_s"
+	done
 
-	# Check if baseXX is installed.
-	if [[ ! -d /mnt/sbin || ! -d /mnt/dev ]]; then
-		_insane=y
-		DEFAULTSETS=$(addel base${VERSION}.tgz $DEFAULTSETS)
-		cat << __EOT
-+*** 'base${VERSION}.tgz' must be (re)installed: /sbin or /dev is missing.
-__EOT
-	fi
-
-	# Check if etcXX is installed.
-	if [[ ! -s /mnt/etc/rc ]]; then
-		_insane=y
-		DEFAULTSETS=$(addel etc${VERSION}.tgz $DEFAULTSETS)
-		cat << __EOT
-+*** 'etc${VERSION}.tgz' must be (re)installed: /etc/rc is missing.
-__EOT
-	fi
-
-	[[ -n $_insane ]] && return 1
-
+	[[ -n $_m ]] && return 1
 	return 0
 }
 
@@ -1634,6 +1604,9 @@ for _set in base etc misc comp man game xbase xetc xshare xfont xserv site ; do
 	isin $_set xbase xetc xshare xfont xserv site && continue
 	DEFAULTSETS="$DEFAULTSETS ${_set}${VERSION}.tgz"
 done
+# Since etc${version}.tgz is not in DEFAULTSETS for upgrades, it can always be
+# in SANESETS.
+SANESETS="bsd base${VERSION}.tgz etc${version}.tgz"
 
 # decide upon an editor
 : ${EDITOR:=ed}
