@@ -1,4 +1,4 @@
-/* $OpenBSD: gzip.c,v 1.1 1999/09/27 21:40:04 espie Exp $ */
+/* $OpenBSD: gzip.c,v 1.2 1999/10/01 01:14:38 espie Exp $ */
 /*-
  * Copyright (c) 1999 Marc Espie.
  *
@@ -28,6 +28,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <stdio.h>
 #include <string.h>
 #include "stand.h"
@@ -95,12 +96,17 @@ gzip_read_header(f, h, sign)
 				return GZIP_SIGNED;
 			else
 				return GZIP_NOT_PGPSIGNED;
-		} else
-			return GZIP_UNSIGNED;
+		} else {
+			if (fseek(f, SIGNSIZE, SEEK_CUR) != -1)
+				return GZIP_SIGNED;
+			else
+				return GZIP_NOT_PGPSIGNED;
+		}
 	} else
 		return GZIP_UNSIGNED;
 }
 
+/* write a gzip header, including PGP signature */
 int 
 gzip_write_header(f, h, sign)
 	FILE *f;
