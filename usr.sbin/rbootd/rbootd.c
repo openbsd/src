@@ -114,7 +114,7 @@ main(argc, argv)
 		if (ConfigFile == NULL)
 			ConfigFile = argv[optind];
 		else {
-			warnx("too many config files (`%s' ignored)\n",
+			warnx("too many config files (`%s' ignored)",
 			    argv[optind]);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.12 1997/08/18 03:11:32 millert Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.13 1997/09/12 04:07:20 millert Exp $ */
 /*	$NetBSD: rarpd.c,v 1.12 1996/03/21 18:28:23 jtc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.12 1997/08/18 03:11:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.13 1997/09/12 04:07:20 millert Exp $";
 #endif
 
 
@@ -579,7 +579,7 @@ rarp_process(ii, pkt)
 
 	if (target_ipaddr == 0) {
 		in.s_addr = ii->ii_ipaddr & ii->ii_netmask;
-		err(NONFATAL, "cannot find %s on net %s\n",
+		err(NONFATAL, "cannot find %s on net %s",
 		    ename, inet_ntoa(in));
 		return;
 	}

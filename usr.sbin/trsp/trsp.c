@@ -1,4 +1,4 @@
-/*	$OpenBSD: trsp.c,v 1.5 1997/09/08 09:23:17 deraadt Exp $	*/
+/*	$OpenBSD: trsp.c,v 1.6 1997/09/12 04:07:23 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -233,11 +233,11 @@ main(argc, argv)
 
 		if (kvm_write(kd, nl[N_SPP_DEBX].n_value, &spp_debx,
 		    sizeof(spp_debx)) != sizeof(spp_debx))
-			errx(4, "write spp_debx: %s\n", kvm_geterr(kd));
+			errx(4, "write spp_debx: %s", kvm_geterr(kd));
 		
 		if (kvm_write(kd, nl[N_SPP_DEBUG].n_value, spp_debug,
 		    sizeof(spp_debug)) != sizeof(spp_debug))
-			errx(4, "write spp_debug: %s\n", kvm_geterr(kd));
+			errx(4, "write spp_debug: %s", kvm_geterr(kd));
 
 		exit(0);
 	}

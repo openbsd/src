@@ -1,4 +1,4 @@
-/*	$OpenBSD: netgroup_mkdb.c,v 1.6 1997/06/18 00:00:45 deraadt Exp $	*/
+/*	$OpenBSD: netgroup_mkdb.c,v 1.7 1997/09/12 04:07:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char *rcsid = "$OpenBSD: netgroup_mkdb.c,v 1.6 1997/06/18 00:00:45 deraadt Exp $";
+static char *rcsid = "$OpenBSD: netgroup_mkdb.c,v 1.7 1997/09/12 04:07:17 millert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -242,7 +242,7 @@ ng_load(fname)
 					break;
 
 				case 1:
-					warnx("Duplicate entry netgroup `%s'\n",
+					warnx("Duplicate entry netgroup `%s'",
 					      head->n_name);
 					break;
 
@@ -500,7 +500,7 @@ ng_print(e, str)
 			break;
 
 		default:
-			errx(1, "Internal error: Bad netgroup type\n");
+			errx(1, "Internal error: Bad netgroup type");
 			break;
 		}
 		str_append(str, ptr, ' ');

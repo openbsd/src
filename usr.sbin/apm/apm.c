@@ -1,3 +1,5 @@
+/*	$OpenBSD: apm.c,v 1.2 1997/09/12 04:07:14 millert Exp $	*/
+
 /*
  *  Copyright (c) 1996 John T. Kohl
  *  All rights reserved.
@@ -87,7 +89,7 @@ send_command(int fd,
 
     if (send(fd, cmd, sizeof(*cmd), 0) == sizeof(*cmd)) {
 	if (recv(fd, reply, sizeof(*reply), 0) != sizeof(*reply)) {
-	    warn("invalid reply from APM daemon\n");
+	    warn("invalid reply from APM daemon");
 	    return 1;
 	}
     } else {
@@ -277,7 +279,7 @@ main(int argc, char *argv[])
 	    break;
 	}
     } else
-	errx(rval, "cannot get reply from APM daemon\n");
+	errx(rval, "cannot get reply from APM daemon");
 
     exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.12 1997/08/10 04:55:18 millert Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.13 1997/09/12 04:07:19 millert Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.12 1997/08/10 04:55:18 millert Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.13 1997/09/12 04:07:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -918,7 +918,7 @@ getfiles(abuf, alen)
 	 * Add emulation of KINFO_FILE here.
 	 */
 	if (memf != NULL)
-		errx(1, "files on dead kernel, not implemented\n");
+		errx(1, "files on dead kernel, not implemented");
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_FILE;
