@@ -1,4 +1,4 @@
-/*	$OpenBSD: complete.c,v 1.11 2001/06/26 23:44:00 lebel Exp $	*/
+/*	$OpenBSD: complete.c,v 1.12 2001/08/03 22:43:16 millert Exp $	*/
 /*	$NetBSD: complete.c,v 1.10 1997/08/18 10:20:18 lukem Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
 
 #ifndef SMALL
 #ifndef lint
-static char rcsid[] = "$OpenBSD: complete.c,v 1.11 2001/06/26 23:44:00 lebel Exp $";
+static char rcsid[] = "$OpenBSD: complete.c,v 1.12 2001/08/03 22:43:16 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -328,8 +328,9 @@ complete(el, ch)
 	if (lastc_argc == cursor_argc && lastc_argo == cursor_argo
 	    && strncmp(word, margv[cursor_argc], cursor_argo) == 0)
 		dolist = 1;
-	else
-	    (void)strlcpy(word, margv[cursor_argc], cursor_argo+1);
+	else if (cursor_argo)
+		memcpy(word, margv[cursor_argc], cursor_argo);
+	word[cursor_argo] = '\0';
 
 	if (cursor_argc == 0)
 		return (complete_command(word, dolist));
