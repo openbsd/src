@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.6 1999/12/05 05:17:38 art Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.7 1999/12/05 06:12:38 art Exp $  */
 
 
 /*
@@ -318,7 +318,9 @@ sync_fsync(v)
 		if (asyncflag)
 			mp->mnt_flag |= MNT_ASYNC;
 		vfs_unbusy(mp, ap->a_p);
-	}
+	} else
+		simple_unlock(&mountlist_slock);
+
 	return (0);
 }
 
