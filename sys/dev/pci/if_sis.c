@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.33 2003/07/09 02:09:08 krw Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.34 2003/10/30 22:10:25 deraadt Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1032,14 +1032,14 @@ void sis_attach(parent, self, aux)
 		 * to at the moment.
 		 */
 		if (sc->sis_rev == SIS_REV_630S ||
-		    sc->sis_rev == SIS_REV_630E ||
-		    sc->sis_rev == SIS_REV_630EA1)
+		    sc->sis_rev == SIS_REV_630E)
 			sis_read_cmos(sc, pa, (caddr_t)&sc->arpcom.ac_enaddr,
 			    0x9, 6);
 		else
 #endif
 		if (sc->sis_rev == SIS_REV_635 ||
-		    sc->sis_rev == SIS_REV_630ET) 	
+		    sc->sis_rev == SIS_REV_630ET ||
+		    sc->sis_rev == SIS_REV_630EA1)
 			sis_read_mac(sc, pa);
 		else
 			sis_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
