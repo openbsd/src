@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.6 2001/06/22 14:11:00 deraadt Exp $	*/
+/*	$OpenBSD: endian.h,v 1.7 2001/06/27 01:23:50 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -69,6 +69,19 @@
 	    (__swap32gen_x & 0xff000000) >> 24);			\
 })
 
+#define __swap64gen(x) __extension__({					\
+	u_int64_t __swap64gen_x = (x);					\
+									\
+	(u_int64_t)((__swap64gen_x & 0xff) << 56 |			\
+	    (__swap64gen_x & 0xff00) << 40 |				\
+	    (__swap64gen_x & 0xff0000) << 24 |				\
+	    (__swap64gen_x & 0xff000000) << 8 |				\
+	    (__swap64gen_x & 0xff00000000) >> 8 |			\
+	    (__swap64gen_x & 0xff0000000000) >> 24 |			\
+	    (__swap64gen_x & 0xff000000000000) >> 40 |			\
+	    (__swap64gen_x & 0xff00000000000000) >> 56);		\
+})
+
 #else /* __GNUC__ */
 
 /* Note that these macros evaluate their arguments several times.  */
@@ -79,6 +92,16 @@
     (u_int32_t)(((u_int32_t)(x) & 0xff) << 24 |				\
     ((u_int32_t)(x) & 0xff00) << 8 | ((u_int32_t)(x) & 0xff0000) >> 8 |	\
     ((u_int32_t)(x) & 0xff000000) >> 24)
+
+#define __swap64gen(x)							\
+	(u_int64_t)(((u_int64_t)(x) & 0xff) << 56) |			\
+	    ((u_int64_t)(x) & 0xff00) << 40 |				\
+	    ((u_int64_t)(x) & 0xff0000) << 24 |				\
+	    ((u_int64_t)(x) & 0xff000000) << 8 |			\
+	    ((u_int64_t)(x) & 0xff00000000) >> 8 |			\
+	    ((u_int64_t)(x) & 0xff0000000000) >> 24 |			\
+	    ((u_int64_t)(x) & 0xff000000000000) >> 40 |			\
+	    ((u_int64_t)(x) & 0xff00000000000000) >> 56)
 
 #endif /* __GNUC__ */
 
@@ -105,11 +128,19 @@
 	    __swap32md(__swap32_x);					\
 })
 
+#define swap64(x) __extension__({					\
+	u_int64_t __swap64_x = (x);					\
+									\
+	__builtin_constant_p(x) ? __swap64gen(__swap64_x) :		\
+	    __swap64md(__swap64_x);					\
+})
+
 #endif /* __GNUC__  */
 
 #else /* MD_SWAP */
 #define swap16 __swap16gen
 #define swap32 __swap32gen
+#define swap64 __swap64gen
 #endif /* MD_SWAP */
 
 #define swap16_multi(v, n) do {						\
@@ -147,13 +178,17 @@ __END_DECLS
 
 #define htobe16 swap16
 #define htobe32 swap32
+#define htobe64 swap64
 #define betoh16 swap16
 #define betoh32 swap32
+#define betoh64 swap64
 
 #define htole16(x) (x)
 #define htole32(x) (x)
+#define htole64(x) (x)
 #define letoh16(x) (x)
 #define letoh32(x) (x)
+#define letoh64(x) (x)
 
 #endif /* BYTE_ORDER */
 
@@ -169,13 +204,17 @@ __END_DECLS
 
 #define htole16 swap16
 #define htole32 swap32
+#define htole64 swap64
 #define letoh16 swap16
 #define letoh32 swap32
+#define letoh64 swap64
 
 #define htobe16(x) (x)
 #define htobe32(x) (x)
+#define htobe64(x) (x)
 #define betoh16(x) (x)
 #define betoh32(x) (x)
+#define betoh64(x) (x)
 
 #endif /* BYTE_ORDER */
 
