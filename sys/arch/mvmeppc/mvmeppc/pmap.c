@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.6 2001/07/25 13:25:32 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.7 2001/08/06 21:00:14 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -1510,7 +1510,6 @@ ptebits(pa, bit)
 	if (bits == bit)
 		return bits;
 
-	pv = pv_table;
 	if (pv->pv_idx < 0)
 		return 0;
 	
