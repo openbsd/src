@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.4 1999/08/08 21:46:15 niklas Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.5 1999/08/16 02:23:55 fgsch Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -141,6 +141,7 @@
 
 #define ETHER_ADDR_LEN		6
 
+#ifdef SMC_DEBUG
 const char *smc91cxx_idstrs[] = {
 	NULL,				/* 0 */
 	NULL,				/* 1 */
@@ -159,6 +160,7 @@ const char *smc91cxx_idstrs[] = {
 	NULL,				/* 14 */
 	NULL,				/* 15 */
 };
+#endif
 
 /* Supported media types. */
 const int smc91cxx_media[] = {
@@ -217,8 +219,10 @@ smc91cxx_attach(sc, myea)
 #endif
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
-	const char *idstr;
 	u_int16_t tmp;
+#ifdef SMC_DEBUG
+	const char *idstr;
+#endif
 #ifdef __NetBSD__
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 #endif
@@ -227,6 +231,7 @@ smc91cxx_attach(sc, myea)
 	/* Make sure the chip is stopped. */
 	smc91cxx_stop(sc);
 
+#ifdef SMC_DEBUG
 	SMC_SELECT_BANK(sc, 3);
 	tmp = bus_space_read_2(bst, bsh, REVISION_REG_W);
 	idstr = smc91cxx_idstrs[RR_ID(tmp)];
@@ -236,6 +241,7 @@ smc91cxx_attach(sc, myea)
 	else
 		printf("unknown chip id %d, ", RR_ID(tmp));
 	printf("revision %d\n", RR_REV(tmp));
+#endif
 
 	/* Read the station address from the chip. */
 	SMC_SELECT_BANK(sc, 1);
@@ -260,7 +266,7 @@ smc91cxx_attach(sc, myea)
 		bcopy(myea, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	}
 #endif
-	printf("%s: MAC address %s, ", sc->sc_dev.dv_xname,
+	printf(": address %s, ",
 #ifdef __NetBSD__
 	    ether_sprintf(myea));
 #else
@@ -269,8 +275,8 @@ smc91cxx_attach(sc, myea)
 
 	/* ..and default media. */
 	tmp = bus_space_read_2(bst, bsh, CONFIG_REG_W);
-	printf("default media %s\n", (aui = (tmp & CR_AUI_SELECT)) ?
-	    "AUI" : "UTP");
+	printf("utp/aui (default %s)\n", (aui = (tmp & CR_AUI_SELECT)) ?
+	    "aui" : "utp");
 
 	/* Initialize the ifnet structure. */
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
