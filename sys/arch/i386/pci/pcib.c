@@ -121,7 +121,7 @@ pcib_callback(self)
 	iba.iba_busname = "isa";
 	iba.iba_iot = I386_BUS_SPACE_IO;
 	iba.iba_memt = I386_BUS_SPACE_MEM;
-#if NISA > 0
+#if NISADMA > 0
 	iba.iba_dmat = &isa_bus_dma_tag;
 #endif
 	config_found(self, &iba, pcib_print);
