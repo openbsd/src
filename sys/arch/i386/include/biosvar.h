@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.3 1997/07/28 23:04:58 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.4 1997/08/02 22:25:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -35,15 +35,17 @@
 #ifndef __BIOS_VAR_H__
 #define __BIOS_VAR_H__
 
-#define BIOS_INTR 0x50
-
-#define BIOS_CHECK  0x00
-#define BIOS_BOOT   0x01
-#define BIOS_GETENV 0x02
-#define BIOS_SETENV 0x03
-#define BIOS_GETC 0x10
-#define BIOS_PUTC 0x11
-#define BIOS_POLL 0x12
+#define BOOTC_CHECK  0x00
+#define BOOTC_BOOT   0x01
+#define BOOTC_GETENV 0x02
+#define BOOTC_SETENV 0x03
+#define  BOOTV_BOOTDEV 1
+#define  BOOTV_BDGEOM  2
+#define  BOOTV_CONSDEV 3
+#define  BOOTV_APMCONN 4
+#define BOOTC_GETC 0x10
+#define BOOTC_PUTC 0x11
+#define BOOTC_POLL 0x12
 
 #define	BIOSNHEADS(d)	(((d)>>8)+1)
 #define	BIOSNSECTS(d)	((d)&0xff)	/* sectors are 1-based */
@@ -212,8 +214,12 @@ extern struct BIOS_regs {
 int kentry __P((u_int, void *));
 
 #ifdef _KERNEL
+#include <machine/bus.h>
+
 struct bios_attach_args {
 	char *bios_busname;
+	bus_space_tag_t bios_iot;
+	bus_space_tag_t bios_memt;
 };
 
 struct consdev;
