@@ -1,4 +1,4 @@
-/*	$OpenBSD: scanio.h,v 1.3 1996/04/18 21:41:08 niklas Exp $	*/
+/*	$OpenBSD: scanio.h,v 1.4 1996/12/11 16:34:13 kstailey Exp $	*/
 /*	$NetBSD: scanio.h,v 1.1 1996/02/18 20:33:18 mycroft Exp $	*/
 
 /*
@@ -38,8 +38,6 @@
 #define _SYS_SCANIO_H
 
 /*
- * XXX scancap make this sort of obsolete:
- *
  * Some comments about the values in the scan_io struct:
  *
  * All user-changeable values have minimum and maximum values for
@@ -56,12 +54,8 @@
  */
 
 struct scan_io {
-	u_long	scan_width;		 /* width in 1/1200ths of an inch */
-	u_long	scan_height;		 /* height in 1/1200ths of an inch */
-#ifdef SCAN_BC
-# define scan_window_width scan_width
-# define scan_window_length scan_height
-#endif
+	u_long	scan_width;		/* width in 1/1200ths of an inch */
+	u_long	scan_height;		/* height in 1/1200ths of an inch */
 	u_short	scan_x_resolution;	/* horizontal resolution in dots-per-inch */
 	u_short	scan_y_resolution;	/* vertical resolution in dots-per-inch */
 	u_long	scan_x_origin;		/* horizontal coordinate of upper left corner */
@@ -70,9 +64,6 @@ struct scan_io {
 	u_char	scan_brightness;	/* brightness control for those to can do it */
 	u_char	scan_contrast;		/* contrast control for those to can do it */
 	u_char	scan_quality;		/* speed of scan for instance */
-#ifdef SCAN_BC
-# define scan_velocity scan_quality
-#endif
 	u_long	scan_window_size;	/* size of window in bytes (ro) */
 	u_long	scan_lines;		/* number of pixels per column (ro) */
 	u_long	scan_pixels_per_line;	/* number of pixels per line (ro) */
@@ -89,13 +80,6 @@ struct scan_io {
 #define SCIOCRESTART	_IO('S', 3) /* restart scan */
 #define SCIOC_USE_ADF	_IO('S', 4) /* use ADF as paper source for next scan */
 				    /* even after close() */
-#ifdef SCAN_BC
-# define SCAN_GET	SCIOCGET
-# define SCAN_SET	SCIOCSET
-# define SCAN_REWIND	SCIOCRESTART
-# define SCAN_USE_ADF	SCIOC_USE_ADF
-#endif
-
 /*
  * defines for scan_image_mode field
  */
@@ -114,9 +98,6 @@ struct scan_io {
 
 #define RICOH_IS410	1	/* Ricoh IS-410 */
 #define FUJITSU_M3096G	2	/* Fujitsu M3096G */
-#ifdef SCAN_BC
-# define FUJITSU	2	/* Fujitsu M3096G (deprecated) */
-#endif
 #define HP_SCANJET_IIC	3	/* HP ScanJet IIc */
 #define RICOH_FS1	4	/* Ricoh FS1 */
 #define SHARP_JX600	5	/* Sharp JX600 */
