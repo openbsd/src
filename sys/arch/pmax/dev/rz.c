@@ -881,8 +881,9 @@ rzopen(dev, flags, mode, p)
 		rzgetinfo(dev);
 
 	lp = sc->sc_label;
-	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0)
-	{
+	if (lp->d_npartitions < RAW_PART)
+		lp->d_npartitions = RAW_PART;
+	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0) {
 		printf("rzopen: ENXIO on rz%d%c unit %d part %d\n",
 			unit, "abcdefg"[part],  unit, part);
 		printf("# partions %d, size of %d = %d\n",
