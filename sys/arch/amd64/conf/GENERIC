@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.45 2004/12/26 01:10:57 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.46 2004/12/29 14:44:09 deraadt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -243,7 +243,7 @@ uk*	at scsibus?			# unknown SCSI
 # IDE controllers
 pciide* at pci? flags 0x0000
 
-#wdc*	at pcmcia? function ?
+#wdc*	at pcmcia?
 
 # IDE hard drives
 #wd*	at wdc? flags 0x0000
@@ -377,7 +377,7 @@ audio*	at uaudio?
 audio*	at yds?
 audio*	at emu?
 
-#bktr0	at pci? dev ? function ?
+#bktr0	at pci?
 
 # FM-Radio devices
 #gtp*	at pci?			# Gemtek/Guillemot Radio PCI Radio Card
