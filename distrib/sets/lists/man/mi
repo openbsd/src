@@ -1239,10 +1239,12 @@
 ./usr/share/man/cat5/wtmp.0
 ./usr/share/man/cat5/ypserv.acl.0
 ./usr/share/man/cat6/bs.0
+./usr/share/man/cat6/cfscores.0
 ./usr/share/man/cat6/grdc.0
 ./usr/share/man/cat6/hunt.0
 ./usr/share/man/cat6/huntd.0
 ./usr/share/man/cat6/intro.0
+./usr/share/man/cat6/snscore.0
 ./usr/share/man/cat7/ascii.0
 ./usr/share/man/cat7/environ.0
 ./usr/share/man/cat7/groff_char.0
@@ -1274,7 +1276,6 @@
 ./usr/share/man/cat8/UKC.0
 ./usr/share/man/cat8/ab.0
 ./usr/share/man/cat8/ac.0
-./usr/share/man/cat8/rc.conf.local.0
 ./usr/share/man/cat8/accton.0
 ./usr/share/man/cat8/afsd.0
 ./usr/share/man/cat8/amd.0
@@ -1474,6 +1475,7 @@
 ./usr/share/man/cat8/rbootd.0
 ./usr/share/man/cat8/rc.0
 ./usr/share/man/cat8/rc.conf.0
+./usr/share/man/cat8/rc.conf.local.0
 ./usr/share/man/cat8/rc.local.0
 ./usr/share/man/cat8/rc.securelevel.0
 ./usr/share/man/cat8/rc.shutdown.0
@@ -1598,6 +1600,11 @@
 ./usr/share/man/cat8/ypxfr_2perday.0
 ./usr/share/man/cat8/zdump.0
 ./usr/share/man/cat8/zic.0
+./usr/share/man/cat9/extent_print.0
+./usr/share/man/cat9/profhz.0
+./usr/share/man/cat9/stathz.0
+./usr/share/man/cat9/tick.0
+./usr/share/man/cat9/tickadj.0
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/man/man4/powerpc

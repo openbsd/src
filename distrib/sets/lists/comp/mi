@@ -1714,6 +1714,7 @@
 ./usr/share/man/cat3/BUF_MEM_grow.0
 ./usr/share/man/cat3/BUF_MEM_new.0
 ./usr/share/man/cat3/BUF_strdup.0
+./usr/share/man/cat3/CIRCLEQ_EMPTY.0
 ./usr/share/man/cat3/CIRCLEQ_END.0
 ./usr/share/man/cat3/CIRCLEQ_ENTRY.0
 ./usr/share/man/cat3/CIRCLEQ_FIRST.0
@@ -1993,9 +1994,11 @@
 ./usr/share/man/cat3/SHA1_Final.0
 ./usr/share/man/cat3/SHA1_Init.0
 ./usr/share/man/cat3/SHA1_Update.0
+./usr/share/man/cat3/SIMPLEQ_EMPTY.0
 ./usr/share/man/cat3/SIMPLEQ_END.0
 ./usr/share/man/cat3/SIMPLEQ_ENTRY.0
 ./usr/share/man/cat3/SIMPLEQ_FIRST.0
+./usr/share/man/cat3/SIMPLEQ_FOREACH.0
 ./usr/share/man/cat3/SIMPLEQ_HEAD.0
 ./usr/share/man/cat3/SIMPLEQ_HEAD_INITIALIZER.0
 ./usr/share/man/cat3/SIMPLEQ_INIT.0
@@ -2019,6 +2022,7 @@
 ./usr/share/man/cat3/SSL_get_error.0
 ./usr/share/man/cat3/SSL_load_error_strings.0
 ./usr/share/man/cat3/SSLeay.0
+./usr/share/man/cat3/TAILQ_EMPTY.0
 ./usr/share/man/cat3/TAILQ_END.0
 ./usr/share/man/cat3/TAILQ_ENTRY.0
 ./usr/share/man/cat3/TAILQ_FIRST.0
