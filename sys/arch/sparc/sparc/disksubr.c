@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.28 2003/06/02 18:47:58 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.29 2003/07/16 18:06:34 tedu Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -472,7 +472,7 @@ disklabel_sun_to_bsd(cp, lp)
 				 * The sun label does not store the FFS fields,
 				 * so just set them with default values here.
 				 */
-				npp->p_fsize = 1024;
+				npp->p_fsize = 2048;
 				npp->p_frag = 8;
 				npp->p_cpg = 16;
 			}
@@ -505,7 +505,7 @@ disklabel_sun_to_bsd(cp, lp)
 			}
 			npp->p_fstype = sun_fstypes[i+8];
 			if (npp->p_fstype == FS_BSDFFS) {
-				npp->p_fsize = 1024;
+				npp->p_fsize = 2048;
 				npp->p_frag = 8;
 				npp->p_cpg = 16;
 			}
