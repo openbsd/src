@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.15 2002/02/16 21:27:30 millert Exp $	*/
+/*	$OpenBSD: subr.c,v 1.16 2002/05/27 06:36:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: subr.c,v 1.15 2002/02/16 21:27:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: subr.c,v 1.16 2002/05/27 06:36:40 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -497,7 +497,7 @@ long flags;
 
 #ifdef XXX_DELAY
 struct delayval {
-	unsigned	delay;		/* delay in ms */
+	unsigned int	delay;		/* delay in ms */
 	int		bits;
 };
 

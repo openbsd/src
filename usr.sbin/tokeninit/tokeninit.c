@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokeninit.c,v 1.4 2002/03/14 06:51:42 mpech Exp $	*/
+/*	$OpenBSD: tokeninit.c,v 1.5 2002/05/27 06:33:51 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -55,7 +55,7 @@ static	int	parse_secret(int, char *, unsigned char *);
 int
 main(int argc, char **argv)
 {
-	unsigned cmd = TOKEN_INITUSER;
+	unsigned int cmd = TOKEN_INITUSER;
 	int	c;
 	int	errors = 0;
 	int	verbose = 0;
@@ -181,7 +181,7 @@ static	int
 parse_secret(int hexformat, char *seed, unsigned char *secret)
 {
 	int i;
-	unsigned tmp[8];
+	unsigned int tmp[8];
 
 	if (hexformat) {
 		if ((i = sscanf(seed, "%02x %02x %02x %02x %02x %02x %02x %02x",
