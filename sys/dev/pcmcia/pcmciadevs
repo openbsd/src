@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.92 2002/06/20 17:10:21 millert Exp $
+	$OpenBSD: pcmciadevs,v 1.93 2002/06/21 08:31:10 henning Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -37,6 +37,7 @@
  */
 
 vendor FUJITSU			0x0004	Fujitsu
+vendor NETGEAR2			0x000b	Netgear
 vendor PANASONIC		0x0032	Matsushita Electric Industrial Co.
 vendor SANDISK			0x0045	Sandisk
 vendor NEWMEDIA			0x0057	NewMedia
@@ -261,6 +262,7 @@ product NEWMEDIA2 BUSTOASTER	0x0001 NewMedia BusToaster
 /* Netgear */
 product NETGEAR FA410TXC	0x4530 Netgear FA410TXC
 product NETGEAR FA411		0x0411 Netgear FA411
+product NETGEAR2 MA401RA	0x7300 Netgear MA401RA
 
 /* Nokia */
 product NOKIA C110_WLAN		0x1110 Nokia C110/C111

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.93 2002/06/20 17:10:39 millert Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.94 2002/06/21 08:31:10 henning Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -44,6 +44,7 @@
  */
 
 #define	PCMCIA_VENDOR_FUJITSU	0x0004	/* Fujitsu */
+#define	PCMCIA_VENDOR_NETGEAR2	0x000b	/* Netgear */
 #define	PCMCIA_VENDOR_PANASONIC	0x0032	/* Matsushita Electric Industrial Co. */
 #define	PCMCIA_VENDOR_SANDISK	0x0045	/* Sandisk */
 #define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* NewMedia */
@@ -356,6 +357,8 @@
 #define	PCMCIA_PRODUCT_NETGEAR_FA410TXC	0x4530
 #define	PCMCIA_CIS_NETGEAR_FA411	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_NETGEAR_FA411	0x0411
+#define	PCMCIA_CIS_NETGEAR2_MA401RA	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NETGEAR2_MA401RA	0x7300
 
 /* Nokia */
 #define	PCMCIA_CIS_NOKIA_C110_WLAN	{ NULL, NULL, NULL, NULL }

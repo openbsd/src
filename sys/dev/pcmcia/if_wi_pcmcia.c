@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.33 2002/06/20 17:10:56 millert Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.34 2002/06/21 08:31:09 henning Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -269,6 +269,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_NOKIA_C110_WLAN,
 	  PCMCIA_CIS_NOKIA_C110_WLAN,
 	  "NOKIA C110 Wireless LAN PC CARD",
+	},
+	{ PCMCIA_VENDOR_NETGEAR2,
+	  PCMCIA_PRODUCT_NETGEAR2_MA401RA,
+	  PCMCIA_CIS_NETGEAR2_MA401RA,
+	  "Netgear MA401RA Wireless LAN PC CARD",
 	},
 	{ 0,
 	  0,
