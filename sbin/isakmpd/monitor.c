@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.25 2004/06/24 17:02:48 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.26 2004/06/25 00:58:39 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -50,6 +50,7 @@
 #include "log.h"
 #include "monitor.h"
 #include "policy.h"
+#include "ui.h"
 #include "util.h"
 
 struct monitor_state {
@@ -62,8 +63,6 @@ volatile sig_atomic_t sigchlded = 0;
 extern volatile sig_atomic_t sigtermed;
 static volatile sig_atomic_t cur_state = STATE_INIT;
 
-extern char    *ui_fifo;
-
 /* Private functions.  */
 int             m_write_int32(int, int32_t);
 int             m_write_raw(int, char *, size_t);
@@ -75,12 +74,13 @@ static void     m_priv_getfd(int);
 static void     m_priv_getsocket(int);
 static void     m_priv_setsockopt(int);
 static void     m_priv_bind(int);
-static void     m_priv_mkfifo(int);
 static int      m_priv_local_sanitize_path(char *, size_t, int);
 static int      m_priv_check_sockopt(int, int);
 static int      m_priv_check_bind(const struct sockaddr *, socklen_t);
 static void     m_priv_increase_state(int);
 static void     m_priv_test_state(int);
+
+static void	m_priv_ui_init(int);
 
 /*
  * Public functions, unprivileged.
@@ -141,6 +141,44 @@ monitor_init(int debug)
 	}
 
 	return m_state.pid;
+}
+
+void
+monitor_exit(int code)
+{
+	if (m_state.pid != 0)
+		kill(m_state.pid, SIGKILL);
+
+	exit(code);
+}
+
+void
+monitor_ui_init(void)
+{
+	int32_t	err;
+
+	if (m_write_int32(m_state.s, MONITOR_UI_INIT))
+		goto errout;
+
+	if (m_read_int32(m_state.s, &err))
+		goto errout;
+
+	if (err != 0) {
+		log_fatal("monitor_ui_init: parent could not create FIFO "
+		    "\"%s\"", ui_fifo);
+		exit(1);
+	}
+
+	ui_socket = mm_receive_fd(m_state.s);
+	if (ui_socket < 0)
+		log_fatal("monitor_ui_init: parent could not create FIFO "
+		    "\"%s\"", ui_fifo);
+
+	return;
+
+errout:
+	log_error("monitor_ui_init: problem talking to privileged process");
+	return;
 }
 
 int
@@ -361,48 +399,6 @@ errout:
 	return -1;
 }
 
-int
-monitor_mkfifo(const char *path, mode_t mode)
-{
-	int32_t	ret, err;
-	char	realpath[MAXPATHLEN];
-
-	/* Only the child process is supposed to run this.  */
-	if (m_state.pid)
-		log_fatal("[priv] bad call to monitor_mkfifo");
-
-	if (path[0] == '/')
-		strlcpy(realpath, path, sizeof realpath);
-	else
-		snprintf(realpath, sizeof realpath, "%s/%s", m_state.root,
-		    path);
-
-	if (m_write_int32(m_state.s, MONITOR_MKFIFO))
-		goto errout;
-
-	if (m_write_raw(m_state.s, realpath, strlen(realpath) + 1))
-		goto errout;
-
-	ret = (int32_t)mode;
-	if (m_write_int32(m_state.s, ret))
-		goto errout;
-
-	if (m_read_int32(m_state.s, &err))
-		goto errout;
-
-	if (err != 0)
-		errno = (int)err;
-
-	if (m_read_int32(m_state.s, &ret))
-		goto errout;
-
-	return (int)ret;
-
-errout:
-	log_print("monitor_mkfifo: read/write error");
-	return -1;
-}
-
 struct monitor_dirents *
 monitor_opendir(const char *path)
 {
@@ -600,6 +596,14 @@ monitor_loop(int debug)
 						m_priv_getfd(m_state.s);
 						break;
 
+					case MONITOR_UI_INIT:
+						LOG_DBG((LOG_MISC, 80,
+						    "%s: MONITOR_UI_INIT",
+						    __func__));
+						m_priv_test_state(STATE_INIT);
+						m_priv_ui_init(m_state.s);
+						break;
+
 					case MONITOR_GET_SOCKET:
 						LOG_DBG((LOG_MISC, 80,
 						    "%s: MONITOR_GET_SOCKET",
@@ -622,14 +626,6 @@ monitor_loop(int debug)
 						    __func__));
 						m_priv_test_state(STATE_INIT);
 						m_priv_bind(m_state.s);
-						break;
-
-					case MONITOR_MKFIFO:
-						LOG_DBG((LOG_MISC, 80,
-						    "%s: MONITOR_MKFIFO",
-						    __func__));
-						m_priv_test_state(STATE_INIT);
-						m_priv_mkfifo(m_state.s);
 						break;
 
 					case MONITOR_INIT_DONE:
@@ -659,6 +655,38 @@ monitor_loop(int debug)
 
 	free(fds);
 	exit(0);
+}
+
+
+/* Privileged: called by monitor_loop.  */
+static void
+m_priv_ui_init(int s)
+{
+	int32_t err;
+
+	ui_init();
+
+	if (ui_socket >= 0)
+		err = 0;
+	else
+		err = -1;
+
+	if (m_write_int32(s, err))
+		goto errout;
+
+	if (ui_socket >= 0 && mm_send_fd(s, ui_socket)) {
+		close(ui_socket);
+		goto errout;
+	}
+
+	/* In case of stdin, we do not close the socket. */
+	if (ui_socket > 0)
+		close(ui_socket);
+	return;
+
+errout:
+	log_error("m_priv_ui_init: read/write operation failed");
+	return;
 }
 
 /* Privileged: called by monitor_loop.  */
@@ -868,54 +896,6 @@ errout:
 		free(name);
 	if (sock >= 0)
 		close(sock);
-	return;
-}
-
-/* Privileged: called by monitor_loop.  */
-static void
-m_priv_mkfifo(int s)
-{
-	char	path[MAXPATHLEN];
-	mode_t	mode;
-	int32_t	v, err;
-
-	if (m_read_raw(s, path, MAXPATHLEN))
-		goto errout;
-
-	if (m_read_int32(s, &v))
-		goto errout;
-	mode = (mode_t) v;
-
-	/*
-	 * ui_fifo is set before creation of the unpriv'ed child.  So path
-	 * should exactly match ui_fifo.  It's also restricted to /var/run.
-	 */
-	if (m_priv_local_sanitize_path(path, sizeof path, O_RDWR) != 0
-	    || strncmp(ui_fifo, path, strlen(ui_fifo))) {
-		err = EACCES;
-		v = -1;
-	} else {
-		unlink(path);	/* XXX See ui.c:ui_init() */
-
-		err = 0;
-		v = (int32_t)mkfifo(path, mode);
-		if (v) {
-			log_error("m_priv_mkfifo: mkfifo(\"%s\", %o) failed",
-			    path, mode);
-			err = (int32_t)errno;
-		}
-	}
-
-	if (m_write_int32(s, err))
-		goto errout;
-
-	if (m_write_int32(s, v))
-		goto errout;
-
-	return;
-
-errout:
-	log_print("m_priv_mkfifo: read/write error");
 	return;
 }
 

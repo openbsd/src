@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.47 2004/06/21 16:37:30 ho Exp $	 */
+/* $OpenBSD: log.c,v 1.48 2004/06/25 00:58:39 hshoexer Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -382,7 +382,11 @@ log_fatal(const char *fmt, ...)
 	va_start(ap, fmt);
 	_log_print(1, LOG_CRIT, fmt, ap, LOG_PRINT, 0);
 	va_end(ap);
+#ifdef USE_PRIVSEP
+	monitor_exit(1);
+#else
 	exit(1);
+#endif
 }
 
 #ifdef USE_DEBUG

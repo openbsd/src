@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.h,v 1.9 2004/06/20 15:03:35 ho Exp $	 */
+/* $OpenBSD: monitor.h,v 1.10 2004/06/25 00:58:39 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -39,6 +39,7 @@
 #define ISAKMP_PORT_DEFAULT	500
 
 enum monitor_reqtypes {
+	MONITOR_UI_INIT,
 	MONITOR_GET_FD,
 	MONITOR_GET_SOCKET,
 	MONITOR_SETSOCKOPT,
@@ -77,18 +78,24 @@ struct dirent  *monitor_readdir(struct monitor_dirents *);
 int             monitor_closedir(struct monitor_dirents *);
 void            monitor_init_done(void);
 
+void		monitor_ui_init(void);
+void		monitor_exit(int);
+
 #else				/* !USE_PRIVSEP */
 
-#define monitor_fopen fopen
-#define monitor_open open
-#define monitor_stat stat
-#define monitor_socket socket
+#define monitor_fopen	fopen
+#define monitor_open	open
+#define monitor_stat	stat
+#define monitor_socket	socket
 #define monitor_setsockopt setsockopt
-#define monitor_bind bind
-#define monitor_mkfifo mkfifo
-#define monitor_opendir opendir
-#define monitor_readdir readdir
+#define monitor_bind	bind
+#define monitor_mkfifo	mkfifo
+#define monitor_opendir	opendir
+#define monitor_readdir	readdir
 #define monitor_closedir closedir
+
+#define monitor_ui_init	ui_init
+#define monitor_exit	exit
 
 #endif				/* USE_PRIVSEP */
 #endif				/* _MONITOR_H_ */

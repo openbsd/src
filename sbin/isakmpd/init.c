@@ -1,4 +1,4 @@
-/* $OpenBSD: init.c,v 1.31 2004/06/20 17:17:35 ho Exp $	 */
+/* $OpenBSD: init.c,v 1.32 2004/06/25 00:58:39 hshoexer Exp $	 */
 /* $EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	 */
 
 /*
@@ -47,6 +47,7 @@
 #include "libcrypto.h"
 #include "log.h"
 #include "math_group.h"
+#include "monitor.h"
 #include "sa.h"
 #include "timer.h"
 #include "transport.h"
@@ -102,7 +103,7 @@ init(void)
 	nat_t_init();
 	udp_encap_init();
 #endif
-	ui_init();
+	monitor_ui_init();
 }
 
 /* Reinitialize, either after a SIGHUP reception or by FIFO UI cmd.  */

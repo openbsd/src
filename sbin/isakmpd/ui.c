@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.40 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: ui.c,v 1.41 2004/06/25 00:58:39 hshoexer Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -79,16 +79,9 @@ ui_init(void)
 		ui_socket = 0;
 		return;
 	}
-	/*
-	 * Don't overwrite a file, i.e '-f
-	 * /etc/isakmpd/isakmpd.conf'.
-	 */
-#if defined (USE_PRIVSEP)
-	/* XXX This is a fstat! */
-	if (monitor_stat(ui_fifo, &st) == 0) {
-#else
+
+	/* Don't overwrite a file, i.e '-f /etc/isakmpd/isakmpd.conf'.  */
 	if (lstat(ui_fifo, &st) == 0) {
-#endif
 		if ((st.st_mode & S_IFMT) == S_IFREG) {
 			errno = EEXIST;
 			log_fatal("ui_init: could not create FIFO \"%s\"",
@@ -98,10 +91,10 @@ ui_init(void)
 
 	/* No need to know about errors.  */
 	unlink(ui_fifo);
-	if (monitor_mkfifo(ui_fifo, 0600) == -1)
+	if (mkfifo(ui_fifo, 0600) == -1)
 		log_fatal("ui_init: mkfifo (\"%s\", 0600) failed", ui_fifo);
 
-	ui_socket = monitor_open(ui_fifo, O_RDWR | O_NONBLOCK, 0);
+	ui_socket = open(ui_fifo, O_RDWR | O_NONBLOCK, 0);
 	if (ui_socket == -1)
 		log_fatal("ui_init: open (\"%s\", O_RDWR | O_NONBLOCK, 0) "
 		    "failed", ui_fifo);
