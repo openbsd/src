@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.35 2000/03/26 22:38:33 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.36 2000/08/17 20:15:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -39,6 +39,10 @@
 #define	BOOTARG_LEN	(NBPG*1)
 #define	BOOTBIOS_ADDR	(0x7c00)
 
+	/* BIOS configure flags */
+#define	BIOSF_BIOS32			0x0001
+#define	BIOSF_PCIBIOS			0x0002
+
 /* BIOS media ID */
 #define BIOSM_F320K	0xff	/* floppy ds/sd  8 spt */
 #define	BIOSM_F160K	0xfe	/* floppy ss/sd  8 spt */
@@ -64,6 +68,16 @@
  * BIOS32
  */
 typedef
+struct bios32_header {
+	u_int32_t	signature;	/* 00: signature "_32_" */
+	u_int32_t	entry;		/* 04: entry point */
+	u_int8_t	rev;		/* 08: revision */
+	u_int8_t	length;		/* 09: header length */
+	u_int8_t	cksum;		/* 0a: modulo 256 checksum */
+	u_int8_t	reserved[5];
+} *bios32_header_t;
+
+typedef
 struct bios32_entry_info {
 	paddr_t	bei_base;
 	psize_t	bei_size;
@@ -72,12 +86,18 @@ struct bios32_entry_info {
 
 typedef
 struct bios32_entry {
-	caddr_t	offset;
+	u_int32_t offset;
 	u_int16_t segment;
 } __attribute__((__packed__)) *bios32_entry_t;
 
+#define	BIOS32_START	0xe0000
+#define	BIOS32_SIZE	0x20000
+#define	BIOS32_END	(BIOS32_START + BIOS32_SIZE - 0x10)
+
 #define	BIOS32_MAKESIG(a, b, c, d) \
 	((a) | ((b) << 8) | ((c) << 16) | ((d) << 24))
+#define	BIOS32_SIGNATURE	BIOS32_MAKESIG('_', '3', '2', '_')
+#define	PCIBIOS_SIGNATURE	BIOS32_MAKESIG('$', 'P', 'C', 'I')
 
 /*
  * CTL_BIOS definitions.
@@ -212,7 +232,6 @@ void bioscnpollc __P((dev_t, int));
 void bios_getopt __P((void));
 
 /* bios32.c */
-void bios32_init __P((void));
 int  bios32_service __P((u_int32_t, bios32_entry_t, bios32_entry_info_t));
 
 extern u_int bootapiver;

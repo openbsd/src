@@ -1,6 +1,36 @@
-/*	$OpenBSD: pcibios.c,v 1.6 2000/08/08 19:12:48 mickey Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.7 2000/08/17 20:15:40 mickey Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.4 2000/07/18 11:15:25 soda Exp $	*/
 
+/*
+ * Copyright (c) 2000 Michael Shalayeff
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Michael Shalayeff.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,21 +110,11 @@
 #include <dev/pci/pcidevs.h>
 
 #include <i386/pci/pcibios.h>
-#ifdef PCIBIOS_INTR_FIXUP
 #include <i386/pci/pci_intr_fixup.h>
-#endif
-#ifdef PCIBIOS_BUS_FIXUP
 #include <i386/pci/pci_bus_fixup.h>
-#endif
-#ifdef PCIBIOS_ADDR_FIXUP
 #include <i386/pci/pci_addr_fixup.h>
-#endif
 
-#ifdef __NetBSD__
-#include <machine/bios32.h>
-#elif __OpenBSD__
 #include <machine/biosvar.h>
-#endif
 
 #ifdef PCIBIOSVERBOSE
 int	pcibiosverbose = 1;
@@ -126,45 +146,58 @@ void	pcibios_print_pir_table __P((void));
 #define	PCI_IRQ_TABLE_START	0xf0000
 #define	PCI_IRQ_TABLE_END	0xfffff
 
-void
-pcibios_init()
+struct pcibios_softc {
+	struct  device sc_dev;
+};
+
+struct cfdriver pcibios_cd = {
+	NULL, "pcibios", DV_DULL
+};
+
+int pcibiosprobe __P((struct device *, void *, void *));
+void pcibiosattach __P((struct device *, struct device *, void *));
+
+struct cfattach pcibios_ca = {
+	sizeof(struct pcibios_softc), pcibiosprobe, pcibiosattach
+};
+
+int
+pcibiosprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
 	struct bios32_entry_info ei;
+	u_int32_t rev_maj, rev_min, mech1, mech2, scmech1, scmech2, maxbus;
+
+	return (bios32_service(PCIBIOS_SIGNATURE, &pcibios_entry, &ei) &&
+	    pcibios_get_status(&rev_maj, &rev_min, &mech1, &mech2,
+	        &scmech1, &scmech2, &maxbus) == PCIBIOS_SUCCESS);
+}
+
+void
+pcibiosattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct pcibios_softc *sc = (struct pcibios_softc *)self;
+	struct bios32_entry_info ei;
 	u_int32_t rev_maj, rev_min, mech1, mech2, scmech1, scmech2;
+	int flags = sc->sc_dev.dv_cfdata->cf_flags;
 
-	if (bios32_service(BIOS32_MAKESIG('$', 'P', 'C', 'I'),
-	    &pcibios_entry, &ei) == 0) {
-		/*
-		 * No PCI BIOS found; will fall back on old
-		 * mechanism.
-		 */
-		return;
-	}
+	bios32_service(PCIBIOS_SIGNATURE, &pcibios_entry, &ei);
+	pcibios_get_status(&rev_maj, &rev_min, &mech1, &mech2,
+	    &scmech1, &scmech2, &pcibios_max_bus);
 
-	/*
-	 * We've located the PCI BIOS service; get some information
-	 * about it.
-	 */
-	if (pcibios_get_status(&rev_maj, &rev_min, &mech1, &mech2,
-	    &scmech1, &scmech2, &pcibios_max_bus) != PCIBIOS_SUCCESS) {
-		/*
-		 * We can't use the PCI BIOS; will fall back on old
-		 * mechanism.
-		 */
-		return;
-	}
-
-	printf("PCI BIOS rev. %d.%d found at 0x%lx\n", rev_maj, rev_min >> 4,
+	printf(": rev. %d.%d found at 0x%lx\n", rev_maj, rev_min >> 4,
 	    ei.bei_entry);
 #ifdef PCIBIOSVERBOSE
-	printf("pcibios: config mechanism %s%s, special cycles %s%s, "
-	    "last bus %d\n",
+	printf("%s: config mechanism %s%s, special cycles %s%s, last bus %d\n",
+	    sc->sc_dev.dv_xname,
 	    mech1 ? "[1]" : "[x]",
 	    mech2 ? "[2]" : "[x]",
 	    scmech1 ? "[1]" : "[x]",
 	    scmech2 ? "[2]" : "[x]",
 	    pcibios_max_bus);
-
 #endif
 
 	/*
@@ -180,8 +213,8 @@ pcibios_init()
 	 */
 	pcibios_pir_init();
 
-#ifdef PCIBIOS_INTR_FIXUP
-	if (pcibios_pir_table != NULL) {
+	if (!(flags & PCIBIOS_INTR_FIXUP) &&
+	    pcibios_pir_table != NULL) {
 		int rv;
 		u_int16_t pciirq;
 
@@ -207,18 +240,14 @@ pcibios_init()
 		 * XXX mask.
 		 */
 	}
-#endif
 
-#ifdef PCIBIOS_BUS_FIXUP
-	pcibios_max_bus = pci_bus_fixup(NULL, 0);
-#ifdef PCIBIOSVERBOSE
-	printf("PCI bus #%d is the last bus\n", pcibios_max_bus);
-#endif
-#endif
+	if (!(flags & PCIBIOS_BUS_FIXUP)) {
+		pcibios_max_bus = pci_bus_fixup(NULL, 0);
+		printf("PCI bus #%d is the last bus\n", pcibios_max_bus);
+	}
 
-#ifdef PCIBIOS_ADDR_FIXUP
-	pci_addr_fixup(NULL, pcibios_max_bus);
-#endif
+	if (!(flags & PCIBIOS_ADDR_FIXUP))
+		pci_addr_fixup(NULL, pcibios_max_bus);
 }
 
 void

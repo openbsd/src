@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.201 2000/08/08 19:23:43 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.202 2000/08/17 20:15:32 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -39,6 +39,7 @@ mainbus0 at root
 
 bios0	at mainbus0
 apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
+pcibios0 at bios0 flags 0x0000
 
 isa0	at mainbus0
 isa0	at pcib?
@@ -49,7 +50,7 @@ option		PCIVERBOSE
 option		EISAVERBOSE
 #option		PCMCIAVERBOSE
 #option		USBVERBOSE
-
+#option		PCIBIOSVERBOSE
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
@@ -75,10 +76,6 @@ cardbus*	at cardslot?
 pcmcia*		at cardslot?
 cbb*		at pci? dev ? function ?
 cardslot*	at cbb?
-
-# NOTE: You may need to uncomment the following line for CardBus to work
-option	BIOS32,PCIBIOS
-option	PCIBIOS_INTR_FIXUP,PCIBIOS_BUS_FIXUP,PCIBIOS_ADDR_FIXUP
 
 # PCI USB Controllers
 #uhci*	at pci?				# Universal Host Controller (Intel)

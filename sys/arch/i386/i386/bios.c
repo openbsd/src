@@ -1,7 +1,7 @@
-/*	$OpenBSD: bios.c,v 1.29 2000/07/27 20:38:10 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.30 2000/08/17 20:15:39 mickey Exp $	*/
 
 /*
- * Copyright (c) 1997-1999 Michael Shalayeff
+ * Copyright (c) 1997-2000 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,6 +61,7 @@
 #include <i386/isa/isa_machdep.h>
 
 #include "apm.h"
+#include "pcibios.h"
 #include "pci.h"
 
 struct bios_softc {
@@ -90,6 +91,7 @@ bios_pciinfo_t *bios_pciinfo;
 bios_diskinfo_t *bios_diskinfo;
 bios_memmap_t	*bios_memmap;
 u_int32_t	bios_cksumlen;
+struct bios32_entry bios32_entry;
 
 bios_diskinfo_t *bios_getdiskinfo __P((dev_t));
 
@@ -120,13 +122,16 @@ biosattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	/* struct bios_softc *sc = (void *) self; */
-#if NAPM > 0
+	struct bios_softc *sc = (struct bios_softc *) self;
 	struct bios_attach_args *bia = aux;
-#endif
-	u_int8_t *va = ISA_HOLE_VADDR(0xffff0);
+	u_int8_t *va;
 	char *str;
+	int flags;
 
+	/* remember flags */
+	flags = sc->sc_dev.dv_cfdata->cf_flags;
+
+	va = ISA_HOLE_VADDR(0xffff0);
 	switch (va[14]) {
 	default:
 	case 0xff: str = "PC";		break;
@@ -138,8 +143,37 @@ biosattach(parent, self, aux)
 	case 0xf9: str = "PC Convertible";break;
 	case 0xf8: str = "PS/2 386+";	break;
 	}
-	printf(": %s(%02x) BIOS, date %c%c/%c%c/%c%c\n",
+	printf(": %s(%02x) BIOS, date %c%c/%c%c/%c%c",
 	    str, va[15], va[5], va[6], va[8], va[9], va[11], va[12]);
+
+	/* see if we have BIOS32 extensions */
+	if (!(flags & BIOSF_BIOS32)) {
+		for (va = ISA_HOLE_VADDR(BIOS32_START);
+		     va < (u_int8_t *)ISA_HOLE_VADDR(BIOS32_END); va += 16) {
+			bios32_header_t h = (bios32_header_t)va;
+			u_int8_t cksum;
+			int i;
+
+			if (h->signature != BIOS32_SIGNATURE)
+				continue;
+
+			/* verify checksum */
+			for (cksum = 0, i = h->length * 16; i--; cksum += va[i])
+				;
+			if (cksum != 0)
+				continue;
+		
+			if (h->entry <= BIOS32_START || h->entry >= BIOS32_END)
+				continue;
+
+			bios32_entry.segment = GSEL(GCODE_SEL, SEL_KPL);
+			bios32_entry.offset = (u_int32_t)ISA_HOLE_VADDR(h->entry);
+			printf(", BIOS32 rev. %d @ 0x%lx", h->rev, h->entry);
+			break;
+		}
+	}
+
+	printf("\n");
 
 #if NAPM > 0
 	if (apm) {
@@ -156,6 +190,17 @@ biosattach(parent, self, aux)
 		ba.bios_memt = bia->bios_memt;
 		ba.bios_iot = bia->bios_iot;
 		ba.bios_apmp = apm;
+		config_found(self, &ba, bios_print);
+	}
+#endif
+#if NPCI > 0 && NPCIBIOS > 0
+	if (!(flags & BIOSF_PCIBIOS)) {
+		struct bios_attach_args ba;
+
+		ba.bios_dev = "pcibios";
+		ba.bios_func = 0x1A;
+		ba.bios_memt = bia->bios_memt;
+		ba.bios_iot = bia->bios_iot;
 		config_found(self, &ba, bios_print);
 	}
 #endif
@@ -262,6 +307,40 @@ bios_print(aux, pnp)
 		printf("%s at %s function 0x%x",
 		    ba->bios_dev, pnp, ba->bios_func);
 	return (UNCONF);
+}
+
+int
+bios32_service(service, e, ei)
+	u_int32_t service;
+	bios32_entry_t e;
+	bios32_entry_info_t ei;
+{
+	u_int32_t base, count, off, ent;
+
+	if (bios32_entry.offset == 0)
+		return 0;
+
+	base = 0;
+	__asm __volatile("lcall (%4)"
+	    : "+a" (service), "+b" (base), "=c" (count), "=d" (off)
+	    : "D" (&bios32_entry)
+	    : "%esi", "cc", "memory");
+
+	if (service & 0xff)
+		return 0;	/* not found */
+
+	ent = base + off;
+	if (ent <= BIOS32_START || ent >= BIOS32_END)
+		return 0;
+
+	e->offset = (vaddr_t)ISA_HOLE_VADDR(ent);
+	e->segment = GSEL(GCODE_SEL, SEL_KPL);
+
+	ei->bei_base = base;
+	ei->bei_size = count;
+	ei->bei_entry = ent;
+
+	return 1;
 }
 
 int
