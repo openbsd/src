@@ -1,4 +1,4 @@
-/*	$OpenBSD: system.c,v 1.16 2003/10/22 23:05:11 tedu Exp $	*/
+/*	$OpenBSD: system.c,v 1.17 2004/03/20 04:28:51 aaron Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)system.c	4.5 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: system.c,v 1.16 2003/10/22 23:05:11 tedu Exp $";
+static char rcsid[] = "$OpenBSD: system.c,v 1.17 2004/03/20 04:28:51 aaron Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -471,7 +471,7 @@ doconnect()
 	FD_SET(serversock, &fdset);
 	if ((i = select(serversock+1, &fdset,
 		    (fd_set *)0, (fd_set *)0, (struct timeval *)0)) < 0) {
-	    if (errno = EINTR) {
+	    if (errno == EINTR) {
 		continue;
 	    } else {
 		perror("in select waiting for API connection");
