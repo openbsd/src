@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: do_command.c,v 1.4 1998/03/30 06:59:43 deraadt Exp $";
+static char rcsid[] = "$Id: do_command.c,v 1.5 1998/05/08 20:17:18 deraadt Exp $";
 #endif
 
 
@@ -128,13 +128,21 @@ child_process(e, u)
 	 * command, and subsequent characters are the additional input to
 	 * the command.  Subsequent %'s will be transformed into newlines,
 	 * but that happens later.
+	 *
+	 * If there are escaped %'s, remove the escape character.
 	 */
 	/*local*/{
 		register int escaped = FALSE;
 		register int ch;
+		register char *p;
 
-		for (input_data = e->cmd; (ch = *input_data); input_data++) {
+		for (input_data = p = e->cmd; (ch = *input_data);
+		    input_data++, p++) {
+			if (p != input_data)
+				*p = ch;
 			if (escaped) {
+				if (ch == '%' || ch == '\\')
+					*--p = ch;
 				escaped = FALSE;
 				continue;
 			}
@@ -147,6 +155,7 @@ child_process(e, u)
 				break;
 			}
 		}
+		*p = '\0';
 	}
 
 	/* fork again, this time so we can exec the user's command.
