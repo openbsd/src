@@ -60,7 +60,6 @@ typedef struct Enc Enc;
 
 struct Enc {
 	char		*name;
-	int		type;
 	Cipher		*cipher;
 	int		enabled;
 	unsigned char	*key;

@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: packet.c,v 1.37 2000/10/11 20:27:23 markus Exp $");
+RCSID("$OpenBSD: packet.c,v 1.38 2000/10/12 14:21:12 markus Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -582,7 +582,7 @@ packet_send2()
 	if (padlen < 4)
 		padlen += block_size;
 	buffer_append_space(&outgoing_packet, &cp, padlen);
-	if (enc && enc->type != SSH_CIPHER_NONE) {
+	if (enc && enc->cipher->number != SSH_CIPHER_NONE) {
 		/* random padding */
 		for (i = 0; i < padlen; i++) {
 			if (i % 4 == 0)
