@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigpending.S,v 1.2 1999/12/31 03:14:50 mickey Exp $	*/
+/*	$OpenBSD: sigpending.S,v 1.3 1999/12/31 04:28:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -32,6 +32,12 @@
  */
 
 #include "SYS.h"
+
+#ifdef SYSLIBC_SCCS
+	.space .text
+	.subspa $code$
+	.asciz "$OpenBSD: sigpending.S,v 1.3 1999/12/31 04:28:50 mickey Exp $"
+#endif
 
 ENTRY(sigpending)
 	SYSCALL(sigpending)
