@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.63 2001/05/11 15:01:51 ho Exp $
+.\"	$OpenBSD: sysctl.8,v 1.64 2001/05/14 07:13:51 angelos Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -120,15 +120,9 @@ privilege can change the value.
 .It kern.ngroups	integer	no
 .It kern.job_control	integer	no
 .It kern.saved_ids	integer	no
-.It kern.link_max	integer	no
-.It kern.max_canon	integer	no
-.It kern.max_input	integer	no
-.It kern.name_max	integer	no
-.It kern.path_max	integer	no
-.It kern.pipe_buf	integer	no
-.It kern.chown_restricted	integer	no
-.It kern.no_trunc	integer	no
 .It kern.boottime	struct	no
+.It kern.ntptime	struct	no
+.It kern.cp_time	struct	no
 .It kern.nchstats	struct	no
 .It kern.forkstat	struct	no
 .It kern.somaxconn	integer	yes
@@ -141,17 +135,23 @@ privilege can change the value.
 .It kern.sysvsem	integer	no
 .It kern.sysvshm	integer	no
 .It kern.arandom	u_int	no
+.It kern.msgbufsize	integer	no
 .It kern.nselcoll	integer	no
 .It kern.malloc.buckets	string	no
 .It kern.malloc.bucket.<sz>	string	no
 .It kern.malloc.kmemnames	string	no
 .It kern.malloc.kmemstat.<name>	string	no
+.It kern.tty.tk_nin	int64_t	no
+.It kern.tty.tk_nout	int64_t	no
+.It kern.tty.tk_rawcc	int64_t	no
+.It kern.tty.tk_cancc	int64_t	no
 .It vm.loadavg	struct	no
 .It vm.psstrings	struct	no
 .It vm.swapencrypt.enable	integer	yes
 .It vm.swapencrypt.keyscreated	integer	no
 .It vm.swapencrypt.keysdeleted	integer	no
-.It vm.uvmexp		struct	no
+.It vm.uvmexp	struct	no
+.It vm.vmmeter	struct	no
 .It fs.posix.setuid	integer	yes
 .It net.inet.ip.forwarding	integer	yes
 .It net.inet.ip.redirect	integer	yes
@@ -250,6 +250,9 @@ privilege can change the value.
 .It hw.physmem	integer	no
 .It hw.usermem	integer	no
 .It hw.pagesize	integer	no
+.It hw.diskstats	struct	no
+.It hw.disknames	string	no
+.It hw.diskcount	integer	no
 .It machdep.console_device	dev_t	no
 .It machdep.apmwarn	integer	yes (i386 only)
 .It machdep.apmhalt	integer	yes (i386 only)
