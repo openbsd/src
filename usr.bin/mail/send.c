@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.8 1997/07/24 17:27:13 millert Exp $	*/
+/*	$OpenBSD: send.c,v 1.9 1997/11/14 00:23:57 millert Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: send.c,v 1.8 1997/07/24 17:27:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: send.c,v 1.9 1997/11/14 00:23:57 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,17 +60,17 @@ static char rcsid[] = "$OpenBSD: send.c,v 1.8 1997/07/24 17:27:13 millert Exp $"
  */
 int
 send(mp, obuf, doign, prefix)
-	register struct message *mp;
+	struct message *mp;
 	FILE *obuf;
 	struct ignoretab *doign;
 	char *prefix;
 {
 	int count;
-	register FILE *ibuf;
+	FILE *ibuf;
 	char line[LINESIZE];
 	int ishead, infld, ignoring = 0, dostat, firstline;
-	register char *cp, *cp2;
-	register int c = 0;
+	char *cp, *cp2;
+	int c = 0;
 	int length;
 	int prefixlen = 0;
 
@@ -236,12 +236,12 @@ send(mp, obuf, doign, prefix)
  */
 void
 statusput(mp, obuf, prefix)
-	register struct message *mp;
+	struct message *mp;
 	FILE *obuf;
 	char *prefix;
 {
 	char statout[3];
-	register char *cp = statout;
+	char *cp = statout;
 
 	if (mp->m_flag & MREAD)
 		*cp++ = 'R';
@@ -405,7 +405,7 @@ fixhead(hp, tolist)
 	struct header *hp;
 	struct name *tolist;
 {
-	register struct name *np;
+	struct name *np;
 
 	hp->h_to = NIL;
 	hp->h_cc = NIL;
@@ -431,7 +431,7 @@ infix(hp, fi)
 	struct header *hp;
 	FILE *fi;
 {
-	register FILE *nfo, *nfi;
+	FILE *nfo, *nfi;
 	int c, fd;
 	char tempname[PATHSIZE];
 
@@ -484,7 +484,7 @@ puthead(hp, fo, w)
 	FILE *fo;
 	int w;
 {
-	register int gotcha;
+	int gotcha;
 
 	gotcha = 0;
 	if (hp->h_to != NIL && w & GTO)
@@ -506,11 +506,11 @@ puthead(hp, fo, w)
 void
 fmt(str, np, fo, comma)
 	char *str;
-	register struct name *np;
+	struct name *np;
 	FILE *fo;
 	int comma;
 {
-	register col, len;
+	int col, len;
 
 	comma = comma ? 1 : 0;
 	col = strlen(str);
@@ -542,11 +542,11 @@ fmt(str, np, fo, comma)
 int
 savemail(name, fi)
 	char name[];
-	register FILE *fi;
+	FILE *fi;
 {
-	register FILE *fo;
+	FILE *fo;
 	char buf[BUFSIZ];
-	register i;
+	int i;
 	time_t now;
 
 	if ((fo = Fopen(name, "a")) == NULL) {

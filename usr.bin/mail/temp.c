@@ -1,4 +1,4 @@
-/*	$OpenBSD: temp.c,v 1.9 1997/07/24 17:27:13 millert Exp $	*/
+/*	$OpenBSD: temp.c,v 1.10 1997/11/14 00:23:59 millert Exp $	*/
 /*	$NetBSD: temp.c,v 1.5 1996/06/08 19:48:42 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)temp.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: temp.c,v 1.9 1997/07/24 17:27:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: temp.c,v 1.10 1997/11/14 00:23:59 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,12 +56,12 @@ char	*tmpdir;
 void
 tinit()
 {
-	register char *cp;
+	char *cp;
 
 	if ((tmpdir = getenv("TMPDIR")) == NULL || *tmpdir == '\0')
 		tmpdir = _PATH_TMP;
 	if ((tmpdir = strdup(tmpdir)) == NULL)
-		panic("Out of memory");
+		errx(1, "Out of memory");
 
 	/* Strip trailing '/' if necesary */
 	cp = tmpdir + strlen(tmpdir) - 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.6 1997/07/24 17:27:10 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.7 1997/11/14 00:23:45 millert Exp $	*/
 /*	$NetBSD: edit.c,v 1.5 1996/06/08 19:48:20 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.6 1997/07/24 17:27:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.7 1997/11/14 00:23:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,10 +86,9 @@ edit1(msgvec, type)
 	int *msgvec;
 	int type;
 {
-	register int c;
-	int i;
+	int c, i;
 	FILE *fp;
-	register struct message *mp;
+	struct message *mp;
 	off_t size;
 
 	/*
@@ -148,12 +147,12 @@ edit1(msgvec, type)
  */
 FILE *
 run_editor(fp, size, type, readonly)
-	register FILE *fp;
+	FILE *fp;
 	off_t size;
 	int type, readonly;
 {
-	register FILE *nf = NULL;
-	register int t;
+	FILE *nf = NULL;
+	int t;
 	time_t modtime;
 	char *edit, tempname[PATHSIZE];
 	struct stat statb;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.14 1997/07/30 07:19:30 millert Exp $	*/
+/*	$OpenBSD: collect.c,v 1.15 1997/11/14 00:23:45 millert Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.14 1997/07/30 07:19:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.15 1997/11/14 00:23:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,10 +81,8 @@ collect(hp, printheaders)
 	int printheaders;
 {
 	FILE *fbuf;
-	int lc, cc, escape, eofcount, fd;
-	register int c, t;
-	char linebuf[LINESIZE], tempname[PATHSIZE], *cp;
-	char getsub;
+	int lc, cc, escape, eofcount, fd, c, t;
+	char linebuf[LINESIZE], tempname[PATHSIZE], *cp, getsub;
 	sigset_t oset, nset;
 	int longline, lastlong, rc;	/* Can deal with lines > LINESIZE */
 
@@ -440,8 +438,8 @@ exwrite(name, fp, f)
 	FILE *fp;
 	int f;
 {
-	register FILE *of;
-	register int c;
+	FILE *of;
+	int c;
 	ssize_t cc, lc;
 	struct stat junk;
 
@@ -449,7 +447,7 @@ exwrite(name, fp, f)
 		printf("\"%s\" ", name);
 		fflush(stdout);
 	}
-	if (stat(name, &junk) >= 0 && (junk.st_mode & S_IFMT) == S_IFREG) {
+	if (stat(name, &junk) >= 0 && S_ISREG(junk.st_mode)) {
 		if (!f)
 			fprintf(stderr, "%s: ", name);
 		fputs("File exists\n", stderr);
@@ -563,7 +561,7 @@ forward(ms, fp, fn, f)
 	char *fn;
 	int f;
 {
-	register int *msgvec;
+	int *msgvec;
 	struct ignoretab *ig;
 	char *tabst;
 
@@ -668,10 +666,10 @@ collhup(s)
 
 void
 savedeadletter(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register FILE *dbuf;
-	register int c;
+	FILE *dbuf;
+	int c;
 	char *cp;
 
 	if (fsize(fp) == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 1997/07/30 06:32:40 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 1997/11/14 00:23:52 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 1997/07/30 06:32:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 1997/11/14 00:23:52 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,8 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.9 1997/07/30 06:32:40 millert Exp $"
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include "extern.h"
+
+int	main __P((int, char **));
 
 /*
  * Mail -- a mail program
@@ -66,7 +68,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int i;
+	int i;
 	struct name *to, *cc, *bcc, *smopts;
 	char *subject;
 	char *ef;

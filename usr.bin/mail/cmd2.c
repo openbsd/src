@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd2.c,v 1.7 1997/08/31 14:32:13 millert Exp $	*/
+/*	$OpenBSD: cmd2.c,v 1.8 1997/11/14 00:23:43 millert Exp $	*/
 /*	$NetBSD: cmd2.c,v 1.7 1997/05/17 19:55:10 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: cmd2.c,v 1.7 1997/08/31 14:32:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd2.c,v 1.8 1997/11/14 00:23:43 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,10 +62,9 @@ int
 next(v)
 	void *v;
 {
+	struct message *mp;
 	int *msgvec = v;
-	register struct message *mp;
-	register int *ip, *ip2;
-	int list[2], mdot;
+	int *ip, *ip2, list[2], mdot;
 
 	if (*msgvec != NULL) {
 
@@ -170,10 +169,9 @@ save1(str, mark, cmd, ignore)
 	char *cmd;
 	struct ignoretab *ignore;
 {
-	register int *ip;
-	register struct message *mp;
+	struct message *mp;
 	char *file, *disp;
-	int f, *msgvec;
+	int f, *msgvec, *ip;
 	FILE *obuf;
 
 	msgvec = (int *)salloc((msgCount + 2) * sizeof(*msgvec));
@@ -205,7 +203,7 @@ save1(str, mark, cmd, ignore)
 		mp = &message[*ip - 1];
 		touch(mp);
 		if (send(mp, obuf, ignore, NULL) < 0) {
-			perror(file);
+			warn("%s", file);
 			(void)Fclose(obuf);
 			return(1);
 		}
@@ -214,7 +212,7 @@ save1(str, mark, cmd, ignore)
 	}
 	fflush(obuf);
 	if (ferror(obuf))
-		perror(file);
+		warn("%s", file);
 	(void)Fclose(obuf);
 	printf("%s\n", disp);
 	return(0);
@@ -247,7 +245,7 @@ snarf(linebuf, flag)
 	char linebuf[];
 	int *flag;
 {
-	register char *cp;
+	char *cp;
 
 	*flag = 1;
 	cp = strlen(linebuf) + linebuf - 1;
@@ -323,9 +321,8 @@ int
 delm(msgvec)
 	int *msgvec;
 {
-	register struct message *mp;
-	register *ip;
-	int last;
+	struct message *mp;
+	int *ip, last;
 
 	last = NULL;
 	for (ip = msgvec; *ip != NULL; ip++) {
@@ -363,8 +360,8 @@ undeletecmd(v)
 	void *v;
 {
 	int *msgvec = v;
-	register struct message *mp;
-	register *ip;
+	int *ip;
+	struct message *mp;
 
 	for (ip = msgvec; *ip && ip-msgvec < msgCount; ip++) {
 		mp = &message[*ip - 1];
@@ -387,7 +384,7 @@ core(v)
 
 	switch (pid = vfork()) {
 	case -1:
-		perror("fork");
+		warn("vfork");
 		return(1);
 	case 0:
 		abort();
@@ -411,7 +408,7 @@ clobber(v)
 	void *v;
 {
 	char **argv = v;
-	register int times;
+	int times;
 
 	if (argv[0] == 0)
 		times = 1;
@@ -429,7 +426,7 @@ clob1(n)
 	int n;
 {
 	char buf[512];
-	register char *cp;
+	char *cp;
 
 	if (n <= 0)
 		return;
@@ -489,9 +486,9 @@ ignore1(list, tab, which)
 	char *which;
 {
 	char field[LINESIZE];
-	register int h;
-	register struct ignore *igp;
 	char **ap;
+	struct ignore *igp;
+	int h;
 
 	if (*list == NULL)
 		return(igshow(tab, which));
@@ -518,7 +515,7 @@ igshow(tab, which)
 	struct ignoretab *tab;
 	char *which;
 {
-	register int h;
+	int h;
 	struct ignore *igp;
 	char **ap, **ring;
 

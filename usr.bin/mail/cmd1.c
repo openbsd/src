@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.11 1997/07/30 06:32:38 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.12 1997/11/14 00:23:42 millert Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd1.c,v 1.11 1997/07/30 06:32:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd1.c,v 1.12 1997/11/14 00:23:42 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,9 +63,8 @@ headers(v)
 	void *v;
 {
 	int *msgvec = v;
-	register int n, mesg, flag;
-	register struct message *mp;
-	int size;
+	int n, mesg, flag, size;
+	struct message *mp;
 
 	size = screensize();
 	n = msgvec[0];
@@ -105,7 +104,7 @@ scroll(v)
 	void *v;
 {
 	char *arg = v;
-	register int s, size;
+	int s, size;
 	int cur[1];
 
 	cur[0] = 0;
@@ -160,7 +159,7 @@ from(v)
 	void *v;
 {
 	int *msgvec = v;
-	register int *ip;
+	int *ip;
 
 	for (ip = msgvec; *ip != NULL; ip++)
 		printhead(*ip);
@@ -225,7 +224,7 @@ int
 pdot(v)
 	void *v;
 {
-	printf("%d\n", dot - &message[0] + 1);
+	printf("%d\n", (int)(dot - &message[0] + 1));
 	return(0);
 }
 
@@ -237,8 +236,8 @@ pcmdlist(v)
 	void *v;
 {
 	extern const struct cmd cmdtab[];
-	register const struct cmd *cp;
-	register int cc;
+	const struct cmd *cp;
+	int cc;
 
 	puts("Commands are:");
 	for (cc = 0, cp = cmdtab; cp->c_name != NULL; cp++) {
@@ -311,10 +310,9 @@ type1(msgvec, doign, page)
 	int *msgvec;
 	int doign, page;
 {
-	register *ip;
+	int nlines, *ip;
 	struct message *mp;
 	char *cp;
-	int nlines;
 	FILE *obuf;
 #if __GNUC__
 	/* Avoid siglongjmp clobbering */
@@ -385,8 +383,8 @@ top(v)
 	void *v;
 {
 	int *msgvec = v;
-	register int *ip;
-	register struct message *mp;
+	int *ip;
+	struct message *mp;
 	int c, topl, lines, lineb;
 	char *valtop, linebuf[LINESIZE];
 	FILE *ibuf;
@@ -428,7 +426,7 @@ stouch(v)
 	void *v;
 {
 	int *msgvec = v;
-	register int *ip;
+	int *ip;
 
 	for (ip = msgvec; *ip != 0; ip++) {
 		dot = &message[*ip-1];
@@ -446,7 +444,7 @@ mboxit(v)
 	void *v;
 {
 	int *msgvec = v;
-	register int *ip;
+	int *ip;
 
 	for (ip = msgvec; *ip != 0; ip++) {
 		dot = &message[*ip-1];

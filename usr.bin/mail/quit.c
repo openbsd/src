@@ -1,4 +1,4 @@
-/*	$OpenBSD: quit.c,v 1.8 1997/07/24 17:27:12 millert Exp $	*/
+/*	$OpenBSD: quit.c,v 1.9 1997/11/14 00:23:55 millert Exp $	*/
 /*	$NetBSD: quit.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: quit.c,v 1.8 1997/07/24 17:27:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: quit.c,v 1.9 1997/11/14 00:23:55 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ quit()
 {
 	int mcount, p, modify, autohold, anystat, holdbit, nohold;
 	FILE *ibuf = NULL, *obuf, *fbuf, *rbuf, *readstat = NULL, *abuf;
-	register struct message *mp;
+	struct message *mp;
 	int c, fd;
 	struct stat minfo;
 	char *mbox, tempname[PATHSIZE];
@@ -363,10 +363,10 @@ newmail:
  */
 int
 writeback(res)
-	register FILE *res;
+	FILE *res;
 {
-	register struct message *mp;
-	register int p, c;
+	struct message *mp;
+	int p, c;
 	FILE *obuf;
 
 	p = 0;
@@ -418,8 +418,8 @@ writeback(res)
 void
 edstop()
 {
-	register int gotcha, c;
-	register struct message *mp;
+	int gotcha, c;
+	struct message *mp;
 	FILE *obuf, *ibuf, *readstat = NULL;
 	struct stat statb;
 	char tempname[PATHSIZE];

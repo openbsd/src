@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.11 1997/07/30 07:19:30 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.12 1997/11/14 00:23:46 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.7 1997/07/09 05:22:00 mikel Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/20/95
- *	$OpenBSD: extern.h,v 1.11 1997/07/30 07:19:30 millert Exp $
+ *	$OpenBSD: extern.h,v 1.12 1997/11/14 00:23:46 millert Exp $
  */
 
 struct name;
@@ -191,8 +191,6 @@ int	 more __P((void *));
 int	 newfileinfo __P((int));
 int	 next __P((void *));
 int	 null __P((void *));
-void	 panic __P((const char *, ...))
-    __attribute__((__format__(__printf__,1,2),__noreturn__));
 struct headline;
 void	 parse __P((char [], struct headline *, char []));
 int	 pcmdlist __P((void *));

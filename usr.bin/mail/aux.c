@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.12 1997/08/04 17:30:22 millert Exp $	*/
+/*	$OpenBSD: aux.c,v 1.13 1997/11/14 00:23:41 millert Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: aux.c,v 1.12 1997/08/04 17:30:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: aux.c,v 1.13 1997/11/14 00:23:41 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,45 +89,13 @@ save2str(str, old)
 }
 
 /*
- * Announce a fatal error and die.
- */
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#ifdef __STDC__
-panic(const char *fmt, ...)
-#else
-panic(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "panic: ");
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)putc('\n', stderr);
-	fflush(stderr);
-	abort();
-}
-
-/*
  * Touch the named message by setting its MTOUCH flag.
  * Touched messages have the effect of not being sent
  * back to the system mailbox on exit.
  */
 void
 touch(mp)
-	register struct message *mp;
+	struct message *mp;
 {
 
 	mp->m_flag |= MTOUCH;
@@ -147,7 +115,7 @@ isdir(name)
 
 	if (stat(name, &sbuf) < 0)
 		return(0);
-	return((sbuf.st_mode & S_IFMT) == S_IFDIR);
+	return (S_ISDIR(sbuf.st_mode));
 }
 
 /*
@@ -157,7 +125,7 @@ int
 argcount(argv)
 	char **argv;
 {
-	register char **ap;
+	char **ap;
 
 	for (ap = argv; *ap++ != NULL;)
 		;	
@@ -173,10 +141,10 @@ hfield(field, mp)
 	char field[];
 	struct message *mp;
 {
-	register FILE *ibuf;
+	FILE *ibuf;
 	char linebuf[LINESIZE];
-	register int lc;
-	register char *hfield;
+	int lc;
+	char *hfield;
 	char *colon, *oldhfield = NULL;
 
 	ibuf = setinput(mp);
@@ -201,14 +169,14 @@ hfield(field, mp)
  */
 int
 gethfield(f, linebuf, rem, colon)
-	register FILE *f;
+	FILE *f;
 	char linebuf[];
-	register int rem;
+	int rem;
 	char **colon;
 {
 	char line2[LINESIZE];
-	register char *cp, *cp2;
-	register int c;
+	char *cp, *cp2;
+	int c;
 
 	for (;;) {
 		if (--rem < 0)
@@ -263,7 +231,7 @@ ishfield(linebuf, colon, field)
 	char linebuf[], field[];
 	char *colon;
 {
-	register char *cp = colon;
+	char *cp = colon;
 
 	*cp = 0;
 	if (strcasecmp(linebuf, field) != 0) {
@@ -282,8 +250,8 @@ ishfield(linebuf, colon, field)
  */
 void
 istrncpy(dest, src, dsize)
-	register char *dest, *src;
-	register size_t dsize;
+	char *dest, *src;
+	size_t dsize;
 {
 
 	if (dsize != 0) {
@@ -382,9 +350,9 @@ alter(name)
 
 	if (stat(name, &sb))
 		return;
-	tv[0].tv_sec = time((time_t *)0) + 1;
-	tv[1].tv_sec = sb.st_mtime;
-	tv[0].tv_usec = tv[1].tv_usec = 0;
+	(void) gettimeofday(&tv[0], (struct timezone *)0);
+	tv[0].tv_sec++;
+	TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);
 	(void)utimes(name, tv);
 }
 
@@ -396,7 +364,7 @@ int
 blankline(linebuf)
 	char linebuf[];
 {
-	register char *cp;
+	char *cp;
 
 	for (cp = linebuf; *cp; cp++)
 		if (*cp != ' ' && *cp != '\t')
@@ -411,10 +379,10 @@ blankline(linebuf)
  */
 char *
 nameof(mp, reptype)
-	register struct message *mp;
+	struct message *mp;
 	int reptype;
 {
-	register char *cp, *cp2;
+	char *cp, *cp2;
 
 	cp = skin(name1(mp, reptype));
 	if (reptype != 0 || charcount(cp, '!') < 2)
@@ -434,9 +402,9 @@ nameof(mp, reptype)
  */
 char *
 skip_comment(cp)
-	register char *cp;
+	char *cp;
 {
-	register nesting = 1;
+	int nesting = 1;
 
 	for (; nesting > 0 && *cp; cp++) {
 		switch (*cp) {
@@ -463,10 +431,8 @@ char *
 skin(name)
 	char *name;
 {
-	register int c;
-	register char *cp, *cp2;
-	int gotlt, lastsp;
-	char *nbuf, *bufend;
+	char *nbuf, *bufend, *cp, *cp2;
+	int c, gotlt, lastsp;
 
 	if (name == NULL)
 		return(NULL);
@@ -476,7 +442,7 @@ skin(name)
 
 	/* We assume that length(input) <= length(output) */
 	if ((nbuf = (char *)malloc(strlen(name) + 1)) == NULL)
-		panic("Out of memory");
+		errx(1, "Out of memory");
 	gotlt = 0;
 	lastsp = 0;
 	bufend = nbuf;
@@ -561,7 +527,7 @@ skin(name)
 	*cp2 = 0;
 
 	if ((nbuf = (char *)realloc(nbuf, strlen(nbuf) + 1)) == NULL)
-		panic("Out of memory");
+		errx(1, "Out of memory");
 	return(nbuf);
 }
 
@@ -574,13 +540,13 @@ skin(name)
  */
 char *
 name1(mp, reptype)
-	register struct message *mp;
+	struct message *mp;
 	int reptype;
 {
 	char namebuf[LINESIZE];
 	char linebuf[LINESIZE];
-	register char *cp, *cp2;
-	register FILE *ibuf;
+	char *cp, *cp2;
+	FILE *ibuf;
 	int first = 1;
 
 	if ((cp = hfield("from", mp)) != NULL)
@@ -638,8 +604,8 @@ charcount(str, c)
 	char *str;
 	int c;
 {
-	register char *cp;
-	register int i;
+	char *cp;
+	int i;
 
 	for (i = 0, cp = str; *cp; cp++)
 		if (*cp == c)
@@ -652,7 +618,7 @@ charcount(str, c)
  */
 int
 anyof(s1, s2)
-	register char *s1, *s2;
+	char *s1, *s2;
 {
 
 	while (*s1)
@@ -666,7 +632,7 @@ anyof(s1, s2)
  */
 int
 raise(c)
-	register int c;
+	int c;
 {
 
 	if (islower(c))
@@ -679,7 +645,7 @@ raise(c)
  */
 char *
 copy(s1, s2)
-	register char *s1, *s2;
+	char *s1, *s2;
 {
 
 	while ((*s2++ = *s1++) != '\0')
@@ -712,10 +678,10 @@ isign(field, ignore)
 
 int
 member(realfield, table)
-	register char *realfield;
+	char *realfield;
 	struct ignoretab *table;
 {
-	register struct ignore *igp;
+	struct ignore *igp;
 
 	for (igp = table->i_head[hash(realfield)]; igp != 0; igp = igp->i_link)
 		if (*igp->i_field == *realfield &&

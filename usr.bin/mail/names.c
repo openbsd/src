@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.8 1997/07/31 02:48:14 millert Exp $	*/
+/*	$OpenBSD: names.c,v 1.9 1997/11/14 00:23:53 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: names.c,v 1.8 1997/07/31 02:48:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: names.c,v 1.9 1997/11/14 00:23:53 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ nalloc(str, ntype)
 	char str[];
 	int ntype;
 {
-	register struct name *np;
+	struct name *np;
 
 	np = (struct name *)salloc(sizeof(*np));
 	np->n_flink = NIL;
@@ -79,7 +79,7 @@ struct name *
 tailof(name)
 	struct name *name;
 {
-	register struct name *np;
+	struct name *np;
 
 	np = name;
 	if (np == NIL)
@@ -99,14 +99,14 @@ extract(line, ntype)
 	char line[];
 	int ntype;
 {
-	register char *cp;
-	register struct name *top, *np, *t;
+	char *cp;
+	struct name *top, *np, *t;
 	char *nbuf;
 
 	if (line == NULL || *line == '\0')
 		return(NIL);
 	if ((nbuf = (char *)malloc(strlen(line) + 1)) == NULL)
-		panic("Out of memory");
+		errx(1, "Out of memory");
 	top = NIL;
 	np = NIL;
 	cp = line;
@@ -128,13 +128,12 @@ extract(line, ntype)
  */
 char *
 detract(np, ntype)
-	register struct name *np;
+	struct name *np;
 	int ntype;
 {
-	register int s;
-	register char *cp, *top;
-	register struct name *p;
-	register int comma;
+	int s, comma;
+	char *cp, *top;
+	struct name *p;
 
 	comma = ntype & GCOMMA;
 	if (np == NIL)
@@ -177,14 +176,14 @@ char *
 yankword(ap, wbuf)
 	char *ap, wbuf[];
 {
-	register char *cp, *cp2;
+	char *cp, *cp2;
 
 	cp = ap;
 	for (;;) {
 		if (*cp == '\0')
 			return(NULL);
 		if (*cp == '(') {
-			register int nesting = 0;
+			int nesting = 0;
 
 			while (*cp != '\0') {
 				switch (*cp++) {
@@ -227,12 +226,11 @@ outof(names, fo, hp)
 	FILE *fo;
 	struct header *hp;
 {
-	register int c;
-	register struct name *np, *top;
+	int c, ispipe;
+	struct name *np, *top;
 	time_t now;
 	char *date, *fname;
 	FILE *fout, *fin;
-	int ispipe;
 
 	top = names;
 	np = names;
@@ -371,7 +369,7 @@ int
 isfileaddr(name)
 	char *name;
 {
-	register char *cp;
+	char *cp;
 
 	if (*name == '+')
 		return(1);
@@ -395,9 +393,9 @@ struct name *
 usermap(names)
 	struct name *names;
 {
-	register struct name *new, *np, *cp;
+	struct name *new, *np, *cp;
 	struct grouphead *gh;
-	register int metoo;
+	int metoo;
 
 	new = NIL;
 	np = names;
@@ -477,7 +475,7 @@ struct name *
 cat(n1, n2)
 	struct name *n1, *n2;
 {
-	register struct name *tail;
+	struct name *tail;
 
 	if (n1 == NIL)
 		return(n2);
@@ -497,13 +495,13 @@ char **
 unpack(np)
 	struct name *np;
 {
-	register char **ap, **top;
-	register struct name *n;
+	char **ap, **top;
+	struct name *n;
 	int t, extra, metoo, verbose;
 
 	n = np;
 	if ((t = count(n)) == 0)
-		panic("No names to unpack");
+		errx(1, "No names to unpack");
 	/*
 	 * Compute the number of extra arguments we will need.
 	 * We need at least two extra -- one for "mail" and one for
@@ -542,7 +540,7 @@ struct name *
 elide(names)
 	struct name *names;
 {
-	register struct name *np, *t, *new;
+	struct name *np, *t, *new;
 	struct name *x;
 
 	if (names == NIL)
@@ -654,9 +652,9 @@ put(list, node)
  */
 int
 count(np)
-	register struct name *np;
+	struct name *np;
 {
-	register int c;
+	int c;
 
 	for (c = 0; np != NIL; np = np->n_flink)
 		if ((np->n_type & GDEL) == 0)
@@ -669,10 +667,10 @@ count(np)
  */
 struct name *
 delname(np, name)
-	register struct name *np;
+	struct name *np;
 	char name[];
 {
-	register struct name *p;
+	struct name *p;
 
 	for (p = np; p != NIL; p = p->n_flink)
 		if (strcasecmp(p->n_name, name) == 0) {
@@ -703,7 +701,7 @@ void
 prettyprint(name)
 	struct name *name;
 {
-	register struct name *np;
+	struct name *np;
 
 	np = name;
 	while (np != NIL) {

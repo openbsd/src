@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.4 1997/07/14 00:24:27 millert Exp $	*/
+/*	$OpenBSD: head.c,v 1.5 1997/11/14 00:23:48 millert Exp $	*/
 /*	$NetBSD: head.c,v 1.6 1996/12/28 07:11:03 tls Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: head.c,v 1.4 1997/07/14 00:24:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: head.c,v 1.5 1997/11/14 00:23:48 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ int
 ishead(linebuf)
 	char linebuf[];
 {
-	register char *cp;
+	char *cp;
 	struct headline hl;
 	char parbuf[BUFSIZ];
 
@@ -105,10 +105,9 @@ fail(linebuf, reason)
 void
 parse(line, hl, pbuf)
 	char line[], pbuf[];
-	register struct headline *hl;
+	struct headline *hl;
 {
-	register char *cp;
-	char *sp;
+	char *cp, *sp;
 	char word[LINESIZE];
 
 	hl->l_from = NULL;
@@ -139,11 +138,10 @@ parse(line, hl, pbuf)
  */
 char *
 copyin(src, space)
-	register char *src;
+	char *src;
 	char **space;
 {
-	register char *cp;
-	char *top;
+	char *cp, *top;
 
 	top = cp = *space;
 	while ((*cp++ = *src++) != '\0')
@@ -193,7 +191,7 @@ isdate(date)
  */
 int
 cmatch(cp, tp)
-	register char *cp, *tp;
+	char *cp, *tp;
 {
 
 	while (*cp && *tp)
@@ -240,9 +238,9 @@ cmatch(cp, tp)
  */
 char *
 nextword(wp, wbuf)
-	register char *wp, *wbuf;
+	char *wp, *wbuf;
 {
-	register c;
+	int c;
 
 	if (wp == NULL) {
 		*wbuf = 0;

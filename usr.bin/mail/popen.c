@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.13 1997/08/31 14:32:14 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.14 1997/11/14 00:23:54 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.13 1997/08/31 14:32:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.14 1997/11/14 00:23:54 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -181,7 +181,7 @@ register_file(fp, pipe, pid)
 	struct fp *fpp;
 
 	if ((fpp = (struct fp *)malloc(sizeof(*fpp))) == NULL)
-		panic("Out of memory");
+		errx(1, "Out of memory");
 	fpp->fp = fp;
 	fpp->pipe = pipe;
 	fpp->pid = pid;
@@ -201,7 +201,7 @@ unregister_file(fp)
 			(void)free(p);
 			return;
 		}
-	panic("Invalid file pointer");
+	errx(1, "Invalid file pointer");
 }
 
 static int
@@ -213,7 +213,7 @@ file_pid(fp)
 	for (p = fp_head; p; p = p->link)
 		if (p->fp == fp)
 			return(p->pid);
-	panic("Invalid file pointer");
+	errx(1, "Invalid file pointer");
 	/*NOTREACHED*/
 }
 
@@ -314,7 +314,7 @@ static struct child *
 findchild(pid)
 	int pid;
 {
-	register struct child **cpp;
+	struct child **cpp;
 
 	for (cpp = &child; *cpp != NULL && (*cpp)->pid != pid;
 	     cpp = &(*cpp)->link)
@@ -330,9 +330,9 @@ findchild(pid)
 
 static void
 delchild(cp)
-	register struct child *cp;
+	struct child *cp;
 {
-	register struct child **cpp;
+	struct child **cpp;
 
 	for (cpp = &child; *cpp != cp; cpp = &(*cpp)->link)
 		;
@@ -346,7 +346,7 @@ sigchild(signo)
 {
 	int pid;
 	int status;
-	register struct child *cp;
+	struct child *cp;
 	int save_errno = errno;
 
 	while ((pid =
@@ -371,7 +371,7 @@ int
 wait_child(pid)
 	int pid;
 {
-	register struct child *cp = findchild(pid);
+	struct child *cp = findchild(pid);
 	sigset_t nset, oset;
 
 	sigemptyset(&nset);
@@ -393,7 +393,7 @@ void
 free_child(pid)
 	int pid;
 {
-	register struct child *cp = findchild(pid);
+	struct child *cp = findchild(pid);
 	sigset_t nset, oset;
 
 	sigemptyset(&nset);
@@ -432,7 +432,7 @@ handle_spool_locks(action)
 	} else if (action == 1) {
 		/* Create the lock */
 		if ((cmd = (char *)malloc(sizeof(_PATH_MAIL_LOCAL) + 3)) == NULL)
-			panic("Out of memory");
+			errx(1, "Out of memory");
 		sprintf(cmd, "%s -H", _PATH_MAIL_LOCAL);
 		if ((lockfp = Popen(cmd, "r")) == NULL || getc(lockfp) != '1') {
 			lockfp = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.14 1997/07/30 07:19:31 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.15 1997/11/14 00:23:48 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.14 1997/07/30 07:19:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.15 1997/11/14 00:23:48 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -212,8 +212,7 @@ int	reset_on_stop;			/* do a reset() if stopped */
 void
 commands()
 {
-	int eofloop = 0;
-	register int n;
+	int n, eofloop = 0;
 	char linebuf[LINESIZE];
 #if __GNUC__
 	/* Avoid siglongjmp clobbering */
@@ -299,9 +298,8 @@ execute(linebuf, contxt)
 	char word[LINESIZE];
 	char *arglist[MAXARGC];
 	const struct cmd *com = NULL;
-	register char *cp, *cp2;
-	register int c;
-	int muvec[2];
+	char *cp, *cp2;
+	int c, muvec[2];
 	int e = 1;
 
 	/*
@@ -456,7 +454,7 @@ execute(linebuf, contxt)
 		break;
 
 	default:
-		panic("Unknown argtype");
+		errx(1, "Unknown argtype");
 	}
 
 out:
@@ -510,7 +508,7 @@ lex(word)
 	char word[];
 {
 	extern const struct cmd cmdtab[];
-	register const struct cmd *cp;
+	const struct cmd *cp;
 
 	for (cp = &cmdtab[0]; cp->c_name != NULL; cp++)
 		if (isprefix(word, cp->c_name))
@@ -526,7 +524,7 @@ int
 isprefix(as1, as2)
 	char *as1, *as2;
 {
-	register char *s1, *s2;
+	char *s1, *s2;
 
 	s1 = as1;
 	s2 = as2;
@@ -632,8 +630,8 @@ int
 newfileinfo(omsgCount)
 	int omsgCount;
 {
-	register struct message *mp;
-	register int u, n, mdot, d, s;
+	struct message *mp;
+	int u, n, mdot, d, s;
 	char fname[PATHSIZE], zname[PATHSIZE], *ename;
 
 	for (mp = &message[omsgCount]; mp < &message[msgCount]; mp++)
@@ -708,7 +706,7 @@ void
 load(name)
 	char *name;
 {
-	register FILE *in, *oldin;
+	FILE *in, *oldin;
 
 	if ((in = Fopen(name, "r")) == NULL)
 		return;
