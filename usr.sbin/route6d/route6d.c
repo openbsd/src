@@ -1,5 +1,7 @@
+/*	$OpenBSD: route6d.c,v 1.2 1999/12/11 10:41:46 itojun Exp $	*/
+
 /*
- * $Header: /home/cvs/src/usr.sbin/route6d/route6d.c,v 1.1.1.1 1999/12/11 10:36:07 itojun Exp $
+* KAME Header: /cvsroot/kame/kame/kame/kame/route6d/route6d.c,v 1.6 1999/09/10 08:20:59 itojun Exp
  */
 
 /*
@@ -32,7 +34,7 @@
  */
 
 #ifndef	lint
-static char _rcsid[] = "$Id: route6d.c,v 1.1.1.1 1999/12/11 10:36:07 itojun Exp $";
+static char _rcsid[] = "KAME Id: route6d.c,v 1.6 1999/09/10 08:20:59 itojun Exp";
 #endif
 
 #include <stdio.h>

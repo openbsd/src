@@ -1,5 +1,7 @@
+/*	$OpenBSD: route6d.h,v 1.2 1999/12/11 10:41:47 itojun Exp $	*/
+
 /*
- * $Header: /home/cvs/src/usr.sbin/route6d/route6d.h,v 1.1.1.1 1999/12/11 10:36:02 itojun Exp $
+ * KAME Header: /cvsroot/kame/kame/kame/kame/route6d/route6d.h,v 1.1.1.1 1999/08/08 23:31:35 itojun Exp
  */
 
 /*
