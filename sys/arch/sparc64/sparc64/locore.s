@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.30 2003/03/20 23:05:30 henric Exp $	*/
+/*	$OpenBSD: locore.s,v 1.31 2003/03/21 22:59:10 jason Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -847,7 +847,7 @@ _C_LABEL(trapbase):
 	VTRAP(0x060, interrupt_vector); ! 060 = interrupt vector
 	TRAP(T_PA_WATCHPT)		! 061 = physical address data watchpoint
 	TRAP(T_VA_WATCHPT)		! 062 = virtual address data watchpoint
-	UTRAP(T_ECCERR)			! We'll implement this one later
+	VTRAP(T_ECCERR, cecc_catch)	! 063 = Correctable ECC error
 ufast_IMMU_miss:			! 064 = fast instr access MMU miss
 	TRACEFLT			! DEBUG
 	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	! Load IMMU 8K TSB pointer
@@ -1083,7 +1083,7 @@ kdatafault:
 	VTRAP(0x060, interrupt_vector); ! 060 = interrupt vector
 	TRAP(T_PA_WATCHPT)		! 061 = physical address data watchpoint
 	TRAP(T_VA_WATCHPT)		! 062 = virtual address data watchpoint
-	UTRAP(T_ECCERR)			! We'll implement this one later
+	VTRAP(T_ECCERR, cecc_catch)	! 063 = Correctable ECC error
 kfast_IMMU_miss:			! 064 = fast instr access MMU miss
 	TRACEFLT			! DEBUG
 	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	! Load IMMU 8K TSB pointer
@@ -11476,6 +11476,60 @@ ENTRY(loadfpstate)
 	ta	1
 	retl
 	 nop
+
+/* XXX belongs elsewhere (ctlreg.h?) */
+#define	AFSR_CECC_ERROR		0x100000	/* AFSR Correctable ECC err */
+#define	DATAPATH_CE		0x100		/* Datapath Correctable Err */
+
+	.data
+	_ALIGN
+	.globl	_C_LABEL(cecclast), _C_LABEL(ceccerrs)
+_C_LABEL(cecclast):
+	.xword 0
+_C_LABEL(ceccerrs):
+	.word 0
+	_ALIGN
+	.text
+
+/*
+ * ECC Correctable Error handler - this doesn't do much except intercept
+ * the error and reset the status bits.
+ */
+ENTRY(cecc_catch)
+	ldxa	[%g0] ASI_AFSR, %g1			! g1 = AFSR
+	ldxa	[%g0] ASI_AFAR, %g2			! g2 = AFAR
+
+	sethi	%hi(cecclast), %g1			! cecclast = AFAR
+	or	%g1, %lo(cecclast), %g1
+	stx	%g2, [%g1]
+
+	sethi	%hi(ceccerrs), %g1			! get current count
+	or	%g1, %lo(ceccerrs), %g1
+	lduw	[%g1], %g2				! g2 = ceccerrs
+
+	ldxa	[%g0] ASI_DATAPATH_ERR_REG_READ, %g3	! Read UDB-Low status
+	andcc	%g3, DATAPATH_CE, %g4			! Check CE bit
+	be,pn	%xcc, 1f				! Don't clear unless
+	 nop						!  necessary
+	stxa	%g4, [%g0] ASI_DATAPATH_ERR_REG_WRITE	! Clear CE bit in UDBL
+	membar	#Sync					! sync store
+	inc	%g2					! ceccerrs++
+1:	mov	0x18, %g5
+	ldxa	[%g5] ASI_DATAPATH_ERR_REG_READ, %g3	! Read UDB-High status
+	andcc	%g3, DATAPATH_CE, %g4			! Check CE bit
+	be,pn	%xcc, 1f				! Don't clear unless
+	 nop						!  necessary
+	stxa	%g4, [%g5] ASI_DATAPATH_ERR_REG_WRITE	! Clear CE bit in UDBH
+	membar	#Sync					! sync store
+	inc	%g2					! ceccerrs++
+1:	set	AFSR_CECC_ERROR, %g3
+	stxa	%g3, [%g0] ASI_AFSR			! Clear CE in AFSR
+	stw	%g2, [%g1]				! set ceccerrs
+	membar	#Sync					! sync store
+        CLRTT
+        retry
+        NOTREACHED
+
 /*
  * ienab_bis(bis) int bis;
  * ienab_bic(bic) int bic;

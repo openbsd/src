@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.58 2003/03/06 08:26:08 henric Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.59 2003/03/21 22:59:10 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -211,6 +211,9 @@ int allowaperture = 1;
 int allowaperture = 0;
 #endif
 #endif
+
+extern int ceccerrs;
+extern int64_t cecclast;
 
 /*
  * Maximum number of DMA segments we'll allow in dmamem_load()
@@ -574,6 +577,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #endif
 	case CPU_CPUTYPE:
 		return (sysctl_rdint(oldp, oldlenp, newp, CPU_SUN4U));
+	case CPU_CECCERRORS:
+		return (sysctl_rdint(oldp, oldlenp, newp, ceccerrs));
+	case CPU_CECCLAST:
+		return (sysctl_rdquad(oldp, oldlenp, newp, cecclast));
 	default:
 		return (EOPNOTSUPP);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.18 2003/03/20 23:05:30 henric Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.19 2003/03/21 22:59:09 jason Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -54,8 +54,10 @@
 #define	CPU_BOOTED_KERNEL	1	/* string: booted kernel name */
 #define	CPU_LED_BLINK		2	/* int: blink leds? */
 #define	CPU_ALLOWAPERTURE	3	/* allow xf86 operations */
-#define CPU_CPUTYPE		4	/* cpu type */
-#define	CPU_MAXID		5	/* number of valid machdep ids */
+#define	CPU_CPUTYPE		4	/* cpu type */
+#define	CPU_CECCERRORS		5	/* Correctable ECC errors */
+#define	CPU_CECCLAST		6	/* Correctable ECC last fault addr */
+#define	CPU_MAXID		7	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES {			\
 	{ 0, 0 },				\
@@ -63,6 +65,8 @@
 	{ "led_blink", CTLTYPE_INT },		\
 	{ "allowaperture", CTLTYPE_INT },	\
 	{ "cputype", CTLTYPE_INT },		\
+	{ "ceccerrs", CTLTYPE_INT },		\
+	{ "cecclast", CTLTYPE_QUAD },		\
 }
 
 #ifdef _KERNEL
