@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.16 1998/07/27 21:11:33 niklas Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.17 1998/12/19 19:07:34 millert Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -10,7 +10,7 @@
 
 .SUFFIXES: .out .o .c .cc .C .cxx .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
 
-CFLAGS+=	${COPTS}
+CFLAGS+=	${COPTS} ${PIPE}
 
 .if (${MACHINE_ARCH} == "powerpc")
 CRTBEGIN?=       ${DESTDIR}/usr/lib/crtbegin.o
