@@ -1,4 +1,4 @@
-/*	$OpenBSD: rec_put.c,v 1.7 2003/06/02 20:18:34 millert Exp $	*/
+/*	$OpenBSD: rec_put.c,v 1.8 2005/01/03 22:30:29 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_put.c	8.7 (Berkeley) 8/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: rec_put.c,v 1.7 2003/06/02 20:18:34 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rec_put.c,v 1.8 2005/01/03 22:30:29 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -200,7 +200,7 @@ __rec_iput(t, nrec, data, flags)
 	DBT tdata;
 	EPG *e;
 	PAGE *h;
-	indx_t index, nxtindex;
+	indx_t idx, nxtindex;
 	pgno_t pg;
 	u_int32_t nbytes;
 	int dflags, status;
@@ -231,7 +231,7 @@ __rec_iput(t, nrec, data, flags)
 		return (RET_ERROR);
 
 	h = e->page;
-	index = e->index;
+	idx = e->index;
 
 	/*
 	 * Add the specified key/data pair to the tree.  The R_IAFTER and
@@ -241,13 +241,13 @@ __rec_iput(t, nrec, data, flags)
 	 */
 	switch (flags) {
 	case R_IAFTER:
-		++index;
+		++idx;
 		break;
 	case R_IBEFORE:
 		break;
 	default:
 		if (nrec < t->bt_nrecs &&
-		    __rec_dleaf(t, h, index) == RET_ERROR) {
+		    __rec_dleaf(t, h, idx) == RET_ERROR) {
 			mpool_put(t->bt_mp, h, 0);
 			return (RET_ERROR);
 		}
@@ -261,18 +261,18 @@ __rec_iput(t, nrec, data, flags)
 	 */
 	nbytes = NRLEAFDBT(data->size);
 	if (h->upper - h->lower < nbytes + sizeof(indx_t)) {
-		status = __bt_split(t, h, NULL, data, dflags, nbytes, index);
+		status = __bt_split(t, h, NULL, data, dflags, nbytes, idx);
 		if (status == RET_SUCCESS)
 			++t->bt_nrecs;
 		return (status);
 	}
 
-	if (index < (nxtindex = NEXTINDEX(h)))
-		memmove(h->linp + index + 1, h->linp + index,
-		    (nxtindex - index) * sizeof(indx_t));
+	if (idx < (nxtindex = NEXTINDEX(h)))
+		memmove(h->linp + idx + 1, h->linp + idx,
+		    (nxtindex - idx) * sizeof(indx_t));
 	h->lower += sizeof(indx_t);
 
-	h->linp[index] = h->upper -= nbytes;
+	h->linp[idx] = h->upper -= nbytes;
 	dest = (char *)h + h->upper;
 	WR_RLEAF(dest, data, dflags);
 
