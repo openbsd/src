@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.37 2000/03/26 16:21:32 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.38 2000/04/17 23:45:24 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.37 2000/03/26 16:21:32 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.38 2000/04/17 23:45:24 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,6 +103,10 @@ static char rcsid[] = "$OpenBSD: parse.c,v 1.37 2000/03/26 16:21:32 espie Exp $"
 #include "job.h"
 #include "buf.h"
 #include "pathnames.h"
+
+#ifdef CLEANUP
+static Lst	    fileNames;	/* file names to free at end */
+#endif
 
 /*
  * These values are returned by ParseEOF to tell Parse_File whether to
@@ -1808,6 +1812,9 @@ ParseDoInclude (file)
      * place. Naturally enough, we start reading at line number 0.
      */
     fname = fullname;
+#ifdef CLEANUP
+    Lst_AtEnd(fileNames, fname);
+#endif
     lineno = 0;
 
     curFILE = fopen (fullname, "r");
@@ -1857,7 +1864,6 @@ Parse_FromString(str, newlineno)
     curPTR = (PTR *) emalloc (sizeof (PTR));
     curPTR->str = curPTR->ptr = str;
     lineno = newlineno;
-    fname = estrdup(fname);
 }
 
 
@@ -1991,6 +1997,9 @@ ParseTraditionalInclude (file)
      * place. Naturally enough, we start reading at line number 0.
      */
     fname = fullname;
+#ifdef CLEANUP
+    lst_AtEnd(fileNames, fname);
+#endif
     lineno = 0;
 
     curFILE = fopen (fullname, "r");
@@ -2028,7 +2037,6 @@ ParseEOF (opened)
 
     if ((ifile = (IFile *)Lst_DeQueue(includes)) == NULL)
     	return DONE;
-    free ((Address) fname);
     fname = ifile->fname;
     lineno = ifile->lineno;
     if (opened && curFILE)
@@ -2455,7 +2463,10 @@ Parse_File(name, stream)
                   *line;	/* the line we're working on */
 
     inLine = FALSE;
-    fname = name;
+    fname = estrdup(name);
+#ifdef CLEANUP
+    Lst_AtEnd(fileNames, fname);
+#endif
     curFILE = stream;
     lineno = 0;
     fatals = 0;
@@ -2641,6 +2652,7 @@ Parse_Init ()
     includes = Lst_Init();
 #ifdef CLEANUP
     targCmds = Lst_Init();
+    fileNames = Lst_Init();
 #endif
 }
 
@@ -2649,6 +2661,7 @@ Parse_End()
 {
 #ifdef CLEANUP
     Lst_Destroy(targCmds, (void (*) __P((ClientData))) free);
+    Lst_Destroy(fileNames, (void (*) __P((ClientData))) free);
     if (targets)
 	Lst_Destroy(targets, NOFREE);
     Lst_Destroy(sysIncPath, Dir_Destroy);
@@ -2695,5 +2708,11 @@ unsigned long
 Parse_Getlineno()
 {
     return lineno;
+}
+
+const char *
+Parse_Getfilename()
+{
+    return fname;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.19 2000/02/02 13:47:47 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.20 2000/04/17 23:45:23 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -98,6 +98,7 @@ void Parse_End __P((void));
 void Parse_FromString __P((char *, unsigned long));
 Lst Parse_MainName __P((void));
 unsigned long Parse_Getlineno __P((void));
+const char *Parse_Getfilename __P((void));
 
 /* str.c */
 void str_init __P((void));
