@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.6 1999/05/06 02:26:15 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.7 1999/12/23 04:07:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -34,7 +34,7 @@
 
 #define	EXEC_ELF
 /* #define	EXEC_ECOFF */
-/* #define	EXEC_SOM */
+#define	EXEC_SOM
 
 #define	DEFAULT_KERNEL_ADDRESS	0x12000
 
@@ -76,5 +76,10 @@ off_t   lif_seek __P((struct open_file *f, off_t offset, int where));
 int     lif_stat __P((struct open_file *f, struct stat *sb));
 int     lif_readdir __P((struct open_file *f, char *name));
 
+union x_header;
+struct x_param;
+int	som_probe __P((int, union x_header *));
+int	som_load __P((int, struct x_param *));
+int	som_ldsym __P((int, struct x_param *));
 
 extern int debug;
