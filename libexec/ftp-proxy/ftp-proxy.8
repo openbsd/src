@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftp-proxy.8,v 1.22 2002/10/04 02:47:28 deraadt Exp $
+.\"	$OpenBSD: ftp-proxy.8,v 1.23 2002/10/04 09:37:19 henning Exp $
 .\"
 .\" Copyright (c) 1996-2001
 .\"	Obtuse Systems Corporation, All rights reserved.
@@ -161,7 +161,7 @@ and requires that FTP connections are redirected to it using a
 rule.
 A typical way to do this would be to use a rule such as
 .Pp
-rdr on xl0 from any to any port 21 -> 127.0.0.1 port 2021 
+rdr on xl0 from any to any port 21 -> 127.0.0.1 port 8021 
 .Pp
 in
 .Xr pf.conf 5
@@ -171,7 +171,7 @@ must then be configured to run
 .Nm ftp-proxy
 on the port from above using
 .Pp
-127.0.0.1:2021 stream tcp nowait root /usr/libexec/ftp-proxy ftp-proxy
+127.0.0.1:8021 stream tcp nowait root /usr/libexec/ftp-proxy ftp-proxy
 .Pp
 in
 .Xr inetd.conf 5 .
