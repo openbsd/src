@@ -1,5 +1,5 @@
-/*	$OpenBSD: strtod.c,v 1.2 1996/03/19 23:15:11 niklas Exp $	*/
-/*	$NetBSD: strtod.c,v 1.21 1996/02/16 21:19:29 mark Exp $	*/
+/*	$OpenBSD: strtod.c,v 1.3 1996/07/27 10:45:23 deraadt Exp $	*/
+/*	$NetBSD: strtod.c,v 1.21.4.1 1996/07/20 01:14:54 jtc Exp $	*/
 
 /****************************************************************
  *
@@ -93,7 +93,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strtod.c,v 1.2 1996/03/19 23:15:11 niklas Exp $";
+static char *rcsid = "$OpenBSD: strtod.c,v 1.3 1996/07/27 10:45:23 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
@@ -1238,7 +1238,7 @@ strtod
 	rv = 0.;
 
 
-	for(s = s00; isspace(*s); s++)
+	for(s = s00; isspace((unsigned char) *s); s++)
 		;
 
 	if (*s == '-') {

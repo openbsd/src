@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strtoul.c	5.3 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: strtoul.c,v 1.2 1995/12/21 14:58:38 deraadt Exp $";
+static char *rcsid = "$Id: strtoul.c,v 1.3 1996/07/27 10:45:25 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -63,7 +63,7 @@ strtoul(nptr, endptr, base)
 	 */
 	s = nptr;
 	do {
-		c = *s++;
+		c = (unsigned char) *s++;
 	} while (isspace(c));
 	if (c == '-') {
 		neg = 1;
@@ -84,7 +84,7 @@ strtoul(nptr, endptr, base)
 
 	cutoff = ULONG_MAX / (unsigned long)base;
 	cutlim = ULONG_MAX % (unsigned long)base;
-	for (acc = 0, any = 0;; c = *s++) {
+	for (acc = 0, any = 0;; c = (unsigned char) *s++) {
 		if (isdigit(c))
 			c -= '0';
 		else if (isalpha(c))
