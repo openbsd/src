@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.93 2003/07/01 10:00:29 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.94 2003/07/05 21:50:35 pvalchev Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1345,7 +1345,7 @@ No longer needed as
 .Nm
 should always be kept up-to-date.
 .It Ev NO_CONFIGURE
-If ${FILESDIR}/configure does not exist, no automatic configuration will
+If ${CONFIGURE_SCRIPT} does not exist, no automatic configuration will
 be done anyway.
 .It Ev NO_EXTRACT
 Set EXTRACT_ONLY= instead.
