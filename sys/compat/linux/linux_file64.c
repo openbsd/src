@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_file64.c,v 1.3 2002/03/14 01:26:50 millert Exp $	*/
+/*	$OpenBSD: linux_file64.c,v 1.4 2002/12/16 16:27:41 fgsch Exp $	*/
 /*	$NetBSD: linux_file64.c,v 1.2 2000/12/12 22:24:56 jdolecek Exp $	*/
 
 /*-
@@ -101,6 +101,9 @@ bsd_to_linux_stat(bsp, lsp)
 	lsp->lst_atime   = bsp->st_atime;
 	lsp->lst_mtime   = bsp->st_mtime;
 	lsp->lst_ctime   = bsp->st_ctime;
+#if LINUX_STAT64_HAS_BROKEN_ST_INO
+	lsp->__lst_ino   = (linux_ino_t)bsp->st_ino;
+#endif
 }
 
 /*

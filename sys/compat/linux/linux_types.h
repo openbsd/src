@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_types.h,v 1.6 2002/10/28 03:39:30 fgsch Exp $	*/
+/*	$OpenBSD: linux_types.h,v 1.7 2002/12/16 16:27:41 fgsch Exp $	*/
 /*	$NetBSD: linux_types.h,v 1.5 1996/05/20 01:59:28 fvdl Exp $	*/
 
 /*
@@ -166,36 +166,35 @@ struct linux___sysctl {
  * insane amounts of padding around dev_t's.
  */
 struct linux_stat64 {
-	unsigned short	lst_dev;
-	unsigned char	__pad0[10];
+	unsigned long long lst_dev;
+	unsigned int	__pad1;
 
-	unsigned long	lst_ino;
+#define LINUX_STAT64_HAS_BROKEN_ST_INO	1
+	unsigned int	__lst_ino;
 	unsigned int	lst_mode;
 	unsigned int	lst_nlink;
 
-	unsigned long	lst_uid;
-	unsigned long	lst_gid;
+	unsigned int	lst_uid;
+	unsigned int	lst_gid;
 
-	unsigned short	lst_rdev;
-	unsigned char	__pad3[10];
+	unsigned long long lst_rdev;
+	unsigned int	__pad2;
 
 	long long	lst_size;
-	unsigned long	lst_blksize;
+	unsigned int	lst_blksize;
 
-	unsigned long	lst_blocks;	/* Number 512-byte blocks allocated. */
-	unsigned long	__pad4;		/* future possible st_blocks high bits*/
+	unsigned long long lst_blocks;	/* Number 512-byte blocks allocated. */
 
-	unsigned long	lst_atime;
-	unsigned long	__pad5;
+	unsigned int	lst_atime;
+	unsigned int	__unused1;
 
-	unsigned long	lst_mtime;
-	unsigned long	__pad6;
+	unsigned int	lst_mtime;
+	unsigned int	__unused2;
 
-	unsigned long	lst_ctime;
-	unsigned long	__pad7;		/* will be high 32 bits of ctime someday */
+	unsigned int	lst_ctime;
+	unsigned int	__unused3;	/* will be high 32 bits of ctime someday */
 
-	unsigned long	__unused1;
-	unsigned long	__unused2;
+	unsigned long long lst_ino;
 };
 
 #endif /* !_LINUX_TYPES_H */
