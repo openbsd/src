@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_exec.c,v 1.6 1996/12/23 02:56:48 deraadt Exp $	*/
+/*	$OpenBSD: hpux_exec.c,v 1.7 1997/02/23 21:40:56 downsj Exp $	*/
 /*	$NetBSD: hpux_exec.c,v 1.3 1996/01/06 12:44:13 thorpej Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
 #include <machine/hpux_machdep.h>
 
 const char hpux_emul_path[] = "/emul/hpux";
-extern char sigcode[], esigcode[];
+extern char hpux_sigcode[], hpux_esigcode[];
 extern struct sysent hpux_sysent[];
 extern char *hpux_syscallnames[];
 extern int bsdtohpuxerrnomap[];
@@ -85,8 +85,8 @@ struct emul emul_hpux = {
 	copyargs,
 	setregs,
 	NULL,
-	sigcode,
-	esigcode,
+	hpux_sigcode,
+	hpux_esigcode,
 };
 
 int

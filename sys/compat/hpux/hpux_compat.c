@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.6 1997/01/27 00:00:03 downsj Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.7 1997/02/23 21:40:55 downsj Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.23 1996/01/06 12:44:11 thorpej Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ int bsdtohpuxerrnomap[NERR] = {
 /*80*/ BERR,BERR,  11
 };
 
-extern char sigcode[], esigcode[];
+extern char hpux_sigcode[], hpux_esigcode[];
 extern struct sysent hpux_sysent[];
 extern char *hpux_syscallnames[];
 
