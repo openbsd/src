@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.4 2004/06/25 11:03:28 art Exp $	*/
+/*	$OpenBSD: clock.c,v 1.5 2004/06/28 01:52:26 deraadt Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -508,7 +508,8 @@ i8254_initclocks()
 	 * XXX If you're doing strange things with multiple clocks, you might
 	 * want to keep track of clock handlers.
 	 */
-	isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK, clockintr,0,"clock");
+	isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK, clockintr,
+	    0, "clock");
 	isa_intr_establish(NULL, 8, IST_PULSE, IPL_CLOCK, rtcintr, 0, "rtc");
 
 	mc146818_write(NULL, MC_REGA, MC_BASE_32_KHz | MC_RATE_128_Hz);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.2 2004/06/25 11:03:28 art Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.3 2004/06/28 01:52:26 deraadt Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -635,7 +635,7 @@ pci_intr_establish(pc, ih, level, func, arg, what)
 	}
 #endif
 
-	return intr_establish(irq, pic, pin, IST_LEVEL, level, func, arg);
+	return intr_establish(irq, pic, pin, IST_LEVEL, level, func, arg, what);
 }
 
 void

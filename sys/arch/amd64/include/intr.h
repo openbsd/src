@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.4 2004/06/26 05:29:17 art Exp $	*/
+/*	$OpenBSD: intr.h,v 1.5 2004/06/28 01:52:26 deraadt Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -44,6 +44,8 @@
 
 #ifndef _LOCORE
 #include <machine/cpu.h>
+
+#include <sys/evcount.h>
 
 /*
  * Struct describing an interrupt source for a CPU. struct cpu_info
@@ -103,7 +105,7 @@ struct intrhand {
 	int	ih_slot;
 	struct cpu_info *ih_cpu;
 	int	ih_irq;
-	char	*ih_what;
+	struct evcount ih_count;
 };
 
 #define IMASK(ci,level) (ci)->ci_imask[(level)]
@@ -218,8 +220,9 @@ int x86_nmi(void);
 void intr_calculatemasks(struct cpu_info *);
 int intr_allocate_slot_cpu(struct cpu_info *, struct pic *, int, int *);
 int intr_allocate_slot(struct pic *, int, int, int, struct cpu_info **, int *,
-		       int *);
-void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *);
+	    int *);
+void *intr_establish(int, struct pic *, int, int, int, int (*)(void *),
+	    void *, char *);
 void intr_disestablish(struct intrhand *);
 void cpu_intr_init(struct cpu_info *);
 int intr_find_mpmapping(int bus, int pin, int *handle);

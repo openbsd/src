@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_machdep.c,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: pciide_machdep.c,v 1.2 2004/06/28 01:52:26 deraadt Exp $	*/
 /*	$NetBSD: pciide_machdep.c,v 1.2 1999/02/19 18:01:27 mycroft Exp $	*/
 
 /*
@@ -64,7 +64,8 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	void *cookie;
 
 	irq = PCIIDE_COMPAT_IRQ(chan);
-	cookie = isa_intr_establish(NULL, irq, IST_EDGE, IPL_BIO, func, arg, dev->dv_xname);
+	cookie = isa_intr_establish(NULL, irq, IST_EDGE, IPL_BIO, func, arg,
+	    dev->dv_xname);
 
 	return (cookie);
 }

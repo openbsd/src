@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.3 2004/06/25 17:27:01 andreas Exp $	*/
+/*	$OpenBSD: vector.S,v 1.4 2004/06/28 01:52:24 deraadt Exp $	*/
 /*	$NetBSD: vector.S,v 1.2 2003/05/04 23:46:41 fvdl Exp $	*/
 
 /*
@@ -414,7 +414,10 @@ IDTVEC(intr_/**/name/**/num)						;\
 	movq	%rsp, %rdi						;\
 8:	movl	%r12d,CPUVAR(ILEVEL)					;\
 	call	*IH_FUN(%rbx)		/* call it */			;\
-	movq	IH_NEXT(%rbx),%rbx	/* next handler in chain */	;\
+	orq	%rax,%rax		/* should it be counted? */	;\
+	jz	4f							;\
+	incq	IH_COUNT(%rbx)						;\
+4:	movq	IH_NEXT(%rbx),%rbx	/* next handler in chain */	;\
 	testq	%rbx,%rbx						;\
 	jnz	6b							;\
 5:									\

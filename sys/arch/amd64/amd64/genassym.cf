@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.6 2004/06/25 11:03:27 art Exp $
+#	$OpenBSD: genassym.cf,v 1.7 2004/06/28 01:52:24 deraadt Exp $
 
 #	Written by Artur Grabowski art@openbsd.org, Public Domain
 
@@ -125,6 +125,7 @@ member	ih_fun
 member	ih_arg
 member	ih_next
 member	ih_level
+member	IH_COUNT	ih_count.ec_count
 
 struct	ioapic_softc
 member	IOAPIC_SC_REG	sc_reg

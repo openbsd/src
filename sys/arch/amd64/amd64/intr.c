@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.3 2004/06/26 05:29:17 art Exp $	*/
+/*	$OpenBSD: intr.c,v 1.4 2004/06/28 01:52:24 deraadt Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -347,7 +347,7 @@ found:
 
 void *
 intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
-	       int (*handler)(void *), void *arg)
+	       int (*handler)(void *), void *arg, char *what)
 {
 	struct intrhand **p, *q, *ih;
 	struct cpu_info *ci;
@@ -438,6 +438,9 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	ih->ih_pin = pin;
 	ih->ih_cpu = ci;
 	ih->ih_slot = slot;
+	evcount_attach(&ih->ih_count, what, (void *)&ih->ih_level,
+	    &evcount_intr);
+
 	*p = ih;
 
 	intr_calculatemasks(ci);
@@ -525,6 +528,7 @@ intr_disestablish(struct intrhand *ih)
 			idt_vec_free(idtvec);
 	}
 
+	evcount_detach(&ih->ih_count);
 	free(ih, M_DEVBUF);
 
 	simple_unlock(&ci->ci_slock);
