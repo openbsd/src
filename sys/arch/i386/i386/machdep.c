@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.222 2003/03/14 22:05:43 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.223 2003/03/28 00:28:22 weingart Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1000,23 +1000,22 @@ winchip_cpu_setup(cpu_device, model, step)
  * Note, the VIA C3 Nehemia provides 4 internal 8-byte buffers, which
  * store random data, and can be accessed a lot quicker than waiting
  * for new data to be generated.  As we are using every 8th bit only
- * due to whitening, we only pull off 4 bytes worth of data here, to
- * help prevent stalling, and allow the RNG to generate new data in
- * parallel with anything else going on.
+ * due to whitening. Since the RNG generates in excess of 21KB/s at
+ * it's worst, collecting 64 bytes worth of entropy should not affect
+ * things significantly.
  *
- * Note, due to some weirdness in the RNG, we need at last 7 bytes
+ * Note, due to some weirdness in the RNG, we need at least 7 bytes
  * extra on the end of our buffer.  Also, there is an outside chance
  * that the VIA RNG can "wedge", as the generated bit-rate is variable.
- * Since the RNG generates in excess of 21KB/s at it's worst, this is
- * still significantly faster than the rate at which we are collecting
- * from it.  We could do all sorts of startup testing and things, but
- * frankly, I don't really see the point.
+ * We could do all sorts of startup testing and things, but
+ * frankly, I don't really see the point.  If the RNG wedges, then the
+ * chances of you having a defective CPU are very high.  Let it wedge.
  *
  * Adding to the whole confusion, in order to access the RNG, we need
  * to have FXSR support enabled, and the correct FPU enable bits must
- * be there to enable the FPU.  It would be nice if all this mumbo-
- * jumbo was not needed in order to use the RNG.  Oh well, life does
- * go on...
+ * be there to enable the FPU in kernel.  It would be nice if all this
+ * mumbo-jumbo was not needed in order to use the RNG.  Oh well, life
+ * does go on...
  */
 #define VIAC3_RNG_BUFSIZ	16		/* 32bit words */
 struct timeout viac3_rnd_tmo;
