@@ -1,0 +1,52 @@
+NOTES ON BUILDING LIBG++ AS A SHARED LIBRARY
+
+A shared library version of libg++-2.7.0 can be built using gcc-2.7.0 on
+the following platforms:
+
+Linux (using the ELF toolchain)
+Sparc running SunOS 4.x
+Alpha running OSF/1
+SGI running IRIX 5.x
+HPPA running HPUX 9.x
+All SVR4 targets (tested on Sparc Solaris and i486 UnixWare)
+
+To build a shared version of libg++ on one of these platforms, pass the
+--enable-shared flag to configure, and be sure to compile with gcc.
+
+In order to run a program built with your new shared library (including
+gperf and the tests), you may have to set the environment variable
+LD_LIBRARY_PATH to include the directory where it lives.
+
+If you are using an SVR4 system other than the ones mentioned above, please
+try running make check and let me (jason@cygnus.com) know whether or not it
+works.
+
+Discussion:
+----------
+
+Many shared library implementations have an idiosyncracy [bug ???] which
+requires anything that is declared in a shared library to be defined even
+if it isn't used.  CursesW.o declares functions that are defined in
+libcurses (and libtermcap under SunOS).  If these libraries do not exist as
+shared libraries (they do under Linux, OSF/1, IRIX, they do not on the
+others) and CursesW.o is incorporated into the ".so" file, these two
+libraries must be added to the link statement even when the CursesWindow
+class is not being used.  This situation can be alleviated by not including
+CursesW.o in the .so file; just edit the 'piclist' file in the libg++ build
+directory, remove CursesW.o, and run 'make' again.
+
+Under SunOS, you can add CursesW.o to a libg++.sa.2.7 file so that it will
+still be included by -lg++; on SVR4 platforms, you will have to put it in
+a separate library in order to access it.
+
+In addition, libstdc++.so and libg++.so contain a number of classes which
+use the math library.  Consequently, if a shared libm does not exist (it
+does under Linux, OSF/1, IRIX and Solaris, but not the others), either the
+math library must to added to the link command or you must compile with a
+flag that tells the linker to ignore unresolved references
+(-Wl,-assert,nodefinitions for SunOS, -Wl,-z,nodefs for SVR4).
+
+
+Jason Merrill (jason@cygnus.com)
+Thanks to Dr. Joseph E. Sacco (jsacco@ssl.com) for the original version of
+this note.

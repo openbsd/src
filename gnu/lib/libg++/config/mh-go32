@@ -1,0 +1,27 @@
+CC=i386-go32-gcc
+AR=i386-go32-ar
+RANLIB=i386-go32-ranlib
+CC_FOR_BUILD=gcc
+HOST_CC=gcc
+HOST_CFLAGS=
+CFLAGS=-O2 -fno-omit-frame-pointer
+HOST_PREFIX=foo
+HOST_PREFIX_1=foo
+RANLIB=i386-go32-ranlib
+AR=i386-go32-ar
+GCC_FOR_TARGET=${target_alias}-gcc
+CXX_FOR_TARGET=${target_alias}-gcc
+CC_FOR_TARGET=${target_alias}-gcc
+AS_FOR_TARGET=${target_alias}-as
+AR_FOR_TARGET=${target_alias}-ar
+NM_FOR_TARGET=${target_alias}-nm
+RANLIB_FOR_TARGET=${target_alias}-ranlib
+HOST_PREFIX=cross
+HOST_PREFIX_1=cross
+MAKEINFOFLAGS=--no-split
+
+INSTALL_DOSREL=install-dosrel
+
+
+
+

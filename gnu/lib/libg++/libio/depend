@@ -1,0 +1,351 @@
+
+PlotFile.o: $(srcdir)/PlotFile.cc \
+  $(srcdir)/PlotFile.h \
+  $(srcdir)/fstream.h \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h \
+  $(srcdir)/libio.h 
+SFile.o: $(srcdir)/SFile.cc \
+  $(srcdir)/SFile.h \
+  $(srcdir)/fstream.h \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h \
+  $(srcdir)/libio.h 
+builtinbuf.o: $(srcdir)/builtinbuf.cc \
+  $(srcdir)/builtinbuf.h \
+  $(srcdir)/streambuf.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/iostreamP.h \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h 
+editbuf.o: $(srcdir)/editbuf.cc \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/editbuf.h \
+  $(srcdir)/fstream.h \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h 
+filebuf.o: $(srcdir)/filebuf.cc \
+  $(srcdir)/iostreamP.h \
+  $(srcdir)/streambuf.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/builtinbuf.h
+fstream.o: $(srcdir)/fstream.cc \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/fstream.h \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h
+indstream.o: $(srcdir)/indstream.cc \
+  $(srcdir)/indstream.h \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h \
+  $(srcdir)/libio.h 
+ioassign.o: $(srcdir)/ioassign.cc \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h
+ioextend.o: $(srcdir)/ioextend.cc \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h \
+  $(srcdir)/libio.h 
+iomanip.o: $(srcdir)/iomanip.cc \
+  $(srcdir)/iomanip.h \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h \
+  $(srcdir)/libio.h 
+iostream.o: $(srcdir)/iostream.cc \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/floatio.h
+isgetline.o: $(srcdir)/isgetline.cc \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h 
+isgetsb.o: $(srcdir)/isgetsb.cc \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h 
+isscan.o: $(srcdir)/isscan.cc \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h 
+osform.o: $(srcdir)/osform.cc \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h 
+parsestream.o: $(srcdir)/parsestream.cc \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/parsestream.h \
+  $(srcdir)/streambuf.h 
+pfstream.o: $(srcdir)/pfstream.cc \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/pfstream.h \
+  $(srcdir)/fstream.h \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h \
+  $(srcdir)/procbuf.h
+procbuf.o: $(srcdir)/procbuf.cc \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/procbuf.h \
+  $(srcdir)/streambuf.h
+sbform.o: $(srcdir)/sbform.cc \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/streambuf.h 
+sbgetline.o: $(srcdir)/sbgetline.cc \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/streambuf.h
+sbscan.o: $(srcdir)/sbscan.cc \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/streambuf.h 
+stdiostream.o: $(srcdir)/stdiostream.cc \
+  $(srcdir)/stdiostream.h \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h
+stdstrbufs.o: $(srcdir)/stdstrbufs.cc \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/stdiostream.h \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h
+stdstreams.o: $(srcdir)/stdstreams.cc \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/streambuf.h \
+  $(srcdir)/iostream.h
+stream.o: $(srcdir)/stream.cc \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/stream.h \
+  $(srcdir)/iostream.h \
+  $(srcdir)/streambuf.h \
+  $(srcdir)/strstream.h \
+  $(srcdir)/strfile.h
+streambuf.o: $(srcdir)/streambuf.cc \
+  $(srcdir)/iostreamP.h \
+  $(srcdir)/streambuf.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h 
+strstream.o: $(srcdir)/strstream.cc \
+  $(srcdir)/iostreamP.h \
+  $(srcdir)/streambuf.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/strstream.h \
+  $(srcdir)/iostream.h \
+  $(srcdir)/strfile.h 
+cleanup.o: $(srcdir)/cleanup.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+filedoalloc.o: $(srcdir)/filedoalloc.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+fileops.o: $(srcdir)/fileops.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+floatconv.o: $(srcdir)/floatconv.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+genops.o: $(srcdir)/genops.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iofclose.o: $(srcdir)/iofclose.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iofdopen.o: $(srcdir)/iofdopen.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iofflush.o: $(srcdir)/iofflush.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iofgetpos.o: $(srcdir)/iofgetpos.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iofgets.o: $(srcdir)/iofgets.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iofopen.o: $(srcdir)/iofopen.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iofprintf.o: $(srcdir)/iofprintf.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iofputs.o: $(srcdir)/iofputs.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iofread.o: $(srcdir)/iofread.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iofscanf.o: $(srcdir)/iofscanf.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iofsetpos.o: $(srcdir)/iofsetpos.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+ioftell.o: $(srcdir)/ioftell.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iofwrite.o: $(srcdir)/iofwrite.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iogetdelim.o: $(srcdir)/iogetdelim.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iogetline.o: $(srcdir)/iogetline.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iogets.o: $(srcdir)/iogets.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+ioignore.o: $(srcdir)/ioignore.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iopadn.o: $(srcdir)/iopadn.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+ioperror.o: $(srcdir)/ioperror.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iopopen.o: $(srcdir)/iopopen.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+ioprims.o: $(srcdir)/ioprims.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+ioprintf.o: $(srcdir)/ioprintf.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+ioputs.o: $(srcdir)/ioputs.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+ioscanf.o: $(srcdir)/ioscanf.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+ioseekoff.o: $(srcdir)/ioseekoff.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+ioseekpos.o: $(srcdir)/ioseekpos.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iosetbuffer.o: $(srcdir)/iosetbuffer.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iosetvbuf.o: $(srcdir)/iosetvbuf.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iosprintf.o: $(srcdir)/iosprintf.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iosscanf.o: $(srcdir)/iosscanf.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iostrerror.o: $(srcdir)/iostrerror.c
+ioungetc.o: $(srcdir)/ioungetc.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+iovfprintf.o: $(srcdir)/iovfprintf.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/floatio.h
+iovfscanf.o: $(srcdir)/iovfscanf.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/floatio.h
+iovsprintf.o: $(srcdir)/iovsprintf.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/strfile.h
+iovsscanf.o: $(srcdir)/iovsscanf.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/strfile.h
+outfloat.o: $(srcdir)/outfloat.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+stdfiles.o: $(srcdir)/stdfiles.c \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h \
+  $(srcdir)/libio.h 
+strops.o: $(srcdir)/strops.c \
+  $(srcdir)/strfile.h \
+  $(srcdir)/libio.h \
+  $(srcdir)/libioP.h \
+  $(srcdir)/iolibio.h 

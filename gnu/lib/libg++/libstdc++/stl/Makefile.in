@@ -1,0 +1,8 @@
+#### package, host, target, and site dependent Makefile fragments come in here.
+##
+
+STL_OBJECTS = tempbuf.o tree.o random.o
+
+stl.list: stamp-picdir $(STL_OBJECTS)
+	@echo  "$(STL_OBJECTS)" >stl.list
+

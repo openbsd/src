@@ -1,0 +1,82 @@
+This is Info file libg++.info, produced by Makeinfo-1.55 from the input
+file /kalessin/giga/bothner/dist/devo/libg++/libg++.texi.
+
+START-INFO-DIR-ENTRY
+* Libg++: (libg++).             The g++ class library.
+END-INFO-DIR-ENTRY
+
+   This file documents the features and implementation of The GNU C++
+library
+
+   Copyright (C) 1988, 1991, 1992 Free Software Foundation, Inc.
+
+   Permission is granted to make and distribute verbatim copies of this
+manual provided the copyright notice and this permission notice are
+preserved on all copies.
+
+   Permission is granted to copy and distribute modified versions of
+this manual under the conditions for verbatim copying, provided also
+that the section entitled "GNU Library General Public License" is
+included exactly as in the original, and provided that the entire
+resulting derived work is distributed under the terms of a permission
+notice identical to this one.
+
+   Permission is granted to copy and distribute translations of this
+manual into another language, under the above conditions for modified
+versions, except that the section entitled "GNU Library General Public
+License" and this permission notice may be included in translations
+approved by the Free Software Foundation instead of in the original
+English.
+
+
+Indirect:
+libg++.info-1: 1265
+libg++.info-2: 41086
+libg++.info-3: 90357
+libg++.info-4: 139360
+libg++.info-5: 189194
+
+Tag Table:
+(Indirect)
+Node: Top1265
+Node: Copying3715
+Node: Contributors30614
+Node: Installation31801
+Node: Trouble32380
+Node: General32859
+Node: Conventions36600
+Node: OK39236
+Node: Proto41086
+Node: Representations55086
+Node: Expressions58688
+Node: Pix63053
+Node: Headers66086
+Node: Builtin68566
+Node: New71246
+Node: Stream74115
+Node: Obstack82360
+Node: AllocRing88656
+Node: String90357
+Node: Integer104071
+Node: Rational110330
+Node: Complex113113
+Node: Fix115190
+Node: Bit118528
+Node: Random129408
+Node: Data139360
+Node: Curses141399
+Node: List144273
+Node: LinkList151137
+Node: Vector153546
+Node: Plex158921
+Node: Stack168721
+Node: Queue170085
+Node: Deque171318
+Node: PQ172736
+Node: Set175059
+Node: Bag179326
+Node: Map182643
+Node: GetOpt185879
+Node: Projects189194
+
+End Tag Table

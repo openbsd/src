@@ -1,0 +1,4 @@
+Makefile
+g++dep
+etags
+config.status
