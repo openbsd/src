@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.17 2002/02/01 08:47:43 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.18 2002/02/08 23:24:08 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -139,7 +139,7 @@
 #ifndef _LOCORE
 #define	CONADDR	conaddr
 #define	CONUNIT	conunit
-#define	COM_FREQ	7272727
+#define	COM_FREQ	7372800
 extern hppa_hpa_t conaddr;
 extern int conunit;
 #endif
