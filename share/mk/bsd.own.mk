@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.61 2002/08/03 08:10:42 pvalchev Exp $
+#	$OpenBSD: bsd.own.mk,v 1.62 2002/08/11 23:13:10 art Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -31,7 +31,8 @@ AFS?=		yes
 DEBUGLIBS?=	no
 # Set toolchain to be able to know differences.
 .if (${MACHINE_ARCH} == "alpha" || ${MACHINE_ARCH} == "powerpc" || \
-     ${MACHINE_ARCH} == "hppa" || ${MACHINE_ARCH} == "sparc64")
+     ${MACHINE_ARCH} == "hppa" || ${MACHINE_ARCH} == "sparc64" || \
+     ${MACHINE_ARCH} == "sparc")
 ELF_TOOLCHAIN?=	yes
 .else
 ELF_TOOLCHAIN?=	no
@@ -117,6 +118,8 @@ NOPIC=
 #pic relocation flags.
 .if (${MACHINE_ARCH} == "sparc64")
 PICFLAG=-fPIC
+.endif
+.if (${MACHINE_ARCH} == "sparc64") || (${MACHINE_ARCH} == "sparc")
 ASPICFLAG=-KPIC
 .else
 ASPICFLAG=-k
