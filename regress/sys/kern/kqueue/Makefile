@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2003/12/02 05:48:48 mickey Exp $
+#	$OpenBSD: Makefile,v 1.10 2003/12/02 21:26:33 deraadt Exp $
 
 PROG=	kqueue-test
 CFLAGS+=-Wall
@@ -25,9 +25,5 @@ kq-pty: ${PROG}
 
 REGRESS_TARGETS=kq-pipe kq-fork kq-process kq-random kq-tun kq-pty
 .PHONY: ${REGRESS_TARGETS}
-
-clean:
-	@${SUDO} ifconfig tun0 -alias down
-	@${SUDO} ifconfig tun1 -alias down
 
 .include <bsd.regress.mk>
