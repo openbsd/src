@@ -45,6 +45,8 @@
 #include <sys/pool.h>
 #include <sys/mount.h>
 
+#include <compat/common/compat_util.h>
+
 #include <miscfs/procfs/procfs.h>
 
 #include <dev/systrace.h>
@@ -94,6 +96,8 @@ struct str_process {
 	struct fsystrace *parent;
 	struct str_policy *policy;
 
+	struct systrace_replace *replace;
+
 	int flags;
 	short answer;
 	short error;
@@ -111,6 +115,8 @@ int	systrace_detach(struct str_process *);
 int	systrace_answer(struct str_process *, struct systrace_answer *);
 int	systrace_io(struct str_process *, struct systrace_io *);
 int	systrace_policy(struct fsystrace *, struct systrace_policy *);
+int	systrace_preprepl(struct str_process *, struct systrace_replace *);
+int	systrace_replace(struct str_process *, size_t, register_t []);
 int	systrace_getcwd(struct fsystrace *, struct str_process *);
 
 int	systrace_processready(struct str_process *);
@@ -281,6 +287,11 @@ systracef_ioctl(fp, cmd, data, p)
 		break;
 	case STRIOCPOLICY:
 		break;
+ 	case STRIOCREPLACE:
+		pid = ((struct systrace_replace *)data)->strr_pid;
+		if (!pid)
+			ret = EINVAL;
+		break;
 	default:
 		ret = EINVAL;
 		break;
@@ -313,6 +324,9 @@ systracef_ioctl(fp, cmd, data, p)
 		break;
 	case STRIOCPOLICY:
 		ret = systrace_policy(fst, (struct systrace_policy *)data);
+		break;
+	case STRIOCREPLACE:
+		ret = systrace_preprepl(strp, (struct systrace_replace *)data);
 		break;
 	case STRIOCGETCWD:
 		ret = systrace_getcwd(fst, strp);
@@ -661,9 +675,15 @@ systrace_redirect(int code, struct proc *p, void *v, register_t *retval)
 			/* XXX - do I need to lock here? */
 			if (strp->answer == SYSTR_POLICY_NEVER)
 				error = strp->error;
-			else if (ISSET(strp->flags, STR_PROC_SYSCALLRES)) {
-				CLR(strp->flags, STR_PROC_SYSCALLRES);
-				report = 1;
+			else {
+				if (ISSET(strp->flags, STR_PROC_SYSCALLRES)) {
+					CLR(strp->flags, STR_PROC_SYSCALLRES);
+					report = 1;
+				}
+				/* Replace the arguments if necessary */
+				if (strp->replace != NULL) {
+					error = systrace_replace(strp, callp->sy_argsize, v);
+				}
 			}
 		}
 		break;
@@ -749,14 +769,8 @@ systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 		goto out;
 	}
 
-	if (ISSET(strp->flags, STR_PROC_ONQUEUE)) {
-		error = EINVAL;
+	if ((error = systrace_processready(strp)) != 0)
 		goto out;
-	}
-	if (!ISSET(strp->flags, STR_PROC_WAITANSWER)) {
-		error = EINVAL;
-		goto out;
-	}
 
 	strp->answer = ans->stra_policy;
 	strp->error = ans->stra_error;
@@ -1001,6 +1015,102 @@ systrace_attach(struct fsystrace *fst, pid_t pid)
 	return (error);
 }
 
+/* Prepare to replace arguments */
+
+int
+systrace_preprepl(struct str_process *strp, struct systrace_replace *repl)
+{
+	size_t len;
+	int i, ret = 0;
+
+	ret = systrace_processready(strp);
+	if (ret)
+		return (ret);
+
+	if (strp->replace != NULL)
+		free(strp->replace, M_XDATA);
+
+	if (repl->strr_nrepl < 0 || repl->strr_nrepl > SYSTR_MAXARGS)
+		return (EINVAL);
+
+	for (i = 0, len = 0; i < repl->strr_nrepl; i++) {
+		len += repl->strr_offlen[i];
+		if (repl->strr_offlen[i] == 0)
+			continue;
+		if (repl->strr_offlen[i] + repl->strr_off[i] > len)
+			return (EINVAL);
+	}
+
+	/* Make sure that the length adds up */
+	if (repl->strr_len != len)
+		return (EINVAL);
+
+	/* Check against a maximum length */
+	if (repl->strr_len > 2048)
+		return (EINVAL);
+
+	strp->replace = (struct systrace_replace *)
+	    malloc(sizeof(struct systrace_replace) + len, M_XDATA, M_WAITOK);
+
+	memcpy(strp->replace, repl, sizeof(struct systrace_replace));
+	ret = copyin(repl->strr_base, strp->replace + 1, len);
+	if (ret) {
+		free(strp->replace, M_XDATA);
+		strp->replace = NULL;
+		return (ret);
+	}
+
+	/* Adjust the offset */
+	repl = strp->replace;
+	repl->strr_base = (caddr_t)(repl + 1);
+
+	return (0);
+}
+
+/*
+ * Replace the arguments with arguments from the monitoring process.
+ */
+
+int
+systrace_replace(struct str_process *strp, size_t argsize, register_t args[])
+{
+	struct proc *p = strp->proc;
+	struct systrace_replace *repl = strp->replace;
+	caddr_t sg, kdata, udata, kbase, ubase;
+	int i, maxarg, ind, ret = 0;
+
+	maxarg = argsize/sizeof(register_t);
+	sg = stackgap_init(p->p_emul);
+	ubase = stackgap_alloc(&sg, repl->strr_len);
+
+	kbase = repl->strr_base;
+	for (i = 0; i < maxarg && i < repl->strr_nrepl; i++) {
+		ind = repl->strr_argind[i];
+		if (ind < 0 || ind >= maxarg) {
+			ret = EINVAL;
+			goto out;
+		}
+		if (repl->strr_offlen[i] == 0) {
+			args[ind] = repl->strr_off[i];
+			continue;
+		}
+		kdata = kbase + repl->strr_off[i];
+		udata = ubase + repl->strr_off[i];
+		if (copyout(kdata, udata, repl->strr_offlen[i])) {
+			ret = EINVAL;
+			goto out;
+		}
+
+		/* Replace the argument with the new address */
+		args[ind] = (register_t)udata;
+	}
+
+ out:
+	free(repl, M_XDATA);
+	strp->replace = NULL;
+	return (ret);
+}
+
 struct str_process *
 systrace_findpid(struct fsystrace *fst, pid_t pid)
 {
@@ -1050,6 +1160,8 @@ systrace_detach(struct str_process *strp)
 
 	if (strp->policy)
 		systrace_closepolicy(fst, strp->policy);
+	if (strp->replace)
+		free(strp->replace, M_XDATA);
 	pool_put(&systr_proc_pl, strp);
 
 	return (error);
@@ -1064,7 +1176,7 @@ systrace_closepolicy(struct fsystrace *fst, struct str_policy *policy)
 	fst->npolicies--;
 
 	if (policy->nsysent)
-		FREE(policy->sysent, M_XDATA);
+		free(policy->sysent, M_XDATA);
 
 	TAILQ_REMOVE(&fst->policies, policy, next);
 
@@ -1113,7 +1225,7 @@ systrace_newpolicy(struct fsystrace *fst, int maxents)
 
 	memset((caddr_t)pol, 0, sizeof(struct str_policy));
 
-	MALLOC(pol->sysent, u_char *, maxents * sizeof(u_char),
+	pol->sysent = (u_char *)malloc(maxents * sizeof(u_char),
 	    M_XDATA, M_WAITOK);
 	pol->nsysent = maxents;
 	for (i = 0; i < maxents; i++)

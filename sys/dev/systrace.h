@@ -118,6 +118,16 @@ struct systrace_policy {
 #define strp_code	strp_data.assign.code
 #define strp_policy	strp_data.assign.policy
 
+struct systrace_replace {
+	pid_t strr_pid;
+	int strr_nrepl;
+	caddr_t	strr_base;	/* Base memory */
+	size_t strr_len;	/* Length of memory */
+	int strr_argind[SYSTR_MAXARGS];
+	size_t strr_off[SYSTR_MAXARGS];
+	size_t strr_offlen[SYSTR_MAXARGS];
+};
+
 #define STRIOCATTACH	_IOW('s', 101, pid_t)
 #define STRIOCDETACH	_IOW('s', 102, pid_t)
 #define STRIOCANSWER	_IOW('s', 103, struct systrace_answer)
@@ -126,6 +136,7 @@ struct systrace_policy {
 #define STRIOCGETCWD	_IOW('s', 106, pid_t)
 #define STRIOCRESCWD	_IO('s', 107)
 #define STRIOCREPORT	_IOW('s', 108, pid_t)
+#define STRIOCREPLACE	_IOW('s', 109, struct systrace_replace)
 
 #define SYSTR_POLICY_ASK	0
 #define SYSTR_POLICY_PERMIT	1
