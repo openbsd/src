@@ -1,0 +1,65 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1998/03/11 20:06:32 maja Exp $
+
+MAN=	lynx.1
+CLEANFILES=	lynx.1
+LDFLAGS+=	-s ${LDSTATIC}
+GNUCFLAGS=	CFLAGS="${CFLAGS}" LDFLAGS="${LDFLAGS}"
+
+all:	config.status lynx.cat1
+	${MAKE} ${GNUCFLAGS}
+
+.FORCE:	.IGNORE
+
+.include <bsd.own.mk>
+
+.ifdef GLOBAL_AUTOCONF_CACHE
+CF=	--cache-file=${GLOBAL_AUTOCONF_CACHE}
+.else
+CF=
+.endif
+
+config: .FORCE
+.ifndef GLOBAL_AUTOCONF_CACHE
+	-rm -f config.cache
+.endif
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	sh ${.CURDIR}/configure --prefix=/usr --libdir=/etc ${CF}
+
+config.status:
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	sh ${.CURDIR}/configure --prefix=/usr --libdir=/etc ${CF}
+
+lynx.1:	${.CURDIR}/lynx.man
+	-cp -p ${.ALLSRC} ${.TARGET}
+
+.ifdef NOMAN
+maninstall: 
+	@echo NOMAN is set
+.endif
+
+install: maninstall
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	    lynx ${DESTDIR}/usr/bin/lynx
+
+distribution:
+	${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+            ${.CURDIR}/lynx.cfg ${DESTDIR}/etc/lynx.cfg
+
+clean cleandir:
+	-@if [ -e makefile ]; then ${MAKE} distclean; fi
+	rm -f ${CLEANFILES}
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.ifndef NOMAN
+.include <bsd.man.mk>
+.endif

@@ -2527,7 +2527,7 @@ next*)
 	CFLAGS="$CFLAGS -DNEXT -DXMOSAIC_HACK"
 	;;
 openbsd*)
-	LIBS="$LIBS -lcompat"
+	LIBS="$LIBS -lcompat -ltermlib"
 	;;
 os2*)
 	# We make sure -Zexe is not used -- it would interfere with @PROG_EXT@
