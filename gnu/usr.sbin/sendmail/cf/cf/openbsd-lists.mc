@@ -6,7 +6,7 @@ divert(-1)
 #
 
 divert(0)dnl
-VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.6 2001/09/11 19:02:48 millert Exp $')
+VERSIONID(`$OpenBSD: openbsd-lists.mc,v 1.7 2001/11/29 18:47:58 millert Exp $')
 OSTYPE(openbsd)dnl
 dnl
 dnl Advertise ourselves as ``openbsd.org''
@@ -42,6 +42,15 @@ dnl
 dnl Wait 4 days before giving up and bouncing the message
 define(`confTO_QUEUERETURN', `4d')dnl
 dnl
+dnl SSL certificate paths
+define(`CERT_DIR', `MAIL_SETTINGS_DIR`'certs')dnl
+define(`confCACERT_PATH', `CERT_DIR')dnl
+define(`confCACERT', `CERT_DIR/mycert.pem')dnl
+define(`confSERVER_CERT', `CERT_DIR/mycert.pem')dnl
+define(`confSERVER_KEY', `CERT_DIR/mykey.pem')dnl
+define(`confCLIENT_CERT', `CERT_DIR/mycert.pem')dnl
+define(`confCLIENT_KEY', `CERT_DIR/mykey.pem')dnl
+dnl
 dnl Make mail appear to be from openbsd.org
 MASQUERADE_AS(openbsd.org)
 FEATURE(masquerade_envelope)
@@ -58,8 +67,15 @@ dnl FEATURE(dnsbl, `dul.maps.vix.com', `Dialup - see http://www.mail-abuse.org/d
 dnl FEATURE(dnsbl, `relays.mail-abuse.org', `Open spam relay - see http://www.mail-abuse.org/rss/')dnl
 dnl
 dnl List the mailers we support
+FEATURE(`no_default_msa')dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
+DAEMON_OPTIONS(`Family=inet, address=0.0.0.0, Name=MTA')dnl
+DAEMON_OPTIONS(`Family=inet6, address=::, Name=MTA6, M=O')dnl
+DAEMON_OPTIONS(`Family=inet, address=0.0.0.0, Port=587, Name=MSA, M=E')dnl
+DAEMON_OPTIONS(`Family=inet6, address=::, Port=587, Name=MSA6, M=O, M=E')dnl
+CLIENT_OPTIONS(`Family=inet6, Address=::')dnl
+CLIENT_OPTIONS(`Family=inet, Address=0.0.0.0')dnl
 dnl
 dnl Finally, we have the local cf-style goo
 LOCAL_CONFIG
@@ -67,6 +83,7 @@ LOCAL_CONFIG
 Cw openbsd.org
 Cw openbsd.net
 Cw openbsd.com
+Cw openssh.org
 Cw anonopenbsd.cs.colorado.edu
 #
 #  Regular expression to reject:
