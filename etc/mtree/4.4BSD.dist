@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.102 2001/01/17 04:55:56 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.103 2001/01/17 21:31:55 brad Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -214,6 +214,11 @@ kerberosIV		gname=bin uname=root mode=0755
 # ./usr/include/protocols
 protocols		gname=bin uname=root mode=0755
 # ./usr/include/protocols
+..
+
+# ./usr/include/readline
+readline	gname=bin uname=root mode=0755
+# ./usr/include/readline
 ..
 
 # ./usr/include/rpc
