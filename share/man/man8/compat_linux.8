@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_linux.8,v 1.21 2001/11/13 13:54:26 mpech Exp $
+.\"	$OpenBSD: compat_linux.8,v 1.22 2002/05/09 06:09:05 jasoni Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -401,3 +401,11 @@ Some binaries will require it to be mounted using the
 option.
 .Sh BUGS
 The information about Linux distributions may become outdated.
+.Pp
+Linux ELF binaries may be detected as svr4 binaries. 
+This can usually be fixed with
+.Xr elf2olf 1
+by setting the OLF opsys tag to Linux (eg: elf2olf -o linux <linux_binary>).
+.Pp
+.Nm
+is currently only supported on the i386.
