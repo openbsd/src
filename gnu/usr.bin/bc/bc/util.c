@@ -45,9 +45,12 @@ strcopyof (str)
      char *str;
 {
   char *temp;
+  size_t len;
 
-  temp = (char *) bc_malloc (strlen (str)+1);
-  return (strcpy (temp,str));
+  len = strlen (str)+1;
+  temp = (char *) bc_malloc (len);
+  strlcpy (temp,str,len);
+  return (temp);
 }
 
 
@@ -91,13 +94,18 @@ make_arg_str (args, len)
 {
   char *temp;
   char sval[20];
+  size_t l;
 
   /* Recursive call. */
   if (args != NULL)
-    temp = make_arg_str (args->next, len+12);
+    {
+      l = len+12;
+      temp = make_arg_str (args->next, l);
+    }
   else
     {
-      temp = (char *) bc_malloc (len);
+      l = len;
+      temp = (char *) bc_malloc (l);
       *temp = 0;
       return temp;
     }
@@ -105,15 +113,15 @@ make_arg_str (args, len)
   /* Add the current number to the end of the string. */
   if (args->arg_is_var)
     if (len != 1) 
-      sprintf (sval, "*%d,", args->av_name);
+      snprintf (sval, sizeof sval, "*%d,", args->av_name);
     else
-      sprintf (sval, "*%d", args->av_name);
+      snprintf (sval, sizeof sval, "*%d", args->av_name);
   else
     if (len != 1) 
-      sprintf (sval, "%d,", args->av_name);
+      snprintf (sval, sizeof sval, "%d,", args->av_name);
     else
-      sprintf (sval, "%d", args->av_name);
-  temp = strcat (temp, sval);
+      snprintf (sval, sizeof sval, "%d", args->av_name);
+  strlcat (temp, sval, l);
   return (temp);
 }
 
@@ -815,7 +823,7 @@ rt_error (mesg, va_alist)
 #else
   va_start (args);
 #endif
-  vsprintf (error_mesg, mesg, args);
+  vsnprintf (error_mesg, sizeof error_mesg, mesg, args);
   va_end (args);
   
   fprintf (stderr, "Runtime error (func=%s, adr=%d): %s\n",
@@ -851,7 +859,7 @@ rt_warn (mesg, va_alist)
 #else
   va_start (args);
 #endif
-  vsprintf (error_mesg, mesg, args);
+  vsnprintf (error_mesg, sizeof error_mesg, mesg, args);
   va_end (args);
 
   fprintf (stderr, "Runtime warning (func=%s, adr=%d): %s\n",

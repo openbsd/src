@@ -554,7 +554,7 @@ rt_error (mesg, va_alist)
 #else
   va_start (args);
 #endif
-  vsprintf (error_mesg, mesg, args);
+  vsnprintf (error_mesg, sizeof error_mesg, mesg, args);
   va_end (args);
   
   fprintf (stderr, "Runtime error: %s\n", error_mesg);
@@ -588,7 +588,7 @@ rt_warn (mesg, va_alist)
 #else
   va_start (args);
 #endif
-  vsprintf (error_mesg, mesg, args);
+  vsnprintf (error_mesg, sizeof error_mesg, mesg, args);
   va_end (args);
 
   fprintf (stderr, "Runtime warning: %s\n", error_mesg);

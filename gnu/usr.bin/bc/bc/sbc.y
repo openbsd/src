@@ -138,7 +138,7 @@ statement 		: Warranty
 				yyerror ("Break outside a for/while");
 			      else
 				{
-				  sprintf (genstr, "J%1d:", break_label);
+				  snprintf (genstr, sizeof genstr, "J%1d:", break_label);
 				  generate (genstr);
 				}
 			    }
@@ -156,26 +156,26 @@ statement 		: Warranty
 			  '(' expression ';'
 			    {
 			      $4 = next_label++;
-			      sprintf (genstr, "pN%1d:", $4);
+			      snprintf (genstr, sizeof genstr, "pN%1d:", $4);
 			      generate (genstr);
 			    }
 			  relational_expression ';'
 			    {
 			      $7 = next_label++;
-			      sprintf (genstr, "B%1d:J%1d:", $7, break_label);
+			      snprintf (genstr, sizeof genstr, "B%1d:J%1d:", $7, break_label);
 			      generate (genstr);
 			      $<i_value>$ = next_label++;
-			      sprintf (genstr, "N%1d:", $<i_value>$);
+			      snprintf (genstr, sizeof genstr, "N%1d:", $<i_value>$);
 			      generate (genstr);
 			    }
 			  expression ')'
 			    {
-			      sprintf (genstr, "pJ%1d:N%1d:", $4, $7);
+			      snprintf (genstr, sizeof genstr, "pJ%1d:N%1d:", $4, $7);
 			      generate (genstr);
 			    }
 			  statement
 			    {
-			      sprintf (genstr, "J%1d:N%1d:", $<i_value>9,
+			      snprintf (genstr, sizeof genstr, "J%1d:N%1d:", $<i_value>9,
 				       break_label);
 			      generate (genstr);
 			      break_label = $1;
@@ -183,30 +183,30 @@ statement 		: Warranty
 			| If '(' relational_expression ')' 
 			    {
 			      $3 = next_label++;
-			      sprintf (genstr, "Z%1d:", $3);
+			      snprintf (genstr, sizeof genstr, "Z%1d:", $3);
 			      generate (genstr);
 			    }
 			  statement
 			    {
-			      sprintf (genstr, "N%1d:", $3); 
+			      snprintf (genstr, sizeof genstr, "N%1d:", $3); 
 			      generate (genstr);
 			    }
 			| While 
 			    {
 			      $1 = next_label++;
-			      sprintf (genstr, "N%1d:", $1);
+			      snprintf (genstr, sizeof genstr, "N%1d:", $1);
 			      generate (genstr);
 			    }
 			'(' relational_expression 
 			    {
 			      $4 = break_label; 
 			      break_label = next_label++;
-			      sprintf (genstr, "Z%1d:", break_label);
+			      snprintf (genstr, sizeof genstr, "Z%1d:", break_label);
 			      generate (genstr);
 			    }
 			')' statement
 			    {
-			      sprintf (genstr, "J%1d:N%1d:", $1, break_label);
+			      snprintf (genstr, sizeof genstr, "J%1d:N%1d:", $1, break_label);
 			      generate (genstr);
 			      break_label = $4;
 			    }
@@ -217,7 +217,7 @@ function 		: Define NAME '(' opt_parameter_list ')' '{'
        			  NEWLINE opt_auto_define_list 
 			    {
 			      check_params ($4,$8);
-			      sprintf (genstr, "F%d,%s.%s[", lookup($2,FUNCT),
+			      snprintf (genstr, sizeof genstr, "F%d,%s.%s[", lookup($2,FUNCT),
 				       arg_str ($4), arg_str ($8));
 			      generate (genstr);
 			      free_args ($4);
@@ -305,9 +305,9 @@ expression		: named_expression ASSIGN_OP
 			      if ($2 != '=')
 				{
 				  if ($1 < 0)
-				    sprintf (genstr, "DL%d:", -$1);
+				    snprintf (genstr, sizeof genstr, "DL%d:", -$1);
 				  else
-				    sprintf (genstr, "l%d:", $1);
+				    snprintf (genstr, sizeof genstr, "l%d:", $1);
 				  generate (genstr);
 				}
 			    }
@@ -316,13 +316,13 @@ expression		: named_expression ASSIGN_OP
 			      $$ = 0;
 			      if ($2 != '=')
 				{
-				  sprintf (genstr, "%c", $2);
+				  snprintf (genstr, sizeof genstr, "%c", $2);
 				  generate (genstr);
 				}
 			      if ($1 < 0)
-				sprintf (genstr, "S%d:", -$1);
+				snprintf (genstr, sizeof genstr, "S%d:", -$1);
 			      else
-				sprintf (genstr, "s%d:", $1);
+				snprintf (genstr, sizeof genstr, "s%d:", $1);
 			      generate (genstr);
 			    }
 			| expression '+' expression
@@ -343,9 +343,9 @@ expression		: named_expression ASSIGN_OP
 			    {
 			      $$ = 1;
 			      if ($1 < 0)
-				sprintf (genstr, "L%d:", -$1);
+				snprintf (genstr, sizeof genstr, "L%d:", -$1);
 			      else
-				sprintf (genstr, "l%d:", $1);
+				snprintf (genstr, sizeof genstr, "l%d:", $1);
 			      generate (genstr);
 			    }
 			| NUMBER
@@ -374,12 +374,12 @@ expression		: named_expression ASSIGN_OP
 			      $$ = 1;
 			      if ($3 != NULL)
 				{ 
-				  sprintf (genstr, "C%d,%s:", lookup($1,FUNCT),
+				  snprintf (genstr, sizeof genstr, "C%d,%s:", lookup($1,FUNCT),
 					   arg_str ($3));
 				  free_args ($3);
 				}
 			      else
-				  sprintf (genstr, "C%d:", lookup($1,FUNCT));
+				  snprintf (genstr, sizeof genstr, "C%d:", lookup($1,FUNCT));
 			      generate (genstr);
 			    }
 			| INCR_DECR named_expression
@@ -388,16 +388,16 @@ expression		: named_expression ASSIGN_OP
 			      if ($2 < 0)
 				{
 				  if ($1 == '+')
-				    sprintf (genstr, "DA%d:L%d:", -$2, -$2);
+				    snprintf (genstr, sizeof genstr, "DA%d:L%d:", -$2, -$2);
 				  else
-				    sprintf (genstr, "DM%d:L%d:", -$2, -$2);
+				    snprintf (genstr, sizeof genstr, "DM%d:L%d:", -$2, -$2);
 				}
 			      else
 				{
 				  if ($1 == '+')
-				    sprintf (genstr, "i%d:l%d:", $2, $2);
+				    snprintf (genstr, sizeof genstr, "i%d:l%d:", $2, $2);
 				  else
-				    sprintf (genstr, "d%d:l%d:", $2, $2);
+				    snprintf (genstr, sizeof genstr, "d%d:l%d:", $2, $2);
 				}
 			      generate (genstr);
 			    }
@@ -406,21 +406,21 @@ expression		: named_expression ASSIGN_OP
 			      $$ = 1;
 			      if ($1 < 0)
 				{
-				  sprintf (genstr, "DL%d:x", -$1);
+				  snprintf (genstr, sizeof genstr, "DL%d:x", -$1);
 				  generate (genstr); 
 				  if ($2 == '+')
-				    sprintf (genstr, "A%d:", -$1);
+				    snprintf (genstr, sizeof genstr, "A%d:", -$1);
 				  else
-				    sprintf (genstr, "M%d:", -$1);
+				    snprintf (genstr, sizeof genstr, "M%d:", -$1);
 				}
 			      else
 				{
-				  sprintf (genstr, "l%d:", $1);
+				  snprintf (genstr, sizeof genstr, "l%d:", $1);
 				  generate (genstr);
 				  if ($2 == '+')
-				    sprintf (genstr, "i%d:", $1);
+				    snprintf (genstr, sizeof genstr, "i%d:", $1);
 				  else
-				    sprintf (genstr, "d%d:", $1);
+				    snprintf (genstr, sizeof genstr, "d%d:", $1);
 				}
 			      generate (genstr);
 			    }

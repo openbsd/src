@@ -1022,7 +1022,7 @@ case 24:
 				yyerror ("Break outside a for/while");
 			      else
 				{
-				  sprintf (genstr, "J%1d:", break_label);
+				  snprintf (genstr, sizeof genstr, "J%1d:", break_label);
 				  generate (genstr);
 				}
 			    ;
@@ -1035,7 +1035,7 @@ case 25:
 				yyerror ("Continue outside a for");
 			      else
 				{
-				  sprintf (genstr, "J%1d:", continue_label);
+				  snprintf (genstr, sizeof genstr, "J%1d:", continue_label);
 				  generate (genstr);
 				}
 			    ;
@@ -1070,9 +1070,9 @@ case 31:
 				warn ("Comparison in first for expression");
 			      yyvsp[-1].i_value = next_label++;
 			      if (yyvsp[-1].i_value < 0)
-				sprintf (genstr, "N%1d:", yyvsp[-1].i_value);
+				snprintf (genstr, sizeof genstr, "N%1d:", yyvsp[-1].i_value);
 			      else
-				sprintf (genstr, "pN%1d:", yyvsp[-1].i_value);
+				snprintf (genstr, sizeof genstr, "pN%1d:", yyvsp[-1].i_value);
 			      generate (genstr);
 			    ;
     break;}
@@ -1081,11 +1081,11 @@ case 32:
 {
 			      if (yyvsp[-1].i_value < 0) generate ("1");
 			      yyvsp[-1].i_value = next_label++;
-			      sprintf (genstr, "B%1d:J%1d:", yyvsp[-1].i_value, break_label);
+			      snprintf (genstr, sizeof genstr, "B%1d:J%1d:", yyvsp[-1].i_value, break_label);
 			      generate (genstr);
 			      yyval.i_value = continue_label;
 			      continue_label = next_label++;
-			      sprintf (genstr, "N%1d:", continue_label);
+			      snprintf (genstr, sizeof genstr, "N%1d:", continue_label);
 			      generate (genstr);
 			    ;
     break;}
@@ -1095,16 +1095,16 @@ case 33:
 			      if (yyvsp[-1].i_value > 1)
 				warn ("Comparison in third for expression");
 			      if (yyvsp[-1].i_value < 0)
-				sprintf (genstr, "J%1d:N%1d:", yyvsp[-7].i_value, yyvsp[-4].i_value);
+				snprintf (genstr, sizeof genstr, "J%1d:N%1d:", yyvsp[-7].i_value, yyvsp[-4].i_value);
 			      else
-				sprintf (genstr, "pJ%1d:N%1d:", yyvsp[-7].i_value, yyvsp[-4].i_value);
+				snprintf (genstr, sizeof genstr, "pJ%1d:N%1d:", yyvsp[-7].i_value, yyvsp[-4].i_value);
 			      generate (genstr);
 			    ;
     break;}
 case 34:
 #line 235 "bc.y"
 {
-			      sprintf (genstr, "J%1d:N%1d:",
+			      snprintf (genstr, sizeof genstr, "J%1d:N%1d:",
 				       continue_label, break_label);
 			      generate (genstr);
 			      break_label = yyvsp[-13].i_value;
@@ -1116,14 +1116,14 @@ case 35:
 {
 			      yyvsp[-1].i_value = if_label;
 			      if_label = next_label++;
-			      sprintf (genstr, "Z%1d:", if_label);
+			      snprintf (genstr, sizeof genstr, "Z%1d:", if_label);
 			      generate (genstr);
 			    ;
     break;}
 case 36:
 #line 250 "bc.y"
 {
-			      sprintf (genstr, "N%1d:", if_label); 
+			      snprintf (genstr, sizeof genstr, "N%1d:", if_label); 
 			      generate (genstr);
 			      if_label = yyvsp[-5].i_value;
 			    ;
@@ -1132,7 +1132,7 @@ case 37:
 #line 256 "bc.y"
 {
 			      yyvsp[0].i_value = next_label++;
-			      sprintf (genstr, "N%1d:", yyvsp[0].i_value);
+			      snprintf (genstr, sizeof genstr, "N%1d:", yyvsp[0].i_value);
 			      generate (genstr);
 			    ;
     break;}
@@ -1141,14 +1141,14 @@ case 38:
 {
 			      yyvsp[0].i_value = break_label; 
 			      break_label = next_label++;
-			      sprintf (genstr, "Z%1d:", break_label);
+			      snprintf (genstr, sizeof genstr, "Z%1d:", break_label);
 			      generate (genstr);
 			    ;
     break;}
 case 39:
 #line 269 "bc.y"
 {
-			      sprintf (genstr, "J%1d:N%1d:", yyvsp[-7].i_value, break_label);
+			      snprintf (genstr, sizeof genstr, "J%1d:N%1d:", yyvsp[-7].i_value, break_label);
 			      generate (genstr);
 			      break_label = yyvsp[-4].i_value;
 			    ;
@@ -1178,7 +1178,7 @@ case 48:
 {
 			      warn ("else clause in if statement");
 			      yyvsp[0].i_value = next_label++;
-			      sprintf (genstr, "J%d:N%1d:", yyvsp[0].i_value, if_label); 
+			      snprintf (genstr, sizeof genstr, "J%d:N%1d:", yyvsp[0].i_value, if_label); 
 			      generate (genstr);
 			      if_label = yyvsp[0].i_value;
 			    ;
@@ -1188,7 +1188,7 @@ case 50:
 {
 			      /* Check auto list against parameter list? */
 			      check_params (yyvsp[-5].a_value,yyvsp[0].a_value);
-			      sprintf (genstr, "F%d,%s.%s[",
+			      snprintf (genstr, sizeof genstr, "F%d,%s.%s[",
 				       lookup(yyvsp[-7].s_value,FUNCTDEF), 
 				       arg_str (yyvsp[-5].a_value), arg_str (yyvsp[0].a_value));
 			      generate (genstr);
@@ -1259,7 +1259,7 @@ case 65:
 case 66:
 #line 356 "bc.y"
 {
-			      sprintf (genstr, "K%d:", -lookup (yyvsp[-2].s_value,ARRAY));
+			      snprintf (genstr, sizeof genstr, "K%d:", -lookup (yyvsp[-2].s_value,ARRAY));
 			      generate (genstr);
 			      yyval.a_value = nextarg (NULL,1,FALSE);
 			    ;
@@ -1274,7 +1274,7 @@ case 67:
 case 68:
 #line 367 "bc.y"
 {
-			      sprintf (genstr, "K%d:", -lookup (yyvsp[-2].s_value,ARRAY));
+			      snprintf (genstr, sizeof genstr, "K%d:", -lookup (yyvsp[-2].s_value,ARRAY));
 			      generate (genstr);
 			      yyval.a_value = nextarg (yyvsp[-4].a_value,1,FALSE);
 			    ;
@@ -1306,9 +1306,9 @@ case 73:
 			      if (yyvsp[0].c_value != '=')
 				{
 				  if (yyvsp[-1].i_value < 0)
-				    sprintf (genstr, "DL%d:", -yyvsp[-1].i_value);
+				    snprintf (genstr, sizeof genstr, "DL%d:", -yyvsp[-1].i_value);
 				  else
-				    sprintf (genstr, "l%d:", yyvsp[-1].i_value);
+				    snprintf (genstr, sizeof genstr, "l%d:", yyvsp[-1].i_value);
 				  generate (genstr);
 				}
 			    ;
@@ -1319,13 +1319,13 @@ case 74:
 			      if (yyvsp[0].i_value > 1) warn("comparison in assignment");
 			      if (yyvsp[-2].c_value != '=')
 				{
-				  sprintf (genstr, "%c", yyvsp[-2].c_value);
+				  snprintf (genstr, sizeof genstr, "%c", yyvsp[-2].c_value);
 				  generate (genstr);
 				}
 			      if (yyvsp[-3].i_value < 0)
-				sprintf (genstr, "S%d:", -yyvsp[-3].i_value);
+				snprintf (genstr, sizeof genstr, "S%d:", -yyvsp[-3].i_value);
 			      else
-				sprintf (genstr, "s%d:", yyvsp[-3].i_value);
+				snprintf (genstr, sizeof genstr, "s%d:", yyvsp[-3].i_value);
 			      generate (genstr);
 			      yyval.i_value = 0;
 			    ;
@@ -1335,14 +1335,14 @@ case 75:
 {
 			      warn("&& operator");
 			      yyvsp[0].i_value = next_label++;
-			      sprintf (genstr, "DZ%d:p", yyvsp[0].i_value);
+			      snprintf (genstr, sizeof genstr, "DZ%d:p", yyvsp[0].i_value);
 			      generate (genstr);
 			    ;
     break;}
 case 76:
 #line 426 "bc.y"
 {
-			      sprintf (genstr, "DZ%d:p1N%d:", yyvsp[-2].i_value, yyvsp[-2].i_value);
+			      snprintf (genstr, sizeof genstr, "DZ%d:p1N%d:", yyvsp[-2].i_value, yyvsp[-2].i_value);
 			      generate (genstr);
 			      yyval.i_value = yyvsp[-3].i_value | yyvsp[0].i_value;
 			    ;
@@ -1352,7 +1352,7 @@ case 77:
 {
 			      warn("|| operator");
 			      yyvsp[0].i_value = next_label++;
-			      sprintf (genstr, "B%d:", yyvsp[0].i_value);
+			      snprintf (genstr, sizeof genstr, "B%d:", yyvsp[0].i_value);
 			      generate (genstr);
 			    ;
     break;}
@@ -1361,7 +1361,7 @@ case 78:
 {
 			      int tmplab;
 			      tmplab = next_label++;
-			      sprintf (genstr, "B%d:0J%d:N%d:1N%d:",
+			      snprintf (genstr, sizeof genstr, "B%d:0J%d:N%d:1N%d:",
 				       yyvsp[-2].i_value, tmplab, yyvsp[-2].i_value, tmplab);
 			      generate (genstr);
 			      yyval.i_value = yyvsp[-3].i_value | yyvsp[0].i_value;
@@ -1459,9 +1459,9 @@ case 88:
 {
 			      yyval.i_value = 1;
 			      if (yyvsp[0].i_value < 0)
-				sprintf (genstr, "L%d:", -yyvsp[0].i_value);
+				snprintf (genstr, sizeof genstr, "L%d:", -yyvsp[0].i_value);
 			      else
-				sprintf (genstr, "l%d:", yyvsp[0].i_value);
+				snprintf (genstr, sizeof genstr, "l%d:", yyvsp[0].i_value);
 			      generate (genstr);
 			    ;
     break;}
@@ -1493,14 +1493,14 @@ case 91:
 			      yyval.i_value = 1;
 			      if (yyvsp[-1].a_value != NULL)
 				{ 
-				  sprintf (genstr, "C%d,%s:",
+				  snprintf (genstr, sizeof genstr, "C%d,%s:",
 					   lookup (yyvsp[-3].s_value,FUNCT),
 					   call_str (yyvsp[-1].a_value));
 				  free_args (yyvsp[-1].a_value);
 				}
 			      else
 				{
-				  sprintf (genstr, "C%d:", lookup (yyvsp[-3].s_value,FUNCT));
+				  snprintf (genstr, sizeof genstr, "C%d:", lookup (yyvsp[-3].s_value,FUNCT));
 				}
 			      generate (genstr);
 			    ;
@@ -1512,16 +1512,16 @@ case 92:
 			      if (yyvsp[0].i_value < 0)
 				{
 				  if (yyvsp[-1].c_value == '+')
-				    sprintf (genstr, "DA%d:L%d:", -yyvsp[0].i_value, -yyvsp[0].i_value);
+				    snprintf (genstr, sizeof genstr, "DA%d:L%d:", -yyvsp[0].i_value, -yyvsp[0].i_value);
 				  else
-				    sprintf (genstr, "DM%d:L%d:", -yyvsp[0].i_value, -yyvsp[0].i_value);
+				    snprintf (genstr, sizeof genstr, "DM%d:L%d:", -yyvsp[0].i_value, -yyvsp[0].i_value);
 				}
 			      else
 				{
 				  if (yyvsp[-1].c_value == '+')
-				    sprintf (genstr, "i%d:l%d:", yyvsp[0].i_value, yyvsp[0].i_value);
+				    snprintf (genstr, sizeof genstr, "i%d:l%d:", yyvsp[0].i_value, yyvsp[0].i_value);
 				  else
-				    sprintf (genstr, "d%d:l%d:", yyvsp[0].i_value, yyvsp[0].i_value);
+				    snprintf (genstr, sizeof genstr, "d%d:l%d:", yyvsp[0].i_value, yyvsp[0].i_value);
 				}
 			      generate (genstr);
 			    ;
@@ -1532,21 +1532,21 @@ case 93:
 			      yyval.i_value = 1;
 			      if (yyvsp[-1].i_value < 0)
 				{
-				  sprintf (genstr, "DL%d:x", -yyvsp[-1].i_value);
+				  snprintf (genstr, sizeof genstr, "DL%d:x", -yyvsp[-1].i_value);
 				  generate (genstr); 
 				  if (yyvsp[0].c_value == '+')
-				    sprintf (genstr, "A%d:", -yyvsp[-1].i_value);
+				    snprintf (genstr, sizeof genstr, "A%d:", -yyvsp[-1].i_value);
 				  else
-				      sprintf (genstr, "M%d:", -yyvsp[-1].i_value);
+				      snprintf (genstr, sizeof genstr, "M%d:", -yyvsp[-1].i_value);
 				}
 			      else
 				{
-				  sprintf (genstr, "l%d:", yyvsp[-1].i_value);
+				  snprintf (genstr, sizeof genstr, "l%d:", yyvsp[-1].i_value);
 				  generate (genstr);
 				  if (yyvsp[0].c_value == '+')
-				    sprintf (genstr, "i%d:", yyvsp[-1].i_value);
+				    snprintf (genstr, sizeof genstr, "i%d:", yyvsp[-1].i_value);
 				  else
-				    sprintf (genstr, "d%d:", yyvsp[-1].i_value);
+				    snprintf (genstr, sizeof genstr, "d%d:", yyvsp[-1].i_value);
 				}
 			      generate (genstr);
 			    ;
@@ -1685,7 +1685,7 @@ yyerrlab:   /* here on detecting error */
 	  msg = (char *) malloc(size + 15);
 	  if (msg != 0)
 	    {
-	      strcpy(msg, "parse error");
+	      strlcpy(msg, "parse error", size + 15);
 
 	      if (count < 5)
 		{
@@ -1694,9 +1694,10 @@ yyerrlab:   /* here on detecting error */
 		       x < (sizeof(yytname) / sizeof(char *)); x++)
 		    if (yycheck[x + yyn] == x)
 		      {
-			strcat(msg, count == 0 ? ", expecting `" : " or `");
-			strcat(msg, yytname[x]);
-			strcat(msg, "'");
+			strlcat(msg, count == 0 ? ", expecting `" : " or `",
+			    size + 15);
+			strlcat(msg, yytname[x], size + 15);
+			strlcat(msg, "'", size + 15);
 			count++;
 		      }
 		}
