@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.59 2002/12/01 13:57:10 todd Exp $
+$OpenBSD: usbdevs,v 1.60 2003/03/14 18:04:23 todd Exp $
 /* $NetBSD: usbdevs,v 1.280 2002/11/05 12:13:40 cjs Exp $ */
 
 /*
@@ -529,6 +529,7 @@ product CATC ANDROMEDA		0x1237	Andromeda hub
 
 /* CASIO products */
 product CASIO QV		0x1001	QV DigitalCamera
+product	CASIO BE300		0x2002	BE-300 PDA
 product	CASIO NAMELAND		0x4001	CASIO Nameland EZ-USB
 
 /* CCYU Technology products */
