@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.20 2004/11/18 16:10:08 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.21 2005/03/10 19:24:30 otto Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -235,6 +235,7 @@ int ppc_cpuspeed(int *);
 #define	PPC_CPU_MPC7400		12
 #define	PPC_CPU_IBM750FX	0x7000
 #define	PPC_CPU_MPC7410		0x800c
+#define	PPC_CPU_MPC7447A	0x8003
 #define	PPC_CPU_MPC7450		0x8000
 #define	PPC_CPU_MPC7455		0x8001
 

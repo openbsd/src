@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.20 2004/11/18 16:10:10 miod Exp $ */
+/*	$OpenBSD: cpu.c,v 1.21 2005/03/10 19:24:30 otto Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -133,6 +133,9 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	case PPC_CPU_MPC7400:
 		snprintf(cpu_model, sizeof(cpu_model), "7400");
 		break;
+	case PPC_CPU_MPC7447A:
+		snprintf(cpu_model, sizeof(cpu_model), "7447A");
+		break;
 	case PPC_CPU_IBM750FX:
 		snprintf(cpu_model, sizeof(cpu_model), "750FX");
 		break;
@@ -154,7 +157,7 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	}
 	snprintf(cpu_model + strlen(cpu_model),
 	    sizeof(cpu_model) - strlen(cpu_model),
-	    " (Revision %x)", pvr & 0xffff);
+	    " (Revision 0x%x)", pvr & 0xffff);
 	printf(": %s", cpu_model);
 
 	/* This should only be executed on openfirmware systems... */
