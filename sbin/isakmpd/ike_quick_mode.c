@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.19 1999/07/07 22:09:54 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.90 1999/06/07 00:02:12 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.20 1999/08/05 22:42:04 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.93 1999/07/25 09:12:36 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -1112,8 +1112,19 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
        * -- Michael Paddon (mwp@aba.net.au)
        */
 
+      ie->flags = IPSEC_EXCH_FLAG_NO_ID;
+
       /* Get initiator address.  */
       msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
+      ie->id_ci_sz = ISAKMP_ID_DATA_OFF
+	+ sizeof ((struct sockaddr_in *)dst)->sin_addr.s_addr;
+      ie->id_ci = malloc (ie->id_ci_sz);
+      if (!ie->id_ci)
+	{
+	  log_error ("responder_recv_HASH_SA_NONCE: malloc (%d) failed",
+		     ie->id_ci_sz);
+	  goto cleanup;
+	}
       SET_ISAKMP_ID_TYPE (ie->id_ci, IPSEC_ID_IPV4_ADDR);
       memcpy (ie->id_ci + ISAKMP_ID_DATA_OFF,
 	      &((struct sockaddr_in *)dst)->sin_addr.s_addr,
@@ -1121,6 +1132,15 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 
       /* Get responder address.  */
       msg->transport->vtbl->get_src (msg->transport, &src, &srclen);
+      ie->id_cr_sz = ISAKMP_ID_DATA_OFF
+	+ sizeof ((struct sockaddr_in *)dst)->sin_addr.s_addr;
+      ie->id_cr = malloc (ie->id_cr_sz);
+      if (!ie->id_cr)
+	{
+	  log_error ("responder_recv_HASH_SA_NONCE: malloc (%d) failed",
+		     ie->id_cr_sz);
+	  goto cleanup;
+	}
       SET_ISAKMP_ID_TYPE (ie->id_cr, IPSEC_ID_IPV4_ADDR);
       memcpy (ie->id_cr + ISAKMP_ID_DATA_OFF,
 	      &((struct sockaddr_in *)src)->sin_addr.s_addr,
@@ -1274,7 +1294,7 @@ responder_send_HASH_SA_NONCE (struct message *msg)
     return -1;
 
   /* If the initiator client ID's were acceptable, just mirror them back.  */
-  if (ie->id_ci)
+  if (!(ie->flags & IPSEC_EXCH_FLAG_NO_ID))
     {
       sz = ie->id_ci_sz;
       id = malloc (sz);
