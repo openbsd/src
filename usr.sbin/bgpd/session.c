@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.145 2004/04/25 07:16:24 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.146 2004/04/25 08:06:00 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1776,7 +1776,8 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			}
 			/* find peers to be deleted */
 			for (p = peers; p != NULL; p = p->next)
-				if (p->conf.reconf_action == RECONF_NONE)
+				if (p->conf.reconf_action == RECONF_NONE &&
+				    !p->conf.cloned)
 					p->conf.reconf_action = RECONF_DELETE;
 			free(nconf);
 			nconf = NULL;
