@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.57 2000/11/16 04:30:01 ericj Exp $
+#	$OpenBSD: GENERIC,v 1.58 2000/11/16 04:50:18 ericj Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -17,6 +17,7 @@ option		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 option		DEC_EB164	# EB164:	AlphaPC 164
 option		DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 option		DEC_550		# Miata:	Digital Personal Workstation
+option		DEC_6600	# EV6:		264DP OEM Board
 
 option		PMAP_NEW
 option		UVM
@@ -39,6 +40,10 @@ config		bsd	swap generic
 
 mainbus0 at	root
 cpu*	at	mainbus0
+
+# EV6 Tsunami Core Logic
+tsc*	at	mainbus0
+
 
 # TurboChannel host bus adapter support
 tcasic*	at	mainbus0
@@ -64,12 +69,14 @@ fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 apecs*	at	mainbus?
 cia*	at	mainbus?
 lca*	at	mainbus?
+tsp*	at	tsc?
 
 # PCI bus support
 pci*	at	apecs?
 pci*	at	cia?
 pci*	at	lca?
 pci*	at	ppb?
+pci*	at	tsp?
 
 # PCI devices
 #ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI
