@@ -1,4 +1,4 @@
-/*	$OpenBSD: scores.c,v 1.3 1998/09/24 06:45:07 pjanzen Exp $	*/
+/*	$OpenBSD: scores.c,v 1.4 2000/01/21 05:33:19 pjanzen Exp $	*/
 /*	$NetBSD: scores.c,v 1.2 1995/04/22 07:42:38 cgd Exp $	*/
 
 /*-
@@ -99,7 +99,7 @@ static void
 getscores(fpp)
 	FILE **fpp;
 {
-	int sd, mint, lck, mask;
+	int sd, mint, lck, mask, i;
 	char *mstr, *human;
 	FILE *sf;
 
@@ -141,6 +141,10 @@ getscores(fpp)
 	nscores = fread(scores, sizeof(scores[0]), MAXHISCORES, sf);
 	if (ferror(sf))
 		err(1, "error reading %s", _PATH_SCOREFILE);
+	for (i = 0; i < nscores; i++)
+		if (scores[i].hs_level < MINLEVEL ||
+		    scores[i].hs_level > MAXLEVEL)
+			errx(1, "scorefile %s corrupt", _PATH_SCOREFILE);
 
 	if (fpp)
 		*fpp = sf;
@@ -204,7 +208,7 @@ savescore(level)
 		rewind(sf);
 		if (fwrite(scores, sizeof(*sp), nscores, sf) != nscores ||
 		    fflush(sf) == EOF)
-			warnx("error writing %s: %s -- %s\n",
+			warnx("error writing %s: %s\n\t-- %s",
 			    _PATH_SCOREFILE, strerror(errno),
 			    "high scores may be damaged");
 	}
@@ -402,6 +406,9 @@ showscores(level)
 			(void)printf("\n");
 		}
 	}
+
+	if (nscores == 0)
+		printf("\t\t\t      - none to date.\n");
 }
 
 static void
@@ -414,13 +421,13 @@ printem(level, offset, hs, n, me)
 	register struct highscore *sp;
 	int nrows, row, col, item, i, highlight;
 	char buf[100];
-#define	TITLE "Rank  Score   Name     (points/level)"
+#define	TITLE "Rank  Score   Name      (points/level)"
 
 	/*
 	 * This makes a nice two-column sort with headers, but it's a bit
 	 * convoluted...
 	 */
-	printf("%s   %s\n", TITLE, n > 1 ? TITLE : "");
+	printf("%s  %s\n", TITLE, n > 1 ? TITLE : "");
 
 	highlight = 0;
 	nrows = (n + 1) / 2;
@@ -435,10 +442,9 @@ printem(level, offset, hs, n, me)
 				(void)putchar('\n');
 				continue;
 			}
-			(void)printf(item + offset < 10 ? "  " : " ");
 			sp = &hs[item];
 			(void)sprintf(buf,
-			    "%d%c %6d  %-11s (%d on %d)",
+			    "%3d%c %6d  %-11s (%6d on %d)",
 			    item + offset, sp->hs_time ? '*' : ' ',
 			    sp->hs_score * sp->hs_level,
 			    sp->hs_name, sp->hs_score, sp->hs_level);
