@@ -185,7 +185,13 @@ writedisklabel(dev, strat, lp, osdep)
 			goto done;
 		}
 	}
-	error = ESRCH;
+	/* Write it in the regular place. */
+	*(struct disklabel *)bp->b_data = *lp;
+	bp->b_flags = B_BUSY | B_WRITE;
+	(*strat)(bp);
+	error = biowait(bp);
+	goto done;
+
 done:
 	brelse(bp);
 	return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.6 1997/08/08 21:46:42 niklas Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.7 1997/10/02 00:58:08 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.9 1997/04/01 03:12:13 scottr Exp $	*/
 
 /*
@@ -199,7 +199,13 @@ writedisklabel(dev, strat, lp, osdep)
 			goto done;
 		}
 	}
-	error = ESRCH;
+	/* Write it in the regular place. */
+	*(struct disklabel *)bp->b_data = *lp;
+	bp->b_flags = B_BUSY | B_WRITE;
+	(*strat)(bp);
+	error = biowait(bp);
+	goto done;
+
 done:
 	brelse(bp);
 	return (error);
