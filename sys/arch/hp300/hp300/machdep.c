@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.56 2001/08/18 20:21:10 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.57 2001/08/19 17:06:25 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -42,8 +42,6 @@
  *
  *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
-
-#define HP300_NEWKVM		/* Write generic m68k format kcore dumps. */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,9 +90,7 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
-#ifdef HP300_NEWKVM
 #include <machine/kcore.h>
-#endif	/* HP300_NEWKVM */
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
@@ -824,9 +820,7 @@ boot(howto)
 u_long	dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
-#ifdef HP300_NEWKVM
 cpu_kcore_hdr_t cpu_kcore_hdr;
-#endif	/* HP300_NEWKVM */
 
 /*
  * This is called by configure to set dumplo and dumpsize.
@@ -857,14 +851,12 @@ dumpconf()
 	 */
 	dumpsize = physmem;
 
-#ifdef HP300_NEWKVM
 	/* hp300 only uses a single segment. */
 	cpu_kcore_hdr.ram_segs[0].start = lowram;
 	cpu_kcore_hdr.ram_segs[0].size = ctob(dumpsize);
 	cpu_kcore_hdr.mmutype = mmutype;
 	cpu_kcore_hdr.kernel_pa = lowram;
 	cpu_kcore_hdr.sysseg_pa = pmap_kernel()->pm_stpa;
-#endif	/* HP300_NEWKVM */
 
 	/* Always skip the first block, in case there is a label there. */
 	if (dumplo < ctod(1))
@@ -890,11 +882,9 @@ dumpsys()
 	int pg;			/* page being dumped */
 	paddr_t maddr;		/* PA being dumped */
 	int error;		/* error code from (*dump)() */
-#ifdef HP300_NEWKVM
 	kcore_seg_t *kseg_p;
 	cpu_kcore_hdr_t *chdr_p;
 	char dump_hdr[dbtob(1)];	/* XXX assume hdr fits in 1 block */
-#endif	/* HP300_NEWKVM */
 	extern int msgbufmapped;
 
 	/* XXX initialized here because of gcc lossage */
@@ -923,7 +913,6 @@ dumpsys()
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
-#ifdef HP300_NEWKVM
 	kseg_p = (kcore_seg_t *)dump_hdr;
 	chdr_p = (cpu_kcore_hdr_t *)&dump_hdr[ALIGN(sizeof(*kseg_p))];
 	bzero(dump_hdr, sizeof(dump_hdr));
@@ -939,10 +928,8 @@ dumpsys()
 	 */
 
 	*chdr_p = cpu_kcore_hdr;
-#endif	/* HP300_NEWKVM */
 
 	printf("dump ");
-#ifdef HP300_NEWKVM
 	maddr = cpu_kcore_hdr.ram_segs[0].start;
 	/* Dump the header. */
 	error = (*dump) (dumpdev, blkno++, (caddr_t)dump_hdr, dbtob(1));
@@ -974,9 +961,6 @@ dumpsys()
 			printf("error %d\n", error);
 			return;
 	}
-#else
-	maddr = lowram;
-#endif	/* HP300_NEWKVM */
 	for (pg = 0; pg < dumpsize; pg++) {
 #define NPGMB	(1024*1024/NBPG)
 		/* print out how many MBs we have dumped */
@@ -1089,26 +1073,6 @@ badbaddr(addr)
 	return(0);
 }
 
-#ifdef PANICBUTTON
-/*
- * Declare these so they can be patched.
- */
-int panicbutton = 1;	/* non-zero if panic buttons are enabled */
-int candbdiv = 2;	/* give em half a second (hz / candbdiv) */
-
-void	candbtimer __P((void *));
-
-int crashandburn;
-
-void
-candbtimer(arg)
-	void *arg;
-{
-
-	crashandburn = 0;
-}
-#endif /* PANICBUTTON */
-
 static int innmihand;	/* simple mutex */
 
 /*
@@ -1144,20 +1108,6 @@ nmihand(frame)
 		} else
 			printf("\n");
 #else
-#ifdef PANICBUTTON
-		if (panicbutton) {
-			if (crashandburn) {
-				crashandburn = 0;
-				printf(": CRASH AND BURN!\n");
-				panic("forced crash");
-			} else {
-				/* Start the crashandburn sequence */
-				printf("\n");
-				crashandburn = 1;
-				timeout(candbtimer, NULL, hz / candbdiv);
-			}
-		} else
-#endif /* PANICBUTTON */
 			printf(": ignoring\n");
 #endif /* DDB */
 
@@ -1169,7 +1119,7 @@ nmihand(frame)
 	/* panic?? */
 	printf("unexpected level 7 interrupt ignored\n");
 
- nmihand_out:
+nmihand_out:
 	innmihand = 0;
 }
 
