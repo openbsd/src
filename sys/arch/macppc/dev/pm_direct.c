@@ -1,4 +1,4 @@
-/*	$OpenBSD: pm_direct.c,v 1.10 2003/05/11 19:41:10 deraadt Exp $	*/
+/*	$OpenBSD: pm_direct.c,v 1.11 2003/07/02 22:03:08 drahn Exp $	*/
 /*	$NetBSD: pm_direct.c,v 1.9 2000/06/08 22:10:46 tsubai Exp $	*/
 
 /*
@@ -500,12 +500,12 @@ pm_intr_pm2()
 	switch ((u_int)(pmdata.data[2] & 0xff)) {
 	case 0x00:		/* 1 sec interrupt? */
 		break;
-	case 0x80:		/* 1 sec interrupt? */
+	case PMU_INT_TICK:	/* 1 sec interrupt? */
 		break;
-	case 0x08:		/* Brightness/Contrast button on LCD panel */
+	case PMU_INT_SNDBRT:	/* Brightness/Contrast button on LCD panel */
 		break;
-	case 0x10:		/* ADB data that were requested by TALK command */
-	case 0x14:
+	case PMU_INT_ADB:	/* ADB data requested by TALK command */
+	case PMU_INT_ADB|PMU_INT_ADB_AUTO:
 		pm_adb_get_TALK_result(&pmdata);
 		break;
 	case 0x16:		/* ADB device event */
