@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.76 2003/01/09 02:50:00 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.77 2003/02/26 08:17:59 david Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1687,7 +1687,7 @@ exchange_add_certs (struct message *msg)
    * Without IDs we cannot handle this yet. Keep the aca_list around for 
    * a later step/retry to see if we got the ID by then. 
    * Note: A 'return -1' breaks X509-auth interop in the responder case
-   *       with some IPSec clients that send CERTREQs early (ex SSH Sentinel).
+   *       with some IPsec clients that send CERTREQs early (ex SSH Sentinel).
    */
   if (!id)
     return 0;
