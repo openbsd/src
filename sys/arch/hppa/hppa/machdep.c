@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.5 1999/04/20 20:55:38 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.6 1999/05/21 17:46:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -178,6 +178,7 @@ u_int	cpu_ticksnum, cpu_ticksdenom, cpu_hzticks;
 dev_t	bootdev;
 int	totalphysmem, physmem, resvmem, esym;
 struct user *proc0paddr;
+struct proc *fpu_curproc;
 int copr_sfu_config;
 int fpcopr_version;
 
