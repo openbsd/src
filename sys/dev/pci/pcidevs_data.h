@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.338 2000/10/26 21:58:45 aaron Exp 
+ *		OpenBSD: pcidevs,v 1.339 2000/10/29 00:48:18 aaron Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3151,6 +3151,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Macronix",
 	    "PMAC 98715",
+	},
+	{
+	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98727,
+	    0,
+	    "Macronix",
+	    "PMAC 98727",
 	},
 	{
 	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX86250,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.338 2000/10/26 21:58:45 aaron Exp 
+ *		OpenBSD: pcidevs,v 1.339 2000/10/29 00:48:18 aaron Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1253,6 +1253,7 @@
 /* Macronix */
 #define	PCI_PRODUCT_MACRONIX_MX98713	0x0512		/* PMAC 98713 */
 #define	PCI_PRODUCT_MACRONIX_MX98715	0x0531		/* PMAC 98715 */
+#define	PCI_PRODUCT_MACRONIX_MX98727	0x0532		/* PMAC 98727 */
 #define	PCI_PRODUCT_MACRONIX_MX86250	0x8625		/* MX86250 */
 
 /* Madge Networks products */
