@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.10 1998/08/24 05:32:10 millert Exp $	*/
+/*	$OpenBSD: kvm.c,v 1.11 1999/11/12 19:12:09 art Exp $	*/
 /*	$NetBSD: kvm.c,v 1.2 1996/05/13 02:30:22 thorpej Exp $	*/
 
 /*-
@@ -512,7 +512,8 @@ kvm_read(kd, kva, buf, len)
 		 * device and let the active kernel do the address translation.
 		 */
 		errno = 0;
-		if (lseek(kd->vmfd, (off_t)kva, 0) == -1 && errno != 0) {
+		if (lseek(kd->vmfd, (off_t)kva, SEEK_SET) == -1 &&
+		    errno != 0) {
 			_kvm_err(kd, 0, "invalid address (%x)", kva);
 			return (-1);
 		}
@@ -535,7 +536,8 @@ kvm_read(kd, kva, buf, len)
 			if (cc > len)
 				cc = len;
 			errno = 0;
-			if (lseek(kd->pmfd, (off_t)pa, 0) == -1 && errno != 0) {
+			if (lseek(kd->pmfd, (off_t)pa, SEEK_SET) == -1 &&
+			    errno != 0) {
 				_kvm_syserr(kd, 0, _PATH_MEM);
 				break;
 			}
@@ -575,7 +577,8 @@ kvm_write(kd, kva, buf, len)
 		 * Just like kvm_read, only we write.
 		 */
 		errno = 0;
-		if (lseek(kd->vmfd, (off_t)kva, 0) == -1 && errno != 0) {
+		if (lseek(kd->vmfd, (off_t)kva, SEEK_SET) == -1 &&
+		    errno != 0) {
 			_kvm_err(kd, 0, "invalid address (%x)", kva);
 			return (-1);
 		}
