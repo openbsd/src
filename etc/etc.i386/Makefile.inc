@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.8 1997/09/25 02:00:51 weingart Exp $
+#	$OpenBSD: Makefile.inc,v 1.9 1997/09/25 02:01:53 deraadt Exp $
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 
 .ifdef DESTDIR
@@ -12,7 +12,7 @@ bsd:
 	    ${DESTDIR}/snapshot/bsd
 
 notes:
-	cp ${.CURDIR}/INSTALL.* ${DESTDIR}
+	cp ${.CURDIR}/INSTALL.* ${DESTDIR}/snapshot
 
 distrib:
 	cd ${.CURDIR}/../distrib && make cleandir && \
