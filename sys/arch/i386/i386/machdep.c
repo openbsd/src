@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.80 1998/02/18 21:13:48 marc Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.81 1998/02/22 21:35:27 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -215,7 +215,7 @@ static	long ioport_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 static	long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 struct	extent *ioport_ex;
 struct	extent *iomem_ex;
-static	ioport_malloc_safe;
+static	int ioport_malloc_safe;
 
 caddr_t	allocsys __P((caddr_t));
 void	setup_buffers __P((vm_offset_t *));
@@ -435,12 +435,13 @@ allocsys(v)
 	 * buffers.  We allocate 1/2 as many swap buffer headers as file
 	 * i/o buffers.
 	 */
-	if (bufpages == 0)
+	if (bufpages == 0) {
 		if (physmem < btoc(2 * 1024 * 1024))
 			bufpages = physmem / (10 * CLSIZE);
 		else
 			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
 			    ((100/BUFCACHEPERCENT) * CLSIZE);
+	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
@@ -1483,15 +1484,14 @@ setsegment(sd, base, limit, type, dpl, def32, gran)
 }
 
 #define	IDTVEC(name)	__CONCAT(X, name)
-extern	IDTVEC(div),     IDTVEC(dbg),     IDTVEC(nmi),     IDTVEC(bpt),
-	IDTVEC(ofl),     IDTVEC(bnd),     IDTVEC(ill),     IDTVEC(dna),
-	IDTVEC(dble),    IDTVEC(fpusegm), IDTVEC(tss),     IDTVEC(missing),
-	IDTVEC(stk),     IDTVEC(prot),    IDTVEC(page),    IDTVEC(rsvd),
-	IDTVEC(fpu),     IDTVEC(align),
-	IDTVEC(syscall), IDTVEC(osyscall);
+extern int IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
+    IDTVEC(bnd), IDTVEC(ill), IDTVEC(dna), IDTVEC(dble), IDTVEC(fpusegm),
+    IDTVEC(tss), IDTVEC(missing), IDTVEC(stk), IDTVEC(prot), IDTVEC(page),
+    IDTVEC(rsvd), IDTVEC(fpu), IDTVEC(align), IDTVEC(syscall),
+    IDTVEC(osyscall);
 
 #if defined(I586_CPU)
-extern IDTVEC(f00f_redirect);
+extern int IDTVEC(f00f_redirect);
 pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 
 int cpu_f00f_bug = 0;

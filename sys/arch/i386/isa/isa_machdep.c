@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa_machdep.c,v 1.27 1998/01/20 18:40:20 niklas Exp $	*/
+/*	$OpenBSD: isa_machdep.c,v 1.28 1998/02/22 21:35:30 niklas Exp $	*/
 /*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
@@ -151,7 +151,7 @@ extern	vm_offset_t avail_end;
 
 #define	IDTVEC(name)	__CONCAT(X,name)
 /* default interrupt vector table entries */
-typedef (*vector) __P((void));
+typedef int (*vector) __P((void));
 extern vector IDTVEC(intr)[], IDTVEC(fast)[];
 void isa_strayintr __P((int));
 void intr_calculatemasks __P((void));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.18 1998/01/04 12:11:37 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.19 1998/02/22 21:35:33 niklas Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -631,7 +631,7 @@ pctty(Dev_t dev)
 int
 pcioctl(Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 {
-	register error;
+	register int error;
 	register struct tty *tp;
 
 	if((tp = get_pccons(dev)) == NULL)

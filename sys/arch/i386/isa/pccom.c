@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.20 1998/02/05 16:48:28 deraadt Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.21 1998/02/22 21:35:31 niklas Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -651,15 +651,15 @@ comattach(parent, self, aux)
 	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_14);
 	delay(100);
 	if (ISSET(bus_space_read_1(iot, ioh, com_iir), IIR_FIFO_MASK) ==
-	    IIR_FIFO_MASK)
-		if (ISSET(bus_space_read_1(iot, ioh, com_fifo), FIFO_TRIGGER_14) ==
-		    FIFO_TRIGGER_14) {
+	    IIR_FIFO_MASK) {
+		if (ISSET(bus_space_read_1(iot, ioh, com_fifo),
+		    FIFO_TRIGGER_14) == FIFO_TRIGGER_14) {
 			SET(sc->sc_hwflags, COM_HW_FIFO);
 			printf(": ns16550a, working fifo\n");
 			sc->sc_fifolen = 16;
 		} else
 			printf(": ns16550, broken fifo\n");
-	else
+	} else
 		printf(": ns8250 or ns16450, no fifo\n");
 	bus_space_write_1(iot, ioh, com_fifo, 0);
 #ifdef COM_HAYESP
