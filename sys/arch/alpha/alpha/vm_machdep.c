@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.29 2003/10/18 20:14:40 jmc Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.30 2003/11/17 10:07:53 miod Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -254,10 +254,10 @@ cpu_swapin(p)
 
 /*
  * cpu_swapout is called immediately before a process's 'struct user'
- * and kernel stack are unwired (which are in turn done immediately
- * before it's P_INMEM flag is cleared).  If the process is the
- * current owner of the floating point unit, the FP state has to be
- * saved, so that it goes out with the pcb, which is in the user area.
+ * and kernel stack are unwired, and after the process' P_INMEM flag
+ * is cleared).  If the process is the current owner of the floating
+ * point unit, the FP state has to be saved, so that it goes out with
+ * the pcb, which is in the user area.
  */
 void
 cpu_swapout(p)
