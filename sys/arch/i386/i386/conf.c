@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.70 2001/06/21 13:21:46 nate Exp $	*/
+/*	$OpenBSD: conf.c,v 1.71 2001/06/23 03:30:37 matthieu Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -230,6 +230,11 @@ cdev_decl(cztty);
 #include "wsmux.h"
 cdev_decl(wsmux);
 
+#ifdef USER_PCICONF
+#include "pci.h"
+cdev_decl(pci);
+#endif
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -328,6 +333,11 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMUX, wsmux),	/* 69: ws multiplexor */
 	cdev_crypto_init(NCRYPTO,crypto), /* 70: /dev/crypto */
 	cdev_tty_init(NCZ,cztty),	/* 71: Cyclades-Z serial port */
+#ifdef USER_PCICONF
+	cdev_pci_init(NPCI,pci),        /* 71: PCI user */
+#else
+	cdev_notdef(),
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.20 2001/03/29 19:56:33 drahn Exp $ */
+/*	$OpenBSD: conf.c,v 1.21 2001/06/23 03:30:38 matthieu Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -183,6 +183,11 @@ cdev_decl(ucom);
 #include "wsmux.h"
 cdev_decl(wsmux);
 
+#ifdef USER_PCICONF
+#include "pci.h"
+cdev_decl(pci);
+#endif
+
 #include "audio.h"
 cdev_decl(audio);
 
@@ -267,6 +272,11 @@ struct cdevsw cdevsw[] = {
 	cdev_mouse_init(NWSMOUSE,	/* 69: mice */
 		wsmouse),
 	cdev_mouse_init(NWSMUX, wsmux),	/* 70: ws multiplexor */
+#ifdef USER_PCICONF
+	cdev_pci_init(NPCI,pci),        /* 71: PCI user */
+#else
+	cdev_notdef(),
+#endif
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 

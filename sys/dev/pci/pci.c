@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.16 2001/01/27 05:02:39 mickey Exp $	*/
+/*	$OpenBSD: pci.c,v 1.17 2001/06/23 03:30:37 matthieu Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -46,8 +46,19 @@
 int pcimatch __P((struct device *, void *, void *));
 void pciattach __P((struct device *, struct device *, void *));
 
+#ifdef USER_PCICONF
+struct pci_softc {
+	struct device sc_dev;
+	pci_chipset_tag_t sc_pc;
+};
+#endif
+
 struct cfattach pci_ca = {
+#ifndef USER_PCICONF
 	sizeof(struct device), pcimatch, pciattach
+#else
+	sizeof(struct pci_softc), pcimatch, pciattach
+#endif
 };
 
 struct cfdriver pci_cd = {
@@ -117,6 +128,9 @@ pciattach(parent, self, aux)
 	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
 	int bus, device, maxndevs, function, nfunctions;
+#ifdef USER_PCICONF
+	struct pci_softc *sc = (struct pci_softc *)self;
+#endif
 
 	pci_attach_hook(parent, self, pba);
 	printf("\n");
@@ -126,6 +140,10 @@ pciattach(parent, self, aux)
 	pc = pba->pba_pc;
 	bus = pba->pba_bus;
 	maxndevs = pci_bus_maxdevs(pc, bus);
+
+#ifdef USER_PCICONF
+	sc->sc_pc = pba->pba_pc;
+#endif
 
 	if (bus == 0)
 		pci_isa_bridge_callback = NULL;
@@ -321,3 +339,119 @@ pci_get_capability(pc, tag, capid, offset, value)
 
 	return (0);
 }
+
+#ifdef USER_PCICONF
+/*
+ * This is the user interface to PCI configuration space.
+ */
+  
+#include <sys/pciio.h>
+#include <sys/fcntl.h>
+
+#ifdef DEBUG
+#define PCIDEBUG(x) printf x
+#else
+#define PCIDEBUG(x)
+#endif
+
+
+int pciopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
+int pciclose __P((dev_t dev, int flag, int devtype, struct proc *p));
+int pciioctl __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p));
+
+int
+pciopen(dev_t dev, int oflags, int devtype, struct proc *p) 
+{
+	PCIDEBUG(("pciopen ndevs: %d\n" , pci_cd.cd_ndevs));
+
+	if ((oflags & FWRITE) && securelevel > 0) {
+		return EPERM;
+	}
+	return 0;
+}
+
+int
+pciclose(dev_t dev, int flag, int devtype, struct proc *p)
+{
+	PCIDEBUG(("pciclose\n"));
+	return 0;
+}
+
+int
+pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	struct pci_io *io;
+	int error;
+	pcitag_t tag;
+	struct pci_softc *pci;
+	pci_chipset_tag_t pc;
+
+	io = (struct pci_io *)data;
+
+	PCIDEBUG(("pciioctl cmd %s", cmd == PCIOCREAD ? "pciocread" 
+		  : cmd == PCIOCWRITE ? "pciocwrite" : "unknown"));
+	PCIDEBUG(("  bus %d dev %d func %d reg %x\n", io->pi_sel.pc_bus,
+		  io->pi_sel.pc_dev, io->pi_sel.pc_func, io->pi_reg));
+
+	if (io->pi_sel.pc_bus >= pci_cd.cd_ndevs) {
+		error = ENXIO;
+		goto done;
+	}
+	pci = pci_cd.cd_devs[io->pi_sel.pc_bus];
+	if (pci != NULL) {
+		pc = pci->sc_pc;
+	} else {
+		error = ENXIO;
+		goto done;
+	}
+
+	if (!(flag & FWRITE))
+		return EPERM;
+
+
+	tag = pci_make_tag(pc, io->pi_sel.pc_bus, io->pi_sel.pc_dev,
+			   io->pi_sel.pc_func);
+
+	switch(cmd) {
+	case PCIOCGETCONF:
+		error = ENODEV;
+		break;
+
+	case PCIOCREAD:
+		switch(io->pi_width) {
+		case 4:
+			/* Make sure the register is properly aligned */
+			if (io->pi_reg & 0x3) 
+				return EINVAL;
+			io->pi_data = pci_conf_read(pc, tag, io->pi_reg);
+			error = 0;
+			break;
+		default:
+			error = ENODEV;
+			break;
+		}
+		break;
+
+	case PCIOCWRITE:
+		switch(io->pi_width) {
+		case 4:
+			/* Make sure the register is properly aligned */
+			if (io->pi_reg & 0x3) 
+				return EINVAL;
+			pci_conf_write(pc, tag, io->pi_reg, io->pi_data);
+			break;
+		default:
+			error = ENODEV;
+			break;
+		}
+		break;
+
+	default:
+		error = ENOTTY;
+		break;
+	}
+ done:
+	return (error);
+}
+
+#endif
