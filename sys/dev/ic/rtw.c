@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.25 2005/03/15 09:24:53 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.26 2005/03/18 00:10:36 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -1716,8 +1716,10 @@ rtw_intr_ioerror(struct rtw_softc *sc, u_int16_t isr)
 {
 	struct rtw_regs *regs = &sc->sc_regs;
 
+#ifdef RTW_DEBUG
 	if ((isr & RTW_INTR_TXFOVW) != 0)
 		printf("%s: tx fifo overflow\n", sc->sc_dev.dv_xname);
+#endif
 
 	if ((isr & (RTW_INTR_RDU|RTW_INTR_RXFOVW)) == 0)
 		return;
