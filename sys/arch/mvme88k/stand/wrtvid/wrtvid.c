@@ -1,3 +1,4 @@
+/*	$OpenBSD: wrtvid.c,v 1.3 1998/08/22 08:52:56 smurph Exp $ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
