@@ -176,8 +176,6 @@ static void r_print_address(int code, int len, const u_char *data) {
 
 static void r_print_string(int code, int len, const u_char *data) {
 	char string[128];
-	const char *cp;
-	char *sp;
 
 	if(!len) {
 		fputs(" ?", stdout);
@@ -209,7 +207,6 @@ static void r_print_hex(int code, int len, const u_char *data) {
 void radius_print(register const u_char *data, u_int len) {
 	const struct radius_header *rhp;
 	const u_char *pp;
-	const char   *cp;
 	int i, l, ac, al;
 
 	if(len < sizeof(struct radius_header)) {
