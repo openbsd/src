@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.12 2002/05/07 06:56:50 hugh Exp $	*/
+/*	$OpenBSD: cu.c,v 1.13 2002/05/29 22:58:56 millert Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cu.c,v 1.12 2002/05/07 06:56:50 hugh Exp $";
+static const char rcsid[] = "$OpenBSD: cu.c,v 1.13 2002/05/29 22:58:56 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -83,8 +83,7 @@ cumain(argc, argv)
 			break;
 		case 's':
 			l = strtol(optarg, &cp, 10);
-			if (*cp != '\0' || l < 0 || l >= INT_MAX ||
-			    speed((int)l) == 0) {
+			if (*cp != '\0' || l < 0 || l >= INT_MAX) {
 				fprintf(stderr, "%s: unsupported speed %s\n",
 				    __progname, optarg);
 				exit(3);
@@ -171,16 +170,26 @@ cumain(argc, argv)
 		break;
 	}
 	setboolean(value(VERBOSE), FALSE);
-	if (HW)
-		ttysetup(speed(BR));
+	if (HW && ttysetup(BR)) {
+		fprintf(stderr, "%s: unsupported speed %ld\n",
+		    __progname, BR);
+		daemon_uid();
+		(void)uu_unlock(uucplock);
+		exit(3);
+	}
 	if (connect()) {
 		printf("Connect failed\n");
 		daemon_uid();
 		(void)uu_unlock(uucplock);
 		exit(1);
 	}
-	if (!HW)
-		ttysetup(speed(BR));
+	if (!HW && ttysetup(BR)) {
+		fprintf(stderr, "%s: unsupported speed %ld\n",
+		    __progname, BR);
+		daemon_uid();
+		(void)uu_unlock(uucplock);
+		exit(3);
+	}
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.18 2002/05/07 06:56:50 hugh Exp $	*/
+/*	$OpenBSD: tip.c,v 1.19 2002/05/29 22:58:56 millert Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tip.c,v 1.18 2002/05/07 06:56:50 hugh Exp $";
+static const char rcsid[] = "$OpenBSD: tip.c,v 1.19 2002/05/29 22:58:56 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -55,14 +55,6 @@ static const char rcsid[] = "$OpenBSD: tip.c,v 1.18 2002/05/07 06:56:50 hugh Exp
  */
 #include "tip.h"
 #include "pathnames.h"
-
-/*
- * Baud rate mapping table
- */
-int rates[] = {
-	0, 50, 75, 110, 134, 150, 200, 300, 600,
-	1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200, -1
-};
 
 int	disc = TTYDISC;		/* tip normally runs this way */
 void	intprompt();
@@ -180,29 +172,32 @@ notnumber:
 		PH = _PATH_PHONES;
 	vinit();				/* init variables */
 	setparity("none");			/* set the parity table */
-	if ((i = speed(number(value(BAUDRATE)))) == 0) {
-		printf("%s: bad baud rate %ld\n", __progname,
-		    number(value(BAUDRATE)));
-		daemon_uid();
-		(void)uu_unlock(uucplock);
-		exit(3);
-	}
 
 	/*
 	 * Hardwired connections require the
 	 *  line speed set before they make any transmissions
 	 *  (this is particularly true of things like a DF03-AC)
 	 */
-	if (HW)
-		ttysetup(i);
+	if (HW && ttysetup(number(value(BAUDRATE)))) {
+		fprintf(stderr, "%s: bad baud rate %ld\n", __progname,
+		    number(value(BAUDRATE)));
+		daemon_uid();
+		(void)uu_unlock(uucplock);
+		exit(3);
+	}
 	if ((p = connect())) {
 		printf("\07%s\n[EOT]\n", p);
 		daemon_uid();
 		(void)uu_unlock(uucplock);
 		exit(1);
 	}
-	if (!HW)
-		ttysetup(i);
+	if (!HW && ttysetup(number(value(BAUDRATE)))) {
+		fprintf(stderr, "%s: bad baud rate %ld\n", __progname,
+		    number(value(BAUDRATE)));
+		daemon_uid();
+		(void)uu_unlock(uucplock);
+		exit(3);
+	}
 cucommon:
 	/*
 	 * From here down the code is shared with
@@ -446,18 +441,6 @@ escape()
 }
 
 int
-speed(n)
-	int n;
-{
-	int *p;
-
-	for (p = rates; *p != -1;  p++)
-		if (*p == n)
-			return n;
-	return 0;
-}
-
-int
 any(cc, p)
 	int cc;
 	char *p;
@@ -545,15 +528,15 @@ help(c)
 /*
  * Set up the "remote" tty's state
  */
-void
+int
 ttysetup(speed)
 	int speed;
 {
 	struct termios	cntrl;
 
-	tcgetattr(FD, &cntrl);
-	cfsetospeed(&cntrl, speed);
-	cfsetispeed(&cntrl, speed);
+	if (tcgetattr(FD, &cntrl))
+		return (-1);
+	cfsetspeed(&cntrl, speed);
 	cntrl.c_cflag &= ~(CSIZE|PARENB);
 	cntrl.c_cflag |= CS8;
 	if (boolean(value(DC)))
@@ -565,7 +548,7 @@ ttysetup(speed)
 	cntrl.c_cc[VTIME] = 0;
 	if (boolean(value(TAND)))
 		cntrl.c_iflag |= IXOFF;
-	tcsetattr(FD, TCSAFLUSH, &cntrl);
+	return (tcsetattr(FD, TCSAFLUSH, &cntrl));
 }
 
 static char partab[0200];
