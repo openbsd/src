@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.62 2004/12/22 12:02:47 grange Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.63 2004/12/23 19:40:21 deraadt Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1873,6 +1873,7 @@ fxp_load_ucode(struct fxp_softc *sc)
 	if (error) {
 		printf("%s: failed loadfirmware of file %s: errno %d\n",
 		    sc->sc_dev.dv_xname, uc->uname, error);
+		sc->sc_flags |= FXPF_UCODE;
 		return;
 	}
 

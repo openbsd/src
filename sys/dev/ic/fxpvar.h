@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.19 2004/09/20 04:27:23 brad Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.20 2004/12/23 19:40:21 deraadt Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -105,7 +105,7 @@ struct fxp_softc {
 	struct mbuf *rfa_tailm;		/* last mbuf in receive frame area */
 	int sc_flags;			/* misc. flags */
 #define	FXPF_DISABLE_STANDBY	0x20	/* currently need to work-around */
-#define	FXPF_UCODE		0x40	/* ucode is loaded */
+#define	FXPF_UCODE		0x40	/* ucode load already attempted */
 	struct timeout stats_update_to; /* Pointer to timeout structure */
 	int rx_idle_secs;		/* # of seconds RX has been idle */
 	struct fxp_cb_tx *cbl_base;	/* base of TxCB list */
