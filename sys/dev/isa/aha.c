@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.25 1996/06/19 14:40:33 deraadt Exp $	*/
+/*	$OpenBSD: aha.c,v 1.26 1996/10/16 12:29:48 deraadt Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -711,7 +711,9 @@ aha_collect_mbo(sc)
 	struct aha_softc *sc;
 {
 	struct aha_mbx_out *wmbo;	/* Mail Box Out pointer */
+#ifdef AHADIAG
 	struct aha_ccb *ccb;
+#endif
 
 	wmbo = wmbx->cmbo;
 
@@ -1182,8 +1184,11 @@ aha_scsi_cmd(xs)
 	struct aha_softc *sc = sc_link->adapter_softc;
 	struct aha_ccb *ccb;
 	struct aha_scat_gath *sg;
-	int seg, datalen, flags, mflags;
+	int seg, flags, mflags;
+#ifdef	TFS
 	struct iovec *iovp;
+	int datalen;
+#endif
 	int s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("aha_scsi_cmd\n"));
