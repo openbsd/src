@@ -1,5 +1,5 @@
-/*	$OpenBSD: openprom.c,v 1.6 2002/07/31 01:12:28 jason Exp $	*/
-/*	$NetBSD: openprom.c,v 1.2 2000/11/18 23:45:05 mrg Exp $ */
+/*	$OpenBSD: openprom.c,v 1.7 2002/07/31 04:36:15 jason Exp $	*/
+/*	$NetBSD: openprom.c,v 1.4 2002/01/10 06:21:53 briggs Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -218,7 +218,7 @@ openpromioctl(dev, cmd, data, flags, p)
 		error = OF_nextprop(node, name, nextprop);
 		splx(s);
 		if (error == 0) {
-			op->op_buflen = len;
+			op->op_buflen = 0;
 			error = subyte(op->op_buf, 0);
 			break;
 		}
