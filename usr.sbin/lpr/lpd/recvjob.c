@@ -1,4 +1,4 @@
-/*	$OpenBSD: recvjob.c,v 1.7 1997/01/17 16:12:42 millert Exp $	*/
+/*	$OpenBSD: recvjob.c,v 1.8 1997/07/16 22:31:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: recvjob.c,v 1.7 1997/01/17 16:12:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: recvjob.c,v 1.8 1997/07/16 22:31:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,10 +71,10 @@ static char rcsid[] = "$OpenBSD: recvjob.c,v 1.7 1997/01/17 16:12:42 millert Exp
 
 #define ack()	(void) write(1, sp, 1);
 
-static char	 dfname[40];	/* data files */
+static char	 dfname[NAME_MAX];	/* data files */
 static int	 minfree;       /* keep at least minfree blocks available */
 static char	*sp = "";
-static char	 tfname[40];	/* tmp copy of cf before linking */
+static char	 tfname[NAME_MAX];	/* tmp copy of cf before linking */
 
 static int        chksize __P((int));
 static void       frecverr __P((const char *, ...));
