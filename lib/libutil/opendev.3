@@ -1,4 +1,4 @@
-.\"	$OpenBSD: opendev.3,v 1.1 1996/06/17 08:17:33 downsj Exp $
+.\"	$OpenBSD: opendev.3,v 1.2 1996/06/18 09:12:03 downsj Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -36,8 +36,8 @@
 .Sh DESCRIPTION
 The
 .Fn opendev
-function opens a device using the ``short form'' name.  This is typically
-``sd0'' or ``sd0c'', for instance, which will be expaned to
+function opens a device using the "short form" name.  This is typically
+"sd0" or "sd0c", for instance, which will be expaned to
 .Pa /dev/rsd0c
 on most architectures.
 .Pp
@@ -65,7 +65,10 @@ will be modified to point at the fully expanded device name.
 .Sh RETURN VALUES
 The
 .Fn opendev
-return value is the return value of
+return value and errors are the same as the return value and errors of
 .Xr open 2 .
+.Sh HISTORY
+.Fn opendev
+first appeared in OpenBSD 1.2.
 .Sh SEE ALSO
 .Xr open 2
