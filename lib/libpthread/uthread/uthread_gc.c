@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_gc.c,v 1.12 2003/01/31 04:46:17 marc Exp $	*/
+/*	$OpenBSD: uthread_gc.c,v 1.13 2003/12/23 20:10:45 brad Exp $	*/
 /*
  * Copyright (c) 1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -66,7 +66,7 @@ _thread_gc(pthread_addr_t arg)
 	curthread->flags |= PTHREAD_FLAGS_PRIVATE;
 
 	/* Set a debug flag based on an environment variable. */
-	f_debug = (getenv("LIBC_R_DEBUG") != NULL);
+	f_debug = (getenv("LIBPTHREAD_DEBUG") != NULL);
 
 	/* Set the name of this thread. */
 	pthread_set_name_np(curthread, (char *)"GC");
