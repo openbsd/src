@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.102 2002/06/18 20:07:58 frantzen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.103 2002/06/18 21:05:17 frantzen Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -557,7 +557,12 @@ host_list	: xhost				{ $$ = $1; }
 		}
 		;
 
-xhost		: '!' host			{ $$ = $2; $$->not = 1; }
+xhost		: '!' host			{
+			struct node_host *h;
+			for (h = $2; h; h = h->next)
+				h->not = 1;
+			$$ = $2;
+		}
 		| host				{ $$ = $1; }
 		| NOROUTE			{
 			$$ = calloc(1, sizeof(struct node_host));
