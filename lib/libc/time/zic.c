@@ -4,8 +4,8 @@
 */
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)zic.c	7.107";
-static char rcsid[] = "$OpenBSD: zic.c,v 1.20 2003/04/06 00:44:36 deraadt Exp $";
+static char elsieid[] = "@(#)zic.c	7.113";
+static char rcsid[] = "$OpenBSD: zic.c,v 1.21 2003/10/06 00:17:13 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -1149,14 +1149,15 @@ const int		nfields;
 		error(_("time before zero"));
 		return;
 	}
-	t = (time_t) dayoff * SECSPERDAY;
-	/*
-	** Cheap overflow check.
-	*/
-	if (t / SECSPERDAY != dayoff) {
-		error(_("time overflow"));
+	if (dayoff < min_time / SECSPERDAY) {
+		error(_("time too small"));
 		return;
 	}
+	if (dayoff > max_time / SECSPERDAY) {
+		error(_("time too large"));
+		return;
+	}
+	t = (time_t) dayoff * SECSPERDAY;
 	tod = gethms(fields[LP_TIME], _("invalid time of day"), FALSE);
 	cp = fields[LP_CORR];
 	{
@@ -1309,9 +1310,9 @@ const char * const		timep;
 		return;
 	} else if (noise) {
 		if (rp->r_loyear < min_year_representable)
-			warning(_("starting year too low to be represented"));
+			warning(_("ending year too low to be represented"));
 		else if (rp->r_loyear > max_year_representable)
-			warning(_("starting year too high to be represented"));
+			warning(_("ending year too high to be represented"));
 	}
 	if (rp->r_loyear > rp->r_hiyear) {
 		error(_("starting year greater than ending year"));
@@ -2146,12 +2147,11 @@ register const int			wantedy;
 	}
 	if (dayoff < 0 && !TYPE_SIGNED(time_t))
 		return min_time;
+	if (dayoff < min_time / SECSPERDAY)
+		return min_time;
+	if (dayoff > max_time / SECSPERDAY)
+		return max_time;
 	t = (time_t) dayoff * SECSPERDAY;
-	/*
-	** Cheap overflow check.
-	*/
-	if (t / SECSPERDAY != dayoff)
-		return (dayoff > 0) ? max_time : min_time;
 	return tadd(t, rp->r_tod);
 }
 

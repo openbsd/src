@@ -2,7 +2,6 @@
 <!DOCTYPE html
 	PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 	"DTD/xhtml1-strict.dtd">
-<!-- $OpenBSD: tz-link.htm,v 1.5 2003/01/07 17:37:37 millert Exp $ -->
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <title>Sources for Time Zone and Daylight Saving Time Data</title>
@@ -20,7 +19,7 @@
 <body>
 <h1>Sources for Time Zone and Daylight Saving Time Data</h1>
 <address>
-@(#)tz-link.htm	7.37
+@(#)tz-link.htm	7.38
 </address>
 <p>
 Please send corrections to this web page to the
@@ -41,12 +40,13 @@ including
 <a href="http://www.freebsd.org/">FreeBSD</a>,
 <a href="http://www.netbsd.org/">NetBSD</a>,
 <a href="http://www.openbsd.org/">OpenBSD</a>,
+<a href="http://www.cygwin.com/">Cygwin</a>,
 <a href="http://www.delorie.com/djgpp/">DJGPP</a>,
 <a href="http://www.hp.com/products1/unix/operating/">HP-UX</a>,
-<a href="http://www.sgi.com/developers/technology/irix.html">IRIX</a>,
-<a href="http://www.caldera.com/products/openunix/">Open UNIX/UnixWare</a>,
-<a href="http://wwws.sun.com/software/solaris/">Solaris</a>, and
-<a href="http://www.tru64unix.compaq.com/">Tru64</a>.</p>
+<a href="http://www.sgi.com/developers/technology/irix/">IRIX</a>,
+<a href="http://wwws.sun.com/software/solaris/">Solaris</a>,
+<a href="http://www.tru64unix.compaq.com/">Tru64</a>, and
+<a href="http://www.sco.com/products/unixware/">UnixWare</a>.</p>
 <p>
 Each location in the database represents a national region where all
 clocks keeping local time have agreed since 1970.
@@ -98,10 +98,6 @@ Here are some recent links that may be of interest.
 <li><a href="http://www.bsdi.com/date/">Date and Time Gateway</a> is a
 text-based point-and-click interface to tables of current time
 throughout the world.</li>
-<li><a href="http://sandbox.xerox.com/stewart/tzconvert.cgi">Timezone
-Converter</a> is a similar interface, with source code
-written in <a href="http://www.perl.org/">Perl</a>, using what Paul
-Stewart calls the "20-line hack no one will let me forget".</li>
 <li>Fancier web interfaces, roughly in ascending order of complexity, include:
 <ul>
 <li><a href="http://www.hilink.com.au/times/">Local Times Around the
@@ -112,29 +108,44 @@ World</a></li>
 <li><a href="http://www.holidayfestival.com/">The Worldwide Holiday
 &amp; Festival Site</a> lists DST-related clock changes along with
 holidays.</li>
-<li><a href="http://www.timeanddate.com/worldclock/">The World Clock</a>
+<li><a href="http://www.timeanddate.com/worldclock/">The World Clock -
+Time Zones</a>
 is a web interface to a time zone database derived from
 <code>tz</code>'s.</li>
+</ul>
+<h2>Other time zone database formats</h2>
+<ul>
+<li>The <a href="ftp://ftp.rfc-editor.org/in-notes/rfc2445.txt">
+Internet Calendaring and Scheduling Core Object Specification
+(iCalendar)</a> specification published by the <a
+href="http://www.ietf.org/html.charters/calsch-charter.html">IETF
+Calendaring and Scheduling Working Group (calsch)</a> covers time zone
+data; see its VTIMEZONE calendar component.</li>
+<li>The <a
+href="http://lists.w3.org/Archives/Public/www-rdf-calendar/"><samp>www-rdf-calendar</samp></a>
+list discusses <a href="http://www.w3.org/RDF/">RDF</a>-based calendar
+and group scheduling systems, and has a <a
+href="http://www.w3.org/2002/12/cal/#tzd">workspace on time zone
+data</a> converted from <code>tz</code>. An earlier <a
+href="http://www.w3.org/2000/01/foo">schema</a> was sketched out by <a
+href="http://www.w3.org/People/Berners-Lee/">Tim Berners-Lee</a>.</li>
+<li><a
+href="http://www.ietf.org/internet-drafts/draft-ietf-calsch-many-xcal-02.txt">XCal</a>
+is a draft <a href="http://www.w3.org/XML/">XML</a> document type
+definition that corresponds to iCalendar. <a
+href="http://www.panix.com/~gmcgath/sosigenes/">Sosigenes</a> is a <a
+href="http://java.sun.com/">Java</a> package for reading XCal
+calendars; it is distributed under the terms of the <a
+href="http://www.opensource.org/licenses/academic.php">Academic Free
+License</a>.</li>
 </ul>
 <h2>Other <code>tz</code> compilers</h2>
 <ul>
 <li><a href="http://primates.ximian.com/~damon/icalendar/">Olson ->
 VTIMEZONE Converter</a> describes a program Vzic that
-compiles <code>tz</code> source into VTIMEZONE text as specified by
-the <a href="ftp://ftp.rfc-editor.org/in-notes/rfc2445.txt">iCalendar</a>
-specification published by the <a
-href="http://www.ietf.org/html.charters/calsch-charter.html">IETF
-Calendaring and Scheduling Working Group</a>. Vzic is freely
+compiles <code>tz</code> source into iCalendar format. Vzic is freely
 available under the <a href="http://www.gnu.org/copyleft/gpl.html">GNU
 General Public License (GPL)</a>.</li>
-<li>Possible XML schemata for the <code>tz</code> data include <a
-href="http://www.w3.org/2000/01/foo">one</a> sketched out by <a
-href="http://www.w3.org/People/Berners-Lee/">Tim Berners-Lee</a> and
-<a
-href="http://developer.iplanet.com/docs/wpapers/calendar/ietf.txt">another</a>
-used by the <a
-href="http://wwws.sun.com/software/products/calendar_srvr/home_calendar.html">Sun
-ONE Calendar Server</a>.</li>
 </ul>
 <h2>Other <code>tz</code> binary file readers</h2>
 <ul>
@@ -148,6 +159,10 @@ and is widely used in GNU/Linux systems.</li>
 <li><a href="http://www.bmsi.com/java/#TZ">ZoneInfo.java</a>
 is a <code>tz</code> binary file reader written in Java.
 It is freely available under the GNU LGPL.</li>
+<li><a href="http://s.keim.free.fr/tz/doc.html">Python time zones</a>
+is a <code>tz</code> binary file reader written in <a
+href="http://www.python.org/">Python</a>. It is freely available
+under a BSD-style license.</li>
 </ul>
 <h2>Other <code>tz</code>-based time zone conversion software</h2>
 <ul>
@@ -155,13 +170,13 @@ It is freely available under the GNU LGPL.</li>
 href="http://www1.tip.nl/~t876506/AboutTimeZonesHC.html">HyperCard
 time zones calculator</a> is a HyperCard stack.</li>
 <li><a
-href="http://www.cimmyt.org/timezone/">Time Zone Converter</a> is a
+href="http://www.cimmyt.org/timezone/">World Time Explorer</a> is a
 Microsoft Windows program.</li>
 </ul>
 <h2>Other time zone databases</h2>
 <ul>
-<li><a href="http://www.astro.com/cgi-bin/atlw3/aq.cgi?lang=e">Astrodienst
-- Atlas Query</a> is Astrodienst's Web version of Shanks's
+<li><a href="http://www.astro.com/cgi-bin/atlw3/aq.cgi?lang=e">Atlas Query
+- Astrodienst</a> is Astrodienst's Web version of Shanks's
 excellent time zone history atlases published in both <a
 href="http://astrocom.com/software/pcatlas.php">computer</a> and <a
 href="http://astrocom.com/books/xrefa.php#SHANKS">book</a> form by <a
@@ -179,8 +194,8 @@ for the <code>usno*</code> files in the <code>tz</code> distribution.</li>
 <li><a href="http://www.airportcitycodes.com/aaa/">Airlines, Airplanes
 and Airports</a> lists current standard times for thousands of
 airports around the world. This seems to be derived from
-the <a href="http://www.iata.org/sked/ssim.htm">Standard
-Schedules Information Manual</a> of the
+the <a href="http://www.iata.org/sked/publications/">Standard
+Schedules Information Manual (SSIM)</a> of the
 the <a href="http://www.iata.org/">International Air Transport
 Association</a>,
 which gives current time zone rules for
@@ -190,7 +205,7 @@ all the airports served by commercial aviation.</li>
 <ul>
 <li>The <a href="http://www.odci.gov/">United States Central
 Intelligence Agency (CIA)</a> publishes a <a
-href="http://www.odci.gov/cia/publications/factbook/ref/pdf/802801.pdf">time
+href="http://www.odci.gov/cia/publications/factbook/reference_maps/pdf/time_zones.pdf">time
 zone map</a>; the
 <a
 href="http://www.lib.utexas.edu/maps/world.html">Perry-Casta&ntilde;eda
@@ -221,7 +236,7 @@ Zones of the United States</a> in the public domain.</li>
 href="http://spatialnews.geocomm.com/features/timezones/">International
 Time Zones and Time Zone Data</a>.</li>
 </ul>
-<h2>Daylight saving time concepts and history</h2>
+<h2>Civil time concepts and history</h2>
 <ul>
 <li><a href="http://physics.nist.gov/time">A Walk through Time</a>
 surveys the evolution of timekeeping.</li>
@@ -236,13 +251,20 @@ The time zone map is out of date, however.</li>
 <li><a href="http://www.phys.uu.nl/~vgent/idl/idl.htm">A History of
 the International Date Line</a> tells the story of the most important
 time zone boundary.</li>
-<li>A few countries have well-documented histories of legal time.
+<li><a href="http://www.mindspring.com/~gwil/tconcept.html">Basic Time
+Zone Concepts</a> discusses terminological issues behind time zones.</li>
+</ul>
+<h2>National histories of legal time</h2>
 <dl>
 <dt>Australia</dt>
 <dd><a
 href="http://www.dstc.qut.edu.au/DST/marg/daylight.html#more">Australia's
 Daylight Saving Times</a> contains pointers to government records and to
 histories of daylight saving.</dd>
+<dt>Austria</dt>
+<dd>The Federal Office of Metrology and Surveying publishes a
+table of <a href="http://www.metrologie.at/pdf/sommerzeit.pdf"
+hreflang="de">daylight saving time in Austria (in German)</a>.</dd>
 <dt>Belgium</dt>
 <dd>The Royal Observatory of Belgium maintains a table of <a
 href="http://www.astro.oma.be/GENERAL/INFO/nli001a.html"
@@ -255,8 +277,12 @@ Portuguese)</a>.</dd>
 <dt>Canada</dt>
 <dd>The Institute for National Measurement Standards publishes current
 and some older information about <a
-href="http://www.nrc.ca/inms/time/tze.html">Time Zones and Daylight
-Saving Time</a>.</dd>
+href="http://inms-ienm.nrc-cnrc.gc.ca/time_services/daylight_savings_e.html">Time
+Zones and Daylight Saving Time</a>.</dd>
+<dt>Chile</dt>
+<dd>The Hydrographic and Oceanographic Service has a <a
+href="http://www.shoa.cl/shoa/faqhoraoficial.htm"
+hreflang="es">history of official time (in Spanish)</a>.</dd>
 <dt>Germany</dt>
 <dd>The National Institute for Science and Technology maintains the <a
 href="http://www.ptb.de/en/org/4/43/432/lega.htm">Realisation of
@@ -274,6 +300,10 @@ hreflang="es">history of Mexican local time (in Spanish)</a>.</dd>
 <dd><a href="http://www.phys.uu.nl/~vgent/wettijd/wettijd.htm"
 hreflang="nl">Legal time in the Netherlands (in Dutch)</a>
 covers the history of local time in the Netherlands from ancient times.</dd>
+<dt>New Zealand</dt>
+<dd>The Department of Internal Affairs maintains a brief history <a
+href="http://www.dia.govt.nz/diawebsite.nsf/wpg_URL/Resource-material-Information-We-Provide-About-Daylight-Saving">about
+daylight saving</a>.</dd>
 <dt>United Kingdom</dt>
 <dd><a
 href="http://student.cusu.cam.ac.uk/~jsm28/british-time/">History of
@@ -282,8 +312,7 @@ with perhaps the best-documented history of clock adjustments.
 The National Physical Laboratory also maintains an <a
 href="http://www.npl.co.uk/time/summer_time_archive.html">archive
 of summer time dates</a>.</dd>
-</dl></li>
-</ul>
+</dl>
 <h2>Precision timekeeping</h2>
 <ul>
 <li><a
@@ -316,13 +345,14 @@ International Earth Rotation Service, the committee that decides
 when leap seconds occur.</li>
 <li>The <a
 href="http://rom.usno.navy.mil/archives/leapsecs.html">Leap
-Second Discussion List</a> covers <a
-href="http://www.findarticles.com/cf_0/m0BPW/11_10/57821998/p1/article.jhtml">McCarthy
-and Klepczynski's proposal to discontinue leap seconds</a>.
+Second Discussion List</a> covers McCarthy and Klepczynski's proposal
+to discontinue leap seconds, published in <a
+href="http://www.gpsworld.com/">GPS World</a> <strong>10</strong>, 11
+(1999-11), 50&ndash;57.
 This proposal is being studied by the URSI Commission J <a
 href="http://space.mit.edu/URSI/leapsecond.html">Working Group on the
 Leap Second</a>, and the IAU
-has plans to report on this proposal by 2003.</li>
+has plans to report on this proposal in 2003.</li>
 </ul>
 <h2>Time notation</h2>
 <ul>
@@ -359,10 +389,11 @@ maintainers.</li>
 </ul>
 <h2>Related indexes</h2>
 <ul>
+<li><a href="tz-art.htm">Time and the Arts</a></li>
 <li><a href="http://dmoz.org/Reference/Time/">Open Directory -
 Reference: Time</a></li>
-<li><a href="tz-art.htm">Time and the Arts</a></li>
-<li><a href="http://dir.yahoo.com/Science/Measurements_and_Units/Time/Time_Zones/">Yahoo! - Science:Measurements and Units:Time:Time Zones</a></li>
+<li><a href="http://directory.google.com/Top/Reference/Time/">Google Directory - Reference &gt; Time</a></li>
+<li><a href="http://dir.yahoo.com/Science/Measurements_and_Units/Time/Time_Zones/">Yahoo! Science &gt; Measurements and Units &gt; Time &gt; Time Zones</a></li>
 </ul>
 </body>
 </html>

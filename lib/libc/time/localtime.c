@@ -4,8 +4,8 @@
 */
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)localtime.c	7.75";
-static char rcsid[] = "$OpenBSD: localtime.c,v 1.22 2003/03/13 15:47:34 deraadt Exp $";
+static char elsieid[] = "@(#)localtime.c	7.76";
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.23 2003/10/06 00:17:13 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -329,8 +329,8 @@ register struct state * const	sp;
 		i = read(fid, u.buf, sizeof u.buf);
 		if (close(fid) != 0)
 			return -1;
-		ttisstdcnt = (int) detzcode(u.tzhead.tzh_ttisgmtcnt);
-		ttisgmtcnt = (int) detzcode(u.tzhead.tzh_ttisstdcnt);
+		ttisstdcnt = (int) detzcode(u.tzhead.tzh_ttisstdcnt);
+		ttisgmtcnt = (int) detzcode(u.tzhead.tzh_ttisgmtcnt);
 		sp->leapcnt = (int) detzcode(u.tzhead.tzh_leapcnt);
 		sp->timecnt = (int) detzcode(u.tzhead.tzh_timecnt);
 		sp->typecnt = (int) detzcode(u.tzhead.tzh_typecnt);

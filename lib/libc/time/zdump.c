@@ -4,8 +4,8 @@
 */
 
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)zdump.c	7.29";
-static char rcsid[] = "$OpenBSD: zdump.c,v 1.11 2003/04/05 00:43:20 tdeval Exp $";
+static char elsieid[] = "@(#)zdump.c	7.31";
+static char rcsid[] = "$OpenBSD: zdump.c,v 1.12 2003/10/06 00:17:13 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
