@@ -1,4 +1,4 @@
-/*	$OpenBSD: defs.h,v 1.8 1998/06/26 21:21:06 millert Exp $	*/
+/*	$OpenBSD: defs.h,v 1.9 1998/07/16 20:40:23 millert Exp $	*/
 
 #ifndef __DEFS_H__
 #define __DEFS_H__
@@ -403,6 +403,7 @@ extern void			message(int, char *, ...);
 #ifndef HAVE_SETPROCTITLE
 extern void			setproctitle(char *fmt, ...);
 #endif
+extern void			yyerror(char *);
 #else
 extern void			debugmsg();
 extern void			error();
@@ -411,6 +412,7 @@ extern void			message();
 #ifndef HAVE_SETPROCTITLE
 extern void			setproctitle();
 #endif
+extern void			yyerror();
 #endif
 
 #endif	/* __DEFS_H__ */
