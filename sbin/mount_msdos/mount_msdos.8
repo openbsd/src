@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_msdos.8,v 1.17 2003/04/18 22:16:24 tedu Exp $
+.\"	$OpenBSD: mount_msdos.8,v 1.18 2003/07/03 08:23:15 jmc Exp $
 .\"	$NetBSD: mount_msdos.8,v 1.10 1996/01/19 21:14:43 leo Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
@@ -65,6 +65,11 @@ when using the syntax
 -t msdos
 .Ar special Ar node
 .Ed
+.Pp
+The
+.Ar special
+device must correspond to a partition registered in the
+.Xr disklabel 5 .
 .Pp
 This command is normally executed by
 .Xr mount 8
@@ -145,7 +150,9 @@ If a directory is readable, it inherits the x attribute as well.
 .El
 .Sh SEE ALSO
 .Xr mount 2 ,
+.Xr disklabel 5 ,
 .Xr fstab 5 ,
+.Xr disklabel 8 ,
 .Xr mount 8 ,
 .Xr umount 8
 .Sh HISTORY

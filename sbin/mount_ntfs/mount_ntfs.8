@@ -1,4 +1,4 @@
-.\" $OpenBSD: mount_ntfs.8,v 1.3 2003/05/20 09:22:07 jmc Exp $
+.\" $OpenBSD: mount_ntfs.8,v 1.4 2003/07/03 08:23:15 jmc Exp $
 .\" $NetBSD: mount_ntfs.8,v 1.13 2003/02/14 16:21:48 grant Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
@@ -61,6 +61,11 @@ at boot time, but can be used by any user to mount an
 NTFS file system on any directory that they own (provided,
 of course, that they have appropriate access to the device that
 contains the file system).
+.Pp
+The
+.Ar special
+device must correspond to a partition registered in the
+.Xr disklabel 5 .
 .Pp
 The supported NTFS versions include both NTFS4, as used by Microsoft
 Windows NT 4.0, and NTFS5, as used by Microsoft Windows 2000 and XP.
@@ -137,6 +142,7 @@ read-only.
 .Sh SEE ALSO
 .Xr mount 2 ,
 .Xr unmount 2 ,
+.Xr disklabel 5 ,
 .Xr fstab 5 ,
 .Xr disklabel 8 ,
 .\" .Xr mbrlabel 8 ,
