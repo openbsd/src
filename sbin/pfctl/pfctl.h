@@ -1,7 +1,7 @@
-/*	$OpenBSD: pfctl_radix.h,v 1.1 2003/01/03 21:37:44 cedric Exp $ */
+/*	$OpenBSD: pfctl.h,v 1.1 2003/01/04 00:01:34 deraadt Exp $ */
 
 /*
- * Copyright (c) 2002 Cedric Berger
+ * Copyright (c) 2001 Daniel Hartmeier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,10 +30,8 @@
  *
  */
 
-#ifndef _PFCTL_RADIX_H_
-#define _PFCTL_RADIX_H_
-
-#include <net/pfvar.h>
+#ifndef _PFCTL_H_
+#define _PFCTL_H_
 
 void	 pfr_set_fd(int);
 int	 pfr_get_fd(void);
@@ -54,5 +52,52 @@ int	 pfr_clr_astats(struct pfr_table *, struct pfr_addr *, int, int *, int);
 int	 pfr_tst_addrs(struct pfr_table *, struct pfr_addr *, int, int *, int);
 int	 pfr_wrap_table(struct pfr_table *, struct pf_addr_wrap *, int *, int);
 int	 pfr_unwrap_table(struct pfr_table *, struct pf_addr_wrap *, int);
+int	 pfctl_clear_tables(int);
+int	 pfctl_show_tables(int);
+int	 pfctl_command_tables(int, char *[], char *, char *, char *, int);
 
-#endif /* _PFCTL_RADIX_H_ */
+#ifndef DEFAULT_PRIORITY
+#define DEFAULT_PRIORITY	1
+#define DEFAULT_QLIMIT		50
+#endif
+
+/*
+ * generalized service curve used for admission control
+ */
+struct segment {
+	LIST_ENTRY(segment)	_next;
+	double			x, y, d, m;
+};
+
+struct pf_altq_node {
+	struct pf_altq		 altq;
+	struct pf_altq_node	*next;
+	struct pf_altq_node	*children;
+};
+
+void			 pfctl_insert_altq_node(struct pf_altq_node **,
+			    const struct pf_altq);
+struct pf_altq_node	*pfctl_find_altq_node(struct pf_altq_node *,
+			    const char *, const char *);
+void			 pfctl_print_altq_node(const struct pf_altq_node *,
+			    unsigned);
+void			 pfctl_free_altq_node(struct pf_altq_node *);
+
+int		 check_commit_altq(int, int);
+void		 pfaltq_store(struct pf_altq *);
+void		 pfaltq_free(struct pf_altq *);
+struct pf_altq	*pfaltq_lookup(const char *);
+struct pf_altq	*qname_to_pfaltq(const char *, const char *);
+u_int32_t	 qname_to_qid(const char *, const char *);
+char		*qid_to_qname(u_int32_t, const char *);
+
+void	 print_altq(const struct pf_altq *, unsigned);
+void	 print_queue(const struct pf_altq *, unsigned);
+
+void	print_addr(struct pf_addr_wrap *, sa_family_t);
+void	print_host(struct pf_state_host *, sa_family_t, int);
+void	print_seq(struct pf_state_peer *);
+void	print_state(struct pf_state *s, int);
+int	unmask(struct pf_addr *, sa_family_t);
+
+#endif /* _PFCTL_H_ */

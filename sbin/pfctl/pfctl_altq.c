@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.28 2003/01/03 21:48:21 deraadt Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.29 2003/01/04 00:01:34 deraadt Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -49,7 +49,7 @@
 #include <altq/altq_hfsc.h>
 
 #include "pfctl_parser.h"
-#include "pfctl_altq.h"
+#include "pfctl.h"
 
 #define is_sc_null(sc)	(((sc) == NULL) || ((sc)->m1 == 0 && (sc)->m2 == 0))
 

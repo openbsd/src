@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.124 2002/12/30 23:46:54 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.125 2003/01/04 00:01:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -51,7 +51,7 @@
 #include <err.h>
 
 #include "pfctl_parser.h"
-#include "pf_print_state.h"
+#include "pfctl.h"
 
 void		 print_op (u_int8_t, const char *, const char *);
 void		 print_port (u_int8_t, u_int16_t, u_int16_t, char *);

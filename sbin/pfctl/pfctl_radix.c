@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.5 2003/01/03 22:47:51 deraadt Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.6 2003/01/04 00:01:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -43,7 +43,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "pfctl_radix.h"
+#include "pfctl.h"
 
 extern int dev;
 

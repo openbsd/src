@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.10 2003/01/03 23:31:26 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.11 2003/01/04 00:01:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -52,11 +52,8 @@
 #include <ctype.h>
 #include <assert.h>
 
-#include "pfctl_table.h"
-#include "pfctl_radix.h"
+#include "pfctl.h"
 #include "pfctl_parser.h"
-#include "pf_print_state.h"
-
 
 #define BUF_SIZE 256
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.121 2003/01/03 22:57:26 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.122 2003/01/04 00:01:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -51,10 +51,7 @@
 #include <unistd.h>
 
 #include "pfctl_parser.h"
-#include "pf_print_state.h"
-#include "pfctl_altq.h"
-#include "pfctl_table.h"
-#include "pfctl_radix.h"
+#include "pfctl.h"
 
 void	 usage(void);
 int	 pfctl_enable(int, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.37 2002/12/22 14:19:29 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.38 2003/01/04 00:01:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -84,6 +84,9 @@ void	print_nat(struct pf_rule *, int);
 void	print_binat(struct pf_rule *, int);
 void	print_rdr(struct pf_rule *, int);
 void	print_status(struct pf_status *);
+
+int	 eval_pfaltq(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
+int	 eval_pfqueue(struct pfctl *, struct pf_altq *, u_int32_t, u_int16_t);
 
 struct icmptypeent {
 	char *name;
