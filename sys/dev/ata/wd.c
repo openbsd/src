@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.35 2004/01/15 21:37:57 grange Exp $ */
+/*	$OpenBSD: wd.c,v 1.36 2004/01/16 21:00:57 grange Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -335,22 +335,15 @@ wdattach(struct device *parent, struct device *self, void *aux)
 		     ((u_int64_t)wd->sc_params.atap_max_lba[2] << 32) |
 		     ((u_int64_t)wd->sc_params.atap_max_lba[1] << 16) |
 		      (u_int64_t)wd->sc_params.atap_max_lba[0]);
-		printf(" LBA48, %lluMB, %d cyl, %d head,"
-		    " %d sec, %llu sectors\n",
+		printf(" LBA48, %lluMB, %llu sectors\n",
 		    wd->sc_capacity / (1048576 / DEV_BSIZE),
-		    wd->sc_params.atap_cylinders,
-		    wd->sc_params.atap_heads,
-		    wd->sc_params.atap_sectors,
 		    wd->sc_capacity);
 	} else if ((wd->sc_flags & WDF_LBA) != 0) {
 		wd->sc_capacity =
 		    (wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
-		printf(" LBA, %lluMB, %d cyl, %d head, %d sec, %llu sectors\n",
+		printf(" LBA, %lluMB, %llu sectors\n",
 		    wd->sc_capacity / (1048576 / DEV_BSIZE),
-		    wd->sc_params.atap_cylinders,
-		    wd->sc_params.atap_heads,
-		    wd->sc_params.atap_sectors,
 		    wd->sc_capacity);
 	} else {
 		wd->sc_capacity =
