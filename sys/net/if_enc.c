@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.25 2000/04/10 02:34:07 angelos Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.26 2000/04/10 04:39:41 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -207,12 +207,8 @@ struct ifnet *ifp;
     /* See if we need to notify a key mgmt. daemon to setup SAs */
     if (ntohl(enc->sc_spi) == SPI_LOCAL_USE)
     {
-	/*
-	 * XXX Can't do this for now, as there's no way for
-	 * XXX key mgmt. to specify link-layer properties
-	 * XXX (e.g., encrypt everything on this interface)
-	 */ 
 #ifdef notyet
+	/* XXX Currently unsupported */ 
 	if (tdb->tdb_satype != SADB_X_SATYPE_BYPASS)
 	  pfkeyv2_acquire(tdb, 0); /* No point checking for errors */
 #endif
@@ -277,9 +273,6 @@ struct ifnet *ifp;
 #endif /* IPSEC */
 }
 
-/*
- * Shamelessly stolen from looutput()
- */
 int
 encoutput(ifp, m, dst, rt)
 struct ifnet *ifp;
@@ -287,8 +280,7 @@ register struct mbuf *m;
 struct sockaddr *dst;
 register struct rtentry *rt;
 {
-    register struct ifqueue *ifq = 0;
-    int s, isr;
+    int s;
 
     if ((m->m_flags & M_PKTHDR) == 0)
       panic("encoutput(): no HDR");
@@ -303,56 +295,22 @@ register struct rtentry *rt;
 		rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
     }
 
+    s = splimp();
+    if (IF_QFULL(&ifp->if_snd)) {
+	ifp->if_oerrors++;
+	m_freem(m);
+	splx(s);
+	return 0;
+    }
+
     ifp->if_opackets++;
     ifp->if_obytes += m->m_pkthdr.len;
 
-    switch (dst->sa_family)
-    {
-#ifdef INET
-	case AF_INET:
-	    ifq = &ipintrq;
-	    isr = NETISR_IP;
-	    break;
-#endif
-#ifdef INET6
-	case AF_INET6:
-	    ifq = &ip6intrq;
-	    isr = NETISR_IPV6;
-	    break;
-#endif
-#ifdef NS
-	case AF_NS:
-	    ifq = &nsintrq;
-	    isr = NETISR_NS;
-	    break;
-#endif
-#ifdef ISO
-	case AF_ISO:
-	    ifq = &clnlintrq;
-	    isr = NETISR_ISO;
-	    break;
-#endif
-	default:
-	    m_freem(m);
-	    return (EAFNOSUPPORT);
-    }
-
-    s = splimp();
-    if (IF_QFULL(ifq))
-    {
-	IF_DROP(ifq);
-	m_freem(m);
-	splx(s);
-	return (ENOBUFS);
-    }
-	
-    IF_ENQUEUE(ifq, m);
-    schednetisr(isr);
-
-    /* Statistics */
-    ifp->if_ipackets++;
-    ifp->if_ibytes += m->m_pkthdr.len;
+    IF_ENQUEUE(&ifp->if_snd, m);
     splx(s);
+
+    (ifp->if_start)(ifp);
+
     return (0);
 }
 
@@ -393,6 +351,7 @@ caddr_t data;
 	case SIOCSIFADDR:
 	case SIOCAIFADDR:
 	case SIOCSIFDSTADDR:
+	case SIOCSIFFLAGS:
 	    break;
 
 	case SIOCGENCSA:
