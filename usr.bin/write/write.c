@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.4 1996/06/26 05:44:00 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.5 1996/08/26 10:22:11 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.4 1996/06/26 05:44:00 deraadt Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.5 1996/08/26 10:22:11 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,6 +63,7 @@ static char *rcsid = "$OpenBSD: write.c,v 1.4 1996/06/26 05:44:00 deraadt Exp $"
 #include <unistd.h>
 #include <utmp.h>
 #include <err.h>
+#include <vis.h>
 
 void done(); 
 void do_write __P((char *, char *, uid_t));
@@ -297,7 +298,8 @@ void
 wr_fputs(s)
 	register char *s;
 {
-	register char c;
+	register u_char c;
+	char visout[4], *s2;
 
 #define	PUTC(c)	if (putchar(c) == EOF) goto err;
 
@@ -305,17 +307,12 @@ wr_fputs(s)
 		c = toascii(*s);
 		if (c == '\n') {
 			PUTC('\r');
-		} else if (!isprint(c) && !isspace(c) && c != '\007') {
-			if (c & 0x80) {
-				PUTC('M');
-				PUTC('-');
-				c &= ~0x80;
-			} else {
-				PUTC('^');
-				c &= ~0x40;
-			}
+			PUTC('\n');
+			continue;
 		}
-		PUTC(c);
+		vis(visout, c, VIS_SAFE, s[1]);
+		for (s2 = visout; *s2; s2++)
+			PUTC(*s2);
 	}
 	return;
 
