@@ -1,4 +1,4 @@
-#	$OpenBSD: OPAL,v 1.1 1996/08/02 22:21:37 niklas Exp $
+#	$OpenBSD: OPAL,v 1.2 1996/08/23 11:51:57 niklas Exp $
 #
 # OPAL, kernel for a DEC Multia at Applitron
 
@@ -17,7 +17,7 @@ option		DST=1			# Daylight savings rules (for param.c)
 option		SWAPPAGER, VNODEPAGER, DEVPAGER # Paging (mandatory)
 option		DEBUG, DIAGNOSTIC	# Extra kernel debugging
 option		KTRACE			# System call tracing support
-option		DDB
+#option		DDB			# Kernel debugger (not yet supported)
 
 # File system options
 option		FIFO		# POSIX fifo support (in all file systems)
@@ -47,7 +47,7 @@ option		COMPAT_10
 option		COMPAT_11
 
 # OSF/1 binary compatibility -- CURRENTLY DOES NOT WORK
-#option		COMPAT_OSF1
+option		COMPAT_OSF1
 
 # Loadable Kernel Modules
 option		LKM
