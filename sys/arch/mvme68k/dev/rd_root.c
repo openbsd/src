@@ -72,8 +72,4 @@ rd_open_hook(unit, rd)
 	int unit;
 	struct rd_conf *rd;
 {
-	if (unit == 0) {
-		/* The root ramdisk only works single-user. */
-		boothowto |= RB_SINGLE;
-	}
 }
