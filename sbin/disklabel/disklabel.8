@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.39 2001/01/24 09:52:24 deraadt Exp $
+.\"	$OpenBSD: disklabel.8,v 1.40 2001/02/04 15:06:05 deraadt Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -539,7 +539,8 @@ The bootstrap code comes from the file
 .El
 .Sh SEE ALSO
 .Xr disklabel 5 ,
-.Xr disktab 5
+.Xr disktab 5 ,
+.Xr scan_ffs 5
 .Sh DIAGNOSTICS
 The kernel device drivers will not allow the size of a disk partition
 to be decreased or the offset of a partition to be changed while
