@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.5 2004/10/23 08:52:49 pefo Exp $
+dnl	$OpenBSD: prep,v 1.6 2005/01/22 01:37:58 pvalchev Exp $
 Before you install your system, you should familiarize yourself with the
 ARCS setup and how to run programs from the Command monitor prompt.
 
@@ -15,7 +15,7 @@ Accessing the Maintenance Console:
 
     The first time the Maintenance Console is entered, it may be
     necessary to force a reset of the environment to its default
-    settings by entering the ``resetenv'' command and the chevron
+    settings by entering the ``resetenv'' command at the chevron
     prompt. If some variables have been set explicitly, this may
     disturb the normal OpenBSD boot process.
 
