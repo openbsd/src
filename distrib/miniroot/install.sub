@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.323 2003/12/04 20:17:02 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.324 2003/12/21 21:45:41 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1585,7 +1585,7 @@ donetconfig() {
 		for _ns in $resp; do
 			echo "nameserver $_ns" >> /tmp/resolv.conf
 		done
-		ask_yn "Use the nameserver now?"
+		ask_yn "Use the nameserver now?" y
 		[[ $resp == y ]] && cp /tmp/resolv.conf /tmp/resolv.conf.shadow
 	fi
 
