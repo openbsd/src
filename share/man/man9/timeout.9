@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.12 2001/02/16 13:30:48 espie Exp $
+.\"	$OpenBSD: timeout.9,v 1.13 2001/03/15 23:21:39 csapuntz Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -49,6 +49,8 @@
 .Fn "timeout_pending" "struct timeout *to"
 .Ft int
 .Fn "timeout_initialized" "struct timeout *to"
+.Ft int
+.Fn "timeout_triggered" "struct timeout *to"
 .Sh DESCRIPTION
 The
 .Nm timeout
@@ -136,6 +138,15 @@ macro can be used to check if a timeout is scheduled to run.
 The
 .Fn timeout_initialized
 macro can be used to check if a timeout has been initialized.
+.Pp
+The
+.Fn timeout_triggered
+macro can be used to check if a timeout is running or has been run.
+The 
+.Fn timeout_add
+and
+.Fn timeout_del
+functions clear the triggered state for that timeout.
 .Pp
 The old
 .Fn timeout
