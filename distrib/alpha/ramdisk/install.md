@@ -1,4 +1,4 @@
-#       $OpenBSD: install.md,v 1.3 1997/05/09 02:25:08 millert Exp $
+#       $OpenBSD: install.md,v 1.4 1997/05/09 17:59:37 millert Exp $
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
@@ -78,7 +78,7 @@ md_get_cddevs() {
 
 md_get_ifdevs() {
         # return available network devices
-	md_get_msgbuf | egrep "(^ed[0-9] |^[dl]e[0-9] )" | cut -d" " -f1 | sort -u
+	md_get_msgbuf | egrep "(^ed[0-9] |^[dl]e[0-9] )" | sed -e 's/^ *//' -e 's/ .*//'
 }
 
 md_get_partition_range() {
@@ -87,7 +87,22 @@ md_get_partition_range() {
 }
 
 md_installboot() {
-	echo "This must be done later by hand"
+	local _rawdev
+
+	_rawdev=/dev/r${1}c
+
+	# use extracted mdec if it exists (may be newer)
+	if [ -d /mnt/usr/mdec ]; then
+		cp /mnt/usr/mdec/boot /mnt/boot
+		sync
+		/mnt/usr/mdec/installboot -v /mnt/boot /mnt/usr/mdec/bootxx $_rawdev
+	elif [ -d /usr/mdec ]; then
+		cp /usr/mdec/boot /mnt/boot
+		sync
+		/usr/mdec/installboot -v /mnt/boot /usr/mdec/bootxx $_rawdev
+	else
+		echo "No boot block prototypes found, you must run installboot manually."
+	fi
 }
 md_labeldisk() {
 	echo "huh"
@@ -276,4 +291,12 @@ __kernfs_failed_1
 		exit
 	fi
 	> ${KERNFSMOUNTED}
+}
+
+hostname() {
+	case $# in
+		0)	cat /kern/hostname ;;
+		1)	echo "$1" > /kern/hostname ;;
+		*)	echo "usage: hostname [name-of-host]"
+	esac
 }
