@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.5 1997/07/28 17:38:53 flipk Exp $	*/
+/*	$OpenBSD: who.c,v 1.6 1997/08/20 05:37:21 denny Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: who.c,v 1.5 1997/07/28 17:38:53 flipk Exp $";
+static char rcsid[] = "$OpenBSD: who.c,v 1.6 1997/08/20 05:37:21 denny Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,6 +72,7 @@ int only_current_term;		/* show info about the current terminal only */
 int show_term;			/* show term state */
 int show_idle;			/* show idle time */
 int show_labels;		/* show column labels */
+int show_quick;			/* quick, names only */
 
 int
 main(argc, argv)
@@ -85,19 +86,23 @@ main(argc, argv)
 	setlocale(LC_ALL, "");
 
 	only_current_term = show_term = show_idle = show_labels = 0;
-	while ((c = getopt(argc, argv, "HmTu")) != -1) {
+	show_quick = 0;
+	while ((c = getopt(argc, argv, "HmqTu")) != -1) {
 		switch (c) {
+		case 'H':
+			show_labels = 1;
+			break;
 		case 'm':
 			only_current_term = 1;
+			break;
+		case 'q':
+			show_quick = 1;
 			break;
 		case 'T':
 			show_term = 1;
 			break;
 		case 'u':
 			show_idle = 1;
-			break;
-		case 'H':
-			show_labels = 1;
 			break;
 		default:
 			usage();
@@ -106,6 +111,10 @@ main(argc, argv)
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (show_quick) {
+		only_current_term = show_term = show_idle = show_labels = 0;
+	}
 
 	if (chdir("/dev")) {
 		err(1, "cannot change directory to /dev");
@@ -121,6 +130,20 @@ main(argc, argv)
 
 		if (only_current_term) {
 			who_am_i(ufp);
+		} else if (show_quick) {
+			int count = 0;
+	
+			while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1) {
+				if (*usr.ut_name && *usr.ut_line) {
+					(void)printf("%-*.*s ", UT_NAMESIZE,
+						UT_NAMESIZE, usr.ut_name);
+					if ((++count % 8) == 0)
+						(void) printf("\n");
+				}
+			}
+			if (count % 8)
+				(void) printf("\n");
+			(void) printf ("# users=%d\n", count);
 		} else {
 			/* only entries with both name and line fields */
 			while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1)
@@ -133,6 +156,20 @@ main(argc, argv)
 
 		if (only_current_term) {
 			who_am_i(ufp);
+		} else if (show_quick) {
+			int count = 0;
+
+			while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1) {
+				if (*usr.ut_name && *usr.ut_line) {
+					(void)printf("%-*.*s ", UT_NAMESIZE,
+						UT_NAMESIZE, usr.ut_name);
+					if ((++count % 8) == 0)
+						(void) printf("\n");
+				}
+			}
+			if (count % 8)
+				(void) printf("\n");
+			(void) printf ("# users=%d\n", count);
 		} else {
 			/* all entries */
 			while (fread((char *)&usr, sizeof(usr), 1, ufp) == 1)
@@ -268,6 +305,6 @@ file(name)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: who [-mTuH] [ file ]\n       who am i\n");
+	(void)fprintf(stderr, "usage: who [-mqTuH] [ file ]\n       who am i\n");
 	exit(1);
 }

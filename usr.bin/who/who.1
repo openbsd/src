@@ -1,4 +1,4 @@
-.\"	$OpenBSD: who.1,v 1.3 1997/07/28 17:38:53 flipk Exp $
+.\"	$OpenBSD: who.1,v 1.4 1997/08/20 05:37:23 denny Exp $
 .\"	$NetBSD: who.1,v 1.5 1994/12/07 04:28:47 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -62,6 +62,9 @@ Only print information about the current terminal.  This is the
 way of saying
 .Nm who 
 .Ar am i .
+.It Fl q
+(Quick.) List only the names and the number of users currently
+logged on. When this option is used, all other options are ignored.
 .It Fl T
 Print a character after the user name indicating the state of the
 terminal line:
