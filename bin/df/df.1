@@ -1,4 +1,4 @@
-.\"	$OpenBSD: df.1,v 1.4 1996/12/07 09:09:04 deraadt Exp $
+.\"	$OpenBSD: df.1,v 1.5 1997/04/14 17:44:29 kstailey Exp $
 .\"	$NetBSD: df.1,v 1.12 1995/12/05 02:42:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -42,7 +42,7 @@
 .Nd display free disk space
 .Sh SYNOPSIS
 .Nm df
-.Op Fl ikln
+.Op Fl hikln
 .Op Fl t Ar type
 .Op Ar file | Ar file_system ...
 .Sh DESCRIPTION
@@ -65,6 +65,10 @@ options below).
 .Pp
 The following options are available:
 .Bl -tag -width Ds
+.It Fl h
+"Human-readable" output.  Use unit suffixes: Byte, Kilobyte, Megabyte,
+Gigabyte, Terabyte, Petabyte, Exabyte in order to reduce the number of
+digits to three or less.
 .It Fl i
 Include statistics on the number of free inodes.
 .It Fl k
