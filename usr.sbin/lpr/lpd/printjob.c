@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.12 1997/07/19 07:11:44 deraadt Exp $ */
+/*	$OpenBSD: printjob.c,v 1.13 1997/07/20 19:04:34 deraadt Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -185,7 +185,7 @@ printjob()
 	/*
 	 * write process id for others to know
 	 */
-	sprintf(line, "%u\n", pid);
+	sprintf(line, "%d\n", pid);
 	pidoff = i = strlen(line);
 	if (write(lfd, line, i) != i) {
 		syslog(LOG_ERR, "%s: %s: %m", printer, LO);
@@ -1048,6 +1048,8 @@ sendmail(user, bombed)
 	struct stat stb;
 	FILE *fp;
 
+	if (user[0] == '-' || user[0] == '/' || !isprint(user[0]))
+		return;
 	pipe(p);
 	if ((s = dofork(DORETURN)) == 0) {		/* child */
 		dup2(p[0], 0);
@@ -1105,9 +1107,12 @@ sendmail(user, bombed)
 	}
 	(void) close(p[0]);
 	(void) close(p[1]);
-	wait(NULL);
-	syslog(LOG_INFO, "mail sent to user %s about job %s on printer %s (%s)",
-		user, *jobname ? jobname : "<unknown>", printer, cp);
+	if (s != -1) {
+		wait(NULL);
+		syslog(LOG_INFO,
+		    "mail sent to user %s about job %s on printer %s (%s)",
+		    user, *jobname ? jobname : "<unknown>", printer, cp);
+	}
 }
 
 /*
