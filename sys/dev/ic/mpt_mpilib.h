@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_mpilib.h,v 1.2 2004/10/26 04:43:59 marco Exp $	*/
+/*	$OpenBSD: mpt_mpilib.h,v 1.3 2004/10/30 18:07:06 marco Exp $	*/
 /*	$NetBSD: mpt_mpilib.h,v 1.2 2003/04/16 23:24:01 thorpej Exp $	*/
 
 /*
@@ -1097,7 +1097,7 @@ typedef struct _MSG_CONFIG_REPLY
 
 typedef struct _CONFIG_PAGE_MANUFACTURING_0
 {
-    fCONFIG_PAGE_HEADER      Header;                     /* 00h */
+    fCONFIG_PAGE_HEADER     Header;                     /* 00h */
     U8                      ChipName[16];               /* 04h */
     U8                      ChipRevision[8];            /* 14h */
     U8                      BoardName[16];              /* 1Ch */
@@ -1112,7 +1112,7 @@ typedef struct _CONFIG_PAGE_MANUFACTURING_0
 
 typedef struct _CONFIG_PAGE_MANUFACTURING_1
 {
-    fCONFIG_PAGE_HEADER      Header;                     /* 00h */
+    fCONFIG_PAGE_HEADER     Header;                     /* 00h */
     U8                      VPD[256];                   /* 04h */
 } fCONFIG_PAGE_MANUFACTURING_1, MPI_POINTER PTR_CONFIG_PAGE_MANUFACTURING_1,
   ManufacturingPage1_t, MPI_POINTER pManufacturingPage1_t;
@@ -1134,12 +1134,14 @@ typedef struct _MPI_CHIP_REVISION_ID
  * one and check Header.PageLength at runtime.
  */
 #ifndef MPI_MAN_PAGE_2_HW_SETTINGS_WORDS
-#define MPI_MAN_PAGE_2_HW_SETTINGS_WORDS    (1)
+/*#define MPI_MAN_PAGE_2_HW_SETTINGS_WORDS    (1)*/
+/* MP: is this right? */
+#define MPI_MAN_PAGE_2_HW_SETTINGS_WORDS    (16)
 #endif
 
 typedef struct _CONFIG_PAGE_MANUFACTURING_2
 {
-    fCONFIG_PAGE_HEADER      Header;                                 /* 00h */
+    fCONFIG_PAGE_HEADER     Header;                                 /* 00h */
     MPI_CHIP_REVISION_ID    ChipId;                                 /* 04h */
     U32                     HwSettings[MPI_MAN_PAGE_2_HW_SETTINGS_WORDS];/* 08h */
 } fCONFIG_PAGE_MANUFACTURING_2, MPI_POINTER PTR_CONFIG_PAGE_MANUFACTURING_2,
@@ -1153,12 +1155,14 @@ typedef struct _CONFIG_PAGE_MANUFACTURING_2
  * one and check Header.PageLength at runtime.
  */
 #ifndef MPI_MAN_PAGE_3_INFO_WORDS
-#define MPI_MAN_PAGE_3_INFO_WORDS           (1)
+/*#define MPI_MAN_PAGE_3_INFO_WORDS           (1)*/
+/* MP: is this right? */
+#define MPI_MAN_PAGE_3_INFO_WORDS           (16)
 #endif
 
 typedef struct _CONFIG_PAGE_MANUFACTURING_3
 {
-    fCONFIG_PAGE_HEADER                  Header;                     /* 00h */
+    fCONFIG_PAGE_HEADER                 Header;                     /* 00h */
     MPI_CHIP_REVISION_ID                ChipId;                     /* 04h */
     U32                                 Info[MPI_MAN_PAGE_3_INFO_WORDS];/* 08h */
 } fCONFIG_PAGE_MANUFACTURING_3, MPI_POINTER PTR_CONFIG_PAGE_MANUFACTURING_3,

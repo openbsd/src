@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt.c,v 1.11 2004/10/28 02:58:33 marco Exp $	*/
+/*	$OpenBSD: mpt.c,v 1.12 2004/10/30 18:07:06 marco Exp $	*/
 /*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
@@ -845,20 +845,86 @@ mpt_print_header(mpt_softc_t *mpt, char *s, fCONFIG_PAGE_HEADER *phdr)
 int
 mpt_read_config_info_mfg(mpt_softc_t *mpt)
 {
-	int rv;
+	int rv, i;
+	fCONFIG_PAGE_HEADER *phdr[5] = {
+		phdr[0] = &mpt->mpt_mfg_page0.Header,
+		phdr[1] = &mpt->mpt_mfg_page1.Header,
+		phdr[2] = &mpt->mpt_mfg_page2.Header,
+		phdr[3] = &mpt->mpt_mfg_page3.Header,
+		phdr[4] = &mpt->mpt_mfg_page4.Header
+	};
 
-	/* retrieve manufacturing  headers */
-	rv = mpt_read_cfg_header(mpt, MPI_CONFIG_PAGETYPE_MANUFACTURING, 0,
-	    0, &mpt->mpt_mfg_page0.Header);
-	if (rv) {
-		mpt_prt(mpt, "Could not retrieve Manufacturing Page 0 Header.");
-		return (-1);
-	} else if (mpt->verbose > 1) {
-		mpt_print_header(mpt, "Manufacturing Header Page",
-		    &mpt->mpt_mfg_page0.Header);
+	for (i = 0; i < 5 /* 5 pages total */; i++) {
+		/* retrieve MFG headers */
+		rv = mpt_read_cfg_header(mpt,
+		    MPI_CONFIG_PAGETYPE_MANUFACTURING, i, 0, phdr[i]);
+		if (rv) {
+			mpt_prt(mpt, "Could not retrieve Manufacturing Page "
+			    "%i Header.", i);
+			return (-1);
+		} else if (mpt->verbose > 1) {
+			mpt_print_header(mpt, "Manufacturing Header Page",
+			    phdr[i]);
+		}
+
+		/* retrieve MFG config pages using retrieved headers */
+		rv = mpt_read_cfg_page(mpt, i, phdr[i]);
+		if (rv) {
+			mpt_prt(mpt, "Could not retrieve manufacturing Page"
+			    " %i", i);
+			return (-1);
+		}
 	}
 
-	/* retrieve manufacturing config pages using retrieved headers */
+	/* mpt->verbose = 2; */
+	if (mpt->verbose > 1) {
+		mpt_prt(mpt, "Manufacturing Page 0 data: %s %s %s %s %s",
+		    mpt->mpt_mfg_page0.ChipName,
+		    mpt->mpt_mfg_page0.ChipRevision,
+		    mpt->mpt_mfg_page0.BoardName,
+		    mpt->mpt_mfg_page0.BoardAssembly,
+		    mpt->mpt_mfg_page0.BoardTracerNumber);
+
+		mpt_prt(mpt, "Manufacturing Page 1 data:");
+		for (i = 0;
+		    i < ((mpt->mpt_mfg_page1.Header.PageLength - 1)<< 2); i++) {
+			printf("%02x ", mpt->mpt_mfg_page1.VPD[i]);
+		}
+		printf("\n");
+
+		mpt_prt(mpt, "Manufacturing Page 2 data: %x %x",
+		    mpt->mpt_mfg_page2.ChipId.PCIRevisionID,
+		    mpt->mpt_mfg_page2.ChipId.DeviceID);
+		for (i = 0;
+		    i < (mpt->mpt_mfg_page2.Header.PageLength - 2); i++) {
+			printf("%08x ", mpt->mpt_mfg_page2.HwSettings[i]);
+		}
+		printf("\n");
+
+		mpt_prt(mpt, "Manufacturing Page 3 data: %x %x",
+		    mpt->mpt_mfg_page3.ChipId.PCIRevisionID,
+		    mpt->mpt_mfg_page3.ChipId.DeviceID);
+		for (i = 0;
+		    i < (mpt->mpt_mfg_page3.Header.PageLength - 2); i++) {
+			printf("%08x ", mpt->mpt_mfg_page3.Info[i]);
+		}
+		printf("\n");
+
+		mpt_prt(mpt, "Manufacturing Page 4 data: %x %x %x %x %x",
+		    mpt->mpt_mfg_page4.InfoSize1,
+		    mpt->mpt_mfg_page4.InfoOffset1,
+		    mpt->mpt_mfg_page4.InfoSize0,
+		    mpt->mpt_mfg_page4.InfoOffset0,
+		    mpt->mpt_mfg_page4.InquirySize,
+		    mpt->mpt_mfg_page4.ISVolumeSettings,
+		    mpt->mpt_mfg_page4.IMEVolumeSettings,
+		    mpt->mpt_mfg_page4.IMVolumeSettings);
+		for (i = 0; i < sizeof(mpt->mpt_mfg_page4.InquiryData); i++) {
+			printf("%02x ", mpt->mpt_mfg_page4.InquiryData[i]);
+		}
+		printf("\n");
+	}
+	/* mpt->verbose = 1; */
 
 	return (0);
 }
