@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.59 2003/06/04 07:31:17 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.60 2003/06/14 11:47:13 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -1338,10 +1338,10 @@ message_add_payload (struct message *msg, u_int8_t payload, u_int8_t *buf,
   struct iovec *new_iov;
   struct payload *payload_node;
 
-  payload_node = malloc (sizeof *payload_node);
+  payload_node = calloc (1, sizeof *payload_node);
   if (!payload_node)
     {
-      log_error ("message_add_payload: malloc (%lu) failed",
+      log_error ("message_add_payload: calloc (1, %lu) failed",
 		 (unsigned long)sizeof *payload_node);
       return -1;
     }
