@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.16 1999/01/11 05:12:24 millert Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.17 1999/04/16 14:04:41 deraadt Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ namei(ndp)
 				cnp->cn_flags |= HASBUF;
 			return (0);
 		}
-		if ((cnp->cn_flags & LOCKPARENT) && ndp->ni_pathlen == 1)
+		if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))
 			VOP_UNLOCK(ndp->ni_dvp, 0, p);
 		if (ndp->ni_loopcnt++ >= MAXSYMLINKS) {
 			error = ELOOP;
