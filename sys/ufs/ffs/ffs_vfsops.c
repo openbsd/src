@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.33 2001/03/22 00:11:36 art Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.34 2001/03/22 00:20:54 art Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -988,7 +988,7 @@ retry:
 	vp->v_flag |= VLOCKSWORK;
 #endif
 	/* XXX - we use the same pool for ffs and mfs */
-	ip = pool_get(&ffs_ino_pool, M_WAITOK);
+	ip = pool_get(&ffs_ino_pool, PR_WAITOK);
 	bzero((caddr_t)ip, sizeof(struct inode));
 	lockinit(&ip->i_lock, PINOD, "inode", 0, 0);
 	vp->v_data = ip;
