@@ -1,4 +1,4 @@
-/* $OpenBSD: mtrr.c,v 1.2 1999/11/20 13:50:15 matthieu Exp $ */
+/* $OpenBSD: mtrr.c,v 1.3 2000/03/13 06:56:56 matthieu Exp $ */
 /*-
  * Copyright (c) 1999 Michael Smith <msmith@freebsd.org>
  * Copyright (c) 1999 Brian Fundakowski Feldman
@@ -49,6 +49,8 @@ mtrrattach (num)
 	if (num > 1)
 		return;
 
+#if 0
+	/* XXX at least 2 people report problems with K6 MTRR */
 	if (strcmp(cpu_vendor, "AuthenticAMD") == 0 &&
 	    (cpu_id & 0xf00) == 0x500 &&
 	    ((cpu_id & 0xf0) > 0x80 ||
@@ -56,14 +58,18 @@ mtrrattach (num)
 	      (cpu_id & 0xf) > 0x7))) {
 		mem_range_softc.mr_op = &k6_mrops;
 		
-		/* Try for i686 MTRRs */
-	} else if ((cpu_feature & CPUID_MTRR) &&
-		   ((cpu_id & 0xf00) == 0x600) &&
-		   ((strcmp(cpu_vendor, "GenuineIntel") == 0) ||
-		    (strcmp(cpu_vendor, "AuthenticAMD") == 0))) {
+		
+	} else 
+#endif
+	/* Try for i686 MTRRs */
+	if ((cpu_feature & CPUID_MTRR) &&
+		((cpu_id & 0xf00) == 0x600) &&
+		((strcmp(cpu_vendor, "GenuineIntel") == 0) ||
+		(strcmp(cpu_vendor, "AuthenticAMD") == 0))) {
 		mem_range_softc.mr_op = &i686_mrops;
-	    
-	} 
+	} else {
+		mem_range_softc.mr_op = NULL;
+	}
 	/* Initialise memory range handling */
 	if (mem_range_softc.mr_op != NULL)
 		mem_range_softc.mr_op->init(&mem_range_softc);
