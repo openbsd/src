@@ -1,8 +1,8 @@
-/*	$OpenBSD: ukbdmap.c,v 1.12 2002/07/25 02:18:10 nate Exp $ */
-/*	$NetBSD: ukbdmap.c,v 1.6 2001/04/04 05:31:57 toshii Exp $	*/
+/*	$OpenBSD: ukbdmap.c,v 1.13 2002/07/29 03:04:16 nate Exp $ */
+/*	$NetBSD: ukbdmap.c,v 1.11 2002/07/11 21:14:31 augustss Exp $	*/
 
 /*
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
