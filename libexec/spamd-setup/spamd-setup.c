@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.11 2003/06/11 14:24:46 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.12 2003/07/06 21:57:27 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -61,6 +61,30 @@ struct blacklist {
 	size_t blc, bls;
 	u_int8_t black;
 };
+
+u_int32_t	imask(u_int8_t b);
+u_int8_t	maxblock(u_int32_t addr, u_int8_t bits);
+u_int8_t	maxdiff(u_int32_t a, u_int32_t b);
+struct cidr	*range2cidrlist(u_int32_t start, u_int32_t end);
+void		cidr2range(struct cidr cidr, u_int32_t *start, u_int32_t *end);
+char		*atop(u_int32_t addr);
+u_int32_t	ptoa(char *cp);
+int		parse_netblock(char *buf, struct bl *start, struct bl *end,
+		    int white);
+int		open_child(char *file, char **argv);
+int		fetch(char *url);
+int		open_file(char *method, char *file);
+char		*fix_quoted_colons(char *buf);
+void		do_message(FILE *sdc, char *msg);
+struct bl	*add_blacklist(struct bl *bl, int *blc, int *bls, int fd,
+		    int white);
+int		cmpbl(const void *a, const void *b);
+struct cidr	**collapse_blacklist(struct bl *bl, int blc);
+int		configure_spamd(u_short dport, char *name, char *message,
+		    struct cidr **blacklists);
+int		configure_pf(struct cidr **blacklists);
+int		getlist(char ** db_array, char *name, struct blacklist *blist,
+		    struct blacklist *blistnew);
 
 u_int32_t
 imask(u_int8_t b)

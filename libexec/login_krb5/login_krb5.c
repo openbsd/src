@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.17 2002/09/06 18:45:06 deraadt Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.18 2003/07/06 21:57:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 Hans Insulander <hin@openbsd.org>.
@@ -38,7 +38,7 @@ krb5_context context;
 krb5_ccache ccache;
 krb5_principal princ;
 
-void
+static void
 krb5_syslog(krb5_context context, int level, krb5_error_code code, char *fmt, ...)
 {
 	va_list ap;
@@ -50,7 +50,7 @@ krb5_syslog(krb5_context context, int level, krb5_error_code code, char *fmt, ..
 	syslog(level, "%s: %s", buf, krb5_get_err_text(context, code));
 }
 
-void
+static void
 store_tickets(struct passwd *pwd, int ticket_newfiles, int ticket_store,
     int token_install)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwalld.c,v 1.10 2003/06/26 07:53:26 deraadt Exp $	*/
+/*	$OpenBSD: rwalld.c,v 1.11 2003/07/06 21:57:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rwalld.c,v 1.10 2003/06/26 07:53:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwalld.c,v 1.11 2003/07/06 21:57:27 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ void wallprog_1(struct svc_req *, SVCXPRT *);
 
 int from_inetd = 1;
 
-void
+static void
 cleanup(int signo)
 {
 	(void) pmap_unset(WALLPROG, WALLVERS);		/* XXX signal race */

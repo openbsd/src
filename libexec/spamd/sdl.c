@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.6 2003/03/03 22:22:23 cloder Exp $ */
+/*	$OpenBSD: sdl.c,v 1.7 2003/07/06 21:57:27 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -47,6 +47,8 @@
 
 static void sdl_free(struct sdlist *);
 static void sdl_clear(struct sdlist *);
+int match_addr(struct sdaddr *a, struct sdaddr *m, struct sdaddr *b,
+    sa_family_t af);
 
 extern int debug;
 struct sdlist *blacklists = NULL;

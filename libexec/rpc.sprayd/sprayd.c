@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprayd.c,v 1.7 2002/09/06 19:43:54 deraadt Exp $*/
+/*	$OpenBSD: sprayd.c,v 1.8 2003/07/06 21:57:27 deraadt Exp $*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: sprayd.c,v 1.7 2002/09/06 19:43:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sprayd.c,v 1.8 2003/07/06 21:57:27 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,14 +52,14 @@ static int from_inetd = 1;
 
 #define TIMEOUT 120
 
-void
+static void
 cleanup(int signo)
 {
 	(void) pmap_unset(SPRAYPROG, SPRAYVERS);	/* XXX signal race */
 	_exit(0);
 }
 
-void
+static void
 die(int signo)
 {
 	_exit(0);

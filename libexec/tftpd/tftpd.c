@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.28 2003/06/25 21:11:25 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.29 2003/07/06 21:57:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.28 2003/06/25 21:11:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.29 2003/07/06 21:57:27 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -404,7 +404,7 @@ validate_access(char *filename, int mode)
 int	timeout;
 jmp_buf	timeoutbuf;
 
-void
+static void
 timer(int signo)
 {
 	/* XXX longjmp/signal resource leaks */
@@ -478,7 +478,7 @@ abort:
 	return (1);
 }
 
-void
+static void
 justquit(int signo)
 {
 	_exit(0);
