@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mv.1,v 1.12 2000/11/09 17:51:57 aaron Exp $
+.\"	$OpenBSD: mv.1,v 1.13 2001/08/13 21:00:05 heko Exp $
 .\"	$NetBSD: mv.1,v 1.8 1995/03/21 09:06:51 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -134,6 +134,17 @@ to
 overwriting
 .Pa bar
 if it already exists.
+.Pp
+.Cm mv -i -- -f bar ,
+.Cm mv -i ./-f bar
+.Pp
+Either of these commands will rename the file 
+.Pa -f 
+to 
+.Pa bar ,
+prompting for confirmation if 
+.Pa bar
+already exists.
 .Sh SEE ALSO
 .Xr cp 1 ,
 .Xr symlink 7

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rm.1,v 1.13 2001/06/08 13:41:21 millert Exp $
+.\"	$OpenBSD: rm.1,v 1.14 2001/08/13 21:00:05 heko Exp $
 .\"	$NetBSD: rm.1,v 1.8 1995/07/25 19:37:30 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
@@ -138,6 +138,12 @@ exits with a value >0.
 Recursively remove all files contained within the
 .Pa foobar
 directory hierarchy.
+.Pp
+.Cm rm -- -f ,
+.Cm rm ./-f
+.Pp
+Either of these commands will remove the file 
+.Pa -f .
 .Sh SEE ALSO
 .Xr rmdir 1 ,
 .\" .Xr undelete 2 ,
