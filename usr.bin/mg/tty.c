@@ -115,6 +115,19 @@ ttinit() {
 }
 
 /*
+ * Re-initialize the terminal when the editor is resumed.
+ * The keypad_xmit doesn't really belong here but...
+ */
+ttreinit() {
+	if (enter_ca_mode)
+		putpad(enter_ca_mode, 1);	/* enter application mode */
+	if (keypad_xmit)
+		putpad(keypad_xmit, 1);		/* turn on keypad */
+
+	setttysize();
+}
+
+/*
  * Clean up the terminal, in anticipation of
  * a return to the command interpreter. This is a no-op
  * on the ANSI display. On the SCALD display, it sets the

@@ -218,7 +218,9 @@ extern	int	queryrepl();		/* Query replace		*/
  * Defined by "spawn.c".
  */
 extern	int	spawncli();		/* Run CLI in a subjob.		*/
+#ifdef	VMS
 extern	int	attachtoparent();	/* Attach to parent process	*/
+#endif
 
 /* defined by "version.c" */
 
@@ -584,7 +586,11 @@ static	PF	fund_CJ[] = {
 	killregion,	/* ^W */
 	prefix,		/* ^X */
 	yank,		/* ^Y */
+#ifndef	VMS
+	spawncli,	 /* ^Z */
+#else
 	attachtoparent, /* ^Z */
+#endif
 };
 static	PF	fund_esc[] = {
 	prefix,		/* esc */
@@ -712,7 +718,11 @@ static	PF	diredcl[] = {
 	prefix,		/* ^X */
 };
 static	PF	diredcz[] = {
+#ifndef	VMS
+	spawncli,	 /* ^Z */
+#else
 	attachtoparent, /* ^Z */
+#endif
 	prefix,		/* esc */
 	rescan,		/* ^\ */
 	rescan,		/* ^] */
@@ -1071,7 +1081,11 @@ FUNCTNAMES	functnames[] = {
 #ifndef NO_MACRO
 	{definemacro,	"start-kbd-macro"},
 #endif
+#ifdef	VMS
 	{attachtoparent,"suspend-emacs"},
+#else
+	{spawncli,	"suspend-emacs"},
+#endif
 	{usebuffer,	"switch-to-buffer"},
 	{poptobuffer,	"switch-to-buffer-other-window"},
 	{twiddle,	"transpose-chars"},
