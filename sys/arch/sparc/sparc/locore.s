@@ -333,7 +333,7 @@ start:
 _trapbase:
 /* trap 0 is special since we cannot receive it */
 	b dostart; nop; nop; nop	! 00 = reset (fake)
-	VTRAP(T_TEXTFAULT, 0)		! 01 = instr. fetch fault (backpatch to memfault)
+	VTRAP(T_TEXTFAULT, memfault_bootup)	! 01 = instr. fetch fault (backpatch to memfault)
 	TRAP(T_ILLINST)			! 02 = illegal instruction
 	TRAP(T_PRIVINST)		! 03 = privileged instruction
 	TRAP(T_FPDISABLED)		! 04 = fp instr, but EF bit off in psr
@@ -341,7 +341,7 @@ _trapbase:
 	WINDOW_UF			! 06 = window underflow
 	TRAP(T_ALIGN)			! 07 = address alignment error
 	VTRAP(T_FPE, fp_exception)	! 08 = fp exception
-	VTRAP(T_DATAFAULT, 0)		! 09 = data fetch fault (backpatch to memfault)
+	VTRAP(T_DATAFAULT, memfault_bootup)	! 09 = data fetch fault (backpatch to memfault)
 	TRAP(T_TAGOF)			! 0a = tag overflow
 	UTRAP(0x0b)
 	UTRAP(0x0c)
@@ -1287,6 +1287,14 @@ normal_mem_fault:
 	b	return_from_trap	! go return
 	 wr	%l0, 0, %psr		! (but first disable traps again)
 
+/* At bootup, we have to point the data/text fault trap table entry
+ * somewhere by default.  Make the machine watchdog so that we can
+ * see what happened by looking at %tbr and %pc under the PROM.
+ */
+memfault_bootup:
+	call	0
+	nop
+	/* NOTREACHED */
 
 /*
  * fp_exception has to check to see if we are trying to save
