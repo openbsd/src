@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.170 2004/05/21 11:48:56 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.171 2004/05/28 16:33:40 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -124,8 +124,6 @@ setup_listener(struct sockaddr *sa)
 	}
 
 	opt = 1;
-	if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)) == -1)
-		fatal("setsockopt SO_REUSEPORT");
 	if (setsockopt(fd, IPPROTO_TCP, TCP_MD5SIG, &opt, sizeof(opt)) == -1)
 		fatal("setsockopt TCP_MD5SIG");
 
