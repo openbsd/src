@@ -245,6 +245,7 @@
 ./usr/include/dev/pci/vga_pcivar.h
 ./usr/include/dev/pci/vgafb_pcivar.h
 ./usr/include/dev/pcmcia
+./usr/include/dev/pcmcia/if_xereg.h
 ./usr/include/dev/pcmcia/pcmciachip.h
 ./usr/include/dev/pcmcia/pcmciadevs.h
 ./usr/include/dev/pcmcia/pcmciareg.h
@@ -719,7 +720,6 @@
 ./usr/include/libgen.h
 ./usr/include/limits.h
 ./usr/include/locale.h
-./usr/include/machine/spinlock.h
 ./usr/include/malloc.h
 ./usr/include/math.h
 ./usr/include/md4.h
