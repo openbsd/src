@@ -45,6 +45,5 @@ Things todo, in no particular order:
  - Logging
  - Manpages are missing for many library functions, as well as a few
    programs. So we should document them and give back to the Heimdal project.
- - Build and install heimdal.info
  - Fix /etc/rc and companions
  - Example configuration installed when system is installed
