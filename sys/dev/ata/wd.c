@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.20 2001/11/06 19:53:18 miod Exp $ */
+/*	$OpenBSD: wd.c,v 1.21 2002/01/07 19:04:46 mickey Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -1042,7 +1042,7 @@ wdioctl(dev, xfer, addr, flag, p)
 #endif
 		
 	default:
-		error = wdc_ioctl(wd->drvp, xfer, addr, flag);
+		error = wdc_ioctl(wd->drvp, xfer, addr, flag, p);
 		goto exit;
 	}
 

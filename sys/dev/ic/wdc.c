@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.43 2001/11/06 19:53:18 miod Exp $     */
+/*      $OpenBSD: wdc.c,v 1.44 2002/01/07 19:04:46 mickey Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -1979,11 +1979,12 @@ bad:
 }
 
 int
-wdc_ioctl(drvp, xfer, addr, flag)
+wdc_ioctl(drvp, xfer, addr, flag, p)
 	struct ata_drive_datas *drvp;
 	u_long xfer;
 	caddr_t addr;
 	int flag;
+	struct proc *p;
 {
 	int error = 0;
 

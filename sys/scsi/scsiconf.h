@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.31 2001/10/26 10:50:26 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.32 2002/01/07 19:04:46 mickey Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ struct scsi_adapter {
 	int		(*open_target_lu) __P((void));
 	int		(*close_target_lu) __P((void));
 	int		(*ioctl) __P((struct scsi_link *, u_long cmd,
-			    caddr_t addrp, int flag));
+			    caddr_t addrp, int flag, struct proc *p));
 };
 
 /*
