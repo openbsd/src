@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.37 2004/10/05 10:12:22 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.38 2004/10/05 10:20:40 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -224,6 +224,12 @@ sub new
 	}
 }
 
+sub destate
+{
+	my ($self, $state) = @_;
+	$self->compute_fullname($state);
+}
+
 # exec/unexec and friends
 package OpenBSD::PackingElement::Action;
 our @ISA=qw(OpenBSD::PackingElement::Object);
@@ -279,7 +285,7 @@ sub write
 sub destate
 {
 	my ($self, $state) = @_;
-	$self->compute_fullname($state);
+	$self->SUPER::destate($state);
 	$state->{lastfile} = $self;
 	$self->compute_modes($state);
 	if (defined $state->{nochecksum}) {
@@ -879,54 +885,39 @@ sub destate
 	}
 }
 
-package OpenBSD::PackingElement::Exec;
+package OpenBSD::PackingElement::ExeclikeAction;
 our @ISA=qw(OpenBSD::PackingElement::Action);
+
+sub destate
+{
+	my ($self, $state) = @_;
+	$self->{expanded} = $self->expand($self->{name}, $state);
+}
+
+package OpenBSD::PackingElement::Exec;
+our @ISA=qw(OpenBSD::PackingElement::ExeclikeAction);
 
 __PACKAGE__->setKeyword('exec');
 
 sub keyword() { "exec" }
 
-sub destate
-{
-	my ($self, $state) = @_;
-	$self->{expanded} = $self->expand($self->{name}, $state);
-}
-
 package OpenBSD::PackingElement::Unexec;
-our @ISA=qw(OpenBSD::PackingElement::Action);
+our @ISA=qw(OpenBSD::PackingElement::ExeclikeAction);
 
 __PACKAGE__->setKeyword('unexec');
 sub keyword() { "unexec" }
 
-sub destate
-{
-	my ($self, $state) = @_;
-	$self->{expanded} = $self->expand($self->{name}, $state);
-}
-
 package OpenBSD::PackingElement::ExtraUnexec;
-our @ISA=qw(OpenBSD::PackingElement::Action);
+our @ISA=qw(OpenBSD::PackingElement::ExeclikeAction);
 
 __PACKAGE__->setKeyword('extraunexec');
 sub keyword() { "extraunexec" }
-
-sub destate
-{
-	my ($self, $state) = @_;
-	$self->{expanded} = $self->expand($self->{name}, $state);
-}
 
 package OpenBSD::PackingElement::DirRm;
 our @ISA=qw(OpenBSD::PackingElement::FileObject);
 
 __PACKAGE__->setKeyword('dirrm');
 sub keyword() { "dirrm" }
-
-sub destate
-{
-	my ($self, $state) = @_;
-	$self->compute_fullname($state);
-}
 
 package OpenBSD::PackingElement::DirBase;
 sub stringize($)
@@ -944,7 +935,7 @@ sub keyword() { "dir" }
 sub destate
 {
 	my ($self, $state) = @_;
-	$self->compute_fullname($state);
+	$self->SUPER::destate($state);
 	$self->compute_modes($state);
 }
 
