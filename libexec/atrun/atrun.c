@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.14 2001/07/09 07:04:41 deraadt Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.15 2001/08/27 16:18:58 deraadt Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -27,8 +27,8 @@
 
 /* System Headers */
 
-#include <sys/fcntl.h>
 #include <sys/types.h>
+#include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -71,7 +71,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.14 2001/07/09 07:04:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: atrun.c,v 1.15 2001/08/27 16:18:58 deraadt Exp $";
 static int debug = 0;
 
 /* Local functions */
