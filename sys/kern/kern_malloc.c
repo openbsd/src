@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.47 2002/02/12 17:19:41 provos Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.48 2002/06/11 05:58:17 art Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ malloc(size, type, flags)
 
 	indx = BUCKETINDX(size);
 	kbp = &bucket[indx];
-	s = splimp();
+	s = splvm();
 #ifdef KMEMSTATS
 	while (ksp->ks_memuse >= ksp->ks_limit) {
 		if (flags & M_NOWAIT) {
@@ -350,7 +350,7 @@ free(addr, type)
 	kup = btokup(addr);
 	size = 1 << kup->ku_indx;
 	kbp = &bucket[kup->ku_indx];
-	s = splimp();
+	s = splvm();
 #ifdef DIAGNOSTIC
 	/*
 	 * Check for returns of data that do not point to the
