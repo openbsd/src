@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_cout.c,v 1.16 2003/06/19 20:31:08 deraadt Exp $	*/
+/*	$OpenBSD: rpc_cout.c,v 1.17 2004/05/09 22:22:45 deraadt Exp $	*/
 /*	$NetBSD: rpc_cout.c,v 1.6 1996/10/01 04:13:53 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -56,7 +56,6 @@ static void print_ifarg(char *);
 static void print_ifsizeof(char *, char *);
 static void print_ifclose(int);
 static void print_ifstat(int, char *, char *, relation, char *, char *, char *);
-static void emit_num(definition *);
 static void emit_program(definition *);
 static void emit_enum(definition *);
 static void emit_union(definition *);

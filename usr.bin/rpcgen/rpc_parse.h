@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_parse.h,v 1.7 2003/06/25 21:09:26 deraadt Exp $	*/
+/*	$OpenBSD: rpc_parse.h,v 1.8 2004/05/09 22:22:45 deraadt Exp $	*/
 /*	$NetBSD: rpc_parse.h,v 1.3 1995/06/11 21:50:00 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -52,7 +52,7 @@ enum relation {
 	REL_VECTOR,	/* fixed length array */
 	REL_ARRAY,	/* variable length array */
 	REL_POINTER,	/* pointer */
-	REL_ALIAS,	/* simple */
+	REL_ALIAS	/* simple */
 };
 typedef enum relation relation;
 
