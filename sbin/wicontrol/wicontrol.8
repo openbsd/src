@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.32 2002/04/06 23:51:10 millert Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.33 2002/04/11 20:36:40 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -180,41 +180,36 @@ The
 is used for diagnostic purposes.
 The Lucent WaveMANAGER sofware can poll the names of remote hosts.
 .It Fl c Ar 0|1
-[Lucent only] Allow the station to create a service set (IBSS).
+Allow the station to create a service set (IBSS).
 Permitted values are 0 (do not create IBSS) and 1 (enable creation of IBSS).
 The default is 0.
 .Pp
-Note: older firmware revisions do not support the creation of a service set.
+Note: Symbol cards and older Lucent/Prism firmware revisions do not
+support the creation of a service set.
 .It Fl q Ar SSID
-Specify the name of an IBSS (SSID) to create on a given interface.
+Specify the name (SSID) of an IBSS to create on a given interface.
 The
 .Ar SSID
-can be any text string up to 30 characters long.
-.Pp
-Note: older firmware revisions do not support IBSS.
+can be any text string up to 32 characters long.
+If the card is in IBSS creation or hostap mode, the IBBS name is
+automatically set to be the same as the
+.Em network name .
 .It Fl p Ar port type
 Set the
 .Ar port type
 for a specified interface.
 The legal values for
 .Ar port type
-are 1 (BSS mode), 3 (ad-hoc mode) and 6 (hostap mode).
+are 1 (BSS mode), 3 (ad-hoc mode), 4 (IBSS mode) and 6 (hostap mode).
 The symbolic values
 .Dq bss ,
-.Dq adhoc
+.Dq adhoc ,
+.Dq ibss ,
 and
 .Dq hostap
-may also be used instead of numeric values.
-In ad-hoc mode, the station can communicate directly with any other
-stations within direct radio range (provided that they are also
-operating in ad-hoc mode).
-In BSS (aka infrastructure) mode, hosts must associate with a service set
-controlled by an access point, which relays traffic between end stations.
-The default setting is 1 (BSS mode).
+may also be used.
 The hostap mode is only available on Prism-II and Prism-2.5-based NICs.
-In this mode, the NIC, in conjuction with the
-.Xr wi 4
-driver, acts as an access point.
+See below for a explanation of the various port types.
 .It Fl a Ar access_point_density
 Specify the
 .Ar access point density
@@ -290,7 +285,21 @@ Permitted values are
 .Ar 3
 (104-bit Shared Key Authentication).
 The 104-bit Shared Key Authentication mode is only available on Symbol cards.
-The default is 1.
+.Pp
+When
+.Em Open System Authentication
+is used, any station may associate with an access point.
+In effect, no authentication is done.
+Note, however, that if WEP is enabled on the access point, stations will
+be able to associate with the access point but will be unable to send and
+receive data packets unless they have the correct WEP key.
+.br
+With
+.Em Shared Key Authentication,
+on the other hand, only stations that have the same WEP key as the access
+point may associate with it.
+.br
+The default is 1 (Open System Authentication).
 .Pp
 Note: It is not valid to enable Shared Key Authentication
 when no valid WEP keys have been defined.
@@ -345,6 +354,61 @@ The
 .Ar max sleep interval
 is specified in milliseconds.
 The default is 100.
+.El
+.Ss Explanation of port types
+.Pp
+There are five modes the NIC can operate in:
+.Bl -tag -width Ds -offset indent
+.It BSS mode
+Also known as
+.Em infrastructure
+mode, this is used when associating with an access point, through
+which all traffic passes.
+If no service set is specified via the
+.Fl n
+flag, the NIC will associate with whichever access point has the
+strongest signal.
+In general, it is a good idea to specify a service set to prevent
+possible hijacking of your connection.
+.It ad-hoc mode
+More accurately known as
+.Dq ad-hoc demo mode .
+This mode does not require an access point; the NIC communicates with
+other ad-hoc stations within range on a peer-to-peer basis.
+This mode is not specified by the IEEE 802.11 standard and there
+may be problems interoperating with NICs manufactured by different
+vendors.
+.It IBSS mode
+Also known as
+.Em IEEE ad-hoc
+mode or
+.Em peer-to-peer
+mode.
+This is the standardized method of operating without an access point.
+Stations associate with a service set created by an IBSS master (see below).
+However, actual connections between stations are peer-to-peer as in ad-hoc mode.
+Lucent firmware version 6.06 or higher, Prism2 firmware 0.8.0 or higher,
+or Symbol firmware version 2.0.0 or higher is required for IBSS mode.
+.It IBSS master
+Also know as
+.Em Host IBSS
+mode.
+In this mode, the station takes on part of the role of an access point,
+however traffic does not pass through it to reach the other stations.
+When a group of stations are operating in IBSS mode, one of them must be
+the master, specifying the network name of the service set.
+Symbol cards do not support operating as an IBSS master.
+.It Host AP
+In this mode, which is only available on Prism2 cards, the NIC acts
+as an access point (base station).
+Some tasks, such as beaconing and frame acknowledgement, are handled
+automatically by the card firmware.
+Authentication and general management of the associated stations,
+however, is performed by the
+.Xr wi 4
+driver itself.
+Note that there are bugs in Host AP mode in Prism firmware revisions
+prior to 0.8.3.
 .El
 .Sh SEE ALSO
 .Xr awi 4 ,
