@@ -146,4 +146,5 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umidivar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/hash.ph
 ./usr/share/man/cat1/gdb.0
+./usr/share/man/cat1/objcopy.0
 ./usr/share/man/cat1/objdump.0

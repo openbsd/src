@@ -1184,7 +1184,6 @@
 ./usr/libexec/rpc.rwalld
 ./usr/libexec/rpc.sprayd
 ./usr/libexec/rshd
-./usr/libexec/safe_finger
 ./usr/libexec/sendmail
 ./usr/libexec/sendmail/sendmail
 ./usr/libexec/sftp-server

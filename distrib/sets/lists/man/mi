@@ -1900,7 +1900,6 @@
 ./usr/share/man/cat8/rwalld.0
 ./usr/share/man/cat8/rwhod.0
 ./usr/share/man/cat8/sa.0
-./usr/share/man/cat8/safe_finger.0
 ./usr/share/man/cat8/savecore.0
 ./usr/share/man/cat8/scan_ffs.0
 ./usr/share/man/cat8/scsi.0
