@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.32 2001/11/09 15:32:21 art Exp $	*/
+/*	$OpenBSD: buf.h,v 1.33 2001/11/15 23:15:15 art Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -98,8 +98,6 @@ struct buf {
 	struct	vnode *b_vp;		/* Device vnode. */
 	int	b_dirtyoff;		/* Offset in buffer of dirty region. */
 	int	b_dirtyend;		/* Offset of end of dirty region. */
-	struct	ucred *b_rcred;		/* Read credentials reference. */
-	struct	ucred *b_wcred;		/* Write credentials reference. */
 	int	b_validoff;		/* Offset in buffer of valid region. */
 	int	b_validend;		/* Offset of end of valid region. */
  	struct	workhead b_dep;		/* List of filesystem dependencies. */

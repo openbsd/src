@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.23 2001/11/06 19:53:21 miod Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.24 2001/11/15 23:15:15 art Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -136,6 +136,15 @@ nfs_bioread(vp, uio, ioflag, cred)
 			}
 		}
 	}
+
+	/*
+	 * update the cache read creds for this vnode
+	 */
+	if (np->n_rcred)
+		crfree(np->n_rcred);
+	np->n_rcred = cred;
+	crhold(cred);
+
 	do {
 	    if ((vp->v_flag & VROOT) && vp->v_type == VLNK) {
 		    return (nfs_readlinkrpc(vp, uio, cred));
@@ -162,7 +171,7 @@ nfs_bioread(vp, uio, ioflag, cred)
 				return (EINTR);
 			    if ((rabp->b_flags & (B_DELWRI | B_DONE)) == 0) {
 				rabp->b_flags |= (B_READ | B_ASYNC);
-				if (nfs_asyncio(rabp, cred)) {
+				if (nfs_asyncio(rabp)) {
 				    rabp->b_flags |= B_INVAL;
 				    brelse(rabp);
 				}
@@ -191,7 +200,7 @@ again:
 			if ((bp->b_flags & (B_DONE | B_DELWRI)) == 0) {
 				bp->b_flags |= B_READ;
 				not_readin = 0;
-				error = nfs_doio(bp, cred, p);
+				error = nfs_doio(bp, p);
 				if (error) {
 				    brelse(bp);
 				    return (error);
@@ -232,7 +241,7 @@ again:
 			return (EINTR);
 		if ((bp->b_flags & B_DONE) == 0) {
 			bp->b_flags |= B_READ;
-			error = nfs_doio(bp, cred, p);
+			error = nfs_doio(bp, p);
 			if (error) {
 				brelse(bp);
 				return (error);
@@ -245,7 +254,7 @@ again:
 	    default:
 		printf(" nfsbioread: type %x unexpected\n",vp->v_type);
 		break;
-	    };
+	    }
 
 	    if (n > 0) {
 		if (!baddr)
@@ -335,6 +344,15 @@ nfs_write(v)
 		psignal(p, SIGXFSZ);
 		return (EFBIG);
 	}
+
+	/*
+	 * update the cache write creds for this node.
+	 */
+	if (np->n_wcred)
+		crfree(np->n_wcred);
+	np->n_wcred = cred;
+	crhold(cred);
+
 	/*
 	 * I use nm_rsize, not nm_wsize so that all buffer cache blocks
 	 * will be the same size within a filesystem. nfs_writerpc will
@@ -357,10 +375,6 @@ again:
 		bp = nfs_getcacheblk(vp, bn, biosize, p);
 		if (!bp)
 			return (EINTR);
-		if (bp->b_wcred == NOCRED) {
-			crhold(cred);
-			bp->b_wcred = cred;
-		}
 		np->n_flag |= NMODIFIED;
 		if (uio->uio_offset + n > np->n_size) {
 			np->n_size = uio->uio_offset + n;
@@ -522,9 +536,8 @@ nfs_vinvalbuf(vp, flags, cred, p, intrflg)
  * are all hung on a dead server.
  */
 int
-nfs_asyncio(bp, cred)
-	register struct buf *bp;
-	struct ucred *cred;
+nfs_asyncio(bp)
+	struct buf *bp;
 {
 	int i,s;
 
@@ -532,17 +545,8 @@ nfs_asyncio(bp, cred)
 		return (EIO);
 	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
 	    if (nfs_iodwant[i]) {
-		if (bp->b_flags & B_READ) {
-			if (bp->b_rcred == NOCRED && cred != NOCRED) {
-				crhold(cred);
-				bp->b_rcred = cred;
-			}
-		} else {
+		if ((bp->b_flags & B_READ) == 0) {
 			bp->b_flags |= B_WRITEINPROG;
-			if (bp->b_wcred == NOCRED && cred != NOCRED) {
-				crhold(cred);
-				bp->b_wcred = cred;
-			}
 		}
 	
 		TAILQ_INSERT_TAIL(&nfs_bufq, bp, b_freelist);
@@ -577,9 +581,8 @@ nfs_asyncio(bp, cred)
  * synchronously or from an nfsiod.
  */
 int
-nfs_doio(bp, cr, p)
-	register struct buf *bp;
-	struct ucred *cr;
+nfs_doio(bp, p)
+	struct buf *bp;
 	struct proc *p;
 {
 	register struct uio *uiop;
@@ -609,16 +612,16 @@ nfs_doio(bp, cr, p)
 	    io.iov_len = uiop->uio_resid = bp->b_bcount;
 	    /* mapping was done by vmapbuf() */
 	    io.iov_base = bp->b_data;
-	    uiop->uio_offset = ((off_t)bp->b_blkno) * DEV_BSIZE;
+	    uiop->uio_offset = ((off_t)bp->b_blkno) << DEV_BSHIFT;
 	    if (bp->b_flags & B_READ) {
 		uiop->uio_rw = UIO_READ;
 		nfsstats.read_physios++;
-		error = nfs_readrpc(vp, uiop, cr);
+		error = nfs_readrpc(vp, uiop);
 	    } else {
 		iomode = NFSV3WRITE_DATASYNC;
 		uiop->uio_rw = UIO_WRITE;
 		nfsstats.write_physios++;
-		error = nfs_writerpc(vp, uiop, cr, &iomode, &must_commit);
+		error = nfs_writerpc(vp, uiop, &iomode, &must_commit);
 	    }
 	    if (error) {
 		bp->b_flags |= B_ERROR;
@@ -630,9 +633,9 @@ nfs_doio(bp, cr, p)
 	    uiop->uio_rw = UIO_READ;
 	    switch (vp->v_type) {
 	    case VREG:
-		uiop->uio_offset = ((off_t)bp->b_blkno) * DEV_BSIZE;
+		uiop->uio_offset = ((off_t)bp->b_blkno) << DEV_BSHIFT;
 		nfsstats.read_bios++;
-		error = nfs_readrpc(vp, uiop, cr);
+		error = nfs_readrpc(vp, uiop);
 		if (!error) {
 		    bp->b_validoff = 0;
 		    if (uiop->uio_resid) {
@@ -643,7 +646,7 @@ nfs_doio(bp, cr, p)
 			 * Just zero fill the rest of the valid area.
 			 */
 			diff = bp->b_bcount - uiop->uio_resid;
-			len = np->n_size - (((u_quad_t)bp->b_blkno) * DEV_BSIZE
+			len = np->n_size - ((((off_t)bp->b_blkno) << DEV_BSHIFT)
 				+ diff);
 			if (len > 0) {
 			    len = min(len, uiop->uio_resid);
@@ -664,7 +667,7 @@ nfs_doio(bp, cr, p)
 	    case VLNK:
 		uiop->uio_offset = (off_t)0;
 		nfsstats.readlink_bios++;
-		error = nfs_readlinkrpc(vp, uiop, cr);
+		error = nfs_readlinkrpc(vp, uiop, curproc->p_ucred);
 		break;
 	    default:
 		printf("nfs_doio:  type %x unexpected\n",vp->v_type);
@@ -691,7 +694,7 @@ nfs_doio(bp, cr, p)
 	    printf("nfs_doio(%x): bp %x doff %d dend %d\n", 
 		vp, bp, bp->b_dirtyoff, bp->b_dirtyend);
 #endif
-	    error = nfs_writerpc(vp, uiop, cr, &iomode, &must_commit);
+	    error = nfs_writerpc(vp, uiop, &iomode, &must_commit);
 	    if (!error && iomode == NFSV3WRITE_UNSTABLE)
 		bp->b_flags |= B_NEEDCOMMIT;
 	    else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.38 2001/11/06 19:53:21 miod Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.39 2001/11/15 23:15:15 art Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -594,8 +594,8 @@ nfs_setattr(v)
  */
 int
 nfs_setattrrpc(vp, vap, cred, procp)
-	register struct vnode *vp;
-	register struct vattr *vap;
+	struct vnode *vp;
+	struct vattr *vap;
 	struct ucred *cred;
 	struct proc *procp;
 {
@@ -877,14 +877,13 @@ nfs_readlinkrpc(vp, uiop, cred)
  * Ditto above
  */
 int
-nfs_readrpc(vp, uiop, cred)
-	register struct vnode *vp;
+nfs_readrpc(vp, uiop)
+	struct vnode *vp;
 	struct uio *uiop;
-	struct ucred *cred;
 {
-	register u_int32_t *tl;
-	register caddr_t cp;
-	register int32_t t1, t2;
+	u_int32_t *tl;
+	caddr_t cp;
+	int32_t t1, t2;
 	caddr_t bpos, dpos, cp2;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	struct nfsmount *nmp;
@@ -912,7 +911,8 @@ nfs_readrpc(vp, uiop, cred)
 			*tl++ = txdr_unsigned(len);
 			*tl = 0;
 		}
-		nfsm_request(vp, NFSPROC_READ, uiop->uio_procp, cred);
+		nfsm_request(vp, NFSPROC_READ, uiop->uio_procp,
+		    VTONFS(vp)->n_rcred);
 		if (v3) {
 			nfsm_postop_attr(vp, attrflag);
 			if (error) {
@@ -941,15 +941,14 @@ nfsmout:
  * nfs write call
  */
 int
-nfs_writerpc(vp, uiop, cred, iomode, must_commit)
-	register struct vnode *vp;
-	register struct uio *uiop;
-	struct ucred *cred;
+nfs_writerpc(vp, uiop, iomode, must_commit)
+	struct vnode *vp;
+	struct uio *uiop;
 	int *iomode, *must_commit;
 {
-	register u_int32_t *tl;
-	register caddr_t cp;
-	register int32_t t1, t2, backup;
+	u_int32_t *tl;
+	caddr_t cp;
+	int32_t t1, t2, backup;
 	caddr_t bpos, dpos, cp2;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
@@ -991,7 +990,8 @@ nfs_writerpc(vp, uiop, cred, iomode, must_commit)
 
 		}
 		nfsm_uiotom(uiop, len);
-		nfsm_request(vp, NFSPROC_WRITE, uiop->uio_procp, cred);
+		nfsm_request(vp, NFSPROC_WRITE, uiop->uio_procp,
+		    VTONFS(vp)->n_wcred);
 		if (v3) {
 			wccflag = NFSV3_WCCCHK;
 			nfsm_wcc_data(vp, wccflag);
@@ -2508,17 +2508,16 @@ nfs_lookitup(dvp, name, len, cred, procp, npp)
  * Nfs Version 3 commit rpc
  */
 int
-nfs_commit(vp, offset, cnt, cred, procp)
-	register struct vnode *vp;
+nfs_commit(vp, offset, cnt, procp)
+	struct vnode *vp;
 	u_quad_t offset;
 	int cnt;
-	struct ucred *cred;
 	struct proc *procp;
 {
-	register caddr_t cp;
-	register u_int32_t *tl;
-	register int32_t t1, t2;
-	register struct nfsmount *nmp = VFSTONFS(vp->v_mount);
+	caddr_t cp;
+	u_int32_t *tl;
+	int32_t t1, t2;
+	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	caddr_t bpos, dpos, cp2;
 	int error = 0, wccflag = NFSV3_WCCRATTR;
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
@@ -2532,7 +2531,7 @@ nfs_commit(vp, offset, cnt, cred, procp)
 	txdr_hyper(offset, tl);
 	tl += 2;
 	*tl = txdr_unsigned(cnt);
-	nfsm_request(vp, NFSPROC_COMMIT, procp, cred);
+	nfsm_request(vp, NFSPROC_COMMIT, procp, VTONFS(vp)->n_wcred);
 	nfsm_wcc_data(vp, wccflag);
 	if (!error) {
 		nfsm_dissect(tl, u_int32_t *, NFSX_V3WRITEVERF);
@@ -2587,29 +2586,23 @@ nfs_strategy(v)
 	void *v;
 {
 	struct vop_strategy_args *ap = v;
-	register struct buf *bp = ap->a_bp;
-	struct ucred *cr;
+	struct buf *bp = ap->a_bp;
 	struct proc *p;
 	int error = 0;
 
 	if ((bp->b_flags & (B_PHYS|B_ASYNC)) == (B_PHYS|B_ASYNC))
 		panic("nfs physio/async");
 	if (bp->b_flags & B_ASYNC)
-		p = (struct proc *)0;
+		p = NULL;
 	else
 		p = curproc;	/* XXX */
-	if (bp->b_flags & B_READ)
-		cr = bp->b_rcred;
-	else
-		cr = bp->b_wcred;
 	/*
 	 * If the op is asynchronous and an i/o daemon is waiting
 	 * queue the request, wake it up and wait for completion
 	 * otherwise just do it ourselves.
 	 */
-	if ((bp->b_flags & B_ASYNC) == 0 ||
-		nfs_asyncio(bp, NOCRED))
-		error = nfs_doio(bp, cr, p);
+	if ((bp->b_flags & B_ASYNC) == 0 || nfs_asyncio(bp))
+		error = nfs_doio(bp, p);
 	return (error);
 }
 
@@ -2639,21 +2632,20 @@ nfs_fsync(v)
  */
 int
 nfs_flush(vp, cred, waitfor, p, commit)
-	register struct vnode *vp;
+	struct vnode *vp;
 	struct ucred *cred;
 	int waitfor;
 	struct proc *p;
 	int commit;
 {
-	register struct nfsnode *np = VTONFS(vp);
-	register struct buf *bp;
-	register int i;
+	struct nfsnode *np = VTONFS(vp);
+	struct buf *bp;
+	int i;
 	struct buf *nbp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	int s, error = 0, slptimeo = 0, slpflag = 0, retv, bvecpos;
 	int passone = 1;
 	u_quad_t off = (u_quad_t)-1, endoff = 0, toff;
-	struct ucred* wcred = NULL;
 #ifndef NFS_COMMITBVECSIZ
 #define NFS_COMMITBVECSIZ	20
 #endif
@@ -2682,14 +2674,6 @@ again:
 				!= (B_DELWRI | B_NEEDCOMMIT))
 				continue;
 			bremfree(bp);
-			/*
-			 * Work out if all buffers are using the same cred
-			 * so we can deal with them all with one commit.
-			 */
-			if (wcred == NULL)
-				wcred = bp->b_wcred;
-			else if (wcred != bp->b_wcred)
-				wcred = NOCRED;
 			bp->b_flags |= (B_BUSY | B_WRITEINPROG);
 			/*
 			 * A list of these buffers is kept so that the
@@ -2712,28 +2696,8 @@ again:
 	if (bvecpos > 0) {
 		/*
 		 * Commit data on the server, as required.
-		 * If all bufs are using the same wcred, then use that with
-		 * one call for all of them, otherwise commit each one
-		 * separately.
 		 */
-		if (wcred != NOCRED)
-			retv = nfs_commit(vp, off, (int)(endoff - off),
-					  wcred, p);
-		else {
-			retv = 0;
-			for (i = 0; i < bvecpos; i++) {
-				off_t off, size;
-				bp = bvec[i];
-				off = ((u_quad_t)bp->b_blkno) * DEV_BSIZE +
-					bp->b_dirtyoff;
-				size = (u_quad_t)(bp->b_dirtyend
-						  - bp->b_dirtyoff);
-				retv = nfs_commit(vp, off, (int)size,
-						  bp->b_wcred, p);
-				if (retv) break;
-			}
-		}
-
+		retv = nfs_commit(vp, off, (int)(endoff - off), p);
 		if (retv == NFSERR_STALEWRITEVERF)
 			nfs_clearcommit(vp->v_mount);
 		/*
@@ -2951,7 +2915,7 @@ nfs_writebp(bp, force)
 		off = ((u_quad_t)bp->b_blkno) * DEV_BSIZE + bp->b_dirtyoff;
 		bp->b_flags |= B_WRITEINPROG;
 		retv = nfs_commit(bp->b_vp, off, bp->b_dirtyend-bp->b_dirtyoff,
-			bp->b_wcred, bp->b_proc);
+			bp->b_proc);
 		bp->b_flags &= ~B_WRITEINPROG;
 		if (!retv) {
 			bp->b_dirtyoff = bp->b_dirtyend = 0;

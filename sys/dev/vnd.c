@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.27 2000/07/05 07:27:12 niklas Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.28 2001/11/15 23:15:15 art Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -558,8 +558,6 @@ vndstrategy(bp)
 		nbp->vb_buf.b_proc = bp->b_proc;
 		nbp->vb_buf.b_iodone = vndiodone;
 		nbp->vb_buf.b_vp = vp;
-		nbp->vb_buf.b_rcred = vnd->sc_cred;	/* XXX crdup? */
-		nbp->vb_buf.b_wcred = vnd->sc_cred;	/* XXX crdup? */
 		nbp->vb_buf.b_dirtyoff = bp->b_dirtyoff;
 		nbp->vb_buf.b_dirtyend = bp->b_dirtyend;
 		nbp->vb_buf.b_validoff = bp->b_validoff;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.15 2001/06/25 03:28:06 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.16 2001/11/15 23:15:15 art Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/vnode.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -58,6 +59,11 @@
 
 LIST_HEAD(nfsnodehashhead, nfsnode) *nfsnodehashtbl;
 u_long nfsnodehash;
+struct lock nfs_hashlock;
+
+struct pool nfs_node_pool;
+
+extern int prtactive;
 
 #define TRUE	1
 #define	FALSE	0
@@ -69,8 +75,11 @@ u_long nfsnodehash;
 void
 nfs_nhinit()
 {
-
 	nfsnodehashtbl = hashinit(desiredvnodes, M_NFSNODE, M_WAITOK, &nfsnodehash);
+	lockinit(&nfs_hashlock, PINOD, "nfs_hashlock", 0, 0);
+
+	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_NFSNODE);
 }
 
 /*
@@ -78,12 +87,12 @@ nfs_nhinit()
  */
 u_long
 nfs_hash(fhp, fhsize)
-	register nfsfh_t *fhp;
+	nfsfh_t *fhp;
 	int fhsize;
 {
-	register u_char *fhpp;
-	register u_long fhsum;
-	register int i;
+	u_char *fhpp;
+	u_long fhsum;
+	int i;
 
 	fhpp = &fhp->fh_bytes[0];
 	fhsum = 0;
@@ -101,19 +110,18 @@ nfs_hash(fhp, fhsize)
 int
 nfs_nget(mntp, fhp, fhsize, npp)
 	struct mount *mntp;
-	register nfsfh_t *fhp;
+	nfsfh_t *fhp;
 	int fhsize;
 	struct nfsnode **npp;
 {
 	struct proc *p = curproc;	/* XXX */
-	register struct nfsnode *np, *np2;
+	struct nfsnode *np;
 	struct nfsnodehashhead *nhpp;
-	register struct vnode *vp;
+	struct vnode *vp;
 	extern int (**nfsv2_vnodeop_p)__P((void *));
 	struct vnode *nvp;
 	int error;
 
-retry:
 	nhpp = NFSNOHASH(nfs_hash(fhp, fhsize));
 loop:
 	for (np = nhpp->lh_first; np != 0; np = np->n_hash.le_next) {
@@ -126,15 +134,19 @@ loop:
 		*npp = np;
 		return(0);
 	}
+	if (lockmgr(&nfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, NULL, p))
+		goto loop;
 	error = getnewvnode(VT_NFS, mntp, nfsv2_vnodeop_p, &nvp);
 	if (error) {
 		*npp = 0;
+		lockmgr(&nfs_hashlock, LK_RELEASE, NULL, p);
 		return (error);
 	}
 	vp = nvp;
-	MALLOC(np, struct nfsnode *, sizeof *np, M_NFSNODE, M_WAITOK);
+	np = pool_get(&nfs_node_pool, PR_WAITOK);
 	bzero((caddr_t)np, sizeof *np);
 	vp->v_data = np;
+	np->n_vnode = vp;
 
 	/* 
 	 * Are we getting the root? If so, make sure the vnode flags
@@ -149,28 +161,15 @@ loop:
 			vp->v_flag |= VROOT;
 		}
 	}
-
-	np->n_vnode = vp;
-	/*
-	 * Insert the nfsnode in the hash queue for its new file handle
-	 */
-	for (np2 = nhpp->lh_first; np2 != 0; np2 = np2->n_hash.le_next) {
-		if (vp->v_mount != NFSTOV(np2)->v_mount || 
-		    fhsize != np2->n_fhsize ||
-		    bcmp((caddr_t)fhp, (caddr_t)np2->n_fhp, fhsize))
-			continue;
-		
-		vrele(vp);
-		goto retry;
-	}
 	
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
 	if (fhsize > NFS_SMALLFH) {
-		MALLOC(np->n_fhp, nfsfh_t *, fhsize, M_NFSBIGFH, M_WAITOK);
+		np->n_fhp = malloc(fhsize, M_NFSBIGFH, M_WAITOK);
 	} else
 		np->n_fhp = &np->n_fh;
 	bcopy((caddr_t)fhp, (caddr_t)np->n_fhp, fhsize);
 	np->n_fhsize = fhsize;
+	lockmgr(&nfs_hashlock, LK_RELEASE, 0, p);
 	*npp = np;
 	return (0);
 }
@@ -183,10 +182,9 @@ nfs_inactive(v)
 		struct vnode *a_vp;
 		struct proc *a_p;
 	} */ *ap = v;
-	register struct nfsnode *np;
-	register struct sillyrename *sp;
+	struct nfsnode *np;
+	struct sillyrename *sp;
 	struct proc *p = curproc;	/* XXX */
-	extern int prtactive;
 
 	np = VTONFS(ap->a_vp);
 	if (prtactive && ap->a_vp->v_usecount != 0)
@@ -222,10 +220,9 @@ nfs_reclaim(v)
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
 	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	register struct nfsnode *np = VTONFS(vp);
-	register struct nfsdmap *dp, *dp2;
-	extern int prtactive;
+	struct vnode *vp = ap->a_vp;
+	struct nfsnode *np = VTONFS(vp);
+	struct nfsdmap *dp, *dp2;
 
 	if (prtactive && vp->v_usecount != 0)
 		vprint("nfs_reclaim: pushing active", vp);
@@ -247,12 +244,16 @@ nfs_reclaim(v)
 		}
 	}
 	if (np->n_fhsize > NFS_SMALLFH) {
-		FREE((caddr_t)np->n_fhp, M_NFSBIGFH);
+		free(np->n_fhp, M_NFSBIGFH);
 	}
 
+	if (np->n_rcred)
+		crfree(np->n_rcred);
+	if (np->n_wcred)
+		crfree(np->n_wcred);	
 	cache_purge(vp);
-	FREE(vp->v_data, M_NFSNODE);
-	vp->v_data = (void *)0;
+	pool_put(&nfs_node_pool, vp->v_data);
+	vp->v_data = NULL;
 	return (0);
 }
 

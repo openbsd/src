@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.10 2001/06/25 03:28:14 csapuntz Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.11 2001/11/15 23:15:15 art Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -117,6 +117,8 @@ struct nfsnode {
 	short			n_fhsize;	/* size in bytes, of fh */
 	short			n_flag;		/* Flag for locking.. */
 	nfsfh_t			n_fh;		/* Small File Handle */
+	struct ucred		*n_rcred;
+	struct ucred		*n_wcred;
 };
 
 #define n_atim		n_un1.nf_atim
@@ -141,7 +143,7 @@ struct nfsnode {
  * Convert between nfsnode pointers and vnode pointers
  */
 #define VTONFS(vp)	((struct nfsnode *)(vp)->v_data)
-#define NFSTOV(np)	((struct vnode *)(np)->n_vnode)
+#define NFSTOV(np)	((np)->n_vnode)
 
 /*
  * Queue head for nfsiod's

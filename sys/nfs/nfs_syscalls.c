@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.19 2001/06/26 05:19:35 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.20 2001/11/15 23:15:15 art Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -945,7 +945,7 @@ nfssvc_iod(p)
 		/* Take one off the front of the list */
 		TAILQ_REMOVE(&nfs_bufq, bp, b_freelist);
 		if (bp->b_flags & B_READ)
-		    (void) nfs_doio(bp, bp->b_rcred, (struct proc *)0);
+		    (void) nfs_doio(bp, NULL);
 		else do {
 		    /*
 		     * Look for a delayed write for the same vnode, so I can do 
@@ -975,7 +975,7 @@ nfssvc_iod(p)
 		    }
 		    splx(s);
 
-		    (void) nfs_doio(bp, bp->b_wcred, (struct proc *)0);
+		    (void) nfs_doio(bp, NULL);
 		} while ((bp = nbp) != NULL);
 	    }
 	    if (error) {

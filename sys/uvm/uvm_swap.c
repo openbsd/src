@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.40 2001/11/12 01:26:10 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.41 2001/11/15 23:15:15 art Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.46 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1391,8 +1391,6 @@ sw_reg_strategy(sdp, bp, bn)
 		nbp->vb_buf.b_iodone   = sw_reg_iodone;
 		nbp->vb_buf.b_vp       = NULLVP;
 		nbp->vb_buf.b_vnbufs.le_next = NOLIST;
-		nbp->vb_buf.b_rcred    = sdp->swd_cred;
-		nbp->vb_buf.b_wcred    = sdp->swd_cred;
 		LIST_INIT(&nbp->vb_buf.b_dep);
 
 		/* 
@@ -1977,7 +1975,6 @@ uvm_swap_io(pps, startslot, npages, flags)
 	 */
 	bp->b_flags = B_BUSY | B_NOCACHE | (flags & (B_READ|B_ASYNC));
 	bp->b_proc = &proc0;	/* XXX */
-	bp->b_rcred = bp->b_wcred = proc0.p_ucred;
 	bp->b_vnbufs.le_next = NOLIST;
 	bp->b_data = (caddr_t)kva;
 	bp->b_blkno = startblk;

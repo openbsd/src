@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.49 2001/11/09 15:32:22 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.50 2001/11/15 23:15:15 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -200,8 +200,6 @@ bufinit()
 		bp = &buf[i];
 		bzero((char *)bp, sizeof *bp);
 		bp->b_dev = NODEV;
-		bp->b_rcred = NOCRED;
-		bp->b_wcred = NOCRED;
 		bp->b_vnbufs.le_next = NOLIST;
 		bp->b_data = buffers + i * MAXBSIZE;
 		LIST_INIT(&bp->b_dep);
@@ -265,10 +263,6 @@ bio_doread(vp, blkno, size, cred, async)
 	if (!ISSET(bp->b_flags, (B_DONE | B_DELWRI))) {
 		/* Start I/O for the buffer (keeping credentials). */
 		SET(bp->b_flags, B_READ | async);
-		if (cred != NOCRED && bp->b_rcred == NOCRED) {
-			crhold(cred);
-			bp->b_rcred = cred;
-		}
 		VOP_STRATEGY(bp);
 
 		/* Pay for the read. */
@@ -911,16 +905,6 @@ start:
 	bp->b_bcount = 0;
 	bp->b_dirtyoff = bp->b_dirtyend = 0;
 	bp->b_validoff = bp->b_validend = 0;
-
-	/* nuke any credentials we were holding */
-	if (bp->b_rcred != NOCRED) {
-		crfree(bp->b_rcred);
-		bp->b_rcred = NOCRED;
-	}
-	if (bp->b_wcred != NOCRED) {
-		crfree(bp->b_wcred);
-		bp->b_wcred = NOCRED;
-	}
 
 	bremhash(bp);
 	*bpp = bp;

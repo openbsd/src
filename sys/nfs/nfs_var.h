@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.14 2001/06/25 03:28:12 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.15 2001/11/15 23:15:15 art Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -66,8 +66,8 @@ int nfs_write __P((void *));
 struct buf *nfs_getcacheblk __P((struct vnode *, daddr_t, int, struct proc *));
 int nfs_vinvalbuf __P((struct vnode *, int, struct ucred *, struct proc *,
 		       int));
-int nfs_asyncio __P((struct buf *, struct ucred *));
-int nfs_doio __P((struct buf *, struct ucred *, struct proc *));
+int nfs_asyncio __P((struct buf *));
+int nfs_doio __P((struct buf *, struct proc *));
 
 /* nfs_boot.c */
 int nfs_boot_init __P((struct nfs_diskless *, struct proc *));
@@ -93,9 +93,8 @@ int nfs_lookup __P((void *));
 int nfs_read __P((void *));
 int nfs_readlink __P((void *));
 int nfs_readlinkrpc __P((struct vnode *, struct uio *, struct ucred *));
-int nfs_readrpc __P((struct vnode *, struct uio *, struct ucred *));
-int nfs_writerpc __P((struct vnode *, struct uio *, struct ucred *, int *,
-		      int *));
+int nfs_readrpc __P((struct vnode *, struct uio *));
+int nfs_writerpc __P((struct vnode *, struct uio *, int *, int *));
 int nfs_mknodrpc __P((struct vnode *, struct vnode **, struct componentname *,
 		      struct vattr *));
 int nfs_mknod __P((void *));
@@ -120,8 +119,7 @@ int nfs_sillyrename __P((struct vnode *, struct vnode *,
 			 struct componentname *));
 int nfs_lookitup __P((struct vnode *, char *, int, struct ucred *,
 		      struct proc *, struct nfsnode **));
-int nfs_commit __P((struct vnode *, u_quad_t, int, struct ucred *,
-		    struct proc *));
+int nfs_commit __P((struct vnode *, u_quad_t, int, struct proc *));
 int nfs_bmap __P((void *));
 int nfs_strategy __P((void *));
 int nfs_mmap __P((void *));
