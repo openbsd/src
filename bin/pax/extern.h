@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.17 2001/02/07 19:04:14 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.18 2001/05/16 03:04:56 mickey Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -169,7 +169,6 @@ int next_file __P((register ARCHD *));
  */
 void ls_list __P((register ARCHD *, time_t, FILE *));
 void ls_tty __P((register ARCHD *));
-int l_strncpy __P((register char *, register char *, int));
 u_long asc_ul __P((register char *, int, register int));
 int ul_asc __P((u_long, register char *, register int, register int));
 #ifndef NET2_STAT
@@ -177,7 +176,7 @@ u_quad_t asc_uqd __P((register char *, int, register int));
 int uqd_asc __P((u_quad_t, register char *, register int, register int));
 #endif
 
-/* 
+/*
  * getoldopt.c
  */
 int getoldopt __P((int, char **, char *));

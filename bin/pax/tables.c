@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.12 2001/02/07 19:04:14 millert Exp $	*/
+/*	$OpenBSD: tables.c,v 1.13 2001/05/16 03:04:58 mickey Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: tables.c,v 1.12 2001/02/07 19:04:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: tables.c,v 1.13 2001/05/16 03:04:58 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,9 +183,8 @@ chk_lnk(arcn)
 			 * handle hardlinks to regular files differently than
 			 * other links.
 			 */
-			arcn->ln_nlen = l_strncpy(arcn->ln_name, pt->name,
-				sizeof(arcn->ln_name) - 1);
-			arcn->ln_name[arcn->ln_nlen] = '\0';
+			arcn->ln_nlen = strlcpy(arcn->ln_name, pt->name,
+				sizeof(arcn->ln_name));
 			if (arcn->type == PAX_REG)
 				arcn->type = PAX_HRG;
 			else
@@ -658,8 +657,7 @@ sub_name(oname, onamelen, onamesize)
 			 * found it, replace it with the new name
 			 * and return (we know that oname has enough space)
 			 */
-			*onamelen = l_strncpy(oname, pt->nname, onamesize - 1);
-			oname[*onamelen] = '\0';
+			*onamelen = strlcpy(oname, pt->nname, onamesize);
 			return;
 		}
 		pt = pt->fow;

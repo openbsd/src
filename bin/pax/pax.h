@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.h,v 1.10 2001/02/07 19:04:14 millert Exp $	*/
+/*	$OpenBSD: pax.h,v 1.11 2001/05/16 03:04:58 mickey Exp $	*/
 /*	$NetBSD: pax.h,v 1.3 1995/03/21 09:07:41 cgd Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@
 #define DEFOP		LIST	/* if no flags default is to LIST */
 
 /*
- * Device type of the current archive volume 
+ * Device type of the current archive volume
  */
 #define ISREG		0	/* regular file */
 #define ISCHR		1	/* character device */
@@ -79,7 +79,7 @@
  *
  * The format specific routine table allows new archive formats to be quickly
  * added. Overall pax operation is independent of the actual format used to
- * form the archive. Only those routines which deal directly with the archive 
+ * form the archive. Only those routines which deal directly with the archive
  * are tailored to the oddities of the specifc format. All other routines are
  * independent of the archive format. Data flow in and out of the format
  * dependent routines pass pointers to ARCHD structure (described below).
@@ -211,7 +211,7 @@ typedef struct {
 #define PAX_FIF		7		/* fifo */
 #define PAX_HLK		8		/* hard link */
 #define PAX_HRG		9		/* hard link to a regular file */
-#define PAX_CTG		10		/* high performance file */ 
+#define PAX_CTG		10		/* high performance file */
 } ARCHD;
 
 /*
@@ -229,7 +229,7 @@ typedef struct oplist {
  * General Macros
  */
 #ifndef MIN
-#define	       MIN(a,b) (((a)<(b))?(a):(b))
+#define	MIN(a,b) (((a)<(b))?(a):(b))
 #endif
 #define MAJOR(x)	major(x)
 #define MINOR(x)	minor(x)

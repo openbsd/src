@@ -1,4 +1,4 @@
-/*	$OpenBSD: file_subs.c,v 1.13 1997/09/01 18:29:48 deraadt Exp $	*/
+/*	$OpenBSD: file_subs.c,v 1.14 2001/05/16 03:04:56 mickey Exp $	*/
 /*	$NetBSD: file_subs.c,v 1.4 1995/03/21 09:07:18 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: file_subs.c,v 1.13 1997/09/01 18:29:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: file_subs.c,v 1.14 2001/05/16 03:04:56 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,7 +164,7 @@ file_close(arcn, fd)
 	/*
 	 * set owner/groups first as this may strip off mode bits we want
 	 * then set file permission modes. Then set file access and
-	 * modification times. 
+	 * modification times.
 	 */
 	if (pids)
 		res = set_ids(arcn->name, arcn->sb.st_uid, arcn->sb.st_gid);
@@ -185,7 +185,7 @@ file_close(arcn, fd)
 /*
  * lnk_creat()
  *	Create a hard link to arcn->ln_name from arcn->name. arcn->ln_name
- *	must exist; 
+ *	must exist;
  * Return:
  *	0 if ok, -1 otherwise
  */
@@ -271,7 +271,7 @@ chk_same(arcn)
 {
 	struct stat sb;
 
-	/* 
+	/*
 	 * if file does not exist, return. if file exists and -k, skip it
 	 * quietly
 	 */

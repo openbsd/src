@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.13 2001/02/09 23:01:00 millert Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.14 2001/05/16 03:04:56 mickey Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ftree.c,v 1.13 2001/02/09 23:01:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftree.c,v 1.14 2001/05/16 03:04:56 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -313,7 +313,7 @@ ftree_arg()
 		if (fthead == NULL) {
 			/*
 			 * the user didn't supply any args, get the file trees
-			 * to process from stdin; 
+			 * to process from stdin;
 			 */
 			if (fgets(farray[0], PAXPATHLEN+1, stdin) == NULL)
 				return(-1);
@@ -382,7 +382,7 @@ next_file(arcn)
 	/*
 	 * ftree_sel() might have set the ftree_skip flag if the user has the
 	 * -n option and a file was selected from this file arg tree. (-n says
-	 * only one member is matched for each pattern) ftree_skip being 1 
+	 * only one member is matched for each pattern) ftree_skip being 1
 	 * forces us to go to the next arg now.
 	 */
 	if (ftree_skip) {
@@ -558,8 +558,7 @@ next_file(arcn)
 	/*
 	 * copy file name, set file name length
 	 */
-	arcn->nlen = l_strncpy(arcn->name, ftent->fts_path, sizeof(arcn->name) - 1);
-	arcn->name[arcn->nlen] = '\0';
+	arcn->nlen = strlcpy(arcn->name, ftent->fts_path, sizeof(arcn->name));
 	arcn->org_name = ftent->fts_path;
 	return(0);
 }

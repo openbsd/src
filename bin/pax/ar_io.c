@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.20 2000/06/09 16:37:54 espie Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.21 2001/05/16 03:04:54 mickey Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.20 2000/06/09 16:37:54 espie Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.21 2001/05/16 03:04:54 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -295,7 +295,7 @@ ar_open(name)
 		break;
 	default:
 		/*
-		 * should never happen, worse case, slow... 
+		 * should never happen, worse case, slow...
 		 */
 		blksz = rdblksz = BLKMULT;
 		break;
@@ -483,7 +483,7 @@ ar_set_wr()
 	 */
 	wr_trail = 0;
 
-	/* 
+	/*
 	 * Add any device dependent code as required here
 	 */
 	if (artyp != ISREG)
@@ -504,7 +504,7 @@ ar_set_wr()
 /*
  * ar_app_ok()
  *	check if the last volume in the archive allows appends. We cannot check
- *	this until we are ready to write since there is no spec that says all 
+ *	this until we are ready to write since there is no spec that says all
  *	volumes in a single archive have to be of the same type...
  * Return:
  *	0 if we can append, -1 otherwise.
@@ -667,10 +667,10 @@ ar_write(buf, bsz)
 	case ISREG:
 		if ((res > 0) && (res % BLKMULT)) {
 			/*
-		 	 * try to fix up partial writes which are not BLKMULT
+			 * try to fix up partial writes which are not BLKMULT
 			 * in size by forcing the runt record to next archive
 			 * volume
-		 	 */
+			 */
 			if ((cpos = lseek(arfd, (off_t)0L, SEEK_CUR)) < 0)
 				break;
 			cpos -= (off_t)res;
@@ -881,12 +881,12 @@ ar_fow(sksz, skipped)
 	 * figure out where we are in the archive
 	 */
 	if ((cpos = lseek(arfd, (off_t)0L, SEEK_CUR)) >= 0) {
-		/* 
-	 	 * we can be asked to move farther than there are bytes in this
+		/*
+		 * we can be asked to move farther than there are bytes in this
 		 * volume, if so, just go to file end and let normal buf_fill()
 		 * deal with the end of file (it will go to next volume by
 		 * itself)
-	 	 */
+		 */
 		if ((mpos = cpos + sksz) > arsb.st_size) {
 			*skipped = arsb.st_size - cpos;
 			mpos = arsb.st_size;
@@ -987,12 +987,12 @@ ar_rev(sksz)
 		break;
 	case ISTAPE:
 		/*
-	 	 * Calculate and move the proper number of PHYSICAL tape
+		 * Calculate and move the proper number of PHYSICAL tape
 		 * blocks. If the sksz is not an even multiple of the physical
 		 * tape size, we cannot do the move (this should never happen).
 		 * (We also cannot handler trailers spread over two vols).
 		 * get_phys() also makes sure we are in front of the filemark.
-	 	 */
+		 */
 		if ((phyblk = get_phys()) <= 0) {
 			lstrval = -1;
 			return(-1);
@@ -1041,7 +1041,7 @@ ar_rev(sksz)
 /*
  * get_phys()
  *	Determine the physical block size on a tape drive. We need the physical
- *	block size so we know how many bytes we skip over when we move with 
+ *	block size so we know how many bytes we skip over when we move with
  *	mtio commands. We also make sure we are BEFORE THE TAPE FILEMARK when
  *	return.
  *	This is one really SLOW routine...

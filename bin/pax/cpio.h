@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.h,v 1.2 1996/06/23 14:20:32 deraadt Exp $	*/
+/*	$OpenBSD: cpio.h,v 1.3 2001/05/16 03:04:56 mickey Exp $	*/
 /*	$NetBSD: cpio.h,v 1.3 1995/03/21 09:07:15 cgd Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ typedef struct {
 	char	c_mtime[11];		/* modification time */
 	char	c_namesize[6];		/* length of pathname */
 	char	c_filesize[11];		/* length of file in bytes */
-} HD_CPIO; 
+} HD_CPIO;
 
 #define	MAGIC		070707		/* transportable archive id */
 
@@ -84,7 +84,7 @@ typedef struct {
 #endif /* _PAX_ */
 
 /*
- * Binary cpio header structure 
+ * Binary cpio header structure
  *
  * CAUTION! CAUTION! CAUTION!
  * Each field really represents a 16 bit short (NOT ASCII). Described as
@@ -104,7 +104,7 @@ typedef struct {
 	u_char	h_namesize[2];
 	u_char	h_filesize_1[2];
 	u_char	h_filesize_2[2];
-} HD_BCPIO; 
+} HD_BCPIO;
 
 #ifdef _PAX_
 /*
@@ -142,7 +142,7 @@ typedef struct {
 	char	c_rmin[8];		/* special file minor # */
 	char	c_namesize[8];		/* length of pathname */
 	char	c_chksum[8];		/* 0 OR CRC of bytes of FILE data */
-} HD_VCPIO; 
+} HD_VCPIO;
 
 #define	VMAGIC		070701		/* sVr4 new portable archive id */
 #define	VCMAGIC		070702		/* sVr4 new portable archive id CRC */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.11 1997/09/01 18:29:56 deraadt Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.12 2001/05/16 03:04:57 mickey Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.11 1997/09/01 18:29:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.12 2001/05/16 03:04:57 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ static int resub __P((regex_t *, regmatch_t *, char *, char *, char *));
  *	parses the -s replacement string; compiles the regular expression
  *	and stores the compiled value and it's replacement string together in
  *	replacement string list. Input to this function is of the form:
- *		/old/new/pg 
+ *		/old/new/pg
  *	The first char in the string specifies the delimiter used by this
  *	replacement string. "Old" is a regular expression in "ed" format which
  *	is compiled by regcomp() and is applied to filenames. "new" is the
@@ -356,7 +356,7 @@ pat_sel(arcn)
 
 	/*
 	 * we reach this point only when we allow a single selected match per
-	 * pattern, if the pattern matches a directory and we do not have -d 
+	 * pattern, if the pattern matches a directory and we do not have -d
 	 * (dflag) we are done with this pattern. We may also be handed a file
 	 * in the subtree of a directory. in that case when we are operating
 	 * with -d, this pattern was already selected and we are done
@@ -446,7 +446,7 @@ pat_sel(arcn)
  *	this archive member is "selected" we process and mark the pattern as
  *	one which matched a selected archive member (see pat_sel())
  * Return:
- *	0 if this archive member should be processed, 1 if it should be 
+ *	0 if this archive member should be processed, 1 if it should be
  *	skipped and -1 if we are done with all patterns (and pax should quit
  *	looking for more members)
  */
@@ -523,7 +523,7 @@ pat_match(arcn)
 /*
  * fn_match()
  * Return:
- *	0 if this archive member should be processed, 1 if it should be 
+ *	0 if this archive member should be processed, 1 if it should be
  *	skipped and -1 if we are done with all patterns (and pax should quit
  *	looking for more members)
  *	Note: *pend may be changed to show where the prefix ends.
@@ -572,7 +572,7 @@ fn_match(pattern, string, pend)
 		case '*':
 			c = *pattern;
 			/*
-			 * Collapse multiple *'s. 
+			 * Collapse multiple *'s.
 			 */
 			while (c == '*')
 				c = *++pattern;
@@ -657,7 +657,7 @@ range_match(pattern, test)
  *	if we spot any file links to the old file name in the future, we will
  *	know exactly how to fix the file link.
  * Return:
- *	0 continue to  process file, 1 skip this file, -1 pax is finished 
+ *	0 continue to  process file, 1 skip this file, -1 pax is finished
  */
 
 #ifdef __STDC__
@@ -816,8 +816,7 @@ tty_rename(arcn)
 	 */
 	tty_prnt("Processing continues, name changed to: %s\n", tmpname);
 	res = add_name(arcn->name, arcn->nlen, tmpname);
-	arcn->nlen = l_strncpy(arcn->name, tmpname, sizeof(arcn->name) - 1);
-	arcn->name[arcn->nlen] = '\0';
+	arcn->nlen = strlcpy(arcn->name, tmpname, sizeof(arcn->name));
 	if (res < 0)
 		return(-1);
 	return(0);
@@ -903,7 +902,7 @@ fix_path(or_name, or_len, dir_name, dir_len)
 	*or_len = len;
 
 	/*
-	 * enough space, shift 
+	 * enough space, shift
 	 */
 	while (src >= start)
 		*dest-- = *src--;
@@ -1097,8 +1096,7 @@ rep_name(name, nlen, prnt)
 		 */
 		if (*nname == '\0')
 			return(1);
-		*nlen = l_strncpy(name, nname, PAXPATHLEN + 1);
-		name[PAXPATHLEN] = '\0';
+		*nlen = strlcpy(name, nname, sizeof(nname));
 	}
 	return(0);
 }
@@ -1107,7 +1105,7 @@ rep_name(name, nlen, prnt)
 /*
  * resub()
  *	apply the replacement to the matched expression. expand out the old
- * 	style ed(1) subexpression expansion.
+ *	style ed(1) subexpression expansion.
  * Return:
  *	-1 if error, or the number of characters added to the destination.
  */
@@ -1138,12 +1136,12 @@ resub(prog, src, dest, destend)
 		else if ((c == '\\') && (*spt >= '0') && (*spt <= '9'))
 			no = *spt++ - '0';
 		else {
- 			if ((c == '\\') && ((*spt == '\\') || (*spt == '&')))
- 				c = *spt++;
- 			*dpt++ = c;
+			if ((c == '\\') && ((*spt == '\\') || (*spt == '&')))
+				c = *spt++;
+			*dpt++ = c;
 			continue;
 		}
- 		if ((prog->startp[no] == NULL) || (prog->endp[no] == NULL) ||
+		if ((prog->startp[no] == NULL) || (prog->endp[no] == NULL) ||
 		    ((len = prog->endp[no] - prog->startp[no]) <= 0))
 			continue;
 
@@ -1152,9 +1150,8 @@ resub(prog, src, dest, destend)
 		 * fail if we run out of space or the match string is damaged
 		 */
 		if (len > (destend - dpt))
-			len = destend - dpt;
-		if (l_strncpy(dpt, prog->startp[no], len) != len)
-			return(-1);
+			return (-1);
+		strncpy(dpt, prog->startp[no], len);
 		dpt += len;
 	}
 	return(dpt - dest);
@@ -1165,7 +1162,7 @@ resub(prog, src, dest, destend)
 /*
  * resub()
  *	apply the replacement to the matched expression. expand out the old
- * 	style ed(1) subexpression expansion.
+ *	style ed(1) subexpression expansion.
  * Return:
  *	-1 if error, or the number of characters added to the destination.
  */
@@ -1209,12 +1206,12 @@ resub(rp, pm, src, dest, destend)
 				return(-1);
 			pmpt = pm + len;
 		} else {
- 			/*
+			/*
 			 * Ordinary character, just copy it
 			 */
- 			if ((c == '\\') && ((*spt == '\\') || (*spt == '&')))
- 				c = *spt++;
- 			*dpt++ = c;
+			if ((c == '\\') && ((*spt == '\\') || (*spt == '&')))
+				c = *spt++;
+			*dpt++ = c;
 			continue;
 		}
 
@@ -1230,9 +1227,8 @@ resub(rp, pm, src, dest, destend)
 		 * fail if we run out of space or the match string is damaged
 		 */
 		if (len > (destend - dpt))
-			len = destend - dpt;
-		if (l_strncpy(dpt, src + pmpt->rm_so, len) != len)
-			return(-1);
+			return (-1);
+		strncpy(dpt, src + pmpt->rm_so, len);
 		dpt += len;
 	}
 	return(dpt - dest);

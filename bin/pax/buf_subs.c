@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf_subs.c,v 1.7 1997/09/01 18:29:46 deraadt Exp $	*/
+/*	$OpenBSD: buf_subs.c,v 1.8 2001/05/16 03:04:55 mickey Exp $	*/
 /*	$NetBSD: buf_subs.c,v 1.5 1995/03/21 09:07:08 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: buf_subs.c,v 1.7 1997/09/01 18:29:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: buf_subs.c,v 1.8 2001/05/16 03:04:55 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ wr_start()
 	}
 
 	/*
-	 * we only allow wrblksz to be used with all archive operations 
+	 * we only allow wrblksz to be used with all archive operations
 	 */
 	blksz = rdblksz = wrblksz;
 	if ((ar_open(arcname) < 0) && (ar_next() < 0))
@@ -164,7 +164,7 @@ rd_start()
 		}
 		if (wrblksz % BLKMULT) {
 			paxwarn(1, "Write block size %d is not a %d byte multiple",
-		    	wrblksz, BLKMULT);
+			wrblksz, BLKMULT);
 			return(-1);
 		}
 	}
@@ -224,7 +224,7 @@ cp_start()
  *	about the conditions under which they will allow a write to occur.
  *	Often devices restrict the conditions where writes can be made writes,
  *	so it may not be feasable to append archives stored on all types of
- *	devices. 
+ *	devices.
  * Return:
  *	0 for success, -1 for failure
  */
@@ -322,7 +322,7 @@ appnd_start(skcnt)
 	paxwarn(1, "Unable to rewrite archive trailer, cannot append.");
 	return(-1);
 }
-	
+
 /*
  * rd_sync()
  *	A read error occurred on this archive volume. Resync the buffer and
@@ -497,7 +497,7 @@ rd_skip(skcnt)
 	return(0);
 }
 
-/* 
+/*
  * wr_fin()
  *	flush out any data (and pad if required) the last block. We always pad
  *	with zero (even though we do not have to). Padding with 0 makes it a
@@ -526,7 +526,7 @@ wr_fin()
  *	by format specific write routines to pass a file header). On failure we
  *	punt. We do not allow the user to continue to write flawed archives.
  *	We assume these headers are not very large (the memory copy we use is
- *	a bit expensive). 
+ *	a bit expensive).
  * Return:
  *	0 if buffer was filled ok, -1 o.w. (buffer flush failure)
  */
@@ -760,7 +760,7 @@ rd_wrfile(arcn, ofd, left)
 	int isem = 1;
 	int rem;
 	int sz = MINFBSZ;
- 	struct stat sb;
+	struct stat sb;
 	u_long crc = 0L;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.16 2001/01/04 20:31:25 todd Exp $	*/
+/*	$OpenBSD: tar.c,v 1.17 2001/05/16 03:04:59 mickey Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.16 2001/01/04 20:31:25 todd Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.17 2001/05/16 03:04:59 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -457,8 +457,7 @@ tar_rd(arcn, buf)
 	 * copy out the name and values in the stat buffer
 	 */
 	hd = (HD_TAR *)buf;
-	arcn->nlen = l_strncpy(arcn->name, hd->name, sizeof(arcn->name) - 1);
-	arcn->name[arcn->nlen] = '\0';
+	arcn->nlen = strlcpy(arcn->name, hd->name, sizeof(arcn->name));
 	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode,sizeof(hd->mode),OCT) &
 	    0xfff);
 	arcn->sb.st_uid = (uid_t)asc_ul(hd->uid, sizeof(hd->uid), OCT);
@@ -485,9 +484,8 @@ tar_rd(arcn, buf)
 		 * the st_mode so -v printing will look correct.
 		 */
 		arcn->type = PAX_SLK;
-		arcn->ln_nlen = l_strncpy(arcn->ln_name, hd->linkname,
-			sizeof(arcn->ln_name) - 1);
-		arcn->ln_name[arcn->ln_nlen] = '\0';
+		arcn->ln_nlen = strlcpy(arcn->ln_name, hd->linkname,
+			sizeof(arcn->ln_name));
 		arcn->sb.st_mode |= S_IFLNK;
 		break;
 	case LNKTYPE:
@@ -497,9 +495,8 @@ tar_rd(arcn, buf)
 		 */
 		arcn->type = PAX_HLK;
 		arcn->sb.st_nlink = 2;
-		arcn->ln_nlen = l_strncpy(arcn->ln_name, hd->linkname,
-			sizeof(arcn->ln_name) - 1);
-		arcn->ln_name[arcn->ln_nlen] = '\0';
+		arcn->ln_nlen = strlcpy(arcn->ln_name, hd->linkname,
+			sizeof(arcn->ln_name));
 
 		/*
 		 * no idea of what type this thing really points at, but
@@ -550,7 +547,7 @@ tar_rd(arcn, buf)
 	 * strip off any trailing slash.
 	 */
 	if (*pt == '/') {
-		*pt = '\0'; 
+		*pt = '\0';
 		--arcn->nlen;
 	}
 	return(0);
@@ -639,8 +636,7 @@ tar_wr(arcn)
 	 * a header)
 	 */
 	hd = (HD_TAR *)hdblk;
-	l_strncpy(hd->name, arcn->name, sizeof(hd->name) - 1);
-	hd->name[sizeof(hd->name) - 1] = '\0';
+	strlcpy(hd->name, arcn->name, sizeof(hd->name));
 	arcn->pad = 0;
 
 	if (arcn->type == PAX_DIR) {
@@ -659,8 +655,7 @@ tar_wr(arcn)
 		 * no data follows this file, so no pad
 		 */
 		hd->linkflag = SYMTYPE;
-		l_strncpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname) - 1);
-		hd->linkname[sizeof(hd->linkname) - 1] = '\0';
+		strlcpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
 			goto out;
 	} else if ((arcn->type == PAX_HLK) || (arcn->type == PAX_HRG)) {
@@ -668,8 +663,7 @@ tar_wr(arcn)
 		 * no data follows this file, so no pad
 		 */
 		hd->linkflag = LNKTYPE;
-		l_strncpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname) - 1);
-		hd->linkname[sizeof(hd->linkname) - 1] = '\0';
+		strlcpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname));
 		if (ul_oct((u_long)0L, hd->size, sizeof(hd->size), 1))
 			goto out;
 	} else {
@@ -848,13 +842,12 @@ ustar_rd(arcn, buf)
 	 */
 	dest = arcn->name;
 	if (*(hd->prefix) != '\0') {
-		cnt = l_strncpy(dest, hd->prefix, sizeof(arcn->name) - 2);
+		cnt = strlcpy(dest, hd->prefix, sizeof(arcn->name) - 1);
 		dest += cnt;
 		*dest++ = '/';
 		cnt++;
 	}
-	arcn->nlen = cnt + l_strncpy(dest, hd->name, sizeof(arcn->name) - cnt);
-	arcn->name[arcn->nlen] = '\0';
+	arcn->nlen = cnt + strlcpy(dest, hd->name, sizeof(arcn->name) - cnt);
 
 	/*
 	 * follow the spec to the letter. we should only have mode bits, strip
@@ -945,9 +938,8 @@ ustar_rd(arcn, buf)
 		/*
 		 * copy the link name
 		 */
-		arcn->ln_nlen = l_strncpy(arcn->ln_name, hd->linkname,
-			sizeof(arcn->ln_name) - 1);
-		arcn->ln_name[arcn->ln_nlen] = '\0';
+		arcn->ln_nlen = strlcpy(arcn->ln_name, hd->linkname,
+			sizeof(arcn->ln_name));
 		break;
 	case CONTTYPE:
 	case AREGTYPE:
@@ -1028,7 +1020,8 @@ ustar_wr(arcn)
 		 * occur, we remove the / and copy the first part to the prefix
 		 */
 		*pt = '\0';
-		l_strncpy(hd->prefix, arcn->name, sizeof(hd->prefix) - 1);
+		strncpy(hd->prefix, arcn->name, sizeof(hd->prefix) - 1);
+		hd->prefix[sizeof(hd->prefix) - 1] = '\0';
 		*pt++ = '/';
 	} else
 		memset(hd->prefix, 0, sizeof(hd->prefix));
@@ -1037,7 +1030,7 @@ ustar_wr(arcn)
 	 * copy the name part. this may be the whole path or the part after
 	 * the prefix
 	 */
-	l_strncpy(hd->name, pt, sizeof(hd->name) - 1);
+	strncpy(hd->name, pt, sizeof(hd->name) - 1);
 	hd->name[sizeof(hd->name) - 1] = '\0';
 
 	/*
@@ -1081,7 +1074,7 @@ ustar_wr(arcn)
 			hd->typeflag = SYMTYPE;
 		else
 			hd->typeflag = LNKTYPE;
-		l_strncpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname) - 1);
+		strncpy(hd->linkname,arcn->ln_name, sizeof(hd->linkname) - 1);
 		hd->linkname[sizeof(hd->linkname) - 1] = '\0';
 		memset(hd->devmajor, 0, sizeof(hd->devmajor));
 		memset(hd->devminor, 0, sizeof(hd->devminor));
@@ -1115,8 +1108,8 @@ ustar_wr(arcn)
 		break;
 	}
 
-	l_strncpy(hd->magic, TMAGIC, TMAGLEN);
-	l_strncpy(hd->version, TVERSION, TVERSLEN);
+	strncpy(hd->magic, TMAGIC, TMAGLEN);
+	strncpy(hd->version, TVERSION, TVERSLEN);
 
 	/*
 	 * set the remaining fields. Some versions want all 16 bits of mode
@@ -1127,8 +1120,8 @@ ustar_wr(arcn)
 	    ul_oct((u_long)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 3) ||
 	    ul_oct((u_long)arcn->sb.st_mtime,hd->mtime,sizeof(hd->mtime),3))
 		goto out;
-	l_strncpy(hd->uname,name_uid(arcn->sb.st_uid, 0),sizeof(hd->uname));
-	l_strncpy(hd->gname,name_gid(arcn->sb.st_gid, 0),sizeof(hd->gname));
+	strncpy(hd->uname,name_uid(arcn->sb.st_uid, 0),sizeof(hd->uname));
+	strncpy(hd->gname,name_gid(arcn->sb.st_gid, 0),sizeof(hd->gname));
 
 	/*
 	 * calculate and store the checksum write the header to the archive
@@ -1147,7 +1140,7 @@ ustar_wr(arcn)
 	return(1);
 
     out:
-    	/*
+	/*
 	 * header field is out of range
 	 */
 	paxwarn(1, "Ustar header field is too small for %s", arcn->org_name);

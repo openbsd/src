@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.16 2001/02/07 19:04:14 millert Exp $	*/
+/*	$OpenBSD: pax.c,v 1.17 2001/05/16 03:04:57 mickey Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pax.c,v 1.16 2001/02/07 19:04:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: pax.c,v 1.17 2001/05/16 03:04:57 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
 /*
  *	PAX - Portable Archive Interchange
  *
- * 	A utility to read, write, and write lists of the members of archive
+ *	A utility to read, write, and write lists of the members of archive
  *	files and copy directory hierarchies. A variety of archive formats
  *	are supported (some are described in POSIX 1003.1 10.1):
  *
@@ -131,7 +131,7 @@ char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
  *
  * 1	READ ENHANCEMENTS
  * 1.1	Operations which read archives will continue to operate even when
- *	processing archives which may be damaged, truncated, or fail to meet 
+ *	processing archives which may be damaged, truncated, or fail to meet
  *	format specs in several different ways. Damaged sections of archives
  *	are detected and avoided if possible. Attempts will be made to resync
  *	archive read operations even with badly damaged media.
@@ -146,7 +146,7 @@ char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
  * 1.5	The user is notified whenever something is found during archive
  *	read operations which violates spec (but the read will continue).
  * 1.6	Multiple archive volumes can be read and may span over different
- *	archive devices 
+ *	archive devices
  * 1.7	Rigidly restores all file attributes exactly as they are stored on the
  *	archive.
  * 1.8	Modification change time ranges can be specified via multiple -T
@@ -172,7 +172,7 @@ char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
  *	these fields. This removes any restrictions on using these archive
  *	formats on large file systems.
  * 2.5	Multiple archive volumes can be written and may span over different
- *	archive devices 
+ *	archive devices
  * 2.6	A archive volume record limit allows the user to specify the number
  *	of bytes stored on an archive volume. When reached the user is
  *	prompted for the next archive volume. This is specified with the
@@ -219,7 +219,7 @@ char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
  *	name modification (-Z)
  *
  * 4	GENERAL ENHANCEMENTS
- * 4.1	Internal structure is designed to isolate format dependent and 
+ * 4.1	Internal structure is designed to isolate format dependent and
  *	independent functions. Formats are selected via a format driver table.
  *	This encourages the addition of new archive formats by only having to
  *	write those routines which id, read and write the archive header.
@@ -280,7 +280,7 @@ main(argc, argv)
 		return(exit_val);
 
 	/*
-	 * select a primary operation mode 
+	 * select a primary operation mode
 	 */
 	switch(act) {
 	case EXTRACT:
@@ -396,7 +396,7 @@ gen_init()
 	/*
 	 * Handle posix locale
 	 *
-	 * set user defines time printing format for -v option 
+	 * set user defines time printing format for -v option
 	 */
 	ltmfrmt = getenv("LC_TIME");
 

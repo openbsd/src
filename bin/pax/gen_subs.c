@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_subs.c,v 1.9 2001/02/12 13:51:15 danh Exp $	*/
+/*	$OpenBSD: gen_subs.c,v 1.10 2001/05/16 03:04:57 mickey Exp $	*/
 /*	$NetBSD: gen_subs.c,v 1.5 1995/03/21 09:07:26 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.9 2001/02/12 13:51:15 danh Exp $";
+static char rcsid[] = "$OpenBSD: gen_subs.c,v 1.10 2001/05/16 03:04:57 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ ls_list(arcn, now, fp)
 	if (strftime(f_date,DATELEN,timefrmt,localtime(&(sbp->st_mtime))) == 0)
 		f_date[0] = '\0';
 	(void)fprintf(fp, "%s%2u %-*.*s %-*.*s ", f_mode, sbp->st_nlink,
-		NAME_WIDTH, UT_NAMESIZE, name_uid(sbp->st_uid, 1), 
+		NAME_WIDTH, UT_NAMESIZE, name_uid(sbp->st_uid, 1),
 		NAME_WIDTH, UT_NAMESIZE, name_gid(sbp->st_gid, 1));
 
 	/*
@@ -164,7 +164,7 @@ ls_list(arcn, now, fp)
 
 /*
  * tty_ls()
- * 	print a short summary of file to tty.
+ *	print a short summary of file to tty.
  */
 
 #ifdef __STDC__
@@ -200,39 +200,6 @@ ls_tty(arcn)
 	strmode(arcn->sb.st_mode, f_mode);
 	tty_prnt("%s%s %s\n", f_mode, f_date, arcn->name);
 	return;
-}
-
-/*
- * l_strncpy()
- *	copy src to dest up to len chars (stopping at first '\0').
- *	when src is shorter than len, pads to len with '\0'. 
- * Return:
- *	number of chars copied. (Note this is a real performance win over
- *	doing a strncpy(), a strlen(), and then a possible memset())
- */
-
-#ifdef __STDC__
-int
-l_strncpy(register char *dest, register char *src, int len)
-#else
-int
-l_strncpy(dest, src, len)
-	register char *dest;
-	register char *src;
-	int len;
-#endif
-{
-	register char *stop;
-	register char *start;
-
-	stop = dest + len;
-	start = dest;
-	while ((dest < stop) && (*src != '\0'))
-		*dest++ = *src++;
-	len = dest - start;
-	while (dest < stop)
-		*dest++ = '\0';
-	return(len);
 }
 
 /*
@@ -283,7 +250,7 @@ asc_ul(str, len, base)
 				break;
 		}
 	} else {
- 		while ((str < stop) && (*str >= '0') && (*str <= '7'))
+		while ((str < stop) && (*str >= '0') && (*str <= '7'))
 			tval = (tval << 3) + (*str++ - '0');
 	}
 	return(tval);
@@ -397,7 +364,7 @@ asc_uqd(str, len, base)
 				break;
 		}
 	} else {
- 		while ((str < stop) && (*str >= '0') && (*str <= '7'))
+		while ((str < stop) && (*str >= '0') && (*str <= '7'))
 			tval = (tval << 3) + (*str++ - '0');
 	}
 	return(tval);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.14 1998/09/20 02:22:21 millert Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.15 2001/05/16 03:04:55 mickey Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.14 1998/09/20 02:22:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.15 2001/05/16 03:04:55 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -479,7 +479,7 @@ wr_archive(arcn, is_app)
 		if ((res > 0) || (docrc && (set_crc(arcn, fd) < 0))) {
 			/*
 			 * unable to obtain the crc we need, close the file,
-			 * purge link table entry 
+			 * purge link table entry
 			 */
 			rdfile_close(arcn, &fd);
 			purg_lnk(arcn);
@@ -506,7 +506,7 @@ wr_archive(arcn, is_app)
 		}
 		wr_one = 1;
 		if (res > 0) {
-			/* 
+			/*
 			 * format write says no file data needs to be stored
 			 * so we are done messing with this file
 			 */
@@ -569,7 +569,7 @@ wr_archive(arcn, is_app)
  *	is called to add the new members.
  *	PAX IMPLEMENTATION DETAIL NOTE:
  *	-u is implemented by adding the new members to the end of the archive.
- *	Care is taken so that these do not end up as links to the older 
+ *	Care is taken so that these do not end up as links to the older
  *	version of the same file already stored in the archive. It is expected
  *	when extraction occurs these newer versions will over-write the older
  *	ones stored "earlier" in the archive (this may be a bad assumption as
@@ -711,7 +711,7 @@ append()
 		(void)fputs("done.\n", listf);
 		vfpart = 0;
 	}
-       
+
 	/*
 	 * go to the writing phase to add the new members
 	 */
@@ -778,13 +778,18 @@ copy()
 	 * set up the destination dir path and make sure it is a directory. We
 	 * make sure we have a trailing / on the destination
 	 */
-	dlen = l_strncpy(dirbuf, dirptr, sizeof(dirbuf) - 1);
+	dlen = strlcpy(dirbuf, dirptr, sizeof(dirbuf));
+	if (dlen >= sizeof(dirbuf) ||
+	    (dlen == sizeof(dirbuf) - 1 && dirbuf[dlen - 1] != '/')) {
+		paxwarn(1, "directory name is too long %s", dirptr);
+		return;
+	}
 	dest_pt = dirbuf + dlen;
 	if (*(dest_pt-1) != '/') {
 		*dest_pt++ = '/';
+		*dest_pt = '\0';
 		++dlen;
 	}
-	*dest_pt = '\0';
 	drem = PAXPATHLEN - dlen;
 
 	if (stat(dirptr, &sb) < 0) {
@@ -799,7 +804,7 @@ copy()
 
 	/*
 	 * start up the hard link table; file traversal routines and the
-	 * modification time and access mode database 
+	 * modification time and access mode database
 	 */
 	if ((lnk_start() < 0) || (ftree_start() < 0) || (dir_start() < 0))
 		return;
@@ -842,17 +847,12 @@ copy()
 			/*
 			 * create the destination name
 			 */
-			if (*(arcn->name) == '/')
-				res = 1;
-			else
-				res = 0;
-			if ((arcn->nlen - res) > drem) {
+			if (strlcpy(dest_pt, arcn->name + (*arcn->name == '/'),
+			    drem + 1) > drem) {
 				paxwarn(1, "Destination pathname too long %s",
 					arcn->name);
 				continue;
 			}
-			(void)strncpy(dest_pt, arcn->name + res, drem);
-			dirbuf[PAXPATHLEN] = '\0';
 
 			/*
 			 * if existing file is same age or newer skip
@@ -860,10 +860,10 @@ copy()
 			res = lstat(dirbuf, &sb);
 			*dest_pt = '\0';
 
-		    	if (res == 0) {
+			if (res == 0) {
 				if (uflag && Dflag) {
 					if ((arcn->sb.st_mtime<=sb.st_mtime) &&
-			    		    (arcn->sb.st_ctime<=sb.st_ctime))
+					    (arcn->sb.st_ctime<=sb.st_ctime))
 						continue;
 				} else if (Dflag) {
 					if (arcn->sb.st_ctime <= sb.st_ctime)
@@ -1020,7 +1020,7 @@ next_head(arcn)
 	register int res;
 	register int shftsz;
 	register int hsz;
-	register int in_resync = 0; 	/* set when we are in resync mode */
+	register int in_resync = 0;	/* set when we are in resync mode */
 	int cnt = 0;			/* counter for trailer function */
 	int first = 1;			/* on 1st read, EOF isn't premature. */
 
@@ -1238,7 +1238,7 @@ get_arc()
 			if ((*fsub[ford[i]].id)(hdbuf, hdsz) < 0)
 				continue;
 			frmt = &(fsub[ford[i]]);
-			/* 
+			/*
 			 * yuck, to avoid slow special case code in the extract
 			 * routines, just push this header back as if it was
 			 * not seen. We have left extra space at start of the
