@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.86 2005/01/10 23:53:49 mcbride Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.87 2005/02/27 13:22:56 markus Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -508,7 +508,8 @@ tcp_newtcpcb(struct inpcb *inp)
 	 * reasonable initial retransmit time.
 	 */
 	tp->t_srtt = TCPTV_SRTTBASE;
-	tp->t_rttvar = tcp_rttdflt * PR_SLOWHZ << (TCP_RTTVAR_SHIFT + 2 - 1);
+	tp->t_rttvar = tcp_rttdflt * PR_SLOWHZ <<
+	    (TCP_RTTVAR_SHIFT + TCP_RTT_BASE_SHIFT - 1);
 	tp->t_rttmin = TCPTV_MIN;
 	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp),
 	    TCPTV_MIN, TCPTV_REXMTMAX);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.69 2005/01/10 23:53:49 mcbride Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.70 2005/02/27 13:22:56 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -323,15 +323,14 @@ tcp_reass_unlock(struct tcpcb *tp)
  * are stored as fixed point numbers scaled by the values below.
  * For convenience, these scales are also used in smoothing the average
  * (smoothed = (1/scale)sample + ((scale-1)/scale)smoothed).
- * With these scales, srtt has 3 bits to the right of the binary point,
- * and thus an "ALPHA" of 0.875.  rttvar has 2 bits to the right of the
+ * With these scales, srtt has 5 bits to the right of the binary point,
+ * and thus an "ALPHA" of 0.875.  rttvar has 4 bits to the right of the
  * binary point, and is smoothed with an ALPHA of 0.75.
  */
-#define	TCP_RTT_SCALE		8	/* multiplier for srtt; 3 bits frac. */
-#define	TCP_RTT_SHIFT		3	/* shift for srtt; 3 bits frac. */
-#define	TCP_RTTVAR_SCALE	4	/* multiplier for rttvar; 2 bits */
-#define	TCP_RTTVAR_SHIFT	2	/* multiplier for rttvar; 2 bits */
-#define TCP_RTT_MAX		(1<<9)	/* maximum rtt */
+#define	TCP_RTT_SHIFT		3	/* shift for srtt; 5 bits frac. */
+#define	TCP_RTTVAR_SHIFT	2	/* shift for rttvar; 4 bits */
+#define	TCP_RTT_BASE_SHIFT	2	/* remaining 2 bit shift */
+#define	TCP_RTT_MAX		(1<<9)	/* maximum rtt */
 
 /*
  * The initial retransmission should happen at rtt + 4 * rttvar.
@@ -343,11 +342,11 @@ tcp_reass_unlock(struct tcpcb *tp)
  * 1.5 tick we need.  But, because the bias is
  * statistical, we have to test that we don't drop below
  * the minimum feasible timer (which is 2 ticks).
- * This macro assumes that the value of TCP_RTTVAR_SCALE
+ * This macro assumes that the value of (1 << TCP_RTTVAR_SHIFT)
  * is the same as the multiplier for rttvar.
  */
 #define	TCP_REXMTVAL(tp) \
-	((((tp)->t_srtt >> TCP_RTT_SHIFT) + (tp)->t_rttvar) >> 2)
+	((((tp)->t_srtt >> TCP_RTT_SHIFT) + (tp)->t_rttvar) >> TCP_RTT_BASE_SHIFT)
 
 /*
  * TCP statistics.

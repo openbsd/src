@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.181 2005/01/10 23:53:49 mcbride Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.182 2005/02/27 13:22:56 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -940,7 +940,7 @@ after_listen:
                                                      
 		/* make sure ts_ecr is sensible */
 		rtt_test = tcp_now - opti.ts_ecr;
-		if (rtt_test < 0 || rtt_test > (TCP_RTT_MAX - 1))
+		if (rtt_test < 0 || rtt_test > TCP_RTT_MAX)
 			opti.ts_ecr = 0;
 	}
 
@@ -1002,7 +1002,7 @@ after_listen:
 				 */
 				++tcpstat.tcps_predack;
 				if (opti.ts_present && opti.ts_ecr)
-					tcp_xmit_timer(tp, tcp_now-opti.ts_ecr+1);
+					tcp_xmit_timer(tp, tcp_now - opti.ts_ecr);
 				else if (tp->t_rtttime &&
 				    SEQ_GT(th->th_ack, tp->t_rtseq))
 					tcp_xmit_timer(tp,
@@ -1764,7 +1764,7 @@ trimthenstep6:
 		 * Recompute the initial retransmit timer.
 		 */
 		if (opti.ts_present && opti.ts_ecr)
-			tcp_xmit_timer(tp, tcp_now-opti.ts_ecr+1);
+			tcp_xmit_timer(tp, tcp_now - opti.ts_ecr);
 		else if (tp->t_rtttime && SEQ_GT(th->th_ack, tp->t_rtseq))
 			tcp_xmit_timer(tp, tcp_now - tp->t_rtttime);
 
@@ -2804,30 +2804,32 @@ tcp_xmit_timer(tp, rtt)
 	short delta;
 	short rttmin;
 
-	--rtt;
 	if (rtt < 0)
 		rtt = 0;
-	if (rtt > TCP_RTT_MAX)
+	else if (rtt > TCP_RTT_MAX)
 		rtt = TCP_RTT_MAX;
 
 	tcpstat.tcps_rttupdated++;
 	if (tp->t_srtt != 0) {
 		/*
-		 * srtt is stored as fixed point with 3 bits after the
-		 * binary point (i.e., scaled by 8).  The following magic
+		 * delta is fixed point with 2 (TCP_RTT_BASE_SHIFT) bits
+		 * after the binary point (scaled by 4), whereas
+		 * srtt is stored as fixed point with 5 bits after the
+		 * binary point (i.e., scaled by 32).  The following magic
 		 * is equivalent to the smoothing algorithm in rfc793 with
 		 * an alpha of .875 (srtt = rtt/8 + srtt*7/8 in fixed
-		 * point).  Adjust rtt to origin 0.
+		 * point).
 		 */
-		delta = (rtt << 2) - (tp->t_srtt >> TCP_RTT_SHIFT);
+		delta = (rtt << TCP_RTT_BASE_SHIFT) -
+		    (tp->t_srtt >> TCP_RTT_SHIFT);
 		if ((tp->t_srtt += delta) <= 0)
-			tp->t_srtt = 1;
+			tp->t_srtt = 1 << TCP_RTT_BASE_SHIFT;
 		/*
 		 * We accumulate a smoothed rtt variance (actually, a
 		 * smoothed mean difference), then set the retransmit
 		 * timer to smoothed rtt + 4 times the smoothed variance.
-		 * rttvar is stored as fixed point with 2 bits after the
-		 * binary point (scaled by 4).  The following is
+		 * rttvar is stored as fixed point with 4 bits after the
+		 * binary point (scaled by 16).  The following is
 		 * equivalent to rfc793 smoothing with an alpha of .75
 		 * (rttvar = rttvar*3/4 + |delta| / 4).  This replaces
 		 * rfc793's wired-in beta.
@@ -2836,15 +2838,16 @@ tcp_xmit_timer(tp, rtt)
 			delta = -delta;
 		delta -= (tp->t_rttvar >> TCP_RTTVAR_SHIFT);
 		if ((tp->t_rttvar += delta) <= 0)
-			tp->t_rttvar = 1;
+			tp->t_rttvar = 1 << TCP_RTT_BASE_SHIFT;
 	} else {
 		/*
 		 * No rtt measurement yet - use the unsmoothed rtt.
 		 * Set the variance to half the rtt (so our first
 		 * retransmit happens at 3*rtt).
 		 */
-		tp->t_srtt = rtt << (TCP_RTT_SHIFT + 2);
-		tp->t_rttvar = rtt << (TCP_RTTVAR_SHIFT + 2 - 1);
+		tp->t_srtt = (rtt + 1) << (TCP_RTT_SHIFT + TCP_RTT_BASE_SHIFT);
+		tp->t_rttvar = (rtt + 1) <<
+		    (TCP_RTTVAR_SHIFT + TCP_RTT_BASE_SHIFT - 1);
 	}
 	tp->t_rtttime = 0;
 	tp->t_rxtshift = 0;
@@ -2860,10 +2863,7 @@ tcp_xmit_timer(tp, rtt)
 	 * statistical, we have to test that we don't drop below
 	 * the minimum feasible timer (which is 2 ticks).
 	 */
-	if (tp->t_rttmin > rtt + 2)
-		rttmin = tp->t_rttmin;
-	else
-		rttmin = rtt + 2;
+	rttmin = min(max(rtt + 2, tp->t_rttmin), TCPTV_REXMTMAX);
 	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp), rttmin, TCPTV_REXMTMAX);
 
 	/*

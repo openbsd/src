@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.74 2004/10/28 19:22:52 mcbride Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.75 2005/02/27 13:22:56 markus Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1167,7 +1167,7 @@ out:
 void
 tcp_setpersist(struct tcpcb *tp)
 {
-	int t = ((tp->t_srtt >> 2) + tp->t_rttvar) >> 1;
+	int t = ((tp->t_srtt >> 2) + tp->t_rttvar) >> (1 + TCP_RTT_BASE_SHIFT);
 	int nticks;
 
 	if (TCP_TIMER_ISARMED(tp, TCPT_REXMT))
