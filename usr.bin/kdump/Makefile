@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2004/12/12 17:06:51 naddy Exp $
+#	$OpenBSD: Makefile,v 1.13 2004/12/14 02:05:00 mickey Exp $
 
 LDSTATIC=${STATIC}
 PROG=	kdump
@@ -7,7 +7,7 @@ SRCS=	kdump.c ioctl.c subr.c
 .PATH:	${.CURDIR}/../ktrace
 CLEANFILES+=ioctl.c
 
-ioctl.c: ${.CURDIR}/mkioctls
+ioctl.c: ${.CURDIR}/Makefile ${.CURDIR}/mkioctls
 	/bin/sh ${.CURDIR}/mkioctls ${DESTDIR}/usr/include/sys/ioctl.h \
 	    ${DESTDIR}/usr/include/sys/ioctl_compat.h \
 	    ${DESTDIR}/usr/include/crypto/cryptodev.h \
@@ -26,7 +26,6 @@ ioctl.c: ${.CURDIR}/mkioctls
 	    ${DESTDIR}/usr/include/net/if_tun.h \
 	    ${DESTDIR}/usr/include/net/pfvar.h \
 	    ${DESTDIR}/usr/include/net80211/ieee80211_ioctl.h \
-	    ${DESTDIR}/usr/include/netinet/ip_carp.h \
 	    ${DESTDIR}/usr/include/netinet6/in6_var.h \
 	    ${DESTDIR}/usr/include/sys/agpio.h \
 	    ${DESTDIR}/usr/include/sys/ataio.h \

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: mkioctls,v 1.18 2004/12/12 17:06:51 naddy Exp $
+#	$OpenBSD: mkioctls,v 1.19 2004/12/14 02:05:00 mickey Exp $
 
 #
 # Copyright (c) 1994
@@ -48,7 +48,6 @@ BEGIN {
 	print "#include <net/if_bridge.h>"
 	print "#include <net/if_pfsync.h>"
 	print "#include <sys/termios.h>"
-	print "#include <netinet/ip_carp.h>"
 	print "#include <netinet/ip_ipsp.h>"
 	print "#include <net/if_enc.h>"
 	print "#include <net80211/ieee80211.h>"
