@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.30 2001/02/22 04:10:29 millert Exp $
+# $OpenBSD: termtypes.master,v 1.31 2001/11/05 18:09:02 naddy Exp $
 #
 # This version of terminfo.src is distributed with ncurses.
 # Report bugs to
@@ -1444,11 +1444,16 @@ ofcons,
 # These are micro-minimal and probably need to be redone for real
 # after the manner of the pcvt entries.
 wsvt25|NetBSD wscons in 25 line DEC VT220 mode, 
-	cols#80, lines#25, use=vt220, 
+	bce, msgr,
+	colors#16, cols#80, lines#25, ncv#32, pairs#64,
+	op=\E[m, setab=\E[4%p1%dm, setaf=\E[3%p1%dm,
+	use=vt220, 
 
 wsvt25m|NetBSD wscons in 25 line DEC VT220 mode with Meta, 
-	km, 
-	cols#80, lines#25, use=vt220, 
+	bce, km, msgr,
+	colors#16, cols#80, lines#25, ncv#32, pairs#64,
+	op=\E[m, setab=\E[4%p1%dm, setaf=\E[3%p1%dm,
+	use=vt220, 
 
 # `rasterconsole' provided by 4.4BSD, NetBSD and OpenBSD on SPARC, and 
 # DECstation/pmax.
