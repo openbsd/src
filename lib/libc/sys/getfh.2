@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getfh.2,v 1.7 2000/10/18 05:12:09 aaron Exp $
+.\"	$OpenBSD: getfh.2,v 1.8 2001/11/29 18:50:21 millert Exp $
 .\"	$NetBSD: getfh.2,v 1.7 1995/10/12 15:40:53 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -84,6 +84,8 @@ Search permission is denied for a component of the path prefix of
 .It Bq ELOOP
 Too many symbolic links were encountered in translating
 .Fa path .
+.It Bq EPERM
+The effective user ID is not the superuser.
 .It Bq EFAULT
 .Fa fhp
 points to an invalid address.
