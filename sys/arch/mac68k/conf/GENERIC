@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.23 1997/10/19 23:40:44 briggs Exp $
+#	$OpenBSD: GENERIC,v 1.24 1998/05/08 22:21:34 gene Exp $
 #	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERIC - an all-in-one kernel for the mac68k
@@ -33,6 +33,7 @@ asc0	at obio?		# ASC/EASC audio
 esp0	at obio?		# SCSI NCR 53C9x
 esp1	at obio?		# SCSI NCR 53C9x
 intvid0	at obio?		# Internal video hardware
+mc*	at obio?		# MACE ethernet on Centris/Quadra 660av
 sn*	at obio?		# Internal ethernet
 zsc0	at obio?		# Zilog serial chip
 zstty*	at zsc? channel ?

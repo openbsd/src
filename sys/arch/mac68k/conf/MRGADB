@@ -1,4 +1,4 @@
-#	$OpenBSD: MRGADB,v 1.1 1998/03/25 02:59:23 gene Exp $
+#	$OpenBSD: MRGADB,v 1.2 1998/05/08 22:21:36 gene Exp $
 #
 # MRGADB - generic kernel with the optional "mrg" adb driver by default
 #
@@ -33,6 +33,7 @@ asc0	at obio?		# ASC/EASC audio
 esp0	at obio?		# SCSI NCR 53C9x
 esp1	at obio?		# SCSI NCR 53C9x
 intvid0	at obio?		# Internal video hardware
+mc*	at obio?		# MACE ethernet on Centris/Quadra 660av
 sn*	at obio?		# Internal ethernet
 zsc0	at obio?		# Zilog serial chip
 zstty*	at zsc? channel ?
