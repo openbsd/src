@@ -1,7 +1,7 @@
-/*	$OpenBSD: privs.h,v 1.8 2003/10/20 21:10:19 jmc Exp $	*/
+/*	$OpenBSD: privs.h,v 1.9 2004/06/17 22:09:11 millert Exp $	*/
 
-/* 
- *  privs.h - header for privileged operations 
+/*
+ *  privs.h - header for privileged operations
  *  Copyright (C) 1993  Thomas Koenig
  *
  * Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@ extern
 #endif
 uid_t real_uid, effective_uid;
 
-#ifndef MAIN_PROGRAM 
+#ifndef MAIN_PROGRAM
 extern
 #endif
 gid_t real_gid, effective_gid;
