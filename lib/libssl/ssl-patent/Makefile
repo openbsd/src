@@ -9,16 +9,20 @@ LCRYPTO_SRC= ${.CURDIR}/../${SSLEAYDIST}/crypto
 .if ${MACHINE_ARCH} == "i386"
 CFLAGS+= -DL_ENDIAN -DBN_ASM
 .else
-.if ${MACHINE_ARCH} == "arc"
+.if ${MACHINE} == "arc"
 CFLAGS+= -DL_ENDIAN
 .else
-.if ${MACHINE_ARCH} == "pmax"
+.if ${MACHINE} == "galileo"
+CFLAGS+= -DL_ENDIAN
+.else
+.if ${MACHINE} == "pmax"
 CFLAGS+= -DL_ENDIAN
 .else
 .if ${MACHINE_ARCH} == "alpha"
 # no ENDIAN stuff defined for alpha
 .else
 CFLAGS+= -DB_ENDIAN
+.endif
 .endif
 .endif
 .endif
