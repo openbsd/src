@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.18 2000/06/18 18:00:18 itojun Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.19 2000/06/18 18:07:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -125,173 +125,169 @@ extern int ipport_hilastauto;
  */
 #if 0
 u_char inet6ctlerrmap[PRC_NCMDS] = {
-        0,              0,              0,              0,
-        0,              EMSGSIZE,       EHOSTDOWN,      EHOSTUNREACH,
-        EHOSTUNREACH,   EHOSTUNREACH,   ECONNREFUSED,   ECONNREFUSED,
-        EMSGSIZE,       EHOSTUNREACH,   0,              0,
-        0,              0,              0,              0,
-        ENOPROTOOPT
+	0,		0,		0,		0,
+	0,		EMSGSIZE,	EHOSTDOWN,	EHOSTUNREACH,
+	EHOSTUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,
+	EMSGSIZE,	EHOSTUNREACH,	0,		0,
+	0,		0,		0,		0,
+	ENOPROTOOPT
 };
 #endif
 
-/*----------------------------------------------------------------------
+/*
  * Bind an address (or at least a port) to an PF_INET6 socket.
- ----------------------------------------------------------------------*/
+ */
 int
 in6_pcbbind(inp, nam)
-     register struct inpcb *inp;
-     struct mbuf *nam;
+	register struct inpcb *inp;
+	struct mbuf *nam;
 {
-  register struct socket *so = inp->inp_socket;
+	register struct socket *so = inp->inp_socket;
 
-  register struct inpcbtable *head = inp->inp_table;
-  register struct sockaddr_in6 *sin6;
-  struct proc *p = curproc;		/* XXX */
-  u_short lport = 0;
-  int wild = INPLOOKUP_IPV6, reuseport = (so->so_options & SO_REUSEPORT);
-  int error;
+	register struct inpcbtable *head = inp->inp_table;
+	register struct sockaddr_in6 *sin6;
+	struct proc *p = curproc;		/* XXX */
+	u_short lport = 0;
+	int wild = INPLOOKUP_IPV6, reuseport = (so->so_options & SO_REUSEPORT);
+	int error;
 
-  /*
-   * REMINDER:  Once up to speed, flow label processing should go here,
-   *            too.  (Same with in6_pcbconnect.)  
-   */
+	/*
+	 * REMINDER:  Once up to speed, flow label processing should go here,
+	 * too.  (Same with in6_pcbconnect.)
+	 */
+	if (in6_ifaddr == 0 || in_ifaddr == 0)
+		return EADDRNOTAVAIL;
 
-  if (in6_ifaddr == 0 || in_ifaddr == 0)
-    return EADDRNOTAVAIL;
+	if (inp->inp_lport != 0 || !IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
+		return EINVAL;	/* If already bound, EINVAL! */
 
-  if (inp->inp_lport != 0 || !IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
-    return EINVAL;   /* If already bound, EINVAL! */
+	if ((so->so_options & (SO_REUSEADDR | SO_REUSEPORT)) == 0 &&
+	    ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
+	     (so->so_options & SO_ACCEPTCONN) == 0))
+		wild |= INPLOOKUP_WILDCARD;
 
-  if ((so->so_options & (SO_REUSEADDR | SO_REUSEPORT)) == 0 &&
-      ((so->so_proto->pr_flags & PR_CONNREQUIRED) == 0 ||
-       (so->so_options & SO_ACCEPTCONN) == 0))
-    wild |= INPLOOKUP_WILDCARD;
+	/*
+	 * If I did get a sockaddr passed in...
+	 */
+	if (nam) {
+		sin6 = mtod(nam, struct sockaddr_in6 *);
+		if (nam->m_len != sizeof (*sin6))
+			return EINVAL;
 
-  /*
-   * If I did get a sockaddr passed in...
-   */
-  if (nam)
-    {
-      sin6 = mtod(nam, struct sockaddr_in6 *);
-      if (nam->m_len != sizeof (*sin6))
-	return EINVAL;
+		/*
+		 * Unlike v4, I have no qualms about EAFNOSUPPORT if the
+		 * wretched family is not filled in!
+		 */
+		if (sin6->sin6_family != AF_INET6)
+			return EAFNOSUPPORT;
 
-      /*
-       * Unlike v4, I have no qualms about EAFNOSUPPORT if the
-       * wretched family is not filled in!
-       */
-      if (sin6->sin6_family != AF_INET6)
-	return EAFNOSUPPORT;
+		/* KAME hack: embed scopeid */
+		if (in6_embedscope(&sin6->sin6_addr, sin6, inp, NULL) != 0)
+			return EINVAL;
+		/* this must be cleared for ifa_ifwithaddr() */
+		sin6->sin6_scope_id = 0;
 
-      /* KAME hack: embed scopeid */
-      if (in6_embedscope(&sin6->sin6_addr, sin6, inp, NULL) != 0)
-	return EINVAL;
-      /* this must be cleared for ifa_ifwithaddr() */
-      sin6->sin6_scope_id = 0;
+		lport = sin6->sin6_port;
 
-      lport = sin6->sin6_port;
+		if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
+			/*
+			 * Treat SO_REUSEADDR as SO_REUSEPORT for multicast;
+			 * allow complete duplication of binding if
+			 * SO_REUSEPORT is set, or if SO_REUSEADDR is set
+			 * and a multicast address is bound on both
+			 * new and duplicated sockets.
+			 */
+			if (so->so_options & SO_REUSEADDR)
+				reuseport = SO_REUSEADDR | SO_REUSEPORT;
+		} else if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
+			struct sockaddr_in sin;
 
-      if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))
-	{
-	  /*
-	   * Treat SO_REUSEADDR as SO_REUSEPORT for multicast;
-	   * allow complete duplication of binding if
-	   * SO_REUSEPORT is set, or if SO_REUSEADDR is set
-	   * and a multicast address is bound on both
-	   * new and duplicated sockets.
-	   */
-	  if (so->so_options & SO_REUSEADDR)
-	    reuseport = SO_REUSEADDR | SO_REUSEPORT;
-	}
-      else if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr))
-	{
-	  struct sockaddr_in sin;
+			bzero(&sin, sizeof(sin));
+			sin.sin_port = 0;
+			sin.sin_len = sizeof(sin);
+			sin.sin_family = AF_INET;
+			sin.sin_addr.s_addr = sin6->sin6_addr.s6_addr32[3];
 
-	  bzero(&sin, sizeof(sin));
-	  sin.sin_port = 0;
-	  sin.sin_len = sizeof(sin);
-	  sin.sin_family = AF_INET;
-	  sin.sin_addr.s_addr = sin6->sin6_addr.s6_addr32[3];
-
-	  sin6->sin6_port = 0;  /* Yechhhh, because of upcoming call to
-				   ifa_ifwithaddr(), which does bcmp's
-				   over the PORTS as well.  (What about flow?)
-				   */
-	  sin6->sin6_flowinfo = 0;
-	  if (ifa_ifwithaddr((struct sockaddr *)sin6) == 0) {
-	    if (!IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr) ||
-		ifa_ifwithaddr((struct sockaddr *)&sin) == 0) {
-	      return EADDRNOTAVAIL;
-	    }
-	  }
-	}
-      if (lport)
-	{
-	  struct inpcb *t;
+			/*
+			 * Yechhhh, because of upcoming call to
+			 * ifa_ifwithaddr(), which does bcmp's
+			 * over the PORTS as well.  (What about flow?)
+			 */
+			sin6->sin6_port = 0;
+			sin6->sin6_flowinfo = 0;
+			if (ifa_ifwithaddr((struct sockaddr *)sin6) == 0) {
+				if (!IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr) ||
+				    ifa_ifwithaddr((struct sockaddr *)&sin) == 0) {
+					return EADDRNOTAVAIL;
+				}
+			}
+		}
+		if (lport) {
+			struct inpcb *t;
 #if 0 /* we don't support IPv4 mapped address */
-	  struct in_addr fa,la;
+			struct in_addr fa,la;
 #endif
 
-	  /* Question:  Do we wish to continue the Berkeley tradition of
-	     ports < IPPORT_RESERVED be only for root? 
-
-	     Answer:  For now yes, but IMHO, it should be REMOVED! 
-
-	     OUCH:  One other thing, is there no better way of finding
-	     a process for a socket instead of using curproc?  (Marked
-	     with BSD's {in,}famous XXX ? */
-	  if (ntohs(lport) < IPPORT_RESERVED &&
-	      (error = suser(p->p_ucred, &p->p_acflag)))
-	    return error;
+			/*
+			 * Question:  Do we wish to continue the Berkeley
+			 * tradition of ports < IPPORT_RESERVED be only for
+			 * root?
+			 * Answer: For now yes, but IMHO, it should be REMOVED!
+			 * OUCH: One other thing, is there no better way of
+			 * finding a process for a socket instead of using
+			 * curproc?  (Marked with BSD's {in,}famous XXX ?
+			 */
+			if (ntohs(lport) < IPPORT_RESERVED &&
+			    (error = suser(p->p_ucred, &p->p_acflag)))
+				return error;
 
 #if 0 /* we don't support IPv4 mapped address */
-	  if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
-	    {
-	      fa.s_addr = 0;
-	      la.s_addr = sin6->sin6_addr.s6_addr32[3];
-	      wild &= ~INPLOOKUP_IPV6;
+			if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
+				fa.s_addr = 0;
+				la.s_addr = sin6->sin6_addr.s6_addr32[3];
+				wild &= ~INPLOOKUP_IPV6;
 
-	      t = in_pcblookup(head, (struct in_addr *)&fa, 0,
-			       (struct in_addr *)&la, lport, wild);
-
-	    }
-	  else
+				t = in_pcblookup(head, (struct in_addr *)&fa, 0,
+				    (struct in_addr *)&la, lport, wild);
+			} else
 #endif
-	    {
-	      t = in_pcblookup(head, (struct in_addr *)&zeroin6_addr, 0,
-			(struct in_addr *)&sin6->sin6_addr, lport, wild);
-	    }
+			{
+				t = in_pcblookup(head,
+				    (struct in_addr *)&zeroin6_addr, 0,
+				    (struct in_addr *)&sin6->sin6_addr, lport,
+				    wild);
+			}
 
-	  if (t && (reuseport & t->inp_socket->so_options) == 0)
-	    return EADDRINUSE;
+			if (t && (reuseport & t->inp_socket->so_options) == 0)
+				return EADDRINUSE;
+		}
+		inp->inp_laddr6 = sin6->sin6_addr;
+
+		if (!IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
+			inp->inp_ipv6.ip6_flow = htonl(0x60000000) |
+			    (sin6->sin6_flowinfo & htonl(0x0fffffff));
+		}
+
+		/*
+		 * Unroll first 2 compares of {UNSPEC,V4MAPPED}.
+		 * Mark PF_INET6 socket as undecided (bound to port-only) or
+		 * mapped (INET6 socket talking IPv4) here.  I may need to move
+		 * this code out of this if (nam) clause, and put it just before
+		 * function return.
+		 *
+		 * Then again, the only time this function is called with NULL
+		 * nam might be during a *_pcbconnect(), which then sets the
+		 * local address ANYWAY.
+		 */
+		if (inp->inp_laddr6.s6_addr32[0] == 0 &&
+		    inp->inp_laddr6.s6_addr32[1] == 0) {
+			if (inp->inp_laddr6.s6_addr32[2] == ntohl(0xffff))
+				inp->inp_flags |= INP_IPV6_MAPPED;
+			if (inp->inp_laddr6.s6_addr32[2] == 0 &&
+			    inp->inp_laddr6.s6_addr32[3] == 0)
+				inp->inp_flags |= INP_IPV6_UNDEC;
+		}
 	}
-      inp->inp_laddr6 = sin6->sin6_addr;
-
-      if (!IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
-	inp->inp_ipv6.ip6_flow = htonl(0x60000000) | 
-	  (sin6->sin6_flowinfo & htonl(0x0fffffff));
-
-      /*
-       * Unroll first 2 compares of {UNSPEC,V4MAPPED}.
-       * Mark PF_INET6 socket as undecided (bound to port-only) or
-       * mapped (INET6 socket talking IPv4) here.  I may need to move
-       * this code out of this if (nam) clause, and put it just before
-       * function return.
-       *
-       * Then again, the only time this function is called with NULL nam
-       * might be during a *_pcbconnect(), which then sets the local address
-       * ANYWAY.
-       */
-      if (inp->inp_laddr6.s6_addr32[0] == 0 && 
-	  inp->inp_laddr6.s6_addr32[1] == 0)
-	{
-	  if (inp->inp_laddr6.s6_addr32[2] == ntohl(0xffff))
-	    inp->inp_flags |= INP_IPV6_MAPPED;
-	  if (inp->inp_laddr6.s6_addr32[2] == 0 &&
-	      inp->inp_laddr6.s6_addr32[3] == 0)
-	    inp->inp_flags |= INP_IPV6_UNDEC;
-	}
-    }
 
 	if (lport == 0) {
 		error = in6_pcbsetport(&inp->inp_laddr6, inp);
@@ -412,7 +408,7 @@ portloop:
 	return 0;
 }
 
-/*----------------------------------------------------------------------
+/*
  * Connect from a socket to a specified address.
  * Both address and port must be specified in argument sin6.
  * Eventually, flow labels will have to be dealt with here, as well.
@@ -421,8 +417,7 @@ portloop:
  * then pick one.
  *
  * I believe this has to be called at splnet().
- ----------------------------------------------------------------------*/
-
+ */
 int
 in6_pcbconnect(inp, nam)
 	register struct inpcb *inp;
@@ -466,17 +461,17 @@ in6_pcbconnect(inp, nam)
 	sin6->sin6_scope_id = 0;
 
 	/* Source address selection. */
-	if (IN6_IS_ADDR_V4MAPPED(&inp->inp_laddr6)
-	 && inp->inp_laddr6.s6_addr32[3] == 0) {
+	if (IN6_IS_ADDR_V4MAPPED(&inp->inp_laddr6) &&
+	    inp->inp_laddr6.s6_addr32[3] == 0) {
 		struct sockaddr_in sin, *sinp;
 
 		bzero(&sin, sizeof(sin));
 		sin.sin_len = sizeof(sin);
 		sin.sin_family = AF_INET;
 		bcopy(&sin6->sin6_addr.s6_addr32[3], &sin.sin_addr,
-			sizeof(sin.sin_addr));
+		    sizeof(sin.sin_addr));
 		sinp = in_selectsrc(&sin, (struct route *)&inp->inp_route6,
-			inp->inp_socket->so_options, NULL, &error);
+		    inp->inp_socket->so_options, NULL, &error);
 		if (sinp == 0) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
@@ -493,9 +488,8 @@ in6_pcbconnect(inp, nam)
 		 * Is it the intended behavior?
 		 */
 		in6a = in6_selectsrc(sin6, inp->inp_outputopts6,
-				     inp->inp_moptions6,
-				     &inp->inp_route6,
-				     &inp->inp_laddr6, &error);
+		    inp->inp_moptions6, &inp->inp_route6, &inp->inp_laddr6,
+		    &error);
 		if (in6a == 0) {
 			if (error == 0)
 				error = EADDRNOTAVAIL;
@@ -507,17 +501,14 @@ in6_pcbconnect(inp, nam)
 
 	inp->inp_ipv6.ip6_hlim = (u_int8_t)in6_selecthlim(inp, ifp);
 
-	if (in_pcblookup(inp->inp_table,
-			 &sin6->sin6_addr,
-			 sin6->sin6_port,
-			 IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) ?
-			  in6a : &inp->inp_laddr6,
-			 inp->inp_lport,
-			 INPLOOKUP_IPV6))
+	if (in_pcblookup(inp->inp_table, &sin6->sin6_addr, sin6->sin6_port,
+	    IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) ? in6a : &inp->inp_laddr6,
+	    inp->inp_lport, INPLOOKUP_IPV6)) {
 		return(EADDRINUSE);
-	if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6)
-	 || (IN6_IS_ADDR_V4MAPPED(&inp->inp_laddr6)
-	  && inp->inp_laddr6.s6_addr32[3] == 0)) {
+	}
+	if (IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6) ||
+	    (IN6_IS_ADDR_V4MAPPED(&inp->inp_laddr6) &&
+	     inp->inp_laddr6.s6_addr32[3] == 0)) {
 		if (inp->inp_lport == 0)
 			(void)in6_pcbbind(inp, (struct mbuf *)0);
 		inp->inp_laddr6 = *in6a;
@@ -538,7 +529,7 @@ in6_pcbconnect(inp, nam)
 	return(0);
 }
 
-/*----------------------------------------------------------------------
+/*
  * Pass some notification to all connections of a protocol
  * associated with address dst.  The local address and/or port numbers
  * may be specified to limit the search.  The "usual action" will be
@@ -547,145 +538,136 @@ in6_pcbconnect(inp, nam)
  * Call the protocol specific routine (if any) to report
  * any errors for each matching socket.
  *
- * Also perform input-side security policy check 
+ * Also perform input-side security policy check
  *    once PCB to be notified has been located.
  *
  * Must be called at splnet.
- ----------------------------------------------------------------------*/
-
+ */
 int
 in6_pcbnotify(head, dst, fport_arg, la, lport_arg, cmd, notify)
-     struct inpcbtable *head;
-     struct sockaddr *dst;
-     uint fport_arg;
-     struct in6_addr *la;
-     uint lport_arg;
-     int cmd;
-     void (*notify) __P((struct inpcb *, int));
+	struct inpcbtable *head;
+	struct sockaddr *dst;
+	uint fport_arg;
+	struct in6_addr *la;
+	uint lport_arg;
+	int cmd;
+	void (*notify) __P((struct inpcb *, int));
 {
-  register struct inpcb *inp, *ninp;
-  struct in6_addr *faddr,laddr = *la;
-  u_short fport = fport_arg, lport = lport_arg;
-  int errno, nmatch = 0;
-  int do_rtchange = (notify == in_rtchange);
+	register struct inpcb *inp, *ninp;
+	struct in6_addr *faddr,laddr = *la;
+	u_short fport = fport_arg, lport = lport_arg;
+	int errno, nmatch = 0;
+	int do_rtchange = (notify == in_rtchange);
 
-  if ((unsigned)cmd > PRC_NCMDS || dst->sa_family != AF_INET6)
-    return 1;
-  faddr = &(((struct sockaddr_in6 *)dst)->sin6_addr);
-  if (IN6_IS_ADDR_UNSPECIFIED(faddr))
-    return 1;
-  if (IN6_IS_ADDR_V4MAPPED(faddr))
-    {
-      printf("Huh?  Thought in6_pcbnotify() never got called with mapped!\n");
-    }
-  
-  /*
-   * Redirects go to all references to the destination,
-   * and use in_rtchange to invalidate the route cache.
-   * Dead host indications: also use in_rtchange to invalidate
-   * the cache, and deliver the error to all the sockets.
-   * Otherwise, if we have knowledge of the local port and address,
-   * deliver only to that socket.
-   */
+	if ((unsigned)cmd > PRC_NCMDS || dst->sa_family != AF_INET6)
+		return 1;
+	faddr = &(((struct sockaddr_in6 *)dst)->sin6_addr);
+	if (IN6_IS_ADDR_UNSPECIFIED(faddr))
+		return 1;
+	if (IN6_IS_ADDR_V4MAPPED(faddr))
+		printf("Huh?  Thought in6_pcbnotify() never got called with mapped!\n");
 
-  if (PRC_IS_REDIRECT(cmd) || cmd == PRC_HOSTDEAD)
-    {
-      fport = 0;
-      lport = 0;
-      laddr = in6addr_any;
+	/*
+	 * Redirects go to all references to the destination,
+	 * and use in_rtchange to invalidate the route cache.
+	 * Dead host indications: also use in_rtchange to invalidate
+	 * the cache, and deliver the error to all the sockets.
+	 * Otherwise, if we have knowledge of the local port and address,
+	 * deliver only to that socket.
+	 */
+	if (PRC_IS_REDIRECT(cmd) || cmd == PRC_HOSTDEAD) {
+		fport = 0;
+		lport = 0;
+		laddr = in6addr_any;
 
-      notify = in_rtchange;
-    }
-  errno = inet6ctlerrmap[cmd];
+		notify = in_rtchange;
+	}
+	errno = inet6ctlerrmap[cmd];
 
-  for (inp = head->inpt_queue.cqh_first;
-       inp != (struct inpcb *)&head->inpt_queue; inp = ninp)
-    {
-      ninp = inp->inp_queue.cqe_next;
+	for (inp = head->inpt_queue.cqh_first;
+	     inp != (struct inpcb *)&head->inpt_queue; inp = ninp) {
+		ninp = inp->inp_queue.cqe_next;
 
 #ifdef INET6
-      if ((inp->inp_flags & INP_IPV6) == 0)
-	continue;
+		if ((inp->inp_flags & INP_IPV6) == 0)
+			continue;
 #endif
 
-      if (do_rtchange) {
-	/*
-	 * Since a non-connected PCB might have a cached route,
-	 * we always call in_rtchange without matching
-	 * the PCB to the src/dst pair.
-	 *
-	 * XXX: we assume in_rtchange does not free the PCB.
-	 */
-	if (IN6_ARE_ADDR_EQUAL(&inp->inp_route6.ro_dst.sin6_addr, faddr))
-	  in_rtchange(inp, errno);
+		if (do_rtchange) {
+			/*
+			 * Since a non-connected PCB might have a cached route,
+			 * we always call in_rtchange without matching
+			 * the PCB to the src/dst pair.
+			 *
+			 * XXX: we assume in_rtchange does not free the PCB.
+			 */
+			if (IN6_ARE_ADDR_EQUAL(&inp->inp_route6.ro_dst.sin6_addr, faddr))
+				in_rtchange(inp, errno);
 
-	if (notify == in_rtchange)
-	  continue;		/* there's nothing to do any more */
-      }
+			if (notify == in_rtchange)
+				continue; /* there's nothing to do any more */
+		}
 
-      if (!IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6, faddr) ||
-	  !inp->inp_socket ||
-	  (lport && inp->inp_lport != lport) ||
-	  (!IN6_IS_ADDR_UNSPECIFIED(&laddr) && !IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, &laddr)) ||
-	  (fport && inp->inp_fport != fport))
-	{
-	  continue;
+		if (!IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6, faddr) ||
+		    !inp->inp_socket ||
+		    (lport && inp->inp_lport != lport) ||
+		    (!IN6_IS_ADDR_UNSPECIFIED(&laddr) && !IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, &laddr)) ||
+		    (fport && inp->inp_fport != fport)) {
+			continue;
+		}
+		nmatch++;
+
+		if (notify)
+			(*notify)(inp, errno);
 	}
-      nmatch++;
-
-      if (notify)
-	(*notify)(inp, errno);
-    }
-   return 0;
+	return 0;
 }
 
-/*----------------------------------------------------------------------
+/*
  * Get the local address/port, and put it in a sockaddr_in6.
  * This services the getsockname(2) call.
- ----------------------------------------------------------------------*/
-
+ */
 int
 in6_setsockaddr(inp, nam)
-     register struct inpcb *inp;
-     struct mbuf *nam;
+	register struct inpcb *inp;
+	struct mbuf *nam;
 {
-  register struct sockaddr_in6 *sin6;
+	register struct sockaddr_in6 *sin6;
 
-  nam->m_len = sizeof(struct sockaddr_in6);
-  sin6 = mtod(nam,struct sockaddr_in6 *);
+	nam->m_len = sizeof(struct sockaddr_in6);
+	sin6 = mtod(nam,struct sockaddr_in6 *);
 
-  bzero ((caddr_t)sin6,sizeof(struct sockaddr_in6));
-  sin6->sin6_family = AF_INET6;
-  sin6->sin6_len = sizeof(struct sockaddr_in6);
-  sin6->sin6_port = inp->inp_lport;
-  sin6->sin6_addr = inp->inp_laddr6;
-  /* KAME hack: recover scopeid */
-  (void)in6_recoverscope(sin6, &inp->inp_laddr6, NULL);
+	bzero ((caddr_t)sin6,sizeof(struct sockaddr_in6));
+	sin6->sin6_family = AF_INET6;
+	sin6->sin6_len = sizeof(struct sockaddr_in6);
+	sin6->sin6_port = inp->inp_lport;
+	sin6->sin6_addr = inp->inp_laddr6;
+	/* KAME hack: recover scopeid */
+	(void)in6_recoverscope(sin6, &inp->inp_laddr6, NULL);
 
-  return 0;
+	return 0;
 }
 
-/*----------------------------------------------------------------------
+/*
  * Get the foreign address/port, and put it in a sockaddr_in6.
  * This services the getpeername(2) call.
- ----------------------------------------------------------------------*/
-
+ */
 int
 in6_setpeeraddr(inp, nam)
-     register struct inpcb *inp;
-     struct mbuf *nam;
+	register struct inpcb *inp;
+	struct mbuf *nam;
 {
-  register struct sockaddr_in6 *sin6;
+	register struct sockaddr_in6 *sin6;
 
-  nam->m_len = sizeof(struct sockaddr_in6);
-  sin6 = mtod(nam,struct sockaddr_in6 *);
+	nam->m_len = sizeof(struct sockaddr_in6);
+	sin6 = mtod(nam,struct sockaddr_in6 *);
 
-  bzero ((caddr_t)sin6,sizeof(struct sockaddr_in6));
-  sin6->sin6_family = AF_INET6;
-  sin6->sin6_len = sizeof(struct sockaddr_in6);
-  sin6->sin6_port = inp->inp_fport;
-  sin6->sin6_addr = inp->inp_faddr6;
-  sin6->sin6_flowinfo = inp->inp_fflowinfo;
+	bzero ((caddr_t)sin6,sizeof(struct sockaddr_in6));
+	sin6->sin6_family = AF_INET6;
+	sin6->sin6_len = sizeof(struct sockaddr_in6);
+	sin6->sin6_port = inp->inp_fport;
+	sin6->sin6_addr = inp->inp_faddr6;
+	sin6->sin6_flowinfo = inp->inp_fflowinfo;
 
-  return 0;
+	return 0;
 }
