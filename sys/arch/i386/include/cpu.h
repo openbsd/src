@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.29 2000/01/29 04:27:48 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.30 2000/06/05 12:43:30 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -54,7 +54,6 @@
  * referenced in generic code
  */
 #define	cpu_swapin(p)			/* nothing */
-#define	cpu_wait(p)			/* nothing */
 
 /*
  * Arguments to hardclock, softclock and statclock
