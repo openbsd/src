@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.7 1997/08/01 19:39:46 deraadt Exp $
+.\"	$OpenBSD: ps.1,v 1.8 1997/08/22 20:20:36 kstailey Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -341,13 +341,16 @@ percentage memory usage (alias pmem)
 .It acflag
 accounting flag (alias acflg)
 .It command
-command and arguments
+command and arguments (alias args)
 .It cpu
 short-term cpu usage factor (for scheduling)
 .It flags
 the process flags, in hexadecimal (alias f)
 .It gid
 effective group
+.It group
+text name of effective group
+.Tn ID
 .It holdcnt
 number of holds on the process (if non-zero, process can't be swapped)
 .It inblk
@@ -409,6 +412,9 @@ core residency time (in seconds; 127 = infinity)
 .It rgid
 real group
 .Tn ID
+.It rgroup
+text name of real group
+.Tn ID
 .It rlink
 reverse link on run queue, or 0
 .It rss
@@ -433,7 +439,7 @@ blocked signals (alias blocked)
 .It sl
 sleep time (in seconds; 127 = infinity)
 .It start
-time started
+time started (alias etime)
 .It state
 symbolic process state (alias stat)
 .It svgid
@@ -458,7 +464,7 @@ control terminal name (two letter abbreviation)
 .It tty
 full name of control terminal
 .It ucomm
-name to be used for accounting
+name to be used for accounting (alias comm)
 .It uid
 effective user
 .Tn ID
