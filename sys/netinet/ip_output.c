@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.38 1999/01/08 21:51:22 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.39 1999/01/11 00:42:53 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -369,70 +369,6 @@ ip_output(m0, va_alist)
 				return ENXIO;
 			}
 
-			/* Check for tunneling */
-			if ((tdb->tdb_flags & TDBF_TUNNELING) &&
-			    (tdb->tdb_xform->xf_type != XF_IP4)){
-#ifdef ENCDEBUG
-				if (encdebug)
-					printf("ip_output(): tunneling\n");
-#endif /* ENCDEBUG */
-
-				/*
-				 * Register first use,
-				 * setup expiration timer
-				 */
-				if (tdb->tdb_first_use == 0) {
-					tdb->tdb_first_use = time.tv_sec;
-
-					if (tdb->tdb_flags & TDBF_FIRSTUSE) {
-						exp = get_expiration();
-						if (exp == NULL)
-							goto expbail;
-						exp->exp_dst.s_addr =
-						    tdb->tdb_dst.s_addr;
-						exp->exp_spi = tdb->tdb_spi;
-						exp->exp_sproto =
-						    tdb->tdb_sproto;
-						exp->exp_timeout =
-						    tdb->tdb_first_use +
-						    tdb->tdb_exp_first_use;
-						put_expiration(exp);
-					}
-
-					if ((tdb->tdb_flags &
-					    TDBF_SOFT_FIRSTUSE) &&
-					    (tdb->tdb_soft_first_use <=
-						tdb->tdb_exp_first_use)) {
-						exp = get_expiration();
-						if (exp == NULL)
-							goto expbail;
-						exp->exp_dst.s_addr =
-						    tdb->tdb_dst.s_addr;
-						exp->exp_spi = tdb->tdb_spi;
-						exp->exp_sproto =
-						    tdb->tdb_sproto;
-						exp->exp_timeout =
-						    tdb->tdb_first_use +
-						    tdb->tdb_soft_first_use;
-						put_expiration(exp);
-					}
-				}
-
-				/*
-				 * Fix checksum here, AH and ESP fix the
-				 * checksum in their output routines.
-				 */
-				ip->ip_sum = in_cksum(m, hlen);
-				error = ipe4_output(m, gw, tdb, &mp);
-				if (mp == NULL)
-					error = EFAULT;
-				if (error) {
-					RTFREE(re->re_rt);
-					return error;
-				}
-				m = mp;
-			}
-
 #ifdef ENCDEBUG
 			if (encdebug)
 				printf("ip_output(): calling %s\n",
@@ -476,6 +412,29 @@ expbail:
 					    tdb->tdb_soft_first_use;
 					put_expiration(exp);
 				}
+			}
+
+			/* Check for tunneling */
+			if ((tdb->tdb_flags & TDBF_TUNNELING) &&
+			    (tdb->tdb_xform->xf_type != XF_IP4)){
+#ifdef ENCDEBUG
+				if (encdebug)
+					printf("ip_output(): tunneling\n");
+#endif /* ENCDEBUG */
+
+				/*
+				 * Fix checksum here, AH and ESP fix the
+				 * checksum in their output routines.
+				 */
+				ip->ip_sum = in_cksum(m, hlen);
+				error = ipe4_output(m, gw, tdb, &mp);
+				if (mp == NULL)
+					error = EFAULT;
+				if (error) {
+					RTFREE(re->re_rt);
+					return error;
+				}
+				m = mp;
 			}
 
 			if (tdb->tdb_xform->xf_type == XF_IP4) {
