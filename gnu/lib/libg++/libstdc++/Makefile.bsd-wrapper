@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1996/05/19 21:48:31 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.7 1996/06/03 07:36:33 deraadt Exp $
 
 IO_DIR=		$(.CURDIR)/../libio
 LIBIBERTY_DIR=	$(.CURDIR)/../libiberty
@@ -41,7 +41,7 @@ STD_OBJS=	$(STD_SRCS:N*.h:R:S/$/.o/g) $(SPEC_OBJS)
 # we must first see to that they are really generated.  This is a hack that
 # ensures this.  The echo at the end is because make doesn't like command
 # substitutions to not generate output.
-.ifnmake obj
+.ifmake !obj && !clean && !cleandir
 PREREQ!=	test ! -f $(IO_OBJDIR)/iostream.list && \
 			(cd $(IO_DIR); \
 			 make -f Makefile.bsd-wrapper iostream.list); \
