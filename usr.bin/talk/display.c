@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.6 1999/03/23 17:00:38 millert Exp $	*/
+/*	$OpenBSD: display.c,v 1.7 2000/12/30 06:27:48 angelos Exp $	*/
 /*	$NetBSD: display.c,v 1.3 1994/12/09 02:14:13 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: display.c,v 1.6 1999/03/23 17:00:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.7 2000/12/30 06:27:48 angelos Exp $";
 #endif /* not lint */
 
 /*
@@ -51,6 +51,9 @@ static char rcsid[] = "$OpenBSD: display.c,v 1.6 1999/03/23 17:00:38 millert Exp
 xwin_t	my_win;
 xwin_t	his_win;
 WINDOW	*line_win;
+
+#undef isprint
+#define isprint(n) ((unsigned char)(n)>31)
 
 int	curses_initialized = 0;
 
@@ -157,7 +160,7 @@ display(win, text, size)
 			cch = (*text & 63) + 64;
 			waddch(win->x_win, cch);
 		} else
-			waddch(win->x_win, *text);
+			waddch(win->x_win, (unsigned char)(*text));
 		getyx(win->x_win, win->x_line, win->x_col);
 		text++;
 	}
