@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.22 2001/06/08 08:09:02 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.23 2001/06/10 01:36:32 beck Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -791,7 +791,7 @@ writeback(fp, docachepush)
 				   TRUE, VM_PROT_WRITE);
 			fa = (u_int)&vmmap[(f->f_fa & PGOFSET) & ~0xF];
 			bcopy((caddr_t)&f->f_pd0, (caddr_t)fa, 16);
-			pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa)
+			pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 				    (vaddr_t)&vmmap[NBPG]);
