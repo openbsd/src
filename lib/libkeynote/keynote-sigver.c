@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sigver.c,v 1.4 1999/10/01 01:08:30 angelos Exp $ */
+/* $OpenBSD: keynote-sigver.c,v 1.5 1999/10/06 20:27:46 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -70,7 +70,7 @@ keynote_sigver(int argc, char *argv[])
     fd = open(argv[1], O_RDONLY, 0);
     if (fd < 0)
     {
-	perror("open()");
+	perror(argv[1]);
 	exit(-1);
     }
 

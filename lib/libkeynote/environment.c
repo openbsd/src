@@ -1,4 +1,4 @@
-/* $OpenBSD: environment.c,v 1.4 1999/10/06 19:26:14 angelos Exp $ */
+/* $OpenBSD: environment.c,v 1.5 1999/10/06 20:27:46 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -723,6 +723,7 @@ kn_get_failed(int sessid, int type, int num)
     struct assertion *as;
     int i;
 
+    keynote_errno = 0;
     if ((keynote_current_session == (struct keynote_session *) NULL) ||
 	(keynote_current_session->ks_id != sessid))
     {
@@ -792,19 +793,45 @@ kn_query(struct environment *env, char **retvalues, int numval,
 
     /* Action set */
     for (en = env; en != (struct environment *) NULL; en = en->env_next)
-      kn_add_action(sessid, en->env_name, en->env_value, en->env_flags);
+      if (kn_add_action(sessid, en->env_name, en->env_value, en->env_flags) ==
+	  -1)
+      {
+	  serrno = keynote_errno;
+	  kn_close(sessid);
+	  keynote_errno = serrno;
+	  return -1;
+      }
 
     /* Locally trusted assertions */
     for (i = 0; i < numtrusted; i++)
-      kn_add_assertion(sessid, trusted[i], trustedlen[i], ASSERT_FLAG_LOCAL);
+      if (kn_add_assertion(sessid, trusted[i], trustedlen[i],
+	  ASSERT_FLAG_LOCAL) == -1)
+      {
+	  serrno = keynote_errno;
+	  kn_close(sessid);
+	  keynote_errno = serrno;
+	  return -1;
+      }
 
     /* Untrusted assertions */
     for (i = 0; i < numuntrusted; i++)
-      kn_add_assertion(sessid, untrusted[i], untrustedlen[i], 0);
+      if (kn_add_assertion(sessid, untrusted[i], untrustedlen[i], 0) == -1)
+      {
+	  serrno = keynote_errno;
+	  kn_close(sessid);
+	  keynote_errno = serrno;
+	  return -1;
+      }
 
     /* Authorizers */
     for (i = 0; i < numauthorizers; i++)
-      kn_add_authorizer(sessid, authorizers[i]);
+      if (kn_add_authorizer(sessid, authorizers[i]) == -1)
+      {
+	  serrno = keynote_errno;
+	  kn_close(sessid);
+	  keynote_errno = serrno;
+	  return -1;
+      }
 
     i = kn_do_query(sessid, retvalues, numval);
     serrno = keynote_errno;
@@ -826,7 +853,6 @@ kn_read_asserts(char *buffer, int bufferlen, int *numassertions)
     char **buf, **tempbuf, *ptr;
 
     keynote_errno = 0;
-
     if (buffer == (char *) NULL)
     {
 	keynote_errno = ERROR_SYNTAX;
@@ -942,6 +968,7 @@ kn_get_authorizer(int sessid, int assertid, int *algorithm)
     struct assertion *as;
     int i;
 
+    keynote_errno = 0;
     if ((keynote_current_session == (struct keynote_session *) NULL) ||
 	(keynote_current_session->ks_id != sessid))
     {
@@ -980,6 +1007,7 @@ kn_get_licensees(int sessid, int assertid)
     struct assertion *as;
     int i;
 
+    keynote_errno = 0;
     if ((keynote_current_session == (struct keynote_session *) NULL) ||
 	(keynote_current_session->ks_id != sessid))
     {
@@ -1007,4 +1035,3 @@ kn_get_licensees(int sessid, int assertid)
 
     return (struct keynote_keylist *) as->as_keylist;
 }
-

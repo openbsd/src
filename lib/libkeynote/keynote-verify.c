@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-verify.c,v 1.4 1999/10/01 01:08:30 angelos Exp $ */
+/* $OpenBSD: keynote-verify.c,v 1.5 1999/10/06 20:27:46 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -132,7 +132,7 @@ keynote_verify(int argc, char *argv[])
 
 		if ((fd = open(optarg, O_RDONLY, 0)) < 0)
 		{
-		    perror("open()");
+		    perror(optarg);
 		    exit(-1);
 		}
 
@@ -252,7 +252,7 @@ keynote_verify(int argc, char *argv[])
 	    case 'l':
 		if ((fd = open(optarg, O_RDONLY, 0)) < 0)
 		{
-		    perror("open()");
+		    perror(optarg);
 		    exit(-1);
 		}
 
@@ -340,7 +340,7 @@ keynote_verify(int argc, char *argv[])
     {
 	if ((fd = open(argv[argc], O_RDONLY, 0)) < 0)
 	{
-	    perror("open()");
+	    perror(argv[argc]);
 	    exit(-1);
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-ver.y,v 1.3 1999/10/01 01:08:30 angelos Exp $ */
+/* $OpenBSD: keynote-ver.y,v 1.4 1999/10/06 20:27:46 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -45,8 +45,7 @@
 %}
 %%
 
-program: /* Nothing */
-       | expr
+program: expr
        | STRING              { if (kn_add_authorizer(sessid, $1) != 0)
 				 return keynote_errno;
                                free($1);
@@ -59,13 +58,13 @@ expr: VSTRING EQ STRING      { int i = kn_add_action(sessid, $1, $3, 0);
 			       free($1);
 			       free($3);
                              }
-    | expr VSTRING EQ STRING { int i = kn_add_action(sessid, $2, $4, 0);
+    | VSTRING EQ STRING      { int i = kn_add_action(sessid, $1, $3, 0);
 
                                if (i != 0)
 				 return i;
-			       free($2);
-			       free($4);
-                             }  
+			       free($1);
+			       free($3);
+                             } expr 
 %%
 void
 kverror(char *s)

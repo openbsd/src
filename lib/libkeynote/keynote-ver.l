@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote-ver.l,v 1.3 1999/10/01 01:08:30 angelos Exp $ */
+/* $OpenBSD: keynote-ver.l,v 1.4 1999/10/06 20:27:46 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -50,7 +50,6 @@
 #include "keynote.h"
 #include "header.h"
 %}
-string          ([a-zA-Z])([a-zA-Z0-9_-])*
 vstring		[a-zA-Z0-9][a-zA-Z0-9_]*
 litstring	\"(([^\"\n])|(\\[\"\n\f\r\t.]))*\"
 comment         "#"[^\n]*
@@ -66,24 +65,21 @@ comment         "#"[^\n]*
 <FIRSTPART>{vstring}          { kvlval.s.string = calloc(strlen(kvtext) + 1,
 							 sizeof(char));
                                 if (kvlval.s.string == (char *) NULL)
-				  return ERROR_MEMORY;
+				{
+				    keynote_errno = ERROR_MEMORY;
+				    return -1;
+				}
 				strcpy(kvlval.s.string, kvtext);
 				BEGIN(MIDDLEPART);
                                 return VSTRING;
                               }
-<KEYSTATE,SECONDPART>{string} { kvlval.s.string = calloc(strlen(kvtext) + 1,
-							 sizeof(char));
-                                if (kvlval.s.string == (char *) NULL)
-				  return ERROR_MEMORY;
-				strncpy(kvlval.s.string, kvtext,
-					strlen(kvtext));
-				BEGIN(FIRSTPART);
-                                return STRING;
-                              }
 <KEYSTATE,SECONDPART>{litstring} { kvlval.s.string = calloc(strlen(kvtext) - 1,
 				  		         sizeof(char));
                                    if (kvlval.s.string == (char *) NULL)
-				     return ERROR_MEMORY;
+				   {
+				       keynote_errno = ERROR_MEMORY;
+				       return -1;
+				   }
 				   mystrncpy(kvlval.s.string, kvtext + 1,
 					     strlen(kvtext) - 2);
 				   BEGIN(FIRSTPART);
@@ -91,7 +87,7 @@ comment         "#"[^\n]*
                                  }
 <FIRSTPART,KEYSTATE>{comment} ;
 [ \t\n]		              ;
-.                             return ERROR_SYNTAX;
+.                             { keynote_errno = ERROR_SYNTAX; return -1; }
 
 %%
 
@@ -254,18 +250,15 @@ read_environment(char *filename)
 	case 0:
 	    return 0;
 	    
-	case ERROR_MEMORY:
-	    fprintf(stderr,
-		    "Memory error while processing environment file <%s>\n",
-		    filename);
-	    return -1;
-	    break;
-	    
-	case 1:
-	case ERROR_SYNTAX:
 	default:
-	    fprintf(stderr, "Syntax error in environment file <%s>, line %d\n",
-		    filename, kvlineno);
+	    if (keynote_errno == ERROR_MEMORY)
+	      fprintf(stderr,
+		      "Memory error while processing environment file <%s>\n",
+		      filename);
+	    else
+	      fprintf(stderr,
+		     "Syntax error in environment file <%s>, line %d\n",
+		     filename, kvlineno);
 	    return -1;
     }
 }

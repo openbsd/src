@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-keygen.c,v 1.4 1999/10/01 01:08:30 angelos Exp $ */
+/* $OpenBSD: keynote-keygen.c,v 1.5 1999/10/06 20:27:46 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -180,7 +180,7 @@ keynote_keygen(int argc, char *argv[])
     fd = open(KEYNOTERNDFILENAME, O_RDONLY, 0);
     if (fd < 0)
     {
-	perror("open(\"/dev/urandom\")");
+	perror(KEYNOTERNDFILENAME);
 	exit(-1);
     }
 
@@ -208,7 +208,7 @@ keynote_keygen(int argc, char *argv[])
     {
         if ((fd = RAND_load_file(KEYNOTERNDFILENAME, cnt)) <= 0)
         {
-	    perror("RAND_load_file()");
+	    perror(KEYNOTERNDFILENAME);
 	    exit(-1);
         }
 
@@ -255,7 +255,7 @@ keynote_keygen(int argc, char *argv[])
 	    fp = fopen(argv[3], "w");
 	    if (fp == (FILE *) NULL)
 	    {
-		perror("fopen()");
+		perror(argv[3]);
 		exit(-1);
 	    }
 	}
@@ -284,7 +284,7 @@ keynote_keygen(int argc, char *argv[])
 	    fp = fopen(argv[4], "w");
 	    if (fp == (FILE *) NULL)
 	    {
-		perror("fopen()");
+		perror(argv[4]);
 		exit(-1);
 	    }
 	}
@@ -340,7 +340,7 @@ keynote_keygen(int argc, char *argv[])
 	    fp = fopen(argv[3], "w");
 	    if (fp == (FILE *) NULL)
 	    {
-		perror("fopen()");
+		perror(argv[3]);
 		exit(-1);
 	    }
 	}
@@ -369,7 +369,7 @@ keynote_keygen(int argc, char *argv[])
 	    fp = fopen(argv[4], "w");
 	    if (fp == (FILE *) NULL)
 	    {
-		perror("fopen()");
+		perror(argv[4]);
 		exit(-1);
 	    }
 	}
