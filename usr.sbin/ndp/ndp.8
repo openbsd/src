@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ndp.8,v 1.14 2002/06/03 04:44:50 itojun Exp $
-.\"	$KAME: ndp.8,v 1.26 2002/06/03 04:39:03 itojun Exp $
+.\"	$OpenBSD: ndp.8,v 1.15 2002/06/03 19:30:49 itojun Exp $
+.\"	$KAME: ndp.8,v 1.27 2002/06/03 19:25:27 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -65,10 +65,7 @@
 .Op Ar flags ...
 .Nm ndp
 .Op Fl nt
-.Fl I Ar interface
-.Nm ndp
-.Op Fl nt
-.Fl I Li delete
+.Fl I Op Ar interface | Li delete
 .Nm ndp
 .Op Fl nt
 .Fl s Ar nodename etheraddr
@@ -144,15 +141,15 @@ Parse the file specified by
 .It Fl H
 Harmonize consistency between the routing table and the default router
 list; install the top entry of the list into the kernel routing table.
-.It Fl I Ar interface
-Shows or specifies the default interface used as the default route when
+.It Fl I
+Shows the default interface used as the default route when
 there is no default router.
-If a valid
+.It Fl I Ar interface
+Specifies the default interface used as the default route when
+there is no default router.
+The 
 .Ar interface
-is specified, the interface will be used as the default.
-If
-.Ar interface
-is not a valid interface name, the current setting will be presented.
+will be used as the default.
 .It Fl I Li delete
 The current default interface will be deleted from the kernel.
 .It Fl i Ar interface Op Ar flags ...
