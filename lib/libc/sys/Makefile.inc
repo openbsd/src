@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.40 2000/12/23 03:04:34 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.41 2001/01/10 17:39:43 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -231,3 +231,5 @@ MLINKS+=truncate.2 ftruncate.2
 MLINKS+=utimes.2 futimes.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=write.2 writev.2 write.2 pwrite.2 write.2 pwritev.2
+MLINKS+=select.2 FD_SET.3 select.2 FD_CLR.3
+MLINKS+=select.2 FD_ISSET.3 select.2 FD_ZERO.3
