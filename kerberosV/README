@@ -1,35 +1,21 @@
-Warning
-=======
+Maintainer
+==========
 
-This is experimental stuff, don't expect things to work correctly at this
-point. Please contact <hin@openbsd.org> if you have questions about the
-kerberosV stuff.
+Please contact <hin@openbsd.org> if you have questions or problems.
 
 
 Status of the code
 ==================
 
-The current status is that the libraries, KDC, kadmind, some basic
-administrators and users utilities, and the telnet client and server works.
+This code is currently beta quality code, but seems to work quite well.
+Heimdal is used by several large University and Commercial sites.
 
 
 Building
 ========
 
-To build this stuff, do the following:
-
-# echo "KERBEROS5=Yes" >> /etc/mk.conf
-# cd /usr/src/kerberosV
-# make build
-
-To get a telnet client and server with kerberos5 support, do the following:
-
-# cd /usr/src/lib/libtelnet
-# make ; make install
-# cd /usr/src/usr.bin/telnet
-# make ; make install
-# cd /usr/src/libexec/telnetd
-# make ; make install 
+The kerberosV directory is now fully a part of the buildsystem, and a
+regular "make build" process is the correct way to compile it.
 
 The krb5.conf and krb5.keytab files have recently been moved to
 /etc/kerberosV directory. If you've previously used this code you should
@@ -48,17 +34,9 @@ BSD Auth
 ========
 
 There's also a BSD Authentication login script in src/libexec/login_krb5,
-which you can build by typing 
-
-# cd /usr/src/libexec/login_krb5
-# make ; make install
-# cd /usr/src/libexec/login_krb5-or-pwd
-# make ; make install
-
-Make sure to also rebuild su and login, or things will _seriously_ break.
-
-Refer to login.conf(5), login(1), login_krb5(8) and login_krb5-or-pwd(8)
-for more information.
+but they are not enabled by default. Refer to login.conf(5), login(1),
+login_krb5(8) and login_krb5-or-pwd(8) for more information on how to
+enable them.
 
 
 TODO
