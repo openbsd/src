@@ -1,4 +1,4 @@
-/*	$OpenBSD: extract.c,v 1.6 2003/06/12 20:58:08 deraadt Exp $	*/
+/*	$OpenBSD: extract.c,v 1.7 2004/09/07 09:41:43 miod Exp $	*/
 /*	$NetBSD: extract.c,v 1.5 1995/03/26 03:27:53 glass Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)extract.c	8.3 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$OpenBSD: extract.c,v 1.6 2003/06/12 20:58:08 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: extract.c,v 1.7 2004/09/07 09:41:43 miod Exp $";
 #endif
 #endif /* not lint */
 
@@ -116,7 +116,7 @@ extract(char **argv)
 		cf.wname = file;
 		copy_ar(&cf, chdr.size);
 
-		if (fchmod(tfd, (short)chdr.mode)) {
+		if (fchmod(tfd, (mode_t)chdr.mode)) {
 			warn("chmod: %s", file);
 			eval = 1;
 		}
