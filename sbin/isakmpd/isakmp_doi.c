@@ -1,5 +1,5 @@
-/*	$OpenBSD: isakmp_doi.c,v 1.3 1998/11/17 11:10:14 niklas Exp $	*/
-/*	$EOM: isakmp_doi.c,v 1.32 1998/10/11 12:01:08 niklas Exp $	*/
+/*	$OpenBSD: isakmp_doi.c,v 1.4 1999/02/26 03:44:24 niklas Exp $	*/
+/*	$EOM: isakmp_doi.c,v 1.34 1999/02/25 11:39:08 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -42,6 +42,8 @@
 
 #include <sys/types.h>
 
+#include "sysdep.h"
+
 #include "doi.h"
 #include "exchange.h"
 #include "isakmp.h"
@@ -81,6 +83,7 @@ static struct doi isakmp_doi = {
   isakmp_get_keystate,
   0,				/* get_spi not needed.  */
   0,				/* XXX need maybe be filled-in.  */
+  0,				/* proto_init not needed.  */
   isakmp_setup_situation,
   isakmp_situation_size,
   isakmp_spi_size,
