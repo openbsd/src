@@ -1,4 +1,4 @@
-/*	$OpenBSD: err.c,v 1.2 1996/06/26 05:44:11 deraadt Exp $	*/
+/*	$OpenBSD: err.c,v 1.3 1998/07/27 16:53:40 deraadt Exp $	*/
 /*	$NetBSD: err.c,v 1.8 1995/10/02 17:37:00 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: err.c,v 1.2 1996/06/26 05:44:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: err.c,v 1.3 1998/07/27 16:53:40 deraadt Exp $";
 #endif
 
 /* number of errors found */
@@ -219,7 +219,7 @@ const	char *msgs[] = {
 	"assignment in conditional context",			      /* 159 */
 	"operator '==' found where '=' was expected",		      /* 160 */
 	"constant in conditional context",			      /* 161 */
-	"comparision of %s with %s, op %s",			      /* 162 */
+	"comparison of %s with %s, op %s",			      /* 162 */
 	"a cast does not yield an lvalue",			      /* 163 */
 	"assignment of negative constant to unsigned type",	      /* 164 */
 	"constant truncated by assignment",			      /* 165 */
@@ -287,7 +287,7 @@ const	char *msgs[] = {
 	"const object %s should have initializer",		      /* 227 */
 	"function cannot return const or volatile object",	      /* 228 */
 	"questionable conversion of function pointer",		      /* 229 */
-	"nonportable character comparision, op %s",		      /* 230 */
+	"nonportable character comparison, op %s",		      /* 230 */
 	"argument %s unused in function %s",			      /* 231 */
 	"label %s unused in function %s",			      /* 232 */
 	"struct %s never defined",				      /* 233 */
@@ -300,7 +300,7 @@ const	char *msgs[] = {
 	"assignment of different structures",			      /* 240 */
 	"dubious operation on enum, op %s",			      /* 241 */
 	"combination of '%s' and '%s', op %s",			      /* 242 */
-	"dubious comparision of enums, op %s",			      /* 243 */
+	"dubious comparison of enums, op %s",			      /* 243 */
 	"illegal structure pointer combination",		      /* 244 */
 	"illegal structure pointer combination, op %s",		      /* 245 */
 	"dubious conversion of enum to '%s'",			      /* 246 */
@@ -331,7 +331,7 @@ const	char *msgs[] = {
 	"switch expression must be of type `int' in traditional C",   /* 271 */
 	"empty translation unit",				      /* 272 */
 	"bit-field type '%s' invalid in ANSI C",		      /* 273 */
-	"ANSI C forbids comparision of %s with %s",		      /* 274 */
+	"ANSI C forbids comparison of %s with %s",		      /* 274 */
 	"cast discards 'const' from pointer target type",	      /* 275 */
 	"",							      /* 276 */
 	"initialisation of '%s' with '%s'",			      /* 277 */

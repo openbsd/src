@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.2 1996/06/26 05:44:19 deraadt Exp $	*/
+/*	$OpenBSD: tree.c,v 1.3 1998/07/27 16:53:41 deraadt Exp $	*/
 /*	$NetBSD: tree.c,v 1.12 1995/10/02 17:37:57 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tree.c,v 1.2 1996/06/26 05:44:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.3 1998/07/27 16:53:41 deraadt Exp $";
 #endif
 
 #include <stdlib.h>
@@ -566,7 +566,7 @@ build(op, ln, rn)
 		rn = cconv(rn);
 
 	/*
-	 * Print some warnings for comparisions of unsigned values with
+	 * Print some warnings for comparisons of unsigned values with
 	 * constants lower than or equal to null. This must be done
 	 * before promote() because otherwise unsigned char and unsigned
 	 * short would be promoted to int. Also types are tested to be
@@ -992,7 +992,7 @@ typeok(op, arg, ln, rn)
 	case NE:
 		/*
 		 * Accept some things which are allowed with EQ and NE,
-		 * but not with ordered comparisions.
+		 * but not with ordered comparisons.
 		 */
 		if (lt == PTR && ((rt == PTR && rst == VOID) || isityp(rt))) {
 			if (rn->tn_op == CON && rn->tn_val->v_quad == 0)
@@ -1165,7 +1165,7 @@ ptrcmpok(op, ln, rn)
 			/* (void *)0 already handled in typeok() */
 			*(lt == FUNC ? &lts : &rts) = "function pointer";
 			*(lt == VOID ? &lts : &rts) = "'void *'";
-			/* ANSI C forbids comparision of %s with %s */
+			/* ANSI C forbids comparison of %s with %s */
 			warning(274, lts, rts);
 		}
 		return;
@@ -1396,7 +1396,7 @@ chkeop2(op, arg, ln, rn)
 #if 0
 	} else if (mp->m_comp && op != EQ && op != NE) {
 		if (eflag)
-			/* dubious comparisions of enums */
+			/* dubious comparisons of enums */
 			warning(243, mp->m_name);
 #endif
 	}
@@ -3674,7 +3674,7 @@ chkaidx(tn, amper)
 }
 
 /*
- * Check for ordered comparisions of unsigned values with 0.
+ * Check for ordered comparisons of unsigned values with 0.
  */
 static void
 chkcomp(op, ln, rn)
@@ -3697,25 +3697,25 @@ chkcomp(op, ln, rn)
 	if ((hflag || pflag) && lt == CHAR && rn->tn_op == CON &&
 	    (rn->tn_val->v_quad < 0 ||
 	     rn->tn_val->v_quad > ~(~0 << (CHAR_BIT - 1)))) {
-		/* nonportable character comparision, op %s */
+		/* nonportable character comparison, op %s */
 		warning(230, mp->m_name);
 		return;
 	}
 	if ((hflag || pflag) && rt == CHAR && ln->tn_op == CON &&
 	    (ln->tn_val->v_quad < 0 ||
 	     ln->tn_val->v_quad > ~(~0 << (CHAR_BIT - 1)))) {
-		/* nonportable character comparision, op %s */
+		/* nonportable character comparison, op %s */
 		warning(230, mp->m_name);
 		return;
 	}
 	if (isutyp(lt) && !isutyp(rt) &&
 	    rn->tn_op == CON && rn->tn_val->v_quad <= 0) {
 		if (rn->tn_val->v_quad < 0) {
-			/* comparision of %s with %s, op %s */
+			/* comparison of %s with %s, op %s */
 			warning(162, tyname(ln->tn_type), "negative constant",
 				mp->m_name);
 		} else if (op == LT || op == GE || (hflag && op == LE)) {
-			/* comparision of %s with %s, op %s */
+			/* comparison of %s with %s, op %s */
 			warning(162, tyname(ln->tn_type), "0", mp->m_name);
 		}
 		return;
@@ -3723,11 +3723,11 @@ chkcomp(op, ln, rn)
 	if (isutyp(rt) && !isutyp(lt) &&
 	    ln->tn_op == CON && ln->tn_val->v_quad <= 0) {
 		if (ln->tn_val->v_quad < 0) {
-			/* comparision of %s with %s, op %s */
+			/* comparison of %s with %s, op %s */
 			warning(162, "negative constant", tyname(rn->tn_type),
 				mp->m_name);
 		} else if (op == GT || op == LE || (hflag && op == GE)) {
-			/* comparision of %s with %s, op %s */
+			/* comparison of %s with %s, op %s */
 			warning(162, "0", tyname(rn->tn_type), mp->m_name);
 		}
 		return;

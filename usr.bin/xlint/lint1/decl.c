@@ -1,4 +1,4 @@
-/*	$OpenBSD: decl.c,v 1.2 1996/06/26 05:44:09 deraadt Exp $	*/
+/*	$OpenBSD: decl.c,v 1.3 1998/07/27 16:53:39 deraadt Exp $	*/
 /*	$NetBSD: decl.c,v 1.11 1995/10/02 17:34:16 jpo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: decl.c,v 1.2 1996/06/26 05:44:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: decl.c,v 1.3 1998/07/27 16:53:39 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -2004,7 +2004,7 @@ isredec(dsym, warn)
  * Checks if two types are compatible. Returns 0 if not, otherwise 1.
  *
  * ignqual	ignore qualifiers of type; used for function params
- * promot	promote left type; used for comparision of params of
+ * promot	promote left type; used for comparison of params of
  *		old style function definitions with params of prototypes.
  * *warn	set to 1 if an old style function declaration is not
  *		compatible with a prototype
