@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.51 2004/01/10 16:20:29 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.52 2004/01/10 22:25:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -618,7 +618,16 @@ rde_send_nexthop(in_addr_t next, int valid)
 		fatal("imsg_compose error");
 }
 
+/*
+ * update specific functions
+ */
 u_char	queue_buf[4096];
+
+u_int16_t
+rde_local_as(void)
+{
+	return conf->as;
+}
 
 void
 rde_update_queue_runner(void)
@@ -634,10 +643,11 @@ rde_update_queue_runner(void)
 			if (peer->state != PEER_UP)
 				continue;
 			/* first withdraws */
-			wpos = 2;
-			r = up_dump_prefix(queue_buf + wpos, len - wpos,
+			wpos = 2; /* reserve space for the lenght field */
+			r = up_dump_prefix(queue_buf + wpos, len - wpos - 2,
 			    &peer->withdraws, peer);
 			wd_len = r;
+			/* write withdraws lenght filed */
 			wd_len = htons(wd_len);
 			memcpy(queue_buf, &wd_len, 2);
 			wpos += r;
@@ -647,8 +657,11 @@ rde_update_queue_runner(void)
 			    peer);
 			wpos += r;
 
-			if (wpos == 2)
-				/* no packet to send */
+			if (wpos == 4)
+				/*
+				 * No packet to send. The 4 bytes are the
+				 * needed withdraw and path attribute lenght.
+				 */
 				continue;
 
 			/* finally send message to SE */

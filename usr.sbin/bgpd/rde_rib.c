@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.15 2004/01/10 16:20:29 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.16 2004/01/10 22:25:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -295,6 +295,82 @@ aspath_create(void *data, u_int16_t len)
 	aspath->hdr.as_cnt = aspath_count(aspath);
 
 	return aspath;
+}
+
+int
+aspath_write(void *p, u_int16_t len, struct aspath *aspath, u_int16_t myAS,
+    int prepend)
+{
+	u_char		*b = p;
+	int		 tot_len, as_len, size, wpos = 0;
+	u_int16_t	 tmp;
+	u_int8_t	 type, attr_flag = ATTR_WELL_KNOWN;
+
+	if (prepend > 255)
+		/* lunatic prepends need to be blocked in the parser */
+		return (-1);
+
+	/* first calculate new size */
+	type = aspath->data[0];
+	size = aspath->data[1];
+	if (prepend == 0)
+		as_len = aspath->hdr.len;
+	else if (type == AS_SET || size + prepend > 255)
+		/* need to attach a new AS_SEQUENCE */
+		as_len = 2 + prepend * 2 + aspath->hdr.len;
+	else
+		as_len = prepend * 2 + aspath->hdr.len;
+
+	/* check buffer size */
+	tot_len = 2 + as_len;
+	if (as_len > 255) {
+		attr_flag |= ATTR_EXTLEN;
+		tot_len += 2;
+	} else
+		tot_len += 1;
+
+	if (tot_len > len)
+		return (-1);
+
+	/* header */
+	b[wpos++] = attr_flag;
+	b[wpos++] = ATTR_ASPATH;
+	if (as_len > 0xff) {
+		tmp = as_len;
+		tmp = htons(tmp);
+		memcpy(b, &tmp, 2);
+		wpos += 2;
+	} else
+		b[wpos++] = (u_char)(as_len & 0xff);
+
+	/* first prepends */
+	myAS = htons(myAS);
+	if (type == AS_SET) {
+		b[wpos++] = AS_SEQUENCE;
+		b[wpos++] = prepend;
+		for (; prepend > 0; prepend--) {
+			memcpy(b + wpos, &myAS, 2);
+			wpos += 2;
+		}
+		memcpy(b + wpos, aspath->data, aspath->hdr.len);
+	} else {
+		if (size + prepend > 255) {
+			b[wpos++] = AS_SEQUENCE;
+			b[wpos++] = size + prepend - 255;
+			for (; prepend + size > 255; prepend--) {
+				memcpy(b + wpos, &myAS, 2);
+				wpos += 2;
+			}
+		}
+		b[wpos++] = AS_SEQUENCE;
+		b[wpos++] = size + prepend;
+		for (; prepend > 0; prepend--) {
+			memcpy(b + wpos, &myAS, 2);
+			wpos += 2;
+		}
+		memcpy(b + wpos, aspath->data + 2, aspath->hdr.len - 2);
+	}
+	return (tot_len);
 }
 
 void

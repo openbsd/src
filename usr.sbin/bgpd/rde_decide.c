@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.12 2004/01/10 16:20:29 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.13 2004/01/10 22:25:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -475,7 +475,7 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	struct attr	*oa;
 	u_int32_t	 tmp32;
 	int		 r;
-	u_int16_t	 aslen, len = sizeof(up_attr_buf), wlen = 0;
+	u_int16_t	 len = sizeof(up_attr_buf), wlen = 0;
 
 	/* origin */
 	if ((r = attr_write(up_attr_buf + wlen, len, ATTR_WELL_KNOWN,
@@ -484,10 +484,8 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	wlen += r; len -= r;
 
 	/* aspath */
-	/* XXX XXX aspath prepends */
-	aslen = aspath_length(a->aspath);
-	if ((r = attr_write(up_attr_buf + wlen, len, ATTR_WELL_KNOWN,
-	    ATTR_ASPATH, aspath_dump(a->aspath), aslen)) == -1)
+	if ((r = aspath_write(up_attr_buf + wlen, len, a->aspath,
+	    rde_local_as(), peer->conf.ebgp == 0 ? 0 : 1)) == -1)
 		return (-1);
 	wlen += r; len -= r;
 
@@ -613,18 +611,26 @@ up_dump_attrnlri(u_char *buf, int len, struct rde_peer *peer)
 	u_int16_t		 attr_len;
 
 	upa = TAILQ_FIRST(&peer->updates);
-	if (upa == NULL || upa->attr_len + 5 > len) 
-		/* either no packet or not enough space */
-		return (0);
+	if (upa == NULL || upa->attr_len + 5 > len) {
+		/*
+		 * either no packet or not enough space.
+		 * The length field needs to be set to zero else it would be
+		 * an invalid bgp update.
+		 */
+		bzero(buf, 2);
+		return (2);
+	}
 
-	/* first dump the attributes */
+	/* first dump the 2-byte path attribute length */
 	attr_len = htons(upa->attr_len);
 	memcpy(buf, &attr_len, 2);
 	wpos = 2;
+
+	/* then the path attributes them self */
 	memcpy(buf + wpos, upa->attr, upa->attr_len);
 	wpos += upa->attr_len;
 
-	/* now dump the nlri */
+	/* last but not least dump the nlri */
 	r = up_dump_prefix(buf + wpos, len - wpos, &upa->prefix_h, peer);
 	wpos += r;
 

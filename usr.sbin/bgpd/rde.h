@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.12 2004/01/10 16:20:29 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.13 2004/01/10 22:25:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -218,6 +218,7 @@ struct prefix {
 /* rde.c */
 void		 rde_send_kroute(struct prefix *, struct prefix *);
 void		 rde_send_nexthop(in_addr_t, int);
+u_int16_t	 rde_local_as(void);
 
 /* rde_rib.c */
 int		 attr_compare(struct attr_flags *, struct attr_flags *);
@@ -233,6 +234,8 @@ int		 aspath_verify(void *, u_int16_t, u_int16_t);
 #define		 AS_ERR_LOOP	-3
 struct aspath	*aspath_create(void *, u_int16_t);
 void		 aspath_destroy(struct aspath *);
+int		 aspath_write(void *, u_int16_t, struct aspath *, u_int16_t,
+		     int);
 u_char		*aspath_dump(struct aspath *);
 u_int16_t	 aspath_length(struct aspath *);
 u_int16_t	 aspath_count(struct aspath *);
