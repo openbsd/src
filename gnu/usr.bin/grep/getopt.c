@@ -21,7 +21,10 @@
    Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
+#if 0
 static char rcsid[] = "$NetBSD: getopt.c,v 1.4 1995/04/28 11:43:53 cgd Exp $";
+#endif
+static char rcsid[] = "$OpenBSD: getopt.c,v 1.2 1997/02/17 09:16:31 niklas Exp $";
 #endif /* not lint */
 
 /* NOTE!!!  AIX requires this to be the first thing in the file.
@@ -177,7 +180,7 @@ static enum
   REQUIRE_ORDER, PERMUTE, RETURN_IN_ORDER
 } ordering;
 
-#if defined(__GNU_LIBRARY__) || defined(__NetBSD__)
+#if defined (__GNU_LIBRARY__) || defined (__NetBSD__) || defined (__OpenBSD__)
 /* We want to avoid inclusion of string.h with non-GNU libraries
    because there are many ways it can cause trouble.
    On some systems, it contains special magic macros that don't work
