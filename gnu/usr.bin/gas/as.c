@@ -1,4 +1,4 @@
-/*	$OpenBSD: as.c,v 1.2 1996/04/23 00:15:50 niklas Exp $	*/
+/*	$OpenBSD: as.c,v 1.3 1999/12/07 20:10:32 espie Exp $	*/
 
 /* as.c - GAS main program.
    Copyright (C) 1987, 1990, 1991, 1992 Free Software Foundation, Inc.
@@ -34,7 +34,7 @@
  *
  */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: as.c,v 1.2 1996/04/23 00:15:50 niklas Exp $";
+static char rcsid[] = "$OpenBSD: as.c,v 1.3 1999/12/07 20:10:32 espie Exp $";
 #endif
 
 #include <stdio.h>
@@ -220,10 +220,12 @@ char **argv;
 					* work_argv = NULL;
 					work_argc--;
 					temp = * ++ work_argv;
+				}
+				if (temp) {
+				    add_include_dir (temp);
+				    arg = "";	/* Finished with this arg. */
 				} else
 				    as_warn("%s: I expected a filename after -I", myname);
-				add_include_dir (temp);
-				arg = "";	/* Finished with this arg. */
 				break;
 			}
 				
