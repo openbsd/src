@@ -73,6 +73,18 @@
 #define Debugger() panic("should call debugger here (bt742a.c)")
 #endif /* ! DDB */
 
+/* XXX fixme:
+ * on i386 at least, xfers to/from user memory
+ * cannot be serviced at interrupt time.
+ */
+#ifdef i386
+#define VOLATILE_XS(xs) \
+	((xs)->datalen > 0 && (xs)->bp == NULL && \
+	((xs)->flags & SCSI_POLL) == 0)
+#else
+#define VOLATILE_XS(xs)        0
+#endif
+
 /*
  * Mail box defs  etc.
  * these could be bigger but we need the bt_softc to fit on a single page..
@@ -115,8 +127,9 @@ struct bt_softc {
 	int sc_iobase;
 	int sc_irq, sc_drq;
 
-	char sc_model[7],
-	     sc_firmware[6];
+	char sc_model[7];
+	char sc_firmware[6];
+	char sc_version[2];
 
 	struct bt_mbx sc_mbx;		/* all our mailboxes */
 #define	wmbx	(&sc->sc_mbx)
@@ -125,6 +138,7 @@ struct bt_softc {
 	int sc_numccbs, sc_mbofull;
 	int sc_scsi_dev;		/* adapters scsi id */
 	struct scsi_link sc_link;	/* prototype for devs */
+	int sc_needbounce;
 };
 
 #ifdef BTDEBUG
@@ -474,6 +488,8 @@ AGAIN:
 		}
 
 		untimeout(bt_timeout, ccb);
+		isadma_copyfrombuf((caddr_t)ccb, CCB_PHYS_SIZE,
+		    1, ccb->ccb_phys);
 		bt_done(sc, ccb);
 
 	next:
@@ -552,6 +568,9 @@ bt_free_ccb(sc, ccb)
 
 	s = splbio();
 
+	if (ccb->ccb_phys[0].addr)
+	        isadma_unmap((caddr_t)ccb, CCB_PHYS_SIZE, 1, ccb->ccb_phys);
+
 	bt_reset_ccb(sc, ccb);
 	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, chain);
 
@@ -596,10 +615,17 @@ bt_get_ccb(sc, flags)
 	int flags;
 {
 	struct bt_ccb *ccb;
-	int s;
+	int hashnum, mflags, s;
 
 	s = splbio();
 
+	if (sc->sc_needbounce) {
+		if (flags & SCSI_NOSLEEP)
+			mflags = ISADMA_MAP_BOUNCE;
+		else
+			mflags = ISADMA_MAP_BOUNCE | ISADMA_MAP_WAITOK;
+	} else
+		mflags = 0;
 	/*
 	 * If we can and have to, sleep waiting for one to come free
 	 * but only if we can't allocate a new one.
@@ -628,6 +654,17 @@ bt_get_ccb(sc, flags)
 	}
 
 	ccb->flags |= CCB_ALLOC;
+
+	if (isadma_map((caddr_t)ccb, CCB_PHYS_SIZE, ccb->ccb_phys,
+	    mflags | ISADMA_MAP_CONTIG) == 1) {
+		hashnum = CCB_HASH(ccb->ccb_phys[0].addr);
+		ccb->nexthash = sc->sc_ccbhash[hashnum];
+		sc->sc_ccbhash[hashnum] = ccb;
+	} else {
+		ccb->ccb_phys[0].addr = 0;
+		bt_free_ccb(sc, ccb);
+		ccb = 0;
+	}
 
 out:
 	splx(s);
@@ -728,7 +765,9 @@ bt_start_ccbs(sc)
 #endif
 
 		/* Link ccb to mbo. */
-		ltophys(KVTOPHYS(ccb), wmbo->ccb_addr);
+		isadma_copytobuf((caddr_t)ccb, CCB_PHYS_SIZE,
+		    1, ccb->ccb_phys);
+		ltophys(ccb->ccb_phys[0].addr, wmbo->ccb_addr);
 		if (ccb->flags & CCB_ABORT)
 			wmbo->cmd = BT_MBO_ABORT;
 		else
@@ -809,8 +848,21 @@ bt_done(sc, ccb)
 		} else
 			xs->resid = 0;
 	}
-	bt_free_ccb(sc, ccb);
 	xs->flags |= ITSDONE;
+
+	if (VOLATILE_XS(xs)) {
+		wakeup(ccb);
+		return;
+	}
+
+	if (ccb->data_nseg) {
+		if (xs->flags & SCSI_DATA_IN)
+			isadma_copyfrombuf(xs->data, xs->datalen,
+			    ccb->data_nseg, ccb->data_phys);
+		isadma_unmap(xs->data, xs->datalen,
+		    ccb->data_nseg, ccb->data_phys);
+	}
+	bt_free_ccb(sc, ccb);
 	scsi_done(xs);
 }
 
@@ -865,6 +917,8 @@ bt_find(ia, sc)
 	    sizeof(inquire.reply), (u_char *)&inquire.reply);
 	switch (inquire.reply.bus_type) {
 	case BT_BUS_TYPE_24BIT:
+		sc->sc_needbounce = 1;
+		break;
 	case BT_BUS_TYPE_32BIT:
 		break;
 	case BT_BUS_TYPE_MCA:
@@ -977,6 +1031,7 @@ bt_init(sc)
 	struct bt_setup setup;
 	struct bt_mailbox mailbox;
 	struct bt_period period;
+	struct isadma_seg mbx_phys[1];
 	int i;
 
 	/* Enable round-robin scheme - appeared at firmware rev. 3.31. */
@@ -1038,9 +1093,18 @@ bt_init(sc)
 	/* Initialize mail box. */
 	mailbox.cmd.opcode = BT_MBX_INIT_EXTENDED;
 	mailbox.cmd.nmbx = BT_MBX_SIZE;
-	ltophys(KVTOPHYS(wmbx), mailbox.cmd.addr);
+	if (isadma_map((caddr_t)(wmbx), sizeof(struct bt_mbx),
+	    mbx_phys, ISADMA_MAP_CONTIG) != 1)
+		panic("bt_init: cannot map mail box");
+	ltophys(mbx_phys[0].addr, mailbox.cmd.addr);
 	bt_cmd(iobase, sc, sizeof(mailbox.cmd), (u_char *)&mailbox.cmd,
 	    0, (u_char *)0);
+
+	/* deal with buggy boards */
+	if ((sc->sc_model[0] == '4' && sc->sc_model[1] == '4' &&
+	    sc->sc_model[2] == '5' && sc->sc_model[3] == 'S') ||
+	    sc->sc_version[0] == '5')
+		sc->sc_needbounce = 1;
 }
 
 void
@@ -1098,6 +1162,8 @@ bt_inquire_setup_information(sc)
 		while (p > sc->sc_model && (p[-1] == ' ' || p[-1] == '\0'))
 			p--;
 		*p = '\0';
+		bcopy(model.reply.version, sc->sc_version,
+		    sizeof sc->sc_version);
 	} else
 		strcpy(sc->sc_model, "542B");
 
@@ -1127,8 +1193,7 @@ bt_scsi_cmd(xs)
 	struct bt_ccb *ccb;
 	struct bt_scat_gath *sg;
 	int seg;		/* scatter gather seg being worked on */
-	u_long thiskv, thisphys, nextphys;
-	int bytes_this_seg, bytes_this_page, datalen, flags;
+	int flags, mflags;
 #ifdef TFS
 	struct iovec *iovp;
 #endif
@@ -1141,6 +1206,13 @@ bt_scsi_cmd(xs)
 	 * then we can't allow it to sleep
 	 */
 	flags = xs->flags;
+	if (sc->sc_needbounce) {
+		if (flags & SCSI_NOSLEEP)
+			mflags = ISADMA_MAP_BOUNCE;
+		else
+			mflags = ISADMA_MAP_BOUNCE | ISADMA_MAP_WAITOK;
+	} else
+		mflags = 0;
 	if ((ccb = bt_get_ccb(sc, flags)) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
@@ -1183,69 +1255,32 @@ bt_scsi_cmd(xs)
 			}
 		} else
 #endif	/* TFS */
-		{
-			/*
-			 * Set up the scatter-gather block.
-			 */
-			SC_DEBUG(sc_link, SDEV_DB4,
-			    ("%d @0x%x:- ", xs->datalen, xs->data));
+		/*
+		 * Set up the scatter-gather block.
+		 */
+		SC_DEBUG(sc_link, SDEV_DB4,
+		    ("%d @0x%x:- ", xs->datalen, xs->data));
 
-			datalen = xs->datalen;
-			thiskv = (int)xs->data;
-			thisphys = KVTOPHYS(thiskv);
-
-			while (datalen && seg < BT_NSEG) {
-				bytes_this_seg = 0;
-
-				/* put in the base address */
-				ltophys(thisphys, sg->seg_addr);
-
-				SC_DEBUGN(sc_link, SDEV_DB4, ("0x%x", thisphys));
-
-				/* do it at least once */
-				nextphys = thisphys;
-				while (datalen && thisphys == nextphys) {
-					/*
-					 * This page is contiguous (physically)
-					 * with the the last, just extend the
-					 * length
-					 */
-					/* how far to the end of the page */
-					nextphys = (thisphys & ~PGOFSET) + NBPG;
-					bytes_this_page = nextphys - thisphys;
-					/**** or the data ****/
-					bytes_this_page = min(bytes_this_page,
-							      datalen);
-					bytes_this_seg += bytes_this_page;
-					datalen -= bytes_this_page;
-
-					/* get more ready for the next page */
-					thiskv = (thiskv & ~PGOFSET) + NBPG;
-					if (datalen)
-						thisphys = KVTOPHYS(thiskv);
-				}
-				/*
-				 * next page isn't contiguous, finish the seg
-				 */
-				SC_DEBUGN(sc_link, SDEV_DB4,
-				    ("(0x%x)", bytes_this_seg));
-				ltophys(bytes_this_seg, sg->seg_len);
-				sg++;
-				seg++;
-			}
+		ccb->data_nseg = isadma_map(xs->data, xs->datalen,
+		    ccb->data_phys, mflags);
+		for (seg = 0; seg < ccb->data_nseg; seg++) {
+			ltophys(ccb->data_phys[seg].addr,
+			    sg[seg].seg_addr);
+			ltophys(ccb->data_phys[seg].length,
+			    sg[seg].seg_len);
 		}
 		/* end of iov/kv decision */
-		SC_DEBUGN(sc_link, SDEV_DB4, ("\n"));
-		if (datalen) {
-			/*
-			 * there's still data, must have run out of segs!
-			 */
-			printf("%s: bt_scsi_cmd, more than %d dma segs\n",
-			    sc->sc_dev.dv_xname, BT_NSEG);
+		if (ccb->data_nseg == 0) {
+			printf("%s: bt_scsi_cmd, cannot map\n",
+			       sc->sc_dev.dv_xname);
 			goto bad;
-		}
-		ltophys(KVTOPHYS(ccb->scat_gath), ccb->data_addr);
-		ltophys(seg * sizeof(struct bt_scat_gath), ccb->data_length);
+		} else if (flags & SCSI_DATA_OUT)
+			isadma_copytobuf(xs->data, xs->datalen,
+					 ccb->data_nseg, ccb->data_phys);
+		ltophys((unsigned)((struct bt_ccb *)(ccb->ccb_phys[0].addr))->scat_gath,
+			ccb->data_addr);
+		ltophys(ccb->data_nseg * sizeof(struct bt_scat_gath),
+			ccb->data_length);
 	} else {		/* No data xfer, use non S/G values */
 		ltophys(0, ccb->data_addr);
 		ltophys(0, ccb->data_length);
@@ -1264,12 +1299,30 @@ bt_scsi_cmd(xs)
 
 	s = splbio();
 	bt_queue_ccb(sc, ccb);
-	splx(s);
 
 	/*
 	 * Usually return SUCCESSFULLY QUEUED
 	 */
 	SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
+
+	if (VOLATILE_XS(xs)) {
+		while ((ccb->xs->flags & ITSDONE) == 0) {
+			tsleep(ccb, PRIBIO, "btwait", 0);
+		}
+		if (ccb->data_nseg) {
+			if (flags & SCSI_DATA_IN)
+				isadma_copyfrombuf(xs->data, xs->datalen,
+				    ccb->data_nseg, ccb->data_phys);
+			isadma_unmap(xs->data, xs->datalen,
+			    ccb->data_nseg, ccb->data_phys);
+		}
+		bt_free_ccb(sc, ccb);
+		scsi_done(xs);
+		splx(s);
+		return COMPLETE;
+	}
+	splx(s);
+
 	if ((flags & SCSI_POLL) == 0)
 		return SUCCESSFULLY_QUEUED;
 
@@ -1321,10 +1374,16 @@ bt_timeout(arg)
 	void *arg;
 {
 	struct bt_ccb *ccb = arg;
-	struct scsi_xfer *xs = ccb->xs;
-	struct scsi_link *sc_link = xs->sc_link;
-	struct bt_softc *sc = sc_link->adapter_softc;
+	struct scsi_xfer *xs;
+	struct scsi_link *sc_link;
+	struct bt_softc *sc;
 	int s;
+
+	s = splbio();
+	isadma_copyfrombuf((caddr_t)ccb, CCB_PHYS_SIZE, 1, ccb->ccb_phys);
+	xs = ccb->xs;
+	sc_link = xs->sc_link;
+	sc = sc_link->adapter_softc;
 
 	sc_print_addr(sc_link);
 	printf("timed out");
