@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.41 2004/03/05 22:21:32 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.42 2004/03/11 14:22:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -100,6 +100,18 @@ path_init(u_int32_t hashsize)
 }
 
 void
+path_shutdown(void)
+{
+	u_int32_t	i;
+
+	for (i = 0; i <= pathtable.path_hashmask; i++)
+		if (!LIST_EMPTY(&pathtable.path_hashtbl[i]))
+			log_warnx("path_free: free non-free table");
+
+	free(pathtable.path_hashtbl);
+}
+
+void
 path_update(struct rde_peer *peer, struct attr_flags *attrs,
     struct bgpd_addr *prefix, int prefixlen)
 {
@@ -183,6 +195,10 @@ void
 path_updateall(struct rde_aspath *asp, enum nexthop_state state)
 {
 	RIB_STAT(path_updateall);
+
+	if (rde_noevaluate())
+		/* if the decision process is turned off this is a no-op */
+		return;
 
 	prefix_updateall(asp, state);
 }
@@ -671,6 +687,30 @@ nexthop_init(u_int32_t hashsize)
 }
 
 void
+nexthop_shutdown(void)
+{
+	struct in_addr	 addr;
+	struct nexthop	*nh;
+	u_int32_t	 i;
+
+	/* remove the dummy entry for connected networks */
+	addr.s_addr = INADDR_ANY;
+	nh = nexthop_get(addr);
+	if (nh != NULL) {
+		if (!LIST_EMPTY(&nh->path_h))
+			log_warnx("nexthop_free: free non-free announce node");
+		LIST_REMOVE(nh, nexthop_l);
+		nexthop_free(nh);
+	}
+
+	for (i = 0; i <= nexthoptable.nexthop_hashmask; i++)
+		if (!LIST_EMPTY(&nexthoptable.nexthop_hashtbl[i]))
+			log_warnx("nexthop_free: free non-free table");
+
+	free(nexthoptable.nexthop_hashtbl);
+}
+
+void
 nexthop_add(struct rde_aspath *asp)
 {
 	struct nexthop	*nh;
@@ -764,6 +804,13 @@ nexthop_update(struct kroute_nexthop *msg)
 
 	if (msg->connected)
 		nh->flags |= NEXTHOP_CONNECTED;
+
+	if (rde_noevaluate())
+		/*
+		 * if the decision process is turned off there is no need
+		 * for the aspath list walk.
+		 */
+		return;
 
 	LIST_FOREACH(asp, &nh->path_h, nexthop_l) {
 		path_updateall(asp, nh->state);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.34 2004/03/05 22:21:32 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.35 2004/03/11 14:22:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -256,6 +256,7 @@ int		 aspath_match(struct aspath *, enum as_spec, u_int16_t);
 
 /* rde_rib.c */
 void		 path_init(u_int32_t);
+void		 path_shutdown(void);
 void		 path_update(struct rde_peer *, struct attr_flags *,
 		     struct bgpd_addr *, int);
 struct rde_aspath *path_get(struct aspath *, struct rde_peer *);
@@ -275,6 +276,7 @@ void		 prefix_destroy(struct prefix *);
 void		 prefix_network_clean(struct rde_peer *, time_t);
 
 void		 nexthop_init(u_int32_t);
+void		 nexthop_shutdown(void);
 void		 nexthop_add(struct rde_aspath *);
 void		 nexthop_remove(struct rde_aspath *);
 void		 nexthop_update(struct kroute_nexthop *);
@@ -292,6 +294,7 @@ void		 up_dump_upcall(struct pt_entry *, void *);
 
 /* rde_prefix.c */
 void		 pt_init(void);
+void		 pt_shutdown(void);
 int		 pt_empty(struct pt_entry *);
 struct pt_entry	*pt_get(struct bgpd_addr *, int);
 struct pt_entry *pt_add(struct bgpd_addr *, int);

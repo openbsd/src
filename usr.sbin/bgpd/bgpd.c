@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.85 2004/03/11 13:35:05 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.86 2004/03/11 14:22:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -195,7 +195,8 @@ main(int argc, char *argv[])
 		fatalx("control socket setup failed");
 
 	/* fork children */
-	rde_pid = rde_main(&conf, peer_l, &net_l, rules_l, pipe_m2r, pipe_s2r);
+	rde_pid = rde_main(&conf, peer_l, &net_l, rules_l, &mrt_l,
+	    pipe_m2r, pipe_s2r);
 	io_pid = session_main(&conf, peer_l, &net_l, rules_l, &mrt_l,
 	    pipe_m2s, pipe_s2r);
 

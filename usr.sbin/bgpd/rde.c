@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.95 2004/03/10 14:29:37 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.96 2004/03/11 14:22:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -57,6 +57,7 @@ void		 rde_update_log(const char *,
 void		 rde_update_queue_runner(void);
 
 void		 peer_init(struct peer *, u_int32_t);
+void		 peer_shutdown(void);
 struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
 void		 peer_remove(struct rde_peer *);
 struct rde_peer	*peer_get(u_int32_t);
@@ -65,6 +66,8 @@ void		 peer_down(u_int32_t);
 
 void		 network_init(struct network_head *);
 void		 network_add(struct network_config *);
+
+void		 rde_shutdown(void);
 
 volatile sig_atomic_t	 rde_quit = 0;
 struct bgpd_config	*conf, *nconf;
@@ -93,10 +96,11 @@ u_int32_t	nexthophashsize = 64;
 int
 rde_main(struct bgpd_config *config, struct peer *peer_l,
     struct network_head *net_l, struct filter_head *rules,
-    int pipe_m2r[2], int pipe_s2r[2])
+    struct mrt_head *mrt_l, int pipe_m2r[2], int pipe_s2r[2])
 {
 	pid_t		 pid;
 	struct passwd	*pw;
+	struct mrt	*m;
 	struct pollfd	 pfd[2];
 	int		 n, nfds;
 
@@ -138,6 +142,12 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	/* initialize the RIB structures */
 	imsg_init(&ibuf_se, pipe_s2r[1]);
 	imsg_init(&ibuf_main, pipe_m2r[1]);
+
+	/* main mrt list is not used in the SE */
+	while ((m = LIST_FIRST(mrt_l)) != NULL) {
+		LIST_REMOVE(m, list);
+		free(m);
+	}
 
 	pt_init();
 	path_init(pathhashsize);
@@ -186,13 +196,15 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 		rde_update_queue_runner();
 	}
 
+	rde_shutdown();
+	
 	msgbuf_write(&ibuf_se.w);
 	msgbuf_clear(&ibuf_se.w);
 	msgbuf_write(&ibuf_main.w);
 	msgbuf_clear(&ibuf_main.w);
 
 	log_info("route decision engine exiting");
-	_exit(0);
+	exit(0);
 }
 
 void
@@ -949,6 +961,18 @@ peer_init(struct peer *peer_l, u_int32_t hashsize)
 	peer_l = NULL;
 }
 
+void
+peer_shutdown(void)
+{
+	u_int32_t	i;
+
+	for (i = 0; i <= peertable.peer_hashmask; i++)
+		if (!LIST_EMPTY(&peertable.peer_hashtbl[i]))
+			log_warnx("peer_free: free non-free table");
+
+	free(peertable.peer_hashtbl);
+}
+
 struct rde_peer *
 peer_get(u_int32_t id)
 {
@@ -1109,5 +1133,63 @@ network_add(struct network_config *nc)
 	rde_apply_set(&attrs, &nc->attrset);
 
 	path_update(&peerself, &attrs, &nc->prefix, nc->prefixlen);
+}
+
+/* clean up */
+void
+rde_shutdown(void)
+{
+	struct rde_peer		*p;
+	struct rde_aspath	*asp, *nasp;
+	struct filter_rule	*r;
+	u_int32_t		 i;
+
+	/*
+	 * the decision process is turend of if rde_quit = 1 and
+	 * rde_shutdown depends on this.
+	 */
+	ENSURE(rde_quit != 0);
+
+	/* First mark all peer as down */
+	for (i = 0; i <= peertable.peer_hashmask; i++)
+		LIST_FOREACH(p, &peertable.peer_hashtbl[i], peer_l) {
+			p->remote_bgpid = 0;
+			p->state = PEER_DOWN;
+			up_down(p);
+		}
+	/*
+	 * Now walk through the aspath list and remove everything.
+	 * path_remove will also remove the prefixes and the pt_entries.
+	 */
+	for (i = 0; i <= peertable.peer_hashmask; i++)
+		while ((p = LIST_FIRST(&peertable.peer_hashtbl[i])) != NULL) {
+			for (asp = LIST_FIRST(&p->path_h);
+			    asp != NULL; asp = nasp) {
+				nasp = LIST_NEXT(asp, peer_l);
+				path_remove(asp);
+			}
+			/* finaly remove peer */
+			peer_remove(p);
+		}
+
+	/* free annoced network prefixes */
+	peerself.remote_bgpid = 0;
+	peerself.state = PEER_DOWN;
+	for (asp = LIST_FIRST(&peerself.path_h); asp != NULL; asp = nasp) {
+		nasp = LIST_NEXT(asp, peer_l);
+		path_remove(asp);
+	}
+
+	/* free filters */
+	while ((r = TAILQ_FIRST(rules_l)) != NULL) {
+		TAILQ_REMOVE(rules_l, r, entries);
+		free(r);
+	}
+	free(rules_l);
+
+	nexthop_shutdown();
+	path_shutdown();
+	pt_shutdown();
+	peer_shutdown();
 }
 
