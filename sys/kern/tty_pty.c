@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.18 2004/02/10 01:31:21 millert Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.19 2004/02/10 21:06:50 millert Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ ptydevname(int minor, struct pt_softc *pti)
 
 	i = minor / (sizeof(TTY_LETTERS) - 1);
 	j = minor % (sizeof(TTY_SUFFIX) - 1);
-	if (i >= sizeof(TTY_LETTERS)) {
+	if (i >= sizeof(TTY_LETTERS) - 1) {
 		pti->pty_pn[0] = '\0';
 		pti->pty_sn[0] = '\0';
 		return;
