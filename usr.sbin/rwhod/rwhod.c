@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.9 1997/04/14 07:01:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.10 1998/04/30 08:45:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -196,8 +196,8 @@ main(argc, argv)
 			continue;
 		wd.wd_hostname[sizeof(wd.wd_hostname)-1] = '\0';
 		if (!verify(wd.wd_hostname)) {
-			syslog(LOG_WARNING, "malformed host name from %x",
-				from.sin_addr);
+			syslog(LOG_WARNING, "malformed host name from %s",
+			    inet_ntoa(from.sin_addr));
 			continue;
 		}
 		(void) snprintf(path, sizeof path, "whod.%s", wd.wd_hostname);
