@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.106 2004/10/05 02:01:18 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.107 2004/10/20 23:04:57 miod Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -47,6 +47,7 @@ xl*	at pci?			# 3C9xx ethernet
 dc*	at pci?			# 21143, "tulip" clone ethernet
 em*	at pci?			# Intel Pro/1000 ethernet
 rl*	at pci?			# RealTek 81[23]9 ethernet
+vr*	at pci?				# VIA Rhine ethernet
 
 # PCI SCSI
 ahc*	at pci?			# Adaptec 2940 SCSI controllers

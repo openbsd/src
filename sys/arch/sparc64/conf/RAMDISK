@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.32 2004/09/23 17:34:15 jason Exp $
+# 	$OpenBSD: RAMDISK,v 1.33 2004/10/20 23:04:57 miod Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -53,6 +53,8 @@ fxp*	at pci?			# EtherExpress 10/100B ethernet
 xl*	at pci?			# 3C9xx ethernet
 dc*	at pci?			# 21143, "tulip" clone ethernet
 em*	at pci?			# Intel Pro/1000 ethernet
+rl*	at pci?			# RealTek 81[23]9 ethernet
+vr*	at pci?				# VIA Rhine ethernet
 
 auxio*	at ebus?
 auxio*	at sbus?
