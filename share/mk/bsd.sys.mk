@@ -1,6 +1,8 @@
-# $NetBSD: bsd.sys.mk,v 1.1 1995/10/22 00:45:59 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.2 1995/12/13 01:25:07 cgd Exp $
 #
-# Parallel make rule overrides
+# Overrides used for NetBSD source tree builds.
+
+CFLAGS+= -Werror
 
 .if defined(PARALLEL)
 # Lex

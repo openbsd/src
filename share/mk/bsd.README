@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.13 1995/10/22 00:45:54 christos Exp $
+#	$NetBSD: bsd.README,v 1.14 1995/12/13 01:25:05 cgd Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
 This is the README file for the new make "include" files for the BSD
@@ -275,12 +275,10 @@ SUBDIRS.
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 The include file <bsd.sys.mk> is used by <bsd.prog.mk> and
-<bsd.lib.mk>.  It contains a set of rules for lex and yacc that
-can be used when multiple lex and yacc files are present in the
-same directory, and their respective targets are made in parallel.
-Since it renames the yacc output include files these rules are not
-used by default. They can be enabled by setting the PARALLEL variable
-in the Makefile.
+<bsd.lib.mk>.  It contains overrides that are used when building
+the NetBSD source tree.  For instance, if "PARALLEL" is defined by
+the program/library Makefile, it includes a set of rules for lex and
+yacc that allow multiple lex and yacc targets to be built in parallel.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
