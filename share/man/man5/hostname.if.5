@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.7 2000/01/02 05:35:30 itojun Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.8 2000/01/02 06:34:30 itojun Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -167,7 +167,7 @@ Optional miscellaneous options to set on the interface, i.e.,
 IPv6 stateless address autoconfiguration:
 .Pp
 .Bd -literal -offset xxxx
-.Li rtsol
+.Li rtsol Va options
 .Ed
 .Pp
 The above format has the following field values:
@@ -187,6 +187,9 @@ Add the following lines into
 .Li net.inet6.ip6.forwarding=0
 .Li net.inet6.ip6.accept_rtadv=1
 .Ed
+.It Va options
+Optional miscellaneous options to set on the interface, i.e.,
+.Dq media 100baseTX mediaopt full-duplex .
 .El
 .Pp
 An addressless network interface setup (useful for
