@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2000/11/27 05:55:47 millert Exp $
+#	$OpenBSD: Makefile,v 1.22 2000/11/27 06:36:26 millert Exp $
 #	$NetBSD: Makefile,v 1.8 1996/05/16 07:03:28 thorpej Exp $
 
 LIB=	util
@@ -15,6 +15,7 @@ MAN=	check_expire.3 getmaxpartitions.3 getrawpartition.3 login.3 opendev.3 \
 
 MLINKS+=login.3 logout.3
 MLINKS+=login.3 logwtmp.3
+MLINKS+=check_expire.3 login_check_expire.3
 MLINKS+=openpty.3 login_tty.3
 MLINKS+=openpty.3 forkpty.3
 MLINKS+=pw_init.3 pw_setdir.3
