@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.38 2004/04/09 07:24:15 miod Exp $	*/
+/*	$OpenBSD: auich.c,v 1.39 2004/05/10 20:12:49 marc Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -52,6 +52,15 @@
 #include <machine/bus.h>
 
 #include <dev/ic/ac97.h>
+
+/*
+ * XXX > 4GB kaboom: define kvtop as a truncated vtophys.  Will not
+ * do the right thing on machines with more than 4 gig of ram.
+ */
+#if defined(__amd64__)
+#include <uvm/uvm_extern.h>	/* for vtophys */
+#define kvtop(va)		(int)vtophys((vaddr_t)(va))
+#endif
 
 /* 12.1.10 NAMBAR - native audio mixer base address register */
 #define	AUICH_NAMBAR	0x10
