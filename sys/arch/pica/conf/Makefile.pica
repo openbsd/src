@@ -127,7 +127,7 @@ symbols.sort: ${PICA}/pica/symbols.raw
 
 locore.o: ${PICA}/pica/locore.S ${PICA}/include/machAsmDefs.h \
 	${PICA}/include/machConst.h ${PICA}/include/reg.h assym.h
-	${CC} -c ${COPTS} ${PARAM} -DLOCORE ${PICA}/pica/locore.S
+	${CC} -c ${COPTS} ${PARAM} -DLOCORE -mips3 ${PICA}/pica/locore.S
 
 fp.o: ${PICA}/pica/fp.S ${PICA}/include/machAsmDefs.h \
 	${PICA}/include/machConst.h ${PICA}/include/reg.h assym.h
