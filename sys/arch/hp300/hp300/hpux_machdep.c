@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.5 1997/04/16 11:56:23 downsj Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.6 1997/04/17 10:28:36 downsj Exp $	*/
 /*	$NetBSD: hpux_machdep.c,v 1.12 1997/04/02 22:41:34 scottr Exp $	*/
 
 /*
@@ -122,7 +122,8 @@ static struct valtostr machine_table[] = {
 	{ HP_360,	"360" },
 	{ HP_370,	"370" },
 	{ HP_375,	"375" },	/* includes 345 and 400 */
-	{ HP_380,	"380" },	/* includes 425 */
+	{ HP_380,	"380" },
+	{ HP_425,	"425" },
 	{ HP_433,	"433" },
 	{     -1,	"3?0" },	/* unknown system (???) */
 };
@@ -268,6 +269,7 @@ hpux_cpu_sysconf_arch()
 		return (HPUX_SYSCONF_CPUM030);
 
 	case HP_380:
+	case HP_425:
 	case HP_433:
 		return (HPUX_SYSCONF_CPUM040);
 

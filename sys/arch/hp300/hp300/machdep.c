@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 1997/04/16 11:56:28 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.23 1997/04/17 10:28:39 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.89 1997/04/09 20:05:20 thorpej Exp $	*/
 
 /*
@@ -508,10 +508,21 @@ identifycpu()
 		t = "345/375 (50MHz";
 		break;
 	case HP_380:
-		t = "380/425 (25MHz";
+		t = "380 (25MHz";
+		break;
+	case HP_425:
+	        if (mmuid == 5) {
+		    t = "425 (25MHz";
+		} else {	/* == 4 */
+		    t = "425 (33MHz";
+		}
 		break;
 	case HP_433:
-		t = "433 (33MHz";
+	        if (mmuid == 6) {
+		    t = "433 (33MHz";
+		} else {	/* == 7 ??? what is this? */
+		    t = "433 (25MHz";
+		}
 		break;
 	default:
 		printf("\nunknown machine type %d\n", machineid);
@@ -559,7 +570,8 @@ identifycpu()
 	}
 	strcat(cpu_model, ")");
 	printf("%s\n", cpu_model);
-	printf("delay constant for this cpu: %d\n", delay_divisor);
+	printf("delay constant for this cpu: %d  MMU ID: %d\n", 
+	       delay_divisor, mmuid & 0xff);
 	/*
 	 * Now that we have told the user what they have,
 	 * let them know if that machine type isn't configured.
@@ -581,6 +593,7 @@ identifycpu()
 #endif
 #if !defined(HP380)
 	case HP_380:
+	case HP_425:
 	case HP_433:
 #endif
 		panic("CPU type not configured");

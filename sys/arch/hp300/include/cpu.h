@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.6 1997/04/16 11:56:34 downsj Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.7 1997/04/17 10:28:40 downsj Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/04/14 02:28:50 thorpej Exp $	*/
 
 /*
@@ -192,10 +192,12 @@ int	want_resched;		/* resched() was called */
 #define	HP_340		5	/* 16Mhz 68030 */
 #define	HP_375		6	/* 50Mhz 68030+32K external cache */
 #define	HP_380		7	/* 25Mhz 68040 */
-#define HP_433		8	/* 33Mhz 68040 */
+#define HP_425		8	/* 25/33Mhz 68040 */
+#define HP_433		9	/* 33Mhz 68040 (maybe also 25MHz?) */
 
 #ifdef _KERNEL
 extern	int machineid;		/* CPU model */
+extern	int mmuid;		/* MMU model */
 extern	int cpuspeed;		/* CPU speed, in MHz */
 
 extern	char *intiobase, *intiolimit;

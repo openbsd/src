@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.14 1997/04/16 11:56:27 downsj Exp $	*/
+/*	$OpenBSD: locore.s,v 1.15 1997/04/17 10:28:38 downsj Exp $	*/
 /*	$NetBSD: locore.s,v 1.67 1997/03/16 10:49:43 thorpej Exp $	*/
 
 /*
@@ -191,6 +191,9 @@ Lnot370:
 	btst	#16,d0			| still on?
 	jeq	Lstart1			| no, must be a 360
 	movl	#HP_375,a0@		| yes, must be a 345/375
+	RELOC(_mmuid, a0)
+	lsrl	#8,d0			| get apparent ID
+	movl	d0,a0@			| save MMU ID
 	jra	Lhaspac
 Lisa370:
 	movl	#HP_370,a0@		| set to 370
@@ -214,14 +217,25 @@ Lnot68030:
 	movl	#FPU_68040,a0@		| ...and FPU
 	RELOC(_ectype, a0)
 	movl	#EC_NONE,a0@		| and no cache (for now XXX)
-	RELOC(_machineid, a0)
+	RELOC(_mmuid, a0)
 	movl	a1@(MMUCMD),d0		| read MMU register
 	lsrl	#8,d0			| get apparent ID
+	movl	d0,a0@			| save MMU ID
+	RELOC(_machineid, a0)
+	cmpb	#7,d0			| id == 7?
+	jeq	Lis433			| XXX 433 underclocked?
 	cmpb	#6,d0			| id == 6?
-	jeq	Lis33mhz		| yes, we have a 433s
-	movl	#HP_380,a0@		| no, we have a 380/425t
+	jeq	Lis433			| yes, we have a 433s
+	cmpb	#5,d0			| id == 5?
+	jeq	Lis425			| yes, we have a 425t
+	cmpb	#4,d0			| id == 4?
+	jeq	Lis425			| Heh, 425t overclocked
+	movl	#HP_380,a0@		| no, we have a 380
 	jra	Lstart1
-Lis33mhz:
+Lis425:
+	movl	#HP_425,a0@		| 425t
+	jra	Lstart1
+Lis433:
 	movl	#HP_433,a0@		| 433s (XXX 425s returns same ID, ugh!)
 	jra	Lstart1
 Lis68020:
@@ -2042,10 +2056,12 @@ Lebootcode:
 #undef DOREBOOT
 
 	.data
-	.globl	_machineid,_mmutype,_cputype,_ectype,_fputype
+	.globl	_machineid,_mmuid,_mmutype,_cputype,_ectype,_fputype
 	.globl	_protorp,_prototc
 _machineid:
 	.long	HP_320		| default to 320
+_mmuid:
+	.long	0		| default to nothing
 _mmutype:
 	.long	MMU_HP		| default to HP MMU
 _cputype:
