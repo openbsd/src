@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.11 2002/11/19 18:40:17 jason Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.12 2002/11/20 00:31:03 jason Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -101,6 +101,7 @@ const struct pci_matchid gem_pci_devices[] = {
 	{ PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC },
 	{ PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC2 },
 	{ PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC3 },
+};
 
 int
 gem_match_pci(parent, cf, aux)
