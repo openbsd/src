@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_openbsd.h,v 1.4 1999/11/22 12:50:53 mjacob Exp $ */
+/*	$OpenBSD: isp_openbsd.h,v 1.5 1999/11/23 21:17:38 mjacob Exp $ */
 /*
  * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
  *
@@ -111,7 +111,7 @@ struct isposinfo {
 #define	CFGPRINTF		printf
 #elif	defined(DIAGNOSTIC)
 #define	DFLT_DBLEVEL		1
-#define	CFGPRINTF		printf
+#define	CFGPRINTF		if (0) printf
 #elif	defined(DEBUG)
 #define	DFLT_DBLEVEL		2
 #define	CFGPRINTF		printf
