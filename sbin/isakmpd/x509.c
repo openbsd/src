@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.53 2001/06/05 06:51:05 angelos Exp $	*/
+/*	$OpenBSD: x509.c,v 1.54 2001/06/05 10:11:42 angelos Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -1410,14 +1410,14 @@ x509_from_printable (char *cert)
   if (ret == -1)
     {
       free (buf);
-      log_error ("x509_from_printable: badly formatted cert");
+      log_print ("x509_from_printable: badly formatted cert");
       return 0;
     }
 
   foo = x509_cert_get (buf, plen);
   free (buf);
   if (!foo)
-    log_error ("x509_from_printable: could not retrieve certificate");
+    log_print ("x509_from_printable: could not retrieve certificate");
   return foo;
 }
 #endif /* USE_X509 */
