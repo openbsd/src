@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.54 2004/02/26 08:18:56 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.55 2004/02/28 00:03:59 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -74,7 +74,6 @@ struct con {
 	int il;
 	char rend[5];	/* any chars in here causes input termination */
 
-	int obufalloc;
 	char *obuf;
 	char *lists;
 	size_t osize;
@@ -148,19 +147,15 @@ grow_obuf(struct con *cp, int off)
 {
 	char *tmp;
 
-	if (!cp->obufalloc)
-		cp->obuf = NULL;
 	tmp = realloc(cp->obuf, cp->osize + 8192);
 	if (tmp == NULL) {
 		free(cp->obuf);
 		cp->obuf = NULL;
 		cp->osize = 0;
-		cp->obufalloc = 0;
 		return (NULL);
 	} else {
 		cp->osize += 8192;
 		cp->obuf = tmp;
-		cp->obufalloc = 1;
 		return (cp->obuf + off);
 	}
 }
@@ -447,11 +442,10 @@ build_reply(struct con *cp)
 
 	matches = cp->blacklists;
 	if (matches == NULL) {
-		if (cp->osize)
-			free(cp->obuf);
+		free(cp->obuf);
 		cp->obuf = NULL;
 		cp->osize = 0;
-		goto bad;
+		goto nomatch;
 	}
 	for (; *matches; matches++) {
 		int used = 0;
@@ -474,12 +468,8 @@ build_reply(struct con *cp)
 			cp->obuf[off] = '\0';
 		}
 	}
-bad:
-	/* Out of memory, or no match. give generic reply */
-	if (cp->obuf != NULL && cp->obufalloc) {
-		free(cp->obuf);
-		cp->obuf = NULL;
-	}
+nomatch:
+	/* No match. give generic reply */
 	if (cp->blacklists != NULL)
 		asprintf(&cp->obuf,
 		    "%s-Sorry %s\n"
@@ -490,22 +480,24 @@ bad:
 	else
 		asprintf(&cp->obuf,
 		    "450 Temporary failure, please try again later.\r\n");
-	if (cp->obuf == NULL) {
-		/* we're having a really bad day.. */
-		cp->obufalloc = 0; /* know not to free or mangle */
-		cp->obuf = "450 Try again\n";
-	} else
+	if (cp->obuf != NULL)
 		cp->osize = strlen(cp->obuf) + 1;
+	else
+		cp->osize = 0;
+	return;
+bad:
+	if (cp->obuf != NULL) {
+		free(cp->obuf);
+		cp->obuf = NULL;
+		cp->osize = 0;
+	}
 }
 
 void
 doreply(struct con *cp)
 {
-	if (reply) {
-		if (!cp->obufalloc)
-			errx(1, "shouldn't happen");
+	if (reply)
 		snprintf(cp->obuf, cp->osize, "%s %s\n", nreply, reply);
-	}
 	build_reply(cp);
 }
 
@@ -538,10 +530,8 @@ initcon(struct con *cp, int fd, struct sockaddr_in *sin)
 	char *tmp;
 
 	time(&t);
-	if (cp->obufalloc) {
-		free(cp->obuf);
-		cp->obuf = NULL;
-	}
+	free(cp->obuf);
+	cp->obuf = NULL;
 	if (cp->blacklists)
 		free(cp->blacklists);
 	bzero(cp, sizeof(struct con));
@@ -560,14 +550,12 @@ initcon(struct con *cp, int fd, struct sockaddr_in *sin)
 	strlcpy(cp->addr, inet_ntoa(sin->sin_addr), sizeof(cp->addr));
 	tmp = strdup(ctime(&t));
 	if (tmp == NULL)
-		tmp = "some time";
-	else
-		tmp[strlen(tmp) - 1] = '\0'; /* nuke newline */
+		err(1, "malloc");
+	tmp[strlen(tmp) - 1] = '\0'; /* nuke newline */
 	snprintf(cp->obuf, cp->osize,
-	    "220 %s ESMTP %s; %s\r\n",
-	    hostname, spamd, tmp);
-	if (tmp != NULL)
-		free(tmp);
+		 "220 %s ESMTP %s; %s\r\n",
+		 hostname, spamd, tmp);
+	free(tmp);
 	cp->op = cp->obuf;
 	cp->ol = strlen(cp->op);
 	cp->w = t + cp->stutter;
@@ -597,7 +585,7 @@ closecon(struct con *cp)
 		free(cp->blacklists);
 		cp->blacklists = NULL;
 	}
-	if (cp->osize > 0 && cp->obufalloc) {
+	if (cp->osize > 0) {
 		free(cp->obuf);
 		cp->obuf = NULL;
 		cp->osize = 0;
@@ -1006,17 +994,10 @@ main(int argc, char *argv[])
 			err(1, "pipe");
 
 		pid = fork();
-		if (pid == -1)
+		switch(pid) {
+		case -1:
 			err(1, "fork");
-		if (pid != 0) {
-			/* parent - run greylister */
-			close(greypipe[1]);
-			grey = fdopen(greypipe[0], "r");
-			if (grey == NULL)
-				err(1, "fdopen");
-			return(greywatcher());
-			/* NOTREACHED */
-		} else {
+		case 0:
 			/* child - continue */
 			close(greypipe[0]);
 			grey = fdopen(greypipe[1], "w");
@@ -1024,9 +1005,18 @@ main(int argc, char *argv[])
 				warn("fdopen");
 				_exit(1);
 			}
+			goto jail;
 		}
+		/* parent - run greylister */
+		close(greypipe[1]);
+		grey = fdopen(greypipe[0], "r");
+		if (grey == NULL)
+			err(1, "fdopen");
+		return(greywatcher());
+		/* NOTREACHED */
 	}
 
+jail:
 	if (chroot("/var/empty") == -1 || chdir("/") == -1) {
 		syslog(LOG_ERR, "cannot chdir to /var/empty.");
 		exit(1);
@@ -1048,7 +1038,7 @@ main(int argc, char *argv[])
 
 	if (debug == 0) {
 		if (daemon(1, 1) == -1)
-			err(1, "fork");
+			err(1, "daemon");
 	} else
 		printf("listening for incoming connections.\n");
 	syslog_r(LOG_WARNING, &sdata, "listening for incoming connections.");
@@ -1068,7 +1058,9 @@ main(int argc, char *argv[])
 
 		if (max > omax) {
 			free(fdsr);
+			fdsr = NULL;
 			free(fdsw);
+			fdsr = NULL;
 			fdsr = (fd_set *)calloc(howmany(max+1, NFDBITS),
 			    sizeof(fd_mask));
 			if (fdsr == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.5 2004/02/26 08:52:58 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.6 2004/02/28 00:03:59 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -39,6 +39,7 @@
 
 #include "grey.h"
 
+extern time_t passtime, greyexp, whiteexp;
 extern struct syslog_data sdata;
 extern struct passwd *pw;
 extern FILE * grey;
@@ -47,10 +48,6 @@ extern int debug;
 size_t whitecount, whitealloc;
 char **whitelist;
 int pfdev;
-
-DB		*db;
-DBT		dbk, dbd;
-BTREEINFO	btreeinfo;
 
 /* borrowed from dhartmei.. */
 int
@@ -105,12 +102,14 @@ configure_pf(char **addrs, int count)
 	if (pipe(pdes) != 0) {
 		syslog_r(LOG_INFO, &sdata, "pipe failed (%m)");
 		free(fdpath);
+		fdpath = NULL;
 		return(-1);
 	}
 	switch (pid = fork()) {
 	case -1:
 		syslog_r(LOG_INFO, &sdata, "fork failed (%m)");
 		free(fdpath);
+		fdpath = NULL;
 		close(pdes[0]);
 		close(pdes[1]);
 		return(-1);
@@ -128,10 +127,12 @@ configure_pf(char **addrs, int count)
 
 	/* parent */
 	free(fdpath);
+	fdpath = NULL;
 	close(pdes[0]);
 	pf = fdopen(pdes[1], "w");
 	if (pf == NULL) {
 		syslog_r(LOG_INFO, &sdata, "fdopen failed (%m)");
+		close(pdes[1]);
 		return(-1);
 	}
 	for (i = 0; i < count; i++)
@@ -179,9 +180,12 @@ addwhiteaddr(char *addr)
 int
 greyscan(char *dbname)
 {
+	BTREEINFO	btreeinfo;
+	DBT		dbk, dbd;
+	DB		*db;
+	struct gdata	gd;
+	int		r;
 	time_t now = time(NULL);
-	struct gdata gd;
-	int r;
 
 	/* walk db, expire, and whitelist */
 
@@ -199,6 +203,7 @@ greyscan(char *dbname)
 
 		if ((dbk.size < 1) || dbd.size != sizeof(struct gdata)) {
 			db->close(db);
+			db = NULL;
 			return(-1);
 		}
 		memcpy(&gd, dbd.data, sizeof(gd));
@@ -214,9 +219,10 @@ greyscan(char *dbname)
 			if (db->del(db, &dbk, 0)) {
 				db->sync(db, 0);
 				db->close(db);
+				db = NULL;
 				return(-1);
 			}
-		} else if (gd.pass < now) {
+		} else if (gd.pass  <= now) {
 			int tuple = 0;
 			char *cp;
 
@@ -242,6 +248,7 @@ greyscan(char *dbname)
 				dbk.size = strlen(a);
 				dbk.data = a;
 				memset(&dbd, 0, sizeof(dbd));
+				gd.expire = now + whiteexp;
 				dbd.size = sizeof(gd);
 				dbd.data = &gd;
 				if (db->put(db, &dbk, &dbd, 0))
@@ -268,10 +275,13 @@ greyscan(char *dbname)
 int
 greyupdate(char *dbname, char *ip, char *from, char *to)
 {
-	char *key = NULL;
-	struct gdata gd;
-	time_t now;
-	int r;
+	BTREEINFO	btreeinfo;
+	DBT		dbk, dbd;
+	DB		*db;
+	char		*key = NULL;
+	struct gdata	gd;
+	time_t		now;
+	int		r;
 
 	now = time(NULL);
 
@@ -294,8 +304,8 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 		memset(&gd, 0, sizeof(gd));
 		gd.first = now;
 		gd.bcount = 1;
-		gd.pass = now + GREYEXP;
-		gd.expire = now + GREYEXP;
+		gd.pass = now + greyexp;
+		gd.expire = now + greyexp;
 		memset(&dbk, 0, sizeof(dbk));
 		dbk.size = strlen(key);
 		dbk.data = key;
@@ -316,10 +326,8 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 		}
 		memcpy(&gd, dbd.data, sizeof(gd));
 		gd.bcount++;
-		if (gd.first + PASSTIME < now) {
+		if (gd.first + passtime < now)
 			gd.pass = now;
-			gd.expire = now + WHITEEXP;
-		}
 		memset(&dbk, 0, sizeof(dbk));
 		dbk.size = strlen(key);
 		dbk.data = key;
@@ -333,11 +341,13 @@ greyupdate(char *dbname, char *ip, char *from, char *to)
 			fprintf(stderr, "updated %s\n", key);
 	}
 	free(key);
+	key = NULL;
 	db->close(db);
 	db = NULL;
 	return(0);
  bad:
 	free(key);
+	key = NULL;
 	db->close(db);
 	db = NULL;
 	return(-1);
@@ -401,9 +411,14 @@ greyreader(void)
 void
 greyscanner(void)
 {
+	int i;
+
 	for (;;) {
 		sleep(DB_SCAN_INTERVAL);
-		greyscan(PATH_SPAMD_DB);
+		i = greyscan(PATH_SPAMD_DB);
+		if (i == -1)
+			syslog_r(LOG_NOTICE, &sdata, "scan of %s failed",
+			    PATH_SPAMD_DB);
 	}
 	/* NOTREACHED */
 }
@@ -444,13 +459,14 @@ greywatcher(void)
 
 	if (!debug) {
 		if (daemon(1, 1) == -1)
-			err(1, "fork");
+			err(1, "daemon");
 	}
 
 	pid = fork();
-	if (pid == -1)
+	switch(pid) {
+	case -1:
 		err(1, "fork");
-	if (pid == 0) {
+	case 0:
 		/*
 		 * child, talks to jailed spamd over greypipe,
 		 * updates db. has no access to pf.
@@ -458,14 +474,16 @@ greywatcher(void)
 		close(pfdev);
 		setproctitle("(%s update)", PATH_SPAMD_DB);
 		greyreader();
-	} else {
-		/*
-		 * parent, scans db periodically for changes and updates
-		 * pf whitelist table accordingly.
-		 */
-		fclose(grey);
-		setproctitle("(pf <spamd-white> update)");
-		greyscanner();
+		/* NOTREACHED */
+		_exit(1);
 	}
-	return(0);
+	/*
+	 * parent, scans db periodically for changes and updates
+	 * pf whitelist table accordingly.
+	 */
+	fclose(grey);
+	setproctitle("(pf <spamd-white> update)");
+	greyscanner();
+	/* NOTREACHED */
+	exit(1);
 }
