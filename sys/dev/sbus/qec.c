@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.1 2001/08/20 22:09:27 jason Exp $	*/
+/*	$OpenBSD: qec.c,v 1.2 2001/08/31 15:12:05 jason Exp $	*/
 /*	$NetBSD: qec.c,v 1.12 2000/12/04 20:12:55 fvdl Exp $ */
 
 /*-
@@ -123,7 +123,6 @@ qecattach(parent, self, aux)
 	int sbusburst;
 	bus_space_tag_t sbt;
 	bus_space_handle_t bh;
-	struct bootpath *bp;
 	int error;
 
 	sc->sc_bustag = sa->sa_bustag;
@@ -227,19 +226,12 @@ qecattach(parent, self, aux)
 
 	qec_init(sc);
 
-	bp = sa->sa_bp;
-	if (bp != NULL && strcmp(bp->name, qec_cd.cd_name) == 0)
-		bp = bp + 1;
-	else
-		bp = NULL;
-
 	/* search through children */
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		struct sbus_attach_args sa;
 
 		sbus_setup_attach_args((struct sbus_softc *)parent,
 				       sbt, sc->sc_dmatag, node, &sa);
-		sa.sa_bp = bp;
 		(void)config_found(&sc->sc_dev, (void *)&sa, qecprint);
 		sbus_destroy_attach_args(&sa);
 	}

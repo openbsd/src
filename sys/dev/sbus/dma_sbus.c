@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma_sbus.c,v 1.4 2001/08/21 05:45:43 jason Exp $	*/
+/*	$OpenBSD: dma_sbus.c,v 1.5 2001/08/31 15:12:05 jason Exp $	*/
 /*	$NetBSD: dma_sbus.c,v 1.5 2000/07/09 20:57:42 pk Exp $ */
 
 /*-
@@ -161,7 +161,6 @@ dmaattach_sbus(parent, self, aux)
 	struct sbus_attach_args *sa = aux;
 	struct dma_softc *dsc = (void *)self;
 	struct lsi64854_softc *sc = &dsc->sc_lsi64854;
-	struct bootpath *bp;
 	bus_space_handle_t bh;
 	bus_space_tag_t sbt;
 	int sbusburst, burst;
@@ -236,21 +235,11 @@ dmaattach_sbus(parent, self, aux)
 	sbt = dma_alloc_bustag(dsc);
 	lsi64854_attach(sc);
 
-	bp = sa->sa_bp;
-	if (bp != NULL &&
-	    (strcmp(bp->name, "espdma") == 0 ||
-	     strcmp(bp->name, "ledma") == 0 ||
-	     strcmp(bp->name, "dma") == 0))
-		bp = bp + 1;
-	else
-		bp = NULL;
-
 	/* Attach children */
 	for (node = firstchild(sa->sa_node); node; node = nextsibling(node)) {
 		struct sbus_attach_args sa;
 		sbus_setup_attach_args((struct sbus_softc *)parent,
 				       sbt, sc->sc_dmatag, node, &sa);
-		sa.sa_bp = bp;
 		(void) config_found(&sc->sc_dev, (void *)&sa, dmaprint_sbus);
 		sbus_destroy_attach_args(&sa);
 	}

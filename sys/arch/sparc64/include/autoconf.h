@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.3 2001/08/20 20:23:52 jason Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.4 2001/08/31 15:12:05 jason Exp $	*/
 /*	$NetBSD: autoconf.h,v 1.10 2001/07/24 19:32:11 eeh Exp $ */
 
 /*-
@@ -122,7 +122,6 @@ struct mainbus_attach_args {
 	int		ma_naddress;
 	int		ma_ninterrupts;
 	int		ma_pri;		/* priority (IPL) */
-	struct bootpath	*ma_bp;
 };
 
 /*
@@ -181,4 +180,4 @@ int	romgetcursoraddr __P((int **, int **));
 int	findroot __P((void));
 int	findnode __P((int, const char *));
 int	node_has_property __P((int, const char *));
-
+void	device_register __P((struct device *, void *));

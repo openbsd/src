@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.1 2001/08/20 22:09:27 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.2 2001/08/31 15:12:05 jason Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -209,7 +209,6 @@ qeattach(parent, self, aux)
 	bus_dma_segment_t seg;
 	bus_size_t size;
 	int rseg, error;
-	struct bootpath *bp;
 	extern void myetheraddr __P((u_char *));
 
 	if (sa->sa_nreg < 2) {
@@ -328,11 +327,6 @@ qeattach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
-
-	bp = sa->sa_bp;
-	if (bp != NULL && strcmp(bp->name, qe_cd.cd_name) == 0 &&
-	    sc->sc_dev.dv_unit == bp->val[1])
-		bp->dev = &sc->sc_dev;
 }
 
 /*

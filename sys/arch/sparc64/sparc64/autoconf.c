@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.6 2001/08/25 12:29:56 art Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.7 2001/08/31 15:12:05 jason Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -82,6 +82,9 @@
 #include <dev/pci/pcivar.h>
 #include <dev/sbus/sbusvar.h>
 
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
@@ -121,10 +124,16 @@ void	diskconf __P((void));
 static	struct device *getdisk __P((char *, int, int, dev_t *));
 static int findblkmajor __P((struct device *));
 
+struct device *booted_device;
 struct	bootpath bootpath[8];
 int	nbootpath;
 static	void bootpath_build __P((void));
 static	void bootpath_print __P((struct bootpath *));
+
+char *bus_compatible __P((char *, struct device *));
+int bus_class __P((struct device *));
+int instance_match __P((struct device *, void *, struct bootpath *bp));
+void nail_bootdev __P((struct device *, struct bootpath *));
 
 /* Global interrupt mappings for all device types.  Match against the OBP
  * 'device_type' property. 
@@ -1148,7 +1157,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				printf(" no address\n");
 		}
 #endif
-		ma.ma_bp = bootpath;
 		(void) config_found(dev, (void *)&ma, mbprint);
 		free(ma.ma_reg, M_DEVBUF);
 		if (ma.ma_ninterrupts)
@@ -1368,4 +1376,298 @@ getdevunit(name, unit)
 			return NULL;
 	}
 	return dev;
+}
+
+#define BUSCLASS_NONE		0
+#define BUSCLASS_MAINBUS	1
+#define BUSCLASS_IOMMU		2
+#define BUSCLASS_OBIO		3
+#define BUSCLASS_SBUS		4
+#define BUSCLASS_VME		5
+#define BUSCLASS_PCI		6
+#define BUSCLASS_XDC		7
+#define BUSCLASS_XYC		8
+#define BUSCLASS_FDC		9
+
+static struct {
+	char	*name;
+	int	class;
+} bus_class_tab[] = {
+	{ "mainbus",	BUSCLASS_MAINBUS },
+	{ "upa",	BUSCLASS_MAINBUS },
+	{ "psycho",	BUSCLASS_MAINBUS },
+	{ "obio",	BUSCLASS_OBIO },
+	{ "iommu",	BUSCLASS_IOMMU },
+	{ "sbus",	BUSCLASS_SBUS },
+	{ "xbox",	BUSCLASS_SBUS },
+	{ "esp",	BUSCLASS_SBUS },
+	{ "dma",	BUSCLASS_SBUS },
+	{ "espdma",	BUSCLASS_SBUS },
+	{ "ledma",	BUSCLASS_SBUS },
+	{ "simba",	BUSCLASS_PCI },
+	{ "ppb",	BUSCLASS_PCI },
+	{ "pciide",	BUSCLASS_PCI },
+	{ "siop",	BUSCLASS_PCI },
+	{ "pci",	BUSCLASS_PCI },
+	{ "fdc",	BUSCLASS_FDC },
+};
+
+/*
+ * A list of PROM device names that differ from our NetBSD
+ * device names.
+ */
+static struct {
+	char	*bpname;
+	int	class;
+	char	*cfname;
+} dev_compat_tab[] = {
+	{ "espdma",	BUSCLASS_NONE,		"dma" },
+	{ "QLGC,isp",	BUSCLASS_NONE,		"isp" },
+	{ "PTI,isp",	BUSCLASS_NONE,		"isp" },
+	{ "ptisp",	BUSCLASS_NONE,		"isp" },
+	{ "SUNW,fdtwo",	BUSCLASS_NONE,		"fdc" },
+	{ "pci",	BUSCLASS_MAINBUS,	"psycho" },
+	{ "pci",	BUSCLASS_PCI,		"ppb" },
+	{ "ide",	BUSCLASS_PCI,		"pciide" },
+	{ "disk",	BUSCLASS_NONE,		"wd" },  /* XXX */
+	{ "network",	BUSCLASS_NONE,		"hme" }, /* XXX */
+	{ "SUNW,fas",	BUSCLASS_NONE,		"esp" },
+	{ "SUNW,hme",	BUSCLASS_NONE,		"hme" },
+	{ "glm",	BUSCLASS_PCI,		"siop" },
+	{ "SUNW,glm",	BUSCLASS_PCI,		"siop" },
+};
+
+char *
+bus_compatible(bpname, dev)
+	char *bpname;
+	struct device *dev;
+{
+	int i, class = bus_class(dev);
+
+	for (i = sizeof(dev_compat_tab)/sizeof(dev_compat_tab[0]); i-- > 0;) {
+		if (strcmp(bpname, dev_compat_tab[i].bpname) == 0 &&
+		    (dev_compat_tab[i].class == BUSCLASS_NONE ||
+		     dev_compat_tab[i].class == class))
+			return (dev_compat_tab[i].cfname);
+	}
+
+	return (bpname);
+}
+
+int
+bus_class(dev)
+	struct device *dev;
+{
+	char *name;
+	int i, class;
+
+	class = BUSCLASS_NONE;
+	if (dev == NULL)
+		return (class);
+
+	name = dev->dv_cfdata->cf_driver->cd_name;
+	for (i = sizeof(bus_class_tab)/sizeof(bus_class_tab[0]); i-- > 0;) {
+		if (strcmp(name, bus_class_tab[i].name) == 0) {
+			class = bus_class_tab[i].class;
+			break;
+		}
+	}
+
+	return (class);
+}
+
+int
+instance_match(dev, aux, bp)
+	struct device *dev;
+	void *aux;
+	struct bootpath *bp;
+{
+	struct mainbus_attach_args *ma;
+	struct sbus_attach_args *sa;
+	struct pci_attach_args *pa;
+
+	/*
+	 * Several devices are represented on bootpaths in one of
+	 * two formats, e.g.:
+	 *	(1) ../sbus@.../esp@<offset>,<slot>/sd@..  (PROM v3 style)
+	 *	(2) /sbus0/esp0/sd@..                      (PROM v2 style)
+	 *
+	 * hence we fall back on a `unit number' check if the bus-specific
+	 * instance parameter check does not produce a match.
+	 *
+	 * For PCI devices, we get:
+	 *	../pci@../xxx@<dev>,<fn>/...
+	 */
+
+	/*
+	 * Rank parent bus so we know which locators to check.
+	 */
+	switch (bus_class(dev->dv_parent)) {
+	case BUSCLASS_MAINBUS:
+		ma = aux;
+		DPRINTF(ACDB_BOOTDEV,
+		    ("instance_match: mainbus device, want %#x have %#x\n",
+		    ma->ma_upaid, bp->val[0]));
+		if (bp->val[0] == ma->ma_upaid)
+			return (1);
+		break;
+	case BUSCLASS_SBUS:
+		sa = aux;
+		DPRINTF(ACDB_BOOTDEV, ("instance_match: sbus device, "
+		    "want slot %#x offset %#x have slot %#x offset %#x\n",
+		     bp->val[0], bp->val[1], sa->sa_slot, sa->sa_offset));
+		if (bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset)
+			return (1);
+		break;
+	case BUSCLASS_PCI:
+		pa = aux;
+		DPRINTF(ACDB_BOOTDEV, ("instance_match: pci device, "
+		    "want dev %#x fn %#x have dev %#x fn %#x\n",
+		     bp->val[0], bp->val[1], pa->pa_device, pa->pa_function));
+		if (bp->val[0] == pa->pa_device &&
+		    bp->val[1] == pa->pa_function)
+			return (1);
+		break;
+	default:
+		break;
+	}
+
+	if (bp->val[0] == -1 && bp->val[1] == dev->dv_unit)
+		return (1);
+
+	return (0);
+}
+
+void
+device_register(dev, aux)
+	struct device *dev;
+	void *aux;
+{
+	struct bootpath *bp = bootpath_store(0, NULL);
+	char *dvname, *bpname;
+
+	/*
+	 * If device name does not match current bootpath component
+	 * then there's nothing interesting to consider.
+	 */
+	if (bp == NULL)
+		return;
+
+	/*
+	 * Translate PROM name in case our drivers are named differently
+	 */
+	bpname = bus_compatible(bp->name, dev);
+	dvname = dev->dv_cfdata->cf_driver->cd_name;
+
+	DPRINTF(ACDB_BOOTDEV,
+	    ("\n%s: device_register: dvname %s(%s) bpname %s(%s)\n",
+	    dev->dv_xname, dvname, dev->dv_xname, bpname, bp->name));
+
+	/* First, match by name */
+	if (strcmp(dvname, bpname) != 0)
+		return;
+
+	if (bus_class(dev) != BUSCLASS_NONE) {
+		/*
+		 * A bus or controller device of sorts. Check instance
+		 * parameters and advance boot path on match.
+		 */
+		if (instance_match(dev, aux, bp) != 0) {
+			bp->dev = dev;
+			bootpath_store(1, bp + 1);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found bus controller %s\n",
+			    dev->dv_xname));
+			return;
+		}
+	} else if (strcmp(dvname, "le") == 0 ||
+		   strcmp(dvname, "hme") == 0) {
+		/*
+		 * ethernet devices.
+		 */
+		if (instance_match(dev, aux, bp) != 0) {
+			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found ethernet controller %s\n",
+			    dev->dv_xname));
+			return;
+		}
+	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
+		/*
+		 * A SCSI disk or cd; retrieve target/lun information
+		 * from parent and match with current bootpath component.
+		 * Note that we also have look back past the `scsibus'
+		 * device to determine whether this target is on the
+		 * correct controller in our boot path.
+		 */
+		struct scsibus_attach_args *sa = aux;
+		struct scsi_link *sl = sa->sa_sc_link;
+		struct scsibus_softc *sbsc =
+			(struct scsibus_softc *)dev->dv_parent;
+		u_int target = bp->val[0];
+		u_int lun = bp->val[1];
+
+		/* Check the controller that this scsibus is on */
+		if ((bp-1)->dev != sbsc->sc_dev.dv_parent)
+			return;
+
+		/*
+		 * Bounds check: we know the target and lun widths.
+		 */
+		if (target >= sl->adapter_buswidth ||
+		    lun >= sl->luns) {
+			printf("SCSI disk bootpath component not accepted: "
+			       "target %u; lun %u\n", target, lun);
+			return;
+		}
+
+		if (sl->target == target && sl->lun == lun) {
+			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found [cs]d disk %s\n",
+			    dev->dv_xname));
+			return;
+		}
+	} else if (strcmp("wd", dvname) == 0) {
+		/* IDE disks. */
+		struct ata_atapi_attach *aa = aux;
+
+		if (aa->aa_channel == bp->val[0]) {
+			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found wd disk %s\n",
+			    dev->dv_xname));
+			return;
+		}
+	} else {
+		/*
+		 * Generic match procedure.
+		 */
+		if (instance_match(dev, aux, bp) != 0) {
+			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found generic device %s\n",
+			    dev->dv_xname));
+			return;
+		}
+	}
+}
+
+void
+nail_bootdev(dev, bp)
+	struct device *dev;
+	struct bootpath *bp;
+{
+
+	if (bp->dev != NULL)
+		panic("device_register: already got a boot device: %s",
+			bp->dev->dv_xname);
+
+	/*
+	 * Mark this bootpath component by linking it to the matched
+	 * device. We pick up the device pointer in cpu_rootconf().
+	 */
+	booted_device = bp->dev = dev;
+
+	/*
+	 * Then clear the current bootpath component, so we don't spuriously
+	 * match similar instances on other busses, e.g. a disk on
+	 * another SCSI bus with the same target.
+	 */
+	bootpath_store(1, NULL);
 }

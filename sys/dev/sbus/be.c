@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.1 2001/08/20 22:47:08 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.2 2001/08/31 15:12:05 jason Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -240,7 +240,6 @@ beattach(parent, self, aux)
 	int instance;
 	int rseg, error;
 	u_int32_t v;
-	struct bootpath *bp;
 	extern void myetheraddr __P((u_char *));
 
 	if (sa->sa_nreg < 3) {
@@ -471,11 +470,6 @@ beattach(parent, self, aux)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
-	bp = sa->sa_bp;
-	if (bp != NULL && strcmp(bp->name, be_cd.cd_name) == 0 &&
-	    sc->sc_dev.dv_unit == bp->val[1])
-		bp->dev = &sc->sc_dev;
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.5 2001/08/22 12:09:12 art Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.6 2001/08/31 15:12:05 jason Exp $	*/
 /*	$NetBSD: sbus.c,v 1.43 2001/07/20 00:07:13 eeh Exp $ */
 
 /*-
@@ -374,12 +374,6 @@ sbus_attach(parent, self, aux)
 			printf("sbus_attach: %s: incomplete\n", name);
 			continue;
 		}
-
-		if (ma->ma_bp != NULL && strcmp(ma->ma_bp->name, "sbus") == 0)
-			sa.sa_bp = ma->ma_bp + 1;
-		else
-			sa.sa_bp = NULL;
-
 		(void) config_found(&sc->sc_dev, (void *)&sa, sbus_print);
 		sbus_destroy_attach_args(&sa);
 	}
