@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.16 1995/05/11 21:29:29 christos Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.17 1996/05/20 14:49:32 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: memalloc.c,v 1.16 1995/05/11 21:29:29 christos Exp $";
+static char rcsid[] = "$NetBSD: memalloc.c,v 1.17 1996/05/20 14:49:32 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -211,7 +211,7 @@ popstackmark(mark)
 void
 growstackblock() {
 	char *p;
-	int newlen = stacknleft * 2 + 100;
+	int newlen = ALIGN(stacknleft * 2 + 100);
 	char *oldspace = stacknxt;
 	int oldlen = stacknleft;
 	struct stack_block *sp;
@@ -230,7 +230,7 @@ growstackblock() {
 		p = stalloc(newlen);
 		memcpy(p, oldspace, oldlen);
 		stacknxt = p;			/* free the space */
-		stacknleft += ALIGN(newlen);	/* we just allocated */
+		stacknleft += newlen;		/* we just allocated */
 	}
 }
 
