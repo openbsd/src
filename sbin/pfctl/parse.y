@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.238 2002/12/06 12:36:02 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.239 2002/12/07 18:16:59 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1811,6 +1811,10 @@ hashkey		: /* empty */
 				MD5Init(&context);
 				MD5Update(&context, $1, strlen($1));
 				MD5Final((unsigned char *)$$, &context);
+				HTONL($$->key32[0]);
+				HTONL($$->key32[1]);
+				HTONL($$->key32[2]);
+				HTONL($$->key32[3]);
 			}
 		}
 		;
