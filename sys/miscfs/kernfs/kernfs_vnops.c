@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.29 2003/01/31 17:37:50 art Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.30 2003/03/30 22:28:05 rohee Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -342,8 +342,14 @@ kernfs_xread(kt, off, bufp, len)
 
 	case KTT_STRING: {
 		char *cp = kt->kt_data;
+		size_t len = strlen(cp);
 
-		*bufp = cp;
+		if (len && cp[len - 1] != '\n') {
+			strlcpy(*bufp, cp, KSTRING - 1);
+			strlcat(*bufp, "\n", KSTRING);
+		} else
+			*bufp = cp;
+
 		break;
 	}
 
