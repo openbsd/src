@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.68 2002/06/19 18:53:53 millert Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.69 2002/07/08 00:48:54 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.68 2002/06/19 18:53:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.69 2002/07/08 00:48:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1273,7 +1273,7 @@ ieee80211_status()
 			nwkey.i_key[i].i_keylen = sizeof(keybuf[i]);
 		}
 		if (ioctl(s, SIOCG80211NWKEY, (caddr_t)&nwkey) == -1) {
-			puts("*****");
+			puts("<not displayed>");
 		} else {
 			nwkey_verbose = 0;
 			/* check to see non default key or multiple keys defined */
