@@ -10,7 +10,7 @@
  *
  * S/KEY misc routines.
  *
- * $Id: skeysubr.c,v 1.12 1996/11/03 18:57:30 millert Exp $
+ * $Id: skeysubr.c,v 1.13 1997/07/10 22:53:37 millert Exp $
  */
 
 #include <stdio.h>
@@ -149,7 +149,8 @@ keycrunch_sha1(result, seed, passwd)
 	char *passwd;	/* Password, any length */
 {
 	char *buf;
-	SHA1_INFO sha;
+	SHA1_CTX sha;
+	u_int32_t results[5];
 	unsigned int buflen;
 
 	buflen = strlen(seed) + strlen(passwd);
@@ -161,20 +162,22 @@ keycrunch_sha1(result, seed, passwd)
 
 	/* Crunch the key through SHA1 */
 	sevenbit(buf);
-	sha1Init(&sha);
-	sha1Update(&sha, (unsigned char *)buf, buflen);
-	sha1Final(&sha);
+	SHA1Init(&sha);
+	SHA1Update(&sha, (unsigned char *)buf, buflen);
+	SHA1Final((unsigned char *)results, &sha);
 	(void)free(buf);
 
 	/* Fold 160 to 64 bits */
-	sha.digest[0] ^= sha.digest[2];
-	sha.digest[1] ^= sha.digest[3];
-	sha.digest[0] ^= sha.digest[4];
+	results[0] ^= results[2];
+	results[1] ^= results[3];
+	results[0] ^= results[4];
 
-	(void)memcpy((void *)result, (void *)sha.digest, SKEY_BINKEY_SIZE);
+	(void)memcpy((void *)result, (void *)results, SKEY_BINKEY_SIZE);
+#if 0 /* XXX */
 #if BYTE_ORDER == LITTLE_ENDIAN
 	sha1ByteReverse((u_int32_t *)result, SKEY_BINKEY_SIZE);
 #endif /* LITTLE_ENDIAN */
+#endif
 
 	return 0;
 }
@@ -230,21 +233,24 @@ static void
 f_sha1(x)
 	char *x;
 {
-	SHA1_INFO sha;
+	SHA1_CTX sha;
+	u_int32_t results[5];
 
-	sha1Init(&sha);
-	sha1Update(&sha, (unsigned char *)x, SKEY_BINKEY_SIZE);
-	sha1Final(&sha);
+	SHA1Init(&sha);
+	SHA1Update(&sha, (unsigned char *)x, SKEY_BINKEY_SIZE);
+	SHA1Final((unsigned char *)results, &sha);
 
 	/* Fold 160 to 64 bits */
-	sha.digest[0] ^= sha.digest[2];
-	sha.digest[1] ^= sha.digest[3];
-	sha.digest[0] ^= sha.digest[4];
+	results[0] ^= results[2];
+	results[1] ^= results[3];
+	results[0] ^= results[4];
 
-	(void)memcpy((void *)x, (void *)sha.digest, SKEY_BINKEY_SIZE);
+	(void)memcpy((void *)x, (void *)results, SKEY_BINKEY_SIZE);
+#if 0 /* XXX */
 #if BYTE_ORDER == LITTLE_ENDIAN
 	sha1ByteReverse((u_int32_t *)x, SKEY_BINKEY_SIZE);
 #endif /* LITTLE_ENDIAN */
+#endif
 }
 
 /* Strip trailing cr/lf from a line of text */
