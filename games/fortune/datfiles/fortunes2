@@ -414,7 +414,7 @@ I found a thesis topic:
 		-- Sister Mary Elephant,
 		"Student Statement for Black Friday"
 %
-	      1/2
+	      1/3
 	 /\(3)
 	 |     2			  1/3
 	 |    z dz cos(3 * PI / 9) = ln (e   )
@@ -422,22 +422,10 @@ I found a thesis topic:
 	\/ 1
 
 The integral of z squared, dz
-From 1 to the square root of 3
+From 1 to the cube root of 3
 	Times the cosine
 	Of 3 PI over nine
 Is the log of the cube root of e
-%
-	   (1/2)
-	/ 3
-	|       2         3 x 3.14            (1/2)
-	|      z dz  cos (--------)   =  ln(e     )
-	/ 1		     9
-
-The integral, from one to root three,
-Of z to the second dz,
-	Times the cosine
-	Of 3 pi over nine
-Is the log of the third root of e.
 %
 	   THE DAILY PLANET
 
