@@ -3636,6 +3636,8 @@
 ./usr/share/man/cat3/tigetstr.0
 ./usr/share/man/cat3/time.0
 ./usr/share/man/cat3/time2posix.0
+./usr/share/man/cat3/timegm.0
+./usr/share/man/cat3/timelocal.0
 ./usr/share/man/cat3/timeout.0
 ./usr/share/man/cat3/times.0
 ./usr/share/man/cat3/timezone.0
