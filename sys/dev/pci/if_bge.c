@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.54 2005/03/07 18:59:11 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.55 2005/03/27 16:14:43 krw Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -749,15 +749,19 @@ bge_newbuf_std(sc, i, m)
 		m_new->m_data = m_new->m_ext.ext_buf;
 	}
 
-	if (bus_dmamap_load_mbuf(sc->bge_dmatag, rxmap, m_new, BUS_DMA_NOWAIT))
-		return(ENOBUFS);
-
 	if (!sc->bge_rx_alignment_bug)
 		m_adj(m_new, ETHER_ALIGN);
+
+	if (bus_dmamap_load_mbuf(sc->bge_dmatag, rxmap, m_new,
+	    BUS_DMA_NOWAIT)) { 
+		if (m == NULL)
+			m_freem(m_new); 	
+		return(ENOBUFS);
+	}
+	
 	sc->bge_cdata.bge_rx_std_chain[i] = m_new;
 	r = &sc->bge_rdata->bge_rx_std_ring[i];
-	BGE_HOSTADDR(r->bge_addr, rxmap->dm_segs[0].ds_addr +
-	    (sc->bge_rx_alignment_bug ? 0 : ETHER_ALIGN));
+	BGE_HOSTADDR(r->bge_addr, rxmap->dm_segs[0].ds_addr);
 	r->bge_flags = BGE_RXBDFLAG_END;
 	r->bge_len = m_new->m_len;
 	r->bge_idx = i;
