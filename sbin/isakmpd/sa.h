@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.h,v 1.16 2000/06/08 20:50:07 niklas Exp $	*/
-/*	$EOM: sa.h,v 1.56 2000/05/19 05:47:53 angelos Exp $	*/
+/*	$OpenBSD: sa.h,v 1.17 2000/08/03 07:23:18 niklas Exp $	*/
+/*	$EOM: sa.h,v 1.57 2000/07/12 20:50:49 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -185,6 +185,7 @@ extern void proto_free (struct proto *proto);
 extern int sa_add_transform (struct sa *, struct payload *, int,
 			     struct proto **);
 extern int sa_create (struct exchange *, struct transport *);
+extern int sa_enter (struct sa *);
 extern void sa_delete (struct sa *, int);
 extern struct sa *sa_find (int (*) (struct sa *, void *), void *);
 extern int sa_flag (char *);
