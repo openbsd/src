@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.39 2001/08/12 17:55:57 mickey Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.40 2001/11/06 19:53:21 miod Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -44,10 +44,7 @@
 /* XXX: clean up includes later */
 #include <uvm/uvm_pglist.h>	/* XXX */
 #include <sys/lock.h>		/* XXX */
-#include <vm/vm.h>		/* XXX */
 #include <uvm/uvm.h>		/* XXX */
-#include <uvm/uvm_extern.h>	/* XXX */
-#include <uvm/uvm_object.h>	/* XXX */
 #include <uvm/uvm_vnode.h>	/* XXX */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_exec.c,v 1.12 2001/09/19 13:28:43 art Exp $	 */
+/*	$OpenBSD: svr4_exec.c,v 1.13 2001/11/06 19:53:18 miod Exp $	 */
 /*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
@@ -40,7 +40,7 @@
 #include <sys/exec_olf.h>
 
 #include <sys/mman.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>

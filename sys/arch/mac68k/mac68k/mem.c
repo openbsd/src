@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.15 2001/11/01 12:13:46 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.16 2001/11/06 19:53:15 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.22 1999/03/27 00:30:07 mycroft Exp $	*/
 
 /*
@@ -54,8 +54,6 @@
 #include <sys/malloc.h>
 
 #include <machine/cpu.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.2 2001/09/22 19:44:37 mickey Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.3 2001/11/06 19:53:19 miod Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -197,8 +197,8 @@ typedef unsigned int uintptr_t;
 #ifdef __NetBSD__
 #include <uvm/uvm_extern.h>
 #else
-#include <vm/vm.h>			/* for vtophys */
-#include <vm/pmap.h>			/* for vtophys */
+#include <uvm/uvm_extern.h>			/* for vtophys */
+#include <uvm/uvm_pmap.h>			/* for vtophys */
 
 #include <dev/rndvar.h>
 #endif

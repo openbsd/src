@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cc.c,v 1.8 2001/11/06 00:30:37 art Exp $	*/
+/*	$OpenBSD: grf_cc.c,v 1.9 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: grf_cc.c,v 1.23 1996/12/23 09:10:02 veego Exp $	*/
 
 /*
@@ -58,7 +58,7 @@
 
 #include <sys/conf.h>
 #include <machine/conf.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include "view.h" 
 

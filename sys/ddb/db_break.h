@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.h,v 1.5 1999/09/11 00:44:59 mickey Exp $	*/
+/*	$OpenBSD: db_break.h,v 1.6 2001/11/06 19:53:18 miod Exp $	*/
 /*	$NetBSD: db_break.h,v 1.8 1996/02/05 01:56:52 christos Exp $	*/
 
 /* 
@@ -33,7 +33,7 @@
 #ifndef	_DDB_DB_BREAK_H_
 #define	_DDB_DB_BREAK_H_
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 /*
  * Breakpoints.

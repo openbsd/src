@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.19 2001/05/05 23:25:51 art Exp $	*/
+/*	$OpenBSD: npx.c,v 1.20 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -54,7 +54,6 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>

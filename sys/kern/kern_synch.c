@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.38 2001/09/13 14:41:50 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.39 2001/11/06 19:53:20 miod Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -48,11 +48,9 @@
 #include <sys/buf.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sched.h>
 #include <sys/timeout.h>
-
-#include <uvm/uvm_extern.h>
 
 #ifdef KTRACE
 #include <sys/ktrace.h>

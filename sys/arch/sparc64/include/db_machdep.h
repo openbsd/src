@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.4 2001/08/22 05:08:11 jason Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.5 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.12 2001/07/07 15:16:13 eeh Exp $ */
 
 /*
@@ -34,7 +34,6 @@
  * Machine-dependent defines for new kernel debugger.
  */
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/frame.h>

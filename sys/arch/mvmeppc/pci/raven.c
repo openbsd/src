@@ -1,4 +1,4 @@
-/*	$OpenBSD: raven.c,v 1.4 2001/09/21 02:11:58 miod Exp $ */
+/*	$OpenBSD: raven.c,v 1.5 2001/11/06 19:53:15 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -43,7 +43,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bat.h>

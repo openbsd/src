@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.10 2001/08/11 23:21:13 art Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.11 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: hpux_machdep.c,v 1.19 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*
@@ -73,8 +73,6 @@
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/vmparam.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

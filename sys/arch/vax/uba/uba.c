@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba.c,v 1.11 2001/09/11 20:05:25 miod Exp $	   */
+/*	$OpenBSD: uba.c,v 1.12 2001/11/06 19:53:17 miod Exp $	   */
 /*	$NetBSD: uba.c,v 1.43 2000/01/24 02:40:36 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -52,7 +52,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.16 2001/09/19 20:50:56 mickey Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.17 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: gdt.c,v 1.8 1996/05/03 19:42:06 christos Exp $	*/
 
 /*-
@@ -42,7 +42,6 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/gdt.h>

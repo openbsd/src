@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.12 2001/11/05 17:25:58 art Exp $	*/
+/*	$OpenBSD: ami.c,v 1.13 2001/11/06 19:53:18 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -60,7 +60,6 @@
 
 #include <machine/bus.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <scsi/scsi_all.h>

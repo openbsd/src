@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.36 2001/11/06 18:41:10 art Exp $ */
+/*	$OpenBSD: trap.c,v 1.37 2001/11/06 19:53:15 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -96,9 +96,8 @@
 extern struct emul emul_sunos;
 #endif
 
-#include <vm/vm.h>
-#include <vm/pmap.h>
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_pmap.h>
 
 #ifdef COMPAT_HPUX
 #include <compat/hpux/hpux.h>

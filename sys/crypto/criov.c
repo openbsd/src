@@ -1,4 +1,4 @@
-/*      $OpenBSD: criov.c,v 1.7 2001/08/12 20:06:08 mickey Exp $	*/
+/*      $OpenBSD: criov.c,v 1.8 2001/11/06 19:53:18 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Theo de Raadt
@@ -35,7 +35,7 @@
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <crypto/cryptodev.h>
 

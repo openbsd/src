@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.2 2001/09/21 02:11:58 miod Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.3 2001/11/06 19:53:15 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -43,7 +43,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bat.h>

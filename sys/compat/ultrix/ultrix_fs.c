@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_fs.c,v 1.5 1998/02/13 14:38:24 deraadt Exp $	*/
+/*	$OpenBSD: ultrix_fs.c,v 1.6 2001/11/06 19:53:18 miod Exp $	*/
 /*	$NetBSD: ultrix_fs.c,v 1.4 1996/04/07 17:23:06 jonathan Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #include <sys/syscallargs.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #define	ULTRIX_MAXPATHLEN	1024
 

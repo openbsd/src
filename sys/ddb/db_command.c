@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.22 2001/07/04 22:15:15 espie Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.23 2001/11/06 19:53:18 miod Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -36,7 +36,7 @@
 #include <sys/reboot.h>
 #include <sys/extent.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <machine/db_machdep.h>		/* type definitions */
 
 #include <ddb/db_lex.h>
@@ -50,9 +50,6 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
-#include <vm/vm.h>
-
-#include <uvm/uvm_extern.h>
 #include <uvm/uvm_ddb.h>
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq_ifsubr.c,v 1.9 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: pdq_ifsubr.c,v 1.10 2001/11/06 19:53:18 miod Exp $	*/
 /*	$NetBSD: pdq_ifsubr.c,v 1.5 1996/05/20 00:26:21 thorpej Exp $	*/
 
 /*-
@@ -83,7 +83,7 @@
 #include <netns/ns_if.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include "pdqvar.h"
 #include "pdqreg.h"

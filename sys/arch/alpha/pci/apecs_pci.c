@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs_pci.c,v 1.7 2001/02/16 08:23:39 jason Exp $	*/
+/*	$OpenBSD: apecs_pci.c,v 1.8 2001/11/06 19:53:13 miod Exp $	*/
 /*	$NetBSD: apecs_pci.c,v 1.10 1996/11/13 21:13:25 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>	/* badaddr() proto */
 

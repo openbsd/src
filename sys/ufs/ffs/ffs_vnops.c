@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.19 2001/09/10 08:48:42 gluk Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.20 2001/11/06 19:53:21 miod Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -50,8 +50,6 @@
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
 #include <sys/pool.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

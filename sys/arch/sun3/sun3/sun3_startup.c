@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun3_startup.c,v 1.19 2001/09/14 09:09:45 art Exp $	*/
+/*	$OpenBSD: sun3_startup.c,v 1.20 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: sun3_startup.c,v 1.55 1996/11/20 18:57:38 gwr Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@
 #include <sys/exec_aout.h>
 #include <sys/msgbuf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/control.h>
 #include <machine/cpu.h>

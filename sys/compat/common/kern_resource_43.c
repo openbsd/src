@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource_43.c,v 1.2 1996/04/18 21:21:33 niklas Exp $	*/
+/*	$OpenBSD: kern_resource_43.c,v 1.3 2001/11/06 19:53:17 miod Exp $	*/
 /*	$NetBSD: kern_resource_43.c,v 1.4 1996/03/14 19:31:46 christos Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 /* ARGSUSED */
 int

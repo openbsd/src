@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.24 2001/06/26 06:27:38 aaron Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.25 2001/11/06 19:53:20 miod Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 void ktrinitheader __P((struct ktr_header *, struct proc *, int));
 int ktrops __P((struct proc *, struct proc *, int, int, struct vnode *));

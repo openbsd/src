@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.22 2001/10/31 11:00:24 art Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.23 2001/11/06 19:53:19 miod Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
 #include <machine/bus.h>
 
 #include <sys/audioio.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/audio_if.h>
 #include <dev/auconv.h>

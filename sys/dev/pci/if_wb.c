@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.14 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.15 2001/11/06 19:53:19 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -116,7 +116,7 @@
 #include <net/bpf.h>
 #endif
 
-#include <vm/vm.h>		/* for vtophys */
+#include <uvm/uvm_extern.h>		/* for vtophys */
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

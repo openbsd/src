@@ -1,4 +1,4 @@
-/* $OpenBSD: cia_dma.c,v 1.2 2000/11/08 20:59:25 ericj Exp $ */
+/* $OpenBSD: cia_dma.c,v 1.3 2001/11/06 19:53:13 miod Exp $ */
 /* $NetBSD: cia_dma.c,v 1.16 2000/06/29 08:58:46 mrg Exp $ */
 
 /*-
@@ -50,7 +50,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>

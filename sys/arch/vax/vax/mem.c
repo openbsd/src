@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.9 2001/11/01 12:13:46 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.10 2001/11/06 19:53:17 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.15 1999/03/24 05:51:17 mrg Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
 #include <machine/pte.h>
 #include <machine/mtpr.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 extern unsigned int avail_end;
 caddr_t zeropage;

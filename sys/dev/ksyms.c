@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.10 2001/11/01 12:13:47 art Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.11 2001/11/06 19:53:18 miod Exp $	*/
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
@@ -41,7 +41,7 @@
 
 #include <machine/cpu.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 extern char *esym;				/* end of symbol table */
 #ifdef __sparc64__

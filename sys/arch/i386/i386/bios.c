@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.46 2001/09/19 20:50:56 mickey Exp $	*/
+/*	$OpenBSD: bios.c,v 1.47 2001/11/06 19:53:14 miod Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -43,7 +43,6 @@
 #include <sys/reboot.h>
 #include <sys/extent.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbicdma.c,v 1.5 2001/06/08 08:09:07 art Exp $ */
+/*	$OpenBSD: sbicdma.c,v 1.6 2001/11/06 19:53:15 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -43,7 +43,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

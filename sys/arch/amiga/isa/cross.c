@@ -1,4 +1,4 @@
-/*	$OpenBSD: cross.c,v 1.17 2001/09/19 20:50:56 mickey Exp $	*/
+/*	$OpenBSD: cross.c,v 1.18 2001/11/06 19:53:14 miod Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Niklas Hallqvist, Carsten Hammer
@@ -37,7 +37,6 @@
 #include <sys/syslog.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>

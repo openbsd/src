@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.9 2001/11/05 17:25:58 art Exp $	*/
+/*	$OpenBSD: aac.c,v 1.10 2001/11/06 19:53:18 miod Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -51,7 +51,7 @@
 
 #include <machine/bus.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>

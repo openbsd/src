@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.11 2001/10/31 11:00:24 art Exp $ */
+/*	$OpenBSD: auvia.c,v 1.12 2001/11/06 19:53:19 miod Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -53,7 +53,7 @@
 #include <sys/device.h>
 #include <sys/audioio.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

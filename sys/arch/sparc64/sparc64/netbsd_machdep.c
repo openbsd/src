@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_machdep.c,v 1.1 2001/09/06 10:45:41 art Exp $	*/
+/*	$OpenBSD: netbsd_machdep.c,v 1.2 2001/11/06 19:53:16 miod Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include <sys/user.h>
 #include <machine/cpu.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <compat/netbsd/netbsd_types.h>
 #include <compat/netbsd/netbsd_signal.h>

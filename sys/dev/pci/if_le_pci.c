@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_pci.c,v 1.17 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: if_le_pci.c,v 1.18 2001/11/06 19:53:19 miod Exp $	*/
 /*	$NetBSD: if_le_pci.c,v 1.13 1996/10/25 21:33:32 cgd Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -58,8 +58,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.10 2001/08/31 03:13:42 mickey Exp $	*/
+/*	$OpenBSD: clock.c,v 1.11 2001/11/06 19:53:14 miod Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -46,7 +46,7 @@
 #include <machine/autoconf.h>
 
 #if defined(DDB)
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>

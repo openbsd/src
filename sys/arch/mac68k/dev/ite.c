@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.18 2001/06/08 08:08:59 art Exp $	*/
+/*	$OpenBSD: ite.c,v 1.19 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: ite.c,v 1.32 1997/02/20 00:23:25 scottr Exp $	*/
 
 /*
@@ -76,8 +76,8 @@
 #include <machine/iteioctl.h>
 #include <machine/grfioctl.h>
 
-#include <vm/vm.h>
-#include <vm/pmap.h>
+#include <uvm/uvm_extern.h>
+#include <uvm/uvm_pmap.h>
 
 #include "../mac68k/macrom.h"
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.32 2000/11/22 16:01:37 art Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.33 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -56,7 +56,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>

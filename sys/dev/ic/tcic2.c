@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2.c,v 1.1 2000/05/15 04:17:28 jason Exp $	*/
+/*	$OpenBSD: tcic2.c,v 1.2 2001/11/06 19:53:18 miod Exp $	*/
 /*	$NetBSD: tcic2.c,v 1.3 2000/01/13 09:38:17 joda Exp $	*/
 
 #undef	TCICDEBUG
@@ -41,7 +41,7 @@
 #include <sys/malloc.h>
 #include <sys/kthread.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

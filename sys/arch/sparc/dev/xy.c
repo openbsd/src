@@ -1,4 +1,4 @@
-/*	$OpenBSD: xy.c,v 1.16 2001/09/11 20:05:24 miod Exp $	*/
+/*	$OpenBSD: xy.c,v 1.17 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: xy.c,v 1.26 1997/07/19 21:43:56 pk Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
 #include <sys/conf.h>
 #include <sys/timeout.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/sun_disklabel.h>

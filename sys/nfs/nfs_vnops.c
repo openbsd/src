@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.37 2001/07/26 20:24:47 millert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.38 2001/11/06 19:53:21 miod Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>

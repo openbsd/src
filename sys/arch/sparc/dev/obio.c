@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.8 1998/10/14 02:23:45 deraadt Exp $	*/
+/*	$OpenBSD: obio.c,v 1.9 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: obio.c,v 1.37 1997/07/29 09:58:11 fair Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #include <sys/syslog.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/pmap.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cg2.c,v 1.8 2001/11/01 12:13:46 art Exp $	*/
+/*	$OpenBSD: cg2.c,v 1.9 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: cg2.c,v 1.7 1996/10/13 03:47:26 christos Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/conf.h>
 #include <machine/fbio.h>

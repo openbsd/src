@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.3 2001/09/19 20:50:57 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.4 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -56,7 +56,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>

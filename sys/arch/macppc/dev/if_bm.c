@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.4 2001/09/16 03:19:30 drahn Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.5 2001/11/06 19:53:15 miod Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 #include <net/bpfdesc.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

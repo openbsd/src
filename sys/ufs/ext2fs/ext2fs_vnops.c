@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.16 2001/07/26 20:24:47 millert Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.17 2001/11/06 19:53:21 miod Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -59,8 +59,6 @@
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/signalvar.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.34 2001/11/05 22:26:57 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.35 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -48,8 +48,6 @@
 #include <machine/psl.h>
 #include <machine/trap.h>
 #include <machine/db_machdep.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

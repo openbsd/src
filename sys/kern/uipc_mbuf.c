@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.41 2001/09/12 00:23:33 art Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.42 2001/11/06 19:53:20 miod Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -62,8 +62,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/pool.h>
 
 #include <machine/cpu.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

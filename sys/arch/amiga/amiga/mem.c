@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.15 2001/11/01 12:13:45 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.16 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 1997/02/02 07:17:14 thorpej Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 
 #include <machine/cpu.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 extern int kernel_reload_write(struct uio *uio);

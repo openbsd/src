@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.16 2001/11/01 12:13:46 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.17 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.25 1999/03/27 00:30:06 mycroft Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 
 #include <machine/cpu.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 extern u_int lowram;

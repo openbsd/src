@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit_43.c,v 1.3 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: kern_exit_43.c,v 1.4 2001/11/06 19:53:17 miod Exp $	*/
 /*	$NetBSD: kern_exit_43.c,v 1.3 1995/10/07 06:26:20 mycroft Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 #include <machine/psl.h>
 #include <compat/common/compat_util.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #ifdef m68k
 #include <machine/frame.h>
 #define GETPS(rp)	((struct frame *)(rp))->f_sr

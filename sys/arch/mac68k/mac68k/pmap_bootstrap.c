@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.14 2001/05/08 17:30:41 aaron Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.15 2001/11/06 19:53:15 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -45,7 +45,7 @@
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <mac68k/mac68k/clockreg.h>

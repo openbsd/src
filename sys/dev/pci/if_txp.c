@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.58 2001/11/05 17:25:58 art Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.59 2001/11/06 19:53:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -73,7 +73,7 @@
 #include <net/if_vlan_var.h>
 #endif
 
-#include <vm/vm.h>              /* for vtophys */
+#include <uvm/uvm_extern.h>              /* for vtophys */
 #include <machine/bus.h>
 
 #include <dev/mii/mii.h>

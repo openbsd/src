@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isapnp.c,v 1.7 1999/03/08 11:17:08 deraadt Exp $	*/
+/*	$OpenBSD: if_le_isapnp.c,v 1.8 2001/11/06 19:53:19 miod Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@
 #include <netinet/if_ether.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_subr.c,v 1.9 2001/06/27 04:58:44 art Exp $	*/
+/*	$OpenBSD: union_subr.c,v 1.10 2001/11/06 19:53:20 miod Exp $	*/
 /*	$NetBSD: union_subr.c,v 1.18 1996/02/09 22:41:10 christos Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 #include <sys/queue.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
-#include <vm/vm.h>		/* for vnode_pager_setsize */
+#include <uvm/uvm_extern.h>		/* for vnode_pager_setsize */
 #include <miscfs/union/union.h>
 
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.16 2001/07/04 08:43:29 niklas Exp $ */
+/*	$OpenBSD: intr.c,v 1.17 2001/11/06 19:53:16 miod Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -50,7 +50,7 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.41 2001/09/19 21:32:19 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.42 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -68,7 +68,7 @@
 
 #include <dev/cons.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bsd_openprom.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fga.c,v 1.4 2000/03/22 04:33:44 jason Exp $	*/
+/*	$OpenBSD: fga.c,v 1.5 2001/11/06 19:53:16 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -48,7 +48,7 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <machine/pmap.h>
 
 #include <machine/autoconf.h>

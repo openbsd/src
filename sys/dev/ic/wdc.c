@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.42 2001/08/23 13:23:28 art Exp $     */
+/*      $OpenBSD: wdc.c,v 1.43 2001/11/06 19:53:18 miod Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -77,7 +77,7 @@
 #include <sys/syslog.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

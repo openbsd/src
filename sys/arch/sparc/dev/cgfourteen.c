@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.7 2001/11/01 12:13:46 art Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.8 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -88,7 +88,7 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/fbio.h>
 #include <machine/autoconf.h>

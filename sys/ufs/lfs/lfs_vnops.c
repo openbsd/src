@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_vnops.c,v 1.5 1997/05/30 08:34:51 downsj Exp $	*/
+/*	$OpenBSD: lfs_vnops.c,v 1.6 2001/11/06 19:53:21 miod Exp $	*/
 /*	$NetBSD: lfs_vnops.c,v 1.11 1996/05/11 18:27:41 mycroft Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>

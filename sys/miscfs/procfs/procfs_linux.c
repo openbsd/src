@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_linux.c,v 1.3 2001/06/27 04:58:43 art Exp $	*/
+/*	$OpenBSD: procfs_linux.c,v 1.4 2001/11/06 19:53:20 miod Exp $	*/
 /*      $NetBSD: procfs_linux.c,v 1.2.4.1 2001/03/30 21:48:11 he Exp $      */
 
 /*
@@ -45,7 +45,6 @@
 
 #include <miscfs/procfs/procfs.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #define PGTOB(p)	((unsigned long)(p) << PAGE_SHIFT)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.105 2001/11/05 17:25:58 art Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.106 2001/11/06 19:53:19 miod Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -48,7 +48,7 @@
 #include <sys/mbuf.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <crypto/cryptodev.h>
 #include <dev/rndvar.h>

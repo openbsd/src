@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.6 1997/10/07 10:57:37 niklas Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.7 2001/11/06 19:53:13 miod Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.7 1997/06/10 18:24:34 veego Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbic.c,v 1.13 2001/11/06 01:47:02 art Exp $	*/
+/*	$OpenBSD: sbic.c,v 1.14 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: sbic.c,v 1.28 1996/10/13 03:07:29 christos Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
 #include <amiga/amiga/cc.h>
 #include <amiga/dev/zbusvar.h>
 
-#include <vm/pmap.h>
+#include <uvm/uvm_pmap.h>
 
 /* Since I can't find this in any other header files */
 #define SCSI_PHASE(reg)	(reg&0x07)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qd.c,v 1.1 2000/04/27 03:14:48 bjc Exp $	*/
+/*	$OpenBSD: qd.c,v 1.2 2001/11/06 19:53:17 miod Exp $	*/
 /*	$NetBSD: qd.c,v 1.17 2000/01/24 02:40:29 matt Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@
 #include <sys/poll.h>
 #include <sys/buf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.14 2001/06/27 04:49:44 art Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.15 2001/11/06 19:53:20 miod Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -51,8 +51,6 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -653,7 +653,7 @@
 #define HAVE_UVM_UVM_EXTERN_H 1
 
 /* Define if you have the <vm/vm.h> header file.  */
-#define HAVE_VM_VM_H 1
+/* #undef HAVE_VM_VM_H */
 
 /* Define if you have the <vm/vm_extern.h> header file.  */
 /* #undef HAVE_VM_VM_EXTERN_H */
@@ -662,7 +662,7 @@
 /* #undef HAVE_VM_VM_OBJECT_H */
 
 /* Define if you have the <vm/vm_pager.h> header file.  */
-#define HAVE_VM_VM_PAGER_H 1
+/* #undef HAVE_VM_VM_PAGER_H */
 
 /* Define if you have the <vm/vm_zone.h> header file.  */
 /* #undef HAVE_VM_VM_ZONE_H */

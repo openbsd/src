@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.14 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.15 2001/11/06 19:53:17 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1999/06/30 18:48:06 ragge Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/macros.h>
 #include <machine/pte.h>

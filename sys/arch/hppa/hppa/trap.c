@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.30 2001/09/19 20:50:56 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.31 2001/11/06 19:53:14 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -47,7 +47,6 @@
 
 #include <net/netisr.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm.h>
 
 #include <machine/iomod.h>

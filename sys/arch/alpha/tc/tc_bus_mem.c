@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc_bus_mem.c,v 1.10 1997/07/19 20:44:19 niklas Exp $	*/
+/*	$OpenBSD: tc_bus_mem.c,v 1.11 2001/11/06 19:53:13 miod Exp $	*/
 /*	$NetBSD: tc_bus_mem.c,v 1.13 1996/12/02 22:19:34 cgd Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <dev/tc/tcvar.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: tsp_bus_io.c,v 1.1 2000/11/16 04:50:18 ericj Exp $ */
+/* $OpenBSD: tsp_bus_io.c,v 1.2 2001/11/06 19:53:13 miod Exp $ */
 /* $NetBSD: tsp_bus_io.c,v 1.4 2000/06/26 19:46:24 thorpej Exp $ */
 
 /*-
@@ -38,7 +38,6 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>

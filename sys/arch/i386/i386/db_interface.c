@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.8 2000/07/05 14:26:34 hugh Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.9 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /* 
@@ -37,7 +37,7 @@
 #include <sys/reboot.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 

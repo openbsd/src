@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_2100_a50.c,v 1.15 2001/08/17 22:43:19 mickey Exp $	*/
+/*	$OpenBSD: pci_2100_a50.c,v 1.16 2001/11/06 19:53:13 miod Exp $	*/
 /*	$NetBSD: pci_2100_a50.c,v 1.12 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>

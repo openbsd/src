@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_exec.c,v 1.17 2001/09/19 13:28:43 art Exp $	*/
+/*	$OpenBSD: linux_exec.c,v 1.18 2001/11/06 19:53:17 miod Exp $	*/
 /*	$NetBSD: linux_exec.c,v 1.13 1996/04/05 00:01:10 christos Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 #include <sys/mman.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>

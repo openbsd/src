@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 2001/09/19 20:50:57 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -104,7 +104,6 @@
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm.h>
 
 #include <sys/sysctl.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 2001/11/06 18:41:09 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.24 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
@@ -56,11 +56,9 @@
 #include <sys/ktrace.h>
 #endif
 
-#include <vm/vm.h>
 #include <sys/user.h>
-#include <vm/pmap.h>
-
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_pmap.h>
 
 #include <machine/psl.h>
 #include <machine/trap.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_usrreq.c,v 1.9 2001/09/23 10:22:13 mickey Exp $	*/
+/*	$OpenBSD: ipx_usrreq.c,v 1.10 2001/11/06 19:53:21 miod Exp $	*/
 
 /*-
  *
@@ -52,7 +52,7 @@
 #include <sys/errno.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>

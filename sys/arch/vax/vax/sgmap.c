@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgmap.c,v 1.5 2001/07/05 10:00:41 art Exp $	*/
+/*	$OpenBSD: sgmap.c,v 1.6 2001/11/06 19:53:17 miod Exp $	*/
 /* $NetBSD: sgmap.c,v 1.8 2000/06/29 07:14:34 mrg Exp $ */
 
 /*-
@@ -44,7 +44,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/sgmap.h>

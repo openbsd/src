@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 2001/09/19 20:50:57 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.24 2001/11/06 19:53:15 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -52,8 +52,6 @@
 #include <sys/syscall.h>
 #include <sys/systm.h>
 #include <sys/ktrace.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

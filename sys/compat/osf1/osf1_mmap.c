@@ -1,4 +1,4 @@
-/* $OpenBSD: osf1_mmap.c,v 1.3 2001/06/27 04:58:41 art Exp $ */
+/* $OpenBSD: osf1_mmap.c,v 1.4 2001/11/06 19:53:17 miod Exp $ */
 /* $NetBSD: osf1_mmap.c,v 1.5 2000/04/11 05:26:27 chs Exp $ */
 
 /*
@@ -37,7 +37,6 @@
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <vm/vm.h>
 #include <uvm/uvm.h>
 
 #include <compat/osf1/osf1.h>

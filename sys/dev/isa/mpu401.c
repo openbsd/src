@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu401.c,v 1.4 1999/08/05 05:32:40 deraadt Exp $	*/
+/*	$OpenBSD: mpu401.c,v 1.5 2001/11/06 19:53:19 miod Exp $	*/
 /*	$NetBSD: mpu401.c,v 1.3 1998/11/25 22:17:06 augustss Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>

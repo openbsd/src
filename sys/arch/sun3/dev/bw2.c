@@ -1,4 +1,4 @@
-/*	$OpenBSD: bw2.c,v 1.9 2001/11/01 12:13:46 art Exp $	*/
+/*	$OpenBSD: bw2.c,v 1.10 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: bw2.c,v 1.8 1996/10/13 03:47:25 christos Exp $	*/
 
 /*
@@ -60,7 +60,7 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/conf.h>
 #include <machine/cpu.h>

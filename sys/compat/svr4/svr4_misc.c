@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.35 2001/08/28 18:25:14 jason Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.36 2001/11/06 19:53:18 miod Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -88,8 +88,6 @@
 #include <compat/svr4/svr4_acl.h>
 
 #include <compat/common/compat_dir.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

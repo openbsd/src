@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgdb_machdep.c,v 1.3 2001/07/04 08:43:29 niklas Exp $ */
+/*	$OpenBSD: kgdb_machdep.c,v 1.4 2001/11/06 19:53:16 miod Exp $ */
 /*	$NetBSD: kgdb_machdep.c,v 1.1 1997/08/31 21:22:45 pk Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
 #include <sys/buf.h>
 #include <sys/kgdb.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/ctlreg.h>
 #include <machine/psl.h>

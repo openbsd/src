@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.c,v 1.21 2001/09/19 20:50:56 mickey Exp $	*/
+/*	$OpenBSD: nubus.c,v 1.22 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: nubus.c,v 1.35 1997/04/22 20:20:32 scottr Exp $	*/
 
 /*
@@ -37,7 +37,6 @@
 #include <sys/conf.h>
 #include <sys/dmap.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>

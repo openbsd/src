@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fpa.c,v 1.16 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: if_fpa.c,v 1.17 2001/11/06 19:53:19 miod Exp $	*/
 /*	$NetBSD: if_fpa.c,v 1.15 1996/10/21 22:56:40 thorpej Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@
 #endif
 #include <net/if_fddi.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.h,v 1.6 2001/08/26 14:31:07 miod Exp $ */
+/*	$OpenBSD: m88110.h,v 1.7 2001/11/06 19:53:15 miod Exp $ */
 
 #ifndef	__MACHINE_M88110_H__
 #define	__MACHINE_M88110_H__
@@ -9,7 +9,7 @@
 
 #include <machine/board.h>
 #include <machine/cmmu.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 /*
  *	88110 CMMU definitions

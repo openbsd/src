@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_output.c,v 1.15 2001/07/04 23:14:53 espie Exp $	*/
+/*	$OpenBSD: db_output.c,v 1.16 2001/11/06 19:53:18 miod Exp $	*/
 /*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
 
 /* 
@@ -37,7 +37,7 @@
 
 #include <dev/cons.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.14 2001/08/25 10:13:29 art Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.15 2001/11/06 19:53:19 miod Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -64,7 +64,7 @@
 #include <net/bpf.h>
 #endif
 
-#include <vm/vm.h>              /* for vtophys */
+#include <uvm/uvm_extern.h>              /* for vtophys */
 
 #include <sys/device.h>
 

@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.40 2000/01/07 23:08:17 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.32 2001/11/05 17:25:58 art Exp $
+ * $OpenBSD: aic7xxx.c,v 1.33 2001/11/06 19:53:18 miod Exp $
  */
 /*
  * A few notes on features of the driver.
@@ -100,7 +100,7 @@
 #include <scsi/scsi_debug.h>
 #include <scsi/scsiconf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/ic/aic7xxxreg.h>
 #include <dev/ic/aic7xxxvar.h>

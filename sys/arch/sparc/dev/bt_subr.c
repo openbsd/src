@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_subr.c,v 1.5 2001/05/10 10:34:42 art Exp $	*/
+/*	$OpenBSD: bt_subr.c,v 1.6 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: bt_subr.c,v 1.5 1996/03/14 19:44:32 christos Exp $ */
 
 /*
@@ -50,7 +50,7 @@
 #include <sys/buf.h>
 #include <sys/errno.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/fbio.h>
 

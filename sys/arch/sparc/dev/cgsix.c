@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.16 2001/11/01 12:13:46 art Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.17 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -69,7 +69,7 @@
 #include <sys/syslog.h>
 #endif
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/pmap.h>

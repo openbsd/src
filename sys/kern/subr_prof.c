@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.8 2001/09/19 20:50:59 mickey Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.9 2001/11/06 19:53:20 miod Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -49,7 +49,6 @@
 #ifdef GPROF
 #include <sys/malloc.h>
 #include <sys/gmon.h>
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 /*

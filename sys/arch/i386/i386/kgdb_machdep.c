@@ -1,4 +1,4 @@
-/*	$OpenBSD: kgdb_machdep.c,v 1.1 2001/01/24 09:37:58 hugh Exp $	*/
+/*	$OpenBSD: kgdb_machdep.c,v 1.2 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: kgdb_machdep.c,v 1.6 1998/08/13 21:36:03 thorpej Exp $	*/
 
 /*-
@@ -82,7 +82,7 @@
 #include <sys/kgdb.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/reg.h>

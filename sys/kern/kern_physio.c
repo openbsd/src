@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_physio.c,v 1.13 2001/06/27 04:49:44 art Exp $	*/
+/*	$OpenBSD: kern_physio.c,v 1.14 2001/11/06 19:53:20 miod Exp $	*/
 /*	$NetBSD: kern_physio.c,v 1.28 1997/05/19 10:43:28 pk Exp $	*/
 
 /*-
@@ -48,8 +48,6 @@
 #include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

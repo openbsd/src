@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.21 2001/06/27 04:58:42 art Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.22 2001/11/06 19:53:20 miod Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -60,7 +60,6 @@
 #include <sys/msgbuf.h>
 #include <miscfs/kernfs/kernfs.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #define KSTRING	256		/* Largest I/O available via this filesystem */

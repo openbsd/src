@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.38 2001/08/12 20:33:50 mickey Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.39 2001/11/06 19:53:17 miod Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
 
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_fcntl.h>

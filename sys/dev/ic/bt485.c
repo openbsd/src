@@ -1,4 +1,4 @@
-/* $OpenBSD: bt485.c,v 1.6 2001/06/27 04:45:58 art Exp $ */
+/* $OpenBSD: bt485.c,v 1.7 2001/11/06 19:53:18 miod Exp $ */
 /* $NetBSD: bt485.c,v 1.2 2000/04/02 18:55:01 nathanw Exp $ */
 
 /*
@@ -39,7 +39,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/ic/bt485reg.h>

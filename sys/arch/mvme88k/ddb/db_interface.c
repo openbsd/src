@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.15 2001/09/23 02:52:02 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.16 2001/11/06 19:53:15 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -35,7 +35,7 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/m882xx.h>		 /* CMMU defs		        */
 #include <machine/trap.h>		 /* current_thread()            */

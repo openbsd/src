@@ -1,4 +1,4 @@
-/*	$OpenBSD: intreg.c,v 1.8 2001/06/27 04:44:02 art Exp $	*/
+/*	$OpenBSD: intreg.c,v 1.9 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: intreg.c,v 1.5 1996/11/20 18:57:32 gwr Exp $	*/
 
 /*-
@@ -54,8 +54,6 @@
 #include <machine/machdep.h>
 #include <machine/mon.h>
 #include <machine/obio.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

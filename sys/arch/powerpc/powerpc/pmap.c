@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.46 2001/11/06 02:53:57 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.47 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -38,8 +38,6 @@
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/pool.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm.h>
 

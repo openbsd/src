@@ -1,4 +1,4 @@
-/*	$OpenBSD: irongate_dma.c,v 1.3 2001/11/05 02:41:02 art Exp $	*/
+/*	$OpenBSD: irongate_dma.c,v 1.4 2001/11/06 19:53:13 miod Exp $	*/
 /* $NetBSD: irongate_dma.c,v 1.3 2000/06/29 08:58:47 mrg Exp $ */
 
 /*-
@@ -62,7 +62,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>

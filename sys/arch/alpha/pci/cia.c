@@ -1,4 +1,4 @@
-/* $OpenBSD: cia.c,v 1.15 2001/11/04 23:12:46 art Exp $ */
+/* $OpenBSD: cia.c,v 1.16 2001/11/06 19:53:13 miod Exp $ */
 /* $NetBSD: cia.c,v 1.56 2000/06/29 08:58:45 mrg Exp $ */
 
 /*-
@@ -70,7 +70,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.4 2001/09/11 20:05:24 miod Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.5 2001/11/06 19:53:15 miod Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -50,7 +50,6 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
-#include <vm/vm.h>
 #include <uvm/uvm.h>
 
 #include <machine/autoconf.h>

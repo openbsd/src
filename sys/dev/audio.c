@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.31 2001/11/01 12:13:46 art Exp $	*/
+/*	$OpenBSD: audio.c,v 1.32 2001/11/06 19:53:18 miod Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -85,7 +85,7 @@
 
 #include <dev/rndvar.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/endian.h>
 

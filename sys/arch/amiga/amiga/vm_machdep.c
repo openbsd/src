@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.24 2001/11/06 18:41:09 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.25 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/05/19 10:14:50 veego Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 
 #include <machine/cpu.h>
 
-#include <vm/vm.h>
 #include <sys/user.h>
 #include <uvm/uvm_extern.h>
 #include <machine/pte.h>

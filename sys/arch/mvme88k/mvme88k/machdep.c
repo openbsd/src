@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.62 2001/10/28 00:59:02 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.63 2001/11/06 19:53:15 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -95,7 +95,6 @@
 
 #include <dev/cons.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <mvme88k/dev/sysconreg.h>

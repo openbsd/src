@@ -77,7 +77,6 @@
 #include <net/bpfdesc.h>
 #endif
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>

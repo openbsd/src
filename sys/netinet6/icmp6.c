@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.47 2001/06/27 03:49:54 angelos Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.48 2001/11/06 19:53:20 miod Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -2898,7 +2898,7 @@ icmp6_redirect_timeout(rt, r)
 	}
 }
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 int
 icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)

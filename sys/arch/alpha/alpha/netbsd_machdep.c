@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_machdep.c,v 1.5 2001/09/05 23:39:13 art Exp $	*/
+/*	$OpenBSD: netbsd_machdep.c,v 1.6 2001/11/06 19:53:13 miod Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -39,7 +39,7 @@
 #include <sys/user.h>
 #include <machine/cpu.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <compat/netbsd/netbsd_types.h>
 #include <compat/netbsd/netbsd_signal.h>

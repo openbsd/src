@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.33 2001/07/16 18:25:43 millert Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.34 2001/11/06 19:53:20 miod Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -54,8 +54,6 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/cdio.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

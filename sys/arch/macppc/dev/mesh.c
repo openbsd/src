@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesh.c,v 1.2 2001/09/15 01:51:11 mickey Exp $	*/
+/*	$OpenBSD: mesh.c,v 1.3 2001/11/06 19:53:15 miod Exp $	*/
 /*	$NetBSD: mesh.c,v 1.1 1999/02/19 13:06:03 tsubai Exp $	*/
 
 /*-
@@ -41,8 +41,7 @@
 #include <sys/queue.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
-
+#include <uvm/uvm_extern.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.7 2001/04/05 20:39:40 deraadt Exp $ */
+/*	$OpenBSD: pmap_bootstrap.c,v 1.8 2001/11/06 19:53:15 miod Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -76,7 +76,7 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #define RELOC(v, t)	*((t*)((u_int)&(v) + firstpa))
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.10 2001/10/24 16:56:56 mickey Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.11 2001/11/06 19:53:18 miod Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -114,7 +114,7 @@
 #include <net/bpf.h>
 #endif
 
-#include <vm/vm.h>	/* for vtophys */
+#include <uvm/uvm_extern.h>	/* for vtophys */
 #include <machine/bus.h>
 
 #include <dev/mii/mii.h>

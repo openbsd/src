@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_alloc.c,v 1.7 1999/01/11 05:12:38 millert Exp $	*/
+/*	$OpenBSD: lfs_alloc.c,v 1.8 2001/11/06 19:53:21 miod Exp $	*/
 /*	$NetBSD: lfs_alloc.c,v 1.4 1996/03/25 12:53:37 pk Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 #include <sys/mount.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>

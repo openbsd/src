@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.5 2001/02/16 19:20:13 mickey Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.6 2001/11/06 19:53:14 miod Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -33,7 +33,7 @@
 #ifndef	_MACHINE_DB_MACHDEP_H_
 #define	_MACHINE_DB_MACHDEP_H_
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #define	DB_ELF_SYMBOLS
 #define	DB_ELFSIZE	32

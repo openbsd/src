@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vfsops.c,v 1.15 2001/06/27 04:58:42 art Exp $	*/
+/*	$OpenBSD: kernfs_vfsops.c,v 1.16 2001/11/06 19:53:20 miod Exp $	*/
 /*	$NetBSD: kernfs_vfsops.c,v 1.26 1996/04/22 01:42:27 christos Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <sys/namei.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>	/* for uvmexp */
 
 #include <miscfs/specfs/specdev.h>

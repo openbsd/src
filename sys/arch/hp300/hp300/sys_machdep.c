@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.10 2001/11/04 02:58:54 miod Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.11 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.17 1997/05/19 10:15:00 veego Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #include <sys/buf.h>
 #include <sys/mount.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sys/syscallargs.h>
 

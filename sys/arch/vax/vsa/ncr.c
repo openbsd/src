@@ -1,4 +1,4 @@
-/* $OpenBSD: ncr.c,v 1.11 2001/09/11 20:05:25 miod Exp $ */
+/* $OpenBSD: ncr.c,v 1.12 2001/11/06 19:53:17 miod Exp $ */
 /*	$NetBSD: ncr.c,v 1.32 2000/06/25 16:00:43 ragge Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_debug.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_misc.c,v 1.21 2001/10/31 10:56:11 art Exp $	*/
+/*	$OpenBSD: ultrix_misc.c,v 1.22 2001/11/06 19:53:18 miod Exp $	*/
 /*	$NetBSD: ultrix_misc.c,v 1.23 1996/04/07 17:23:04 jonathan Exp $	*/
 
 /*
@@ -123,7 +123,7 @@
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sys/conf.h>					/* iszerodev() */
 #include <sys/socketvar.h>				/* sosetopt() */

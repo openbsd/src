@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.11 2001/03/04 19:19:43 niklas Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.12 2001/11/06 19:53:13 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -33,7 +33,7 @@
 #define	_ALPHA_DB_MACHDEP_H_
 
 /* XXX - Need to include vm.h for boolean_t */
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #define DB_MACHINE_COMMANDS
 

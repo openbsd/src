@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.10 1997/09/18 13:39:43 niklas Exp $	*/
+/*	$OpenBSD: clock.c,v 1.11 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.25 1997/01/02 20:59:42 is Exp $	*/
 
 /*
@@ -403,7 +403,7 @@ clkread()
 #include <sys/resourcevar.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <amiga/amiga/clockioctl.h>
 #include <sys/specdev.h>
 #include <sys/vnode.h>

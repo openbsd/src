@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.3 2001/10/02 14:57:09 jason Exp $	*/
+/*	$OpenBSD: clock.c,v 1.4 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -75,7 +75,6 @@
 #endif
 #include <sys/sched.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka630.c,v 1.6 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: ka630.c,v 1.7 2001/11/06 19:53:17 miod Exp $	*/
 /*	$NetBSD: ka630.c,v 1.17 1999/09/06 19:52:52 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
@@ -42,7 +42,7 @@
 #include <sys/time.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/pmap.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.4 2001/11/01 12:13:46 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.5 2001/11/06 19:53:16 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 2001/04/24 04:31:12 thorpej Exp $ */
 
 /*
@@ -57,7 +57,6 @@
 #include <machine/conf.h>
 #include <machine/ctlreg.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 vaddr_t prom_vstart = 0xf000000;

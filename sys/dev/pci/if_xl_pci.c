@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.9 2001/08/25 10:13:29 art Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.10 2001/11/06 19:53:19 miod Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -71,7 +71,7 @@
 #include <net/bpf.h>
 #endif
 
-#include <vm/vm.h>              /* for vtophys */
+#include <uvm/uvm_extern.h>              /* for vtophys */
 
 /*
  * The following #define causes the code to use PIO to access the

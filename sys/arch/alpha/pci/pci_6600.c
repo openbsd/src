@@ -1,4 +1,4 @@
-/* $OpenBSD: pci_6600.c,v 1.5 2001/08/17 22:26:58 mickey Exp $ */
+/* $OpenBSD: pci_6600.c,v 1.6 2001/11/06 19:53:13 miod Exp $ */
 /* $NetBSD: pci_6600.c,v 1.5 2000/06/06 00:50:15 thorpej Exp $ */
 
 /*-
@@ -38,7 +38,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm.h>
 
 #include <machine/autoconf.h>

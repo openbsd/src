@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.7 2001/03/04 19:19:42 niklas Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.8 2001/11/06 19:53:13 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -35,7 +35,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/db_machdep.h>
 #include <machine/frame.h>

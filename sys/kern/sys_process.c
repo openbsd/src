@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.13 2001/06/27 04:49:47 art Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.14 2001/11/06 19:53:20 miod Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -65,7 +65,6 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/reg.h>

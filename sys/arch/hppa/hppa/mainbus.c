@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.14 2001/11/05 17:25:57 art Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.15 2001/11/06 19:53:14 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -41,9 +41,8 @@
 #include <sys/extent.h>
 #include <sys/mbuf.h>
 
-#include <vm/vm.h>
-#include <uvm/uvm_page.h>
 #include <uvm/uvm.h>
+#include <uvm/uvm_page.h>
 
 #include <machine/pdc.h>
 #include <machine/iomod.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.29 2001/10/31 10:56:10 art Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.30 2001/11/06 19:53:17 miod Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -101,7 +101,7 @@
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #ifdef sun3
 # include <machine/machdep.h>	/* for prototype of reboot2() */

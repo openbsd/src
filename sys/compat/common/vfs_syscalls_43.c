@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.15 2001/10/26 12:03:27 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.16 2001/11/06 19:53:17 miod Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <sys/pipe.h>
 

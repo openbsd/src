@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc_obio.c,v 1.1 1998/05/08 22:15:32 gene Exp $	*/
+/*	$OpenBSD: if_mc_obio.c,v 1.2 2001/11/06 19:53:14 miod Exp $	*/
 /*	$NetBSD: if_mc_obio.c,v 1.4 1998/01/13 19:24:54 scottr Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>

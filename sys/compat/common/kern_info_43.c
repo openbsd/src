@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_info_43.c,v 1.10 2001/06/27 04:58:41 art Exp $	*/
+/*	$OpenBSD: kern_info_43.c,v 1.11 2001/11/06 19:53:17 miod Exp $	*/
 /*	$NetBSD: kern_info_43.c,v 1.5 1996/02/04 02:02:22 christos Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <sys/mount.h>

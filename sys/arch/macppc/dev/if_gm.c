@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gm.c,v 1.3 2001/09/05 16:54:01 mickey Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.4 2001/11/06 19:53:15 miod Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.14 2001/07/22 11:29:46 wiz Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #include <sys/socket.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <net/if.h>
 #include <netinet/in.h>

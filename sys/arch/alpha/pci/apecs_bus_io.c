@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs_bus_io.c,v 1.5 2001/02/16 09:07:19 jason Exp $	*/
+/*	$OpenBSD: apecs_bus_io.c,v 1.6 2001/11/06 19:53:13 miod Exp $	*/
 /* $NetBSD: apecs_bus_io.c,v 1.8 1997/09/02 13:19:10 thorpej Exp $ */
 
 /*
@@ -34,7 +34,7 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ka670.c,v 1.2 2001/09/11 20:05:25 miod Exp $	*/
+/*	$OpenBSD: ka670.c,v 1.3 2001/11/06 19:53:17 miod Exp $	*/
 /*	$NetBSD: ka670.c,v 1.4 2000/03/13 23:52:35 soren Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
@@ -39,7 +39,7 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/pte.h>
 #include <machine/cpu.h>

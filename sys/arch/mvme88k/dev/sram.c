@@ -1,4 +1,4 @@
-/*	$OpenBSD: sram.c,v 1.3 2001/11/01 12:13:46 art Exp $ */
+/*	$OpenBSD: sram.c,v 1.4 2001/11/06 19:53:15 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -43,7 +43,7 @@
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
 #include <machine/mioctl.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 struct sramsoftc {
 	struct device	sc_dev;
