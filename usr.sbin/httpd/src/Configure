@@ -134,10 +134,10 @@ awk >>Makefile <$tmpfile '\
 #
 # Extract the rules.
 #
-RULE_WANTHSREGEX=`./helpers/CutRule WANTHSREGEX $file`
-RULE_STATUS=`./helpers/CutRule STATUS $file`
-RULE_SOCKS4=`./helpers/CutRule SOCKS4 $file`
-RULE_IRIXNIS=`./helpers/CutRule IRIXNIS $file`
+RULE_WANTHSREGEX=`sh ./helpers/CutRule WANTHSREGEX $file`
+RULE_STATUS=`sh ./helpers/CutRule STATUS $file`
+RULE_SOCKS4=`sh ./helpers/CutRule SOCKS4 $file`
+RULE_IRIXNIS=`sh ./helpers/CutRule IRIXNIS $file`
 
 #
 # Now we determine the OS/Platform automagically, thanks to
@@ -154,7 +154,7 @@ RULE_IRIXNIS=`./helpers/CutRule IRIXNIS $file`
 # add the required lines below.
 #
 
-PLAT=`./helpers/GuessOS`
+PLAT=`sh ./helpers/GuessOS`
 
 # Preset DBM_LIB. Can be overridden on a per-platform basis.
 
@@ -163,7 +163,7 @@ DBM_LIB="-ldbm"
 #
 # Look for ranlib. Do it early in case we want to override it below
 #
-if ./helpers/PrintPath -s ranlib; then
+if sh ./helpers/PrintPath -s ranlib; then
     RANLIB="ranlib"
 else
     RANLIB="true"
@@ -177,7 +177,7 @@ fi
 for compilers in "gcc" "cc" "acc" "c89"
 do
     lookedfor="$lookedfor $compilers"
-    if ./helpers/PrintPath -s $compilers; then
+    if sh ./helpers/PrintPath -s $compilers; then
 	COMPILER="$compilers"
     	break
     fi
