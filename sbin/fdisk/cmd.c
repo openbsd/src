@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.14 1997/10/21 22:49:32 provos Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.15 1997/12/23 23:52:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -274,7 +274,7 @@ Xwrite(cmd, disk, mbr, tt, offset)
 }
 
 int
-Xexit(cmd, disk, r, tt, offset)
+Xquit(cmd, disk, r, tt, offset)
 	cmd_t *cmd;
 	disk_t *disk;
 	mbr_t *r;
@@ -302,7 +302,7 @@ Xabort(cmd, disk, mbr, tt, offset)
 
 
 int
-Xquit(cmd, disk, mbr, tt, offset)
+Xexit(cmd, disk, mbr, tt, offset)
 	cmd_t *cmd;
 	disk_t *disk;
 	mbr_t *mbr;

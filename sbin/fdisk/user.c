@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.11 1997/10/21 22:49:35 provos Exp $	*/
+/*	$OpenBSD: user.c,v 1.12 1997/12/23 23:53:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -59,8 +59,8 @@ static cmd_table_t cmd_table[] = {
 	{"select", Xselect,	"Select extended partition table entry MBR"},
 	{"print",  Xprint,	"Print loaded MBR partition table"},
 	{"write",  Xwrite,	"Write loaded MBR to disk"},
-	{"exit",   Xexit,	"Exit edit of current MBR, saving current changes"},
-	{"quit",   Xquit,	"Quit edit of current MBR, without saving changes"},
+	{"exit",   Xexit,	"Exit edit of current MBR, without saving changes"},
+	{"quit",   Xquit,	"Quit edit of current MBR, saving current changes"},
 	{"abort",  Xabort,	"Abort program without saving current changes"},
 	{NULL,     NULL,	NULL}
 };
