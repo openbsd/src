@@ -1,11 +1,8 @@
-/*	$OpenBSD: ranlib.c,v 1.4 1999/09/21 13:15:43 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.1 1999/09/21 13:15:43 espie Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Hugh Smith at The University of Guelph.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,63 +33,21 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1990 The Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
+/* misc.c */
+extern int tmp __P((void));
+extern void *emalloc __P((size_t));
+extern void badfmt __P((void));
+extern void error __P((const char *));
+extern const char *rname __P((const char *));
+extern char *tname;			/* temporary file "name" */
 
-#ifndef lint
-/*static char sccsid[] = "from: @(#)ranlib.c	5.6 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: ranlib.c,v 1.4 1999/09/21 13:15:43 espie Exp $";
-#endif /* not lint */
+/* touch.c */
+extern int touch __P((void));
+extern void settime __P((int));
 
-#include <sys/types.h>
-#include <dirent.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <archive.h>
-#include "extern.h"
+/* build.c */
+extern int build __P((void));
 
-CHDR chdr;
-u_int options;				/* UNUSED -- keep open_archive happy */
+/* main.c */
+extern char *archive;			/* archive name */
 
-char *archive;
-
-static void
-usage();
-
-int
-main(argc, argv)
-	int argc;
-	char **argv;
-{
-	int ch, eval, tflag;
-
-	tflag = 0;
-	while ((ch = getopt(argc, argv, "t")) != -1)
-		switch(ch) {
-		case 't':
-			tflag = 1;
-			break;
-		case '?':
-		default:
-			usage();
-		}
-	argc -= optind;
-	argv += optind;
-
-	if (!*argv)
-		usage();
-
-	for (eval = 0; archive = *argv++;)
-		eval |= tflag ? touch() : build();
-	exit(eval);
-}
-
-static void
-usage()
-{
-	(void)fprintf(stderr, "usage: ranlib [-t] archive ...\n");
-	exit(1);
-}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.4 1999/08/27 08:43:22 fgsch Exp $	*/
+/*	$OpenBSD: misc.c,v 1.5 1999/09/21 13:15:43 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)misc.c	5.2 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: misc.c,v 1.4 1999/08/27 08:43:22 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.5 1999/09/21 13:15:43 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,10 +49,11 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.4 1999/08/27 08:43:22 fgsch Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include "pathnames.h"
+#include "extern.h"
 
-extern char	*archive;			/* archive name */
-char		*tname = "temporary file";
+char *tname = "temporary file";
 
+int
 tmp()
 {
 	static char *envtmp;
@@ -80,40 +81,42 @@ tmp()
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 	if ((fd = mkstemp(path)) == -1)
 		error(tname);
-        (void)unlink(path);
+   	(void)unlink(path);
 	(void)sigprocmask(SIG_SETMASK, &oset, (sigset_t *)NULL);
 	return(fd);
 }
 
 void *
 emalloc(len)
-	int len;
+	size_t len;
 {
-	char *p;
+	void *p;
 
-	if (!(p = malloc((u_int)len)))
+	if (!(p = malloc(len)))
 		error(archive);
 	return(p);
 }
 
-char *
+const char *
 rname(path)
-	char *path;
+	const char *path;
 {
-	register char *ind;
+	register const char *ind;
 
 	return((ind = strrchr(path, '/')) ? ind + 1 : path);
 }
 
+void
 badfmt()
 {
 	errno = EFTYPE;
 	error(archive);
 }
 
+void
 error(name)
-	char *name;
+	const char *name;
 {
-	(void)fprintf(stderr, "ranlib: %s: %s\n", name, strerror(errno));
-	exit(1);
+
+	err(1, "%s", name);
 }

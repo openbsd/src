@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.2 1996/06/26 05:38:07 deraadt Exp $	*/
+/*	$OpenBSD: touch.c,v 1.3 1999/09/21 13:15:43 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)touch.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$OpenBSD: touch.c,v 1.2 1996/06/26 05:38:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: touch.c,v 1.3 1999/09/21 13:15:43 espie Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,10 +51,11 @@ static char rcsid[] = "$OpenBSD: touch.c,v 1.2 1996/06/26 05:38:07 deraadt Exp $
 #include <stdio.h>
 #include <string.h>
 #include <archive.h>
+#include "extern.h"
 
 extern CHDR chdr;			/* converted header */
-extern char *archive;			/* archive name */
 
+int
 touch()
 {
 	int afd;
@@ -72,6 +73,7 @@ touch()
 	return(0);
 }
 
+void
 settime(afd)
 	int afd;
 {
@@ -82,7 +84,7 @@ settime(afd)
 	size = SARMAG + sizeof(hdr->ar_name);
 	if (lseek(afd, size, SEEK_SET) == (off_t)-1)
 		error(archive);
-	(void)sprintf(buf, "%-12ld", time((time_t *)NULL) + RANLIBSKEW);
+	(void)sprintf(buf, "%-12ld", (long int)time((time_t *)NULL) + RANLIBSKEW);
 	if (write(afd, buf, sizeof(hdr->ar_date)) != sizeof(hdr->ar_date))
 		error(archive);
 }

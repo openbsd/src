@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.6 1999/05/10 16:14:07 espie Exp $	*/
+/*	$OpenBSD: build.c,v 1.7 1999/09/21 13:15:43 espie Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)build.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$OpenBSD: build.c,v 1.6 1999/05/10 16:14:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: build.c,v 1.7 1999/09/21 13:15:43 espie Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -52,14 +52,15 @@ static char rcsid[] = "$OpenBSD: build.c,v 1.6 1999/05/10 16:14:07 espie Exp $";
 #include <limits.h>
 #include <ranlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <archive.h>
+#include <err.h>
 #include "byte.c"
+#include "extern.h"
 
 
 extern CHDR chdr;			/* converted header */
-extern char *archive;			/* archive name */
-extern char *tname;			/* temporary file "name" */
 
 typedef struct _rlib {
 	struct _rlib *next;		/* next structure */
@@ -75,17 +76,16 @@ static long	tsymlen;		/* total string length */
 
 static int rexec();
 static void symobj();
-extern void	*emalloc();
 
+int
 build()
 {
 	CF cf;
 	int afd, tfd;
-	int check_mid;
 	int current_mid;
 	off_t size;
 
-	check_mid = 0;
+	current_mid = -1;
 	afd = open_archive(O_RDWR);
 	fp = fdopen(afd, "r+");
 	tfd = tmp();
@@ -103,11 +103,13 @@ build()
 			continue;
 		}
 		new_mid = rexec(afd, tfd);
-		if (check_mid && new_mid != current_mid)
-			errx(1, "Mixed object format archive: %d / %d", 
-				new_mid, current_mid);
-		current_mid = new_mid;
-		check_mid = 1;
+		if (new_mid != -1) {
+			if (current_mid == -1)
+				current_mid = new_mid;
+			else if (new_mid != current_mid)
+				errx(1, "Mixed object format archive: %d / %d", 
+					new_mid, current_mid);
+		}
 		put_arobj(&cf, (struct stat *)NULL);
 	}
 	*pnext = NULL;
@@ -133,6 +135,9 @@ build()
  * rexec
  *	Read the exec structure; ignore any files that don't look
  *	exactly right. Return MID.
+ * 	return -1 for files that don't look right.
+ *	XXX it's hard to be sure when to ignore files, and when to error
+ *	out.
  */
 static int
 rexec(rfd, wfd)
@@ -142,11 +147,13 @@ rexec(rfd, wfd)
 	register RLIB *rp;
 	register long nsyms;
 	register int nr, symlen;
-	register char *strtab, *sym;
+	register char *strtab = 0;
+	char *sym;
 	struct exec ebuf;
 	struct nlist nl;
 	off_t r_off, w_off;
 	long strsize;
+	int result = -1;
 
 	/* Get current offsets for original and tmp files. */
 	r_off = lseek(rfd, (off_t)0, SEEK_CUR);
@@ -155,37 +162,40 @@ rexec(rfd, wfd)
 	/* Read in exec structure. */
 	nr = read(rfd, (char *)&ebuf, sizeof(struct exec));
 	if (nr != sizeof(struct exec))
-		goto badread;
+		goto bad;
 
 	/* Check magic number and symbol count. */
 	if (BAD_OBJECT(ebuf) || ebuf.a_syms == 0)
-		goto bad1;
+		goto bad;
 	fix_header_order(&ebuf);
 
 	/* Seek to string table. */
-	if (lseek(rfd, N_STROFF(ebuf) + r_off, SEEK_SET) == (off_t)-1)
-		error(archive);
+	if (lseek(rfd, N_STROFF(ebuf) + r_off, SEEK_SET) == (off_t)-1) {
+		if (errno == EINVAL)
+			goto bad;
+		else
+			error(archive);
+	}
 
 	/* Read in size of the string table. */
 	nr = read(rfd, (char *)&strsize, sizeof(strsize));
 	if (nr != sizeof(strsize))
-		goto badread;
+		goto bad;
 
 	strsize = fix_long_order(strsize, N_GETMID(ebuf));
+
 	/* Read in the string table. */
 	strsize -= sizeof(strsize);
 	strtab = (char *)emalloc(strsize);
 	nr = read(rfd, strtab, strsize);
-	if (nr != strsize) {
-badread:	if (nr < 0)
-			error(archive);
-		goto bad2;
-	}
+	if (nr != strsize) 
+		goto bad;
 
 	/* Seek to symbol table. */
 	if (fseek(fp, N_SYMOFF(ebuf) + r_off, SEEK_SET) == (off_t)-1)
-		goto bad2;
+		goto bad;
 
+	result = N_GETMID(ebuf);
 	/* For each symbol read the nlist entry and save it as necessary. */
 	nsyms = ebuf.a_syms / sizeof(struct nlist);
 	while (nsyms--) {
@@ -194,7 +204,7 @@ badread:	if (nr < 0)
 				badfmt();
 			error(archive);
 		}
-	fix_nlist_order(&nl, N_GETMID(ebuf));
+		fix_nlist_order(&nl, N_GETMID(ebuf));
 
 		/* Ignore if no name or local. */
 		if (!nl.n_un.n_strx || !(nl.n_type & N_EXT))
@@ -225,9 +235,11 @@ badread:	if (nr < 0)
 		tsymlen += symlen;
 	}
 
-bad2:	free(strtab);
-bad1:	(void)lseek(rfd, (off_t)r_off, SEEK_SET);
-	return N_GETMID(ebuf);
+bad: 	if (nr < 0)
+		error(archive);
+	free(strtab);
+	(void)lseek(rfd, (off_t)r_off, SEEK_SET);
+	return result;
 }
 
 /*
