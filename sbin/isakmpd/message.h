@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.h,v 1.5 1998/12/21 01:02:26 niklas Exp $	*/
-/*	$EOM: message.h,v 1.38 1998/11/27 17:12:29 niklas Exp $	*/
+/*	$OpenBSD: message.h,v 1.6 1999/02/26 03:48:04 niklas Exp $	*/
+/*	$EOM: message.h,v 1.39 1999/02/06 15:03:40 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -155,6 +155,9 @@ struct message {
 
 /* The message has already been encrypted.  */
 #define MSG_ENCRYPTED	4
+
+/* The message is on the send queue.  */
+#define MSG_IN_TRANSIT	8
 
 extern int message_add_payload (struct message *, u_int8_t, u_int8_t *,
 				size_t, int);
