@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.25 1998/11/20 01:35:32 art Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.26 1998/12/04 15:57:01 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1853,6 +1853,7 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 		}
 		splx(s);
 	}
+	s = splbio();
 	for (;;) {
 		if ((blist = vp->v_cleanblkhd.lh_first) && 
 		    (flags & V_SAVEMETA))
@@ -1869,32 +1870,34 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 			nbp = bp->b_vnbufs.le_next;
 			if (flags & V_SAVEMETA && bp->b_lblkno < 0)
 				continue;
-			s = splbio();
 			if (bp->b_flags & B_BUSY) {
 				bp->b_flags |= B_WANTED;
 				error = tsleep((caddr_t)bp,
 					slpflag | (PRIBIO + 1), "vinvalbuf",
 					slptimeo);
-				splx(s);
-				if (error)
+				if (error) {
+					splx(s);
 					return (error);
+				}
 				break;
 			}
 			bp->b_flags |= B_BUSY | B_VFLUSH;
-			splx(s);
 			/*
 			 * XXX Since there are no node locks for NFS, I believe
 			 * there is a slight chance that a delayed write will
 			 * occur while sleeping just above, so check for it.
 			 */
 			if ((bp->b_flags & B_DELWRI) && (flags & V_SAVE)) {
+				splx(s);
 				(void) VOP_BWRITE(bp);
+				s = splbio();
 				break;
 			}
 			bp->b_flags |= B_INVAL;
 			brelse(bp);
 		}
 	}
+	splx(s);
 	if (!(flags & V_SAVEMETA) &&
 	    (vp->v_dirtyblkhd.lh_first || vp->v_cleanblkhd.lh_first))
 		panic("vinvalbuf: flush failed");
