@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.109 2004/04/13 00:15:28 tedu Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.110 2004/05/10 22:36:21 pedro Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -154,7 +154,8 @@ sys_mount(p, v, retval)
 		}
 		/*
 		 * Do not allow NFS export by non-root users. Silently
-		 * enforce MNT_NOSUID and MNT_NODEV for non-root users.
+		 * enforce MNT_NOSUID and MNT_NODEV for non-root users, and
+		 * inherit MNT_NOEXEC from the mount point.
 		 */
 		if (p->p_ucred->cr_uid != 0) {
 			if (SCARG(uap, flags) & MNT_EXPORTED) {
@@ -162,6 +163,8 @@ sys_mount(p, v, retval)
 				return (EPERM);
 			}
 			SCARG(uap, flags) |= MNT_NOSUID | MNT_NODEV;
+			if (flag & MNT_NOEXEC)
+				SCARG(uap, flags) |= MNT_NOEXEC;
 		}
 		if ((error = vfs_busy(mp, LK_NOWAIT, 0, p)) != 0) {
 			vput(vp);
@@ -182,7 +185,8 @@ sys_mount(p, v, retval)
 	}
 	/*
 	 * Do not allow NFS export by non-root users. Silently
-	 * enforce MNT_NOSUID and MNT_NODEV for non-root users.
+	 * enforce MNT_NOSUID and MNT_NODEV for non-root users, and inherit
+	 * MNT_NOEXEC from the mount point.
 	 */
 	if (p->p_ucred->cr_uid != 0) {
 		if (SCARG(uap, flags) & MNT_EXPORTED) {
@@ -190,6 +194,8 @@ sys_mount(p, v, retval)
 			return (EPERM);
 		}
 		SCARG(uap, flags) |= MNT_NOSUID | MNT_NODEV;
+		if (vp->v_mount->mnt_flag & MNT_NOEXEC)
+			SCARG(uap, flags) |= MNT_NOEXEC;
 	}
 	if ((error = vinvalbuf(vp, V_SAVE, p->p_ucred, p, 0, 0)) != 0)
 		return (error);
