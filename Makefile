@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 1998/09/07 00:47:11 niklas Exp $
+#	$OpenBSD: Makefile,v 1.41 1998/09/30 13:27:28 art Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -17,10 +17,14 @@
 # well as populate the /usr/obj properly with directories for the
 # objects.
 #
-# 3) If you are reasonably sure that things will compile OK, use the
+# 3) It is strongly recommended that you build and install a new kernel
+# before rebuilding your system. Some of the new programs may use new
+# functionality or depend on API changes that your old kernel doesn't have.
+#
+# 4) If you are reasonably sure that things will compile OK, use the
 # "make build" target supplied here. Good luck.
 #
-# 4) If you want to setup a cross-build environment, there is a "cross-tools"
+# 5) If you want to setup a cross-build environment, there is a "cross-tools"
 # target available which upon completion of "make TARGET=<target> cross-tools" 
 # (where <target> is one of the names in the /sys/arch directory) will produce
 # a set of compilation tools along with the includes in the /usr/cross/<target>
