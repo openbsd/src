@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.440 2004/02/10 21:06:04 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.441 2004/02/11 18:34:51 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -878,9 +878,10 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 					if (rule_label(&r, $5.label))
 						YYERROR;
 					h = ifa_lookup(i->ifname, 0);
-					expand_rule(&r, NULL, NULL, NULL, NULL,
-					    h, NULL, NULL, NULL, NULL, NULL,
-					    NULL);
+					if (h != NULL)
+						expand_rule(&r, NULL, NULL,
+						    NULL, NULL, h, NULL, NULL,
+						    NULL, NULL, NULL, NULL);
 				}
 			}
 			free($5.label);
@@ -3982,9 +3983,9 @@ expand_rule(struct pf_rule *r,
 		    src_host->af != dst_host->af) ||
 		    (src_host->ifindex && dst_host->ifindex &&
 		    src_host->ifindex != dst_host->ifindex) ||
-		    (src_host->ifindex && if_nametoindex(interface->ifname) &&
+		    (src_host->ifindex && *interface->ifname &&
 		    src_host->ifindex != if_nametoindex(interface->ifname)) ||
-		    (dst_host->ifindex && if_nametoindex(interface->ifname) &&
+		    (dst_host->ifindex && *interface->ifname &&
 		    dst_host->ifindex != if_nametoindex(interface->ifname)))
 			continue;
 		if (!r->af && src_host->af)
@@ -3992,12 +3993,14 @@ expand_rule(struct pf_rule *r,
 		else if (!r->af && dst_host->af)
 			r->af = dst_host->af;
 
-		if (if_indextoname(src_host->ifindex, ifname))
+		if (*interface->ifname)
+			memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
+		else if (if_indextoname(src_host->ifindex, ifname))
 			memcpy(r->ifname, ifname, sizeof(r->ifname));
 		else if (if_indextoname(dst_host->ifindex, ifname))
 			memcpy(r->ifname, ifname, sizeof(r->ifname));
 		else
-			memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
+			memset(r->ifname, '\0', sizeof(r->ifname));
 
 		if (strlcpy(r->label, label, sizeof(r->label)) >=
 		    sizeof(r->label))
