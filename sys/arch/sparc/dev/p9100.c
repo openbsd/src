@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.26 2004/02/27 22:32:20 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.27 2004/03/09 22:59:09 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -638,6 +638,10 @@ p9100_ras_init(struct p9100_softc *sc)
 
 	P9100_SELECT_PE(sc);
 	P9100_WRITE_CMD(sc, P9000_PE_WINOFFSET, 0);
+	P9100_WRITE_CMD(sc, P9000_PE_INDEX, 0);
+	P9100_WRITE_CMD(sc, P9000_PE_WINMIN, 0);
+	P9100_WRITE_CMD(sc, P9000_PE_WINMAX,
+	    P9000_COORDS(sc->sc_sunfb.sf_width - 1, sc->sc_sunfb.sf_height - 1));
 }
 
 void
@@ -792,7 +796,8 @@ p9100_ras_do_cursor(struct rasops_info *ri)
 
 	P9100_SELECT_DE_LOW(sc);
 	P9100_WRITE_CMD(sc, P9000_DE_RASTER,
-	    (~P9100_RASTER_DST) & P9100_RASTER_MASK);
+	    (P9100_RASTER_PATTERN ^ P9100_RASTER_DST) & P9100_RASTER_MASK);
+	P9100_WRITE_CMD(sc, P9100_DE_COLOR0, P9100_COLOR8(WSCOL_BLACK));
 
 	P9100_SELECT_COORD(sc, P9000_LC_RECT);
 	P9100_WRITE_CMD(sc, P9000_LC_RECT + P9000_COORD_XY,
