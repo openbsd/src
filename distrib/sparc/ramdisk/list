@@ -1,35 +1,35 @@
-#	$OpenBSD: list,v 1.24 2003/10/01 22:03:29 miod Exp $
+#	$OpenBSD: list,v 1.25 2005/01/11 19:21:08 deraadt Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
-LINK	instbin				sbin/disklabel
-LINK	instbin				sbin/restore
-LINK	instbin				usr/bin/grep usr/bin/egrep usr/bin/fgrep
-LINK	instbin				usr/bin/less usr/bin/more
-LINK	instbin				usr/sbin/installboot
+LINK	instbin					sbin/disklabel
+LINK	instbin					sbin/restore
+LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
+LINK	instbin					usr/bin/less usr/bin/more
+LINK	instbin					usr/sbin/installboot
 
 SRCDIRS	sys/arch/sparc/stand
 
 SYMLINK	/tmp	var/tmp
 
 # copy the MAKEDEV script and make some devices
-SCRIPT	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
+SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
 # we need the contents of /usr/mdec (but not boot or binstall)
-COPYDIR	${DESTDIR}/usr/mdec		usr/mdec
-SPECIAL	rm -f usr/mdec/binstall		usr/mdec/installboot
+COPYDIR	${DESTDIR}/usr/mdec			usr/mdec
+SPECIAL	rm -f usr/mdec/binstall			usr/mdec/installboot
 
 # various files that we need in /etc for the install
-SCRIPT	${DESTDIR}/etc/disktab		etc/disktab.shadow
-SYMLINK	/tmp/disktab.shadow		etc/disktab
-SYMLINK	/tmp/fstab.shadow		etc/fstab
-SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
-SYMLINK	/tmp/hosts			etc/hosts
-TERMCAP	vt100,vt220,dumb,sun		usr/share/misc/termcap
+SCRIPT	${DESTDIR}/etc/disktab			etc/disktab.shadow
+SYMLINK	/tmp/disktab.shadow			etc/disktab
+SYMLINK	/tmp/fstab.shadow			etc/fstab
+SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
+SYMLINK	/tmp/hosts				etc/hosts
+TERMCAP	vt100,vt220,dumb,sun			usr/share/misc/termcap
 
 # and the installation tools
-SCRIPT	${ARCHDIR}/../install.md	install.md
+SCRIPT	${ARCHDIR}/../install.md		install.md
 
 # no NFS support in sparc ramdisk
 REMOVE	sbin/mount_nfs

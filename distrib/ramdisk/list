@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.26 2004/12/29 00:45:34 deraadt Exp $
+#	$OpenBSD: list,v 1.27 2005/01/11 19:21:08 deraadt Exp $
 #	$NetBSD: list,v 1.4.4.1 1996/06/20 20:30:26 pk Exp $
 
 SRCDIRS distrib/special
@@ -25,7 +25,8 @@ LINK	instbin					bin/ksh bin/sh
 LINK	instbin					bin/stty
 LINK	instbin					bin/sync
 LINK	instbin					sbin/dmesg
-LINK	instbin					sbin/fsck_ffs sbin/fsck
+LINK	instbin					sbin/fsck
+LINK	instbin					sbin/fsck_ffs
 LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/ifconfig
 LINK	instbin					sbin/dhclient
