@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_socket.c,v 1.3 1996/04/17 05:24:01 mickey Exp $	*/
+/*	$OpenBSD: linux_socket.c,v 1.4 1997/11/26 08:45:46 deraadt Exp $	*/
 /*	$NetBSD: linux_socket.c,v 1.14 1996/04/05 00:01:50 christos Exp $	*/
 
 /*
@@ -609,20 +609,20 @@ linux_setsockopt(p, uap, retval)
 	SCARG(&bsa, valsize) = lsa.optlen;
 
 	switch (SCARG(&bsa, level)) {
-		case SOL_SOCKET:
-			name = linux_to_bsd_so_sockopt(lsa.optname);
-			break;
-		case IPPROTO_IP:
-			name = linux_to_bsd_ip_sockopt(lsa.optname);
-			break;
-		case IPPROTO_TCP:
-			name = linux_to_bsd_tcp_sockopt(lsa.optname);
-			break;
-		case IPPROTO_UDP:
-			name = linux_to_bsd_udp_sockopt(lsa.optname);
-			break;
-		default:
-			return EINVAL;
+	case SOL_SOCKET:
+		name = linux_to_bsd_so_sockopt(lsa.optname);
+		break;
+	case IPPROTO_IP:
+		name = linux_to_bsd_ip_sockopt(lsa.optname);
+		break;
+	case IPPROTO_TCP:
+		name = linux_to_bsd_tcp_sockopt(lsa.optname);
+		break;
+	case IPPROTO_UDP:
+		name = linux_to_bsd_udp_sockopt(lsa.optname);
+		break;
+	default:
+		return EINVAL;
 	}
 
 	if (name == -1)
@@ -660,20 +660,20 @@ linux_getsockopt(p, uap, retval)
 	SCARG(&bga, avalsize) = lga.optlen;
 
 	switch (SCARG(&bga, level)) {
-		case SOL_SOCKET:
-			name = linux_to_bsd_so_sockopt(lga.optname);
-			break;
-		case IPPROTO_IP:
-			name = linux_to_bsd_ip_sockopt(lga.optname);
-			break;
-		case IPPROTO_TCP:
-			name = linux_to_bsd_tcp_sockopt(lga.optname);
-			break;
-		case IPPROTO_UDP:
-			name = linux_to_bsd_udp_sockopt(lga.optname);
-			break;
-		default:
-			return EINVAL;
+	case SOL_SOCKET:
+		name = linux_to_bsd_so_sockopt(lga.optname);
+		break;
+	case IPPROTO_IP:
+		name = linux_to_bsd_ip_sockopt(lga.optname);
+		break;
+	case IPPROTO_TCP:
+		name = linux_to_bsd_tcp_sockopt(lga.optname);
+		break;
+	case IPPROTO_UDP:
+		name = linux_to_bsd_udp_sockopt(lga.optname);
+		break;
+	default:
+		return EINVAL;
 	}
 
 	if (name == -1)
