@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.3 2002/05/21 15:46:07 jason Exp $	*/
+/*	$OpenBSD: creator.c,v 1.4 2002/05/21 18:31:31 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -218,8 +218,17 @@ creator_attach(parent, self, aux)
 	sc->sc_rasops.ri_ops.alloc_attr(&sc->sc_rasops, 0, 0, 0, &defattr);
 
 	if (console) {
+		int *ccolp, *crowp;
+
+		if (romgetcursoraddr(&crowp, &ccolp))
+			ccolp = crowp = NULL;
+		if (ccolp != NULL)
+			sc->sc_rasops.ri_ccol = *ccolp;
+		if (crowp != NULL)
+			sc->sc_rasops.ri_crow = *crowp;
+
 		wsdisplay_cnattach(&creator_stdscreen, &sc->sc_rasops,
-		    0, 0, defattr);
+		    sc->sc_rasops.ri_ccol, sc->sc_rasops.ri_crow, defattr);
 	}
 
 	waa.console = console;
