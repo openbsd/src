@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.16 2000/03/29 15:47:43 millert Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.17 2000/03/30 08:18:45 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -50,7 +50,7 @@ MANALL=	ssl.cat3 SSL_get_error.cat3 \
 	DH_generate_parameters.cat3 RSA_sign.cat3 DH_get_ex_new_index.cat3 \
 	RSA_sign_ASN1_OCTET_STRING.cat3 DH_new.cat3 RSA_size.cat3 DH_set_method.cat3 \
 	blowfish.cat3 DH_size.cat3 bn.cat3 DSA_SIG_new.cat3 bn_internal.cat3 \
-	DSA_do_sign.cat3 buffer.cat3 DSA_dup_DH.cat3 crypto.cat3 DSA_generate_key.cat3 \
+	DSA_do_sign.cat3 DSA_dup_DH.cat3 crypto.cat3 DSA_generate_key.cat3 \
 	DSA_generate_parameters.cat3 d2i_DHparams.cat3 d2i_RSAPublicKey.cat3 \
 	DSA_get_ex_new_index.cat3 des_modes.cat3 DSA_new.cat3 dh.cat3 \
 	DSA_set_method.cat3 dsa.cat3 DSA_sign.cat3 DSA_size.cat3 hmac.cat3 \
@@ -62,6 +62,12 @@ MANALL=	ssl.cat3 SSL_get_error.cat3 \
 	EVP_EncryptInit.cat3 \
 	\
 	openssl.cat1
+
+BUF_MEM_new.cat3: buffer.pod
+	( cp ${.ALLSRC} BUF_MEM_new.pod && pod2man --section=3 --official \
+	  --center='OpenBSD Reference Manual' --release="OpenBSD `uname -r`" \
+	  BUF_MEM_new.pod ) | nroff -Tascii -man > ${.TARGET}
+
 MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	BN_CTX_start.3 BN_CTX_get.3 BN_CTX_start.3 BN_CTX_end.3 \
 	BN_add.3 BN_sub.3 BN_add.3 BN_mul.3 BN_add.3 BN_div.3 \
@@ -165,9 +171,10 @@ MLINKS+=BN_CTX_new.3 BN_CTX_init.3 BN_CTX_new.3 BN_CTX_free.3 \
 	RSA_set_method.3 RSA_new_method.3 \
 	RSA_sign.3 RSA_verify.3 \
 	RSA_sign_ASN1_OCTET_STRING.3 RSA_verify_ASN1_OCTET_STRING.3 \
-	buffer.3 BUF_MEM_new.3 buffer.3 BUF_MEM_free.3 \
-	buffer.3 BUF_MEM_grow.3 buffer.3 BUF_strdup.3 \
+	BUF_MEM_new.3 BUF_MEM_free.3 \
+	BUF_MEM_new.3 BUF_MEM_grow.3 BUF_MEM_new.3 BUF_strdup.3 \
 	d2i_DHparams.3 i2d_DHparams.3
+
 .else
 MANALL=
 .endif
