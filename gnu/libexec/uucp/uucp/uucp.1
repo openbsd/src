@@ -1,4 +1,4 @@
-''' $Id: uucp.1,v 1.1.1.1 1995/10/18 08:38:42 deraadt Exp $
+''' $Id: uucp.1,v 1.2 1998/04/27 00:56:53 deraadt Exp $
 .TH uucp 1 "Taylor UUCP 1.06"
 .SH NAME
 uucp \- Unix to Unix copy
@@ -181,15 +181,15 @@ The file names may be changed at compilation time or by the
 configuration file, so these are only approximations.
 
 .br
-/usr/lib/uucp/config - Configuration file.
+/etc/uucp/config - Configuration file.
 .br
-/usr/spool/uucp -
+/var/spool/uucp -
 UUCP spool directory.
 .br
-/usr/spool/uucp/Log -
+/var/spool/uucp/Log -
 UUCP log file.
 .br
-/usr/spool/uucppublic -
+/var/spool/uucppublic -
 Default UUCP public directory.
 .SH SEE ALSO
 mail(1), uux(1), uustat(1), uucico(8)
