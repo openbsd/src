@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_mp.h,v 1.2 2000/04/07 22:10:30 niklas Exp $	*/
-/*	$EOM: math_mp.h,v 1.2 2000/04/07 22:05:57 niklas Exp $	*/
+/*	$OpenBSD: math_mp.h,v 1.3 2000/06/08 20:49:30 niklas Exp $	*/
+/*	$EOM: math_mp.h,v 1.3 2000/05/08 13:41:40 ho Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <gmp.h>
 
-#define mpz_t math_mp_t;
+#define math_mp_t mpz_t
 
 #elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
 
