@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.20 2002/02/17 19:42:30 millert Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.21 2002/03/20 13:40:57 espie Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -1058,7 +1058,8 @@ play_msf(start_m, start_s, start_f, end_m, end_s, end_f)
 	return ioctl(fd, CDIOCPLAYMSF, (char *) &a);
 }
 
-int status(trk, min, sec, frame)
+int 
+status(trk, min, sec, frame)
 	int *trk;
 	int *min;
 	int *sec;
