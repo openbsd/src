@@ -1,10 +1,10 @@
-#	$Id: copy_kernel,v 1.1.1.1 1995/10/18 08:38:00 deraadt Exp $
+#	$Id: copy_kernel,v 1.2 1996/06/11 09:05:32 deraadt Exp $
 #
 #	Kernel copy script
 
 DEFAULT_PARTITON=sd0a
 MOUNT_POINT=/mnt
-KERNEL_NAME=/netbsd
+KERNEL_NAME=/bsd
 #TEST=testfn
 
 testfn() {
@@ -38,7 +38,7 @@ warning() {
 }
 
 trap "cancel;" 2 3
-echo	"NetBSD kernel copy program"
+echo	"OpenBSD kernel copy program"
 echo	""
 echo	"Default answers are displayed in brackets.  You may hit Control-C"
 echo	"at any time to cancel this operation (though if you hit Control-C at"
