@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.43 2001/06/25 19:31:51 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.44 2001/06/25 22:29:20 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -284,10 +284,8 @@ atapiscsi_attach(parent, self, aux)
 	if (as->sc_adapterlink.scsibus != (u_int8_t)-1) {
 		int bus = as->sc_adapterlink.scsibus;
 		extern struct cfdriver scsibus_cd;
-
 		struct scsibus_softc *scsi = scsibus_cd.cd_devs[bus];
-		struct scsi_link *link = scsi->sc_link[drvp->drive][0];
-		struct ata_drive_datas *drvp = &chp->ch_drive[drvp->drive];
+		struct scsi_link *link = scsi->sc_link[0][0];
 		
 		if (!link) {
 			strncpy(drvp->drive_name, 
@@ -588,6 +586,18 @@ wdc_atapi_the_poll_machine(chp, xfer)
 			idx = 0;
 		}
 
+		if (cold && retargs.expect_irq == 1) {
+			xfer->endticks = 0;
+			chp->ch_flags |= WDCF_IRQ_WAIT;
+			while (xfer->endticks == 0 && 
+			    (current_timeout * 1000) <= idx) {
+				delay(1000);
+				idx += 1000;
+			}
+			chp->ch_flags &= ~WDCF_IRQ_WAIT;
+			continue;
+		}
+
 		if (retargs.delay != 0) {
 			delay (1000 * retargs.delay);
 			idx += 1000 * retargs.delay;
@@ -610,8 +620,12 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 	int timeout_delay = hz / 10;
 	
 	if (xfer->c_flags & C_POLL) {
-		if (ctxt != ctxt_process) 
+		if (ctxt != ctxt_process) {
+			if (ctxt == ctxt_interrupt)
+				xfer->endticks = 1;
+
 			return (0);
+		}
 
 		wdc_atapi_the_poll_machine(chp, xfer);
 		return (0);
@@ -651,17 +665,16 @@ wdc_atapi_the_machine(chp, xfer, ctxt)
 			return (claim_irq);
 		}
 
-		if (retargs.delay) 
-			timeout_delay = max(retargs.delay * hz / 1000, 1);
-
 		if (retargs.expect_irq) {
 			chp->ch_flags |= WDCF_IRQ_WAIT;
 			timeout_add(&chp->ch_timo, xfer->endticks - ticks);
 			return (claim_irq);
 		}
 		
-		if (retargs.delay != 0)
+		if (retargs.delay != 0) {
+			timeout_delay = max(retargs.delay * hz / 1000, 1);
 			break;
+		}
 
 		DELAY(1);
 	}
