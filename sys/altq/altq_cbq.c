@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.14 2003/03/11 02:25:59 kjc Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.15 2003/03/31 12:35:45 henning Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -278,8 +278,6 @@ cbq_add_queue(struct pf_altq *a)
 	cbq_state_t	*cbqp;
 	struct rm_class	*cl;
 	struct cbq_opts	*opts;
-	u_int32_t	 chandle;
-	int		 i;
 
 	if ((cbqp = a->altq_disc) == NULL)
 		return (EINVAL);
@@ -311,7 +309,7 @@ cbq_add_queue(struct pf_altq *a)
 	}
 
 	/*
-	 * allocate class handle
+	 * check parameters
 	 */
 	switch (opts->flags & CBQCLF_CLASSMASK) {
 	case CBQCLF_ROOTCLASS:
@@ -319,37 +317,23 @@ cbq_add_queue(struct pf_altq *a)
 			return (EINVAL);
 		if (cbqp->ifnp.root_)
 			return (EINVAL);
-		chandle = ROOT_CLASS_HANDLE;
+		a->qid = ROOT_CLASS_HANDLE;
 		break;
 	case CBQCLF_DEFCLASS:
 		if (cbqp->ifnp.default_)
 			return (EINVAL);
-		chandle = DEFAULT_CLASS_HANDLE;
-		break;
-	case CBQCLF_CTLCLASS:
-		if (cbqp->ifnp.ctl_)
-			return (EINVAL);
-		chandle = CTL_CLASS_HANDLE;
+		a->qid = DEFAULT_CLASS_HANDLE;
 		break;
 	case 0:
-		if (a->qid) {
-			chandle = a->qid;
-			if (chandle >= CBQ_MAX_CLASSES &&
-			    chandle != DEFAULT_CLASS_HANDLE &&
-			    chandle != CTL_CLASS_HANDLE)
-				return (EINVAL);
-			if (cbqp->cbq_class_tbl[chandle] != NULL)
-				return (EBUSY);
-		} else {
-			/* find a free class slot. for now, reserve qid 0 */
-			for (i = 1; i < CBQ_MAX_CLASSES; i++)
-				if (cbqp->cbq_class_tbl[i] == NULL)
-					break;
-			if (i == CBQ_MAX_CLASSES)
-				return (ENOSPC);
-			chandle = (u_int32_t)i;
-		}
-			break;
+		if (a->qid == 0)
+			return (EINVAL);
+		if (a->qid >= CBQ_MAX_CLASSES &&
+		    a->qid != DEFAULT_CLASS_HANDLE &&
+		    a->qid != CTL_CLASS_HANDLE)
+			return (EINVAL);
+		if (cbqp->cbq_class_tbl[a->qid] != NULL)
+			return (EBUSY);
+		break;
 	default:
 		/* more than two flags bits set */
 		return (EINVAL);
@@ -359,7 +343,7 @@ cbq_add_queue(struct pf_altq *a)
 	 * create a class.  if this is a root class, initialize the
 	 * interface.
 	 */
-	if (chandle == ROOT_CLASS_HANDLE) {
+	if (a->qid == ROOT_CLASS_HANDLE) {
 		rmc_init(cbqp->ifnp.ifq_, &cbqp->ifnp, opts->ns_per_byte,
 		    cbqrestart, a->qlimit, RM_MAXQUEUED,
 		    opts->maxidle, opts->minidle, opts->offtime,
@@ -376,24 +360,19 @@ cbq_add_queue(struct pf_altq *a)
 		return (ENOMEM);
 
 	/* return handle to user space. */
-	a->qid = chandle;
-
-	cl->stats_.handle = chandle;
+	cl->stats_.handle = a->qid;
 	cl->stats_.depth = cl->depth_;
 
 	/* save the allocated class */
-	switch (chandle) {
+	switch (a->qid) {
 	case NULL_CLASS_HANDLE:
 	case ROOT_CLASS_HANDLE:
 		break;
 	case DEFAULT_CLASS_HANDLE:
 		cbqp->ifnp.default_ = cl;
 		break;
-	case CTL_CLASS_HANDLE:
-		cbqp->ifnp.ctl_ = cl;
-		break;
 	default:
-		cbqp->cbq_class_tbl[chandle] = cl;
+		cbqp->cbq_class_tbl[a->qid] = cl;
 		break;
 	}
 	return (0);

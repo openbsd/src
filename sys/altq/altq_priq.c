@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.13 2003/03/27 11:53:13 henning Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.14 2003/03/31 12:35:45 henning Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -136,13 +136,14 @@ priq_add_queue(struct pf_altq *a)
 	if (a->priority >= PRIQ_MAXPRI)
 		return (EINVAL);
 
-	if (a->qid != 0) {
-		/* qid is tied to priority with priq */
-		if (a->qid != a->priority + 1)
-			return (EINVAL);
-		if (clh_to_clp(pif, a->qid) != NULL)
-			return (EBUSY);
-	}
+	if (a->qid == 0)
+		return (EINVAL);
+
+	/* qid is tied to priority with priq */
+	if (a->qid != a->priority + 1)
+		return (EINVAL);
+	if (clh_to_clp(pif, a->qid) != NULL)
+		return (EBUSY);
 
 	cl = priq_class_create(pif, a->priority, a->qlimit,
 	    a->pq_u.priq_opts.flags, a->qid);
@@ -300,10 +301,7 @@ priq_class_create(struct priq_if *pif, int pri, int qlimit, int flags, int qid)
 	if (pri > pif->pif_maxpri)
 		pif->pif_maxpri = pri;
 	cl->cl_pif = pif;
-	if (qid)
-		cl->cl_handle = qid;
-	else
-		cl->cl_handle = pri + 1;
+	cl->cl_handle = qid;
 
 #ifdef ALTQ_RED
 	if (flags & (PRCF_RED|PRCF_RIO)) {
