@@ -8,7 +8,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $Id: skeylogin.c,v 1.6 1996/09/29 23:35:08 millert Exp $
+ * $Id: skeylogin.c,v 1.7 1996/09/30 04:10:46 millert Exp $
  */
 
 #include <sys/param.h>
@@ -33,8 +33,8 @@
 
 #define	_PATH_KEYFILE	"/etc/skeykeys"
 
-char *skipspace __ARGS((char *));
-int skeylookup __ARGS((struct skey *, char *));
+char *skipspace __P((char *));
+int skeylookup __P((struct skey *, char *));
 
 /* Issue a skey challenge for user 'name'. If successful,
  * fill in the caller's skey structure and return 0. If unsuccessful

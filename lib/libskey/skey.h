@@ -11,24 +11,8 @@
  *
  * Main client header
  *
- * $Id: skey.h,v 1.4 1996/09/29 21:27:01 millert Exp $
+ * $Id: skey.h,v 1.5 1996/09/30 04:10:45 millert Exp $
  */
-
-#if	defined(__TURBOC__) || defined(__STDC__) || defined(LATTICE)
-#define	ANSIPROTO	1
-#endif
-
-#ifndef	__ARGS
-#ifdef	ANSIPROTO
-#define	__ARGS(x)	x
-#else
-#define	__ARGS(x)	()
-#endif
-#endif
-
-#ifdef SOLARIS
-#define setpriority(x,y,z)      z
-#endif
 
 /* Server-side data structure for reading keys file during login */
 struct skey
@@ -50,28 +34,28 @@ struct mc
 	int cnt;
 };
 
-void f __ARGS ((char *x));
-int keycrunch __ARGS ((char *result, char *seed, char *passwd));
-char *btoe __ARGS ((char *engout, char *c));
-char *put8 __ARGS ((char *out, char *s));
-int etob __ARGS ((char *out, char *e));
-void rip __ARGS ((char *buf));
-int skeychallenge __ARGS ((struct skey * mp, char *name, char *ss));
-int skeylookup __ARGS ((struct skey * mp, char *name));
-int skeyverify __ARGS ((struct skey * mp, char *response));
-int skeyzero __ARGS ((struct skey * mp, char *response));
-void sevenbit __ARGS ((char *s));
-void backspace __ARGS ((char *s));
-char *skipspace __ARGS ((char *s));
-char *readpass __ARGS ((char *buf, int n));
-char *readskey __ARGS ((char *buf, int n));
-int skey_authenticate __ARGS ((char *));
-int skey_passcheck __ARGS ((char *, char *));
-char *skey_keyinfo __ARGS ((char *));
-int skey_haskey __ARGS ((char *));
-int getskeyprompt __ARGS ((struct skey *, char *, char *));
-int atob8 __ARGS((char *, char *));
-int btoa8 __ARGS((char *, char *));
-int htoi __ARGS((char));
-const char * skey_get_algorithm __ARGS((void));
-char * skey_set_algorithm __ARGS((char *));
+void f __P((char *x));
+int keycrunch __P((char *result, char *seed, char *passwd));
+char *btoe __P((char *engout, char *c));
+char *put8 __P((char *out, char *s));
+int etob __P((char *out, char *e));
+void rip __P((char *buf));
+int skeychallenge __P((struct skey * mp, char *name, char *ss));
+int skeylookup __P((struct skey * mp, char *name));
+int skeyverify __P((struct skey * mp, char *response));
+int skeyzero __P((struct skey * mp, char *response));
+void sevenbit __P((char *s));
+void backspace __P((char *s));
+char *skipspace __P((char *s));
+char *readpass __P((char *buf, int n));
+char *readskey __P((char *buf, int n));
+int skey_authenticate __P((char *username));
+int skey_passcheck __P((char *username, char *passwd));
+char *skey_keyinfo __P((char *username));
+int skey_haskey __P((char *username));
+int getskeyprompt __P((struct skey *mp, char *name, char *prompt));
+int atob8 __P((char *out, char *in));
+int btoa8 __P((char *out, char *in));
+int htoi __P((char c));
+const char * skey_get_algorithm __P((void));
+char * skey_set_algorithm __P((char *new));

@@ -10,7 +10,7 @@
  *
  * S/KEY misc routines.
  *
- * $Id: skeysubr.c,v 1.5 1996/09/29 23:35:07 millert Exp $
+ * $Id: skeysubr.c,v 1.6 1996/09/30 04:10:47 millert Exp $
  */
 
 #include <stdio.h>
@@ -29,14 +29,14 @@
 #define SKEY_HASH_DEFAULT	1
 #endif
 
-static void trapped __ARGS((int sig));
-static void f_md4 __ARGS ((char *x));
-static void f_md5 __ARGS ((char *x));
-static void f_sha1 __ARGS ((char *x));
-static void skey_echo __ARGS ((int action));
-static int keycrunch_md4 __ARGS ((char *result, char *seed, char *passwd));
-static int keycrunch_md5 __ARGS ((char *result, char *seed, char *passwd));
-static int keycrunch_sha1 __ARGS ((char *result, char *seed, char *passwd));
+static void trapped __P((int sig));
+static void f_md4 __P((char *x));
+static void f_md5 __P((char *x));
+static void f_sha1 __P((char *x));
+static void skey_echo __P((int action));
+static int keycrunch_md4 __P((char *result, char *seed, char *passwd));
+static int keycrunch_md5 __P((char *result, char *seed, char *passwd));
+static int keycrunch_sha1 __P((char *result, char *seed, char *passwd));
 
 /* Current hash type (index into skey_hash_types array) */
 static int skey_hash_type = SKEY_HASH_DEFAULT;
@@ -48,8 +48,8 @@ static int skey_hash_type = SKEY_HASH_DEFAULT;
 #define SKEY_ALGORITH_MAX	3
 struct skey_algorithm_table {
 	const char *name;
-	int (*keycrunch) __ARGS((char *, char *, char *));
-	void (*f) __ARGS((char *));
+	int (*keycrunch) __P((char *, char *, char *));
+	void (*f) __P((char *));
 };
 static struct skey_algorithm_table skey_algorithm_table[] = {
 	{ "md4", keycrunch_md4, f_md4 },

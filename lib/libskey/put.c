@@ -8,7 +8,7 @@
  *
  * Dictionary lookup and extraction.
  *
- * $Id: put.c,v 1.2 1996/09/27 15:38:58 millert Exp $
+ * $Id: put.c,v 1.3 1996/09/30 04:10:43 millert Exp $
  */
 
 #include <stdio.h>
@@ -17,10 +17,10 @@
 #include <ctype.h>
 #include "skey.h"
 
-static unsigned long extract __ARGS ((char *s, int start, int length));
-static void standard __ARGS ((char *word));
-static void insert __ARGS ((char *s, int x, int start, int length));
-static int wsrch __ARGS ((char *w, int low, int high));
+static unsigned long extract __P ((char *s, int start, int length));
+static void standard __P ((char *word));
+static void insert __P ((char *s, int x, int start, int length));
+static int wsrch __P ((char *w, int low, int high));
 
 /* Dictionary for integer-word translations */
 char Wp[2048][4] = {
