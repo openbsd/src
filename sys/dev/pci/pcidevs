@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.39 1998/03/28 04:29:11 deraadt Exp $
+$OpenBSD: pcidevs,v 1.40 1998/03/28 09:29:30 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -704,6 +704,7 @@ product DEC 21154	0x0026	DECchip 21154 PCI-PCI Bridge
 
 /* Diamond products */
 product DIAMOND VIPER	0x9001	Viper/PCI
+product DIAMOND MONSTER	0x0001	Monster
 
 /* Distributed Processing Technology products */
 product DPT SC_RAID	0xa400	SmartCache/Raid
