@@ -1,5 +1,0 @@
-0x400000 Top of physical RAM for 4mb machine
-0x3EB800 Start of boot code
-0x288000 Start of ramdisk when booting from rd0
-0x240000 Start of netbsd image (may overflow into rd0 image)
-0x002000 Start of kernel (may overflow into netbsd image)
