@@ -33,8 +33,8 @@ Supported devices include:
 		the motherboard (Tyne).
 		ISA tty02 and tty03 on all ISA capable systems.
 
-	paralell ports:
-		paralell ports is supported on-board (PICA) or on ISA
+	parallel ports:
+		parallel ports is supported on-board (PICA) or on ISA
 		(rPC44 and Tyne).
 
 	floppy:
