@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.10 2003/01/28 05:12:47 jason Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.11 2003/01/29 00:52:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -150,6 +150,7 @@ harmony_attach(parent, self, aux)
 {
 	struct harmony_softc *sc = (struct harmony_softc *)self;
 	struct gsc_attach_args *ga = aux;
+	u_int32_t cntl;
 	int i;
 
 	sc->sc_bt = ga->ga_iot;
@@ -225,7 +226,9 @@ harmony_attach(parent, self, aux)
 	/* reset chip, and push default gain controls */
 	harmony_reset_codec(sc);
 
-	printf("\n");
+	cntl = READ_REG(sc, HARMONY_CNTL);
+	printf(": rev %d\n",
+	    (cntl & CNTL_CODEC_REV_MASK) >> CNTL_CODEC_REV_SHIFT);
 
 	audio_attach_mi(&harmony_sa_hw_if, sc, &sc->sc_dv);
 }
