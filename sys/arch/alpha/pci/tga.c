@@ -1,4 +1,4 @@
-/*	$OpenBSD: tga.c,v 1.11 1997/11/06 12:27:04 niklas Exp $	*/
+/*	$OpenBSD: tga.c,v 1.12 1998/11/21 18:25:48 millert Exp $	*/
 /*	$NetBSD: tga.c,v 1.13 1996/12/05 01:39:37 cgd Exp $	*/
 
 /*
@@ -405,7 +405,7 @@ tgammap(v, offset, prot)
 {
 	struct tga_softc *sc = v;
 
-	if (offset > sc->sc_dc->dc_tgaconf->tgac_cspace_size)
+	if (offset >= sc->sc_dc->dc_tgaconf->tgac_cspace_size || offset < 0)
 		return -1;
 	return alpha_btop(sc->sc_dc->dc_paddr + offset);
 }
