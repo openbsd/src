@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.24 2000/11/23 12:56:51 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.56 2000/11/23 12:22:08 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.25 2001/01/26 11:08:08 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -63,7 +63,6 @@
 #include "udp.h"
 #include "util.h"
 
-#define BACKLOG 16
 #define UDP_SIZE 65536
 
 /* If a system doesn't have SO_REUSEPORT, SO_REUSEADDR will have to do.  */
