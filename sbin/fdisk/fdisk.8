@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.11 1997/12/23 23:53:02 deraadt Exp $
+.\"	$OpenBSD: fdisk.8,v 1.12 1998/01/19 15:56:33 weingart Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -90,8 +90,9 @@ table of the specified device, ie.
      3: 00    0   0   0 -    0   0   0 [         0 -          0] unused
 .Ed
 .Pp
-This disk is divided into three partitions that happen to fill the disk.
-Partition two overlaps partition one.  (Used for debugging purposes)
+This disk is divided into two partitions that happen to fill the disk.
+The first partition overlaps the third partition.  (Used for debugging
+purposes)
 .Bl -tag -width "start/size"
 .It Em "#"
 Number of partition table entry.  A '*' denotes the bootable partition.
