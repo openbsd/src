@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.8 1997/09/12 04:07:16 millert Exp $ */
+/*	$OpenBSD: arp.c,v 1.9 1997/11/21 22:42:55 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -373,6 +373,8 @@ dump(addr)
 	mib[5] = RTF_LLINFO;
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
 		err(1, "route-sysctl-estimate");
+	if (needed == 0)
+		return;
 	if ((buf = malloc(needed)) == NULL)
 		err(1, "malloc");
 	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
