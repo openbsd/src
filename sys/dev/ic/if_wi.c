@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.97 2003/08/15 20:32:17 tedu Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.98 2003/09/06 20:53:57 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.97 2003/08/15 20:32:17 tedu Exp $";
+	"$OpenBSD: if_wi.c,v 1.98 2003/09/06 20:53:57 drahn Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -391,7 +391,7 @@ wi_attach(sc)
 	    sizeof(struct ether_header));
 #endif
 
-	shutdownhook_establish(wi_shutdown, sc);
+	sc->sc_sdhook = shutdownhook_establish(wi_shutdown, sc);
 
 	wi_init(sc);
 	wi_stop(sc);
@@ -2388,6 +2388,21 @@ wi_watchdog(ifp)
 	ifp->if_oerrors++;
 
 	return;
+}
+
+void
+wi_detach(sc)
+	struct wi_softc *sc;
+{
+	struct ifnet *ifp;
+	ifp = &sc->sc_arpcom.ac_if;
+
+	if (ifp->if_flags & IFF_RUNNING)
+		wi_stop(sc);
+	
+	sc->wi_flags &= ~WI_FLAGS_ATTACHED;
+	shutdownhook_disestablish(sc->sc_sdhook);
+
 }
 
 STATIC void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.20 2002/10/27 16:20:48 millert Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.21 2003/09/06 20:53:57 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -108,6 +108,7 @@ struct wi_softc	{
 		u_int16_t		wi_confbits;
 		u_int16_t		wi_confbits_param0;
 	} wi_debug;
+	void				*sc_sdhook;
 };
 
 /* Values for wi_flags. */
@@ -126,6 +127,7 @@ struct wi_softc	{
 #define WI_PRT_ARG(sc)	(sc)->sc_dev.dv_xname
 
 int	wi_attach(struct wi_softc *);
+void	wi_detach(struct wi_softc *);
 int	wi_intr(void *);
 void	wi_init(struct wi_softc *);
 void	wi_stop(struct wi_softc *);
