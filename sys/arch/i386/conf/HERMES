@@ -3,7 +3,7 @@
 #
 # This system was a 468 but now has an Intel Pentium Overdrive Processor[tm]
 #
-# $OpenBSD: HERMES,v 1.4 1997/06/05 12:41:29 kstailey Exp $
+# $OpenBSD: HERMES,v 1.5 1997/06/09 12:15:19 kstailey Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -104,7 +104,8 @@ uk*	at scsibus? target ? lun ?	# unknown SCSI
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*	at fdc? drive ?
 
-ep0	at isa? port ? irq ?		# 3c509 ethernet card
+#ep0	at isa? port ? irq ?		# 3c509 ethernet card
+ed0	at isa? port 0x300 irq 3 iomem 0xd000	# Linksys Ether16 LAN
 
 sb0	at isa? port 0x220 irq 5 drq 3	# SoundBlaster
 spkr0	at pckbd? port 0x61		# built-in speaker
