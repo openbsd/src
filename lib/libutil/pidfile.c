@@ -1,4 +1,4 @@
-/*	$OpenBSD: pidfile.c,v 1.2 2001/12/08 02:25:06 deraadt Exp $	*/
+/*	$OpenBSD: pidfile.c,v 1.3 2002/01/02 10:22:18 mpech Exp $	*/
 /*	$NetBSD: pidfile.c,v 1.4 2001/02/19 22:43:42 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: pidfile.c,v 1.2 2001/12/08 02:25:06 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pidfile.c,v 1.3 2002/01/02 10:22:18 mpech Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -50,7 +50,7 @@ static const char rcsid[] = "$OpenBSD: pidfile.c,v 1.2 2001/12/08 02:25:06 deraa
 #include <util.h>
 
 static char *pidfile_path;
-static int pidfile_pid;
+static pid_t pidfile_pid;
 
 static void pidfile_cleanup(void);
 
