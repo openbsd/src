@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.50 2001/05/22 22:53:38 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.51 2001/05/22 23:07:39 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -209,24 +209,6 @@ ubsec_attach(parent, self, aux)
 		else
 			sc->sc_rnghz = 1;
 
-		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_mcr),
-		    &sc->sc_rng.rng_q.q_mcr, 0)) {
-			printf(": rng mcr alloc failed\n");
-			return;
-		}
-		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_ctx_rngbypass),
-		    &sc->sc_rng.rng_q.q_ctx, 0)) {
-			ubsec_dma_free(sc, &sc->sc_rng.rng_q.q_mcr);
-			printf(": rng ctx alloc failed\n");
-			return;
-		}
-		if (ubsec_dma_malloc(sc, sizeof(u_int32_t) * UBSEC_RNG_BUFSIZ,
-		    &sc->sc_rng.rng_buf, 0)) {
-			ubsec_dma_free(sc, &sc->sc_rng.rng_q.q_ctx);
-			ubsec_dma_free(sc, &sc->sc_rng.rng_q.q_mcr);
-			printf(": rng buf alloc failed\n");
-			return;
-		}
 		timeout_set(&sc->sc_rngto, ubsec_rng, sc);
 		timeout_add(&sc->sc_rngto, sc->sc_rnghz);
 		printf(", rng");
@@ -1234,6 +1216,10 @@ ubsec_rng(vsc)
 	int s;
 
 	s = splnet();
+	if (rng->rng_used) {
+		splx(s);
+		return;
+	}
 	sc->sc_nqueue2++;
 	if (sc->sc_nqueue2 >= UBS_MAX_NQUEUE)
 		goto out;
@@ -1256,9 +1242,6 @@ ubsec_rng(vsc)
 			goto out;
 		}
 	}
-		
-	if (rng->rng_used)
-		goto out;
 
 	mcr = (struct ubsec_mcr *)rng->rng_q.q_mcr.dma_vaddr;
 	ctx = (struct ubsec_ctx_rngbypass *)rng->rng_q.q_ctx.dma_vaddr;
