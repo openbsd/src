@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cvreg.h,v 1.1.2.2 1995/11/10 16:27:13 chopps Exp $	*/
+/*	$NetBSD: grf_cvreg.h,v 1.3 1995/12/27 07:15:55 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -158,6 +158,7 @@ struct grfcvtext_mode {
 #define SEQ_ID_CLKSYN_TEST_HI	0x16	/* reserved for S3 testing of the */
 #define SEQ_ID_CLKSYN_TEST_LO	0x17	/*   internal clock synthesizer   */
 #define SEQ_ID_RAMDAC_CNTL	0x18
+#define SEQ_ID_MORE_MAGIC	0x1A
 
 /* CRT Controller: */
 #define CRT_ADDRESS		0x03D4
