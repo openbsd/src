@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-keyscan.c,v 1.13 2001/02/07 18:04:50 itojun Exp $");
+RCSID("$OpenBSD: ssh-keyscan.c,v 1.14 2001/02/07 22:43:16 markus Exp $");
 
 #include <sys/queue.h>
 #include <errno.h>
@@ -138,7 +138,7 @@ Linebuf_lineno(Linebuf * lb)
 }
 
 static inline char *
-getline(Linebuf * lb)
+Linebuf_getline(Linebuf * lb)
 {
 	int n = 0;
 
@@ -527,7 +527,7 @@ nexthost(int argc, char **argv)
 				error("ignoring invalid/misplaced option `%s'", argv[argno++]);
 		} else {
 			char *line;
-			line = getline(lb);
+			line = Linebuf_getline(lb);
 			if (line)
 				return (line);
 			Linebuf_free(lb);
