@@ -1,12 +1,8 @@
-#	$OpenBSD: Makefile.inc,v 1.6 1998/05/29 04:22:19 rahnds Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 1998/07/19 19:42:54 rahnds Exp $
 #	etc.powerpc/Makefile.inc -- powerpc-specific etc Makefile targets
 
 .ifdef DESTDIR
-snap_md: binutils bsd distrib
-
-binutils:
-	cd ${DESTDIR} && tar cf - usr/*openbsd* \
-	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.binutils.tar${GZIPEXT}
+snap_md: bsd distrib
 
 bsd:
 	cd ${.CURDIR}/../sys/arch/powerpc/conf && config GENERIC
@@ -22,6 +18,7 @@ bsd:
 
 # knows about bsdofw.rd and bsd.rd
 distrib:
+	cp ${DESTDIR}/usr/mdec/ofwboot ${DESTDIR}/snapshot/ofwboot
 	cd ${.CURDIR}/../distrib && make cleandir && \
 		make && make install
 	mkdir ${DESTDIR}/snapshot/boot
