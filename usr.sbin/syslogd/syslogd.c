@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.45 2001/11/17 13:32:57 markus Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.46 2001/11/17 13:33:42 markus Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.45 2001/11/17 13:32:57 markus Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.46 2001/11/17 13:33:42 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -218,6 +218,7 @@ void	reapchild __P((int));
 char   *ttymsg __P((struct iovec *, int, char *, int));
 void	usage __P((void));
 void	wallmsg __P((struct filed *, struct iovec *));
+int	getmsgbufsize __P((void));
 
 #define MAXFUNIX	21
 
