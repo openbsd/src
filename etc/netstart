@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.50 1999/09/01 05:07:50 deraadt Exp $
+#	$OpenBSD: netstart,v 1.51 1999/09/01 18:07:34 deraadt Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -114,7 +114,8 @@ for bn in /etc/bridgename.*; do
     {
 	# All lines are run as brconfig(8) commands.
 	while read line ; do
-	    # XXX should support # comments and skip blank lines 
+	    line=${line%%#*}		# strip comments
+	    test -z "$line" && continue
 	    brconfig $if $line
 	done
     } < /etc/bridgename.$if
