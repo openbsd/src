@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.15 2003/12/24 22:45:45 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.16 2003/12/28 21:29:27 krw Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -252,14 +252,11 @@ ahc_done(struct ahc_softc *ahc, struct scb *scb)
 		break;
 	case CAM_BDR_SENT:
 	case CAM_SCSI_BUS_RESET:
+	case CAM_REQUEUE_REQ:
 		xs->error = XS_RESET;
 		break;
 	case CAM_SEL_TIMEOUT:
 		xs->error = XS_SELTIMEOUT;
-		break;
-	case CAM_REQUEUE_REQ:
-		scb->flags |= SCB_REQUEUE;
-		xs->error = XS_NOERROR;
 		break;
 	default:
 		xs->error = XS_DRIVER_STUFFUP;
@@ -475,18 +472,8 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 		scb->hscb->control |= MK_MESSAGE;
 	}
 
-	if ((tstate->tagenable & mask) != 0) {
-		switch (xs->cmd->opcode) {
-		case INQUIRY:
-		case TEST_UNIT_READY:
-		case REQUEST_SENSE:
-			/* Don't use tagged i/o on these commands */
-			break;
-		default:
-			scb->hscb->control |= TAG_ENB;
-			break;
-		}
-	}
+	if ((tstate->tagenable & mask) != 0)
+		ahc_set_transaction_tag(scb, TRUE, MSG_SIMPLE_TASK);
 
 	bus_dmamap_sync(ahc->parent_dmat, ahc->scb_data->hscb_dmamap,
 	    0, ahc->scb_data->hscb_dmamap->dm_mapsize,
@@ -917,8 +904,8 @@ bus_reset:
 				timeout_add(&scb->xs->stimeout, 2 * hz);
 				ahc_unpause(ahc);
 			} else {
-				/* Go "immediatly" to the bus reset */
-				/* This shouldn't happen */
+				/* Go "immediately" to the bus reset. */
+				/* This shouldn't happen. */
 				ahc_set_recoveryscb(ahc, scb);
 				ahc_print_path(ahc, scb);
 				printf("SCB %d: Immediate reset.  "
