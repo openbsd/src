@@ -1,17 +1,24 @@
-#	$OpenBSD: isakmpd.conf.sample,v 1.6 1998/12/21 01:02:25 niklas Exp $
-#	$EOM: isakmpd.conf.sample,v 1.24 1998/12/21 00:48:06 niklas Exp $
+#	$OpenBSD: isakmpd.conf.sample,v 1.7 1999/02/26 03:45:30 niklas Exp $
+#	$EOM: isakmpd.conf.sample,v 1.26 1999/02/24 15:48:51 niklas Exp $
 
 # A configuration sample for the isakmpd ISAKMP/Oakley (aka IKE) daemon.
 
 [General]
 Retransmits=		3
 Exchange-max-time=	120
+#Listen-on=		10.1.0.2
 
 # Incoming phase 1 negotiations are multiplexed on the source IP address
 [Phase 1]
 10.1.0.1=		ISAKMP-peer-1
 10.1.0.2=		ISAKMP-peer-2
 Default=		Default-ISAKMP-peer
+
+# These connections are walked over after config file parsing and told
+# to the application layer so that it will inform us when traffic wants to
+# pass over them.  This means we can do on-demand keying.
+[Phase 2]
+Connections=		IPsec-1-2
 
 [ISAKMP-peer-1]
 Phase=			1
