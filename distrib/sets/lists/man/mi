@@ -1214,6 +1214,14 @@
 ./usr/share/man/cat4/mvme68k/mem.0
 ./usr/share/man/cat4/mvme68k/ssh.0
 ./usr/share/man/cat4/mvme88k
+./usr/share/man/cat4/mvme88k/bussw.0
+./usr/share/man/cat4/mvme88k/ie.0
+./usr/share/man/cat4/mvme88k/intro.0
+./usr/share/man/cat4/mvme88k/pcctwo.0
+./usr/share/man/cat4/mvme88k/ssh.0
+./usr/share/man/cat4/mvme88k/ve.0
+./usr/share/man/cat4/mvme88k/vme.0
+./usr/share/man/cat4/mvme88k/vs.0
 ./usr/share/man/cat4/mvmeppc
 ./usr/share/man/cat4/ncr.0
 ./usr/share/man/cat4/ne.0
