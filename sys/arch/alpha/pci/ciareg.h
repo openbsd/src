@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciareg.h,v 1.6 1998/06/28 02:58:50 angelos Exp $	*/
+/*	$OpenBSD: ciareg.h,v 1.7 1998/06/28 03:00:25 angelos Exp $	*/
 /*	$NetBSD: ciareg.h,v 1.7 1996/11/23 06:42:55 cgd Exp $	*/
 
 /*
@@ -164,7 +164,7 @@
 #define         CNFG_DWEN               0x00000020
 #define         CNFG_WLEN               0x00000100
 
-#define CIA_CSR_CNFG_BITS       "\20\11WLEN\6DWEN\5MWEN\1BW
+#define CIA_CSR_CNFG_BITS       "\20\11WLEN\6DWEN\5MWEN\1BWEN"
 
 #define	CIA_CSR_HAE_MEM	(CIA_CSRS + 0x400)
 
