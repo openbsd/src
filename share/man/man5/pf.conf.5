@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.207 2003/03/04 22:50:36 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.208 2003/03/04 23:40:03 dhartmei Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -842,6 +842,22 @@ external interface.
 Redirections cannot reflect packets back through the interface they arrive
 on, they can only be redirected to hosts connected to different interfaces
 or to the firewall itself.
+.Pp
+Note that redirecting external incoming connections to the loopback
+address, as in
+.Bd -literal -offset indent
+.Xo Ic rdr on ne3 inet proto tcp\ 
+.Ic to port 8025 -> 127.0.0.1 port 25
+.Xc
+.Ed
+.Pp
+will effectively allow an external host to connect to daemons
+bound solely to the loopback address, circumventing the traditional
+blocking of such connections on a real interface.
+Unless this effect is desired, any of the local non-loopback addresses
+should be used as redirection target instead, which allows external
+connections only to daemons bound to this address or not bound to
+any address.
 .Pp
 .Sh PACKET FILTERING
 .Xr pf 4
