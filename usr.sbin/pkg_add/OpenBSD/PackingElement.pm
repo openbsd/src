@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.45 2004/10/05 20:22:10 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.46 2004/10/05 20:35:09 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -26,7 +26,6 @@ require 5.008_000;
 # setKeyword and Factory.
 # It does provide base methods for stuff under it, though.
 package OpenBSD::PackingElement;
-use File::Basename;
 our %keyword;
 our %oldkeyword;
 
@@ -145,6 +144,7 @@ sub new { die "Can't create annotation objects" }
 
 # concrete objects
 package OpenBSD::PackingElement::Object;
+use File::Basename;
 our @ISA=qw(OpenBSD::PackingElement);
 
 sub compute_fullname
