@@ -84,7 +84,7 @@ void epstart __P((struct ifnet *));
 void epwatchdog __P((struct ifnet *));
 void epreset __P((struct ep_softc *));
 void epread __P((struct ep_softc *));
-struct mbuf *epget __P((struct ep_softc *, int));
+struct mbuf *epget __P((struct ep_softc *, struct ether_header *, int));
 void epmbuffill __P((void *));
 void epmbufempty __P((struct ep_softc *));
 void epsetfilter __P((struct ep_softc *));
@@ -580,7 +580,7 @@ epread(sc)
 	bus_io_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *m;
-	struct ether_header *eh;
+	struct ether_header eh;
 	int len;
 
 	len = bus_io_read_2(bc, ioh, EP_W1_RX_STATUS);
@@ -620,16 +620,13 @@ again:
 	len &= RX_BYTES_MASK;	/* Lower 11 bits = RX bytes. */
 
 	/* Pull packet off interface. */
-	m = epget(sc, len);
+	m = epget(sc, &eh, len);
 	if (m == 0) {
 		ifp->if_ierrors++;
 		goto abort;
 	}
 
 	++ifp->if_ipackets;
-
-	/* We assume the header fit entirely in one mbuf. */
-	eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
 	/*
@@ -645,18 +642,16 @@ again:
 		 * mode, we have to check if this packet is really ours.
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
-			    sizeof(eh->ether_dhost)) != 0) {
+		    (eh.ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
+		    bcmp(eh.ether_dhost, sc->sc_arpcom.ac_enaddr,
+			    sizeof(eh.ether_dhost)) != 0) {
 			m_freem(m);
 			return;
 		}
 	}
 #endif
 
-	/* We assume the header fit entirely in one mbuf. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	ether_input(ifp, &eh, m);
 
 	/*
 	 * In periods of high traffic we can actually receive enough
@@ -696,8 +691,9 @@ abort:
 }
 
 struct mbuf *
-epget(sc, totlen)
+epget(sc, eh, totlen)
 	struct ep_softc *sc;
+	struct ether_header *eh;
 	int totlen;
 {
 	bus_chipset_tag_t bc = sc->sc_bc;
@@ -723,7 +719,6 @@ epget(sc, totlen)
 		m->m_flags = M_PKTHDR;
 	}
 	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = totlen;
 	len = MHLEN;
 	top = 0;
 	mp = &top;
@@ -734,6 +729,13 @@ epget(sc, totlen)
 	 * reading it.  We may still lose packets at other times.
 	 */
 	sh = splhigh();
+
+	if(totlen > sizeof(struct ether_header)) {
+		bus_io_read_multi_2(bc, ioh,
+		    EP_W1_RX_PIO_RD_1, eh, sizeof(struct ether_header) / 2);
+		totlen -= sizeof(struct ether_header);
+	}
+	m->m_pkthdr.len = totlen;
 
 	while (totlen > 0) {
 		if (top) {
