@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.2 2004/08/06 22:31:31 mickey Exp $ */
+/*      $OpenBSD: param.h,v 1.3 2004/08/10 20:28:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,13 +44,13 @@
 #ifndef _MIPS_PARAM_H_
 #define _MIPS_PARAM_H_
 
-#ifdef _KERNEL    
+#ifdef _KERNEL
 #ifdef _LOCORE
-#include <machine/psl.h>                                             
-#else                                                                
+#include <machine/psl.h>
+#else
 #include <machine/cpu.h>
-#endif                                                              
-#endif                                                             
+#endif
+#endif
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all

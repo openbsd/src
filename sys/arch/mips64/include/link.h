@@ -1,8 +1,8 @@
-/*	$OpenBSD: link.h,v 1.1 2004/08/06 20:56:02 pefo Exp $ */
+/*	$OpenBSD: link.h,v 1.2 2004/08/10 20:28:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,7 +34,7 @@
 
 #ifndef _MIPS_LINK_H_
 #define _MIPS_LINK_H_
- 
+
 #include <elf_abi.h>
 #include <machine/elf_abi.h>
 
@@ -46,9 +46,9 @@
 
 struct r_debug {
 	int	r_version;	/* Protocol version.	*/
-    	struct link_map *r_map;	/* Head of list of loaded objects.  */
+	struct link_map *r_map;	/* Head of list of loaded objects.  */
 
-	Elf32_Addr r_brk;                                            
+	Elf32_Addr r_brk;
 	enum {
 		RT_CONSISTENT,	/* Mapping change is complete.  */
 		RT_ADD,		/* Adding a new object.  */
@@ -56,8 +56,7 @@ struct r_debug {
 	} r_state;
 
 	Elf32_Addr r_ldbase;	/* Base address the linker is loaded at.  */
-};            
-
+};
 
 /*
  * Shared object map data used by the debugger.

@@ -1,7 +1,7 @@
-/*	$OpenBSD: archtype.h,v 1.1 2004/08/06 20:56:01 pefo Exp $	*/
+/*	$OpenBSD: archtype.h,v 1.2 2004/08/10 20:28:13 deraadt Exp $	*/
 /*
  * Copyright (c) 1997-2003 Opsycon AB, Sweden (www.opsycon.se)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -77,8 +77,8 @@
 #define	WG8168			0x0056	/* Willowglen 8168 5231 VME card */
 #define	WG6000			0x0057	/* Willowglen CPU-6000 */
 #define	WG7000			0x0058	/* Willowglen CPU-7000 */
-#define	WG8200			0x0059	/* Willowglen CPU-8200 */ 
-#define	WG8232			0x005a	/* Willowglen CPU-8232 */ 
+#define	WG8200			0x0059	/* Willowglen CPU-8200 */
+#define	WG8232			0x005a	/* Willowglen CPU-8232 */
 
 #define	MISC_CLASS		0x00F0	/* Misc machines... */
 #define	LAGUNA			0x00F1	/* Heurikon Laguna VME board */

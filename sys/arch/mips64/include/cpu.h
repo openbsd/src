@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.2 2004/08/09 14:57:26 pefo Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.3 2004/08/10 20:28:13 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -65,10 +65,10 @@
 #define KSEG_SIZE	0x20000000
 
 #define	KSEG0_TO_PHYS(x)	((u_long)(x) & 0x1fffffff)
-#define	KSEG1_TO_PHYS(x) 	((u_long)(x) & 0x1fffffff)
+#define	KSEG1_TO_PHYS(x)	((u_long)(x) & 0x1fffffff)
 #define	PHYS_TO_KSEG0(x)	((u_long)(x) | KSEG0_BASE)
-#define	PHYS_TO_KSEG1(x) 	((u_long)(x) | KSEG1_BASE)
-#define	PHYS_TO_KSEG3(x) 	((u_long)(x) | KSEG3_BASE)
+#define	PHYS_TO_KSEG1(x)	((u_long)(x) | KSEG1_BASE)
+#define	PHYS_TO_KSEG3(x)	((u_long)(x) | KSEG3_BASE)
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.2 2004/08/10 20:15:47 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.3 2004/08/10 20:28:13 deraadt Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -200,7 +200,7 @@ pagemove(from, to, size)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
-	if(((vaddr_t)from & CpuCacheAliasMask) != ((vaddr_t)to & CpuCacheAliasMask)) {
+	if (((vaddr_t)from & CpuCacheAliasMask) != ((vaddr_t)to & CpuCacheAliasMask)) {
 		Mips_HitSyncDCache((vaddr_t)from, size);
 	}
 	while (size > 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.2 2004/08/10 20:15:47 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.3 2004/08/10 20:28:13 deraadt Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ readdisklabel(dev, strat, lp, osdep, spoofonly)
 				msg = "dos partition I/O error";
 				goto done;
 			}
-			if(((int *)bp->b_data)[0] == 0x01084025 &&
+			if (((int *)bp->b_data)[0] == 0x01084025 &&
 			   ((int *)bp->b_data)[1] == 0x01294825) {
 				goto nodoslabel;
 			}
@@ -430,8 +430,8 @@ writedisklabel(dev, strat, lp, osdep)
 		if ((error = biowait(bp)) != 0)
 			goto done;
 
-		if(((int *)bp->b_data)[0] == 0x01084025 &&
-		   ((int *)bp->b_data)[1] == 0x01294825) {
+		if (((int *)bp->b_data)[0] == 0x01084025 &&
+		    ((int *)bp->b_data)[1] == 0x01294825) {
 			goto nodoslabel;
 		}
 		/* XXX how do we check veracity/bounds of this? */

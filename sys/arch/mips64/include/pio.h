@@ -1,8 +1,8 @@
-/*	$OpenBSD: pio.h,v 1.2 2004/08/09 14:57:26 pefo Exp $ */
+/*	$OpenBSD: pio.h,v 1.3 2004/08/10 20:28:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -82,7 +82,7 @@ __out16rb(a,v)
 
 	_v_ = ((v >> 8) & 0xff) | (v << 8);
 	out16(a, _v_);
-}  
+}
 
 static __inline u_int32_t
 __in32rb(a)
@@ -93,7 +93,7 @@ __in32rb(a)
 	_v_ = in32(a);
 	_v_ = _swap_(_v_);
         return _v_;
-}                      
+}
 
 static __inline u_int16_t
 __in16rb(a)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.1 2004/08/06 20:56:02 pefo Exp $	*/
+/*	$OpenBSD: signal.h,v 1.2 2004/08/10 20:28:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,7 +68,7 @@ struct	sigcontext {
 	f_register_t sc_fpregs[33]; /* fp regs 0 to 31 and csr */
 	long	sc_fpused;	/* fp has been used */
 	long	sc_fpc_eir;	/* floating point exception instruction reg */
-	long	xxx[8];		/* XXX reserved */ 
+	long	xxx[8];		/* XXX reserved */
 };
 #endif	/* !_ANSI_SOURCE */
 

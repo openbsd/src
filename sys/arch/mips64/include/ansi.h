@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.1 2004/08/06 20:56:01 pefo Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.2 2004/08/10 20:28:13 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -69,7 +69,7 @@
  * chosen over a long is that the is*() and to*() routines take ints (says
  * ANSI C), but they use _RUNE_T_ instead of int.  By changing it here, you
  * lose a bit of ANSI conformance, but your programs will still work.
- *    
+ *
  * Note that _WCHAR_T_ and _RUNE_T_ must be of the same type.  When wchar_t
  * and rune_t are typedef'd, _WCHAR_T_ will be undef'd, but _RUNE_T remains
  * defined for ctype.h.

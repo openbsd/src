@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.2 2004/08/09 14:57:26 pefo Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.3 2004/08/10 20:28:13 deraadt Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -108,7 +108,7 @@ typedef struct arc_config
 	u_int32_t		affinity_mask;
 	u_int32_t		config_data_len;
 	u_int32_t		id_len;
-	char 			*id;
+	char			*id;
 } arc_config_t;
 
 typedef enum arc_status
@@ -215,7 +215,7 @@ typedef struct arc_calls
 	volatile void (*return_from_main)(void); /* ReturnFromMain 9 */
 
 	arc_config_t *(*get_peer)(	/* GetPeer 10 */
-		arc_config_t *); 	/* Component */
+		arc_config_t *);	/* Component */
 
 	arc_config_t *(*get_child)(	/* GetChild 11 */
 		arc_config_t *);	/* Component */
@@ -288,7 +288,7 @@ typedef struct arc_calls
 	arc_status_t (*seek)(		/* Seek 29 */
 		u_int32_t,		/* FileId */
 		int64_t *,		/* Offset */
-		arc_seek_mode_t); 	/* Mode */
+		arc_seek_mode_t);	/* Mode */
 
 	arc_status_t (*mount)(		/* Mount 30 */
 		char *,			/* Path */
@@ -320,7 +320,7 @@ typedef struct arc_calls
 #define ARC_PARAM_BLK_MAGIC	0x53435241
 #define ARC_PARAM_BLK_MAGIC_BUG	0x41524353	/* This is wrong... but req */
 
-typedef struct arc_param_blk 
+typedef struct arc_param_blk
 {
 	u_int32_t	magic;		/* Magic Number */
 	u_int32_t	length;		/* Length of parameter block */

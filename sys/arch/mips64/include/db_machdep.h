@@ -1,8 +1,8 @@
-/*	$OpenBSD: db_machdep.h,v 1.2 2004/08/10 20:07:15 pefo Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.3 2004/08/10 20:28:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:

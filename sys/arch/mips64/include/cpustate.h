@@ -1,8 +1,8 @@
-/*	$OpenBSD: cpustate.h,v 1.1 2004/08/06 20:56:01 pefo Exp $ */
+/*	$OpenBSD: cpustate.h,v 1.2 2004/08/10 20:28:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -128,7 +128,7 @@
 	RESTORE_REG(t8, T8, frame, bo)		;\
 	RESTORE_REG(t9, T9, frame, bo)		;\
 	RESTORE_REG(gp, GP, frame, bo)		;\
-	RESTORE_REG(ra, RA, frame, bo)	
+	RESTORE_REG(ra, RA, frame, bo)
 
 /*
  *  Restore 'callee save' registers

@@ -1,6 +1,6 @@
-/*      $OpenBSD: pmap.h,v 1.2 2004/08/06 22:39:13 deraadt Exp $ */
+/*      $OpenBSD: pmap.h,v 1.3 2004/08/10 20:28:13 deraadt Exp $ */
 
-/* 
+/*
  * Copyright (c) 1987 Carnegie-Mellon University
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -53,7 +53,7 @@
  * The user address space is mapped using a two level structure where
  * virtual address bits 30..22 are used to index into a segment table which
  * points to a page worth of PTEs (4096 page can hold 1024 PTEs).
- * Bits 21..12 are then used to index a PTE which describes a page within 
+ * Bits 21..12 are then used to index a PTE which describes a page within
  * a segment.
  *
  * The wired entries in the TLB will contain the following:

@@ -1,8 +1,8 @@
-/*	$OpenBSD: asm.h,v 1.1 2004/08/06 20:56:01 pefo Exp $ */
+/*	$OpenBSD: asm.h,v 1.2 2004/08/10 20:28:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -54,7 +54,7 @@
 #error "__MIPSEL__ or __MIPSEB__ must be defined"
 #endif
 /*
- * Define how to access unaligned data word 
+ * Define how to access unaligned data word
  */
 #if defined(__MIPSEL__)
 #define LWLO    lwl
@@ -181,7 +181,7 @@
  */
 #if defined(XGPROF) || defined(XPROF)
 #define	MCOUNT			\
-	subu 	sp, sp, 32;	\
+	subu	sp, sp, 32;	\
 	SAVE_GP(16);		\
 	sw	ra, 28(sp);	\
 	sw	gp, 24(sp);	\

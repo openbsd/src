@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.3 2004/08/10 20:15:47 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.4 2004/08/10 20:28:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -231,12 +231,12 @@ pmap_steal_memory(size, vstartp, vendp)
 	va = 0;
 
 	for(i = 0; i < vm_nphysseg && va == 0; i++) {
-		if(vm_physmem[i].avail_start != vm_physmem[i].start ||
+		if (vm_physmem[i].avail_start != vm_physmem[i].start ||
                     vm_physmem[i].avail_start >= vm_physmem[i].avail_end) {
 			continue;
 		}
 
-		if((vm_physmem[i].avail_end - vm_physmem[i].avail_start) < npgs) {
+		if ((vm_physmem[i].avail_end - vm_physmem[i].avail_start) < npgs) {
 			continue;
 		}
 
@@ -244,8 +244,8 @@ pmap_steal_memory(size, vstartp, vendp)
 		vm_physmem[i].avail_start += npgs;
 		vm_physmem[i].start += npgs;
 
-		if(vm_physmem[i].avail_start == vm_physmem[i].end) {
-			if(vm_nphysseg == 1) {
+		if (vm_physmem[i].avail_start == vm_physmem[i].end) {
+			if (vm_nphysseg == 1) {
 				panic("pmap_steal_memory: out of memory!");
 			}
 
@@ -254,17 +254,17 @@ pmap_steal_memory(size, vstartp, vendp)
 				vm_physmem[x] = vm_physmem[x + 1];
 			}
 		}
-		if(vstartp) {
+		if (vstartp) {
 			*vstartp = round_page(virtual_start);
 		}
-		if(vendp) {
+		if (vendp) {
 			*vendp = virtual_end;
 		}
 		va = PHYS_TO_KSEG0(pa);
 		memset((caddr_t)va, 0, size);
 	}
 
-	if(va == 0) {
+	if (va == 0) {
 		panic("pmap_steal_memory: no memory to steal");
 	}
 
@@ -373,7 +373,7 @@ extern struct user *proc0paddr;
 		} while (mem == NULL);
 
 		pv = pa_to_pvh(VM_PAGE_TO_PHYS(mem));
-		if(pv->pv_flags & PV_CACHED &&
+		if (pv->pv_flags & PV_CACHED &&
 		   ((pv->pv_va ^ PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem))) & CpuCacheAliasMask) != 0) {
 			Mips_SyncDCachePage(pv->pv_va);
 		}
@@ -536,25 +536,25 @@ pmap_remove(pmap, sva, eva)
 
 	stat_count(remove_stats.calls);
 
-	if(pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT)) {
+	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT)) {
 		printf("pmap_remove(%x, %x, %x)\n", pmap, sva, eva);
 	}
-	if(pmap == NULL) {
+	if (pmap == NULL) {
 		return;
 	}
 
-	if(pmap == pmap_kernel()) {
+	if (pmap == pmap_kernel()) {
 		pt_entry_t *pte;
 
 		/* remove entries from kernel pmap */
 #ifdef DIAGNOSTIC
-		if(sva < VM_MIN_KERNEL_ADDRESS || eva > virtual_end)
+		if (sva < VM_MIN_KERNEL_ADDRESS || eva > virtual_end)
 			panic("pmap_remove: kva not in range");
 #endif
 		pte = kvtopte(sva);
 		for(; sva < eva; sva += NBPG, pte++) {
 			entry = pte->pt_entry;
-			if(!(entry & PG_V))
+			if (!(entry & PG_V))
 				continue;
 			pmap->pm_stats.resident_count--;
 			pmap_remove_pv(pmap, sva, pfn_to_pad(entry));
@@ -593,7 +593,7 @@ pmap_remove(pmap, sva, eva)
 			if (!(entry & PG_V))
 				continue;
 			pmap->pm_stats.resident_count--;
-			if(!pfn_is_ext(entry)) {/* padr > 32 bits */
+			if (!pfn_is_ext(entry)) {/* padr > 32 bits */
 				pmap_remove_pv(pmap, sva, pfn_to_pad(entry));
 			}
 			pte->pt_entry = PG_NV;
@@ -877,7 +877,7 @@ pmap_enter(pmap, va, pa, prot, stat)
 
 	is_physaddr = IS_VM_PHYSADDR(pa);
 
-	if(is_physaddr) {
+	if (is_physaddr) {
 		pv_entry_t pv, npv;
 		int s;
 
@@ -950,7 +950,7 @@ pmap_enter(pmap, va, pa, prot, stat)
 					/*
 					 * Check cache aliasing incompatibility
 					 */
-					if(((npv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
+					if (((npv->pv_va ^ va) & CpuCacheAliasMask) != 0) {
 						printf("pmap_enter: uncached mapping for pa %p, va %p !=  %p.\n", pa, npv->pv_va, va);
 						pmap_page_cache(pa,PV_UNCACHED);
 						Mips_SyncCache();
@@ -981,7 +981,7 @@ pmap_enter(pmap, va, pa, prot, stat)
 
 			/* can this cause us to recurse forever? */
 			npv = pmap_pv_alloc();
-			if(npv == NULL) {
+			if (npv == NULL) {
 				panic("pmap_pv_alloc() failed");
 			}
 			npv->pv_va = va;
@@ -1016,7 +1016,7 @@ pmap_enter(pmap, va, pa, prot, stat)
 		if (!(pte->pt_entry & PG_V)) {
 			pmap->pm_stats.resident_count++;
 		}
-		if(pa != pfn_to_pad(pte->pt_entry)) {
+		if (pa != pfn_to_pad(pte->pt_entry)) {
 			pmap_remove(pmap, va, va + NBPG);
 			stat_count(enter_stats.mchange);
 		}
@@ -1043,7 +1043,7 @@ pmap_enter(pmap, va, pa, prot, stat)
 		} while (mem == NULL);
 
 		pv = pa_to_pvh(VM_PAGE_TO_PHYS(mem));
-		if(pv->pv_flags & PV_CACHED &&
+		if (pv->pv_flags & PV_CACHED &&
 		   ((pv->pv_va ^ PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem))) & CpuCacheAliasMask) != 0) {
 			Mips_SyncDCachePage(pv->pv_va);
 		}
@@ -1073,7 +1073,7 @@ pmap_enter(pmap, va, pa, prot, stat)
 		printf("\n");
 	}
 
-	if(pa != pfn_to_pad(pte->pt_entry)) {
+	if (pa != pfn_to_pad(pte->pt_entry)) {
 		pmap_remove(pmap, va, va + NBPG);
 		stat_count(enter_stats.mchange);
 	}
@@ -1319,7 +1319,7 @@ pmap_zero_page(struct vm_page *pg)
 
 	p = (vaddr_t)PHYS_TO_KSEG0(phys);
 	pv = pa_to_pvh(phys);
-	if(pv->pv_flags & PV_CACHED &&
+	if (pv->pv_flags & PV_CACHED &&
 		   ((pv->pv_va ^ (int)p) & CpuCacheAliasMask) != 0) {
 		Mips_SyncDCachePage(pv->pv_va);
 	}
@@ -1361,12 +1361,12 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 	d = (int *)PHYS_TO_KSEG0(dst);
 
 	pv = pa_to_pvh(src);
-	if(pv->pv_flags & PV_CACHED &&
+	if (pv->pv_flags & PV_CACHED &&
 		   (sf = ((pv->pv_va ^ (int)s) & CpuCacheAliasMask) != 0)) {
 		Mips_SyncDCachePage(pv->pv_va);
 	}
 	pv = pa_to_pvh(dst);
-	if(pv->pv_flags & PV_CACHED &&
+	if (pv->pv_flags & PV_CACHED &&
 		   (df = ((pv->pv_va ^ (int)d) & CpuCacheAliasMask) != 0)) {
 		Mips_SyncDCachePage(pv->pv_va);
 	}
@@ -1379,11 +1379,11 @@ pmap_copy_page(struct vm_page *srcpg, struct vm_page *dstpg)
 		d += 4;
 	} while (s != end);
 
-	if(sf) {
+	if (sf) {
 		Mips_HitSyncDCache((vaddr_t)PHYS_TO_KSEG0(src), PAGE_SIZE);
 	}
 #if 0	/* XXX TODO: Why can't we trust the following? */
-	if(df || (pv->pv_pmap == NULL) || (pv->pv_flags & PV_EXEC)) {
+	if (df || (pv->pv_pmap == NULL) || (pv->pv_flags & PV_EXEC)) {
 		Mips_HitSyncDCachePage(dst);
 	}
 #else
@@ -1587,7 +1587,7 @@ pmap_pv_page_alloc(u_long size, int flags, int mtype)
 {
         paddr_t pg;
 
-        if(pmap_physpage_alloc(&pg))
+        if (pmap_physpage_alloc(&pg))
                 return ((void *) PHYS_TO_KSEG0(pg));
         return (NULL);
 }

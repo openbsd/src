@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.1 2004/08/06 20:56:02 pefo Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.2 2004/08/10 20:28:13 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -99,7 +99,7 @@
  * It is related to human patience and other factors which don't really
  * change over time.
  */
-#define	MAXSLP 		20
+#define	MAXSLP		20
 
 #define	VM_PHYSSEG_MAX	8	/* Max number of physical memory segments */
 #define VM_PHYSSEG_STRAT VM_PSTRAT_BSEARCH
@@ -137,6 +137,6 @@ vaddr_t virtual_end;
 struct pmap_physseg {
 	struct pv_entry *pvent;		/* pv list of this seg */
 	char *attrs;
-}; 
+};
 
 #endif /* !_MIPS_VMPARAM_H_ */

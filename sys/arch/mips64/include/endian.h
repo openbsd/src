@@ -1,8 +1,8 @@
-/*	$OpenBSD: endian.h,v 1.1 2004/08/06 20:56:01 pefo Exp $ */
+/*	$OpenBSD: endian.h,v 1.2 2004/08/10 20:28:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Opsycon AB  (www.opsycon.se / www.opsycon.com)
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:

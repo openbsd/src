@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.4 2004/08/10 20:15:47 deraadt Exp $ */
+/*	$OpenBSD: cpu.c,v 1.5 2004/08/10 20:28:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -77,7 +77,7 @@ cpuattach(parent, dev, aux)
 	switch(sys_config.cpu[cpuno].type) {
 
 	case MIPS_R4000:
-		if(CpuPrimaryInstCacheSize == 16384)
+		if (CpuPrimaryInstCacheSize == 16384)
 			printf("MIPS R4400 CPU");
 		else
 			printf("MIPS R4000 CPU");
@@ -107,7 +107,7 @@ cpuattach(parent, dev, aux)
 		printf("PMC-Sierra RM52X0 CPU");
 		break;
 	case MIPS_RM7000:
-		if(sys_config.cpu[cpuno].vers_maj < 2) {
+		if (sys_config.cpu[cpuno].vers_maj < 2) {
 			printf("PMC-Sierra RM7000 CPU");
 		} else {
 			printf("PMC-Sierra RM7000A CPU");
@@ -182,7 +182,7 @@ cpuattach(parent, dev, aux)
 		printf("1 way");
 		break;
 	}
-	if(CpuSecondaryCacheSize != 0) {
+	if (CpuSecondaryCacheSize != 0) {
 		switch(sys_config.cpu[cpuno].type) {
 		case MIPS_RM7000:
 		case MIPS_RM9000:
@@ -195,7 +195,7 @@ cpuattach(parent, dev, aux)
 		}
 
 	}
-	if(CpuTertiaryCacheSize != 0) {
+	if (CpuTertiaryCacheSize != 0) {
 		printf(", L3 %dKB direct", CpuTertiaryCacheSize / 1024);
 	}
 	printf("\n");
@@ -206,7 +206,7 @@ cpuattach(parent, dev, aux)
 	printf("cpu%d: Alias mask 0x%x\n", cpuno, CpuCacheAliasMask);
 	printf("cpu%d: Config Register %x\n", cpuno, CpuConfigRegister);
 	printf("cpu%d: Cache type %x\n", cpuno, CpuCacheType);
-	if(fpu_id.cpu[cpuno].cp_imp == MIPS_RM7000) {
+	if (fpu_id.cpu[cpuno].cp_imp == MIPS_RM7000) {
 		u_int tmp;
 		tmp = CpuConfigRegister;
 		printf("cpu%d: ", cpuno);

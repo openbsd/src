@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.3 2004/08/10 20:15:47 deraadt Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.4 2004/08/10 20:28:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -117,7 +117,7 @@ kdb_trap(type, fp)
 {
 	switch(type) {
 	case T_BREAK:		/* breakpoint */
-		if(db_get_value((fp)->pc, sizeof(int), FALSE) == BREAK_SOVER) {
+		if (db_get_value((fp)->pc, sizeof(int), FALSE) == BREAK_SOVER) {
 			(fp)->pc += BKPT_SIZE;
 		}
 		break;
@@ -128,7 +128,7 @@ kdb_trap(type, fp)
 		if (!db_panic)
 			return (0);
 #endif
-		if(db_recover != 0) {
+		if (db_recover != 0) {
 			db_error("Caught exception in ddb.\n");
 			/*NOTREACHED*/
 		}
@@ -190,10 +190,10 @@ db_write_bytes(addr, size, data)
 		len -= sizeof(int);
 	}
 
-	if(len) {
+	if (len) {
 		kdbpokeb(ptr, *data++);
 	}
-	if(addr < VM_MIN_KERNEL_ADDRESS) {
+	if (addr < VM_MIN_KERNEL_ADDRESS) {
 		Mips_HitSyncDCache(addr, size);
 		Mips_InvalidateICache(PHYS_TO_KSEG0(addr & 0xffff), size);
 	}
@@ -391,7 +391,7 @@ loop:
 	}
 
 done:
-	if(symname == NULL) {
+	if (symname == NULL) {
 		if (subr == (long)idle)
 			(*pr)("idle ");
 		else
@@ -565,7 +565,7 @@ char *attr[] = {
 	pid = -1;
 
 	if (m[0] == 'p') {
-		if(have_addr && addr < 256) {
+		if (have_addr && addr < 256) {
 			pid = addr;
 			tlbno = 0;
 			count = sys_config.cpu[0].tlbsize;
@@ -587,7 +587,7 @@ if ((tlbp.tlb_hi == tlb.tlb_hi && (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V)) ||
 		}
 		return;
 	} else {
-		if(have_addr && addr < sys_config.cpu[0].tlbsize) {
+		if (have_addr && addr < sys_config.cpu[0].tlbsize) {
 			tlbno = addr;
 		}
 			else {
@@ -603,11 +603,11 @@ if ((tlbp.tlb_hi == tlb.tlb_hi && (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V)) ||
 		if (pid >= 0 && (tlb.tlb_hi & 0xff) != pid)
 			continue;
 
-		if(tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V) {
+		if (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V) {
 			printf("%2d v=0x%08x", tlbno, tlb.tlb_hi & ~0xff);
 			printf("/%02x ", tlb.tlb_hi & 0xff);
 
-			if(tlb.tlb_lo0 & PG_V) {
+			if (tlb.tlb_lo0 & PG_V) {
 				printf("0x%08x ", pfn_to_pad(tlb.tlb_lo0));
 				printf("%c", tlb.tlb_lo0 & PG_M ? 'M' : ' ');
 				printf("%c", tlb.tlb_lo0 & PG_G ? 'G' : ' ');
@@ -616,7 +616,7 @@ if ((tlbp.tlb_hi == tlb.tlb_hi && (tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V)) ||
 				printf("invalid             ");
 			}
 
-			if(tlb.tlb_lo1 & PG_V) {
+			if (tlb.tlb_lo1 & PG_V) {
 				printf("0x%08x ", pfn_to_pad(tlb.tlb_lo1));
 				printf("%c", tlb.tlb_lo1 & PG_M ? 'M' : ' ');
 				printf("%c", tlb.tlb_lo1 & PG_G ? 'G' : ' ');

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.3 2004/08/10 20:15:47 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.4 2004/08/10 20:28:13 deraadt Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -440,7 +440,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 			 * quad alignment for the rest of the arguments.
 			 */
 			if (p->p_md.md_flags & MDP_O32) {
-				if(_QUAD_LOWWORD == 0) {
+				if (_QUAD_LOWWORD == 0) {
 					code = locr0->a0;
 				} else {
 					code = locr0->a1;
@@ -630,7 +630,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		if ((int)trapframe->cause & CR_BR_DELAY)
 			va += 4;
 		printf("watch exception @ %p\n", va);
-		if(rm7k_watchintr(trapframe)) {
+		if (rm7k_watchintr(trapframe)) {
 			/* Return to user, don't add any more overhead */
 			return (trapframe->pc);
 		}
@@ -658,7 +658,7 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		else {
 			locr0->pc += 4;
 		}
-		if(instr == 0x040c0000) { /* Performance cntr trap */
+		if (instr == 0x040c0000) { /* Performance cntr trap */
 			int result;
 
 			result = rm7k_perfcntr(trapframe->a0, trapframe->a1,
@@ -903,7 +903,7 @@ MipsEmulateBranch(framePtr, instPC, fpcCSR, instptr)
 	((unsigned long)InstPtr + 4 + ((short)inst.IType.imm << 2))
 
 
-	if(instptr) {
+	if (instptr) {
 		inst = *(InstFmt *)&instptr;
 	}
 	else {
@@ -1059,7 +1059,7 @@ cpu_singlestep(p)
 	procfs_domem(curproc, p, NULL, &uio);
 
 	/* compute next address after current location */
-	if(curinstr != 0) {
+	if (curinstr != 0) {
 		va = MipsEmulateBranch(locr0, locr0->pc, locr0->fsr, curinstr);
 	}
 	else {
