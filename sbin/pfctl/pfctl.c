@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.56 2002/03/25 22:05:49 frantzen Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.57 2002/03/26 17:37:11 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -33,20 +33,21 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
+
 #include <net/if.h>
 #include <netinet/in.h>
 #include <net/pfvar.h>
 #include <arpa/inet.h>
 
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <err.h>
-#include <limits.h>
-#include <netdb.h>
 
 #include "pfctl_parser.h"
 
@@ -173,10 +174,11 @@ usage()
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dehnqrv] [-F set] [-l interface] ",
-	    __progname);
-	fprintf(stderr, "[-N file] [-O level] [-R file] [-s set] [-t set] "
-	    "[-x level] [-z]\n");
+	fprintf(stderr, "usage: %s [-dehnqrvz] [-F modifier] ", __progname);
+	fprintf(stderr, "[-N file] [-O level] [-R file] [-k host] ");
+	fprintf(stderr, "[-l interface] [-m modifier] [-s modifier] ");
+	fprintf(stderr, "[-t modifier] [-x level]\n");
+
 	exit(1);
 }
 
@@ -912,8 +914,6 @@ pfctl_clear_rule_counters(int dev, int opts)
 int
 main(int argc, char *argv[])
 {
-	extern char *optarg;
-	extern int optind;
 	int error = 0;
 	int dev = -1;
 	int ch;
