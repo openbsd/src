@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.14 2004/01/10 23:25:44 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.15 2004/02/17 16:25:16 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -146,6 +146,7 @@ msgbuf_write(struct msgbuf *msgbuf)
 	int		 i = 0;
 	ssize_t		 n;
 
+	bzero(&iov, sizeof(iov));
 	TAILQ_FOREACH(buf, &msgbuf->bufs, entries) {
 		if (i >= IOV_MAX)
 			break;
