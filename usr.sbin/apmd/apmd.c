@@ -448,8 +448,11 @@ main(int argc, char *argv[])
 		case APM_NORMAL_RESUME:
 		case APM_CRIT_RESUME:
 		case APM_SYS_STANDBY_RESUME:
-		    powerstatus = power_status(ctl_fd, 0, 0);
-		    powerchange = 1;
+		    powerbak = power_status(ctl_fd, 0, 0);
+		    if (powerstatus != powerbak) {
+			powerstatus = powerbak;
+			powerchange = 1;
+		    }
 		    resumes++;
 		    break;
 		case APM_POWER_CHANGE:

@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: apmd.8,v 1.13 2001/03/22 04:51:13 angelos Exp $
+.\"	$Id: apmd.8,v 1.14 2001/03/22 05:24:03 angelos Exp $
 .\"
 .Dd March 24, 1996
 .Dt APMD 8
@@ -166,7 +166,8 @@ mode.
 The resume program is run after resuming from a stand-by or
 suspended state.
 The powerup and powerdown programs are run after the power status (AC
-connected or not) changes, as well as after a resume.
+connected or not) changes, as well as after a resume (if the power
+status changed in the mean time).
 .Sh FILES
 .Pa /etc/apm/suspend ,
 .Pa /etc/apm/standby ,
