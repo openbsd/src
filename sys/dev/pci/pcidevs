@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.141 1999/05/13 07:00:03 downsj Exp $
+$OpenBSD: pcidevs,v 1.142 1999/05/14 00:28:25 downsj Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1208,7 +1208,8 @@ product TOSHIBA2 ToPIC97	0x060f	ToPIC97 PCI-CardBus
 product TOSHIBA2 TFIRO		0x0701	PCI-FIRO
 
 /* Trident products */
-product TRIDENT 4DWAVE		0x2000	4DWAVE
+product TRIDENT 4DWAVE_DX	0x2000	4DWAVE DX
+product TRIDENT 4DWAVE_NX	0x2001	4DWAVE NX
 product TRIDENT	TGUI_9320	0x9320	TGUI 9320
 product TRIDENT	TGUI_9350	0x9350	TGUI 9350
 product TRIDENT	TGUI_9360	0x9360	TGUI 9360
