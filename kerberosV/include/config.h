@@ -1036,7 +1036,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "\100(#)" msg }
 #define KRB5 1
 
 /* Define if krb_mk_req takes cons char * */
-/* #undef KRB_MK_REQ_CONST */
+#define KRB_MK_REQ_CONST
 
 /* Define to zero if your krb.h doesn't */
 /* #undef KRB_VERIFY_NOT_SECURE */
