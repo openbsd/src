@@ -38,15 +38,15 @@ After transferring the miniroot to disk, bring the system down by:
 
 Then boot the miniroot by typing the appropriate command at the PROM:
 
-	> b sd(,,1)bsd -s		# for sun4 monitors
-	ok boot sd(,,1)bsd -s		# for version 1 OpenBOOT ROMs
-	ok boot disk:b bsd -s		# for version 2 OpenBOOT ROMs
+	> b sd(,,1)bsd 		# for sun4 monitors
+	ok boot sd(,,1)bsd 	# for version 1 OpenBOOT ROMs
+	ok boot disk:b bsd 	# for version 2 OpenBOOT ROMs
 
 If you've loaded the miniroot onto some other disk than `sd0' adapt
 the boot specifier accordingly, e.g.:
 
-        > b sd(0,20,1)bsd -s       # example - scsi target 4 on sun4 monitors
-	ok boot disk1:b bsd -s     # example - scsi target 1 on v2 OpenBOOT ROM
+        > b sd(0,20,1)bsd       # example - scsi target 4 on sun4 monitors
+	ok boot disk1:b bsd     # example - scsi target 1 on v2 OpenBOOT ROM
 
 This will cause the kernel contained in the miniroot to be booted.
 After the initial probe messages you'll asked to start the install
