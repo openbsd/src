@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.29 2004/10/31 09:26:57 dlg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.30 2004/10/31 09:35:41 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1489,11 +1489,8 @@ ehci_sync_hc(ehci_softc_t *sc)
 		return;
 	}
 	DPRINTFN(2,("ehci_sync_hc: enter\n"));
-#if defined(__OpenBSD__) 
-	usb_lockmgr(&sc->sc_doorbell_lock, LK_EXCLUSIVE, NULL, curproc); /* get doorbell */
-#else
-	lockmgr(&sc->sc_doorbell_lock, LK_EXCLUSIVE, NULL); /* get doorbell */
-#endif
+	/* get doorbell */
+	usb_lockmgr(&sc->sc_doorbell_lock, LK_EXCLUSIVE, NULL, curproc);
 	s = splhardusb();
 	/* ask for doorbell */
 	EOWRITE4(sc, EHCI_USBCMD, EOREAD4(sc, EHCI_USBCMD) | EHCI_CMD_IAAD);
@@ -1503,11 +1500,8 @@ ehci_sync_hc(ehci_softc_t *sc)
 	DPRINTFN(1,("ehci_sync_hc: cmd=0x%08x sts=0x%08x\n",
 		    EOREAD4(sc, EHCI_USBCMD), EOREAD4(sc, EHCI_USBSTS)));
 	splx(s);
-#if defined(__OpenBSD__) 
-	usb_lockmgr(&sc->sc_doorbell_lock, LK_RELEASE, NULL, curproc); /* release doorbell */
-#else
-	lockmgr(&sc->sc_doorbell_lock, LK_RELEASE, NULL); /* release doorbell */
-#endif
+	/* release doorbell */
+	usb_lockmgr(&sc->sc_doorbell_lock, LK_RELEASE, NULL, curproc);
 #ifdef DIAGNOSTIC
 	if (error)
 		printf("ehci_sync_hc: tsleep() = %d\n", error);
