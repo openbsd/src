@@ -1,4 +1,4 @@
-/*    $OpenBSD: vm_glue.c,v 1.10 1996/03/19 21:10:55 mickey Exp $    */
+/*    $OpenBSD: vm_glue.c,v 1.11 1996/03/24 17:05:35 tholo Exp $    */
 /*    $NetBSD: vm_glue.c,v 1.52 1996/02/12 21:51:59 christos Exp $    */
 
 /* 
@@ -550,7 +550,6 @@ swapout(p)
 /*
  * DEBUG stuff
  */
-#ifdef	DEBUG
 
 int indent = 0;
 
@@ -578,5 +577,3 @@ iprintf(pr, fmt /* , va_alist */)
 	(*pr)("%r", fmt, ap);
 	va_end(ap);
 }
-#endif
-
