@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.7 2003/12/21 16:11:33 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.8 2003/12/21 18:21:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -121,7 +121,6 @@ struct peer {
 	int			 sock;
 	int			 events;
 	int			 queued_writes;
-	int			 queued_reads;
 	int			 queued_imsg_writes;
 	struct peer_buf_read	*rbuf;
 	struct peer		*next;

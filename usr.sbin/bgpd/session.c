@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.23 2003/12/20 21:43:45 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.24 2003/12/21 18:21:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -589,7 +589,7 @@ change_state(struct peer *peer, enum session_state state,
 		buf_peer_remove(peer);
 		free(peer->rbuf);
 		peer->rbuf = NULL;
-		peer->queued_writes = peer->queued_reads = 0;
+		peer->queued_writes = 0;
 		if (peer->state == STATE_ESTABLISHED)
 			session_down(peer);
 		if (event != EVNT_STOP) {
