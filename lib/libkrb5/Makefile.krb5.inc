@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.krb5.inc,v 1.10 2004/10/29 16:25:34 biorn Exp $
+# $OpenBSD: Makefile.krb5.inc,v 1.11 2004/11/26 12:02:10 biorn Exp $
 
 DIR_KRB5INC=	${.CURDIR}/../../kerberosV/include
 DIR_KRB5LIB=	${KRB5SRC}/lib/krb5
@@ -7,6 +7,10 @@ HDR_KRB5LIB=	krb5.h krb5-protos.h krb5-private.h
 HDR_GEN+=	krb5_err.h heim_err.h k524_err.h
 
 MAN+=	krb5.conf.5
+
+MAN+=	kerberos.8
+
+MAN+=	krb5.3
 
 MAN+=	krb5_init_context.3
 MLINKS+=krb5_init_context.3 krb5_free_context.3
@@ -136,6 +140,32 @@ MAN+=	krb5_set_password.3
 MLINKS+=krb5_set_password.3 krb5_change_password.3
 MLINKS+=krb5_set_password.3 krb5_set_password_using_ccache.3
 
+MAN+=	krb5_ccache.3
+MLINKS+=krb5_ccache.3 krb5_cc_cursor.3
+MLINKS+=krb5_ccache.3 krb5_cc_ops.3
+MLINKS+=krb5_ccache.3 krb5_fcc_ops.3
+MLINKS+=krb5_ccache.3 krb5_mcc_ops.3
+MLINKS+=krb5_ccache.3 krb5_cc_close.3
+MLINKS+=krb5_ccache.3 krb5_cc_copy_cache.3
+MLINKS+=krb5_ccache.3 krb5_cc_default.3
+MLINKS+=krb5_ccache.3 krb5_cc_default_name.3
+MLINKS+=krb5_ccache.3 krb5_cc_destroy.3
+MLINKS+=krb5_ccache.3 krb5_cc_end_seq_get.3
+MLINKS+=krb5_ccache.3 krb5_cc_gen_new.3
+MLINKS+=krb5_ccache.3 krb5_cc_get_name.3
+MLINKS+=krb5_ccache.3 krb5_cc_get_principal.3
+MLINKS+=krb5_ccache.3 krb5_cc_get_type.3
+MLINKS+=krb5_ccache.3 krb5_cc_get_ops.3
+MLINKS+=krb5_ccache.3 krb5_cc_get_version.3
+MLINKS+=krb5_ccache.3 krb5_cc_initialize.3
+MLINKS+=krb5_ccache.3 krb5_cc_register.3
+MLINKS+=krb5_ccache.3 krb5_cc_resolve.3
+MLINKS+=krb5_ccache.3 krb5_cc_retrieve_cred.3
+MLINKS+=krb5_ccache.3 krb5_cc_remove_cred.3
+MLINKS+=krb5_ccache.3 krb5_cc_set_default_name.3
+MLINKS+=krb5_ccache.3 krb5_cc_store_cred.3
+MLINKS+=krb5_ccache.3 krb5_cc_set_flags.3
+MLINKS+=krb5_ccache.3 krb5_cc_next_cred.3
 
 .PATH:	${DIR_KRB5LIB}
 
