@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_afmap.c,v 1.1 2001/06/27 05:28:34 kjc Exp $	*/
+/*	$OpenBSD: altq_afmap.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
 /*	$KAME: altq_afmap.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -34,16 +34,6 @@
  * flowinfo mechanism.  it's just put in the altq framework since
  * it is easy to add devices to altq.
  */
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include "opt_altq.h"
-#if (__FreeBSD__ != 2)
-#include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
-#endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
-#ifdef ALTQ_AFMAP
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -408,5 +398,3 @@ afmioctl(dev, cmd, addr, flag, p)
 
 	return error;
 }
-
-#endif /* ALTQ_AFMAP */

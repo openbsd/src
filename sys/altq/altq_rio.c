@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rio.c,v 1.1 2001/06/27 05:28:36 kjc Exp $	*/
+/*	$OpenBSD: altq_rio.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
 /*	$KAME: altq_rio.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -58,17 +58,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include "opt_altq.h"
-#if (__FreeBSD__ != 2)
-#include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
-#endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
-#ifdef ALTQ_RIO	/* rio is enabled by ALTQ_RIO option in opt_altq.h */
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -825,5 +814,3 @@ static struct altqsw rio_sw =
 ALTQ_MODULE(altq_rio, ALTQT_RIO, &rio_sw);
 
 #endif /* KLD_MODULE */
-
-#endif /* ALTQ_RIO */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_fifoq.c,v 1.1 2001/06/27 05:28:35 kjc Exp $	*/
+/*	$OpenBSD: altq_fifoq.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.7 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -26,11 +26,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include "opt_altq.h"
-#endif /* __FreeBSD__ || __NetBSD__ */
-#ifdef ALTQ_FIFOQ  /* fifoq is enabled by ALTQ_FIFOQ option in opt_altq.h */
 
 /*
  * FIFOQ is an altq sample implementation.  There will be little
@@ -411,5 +406,3 @@ static struct altqsw fifoq_sw =
 ALTQ_MODULE(altq_fifoq, ALTQT_FIFOQ, &fifoq_sw);
 
 #endif /* KLD_MODULE */
-
-#endif /* ALTQ_FIFOQ */

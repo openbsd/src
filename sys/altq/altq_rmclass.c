@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_rmclass.c,v 1.1 2001/06/27 05:28:36 kjc Exp $	*/
+/*	$OpenBSD: altq_rmclass.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.10 2001/02/09 07:20:40 kjc Exp $	*/
 
 /*
@@ -36,19 +36,6 @@
  * LBL code modified by speer@eng.sun.com, May 1977.
  * For questions and/or comments, please send mail to cbq@ee.lbl.gov
  */
-
-#ident "@(#)rm_class.c  1.48     97/12/05 SMI"
-
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include "opt_altq.h"
-#if (__FreeBSD__ != 2)
-#include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
-#endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
-#ifdef ALTQ_CBQ	/* cbq is enabled by ALTQ_CBQ option in opt_altq.h */
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1744,8 +1731,6 @@ void cbqtrace_dump(counter)
 	}
 }
 #endif /* CBQ_TRACE */
-
-#endif /* ALTQ_CBQ */
 
 #if defined(ALTQ_CBQ) || defined(ALTQ_RED) || defined(ALTQ_RIO) || defined(ALTQ_HFSC) || defined(ALTQ_PRIQ)
 #if !defined(__GNUC__) || defined(ALTQ_DEBUG)

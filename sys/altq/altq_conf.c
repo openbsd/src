@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_conf.c,v 1.1 2001/06/27 05:28:35 kjc Exp $	*/
+/*	$OpenBSD: altq_conf.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
 /*	$KAME: altq_conf.c,v 1.11 2001/06/21 11:00:36 kjc Exp $	*/
 
 /*
@@ -26,16 +26,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include "opt_altq.h"
-#if (__FreeBSD__ != 2)
-#include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
-#endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
 
 /*
  * altq device interface.

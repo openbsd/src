@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_cbq.c,v 1.1 2001/06/27 05:28:34 kjc Exp $	*/
+/*	$OpenBSD: altq_cbq.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.9 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -30,19 +30,6 @@
  *  
  * These notices must be retained in any copies of any part of this software.
  */
-
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include "opt_altq.h"
-#if (__FreeBSD__ != 2)
-#include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
-#endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
-#ifdef ALTQ_CBQ	/* cbq is enabled by ALTQ_CBQ option in opt_altq.h */
-
-/* #pragma ident "@(#)cbq.c  1.39     98/05/13 SMI" */
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -969,5 +956,3 @@ static struct altqsw cbq_sw =
 ALTQ_MODULE(altq_cbq, ALTQT_CBQ, &cbq_sw);
 
 #endif /* KLD_MODULE */
-
-#endif /* ALTQ_CBQ */

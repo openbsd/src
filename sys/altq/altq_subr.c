@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.1 2001/06/27 05:28:36 kjc Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
 /*	$KAME: altq_subr.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -26,17 +26,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifdef ALTQ
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include "opt_altq.h"
-#if (__FreeBSD__ != 2)
-#include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
-#endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -1548,5 +1537,3 @@ init_machclk(void)
 	printf("altq: emulate %uHz cpu clock\n", machclk_freq);
 }
 #endif /* !i386 && !alpha */
-
-#endif /* ALTQ */

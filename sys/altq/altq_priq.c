@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.1 2001/06/27 05:28:35 kjc Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -28,18 +28,6 @@
 /*
  * priority queue
  */
-
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include "opt_altq.h"
-#if (__FreeBSD__ != 2)
-#include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
-#endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
-
-#ifdef ALTQ_PRIQ  /* priq is enabled by ALTQ_PRIQ option in opt_altq.h */
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -862,5 +850,3 @@ static struct altqsw priq_sw =
 ALTQ_MODULE(altq_priq, ALTQT_PRIQ, &priq_sw);
 
 #endif /* KLD_MODULE */
-
-#endif /* ALTQ_PRIQ */

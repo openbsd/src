@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_wfq.c,v 1.1 2001/06/27 05:28:36 kjc Exp $	*/
+/*	$OpenBSD: altq_wfq.c,v 1.2 2001/08/09 14:32:59 deraadt Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.7 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -30,17 +30,6 @@
  *  March 27, 1997.  Written by Hiroshi Kyusojin of Keio University
  *  (kyu@mt.cs.keio.ac.jp). 
  */
-
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include "opt_altq.h"
-#if (__FreeBSD__ != 2)
-#include "opt_inet.h"
-#ifdef __FreeBSD__
-#include "opt_inet6.h"
-#endif
-#endif
-#endif /* __FreeBSD__ || __NetBSD__ */
-#ifdef ALTQ_WFQ
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -748,5 +737,3 @@ static struct altqsw wfq_sw =
 ALTQ_MODULE(altq_wfq, ALTQT_WFQ, &wfq_sw);
 
 #endif /* KLD_MODULE */
-
-#endif /* ALTQ_WFQ */
