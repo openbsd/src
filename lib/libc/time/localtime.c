@@ -1,5 +1,5 @@
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: localtime.c,v 1.6 1996/09/05 12:28:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: localtime.c,v 1.7 1996/10/30 00:20:14 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -1366,7 +1366,14 @@ int * const		okayp;
 		dir = tmcomp(&mytm, &yourtm);
 		if (dir != 0) {
 			if (bits-- < 0)
+#ifdef PCTS
+			{
+				t += 2;
+				break;
+			}
+#else
 				return WRONG;
+#endif
 			if (bits < 0)
 				--t; /* may be needed if new t is minimal */
 			else if (dir > 0)
