@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.35 2002/05/29 07:54:59 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.36 2002/06/07 04:11:51 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -308,10 +308,8 @@ in6_control(so, cmd, data, ifp, p)
 	struct	in6_ifreq *ifr = (struct in6_ifreq *)data;
 	struct	in6_ifaddr *ia, *oia;
 	struct	in6_aliasreq *ifra = (struct in6_aliasreq *)data;
+	struct sockaddr_in6 *sa6;
 	struct	sockaddr_in6 oldaddr;
-#ifdef COMPAT_IN6IFIOCTL
-	struct	sockaddr_in6 net;
-#endif
 	int error = 0, hostIsNew, prefixIsNew;
 	int newifaddr;
 	time_t time_second = (time_t)time.tv_sec;
@@ -354,11 +352,11 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCAIFPREFIX_IN6:
 	case SIOCCIFPREFIX_IN6:
 	case SIOCSGIFPREFIX_IN6:
-		if (!privileged)
-			return(EPERM);
-		/*fall through*/
 	case SIOCGIFPREFIX_IN6:
-		return(in6_prefix_ioctl(so, cmd, data, ifp));
+		log(LOG_NOTICE,
+		    "prefix ioctls are now invalidated. "
+		    "please use ifconfig.\n");
+		return(EOPNOTSUPP);
 	}
 
 	switch (cmd) {
@@ -373,19 +371,53 @@ in6_control(so, cmd, data, ifp, p)
 
 	/*
 	 * Find address for this interface, if it exists.
+	 *
+	 * In netinet code, we have checked ifra_addr in SIOCSIF*ADDR operation
+	 * only, and used the first interface address as the target of other
+	 * operations (without checking ifra_addr).  This was because netinet
+	 * code/API assumed at most 1 interface address per interface.
+	 * Since IPv6 allows a node to assign multiple addresses
+	 * on a single interface, we almost always look and check the
+	 * presence of ifra_addr, and reject invalid ones here.
+	 * It also decreases duplicated code among SIOC*_IN6 operations.
 	 */
-	if (ifra->ifra_addr.sin6_family == AF_INET6) { /* XXX */
-		struct sockaddr_in6 *sa6 =
-			(struct sockaddr_in6 *)&ifra->ifra_addr;
-
+	switch (cmd) {
+	case SIOCAIFADDR_IN6:
+	case SIOCSIFPHYADDR_IN6:
+		sa6 = &ifra->ifra_addr;
+		break;
+	case SIOCSIFADDR_IN6:
+	case SIOCGIFADDR_IN6:
+	case SIOCSIFDSTADDR_IN6:
+	case SIOCSIFNETMASK_IN6:
+	case SIOCGIFDSTADDR_IN6:
+	case SIOCGIFNETMASK_IN6:
+	case SIOCDIFADDR_IN6:
+	case SIOCGIFPSRCADDR_IN6:
+	case SIOCGIFPDSTADDR_IN6:
+	case SIOCGIFAFLAG_IN6:
+	case SIOCSNDFLUSH_IN6:
+	case SIOCSPFXFLUSH_IN6:
+	case SIOCSRTRFLUSH_IN6:
+	case SIOCGIFALIFETIME_IN6:
+	case SIOCSIFALIFETIME_IN6:
+	case SIOCGIFSTAT_IN6:
+	case SIOCGIFSTAT_ICMP6:
+		sa6 = &ifr->ifr_addr;
+		break;
+	default:
+		sa6 = NULL;
+		break;
+	}
+	if (sa6 && sa6->sin6_family == AF_INET6) {
 		if (IN6_IS_ADDR_LINKLOCAL(&sa6->sin6_addr)) {
 			if (sa6->sin6_addr.s6_addr16[1] == 0) {
-				/* interface ID is not embedded by the user */
+				/* link ID is not embedded by the user */
 				sa6->sin6_addr.s6_addr16[1] =
-					htons(ifp->if_index);
+				    htons(ifp->if_index);
 			} else if (sa6->sin6_addr.s6_addr16[1] !=
-				    htons(ifp->if_index)) {
-				return(EINVAL);	/* ifid contradicts */
+			    htons(ifp->if_index)) {
+				return(EINVAL);	/* link ID contradicts */
 			}
 			if (sa6->sin6_scope_id) {
 				if (sa6->sin6_scope_id !=
@@ -394,33 +426,32 @@ in6_control(so, cmd, data, ifp, p)
 				sa6->sin6_scope_id = 0; /* XXX: good way? */
 			}
 		}
-		ia = in6ifa_ifpwithaddr(ifp, &ifra->ifra_addr.sin6_addr);
-	}
+		ia = in6ifa_ifpwithaddr(ifp, &sa6->sin6_addr);
+	} else
+		ia = NULL;
 
 	switch (cmd) {
+	case SIOCSIFADDR_IN6:
+	case SIOCSIFDSTADDR_IN6:
+	case SIOCSIFNETMASK_IN6:
+		/*
+		 * Since IPv6 allows a node to assign multiple addresses
+		 * on a single interface, SIOCSIFxxx ioctls are deprecated.
+		 */
+		return(EINVAL);
 
 	case SIOCDIFADDR_IN6:
 		/*
 		 * for IPv4, we look for existing in_ifaddr here to allow
-		 * "ifconfig if0 delete" to remove first IPv4 address on the
-		 * interface.  For IPv6, as the spec allow multiple interface
-		 * address from the day one, we consider "remove the first one"
-		 * semantics to be not preferable.
+		 * "ifconfig if0 delete" to remove the first IPv4 address on
+		 * the interface.  For IPv6, as the spec allows multiple
+		 * interface address from the day one, we consider "remove the
+		 * first one" semantics to be not preferable.
 		 */
 		if (ia == NULL)
 			return(EADDRNOTAVAIL);
 		/* FALLTHROUGH */
 	case SIOCAIFADDR_IN6:
-	case SIOCSIFADDR_IN6:
-#ifdef COMPAT_IN6IFIOCTL
-	case SIOCSIFDSTADDR_IN6:
-	case SIOCSIFNETMASK_IN6:
-		/*
-		 * Since IPv6 allows a node to assign multiple addresses
-		 * on a single interface, SIOCSIFxxx ioctls are not suitable
-		 * and should be unused.
-		 */
-#endif
 		if (ifra->ifra_addr.sin6_family != AF_INET6)
 			return(EAFNOSUPPORT);
 		if (!privileged)
@@ -548,41 +579,6 @@ in6_control(so, cmd, data, ifp, p)
 		    *((struct in6_ifextra *)ifp->if_afdata[AF_INET6])->icmp6_ifstat;
 		break;
 
-#ifdef COMPAT_IN6IFIOCTL		/* should be unused */
-	case SIOCSIFDSTADDR_IN6:
-		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
-			return(EINVAL);
-		oldaddr = ia->ia_dstaddr;
-		ia->ia_dstaddr = ifr->ifr_dstaddr;
-
-		/* link-local index check */
-		if (IN6_IS_ADDR_LINKLOCAL(&ia->ia_dstaddr.sin6_addr)) {
-			if (ia->ia_dstaddr.sin6_addr.s6_addr16[1] == 0) {
-				/* interface ID is not embedded by the user */
-				ia->ia_dstaddr.sin6_addr.s6_addr16[1]
-					= htons(ifp->if_index);
-			} else if (ia->ia_dstaddr.sin6_addr.s6_addr16[1] !=
-				    htons(ifp->if_index)) {
-				ia->ia_dstaddr = oldaddr;
-				return(EINVAL);	/* ifid contradicts */
-			}
-		}
-
-		if (ifp->if_ioctl && (error = (ifp->if_ioctl)
-				      (ifp, SIOCSIFDSTADDR, (caddr_t)ia))) {
-			ia->ia_dstaddr = oldaddr;
-			return(error);
-		}
-		if (ia->ia_flags & IFA_ROUTE) {
-			ia->ia_ifa.ifa_dstaddr = (struct sockaddr *)&oldaddr;
-			rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST);
-			ia->ia_ifa.ifa_dstaddr =
-				(struct sockaddr *)&ia->ia_dstaddr;
-			rtinit(&(ia->ia_ifa), (int)RTM_ADD, RTF_HOST|RTF_UP);
-		}
-		break;
-
-#endif
 	case SIOCGIFALIFETIME_IN6:
 		ifr->ifr_ifru.ifru_lifetime = ia->ia6_lifetime;
 		break;
@@ -601,63 +597,6 @@ in6_control(so, cmd, data, ifp, p)
 		} else
 			ia->ia6_lifetime.ia6t_preferred = 0;
 		break;
-
-	case SIOCSIFADDR_IN6:
-		error = in6_ifinit(ifp, ia, &ifr->ifr_addr, 1);
-#if 0
-		/*
-		 * the code chokes if we are to assign multiple addresses with
-		 * the same address prefix (rtinit() will return EEXIST, which
-		 * is not fatal actually).  we will get memory leak if we
-		 * don't do it.
-		 * -> we may want to hide EEXIST from rtinit().
-		 */
-  undo:
-		if (error && newifaddr) {
-			TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
-			IFAFREE(&ia->ia_ifa);
-
-			oia = ia;
-			if (oia == (ia = in6_ifaddr))
-				in6_ifaddr = ia->ia_next;
-			else {
-				while (ia->ia_next && (ia->ia_next != oia))
-					ia = ia->ia_next;
-				if (ia->ia_next)
-					ia->ia_next = oia->ia_next;
-				else {
-					printf("Didn't unlink in6_ifaddr "
-					    "from list\n");
-				}
-			}
-			IFAFREE(&oia->ia_ifa);
-		}
-#endif
-		return error;
-
-#ifdef COMPAT_IN6IFIOCTL		/* XXX should be unused */
-	case SIOCSIFNETMASK_IN6:
-		ia->ia_prefixmask = ifr->ifr_addr;
-		bzero(&net, sizeof(net));
-		net.sin6_len = sizeof(struct sockaddr_in6);
-		net.sin6_family = AF_INET6;
-		net.sin6_port = htons(0);
-		net.sin6_flowinfo = htonl(0);
-		net.sin6_addr.s6_addr32[0]
-			= ia->ia_addr.sin6_addr.s6_addr32[0] &
-				ia->ia_prefixmask.sin6_addr.s6_addr32[0];
-		net.sin6_addr.s6_addr32[1]
-			= ia->ia_addr.sin6_addr.s6_addr32[1] &
-				ia->ia_prefixmask.sin6_addr.s6_addr32[1];
-		net.sin6_addr.s6_addr32[2]
-			= ia->ia_addr.sin6_addr.s6_addr32[2] &
-				ia->ia_prefixmask.sin6_addr.s6_addr32[2];
-		net.sin6_addr.s6_addr32[3]
-			= ia->ia_addr.sin6_addr.s6_addr32[3] &
-				ia->ia_prefixmask.sin6_addr.s6_addr32[3];
-		ia->ia_net = net;
-		break;
-#endif
 
 	case SIOCAIFADDR_IN6:
 		prefixIsNew = 0;
