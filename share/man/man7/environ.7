@@ -1,4 +1,4 @@
-.\"	$OpenBSD: environ.7,v 1.6 1999/07/09 13:35:37 aaron Exp $
+.\"	$OpenBSD: environ.7,v 1.7 2000/02/13 13:24:55 aaron Exp $
 .\"	$NetBSD: environ.7,v 1.4 1995/07/03 19:45:07 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -48,35 +48,33 @@ An array of strings called the
 is made available by
 .Xr execve 2
 when a process begins.  By convention these strings have the form
-.Dq Ar name Ns No = Ns Ar value .
-The following names are used by various commands:
+.Ar name Ns No = Ns Ar value .
+The following variables are recognized by various commands:
 .Bl -tag -width BLOCKSIZE
 .It Ev BLOCKSIZE
 The size of the block units used by several commands, most notably
 .Xr df 1 ,
-.Xr du 1
+.Xr du 1 ,
 and
 .Xr ls 1 .
-.Ev BLOCKSIZE
-may be specified in units of a byte by specifying a number,
+May be specified in units of a byte by specifying a number,
 in units of a kilobyte by specifying a number followed by
-.Dq K
+.Sq K
 or
-.Dq k ,
+.Sq k ,
 in units of a megabyte by specifying a number followed by
-.Dq M
+.Sq M
 or
-.Dq m
-and in units of a gigabyte by specifying a number followed
+.Sq m ,
+or in units of a gigabyte by specifying a number followed
 by
-.Dq G
+.Sq G
 or
-.Dq g .
+.Sq g .
 Sizes less than 512 bytes or greater than a gigabyte are ignored.
 .It Ev EXINIT
-A startup list of commands read by
-.Xr ex 1 ,
-.Xr edit 1 ,
+A list of startup commands read by
+.Xr ex 1
 and
 .Xr vi 1 .
 .It Ev HOME
@@ -88,37 +86,50 @@ from the password file
 The sequence of directories, separated by colons, searched by
 .Xr csh 1 ,
 .Xr sh 1 ,
+.Xr ksh 1 ,
 .Xr system 3 ,
 .Xr execvp 3 ,
 etc. when looking for an executable file.
-Initially,
-.Ev PATH
-is set to
-.Dq /usr/bin:/bin
+Initially set to the value of
+.Dv _PATH_DEFPATH
 by
-.Xr login 1 .
+.Xr login 1 ,
+traditionally
+.Pa /usr/bin:/bin ,
+but expanded to include
+.Pa /usr/sbin ,
+.Pa /sbin ,
+.Pa /usr/X11R6/bin ,
+and
+.Pa /usr/local/bin
+in
+.Ox .
 .It Ev PRINTER
 The name of the default printer to be used by
 .Xr lpq 1 ,
 .Xr lpr 1 ,
 and
 .Xr lprm 1 .
+.It Ev PWD
+The current working directory.
 .It Ev SHELL
 The full pathname of the user's login shell.
 .It Ev TERM
 The kind of terminal for which output is to be prepared.
 This information is used by commands such as
 .Xr nroff 1
-or
+and
 .Xr plot 1
-which may exploit special terminal capabilities.  See
+which may exploit special terminal capabilities.
+See
 .Pa /usr/share/misc/termcap
 .Pq Xr termcap 5
 for a list of terminal types.
 .It Ev TERMCAP
-The string describing the terminal in TERM, or, if
-it begins with a
-.Dq / ,
+The string describing the terminal in
+.Ev TERM ,
+or, if it begins with a
+.Ql / ,
 the name of the termcap file.
 See
 .Ev TERMPATH
@@ -134,7 +145,7 @@ no
 is equivalent to a
 .Ev TERMPATH
 of
-.Dq $HOME/.termcap:/etc/termcap .
+.Pa $HOME/.termcap:/etc/termcap .
 .Ev TERMPATH
 is ignored if
 .Ev TERMCAP
@@ -171,7 +182,7 @@ command and
 arguments in
 .Xr sh 1 ,
 or by the
-.Xr setenv
+.Ic setenv
 command if you use
 .Xr csh 1 .
 It is unwise to change certain
@@ -187,6 +198,7 @@ and
 unless you know what you are doing.
 .Sh SEE ALSO
 .Xr csh 1 ,
+.Xr env 1 ,
 .Xr ex 1 ,
 .Xr login 1 ,
 .Xr sh 1 ,
@@ -194,6 +206,7 @@ unless you know what you are doing.
 .Xr execle 3 ,
 .Xr system 3 ,
 .Xr termcap 3 ,
+.Xr tzset 3 ,
 .Xr termcap 5
 .Sh HISTORY
 The
