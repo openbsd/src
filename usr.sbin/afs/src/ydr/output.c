@@ -1900,7 +1900,7 @@ genencodein (List *list, Listitem *item, void *arg)
     FILE *f = (FILE *)arg;
     
     if (a->argtype == TIN || a->argtype == TINOUT) {
-	if (a->type->type == TPOINTER) {
+	if (a->type->type == YDR_TPOINTER) {
 	    size_t len = strlen (a->name) + 4;
 	    char *tmp = (char *)emalloc (len);
 	    
@@ -1921,7 +1921,7 @@ gendecodeout (List *list, Listitem *item, void *arg)
      FILE *f = (FILE *)arg;
 
      if (a->argtype == TOUT || a->argtype == TINOUT) {
-	 if (a->type->type == TPOINTER) {
+	 if (a->type->type == YDR_TPOINTER) {
 	     size_t len = strlen(a->name) + 4;
 	     char *tmp = (char *)emalloc (len);
 	       
