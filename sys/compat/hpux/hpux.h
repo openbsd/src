@@ -1,6 +1,7 @@
-/*	$NetBSD: hpux.h,v 1.8 1995/05/10 16:45:29 christos Exp $	*/
+/*	$NetBSD: hpux.h,v 1.10 1995/12/08 07:54:43 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -95,27 +96,39 @@ struct hpux_sgttyb {
 #define bsdtohpuxdev(d)	((major(d) << 24) | minor(d))
 
 struct	hpux_stat {
-	long	hst_dev;
-	u_long	hst_ino;
-	u_short	hst_mode;
-	short	hst_nlink;
-	u_short	hst_uid;
-	u_short	hst_gid;
-	long	hst_rdev;
-	long	hst_size;
-	time_t	hst_atime;
-	int	hst_spare1;
-	time_t	hst_mtime;
-	int	hst_spare2;
-	time_t	hst_ctime;
-	int	hst_spare3;
-	long	hst_blksize;
-	long	hst_blocks;
-	u_int	hst_remote;
-	long	hst_netdev;  	
-	u_long	hst_netino;
-	long	hst_spare4[9];
+	long		hst_dev;
+	u_long		hst_ino;
+	u_short		hst_mode;
+	short		hst_nlink;
+	u_short		hst_old_uid;	/* these have since moved */
+	u_short		hst_old_gid;	/* ... */
+	long		hst_rdev;
+	long		hst_size;
+	long		hst_atime;
+	int		hst_spare1;
+	long		hst_mtime;
+	int		hst_spare2;
+	long		hst_ctime;
+	int		hst_spare3;
+	long		hst_blksize;
+	long		hst_blocks;
+	u_int		hst_remote;
+	long		hst_netdev;  	
+	u_long		hst_netino;
+	u_short		hst_cnode;
+	u_short		hst_rcnode;
+	u_short		hst_netsite;
+	short		hst_fstype;
+	long		hst_realdev;
+	u_short		hst_basemode;
+	u_short		hst_spareshort1;
+	long		hst_uid;
+	long		hst_gid;
+	long		hst_spare4[3];
 };
+
+#define	HST_REMOTE_REMOTE	0x01	/* set if file is remote */
+#define	HST_REMOTE_ACL		0x02	/* set if file has ACL entries */
 
 /* from old timeb.h */
 struct hpux_otimeb {
@@ -308,3 +321,10 @@ struct hpux_sigaction {
  * code to the HP-UX EAGAIN value.
  */
 #define OEAGAIN	82
+
+/*
+ * Extensions to the fd_ofileflags flags.
+ */
+#define	HPUX_UF_NONBLOCK_ON	0x10
+#define	HPUX_UF_FNDELAY_ON	0x20
+#define	HPUX_UF_FIONBIO_ON	0x40 

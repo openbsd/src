@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_file.c,v 1.1 1995/10/10 01:19:30 mycroft Exp $	*/
+/*	$NetBSD: freebsd_file.c,v 1.2 1995/11/07 22:27:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden

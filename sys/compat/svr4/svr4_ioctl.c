@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.12 1995/10/07 06:27:41 mycroft Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.13 1995/10/14 20:24:27 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -55,10 +55,11 @@
 #include <compat/svr4/svr4_sockio.h>
 
 #ifdef DEBUG_SVR4
+static void svr4_decode_cmd __P((u_long, char *, char *, int *, int *));
 /*
  * Decode an ioctl command symbolically
  */
-void
+static void
 svr4_decode_cmd(cmd, dir, c, num, argsiz)
 	u_long		  cmd;
 	char		 *dir, *c;
@@ -100,7 +101,7 @@ svr4_sys_ioctl(p, v, retval)
 	svr4_decode_cmd(SCARG(uap, com), dir, &c, &num, &argsiz);
 
 	printf("svr4_ioctl(%d, _IO%s(%c, %d, %d), %x);\n", SCARG(uap, fd),
-	       dir, c, num, argsiz, SCARG(uap, data));
+	       dir, c, num, argsiz, (unsigned int) SCARG(uap, data));
 #endif
 	fdp = p->p_fd;
 	cmd = SCARG(uap, com);

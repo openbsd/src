@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13 1995/10/07 06:27:15 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.14 1995/12/09 04:01:47 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -45,7 +45,7 @@
 
 0	NOARGS		{ int sys_nosys(void); } syscall
 1	NOARGS		{ int sys_exit(int rval); }
-2	STD		{ int linux_sys_fork(void); }
+2	NOARGS		{ int sys_fork(void); }
 3	NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
 4	NOARGS		{ int sys_write(int fd, char *buf, u_int nbyte); }
 5	STD		{ int linux_sys_open(char *path, int flags, int mode); }

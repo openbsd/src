@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.4 1994/12/14 20:20:26 mycroft Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.5 1995/10/14 20:24:38 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -67,6 +67,8 @@ enum {
 	dev_tcp		= 35,
 	dev_udp		= 36
 };
+
+int svr4_netattach __P((int));
 
 static int svr4_netclose __P((struct file *fp, struct proc *p));
 

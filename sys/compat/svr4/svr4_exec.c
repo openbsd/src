@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.15 1995/06/24 20:29:19 christos Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -82,7 +82,6 @@ svr4_copyargs(pack, arginfo, stack, argp)
 	void *argp;
 {
 	AuxInfo *a;
-	struct elf_args *ap;
 
 	if (!(a = (AuxInfo *) elf_copyargs(pack, arginfo, stack, argp)))
 		return NULL;

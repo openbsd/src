@@ -1,4 +1,4 @@
-#	$NetBSD: files.svr4,v 1.4 1995/08/14 01:34:12 mycroft Exp $
+#	$NetBSD: files.svr4,v 1.5 1995/10/14 20:24:17 christos Exp $
 #
 # Config.new file description for machine-independent SVR4 compat code.
 # Included by ports that need it.
@@ -6,18 +6,19 @@
 # ports should define any machine-specific files they need in their
 # own file lists.
 
-file	compat/svr4/svr4_error.c	compat_svr4
 file	compat/svr4/svr4_exec.c		compat_svr4
 file	compat/svr4/svr4_fcntl.c	compat_svr4
-file	compat/svr4/svr4_filio.c	compat_svr4
 file	compat/svr4/svr4_ioctl.c	compat_svr4
 file	compat/svr4/svr4_misc.c		compat_svr4
-file	compat/svr4/svr4_net.c		compat_svr4
 file	compat/svr4/svr4_signal.c	compat_svr4
-file	compat/svr4/svr4_sockio.c	compat_svr4
 file	compat/svr4/svr4_stat.c		compat_svr4
-file	compat/svr4/svr4_stream.c	compat_svr4
 file	compat/svr4/svr4_syscalls.c	compat_svr4
 file	compat/svr4/svr4_sysent.c	compat_svr4
+file	compat/svr4/svr4_net.c		compat_svr4
 file	compat/svr4/svr4_termios.c	compat_svr4
+file	compat/svr4/svr4_stream.c	compat_svr4
 file	compat/svr4/svr4_ttold.c	compat_svr4
+file	compat/svr4/svr4_filio.c	compat_svr4
+file	compat/svr4/svr4_sockio.c	compat_svr4
+file	compat/svr4/svr4_error.c	compat_svr4
+file	compat/svr4/svr4_ipc.c		compat_svr4

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_termios.c,v 1.5 1995/10/07 06:27:55 mycroft Exp $	 */
+/*	$NetBSD: svr4_termios.c,v 1.6 1995/10/14 20:24:58 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -46,6 +46,7 @@
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_ioctl.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_stropts.h>
 #include <compat/svr4/svr4_termios.h>
@@ -458,7 +459,7 @@ svr4_termioctl(fp, cmd, data, p, retval)
 		{
 			int i;
 			printf("iflag=%o oflag=%o cflag=%o lflag=%o\n",
-			       bt.c_iflag, bt.c_oflag, bt.c_lflag);
+			       bt.c_iflag, bt.c_oflag, bt.c_cflag, bt.c_lflag);
 			printf("cc: ");
 			for (i = 0; i < NCCS; i++)
 				printf("%o ", bt.c_cc[i]);
@@ -474,7 +475,7 @@ svr4_termioctl(fp, cmd, data, p, retval)
 		{
 			int i;
 			printf("iflag=%o oflag=%o cflag=%o lflag=%o\n",
-			       st.c_iflag, st.c_oflag, st.c_lflag);
+			       bt.c_iflag, bt.c_oflag, bt.c_cflag, bt.c_lflag);
 			printf("cc: ");
 			for (i = 0; i < SVR4_NCCS; i++)
 				printf("%o ", st.c_cc[i]);

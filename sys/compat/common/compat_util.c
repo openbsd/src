@@ -1,4 +1,4 @@
-/* 	$NetBSD: compat_util.c,v 1.2.2.1 1995/10/22 08:22:47 mycroft Exp $	*/
+/* 	$NetBSD: compat_util.c,v 1.3 1995/10/22 08:20:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.14 1995/10/07 06:26:38 mycroft Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.15 1995/11/28 08:39:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -347,14 +347,16 @@ hpux_sys_sigaction(p, v, retval)
 	return (0);
 }
 
-#ifdef COMPAT_HPUX_6X
 int
-compat_hpux_6x_sys_ssig(p, v, retval)
+hpux_sys_ssig_6x(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_hpux_6x_sys_ssig_args *uap = v;
+	struct hpux_sys_ssig_6x_args /* {
+		syscallarg(int) signo;
+		syscallarg(sig_t) fun;
+	} */ *uap = v;
 	register int a;
 	struct sigaction vec;
 	register struct sigaction *sa = &vec;
@@ -383,7 +385,6 @@ compat_hpux_6x_sys_ssig(p, v, retval)
 #endif
 	return (0);
 }
-#endif
 
 /* signal numbers: convert from HPUX to BSD */
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_util.h,v 1.2 1995/06/24 20:17:57 christos Exp $	 */
+/*	$NetBSD: hpux_util.h,v 1.3 1995/12/08 07:45:34 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1995 Christos Zoulas
@@ -31,6 +31,14 @@
 #define	_HPUX_UTIL_H_
 
 #include <compat/common/compat_util.h>
+
+extern const char hpux_emul_path[];
+
+#define	HPUX_CHECK_ALT_EXIST(p, sgp, path)	\
+	CHECK_ALT_EXIST(p, sgp, hpux_emul_path, path)
+
+#define	HPUX_CHECK_ALT_CREAT(p, sgp, path)	\
+	CHECK_ALT_CREAT(p, sgp, hpux_emul_path, path)
 
 #ifdef DEBUG_HPUX
 #define DPRINTF(a)	printf a;

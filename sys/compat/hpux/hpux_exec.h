@@ -1,6 +1,7 @@
-/*	$NetBSD: hpux_exec.h,v 1.5 1994/10/26 02:45:16 cgd Exp $	*/
+/*	$NetBSD: hpux_exec.h,v 1.6 1995/11/28 08:39:45 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,22 +43,81 @@
  *	@(#)hpux_exec.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _HPUX_EXEC_H_
+#define _HPUX_EXEC_H_
+
 /*
  * HPUX a.out header format
  */
 struct hpux_exec {
 	long	ha_magic;	/* magic number */
 	short	ha_version;	/* version ID */
-	short	ha_pad0;	/* doesn't matter */
+	short	ha_shlhw;	/* shared lib "highwater" mark */
 	long	ha_misc;	/* misc. info */
-unsigned long	ha_text;	/* size of text segment */
-unsigned long	ha_data;	/* size of initialized data */
-unsigned long	ha_bss;		/* size of uninitialized data */
-unsigned long	ha_pad2[5];	/* doesn't matter */
-unsigned long	ha_entry;	/* entry point */
-unsigned long	ha_pad3[4];	/* doesn't matter */
+	long	ha_text;	/* size of text segment */
+	long	ha_data;	/* size of initialized data */
+	long	ha_bss;		/* size of uninitialized data */
+	long	ha_trsize;	/* size of text relocation */
+	long	ha_drsize;	/* size of data relocation */
+	long	ha_pascal;	/* pascal section size */
+	long	ha_symbols;	/* symbol table size */
+	long	ha_pad0;
+	long	ha_entry;	/* entry point */
+	long	ha_pad1;
+	long	ha_supsyms;	/* supplementary symbol table */
+	long	ha_drelocs;	/* non-PIC relocation info */
+	long	ha_extentions;	/* file offset of special extensions */
 };
+
+#define	HPUX_EXEC_HDR_SIZE	(sizeof(struct hpux_exec))
+
+#define	HPUX_MAGIC(ha)		((ha)->ha_magic & 0xffff)
+#define	HPUX_SYSID(ha)		(((ha)->ha_magic >> 16) & 0xffff)
+
+/*
+ * Additional values for HPUX_MAGIC()
+ */
+#define	HPUX_MAGIC_RELOC	0x0106		/* relocatable object */
+#define HPUX_MAGIC_DL		0x010d		/* dynamic load library */
+#define	HPUX_MAGIC_SHL		0x010e		/* shared library */
+
+#define HPUX__LDPGSZ		4096		/* align to this */
+#define HPUX__LDPGSHIFT		12		/* log2(HPUX__LDPGSZ) */
+
+#define	HPUX__SEGMENT_ROUND(x)						\
+	(((x) + HPUX__LDPGSZ - 1) & ~(HPUX__LDPGSZ - 1))
+
+#define	HPUX_TXTOFF(x, m)						\
+	((((m) == ZMAGIC) ||						\
+	  ((m) == HPUX_MAGIC_SHL) ||					\
+	  ((m) == HPUX_MAGIC_DL)) ?					\
+	  HPUX__LDPGSZ : HPUX_EXEC_HDR_SIZE)
+
+#define	HPUX_DATAOFF(x, m)						\
+	((((m) == ZMAGIC) ||						\
+	  ((m) == HPUX_MAGIC_SHL) ||					\
+	  ((m) == HPUX_MAGIC_DL)) ?					\
+	  (HPUX__LDPGSZ + HPUX__SEGMENT_ROUND((x).ha_text)) :		\
+	  (HPUX_EXEC_HDR_SIZE + (x).ha_text))
+
+#define	HPUX_PASOFF(x, m)						\
+	((((m) == ZMAGIC) ||						\
+	  ((m) == HPUX_MAGIC_SHL) ||					\
+	  ((m) == HPUX_MAGIC_DL)) ?					\
+	  (HPUX__LDPGSZ + HPUX__SEGMENT_ROUND((x).ha_text) +		\
+	    HPUX__SEGMENT_ROUND((x).ha_data)) :				\
+	  (HPUX_EXEC_HDR_SIZE + (x).ha_text + (x).ha_data))
+
+#define	HPUX_SYMOFF(x, m)	(HPUX_PASOFF((x), (m)) + (x).ha_pascal)
+#define	HPUX_SUPSYMOFF(x, m)	(HPUX_SYMOFF((x), (m)) + (x).ha_symbols)
+#define	HPUX_RTEXTOFF(x, m)	(HPUX_SUPSYMOFF((x), (m)) + (x).ha_supsyms)
+#define	HPUX_RDATAOFF(x, m)	(HPUX_RTEXTOFF((x), (m)) + (x).ha_trsize)
+#define	HPUX_EXTOFF(x, m)	((x).ha_extentions)
 
 #define	HPUXM_VALID	0x00000001
 #define HPUXM_STKWT	0x02000000
 #define HPUXM_DATAWT	0x04000000
+
+int	exec_hpux_makecmds __P((struct proc *, struct exec_package *));
+
+#endif /* _HPUX_EXEC_H_ */

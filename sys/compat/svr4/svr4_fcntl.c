@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.13 1995/10/09 23:56:17 thorpej Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.14 1995/10/14 20:24:24 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -48,11 +48,18 @@
 #include <compat/svr4/svr4_fcntl.h>
 #include <compat/svr4/svr4_poll.h>
 
+static u_long svr4_to_bsd_cmd __P((u_long));
+static int svr4_to_bsd_flags __P((int));
+static int bsd_to_svr4_flags __P((int));
+static void bsd_to_svr4_flock __P((struct flock *, struct svr4_flock *));
+static void svr4_to_bsd_flock __P((struct svr4_flock *, struct flock *));
+static void svr4_pollscan __P((struct proc *, struct svr4_pollfd *, int,
+			       register_t *));
+
 static u_long
 svr4_to_bsd_cmd(cmd)
-	u_long cmd;
+	u_long	cmd;
 {
-
 	switch (cmd) {
 	case SVR4_F_DUPFD:
 		return F_DUPFD;
@@ -276,7 +283,8 @@ svr4_sys_fcntl(p, v, retval)
 		return error;
 
 	case F_SETFL:
-		SCARG(&fa, arg) = (void *) svr4_to_bsd_flags(SCARG(uap, arg));
+		SCARG(&fa, arg) =
+			(void *) svr4_to_bsd_flags((u_long) SCARG(uap, arg));
 		return sys_fcntl(p, &fa, retval);
 
 	case F_GETLK:
@@ -377,13 +385,12 @@ svr4_sys_poll(p, v, retval)
 	int msec = SCARG(uap, timeout);
 	struct timeval atv;
 	int timo;
-	u_int ni;
 	int ncoll;
 	extern int nselcoll, selwait;
 
 	pl = (struct svr4_pollfd *) malloc(sz, M_TEMP, M_WAITOK);
 
-	if (error = copyin(SCARG(uap, fds), pl, sz))
+	if ((error = copyin(SCARG(uap, fds), pl, sz)) != 0)
 		goto bad;
 
 	for (i = 0; i < SCARG(uap, nfds); i++) {
@@ -440,7 +447,7 @@ done:
 	if (error == EWOULDBLOCK)
 		error = 0;
 
-	if (error2 = copyout(pl, SCARG(uap, fds), sz))
+	if ((error2 = copyout(pl, SCARG(uap, fds), sz)) != 0)
 		error = error2;
 
 bad:

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.22 1995/10/09 11:24:05 mycroft Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.23 1995/12/09 04:01:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -503,27 +503,6 @@ linux_sys_mmap(p, v, retval)
 	SCARG(&cma,pos) = lmap.lm_pos;
 
 	return sys_mmap(p, &cma, retval);
-}
-
-/*
- * Linux doesn't use the retval[1] value to determine whether
- * we are the child or parent.
- */
-int
-linux_sys_fork(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	int error;
-
-	if ((error = sys_fork(p, v, retval)))
-		return error;
-
-	if (retval[1] == 1)
-		retval[0] = 0;
-
-	return 0;
 }
 
 /*

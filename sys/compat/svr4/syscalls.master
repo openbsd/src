@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13 1995/10/07 06:27:57 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.14 1995/10/14 20:25:06 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -93,21 +93,22 @@
 47	NOARGS		{ gid_t sys_getgid(void); }
 48	STD		{ int svr4_sys_signal(int signum, svr4_sig_t handler); }
 #ifdef SYSVMSG
-49	UNIMPL		{ int sys_msgsys(int which, int a2, int a3, int a4, \
-			    int a5, int a6); }
+49	STD		{ int svr4_sys_msgsys(int what, int a2, int a3, \
+					      int a4, int a5); }
 #else
 49	UNIMPL		msgsys
 #endif
 50	STD		{ int svr4_sys_sysarch(int op, void *a1); }
 51	UNIMPL		acct
 #ifdef SYSVSHM
-52	UNIMPL		{ int sys_shmsys(int which, int a2, int a3, int a4); }
+52	STD		{ int svr4_sys_shmsys(int what, int a2, int a3, \
+					      int a4); }
 #else
 52	UNIMPL		shmsys
 #endif
 #ifdef SYSVSEM
-53	UNIMPL		{ int sys_semsys(int which, int a2, int a3, int a4, \
-			    int a5); }
+53	STD		{ int svr4_sys_semsys(int what, int a2, int a3, \
+					      int a4, int a5); }
 #else
 53	UNIMPL		semsys
 #endif

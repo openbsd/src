@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.28 1995/10/09 11:24:17 mycroft Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.29 1995/10/14 20:24:35 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -60,6 +60,8 @@
 #include <sys/times.h>
 #include <sys/sem.h>
 #include <sys/msg.h>
+#include <sys/ptrace.h>
+#include <sys/signalvar.h>
 
 #include <netinet/in.h>
 #include <sys/syscallargs.h>
@@ -79,7 +81,6 @@
 #include <compat/svr4/svr4_sysconfig.h>
 
 #include <vm/vm.h>
-/* XXX */ extern struct proc *pfind();
 
 static __inline clock_t timeval_to_clock_t __P((struct timeval *));
 static int svr4_setinfo	__P((struct proc *, int, svr4_siginfo_t *));
@@ -306,9 +307,6 @@ svr4_sys_mmap(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_mmap_args	*uap = v;
-	struct filedesc		*fdp;
-	struct file		*fp;
-	struct vnode		*vp;
 	struct sys_mmap_args	 mm;
 	caddr_t 		 rp;
 #define _MAP_NEW	0x80000000
@@ -618,7 +616,7 @@ svr4_sys_times(p, v, retval)
 	if (error)
 		return error;
 
-	if (error = copyin(ru, &r, sizeof r))
+	if ((error = copyin(ru, &r, sizeof r)) != 0)
 		return error;
 
 	tms.tms_utime = timeval_to_clock_t(&r.ru_utime);
@@ -629,7 +627,7 @@ svr4_sys_times(p, v, retval)
 	if (error)
 		return error;
 
-	if (error = copyin(ru, &r, sizeof r))
+	if ((error = copyin(ru, &r, sizeof r)) != 0)
 		return error;
 
 	tms.tms_cutime = timeval_to_clock_t(&r.ru_utime);
@@ -945,7 +943,8 @@ svr4_sys_waitsys(p, v, retval)
 	}
 
 	DPRINTF(("waitsys(%d, %d, %x, %x)\n", 
-	         SCARG(uap, grp), SCARG(uap, id), SCARG(uap, info),
+	         SCARG(uap, grp), SCARG(uap, id),
+		 (unsigned int) SCARG(uap, info),
 	         SCARG(uap, options)));
 
 loop:
@@ -1049,7 +1048,7 @@ loop:
 		return 0;
 	}
 
-	if (error = tsleep((caddr_t)p, PWAIT | PCATCH, "svr4_wait", 0))
+	if ((error = tsleep((caddr_t)p, PWAIT | PCATCH, "svr4_wait", 0)) != 0)
 		return error;
 	goto loop;
 }

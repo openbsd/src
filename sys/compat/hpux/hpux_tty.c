@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.11 1995/10/07 06:26:40 mycroft Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.13 1995/12/11 16:32:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -459,7 +459,7 @@ int
 hpuxtobsdbaud(hpux_speed)
 	int hpux_speed;
 {
-	static char hpuxtobsdbaudtab[32] = {
+	static int hpuxtobsdbaudtab[32] = {
 		B0,	B50,	B75,	B110,	B134,	B150,	B200,	B300,
 		B600,	B0,	B1200,	B1800,	B2400,	B0,	B4800,	B0,
 		B9600,	B19200,	B38400,	B0,	B0,	B0,	B0,	B0,
@@ -469,26 +469,30 @@ hpuxtobsdbaud(hpux_speed)
 	return(hpuxtobsdbaudtab[hpux_speed & TIO_CBAUD]);
 }
 
-#ifdef COMPAT_HPUX_6X
-
 int
-compat_hpux_6x_sys_gtty(p, v, retval)
+hpux_sys_stty_6x(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_hpux_6x_sys_gtty_args *uap = v;
+	struct hpux_sys_stty_6x_args /* {
+		syscallarg(int) fd;
+		syscallarg(caddr_t) arg;
+	} */ *uap = v;
 
 	return (getsettty(p, SCARG(uap, fd), HPUXTIOCGETP, SCARG(uap, arg)));
 }
 
 int
-compat_hpux_6x_sys_stty(p, v, retval)
+hpux_sys_gtty_6x(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_hpux_6x_sys_stty_args *uap = v;
+	struct hpux_sys_gtty_6x_args /* {
+		syscallarg(int) fd;
+		syscallarg(caddr_t) arg;
+	} */ *uap = v;
 
 	return (getsettty(p, SCARG(uap, fd), HPUXTIOCSETP, SCARG(uap, arg)));
 }
@@ -545,4 +549,3 @@ getsettty(p, fdes, com, cmarg)
 	}
 	return (error);
 }
-#endif

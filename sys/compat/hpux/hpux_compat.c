@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.19 1995/10/07 06:26:34 mycroft Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.22 1995/12/09 04:05:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -121,20 +121,7 @@ extern char sigcode[], esigcode[];
 extern struct sysent hpux_sysent[];
 extern char *hpux_syscallnames[];
 
-struct emul emul_hpux = {
-	"hpux",
-	bsdtohpuxerrnomap,
-	sendsig,
-	HPUX_SYS_syscall,
-	HPUX_SYS_MAXSYSCALL,
-	hpux_sysent,
-	hpux_syscallnames,
-	0,
-	copyargs,
-	setregs,
-	sigcode,
-	esigcode,
-};
+static	int hpux_scale __P((struct timeval *));
 
 /*
  * HP-UX fork and vfork need to map the EAGAIN return value appropriately.
@@ -148,7 +135,7 @@ hpux_sys_fork(p, v, retval)
 	struct hpux_sys_fork_args *uap = v;
 	int error;
 
-	error = sys_fork(p, (struct fork_args *) uap, retval);
+	error = sys_fork(p, v, retval);
 	if (error == EAGAIN)
 		error = OEAGAIN;
 	return (error);
@@ -163,26 +150,10 @@ hpux_sys_vfork(p, v, retval)
 	struct hpux_sys_vfork_args *uap = v;
 	int error;
 
-	error = sys_vfork(p, (struct vfork_args *) uap, retval);
+	error = sys_vfork(p, v, retval);
 	if (error == EAGAIN)
 		error = OEAGAIN;
 	return (error);
-}
-
-int
-hpux_sys_execv(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct hpux_sys_execv_args *uap = v;
-	struct sys_execve_args ap;
-
-	SCARG(&ap, path) = SCARG(uap, path);
-	SCARG(&ap, argp) = SCARG(uap, argp);
-	SCARG(&ap, envp) = NULL;
-
-	return sys_execve(p, &ap, retval);
 }
 
 /*
@@ -306,209 +277,6 @@ hpux_sys_waitpid(p, v, retval)
 }
 
 /*
- * Old creat system call.
- */
-int
-hpux_sys_creat(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct hpux_sys_creat_args *uap = v;
-	struct sys_open_args oap;
-
-	SCARG(&oap, path) = SCARG(uap, path);
-	SCARG(&oap, flags) = O_WRONLY | O_CREAT | O_TRUNC;
-	SCARG(&oap, mode) = SCARG(uap, mode);
-
-	return sys_open(p, &oap, retval);
-}
-
-/*
- * XXX extensions to the fd_ofileflags flags.
- * Hate to put this there, but they do need to be per-file.
- */
-#define UF_NONBLOCK_ON	0x10
-#define	UF_FNDELAY_ON	0x20
-#define	UF_FIONBIO_ON	0x40
-
-/*
- * Must remap some bits in the mode mask.
- * O_CREAT, O_TRUNC, and O_EXCL must be remapped,
- * O_NONBLOCK is remapped and remembered,
- * O_FNDELAY is remembered,
- * O_SYNCIO is removed entirely.
- */
-int
-hpux_sys_open(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct hpux_sys_open_args *uap = v;
-	int mode, error;
-
-	mode = SCARG(uap, mode);
-	SCARG(uap, mode) &=
-		~(HPUXNONBLOCK|HPUXFSYNCIO|HPUXFEXCL|HPUXFTRUNC|HPUXFCREAT);
-	if (mode & HPUXFCREAT) {
-		/*
-		 * simulate the pre-NFS behavior that opening a
-		 * file for READ+CREATE ignores the CREATE (unless
-		 * EXCL is set in which case we will return the
-		 * proper error).
-		 */
-		if ((mode & HPUXFEXCL) || (FFLAGS(mode) & FWRITE))
-			SCARG(uap, mode) |= O_CREAT;
-	}
-	if (mode & HPUXFTRUNC)
-		SCARG(uap, mode) |= O_TRUNC;
-	if (mode & HPUXFEXCL)
-		SCARG(uap, mode) |= O_EXCL;
-	if (mode & HPUXNONBLOCK)
-		SCARG(uap, mode) |= O_NDELAY;
-	error = sys_open(p, (struct open_args *) uap, retval);
-	/*
-	 * Record non-blocking mode for fcntl, read, write, etc.
-	 */
-	if (error == 0 && (SCARG(uap, mode) & O_NDELAY))
-		p->p_fd->fd_ofileflags[*retval] |=
-			(mode & HPUXNONBLOCK) ? UF_NONBLOCK_ON : UF_FNDELAY_ON;
-	return (error);
-}
-
-int
-hpux_sys_fcntl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct hpux_sys_fcntl_args *uap = v;
-	int mode, error, flg = F_POSIX;
-	struct file *fp;
-	char *pop;
-	struct hpux_flock hfl;
-	struct flock fl;
-	struct vnode *vp;
-
-	if ((unsigned)SCARG(uap, fd) >= p->p_fd->fd_nfiles ||
-	    (fp = p->p_fd->fd_ofiles[SCARG(uap, fd)]) == NULL)
-		return (EBADF);
-	pop = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];
-	switch (SCARG(uap, cmd)) {
-	case F_SETFL:
-		if (SCARG(uap, arg) & HPUXNONBLOCK)
-			*pop |= UF_NONBLOCK_ON;
-		else
-			*pop &= ~UF_NONBLOCK_ON;
-		if (SCARG(uap, arg) & HPUXNDELAY)
-			*pop |= UF_FNDELAY_ON;
-		else
-			*pop &= ~UF_FNDELAY_ON;
-		if (*pop & (UF_NONBLOCK_ON|UF_FNDELAY_ON|UF_FIONBIO_ON))
-			SCARG(uap, arg) |= FNONBLOCK;
-		else
-			SCARG(uap, arg) &= ~FNONBLOCK;
-		SCARG(uap, arg) &= ~(HPUXNONBLOCK|HPUXFSYNCIO|HPUXFREMOTE);
-		break;
-	case F_GETFL:
-	case F_DUPFD:
-	case F_GETFD:
-	case F_SETFD:
-		break;
-
-	case HPUXF_SETLKW:
-		flg |= F_WAIT;
-		/* Fall into F_SETLK */
-
-	case HPUXF_SETLK:
-		if (fp->f_type != DTYPE_VNODE)
-			return (EBADF);
-		vp = (struct vnode *)fp->f_data;
-		/* Copy in the lock structure */
-		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&hfl,
-		    sizeof (hfl));
-		if (error)
-			return (error);
-		fl.l_start = hfl.hl_start;
-		fl.l_len = hfl.hl_len;
-		fl.l_pid = hfl.hl_pid;
-		fl.l_type = hfl.hl_type;
-		fl.l_whence = hfl.hl_whence;
-		if (fl.l_whence == SEEK_CUR)
-			fl.l_start += fp->f_offset;
-		switch (fl.l_type) {
-
-		case F_RDLCK:
-			if ((fp->f_flag & FREAD) == 0)
-				return (EBADF);
-			p->p_flag |= P_ADVLOCK;
-			return (VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg));
-
-		case F_WRLCK:
-			if ((fp->f_flag & FWRITE) == 0)
-				return (EBADF);
-			p->p_flag |= P_ADVLOCK;
-			return (VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg));
-
-		case F_UNLCK:
-			return (VOP_ADVLOCK(vp, (caddr_t)p, F_UNLCK, &fl,
-				F_POSIX));
-
-		default:
-			return (EINVAL);
-		}
-
-	case F_GETLK:
-		if (fp->f_type != DTYPE_VNODE)
-			return (EBADF);
-		vp = (struct vnode *)fp->f_data;
-		/* Copy in the lock structure */
-		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&hfl,
-		    sizeof (hfl));
-		if (error)
-			return (error);
-		fl.l_start = hfl.hl_start;
-		fl.l_len = hfl.hl_len;
-		fl.l_pid = hfl.hl_pid;
-		fl.l_type = hfl.hl_type;
-		fl.l_whence = hfl.hl_whence;
-		if (fl.l_whence == SEEK_CUR)
-			fl.l_start += fp->f_offset;
-		if (error = VOP_ADVLOCK(vp, (caddr_t)p, F_GETLK, &fl, F_POSIX))
-			return (error);
-		hfl.hl_start = fl.l_start;
-		hfl.hl_len = fl.l_len;
-		hfl.hl_pid = fl.l_pid;
-		hfl.hl_type = fl.l_type;
-		hfl.hl_whence = fl.l_whence;
-		return (copyout((caddr_t)&hfl, (caddr_t)SCARG(uap, arg),
-		    sizeof (hfl)));
-
-	default:
-		return (EINVAL);
-	}
-	error = sys_fcntl(p, uap, retval);
-	if (error == 0 && SCARG(uap, cmd) == F_GETFL) {
-		mode = *retval;
-		*retval &= ~(O_CREAT|O_TRUNC|O_EXCL);
-		if (mode & FNONBLOCK) {
-			if (*pop & UF_NONBLOCK_ON)
-				*retval |= HPUXNONBLOCK;
-			if ((*pop & UF_FNDELAY_ON) == 0)
-				*retval &= ~HPUXNDELAY;
-		}
-		if (mode & O_CREAT)
-			*retval |= HPUXFCREAT;
-		if (mode & O_TRUNC)
-			*retval |= HPUXFTRUNC;
-		if (mode & O_EXCL)
-			*retval |= HPUXFEXCL;
-	}
-	return (error);
-}
-
-/*
  * Read and write calls.  Same as BSD except for non-blocking behavior.
  * There are three types of non-blocking reads/writes in HP-UX checked
  * in the following order:
@@ -530,10 +298,10 @@ hpux_sys_read(p, v, retval)
 	if (error == EWOULDBLOCK) {
 		char *fp = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];
 
-		if (*fp & UF_NONBLOCK_ON) {
+		if (*fp & HPUX_UF_NONBLOCK_ON) {
 			*retval = -1;
 			error = OEAGAIN;
-		} else if (*fp & UF_FNDELAY_ON) {
+		} else if (*fp & HPUX_UF_FNDELAY_ON) {
 			*retval = 0;
 			error = 0;
 		}
@@ -554,10 +322,10 @@ hpux_sys_write(p, v, retval)
 	if (error == EWOULDBLOCK) {
 		char *fp = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];
 
-		if (*fp & UF_NONBLOCK_ON) {
+		if (*fp & HPUX_UF_NONBLOCK_ON) {
 			*retval = -1;
 			error = OEAGAIN;
-		} else if (*fp & UF_FNDELAY_ON) {
+		} else if (*fp & HPUX_UF_FNDELAY_ON) {
 			*retval = 0;
 			error = 0;
 		}
@@ -578,10 +346,10 @@ hpux_sys_readv(p, v, retval)
 	if (error == EWOULDBLOCK) {
 		char *fp = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];
 
-		if (*fp & UF_NONBLOCK_ON) {
+		if (*fp & HPUX_UF_NONBLOCK_ON) {
 			*retval = -1;
 			error = OEAGAIN;
-		} else if (*fp & UF_FNDELAY_ON) {
+		} else if (*fp & HPUX_UF_FNDELAY_ON) {
 			*retval = 0;
 			error = 0;
 		}
@@ -602,10 +370,10 @@ hpux_sys_writev(p, v, retval)
 	if (error == EWOULDBLOCK) {
 		char *fp = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];
 
-		if (*fp & UF_NONBLOCK_ON) {
+		if (*fp & HPUX_UF_NONBLOCK_ON) {
 			*retval = -1;
 			error = OEAGAIN;
-		} else if (*fp & UF_FNDELAY_ON) {
+		} else if (*fp & HPUX_UF_FNDELAY_ON) {
 			*retval = 0;
 			error = 0;
 		}
@@ -795,64 +563,6 @@ hpux_sys_sysconf(p, v, retval)
 		return (EINVAL);
 	}
 	return (0);
-}
-
-int
-hpux_sys_stat(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct hpux_sys_stat_args *uap = v;
-
-	return (hpux_stat1(SCARG(uap, path), SCARG(uap, sb), FOLLOW, p));
-}
-
-int
-hpux_sys_lstat(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct hpux_sys_lstat_args *uap = v;
-
-	return (hpux_stat1(SCARG(uap, path), SCARG(uap, sb), NOFOLLOW, p));
-}
-
-int
-hpux_sys_fstat(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct hpux_sys_fstat_args *uap = v;
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
-	struct stat sb;
-	int error;
-
-	if (((unsigned)SCARG(uap, fd)) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
-		return (EBADF);
-
-	switch (fp->f_type) {
-
-	case DTYPE_VNODE:
-		error = vn_stat((struct vnode *)fp->f_data, &sb, p);
-		break;
-
-	case DTYPE_SOCKET:
-		error = soo_stat((struct socket *)fp->f_data, &sb, p);
-		break;
-
-	default:
-		panic("fstat");
-		/*NOTREACHED*/
-	}
-	/* is this right for sockets?? */
-	if (error == 0)
-		error = bsdtohpuxstat(&sb, SCARG(uap, sb));
-	return (error);
 }
 
 int
@@ -1179,81 +889,6 @@ hpux_sys_mmap(p, v, retval)
 	return (sys_mmap(p, &nargs, retval));
 }
 
-hpux_stat1(fname, hsb, follow, p)
-	char *fname;
-	struct hpux_stat *hsb;
-	int follow;
-	struct proc *p;
-{
-	int error;
-	struct stat sb;
-	struct nameidata nd;
-
-	NDINIT(&nd, LOOKUP, follow | LOCKLEAF, UIO_USERSPACE, fname, p);
-	if (error = namei(&nd))
-		return (error);
-	error = vn_stat(nd.ni_vp, &sb, p);
-	vput(nd.ni_vp);
-	if (error == 0)
-		error = bsdtohpuxstat(&sb, hsb);
-	return (error);
-}
-
-#ifdef hp300
-#include "grf.h"
-#define	NHIL	1	/* XXX */
-#endif
-
-#if NGRF > 0
-extern int grfopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
-#endif
-
-#if NHIL > 0
-extern int hilopen __P((dev_t dev, int oflags, int devtype, struct proc *p));
-#endif
-
-#include <sys/conf.h>
-
-int
-bsdtohpuxstat(sb, hsb)
-	struct stat *sb;
-	struct hpux_stat *hsb;
-{
-	struct hpux_stat ds;
-
-	bzero((caddr_t)&ds, sizeof(ds));
-	ds.hst_dev = (u_short)sb->st_dev;
-	ds.hst_ino = (u_long)sb->st_ino;
-	ds.hst_mode = sb->st_mode;
-	ds.hst_nlink = sb->st_nlink;
-	ds.hst_uid = (u_short)sb->st_uid;
-	ds.hst_gid = (u_short)sb->st_gid;
-	ds.hst_rdev = bsdtohpuxdev(sb->st_rdev);
-
-	/* XXX: I don't want to talk about it... */
-	if ((sb->st_mode & S_IFMT) == S_IFCHR)
-#if NGRF > 0
-		if (cdevsw[major(sb->st_rdev)].d_open == grfopen)
-			ds.hst_rdev = grfdevno(sb->st_rdev);
-		else
-#endif
-#if NHIL > 0
-			if (cdevsw[major(sb->st_rdev)].d_open == hilopen)
-				ds.hst_rdev = hildevno(sb->st_rdev);
-#endif
-
-	if (sb->st_size < (quad_t)1 << 32)
-		ds.hst_size = (long)sb->st_size;
-	else
-		ds.hst_size = -2;
-	ds.hst_atime = sb->st_atime;
-	ds.hst_mtime = sb->st_mtime;
-	ds.hst_ctime = sb->st_ctime;
-	ds.hst_blksize = sb->st_blksize;
-	ds.hst_blocks = sb->st_blocks;
-	return(copyout((caddr_t)&ds, (caddr_t)hsb, sizeof(ds)));
-}
-
 int
 hpuxtobsdioctl(com)
 	u_long com;
@@ -1358,14 +993,14 @@ hpux_sys_ioctl(p, v, retval)
 		int tmp;
 
 		if (*(int *)dt)
-			*ofp |= UF_FIONBIO_ON;
+			*ofp |= HPUX_UF_FIONBIO_ON;
 		else
-			*ofp &= ~UF_FIONBIO_ON;
+			*ofp &= ~HPUX_UF_FIONBIO_ON;
 		/*
 		 * Only set/clear if O_NONBLOCK/FNDELAY not in effect
 		 */
-		if ((*ofp & (UF_NONBLOCK_ON|UF_FNDELAY_ON)) == 0) {
-			tmp = *ofp & UF_FIONBIO_ON;
+		if ((*ofp & (HPUX_UF_NONBLOCK_ON|HPUX_UF_FNDELAY_ON)) == 0) {
+			tmp = *ofp & HPUX_UF_FIONBIO_ON;
 			error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO,
 						       (caddr_t)&tmp, p);
 		}
@@ -1690,7 +1325,6 @@ hpux_sys_getaccess(p, v, retval)
 /*
  * XXX: This needs to be in hpux_machdep.c !!
  */
-extern char kstack[];
 #define UOFF(f)		((int)&((struct user *)0)->f)
 #define HPUOFF(f)	((int)&((struct hpux_user *)0)->f)
 
@@ -1703,7 +1337,10 @@ struct bsdfp {
 
 /*
  * Brutal hack!  Map HP-UX u-area offsets into BSD k-stack offsets.
+ *
+ * XXX move to hpux_machdep.c
  */
+int
 hpuxtobsduoff(off, isps, p)
 	int *off, *isps;
 	struct proc *p;
@@ -1736,7 +1373,7 @@ hpuxtobsduoff(off, isps, p)
 	 * for simplicity.
 	 */
 	if (off < (int *)ctob(UPAGES))
-		off = (int *)((u_int)off + (u_int)kstack);
+		off = (int *)((u_int)off + (u_int)p->p_addr);	/* XXX */
 
 	/*
 	 * General registers.
@@ -1773,7 +1410,7 @@ hpuxtobsduoff(off, isps, p)
 		 */
 		else
 			raddr = (u_int) &ar0[(int)(off - ar0)];
-		return((int)(raddr - (u_int)kstack));
+		return((int)(raddr - (u_int)p->p_addr));	/* XXX */
 	}
 #endif
 	/* everything else */
@@ -1784,6 +1421,8 @@ hpuxtobsduoff(off, isps, p)
  * Kludge up a uarea dump so that HP-UX debuggers can find out
  * what they need.  IMPORTANT NOTE: we do not EVEN attempt to
  * convert the entire user struct.
+ *
+ * XXX move to hpux_machdep.c
  */
 int
 hpux_dumpu(vp, cred)
@@ -1852,9 +1491,10 @@ hpux_dumpu(vp, cred)
 			(int *)NULL, p);
 	/*
 	 * Dump the remaining UPAGES-1 pages normally
+	 * XXX Spot the wild guess.
 	 */
 	if (!error) 
-		error = vn_rdwr(UIO_WRITE, vp, kstack + ctob(1),
+		error = vn_rdwr(UIO_WRITE, vp, (caddr_t)p->p_addr + ctob(1),
 				ctob(UPAGES-1), (off_t)ctob(1), UIO_SYSSPACE,
 				IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
 	free((caddr_t)faku, M_TEMP);
@@ -1863,30 +1503,22 @@ hpux_dumpu(vp, cred)
 }
 
 /*
- * The remaining routines are essentially the same as those in kern_xxx.c
- * and vfs_xxx.c as defined under "#ifdef COMPAT".  We replicate them here
- * to avoid COMPAT_HPUX dependencies in those files and to make sure that
- * HP-UX compatibility still works even when COMPAT is not defined.
- *
- * These are still needed as of HP-UX 7.05.
+ * Ancient HP-UX system calls.  Some 9.x executables even use them!
  */
-#ifdef COMPAT_HPUX_6X
-
 #define HPUX_HZ	50
 
-#include "sys/times.h"
+#include <sys/times.h>
 
 
 /*
  * SYS V style setpgrp()
  */
 int
-compat_hpux_6x_sys_setpgrp(p, v, retval)
+hpux_sys_setpgrp_6x(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_hpux_6x_sys_setpgrp_args *uap = v;
 
 	if (p->p_pid != p->p_pgid)
 		enterpgrp(p, p->p_pid, 0);
@@ -1895,32 +1527,34 @@ compat_hpux_6x_sys_setpgrp(p, v, retval)
 }
 
 int
-compat_hpux_6x_sys_time(p, v, retval)
+hpux_sys_time_6x(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct compat_hpux_6x_sys_time_args *uap = v;
-
+	struct hpux_sys_time_6x_args /* {
+		syscallarg(time_t *) t;
+	} */ *uap = v;
 	int error = 0;
 	struct timeval tv;
 
 	microtime(&tv);
-        if (SCARG(uap, t))
-		error = copyout(&tv.tv_sec, SCARG(uap, t),
-				sizeof(*(SCARG(uap, t))));
+        if (SCARG(uap, t) != NULL)
+		error = copyout(&tv.tv_sec, SCARG(uap, t), sizeof(time_t));
 
-	*retval = (int) tv.tv_sec;
-	return error;
+	*retval = (register_t)tv.tv_sec;
+	return (error);
 }
 
 int
-compat_hpux_6x_sys_stime(p, v, retval)
+hpux_sys_stime_6x(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct compat_hpux_6x_sys_stime_args *uap = v;
+	struct hpux_sys_stime_6x_args /* {
+		syscallarg(int) time;
+	} */ *uap = v;
 	struct timeval tv;
 	int s, error;
 
@@ -1937,12 +1571,14 @@ compat_hpux_6x_sys_stime(p, v, retval)
 }
 
 int
-compat_hpux_6x_sys_ftime(p, v, retval)
+hpux_sys_ftime_6x(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct compat_hpux_6x_sys_ftime_args *uap = v;
+	struct hpux_sys_ftime_6x_args /* {
+		syscallarg(struct hpux_timeb *) tp;
+	} */ *uap = v;
 	struct hpux_otimeb tb;
 	int s;
 
@@ -1956,12 +1592,14 @@ compat_hpux_6x_sys_ftime(p, v, retval)
 }
 
 int
-compat_hpux_6x_sys_alarm(p, v, retval)
+hpux_sys_alarm_6x(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct compat_hpux_6x_sys_alarm_args *uap = v;
+	struct hpux_sys_alarm_6x_args /* {
+		syscallarg(int) deltat;
+	} */ *uap = v;
 	int s = splhigh();
 
 	untimeout(realitexpire, (caddr_t)p);
@@ -1983,12 +1621,14 @@ compat_hpux_6x_sys_alarm(p, v, retval)
 }
 
 int
-compat_hpux_6x_sys_nice(p, v, retval)
+hpux_sys_nice_6x(p, v, retval)
 	register struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct compat_hpux_6x_sys_nice_args *uap = v;
+	struct hpux_sys_nice_6x_args /* {
+		syscallarg(int) nval;
+	} */ *uap = v;
 	int error;
 
 	error = donice(p, p, (p->p_nice-NZERO)+SCARG(uap, nval));
@@ -1998,12 +1638,14 @@ compat_hpux_6x_sys_nice(p, v, retval)
 }
 
 int
-compat_hpux_6x_sys_times(p, v, retval)
+hpux_sys_times_6x(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct compat_hpux_6x_sys_times_args *uap = v;
+	struct hpux_sys_times_6x_args /* {
+		syscallarg(struct tms *) tms;
+	} */ *uap = v;
 	struct timeval ru, rs;
 	struct tms atms;
 	int error;
@@ -2016,7 +1658,8 @@ compat_hpux_6x_sys_times(p, v, retval)
 	error = copyout((caddr_t)&atms, (caddr_t)SCARG(uap, tms),
 	    sizeof (atms));
 	if (error == 0)
-		*(time_t *)retval = hpux_scale(&time) - hpux_scale(&boottime);
+		*(time_t *)retval = hpux_scale((struct timeval *)&time) -
+		    hpux_scale(&boottime);
 	return (error);
 }
 
@@ -2025,7 +1668,7 @@ compat_hpux_6x_sys_times(p, v, retval)
  * What we really do is return 1/HPUX_HZ-th of a second since that
  * is what HP-UX returns.
  */
-int
+static int
 hpux_scale(tvp)
 	register struct timeval *tvp;
 {
@@ -2037,12 +1680,15 @@ hpux_scale(tvp)
  * Can't set ICHG.
  */
 int
-compat_hpux_6x_sys_utime(p, v, retval)
+hpux_sys_utime_6x(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct compat_hpux_6x_sys_utime_args *uap = v;
+	struct hpux_sys_utime_6x_args /* {
+		syscallarg(char *) fname;
+		syscallarg(time_t *) tptr;
+	} */ *uap = v;
 	register struct vnode *vp;
 	struct vattr vattr;
 	time_t tv[2];
@@ -2075,90 +1721,13 @@ compat_hpux_6x_sys_utime(p, v, retval)
 }
 
 int
-compat_hpux_6x_sys_pause(p, v, retval)
+hpux_sys_pause_6x(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct compat_hpux_6x_sys_pause_args *uap = v;
+	struct sys_sigsuspend_args bsa;
 
-	(void) tsleep(kstack, PPAUSE | PCATCH, "pause", 0);
-	/* always return EINTR rather than ERESTART... */
-	return (EINTR);
+	SCARG(&bsa, mask) = p->p_sigmask;
+	return (sys_sigsuspend(p, &bsa, retval));
 }
-
-/*
- * The old fstat system call.
- */
-int
-compat_hpux_6x_sys_fstat(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct compat_hpux_6x_sys_fstat_args *uap = v;
-	register struct filedesc *fdp = p->p_fd;
-	struct file *fp;
-
-	if (((unsigned)SCARG(uap, fd)) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
-		return (EBADF);
-	if (fp->f_type != DTYPE_VNODE)
-		return (EINVAL);
-	return (compat_hpux_6x_stat1((struct vnode *)fp->f_data,
-				      SCARG(uap, sb), p));
-}
-
-/*
- * Old stat system call.  This version follows links.
- */
-int
-compat_hpux_6x_sys_stat(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct compat_hpux_6x_sys_stat_args *uap = v;
-	int error;
-	struct nameidata nd;
-
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), p);
-	if (error = namei(&nd))
-		return (error);
-	error = compat_hpux_6x_stat1(nd.ni_vp, SCARG(uap, sb), p);
-	vput(nd.ni_vp);
-	return (error);
-}
-
-int
-compat_hpux_6x_stat1(vp, ub, p)
-	struct vnode *vp;
-	struct hpux_ostat *ub;
-	struct proc *p;
-{
-	struct hpux_ostat ohsb;
-	struct stat sb;
-	int error;
-
-	error = vn_stat(vp, &sb, p);
-	if (error)
-		return (error);
-
-	ohsb.hst_dev = sb.st_dev;
-	ohsb.hst_ino = sb.st_ino;
-	ohsb.hst_mode = sb.st_mode;
-	ohsb.hst_nlink = sb.st_nlink;
-	ohsb.hst_uid = sb.st_uid;
-	ohsb.hst_gid = sb.st_gid;
-	ohsb.hst_rdev = sb.st_rdev;
-	if (sb.st_size < (quad_t)1 << 32)
-		ohsb.hst_size = sb.st_size;
-	else
-		ohsb.hst_size = -2;
-	ohsb.hst_atime = sb.st_atime;
-	ohsb.hst_mtime = sb.st_mtime;
-	ohsb.hst_ctime = sb.st_ctime;
-	return (copyout((caddr_t)&ohsb, (caddr_t)ub, sizeof(ohsb)));
-}
-#endif

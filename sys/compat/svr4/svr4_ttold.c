@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.c,v 1.6 1995/10/07 06:27:56 mycroft Exp $	 */
+/*	$NetBSD: svr4_ttold.c,v 1.7 1995/10/14 20:25:01 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -49,6 +49,7 @@
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_stropts.h>
 #include <compat/svr4/svr4_ttold.h>
+#include <compat/svr4/svr4_ioctl.h>
 
 static void svr4_tchars_to_bsd_tchars __P((const struct svr4_tchars *st,
 					   struct tchars *bt));

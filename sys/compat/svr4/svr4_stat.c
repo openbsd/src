@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.13 1995/10/07 06:27:49 mycroft Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.14 1995/10/14 20:24:43 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -66,6 +66,12 @@
 # define SVR4_NO_OSTAT
 #endif
 
+static void bsd_to_svr4_xstat __P((struct stat *, struct svr4_xstat *));
+
+
+#ifndef SVR4_NO_OSTAT
+static void bsd_to_svr4_stat __P((struct stat *, struct svr4_stat *));
+
 static void
 bsd_to_svr4_stat(st, st4)
 	struct stat		*st;
@@ -84,6 +90,8 @@ bsd_to_svr4_stat(st, st4)
 	st4->st_mtim = st->st_mtimespec.ts_sec;
 	st4->st_ctim = st->st_ctimespec.ts_sec;
 }
+#endif
+
 
 
 static void
@@ -351,7 +359,7 @@ svr4_ustat(p, uap, retval)
          * XXX: should set f_tfree and f_tinode at least
          * How do we translate dev -> fstat? (and then to svr4_ustat)
          */
-	if (error = copyout(&us, SCARG(uap, name), sizeof us))
+	if ((error = copyout(&us, SCARG(uap, name), sizeof us)) != 0)
 		return (error);
 
 	return 0;
@@ -445,16 +453,16 @@ svr4_sys_systeminfo(p, v, retval)
 		break;
 
 	case SVR4_SI_SET_HOSTNAME:
-		if (error = suser(p->p_ucred, &p->p_acflag))
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return error;
 		name = KERN_HOSTNAME;
-		return kern_sysctl(&name, 1, 0, 0, SCARG(uap, buf), rlen);
+		return kern_sysctl(&name, 1, 0, 0, SCARG(uap, buf), rlen, p);
 
 	case SVR4_SI_SET_SRPC_DOMAIN:
-		if (error = suser(p->p_ucred, &p->p_acflag))
+		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return error;
 		name = KERN_DOMAINNAME;
-		return kern_sysctl(&name, 1, 0, 0, SCARG(uap, buf), rlen);
+		return kern_sysctl(&name, 1, 0, 0, SCARG(uap, buf), rlen, p);
 
 	default:
 		DPRINTF(("Bad systeminfo command %d\n", SCARG(uap, what)));
