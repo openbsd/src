@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.9 2000/01/10 01:09:16 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.10 2000/01/10 01:20:53 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -143,7 +143,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
         IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
         return EOPNOTSUPP;
     }
-    
+
     /* Retrieve the SPI from the relevant IPsec header */
     if (sproto == IPPROTO_ESP)
       m_copydata(m, skip, sizeof(u_int32_t), (caddr_t) &spi);
@@ -195,6 +195,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
     tdbp = gettdb(spi, &dst_address, sproto);
     if (tdbp == NULL)
     {
+	splx(s);
 	DPRINTF(("%s: could not find SA for packet to %s, spi %08x\n",
 		 IPSEC_NAME, ipsp_address(dst_address), ntohl(spi)));
 	m_freem(m);
@@ -205,6 +206,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 	
     if (tdbp->tdb_flags & TDBF_INVALID)
     {
+	splx(s);
 	DPRINTF(("%s: attempted to use invalid SA %s/%08x\n",
 		 IPSEC_NAME, ipsp_address(dst_address), ntohl(spi)));
 	m_freem(m);
@@ -215,6 +217,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 
     if (tdbp->tdb_xform == NULL)
     {
+	splx(s);
 	DPRINTF(("%s: attempted to use uninitialized SA %s/%08x\n",
 		 IPSEC_NAME, ipsp_address(dst_address), ntohl(spi)));
 	m_freem(m);
@@ -235,10 +238,22 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 	tdb_expiration(tdbp, TDBEXP_TIMEOUT);
     }
 
+    /* If we do ingress filtering and the list is empty, quick drop */
+    if (ipsec-acl && (tdbp->tdb_access == NULL))
+    {
+	DPRINTF(("%s: packet from %s dropped due to empty policy list, SA %s/%08x\n", IPSEC_NAME, ipsp_address(src_address), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
+	splx(s);
+	m_freem(m);
+	*m0 = NULL;
+	IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
+	return EACCES;
+    }
+
     m = (*(tdbp->tdb_xform->xf_input))(m, tdbp, skip, protoff);
     if (m == NULL)
     {
 	/* The called routine will print a message if necessary */
+	splx(s);
 	IPSEC_ISTAT(espstat.esps_badkcr, ahstat.ahs_badkcr);
 	return EINVAL;
     }
@@ -251,6 +266,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
         {
 	    DPRINTF(("%s: processing failed for SA %s/%08x\n",
 		     IPSEC_NAME, ipsp_address(tdbp->tdb_dst), ntohl(spi)));
+	    splx(s);
             IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
 	    *m0 = NULL;
             return ENOMEM;
@@ -279,6 +295,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 		 (tdbp->tdb_proxy.sa.sa_family != 0)))
 	    {
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet_ntoa4(ipn.ip_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
+		splx(s);
 		m_freem(m);
 	    	*m0 = NULL;
                 IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
@@ -306,6 +323,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 		 (tdbp->tdb_proxy.sa.sa_family != 0)))
 	    {
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet6_ntoa4(ip6n.ip6_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
+		splx(s);
 		m_freem(m);
 	    	*m0 = NULL;
 		IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
@@ -325,6 +343,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 	     (tdbp->tdb_src.sa.sa_family != 0)))
 	{
 	    DPRINTF(("%s: source address %s doesn't correspond to expected source %s, SA %s/%08x\n", IPSEC_NAME, inet_ntoa4(ip->ip_src), ipsp_address(tdbp->tdb_src), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
+	    splx(s);
 	    m_freem(m);
 	    IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
 	    *m0 = NULL;
@@ -341,6 +360,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
         {
 	    DPRINTF(("%s: processing failed for SA %s/%08x\n",
 		     IPSEC_NAME, ipsp_address(tdbp->tdb_dst), ntohl(spi)));
+	    splx(s);
             IPSEC_ISTAT(espstat.esps_hdrops, ahstat.ahs_hdrops);
 	    *m0 = NULL;
             return ENOMEM;
@@ -370,6 +390,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 		 (tdbp->tdb_proxy.sa.sa_family != 0)))
 	    {
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet_ntoa4(ipn.ip_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
+		splx(s);
 		m_freem(m);
 		IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
 	    	*m0 = NULL;
@@ -396,6 +417,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 		 (tdbp->tdb_proxy.sa.sa_family != 0)))
 	    {
 		DPRINTF(("%s: inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", IPSEC_NAME, inet6_ntoa4(ip6n.ip6_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
+		splx(s);
 		m_freem(m);
 	    	*m0 = NULL;
 		IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
@@ -415,6 +437,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 	     (tdbp->tdb_src.sa.sa_family != 0)))
 	{
 	    DPRINTF(("%s: packet %s to %s does not match any ACL entries, SA %s/%08x\n", IPSEC_NAME, ipsp_address(src_address), ipsp_address(dst_address), ipsp_address(tdbp->tdb_src), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
+	    splx(s);
 	    m_freem(m);
 	    *m0 = NULL;
 	    IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
@@ -490,6 +513,7 @@ ipsec_common_input(struct mbuf **m0, int skip, int protoff, int af, int sproto)
 	{
 	    /* Failed to match any entry in the ACL */
 		DPRINTF(("%s: packet from %s to %s dropped due to policy, SA %s/%08x\n", IPSEC_NAME, ipsp_address(src_address), ipsp_address(dst_address), ipsp_address(tdbp->tdb_dst), ntohl(spi)));
+		splx(s);
 		m_freem(m);
 	    	*m0 = NULL;
 		IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops);
