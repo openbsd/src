@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.3 1999/08/06 01:29:13 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.4 2000/07/04 13:01:08 art Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -746,6 +746,7 @@ cs4231_commit_settings(addr)
 	while (tries-- && regs->idr == CS_IAR_INIT);
 	if (tries == 0) {
 		printf("%s: timeout committing fspb\n", sc->sc_dev.dv_xname);
+		splx(s);
 		return (0);
 	}
 
@@ -757,6 +758,7 @@ cs4231_commit_settings(addr)
 	while (tries-- && regs->idr == CS_IAR_INIT);
 	if (tries == 0) {
 		printf("%s: timeout committing cdf\n", sc->sc_dev.dv_xname);
+		splx(s);
 		return (0);
 	}
 
