@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.37 1997/06/20 13:01:34 deraadt Exp $
+#	$OpenBSD: rc,v 1.38 1997/07/22 10:02:47 provos Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -310,6 +310,13 @@ fi
 # rbootd isn't run.
 if [ "X${rbootd_flags}" != X"NO" -a -r /etc/rbootd.conf ]; then
 	echo -n ' rbootd';		rbootd ${rbootd_flags}
+fi
+
+# $photurisd_flags is imported from /etc/netstart;
+# If $photurisd_flags == NO or /etc/photuris/ doesn't exist, then
+# photurisd isn't run.
+if [ "X${photurisd_flags}" != X"NO" -a -d /etc/photuris ]; then
+	echo -n ' photurisd';		photurisd ${photurisd_flags}
 fi
 
 if [ -x /usr/sbin/screenblank ]; then
