@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.42 2001/03/28 20:03:00 angelos Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.43 2001/04/06 16:27:45 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -173,7 +173,7 @@ ubsec_attach(parent, self, aux)
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ubsec_intr, sc,
 	    self->dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt\n");
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
