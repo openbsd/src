@@ -1,2 +1,5 @@
 tset -Q \?$TERM
-echo "Don't login as root, use su"
+
+if ( `logname` == `whoami` ) then
+	echo "Don't login as root, use su"
+endif
