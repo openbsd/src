@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.2 1999/12/07 20:42:54 jason Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.3 1999/12/08 00:09:59 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -30,7 +30,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_ste.c,v 1.12 1999/09/22 06:08:11 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_ste.c,v 1.14 1999/12/07 06:08:11 wpaul Exp $
  */
 
 #include "bpfilter.h"
@@ -395,6 +395,13 @@ int ste_ifmedia_upd(ifp)
 
 	sc = ifp->if_softc;
 	mii = &sc->sc_mii;
+	sc->ste_link = 0;
+	if (mii->mii_instance) {
+		struct mii_softc	*miisc;
+		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
+		    miisc = LIST_NEXT(miisc, mii_list))
+			mii_phy_reset(miisc);
+	}
 	mii_mediachg(mii);
 
 	return(0);
@@ -731,11 +738,10 @@ void ste_txeoc(sc)
 			ifp->if_oerrors++;
 			printf("ste%d: transmission error: %x\n",
 			    sc->ste_unit, txstat);
-			STE_SETBIT4(sc, STE_ASICCTL, STE_ASICCTL_TX_RESET);
 
-			if (sc->ste_cdata.ste_tx_head != NULL)
-				CSR_WRITE_4(sc, STE_TX_DMALIST_PTR,
-				    vtophys(sc->ste_cdata.ste_tx_head->ste_ptr));
+			ste_reset(sc);
+			ste_init(sc);
+
 			if (txstat & STE_TXSTATUS_UNDERRUN &&
 			    sc->ste_tx_thresh < STE_PACKET_SIZE) {
 				sc->ste_tx_thresh += STE_MIN_FRAMELEN;
@@ -757,39 +763,35 @@ void ste_txeoc(sc)
 void ste_txeof(sc)
 	struct ste_softc	*sc;
 {
-	struct ste_chain	*cur_tx;
+	struct ste_chain	*cur_tx = NULL;
 	struct ifnet		*ifp;
+	int			idx;
 
 	ifp = &sc->arpcom.ac_if;
 
-	/* Clear the timeout timer. */
-	ifp->if_timer = 0;
+	idx = sc->ste_cdata.ste_tx_cons;
+	while(idx != sc->ste_cdata.ste_tx_prod) {
+		cur_tx = &sc->ste_cdata.ste_tx_chain[idx];
 
-	while(sc->ste_cdata.ste_tx_head != NULL) {
-		cur_tx = sc->ste_cdata.ste_tx_head;
 		if (!(cur_tx->ste_ptr->ste_ctl & STE_TXCTL_DMADONE))
 			break;
-		sc->ste_cdata.ste_tx_head = cur_tx->ste_next;
 
-		m_freem(cur_tx->ste_mbuf);
-		cur_tx->ste_mbuf = NULL;
+		if (cur_tx->ste_mbuf != NULL) {
+			m_freem(cur_tx->ste_mbuf);
+			cur_tx->ste_mbuf = NULL;
+		}
+
 		ifp->if_opackets++;
 
-		cur_tx->ste_next = sc->ste_cdata.ste_tx_free;
-		sc->ste_cdata.ste_tx_free = cur_tx;
+		sc->ste_cdata.ste_tx_cnt--;
+		STE_INC(idx, STE_TX_LIST_CNT);
+		ifp->if_timer = 0;
 	}
 
-	if (sc->ste_cdata.ste_tx_head == NULL) {
+	sc->ste_cdata.ste_tx_cons = idx;
+
+	if (cur_tx != NULL)
 		ifp->if_flags &= ~IFF_OACTIVE;
-		sc->ste_cdata.ste_tx_tail = NULL;
-	} else {
-		if (CSR_READ_4(sc, STE_DMACTL) & STE_DMACTL_TXDMA_STOPPED ||
-		    !CSR_READ_4(sc, STE_TX_DMALIST_PTR)) {
-			CSR_WRITE_4(sc, STE_TX_DMALIST_PTR,
-			    vtophys(sc->ste_cdata.ste_tx_head->ste_ptr));
-			CSR_WRITE_4(sc, STE_DMACTL, STE_DMACTL_TXDMA_UNSTALL);
-		}
-	}
 
 	return;
 }
@@ -821,6 +823,14 @@ void ste_stats_update(xsc)
 	    stats.ste_multi_colls + stats.ste_late_colls;
 
 	mii_tick(mii);
+	if (!sc->ste_link) {
+		mii_pollstat(mii);
+		if (mii->mii_media_status & IFM_ACTIVE &&
+		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE)
+			sc->ste_link++;
+		if (ifp->if_snd.ifq_head != NULL)
+			ste_start(ifp);
+	}
 
 	timeout(ste_stats_update, sc, hz);
 	splx(s);
@@ -1099,16 +1109,27 @@ void ste_init_tx_list(sc)
 	cd = &sc->ste_cdata;
 	ld = sc->ste_ldata;
 	for (i = 0; i < STE_TX_LIST_CNT; i++) {
-		cd->ste_tx_chain[i].ste_ptr = &ld->ste_tx_list[i];
+		cd->ste_tx_chain[i].ste_phys = vtophys(&ld->ste_tx_list[i]);
 		if (i == (STE_TX_LIST_CNT - 1))
-			cd->ste_tx_chain[i].ste_next = NULL;
+			cd->ste_tx_chain[i].ste_next =
+			    &cd->ste_tx_chain[0];
 		else
 			cd->ste_tx_chain[i].ste_next =
 			    &cd->ste_tx_chain[i + 1];
+		if (i == 0)
+			cd->ste_tx_chain[i].ste_prev =
+			    &cd->ste_tx_chain[STE_TX_LIST_CNT - 1];
+		else
+			cd->ste_tx_chain[i].ste_prev =
+			    &cd->ste_tx_chain[i - 1];
 	}
 
-	cd->ste_tx_free = &cd->ste_tx_chain[0];
-	cd->ste_tx_tail = cd->ste_tx_head = NULL;
+	bzero((char *)ld->ste_tx_list,
+	    sizeof(struct ste_desc) * STE_TX_LIST_CNT);
+
+	cd->ste_tx_prod = 0;
+	cd->ste_tx_cons = 0;
+	cd->ste_tx_cnt = 0;
 
 	return;
 }
@@ -1148,7 +1169,6 @@ void ste_init(xsc)
 	CSR_WRITE_1(sc, STE_TX_DMABURST_THRESH, STE_PACKET_SIZE >> 8);
 
 	/* Set the TX start threshold for best performance. */
-	sc->ste_tx_thresh = STE_MIN_FRAMELEN;
 	CSR_WRITE_2(sc, STE_TX_STARTTHRESH, sc->ste_tx_thresh);
 
 	/* Set the TX reclaim threshold. */
@@ -1181,6 +1201,18 @@ void ste_init(xsc)
 	STE_SETBIT4(sc, STE_DMACTL, STE_DMACTL_RXDMA_UNSTALL);
 	STE_SETBIT4(sc, STE_DMACTL, STE_DMACTL_RXDMA_UNSTALL);
 
+	/* Set TX polling interval */
+	CSR_WRITE_1(sc, STE_TX_DMAPOLL_PERIOD, 64);
+
+	/* Load address of the TX list */
+	STE_SETBIT4(sc, STE_DMACTL, STE_DMACTL_TXDMA_STALL);
+	ste_wait(sc);
+	CSR_WRITE_4(sc, STE_TX_DMALIST_PTR,
+	    vtophys(&sc->ste_ldata->ste_tx_list[0]));
+	STE_SETBIT4(sc, STE_DMACTL, STE_DMACTL_TXDMA_UNSTALL);
+	STE_SETBIT4(sc, STE_DMACTL, STE_DMACTL_TXDMA_UNSTALL);
+	ste_wait(sc);
+
 	/* Enable receiver and transmitter */
 	CSR_WRITE_2(sc, STE_MACCTL0, 0);
 	STE_SETBIT2(sc, STE_MACCTL1, STE_MACCTL1_TX_ENABLE);
@@ -1193,7 +1225,7 @@ void ste_init(xsc)
 	CSR_WRITE_2(sc, STE_ISR, 0xFFFF);
 	CSR_WRITE_2(sc, STE_IMR, STE_INTRS);
 
-	mii_mediachg(mii);
+	ste_ifmedia_upd(ifp);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1222,6 +1254,8 @@ void ste_stop(sc)
 	STE_SETBIT2(sc, STE_DMACTL, STE_DMACTL_TXDMA_STALL);
 	STE_SETBIT2(sc, STE_DMACTL, STE_DMACTL_RXDMA_STALL);
 	ste_wait(sc);
+
+	sc->ste_link = 0;
 
 	for (i = 0; i < STE_RX_LIST_CNT; i++) {
 		if (sc->ste_cdata.ste_rx_chain[i].ste_mbuf != NULL) {
@@ -1264,30 +1298,6 @@ void ste_reset(sc)
 	if (i == STE_TIMEOUT)
 		printf("ste%d: global reset never completed\n", sc->ste_unit);
 
-#ifdef foo
-	STE_SETBIT4(sc, STE_ASICCTL, STE_ASICCTL_RX_RESET);
-	for (i = 0; i < STE_TIMEOUT; i++) {
-		if (!(CSR_READ_4(sc, STE_ASICCTL) & STE_ASICCTL_RX_RESET))
-			break;
-	}
-
-	if (i == STE_TIMEOUT)
-		printf("ste%d: RX reset never completed\n", sc->ste_unit);
-
-	DELAY(100000);
-
-	STE_SETBIT4(sc, STE_ASICCTL, STE_ASICCTL_TX_RESET);
-	for (i = 0; i < STE_TIMEOUT; i++) {
-		if (!(CSR_READ_4(sc, STE_ASICCTL) & STE_ASICCTL_TX_RESET))
-			break;
-	}
-
-	if (i == STE_TIMEOUT)
-		printf("ste%d: TX reset never completed\n", sc->ste_unit);
-
-	DELAY(100000);
-#endif
-
 	return;
 }
 
@@ -1324,11 +1334,25 @@ int ste_ioctl(ifp, command, data)
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
-			ste_init(sc);
+			if (ifp->if_flags & IFF_RUNNING &&
+			    ifp->if_flags & IFF_PROMISC &&
+			    !(sc->ste_if_flags & IFF_PROMISC)) {
+				STE_SETBIT1(sc, STE_RX_MODE,
+				    STE_RXMODE_PROMISC);
+			} else if (ifp->if_flags & IFF_RUNNING &&
+			    !(ifp->if_flags & IFF_PROMISC) &&
+			    sc->ste_if_flags & IFF_PROMISC) {
+				STE_CLRBIT1(sc, STE_RX_MODE,
+				    STE_RXMODE_PROMISC);
+			} else if (!(ifp->if_flags & IFF_RUNNING)) {
+				sc->ste_tx_thresh = STE_MIN_FRAMELEN;
+				ste_init(sc);
+			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				ste_stop(sc);
 		}
+		sc->ste_if_flags = ifp->if_flags;
 		error = 0;
 		break;
 	case SIOCADDMULTI:
@@ -1358,11 +1382,13 @@ int ste_encap(sc, c, m_head)
 {
 	int			frag = 0;
 	struct ste_frag		*f = NULL;
-	int			total_len;
 	struct mbuf		*m;
+	struct ste_desc		*d;
+	int			total_len = 0;
 
-	m = m_head;
-	total_len = 0;
+	d = c->ste_ptr;
+	d->ste_ctl = 0;
+	d->ste_next = 0;
 
 	for (m = m_head, frag = 0; m != NULL; m = m->m_next) {
 		if (m->m_len != 0) {
@@ -1376,39 +1402,9 @@ int ste_encap(sc, c, m_head)
 		}
 	}
 
-	if (m != NULL) {
-		struct mbuf		*m_new = NULL;
-
-		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
-		if (m_new == NULL) {
-			printf("ste%d: no memory for "
-			   "tx list", sc->ste_unit);
-			return(1);
-		}
-		if (m_head->m_pkthdr.len > MHLEN) {
-			MCLGET(m_new, M_DONTWAIT);
-			if (!(m_new->m_flags & M_EXT)) {
-				m_freem(m_new);
-				printf("ste%d: no memory for "
-			   	    "tx list", sc->ste_unit);
-				return(1);
-			}
-		}
-		m_copydata(m_head, 0, m_head->m_pkthdr.len,
-		    mtod(m_new, caddr_t));
-		m_new->m_pkthdr.len = m_new->m_len = m_head->m_pkthdr.len;
-		m_freem(m_head);
-		m_head = m_new;
-		f = &c->ste_ptr->ste_frags[0];
-		f->ste_addr = vtophys(mtod(m_new, caddr_t));
-		f->ste_len = total_len = m_new->m_len;
-		frag = 1;
-	}
-
 	c->ste_mbuf = m_head;
 	c->ste_ptr->ste_frags[frag - 1].ste_len |= STE_FRAG_LAST;
 	c->ste_ptr->ste_ctl = total_len;
-	c->ste_ptr->ste_next = 0;
 
 	return(0);
 }
@@ -1419,42 +1415,48 @@ void ste_start(ifp)
 	struct ste_softc	*sc;
 	struct mbuf		*m_head = NULL;
 	struct ste_chain	*prev = NULL, *cur_tx = NULL, *start_tx;
+	int			idx;
 
 	sc = ifp->if_softc;
 
-	if (sc->ste_cdata.ste_tx_free == NULL) {
-		ifp->if_flags |= IFF_OACTIVE;
+	if (!sc->ste_link)
 		return;
-	}
 
-	start_tx = sc->ste_cdata.ste_tx_free;
+	if (ifp->if_flags & IFF_OACTIVE)
+		return;
 
-	while(sc->ste_cdata.ste_tx_free != NULL) {
+	idx = sc->ste_cdata.ste_tx_prod;
+	start_tx = &sc->ste_cdata.ste_tx_chain[idx];
+
+	while(sc->ste_cdata.ste_tx_chain[idx].ste_mbuf == NULL) {
+		if ((STE_TX_LIST_CNT - sc->ste_cdata.ste_tx_cnt) < 3) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
 		IF_DEQUEUE(&ifp->if_snd, m_head);
 		if (m_head == NULL)
 			break;
 
-		cur_tx = sc->ste_cdata.ste_tx_free;
-		sc->ste_cdata.ste_tx_free = cur_tx->ste_next;
-
-		cur_tx->ste_next = NULL;
+		cur_tx = &sc->ste_cdata.ste_tx_chain[idx];
 
 		ste_encap(sc, cur_tx, m_head);
 
-		if (prev != NULL) {
-			prev->ste_next = cur_tx;
-			prev->ste_ptr->ste_next = vtophys(cur_tx->ste_ptr);
-		}
+		if (prev != NULL)
+			prev->ste_ptr->ste_next = cur_tx->ste_phys;
 		prev = cur_tx;
 
 #if NBPFILTER > 0
 		/*
-		 * If there's a BPF listener, bounce a copt of this frame
+		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 	 	 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, cur_tx->ste_mbuf);
 #endif
+
+		STE_INC(idx, STE_TX_LIST_CNT);
+		sc->ste_cdata.ste_tx_cnt++;
 	}
 
 	if (cur_tx == NULL)
@@ -1462,25 +1464,9 @@ void ste_start(ifp)
 
 	cur_tx->ste_ptr->ste_ctl |= STE_TXCTL_DMAINTR;
 
-	STE_SETBIT4(sc, STE_DMACTL, STE_DMACTL_TXDMA_STALL);
-	ste_wait(sc);
-
-	if (sc->ste_cdata.ste_tx_head != NULL) {
-		sc->ste_cdata.ste_tx_tail->ste_next = start_tx;
-		sc->ste_cdata.ste_tx_tail->ste_ptr->ste_next =
-		    vtophys(start_tx->ste_ptr);
-		sc->ste_cdata.ste_tx_tail->ste_ptr->ste_ctl &=
-		    ~STE_TXCTL_DMAINTR;
-		sc->ste_cdata.ste_tx_tail = cur_tx;
-	} else {
-		sc->ste_cdata.ste_tx_head = start_tx;
-		sc->ste_cdata.ste_tx_tail = cur_tx;
-	}
-
-	if (!CSR_READ_4(sc, STE_TX_DMALIST_PTR))
-		CSR_WRITE_4(sc, STE_TX_DMALIST_PTR,
-		    vtophys(start_tx->ste_ptr));
-	STE_SETBIT4(sc, STE_DMACTL, STE_DMACTL_TXDMA_UNSTALL);
+	/* Start transmission */
+	sc->ste_cdata.ste_tx_prod = idx;
+	start_tx->ste_prev->ste_ptr->ste_next = start_tx->ste_phys;
 
 	ifp->if_timer = 5;
 
@@ -1496,14 +1482,6 @@ void ste_watchdog(ifp)
 
 	ifp->if_oerrors++;
 	printf("ste%d: watchdog timeout\n", sc->ste_unit);
-
-#ifdef foo
-	if (sc->ste_pinfo != NULL) {
-		if (!(ste_phy_readreg(sc, PHY_BMSR) & PHY_BMSR_LINKSTAT))
-			printf("ste%d: no carrier - transceiver "
-			    "cable problem?\n", sc->ste_unit);
-	}
-#endif
 
 	ste_txeoc(sc);
 	ste_txeof(sc);
