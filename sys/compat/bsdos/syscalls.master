@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.12 2004/01/14 05:23:25 tedu Exp $
+	$OpenBSD: syscalls.master,v 1.13 2004/05/28 18:28:14 tedu Exp $
 
 ; OpenBSD COMPAT_BSDOS system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -117,7 +117,11 @@
 48	NOARGS		{ int sys_sigprocmask(int how, sigset_t mask); }
 49	NOARGS		{ int sys_getlogin(char *namebuf, u_int namelen); }
 50	NOARGS		{ int sys_setlogin(char *namebuf); }
+#ifdef ACCOUNTING
 51	NOARGS		{ int sys_acct(char *path); }
+#else
+51	UNIMPL		acct
+#endif
 52	NOARGS		{ int sys_sigpending(void); }
 53	NOARGS		{ int sys_osigaltstack(struct osigaltstack *nss, \
 			    struct osigaltstack *oss); }

@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.9 2003/01/30 03:29:49 millert Exp $
+	$OpenBSD: syscalls.master,v 1.10 2004/05/28 18:28:14 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.29 1999/05/10 03:33:04 cgd Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -106,7 +106,11 @@
 48	NOARGS		{ int sys_sigprocmask(int how, sigset_t mask); }
 49	NOARGS		{ int sys_getlogin(char *namebuf, u_int namelen); }
 50	NOARGS		{ int sys_setlogin(const char *namebuf); }
+#ifdef	ACCOUNTING
 51	NOARGS		{ int sys_acct(const char *path); }
+#else
+51	UNIMPL		acct
+#endif
 52	UNIMPL		sigpending
 53	STD		{ int osf1_sys_classcntl(int opcode, int arg1, \
 			    int arg2, int arg3); }

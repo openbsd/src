@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.9 2003/05/11 19:45:18 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.10 2004/05/28 18:28:14 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1996/01/07 13:38:57 jonathan Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -96,7 +96,11 @@
 48	UNIMPL		ssig
 49	UNIMPL		reserved for USG
 50	UNIMPL		reserved for USG
+#ifdef ACCOUNTING
 51	NOARGS		{ int sys_acct(char *path); }
+#else
+51	UNIMPL		acct
+#endif
 52	UNIMPL
 53	UNIMPL		syslock
 54	STD		{ int ultrix_sys_ioctl(int fd, u_long com, caddr_t data); }

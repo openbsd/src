@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.46 2004/04/05 00:01:12 tedu Exp $
+	$OpenBSD: syscalls.master,v 1.47 2004/05/28 18:28:14 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -107,7 +107,11 @@
 			    linux_handler_t handler); }
 49	NOARGS		linux_geteuid16 { uid_t sys_geteuid(void); }
 50	NOARGS		linux_getegid16 { gid_t sys_getegid(void); }
+#ifdef ACCOUNTING
 51	NOARGS		{ int sys_acct(char *path); }
+#else
+51	UNIMPL		acct
+#endif
 52	STD		{ int linux_sys_phys(void); }
 53	STD		{ int linux_sys_lock(void); }
 54	STD		{ int linux_sys_ioctl(int fd, u_long com, \
