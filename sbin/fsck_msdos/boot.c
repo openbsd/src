@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.9 2003/07/29 18:38:35 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.10 2004/07/17 02:14:33 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: boot.c,v 1.9 2003/07/29 18:38:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: boot.c,v 1.10 2004/07/17 02:14:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -47,9 +47,7 @@ static char rcsid[] = "$OpenBSD: boot.c,v 1.9 2003/07/29 18:38:35 deraadt Exp $"
 #include "ext.h"
 
 int
-readboot(dosfs, boot)
-	int dosfs;
-	struct bootblock *boot;
+readboot(int dosfs, struct bootblock *boot)
 {
 	u_char block[DOSBOOTBLOCKSIZE];
 	u_char fsinfo[2 * DOSBOOTBLOCKSIZE];
@@ -227,9 +225,7 @@ readboot(dosfs, boot)
 }
 
 int
-writefsinfo(dosfs, boot)
-	int dosfs;
-	struct bootblock *boot;
+writefsinfo(int dosfs, struct bootblock *boot)
 {
 	u_char fsinfo[2 * DOSBOOTBLOCKSIZE];
 

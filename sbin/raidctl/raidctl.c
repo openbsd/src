@@ -1,4 +1,4 @@
-/*	$OpenBSD: raidctl.c,v 1.22 2004/06/21 15:27:18 avsm Exp $	*/
+/*	$OpenBSD: raidctl.c,v 1.23 2004/07/17 02:14:33 deraadt Exp $	*/
 /*      $NetBSD: raidctl.c,v 1.27 2001/07/10 01:30:52 lukem Exp $   */
 
 /*-
@@ -101,9 +101,7 @@ int verbose;
 int do_all;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	int num_options;
@@ -365,11 +363,7 @@ main(argc, argv)
 }
 
 void
-do_ioctl(fd, command, arg, ioctl_name)
-	int fd;
-	unsigned long command;
-	void *arg;
-	const char *ioctl_name;
+do_ioctl(int fd, unsigned long command, void *arg, const char *ioctl_name)
 {
 	if (ioctl(fd, command, arg) < 0)
 		errx(1, "ioctl (%s) failed", ioctl_name);
@@ -377,10 +371,7 @@ do_ioctl(fd, command, arg, ioctl_name)
 
 
 static void
-rf_configure(fds, config_file, force)
-	fdidpair *fds;
-	char *config_file;
-	int force;
+rf_configure(fdidpair *fds, char *config_file, int force)
 {
 	void *generic;
 	RF_Config_t cfg;
@@ -401,8 +392,7 @@ rf_configure(fds, config_file, force)
 }
 
 static const char *
-device_status(status)
-	RF_DiskStatus_t status;
+device_status(RF_DiskStatus_t status)
 {
 
 	switch (status) {
@@ -427,9 +417,7 @@ device_status(status)
 }
 
 static void
-rf_get_device_status(fds, nfd)
-	fdidpair *fds;
-	int nfd;
+rf_get_device_status(fdidpair *fds, int nfd)
 {
 	RF_DeviceConfig_t device_config;
 	void *cfg_ptr;
@@ -502,9 +490,7 @@ rf_get_device_status(fds, nfd)
 }
 
 static void
-rf_output_configuration(fds, nfd)
-	fdidpair *fds;
-	int nfd;
+rf_output_configuration(fdidpair *fds, int nfd)
 {
 	RF_DeviceConfig_t device_config;
 	void *cfg_ptr;
@@ -579,11 +565,8 @@ rf_output_configuration(fds, nfd)
 }
 
 static void
-get_component_number(fds, component_name, component_number, num_columns)
-	fdidpair *fds;
-	char *component_name;
-	int *component_number;
-	int *num_columns;
+get_component_number(fdidpair *fds, char *component_name, int *component_number,
+		     int *num_columns)
 {
 	RF_DeviceConfig_t device_config;
 	void *cfg_ptr;
@@ -626,10 +609,7 @@ get_component_number(fds, component_name, component_number, num_columns)
 }
 
 static void
-rf_fail_disk(fds, component_to_fail, do_recon)
-	fdidpair *fds;
-	char *component_to_fail;
-	int do_recon;
+rf_fail_disk(fdidpair *fds, char *component_to_fail, int do_recon)
 {
 	struct rf_recon_req recon_request;
 	int component_num;
@@ -654,9 +634,7 @@ rf_fail_disk(fds, component_to_fail, do_recon)
 }
 
 static void
-get_component_label(fds, component)
-	fdidpair *fds;
-	char *component;
+get_component_label(fdidpair *fds, char *component)
 {
 	RF_ComponentLabel_t component_label;
 	void *label_ptr;
@@ -699,9 +677,7 @@ get_component_label(fds, component)
 }
 
 static void
-set_component_label(fds, component)
-	fdidpair *fds;
-	char *component;
+set_component_label(fdidpair *fds, char *component)
 {
 	RF_ComponentLabel_t component_label;
 	int component_num;
@@ -727,9 +703,7 @@ set_component_label(fds, component)
 
 
 static void
-init_component_labels(fds, serial_number)
-	fdidpair *fds;
-	int serial_number;
+init_component_labels(fdidpair *fds, int serial_number)
 {
 	RF_ComponentLabel_t component_label;
 
@@ -748,9 +722,7 @@ init_component_labels(fds, serial_number)
 }
 
 static void
-set_autoconfig(fds, autoconf)
-	fdidpair *fds;
-	char *autoconf;
+set_autoconfig(fdidpair *fds, char *autoconf)
 {
 	int auto_config;
 	int root_config;
@@ -783,9 +755,7 @@ set_autoconfig(fds, autoconf)
 }
 
 static void
-add_hot_spare(fds, component)
-	fdidpair *fds;
-	char *component;
+add_hot_spare(fdidpair *fds, char *component)
 {
 	RF_SingleComponent_t hot_spare;
 
@@ -799,9 +769,7 @@ add_hot_spare(fds, component)
 }
 
 static void
-remove_hot_spare(fds, component)
-	fdidpair *fds;
-	char *component;
+remove_hot_spare(fdidpair *fds, char *component)
 {
 	RF_SingleComponent_t hot_spare;
 	int component_num;
@@ -820,9 +788,7 @@ remove_hot_spare(fds, component)
 }
 
 static void
-rebuild_in_place(fds, component)
-	fdidpair *fds;
-	char *component;
+rebuild_in_place(fdidpair *fds, char *component)
 {
 	RF_SingleComponent_t comp;
 	int component_num;
@@ -846,10 +812,7 @@ rebuild_in_place(fds, component)
 }
 
 static void
-check_parity(fds, nfd, do_rewrite)
-	fdidpair *fds;
-	int nfd;
-	int do_rewrite;
+check_parity(fdidpair *fds, int nfd, int do_rewrite)
 {
 	int i, is_clean, all_dirty, was_dirty;
 	int percent_done;
@@ -912,10 +875,7 @@ check_parity(fds, nfd, do_rewrite)
 
 
 static void
-check_status(fds, nfd, meter)
-	fdidpair *fds;
-	int nfd;
-	int meter;
+check_status(fdidpair *fds, int nfd, int meter)
 {
 	int i;
 	int recon_percent_done = 0;
@@ -976,10 +936,7 @@ check_status(fds, nfd, meter)
 const char *tbits = "|/-\\";
 
 static void
-do_meter(fds, nfd, option)
-	fdidpair *fds;
-	int nfd;
-	u_long option;
+do_meter(fdidpair *fds, int nfd, u_long option)
 {
 	int percent_done;
 	int start_value;
@@ -1120,10 +1077,7 @@ const char stars[] = "****************************************"
                      "                                        ";
 
 static void
-get_bar(string, percent, max_strlen)
-	char *string;
-	double percent;
-	int max_strlen;
+get_bar(char *string, double percent, int max_strlen)
 {
 	int offset;
 
@@ -1138,9 +1092,7 @@ get_bar(string, percent, max_strlen)
 }
 
 static void
-get_time_string(string, simple_time)
-	char *string;
-	int simple_time;
+get_time_string(char *string, int simple_time)
 {
 	int minutes, seconds, hours;
 	char hours_buffer[5];
@@ -1174,9 +1126,7 @@ get_time_string(string, simple_time)
 }
 
 static int
-open_device(devfd, name)
-	fdidpair **devfd;
-	char *name;
+open_device(fdidpair **devfd, char *name)
 {
 	int nfd, i;
  	struct stat st;
@@ -1228,9 +1178,7 @@ open_device(devfd, name)
 }
 
 static int
-get_all_devices(diskarray, genericname)
-	char	 ***diskarray;
-	const char *genericname;
+get_all_devices(char ***diskarray, const char *genericname)
 {
 	int	i, numdevs, mib[2];
 	size_t	len;
@@ -1271,7 +1219,7 @@ get_all_devices(diskarray, genericname)
 }
 
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr,
 	    "usage: raidctl [-v] [-afFgrR component] [-BGipPsSu] [-cC config_file]\n");

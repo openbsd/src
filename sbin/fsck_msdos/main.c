@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2004/07/17 02:14:33 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.12 2002/02/19 19:39:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.13 2004/07/17 02:14:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -57,15 +57,13 @@ static void usage(void);
 int main(int, char **);
 
 static void
-usage()
+usage(void)
 {
 	errexit("Usage: fsck_msdos [-fnpy] filesystem ... \n");
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	int ret = 0, erg;
 	int ch;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs.c,v 1.8 2003/07/29 18:38:36 deraadt Exp $	*/
+/*	$OpenBSD: lfs.c,v 1.9 2004/07/17 02:14:33 deraadt Exp $	*/
 /*	$NetBSD: lfs.c,v 1.8 1995/06/19 21:30:36 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-static char rcsid[] = "$OpenBSD: lfs.c,v 1.8 2003/07/29 18:38:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lfs.c,v 1.9 2004/07/17 02:14:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -169,14 +169,8 @@ static void make_dir( void *, struct direct *, int);
 static void put(int, off_t, void *, size_t);
 
 int
-make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
-	int fd;
-	struct disklabel *lp;
-	struct partition *partp;
-	int minfree;
-	int block_size;
-	int frag_size;
-	int seg_size;
+make_lfs(int fd, struct disklabel *lp, struct partition *partp, int minfree,
+	 int block_size, int frag_size, int seg_size)
 {
 	struct dinode *dip;	/* Pointer to a disk inode */
 	struct dinode *dpagep;	/* Pointer to page of disk inodes */
@@ -602,11 +596,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 }
 
 static void
-put(fd, off, p, len)
-	int fd;
-	off_t off;
-	void *p;
-	size_t len;
+put(int fd, off_t off, void *p, size_t len)
 {
 	int wbytes;
 
@@ -624,16 +614,19 @@ put(fd, off, p, len)
  */
 
 void
-lfsinit()
+lfsinit(void)
 {}
 
+/*
+ * ino    : inode we're creating
+ * dip    : disk inode
+ * nblocks: number of blocks in file
+ * saddr  : starting block address
+ * lfsp   : superblock
+ */
 static daddr_t
-make_dinode(ino, dip, nblocks, saddr, lfsp)
-	ino_t ino;				/* inode we're creating */
-	struct dinode *dip;			/* disk inode */
-	int nblocks;				/* number of blocks in file */
-	daddr_t saddr;				/* starting block address */
-	struct lfs *lfsp;			/* superblock */
+make_dinode(ino_t ino, struct dinode *dip, int nblocks, daddr_t saddr,
+	    struct lfs *lfsp)
 {
 	int db_per_fb, i;
 
@@ -664,10 +657,7 @@ make_dinode(ino, dip, nblocks, saddr, lfsp)
  * entries in protodir fir in the first DIRBLKSIZ.
  */
 static void
-make_dir(bufp, protodir, entries)
-	void *bufp;
-	struct direct *protodir;
-	int entries;
+make_dir(void *bufp, struct direct *protodir, int entries)
 {
 	char *cp;
 	int i, spcleft;

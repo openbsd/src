@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_configure.c,v 1.11 2003/03/13 09:09:27 deraadt Exp $	*/
+/*	$OpenBSD: rf_configure.c,v 1.12 2004/07/17 02:14:33 deraadt Exp $	*/
 /*	$NetBSD: rf_configure.c,v 1.14 2001/02/04 21:05:42 christos Exp $	*/
 
 /*
@@ -153,9 +153,7 @@ int rf_get_next_nonblank_line(char *buf, int len, FILE *fp,
  * the system via ioctl.
  */
 int
-rf_MakeConfig(configname, cfgPtr)
-  char         *configname;
-  RF_Config_t  *cfgPtr;
+rf_MakeConfig(char *configname, RF_Config_t *cfgPtr)
 {
   int numscanned, val, r, c, retcode, aa, bb, cc;
   char buf[256], buf1[256], *cp;
@@ -311,10 +309,8 @@ out:
  * information to be passed into the configuration code.
  */
 int
-rf_MakeLayoutSpecificNULL(fp, cfgPtr, ignored)
-  FILE         *fp				ATTRIBUTE_UNUSED;
-  RF_Config_t  *cfgPtr;
-  void         *ignored				ATTRIBUTE_UNUSED;
+rf_MakeLayoutSpecificNULL(FILE *fp ATTRIBUTE_UNUSED, RF_Config_t *cfgPtr,
+			  void *ignored ATTRIBUTE_UNUSED)
 {
   cfgPtr->layoutSpecificSize = 0;
   cfgPtr->layoutSpecific     = NULL;
@@ -322,10 +318,7 @@ rf_MakeLayoutSpecificNULL(fp, cfgPtr, ignored)
 }
 
 int
-rf_MakeLayoutSpecificDeclustered(configfp, cfgPtr, arg)
-  FILE         *configfp;
-  RF_Config_t  *cfgPtr;
-  void         *arg;
+rf_MakeLayoutSpecificDeclustered(FILE *configfp, RF_Config_t *cfgPtr, void *arg)
 {
   int b, v, k, r, lambda, norotate, i, val, distSpare;
   char *cfgBuf, *bdfile, *p, *smname;
@@ -446,11 +439,7 @@ rf_find_white(char *p)
  * specified as a parameter
  */
 int
-rf_search_file_for_start_of(string, buf, len, fp)
-	const char *string;
-  char  *buf;
-  int    len;
-  FILE  *fp;
+rf_search_file_for_start_of(const char *string, char *buf, int len, FILE *fp)
 {
   char *p;
 
@@ -469,11 +458,8 @@ rf_search_file_for_start_of(string, buf, len, fp)
 
 /* reads from file fp into buf until it finds an interesting line */
 int
-rf_get_next_nonblank_line(buf, len, fp, errmsg)
-  char  *buf;
-  int    len					ATTRIBUTE_UNUSED;
-  FILE  *fp;
-	const char *errmsg;
+rf_get_next_nonblank_line(char *buf, int len ATTRIBUTE_UNUSED, FILE *fp,
+			  const char *errmsg)
 {
   char *p;
 
@@ -503,9 +489,7 @@ rf_get_next_nonblank_line(buf, len, fp, errmsg)
  *
  */
 void *
-rf_ReadSpareTable(req, fname)
-  RF_SparetWait_t  *req;
-  char             *fname;
+rf_ReadSpareTable(RF_SparetWait_t *req, char *fname)
 {
 	int i, j, numFound, linecount, tableNum, tupleNum,
 	    spareDisk, spareBlkOffset;

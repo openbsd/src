@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.14 2003/06/25 21:24:25 deraadt Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.15 2004/07/17 02:14:33 deraadt Exp $	*/
 /*	$NetBSD: newfs.c,v 1.5 1996/05/16 07:17:50 thorpej Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.14 2003/06/25 21:24:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.15 2004/07/17 02:14:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -120,9 +120,7 @@ static void rewritelabel(char *, int, struct disklabel *);
 static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	struct partition *pp;
@@ -337,9 +335,7 @@ char lmsg[] = "%s: can't read disk label";
 #endif
 
 static struct disklabel *
-getdisklabel(s, fd)
-	char *s;
-	int fd;
+getdisklabel(char *s, int fd)
 {
 	static struct disklabel lab;
 
@@ -364,8 +360,7 @@ getdisklabel(s, fd)
 
 
 static struct disklabel *
-debug_readlabel(fd)
-	int fd;
+debug_readlabel(int fd)
 {
 	static struct disklabel lab;
 	int n;
@@ -379,10 +374,7 @@ debug_readlabel(fd)
 }
 
 static void
-rewritelabel(s, fd, lp)
-	char *s;
-	int fd;
-	struct disklabel *lp;
+rewritelabel(char *s, int fd, struct disklabel *lp)
 {
 #ifdef COMPAT
 	if (unlabeled)
@@ -433,7 +425,7 @@ rewritelabel(s, fd, lp)
 }
 
 void
-usage()
+usage(void)
 {
 	if (mfs) {
 		fprintf(stderr,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.13 2003/11/08 19:17:28 jmc Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.14 2004/07/17 02:14:33 deraadt Exp $	*/
 /*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: symtab.c,v 1.13 2003/11/08 19:17:28 jmc Exp $";
+static const char rcsid[] = "$OpenBSD: symtab.c,v 1.14 2004/07/17 02:14:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -81,8 +81,7 @@ static void		 removeentry(struct entry *);
  * Look up an entry by inode number
  */
 struct entry *
-lookupino(inum)
-	ino_t inum;
+lookupino(ino_t inum)
 {
 	struct entry *ep;
 
@@ -98,9 +97,7 @@ lookupino(inum)
  * Add an entry into the entry table
  */
 static void
-addino(inum, np)
-	ino_t inum;
-	struct entry *np;
+addino(ino_t inum, struct entry *np)
 {
 	struct entry **epp;
 
@@ -120,8 +117,7 @@ addino(inum, np)
  * Delete an entry from the entry table
  */
 void
-deleteino(inum)
-	ino_t inum;
+deleteino(ino_t inum)
 {
 	struct entry *next;
 	struct entry **prev;
@@ -144,8 +140,7 @@ deleteino(inum)
  * Look up an entry by name
  */
 struct entry *
-lookupname(name)
-	char *name;
+lookupname(char *name)
 {
 	struct entry *ep;
 	char *np, *cp;
@@ -174,8 +169,7 @@ lookupname(name)
  * Look up the parent of a pathname
  */
 static struct entry *
-lookupparent(name)
-	char *name;
+lookupparent(char *name)
 {
 	struct entry *ep;
 	char *tailindex;
@@ -197,8 +191,7 @@ lookupparent(name)
  * Determine the current pathname of a node or leaf
  */
 char *
-myname(ep)
-	struct entry *ep;
+myname(struct entry *ep)
 {
 	char *cp;
 	static char namebuf[MAXPATHLEN];
@@ -225,10 +218,7 @@ static struct entry *freelist = NULL;
  * add an entry to the symbol table
  */
 struct entry *
-addentry(name, inum, type)
-	char *name;
-	ino_t inum;
-	int type;
+addentry(char *name, ino_t inum, int type)
 {
 	struct entry *np, *ep;
 
@@ -276,8 +266,7 @@ addentry(name, inum, type)
  * delete an entry from the symbol table
  */
 void
-freeentry(ep)
-	struct entry *ep;
+freeentry(struct entry *ep)
 {
 	struct entry *np;
 	ino_t inum;
@@ -320,9 +309,7 @@ freeentry(ep)
  * Relocate an entry in the tree structure
  */
 void
-moveentry(ep, newname)
-	struct entry *ep;
-	char *newname;
+moveentry(struct entry *ep, char *newname)
 {
 	struct entry *np;
 	char *cp;
@@ -350,8 +337,7 @@ moveentry(ep, newname)
  * Remove an entry in the tree structure
  */
 static void
-removeentry(ep)
-	struct entry *ep;
+removeentry(struct entry *ep)
 {
 	struct entry *np;
 
@@ -396,8 +382,7 @@ static struct strhdr strtblhdr[allocsize(NAME_MAX) / STRTBLINCR];
  * has an appropriate sized entry, and if not allocates a new one.
  */
 char *
-savename(name)
-	char *name;
+savename(char *name)
 {
 	struct strhdr *np;
 	long len;
@@ -424,8 +409,7 @@ savename(name)
  * appropriate free list.
  */
 void
-freename(name)
-	char *name;
+freename(char *name)
 {
 	struct strhdr *tp, *np;
 
@@ -452,9 +436,7 @@ struct symtableheader {
  * dump a snapshot of the symbol table
  */
 void
-dumpsymtable(filename, checkpt)
-	char *filename;
-	long checkpt;
+dumpsymtable(char *filename, long checkpt)
 {
 	struct entry *ep, *tep;
 	ino_t i;
@@ -539,8 +521,7 @@ dumpsymtable(filename, checkpt)
  * Initialize a symbol table from a file
  */
 void
-initsymtable(filename)
-	char *filename;
+initsymtable(char *filename)
 {
 	char *base;
 	long tblsize;

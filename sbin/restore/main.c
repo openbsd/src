@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 2003/07/28 06:13:26 tedu Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2004/07/17 02:14:33 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.13 1997/07/01 05:37:51 lukem Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.14 2003/07/28 06:13:26 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.15 2004/07/17 02:14:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,9 +80,7 @@ static void obsolete(int *, char **[]);
 static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch;
 	ino_t ino;
@@ -285,7 +283,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage: %s -i [-chmvy] [-b blocksize] [-f file] [-s fileno]\n", __progname);
@@ -302,9 +300,7 @@ usage()
  *	getopt(3) will like.
  */
 static void
-obsolete(argcp, argvp)
-	int *argcp;
-	char **argvp[];
+obsolete(int *argcp, char **argvp[])
 {
 	int argc, flags;
 	char *ap, **argv, *flagsp, **nargv, *p;

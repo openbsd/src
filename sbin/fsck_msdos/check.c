@@ -1,4 +1,4 @@
-/*	$OpenBSD: check.c,v 1.9 2003/07/29 18:38:35 deraadt Exp $	*/
+/*	$OpenBSD: check.c,v 1.10 2004/07/17 02:14:33 deraadt Exp $	*/
 /*	$NetBSD: check.c,v 1.8 1997/10/17 11:19:29 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: check.c,v 1.9 2003/07/29 18:38:35 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: check.c,v 1.10 2004/07/17 02:14:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -48,8 +48,7 @@ static char rcsid[] = "$OpenBSD: check.c,v 1.9 2003/07/29 18:38:35 deraadt Exp $
 #include "ext.h"
 
 int
-checkfilesys(fname)
-	const char *fname;
+checkfilesys(const char *fname)
 {
 	int dosfs;
 	struct bootblock boot;
