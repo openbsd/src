@@ -3,7 +3,7 @@
 #
 # This system was a 468 but now has an Intel Pentium Overdrive Processor[tm]
 #
-# $OpenBSD: HERMES,v 1.8 1997/06/24 12:28:20 kstailey Exp $
+# $OpenBSD: HERMES,v 1.9 1997/07/07 11:42:49 kstailey Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -45,19 +45,19 @@ option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 
 #option		VM86		# Virtual x86 mode; to be used by dos emualtors
 #option		USER_LDT	# user-settable LDT; used by WINE
-#option		LKM		# loadable kernel modules
+option		LKM		# loadable kernel modules
 
 option		FFS		# UFS
 #option		QUOTA		# UFS quotas
-option		MFS		# memory file system
 
 option		NFSCLIENT	# Network File System client
 option		NFSSERVER	# Network File System server
 
 #option		CD9660		# ISO 9660 + Rock Ridge file system
 #option		FDESC		# /dev/fd
-option		FIFO		# FIFOs; multiuser fails without this
+option		FIFO		# POSIX fifo support (in all file systems)
 option		KERNFS		# /kern
+option		MFS		# memory file system
 option		MSDOSFS		# MS-DOS file system
 option		NULLFS		# mount directories on directories
 option		PORTAL		# call processes via the FS
