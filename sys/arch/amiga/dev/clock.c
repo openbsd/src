@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.7 1996/05/29 10:14:49 niklas Exp $	*/
+/*	$OpenBSD: clock.c,v 1.8 1996/06/04 13:28:39 niklas Exp $	*/
 /*	$NetBSD: clock.c,v 1.15 1996/05/10 14:30:53 is Exp $	*/
 
 /*
@@ -64,8 +64,6 @@
 #include <sys/PROF.h>
 #endif
 
-extern void hardclock();
-
 /* the clocks run at NTSC: 715.909kHz or PAL: 709.379kHz. 
    We're using a 100 Hz clock. */
 
@@ -104,6 +102,7 @@ int clockmatch __P((struct device *, void *, void *));
 void clockattach __P((struct device *, struct device *, void *));
 void cpu_initclocks __P((void));
 void setmicspertick __P((void));
+int clockintr __P((void *));
 
 struct cfattach clock_ca = {
 	sizeof(struct device), clockmatch, clockattach
@@ -179,7 +178,8 @@ clockattach(pdp, dp, auxp)
 
 #if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
 int
-clockintr ()
+clockintr (arg)
+	void *arg;
 {
 	/* Is it a timer A interrupt? */
 	if (ciab.icr & 1) {
@@ -200,12 +200,12 @@ cpu_initclocks()
 	/*
 	 * enable interrupts for timer A
 	 */
-	clcokcia.icr = (1<<7) | (1<<0);
+	clockcia->icr = (1<<7) | (1<<0);
 
 	/*
 	 * start timer A in continuous shot mode
 	 */
-	clockcia.cra = (clockcia.cra & 0xc0) | 1;
+	clockcia->cra = (clockcia->cra & 0xc0) | 1;
   
 #if defined(IPL_REMAP_1) || defined(IPL_REMAP_2)
 	isr.isr_intr = clockintr;
