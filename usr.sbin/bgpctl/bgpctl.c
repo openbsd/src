@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.54 2004/04/27 04:06:10 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.55 2004/04/28 00:56:49 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -272,9 +272,11 @@ show_summary_msg(struct imsg *imsg)
 		printf("%-20s %5u %10llu %10llu %5u %-8s %s\n",
 		    s, p->conf.remote_as,
 		    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
-		    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive,
+		    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive +
+		    p->stats.msg_rcvd_rrefresh,
 		    p->stats.msg_sent_open + p->stats.msg_sent_notification +
-		    p->stats.msg_sent_update + p->stats.msg_sent_keepalive,
+		    p->stats.msg_sent_update + p->stats.msg_sent_keepalive +
+		    p->stats.msg_sent_rrefresh,
 		    p->wbuf.queued,
 		    fmt_timeframe(p->stats.last_updown),
 		    statenames[p->state]);
@@ -421,11 +423,15 @@ print_neighbor_msgstats(struct peer *p)
 	    p->stats.msg_sent_update, p->stats.msg_rcvd_update);
 	printf("  %-15s %10llu %10llu\n", "Keepalives",
 	    p->stats.msg_sent_keepalive, p->stats.msg_rcvd_keepalive);
+	printf("  %-15s %10llu %10llu\n", "Route Refresh",
+	    p->stats.msg_sent_rrefresh, p->stats.msg_rcvd_rrefresh);
 	printf("  %-15s %10llu %10llu\n", "Total",
 	    p->stats.msg_sent_open + p->stats.msg_sent_notification +
-	    p->stats.msg_sent_update + p->stats.msg_sent_keepalive,
+	    p->stats.msg_sent_update + p->stats.msg_sent_keepalive +
+	    p->stats.msg_sent_rrefresh,
 	    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
-	    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive);
+	    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive +
+	    p->stats.msg_rcvd_rrefresh);
 }
 
 void
