@@ -1142,6 +1142,7 @@
 ./usr/share/man/cat4/tx.0
 ./usr/share/man/cat4/txphy.0
 ./usr/share/man/cat4/uaudio.0
+./usr/share/man/cat4/ubsec.0
 ./usr/share/man/cat4/udp.0
 ./usr/share/man/cat4/ugen.0
 ./usr/share/man/cat4/uhci.0
