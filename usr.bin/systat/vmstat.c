@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.17 1998/12/19 06:34:22 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.18 1999/06/16 10:18:30 espie Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-static char rcsid[] = "$OpenBSD: vmstat.c,v 1.17 1998/12/19 06:34:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vmstat.c,v 1.18 1999/06/16 10:18:30 espie Exp $";
 #endif /* not lint */
 
 /*
@@ -66,7 +66,7 @@ static char rcsid[] = "$OpenBSD: vmstat.c,v 1.17 1998/12/19 06:34:22 deraadt Exp
 #include <utmp.h>
 #include <unistd.h>
 
-#if defined(i386)
+#if defined(__i386__)
 #define	_KERNEL
 #include <machine/psl.h>
 #undef _KERNEL
@@ -158,7 +158,7 @@ static struct nlist namelist[] = {
 	{ "_intrcnt" },
 #define	X_EINTRCNT	7
 	{ "_eintrcnt" },
-#if defined(i386)
+#if defined(__i386__)
 #define	X_INTRHAND	8
 	{ "_intrhand" },
 #endif
@@ -227,7 +227,7 @@ initkre()
 #undef allocate
 	}
 	if (nintr == 0) {
-#if defined(i386)
+#if defined(__i386__)
 		struct intrhand *intrhand[16], *ihp, ih;
 		char iname[16];
 		int namelen, n;
@@ -655,7 +655,7 @@ getinfo(s, st)
 	int mib[2];
 	size_t size;
 	extern int errno;
-#if defined(i386)
+#if defined(__i386__)
 	struct intrhand *intrhand[16], *ihp, ih;
 	int i, n;
 #endif
@@ -664,7 +664,7 @@ getinfo(s, st)
 	NREAD(X_CPTIME, s->time, sizeof s->time);
 	NREAD(X_CNT, &s->Cnt, sizeof s->Cnt);
 	NREAD(X_NCHSTATS, &s->nchstats, sizeof s->nchstats);
-#if defined(i386)
+#if defined(__i386__)
 	NREAD(X_INTRHAND, intrhand, sizeof(intrhand));
 	for (i = 0, n = 0; i < 16; i++) {
 		ihp = intrhand[i];
