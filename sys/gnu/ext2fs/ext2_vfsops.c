@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vfsops.c,v 1.8 1996/07/14 08:10:02 downsj Exp $	*/
+/*	$OpenBSD: ext2_vfsops.c,v 1.9 1996/07/14 08:30:34 downsj Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -121,9 +121,6 @@ static int	compute_sb_data __P((struct vnode * devvp,
 				     struct ext2_super_block * es,
 				     struct ext2_sb_info * fs));
 
-#ifdef notyet
-static int ext2_mountroot __P((void));
-
 /*
  * Called by main() when ext2fs is going to be mounted as root.
  *
@@ -139,7 +136,7 @@ ext2_mountroot()
 	register struct mount *mp;
 	struct proc *p = curproc;	/* XXX */
 	struct ufsmount *ump;
-	u_int size;
+	size_t size;
 	int error;
 	
 	/*
@@ -152,24 +149,22 @@ ext2_mountroot()
 	bzero((char *)mp, (u_long)sizeof(struct mount));
 	mp->mnt_op = &ext2fs_vfsops;
 	mp->mnt_flag = MNT_RDONLY;
-	if (error = ext2_mountfs(rootvp, mp, p)) {
+	if ((error = ext2_mountfs(rootvp, mp, p)) != 0) {
 		bsd_free(mp, M_MOUNT);
 		return (error);
 	}
-	if (error = vfs_lock(mp)) {
+	if ((error = vfs_lock(mp)) != 0) {
 		(void)ext2_unmount(mp, 0, p);
 		bsd_free(mp, M_MOUNT);
 		return (error);
 	}
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
-	mp->mnt_flag |= MNT_ROOTFS;
 	mp->mnt_vnodecovered = NULLVP;
 	ump = VFSTOUFS(mp);
 	fs = ump->um_e2fs;
 	bzero(fs->fs_fsmnt, sizeof(fs->fs_fsmnt));
 	fs->fs_fsmnt[0] = '/';
-	bcopy((caddr_t)fs->fs_fsmnt, (caddr_t)mp->mnt_stat.f_mntonname,
-	    MNAMELEN);
+	bcopy(fs->fs_fsmnt, mp->mnt_stat.f_mntonname, MNAMELEN);
 	(void) copystr(ROOTNAME, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
@@ -178,7 +173,6 @@ ext2_mountroot()
 	inittodr(fs->s_es->s_wtime);		/* this helps to set the time */
 	return (0);
 }
-#endif
 
 /*
  * VFS Operations.
