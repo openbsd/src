@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.37 1999/07/20 06:21:59 csapuntz Exp $	*/
+/*	$OpenBSD: cd.c,v 1.38 1999/07/20 09:41:41 csapuntz Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1319,7 +1319,7 @@ cd_play_msf(cd, startm, starts, startf, endm, ends, endf)
 	scsi_cmd.end_f = endf;
 	return (scsi_scsi_cmd(cd->sc_link,
 	    (struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd),
-	    0, 0, CDRETRIES, 2000, NULL, 0));
+	    0, 0, CDRETRIES, 20000, NULL, 0));
 }
 
 /*
