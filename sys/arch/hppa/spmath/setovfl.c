@@ -1,3 +1,5 @@
+/*	$OpenBSD: setovfl.c,v 1.3 1998/07/02 19:05:50 mickey Exp $	*/
+
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -73,8 +75,8 @@ unsigned int sign;
 		case ROUNDZERO:
 			Sgl_setlargest(result,sign);
 	}
-	return(result);
 	*/
+	return(result);
 }
 
 dbl_floating_point dbl_setoverflow(sign)
@@ -108,6 +110,6 @@ unsigned int sign;
 		case ROUNDZERO:
 			Dbl_setlargest(result,sign);
 	}
-	return(result);
 	*/
+	return(result);
 }

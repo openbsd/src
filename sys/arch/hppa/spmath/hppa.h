@@ -1,3 +1,5 @@
+/*	$OpenBSD: hppa.h,v 1.3 1998/07/02 19:05:31 mickey Exp $	*/
+
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 

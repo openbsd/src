@@ -1,3 +1,5 @@
+/*	$OpenBSD: md.h,v 1.3 1998/07/02 19:05:35 mickey Exp $	*/
+
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -36,6 +38,8 @@
  * Hewlett-Packard Company makes no representations about the 
  * suitability of this software for any purpose.
  */
+
+#include <sys/cdefs.h>
 
 /*****************************************************************
  * Muliply/Divide SFU Internal State                             *
@@ -77,6 +81,8 @@ typedef int boolean;
 #define BIT30 0x2
 #define BIT31 0x1
 
+	/* Simply copy the arguments to the emulated copies of the registers */
+#define	mdrr(reg1,reg2,result)	{result_hi = reg1;result_lo = reg2;}
 
 /*
  *  Structures
@@ -86,3 +92,22 @@ struct md_state {
 	int resulthi,	/* high word of result */
 	    resultlo;	/* low word of result */
 };
+
+void divsfm __P((int, int, struct mdsfu_register *));
+void divsfr __P((int, int, struct mdsfu_register *));
+void divsim __P((int, int, struct mdsfu_register *));
+void divsir __P((int, int, struct mdsfu_register *));
+
+void divu __P((int, int, int, struct mdsfu_register *));
+void divufr __P((unsigned int, unsigned int, struct mdsfu_register *));
+void divuir __P((unsigned int, unsigned int, struct mdsfu_register *));
+
+void mpyaccs __P((int, int, struct mdsfu_register *));
+void mpyaccu __P((unsigned int, unsigned int, struct mdsfu_register *));
+void mpys __P((int, int, struct mdsfu_register *));
+void mpyscv __P((int, int, struct mdsfu_register *));
+void mpyu __P((unsigned int, unsigned int, struct mdsfu_register *));
+void mpyucv __P((unsigned int, unsigned int, struct mdsfu_register *));
+
+int impys __P((int *, int *, struct mdsfu_register *));
+int impyu __P((int *, int *, struct mdsfu_register *));

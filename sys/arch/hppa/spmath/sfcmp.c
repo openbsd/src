@@ -1,3 +1,5 @@
+/*	$OpenBSD: sfcmp.c,v 1.3 1998/07/02 19:05:53 mickey Exp $	*/
+
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -43,6 +45,7 @@
 /*
  * sgl_cmp: compare two values
  */
+int
 sgl_fcmp(leftptr, rightptr, cond, status)
     sgl_floating_point *leftptr, *rightptr;
     unsigned int cond; /* The predicate to be tested */

@@ -1,0 +1,37 @@
+#	$OpenBSD: files.spmath,v 1.1 1998/07/02 19:05:26 mickey Exp $
+
+file	arch/hppa/spmath/dfadd.c	fpemul
+file	arch/hppa/spmath/dfcmp.c	fpemul
+file	arch/hppa/spmath/dfdiv.c	fpemul
+file	arch/hppa/spmath/dfmpy.c	fpemul
+file	arch/hppa/spmath/dfrem.c	fpemul
+file	arch/hppa/spmath/dfsqrt.c	fpemul
+file	arch/hppa/spmath/dfsub.c	fpemul
+file	arch/hppa/spmath/divsfm.c	fpemul
+file	arch/hppa/spmath/divsfr.c	fpemul
+file	arch/hppa/spmath/divsim.c	fpemul
+file	arch/hppa/spmath/divsir.c	fpemul
+file	arch/hppa/spmath/divufr.c	fpemul
+file	arch/hppa/spmath/divuir.c	fpemul
+file	arch/hppa/spmath/mpyaccs.c	fpemul
+file	arch/hppa/spmath/mpyaccu.c	fpemul
+file	arch/hppa/spmath/mpys.c		fpemul
+file	arch/hppa/spmath/mpyscv.c	fpemul
+file	arch/hppa/spmath/mpyu.c		fpemul
+file	arch/hppa/spmath/mpyucv.c	fpemul
+file	arch/hppa/spmath/setovfl.c	fpemul
+file	arch/hppa/spmath/sfadd.c	fpemul
+file	arch/hppa/spmath/sfcmp.c	fpemul
+file	arch/hppa/spmath/sfdiv.c	fpemul
+file	arch/hppa/spmath/sfmpy.c	fpemul
+file	arch/hppa/spmath/sfrem.c	fpemul
+file	arch/hppa/spmath/sfsqrt.c	fpemul
+file	arch/hppa/spmath/sfsub.c	fpemul
+file	arch/hppa/spmath/fcnvff.c	fpemul
+file	arch/hppa/spmath/fcnvfx.c	fpemul
+file	arch/hppa/spmath/fcnvfxt.c	fpemul
+file	arch/hppa/spmath/fcnvxf.c	fpemul
+file	arch/hppa/spmath/frnd.c		fpemul
+file	arch/hppa/spmath/divu.S		fpemul
+file	arch/hppa/spmath/impys.S	fpemul
+file	arch/hppa/spmath/impyu.S	fpemul

@@ -1,3 +1,5 @@
+/*	$OpenBSD: fcnvxf.c,v 1.3 1998/07/02 19:05:25 mickey Exp $	*/
+
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -45,12 +47,13 @@
 /*
  *  Convert single fixed-point to single floating-point format
  */
-
+int
 sgl_to_sgl_fcnvxf(srcptr,nullptr,dstptr,status)
 
 int *srcptr;
 sgl_floating_point *dstptr;
-unsigned int *nullptr, *status;
+void *nullptr;
+unsigned int *status;
 {
 	register int src, dst_exponent;
 	register unsigned int result = 0;
@@ -115,12 +118,13 @@ unsigned int *nullptr, *status;
 /*
  *  Single Fixed-point to Double Floating-point 
  */
-
+int
 sgl_to_dbl_fcnvxf(srcptr,nullptr,dstptr,status)
 
 int *srcptr;
 dbl_floating_point *dstptr;
-unsigned int *nullptr, *status;
+void *nullptr;
+unsigned int *status;
 {
 	register int src, dst_exponent;
 	register unsigned int resultp1 = 0, resultp2 = 0;
@@ -155,8 +159,8 @@ unsigned int *nullptr, *status;
 	/*  left justify source, with msb at bit position 1  */
 	if (dst_exponent >= 0) src <<= dst_exponent;
 	else src = 1 << 30;
-	Dbl_set_mantissap1(resultp1, src >> DBL_EXP_LENGTH - 1);
-	Dbl_set_mantissap2(resultp2, src << (33-DBL_EXP_LENGTH));
+	Dbl_set_mantissap1(resultp1, (src >> (DBL_EXP_LENGTH - 1)));
+	Dbl_set_mantissap2(resultp2, (src << (33-DBL_EXP_LENGTH)));
 	Dbl_set_exponent(resultp1, (30+DBL_BIAS) - dst_exponent);
 	Dbl_copytoptr(resultp1,resultp2,dstptr);
 	return(NOEXCEPTION);
@@ -165,12 +169,13 @@ unsigned int *nullptr, *status;
 /*
  *  Double Fixed-point to Single Floating-point 
  */
-
+int
 dbl_to_sgl_fcnvxf(srcptr,nullptr,dstptr,status)
 
 dbl_integer *srcptr;
 sgl_floating_point *dstptr;
-unsigned int *nullptr, *status;
+void *nullptr;
+unsigned int *status;
 {
 	int dst_exponent, srcp1;
 	unsigned int result = 0, srcp2;
@@ -239,7 +244,7 @@ unsigned int *nullptr, *status;
 		 */
 		else srcp1 >>= -(dst_exponent);
 	}
-	Sgl_set_mantissa(result, srcp1 >> SGL_EXP_LENGTH - 1);
+	Sgl_set_mantissa(result, (srcp1 >> (SGL_EXP_LENGTH - 1)));
 	Sgl_set_exponent(result, (62+SGL_BIAS) - dst_exponent);
 
 	/* check for inexact */
@@ -269,12 +274,13 @@ unsigned int *nullptr, *status;
 /*
  *  Double Fixed-point to Double Floating-point 
  */
-
+int
 dbl_to_dbl_fcnvxf(srcptr,nullptr,dstptr,status)
 
 dbl_integer *srcptr;
 dbl_floating_point *dstptr;
-unsigned int *nullptr, *status;
+void *nullptr;
+unsigned int *status;
 {
 	register int srcp1, dst_exponent;
 	register unsigned int srcp2, resultp1 = 0, resultp2 = 0;

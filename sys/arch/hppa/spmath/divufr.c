@@ -1,3 +1,5 @@
+/*	$OpenBSD: divufr.c,v 1.3 1998/07/02 19:05:16 mickey Exp $	*/
+
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -40,7 +42,8 @@
 
 #include "../spmath/md.h"
 
-VOID divufr(opnd1,opnd2,result)
+void
+divufr(opnd1,opnd2,result)
 
 unsigned int opnd1, opnd2;
 struct mdsfu_register *result;

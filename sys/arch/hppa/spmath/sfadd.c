@@ -1,3 +1,5 @@
+/*	$OpenBSD: sfadd.c,v 1.3 1998/07/02 19:05:51 mickey Exp $	*/
+
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -43,6 +45,7 @@
 /*
  * Single_add: add two single precision values.
  */
+int
 sgl_fadd(leftptr, rightptr, dstptr, status)
     sgl_floating_point *leftptr, *rightptr, *dstptr;
     unsigned int *status;
@@ -491,10 +494,11 @@ sgl_fadd(leftptr, rightptr, dstptr, status)
 	    {
 	    Sgl_setwrapped_exponent(result,result_exponent,ovfl);
 	    *dstptr = result;
-	    if (inexact)
+	    if (inexact) {
 		if (Is_inexacttrap_enabled())
 		    return(OVERFLOWEXCEPTION | INEXACTEXCEPTION);
 		else Set_inexactflag();
+	    }
 	    return(OVERFLOWEXCEPTION);
 	    }
         else
@@ -506,8 +510,9 @@ sgl_fadd(leftptr, rightptr, dstptr, status)
 	}
     else Sgl_set_exponent(result,result_exponent);
     *dstptr = result;
-    if(inexact) 
+    if(inexact) {
 	if(Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
 	else Set_inexactflag();
+    }
     return(NOEXCEPTION);
     }

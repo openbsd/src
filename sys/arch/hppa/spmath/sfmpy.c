@@ -1,3 +1,5 @@
+/*	$OpenBSD: sfmpy.c,v 1.3 1998/07/02 19:05:58 mickey Exp $	*/
+
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -43,7 +45,7 @@
 /*
  *  Single Precision Floating-point Multiply
  */
-
+int
 sgl_fmpy(srcptr1,srcptr2,dstptr,status)
 
 sgl_floating_point *srcptr1, *srcptr2, *dstptr;
@@ -273,10 +275,11 @@ unsigned int *status;
                          */
 			Sgl_setwrapped_exponent(result,dest_exponent,ovfl);
 			*dstptr = result;
-			if (inexact) 
+			if (inexact) {
 			    if (Is_inexacttrap_enabled())
 				return(OVERFLOWEXCEPTION | INEXACTEXCEPTION);
 			    else Set_inexactflag();
+			}
 			return(OVERFLOWEXCEPTION);
                 }
 		inexact = TRUE;
@@ -295,10 +298,11 @@ unsigned int *status;
                          */
 			Sgl_setwrapped_exponent(result,dest_exponent,unfl);
 			*dstptr = result;
-			if (inexact) 
+			if (inexact) {
 			    if (Is_inexacttrap_enabled())
 				return(UNDERFLOWEXCEPTION | INEXACTEXCEPTION);
 			    else Set_inexactflag();
+			}
 			return(UNDERFLOWEXCEPTION);
                 }
 

@@ -1,3 +1,5 @@
+/*	$OpenBSD: frnd.c,v 1.3 1998/07/02 19:05:29 mickey Exp $	*/
+
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -48,10 +50,12 @@
  */
 
 /*ARGSUSED*/
+int
 sgl_frnd(srcptr,nullptr,dstptr,status)
 
 sgl_floating_point *srcptr, *dstptr;
-unsigned int *nullptr, *status;
+void *nullptr;
+unsigned int *status;
 {
 	register unsigned int src, result;
 	register int src_exponent;
@@ -139,9 +143,10 @@ unsigned int *nullptr, *status;
 		}
 	}
 	*dstptr = result;
-	if (inexact) 
+	if (inexact) {
 		if (Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
 		else Set_inexactflag();
+	}
 	return(NOEXCEPTION);
 } 
 
@@ -150,10 +155,12 @@ unsigned int *nullptr, *status;
  */
 
 /*ARGSUSED*/
+int
 dbl_frnd(srcptr,nullptr,dstptr,status)
 
 dbl_floating_point *srcptr, *dstptr;
-unsigned int *nullptr, *status;
+void *nullptr;
+unsigned int *status;
 {
 	register unsigned int srcp1, srcp2, resultp1, resultp2;
 	register int src_exponent;
@@ -244,17 +251,20 @@ unsigned int *nullptr, *status;
 		}
 	}
 	Dbl_copytoptr(resultp1,resultp2,dstptr);
-	if (inexact)
+	if (inexact) {
 		if (Is_inexacttrap_enabled()) return(INEXACTEXCEPTION);
 		else Set_inexactflag();
+	}
 	return(NOEXCEPTION);
 }
 
 /*ARGSUSED*/
+int
 quad_frnd(srcptr,nullptr,dstptr,status)
 
 quad_floating_point *srcptr, *dstptr;
-unsigned int *nullptr, *status;
+void *nullptr;
+unsigned int *status;
 {
 	return(UNIMPLEMENTEDEXCEPTION);
 }

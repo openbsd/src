@@ -1,3 +1,5 @@
+/*	$OpenBSD: dfmpy.c,v 1.3 1998/07/02 19:05:01 mickey Exp $	*/
+
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -44,6 +46,7 @@
  *  Double Precision Floating-point Multiply
  */
 
+int
 dbl_fmpy(srcptr1,srcptr2,dstptr,status)
 
 dbl_floating_point *srcptr1, *srcptr2, *dstptr;
@@ -287,10 +290,12 @@ unsigned int *status;
                          */
 			Dbl_setwrapped_exponent(resultp1,dest_exponent,ovfl);
 			Dbl_copytoptr(resultp1,resultp2,dstptr);
-			if (inexact) 
+			if (inexact) {
 			    if (Is_inexacttrap_enabled())
 				return (OVERFLOWEXCEPTION | INEXACTEXCEPTION);
-			    else Set_inexactflag();
+			    else
+				Set_inexactflag();
+			}
 			return (OVERFLOWEXCEPTION);
                 }
 		inexact = TRUE;
@@ -309,10 +314,12 @@ unsigned int *status;
                          */
 			Dbl_setwrapped_exponent(resultp1,dest_exponent,unfl);
 			Dbl_copytoptr(resultp1,resultp2,dstptr);
-			if (inexact) 
+			if (inexact) {
 			    if (Is_inexacttrap_enabled())
 				return (UNDERFLOWEXCEPTION | INEXACTEXCEPTION);
-			    else Set_inexactflag();
+			    else
+				Set_inexactflag();
+			}
 			return (UNDERFLOWEXCEPTION);
                 }
 

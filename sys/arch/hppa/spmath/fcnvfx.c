@@ -1,3 +1,5 @@
+/*	$OpenBSD: fcnvfx.c,v 1.3 1998/07/02 19:05:19 mickey Exp $	*/
+
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -46,6 +48,7 @@
  *  Single Floating-point to Single Fixed-point 
  */
 /*ARGSUSED*/
+int
 sgl_to_sgl_fcnvfx(srcptr,nullptr,dstptr,status)
 
 sgl_floating_point *srcptr, *nullptr, *status;
@@ -97,9 +100,10 @@ int *dstptr;
 			case ROUNDNEAREST:
 			     if (Sgl_isone_roundbit(src,src_exponent)) {
 			        if (Sgl_isone_stickybit(src,src_exponent) 
-				|| (Sgl_isone_lowmantissa(temp)))
+				|| (Sgl_isone_lowmantissa(temp))) {
 			           if (Sgl_iszero_sign(src)) result++;
 			           else result--;
+				}
 			     }
 			} 
 		}
@@ -120,9 +124,10 @@ int *dstptr;
 			     break;
 			case ROUNDNEAREST:
 			     if (src_exponent == -1)
-			        if (Sgl_isnotzero_mantissa(src))
+			        if (Sgl_isnotzero_mantissa(src)) {
 			           if (Sgl_iszero_sign(src)) result++;
 			           else result--;
+				}
 			} 
 		}
 	}
@@ -138,11 +143,13 @@ int *dstptr;
  *  Single Floating-point to Double Fixed-point 
  */
 /*ARGSUSED*/
+int
 sgl_to_dbl_fcnvfx(srcptr,nullptr,dstptr,status)
 
 sgl_floating_point *srcptr;
 dbl_integer *dstptr;
-unsigned int *nullptr, *status;
+void *nullptr;
+unsigned int *status;
 {
 	register int src_exponent, resultp1;
 	register unsigned int src, temp, resultp2;
@@ -198,13 +205,14 @@ unsigned int *nullptr, *status;
                         case ROUNDNEAREST:
                              if (Sgl_isone_roundbit(src,src_exponent))
                                 if (Sgl_isone_stickybit(src,src_exponent) || 
-				(Dint_isone_lowp2(resultp2)))
+				(Dint_isone_lowp2(resultp2))) {
 				   if (Sgl_iszero_sign(src)) {
 				      Dint_increment(resultp1,resultp2);
 				   }
                                    else {
 				      Dint_decrement(resultp1,resultp2);
 				   }
+				}
                         }
                 }
         }
@@ -228,13 +236,14 @@ unsigned int *nullptr, *status;
                              break;
                         case ROUNDNEAREST:
                              if (src_exponent == -1)
-                                if (Sgl_isnotzero_mantissa(src))
+                                if (Sgl_isnotzero_mantissa(src)) {
                                    if (Sgl_iszero_sign(src)) {
 				      Dint_increment(resultp1,resultp2);
 				   }
                                    else {
 				      Dint_decrement(resultp1,resultp2);
 				   }
+				}
 			}
 		}
 	}
@@ -250,11 +259,13 @@ unsigned int *nullptr, *status;
  *  Double Floating-point to Single Fixed-point 
  */
 /*ARGSUSED*/
+int
 dbl_to_sgl_fcnvfx(srcptr,nullptr,dstptr,status)
 
 dbl_floating_point *srcptr;
 int *dstptr;
-unsigned int *nullptr, *status;
+void *nullptr;
+unsigned int *status;
 {
 	register unsigned int srcp1,srcp2, tempp1,tempp2;
 	register int src_exponent, result;
@@ -303,9 +314,10 @@ unsigned int *nullptr, *status;
                         case ROUNDNEAREST:
                              if (Dbl_isone_roundbit(srcp1,srcp2,src_exponent))
                                 if (Dbl_isone_stickybit(srcp1,srcp2,src_exponent) || 
-				(Dbl_isone_lowmantissap1(tempp1)))
+				(Dbl_isone_lowmantissap1(tempp1))) {
                                    if (Dbl_iszero_sign(srcp1)) result++;
                                    else result--;
+				}
                         } 
 			/* check for overflow */
 			if ((Dbl_iszero_sign(srcp1) && result < 0) ||
@@ -330,9 +342,10 @@ unsigned int *nullptr, *status;
                              break;
                         case ROUNDNEAREST:
                              if (src_exponent == -1)
-                                if (Dbl_isnotzero_mantissa(srcp1,srcp2))
+                                if (Dbl_isnotzero_mantissa(srcp1,srcp2)) {
                                    if (Dbl_iszero_sign(srcp1)) result++;
                                    else result--;
+				}
 			}
                 }
 	}
@@ -348,11 +361,13 @@ unsigned int *nullptr, *status;
  *  Double Floating-point to Double Fixed-point 
  */
 /*ARGSUSED*/
+int
 dbl_to_dbl_fcnvfx(srcptr,nullptr,dstptr,status)
 
 dbl_floating_point *srcptr;
 dbl_integer *dstptr;
-unsigned int *nullptr, *status;
+void *nullptr;
+unsigned int *status;
 {
 	register int src_exponent, resultp1;
 	register unsigned int srcp1, srcp2, tempp1, tempp2, resultp2;
@@ -384,8 +399,8 @@ unsigned int *nullptr, *status;
 		tempp1 = srcp1;
 		tempp2 = srcp2;
 		Dbl_clear_signexponent_set_hidden(tempp1);
-		Dint_from_dbl_mantissa(tempp1,tempp2,src_exponent,resultp1,
-		resultp2);
+		Dint_from_dbl_mantissa(tempp1,tempp2,src_exponent,
+				       resultp1, resultp2);
 		if (Dbl_isone_sign(srcp1)) {
 			Dint_setone_sign(resultp1,resultp2);
 		}
@@ -408,13 +423,14 @@ unsigned int *nullptr, *status;
                         case ROUNDNEAREST:
                              if (Dbl_isone_roundbit(srcp1,srcp2,src_exponent))
                                 if (Dbl_isone_stickybit(srcp1,srcp2,src_exponent) || 
-				(Dint_isone_lowp2(resultp2)))
+				(Dint_isone_lowp2(resultp2))) {
                                    if (Dbl_iszero_sign(srcp1)) {
 				      Dint_increment(resultp1,resultp2);
 				   }
                                    else {
 				      Dint_decrement(resultp1,resultp2);
 				   }
+				}
                         } 
                 }
 	}
@@ -438,13 +454,14 @@ unsigned int *nullptr, *status;
                              break;
                         case ROUNDNEAREST:
                              if (src_exponent == -1)
-                                if (Dbl_isnotzero_mantissa(srcp1,srcp2))
+                                if (Dbl_isnotzero_mantissa(srcp1,srcp2)) {
                                    if (Dbl_iszero_sign(srcp1)) {
 				      Dint_increment(resultp1,resultp2);
 				   }
                                    else {
 				      Dint_decrement(resultp1,resultp2);
-				   }
+				   } 
+				}
 			}
                 }
 	}

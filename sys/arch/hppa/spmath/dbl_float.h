@@ -1,3 +1,5 @@
+/*	$OpenBSD: dbl_float.h,v 1.3 1998/07/02 19:04:56 mickey Exp $	*/
+
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -35,6 +37,9 @@
  * Hewlett-Packard Company makes no representations about the 
  * suitability of this software for any purpose.
  */
+
+#include <sys/cdefs.h>
+
 /**************************************
  * Declare double precision functions *
  **************************************/
@@ -91,14 +96,14 @@
 /* varamount must be less than 64 */
 #define Dbl_rightshift_exponentmantissa(srcdstA, srcdstB, varamount)	\
     {if((varamount) >= 32) {						\
-        Dallp2(srcdstB) = Dexponentmantissap1(srcdstA) >> (varamount-32); \
+        Dallp2(srcdstB) = Dexponentmantissap1(srcdstA) >> ((varamount)-32); \
 	Dallp1(srcdstA) &= (1<<31);  /* clear exponentmantissa field */ \
     }									\
     else if(varamount > 0) {						\
 	Variable_shift_double(Dexponentmantissap1(srcdstA), Dallp2(srcdstB), \
 	(varamount), Dallp2(srcdstB));					\
 	Deposit_dexponentmantissap1(srcdstA,				\
-	    (Dexponentmantissap1(srcdstA)>>varamount));			\
+	    (Dexponentmantissap1(srcdstA)>>(varamount)));			\
     } }
 /* varamount must be less than 64 */
 #define Dbl_leftshift(srcdstA, srcdstB, varamount)			\
@@ -372,7 +377,7 @@
 		{							\
 	        Variable_shift_double(Dallp1(srcdstA),Dallp2(srcdstB),	\
 		 shift-32, Extall(extent));				\
-	        if(Dallp2(srcdstB) << 64 - (shift)) Ext_setone_low(extent); \
+	        if(Dallp2(srcdstB) << (64 - (shift))) Ext_setone_low(extent); \
 	        }							\
 	    else Extall(extent) = Dallp2(srcdstB);			\
 	    Dallp2(srcdstB) = Dallp1(srcdstA) >> (shift - 32);		\
@@ -390,7 +395,7 @@
 	/* Small alignment is simpler.  Extension is easily set. */	\
 	if (shift > 0)							\
 	    {								\
-	    Extall(extent) = Dallp2(srcdstB) << 32 - (shift);		\
+	    Extall(extent) = Dallp2(srcdstB) << (32 - (shift));		\
 	    Variable_shift_double(Dallp1(srcdstA),Dallp2(srcdstB),shift, \
 	     Dallp2(srcdstB));						\
 	    Dallp1(srcdstA) >>= shift;					\
@@ -403,8 +408,8 @@
  * (due to the exponent becoming negative) during normalization.
  */
 #define Dbl_fix_overshift(srcdstA,srcdstB,shift,extent)			\
-	    Extall(extent) = Dallp2(srcdstB) << 32 - (shift);		\
-	    Dallp2(srcdstB) = (Dallp1(srcdstA) << 32 - (shift)) |	\
+	    Extall(extent) = Dallp2(srcdstB) << (32 - (shift));		\
+	    Dallp2(srcdstB) = (Dallp1(srcdstA) << (32 - (shift))) |	\
 		(Dallp2(srcdstB) >> (shift));				\
 	    Dallp1(srcdstA) = Dallp1(srcdstA) >> shift
 
@@ -519,7 +524,7 @@
     Dbl_clear_signexponent_set_hidden(opndp1);				\
     if (exponent >= (1-DBL_P)) {					\
 	if (exponent >= -31) {						\
-	    guard = (Dallp2(opndp2) >> -exponent) & 1;			\
+	    guard = (Dallp2(opndp2) >> (-(exponent))) & 1;		\
 	    if (exponent < 0) sticky |= Dallp2(opndp2) << (32+exponent); \
 	    if (exponent > -31) {					\
 		Variable_shift_double(opndp1,opndp2,1-exponent,opndp2);	\
@@ -531,10 +536,10 @@
 	    }								\
 	}								\
 	else {								\
-	    guard = (Dallp1(opndp1) >> -32-exponent) & 1;		\
+	    guard = (Dallp1(opndp1) >> (-32-(exponent))) & 1;		\
 	    if (exponent == -32) sticky |= Dallp2(opndp2);		\
-	    else sticky |= (Dallp2(opndp2) | Dallp1(opndp1) << 64+exponent); \
-	    Dallp2(opndp2) = Dallp1(opndp1) >> -31-exponent;		\
+	    else sticky |= (Dallp2(opndp2) | Dallp1(opndp1) << (64+(exponent))); \
+	    Dallp2(opndp2) = Dallp1(opndp1) >> (-31-(exponent));	\
 	    Dbl_setzerop1(opndp1);					\
 	}								\
 	inexact = guard | sticky;					\
@@ -545,3 +550,19 @@
 	Dbl_setzero(opndp1,opndp2);					\
 	inexact = sticky;						\
     }
+
+
+int dbl_fadd __P((dbl_floating_point *, dbl_floating_point*, dbl_floating_point*, unsigned int *));
+int dbl_fcmp __P((dbl_floating_point *, dbl_floating_point*, unsigned int, unsigned int *));
+int dbl_fdiv __P((dbl_floating_point *, dbl_floating_point *, dbl_floating_point *, unsigned int *));
+int dbl_fmpy __P((dbl_floating_point *, dbl_floating_point *, dbl_floating_point*, unsigned int *));
+int dbl_frem __P((dbl_floating_point *, dbl_floating_point *, dbl_floating_point*, unsigned int *));
+int dbl_fsqrt __P((dbl_floating_point *, void *, dbl_floating_point *, unsigned int *));
+int dbl_fsub __P((dbl_floating_point *, dbl_floating_point *, dbl_floating_point*, unsigned int *));
+
+dbl_floating_point dbl_setoverflow __P((unsigned int));
+
+int sgl_to_dbl_fcnvff __P((sgl_floating_point *, void *, dbl_floating_point *, unsigned int *));
+int dbl_to_sgl_fcnvff __P((dbl_floating_point *, void *, sgl_floating_point *, unsigned int *));
+
+int dbl_frnd __P((dbl_floating_point *, void *, dbl_floating_point *, unsigned int *));

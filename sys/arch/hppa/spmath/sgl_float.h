@@ -1,3 +1,5 @@
+/*	$OpenBSD: sgl_float.h,v 1.3 1998/07/02 19:06:03 mickey Exp $	*/
+
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -35,6 +37,9 @@
  * Hewlett-Packard Company makes no representations about the 
  * suitability of this software for any purpose.
  */
+
+#include <sys/cdefs.h>
+
 /******************************
  * Single precision functions *
  ******************************/
@@ -73,7 +78,7 @@
     Sall(srcdst) <<= varamount
 #define Sgl_rightshift_exponentmantissa(srcdst, varamount) \
     Sall(srcdst) = \
-	(Sexponentmantissa(srcdst) >> varamount) | (Sall(srcdst) & (1<<31))
+	(Sexponentmantissa(srcdst) >> (varamount)) | (Sall(srcdst) & (1<<31))
 
 #define Sgl_leftshiftby1_withextent(left,right,result) \
     Shiftdouble(Sall(left),Extall(right),31,Sall(result))
@@ -212,7 +217,7 @@
 
 #define Sgl_setlargestpositive(sgl_value) 				\
     Sall(sgl_value) = ((SGL_EMAX+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))	\
-                      | ((1<<(32-(1+SGL_EXP_LENGTH))) - 1 )
+                      | ((1<<(32-(1+SGL_EXP_LENGTH))) - 1)
 #define Sgl_setlargestnegative(sgl_value)				\
     Sall(sgl_value) = ((SGL_EMAX+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))	\
                       | ((1<<(32-(1+SGL_EXP_LENGTH))) - 1 ) | (1<<31)
@@ -221,11 +226,11 @@
     Sall(sgl_value) = 				\
     ((1<<SGL_EXP_LENGTH) | SGL_INFINITY_EXPONENT) << (32-(1+SGL_EXP_LENGTH))
 #define Sgl_setlargest(sgl_value,sign) 					\
-    Sall(sgl_value) = sign << 31 |					\
+    Sall(sgl_value) = ((sign) << 31) |					\
         (((SGL_EMAX+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))		\
 	  | ((1 << (32-(1+SGL_EXP_LENGTH))) - 1 ))
 #define Sgl_setlargest_exponentmantissa(sgl_value)			\
-    Sall(sgl_value) = Sall(sgl_value) & (1<<31) |			\
+    Sall(sgl_value) = (Sall(sgl_value) & (1<<31)) |			\
         (((SGL_EMAX+SGL_BIAS) << (32-(1+SGL_EXP_LENGTH)))		\
 	  | ((1 << (32-(1+SGL_EXP_LENGTH))) - 1 ))
 
@@ -316,9 +321,9 @@
 #define Sgl_denormalize(opnd,exponent,guard,sticky,inexact)		\
 	Sgl_clear_signexponent_set_hidden(opnd);			\
 	if (exponent >= (1 - SGL_P)) {					\
-		guard = (Sall(opnd) >> -exponent) & 1;			\
+		guard = (Sall(opnd) >> (-(exponent))) & 1;		\
 		if (exponent < 0) sticky |= Sall(opnd) << (32+exponent); \
-		inexact = guard | sticky;				\
+		inexact = (guard) | (sticky);				\
 		Sall(opnd) >>= (1-exponent);				\
 	}								\
 	else {								\
@@ -327,3 +332,14 @@
 		inexact = sticky;					\
 		Sgl_setzero(opnd);					\
 	}
+
+sgl_floating_point sgl_setoverflow __P((unsigned int));
+int sgl_fadd __P((sgl_floating_point *, sgl_floating_point *, sgl_floating_point *, unsigned int *));
+int sgl_fcmp __P((sgl_floating_point *, sgl_floating_point *, unsigned int, unsigned int *));
+int sgl_fdiv __P((sgl_floating_point *, sgl_floating_point *, sgl_floating_point *, unsigned int *));
+int sgl_fmpy __P((sgl_floating_point *, sgl_floating_point *, sgl_floating_point *, unsigned int *));
+int sgl_frem __P((sgl_floating_point *, sgl_floating_point *, sgl_floating_point *, unsigned int *));
+int sgl_fsqrt __P((sgl_floating_point *, void *, sgl_floating_point *, unsigned int *));
+int sgl_fsub __P((sgl_floating_point *, sgl_floating_point *, sgl_floating_point *, unsigned int *));
+int sgl_frnd __P((sgl_floating_point *, void *, sgl_floating_point *, unsigned int *));
+

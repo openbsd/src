@@ -1,3 +1,5 @@
+/*	$OpenBSD: dfrem.c,v 1.3 1998/07/02 19:05:03 mickey Exp $	*/
+
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -44,7 +46,7 @@
 /*
  *  Double Precision Floating-point Remainder
  */
-
+int
 dbl_frem(srcptr1,srcptr2,dstptr,status)
 
 dbl_floating_point *srcptr1, *srcptr2, *dstptr;

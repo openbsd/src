@@ -1,3 +1,5 @@
+/*	$OpenBSD: fcnvfxt.c,v 1.3 1998/07/02 19:05:21 mickey Exp $	*/
+
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
  *              All Rights Reserved 
@@ -47,11 +49,13 @@
  *  with truncated result
  */
 /*ARGSUSED*/
+int
 sgl_to_sgl_fcnvfxt(srcptr,nullptr,dstptr,status)
 
 sgl_floating_point *srcptr;
 int *dstptr;
-unsigned int *nullptr, *status;
+void *nullptr;
+unsigned int *status;
 {
 	register unsigned int src, temp;
 	register int src_exponent, result;
@@ -107,11 +111,13 @@ unsigned int *nullptr, *status;
  *  Single Floating-point to Double Fixed-point 
  */
 /*ARGSUSED*/
+int
 sgl_to_dbl_fcnvfxt(srcptr,nullptr,dstptr,status)
 
 sgl_floating_point *srcptr;
 dbl_integer *dstptr;
-unsigned int *nullptr, *status;
+void *nullptr;
+unsigned int *status;
 {
 	register int src_exponent, resultp1;
 	register unsigned int src, temp, resultp2;
@@ -172,11 +178,13 @@ unsigned int *nullptr, *status;
  *  Double Floating-point to Single Fixed-point 
  */
 /*ARGSUSED*/
+int
 dbl_to_sgl_fcnvfxt(srcptr,nullptr,dstptr,status)
 
 dbl_floating_point *srcptr;
 int *dstptr;
-unsigned int *nullptr, *status;
+void  *nullptr;
+unsigned int *status;
 {
 	register unsigned int srcp1, srcp2, tempp1, tempp2;
 	register int src_exponent, result;
@@ -228,11 +236,13 @@ unsigned int *nullptr, *status;
  *  Double Floating-point to Double Fixed-point 
  */
 /*ARGSUSED*/
+int
 dbl_to_dbl_fcnvfxt(srcptr,nullptr,dstptr,status)
 
 dbl_floating_point *srcptr;
 dbl_integer *dstptr;
-unsigned int *nullptr, *status;
+void *nullptr;
+unsigned int *status;
 {
 	register int src_exponent, resultp1;
 	register unsigned int srcp1, srcp2, tempp1, tempp2, resultp2;
