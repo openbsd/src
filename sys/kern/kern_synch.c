@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.23 2000/03/23 16:54:43 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.24 2000/04/19 09:58:20 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -93,14 +93,6 @@ scheduler_start()
 }
 
 /*
- * We need to keep track on how many times we call roundrobin before we
- * actually attempt a switch (that is when we call mi_switch()).
- * This is done so that some slow kernel subsystems can yield instead of
- * blocking the scheduling.
- */
-int	roundrobin_attempts;
-
-/*
  * Force switch among equal priority processes every 100ms.
  */
 /* ARGSUSED */
@@ -109,9 +101,23 @@ roundrobin(arg)
 	void *arg;
 {
 	struct timeout *to = (struct timeout *)arg;
+	int s;
 
+	if (curproc != NULL) {
+		s = splstatclock();
+		if (curproc->p_schedflags & PSCHED_SEENRR) {
+			/*
+			 * The process has already been through a roundrobin
+			 * without switching and may be hogging the CPU.
+			 * Indicate that the process should yield.
+			 */
+			curproc->p_schedflags |= PSCHED_SHOULDYIELD;
+		} else {
+			curproc->p_schedflags |= PSCHED_SEENRR;
+		}
+		splx(s);
+	}
 	need_resched();
-	roundrobin_attempts++;
 	timeout_add(to, hz / 10);
 }
 
@@ -606,6 +612,52 @@ restart:
 }
 
 /*
+ * General yield call.  Puts the current process back on its run queue and
+ * performs a voluntary context switch.
+ */
+void
+yield()
+{
+	struct proc *p = curproc;
+	int s;
+
+	p->p_priority = p->p_usrpri;
+	s = splstatclock();
+	setrunqueue(p);
+	p->p_stats->p_ru.ru_nvcsw++;
+	mi_switch();
+	splx(s);
+}
+
+/*
+ * General preemption call.  Puts the current process back on its run queue
+ * and performs an involuntary context switch.  If a process is supplied,
+ * we switch to that process.  Otherwise, we use the normal process selection
+ * criteria.
+ */
+void
+preempt(newp)
+	struct proc *newp;
+{
+	struct proc *p = curproc;
+	int s;
+
+	/*
+	 * XXX Switching to a specific process is not supported yet.
+	 */
+	if (newp != NULL)
+		panic("preempt: cpu_preempt not yet implemented");
+
+	p->p_priority = p->p_usrpri;
+	s = splstatclock();
+	setrunqueue(p);
+	p->p_stats->p_ru.ru_nivcsw++;
+	mi_switch();
+	splx(s);
+}
+
+
+/*
  * The machine independent parts of mi_switch().
  * Must be called at splstatclock() or higher.
  */
@@ -654,6 +706,13 @@ mi_switch()
 		resetpriority(p);
 	}
 
+
+	/*
+	 * Process is about to yield the CPU; clear the appropriate
+	 * scheduling flags.
+	 */
+	p->p_schedflags &= ~PSCHED_SWITCHCLEAR;
+
 	/*
 	 * Pick a new current process and record its start time.
 	 */
@@ -664,13 +723,6 @@ mi_switch()
 #endif
 	cpu_switch(p);
 	microtime(&runtime);
-
-	/*
-	 * We reset roundrobin_attempts at exit, because cpu_switch could
-	 * have looped in the idle loop and the attempts would increase
-	 * leading to unjust punishment of an innocent process.
-	 */
-	roundrobin_attempts = 0;
 }
 
 /*

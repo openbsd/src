@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.29 2000/03/23 14:43:47 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.30 2000/04/19 09:58:19 art Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -154,6 +154,7 @@ struct	proc {
 	char	*p_wmesg;	 /* Reason for sleep. */
 	u_int	p_swtime;	 /* Time swapped in or out. */
 	u_int	p_slptime;	 /* Time since last blocked. */
+	int	p_schedflags;	 /* PSCHED_* flags */
 
 	struct	itimerval p_realtimer;	/* Alarm timer. */
 	struct	timeout p_realit_to;	/* Alarm timeout. */
@@ -241,6 +242,15 @@ struct	proc {
 
 #define	P_NOCLDWAIT	0x080000	/* Let pid 1 wait for my children */
 #define	P_NOZOMBIE	0x100000	/* Pid 1 waits for me instead of dad */
+
+/*
+ * These flags are kept in p_schedflags.  p_schedflags may be modified
+ * only at splstatclock().
+ */
+#define PSCHED_SEENRR		0x0001	/* process has been in roundrobin() */
+#define PSCHED_SHOULDYIELD	0x0002	/* process should yield */
+
+#define PSCHED_SWITCHCLEAR	(PSCHED_SEENRR|PSCHED_SHOULDYIELD)
 
 /*
  * MOVE TO ucred.h?
@@ -332,6 +342,8 @@ int	enterpgrp __P((struct proc *p, pid_t pgid, int mksess));
 void	fixjobc __P((struct proc *p, struct pgrp *pgrp, int entering));
 int	inferior __P((struct proc *p));
 int	leavepgrp __P((struct proc *p));
+void	yield __P((void));
+void	preempt __P((struct proc *));
 void	mi_switch __P((void));
 void	pgdelete __P((struct pgrp *pgrp));
 void	procinit __P((void));

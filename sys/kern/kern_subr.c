@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.11 2000/03/03 16:58:49 art Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.12 2000/04/19 09:58:20 art Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -49,10 +49,6 @@
 #include <sys/kernel.h>
 #include <sys/resourcevar.h>
 
-void uio_yield __P((struct proc *));
-
-#define UIO_NEED_YIELD (roundrobin_attempts >= 2)
-
 int
 uiomove(cp, n, uio)
 	register caddr_t cp;
@@ -85,8 +81,8 @@ uiomove(cp, n, uio)
 		switch (uio->uio_segflg) {
 
 		case UIO_USERSPACE:
-			if (UIO_NEED_YIELD)
-				uio_yield(p);
+			if (p->p_schedflags & PSCHED_SHOULDYIELD)
+				preempt(NULL);
 			if (uio->uio_rw == UIO_READ)
 				error = copyout(cp, iov->iov_base, cnt);
 			else
@@ -166,20 +162,6 @@ again:
 	uio->uio_resid--;
 	uio->uio_offset++;
 	return (0);
-}
-
-void
-uio_yield(p)
-	struct proc *p;
-{
-	int s;
-
-	p->p_priority = p->p_usrpri;
-	s = splstatclock();
-	setrunqueue(p);
-	p->p_stats->p_ru.ru_nivcsw++;
-	mi_switch();
-	splx(s);
 }
 
 /*
