@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.130 2004/02/02 19:56:23 cedric Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.131 2004/02/10 20:20:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2577,8 +2577,10 @@ bridge_fragment(struct bridge_softc *sc, struct ifnet *ifp,
 	}
 
 	error = ip_fragment(m, ifp, ifp->if_mtu);
-	if (error)
+	if (error) {
+		m = NULL;
 		goto dropit;
+	}
 
 	for (; m; m = m0) {
 		m0 = m->m_nextpkt;
