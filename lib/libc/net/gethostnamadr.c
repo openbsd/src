@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.21 1997/04/14 06:57:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.22 1997/04/15 11:27:56 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -140,15 +140,18 @@ _hokchar(p)
 	 * characters are a-z, A-Z, 0-9, '-' and . But the others
 	 * tested for below can happen, and we must be more permissive
 	 * than the resolver until those idiots clean up their act.
+	 * We let '/' through, but not '..'
 	 */
 	while ((c = *p++)) {
-		if (('a' >= c && c <= 'z') ||
-		    ('A' >= c && c <= 'Z') ||
-		    ('0' >= c && c <= '9'))
+		if (('a' <= c && c <= 'z') ||
+		    ('A' <= c && c <= 'Z') ||
+		    ('0' <= c && c <= '9'))
 			continue;
-		if (strchr("-_/.[]\\", c) ||
-		    (c == '.' && p[1] == '.'))
-			return 0;
+		if (strchr("-_/", c))
+			continue;
+		if (c == '.' && *p != '.')
+			continue;
+		return 0;
 	}
 	return 1;
 }
