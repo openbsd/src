@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.278 2000/07/06 21:02:35 fgsch Exp $
+	$OpenBSD: pcidevs,v 1.279 2000/07/07 18:15:27 chris Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1301,6 +1301,7 @@ product PLX	9050		0x9050	I/O
 product PROMISE DC5030		0x5300	DC5030
 product	PROMISE ULTRA33		0x4d33  Ultra33/ATA IDE
 product	PROMISE ULTRA66		0x4d38  Ultra66/ATA IDE
+product	PROMISE	ULTRA100	0x4d30	Ultra100/ATA IDE
 
 /* QLogic products */
 product QLOGIC ISP1020		0x1020	ISP1020
