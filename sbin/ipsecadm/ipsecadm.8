@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.3 1999/02/27 07:29:17 deraadt Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.4 1999/03/02 18:29:34 deraadt Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -51,7 +51,9 @@ provided by IPSec.
 The possible commands are:
 .Bl -tag -width new_esp
 .It new esp
-Setup a Security Parameters Index (SPI) which uses the new esp transforms.
+Setup a Security Association (SA) which uses the new esp transforms.
+A SA consists of the destination address,
+a Security Parameter Index (SPI) and a security protocol.
 Encryption and authentication algorithms can be applied.
 This is the default mode.
 Allowed
@@ -67,7 +69,7 @@ modifiers are:
 and
 .Fl key .
 .It old esp
-Setup a SPI which uses the old esp transforms. Only
+Setup a SA which uses the old esp transforms. Only
 encryption algorithms can be applied. Allowed modifiers are:
 .Fl dst ,
 .Fl src ,
@@ -79,7 +81,7 @@ encryption algorithms can be applied. Allowed modifiers are:
 and
 .Fl key .
 .It new ah
-Setup a SPI which uses the new ah transforms. Authentication
+Setup a SA which uses the new ah transforms. Authentication
 will be done with HMAC using the specified hash algorithm. Allowed modifiers
 are:
 .Fl dst ,
@@ -91,7 +93,7 @@ are:
 and
 .Fl key .
 .It old ah
-Setup a SPI which uses the old ah transforms. Simple keyed
+Setup a SA which uses the old ah transforms. Simple keyed
 hashes will be used for authentication. Allowed modifiers are:
 .Fl dst ,
 .Fl src ,
@@ -102,9 +104,9 @@ hashes will be used for authentication. Allowed modifiers are:
 and
 .Fl key .
 .It ip4
-Setup an SPI which uses the IP-in-IP encapsulation protocol. This mode
+Setup an SA which uses the IP-in-IP encapsulation protocol. This mode
 offers no security services by itself, but can be used to route other
-(experimental or otherwise) protocols over an IP network. The SPI value
+(experimental or otherwise) protocols over an IP network.  The SPI value
 is not used for anything other than referencing the information, and
 does not appear on the wire. Unlike other setups, like new esp, there
 is no necessary setup in the receiving side. Allowed modifiers are:
@@ -113,8 +115,8 @@ is no necessary setup in the receiving side. Allowed modifiers are:
 and
 .Fl spi.
 .It delspi
-The specified Security Association (SA) will be deleted. An SA consists of
-the destination address, SPI and security protocol. Allowed modifiers are:
+The specified SA will be deleted.
+Allowed modifiers are:
 .Fl dst ,
 .Fl spi ,
 .Fl proto .
@@ -153,7 +155,7 @@ defaults to new esp mode.
 The modifiers have the following meanings:
 .Bl -tag -width forcetunnel -offset indent
 .It src
-The source IP address for the SPI. This is necessary for incoming
+The source IP address for the SA. This is necessary for incoming
 SAs to avoid source address spoofing between mutually
 suspicious hosts that have established SAs with us. For outgoing SAs, this
 field is used to slightly speedup packet processing. If this field is
@@ -165,7 +167,7 @@ the
 .Nm forcetunnel
 option has been specified.
 .It dst
-The destination IP address for the SPI.
+The destination IP address for the SA.
 .It proxy
 This IP address, if provided, is checked against the inner IP address when
 doing tunneling to a firewall, to prevent source spoofing attacks. It is
@@ -174,7 +176,7 @@ applicable in a scenario when host A is using IPsec to communicate with
 firewall B, and through that to host C. In that case, the proxy address for
 the incoming SA should be C. This option is not necessary for outgoing SAs.
 .It spi
-The unique Security Parameter Index (SPI).
+The Security Parameter Index (SPI).
 .It tunnel
 This option has been deprecated. The arguments are ignored, and it
 otherwise has the same effect as the
@@ -192,7 +194,7 @@ and
 options. Notice that the IPsec stack will perform IP-inside-IP encapsulation
 when deemed necessary, even if this flag has not been set.
 .It enc
-The encryption algorithm to be used with the SPI. Possible values
+The encryption algorithm to be used with the SA. Possible values
 are:
 .Bl -tag -width skipjack
 .It Nm des
@@ -218,7 +220,7 @@ it is a poor choice.
 .El
 .Pp
 .It auth
-The authentication algorithm to be used with the SPI. Possible values
+The authentication algorithm to be used with the SA. Possible values
 are:
 .Nm md5
 and
@@ -333,17 +335,19 @@ to using a source address of 0.0.0.0 and a source network mask of
 Instead of creating a flow, an existing flow is deleted.
 .El
 .Sh EXAMPLE
-Setup a SPI which uses new esp with 3des encryption and HMAC-SHA1
+Setup a SA which uses new esp with 3des encryption and HMAC-SHA1
 authentication:
 .Bd -literal
-ipsecadm -enc 3des -auth sha1 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3
--key 638063806380638063806380638063806380638063806380 -authkey 1234123412341234
+ipsecadm new esp -enc 3des -auth sha1 -spi 1001 -dst 169.20.12.2 \e\ 
+	-src 169.20.12.3.342 \e\ 
+	-key 638063806380638063806380638063806380638063806380 \e\ 
+	-authkey 1234123412341234123412341234123412341234
 .Ed
 .Pp
-Setup a SPI for authentication with old ah only:
+Setup a SA for authentication with old ah only:
 .Bd -literal
-ipsecadm old ah -auth md5 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3
--key 12341234deadbeef
+ipsecadm old ah -auth md5 -spi 1001 -dst 169.20.12.2 -src 169.20.12.3 \e\ 
+	-key 12341234deadbeef
 .Ed
 .Sh SEE ALSO
 .Xr services 5 ,
