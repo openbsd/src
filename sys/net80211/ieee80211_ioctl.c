@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.2 2004/06/28 02:51:18 millert Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.3 2004/06/28 19:29:40 millert Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -271,10 +271,10 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case WI_RID_DEFLT_CRYPT_KEYS:
 		keys = (struct wi_ltv_keys *)&wreq;
+		memset(keys, 0, sizeof(*keys));
 		/* do not show keys to non-root user */
 		error = suser(curproc, 0);
 		if (error) {
-			memset(keys, 0, sizeof(*keys));
 			error = 0;
 			break;
 		}
@@ -722,9 +722,7 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 		keys = (struct wi_ltv_keys *)&wreq;
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			len = letoh16(keys->wi_keys[i].wi_keylen);
-			if (len != 0 && len < IEEE80211_WEP_KEYLEN)
-				return EINVAL;
-			if (len > sizeof(ic->ic_nw_keys[i].wk_key))
+			if (len < 0 || len > sizeof(ic->ic_nw_keys[i].wk_key))
 				return EINVAL;
 		}
 		memset(ic->ic_nw_keys, 0, sizeof(ic->ic_nw_keys));
@@ -1182,9 +1180,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		memset(keys, 0, sizeof(keys));
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			keys[i].wk_len = nwkey->i_key[i].i_keylen;
-			if ((keys[i].wk_len > 0 &&
-			    keys[i].wk_len < IEEE80211_WEP_KEYLEN) ||
-			    keys[i].wk_len > sizeof(keys[i].wk_key)) {
+			if (keys[i].wk_len > sizeof(keys[i].wk_key)) {
 				error = EINVAL;
 				break;
 			}

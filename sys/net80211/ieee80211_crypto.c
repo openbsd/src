@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_crypto.c,v 1.2 2004/06/27 04:14:23 millert Exp $	*/
+/*	$OpenBSD: ieee80211_crypto.c,v 1.3 2004/06/28 19:29:40 millert Exp $	*/
 /*	$NetBSD: ieee80211_crypto.c,v 1.5 2003/12/14 09:56:53 dyoung Exp $	*/
 
 /*-
@@ -130,6 +130,9 @@ ieee80211_crypto_detach(struct ifnet *ifp)
 	}
 }
 
+/* Round up to a multiple of IEEE80211_WEP_KEYLEN + IEEE80211_WEP_IVLEN */
+#define klen_round(x)	(((x) + (IEEE80211_WEP_KEYLEN + IEEE80211_WEP_IVLEN - 1)) & ~(IEEE80211_WEP_KEYLEN + IEEE80211_WEP_IVLEN - 1))
+
 struct mbuf *
 ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 {
@@ -216,10 +219,9 @@ ieee80211_wep_crypt(struct ifnet *ifp, struct mbuf *m0, int txflag)
 		moff += IEEE80211_WEP_IVLEN + IEEE80211_WEP_KIDLEN;
 	}
 	memcpy(keybuf, ivp, IEEE80211_WEP_IVLEN);
-	memcpy(keybuf + IEEE80211_WEP_IVLEN, ic->ic_nw_keys[kid].wk_key,
-	    ic->ic_nw_keys[kid].wk_len);
-	arc4_setkey(ctx, keybuf,
-	    IEEE80211_WEP_IVLEN + ic->ic_nw_keys[kid].wk_len);
+	len = klen_round(IEEE80211_WEP_IVLEN + ic->ic_nw_keys[kid].wk_len);
+	memcpy(keybuf + IEEE80211_WEP_IVLEN, ic->ic_nw_keys[kid].wk_key, len);
+	arc4_setkey(ctx, keybuf, len);
 
 	/* encrypt with calculating CRC */
 	crc = ~0;
