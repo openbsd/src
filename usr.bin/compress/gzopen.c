@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.18 2003/12/16 22:38:40 henning Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.19 2003/12/16 22:46:25 henning Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -58,8 +58,10 @@
   (zlib format), rfc1951.txt (deflate format) and rfc1952.txt (gzip format).
 */
 
+#ifndef SMALL
 const char gz_rcsid[] =
-    "$OpenBSD: gzopen.c,v 1.18 2003/12/16 22:38:40 henning Exp $";
+    "$OpenBSD: gzopen.c,v 1.19 2003/12/16 22:46:25 henning Exp $";
+#endif
 
 #include <sys/param.h>
 #include <sys/stat.h>
