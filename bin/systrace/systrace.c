@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.14 2002/06/10 19:16:26 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.15 2002/06/11 05:21:17 jsyn Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -75,11 +75,11 @@ trans_cb(int fd, pid_t pid, int policynr,
 		goto out;
 
 	if ((policy = systrace_findpolnr(policynr)) == NULL)
-		errx(1, "%s:%d: find %d\n", __func__, __LINE__,
+		errx(1, "%s:%d: find %d", __func__, __LINE__,
 		    policynr);
 
 	if ((pflq = systrace_policyflq(policy, emulation, name)) == NULL)
-		errx(1, "%s:%d: no filter queue\n", __func__, __LINE__);
+		errx(1, "%s:%d: no filter queue", __func__, __LINE__);
 
 	ipid = intercept_getpid(pid);
 	ipid->uflags = 0;
@@ -140,7 +140,7 @@ gen_cb(int fd, pid_t pid, int policynr, char *name, int code,
 		goto out;
 
 	if ((policy = systrace_findpolnr(policynr)) == NULL)
-		errx(1, "%s:%d: find %d\n", __func__, __LINE__,
+		errx(1, "%s:%d: find %d", __func__, __LINE__,
 		    policynr);
 
 	ipid = intercept_getpid(pid);
