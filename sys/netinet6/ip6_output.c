@@ -1,5 +1,5 @@
-/*	$OpenBSD: ip6_output.c,v 1.25 2001/02/16 16:38:15 itojun Exp $	*/
-/*	$KAME: ip6_output.c,v 1.164 2001/02/10 05:05:15 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.26 2001/03/13 03:35:15 itojun Exp $	*/
+/*	$KAME: ip6_output.c,v 1.169 2001/03/13 03:10:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -248,6 +248,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	        bcopy(&tdb->tdb_dst, &sdst, sizeof(sdst));
 		sspi = tdb->tdb_spi;
 		sproto = tdb->tdb_sproto;
+	        splx(s);
 
 		/*
 		 * If the socket has set the bypass flags and SA destination
@@ -260,7 +261,6 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		    inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS &&
 		    sdst.sa.sa_family == AF_INET6 &&
 		    IN6_ARE_ADDR_EQUAL(&sdst.sin6.sin6_addr, &ip6->ip6_dst)) {
-		        splx(s);
 		        sproto = 0; /* mark as no-IPsec-needed */
 			goto done_spd;
 		}
@@ -581,6 +581,7 @@ skip_ipsec2:;
 
 		tdb = gettdb(sspi, &sdst, sproto);
 		if (tdb == NULL) {
+			splx(s);
 			error = EHOSTUNREACH;
 			m_freem(m);
 			goto done;
