@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.145 2001/09/05 12:42:31 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.146 2001/09/05 19:12:59 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -168,13 +168,15 @@ int			 pfopen(dev_t, int, int, struct proc *);
 int			 pfclose(dev_t, int, int, struct proc *);
 int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
-u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t);
+u_int16_t		 pf_cksum_fixup(u_int16_t, u_int16_t, u_int16_t,
+			    u_int8_t);
 void			 pf_change_ap(u_int32_t *, u_int16_t *, u_int16_t *,
-			    u_int16_t *, u_int32_t, u_int16_t);
-void			 pf_change_a(u_int32_t *, u_int16_t *, u_int32_t);
+			    u_int16_t *, u_int32_t, u_int16_t, u_int8_t);
+void			 pf_change_a(u_int32_t *, u_int16_t *, u_int32_t,
+			    u_int8_t);
 void			 pf_change_icmp(u_int32_t *, u_int16_t *, u_int32_t *,
 			    u_int32_t, u_int16_t, u_int16_t *, u_int16_t *,
-			    u_int16_t *, u_int16_t *);
+			    u_int16_t *, u_int16_t *, u_int8_t);
 void			 pf_send_reset(struct ip *, int, struct tcphdr *);
 void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t);
 u_int16_t		 pf_map_port_range(struct pf_rdr *, u_int16_t);
@@ -1638,47 +1640,49 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 }
 
 u_int16_t
-pf_cksum_fixup(u_int16_t cksum, u_int16_t old, u_int16_t new)
+pf_cksum_fixup(u_int16_t cksum, u_int16_t old, u_int16_t new, u_int8_t udp)
 {
-	u_int32_t l = cksum + old - new;
+	u_int32_t l;
 
+	if (udp && !cksum)
+		return 0x0000;
+	l = cksum + old - new;
 	l = (l >> 16) + (l & 65535);
 	l = l & 65535;
-	if (l)
-		return (l);
-	else
-		return (65535);
+	if (udp && !l)
+		return 0xFFFF;
+	return (l);
 }
 
 void
 pf_change_ap(u_int32_t *a, u_int16_t *p, u_int16_t *ic, u_int16_t *pc,
-    u_int32_t an, u_int16_t pn)
+    u_int32_t an, u_int16_t pn, u_int8_t u)
 {
 	u_int32_t ao = *a;
 	u_int16_t po = *p;
 
 	*a = an;
 	*ic = pf_cksum_fixup(pf_cksum_fixup(*ic, ao / 65536,
-	    an / 65536), ao % 65536, an % 65536);
+	    an / 65536, 0), ao % 65536, an % 65536, 0);
 	*p = pn;
 	*pc = pf_cksum_fixup(pf_cksum_fixup(pf_cksum_fixup(*pc, ao / 65536,
-	    an / 65536), ao % 65536, an % 65536),
-	    po, pn);
+	    an / 65536, u), ao % 65536, an % 65536, u), po, pn, u);
 }
 
 void
-pf_change_a(u_int32_t *a, u_int16_t *c, u_int32_t an)
+pf_change_a(u_int32_t *a, u_int16_t *c, u_int32_t an, u_int8_t u)
 {
 	u_int32_t ao = *a;
 
 	*a = an;
-	*c = pf_cksum_fixup(pf_cksum_fixup(*c, ao / 65536, an / 65536),
-	    ao % 65536, an % 65536);
+	*c = pf_cksum_fixup(pf_cksum_fixup(*c, ao / 65536, an / 65536, u),
+	    ao % 65536, an % 65536, u);
 }
 
 void
 pf_change_icmp(u_int32_t *ia, u_int16_t *ip, u_int32_t *oa, u_int32_t na,
-    u_int16_t np, u_int16_t *pc, u_int16_t *h2c, u_int16_t *ic, u_int16_t *hc)
+    u_int16_t np, u_int16_t *pc, u_int16_t *h2c, u_int16_t *ic, u_int16_t *hc,
+    u_int8_t u)
 {
 	u_int32_t oia = *ia, ooa = *oa, opc, oh2c = *h2c;
 	u_int16_t oip = *ip;
@@ -1688,21 +1692,21 @@ pf_change_icmp(u_int32_t *ia, u_int16_t *ip, u_int32_t *oa, u_int32_t na,
 	/* Change inner protocol port, fix inner protocol checksum. */
 	*ip = np;
 	if (pc != NULL)
-		*pc = pf_cksum_fixup(*pc, oip, *ip);
-	*ic = pf_cksum_fixup(*ic, oip, *ip);
+		*pc = pf_cksum_fixup(*pc, oip, *ip, u);
+	*ic = pf_cksum_fixup(*ic, oip, *ip, 0);
 	if (pc != NULL)
-		*ic = pf_cksum_fixup(*ic, opc, *pc);
+		*ic = pf_cksum_fixup(*ic, opc, *pc, 0);
 	/* Change inner ip address, fix inner ip checksum and icmp checksum. */
 	*ia = na;
-	*h2c = pf_cksum_fixup(pf_cksum_fixup(*h2c, oia / 65536, *ia / 65536),
-	    oia % 65536, *ia % 65536);
-	*ic = pf_cksum_fixup(pf_cksum_fixup(*ic, oia / 65536, *ia / 65536),
-	    oia % 65536, *ia % 65536);
-	*ic = pf_cksum_fixup(*ic, oh2c, *h2c);
+	*h2c = pf_cksum_fixup(pf_cksum_fixup(*h2c, oia / 65536, *ia / 65536, 0),
+	    oia % 65536, *ia % 65536, 0);
+	*ic = pf_cksum_fixup(pf_cksum_fixup(*ic, oia / 65536, *ia / 65536, 0),
+	    oia % 65536, *ia % 65536, 0);
+	*ic = pf_cksum_fixup(*ic, oh2c, *h2c, 0);
 	/* Change outer ip address, fix outer ip checksum. */
 	*oa = na;
-	*hc = pf_cksum_fixup(pf_cksum_fixup(*hc, ooa / 65536, *oa / 65536),
-	    ooa % 65536, *oa % 65536);
+	*hc = pf_cksum_fixup(pf_cksum_fixup(*hc, ooa / 65536, *oa / 65536, 0),
+	    ooa % 65536, *oa % 65536, 0);
 }
 
 void
@@ -2013,7 +2017,8 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			if (error)
 				return (PF_DROP);
 			pf_change_ap(&h->ip_src.s_addr, &th->th_sport,
-			    &h->ip_sum, &th->th_sum, nat->raddr, htons(nport));
+			    &h->ip_sum, &th->th_sum, nat->raddr,
+			    htons(nport), 0);
 			rewrite++;
 		}
 	} else {
@@ -2028,7 +2033,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 				nport = rdr->rport;
 
 			pf_change_ap(&h->ip_dst.s_addr, &th->th_dport,
-			    &h->ip_sum, &th->th_sum, rdr->raddr, nport);
+			    &h->ip_sum, &th->th_sum, rdr->raddr, nport, 0);
 			rewrite++;
 		}
 	}
@@ -2082,11 +2087,11 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			/* undo NAT/RST changes, if they have taken place */
 			if (nat != NULL) {
 				pf_change_ap(&h->ip_src.s_addr, &th->th_sport,
-				    &h->ip_sum, &th->th_sum, baddr, bport);
+				    &h->ip_sum, &th->th_sum, baddr, bport, 0);
 				rewrite++;
 			} else if (rdr != NULL) {
 				pf_change_ap(&h->ip_dst.s_addr, &th->th_dport,
-				    &h->ip_sum, &th->th_sum, baddr, bport);
+				    &h->ip_sum, &th->th_sum, baddr, bport, 0);
 				rewrite++;
 			}
 			if (rm->rule_flag & PFRULE_RETURNRST)
@@ -2154,7 +2159,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			while ((s->src.seqdiff = arc4random()) == 0)
 				;
 			pf_change_a(&th->th_seq, &th->th_sum,
-			    htonl(s->src.seqlo + s->src.seqdiff));
+			    htonl(s->src.seqlo + s->src.seqdiff), 0);
 			rewrite = 1;
 		} else
 			s->src.seqdiff = 0;
@@ -2206,7 +2211,8 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 			if (error)
 				return (PF_DROP);
 			pf_change_ap(&h->ip_src.s_addr, &uh->uh_sport,
-			    &h->ip_sum, &uh->uh_sum, nat->raddr, htons(nport));
+			    &h->ip_sum, &uh->uh_sum, nat->raddr,
+			    htons(nport), 1);
 			rewrite++;
 		}
 	} else {
@@ -2222,7 +2228,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 			pf_change_ap(&h->ip_dst.s_addr, &uh->uh_dport,
 			    &h->ip_sum, &uh->uh_sum, rdr->raddr,
-			    nport);
+			    nport, 1);
 
 			rewrite++;
 		}
@@ -2274,11 +2280,11 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 			/* undo NAT/RST changes, if they have taken place */
 			if (nat != NULL) {
 				pf_change_ap(&h->ip_src.s_addr, &uh->uh_sport,
-				    &h->ip_sum, &uh->uh_sum, baddr, bport);
+				    &h->ip_sum, &uh->uh_sum, baddr, bport, 1);
 				rewrite++;
 			} else if (rdr != NULL) {
 				pf_change_ap(&h->ip_dst.s_addr, &uh->uh_dport,
-				    &h->ip_sum, &uh->uh_sum, baddr, bport);
+				    &h->ip_sum, &uh->uh_sum, baddr, bport, 1);
 				rewrite++;
 			}
 			pf_send_icmp(m, rm->return_icmp >> 8,
@@ -2372,7 +2378,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		if ((nat = pf_get_nat(ifp, IPPROTO_ICMP,
 		    h->ip_src.s_addr, h->ip_dst.s_addr)) != NULL) {
 			baddr = h->ip_src.s_addr;
-			pf_change_a(&h->ip_src.s_addr, &h->ip_sum, nat->raddr);
+			pf_change_a(&h->ip_src.s_addr, &h->ip_sum, nat->raddr, 0);
 		}
 	}
 
@@ -2569,8 +2575,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 				;
 			ack = ntohl(th->th_ack) - dst->seqdiff;
 			pf_change_a(&th->th_seq, &th->th_sum, htonl(seq +
-			    src->seqdiff));
-			pf_change_a(&th->th_ack, &th->th_sum, htonl(ack));
+			    src->seqdiff), 0);
+			pf_change_a(&th->th_ack, &th->th_sum, htonl(ack), 0);
 		} else {
 			ack = ntohl(th->th_ack);
 		}
@@ -2600,8 +2606,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		if (src->seqdiff) {
 			/* Modulate sequence numbers */
 			pf_change_a(&th->th_seq, &th->th_sum, htonl(seq +
-			    src->seqdiff));
-			pf_change_a(&th->th_ack, &th->th_sum, htonl(ack));
+			    src->seqdiff), 0);
+			pf_change_a(&th->th_ack, &th->th_sum, htonl(ack), 0);
 		}
 		end = seq + len;
 		if (th->th_flags & TH_SYN)
@@ -2781,12 +2787,12 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			pf_change_ap(&h->ip_src.s_addr,
 			    &th->th_sport, &h->ip_sum,
 			    &th->th_sum, (*state)->gwy.addr,
-			    (*state)->gwy.port);
+			    (*state)->gwy.port, 0);
 		else
 			pf_change_ap(&h->ip_dst.s_addr,
 			    &th->th_dport, &h->ip_sum,
 			    &th->th_sum, (*state)->lan.addr,
-			    (*state)->lan.port);
+			    (*state)->lan.port, 0);
 		m_copyback(m, off, sizeof(*th), (caddr_t)th);
 	} else if (src->seqdiff) {
 		/* Copyback sequence modulation */
@@ -2848,11 +2854,11 @@ pf_test_state_udp(struct pf_state **state, int direction, struct ifnet *ifp,
 		if (direction == PF_OUT)
 			pf_change_ap(&h->ip_src.s_addr, &uh->uh_sport,
 			    &h->ip_sum, &uh->uh_sum,
-			    (*state)->gwy.addr, (*state)->gwy.port);
+			    (*state)->gwy.addr, (*state)->gwy.port, 1);
 		else
 			pf_change_ap(&h->ip_dst.s_addr, &uh->uh_dport,
 			    &h->ip_sum, &uh->uh_sum,
-			    (*state)->lan.addr, (*state)->lan.port);
+			    (*state)->lan.addr, (*state)->lan.port, 1);
 		m_copyback(m, off, sizeof(*uh), (caddr_t)uh);
 	}
 
@@ -2900,10 +2906,10 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 		if ((*state)->lan.addr != (*state)->gwy.addr) {
 			if (direction == PF_OUT)
 				pf_change_a(&h->ip_src.s_addr,
-				    &h->ip_sum, (*state)->gwy.addr);
+				    &h->ip_sum, (*state)->gwy.addr, 0);
 			else
 				pf_change_a(&h->ip_dst.s_addr,
-				    &h->ip_sum, (*state)->lan.addr);
+				    &h->ip_sum, (*state)->lan.addr, 0);
 		}
 
 		return (PF_PASS);
@@ -2975,7 +2981,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			/* Demodulate sequence number */
 			seq = ntohl(th.th_seq) - src->seqdiff;
 			if (src->seqdiff)
-				pf_change_a(&th.th_seq, &th.th_sum, htonl(seq));
+				pf_change_a(&th.th_seq, &th.th_sum,
+				    htonl(seq), 0);
 
 			if (!SEQ_GEQ(src->seqhi, seq) ||
 			    !SEQ_GEQ(seq, src->seqlo - dst->max_win)) {
@@ -2994,14 +3001,14 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 					    (*state)->lan.addr,
 					    (*state)->lan.port, NULL,
 					    &h2.ip_sum, &ih->icmp_cksum,
-					    &h->ip_sum);
+					    &h->ip_sum, 0);
 				} else {
 					pf_change_icmp(&h2.ip_dst.s_addr,
 					    &th.th_dport, &h->ip_src.s_addr,
 					    (*state)->gwy.addr,
 					    (*state)->gwy.port, NULL,
 					    &h2.ip_sum, &ih->icmp_cksum,
-					    &h->ip_sum);
+					    &h->ip_sum, 0);
 				}
 				m_copyback(m, off, ICMP_MINLEN, (caddr_t)ih);
 				m_copyback(m, ipoff2, sizeof(h2), (caddr_t)&h2);
@@ -3044,14 +3051,14 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 					    (*state)->lan.addr,
 					    (*state)->lan.port, &uh.uh_sum,
 					    &h2.ip_sum, &ih->icmp_cksum,
-					    &h->ip_sum);
+					    &h->ip_sum, 1);
 				} else {
 					pf_change_icmp(&h2.ip_dst.s_addr,
 					    &uh.uh_dport, &h->ip_src.s_addr,
 					    (*state)->gwy.addr,
 					    (*state)->gwy.port, &uh.uh_sum,
 					    &h2.ip_sum, &ih->icmp_cksum,
-					    &h->ip_sum);
+					    &h->ip_sum, 1);
 				}
 				m_copyback(m, off, ICMP_MINLEN, (caddr_t)ih);
 				m_copyback(m, ipoff2, sizeof(h2),
@@ -3094,14 +3101,14 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 					    (*state)->lan.addr,
 					    (*state)->lan.port, NULL,
 					    &h2.ip_sum, &ih->icmp_cksum,
-					    &h->ip_sum);
+					    &h->ip_sum, 0);
 				} else {
 					pf_change_icmp(&h2.ip_dst.s_addr,
 					    &iih.icmp_id, &h->ip_src.s_addr,
 					    (*state)->gwy.addr,
 					    (*state)->gwy.port, NULL,
 					    &h2.ip_sum, &ih->icmp_cksum,
-					    &h->ip_sum);
+					    &h->ip_sum, 0);
 				}
 				m_copyback(m, off, ICMP_MINLEN, (caddr_t)ih);
 				m_copyback(m, ipoff2, sizeof(h2),
