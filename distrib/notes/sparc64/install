@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.19 2002/03/23 23:58:50 miod Exp $
+dnl	$OpenBSD: install,v 1.20 2002/03/28 19:54:40 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -128,6 +128,10 @@ OpenBSDBootMsgs
 	you should choose the terminal type from amongst those listed.
 	(If your terminal type is xterm, just use vt100).
 
+dnl put this back for 3.2
+dnl	After entering the terminal type you will be asked whether you
+dnl	wish to do an "(I)nstall" or an "(U)pgrade".  Enter 'I' for a
+dnl	fresh install or 'U' to upgrade an existing installation.
 	After entering the terminal type you will be asked whether you
 	wish to do an "(I)nstall".  Enter 'I' for a fresh installation.
 	Note that you cannot upgrade a previous OpenBSD installation
