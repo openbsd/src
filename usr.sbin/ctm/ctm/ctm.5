@@ -1,5 +1,5 @@
 .\"----------------------------------------------------------------------------
-.\""THE BEER-WARE LICENSE" (Revision 42): 
+.\""THE BEER-WARE LICENSE" (Revision 42):
 .\"<joerg@freebsd.org> wrote this file.  As long as you retain this notice you
 .\"can do whatever you want with this stuff. If we meet some day, and you think
 .\"this stuff is worth it, you can buy me a beer in return.       Joerg Wunsch
@@ -10,7 +10,7 @@
 .\"
 .\" CTM and ctm(1) by <phk@login.dknet.dk>
 .\"
-.\" $Id: ctm.5,v 1.3 1998/11/08 00:21:28 aaron Exp $
+.\" $Id: ctm.5,v 1.4 1999/06/05 22:16:39 aaron Exp $
 .\"
 .Dd March 25, 1995
 .Os
@@ -65,7 +65,7 @@ field is currently not implemented.
 .It _END Ar md5
 This statement ends the CTM delta. The global
 .Ar md5
-checksum is matched against the MD5 checksum of the entire delta, up to 
+checksum is matched against the MD5 checksum of the entire delta, up to
 and including the space (0x20) character following
 .Dq _END .
 .It \&FM Ar name uid gid mode md5 count
@@ -168,7 +168,7 @@ CTM_END 74ddd298d76215ae45a077a4b6a74e9c
 .Xr ctm_rmail 1 ,
 .Xr ed 1
 .Sh HISTORY
-Initial trials ran during the FreeBSD 1.1.5, and many bugs and 
+Initial trials ran during the FreeBSD 1.1.5, and many bugs and
 methods were hashed out.
 The CTM system has been made publically available in FreeBSD 2.1.
 .Sh AUTHORS

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: trpt.8,v 1.8 1999/05/23 14:11:38 aaron Exp $
+.\"	$OpenBSD: trpt.8,v 1.9 1999/06/05 22:18:19 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,7 +59,7 @@ when a socket is marked for
 (see
 .Xr setsockopt 2 ) ,
 and prints a readable description of these records.
-When no options are supplied, 
+When no options are supplied,
 .Nm
 prints all the trace records found in the system
 grouped according to
@@ -110,9 +110,9 @@ is as follows.
 Isolate the problem and enable debugging on the
 socket(s) involved in the connection.
 Find the address of the protocol control blocks
-associated with the sockets using the 
+associated with the sockets using the
 .Fl A
-option to 
+option to
 .Xr netstat 1 .
 Then run
 .Nm

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.9 1999/05/16 19:58:13 alex Exp $
+.\"	$OpenBSD: mtree.8,v 1.10 1999/06/05 22:17:32 aaron Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -66,9 +66,9 @@ Ignore everything except directory type files.
 .It Fl e
 Don't complain about files that are in the file hierarchy, but not in the
 specification.
-.It Fl f
-Read the specification from
-.Ar file  ,
+.It Fl f Ar spec
+Read the specification from file
+.Ar spec ,
 instead of from the standard input.
 .It Fl i
 Indents the output 4 spaces each time a directory level is descended when
@@ -78,31 +78,33 @@ option.
 This does not effect either the /set statements or the comment before each
 directory.
 It does however effect the comment before the close of each directory.
-.It Fl K
+.It Fl K Ar keywords
 Add the specified (whitespace or comma separated) keywords to the current
 set of keywords.
-.It Fl k
-Use the ``type'' keyword plus the specified (whitespace or comma separated)
+.It Fl k Ar keywords
+Use the
+.Dq type
+keyword plus the specified (whitespace or comma separated)
 keywords instead of the current set of keywords.
 .It Fl n
-Do not emit pathname comments when creating a specification.  Normally 
+Do not emit pathname comments when creating a specification.  Normally
 a comment is emitted before each directory and before the close of that
-directory when using the 
+directory when using the
 .Fl c
 option.
-.It Fl p
+.It Fl p Ar path
 Use the file hierarchy rooted in
 .Ar path  ,
 instead of the current directory.
 .It Fl q
 Quiet mode.  Do not complain when a
-.Sq missing
+.Dq missing
 directory can not be created because it is already exists.  This occurs
 when the directory is a symbolic link.
 .It Fl r
 Remove any files in the file hierarchy that are not described in the
 specification.
-.It Fl s
+.It Fl s Ar seed
 Display a single checksum to the standard error output that represents all
 of the files for which the keyword
 .Cm cksum
@@ -110,7 +112,8 @@ was specified.
 The checksum is seeded with the specified value.
 .It Fl t
 If a file's timestamp is different from the specification,
-``touch'' it to match the specification (and list as modified).
+.Dq touch
+it to match the specification (and list as modified).
 .It Fl U
 Modify the owner, group, and permissions of existing files to match
 the specification and create any missing directories.
@@ -127,8 +130,9 @@ did not match the specification.
 Don't descend below mount points in the file hierarchy.
 .El
 .Pp
-Specifications are mostly composed of ``keywords'', i.e. strings that
-that specify values relating to files.
+Specifications are mostly composed of
+.Dq keywords ,
+(i.e., strings that specify values relating to files).
 No keywords have default values, and if a keyword has no value set, no
 checks based on it are performed.
 .Pp
@@ -203,15 +207,19 @@ and
 There are four types of lines in a specification.
 .Pp
 The first type of line sets a global value for a keyword, and consists of
-the string ``/set'' followed by whitespace, followed by sets of keyword/value
+the string
+.Dq /set
+followed by whitespace, followed by sets of keyword/value
 pairs, separated by whitespace.
 Keyword/value pairs consist of a keyword, followed by an equals sign
-(``=''), followed by a value, without whitespace characters.
+.Pq Sq = ,
+followed by a value, without whitespace characters.
 Once a keyword has been set, its value remains unchanged until either
 reset or unset.
 .Pp
 The second type of line unsets keywords and consists of the string
-``/unset'', followed by whitespace, followed by one or more keywords,
+.Dq /unset ,
+followed by whitespace, followed by one or more keywords,
 separated by whitespace.
 .Pp
 The third type of line is a file specification and consists of a file
@@ -219,12 +227,20 @@ name, followed by whitespace, followed by zero or more whitespace
 separated keyword/value pairs.
 The file name may be preceded by whitespace characters.
 The file name may contain any of the standard file name matching
-characters (``['', ``]'', ``?'' or ``*''), in which case files
-in the hierarchy will be associated with the first pattern that
+characters
+.Po
+.Dq [ ,
+.Dq ] ,
+.Dq ? ,
+or
+.Dq \&*
+.Pc ,
+in which case files in the hierarchy will be associated with the first
+pattern that they match.
 they match.
 .Pp
 Each of the keyword/value pairs consist of a keyword, followed by an
-equals sign (``=''), followed by the keyword's value, without
+equals sign, followed by the keyword's value, without
 whitespace characters.
 These values override, without changing, the global value of the
 corresponding keyword.
@@ -239,7 +255,9 @@ causes the current directory
 path to ascend one level.
 .Pp
 Empty lines and lines whose first non-whitespace character is a hash
-mark (``#'') are ignored.
+mark
+.Pq Sq #
+are ignored.
 .Pp
 The
 .Nm mtree
@@ -249,7 +267,9 @@ A status of 2 is converted to a status of 0 if the
 .Fl U
 option is used.
 .Sh EXAMPLES
-To detect system binaries that have been ``trojan horsed'', it is recommended
+To detect system binaries that have been
+.Dq trojan horsed ,
+it is recommended
 that
 .Nm mtree
 .Fl K

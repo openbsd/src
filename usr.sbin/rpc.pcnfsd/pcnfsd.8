@@ -4,7 +4,7 @@
 .SH NAME
 pcnfsd \- (PC)NFS authentication and print request server
 .SH SYNOPSIS
-.B /usr/sbin/rpc.pcnfsd 
+.B /usr/sbin/rpc.pcnfsd
 .SH WARNING
 This program probably contains 5 to 6 security holes in it (it has been
 diagnosed to have a few, but they were not yet been fixed).  Use it at
@@ -20,36 +20,36 @@ systems. This page describes version two of the
 server.
 .LP
 .B rpc.pcnfsd
-may be started from 
+may be started from
 .B /etc/rc.local
 or by the
 .BR inetd (8)
 superdaemon. It reads the configuration file
 .B /etc/pcnfsd.conf
 if present, and then services RPC requests directed to
-program number 150001. This release of the 
+program number 150001. This release of the
 .B pcnfsd
 daemon supports both version 1 and version 2 of the pcnfsd
-protocol. Consult the 
+protocol. Consult the
 .B rpcgen
 source file
 .B pcnfsd.x
 for details of the protocols.
 .LP
-The requests serviced by 
+The requests serviced by
 .B pcnfsd
 fall into three categories: authentication, printing, and other. Only the
 authentication and printing services have administrative significance.
 .SH AUTHENTICATION
-When 
+When
 .B pcnfsd
-receives a 
+receives a
 .B PCNFSD_AUTH
 or
 .B PCNFSD2_AUTH
 request\**, it will "log in" the user by validating the username and
 password and returning the corresponding uid, gids, home directory,
-and umask. If 
+and umask. If
 .B pcnfsd
 was built with the
 .B WTMP
@@ -98,7 +98,7 @@ will issue a
 .B PCNFSD_PR_START
 or
 .B PCNFSD2_PR_START
-request. 
+request.
 .B pcnfsd
 handles this, and most other print-related requests, by
 constructing a command based on the printing services of
@@ -120,10 +120,10 @@ and the creation of filters to perform the required processing. This
 is outside the scope of this discussion. In addition,
 .B pcnfsd
 includes a mechanism by which  you can define virtual printers known
-only to 
+only to
 .B pcnfsd
 clients. Each printer is defined by a line in the
-.B /etc/pcnfsd.conf 
+.B /etc/pcnfsd.conf
 file of the following form
 .RS
 .sp
@@ -131,7 +131,7 @@ file of the following form
 .sp
 .RE
 \fIname\fP is the name of the printer you want to define. \fIalias-for\fP
-is the name of a "real" printer which corresponds to this printer. For 
+is the name of a "real" printer which corresponds to this printer. For
 example, a request to
 display the queue for \fIname\fP will be translated into the
 corresponding request for the printer \fIalias-for\fP. If you have
@@ -143,7 +143,7 @@ below for an example.) \fIcommand\fP is a
 command which will be executed whenever a file is printed on \fIname\fP.
 This command is executed by the Bourne shell,
 .B /bin/sh
-using the 
+using the
 .B -c
 option. For complex operations you should
 construct an executable shell program and invoke that in \fIcommand\fP.
@@ -173,7 +173,7 @@ printer rotated lw /usr/local/bin/enscript -2r \s-2$FILE\s0
 printer test - /usr/bin/cp \s-2$FILE\s0 /usr/tmp/\s-2$HOST\s0-\s-2$USER\s0
 .sp
 .RE
-If a client system prints a job on the printer 
+If a client system prints a job on the printer
 .B rotated
 the utility
 .B enscript
@@ -193,7 +193,7 @@ the printer
 The printer
 .B test
 is used only for testing. Any file sent to this printer
-will be copied into 
+will be copied into
 .B /usr/tmp.
 Any request to list the queue, check the status, etc. of printer
 .B test

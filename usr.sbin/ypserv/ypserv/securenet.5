@@ -1,4 +1,4 @@
-.\"	$OpenBSD: securenet.5,v 1.5 1999/03/12 15:34:00 aaron Exp $
+.\"	$OpenBSD: securenet.5,v 1.6 1999/06/05 22:18:32 aaron Exp $
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -33,11 +33,11 @@
 .Os
 .Sh NAME
 .Nm securenet
-.Nd 
+.Nd
 .Xr ypserv 8
 configuration file for secure networks
 .Sh DESCRIPTION
-The 
+The
 .Nm
 file controls which hosts can connect to the
 .Nm YP
@@ -49,7 +49,7 @@ is the network mask. The second item is the network.
 A configuration file might look like the following:
 .Bd -literal
 #
-# Only my local net is secure. 
+# Only my local net is secure.
 #
 255.255.255.0 139.58.253.0
 .Ed

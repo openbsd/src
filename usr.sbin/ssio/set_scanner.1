@@ -1,4 +1,4 @@
-.\" $Id: set_scanner.1,v 1.1 1997/03/11 03:23:16 kstailey Exp $
+.\" $Id: set_scanner.1,v 1.2 1999/06/05 22:18:14 aaron Exp $
 .\"
 .\" Copyright (c) 1996 Kenneth Stailey
 .\" All rights reserved.
@@ -36,7 +36,7 @@ set_scanner - change the parameter settings for the scanner
 .SH SYNOPSIS
 .B set_scanner
 .RI [ -w width ]
-.RI [ -h height] 
+.RI [ -h height]
 .RI [ -x x_origin ]
 .RI [ -y y_origin ]
 .RI [ -r resolution ]
@@ -104,11 +104,11 @@ is followed by a decimal integer that specifies the level of contrast used.
 To see acceptable values for
 .I contrast
 use the command "lsattr -R -l scan0 -a contrast".
-.I 
+.I
 .PP
 .B \-d
 Set the defaults.  Scanner settings will be remembered even after the system
-reboots. 
+reboots.
 .B set_scanner
 will use "chdev" to alter the ODM instead of the ioctl(2) system call on the
 device special file.

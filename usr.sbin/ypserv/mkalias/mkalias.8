@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkalias.8,v 1.2 1999/03/12 15:33:59 aaron Exp $
+.\"	$OpenBSD: mkalias.8,v 1.3 1999/06/05 22:18:24 aaron Exp $
 .\" Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -37,7 +37,7 @@
 .Sh SYNOPSIS
 .Nm mkalias
 .Op Fl v
-.Op Fl e 
+.Op Fl e
 .Op Fl E
 .Op Fl d
 .Op Fl u
@@ -47,7 +47,7 @@
 .Sh DESCRIPTION
 .Nm
 is used to convert a mail.aliases map to a mail.byaddr map. This is
-an inverse map of user@host (or user!host) back to alias. 
+an inverse map of user@host (or user!host) back to alias.
 .Pp
 .Pp
 The options are as follows:
@@ -62,22 +62,22 @@ Same as
 but also check for any MX-record.
 .It Fl d
 Assume Domain names are OK. Only useful together with
-.Fl e 
+.Fl e
 or
 .Fl E .
 .It Fl u
 Assume UUCP names are OK. Only useful together with
-.Fl e 
+.Fl e
 or
 .Fl E .
 .It Fl n
-Capitalize name. eg mats.o.jansson becomes Mats.O.Jansson.  
+Capitalize name. eg mats.o.jansson becomes Mats.O.Jansson.
 .It Ar input
 Use this map as input.
 .It Ar output
 Use this map as output. If the output map isn't given don't create database.
 Can be useful together with
-.Fl e 
+.Fl e
 or
 .Fl E .
 .El
@@ -88,6 +88,6 @@ on SunOS 4.1.x seems to have a
 Since I don't know what it is supposed to do I haven't implemented it. But it is accepted by the program.
 .Sh SEE ALSO
 .Xr yp 8 ,
-.Xr ypserv 8 
+.Xr ypserv 8
 .Sh AUTHOR
 Mats O Jansson <moj@stacken.kth.se>

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.8 1999/05/28 23:00:04 aaron Exp $
+.\"	$OpenBSD: adduser.8,v 1.9 1999/06/05 22:16:26 aaron Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -50,9 +50,9 @@
 .Op Fl v | verbose
 .Op Fl unencrypted
 .Sh DESCRIPTION
-.Nm adduser 
+.Nm
 is a simple program for adding new users.
-.Nm adduser
+.Nm
 first performs consistency
 checks on the passwd, group, and shell databases. It creates passwd/group
 entries, a HOME directory, dotfiles for a new user, and sends him or her a
@@ -61,10 +61,10 @@ welcome message at the discretion of the person creating the account.
 .Bl -tag -width Ds
 .It Sy username
 Login names should contain only lowercase characters or digits. They should be
-no longer than 8 characters (see 
+no longer than 8 characters (see
 .Xr setlogin 2
-BUGS section). 
-.\" The reasons for this limit are "Historical". 
+BUGS section).
+.\" The reasons for this limit are "Historical".
 .\" Given that people have traditionally wanted to break this
 .\" limit for aesthetic reasons, it's never been of great importance to break
 .\" such a basic fundamental parameter in UNIX.
@@ -76,11 +76,11 @@ If you need a longer login name for e-mail addresses,
 you can define an alias in
 .Pa /etc/aliases .
 .It Sy fullname
-This should contain the user's firstname and surname.  The 
+This should contain the user's firstname and surname.  The
 .Dq \&:
 is not permitted.
 .It Sy shell
-Only valid entries from the 
+Only valid entries from the
 .Xr shells 5
 database or entries corresponding to
 .Xr sliplogin 8
@@ -97,9 +97,9 @@ searched for.  This value must be more than the value of uid_start.
 The default value is 32000 or as configured in the configuration file.
 .It Sy gid/login group
 This value is generated automatically, but can be specified at the
-discretion of the person invoking the program. 
+discretion of the person invoking the program.
 .It Sy password
-If not empty, the password is encrypted according to 
+If not empty, the password is encrypted according to
 .Xr passwd.conf 5 .
 If empty, the account will be automatically disabled to prevent spurious
 access to it.
@@ -109,19 +109,19 @@ access to it.
 .\" with most other schemes.  With each user in his/her own group the user can
 .\" safely run with a umask of 002 and have files created in their home directory
 .\" and not worry about others being able to read them.
-.\" 
+.\"
 .\" For a shared area you create a separate uid/gid (like cvs or ncvs on freefall),
 .\" you place each person that should be able to access this area into that new
 .\" group.
-.\" 
+.\"
 .\" This model of uid/gid administration allows far greater flexibility than lumping
 .\" users into groups and having to muck with the umask when working in a shared
 .\" area.
-.\" 
+.\"
 .\" I have been using this model for almost 10 years and found that it works
 .\" for most situations, and has never gotten in the way.  (Rod Grimes)
 .Sh CONFIGURATION
-.Nm adduser
+.Nm
 follows these steps to extract its configuration
 information:
 .Pp
@@ -148,16 +148,16 @@ By default the password is assumed to already be properly encrypted.
 Check the passwd, group, and shells databases for consistency and problems
 then exit without performing any other operation.
 .It Sy -create_config
-Create or edit default configuration information and message file before 
+Create or edit default configuration information and message file before
 proceeding with the normal interactive adduser procedure.
 .It Sy -dotdir Ar directory
-Copy files from 
-.Ar directory 
+Copy files from
+.Ar directory
 into the HOME directory of new users.  Files named in the fashion of
 .Dq Pa dot.foo
-will be renamed to 
+will be renamed to
 .Dq Pa .foo .
-By default, all files are made writable and readable by 
+By default, all files are made writable and readable by
 their owner.
 .\" don't allow group or world to write files and allow only owner
 .\" to read/execute/write .rhost, .Xauthority, .kermrc, .netrc, Mail,
@@ -165,10 +165,10 @@ their owner.
 .It Sy -encrypt,-e Ar method
 Encrypt local passwords using
 .Ar method
-of encryption as described in 
+of encryption as described in
 .Xr passwd.conf 5 .
 .It Sy -group Ar login_group
-Specify the default login group.  A value of 
+Specify the default login group.  A value of
 .Ar USER
 means that the username is to be used as the login group.
 .It Sy -help,-h,-?
@@ -186,12 +186,12 @@ for
 causes no message to be sent to new users.
 .It Sy -noconfig
 Do not read the default configuration file.
-.It Sy -shell Ar shell 
+.It Sy -shell Ar shell
 Specify the default shell for new users.
 .It Sy -silent,-s,-quiet,-q
-Causes the program to print fewer warnings, questions, and bug reports. 
+Causes the program to print fewer warnings, questions, and bug reports.
 .It Sy -uid Ar uid
-Use UIDs from 
+Use UIDs from
 .Ar uid
 up when automatically generating UIDs.
 .It Sy -unencrypted
@@ -207,11 +207,11 @@ This option is recommended for novice users.
 .\" .Sh FORMAT
 .\" .Bl -tag -width Ds -compact
 .\" .Ql Pa #
-.\" is a comment.  
+.\" is a comment.
 .\" .P
 .\" .It Sy config file
 .\" .Nm adduser
-.\" reads and writes this file. 
+.\" reads and writes this file.
 .\" See /etc/adduser.conf for more details.
 .\" .It Sy message file
 .\" Eval variables in this file. See /etc/adduser.message for more
@@ -221,7 +221,7 @@ This option is recommended for novice users.
 $ adduser
 .Pp
 Start
-.Nm adduser
+.Nm
 in interactive mode.
 .Pp
 $ adduser -unencrypted -batch falken guest,staff,beer 'Prof. Falken' joshua
@@ -231,14 +231,14 @@ Create user
 and
 login group
 .Dq falken .
-Invite user 
+Invite user
 .Dq falken
 into groups
 .Dq guest ,
 .Dq staff ,
 and
 .Dq beer .
-Realname (fullname) 
+Realname (fullname)
 is
 .Dq Prof. Falken .
 Password is
@@ -246,12 +246,12 @@ Password is
 (don't use such a password!).
 Create the HOME directory
 .Pa /home/falken
-and copy all files and directories 
+and copy all files and directories
 from
 .Pa /usr/share/skel
 to
 .Pa /home/falken .
-Send user falken 
+Send user falken
 a welcome message.
 .Pp
 $ adduser -uid_start 5000 -group guest -message no -batch vehlefanz

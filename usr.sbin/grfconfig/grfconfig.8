@@ -1,4 +1,4 @@
-.\"	$OpenBSD: grfconfig.8,v 1.7 1999/05/28 23:00:06 aaron Exp $
+.\"	$OpenBSD: grfconfig.8,v 1.8 1999/06/05 22:16:48 aaron Exp $
 .\"	$NetBSD: grfconfig.8,v 1.4 1997/07/29 17:40:47 veego Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 .Dt GRFCONFIG 8 amiga
 .Os
 .Sh NAME
-.Nm grfconfig 
+.Nm grfconfig
 .Nd alter grf device screen mode definitions at run time
 .Sh SYNOPSIS
 .Nm grfconfig
@@ -63,10 +63,10 @@ pretty list normally shown.
 The grf device to manipulate.  This argument is required.
 .It Ar file
 The file which contains the mode definitions.  If this argument
-is not specified, 
+is not specified,
 .Nm
 will print out of a list of the modes currently loaded into
-the grf device.  
+the grf device.
 .El
 .Sh MODE DEFINITION FILE
 The mode definitions are taken from a file which has lines of the format:
@@ -104,7 +104,7 @@ use the default flags: -hsync -vsync
 .It doublescan
 doublescan mode
 .It interlace
-interlace mode 
+interlace mode
 .It +hsync
 positive horizontal sync pulses
 .It -hsync

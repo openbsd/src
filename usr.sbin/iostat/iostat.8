@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iostat.8,v 1.9 1998/11/08 00:21:30 aaron Exp $
+.\"	$OpenBSD: iostat.8,v 1.10 1999/06/05 22:17:03 aaron Exp $
 .\"	$NetBSD: iostat.8,v 1.10 1996/10/25 18:21:57 scottr Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -57,7 +57,7 @@ displays kernel
 statistics on terminal, disk and CPU operations.  By default,
 .Nm iostat
 displays one line of statistics averaged over the machine's run time.
-The use of 
+The use of
 .Fl c
 presents successive lines averaged over the
 .Ar wait
@@ -83,9 +83,9 @@ If no
 interval is specified, the default is 1 second.
 .It Fl C
 Show CPU statistics.  This is enabled by default unless the
-.Fl d, 
+.Fl d,
 .Fl D,
-or 
+or
 .Fl T
 flags are used.
 .It Fl d
@@ -93,7 +93,7 @@ Show disk statistics.  This is the default.  Displays kilobytes per
 transfer, number of transfers, and megabytes transferred.  Use of this
 flag disables display of CPU and tty statistics.
 .It Fl D
-Show alternate disk statistics.  Displays kilobytes transfered, number of 
+Show alternate disk statistics.  Displays kilobytes transfered, number of
 transfers, and time spent in transfers.  Use of this flag disables the
 default display.
 .It Fl I
@@ -107,9 +107,9 @@ Extract the name list from the specified system instead of the default
 .Dq Pa /bsd .
 .It Fl T
 Show tty statistics.  This is enabled by default unless the
-.Fl C, 
+.Fl C,
 .Fl d,
-or 
+or
 .Fl D
 flags are used.
 .It Fl w
@@ -132,7 +132,7 @@ characters read from terminals
 characters written to terminals
 .El
 .It disks
-Disk operations. 
+Disk operations.
 The header of the field is the disk name and unit number.
 If more than four disk drives are configured in the system,
 .Nm iostat

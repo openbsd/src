@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ac.8,v 1.3 1998/11/08 00:21:25 aaron Exp $
+.\"	$Id: ac.8,v 1.4 1999/06/05 22:16:18 aaron Exp $
 .\"
 .Dd March 15, 1994
 .Dt AC 8
@@ -37,14 +37,14 @@
 .Nm ac
 .Nd connect time accounting
 .Sh SYNOPSIS
-.Nm ac
+.Nm
 .Op Fl dp
 .\".Op Fl c Ar console
 .Op Fl t Ar tty
 .Op Fl w Ar wtmp
 .Op Ar users ...
 .Sh DESCRIPTION
-If the file 
+If the file
 .Pa /var/log/wtmp
 exists, a record of individual login and logout
 times are written to it by
@@ -52,7 +52,7 @@ times are written to it by
 and
 .Xr init 8 ,
 respectively.
-.Nm ac
+.Nm
 examines these records and writes the accumulated connect time
 for all logins to the standard output.
 .Pp
@@ -61,7 +61,7 @@ The options are as follows:
 .It Fl d
 Display the connect times in 24 hour chunks.
 .\" .It Fl c Ar console
-.\" Use 
+.\" Use
 .\" .Ar console
 .\" as the name of the device that local X sessions (ut_host of ":0.0")
 .\" originate from.  If any login has been recorded on
@@ -73,9 +73,13 @@ Print individual users' totals.
 .It Fl t Ar tty
 Only do accounting logins on certain ttys.  The
 .Ar tty
-specification can start with '!' to indicate not this
+specification can start with
+.Ql \&!
+to indicate not this
 .Ar tty
-and end with '*' to indicate all similarly named ttys.
+and end with
+.Ql *
+to indicate all similarly named ttys.
 Multiple
 .Fl t
 flags may be specified.
@@ -89,7 +93,7 @@ Display totals for the given individuals only.
 .El
 .Pp
 If no arguments are given,
-.Nm ac
+.Nm
 displays the total connect time for all
 accounts with login sessions recorded in
 .Pa wtmp .
@@ -119,7 +123,7 @@ to be charged out at a different rate than
 .Pa other .
 .Pp
 The
-.Nm ac
+.Nm
 utility exits 0 on success or >0 if a fatal error occurred.
 .Sh FILES
 .Bl -tag -width /var/log/wtmp.[0-7] -compact
@@ -135,11 +139,11 @@ rotated files
 .Xr sa 8
 .Sh HISTORY
 An
-.Nm ac
+.Nm
 command appeard in
 .At v6 .
 This version of
-.Nm ac
+.Nm
 was written for
 .Nx 0.9a
 from the specification provided by various systems' manual pages.
@@ -148,10 +152,10 @@ from the specification provided by various systems' manual pages.
 .\" .Nm ac
 .\" ignores the fact that entries with ut_host of ":0.0" are not real
 .\" login sessions.  Normally such entries are ignored except in the case
-.\" of a user being logged in when the 
+.\" of a user being logged in when the
 .\" .Pa wtmp
 .\" file was rotated, in which case a login with ut_host of ":0.0" may
-.\" appear without any preceeding console logins.  
+.\" appear without any preceeding console logins.
 .\" If no one is logged in on the console, the user is deemed to have
 .\" logged in on at the earliest time stamp found in
 .\" .Pa wtmp .

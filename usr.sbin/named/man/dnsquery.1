@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dnsquery.1,v 1.4 1997/07/03 09:26:13 deraadt Exp $
+.\"	$OpenBSD: dnsquery.1,v 1.5 1999/06/05 22:17:33 aaron Exp $
 .TH DNSQUERY 1 "10 March 1990"
 .UC 6
 .SH NAME
@@ -11,10 +11,10 @@ dnsquery \- query domain name servers using resolver
 .I type]
 [-c
 .I class]
-[-r 
-.I retry] 
-[-p 
-.I retry_period] 
+[-r
+.I retry]
+[-p
+.I retry_period]
 [-d] [-s] [-v] host
 .SH DESCRIPTION
 The
@@ -32,8 +32,8 @@ are treated without case-sensitivity.
 .SH OPTIONS
 .TP 1i
 .B \-n
-The nameserver to be used in the query.  Nameservers can appear as either 
-Internet addresses of the form w.x.y.z or can appear as domain names.  
+The nameserver to be used in the query.  Nameservers can appear as either
+Internet addresses of the form w.x.y.z or can appear as domain names.
 (default: as specified in /etc/resolv.conf)
 .TP 1i
 .B \-t
@@ -139,7 +139,7 @@ The name of the host (or domain) of interest.
 .br
 <resolv.h>		list of resolver flags
 .SH "SEE ALSO"
-nslookup(1), nstest(1), nsquery(1), 
+nslookup(1), nstest(1), nsquery(1),
 named(8), resolver(3)
 .SH DIAGNOSTICS
 If the resolver fails to answer the query and debugging has not been

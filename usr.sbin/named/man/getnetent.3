@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnetent.3,v 1.3 1998/06/15 17:56:16 mickey Exp $
+.\"	$OpenBSD: getnetent.3,v 1.4 1999/06/05 22:17:36 aaron Exp $
 .\" $From: getnetent.3,v 8.2 1996/05/09 05:59:10 vixie Exp $
 .TH getnetent 3
 .SH NAME
@@ -31,8 +31,8 @@ subroutines
 each return a pointer to an object with the
 following structure
 containing the broken-out
-fields of a line in the 
-.I networks 
+fields of a line in the
+.I networks
 database.
 .RS
 .PP
@@ -65,20 +65,20 @@ order.
 .PP
 If the
 .I stayopen
-flag on a 
+flag on a
 .I setnetent
 subroutine is NULL, the
 .I networks
 database is opened.  Otherwise the
 .I setnetent
-has the effect of rewinding the 
-.I networks 
+has the effect of rewinding the
+.I networks
 database.
 The
 .I endnetent
 may be called to
-close the 
-.I networks 
+close the
+.I networks
 database when processing is complete.
 .PP
 The
@@ -97,7 +97,7 @@ number is found
 The
 .I getnetent
 subroutine keeps a pointer in the database, allowing
-successive calls to be used 
+successive calls to be used
 to search the entire file.
 .PP
 A call to

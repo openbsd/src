@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: apmd.8,v 1.9 1999/05/23 14:11:32 aaron Exp $
+.\"	$Id: apmd.8,v 1.10 1999/06/05 22:16:28 aaron Exp $
 .\"
 .Dd March 24, 1996
 .Dt APMD 8
@@ -42,7 +42,7 @@
 .Nm
 monitors the advanced power management (APM) pseudo-device, acting on
 signaled events and upon user requests as sent by the
-.Xr apm 8 
+.Xr apm 8
 program.
 For suspend and standby request events delivered by the BIOS, or via
 .Xr apm 8 ,
@@ -55,7 +55,7 @@ runs the appropriate configuration program (if one exists).
 For power status change events,
 .Nm
 fetches the current status and reports it via
-.Xr syslog 3 
+.Xr syslog 3
 with logging facility
 .Dv LOG_DAEMON .
 .Pp
@@ -67,7 +67,7 @@ device).
 Suspends are announced with two high tones.
 .Pp
 .Nm
-periodically polls the APM driver for the current power state.  
+periodically polls the APM driver for the current power state.
 If the battery charge level changes substantially or the external power
 status changes, the new status is logged.  The polling rate defaults to
 once per 10 minutes, but may be specified using the
@@ -165,10 +165,10 @@ and
 are the files that contain the host's customized actions.
 Each file must be an executable binary or shell script suitable
 for execution by the
-.Xr execve 2 
+.Xr execve 2
 function.
 If you wish to have the same program or script control all transitions, it
-may determine which transition is in progress by examining its 
+may determine which transition is in progress by examining its
 .Va argv[0]
 which is set to one of
 .Ar suspend ,

@@ -6,7 +6,7 @@
 .\" are met:
 .\"
 .\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer. 
+.\"    notice, this list of conditions and the following disclaimer.
 .\"
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in
@@ -54,30 +54,30 @@
 .SH NAME
 apachectl \- Apache HTTP server control interface
 .SH SYNOPSIS
-.B apachectl 
+.B apachectl
 \fIcommand\fP [...]
 .SH DESCRIPTION
 .B apachectl
-is a front end to the Apache HyperText Transfer Protocol (HTTP) 
-server.  It is designed to help the administrator control the 
-functioning of the Apache 
+is a front end to the Apache HyperText Transfer Protocol (HTTP)
+server.  It is designed to help the administrator control the
+functioning of the Apache
 .B httpd
-daemon.  
+daemon.
 .PP
-.B NOTE: 
-If your Apache installation uses non-standard paths, you will need to 
-edit the 
+.B NOTE:
+If your Apache installation uses non-standard paths, you will need to
+edit the
 .B apachectl
-script to set the appropriate paths to your PID file and your 
+script to set the appropriate paths to your PID file and your
 .B httpd
 binary.  See the comments in the script for details.
 .PP
-The 
+The
 .B apachectl
-script returns a 0 exit value on success, and >0 if an error 
+script returns a 0 exit value on success, and >0 if an error
 occurs.  For more details, view the comments in the script.
 .PP
-Full documentation for Apache is available at 
+Full documentation for Apache is available at
 .B http://www.apache.org/
 .
 .SH OPTIONS
@@ -92,14 +92,14 @@ Stops the Apache daemon.
 .BI restart
 Restarts the Apache daemon by sending it a SIGHUP.  If the daemon
 is not running, it is started.
-This command automatically checks the configuration files via 
+This command automatically checks the configuration files via
 .BI configtest
 before initiating the restart to make sure Apache doesn't die.
 .TP
 .BI fullstatus
-Displays a full status report from 
-.B mod_status. 
-For this to work, you need to have mod_status enabled on your server 
+Displays a full status report from
+.B mod_status.
+For this to work, you need to have mod_status enabled on your server
 and a text-based browser such as \fIlynx\fP available on your system.  The
 URL used to access the status report can be set by editing the
 .B STATUSURL
@@ -116,13 +116,13 @@ normal restart in that currently open connections are not aborted.
 A side effect is that old log files will not be closed immediately.
 This means that if used in a log rotation script, a substantial delay may be
 necessary to ensure that the old log files are closed before processing them.
-This command automatically checks the configuration files via 
+This command automatically checks the configuration files via
 .BI configtest
 before initiating the restart to make sure Apache doesn't die.
 .TP
 .BI configtest
 Run a configuration file syntax test. It parses the configuration
-files and either reports 
+files and either reports
 .B "Syntax Ok"
 or detailed information about the particular syntax error.
 .TP

@@ -10,12 +10,12 @@ mrinfo \- Displays configuration info from a multicast router
 .B \-d
 .I debug_level
 ] [
-.B \-r 
+.B \-r
 .I retry_count
 ] [
-.B \-t 
+.B \-t
 .I timeout_count
-] 
+]
 .B multicast_router
 
 .SH DESCRIPTION
@@ -27,7 +27,7 @@ attempts to display the configuration information from the multicast router
 uses the ASK_NEIGHBORS IGMP message to the specified multicast router. If this
 multicast router responds, the version number and a list of their neighboring
 multicast router addresses is part of that response. If the responding router
-has a recent multicast version number, then 
+has a recent multicast version number, then
 .I mrinfo
 requests additional information such as metrics, thresholds, and flags from the
 multicast router. Once the specified multicast router responds, the
@@ -39,7 +39,7 @@ configuration is displayed to the standard output.
 "\-d" option sets the debug level. When the debug level is greater than the
 default value of 0, addition debugging messages are printed. Regardless of
 the debug level, an error condition, will always write an error message and will
-cause 
+cause
 .I mrinfo
 to terminate.
 Non-zero debug levels have the following effects:

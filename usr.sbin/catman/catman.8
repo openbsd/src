@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: catman.8,v 1.2 1998/11/08 00:21:27 aaron Exp $
+.\"	$Id: catman.8,v 1.3 1999/06/05 22:16:33 aaron Exp $
 .\"
 .Dd July 30, 1993
 .Dt CATMAN 8
@@ -41,15 +41,15 @@
 .Op Fl M Ar directory
 .Op Ar sections
 .Sh DESCRIPTION
-.Nm catman 
-creates formatted versions of the on-line manual pages from their 
+.Nm
+creates formatted versions of the on-line manual pages from their
 .Xr nroff 1
 source.
-Manual pages whose formatted versions are missing or out of date are 
+Manual pages whose formatted versions are missing or out of date are
 regenerated.
-If manual pages are regenerated, 
-.Nm catman
-also regenerates the 
+If manual pages are regenerated,
+.Nm
+also regenerates the
 .Xr whatis 1
 database.
 .Pp
@@ -65,7 +65,7 @@ manual pages in sections 1, 3, and 8 will be checked and regenerated.
 If no
 .Ar sections
 argument is provided,
-.Nm catman
+.Nm
 will try to operate on all of the known manual sections.
 .Pp
 The options are as follows:
@@ -75,7 +75,7 @@ Ignore errors from
 .Xr nroff
 when building man pages.
 .It Fl n
-Do not create the 
+Do not create the
 .Xr whatis 1
 database.
 .It Fl p
@@ -83,15 +83,15 @@ Display the commands that would have been executed, but do not actually
 execute them.
 .It Fl s
 Perform work silently; do not echo commands as they are executed.  This
-flag is ignored if 
+flag is ignored if
 .Fl p
 is also specified.
 .It Fl w
-Only create the 
+Only create the
 .Xr whatis 1
 database.
 .It Fl M Ar directory
-Update manual pages in 
+Update manual pages in
 .Ar directory .
 .El
 .Sh SEE ALSO
@@ -99,6 +99,6 @@ Update manual pages in
 .Xr man 1 ,
 .Xr whatis 1
 .Sh BUGS
-Currently knows nothing about 
-.Pa /etc/man.conf 
+Currently knows nothing about
+.Pa /etc/man.conf
 and machine specific man pages.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdate.8,v 1.8 1999/04/02 15:12:20 aaron Exp $
+.\"	$OpenBSD: rdate.8,v 1.9 1999/06/05 22:18:02 aaron Exp $
 .\"	$NetBSD: rdate.8,v 1.4 1996/04/08 20:55:17 jtc Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Nm rdate
 .Op Fl psa
-.Ar host 
+.Ar host
 .Sh DESCRIPTION
 .Nm
 displays and sets the local date and time from the
@@ -54,7 +54,7 @@ Do not set, just print the remote time
 .It Fl s
 Do not print the time.
 .It Fl a
-Use the 
+Use the
 .Xr adjtime 2
 call to gradually skew the local time to the
 remote time rather than just hopping.

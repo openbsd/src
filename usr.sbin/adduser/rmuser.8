@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmuser.8,v 1.4 1999/05/28 23:00:05 aaron Exp $
+.\"	$OpenBSD: rmuser.8,v 1.5 1999/06/05 22:16:26 aaron Exp $
 .\"
 .\" Copyright 1995, 1996
 .\"     Guy Helmer, Madison, South Dakota 57042.  All rights reserved.
@@ -38,11 +38,11 @@
 .Nm rmuser
 .Op Ar username
 .Sh DESCRIPTION
-The utility
-.Nm rmuser
-removes a user's 
+The
+.Nm
+utility removes a user's
 .Xr crontab 1
-entry (if any) and any 
+entry (if any) and any
 .Xr at 1
 jobs belonging to the user,
 then removes a user from the system's local password file, removes
@@ -55,17 +55,17 @@ the group is removed (this complements
 .Xr adduser 8 Ns 's
 per-user unique groups).
 .Pp
-.Nm rmuser
+.Nm
 politely refuses to remove users whose uid is 0 (typically root), since
 it seemed like a good idea at the time
-.Nm rmuser
+.Nm
 was written.
 .Pp
-.Nm rmuser
+.Nm
 shows the selected user's password file entry and asks for confirmation
 that you wish to remove the user.  If the user's home directory is owned
 by the user (and not by any other user),
-.Nm rmuser
+.Nm
 asks whether you wish to remove the user's home directory and everything
 below.
 .Pp
@@ -74,7 +74,7 @@ Available options:
 .Bl -tag -width username
 .It Ar \&username
 Identifies the user to be removed; if not present,
-.Nm rmuser
+.Nm
 interactively asks for the user to be removed.
 .El
 .Sh FILES
@@ -101,6 +101,5 @@ interactively asks for the user to be removed.
 The
 .Nm
 command appeared in FreeBSD 2.1.5.
-
 .\" .Sh AUTHOR
 .\" Guy Helmer, Madison, South Dakota

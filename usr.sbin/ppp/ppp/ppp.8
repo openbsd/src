@@ -1,11 +1,11 @@
-.\" $Id: ppp.8,v 1.46 1999/06/05 04:16:05 aaron Exp $
+.\" $Id: ppp.8,v 1.47 1999/06/05 22:17:51 aaron Exp $
 .Dd 20 September 1995
 .nr XX \w'\fC00'
 .Os
 .Dt PPP 8
 .Sh NAME
 .Nm ppp
-.Nd Point to Point Protocol (a.k.a. user-ppp) 
+.Nd Point to Point Protocol (a.k.a. user-ppp)
 .Sh SYNOPSIS
 .Nm ppp
 .Oo
@@ -189,7 +189,7 @@ and group
 .Dv network ,
 with permissions
 .Dv 04554 .
-By default, 
+By default,
 .Nm
 will not run if the invoking user ID is not 0.  This may be overridden
 by using the
@@ -290,7 +290,7 @@ See below for details.
 .Pp
 Enabling IP aliasing allows
 .Nm ppp
-to act as a NAT or masquerading engine for all machines on an internal 
+to act as a NAT or masquerading engine for all machines on an internal
 LAN.  Refer to
 .Xr libalias 3
 for details.
@@ -370,7 +370,7 @@ command in
 .It
 Create a log file.
 .Nm
-uses 
+uses
 .Xr syslog 3
 to log information.  A common log file name is
 .Pa /var/log/ppp.log .
@@ -510,7 +510,7 @@ Defaults:
 Connect time: 0 secs
 0 octets in, 0 octets out
 Overall 0 bytes/sec
-ppp ON awfulhak> 
+ppp ON awfulhak>
 .Ed
 .Pp
 The term command can now be used to talk directly to the device:
@@ -1343,7 +1343,7 @@ from the outside world.
 In general, correct
 .Nm
 operation should first be verified with packet aliasing disabled.
-Then, the 
+Then, the
 .Fl alias
 option should be switched on, and network applications (web browser,
 .Xr telnet 1 ,
@@ -2592,7 +2592,7 @@ layer shuts down, and is also available using the
 .Dq show
 command.  Throughput statistics are available at the
 .Dq IPCP
-and 
+and
 .Dq physical
 levels.
 .It utmp
@@ -3676,8 +3676,8 @@ command before dialing):
 .Bd -literal -offset indent
 Dial attempt 1 of 1
 dial OK!
-Chat: Expecting: 
-Chat: Sending: 
+Chat: Expecting:
+Chat: Sending:
 Chat: Expecting: login:--login:
 Chat: Wait for (5): login:
 Chat: Sending: ppp
@@ -3688,7 +3688,7 @@ Chat: Expecting: !sh \\-c "echo \\-n label: >&2"
 Chat: Exec: sh -c "echo -n label: >&2"
 Chat: Wait for (5): !sh \\-c "echo \\-n label: >&2" --> label:
 Chat: Exec: /bin/echo in
-Chat: Sending: 
+Chat: Sending:
 Chat: Expecting: HELLO
 Chat: Wait for (5): HELLO
 login OK!
@@ -4508,7 +4508,7 @@ Logging and debugging information file.  Note, this name is specified in
 See
 .Xr syslog.conf 5
 for further details.
-.It Pa /var/spool/lock/LCK..* 
+.It Pa /var/spool/lock/LCK..*
 tty port locking file.  Refer to
 .Xr uucplock 3
 for further details.

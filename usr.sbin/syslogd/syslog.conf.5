@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslog.conf.5	8.1 (Berkeley) 6/9/93
-.\"     $OpenBSD: syslog.conf.5,v 1.4 1997/11/09 09:45:04 todd Exp $
+.\"     $OpenBSD: syslog.conf.5,v 1.5 1999/06/05 22:18:15 aaron Exp $
 .\"	$NetBSD: syslog.conf.5,v 1.4 1996/01/02 17:41:46 perry Exp $
 .\"
 .Dd June 9, 1993
@@ -102,9 +102,9 @@ similar
 values specified to the
 .Xr syslog
 library routine.
-.Pp 
+.Pp
 Each block of lines is separated from the previous block by a tag. The tag
-is a line beginning with 
+is a line beginning with
 .Em #!prog
 or
 .Em !prog
@@ -206,7 +206,6 @@ beginning with (``!'').  This allows
 .Nm
 files to be shared with systems that don't recognise the (``!'') syntax.
 .Sh EXAMPLES
-.Pp
 A configuration file might appear as follows:
 .Bd -literal
 # Log all kernel messages, authentication messages of
@@ -236,7 +235,7 @@ mail.*							/var/log/maillog
 # Save mail and news errors of level err and higher in a
 # special file.
 uucp,news.crit						/var/log/spoolerr
-  
+
 # Save ftpd transactions along with mail and news
 !ftpd
 *.*                                                     /var/log/spoolerr

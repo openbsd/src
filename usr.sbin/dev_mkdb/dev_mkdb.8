@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)dev_mkdb.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: dev_mkdb.8,v 1.2 1998/11/08 00:21:28 aaron Exp $
+.\"	$Id: dev_mkdb.8,v 1.3 1999/06/05 22:16:40 aaron Exp $
 .\"
 .Dd June 6, 1993
 .Os
@@ -44,7 +44,7 @@ database
 .Nm dev_mkdb
 .Sh DESCRIPTION
 The
-.Nm dev_mkdb
+.Nm
 command creates a
 .Xr db 3
 hash access method database in
@@ -52,7 +52,7 @@ hash access method database in
 which contains the names of all of the character and block special
 files in the
 .Dq Pa /dev
-directory, using the file type and the 
+directory, using the file type and the
 .Va st_rdev
 field as the key.
 .Pp
@@ -83,6 +83,6 @@ database file
 .Xr kvm_mkdb 8
 .Sh HISTORY
 The
-.Nm dev_mkdb
+.Nm
 command appeared in
 .Bx 4.4 .

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)inetd.8	6.7 (Berkeley) 3/16/91
-.\"	$Id: inetd.8,v 1.9 1999/05/23 14:11:33 aaron Exp $
+.\"	$Id: inetd.8,v 1.10 1999/06/05 22:17:01 aaron Exp $
 .\"
 .Dd March 16, 1991
 .Dt INETD 8
@@ -148,16 +148,16 @@ services (discussed below), the service
 name
 .Em must
 be the official name of the service (that is, the first entry in
-.Pa /etc/services ) . 
+.Pa /etc/services ) .
 When used to specify a Sun-RPC
 based service, this field is a valid RPC service name in
 the file
-.Pa /etc/rpc . 
-The part on the right of the 
+.Pa /etc/rpc .
+The part on the right of the
 .Dq /
 is the RPC version number. This
 can simply be a single numeric argument or a range of versions.
-A range is bounded by the low version to the high version - 
+A range is bounded by the low version to the high version -
 .Dq rusers/1-3 .
 .Pp
 The
@@ -180,10 +180,10 @@ Examples might be
 .Dq tcp
 or
 .Dq udp .
-RPC based services are specified with the 
+RPC based services are specified with the
 .Dq rpc/tcp
-or 
-.Dq rpc/udp 
+or
+.Dq rpc/udp
 service type.
 .Pp
 The
@@ -245,7 +245,7 @@ out and exit when no more connections are active.
 .Nm
 will continue to
 listen on the master socket for connections, so the server should not close
-it when it exits. 
+it when it exits.
 .Xr identd 8
 is usually the only stream server marked as wait.
 .Pp

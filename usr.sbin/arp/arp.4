@@ -48,7 +48,7 @@ It is used by all of the 10Mb/s Ethernet interface drivers.
 It is not specific to Internet protocols or to 10Mb/s Ethernet,
 but this implementation currently supports only that combination.
 .Pp
-ARP caches Internet-Ethernet address mappings. 
+ARP caches Internet-Ethernet address mappings.
 When an interface requests a mapping for an address not in the cache,
 ARP queues the message which requires the mapping and broadcasts
 a message on the associated network requesting the address mapping.
@@ -91,7 +91,7 @@ Manually added entries may be temporary, static or permanent,
 and may be
 .Dq published ,
 in which case the system will respond to ARP requests for that host
-as if it were the target of the request. A static entry will not 
+as if it were the target of the request. A static entry will not
 time out, but may be overwritten by network traffic, while a permanent
 entry will not time out and can not be overwritten.
 .Pp

@@ -6,7 +6,7 @@
 .\" are met:
 .\"
 .\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer. 
+.\"    notice, this list of conditions and the following disclaimer.
 .\"
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in
@@ -198,18 +198,18 @@ by guessing it from the filename.
 .PP
 Query options:
 .TP 12
-.B \-q 
-Performs a query for 
+.B \-q
+Performs a query for
 .BR apxs 's
 knowledge about certain settings. The
 .I query
 parameters can be one or more of the following strings:
 .nf
   CC              TARGET
-  CFLAGS          SBINDIR    
-  CFLAGS_SHLIB    INCLUDEDIR 
-  LD_SHLIB        LIBEXECDIR 
-  LDFLAGS_SHLIB   SYSCONFDIR 
+  CFLAGS          SBINDIR
+  CFLAGS_SHLIB    INCLUDEDIR
+  LD_SHLIB        LIBEXECDIR
+  LDFLAGS_SHLIB   SYSCONFDIR
   LIBS_SHLIB
 .fi
 Use this for manually determining settings. For instance use
@@ -278,13 +278,13 @@ This option is directly passed through to the linker command.
 Use this to add your own libraries to search to the build process.
 .TP 12
 .BI \-Wc, "compiler-flags"
-This option passes 
+This option passes
 .I compiler-flags
 as additional flags to the compiler command.
 Use this to add local compiler-specific options.
 .TP 12
 .BI \-Wl, "linker-flags"
-This option passes 
+This option passes
 .I linker-flags
 as additional flags to the linker command.
 Use this to add local linker-specific options.
@@ -299,7 +299,7 @@ servers
 directory.
 .TP 12
 .B \-a
-This additionally activates the module 
+This additionally activates the module
 by automatically adding a corresponding
 .B LoadModule
 line to Apache's
@@ -309,11 +309,11 @@ configuration file (only if still no such entry exists).
 .B \-A
 Same as option
 .B \-a
-but the created 
+but the created
 .B LoadModule
 directive is
 prefixed with a hash sign (#), i.e. the module is
-just prepared for later activation but initially disabled. 
+just prepared for later activation but initially disabled.
 .PD
 .SH EXAMPLES
 Assume you have an Apache module named mod_foo.c available which should extend

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser_proc.8,v 1.3 1999/05/23 14:11:31 aaron Exp $
+.\"	$OpenBSD: adduser_proc.8,v 1.4 1999/06/05 22:16:25 aaron Exp $
 .\"	$NetBSD: adduser.8,v 1.4 1994/11/30 19:36:21 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -46,11 +46,11 @@ A new user must choose a login name, which must not already appear in
 or
 .Pa /etc/aliases .
 It must also not begin with the hyphen
-.Ql Fl
+.Pq Ql -
 character.
 It is strongly recommended that it be all lower-case, and not contain
 the dot
-.Ql \&.
+.Pq Ql \&.
 character, as that tends to confuse mailers.
 An account can be added by editing a line into the passwd file; this
 must be done with the password file locked, e.g. by using

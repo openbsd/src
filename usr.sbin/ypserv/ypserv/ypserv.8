@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypserv.8,v 1.12 1999/04/02 15:12:22 aaron Exp $
+.\"	$OpenBSD: ypserv.8,v 1.13 1999/06/05 22:18:33 aaron Exp $
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -51,7 +51,7 @@ A YP map is stored on the server as a
 database. A number of YP maps is grouped together in a domain.
 .Nm
 determines the domains it serves by looking for a directory with
-the domain name in 
+the domain name in
 .Pa /var/yp .
 .Pp
 YP hasn't been known for high security through the years. In recent years
@@ -62,7 +62,7 @@ It contains networks the server can assume is secure. For information about
 file format see
 .Xr securenet 5 .
 .Pp
-Before the author of this server had seen 
+Before the author of this server had seen
 .Xr securenet 5
 another format,
 .Xr ypserv.acl 5 ,
@@ -70,8 +70,8 @@ was implemented.
 This file format makes it possible to allow and deny hosts and networks
 access to the server. This file can have any name since it's given by
 the argument to
-.Fl a 
-(use full path). 
+.Fl a
+(use full path).
 .Pp
 The file used can be reread by sending a
 .Dv SIGHUP
@@ -105,7 +105,7 @@ Allow
 .Nm
 to answer old YP version 1 requests.
 .It Fl a Ar aclfile
-Don't use 
+Don't use
 .Pa /var/yp/securenet .
 Use another file with a different file format. For further information see
 .Xr ypserv.acl 5 .
@@ -119,7 +119,7 @@ Alternately, if these maps were built on the YP master using
 .Nm makedbm
 .Fl b
 then DNS queries will be done without needing to specify
-.Fl d . 
+.Fl d .
 .It Fl x
 Terminate the server after processing
 .Ar aclfile

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rwhod.8,v 1.9 1999/05/23 14:11:37 aaron Exp $
+.\"	$OpenBSD: rwhod.8,v 1.10 1999/06/05 22:18:07 aaron Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rwhod.8	8.2 (Berkeley) 12/11/93
-.\"     $OpenBSD: rwhod.8,v 1.9 1999/05/23 14:11:37 aaron Exp $
+.\"     $OpenBSD: rwhod.8,v 1.10 1999/06/05 22:18:07 aaron Exp $
 .\"
 .Dd December 11, 1993
 .Dt RWHOD 8
@@ -63,7 +63,7 @@ them in a collection of files located in the directory
 .Pa /var/rwho .
 .Pp
 The server transmits and receives messages at the port indicated
-in the ``who'' service specification; see 
+in the ``who'' service specification; see
 .Xr services 5 .
 The messages sent and received, are of the form:
 .Bd -literal -offset indent
@@ -92,15 +92,15 @@ struct	whod {
 All fields are converted to network byte order prior to
 transmission.  The load averages are as calculated by the
 .Xr w 1
-program, and represent load averages over the 5, 10, and 15 minute 
+program, and represent load averages over the 5, 10, and 15 minute
 intervals prior to a server's transmission; they are multiplied by 100
 for representation in an integer.  The host name
 included is that returned by
 .Xr gethostname 3
 with any trailing domain name omitted.
 The array at the end of the message contains information about
-the users logged in to the sending machine.  This information 
-includes the contents of the 
+the users logged in to the sending machine.  This information
+includes the contents of the
 .Xr utmp 5
 entry for each non-idle terminal line and a value indicating the
 time in seconds since a character was last received on the terminal line.
@@ -128,7 +128,7 @@ Status messages are generated approximately once every
 .Xr ruptime 1 ,
 .Xr rwho 1
 .Sh BUGS
-There should be a way to relay status information between networks. 
+There should be a way to relay status information between networks.
 Status information should be sent only upon request rather than continuously.
 People often interpret the server dying
 or network communication failures

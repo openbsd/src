@@ -27,27 +27,27 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: netgroup_mkdb.8,v 1.1.1.1 1995/10/18 08:47:57 deraadt Exp $
+.\"	$Id: netgroup_mkdb.8,v 1.2 1999/06/05 22:17:46 aaron Exp $
 .\"
 .Dd February 3, 1994
-.Dt NETGROUP_MKDB 8 
+.Dt NETGROUP_MKDB 8
 .Os
 .Sh NAME
-.Nm netgroup_mkdb 
+.Nm netgroup_mkdb
 .Nd generate the netgroup databases
 .Sh SYNOPSIS
-.Nm netgroup_mkdb 
+.Nm netgroup_mkdb
 .Op Fl o Ar database
 .Op file
 .Sh DESCRIPTION
-.Nm Netgroup_mkdb
+.Nm netgroup_mkdb
 creates
 .Xr db 3
 style databases for the specified file. If no file is specified, then
 .Pa /etc/netgroup
 is used.
-These databases are then installed into 
-.Pa /etc/netgroup.db.
+These databases are then installed into
+.Pa /etc/netgroup.db .
 The file must be in the correct format (see
 .Xr netgroup 5 ).
 .Pp
@@ -60,16 +60,16 @@ Put the output databases in the named file.
 The databases are used by the C library netgroup routines (see
 .Xr getnetgrent 3 ).
 .Pp
-.Nm Netgroup_mkdb
+.Nm netgroup_mkdb
 exits zero on success, non-zero on failure.
 .Sh FILES
 .Bl -tag -width 24n -compact
 .It Pa /etc/netgroup.db
-The current netgroup database
+current netgroup database
 .It Pa /etc/netgroup.db.tmp
-A temporary file
+a temporary file
 .It Pa /etc/netgroup
-The current netgroup file
+current netgroup file
 .El
 .Sh BUGS
 Because
@@ -78,11 +78,11 @@ guarantees not to install a partial destination file it must
 build a temporary file in the same file system and if successful use
 .Xr rename 2
 to install over the destination file.
-.Pp   
-If    
+.Pp
+If
 .Nm netgroup_mkdb
 fails it will leave the previous version of the destination file intact.
 .Sh SEE ALSO
 .Xr db 3 ,
 .Xr getnetgrent 3 ,
-.Xr netgroup 5 
+.Xr netgroup 5

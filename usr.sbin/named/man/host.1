@@ -1,16 +1,16 @@
-.\"	$OpenBSD: host.1,v 1.2 1997/03/12 10:42:14 downsj Exp $
+.\"	$OpenBSD: host.1,v 1.3 1999/06/05 22:17:37 aaron Exp $
 .\"
 .\"	@(#)host.1              e07@nikhef.nl (Eric Wassenaar) 961010
 .\"
 .TH host 1 "961010"
 .SH NAME
 host \- query nameserver about domain names and zones
-.SH SYNOPSIS 
+.SH SYNOPSIS
 .na
 .nf
-\fBhost\fP [\fB\-v\fP] [\fB\-a\fP] [\fB\-t\fP \fIquerytype\fP] [\fIoptions\fP]  \fIname\fP  [\fIserver\fP] 
+\fBhost\fP [\fB\-v\fP] [\fB\-a\fP] [\fB\-t\fP \fIquerytype\fP] [\fIoptions\fP]  \fIname\fP  [\fIserver\fP]
 .br
-\fBhost\fP [\fB\-v\fP] [\fB\-a\fP] [\fB\-t\fP \fIquerytype\fP] [\fIoptions\fP]  \fB\-l\fP \fIzone\fP  [\fIserver\fP] 
+\fBhost\fP [\fB\-v\fP] [\fB\-a\fP] [\fB\-t\fP \fIquerytype\fP] [\fIoptions\fP]  \fB\-l\fP \fIzone\fP  [\fIserver\fP]
 .br
 \fBhost\fP [\fB\-v\fP] [\fIoptions\fP] \fB\-H\fP [\fB\-D\fP] [\fB\-E\fP] [\fB\-G\fP] \fIzone\fP
 .br
@@ -21,7 +21,7 @@ host \- query nameserver about domain names and zones
 \fBhost\fP [\fIoptions\fP] \fB\-x\fP [\fIname\fP ...]
 .br
 \fBhost\fP [\fIoptions\fP] \fB\-X\fP \fIserver\fP [\fIname\fP ...]
-.SH DESCRIPTION 
+.SH DESCRIPTION
 .I host
 looks for information about Internet hosts and domain names.
 It gets this information from a set of interconnected servers

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ipftest.1,v 1.8 1999/05/24 23:39:57 aaron Exp $          
+.\"     $OpenBSD: ipftest.1,v 1.9 1999/06/05 22:17:04 aaron Exp $
 .Dd May 23, 1999
 .Os
 .Dt IPFTEST 1
@@ -27,39 +27,39 @@ reads test packets from
 .Ar stdin
 or the file specified by the
 .Fl i
-option, applies the ruleset specified by the 
+option, applies the ruleset specified by the
 .Fl r
 option to each, and generates information about the effect of the ruleset on
-each packet to 
+each packet to
 .Ar stdout .
 .Pp
 Captured or handcrafted packets to be tested can be supplied
 in a variety of formats. See the options
-.Fl P , Fl S , 
-.Fl T , Fl H 
+.Fl P , Fl S ,
+.Fl T , Fl H
 and
-.Fl E 
+.Fl E
 for details. In addition the
 .Fl X
-option gives 
+option gives
 .Nm
-the ability to use its own text description format to generate 
-.Dq fake 
+the ability to use its own text description format to generate
+.Dq fake
 packets.  The format used is:
-.Bd -ragged 
+.Bd -ragged
 in|out on
 .Ar if
 .Op tcp|udp|icmp
 .Ar srchost
-.Op , Ar port 
+.Op , Ar port
 .Ar dsthost
 .Op , Ar port
 .Op Fl FSRPAU
 .Ed
 .Pp
-This allows for input or output ICMP, TCP, or UDP packets to be generated for 
+This allows for input or output ICMP, TCP, or UDP packets to be generated for
 any interface. For TCP or UDP it allows the specification of source and
-destination ports. For TCP it allows the specification of TCP flags. 
+destination ports. For TCP it allows the specification of TCP flags.
 Some examples are:
 .Bd -literal -offset indent
 # a UDP packet coming in on le0
@@ -93,7 +93,7 @@ not otherwise possible to associate a packet with an interface.  Normal
 .Dq text packets
 can override this setting.
 .It Fl P
-The input file is in 
+The input file is in
 the binary format produced using libpcap
 (i.e.,
 .Xr tcpdump

@@ -14,9 +14,9 @@
 .\" * I'll try to keep a version up to date.  I can be reached as follows:
 .\" * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
 .\" */
-.\" 
-.\" $Id: cron.8,v 1.3 1999/03/10 02:43:11 pjanzen Exp $
-.\" 
+.\"
+.\" $Id: cron.8,v 1.4 1999/06/05 22:16:34 aaron Exp $
+.\"
 .TH CRON 8 "20 December 1993"
 .UC 4
 .SH NAME
@@ -58,7 +58,7 @@ crontab.
 Special considerations exist when the clock is changed by less than 3
 hours, for example at the beginning and end of Daylight Saving
 Time. If the time has moved forwards, those jobs which would have
-run in the time that was skipped will be run soon after the change. 
+run in the time that was skipped will be run soon after the change.
 Conversely, if the time has moved backwards by less than 3 hours,
 those jobs that fall into the repeated time will not be run.
 .PP

@@ -6,7 +6,7 @@
 .\" are met:
 .\"
 .\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer. 
+.\"    notice, this list of conditions and the following disclaimer.
 .\"
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in
@@ -54,7 +54,7 @@
 .SH NAME
 ab \- Apache HTTP server benchmarking tool
 .SH SYNOPSIS
-.B ab 
+.B ab
 [
 .B \-k
 ] [
@@ -64,13 +64,13 @@ ab \- Apache HTTP server benchmarking tool
 ] [
 .BI \-c " concurrency"
 ]
-.I [http://]hostname[:port]/path 
+.I [http://]hostname[:port]/path
 
 .B ab
 [
-.B \-v 
+.B \-v
 ] [
-.B \-h 
+.B \-h
 ]
 .PP
 .SH DESCRIPTION
@@ -78,11 +78,11 @@ ab \- Apache HTTP server benchmarking tool
 is a tool for benchmarking your Apache HyperText Transfer Protocol (HTTP)
 server. It is designed to give you an impression on how performant is your
 current Apache installation.  This especially shows you how much requests per
-time your Apache installation is capable to serve. 
+time your Apache installation is capable to serve.
 .PP
 .SH OPTIONS
 .TP 12
-.B \-k 
+.B \-k
 Enable the HTTP KeepAlive feature, i.e. perform multiple requests within one
 HTTP session instead. Default is no KeepAlive.
 .TP 12
@@ -93,20 +93,20 @@ benchmarking results.
 .TP 12
 .BI \-t " timelimit"
 Seconds to max. spend for benchmarking. This implies
-a 
-.B \-n 
+a
+.B \-n
 .B 50000
 internally. Use this to benchmark the server within a fixed total amount of
-time.  Per default there is no timelimit. 
+time.  Per default there is no timelimit.
 .TP 12
 .BI \-c " concurrency"
-Number of multiple requests per time to perform. 
+Number of multiple requests per time to perform.
 Default is one request per time.
 .TP 12
-.B \-v 
+.B \-v
 Display version and copyright information.
 .TP 12
-.B \-h 
+.B \-h
 Display usage information.
 .PD
 .SH SEE ALSO

@@ -7,7 +7,7 @@
 .\" are met:
 .\"
 .\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer. 
+.\"    notice, this list of conditions and the following disclaimer.
 .\"
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in
@@ -56,7 +56,7 @@
 .SH NAME
 httpd \- Apache hypertext transfer protocol server
 .SH SYNOPSIS
-.B httpd 
+.B httpd
 [
 .B \-X
 ] [
@@ -73,25 +73,25 @@ httpd \- Apache hypertext transfer protocol server
 .BI \-D " parameter"
 ]
 
-.B httpd 
+.B httpd
 [
 .B \-h
-] 
+]
 [
 .B \-l
-] 
+]
 [
 .B \-L
-] 
+]
 [
 .B \-v
-] 
+]
 [
 .B \-V
-] 
+]
 [
 .B \-S
-] 
+]
 
 .SH DESCRIPTION
 .B httpd
@@ -100,24 +100,24 @@ designed to be run as a standalone daemon process. When used like this
 is will create a pool of child processes to handle requests. To stop
 it, send a TERM signal to the initial (parent) process. The PID of
 this process is written to a file as given in the configuration file.
-Alternatively 
-.B httpd 
+Alternatively
+.B httpd
 may be invoked by the Internet daemon inetd(8) each
 time a connection to the HTTP service is made.
 .PP
 This manual page only lists the command line arguments. For details
-of the directives necessary to configure 
+of the directives necessary to configure
 .B httpd
 see the Apache manual,
 which is part of the Apache distribution or can be found at
 http://www.apache.org/. Paths in this manual may not reflect those
-compiled into 
+compiled into
 .B httpd.
 .SH OPTIONS
 .TP 12
 .BI \-R " libexecdir"
 This option is only available if Apache was built with
-the 
+the
 .I SHARED_CORE
 rule enabled which forces the Apache core code to be
 placed into a dynamic shared object (DSO) file. This file
@@ -170,12 +170,12 @@ does not detach from the terminal or fork any children. Do NOT use this mode
 to provide ordinary web service.
 .TP
 .B \-v
-Print the version of 
+Print the version of
 .B httpd
 , and then exit.
 .TP
 .B \-V
-Print the version and build parameters of 
+Print the version and build parameters of
 .B httpd
 , and then exit.
 .SH FILES

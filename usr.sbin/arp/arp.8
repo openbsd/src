@@ -56,7 +56,7 @@
 .Fl f Ar filename
 .Sh DESCRIPTION
 The
-.Nm arp
+.Nm
 program displays and modifies the Internet-to-Ethernet address translation
 tables used by the address resolution protocol
 .Pq Xr arp 4 .
@@ -81,19 +81,19 @@ with the
 flag.
 .It Fl n
 Show network addresses as numbers (normally
-.Nm arp
+.Nm
 attempts to display addresses symbolically).
 .It Fl s Ar hostname ether_addr
 Create an
 .Tn ARP
 entry for the host called
 .Ar hostname
-with the Ethernet address 
+with the Ethernet address
 .Ar ether_addr .
 The Ethernet address is given as six hex bytes separated by
 colons.  The entry will be static, i.e. not time out, unless the word
 .Ar temp
-is given in the command.  A static ARP entry can be overwritten 
+is given in the command.  A static ARP entry can be overwritten
 by network traffic, unless the word
 .Ar permanent
 is given.  If the word
@@ -104,7 +104,7 @@ i.e., this system will
 act as an
 .Tn ARP
 server,
-responding to requests for 
+responding to requests for
 .Ar hostname
 even though the host address is not its own.
 .It Fl f

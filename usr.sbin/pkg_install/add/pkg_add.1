@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.8 1999/04/21 21:27:49 aaron Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.9 1999/06/05 22:17:48 aaron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -52,7 +52,7 @@ to insure it poses no danger to your system's integrity.  Pay particular
 attention to any +INSTALL, +DEINSTALL, +REQUIRE or +MTREE_DIRS files,
 and inspect the +CONTENTS file for
 .Cm @cwd ,
-.Cm @mode 
+.Cm @mode
 (check for setuid),
 .Cm @dirrm ,
 .Cm @exec ,
@@ -72,7 +72,7 @@ The named packages are installed.  A package name of
 will cause
 .Nm
 to read from stdin. If the packages are not found in the current
-working directory, 
+working directory,
 .Nm
 will search them in each directory named by
 .Ev PKG_PATH .
@@ -119,8 +119,8 @@ options).
 .It Fl t Ar template
 Use
 .Ar template
-as the input to 
-.Xr mkdtemp 3 
+as the input to
+.Xr mkdtemp 3
 when creating a
 .Dq staging area .
 By default, this is the string
@@ -208,7 +208,7 @@ passive mode ftp correctly. This is very rare since
 will try active mode ftp if the server refuses a passive mode
 connection.
 .Sh TECHNICAL DETAILS
-.Nm 
+.Nm
 extracts each package's
 .Dq packing list
 into a special staging directory in
@@ -257,7 +257,7 @@ final location, otherwise it is extracted into the staging area.
 .It
 If the package contains a
 .Ar require
-script (see 
+script (see
 .Xr pkg_create 1 ),
 it is executed with the following arguments:
 .Bl -tag -width indentindent
@@ -302,20 +302,20 @@ then mtree is invoked as:
 .Pp
 .Bd -filled -offset indent -compact
 .Cm mtree
-.Fl u 
-.Fl f 
+.Fl u
+.Fl f
 .Ar mtreefile
 .Fl d
-.Fl e 
-.Fl p 
-.Pa prefix 
+.Fl e
+.Fl p
+.Pa prefix
 .Ed
 .Pp
 where
 .Pa prefix
 is either the prefix specified with the
 .Fl p
-flag or, if no 
+flag or, if no
 .Fl p
 flag was specified, the name of the first directory named by a
 .Cm @cwd
@@ -338,7 +338,7 @@ script, description, and display files are copied into
 .Pa /var/db/pkg/<pkg-name>
 for subsequent possible use by
 .Xr pkg_delete 1 .
-Any package dependencies are recorded in the other packages' 
+Any package dependencies are recorded in the other packages'
 .Pa /var/db/pkg/<other-pkg>/+REQUIRED_BY
 file
 (if the environment variable
@@ -397,7 +397,7 @@ Hard links between files in a distribution are only preserved if either
 (1) the staging area is on the same file system as the target directory of
 all the links to the file, or (2) all the links to the file are bracketed by
 .Cm @cwd
-directives in the contents file, 
+directives in the contents file,
 .Em and
 the link names are extracted with a single
 .Cm tar

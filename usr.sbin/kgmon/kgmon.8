@@ -1,4 +1,4 @@
-.\" $OpenBSD: kgmon.8,v 1.4 1999/05/23 14:11:33 aaron Exp $
+.\" $OpenBSD: kgmon.8,v 1.5 1999/06/05 22:17:13 aaron Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)kgmon.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: kgmon.8,v 1.4 1999/05/23 14:11:33 aaron Exp $
+.\"	$Id: kgmon.8,v 1.5 1999/06/05 22:17:13 aaron Exp $
 .\"
 .Dd June 6, 1993
 .Dt KGMON 8
@@ -76,7 +76,7 @@ Dump the contents of the profile buffers into a
 .Pa gmon.out
 file.
 .It Fl r
-Reset all the profile buffers. 
+Reset all the profile buffers.
 If the
 .Fl p
 flag is also specified, the
@@ -88,11 +88,11 @@ instead of the default
 .Pa /dev/kmem .
 .It Fl N
 Extract the name list from the specified system instead of the
-default 
+default
 .Pa /bsd .
 .El
 .Pp
-If neither 
+If neither
 .Fl b
 nor
 .Fl h
@@ -117,8 +117,8 @@ default memory
 Users with only read permission on
 .Pa /dev/kmem
 cannot change the state
-of profiling collection. 
-They can get a 
+of profiling collection.
+They can get a
 .Pa gmon.out
 file with the warning that the data may be
 inconsistent if profiling is in progress.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.6 1998/12/16 02:47:53 aaron Exp $	
+.\"	$OpenBSD: pkg_create.1,v 1.7 1999/06/05 22:17:49 aaron Exp $	
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -159,7 +159,7 @@ installation/deinstallation should proceed.
 .It Fl t Ar template
 Use
 .Ar template
-as the input to 
+as the input to
 .Xr mktemp 3 .
 By default, this is the string
 .Pa /tmp/instmp.XXXXXX ,
@@ -187,22 +187,22 @@ with
 flag) for further information on using this flag.
 .It Fl D Ar displayfile
 Display the file (using
-.Xr more 1 ) 
+.Xr more 1 )
 after installing the package.  Useful for things like
 legal notices on almost-free software, etc.
 .It Fl m Ar mtreefile
 Run
 .Xr mtree 8
-with input from mtreefile before the package is installed.  
+with input from mtreefile before the package is installed.
 .Xr mtree
 is invoked as
 .Cm mtree
-.Fl u 
-.Fl f 
+.Fl u
+.Fl f
 .Ar mtreefile
 .Fl d
-.Fl e 
-.Fl p 
+.Fl e
+.Fl p
 .Pa prefix ,
 where
 .Pa prefix
@@ -338,12 +338,12 @@ trying to document some particularly hairy sequence that
 may trip someone up later.
 .It Cm @ignore
 Used internally to tell extraction to ignore the next file (don't
-copy it anywhere), as it's used for some special purpose. 
+copy it anywhere), as it's used for some special purpose.
 .It Cm @ignore_inst
 Similar to
 .Cm @ignore ,
 but the ignoring of the next file is delayed one evaluation cycle.  This
-makes it possible to use this directive in the 
+makes it possible to use this directive in the
 .Ar packinglist
 file, so you can pack a
 specialized datafile in with a distribution for your install script (or
@@ -373,15 +373,15 @@ Declare
 .Pa name
 as an
 .Xr mtree 8
-input file to be used at install time (see 
+input file to be used at install time (see
 .Fl m
 above).  Only the first
 .Cm @mtree
-directive is honored. 
+directive is honored.
 .It Cm @display Ar name
 Declare
 .Pa name
-as the file to be displayed at install time (see 
+as the file to be displayed at install time (see
 .Fl D
 above).
 .It Cm @pkgdep Ar pkgname

@@ -1,9 +1,9 @@
-.\"	$OpenBSD: named.8,v 1.8 1999/06/05 04:16:05 aaron Exp $
+.\"	$OpenBSD: named.8,v 1.9 1999/06/05 22:17:40 aaron Exp $
 .\" ++Copyright++ 1985
 .\" -
 .\" Copyright (c) 1985
 .\"    The Regents of the University of California.  All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -19,7 +19,7 @@
 .\" 4. Neither the name of the University nor the names of its contributors
 .\"    may be used to endorse or promote products derived from this software
 .\"    without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
 .\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 .\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -33,14 +33,14 @@
 .\" SUCH DAMAGE.
 .\" -
 .\" Portions Copyright (c) 1993 by Digital Equipment Corporation.
-.\" 
+.\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
 .\" copyright notice and this permission notice appear in all copies, and that
 .\" the name of Digital Equipment Corporation not be used in advertising or
 .\" publicity pertaining to distribution of the document or software without
 .\" specific, written prior permission.
-.\" 
+.\"
 .\" THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
 .\" WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
@@ -149,7 +149,7 @@ Any additional argument is taken as the name of the boot file.
 If multiple boot files are specified, only the last is used.
 .PP
 The boot file contains information about where the name server is to get
-its initial data.  
+its initial data.
 Lines in the boot file cannot be continued on subsequent lines.
 The following is a small example:
 .in +2m
@@ -249,7 +249,7 @@ in your ``xfrnets'' directives.  This directive may also be given as
 .LP
 The ``include'' directive (not shown) can be used to process the contents
 of some other file as though they appeared in place of the ``include''
-directive.  This is useful if you have a lot of zones or if you have 
+directive.  This is useful if you have a lot of zones or if you have
 logical groupings of zones which are maintained by different people.
 The ``include'' directive takes one argument, that being the name of the
 file whose contents are to be included.  No quotes are necessary around
@@ -351,7 +351,7 @@ The
 .I opt_class
 field is the object address type; currently only one type is supported,
 .BR IN ,
-for objects connected to the DARPA Internet. 
+for objects connected to the DARPA Internet.
 The
 .I type
 field contains one of the following tokens; the data expected in the
@@ -467,7 +467,7 @@ Toggles logging of all incoming queries via syslog(8)
 /var/named/named.stats	nameserver statistics data
 .fi
 .SH "SEE ALSO"
-kill(1), gethostbyname(3), signal(2), 
+kill(1), gethostbyname(3), signal(2),
 resolver(3), resolver(5), hostname(7),
 RFC 882, RFC 883, RFC 973, RFC 974, RFC 1033, RFC 1034, RFC 1035, RFC 1123,
 \fIName Server Operations Guide for \s-1BIND\s+1\fR

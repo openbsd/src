@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostbyname.3,v 1.2 1997/03/12 10:42:13 downsj Exp $
+.\"	$OpenBSD: gethostbyname.3,v 1.3 1999/06/05 22:17:35 aaron Exp $
 .\" Copyright (c) 1983, 1987 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -61,7 +61,7 @@ following structure describing an internet host
 referenced by name or by address, respectively.
 This structure contains either the information obtained from the name server,
 .IR named (8),
-or broken-out fields from a line in 
+or broken-out fields from a line in
 .IR /etc/hosts .
 If the local name server is not running these routines do a lookup in
 .IR /etc/hosts .
@@ -133,7 +133,7 @@ If the
 .I stayopen
 flag is non-zero,
 this sets the option to send all queries to the name server using TCP
-and to retain the connection after each call to 
+and to retain the connection after each call to
 .I gethostbyname
 or
 .IR gethostbyaddr .
@@ -143,7 +143,7 @@ Otherwise, queries are performed using UDP datagrams.
 closes the TCP connection.
 .SH DIAGNOSTICS
 .PP
-Error return status from 
+Error return status from
 .I gethostbyname
 and
 .I gethostbyaddr
@@ -180,8 +180,8 @@ A retry at some later time may succeed.
 Some unexpected server failure was encountered.
 This is a non-recoverable error.
 .IP NO_DATA \w'HOST_NOT_FOUND'u+2n
-The requested name is valid but does not have an IP address; 
-this is not a temporary error.  
+The requested name is valid but does not have an IP address;
+this is not a temporary error.
 This means that the name is known to the name server but there is no address
 associated with this name.
 Another type of request to the name server using this domain name
@@ -203,7 +203,7 @@ are redefined,
 when
 .IR libc
 is built to use only the routines to lookup in
-.IR /etc/hosts 
+.IR /etc/hosts
 and not the name server.
 .PP
 .I Gethostent
@@ -211,7 +211,7 @@ reads the next line of
 .IR /etc/hosts ,
 opening the file if necessary.
 .PP
-.I Sethostent 
+.I Sethostent
 is redefined to open and rewind the file.  If the
 .I stayopen
 argument is non-zero,

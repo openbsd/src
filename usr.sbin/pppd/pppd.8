@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.15 1998/06/15 17:56:17 mickey Exp $
+.\" $OpenBSD: pppd.8,v 1.16 1999/06/05 22:17:55 aaron Exp $
 .\" manual page [] for pppd 2.3
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\" SH section heading
@@ -142,7 +142,7 @@ bytes of data).
 Set the MTU [Maximum Transmit Unit] value to \fIn\fR.  Unless the
 peer requests a smaller value via MRU negotiation, pppd will
 request that the kernel networking code send data packets of no more
-than \fIn\fR bytes through the PPP network interface. 
+than \fIn\fR bytes through the PPP network interface.
 .TP
 .B passive
 Enables the "passive" option in the LCP.  With this option, pppd will
@@ -594,7 +594,7 @@ supports Predictor-1 compression.
 Add an entry to this system's ARP [Address Resolution Protocol] table
 with the IP address of the peer and the Ethernet address of this
 system.  This will have the effect of making the peer appear to other
-systems to be on the local ethernet.
+systems to be on the local Ethernet.
 .TP
 .B remotename \fIname
 Set the assumed name of the remote system for authentication purposes
@@ -1035,7 +1035,7 @@ executed with the parameters
 .IP
 \fIinterface-name tty-device speed network-number local-IPX-node-address
 remote-IPX-node-address local-IPX-routing-protocol remote-IPX-routing-protocol
-local-IPX-router-name remote-IPX-router-name ipparam pppd-pid\fR 
+local-IPX-router-name remote-IPX-router-name ipparam pppd-pid\fR
 .IP
 The local-IPX-routing-protocol and remote-IPX-routing-protocol field
 may be one of the following:

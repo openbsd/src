@@ -17,12 +17,12 @@
 .\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
-.\" @(#) $Id: rarpd.8,v 1.5 1999/04/02 15:12:20 aaron Exp $
+.\" @(#) $Id: rarpd.8,v 1.6 1999/06/05 22:18:01 aaron Exp $
 .\"
 .Dd October 26, 1990
 .Dt RARPD 8
 .Sh NAME
-.Nm rarpd 
+.Nm rarpd
 .Nd reverse ARP daemon
 .Sh SYNOPSIS
 .Nm rarpd
@@ -32,12 +32,12 @@
 .Nm
 services Reverse ARP requests on the Ethernet connected to
 .Ar interface .
-Upon receiving a request, 
+Upon receiving a request,
 .Nm
-maps the target hardware address to an IP address via its name, which 
+maps the target hardware address to an IP address via its name, which
 must be present in both the
 .Xr ethers 5
-and 
+and
 .Xr hosts 5
 databases.
 If a host does not exist in both databases, the translation cannot
@@ -45,30 +45,30 @@ proceed and a reply will not be sent.
 .\" .Pp
 .\" Additionally, a request is honored only if the server
 .\" (i.e., the host that rarpd is running on)
-.\" can "boot" the target; that is, if the directory 
+.\" can "boot" the target; that is, if the directory
 .\" .Pa /tftpboot/ Ns Em ipaddr
-.\" exists, where 
+.\" exists, where
 .\" .Rm ipaddr
 .\" is the target IP address.
 .Pp
-In normal operation, 
+In normal operation,
 .Nm
 forks a copy of itself and runs in
-the background.  Anomalies and errors are reported via 
+the background.  Anomalies and errors are reported via
 .Xr syslog 3 .
 .Pp
 The options are as follows:
 .Bl -tag -width indent
 .It Fl a
 Listen on all the Ethernets attached to the system.
-If 
-.Fl a 
+If
+.Fl a
 is omitted, an
 .Ar interface
 must be specified.
 .It Fl d
 Run in debug mode, with all the output to stderr.
-This option implies the 
+This option implies the
 .Fl f
 option.
 .It Fl f
@@ -88,7 +88,7 @@ host name data base
 .Sh SEE ALSO
 .Xr bpf 4 ,
 .Xr diskless 8
-.Rs 
+.Rs
 .%R A Reverse Address  Resolution Protocol
 .%N RFC 903
 .%A Finlayson, R.

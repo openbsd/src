@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.4 1998/12/16 02:47:53 aaron Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.5 1999/06/05 22:17:50 aaron Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -51,7 +51,7 @@ Pay particular
 attention to any +INSTALL, +DEINSTALL, +REQUIRE or +MTREE_DIRS files,
 and inspect the +CONTENTS file for
 .Cm @cwd ,
-.Cm @mode 
+.Cm @mode
 (check for setuid),
 .Cm @dirrm ,
 .Cm @exec ,
@@ -88,7 +88,7 @@ normal files/directories or with the
 directive) will be removed at deinstallation time.  This option tells
 .Nm
 to also remove any directories that were emptied as a result of removing
-the package.  
+the package.
 .It Fl f
 Force removal of the package, even if a dependency is recorded or the
 deinstall or require script fails.
@@ -96,7 +96,7 @@ deinstall or require script fails.
 .Pp
 .Sh TECHNICAL DETAILS
 .Nm
-does pretty much what it says.  It examines installed package records in 
+does pretty much what it says.  It examines installed package records in
 .Pa /var/db/pkg/<pkg-name> ,
 deletes the package contents, and finally removes the package records.
 .Pp
@@ -109,7 +109,7 @@ option is given).
 .Pp
 If the package contains a
 .Ar require
-file (see 
+file (see
 .Xr pkg_create 1 ),
 then this is executed first as
 .Bd -filled -offset indent

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmt.8,v 1.5 1999/05/23 14:11:37 aaron Exp $
+.\"	$OpenBSD: rmt.8,v 1.6 1999/06/05 22:18:04 aaron Exp $
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)rmt.8	6.5 (Berkeley) 3/16/91
-.\"	$Id: rmt.8,v 1.5 1999/05/23 14:11:37 aaron Exp $
+.\"	$Id: rmt.8,v 1.6 1999/06/05 22:18:04 aaron Exp $
 .\"
 .Dd March 16, 1991
 .Dt RMT 8
@@ -53,14 +53,14 @@ or
 .Xr rcmd 3
 call.
 .Pp
-The 
+The
 .Nm
 program accepts requests specific to the manipulation of
 magnetic tapes, performs the commands, then responds with
 a status indication.  All responses are in
 .Tn ASCII
 and in
-one of two forms. 
+one of two forms.
 Successful commands have responses of:
 .Bd -filled -offset indent
 .Sm off
@@ -101,7 +101,7 @@ indicates that a newline should be supplied:
 .It Xo Sy \&O Ar device
 .No \en Ar mode No \en
 .Xc
-Open the specified 
+Open the specified
 .Ar device
 using the indicated
 .Ar mode .
@@ -155,9 +155,9 @@ If
 exceeds the size of the data buffer (10 kilobytes), it is
 truncated to the data buffer size.
 .Nm
-then performs the requested 
+then performs the requested
 .Xr read 2
-and responds with 
+and responds with
 .Sm off
 .Sy A Ar count-read No \en
 .Sm on
@@ -177,7 +177,7 @@ command using the specified parameters.
 The parameters are interpreted as the
 .Tn ASCII
 representations of the decimal values
-to place in the 
+to place in the
 .Ar mt_op
 and
 .Ar mt_count
@@ -198,7 +198,7 @@ sent (in binary).
 .El
 .Sm on
 .Pp
-Any other command causes 
+Any other command causes
 .Nm
 to exit.
 .Sh DIAGNOSTICS
