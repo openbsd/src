@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.19 1999/06/27 08:15:19 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.20 1999/07/04 12:43:22 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.141 1999/06/26 22:00:49 tom Exp $
+ * $From: curses.priv.h,v 1.142 1999/07/04 01:21:35 tom Exp $
  *
  *	curses.priv.h
  *
@@ -421,6 +421,10 @@ typedef	struct {
 #endif
 
 /* usually in <unistd.h> */
+#ifndef STDIN_FILENO
+#define STDIN_FILENO 0
+#endif
+
 #ifndef STDOUT_FILENO
 #define STDOUT_FILENO 1
 #endif

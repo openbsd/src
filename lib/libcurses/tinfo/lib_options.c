@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_options.c,v 1.2 1999/02/24 06:31:11 millert Exp $	*/
+/*	$OpenBSD: lib_options.c,v 1.3 1999/07/04 12:43:16 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -46,7 +46,7 @@
 #include <term.h>	/* keypad_xmit, keypad_local, meta_on, meta_off */
 			/* cursor_visible,cursor_normal,cursor_invisible */
 
-MODULE_ID("$From: lib_options.c,v 1.34 1999/02/18 11:56:16 tom Exp $")
+MODULE_ID("$From: lib_options.c,v 1.35 1999/07/04 00:18:28 tom Exp $")
 
 int idlok(WINDOW *win,  bool flag)
 {
@@ -255,7 +255,7 @@ int _nc_keypad(bool flag)
 	    (void) fflush(SP->_ofp);
 	}
 
-	if (!SP->_tried) {
+	if (flag && !SP->_tried) {
 	    _nc_init_keytry();
 	    SP->_tried = TRUE;
 	}
