@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.57 2000/01/12 11:11:26 d Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.58 2000/01/14 21:24:26 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -530,7 +530,7 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 #if defined(SUN4M)
 #define getpte4m(va)		lda((va & 0xFFFFF000) | ASI_SRMMUFP_L3, \
 				    ASI_SRMMUFP)
-void	setpgt4m __P((int *ptep, int pte));
+static __inline void setpgt4m __P((int *, int));
 void	setpte4m __P((vaddr_t va, int pte));
 void	setptesw4m __P((struct pmap *pm, vaddr_t va, int pte));
 u_int	getptesw4m __P((struct pmap *pm, vaddr_t va));
@@ -728,16 +728,13 @@ getptesw4m(pm, va)		/* Assumes L3 mapping! */
 	return (sm->sg_pte[VA_SUN4M_VPG(va)]); 	/* return pte */
 }
 
-__inline void
+
+static __inline void
 setpgt4m(ptep, pte)
 	int *ptep;
 	int pte;
 {
 	swap(ptep, pte);
-#if 0
-	if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) == 0)
-		cpuinfo.pcache_flush_line((int)ptep, VA2PA((caddr_t)ptep));
-#endif
 }
 
 /*
