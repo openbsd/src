@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strxfrm.c,v 1.4 2003/06/11 21:08:16 deraadt Exp $";
+static char *rcsid = "$OpenBSD: strxfrm.c,v 1.5 2003/09/06 22:43:12 tedu Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -44,23 +44,11 @@ static char *rcsid = "$OpenBSD: strxfrm.c,v 1.4 2003/06/11 21:08:16 deraadt Exp 
 size_t
 strxfrm(char *dst, const char *src, size_t n)
 {
-	size_t r = 0;
-	int c;
 
 	/*
 	 * Since locales are unimplemented, this is just a copy.
 	 */
-	if (n != 0) {
-		while ((c = *src++) != 0) {
-			r++;
-			if (--n == 0) {
-				while (*src++ != 0)
-					r++;
-				break;
-			}
-			*dst++ = c;
-		}
-		*dst = 0;
-	}
-	return (r);
+	if (n == 0)
+		return (strlen(src));
+	return (strlcpy(dst, src, n));
 }
