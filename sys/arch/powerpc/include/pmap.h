@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.23 2001/12/05 00:11:51 millert Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.24 2002/03/13 18:27:36 drahn Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -47,17 +47,27 @@ typedef u_int sr_t;
 #define	SR_SUKEY	0x40000000
 #define	SR_PRKEY	0x20000000
 #define	SR_VSID		0x00ffffff
-
+/*
+ * bit 
+ *   3  2 2  2    2 1  1 1  1 1            0
+ *   1  8 7  4    0 9  6 5  2 1            0
+ *  |XXXX|XXXX XXXX|XXXX XXXX|XXXX XXXX XXXX
+ *
+ *  bits 28 - 31 contain SR
+ *  bits 20 - 27 contain L1 for VtoP translation
+ *  bits 12 - 19 contain L2 for VtoP translation
+ *  bits  0 - 11 contain page offset
+ */
 #ifndef _LOCORE
 /* V->P mapping data */
-typedef int pmapv_t;
-#define VP_SR_SIZE	32
+typedef struct pmapvp pmapvp_t;
+#define VP_SR_SIZE	16
 #define VP_SR_MASK	(VP_SR_SIZE-1)
-#define VP_SR_POS 	27
-#define VP_IDX1_SIZE	1024
+#define VP_SR_POS 	28
+#define VP_IDX1_SIZE	256
 #define VP_IDX1_MASK	(VP_IDX1_SIZE-1)
-#define VP_IDX1_POS 	17
-#define VP_IDX2_SIZE	32
+#define VP_IDX1_POS 	20
+#define VP_IDX2_SIZE	256
 #define VP_IDX2_MASK	(VP_IDX2_SIZE-1)
 #define VP_IDX2_POS 	12
 
@@ -74,24 +84,27 @@ void pmap_kenter_cache( vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
  */
 struct pmap {
 	sr_t pm_sr[16];		/* segments used in this pmap */
+	pmapvp_t *pm_vp[VP_SR_SIZE];	/* virtual to physical table */
 	int pm_refs;		/* ref count */
-	pmapv_t *vps[VP_SR_SIZE];	/* virtual to physical table */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 };
 
 typedef	struct pmap *pmap_t;
-boolean_t ptemodify(paddr_t pa, u_int mask, u_int val);
 
 #ifdef	_KERNEL
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
-int ptebits(paddr_t pa, int bit);
+boolean_t pteclrbits(paddr_t pa, u_int mask, u_int clear);
 
 
-#define pmap_clear_modify(page)	 (ptemodify(VM_PAGE_TO_PHYS(page), PTE_CHG, 0))
-#define	pmap_clear_reference(page) (ptemodify(VM_PAGE_TO_PHYS(page), PTE_REF, 0))
-#define	pmap_is_modified(page)	 (ptebits(VM_PAGE_TO_PHYS(page), PTE_CHG))
-#define	pmap_is_referenced(page) (ptebits(VM_PAGE_TO_PHYS(page), PTE_REF))
+#define pmap_clear_modify(page) \
+	(pteclrbits(VM_PAGE_TO_PHYS(page), PTE_CHG, TRUE))
+#define	pmap_clear_reference(page) \
+	(pteclrbits(VM_PAGE_TO_PHYS(page), PTE_REF, TRUE))
+#define	pmap_is_modified(page) \
+	(pteclrbits(VM_PAGE_TO_PHYS(page), PTE_CHG, FALSE))
+#define	pmap_is_referenced(page) \
+	(pteclrbits(VM_PAGE_TO_PHYS(page), PTE_REF, FALSE))
 #define	pmap_unwire(pm, va)
 #define	pmap_phys_address(x)		(x)
 #define pmap_update(pmap)	/* nothing (yet) */
@@ -101,10 +114,10 @@ int ptebits(paddr_t pa, int bit);
 /*
  * Alternate mapping methods for pool.
  * Really simple. 0x0->0x80000000 contain 1->1 mappings of the physical
- * memory.
+ * memory. - XXX
  */
-#define PMAP_MAP_POOLPAGE(pa)	((vaddr_t)pa)
-#define PMAP_UNMAP_POOLPAGE(va)	((paddr_t)va)
+#define PMAP_MAP_POOLPAGE(pa) ((vaddr_t)pa)
+#define PMAP_UNMAP_POOLPAGE(va)       ((paddr_t)va)
 
 void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
 
@@ -113,6 +126,9 @@ void pmap_release __P((struct pmap *));
 
 void pmap_real_memory __P((vm_offset_t *start, vm_size_t *size));
 void switchexit __P((struct proc *));
+
+int pte_spill_v(struct pmap *pm, u_int32_t va, u_int32_t dsisr);
+#define pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr) ;
 
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.42 2002/01/13 05:30:17 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.43 2002/03/13 18:27:37 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -277,14 +277,17 @@ trap(frame)
 			
 			map = kernel_map;
 			va = frame->dar;
-			if ((va >> ADDR_SR_SHFT) == USER_SR) {
+			if ((va >> ADDR_SR_SHIFT) == USER_SR) {
 				sr_t user_sr;
 				
 				asm ("mfsr %0, %1"
 				     : "=r"(user_sr) : "K"(USER_SR));
 				va &= ADDR_PIDX | ADDR_POFF;
-				va |= user_sr << ADDR_SR_SHFT;
+				va |= user_sr << ADDR_SR_SHIFT;
 				map = &p->p_vmspace->vm_map;
+				if (pte_spill_v(map->pmap, va, frame->dsisr)) {
+					return;
+				}
 			}
 			if (frame->dsisr & DSISR_STORE)
 				ftype = VM_PROT_READ | VM_PROT_WRITE;
@@ -310,6 +313,13 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 		{
 			int ftype, vftype;
 			
+			if (pte_spill_v(p->p_vmspace->vm_map.pmap,
+				frame->dar, frame->dsisr))
+			{
+				/* fault handled by spill handler */
+				break;
+			}
+
 			if (frame->dsisr & DSISR_STORE) {
 				ftype = VM_PROT_READ | VM_PROT_WRITE;
 				vftype = VM_PROT_WRITE;
@@ -333,6 +343,12 @@ printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 		{
 			int ftype;
 			
+			if (pte_spill_v(p->p_vmspace->vm_map.pmap,
+				frame->srr0, 0))
+			{
+				/* fault handled by spill handler */
+				break;
+			}
 			ftype = VM_PROT_READ | VM_PROT_EXECUTE;
 			if (uvm_fault(&p->p_vmspace->vm_map,
 				     trunc_page(frame->srr0), 0, ftype) == 0) {
@@ -340,7 +356,7 @@ printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 			}
 		}
 #if 0
-printf("isi iar %x\n", frame->srr0);
+printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 #endif
 	case EXC_MCHK|EXC_USER:
 /* XXX Likely that returning from this trap is bogus... */
@@ -535,8 +551,11 @@ mpc_print_pci_stat();
 		}
 #if 0
 printf("pgm iar %x srr1 %x\n", frame->srr0, frame->srr1);
+{ 
+int i;
 for (i = 0; i < errnum; i++) {
 	printf("\t[%s]\n", errstr[i]);
+}
 }
 #endif
 		sv.sival_int = frame->srr0;
@@ -657,13 +676,6 @@ child_return(arg)
 	curpriority = p->p_priority;
 }
 
-static inline void
-setusr(int content)
-{
-	asm volatile ("isync; mtsr %0,%1; isync"
-		      :: "n"(USER_SR), "r"(content));
-}
-
 int
 badaddr(addr, len)
 	char *addr;
@@ -692,65 +704,6 @@ badaddr(addr, len)
 	return(0);
 }
 
-int
-copyin(udaddr, kaddr, len)
-	const void *udaddr;
-	void *kaddr;
-	size_t len;
-{
-	void *p;
-	size_t l;
-	faultbuf env;
-	register void *oldh = curpcb->pcb_onfault;
-
-	if (setfault(env)) {
-		curpcb->pcb_onfault = oldh;
-		return EFAULT;
-	}
-	while (len > 0) {
-		p = USER_ADDR + ((u_int)udaddr & ~SEGMENT_MASK);
-		l = (USER_ADDR + SEGMENT_LENGTH) - p;
-		if (l > len)
-			l = len;
-		setusr(curpcb->pcb_pm->pm_sr[(u_int)udaddr >> ADDR_SR_SHFT]);
-		bcopy(p, kaddr, l);
-		udaddr += l;
-		kaddr += l;
-		len -= l;
-	}
-	curpcb->pcb_onfault = oldh;
-	return 0;
-}
-
-int
-copyout(kaddr, udaddr, len)
-	const void *kaddr;
-	void *udaddr;
-	size_t len;
-{
-	void *p;
-	size_t l;
-	faultbuf env;
-	register void *oldh = curpcb->pcb_onfault;
-
-	if (setfault(env)) {
-		curpcb->pcb_onfault = oldh;
-		return EFAULT;
-	}
-	while (len > 0) {
-		p = USER_ADDR + ((u_int)udaddr & ~SEGMENT_MASK);
-		l = (USER_ADDR + SEGMENT_LENGTH) - p;
-		if (l > len)
-			l = len;
-		setusr(curpcb->pcb_pm->pm_sr[(u_int)udaddr >> ADDR_SR_SHFT]);
-		bcopy(kaddr, p, l);
-		udaddr += l;
-		kaddr += l;
-		len -= l;
-	}
-	curpcb->pcb_onfault = oldh;
-	return 0;
-}
 
 /*
  * For now, this only deals with the particular unaligned access case

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 2002/03/08 02:52:36 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.28 2002/03/13 18:27:36 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -240,16 +240,6 @@ where = 3;
 	battable[0].batl = BATL(0x00000000, BAT_M);
 	battable[0].batu = BATU(0x00000000);
 
-#if 0
-	battable[0x8].batl = BATL(0x80000000, BAT_I);
-	battable[0x8].batu = BATU(0x80000000);
-	battable[0x9].batl = BATL(0x90000000, BAT_I);
-	battable[0x9].batu = BATU(0x90000000);
-	battable[0xa].batl = BATL(0xa0000000, BAT_I);
-	battable[0xa].batu = BATU(0xa0000000);
-	segment8_a_mapped = 1;
-#endif
-
 	/*
 	 * Now setup fixed bat registers
 	 *
@@ -262,12 +252,6 @@ where = 3;
 	/* DBAT0 used similar */
 	__asm__ volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
-
-#if 0
-	__asm__ volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
-		      :: "r"(battable[1].batl), "r"(battable[1].batu));
-	__asm__ volatile ("sync;isync");
-#endif
 
 	/*
 	 * Set up trap vectors
@@ -282,7 +266,7 @@ where = 3;
 			 * This one is (potentially) installed during autoconf
 			 */
 			break;
-#if 1
+
 		case EXC_DSI:
 			bcopy(&dsitrap, (void *)EXC_DSI, (size_t)&dsisize);
 			break;
@@ -292,7 +276,6 @@ where = 3;
 		case EXC_ALI:
 			bcopy(&alitrap, (void *)EXC_ALI, (size_t)&alisize);
 			break;
-#endif
 		case EXC_DECR:
 			bcopy(&decrint, (void *)EXC_DECR, (size_t)&decrsize);
 			break;
@@ -321,6 +304,7 @@ where = 3;
 
 	/* Grr, ALTIVEC_UNAVAIL is a vector not ~0xff aligned: 0x0f20 */
 	bcopy(&trapcode, (void *)0xf20, (size_t)&trapsize);
+
 	/*
 	 * since trapsize is > 0x20, we just overwrote the EXC_PERF handler
 	 * since we do not use it, we will "share" it with the EXC_VEC,

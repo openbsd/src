@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.19 2001/12/05 01:57:15 provos Exp $	*/
+/*	$OpenBSD: param.h,v 1.20 2002/03/13 18:27:36 drahn Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -122,9 +122,9 @@
  */
 #define	USER_SR		13
 #define	KERNEL_SR	14
-#define	KERNEL_SEGMENT	(0xfffff0 + KERNEL_SR)
-#define	EMPTY_SEGMENT	0xfffff0
-#define	USER_ADDR	((void *)(USER_SR << ADDR_SR_SHFT))
+#define	KERNEL_SEG0	0xfffff0
+#define	KERNEL_SEGMENT	(KERNEL_SEG0 + KERNEL_SR)
+#define	USER_ADDR	((void *)(USER_SR << ADDR_SR_SHIFT))
 
 /*
  * Some system constants
