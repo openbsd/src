@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.16 1997/10/03 20:58:06 deraadt Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.17 1997/10/03 21:36:07 deraadt Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -144,7 +144,7 @@ main(argc, argv)
 	if ((nheads == -1 || nsectors == -1) &&
 	    sysctl(mib, 3, &biosdev, &size, NULL, 0) != -1) {
 
-		if (biosdev & 0x80) {
+		if (biosdev == 0 || (biosdev & 0x80)) {
 			u_int geo;
 
 			mib[2] = BIOS_GEOMETRY;
@@ -158,7 +158,9 @@ main(argc, argv)
 			if (nsectors == -1)
 				nsectors = BIOSNSECTS(geo);
 		}
-	} else if (nheads == -1 || nsectors == -1)
+	}
+
+	if (nheads == -1 || nsectors == -1)
 		errx(1, "Unable to get BIOS geometry, must specify -h and -s");
 
 	/* Open and check raw disk device */
