@@ -1,7 +1,7 @@
-/*	$OpenBSD: readpassphrase.c,v 1.12 2001/12/15 05:41:00 millert Exp $	*/
+/*	$OpenBSD: readpassphrase.c,v 1.13 2002/05/09 16:40:35 millert Exp $	*/
 
 /*
- * Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 2000-2002 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.12 2001/12/15 05:41:00 millert Exp $";
+static const char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.13 2002/05/09 16:40:35 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -53,8 +53,8 @@ readpassphrase(const char *prompt, char *buf, size_t bufsiz, int flags)
 	int input, output, save_errno;
 	char ch, *p, *end;
 	struct termios term, oterm;
-	struct sigaction sa, saveint, savehup, savequit, saveterm;
-	struct sigaction savetstp, savettin, savettou;
+	struct sigaction sa, savealrm, saveint, savehup, savequit, saveterm;
+	struct sigaction savetstp, savettin, savettou, savepipe;
 
 	/* I suppose we could alloc on demand in this case (XXX). */
 	if (bufsiz == 0) {
@@ -63,6 +63,7 @@ readpassphrase(const char *prompt, char *buf, size_t bufsiz, int flags)
 	}
 
 restart:
+	signo = 0;
 	/*
 	 * Read and write to /dev/tty if available.  If not, read from
 	 * stdin and write to stderr unless a tty is required.
@@ -79,13 +80,15 @@ restart:
 	/*
 	 * Catch signals that would otherwise cause the user to end
 	 * up with echo turned off in the shell.  Don't worry about
-	 * things like SIGALRM and SIGPIPE for now.
+	 * things like SIGXCPU and SIGVTALRM for now.
 	 */
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;		/* don't restart system calls */
 	sa.sa_handler = handler;
-	(void)sigaction(SIGINT, &sa, &saveint);
+	(void)sigaction(SIGALRM, &sa, &savealrm);
 	(void)sigaction(SIGHUP, &sa, &savehup);
+	(void)sigaction(SIGINT, &sa, &saveint);
+	(void)sigaction(SIGPIPE, &sa, &savepipe);
 	(void)sigaction(SIGQUIT, &sa, &savequit);
 	(void)sigaction(SIGTERM, &sa, &saveterm);
 	(void)sigaction(SIGTSTP, &sa, &savetstp);
@@ -128,9 +131,11 @@ restart:
 	/* Restore old terminal settings and signals. */
 	if (memcmp(&term, &oterm, sizeof(term)) != 0)
 		(void)tcsetattr(input, TCSANOW|TCSASOFT, &oterm);
-	(void)sigaction(SIGINT, &saveint, NULL);
+	(void)sigaction(SIGALRM, &savealrm, NULL);
 	(void)sigaction(SIGHUP, &savehup, NULL);
+	(void)sigaction(SIGINT, &saveint, NULL);
 	(void)sigaction(SIGQUIT, &savequit, NULL);
+	(void)sigaction(SIGPIPE, &savepipe, NULL);
 	(void)sigaction(SIGTERM, &saveterm, NULL);
 	(void)sigaction(SIGTSTP, &savetstp, NULL);
 	(void)sigaction(SIGTTIN, &savettin, NULL);
@@ -143,12 +148,11 @@ restart:
 	 * now that we have restored the signal handlers.
 	 */
 	if (signo) {
-		kill(getpid(), signo); 
+		kill(getpid(), signo);
 		switch (signo) {
 		case SIGTSTP:
 		case SIGTTIN:
 		case SIGTTOU:
-			signo = 0;
 			goto restart;
 		}
 	}
