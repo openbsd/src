@@ -1,0 +1,32 @@
+.\" $OpenBSD: ze.4,v 1.1 2000/07/22 04:51:40 bjc Exp $
+.\"
+.Dd July 21, 2000
+.Dt ZE 4 vax
+.Os
+.Sh NAME
+.Nm ze
+.Nd SGEC ethernet device
+.Sh SYNOPSIS
+.Cd "ze* at ibus?                    " Pq "MicroVAX, VAX 4000"
+.Cd "ze* at vsbus0 csr 0x20008000    " Pq "VAXstation onboard"
+.Sh DESCRIPTION
+The
+.Nm
+interface provides access to the 10 Mb/s
+.Tn Ethernet
+network through the DEC Second Generation Ethernet Chip (SGEC) chipset.
+.Pp
+Different machine configurations have varying types of connectors.  The 
+following types can be found:
+.Pp
+.Bl -tag -width 10n
+.It AUI/DIX
+15-pin connector (10base5)
+.It BNC
+RG58 connector (10base2)
+.El
+.Sh SEE ALSO
+.Xr arp 4 ,
+.Xr ifconfig 4 ,
+.Xr ifmedia 4 , 
+.Xr le 4
