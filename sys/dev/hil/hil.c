@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.3 2003/02/15 23:42:48 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.4 2003/02/15 23:45:52 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -95,7 +95,7 @@ struct cfdriver hil_cd = {
 };
 
 void	hilconfig(struct hil_softc *);
-
+int	hilsubmatch(struct device *, void *, void *);
 void	hil_process_int(struct hil_softc *, u_int8_t, u_int8_t);
 void	polloff(struct hil_softc *);
 void	pollon(struct hil_softc *);
@@ -159,6 +159,19 @@ hildevprint(void *aux, const char *pnp)
 	}
 
 	return (UNCONF);
+}
+
+int
+hilsubmatch(struct device *parent, void *vcf, void *aux)
+{
+	struct hil_attach_args *ha = aux;
+	struct cfdata *cf = vcf;
+
+	if (cf->cf_loc[0] != -1 &&
+	    cf->cf_loc[0] != ha->ha_code)
+		return (0);
+
+	return ((*cf->cf_attach->ca_match)(parent, vcf, aux));
 }
 
 void
@@ -251,7 +264,8 @@ hil_attach_deferred(void *v)
 			ha.ha_infolen = len;
 			bcopy(sc->sc_cmdbuf, ha.ha_info, len);
 
-			config_found(&sc->sc_dev, &ha, hildevprint);
+			config_found_sm(&sc->sc_dev, &ha, hildevprint,
+			    hilsubmatch);
 		}
 	}
 

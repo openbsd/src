@@ -1,9 +1,9 @@
-#	$OpenBSD: files.hil,v 1.2 2003/02/12 01:43:31 miod Exp $
+#	$OpenBSD: files.hil,v 1.3 2003/02/15 23:45:52 miod Exp $
 #
 # Configuration file for machine-independent HIL code.
 #
 
-device	hil { }
+device	hil { code = -1 }
 file	dev/hil/hil.c		hil	needs-flag
 
 device	hilkbd: wskbddev
