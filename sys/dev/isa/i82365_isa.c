@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isa.c,v 1.5 1999/01/01 08:05:46 fgsch Exp $	*/
+/*	$OpenBSD: i82365_isa.c,v 1.6 1999/01/07 02:28:15 niklas Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -199,8 +199,18 @@ pcic_isa_attach(parent, self, aux)
 	sc->memt = memt;
 	sc->memh = memh;
 
+	printf("\n");
+
+	pcic_attach(sc);
+	pcic_isa_bus_width_probe (sc, iot, ioh, ia->ia_iobase, ia->ia_iosize);
+	pcic_attach_sockets(sc);
+
 	/*
-	 * allocate an irq.  it will be used by both controllers.  I could
+	 * We allocate the card event IRQ late because it is more important
+	 * that the cards will get their interrupt than that we get a
+	 * card event interrupt vector that works.
+	 *
+	 * Allocate an irq.  It will be used by both controllers.  I could
 	 * use two different interrupts, but interrupts are relatively
 	 * scarce, shareable, and for PCIC controllers, very infrequent.
 	 */
@@ -209,30 +219,23 @@ pcic_isa_attach(parent, self, aux)
 		int ist = IST_EDGE;
 
 		for (i = 0; i < npcic_isa_intr_list; i++)
-			if (isa_intr_check(ic, pcic_isa_intr_list[i], ist) == 2)
+			if (isa_intr_check(ic, pcic_isa_intr_list[i], ist) ==
+			    2)
 				goto found;
 		for (i = 0; i < npcic_isa_intr_list; i++)
-			if (isa_intr_check(ic, pcic_isa_intr_list[i], ist) == 1)
+			if (isa_intr_check(ic, pcic_isa_intr_list[i], ist) ==
+			    1)
 				goto found;
-		printf("\n%s: can't allocate interrupt\n", sc->dev.dv_xname);
+		printf("%s: no irq\n", sc->dev.dv_xname);
 		return;
 found:
 		sc->irq = pcic_isa_intr_list[i];
-		printf(" irq %d", sc->irq);
 	}
-
-	printf("\n");
-
-	pcic_attach(sc);
-
-	pcic_isa_bus_width_probe (sc, iot, ioh, ia->ia_iobase, ia->ia_iosize);
 
 	sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY,
 	    pcic_intr, sc, sc->dev.dv_xname);
-	if (sc->ih == NULL) {
-		printf("%s: can't establish interrupt\n", sc->dev.dv_xname);
-		return;
-	}
-
-	pcic_attach_sockets(sc);
+	if (sc->ih)
+		printf("%s: irq %d\n", sc->dev.dv_xname, sc->irq);
+	else
+		printf("%s: no irq\n", sc->dev.dv_xname);
 }
