@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751var.h,v 1.4 2000/03/16 20:33:48 deraadt Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.5 2000/03/22 03:57:57 jason Exp $	*/
 
 /*
  *  Invertex AEON / Hi/fn 7751 driver
@@ -39,18 +39,18 @@
 /*
  *  Length values for cryptography
  */
-#define HIFN_DES_KEY_LENGTH         8
-#define HIFN_3DES_KEY_LENGTH       24
-#define HIFN_MAX_CRYPT_KEY_LENGTH  HIFN_3DES_KEY_LENGTH
-#define HIFN_IV_LENGTH              8
+#define HIFN_DES_KEY_LENGTH		8
+#define HIFN_3DES_KEY_LENGTH		24
+#define HIFN_MAX_CRYPT_KEY_LENGTH	HIFN_3DES_KEY_LENGTH
+#define HIFN_IV_LENGTH			8
 
 /*
  *  Length values for authentication
  */
-#define HIFN_MAC_KEY_LENGTH   64
-#define HIFN_MD5_LENGTH       16
-#define HIFN_SHA1_LENGTH      20
-#define HIFN_MAC_TRUNC_LENGTH 12
+#define HIFN_MAC_KEY_LENGTH		64
+#define HIFN_MD5_LENGTH			16
+#define HIFN_SHA1_LENGTH		20
+#define HIFN_MAC_TRUNC_LENGTH		12
 
 #define MAX_SCATTER 10
 
@@ -64,27 +64,27 @@
  *  Flags is the bitwise "or" values for command configuration.  A single
  *  encrypt direction needs to be set:
  *
- *      HIFN_ENCODE or HIFN_DECODE
+ *	HIFN_ENCODE or HIFN_DECODE
  *
  *  To use cryptography, a single crypto algorithm must be included:
  *
- *      HIFN_CRYPT_3DES or HIFN_CRYPT_DES
+ *	HIFN_CRYPT_3DES or HIFN_CRYPT_DES
  *
  *  To use authentication is used, a single MAC algorithm must be included:
  *
- *      HIFN_MAC_MD5 or HIFN_MAC_SHA1
+ *	HIFN_MAC_MD5 or HIFN_MAC_SHA1
  *
  *  By default MD5 uses a 16 byte hash and SHA-1 uses a 20 byte hash.
  *  If the value below is set, hash values are truncated or assumed
  *  truncated to 12 bytes:
  *
- *      HIFN_MAC_TRUNC
+ *	HIFN_MAC_TRUNC
  *
  *  Keys for encryption and authentication can be sent as part of a command,
  *  or the last key value used with a particular session can be retrieved
  *  and used again if either of these flags are not specified.
  *
- *  HIFN_CRYPT_NEW_KEY, HIFN_MAC_NEW_KEY
+ *	HIFN_CRYPT_NEW_KEY, HIFN_MAC_NEW_KEY
  *
  *  Whether we block or not waiting for the dest data to be ready is
  *  determined by whether a callback function is given.  The other
@@ -92,15 +92,15 @@
  *  it is not okay to block while waiting for an open slot in the
  *  rings, include in the following value:
  *
- *      HIFN_DMA_FULL_NOBLOCK
+ *	HIFN_DMA_FULL_NOBLOCK
  *
  *  result_flags
  *  ------------
  *  result_flags is a bitwise "or" of result values.  The result_flags
  *  values should not be considered valid until:
  *
- *       callback routine NULL:  hifn_crypto() returns
- *       callback routine set:   callback routine called
+ *	callback routine NULL:  hifn_crypto() returns
+ *	callback routine set:   callback routine called
  *
  *  Right now there is only one result flag:  HIFN_MAC_BAD
  *  It's bit is set on decode operations using authentication when a
@@ -119,7 +119,9 @@
  *  Warning:  Using session numbers and multiboard at the same time
  *            is currently broken.
  *
- * mbuf: either fill in the mbuf pointer and npa=0 or
+ *  mbuf
+ *  ----
+ *  Either fill in the mbuf pointer and npa=0 or
  *	 fill packp[] and packl[] and set npa to > 0
  * 
  *  mac_header_skip
@@ -180,7 +182,7 @@
  */
 typedef struct hifn_command {
 	u_int	flags;
-	volatile u_int result_status;
+	volatile u_int result_flags;
 
 	u_short	session_num;
 
@@ -209,33 +211,33 @@ typedef struct hifn_command {
 /*
  *  Return values for hifn_crypto()
  */
-#define HIFN_CRYPTO_SUCCESS      0
-#define HIFN_CRYPTO_BAD_INPUT   -1
-#define HIFN_CRYPTO_RINGS_FULL  -2
+#define HIFN_CRYPTO_SUCCESS	0
+#define HIFN_CRYPTO_BAD_INPUT	(-1)
+#define HIFN_CRYPTO_RINGS_FULL	(-2)
 
 
 /*
  *  Defines for the "config" parameter of hifn_command_t
  */
-#define HIFN_ENCODE           1
-#define HIFN_DECODE           2
-#define HIFN_CRYPT_3DES       4
-#define HIFN_CRYPT_DES        8
-#define HIFN_MAC_MD5          16
-#define HIFN_MAC_SHA1         32
-#define HIFN_MAC_TRUNC        64
-#define HIFN_CRYPT_NEW_KEY    128
-#define HIFN_MAC_NEW_KEY      256
-#define HIFN_DMA_FULL_NOBLOCK 512
+#define HIFN_ENCODE		0x0001
+#define HIFN_DECODE		0x0002
+#define HIFN_CRYPT_3DES		0x0004
+#define HIFN_CRYPT_DES		0x0008
+#define HIFN_MAC_MD5		0x0010
+#define HIFN_MAC_SHA1		0x0020
+#define HIFN_MAC_TRUNC		0x0040
+#define HIFN_CRYPT_NEW_KEY	0x0080
+#define HIFN_MAC_NEW_KEY	0x0100
+#define HIFN_DMA_FULL_NOBLOCK	0x0200
 
-#define HIFN_USING_CRYPT(f) ((f) & (HIFN_CRYPT_3DES|HIFN_CRYPT_DES))
-#define HIFN_USING_MAC(f)   ((f) & (HIFN_MAC_MD5|HIFN_MAC_SHA1))
+#define HIFN_USING_CRYPT(f)	((f) & (HIFN_CRYPT_3DES|HIFN_CRYPT_DES))
+#define HIFN_USING_MAC(f)	((f) & (HIFN_MAC_MD5|HIFN_MAC_SHA1))
 
 /*
  *  Defines for the "result_status" parameter of hifn_command_t.
  */
-#define HIFN_MAC_BAD       1
-#define HIFN_MAC_OK(r)     !((r) & HIFN_MAC_BAD)
+#define HIFN_MAC_BAD		1
+#define HIFN_MAC_OK(r)		(!((r) & HIFN_MAC_BAD))
 
 #ifdef _KERNEL
 
@@ -271,6 +273,13 @@ typedef struct hifn_command {
  *
  *************************************************************************/
 int hifn_crypto __P((hifn_command_t *command));
+
+/*
+ * Convert back and forth from 'sid' to 'card' and 'session'
+ */
+#define HIFN_CARD(sid)		(((sid) & 0xf0000000) >> 28)
+#define HIFN_SESSION(sid)	((sid) & 0x000007ff)
+#define HIFN_SID(crd,ses)	(((crd) << 28) | ((ses) & 0x7ff))
 
 #endif /* _KERNEL */
 
