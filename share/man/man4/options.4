@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.98 2002/05/03 15:49:16 brad Exp $
+.\"	$OpenBSD: options.4,v 1.99 2002/05/07 08:15:53 miod Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -112,7 +112,7 @@ On those architectures that support it, this enables binary
 compatibility with
 .Em SunOS 4.x
 applications built for the same architecture.
-This option is supported on sparc and most m68k architectures.
+This option is supported on sparc and all m68k architectures.
 See
 .Xr compat_sunos 8 .
 .It Cd option COMPAT_ULTRIX
@@ -120,8 +120,7 @@ On those architectures that support it, this enables binary
 compatibility with
 .Tn Ultrix
 applications built for the same architecture.
-This option is available on the little-endian MIPS architectures like
-arc and pmax.
+This option is available on the vax architecture.
 See
 .Xr compat_ultrix 8 .
 .It Cd option COMPAT_FREEBSD
