@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.171 2002/09/06 21:30:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.172 2002/11/07 23:43:40 pvalchev Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -198,7 +198,7 @@ distribution-etc-root-var: distrib-dirs
 		${DESTDIR}/var/log/lpd-errs
 	${INSTALL} -c -o ${BINOWN} -g wheel -m 600 /dev/null \
 		${DESTDIR}/var/log/maillog
-	${INSTALL} -c -o ${BINOWN} -g wheel -m 640 /dev/null \
+	${INSTALL} -c -o ${BINOWN} -g wheel -m 644 /dev/null \
 		${DESTDIR}/var/log/messages
 	${INSTALL} -c -o ${BINOWN} -g wheel -m 600 /dev/null \
 		${DESTDIR}/var/log/secure
