@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.49 1999/01/02 00:02:53 niklas Exp $
+#	$OpenBSD: files.i386,v 1.50 1999/01/20 18:28:46 niklas Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -95,12 +95,6 @@ file	arch/i386/pci/pchb.c		pchb
 device	pcib:	pcibus
 attach	pcib at pci
 file	arch/i386/pci/pcib.c		pcib
-
-#
-# Pcmcia, before ISA (to define device stuff)
-#
-
-#include "../../../dev/pcmcia/files.pcmcia"
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI or ISA+PCMCIA drivers
@@ -278,3 +272,6 @@ file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp
 #
 include "dev/pcmcia/files.pcmcia"
 
+# i386-specific PCMCIA drivers
+attach	pccom at pcmcia with com_pcmcia
+file	dev/pcmcia/com_pcmcia.c			com_pcmcia
