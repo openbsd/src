@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.17 2004/03/01 17:04:07 henning Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.18 2004/03/05 22:21:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -393,6 +393,21 @@ attr_copy(struct attr_flags *t, struct attr_flags *s)
 }
 
 void
+attr_move(struct attr_flags *t, struct attr_flags *s)
+{
+	struct attr	*os;
+	/*
+	 * first copy the full struct, then move the optional attributes.
+	 */
+	memcpy(t, s, sizeof(struct attr_flags));
+	TAILQ_INIT(&t->others);
+	while ((os = TAILQ_FIRST(&s->others)) != NULL) {
+		TAILQ_REMOVE(&s->others, os, attr_l);
+		TAILQ_INSERT_TAIL(&t->others, os, attr_l);
+	}
+}
+
+void
 attr_free(struct attr_flags *a)
 {
 	/*
@@ -467,9 +482,12 @@ attr_optadd(struct attr_flags *attr, u_int8_t flags, u_int8_t type,
 
 	/* keep a sorted list */
 	TAILQ_FOREACH_REVERSE(p, &attr->others, attr_l, attr_list) {
-		if (type == p->type)
+		if (type == p->type) {
 			/* attribute only once allowed */
+			free(a->data);
+			free(a);
 			return (-1);
+		}
 		if (type > p->type) {
 			TAILQ_INSERT_AFTER(&attr->others, p, a, attr_l);
 			return (0);

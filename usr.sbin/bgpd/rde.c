@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.93 2004/03/02 19:29:01 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.94 2004/03/05 22:21:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -388,7 +388,7 @@ rde_update_dispatch(struct imsg *imsg)
 	u_int16_t		 nlri_len, size;
 	u_int8_t		 prefixlen, subtype;
 	struct bgpd_addr	 prefix;
-	struct attr_flags	 attrs;
+	struct attr_flags	 attrs, fattrs;
 
 	peer = peer_get(imsg->hdr.peerid);
 	if (peer == NULL)	/* unknown peer, cannot happen */
@@ -509,14 +509,17 @@ rde_update_dispatch(struct imsg *imsg)
 		p += pos;
 		nlri_len -= pos;
 
-		/* input filter */
 		/*
-		 * XXX we need to copy attrs befor calling the filter
-		 * but that stinks, because we copy it again in path_update.
+		 * We need to copy attrs befor calling the filter because
+		 * the filter may change the attributes.
 		 */
-		if (rde_filter(peer, &attrs, &prefix, prefixlen,
-		    DIR_IN) == ACTION_DENY)
+		attr_copy(&fattrs, &attrs);
+		/* input filter */
+		if (rde_filter(peer, &fattrs, &prefix, prefixlen,
+		    DIR_IN) == ACTION_DENY) {
+			attr_free(&fattrs);
 			continue;
+		}
 
 		/* max prefix checker */
 		if (peer->conf.max_prefix &&
@@ -525,11 +528,12 @@ rde_update_dispatch(struct imsg *imsg)
 			rde_update_err(peer, ERR_CEASE, ERR_CEASE_MAX_PREFIX,
 			    NULL, 0);
 			attr_free(&attrs);
+			attr_free(&fattrs);
 			return (-1);
 		}
 
-		rde_update_log("update", peer, &attrs, &prefix, prefixlen);
-		path_update(peer, &attrs, &prefix, prefixlen);
+		rde_update_log("update", peer, &fattrs, &prefix, prefixlen);
+		path_update(peer, &fattrs, &prefix, prefixlen);
 	}
 
 	/* need to free allocated attribute memory that is no longer used */

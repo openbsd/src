@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.33 2004/03/01 16:02:01 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.34 2004/03/05 22:21:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -226,6 +226,7 @@ u_char		*attr_error(u_char *, u_int16_t, struct attr_flags *,
 u_int8_t	 attr_missing(struct attr_flags *, int);
 int		 attr_compare(struct attr_flags *, struct attr_flags *);
 void		 attr_copy(struct attr_flags *, struct attr_flags *);
+void		 attr_move(struct attr_flags *, struct attr_flags *);
 void		 attr_free(struct attr_flags *);
 int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,
 		     u_int16_t);
