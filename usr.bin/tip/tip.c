@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.12 2001/04/12 19:21:43 millert Exp $	*/
+/*	$OpenBSD: tip.c,v 1.13 2001/09/09 19:30:49 millert Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tip.c,v 1.12 2001/04/12 19:21:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: tip.c,v 1.13 2001/09/09 19:30:49 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -68,7 +68,6 @@ int	disc = TTYDISC;		/* tip normally runs this way */
 void	intprompt();
 void	timeout();
 void	cleanup();
-char	*sname();
 char	PNbuf[256];			/* This limits the size of a number */
 
 int
@@ -85,7 +84,7 @@ main(argc, argv)
 	egid = getegid();
 	uid = getuid();
 	euid = geteuid();
-	if (equal(sname(argv[0]), "cu")) {
+	if (equal(__progname, "cu")) {
 		cumode = 1;
 		cumain(argc, argv);
 		goto cucommon;
@@ -96,7 +95,7 @@ main(argc, argv)
 		exit(1);
 	}
 	if (!isatty(0)) {
-		fprintf(stderr, "tip: must be interactive\n");
+		fprintf(stderr, "%s: must be interactive\n", __progname);
 		exit(1);
 	}
 
@@ -119,7 +118,8 @@ main(argc, argv)
 			break;
 
 		default:
-			fprintf(stderr, "tip: %s, unknown option\n", argv[1]);
+			fprintf(stderr, "%s: %s, unknown option\n", __progname,
+			    argv[1]);
 			break;
 		}
 	}
@@ -134,8 +134,8 @@ main(argc, argv)
 	 *	is private, we don't want 'ps' or 'w' to find it).
 	 */
 	if (strlen(system) > sizeof PNbuf - 1) {
-		fprintf(stderr, "tip: phone number too long (max = %d bytes)\n",
-			sizeof PNbuf - 1);
+		fprintf(stderr, "%s: phone number too long (max = %d bytes)\n",
+			__progname, sizeof(PNbuf) - 1);
 		exit(1);
 	}
 	strncpy( PNbuf, system, sizeof PNbuf - 1 );
@@ -181,7 +181,8 @@ notnumber:
 	vinit();				/* init variables */
 	setparity("none");			/* set the parity table */
 	if ((i = speed(number(value(BAUDRATE)))) == 0) {
-		printf("tip: bad baud rate %ld\n", number(value(BAUDRATE)));
+		printf("%s: bad baud rate %ld\n", __progname,
+		    number(value(BAUDRATE)));
 		daemon_uid();
 		(void)uu_unlock(uucplock);
 		exit(3);
@@ -559,22 +560,6 @@ ttysetup(speed)
 	if (boolean(value(TAND)))
 		cntrl.c_iflag |= IXOFF;
 	tcsetattr(FD, TCSAFLUSH, &cntrl);
-}
-
-/*
- * Return "simple" name from a file name,
- * strip leading directories.
- */
-char *
-sname(s)
-	register char *s;
-{
-	register char *p = s;
-
-	while (*s)
-		if (*s++ == '/')
-			p = s;
-	return (p);
 }
 
 static char partab[0200];

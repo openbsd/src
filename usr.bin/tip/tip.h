@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.10 2000/04/20 06:19:33 deraadt Exp $	*/
+/*	$OpenBSD: tip.h,v 1.11 2001/09/09 19:30:49 millert Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -265,8 +265,10 @@ char	ccc;			/* synchronization character */
 char	ch;			/* for tipout */
 char	*uucplock;		/* name of lock file for uucp's */
 
-int	odisc;				/* initial tty line discipline */
-extern	int disc;			/* current tty discpline */
+int	odisc;			/* initial tty line discipline */
+extern	int disc;		/* current tty discpline */
+
+extern	char *__progname;	/* program name */
 
 extern	char *ctrl();
 extern	char *vinterp();
