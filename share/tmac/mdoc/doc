@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc,v 1.12 2003/10/04 14:30:27 jmc Exp $
+.\"	$OpenBSD: doc,v 1.13 2003/10/04 14:41:26 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -737,20 +737,44 @@
 .if \\n(aC==0 \{\
 .	ie \\n(.$==0 \{\
 .		ie "\\*(n1"" .tm Usage: .Nm Name(s) ... \\*(Pu (#\\n(.c)
-.		el \&\\*(nM\\*(n1\fP\s0
+.		el \{\
+.			ds mN Nm
+.			ds A1 \\*(n1
+.			nr fV 1
+.			fV
+.		\}
 .	\}
 .	el \{\
 .		ds mN Nm
-.               ds A1 \\$1
-.               ds A2 \\$2
-.               ds A3 \\$3
-.               ds A4 \\$4
-.               ds A5 \\$5
-.               ds A6 \\$6
-.               ds A7 \\$7
-.               ds A8 \\$8
-.               ds A9 \\$9
-.               nr fV \\n(.$
+.		sW "\\$1"
+.		aT \\$1
+.		ie \\n(aT==3:\\n(aT==4 \{\
+.			ds A1 \\*(n1
+.			ds A2 \\$1
+.			ds A3 \\$2
+.			ds A4 \\$3
+.			ds A5 \\$4
+.			ds A6 \\$5
+.			ds A7 \\$6
+.			ds A8 \\$7
+.			ds A9 \\$8
+.			if !"\\$9"" .as A9 " \\$9
+.			nr fV \\n(.$
+.			if \\n(fV<9 .nr fV \\n(fV+1
+.		\}
+.		el \{\
+.			ie "\\$1"" .ds A1 \\*(n1
+.			el .ds A1 \\$1
+.			ds A2 \\$2
+.			ds A3 \\$3
+.			ds A4 \\$4
+.			ds A5 \\$5
+.			ds A6 \\$6
+.			ds A7 \\$7
+.			ds A8 \\$8
+.			ds A9 \\$9
+.			nr fV \\n(.$
+.		\}
 .               fV
 .       \}
 .\}
