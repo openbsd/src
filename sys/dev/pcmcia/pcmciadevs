@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.39 2000/07/22 02:58:18 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.40 2000/08/04 15:47:32 aaron Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -60,6 +60,7 @@ vendor SIMPLETECH		0x014d	Simple Technology
 vendor SYMBOL			0x014d	Symbol
 vendor LUCENT			0x0156	Lucent
 vendor AIRONET			0x015f	Aironet Wireless Communications
+vendor PSION			0x016c	Psion
 vendor COMPAQ2			0x0183	Compaq
 vendor KINGSTON			0x0186	Kingston
 vendor DAYNA			0x0194	Dayna
@@ -206,6 +207,9 @@ product PANASONIC KME		0x2604 Panasonic CD-R/RW Interface Card
 /* Proxim */
 product PROXIM ROAMABOUT_2400FH	0x1058 Digital RoamAbout 2400FH
 product PROXIM RANGELAN2_7401	0x1158 Proxim RangeLAN2 7401
+
+/* Psion */
+product PSION GOLDCARD		0x0020 Psion Goldcard
 
 /* Quatech */
 product QUATECH DSP_225		0x0008 Quatech Dual Serial Port
