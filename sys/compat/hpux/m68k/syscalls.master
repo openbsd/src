@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.10 2004/06/30 20:40:05 mickey Exp $
+	$OpenBSD: syscalls.master,v 1.1 2004/07/09 21:33:45 mickey Exp $
 ;	$NetBSD: syscalls.master,v 1.13 1997/03/16 03:48:04 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -40,7 +40,7 @@
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>
-#include <compat/hpux/hpux_syscallargs.h>
+#include <compat/hpux/m68k/hpux_syscallargs.h>
 
 #include <machine/hpux_machdep.h>
 
@@ -408,7 +408,7 @@
 			    int flags); }
 287	NOARGS		{ int sys_sendto(int s, caddr_t buf, size_t len, \
 			    int flags, caddr_t to, int tolen); }
-288	STD		{ int hpux_sys_setsockopt2(int s, int level, int name, \
+288	STD		{ int hpux_sys_setsockopt(int s, int level, int name, \
 			    caddr_t val, int valsize); }
 289	NOARGS		{ int sys_shutdown(int s, int how); }
 290	NOARGS		{ int sys_socket(int domain, int type, int protocol); }

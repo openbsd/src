@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_exec.c,v 1.15 2002/03/14 01:26:49 millert Exp $	*/
+/*	$OpenBSD: hpux_exec.c,v 1.1 2004/07/09 21:33:45 mickey Exp $	*/
 /*	$NetBSD: hpux_exec.c,v 1.8 1997/03/16 10:14:44 thorpej Exp $	*/
 
 /*
@@ -56,8 +56,8 @@
 
 #include <compat/hpux/hpux.h>
 #include <compat/hpux/hpux_util.h>
-#include <compat/hpux/hpux_syscall.h>
-#include <compat/hpux/hpux_syscallargs.h>
+#include <compat/hpux/m68k/hpux_syscall.h>
+#include <compat/hpux/m68k/hpux_syscallargs.h>
 
 #include <machine/hpux_machdep.h>
 
@@ -105,9 +105,6 @@ exec_hpux_makecmds(p, epp)
 	magic = HPUX_MAGIC(hpux_ep);
 	sysid = HPUX_SYSID(hpux_ep);
 
-	/*
-	 * XXX This will lose if there's ever an hp700 port.
-	 */
 	if (sysid != MID_HPUX)
 		return (ENOEXEC);
 

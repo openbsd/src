@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_file.c,v 1.14 2003/12/19 23:53:12 miod Exp $	*/
+/*	$OpenBSD: hpux_file.c,v 1.15 2004/07/09 21:33:44 mickey Exp $	*/
 /*	$NetBSD: hpux_file.c,v 1.5 1997/04/27 21:40:48 thorpej Exp $	*/
 
 /*
@@ -81,9 +81,9 @@
 
 #include <machine/hpux_machdep.h>
 
-static int	hpux_stat1(struct proc *, void *, register_t *, int);
-static void	bsd_to_hpux_stat(struct stat *, struct hpux_stat *);
-static void	bsd_to_hpux_ostat(struct stat *, struct hpux_ostat *);
+int	hpux_stat1(struct proc *, void *, register_t *, int);
+void	bsd_to_hpux_stat(struct stat *, struct hpux_stat *);
+void	bsd_to_hpux_ostat(struct stat *, struct hpux_ostat *);
 
 /*
  * HP-UX creat(2) system call.
@@ -444,7 +444,7 @@ hpux_sys_lstat(p, v, retval)
 /*
  * Do the meat of stat(2) and lstat(2).
  */
-static int
+int
 hpux_stat1(p, v, retval, dolstat)
 	struct proc *p;
 	void *v;
@@ -485,6 +485,7 @@ hpux_stat1(p, v, retval, dolstat)
 	return (copyout(&tmphst, SCARG(uap, sb), sizeof(struct hpux_stat)));
 }
 
+#ifndef __hppa__
 /*
  * The old HP-UX fstat(2) system call.
  */
@@ -561,9 +562,36 @@ hpux_sys_stat_6x(p, v, retval)
 }
 
 /*
+ * Convert a NetBSD stat structure to an old-style HP-UX stat structure.
+ */
+void
+bsd_to_hpux_ostat(sb, hsb)
+	struct stat *sb;
+	struct hpux_ostat *hsb;
+{
+
+	bzero(hsb, sizeof(struct hpux_ostat));
+	hsb->hst_dev = (u_short)sb->st_dev;
+	hsb->hst_ino = (u_short)sb->st_ino;
+	hsb->hst_mode = (u_short)sb->st_mode;
+	hsb->hst_nlink = (u_short)sb->st_nlink;
+	hsb->hst_uid = (u_short)sb->st_uid;
+	hsb->hst_gid = (u_short)sb->st_gid;
+	hsb->hst_rdev = (u_short)sb->st_rdev;
+	if (sb->st_size < (off_t)(((off_t)1) << 32))
+		hsb->hst_size = (int)sb->st_size;
+	else
+		hsb->hst_size = -2;
+	hsb->hst_atime = (int)sb->st_atime;
+	hsb->hst_mtime = (int)sb->st_mtime;
+	hsb->hst_ctime = (int)sb->st_ctime;
+}
+#endif
+
+/*
  * Convert a NetBSD stat structure to an HP-UX stat structure.
  */
-static void
+void
 bsd_to_hpux_stat(sb, hsb)
 	struct stat *sb;
 	struct hpux_stat *hsb;
@@ -592,32 +620,6 @@ bsd_to_hpux_stat(sb, hsb)
 	hsb->hst_ctime = (long)sb->st_ctime;
 	hsb->hst_blksize = (long)sb->st_blksize;
 	hsb->hst_blocks = (long)sb->st_blocks;
-}
-
-/*
- * Convert a NetBSD stat structure to an old-style HP-UX stat structure.
- */
-static void
-bsd_to_hpux_ostat(sb, hsb)
-	struct stat *sb;
-	struct hpux_ostat *hsb;
-{
-
-	bzero(hsb, sizeof(struct hpux_ostat));
-	hsb->hst_dev = (u_short)sb->st_dev;
-	hsb->hst_ino = (u_short)sb->st_ino;
-	hsb->hst_mode = (u_short)sb->st_mode;
-	hsb->hst_nlink = (u_short)sb->st_nlink;
-	hsb->hst_uid = (u_short)sb->st_uid;
-	hsb->hst_gid = (u_short)sb->st_gid;
-	hsb->hst_rdev = (u_short)sb->st_rdev;
-	if (sb->st_size < (off_t)(((off_t)1) << 32))
-		hsb->hst_size = (int)sb->st_size;
-	else
-		hsb->hst_size = -2;
-	hsb->hst_atime = (int)sb->st_atime;
-	hsb->hst_mtime = (int)sb->st_mtime;
-	hsb->hst_ctime = (int)sb->st_ctime;
 }
 
 /*

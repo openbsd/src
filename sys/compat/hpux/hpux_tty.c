@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_tty.c,v 1.9 2003/06/02 23:28:00 millert Exp $	*/
+/*	$OpenBSD: hpux_tty.c,v 1.10 2004/07/09 21:33:45 mickey Exp $	*/
 /*	$NetBSD: hpux_tty.c,v 1.14 1997/04/01 19:59:05 scottr Exp $	*/
 
 /*
@@ -472,6 +472,7 @@ hpuxtobsdbaud(hpux_speed)
 	return(hpuxtobsdbaudtab[hpux_speed & TIO_CBAUD]);
 }
 
+#ifndef __hppa__
 int
 hpux_sys_stty_6x(p, v, retval)
 	struct proc *p;
@@ -499,6 +500,7 @@ hpux_sys_gtty_6x(p, v, retval)
 
 	return (getsettty(p, SCARG(uap, fd), HPUXTIOCSETP, SCARG(uap, arg)));
 }
+#endif
 
 /*
  * Simplified version of ioctl() for use by

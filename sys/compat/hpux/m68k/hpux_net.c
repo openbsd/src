@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_net.c,v 1.10 2003/06/02 23:28:00 millert Exp $	*/
+/*	$OpenBSD: hpux_net.c,v 1.1 2004/07/09 21:33:45 mickey Exp $	*/
 /*	$NetBSD: hpux_net.c,v 1.14 1997/04/01 19:59:02 scottr Exp $	*/
 
 /*
@@ -60,16 +60,8 @@
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>
-#include <compat/hpux/hpux_syscallargs.h>
 #include <compat/hpux/hpux_util.h>
-
-struct hpux_sys_setsockopt_args {
-	syscallarg(int) s;
-	syscallarg(int) level;
-	syscallarg(int) name;
-	syscallarg(caddr_t) val;
-	syscallarg(int) valsize;
-};
+#include <compat/hpux/m68k/hpux_syscallargs.h>
 
 struct hpux_sys_getsockopt_args {
 	syscallarg(int) s;
@@ -79,7 +71,7 @@ struct hpux_sys_getsockopt_args {
 	syscallarg(int *) avalsize;
 };
 
-int	hpux_sys_setsockopt(struct proc *, void *, register_t *);
+int	hpux_sys_setsockopt2(struct proc *, void *, register_t *);
 int	hpux_sys_getsockopt(struct proc *, void *, register_t *);
 
 void	socksetsize(int, struct mbuf *);
@@ -106,7 +98,7 @@ struct hpuxtobsdipc {
 	{ compat_43_sys_send,		4 }, /* 3f4 */
 	{ sys_shutdown,			2 }, /* 3f5 */
 	{ compat_43_sys_getsockname,	3 }, /* 3f6 */
-	{ hpux_sys_setsockopt,		5 }, /* 3f7 */
+	{ hpux_sys_setsockopt2,		5 }, /* 3f7 */
 	{ sys_sendto,			6 }, /* 3f8 */
 	{ compat_43_sys_recvfrom,	6 }, /* 3f9 */
 	{ compat_43_sys_getpeername,	3 }, /* 3fa */
@@ -198,7 +190,7 @@ socksetsize(size, m)
 
 /* ARGSUSED */
 int
-hpux_sys_setsockopt(p, v, retval)
+hpux_sys_setsockopt2(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
@@ -243,12 +235,12 @@ bad:
 
 /* ARGSUSED */
 int
-hpux_sys_setsockopt2(p, v, retval)
+hpux_sys_setsockopt(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct hpux_sys_setsockopt2_args *uap = v;
+	struct hpux_sys_setsockopt_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;

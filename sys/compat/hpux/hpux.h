@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux.h,v 1.10 2004/07/01 20:35:35 mickey Exp $	*/
+/*	$OpenBSD: hpux.h,v 1.11 2004/07/09 21:33:44 mickey Exp $	*/
 /*	$NetBSD: hpux.h,v 1.11 1997/04/01 19:58:58 scottr Exp $	*/
 
 /*
@@ -148,51 +148,6 @@ struct	hpux_ostat {
 	int	hst_atime;
 	int	hst_mtime;
 	int	hst_ctime;
-};
-/*
- * Skeletal 6.X HP-UX user structure info for ptrace() mapping.
- * Yes, this is as bogus as it gets...
- */
-
-/* 6.0/6.2 offsets */
-#define ooHU_AROFF	0x004
-#define ooHU_TSOFF	0x092
-#define ooHU_EDOFF	0x91E
-#define ooHU_FPOFF	0xA66
-
-/* 6.5 offsets */
-#define oHU_AROFF	0x004
-#define oHU_TSOFF	0x0B2
-#define oHU_EDOFF	0x93A
-#define oHU_FPOFF	0xA86
-
-/* 7.X offsets */
-#define HU_AROFF	0x004
-#define HU_TSOFF	0x0B4
-#define HU_EDOFF	0x8C8
-#define HU_FPOFF	0xA28
-
-#define HU_PAD1	(HU_AROFF)
-#define HU_PAD2	(HU_TSOFF-HU_AROFF-4)
-#define HU_PAD3	(HU_EDOFF-HU_TSOFF-12)
-#define HU_PAD4	(HU_FPOFF-HU_EDOFF-sizeof(struct hpux_exec))
-
-struct hpux_user {
-	u_char	whocares1[HU_PAD1];	/* +0x000 */
-	int	*hpuxu_ar0;		/* +0x004 */
-	u_char	whocares2[HU_PAD2];	/* +0x008 */
-	int	hpuxu_tsize;		/* +0x0B2 */
-	int	hpuxu_dsize;		/* +0x0B6 */
-	int	hpuxu_ssize;		/* +0x0BA */
-	u_char	whocares3[HU_PAD3];	/* +0x0BE */
-	struct	hpux_exec hpuxu_exdata;	/* +0x93A */
-	u_char	whocares4[HU_PAD4];	/* +0x95E */
-	struct	hpux_fp {		/* +0xA66 */
-		int hpfp_save[54];
-		int hpfp_ctrl[3];
-		int hpfp_reg[24];
-	} hpuxu_fp;
-	short	hpuxu_dragon;		/* +0xBCA */
 };
 
 /* HP-UX compat file flags */
