@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.49 2001/09/15 23:13:40 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.50 2001/09/15 23:23:40 wilfried Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -171,11 +171,11 @@ struct icmpcodeent icmp6_code[] = {
 	
 
 struct icmptypeent *
-geticmptypebynumber(u_int8_t type, u_int8_t proto)
+geticmptypebynumber(u_int8_t type, u_int8_t af)
 {
 	unsigned i;
 
-	if (proto == IPPROTO_ICMP) {
+	if (af != AF_INET6) {
 		for(i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
 			if(type == icmp_type[i].type)
 				return (&icmp_type[i]);
@@ -191,11 +191,11 @@ geticmptypebynumber(u_int8_t type, u_int8_t proto)
 }
 
 struct icmptypeent *
-geticmptypebyname(char *w, u_int8_t proto)
+geticmptypebyname(char *w, u_int8_t af)
 {
 	unsigned i;
 
-	if (proto == IPPROTO_ICMP) {
+	if (af != AF_INET6) {
 		for(i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
 			if(!strcmp(w, icmp_type[i].name))
 				return (&icmp_type[i]);
@@ -211,11 +211,11 @@ geticmptypebyname(char *w, u_int8_t proto)
 }
 
 struct icmpcodeent *
-geticmpcodebynumber(u_int8_t type, u_int8_t code, u_int8_t proto)
+geticmpcodebynumber(u_int8_t type, u_int8_t code, u_int8_t af)
 {
 	unsigned i;
 
-	if (proto == IPPROTO_ICMP) {
+	if (af != AF_INET6) {
 		for(i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
 			if (type == icmp_code[i].type &&
 			    code == icmp_code[i].code)
@@ -233,11 +233,11 @@ geticmpcodebynumber(u_int8_t type, u_int8_t code, u_int8_t proto)
 }
 
 struct icmpcodeent *
-geticmpcodebyname(u_long type, char *w, u_int8_t proto)
+geticmpcodebyname(u_long type, char *w, u_int8_t af)
 {
 	unsigned i;
 
-	if (proto == IPPROTO_ICMP) {
+	if (af != AF_INET6) {
 		for(i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
 			if (type == icmp_code[i].type &&
 			    !strcmp(w, icmp_code[i].name))
@@ -619,13 +619,17 @@ print_rule(struct pf_rule *r)
 		else if (r->return_icmp) {
 			struct icmpcodeent *ic;
 
-			printf("return-icmp");
+			if (r->af != AF_INET6)
+				printf("return-icmp");
+			else
+				printf("return-icmp6");
 			ic = geticmpcodebynumber(r->return_icmp >> 8,
-			    r->return_icmp & 255, r->proto);
-			if ((ic == NULL) || (ic->type != ICMP_UNREACH))
-				printf("(%u,%u) ", r->return_icmp >> 8,
-				    r->return_icmp & 255);
-			else if (ic->code != ICMP_UNREACH_PORT)
+			    r->return_icmp & 255, r->af);
+
+			if (ic == NULL)
+				printf("(%u) ", r->return_icmp & 255);
+			else if ((r->af != AF_INET6 && ic->code != ICMP_UNREACH_PORT) ||
+			    (r->af == AF_INET6 && ic->code != ICMP6_DST_UNREACH_NOPORT))
 				printf("(%s) ", ic->name);
 			else
 				printf(" ");
@@ -703,15 +707,19 @@ print_rule(struct pf_rule *r)
 	if (r->type) {
 		struct icmptypeent *p;
 
-		p = geticmptypebynumber(r->type-1, r->proto);
-		if (p != NULL)
-			printf("icmp-type %s ", p->name);
+		p = geticmptypebynumber(r->type-1, r->af);
+		if (r->af != AF_INET6)
+			printf("icmp-type");
 		else
-			printf("icmp-type %u ", r->type-1);
+			printf("ipv6-icmp-type");
+		if (p != NULL)
+			printf(" %s ", p->name);
+		else
+			printf(" %u ", r->type-1);
 		if (r->code) {
 			struct icmpcodeent *p;
 
-			p = geticmpcodebynumber(r->type-1, r->code-1, r->proto);
+			p = geticmpcodebynumber(r->type-1, r->code-1, r->af);
 			if (p != NULL)
 				printf("code %s ", p->name);
 			else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.34 2001/09/15 21:49:19 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.35 2001/09/15 23:23:40 wilfried Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -242,22 +242,30 @@ blockspec	: /* empty */		{ $$.b2 = 0; $$.w = 0; }
 			$$.w = (ICMP6_DST_UNREACH << 8) |
 			    ICMP6_DST_UNREACH_NOPORT;
 		}
+		| RETURNICMP '(' NUMBER ')'	{
+			$$.w = (ICMP_UNREACH << 8) | $3;
+			$$.b2 = 0;
+		}
 		| RETURNICMP '(' STRING ')'	{
 			struct icmpcodeent *p;
 
 			if ((p = geticmpcodebyname(ICMP_UNREACH, $3,
-			    IPPROTO_ICMP)) == NULL) {
+			    AF_INET)) == NULL) {
 				yyerror("unknown icmp code %s", $3);
 				YYERROR;
 			}
 			$$.w = (p->type << 8) | p->code;
 			$$.b2 = 0;
 		}
+		| RETURNICMP6 '(' NUMBER ')'	{
+			$$.w = (ICMP6_DST_UNREACH << 8) | $3;
+			$$.b2 = 0;
+		}
 		| RETURNICMP6 '(' STRING ')'	{
 			struct icmpcodeent *p;
 
 			if ((p = geticmpcodebyname(ICMP6_DST_UNREACH, $3,
-			    IPPROTO_ICMPV6)) == NULL) {
+			    AF_INET6)) == NULL) {
 				yyerror("unknown icmp code %s", $3);
 				YYERROR;
 			}
@@ -559,7 +567,7 @@ icmp_item	: icmptype		{
 				err(1, "icmp_item: malloc");
 			$$->type = $1;
 			if ((p = geticmpcodebyname($1, $3,
-			    IPPROTO_ICMP)) == NULL) {
+			    AF_INET)) == NULL) {
 				yyerror("unknown icmp-code %s", $3);
 				YYERROR;
 			}
@@ -599,7 +607,7 @@ icmp6_item	: icmp6type		{
 				err(1, "icmp_item: malloc");
 			$$->type = $1;
 			if ((p = geticmpcodebyname($1, $3,
-			    IPPROTO_ICMPV6)) == NULL) {
+			    AF_INET6)) == NULL) {
 				yyerror("unknown icmp6-code %s", $3);
 				YYERROR;
 			}
@@ -612,7 +620,7 @@ icmp6_item	: icmp6type		{
 icmptype	: STRING			{
 			struct icmptypeent *p;
 
-			if ((p = geticmptypebyname($1, IPPROTO_ICMP)) == NULL) {
+			if ((p = geticmptypebyname($1, AF_INET)) == NULL) {
 				yyerror("unknown icmp-type %s", $1);
 				YYERROR;
 			}
@@ -630,8 +638,7 @@ icmptype	: STRING			{
 icmp6type	: STRING			{
 			struct icmptypeent *p;
 
-			if ((p = geticmptypebyname($1,
-			    IPPROTO_ICMPV6)) == NULL) {
+			if ((p = geticmptypebyname($1, AF_INET6)) == NULL) {
 				yyerror("unknown ipv6-icmp-type %s", $1);
 				YYERROR;
 			}
@@ -951,6 +958,12 @@ rule_consistent(struct pf_rule *r)
 	if ((r->proto == IPPROTO_ICMP && r->af == AF_INET6) ||
 	    (r->proto == IPPROTO_ICMPV6 && r->af == AF_INET)) {
 		yyerror("icmp version does not match address family");
+		problems++;
+	}
+	if (!(r->rule_flag & PFRULE_RETURNRST) && r->return_icmp &&
+	    ((r->af != AF_INET6  &&  (r->return_icmp>>8) != ICMP_UNREACH) ||
+	    (r->af == AF_INET6 && (r->return_icmp>>8) != ICMP6_DST_UNREACH))) {
+		yyerror("return-icmp version does not match address family");
 		problems++;
 	}
 	if (r->keep_state == PF_STATE_MODULATE && r->proto &&
