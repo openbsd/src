@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.h,v 1.3 1997/09/01 18:44:23 millert Exp $	*/
+/*	$OpenBSD: glob.h,v 1.4 1998/01/31 17:06:26 millert Exp $	*/
 /*	$NetBSD: glob.h,v 1.5 1994/10/26 00:55:56 cgd Exp $	*/
 
 /*
@@ -81,6 +81,7 @@ typedef struct {
 #define	GLOB_NOMAGIC	0x0200	/* GLOB_NOCHECK without magic chars (csh). */
 #define	GLOB_QUOTE	0x0400	/* Quote special chars with \. */
 #define	GLOB_TILDE	0x0800	/* Expand tilde names from the passwd file. */
+#define	GLOB_NOESCAPE	0x1000	/* Disable backslash escaping. */
 #endif
 
 /* Error values returned by glob(3) */

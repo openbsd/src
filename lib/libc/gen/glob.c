@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-static char rcsid[] = "$OpenBSD: glob.c,v 1.6 1997/09/01 18:40:33 millert Exp $";
+static char rcsid[] = "$OpenBSD: glob.c,v 1.7 1998/01/31 17:06:27 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -175,7 +175,10 @@ glob(pattern, flags, errfunc, pglob)
 
 	bufnext = patbuf;
 	bufend = bufnext + MAXPATHLEN;
-	if (flags & GLOB_QUOTE) {
+	if (flags & GLOB_NOESCAPE)
+	    while (bufnext < bufend && (c = *patnext++) != EOS)
+		    *bufnext++ = c;
+	else {
 		/* Protect the quoted characters. */
 		while (bufnext < bufend && (c = *patnext++) != EOS)
 			if (c == QUOTE) {
@@ -188,9 +191,6 @@ glob(pattern, flags, errfunc, pglob)
 			else
 				*bufnext++ = c;
 	}
-	else
-	    while (bufnext < bufend && (c = *patnext++) != EOS)
-		    *bufnext++ = c;
 	*bufnext = EOS;
 
 	if (flags & GLOB_BRACE)
