@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.10 2005/03/10 17:26:10 tedu Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.11 2005/03/15 03:47:58 tedu Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -86,9 +86,18 @@ void lf_free(struct lockf *);
  * We enforce a limit on locks by uid, so that a single user cannot
  * run the kernel out of memory.  For now, the limit is pretty coarse.
  * There is no limit on root.
+ *
+ * Splitting a lock will always succeed, regardless of current allocations.
+ * If you're slightly above the limit, we still have to permit an allocation
+ * so that the unlock can succeed.  If the unlocking causes too many splits,
+ * however, you're totally cutoff.
  */
 int maxlocksperuid = 1024;
 
+/*
+ * 3 options for allowfail.
+ * 0 - always allocate.  1 - cutoff at limit.  2 - cutoff at double limit.
+ */
 struct lockf *
 lf_alloc(uid_t uid, int allowfail)
 {
@@ -96,13 +105,15 @@ lf_alloc(uid_t uid, int allowfail)
 	struct lockf *lock;
 
 	uip = uid_find(uid);
-	if (uid && allowfail && uip->ui_lockcnt > maxlocksperuid)
+	if (uid && allowfail && uip->ui_lockcnt >
+	    (allowfail == 1 ? maxlocksperuid : (maxlocksperuid * 2)))
 		return (NULL);
 	uip->ui_lockcnt++;
 	lock = pool_get(&lockfpool, PR_WAITOK);
 	lock->lf_uid = uid;
 	return (lock);
 }
+
 void
 lf_free(struct lockf *lock)
 {
@@ -175,7 +186,7 @@ lf_advlock(head, size, id, op, fl, flags)
 	/*
 	 * Create the lockf structure.
 	 */
-	lock = lf_alloc(p->p_ucred->cr_uid, op != F_UNLCK);
+	lock = lf_alloc(p->p_ucred->cr_uid, op != F_UNLCK ? 1 : 2);
 	if (!lock)
 		return (ENOMEM);
 	lock->lf_start = start;
