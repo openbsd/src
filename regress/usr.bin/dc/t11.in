@@ -1,0 +1,8 @@
+[[IF]p]sa
+[[ELSE]p]sb
+0 1<aeb
+1 0>aeb
+0 0=aeb
+0 1=aeb
+1 0!=aeb
+0 0!=aeb
