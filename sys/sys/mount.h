@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.33 2000/02/07 04:52:11 assar Exp $	*/
+/*	$OpenBSD: mount.h,v 1.34 2000/02/09 10:29:56 assar Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -557,6 +557,10 @@ int	vfs_unregister __P((struct vfsconf *));
 #else /* _KERNEL */
 
 #include <sys/cdefs.h>
+
+#ifndef _SYS_STAT_H_
+struct stat;
+#endif
 
 __BEGIN_DECLS
 int	fstatfs __P((int, struct statfs *));
