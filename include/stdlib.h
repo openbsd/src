@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.8 1998/11/20 11:18:26 d Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.9 1999/02/25 21:40:15 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -129,16 +129,16 @@ void  *alloca __P((size_t));
 #endif /* __GNUC__ */ 
 
 char	*getbsize __P((int *, long *));
-char	*cgetcap __P((char *, char *, int));
+char	*cgetcap __P((char *, const char *, int));
 int	 cgetclose __P((void));
-int	 cgetent __P((char **, char **, char *));
+int	 cgetent __P((char **, char **, const char *));
 int	 cgetfirst __P((char **, char **));
-int	 cgetmatch __P((char *, char *));
+int	 cgetmatch __P((char *, const char *));
 int	 cgetnext __P((char **, char **));
-int	 cgetnum __P((char *, char *, long *));
-int	 cgetset __P((char *));
-int	 cgetstr __P((char *, char *, char **));
-int	 cgetustr __P((char *, char *, char **));
+int	 cgetnum __P((char *, const char *, long *));
+int	 cgetset __P((const char *));
+int	 cgetstr __P((char *, const char *, char **));
+int	 cgetustr __P((char *, const char *, char **));
 
 int	 daemon __P((int, int));
 char	*devname __P((int, int));

@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getcap.c,v 1.15 1998/08/14 21:39:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: getcap.c,v 1.16 1999/02/25 21:40:17 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -64,9 +64,9 @@ static size_t	 topreclen;	/* toprec length */
 static char	*toprec;	/* Additional record specified by cgetset() */
 static int	 gottoprec;	/* Flag indicating retrieval of toprecord */
 
-static int	cdbget __P((DB *, char **, char *));
-static int 	getent __P((char **, u_int *, char **, int, char *, int, char *));
-static int	nfcmp __P((char *, char *));
+static int	cdbget __P((DB *, char **, const char *));
+static int 	getent __P((char **, u_int *, char **, int, const char *, int, char *));
+static int	nfcmp __P((const char *, char *));
 
 /*
  * Cgetset() allows the addition of a user specified buffer to be added
@@ -75,7 +75,7 @@ static int	nfcmp __P((char *, char *));
  */
 int
 cgetset(ent)
-	char *ent;
+	const char *ent;
 {
 	if (ent == NULL) {
 		if (toprec)
@@ -108,10 +108,12 @@ cgetset(ent)
  */
 char *
 cgetcap(buf, cap, type)
-	char *buf, *cap;
+	char *buf;
+	const char *cap;
 	int type;
 {
-	register char *bp, *cp;
+	register char *bp;
+	register const char *cp;
 
 	bp = buf;
 	for (;;) {
@@ -160,7 +162,8 @@ cgetcap(buf, cap, type)
  */
 int
 cgetent(buf, db_array, name)
-	char **buf, **db_array, *name;
+	char **buf, **db_array;
+	const char *name;
 {
 	u_int dummy;
 
@@ -187,7 +190,8 @@ cgetent(buf, db_array, name)
  */
 static int
 getent(cap, len, db_array, fd, name, depth, nfield)
-	char **cap, **db_array, *name, *nfield;
+	char **cap, **db_array, *nfield;
+	const char *name;
 	u_int *len;
 	int fd, depth;
 {
@@ -558,11 +562,12 @@ tc_exp:	{
 static int
 cdbget(capdbp, bp, name)
 	DB *capdbp;
-	char **bp, *name;
+	char **bp;
+	const char *name;
 {
 	DBT key, data;
 
-	key.data = name;
+	key.data = (void *)name;
 	key.size = strlen(name);
 
 	for (;;) {
@@ -592,9 +597,11 @@ cdbget(capdbp, bp, name)
  */
 int
 cgetmatch(buf, name)
-	char *buf, *name;
+	char *buf;
+	const char *name;
 {
-	register char *np, *bp;
+	register char *bp;
+	register const char *np;
 
 	/*
 	 * Start search at beginning of record.
@@ -792,7 +799,8 @@ cgetnext(bp, db_array)
  */
 int
 cgetstr(buf, cap, str)
-	char *buf, *cap;
+	char *buf;
+	const char *cap;
 	char **str;
 {
 	register u_int m_room;
@@ -929,7 +937,8 @@ cgetstr(buf, cap, str)
  */
 int
 cgetustr(buf, cap, str)
-	char *buf, *cap, **str;
+	char *buf, **str;
+	const char *cap;
 {
 	register u_int m_room;
 	register char *bp, *mp;
@@ -1010,7 +1019,8 @@ cgetustr(buf, cap, str)
  */
 int
 cgetnum(buf, cap, num)
-	char *buf, *cap;
+	char *buf;
+	const char *cap;
 	long *num;
 {
 	register long n;
@@ -1074,7 +1084,8 @@ cgetnum(buf, cap, num)
  */
 static int
 nfcmp(nf, rec)
-	char *nf, *rec;
+	const char *nf;
+	char *rec;
 {
 	char *cp, tmp;
 	int ret;
