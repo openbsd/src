@@ -1,4 +1,4 @@
-.\"	$OpenBSD: telnetd.8,v 1.14 2000/06/29 13:40:58 aaron Exp $
+.\"	$OpenBSD: telnetd.8,v 1.15 2000/08/18 03:26:09 itojun Exp $
 .\"	$NetBSD: telnetd.8,v 1.8 1996/03/20 04:25:55 tls Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@
 protocol server
 .Sh SYNOPSIS
 .Nm telnetd
-.Op Fl Uhlkn
+.Op Fl Uhlkn46
 .Op Fl D Ar debugmode
 .Op Fl I Ns Ar initid
 .Op Fl S Ar tos
@@ -304,6 +304,19 @@ authentication, and
 can be used to temporarily disable
 a specific authentication type without having to recompile
 .Nm telnetd .
+.It Fl 4
+.It Fl 6
+Specifies address family to be used on
+.Fl debug
+mode.
+During normal operation
+.Po
+called from
+.Xr inetd 8
+.Pc
+.Nm
+will use the file descriptor passed from
+.Xr inetd 8 .
 .El
 .Pp
 .Nm
