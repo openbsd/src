@@ -1,4 +1,4 @@
-/* $OpenBSD: tcasic.c,v 1.11 2002/05/02 23:45:44 miod Exp $ */
+/* $OpenBSD: tcasic.c,v 1.12 2002/05/03 00:04:26 millert Exp $ */
 /* $NetBSD: tcasic.c,v 1.36 2001/08/23 01:16:52 nisimura Exp $ */
 
 /*
@@ -244,4 +244,12 @@ tc_fb_cnattach(tcaddr)
 }
 #endif /* if NWSDISPLAY > 0 */
 
+#else
+
+int
+tc_fb_cnattach(tcaddr)
+	tc_addr_t tcaddr;
+{
+		return (ENXIO);
+}
 #endif
