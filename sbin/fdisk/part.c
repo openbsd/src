@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.14 2000/01/08 04:51:16 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.15 2000/03/29 01:53:01 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -104,15 +104,24 @@ static struct part_type {
 void
 PRT_printall()
 {
-	int i;
+	int i, idrows;
+
+        idrows = ((sizeof(part_types)/sizeof(struct part_type))+3)/4;
 
 	printf("Choose from the following Partition id values:\n");
-	for (i = 0; i < sizeof(part_types)/sizeof(struct part_type); i++) {
-		printf("%02X %s%s", part_types[i].type,
-		    part_types[i].sname, (i+1) % 4 ? "   " : "\n");
+	for (i = 0; i < idrows; i++) {
+		printf("%02X %s   %02X %s   %02X %s"
+                      , part_types[i         ].type, part_types[i         ].sname
+                      , part_types[i+idrows  ].type, part_types[i+idrows  ].sname
+                      , part_types[i+idrows*2].type, part_types[i+idrows*2].sname
+                      );
+                if ((i+idrows*3) < (sizeof(part_types)/sizeof(struct part_type))) {
+		       printf("   %02X %s\n"
+                             , part_types[i+idrows*3].type, part_types[i+idrows*3].sname );
+                }
+		else
+		        printf( "\n" );
 	}
-	if (i % 4)
-		printf("\n");
 }
 
 char *
