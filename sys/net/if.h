@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.45 2003/12/03 13:27:36 markus Exp $	*/
+/*	$OpenBSD: if.h,v 1.46 2003/12/08 09:09:03 markus Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -94,6 +94,15 @@ struct if_clone {
 
 #define	IF_CLONE_INITIALIZER(name, create, destroy)			\
 	{ { 0 }, name, sizeof(name) - 1, create, destroy }
+
+/*
+ * Structure used to query names of interface cloners.
+ */
+struct if_clonereq {
+	int	ifcr_total;		/* total cloners (out) */
+	int	ifcr_count;		/* room for this many in user buffer */
+	char	*ifcr_buffer;		/* buffer for cloner names */
+};
 
 /*
  * Structure defining statistics and other data kept regarding a network

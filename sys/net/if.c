@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.75 2003/12/03 13:27:36 markus Exp $	*/
+/*	$OpenBSD: if.c,v 1.76 2003/12/08 09:09:03 markus Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -122,6 +122,7 @@ int	if_detached_ioctl(struct ifnet *, u_long, caddr_t);
 int	if_detached_init(struct ifnet *);
 void	if_detached_watchdog(struct ifnet *);
 
+int	if_clone_list(struct if_clonereq *);
 struct if_clone	*if_clone_lookup(const char *, int *);
 
 LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
@@ -704,6 +705,40 @@ if_clone_detach(ifc)
 }
 
 /*
+ * Provide list of interface cloners to userspace.
+ */
+int
+if_clone_list(ifcr)
+	struct if_clonereq *ifcr;
+{
+	char outbuf[IFNAMSIZ], *dst;
+	struct if_clone *ifc;
+	int count, error = 0;
+
+	ifcr->ifcr_total = if_cloners_count;
+	if ((dst = ifcr->ifcr_buffer) == NULL) {
+		/* Just asking how many there are. */
+		return (0);
+	}
+
+	if (ifcr->ifcr_count < 0)
+		return (EINVAL);
+
+	count = (if_cloners_count < ifcr->ifcr_count) ?
+	    if_cloners_count : ifcr->ifcr_count;
+
+	for (ifc = LIST_FIRST(&if_cloners); ifc != NULL && count != 0;
+	     ifc = LIST_NEXT(ifc, ifc_list), count--, dst += IFNAMSIZ) {
+		strlcpy(outbuf, ifc->ifc_name, IFNAMSIZ);
+		error = copyout(outbuf, dst, IFNAMSIZ);
+		if (error)
+			break;
+	}
+
+	return (error);
+}
+
+/*
  * Locate an interface based on a complete address.
  */
 /*ARGSUSED*/
@@ -1024,6 +1059,8 @@ ifioctl(so, cmd, data, p)
 		return ((cmd == SIOCIFCREATE) ?
 			if_clone_create(ifr->ifr_name) :
 			if_clone_destroy(ifr->ifr_name));
+	case SIOCIFGCLONERS:
+		return (if_clone_list((struct if_clonereq *)data));
 	}
 
 	ifp = ifunit(ifr->ifr_name);

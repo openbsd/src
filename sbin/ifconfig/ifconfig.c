@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.85 2003/12/07 15:30:24 markus Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.86 2003/12/08 09:09:03 markus Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.85 2003/12/07 15:30:24 markus Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.86 2003/12/08 09:09:03 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -328,6 +328,7 @@ void	usage(void);
 const char *get_string(const char *, const char *, u_int8_t *, int *);
 void	print_string(const u_int8_t *, int);
 char	*sec2str(time_t);
+void	list_cloners(void);
 
 const char *get_media_type_string(int);
 const char *get_media_subtype_string(int);
@@ -403,6 +404,7 @@ main(int argc, char *argv[])
 	const struct afswtch *rafp = NULL;
 	int aflag = 0;
 	int ifaliases = 0;
+	int Cflag = 0;
 	int i;
 
 	if (argc < 2)
@@ -426,6 +428,8 @@ main(int argc, char *argv[])
 		if (argc < 1)
 			usage();
 		(void) strlcpy(name, *argv, sizeof(name));
+	} else if (!strcmp(*argv, "-C")) {
+		Cflag = 1;
 	} else
 		(void) strlcpy(name, *argv, sizeof(name));
 	argc--, argv++;
@@ -437,6 +441,12 @@ main(int argc, char *argv[])
 			}
 		rafp = afp;
 		af = ifr.ifr_addr.sa_family = rafp->af_af;
+	}
+	if (Cflag) {
+		if (argc > 0 || mflag || aflag)
+			usage();
+		list_cloners();
+		exit(0);
 	}
 	if (aflag) {
 		if (argc > 0)
@@ -794,6 +804,47 @@ clone_destroy(const char *addr, int param)
 	(void) strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCIFDESTROY, &ifr) == -1)
 		err(1, "SIOCIFDESTROY");
+}
+
+void
+list_cloners(void)
+{
+	struct if_clonereq ifcr;
+	char *cp, *buf;
+	int idx;
+
+	memset(&ifcr, 0, sizeof(ifcr));
+
+	getsock(AF_INET);
+
+	if (ioctl(s, SIOCIFGCLONERS, &ifcr) == -1)
+		err(1, "SIOCIFGCLONERS for count");
+
+	buf = malloc(ifcr.ifcr_total * IFNAMSIZ);
+	if (buf == NULL)
+		err(1, "unable to allocate cloner name buffer");
+
+	ifcr.ifcr_count = ifcr.ifcr_total;
+	ifcr.ifcr_buffer = buf;
+
+	if (ioctl(s, SIOCIFGCLONERS, &ifcr) == -1)
+		err(1, "SIOCIFGCLONERS for names");
+
+	/*
+	 * In case some disappeared in the mean time, clamp it down.
+	 */
+	if (ifcr.ifcr_count > ifcr.ifcr_total)
+		ifcr.ifcr_count = ifcr.ifcr_total;
+
+	for (cp = buf, idx = 0; idx < ifcr.ifcr_count; idx++, cp += IFNAMSIZ) {
+		if (idx > 0)
+			putchar(' ');
+		printf("%s", cp);
+	}
+
+	putchar('\n');
+	free(buf);
+	return;
 }
 
 #define RIDADDR 0
@@ -2542,6 +2593,7 @@ usage(void)
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
 		"       ifconfig [-a | -A | -am | -Am] [ af ]\n"
 		"       ifconfig -m interface [af]\n"
+		"       ifconfig -C\n"
 		"       ifconfig interface create\n"
 		"       ifconfig interface destroy\n");
 	exit(1);

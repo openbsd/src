@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.73 2003/12/06 23:10:19 deraadt Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.74 2003/12/08 09:09:03 markus Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -71,6 +71,8 @@
 .Nm ifconfig
 .Ar interface
 .Cm destroy
+.Nm ifconfig
+.Fl C
 .Nm ifconfig
 .Op Fl a | am
 .Op Ar address_family
@@ -593,6 +595,14 @@ If
 .Fl m
 followed by an interface name is specified, then the media information
 for that interface will be printed.
+.Pp
+The
+.Fl C
+option causes
+.Nm
+to print the names of all network pseudo-devices that
+can be created dynamically at runtime using
+.Cm ifconfig create .
 .Pp
 Only the superuser may modify the configuration of a network interface.
 .Sh EXAMPLES
