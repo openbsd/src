@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 2004/08/11 15:13:35 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.4 2004/09/21 07:55:50 miod Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -215,6 +215,7 @@ cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 25: */
 #else
 	cdev_notdef(),			/* 51: */
 #endif
+	cdev_ptm_init(NPTY,ptm),	/* 52: pseudo-tty ptm device */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
