@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.8 2003/12/19 16:46:07 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.9 2003/12/19 20:20:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -49,6 +49,7 @@
 
 void	session_sighdlr(int);
 int	setup_listener(void);
+void	init_conf(struct bgpd_config *);
 void	init_peers(void);
 void	bgp_fsm(struct peer *, enum session_events);
 int	timer_due(time_t);
@@ -172,6 +173,7 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 	s2r_sock = pipe_s2r[0];
 	close(pipe_m2s[0]);
 	close(pipe_s2r[1]);
+	init_conf(conf);
 	init_imsg_buf();
 	init_peers();
 
@@ -289,6 +291,13 @@ session_main(struct bgpd_config *config, int pipe_m2s[2], int pipe_s2r[2])
 	close(sock);
 	logit(LOG_INFO, "session engine exiting");
 	_exit(0);
+}
+
+void
+init_conf(struct bgpd_config *c)
+{
+	if (!c->holdtime)
+		c->holdtime = INTERVAL_HOLD;
 }
 
 void
@@ -1261,10 +1270,9 @@ session_dispatch_imsg(int fd, int idx)
 				fatal("got IMSG_RECONF_DONE but no config", 0);
 			conf->as = nconf->as;
 			conf->holdtime = nconf->holdtime;
-			if (!conf->holdtime)
-				conf->holdtime = INTERVAL_HOLD;
 			conf->bgpid = nconf->bgpid;
 			conf->min_holdtime = nconf->min_holdtime;
+			init_conf(conf);
 			/* add new peers */
 			for (p = nconf->peers; p != NULL; p = next) {
 				next = p->next;
