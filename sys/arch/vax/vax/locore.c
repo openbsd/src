@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.c,v 1.25 2002/07/21 09:17:14 hugh Exp $	*/
+/*	$OpenBSD: locore.c,v 1.26 2002/12/15 01:51:13 miod Exp $	*/
 /*	$NetBSD: locore.c,v 1.43 2000/03/26 11:39:45 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -164,7 +164,7 @@ start(struct rpb *prpb)
 		dep_call = &ka48_calls;
 		switch((vax_siedata >> 8) & 0xFF) {
 		case VAX_STYP_45:
-			strcat(cpu_model, "3100/m{30,40}");
+			strcpy(cpu_model, "MicroVAX 3100/m{30,40}");
 			break;
 		case VAX_STYP_48:
 			strcpy(cpu_model, "VAXstation 4000/VLC");
