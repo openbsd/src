@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.4 2001/11/13 14:31:52 drahn Exp $	*/
+/*	$OpenBSD: reg.h,v 1.5 2001/12/17 03:19:01 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,11 +66,12 @@ struct vreg {
 	u_int32_t vrsave;
 };
 
-int process_read_regs __P((struct proc *p, struct reg *regs));
+#ifdef _KERNEL
 #ifdef PPC_VECTOR_SUPPORTED
 void save_vec(struct proc *);
 void enable_vec(struct proc *);
 extern struct proc *ppc_vecproc;
 extern struct pool ppc_vecpl;
 #endif /* PPC_VECTOR_SUPPORTED */
+#endif /* _KERNEL */
 #endif /* !_POWERPC_REG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.28 2001/12/08 02:24:07 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.29 2001/12/17 03:19:01 drahn Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #include <sys/signalvar.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
+#include <sys/ptrace.h>
 
 #include <uvm/uvm_extern.h>
 
