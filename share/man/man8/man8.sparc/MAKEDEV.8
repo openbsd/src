@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.10 2002/01/12 15:58:23 jason Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.11 2002/04/08 21:40:30 miod Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -55,9 +55,9 @@ See
 for a more complete discussion of special files.
 .Pp
 .Nm MAKEDEV
-takes any number of device names as arguments,
-where the names are the common abbreviation for
-the device.  There are three special device names,
+takes any number of device names as arguments, where the names are
+the common abbreviation for the device.
+There are three special device names,
 .Ar all ,
 .Ar std
 and
@@ -65,31 +65,29 @@ and
 If
 given,
 .Ar all
-creates device files for all devices on
-Sparc.  If units are expected for a device
+creates device files for all devices on sparc.
+If units are expected for a device,
 .Nm MAKEDEV
-supplies the standard numbers.
+will supply the standard numbers.
 The
 .Ar std
-argument creates the standard devices for Sparc.
+argument creates only the standard devices for sparc.
 Finally
 .Ar local
-is for devices specific to the local site, and
-executes the shell file
+is for devices specific to the local site, and executes the shell file
 .Pa MAKEDEV.local .
 .Pp
-Sparc supports the following devices.
-Where a device name is followed by a hash
-sign ("#"), the hash sign must be replaced
-by a unit number.
+The sparc supports the following devices.
+Where a device name is followed by a hash sign ("#"), the hash sign
+must be replaced by a unit number.
 .Pp
 .Sy Pseudo\-names
 .Bl -tag -width indent -compact
 .It Ar all
-All known devices for Sparc.
+All known devices for sparc.
 .It Ar std
-The standard devices (console, drum, fd/*, klog, kmem, mem, null,
-stderr, stdin, stdout, tty, zero)
+The standard devices (console, drum, fd/*, klog, kmem, mem, null, stderr,
+stdin, stdout, tty, zero)
 .It Ar local
 Configuration specific devices
 .El

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.17 2002/01/12 15:58:23 jason Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.18 2002/04/08 21:40:29 miod Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -72,7 +72,7 @@
 .Sh SYNOPSIS
 .Nm MAKEDEV
 .Ar name
-.Ar ...
+.Op Ar ...
 .Sh DESCRIPTION
 The shell script
 .Nm MAKEDEV ,
@@ -86,25 +86,43 @@ for a more complete discussion of special files.
 .Nm MAKEDEV
 takes any number of device names as arguments, where the names are
 the common abbreviation for the device.
-There are two special devices,
+There are three special device names,
+.Ar all ,
 .Ar std
 and
 .Ar local .
-The former creates the standard devices for the architecture.
-The latter is for devices specific to the local site, and
-executes the shell file
+If
+given,
+.Ar all
+creates device files for all devices on the i386.
+If units are expected for a device,
+.Nm MAKEDEV
+will supply the standard numbers.
+The
+.Ar std
+argument creates only the standard devices for the i386.
+Finally
+.Ar local
+is for devices specific to the local site, and executes the shell file
 .Pa MAKEDEV.local .
 .Pp
 The i386 supports the following devices.
-Where a device name is followed by a hash sign (``#''), the hash sign
+Where a device name is followed by a hash sign ("#"), the hash sign
 must be replaced by a unit number.
 .Pp
-.Bl -tag -width XXXXXXXXXX
+.Sy Pseudo\-names
+.Bl -tag -width indent -compact
+.It Ar all
+All known devices for the i386.
 .It Ar std
-the standard devices (console, drum, fd/*, klog, kmem, mem, null,
-stderr, stdin, stdout, tty)
+The standard devices (console, drum, fd/*, klog, kmem, mem, null, stderr,
+stdin, stdout, tty, zero)
 .It Ar local
-configuration specific devices
+Configuration specific devices
+.El
+.Pp
+.Sy Device\-names
+.Bl -tag -width indent -compact
 .It Ar ttyC0
 pccons console or pcvt screen 0
 .It Ar ttyC#
@@ -175,9 +193,8 @@ Brooktree 848 driver
 .It Ar wdt#
 watchdog timer
 .El
-.Pp
 .Sh FILES
-.Bl -tag -width XXXX -compact
+.Bl -tag -width /dev -compact
 .It Pa /dev
 The special file directory.
 .El

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.8 2002/01/12 15:58:23 jason Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.9 2002/04/08 21:40:30 miod Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -41,14 +41,13 @@
 .Sh SYNOPSIS
 .Nm MAKEDEV
 .Ar name
-.Ar ...
+.Op Ar ...
 .Sh DESCRIPTION
 The shell script
 .Nm MAKEDEV ,
 found in the
 .Pa /dev
-directory, is used to create the common special
-files.
+directory, is used to create the common special files.
 See
 .Xr intro 4
 for a more complete discussion of special files.
@@ -58,38 +57,41 @@ takes any number of device names as arguments, where the names are
 the common abbreviation for the device.
 There are three special device names,
 .Ar all ,
-.Ar std ,
+.Ar std
 and
 .Ar local .
-.Ar All
-creates device files for all devices on the VAX. If units are expected for
-a device,
+If
+given,
+.Ar all
+creates device files for all devices on the vax.
+If units are expected for a device,
 .Nm MAKEDEV
-supplies the standard numbers. The
+will supply the standard numbers.
+The
 .Ar std
-argument creates the standard devices for the VAX.  Finally, the
+argument creates only the standard devices for the vax.
+Finally
 .Ar local
-argument is for devices specific to the local site, and executes the
-shell file
+is for devices specific to the local site, and executes the shell file
 .Pa MAKEDEV.local .
 .Pp
-The VAX supports the following devices.
-Where a device name is followed by a hash sign (``#''), the hash sign
+The vax supports the following devices.
+Where a device name is followed by a hash sign ("#"), the hash sign
 must be replaced by a unit number.
 .Pp
 .Sy Pseudo\-names
-.Bl -tag -width indent
+.Bl -tag -width indent -compact
 .It Ar all
-All known devices for the VAX.
+All known devices for the vax.
 .It Ar std
-The standard devices (console, crl, csa1, csa2, drum, fd/*, floppy,
-kUmem, klog, kmem, mem, null, stderr, stdin, stdout, tty, tu0, tu1, zero)
+The standard devices (console, drum, fd/*, klog, kmem, mem, null, stderr,
+stdin, stdout, tty, zero)
 .It Ar local
-Configuration\-specific devices
+Configuration specific devices
 .El
 .Pp
-.Sy Device names
-.Bl -tag -width indent
+.Sy Device\-names
+.Bl -tag -width indent -compact
 .It Ar ad#
 Unibus interface to data translation a/d converter
 .It Ar bpf#
@@ -173,9 +175,8 @@ Unibus Varian parallel interface
 .It Ar vp#
 Unibus Versatec parallel interface
 .El
-.Pp
 .Sh FILES
-.Bl -tag -width XXXX -compact
+.Bl -tag -width /dev -compact
 .It Pa /dev
 The special file directory.
 .El
