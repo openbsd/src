@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.50 1999/11/11 19:15:19 csapuntz Exp $	*/
+/*	$OpenBSD: cd.c,v 1.51 1999/11/12 05:52:58 angelos Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -66,7 +66,6 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/scsiio.h>
-#include <sys/dvdio.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/cd.h>
@@ -133,13 +132,13 @@ int	cd_read_toc __P((struct cd_softc *, int, int, void *,
 int	cd_get_parms __P((struct cd_softc *, int));
 int	cd_load_toc __P((struct cd_softc *, struct cd_toc *));
 
-int    dvd_auth __P((struct cd_softc *, dvd_authinfo *));
-int    dvd_read_physical __P((struct cd_softc *, dvd_struct *));
-int    dvd_read_copyright __P((struct cd_softc *, dvd_struct *));
-int    dvd_read_disckey __P((struct cd_softc *, dvd_struct *));
-int    dvd_read_bca __P((struct cd_softc *, dvd_struct *));
-int    dvd_read_manufact __P((struct cd_softc *, dvd_struct *));
-int    dvd_read_struct __P((struct cd_softc *, dvd_struct *));
+int    dvd_auth __P((struct cd_softc *, union dvd_authinfo *));
+int    dvd_read_physical __P((struct cd_softc *, union dvd_struct *));
+int    dvd_read_copyright __P((struct cd_softc *, union dvd_struct *));
+int    dvd_read_disckey __P((struct cd_softc *, union dvd_struct *));
+int    dvd_read_bca __P((struct cd_softc *, union dvd_struct *));
+int    dvd_read_manufact __P((struct cd_softc *, union dvd_struct *));
+int    dvd_read_struct __P((struct cd_softc *, union dvd_struct *));
 
 struct cfattach cd_ca = {
 	sizeof(struct cd_softc), cdmatch, cdattach
@@ -1139,10 +1138,10 @@ cdioctl(dev, cmd, addr, flag, p)
 	}
 
 	case DVD_AUTH:
-		return (dvd_auth(cd, (dvd_authinfo *)addr));
+		return (dvd_auth(cd, (union dvd_authinfo *)addr));
 
 	case DVD_READ_STRUCT:
-		return (dvd_read_struct(cd, (dvd_struct *)addr));
+		return (dvd_read_struct(cd, (union dvd_struct *)addr));
 	
 	default:
 		if (CDPART(dev) != RAW_PART)
@@ -1572,13 +1571,13 @@ cddump(dev, blkno, va, size)
 	return ENXIO;
 }
 
-#define	dvd_copy_key(dst, src)		bcopy((src), (dst), sizeof(dvd_key))
-#define	dvd_copy_challenge(dst, src)	bcopy((src), (dst), sizeof(dvd_challenge))
+#define	dvd_copy_key(dst, src)		bcopy((src), (dst), DVD_KEY_SIZE)
+#define	dvd_copy_challenge(dst, src)	bcopy((src), (dst), DVD_CHALLENGE_SIZE)
 
 int
 dvd_auth(cd, a)
 	struct cd_softc *cd;
-	dvd_authinfo *a;
+	union dvd_authinfo *a;
 {
 	struct scsi_generic cmd;
 	u_int8_t buf[20];
@@ -1694,7 +1693,7 @@ dvd_auth(cd, a)
 int
 dvd_read_physical(cd, s)
 	struct cd_softc *cd;
-	dvd_struct *s;
+	union dvd_struct *s;
 {
 	struct scsi_generic cmd;
 	u_int8_t buf[4 + 4 * 20], *bufp;
@@ -1736,7 +1735,7 @@ dvd_read_physical(cd, s)
 int
 dvd_read_copyright(cd, s)
 	struct cd_softc *cd;
-	dvd_struct *s;
+	union dvd_struct *s;
 {
 	struct scsi_generic cmd;
 	u_int8_t buf[8];
@@ -1761,7 +1760,7 @@ dvd_read_copyright(cd, s)
 int
 dvd_read_disckey(cd, s)
 	struct cd_softc *cd;
-	dvd_struct *s;
+	union dvd_struct *s;
 {
 	struct scsi_generic cmd;
 	u_int8_t buf[4 + 2048];
@@ -1785,7 +1784,7 @@ dvd_read_disckey(cd, s)
 int
 dvd_read_bca(cd, s)
 	struct cd_softc *cd;
-	dvd_struct *s;
+	union dvd_struct *s;
 {
 	struct scsi_generic cmd;
 	u_int8_t buf[4 + 188];
@@ -1811,7 +1810,7 @@ dvd_read_bca(cd, s)
 int
 dvd_read_manufact(cd, s)
 	struct cd_softc *cd;
-	dvd_struct *s;
+	union dvd_struct *s;
 {
 	struct scsi_generic cmd;
 	u_int8_t buf[4 + 2048];
@@ -1837,7 +1836,7 @@ dvd_read_manufact(cd, s)
 int
 dvd_read_struct(cd, s)
 	struct cd_softc *cd;
-	dvd_struct *s;
+	union dvd_struct *s;
 {
 
 	switch (s->type) {
