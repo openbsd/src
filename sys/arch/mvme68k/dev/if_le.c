@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.9 1996/06/11 10:08:26 deraadt Exp $ */
+/*	$OpenBSD: if_le.c,v 1.10 1996/08/20 05:17:08 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -72,7 +72,6 @@ struct cfattach le_ca = {
 
 hide void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
 hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
-hide void lehwinit __P((struct am7990_softc *));
 
 hide void
 lewrcsr(sc, port, val)
@@ -96,12 +95,6 @@ lerdcsr(sc, port)
 	ler1->ler1_rap = port;
 	val = ler1->ler1_rdp;
 	return (val);
-}
-
-hide void
-lehwinit(sc)
-	struct am7990_softc *sc;
-{
 }
 
 int
@@ -136,22 +129,15 @@ leattach(parent, self, aux)
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr(u_char *);
 
-	printf(" pri %d", pri);
-
 	/* Are we the boot device? */
 	if (ca->ca_paddr == bootaddr)
 		bootdv = self;
 
-	/* connect the interrupt */
-	lesc->sc_ih.ih_fn = am7990_intr;
-	lesc->sc_ih.ih_arg = sc;
-	lesc->sc_ih.ih_ipl = pri;
-	pccintr_establish(PCCV_LE, &lesc->sc_ih);
-
+	sc->sc_mem = etherbuf;
 	lesc->sc_r1 = (struct lereg1 *)ca->ca_vaddr;
 	sc->sc_conf3 = LE_C3_BSWP /*| LE_C3_ACON | LE_C3_BCON*/;
-	sc->sc_addr = (u_long)etherbuf;
-	sc->sc_memsize = MEMSIZE;
+	sc->sc_addr = kvtop(sc->sc_mem);
+	sc->sc_memsize = LEMEMSIZE;
 
 	myetheraddr(sc->sc_arpcom.ac_enaddr);
 
@@ -166,9 +152,14 @@ leattach(parent, self, aux)
 
 	sc->sc_rdcsr = lerdcsr;
 	sc->sc_wrcsr = lewrcsr;
-	sc->sc_hwinit = lehwinit;
+	sc->sc_hwinit = NULL;
 
 	am7990_config(sc);
 
+	/* connect the interrupt */
+	lesc->sc_ih.ih_fn = am7990_intr;
+	lesc->sc_ih.ih_arg = sc;
+	lesc->sc_ih.ih_ipl = pri;
+	pccintr_establish(PCCV_LE, &lesc->sc_ih);
 	((struct pccreg *)ca->ca_master)->pcc_leirq = pri | PCC_IRQ_IEN;
 }
