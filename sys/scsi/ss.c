@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.37 1999/05/11 23:25:43 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.38 1999/05/11 23:41:37 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -111,7 +111,11 @@ struct ss_quirk_inquiry_pattern {
 	struct quirkdata quirkdata;
 };
 
-struct  quirkdata ss_gen_quirks;
+struct  quirkdata ss_gen_quirks = {
+	"generic", 0, 40, 0, 0, 0,
+	{0, 0}, 0, 0, GENERIC_SCSI2,
+	NULL, NULL, NULL
+};
 
 void    ssstrategy __P((struct buf *));
 void    ssstart __P((void *));
