@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.40 2000/05/27 20:44:41 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.41 2000/05/28 02:23:30 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
 
 /*
@@ -478,7 +478,7 @@ again:
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
-			pg = uvm_pagealloc(NULL, 0, NULL);
+			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				      "buffer cache");
@@ -486,7 +486,8 @@ again:
 			pmap_kenter_pgs(curbuf, &pg, 1);
 #else
 			pmap_enter(kernel_map->pmap, curbuf,
-				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
+				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE,
+				   VM_PROT_READ|VM_PROT_WRITE);
 #endif
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
@@ -541,7 +542,7 @@ again:
 	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
 #if defined(UVM)
 	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
-				 VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE; NULL);
+				 VM_MBUF_SIZE, VM_MAP_INTRSAFE, FALSE, NULL);
 #else
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 	    VM_MBUF_SIZE, FALSE);
