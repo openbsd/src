@@ -1,4 +1,4 @@
-.\"	$OpenBSD: calendar.1,v 1.16 2001/09/27 18:19:20 mickey Exp $
+.\"	$OpenBSD: calendar.1,v 1.17 2001/10/11 20:10:30 mickey Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -99,8 +99,8 @@ To enforce special date calculation mode for Cyrillic calendars
 you should specify
 .Dq LANG=<local_name>
 and
-.Dq BODUN=Yes
-where <local_name> can be ru_RU.KOI8-R, uk_UA.KOI8-U or by_BY.KOI8-B
+.Dq BODUN=<bodun_prefix>
+where <local_name> can be ru_RU.KOI8-R, uk_UA.KOI8-U or by_BY.KOI8-B.
 .Pp
 Other lines should begin with a month and day.
 They may be entered in almost any format, either numeric or as character
