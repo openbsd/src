@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.19 2003/12/25 17:07:24 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.20 2003/12/25 19:24:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -56,6 +56,7 @@ pid_t			pid;
 
 #define	F_BGPD_INSERTED		0x0001
 #define F_KERNEL		0x0002
+#define	F_CONNECTED		0x0004
 
 int
 kroute_init(void)
@@ -299,6 +300,7 @@ kroute_fetchtable(void)
 		if ((kr = calloc(1, sizeof(struct kroute_node))) == NULL)
 			fatal(NULL, errno);
 
+		kr->flags = F_KERNEL;
 		kr->r.prefix = sa_in->sin_addr.s_addr;
 		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK]) !=
 		    NULL) {
@@ -310,10 +312,12 @@ kroute_fetchtable(void)
 			kr->r.prefixlen = prefixlen_classful(kr->r.prefix);
 
 		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_GATEWAY]) !=
-		    NULL)
-			kr->r.nexthop = sa_in->sin_addr.s_addr;
-
-		kr->flags = F_KERNEL;
+		    NULL) {
+			if (sa_in->sin_family == AF_INET)
+				kr->r.nexthop = sa_in->sin_addr.s_addr;
+			else if (sa_in->sin_family == AF_LINK)
+				kr->flags |= F_CONNECTED;
+		}
 
 		if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
 			logit(LOG_CRIT, "RB_INSERT failed!");
@@ -335,6 +339,7 @@ kroute_dispatch_msg(int fd)
 	struct sockaddr_in	*sa_in;
 	struct kroute_node	*kr, s;
 	in_addr_t		 nexthop;
+	int			 flags;
 
 	if ((n = read(fd, &buf, sizeof(buf))) == -1)
 		fatal("read error on routing socket", errno);
@@ -346,6 +351,8 @@ kroute_dispatch_msg(int fd)
 		rtm = (struct rt_msghdr *)next;
 		sa = (struct sockaddr *)(rtm + 1);
 		get_rtaddrs(rtm->rtm_addrs, sa, rti_info);
+		flags = F_KERNEL;
+		nexthop = 0;
 
 		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_DST]) == NULL)
 			continue;
@@ -370,10 +377,12 @@ kroute_dispatch_msg(int fd)
 			s.r.prefixlen = prefixlen_classful(s.r.prefix);
 
 		if ((sa_in = (struct sockaddr_in *)rti_info[RTAX_GATEWAY]) !=
-		    NULL)
-			nexthop = sa_in->sin_addr.s_addr;
-		else
-			nexthop = 0;
+		    NULL) {
+			if (sa_in->sin_family == AF_INET)
+				nexthop = sa_in->sin_addr.s_addr;
+			else if (sa_in->sin_family == AF_LINK)
+				flags |= F_CONNECTED;
+		}
 
 		switch (rtm->rtm_type) {
 		case RTM_ADD:
@@ -382,16 +391,18 @@ kroute_dispatch_msg(int fd)
 				fatal("nexthop is 0 in kroute_dispatch!", 0);
 
 			if ((kr = RB_FIND(kroute_tree, &krt, &s)) != NULL) {
-				if (kr->flags & F_KERNEL)
+				if (kr->flags & F_KERNEL) {
 					kr->r.nexthop = nexthop;
+					kr->flags = flags;
+				}
 			} else {
 				if ((kr = calloc(1,
-				   sizeof(struct kroute_node))) == NULL)
+				    sizeof(struct kroute_node))) == NULL)
 					fatal(NULL, errno);
 				kr->r.prefix = s.r.prefix;
 				kr->r.prefixlen = s.r.prefixlen;
 				kr->r.nexthop = nexthop;
-				kr->flags = F_KERNEL;
+				kr->flags = flags;
 
 				if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
 					logit(LOG_CRIT, "RB_INSERT failed!");
