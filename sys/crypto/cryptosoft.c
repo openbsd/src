@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.30 2002/03/01 02:50:02 provos Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.31 2002/03/05 15:59:41 markus Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -375,8 +375,8 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
  * Compute keyed-hash authenticator.
  */
 int
-swcr_authcompute(struct cryptodesc *crd, struct swcr_data *sw,
-    caddr_t buf, int outtype)
+swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
+    struct swcr_data *sw, caddr_t buf, int outtype)
 {
 	unsigned char aalg[AALG_MAX_RESULT_LEN];
 	struct auth_hash *axf;
@@ -424,10 +424,19 @@ swcr_authcompute(struct cryptodesc *crd, struct swcr_data *sw,
 		axf->Update(&ctx, sw->sw_octx, sw->sw_klen);
 		axf->Final(aalg, &ctx);
 		break;
+
+	case CRYPTO_MD5:
+	case CRYPTO_SHA1:
+		axf->Final(aalg, &ctx);
+		break;
 	}
 
 	/* Inject the authentication data */
-	COPYBACK(outtype, buf, crd->crd_inject, axf->authsize, aalg);
+	if (outtype == CRYPTO_BUF_MBUF)
+		COPYBACK(outtype, buf, crd->crd_inject, axf->authsize, aalg);
+	else
+		bcopy(aalg, crp->crp_mac, axf->authsize);
+	
 	return 0;
 }
 
@@ -679,6 +688,24 @@ swcr_newsession(u_int32_t *sid, struct cryptoini *cri)
 			(*swd)->sw_axf = axf;
 			break;
 
+		case CRYPTO_MD5:
+			axf = &auth_hash_md5;
+			goto auth3common;
+	
+		case CRYPTO_SHA1:
+			axf = &auth_hash_sha1;
+		auth3common:
+			(*swd)->sw_ictx = malloc(axf->ctxsize, M_CRYPTO_DATA,
+			    M_NOWAIT);
+			if ((*swd)->sw_ictx == NULL) {
+				swcr_freesession(i);
+				return ENOBUFS;
+			}
+	
+			axf->Init((*swd)->sw_ictx);
+			(*swd)->sw_axf = axf;
+			break;
+
 		case CRYPTO_DEFLATE_COMP:
 			cxf = &comp_algo_deflate;
 			(*swd)->sw_cxf = cxf;
@@ -762,6 +789,14 @@ swcr_freesession(u_int64_t tid)
 			}
 			break;
 
+		case CRYPTO_MD5:
+		case CRYPTO_SHA1:
+			axf = swd->sw_axf;
+
+			if (swd->sw_ictx)
+				free(swd->sw_ictx, M_CRYPTO_DATA);
+			break;
+
 		case CRYPTO_DEFLATE_COMP:
 			cxf = swd->sw_cxf;
 			break;
@@ -842,7 +877,9 @@ swcr_process(struct cryptop *crp)
 		case CRYPTO_RIPEMD160_HMAC:
 		case CRYPTO_MD5_KPDK:
 		case CRYPTO_SHA1_KPDK:
-			if ((crp->crp_etype = swcr_authcompute(crd, sw,
+		case CRYPTO_MD5:
+		case CRYPTO_SHA1:
+			if ((crp->crp_etype = swcr_authcompute(crp, crd, sw,
 			    crp->crp_buf, type)) != 0)
 				goto done;
 			break;
@@ -894,6 +931,10 @@ swcr_init(void)
 		crypto_register(swcr_id, CRYPTO_MD5_KPDK, 0, 0,
 		    NULL, NULL, NULL);
 		crypto_register(swcr_id, CRYPTO_SHA1_KPDK, 0, 0,
+		    NULL, NULL, NULL);
+		crypto_register(swcr_id, CRYPTO_MD5, 0, 0,
+		    NULL, NULL, NULL);
+		crypto_register(swcr_id, CRYPTO_SHA1, 0, 0,
 		    NULL, NULL, NULL);
 		crypto_register(swcr_id, CRYPTO_RIJNDAEL128_CBC, 0, 0,
 		    NULL, NULL, NULL);
