@@ -1,5 +1,5 @@
-/*	$OpenBSD: connection.h,v 1.1 1999/05/02 05:52:48 niklas Exp $	*/
-/*	$EOM: connection.h,v 1.1 1999/05/01 20:21:09 niklas Exp $	*/
+/*	$OpenBSD: connection.h,v 1.2 1999/06/02 06:32:23 niklas Exp $	*/
+/*	$EOM: connection.h,v 1.4 1999/05/28 13:53:22 ho Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -41,8 +41,14 @@
 #ifndef _CONNECTION_H_
 #define _CONNECTION_H_
 
+#include <sys/types.h>
+
 extern void connection_init (void);
+extern char *connection_passive_lookup_by_ids (u_int8_t *, u_int8_t *);
+extern void connection_reinit (void);
+extern void connection_report (void);
 extern int connection_setup (char *);
+extern int connection_record_passive (char *);
 extern void connection_teardown (char *);
 
 #endif /* _CONNECTION_H_ */
