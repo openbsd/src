@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.11 1996/12/17 03:46:36 dm Exp $	*/
+/*	$OpenBSD: mount.h,v 1.12 1996/12/24 20:14:35 dm Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -356,6 +356,9 @@ struct nfs_args3 {
 /*
  * NFS mount option flags
  */
+#ifndef _KERNEL
+#define	NFSMNT_RESVPORT		0x00000000  /* always use reserved ports */
+#endif /* !_KERNEL */
 #define	NFSMNT_SOFT		0x00000001  /* soft mount (hard is default) */
 #define	NFSMNT_WSIZE		0x00000002  /* set write size */
 #define	NFSMNT_RSIZE		0x00000004  /* set read size */
@@ -371,12 +374,17 @@ struct nfs_args3 {
 #define	NFSMNT_LEASETERM	0x00001000  /* set lease term (nqnfs) */
 #define	NFSMNT_READAHEAD	0x00002000  /* set read ahead */
 #define	NFSMNT_DEADTHRESH	0x00004000  /* set dead server retry thresh */
-#define	NFSMNT_RESVPORT		0x00008000  /* Allocate a reserved port */
+#ifdef _KERNEL /* Coming soon to a system call near you! */
+#define	NFSMNT_NOAC		0x00008000  /* disable attribute cache */
+#endif /* _KERNEL */
 #define	NFSMNT_RDIRPLUS		0x00010000  /* Use Readdirplus for V3 */
 #define	NFSMNT_READDIRSIZE	0x00020000  /* Set readdir size */
 
 /* Flags valid only in mount syscall arguments */
-#define NFSMNT_ACTIMES		0x00040000  /* Args contain attr cache times*/
+#define NFSMNT_ACREGMIN		0x00040000  /* acregmin field valid */
+#define NFSMNT_ACREGMAX 	0x00080000  /* acregmax field valid */
+#define NFSMNT_ACDIRMIN		0x00100000  /* acdirmin field valid */
+#define NFSMNT_ACDIRMAX		0x00200000  /* acdirmax field valid */
 
 /* Flags valid only in kernel */
 #define	NFSMNT_INTERNAL		0xfffc0000  /* Bits set internally */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.7 1996/07/03 07:10:33 deraadt Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.8 1996/12/24 20:14:29 dm Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -165,8 +165,10 @@ nfs_connect(nmp, rep)
 
 	/*
 	 * Some servers require that the client port be a reserved port number.
+	 * We always allocate a reserved port, as this prevents filehandle
+	 * disclosure through UDP port capture.
 	 */
-	if (saddr->sa_family == AF_INET && (nmp->nm_flag & NFSMNT_RESVPORT)) {
+	if (saddr->sa_family == AF_INET) {
 		MGET(m, M_WAIT, MT_SONAME);
 		sin = mtod(m, struct sockaddr_in *);
 		sin->sin_len = m->m_len = sizeof (struct sockaddr_in);
