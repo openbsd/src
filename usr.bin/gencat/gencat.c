@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencat.c,v 1.4 1996/06/26 05:33:40 deraadt Exp $	*/
+/*	$OpenBSD: gencat.c,v 1.5 1997/09/21 10:34:00 jdm Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -16,7 +16,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *        This product includes software developed by the NetBSD 
  *	  Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its 
@@ -70,6 +70,9 @@ up-to-date.  Many thanks.
 
 #define _NLS_PRIVATE
 
+/* ensure 8-bit cleanliness */
+#define ISSPACE(c) (isascii(c) && isspace(c))
+
 #include <sys/queue.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -84,7 +87,6 @@ extern void MCDelSet __P((int setId));
 extern void MCAddMsg __P((int msgId, const char *msg));
 extern void MCDelMsg __P((int msgId));
 extern void MCParse __P((int fd));
-extern void MCReadCat __P((int fd));
 extern void MCWriteCat __P((int fd));
 
 struct _msgT {
@@ -181,12 +183,6 @@ error(cptr, msg)
 }
 
 static void
-corrupt()
-{
-	error(NULL, "corrupt message catalog");
-}
-
-static void
 nomem()
 {
 	error(NULL, "out of memory");
@@ -270,11 +266,11 @@ static char *
 wskip(cptr)
 	char   *cptr;
 {
-	if (!*cptr || !isspace(*cptr)) {
+	if (!*cptr || !ISSPACE(*cptr)) {
 		warning(cptr, "expected a space");
 		return (cptr);
 	}
-	while (*cptr && isspace(*cptr))
+	while (*cptr && ISSPACE(*cptr))
 		++cptr;
 	return (cptr);
 }
@@ -283,11 +279,11 @@ static char *
 cskip(cptr)
 	char   *cptr;
 {
-	if (!*cptr || isspace(*cptr)) {
+	if (!*cptr || ISSPACE(*cptr)) {
 		warning(cptr, "wasn't expecting a space");
 		return (cptr);
 	}
-	while (*cptr && !isspace(*cptr))
+	while (*cptr && !ISSPACE(*cptr))
 		++cptr;
 	return (cptr);
 }
@@ -305,7 +301,7 @@ getmsg(fd, cptr, quote)
 
 	if (quote && *cptr == quote) {
 		++cptr;
-	} 
+	};
 
 	clen = strlen(cptr) + 1;
 	if (clen > msglen) {
@@ -321,8 +317,8 @@ getmsg(fd, cptr, quote)
 		if (quote && *cptr == quote) {
 			char   *tmp;
 			tmp = cptr + 1;
-			if (*tmp && (!isspace(*tmp) || *wskip(tmp))) {
-				warning(cptr, "unexpected quote character, ignoreing");
+			if (*tmp && (!ISSPACE(*tmp) || *wskip(tmp))) {
+				warning(cptr, "unexpected quote character, ignoring");
 				*tptr++ = *cptr++;
 			} else {
 				*cptr = '\0';
@@ -368,6 +364,19 @@ getmsg(fd, cptr, quote)
 					*tptr++ = '\\';
 					++cptr;
 					break;
+				case '"': 
+				case '\'':
+					/* 
+					 * While it isn't necessary to
+					 * escape ' and ", let's accept
+					 * them escaped and not complain.
+					 * (XPG4 states that '\' should be
+					 * ignored when not used in a
+					 * valid escape sequence)
+					 */
+					*tptr++ = '"';
+					++cptr;
+					break;
 				default:
 					if (isdigit(*cptr)) {
 						*tptr = 0;
@@ -381,7 +390,7 @@ getmsg(fd, cptr, quote)
 							++cptr;
 						}
 					} else {
-						warning(cptr, "unrecognized escape sequence");
+						warning(cptr, "unrecognized escape sequence; ignoring escape character");
 					}
 				}
 			} else {
@@ -427,7 +436,7 @@ MCParse(fd)
 					else
 						quote = *cptr;
 				}
-			} else if (isspace(*cptr)) {
+			} else if (ISSPACE(*cptr)) {
 				;
 			} else {
 				if (*cptr) {
@@ -451,89 +460,6 @@ MCParse(fd)
 			}
 		}
 	}
-}
-
-void
-MCReadCat(fd)
-	int     fd;
-{
-#if 0
-	MCHeaderT mcHead;
-	MCMsgT  mcMsg;
-	MCSetT  mcSet;
-	msgT   *msg;
-	setT   *set;
-	int     i;
-	char   *data;
-
-	/* XXX init sethead? */
-
-	if (read(fd, &mcHead, sizeof(mcHead)) != sizeof(mcHead))
-		corrupt();
-	if (strncmp(mcHead.magic, MCMagic, MCMagicLen) != 0)
-		corrupt();
-	if (mcHead.majorVer != MCMajorVer)
-		error(NULL, "unrecognized catalog version");
-	if ((mcHead.flags & MCGetByteOrder()) == 0)
-		error(NULL, "wrong byte order");
-
-	if (lseek(fd, mcHead.firstSet, SEEK_SET) == -1)
-		corrupt();
-
-	for (;;) {
-		if (read(fd, &mcSet, sizeof(mcSet)) != sizeof(mcSet))
-			corrupt();
-		if (mcSet.invalid)
-			continue;
-
-		set = xmalloc(sizeof(setT));
-		memset(set, '\0', sizeof(*set));
-		if (cat->first) {
-			cat->last->next = set;
-			set->prev = cat->last;
-			cat->last = set;
-		} else
-			cat->first = cat->last = set;
-
-		set->setId = mcSet.setId;
-
-		/* Get the data */
-		if (mcSet.dataLen) {
-			data = xmalloc(mcSet.dataLen);
-			if (lseek(fd, mcSet.data.off, SEEK_SET) == -1)
-				corrupt();
-			if (read(fd, data, mcSet.dataLen) != mcSet.dataLen)
-				corrupt();
-			if (lseek(fd, mcSet.u.firstMsg, SEEK_SET) == -1)
-				corrupt();
-
-			for (i = 0; i < mcSet.numMsgs; ++i) {
-				if (read(fd, &mcMsg, sizeof(mcMsg)) != sizeof(mcMsg))
-					corrupt();
-				if (mcMsg.invalid) {
-					--i;
-					continue;
-				}
-				msg = xmalloc(sizeof(msgT));
-				memset(msg, '\0', sizeof(*msg));
-				if (set->first) {
-					set->last->next = msg;
-					msg->prev = set->last;
-					set->last = msg;
-				} else
-					set->first = set->last = msg;
-
-				msg->msgId = mcMsg.msgId;
-				msg->str = xstrdup((char *) (data + mcMsg.msg.off));
-			}
-			free(data);
-		}
-		if (!mcSet.nextSet)
-			break;
-		if (lseek(fd, mcSet.nextSet, SEEK_SET) == -1)
-			corrupt();
-	}
-#endif
 }
 
 /*
@@ -709,7 +635,7 @@ MCAddMsg(msgId, str)
 #if 0
 	/* XXX */
 	if (msgId > NL_SETMAX) {
-		error(NULL, "msgID %d exceeds limit (%d)");
+		error(NULL, "msgId %d exceeds limit (%d)");
 		/* NOTREACHED */
 	}
 #endif
@@ -750,7 +676,7 @@ MCDelSet(setId)
 		msg = set->msghead.lh_first;
 		while (msg) {
 			free(msg->str);
-			LIST_REMOVE(msg, entries)
+			LIST_REMOVE(msg, entries);
 		}
 
 		LIST_REMOVE(set, entries);
