@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.44 2001/06/23 04:44:25 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.45 2001/06/23 20:54:15 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1350,6 +1350,12 @@ txp_start(ifp)
 
 		if (m->m_pkthdr.csum & M_IPV4_CSUM_OUT)
 			txd->tx_pflags |= TX_PFLAGS_IPCKSUM;
+#if 0
+		if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
+			txd->tx_pflags |= TX_PFLAGS_TCPCKSUM;
+		if (m->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
+			txd->tx_pflags |= TX_PFLAGS_UDPCKSUM;
+#endif
 
 		fxd = (struct txp_frag_desc *)(r->r_desc + prod);
 		for (i = 0; i < sd->sd_map->dm_nsegs; i++) {
