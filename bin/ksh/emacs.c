@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.6 1998/10/29 04:09:20 millert Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.7 1999/01/10 17:55:02 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -680,7 +680,7 @@ static void
 x_bs(c)
 	int c;
 {
-	register i;
+	register int i;
 	i = x_size(c);
 	while (i--)
 		x_e_putc('\b');
@@ -690,7 +690,7 @@ static int
 x_size_str(cp)
 	register char *cp;
 {
-	register size = 0;
+	register int size = 0;
 	while (*cp)
 		size += x_size(*cp++);
 	return size;
@@ -1480,7 +1480,7 @@ x_init_emacs()
 		for (j = 0; j < X_TABSZ; j++)
 			x_tab[i][j] = XFUNC_error;
 	for (i = 0; i < NELEM(x_defbindings); i++)
-		x_tab[x_defbindings[i].xdb_tab][x_defbindings[i].xdb_char]
+		x_tab[(unsigned char)x_defbindings[i].xdb_tab][x_defbindings[i].xdb_char]
 			= x_defbindings[i].xdb_func;
 
 	x_atab = (char *(*)[X_TABSZ]) alloc(sizeofN(*x_atab, X_NTABS), AEDIT);

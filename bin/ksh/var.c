@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.8 1999/01/08 20:25:02 millert Exp $	*/
+/*	$OpenBSD: var.c,v 1.9 1999/01/10 17:55:03 millert Exp $	*/
 
 #include "sh.h"
 #include "ksh_time.h"
@@ -64,11 +64,12 @@ popblock()
 
 	e->loc = l->next;	/* pop block */
 	for (i = l->vars.size; --i >= 0; )
-		if ((vp = *vpp++) != NULL && (vp->flag&SPECIAL))
+		if ((vp = *vpp++) != NULL && (vp->flag&SPECIAL)) {
 			if ((vq = global(vp->name))->flag & ISSET)
 				setspec(vq);
 			else
 				unsetspec(vq);
+		}
 	if (l->flags & BF_DOGETOPTS)
 		user_opt = l->getopts_state;
 	afreeall(&l->area);
@@ -182,6 +183,7 @@ global(n)
 			for (c = 0; digit(*n); n++)
 				c = c*10 + *n-'0';
 			if (c <= l->argc)
+				/* SETSTR: can't fail */
 				setstr(vp, l->argv[c]);
 			return vp;
 		}
@@ -214,11 +216,12 @@ global(n)
 	}
 	for (l = e->loc; ; l = l->next) {
 		vp = tsearch(&l->vars, n, h);
-		if (vp != NULL)
+		if (vp != NULL) {
 			if (array)
 				return arraysearch(vp, val);
 			else
 				return vp;
+		}
 		if (l->next == NULL)
 			break;
 	}
@@ -390,6 +393,7 @@ setint(vq, n)
 		vp->type = 0;
 		vp->areap = ATEMP;
 		vp->val.i = n;
+		/* SETSTR: can't fail */
 		setstr(vq, str_val(vp));
 	} else
 		vq->val.i = n;
@@ -675,6 +679,7 @@ typeset(var, set, clr, field, base)
 			if (set & (LJUST|RJUST|ZEROFIL))
 				t->u2.field = field;
 			if (fake_assign) {
+				/* SETSTR: XXX make unset, then fail? */
 				setstr(t, s);
 				if (free_me)
 					afree((void *) free_me, t->areap);
@@ -685,11 +690,13 @@ typeset(var, set, clr, field, base)
 	if (val != NULL) {
 		if (vp->flag&INTEGER) {
 			/* do not zero base before assignment */
+			/* SETSTR: XXX */
 			setstr(vp, val);
 			/* Done after assignment to override default */
 			if (base > 0)
 				vp->type = base;
 		} else
+			/* SETSTR: can't fail */
 			setstr(vp, val);
 	}
 
@@ -835,6 +842,7 @@ makenv()
 					char *val;
 					val = str_val(vp);
 					vp->flag &= ~INTEGER;
+					/* SETSTR: can't fail */
 					setstr(vp, val);
 				}
 				XPput(env, vp->val.s);
@@ -1157,6 +1165,7 @@ set_array(var, reset, vals)
 	 */
 	for (i = 0; vals[i]; i++) {
 		vq = arraysearch(vp, i);
+		/* SETSTR: XXX */
 		setstr(vq, vals[i]);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.9 1998/10/29 04:09:20 millert Exp $	*/
+/*	$OpenBSD: history.c,v 1.10 1999/01/10 17:55:02 millert Exp $	*/
 
 /*
  * command history
@@ -240,8 +240,10 @@ c_fc(wp)
 		return 1;
 	}
 
-	if (!Flag(FSH))
+	if (!Flag(FSH)) {
+		/* SETSTR: ignore fail (arbitrary) */
 		setstr(local("_", FALSE), tf->name);
+	}
 
 	/* XXX: source should not get trashed by this.. */
 	{

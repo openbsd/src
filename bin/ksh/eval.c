@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.7 1999/01/08 20:24:58 millert Exp $	*/
+/*	$OpenBSD: eval.c,v 1.8 1999/01/10 17:55:02 millert Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -417,6 +417,7 @@ expand(cp, wp, f)
 					setstr(st->var, debunk(
 						(char *) alloc(strlen(dp) + 1,
 							ATEMP), dp));
+					/* SETSTR: fail operation */
 					x.str = str_val(st->var);
 					type = XSUB;
 					if (f&DOBLANK)

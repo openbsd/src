@@ -1,4 +1,4 @@
-$OpenBSD: CONTRIBUTORS,v 1.6 1999/01/08 20:24:56 millert Exp $
+$OpenBSD: CONTRIBUTORS,v 1.7 1999/01/10 17:55:01 millert Exp $
 
 This is a partial history of this shell gleened from old change logs and
 readmes (most of which are still in the misc directory) and the source
@@ -118,3 +118,7 @@ Other contributors:
       in exec.c(flushcom).
     * Todd. C Miller (Todd C. Miller <Todd.Miller@courtesan.com>): fix
       for coredump in jobs.
+    * Kevin Schoedel <schoedel@kw.igs.net>: fix for word location in file
+      completion.
+    * Martin Lucina <mato@kotelna.sk>: fix for argument parsing in exit command,
+      fix for KSH_CHECK_H_TYPE.

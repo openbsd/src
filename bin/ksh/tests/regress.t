@@ -1036,3 +1036,19 @@ stdin:
 expected-stdout: 
 	2
 ---
+
+name: regression-60
+description:
+	Check if default exit status is previous command
+stdin:
+	(true; exit)
+	echo A $?
+	(false; exit)
+	echo B $?
+	( (exit 103) ; exit)
+	echo C $?
+expected-stdout: 
+	A 0
+	B 1
+	C 103
+---

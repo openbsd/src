@@ -1,3 +1,15 @@
+Tue Jan  5 16:45:00 NST 1999 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* aclocal.m4(KSH_CHECK_H_TYPE): remove extra [] from egrep pattern.
+	* c_sh.c(c_exitreturn): fixed logic of exit status parsing
+	  (fixes from Martin Lucina).
+
+Tue Jan  5 16:31:37 NST 1999 Michael Rendell (michael@panda.cs.mun.ca)
+
+	* edit.c(x_locate_word): changed IS_WORDC macro from !isspace
+	  to !lex1/'/"
+	  (based on fix from Kevin Schoedel).
+
 Wed Dec 16 15:02:48 NST 1998 Michael Rendell (michael@panda.cs.mun.ca)
 
 	* io.c(kshdebug_init_,kshdebug_printf_,kshdebug_dump_),
@@ -290,7 +302,7 @@ Wed Oct 30 11:23:17 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 	* exec.c(comexec): case CFUNC: set $0 to kshname if non-function
 	  function.
 
-$OpenBSD: ChangeLog,v 1.8 1999/01/08 20:24:56 millert Exp $
+$OpenBSD: ChangeLog,v 1.9 1999/01/10 17:55:01 millert Exp $
 
 Tue Oct 29 11:34:58 NST 1996 Michael Rendell (michael@panda.cs.mun.ca)
 

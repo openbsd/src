@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.10 1999/01/08 20:24:57 millert Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.11 1999/01/10 17:55:01 millert Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -125,9 +125,11 @@ c_cd(wp)
 	/* Clear out tracked aliases with relative paths */
 	flushcom(0);
 
-	/* Set OLDPWD */
+	/* Set OLDPWD (note: unsetting OLDPWD does not disable this
+	 * setting in at&t ksh)
+	 */
 	if (current_wd[0])
-		setstr(oldpwd_s, current_wd);
+		setstr(oldpwd_s, current_wd); /* SETSTR no die, don't set */
 
 	if (!ISABSPATH(Xstring(xs, xp))) {
 #ifdef OS2
@@ -148,7 +150,7 @@ c_cd(wp)
 	/* Set PWD */
 	if (pwd) {
 		set_current_wd(pwd);
-		setstr(pwd_s, pwd);
+		setstr(pwd_s, pwd);	/* SETSTR no die, leave unchanged */
 	} else {
 		set_current_wd(null);
 		pwd = Xstring(xs, xp);
@@ -1098,13 +1100,14 @@ c_jobs(wp)
 			return 1;
 		}
 	wp += builtin_opt.optind;
-	if (!*wp)
+	if (!*wp) {
 		if (j_jobs((char *) 0, flag, nflag))
 			rv = 1;
-	else
+	} else {
 		for (; *wp; wp++)
 			if (j_jobs(*wp, flag, nflag))
 				rv = 1;
+	}
 	return rv;
 }
 
@@ -1364,7 +1367,7 @@ c_getopts(wp)
 	if (user_opt.optarg == (char *) 0)
 		unset(global("OPTARG"), 0);
 	else
-		setstr(global("OPTARG"), user_opt.optarg);
+		setstr(global("OPTARG"), user_opt.optarg); /* SETSTR: no fail, cause exit code to be non-zero */
 
 	vq = global(var);
 	if (vq->flag & RDONLY) {
@@ -1373,7 +1376,7 @@ c_getopts(wp)
 	}
 	if (Flag(FEXPORT))
 		typeset(var, EXPORT, 0, 0, 0);
-	setstr(vq, buf);
+	setstr(vq, buf);	/* SETSTR: no fail, cause exit code to be !0 */
 
 	return optc < 0 ? 1 : 0;
 }

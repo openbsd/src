@@ -1,4 +1,4 @@
-$OpenBSD: BUG-REPORTS,v 1.8 1999/01/08 20:24:54 millert Exp $
+$OpenBSD: BUG-REPORTS,v 1.9 1999/01/10 17:55:01 millert Exp $
 
 List of reported problems (problems reported and fixed before 5.0.4 not
 included).  Unresolved problems (may or may not still exist) marked by *,
@@ -1323,3 +1323,16 @@ x pdksh 5.2.13, (reported by Dmitri Kulginov): "trap exit 1" does not set a
 x pdksh 5.2.13, (reported by Mark Funkenhauser): eval "$(false)" does not
   result in $? being set to 1 (is 0).
   [fixed in 5.2.14: c_sh.c(c_eval): set exstat to subst_exstat before shell()]
+
+x pdksh 5.2.13, (reported with fix by Kevin Schoedel): word boardaries in
+  file completion are only spaces - at&t ksh uses ()<>&| and spaces.
+  [fixed in 5.2.14: edit.c(IS_WORDC): changed macro to be LEX1 + quotes]
+
+x pdksh 5.2.13.5, (reported with fix by Martin Lucina <mato@kotelna.sk>):
+  exit status parsing in exit command incorrect (sets status to random
+  value if no argument given).
+  [fixed in 5.2.14: c_sh.c(c_exitreturn): only set exstat if arg given]
+
+x pdksh 5.2.13.5, (reported with fix by Martin Lucina <mato@kotelna.sk>):
+  KSH_CHECK_H_TYPE in aclocal.m4 has too many [] around the patterns.
+  [fixed in 5.2.14: aclocal.m4(KSH_CHECK_H_TYPE): remove two pairs on []]

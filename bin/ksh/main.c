@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 1999/01/08 20:25:00 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 1999/01/10 17:55:03 millert Exp $	*/
 
 /*
  * startup, main loop, enviroments and error handling
@@ -186,6 +186,7 @@ main(argc, argv)
 	 */
 	{
 		struct tbl *vp = global("PATH");
+		/* SETSTR: can't fail */
 		setstr(vp, def_path);
 	}
 
@@ -252,6 +253,7 @@ main(argc, argv)
 		 * bogus value
 		 */
 		if (current_wd[0] || pwd != null)
+			/* SETSTR: can't fail */
 			setstr(pwd_v, current_wd);
 	}
 	ppid = getppid();
@@ -259,6 +261,7 @@ main(argc, argv)
 #ifdef KSH
 	setint(global("RANDOM"), (long) (time((time_t *)0) * kshpid * ppid));
 #endif /* KSH */
+	/* SETSTR: can't fail */
 	setstr(global(version_param), ksh_version);
 
 	/* execute initialization statements */
@@ -279,6 +282,7 @@ main(argc, argv)
 		 */
 		if (!(vp->flag & ISSET)
 		    || (!ksheuid && !strchr(str_val(vp), '#')))
+			/* SETSTR: can't fail */
 			setstr(vp, safe_prompt);
 	}
 
@@ -593,11 +597,12 @@ shell(s, toplevel)
 		if (trap)
 			runtraps(0);
 
-		if (s->next == NULL)
+		if (s->next == NULL) {
 			if (Flag(FVERBOSE))
 				s->flags |= SF_ECHO;
 			else
 				s->flags &= ~SF_ECHO;
+		}
 
 		if (interactive) {
 			j_notify();

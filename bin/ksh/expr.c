@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.4 1997/06/19 13:58:41 kstailey Exp $	*/
+/*	$OpenBSD: expr.c,v 1.5 1999/01/10 17:55:02 millert Exp $	*/
 
 /*
  * Korn expression evaluation
@@ -212,6 +212,7 @@ v_evaluate(vp, expr, error_ok)
 	if (vp->flag & INTEGER)
 		setint_v(vp, v);
 	else
+		/* SETSTR: can't fail; if pretending, allow fail */
 		setstr(vp, str_val(v));
 
 	es = curstate.prev;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.8 1999/01/08 20:24:58 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.9 1999/01/10 17:55:02 millert Exp $	*/
 
 /*
  * Command line editing - common code
@@ -707,7 +707,7 @@ x_command_glob(flags, str, slen, wordsp)
 	return nwords;
 }
 
-#define IS_WORDC(c)	!isspace(c)
+#define IS_WORDC(c)	!(ctype(c, C_LEX1) || (c) == '\'' || (c) == '"')
 
 static int
 x_locate_word(buf, buflen, pos, startp, is_commandp)

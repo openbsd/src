@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.14 1999/01/08 20:24:59 millert Exp $	*/
+/*	$OpenBSD: exec.c,v 1.15 1999/01/10 17:55:02 millert Exp $	*/
 
 /*
  * execute command tree
@@ -326,6 +326,9 @@ execute(t, flags)
 				vq = global(t->str);
 				if (vq->flag & RDONLY)
 					errorf("%s is read only", t->str);
+				/* SETSTR: fail (put readonly check in setstr,
+				 * controlled by a flag?)
+				 */
 				setstr(vq, *ap++);
 				rv = execute(t->left, flags & XERROK);
 			}
@@ -343,6 +346,9 @@ execute(t, flags)
 				vq = global(t->str);
 				if (vq->flag & RDONLY)
 					errorf("%s is read only", t->str);
+				/* SETSTR: fail (put readonly check in setstr,
+				 * controlled by a flag?)
+				 */
 				setstr(vq, cp);
 				rv = execute(t->left, flags & XERROK);
 			}
@@ -471,7 +477,8 @@ comexec(t, tp, ap, flags)
 	if (!Flag(FSH) && Flag(FTALKING) && *(lastp = ap)) {
 		while (*++lastp)
 			;
-		setstr(typeset("_", LOCAL, 0, 0, 0), *--lastp);
+		/* SETSTR: can't fail */
+		setstr(typeset("_", LOCAL, 0, INTEGER, 0), *--lastp);
 	}
 #endif /* KSH */
 
@@ -716,6 +723,7 @@ comexec(t, tp, ap, flags)
 #ifdef KSH
 		if (!Flag(FSH)) {
 			/* set $_ to program's full path */
+			/* SETSTR: can't fail */
 			setstr(typeset("_", LOCAL|EXPORT, 0, 0, 0), tp->val.s);
 		}
 #endif /* KSH */
