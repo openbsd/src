@@ -107,7 +107,7 @@ char	*argv[];
 		if (read(fd, &hdr, sizeof hdr) != sizeof hdr
 		    || (N_GETFLAG(hdr) & EX_DPMASK) != EX_DYNAMIC
 #if 1 /* Compatibility */
-		    || hdr.a_entry < __LDPGSZ
+		    || hdr.a_entry < N_PAGSIZ(hdr)
 #endif
 		    ) {
 
