@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.9 2000/10/31 18:56:42 deraadt Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.10 2000/11/07 18:21:22 mickey Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*-
@@ -49,18 +49,18 @@
  *    notice, this list of conditions and the following disclaimer.
  * 2. The name of the developer may NOT be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND 
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
- * SUCH DAMAGE. 
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 /*
@@ -145,6 +145,9 @@ const struct pciintr_icu_table {
 
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_85C503,
 	  sis85c503_init },
+
+	{ PCI_VENDOR_AMD,	PCI_PRODUCT_AMD_PBC756_ISA,
+	  amd756_init },
 
 	{ 0,			0,
 	  NULL },
@@ -355,7 +358,7 @@ pciintr_link_init()
 				    pir->bus, PIR_DEVFUNC_DEVICE(pir->device),
 				    link, pir->linkmap[pin].bitmap, l->bitmap);
 #endif
-				/* safer value. */  
+				/* safer value. */
 				l->bitmap &= pir->linkmap[pin].bitmap;
 				/* XXX - or, should ignore this entry? */
 			}
@@ -458,7 +461,7 @@ pciintr_link_fixup()
 		if (pciintr_bitmap_find_lowest_irq(l->bitmap & pciirq,
 		    &l->irq)) {
 			/*
-			 * This IRQ is a valid PCI IRQ already 
+			 * This IRQ is a valid PCI IRQ already
 			 * connected to another PIRQ, and also an
 			 * IRQ our PIRQ can use; connect it up!
 			 */
@@ -640,7 +643,7 @@ pciintr_do_header_fixup(pc, tag)
 		printf("  %d   ", l->fixup_stage);
 	}
 #endif
-	
+
 	/*
 	 * IRQs 14 and 15 are reserved for PCI IDE interrupts; don't muck
 	 * with them.
