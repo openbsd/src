@@ -34,7 +34,7 @@
 /* Tiny program to help debug popper */
 
 #include "popper.h"
-RCSID("$KTH: pop_debug.c,v 1.20 2000/12/31 07:34:05 assar Exp $");
+RCSID("$KTH: pop_debug.c,v 1.21 2001/02/20 01:44:47 assar Exp $");
 
 static void
 loop(int s)
@@ -215,7 +215,7 @@ main(int argc, char **argv)
     int ret = 1;
     int optind = 0;
 
-    set_progname(argv[0]);
+    setprogname(argv[0]);
 
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
 		&optind))

@@ -34,7 +34,7 @@
 #include "otp_locl.h"
 #include <getarg.h>
 
-RCSID("$KTH: otpprint.c,v 1.13 1999/12/02 16:58:33 joda Exp $");
+RCSID("$KTH: otpprint.c,v 1.14 2001/02/20 01:44:46 assar Exp $");
 
 static int extendedp;
 static int count = 10;
@@ -101,7 +101,7 @@ main (int argc, char **argv)
     void (*fn)(OtpKey, char *, size_t);
     OtpAlgorithm *alg = otp_find_alg (OTP_ALG_DEFAULT);
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
     if(getarg(args, num_args, argc, argv, &optind))
 	usage(1);
     if(help_flag)

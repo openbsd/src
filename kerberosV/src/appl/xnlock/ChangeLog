@@ -1,3 +1,7 @@
+2001-03-15  Johan Danielsson  <joda@pdc.kth.se>
+
+	* xnlock.c: don't explicitly set the krb4 ticket file
+
 2000-12-31  Assar Westerlund  <assar@sics.se>
 
 	* xnlock.c (main): handle krb5_init_context failure consistently

@@ -1,9 +1,9 @@
-# $KTH: Makefile.am,v 1.24 2001/01/30 01:47:41 assar Exp $
+# $KTH: Makefile.am,v 1.25 2001/05/16 23:50:14 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 lib_LTLIBRARIES = libdes.la
-libdes_la_LDFLAGS = -version-info 3:0:0
+libdes_la_LDFLAGS = -version-info 3:1:0
 
 include_HEADERS = des.h md4.h md5.h sha.h rc4.h
 

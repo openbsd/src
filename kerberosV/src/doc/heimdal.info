@@ -21,6 +21,7 @@ Heimdal
 * Things in search for a better place::
 * Kerberos 4 issues::
 * Windows 2000 compatability::
+* Programming with Kerberos::
 * Migration::
 * Acknowledgments::
 
@@ -808,8 +809,16 @@ A working solution would be to hook up a machine with a real operating
 system to the console of the Cisco and then use it as a backwards
 terminal server.
 
+Making things work on Transarc AFS
+==================================
+
+How to get a KeyFile
+--------------------
+
+`ktutil -k AFSKEYFILE:KeyFile get afs@MY.REALM'
+
 
-File: heimdal.info,  Node: Kerberos 4 issues,  Next: Migration,  Prev: Things in search for a better place,  Up: Top
+File: heimdal.info,  Node: Kerberos 4 issues,  Next: Windows 2000 compatability,  Prev: Things in search for a better place,  Up: Top
 
 Kerberos 4 issues
 *****************
@@ -1042,53 +1051,7 @@ A program that does this is `krb-forward'
 (<ftp://ftp.stacken.kth.se/pub/projekts/krb-forward>).
 
 
-File: heimdal.info,  Node: Migration,  Next: Windows 2000 compatability,  Prev: Kerberos 4 issues,  Up: Top
-
-Migration
-*********
-
-General issues
-==============
-
-When migrating from a Kerberos 4 KDC.
-
-Order in what to do things:
-===========================
-
-   * Convert the database, check all principals that hprop complains
-     about.
-
-     `hprop -n --source=<NNN>| hpropd -n'
-
-     Replace <NNN> with whatever source you have, like krb4-db or
-     krb4-dump.
-
-   * Run a Kerberos 5 slave for a while.
-
-   * Figure out if it does everything you want it to.
-
-     Make sure that all things that you use works for you.
-
-   * Let a small number of controlled users use Kerberos 5 tools.
-
-     Find a sample population of your users and check what programs
-     they use, you can also check the kdc-log to check what ticket are
-     checked out.
-
-   * Burn the bridge and change the master.
-
-   * Let all users use the Kerberos 5 tools by default.
-
-   * Turn off services that do not need Kerberos 4 authentication.
-
-     Things that might be hard to get away is old programs with support
-     for Kerberos 4. Example applications are old Eudora installations
-     using KPOP, and Zephyr. Eudora can use the Kerberos 4 kerberos in
-     the Heimdal kdc.
-
-
-
-File: heimdal.info,  Node: Windows 2000 compatability,  Next: Acknowledgments,  Prev: Migration,  Up: Top
+File: heimdal.info,  Node: Windows 2000 compatability,  Next: Programming with Kerberos,  Prev: Kerberos 4 issues,  Up: Top
 
 Windows 2000 compatability
 **************************
@@ -1364,7 +1327,312 @@ Other useful programs include these:
    * pwdump2 <http://www.webspan.net/~tas/pwdump2/>
 
 
-File: heimdal.info,  Node: Acknowledgments,  Prev: Windows 2000 compatability,  Up: Top
+File: heimdal.info,  Node: Programming with Kerberos,  Next: Migration,  Prev: Windows 2000 compatability,  Up: Top
+
+Programming with Kerberos
+*************************
+
+First you need to know how the Kerberos model works, go read the
+introduction text (*note What is Kerberos?::).
+
+* Menu:
+
+* Kerberos 5 API Overview::
+* Walkthru a sample Kerberos 5 client::
+* Validating a password in a server application::
+
+
+File: heimdal.info,  Node: Kerberos 5 API Overview,  Next: Walkthru a sample Kerberos 5 client,  Prev: Programming with Kerberos,  Up: Programming with Kerberos
+
+Kerberos 5 API Overview
+=======================
+
+Most functions are documenteded in manual pages.  This overview only
+tries to point to where to look for a specific function.
+
+Kerberos context
+----------------
+
+A kerberos context (`krb5_context') holds all per thread state. All
+global variables that are context specific are stored in this struture,
+including default encryption types, credential-cache (ticket file), and
+default realms.
+
+See the manual pages for `krb5_context(3)' and `krb5_init_context(3)'.
+
+Kerberos authenication context
+------------------------------
+
+Kerberos authentication context (`krb5_auth_context') holds all context
+related to an authenticated connection, in a similar way to the
+kerberos context that holds the context for the thread or process.
+
+The `krb5_auth_context' is used by various functions that are directly
+related to authentication between the server/client. Example of data
+that this structure contains are various flags, addresses of client and
+server, port numbers, keyblocks (and subkeys), sequence numbers, replay
+cache, and checksum types.
+
+See the manual page for `krb5_auth_context(3)'.
+
+Keytab managment
+----------------
+
+A keytab is a storage for locally stored keys. Heimdal includes keytab
+support for Kerberos 5 keytabs, Kerberos 4 srvtab, AFS-KeyFile's, and
+for storing keys in memory.
+
+See also manual page for `krb5_keytab(3)'
+
+
+File: heimdal.info,  Node: Walkthru a sample Kerberos 5 client,  Next: Validating a password in a server application,  Prev: Kerberos 5 API Overview,  Up: Programming with Kerberos
+
+Walkthru a sample Kerberos 5 client
+===================================
+
+This example contains parts of a sample TCP Kerberos 5 clients, if you
+want a real working client, please look in `appl/test' directory in the
+Heimdal distribution.
+
+All Kerberos error-codes that are returned from kerberos functions in
+this program are passed to `krb5_err', that will print a descriptive
+text of the error code and exit. Graphical programs can convert
+error-code to a humal readable error-string with the
+`krb5_get_err_text(3)' function.
+
+Note that you should not use any Kerberos function before
+`krb5_init_context()' have completed successfully. That is the reson
+`err()' is used when `krb5_init_context()' fails.
+
+First the client needs to call `krb5_init_context' to initialize the
+Kerberos 5 library. This is only needed once per thread in the program.
+If the function returns a non-zero value it indicates that either the
+Kerberos implemtation is failing or its disabled on this host.
+
+     #include <krb5.h>
+     
+     int
+     main(int argc, char **argv)
+     {
+             krb5_context context;
+     
+             if (krb5_context(&context))
+                     errx (1, "krb5_context");
+
+Now the client wants to connect to the host at the other end. The
+preferred way of doing this is using `getaddrinfo(3)' (for operating
+system that have this function implemented), since getaddrinfo is
+neutral to the address type and can use any protocol that is available.
+
+             struct addrinfo *ai, *a;
+             struct addrinfo hints;
+             int error;
+     
+             memset (&hints, 0, sizeof(hints));
+             hints.ai_socktype = SOCK_STREAM;
+             hints.ai_protocol = IPPROTO_TCP;
+     
+             error = getaddrinfo (hostname, "pop3", &hints, &ai);
+             if (error)
+                     errx (1, "%s: %s", hostname, gai_strerror(error));
+     
+             for (a = ai; a != NULL; a = a->ai_next) {
+                     int s;
+     
+                     s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
+                     if (s < 0)
+                             continue;
+                     if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
+                             warn ("connect(%s)", hostname);
+                                 close (s);
+                                 continue;
+                     }
+                     freeaddrinfo (ai);
+                     ai = NULL;
+             }
+             if (ai) {
+                         freeaddrinfo (ai);
+                         errx ("failed to contact %s", hostname);
+             }
+
+Before authenticating, an authentication context needs to be created.
+This context keeps all information for one (to be) authenticated
+connection (see `krb5_auth_context(3)').
+
+             status = krb5_auth_con_init (context, &auth_context);
+             if (status)
+                     krb5_err (context, 1, status, "krb5_auth_con_init");
+
+For setting the address in the authentication there is a help function
+`krb5_auth_con_setaddrs_from_fd' that does everthing that is needed
+when given a connected file descriptor to the socket.
+
+             status = krb5_auth_con_setaddrs_from_fd (context,
+                                                      auth_context,
+                                                      &sock);
+             if (status)
+                     krb5_err (context, 1, status,
+                               "krb5_auth_con_setaddrs_from_fd");
+
+The next step is to build a server principal for the service we want to
+connect to. (See also `krb5_sname_to_principal(3)'.)
+
+             status = krb5_sname_to_principal (context,
+                                               hostname,
+                                               service,
+                                               KRB5_NT_SRV_HST,
+                                               &server);
+             if (status)
+                     krb5_err (context, 1, status, "krb5_sname_to_principal");
+
+The client principal is not passed to `krb5_sendauth(3)' function, this
+causes the `krb5_sendauth' function to try to figure it out itself.
+
+The server program is using the function `krb5_recvauth(3)' to receive
+the Kerberos 5 authenticator.
+
+In this case, mutual authenication will be tried. That means that the
+server will authenticate to the client. Using mutual authenication is
+good since it enables the user to verify that they are talking to the
+right server (a server that knows the key).
+
+If you are using a non-blocking socket you will need to do all work of
+`krb5_sendauth' yourself. Basically you need to send over the
+authenticator from `krb5_mk_req(3)' and, in case of mutual
+authentication, verifying the result from the server with
+`krb5_rd_rep(3)'.
+
+             status = krb5_sendauth (context,
+                                     &auth_context,
+                                     &sock,
+                                     VERSION,
+                                     NULL,
+                                     server,
+                                     AP_OPTS_MUTUAL_REQUIRED,
+                                     NULL,
+                                     NULL,
+                                     NULL,
+                                     NULL,
+                                     NULL,
+                                     NULL);
+             if (status)
+                     krb5_err (context, 1, status, "krb5_sendauth");
+
+Once authentication has been performed, it is time to send some data.
+First we create a krb5_data structure, then we sign it with
+`krb5_mk_safe(3)' using the `auth_context' that contains the
+session-key that was exchanged in the
+`krb5_sendauth(3)'/`krb5_recvauth(3)' authentication sequence.
+
+             data.data   = "hej";
+             data.length = 3;
+     
+             krb5_data_zero (&packet);
+     
+             status = krb5_mk_safe (context,
+                                    auth_context,
+                                    &data,
+                                    &packet,
+                                    NULL);
+             if (status)
+                     krb5_err (context, 1, status, "krb5_mk_safe");
+
+And send it over the network.
+
+             len = packet.length;
+             net_len = htonl(len);
+     
+             if (krb5_net_write (context, &sock, &net_len, 4) != 4)
+                     err (1, "krb5_net_write");
+             if (krb5_net_write (context, &sock, packet.data, len) != len)
+                     err (1, "krb5_net_write");
+
+To send encrypted (and signed) data `krb5_mk_priv(3)' should be used
+instead. `krb5_mk_priv(3)' works the same way as `krb5_mk_safe(3)',
+with the exception that it encrypts the data in addition to signing it.
+
+             data.data   = "hemligt";
+             data.length = 7;
+     
+             krb5_data_free (&packet);
+     
+             status = krb5_mk_priv (context,
+                                    auth_context,
+                                    &data,
+                                    &packet,
+                                    NULL);
+             if (status)
+                     krb5_err (context, 1, status, "krb5_mk_priv");
+
+And send it over the network.
+
+             len = packet.length;
+             net_len = htonl(len);
+     
+             if (krb5_net_write (context, &sock, &net_len, 4) != 4)
+                     err (1, "krb5_net_write");
+             if (krb5_net_write (context, &sock, packet.data, len) != len)
+                     err (1, "krb5_net_write");
+
+The server is using `krb5_rd_safe(3)' and `krb5_rd_priv(3)' to verify
+the signature and decrypt the packet.
+
+
+File: heimdal.info,  Node: Validating a password in a server application,  Prev: Walkthru a sample Kerberos 5 client,  Up: Programming with Kerberos
+
+Validating a password in an application
+=======================================
+
+See the manual page for `krb5_verify_user(3)'.
+
+
+File: heimdal.info,  Node: Migration,  Next: Acknowledgments,  Prev: Programming with Kerberos,  Up: Top
+
+Migration
+*********
+
+General issues
+==============
+
+When migrating from a Kerberos 4 KDC.
+
+Order in what to do things:
+===========================
+
+   * Convert the database, check all principals that hprop complains
+     about.
+
+     `hprop -n --source=<NNN>| hpropd -n'
+
+     Replace <NNN> with whatever source you have, like krb4-db or
+     krb4-dump.
+
+   * Run a Kerberos 5 slave for a while.
+
+   * Figure out if it does everything you want it to.
+
+     Make sure that all things that you use works for you.
+
+   * Let a small number of controlled users use Kerberos 5 tools.
+
+     Find a sample population of your users and check what programs
+     they use, you can also check the kdc-log to check what ticket are
+     checked out.
+
+   * Burn the bridge and change the master.
+
+   * Let all users use the Kerberos 5 tools by default.
+
+   * Turn off services that do not need Kerberos 4 authentication.
+
+     Things that might be hard to get away is old programs with support
+     for Kerberos 4. Example applications are old Eudora installations
+     using KPOP, and Zephyr. Eudora can use the Kerberos 4 kerberos in
+     the Heimdal kdc.
+
+
+
+File: heimdal.info,  Node: Acknowledgments,  Prev: Migration,  Up: Top
 
 Acknowledgments
 ***************
@@ -1447,35 +1715,39 @@ All bugs were introduced by ourselves.
 
 Tag Table:
 Node: Top210
-Node: Introduction535
-Node: What is Kerberos?3177
-Node: Building and Installing8251
-Node: Setting up a realm11985
-Node: Configuration file12646
-Node: Creating the database15336
-Node: keytabs17839
-Node: Remote administration18673
-Node: Password changing20427
-Node: Testing clients and servers22234
-Node: Slave Servers22554
-Node: Incremental propagation24186
-Node: Salting26714
-Node: Things in search for a better place28103
-Node: Kerberos 4 issues30825
-Node: Principal conversion issues31327
-Ref: Principal conversion issues-Footnote-133550
-Ref: Principal conversion issues-Footnote-233618
-Node: Converting a version 4 database33671
-Node: kaserver38671
-Node: Migration40409
-Node: Windows 2000 compatability41666
-Node: Configuring Windows 2000 to use a Heimdal KDC42834
-Node: Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC44586
-Node: Create account mappings47066
-Node: Encryption types47656
-Node: Authorization data48397
-Node: Quirks of Windows 2000 KDC49541
-Node: Useful links when reading about the Windows 200050782
-Node: Acknowledgments52610
+Node: Introduction565
+Node: What is Kerberos?3207
+Node: Building and Installing8281
+Node: Setting up a realm12015
+Node: Configuration file12676
+Node: Creating the database15366
+Node: keytabs17869
+Node: Remote administration18703
+Node: Password changing20457
+Node: Testing clients and servers22264
+Node: Slave Servers22584
+Node: Incremental propagation24216
+Node: Salting26744
+Node: Things in search for a better place28133
+Node: Kerberos 4 issues31018
+Node: Principal conversion issues31537
+Ref: Principal conversion issues-Footnote-133760
+Ref: Principal conversion issues-Footnote-233828
+Node: Converting a version 4 database33881
+Node: kaserver38881
+Node: Windows 2000 compatability40619
+Node: Configuring Windows 2000 to use a Heimdal KDC41805
+Node: Inter-Realm keys (trust) between Windows 2000 and a Heimdal KDC43557
+Node: Create account mappings46037
+Node: Encryption types46627
+Node: Authorization data47368
+Node: Quirks of Windows 2000 KDC48512
+Node: Useful links when reading about the Windows 200049753
+Node: Programming with Kerberos51581
+Node: Kerberos 5 API Overview51994
+Node: Walkthru a sample Kerberos 5 client53546
+Node: Validating a password in a server application61362
+Node: Migration61643
+Node: Acknowledgments62897
 
 End Tag Table

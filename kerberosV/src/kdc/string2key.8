@@ -1,29 +1,32 @@
-.\" $KTH: string2key.8,v 1.2 2000/03/04 14:02:55 assar Exp $
+.\" $KTH: string2key.8,v 1.4 2001/06/08 21:35:32 joda Exp $
 .\"
 .Dd March  4, 2000
 .Dt STRING2KEY 8
 .Os HEIMDAL
 .Sh NAME
 .Nm string2key
-.Nd
-map a password into a key
+.Nd map a password into a key
 .Sh SYNOPSIS
 .Nm
 .Op Fl 5 | Fl -version5
 .Op Fl 4 | Fl -version4
 .Op Fl a | Fl -afs
 .Oo Fl c Ar cell \*(Ba Xo
-.Fl -cell= Ns Ar cell Oc
+.Fl -cell= Ns Ar cell
 .Xc
+.Oc
 .Oo Fl w Ar password \*(Ba Xo
-.Fl -password= Ns Ar password Oc
+.Fl -password= Ns Ar password
 .Xc
+.Oc
 .Oo Fl p Ar principal \*(Ba Xo
-.Fl -principal= Ns Ar principal Oc
+.Fl -principal= Ns Ar principal
 .Xc
+.Oc
 .Oo Fl k Ar string \*(Ba Xo
-.Fl -keytype= Ns Ar string Oc
+.Fl -keytype= Ns Ar string
 .Xc
+.Oc
 .Ar password
 .Sh DESCRIPTION
 .Nm

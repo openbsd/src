@@ -92,6 +92,8 @@ des_cblock (*key);
 	des_set_odd_parity((des_cblock *)key);
 	i=des_check_key;
 	des_check_key=0;
+	if(des_is_weak_key((des_cblock *)key))
+	    (*key)[7] ^= 0xF0;
 	des_set_key((des_cblock *)key,ks);
 	des_check_key=i;
 	des_cbc_cksum((des_cblock *)str,(des_cblock *)key,(long)length,ks,
@@ -158,9 +160,13 @@ des_cblock (*key2);
 	des_set_odd_parity((des_cblock *)key2);
 	i=des_check_key;
 	des_check_key=0;
+	if(des_is_weak_key((des_cblock *)key1))
+	    (*key1)[7] ^= 0xF0;
 	des_set_key((des_cblock *)key1,ks);
 	des_cbc_cksum((des_cblock *)str,(des_cblock *)key1,(long)length,ks,
 		(des_cblock *)key1);
+	if(des_is_weak_key((des_cblock *)key2))
+	    (*key2)[7] ^= 0xF0;
 	des_set_key((des_cblock *)key2,ks);
 	des_cbc_cksum((des_cblock *)str,(des_cblock *)key2,(long)length,ks,
 		(des_cblock *)key2);

@@ -1,3 +1,21 @@
+2001-05-17  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.am: bump version to 3:1:0
+
+2001-05-11  Assar Westerlund  <assar@sics.se>
+
+	* str2key.c (des_string_to_key, des_string_to_2keys): avoid weak
+	keys
+
+2001-02-16  Assar Westerlund  <assar@sics.se>
+
+	* set_key.c: correct weak keys and update comment
+
+2001-02-14  Assar Westerlund  <assar@sics.se>
+
+	* set_key.c: correct the two last weak keys in accordance with
+	FIPS 74.  noted by <jhutz@cmu.edu>
+
 2001-01-30  Assar Westerlund  <assar@sics.se>
 
 	* Makefile.am (libdes_la_LDFLAGS): bump version to 3:0:0

@@ -8,7 +8,7 @@
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: xnlock.c,v 1.83 2000/12/31 07:42:33 assar Exp $");
+RCSID("$KTH: xnlock.c,v 1.85 2001/03/15 17:13:13 joda Exp $");
 #endif
 
 #include <stdio.h>
@@ -199,7 +199,7 @@ get_words(void)
 static void
 usage(void)
 {
-    fprintf(stderr, "usage: %s [options] [message]\n", __progname);
+    fprintf(stderr, "usage: %s [options] [message]\n", getprogname());
     fprintf(stderr, "-fg color     foreground color\n");
     fprintf(stderr, "-bg color     background color\n");
     fprintf(stderr, "-rv           reverse foreground/background colors\n");
@@ -584,12 +584,8 @@ verify_krb5(const char *password)
 	    ret = krb5_cc_retrieve_cred(context, id, 0, &mcred, &cred);
 	    if(ret == 0) {
 		ret = krb524_convert_creds_kdc(context, id, &cred, &c);
-		if(ret == 0) {
-		    snprintf(krb4tkfile, sizeof(krb4tkfile), "%s%d", TKT_ROOT,
-			     getuid());
-		    krb_set_tkt_string(krb4tkfile);
+		if(ret == 0) 
 		    tf_setup(&c, c.pname, c.pinst);
-		}
 		memset(&c, 0, sizeof(c));
 		krb5_free_creds_contents(context, &cred);
 	    }
@@ -946,7 +942,7 @@ main (int argc, char **argv)
     Widget override;
     XGCValues gcvalues;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
 
     /*
      * Must be setuid root to read /etc/shadow, copy encrypted

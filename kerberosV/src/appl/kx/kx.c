@@ -33,7 +33,7 @@
 
 #include "kx.h"
 
-RCSID("$KTH: kx.c,v 1.67 2000/10/08 13:21:17 assar Exp $");
+RCSID("$KTH: kx.c,v 1.68 2001/02/20 01:44:45 assar Exp $");
 
 static int nchild;
 static int donep;
@@ -690,7 +690,7 @@ main(int argc, char **argv)
     int ret	= 1;
     char *host	= NULL;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
 
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
 		&optind))

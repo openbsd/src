@@ -33,7 +33,7 @@
 
 #include "kx.h"
 
-RCSID("$KTH: kxd.c,v 1.68 2000/10/08 13:22:19 assar Exp $");
+RCSID("$KTH: kxd.c,v 1.69 2001/02/20 01:44:45 assar Exp $");
 
 static pid_t wait_on_pid = -1;
 static int   done        = 0;
@@ -708,7 +708,7 @@ main (int argc, char **argv)
     int port;
     int optind = 0;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
     roken_openlog ("kxd", LOG_ODELAY | LOG_PID, LOG_DAEMON);
 
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
