@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.10 2000/10/18 23:29:20 todd Exp $
+# $OpenBSD: dhclient-script,v 1.11 2000/10/18 23:42:56 todd Exp $
 #
 
 if [ "x$new_network_number" != "x" ]; then
@@ -81,7 +81,7 @@ if [ "x$reason" = "xBOUND" ] || [ "x$reason" = "xRENEW" ] || \
     if [ -n "$new_domain_name_servers" ];
      then
       echo "search $new_domain_name" >/etc/resolv.conf
-      for nameserver in "$new_domain_name_servers"; do
+      for nameserver in $new_domain_name_servers; do
         echo nameserver $nameserver >>/etc/resolv.conf
       done
       if [ -f /etc/resolv.conf.tail ]; then
