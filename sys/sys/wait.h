@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.9 1995/03/26 20:25:07 jtc Exp $	*/
+/*	$NetBSD: wait.h,v 1.10 1995/10/19 08:14:18 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -34,6 +34,9 @@
  *
  *	@(#)wait.h	8.2 (Berkeley) 7/10/94
  */
+
+#ifndef _SYS_WAIT_H_
+#define _SYS_WAIT_H_
 
 /*
  * This file holds definitions relevent to the wait4 system call
@@ -156,3 +159,5 @@ pid_t	wait4 __P((pid_t, int *, int, struct rusage *));
 #endif
 __END_DECLS
 #endif
+
+#endif /* !_SYS_WAIT_H_ */
