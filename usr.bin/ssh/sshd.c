@@ -1,4 +1,4 @@
-/*
+
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.84 2000/02/01 13:52:26 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.85 2000/02/05 10:13:12 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1186,6 +1186,7 @@ do_authentication()
 	pw = getpwnam(user);
 	if (!pw || !allowed_user(pw))
 		do_fake_authloop(user);
+	xfree(user);
 
 	/* Take a copy of the returned structure. */
 	memset(&pwcopy, 0, sizeof(pwcopy));
@@ -1204,7 +1205,7 @@ do_authentication()
 	if (getuid() != 0 && pw->pw_uid != getuid())
 		packet_disconnect("Cannot change user when server not running as root.");
 
-	debug("Attempting authentication for %.100s.", user);
+	debug("Attempting authentication for %.100s.", pw->pw_name);
 
 	/* If the user has no password, accept authentication immediately. */
 	if (options.password_authentication &&
@@ -1527,6 +1528,7 @@ do_fake_authloop(char *user)
 		/* Try to send a fake s/key challenge. */
 		if (options.skey_authentication == 1 &&
 		    (skeyinfo = skey_fake_keyinfo(user)) != NULL) {
+			password = NULL;
 			if (type == SSH_CMSG_AUTH_TIS) {
 				packet_start(SSH_SMSG_AUTH_TIS_CHALLENGE);
 				packet_put_string(skeyinfo, strlen(skeyinfo));
@@ -1540,6 +1542,8 @@ do_fake_authloop(char *user)
 			           strncasecmp(password, "s/key", 5) == 0 ) {
 				packet_send_debug(skeyinfo);
 			}
+			if (password != NULL)
+				xfree(password);
 		}
 #endif
 		if (attempt > AUTH_FAIL_MAX)
