@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.c,v 1.9 2004/09/27 12:39:29 jfb Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.10 2004/09/27 13:42:39 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -59,10 +59,10 @@ extern char *__progname;
 
 
 
-int foreground = 0;
+int cvsd_fg = 0;
 
-volatile sig_atomic_t running = 1;
-volatile sig_atomic_t restart = 0;
+volatile sig_atomic_t cvsd_running = 1;
+volatile sig_atomic_t cvsd_restart = 0;
 
 
 uid_t  cvsd_uid = -1;
@@ -100,7 +100,7 @@ cvsd_sighdlr(int signo)
 {
 	switch (signo) {
 	case SIGHUP:
-		restart = 1;
+		cvsd_restart = 1;
 		break;
 	case SIGCHLD:
 		cvsd_sigchld = 1;
@@ -108,7 +108,7 @@ cvsd_sighdlr(int signo)
 	case SIGINT:
 	case SIGTERM:
 	case SIGQUIT:
-		running = 0;
+		cvsd_running = 0;
 		break;
 	case SIGINFO:
 		cvsd_siginfo = 1;
@@ -168,7 +168,7 @@ main(int argc, char **argv)
 			cvs_log_filter(LP_FILTER_UNSET, LP_INFO);
 			break;
 		case 'f':
-			foreground = 1;
+			cvsd_fg = 1;
 			break;
 		case 'g':
 			cvsd_set(CVSD_SET_GROUP, optarg);
@@ -230,7 +230,7 @@ main(int argc, char **argv)
 	signal(SIGTERM, cvsd_sighdlr);
 	signal(SIGCHLD, cvsd_sighdlr);
 
-	if (!foreground && daemon(0, 0) == -1) {
+	if (!cvsd_fg && daemon(0, 0) == -1) {
 		cvs_log(LP_ERRNO, "failed to become a daemon");
 		exit(EX_OSERR);
 	}
@@ -604,10 +604,10 @@ cvsd_parent_loop(void)
 	pfd = NULL;
 
 	for (;;) {
-		if (!running)
+		if (!cvsd_running)
 			break;
 
-		if (restart) {
+		if (cvsd_restart) {
 			/* restart server */
 		}
 
@@ -711,7 +711,7 @@ cvsd_child_loop(void)
 	pfd[0].events = POLLIN;
 	timeout = INFTIM;
 
-	while (running) {
+	while (cvsd_running) {
 		ret = poll(pfd, 1, timeout);
 		if (ret == -1) {
 			if (errno == EINTR)
@@ -739,7 +739,7 @@ cvsd_child_loop(void)
 		case CVSD_MSG_PASSFD:
 			break;
 		case CVSD_MSG_SHUTDOWN:
-			running = 0;
+			cvsd_running = 0;
 			break;
 		default:
 			cvs_log(LP_ERR,
