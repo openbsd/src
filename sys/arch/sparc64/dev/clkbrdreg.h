@@ -1,4 +1,4 @@
-/*	$OpenBSD: clkbrdreg.h,v 1.1 2004/09/28 02:06:36 jason Exp $	*/
+/*	$OpenBSD: clkbrdreg.h,v 1.2 2004/10/01 15:36:30 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -35,6 +35,11 @@
 #define	CLK_IRQ		0x60
 #define	CLK_PSTS2	0x70
 
-#define	CLK_CTRL_LLED	0x04	/* left led (reversed) */
-#define	CLK_CTRL_MLED	0x02	/* middle led */
-#define	CLK_CTRL_RLED	0x01	/* right led */
+#define	CLK_CTRL_IEN_FAN	0x80	/* intr enable: fan failure */
+#define	CLK_CTRL_IEN_DC		0x40	/* intr enable: pwr supply DC */
+#define	CLK_CTRL_IEN_AC		0x20	/* intr enable: AC pwr supply */
+#define	CLK_CTRL_IEN_BRD	0x10	/* intr enable: board insert */
+#define	CLK_CTRL_POFF		0x08	/* turn off system power */
+#define	CLK_CTRL_LLED		0x04	/* left led (reversed) */
+#define	CLK_CTRL_MLED		0x02	/* middle led */
+#define	CLK_CTRL_RLED		0x01	/* right led */
