@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.29 2002/01/09 11:30:53 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.30 2002/01/27 02:08:08 frantzen Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -420,15 +420,27 @@ For instance:
 .Pp
 Caveat:  If
 .Em pf
-picks up an already established connection (the firewall was rebooted, the
-state table was flushed, ...) it will not randomize the sequence number and it
-will fall back to operating as if "keep state" was specified for that
-connection.
+picks up an already established connection
+.Po
+the firewall was rebooted, the state table was flushed, ...
+.Pc
+it will not be able to safely modulate the state of that connection.
+.Em pf
+will fall back and operate as if "keep state" was specified instead.
+Without this fallback, modulation would cause both end hosts to
+each think that the other had somehow lost sync.
 .Pp
 Caveat:  If the state table is flushed or the firewall is rebooted,
-currently established modulated connections can not be continued or picked
-up again by the firewall.
-The sequence numbers will be out of sync without the modulator.
+currently modulated connections can not be continued or picked
+up again by the firewall.  State modulation causes the firewall to phase
+shift the sequencing of each side of a connection
+.Po
+add a random number to each side.
+.Pc
+The sudden withdrawl
+of the modulation will appear to each side of the connection that its
+peer has suddenly shifted its sequence by a random amount.  Neither side
+will be able to recover and the connection will stall then eventually close.
 .Sh NORMALIZATION
 Packet normalization is invoked via the
 .Pa scrub
