@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.85 2002/06/11 04:54:10 miod Exp $	*/
+/*	$OpenBSD: com.c,v 1.86 2002/07/06 19:14:20 nordin Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1294,10 +1294,6 @@ comintr(arg)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
 	u_char lsr, data, msr, delta;
-#ifdef PPS_SYNC
-	struct timeval tv;
-	long usec;
-#endif /* PPS_SYNC */
 
 	if (!sc->sc_tty)
 		return (0);		/* can't do squat. */
@@ -1358,19 +1354,6 @@ comintr(arg)
 			delta = msr ^ sc->sc_msr;
 			sc->sc_msr = msr;
 			if (ISSET(delta, MSR_DCD)) {
-#ifdef PPS_SYNC
-				if (ISSET(sc->sc_swflags, COM_SW_PPS)) {
-					if (ISSET(msr, MSR_DCD)) {
-						usec = time.tv_usec;
-						microtime(&tv);
-						usec = tv.tv_usec - usec;
-						if (usec < 0)
-							usec += 1000000;
-						hardpps(&tv, usec);
-					}
-				}
-				else
-#endif /* PPS_SYNC */
 				if (!ISSET(sc->sc_swflags, COM_SW_SOFTCAR) &&
 				    (*linesw[tp->t_line].l_modem)(tp, ISSET(msr, MSR_DCD)) == 0) {
 					CLR(sc->sc_mcr, sc->sc_dtr);

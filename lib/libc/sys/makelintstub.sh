@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: makelintstub.sh,v 1.1 1998/02/08 22:45:15 tholo Exp $
+#	$OpenBSD: makelintstub.sh,v 1.2 2002/07/06 19:14:20 nordin Exp $
 #	$NetBSD: makelintstub,v 1.2 1997/11/05 05:46:18 thorpej Exp $
 #
 # Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -59,7 +59,6 @@ header()
 	#include <sys/msg.h>
 	#include <sys/sem.h>
 	#include <sys/shm.h>
-	#include <sys/timex.h>
 	#include <sys/socket.h>
 	#include <sys/ioctl.h>
 	#include <sys/ktrace.h>

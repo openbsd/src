@@ -1445,7 +1445,6 @@
 ./usr/include/sys/timeb.h
 ./usr/include/sys/timeout.h
 ./usr/include/sys/times.h
-./usr/include/sys/timex.h
 ./usr/include/sys/tprintf.h
 ./usr/include/sys/tree.h
 ./usr/include/sys/tty.h

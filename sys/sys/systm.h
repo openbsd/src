@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.50 2002/05/15 23:17:53 art Exp $	*/
+/*	$OpenBSD: systm.h,v 1.51 2002/07/06 19:14:20 nordin Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -225,12 +225,6 @@ struct clockframe;
 void	hardclock(struct clockframe *);
 void	softclock(void);
 void	statclock(struct clockframe *);
-#ifdef NTP
-void	hardupdate(long offset);
-#ifdef PPS_SYNC
-void	hardpps(struct timeval *, long);
-#endif
-#endif
 
 void	initclocks(void);
 void	inittodr(time_t);

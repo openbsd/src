@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.6 2002/06/21 15:26:06 provos Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.7 2002/07/06 19:14:19 nordin Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -51,7 +51,6 @@
 #define SYSVMSG
 #define SYSVSHM
 #define LFS
-#define NTP
 #include "../../sys/kern/syscalls.c"
 
 #include "../../sys/compat/bsdos/bsdos_syscalls.c"
@@ -71,7 +70,6 @@
 #undef SYSVMSG
 #undef SYSVSHM
 #undef LFS
-#undef NTP
 
 #include <sys/ioctl.h>
 #include <sys/tree.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ser.c,v 1.13 2002/06/11 03:25:43 miod Exp $	*/
+/*	$OpenBSD: ser.c,v 1.14 2002/07/06 19:14:20 nordin Exp $	*/
 /*	$NetBSD: ser.c,v 1.43 1998/01/12 10:40:11 thorpej Exp $	*/
 
 /*
@@ -607,10 +607,6 @@ sermint(unit)
 	struct ser_softc *sc = (struct ser_softc *)ser_cd.cd_devs[unit];
 	struct tty *tp = sc->ser_tty;
 	u_char stat, last, istat;
-#ifdef PPS_SYNC
-	struct timeval tv;
-	long usec;
-#endif /* PPS_SYNC */
 
 	if (!tp)
 		return;
@@ -634,18 +630,6 @@ sermint(unit)
 	istat = stat ^ last;
 
 	if (ISSET(istat, CIAB_PRA_CD)) {
-#ifdef PPS_SYNC
-		if (ISSET(sc->ser_swflags, TIOCFLAG_PPS)) {
-			if (ISDCD(stat)) {
-				usec = time.tv_usec;
-				microtime(&tv);                 
-				usec = tv.tv_usec - usec;
-				if (usec < 0)
-					usec += 1000000;
-				hardpps(&tv, usec);           
-			}
-		}
-#endif /* PPS_SYNC */
 		if (!ISSET(sc->ser_swflags, TIOCFLAG_SOFTCAR) &&
 		    (*linesw[tp->t_line].l_modem)(tp, ISDCD(stat)) ==
 		    0) {

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.93 2002/06/11 08:54:36 angelos Exp $
+.\"	$OpenBSD: sysctl.3,v 1.94 2002/07/06 19:14:19 nordin Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -293,7 +293,6 @@ information.
 .It Dv KERN_NOSUIDCOREDUMP No "	integer	yes"
 .It Dv KERN_NPROCS No "	integer	no"
 .It Dv KERN_NSELCOLL No "	integer	no"
-.It Dv KERN_NTPTIME No "	struct ntptimeval	no"
 .It Dv KERN_NUMVNODES No "	integer	no"
 .It Dv KERN_OSRELEASE No "	string	no"
 .It Dv KERN_OSREV No "	integer	no"
@@ -417,10 +416,6 @@ Programs with their set-user-ID bit set will not dump core when this is set.
 Number of
 .Xr select 2
 collisions.
-.It Dv KERN_NTPTIME
-Returns a
-.Li strct ntptimeval ,
-containing kernel precision timekeeping information.
 .It Dv KERN_NUMVNODES
 Number of vnodes in use.
 .It Dv KERN_OSRELEASE

@@ -1,11 +1,9 @@
-#	$OpenBSD: GENERIC,v 1.88 2002/05/16 21:28:16 provos Exp $
+#	$OpenBSD: GENERIC,v 1.89 2002/07/06 19:14:20 nordin Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
 
 #option		INSECURE	# default to secure
-
-option		NTP		# hooks supporting the Network Time Protocol
 
 option		DDB		# in-kernel debugger
 #option		DDB_SAFE_CONSOLE # allow break into ddb during boot

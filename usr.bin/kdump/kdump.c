@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.17 2002/06/23 20:01:25 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.18 2002/07/06 19:14:20 nordin Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.17 2002/06/23 20:01:25 deraadt Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.18 2002/07/06 19:14:20 nordin Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -94,7 +94,6 @@ pid_t pid = -1;
 #define SYSVMSG
 #define SYSVSHM
 #define LFS
-#define NTP
 #include "../../sys/kern/syscalls.c"
 
 #include "../../sys/compat/bsdos/bsdos_syscalls.c"
@@ -114,7 +113,6 @@ pid_t pid = -1;
 #undef SYSVMSG
 #undef SYSVSHM
 #undef LFS
-#undef NTP
 
 struct emulation {
 	char *name;		/* Emulation name */

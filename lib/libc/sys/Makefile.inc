@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.53 2002/06/10 17:46:41 fgsch Exp $
+#	$OpenBSD: Makefile.inc,v 1.54 2002/07/06 19:14:20 nordin Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -49,7 +49,6 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	mkfifo.o mknod.o mlock.o mlockall.o \
 	mount.o mprotect.o msgctl.o msgget.o msgrcv.o msgsnd.o msync.o \
 	munlock.o munlockall.o munmap.o nanosleep.o nfssvc.o \
-	ntp_gettime.o ntp_adjtime.o \
 	open.o pathconf.o pipe.o poll.o profil.o quotactl.o \
 	read.o readlink.o readv.o reboot.o recvfrom.o recvmsg.o rename.o \
 	revoke.o rmdir.o select.o semget.o semop.o sendmsg.o sendto.o \

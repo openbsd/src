@@ -1,4 +1,4 @@
-/*	$OpenBSD: freebsd_misc.c,v 1.7 2001/02/03 02:45:31 mickey Exp $	*/
+/*	$OpenBSD: freebsd_misc.c,v 1.8 2002/07/06 19:14:20 nordin Exp $	*/
 /*	$NetBSD: freebsd_misc.c,v 1.2 1996/05/03 17:03:10 christos Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/freebsd/freebsd_util.h>
 #include <compat/freebsd/freebsd_rtprio.h>
-#include <compat/freebsd/freebsd_timex.h>
 
 /* just a place holder */
 
@@ -62,21 +61,6 @@ freebsd_sys_rtprio(p, v, retval)
 		syscallarg(int) function;
 		syscallarg(pid_t) pid;
 		syscallarg(struct freebsd_rtprio *) rtp;
-	} */ *uap = v;
-#endif
-
-	return ENOSYS;	/* XXX */
-}
-
-int
-freebsd_ntp_adjtime(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-#ifdef notyet
-	struct freebsd_ntp_adjtime_args /* {
-		syscallarg(struct freebsd_timex *) tp;
 	} */ *uap = v;
 #endif
 

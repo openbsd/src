@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.49 2002/03/14 00:42:25 miod Exp $
+;	$OpenBSD: syscalls.master,v 1.50 2002/07/06 19:14:20 nordin Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -332,13 +332,8 @@
 			  size_t nbyte, int pad, off_t offset); }
 174	STD		{ ssize_t sys_pwrite(int fd, const void *buf, \
 			  size_t nbyte, int pad, off_t offset); }
-#ifdef NTP
-175	STD		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
-176	STD		{ int sys_ntp_adjtime(struct timex *tp); }
-#else
 175	UNIMPL		ntp_gettime
 176	UNIMPL		ntp_adjtime
-#endif
 177	UNIMPL
 178	UNIMPL
 179	UNIMPL
