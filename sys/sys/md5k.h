@@ -1,7 +1,10 @@
-/*	$OpenBSD: md5k.h,v 1.2 1997/04/04 16:17:02 mickey Exp $	*/
+/*	$OpenBSD: md5k.h,v 1.3 1997/05/29 19:15:44 deraadt Exp $	*/
 
 /* GLOBAL.H - RSAREF types and constants
  */
+
+#ifndef _MD5K_H_
+#define _MD5K_H_
 
 /* POINTER defines a generic pointer type */
 typedef void *POINTER;
@@ -52,3 +55,5 @@ void MD5Update __P
 void MD5Final __P ((unsigned char [16], MD5_CTX *));
 
 #define _MD5_H_
+
+#endif /* _MD5K_H_ */
