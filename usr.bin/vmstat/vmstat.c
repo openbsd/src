@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.18 1997/02/22 17:20:30 kstailey Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.19 1997/06/30 07:03:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -342,7 +342,7 @@ choosedrives(argv)
 	return(argv);
 }
 
-long
+time_t
 getuptime()
 {
 	static time_t now;
@@ -696,7 +696,8 @@ cpustats()
 void
 dointr()
 {
-	register long i, j, inttotal, uptime;
+	register long i, j, inttotal;
+	time_t uptime;
 	static char iname[64];
 	struct iv ivt[32], *ivp = ivt;
 
@@ -733,7 +734,8 @@ void
 dointr()
 {
 	struct intrhand *intrhand[16], *ihp, ih;
-	long inttotal, uptime;
+	long inttotal;
+	time_t uptime;
 	int intrstray[16];
 	char iname[17];
 	int i;
@@ -769,7 +771,8 @@ dointr()
 void
 dointr()
 {
-	register long *intrcnt, inttotal, uptime;
+	register long *intrcnt, inttotal;
+	time_t uptime;
 	register int nintr, inamlen;
 	register char *intrname;
 	struct evcntlist allevents;
