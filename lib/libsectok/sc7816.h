@@ -1,4 +1,4 @@
-/* $Id: sc7816.h,v 1.2 2001/07/20 15:51:45 rees Exp $ */
+/* $Id: sc7816.h,v 1.3 2003/06/02 01:29:37 deraadt Exp $ */
 
 /*
 copyright 1997, 2000
@@ -119,8 +119,8 @@ void print_time ()
     int i;
 
     for (i = 0 ; i < perf_num ; i ++ ) {
-	printf ("%ld.%06ld: %s\n",
-		perf_tv[i].tv_sec, perf_tv[i].tv_usec, perf_buf[i]);
+	printf("%ld.%06ld: %s\n",
+	    perf_tv[i].tv_sec, perf_tv[i].tv_usec, perf_buf[i]);
     }
     return; 
 }
@@ -155,21 +155,3 @@ void print_time ();
 #define SetTime(x)
 #define print_time() ;
 #endif /* SCPERF */
-
-/* macros */
-#ifdef SCFS
-#define ADEBMISC        0x00000001	/* misc debugging */
-#define MESSAGE1(x) arla_warnx (ADEBMISC,x)
-#define MESSAGE2(x,y) arla_warnx (ADEBMISC,x,y)
-#define MESSAGE3(x,y,z) arla_warnx (ADEBMISC,x,y,z)
-#define MESSAGE4(x,y,z,u) arla_warnx (ADEBMISC,x,y,z,u)
-#define MESSAGE5(x,y,z,u,v) arla_warnx (ADEBMISC,x,y,z,u,v)
-#define MESSAGE6(x,y,z,u,v,w) arla_warnx (ADEBMISC,x,y,z,u,v,w)
-#else 
-#define MESSAGE1(x) fprintf(stderr,x)
-#define MESSAGE2(x,y) fprintf(stderr,x,y)
-#define MESSAGE3(x,y,z) fprintf(stderr,x,y,z)
-#define MESSAGE4(x,y,z,u) fprintf(stderr,x,y,z,u)
-#define MESSAGE5(x,y,z,u,v) fprintf(stderr,x,y,z,u,v)
-#define MESSAGE6(x,y,z,u,v,w) fprintf(stderr,x,y,z,u,v,w)
-#endif /* SCFS */
