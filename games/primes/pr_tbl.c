@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr_tbl.c,v 1.2 1999/09/25 15:52:20 pjanzen Exp $	*/
+/*	$OpenBSD: pr_tbl.c,v 1.3 2001/08/19 17:12:43 pjanzen Exp $	*/
 /*	$NetBSD: pr_tbl.c,v 1.3 1995/03/23 08:35:52 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_tbl.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pr_tbl.c,v 1.2 1999/09/25 15:52:20 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: pr_tbl.c,v 1.3 2001/08/19 17:12:43 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: pr_tbl.c,v 1.2 1999/09/25 15:52:20 pjanzen Exp 
  * and 65537^2 > 2^32-1.
  */
 
+#include <sys/types.h>
 #include "primes.h"
 
 const ubig prime[] = {
@@ -550,4 +551,4 @@ const ubig prime[] = {
 };
 
 /* pr_limit - largest prime in the prime table */
-const unsigned long *pr_limit = &prime[(sizeof(prime)/sizeof(prime[0]))-1];
+const ubig *pr_limit = &prime[(sizeof(prime)/sizeof(prime[0]))-1];

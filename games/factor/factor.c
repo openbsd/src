@@ -1,4 +1,4 @@
-/*	$OpenBSD: factor.c,v 1.8 2001/08/19 15:22:43 pjanzen Exp $	*/
+/*	$OpenBSD: factor.c,v 1.9 2001/08/19 17:12:40 pjanzen Exp $	*/
 /*	$NetBSD: factor.c,v 1.5 1995/03/23 08:28:07 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: factor.c,v 1.8 2001/08/19 15:22:43 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: factor.c,v 1.9 2001/08/19 17:12:40 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,7 +183,7 @@ pr_fact(val)
 	}
 
 	/* Factor value. */
-	(void)printf("%lu:", val);
+	(void)printf("%lu:", (unsigned long) val);
 	for (fact = &prime[0]; val > 1; ++fact) {
 		/* Look for the smallest factor. */
 		do {
@@ -193,13 +193,13 @@ pr_fact(val)
 
 		/* Watch for primes larger than the table. */
 		if (fact > pr_limit) {
-			(void)printf(" %lu", val);
+			(void)printf(" %lu", (unsigned long) val);
 			break;
 		}
 
 		/* Divide factor out until none are left. */
 		do {
-			(void)printf(" %lu", *fact);
+			(void)printf(" %lu", (unsigned long) *fact);
 			val /= (long)*fact;
 		} while ((val % (long)*fact) == 0);
 
