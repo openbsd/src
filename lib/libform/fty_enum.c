@@ -1,4 +1,4 @@
-/*	$OpenBSD: fty_enum.c,v 1.7 2000/10/08 22:47:09 millert Exp $	*/
+/*	$OpenBSD: fty_enum.c,v 1.8 2000/10/22 18:27:24 millert Exp $	*/
 
 
 /*
@@ -15,7 +15,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$From: fty_enum.c,v 1.13 2000/09/10 00:55:26 juergen Exp $")
+MODULE_ID("$From: fty_enum.c,v 1.14 2000/10/18 09:28:19 juergen Exp $")
 
 typedef struct {
   char **kwds;
@@ -49,7 +49,7 @@ static void *Make_Enum_Type(va_list * ap)
       argp->checkunique = cunique ? TRUE : FALSE;
 
       kp = argp->kwds;
-      while( (kp && *kp++) ) cnt++;
+      while( kp && (*kp++) ) cnt++;
       argp->count = cnt;
     }
   return (void *)argp;

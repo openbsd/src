@@ -1,4 +1,4 @@
-/*	$OpenBSD: comp_parse.c,v 1.8 2000/10/08 22:47:00 millert Exp $	*/
+/*	$OpenBSD: comp_parse.c,v 1.9 2000/10/22 18:27:23 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -54,7 +54,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: comp_parse.c,v 1.41 2000/10/03 09:53:49 tom Exp $")
+MODULE_ID("$From: comp_parse.c,v 1.42 2000/10/14 17:50:45 Bernhard.Rosenkraenzer Exp $")
 
 static void sanity_check(TERMTYPE *);
 void (*_nc_check_termtype) (TERMTYPE *) = sanity_check;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_getch.c,v 1.8 2000/10/10 15:10:31 millert Exp $	*/
+/*	$OpenBSD: lib_getch.c,v 1.9 2000/10/22 18:27:22 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -42,56 +42,11 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_getch.c,v 1.49 2000/07/29 15:45:24 tom Exp $")
+MODULE_ID("$From: lib_getch.c,v 1.50 2000/10/09 23:53:57 Ilya.Zakharevich Exp $")
 
 #include <fifo_defs.h>
 
 int ESCDELAY = 1000;		/* max interval betw. chars in funkeys, in millisecs */
-
-#ifdef USE_EMX_MOUSE
-#  include <sys/select.h>
-static int
-kbd_mouse_read(unsigned char *p)
-{
-    fd_set *fdset;
-    size_t fdsetsize;
-    int nums = SP->_ifd + 1;
-
-    if (SP->_checkfd >= 0 && SP->_checkfd >= nums)
-	nums = SP->_checkfd + 1;
-    if (SP->_mouse_fd >= 0 && SP->_mouse_fd >= nums)
-	nums = SP->_mouse_fd + 1;
-    fdsetsize = howmany(nums, NFDBITS) * sizeof(fd_mask);
-    fdset = malloc(fdsetsize);
-    if (fdset == NULL)
-	return -1;
-
-    for (;;) {
-	memset(fdset, 0, fdsetsize);
-	FD_SET(SP->_ifd, fdset);
-	if (SP->_checkfd >= 0)
-	    FD_SET(SP->_checkfd, fdset);
-	if (SP->_mouse_fd >= 0)
-	    FD_SET(SP->_mouse_fd, fdset);
-	if (select(nums, fdset, NULL, NULL, NULL) >= 0) {
-	    int n;
-
-	    if (SP->_mouse_fd >= 0
-		&& FD_ISSET(SP->_mouse_fd, fdset)) {	/* Prefer mouse */
-		n = read(SP->_mouse_fd, p, 1);
-	    } else {
-		n = read(SP->_ifd, p, 1);
-	    }
-	    free(fdset);
-	    return n;
-	}
-	if (errno != EINTR) {
-	    free(fdset);
-	    return -1;
-	}
-    }
-}
-#endif /* USE_EMX_MOUSE */
 
 static inline int
 fifo_peek(void)
@@ -137,7 +92,7 @@ fifo_push(void)
     errno = 0;
 #endif
 
-#if USE_GPM_SUPPORT
+#if USE_GPM_SUPPORT || defined(USE_EMX_MOUSE)
     if ((SP->_mouse_fd >= 0)
 	&& (_nc_timed_wait(3, -1, (int *) 0) & 2)) {
 	SP->_mouse_event(SP);
@@ -147,11 +102,7 @@ fifo_push(void)
 #endif
     {
 	unsigned char c2 = 0;
-#ifdef USE_EMX_MOUSE
-	n = kbd_mouse_read(&c2);
-#else
 	n = read(SP->_ifd, &c2, 1);
-#endif
 	ch = c2 & 0xff;
     }
 

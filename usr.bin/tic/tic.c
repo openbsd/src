@@ -44,7 +44,7 @@
 #include <term_entry.h>
 #include <transform.h>
 
-MODULE_ID("$From: tic.c,v 1.82 2000/10/01 02:11:39 tom Exp $")
+MODULE_ID("$From: tic.c,v 1.83 2000/10/14 17:30:26 tom Exp $")
 
 const char *_nc_progname = "tic";
 
@@ -772,16 +772,17 @@ expected_params(char *name)
 	{ "chr",		1 },
 	{ "colornm",		1 },
 	{ "cpi",		1 },
+	{ "csnm",		1 },
 	{ "csr",		2 },
 	{ "cub",		1 },
 	{ "cud",		1 },
 	{ "cuf",		1 },
 	{ "cup",		2 },
-	{ "cvr",		1 },
 	{ "cuu",		1 },
+	{ "cvr",		1 },
 	{ "cwin",		5 },
 	{ "dch",		1 },
-	{ "dclk",		2 },
+	{ "defc",		3 },
 	{ "dial",		1 },
 	{ "dispc",		1 },
 	{ "dl",			1 },
@@ -803,11 +804,13 @@ expected_params(char *name)
 	{ "pfxl",		3 },
 	{ "pln",		2 },
 	{ "qdial",		1 },
+	{ "rcsd",		1 },
 	{ "rep",		2 },
 	{ "rin",		1 },
 	{ "sclk",		3 },
 	{ "scp",		1 },
 	{ "scs",		1 },
+	{ "scsd",		2 },
 	{ "setab",		1 },
 	{ "setaf",		1 },
 	{ "setb",		1 },
@@ -822,7 +825,7 @@ expected_params(char *name)
 	{ "smglr",		2 },
 	{ "smgrp",		1 },
 	{ "smgtb",		2 },
-	{ "smgtp",		2 },
+	{ "smgtp",		1 },
 	{ "tsl",		1 },
 	{ "u6",			-1 },
 	{ "vpa",		1 },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: term.h,v 1.10 2000/07/10 03:06:11 millert Exp $	*/
+/*	$OpenBSD: term.h,v 1.11 2000/10/22 18:27:19 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -47,7 +47,7 @@
 #endif
 
 #undef  NCURSES_VERSION
-#define NCURSES_VERSION "5.1"
+#define NCURSES_VERSION "5.2"
 
 #ifdef __cplusplus
 extern "C" {

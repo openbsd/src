@@ -55,7 +55,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: read_termcap.c,v 1.49 2000/10/05 00:37:19 tom Exp $")
+MODULE_ID("$From: read_termcap.c,v 1.51 2000/10/21 00:34:11 Philip.Guenther Exp $")
 
 #if !PURE_TERMINFO
 
@@ -81,7 +81,8 @@ MODULE_ID("$From: read_termcap.c,v 1.49 2000/10/05 00:37:19 tom Exp $")
 #define _nc_cgetset   cgetset
 #else
 static int _nc_cgetmatch(char *, const char *);
-static int _nc_getent(char **, unsigned *, int *, int, char **, int, const char *, int, char *);
+static int _nc_getent(char **, unsigned *, int *, int, char **, int, const char
+		      *, int, char *);
 static int _nc_nfcmp(const char *, char *);
 
 /*-
@@ -257,15 +258,15 @@ _nc_cgetent(char **buf, int *oline, char **db_array, const char *name)
 #define DOALLOC(size) typeRealloc(char, size, record)
 static int
 _nc_getent(
-    char **cap,			/* termcap-content */
-    unsigned *len,		/* length, needed for recursion */
-    int *beginning,		/* line-number at match */
-    int in_array,		/* index in 'db_array[] */
-    char **db_array,		/* list of files to search */
-    int fd,
-    const char *name,
-    int depth,
-    char *nfield)
+	      char **cap,	/* termcap-content */
+	      unsigned *len,	/* length, needed for recursion */
+	      int *beginning,	/* line-number at match */
+	      int in_array,	/* index in 'db_array[] */
+	      char **db_array,	/* list of files to search */
+	      int fd,
+	      const char *name,
+	      int depth,
+	      char *nfield)
 {
     register char *r_end, *rp;
     int myfd = FALSE;
@@ -318,7 +319,7 @@ _nc_getent(
 	    if (fd >= 0) {
 		(void) lseek(fd, (off_t) 0, SEEK_SET);
 	    } else if ((_nc_access(db_array[current], R_OK) < 0)
-		|| (fd = open(db_array[current], O_RDONLY, 0)) < 0) {
+		       || (fd = open(db_array[current], O_RDONLY, 0)) < 0) {
 		/* No error on unfound file. */
 		if (errno == ENOENT)
 		    continue;
@@ -481,7 +482,7 @@ _nc_getent(
 	    tcend = s;
 
 	    iret = _nc_getent(&icap, &ilen, &oline, current, db_array, fd,
-		tc, depth + 1, 0);
+			      tc, depth + 1, 0);
 	    newicap = icap;	/* Put into a register. */
 	    newilen = ilen;
 	    if (iret != TC_SUCCESS) {

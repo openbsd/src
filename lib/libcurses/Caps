@@ -29,8 +29,8 @@
 # Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995
 #    and: Eric S. Raymond <esr@snark.thyrsus.com>
 #
-# $OpenBSD: Caps,v 1.4 2000/10/08 22:46:53 millert Exp $
-# $From: Caps,v 1.28 2000/10/01 02:07:36 tom Exp $
+# $OpenBSD: Caps,v 1.5 2000/10/22 18:27:18 millert Exp $
+# $From: Caps,v 1.30 2000/10/14 17:36:14 tom Exp $
 #
 # This is the master termcap/terminfo capability table.
 #
@@ -595,11 +595,11 @@ key_f62         	kf62	str	Fq	----E	F62 function key
 key_f63         	kf63	str	Fr	----E	F63 function key
 clr_bol         	el1	str	cb	-----	Clear to beginning of line
 clear_margins    	mgc	str	MC	-----	clear right and left soft margins
-set_left_margin    	smgl	str	ML	-----	set left soft margin at current column
+set_left_margin    	smgl	str	ML	-----	set left soft margin at current column.  See smgl. (ML is not in BSD termcap).
 set_right_margin	smgr	str	MR	-----	set right soft margin at current column
 label_format    	fln	str	Lf	-----	label format
 set_clock       	sclk	str	SC	-----	set clock, #1 hrs #2 mins #3 secs
-display_clock   	dclk	str	DK	-----	display clock at (#1,#2)
+display_clock   	dclk	str	DK	-----	display clock
 remove_clock    	rmclk	str	RC	-----	remove clock
 create_window   	cwin	str	CW	-----	define a window #1 from #2,#3 to #4,#5
 goto_window     	wingo	str	WG	-----	go to window #1
@@ -638,7 +638,7 @@ change_char_pitch	cpi	str	ZA	-----	Change number of characters per inch to #1
 change_line_pitch	lpi	str	ZB	-----	Change number of lines per inch to #1
 change_res_horz  	chr	str	ZC	-----	Change horizontal resolution to #1
 change_res_vert  	cvr	str	ZD	-----	Change vertical resolution to #1
-define_char     	defc	str	ZE	-----	Define a character
+define_char     	defc	str	ZE	-----	Define a character #1, #2 dots wide, descender #3
 enter_doublewide_mode	swidm	str	ZF	-----	Enter double-wide mode
 enter_draft_quality	sdrfq	str	ZG	-----	Enter draft-quality mode
 enter_italics_mode	sitm	str	ZH	-----	Enter italic mode
@@ -671,15 +671,15 @@ parm_right_micro	mcuf	str	Zh	-----	Like parm_right_cursor in micro mode
 parm_up_micro   	mcuu	str	Zi	-----	Like parm_up_cursor in micro mode
 select_char_set 	scs	str	Zj	-----	Select character set, #1
 set_bottom_margin	smgb	str	Zk	-----	Set bottom margin at current line
-set_bottom_margin_parm	smgbp	str	Zl	-----	Set bottom margin at line #1 or #2 lines from bottom
-set_left_margin_parm	smglp	str	Zm	-----	Set left (right) margin at column #1 (#2)
+set_bottom_margin_parm	smgbp	str	Zl	-----	Set bottom margin at line #1 or (if smgtp is not given) #2 lines from bottom
+set_left_margin_parm	smglp	str	Zm	-----	Set left (right) margin at column #1
 set_right_margin_parm	smgrp	str	Zn	-----	Set right margin at column #1
 set_top_margin  	smgt	str	Zo	-----	Set top margin at current line
-set_top_margin_parm	smgtp	str	Zp	-----	Set top (bottom) margin at row #1 (#2)
+set_top_margin_parm	smgtp	str	Zp	-----	Set top (bottom) margin at row #1
 start_bit_image 	sbim	str	Zq	-----	Start printing bit image graphics
-start_char_set_def	scsd	str	Zr	-----	Start character set definition
+start_char_set_def	scsd	str	Zr	-----	Start character set definition #1, with #2 characters in the set
 stop_bit_image  	rbim	str	Zs	-----	Stop printing bit image graphics
-stop_char_set_def	rcsd	str	Zt	-----	End definition of character set
+stop_char_set_def	rcsd	str	Zt	-----	End definition of character set #1
 subscript_characters	subcs	str	Zu	-----	List of subscriptable characters
 superscript_characters	supcs	str	Zv	-----	List of superscriptable characters
 these_cause_cr  	docr	str	Zw	-----	Printing any of these characters causes CR
@@ -698,7 +698,7 @@ zero_motion     	zerom	str	Zx	-----	No motion for subsequent character
 #%lw25 lw6 lw2 lw18.
 #%\fBVariable	Cap-	TCap	Description\fR
 #%\fBString	name	Code\fR
-char_set_names  	csnm	str	Zy	-----	List of character set names
+char_set_names  	csnm	str	Zy	-----	Produce #1'th item from list of character set names
 key_mouse       	kmous	str	Km	-----	Mouse event has occurred
 mouse_info      	minfo	str	Mi	-----	Mouse status information
 req_mouse_pos   	reqmp	str	RQ	-----	Request mouse position
@@ -712,7 +712,7 @@ set0_des_seq    	s0ds	str	s0	-----	Shift to code set 0 (EUC set 0, ASCII)
 set1_des_seq    	s1ds	str	s1	-----	Shift to code set 1
 set2_des_seq    	s2ds	str	s2	-----	Shift to code set 2
 set3_des_seq    	s3ds	str	s3	-----	Shift to code set 3
-set_lr_margin   	smglr	str	ML	-----	Set both left and right margins to #1, #2
+set_lr_margin   	smglr	str	ML	-----	Set both left and right margins to #1, #2.  (ML is not in BSD termcap).
 set_tb_margin   	smgtb	str	MT	-----	Sets both top and bottom margins to #1, #2
 bit_image_repeat	birep	str	Xy	-----	Repeat bit image cell #1 #2 times
 bit_image_newline	binel	str	Zz	-----	Move to next row of the bit image

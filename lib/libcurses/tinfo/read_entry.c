@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_entry.c,v 1.10 2000/10/08 22:47:03 millert Exp $	*/
+/*	$OpenBSD: read_entry.c,v 1.11 2000/10/22 18:27:23 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -43,7 +43,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$From: read_entry.c,v 1.68 2000/10/04 02:32:04 tom Exp $")
+MODULE_ID("$From: read_entry.c,v 1.69 2000/10/10 00:57:40 Todd.Miller Exp $")
 
 #if !HAVE_TELL
 #define tell(fd) 0		/* lseek() is POSIX, but not tell() - odd... */
@@ -178,9 +178,9 @@ read_termtype(int fd, TERMTYPE * ptr)
     str_size = LOW_MSB(buf + 10);
 
     TR(TRACE_DATABASE,
-	    ("TERMTYPE name_size=%d, bool=%d/%d, num=%d/%d str=%d/%d(%d)",
-	    name_size, bool_count, BOOLCOUNT, num_count, NUMCOUNT,
-	    str_count, STRCOUNT, str_size));
+       ("TERMTYPE name_size=%d, bool=%d/%d, num=%d/%d str=%d/%d(%d)",
+	name_size, bool_count, BOOLCOUNT, num_count, NUMCOUNT,
+	str_count, STRCOUNT, str_size));
     if (name_size < 0
 	|| bool_count < 0
 	|| num_count < 0
@@ -283,19 +283,20 @@ read_termtype(int fd, TERMTYPE * ptr)
 	ptr->Strings = typeRealloc(char *, ptr->num_Strings, ptr->Strings);
 
 	TR(TRACE_DATABASE, ("extended header is %d/%d/%d(%d:%d)",
-		ext_bool_count, ext_num_count, ext_str_count, ext_str_size, ext_str_limit));
+			    ext_bool_count, ext_num_count, ext_str_count,
+			    ext_str_size, ext_str_limit));
 
 	TR(TRACE_DATABASE, ("READ %d extended-booleans @%d",
-		ext_bool_count, tell(fd)));
+			    ext_bool_count, tell(fd)));
 	if ((ptr->ext_Booleans = ext_bool_count) != 0) {
 	    if (read(fd, ptr->Booleans + BOOLCOUNT, (unsigned)
-		    ext_bool_count) != ext_bool_count)
+		     ext_bool_count) != ext_bool_count)
 		return (0);
 	}
 	even_boundary(ext_bool_count);
 
 	TR(TRACE_DATABASE, ("READ %d extended-numbers @%d",
-		ext_num_count, tell(fd)));
+			    ext_num_count, tell(fd)));
 	if ((ptr->ext_Numbers = ext_num_count) != 0) {
 	    if (!read_shorts(fd, buf, ext_num_count))
 		return (0);
@@ -309,7 +310,7 @@ read_termtype(int fd, TERMTYPE * ptr)
 	    return (0);
 
 	TR(TRACE_DATABASE, ("READ %d bytes of extended-strings @%d",
-		ext_str_limit, tell(fd)));
+			    ext_str_limit, tell(fd)));
 
 	if (ext_str_limit) {
 	    if ((ptr->ext_str_table = typeMalloc(char, ext_str_limit)) == 0)
@@ -321,20 +322,20 @@ read_termtype(int fd, TERMTYPE * ptr)
 
 	if ((ptr->ext_Strings = ext_str_count) != 0) {
 	    TR(TRACE_DATABASE,
-		("Before computing extended-string capabilities str_count=%d, ext_str_count=%d",
-		    str_count, ext_str_count));
+	       ("Before computing extended-string capabilities str_count=%d, ext_str_count=%d",
+		str_count, ext_str_count));
 	    convert_strings(buf, ptr->Strings + str_count, ext_str_count,
-		ext_str_limit, ptr->ext_str_table);
+			    ext_str_limit, ptr->ext_str_table);
 	    for (i = ext_str_count - 1; i >= 0; i--) {
 		TR(TRACE_DATABASE, ("MOVE from [%d:%d] %s",
-			i, i + str_count,
-			_nc_visbuf(ptr->Strings[i + str_count])));
+				    i, i + str_count,
+				    _nc_visbuf(ptr->Strings[i + str_count])));
 		ptr->Strings[i + STRCOUNT] = ptr->Strings[i + str_count];
 		if (VALID_STRING(ptr->Strings[i + STRCOUNT]))
 		    base += (strlen(ptr->Strings[i + STRCOUNT]) + 1);
 		TR(TRACE_DATABASE, ("... to    [%d] %s",
-			i + STRCOUNT,
-			_nc_visbuf(ptr->Strings[i + STRCOUNT])));
+				    i + STRCOUNT,
+				    _nc_visbuf(ptr->Strings[i + STRCOUNT])));
 	    }
 	}
 
@@ -342,23 +343,23 @@ read_termtype(int fd, TERMTYPE * ptr)
 	    if ((ptr->ext_Names = typeCalloc(char *, need)) == 0)
 		  return (0);
 	    TR(TRACE_DATABASE,
-		("ext_NAMES starting @%d in extended_strings, first = %s",
-		    base, _nc_visbuf(ptr->ext_str_table + base)));
+	       ("ext_NAMES starting @%d in extended_strings, first = %s",
+		base, _nc_visbuf(ptr->ext_str_table + base)));
 	    convert_strings(buf + (2 * ext_str_count), ptr->ext_Names, need,
-		ext_str_limit, ptr->ext_str_table + base);
+			    ext_str_limit, ptr->ext_str_table + base);
 	}
 
 	T(("...done reading terminfo bool %d(%d) num %d(%d) str %d(%d)",
-		ptr->num_Booleans, ptr->ext_Booleans,
-		ptr->num_Numbers, ptr->ext_Numbers,
-		ptr->num_Strings, ptr->ext_Strings));
+	   ptr->num_Booleans, ptr->ext_Booleans,
+	   ptr->num_Numbers, ptr->ext_Numbers,
+	   ptr->num_Strings, ptr->ext_Strings));
 
 	TR(TRACE_DATABASE, ("extend: num_Booleans:%d", ptr->num_Booleans));
     } else
 #endif /* NCURSES_XNAMES */
     {
 	T(("...done reading terminfo bool %d num %d str %d",
-		bool_count, num_count, str_count));
+	   bool_count, num_count, str_count));
 #if NCURSES_XNAMES
 	TR(TRACE_DATABASE, ("normal: num_Booleans:%d", ptr->num_Booleans));
 #endif
@@ -405,7 +406,7 @@ _nc_read_file_entry(const char *const filename, TERMTYPE * ptr)
  */
 static int
 _nc_read_tic_entry(char *const filename,
-    const char *const dir, const char *ttn, TERMTYPE * const tp)
+		   const char *const dir, const char *ttn, TERMTYPE * const tp)
 {
 /* maximum safe length of terminfo root directory name */
 #define MAX_TPATH	(PATH_MAX - MAX_ALIAS - 6)
@@ -422,7 +423,7 @@ _nc_read_tic_entry(char *const filename,
  */
 static int
 _nc_read_terminfo_dirs(const char *dirs, char *const filename, const char *const
-    ttn, TERMTYPE * const tp)
+		       ttn, TERMTYPE * const tp)
 {
     char *list, *a;
     const char *b;
