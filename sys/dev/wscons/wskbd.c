@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.24 2001/09/16 00:42:44 millert Exp $ */
+/* $OpenBSD: wskbd.c,v 1.25 2001/09/26 01:21:37 jcs Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -425,9 +425,11 @@ wskbd_attach(parent, self, aux)
 	printf("\n");
 
 #if NWSMUX > 0
-	if (mux != WSKBDDEVCF_MUX_DEFAULT)
+	if (mux != WSKBDDEVCF_MUX_DEFAULT) {
 		wsmux_attach(mux, WSMUX_KBD, &sc->sc_dv, &sc->sc_events, 
 			     &sc->sc_mux, &wskbd_muxops);
+		wsdisplay_set_console_kbd(self);
+	}
 #endif
 
 }
