@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay_subr.c,v 1.4 2001/04/14 04:44:01 aaron Exp $ */
+/* $OpenBSD: pcdisplay_subr.c,v 1.5 2003/11/20 17:47:02 millert Exp $ */
 /* $NetBSD: pcdisplay_subr.c,v 1.16 2000/06/08 07:01:19 cgd Exp $ */
 
 /*
@@ -263,9 +263,8 @@ pcdisplay_eraserows(id, startrow, nrows, fillattr)
 	struct pcdisplayscreen *scr = id;
 	bus_space_tag_t memt = scr->hdl->ph_memt;
 	bus_space_handle_t memh = scr->hdl->ph_memh;
-	bus_size_t off, count;
+	bus_size_t off, count, n;
 	u_int16_t val;
-	int i;
 
 	off = startrow * scr->type->ncols;
 	count = nrows * scr->type->ncols;
@@ -276,6 +275,6 @@ pcdisplay_eraserows(id, startrow, nrows, fillattr)
 		bus_space_set_region_2(memt, memh, scr->dispoffset + off * 2,
 				       val, count);
 	else
-		for (i = 0; i < count; i++)
-			scr->mem[off + i] = val;
+		for (n = 0; n < count; n++)
+			scr->mem[off + n] = val;
 }
