@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokendb.c,v 1.4 2002/06/23 03:11:09 deraadt Exp $	*/
+/*	$OpenBSD: tokendb.c,v 1.5 2002/11/21 22:00:49 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -44,6 +44,7 @@
 #include <db.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <limits.h>
 #include <stdio.h>
 #include <syslog.h>
@@ -164,14 +165,26 @@ static	int
 tokendb_open(void)
 {
 	int	must_set_perms = 0;
+	int	must_set_mode = 0;
+	struct	group	*grp;
 	struct	stat	statb;
+
+	if ((grp = getgrnam(TOKEN_GROUP)) == NULL) {
+		printf("Missing %s group, authentication disabled\n",
+		    TOKEN_GROUP);
+		fflush(stdout);
+		syslog(LOG_ALERT,
+		    "the %s group is missing, token authentication disabled",
+		    TOKEN_GROUP);
+		return (-1);
+	}
 
 	if (stat(tt->db, &statb) < 0) {
 		if (errno != ENOENT)
 			return (-1);
 		must_set_perms++;
 	} else {
-		if (statb.st_uid != 0 || statb.st_gid != 0) {
+		if (statb.st_uid != 0 || statb.st_gid != grp->gr_gid) {
 #ifdef PARANOID
 			printf("Authentication disabled\n");
 			fflush(stdout);
@@ -183,7 +196,7 @@ tokendb_open(void)
 			must_set_perms++;
 #endif
 		}
-		if ((statb.st_mode & 0777) != 0600) {
+		if ((statb.st_mode & 0777) != 0620) {
 #ifdef PARANOID
 			printf("Authentication disabled\n");
 			fflush(stdout);
@@ -192,21 +205,24 @@ tokendb_open(void)
 			    tt->db, statb.st_mode);
 			return (-1);
 #else
-			must_set_perms++;
+			must_set_mode++;
 #endif
 		}
 	}
 	if (!(tokendb =
-	    dbopen(tt->db, O_CREAT | O_RDWR, 0600, DB_BTREE, 0)) )
+	    dbopen(tt->db, O_CREAT | O_RDWR, 0620, DB_BTREE, 0)) )
 		return (-1);
 
 	if (flock((tokendb->fd)(tokendb), LOCK_SH)) {
 		(tokendb->close)(tokendb);
 		return (-1);
 	}
-	if (must_set_perms && chown(tt->db, 0, 0))
+	if (must_set_perms && fchown((tokendb->fd)(tokendb), 0, grp->gr_gid))
 		syslog(LOG_INFO,
 		    "Can't set owner/group of %s errno=%m", tt->db);
+	if (must_set_mode && fchmod((tokendb->fd)(tokendb), 0620))
+		syslog(LOG_INFO,
+		    "Can't set mode of %s errno=%m", tt->db);
 
 	return (0);
 }
