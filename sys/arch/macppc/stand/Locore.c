@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.8 2003/10/16 04:30:09 drahn Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.9 2004/01/09 16:50:30 drahn Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
@@ -46,37 +46,35 @@ static void setup(void);
 #ifdef XCOFF_GLUE
 asm (".text; .globl _entry; _entry: .long _start,0,0");
 #endif
-asm("
-	.text
-	.globl	bat_init
-bat_init:
-
-	mfmsr   8
-        li      0,0
-        mtmsr   0
-        isync
-
-        mtibatu 0,0
-        mtibatu 1,0
-        mtibatu 2,0
-        mtibatu 3,0
-        mtdbatu 0,0
-        mtdbatu 1,0
-        mtdbatu 2,0
-        mtdbatu 3,0
-
-        li      9,0x12          /* BATL(0, BAT_M, BAT_PP_RW) */
-        mtibatl 0,9
-        mtdbatl 0,9
-        li      9,0x1ffe        /* BATU(0, BAT_BL_256M, BAT_Vs) */
-        mtibatu 0,9
-        mtdbatu 0,9
-        isync
-
-        mtmsr   8
-	isync
-	blr
-");
+asm("   .text			\n"
+"	.globl	bat_init	\n"
+"bat_init:			\n"
+"				\n"
+"	mfmsr   8		\n"
+"	li      0,0		\n"
+"	mtmsr   0		\n"
+"	isync			\n"
+"				\n"
+"	mtibatu 0,0		\n"	
+"	mtibatu 1,0		\n"
+"	mtibatu 2,0		\n"
+"	mtibatu 3,0		\n"
+"	mtdbatu 0,0		\n"
+"	mtdbatu 1,0		\n"
+"	mtdbatu 2,0		\n"
+"	mtdbatu 3,0		\n"
+"				\n"
+"	li      9,0x12         	\n"	 /* BATL(0, BAT_M, BAT_PP_RW) */	
+"	mtibatl 0,9		\n"
+"	mtdbatl 0,9		\n"
+"	li      9,0x1ffe        \n"	/* BATU(0, BAT_BL_256M, BAT_Vs) */
+"	mtibatu 0,9		\n"
+"	mtdbatu 0,9		\n"
+"	isync			\n"
+"				\n"
+"	mtmsr 8  		\n"
+"	isync			\n"
+"	blr			\n");
 
 __dead void
 _start(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
