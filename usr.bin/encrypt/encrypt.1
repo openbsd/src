@@ -1,4 +1,4 @@
-.\"	$OpenBSD: encrypt.1,v 1.17 2001/07/31 18:12:02 millert Exp $
+.\"	$OpenBSD: encrypt.1,v 1.18 2003/06/14 23:19:18 millert Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
 .\"
@@ -33,6 +33,7 @@
 .Nm encrypt
 .Op Fl k
 .Op Fl b Ar rounds
+.Op Fl c Ar class
 .Op Fl m
 .Op Fl s Ar salt
 .Op Fl p | Ar string
@@ -55,6 +56,11 @@ terminating newline.
 .It Fl b Ar rounds
 Encrypt the string using Blowfish hashing with the specified
 .Ar rounds .
+.It Fl c Ar class
+Use the cipher type specified in the given user login class.
+See
+.Xr login.conf 5
+for more information.
 .It Fl m
 Encrypt the string using MD5.
 .It Fl p
@@ -70,12 +76,12 @@ is specified,
 .Nm
 reads one string per line from standard input, encrypting each one
 with the chosen algorithm from above.
-In case that no specific algorithm was given as a command line option,
-the algorithm specified in the default class in
+In the case where no specific algorithm or specific user login class was given
+as a command line option, the algorithm specified in the default class in
 .Pa /etc/login.conf
 will be used.
 .Pp
-For MD5 and Blowfish a new random salt is automatically generated for each
+For MD5 and Blowfish, a new random salt is automatically generated for each
 password.
 .Pp
 Specifying the

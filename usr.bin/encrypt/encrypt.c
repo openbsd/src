@@ -1,4 +1,4 @@
-/*	$OpenBSD: encrypt.c,v 1.17 2003/04/06 21:22:31 deraadt Exp $	*/
+/*	$OpenBSD: encrypt.c,v 1.18 2003/06/14 23:19:18 millert Exp $	*/
 
 /*
  * Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -54,7 +54,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-k] [-b rounds] [-m] [-s salt] [-p | string]\n",
+	    "usage: %s [-k] [-b rounds] [-c class] [-m] [-s salt] [-p | string]\n",
 	    __progname);
 	exit(1);
 }
@@ -117,8 +117,9 @@ print_passwd(char *string, int operation, void *extra)
 
 	default:
 		pwd.pw_name = "default";
-		if ((lc = login_getclass(NULL)) == NULL)
-			errx(1, "unable to get default login class.");
+		if ((lc = login_getclass(extra)) == NULL)
+			errx(1, "unable to get login class `%s'",
+			    extra ? (char *)extra : "default");
 		if (!pwd_gensalt(buffer, _PASSWORD_LEN, &pwd, lc, 'l'))
 			errx(1, "can't generate salt");
 		salt = buffer;
@@ -135,12 +136,12 @@ main(int argc, char **argv)
 	int operation = -1;
 	int prompt = 0;
 	int rounds;
-	void *extra;                       /* Store salt or number of rounds */
+	void *extra = NULL;		/* Store salt or number of rounds */
 
 	if (strcmp(__progname, "makekey") == 0)
 		operation = DO_MAKEKEY;
 
-	while ((opt = getopt(argc, argv, "kmps:b:")) != -1) {
+	while ((opt = getopt(argc, argv, "kmps:b:c:")) != -1) {
 		switch (opt) {
 		case 'k':                       /* Stdin/Stdout Unix crypt */
 			if (operation != -1 || prompt)
@@ -173,6 +174,11 @@ main(int argc, char **argv)
 			operation = DO_BLF;
 			rounds = atoi(optarg);
 			extra = &rounds;
+			break;
+
+		case 'c':                       /* user login class */
+			extra = optarg;
+			operation = -1;
 			break;
 
 		default:
