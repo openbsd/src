@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.12 1996/08/08 06:36:47 tholo Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.13 1996/09/24 02:38:30 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -701,8 +701,16 @@ sys_chroot(p, v, retval)
 	    SCARG(uap, path), p);
 	if ((error = change_dir(&nd, p)) != 0)
 		return (error);
-	if (fdp->fd_rdir != NULL)
+	if (fdp->fd_rdir != NULL) {
+		/*
+		 * A chroot() done inside a changed root environment does
+		 * an automatic chdir to avoid the out-of-tree experience.
+		 */
 		vrele(fdp->fd_rdir);
+		vrele(fdp->fd_cdir);
+		VREF(nd.ni_vp);
+		fdp->fd_cdir = nd.ni_vp;
+	}
 	fdp->fd_rdir = nd.ni_vp;
 	return (0);
 }

@@ -57,9 +57,15 @@ beginning with
 In order for a directory to become the root directory
 a process must have execute (search) access for that directory.
 .Pp
-It should be noted that
+If the program is not currently running with an altered root directory,
+it should be noted that
 .Fn chroot
 has no effect on the process's current directory.
+.Pp
+If the program is already running with an altered root directory, the
+process's current directory is changed to the same new root directory.
+This prevents the current directory from being further up the directory
+tree than the altered root directory.
 .Pp
 This call is restricted to the super-user.
 .Sh RETURN VALUES
