@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.171 2001/05/30 02:11:09 deraadt Exp $
+#	$OpenBSD: rc,v 1.172 2001/06/02 03:06:29 miod Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -64,7 +64,7 @@ for dev in 0 1 2 3; do
 	fi
 done
 
-swapon -a
+swapctl -A -t blk
 
 if [ -e /fastboot ]; then
 	echo "Fast boot: skipping disk checks."
@@ -267,6 +267,8 @@ fi
 echo '.'
 
 mount -a -t nfs
+
+swapctl -A -t noblk
 
 # /var/crash should be a directory or a symbolic link
 # to the crash directory if core dumps are to be saved.
