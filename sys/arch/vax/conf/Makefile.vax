@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.vax,v 1.8 1997/10/02 19:56:06 niklas Exp $
+#	$OpenBSD: Makefile.vax,v 1.9 1998/05/11 15:37:23 niklas Exp $
 #	$NetBSD: Makefile.vax,v 1.32 1997/03/14 23:27:35 mycroft Exp $
 
-# Makefile for NetBSD
+# Makefile for OpenBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
