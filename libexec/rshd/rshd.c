@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.11 1997/02/05 04:18:30 deraadt Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.12 1997/02/05 14:26:49 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -261,11 +261,6 @@ doit(fromp)
 			if (c == IPOPT_EOL)
 				break;
 			i += (c == IPOPT_NOP) ? 1 : optbuf[i+1];
-		}
-		if (setsockopt(0, ipproto, IP_OPTIONS,
-		    (char *)NULL, optsize) != 0) {
-			syslog(LOG_ERR, "setsockopt IP_OPTIONS NULL: %m");
-			exit(1);
 		}
 	}
       }
