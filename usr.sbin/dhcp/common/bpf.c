@@ -171,7 +171,7 @@ int dhcp_bpf_tr_filter_len = (sizeof dhcp_bpf_tr_filter /
 void if_register_receive (info)
 	struct interface_info *info;
 {
-	int flag = 1;
+	int flag = 1, sz;
 	struct bpf_version v;
 	struct bpf_program p;
 
@@ -193,8 +193,9 @@ void if_register_receive (info)
 		error ("Can't set immediate mode on bpf device: %m");
 
 	/* Get the required BPF buffer length from the kernel. */
-	if (ioctl (info -> rfdesc, BIOCGBLEN, &info -> rbuf_max) < 0)
+	if (ioctl (info -> rfdesc, BIOCGBLEN, &sz) < 0)
 		error ("Can't get bpf buffer length: %m");
+	info->rbuf_max = sz;
 	info -> rbuf = malloc (info -> rbuf_max);
 	if (!info -> rbuf)
 		error ("Can't allocate %d bytes for bpf input buffer.");
