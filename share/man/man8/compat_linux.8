@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_linux.8,v 1.18 2001/08/17 11:13:58 mpech Exp $
+.\"	$OpenBSD: compat_linux.8,v 1.19 2001/10/04 16:56:52 mpech Exp $
 .\"	$NetBSD: compat_linux.8,v 1.2 1995/10/16 20:17:59 fvdl Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -81,7 +81,6 @@ system.
 After a while, you will have a sufficient set of Linux shared libraries
 on your system to be able to run newly imported Linux binaries without
 any extra work.
-
 .Ss Setting up shared libraries
 How to get to know which shared libraries Linux binaries need, and where
 to get them? Basically, there are 3 possibilities (when following
@@ -259,7 +258,6 @@ revision number) should match; the minor number(s) <mm> are
 less important, though it is advised to take the most
 recent version.
 .El
-
 .Ss Finding the necessary files.
 .Nm Note:
 the information below is valid as of the time this
@@ -348,7 +346,6 @@ slakware/x9/xf_lib.tgz
 Extract the files from these gzipped tarfiles in your /emul/linux directory
 (possibly omitting or afterwards removing files you don't need), and you
 are done.
-
 .Ss Programs using SVGAlib
 SVGAlib binaries require some extra care. The pcvt virtual console driver
 has to be in the kernel for them to work, and you will also have to create
@@ -370,17 +367,13 @@ Only the DSP device is emulated, the following link should be created:
 .nf
 /emul/linux/dev/dsp -> /dev/audio
 .fi
-.Pp
 .Ss Other links Linux bins may require
-.Pp
 CD-ROM support requires a link to your cdrom device, similar to:
 .Pp
 .nf
 /emul/linux/dev/cdrom -> /dev/cd0a   (first scsi cdrom)
 .fi
-.Pp
 .Ss File systems
-.Pp
 Many Linux binaries expect /proc to have procfs mounted on it.
 Some binaries will require it to be mounted using the
 .Fl o Ar linux

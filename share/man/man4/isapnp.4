@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isapnp.4,v 1.21 2001/08/03 15:21:16 mpech Exp $
+.\"	$OpenBSD: isapnp.4,v 1.22 2001/10/04 16:56:51 mpech Exp $
 .\"	$NetBSD: isapnp.4,v 1.8 1998/06/07 09:08:46 enami Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
@@ -50,7 +50,6 @@ devices on an ISA bus.
 .Ox
 includes machine-independent ISAPNP drivers, sorted by function
 and driver name:
-.Pp
 .Ss Disk controllers
 .Bl -tag -width speakerxx -offset ind -compact
 .It Xr aic 4
@@ -60,7 +59,6 @@ Adaptec AHA-154x SCSI controller card.
 .It Xr wdc 4
 IDE controllers (typically found on sound cards).
 .El
-.Pp
 .Ss Serial and parallel interfaces
 .Bl -tag -width speaker -offset ind -compact
 .It Xr com 4 , Xr pccom 4
@@ -68,7 +66,6 @@ IDE controllers (typically found on sound cards).
 modems.
 Winmodems are not supported.
 .El
-.Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset ind -compact
 .It Xr ep 4

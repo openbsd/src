@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.54 2001/10/04 10:28:20 wilfried Exp $
+.\" $OpenBSD: vpn.8,v 1.55 2001/10/04 16:56:52 mpech Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -104,8 +104,6 @@ required:
 .Pp
 For more permanent operation, these options should be enabled in your
 .Xr sysctl.conf 5 .
-.Pp
-
 .Ss Generating Manual Keys [manual keying]
 The shared secret symmetric keys used to create a VPN can
 be any hexadecimal value, so long as both sides of the connection use
@@ -166,7 +164,6 @@ options may be used to specify the keys directly in the
 command line.  However, another user could view the keys by using the
 .Xr ps 1
 command at the appropriate time (or use a program for doing so).
-.Pp
 .Ss Creating IPsec Flows [manual keying]
 Both IPsec gateways need to configure
 .Xr ipsec 4
@@ -247,7 +244,6 @@ and on the security gateway of subnet B:
 	          B_EXTERNAL_IP 255.255.255.255
 	    -in -require -src B_EXTERNAL_IP
 .Ed
-.Pp
 .Ss Configure and run the keying daemon [automated keying]
 Unless manual keying is used, both security gateways need to start
 either the

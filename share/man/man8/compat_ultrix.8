@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compat_ultrix.8,v 1.8 2001/08/17 11:13:58 mpech Exp $
+.\"	$OpenBSD: compat_ultrix.8,v 1.9 2001/10/04 16:56:52 mpech Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -69,7 +69,6 @@ Set up resolv.conf and svc.conf as below:
 .br
 .It # cp -p /usr/share/samples/emul/ultrix/etc/*	./
 .El
-.Pp
 .Ss /etc/resolv.conf
 The Ultrix resolver library only understands
 .Sy domain
@@ -81,7 +80,6 @@ You should create a copy of /etc/resolv.conf containing only those
 commands and put it in /emul/ultrix/etc/resolv.conf.  Note that the
 domain search order used by Ultrix executables may not be the same as
 native binaries; there is no good way around this.
-.Pp
 .Ss /etc/svc.conf
 Ultrix uses /etc/svc.conf to select an ordered search of YP, Hesiod,
 or local flat-file mappings.  You should create an

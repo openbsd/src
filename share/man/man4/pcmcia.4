@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.18 2001/08/03 15:21:16 mpech Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.19 2001/10/04 16:56:51 mpech Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -55,13 +55,11 @@ devices.
 .Sh SUPPORTED DEVICES
 The following devices are supported, sorted by function
 and driver name:
-.Pp
 .Ss Serial interfaces and modems
 .Bl -tag -width speaker -offset ind -compact
 .It Xr com 4 , Xr pccom 4
 8250/16450/16550-compatible PCMCIA serial cards and modems.
 .El
-.Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset ind -compact
 .It Xr an 4
@@ -85,7 +83,6 @@ Lucent WaveLAN IEEE 802.11DS and compatible cards.
 .It Xr xe 4
 Xircom 16bit Ethernet cards.
 .El
-.Pp
 .Ss SCSI controllers
 .Bl -tag -width speaker -offset ind -compact
 .It Xr aic 4

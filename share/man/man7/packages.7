@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.11 2001/10/04 10:28:20 wilfried Exp $
+.\" $OpenBSD: packages.7,v 1.12 2001/10/04 16:56:52 mpech Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -60,7 +60,6 @@ correspondingly, human resources for the ports tree are somewhat lacking.
 As of
 .Ox 2.7 ,
 the package systems should offer a few basic warranties.
-.Pp
 .Ss "Installing a package won't erase existing files"
 .Xr pkg_add 1
 will instead identify conflicts, back the existing files up, display a
@@ -119,7 +118,6 @@ in
 .Qq "verbose, don't actually install the package"
 mode first, so that
 additional steps may be figured out.
-.Pp
 .Ss "The package system does not handle shared files across packages"
 If two packages install a file with the same name, there is a conflict.
 There is currently no mechanism in the package system beyond a basic

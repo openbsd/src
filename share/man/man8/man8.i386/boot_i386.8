@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_i386.8,v 1.4 2001/08/20 06:09:32 mpech Exp $
+.\"	$OpenBSD: boot_i386.8,v 1.5 2001/10/04 16:56:52 mpech Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\"
@@ -44,7 +44,6 @@ system bootstrapping procedures
 Normally, the system will reboot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed,
 and unless this fails, the system will resume multi-user operations.
-.Pp
 .Ss Cold starts
 The
 .Tn "PC AT"
@@ -61,7 +60,6 @@ clones attempt to boot off the drive specified in the BIOS setup, or
 if it is an older BIOS, it will start with checking for a disk in floppy
 drive A (otherwise known as drive 0) first, and failing that, attempt to
 boot the hard disk C (otherwise known as hard disk controller 1, drive 0).
-.Pp
 .Ss Warm starts
 The BIOS loads the first block (at physical location: track 0, head 0,
 sector 1) off the boot device into memory, and if the last two bytes in the
