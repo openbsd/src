@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.6 1996/07/02 06:51:56 niklas Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.7 1996/08/29 15:17:37 deraadt Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -59,6 +59,11 @@
 #include <sys/lkm.h>
 #include <sys/syscall.h>
 
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_sym.h>
+#endif
+
 #include <vm/vm.h>
 #include <vm/vm_param.h>
 #include <vm/vm_kern.h>
@@ -69,6 +74,7 @@
 #define	LKMS_IDLE	0x00
 #define	LKMS_RESERVED	0x01
 #define	LKMS_LOADING	0x02
+#define	LKMS_LOADING_SYMS	0x03
 #define	LKMS_LOADED	0x04
 #define	LKMS_UNLOADING	0x08
 
@@ -235,6 +241,11 @@ lkmunreserve()
 	if (lkm_state == LKMS_IDLE)
 		return;
 
+#ifdef DDB
+	if (curp && curp->private.lkm_any && curp->private.lkm_any->lkm_name)
+	    db_del_symbol_table(curp->private.lkm_any->lkm_name);
+#endif
+
 	/*
 	 * Actually unreserve the memory
 	 */
@@ -286,7 +297,7 @@ lkmioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int error = 0;
+	int error = 0, i;
 	struct lmc_resrv *resrvp;
 	struct lmc_loadbuf *loadbufp;
 	struct lmc_unload *unloadp;
@@ -294,6 +305,7 @@ lkmioctl(dev, cmd, data, flag, p)
 
 	switch(cmd) {
 	case LMRESERV:		/* reserve pages for a module */
+	case LMRESERV_O:	/* reserve pages for a module */
 		if (securelevel > 0)
 			return EPERM;
 
@@ -306,6 +318,7 @@ lkmioctl(dev, cmd, data, flag, p)
 			error = ENOMEM;		/* no slots available */
 			break;
 		}
+		curp->ver = (cmd == LMRESERV) ? LKM_VERSION : LKM_OLDVERSION;
 		resrvp->slot = curp->id;	/* return slot */
 
 		/*
@@ -319,8 +332,22 @@ lkmioctl(dev, cmd, data, flag, p)
 
 		resrvp->addr = curp->area; /* ret kernel addr */
 
+		if (cmd == LMRESERV && resrvp->sym_size) {
+			curp->sym_size = resrvp->sym_size;
+			curp->sym_symsize = resrvp->sym_symsize;
+			curp->syms = (caddr_t)kmem_alloc(kmem_map, curp->sym_size);
+			curp->sym_offset = 0;
+			resrvp->sym_addr = curp->syms; /* ret symbol addr */
+		} else {
+			curp->sym_size = 0;
+			curp->syms = 0;
+			curp->sym_offset = 0;
+			if (cmd == LMRESERV)
+				resrvp->sym_addr = 0;
+		}
 #ifdef DEBUG
 		printf("LKM: LMRESERV (actual   = 0x%08lx)\n", curp->area);
+		printf("LKM: LMRESERV (syms     = 0x%08x)\n", curp->syms);
 		printf("LKM: LMRESERV (adjusted = 0x%08lx)\n",
 			trunc_page(curp->area));
 #endif	/* DEBUG */
@@ -356,12 +383,46 @@ lkmioctl(dev, cmd, data, flag, p)
 			curp->offset, curp->size, loadbufp->cnt);
 #endif	/* DEBUG */
 		} else {
-			lkm_state = LKMS_LOADED;
+			lkm_state = LKMS_LOADING_SYMS;
 #ifdef DEBUG
 			printf("LKM: LMLOADBUF (loaded)\n");
 #endif	/* DEBUG */
 		}
 		curp->offset += loadbufp->cnt;
+		break;
+
+	case LMLOADSYMS:	/* Copy in; stateful, follows LMRESERV*/
+		if ((flag & FWRITE) == 0) /* only allow this if writing */
+			return EPERM;
+
+		loadbufp = (struct lmc_loadbuf *)data;
+		i = loadbufp->cnt;
+		if ((lkm_state != LKMS_LOADING &&
+		     lkm_state != LKMS_LOADING_SYMS)
+		    || i < 0
+		    || i > MODIOBUF
+		    || i > curp->sym_size - curp->sym_offset) {
+			error = ENOMEM;
+			break;
+		}
+
+		/* copy in buffer full of data*/
+		if (error = copyin(loadbufp->data, curp->syms + curp->sym_offset, i))
+			break;
+
+		if ((curp->sym_offset + i) < curp->sym_size) {
+			lkm_state = LKMS_LOADING_SYMS;
+#ifdef DEBUG
+			printf( "LKM: LMLOADSYMS (loading @ %d of %d, i = %d)\n",
+			curp->sym_offset, curp->sym_size, i);
+#endif	/* DEBUG*/
+		} else {
+			lkm_state = LKMS_LOADED;
+#ifdef DEBUG
+			printf( "LKM: LMLOADSYMS (loaded)\n");
+#endif	/* DEBUG*/
+		}
+		curp->sym_offset += i;
 		break;
 
 	case LMUNRESRV:		/* discard reserved pages for a module */
@@ -388,9 +449,11 @@ lkmioctl(dev, cmd, data, flag, p)
 		case LKMS_LOADED:
 			break;
 		case LKMS_LOADING:
-			/* The remainder must be bss, so we clear it */
-			bzero((caddr_t)curp->area + curp->offset,
-			      curp->size - curp->offset);
+		case LKMS_LOADING_SYMS:
+			if (curp->size - curp->offset > 0)
+			    /* The remainder must be bss, so we clear it */
+			    bzero((caddr_t)curp->area + curp->offset,
+				  curp->size - curp->offset);
 			break;
 		default:
 
@@ -403,8 +466,11 @@ lkmioctl(dev, cmd, data, flag, p)
 		curp->entry = (int (*) __P((struct lkm_table *, int, int)))
 				(*((long *) (data)));
 
+#ifdef DEBUG
+		printf("LKM: call entrypoint %x\n", curp->entry);
+#endif
 		/* call entry(load)... (assigns "private" portion) */
-		error = (*(curp->entry))(curp, LKM_E_LOAD, LKM_VERSION);
+		error = (*(curp->entry))(curp, LKM_E_LOAD, curp->ver);
 		if (error) {
 			/*
 			 * Module may refuse loading or may have a
@@ -419,6 +485,15 @@ lkmioctl(dev, cmd, data, flag, p)
 #ifdef DEBUG
 		printf("LKM: LMREADY, id=%d, dev=%d\n", curp->id, curp->private.lkm_any->lkm_offset);
 #endif	/* DEBUG */
+#ifdef DDB
+		if (curp->syms && curp->sym_offset >= curp->sym_size) {
+		    db_add_symbol_table(curp->syms,
+					curp->syms + curp->sym_symsize,
+					curp->private.lkm_any->lkm_name,
+					curp->syms, NULL);
+		    printf("DDB symbols added: %d bytes\n", curp->sym_symsize);
+		}
+#endif
 		curp->refcnt++;
 		lkm_state = LKMS_IDLE;
 		break;
@@ -436,7 +511,7 @@ lkmioctl(dev, cmd, data, flag, p)
 			break; /* error set in lkmlookup */
 
 		/* call entry(unload) */
-		if ((*(curp->entry))(curp, LKM_E_UNLOAD, LKM_VERSION)) {
+		if ((*(curp->entry))(curp, LKM_E_UNLOAD, curp->ver)) {
 			error = EBUSY;
 			break;
 		}
@@ -904,6 +979,8 @@ lkmdispatch(lkmtp, cmd)
 	int cmd;
 {
 	int error = 0;		/* default = success */
+
+	printf("lkmdispatch: %x %d\n", lkmtp, cmd);
 
 	switch(lkmtp->private.lkm_any->lkm_type) {
 	case LM_SYSCALL:

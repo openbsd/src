@@ -1,4 +1,4 @@
-/*	$OpenBSD: lkm.h,v 1.4 1996/06/21 17:03:25 mickey Exp $	*/
+/*	$OpenBSD: lkm.h,v 1.5 1996/08/29 15:17:34 deraadt Exp $	*/
 /*	$NetBSD: lkm.h,v 1.12 1996/02/09 18:25:13 christos Exp $	*/
 
 /*
@@ -57,6 +57,7 @@ typedef enum loadmod {
 } MODTYPE;
 
 
+#define	LKM_OLDVERSION	1		/* version of module loader */
 #define	LKM_VERSION	1		/* version of module loader */
 #define	MAXLKMNAME	32
 
@@ -192,6 +193,13 @@ struct lkm_table {
 
 	int	(*entry) __P((struct lkm_table *, int, int));/* entry function */
 	union lkm_generic	private;	/* module private data */
+
+				/* ddb support */
+	char	*syms;		/* ? start of symbol table */
+	u_long	sym_size;	/* ? size of symbol table */
+	u_long	sym_offset;	/* ? offset */
+	u_long	sym_symsize;	/* ? symsize */
+	char	*sym_addr;	/* ? addr */
 };
 
 
@@ -286,14 +294,16 @@ extern struct lkm_table *lkm_list __P((struct lkm_table *));
 /*
  * IOCTL's recognized by /dev/lkm
  */
-#define	LMRESERV	_IOWR('K', 0, struct lmc_resrv)
+#define	LMRESERV_O	_IOWR('K', 0, struct lmc_resrv)
 #define	LMLOADBUF	_IOW('K', 1, struct lmc_loadbuf)
 #define	LMUNRESRV	_IO('K', 2)
 #define	LMREADY		_IOW('K', 3, int)
+#define	LMRESERV	_IOWR('K', 4, struct lmc_resrv)
 
 #define	LMLOAD		_IOW('K', 9, struct lmc_load)
 #define	LMUNLOAD	_IOWR('K', 10, struct lmc_unload)
 #define	LMSTAT		_IOWR('K', 11, struct lmc_stat)
+#define	LMLOADSYMS	_IOW('K', 12, struct lmc_loadbuf)
 
 #define	MODIOBUF	512		/* # of bytes at a time to loadbuf */
 
@@ -310,6 +320,12 @@ struct lmc_resrv {
 	char	*name;		/* IN: name (must be provided */
 	int	slot;		/* OUT: allocated slot (module ID) */
 	u_long	addr;		/* OUT: Link-to address */
+				/* ddb support */
+	char	*syms;		/* ? start of symbol table */
+	u_long	sym_size;	/* ? size of symbol table */
+	u_long	sym_offset;	/* ? offset */
+	u_long	sym_symsize;	/* ? symsize */
+	char	*sym_addr;	/* ? addr */
 };
 
 
