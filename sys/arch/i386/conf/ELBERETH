@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ELBERETH,v 1.12 1997/09/02 04:11:21 downsj Exp $
+#	$OpenBSD: ELBERETH,v 1.13 1997/09/24 15:11:07 kstailey Exp $
 #
 #
 #	ELBERETH -- 166MHz Pentium PCI
@@ -81,6 +81,7 @@ config		bsd	root on wd0 swap on wd0 and sd0 dumps on sd0
 
 mainbus0 at root
 
+bios0	at mainbus0
 isa0	at mainbus0			# ISA and VL bus systems
 pci0	at mainbus0 bus ?
 isadma0	at isa?

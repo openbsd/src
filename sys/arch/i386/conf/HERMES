@@ -3,7 +3,7 @@
 #
 # This system was a 468 but now has an Intel Pentium Overdrive Processor[tm]
 #
-# $OpenBSD: HERMES,v 1.10 1997/09/02 04:11:22 downsj Exp $
+# $OpenBSD: HERMES,v 1.11 1997/09/24 15:11:06 kstailey Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -79,6 +79,7 @@ config		bsd	root on sd0a swap on sd0b dumps on sd0b
 
 mainbus0 at root
 
+bios0	at mainbus0
 isa0	at mainbus0			# ISA and VL bus systems
 isadma0	at isa?
 
