@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_slvar.h,v 1.7 2001/06/09 06:16:38 angelos Exp $	*/
+/*	$OpenBSD: if_slvar.h,v 1.8 2001/06/12 21:41:32 deraadt Exp $	*/
 /*	$NetBSD: if_slvar.h,v 1.16 1996/05/07 02:40:46 thorpej Exp $	*/
 
 /*-
@@ -71,6 +71,37 @@ struct sl_softc {
 	caddr_t	sc_bpf;			/* BPF data */
 };
 
+/*
+ * Statistics.
+ */
+struct slstat	{
+	u_int	sl_ibytes;	/* bytes received */
+	u_int	sl_ipackets;	/* packets received */
+	u_int	sl_obytes;	/* bytes sent */
+	u_int	sl_opackets;	/* packets sent */
+};
+
+struct vjstat {
+	u_int	vjs_packets;	/* outbound packets */
+	u_int	vjs_compressed;	/* outbound compressed packets */
+	u_int	vjs_searches;	/* searches for connection state */
+	u_int	vjs_misses;	/* times couldn't find conn. state */
+	u_int	vjs_uncompressedin; /* inbound uncompressed packets */
+	u_int	vjs_compressedin;   /* inbound compressed packets */
+	u_int	vjs_errorin;	/* inbound unknown type packets */
+	u_int	vjs_tossed;	/* inbound packets tossed because of error */
+};
+
+struct sl_stats {
+	struct slstat	sl;	/* basic PPP statistics */
+	struct vjstat	vj;	/* VJ header compression statistics */
+};
+
+struct ifslstatsreq {
+	char ifr_name[IFNAMSIZ];
+	struct sl_stats stats;
+};
+
 /* internal flags */
 #define	SC_ERROR	0x0001		/* had an input error */
 
@@ -78,6 +109,12 @@ struct sl_softc {
 #define	SC_COMPRESS	IFF_LINK0	/* compress TCP traffic */
 #define	SC_NOICMP	IFF_LINK1	/* supress ICMP traffic */
 #define	SC_AUTOCOMP	IFF_LINK2	/* auto-enable TCP compression */
+
+/*
+ * These two are interface ioctls so that pppstats can do them on
+ * a socket without having to open the serial device.
+ */
+#define SIOCGSLSTATS	_IOWR('i', 123, struct ifslstatsreq)
 
 #ifdef _KERNEL
 void	slattach __P((int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.11 2001/05/17 18:41:46 provos Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.12 2001/06/12 21:41:32 deraadt Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -882,9 +882,11 @@ slioctl(ifp, cmd, data)
 	u_long cmd;
 	caddr_t data;
 {
+	register struct sl_softc *sc = ifp->if_softc;
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 	register struct ifreq *ifr;
 	register int s = splimp(), error = 0;
+	struct sl_stats *slsp;
 
 	switch (cmd) {
 
@@ -918,6 +920,26 @@ slioctl(ifp, cmd, data)
 			error = EAFNOSUPPORT;
 			break;
 		}
+		break;
+
+	case SIOCGSLSTATS:
+		slsp = &((struct ifslstatsreq *) data)->stats;
+		bzero(slsp, sizeof(*slsp));
+		/* slsp->sl = sc->sc_stats; */
+		slsp->sl.sl_ibytes = sc->sc_if.if_ibytes;
+		slsp->sl.sl_obytes = sc->sc_if.if_obytes;
+		slsp->sl.sl_ipackets = sc->sc_if.if_ipackets;
+		slsp->sl.sl_opackets = sc->sc_if.if_opackets;
+#ifdef INET
+		slsp->vj.vjs_packets = sc->sc_comp.sls_packets;
+		slsp->vj.vjs_compressed = sc->sc_comp.sls_compressed;
+		slsp->vj.vjs_searches = sc->sc_comp.sls_searches;
+		slsp->vj.vjs_misses = sc->sc_comp.sls_misses;
+		slsp->vj.vjs_uncompressedin = sc->sc_comp.sls_uncompressedin;
+		slsp->vj.vjs_compressedin = sc->sc_comp.sls_compressedin;
+		slsp->vj.vjs_errorin = sc->sc_comp.sls_errorin;
+		slsp->vj.vjs_tossed = sc->sc_comp.sls_tossed;
+#endif /* INET */
 		break;
 
 	default:
