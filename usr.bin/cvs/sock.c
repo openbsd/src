@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.12 2005/02/22 23:17:42 jfb Exp $	*/
+/*	$OpenBSD: sock.c,v 1.13 2005/03/10 22:15:03 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -67,6 +67,8 @@ static struct sockaddr_un cvs_sun;
 int
 cvsd_sock_open(void)
 {
+	mode_t	old_umask;
+
 	if (cvsd_sock >= 0)
 		cvsd_sock_close();
 
@@ -79,13 +81,16 @@ cvsd_sock_open(void)
 		return (-1);
 	}
 
+	old_umask = umask(S_IXUSR|S_IXGRP|S_IWOTH|S_IROTH|S_IXOTH);
 	if (bind(cvsd_sock, (struct sockaddr *)&cvsd_sun,
 	    SUN_LEN(&cvsd_sun)) == -1) {
 		cvs_log(LP_ERRNO, "failed to bind local socket to `%s'",
 		    cvsd_sock_path);
 		(void)close(cvsd_sock);
+		umask(old_umask);
 		return (-1);
 	}
+	umask(old_umask);
 
 	(void)listen(cvsd_sock, 10);
 
