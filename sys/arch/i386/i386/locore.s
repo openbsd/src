@@ -42,6 +42,7 @@
 #include "npx.h"
 #include "assym.h"
 #include "apm.h"
+#include "pctr.h"
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
@@ -1636,14 +1637,19 @@ ENTRY(idle)
 	sti
 #if NAPM > 0
 	call	_apm_cpu_idle
-#endif
 	hlt
-#if NAPM > 0
 	cmpl	$0,_apm_dobusy
 	je	1f
 	call	_apm_cpu_busy
-1:	
-#endif
+1:
+#else /* NAPM == 0 */
+#if NPCTR > 0
+	addl	$1,_pctr_idlcnt
+	adcl	$0,_pctr_idlcnt+4
+#else /* NPCTR == 0 */
+	hlt
+#endif /* NPCTR == 0 */
+#endif /* NAPM == 0 */
 	jmp	_idle
 
 #ifdef DIAGNOSTIC

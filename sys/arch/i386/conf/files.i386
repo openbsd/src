@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.22 1996/07/28 05:07:04 downsj Exp $
+#	$OpenBSD: files.i386,v 1.23 1996/08/08 18:47:13 dm Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -166,6 +166,10 @@ file	dev/isa/if_ed.c			ed & (ed_isa | ed_pcmcia) needs-flag
 device	joy
 attach	joy at isa
 file	arch/i386/isa/joy.c		joy needs-flag
+
+# Pentium performance counters
+pseudo-device	pctr
+file	arch/i386/i386/pctr.c		pctr needs-flag
 
 #
 # EISA-only drivers

@@ -99,27 +99,25 @@ void	delay __P((int));
 /*
  * High resolution clock support (Pentium only)
  */
-#define CPU_CLOCKUPDATE(otime, ntime) \
-	do { \
-		if (pentium_mhz) { \
-			__asm __volatile("cli\n" \
-					 "movl (%2), %%eax\n" \
-					 "movl %%eax, (%1)\n" \
-					 "movl 4(%2), %%eax\n" \
-					 "movl %%eax, 4(%1)\n" \
-					 "movl $0x10, %%ecx\n" \
-					 "xorl %%eax, %%eax\n" \
-					 "movl %%eax, %%edx\n" \
-					 ".byte 0xf, 0x30\n" \
-					 "sti\n" \
-					 "#%0%1%2" \
-					 : "=m" (*otime) \
-					 : "c" (otime), "b" (ntime) \
-					 : "ax", "cx", "dx"); \
-		} \
-		else { \
-			*(otime) = *(ntime); \
-		} \
+extern u_quad_t pentium_base_tsc;
+#define CPU_CLOCKUPDATE(otime, ntime)					\
+	do {								\
+		if (pentium_mhz) {					\
+			__asm __volatile("cli\n"			\
+					 "movl (%3), %%eax\n"		\
+					 "movl %%eax, (%2)\n"		\
+					 "movl 4(%3), %%eax\n"		\
+					 "movl %%eax, 4(%2)\n"		\
+					 ".byte 0xf, 0x31\n"		\
+					 "sti\n"			\
+					 "#%0 %1 %2 %3"			\
+					 : "=m" (*otime),		\
+					 "=A" (pentium_base_tsc)	\
+					 : "c" (otime), "b" (ntime));	\
+		}							\
+		else {							\
+			*(otime) = *(ntime);				\
+		}							\
 	} while (0)
 #endif
 void	delay __P((int));
