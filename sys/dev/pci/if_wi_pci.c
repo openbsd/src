@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.39 2004/11/23 21:12:23 fgsch Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.40 2004/12/08 15:40:40 markus Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -81,9 +81,15 @@ int	wi_pci_tmd_attach(struct pci_attach_args *pa, struct wi_softc *sc);
 int	wi_pci_native_attach(struct pci_attach_args *pa, struct wi_softc *sc);
 int	wi_pci_common_attach(struct pci_attach_args *pa, struct wi_softc *sc);
 void	wi_pci_plx_print_cis(struct wi_softc *);
+void	wi_pci_power(int, void *);
+
+struct wi_pci_softc {
+	struct wi_softc		 sc_wi;		/* real softc */
+	void			*sc_powerhook;
+};
 
 struct cfattach wi_pci_ca = {
-	sizeof (struct wi_softc), wi_pci_match, wi_pci_attach
+	sizeof (struct wi_pci_softc), wi_pci_match, wi_pci_attach
 };
 
 static const struct wi_pci_product {
@@ -135,6 +141,7 @@ wi_pci_match(struct device *parent, void *match, void *aux)
 void
 wi_pci_attach(struct device *parent, struct device *self, void *aux)
 {
+	struct wi_pci_softc *psc = (struct wi_pci_softc *)self;
 	struct wi_softc *sc = (struct wi_softc *)self;
 	struct pci_attach_args *pa = aux;
 	const struct wi_pci_product *pp;
@@ -144,6 +151,21 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	printf("\n");
 	wi_attach(sc, &wi_func_io);
+
+	psc->sc_powerhook = powerhook_establish(wi_pci_power, sc);
+}
+
+void
+wi_pci_power(int why, void *arg)
+{
+	struct wi_softc *sc = (struct wi_softc *)arg;
+	struct ifnet *ifp;
+
+	if (why == PWR_RESUME) {
+		ifp = &sc->sc_arpcom.ac_if;
+		if (ifp->if_flags & IFF_UP)
+			wi_init(sc);
+	}
 }
 
 /*
