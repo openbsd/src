@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 1998/03/10 16:34:03 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 1998/09/10 06:44:41 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.9 1998/03/10 16:34:03 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.10 1998/09/10 06:44:41 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -180,6 +180,7 @@ main(argc, argv)
 			break;
 		case 'o':
 			strncpy(outfile, optarg, sizeof(outfile)-1);
+			outfile[sizeof(outfile)-1] = '\0';
 			break;
 		case 'q':
 			verbose = -1;
