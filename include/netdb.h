@@ -1,4 +1,4 @@
-/*	$OpenBSD: netdb.h,v 1.9 2000/02/09 12:22:08 itojun Exp $	*/
+/*	$OpenBSD: netdb.h,v 1.10 2000/05/15 10:50:39 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1980, 1983, 1988, 1993
@@ -214,7 +214,7 @@ void		setservent __P((int));
 int		getaddrinfo __P((const char *name, const char *service,
 		    const struct addrinfo *req, struct addrinfo **pai));
 void		freeaddrinfo __P((struct addrinfo *ai));
-int		getnameinfo __P((const struct sockaddr *sa, size_t addrlen,
+int		getnameinfo __P((const struct sockaddr *sa, socklen_t addrlen,
 		    char *host, size_t hostlen, char *serv, size_t servlen,
 		    int flags));
 char		*gai_strerror __P((int ecode));
