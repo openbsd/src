@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.7 2002/06/21 00:00:05 itojun Exp $ */
+/*	$OpenBSD: cpu.c,v 1.8 2002/06/21 06:26:50 itojun Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -188,6 +188,7 @@ cpuattach(parent, dev, aux)
 	case MPC603e:
 	case MPC750:
 	case MPC7400:
+	case IBM750FX:
 	case MPC7410:
 	case MPC7450:
 	case MPC7455:
@@ -198,7 +199,7 @@ cpuattach(parent, dev, aux)
 	asm ("mtspr %0,1008" : "=r" (hid0));
 
 	/* if processor is G3 or G4, configure l2 cache */ 
-	if ( (cpu == MPC750) || (cpu == MPC7400)
+	if ( (cpu == MPC750) || (cpu == MPC7400) || (cpu == IBM750FX)
 	    || (cpu == MPC7410) || (cpu == MPC7450) || (cpu == MPC7455)) {
 		config_l2cr(cpu);
 	}
@@ -293,7 +294,9 @@ config_l2cr(int cpu)
 			if (l3cr & L3CR_L3E)
 				printf(", %cMB L3 cache",
 				    l3cr & L3CR_L3SIZ ? '2' : '1');
-		} else {
+		} else if (cpu == IBM750FX)
+			printf(": 512KB L2 cache");
+		else {
 			switch (l2cr & L2CR_L2SIZ) {
 			case L2SIZ_256K:
 				printf(": 256KB");
