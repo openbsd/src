@@ -1,4 +1,4 @@
-.\"     $OpenBSD: txp.4,v 1.13 2004/09/30 19:59:25 mickey Exp $
+.\"     $OpenBSD: txp.4,v 1.14 2004/12/14 01:50:42 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -114,6 +114,13 @@ Use 100baseTX, half duplex
 Use 10baseT, full duplex
 .It media 10baseT Op mediaopt half-duplex
 Use 10baseT, half duplex
+.El
+.Sh FILES
+The driver need a firmware file,
+which is loaded on demand at startup:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/3c990
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.73 2004/09/23 17:45:16 brad Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.74 2004/12/14 01:50:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -76,8 +76,6 @@
 
 #include <dev/pci/if_txpreg.h>
 
-#include <dev/microcode/typhoon/3c990img.h>
-
 /*
  * These currently break the 3c990 firmware, hopefully will be resolved
  * at some point.
@@ -87,6 +85,7 @@
 
 int txp_probe(struct device *, void *, void *);
 void txp_attach(struct device *, struct device *, void *);
+void txp_attachhook(void *vsc);
 int txp_intr(void *);
 void txp_tick(void *);
 void txp_shutdown(void *);
@@ -101,7 +100,7 @@ int txp_reset_adapter(struct txp_softc *);
 int txp_download_fw(struct txp_softc *);
 int txp_download_fw_wait(struct txp_softc *);
 int txp_download_fw_section(struct txp_softc *,
-    struct txp_fw_section_header *, int);
+    struct txp_fw_section_header *, int, u_char *, size_t);
 int txp_alloc_rings(struct txp_softc *);
 void txp_dma_free(struct txp_softc *, struct txp_dma_alloc *);
 int txp_dma_malloc(struct txp_softc *, bus_size_t, struct txp_dma_alloc *, int);
@@ -158,6 +157,99 @@ txp_probe(parent, match, aux)
 }
 
 void
+txp_attachhook(void *vsc)
+{
+	struct txp_softc *sc = vsc;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	u_int16_t p1;
+	u_int32_t p2;
+	int s;
+
+	s = splnet();
+	printf("%s: ", sc->sc_dev.dv_xname);
+
+	if (txp_chip_init(sc)) {
+		printf("failed chip init\n");
+		splx(s);
+		return;
+	}
+
+	if (txp_download_fw(sc)) {
+		splx(s);
+		return;
+	}
+
+	if (txp_alloc_rings(sc)) {
+		splx(s);
+		return;
+	}
+
+	if (txp_command(sc, TXP_CMD_MAX_PKT_SIZE_WRITE, TXP_MAX_PKTLEN, 0, 0,
+	    NULL, NULL, NULL, 1)) {
+		splx(s);
+		return;
+	}
+
+	if (txp_command(sc, TXP_CMD_STATION_ADDRESS_READ, 0, 0, 0,
+	    &p1, &p2, NULL, 1)) {
+		splx(s);
+		return;
+	}
+
+	txp_set_filter(sc);
+
+	p1 = htole16(p1);
+	sc->sc_arpcom.ac_enaddr[0] = ((u_int8_t *)&p1)[1];
+	sc->sc_arpcom.ac_enaddr[1] = ((u_int8_t *)&p1)[0];
+	p2 = htole32(p2);
+	sc->sc_arpcom.ac_enaddr[2] = ((u_int8_t *)&p2)[3];
+	sc->sc_arpcom.ac_enaddr[3] = ((u_int8_t *)&p2)[2];
+	sc->sc_arpcom.ac_enaddr[4] = ((u_int8_t *)&p2)[1];
+	sc->sc_arpcom.ac_enaddr[5] = ((u_int8_t *)&p2)[0];
+
+	printf("address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	sc->sc_cold = 0;
+
+	ifmedia_init(&sc->sc_ifmedia, 0, txp_ifmedia_upd, txp_ifmedia_sts);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX|IFM_HDX, 0, NULL);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
+	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
+
+	sc->sc_xcvr = TXP_XCVR_AUTO;
+	txp_command(sc, TXP_CMD_XCVR_SELECT, TXP_XCVR_AUTO, 0, 0,
+	    NULL, NULL, NULL, 0);
+	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO);
+
+	ifp->if_softc = sc;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_ioctl = txp_ioctl;
+	ifp->if_start = txp_start;
+	ifp->if_watchdog = txp_watchdog;
+	ifp->if_baudrate = 10000000;
+	IFQ_SET_MAXLEN(&ifp->if_snd, TX_ENTRIES);
+	IFQ_SET_READY(&ifp->if_snd);
+	ifp->if_capabilities = 0;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+
+	txp_capabilities(sc);
+
+	timeout_set(&sc->sc_tick, txp_tick, sc);
+
+	/*
+	 * Attach us everywhere
+	 */
+	if_attach(ifp);
+	ether_ifattach(ifp);
+
+	shutdownhook_establish(txp_shutdown, sc);
+	splx(s);
+}
+
+void
 txp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -167,11 +259,8 @@ txp_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_size_t iosize;
 	u_int32_t command;
-	u_int16_t p1;
-	u_int32_t p2;
 
 	sc->sc_cold = 1;
 
@@ -212,75 +301,13 @@ txp_attach(parent, self, aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s", intrstr);
+	printf(": %s\n", intrstr);
 
-	if (txp_chip_init(sc))
-		return;
+	if (rootvp == NULL)
+		mountroothook_establish(txp_attachhook, sc);
+	else
+		txp_attachhook(sc);
 
-	if (txp_download_fw(sc))
-		return;
-
-	if (txp_alloc_rings(sc))
-		return;
-
-	if (txp_command(sc, TXP_CMD_MAX_PKT_SIZE_WRITE, TXP_MAX_PKTLEN, 0, 0,
-	    NULL, NULL, NULL, 1))
-		return;
-
-	if (txp_command(sc, TXP_CMD_STATION_ADDRESS_READ, 0, 0, 0,
-	    &p1, &p2, NULL, 1))
-		return;
-
-	txp_set_filter(sc);
-
-	p1 = htole16(p1);
-	sc->sc_arpcom.ac_enaddr[0] = ((u_int8_t *)&p1)[1];
-	sc->sc_arpcom.ac_enaddr[1] = ((u_int8_t *)&p1)[0];
-	p2 = htole32(p2);
-	sc->sc_arpcom.ac_enaddr[2] = ((u_int8_t *)&p2)[3];
-	sc->sc_arpcom.ac_enaddr[3] = ((u_int8_t *)&p2)[2];
-	sc->sc_arpcom.ac_enaddr[4] = ((u_int8_t *)&p2)[1];
-	sc->sc_arpcom.ac_enaddr[5] = ((u_int8_t *)&p2)[0];
-
-	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
-	sc->sc_cold = 0;
-
-	ifmedia_init(&sc->sc_ifmedia, 0, txp_ifmedia_upd, txp_ifmedia_sts);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T, 0, NULL);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T|IFM_HDX, 0, NULL);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX, 0, NULL);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX|IFM_HDX, 0, NULL);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_100_TX|IFM_FDX, 0, NULL);
-	ifmedia_add(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
-
-	sc->sc_xcvr = TXP_XCVR_AUTO;
-	txp_command(sc, TXP_CMD_XCVR_SELECT, TXP_XCVR_AUTO, 0, 0,
-	    NULL, NULL, NULL, 0);
-	ifmedia_set(&sc->sc_ifmedia, IFM_ETHER|IFM_AUTO);
-
-	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_ioctl = txp_ioctl;
-	ifp->if_start = txp_start;
-	ifp->if_watchdog = txp_watchdog;
-	ifp->if_baudrate = 10000000;
-	IFQ_SET_MAXLEN(&ifp->if_snd, TX_ENTRIES);
-	IFQ_SET_READY(&ifp->if_snd);
-	ifp->if_capabilities = 0;
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
-
-	txp_capabilities(sc);
-
-	timeout_set(&sc->sc_tick, txp_tick, sc);
-
-	/*
-	 * Attach us everywhere
-	 */
-	if_attach(ifp);
-	ether_ifattach(ifp);
-
-	shutdownhook_establish(txp_shutdown, sc);
 }
 
 int
@@ -354,8 +381,10 @@ txp_download_fw(sc)
 {
 	struct txp_fw_file_header *fileheader;
 	struct txp_fw_section_header *secthead;
-	int sect;
 	u_int32_t r, i, ier, imr;
+	size_t buflen;
+	int sect, err;
+	u_char *buf;
 
 	ier = READ_REG(sc, TXP_IER);
 	WRITE_REG(sc, TXP_IER, ier | TXP_INT_A2H_0);
@@ -370,17 +399,24 @@ txp_download_fw(sc)
 		DELAY(50);
 	}
 	if (r != STAT_WAITING_FOR_HOST_REQUEST) {
-		printf(": not waiting for host request\n");
+		printf("not waiting for host request\n");
 		return (-1);
 	}
 
 	/* Ack the status */
 	WRITE_REG(sc, TXP_ISR, TXP_INT_A2H_0);
 
-	fileheader = (struct txp_fw_file_header *)tc990image;
+	err = loadfirmware("3c990", &buf, &buflen);
+	if (err) {
+		printf(": failed loadfirmware of file 3c990: errno %d\n",
+		    err);
+		return (err);
+	}
+
+	fileheader = (struct txp_fw_file_header *)buf;
 	if (bcmp("TYPHOON", fileheader->magicid, sizeof(fileheader->magicid))) {
-		printf(": fw invalid magic\n");
-		return (-1);
+		printf("firmware invalid magic\n");
+		goto fail;
 	}
 
 	/* Tell boot firmware to get ready for image */
@@ -388,16 +424,16 @@ txp_download_fw(sc)
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_RUNTIME_IMAGE);
 
 	if (txp_download_fw_wait(sc)) {
-		printf("%s: fw wait failed, initial\n", sc->sc_dev.dv_xname);
-		return (-1);
+		printf("fw wait failed, initial\n");
+		goto fail;
 	}
 
-	secthead = (struct txp_fw_section_header *)(((u_int8_t *)tc990image) +
+	secthead = (struct txp_fw_section_header *)(buf +
 	    sizeof(struct txp_fw_file_header));
 
 	for (sect = 0; sect < letoh32(fileheader->nsections); sect++) {
-		if (txp_download_fw_section(sc, secthead, sect))
-			return (-1);
+		if (txp_download_fw_section(sc, secthead, sect, buf, buflen))
+			goto fail;
 		secthead = (struct txp_fw_section_header *)
 		    (((u_int8_t *)secthead) + letoh32(secthead->nbytes) +
 			sizeof(*secthead));
@@ -412,14 +448,19 @@ txp_download_fw(sc)
 		DELAY(50);
 	}
 	if (r != STAT_WAITING_FOR_BOOT) {
-		printf(": not waiting for boot\n");
-		return (-1);
+		printf("not waiting for boot\n");
+		goto fail;
 	}
 
 	WRITE_REG(sc, TXP_IER, ier);
 	WRITE_REG(sc, TXP_IMR, imr);
 
+	free(buf, M_DEVBUF);
+	printf("loaded firmware, ");
 	return (0);
+fail:
+	free(buf, M_DEVBUF);
+	return (-1);
 }
 
 int
@@ -436,7 +477,7 @@ txp_download_fw_wait(sc)
 	}
 
 	if (!(r & TXP_INT_A2H_0)) {
-		printf(": fw wait failed comm0\n");
+		printf("fw wait failed comm0\n");
 		return (-1);
 	}
 
@@ -444,17 +485,19 @@ txp_download_fw_wait(sc)
 
 	r = READ_REG(sc, TXP_A2H_0);
 	if (r != STAT_WAITING_FOR_SEGMENT) {
-		printf(": fw not waiting for segment\n");
+		printf("fw not waiting for segment\n");
 		return (-1);
 	}
 	return (0);
 }
 
 int
-txp_download_fw_section(sc, sect, sectnum)
+txp_download_fw_section(sc, sect, sectnum, buf, buflen)
 	struct txp_softc *sc;
 	struct txp_fw_section_header *sect;
 	int sectnum;
+	u_char *buf;
+	size_t buflen;
 {
 	struct txp_dma_alloc dma;
 	int rseg, err = 0;
@@ -466,22 +509,22 @@ txp_download_fw_section(sc, sect, sectnum)
 		return (0);
 
 	/* Make sure we aren't past the end of the image */
-	rseg = ((u_int8_t *)sect) - ((u_int8_t *)tc990image);
-	if (rseg >= sizeof(tc990image)) {
-		printf(": fw invalid section address, section %d\n", sectnum);
+	rseg = ((u_int8_t *)sect) - ((u_int8_t *)buf);
+	if (rseg >= buflen) {
+		printf("fw invalid section address, section %d\n", sectnum);
 		return (-1);
 	}
 
 	/* Make sure this section doesn't go past the end */
 	rseg += letoh32(sect->nbytes);
-	if (rseg >= sizeof(tc990image)) {
-		printf(": fw truncated section %d\n", sectnum);
+	if (rseg >= buflen) {
+		printf("fw truncated section %d\n", sectnum);
 		return (-1);
 	}
 
 	/* map a buffer, copy segment to it, get physaddr */
 	if (txp_dma_malloc(sc, letoh32(sect->nbytes), &dma, 0)) {
-		printf(": fw dma malloc failed, section %d\n", sectnum);
+		printf("fw dma malloc failed, section %d\n", sectnum);
 		return (-1);
 	}
 
@@ -498,7 +541,7 @@ txp_download_fw_section(sc, sect, sectnum)
 	m.m_flags = 0;
 	csum = in_cksum(&m, letoh32(sect->nbytes));
 	if (csum != sect->cksum) {
-		printf(": fw section %d, bad cksum (expected 0x%x got 0x%x)\n",
+		printf("fw section %d, bad cksum (expected 0x%x got 0x%x)\n",
 		    sectnum, sect->cksum, csum);
 		err = -1;
 		goto bail;
@@ -877,7 +920,7 @@ txp_alloc_rings(sc)
 	/* boot record */
 	if (txp_dma_malloc(sc, sizeof(struct txp_boot_record), &sc->sc_boot_dma,
 	    BUS_DMA_COHERENT)) {
-		printf(": can't allocate boot record\n");
+		printf("can't allocate boot record\n");
 		return (-1);
 	}
 	boot = (struct txp_boot_record *)sc->sc_boot_dma.dma_vaddr;
@@ -887,7 +930,7 @@ txp_alloc_rings(sc)
 	/* host variables */
 	if (txp_dma_malloc(sc, sizeof(struct txp_hostvar), &sc->sc_host_dma,
 	    BUS_DMA_COHERENT)) {
-		printf(": can't allocate host ring\n");
+		printf("can't allocate host ring\n");
 		goto bail_boot;
 	}
 	bzero(sc->sc_host_dma.dma_vaddr, sizeof(struct txp_hostvar));
@@ -898,7 +941,7 @@ txp_alloc_rings(sc)
 	/* high priority tx ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_tx_desc) * TX_ENTRIES,
 	    &sc->sc_txhiring_dma, BUS_DMA_COHERENT)) {
-		printf(": can't allocate high tx ring\n");
+		printf("can't allocate high tx ring\n");
 		goto bail_host;
 	}
 	bzero(sc->sc_txhiring_dma.dma_vaddr, sizeof(struct txp_tx_desc) * TX_ENTRIES);
@@ -925,7 +968,7 @@ txp_alloc_rings(sc)
 	/* low priority tx ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_tx_desc) * TX_ENTRIES,
 	    &sc->sc_txloring_dma, BUS_DMA_COHERENT)) {
-		printf(": can't allocate low tx ring\n");
+		printf("can't allocate low tx ring\n");
 		goto bail_txhiring;
 	}
 	bzero(sc->sc_txloring_dma.dma_vaddr, sizeof(struct txp_tx_desc) * TX_ENTRIES);
@@ -940,7 +983,7 @@ txp_alloc_rings(sc)
 	/* high priority rx ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_rx_desc) * RX_ENTRIES,
 	    &sc->sc_rxhiring_dma, BUS_DMA_COHERENT)) {
-		printf(": can't allocate high rx ring\n");
+		printf("can't allocate high rx ring\n");
 		goto bail_txloring;
 	}
 	bzero(sc->sc_rxhiring_dma.dma_vaddr, sizeof(struct txp_rx_desc) * RX_ENTRIES);
@@ -957,7 +1000,7 @@ txp_alloc_rings(sc)
 	/* low priority ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_rx_desc) * RX_ENTRIES,
 	    &sc->sc_rxloring_dma, BUS_DMA_COHERENT)) {
-		printf(": can't allocate low rx ring\n");
+		printf("can't allocate low rx ring\n");
 		goto bail_rxhiring;
 	}
 	bzero(sc->sc_rxloring_dma.dma_vaddr, sizeof(struct txp_rx_desc) * RX_ENTRIES);
@@ -974,7 +1017,7 @@ txp_alloc_rings(sc)
 	/* command ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_cmd_desc) * CMD_ENTRIES,
 	    &sc->sc_cmdring_dma, BUS_DMA_COHERENT)) {
-		printf(": can't allocate command ring\n");
+		printf("can't allocate command ring\n");
 		goto bail_rxloring;
 	}
 	bzero(sc->sc_cmdring_dma.dma_vaddr, sizeof(struct txp_cmd_desc) * CMD_ENTRIES);
@@ -988,7 +1031,7 @@ txp_alloc_rings(sc)
 	/* response ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_rsp_desc) * RSP_ENTRIES,
 	    &sc->sc_rspring_dma, BUS_DMA_COHERENT)) {
-		printf(": can't allocate response ring\n");
+		printf("can't allocate response ring\n");
 		goto bail_cmdring;
 	}
 	bzero(sc->sc_rspring_dma.dma_vaddr, sizeof(struct txp_rsp_desc) * RSP_ENTRIES);
@@ -1002,7 +1045,7 @@ txp_alloc_rings(sc)
 	/* receive buffer ring */
 	if (txp_dma_malloc(sc, sizeof(struct txp_rxbuf_desc) * RXBUF_ENTRIES,
 	    &sc->sc_rxbufring_dma, BUS_DMA_COHERENT)) {
-		printf(": can't allocate rx buffer ring\n");
+		printf("can't allocate rx buffer ring\n");
 		goto bail_rspring;
 	}
 	bzero(sc->sc_rxbufring_dma.dma_vaddr, sizeof(struct txp_rxbuf_desc) * RXBUF_ENTRIES);
@@ -1056,7 +1099,7 @@ txp_alloc_rings(sc)
 	/* zero dma */
 	if (txp_dma_malloc(sc, sizeof(u_int32_t), &sc->sc_zero_dma,
 	    BUS_DMA_COHERENT)) {
-		printf(": can't allocate response ring\n");
+		printf("can't allocate response ring\n");
 		goto bail_rxbufring;
 	}
 	bzero(sc->sc_zero_dma.dma_vaddr, sizeof(u_int32_t));
@@ -1071,7 +1114,7 @@ txp_alloc_rings(sc)
 		DELAY(50);
 	}
 	if (r != STAT_WAITING_FOR_BOOT) {
-		printf(": not waiting for boot\n");
+		printf("not waiting for boot\n");
 		goto bail;
 	}
 	WRITE_REG(sc, TXP_H2A_2, sc->sc_boot_dma.dma_paddr >> 32);
@@ -1086,7 +1129,7 @@ txp_alloc_rings(sc)
 		DELAY(50);
 	}
 	if (r != STAT_RUNNING) {
-		printf(": fw not running\n");
+		printf("fw not running\n");
 		goto bail;
 	}
 

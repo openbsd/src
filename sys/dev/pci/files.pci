@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.165 2004/12/01 01:28:59 pvalchev Exp $
+#	$OpenBSD: files.pci,v 1.166 2004/12/14 01:50:42 deraadt Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -130,7 +130,7 @@ attach	esa at pci
 file	dev/pci/esa.c		esa
 
 # Yamaha YMF Audio
-device	yds { }: audio, auconv, mulaw, ac97
+device	yds { }: audio, auconv, mulaw, ac97, firmload
 attach	yds at pci
 file	dev/pci/yds.c			yds
 
