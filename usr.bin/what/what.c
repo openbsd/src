@@ -1,4 +1,4 @@
-/*	$OpenBSD: what.c,v 1.3 1996/06/26 06:40:11 deraadt Exp $	*/
+/*	$OpenBSD: what.c,v 1.4 1996/06/26 07:08:36 deraadt Exp $	*/
 /*	$NetBSD: what.c,v 1.4 1994/12/20 16:01:03 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)what.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: what.c,v 1.3 1996/06/26 06:40:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: what.c,v 1.4 1996/06/26 07:08:36 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ loop:		if (c == '$') {
 			for (i = 0; match[i]; i++)
 				if ((c = getchar()) != match[i])
 					goto loop;
-			printf("$%s", match);
+			printf("\t$%s", match);
 			while (isprint(c = getchar()))
 				putchar(c);
 			putchar('\n');
