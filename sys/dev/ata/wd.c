@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.12 2000/04/10 07:06:16 csapuntz Exp $ */
+/*	$OpenBSD: wd.c,v 1.13 2000/06/30 06:56:24 art Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -162,6 +162,7 @@ struct wd_softc {
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif
+	struct timeout sc_restart_timeout;
 	void *sc_sdhook;
 };
 
@@ -383,6 +384,7 @@ wdattach(parent, self, aux)
 	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname,
 			  RND_TYPE_DISK, 0);
 #endif
+	timeout_set(&wd->sc_restart_timeout, wdrestart, wd);
 }
 
 int
@@ -586,7 +588,7 @@ __wdstart(wd, bp)
 	disk_busy(&wd->sc_dk);
 	switch (wdc_ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
 	case WDC_TRY_AGAIN:
-		timeout(wdrestart, wd, hz);
+		timeout_add(&wd->sc_restart_timeout, hz);
 		break;
 	case WDC_QUEUED:
 		break;
@@ -637,7 +639,7 @@ retry:
 		    wd->sc_wdc_bio.blkdone, wd->sc_dk.dk_label);
 		if (wd->retries++ < WDIORETRIES) {
 			printf(", retrying\n");
-			timeout(wdrestart, wd, RECOVERYTIME);
+			timeout_add(&wd->sc_restart_timeout, RECOVERYTIME);
 			return;
 		}
 		printf("\n");
