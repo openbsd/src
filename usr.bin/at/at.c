@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.40 2003/09/26 21:26:40 tedu Exp $	*/
+/*	$OpenBSD: at.c,v 1.41 2004/06/03 19:19:07 millert Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -42,7 +42,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.40 2003/09/26 21:26:40 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.41 2004/06/03 19:19:07 millert Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -71,7 +71,7 @@ static int check_permission(void);
 static void panic(const char *);
 static void perr(const char *);
 static void perr2(const char *, const char *);
-static void usage(void);
+static __dead void usage(void);
 time_t parsetime(int, char **);
 
 /*
@@ -878,7 +878,7 @@ check_permission(void)
 	return (ok);
 }
 
-static void
+static __dead void
 usage(void)
 {
 	/* Print usage and exit.  */
@@ -920,6 +920,9 @@ main(int argc, char **argv)
 	int aflag = 0;
 	int cflag = 0;
 	int nflag = 0;
+
+	if (argc < 1)
+		usage();
 
 	if ((ProgramName = strrchr(argv[0], '/')) != NULL)
 		ProgramName++;
