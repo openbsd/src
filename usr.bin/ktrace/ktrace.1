@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.13 2003/06/10 09:12:10 jmc Exp $
+.\"	$OpenBSD: ktrace.1,v 1.14 2003/09/03 08:54:33 jmc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@
 .Nm ktrace
 .Op Fl aCcdi
 .Op Fl f Ar trfile
-.Op Fl g Ar pgrp
+.Op Fl g Ar pgid
 .Op Fl p Ar pid
 .Op Fl t Ar trstr
 .Nm ktrace
@@ -56,8 +56,7 @@ unless overridden by the
 .Fl f
 option.
 The kernel operations that are traced include system calls, namei
-translations, signal processing, and
-.Tn I/O .
+translations, signal processing, and I/O.
 .Pp
 Once tracing is enabled on a process, trace data will be logged until
 either the process exits or the trace point is cleared.
@@ -67,14 +66,14 @@ attempting to trace a process.
 The following command is sufficient to disable tracing on all user owned
 processes, and, if executed by root, all processes:
 .Pp
-.Dl \&$ ktrace -C
+.Dl $ ktrace -C
 .Pp
 The trace file is not human-readable; use
 .Xr kdump 1
 to decode it.
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "-t trstr"
 .It Fl a
 Append to the trace file instead of recreating it.
 .It Fl C
@@ -112,14 +111,13 @@ and
 .Cm s .
 The following table equates the letters with the tracepoints:
 .Pp
-.Bl -tag -width flag -compact
+.Bl -tag -width flag -offset indent -compact
 .It Cm c
 trace system calls
 .It Cm e
 trace emulation changes
 .It Cm i
-trace
-.Tn I/O
+trace I/O
 .It Cm n
 trace namei translations
 .It Cm s
@@ -145,10 +143,9 @@ options are mutually exclusive.
 default ktrace dump file
 .El
 .Sh EXAMPLES
-# trace all kernel operations of process id 34
+# trace all kernel operations of process ID 34
 .Dl $ ktrace -p 34
-.Pp
-.Bd -literal
+.Bd -unfilled
 # trace all kernel operations of processes in process group 15 and
 # pass the trace flags to all current and future children
 .Ed
@@ -160,9 +157,7 @@ default ktrace dump file
 # disable tracing signals on process 70 and all current children
 .Dl $ ktrace -t s -cdp 70
 .Pp
-# enable tracing of
-.Tn I/O
-on process 67
+# enable tracing of I/O on process 67
 .Dl $ ktrace -ti -p 67
 .Pp
 # run the command "w", tracing only system calls
