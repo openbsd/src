@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.2 1999/02/27 18:29:54 jason Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.3 1999/03/01 04:44:44 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -46,6 +46,8 @@
 #include <string.h>
 #include <err.h>
 #include <sysexits.h>
+#include <stdlib.h>
+#include <limits.h>
 
 void usage(void);
 int main(int, char **);
@@ -53,6 +55,7 @@ int bridge_setflag(int, char *, short);
 int bridge_clrflag(int, char *, short);
 int bridge_list(int, char *, char *);
 int bridge_addrs(int, char *, char *);
+int bridge_maxaddr(int, char *, char *);
 int bridge_add(int, char *, char *);
 int bridge_delete(int, char *, char *);
 int bridge_status(int, char *);
@@ -162,6 +165,16 @@ main(argc, argv)
 			if (error)
 				return (error);
 		}
+		else if (strcmp("maxaddr", argv[0]) == 0) {
+			argc--; argv++;
+			if (argc == 0) {
+				warnx("maxaddr requires an argument");
+				return (EX_USAGE);
+			}
+			error = bridge_maxaddr(sock, brdg, argv[0]);
+			if (error)
+				return (error);
+		}
 		else {
 			warnx("unrecognized option: %s", argv[0]);
 			return (EX_USAGE);
@@ -266,30 +279,34 @@ bridge_clrflag(s, brdg, f)
 }
 
 int
-bridge_list(sock, brdg, delim)
-	int sock;
+bridge_list(s, brdg, delim)
+	int s;
 	char *brdg, *delim;
 {
-	struct ifbreq req;
-	u_int32_t i = 0;
-	char buf[sizeof(req.ifsname) + 1];
+	struct ifbreq *reqp;
+	struct ifbifconf bifc;
+	int i, len = 8192;
+	char buf[sizeof(reqp->ifbr_ifsname) + 1], *inbuf = NULL;
 
 	while (1) {
-		strncpy(req.ifbname, brdg, sizeof(req.ifbname));
-		req.index = i;
-		if (ioctl(sock, SIOCBRDGIDX, &req) < 0) {
-			if (errno == ENOENT)    /* end of list */
-				return (0);
-			warn("ioctl(SIOCBRDGIDX)");
-			return (EX_IOERR);
-		}
-
-		bzero(buf, sizeof(buf));
-		strncpy(buf, req.ifsname, sizeof(req.ifsname));
-		printf("%s%s\n", delim, buf);
-		i++;
+		strncpy(bifc.ifbic_name, brdg, sizeof(bifc.ifbic_name));
+		bifc.ifbic_len = len;
+		bifc.ifbic_buf = inbuf = realloc(inbuf, len);
+		if (inbuf == NULL)
+			err(1, "malloc");
+		if (ioctl(s, SIOCBRDGIFS, &bifc) < 0)
+			err(1, "ioctl(SIOCBRDGIFS)");
+		if (bifc.ifbic_len + sizeof(*reqp) < len)
+			break;
+		len *= 2;
 	}
-
+	for (i = 0; i < bifc.ifbic_len / sizeof(*reqp); i++) {
+		reqp = bifc.ifbic_req + i;
+		bzero(buf, sizeof(buf));
+		strncpy(buf, reqp->ifbr_ifsname, sizeof(reqp->ifbr_ifsname));
+		printf("%s%s\n", delim, buf);
+	}
+	free(bifc.ifbic_buf);
 	return (0);             /* NOTREACHED */
 }
 
@@ -300,8 +317,8 @@ bridge_add(s, brdg, ifn)
 {
 	struct ifbreq req;
 
-	strncpy(req.ifbname, brdg, sizeof(req.ifbname));
-	strncpy(req.ifsname, ifn, sizeof(req.ifsname));
+	strncpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
+	strncpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname));
 	if (ioctl(s, SIOCBRDGADD, &req) < 0) {
 		warn("ioctl(SIOCADDBRDG)");
 		if (errno == EPERM)
@@ -318,8 +335,8 @@ bridge_delete(s, brdg, ifn)
 {
 	struct ifbreq req;
 
-	strncpy(req.ifbname, brdg, sizeof(req.ifbname));
-	strncpy(req.ifsname, ifn, sizeof(req.ifsname));
+	strncpy(req.ifbr_name, brdg, sizeof(req.ifbr_name));
+	strncpy(req.ifbr_ifsname, ifn, sizeof(req.ifbr_ifsname));
 	if (ioctl(s, SIOCBRDGDEL, &req) < 0) {
 		warn("ioctl(SIOCDELBRDG)");
 		if (errno == EPERM)
@@ -330,28 +347,61 @@ bridge_delete(s, brdg, ifn)
 }
 
 int
+bridge_maxaddr(s, brdg, arg)
+	int s;
+	char *brdg, *arg;
+{
+	struct ifbcachereq ifbc;
+	u_int32_t newsize;
+	char *endptr;
+
+	newsize = strtoul(arg, &endptr, 0);
+	if (arg[0] == '\0' || endptr[0] != '\0') {
+		printf("invalid arg for maxaddr: %s\n", arg);
+		return (EX_USAGE);
+	}
+
+	strncpy(ifbc.ifbc_name, brdg, sizeof ifbc.ifbc_name);
+	ifbc.ifbc_size = newsize;
+	if (ioctl(s, SIOCBRDGSCACHE, (caddr_t)&ifbc) < 0) {
+		warn("ioctl(SIOCBRDGGCACHE)");
+		return (EX_IOERR);
+	}
+	return (0);
+}
+
+int
 bridge_addrs(s, brdg, delim)
 	int s;
 	char *brdg, *delim;
 {
-	struct ifbrtreq req;
-	u_int32_t i = 0;
-	int r = 0;
+	struct ifbaconf ifbac;
+	struct ifbareq *ifba;
+	char *inbuf = NULL, buf[sizeof(ifba->ifba_name) + 1];
+	int i, len = 8192;
 
-	while (r == 0) {
-		strncpy(req.ifbname, brdg, sizeof(req.ifbname));
-		req.index = i;
-
-		r = ioctl(s, SIOCBRDGRT, &req);
-		if (r != 0) {
-			if (errno == ENOENT || errno == ENETDOWN)
+	while (1) {
+		ifbac.ifbac_len = len;
+		ifbac.ifbac_buf = inbuf = realloc(inbuf, len);
+		strncpy(ifbac.ifbac_name, brdg, sizeof(ifbac.ifbac_name));
+		if (inbuf == NULL)
+			err(EX_IOERR, "malloc");
+		if (ioctl(s, SIOCBRDGRTS, &ifbac) < 0) {
+			if (errno == ENETDOWN)
 				return (0);
-			warn("ioctl(SIOCBRDGRT)");
-			return (EX_IOERR);
+			err(EX_IOERR, "ioctl(SIOCBRDGRTS)");
 		}
-		printf("%s%s %u %s\n", delim, ether_ntoa(&req.dst),
-		    req.age, req.ifsname);
-		i++;
+		if (ifbac.ifbac_len + sizeof(*ifba) < len)
+			break;
+		len *= 2;
+	}
+
+	for (i = 0; i < ifbac.ifbac_len / sizeof(*ifba); i++) {
+		ifba = ifbac.ifbac_req + i;
+		bzero(buf, sizeof(buf));
+		strncpy(buf, ifba->ifba_name, sizeof(ifba->ifba_name));
+		printf("%s%s %s %u\n", delim, ether_ntoa(&ifba->ifba_dst),
+		    buf, ifba->ifba_age);
 	}
 
 	return (0);
@@ -366,7 +416,7 @@ is_bridge(s, brdg)
 	char *brdg;
 {
 	struct ifreq ifr;
-	struct ifbrtreq req;
+	struct ifbaconf ifbac;
 
 	strncpy(ifr.ifr_name, brdg, sizeof ifr.ifr_name);
 
@@ -375,10 +425,10 @@ is_bridge(s, brdg)
 		return (0);
 	}
 
-	strncpy(req.ifbname, brdg, sizeof(req.ifbname));
-	req.index = 0;
-	if (ioctl(s, SIOCBRDGRT, (caddr_t)&req) < 0) {
-		if (errno == ENOENT || errno == ENETDOWN)
+	ifbac.ifbac_len = 0;
+	strncpy(ifbac.ifbac_name, brdg, sizeof(ifbac.ifbac_name));
+	if (ioctl(s, SIOCBRDGRTS, (caddr_t)&ifbac) < 0) {
+		if (errno == ENETDOWN)
 			return (1);
 		return (0);
 	}
@@ -391,6 +441,7 @@ bridge_status(s, brdg)
 	char *brdg;
 {
 	struct ifreq ifr;
+	struct ifbcachereq ifbc;
 	int err;
 
 	strncpy(ifr.ifr_name, brdg, sizeof ifr.ifr_name);
@@ -411,7 +462,14 @@ bridge_status(s, brdg)
 	if (err)
 		return (err);
 
-	printf("\tAddresses:\n");
+	strncpy(ifbc.ifbc_name, brdg, sizeof ifbc.ifbc_name);
+	if (ioctl(s, SIOCBRDGGCACHE, (caddr_t)&ifbc) < 0) {
+		warn("ioctl(SIOCBRDGGCACHE)");
+		return (EX_IOERR);
+	}
+
+	printf("\tAddresses (max cache: %u):\n", ifbc.ifbc_size);
+
 	err = bridge_addrs(s, brdg, "\t\t");
 	return (err);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.2 1999/02/27 21:19:27 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.3 1999/03/01 04:44:44 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -67,6 +67,13 @@
 #endif
 #define	BRIDGE_RTABLE_MASK	(BRIDGE_RTABLE_SIZE - 1)
 
+/*
+ * Maximum number of addresses to cache
+ */
+#ifndef BRIDGE_RTABLE_MAX
+#define BRIDGE_RTABLE_MAX	100
+#endif
+
 extern int ifqmaxlen;
 
 /*
@@ -74,7 +81,7 @@ extern int ifqmaxlen;
  */
 struct bridge_iflist {
 	LIST_ENTRY(bridge_iflist)	next;		/* next in list */
-	struct ifnet			*ifp;		/* member interface */
+	struct				ifnet *ifp;	/* member interface */
 	u_int32_t			bif_flags;	/* member flags */
 };
 
@@ -83,17 +90,19 @@ struct bridge_iflist {
  */
 struct bridge_rtnode {
 	LIST_ENTRY(bridge_rtnode)	brt_next;	/* next in list */
-	struct ifnet			*brt_if;	/* destination ifs */
+	struct				ifnet *brt_if;	/* destination ifs */
 	u_int32_t			brt_age;	/* age counter */
-	struct ether_addr		brt_addr;	/* destination addr */
+	struct				ether_addr brt_addr;	/* dst addr */
 };
 
 /*
  * Software state for each bridge
  */
 struct bridge_softc {
-	struct ifnet			sc_if;		/* the interface */
+	struct				ifnet sc_if;	/* the interface */
 	u_int32_t			sc_brtageidx;	/* route age index */
+	u_int32_t			sc_brtmax;	/* max # addresses */
+	u_int32_t			sc_brtcnt;	/* current # addrs */
 	LIST_HEAD(, bridge_iflist)	sc_iflist;	/* interface list */
 	LIST_HEAD(bridge_rthead, bridge_rtnode)	*sc_rts;/* hash table */
 };
@@ -107,9 +116,11 @@ struct mbuf *	bridge_broadcast __P((struct bridge_softc *sc,
     struct ifnet *, struct ether_header *, struct mbuf *));
 void	bridge_stop __P((struct bridge_softc *));
 void	bridge_init __P((struct bridge_softc *));
+int	bridge_bifconf __P((struct bridge_softc *, struct ifbifconf *));
 
-int	bridge_rtfind __P((struct bridge_softc *, struct ifbrtreq *));
+int	bridge_rtfind __P((struct bridge_softc *, struct ifbaconf *));
 void	bridge_rtage __P((void *));
+void	bridge_rttrim __P((struct bridge_softc *));
 void	bridge_rtdelete __P((struct bridge_softc *, struct ifnet *));
 struct ifnet *	bridge_rtupdate __P((struct bridge_softc *,
     struct ether_addr *, struct ifnet *ifp));
@@ -137,12 +148,12 @@ void
 bridgeattach(unused)
 	int unused;
 {
-	register int i;
+	int i;
 	struct ifnet *ifp;
 
 	for (i = 0; i < NBRIDGE; i++) {
+		bridgectl[i].sc_brtmax = BRIDGE_RTABLE_MAX;
 		LIST_INIT(&bridgectl[i].sc_iflist);
-
 		ifp = &bridgectl[i].sc_if;
 		sprintf(ifp->if_xname, "bridge%d", i);
 		ifp->if_softc = &bridgectl[i];
@@ -153,7 +164,6 @@ bridgeattach(unused)
 		ifp->if_type  = IFT_PROPVIRTUAL;
 		ifp->if_snd.ifq_maxlen = ifqmaxlen;
 		ifp->if_hdrlen = sizeof(struct ether_header);
-
 		if_attach(ifp);
 	}
 }
@@ -168,8 +178,10 @@ bridge_ioctl(ifp, cmd, data)
 	struct ifnet *ifs;
 	struct bridge_softc *sc = (struct bridge_softc *)ifp->if_softc;
 	struct ifbreq *req = (struct ifbreq *)data;
-	struct ifbrtreq *brtreq = (struct ifbrtreq *)data;
-	int	error = 0, s, i;
+	struct ifbaconf *baconf = (struct ifbaconf *)data;
+	struct ifbcachereq *bcachereq = (struct ifbcachereq *)data;
+	struct ifbifconf *bifconf = (struct ifbifconf *)data;
+	int	error = 0, s;
 	struct bridge_iflist *p;
 
 	s = splimp();
@@ -184,7 +196,7 @@ bridge_ioctl(ifp, cmd, data)
 		/*
 		 * Get pointer to ifnet structure for the named interface.
 		 */
-		ifs = ifunit(req->ifsname);
+		ifs = ifunit(req->ifbr_ifsname);
 		if (ifs == NULL) {			/* no such interface */
 			error = ENOENT;
 			break;
@@ -249,7 +261,7 @@ bridge_ioctl(ifp, cmd, data)
 
 		p = LIST_FIRST(&sc->sc_iflist);
 		while (p != NULL) {
-			if (strncmp(p->ifp->if_xname, req->ifsname,
+			if (strncmp(p->ifp->if_xname, req->ifbr_ifsname,
 			    sizeof(p->ifp->if_xname)) == 0) {
 				/*
 				 * Remove the pointer back to us.
@@ -278,34 +290,22 @@ bridge_ioctl(ifp, cmd, data)
 			break;
 		}
 		break;
-	case SIOCBRDGIDX:
-		/*
-		 * Search through list looking for right element.
-		 */
-		i = 0;
-		p = LIST_FIRST(&sc->sc_iflist);
-		while (p != NULL && i < req->index) {
-			i++;
-			p = LIST_NEXT(p, next);
-		}
-
-		/*
-		 * Make sure we didn't go off the end of the list.
-		 */
-		if (p == NULL || req->index != i) {
-			error = ENOENT;
-			break;
-		}
-		/* found it */
-		strncpy(req->ifsname, p->ifp->if_xname, sizeof(req->ifsname)-1);
-		req->ifsname[sizeof(req->ifsname)-1] = '\0';
+	case SIOCBRDGIFS:
+		error = bridge_bifconf(sc, bifconf);
 		break;
-	case SIOCBRDGRT:
+	case SIOCBRDGRTS:
 		if ((ifp->if_flags & IFF_RUNNING) == 0) {
 			error = ENETDOWN;
 			break;
 		}
-		error = bridge_rtfind(sc, brtreq);
+		error = bridge_rtfind(sc, baconf);
+		break;
+	case SIOCBRDGGCACHE:
+		bcachereq->ifbc_size = sc->sc_brtmax;
+		break;
+	case SIOCBRDGSCACHE:
+		sc->sc_brtmax = bcachereq->ifbc_size;
+		bridge_rttrim(sc);
 		break;
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == IFF_UP)
@@ -320,6 +320,51 @@ bridge_ioctl(ifp, cmd, data)
 	}
 	splx(s);
 	return (error);
+}
+
+int
+bridge_bifconf(sc, bifc)
+	struct bridge_softc *sc;
+	struct ifbifconf *bifc;
+{
+	struct bridge_iflist *p;
+	u_int32_t total, i;
+	int error;
+	struct ifbreq breq;
+
+	p = LIST_FIRST(&sc->sc_iflist);
+	while (p != NULL) {
+		total++;
+		p = LIST_NEXT(p, next);
+	}
+
+	if (bifc->ifbic_len == 0) {
+		bifc->ifbic_len = total * sizeof(struct ifbreq);
+		return (0);
+	}
+
+	p = LIST_FIRST(&sc->sc_iflist);
+	i = 0;
+	while (p != NULL && bifc->ifbic_len > sizeof(breq)) {
+		strncpy(breq.ifbr_name, sc->sc_if.if_xname,
+		    sizeof (breq.ifbr_name));
+		breq.ifbr_name[sizeof(breq.ifbr_name)-1] = '\0';
+		strncpy(breq.ifbr_ifsname, p->ifp->if_xname,
+		    sizeof (breq.ifbr_ifsname));
+		breq.ifbr_ifsname[sizeof(breq.ifbr_ifsname)-1] = '\0';
+		breq.ifbr_ifsflags = p->bif_flags;
+		error = copyout((caddr_t)&breq,
+		    (caddr_t)(bifc->ifbic_req + i), sizeof(breq));
+		if (error) {
+			bifc->ifbic_len = i * sizeof(breq);
+			return (error);
+		}
+		p = LIST_NEXT(p, next);
+		i++;
+		bifc->ifbic_len -= sizeof(breq);
+	}
+	bifc->ifbic_len = i * sizeof(breq);
+	return (0);
 }
 
 void
@@ -385,6 +430,7 @@ bridge_stop(sc)
 				p = LIST_NEXT(n, brt_next);
 				LIST_REMOVE(n, brt_next);
 				free(n, M_DEVBUF);
+				sc->sc_brtcnt--;
 				n = p;
 			}
 		}
@@ -812,6 +858,10 @@ bridge_rtupdate(sc, ea, ifp)
 	h = bridge_hash(ea);
 	p = LIST_FIRST(&sc->sc_rts[h]);
 	if (p == NULL) {
+		if (sc->sc_brtcnt >= sc->sc_brtmax) {
+			splx(s);
+			return (NULL);
+		}
 		p = (struct bridge_rtnode *)
 				malloc(sizeof(struct bridge_rtnode),
 				    M_DEVBUF, M_NOWAIT);
@@ -824,6 +874,7 @@ bridge_rtupdate(sc, ea, ifp)
 		p->brt_if = ifp;
 		p->brt_age = 1;
 		LIST_INSERT_HEAD(&sc->sc_rts[h], p, brt_next);
+		sc->sc_brtcnt++;
 		splx(s);
 		return (ifp);
 	}
@@ -841,6 +892,10 @@ bridge_rtupdate(sc, ea, ifp)
 		}
 
 		if (dir > 0) {
+			if (sc->sc_brtcnt >= sc->sc_brtmax) {
+				splx(s);
+				return (NULL);
+			}
 			p = (struct bridge_rtnode *)
 					malloc(sizeof(struct bridge_rtnode),
 					    M_DEVBUF, M_NOWAIT);
@@ -853,11 +908,16 @@ bridge_rtupdate(sc, ea, ifp)
 			p->brt_if = ifp;
 			p->brt_age = 1;
 			LIST_INSERT_BEFORE(q, p, brt_next);
+			sc->sc_brtcnt++;
 			splx(s);
 			return (ifp);
 		}
 
 		if (p == NULL) {
+			if (sc->sc_brtcnt >= sc->sc_brtmax) {
+				splx(s);
+				return (NULL);
+			}
 			p = (struct bridge_rtnode *)
 					malloc(sizeof(struct bridge_rtnode),
 					    M_DEVBUF, M_NOWAIT);
@@ -870,6 +930,7 @@ bridge_rtupdate(sc, ea, ifp)
 			p->brt_if = ifp;
 			p->brt_age = 1;
 			LIST_INSERT_AFTER(q, p, brt_next);
+			sc->sc_brtcnt++;
 			splx(s);
 			return (ifp);
 		}
@@ -954,6 +1015,60 @@ bridge_hash(addr)
 	return (c & BRIDGE_RTABLE_MASK);
 }
 
+/*
+ * Trim the routing table so that we've got a number of routes
+ * less than or equal to the maximum.
+ */
+void
+bridge_rttrim(sc)
+	struct bridge_softc *sc;
+{
+	struct bridge_rtnode *n, *p;
+	int s, i;
+
+	s = splhigh();
+	if (sc->sc_rts == NULL) {
+		splx(s);
+		return;
+	}
+
+	/*
+	 * Make sure we have to trim the address table
+	 */
+	if (sc->sc_brtcnt <= sc->sc_brtmax) {
+		splx(s);
+		return;
+	}
+
+	/*
+	 * Force an aging cycle, this might trim enough addresses.
+	 */
+	splx(s);
+	bridge_rtage(sc);
+	s = splhigh();
+
+	if (sc->sc_brtcnt <= sc->sc_brtmax) {
+		splx(s);
+		return;
+	}
+
+	for (i = 0; i < BRIDGE_RTABLE_SIZE; i++) {
+		n = LIST_FIRST(&sc->sc_rts[i]);
+		while (n != NULL) {
+			p = LIST_NEXT(n, brt_next);
+			LIST_REMOVE(n, brt_next);
+			sc->sc_brtcnt--;
+			free(n, M_DEVBUF);
+			n = p;
+			if (sc->sc_brtcnt <= sc->sc_brtmax) {
+				splx(s);
+				return;
+			}
+		}
+	}
+	splx(s);
+}
+
 void
 bridge_rtage(vsc)
 	void *vsc;
@@ -987,6 +1102,7 @@ bridge_rtage(vsc)
 				n->brt_addr.ether_addr_octet[5]);
 #endif
 			LIST_REMOVE(n, brt_next);
+			sc->sc_brtcnt--;
 			free(n, M_DEVBUF);
 			n = p;
 		}
@@ -1022,6 +1138,7 @@ bridge_rtdelete(sc, ifp)
 			if (n->brt_if == ifp) {		/* found one */
 				p = LIST_NEXT(n, brt_next);
 				LIST_REMOVE(n, brt_next);
+				sc->sc_brtcnt--;
 				free(n, M_DEVBUF);
 				n = p;
 			}
@@ -1034,41 +1151,62 @@ bridge_rtdelete(sc, ifp)
 }
 
 /*
- * Find the route for a given index value in rq->index.
- * Returns 0 on success, otherwise an error value.
+ * Gather all of the routes for this interface.
  */
 int
-bridge_rtfind(sc, rq)
+bridge_rtfind(sc, baconf)
 	struct bridge_softc *sc;
-	struct ifbrtreq *rq;
+	struct ifbaconf *baconf;
 {
-	int i, s;
+	int i, s, error;
 	u_int32_t cnt;
 	struct bridge_rtnode *n;
+	struct ifbareq bareq;
 
 	s = splhigh();
+
 	if (sc->sc_rts == NULL) {
+		baconf->ifbac_len = 0;
 		splx(s);
-		return (ENOENT);
+		return (0);
 	}
 
-	for (cnt = 0, i = 0; i < BRIDGE_RTABLE_SIZE; i++) {
+	if (baconf->ifbac_len == 0) {
+		baconf->ifbac_len = sc->sc_brtcnt * sizeof(struct ifbareq);
+		splx(s);
+		return (0);
+	}
+
+	for (i = 0, cnt = 0; i < BRIDGE_RTABLE_SIZE; i++) {
 		n = LIST_FIRST(&sc->sc_rts[i]);
 		while (n != NULL) {
-			if (cnt == rq->index) {
-				bcopy(&n->brt_addr, &rq->dst, sizeof(rq->dst));
-				bcopy(n->brt_if->if_xname, rq->ifsname,
-				    IFNAMSIZ);
-				rq->age = n->brt_age;
+			if (baconf->ifbac_len < sizeof(struct ifbareq)) {
+				baconf->ifbac_len = cnt *
+				    sizeof(struct ifbareq);
 				splx(s);
 				return (0);
+			}
+			bcopy(n->brt_if->if_xname, bareq.ifba_name,
+			    sizeof(bareq.ifba_name));
+			bcopy(&n->brt_addr, &bareq.ifba_dst,
+			    sizeof(bareq.ifba_dst));
+			bareq.ifba_age = n->brt_age;
+			error = copyout((caddr_t)&bareq,
+		    	    (caddr_t)(baconf->ifbac_req + cnt), sizeof(bareq));
+			if (error) {
+				baconf->ifbac_len = cnt *
+				    sizeof(struct ifbareq);
+				splx(s);
+				return (error);
 			}
 			n = LIST_NEXT(n, brt_next);
 			cnt++;
 		}
 	}
+
+	baconf->ifbac_len = cnt * sizeof(struct ifbareq);
 	splx(s);
-	return (ENOENT);
+	return (0);
 }
 
 #if defined(INET) && (defined(IPFILTER) || defined(IPFILTER_LKM))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.1 1999/02/26 17:01:32 jason Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.2 1999/03/01 04:44:44 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -32,23 +32,54 @@
  */
 
 /*
- * Bridge control request: (add/delete/iterate) member interfaces.
+ * Bridge control request: add/delete member interfaces.
  */
 struct ifbreq {
-	char		ifbname[IFNAMSIZ];	/* bridge ifs name */
-	char		ifsname[IFNAMSIZ];	/* member ifs name */
-	u_int32_t	index;			/* iteration index */
+	char		ifbr_name[IFNAMSIZ];	/* bridge ifs name */
+	char		ifbr_ifsname[IFNAMSIZ];	/* member ifs name */
+	u_int32_t	ifbr_ifsflags;		/* memver ifs flags */
 };
 
 /*
- * Bridge routing request: iterate known routes.
+ * Interface list structure
  */
-struct ifbrtreq {
-	char			ifbname[IFNAMSIZ];	/* bridge ifs name */
-	u_int32_t		index;			/* iteration index */
-	struct ether_addr	dst;			/* destination addr */
-	char			ifsname[IFNAMSIZ];	/* destination ifs */
-	u_int16_t		age;			/* route age */
+struct ifbifconf {
+	char		ifbic_name[IFNAMSIZ];	/* bridge ifs name */
+	u_int32_t	ifbic_len;		/* buffer size */
+	union {
+		caddr_t	ifbicu_buf;
+		struct	ifbreq *ifbicu_req;
+	} ifbic_ifbicu;
+#define	ifbic_buf	ifbic_ifbicu.ifbicu_buf
+#define	ifbic_req	ifbic_ifbicu.ifbicu_req
+};
+
+/*
+ * Bridge address request
+ */
+struct ifbareq {
+	char			ifba_name[IFNAMSIZ];	/* destination ifs */
+	u_int32_t		ifba_age;		/* route age */
+	struct ether_addr	ifba_dst;		/* destination addr */
+};
+
+struct ifbaconf {
+	char			ifbac_name[IFNAMSIZ];	/* bridge ifs name */
+	u_int32_t		ifbac_len;		/* buffer size */
+	union {
+		caddr_t	ifbacu_buf;			/* buffer */
+		struct ifbareq *ifbacu_req;		/* request pointer */
+	} ifbac_ifbacu;
+#define	ifbac_buf	ifbac_ifbacu.ifbacu_buf
+#define	ifbac_req	ifbac_ifbacu.ifbacu_req
+};
+
+/*
+ * Bridge cache size get/set
+ */
+struct ifbcachereq {
+	char			ifbc_name[IFNAMSIZ];	/* bridge ifs name */
+	u_int32_t		ifbc_size;		/* cache size */
 };
 
 #ifdef _KERNEL

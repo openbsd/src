@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.5 1999/02/26 17:01:33 jason Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.6 1999/03/01 04:44:43 jason Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -85,8 +85,10 @@
 
 #define	SIOCBRDGADD	_IOWR('i', 60, struct ifbreq)	/* add bridge ifs */
 #define	SIOCBRDGDEL	_IOWR('i', 61, struct ifbreq)	/* del bridge ifs */
-#define	SIOCBRDGIDX	_IOWR('i', 62, struct ifbreq)	/* get ifs by index */
-#define	SIOCBRDGRT	_IOWR('i', 63, struct ifbrtreq)	/* get rts by index */
+#define	SIOCBRDGSCACHE	_IOWR('i', 64, struct ifbcachereq) /* set cache size */
+#define	SIOCBRDGGCACHE	_IOWR('i', 65, struct ifbcachereq) /* get cache size */
+#define	SIOCBRDGIFS	_IOWR('i', 66, struct ifbreq)	/* get member ifs */
+#define	SIOCBRDGRTS	_IOWR('i', 67, struct ifbaconf)	/* get addresses */
 
 #define	SIOCSIFMTU	 _IOW('i', 127, struct ifreq)	/* set ifnet mtu */
 #define	SIOCGIFMTU	_IOWR('i', 126, struct ifreq)	/* get ifnet mtu */
