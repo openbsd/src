@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.7 1996/07/28 05:13:19 joshd Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.8 1996/07/28 05:54:41 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.7 1996/07/28 05:13:19 joshd Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.8 1996/07/28 05:54:41 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -382,13 +382,14 @@ main(argc, argv, envp)
 				continue;
 			}
 			plen = sizeof(peer);
-			if (getpeername(ctrl, (struct sockaddr *)&peer, &plen) < 0)
-			{	syslog(LOG_WARNING, "could not getpeername");
+			if (getpeername(ctrl, (struct sockaddr *)&peer,
+			    &plen) < 0) {
+				syslog(LOG_WARNING, "could not getpeername");
 				continue;
 			}
-			if (ntohs(peer.sin_port) == 20)
-			{	syslog(LOG_INFO, "Connect to %s from port %d",
-				       sep->se_service, ntohs(peer.sin_port));
+			if (ntohs(peer.sin_port) == 20) {
+				syslog(LOG_INFO, "Connect to %s from port %d",
+				    sep->se_service, ntohs(peer.sin_port));
 				continue;
 			}
 		} else
