@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.102 2002/12/19 16:32:59 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.103 2003/01/13 23:29:27 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -252,6 +252,10 @@ int  acard_pci_intr(void *);
 void serverworks_chip_map(struct pciide_softc*, struct pci_attach_args*);
 void serverworks_setup_channel(struct channel_softc*);
 int  serverworks_pci_intr(void *);
+
+void nforce_chip_map(struct pciide_softc *, struct pci_attach_args *);
+void nforce_setup_channel(struct channel_softc *);
+int  nforce_pci_intr(void *);
  
 void pciide_channel_dma_setup(struct pciide_channel *);
 int  pciide_dma_table_setup(struct pciide_softc*, int, int);
@@ -522,6 +526,17 @@ const struct pciide_product_desc pciide_serverworks_products[] =  {
 	},
 };
 
+const struct pciide_product_desc pciide_nvidia_products[] = {
+	{ PCI_PRODUCT_NVIDIA_NFORCE_IDE,
+	  0,
+	  nforce_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE2_IDE,
+	  0,
+	  nforce_chip_map
+	}
+};
+
 
 struct pciide_vendor_desc {
 	u_int32_t ide_vendor;
@@ -557,7 +572,9 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	{ PCI_VENDOR_RCC, pciide_serverworks_products,
 	  sizeof(pciide_serverworks_products)/sizeof(pciide_serverworks_products[0]) },
 	{ PCI_VENDOR_PROMISE, pciide_promise_products,
-	  sizeof(pciide_promise_products)/sizeof(pciide_promise_products[0]) }
+	  sizeof(pciide_promise_products)/sizeof(pciide_promise_products[0]) },
+	{ PCI_VENDOR_NVIDIA, pciide_nvidia_products,
+	  sizeof(pciide_nvidia_products)/sizeof(pciide_nvidia_products[0]) }
 };
 
 /* options passed via the 'flags' config keyword */
@@ -4978,6 +4995,140 @@ acard_pci_intr(arg)
 			rv = 1;
 		else if (rv == 0)
 			rv = crv;
+	}
+	return rv;
+}
+
+void
+nforce_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
+{
+	struct pciide_channel *cp;
+	int channel;
+	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
+	bus_size_t cmdsize, ctlsize;
+
+	if (pciide_chipen(sc, pa) == 0)
+		return;
+
+	printf(": DMA");
+	pciide_mapreg_dma(sc, pa);
+
+	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
+	    WDC_CAPABILITY_MODE;
+	if (sc->sc_dma_ok) {
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
+		sc->sc_wdcdev.irqack = pciide_irqack;
+	}
+	sc->sc_wdcdev.PIO_cap = 4;
+	sc->sc_wdcdev.DMA_cap = 2;
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_NVIDIA_NFORCE_IDE:
+		sc->sc_wdcdev.UDMA_cap = 5;
+		break;
+	case PCI_PRODUCT_NVIDIA_NFORCE2_IDE:
+		sc->sc_wdcdev.UDMA_cap = 6;
+	default:
+		sc->sc_wdcdev.UDMA_cap = 0;
+	}
+	sc->sc_wdcdev.set_modes = nforce_setup_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanarray;
+	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
+
+	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
+
+	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
+		cp = &sc->pciide_channels[channel];
+
+		if (pciide_chansetup(sc, channel, interface) == 0)
+			continue;
+		pciide_map_compat_intr(pa, cp, channel, interface);
+		if (cp->hw_ok == 0)
+			continue;
+		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+		    nforce_pci_intr);
+		if (cp->hw_ok == 0) {
+			pciide_unmap_compat_intr(pa, cp, channel, interface);
+			continue;
+		}
+
+		if (pciide_chan_candisable(cp)) {
+			pciide_unmap_compat_intr(pa, cp, channel, interface);
+		}
+
+		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
+	}
+}
+
+void
+nforce_setup_channel(struct channel_softc *chp)
+{
+	struct ata_drive_datas *drvp;
+	int drive;
+	u_int32_t idedma_ctl;
+	struct pciide_channel *cp = (struct pciide_channel*)chp;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	int channel = chp->channel;
+
+	/* Setup DMA if needed */
+	pciide_channel_dma_setup(cp);
+
+	idedma_ctl = 0;
+
+	/* Per channel settings */
+	for (drive = 0; drive < 2; drive++) {
+		drvp = &chp->ch_drive[drive];
+
+		/* If no drive, skip */
+		if ((drvp->drive_flags & DRIVE) == 0)
+			continue;
+
+		if (drvp->drive_flags & DRIVE_UDMA) {
+			drvp->drive_flags &= ~DRIVE_DMA;
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+		} else if (drvp->drive_flags & DRIVE_DMA) {
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+		} else {
+		}
+	}
+
+	if (idedma_ctl != 0) {
+		/* Add software bits in status register */
+		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL(channel), idedma_ctl);
+	}
+	pciide_print_modes(cp);
+}
+
+int
+nforce_pci_intr(void *arg)
+{
+	struct pciide_softc *sc = arg;
+	struct pciide_channel *cp;
+	struct channel_softc *wdc_cp;
+	int i, rv, crv; 
+	u_int32_t dmastat;
+
+	rv = 0;
+	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
+		cp = &sc->pciide_channels[i];
+		wdc_cp = &cp->wdc_channel;
+
+		/* Skip compat channel */
+		if (cp->compat)
+			continue;
+
+		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    IDEDMA_CTL(i));
+		if ((dmastat & IDEDMA_CTL_INTR) == 0)
+			continue;
+
+		crv = wdcintr(wdc_cp);
+		if (crv == 0)
+			printf("%s:%d: bogus intr\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname, i);
+		else
+			rv = 1;
 	}
 	return rv;
 }
