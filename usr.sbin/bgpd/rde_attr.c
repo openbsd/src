@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.6 2004/02/16 18:02:12 henning Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.7 2004/02/18 11:11:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -147,8 +147,8 @@ attr_parse(u_char *p, u_int16_t len, struct attr_flags *a, int ebgp,
 		goto optattr;
 	default:
 optattr:
-		/* XXX error checking */
-		attr_optadd(a, flags, type, p, attr_len);
+		if (attr_optadd(a, flags, type, p, attr_len) == -1)
+			return (-1);
 		plen += attr_len;
 		break;
 	}
@@ -356,7 +356,8 @@ attr_optadd(struct attr_flags *attr, u_int8_t flags, u_int8_t type,
 {
 	struct attr	*a, *p;
 
-	/* XXX we need to do some basic checks (flags, len if known,...) */
+	/* we need validate known optional attributes */
+
 	if (flags & ATTR_OPTIONAL && ! flags & ATTR_TRANSITIVE)
 		/*
 		 * We already know that we're not intrested in this attribute.
@@ -381,11 +382,13 @@ attr_optadd(struct attr_flags *attr, u_int8_t flags, u_int8_t type,
 
 	/* keep a sorted list */
 	TAILQ_FOREACH_REVERSE(p, &attr->others, attr_l, attr_list) {
+		if (type == p->type)
+			/* attribute only once allowed */
+			return (-1);
 		if (type > p->type) {
 			TAILQ_INSERT_AFTER(&attr->others, p, a, attr_l);
 			return (0);
 		}
-		ENSURE(type != p->type);
 	}
 	TAILQ_INSERT_HEAD(&attr->others, a, attr_l);
 	return (0);
@@ -439,6 +442,10 @@ aspath_verify(void *data, u_int16_t len, u_int16_t myAS)
 	int		 error = 0;
 	u_int16_t	 seg_size;
 	u_int8_t	 i, seg_len, seg_type;
+
+	if (len & 1)
+		/* odd lenght aspath are invalid */
+		return AS_ERR_BAD;
 
 	for (; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
