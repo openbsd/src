@@ -5,21 +5,50 @@
 
 %order=();
 
+%exception=();
+%ok=();
+
+
 open(SORTED, shift) or die "No sorted output\n";
 while(<SORTED>) {
 	chomp;
+	while (m/^tsort: cycle in data/) {
+		@list = ();
+		while (<SORTED>) {
+			chomp;
+			last if m/^tsort: cycle in data/;
+			last unless m/^tsort:\s+/;
+			push(@list, $');
+		}
+		for $i (1 .. @list) {
+			$exception{$list[$i-1].' '.$list[$i % @list]} = 1;
+		}
+		$break{$list[1]} = 1;
+	}
 	$order{$_} = $i++;
 }
 close(SORTED);
+
+@pairs=();
 
 open(PAIRS, shift) or die "No pairs\n";
 while (<PAIRS>) {
 	chomp;
 	push(@pairs, split(/\s+/, $_));
 	while (@pairs >= 2) {
-	    ($a, $b) = (pop @pairs, pop @pairs);
+	    $b = pop @pairs;
+	    $a = pop @pairs;
+	    if (defined $exception{"$a $b"}) {
+	    	$ok{"$a $b"} = 1;
+	    }
+	    next if $break{$a} = 1;
 	    next unless $order{$a} < $order{$b};
 	    die "Bad pair $a $b\n";
     	}
 }
 close(PAIRS);
+
+while (($key, $v) = each %exception) {
+	next if $v != 1;
+	die "Bogus cycle edge $key\n" unless $ok{$key};
+}
