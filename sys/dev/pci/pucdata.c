@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.4 2000/08/08 17:01:25 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.5 2000/09/11 21:23:25 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -565,6 +565,7 @@ const struct puc_device_description puc_devices[] = {
 
 	/* IBM 33L4618: AT&T/Lucent Venus Modem */
 	{   /* "IBM 33L4618: AT&T/Lucent Venus Modem", */
+	    /* "Actiontec 56K PCI Master" */
 	    {	PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_VENUSMODEM, 0,	0	},
 	    {	0xffff,	0xffff,					0,	0	},
 	    {
