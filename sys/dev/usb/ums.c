@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.14 2004/07/08 22:18:44 deraadt Exp $ */
+/*	$OpenBSD: ums.c,v 1.15 2004/12/06 11:08:23 dlg Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ int	umsdebug = 0;
 #define PS2MBUTMASK	x04
 #define PS2BUTMASK 0x0f
 
-#define MAX_BUTTONS	7	/* must not exceed size of sc_buttons */
+#define MAX_BUTTONS	16	/* must not exceed size of sc_buttons */
 
 struct ums_softc {
 	struct uhidev sc_hdev;
