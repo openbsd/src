@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.9 1998/03/01 09:05:29 johns Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.10 2001/09/10 16:34:49 jason Exp $	*/
 /*	$NetBSD: fpu.c,v 1.6 1997/07/29 10:09:51 fair Exp $	*/
 
 /*
@@ -362,10 +362,17 @@ fpu_execute(fe, instr)
 		fp = fpu_mul(fe);
 		break;
 
-	case FTOS >> 2:
-	case FTOD >> 2:
-	case FTOX >> 2:
 	case FTOI >> 2:
+	case FTOS >> 2:
+		rd = instr.i_opf.i_rd;
+		goto fto;
+	case FTOD >> 2:
+		rd = instr.i_opf.i_rd & (~1);
+		goto fto;
+	case FTOX >> 2:
+		rd = instr.i_opf.i_rd & (~3);
+
+fto:
 		fpu_explode(fe, fp = &fe->fe_f1, type, rs2);
 		type = opf & 3;	/* sneaky; depends on instruction encoding */
 		break;
