@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.49 2002/05/15 20:10:32 millert Exp $
+#	$OpenBSD: Makefile,v 1.50 2002/05/26 09:32:58 deraadt Exp $
 #	$NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
@@ -51,11 +51,27 @@ MLINKS+=bus_space.9 bus_space_alloc.9 bus_space.9 bus_space_barrier.9 \
 	bus_space.9 bus_space_write_4.9 bus_space.9 bus_space_write_8.9 \
 	bus_space.9 bus_space_write_multi_1.9 bus_space.9 bus_space_write_multi_2.9 \
 	bus_space.9 bus_space_write_multi_4.9 bus_space.9 bus_space_write_multi_8.9 \
-	bus_space.9 bus_space_write_raw_multi_2.9 bus_space.9 bus_space_write_raw_multi_4.9 \
-	bus_space.9 bus_space_write_raw_multi_8.9 bus_space.9 bus_space_write_region_1.9 \
-	bus_space.9 bus_space_write_region_2.9 bus_space.9 bus_space_write_region_4.9 \
-	bus_space.9 bus_space_write_region_8.9 bus_space.9 bus_space_write_raw_region_2.9 \
-	bus_space.9 bus_space_write_raw_region_4.9 bus_space.9 bus_space_write_raw_region_8.9
+	bus_space.9 bus_space_write_raw_multi_2.9 \
+	bus_space.9 bus_space_write_raw_multi_4.9 \
+	bus_space.9 bus_space_write_raw_multi_8.9 \
+	bus_space.9 bus_space_write_region_1.9 \
+	bus_space.9 bus_space_write_region_2.9 \
+	bus_space.9 bus_space_write_region_4.9 \
+	bus_space.9 bus_space_write_region_8.9 \
+	bus_space.9 bus_space_write_raw_region_2.9 \
+	bus_space.9 bus_space_write_raw_region_4.9 \
+	bus_space.9 bus_space_write_raw_region_8.9
+MLINKS+=crypto.9 crypto_register.9 \
+	crypto.9 crypto_kregister.9 \
+	crypto.9 crypto_unregister.9 \
+	crypto.9 crypto_done.9 \
+	crypto.9 crypto_kdone.9 \
+	crypto.9 crypto_newsession.9 \
+	crypto.9 crypto_freesession.9 \
+	crypto.9 crypto_dispatch.9 \
+	crypto.9 crypto_kdispatch.9 \
+	crypto.9 crypto_getreq.9 \
+	crypto.9 crypto_freereq.9
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
 	copy.9 copyinstr.9 copy.9 copyoutstr.9
 MLINKS+=ctxsw.9 cpu_switch.9 ctxsw.9 mi_switch.9
@@ -87,6 +103,15 @@ MLINKS+=mbuf.9 m_copym2.9 mbuf.9 m_copym.9 mbuf.9 m_free.9 mbuf.9 MFREE.9 \
 	mbuf.9 MEXTALLOC.9 mbuf.9 MCLGET.9 mbuf.9 MEXTADD.9 mbuf.9 M_ALIGN.9 \
 	mbuf.9 MH_ALIGN.9 mbuf.9 M_READONLY.9 mbuf.9 M_LEADINGSPACE.9 \
 	mbuf.9 M_TRAILINGSPACE.9 mbuf.9 MCHTYPE.9
+MLINKS+=random.9 add_true_randomness.9 \
+	random.9 add_timer_randomness.9 \
+	random.9 add_mouse_randomness.9 \
+	random.9 add_tty_randomness.9 \
+	random.9 add_net_randomness.9 \
+	random.9 add_disk_randomness.9 \
+	random.9 add_audio_randomness.9 \
+	random.9 get_random_bytes.9 \
+	random.9 arc4random.9
 MLINKS+=pfind.9 pgfind.9
 MLINKS+=pool.9 pool_init.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_put.9 pool.9 pool_prime.9 pool.9 pool_sethiwat.9 \
