@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.21 2004/01/22 19:07:34 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.22 2004/01/22 20:59:17 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -162,8 +162,6 @@ struct peer	*getpeerbyip(in_addr_t);
 int		 imsg_compose_parent(int, pid_t, void *, u_int16_t);
 
 /* log.c */
-void		 log_peer_warn(const struct peer *, const char *, ...);
-void		 log_peer_warnx(const struct peer *, const char *, ...);
 void		 log_statechange(const struct peer *, enum session_state,
 		    enum session_events);
 void		 log_notification(const struct peer *, u_int8_t, u_int8_t,

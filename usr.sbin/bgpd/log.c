@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.19 2004/01/22 19:13:56 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.20 2004/01/22 20:59:17 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -100,17 +100,17 @@ static const char *procnames[] = {
 	"RDE"
 };
 
-char	*log_fmt_peer(const struct peer *);
+char	*log_fmt_peer(const struct peer_config *);
 
 char *
-log_fmt_peer(const struct peer *peer)
+log_fmt_peer(const struct peer_config *peer)
 {
 	char		*ip;
 	char		*pfmt;
 
-	ip = inet_ntoa(peer->conf.remote_addr.sin_addr);
-	if (peer->conf.descr[0]) {
-		if (asprintf(&pfmt, "neighbor %s (%s)", ip, peer->conf.descr) ==
+	ip = inet_ntoa(peer->remote_addr.sin_addr);
+	if (peer->descr[0]) {
+		if (asprintf(&pfmt, "neighbor %s (%s)", ip, peer->descr) ==
 		    -1)
 			fatal(NULL);
 	} else {
@@ -159,7 +159,7 @@ vlog(int pri, const char *fmt, va_list ap)
 
 
 void
-log_peer_warn(const struct peer *peer, const char *emsg, ...)
+log_peer_warn(const struct peer_config *peer, const char *emsg, ...)
 {
 	char	*p, *nfmt;
 	va_list	 ap;
@@ -181,7 +181,7 @@ log_peer_warn(const struct peer *peer, const char *emsg, ...)
 }
 
 void
-log_peer_warnx(const struct peer *peer, const char *emsg, ...)
+log_peer_warnx(const struct peer_config *peer, const char *emsg, ...)
 {
 	char	*p, *nfmt;
 	va_list	 ap;
@@ -284,7 +284,7 @@ log_statechange(const struct peer *peer, enum session_state nstate,
 {
 	char	*p;
 
-	p = log_fmt_peer(peer);
+	p = log_fmt_peer(&peer->conf);
 	logit(LOG_INFO, "%s: state change %s -> %s, reason: %s",
 	    p, statenames[peer->state], statenames[nstate], eventnames[event]);
 	free(p);
@@ -298,7 +298,7 @@ log_notification(const struct peer *peer, u_int8_t errcode, u_int8_t subcode,
 	const char	*suberrname = NULL;
 	int		 uk = 0;
 
-	p = log_fmt_peer(peer);
+	p = log_fmt_peer(&peer->conf);
 	switch (errcode) {
 	case ERR_HEADER:
 		if (subcode > sizeof(suberr_header_names)/sizeof(char *))
@@ -354,7 +354,7 @@ log_conn_attempt(const struct peer *peer, struct in_addr remote)
 		logit(LOG_INFO, "connection from non-peer %s refused",
 			    inet_ntoa(remote));
 	else {
-		p = log_fmt_peer(peer);
+		p = log_fmt_peer(&peer->conf);
 		logit(LOG_INFO, "Connection attempt from %s while session is "
 		    "in state %s", p, statenames[peer->state]);
 		free(p);
