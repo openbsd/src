@@ -1120,8 +1120,6 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/pcvt_ioctl.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/pcvt_mouse.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/pio.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/i386/pmap.new.ph
-./usr/libdata/perl5/site_perl/i386-openbsd/i386/pmap.old.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/pmap.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/proc.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/profile.ph

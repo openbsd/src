@@ -2103,3 +2103,12 @@
 ./var/www/htdocs/manual/vhosts/index.html.ja.jis
 ./var/www/htdocs/manual/win_compiling.html
 ./var/www/htdocs/manual/win_service.html
+./usr/share/doc/smm/11.timedop/Makefile
+./usr/share/doc/smm/11.timedop/timed.ms
+./usr/share/doc/smm/12.timed/Makefile
+./usr/share/doc/smm/12.timed/date
+./usr/share/doc/smm/12.timed/loop
+./usr/share/doc/smm/12.timed/time
+./usr/share/doc/smm/12.timed/timed.ms
+./usr/share/doc/smm/12.timed/unused
+./usr/share/man/cat4/bt.0
