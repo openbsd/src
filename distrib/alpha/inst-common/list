@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: list,v 1.4 1997/05/09 18:00:20 millert Exp $
+#	$OpenBSD: list,v 1.5 1997/05/16 01:37:09 millert Exp $
 #
 
 # copy the crunched binary, link to it, and kill it
@@ -84,3 +84,6 @@ COPY	${DESTDIR}/etc/spwd.db		etc
 # and the common installation tools
 COPY	${TOPDIR}/inst-common/dot.commonutils	.commonutils
 COPY	${TOPDIR}/inst-common/termcap.vt	usr/share/misc/termcap
+
+# so DNS can work
+SYMLINK /tmp/resolv.conf.shadow		etc/resolv.conf
