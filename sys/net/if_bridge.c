@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.63 2001/06/23 07:08:51 angelos Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.64 2001/06/24 20:12:50 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -50,6 +50,9 @@
 #include <net/if_llc.h>
 #include <net/route.h>
 #include <net/netisr.h>
+#ifdef PACKETFILTER
+#include <net/pfvar.h>
+#endif
 
 #ifdef INET
 #include <netinet/in.h>
@@ -141,7 +144,7 @@ u_int8_t bridge_filterrule __P((struct brl_head *, struct ether_header *));
 	 (a)->ether_addr_octet[2] == 0x5e)
 
 
-#if defined(INET) && defined(IPFILTER)
+#ifdef PACKETFILTER
 /*
  * Filter hooks
  */
@@ -1862,8 +1865,7 @@ bridge_flushrule(bif)
 	return (0);
 }
 
-#if defined(INET) && defined(IPFILTER)
-
+#ifdef PACKETFILTER
 /*
  * Filter IP packets by peeking into the ethernet frame.  This violates
  * the ISO model, but allows us to act as a IP filter at the data link
@@ -1880,10 +1882,8 @@ bridge_filter(sc, ifp, eh, m)
 	struct llc llc;
 	int hassnap = 0;
 	struct ip *ip;
+	struct mbuf *m1;
 	int hlen;
-
-	if (fr_checkp == NULL)
-		return (m);
 
 	if (eh->ether_type != htons(ETHERTYPE_IP)) {
 		if (eh->ether_type > ETHERMTU ||
@@ -1950,10 +1950,10 @@ bridge_filter(sc, ifp, eh, m)
 	}
 
 	/* Finally, we get to filter the packet! */
-	if (fr_checkp && (*fr_checkp)(ip, hlen, ifp, 0, &m))
-		return (NULL);
-	if (m == NULL)		/* in case of 'fastroute' */
-		return (NULL);
+	m1 = m;
+	if (pf_test(PF_IN, m->m_pkthdr.rcvif, &m1) != PF_PASS)
+		goto dropit;
+	m = m1;
 
 	/* Rebuild the IP header */
 	if (m->m_len < hlen && ((m = m_pullup(m, hlen)) == NULL))
