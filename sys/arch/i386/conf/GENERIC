@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.121 1999/08/05 01:07:29 niklas Exp $
+#	$OpenBSD: GENERIC,v 1.122 1999/08/10 17:43:57 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -232,7 +232,7 @@ sp0	at pss0 port 0x530 irq 10 drq 0		# sound port driver
 eap*	at pci? dev ? function ?		# Ensoniq AudioPCI S5016
 eso*	at pci? dev ? function ?		# ESS Solo-1 PCI AudioDrive
 sv*	at pci? dev ? function ?		# S3 SonicVibes (S3 617)
-sb0	at isa? port 0x220 irq 7 drq 1		# SoundBlaster
+sb0	at isa? port 0x220 irq 5 drq 1		# SoundBlaster
 sb*	at isapnp?
 ess*	at isapnp?				# ESS Tech ES188[78], ES888
 wss0	at isa? port 0x530 irq 10 drq 0		# Windows Sound System
