@@ -26,12 +26,12 @@ include "arch/arm/xscale/files.pxa2x0"
 
 # LCD frame buffer
 attach lcd at pxaip with lcd_pxaip
-file arch/zaurus/zaurus/zaurus_lcd.c			lcd_pxaip
+file arch/zaurus/zaurus/zaurus_lcd.c		lcd_pxaip
 
 # GPIO keyboard 
 device zkbd: wskbddev
 attach zkbd at pxaip
-file arch/zaurus/dev/zaurus_kbd.c			zkbd
+file arch/zaurus/dev/zaurus_kbd.c		zkbd
 
 #
 # Machine-independent ATA drivers
@@ -44,8 +44,8 @@ file	arch/zaurus/zaurus/autoconf.c
 file	arch/arm/arm/disksubr.c			disk
 
 # ARM FPE
-file	arch/arm/fpe-arm/armfpe_glue.S	armfpe
-file	arch/arm/fpe-arm/armfpe_init.c	armfpe
+file	arch/arm/fpe-arm/armfpe_glue.S		armfpe
+file	arch/arm/fpe-arm/armfpe_init.c		armfpe
 file	arch/arm/fpe-arm/armfpe.s		armfpe
 
 # Machine-independent I2O drivers.
@@ -56,7 +56,6 @@ include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
 include "dev/pckbc/files.pckbc"
-
 
 # Include USB stuff
 include "dev/usb/files.usb"
