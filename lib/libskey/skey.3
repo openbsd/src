@@ -1,0 +1,392 @@
+.\" $OpenBSD: skey.3,v 1.1 2001/06/23 21:34:40 millert Exp $
+.\"
+.\" Copyright (c) 2001 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+.\" THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\" EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+.\" OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+.\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd June 21, 2001
+.Dt SKEY 3
+.Os
+.Sh NAME
+.Nm atob8,
+.Nm backspace,
+.Nm btoa8,
+.Nm btoe,
+.Nm etob,
+.Nm f,
+.Nm htoi,
+.Nm keycrunch,
+.Nm put8,
+.Nm readpass,
+.Nm readskey,
+.Nm rip,
+.Nm sevenbit,
+.Nm skey_authenticate,
+.Nm skey_get_algorithm
+.Nm skey_haskey,
+.Nm skey_keyinfo,
+.Nm skey_passcheck,
+.Nm skey_set_algorithm,
+.Nm skey_unlock,
+.Nm skeychallenge,
+.Nm skeygetnext,
+.Nm skeylookup,
+.Nm skeyverify,
+.Nm skeyzero,
+.Nm skipspace
+.Nd S/Key library functions
+.Sh SYNOPSIS
+.Fd #include <skey.h>
+.Ft int
+.Fn atob8 "char *out" "char *in"
+.Ft void
+.Fn backspace "char *buf"
+.Ft int
+.Fn btoa8 "char *out" "char *in"
+.Ft char *
+.Fn btoe "char *engout" "char *c"
+.Ft int
+.Fn etob "char *out" "char *e"
+.Ft void
+.Fn f "char *x"
+.Ft int
+.Fn htoi "int h"
+.Ft int
+.Fn keycrunch "char *result" "char *seed" "char *passwd"
+.Ft char *
+.Fn put8 "char *out" "char *s"
+.Ft char *
+.Fn readpass "char *buf" "int n"
+.Ft char *
+.Fn readskey "char *buf" "int n"
+.Ft void
+.Fn rip "char *buf"
+.Ft void
+.Fn sevenbit "char *s"
+.Ft int
+.Fn skey_authenticate "char *user"
+.Ft const char *
+.Fn skey_get_algorithm "void"
+.Ft int
+.Fn skey_haskey "char *user"
+.Ft char *
+.Fn skey_keyinfo "char *user"
+.Ft int
+.Fn skey_passcheck "char *user" "char *passwd"
+.Ft char *
+.Fn skey_set_algorithm "char *new"
+.Ft int
+.Fn skey_unlock "struct skey *rec"
+.Ft int
+.Fn skeychallenge "struct skey *rec" "char *user" "char *buf"
+.Ft int
+.Fn skeygetnext "struct skey *rec"
+.Ft int
+.Fn skeylookup "struct skey *rec" "char *user"
+.Ft int
+.Fn skeyverify "struct skey *rec" "char *response"
+.Ft int
+.Fn skeyzero "struct skey *" "char *user"
+.Ft char *
+.Fn skipspace "char *"
+.Sh DESCRIPTION
+These functions implement the S/Key one time password authentication
+mechanism.
+.Pp
+The
+.Fn atob8
+function converts the 16-byte hex string
+.Fa in
+to an 8-byte binary array stored in
+.Fa out .
+The
+.Fn atob8
+function returns 0 on success and -1 if an invalid hex character is encountered.
+.Pp
+The
+.Fn backspace
+function removes backspaced over characters from
+.Fa buf .
+Note that
+.Fn backspace
+assumes the actual backspace character is 0x8 (^H).
+.Pp
+The
+.Fn btoa8
+function converts the 8-byte binary array
+.Fa in
+to a 16-byte string of hex digits stored in
+.Fa out .
+The
+.Fn btoa8
+function returns 0 on success and -1 if an error occurred.
+.Pp
+The
+.Fn btoe
+function encodes the 8 bytes in
+.Fa c
+into a string of 6 english words, stored in
+.Fa engout .
+The caller must supply enough space (30 bytes including the final NUL)
+to store the words.
+The
+.Fn btoe
+function returns
+.Fa engout .
+.Pp
+The
+.Fn etob
+function converts the 6 english words in
+.Fa e
+into an 8-byte binary representation.
+The
+.Fn etob
+function returns 1 if the words are all in the database and parity is correct,
+0 if a word is not in the database, -1 if the number of words is incorrect,
+or -2 if there is a parity error.
+.Pp
+The
+.Fn f
+function is a one-way hash that overwrites the 8-byte input buffer
+.Fa x
+with the hashed result.
+.Pp
+The
+.Fn htoi
+function converts a single hex digit
+.Fa h
+to an integer.
+The
+.Fn htoi
+function returns the converted integer on success or -1 if
+.Fa h
+not a valid hex digit.
+.Pp
+The
+.Fn keycrunch
+function concatenates the
+.Fa seed
+and
+.Fa passwd ,
+runs them through a hash function and collapses the
+.Fa result
+to 64 bits.
+The
+.Fn keycrunch
+function returns 0 on success or -1 if there is a memory allocation failure.
+.Pp
+The
+.Fn put8
+function converts the 8 bytes stored in
+.Fa s
+into a series of 4 16-bit hex digit stored in
+.Fa out .
+There must be at least 20 bytes (including the NUL) in the output buffer,
+.Fa out .
+The
+.Fn put8
+function returns
+.Fa out .
+.Pp
+The
+.Fn readpass
+function reads up to
+.Fa n
+characters from standard input with echo turned off, converting the
+resulting string to 7 bits, storing the result in
+.Fa buf .
+The
+.Fn readpass
+function returns
+.Fa buf .
+.Pp
+The
+.Fn readskey
+function reads up to
+.Fa n   
+characters from standard input with echo turned on, converting the
+resulting string to 7 bits, storing the result in
+.Fa buf .
+The
+.Fn readskey
+function returns
+.Fa buf .
+.Pp
+The
+.Fn rip
+function strips trailing linefeeds and carriage returns from
+.Fa buf .
+.Pp
+The
+.Fn sevenbit
+function strips the high bit from each character in
+.Fa s ,
+converting the characters to seven bit
+.Tn ASCII .
+.Pp
+The
+.Fn skey_authenticate
+function presents the
+.Fa user
+with an S/Key challenge and authenticates the response.
+The  
+.Fn skey_authenticate
+function returns 0 if authentication is successful or -1 if not.
+.Pp
+The
+.Fn skey_get_algorithm
+function returns a string corresponding to the hash algorithm for
+the current user.
+The default algorithm is
+.Dq md5 .
+.Pp
+The
+.Fn skey_haskey
+function returns 0 if the
+.Fa user
+exists in the S/Key database, 1 if the user does not exist, or -1
+if there was an error reading the database.
+.Pp
+The
+.Fn skey_keyinfo
+function returns a string containing the current sequence number and seed for
+.Fa user .
+The returned string points to internal static storage that will be
+overwritten by subsequent calls to
+.Fn skey_keyinfo .
+.Pp
+The
+.Fn skey_passcheck
+function check a
+.Fa user
+and
+.Fa passwd
+pair against the S/Key database.
+It returns 0 on successful authentication or -1 on failure.
+.Pp
+The
+.Fn skey_set_algorithm
+function sets the user's hash algorithm based on the string
+.Fa new .
+The
+.Fn skey_set_algorithm
+function returns the specified algorithm if it is supported,
+or the null pointer if the hash algorithm is not supported.
+.Pp
+The
+.Fn skey_unlock
+function unlocks the record in the S/Key database specified by
+.Fa rec .
+The
+.Fn skey_unlock
+function returns 0 on success or -1 on failure.
+Either way, the S/Key database is not closed nor is the database
+file pointer affected.
+.Pp
+The
+.Fn skeychallenge
+function stores the (potentially fake) S/Key challenge for
+.Fa user
+in
+.Fa buf .
+It also fills in the skey struct
+.Fa rec
+and locks the user's record in the S/Key database.
+The
+.Fn skeychallenge
+function returns 0 on success or -1 on failure.
+On success the S/Key database remains open and the read/write file
+pointer is set to the beginning of the record.
+.Pp
+The
+.Fn skeygetnext
+function stores the next record in the S/Key database in
+.Fa rec
+and locks that record in the S/Key database.
+The
+.Fn skeygetnext
+function returns 0 on success, 1 if there are no more entries,
+or -1 if there was an error accessing the S/Key database.
+The S/Key database remains open after a call to
+.Fn skeygetnext .
+If no error was encountered accessing the S/Key database, the read/write
+file pointer is set to the beginning of the record or at EOF if
+there are no more records.
+.Pp
+The
+.Fn skeylookup
+function looks up the specified
+.Fa user
+in the S/Key database then fills in the skey struct
+.Fa rec
+and locks the user's record in the database.
+The
+.Fn skeylookup
+function returns 0 on success, 1 if
+.Fa user
+was not found, or -1 if there was an error accessing the S/Key database.
+If no error was encountered accessing the S/Key database, the read/write
+file pointer is set to the beginning of the record.
+.Pp
+The
+.Fn skeyverify
+function verifies the user's
+.Fa response
+based on the S/Key record
+.Fa rec .
+It returns 0 on success (updating the database), 1 on failure, or
+-1 if there was an error accessing the database.
+The database is always closed by a call to
+.Fn skeyverify .
+.Pp
+The
+.Fn skeyzero
+function zeroes out the entry in the S/Key database specified by
+.Fa rec
+and
+.Fa user .
+The
+.Fn skeyzero
+function returns 0 on success and -1 if there was an error updating
+the database.
+The database is always closed by a call to
+.Fn skeyzero .
+.Sh SEE ALSO
+.Xr skey 1 ,
+.Xr skeyinit 1
+.Sh STANDARDS
+There is no standard API for S/Key.
+The de facto standard is the free S/Key distribution released by Bellcore.
+.Pp
+The following functions are extensions and do not appear in
+the original Bellcore S/Key distribution:
+.Fn readskey ,
+.Fn skey_authenticate ,
+.Fn skey_get_algorithm ,
+.Fn skey_haskey ,
+.Fn skey_keyinfo ,
+.Fn skey_passcheck ,
+.Fn skey_set_algorithm ,
+.Fn skey_unlock ,
+.Fn skeyzero .
