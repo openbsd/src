@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.6 2002/03/28 18:21:06 mickey Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.7 2002/04/06 20:31:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -44,6 +44,9 @@ struct wi_softc	{
 	struct ifmedia		sc_media;
 	bus_space_handle_t	wi_bhandle;
 	bus_space_tag_t		wi_btag;
+	bus_space_handle_t	wi_lhandle;
+	bus_space_tag_t		wi_ltag;
+	bus_size_t		wi_cor_offset;
 	int			wi_tx_data_id;
 	int			wi_tx_mgmt_id;
 	int			wi_gone;
@@ -77,13 +80,18 @@ struct wi_softc	{
 	void			*sc_ih;
 	struct timeout		sc_timo;
 	int			sc_enabled;
-	int			sc_prism2;
-	int			sc_prism2_ver;
+	int			sc_firmware_type;
+	int			sc_sta_firmware_ver;
 	int			sc_pci;
 	struct wihap_info	wi_hostap_info;
 	u_int32_t		wi_icv;
 	int			wi_icv_flag;
 };
+
+/* Firmware types */
+#define WI_LUCENT	0
+#define WI_INTERSIL	1
+#define WI_SYMBOL	2
 
 #define WI_PRT_FMT "%s"
 #define WI_PRT_ARG(sc)	(sc)->sc_dev.dv_xname

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.16 2002/03/30 21:57:40 millert Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.17 2002/04/06 20:31:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -271,16 +271,18 @@
 #define WI_AUX_OFFSET		0x3C
 #define WI_AUX_DATA		0x3E
 
-#define WI_PCI_PLX_LOCALRES	0x14	/* PLX chip's local registers */
-#define WI_PCI_PLX_MEMRES	0x18	/* Prism attribute memory (PLX) */
-#define WI_PCI_PLX_IORES	0x1C	/* Prism I/O space (PLX) */
+#define WI_COR_OFFSET		0x3E0	/* COR attribute offset of card */
+
+#define WI_PLX_LOCALRES		0x14	/* PLX chip's local registers */
+#define WI_PLX_MEMRES		0x18	/* Prism attribute memory (PLX) */
+#define WI_PLX_IORES		0x1C	/* Prism I/O space (PLX) */
 #define WI_PLX_INTCSR		0x4C	/* PLX Interrupt CSR */
 #define WI_PLX_INTEN		0x40	/* Interrupt Enable bit */
-#define WI_PLX_COR_OFFSET	0x3E0	/* COR attribute offset of Prism2 */
 #define WI_PLX_COR_VALUE	0x41	/* Enable with irq in level trigger */
 
-#define WI_PCI_TMD_LOCALRES	0x14	/* TMD chip's local registers */
-#define WI_PCI_TMD_IORES	0x18	/* Prism I/O space (TMD) */
+#define WI_TMD_LOCALRES		0x14	/* TMD chip's local registers */
+#define WI_TMD_IORES		0x18	/* Prism I/O space (TMD) */
+#define WI_TMD_COR_OFFSET	0x00	/* COR attribute offset of Prism2 */
 #define WI_TMD_COR_VALUE	0x45
 
 /*
@@ -290,7 +292,7 @@
  * About WI_PCI_COR: In this Register, only soft-reset bit implement; Bit(7).
  */
 #define WI_PCI_CBMA		0x10
-#define WI_PCI_COR		0x4C
+#define WI_PCI_COR_OFFSET	0x4C
 #define WI_PCI_HCR		0x5C
 #define WI_PCI_MASTER0_ADDRH	0x80
 #define WI_PCI_MASTER0_ADDRL	0x84
@@ -304,7 +306,8 @@
 #define WI_PCI_MASTER1_LEN	0xA8
 #define WI_PCI_MASTER1_CON	0xAC
 
-#define WI_PCI_SOFT_RESET       (1 << 7)
+#define WI_COR_SOFT_RESET	(1 << 7)
+#define WI_COR_CLEAR		0x00
 
 /*
  * One form of communication with the Hermes is with what Lucent calls
@@ -378,16 +381,19 @@ struct wi_ltv_ver {
 	u_int16_t	wi_len;
 	u_int16_t	wi_type;
 	u_int16_t	wi_ver[4];
-#define	WI_NIC_EVB2	0x8000
-#define	WI_NIC_HWB3763	0x8001
-#define	WI_NIC_HWB3163	0x8002
-#define	WI_NIC_HWB3163B	0x8003
-#define	WI_NIC_EVB3	0x8004
-#define	WI_NIC_HWB1153	0x8007
-#define	WI_NIC_P2_SST	0x8008  /* Prism2 with SST flush */
-#define	WI_NIC_PRISM2_5	0x800C
-#define	WI_NIC_3874A	0x8013	/* Prism2.5 Mini-PCI */
-#define	WI_NIC_37300P	0x801a
+#define	WI_NIC_LUCENT		0x0001
+#define	WI_NIC_SONY		0x0002
+#define	WI_NIC_LUCENT_EM	0x0005
+#define	WI_NIC_EVB2		0x8000
+#define	WI_NIC_HWB3763		0x8001
+#define	WI_NIC_HWB3163		0x8002
+#define	WI_NIC_HWB3163B		0x8003
+#define	WI_NIC_EVB3		0x8004
+#define	WI_NIC_HWB1153		0x8007
+#define	WI_NIC_P2_SST		0x8008  /* Prism2 with SST flush */
+#define	WI_NIC_PRISM2_5		0x800C
+#define	WI_NIC_3874A		0x8013	/* Prism2.5 Mini-PCI */
+#define	WI_NIC_37300P		0x801a
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.45 2002/04/05 15:35:34 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.46 2002/04/06 20:31:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.45 2002/04/05 15:35:34 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.46 2002/04/06 20:31:56 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -269,14 +269,14 @@ wi_attach(sc, print_cis)
 	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO, 0, 0), 0);
 	ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
 	    IFM_IEEE80211_ADHOC, 0), 0);
-	if (sc->sc_prism2)
+	if (sc->sc_firmware_type == WI_INTERSIL)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_AUTO,
 		    IFM_IEEE80211_HOSTAP, 0), 0);
 	if (sc->wi_supprates & WI_SUPPRATES_1M) {
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
 		    IFM_IEEE80211_ADHOC, 0), 0);
-		if (sc->sc_prism2)
+		if (sc->sc_firmware_type == WI_INTERSIL)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS1,
 			    IFM_IEEE80211_HOSTAP, 0), 0);
 	}
@@ -284,7 +284,7 @@ wi_attach(sc, print_cis)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
 		    IFM_IEEE80211_ADHOC, 0), 0);
-		if (sc->sc_prism2)
+		if (sc->sc_firmware_type == WI_INTERSIL)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS2,
 			    IFM_IEEE80211_HOSTAP, 0), 0);
 	}
@@ -292,7 +292,7 @@ wi_attach(sc, print_cis)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
 		    IFM_IEEE80211_ADHOC, 0), 0);
-		if (sc->sc_prism2)
+		if (sc->sc_firmware_type == WI_INTERSIL)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS5,
 			    IFM_IEEE80211_HOSTAP, 0), 0);
 	}
@@ -300,7 +300,7 @@ wi_attach(sc, print_cis)
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11, 0, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
 		    IFM_IEEE80211_ADHOC, 0), 0);
-		if (sc->sc_prism2)
+		if (sc->sc_firmware_type == WI_INTERSIL)
 			ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_IEEE80211_DS11,
 			    IFM_IEEE80211_HOSTAP, 0), 0);
 		ADD(IFM_MAKEWORD(IFM_IEEE80211, IFM_MANUAL, 0, 0), 0);
@@ -683,10 +683,29 @@ STATIC void
 wi_reset(sc)
 	struct wi_softc		*sc;
 {
+	u_int8_t cor_value;
+
 	DPRINTF(WID_RESET, ("wi_reset: sc %p\n", sc));
+
+	/*
+	 * Do a soft reset of the card.  This is required by Symbol cards
+	 * and shouldn't hurt others.  We don't do this on Lucent cards
+	 * because it messes up some old Lucent firmware revisions.
+	 */
+	if (sc->sc_firmware_type != WI_LUCENT) {
+		cor_value = bus_space_read_2(sc->wi_ltag, sc->wi_lhandle,
+		    sc->wi_cor_offset);
+		bus_space_write_1(sc->wi_ltag, sc->wi_lhandle,
+		    sc->wi_cor_offset, (cor_value | WI_COR_SOFT_RESET));
+		DELAY(1000);
+		bus_space_write_1(sc->wi_ltag, sc->wi_lhandle,
+		    sc->wi_cor_offset, (cor_value & ~WI_COR_SOFT_RESET));
+		DELAY(1000);
+	}
 
 	if (wi_cmd(sc, WI_CMD_INI, 0))
 		printf(WI_PRT_FMT ": init failed\n", WI_PRT_ARG(sc));
+
 	CSR_WRITE_2(sc, WI_INT_EN, 0);
 	CSR_WRITE_2(sc, WI_EVENT_ACK, 0xFFFF);
 
@@ -708,7 +727,7 @@ wi_read_record(sc, ltv)
 	int			len, code;
 	struct wi_ltv_gen	*oltv, p2ltv;
 
-	if (sc->sc_prism2) {
+	if (sc->sc_firmware_type != WI_LUCENT) {
 		oltv = ltv;
 		switch (ltv->wi_type) {
 		case WI_RID_ENCRYPTION:
@@ -752,7 +771,7 @@ wi_read_record(sc, ltv)
 	if (ltv->wi_len > 1)
 		CSR_READ_RAW_2(sc, WI_DATA1, ptr, (ltv->wi_len-1)*2);
 
-	if (sc->sc_prism2) {
+	if (sc->sc_firmware_type != WI_LUCENT) {
 		int v;
 
 		switch (oltv->wi_type) {
@@ -778,15 +797,9 @@ wi_read_record(sc, ltv)
 				oltv->wi_val = htole16(0);
 			break;
 		case WI_RID_TX_CRYPT_KEY:
-			oltv->wi_len = 2;
-			oltv->wi_val = ltv->wi_val;
-			break;
 		case WI_RID_CNFAUTHMODE:
 			oltv->wi_len = 2;
-			if (ltv->wi_val & htole16(0x01))
-				oltv->wi_val = htole16(1);
-			else if (ltv->wi_val & htole16(0x02))
-				oltv->wi_val = htole16(2);
+			oltv->wi_val = ltv->wi_val;
 			break;
 		}
 	}
@@ -806,7 +819,7 @@ wi_write_record(sc, ltv)
 	int			i;
 	struct wi_ltv_gen	p2ltv;
 
-	if (sc->sc_prism2) {
+	if (sc->sc_firmware_type != WI_LUCENT) {
 		int v;
 
 		switch (ltv->wi_type) {
@@ -834,11 +847,14 @@ wi_write_record(sc, ltv)
 					/* Disable tx encryption...
 					 * it's broken.
 					 */
-					p2ltv.wi_val = htole16(0x13);
+					p2ltv.wi_val = htole16(HOST_ENCRYPT |
+					    PRIVACY_INVOKED |
+					    EXCLUDE_UNENCRYPTED);
 				else
-					p2ltv.wi_val = htole16(0x03);
+					p2ltv.wi_val = htole16(PRIVACY_INVOKED |
+					    EXCLUDE_UNENCRYPTED);
 			else
-				p2ltv.wi_val = htole16(0x90);
+				p2ltv.wi_val = htole16(HOST_ENCRYPT | HOST_DECRYPT);
 			ltv = &p2ltv;
 			break;
 		case WI_RID_TX_CRYPT_KEY:
@@ -867,15 +883,6 @@ wi_write_record(sc, ltv)
 				}
 			}
 			return (0);
-		case WI_RID_CNFAUTHMODE:
-			p2ltv.wi_type = WI_RID_CNFAUTHMODE;
-			p2ltv.wi_len = 2;
-			if (ltv->wi_val == htole16(1))
-				p2ltv.wi_val = htole16(0x01);
-			else if (ltv->wi_val == htole16(2))
-				p2ltv.wi_val = htole16(0x02);
-			ltv = &p2ltv;
-			break;
 		}
 	}
 
@@ -1021,8 +1028,8 @@ wi_alloc_nicmem(sc, len, id)
 	if (i < 0)
 		return(ETIMEDOUT);
 
-	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_ALLOC);
 	*id = CSR_READ_2(sc, WI_ALLOC_FID);
+	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_ALLOC);
 
 	if (wi_seek(sc, *id, 0, WI_BAP0))
 		return(EIO);
@@ -1306,13 +1313,20 @@ wi_ioctl(ifp, command, data)
 		error = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
 		if (error)
 			break;
-		if (wreq.wi_type == WI_RID_IFACE_STATS) {
-			error = EINVAL;
+		error = EINVAL;
+		switch (wreq.wi_type) {
+		case WI_RID_IFACE_STATS:
 			break;
-		} else if (wreq.wi_type == WI_RID_MGMT_XMIT) {
+		case WI_RID_MGMT_XMIT:
 			error = wi_mgmt_xmit(sc, (caddr_t)&wreq.wi_val,
 			    wreq.wi_len);
-		} else {
+			break;
+		case WI_RID_ROAMING_MODE:
+			/* Symbol cards use 0xFC2D for something else. */
+			if (sc->sc_firmware_type == WI_SYMBOL)
+				break;
+			/* FALLTHROUGH */
+		default:
 			error = wi_write_record(sc, (struct wi_ltv_gen *)&wreq);
 			if (!error)
 				error = wi_setdef(sc, &wreq);
@@ -1431,8 +1445,9 @@ wi_init(sc)
 	/* Power Managment Max Sleep */
 	WI_SETVAL(WI_RID_MAX_SLEEP, sc->wi_max_sleep);
 
-	/* Roaming type */
-	WI_SETVAL(WI_RID_ROAMING_MODE, sc->wi_roaming);
+	/* Set Roaming Mode unless this is a Symbol card. */
+	if (sc->sc_firmware_type != WI_SYMBOL)
+		WI_SETVAL(WI_RID_ROAMING_MODE, sc->wi_roaming);
 
 	/* Specify the network name */
 	WI_SETSTR(WI_RID_DESIRED_SSID, sc->wi_net_name);
@@ -1476,15 +1491,17 @@ wi_init(sc)
 		sc->wi_keys.wi_len = (sizeof(struct wi_ltv_keys) / 2) + 1;
 		sc->wi_keys.wi_type = WI_RID_DEFLT_CRYPT_KEYS;
 		wi_write_record(sc, (struct wi_ltv_gen *)&sc->wi_keys);
-		if (sc->sc_prism2 && sc->wi_use_wep) {
+		if (sc->sc_firmware_type != WI_LUCENT && sc->wi_use_wep) {
 			/*
-			 * For Prism2 Firmware version less than 0.8.2.
+			 * HWB3163 EVAL-CARD Firmware version less than 0.8.2.
+			 *
 			 * If promiscuous mode is disabled, the Prism2 chip
 			 * does not work with WEP .
 			 * I'm currently investigating the details of this.
 			 * (ichiro@netbsd.org)
 			 */
-			 if (sc->sc_prism2_ver < 82 ) {
+			 if (sc->sc_firmware_type == WI_INTERSIL &&
+			    sc->sc_sta_firmware_ver < 802 ) {
 				/* firm ver < 0.8.2 */
 				WI_SETVAL(WI_RID_PROMISC, 1);
 			 }
@@ -1692,9 +1709,10 @@ nextpkt:
 		if (!wihap_check_tx(&sc->wi_hostap_info, eh->ether_dhost,
 		    &tx_frame.wi_tx_rate) && !(ifp->if_flags & IFF_PROMISC)) {
 			if (ifp->if_flags & IFF_DEBUG)
-				printf("wi_start: dropping unassoc dst %s\n",
+				printf(WI_PRT_FMT
+				    ": wi_start: dropping unassoc dst %s\n",
+				    WI_PRT_ARG(sc),
 				    ether_sprintf(eh->ether_dhost));
-			m_freem(m0);
 			goto nextpkt;
 		}
 	}
@@ -1770,8 +1788,10 @@ nextpkt:
 
 		if (sc->wi_ptype == WI_PORTTYPE_AP && sc->wi_use_wep) {
 
-			/* Do host encryption. */
-			printf("XXX: host encrypt not implemented for 802.3\n");
+			/* Do host encryption. (XXX - not implemented) */
+			printf(WI_PRT_FMT
+			    ": host encrypt not implemented for 802.3\n",
+			    WI_PRT_ARG(sc));
 		} else {
 			m_copydata(m0, 0, m0->m_pkthdr.len,
 			    (caddr_t)&sc->wi_txbuf);
@@ -1795,7 +1815,7 @@ nextpkt:
 	m_freem(m0);
 
 	if (wi_cmd(sc, WI_CMD_TX|WI_RECLAIM, id))
-		printf(WI_PRT_FMT ": xmit failed\n", WI_PRT_ARG(sc));
+		printf(WI_PRT_FMT ": wi_start: xmit failed\n", WI_PRT_ARG(sc));
 
 	ifp->if_flags |= IFF_OACTIVE;
 
@@ -1839,7 +1859,8 @@ wi_mgmt_xmit(sc, data, len)
 	    (len - sizeof(struct wi_80211_hdr)) + 2);
 
 	if (wi_cmd(sc, WI_CMD_TX|WI_RECLAIM, id)) {
-		printf(WI_PRT_FMT ": xmit failed\n", WI_PRT_ARG(sc));
+		printf(WI_PRT_FMT ": wi_mgmt_xmit: xmit failed\n",
+		    WI_PRT_ARG(sc));
 		return(EIO);
 	}
 
@@ -1908,12 +1929,14 @@ wi_get_id(sc, print_cis)
 {
 	struct wi_ltv_ver	ver;
 	struct wi_ltv_cis	cis;
+	u_int16_t		pri_fw_ver[3];
 	const char		*p;
 
 	if (print_cis) {
 		/*
 		 * For PCI attachments the CIS strings won't have been printed
 		 * so print them here.
+		 * XXX - messes up each odd character on Symbol cards
 		 */
 		cis.wi_type = WI_RID_CIS;
 		cis.wi_len = sizeof(cis.wi_cis);
@@ -1938,51 +1961,66 @@ wi_get_id(sc, print_cis)
 	switch (letoh16(ver.wi_ver[0])) {
 		case WI_NIC_EVB2:
 			p = "PRISM I HFA3841(EVB2)";
-			sc->sc_prism2 = 1;
+			sc->sc_firmware_type = WI_INTERSIL;
 			break;
 		case WI_NIC_HWB3763:
 			p = "PRISM II HWB3763 rev.B";
-			sc->sc_prism2 = 1;
+			sc->sc_firmware_type = WI_INTERSIL;
 			break;
 		case WI_NIC_HWB3163:
 			p = "PRISM II HWB3163 rev.A";
-			sc->sc_prism2 = 1;
+			sc->sc_firmware_type = WI_INTERSIL;
 			break;
 		case WI_NIC_HWB3163B:
 			p = "PRISM II HWB3163 rev.B";
-			sc->sc_prism2 = 1;
+			sc->sc_firmware_type = WI_INTERSIL;
 			break;
 		case WI_NIC_EVB3:
 			p = "PRISM II  HFA3842(EVB3)";
-			sc->sc_prism2 = 1;
+			sc->sc_firmware_type = WI_INTERSIL;
 			break;
 		case WI_NIC_HWB1153:
 			p = "PRISM I HFA1153";
-			sc->sc_prism2 = 1;
+			sc->sc_firmware_type = WI_INTERSIL;
 			break;
 		case WI_NIC_P2_SST:
 			p = "PRISM II HWB3163 SST-flash";
-			sc->sc_prism2 = 1;
+			sc->sc_firmware_type = WI_INTERSIL;
 			break;
 		case WI_NIC_PRISM2_5:
 			p = "PRISM 2.5 ISL3873";
-			sc->sc_prism2 = 1;
+			sc->sc_firmware_type = WI_INTERSIL;
 			break;
 		case WI_NIC_3874A:
 			p = "PRISM 2.5 ISL3874A(PCI)";
-			sc->sc_prism2 = 1;
+			sc->sc_firmware_type = WI_INTERSIL;
 			break;
 		case WI_NIC_37300P:
 			p = "PRISM 2.5 ISL37300P";
-			sc->sc_prism2 = 1;
+			sc->sc_firmware_type = WI_INTERSIL;
 			break;
 		default:
-			p = "Lucent chip or unknown chip";
-			sc->sc_prism2 = 0;
+			if (letoh16(ver.wi_ver[0]) & 0x8000) {
+				p = "Unknown PRISM2 chip";
+				sc->sc_firmware_type = WI_INTERSIL;
+			} else {
+				sc->sc_firmware_type = WI_LUCENT;
+			}
 			break;
 	}
 
-	/* get firmware version */
+	/* get primary firmware version (XXX - how to do Lucent?) */
+	if (sc->sc_firmware_type != WI_LUCENT) {
+		bzero(&ver, sizeof(ver));
+		ver.wi_type = WI_RID_PRI_IDENTITY;
+		ver.wi_len = 5;
+		wi_read_record(sc, (struct wi_ltv_gen *)&ver);
+		pri_fw_ver[0] = letoh16(ver.wi_ver[2]);
+		pri_fw_ver[1] = letoh16(ver.wi_ver[3]);
+		pri_fw_ver[2] = letoh16(ver.wi_ver[1]);
+	}
+
+	/* get station firmware version */
 	bzero(&ver, sizeof(ver));
 	ver.wi_type = WI_RID_STA_IDENTITY;
 	ver.wi_len = 5;
@@ -1990,15 +2028,39 @@ wi_get_id(sc, print_cis)
 	ver.wi_ver[1] = letoh16(ver.wi_ver[1]);
 	ver.wi_ver[2] = letoh16(ver.wi_ver[2]);
 	ver.wi_ver[3] = letoh16(ver.wi_ver[3]);
-	if (sc->sc_prism2) {
-		printf("\n%s: %s, Firmware %d.%d.%d, ",
-		    WI_PRT_ARG(sc), p, ver.wi_ver[2],
-		    ver.wi_ver[3], ver.wi_ver[1]);
-		sc->sc_prism2_ver = ver.wi_ver[2] * 100 +
-				    ver.wi_ver[3] *  10 + ver.wi_ver[1];
-	} else {
+	sc->sc_sta_firmware_ver = ver.wi_ver[2] * 10000 +
+	    ver.wi_ver[3] * 100 + ver.wi_ver[1];
+
+	if (sc->sc_firmware_type == WI_INTERSIL &&
+	    (sc->sc_sta_firmware_ver == 10102 || sc->sc_sta_firmware_ver == 20102)) {
+		struct wi_ltv_str sver;
+		char *p;
+
+		bzero(&sver, sizeof(sver));
+		sver.wi_type = WI_RID_SYMBOL_IDENTITY;
+		sver.wi_len = 7;
+		/* value should be "V2.00-11" */
+		if (wi_read_record(sc, (struct wi_ltv_gen *)&sver) == 0 &&
+		    *(p = (char *)sver.wi_str) == 'V' &&
+		    p[2] == '.' && p[5] == '-' && p[8] == '\0') {
+			sc->sc_firmware_type = WI_SYMBOL;
+			sc->sc_sta_firmware_ver = (p[1] - '0') * 10000 +
+			    (p[3] - '0') * 1000 + (p[4] - '0') * 100 +
+			    (p[6] - '0') * 10 + (p[7] - '0');
+		}
+	}
+
+	if (sc->sc_firmware_type == WI_LUCENT) {
 		printf("\n%s: Firmware %d.%d variant %d, ", WI_PRT_ARG(sc),
 		    ver.wi_ver[2], ver.wi_ver[3], ver.wi_ver[1]);
+	} else {
+		printf("\n%s: %s%s, Firmware %d.%d.%d (primary), %d.%d.%d (station), ",
+		    WI_PRT_ARG(sc),
+		    sc->sc_firmware_type == WI_SYMBOL ? "Symbol " : "", p,
+		    pri_fw_ver[0], pri_fw_ver[1], pri_fw_ver[2],
+		    sc->sc_sta_firmware_ver / 10000,
+		    (sc->sc_sta_firmware_ver % 10000) / 100,
+		    sc->sc_sta_firmware_ver % 100);
 	}
 
 	return;
@@ -2069,7 +2131,7 @@ wi_media_change(ifp)
 	    (IFM_IEEE80211_ADHOC|IFM_IEEE80211_HOSTAP))
 		return (EINVAL);
 	if ((sc->sc_media.ifm_cur->ifm_media & IFM_IEEE80211_HOSTAP) &&
-	    !sc->sc_prism2)
+	    sc->sc_firmware_type == WI_LUCENT)
 		return (EINVAL);
 
 	if ((sc->sc_media.ifm_cur->ifm_media & IFM_IEEE80211_ADHOC))

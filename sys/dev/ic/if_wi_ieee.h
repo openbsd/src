@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.4 2002/03/28 18:21:06 mickey Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.5 2002/04/06 20:31:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -171,7 +171,8 @@ struct wi_counters {
  */
 
 #define WI_RID_DNLD_BUF		0xFD01
-#define WI_RID_MEMSZ		0xFD02
+#define WI_RID_MEMSZ		0xFD02 /* memory size info (Lucent) */
+#define WI_RID_PRI_IDENTITY	0xFD02 /* primary firmware ident (PRISM2) */
 #define WI_RID_DOMAINS		0xFD11 /* List of intended regulatory domains */
 #define WI_RID_CIS		0xFD13 /* CIS info */
 #define WI_RID_COMMQUAL		0xFD43 /* Communications quality */
@@ -213,6 +214,14 @@ struct wi_counters {
 #define	WI_RID_P2_CRYPT_KEY2	0xFC26
 #define	WI_RID_P2_CRYPT_KEY3	0xFC27
 #define	WI_RID_P2_ENCRYPTION	0xFC28
+#define PRIVACY_INVOKED		0x01
+#define EXCLUDE_UNENCRYPTED	0x02
+#define HOST_ENCRYPT		0x10
+#define IV_EVERY_FRAME		0x00
+#define IV_EVERY10_FRAME	0x20
+#define IV_EVERY50_FRAME	0x40
+#define IV_EVERY100_FRAME	0x60
+#define HOST_DECRYPT		0x80
 #define	WI_RID_WEP_MAPTABLE	0xFC29
 #define	WI_RID_CNFAUTHMODE	0xFC2A
 #define	WI_RID_ROAMING_MODE	0xFC2D /* Roaming mode (1:firm,3:disable) */
@@ -283,6 +292,7 @@ struct wi_ltv_keys {
 #define WI_RID_STA_IDENTITY	0xFD20 /* station funcs firmware ident */
 #define WI_RID_STA_SUP_RANGE	0xFD21 /* station supplier compat */
 #define WI_RID_MFI_ACT_RANGE	0xFD22
+#define WI_RID_SYMBOL_IDENTITY	0xFD24 /* Symbol station firmware ident */
 #define WI_RID_CFI_ACT_RANGE	0xFD33
 
 /*

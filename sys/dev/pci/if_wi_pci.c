@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.21 2002/04/03 22:49:56 millert Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.22 2002/04/06 20:31:56 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -167,12 +167,14 @@ wi_pci_attach(parent, self, aux)
 	/* Map memory and I/O registers. */
 	switch (pp->pp_type) {
 	case WI_PCI_PLX:
-		if (pci_mapreg_map(pa, WI_PCI_PLX_MEMRES, PCI_MAPREG_TYPE_MEM, 0,
+		if (pci_mapreg_map(pa, WI_PLX_MEMRES, PCI_MAPREG_TYPE_MEM, 0,
 		    &memt, &memh, NULL, &memsize, 0) != 0) {
 			printf(": can't map mem space\n");
 			return;
 		}
-		if (pci_mapreg_map(pa, WI_PCI_PLX_IORES,
+		sc->wi_ltag = memt;
+		sc->wi_lhandle = memh;
+		if (pci_mapreg_map(pa, WI_PLX_IORES,
 		    PCI_MAPREG_TYPE_IO, 0, &iot, &ioh, NULL, NULL, 0) != 0) {
 			printf(": can't map I/O space\n");
 			return;
@@ -184,10 +186,10 @@ wi_pci_attach(parent, self, aux)
 		 * As such, we don't consider an error here to be fatal.
 		 */
 		localsize = 0;
-		if (pci_mapreg_type(pa->pa_pc, pa->pa_tag, WI_PCI_PLX_LOCALRES)
+		if (pci_mapreg_type(pa->pa_pc, pa->pa_tag, WI_PLX_LOCALRES)
 		    == PCI_MAPREG_TYPE_IO) {
 			if (pci_io_find(pa->pa_pc, pa->pa_tag,
-			    WI_PCI_PLX_LOCALRES, &localbase, &localsize) != 0)
+			    WI_PLX_LOCALRES, &localbase, &localsize) != 0)
 				printf(": can't find PLX I/O space\n");
 			if (localsize != 0) {
 				if (bus_space_map(pa->pa_iot, localbase,
@@ -206,14 +208,18 @@ wi_pci_attach(parent, self, aux)
 			return;
 		}
 		sc->sc_pci = 1;
+		sc->wi_ltag = iot;
+		sc->wi_lhandle = ioh;
 		break;
 	case WI_PCI_TMD:
-		if (pci_mapreg_map(pa, WI_PCI_TMD_LOCALRES, PCI_MAPREG_TYPE_IO,
+		if (pci_mapreg_map(pa, WI_TMD_LOCALRES, PCI_MAPREG_TYPE_IO,
 		    0, &localt, &localh, NULL, &localsize, 0) != 0) {
 			printf(": can't map TMD I/O space\n");
 			return;
 		}
-		if (pci_mapreg_map(pa, WI_PCI_TMD_IORES, PCI_MAPREG_TYPE_IO,
+		sc->wi_ltag = localt;
+		sc->wi_lhandle = localh;
+		if (pci_mapreg_map(pa, WI_TMD_IORES, PCI_MAPREG_TYPE_IO,
 		    0, &iot, &ioh, NULL, NULL, 0) != 0) {
 			printf(": can't map I/O space\n");
 			return;
@@ -269,33 +275,32 @@ wi_pci_attach(parent, self, aux)
 		/*
 		 * Setup the PLX chip for level interrupts and config index 1
 		 */
-		bus_space_write_1(memt, memh,
-		    WI_PLX_COR_OFFSET, WI_PLX_COR_VALUE);
+		bus_space_write_1(memt, memh, WI_COR_OFFSET, WI_PLX_COR_VALUE);
+		sc->wi_cor_offset = WI_COR_OFFSET;
 
 		/* Unmap registers we no longer need access to. */
 		if (localsize != 0)
 			bus_space_unmap(localt, localh, localsize);
-		bus_space_unmap(memt, memh, memsize);
 
 		wi_attach(sc, 1);
 		break;
 	case WI_PCI_PRISM:
-		bus_space_write_2(iot, ioh, WI_PCI_COR, WI_PCI_SOFT_RESET);
+		bus_space_write_2(iot, ioh, WI_PCI_COR_OFFSET,
+		    WI_COR_SOFT_RESET);
 		DELAY(100*1000); /* 100 m sec */
-		bus_space_write_2(iot, ioh, WI_PCI_COR, 0x0);
+		bus_space_write_2(iot, ioh, WI_PCI_COR_OFFSET, WI_COR_CLEAR);
 		DELAY(100*1000); /* 100 m sec */
+		sc->wi_cor_offset = WI_PCI_COR_OFFSET;
 
 		wi_attach(sc, 0);
 		break;
 	case WI_PCI_TMD:
-		bus_space_write_1(localt, localh, 0, WI_TMD_COR_VALUE);
-		/* XXX - correct delay? */
-		DELAY(100*1000); /* 100 m sec */
+		bus_space_write_1(localt, localh, WI_TMD_COR_OFFSET,
+		    WI_TMD_COR_VALUE);
+		DELAY(1000);
 		if (bus_space_read_1(localt, localh, 0) != WI_TMD_COR_VALUE)
 			printf(": unable to initialize TMD7160 ");
-
-		/* Unmap registers we no longer need access to. */
-		bus_space_unmap(localt, localh, localsize);
+		sc->wi_cor_offset = WI_TMD_COR_OFFSET;
 
 		wi_attach(sc, 1);
 		break;
