@@ -38,7 +38,7 @@
 
 #if defined(SYSLIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: sigreturn.S,v 1.4 2000/01/06 10:41:58 d Exp $"
+	.asciz "$OpenBSD: sigreturn.S,v 1.5 2000/01/06 16:29:29 d Exp $"
 #endif /* SYSLIBC_SCCS */
 
 /*
@@ -48,7 +48,7 @@
 #undef _PROF_PROLOGUE
 #define _PROF_PROLOGUE \
 	pusha; \
-	.data; 1:; .long 0; .text; movl $1b,%eax; call mcount; popa ; nop
+	.data; 1:; .long 0; .text; movl $1b,%eax; call mcount; popa ; nop ;
 #endif /* PROF */
 
 SYSCALL(sigreturn)
