@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 1997/09/10 12:04:42 maja Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 1997/10/02 19:54:14 niklas Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.25 1997/03/22 12:51:00 ragge Exp $	*/
 
 /*
@@ -81,6 +81,7 @@ configure()
 	 * parameter based on device(s) used.
 	 */
 	swapconf();
+	dumpconf();
 	cold = 0;
 	mtpr(GC_CCF, PR_TXDB);	/* Clear cold start flag in cpu */
 }
@@ -90,13 +91,14 @@ int	backplane_match __P((struct device *, void *, void *));
 void	backplane_attach __P((struct device *, struct device *, void *));
 
 int
-printut(aux, hej)
+printut(aux, msg)
 	void *aux;
-	const char *hej;
+	const char *msg;
 {
 	struct bp_conf *bp = aux;
-	if (hej)
-		printf("printut %s %s %d\n",hej, bp->type, bp->num);
+
+	if (msg)
+		printf("printut %s %s %d\n", msg, bp->type, bp->num);
 	return (UNSUPP);
 }
 
