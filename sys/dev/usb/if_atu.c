@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.23 2004/11/22 13:41:13 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.24 2004/11/22 22:28:16 deraadt Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -960,7 +960,8 @@ int
 atu_upload_internal_firmware(struct atu_softc *sc)
 {
 	u_char	state, *ptr = NULL, *firm = NULL, status[6];
-	int	bytes_left = 0, block_size, block = 0, err;
+	int block_size, block = 0, err;
+	size_t	bytes_left = 0;
 	char	*name = NULL;
 
 	/*
