@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.96 2002/12/17 23:11:32 millert Exp $
+.\"	$OpenBSD: sysctl.3,v 1.97 2003/01/21 22:52:07 markus Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -757,6 +757,30 @@ return the number of elements in the the argv or env array.
 returns the argv array and
 .Dv KERN_PROC_ENV
 returns the environ array.
+.It Dv KERN_WATCHDOG
+If the kernel does not support a hardware watchdog timer,
+attempts to retrieve or set any of the
+.Dv KERN_WATCHDOG
+values will fail with
+.Er EOPNOTSUPP .
+.Bl -column "KERN_WATCHDOG_PERIOD" "integer" "yes" -offset indent
+.It Sy "Third level name"	Type	Changeable
+.It Dv KERN_WATCHDOG_PERIOD	integer	yes
+.It Dv KERN_WATCHDOG_AUTO	integer	yes
+.El
+.Pp
+The variables are as follows:
+.Bl -tag -width "123456"
+.It Dv KERN_WATCHDOG_PERIOD
+The period of the watchdog timer in seconds.
+Set to 0 to disable the watchdog timer.
+.It Dv KERN_WATCHDOG_AUTO
+If set to 1, the kernel refreshes the watchdog timer periodically.
+If set to 0, a userland process must ensure that the watchdog timer
+gets refreshed by setting the
+.Dv KERN_WATCHDOG_PERIOD
+variable.
+.El
 .El
 .Ss CTL_MACHDEP
 The set of variables defined is architecture dependent.
