@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.41 1997/10/02 01:16:02 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.42 1997/10/13 15:02:15 pefo Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.41 1997/10/02 01:16:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.42 1997/10/13 15:02:15 pefo Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -403,7 +403,7 @@ writelabel(f, boot, lp)
 		if (dosdp && pp->p_size &&
 		    (dosdp->dp_typ == DOSPTYP_OPENBSD ||
 		    dosdp->dp_typ == DOSPTYP_386BSD)) {
-		        sectoffset = dosdp->dp_start * lp->d_secsize;
+		        sectoffset = get_le(&dosdp->dp_start) * lp->d_secsize;
 		} else {
 			if (dosdp) {
 				int first, ch;
@@ -596,31 +596,31 @@ readmbr(f)
 	}
 	/* Find OpenBSD partition. */
 	for (part = 0; part < NDOSPART; part++) {
-		if (dp[part].dp_size && dp[part].dp_typ == DOSPTYP_OPENBSD) {
+		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_OPENBSD) {
 			fprintf(stderr, "# using MBR partition %d: "
 			    "type %d (0x%02x) "
 			    "offset %d (0x%x) size %d (0x%x)\n", part,
 			    dp[part].dp_typ, dp[part].dp_typ,
-			    dp[part].dp_start, dp[part].dp_start,
-			    dp[part].dp_size, dp[part].dp_size);
+			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_start),
+			    get_le(&dp[part].dp_size), get_le(&dp[part].dp_size));
 			return (&dp[part]);
 		}
 	}
 	for (part = 0; part < NDOSPART; part++) {
-		if (dp[part].dp_size && dp[part].dp_typ == DOSPTYP_386BSD) {
+		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_386BSD) {
 			fprintf(stderr, "# using MBR partition %d: "
 			    "type %d (0x%02x) "
 			    "offset %d (0x%x) size %d (0x%x)\n", part,
 			    dp[part].dp_typ, dp[part].dp_typ, 
-			    dp[part].dp_start, dp[part].dp_start,
-			    dp[part].dp_size, dp[part].dp_size);
+			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_start),
+			    get_le(&dp[part].dp_size), get_le(&dp[part].dp_size));
 			return (&dp[part]);
 		}
 	}
 
 	/* If no OpenBSD partition, find first used partition. */
 	for (part = 0; part < NDOSPART; part++) {
-		if (dp[part].dp_size) {
+		if (get_le(&dp[part].dp_size)) {
 			warnx("warning, DOS partition table with no valid OpenBSD partition");
 			return (&dp[part]);
 		}
@@ -645,10 +645,10 @@ readlabel(f)
 		off_t sectoffset = 0;
 
 #ifdef DOSLABEL
-		if (dosdp && dosdp->dp_size &&
+		if (dosdp && get_le(&dosdp->dp_size) &&
 		    (dosdp->dp_typ == DOSPTYP_386BSD ||
 		    dosdp->dp_typ == DOSPTYP_OPENBSD))
-			sectoffset = dosdp->dp_start * DEV_BSIZE;
+			sectoffset = get_le(&dosdp->dp_start) * DEV_BSIZE;
 #endif
 		if (verbose)
 			printf("reading label from block %d (0x%x)\n",
