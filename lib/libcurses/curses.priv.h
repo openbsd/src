@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.6 1998/07/23 21:18:12 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.7 1998/07/27 03:37:30 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.105 1998/06/28 00:11:47 tom Exp $
+ * $From: curses.priv.h,v 1.106 1998/07/25 20:07:29 tom Exp $
  *
  *	curses.priv.h
  *
@@ -645,6 +645,7 @@ extern WINDOW *_nc_makenew(int, int, int, int, int);
 extern char *_nc_trace_buf(int, size_t);
 extern chtype _nc_background(WINDOW *);
 extern chtype _nc_render(WINDOW *, chtype);
+extern int _nc_access(const char *, int);
 extern int _nc_keypad(bool);
 extern int _nc_outch(int);
 extern int _nc_setupscreen(short, short const, FILE *);

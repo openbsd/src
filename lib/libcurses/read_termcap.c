@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_termcap.c,v 1.1 1998/07/23 21:19:59 millert Exp $	*/
+/*	$OpenBSD: read_termcap.c,v 1.2 1998/07/27 03:37:35 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -63,7 +63,7 @@
 #include <fcntl.h>
 #endif
 
-MODULE_ID("$From: read_termcap.c,v 1.30 1998/05/30 23:49:12 Todd.Miller Exp $")
+MODULE_ID("$From: read_termcap.c,v 1.33 1998/07/25 20:22:11 tom Exp $")
 
 #ifndef PURE_TERMINFO
 
@@ -324,15 +324,14 @@ _nc_getent(
 			 */
 			if (fd >= 0) {
 				(void)lseek(fd, (off_t)0, SEEK_SET);
+			} else if (_nc_access(db_array[current], R_OK) < 0
+			  || (fd = open(db_array[current], O_RDONLY, 0) < 0)) {
+				/* No error on unfound file. */
+				if (errno == ENOENT)
+					continue;
+				free(record);
+				return (TC_SYS_ERR);
 			} else {
-				fd = open(db_array[current], O_RDONLY, 0);
-				if (fd < 0) {
-					/* No error on unfound file. */
-					if (errno == ENOENT)
-						continue;
-					free(record);
-					return (TC_SYS_ERR);
-				}
 				myfd = TRUE;
 			}
 			lineno = 0;
@@ -899,6 +898,24 @@ _nc_tgetent(char *bp, char **sourcename, int *lineno, const char *name)
 #endif /* USE_BSD_TGETENT */
 #endif /* USE_GETCAP */
 
+#define MAXPATHS	32
+
+/*
+ * Add a filename to the list in 'termpaths[]', checking that we really have
+ * a right to open the file.
+ */
+#if !USE_GETCAP
+static int add_tc(char *termpaths[], char *path, int count)
+{
+	if (count < MAXPATHS
+	 && _nc_access(path, R_OK) == 0)
+		termpaths[count++] = path;
+	termpaths[count] = 0;
+	return count;
+}
+#define ADD_TC(path, count) filecount = add_tc(termpaths, path, count)
+#endif /* !USE_GETCAP */
+
 int _nc_read_termcap_entry(const char *const tn, TERMTYPE *const tp)
 {
 	int found = FALSE;
@@ -946,19 +963,18 @@ int _nc_read_termcap_entry(const char *const tn, TERMTYPE *const tp)
 	 * if the database is not accessible.
 	 */
 	FILE	*fp;
-#define MAXPATHS	32
 	char	*tc, *termpaths[MAXPATHS];
 	int	filecount = 0;
 	bool	use_buffer = FALSE;
 	char	tc_buf[1024];
 	char	pathbuf[PATH_MAX];
 
+	termpaths[filecount] = 0;
 	if ((tc = getenv("TERMCAP")) != 0)
 	{
 		if (is_pathname(tc))	/* interpret as a filename */
 		{
-			termpaths[0] = tc;
-			termpaths[filecount = 1] = 0;
+			ADD_TC(tc, 0);
 		}
 		else if (_nc_name_match(tc, tn, "|:")) /* treat as a capability file */
 		{
@@ -975,13 +991,9 @@ int _nc_read_termcap_entry(const char *const tn, TERMTYPE *const tp)
 					*cp = '\0';
 				else if (cp == tc || cp[-1] == '\0')
 				{
-					if (filecount >= MAXPATHS - 1)
-						return(-1);
-
-					termpaths[filecount++] = cp;
+					ADD_TC(cp, filecount);
 				}
 			}
-			termpaths[filecount] = 0;
 		}
 	}
 	else	/* normal case */
@@ -994,20 +1006,18 @@ int _nc_read_termcap_entry(const char *const tn, TERMTYPE *const tp)
 		 * Probably /etc/termcap is a symlink to /usr/share/misc/termcap.
 		 * Avoid reading the same file twice.
 		 */
-		if (access("/etc/termcap", R_OK) == 0)
-			termpaths[filecount++] = "/etc/termcap";
-		else if (access("/usr/share/misc/termcap", R_OK) == 0)
-			termpaths[filecount++] = "/usr/share/misc/termcap";
+		if (_nc_access("/etc/termcap", F_OK) == 0)
+			ADD_TC("/etc/termcap", filecount);
+		else
+			ADD_TC("/usr/share/misc/termcap", filecount);
 
 		if ((h = getenv("HOME")) != NULL && strlen(h) + 9 < PATH_MAX)
 		{
 		    /* user's .termcap, if any, should override it */
 		    (void) strcpy(envhome, h);
 		    (void) sprintf(pathbuf, "%s/.termcap", envhome);
-		    termpaths[filecount++] = pathbuf;
+		    ADD_TC(pathbuf, filecount);
 		}
-
-		termpaths[filecount] = 0;
 	}
 
 	/* parse the sources */

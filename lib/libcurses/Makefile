@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 1998/07/23 21:23:40 millert Exp $
+#	$OpenBSD: Makefile,v 1.24 1998/07/27 03:37:26 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -10,7 +10,7 @@ FALLBACK_LIST=
 AWK?=	/usr/bin/awk
 
 LIB=    curses
-SRCS=   alloc_entry.c captoinfo.c codes.c comp_captab.c comp_error.c \
+SRCS=   access.c alloc_entry.c captoinfo.c codes.c comp_captab.c comp_error.c \
         comp_expand.c comp_hash.c comp_parse.c comp_scan.c define_key.c \
         expanded.c fallback.c hardscroll.c hashmap.c keyok.c lib_acs.c \
         lib_adabind.c lib_addch.c lib_addstr.c lib_baudrate.c \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_trace.c,v 1.3 1998/07/23 21:19:38 millert Exp $	*/
+/*	$OpenBSD: lib_trace.c,v 1.4 1998/07/27 03:37:33 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -40,7 +40,7 @@
 #include <curses.priv.h>
 #include <tic.h>
 
-MODULE_ID("$From: lib_trace.c,v 1.27 1998/07/18 02:18:45 tom Exp $")
+MODULE_ID("$From: lib_trace.c,v 1.29 1998/07/25 20:11:02 tom Exp $")
 
 #include <ctype.h>
 #if HAVE_FCNTL_H
@@ -61,12 +61,14 @@ void trace(const unsigned int tracelevel GCC_UNUSED)
 {
 #ifdef TRACE
 static bool	been_here = FALSE;
+static char	my_name[] = "trace";
 
    	_nc_tracing = tracelevel;
 	if (! been_here && tracelevel) {
 		been_here = TRUE;
 
-		if ((tracefp = fopen("trace", "w")) == 0) {
+		if (_nc_access(my_name, W_OK) < 0
+		 || (tracefp = fopen(my_name, "w")) == 0) {
 			perror("curses: Can't open 'trace' file: ");
 			exit(EXIT_FAILURE);
 		}
