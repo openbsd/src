@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.6 2004/07/29 18:32:03 jfb Exp $	*/
+/*	$OpenBSD: client.c,v 1.7 2004/07/30 01:49:22 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -41,6 +41,7 @@
 
 #include "cvs.h"
 #include "log.h"
+#include "proto.h"
 
 
 
@@ -196,80 +197,6 @@ cvs_client_disconnect(struct cvsroot *root)
 		fclose(cvs_server_inlog);
 	if (cvs_server_outlog != NULL)
 		fclose(cvs_server_outlog);
-}
-
-
-/*
- * cvs_client_sendreq()
- *
- * Send a request to the server of type <rid>, with optional arguments
- * contained in <arg>, which should not be terminated by a newline.
- * The <resp> argument is 0 if no response is expected, or any other value if
- * a response is expected.
- * Returns 0 on success, or -1 on failure.
- */
-
-int
-cvs_client_sendreq(u_int rid, const char *arg, int resp)
-{
-	int ret;
-	size_t len;
-	char *rbp;
-	const char *reqp;
-
-	if (cvs_server_in == NULL) {
-		cvs_log(LP_ERR, "cannot send request: Not connected");
-		return (-1);
-	}
-
-	reqp = cvs_req_getbyid(rid);
-	if (reqp == NULL) {
-		cvs_log(LP_ERR, "unsupported request type %u", rid);
-		return (-1);
-	}
-
-	snprintf(cvs_client_buf, sizeof(cvs_client_buf), "%s%s%s\n", reqp,
-	    (arg == NULL) ? "" : " ", (arg == NULL) ? "" : arg);
-
-	rbp = cvs_client_buf;
-
-	if (cvs_server_inlog != NULL)
-		fputs(cvs_client_buf, cvs_server_inlog);
-
-	ret = fputs(cvs_client_buf, cvs_server_in);
-	if (ret == EOF) {
-		cvs_log(LP_ERRNO, "failed to send request to server");
-		return (-1);
-	}
-
-	if (resp) {
-		do {
-			/* wait for incoming data */
-			if (fgets(cvs_client_buf, sizeof(cvs_client_buf),
-			    cvs_server_out) == NULL) {
-				if (feof(cvs_server_out))
-					return (0);
-				cvs_log(LP_ERRNO,
-				    "failed to read response from server");
-				return (-1);
-			}
-
-			if (cvs_server_outlog != NULL)
-				fputs(cvs_client_buf, cvs_server_outlog);
-
-			if ((len = strlen(cvs_client_buf)) != 0) {
-				if (cvs_client_buf[len - 1] != '\n') {
-					/* truncated line */
-				}
-				else
-					cvs_client_buf[--len] = '\0';
-			}
-
-			ret = cvs_resp_handle(cvs_client_buf);
-		} while (ret == 0);
-	}
-
-	return (ret);
 }
 
 
@@ -538,52 +465,6 @@ cvs_client_initlog(void)
 	/* make the streams line-buffered */
 	setvbuf(cvs_server_inlog, NULL, _IOLBF, 0);
 	setvbuf(cvs_server_outlog, NULL, _IOLBF, 0);
-
-	return (0);
-}
-
-
-/*
- * cvs_client_sendfile()
- *
- */
-
-int
-cvs_client_sendfile(const char *path)
-{
-	int fd;
-	ssize_t ret;
-	char buf[4096];
-	struct stat st;
-
-	if (stat(path, &st) == -1) {
-		cvs_log(LP_ERRNO, "failed to stat `%s'", path);
-		return (-1);
-	}
-
-	fd = open(path, O_RDONLY, 0);
-	if (fd == -1) {
-		return (-1);
-	}
-
-	if (cvs_modetostr(st.st_mode, buf, sizeof(buf)) < 0)
-		return (-1);
-
-	cvs_client_sendln(buf);
-	snprintf(buf, sizeof(buf), "%lld\n", st.st_size);
-	cvs_client_sendln(buf);
-
-	while ((ret = read(fd, buf, sizeof(buf))) != 0) {
-		if (ret == -1) {
-			cvs_log(LP_ERRNO, "failed to read file `%s'", path);
-			return (-1);
-		}
-
-		cvs_client_sendraw(buf, (size_t)ret);
-
-	}
-
-	(void)close(fd);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.3 2004/07/29 18:32:46 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.4 2004/07/30 01:49:24 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -38,6 +38,7 @@
 #include "cvs.h"
 #include "rcs.h"
 #include "log.h"
+#include "proto.h"
 
 
 int  cvs_update_file  (CVSFILE *, void *);
@@ -105,8 +106,8 @@ cvs_update(int argc, char **argv)
 
 	cvs_file_examine(cf, cvs_update_file, NULL);
 
-	cvs_client_senddir(cf->cf_path);
-	cvs_client_sendreq(CVS_REQ_UPDATE, NULL, 1);
+	cvs_senddir(cf->cf_ddat->cd_root, cf);
+	cvs_sendreq(cf->cf_ddat->cd_root, CVS_REQ_UPDATE, NULL);
 
 	return (0);
 }
@@ -132,12 +133,10 @@ cvs_update_file(CVSFILE *cf, void *arg)
 		root = cf->cf_ddat->cd_root;
 		if ((cf->cf_parent == NULL) ||
 		    (root != cf->cf_parent->cf_ddat->cd_root)) {
-			cvs_client_connect(root);
-			/* XXX temporary hack */
-			cvs_root = root;
+			cvs_connect(root);
 		}
 
-		cvs_client_senddir(cf->cf_path);
+		cvs_senddir(root, cf);
 		return (0);
 	}
 	else
@@ -157,8 +156,7 @@ cvs_update_file(CVSFILE *cf, void *arg)
 		if (root->cr_method == CVS_METHOD_LOCAL)
 			cvs_printf("? %s\n", cf->cf_path);
 		else
-			cvs_client_sendreq(CVS_REQ_QUESTIONABLE,
-			    cf->cf_name, 0);
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
 		return (0);
 	}
 
@@ -167,7 +165,7 @@ cvs_update_file(CVSFILE *cf, void *arg)
 		return (-1);
 
 	if ((root->cr_method != CVS_METHOD_LOCAL) &&
-	    (cvs_client_sendentry(entp) < 0)) {
+	    (cvs_sendentry(root, entp) < 0)) {
 		cvs_ent_free(entp);
 		return (-1);
 	}
@@ -175,12 +173,12 @@ cvs_update_file(CVSFILE *cf, void *arg)
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		switch (cf->cf_cvstat) {
 		case CVS_FST_UPTODATE:
-			cvs_client_sendreq(CVS_REQ_UNCHANGED, cf->cf_name, 0);
+			cvs_sendreq(root, CVS_REQ_UNCHANGED, cf->cf_name);
 			break;
 		case CVS_FST_ADDED:
 		case CVS_FST_MODIFIED:
-			cvs_client_sendreq(CVS_REQ_MODIFIED, cf->cf_name, 0);
-			cvs_sendfile(cf->cf_path);
+			cvs_sendreq(root, CVS_REQ_MODIFIED, cf->cf_name);
+			cvs_sendfile(root, cf->cf_path);
 			break;
 		default:
 			return (-1);

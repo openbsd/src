@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.5 2004/07/29 17:48:19 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.6 2004/07/30 01:49:22 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -57,6 +57,7 @@ int   cvs_readonly = 0;
 
 /* name of the command we are running */
 char *cvs_command;
+int   cvs_cmdop;
 char *cvs_rootstr;
 char *cvs_rsh = CVS_RSH_DEFAULT;
 char *cvs_editor = CVS_EDITOR_DEFAULT;
@@ -78,6 +79,7 @@ struct cvsroot *cvs_root = NULL;
  */
 
 static struct cvs_cmd {
+	int     cmd_op;
 	char    cmd_name[CVS_CMD_MAXNAMELEN];
 	char    cmd_alias[CVS_CMD_MAXALIAS][CVS_CMD_MAXNAMELEN];
 	int   (*cmd_hdlr)(int, char **);
@@ -85,62 +87,62 @@ static struct cvs_cmd {
 	char    cmd_descr[CVS_CMD_MAXDESCRLEN];
 } cvs_cdt[] = {
 	{
-		"add",      { "ad",  "new" }, cvs_add,
+		CVS_OP_ADD, "add",      { "ad",  "new" }, cvs_add,
 		"[-m msg] file ...",
 		"Add a new file/directory to the repository",
 	},
 	{
-		"admin",    { "adm", "rcs" }, NULL,
+		-1, "admin",    { "adm", "rcs" }, NULL,
 		"",
 		"Administration front end for rcs",
 	},
 	{
-		"annotate", { "ann"        }, NULL,
+		CVS_OP_ANNOTATE, "annotate", { "ann"        }, NULL,
 		"",
 		"Show last revision where each line was modified",
 	},
 	{
-		"checkout", { "co",  "get" }, cvs_checkout,
+		CVS_OP_CHECKOUT, "checkout", { "co",  "get" }, cvs_checkout,
 		"",
 		"Checkout sources for editing",
 	},
 	{
-		"commit",   { "ci",  "com" }, cvs_commit,
+		CVS_OP_COMMIT, "commit",   { "ci",  "com" }, cvs_commit,
 		"[-flR] [-F logfile | -m msg] [-r rev] ...",
 		"Check files into the repository",
 	},
 	{
-		"diff",     { "di",  "dif" }, cvs_diff,
+		CVS_OP_DIFF, "diff",     { "di",  "dif" }, cvs_diff,
 		"[-cilu] [-D date] [-r rev] ...",
 		"Show differences between revisions",
 	},
 	{
-		"edit",     {              }, NULL,
+		-1, "edit",     {              }, NULL,
 		"",
 		"Get ready to edit a watched file",
 	},
 	{
-		"editors",  {              }, NULL,
+		-1, "editors",  {              }, NULL,
 		"",
 		"See who is editing a watched file",
 	},
 	{
-		"export",   { "ex",  "exp" }, NULL,
+		-1, "export",   { "ex",  "exp" }, NULL,
 		"",
 		"Export sources from CVS, similar to checkout",
 	},
 	{
-		"history",  { "hi",  "his" }, cvs_history,
+		CVS_OP_HISTORY, "history",  { "hi",  "his" }, cvs_history,
 		"",
 		"Show repository access history",
 	},
 	{
-		"import",   { "im",  "imp" }, NULL,
+		CVS_OP_IMPORT, "import",   { "im",  "imp" }, NULL,
 		"",
 		"Import sources into CVS, using vendor branches",
 	},
 	{
-		"init",     {              }, cvs_init,
+		CVS_OP_INIT, "init",     {              }, cvs_init,
 		"",
 		"Create a CVS repository if it doesn't exist",
 	},
@@ -152,82 +154,82 @@ static struct cvs_cmd {
 	},
 #endif
 	{
-		"log",      { "lo"         }, cvs_getlog,
+		CVS_OP_LOG, "log",      { "lo"         }, cvs_getlog,
 		"",
 		"Print out history information for files",
 	},
 	{
-		"login",    {}, NULL,
+		-1, "login",    {}, NULL,
 		"",
 		"Prompt for password for authenticating server",
 	},
 	{
-		"logout",   {}, NULL,
+		-1, "logout",   {}, NULL,
 		"",
 		"Removes entry in .cvspass for remote repository",
 	},
 	{
-		"rdiff",    {}, NULL,
+		-1, "rdiff",    {}, NULL,
 		"",
 		"Create 'patch' format diffs between releases",
 	},
 	{
-		"release",  {}, NULL,
+		-1, "release",  {}, NULL,
 		"",
 		"Indicate that a Module is no longer in use",
 	},
 	{
-		"remove",   {}, NULL,
+		CVS_OP_REMOVE, "remove",   {}, NULL,
 		"",
 		"Remove an entry from the repository",
 	},
 	{
-		"rlog",     {}, NULL,
+		-1, "rlog",     {}, NULL,
 		"",
 		"Print out history information for a module",
 	},
 	{
-		"rtag",     {}, NULL,
+		-1, "rtag",     {}, NULL,
 		"",
 		"Add a symbolic tag to a module",
 	},
 	{
-		"server",   {}, cvs_server,
+		CVS_OP_SERVER, "server",   {}, cvs_server,
 		"",
 		"Server mode",
 	},
 	{
-		"status",   {}, NULL,
+		CVS_OP_STATUS, "status",   {}, NULL,
 		"",
 		"Display status information on checked out files",
 	},
 	{
-		"tag",      { "ta", }, NULL,
+		CVS_OP_TAG, "tag",      { "ta", }, NULL,
 		"",
 		"Add a symbolic tag to checked out version of files",
 	},
 	{
-		"unedit",   {}, NULL,
+		-1, "unedit",   {}, NULL,
 		"",
 		"Undo an edit command",
 	},
 	{
-		"update",   {}, cvs_update,
+		CVS_OP_UPDATE, "update",   {}, cvs_update,
 		"",
 		"Bring work tree in sync with repository",
 	},
 	{
-		"version",  {}, cvs_version,
+		CVS_OP_VERSION, "version",  {}, cvs_version,
 		"",
 		"Show current CVS version(s)",
 	},
 	{
-		"watch",    {}, NULL,
+		-1, "watch",    {}, NULL,
 		"",
 		"Set watches",
 	},
 	{
-		"watchers", {}, NULL,
+		-1, "watchers", {}, NULL,
 		"",
 		"See who is watching a file",
 	},
@@ -393,6 +395,8 @@ main(int argc, char **argv)
 		cvs_log(LP_ERR, "command `%s' not implemented", cvs_command);
 		exit(1);
 	}
+
+	cvs_cmdop = cmdp->cmd_op;
 
 	ret = (*cmdp->cmd_hdlr)(argc, argv);
 	if (ret == EX_USAGE) {

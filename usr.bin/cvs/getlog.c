@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.2 2004/07/29 18:23:26 jfb Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.3 2004/07/30 01:49:23 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -38,6 +38,7 @@
 #include "log.h"
 #include "rcs.h"
 #include "sock.h"
+#include "proto.h"
 
 
 #define CVS_GLOG_RFONLY    0x01

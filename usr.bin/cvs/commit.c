@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: commit.c,v 1.2 2004/07/30 01:49:22 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -37,6 +37,7 @@
 
 #include "cvs.h"
 #include "log.h"
+#include "proto.h"
 
 
 

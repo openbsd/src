@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.7 2004/07/28 02:15:10 jfb Exp $	*/
+/*	$OpenBSD: root.c,v 1.8 2004/07/30 01:49:24 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -255,7 +255,6 @@ cvsroot_get(const char *dir)
 	size_t len;
 	char rootpath[MAXPATHLEN], *rootstr, line[128];
 	FILE *fp;
-	struct cvsroot *rp;
 
 	if (cvs_rootstr != NULL)
 		return cvsroot_parse(cvs_rootstr);

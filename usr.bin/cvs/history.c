@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.2 2004/07/29 18:34:23 jfb Exp $	*/
+/*	$OpenBSD: history.c,v 1.3 2004/07/30 01:49:23 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -38,6 +38,7 @@
 #include "cvs.h"
 #include "rcs.h"
 #include "log.h"
+#include "proto.h"
 
 #define CVS_HISTORY_MAXMOD    16
 
@@ -162,25 +163,24 @@ cvs_history(int argc, char **argv)
 	}
 	else {
 		if (flags & CVS_HF_C)
-			cvs_client_sendarg("-c", 0);
+			cvs_sendarg(root, "-c", 0);
 
 		if (flags & CVS_HF_O)
-			cvs_client_sendarg("-o", 0);
+			cvs_sendarg(root, "-o", 0);
 
 		if (tag != NULL) {
-			cvs_client_sendarg("-t", 0);
-			cvs_client_sendarg(tag, 0);
+			cvs_sendarg(root, "-t", 0);
+			cvs_sendarg(root, tag, 0);
 		}
 		if (user != NULL) {
-			cvs_client_sendarg("-u", 0);
-			cvs_client_sendarg(user, 0);
+			cvs_sendarg(root, "-u", 0);
+			cvs_sendarg(root, user, 0);
 		}
 
+		cvs_sendarg(root, "-z", 0);
+		cvs_sendarg(root, zone, 0);
 
-		cvs_client_sendarg("-z", 0);
-		cvs_client_sendarg(zone, 0);
-
-		cvs_client_sendreq(CVS_REQ_HISTORY, NULL, 1);
+		cvs_sendreq(root, CVS_REQ_HISTORY, NULL);
 	}
 
 	return (0);

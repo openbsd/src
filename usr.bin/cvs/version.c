@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.3 2004/07/29 18:23:25 jfb Exp $	*/
+/*	$OpenBSD: version.c,v 1.4 2004/07/30 01:49:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -34,32 +34,33 @@
 #include <sysexits.h>
 
 #include "cvs.h"
+#include "proto.h"
 
 
 
 int
 cvs_version(int argc, char **argv)
 {
+	struct cvsroot *root;
+
 	if (argc > 1)
 		return (EX_USAGE);
 
-	cvs_root = cvsroot_get(".");
-
-	if ((cvs_root) && (cvs_root->cr_method != CVS_METHOD_LOCAL))
+	root = cvsroot_get(".");
+	if ((root != NULL) && (root->cr_method != CVS_METHOD_LOCAL))
 		printf("Client: ");
-
 	printf("%s\n", CVS_VERSION);
 
-
-	if ((cvs_root) && (cvs_root->cr_method != CVS_METHOD_LOCAL))
-		if (cvs_client_connect(cvs_root) < 0)
+	if ((root != NULL) && (root->cr_method != CVS_METHOD_LOCAL)) {
+		if (cvs_connect(root) < 0)
 			return (1);
 
-	if ((cvs_root) && (cvs_root->cr_method != CVS_METHOD_LOCAL)) {
 		printf("Server: ");
-		cvs_client_sendreq(CVS_REQ_VERSION, NULL, 1);
-		cvs_client_disconnect(cvs_root);
+		cvs_sendreq(root, CVS_REQ_VERSION, NULL);
+		cvs_disconnect(root);
 	}
+
+	cvsroot_free(root);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.16 2004/07/30 01:49:22 jfb Exp $	*/
+/*	$OpenBSD: file.h,v 1.1 2004/07/30 01:49:23 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -24,8 +24,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
  */
 
-#ifndef CVS_H
-#define CVS_H
+#ifndef FILE_H
+#define FILE_H
 
 #include <sys/param.h>
 #include <stdio.h>
@@ -36,8 +36,8 @@
 #define CVS_VERSION    "OpenCVS 0.1"
 
 
-#define CVS_HIST_CACHE     128
-#define CVS_HIST_NBFLD     6
+#define FILE_HIST_CACHE     128
+#define FILE_HIST_NBFLD     6
 
 
 #define CVS_CKSUM_LEN      33     /* length of a CVS checksum string */
@@ -193,110 +193,6 @@ struct cvs_dir {
 	struct cvs_flist cd_files;
 };
 
-#define CVS_HIST_ADDED    'A'
-#define CVS_HIST_EXPORT   'E'
-#define CVS_HIST_RELEASE  'F'
-#define CVS_HIST_MODIFIED 'M'
-#define CVS_HIST_CHECKOUT 'O'
-#define CVS_HIST_COMMIT   'R'
-#define CVS_HIST_TAG      'T'
-
-
-#define CVS_ENT_NONE    0
-#define CVS_ENT_FILE    1
-#define CVS_ENT_DIR     2
-
-
-struct cvs_ent {
-	char    *ce_line;
-	char    *ce_buf;
-	u_int    ce_type;
-	char    *ce_name;
-	RCSNUM  *ce_rev;
-	char    *ce_timestamp;
-	char    *ce_opts;
-	char    *ce_tag;
-	TAILQ_ENTRY(cvs_ent) ce_list;
-};
-
-typedef struct cvs_entries {
-	char    *cef_path;
-	FILE    *cef_file;
-
-	TAILQ_HEAD(, cvs_ent) cef_ent;
-	struct cvs_ent       *cef_cur;
-} CVSENTRIES;
-
-
-
-struct cvs_hent {
-	char    ch_event;
-	time_t  ch_date;
-	uid_t   ch_uid;
-	char   *ch_user;
-	char   *ch_curdir;
-	char   *ch_repo;
-	RCSNUM *ch_rev;
-	char   *ch_arg;
-};
-
-
-typedef struct cvs_histfile {
-	int     chf_fd;
-	char   *chf_buf;       /* read buffer */
-	size_t  chf_blen;      /* buffer size */
-	size_t  chf_bused;     /* bytes used in buffer */
-
-	off_t   chf_off;       /* next read */
-	u_int   chf_sindex;    /* history entry index of first in array */
-	u_int   chf_cindex;    /* current index (for getnext()) */
-	u_int   chf_nbhent;    /* number of valid entries in the array */
-
-	struct cvs_hent chf_hent[CVS_HIST_CACHE];
-
-} CVSHIST;
-
-
-#ifdef CVS
-extern struct cvsroot *cvs_root;
-#endif
-
-
-
-
-/* client command handlers */
-int  cvs_add      (int, char **);
-int  cvs_checkout (int, char **);
-int  cvs_commit   (int, char **);
-int  cvs_diff     (int, char **);
-int  cvs_getlog   (int, char **);
-int  cvs_history  (int, char **);
-int  cvs_init     (int, char **);
-int  cvs_server   (int, char **);
-int  cvs_status   (int, char **);
-int  cvs_update   (int, char **);
-int  cvs_version  (int, char **);
-
-
-/* from client.c */
-int     cvs_client_connect     (struct cvsroot *);
-void    cvs_client_disconnect  (struct cvsroot *);
-int     cvs_client_sendreq     (u_int, const char *, int);
-int     cvs_client_sendarg     (const char *, int);
-int     cvs_client_sendln      (const char *);
-int     cvs_client_sendraw     (const void *, size_t);
-ssize_t cvs_client_recvraw     (void *, size_t);
-int     cvs_client_getln       (char *, size_t);
-int     cvs_client_senddir     (const char *);
-
-
-/* from root.c */
-struct cvsroot*  cvsroot_parse (const char *);
-void             cvsroot_free  (struct cvsroot *);
-struct cvsroot*  cvsroot_get   (const char *);
-
-
-/* from file.c */
 int      cvs_file_init    (void);
 int      cvs_file_ignore  (const char *);
 int      cvs_file_chkign  (const char *);
@@ -307,36 +203,4 @@ void     cvs_file_free    (struct cvs_file *);
 int      cvs_file_examine (CVSFILE *, int (*)(CVSFILE *, void *), void *);
 
 
-/* Entries API */
-CVSENTRIES*      cvs_ent_open   (const char *, int);
-struct cvs_ent*  cvs_ent_get    (CVSENTRIES *, const char *);
-struct cvs_ent*  cvs_ent_next   (CVSENTRIES *);
-int              cvs_ent_add    (CVSENTRIES *, struct cvs_ent *);
-int              cvs_ent_addln  (CVSENTRIES *, const char *);
-int              cvs_ent_remove (CVSENTRIES *, const char *);
-struct cvs_ent*  cvs_ent_parse  (const char *);
-void             cvs_ent_close  (CVSENTRIES *);
-void             cvs_ent_free   (struct cvs_ent *);
-struct cvs_ent*  cvs_ent_getent (const char *);
-
-/* history API */
-CVSHIST*         cvs_hist_open    (const char *);
-void             cvs_hist_close   (CVSHIST *);
-int              cvs_hist_parse   (CVSHIST *);
-struct cvs_hent* cvs_hist_getnext (CVSHIST *);
-int              cvs_hist_append  (CVSHIST *, struct cvs_hent *);
-
-
-/* from util.c */
-int    cvs_readrepo   (const char *, char *, size_t);
-int    cvs_splitpath  (const char *, char *, size_t, char *, size_t);
-int    cvs_modetostr  (mode_t, char *, size_t);
-int    cvs_strtomode  (const char *, mode_t *);
-int    cvs_mkadmin    (struct cvs_file *, mode_t);
-int    cvs_cksum      (const char *, char *, size_t);
-int    cvs_exec       (int, char **, int []);
-int    cvs_getargv    (const char *, char **, int);
-void   cvs_freeargv   (char **, int);
-
-
-#endif /* CVS_H */
+#endif /* FILE_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.3 2004/07/14 04:32:42 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.4 2004/07/30 01:49:23 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -146,6 +146,7 @@
 #include "cvs.h"
 #include "log.h"
 #include "buf.h"
+#include "proto.h"
 
 
 #define CVS_DIFF_DEFCTX    3   /* default context length */
@@ -197,6 +198,13 @@ struct context_vec {
 	int d;			/* end line in new file */
 };
 
+struct diff_arg {
+	char  *rev1;
+	char  *rev2;
+	char  *date1;
+	char  *date2;
+};
+
 
 struct excludes {
 	char *pattern;
@@ -206,8 +214,7 @@ struct excludes {
 
 char	*splice(char *, char *);
 int  cvs_diffreg(const char *, const char *);
-int  cvs_diff_file  (const char *, const char *, const char *);
-int  cvs_diff_dir   (const char *, int);
+int  cvs_diff_file  (struct cvs_file *, void *);
 static void output(const char *, FILE *, const char *, FILE *);
 static void check(FILE *, FILE *);
 static void range(int, int, char *);
@@ -231,17 +238,11 @@ static int  isqrt(int);
 static int  stone(int *, int, int *, int *);
 static int  readhash(FILE *);
 static int  files_differ(FILE *, FILE *);
-static __inline int min(int, int);
-static __inline int max(int, int);
-static char *match_function(const long *, int, FILE *);
 static char *preadline(int, size_t, off_t);
 
 
 
 extern int cvs_client;
-extern struct cvsroot *cvs_root;
-
-
 
 static int aflag, bflag, dflag, iflag, tflag, Tflag, wflag;
 static int context, status;
@@ -272,7 +273,6 @@ static struct context_vec *context_vec_end;
 static struct context_vec *context_vec_ptr;
 
 #define FUNCTION_CONTEXT_SIZE	41
-static char lastbuf[FUNCTION_CONTEXT_SIZE];
 static int lastline;
 static int lastmatchline;
 
@@ -350,16 +350,17 @@ u_char cup2low[256] = {
 int
 cvs_diff(int argc, char **argv)
 {
-	int i, ch, recurse;
-	size_t dalen;
-	char dir[MAXPATHLEN], file[MAXPATHLEN], *d1, *d2, *r1, *r2;
+	int ch, recurse, flags;
+	struct cvs_file *files;
+	struct diff_arg darg;
+	struct cvsroot *root;
 
 	context = CVS_DIFF_DEFCTX;
-	strlcpy(diffargs, argv[0], sizeof(diffargs));
-
-	d1 = d2 = NULL;
-	r1 = r2 = NULL;
+	flags = CF_RECURSE|CF_IGNORE|CF_SORT|CF_KNOWN;
 	recurse = 1;
+
+	memset(&darg, 0, sizeof(darg));
+	strlcpy(diffargs, argv[0], sizeof(diffargs));
 
 	while ((ch = getopt(argc, argv, "cD:lir:u")) != -1) {
 		switch (ch) {
@@ -368,10 +369,10 @@ cvs_diff(int argc, char **argv)
 			format = D_CONTEXT;
 			break;
 		case 'D':
-			if (d1 == NULL && r1 == NULL)
-				d1 = optarg;
-			else if (d2 == NULL && r2 == NULL)
-				d2 = optarg;
+			if (darg.date1 == NULL && darg.rev1 == NULL)
+				darg.date1 = optarg;
+			else if (darg.date2 == NULL && darg.rev2 == NULL)
+				darg.date2 = optarg;
 			else {
 				cvs_log(LP_ERR,
 				    "no more than two revisions/dates can "
@@ -381,16 +382,17 @@ cvs_diff(int argc, char **argv)
 		case 'l':
 			strlcat(diffargs, " -l", sizeof(diffargs));
 			recurse = 0;
+			flags &= ~CF_RECURSE;
 			break;
 		case 'i':
 			strlcat(diffargs, " -i", sizeof(diffargs));
 			iflag = 1;
 			break;
 		case 'r':
-			if ((r1 == NULL) && (d1 == NULL))
-				r1 = optarg;
-			else if ((r2 == NULL) && (d2 == NULL))
-				r2 = optarg;
+			if ((darg.rev1 == NULL) && (darg.date1 == NULL))
+				darg.rev1 = optarg;
+			else if ((darg.rev2 == NULL) && (darg.date2 == NULL))
+				darg.rev2 = optarg;
 			else {
 				cvs_log(LP_ERR,
 				    "no more than two revisions/dates can "
@@ -411,68 +413,51 @@ cvs_diff(int argc, char **argv)
 	argv += optind;
 
 	if (argc == 0) {
-		/* get the CVSROOT from current dir */
-		strlcpy(dir, ".", sizeof(dir));
-
-		cvs_root = cvsroot_get(dir);
-		if (cvs_root == NULL)
-			return (EX_USAGE);
-
-		if (cvs_root->cr_method != CVS_METHOD_LOCAL) {
-			cvs_client_connect();
-
-			/* send the flags */
-			if (format == D_CONTEXT)
-				cvs_client_sendarg("-c", 0);
-			else if (format == D_UNIFIED)
-				cvs_client_sendarg("-u", 0);
-
-			if (r1 != NULL) {
-				cvs_client_sendarg("-r", 0);
-				cvs_client_sendarg(r1, 1);
-			}
-			else if (d1 != NULL) {
-				cvs_client_sendarg("-D", 0);
-				cvs_client_sendarg(d1, 1);
-			}
-			if (r2 != NULL) {
-				cvs_client_sendarg("-r", 0);
-				cvs_client_sendarg(r2, 1);
-			}
-			else if (d2 != NULL) {
-				cvs_client_sendarg("-D", 0);
-				cvs_client_sendarg(d2, 1);
-			}
-		}
-
-		cvs_diff_dir(dir, recurse);
+		files = cvs_file_get(".", flags);
 	}
-	else {
-		for (i = 0; i < argc; i++) {
-			cvs_splitpath(argv[i], dir, sizeof(dir),
-			    file, sizeof(file));
-			cvs_root = cvsroot_get(dir);
-			if (cvs_root == NULL)
-				return (EX_USAGE);
+	else
+		files = cvs_file_getspec(argv, argc, 0);
 
-			if (cvs_root->cr_method != CVS_METHOD_LOCAL) {
-				cvs_client_connect();
+	cvs_file_examine(files, cvs_diff_file, &darg);
 
-				if (i == 0) {
-					/* send the flags */
-					if (format == D_CONTEXT)
-						cvs_client_sendarg("-c", 0);
-					else if (format == D_UNIFIED)
-						cvs_client_sendarg("-u", 0);
-				}
-			}
+	root = files->cf_ddat->cd_root;
+	if (root->cr_method != CVS_METHOD_LOCAL)
+		cvs_sendreq(root, CVS_REQ_DIFF, NULL);
 
-			cvs_diff_file(argv[i], r1, r2);
-		}
+	return (0);
+}
+
+
+/*
+ * cvs_diff_sendflags()
+ *
+ */
+
+int
+cvs_diff_sendflags(struct cvsroot *root, struct diff_arg *dap)
+{
+	/* send the flags */
+	if (format == D_CONTEXT)
+		cvs_sendarg(root, "-c", 0);
+	else if (format == D_UNIFIED)
+		cvs_sendarg(root, "-u", 0);
+
+	if (dap->rev1 != NULL) {
+		cvs_sendarg(root, "-r", 0);
+		cvs_sendarg(root, dap->rev1, 1);
 	}
-
-	if (cvs_root->cr_method != CVS_METHOD_LOCAL)
-		cvs_client_sendreq(CVS_REQ_DIFF, NULL, 1);
+	else if (dap->date1 != NULL) {
+		cvs_sendarg(root, "-D", 0);
+		cvs_sendarg(root, dap->date1, 1);
+	}
+	if (dap->rev2 != NULL) {
+		cvs_sendarg(root, "-r", 0);
+		cvs_sendarg(root, dap->rev2, 1);
+	}
+	else if (dap->date2 != NULL) {
+		cvs_sendarg(root, "-D", 0);
+		cvs_sendarg(root, dap->date2, 1);
+	}
 
 	return (0);
 }
@@ -485,184 +470,125 @@ cvs_diff(int argc, char **argv)
  */
 
 int
-cvs_diff_file(const char *path, const char *rev1, const char *rev2)
+cvs_diff_file(struct cvs_file *cfp, void *arg)
 {
-	int modif;
-	char dir[MAXPATHLEN], file[MAXPATHLEN], rcspath[MAXPATHLEN];
-	char repo[MAXPATHLEN], buf[64];
-	time_t tsec;
+	char *dir, *repo, rcspath[MAXPATHLEN], buf[64];
 	BUF *b1, *b2;
 	RCSNUM *r1, *r2;
 	RCSFILE *rf;
-	CVSENTRIES *entf;
-	struct tm tmstamp;
-	struct stat fst;
+	struct diff_arg *dap;
 	struct cvs_ent *entp;
+	struct cvsroot *root;
+
+	dap = (struct diff_arg *)arg;
+
+	cvs_log(LP_DEBUG, "%s: diffing %s", __func__, cfp->cf_path);
+
+	if (cfp->cf_type == DT_DIR) {
+		root = cfp->cf_ddat->cd_root;
+		if ((cfp->cf_parent == NULL) ||
+		    (root != cfp->cf_parent->cf_ddat->cd_root)) {
+			cvs_connect(root);
+			cvs_diff_sendflags(root, dap);
+		}
+
+		cvs_senddir(root, cfp);
+		return (0);
+	}
+	else	/* take the root of parent directory */
+		root = cfp->cf_parent->cf_ddat->cd_root;
 
 	rf = NULL;
-	diff_file = path;
-
-	if (stat(path, &fst) == -1) {
-		cvs_log(LP_ERRNO, "cannot find %s", path);
-		return (-1);
+	diff_file = cfp->cf_path;
+	if (cfp->cf_parent != NULL) {
+		dir = cfp->cf_parent->cf_path;
+		repo = cfp->cf_parent->cf_ddat->cd_repo;
+	}
+	else {
+		dir = ".";
+		repo = NULL;
 	}
 
-	cvs_splitpath(path, dir, sizeof(dir), file, sizeof(file));
-	cvs_readrepo(dir, repo, sizeof(repo));
-
-	entf = cvs_ent_open(dir, O_RDONLY);
-	if (entf == NULL) {
-		cvs_log(LP_ERR, "no CVS/Entries file in `%s'", dir);
-		return (-1);
+	if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
+		if (root->cr_method == CVS_METHOD_LOCAL)
+			cvs_log(LP_WARN, "I know nothing about %s", diff_file);
+		else
+			cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cfp->cf_name);
+		return (0);
 	}
 
-	entp = cvs_ent_get(entf, file);
-	if ((entp == NULL) && (cvs_root->cr_method == CVS_METHOD_LOCAL)) {
-		cvs_log(LP_WARN, "I know nothing about %s", path);
+	entp = cvs_ent_getent(diff_file);
+	if (entp == NULL)
 		return (-1);
-	}
 
-	if (cvs_root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_client_senddir(dir) < 0)
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		if (cvs_sendentry(root, entp) < 0) {
+			cvs_ent_free(entp);
 			return (-1);
+		}
 	}
 
-	tsec = (time_t)fst.st_mtimespec.tv_sec;
-
-	if ((gmtime_r(&tsec, &tmstamp) == NULL) ||
-	    (asctime_r(&tmstamp, buf) == NULL)) {
-		cvs_log(LP_ERR, "failed to generate file timestamp");
-		return (-1);
-	}
-	modif = (strcmp(buf, entp->ce_timestamp) == 0) ? 0 : 1;
-
-	if (cvs_root->cr_method != CVS_METHOD_LOCAL)
-		cvs_client_sendentry(entp);
-
-	if (!modif) {
-		if (cvs_root->cr_method != CVS_METHOD_LOCAL)
-			cvs_client_sendreq(CVS_REQ_UNCHANGED, file, 0);
-		cvs_ent_close(entf);
+	if (cfp->cf_cvstat == CVS_FST_UPTODATE) {
+		if (root->cr_method != CVS_METHOD_LOCAL)
+			cvs_sendreq(root, CVS_REQ_UNCHANGED, cfp->cf_name);
+		cvs_ent_free(entp);
 		return (0);
 	}
 
 	/* at this point, the file is modified */
-	if (cvs_root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_client_sendreq(CVS_REQ_MODIFIED, file, 0);
-		cvs_sendfile(path);
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		cvs_sendreq(root, CVS_REQ_MODIFIED, cfp->cf_name);
+		cvs_sendfile(root, diff_file);
 	}
 	else {
 		snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
-		    cvs_root->cr_dir, repo, path, RCS_FILE_EXT);
+		    root->cr_dir, repo, diff_file, RCS_FILE_EXT);
 
 		rf = rcs_open(rcspath, RCS_MODE_READ);
-		if (rf == NULL)
+		if (rf == NULL) {
+			cvs_ent_free(entp);
 			return (-1);
+		}
 
-		printf("Index: %s\n%s\nRCS file: %s\n", path,
+		cvs_printf("Index: %s\n%s\nRCS file: %s\n", diff_file,
 		    RCS_DIFF_DIV, rcspath);
 
-		if (rev1 == NULL)
+		if (dap->rev1 == NULL)
 			r1 = entp->ce_rev;
 		else {
 			r1 = rcsnum_alloc();
-			rcsnum_aton(rev1, NULL, r1);
+			rcsnum_aton(dap->rev1, NULL, r1);
 		}
 
-		printf("retrieving revision %s\n",
+		cvs_printf("retrieving revision %s\n",
 		    rcsnum_tostr(r1, buf, sizeof(buf)));
 		b1 = rcs_getrev(rf, r1);
 
-		if (rev2 != NULL) {
-			printf("retrieving revision %s\n", rev2);
+		if (dap->rev2 != NULL) {
+			cvs_printf("retrieving revision %s\n", dap->rev2);
 			r2 = rcsnum_alloc();
-			rcsnum_aton(rev2, NULL, r2);
+			rcsnum_aton(dap->rev2, NULL, r2);
 			b2 = rcs_getrev(rf, r2);
 		}
 		else {
-			b2 = cvs_buf_load(path, BUF_AUTOEXT);
+			b2 = cvs_buf_load(diff_file, BUF_AUTOEXT);
 		}
+
+		rcs_close(rf);
 
 		printf("%s", diffargs);
 		printf(" -r%s", buf);
-		if (rev2 != NULL)
-			printf(" -r%s", rev2);
-		printf(" %s\n", path);
+		if (dap->rev2 != NULL)
+			printf(" -r%s", dap->rev2);
+		printf(" %s\n", diff_file);
 		cvs_buf_write(b1, "/tmp/diff1", 0600);
 		cvs_buf_write(b2, "/tmp/diff2", 0600);
 		cvs_diffreg("/tmp/diff1", "/tmp/diff2");
 	}
 
-	cvs_ent_close(entf);
-
+	cvs_ent_free(entp);
 	return (0);
 }
-
-
-/*
- * cvs_diff_dir()
- *
- */
-
-int
-cvs_diff_dir(const char *dir, int recurse)
-{
-	char path[MAXPATHLEN];
-	DIR *dirp;
-	CVSENTRIES *entf;
-	struct dirent *dentp;
-	struct cvs_ent *entp;
-
-	printf("cvs_diff_dir(%s)\n", dir);
-
-	dirp = opendir(dir);
-	if (dirp == NULL) {
-		cvs_log(LP_ERRNO, "failed to open directory `%s'", dir);
-		return (-1);
-	}
-
-	entf = cvs_ent_open(dir, O_RDONLY);
-	if (entf == NULL) {
-		cvs_log(LP_ERR, "no CVS/Entries file in `%s'", dir);
-		(void)closedir(dirp);
-		return (-1);
-	}
-
-	while ((dentp = readdir(dirp)) != NULL) {
-		if ((strcmp(dentp->d_name, "CVS") == 0) ||
-		    (dentp->d_name[0] == '.'))
-			continue;
-
-		if (strcmp(dir, ".") != 0) {
-			strlcpy(path, dir, sizeof(path));
-			strlcat(path, "/", sizeof(path));
-		}
-		else
-			path[0] = '\0';
-		strlcat(path, dentp->d_name, sizeof(path));
-		if (dentp->d_type == DT_DIR) {
-			if (!recurse)
-				continue;
-			cvs_diff_dir(path, recurse);
-		}
-		else {
-			entp = cvs_ent_get(entf, dentp->d_name);
-			if (entp == NULL) {
-				cvs_client_sendreq(CVS_REQ_QUESTIONABLE, path,
-				    0);
-			}
-			else {
-#if 0
-				cvs_diff_file(path);
-#endif
-			}
-		}
-	}
-
-	return (0);
-}
-
-
 
 
 int
@@ -896,7 +822,7 @@ stone(int *a, int n, int *b, int *c)
 	int oldc, tc, oldl;
 	u_int numtries;
 
-	const u_int bound = dflag ? UINT_MAX : max(256, isqrt(n));
+	const u_int bound = dflag ? UINT_MAX : MAX(256, isqrt(n));
 
 	k = 0;
 	c[0] = newcand(0, 0, 0);
@@ -1480,46 +1406,6 @@ asciifile(FILE *f)
 	return (1);
 }
 
-static __inline int min(int a, int b)
-{
-	return (a < b ? a : b);
-}
-
-static __inline int max(int a, int b)
-{
-	return (a > b ? a : b);
-}
-
-static char *
-match_function(const long *f, int pos, FILE *file)
-{
-	char buf[FUNCTION_CONTEXT_SIZE];
-	size_t nc;
-	int last = lastline;
-	char *p;
-
-	lastline = pos;
-	while (pos > last) {
-		fseek(file, f[pos - 1], SEEK_SET);
-		nc = f[pos] - f[pos - 1];
-		if (nc >= sizeof(buf))
-			nc = sizeof(buf) - 1;
-		nc = fread(buf, 1, nc, file);
-		if (nc > 0) {
-			buf[nc] = '\0';
-			p = strchr(buf, '\n');
-			if (p != NULL)
-				*p = '\0';
-			if (isalpha(buf[0]) || buf[0] == '_' || buf[0] == '$') {
-				strlcpy(lastbuf, buf, sizeof lastbuf);
-				lastmatchline = pos;
-				return lastbuf;
-			}
-		}
-		pos--;
-	}
-	return lastmatchline > 0 ? lastbuf : NULL;
-}
 
 /* dump accumulated "context" diff changes */
 static void
@@ -1528,16 +1414,16 @@ dump_context_vec(FILE *f1, FILE *f2)
 	struct context_vec *cvp = context_vec_start;
 	int lowa, upb, lowc, upd, do_output;
 	int a, b, c, d;
-	char ch, *f;
+	char ch;
 
 	if (context_vec_start > context_vec_ptr)
 		return;
 
 	b = d = 0;		/* gcc */
-	lowa = max(1, cvp->a - context);
-	upb = min(len[0], context_vec_ptr->b + context);
-	lowc = max(1, cvp->c - context);
-	upd = min(len[1], context_vec_ptr->d + context);
+	lowa = MAX(1, cvp->a - context);
+	upb = MIN(len[0], context_vec_ptr->b + context);
+	lowc = MAX(1, cvp->c - context);
+	upd = MIN(len[1], context_vec_ptr->d + context);
 
 	printf("***************");
 	printf("\n*** ");
@@ -1626,16 +1512,16 @@ dump_unified_vec(FILE *f1, FILE *f2)
 	struct context_vec *cvp = context_vec_start;
 	int lowa, upb, lowc, upd;
 	int a, b, c, d;
-	char ch, *f;
+	char ch;
 
 	if (context_vec_start > context_vec_ptr)
 		return;
 
 	b = d = 0;		/* gcc */
-	lowa = max(1, cvp->a - context);
-	upb = min(len[0], context_vec_ptr->b + context);
-	lowc = max(1, cvp->c - context);
-	upd = min(len[1], context_vec_ptr->d + context);
+	lowa = MAX(1, cvp->a - context);
+	upb = MIN(len[0], context_vec_ptr->b + context);
+	lowc = MAX(1, cvp->c - context);
+	upd = MIN(len[1], context_vec_ptr->d + context);
 
 	fputs("@@ -", stdout);
 	uni_range(lowa, upb);

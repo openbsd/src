@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: add.c,v 1.2 2004/07/30 01:49:21 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -35,10 +35,7 @@
 
 #include "cvs.h"
 #include "log.h"
-
-
-
-extern struct cvsroot *cvs_root;
+#include "proto.h"
 
 
 
@@ -54,6 +51,7 @@ cvs_add(int argc, char **argv)
 {
 	int ch, i, ret;
 	char *kflag, *msg;
+	struct cvsroot *root;
 
 	kflag = NULL;
 
@@ -77,22 +75,19 @@ cvs_add(int argc, char **argv)
 		return (EX_USAGE);
 	}
 
+	root = NULL;
+
 	for (i = 0; i < argc; i++) {
-		/*
-		 * XXX figure out if we should send `Modified' or `Is-Modified'
-		 * The cvs documentation specifies that Modified should be used
-		 * in this case, but GNU CVS sends the latter.
-		 */
-		ret = cvs_client_sendreq(CVS_REQ_ISMODIFIED, argv[i], 0);
+		ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED, argv[i]);
 		if (ret < 0)
 			return (EX_DATAERR);
 	}
 
 	for (i = 0; i < argc; i++) {
-		ret = cvs_client_sendreq(CVS_REQ_ARGUMENT, argv[i], 0);
+		ret = cvs_sendreq(root, CVS_REQ_ARGUMENT, argv[i]);
 	}
 
-	ret = cvs_client_sendreq(CVS_REQ_ADD, NULL, 0);
+	ret = cvs_sendreq(root, CVS_REQ_ADD, NULL);
 
 	return (0);
 }

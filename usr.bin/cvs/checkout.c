@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.4 2004/07/29 18:32:45 jfb Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.5 2004/07/30 01:49:22 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -35,6 +35,7 @@
 
 #include "cvs.h"
 #include "log.h"
+#include "proto.h"
 
 
 
@@ -49,6 +50,7 @@ int
 cvs_checkout(int argc, char **argv)
 {
 	int ch;
+	struct cvsroot *root;
 
 	while ((ch = getopt(argc, argv, "")) != -1) {
 		switch (ch) {
@@ -66,18 +68,18 @@ cvs_checkout(int argc, char **argv)
 		return (EX_USAGE);
 	}
 
-	cvs_root = cvsroot_get(".");
-	if (cvs_root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_client_connect(cvs_root);
+	root = cvsroot_get(".");
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		cvs_connect(root);
 	}
 
-	cvs_client_sendarg(argv[0], 0);
-	cvs_client_senddir(".");
-	cvs_client_sendreq(CVS_REQ_XPANDMOD, NULL, 1);
+	cvs_sendarg(root, argv[0], 0);
+	cvs_senddir(root, ".");
+	cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL);
 
-	cvs_client_sendarg(argv[0], 0);
-	cvs_client_senddir(".");
-	cvs_client_sendreq(CVS_REQ_CO, NULL, 1);
+	cvs_sendarg(root, argv[0], 0);
+	cvs_senddir(root, ".");
+	cvs_sendreq(root, CVS_REQ_CO, NULL);
 
 	return (0);
 }

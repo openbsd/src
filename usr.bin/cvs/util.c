@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2004/07/28 01:50:05 jfb Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 2004/07/30 01:49:24 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -277,7 +277,7 @@ cvs_splitpath(const char *path, char *dir, size_t dlen, char *file, size_t flen)
 		}
 	}
 	else {
-		rlen = MIN(dlen - 1, sp - path);
+		rlen = MIN(dlen - 1, (size_t)(sp - path));
 		if (dir != NULL) {
 			strncpy(dir, path, rlen);
 			dir[rlen] = '\0';
