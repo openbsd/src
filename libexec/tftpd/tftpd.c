@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftpd.c,v 1.36 2004/09/18 06:38:02 deraadt Exp $	*/
+/*	$OpenBSD: tftpd.c,v 1.37 2005/02/22 10:52:17 otto Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tftpd.c	5.13 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: tftpd.c,v 1.36 2004/09/18 06:38:02 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tftpd.c,v 1.37 2005/02/22 10:52:17 otto Exp $";
 #endif /* not lint */
 
 /*
@@ -190,6 +190,7 @@ main(int argc, char *argv[])
 			syslog(LOG_ERR, "too many -s directories");
 			exit(1);
 		}
+		tzset();
 		if (chroot(dirs[0])) {
 			syslog(LOG_ERR, "chroot %s: %m", dirs[0]);
 			exit(1);
