@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.44 2003/04/07 17:01:08 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.45 2003/06/12 17:50:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -707,10 +707,11 @@ void
 mbus_dmamap_sync(void *v, bus_dmamap_t map, bus_addr_t offset, bus_size_t len,
     int ops)
 {
-	if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE))
-		fdcache(HPPA_SID_KERNEL, map->_dm_va + offset, len);
-	else
-		pdcache(HPPA_SID_KERNEL, map->_dm_va + offset, len);
+	/*
+	 * cannot use purge since the data for dma is not
+	 * guarantied to be aligned in any way
+	 */
+	fdcache(HPPA_SID_KERNEL, map->_dm_va + offset, len);
 
 	/* for either operation sync the shit away */
 	__asm __volatile ("sync\n\tsyncdma\n\tsync\n\t"
