@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.33 2003/03/08 17:18:25 deraadt Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.34 2003/04/13 18:04:41 deraadt Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -495,7 +495,7 @@ rsource(char *name, struct stat *statp)
 		return;
 	}
 	last = strrchr(name, '/');
-	if (last == 0)
+	if (last == NULL)
 		last = name;
 	else
 		last++;
