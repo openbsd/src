@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.25 2000/12/15 15:18:36 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.26 2001/02/19 17:23:13 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.39 1997/06/10 18:26:41 veego Exp $	*/
 
 /* 
@@ -323,6 +323,11 @@ pmap_bootstrap(firstaddr, loadaddr)
 
 	fromads = firstaddr;
 	toads = maxmem << PGSHIFT;
+
+#if defined(UVM)
+	uvmexp.pagesize = NBPG;
+	uvm_setpagesize();
+#endif
 
 	/* XXX: allow for msgbuf */
 	toads -= m68k_round_page(MSGBUFSIZE);
