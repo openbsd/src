@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.31 2005/04/01 20:14:40 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.32 2005/04/04 22:40:31 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -1480,7 +1480,7 @@ ami_ioctl(dev, cmd, addr)
 	case BIOCCAPABILITIES:
 		((bioc_capabilities *)addr)->ioctls =
 		    BIOC_ALARM | BIOC_PING | BIOC_SCSICMD | BIOC_STARTSTOP |
-		    BIOC_STATUS;
+		    BIOC_STATUS | BIOC_BLINK;
 
 		((bioc_capabilities *)addr)->raid_types =
 		    BIOC_RAID0 | BIOC_RAID1 | BIOC_RAID5 |
@@ -1495,6 +1495,11 @@ ami_ioctl(dev, cmd, addr)
 
 	case BIOCALARM:
 		error = ami_ioctl_alarm(sc, (bioc_alarm *)addr);
+		break;
+
+	case BIOCBLINK:
+		error = EOPNOTSUPP; /* let userland land knows it must issue
+				   * a cdb to handle blinking. */
 		break;
 
 	case BIOCSTARTSTOP:
