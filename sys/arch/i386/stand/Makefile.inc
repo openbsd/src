@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.12 1997/07/25 18:27:25 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.13 1997/07/28 22:03:26 mickey Exp $
 
 CFLAGS=-O -Wall -Werror
 CPPFLAGS=-I${S} -I${SADIR}/libsa -I. -I${.CURDIR}
@@ -19,6 +19,11 @@ HEAP_LIMIT=0x50000
 BOOTREL=0x3000
 BOOTMAGIC=0xdeadbeef
 
+.if exists(${SADIR}/etc/assym.h)
+CPPFLAGS+=-I${SADIR}/etc
+.else
+CPPFLAGS+=-I${SADIR}/etc/${__objdir}
+.endif
 .if exists(${SADIR}/libsa/libsa.a)
 LIBSA=${SADIR}/libsa/libsa.a
 .else

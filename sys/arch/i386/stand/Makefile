@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.6 1997/03/31 03:11:58 weingart Exp $
+#	$OpenBSD: Makefile,v 1.7 1997/07/28 22:03:25 mickey Exp $
 
-SUBDIR=	libsa libz biosboot installboot boot mbr
+SUBDIR=	etc libsa libz biosboot installboot boot mbr
 
 .include <bsd.subdir.mk>
