@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.26 1998/09/28 01:59:56 jason Exp $
+#	$OpenBSD: files.pci,v 1.27 1998/10/10 03:55:05 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
@@ -90,6 +90,11 @@ file	dev/pci/cy_pci.c		cy_pci
 device	fxp: ether, ifnet, mii, ifmedia
 attach	fxp at pci 
 file	dev/pci/if_fxp.c		fxp
+
+# Texas Instruments ThunderLAN
+device	tl: ether, ifnet, mii, ifmedia
+attach	tl at pci
+file	dev/pci/if_tl.c			tl
 
 # S3 SonicVibes (S3 617)
 device	sv: audio, auconv, mulaw

@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.92 1998/10/09 00:15:34 deraadt Exp $
+$OpenBSD: pcidevs,v 1.93 1998/10/10 03:55:05 jason Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -707,22 +707,25 @@ product COGENT EM110TX		0x1400 EX110TX PCI Fast Ethernet Adapter
 
 /* Compaq products */
 product	COMPAQ PCI_EISA_BRIDGE	0x0001	PCI-EISA Bridge
-product COMPAQ PCI_ISA_BRIDGE	0x0002	PCI-ISA Bridge
-product COMPAQ TRIFLEX1		0x1000	Triflex Host-PCI Bridge
-product COMPAQ TRIFLEX2		0x2000	Triflex Host-PCI Bridge
+product	COMPAQ PCI_ISA_BRIDGE	0x0002	PCI-ISA Bridge
+product	COMPAQ TRIFLEX1		0x1000	Triflex Host-PCI Bridge
+product	COMPAQ TRIFLEX2		0x2000	Triflex Host-PCI Bridge
 product	COMPAQ QVISION_V0	0x3032	QVision
 product	COMPAQ QVISION_1280P	0x3033	QVision 1280/p
 product	COMPAQ QVISION_V2	0x3034	QVision
-product COMPAQ TRIFLEX4		0x4000	Triflex Host-PCI Bridge
-product COMPAQ USB		0x7020	USB Controller
-product COMPAQ N100TX		0xae32	Netelligent 10/100 TX
-product COMPAQ N10T		0xae34	Netelligent 10 T
-product COMPAQ IntNF3P		0xae35	Integrated NetFlex 3/P
-product COMPAQ IntPL100TX	0xae43	ProLiant Integrated Netelligent 10/100 TX
-product COMPAQ DPNet100TX	0xae40	Dual Port Netelligent 10/100 TX
-product COMPAQ DP4000		0xb011	Deskpro 4000 5233MMX
-product COMPAQ NF3P		0xf130	NetFlex 3/P
-product COMPAQ NF3P_BNC		0xf150	NetFlex 3/P w/ BNC
+product	COMPAQ TRIFLEX4		0x4000	Triflex Host-PCI Bridge
+product	COMPAQ USB		0x7020	USB Controller
+product	COMPAQ N100TX		0xae32	Netelligent 10/100 TX
+product	COMPAQ Nunknown		0xae33	Netelligent unknown
+product	COMPAQ N10T		0xae34	Netelligent 10 T
+product	COMPAQ IntNF3P		0xae35	Integrated NetFlex 3/P
+product	COMPAQ DPNet100TX	0xae40	Dual Port Netelligent 10/100 TX
+product	COMPAQ IntPL100TX	0xae43	ProLiant Integrated Netelligent 10/100 TX
+product	COMPAQ DP4000		0xb011	Deskpro 4000 5233MMX
+product	COMPAQ N10T2		0xb012	Netelligent 10 T/2 PCI UTP/Coax
+product	COMPAQ N10_TX_UTP	0xb030	Netelligent 10/100 TX UTP
+product	COMPAQ NF3P		0xf130	NetFlex 3/P
+product	COMPAQ NF3P_BNC		0xf150	NetFlex 3/P w/ BNC
 
 /* Compex */
 product COMPEX COMPEXE		0x1401	Compex Ethernet
@@ -942,6 +945,11 @@ product NUMBER9 I128_2		0x2339	Imagine-128 II
 
 /* Oak Technologies products */
 product OAKTECH OTI1007		0x0107	OTI107
+
+/* Olicom */
+product	OLICOM OC2183		0x0013	OC2183
+product	OLICOM OC2325		0x0012	OC2325
+product	OLICOM OC2326		0x0014	OC2326
 
 /* Opti products */
 product OPTI 82C557		0xc557	82C557 Host Bridge
