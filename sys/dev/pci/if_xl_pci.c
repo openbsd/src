@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.13 2002/11/19 18:40:17 jason Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.14 2003/01/12 20:48:15 henning Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,6 +120,7 @@ const struct pci_matchid xl_pci_devices[] = {
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C555 },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556 },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556B },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C9201 },
 };
 
 int
