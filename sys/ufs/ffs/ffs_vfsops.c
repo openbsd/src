@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.23 1999/05/31 17:34:54 millert Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.24 1999/12/03 21:29:29 art Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -145,14 +145,14 @@ ffs_mount(mp, path, data, ndp, p)
 	struct ufs_args args;
 	struct ufsmount *ump = NULL;
 	register struct fs *fs;
-	int err = 0, flags;
+	int error = 0, flags;
 	int ronly;
 	mode_t accessmode;
 	size_t size;
 
-	err = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
-	if (err)
-		return (err);
+	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
+	if (error)
+		return (error);
 	/*
 	 * If updating, check whether changing from read-only to
 	 * read/write; if there is no device name, that's all we do.
@@ -161,7 +161,7 @@ ffs_mount(mp, path, data, ndp, p)
 		ump = VFSTOUFS(mp);
 		fs = ump->um_fs;
 		devvp = ump->um_devvp;
-		err = 0;
+		error = 0;
 		ronly = fs->fs_ronly;
 
 		if (ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
@@ -169,14 +169,14 @@ ffs_mount(mp, path, data, ndp, p)
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
 			if (mp->mnt_flag & MNT_SOFTDEP)
-				err = softdep_flushfiles(mp, flags, p);
+				error = softdep_flushfiles(mp, flags, p);
 			else
-				err = ffs_flushfiles(mp, flags, p);
+				error = ffs_flushfiles(mp, flags, p);
 			ronly = 1;
 		}
-		if (!err && (mp->mnt_flag & MNT_RELOAD)) 
-			err = ffs_reload(mp, ndp->ni_cnd.cn_cred, p);
-		if (err)
+		if (!error && (mp->mnt_flag & MNT_RELOAD)) 
+			error = ffs_reload(mp, ndp->ni_cnd.cn_cred, p);
+		if (error)
 			goto error_1;
 
 		if (ronly && (mp->mnt_flag & MNT_WANTRDWR)) {
@@ -186,10 +186,11 @@ ffs_mount(mp, path, data, ndp, p)
 			 */
 			if (p->p_ucred->cr_uid != 0) {
 				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
-				err = VOP_ACCESS(devvp, VREAD | VWRITE,
+				error = VOP_ACCESS(devvp, VREAD | VWRITE,
 						 p->p_ucred, p);
 				VOP_UNLOCK(devvp, 0, p);
-				if (err) goto error_1;
+				if (error)
+					goto error_1;
 			}
 
                         if (fs->fs_clean == 0) {
@@ -201,14 +202,15 @@ ffs_mount(mp, path, data, ndp, p)
                                         printf(
 "WARNING: R/W mount of %s denied.  Filesystem is not clean - run fsck\n",
                                             fs->fs_fsmnt);
-                                        err = EPERM;
+                                        error = EPERM;
                                         goto error_1;
                                 }
                         }
 
 			if ((fs->fs_flags & FS_DOSOFTDEP)) {
-				err = softdep_mount(devvp, mp, fs, p->p_ucred);
-				if (err)
+				error = softdep_mount(devvp, mp, fs,
+						      p->p_ucred);
+				if (error)
 					goto error_1;
 			}
 
@@ -229,8 +231,8 @@ ffs_mount(mp, path, data, ndp, p)
 			/*
 			 * Process export requests.
 			 */
-			err = vfs_export(mp, &ump->um_export, &args.export);
-			if (err)
+			error = vfs_export(mp, &ump->um_export, &args.export);
+			if (error)
 				goto error_1;
 			else
 				goto success;
@@ -241,18 +243,18 @@ ffs_mount(mp, path, data, ndp, p)
 	 * and verify that it refers to a sensible block device.
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
-	if ((err = namei(ndp)) != 0)
+	if ((error = namei(ndp)) != 0)
 		goto error_1;
 
 	devvp = ndp->ni_vp;
 
 	if (devvp->v_type != VBLK) {
-		err = ENOTBLK;
+		error = ENOTBLK;
 		goto error_2;
 	}
 	
 	if (major(devvp->v_rdev) >= nblkdev) {
-		err = ENXIO;
+		error = ENXIO;
 		goto error_2;
 	}
 
@@ -265,9 +267,9 @@ ffs_mount(mp, path, data, ndp, p)
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
-		err = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
+		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
 		VOP_UNLOCK(devvp, 0, p);
-		if (err) 
+		if (error) 
 			goto error_2;
 	}
 
@@ -284,20 +286,23 @@ ffs_mount(mp, path, data, ndp, p)
                         if (devvp->v_rdev == ump->um_devvp->v_rdev) {
                                 vrele(devvp);
                         } else {
-                                err = EINVAL;   /* needs translation */
+                                error = EINVAL;   /* needs translation */
                         }
                 } else
                         vrele(devvp);
                 /*
                  * Update device name only on success
                  */
-                if (!err) {
-                        /* Save "mounted from" info for mount point (NULL pad)*/
+                if (!error) {
+			/*
+			 * Save "mounted from" info for mount point (NULL pad)
+			 */
                         copyinstr(args.fspec,
 				  mp->mnt_stat.f_mntfromname,
 				  MNAMELEN - 1,
 				  &size);
-                        bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+                        bzero(mp->mnt_stat.f_mntfromname + size,
+			      MNAMELEN - size);
 		}
 	} else {
                 /*
@@ -320,10 +325,11 @@ ffs_mount(mp, path, data, ndp, p)
 			  &size);                         /* real size*/
                 bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 
-                err = ffs_mountfs(devvp, mp, p);
+                error = ffs_mountfs(devvp, mp, p);
 	}
 
-	if (err) goto error_2;
+	if (error)
+		goto error_2;
 	
         /*
          * Initialize FS stat information in mount struct; uses both
@@ -350,7 +356,7 @@ success:
 error_2:        /* error with devvp held */
 	vrele (devvp);
 error_1:        /* no state to back out */
-        return (err);
+        return (error);
 }
 
 /*
