@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.22 2002/12/02 02:07:28 millert Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.23 2002/12/02 15:38:54 millert Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -113,8 +113,11 @@ void	*bsearch(const void *, const void *, size_t, size_t,
 	    int (*)(const void *, const void *));
 void	*calloc(size_t, size_t);
 div_t	 div(int, int);
+char	*ecvt(double, int, int *, int *);
 __dead void	 exit(int);
+char	*fcvt(double, int, int *, int *);
 void	 free(void *);
+char	*gcvt(double, int, char *);
 char	*getenv(const char *);
 long	 labs(long);
 ldiv_t	 ldiv(long, long);
