@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.566 2002/11/23 01:35:34 mickey Exp $
+	$OpenBSD: pcidevs,v 1.567 2002/11/27 14:47:07 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1011,6 +1011,7 @@ product CHIPS 65554		0x00e4	65554
 product CHIPS 65555		0x00e5	65555
 product CHIPS 68554		0x00f4	68554
 product CHIPS 69000		0x00c0	69000
+product CHIPS 69030		0x0c30	69030
 
 /* Cirrus Logic products */
 product CIRRUS CL_GD7548	0x0038	CL-GD7548
