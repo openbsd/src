@@ -1,4 +1,4 @@
-/*	$Id: pmap.c,v 1.2 1995/11/07 08:50:23 deraadt Exp $ */
+/*	$Id: pmap.c,v 1.3 1995/11/28 20:43:19 deraadt Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -1243,6 +1243,13 @@ validate:
 	npte = pa | pte_prot(pmap, prot) | (*pte & (PG_M|PG_U)) | PG_V;
 	if (wired)
 		npte |= PG_W;
+
+	/* Don't cache if process can't take it, like SunOS ones.  */
+	if (mmutype == MMU_68040 && pmap != pmap_kernel() &&
+	    (curproc->p_md.md_flags & MDP_UNCACHE_WX) &&
+	    (prot & VM_PROT_EXECUTE) && (prot & VM_PROT_WRITE))
+		checkpv = cacheable = FALSE;
+
 	if (!checkpv && !cacheable)
 		npte |= PG_CI;
 #if defined(M68040)
