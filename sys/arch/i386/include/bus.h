@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.20 2000/04/08 05:50:50 aaron Exp $	*/
+/*	$OpenBSD: bus.h,v 1.21 2000/07/27 16:33:39 mickey Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -745,7 +745,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 			cld					;	\
 			repne					;	\
 			movsw"					:	\
-		    "=D" (_port2), "=S" (_port1), "=c" (_(cnt))	:	\
+		    "=D" (_port2), "=S" (_port1), "=c" ((_cnt))	:	\
 		    "0" (_port2), "1" (_port1), "2" ((_cnt))	:	\
 		    "memory", "cc");					\
 	}								\
