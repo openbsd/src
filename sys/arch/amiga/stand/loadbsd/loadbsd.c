@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadbsd.c,v 1.7 1996/10/04 23:34:58 niklas Exp $	*/
+/*	$OpenBSD: loadbsd.c,v 1.8 1996/10/10 07:08:16 niklas Exp $	*/
 /*	$NetBSD: loadbsd.c,v 1.19.4.2 1996/08/03 00:51:46 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <signal.h>
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined (__OpenBSD__)
 #include <err.h>
 #endif
 #include <exec/types.h>
@@ -61,7 +61,7 @@
 #undef __LDPGSZ
 #define __LDPGSZ 8192
 
-#ifndef __NetBSD__
+#if !defined(__NetBSD__) && !defined(__OpenBSD__)
 #ifndef __P
 #ifdef __STDC__
 #define __P(x) x
@@ -87,7 +87,7 @@ void warnx __P((const char *, ...));
  *		Started version history comment.
  *	2.3	04/26/94 - Added -D option to enter debugger on boot.
  *	2.4	04/30/94 - Cpuid includes base machine type.
- *		Also check if CPU is capable of running NetBSD.
+ *		Also check if CPU is capable of running OpenBSD.
  *	2.5	05/17/94 - Add check for "A3000 bonus".
  *	2.6	06/05/94 - Added -c option to override machine type.
  *	2.7	06/15/94 - Pass E clock frequency.
@@ -854,8 +854,10 @@ _startit_end:
 void
 usage()
 {
-	fprintf(stderr, "usage: %s [-abhkpstADSVZ] [-c machine] [-m mem] [-n mode] [-I sync-inhibit] kernel\n",
-	    program_name);
+	fprintf(stderr,
+	     "usage: %s [-abchkpstADSVZ] [-C machine] [-m mem] [-n mode]\n",
+	     program_name);
+	fprintf(stderr,"           [-I sync-inhibit] kernel\n");
 	exit(1);
 }
 
@@ -865,9 +867,10 @@ verbose_usage()
 {
 	fprintf(stderr, "
 NAME
-\t%s - loads NetBSD from amiga dos.
+\t%s - loads OpenBSD from amiga dos.
 SYNOPSIS
-\t%s [-abchkpstADSVZ] [-C machine] [-m mem] [-n flags] [-I sync-inhibit] kernel
+\t%s [-abchkpstADSVZ] [-C machine] [-m mem] [-n flags]
+\t    [-I sync-inhibit] kernel
 OPTIONS
 \t-a  Boot up to multiuser mode.
 \t-A  Use AGA display mode, if available.
@@ -893,7 +896,7 @@ OPTIONS
 \t-S  Include kernel symbol table.
 \t-t  This is a *test* option.  It prints out the memory
 \t    list information being passed to the kernel and also
-\t    exits without actually starting NetBSD.
+\t    exits without actually starting OpenBSD.
 \t-V  Version of loadbsd program.
 \t-Z  Force kernel load to chipmem.
 HISTORY
