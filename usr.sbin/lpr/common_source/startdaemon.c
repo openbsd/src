@@ -1,3 +1,5 @@
+/*	$OpenBSD: startdaemon.c,v 1.3 1997/01/17 16:11:38 millert Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)startdaemon.c	8.2 (Berkeley) 4/17/94";
+#else
+static char rcsid[] = "$OpenBSD: startdaemon.c,v 1.3 1997/01/17 16:11:38 millert Exp $";
+#endif
 #endif /* not lint */
 
 

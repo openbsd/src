@@ -1,3 +1,5 @@
+/*	$OpenBSD: rmjob.c,v 1.5 1997/01/17 16:11:37 millert Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
+#else
+static char rcsid[] = "$OpenBSD: rmjob.c,v 1.5 1997/01/17 16:11:37 millert Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: common.c,v 1.4 1997/01/17 16:11:35 millert Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +39,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
+#else
+static char rcsid[] = "$OpenBSD: common.c,v 1.4 1997/01/17 16:11:35 millert Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

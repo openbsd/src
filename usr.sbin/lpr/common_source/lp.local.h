@@ -1,3 +1,5 @@
+/*	$OpenBSD: lp.local.h,v 1.2 1997/01/17 16:11:36 millert Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
