@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.74 2002/07/30 16:35:15 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.75 2002/07/30 17:28:54 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -998,7 +998,7 @@ return         = "return-rst" [ "(" "ttl" number ")" ] |
                      [ "(" ( icmp-code-name | icmp-code-number ) ")" ] .
 
 ifspec         = ( [ "!" ] interface-name ) | "{" interface-list "}"
-interface-list = [ "!" ] interface-name [ "," interface-list ] .
+interface-list = [ "!" ] interface-name [ [ "," ] interface-list ] .
 route          = "fastroute" |
                  "route-to" "(" interface-name address ")" |
                  "route-to" interface-name |
@@ -1007,7 +1007,7 @@ route          = "fastroute" |
 af	       = "inet" | "inet6" .
 
 protospec      = "proto" ( proto-name | proto-number | "{" proto-list "}" ) .
-proto-list     = ( proto-name | proto-number ) [ "," proto-list ] .
+proto-list     = ( proto-name | proto-number ) [ [ "," ] proto-list ] .
 
 hosts          = "all" |
                  "from" ( "any" | "no-route" | "self" | host |
@@ -1019,7 +1019,7 @@ ipspec         = "any" | host | "{" host-list "}" .
 host           = [ "!" ] address [ "/" mask-bits ] .
 address        = ( interface-name | "(" interface-name ")" | host-name |
                    ipv4-dotted-quad | ipv6-coloned-hex ) .
-host-list      = host [ "," host-list ] .
+host-list      = host [ [ "," ] host-list ] .
 
 port           = "port" ( unary-op | binary-op | "{" op-list "}" ) .
 portspec       = "port" ( number | name ) [ ":" ( "*" | number | name ) ] .
@@ -1029,7 +1029,7 @@ group          = "group" ( unary-op | binary-op | "{" op-list "}" ) .
 unary-op       = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
                  ( name | number ) .
 binary-op      = number ( "<>" | "><" ) number .
-op-list        = ( unary-op | binary-op ) [ "," op-list ] .
+op-list        = ( unary-op | binary-op ) [ [ "," ] op-list ] .
 
 flags          = "flags" ( flag-set | flag-set "/" flag-set |
                            "/" flag-set ) .
@@ -1040,12 +1040,12 @@ icmp-type      = "icmp-type" ( icmp-type-code | "{" icmp-list "}" ) .
 ipv6-icmp-type = "ipv6-icmp-type" ( icmp-type-code | "{" icmp-list "}" ) . 
 icmp-type-code = ( icmp-type-name | icmp-type-number )
                  [ "code" ( icmp-code-name | icmp-code-number ) ] .
-icmp-list      = icmp-type-code [ "," icmp-list ] . 
+icmp-list      = icmp-type-code [ [ "," ] icmp-list ] . 
 
-state-opts     = state-opt [ "," state-opts ] .
+state-opts     = state-opt [ [ "," ] state-opts ] .
 state-opt      = ( "max" seconds ) | ( timeout seconds ) .
 
-timeout-list   = timeout [ "," timeout-list ] .
+timeout-list   = timeout [ [ "," ] timeout-list ] .
 timeout        = ( "tcp.first" | "tcp.opening" | "tcp.established" |
                  "tcp.closing" | "tcp.finwait" | "tcp.closed" |
                  "udp.first" | "udp.single" | "udp.multiple" |
@@ -1053,7 +1053,7 @@ timeout        = ( "tcp.first" | "tcp.opening" | "tcp.established" |
                  "other.first" | "other.multiple" ) seconds .
 seconds        = number .
 
-limit-list     = limit [ "," limit-list ] . 
+limit-list     = limit [ [ "," ] limit-list ] . 
 limit          = ( "states" | "frags" ) number .
 .Ed
 .Sh FILES
