@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.38 2002/07/25 22:18:27 nordin Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.39 2002/08/23 01:13:09 pvalchev Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -537,8 +537,7 @@ sunos_sys_setsockopt(p, v, retval)
 		m->m_len = sizeof(struct linger);
 		error = (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 		    SO_LINGER, m));
-		FRELE(fp);
-		return (error);
+		goto bad;
 	}
 	if (SCARG(uap, level) == IPPROTO_IP) {
 #define		SUNOS_IP_MULTICAST_IF		2
@@ -560,22 +559,22 @@ sunos_sys_setsockopt(p, v, retval)
 		}
 	}
 	if (SCARG(uap, valsize) > MLEN) {
-		FRELE(fp);
-		return (EINVAL);
+		error = EINVAL;
+		goto bad;
 	}
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 		    (u_int)SCARG(uap, valsize));
 		if (error) {
-			FRELE(fp);
 			(void) m_free(m);
-			return (error);
+			goto bad;
 		}
 		m->m_len = SCARG(uap, valsize);
 	}
 	error = (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m));
+bad:
 	FRELE(fp);
 	return (error);
 }
