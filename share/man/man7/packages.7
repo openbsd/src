@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages.7,v 1.8 2001/04/10 17:48:10 espie Exp $
+.\" $OpenBSD: packages.7,v 1.9 2001/04/30 21:13:36 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -209,30 +209,6 @@ Members of the
 project routinely scan built packages for conflicting files.
 Most packages should contain correct annotations, and not allow themselves
 to be installed on top of a conflicting package.
-As of
-.Ox 2.7 ,
-dependencies don't take package flavors into account.
-The recommended work-around is a hack: install a symbolic link with
-the required name in the package database in
-.Pa /var/db/pkg .
-.Pp
-For instance, if you installed
-.Nm ghostscript-6.01-a4
-through
-.Xr ftp 1 ,
-and then find out that
-.Nm gv-3.5.8
-does require
-.Nm ghostscript-5.50
-as a dependency, you can do
-.Bd -literal -offset indent
-ln -s /var/db/pkg/ghostscript-6.01-A4 /var/db/pkg/ghostscript-5.50
-.Ed
-
-to satisfy that dependency.
-.Xr pkg_delete 1
-is aware of this hack, and will safely delete those extra links along
-with the actual package itself.
 .Pp
 .Sh PACKAGE DEPENDENCIES
 Each package holds a full list of pre-required packages.
@@ -245,7 +221,7 @@ are supported:  pointing
 .Ev PKG_PATH
 to a distant package repository, e.g.,
 .Bd -literal -width indent
-setenv PKG_PATH ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/i386
+setenv PKG_PATH ftp://ftp.openbsd.org/pub/OpenBSD/2.9/packages/i386
 .Ed
 will let
 .Xr pkg_add 1
