@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: dot.commonutils,v 1.6 1996/09/05 21:26:51 deraadt Exp $
+#	$Id: dot.commonutils,v 1.7 1996/12/09 07:05:12 deraadt Exp $
 
 # Installation utilites (functions), to get NetBSD installed on
 # the hard disk.  These are meant to be invoked from the shell prompt,
@@ -93,7 +93,7 @@ Load_fd()
 	    "Insert floppy (hit Control-C to terminate, enter to load): "
 	do
 		read foo
-		mount -t msdos /dev/fd${which}a /mnt2
+		mount -r -t msdos /dev/fd${which}a /mnt2
 		cp -rp /mnt2/* .
 		umount /mnt2
 	done

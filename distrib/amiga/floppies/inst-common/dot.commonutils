@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$OpenBSD: dot.commonutils,v 1.6 1996/10/13 17:33:07 niklas Exp $
+#	$OpenBSD: dot.commonutils,v 1.7 1996/12/09 07:04:46 deraadt Exp $
 
 # Installation utilites (functions), to get OpenBSD installed on
 # the hard disk.  These are meant to be invoked from the shell prompt,
@@ -83,7 +83,7 @@ Load_fd()
 	done
 	while echo -n "Insert floppy (hit ^C to terminate, enter to load): "
 	do
-		mount -t msdos /dev/fd0$which /mnt2
+		mount -r -t msdos /dev/fd0$which /mnt2
 		cp -rp /mnt2/* .
 		umount /mnt2
 	done
