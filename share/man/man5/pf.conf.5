@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.187 2003/02/21 16:59:29 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.188 2003/02/28 22:43:59 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -581,6 +581,7 @@ Exactly one default queue is required.
 The queue can borrow bandwidth from the parent.
 .It Ar control
 Control-class packets (RSVP, IGMP, ICMP) are assigned to this queue.
+Must not be identical to the default queue.
 .It Ar red
 Enable RED (Random Early Detection) on this queue.
 RED drops packets with a probability proportional to the average
