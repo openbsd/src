@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.23 1995/09/11 22:03:00 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.24 1995/12/28 16:22:41 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1605,7 +1605,10 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
 	InstFmt inst;
 	unsigned retAddr;
 	int condition;
-	inst = *(InstFmt *)instPC;
+
+	inst.word = (instPC < MACH_CACHED_MEMORY_ADDR) ?
+		fuiword((caddr_t)instPC) : *(unsigned*)instPC;
+		
 #if 0
 	printf("regsPtr=%x PC=%x Inst=%x fpcCsr=%x\n", regsPtr, instPC,
 		inst.word, fpcCSR); /* XXX */
