@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.3 1996/04/07 17:23:08 jonathan Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.3.4.1 1996/06/13 18:22:37 jonathan Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -236,8 +236,8 @@ stios2btios(st, bt)
 	/* bt->c_cc[VSWTCH]   = EMUL_TO_NATIVE_CC(st->c_cc[7]); */
 	bt->c_cc[VSTART]   = EMUL_TO_NATIVE_CC(st->c_cc[10]);
 	bt->c_cc[VSTOP]    = EMUL_TO_NATIVE_CC(st->c_cc[11]);
-	bt->c_cc[VSUSP]    = EMUL_TO_NATIVE_CC(st->c_cc[112]);
-	bt->c_cc[VDSUSP]   = EMUL_TO_NATIVE_CC(st->c_cc[113]);
+	bt->c_cc[VSUSP]    = EMUL_TO_NATIVE_CC(st->c_cc[12]);
+	bt->c_cc[VDSUSP]   = EMUL_TO_NATIVE_CC(st->c_cc[13]);
 	bt->c_cc[VREPRINT] = EMUL_TO_NATIVE_CC(st->c_cc[14]);
 	bt->c_cc[VDISCARD] = EMUL_TO_NATIVE_CC(st->c_cc[15]);
 	bt->c_cc[VWERASE]  = EMUL_TO_NATIVE_CC(st->c_cc[16]);
