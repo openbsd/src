@@ -1,4 +1,4 @@
-/*	$OpenBSD: flockfile.c,v 1.2 2000/01/06 08:26:04 d Exp $	*/
+/*	$OpenBSD: flockfile.c,v 1.3 2001/08/30 07:38:27 fgsch Exp $	*/
 
 #include <stdio.h>
 #include "thread_private.h"
@@ -48,7 +48,7 @@ WEAK_NAME(funlockfile)(fp)
 void
 WEAK_NAME(_flockfile_debug)(fp, fname, lineno)
 	FILE * fp;
-	const char * fname;
+	char * fname;
 	int lineno;
 {
 }

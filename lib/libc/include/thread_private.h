@@ -1,4 +1,4 @@
-/* $OpenBSD: thread_private.h,v 1.7 2001/08/12 12:03:01 heko Exp $ */
+/* $OpenBSD: thread_private.h,v 1.8 2001/08/30 07:38:27 fgsch Exp $ */
 
 #ifndef _THREAD_PRIVATE_H_
 #define _THREAD_PRIVATE_H_
@@ -128,8 +128,8 @@ void *	_libc_private_storage(volatile struct _thread_private_key_struct *,
 #endif
 
 int	_thread_fd_lock(int, int, struct timespec *);
-int	_thread_fd_lock_debug(int, int, struct timespec *, const char *, int);
+int	_thread_fd_lock_debug(int, int, struct timespec *, char *, int);
 void	_thread_fd_unlock(int, int);
-void	_thread_fd_unlock_debug(int, int, const char *, int);
+void	_thread_fd_unlock_debug(int, int, char *, int);
 
 #endif /* _THREAD_PRIVATE_H_ */

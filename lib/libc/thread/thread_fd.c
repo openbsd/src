@@ -1,4 +1,4 @@
-/*	$OpenBSD: thread_fd.c,v 1.1 2000/01/06 07:27:33 d Exp $	*/
+/*	$OpenBSD: thread_fd.c,v 1.2 2001/08/30 07:38:27 fgsch Exp $	*/
 
 #include <sys/time.h>
 #include <pthread.h>
@@ -28,7 +28,7 @@ WEAK_NAME(_thread_fd_lock_debug)(fd, lock_type, timeout, fname, lineno)
 	int	fd;
 	int	lock_type;
 	struct timespec *timeout;
-	const char *fname;
+	char	*fname;
 	int	lineno;
 {
 	return 0;
@@ -45,7 +45,7 @@ void
 WEAK_NAME(_thread_fd_unlock_debug)(fd, lock_type, fname, lineno)
 	int	fd;
 	int	lock_type;
-	const char *fname;
+	char	*fname;
 	int	lineno;
 {
 }
