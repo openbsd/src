@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.22 2001/12/05 02:23:59 art Exp $	*/
+/*	$OpenBSD: print.c,v 1.23 2002/01/30 17:52:40 mickey Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.22 2001/12/05 02:23:59 art Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.23 2002/01/30 17:52:40 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,7 @@ command(ki, ve)
 			left = v->width;
 	} else
 		left = -1;
-	if (needenv) {
+	if (needenv && kd != NULL) {
 		argv = kvm_getenvv(kd, ki->ki_p, termwidth);
 		if ((p = argv) != NULL) {
 			while (*p) {
@@ -135,12 +135,14 @@ command(ki, ve)
 	}
 	if (needcomm) {
 		if (!commandonly) {
-			argv = kvm_getargv(kd, ki->ki_p, termwidth);
-			if ((p = argv) != NULL) {
-				while (*p) {
-					fmt_puts(*p, &left);
-					p++;
-					fmt_putc(' ', &left);
+			if (kd != NULL) {
+				argv = kvm_getargv(kd, ki->ki_p, termwidth);
+				if ((p = argv) != NULL) {
+					while (*p) {
+						fmt_puts(*p, &left);
+						p++;
+						fmt_putc(' ', &left);
+					}
 				}
 			}
 			if (argv == 0 || argv[0] == 0 ||
