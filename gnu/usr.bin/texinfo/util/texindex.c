@@ -1,7 +1,8 @@
 /* Process TeX index dribble output into an actual index.
-   $Id: texindex.c,v 1.3 2000/02/09 02:18:43 espie Exp $
+   $Id: texindex.c,v 1.4 2002/06/10 13:51:04 espie Exp $
 
-   Copyright (C) 1987, 91, 92, 96, 97, 98, 99 Free Software Foundation, Inc.
+   Copyright (C) 1987, 91, 92, 96, 97, 98, 99, 2000, 01, 02
+   Free Software Foundation, Inc. 
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -288,7 +289,8 @@ _("Usually FILE... is specified as `foo.%c%c\' for a document `foo.texi'.\n"),
   fputs (_("\n\
 Email bug reports to bug-texinfo@gnu.org,\n\
 general questions and discussion to help-texinfo@gnu.org.\n\
-"), f);
+Texinfo home page: http://www.gnu.org/software/texinfo/"), f);
+  fputs ("\n", f);
 
   xexit (result_value);
 }
@@ -340,7 +342,7 @@ decode_command (argc, argv)
 There is NO warranty.  You may redistribute this software\n\
 under the terms of the GNU General Public License.\n\
 For more information about these matters, see the files named COPYING.\n"),
-                  "1999");
+                  "2002");
               xexit (0);
             }
           else if ((strcmp (arg, "--keep") == 0) ||
@@ -393,8 +395,8 @@ maketempname (count)
   int fd;
 
   sprintf (tempsuffix, ".%d", count);
-  name = concat (tempdir, tempbase, tempsuffix);
-  
+  name =  concat (tempdir, tempbase, tempsuffix);
+
   fd = open (name, O_CREAT|O_EXCL|O_WRONLY, 0666);
   if (fd == -1)
     return NULL;
@@ -958,8 +960,6 @@ fail:
   for (i = 0; i < ntemps; i++)
     {
       char *newtemp = maketempname (++tempcount);
-      if (!newtemp)
-        pfatal_with_name("temp file");
       sort_in_core (&tempfiles[i], MAX_IN_CORE_SORT, newtemp);
       if (!keep_tempfiles)
         unlink (tempfiles[i]);

@@ -1,8 +1,9 @@
 #! /bin/sh
 # texi2dvi --- produce DVI (or PDF) files from Texinfo (or LaTeX) sources.
-# $Id: texi2dvi,v 1.3 2000/02/09 02:18:42 espie Exp $
+# $Id: texi2dvi,v 1.4 2002/06/10 13:51:04 espie Exp $
 #
-# Copyright (C) 1992, 93, 94, 95, 96, 97, 98, 99 Free Software Foundation, Inc.
+# Copyright (C) 1992, 93, 94, 95, 96, 97, 98, 99, 2001, 02
+# Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,12 +27,12 @@
 # the `--debug' option when making a bug report.
 
 # This string is expanded by rcs automatically when this file is checked out.
-rcs_revision='$Revision: 1.3 $'
+rcs_revision='$Revision: 1.4 $'
 rcs_version=`set - $rcs_revision; echo $2`
 program=`echo $0 | sed -e 's!.*/!!'`
-version="texi2dvi (GNU Texinfo 4.0) $rcs_version
+version="texi2dvi (GNU Texinfo 4.2) $rcs_version
 
-Copyright (C) 1999 Free Software Foundation, Inc.
+Copyright (C) 2002 Free Software Foundation, Inc.
 There is NO warranty.  You may redistribute this software
 under the terms of the GNU General Public License.
 For more information about these matters, see the files named COPYING."
@@ -46,46 +47,52 @@ is used to determine its language (LaTeX or Texinfo).
 Makeinfo is used to perform Texinfo macro expansion before running TeX
 when needed.
 
-Options:
-  -@                   Use @input instead of \input; for preloaded Texinfo.
-  -b, --batch          No interaction.
-  -c, --clean          Remove all auxiliary files.
-  -D, --debug          Turn on shell debugging (set -x).
-  -e, --expand         Force macro expansion using makeinfo.
-  -I DIR               Search DIR for Texinfo files.
-  -h, --help           Display this help and exit successfully.
-  -l, --language=LANG  Specify the LANG of FILE: LaTeX or Texinfo.
-  -p, --pdf            Use pdftex or pdflatex for processing.
-  -q, --quiet          No output unless errors (implies --batch).
-  -s, --silent         Same as --quiet.
-  -t, --texinfo=CMD    Insert CMD after @setfilename in copy of input file.
-                       Multiple values accumulate.
-  -v, --version        Display version information and exit successfully.
-  -V, --verbose        Report on what is done.
+Operation modes:
+  -b, --batch         no interaction
+  -c, --clean         remove all auxiliary files
+  -D, --debug         turn on shell debugging (set -x)
+  -h, --help          display this help and exit successfully
+  -o, --output=OFILE  leave output in OFILE (implies --clean);
+                      Only one input FILE may be specified in this case
+  -q, --quiet         no output unless errors (implies --batch)
+  -s, --silent        same as --quiet
+  -v, --version       display version information and exit successfully
+  -V, --verbose       report on what is done
+
+TeX tuning:
+  -@                   use @input instead of \input; for preloaded Texinfo
+  -e, --expand         force macro expansion using makeinfo
+  -I DIR               search DIR for Texinfo files
+  -l, --language=LANG  specify the LANG of FILE (LaTeX or Texinfo)
+  -p, --pdf            use pdftex or pdflatex for processing
+  -t, --texinfo=CMD    insert CMD after @setfilename in copy of input file
+                       multiple values accumulate
 
 The values of the BIBTEX, LATEX (or PDFLATEX), MAKEINDEX, MAKEINFO,
 TEX (or PDFTEX), and TEXINDEX environment variables are used to run
 those commands, if they are set.
 
 Email bug reports to <bug-texinfo@gnu.org>,
-general questions and discussion to <help-texinfo@gnu.org>."
+general questions and discussion to <help-texinfo@gnu.org>.
+Texinfo home page: http://www.gnu.org/software/texinfo/"
 
 # Initialize variables for option overriding and otherwise.
 # Don't use `unset' since old bourne shells don't have this command.
 # Instead, assign them an empty value.
-escape='\'
 batch=false     # eval for batch mode
 clean=
 debug=
+escape='\'
 expand=         # t for expansion via makeinfo
-oformat=dvi
-set_language=
 miincludes=     # makeinfo include path
+oformat=dvi
+oname=		# --output
+quiet=          # by default let the tools' message be displayed
+set_language=
 textra=
 tmpdir=${TMPDIR:-/tmp}/t2d$$  # avoid collisions on 8.3 filesystems.
 txincludes=     # TEXINPUTS extensions
 txiprereq=19990129 # minimum texinfo.tex version to have macro expansion
-quiet=          # by default let the tools' message be displayed
 verbose=false   # echo for verbose mode
 
 orig_pwd=`pwd`
@@ -144,6 +151,13 @@ while test x"$1" != x"$arg_sep"; do
       txincludes="$txincludes$path_sep$1"
       ;;
     -l | --l*) shift; set_language=$1;;
+    -o | --o*)
+      shift
+      clean=t
+      case "$1" in
+        /* | ?:/*) oname=$1;;
+                *) oname="$orig_pwd/$1";;
+      esac;;
     -p | --p*) oformat=pdf;;
     -t | --t*) shift; textra="$textra\\
 $1";;
@@ -168,11 +182,20 @@ done
 shift
 
 # Interpret remaining command line args as filenames.
-if test $# = 0; then
+case $# in
+ 0)
   echo "$0: Missing file arguments." >&2
   echo "$0: Try \`--help' for more information." >&2
   exit 2
-fi
+  ;;
+ 1) ;;
+ *)
+  if test -n "$oname"; then
+    echo "$0: Can't use option \`--output' with more than one argument." >&2
+    exit 2
+  fi
+  ;;
+esac
 
 # Prepare the temporary directory.  Remove it at exit, unless debugging.
 if test -z "$debug"; then
@@ -205,14 +228,23 @@ cat <<EOF >$comment_iftex_sed
     s/^@c texi2dvi//
   }
 }
-/^@html/,/^@end html/d
-/^@ifhtml/,/^@end ifhtml/d
-/^@ifnottex/,/^@end ifnottex/d
+/^@html/,/^@end html/{
+  s/^/@c (texi2dvi)/
+}
+/^@ifhtml/,/^@end ifhtml/{
+  s/^/@c (texi2dvi)/
+}
+/^@ifnottex/,/^@end ifnottex/{
+  s/^/@c (texi2dvi)/
+}
 /^@ifinfo/,/^@end ifinfo/{
   /^@node/p
   /^@menu/,/^@end menu/p
-  d
+  t
+  s/^/@c (texi2dvi)/
 }
+s/^@ifnotinfo/@c texi2dvi@ifnotinfo/
+s/^@end ifnotinfo/@c texi2dvi@end ifnotinfo/
 EOF
 # Uncommenting is simple: Remove any leading `@c texi2dvi'.
 uncomment_iftex_sed=$utildir/uncomment.sed
@@ -373,9 +405,9 @@ for command_line_filename in ${1+"$@"}; do
         txiversion_tex=txiversion.tex
         echo '\input texinfo.tex @bye' >$tmpdir/$txiversion_tex
         # Run in the tmpdir to avoid leaving files.
-        eval `cd $tmpdir >/dev/null \
-                    && $tex $txiversion_tex 2>/dev/null \
-| sed -n 's/^.*\[\(.*\)version \(....\)-\(..\)-\(..\).*$/txiformat=\1 txiversion="\2\3\4"/p'`
+        eval `cd $tmpdir >/dev/null &&
+              $tex $txiversion_tex 2>/dev/null |
+              sed -n 's/^.*\[\(.*\)version \(....\)-\(..\)-\(..\).*$/txiformat=\1 txiversion="\2\3\4"/p'`
         $verbose "texinfo.tex preloaded as \`$txiformat', version is \`$txiversion' ..."
         if test "$txiprereq" -le "$txiversion" >/dev/null 2>&1; then
           makeinfo=
@@ -489,8 +521,8 @@ for command_line_filename in ${1+"$@"}; do
     # Prevent $ESCAPE from being interpreted by the shell if it happens
     # to be `/'.
     $batch tex_args="\\${escape}nonstopmode\ \\${escape}input"
-    $verbose "Running $cmd ..."
     cmd="$tex $tex_args $filename_input"
+    $verbose "Running $cmd ..."
     if $cmd >&5; then :; else
       echo "$0: $tex exited with bad status, quitting." >&2
       echo "$0: see $filename_noext.log for errors." >&2
@@ -550,8 +582,13 @@ for command_line_filename in ${1+"$@"}; do
   # - the next file is processed in correct conditions
   # - the temporary file can be removed
   if test -n "$clean"; then
-    $verbose "Copying $oformat file from `pwd` to $orig_pwd"
-    cp -p "./$filename_noext.$oformat" "$orig_pwd"
+    if test -n "$oname"; then
+       dest=$oname
+    else
+       dest=$orig_pwd
+    fi
+    $verbose "Copying $oformat file from `pwd` to $dest"
+    cp -p "./$filename_noext.$oformat" "$dest"
     cd / # in case $orig_pwd is on a different drive (for DOS)
     cd $orig_pwd || exit 1
   fi

@@ -6,7 +6,7 @@ This particular dir file is merely made available for your hacking
 If you have dir entries for Texinfo manuals you'd like to be added here,
   please send them to karl@gnu.org.
 
-$Id: dir-example,v 1.3 2000/02/09 02:18:36 espie Exp $
+$Id: dir-example,v 1.4 2002/06/10 13:51:01 espie Exp $
 
 File: dir,	Node: Top,	This is the top of the INFO tree.
 
@@ -74,11 +74,12 @@ GNU programming tools
 Texinfo documentation system
 * Info: (info).                 Documentation browsing system.
 * Texinfo: (texinfo).           The GNU documentation format.
-* info program: (info-stnd).    Standalone Info-reading program.
+* info standalone: (info-stnd).                 Standalone Info reader.
+* infokey: (info-stnd)Invoking infokey.         Compile Info customizations.
 * install-info: (texinfo)Invoking install-info. Updating info/dir entries.
+* makeinfo: (texinfo)makeinfo options.          Translate Texinfo source.
 * texi2dvi: (texinfo)Format with texi2dvi.      Printing Texinfo documentation.
 * texindex: (texinfo)Format with tex/texindex.  Sorting Texinfo index files.
-* makeinfo: (texinfo)makeinfo options.  Translate Texinfo source.
 
 Printing Tools
 * a2ps: (a2ps).                    PostScript Generating Utility
@@ -118,6 +119,7 @@ GNU programming support
 * Autoconf: (autoconf).         Automatic generation of package configuration.
 * Configure: (configure).       Cygnus configure.
 * Gnats: (gnats).               Cygnus bug tracking system.
+* help2man: (help2man).         Automatic manual page generation.
 * Remsync: (remsync).           Remote synchronization of directory trees.
 * Send PR: (send-pr).           Cygnus bug reporting for Gnats.
 
@@ -144,15 +146,16 @@ GNU programming documentation
 * Maintaining: (maintain).      Maintaining GNU software.
 * Source config: (cfg-paper).   Some theory on configuring source packages.
 * Stabs: (stabs).               Symbol table debugging information format.
+
+GNU organization
+* Maintain: (maintain).		GNU maintainer guidelines.
 * Standards: (standards).       GNU coding standards.
+* Tasks: (tasks).               GNU task list.
 
 Linux
 * dosemu: (dosemu).             Linux DOS emulator.
 * gpm: (gpm).                   Linux general purpose mouse interface.
 * linux-faq: (linux-faq).       The Linux FAQ List.
-
-Utilities
-* bzip2: (bzip2).               (de)compression.
 
 TeX
 * Afm2tfm: (dvips)Invoking afm2tfm.  Making Type 1 fonts available to TeX.
@@ -183,7 +186,6 @@ Other things
 * Perl: (perl).                 Practical extraction and report language.
 * PRCS: (prcs).                 Project revision control system.
 * Screen: (screen).             Terminal multiplexer.
-* UMB C.S. Dept.: (csinfo).     UMass/Boston Computer Science Dept. info.
 
 Individual utilities
 * aclocal: (automake)Invoking aclocal.          Generating aclocal.m4.
@@ -196,6 +198,7 @@ Individual utilities
 * awk: (gawk)Invoking gawk.                     Text processing and scanning.
 * basename: (sh-utils)basename invocation.      Strip directory and suffix.
 * bibtex: (web2c)BibTeX invocation.             Maintaining bibliographies.
+* bzip2: (bzip2).               		(de)compression.
 * c++filt: (binutils)c++filt.                   Demangle C++ symbols.
 * cat: (textutils)cat invocation.               Concatenate and write files.
 * chgrp: (fileutils)chgrp invocation.           Change file groups.

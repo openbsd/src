@@ -1,7 +1,7 @@
 /* makeinfo.h -- declarations for Makeinfo.
-   $Id: makeinfo.h,v 1.3 2000/02/09 02:18:42 espie Exp $
+   $Id: makeinfo.h,v 1.4 2002/06/10 13:51:03 espie Exp $
 
-   Copyright (C) 1996, 97, 98, 99 Free Software Foundation, Inc.
+   Copyright (C) 1996, 97, 98, 99, 2000, 01, 02 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ DECLARE (int, executing_string, 0);
    stream, because it has already been written. */
 DECLARE (int, me_inhibit_expansion, 0);
 
-extern char *expansion (), *text_expansion ();
+extern char *expansion (), *text_expansion (), *full_expansion ();
 
 /* Current output stream. */
 DECLARE (FILE *, output_stream, NULL);
@@ -116,9 +116,22 @@ DECLARE (int, multitable_active, 0);
 /* Nonzero means that we're generating HTML. */
 DECLARE (int, html, 0);
 
+/* Nonzero means that we're generating XML. */
+DECLARE (int, xml, 0);
+
+/* Nonzero means that we're generating DocBook. */
+DECLARE (int, docbook, 0);
+
+/* Nonzero means true 8-bit output for Info and plain text.  */
+DECLARE (int, enable_encoding, 0);
+
 /* Nonzero means escape characters in HTML output. */
 DECLARE (int, escape_html, 1);
 extern char *escape_string (); /* do HTML escapes */
+
+/* Access key number for next menu entry to be generated (1 to 9, or 10 to
+   mean no access key)  */
+DECLARE (int, next_menu_item_number, 1);
 
 /* Nonzero means that the use of paragraph_start_indent is inhibited.
    @example uses this to line up the left columns of the example text.
@@ -135,6 +148,12 @@ DECLARE (char *, current_node, NULL);
 /* Command name in the process of being hacked. */
 DECLARE (char *, command, NULL);
 
+/* @copying ... @end copying. */
+DECLARE (char *, copying_text, NULL);
+
+/* @documentdescription ... @end documentdescription. */
+DECLARE (char *, document_description, NULL);
+
 /* Nonzero if the last character inserted has the syntax class of NEWLINE. */
 DECLARE (int, last_char_was_newline, 1);
 
@@ -144,6 +163,7 @@ DECLARE (char *, input_text, (char *)NULL);
 DECLARE (int, input_text_length, 0);
 DECLARE (int, input_text_offset, 0);
 DECLARE (int, line_number, 0);
+DECLARE (char *, toplevel_output_filename, NULL);
 #define curchar() input_text[input_text_offset]
 
 /* A colon separated list of directories to search for files included
@@ -161,9 +181,15 @@ DECLARE (int, no_headers, 0);
    generating HTML.  (--ifhtml) */
 DECLARE (int, process_html, 0);
 
-/* Nonzero means that we process @ifinfo even when generating HTML.
-   (--ifinfo) */
-DECLARE (int, process_info, 1);
+/* Positive means process @ifinfo (even if not generating Info);
+   zero means don't process @ifinfo (even if we are);
+   -1 means we don't know yet.  (--ifinfo) */
+DECLARE (int, process_info, -1);
+
+/* Positive means process @ifplaintext (even if not generating plain text);
+   zero means we don't process @ifplaintext (even if we are);
+   -1 means we don't know yet.  (--ifplaintext) */
+DECLARE (int, process_plaintext, -1);
 
 /* Nonzero means that we process @tex and @iftex.  (--iftex) */
 DECLARE (int, process_tex, 0);
@@ -180,6 +206,9 @@ DECLARE (int, verbose_mode, 0);
 
 /* Nonzero means prefix each @chapter, ... with a number like 1. (--number-sections) */
 DECLARE (int, number_sections, 0);
+
+/* Nonzero means split size.  When zero, DEFAULT_SPLIT_SIZE is used. */
+DECLARE (int, split_size, 0);
 
 /* Nonzero means expand node names and references while validating.
    This will avoid errors when the Texinfo document uses features
@@ -225,6 +254,8 @@ DECLARE (int, expensive_validation, 0);
 
 #define COMMAND_PREFIX '@'
 
+#define END_VERBATIM "end verbatim"
+
 /* Stuff for splitting large files. */
 #define SPLIT_SIZE_THRESHOLD 70000  /* What's good enough for Stallman... */
 #define DEFAULT_SPLIT_SIZE 50000    /* Is probably good enough for me. */
@@ -255,6 +286,5 @@ DECLARE (int, splitting, 1);    /* Defaults to true for now. */
    else zero. */
 #define looking_at(string) \
   (strncmp (input_text + input_text_offset, string, strlen (string)) == 0)
-
 
 #endif /* not MAKEINFO_H */

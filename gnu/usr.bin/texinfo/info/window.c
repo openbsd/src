@@ -1,7 +1,7 @@
 /* window.c -- windows in Info.
-   $Id: window.c,v 1.3 2000/02/09 02:18:40 espie Exp $
+   $Id: window.c,v 1.4 2002/06/10 13:51:03 espie Exp $
 
-   Copyright (C) 1993, 97, 98 Free Software Foundation, Inc.
+   Copyright (C) 1993, 97, 98, 2001, 02 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -758,7 +758,20 @@ string_width (string, hpos)
 
   for (width = 0, i = 0; string[i]; i++)
     {
-      this_char_width = character_width (string[i], hpos);
+      /* Support ANSI escape sequences for -R.  */
+      if (raw_escapes_p
+	  && string[i] == '\033'
+	  && string[i+1] == '['
+	  && isdigit (string[i+2])
+	  && (string[i+3] == 'm'
+	      || (isdigit (string[i+3]) && string[i+4] == 'm')))
+	{
+	  while (string[i] != 'm')
+	    i++;
+	  this_char_width = 0;
+	}
+      else
+	this_char_width = character_width (string[i], hpos);
       width += this_char_width;
       hpos += this_char_width;
     }
@@ -826,8 +839,33 @@ calculate_line_starts (window)
 
       while (1)
         {
-          c = node->contents[i];
-          cwidth = character_width (c, hpos);
+	  /* The cast to unsigned char is for 8-bit characters, which
+	     could be passed as negative integers to character_width
+	     and wreak havoc on some naive implementations of iscntrl.  */
+          c = (unsigned char) node->contents[i];
+
+	  /* Support ANSI escape sequences for -R.  */
+	  if (raw_escapes_p
+	      && c == '\033'
+	      && node->contents[i+1] == '['
+	      && isdigit (node->contents[i+2]))
+	    {
+	      if (node->contents[i+3] == 'm')
+		{
+		  i += 3;
+		  cwidth = 0;
+		}
+	      else if (isdigit (node->contents[i+3])
+		       && node->contents[i+4] == 'm')
+		{
+		  i += 4;
+		  cwidth = 0;
+		}
+	      else
+		cwidth = character_width (c, hpos);
+	    }
+	  else
+	    cwidth = character_width (c, hpos);
 
           /* If this character fits within this line, just do the next one. */
           if ((hpos + cwidth) < window->width)
@@ -1006,7 +1044,23 @@ window_get_cursor_column (window)
   end = window->point - (line - window->node->contents);
 
   for (hpos = 0, i = 0; i < end; i++)
-    hpos += character_width (line[i], hpos);
+    {
+      /* Support ANSI escape sequences for -R.  */
+      if (raw_escapes_p
+	  && line[i] == '\033'
+	  && line[i+1] == '['
+	  && isdigit (line[i+2]))
+	{
+	  if (line[i+3] == 'm')
+	    i += 3;
+	  else if (isdigit (line[i+3]) && line[i+4] == 'm')
+	    i += 4;
+	  else
+	    hpos += character_width (line[i], hpos);
+	}
+      else
+	hpos += character_width (line[i], hpos);
+    }
 
   return (hpos);
 }
@@ -1022,8 +1076,17 @@ window_chars_to_goal (line, goal)
 
   for (hpos = 0, i = 0; line[i] != '\n'; i++)
     {
-
-      check = hpos + character_width (line[i], hpos);
+      /* Support ANSI escape sequences for -R.  */
+      if (raw_escapes_p
+	  && line[i] == '\033'
+	  && line[i+1] == '['
+	  && isdigit (line[i+2])
+	  && (line[i+3] == 'm'
+	      || (isdigit (line[i+3]) && line[i+4] == 'm')))
+	while (line[i] != 'm')
+	  i++;
+      else
+	check = hpos + character_width (line[i], hpos);
 
       if (check > goal)
         break;
@@ -1298,16 +1361,17 @@ message_buffer_resize (length)
 /* Format MESSAGE_BUFFER with the results of printing FORMAT with ARG1 and
    ARG2. */
 static void
-build_message_buffer (format, arg1, arg2)
+build_message_buffer (format, arg1, arg2, arg3)
      char *format;
-     void *arg1, *arg2;
+     void *arg1, *arg2, *arg3;
 {
   register int i, len;
-  void *args[2];
+  void *args[3];
   int arg_index = 0;
 
   args[0] = arg1;
   args[1] = arg2;
+  args[2] = arg3;
 
   len = strlen (format);
 
@@ -1326,7 +1390,9 @@ build_message_buffer (format, arg1, arg2)
           char *fmt_start = format + i;
           char *fmt;
           int fmt_len, formatted_len;
+	  int paramed = 0;
 
+	format_again:
           i++;
           while (format[i] && strchr ("-. +0123456789", format[i]))
             i++;
@@ -1335,18 +1401,39 @@ build_message_buffer (format, arg1, arg2)
           if (c == '\0')
             abort ();
 
+	  if (c == '$') {
+	    /* position parameter parameter */
+	    /* better to use bprintf from bfox's metahtml? */
+	    arg_index = atoi(fmt_start + 1) - 1;
+	    if (arg_index < 0)
+	      arg_index = 0;
+	    if (arg_index >= 2)
+	      arg_index = 1;
+	    paramed = 1;
+	    goto format_again;
+	  }
+
           fmt_len = format + i - fmt_start + 1;
           fmt = (char *) xmalloc (fmt_len + 1);
           strncpy (fmt, fmt_start, fmt_len);
           fmt[fmt_len] = '\0';
+
+	  if (paramed) {
+	    /* removed positioned parameter */
+	    char *p;
+	    for (p = fmt + 1; *p && *p != '$'; p++) {
+	      ;
+	    }
+	    strcpy(fmt + 1, p + 1);
+	  }
 
           /* If we have "%-98s", maybe 98 calls for a longer string.  */
           if (fmt_len > 2)
             {
               int j;
 
-              for (j = 0; j < fmt_len; j++)
-                if (isdigit (fmt[j]))
+              for (j = fmt_len - 2; j >= 0; j--)
+                if (isdigit (fmt[j]) || fmt[j] == '$')
                   break;
 
               formatted_len = atoi (fmt + j);
@@ -1430,7 +1517,7 @@ build_message_node (format, arg1, arg2)
   NODE *node;
 
   message_buffer_index = 0;
-  build_message_buffer (format, arg1, arg2);
+  build_message_buffer (format, arg1, arg2, 0);
 
   node = message_buffer_to_node ();
   return (node);
@@ -1467,11 +1554,11 @@ initialize_message_buffer ()
 
 /* Print FORMAT with ARG1,2 to the end of the current message buffer. */
 void
-printf_to_message_buffer (format, arg1, arg2)
+printf_to_message_buffer (format, arg1, arg2, arg3)
      char *format;
-     void *arg1, *arg2;
+     void *arg1, *arg2, *arg3;
 {
-  build_message_buffer (format, arg1, arg2);
+  build_message_buffer (format, arg1, arg2, arg3);
 }
 
 /* Return the current horizontal position of the "cursor" on the most
