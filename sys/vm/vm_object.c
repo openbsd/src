@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_object.c,v 1.21 1998/03/01 00:38:15 niklas Exp $	*/
+/*	$OpenBSD: vm_object.c,v 1.22 1998/04/25 07:17:21 niklas Exp $	*/
 /*	$NetBSD: vm_object.c,v 1.46 1997/03/30 20:56:12 mycroft Exp $	*/
 
 /*-
@@ -623,7 +623,7 @@ vm_object_cache_trim()
 		vm_object_cache_unlock();
 
 		if (object != vm_object_lookup(object->pager))
-			panic("vm_object_deactivate: I'm sooo confused.");
+			panic("vm_object_cache_trim: I'm sooo confused.");
 
 		pager_cache(object, FALSE);
 
