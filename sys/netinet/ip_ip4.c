@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.34 1999/12/06 07:14:36 angelos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.35 1999/12/08 06:05:32 itojun Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -72,7 +72,6 @@
 #ifdef INET6
 #include <netinet6/in6.h>
 #include <netinet6/ip6.h>
-#include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/icmp6.h>
 #endif /* INET6 */
@@ -271,8 +270,7 @@ ip4_input(m, va_alist)
 
 		      sin6 = (struct sockaddr_in6 *) ifa->ifa_addr;
 
-		      if (!bcmp(&sin6->sin6_addr, &ipv6->sin6_addr,
-				sizeof(struct in6_addr)))
+		      if (IN6_ARE_ADDR_EQUAL(&sin6->sin6_addr, &ipv6->ip6_src))
 		      {
 			  DPRINTF(("ip_input(): possible local address spoofing detected on packet from %s to %s (%s->%s)\n", inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet6_ntoa4(ipv6->ip6_src), inet6_ntoa4(ipv6->ip6_dst)));
 			  ip4stat.ip4s_spoof++;
@@ -338,7 +336,7 @@ ip4_input(m, va_alist)
 
 #ifdef INET6
     if (ifq == &ip6intrq)
-      schednetisr(NETISR_IP6);
+      schednetisr(NETISR_IPV6);
 #endif /* INET6 */
 
     splx(s);
