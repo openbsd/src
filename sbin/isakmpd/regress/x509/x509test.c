@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509test.c,v 1.20 2002/06/10 18:08:59 ho Exp $	*/
+/*	$OpenBSD: x509test.c,v 1.21 2002/08/02 17:09:29 aaron Exp $	*/
 /*	$EOM: x509test.c,v 1.9 2000/12/21 15:24:25 ho Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ main (int argc, char *argv[])
   if (argc == 4)
     {
       printf ("Verifying extension: ");
-      if (inet_aton (argv[3], &saddr) == -1)
+      if (inet_aton (argv[3], &saddr) == 0)
 	{
 	  printf ("inet_aton () failed\n");
 	  exit (1);
