@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.77 1998/08/11 12:54:21 maja Exp 
+ *	OpenBSD: pcidevs,v 1.78 1998/08/13 06:48:38 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2259,10 +2259,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT82C586 (Apollo VP) PCI-ISA Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595,
+	    0,
+	    "VIA Technologies",
+	    "VT82C595 (Apollo VP2) Host-PCI Bridge",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597PCI,
 	    0,
 	    "VIA Technologies",
 	    "VT82C597 (Apollo VP3) Host-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C598PCI,
+	    0,
+	    "VIA Technologies",
+	    "VT82C598 (Apollo MVP3) Host-PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926,
@@ -2301,10 +2313,22 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "VT83C572 USB Controller",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_PWR,
+	    0,
+	    "VIA Technologies",
+	    "VT82C586 (Apollo VP) Power Management Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP,
 	    0,
 	    "VIA Technologies",
 	    "VT82C597 (Apollo VP3) PCI-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C598AGP,
+	    0,
+	    "VIA Technologies",
+	    "VT82C598 (Apollo MVP3) PCI-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6000B,
