@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.24 2003/01/25 19:46:02 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.25 2003/02/08 12:34:27 todd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -94,6 +94,10 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "wskbd.h"
 #include "wsmouse.h"
 #include "wsmux.h"
+#ifdef XFS
+#include <xfs/nxfs.h>
+cdev_decl(xfs_dev);
+#endif
 
 #include "inet.h"
 #include "bpfilter.h"
