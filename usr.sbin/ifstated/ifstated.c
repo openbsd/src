@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.19 2004/09/21 12:04:39 mpf Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.20 2004/10/05 21:17:02 mpf Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -707,7 +707,7 @@ logit(int level, const char *fmt, ...)
 			fprintf(stderr, "\n");
 		}
 	} else
-		vsyslog(LOG_DAEMON, fmt, ap);
+		vsyslog(LOG_NOTICE, fmt, ap);
 
 	va_end(ap);
 }
