@@ -1,5 +1,5 @@
-/*	$OpenBSD: fetch.c,v 1.4 1997/03/14 04:32:14 millert Exp $	*/
-/*	$NetBSD: fetch.c,v 1.3 1997/03/13 06:23:15 lukem Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.5 1997/03/21 20:59:29 millert Exp $	*/
+/*	$NetBSD: fetch.c,v 1.4 1997/03/16 14:24:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.4 1997/03/14 04:32:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.5 1997/03/21 20:59:29 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -448,7 +448,7 @@ auto_fetch(argc, argv)
 		 * Set up the connection if we don't have one.
 		 */
 		if (strcmp(host, lasthost) != 0) {
-			strcpy(lasthost, host);
+			(void)strcpy(lasthost, host);
 			if (connected)
 				disconnect(0, NULL);
 			xargv[0] = __progname;
@@ -528,7 +528,7 @@ auto_fetch(argc, argv)
 			interactive = 0;
 			xargv[0] = "mget";
 			mget(2, xargv);
-			interactive = 1;
+			interactive = ointeractive;
 		} else
 			get(2, xargv);
 

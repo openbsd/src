@@ -1,5 +1,5 @@
-/*	$OpenBSD: complete.c,v 1.4 1997/03/14 04:32:13 millert Exp $	*/
-/*	$NetBSD: complete.c,v 1.3 1997/03/13 06:23:13 lukem Exp $	*/
+/*	$OpenBSD: complete.c,v 1.5 1997/03/21 20:59:28 millert Exp $	*/
+/*	$NetBSD: complete.c,v 1.6 1997/03/16 14:24:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,8 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef SMALL
 #ifndef lint
-static char rcsid[] = "$OpenBSD: complete.c,v 1.4 1997/03/14 04:32:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: complete.c,v 1.5 1997/03/21 20:59:28 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -86,7 +87,7 @@ complete_ambiguous(word, list, words)
 		return (CC_ERROR);	/* no choices available */
 
 	if (words->sl_cur == 1) {	/* only once choice available */
-		strcpy(insertstr, words->sl_str[0]);
+		(void)strcpy(insertstr, words->sl_str[0]);
 		if (el_insertstr(el, insertstr + wordlen) == -1)
 			return (CC_ERROR);
 		else
@@ -105,7 +106,7 @@ complete_ambiguous(word, list, words)
 				matchlen = j;
 		}
 		if (matchlen > wordlen) {
-			strncpy(insertstr, lastmatch, matchlen);
+			(void)strncpy(insertstr, lastmatch, matchlen);
 			insertstr[matchlen] = '\0';
 			if (el_insertstr(el, insertstr + wordlen) == -1)
 				return (CC_ERROR);
@@ -167,16 +168,18 @@ complete_local(word, list)
 	unsigned char rv;
 
 	if ((file = strrchr(word, '/')) == NULL) {
-		strcpy(dir, ".");
+		dir[0] = '.';
+		dir[1] = '\0';
 		file = word;
 	} else {
-		if (file == word)
-			strcpy(dir, "/");
-		else {
-			strncpy(dir, word, file - word);
+		if (file == word) {
+			dir[0] = '/';
+			dir[1] = '\0';
+		} else {
+			(void)strncpy(dir, word, file - word);
 			dir[file - word] = '\0';
 		}
-		++file;
+		file++;
 	}
 
 	if ((dd = opendir(dir)) == NULL)
@@ -224,7 +227,8 @@ complete_remote(word, list)
 	char *dummyargv[] = { "complete", dir, NULL };
 
 	if ((file = strrchr(word, '/')) == NULL) {
-		(void)strcpy(dir, ".");
+		dir[0] = '.';
+		dir[1] = '\0';
 		file = word;
 	} else {
 		cp = file;
@@ -320,7 +324,7 @@ complete(el, ch)
 	len = lf->lastchar - lf->buffer;
 	if (len >= sizeof(line))
 		return (CC_ERROR);
-	strncpy(line, lf->buffer, len);
+	(void)strncpy(line, lf->buffer, len);
 	line[len] = '\0';
 	cursor_pos = line + (lf->cursor - lf->buffer);
 	lastc_argc = cursor_argc;	/* remember last cursor pos */
@@ -336,7 +340,7 @@ complete(el, ch)
 	    && strncmp(word, margv[cursor_argc], cursor_argo) == 0)
 		dolist = 1;
 	else
-	    strncpy(word, margv[cursor_argc], cursor_argo);
+	    (void)strncpy(word, margv[cursor_argc], cursor_argo);
 	word[cursor_argo] = '\0';
 
 	if (cursor_argc == 0)
@@ -376,3 +380,4 @@ complete(el, ch)
 
 	return (CC_ERROR);
 }
+#endif

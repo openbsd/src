@@ -1,5 +1,5 @@
-/*	$OpenBSD: cmdtab.c,v 1.7 1997/03/14 04:32:12 millert Exp $	*/
-/*	$NetBSD: cmdtab.c,v 1.13 1997/03/13 06:23:12 lukem Exp $	*/
+/*	$OpenBSD: cmdtab.c,v 1.8 1997/03/21 20:59:27 millert Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.14 1997/03/14 01:39:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.7 1997/03/14 04:32:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmdtab.c,v 1.8 1997/03/21 20:59:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,9 +65,9 @@ char	deletehelp[] =	"delete remote file";
 char	dirhelp[] =	"list contents of remote directory";
 char	disconhelp[] =	"terminate ftp session";
 char	domachelp[] =	"execute macro";
-#ifndef SMALLFTP
+#ifndef SMALL
 char	edithelp[] =	"toggle command line editing";
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 char	formhelp[] =	"set file transfer format";
 char	globhelp[] =	"toggle metacharacter expansion of local file names";
 char	hashhelp[] =	"toggle printing `#' marks; specify number to set size";
@@ -126,13 +126,13 @@ char	umaskhelp[] =	"get (set) umask on remote side";
 char	userhelp[] =	"send new user information";
 char	verbosehelp[] =	"toggle verbose mode";
 
-#ifdef SMALLFTP
+#ifdef SMALL
 #define CMPL(x)
 #define CMPL0
-#else  /* !SMALLFTP */
+#else  /* !SMALL */
 #define CMPL(x)	__STRING(x), 
 #define CMPL0	"",
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 
 struct cmd cmdtab[] = {
 	{ "!",		shellhelp,	0, 0, 0, CMPL0		shell },
@@ -153,9 +153,9 @@ struct cmd cmdtab[] = {
 	{ "delete",	deletehelp,	0, 1, 1, CMPL(r)	delete },
 	{ "dir",	dirhelp,	1, 1, 1, CMPL(rl)	ls },
 	{ "disconnect",	disconhelp,	0, 1, 1, CMPL0		disconnect },
-#ifndef SMALLFTP
+#ifndef SMALL
 	{ "edit",	edithelp,	0, 0, 0, CMPL0		setedit },
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 	{ "exit",	quithelp,	0, 0, 0, CMPL0		quit },
 	{ "form",	formhelp,	0, 1, 1, CMPL0		setform },
 	{ "ftp",	connecthelp,	0, 0, 1, CMPL0		setpeer },

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ftp_var.h,v 1.9 1997/03/14 04:32:16 millert Exp $	*/
-/*	$NetBSD: ftp_var.h,v 1.14 1997/03/13 06:23:19 lukem Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.10 1997/03/21 20:59:30 millert Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.15 1997/03/14 01:39:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,9 +43,9 @@
 #include <sys/param.h>
 #include <setjmp.h>
 
-#ifndef SMALLFTP
+#ifndef SMALL
 #include <histedit.h>
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 
 #include "stringlist.h"
 #include "extern.h"
@@ -109,14 +109,14 @@ int	dirchange;		/* remote directory changed by cd command */
 int	retry_connect;		/* retry connect if failed */
 int	ttywidth;		/* width of tty */
 
-#ifndef SMALLFTP
+#ifndef SMALL
 int	  editing;		/* command line editing enabled */
 EditLine *el;			/* editline(3) status structure */
 History  *hist;			/* editline(3) history structure */
 char	 *cursor_pos;		/* cursor position we're looking for */
 int	  cursor_argc;		/* location of cursor in margv */
 int	  cursor_argo;		/* offset of cursor in margv[cursor_argc] */
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 
 off_t	bytes;			/* current # of bytes read */
 off_t	filesize;		/* size of file being transferred */
@@ -151,9 +151,9 @@ struct cmd {
 	char	 c_bell;	/* give bell when command completes */
 	char	 c_conn;	/* must be connected to use command */
 	char	 c_proxy;	/* proxy server may execute */
-#ifndef SMALLFTP
+#ifndef SMALL
 	char	*c_complete;	/* context sensitive completion list */
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 	void	(*c_handler) __P((int, char **)); /* function to call */
 };
 

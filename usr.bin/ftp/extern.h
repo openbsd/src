@@ -1,5 +1,5 @@
-/*	$OpenBSD: extern.h,v 1.9 1997/03/14 04:32:14 millert Exp $	*/
-/*	$NetBSD: extern.h,v 1.12 1997/03/13 06:23:15 lukem Exp $	*/
+/*	$OpenBSD: extern.h,v 1.10 1997/03/21 20:59:28 millert Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 1997/03/14 01:39:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -54,9 +54,9 @@ void	changetype __P((int, int));
 void	cmdabort __P((int));
 void	cmdscanner __P((int));
 int	command __P((const char *, ...));
-#ifndef SMALLFTP
+#ifndef SMALL
 unsigned char complete __P((EditLine *, int));
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 int	confirm __P((const char *, const char *));
 FILE   *dataconn __P((const char *));
 void	delete __P((int, char **));

@@ -1,5 +1,5 @@
-/*	$OpenBSD: main.c,v 1.24 1997/03/14 05:36:02 millert Exp $	*/
-/*	$NetBSD: main.c,v 1.18 1997/03/13 06:23:19 lukem Exp $	*/
+/*	$OpenBSD: main.c,v 1.25 1997/03/21 20:59:30 millert Exp $	*/
+/*	$NetBSD: main.c,v 1.20 1997/03/16 14:24:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.24 1997/03/14 05:36:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.25 1997/03/21 20:59:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ main(argc, argv)
 	preserve = 1;
 	verbose = 0;
 	progress = 0;
-#ifndef SMALLFTP
+#ifndef SMALL
 	editing = 0;
 #endif
 	mark = HASHBYTES;
@@ -106,7 +106,7 @@ main(argc, argv)
 	fromatty = isatty(fileno(stdin));
 	if (fromatty) {
 		verbose = 1;		/* verbose if from a tty */
-#ifndef SMALLFTP
+#ifndef SMALL
 		editing = 1;		/* editing mode on if from a tty */
 #endif
 	}
@@ -125,7 +125,7 @@ main(argc, argv)
 			break;
 
 		case 'e':
-#ifndef SMALLFTP
+#ifndef SMALL
 			editing = 0;
 #endif
 			break;
@@ -198,7 +198,7 @@ main(argc, argv)
 		(void)strcpy(home, pw->pw_dir);
 	}
 
-#ifndef SMALLFTP
+#ifndef SMALL
 	if (editing) {
 		el = el_init(__progname, stdin, stdout); /* init editline */
 
@@ -217,14 +217,14 @@ main(argc, argv)
 
 		el_source(el, NULL);	/* read ~/.editrc */
 	}
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 
 	setttywidth(0);
 	(void)signal(SIGWINCH, setttywidth);
-#ifndef SMALLFTP
+#ifndef SMALL
 	if (editing)
 		el_set(el, EL_SIGNAL, 1);
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 
 	if (argc > 0) {
 		if (strchr(argv[0], ':') != NULL) {
@@ -326,15 +326,15 @@ cmdscanner(top)
 	int num;
 
 	if (!top 
-#ifndef SMALLFTP
+#ifndef SMALL
 	    && !editing
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 	    )
 		(void)putchar('\n');
 	for (;;) {
-#ifndef SMALLFTP
+#ifndef SMALL
 		if (!editing) {
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 			if (fromatty) {
 				fputs(prompt(), stdout);
 				(void)fflush(stdout);
@@ -354,7 +354,7 @@ cmdscanner(top)
 					/* void */;
 				break;
 			} /* else it was a line without a newline */
-#ifndef SMALLFTP
+#ifndef SMALL
 		} else {
 			const char *buf;
 			cursor_pos = NULL;
@@ -372,7 +372,7 @@ cmdscanner(top)
 			line[num] = '\0';
 			history(hist, H_ENTER, buf);
 		}
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 
 		makeargv();
 		if (margc == 0)
@@ -383,14 +383,14 @@ cmdscanner(top)
 			continue;
 		}
 		if (c == 0) {
-#ifndef SMALLFTP
+#ifndef SMALL
 			/*
 			 * Give editline(3) a shot at unknown commands.
 			 * XXX - bogus commands with a colon in
 			 *       them will not elicit an error.
 			 */
 			if (el_parse(el, margc, margv) != 0)
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 				puts("?Invalid command.");
 			continue;
 		}
@@ -462,7 +462,7 @@ makeargv()
 		if (argp == NULL)
 			break;
 	}
-#ifndef SMALLFTP
+#ifndef SMALL
 	if (cursor_pos == line) {
 		cursor_argc = 0;
 		cursor_argo = 0;
@@ -470,12 +470,12 @@ makeargv()
 		cursor_argc = margc;
 		cursor_argo = strlen(margv[margc-1]);
 	}
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 }
 
-#ifdef SMALLFTP
+#ifdef SMALL
 #define INC_CHKCURSOR(x)	(x)++
-#else  /* !SMALLFTP */
+#else  /* !SMALL */
 #define INC_CHKCURSOR(x)	{ (x)++ ; \
 				if (x == cursor_pos) { \
 					cursor_argc = margc; \
@@ -483,7 +483,7 @@ makeargv()
 					cursor_pos = NULL; \
 				} }
 						
-#endif /* !SMALLFTP */
+#endif /* !SMALL */
 
 /*
  * Parse string into argbuf;
