@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.23 2004/01/27 16:49:53 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.24 2004/01/27 21:20:44 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -383,11 +383,12 @@ log_ntoa(in_addr_t ip)
 }
 
 char *
-log_addr(const struct bgpd_addr *addr) {
-	switch (addr->af) {
-	case AF_INET:
-		return (inet_ntoa(addr->v4));
-	default:
-		return ("(unknown address family)");
-	}
+log_addr(const struct bgpd_addr *addr)
+{
+	static char	buf[48];
+
+	if(inet_ntop(addr->af, &addr->ba, buf, sizeof(buf)) == NULL)
+		return ("?");
+	else
+		return (buf);
 }
