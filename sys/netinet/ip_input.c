@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.69 2001/05/16 06:38:25 fgsch Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.70 2001/05/20 08:35:11 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -302,6 +302,7 @@ ipv4_input(struct mbuf *m, ...)
 	int error, s;
 	struct tdb *tdb;
 	struct tdb_ident *tdbi;
+	struct m_tag *mtag;
 #endif /* IPSEC */
 
 	va_start(ap, m);
@@ -499,15 +500,15 @@ ipv4_input(struct mbuf *m, ...)
 	} else {
 #ifdef IPSEC
 	        /* IPsec policy check for forwarded packets */
+		mtag = m_tag_find(m, PACKET_TAG_IPSEC_DONE, NULL);
                 s = splnet();
-		tdbi = (struct tdb_ident *) m->m_pkthdr.tdbi;
-                if (tdbi == NULL)
-                  tdb = NULL;
-                else
-                  tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
-
+		if (mtag != NULL) {
+			tdbi = (struct tdb_ident *)(mtag + 1);
+			tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+		} else
+			tdb = NULL;
 	        ipsp_spd_lookup(m, AF_INET, hlen, &error,
-		  	        IPSP_DIRECTION_IN, tdb, NULL);
+		    IPSP_DIRECTION_IN, tdb, NULL);
                 splx(s);
 
 		/* Error or otherwise drop-packet indication */
@@ -646,15 +647,15 @@ found:
 	  goto skipipsec;
 
 	/* IPsec policy check for local-delivery packets */
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_DONE, NULL); 
         s = splnet();
-	tdbi = (struct tdb_ident *) m->m_pkthdr.tdbi;
-        if (tdbi == NULL)
-                tdb = NULL;
-        else
+	if (mtag) {
+		tdbi = (struct tdb_ident *)(mtag + 1);
 	        tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
-
+	} else
+		tdb = NULL;
 	ipsp_spd_lookup(m, AF_INET, hlen, &error, IPSP_DIRECTION_IN,
-			tdb, NULL);
+	    tdb, NULL);
         splx(s);
 
 	/* Error or otherwise drop-packet indication */

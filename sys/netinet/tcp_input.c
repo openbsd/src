@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.87 2001/05/12 18:35:17 aaron Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.88 2001/05/20 08:35:11 angelos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -392,6 +392,7 @@ tcp_input(m, va_alist)
 	struct ip6_hdr *ipv6 = NULL;
 #endif /* INET6 */
 #ifdef IPSEC
+	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct tdb *tdb;
 	int error, s;
@@ -765,15 +766,15 @@ findpcb:
 	}
 
 #ifdef IPSEC
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_DONE, NULL);
         s = splnet();
-	tdbi = (struct tdb_ident *) m->m_pkthdr.tdbi;
-        if (tdbi == NULL)
-                tdb = NULL;
-        else
+	if (mtag != NULL) {
+		tdbi = (struct tdb_ident *)(mtag + 1);
 	        tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
-
+	} else
+		tdb = NULL;
 	ipsp_spd_lookup(m, af, iphlen, &error, IPSP_DIRECTION_IN,
-			tdb, inp);
+	    tdb, inp);
 
 	/* Latch SA */
 	if (inp->inp_tdb_in != tdb) {

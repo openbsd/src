@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.34 2001/05/11 17:20:11 aaron Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.35 2001/05/20 08:35:10 angelos Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -366,13 +366,10 @@ icmp_input(m, va_alist)
 			goto badcode;
 		code = PRC_QUENCH;
 	deliver:
-		/*
-		 * Free packet atttributes. XXX
-		 */
-		if ((m->m_flags & M_PKTHDR) && (m->m_pkthdr.tdbi)) {
-		    free(m->m_pkthdr.tdbi, M_TEMP);
-		    m->m_pkthdr.tdbi = NULL;
-		}
+		/* Free packet atttributes */
+		if (m->m_flags & M_PKTHDR)
+			m_tag_delete_chain(m, NULL);
+
 		/*
 		 * Problem with datagram; advise higher level routines.
 		 */
@@ -473,13 +470,10 @@ icmp_input(m, va_alist)
 				ip->ip_src = ia->ia_dstaddr.sin_addr;
 		}
 reflect:
-		/*
-		 * Free packet atttributes. XXX
-		 */
-		if ((m->m_flags & M_PKTHDR) && (m->m_pkthdr.tdbi)) {
-		    free(m->m_pkthdr.tdbi, M_TEMP);
-		    m->m_pkthdr.tdbi = NULL;
-		}
+		/* Free packet atttributes */
+		if (m->m_flags & M_PKTHDR)
+			m_tag_delete_chain(m, NULL);
+
 		ip->ip_len += hlen;	/* since ip_input deducts this */
 		icmpstat.icps_reflect++;
 		icmpstat.icps_outhist[icp->icmp_type]++;
@@ -487,13 +481,9 @@ reflect:
 		return;
 
 	case ICMP_REDIRECT:
-		/*
-		 * Free packet atttributes. XXX
-		 */
-		if ((m->m_flags & M_PKTHDR) && (m->m_pkthdr.tdbi)) {
-		    free(m->m_pkthdr.tdbi, M_TEMP);
-		    m->m_pkthdr.tdbi = NULL;
-		}
+		/* Free packet atttributes */
+		if (m->m_flags & M_PKTHDR)
+			m_tag_delete_chain(m, NULL);
 		if (code > 3)
 			goto badcode;
 		if (icmplen < ICMP_ADVLENMIN || icmplen < ICMP_ADVLEN(icp) ||
