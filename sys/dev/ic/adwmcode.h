@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwmcode.h,v 1.4 2000/06/29 00:04:32 krw Exp $ */
+/*	$OpenBSD: adwmcode.h,v 1.5 2001/02/22 17:17:32 krw Exp $ */
 /*      $NetBSD: adwmcode.h,v 1.5 2000/05/27 18:24:51 dante Exp $        */
 
 /*
@@ -70,15 +70,15 @@ typedef struct adw_carrier ADW_CARRIER;
 /*
  * next_ba flags
  */
-#define ASC_RQ_DONE		0x00000001
-#define ASC_RQ_GOOD		0x00000002
-#define ASC_CQ_STOPPER		0x00000000
+#define ADW_RQ_DONE		0x00000001
+#define ADW_RQ_GOOD		0x00000002
+#define ADW_CQ_STOPPER		0x00000000
 
 /*
  * Mask used to eliminate low 4 bits of carrier 'next_ba' field.
  */
-#define ASC_NEXT_BA_MASK	0xFFFFFFF0
-#define ASC_GET_CARRP(carrp)	((carrp) & ASC_NEXT_BA_MASK)
+#define ADW_NEXT_BA_MASK	0xFFFFFFF0
+#define ADW_GET_CARRP(carrp)	((carrp) & ADW_NEXT_BA_MASK)
 
 /*
  * Bus Address of a Carrier.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.15 2001/02/20 00:52:58 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.16 2001/02/22 17:17:32 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -1169,7 +1169,7 @@ adw_print_info(sc, tid)
 /*
  * adw_isr_callback() - Second Level Interrupt Handler called by AdwISR()
  *
- * Interrupt callback function for the Wide SCSI Adv Library.
+ * Interrupt callback function for the Wide SCSI Adw Library.
  *
  * Notice:
  * Interrupts are disabled by the caller (AdwISR() function), and will be
@@ -1360,7 +1360,7 @@ NO_ERROR:
 
 
 /*
- * adw_async_callback() - Adv Library asynchronous event callback function.
+ * adw_async_callback() - Adw Library asynchronous event callback function.
  */
 static void
 adw_async_callback(sc, code)
@@ -1368,12 +1368,12 @@ adw_async_callback(sc, code)
 	u_int8_t	code;
 {
 	switch (code) {
-	case ADV_ASYNC_SCSI_BUS_RESET_DET:
+	case ADW_ASYNC_SCSI_BUS_RESET_DET:
 		/* The firmware detected a SCSI Bus reset. */
 		printf("%s: SCSI Bus reset detected\n", sc->sc_dev.dv_xname);
 		break;
 
-	case ADV_ASYNC_RDMA_FAILURE:
+	case ADW_ASYNC_RDMA_FAILURE:
 		/*
 		 * Handle RDMA failure by resetting the SCSI Bus and
 		 * possibly the chip if it is unresponsive.
@@ -1383,14 +1383,14 @@ adw_async_callback(sc, code)
 		adw_reset_bus(sc);
 		break;
 
-	case ADV_HOST_SCSI_BUS_RESET:
+	case ADW_HOST_SCSI_BUS_RESET:
 		/* Host generated SCSI bus reset occurred. */
 		printf("%s: Host generated SCSI bus reset occurred\n",
 				sc->sc_dev.dv_xname);
 		break;
 
 
-	case ADV_ASYNC_CARRIER_READY_FAILURE:
+	case ADW_ASYNC_CARRIER_READY_FAILURE:
 		/* 
 		 * Carrier Ready failure.
 	         *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwlib.h,v 1.6 2000/12/08 00:03:31 krw Exp $ */
+/*	$OpenBSD: adwlib.h,v 1.7 2001/02/22 17:17:32 krw Exp $ */
 /*      $NetBSD: adwlib.h,v 1.14 2000/07/03 18:14:18 dante Exp $        */
 
 /*
@@ -75,18 +75,18 @@
  * Define Adw Reset Hold Time grater than 25 uSec.
  * See AdwResetSCSIBus() for more info.
  */
-#define ASC_SCSI_RESET_HOLD_TIME_US  60
+#define ADW_SCSI_RESET_HOLD_TIME_US  60
 
 /*
  * Define Adw EEPROM constants.
  */
 
-#define ASC_EEP_DVC_CFG_BEGIN           (0x00)
-#define ASC_EEP_DVC_CFG_END             (0x15)
-#define ASC_EEP_DVC_CTL_BEGIN           (0x16)  /* location of OEM name */
-#define ASC_EEP_MAX_WORD_ADDR           (0x1E)
+#define ADW_EEP_DVC_CFG_BEGIN           (0x00)
+#define ADW_EEP_DVC_CFG_END             (0x15)
+#define ADW_EEP_DVC_CTL_BEGIN           (0x16)  /* location of OEM name */
+#define ADW_EEP_MAX_WORD_ADDR           (0x1E)
 
-#define ASC_EEP_DELAY_MS                100
+#define ADW_EEP_DELAY_MS                100
 
 /*
  * EEPROM bits reference by the RISC after initialization.
@@ -110,15 +110,15 @@
  *
  * Default values are maintained in the structure Default_EEPROM_Config.
  */
-#define ADV_EEPROM_BIG_ENDIAN          0x8000   /* EEPROM Bit 15 */
-#define ADV_EEPROM_BIOS_ENABLE         0x4000   /* EEPROM Bit 14 */
+#define ADW_EEPROM_BIG_ENDIAN          0x8000   /* EEPROM Bit 15 */
+#define ADW_EEPROM_BIOS_ENABLE         0x4000   /* EEPROM Bit 14 */
 /*
  * For the ASC3550 Bit 13 is Termination Polarity control bit.
  * For later ICs Bit 13 controls whether the CIS (Card Information
  * Service Section) is loaded from EEPROM.
  */
-#define ADV_EEPROM_TERM_POL            0x2000   /* EEPROM Bit 13 */
-#define ADV_EEPROM_CIS_LD              0x2000   /* EEPROM Bit 13 */
+#define ADW_EEPROM_TERM_POL            0x2000   /* EEPROM Bit 13 */
+#define ADW_EEPROM_CIS_LD              0x2000   /* EEPROM Bit 13 */
 
 /*
  * ASC38C1600 Bit 11
@@ -209,11 +209,11 @@ typedef struct adw_eeprom
 	u_int16_t	check_sum;		/* 21 EEP check sum */
 	u_int8_t	oem_name[16];		/* 22 OEM name */
 	u_int16_t	dvc_err_code;		/* 30 last device driver error code */
-	u_int16_t	adv_err_code;		/* 31 last uc and Adw Lib error code */
-	u_int16_t	adv_err_addr;		/* 32 last uc error address */
+	u_int16_t	adw_err_code;		/* 31 last uc and Adw Lib error code */
+	u_int16_t	adw_err_addr;		/* 32 last uc error address */
 	u_int16_t	saved_dvc_err_code;	/* 33 saved last dev. driver error code	*/
-	u_int16_t	saved_adv_err_code;	/* 34 saved last uc and Adw Lib error code */
-	u_int16_t	saved_adv_err_addr;	/* 35 saved last uc error address 	*/
+	u_int16_t	saved_adw_err_code;	/* 34 saved last uc and Adw Lib error code */
+	u_int16_t	saved_adw_err_addr;	/* 35 saved last uc error address 	*/
 	u_int16_t	reserved1[20];		/* 36 - 55 reserved */
 	u_int16_t	cisptr_lsw;		/* 56 CIS PTR LSW */
 	u_int16_t	cisprt_msw;		/* 57 CIS PTR MSW */
@@ -226,13 +226,13 @@ typedef struct adw_eeprom
 /*
  * EEPROM Commands
  */
-#define ASC_EEP_CMD_READ          0x80
-#define ASC_EEP_CMD_WRITE         0x40
-#define ASC_EEP_CMD_WRITE_ABLE    0x30
-#define ASC_EEP_CMD_WRITE_DISABLE 0x00
+#define ADW_EEP_CMD_READ          0x80
+#define ADW_EEP_CMD_WRITE         0x40
+#define ADW_EEP_CMD_WRITE_ABLE    0x30
+#define ADW_EEP_CMD_WRITE_DISABLE 0x00
 
-#define ASC_EEP_CMD_DONE             0x0200
-#define ASC_EEP_CMD_DONE_ERR         0x0001
+#define ADW_EEP_CMD_DONE             0x0200
+#define ADW_EEP_CMD_DONE_ERR         0x0001
 
 /* cfg_word */
 #define EEP_CFG_WORD_BIG_ENDIAN      0x8000
@@ -834,7 +834,7 @@ typedef struct adw_scsi_req_q {
 } ADW_SCSI_REQ_Q;
 
 /*
- * ASC_SCSI_REQ_Q 'done_status' return values.
+ * ADW_SCSI_REQ_Q 'done_status' return values.
  */
 #define QD_NO_STATUS         0x00       /* Request not completed yet. */
 #define QD_NO_ERROR          0x01
@@ -842,7 +842,7 @@ typedef struct adw_scsi_req_q {
 #define QD_WITH_ERROR        0x04
 
 /*
- * ASC_SCSI_REQ_Q 'host_status' return values.
+ * ADW_SCSI_REQ_Q 'host_status' return values.
  */
 #define QHSTA_NO_ERROR              0x00
 #define QHSTA_M_SEL_TIMEOUT         0x11
@@ -874,7 +874,7 @@ typedef struct adw_scsi_req_q {
 #define QHSTA_M_SGBACKUP_ERROR      0x47 /* Scatter-Gather backup error */
 
 /*
- * ASC_SCSI_REQ_Q 'scsi_status' return values.
+ * ADW_SCSI_REQ_Q 'scsi_status' return values.
  */
 #define SCSI_STATUS_GOOD		0x00
 #define SCSI_STATUS_CHECK_CONDITION	0x02
@@ -918,11 +918,11 @@ typedef struct adw_scsi_req_q {
 #define SCSI_MS_PER_SEC              1000UL  /* milliseconds per second */
 #define SCSI_MAX_RETRY               10      /* retry count */
 
-#define ADV_ASYNC_RDMA_FAILURE          0x01 /* Fatal RDMA failure. */
-#define ADV_ASYNC_SCSI_BUS_RESET_DET    0x02 /* Detected SCSI Bus Reset. */
-#define ADV_ASYNC_CARRIER_READY_FAILURE 0x03 /* Carrier Ready failure. */
+#define ADW_ASYNC_RDMA_FAILURE          0x01 /* Fatal RDMA failure. */
+#define ADW_ASYNC_SCSI_BUS_RESET_DET    0x02 /* Detected SCSI Bus Reset. */
+#define ADW_ASYNC_CARRIER_READY_FAILURE 0x03 /* Carrier Ready failure. */
 
-#define ADV_HOST_SCSI_BUS_RESET      0x80 /* Host Initiated SCSI Bus Reset. */
+#define ADW_HOST_SCSI_BUS_RESET      0x80 /* Host Initiated SCSI Bus Reset. */
 
 
 /* Read byte from a register. */
@@ -1014,16 +1014,16 @@ do {									\
 	ADW_READ_BYTE_REGISTER((iot), (ioh), IOPB_CHIP_TYPE_REV)
 
 /*
- * Abort an SRB in the chip's RISC Memory. The 'srb_ptr' argument must
- * match the ASC_SCSI_REQ_Q 'srb_ptr' field.
+ * Abort a CCB in the chip's RISC Memory. The 'ccb_ptr' argument must
+ * match the ADW_SCSI_REQ_Q 'ccb_ptr' field.
  * 
  * If the request has not yet been sent to the device it will simply be
  * aborted from RISC memory. If the request is disconnected it will be
  * aborted on reselection by sending an Abort Message to the target ID.
  *
  * Return value:
- *      ADW_TRUE(1) - Queue was successfully aborted.
- *      ADW_FALSE(0) - Queue was not found on the active queue list.
+ *      ADW_TRUE(1) - ccb was successfully aborted.
+ *      ADW_FALSE(0) - ccb was not found on the active queue list.
  */
 #define ADW_ABORT_CCB(sc, ccb_ptr) \
 	AdwSendIdleCmd((sc), (u_int16_t) IDLE_CMD_ABORT, (ccb_ptr)->hashkey)
@@ -1113,7 +1113,7 @@ typedef struct {
 } ADW_SCSI_INQUIRY; /* 74 bytes */
 
 /*
- * Adv Library functions available to drivers.
+ * Adw Library functions available to drivers.
  */
 
 int	AdwInitFromEEPROM __P((ADW_SOFTC *));
