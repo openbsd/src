@@ -25,6 +25,8 @@ larger, as your system will be doing much more swapping.
 Supported devices include:
 	A4000/A1200 IDE controller.
 	ISA IDE & ATAPI with a supported ISA bridge.
+		[Note: With single ATAPI device IDE busses, the
+		ATAPI device should be set to SLAVE.]
 	SCSI host adapters:
 		33c93 based boards: A2091, A3000 and GVP series II.
 		53c80 based boards: 12 Gauge, IVS, Emplant and
