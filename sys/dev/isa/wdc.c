@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.3 1996/08/07 01:53:02 downsj Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.4 1996/08/12 05:21:20 niklas Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -1443,7 +1443,7 @@ wdc_atapi_get_params(ab_link, drive, id)
 	    bus_io_read_1(bc, ioh, wd_cyl_hi);
 	if (len != sizeof(struct atapi_identify)) {
 		printf("Warning drive %d returned %d/%d of "
-		    "indentify device data\n", drive, len,
+		    "identify device data\n", drive, len,
 		    sizeof(struct atapi_identify));
 		excess = len - sizeof(struct atapi_identify);
 		if (excess < 0)
