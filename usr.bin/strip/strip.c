@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.22 2004/07/12 10:44:11 miod Exp $	*/
+/*	$OpenBSD: strip.c,v 1.23 2004/10/09 20:36:05 mickey Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$OpenBSD: strip.c,v 1.22 2004/07/12 10:44:11 miod Exp $";
+static char rcsid[] = "$OpenBSD: strip.c,v 1.23 2004/10/09 20:36:05 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -254,7 +254,7 @@ s_stab(const char *fn, int fd, EXEC *ep, struct stat *sp, off_t *sz)
 	 * of the string table.
 	 */
 	strbase = (char *)ep + N_STROFF(*ep);
-	allocsize = fix_long_order(*(u_long *)strbase, mid);
+	allocsize = fix_32_order(*(u_long *)strbase, mid);
 	if ((nstrbase = malloc((u_int) allocsize)) == NULL) {
 		warnx("%s", strerror(ENOMEM));
 		goto end;
@@ -363,7 +363,7 @@ s_stab(const char *fn, int fd, EXEC *ep, struct stat *sp, off_t *sz)
 
 	/* Fill in the new size of the string table. */
 	len = nstr - nstrbase;
-	*(u_long *)nstrbase = fix_long_order(len, mid);
+	*(u_long *)nstrbase = fix_32_order(len, mid);
 
 	/*
 	 * Copy the new string table into place.  Nsym should be pointing

@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.11 2003/06/12 20:58:10 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.12 2004/10/09 20:36:05 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,7 +34,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)build.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$OpenBSD: build.c,v 1.11 2003/06/12 20:58:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: build.c,v 1.12 2004/10/09 20:36:05 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -176,7 +176,7 @@ rexec(int rfd, int wfd)
 	if (nr != sizeof(strsize))
 		goto bad;
 
-	strsize = fix_long_order(strsize, N_GETMID(ebuf));
+	strsize = fix_32_order(strsize, N_GETMID(ebuf));
 
 	/* Read in the string table. */
 	strsize -= sizeof(strsize);
@@ -283,7 +283,7 @@ symobj(int mid)
 		error(tname);
 
 	/* First long is the size of the ranlib structure section. */
-	size = fix_long_order(symcnt * sizeof(struct ranlib), mid);
+	size = fix_32_order(symcnt * sizeof(struct ranlib), mid);
 	if (!fwrite((char *)&size, sizeof(size), 1, fp))
 		error(tname);
 
@@ -306,7 +306,7 @@ symobj(int mid)
 
 	/* Second long is the size of the string table. */
 
-	size = fix_long_order(tsymlen, mid);
+	size = fix_32_order(tsymlen, mid);
 	if (!fwrite((char *)&size, sizeof(size), 1, fp))
 		error(tname);
 
