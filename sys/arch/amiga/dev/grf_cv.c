@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cv.c,v 1.15 1997/09/18 13:39:49 niklas Exp $	*/
+/*	$OpenBSD: grf_cv.c,v 1.16 1998/01/15 14:14:35 niklas Exp $	*/
 /*	$NetBSD: grf_cv.c,v 1.24 1997/07/30 11:05:55 veego Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ extern unsigned char S3FONT[];
  */
 struct grfcvtext_mode cvconsole_mode = {
 	{ 255, "", 25000000, 640, 480, 4, 640/8, 680/8, 768/8, 800/8,
-	  481, 521, 491, 493, 525 },
+	  481, 491, 493, 525, 0 },
 	8, S3FONTY, 80, 480 / S3FONTY, S3FONT, 32, 255
 };
 
