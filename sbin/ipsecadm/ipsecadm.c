@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.53 2001/04/19 20:12:45 niklas Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.54 2001/05/30 16:44:41 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -927,7 +927,7 @@ main(int argc, char **argv)
 		sid1.sadb_ident_type = SADB_IDENTTYPE_FQDN;
 	      else
 		if (!strcmp(argv[i + 1], "ufqdn"))
-		  sid1.sadb_ident_type = SADB_IDENTTYPE_MBOX;
+		  sid1.sadb_ident_type = SADB_IDENTTYPE_USERFQDN;
 		else
 		{
 		    fprintf(stderr, "%s: unknown identity type \"%s\"\n",
@@ -957,7 +957,7 @@ main(int argc, char **argv)
 		sid2.sadb_ident_type = SADB_IDENTTYPE_FQDN;
 	      else
 		if (!strcmp(argv[i + 1], "ufqdn"))
-		  sid2.sadb_ident_type = SADB_IDENTTYPE_MBOX;
+		  sid2.sadb_ident_type = SADB_IDENTTYPE_USERFQDN;
 		else
 		{
 		    fprintf(stderr, "%s: unknown identity type \"%s\"\n",
