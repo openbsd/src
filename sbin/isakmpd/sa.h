@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.h,v 1.4 1998/12/21 01:02:27 niklas Exp $	*/
-/*	$EOM: sa.h,v 1.39 1998/12/15 16:58:47 niklas Exp $	*/
+/*	$OpenBSD: sa.h,v 1.5 1999/02/26 03:50:26 niklas Exp $	*/
+/*	$EOM: sa.h,v 1.40 1999/02/14 00:11:40 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -71,7 +71,7 @@ struct proto {
   /* The protocol this SA is for.  */
   u_int8_t proto;
 
-  /* Security parameter index info.  Element 0 - responder, 1 - initiator.  */
+  /* Security parameter index info.  Element 0 - outgoing, 1 - incoming.  */
   u_int8_t spi_sz[2];
   u_int8_t *spi[2];
 
@@ -140,7 +140,8 @@ struct sa {
   u_int64_t seconds;
   u_int64_t kilobytes;
 
-  /* The event that will occur when an SA has timed out.  */
+  /* The events that will occur when an SA has timed out.  */
+  struct event *soft_death;
   struct event *death;
 };
 
@@ -152,6 +153,7 @@ extern int sa_add_transform (struct sa *, struct payload *, int,
 			     struct proto **);
 extern int sa_create (struct exchange *, struct transport *);
 extern void sa_delete (struct sa *, int);
+extern struct sa *sa_find (int (*) (struct sa *, void *), void *);
 extern void sa_free (struct sa *);
 extern void sa_free_aux (struct sa *);
 extern void sa_init (void);
@@ -161,7 +163,8 @@ extern struct sa *sa_lookup (u_int8_t *, u_int8_t *);
 extern struct sa *sa_lookup_by_header (u_int8_t *, int);
 extern struct sa *sa_lookup_by_name (char *, int);
 extern struct sa *sa_lookup_from_icookie (u_int8_t *);
-extern void sa_rekey_p1 (struct sa *);
+extern void sa_soft_expire (struct sa *);
+extern void sa_hard_expire (struct sa *);
 extern void sa_report (void);
 
 #endif /* _SA_H_ */
