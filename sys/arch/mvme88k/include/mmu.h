@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.24 2003/11/08 21:45:18 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.25 2003/12/19 18:08:20 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -186,8 +186,6 @@ typedef	u_int32_t	pt_ind_entry_t;
 
 /* XXX uses knowledge of pmap structure */
 #define SDTENT(map, va)	((sdt_entry_t *)((map)->pm_stab + SDTIDX(va)))
-
-#define PT_FREE(tbl)	uvm_km_free(kernel_map, (vaddr_t)tbl, PAGE_SIZE)
 
 /*
  * Va spaces mapped by tables and PDT table group.

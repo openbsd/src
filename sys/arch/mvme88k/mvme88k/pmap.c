@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.94 2003/12/14 22:08:02 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.95 2003/12/19 18:08:23 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -352,7 +352,7 @@ pmap_pte(pmap_t pmap, vaddr_t virt)
 
 	sdt = SDTENT(pmap, virt);
 	/*
-	 * Check whether page table is exist or not.
+	 * Check whether page table exists.
 	 */
 	if (!SDT_VALID(sdt))
 		return (PT_ENTRY_NULL);
@@ -1170,7 +1170,7 @@ pmap_create(void)
 
 	segdt = (sdt_entry_t *)uvm_km_zalloc(kernel_map, s);
 	if (segdt == NULL)
-		panic("pmap_create: kmem_alloc failure");
+		panic("pmap_create: uvm_km_zalloc failure");
 
 	/*
 	 * Initialize pointer to segment table both virtual and physical.
@@ -1199,8 +1199,8 @@ pmap_create(void)
 	 * Initialize SDT_ENTRIES.
 	 */
 	/*
-	 * There is no need to clear segment table, since kmem_alloc would
-	 * provide us clean pages.
+	 * There is no need to clear segment table, since uvm_km_zalloc
+	 * provides us clean pages.
 	 */
 
 	/*
@@ -1233,14 +1233,13 @@ pmap_create(void)
  * Calls:
  *	pmap_pte
  *	uvm_km_free
- *	PT_FREE
  *
  * Special Assumptions:
  *	No locking is needed, since this is only called which the
  * 	pm_count field of the pmap structure goes to zero.
  *
  * This routine sequences of through the user address space, releasing
- * all translation table space back to the system using PT_FREE.
+ * all translation table space back to the system using uvm_km_free.
  * The loops are indexed by the virtual address space
  * ranges represented by the table group sizes(PDT_VA_SPACE).
  *
@@ -1266,7 +1265,7 @@ pmap_release(pmap_t pmap)
 				printf("(pmap_release: %x) free page table = 0x%x\n",
 				    curproc, gdttbl);
 #endif
-			PT_FREE(gdttbl);
+			uvm_km_free(kernel_map, (vaddr_t)gdttbl, PAGE_SIZE);
 		}
 	}
 
@@ -1780,7 +1779,7 @@ pmap_protect(pmap_t pmap, vaddr_t s, vaddr_t e, vm_prot_t prot)
  *	Must be called with the pmap system and the pmap unlocked, since
  *	these must be unlocked to use vm_allocate or vm_deallocate (via
  *	uvm_km_zalloc). Thus it must be called in a unlock/lock loop
- *	that checks whether the map has been expanded enough. ( We won't loop
+ *	that checks whether the map has been expanded enough. (We won't loop
  *	forever, since page table aren't shrunk.)
  *
  * Parameters:
@@ -1839,14 +1838,14 @@ pmap_expand(pmap_t pmap, vaddr_t v)
 		 * Someone else caused us to expand
 		 * during our vm_allocate.
 		 */
-		PMAP_UNLOCK(pmap, spl);
-		/* XXX */
+		simple_unlock(&pmap->pm_lock);
 		uvm_km_free(kernel_map, pdt_vaddr, PAGE_SIZE);
 
 #ifdef DEBUG
 		if (pmap_con_dbg & CD_EXP)
 			printf("(pmap_expand: %x) table has already been allocated\n", curproc);
 #endif
+		splx(spl);
 		return;
 	}
 	/*
@@ -1899,7 +1898,6 @@ pmap_expand(pmap_t pmap, vaddr_t v)
  *	pmap_pte
  *	pmap_expand
  *	pmap_remove_pte
- *	PT_FREE
  *
  *	This routine starts off by calling pmap_pte to obtain a (virtual)
  * pointer to the page table entry corresponding to given virtual
@@ -1976,9 +1974,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			/*
 			 * Must unlock to expand the pmap.
 			 */
-			PMAP_UNLOCK(pmap, spl);
+			simple_unlock(&pmap->pm_lock);
 			pmap_expand(pmap, va);
-			PMAP_LOCK(pmap, spl);
+			simple_lock(&pmap->pm_lock);
 		}
 	}
 	/*
@@ -2005,7 +2003,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		else if (!wired && pmap_pte_w(pte))
 			pmap->pm_stats.wired_count--;
 
-	} else { /* if ( pa == old_pa) */
+	} else { /* if (pa == old_pa) */
 
 		/*
 		 * Remove old mapping from the PV list if necessary.
@@ -2255,9 +2253,9 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
  *	pmap		pointer to pmap structure
  *
  * Calls:
- *	PT_FREE
  *	pmap_pte
  *	pmap_remove_range
+ *	uvm_km_free
  *
  *	The intent of this routine is to release memory pages being used
  * by translation tables. They can be release only if they contain no
@@ -2268,15 +2266,11 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
  * a full page of tables has no wired enties, any otherwise valid
  * entries are invalidated (via pmap_remove_range). Then, the segment
  * table entries corresponding to this group of page tables are
- * invalidated. Finally, PT_FREE is called to return the page to the
+ * invalidated. Finally, uvm_km_free is called to return the page to the
  * system.
  *
  *	If all entries in a segment table are invalidated, it too can
  * be returned to the system.
- *
- *	[Note: depending upon compilation options, tables may be in zones
- * or allocated through kmem_alloc. In the former case, the
- * module deals with a single table at a time.]
  */
 void
 pmap_collect(pmap_t pmap)
@@ -2331,13 +2325,12 @@ pmap_collect(pmap_t pmap)
 		*((sdt_entry_t *)(sdtp + SDT_ENTRIES)) = 0;
 
 		/*
-		 * we have to unlock before freeing the table, since PT_FREE
-		 * calls uvm_km_free or free, which will invoke another
-		 * pmap routine
+		 * we have to unlock before freeing the table, since
+		 * uvm_km_free will invoke another pmap routine
 		 */
-		PMAP_UNLOCK(pmap, spl);
-		PT_FREE(gdttbl);
-		PMAP_LOCK(pmap, spl);
+		simple_unlock(&pmap->pm_lock);
+		uvm_km_free(kernel_map, (vaddr_t)gdttbl, PAGE_SIZE);
+		simple_lock(&pmap->pm_lock);
 	}
 
 	PMAP_UNLOCK(pmap, spl);
