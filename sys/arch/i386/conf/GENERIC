@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.70 1998/07/03 08:15:07 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.71 1998/07/08 22:44:52 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -187,6 +187,9 @@ pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis UltraSound (flags is record drq)
 ym*	at isapnp?
 #spkr0	at pckbd? port 0x61
+
+eap*	at pci? dev ? function ?		# Ensoniq AudioPCI S5016
+sv*	at pci? dev ? function ?		# S3 SonicVibes (S3 617)
 
 #Audio Support
 audio*  at sb?
