@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.6 1998/10/04 01:05:25 millert Exp $	*/
+/*	$OpenBSD: ls.c,v 1.7 2001/02/05 07:55:36 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: ls.c,v 1.6 1998/10/04 01:05:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.7 2001/02/05 07:55:36 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,6 +55,8 @@ static char rcsid[] = "$OpenBSD: ls.c,v 1.6 1998/10/04 01:05:25 millert Exp $";
 static void printlink __P((char *));
 static void printtime __P((time_t));
 
+#define NAME_WIDTH	8
+
 void
 printlong(name, accpath, sb)
 	char *name;			/* filename to print */
@@ -65,9 +67,9 @@ printlong(name, accpath, sb)
 
 	(void)printf("%6u %4qd ", sb->st_ino, sb->st_blocks);
 	(void)strmode(sb->st_mode, modep);
-	(void)printf("%s %3u %-*s %-*s ", modep, sb->st_nlink, UT_NAMESIZE,
-	    user_from_uid(sb->st_uid, 0), UT_NAMESIZE,
-	    group_from_gid(sb->st_gid, 0));
+	(void)printf("%s %3u %-*.*s %-*.*s ", modep, sb->st_nlink, 
+	    NAME_WIDTH, UT_NAMESIZE, user_from_uid(sb->st_uid, 0), 
+	    NAME_WIDTH, UT_NAMESIZE, group_from_gid(sb->st_gid, 0));
 
 	if (S_ISCHR(sb->st_mode) || S_ISBLK(sb->st_mode))
 		(void)printf("%3d, %3d ", major(sb->st_rdev),
