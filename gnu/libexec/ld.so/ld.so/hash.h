@@ -13,12 +13,12 @@ struct elf_resolve{
   /* These entries must be in this order to be compatible with the interface used
      by gdb to obtain the list of symbols. */
   char * loadaddr;
+  char * loadoffs;
   char * libname;
   unsigned int dynamic_addr;
   struct elf_resolve * next;
   struct elf_resolve * prev;
   /* Nothing after this address is used by gdb. */
-  char * loadoffs;
   enum {elf_lib, elf_executable,program_interpreter, loaded_file} libtype;
   struct dyn_elf * symbol_scope;
   unsigned short usage_count;
