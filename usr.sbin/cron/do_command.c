@@ -16,7 +16,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: do_command.c,v 1.1.1.1 1995/10/18 08:47:30 deraadt Exp $";
+static char rcsid[] = "$Id: do_command.c,v 1.2 1996/08/07 06:18:33 deraadt Exp $";
 #endif
 
 
@@ -210,6 +210,7 @@ child_process(e, u)
 # if defined(BSD)
 		initgroups(env_get("LOGNAME", e->envp), e->gid);
 # endif
+		setlogin(usernm);
 		setuid(e->uid);		/* we aren't root after this... */
 		chdir(env_get("HOME", e->envp));
 
