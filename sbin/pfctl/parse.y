@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.458 2004/06/29 17:40:18 frantzen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.459 2004/06/29 22:14:13 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -474,11 +474,6 @@ option		: SET OPTIMIZATION STRING		{
 		| SET LIMIT '{' limit_list '}'
 		| SET LOGINTERFACE STRING		{
 			if (check_rulestate(PFCTL_STATE_OPTION)) {
-				free($3);
-				YYERROR;
-			}
-			if ((ifa_exists($3, 0) == NULL) && strcmp($3, "none")) {
-				yyerror("interface %s doesn't exist", $3);
 				free($3);
 				YYERROR;
 			}
@@ -1930,11 +1925,6 @@ if_item_not	: not if_item			{ $$ = $2; $$->not = $1; }
 if_item		: STRING			{
 			struct node_host	*n;
 
-			if ((n = ifa_exists($1, 1)) == NULL) {
-				yyerror("unknown interface %s", $1);
-				free($1);
-				YYERROR;
-			}
 			$$ = calloc(1, sizeof(struct node_if));
 			if ($$ == NULL)
 				err(1, "if_item: calloc");
@@ -1945,8 +1935,11 @@ if_item		: STRING			{
 				yyerror("interface name too long");
 				YYERROR;
 			}
+
+			if ((n = ifa_exists($1, 1)) != NULL)
+				$$->ifa_flags = n->ifa_flags;
+
 			free($1);
-			$$->ifa_flags = n->ifa_flags;
 			$$->not = 0;
 			$$->next = NULL;
 			$$->tail = $$;
@@ -2202,11 +2195,6 @@ dynaddr		: '(' STRING ')'		{
 				free(op);
 				yyerror("illegal combination of "
 				    "interface modifiers");
-				YYERROR;
-			}
-			if (ifa_exists($2, 1) == NULL && strcmp($2, "self")) {
-				yyerror("interface %s does not exist", $2);
-				free(op);
 				YYERROR;
 			}
 			$$ = calloc(1, sizeof(struct node_host));
@@ -3340,13 +3328,6 @@ route_host	: STRING			{
 			if ($$ == NULL)
 				err(1, "route_host: calloc");
 			$$->ifname = $1;
-			if (ifa_exists($$->ifname, 0) == NULL) {
-				yyerror("routeto: unknown interface %s",
-				    $$->ifname);
-				free($1);
-				free($$);
-				YYERROR;
-			}
 			set_ipmask($$, 128);
 			$$->next = NULL;
 			$$->tail = $$;
@@ -3354,11 +3335,6 @@ route_host	: STRING			{
 		| '(' STRING host ')'		{
 			$$ = $3;
 			$$->ifname = $2;
-			if (ifa_exists($$->ifname, 0) == NULL) {
-				yyerror("routeto: unknown interface %s",
-				    $$->ifname);
-				YYERROR;
-			}
 		}
 		;
 

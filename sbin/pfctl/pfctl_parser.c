@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.201 2004/06/10 14:22:54 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.202 2004/06/29 22:14:13 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1020,8 +1020,6 @@ ifa_load(void)
 {
 	struct ifaddrs		*ifap, *ifa;
 	struct node_host	*n = NULL, *h = NULL;
-	struct pfr_buffer	 b;
-	struct pfi_if		*p;
 
 	if (getifaddrs(&ifap) < 0)
 		err(1, "getifaddrs");
@@ -1097,43 +1095,6 @@ ifa_load(void)
 		}
 	}
 
-	/* add interface groups, including clonable and dynamic stuff */
-	bzero(&b, sizeof(b));
-	b.pfrb_type = PFRB_IFACES;
-	for (;;) {
-		if (pfr_buf_grow(&b, b.pfrb_size))
-			err(1, "ifa_load: pfr_buf_grow");
-		b.pfrb_size = b.pfrb_msize;
-		if (pfi_get_ifaces(NULL, b.pfrb_caddr, &b.pfrb_size,
-		    PFI_FLAG_GROUP))
-			err(1, "ifa_load: pfi_get_ifaces");
-		if (b.pfrb_size <= b.pfrb_msize)
-			break;
-	}
-	PFRB_FOREACH(p, &b) {
-		n = calloc(1, sizeof(struct node_host));
-		if (n == NULL)
-			err(1, "address: calloc");
-		n->af = AF_LINK;
-		n->ifa_flags = PF_IFA_FLAG_GROUP;
-		if (p->pfif_flags & PFI_IFLAG_DYNAMIC)
-			n->ifa_flags |= PF_IFA_FLAG_DYNAMIC;
-		if (p->pfif_flags & PFI_IFLAG_CLONABLE)
-			n->ifa_flags |= PF_IFA_FLAG_CLONABLE;
-		if (!strcmp(p->pfif_name, "lo"))
-			n->ifa_flags |= IFF_LOOPBACK;
-		if ((n->ifname = strdup(p->pfif_name)) == NULL)
-			err(1, "ifa_load: strdup");
-		n->next = NULL;
-		n->tail = n;
-		if (h == NULL)
-			h = n;
-		else {
-			h->tail->next = n;
-			h->tail = n;
-		}
-	}
-
 	iftab = h;
 	freeifaddrs(ifap);
 }
@@ -1142,12 +1103,7 @@ struct node_host *
 ifa_exists(const char *ifa_name, int group_ok)
 {
 	struct node_host	*n;
-	char			*p, buf[IFNAMSIZ];
-	int			 group;
 
-	group = !isdigit(ifa_name[strlen(ifa_name) - 1]);
-	if (group && !group_ok)
-		return (NULL);
 	if (iftab == NULL)
 		ifa_load();
 
@@ -1155,19 +1111,7 @@ ifa_exists(const char *ifa_name, int group_ok)
 		if (n->af == AF_LINK && !strncmp(n->ifname, ifa_name, IFNAMSIZ))
 			return (n);
 	}
-	if (!group) {
-		/* look for clonable and/or dynamic interface */
-		strlcpy(buf, ifa_name, sizeof(buf));
-		for (p = buf + strlen(buf) - 1; p > buf && isdigit(*p); p--)
-			*p = '\0';
-		for (n = iftab; n != NULL; n = n->next)
-			if (n->af == AF_LINK &&
-			    !strncmp(n->ifname, buf, IFNAMSIZ))
-				break;
-		if (n != NULL && n->ifa_flags &
-		    (PF_IFA_FLAG_DYNAMIC | PF_IFA_FLAG_CLONABLE))
-			return (n);	/* XXX */
-	}
+
 	return (NULL);
 }
 
