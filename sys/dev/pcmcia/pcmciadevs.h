@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.97 2002/08/17 21:55:36 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.98 2002/11/10 18:52:32 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.95 2002/08/17 21:55:10 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.96 2002/11/10 18:52:02 mickey Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -496,6 +496,7 @@
 #define	PCMCIA_VENDOR_EPSON	-1	/* Seiko Epson Corporation */
 #define	PCMCIA_VENDOR_EXP	-1	/* EXP Computer Inc */
 #define	PCMCIA_VENDOR_GEMTEK	-1	/* GEMTEK */
+#define	PCMCIA_VENDOR_GVC	-1	/* GVC */
 #define	PCMCIA_VENDOR_ICOM	-1	/* ICOM Inc */
 #define	PCMCIA_VENDOR_INTERSIL	-1	/* Intersil */
 #define	PCMCIA_VENDOR_PLANET	-1	/* Planet */
@@ -641,3 +642,5 @@
 #define	PCMCIA_PRODUCT_SIMPLETECH_SPECTRUM24_ALT	PCMCIA_PRODUCT_INVALID
 #define	PCMCIA_CIS_AROWANA_FE	{ "PCMCIA", "Fast-Ethernet", NULL, NULL }
 #define	PCMCIA_PRODUCT_AROWANA_FE	PCMCIA_PRODUCT_INVALID
+#define	PCMCIA_CIS_GVC_NP0335	{ "ETHER-C16", "ETHER-C16", "Fast Ethernet", NULL }
+#define	PCMCIA_PRODUCT_GVC_NP0335	PCMCIA_PRODUCT_INVALID
