@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inetd.8,v 1.25 2003/06/12 12:59:50 jmc Exp $
+.\"	$OpenBSD: inetd.8,v 1.26 2004/04/24 21:40:35 millert Exp $
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -192,11 +192,18 @@ and
 .Dq udp
 will be recognized as
 .Dq TCP or UDP over default IP version .
-It is currently IPv4, but in the future it will be IPv6.
+This is currently IPv4, but in the future it will be IPv6.
 If you need to specify IPv4 or IPv6 explicitly, use something like
 .Dq tcp4
 or
 .Dq udp6 .
+A
+.Em protocol
+of
+.Dq unix
+is used to specify a socket in the
+.Ux
+domain.
 .Pp
 The
 .Em wait/nowait
@@ -377,7 +384,7 @@ command appeared in
 Support for Sun-RPC
 based services is modelled after that
 provided by SunOS 4.1.
-IPv6 support and IPsec hack was made by KAME project, in 1999.
+IPv6 support was added by the KAME project in 1999.
 .Sh BUGS
 Host address specifiers, while they make conceptual sense for RPC
 services, do not work entirely correctly.
