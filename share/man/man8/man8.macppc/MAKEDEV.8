@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.4 2002/04/08 21:40:29 miod Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.5 2002/10/02 17:40:21 miod Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -55,11 +55,12 @@ for a more complete discussion of special files.
 .Nm MAKEDEV
 takes any number of device names as arguments, where the names are
 the common abbreviation for the device.
-There are three special device names,
+There are four special device names,
 .Ar all ,
-.Ar std
+.Ar std ,
+.Ar local
 and
-.Ar local .
+.Ar wscons .
 If
 given,
 .Ar all
@@ -80,7 +81,7 @@ Where a device name is followed by a hash sign ("#"), the hash sign
 must be replaced by a unit number.
 .Pp
 .Sy Pseudo\-names
-.Bl -tag -width indent -compact
+.Bl -tag -width wsmouse indent -compact
 .It Ar all
 All known devices for macppc.
 .It Ar std
@@ -88,10 +89,12 @@ The standard devices (console, drum, fd/*, klog, kmem, mem, null, stderr,
 stdin, stdout, tty, zero)
 .It Ar local
 Configuration specific devices
+.It Ar wscons
+All wscons-related devices.
 .El
 .Pp
 .Sy Device\-names
-.Bl -tag -width indent -compact
+.Bl -tag -width wsmouse indent -compact
 .It Ar bpf#
 Berkeley packet filters
 .It Ar ccd#
@@ -120,6 +123,8 @@ SCSI scanners
 SCSI tape drives
 .It Ar tty#
 Serial ports
+.It Ar ttyC#
+wscons console screens
 .It Ar tun#
 Network tunnel devices
 .It Ar uk#
@@ -138,13 +143,16 @@ USB generic devices
 .It Ar utty#
 USB serial ports
 .It Ar vnd#
-"File" pseudo-disks
+.Dq file
+pseudo-disks
 .It Ar wd#
 IDE disk drives
-.It Ar wskbd#
-WSCONS keyboard devices
-.It Ar wsmouse#
-WSCONS mouse devices
+.It Ar wskbd
+Keyboard devices for wscons.
+.It Ar wsmouse
+Mouse devices for wscons.
+.It Ar wsmux
+Multiplexor devices for wscons.
 .It Ar xfs#
 XFS filesystem devices
 .El

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.9 2002/04/09 17:29:23 deraadt Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.10 2002/10/02 17:40:22 miod Exp $
 .\"	$NetBSD: MAKEDEV.8,v 1.1 1995/09/06 21:31:34 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -84,7 +84,7 @@ Where a device name is followed by a hash sign ("#"), the hash sign
 must be replaced by a unit number.
 .Pp
 .Sy Pseudo\-names
-.Bl -tag -width indent -compact
+.Bl -tag -width cgfour# indent -compact
 .It Ar all
 All known devices for the sun3.
 .It Ar std
@@ -95,7 +95,7 @@ Configuration specific devices
 .El
 .Pp
 .Sy Device\-names
-.Bl -tag -width indent -compact
+.Bl -tag -width cgfour# indent -compact
 .It Ar bpf#
 Berkeley packet filters
 .It Ar bwtwo#
@@ -121,7 +121,8 @@ SCSI tape drives
 .It Ar tty#
 Onboard Serial ports
 .It Ar vnd#
-"File" pseudo-disks
+.Dq file
+pseudo-disks
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact

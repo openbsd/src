@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.3 2002/04/08 21:40:30 miod Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.4 2002/10/02 17:40:22 miod Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -57,11 +57,12 @@ for a more complete discussion of special files.
 .Nm MAKEDEV
 takes any number of device names as arguments, where the names are
 the common abbreviation for the device.
-There are three special device names,
+There are four special device names,
 .Ar all ,
-.Ar std
+.Ar std ,
+.Ar local
 and
-.Ar local .
+.Ar wscons .
 If
 given,
 .Ar all
@@ -82,7 +83,7 @@ Where a device name is followed by a hash sign ("#"), the hash sign
 must be replaced by a unit number.
 .Pp
 .Sy Pseudo\-names
-.Bl -tag -width indent -compact
+.Bl -tag -width openprom indent -compact
 .It Ar all
 All known devices for sparc64.
 .It Ar std
@@ -90,26 +91,20 @@ The standard devices (console, drum, fd/*, klog, kmem, mem, null, stderr,
 stdin, stdout, tty, zero)
 .It Ar local
 Configuration specific devices
+.It Ar wscons
+All wscons-related devices.
 .El
 .Pp
 .Sy Device\-names
-.Bl -tag -width indent -compact
+.Bl -tag -width openprom indent -compact
 .It Ar audio
 Audio device
 .It Ar bpf#
 Berkeley packet filters
-.It Ar bwtwo#
-Black and white frame buffers
 .It Ar ccd#
 Concatenated disk drives
 .It Ar cd#
 SCSI CD-ROM drives
-.It Ar cgfourteen#
-Colour frame buffers
-.It Ar cgthree#
-Colour frame buffers
-.It Ar cgsix#
-Accelerated colour frame buffers
 .It Ar ch#
 SCSI media changer drives
 .It Ar cua#
@@ -117,12 +112,8 @@ Serial ports
 .It Ar fd#
 .Dq floppy
 disk drives
-.It Ar kbd
-The keyboard
 .It Ar lkm
 Loadable kernel modules.
-.It Ar mouse#
-Mouse ports
 .It Ar openprom
 OPENPROM and EEPROM interface
 .It Ar pty#
@@ -139,17 +130,24 @@ SCSI disk drives
 SCSI SES/SAF-TE devices
 .It Ar st#
 SCSI tape drives
-.It Ar tcx#
-Accelerated colour frame buffers
 .It Ar tty#
 Serial ports
+.It Ar ttyC#
+wscons console screens
 .It Ar tun#
 Network tunnel devices
 .It Ar uk#
 .Dq unknown SCSI
 devices
 .It Ar vnd#
-"File" pseudo-disks
+.Dq file
+pseudo-disks
+.It Ar wskbd
+Keyboard devices for wscons.
+.It Ar wsmouse
+Mouse devices for wscons.
+.It Ar wsmux
+Multiplexor devices for wscons.
 .It Ar xfs#
 XFS filesystem devices
 .El

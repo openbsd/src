@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.19 2002/09/26 14:44:43 fgsch Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.20 2002/10/02 17:40:21 miod Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -86,11 +86,12 @@ for a more complete discussion of special files.
 .Nm MAKEDEV
 takes any number of device names as arguments, where the names are
 the common abbreviation for the device.
-There are three special device names,
+There are four special device names,
 .Ar all ,
-.Ar std
+.Ar std ,
+.Ar local
 and
-.Ar local .
+.Ar wscons .
 If
 given,
 .Ar all
@@ -111,7 +112,7 @@ Where a device name is followed by a hash sign ("#"), the hash sign
 must be replaced by a unit number.
 .Pp
 .Sy Pseudo\-names
-.Bl -tag -width indent -compact
+.Bl -tag -width wsmouse indent -compact
 .It Ar all
 All known devices for the i386.
 .It Ar std
@@ -119,77 +120,77 @@ The standard devices (console, drum, fd/*, klog, kmem, mem, null, stderr,
 stdin, stdout, tty, zero)
 .It Ar local
 Configuration specific devices
+.It Ar wscons
+All wscons-related devices.
 .El
 .Pp
 .Sy Device\-names
-.Bl -tag -width indent -compact
-.It Ar ttyC#
-wscons console screens
-.It Ar tty#
-standard PC COM ports
+.Bl -tag -width wsmouse indent -compact
+.It Ar apm
+power management devices
+.It Ar audio
+audio device
+.It Ar bktr#
+Brooktree 848 driver
+.It Ar bpf#
+packet filter
+.It Ar ccd#
+concatenated disk devices
 .It Ar cd#
 SCSI CD-ROM drives
-.It Ar mcd#
-Mitsumi CD-ROM drives
 .It Ar fd#
 .Dq floppy
 disk drives (3 1/2, 5 1/4)
+.It Ar joy#
+joystick driver
+.It Ar lkm
+loadable kernel modules interface
+.It Ar lpa#
+interruptless parallel port driver
+.It Ar lpt#
+stock parallel port device driver
+.It Ar mcd#
+Mitsumi CD-ROM drives
 .It Ar pty#
 set of 16 master and slave pseudo terminals
-.It Ar sd#
-SCSI disk drives
-.It Ar st#
-SCSI tape drives
-.It Ar wd#
-.Dq winchester
-disk drives (ST506, IDE, ESDI, RLL etc.)
-.It Ar wt#
-QIC-interfaced (i.e. not SCSI) 3M cartridge tape
-.It Ar vnd#
-.Dq file
-pseudo-disks
+.It Ar random
+in-kernel random number generator
 .It Ar rd#
 .Dq ramdisk
 pseudo-disks
-.It Ar ccd#
-concatenated disk devices
-.It Ar mms#
-Microsoft bus mouse
-.It Ar lms#
-Logitech bus mouse
-.It Ar pms#
-PS/2 mouse
-.It Ar lpt#
-stock parallel port device driver
-.It Ar lpa#
-interruptless parallel port driver
-.It Ar bpf#
-packet filter
+.It Ar sd#
+SCSI disk drives
 .It Ar speaker
 pc speaker
-.It Ar lkm
-loadable kernel modules interface
-.It Ar audio
-audio device
-.It Ar apm
-power management devices
+.It Ar ss#
+SCSI scanners
+.It Ar st#
+SCSI tape drives
+.It Ar tty#
+standard PC COM ports
+.It Ar ttyC#
+wscons console screens
 .It Ar tun#
 network tunnel driver
-.It Ar joy#
-joystick driver
-.It Ar pcmcia#
-PCMCIA card drivers
-.It Ar random
-in-kernel random number generator
 .It Ar uk#
 .Dq unknown SCSI
 devices
-.It Ar ss#
-SCSI scanners
-.It Ar bktr#
-Brooktree 848 driver
+.It Ar vnd#
+.Dq file
+pseudo-disks
+.It Ar wd#
+.Dq winchester
+disk drives (ST506, IDE, ESDI, RLL etc.)
 .It Ar wdt#
 watchdog timer
+.It Ar wskbd
+Keyboard devices for wscons.
+.It Ar wsmouse
+Mouse devices for wscons.
+.It Ar wsmux
+Multiplexor devices for wscons.
+.It Ar wt#
+QIC-interfaced (i.e. not SCSI) 3M cartridge tape
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.1 2002/04/08 21:40:25 miod Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.2 2002/10/02 17:40:17 miod Exp $
 .\"
 .\" Copyright (c) 2001 Miodrag Vallat.
 .\" All rights reserved.
@@ -49,11 +49,12 @@ for a more complete discussion of special files.
 .Nm MAKEDEV
 takes any number of device names as arguments, where the names are
 the common abbreviation for the device.
-There are three special device names,
+There are four special device names,
 .Ar all ,
-.Ar std
+.Ar std ,
+.Ar local
 and
-.Ar local .
+.Ar wscons .
 If
 given,
 .Ar all
@@ -74,7 +75,7 @@ Where a device name is followed by a hash sign ("#"), the hash sign
 must be replaced by a unit number.
 .Pp
 .Sy Pseudo\-names
-.Bl -tag -width indent -compact
+.Bl -tag -width wsmouse indent -compact
 .It Ar all
 All known devices for the alpha.
 .It Ar std
@@ -87,19 +88,15 @@ All wscons-related devices.
 .El
 .Pp
 .Sy Device\-names
-.Bl -tag -width indent -compact
+.Bl -tag -width wsmouse indent -compact
 .It Ar bpf#
 Berkeley packet filters
 .It Ar cd#
 SCSI CD-ROM drives
 .It Ar iop#
 I2O devices.
-.It Ar kbd
-The keyboard
 .It Ar lkm
 Loadable kernel modules.
-.It Ar mouse#
-Mouse ports
 .It Ar pty#
 Set of 16 master and slave pseudo terminals
 .It Ar sd#
@@ -108,8 +105,11 @@ SCSI disk drives
 SCSI tape drives
 .It Ar tty#
 Onboard Serial ports
+.It Ar ttyC#
+wscons console screens
 .It Ar vnd#
-"File" pseudo-disks
+.Dq file
+pseudo-disks
 .It Ar wskbd
 Keyboard devices for wscons.
 .It Ar wsmouse
