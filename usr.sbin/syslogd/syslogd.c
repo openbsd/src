@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.37 2001/01/11 23:39:12 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.38 2001/01/16 23:58:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.37 2001/01/11 23:39:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.38 2001/01/16 23:58:00 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -194,12 +194,14 @@ int	Initialized = 0;	/* set when we have initialized ourselves */
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
 volatile int MarkSet;
+volatile int WantDie;
 
 int	SecureMode = 1;		/* when true, speak only unix domain socks */
 
 void	cfline __P((char *, struct filed *, char *));
 char   *cvthname __P((struct sockaddr_in *));
 int	decode __P((const char *, CODE *));
+void	dodie __P((int));
 void	die __P((int));
 void	domark __P((int));
 void	markit __P((void));
@@ -289,9 +291,9 @@ main(argc, argv)
 	linesize++;
 	line = malloc(linesize);
 
-	(void)signal(SIGTERM, die);
-	(void)signal(SIGINT, Debug ? die : SIG_IGN);
-	(void)signal(SIGQUIT, Debug ? die : SIG_IGN);
+	(void)signal(SIGTERM, dodie);
+	(void)signal(SIGINT, Debug ? dodie : SIG_IGN);
+	(void)signal(SIGQUIT, Debug ? dodie : SIG_IGN);
 	(void)signal(SIGCHLD, reapchild);
 	(void)signal(SIGALRM, domark);
 	(void)alarm(TIMERINTVL);
@@ -372,6 +374,11 @@ main(argc, argv)
 		errx(1, "calloc fd_set");
 
 	for (;;) {
+		if (MarkSet)
+			markit();
+		if (WantDie)
+			die(WantDie);
+
 		bzero(fdsr, howmany(fdsrmax+1, NFDBITS) *
 		    sizeof(fd_mask));
 
@@ -390,8 +397,6 @@ main(argc, argv)
 		case -1:
 			if (errno != EINTR)
 				logerror("select");
-			if (MarkSet)
-				markit();
 			continue;
 		}
 
@@ -879,6 +884,13 @@ cvthname(f)
 	if ((p = strchr(hp->h_name, '.')) && strcmp(p + 1, LocalDomain) == 0)
 		*p = '\0';
 	return (hp->h_name);
+}
+
+void
+dodie(signo)
+	int signo;
+{
+	WantDie = signo;
 }
 
 void
