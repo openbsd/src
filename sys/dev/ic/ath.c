@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.6 2005/01/03 19:59:18 jsg Exp $  */
+/*      $OpenBSD: ath.c,v 1.7 2005/02/17 18:28:05 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1177,8 +1177,8 @@ ath_start(struct ifnet *ifp)
 			TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
 			splx(s);
 			ifp->if_oerrors++;
-			if (ni != NULL && ni != ic->ic_bss)
-			          ieee80211_free_node(ic, ni);
+			if (ni != NULL)
+				ieee80211_release_node(ic, ni);
 			continue;
 		}
 
@@ -2444,10 +2444,7 @@ ath_rx_proc(void *arg, int npending)
 		 * reclamation (e.g. in response to a DEAUTH message)
 		 * so use release_node here instead of unref_node.
 		 */
-		if (ni == ic->ic_bss)
-			ieee80211_unref_node(&ni);
-		else
-			ieee80211_free_node(ic, ni);
+		ieee80211_release_node(ic, ni);
 
   rx_next:
 		TAILQ_INSERT_TAIL(&sc->sc_rxbuf, bf, bf_list);
@@ -2895,8 +2892,7 @@ ath_tx_proc(void *arg, int npending)
 			 *     this is a DEAUTH message that was sent and the
 			 *     node was timed out due to inactivity.
 			 */
-			if(ni != NULL && ni != ic->ic_bss)
-  			        ieee80211_free_node(ic, ni);
+			ieee80211_release_node(ic, ni);
 		}
 		bus_dmamap_sync(sc->sc_dmat, bf->bf_dmamap, 0,
 		    bf->bf_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -2962,11 +2958,11 @@ ath_draintxq(struct ath_softc *sc)
 		ni = bf->bf_node;
 		bf->bf_node = NULL;
 		s = splnet();
-		if (ni != NULL && ni != ic->ic_bss) {
+		if (ni != NULL) {
 			/*
 			 * Reclaim node reference.
 			 */
-			ieee80211_free_node(ic, ni);
+			ieee80211_release_node(ic, ni);
 		}
 		TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
 		splx(s);

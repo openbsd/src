@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.2 2004/07/04 22:34:14 naddy Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.3 2005/02/17 18:28:05 reyk Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -463,10 +463,8 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 		case IEEE80211_S_ASSOC:
 			/* timeout restart scan */
 			ni = ieee80211_find_node(ic, ic->ic_bss->ni_macaddr);
-			if (ni != NULL) {
+			if (ni != NULL)
 				ni->ni_fails++;
-				ieee80211_unref_node(&ni);
-			}
 			ieee80211_begin_scan(ifp);
 			break;
 		}

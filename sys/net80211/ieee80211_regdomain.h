@@ -1,4 +1,4 @@
-/*     $OpenBSD: ieee80211_regdomain.h,v 1.4 2004/12/30 23:35:35 reyk Exp $ */
+/*     $OpenBSD: ieee80211_regdomain.h,v 1.5 2005/02/17 18:28:05 reyk Exp $ */
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>.
@@ -479,6 +479,18 @@ struct ieee80211_countryname {
 	{ CTRY_DEBUG,              "zz", DMN_DEBUG }			\
 }
 
+enum ieee80211_ctl {
+	CTL_11A		= 0x00,
+	CTL_11B		= 0x01,
+	CTL_11G		= 0x02,
+	CTL_TURBO	= 0x03,
+	CTL_TURBO_G	= 0x04,
+	CTL_FCC		= 0x10,
+	CTL_ETSI	= 0x30,
+	CTL_MKK		= 0x40,
+	CTL_NONE	= 0xff
+};
+
 struct ieee80211_regchannel {
 	u_int16_t	rc_channel;
 	u_int32_t 	rc_mode;
@@ -810,6 +822,7 @@ extern u_int32_t	 ieee80211_name2regdomain(const char *);
 extern const char 	*ieee80211_countrycode2name(u_int16_t);
 extern const char 	*ieee80211_regdomain2name(u_int32_t);
 extern u_int32_t 	 ieee80211_regdomain2flag(u_int16_t, u_int16_t);
+extern u_int32_t	 ieee80211_countrycode2regdomain(u_int16_t);
 
 __END_DECLS
 

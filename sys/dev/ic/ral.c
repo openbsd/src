@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.5 2005/02/17 17:43:31 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.6 2005/02/17 18:28:05 reyk Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -552,8 +552,8 @@ ral_reset_tx_ring(struct ral_softc *sc, struct ral_tx_ring *ring)
 			data->m = NULL;
 		}
 
-		if (data->ni != NULL && data->ni != ic->ic_bss) {
-			ieee80211_free_node(ic, data->ni);
+		if (data->ni != NULL) {
+			ieee80211_release_node(ic, data->ni);
 			data->ni = NULL;
 		}
 
@@ -596,8 +596,8 @@ ral_free_tx_ring(struct ral_softc *sc, struct ral_tx_ring *ring)
 				m_freem(data->m);
 			}
 
-			if (data->ni != NULL && data->ni != ic->ic_bss)
-				ieee80211_free_node(ic, data->ni);
+			if (data->ni != NULL)
+				ieee80211_release_node(ic, data->ni);
 
 			if (data->map != NULL)
 				bus_dmamap_destroy(sc->sc_dmat, data->map);
@@ -1030,10 +1030,7 @@ ral_tx_intr(struct ral_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, data->map);
 		m_freem(data->m);
 		data->m = NULL;
-		if (data->ni == ic->ic_bss)
-			ieee80211_unref_node(&data->ni);
-		else
-			ieee80211_free_node(ic, data->ni);
+		ieee80211_release_node(ic, data->ni);
 		data->ni = NULL;
 
 		/* descriptor is no longer valid */
@@ -1101,10 +1098,7 @@ ral_prio_intr(struct ral_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, data->map);
 		m_freem(data->m);
 		data->m = NULL;
-		if (data->ni == ic->ic_bss)
-			ieee80211_unref_node(&data->ni);
-		else
-			ieee80211_free_node(ic, data->ni);
+		ieee80211_release_node(ic, data->ni);
 		data->ni = NULL;
 
 		/* descriptor is no longer valid */
@@ -1757,8 +1751,8 @@ ral_start(struct ifnet *ifp)
 				bpf_mtap(ic->ic_rawbpf, m0);
 #endif
 			if (ral_tx_data(sc, m0, ni) != 0) {
-				if (ni != NULL && ni != ic->ic_bss)
-					ieee80211_free_node(ic, ni);
+				if (ni != NULL)
+					ieee80211_release_node(ic, ni);
 				break;
 			}
 		}

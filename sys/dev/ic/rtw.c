@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.16 2005/02/14 12:49:29 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.17 2005/02/17 18:28:05 reyk Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -1234,7 +1234,6 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 	struct rtw_rxdesc_blk *rdb;
 	struct mbuf *m;
 
-	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni;
 	struct ieee80211_frame *wh;
 
@@ -1393,10 +1392,7 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 #endif /* RTW_DEBUG */
 
 		ieee80211_input(&sc->sc_if, m, ni, rssi, htsftl);
-		if (ni == ic->ic_bss)
-			ieee80211_unref_node(&ni);
-		else
-			ieee80211_free_node(&sc->sc_ic, ni);
+		ieee80211_release_node(&sc->sc_ic, ni);
 next:
 		rtw_rxdesc_init(rdb, rs, next, 0);
 	}
@@ -1426,10 +1422,7 @@ rtw_txsoft_release(bus_dma_tag_t dmat, struct ieee80211com *ic,
 	    BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(dmat, ts->ts_dmamap);
 	m_freem(m);
-	if (ni == ic->ic_bss)
-		ieee80211_unref_node(&ni);
-	else
-		ieee80211_free_node(ic, ni);
+	ieee80211_release_node(ic, ni);
 }
 
 void
@@ -3003,8 +2996,7 @@ post_load_err:
 	bus_dmamap_unload(sc->sc_dmat, dmamap);
 	m_freem(m0);
 post_dequeue_err:
-	if (ni != ic->ic_bss)
-		ieee80211_free_node(&sc->sc_ic, ni);
+	ieee80211_release_node(&sc->sc_ic, ni);
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.50 2005/01/26 13:05:49 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.51 2005/02/17 18:28:05 reyk Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1635,10 +1635,7 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	ieee80211_input(ifp, m, ni, h->rssi, UGETDW(h->rx_time));
 
-	if (ni == ic->ic_bss)
-		ieee80211_unref_node(&ni);
-	else
-		ieee80211_free_node(ic, ni);
+	ieee80211_release_node(ic, ni);
 done1:
 	splx(s);
 done:
@@ -1867,9 +1864,8 @@ bad:
 			cd->atu_tx_inuse--;
 			splx(s);
 			/* ifp_if_oerrors++; */
-			if (ni != NULL && ni != ic->ic_bss)
-				/* reclaim node */
-				ieee80211_free_node(ic, ni);
+			if (ni != NULL)
+				ieee80211_release_node(ic, ni);
 			continue;
 		}
 		ifp->if_timer = 5;

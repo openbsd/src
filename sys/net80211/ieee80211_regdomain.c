@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_regdomain.c,v 1.2 2004/11/06 18:31:41 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_regdomain.c,v 1.3 2005/02/17 18:28:05 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004 Reyk Floeter <reyk@vantronix.net>. 
@@ -179,3 +179,15 @@ ieee80211_regdomain2flag(u_int16_t regdomain, u_int16_t mhz)
 	return((u_int32_t)DMN_DEBUG);
 }
 
+u_int32_t
+ieee80211_countrycode2regdomain(u_int16_t code)
+{
+	int i;
+
+	for (i = 0;
+	     i < (sizeof(ieee80211_r_ctry) / sizeof(ieee80211_r_ctry[0])); i++)
+		if (ieee80211_r_ctry[i].cn_code == code)
+			return (ieee80211_r_ctry[i].cn_domain);
+
+	return((u_int32_t)DMN_DEFAULT);
+}

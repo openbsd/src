@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.28 2005/01/15 05:24:10 brad Exp $	*/
+/*	$OpenBSD: atw.c,v 1.29 2005/02/17 18:28:05 reyk Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3255,12 +3255,9 @@ atw_rxintr(struct atw_softc *sc)
 		/*
 		 * The frame may have caused the node to be marked for
 		 * reclamation (e.g. in response to a DEAUTH message)
-		 * so use free_node here instead of unref_node.
+		 * so use release_node here instead of unref_node.
 		 */
-		if (ni == ic->ic_bss)
-			ieee80211_unref_node(&ni);
-		else
-			ieee80211_free_node(ic, ni);
+		ieee80211_release_node(ic, ni);
 	}
 
 	/* Update the receive pointer. */
@@ -3627,8 +3624,8 @@ atw_start(struct ifnet *ifp)
 
 		M_PREPEND(m0, offsetof(struct atw_frame, atw_ihdr), M_DONTWAIT);
 
-		if (ni != NULL && ni != ic->ic_bss)
-			ieee80211_free_node(ic, ni);
+		if (ni != NULL)
+			ieee80211_release_node(ic, ni);
 
 		if (m0 == NULL) {
 			ifp->if_oerrors++;

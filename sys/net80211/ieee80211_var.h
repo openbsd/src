@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.5 2005/02/15 19:44:15 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.6 2005/02/17 18:28:05 reyk Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -110,6 +110,7 @@ struct ieee80211_channel {
 #define	IEEE80211_CHAN_PASSIVE	0x0200	/* Only passive scan allowed */
 #define	IEEE80211_CHAN_DYN	0x0400	/* Dynamic CCK-OFDM channel */
 #define	IEEE80211_CHAN_GFSK	0x0800	/* GFSK channel (FHSS PHY) */
+#define	IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
 
 /*
  * Useful combinations of channel characteristics.
@@ -126,6 +127,8 @@ struct ieee80211_channel {
 	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_DYN)
 #define	IEEE80211_CHAN_T \
 	(IEEE80211_CHAN_5GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
+#define	IEEE80211_CHAN_TG \
+	(IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_OFDM | IEEE80211_CHAN_TURBO)
 
 #define	IEEE80211_IS_CHAN_FHSS(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_FHSS) == IEEE80211_CHAN_FHSS)
@@ -139,6 +142,8 @@ struct ieee80211_channel {
 	(((_c)->ic_flags & IEEE80211_CHAN_G) == IEEE80211_CHAN_G)
 #define	IEEE80211_IS_CHAN_T(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_T) == IEEE80211_CHAN_T)
+#define	IEEE80211_IS_CHAN_TG(_c) \
+	(((_c)->ic_flags & IEEE80211_CHAN_TG) == IEEE80211_CHAN_TG)
 
 #define	IEEE80211_IS_CHAN_2GHZ(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_2GHZ) != 0)
@@ -150,6 +155,8 @@ struct ieee80211_channel {
 	(((_c)->ic_flags & IEEE80211_CHAN_CCK) != 0)
 #define	IEEE80211_IS_CHAN_GFSK(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_GFSK) != 0)
+#define	IEEE80211_IS_CHAN_XR(_c) \
+	(((_c)->ic_flags & IEEE80211_CHAN_XR) != 0)
 
 /* ni_chan encoding for FH phy */
 #define	IEEE80211_FH_CHANMOD	80
@@ -167,6 +174,7 @@ struct ieee80211com {
 #else
 	struct arpcom		ic_ac;
 #endif
+	LIST_ENTRY(ieee80211com) ic_list;	/* chain of all ieee80211com */
 	void			(*ic_recv_mgmt)(struct ieee80211com *,
 				    struct mbuf *, struct ieee80211_node *,
 				    int, int, u_int32_t);
@@ -192,7 +200,7 @@ struct ieee80211com {
 	enum ieee80211_phytype	ic_phytype;	/* XXX wrong for multi-mode */
 	enum ieee80211_opmode	ic_opmode;	/* operation mode */
 	enum ieee80211_state	ic_state;	/* 802.11 state */
-	u_int32_t		ic_aid_bitmap[IEEE80211_MAX_AID / 32 + 1];
+	u_int32_t		*ic_aid_bitmap;
 	u_int16_t		ic_max_aid;
 	enum ieee80211_protmode	ic_protmode;	/* 802.11g protection mode */
 	struct ifmedia		ic_media;	/* interface media config */
@@ -206,9 +214,7 @@ struct ieee80211com {
 	int			ic_fixed_rate;	/* index to ic_sup_rates[] */
 	u_int16_t		ic_rtsthreshold;
 	u_int16_t		ic_fragthreshold;
-#ifdef __FreeBSD__
-	struct mtx		ic_nodelock;	/* on node table */
-#endif
+	ieee80211_node_lock_t	ic_nodelock;	/* on node table */
 	u_int			ic_scangen;	/* gen# for timeout scan */
 	struct ieee80211_node	*(*ic_node_alloc)(struct ieee80211com *);
 	void			(*ic_node_free)(struct ieee80211com *,
@@ -218,7 +224,11 @@ struct ieee80211com {
 					const struct ieee80211_node *);
 	u_int8_t		(*ic_node_getrssi)(struct ieee80211com *,
 					struct ieee80211_node *);
-	TAILQ_HEAD(, ieee80211_node) ic_node;	/* information of all nodes */
+	TAILQ_HEAD(, ieee80211_node) ic_node;	/* information of all nodes
+						 * LRU at tail
+						 */
+	int			ic_nnodes;	/* length of ic_nnodes */
+	int			ic_max_nnodes;	/* max length of ic_nnodes */
 	LIST_HEAD(, ieee80211_node) ic_hash[IEEE80211_NODE_HASHSIZE];
 	u_int16_t		ic_lintval;	/* listen interval */
 	u_int16_t		ic_holdover;	/* PM hold over duration */
@@ -248,6 +258,9 @@ struct ieee80211com {
 #define	ic_if		ic_ac.ac_if
 #endif
 #define	ic_softc	ic_if.if_softc
+
+LIST_HEAD(ieee80211com_head, ieee80211com);
+extern struct ieee80211com_head ieee80211com_head;
 
 #define	IEEE80211_ADDR_EQ(a1,a2)	(memcmp(a1,a2,IEEE80211_ADDR_LEN) == 0)
 #define	IEEE80211_ADDR_COPY(dst,src)	memcpy(dst,src,IEEE80211_ADDR_LEN)
@@ -320,6 +333,6 @@ extern	int ieee80211_debug;
 #define	IEEE80211_DPRINTF2(X)
 #endif
 
-extern	int ieee80211_inact_max;
+extern	int ieee80211_cache_size;
 
 #endif /* _NET80211_IEEE80211_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.24 2005/01/09 16:47:50 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.25 2005/02/17 18:28:05 reyk Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -795,10 +795,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 	/* Send the frame to the upper layer */
 	ieee80211_input(ifp, m, ni, IWI_RSSIDBM2RAW(frame->rssi_dbm), 0);
 
-	if (ni == ic->ic_bss)
-		ieee80211_unref_node(&ni);
-	else
-		ieee80211_free_node(ic, ni);
+	ieee80211_release_node(ic, ni);
 
 	MGETHDR(buf->m, M_DONTWAIT, MT_DATA);
 	if (buf->m == NULL) {
@@ -971,8 +968,7 @@ iwi_tx_intr(struct iwi_softc *sc)
 		bus_dmamap_unload(sc->sc_dmat, buf->map);
 		m_freem(buf->m);
 		buf->m = NULL;
-		if (buf->ni != ic->ic_bss)
-			ieee80211_free_node(ic, buf->ni);
+		ieee80211_release_node(ic, buf->ni);
 		buf->ni = NULL;
 
 		sc->tx_queued--;
@@ -1221,8 +1217,8 @@ iwi_start(struct ifnet *ifp)
 #endif
 
 		if (iwi_tx_start(ifp, m0, ni) != 0) {
-			if (ni != NULL && ni != ic->ic_bss)
-				ieee80211_free_node(ic, ni);
+			if (ni != NULL)
+				ieee80211_release_node(ic, ni);
 			break;
 		}
 
@@ -2003,8 +1999,7 @@ iwi_stop(struct ifnet *ifp, int disable)
 			buf->m = NULL;
 
 			if (buf->ni != NULL) {
-				if (buf->ni != ic->ic_bss)
-					ieee80211_free_node(ic, buf->ni);
+				ieee80211_release_node(ic, buf->ni);
 				buf->ni = NULL;
 			}
 		}

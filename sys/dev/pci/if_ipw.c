@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.39 2005/01/13 20:52:13 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.40 2005/02/17 18:28:05 reyk Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -939,10 +939,7 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	/* Send the frame to the upper layer */
 	ieee80211_input(ifp, m, ni, status->rssi, 0);
 
-	if (ni == ic->ic_bss)
-		ieee80211_unref_node(&ni);
-	else
-		ieee80211_free_node(ic, ni);
+	ieee80211_release_node(ic, ni);
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
@@ -1060,8 +1057,8 @@ ipw_release_sbd(struct ipw_softc *sc, struct ipw_soft_bd *sbd)
 
 		m_freem(sbuf->m);
 
-		if (sbuf->ni != NULL && sbuf->ni != ic->ic_bss)
-			ieee80211_free_node(ic, sbuf->ni);
+		if (sbuf->ni != NULL)
+			ieee80211_release_node(ic, sbuf->ni);
 
 		/* kill watchdog timer */
 		sc->sc_tx_timer = 0;
@@ -1385,8 +1382,8 @@ ipw_start(struct ifnet *ifp)
 #endif
 
 		if (ipw_tx_start(ifp, m, ni) != 0) {
-			if (ni != NULL && ni != ic->ic_bss)
-				ieee80211_free_node(ic, ni);
+			if (ni != NULL)
+				ieee80211_release_node(ic, ni);
 			break;
 		}
 

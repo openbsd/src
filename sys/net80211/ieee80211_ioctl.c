@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.5 2005/02/15 19:44:15 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.6 2005/02/17 18:28:05 reyk Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -1366,9 +1366,16 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			break;
 		error = ieee80211_cfgset(ifp, cmd, data);
 		break;
+#if 0
+	case SIOCG80211ZSTATS:
+#endif
 	case SIOCG80211STATS:
 		ifr = (struct ifreq *)data;
 		copyout(&ic->ic_stats, ifr->ifr_data, sizeof (ic->ic_stats));
+#if 0
+		if (cmd == SIOCG80211ZSTATS)
+			memset(&ic->ic_stats, 0, sizeof(ic->ic_stats));
+#endif
 		break;
 	case SIOCS80211TXPOWER:
 		txpower = (struct ieee80211_txpower *)data;
@@ -1426,7 +1433,7 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				    IEEE80211_FC0_SUBTYPE_DEAUTH,
 				    IEEE80211_REASON_AUTH_LEAVE);
 
-			ieee80211_free_node(ic, ni);
+			ieee80211_release_node(ic, ni);
 		}
 		break;
 	case SIOCHOSTAP_GET:

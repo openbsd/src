@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.4 2004/12/28 23:07:32 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.5 2005/02/17 18:28:05 reyk Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -198,7 +198,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	ni = ieee80211_find_txnode(ic, eh.ether_dhost);
 	if (ni == NULL) {
 		IEEE80211_DPRINTF(("%s: no node for dst %s, discard frame\n",
-			__func__, ether_sprintf(eh.ether_dhost)));
+		    __func__, ether_sprintf(eh.ether_dhost)));
 		ic->ic_stats.is_tx_nonode++;
 		goto bad;
 	}
@@ -235,7 +235,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 		wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
 		IEEE80211_ADDR_COPY(wh->i_addr1, eh.ether_dhost);
 		IEEE80211_ADDR_COPY(wh->i_addr2, eh.ether_shost);
-		IEEE80211_ADDR_COPY(wh->i_addr3, ni->ni_bssid);
+		IEEE80211_ADDR_COPY(wh->i_addr3, ic->ic_bss->ni_bssid);
 		break;
 	case IEEE80211_M_HOSTAP:
 		wh->i_fc[1] = IEEE80211_FC1_DIR_FROMDS;
@@ -253,8 +253,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 bad:
 	if (m != NULL)
 		m_freem(m);
-	if (ni && ni != ic->ic_bss)
-		ieee80211_free_node(ic, ni);
+	ieee80211_release_node(ic, ni);
 	*pni = NULL;
 	return NULL;
 }
@@ -390,7 +389,7 @@ ieee80211_compute_duration(struct ieee80211_frame *wh, int len,
 	else if (lastlen0 != 0) {	/* a short "tail" fragment */
 		lastlen = lastlen0 + overlen;
 		npkt++;
-	} else
+	} else				/* full-length "tail" fragment */
 		lastlen = fraglen + overlen;
 
 	if (npktp != NULL)
@@ -515,8 +514,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 	 * the xmit is complete all the way in the driver.  On error we
 	 * will remove our reference.
 	 */
-	if (ni != ic->ic_bss)
-		ieee80211_ref_node(ni);
+	ieee80211_ref_node(ni);
 	timer = 0;
 	switch (type) {
 	case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
@@ -789,7 +787,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 	default:
 		IEEE80211_DPRINTF(("%s: invalid mgmt frame type %u\n",
-			__func__, type));
+		    __func__, type));
 		senderr(EINVAL, is_tx_unknownmgt);
 		/* NOTREACHED */
 	}
@@ -800,8 +798,7 @@ ieee80211_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni,
 			ic->ic_mgt_timer = timer;
 	} else {
 bad:
-		if (ni != ic->ic_bss)		/* remove ref we added */
-			ieee80211_free_node(ic, ni);
+		ieee80211_release_node(ic, ni);
 	}
 	return ret;
 #undef senderr
