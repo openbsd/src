@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.c,v 1.3 1997/04/25 01:19:20 angelos Exp $	*/
+/*	$OpenBSD: encap.c,v 1.4 1997/06/17 23:25:53 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -172,6 +172,8 @@ encap_output(m, va_alist)
 	switch (emp->em_type)
 	{
 	      case EMT_IFADDR:
+		if (emp->em_ifn >= nencap)
+			SENDERR(ENODEV);
 		/*
 		 * Set the default source address for an encap interface
 		 */
@@ -213,8 +215,7 @@ encap_output(m, va_alist)
 		
 	      case EMT_SETSPI:
 		if (emp->em_if >= nencap)
-		  SENDERR(ENODEV);
-		
+			SENDERR(ENODEV);
 		tdbp = gettdb(emp->em_spi, emp->em_dst);
 		if (tdbp == NULL)
 		{
@@ -238,8 +239,7 @@ encap_output(m, va_alist)
 		
 	      case EMT_DELSPI:
 		if (emp->em_if >= nencap)
-		  SENDERR(ENODEV);
-
+			SENDERR(ENODEV);
 		tdbp = gettdb(emp->em_spi, emp->em_dst);
 		if (tdbp == NULL)
 		{
@@ -257,9 +257,8 @@ encap_output(m, va_alist)
 		break;
 
 	      case EMT_DELSPICHAIN:
-                if (emp->em_if >= nencap)
-                  SENDERR(ENODEV);
-
+		if (emp->em_if >= nencap)
+			SENDERR(ENODEV);
                 tdbp = gettdb(emp->em_spi, emp->em_dst);
                 if (tdbp == NULL)
                 {
@@ -279,10 +278,7 @@ encap_output(m, va_alist)
 	      case EMT_GRPSPIS:
 		nspis = (emlen - 4) / 12;
 		if (nspis * 12 + 4 != emlen)
-		{
 			SENDERR(EINVAL);
-			break;
-		}
 		
 		for (i = 0; i < nspis; i++)
 		  if ((tdbp = gettdb(emp->em_rel[i].emr_spi, emp->em_rel[i].emr_dst)) == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.h,v 1.2 1997/02/24 13:33:56 niklas Exp $	*/
+/*	$OpenBSD: encap.h,v 1.3 1997/06/17 23:25:54 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -186,7 +186,7 @@ struct encap_msghdr
 		{
 			u_int32_t Spi;	/* SPI */
 			struct in_addr Dst; /* Destination address */
-			int32_t If;		/* enc i/f for input */
+			u_int32_t If;		/* enc i/f for input */
 			int32_t Alg;	/* Algorithm to use */
 			u_int8_t Dat[1];	/* Data */
 		} Xfm;
