@@ -1,4 +1,4 @@
-/*	$OpenBSD: aperture.c,v 1.2 1996/12/21 22:23:38 millert Exp $	*/
+/*	$OpenbSD$	*/
 
 /*
  * Copyright 1994 the XFree86 Project Inc. 
@@ -14,7 +14,13 @@
 #include <sys/errno.h>
 
 #define VGA_START 0xA0000
+#ifdef PC98 
+#define VGA_END   0xFFFFF
+#define HOLE16M_START	0xF00000
+#define HOLE16M_END	0xFFFFFF
+#else 
 #define VGA_END   0xBFFFF
+#endif 
 
 /* open counter */
 static int ap_open_count = 0;
@@ -25,6 +31,7 @@ static int ap_open_count = 0;
 int
 apopen(dev_t dev, int oflags, int devtype, struct proc *p)
 {
+
     if (suser(p->p_ucred, &p->p_acflag) != 0) {
 	return(EPERM);
     }
@@ -62,8 +69,13 @@ apmmap(dev_t dev, int offset, int length)
     printf("apmmap: addr 0x%x\n", offset);
 #endif
     if  ((minor(dev) == 0) 
-	  && ((offset >= VGA_START && offset <= VGA_END)
-	     || (unsigned)offset > (unsigned)ctob(physmem))) {
+	 && ((offset >= VGA_START && offset <= VGA_END )
+	     || (unsigned)offset > (unsigned)ctob(physmem)
+#ifdef PC98
+	     || ((unsigned)offset >=HOLE16M_START
+                   && (unsigned)offset <= HOLE16M_END)
+#endif
+	     )) {
 	return i386_btop(offset);
     } else {
 	return(-1);
