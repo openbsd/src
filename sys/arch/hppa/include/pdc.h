@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.16 2002/01/25 21:26:41 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.17 2002/02/08 20:43:16 miod Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -522,6 +522,14 @@ struct device_path {
 #define	PZF_AUTOSEARCH	0x40	/*	the "boot device" */
 #define	PZF_TIMER	0x0f	/* power of 2 # secs "boot timer" (0 == dflt) */
 #define	PZF_BITS	"\020\010autoboot\07autosearch"
+
+/* macros to decode serial parameters out of dp_layers */
+#define	PZL_BITS(l)	(((l) & 0x03) + 5)
+#define	PZL_PARITY(l)	(((l) & 0x18) >> 3)
+#define	PZL_SPEED(l)	(((l) & 0x3c0) >> 6)
+#define	PZL_ENCODE(bits, parity, speed) \
+	(((bits) - 5) & 0x03) | (((parity) & 0x3) << 3) | \
+	(((speed) & 0x10) << 6)
 
 /*
  * A processors Stable Storage is accessed through the PDC.  There are

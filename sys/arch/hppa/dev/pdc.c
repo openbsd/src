@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.20 2002/02/05 03:46:23 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.21 2002/02/08 20:43:14 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -75,6 +75,21 @@ void pdctimeout __P((void *v));
 int pdcparam __P((struct tty *tp, struct termios *));
 int pdccnlookc __P((dev_t dev, int *cp));
 
+/* serial console speed table */
+static int pdc_speeds[] = {
+	B50,
+	B75,
+	B110,
+	B150,
+	B300,
+	B600,
+	B1200,
+	B2400,
+	B4800,
+	B7200,
+	B9600,
+};
+
 void
 pdc_init()
 {
@@ -122,8 +137,14 @@ pdc_init()
 #endif
 		conaddr = (u_long)pzd->pz_hpa + IOMOD_DEVOFFSET;
 		conunit = 0;
-		/* TODO detect the baud rate from layer[0] */
-		comdefaultrate = B9600;
+
+		/* compute correct baud rate */
+		if (PZL_SPEED(pzd->pz_layers[0]) <
+		    sizeof(pdc_speeds) / sizeof(int))
+			comdefaultrate =
+			    pdc_speeds[PZL_SPEED(pzd->pz_layers[0])];
+		else
+			comdefaultrate = B9600;	/* XXX */
 	}
 #endif
 }
