@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.34 2003/08/11 20:43:31 millert Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.35 2004/01/17 20:57:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -37,7 +37,7 @@ static const char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static const char rcsid[] = "$OpenBSD: rsh.c,v 1.34 2003/08/11 20:43:31 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rsh.c,v 1.35 2004/01/17 20:57:15 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,29 +61,9 @@ static const char rcsid[] = "$OpenBSD: rsh.c,v 1.34 2003/08/11 20:43:31 millert 
 
 #include "pathnames.h"
 
-#ifdef KERBEROS
-#include <des.h>
-#include <kerberosIV/krb.h>
-
-CREDENTIALS cred;
-Key_schedule schedule;
-int use_kerberos = 1, doencrypt;
-char dst_realm_buf[REALM_SZ], *dest_realm;
-
-void warning(const char *, ...);
-void desrw_set_key(des_cblock *, des_key_schedule *);
-int des_read(int, char *, int);
-int des_write(int, void *, int);
-
-int krcmd(char **, u_short, char *, char *, int *, char *);
-int krcmd_mutual(char **, u_short, char *, char *, int *, char *,
-    CREDENTIALS *, Key_schedule);
-#endif
-
-void usage(void);
+__dead void usage(void);
 void sendsig(int);
 char *copyargs(char **argv);
-
 void talk(int, sigset_t *, int, int);
 
 /*
@@ -94,26 +74,21 @@ int rfd2;
 int
 main(int argc, char *argv[])
 {
-	extern char *optarg;
-	extern int optind;
 	struct passwd *pw;
 	struct servent *sp;
 	sigset_t mask, omask;
 	int argoff, asrsh, ch, dflag, nflag, one, rem, uid;
-	char *args, *host, *user, *p;
+	char *args, *host, *user;
 	pid_t pid = 0;
+	extern char *__progname;
 
 	argoff = asrsh = dflag = nflag = 0;
 	one = 1;
 	host = user = NULL;
 
 	/* if called as something other than "rsh", use it as the host name */
-	if ((p = strrchr(argv[0], '/')))
-		++p;
-	else
-		p = argv[0];
-	if (strcmp(p, "rsh"))
-		host = p;
+	if (strcmp(__progname, "rsh") != 0)
+		host = __progname;
 	else
 		asrsh = 1;
 
@@ -123,22 +98,13 @@ main(int argc, char *argv[])
 		argoff = 1;
 	}
 
-#ifdef KERBEROS
-#define	OPTIONS	"8KLdek:l:nwx"
-#else
-#define	OPTIONS	"8KLdel:nw"
-#endif
-	while ((ch = getopt(argc - argoff, argv + argoff, OPTIONS)) != -1)
+	while ((ch = getopt(argc - argoff, argv + argoff, "8KLdel:nw")) != -1)
 		switch(ch) {
+		case '8':	/* -8KLew are ignored to allow rlogin aliases */
 		case 'K':
-#ifdef KERBEROS
-			use_kerberos = 0;
-#endif
-			break;
-		case 'L':	/* -8Lew are ignored to allow rlogin aliases */
+		case 'L':
 		case 'e':
 		case 'w':
-		case '8':
 			break;
 		case 'd':
 			dflag = 1;
@@ -146,22 +112,9 @@ main(int argc, char *argv[])
 		case 'l':
 			user = optarg;
 			break;
-#ifdef KERBEROS
-		case 'k':
-			dest_realm = dst_realm_buf;
-			strncpy(dest_realm, optarg, REALM_SZ);
-			break;
-#endif
 		case 'n':
 			nflag = 1;
 			break;
-#ifdef KERBEROS
-		case 'x':
-			doencrypt = 1;
-			desrw_set_key(&cred.session, &schedule);
-			break;
-#endif
-		case '?':
 		default:
 			usage();
 		}
@@ -191,73 +144,20 @@ main(int argc, char *argv[])
 
 	if (geteuid() != 0)
 		errx(1, "must be setuid root");
-	if (!(pw = getpwuid(uid = getuid())))
+	if ((pw = getpwuid(uid = getuid())) == NULL)
 		errx(1, "unknown user ID %u", uid);
-	if (!user)
+	if (user == NULL)
 		user = pw->pw_name;
-
-#ifdef KERBEROS
-	/* -x turns off -n */
-	if (doencrypt)
-		nflag = 0;
-#endif
 
 	args = copyargs(argv);
 
-	sp = NULL;
-#ifdef KERBEROS
-	if (use_kerberos) {
-		sp = getservbyname((doencrypt ? "ekshell" : "kshell"), "tcp");
-		if (sp == NULL) {
-			use_kerberos = 0;
-			warning("can't get entry for %s/tcp service",
-			    doencrypt ? "ekshell" : "kshell");
-		}
-	}
-#endif
-	if (sp == NULL)
-		sp = getservbyname("shell", "tcp");
-	if (sp == NULL)
+	if ((sp = getservbyname("shell", "tcp")) == NULL)
 		errx(1, "shell/tcp: unknown service");
 
-	(void) unsetenv("RSH");		/* no tricks with rcmd(3) */
+	(void)unsetenv("RSH");		/* no tricks with rcmd(3) */
 
-#ifdef KERBEROS
-try_connect:
-	if (use_kerberos) {
-		rem = KSUCCESS;
-		errno = 0;
-		if (dest_realm == NULL)
-			dest_realm = krb_realmofhost(host);
-
-		if (doencrypt)
-			rem = krcmd_mutual(&host, sp->s_port, user, args,
-			    &rfd2, dest_realm, &cred, schedule);
-		else
-			rem = krcmd(&host, sp->s_port, user, args, &rfd2,
-			    dest_realm);
-		if (rem < 0) {
-			use_kerberos = 0;
-			sp = getservbyname("shell", "tcp");
-			if (sp == NULL)
-				errx(1, "unknown service shell/tcp");
-			if (errno == ECONNREFUSED)
-				warning("remote host doesn't support Kerberos");
-			if (errno == ENOENT)
-				warning("can't provide Kerberos auth data");
-			goto try_connect;
-		}
-	} else {
-		if (doencrypt)
-			errx("the -x flag requires Kerberos authentication");
-		rem = rcmd_af(&host, sp->s_port, pw->pw_name, user, args,
-		    &rfd2, PF_UNSPEC);
-	}
-#else
 	rem = rcmd_af(&host, sp->s_port, pw->pw_name, user, args, &rfd2,
 	    PF_UNSPEC);
-#endif
-
 	if (rem < 0)
 		exit(1);
 
@@ -291,13 +191,8 @@ try_connect:
 			err(1, "fork");
 	}
 
-#ifdef KERBEROS
-	if (!doencrypt)
-#endif
-	{
-		(void)ioctl(rfd2, FIONBIO, &one);
-		(void)ioctl(rem, FIONBIO, &one);
-	}
+	(void)ioctl(rfd2, FIONBIO, &one);
+	(void)ioctl(rem, FIONBIO, &one);
 
 	talk(nflag, &omask, pid, rem);
 
@@ -331,12 +226,9 @@ rewrite:
 				err(1, "poll");
 			goto rewrite;
 		}
-#ifdef KERBEROS
-		if (doencrypt)
-			wc = des_write(rem, bp, cc);
-		else
-#endif
-			wc = write(rem, bp, cc);
+		if (pfd[0].revents & (POLLERR|POLLHUP|POLLNVAL))
+			err(1, "poll");
+		wc = write(rem, bp, cc);
 		if (wc < 0) {
 			if (errno == EWOULDBLOCK)
 				goto rewrite;
@@ -363,14 +255,12 @@ done:
 				err(1, "poll");
 			continue;
 		}
+		if ((pfd[0].revents & (POLLERR|POLLHUP|POLLNVAL)) ||
+		    (pfd[1].revents & (POLLERR|POLLHUP|POLLNVAL)))
+			err(1, "poll");
 		if (pfd[1].revents & POLLIN) {
 			errno = 0;
-#ifdef KERBEROS
-			if (doencrypt)
-				cc = des_read(rfd2, buf, sizeof buf);
-			else
-#endif
-				cc = read(rfd2, buf, sizeof buf);
+			cc = read(rfd2, buf, sizeof buf);
 			if (cc <= 0) {
 				if (errno != EWOULDBLOCK)
 					pfd[1].revents = 0;
@@ -379,12 +269,7 @@ done:
 		}
 		if (pfd[0].revents & POLLIN) {
 			errno = 0;
-#ifdef KERBEROS
-			if (doencrypt)
-				cc = des_read(rem, buf, sizeof buf);
-			else
-#endif
-				cc = read(rem, buf, sizeof buf);
+			cc = read(rem, buf, sizeof buf);
 			if (cc <= 0) {
 				if (errno != EWOULDBLOCK)
 					pfd[0].revents = 0;
@@ -399,32 +284,9 @@ sendsig(int signo)
 {
 	int save_errno = errno;
 
-#ifdef KERBEROS
-	if (doencrypt)
-		(void)des_write(rfd2, &signo, 1);
-	else
-#endif
-		(void)write(rfd2, &signo, 1);
+	(void)write(rfd2, &signo, 1);
 	errno = save_errno;
 }
-
-#ifdef KERBEROS
-/* VARARGS */
-void
-warning(const char *fmt, ...)
-{
-	va_list ap;
-	char myrealm[REALM_SZ];
-
-	if (krb_get_lrealm(myrealm, 0) != KSUCCESS)
-		return;
-	(void)fprintf(stderr, "rsh: warning, using standard rsh: ");
-	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, ".\n");
-}
-#endif
 
 char *
 copyargs(char **argv)
@@ -451,15 +313,10 @@ copyargs(char **argv)
 	return(args);
 }
 
-void
+__dead void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: rsh [-Kdn%s]%s[-l username] hostname [command]\n",
-#ifdef KERBEROS
-	    "x", " [-k realm] ");
-#else
-	    "", " ");
-#endif
+	    "usage: rsh [-Kdn] [-l username] hostname [command]\n");
 	exit(1);
 }
