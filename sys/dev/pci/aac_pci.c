@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_pci.c,v 1.13 2004/08/29 19:07:26 marco Exp $	*/
+/*	$OpenBSD: aac_pci.c,v 1.14 2004/11/23 04:02:25 marco Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -63,6 +63,7 @@ int	aac_pci_probe(struct device *, void *, void *);
 void	aac_pci_attach(struct device *, struct device *, void *);
 
 /* Adaptec */
+#define PCI_PRODUCT_ADP2_AACASR2200S   0x0285
 #define PCI_PRODUCT_ADP2_AACASR2120S   0x0286
 #define PCI_PRODUCT_ADP2_AACADPSATA2C  0x0289
 #define PCI_PRODUCT_ADP2_AACADPSATA4C  0x0290
@@ -85,6 +86,7 @@ struct aac_sub_ident {
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACADPSATA8C, "Adaptec 2810SA" }, /* guess */
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACADPSATA16C, "Adaptec 21610SA" }, /* guess */
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACASR2120S, "Adaptec 2120S" },
+	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AACASR2200S, "Adaptec 2200S" },
 	{ PCI_VENDOR_DELL, PCI_PRODUCT_ADP2_AACCERCSATA6C, "Dell CERC-SATA" },
 	{ PCI_VENDOR_DELL, PCI_PRODUCT_ADP2_AACPERC320DC, "Dell PERC 320/DC" },
 	{ 0, 0, "" }
@@ -163,6 +165,9 @@ struct aac_ident {
 	/* Adaptec ASR-2120S */
 	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2200S, PCI_VENDOR_ADP2,
 	    PCI_PRODUCT_ADP2_AACASR2120S, AAC_HWIF_I960RX },
+	/* Adaptec ASR-2200S */
+	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2200S, PCI_VENDOR_ADP2,
+	    PCI_PRODUCT_ADP2_AACASR2200S, AAC_HWIF_I960RX },
 	{ 0, 0, 0, 0 }
 };
 
