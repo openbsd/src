@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_input.c,v 1.12 2000/01/15 07:02:13 fgsch Exp $	*/
+/*	$OpenBSD: ipx_input.c,v 1.13 2000/01/15 07:07:17 fgsch Exp $	*/
 
 /*-
  *
@@ -325,16 +325,19 @@ struct mbuf *m;
 	int ok_back = 0;
 
 	if (ipxforwarding == 0) {
+		ipxstat.ipxs_cantforward++;
 		m_freem(m);
 		goto cleanup;
 	}
 	ipx->ipx_tc++;
 	if (ipx->ipx_tc > IPX_MAXHOPS) {
+		ipxstat.ipxs_cantforward++;
 		m_freem(m);
 		goto cleanup;
 	}
 
 	if ((ok_there = ipx_do_route(&ipx->ipx_dna,&ipx_droute)) == 0) {
+		ipxstat.ipxs_noroute++;
 		m_freem(m);
 		goto cleanup;
 	}
@@ -355,6 +358,7 @@ struct mbuf *m;
 		}
 		if ((ok_back = ipx_do_route(&ipx->ipx_sna,&ipx_sroute)) == 0) {
 			/* error = ENETUNREACH; He'll never get it! */
+			ipxstat.ipxs_noroute++;
 			m_freem(m);
 			goto cleanup;
 		}
@@ -364,6 +368,7 @@ struct mbuf *m;
 		    (ifp!=ipx_sroute.ro_rt->rt_ifp)) {
 			flags |= IPX_ALLOWBROADCAST;
 		} else {
+			ipxstat.ipxs_noroute++;
 			m_freem(m);
 			goto cleanup;
 		}
@@ -387,6 +392,8 @@ struct mbuf *m;
 
 	error = ipx_outputfl(m, &ipx_droute, flags);
 	if (error == 0) {
+		ipxstat.ipxs_forward++;
+
 		if (ipxprintfs) {
 			printf("forward: ");
 			ipx_printhost(&ipx->ipx_sna);
