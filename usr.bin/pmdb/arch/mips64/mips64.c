@@ -1,4 +1,4 @@
-/*      $OpenBSD: mips64.c,v 1.1 2004/11/11 18:47:14 pefo Exp $       */
+/*      $OpenBSD: mips64.c,v 1.2 2004/11/11 19:09:28 pefo Exp $       */
 /*
  * Copyright (c) 2002 Dale Rahn <drahn@openbsd.org>
  * All rights reserved.
@@ -38,10 +38,15 @@ static const char *md_reg_names[] = {
 	"a4", "a5", "a6","a7","t0","t1","t2","t3",
 	"s0","s1","s2","s3","s4","s5","s6","s7",
 	"t8","t9","k0","k1","gp","sp","s8","ra",
-	"sr", "mullo", "mulhi", "badvaddr", "cause", "pc"
+	"sr", "mullo", "mulhi", "badvaddr", "cause", "pc", "ic", "cpl"
+	"$f0", "$f1", "$f2", "$f3", "$f4", "$f5", "$f6", "$f7",
+	"$f8", "$f9", "$f10", "$f11", "$f12", "$f13", "$f14", "$f15",
+	"$f16", "$f17", "$f18", "$f19", "$f20", "$f21", "$f22", "$f23",
+	"$f24", "$f25", "$f26", "$f27", "$f28", "$f29", "$f30", "$f31",
+	"fsr"
 };
 
-struct md_def md_def = { md_reg_names, 38, 38};
+struct md_def md_def = { md_reg_names, NREGS, PC};
 
 void
 md_def_init(void)
@@ -85,6 +90,6 @@ md_getregs(struct pstate *ps, reg *regs)
 	struct reg md_reg;
 	if (process_getregs(ps, &md_reg))
 		return -1;
-	memcpy(regs, &md_reg, 38 * sizeof(long));
+	memcpy(regs, &md_reg, NREGS * sizeof(long));
 	return 0;
 }
