@@ -1,0 +1,5 @@
+invalid netmask
+stdin:2: could not parse host specification
+invalid netmask
+stdin:3: could not parse host specification
+pfctl: Syntax error in config file: pf rules not loaded
