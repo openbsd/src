@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.260 2002/11/23 05:16:58 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.261 2002/11/23 05:48:01 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1362,7 +1362,7 @@ pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
 			MD5Update(&context, (unsigned char *)&rpool->key,
 			    sizeof(rpool->key));
 		MD5Final(hash, &context);
-		PF_POOLMASK(naddr, raddr, rmask, (struct pf_addr *)hash, af); 
+		PF_POOLMASK(naddr, raddr, rmask, (struct pf_addr *)&hash, af); 
 		break;
 	case PF_POOL_ROUNDROBIN:
 		if (pf_match_addr(0, &cur->addr.addr, &cur->addr.mask,
