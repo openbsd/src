@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.17 1999/04/18 15:06:58 provos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.18 1999/06/05 17:05:34 deraadt Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -511,7 +511,12 @@ main(int argc, char **argv)
 	{
 	    proxy.sin.sin_family = AF_INET;
 	    proxy.sin.sin_len = sizeof(struct sockaddr_in);
-	    proxy.sin.sin_addr.s_addr = inet_addr(argv[i + 1]);
+	    if (!inet_aton(argv[i + 1], &proxy.sin.sin_addr)) {
+		fprintf(stderr,
+		    "%s: Warning: proxy address %s is not valid\n",
+		    argv[i + 1]);
+		exit(1);
+	    }
 	    sad3.sadb_address_exttype = SADB_EXT_ADDRESS_PROXY;
 	    sad3.sadb_address_len = 1 + sizeof(struct sockaddr_in) / 8;
 	    i++;
@@ -589,10 +594,30 @@ main(int argc, char **argv)
 	    osmask.sin.sin_len = sizeof(struct sockaddr_in);
 	    odmask.sin.sin_len = sizeof(struct sockaddr_in);
 	    
-	    osrc.sin.sin_addr.s_addr = inet_addr(argv[i + 1]); i++;
-	    osmask.sin.sin_addr.s_addr = inet_addr(argv[i + 1]); i++;
-	    odst.sin.sin_addr.s_addr = inet_addr(argv[i + 1]); i++;
-	    odmask.sin.sin_addr.s_addr = inet_addr(argv[i + 1]); i++;
+	    if (!inet_aton(argv[i + 1], &osrc.sin.sin_addr)) {
+		fprintf(stderr, "%s: source address %s is not valid\n", argv[0],
+		    argv[i + 1]);
+	        exit(1);
+	    }
+	    i++;
+	    if (!inet_aton(argv[i + 1], &osmask.sin.sin_addr)) {
+		fprintf(stderr, "%s: source netmask %s is not valid\n", argv[0],
+		    argv[i + 1]);
+	        exit(1);
+	    }
+	    i++;
+	    if (!inet_aton(argv[i + 1], &odst.sin.sin_addr)) {
+		fprintf(stderr, "%s: destination address %s is not valid\n", argv[0],
+		    argv[i + 1]);
+	        exit(1);
+	    }
+	    i++;
+	    if (!inet_aton(argv[i + 1], &odmask.sin.sin_addr)) {
+		fprintf(stderr, "%s: destination netmask %s is not valid\n", argv[0],
+		    argv[i + 1]);
+	        exit(1);
+	    }
+	    i++;
 	    continue;
 	}
 

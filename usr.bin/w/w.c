@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.26 1999/04/25 00:33:56 millert Exp $	*/
+/*	$OpenBSD: w.c,v 1.27 1999/06/05 17:04:59 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #else
-static char *rcsid = "$OpenBSD: w.c,v 1.26 1999/04/25 00:33:56 millert Exp $";
+static char *rcsid = "$OpenBSD: w.c,v 1.27 1999/06/05 17:04:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ main(argc, argv)
 	struct hostent *hp;
 	struct stat *stp;
 	FILE *ut;
-	u_long l;
+	struct in_addr addr;
 	int ch, i, nentries, nusers, wcmd;
 	char *memf, *nlistf, *p, *x;
 	char buf[MAXHOSTNAMELEN], errbuf[_POSIX2_LINE_MAX];
@@ -319,9 +319,8 @@ main(argc, argv)
 				*x++ = '\0';
 				break;
 			}
-		if (!nflag && isdigit(*p) &&
-		    (long)(l = inet_addr(p)) != -1 &&
-		    (hp = gethostbyaddr((char *)&l, sizeof(l), AF_INET))) {
+		if (!nflag && inet_aton(p, &addr) &&
+		    (hp = gethostbyaddr((char *)&addr, sizeof(addr), AF_INET))) {
 			if (domain[0] != '\0') {
 				p = hp->h_name;
 				p += strlen(hp->h_name);
