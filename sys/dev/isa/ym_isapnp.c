@@ -1,4 +1,4 @@
-/*	$OpenBSD: ym_isapnp.c,v 1.6 1999/07/21 12:39:22 deraadt Exp $ */
+/*	$OpenBSD: ym_isapnp.c,v 1.7 1999/08/05 05:32:41 deraadt Exp $ */
 
 
 /*
@@ -54,7 +54,7 @@
 
 #include <dev/ic/cs4231reg.h>
 #include <dev/isa/cs4231var.h>
-#include <dev/isa/mpu401var.h>
+#include <dev/ic/mpuvar.h>
 
 #include <dev/isa/wssreg.h>
 #include <dev/isa/ymvar.h>

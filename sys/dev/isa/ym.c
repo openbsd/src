@@ -1,4 +1,4 @@
-/* $OpenBSD: ym.c,v 1.7 1999/07/21 16:19:55 provos Exp $ */
+/* $OpenBSD: ym.c,v 1.8 1999/08/05 05:32:41 deraadt Exp $ */
 
 
 /*
@@ -52,7 +52,7 @@
 #include <dev/ic/ad1848reg.h>
 #include <dev/isa/ad1848var.h>
 #include <dev/ic/opl3sa3.h>
-#include <dev/isa/mpu401var.h>
+#include <dev/ic/mpuvar.h>
 #include <dev/isa/ymvar.h>
 
 int ym_getdev __P((void *, struct audio_device *));

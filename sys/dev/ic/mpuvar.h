@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu401var.h,v 1.2 1999/07/20 16:36:05 deraadt Exp $	*/
+/*	$OpenBSD: mpuvar.h,v 1.1 1999/08/05 05:32:40 deraadt Exp $	*/
 /*	$NetBSD: mpu401var.h,v 1.3 1998/11/25 22:17:06 augustss Exp $	*/
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdspvar.h,v 1.10 1999/07/20 16:36:05 deraadt Exp $	*/
+/*	$OpenBSD: sbdspvar.h,v 1.11 1999/08/05 05:32:41 deraadt Exp $	*/
 /*	$NetBSD: sbdspvar.h,v 1.37 1998/08/10 00:20:39 mycroft Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 
 #include "midi.h"
 #if NMIDI > 0
-#include <dev/isa/mpu401var.h>
+#include <dev/ic/mpuvar.h>
 #endif
 
 #define SB_MASTER_VOL	0

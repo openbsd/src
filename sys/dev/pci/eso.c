@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.1 1999/08/04 23:38:03 niklas Exp $	*/
+/*	$OpenBSD: eso.c,v 1.2 1999/08/05 05:32:41 deraadt Exp $	*/
 /*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -58,11 +58,7 @@
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
 
-#ifdef __OpenBSD__
-#include <dev/isa/mpu401var.h> /* XXX should not be ISA! */
-#else
 #include <dev/ic/mpuvar.h>
-#endif
 #include <dev/ic/i8237reg.h>
 #include <dev/pci/esoreg.h>
 #include <dev/pci/esovar.h>

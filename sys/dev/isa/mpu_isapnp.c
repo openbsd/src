@@ -18,7 +18,7 @@
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 
-#include <dev/isa/mpu401var.h>
+#include <dev/ic/mpuvar.h>
 
 int	mpu_isapnp_match __P((struct device *, void *, void *));
 void	mpu_isapnp_attach __P((struct device *, struct device *, void *));

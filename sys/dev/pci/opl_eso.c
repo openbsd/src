@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl_eso.c,v 1.1 1999/08/04 23:38:03 niklas Exp $	*/
+/*	$OpenBSD: opl_eso.c,v 1.2 1999/08/05 05:32:41 deraadt Exp $	*/
 /*	$NetBSD: opl_eso.c,v 1.1 1999/07/12 15:13:31 kleink Exp $	*/
 
 /*
@@ -67,11 +67,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-#ifdef __OpenBSD__
-#include <dev/isa/mpu401var.h> /* XXX should not be ISA! */
-#else
-#include <dev/isa/mpuvar.h> /* XXX should not be ISA! */
-#endif
+#include <dev/ic/mpuvar.h>
 #include <dev/pci/esovar.h>
 
 HIDE int	opl_eso_match __P((struct device *, MATCH_ARG_2_T, void *));
