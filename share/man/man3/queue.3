@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.9 2000/03/19 19:25:24 aaron Exp $
+.\"	$OpenBSD: queue.3,v 1.10 2000/04/15 01:37:28 deraadt Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -86,6 +86,7 @@
 .Nm TAILQ_PREV ,
 .Nm TAILQ_EMPTY ,
 .Nm TAILQ_FOREACH ,
+.Nm TAILQ_FOREACH_REVERSE ,
 .Nm TAILQ_INIT ,
 .Nm TAILQ_INSERT_AFTER ,
 .Nm TAILQ_INSERT_BEFORE ,
@@ -188,6 +189,10 @@
 .Ft "struct TYPE *"
 .Fn TAILQ_LAST "TAILQ_HEAD *head" "HEADNAME NAME"
 .Fn TAILQ_PREV "TAILQ_HEAD *head" "HEADNAME NAME"
+.Ft "bool"
+.Fn TAILQ_EMPTY "TAILQ_HEAD *head"
+.Fn TAILQ_FOREACH "VARNAME" "TAILQ_HEAD *head" "TAILQ_ENTRY NAME"
+.Fn TAILQ_FOREACH_REVERSE "VARNAME" "TAILQ_HEAD *head" "TAILQ_ENTRY NAME"
 .Ft void
 .Fn TAILQ_INIT "TAILQ_HEAD *head"
 .Ft void
@@ -214,6 +219,10 @@
 .Fn CIRCLEQ_NEXT "struct TYPE *listelm" "CIRCLEQ_ENTRY NAME"
 .Ft "struct TYPE *"
 .Fn CIRCLEQ_PREV "struct TYPE *listelm" "CIRCLEQ_ENTRY NAME"
+.Ft "bool"
+.Fn CIRCLEQ_EMPTY "CIRCLEQ_HEAD *head"
+.Fn CIRCLEQ_FOREACH "VARNAME" "CIRCLEQ_HEAD *head" "CIRCLEQ_ENTRY NAME"
+.Fn CIRCLEQ_FOREACH_REVERSE "VARNAME" "CIRCLEQ_HEAD *head" "CIRCLEQ_ENTRY NAME"
 .Ft void
 .Fn CIRCLEQ_INIT "CIRCLEQ_HEAD *head"
 .Ft void
@@ -793,6 +802,12 @@ is used for tail queue traversal
 TAILQ_FOREACH(np, head, NAME)
 .Ed
 .Pp
+The
+.Fn TAILQ_FOREACH_REVERSE
+acts like
+.Fn TAILQ_FOREACH
+but traveres the tail queue in reverse.
+.Pp
 The 
 .Fn TAILQ_EMPTY
 macro should be used to check whether a tail queue is empty.
@@ -921,6 +936,12 @@ is used for circular queue forward traversal
 .Bd -literal -offset indent
 CIRCLEQ_FOREACH(np, head, NAME)
 .Ed
+.Pp
+The
+.Fn CIRCLEQ_FOREACH_REVERSE
+macro acts like
+.Fn CIRCLEQ_FOREACH
+but traverses the circular queue backwards.
 .Pp
 The 
 .Fn CIRCLEQ_EMPTY
