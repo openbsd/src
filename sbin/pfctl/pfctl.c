@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.63 2002/05/19 21:09:56 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.64 2002/05/19 22:15:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -111,7 +111,8 @@ static const struct {
 	{ "other.multiple",	PFTM_OTHER_MULTIPLE },
 	{ "frag",		PFTM_FRAG },
 	{ "interval",		PFTM_INTERVAL },
-	{ NULL,			0 }};
+	{ NULL,			0 }
+};
 
 static const struct {
 	const char	*name;
@@ -119,7 +120,8 @@ static const struct {
 } pf_limits[] = {
 	{ "states",	PF_LIMIT_STATES },
 	{ "frags",	PF_LIMIT_FRAGS },
-	{ NULL,		0 }};
+	{ NULL,		0 }
+};
 
 struct pf_hint {
 	const char	*name;
@@ -132,15 +134,17 @@ static const struct pf_hint pf_hint_normal[] = {
 	{ "tcp.closing",	15 * 60 },
 	{ "tcp.finwait",	45 },
 	{ "tcp.closed",		90 },
-	{ NULL,			0}};
+	{ NULL,			0 }
+};
 static const struct pf_hint pf_hint_satellite[] = {
-	{ "tcp.first",		3 * 60},
-	{ "tcp.opening",	30 + 5},
+	{ "tcp.first",		3 * 60 },
+	{ "tcp.opening",	30 + 5 },
 	{ "tcp.established",	24 * 60 * 60 },
-	{ "tcp.closing",	15 * 60 + 5},
-	{ "tcp.finwait",	45 + 5},
-	{ "tcp.closed",		90 + 5},
-	{ NULL,			0}};
+	{ "tcp.closing",	15 * 60 + 5 },
+	{ "tcp.finwait",	45 + 5 },
+	{ "tcp.closed",		90 + 5 },
+	{ NULL,			0 }
+};
 static const struct pf_hint pf_hint_conservative[] = {
 	{ "tcp.first",		60 * 60 },
 	{ "tcp.opening",	15 * 60 },
@@ -148,7 +152,8 @@ static const struct pf_hint pf_hint_conservative[] = {
 	{ "tcp.closing",	60 * 60 },
 	{ "tcp.finwait",	10 * 60 },
 	{ "tcp.closed",		3 * 60 },
-	{ NULL,			0}};
+	{ NULL,			0 }
+};
 static const struct pf_hint pf_hint_aggressive[] = {
 	{ "tcp.first",		30 },
 	{ "tcp.opening",	5 },
@@ -156,7 +161,8 @@ static const struct pf_hint pf_hint_aggressive[] = {
 	{ "tcp.closing",	60 },
 	{ "tcp.finwait",	30 },
 	{ "tcp.closed",		30 },
-	{ NULL,			0}};
+	{ NULL,			0 }
+};
 
 static const struct {
 	const char *name;
@@ -168,7 +174,8 @@ static const struct {
 	{ "high-latency",	pf_hint_satellite },
 	{ "conservative",	pf_hint_conservative },
 	{ "aggressive",		pf_hint_aggressive },
-	{ NULL,			NULL }};
+	{ NULL,			NULL }
+};
 
 void
 usage(void)
@@ -368,7 +375,7 @@ pfctl_kill_states(int dev, int opts)
 	if ((opts & PF_OPT_QUIET) == 0)
 		printf("killed %d states from %d sources and %d destinations\n",
 		    killed, sources, dests);
-	return 0;
+	return (0);
 }
 
 int
@@ -524,7 +531,7 @@ pfctl_add_rule(struct pfctl *pf, struct pf_rule *r)
 	}
 	if (pf->opts & PF_OPT_VERBOSE)
 		print_rule(&pf->prule->rule);
-	return 0;
+	return (0);
 }
 
 int
@@ -537,7 +544,7 @@ pfctl_add_nat(struct pfctl *pf, struct pf_nat *n)
 	}
 	if (pf->opts & PF_OPT_VERBOSE)
 		print_nat(&pf->pnat->nat);
-	return 0;
+	return (0);
 }
 
 int
@@ -550,7 +557,7 @@ pfctl_add_binat(struct pfctl *pf, struct pf_binat *b)
 	}
 	if (pf->opts & PF_OPT_VERBOSE)
 		print_binat(&pf->pbinat->binat);
-	return 0;
+	return (0);
 }
 
 int
@@ -563,7 +570,7 @@ pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
 	}
 	if (pf->opts & PF_OPT_VERBOSE)
 		print_rdr(&pf->prdr->rdr);
-	return 0;
+	return (0);
 }
 
 int
@@ -691,12 +698,12 @@ pfctl_hint(int dev, const char *opt, int opts)
 	hint = pf_hints[i].hint;
 	if (hint == NULL) {
 		warnx("Bad hint name.  Format -O hint");
-		return 1;
+		return (1);
 	}
 
 	for (i = 0; hint[i].name; i++)
 		if ((r = pfctl_settimeout(dev, hint[i].name, hint[i].timeout)))
-			return r;
+			return (r);
 	return (0);
 }
 
@@ -810,7 +817,7 @@ pfctl_timeout(int dev, char *opt, int opts)
 		setval = strtol(seconds, &serr, 10);
 		if (*serr != '\0' || *seconds == '\0' || setval < 0) {
 			warnx("Bad timeout argument.  Format -t name=seconds");
-			return 1;
+			return (1);
 		}
 		return pfctl_settimeout(dev, opt, setval);
 	}
@@ -835,11 +842,11 @@ pfctl_gettimeout(int dev, const char *opt)
 		}
 	}
 	if (strcmp(opt, "all") == 0)
-		return 0;
+		return (0);
 
 	if (pf_timeouts[i].name == NULL) {
 		warnx("Bad timeout name.  Format -t name[=<seconds>]");
-		return 1;
+		return (1);
 	}
 
 	if (ioctl(dev, DIOCGETTIMEOUT, &pt))
@@ -865,7 +872,7 @@ pfctl_settimeout(int dev, const char *opt, int seconds)
 
 	if (pf_timeouts[i].name == NULL) {
 		warnx("Bad timeout name.  Format -t name[=<seconds>]");
-		return 1;
+		return (1);
 	}
 
 	pt.seconds = seconds;
@@ -1132,8 +1139,6 @@ main(int argc, char *argv[])
 		if (pfctl_clear_rule_counters(dev, opts))
 			error = 1;
 	}
-
 	close(dev);
-
 	exit(error);
 }
