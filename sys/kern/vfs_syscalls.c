@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.49 1998/12/21 13:08:49 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.50 1998/12/23 10:53:06 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -429,7 +429,7 @@ dounmount(mp, flags, p)
 	simple_lock(&mountlist_slock);
 	if (mp->mnt_flag & MNT_UNMOUNT) {
 		simple_unlock(&mountlist_slock);
-		mp->mnt_flag |= MNT_WAIT;
+		mp->mnt_flag |= MNT_MWAIT;
 		sleep(mp, PVFS);
 		return ENOENT;
 	}
