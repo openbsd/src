@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fmt_scaled.3,v 1.1 2003/05/15 01:26:26 ian Exp $
+.\"	$OpenBSD: fmt_scaled.3,v 1.2 2003/06/02 11:37:27 jmc Exp $
 .\" Copyright (c) 2001, 2003 Ian Darwin.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -103,6 +103,22 @@ else
 .Sh SEE ALSO
 .Xr printf 3 ,
 .Xr scanf 3
+.Sh HISTORY
+The functions
+.Fn fmt_scaled
+and
+.Fn scan_scaled
+first appeared in
+.Ox 3.4 .
+.Sh AUTHORS
+Ken Stailey wrote the first version of the code that became
+.Fn fmt_scaled ,
+originally inside
+.Ox
+.Xr df 1 .
+Ian Darwin excerpted this and made it into a library routine
+(with significant help from Paul Janzen), and wrote
+.Fn scan_scaled .
 .Sh BUGS
 Some of the scale factors have misleading meanings in lower case
 (p for P is incorrect; p should be pico- and P for Peta-).
@@ -114,19 +130,3 @@ A person creating a disk partition of "100m" is unlikely to require
 Cannot represent the larger scale factors on all architectures.
 .Pp
 Ignores the current locale.
-.Sh HISTORY
-The functions
-.Fn fmt_scaled
-and
-.Fn scan_scaled
-first appeared in
-.Ox 3.4 .
-.Sh AUTHORS
-Ken Stailey wrote the first version of the code that became
-.Xr fmt_scaled 3 ,
-originally inside
-.Ox
-.Xr df 1 .
-Ian Darwin excerpted this and made it into a library routine
-(with significant help from Paul Janzen), and wrote
-.Xr scan_scaled 3 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.3,v 1.9 2003/05/23 12:31:32 jmc Exp $
+.\"	$OpenBSD: scsi.3,v 1.10 2003/06/02 11:37:27 jmc Exp $
 .\" Copyright (c) 1994 HD Associates (hd@world.std.com)
 .\" All rights reserved.
 .\"
@@ -332,17 +332,6 @@ returns the result of the ioctl call.
 .Sh SEE ALSO
 .Xr scsi 4 ,
 .Xr scsi 8
-.Sh BUGS
-This only works completely for the 1542C.
-The host adapter code
-that sets up the residual amount of data transfer has to be added
-to each individual adapter.
-This library is usable on the other
-host adapters; however, the SCSI driver pretends that the proper
-amount of data is always transferred.
-If you have an Adaptec 174x
-and can hack contact dufault@hda.com and you can have the code to
-calculate residual data for the 174x series to integrate and test.
 .Sh HISTORY
 Many systems have comparable interfaces to permit a user to construct a
 SCSI command in user space.
@@ -355,3 +344,14 @@ go here; Peter Dufault first read about it in a 1989 Sun Expert magazine.
 Peter Dufault implemented a clone of SGI's interface in 386bsd that
 led to this library and the related kernel ioctl.
 If anyone needs that for compatibility contact dufault@hda.com.
+.Sh BUGS
+This only works completely for the 1542C.
+The host adapter code
+that sets up the residual amount of data transfer has to be added
+to each individual adapter.
+This library is usable on the other
+host adapters; however, the SCSI driver pretends that the proper
+amount of data is always transferred.
+If you have an Adaptec 174x
+and can hack contact dufault@hda.com and you can have the code to
+calculate residual data for the 174x series to integrate and test.

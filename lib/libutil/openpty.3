@@ -1,4 +1,4 @@
-.\"	$OpenBSD: openpty.3,v 1.9 2003/05/23 12:31:32 jmc Exp $
+.\"	$OpenBSD: openpty.3,v 1.10 2003/06/02 11:37:27 jmc Exp $
 .\" Copyright (c) 1995
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -133,6 +133,10 @@ and the child process of
 return 0, and the parent process of
 .Fn forkpty
 returns the process ID of the child process.
+.Sh FILES
+.Bl -tag -width /dev/[pt]ty[pqrstuvwxyzPQRST][0123456789abcdef] -compact
+.It Pa /dev/[pt]ty[pqrstuvwxyzPQRST][0123456789abcdef]
+.El
 .Sh ERRORS
 .Fn openpty
 will fail if:
@@ -153,9 +157,5 @@ will fail if either
 or
 .Fn fork
 fails.
-.Sh FILES
-.Bl -tag -width /dev/[pt]ty[pqrstuvwxyzPQRST][0123456789abcdef] -compact
-.It Pa /dev/[pt]ty[pqrstuvwxyzPQRST][0123456789abcdef]
-.El
 .Sh SEE ALSO
 .Xr fork 2
