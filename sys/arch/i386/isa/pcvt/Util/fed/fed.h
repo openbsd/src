@@ -109,7 +109,7 @@ void invert ( void );
 void setchr ( char type );
 void setrow ( char type );
 void setcol ( char type );
-void main ( int argc, char *argv[] );
+int main ( int argc, char *argv[] );
 void readfont ( char *filename );
 void dis_cmd ( char *strg );
 void clr_cmd ( void );
