@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.6 2000/02/15 02:28:15 jason Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.7 2000/06/27 20:09:42 aaron Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1101,6 +1101,7 @@ void ste_init_tx_list(sc)
 	cd = &sc->ste_cdata;
 	ld = sc->ste_ldata;
 	for (i = 0; i < STE_TX_LIST_CNT; i++) {
+		cd->ste_tx_chain[i].ste_ptr = &ld->ste_tx_list[i];
 		cd->ste_tx_chain[i].ste_phys = vtophys(&ld->ste_tx_list[i]);
 		if (i == (STE_TX_LIST_CNT - 1))
 			cd->ste_tx_chain[i].ste_next =
