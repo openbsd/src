@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.18 2001/12/18 22:55:25 provos Exp $	*/
+/*	$OpenBSD: auich.c,v 1.19 2001/12/18 23:02:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -172,6 +172,7 @@ struct auich_softc {
 
 	void *powerhook;
 	int suspend;
+	u_int16_t ext_ctrl;
 };
 
 #ifdef AUICH_DEBUG
@@ -1045,10 +1046,9 @@ auich_powerhook(why, self)
 		/* Power down */
 		DPRINTF(1, ("auich: power down\n"));
 		sc->suspend = why;
+		auich_read_codec(sc, AC97_REG_EXT_AUDIO_CTRL, &sc->ext_ctrl);
 
 	} else {
-		u_int16_t id, ext_id;
-
 		/* Wake up */
 		DPRINTF(1, ("auich: power resume\n"));
 		if (sc->suspend == PWR_RESUME) {
@@ -1059,15 +1059,7 @@ auich_powerhook(why, self)
 		}
 		sc->suspend = why;
 		auich_reset_codec(sc);
-
-		auich_read_codec(sc, AC97_REG_EXT_AUDIO_ID, &ext_id);
-		auich_read_codec(sc, AC97_REG_EXT_AUDIO_ID, &id);
-		if (ext_id & AC97_EXT_AUDIO_VRA)
-			id |= AC97_EXT_AUDIO_VRA;
-		if (ext_id & AC97_EXT_AUDIO_VRM)
-			id |= AC97_EXT_AUDIO_VRM;
-		auich_write_codec(sc, AC97_REG_EXT_AUDIO_CTRL, id);
-
+		auich_write_codec(sc, AC97_REG_EXT_AUDIO_CTRL, sc->ext_ctrl);
 		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
 	}
 }
