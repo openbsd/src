@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.5 2002/02/16 01:58:33 art Exp $
-#	$NetBSD: Makefile,v 1.6 1995/04/24 05:52:15 cgd Exp $
+#	$OpenBSD: Makefile,v 1.6 2002/02/18 11:28:27 art Exp $
 
 SUBDIR+= _setjmp db regex setjmp sigsetjmp malloc sigreturn popen
+SUBDIR+= longjmp
 .if (${MACHINE_ARCH} != "vax")
 SUBDIR+= ieeefp
 .endif
