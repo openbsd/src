@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.70 2005/02/24 13:55:51 hshoexer Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.71 2005/02/25 14:14:31 hshoexer Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -120,8 +120,8 @@ usage(void)
 	fprintf(stderr,
 	    "usage: %s [-4] [-6] [-a] [-c config-file] [-d] [-D class=level]\n"
 	    "          [-f fifo] [-i pid-file] [-K] [-n] [-N udpencap-port]\n"
-	    "          [-p listen-port] [-P local-port] [-L]\n"
-	    "          [-l packetlog-file] [-r seed] [-R report-file] [-v]\n",
+	    "          [-p listen-port] [-L] [-l packetlog-file] [-r seed]\n"
+	    "          [-R report-file] [-v]\n",
 	    sysdep_progname());
 	exit(1);
 }
@@ -197,10 +197,6 @@ parse_args(int argc, char *argv[])
 
 		case 'p':
 			udp_default_port = optarg;
-			break;
-
-		case 'P':
-			udp_bind_port = optarg;
 			break;
 
 #ifdef USE_DEBUG

@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.80 2004/12/14 10:17:28 mcbride Exp $	 */
+/* $OpenBSD: udp.c,v 1.81 2005/02/25 14:14:31 hshoexer Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -105,8 +105,7 @@ static struct transport_vtbl udp_transport_vtbl = {
 };
 
 char		*udp_default_port = 0;
-char		*udp_bind_port = 0;
-int		bind_family = 0;
+int		 bind_family = 0;
 
 void
 udp_init(void)

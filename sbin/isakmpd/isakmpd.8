@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.66 2005/02/24 13:55:51 hshoexer Exp $
+.\" $OpenBSD: isakmpd.8,v 1.67 2005/02/25 14:14:31 hshoexer Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -48,9 +48,8 @@
 .Op Fl f Ar fifo
 .Op Fl i Ar pid-file
 .Op Fl n
-.Op Fl N
+.Op Fl N Ar udpencap-port
 .Op Fl p Ar listen-port
-.Op Fl P Ar local-port
 .Op Fl K
 .Op Fl L
 .Op Fl l Ar packetlog-file
@@ -229,11 +228,6 @@ option specifies the listen port for encapsulated udp the daemon will bind to.
 The
 .Fl p
 option specifies the listen port the daemon will bind to.
-.It Fl P Ar local-port
-On the other hand, the port specified to capital
-.Fl P
-will be what the daemon binds its local end to when acting as
-initiator.
 .It Fl K
 When this option is given,
 .Nm
@@ -602,7 +596,3 @@ unprivileged ports (>1024).
 It is not possible to change the interfaces
 .Nm
 listens on without a restart.
-.Sh BUGS
-The
-.Fl P
-flag does not do what we document, rather it does nothing.
