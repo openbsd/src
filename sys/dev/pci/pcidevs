@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.273 2000/06/19 15:48:21 chris Exp $
+	$OpenBSD: pcidevs,v 1.274 2000/06/29 09:52:42 niklas Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1162,6 +1162,7 @@ product NEOMAGIC 128ZV		0x0003	Magicgraph 128ZV
 product NEOMAGIC NM2160		0x0004	Magicgraph NM2160
 product NEOMAGIC NM2200		0x0005	Magicgraph NM2200
 product NEOMAGIC NM2360		0x0006	Magicgraph NM2360
+product NEOMAGIC NM256XLP	0x0016	MagicMedia 256XL+
 product NEOMAGIC NM256AV	0x8005	MagicMedia 256AV
 product NEOMAGIC NM256ZX	0x8006	MagicMedia 256ZX
 
@@ -1328,6 +1329,9 @@ product RICOH RF5C476		0x0476	5C476 PCI-CardBus
 product RICOH RF5C477		0x0477	5C477 PCI-CardBus
 product RICOH RF5C478		0x0478	5C478 PCI-CardBus
 
+/* Rockwell Semiconductor Systems products */
+product ROCKWELL RS56SP_PCI11P1	0x2005	RS56/SP-PCI11P1 Modem
+
 /* S3 products */
 product S3 VIRGE		0x5631	ViRGE
 product S3 TRIO32		0x8810	Trio32
@@ -1411,6 +1415,7 @@ product SMC 83C170		0x0005	83C170 (EPIC/100)
 
 /* Sony products */
 product	SONY CXD1947A		0x8009	CXD1947A FireWire
+product	SONY CXD3222		0x8039	CXD3222 FireWire
 
 /* STB products */
 product STB2 RIVA128		0x0018 Velocity128
@@ -1658,9 +1663,9 @@ product	XIRCOM X3201_3_21143	0x0003	X3201-3 (21143)
 
 /* Yamaha products */
 product YAMAHA YMF724E_V	0x0004	724 Audio
-product YAMAHA YMF744		0x0010	DS-1S Audio
 product YAMAHA YMF724		0x000d	DS-1 Audio
 product YAMAHA YMF740		0x000d	DS-1L Audio
+product YAMAHA YMF744		0x0010	DS-1S Audio
 
 /* Zeinet products */
 product ZEINET 1221		0x0001	1221
