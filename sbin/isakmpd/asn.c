@@ -1,8 +1,9 @@
-/*	$OpenBSD: asn.c,v 1.6 1999/02/26 03:32:11 niklas Exp $	*/
-/*	$EOM: asn.c,v 1.21 1999/02/25 11:38:42 niklas Exp $	*/
+/*	$OpenBSD: asn.c,v 1.7 1999/04/19 20:56:57 niklas Exp $	*/
+/*	$EOM: asn.c,v 1.25 1999/04/18 15:17:22 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,32 +50,53 @@
 #include "asn.h"
 #include "gmp_util.h"
 
-struct asn_handler table[] =  {
-  {TAG_INTEGER, asn_free_integer, 
-   asn_get_encoded_len_integer, asn_decode_integer, asn_encode_integer},
-  {TAG_OBJECTID, asn_free_objectid,
-   asn_get_encoded_len_objectid, asn_decode_objectid, asn_encode_objectid},
-  {TAG_SEQUENCE, asn_free_sequence, 
-   asn_get_encoded_len_sequence, asn_decode_sequence, asn_encode_sequence},
-  {TAG_SET, asn_free_sequence, 
-   asn_get_encoded_len_sequence, asn_decode_sequence, asn_encode_sequence},
-  {TAG_UTCTIME, asn_free_string, 
-   asn_get_encoded_len_string, asn_decode_string, asn_encode_string},
-  {TAG_BITSTRING, asn_free_string, 
-   asn_get_encoded_len_string, asn_decode_string, asn_encode_string},
-  {TAG_OCTETSTRING, asn_free_string, 
-   asn_get_encoded_len_string, asn_decode_string, asn_encode_string},
-  {TAG_BOOL, asn_free_string, 
-   asn_get_encoded_len_string, asn_decode_string, asn_encode_string},
-  {TAG_PRINTSTRING, asn_free_string, 
-   asn_get_encoded_len_string, asn_decode_string, asn_encode_string},
-  {TAG_RAW, asn_free_raw, 
-   asn_get_encoded_len_raw, asn_decode_raw, asn_encode_raw},
-  {TAG_NULL, asn_free_null, 
-   asn_get_encoded_len_null, asn_decode_null, asn_encode_null},
-  {TAG_ANY, asn_free_null,
-   NULL, asn_decode_any, NULL},
-  {TAG_STOP, NULL, NULL, NULL, NULL}
+struct asn_handler table[] = {
+  {
+    TAG_INTEGER, asn_free_integer, asn_get_encoded_len_integer,
+    asn_decode_integer, asn_encode_integer
+  },
+  {
+    TAG_OBJECTID, asn_free_objectid, asn_get_encoded_len_objectid,
+    asn_decode_objectid, asn_encode_objectid
+  },
+  {
+    TAG_SEQUENCE, asn_free_sequence, asn_get_encoded_len_sequence,
+    asn_decode_sequence, asn_encode_sequence
+  },
+  {
+    TAG_SET, asn_free_sequence, asn_get_encoded_len_sequence,
+    asn_decode_sequence, asn_encode_sequence
+  },
+  {
+    TAG_UTCTIME, asn_free_string, asn_get_encoded_len_string,
+    asn_decode_string, asn_encode_string
+  },
+  {
+    TAG_BITSTRING, asn_free_string, asn_get_encoded_len_string,
+    asn_decode_string, asn_encode_string
+  },
+  {
+    TAG_OCTETSTRING, asn_free_string, asn_get_encoded_len_string,
+    asn_decode_string, asn_encode_string
+  },
+  {
+    TAG_BOOL, asn_free_string, asn_get_encoded_len_string, asn_decode_string,
+    asn_encode_string
+  },
+  {
+    TAG_PRINTSTRING, asn_free_string, asn_get_encoded_len_string,
+    asn_decode_string, asn_encode_string
+  },
+  {
+    TAG_RAW, asn_free_raw, asn_get_encoded_len_raw, asn_decode_raw,
+    asn_encode_raw
+  },
+  {
+    TAG_NULL, asn_free_null, asn_get_encoded_len_null, asn_decode_null,
+    asn_encode_null
+  },
+  { TAG_ANY, asn_free_null, 0, asn_decode_any, 0 },
+  { TAG_STOP, 0, 0, 0, 0 }
 };
 
 int
@@ -96,23 +118,24 @@ asn_get_from_file (char *name, u_int8_t **asn, u_int32_t *asnlen)
       log_error ("asn_get_from_file: failed to open %s", name);
       return 0;
     }
-  
-  if ((*asn = malloc (st.st_size)) == NULL)
+
+  *asn = malloc (st.st_size);
+  if (!*asn)
     {
-      log_print ("asn_get_from_file: out of memory");
+      log_print ("asn_get_from_file: malloc (%d) failed", st.st_size);
       res = 0;
       goto done;
     }
 
-  if (read (fd, *asn, st.st_size) != st.st_size ||
-      asn_get_len (*asn) != *asnlen)
+  if (read (fd, *asn, st.st_size) != st.st_size
+      || asn_get_len (*asn) != *asnlen)
     {
       log_print ("x509_asn_obtain: asn file ended early");
       free (*asn);
       res = 0;
       goto done;
     }
-		 
+
   res = 1;
 
  done:
@@ -126,13 +149,17 @@ asn_template_clone (struct norm_type *obj, int constructed)
 {
   struct norm_type *p;
   u_int32_t i;
-  
-  if (!constructed) 
+
+  if (!constructed)
     {
       p = malloc (sizeof (struct norm_type));
-      if (p == NULL)
-	return NULL;
-      
+      if (!p)
+	{
+	  log_error ("asn_template_clone: malloc (%d) failed",
+		     sizeof (struct norm_type));
+	  return 0;
+	}
+
       memcpy (p, obj, sizeof (struct norm_type));
 
       obj = p;
@@ -141,7 +168,7 @@ asn_template_clone (struct norm_type *obj, int constructed)
   if (obj->type != TAG_SEQUENCE && obj->type != TAG_SET)
     {
       obj->len = 0;
-      obj->data = NULL;
+      obj->data = 0;
     }
   else if (obj->type == TAG_SEQUENCE || obj->type == TAG_SET)
     {
@@ -149,11 +176,14 @@ asn_template_clone (struct norm_type *obj, int constructed)
       obj = obj->data;
       i = 0;
       while (obj[i++].type != TAG_STOP);
-      
-      p->data = malloc (i * sizeof (struct norm_type));
-      if (p->data == NULL)
-	return NULL;
 
+      p->data = malloc (i * sizeof (struct norm_type));
+      if (!p->data)
+	{
+	  log_error ("asn_template_clone: malloc (%d) failed",
+		     i * sizeof (struct norm_type));
+	  return 0;
+	}
       memcpy (p->data, obj, i * sizeof (struct norm_type));
       obj = p->data;
 
@@ -161,8 +191,8 @@ asn_template_clone (struct norm_type *obj, int constructed)
       while (obj[i].type != TAG_STOP)
 	{
 	  obj[i].len = 0;
-	  if (asn_template_clone (&obj[i], 1) == NULL)
-	    return NULL;
+	  if (!asn_template_clone (&obj[i], 1))
+	    return 0;
 
 	  i++;
 	}
@@ -171,24 +201,23 @@ asn_template_clone (struct norm_type *obj, int constructed)
   return obj;
 }
 
-/* Associates a human readable name to an OBJECT IDENTIFIER */
-
+/* Associates a human readable name to an OBJECT IDENTIFIER.  */
 char *
 asn_parse_objectid (struct asn_objectid *table, char *id)
 {
   u_int32_t len = 0;
-  char *p = NULL;
+  char *p = 0;
   static char buf[LINE_MAX];
 
-  if (id == NULL)
-    return NULL;
+  if (!id)
+    return 0;
 
-  while (table->name != NULL)
+  while (table->name)
     {
       if (!strcmp (table->objectid, id))
 	return table->name;
-      if (!strncmp (table->objectid, id, strlen (table->objectid)) &&
-	  strlen (table->objectid) > len)
+      if (!strncmp (table->objectid, id, strlen (table->objectid))
+	  && strlen (table->objectid) > len)
 	{
 	  len = strlen (table->objectid);
 	  p = table->name;
@@ -198,18 +227,17 @@ asn_parse_objectid (struct asn_objectid *table, char *id)
     }
 
   if (len == 0)
-    return NULL;
+    return 0;
 
   strncpy (buf, p, sizeof (buf) - 1);
   buf[sizeof (buf) - 1] = 0;
-  strncat (buf + strlen (buf), id + len, sizeof (buf) -1 - strlen (buf));
+  strncat (buf + strlen (buf), id + len, sizeof (buf) - 1 - strlen (buf));
   buf[sizeof (buf) - 1] = 0;
 
   return buf;
 }
 
-/* Retrieves the pointer to a data type referenced by the path name */
-
+/* Retrieves the pointer to a data type referenced by the path name.  */
 struct norm_type *
 asn_decompose (char *path, struct norm_type *obj)
 {
@@ -218,27 +246,27 @@ asn_decompose (char *path, struct norm_type *obj)
 
   if (!strcasecmp (path, obj->name))
       return obj->data;
-  
+
   p = path = strdup (path);
   p2 = strsep (&p, ".");
 
-  if (strcasecmp (p2, obj->name) || p == NULL)
+  if (strcasecmp (p2, obj->name) || !p)
     goto fail;
 
-  while (p != NULL)
+  while (p)
     {
       obj = obj->data;
-      if (obj == NULL)
+      if (!obj)
 	break;
-      
+
       p2 = strsep (&p, ".");
 
-      /* 
+      /*
        * For SEQUENCE OF or SET OF, we want to be able to say
        * AttributeValueAssertion[1] for the 2nd value.
        */
       tmp = strchr (p2, '[');
-      if (tmp != NULL)
+      if (tmp)
 	{
 	  counter = atoi (tmp+1);
 	  *tmp = 0;
@@ -246,18 +274,18 @@ asn_decompose (char *path, struct norm_type *obj)
       else
 	counter = 0;
 
-      /* Find the Tag */
+      /* Find the tag.  */
       while (obj->type != TAG_STOP)
 	{
 	  if (!strcasecmp (p2, obj->name) && counter-- == 0)
 	    break;
 	  obj++;
 	}
-      
+
       if (obj->type == TAG_STOP)
 	goto fail;
 
-      if (p == NULL)
+      if (!p)
 	goto done;
 
       if (obj->type != TAG_SEQUENCE && obj->type != TAG_SET)
@@ -270,11 +298,10 @@ asn_decompose (char *path, struct norm_type *obj)
 
  fail:
   free (path);
-  return NULL;
+  return 0;
 }
 
-/* Gets an entry from the ASN.1 tag switch table */
-
+/* Gets an entry from the ASN.1 tag switch table.  */
 struct asn_handler *
 asn_get (enum asn_tags type)
 {
@@ -286,14 +313,13 @@ asn_get (enum asn_tags type)
     else
       h++;
 
-  return NULL;
+  return 0;
 }
 
 /*
  * For the long form of BER encoding we need to know in how many
  * octets the length can be encoded.
  */
-
 u_int32_t
 asn_sizeinoctets (u_int32_t len)
 {
@@ -311,24 +337,32 @@ asn_sizeinoctets (u_int32_t len)
 u_int8_t *
 asn_format_header (struct norm_type *obj, u_int8_t *asn, u_int8_t **data)
 {
-  u_int8_t *buf = NULL, type;
+  u_int8_t *buf = 0, *erg;
+  u_int8_t type;
   u_int16_t len_off, len;
   struct asn_handler *h;
 
   h = asn_get (obj->type);
-  if (h == NULL)
-    return NULL;
+  if (!h)
+    return 0;
 
-  if (asn != NULL)
+  if (asn)
     buf = asn;
 
-  /* We only do low tag at the moment */
+  /* We only do low tags at the moment.  */
   len_off = 1;
 
   len = h->get_encoded_len (obj, &type);
 
-  if (buf == NULL && (buf = malloc (len)) == NULL)
-    return NULL;
+  if (!buf)
+    {
+      buf = malloc (len);
+      if (!buf)
+	{
+	  log_error ("asn_format_header: malloc (%d) failed", len);
+	  return 0;
+	}
+    }
 
   if (type != ASN_LONG_FORM)
     {
@@ -355,22 +389,21 @@ asn_format_header (struct norm_type *obj, u_int8_t *asn, u_int8_t **data)
 	}
     }
 
-  if (ISEXPLICIT(obj))
+  if (ISEXPLICIT (obj))
     {
-      u_int8_t *erg;
-      /* Explicit tagging add an outer layer */
-      struct norm_type tmp = {obj->type, obj->class&0x3, NULL, 0, obj->data};
+      /* Explicit tagging adds an outer layer.  */
+      struct norm_type tmp = {obj->type, obj->class&0x3, 0, 0, obj->data};
 
-      /* XXX - force the class to be CONTEXT */
-      buf[0] = GET_EXP(obj) | (((enum asn_classes)CONTEXT & 0x3) << 6) | 
-	ASN_CONSTRUCTED;
+      /* XXX Force the class to be CONTEXT.  */
+      buf[0] = GET_EXP (obj) | (((enum asn_classes)CONTEXT & 0x3) << 6)
+	| ASN_CONSTRUCTED;
       erg = asn_format_header (&tmp, *data, data);
 
       if (erg && (obj->type == TAG_SEQUENCE || obj->type == TAG_SET))
 	erg[0] |= ASN_CONSTRUCTED;
     }
   else
-    /* XXX low tag only */
+    /* XXX Low tags only.  */
     buf[0] = obj->type | (obj->class << 6);
 
   return buf;
@@ -385,25 +418,24 @@ asn_get_encoded_len (struct norm_type *obj, u_int32_t len, u_int8_t *type)
     {
       /* Short form */
       len = len + 1 + len_off;
-      if (type != NULL)
+      if (type)
 	*type = 0;
     }
   else
     {
       /* Long Form */
       len = len + asn_sizeinoctets (len) + 1 + len_off;
-      if (type != NULL)
+      if (type)
 	*type = ASN_LONG_FORM;
     }
 
-  if (obj != NULL && ISEXPLICIT(obj))
-    len = asn_get_encoded_len (NULL, len, NULL);
+  if (obj && ISEXPLICIT (obj))
+    len = asn_get_encoded_len (0, len, 0);
 
   return len;
 }
 
-/* Tries to decode an ANY tag, if we cant handle it we just raw encode it */
-
+/* Tries to decode an ANY tag, if we cant handle it we just raw encode it.  */
 u_int8_t *
 asn_decode_any (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
 {
@@ -415,7 +447,7 @@ asn_decode_any (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
     type = TAG_RAW;
 
   h = asn_get (type);
-  if (h == NULL)
+  if (!h)
     {
       type = TAG_RAW;
       h = asn_get (type);
@@ -425,7 +457,7 @@ asn_decode_any (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
   return h->decode (asn, asnlen, obj);
 }
 
-u_int32_t 
+u_int32_t
 asn_get_encoded_len_integer (struct norm_type *obj, u_int8_t *type)
 {
   u_int16_t len_off;
@@ -433,7 +465,7 @@ asn_get_encoded_len_integer (struct norm_type *obj, u_int8_t *type)
   u_int32_t tmp;
   mpz_t a;
 
-  /* XXX - We only do low tag at the moment */
+  /* XXX We only do low tags at the moment.  */
   len_off = 1;
 
   obj->len = len = mpz_sizeinoctets ((mpz_ptr) obj->data);
@@ -441,7 +473,7 @@ asn_get_encoded_len_integer (struct norm_type *obj, u_int8_t *type)
 
   if (len > 1)
     mpz_fdiv_q_2exp (a, a, (len - 1) << 3);
-  
+
   tmp = mpz_fdiv_r_ui (a, a, 256);
   mpz_clear (a);
 
@@ -460,7 +492,6 @@ asn_get_encoded_len_integer (struct norm_type *obj, u_int8_t *type)
  * Encode an integer value.
  * Input = obj, output = asn or return value.
  */
-
 u_int8_t *
 asn_encode_integer (struct norm_type *obj, u_int8_t *asn)
 {
@@ -469,13 +500,13 @@ asn_encode_integer (struct norm_type *obj, u_int8_t *asn)
 
   buf = asn_format_header (obj, asn, &data);
 
-  if (buf == NULL)
-    return NULL;
+  if (!buf)
+    return 0;
 
   len = mpz_sizeinoctets ((mpz_ptr) obj->data);
   mpz_getraw (data, (mpz_ptr) obj->data, len);
 
-  /* XXX - We only deal with unsigned integers at the moment */
+  /* XXX We only deal with unsigned integers at the moment.  */
   if (data[0] & 0x80)
     {
       memmove (data + 1, data, len);
@@ -490,33 +521,35 @@ asn_decode_integer (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
 {
   u_int8_t *data;
   u_int32_t len;
+  mpz_ptr p;
 
   if (asnlen < asn_get_len (asn))
     {
       log_print ("asn_decode_integer: ASN.1 content is bigger than buffer");
-      return NULL;
+      return 0;
     }
 
   len = asn_get_data_len (obj, &asn, &data);
 
-  if (TAG_TYPE(asn) != TAG_INTEGER)
+  if (TAG_TYPE (asn) != TAG_INTEGER)
     {
       log_print ("asn_decode_integer: expected tag type INTEGER, got %d",
-		 TAG_TYPE(asn));
-      return NULL;
+		 TAG_TYPE (asn));
+      return 0;
     }
 
-  obj->data = malloc (sizeof (mpz_ptr));
-  if (obj->data == NULL) 
+  p = malloc (sizeof *p);
+  if (!p)
     {
-      log_print ("asn_decode_integer: out of memory.");
-      return NULL;
+      log_error ("asn_decode_integer: malloc (%d) failed", sizeof *p);
+      return 0;
     }
 
-  mpz_init ((mpz_ptr) obj->data);
-  mpz_setraw ((mpz_ptr) obj->data, data, len);
+  mpz_init (p);
+  mpz_setraw (p, data, len);
 
   obj->len = len;
+  obj->data = p;
 
   return data + len;
 }
@@ -524,7 +557,7 @@ asn_decode_integer (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
 void
 asn_free_integer (struct norm_type *obj)
 {
-  if (obj->data != NULL)
+  if (obj->data)
     {
       mpz_clear ((mpz_ptr) obj->data);
       free (obj->data);
@@ -532,7 +565,7 @@ asn_free_integer (struct norm_type *obj)
 }
 
 
-u_int32_t 
+u_int32_t
 asn_get_encoded_len_string (struct norm_type *obj, u_int8_t *type)
 {
   return asn_get_encoded_len (obj, obj->len, type);
@@ -542,7 +575,6 @@ asn_get_encoded_len_string (struct norm_type *obj, u_int8_t *type)
  * Encode a String
  * Input = obj, output = asn or return value.
  */
-
 u_int8_t *
 asn_encode_string (struct norm_type *obj, u_int8_t *asn)
 {
@@ -550,8 +582,8 @@ asn_encode_string (struct norm_type *obj, u_int8_t *asn)
 
   buf = asn_format_header (obj, asn, &data);
 
-  if (buf == NULL)
-    return NULL;
+  if (!buf)
+    return 0;
 
   memcpy (data, obj->data, obj->len);
 
@@ -566,24 +598,28 @@ asn_decode_string (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
 
   obj->len = len = asn_get_data_len (obj, &asn, &data);
 
-  if (TAG_TYPE(asn) != obj->type)
+  if (TAG_TYPE (asn) != obj->type)
     {
       log_print ("asn_decode_string: expected tag type STRING(%d), got %d",
-		 obj->type, TAG_TYPE(asn));
-      return NULL;
+		 obj->type, TAG_TYPE (asn));
+      return 0;
     }
 
   if (asnlen < asn_get_len (asn))
     {
       log_print ("asn_decode_string: ASN.1 content is bigger than buffer");
-      return NULL;
+      return 0;
     }
 
   obj->data = malloc (obj->len + 1);
-  if (obj->data == NULL)
-    return NULL;
+  if (!obj->data)
+    {
+      log_error ("asn_decode_string: malloc (%d) failed", obj->len + 1);
+      return 0;
+    }
   memcpy ((char *)obj->data, data, obj->len);
-  /* 
+
+  /*
    * Encode a terminating '0', this is irrelevant for OCTET strings
    * but nice for printable strings which do not include the terminating
    * zero.
@@ -596,12 +632,12 @@ asn_decode_string (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
 void
 asn_free_string (struct norm_type *obj)
 {
-  if (obj->data != NULL)
+  if (obj->data)
     free (obj->data);
 }
 
 
-u_int32_t 
+u_int32_t
 asn_get_encoded_len_objectid (struct norm_type *obj, u_int8_t *type)
 {
   u_int16_t len_off;
@@ -609,10 +645,10 @@ asn_get_encoded_len_objectid (struct norm_type *obj, u_int8_t *type)
   u_int32_t tmp;
   char *buf, *buf2;
 
-  /* XXX - We only do low tag at the moment */
+  /* XXX We only do low tags at the moment.  */
   len_off = 1;
 
-  /* The first two numbers are encoded together */
+  /* The first two numbers are encoded together.  */
   buf = obj->data;
   tmp = strtol (buf, &buf2, 10);
   buf = buf2;
@@ -633,7 +669,7 @@ asn_get_encoded_len_objectid (struct norm_type *obj, u_int8_t *type)
       } while (tmp);
     }
 
-  /* The first two ids are encoded as one octet */
+  /* The first two IDs are encoded as one octet.  */
   obj->len = len - 1;
 
   return asn_get_encoded_len (obj, len, type);
@@ -643,7 +679,6 @@ asn_get_encoded_len_objectid (struct norm_type *obj, u_int8_t *type)
  * Encode an Object Identifier
  * Input = obj, output = asn or return value.
  */
-
 u_int8_t *
 asn_encode_objectid (struct norm_type *obj, u_int8_t *asn)
 {
@@ -654,18 +689,18 @@ asn_encode_objectid (struct norm_type *obj, u_int8_t *asn)
 
   buf = asn_format_header (obj, asn, &data);
 
-  if (buf == NULL)
-    return NULL;
+  if (!buf)
+    return 0;
 
   enc = obj->data;
   while (*enc)
     {
-      /* First two ids are encoded as one octet */
+      /* First two IDs are encoded as one octet.  */
       if (flag == 0)
 	{
 	  tmp = strtol (enc, &enc2, 10);
 	  if (enc == enc2)
-	    return NULL;
+	    return 0;
 	  enc = enc2;
 	  tmp2 = strtol (enc, &enc2, 10) + 40 * tmp;
 	  flag = 1;
@@ -676,7 +711,7 @@ asn_encode_objectid (struct norm_type *obj, u_int8_t *asn)
       if (enc == enc2)
 	break;
 
-      /* Reverse the digits to base-128 */
+      /* Reverse the digits to base-128.  */
       tmp = 0;
       do {
 	tmp <<= 7;
@@ -686,7 +721,7 @@ asn_encode_objectid (struct norm_type *obj, u_int8_t *asn)
 
       enc = enc2;
       do {
-	/* If the next octet still belongs to the data set msb */
+	/* If the next octet still belongs to the data set MSB.  */
 	*data++ = (tmp & 0x7f) | ( tmp > 127 ? 0x80 : 0);
 	tmp >>= 7;
       } while (tmp);
@@ -705,41 +740,44 @@ asn_decode_objectid (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
 
   len = asn_get_data_len (obj, &asn, &data);
 
-  if (TAG_TYPE(asn) != TAG_OBJECTID)
+  if (TAG_TYPE (asn) != TAG_OBJECTID)
     {
       log_print ("asn_decode_objectid: expected tag type OBJECTID, got %d",
-		 TAG_TYPE(asn));
-      return NULL;
+		 TAG_TYPE (asn));
+      return 0;
     }
 
   if (asnlen < asn_get_len (asn))
     {
       log_print ("asn_decode_objectid: ASN.1 content is bigger than buffer");
-      return NULL;
+      return 0;
     }
 
-  obj->data = NULL;
+  obj->data = 0;
   obj->len = 0;
   while (len > 0)
     {
       tmp = 0;
-      do {
-	tmp <<= 7;
-	tmp += *data & 0x7f;
-      } while (len-- > 0 && (*data++ & 0x80));
+      do
+	{
+	  tmp <<= 7;
+	  tmp += *data & 0x7f;
+	}
+      while (len-- > 0 && (*data++ & 0x80));
 
       if (flag == 0)
-	  c = snprintf (NULL, 0, "%d %d ", tmp/40, tmp % 40) + 1;
+	  c = snprintf (0, 0, "%d %d ", tmp / 40, tmp % 40) + 1;
       else
-	  c = snprintf (NULL, 0, "%d ", tmp) + 1;
+	  c = snprintf (0, 0, "%d ", tmp) + 1;
 
       new_buf = realloc (obj->data, obj->len + c);
-      if (new_buf == NULL) 
+      if (!new_buf)
 	{
+	  log_error ("asn_decode_objectid: realloc (%p, %d) failed", obj->data,
+		     obj->len + c);
 	  free (obj->data);
-	  obj->data = NULL;
-	  log_print ("asn_decode_objectid: out of memory.");
-	  return NULL;
+	  obj->data = 0;
+	  return 0;
 	}
       obj->data = new_buf;
 
@@ -754,7 +792,7 @@ asn_decode_objectid (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
       obj->len = strlen (obj->data);
     }
 
-  if (obj->data != NULL)
+  if (obj->data)
     ((char *)obj->data)[obj->len - 1] = 0;
 
   return data;
@@ -763,15 +801,15 @@ asn_decode_objectid (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
 void
 asn_free_objectid (struct norm_type *obj)
 {
-  if (obj->data != NULL)
+  if (obj->data)
     free (obj->data);
 }
 
 
-u_int32_t 
+u_int32_t
 asn_get_encoded_len_raw (struct norm_type *obj, u_int8_t *type)
 {
-  if (type != NULL)
+  if (type)
     {
       if (obj->len > 127)
 	*type = ASN_LONG_FORM;
@@ -785,16 +823,23 @@ asn_get_encoded_len_raw (struct norm_type *obj, u_int8_t *type)
 u_int8_t *
 asn_encode_raw (struct norm_type *obj, u_int8_t *asn)
 {
-  u_int8_t *buf = NULL;
+  u_int8_t *buf = 0;
 
   if (obj->len == 0)
     return asn;
 
-  if (asn != NULL)
+  if (asn)
     buf = asn;
 
-  if (buf == NULL && (buf = malloc (obj->len)) == NULL)
-    return NULL;
+  if (!buf)
+    {
+      buf = malloc (obj->len);
+      if (!buf)
+	{
+	  log_error ("asn_encode_raw: malloc (%d) failed", obj->len);
+	  return 0;
+	}
+    }
 
   memcpy (buf, obj->data, obj->len);
 
@@ -808,14 +853,14 @@ asn_decode_raw (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
   if (asnlen < obj->len)
     {
       log_print ("asn_decode_raw: ASN.1 content is bigger than buffer");
-      return NULL;
+      return 0;
     }
 
   obj->data = malloc (obj->len);
-  if (obj->data == NULL)
+  if (!obj->data)
     {
-      log_print ("asn_decode_raw: out of memory");
-      return NULL;
+      log_error ("asn_decode_raw: malloc (%d) failed", obj->len);
+      return 0;
     }
 
   memcpy (obj->data, asn, obj->len);
@@ -826,11 +871,11 @@ asn_decode_raw (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
 void
 asn_free_raw (struct norm_type *obj)
 {
-  if (obj->data != NULL)
+  if (obj->data)
     free (obj->data);
 }
 
-u_int32_t 
+u_int32_t
 asn_get_encoded_len_null (struct norm_type *obj, u_int8_t *type)
 {
   return asn_get_encoded_len (obj, 0, type);
@@ -839,14 +884,21 @@ asn_get_encoded_len_null (struct norm_type *obj, u_int8_t *type)
 u_int8_t *
 asn_encode_null (struct norm_type *obj, u_int8_t *asn)
 {
-  u_int8_t *buf = NULL;
+  u_int8_t *buf = 0;
 
-  if (asn != NULL)
+  if (asn)
     buf = asn;
 
-  if (buf == NULL && (buf = malloc (2)) == NULL)
-    return NULL;
-  
+  if (!buf)
+    {
+      buf = malloc (2);
+      if (!buf)
+	{
+	  log_error ("asn_encode_null: malloc (2) failed");
+	  return 0;
+	}
+    }
+
   buf[0] = obj->type;
   buf[1] = 0;
 
@@ -856,7 +908,7 @@ asn_encode_null (struct norm_type *obj, u_int8_t *asn)
 u_int8_t *
 asn_decode_null (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
 {
-  obj->data = NULL;
+  obj->data = 0;
   obj->len = 0;
 
   return asn + asn_get_len (asn);
@@ -865,7 +917,7 @@ asn_decode_null (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
 void
 asn_free_null (struct norm_type *obj)
 {
-  obj->data = NULL;
+  obj->data = 0;
 }
 
 void
@@ -873,26 +925,23 @@ asn_free (struct norm_type *obj)
 {
   struct asn_handler *h = asn_get (obj->type);
 
-  if (h == NULL)
-      log_print ("asn_free: unkown ASN.1 type %d", obj->type);
+  if (!h)
+    log_print ("asn_free: unkown ASN.1 type %d", obj->type);
   else
-    h->free (obj);
+    h->deallocate (obj);
 }
 
-/*
- * Returns the whole length of the BER encoded ASN.1 object.
- */
-
+/* Returns the whole length of the BER encoded ASN.1 object.  */
 u_int32_t
 asn_get_len (u_int8_t *asn)
 {
   u_int32_t len;
   u_int8_t *data;
-  struct norm_type tmp = {TAG_RAW, UNIVERSAL, NULL, 0, NULL};
+  struct norm_type tmp = { TAG_RAW, UNIVERSAL, 0, 0, 0 };
 
   len = asn_get_data_len (&tmp, &asn, &data);
 
-  if (asn == NULL)
+  if (!asn)
     return 0;
 
   return (data - asn) + len;
@@ -904,21 +953,19 @@ asn_get_len (u_int8_t *asn)
  * For TAG_NULL the data length is zero, so we have to return an error
  * in asn, asn will be NULL in case of error.
  */
-
 u_int32_t
 asn_get_data_len (struct norm_type *obj, u_int8_t **asn, u_int8_t **data)
 {
   u_int32_t len;
   u_int16_t len_off = 1;
+  static struct norm_type tmp = { TAG_RAW, UNIVERSAL, 0, 0, 0 };
 
-  if (obj != NULL && ISEXPLICIT(obj))
+  if (obj && ISEXPLICIT (obj))
     {
-      struct norm_type tmp = {TAG_RAW, UNIVERSAL, NULL, 0, NULL};
-
-      if (TAG_TYPE(*asn) != GET_EXP(obj))
+      if (TAG_TYPE (*asn) != GET_EXP (obj))
 	{
-	  log_print ("asn_get_data_len: explict tagging was needed");
-	  *asn = NULL;
+	  log_print ("asn_get_data_len: explicit tagging was needed");
+	  *asn = 0;
 	  return 0;
 	}
 
@@ -930,12 +977,12 @@ asn_get_data_len (struct norm_type *obj, u_int8_t **asn, u_int8_t **data)
     {
       int i, octets = (*asn)[len_off] & 0x7f;
 
-      /* XXX - we only decode really small length */
-      if (octets > sizeof (len))
+      /* XXX We only decode really small lengths.  */
+      if (octets > sizeof len)
 	{
 	  log_print ("asn_get_data_len: long form length %d exceeds "
 		     "allowed maximum", octets);
-	  *asn = NULL;
+	  *asn = 0;
 	  return 0;
 	}
 
@@ -944,7 +991,7 @@ asn_get_data_len (struct norm_type *obj, u_int8_t **asn, u_int8_t **data)
 	  len = (len << 8) | (*asn)[len_off + 1 + i];
 	}
 
-      if (data != NULL)
+      if (data)
 	*data = *asn + len_off + 1 + octets;
     }
   else
@@ -952,7 +999,7 @@ asn_get_data_len (struct norm_type *obj, u_int8_t **asn, u_int8_t **data)
       /* Short form */
       len = (*asn)[len_off];
 
-      if (data != NULL)
+      if (data)
 	*data = *asn + len_off + 1;
     }
 
@@ -965,18 +1012,18 @@ asn_free_sequence (struct norm_type *obj)
   struct norm_type *in = obj->data;
   struct asn_handler *h;
 
-  if (in == NULL)
+  if (!in)
     return;
 
   while (in->type != TAG_STOP)
     {
       h = asn_get (in->type);
-      if (h == NULL)
+      if (!h)
 	break;
 
-      h->free (in++);
+      h->deallocate (in++);
     }
-  
+
   free (obj->data);
 }
 
@@ -991,12 +1038,12 @@ asn_get_encoded_len_sequence (struct norm_type *seq, u_int8_t *type)
   for (len = 0, i = 0; obj[i].type != TAG_STOP; i++)
     {
       h = asn_get (obj[i].type);
-      if (h == NULL)
+      if (!h)
 	{
-	  log_print ("asn_encode_sequence: unkown type %d", obj[i].type);
+	  log_print ("asn_encode_sequence: unknown type %d", obj[i].type);
 	  break;
 	}
-      len += h->get_encoded_len (&obj[i], NULL);
+      len += h->get_encoded_len (&obj[i], 0);
     }
 
   return asn_get_encoded_len (seq, len, type);
@@ -1010,33 +1057,34 @@ asn_encode_sequence (struct norm_type *seq, u_int8_t *asn)
   struct norm_type *obj;
   struct asn_handler *h;
   int i;
-  
-  if ((h = asn_get (seq->type)) == NULL)
-    return NULL;
+
+  h = asn_get (seq->type);
+  if (!h)
+    return 0;
 
   obj = (struct norm_type *) seq->data;
 
   erg = asn_format_header (seq, asn, &data);
-  if (erg == NULL)
-      return NULL;
+  if (!erg)
+      return 0;
 
   for (i = 0, len = 0; obj[i].type != TAG_STOP; i++)
     {
       h = asn_get (obj[i].type);
-      if (h == NULL)
+      if (!h)
 	{
 	  log_print ("asn_encode_sequence: unknown ASN.1 tag %d", obj[i].type);
-	  return NULL;
+	  return 0;
 	}
 
-      /* A structure can be optional, indicated by data == NULL */
-      if (h->encode (&obj[i], data + len) == NULL && obj->data != NULL)
+      /* A structure can be optional, indicated by data == 0.  */
+      if (!h->encode (&obj[i], data + len) && obj->data)
 	{
-	  log_print ("asn_encode_sequence: encoding of %s failed", 
+	  log_print ("asn_encode_sequence: encoding of %s failed",
 		     obj[i].name);
-	  return NULL;
+	  return 0;
 	}
-      len += h->get_encoded_len (&obj[i], NULL);
+      len += h->get_encoded_len (&obj[i], 0);
     }
 
   erg[0] |= ASN_CONSTRUCTED;
@@ -1055,35 +1103,35 @@ asn_decode_sequence (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
   if (asnlen < asn_get_len (asn))
     {
       log_print ("asn_decode_sequence: ASN.1 content is bigger than buffer");
-      return NULL;
+      return 0;
     }
 
   len = asn_get_data_len (obj, &asn, &data);
-  
-  /* XXX - an empty sequence is that okay */
+
+  /* XXX An empty sequence is that okay.  */
   if (len == 0)
     return data;
 
-  if (TAG_TYPE(asn) != obj->type)
+  if (TAG_TYPE (asn) != obj->type)
     {
       log_print ("asn_decode_sequence: expected tag type SEQUENCE/SET, got %d",
-		 TAG_TYPE(asn));
-      return NULL;
+		 TAG_TYPE (asn));
+      return 0;
     }
 
-  /* Handle dynamic sized sets and sequences */
+  /* Handle dynamic sized sets and sequences.  */
   flags = obj->flags;
 
   if (flags & ASN_FLAG_ZEROORMORE)
     {
-      struct norm_type stop_tag = {TAG_STOP};
+      struct norm_type stop_tag = { TAG_STOP };
       struct norm_type *tmp;
 
       /* Zero occurences */
       if (len == 0)
 	{
 	  asn_free (obj);
-	  obj->data = NULL;
+	  obj->data = 0;
 	  return data;
 	}
 
@@ -1098,35 +1146,35 @@ asn_decode_sequence (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
       if (p != data + len)
 	{
 	  log_print ("asn_decode_sequence: SEQ/SET OF too many elements");
-	  return NULL;
+	  return 0;
 	}
 
-      /* 
+      /*
        * Create new templates for dynamically added objects,
        * the ASN.1 tags SEQUENCE OF and SET OF, specify an unknown
        * number of elements.
        */
-
       new_buf = realloc (obj->data,
-			   (objects+1) * sizeof (struct norm_type));
-      if (new_buf == NULL)
+			 (objects + 1) * sizeof (struct norm_type));
+      if (!new_buf)
 	{
+	  log_error ("asn_decode_sequence: realloc (%p, %d) failed", obj->data,
+		     (objects + 1) * sizeof (struct norm_type));
 	  asn_free (obj);
-	  obj->data = NULL;
-	  log_print ("asn_decode_sequence: out of memory");
-	  return NULL;
+	  obj->data = 0;
+	  return 0;
 	}
       obj->data = new_buf;
-      
+
       tmp = obj->data;
-      
+
       /* Copy TAG_STOP */
       memcpy (tmp + objects, &stop_tag, sizeof (struct norm_type));
       while (objects-- > 1)
 	{
 	  memcpy (tmp + objects, tmp, sizeof (struct norm_type));
-	  if (asn_template_clone (tmp + objects, 1) == NULL)
-	    return NULL;
+	  if (!asn_template_clone (tmp + objects, 1))
+	    return 0;
 	}
     }
 
@@ -1138,21 +1186,22 @@ asn_decode_sequence (u_int8_t *asn, u_int32_t asnlen, struct norm_type *obj)
       if (obj->type == TAG_STOP)
 	break;
       h = asn_get (obj->type);
-      if (h == NULL)
+      if (!h)
 	{
 	  log_print ("asn_decode_sequence: unknown ASN.1 tag %d", obj->type);
-	  return NULL;
+	  return 0;
 	}
 
-      if ((p = h->decode (p, (data - p) + len, obj++)) == NULL)
+      p = h->decode (p, (data - p) + len, obj++);
+      if (!p)
 	break;
     }
 
   if (p < data + len)
       log_print ("asn_decode_sequence: ASN tag was not decoded completely");
 
-  if (p == NULL)
-    return NULL;
+  if (!p)
+    return 0;
 
   return data + len;
 }
