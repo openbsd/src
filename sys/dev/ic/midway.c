@@ -1,4 +1,4 @@
-/*	$OpenBSD: midway.c,v 1.22 1998/10/20 23:31:06 deraadt Exp $	*/
+/*	$OpenBSD: midway.c,v 1.23 1999/01/11 02:30:59 aaron Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -430,8 +430,7 @@ u_int32_t r;
 
 #ifdef EN_DEBUG_RANGE
   if (r > MID_MAXOFF || (r % 4)) {
-    printf("en_read out of range, r=0x%x\n", r);
-    panic("en_read");
+    panic("en_read: out of range, r=0x%x", r);
   }
 #endif
 
@@ -451,8 +450,7 @@ u_int32_t r, v;
 {
 #ifdef EN_DEBUG_RANGE
   if (r > MID_MAXOFF || (r % 4)) {
-    printf("en_write out of range, r=0x%x\n", r);
-    panic("en_write");
+    panic("en_write: out of range, r=0x%x", r);
   }
 #endif
 
@@ -2451,8 +2449,8 @@ void *arg;
         } else {
 	  IF_DEQUEUE(&sc->rxslot[slot].indma, m);
 	  if (!m) {
-	    printf("%s: lost mbuf in slot %d!\n", sc->sc_dev.dv_xname, slot);
-	    panic("enintr: drqsync");
+	    panic("enintr: drqsync: %s: lost mbuf in slot %d!",
+		sc->sc_dev.dv_xname, slot);
 	  }
         }
 	/* do something with this mbuf */
