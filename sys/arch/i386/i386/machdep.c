@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.212 2002/07/20 19:24:56 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.213 2002/07/24 01:15:39 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2105,7 +2105,8 @@ init386(first_avail)
 	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GLDT_SEL].sd, ldt, sizeof(ldt) - 1, SDT_SYSLDT, SEL_KPL,
 	    0, 0);
-	setsegment(&gdt[GUCODE_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+	setsegment(&gdt[GUCODE_SEL].sd, 0,
+	    i386_btop(VM_MAXUSER_ADDRESS - MAXSSIZ) - 1,
 	    SDT_MEMERA, SEL_UPL, 1, 1);
 	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
 	    SDT_MEMRWA, SEL_UPL, 1, 1);
