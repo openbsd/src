@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.23 2001/02/03 21:38:38 jason Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.24 2001/02/06 02:50:02 jason Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -105,6 +105,9 @@ etherip_input(m, va_alist)
 #if NGIF > 0
 	int i;
 #endif /* NGIF */
+#if NBRIDGE > 0
+	int s;
+#endif /* NBRIDGE */
 
 	va_start(ap, m);
 	iphlen = va_arg(ap, int);
@@ -202,6 +205,7 @@ etherip_input(m, va_alist)
 		break;
 #endif /* INET6 */
 	default:
+		DPRINTF(("etherip_input(): invalid protocol %d\n", v));
 		m_freem(m);
 		etheripstat.etherip_hdrops++;
 		return /* EAFNOSUPPORT */;
@@ -216,7 +220,8 @@ etherip_input(m, va_alist)
 	/* Copy ethernet header */
 	m_copydata(m, 0, sizeof(eh), (void *) &eh);
 
-	m->m_flags &= ~(M_BCAST|M_MCAST);
+	/* Reset the flags based on the inner packet */
+	m->m_flags &= ~(M_BCAST|M_MCAST|M_AUTH|M_CONF);
 	if (eh.ether_dhost[0] & 1) {
 		if (bcmp((caddr_t) etherbroadcastaddr,
 		    (caddr_t)eh.ether_dhost, sizeof(etherbroadcastaddr)) == 0)
@@ -258,7 +263,10 @@ etherip_input(m, va_alist)
 	m->m_pkthdr.rcvif = &gif[i].gif_if;
 	if (m->m_flags & (M_BCAST|M_MCAST))
 		gif[i].gif_if.if_imcasts++;
+
+	s = splnet();
 	m = bridge_input(&gif[i].gif_if, &eh, m);
+	splx(s);
 	if (m == NULL)
 		return;
 #endif /* NBRIDGE */
@@ -335,6 +343,12 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
 	/* Don't forget the EtherIP header */
 	hlen += sizeof(struct etherip_header);
+
+	if (!(m->m_flags & M_PKTHDR)) {
+		DPRINTF(("etherip_output(): mbuf is not a header\n"));
+		m_freem(m);
+		return (ENOBUFS);
+	}
 
 	MGETHDR(m0, M_DONTWAIT, MT_DATA);
 	if (m0 == NULL) {
