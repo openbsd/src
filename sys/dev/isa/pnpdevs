@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.8 1997/12/26 09:53:15 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.9 1998/02/26 08:34:33 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -362,7 +362,7 @@ pccom	BDP0356	#Best Data 56x2
 # Sound:
 sb	ADS7150	#AD1815
 sb	ADS7180	#AD1816
-sb	CTL0001	#
+sb	CTL0001	#Creative ViBRA16C PnP Audio
 sb	CTL0031	#SB AWE32
 sb	CTL0041	#SB16 PnP (CT4131)
 sb	CTL0042	#SB AWE64 Value
