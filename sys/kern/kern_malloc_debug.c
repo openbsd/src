@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc_debug.c,v 1.18 2002/07/01 23:04:09 art Exp $	*/
+/*	$OpenBSD: kern_malloc_debug.c,v 1.19 2002/12/05 22:16:13 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -75,8 +75,8 @@
  * if any memory chunks of this type are used. It's ok to change the size
  * in runtime.
  */
-int debug_malloc_type = -1;
-int debug_malloc_size = -1;
+int debug_malloc_type = 0;
+int debug_malloc_size = 0;
 int debug_malloc_size_lo = -1;
 int debug_malloc_size_hi = -1;
 
@@ -104,6 +104,8 @@ int debug_malloc_frees;
 int debug_malloc_pages;
 int debug_malloc_chunks_on_freelist;
 
+int debug_malloc_initialized;
+
 struct pool debug_malloc_pool;
 
 int
@@ -116,7 +118,8 @@ debug_malloc(unsigned long size, int type, int flags, void **addr)
 	if ((type != debug_malloc_type && debug_malloc_type != 0) ||
 	    (size != debug_malloc_size && debug_malloc_size != 0) ||
 	    (debug_malloc_size_lo != -1 && size < debug_malloc_size_lo) ||
-	    (debug_malloc_size_hi != -1 && size > debug_malloc_size_hi))
+	    (debug_malloc_size_hi != -1 && size > debug_malloc_size_hi) ||
+	    !debug_malloc_initialized)
 		return (0);
 
 	/* XXX - fix later */
@@ -217,6 +220,8 @@ debug_malloc_init(void)
 
 	pool_init(&debug_malloc_pool, sizeof(struct debug_malloc_entry),
 	    0, 0, 0, "mdbepl", NULL);
+
+	debug_malloc_initialized = 1;
 }
 
 /*
