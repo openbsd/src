@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.15 1995/06/07 17:16:10 cgd Exp $	*/
+/*	$NetBSD: inode.c,v 1.16 1995/12/14 22:17:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$NetBSD: inode.c,v 1.15 1995/06/07 17:16:10 cgd Exp $";
+static char rcsid[] = "$NetBSD: inode.c,v 1.16 1995/12/14 22:17:26 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -512,6 +512,7 @@ allocino(request, type)
 {
 	register ino_t ino;
 	register struct dinode *dp;
+	time_t t;
 
 	if (request == 0)
 		request = ROOTINO;
@@ -540,7 +541,8 @@ allocino(request, type)
 		return (0);
 	}
 	dp->di_mode = type;
-	(void)time((time_t *)&dp->di_atime);
+	(void)time(&t);
+	dp->di_atime = t;
 	dp->di_mtime = dp->di_ctime = dp->di_atime;
 	dp->di_size = sblock.fs_fsize;
 	dp->di_blocks = btodb(sblock.fs_fsize);

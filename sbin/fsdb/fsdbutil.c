@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdbutil.c,v 1.2 1995/10/08 23:18:12 thorpej Exp $	*/
+/*	$NetBSD: fsdbutil.c,v 1.3 1995/12/14 22:30:45 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsdbutil.c,v 1.2 1995/10/08 23:18:12 thorpej Exp $";
+static char rcsid[] = "$NetBSD: fsdbutil.c,v 1.3 1995/12/14 22:30:45 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -96,6 +96,7 @@ printstat(cp, inum, dp)
 {
     struct group *grp;
     struct passwd *pw;
+    time_t t;
     char *p;
 
     printf("%s: ", cp);
@@ -130,13 +131,16 @@ printstat(cp, inum, dp)
 	break;
     }
     printf("I=%lu MODE=%o SIZE=%qu", inum, dp->di_mode, dp->di_size);
-    p = ctime((time_t *)&dp->di_mtime);
+    t = dp->di_mtime;
+    p = ctime(&t);
     printf("\n\tMTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
 	   dp->di_mtimensec);
-    p = ctime((time_t *)&dp->di_ctime);
+    t = dp->di_ctime;
+    p = ctime(&t);
     printf("\n\tCTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
 	   dp->di_ctimensec);
-    p = ctime((time_t *)&dp->di_atime);
+    t = dp->di_atime;
+    p = ctime(&t);
     printf("\n\tATIME=%15.15s %4.4s [%d nsec]\n", &p[4], &p[20],
 	   dp->di_atimensec);
 

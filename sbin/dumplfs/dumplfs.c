@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.6 1995/06/07 17:16:05 cgd Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.7 1995/12/14 22:36:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: dumplfs.c,v 1.6 1995/06/07 17:16:05 cgd Exp $";
+static char rcsid[] = "$NetBSD: dumplfs.c,v 1.7 1995/12/14 22:36:34 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -355,6 +355,11 @@ dump_dinode(dip)
 	struct dinode *dip;
 {
 	int i;
+	time_t at, mt, ct;
+
+	at = dip->di_atime;
+	mt = dip->di_mtime;
+	ct = dip->di_ctime;
 
 	(void)printf("%s%d\t%s%d\t%s%d\t%s%d\t%s%d\n",
 		"mode  ", dip->di_mode,
@@ -363,9 +368,9 @@ dump_dinode(dip)
 		"gid   ", dip->di_gid,
 		"size  ", dip->di_size);
 	(void)printf("%s%s%s%s%s%s",
-		"atime ", ctime((time_t *)&dip->di_atime),
-		"mtime ", ctime((time_t *)&dip->di_mtime),
-		"ctime ", ctime((time_t *)&dip->di_ctime));
+		"atime ", ctime(&at),
+		"mtime ", ctime(&mt),
+		"ctime ", ctime(&ct));
 	(void)printf("inum  %d\n", dip->di_inumber);
 	(void)printf("Direct Addresses\n");
 	for (i = 0; i < NDADDR; i++) {
