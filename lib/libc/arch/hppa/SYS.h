@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.4 1999/09/16 19:19:46 mickey Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.5 1999/11/14 00:59:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-1999 Michael Shalayeff
@@ -41,24 +41,32 @@
 #define	__EXIT(p,x)	EXIT(__CONCAT(p,x))
 
 
+#define	__SYSCALL(p,x)				!\
+	.import	errno, data			!\
+	stw	rp, HPPA_FRAME_ERP(sr0,sp)	!\
+	ldil	L%SYSCALLGATE, r1		!\
+	ble	4(sr7, r1)			!\
+	ldi	__CONCAT(SYS_,x), t1		!\
+	comb,=,n r0, t1, __CONCAT(x,$noerr)	!\
+	ldil	L%errno, r1			!\
+	stw	t1, R%errno(r1)			!\
+	ldi	-1, ret0			!\
+	ldi	-1, ret1			!\
+	.label	__CONCAT(x,$noerr)		!\
+	ldw HPPA_FRAME_ERP(sr0,sp), rp
+
 #define	__RSYSCALL(p,x)			!\
 __ENTRY(p,x)				!\
-	stw rp, HPPA_FRAME_ERP(sr0,sp)	!\
-	ldil L%SYSCALLGATE, r1		!\
-	ble 4(sr7, r1)			!\
-	ldi __CONCAT(SYS_,x),r22	!\
-	or,<> r0,r22,r0			!\
-	ldw HPPA_FRAME_ERP(sr0,sp),rp	!\
+	__SYSCALL(p,x)			!\
+	bv	r0(rp)			!\
+	nop				!\
 __EXIT(p,x)
 
 #define	__PSEUDO(p,x,y)			!\
 __ENTRY(p,x)				!\
-	stw rp, HPPA_FRAME_ERP(sr0,sp)	!\
-	ldil L%SYSCALLGATE, r1		!\
-	ble 4(sr7, r1)			!\
-	ldi __CONCAT(SYS_,y),r22	!\
-	or,<> r0,r22,r0			!\
-	ldw HPPA_FRAME_ERP(sr0,sp),rp	!\
+	__SYSCALL(p,y)			!\
+	bv	r0(rp)			!\
+	nop				!\
 __EXIT(p,x)
 
 /*
@@ -88,4 +96,4 @@ __EXIT(p,x)
 # define PSEUDO(x,y)	__PSEUDO(,x,y)
 /*# define SYSENTRY(x)	__ENTRY(,x)*/
 #endif _THREAD_SAFE
-	.import	cerror, code
+
