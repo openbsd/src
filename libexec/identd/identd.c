@@ -1,4 +1,4 @@
-/*	$OpenBSD: identd.c,v 1.31 2002/07/16 10:36:10 deraadt Exp $	*/
+/*	$OpenBSD: identd.c,v 1.32 2002/07/17 02:53:36 deraadt Exp $	*/
 
 /*
  * This program is in the public domain and may be used freely by anyone
@@ -154,7 +154,7 @@ main(int argc, char *argv[])
 	uid_t   set_uid = 0;
 	gid_t   set_gid = 0;
 	extern char *optarg;
-	size_t len;
+	socklen_t len;
 
 	openlog(__progname, LOG_PID, LOG_DAEMON);
 	/*
