@@ -2266,10 +2266,6 @@
 ./usr/share/man/cat3/keynote.0
 ./usr/share/man/cat3/keyok.0
 ./usr/share/man/cat3/keypad.0
-./usr/share/man/cat3/kgetent.0
-./usr/share/man/cat3/kgetflag.0
-./usr/share/man/cat3/kgetnum.0
-./usr/share/man/cat3/kgetstr.0
 ./usr/share/man/cat3/killchar.0
 ./usr/share/man/cat3/killpg.0
 ./usr/share/man/cat3/kn_add_action.0
