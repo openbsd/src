@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.18 2003/08/15 22:46:46 millert Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.19 2004/08/23 19:09:36 millert Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: xargs.c,v 1.18 2003/08/15 22:46:46 millert Exp $";
+static const char rcsid[] = "$OpenBSD: xargs.c,v 1.19 2004/08/23 19:09:36 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,8 +82,6 @@ static int count, insingle, indouble, oflag, pflag, tflag, Rflag, rval, zflag;
 static int cnt, Iflag, jfound, Lflag, wasquoted, xflag;
 static int curprocs, maxprocs;
 static size_t inpsize;
-
-static volatile int childerr;
 
 extern char **environ;
 
@@ -517,7 +515,6 @@ run(char **argv)
 		(void)fflush(stderr);
 	}
 exec:
-	childerr = 0;
 	switch(pid = vfork()) {
 	case -1:
 		err(1, "vfork");
@@ -538,8 +535,8 @@ exec:
 			close(fd);
 		}
 		execvp(argv[0], argv);
-		childerr = errno;
-		_exit(1);
+                warn("%s", argv[0]);
+		_exit(errno == ENOENT ? 127 : 126);
 	}
 	curprocs++;
 	waitchildren(*argv, 0);
@@ -554,11 +551,6 @@ waitchildren(const char *name, int waitall)
 	while ((pid = waitpid(-1, &status, !waitall && curprocs < maxprocs ?
 	    WNOHANG : 0)) > 0) {
 		curprocs--;
-		/* If we couldn't invoke the utility, exit. */
-		if (childerr != 0) {
-			errno = childerr;
-			err(errno == ENOENT ? 127 : 126, "%s", name);
-		}
 		/*
 		 * According to POSIX, we have to exit if the utility exits
 		 * with a 255 status, or is interrupted by a signal.
@@ -570,6 +562,9 @@ waitchildren(const char *name, int waitall)
 			if (WEXITSTATUS(status) == 255) {
 				warnx("%s exited with status 255", name);
 				exit(124);
+                        } else if (WEXITSTATUS(status) == 127 || 
+			    WEXITSTATUS(status) == 126) {
+				exit(WEXITSTATUS(status));
 			} else if (WEXITSTATUS(status) != 0) {
 				rval = 123;
 			}
