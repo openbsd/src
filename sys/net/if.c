@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.74 2003/12/03 11:01:43 markus Exp $	*/
+/*	$OpenBSD: if.c,v 1.75 2003/12/03 13:27:36 markus Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -121,6 +121,11 @@ void	if_detached_start(struct ifnet *);
 int	if_detached_ioctl(struct ifnet *, u_long, caddr_t);
 int	if_detached_init(struct ifnet *);
 void	if_detached_watchdog(struct ifnet *);
+
+struct if_clone	*if_clone_lookup(const char *, int *);
+
+LIST_HEAD(, if_clone) if_cloners = LIST_HEAD_INITIALIZER(if_cloners);
+int if_cloners_count;
 
 /*
  * Network interface utility routines.
@@ -583,6 +588,119 @@ if_detach_queues(ifp, q)
 		m_freem(m);
 		IF_DROP(q);
 	}
+} 
+
+/*
+ * Create a clone network interface.
+ */
+int
+if_clone_create(name)
+	const char *name;
+{
+	struct if_clone *ifc;
+	int unit;
+
+	ifc = if_clone_lookup(name, &unit);
+	if (ifc == NULL)
+		return (EINVAL);
+
+	if (ifunit(name) != NULL)
+		return (EEXIST);
+
+	return ((*ifc->ifc_create)(ifc, unit));
+}
+
+/*
+ * Destroy a clone network interface.
+ */
+int
+if_clone_destroy(name)
+	const char *name;
+{
+	struct if_clone *ifc;
+	struct ifnet *ifp;
+
+	ifc = if_clone_lookup(name, NULL);
+	if (ifc == NULL)
+		return (EINVAL);
+
+	ifp = ifunit(name);
+	if (ifp == NULL)
+		return (ENXIO);
+
+	if (ifc->ifc_destroy == NULL)
+		return (EOPNOTSUPP);
+
+	(*ifc->ifc_destroy)(ifp);
+	return (0);
+}
+
+/*
+ * Look up a network interface cloner.
+ */
+struct if_clone *
+if_clone_lookup(name, unitp)
+	const char *name;
+	int *unitp;
+{
+	struct if_clone *ifc;
+	const char *cp;
+	int unit;
+
+	/* separate interface name from unit */
+	for (cp = name;
+	    cp - name < IFNAMSIZ && *cp && (*cp < '0' || *cp > '9');
+	    cp++)
+		continue;
+
+	if (cp == name || cp - name == IFNAMSIZ || !*cp)
+		return (NULL);	/* No name or unit number */
+
+	LIST_FOREACH(ifc, &if_cloners, ifc_list) {
+		if (strlen(ifc->ifc_name) == cp - name &&
+		    !strncmp(name, ifc->ifc_name, cp - name))
+			break;
+	}
+
+	if (ifc == NULL)
+		return (NULL);
+
+	unit = 0;
+	while (cp - name < IFNAMSIZ && *cp) {
+		if (*cp < '0' || *cp > '9' || unit > INT_MAX / 10) {
+			/* Bogus unit number. */
+			return (NULL);
+		}
+		unit = (unit * 10) + (*cp++ - '0');
+	}
+
+	if (unitp != NULL)
+		*unitp = unit;
+	return (ifc);
+}
+
+/*
+ * Register a network interface cloner.
+ */
+void
+if_clone_attach(ifc)
+	struct if_clone *ifc;
+{
+
+	LIST_INSERT_HEAD(&if_cloners, ifc, ifc_list);
+	if_cloners_count++;
+}
+
+/*
+ * Unregister a network interface cloner.
+ */
+void
+if_clone_detach(ifc)
+	struct if_clone *ifc;
+{
+
+	LIST_REMOVE(ifc, ifc_list);
+	if_cloners_count--;
 }
 
 /*
@@ -864,7 +982,7 @@ if_slowtimo(arg)
  */
 struct ifnet *
 ifunit(name)
-	register char *name;
+	const char *name;
 {
 	register struct ifnet *ifp;
 
@@ -897,6 +1015,17 @@ ifioctl(so, cmd, data, p)
 		return (ifconf(cmd, data));
 	}
 	ifr = (struct ifreq *)data;
+
+	switch (cmd) {
+	case SIOCIFCREATE:
+	case SIOCIFDESTROY:
+		if ((error = suser(p, 0)) != 0)
+			return (error);
+		return ((cmd == SIOCIFCREATE) ?
+			if_clone_create(ifr->ifr_name) :
+			if_clone_destroy(ifr->ifr_name));
+	}
+
 	ifp = ifunit(ifr->ifr_name);
 	if (ifp == 0)
 		return (ENXIO);

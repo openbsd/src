@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.44 2003/10/19 03:58:25 david Exp $	*/
+/*	$OpenBSD: if.h,v 1.45 2003/12/03 13:27:36 markus Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -79,6 +79,21 @@ struct socket;
 struct ether_header;
 struct arpcom;
 struct rt_addrinfo;
+
+/*
+ * Structure describing a `cloning' interface.
+ */
+struct if_clone {
+	LIST_ENTRY(if_clone) ifc_list;	/* on list of cloners */
+	const char *ifc_name;		/* name of device, e.g. `gif' */
+	size_t ifc_namelen;		/* length of name */
+
+	int	(*ifc_create)(struct if_clone *, int);
+	void	(*ifc_destroy)(struct ifnet *);
+};
+
+#define	IF_CLONE_INITIALIZER(name, create, destroy)			\
+	{ { 0 }, name, sizeof(name) - 1, create, destroy }
 
 /*
  * Structure defining statistics and other data kept regarding a network
@@ -556,7 +571,7 @@ int	ifconf(u_long, caddr_t);
 void	ifinit(void);
 int	ifioctl(struct socket *, u_long, caddr_t, struct proc *);
 int	ifpromisc(struct ifnet *, int);
-struct	ifnet *ifunit(char *);
+struct	ifnet *ifunit(const char *);
 
 struct	ifaddr *ifa_ifwithaddr(struct sockaddr *);
 struct	ifaddr *ifa_ifwithaf(int);
@@ -567,6 +582,12 @@ struct	ifaddr *ifa_ifwithroute(int, struct sockaddr *,
 struct	ifaddr *ifaof_ifpforaddr(struct sockaddr *, struct ifnet *);
 void	ifafree(struct ifaddr *);
 void	link_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
+
+void	if_clone_attach(struct if_clone *);
+void	if_clone_detach(struct if_clone *);
+
+int	if_clone_create(const char *);
+int	if_clone_destroy(const char *);
 
 int	loioctl(struct ifnet *, u_long, caddr_t);
 void	loopattach(int);
