@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.804 2004/11/23 20:57:57 damien Exp 
+ *	OpenBSD: pcidevs,v 1.805 2004/11/24 03:44:43 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -650,7 +650,9 @@
 
 /* ATI Technologies */
 #define	PCI_PRODUCT_ATI_RADEON_9600	0x4151		/* Radeon 9600 */
+#define	PCI_PRODUCT_ATI_RADEON_9600XT	0x4152		/* Radeon 9600 XT */
 #define	PCI_PRODUCT_ATI_MACH32	0x4158		/* Mach32 */
+#define	PCI_PRODUCT_ATI_RADEON_9600XT_2	0x4172		/* Radeon 9600 XT 2nd */
 #define	PCI_PRODUCT_ATI_R200_BB	0x4242		/* Radeon 8500 BB */
 #define	PCI_PRODUCT_ATI_RADEON_IGP320M	0x4336		/* Radeon IGP 320M */
 #define	PCI_PRODUCT_ATI_MOBILITY_M6	0x4337		/* Mobility M6 */
