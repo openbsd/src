@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: mktemp.c,v 1.5 1997/01/20 07:46:56 graichen Exp $";
+static char rcsid[] = "$OpenBSD: mktemp.c,v 1.6 1997/02/07 13:01:24 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -82,13 +82,25 @@ _gettemp(path, doopen)
 	extern int errno;
 	register char *start, *trv;
 	struct stat sbuf;
-	u_int pid;
+	int pid;
 
 	pid = getpid();
-	for (trv = path; *trv; ++trv);		/* extra X's get set to 0's */
-	while (*--trv == 'X') {
-		*trv = (pid % 10) + '0';
+	for (trv = path; *trv; ++trv)
+		;
+	--trv;
+	while (*trv == 'X' && pid != 0) {
+		*trv-- = (pid % 10) + '0';
 		pid /= 10;
+	}
+	while (*trv == 'X') {
+		char c;
+
+		pid = (arc4random() & 0xffff) % (26+26);
+		if (pid < 26)
+			c = pid + 'A';
+		else
+			c = (pid - 26) + 'a';
+		*trv-- = c;
 	}
 
 	/*
