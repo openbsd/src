@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.32 2004/12/05 01:10:56 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.33 2004/12/05 01:38:35 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -2161,31 +2161,17 @@ int
 atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 {
 	struct atu_softc		*sc = ifp->if_softc;
-
-	struct ifreq			*ifr = (struct ifreq *)data;
-	struct ifaddr			*ifa = (struct ifaddr *)data;
-	struct ieee80211req		*ireq;
-	struct ieee80211_bssid		*bssid;
-	struct ieee80211chanreq		*chanreq;
-	struct ieee80211_power		*power;
+	struct ifaddr			*ifa;
 	int				err = 0;
-#if 0
-	u_int8_t			tmp[32] = "";
-	int				len = 0;
-#endif
-	struct ieee80211_nwid		nwid;
-	int				change, s;
+	int				s;
 
 	s = splnet();
-	ireq = (struct ieee80211req *)data;
-	change = ifp->if_flags ^ sc->atu_if_flags;
-
-	DPRINTFN(15, ("%s: atu_ioctl: command=%lu\n", USBDEVNAME(sc->atu_dev),
-	    command));
 
 	switch (command) {
 	case SIOCSIFADDR:
 		DPRINTFN(15, ("%s: SIOCSIFADDR\n", USBDEVNAME(sc->atu_dev)));
+
+		ifa = (struct ifaddr *)data;
 
 		ifp->if_flags |= IFF_UP;
 		atu_init(ifp);
@@ -2197,89 +2183,6 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			break;
 #endif /* INET */
 		}
-		break;
-
-	case SIOCSIFFLAGS:
-		DPRINTFN(15, ("%s: SIOCSIFFLAGS\n", USBDEVNAME(sc->atu_dev)));
-
-		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    !(sc->atu_if_flags & IFF_PROMISC)) {
-/* enable promisc */
-#if 0
-				sc->atu_rxfilt |= ATU_RXFILT_PROMISC;
-				atu_setword(sc, ATU_CMD_SET_PKT_FILTER,
-				    sc->atu_rxfilt);
-#endif
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    !(ifp->if_flags & IFF_PROMISC) &&
-			    sc->atu_if_flags & IFF_PROMISC) {
-/* disable promisc */
-#if 0
-				sc->atu_rxfilt &= ~ATU_RXFILT_PROMISC;
-				atu_setword(sc, ATU_CMD_SET_PKT_FILTER,
-				    sc->atu_rxfilt);
-#endif
-			} else if (!(ifp->if_flags & IFF_RUNNING))
-				atu_init(ifp);
-
-#if 0
-			DPRINTFN(15, ("%s: ioctl calling atu_init()\n",
-			    USBDEVNAME(sc->atu_dev)));
-			atu_init(ifp);
-			err = atu_switch_radio(sc, 1);
-#endif
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				atu_stop(ifp, 0);
-			err = atu_switch_radio(sc, 0);
-		}
-		sc->atu_if_flags = ifp->if_flags;
-
-		err = 0;
-		break;
-
-	default:
-		err = ieee80211_ioctl(ifp, command, data);
-		break;
-	}
-
-	if (err == ENETRESET) {
-		if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) ==
-		    (IFF_RUNNING|IFF_UP)) {
-			DPRINTF(("%s: atu_ioctl(): netreset\n",
-			    USBDEVNAME(sc->atu_dev)));
-			atu_init(ifp);
-		}
-		err = 0;
-	}
-
-	splx(s);
-
-	return (err);
-
-	switch (command) {
-	case SIOCSIFADDR:
-		DPRINTFN(15, ("%s: SIOCSIFADDR\n", USBDEVNAME(sc->atu_dev)));
-
-		ifp->if_flags |= IFF_UP;
-		atu_init(ifp);
-
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			arp_ifinit(&sc->sc_ic.ic_ac, ifa);
-			break;
-#endif /* INET */
-		}
-		break;
-
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ATU_MAX_MTU)
-			err = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 
 	case SIOCSIFFLAGS:
@@ -2328,269 +2231,33 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		/* TODO: implement */
 		err = 0;
 		break;
-
+   
 	case SIOCDELMULTI:
 		DPRINTFN(15, ("%s: SIOCDELMULTI\n", USBDEVNAME(sc->atu_dev)));
 		/* TODO: implement */
 		err = 0;
 		break;
 
-	case SIOCS80211NWID:
-		DPRINTFN(15, ("%s: SIOCS80211NWID\n",
-		    USBDEVNAME(sc->atu_dev)));
-		err = copyin(ifr->ifr_data, &nwid, sizeof(nwid));
-		if (err)
-			break;
-		if (nwid.i_len > IEEE80211_NWID_LEN) {
-			err = EINVAL;
-			break;
-		}
-		sc->atu_ssidlen = nwid.i_len;
-		memcpy(sc->atu_ssid, nwid.i_nwid, nwid.i_len);
-		sc->atu_mgmt_flags |= ATU_CHANGED_SETTINGS;
-		break;
-
-	case SIOCG80211NWID:
-		DPRINTFN(15, ("%s: SIOGS80211NWID\n",
-		    USBDEVNAME(sc->atu_dev)));
-		nwid.i_len = sc->atu_ssidlen;
-		memcpy(nwid.i_nwid, sc->atu_ssid, nwid.i_len);
-		err = copyout(&nwid, ifr->ifr_data, sizeof(nwid));
-#ifdef ATU_DEBUG
-		if (atudebug > 20)
-			atu_print_a_bunch_of_debug_things(sc);
-#endif /* ATU_DEBUG */
-		break;
-
-	case SIOCG80211BSSID:
-		DPRINTF(("%s: ioctl 80211 get BSSID\n",
-		    USBDEVNAME(sc->atu_dev)));
-		bssid = (struct ieee80211_bssid *)data;
-		IEEE80211_ADDR_COPY(bssid->i_bssid, sc->atu_bssid);
-		DPRINTF(("%s: returned %s\n", USBDEVNAME(sc->atu_dev),
-		    ether_sprintf(sc->atu_bssid)));
-		break;
-	case SIOCS80211CHANNEL:
-		chanreq = (struct ieee80211chanreq *)data;
-		DPRINTF(("%s: ioctl 80211 set CHANNEL (%d)\n",
-		    USBDEVNAME(sc->atu_dev), chanreq->i_channel));
-
-		if (((chanreq->i_channel < 1) || (chanreq->i_channel > 14)) &&
-		    (chanreq->i_channel != IEEE80211_CHAN_ANY)) {
-			err = EINVAL;
-			break;
-		}
-		/* restart scan / join / etc now */
-		sc->atu_desired_channel = chanreq->i_channel;
-		sc->atu_mgmt_flags |= ATU_CHANGED_SETTINGS;
-		break;
-	case SIOCG80211CHANNEL:
-		DPRINTF(("%s: ioctl 80211 get CHANNEL\n",
-		    USBDEVNAME(sc->atu_dev)));
-		chanreq = (struct ieee80211chanreq *)data;
-		if ((sc->atu_desired_channel == IEEE80211_CHAN_ANY) &&
-		    (!(sc->atu_mgmt_flags & ATU_NETWORK_OK)))
-			chanreq->i_channel = IEEE80211_CHAN_ANY;
-		else
-			chanreq->i_channel = sc->atu_channel;
-		break;
-	case SIOCG80211POWER:
-		DPRINTF(("%s: ioctl 80211 get POWER\n",
-		    USBDEVNAME(sc->atu_dev)));
-		power = (struct ieee80211_power *)data;
-		/* Dummmy, we don't do power saving at the moment */
-		power->i_enabled = 0;
-		power->i_maxsleep = 0;
-		break;
-
-#if 0
-	case SIOCG80211:
-		switch(ireq->i_type) {
-		case IEEE80211_IOC_SSID:
-			err = copyout(sc->atu_ssid, ireq->i_data,
-			    sc->atu_ssidlen);
-			ireq->i_len = sc->atu_ssidlen;
-			break;
-
-		case IEEE80211_IOC_NUMSSIDS:
-			ireq->i_val = 1;
-			break;
-
-		case IEEE80211_IOC_CHANNEL:
-			ireq->i_val = sc->atu_channel;
-
-			/*
-			 * every time the channel is requested, we errr...
-			 * print a bunch of debug things :)
-			 */
-#ifdef ATU_DEBUG
-			if (atudebug > 20)
-				atu_print_a_bunch_of_debug_things(sc);
-#endif /* ATU_DEBUG */
-			break;
-
-		case IEEE80211_IOC_AUTHMODE:
-			/* TODO: change this when shared-key is implemented */
-			ireq->i_val = IEEE80211_AUTH_OPEN;
-			break;
-
-		case IEEE80211_IOC_WEP:
-			switch (sc->atu_encrypt) {
-			case ATU_WEP_TX:
-				ireq->i_val = IEEE80211_WEP_MIXED;
-				break;
-			case ATU_WEP_TXRX:
-				ireq->i_val = IEEE80211_WEP_ON;
-				break;
-			default:
-				ireq->i_val = IEEE80211_WEP_OFF;
-			}
-			break;
-
-		case IEEE80211_IOC_NUMWEPKEYS:
-			ireq->i_val = 4;
-			break;
-
-		case IEEE80211_IOC_WEPKEY:
-			err = suser(curproc, 0);
-			if (err)
-				break;
-
-			if((ireq->i_val < 0) || (ireq->i_val > 3)) {
-				err = EINVAL;
-				break;
-			}
-
-			if (sc->atu_encrypt == ATU_WEP_40BITS)
-				len = 5;
-			else
-				len = 13;
-
-			err = copyout(sc->atu_wepkeys[ireq->i_val],
-			    ireq->i_data, len);
-			break;
-
-		case IEEE80211_IOC_WEPTXKEY:
-			ireq->i_val = sc->atu_wepkey;
-			break;
-
-		default:
-			DPRINTF(("%s: ioctl:  unknown 80211: %04x %d\n",
-			    USBDEVNAME(sc->atu_dev), ireq->i_type,
-			    ireq->i_type));
-			err = EINVAL;
-		}
-		break;
-
-	case SIOCS80211:
-		err = suser(curproc, 0);
-		if (err)
-			break;
-
-		switch(ireq->i_type) {
-		case IEEE80211_IOC_SSID:
-			if (ireq->i_len < 0 || ireq->i_len > 32) {
-				err = EINVAL;
-				break;
-			}
-
-			err = copyin(ireq->i_data, tmp, ireq->i_len);
-			if (err)
-				break;
-
-			sc->atu_ssidlen = ireq->i_len;
-			memcpy(sc->atu_ssid, tmp, ireq->i_len);
-
-			sc->atu_mgmt_flags |= ATU_CHANGED_SETTINGS;
-			break;
-
-		case IEEE80211_IOC_CHANNEL:
-			if (ireq->i_val < 1 || ireq->i_val > 14) {
-				err = EINVAL;
-				break;
-			}
-
-			sc->atu_channel = ireq->i_val;
-
-			/* restart scan / join / etc now */
-			sc->atu_mgmt_flags |= ATU_CHANGED_SETTINGS;
-			break;
-
-		case IEEE80211_IOC_WEP:
-			switch (ireq->i_val) {
-			case IEEE80211_WEP_OFF:
-				sc->atu_encrypt = ATU_WEP_OFF;
-				break;
-			case IEEE80211_WEP_MIXED:
-				sc->atu_encrypt = ATU_WEP_TX;
-				break;
-			case IEEE80211_WEP_ON:
-				sc->atu_encrypt = ATU_WEP_TXRX;
-				break;
-			default:
-				err = EINVAL;
-			}
-			if (err)
-				break;
-
-			/*
-			 * to change the wep-bit in our beacon we HAVE to send
-			 * CMD_STARTUP again
-			 */
-			err = atu_initial_config(sc);
-			/*
-			 * after that we have to send CMD_JOIN again to get
-			 * the receiver running again. so we'll just
-			 * restart the entire join/assoc/auth state-machine.
-			 */
-			sc->atu_mgmt_flags |= ATU_CHANGED_SETTINGS;
-			break;
-
-		case IEEE80211_IOC_WEPKEY:
-			if ((ireq->i_val < 0) || (ireq->i_val > 3) ||
-			    (ireq->i_len > 13)) {
-				err = EINVAL;
-				break;
-			}
-			err = copyin(ireq->i_data, tmp, ireq->i_len);
-			if (err)
-				break;
-			err = atu_set_wepkey(sc, ireq->i_val, tmp,
-			    ireq->i_len);
-			break;
-
-		case IEEE80211_IOC_WEPTXKEY:
-			if ((ireq->i_val < 0) || (ireq->i_val > 3)) {
-				err = EINVAL;
-				break;
-			}
-			sc->atu_wepkey = ireq->i_val;
-			err = atu_send_mib(sc, MIB_MAC_WEP__KEY_ID,
-			    NR(sc->atu_wepkey));
-
-			break;
-
-		case IEEE80211_IOC_AUTHMODE:
-			/* TODO: change when shared-key is implemented */
-			if (ireq->i_val != IEEE80211_AUTH_OPEN)
-				err = EINVAL;
-			break;
-
-		default:
-			err = EINVAL;
-		}
-		break;
-#endif
-
 	default:
-		DPRINTFN(15, ("%s: default\n", USBDEVNAME(sc->atu_dev)));
+		DPRINTFN(15, ("%s: ieee80211_ioctl (%lu)\n",
+		    USBDEVNAME(sc->atu_dev), command));
 		err = ieee80211_ioctl(ifp, command, data);
 		break;
 	}
 
-	sc->atu_if_flags = ifp->if_flags;
+	if (err == ENETRESET) {
+		if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) ==
+		    (IFF_RUNNING|IFF_UP)) {
+			DPRINTF(("%s: atu_ioctl(): netreset\n",
+			    USBDEVNAME(sc->atu_dev)));
+			atu_init(ifp);
+		}
+		err = 0;
+	}
+
 	splx(s);
-	return(err);
+
+	return (err);
 }
 
 void
