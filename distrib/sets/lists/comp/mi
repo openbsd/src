@@ -3050,6 +3050,7 @@
 ./usr/share/man/cat3/dirfd.0
 ./usr/share/man/cat3/dirname.0
 ./usr/share/man/cat3/div.0
+./usr/share/man/cat3/dladdr.0
 ./usr/share/man/cat3/dlclose.0
 ./usr/share/man/cat3/dlctl.0
 ./usr/share/man/cat3/dlerror.0
