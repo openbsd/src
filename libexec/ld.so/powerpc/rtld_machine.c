@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.31 2003/09/04 19:33:49 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.32 2003/09/04 19:37:07 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -511,31 +511,33 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 	if (!lazy) {
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
-		return;
-	}
-	first_rela = (Elf32_Addr *)
-	    (((Elf32_Rela *)(object->Dyn.info[DT_JMPREL]))->r_offset +
-	    object->load_offs);
-	pltresolve = (Elf32_Addr *)(first_rela) - 18;
+	} else {
+		first_rela = (Elf32_Addr *)
+		    (((Elf32_Rela *)(object->Dyn.info[DT_JMPREL]))->r_offset +
+		    object->load_offs);
+		pltresolve = (Elf32_Addr *)(first_rela) - 18;
 
-	relas = (Elf32_Rela *)(object->Dyn.info[DT_JMPREL]);
-	numrela = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf32_Rela);
-	r_addr = (Elf32_Addr *)(relas->r_offset + object->load_offs);
+		relas = (Elf32_Rela *)(object->Dyn.info[DT_JMPREL]);
+		numrela = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf32_Rela);
+		r_addr = (Elf32_Addr *)(relas->r_offset + object->load_offs);
 
-	for (i = 0, index = 0; i < numrela; i++, r_addr+=2, index++) {
-		if (index >= (2 << 12)) {
-			/* addis r11,r11,.PLTtable@ha*/
-			r_addr[0] = ADDIS_R11_R0 | HA(index*4);
-			r_addr[1] = ADDI_R11_R11 | L(index*4);
-			BR(r_addr[2], pltresolve);
-			/* only every other slot is used after index == 2^14 */
-			r_addr += 2;
-		} else {
-			r_addr[0] = LI_R11 | (index * 4);
-			BR(r_addr[1], pltresolve);
+		for (i = 0, index = 0; i < numrela; i++, r_addr+=2, index++) {
+			if (index >= (2 << 12)) {
+				/* addis r11,r0,.PLTtable@ha*/
+				r_addr[0] = ADDIS_R11_R0 | HA(index*4);
+				r_addr[1] = ADDI_R11_R11 | L(index*4);
+				BR(r_addr[2], pltresolve);
+				/* only every other slot is used after
+				 * index == 2^14
+				 */
+				r_addr += 2;
+			} else {
+				r_addr[0] = LI_R11 | (index * 4);
+				BR(r_addr[1], pltresolve);
+			}
+			_dl_dcbf(&r_addr[0]);
+			_dl_dcbf(&r_addr[2]);
 		}
-		_dl_dcbf(&r_addr[0]);
-		_dl_dcbf(&r_addr[2]);
 	}
 	if (object->got_size != 0) {
 

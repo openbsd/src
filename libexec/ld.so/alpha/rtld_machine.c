@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.27 2003/09/04 19:33:49 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.28 2003/09/04 19:37:07 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -283,25 +283,26 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 	if (object->obj_type == OBJTYPE_LDR || !lazy || pltgot == NULL) {
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
-		return;
-	}
+	} else {
+		if (object->obj_type != OBJTYPE_EXE) {
+			int i, size;
+			Elf_Addr *addr;
+			Elf_RelA *rela;
 
-	if (object->obj_type != OBJTYPE_EXE) {
-		int i, size;
-		Elf_Addr *addr;
-		Elf_RelA *rela;
+			size = object->Dyn.info[DT_PLTRELSZ] /
+			    sizeof(Elf_RelA);
+			rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
 
-		size = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf_RelA);
-		rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
-
-		for (i = 0; i < size; i++) {
-			addr = (Elf_Addr *)(object->load_offs + rela[i].r_offset);
-			*addr += object->load_offs;
+			for (i = 0; i < size; i++) {
+				addr = (Elf_Addr *)(object->load_offs +
+				    rela[i].r_offset);
+				*addr += object->load_offs;
+			}
 		}
-	}
 
-	pltgot[2] = (Elf_Addr)_dl_bind_start;
-	pltgot[3] = (Elf_Addr)object;
+		pltgot[2] = (Elf_Addr)_dl_bind_start;
+		pltgot[3] = (Elf_Addr)object;
+	}
 	if (object->got_size != 0)
 		_dl_mprotect((void*)object->got_addr, object->got_size,
 		    PROT_READ);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.12 2003/09/04 19:33:49 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.13 2003/09/04 19:37:07 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -438,27 +438,28 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 	if (!lazy) {
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
-		return;
-	}
+	} else {
+		rel = (Elf_Rel *)(object->Dyn.info[DT_JMPREL]);
+		num = (object->Dyn.info[DT_PLTRELSZ]);
+		for (llist = object->load_list; llist != NULL;
+		    llist = llist->next) {
+			if (!(llist->prot & PROT_WRITE))
+				_dl_mprotect(llist->start, llist->size,
+				    llist->prot|PROT_WRITE);
+		}
+		for (i = 0; i < num/sizeof(Elf_Rel); i++, rel++) {
+			Elf_Addr *where;
+			where = (Elf_Addr *)(rel->r_offset + object->load_offs);
+			*where += object->load_offs;
+		}
+		for (llist = object->load_list; llist != NULL;
+		    llist = llist->next) {
+			if (!(llist->prot & PROT_WRITE))
+				_dl_mprotect(llist->start, llist->size,
+				    llist->prot);
+		}
 
-	rel = (Elf_Rel *)(object->Dyn.info[DT_JMPREL]);
-	num = (object->Dyn.info[DT_PLTRELSZ]);
-	for (llist = object->load_list; llist != NULL; llist = llist->next) {
-		if (!(llist->prot & PROT_WRITE))
-			_dl_mprotect(llist->start, llist->size,
-			    llist->prot|PROT_WRITE);
 	}
-	for (i = 0; i < num/sizeof(Elf_Rel); i++, rel++) {
-		Elf_Addr *where;
-		where = (Elf_Addr *)(rel->r_offset + object->load_offs);
-		*where += object->load_offs;
-	}
-	for (llist = object->load_list; llist != NULL; llist = llist->next) {
-		if (!(llist->prot & PROT_WRITE))
-			_dl_mprotect(llist->start, llist->size,
-			    llist->prot);
-	}
-
 	/* PLT is already RO on i386, no point in mprotecting it, just GOT */
 	if (object->got_size != 0)
 		_dl_mprotect((void*)object->got_start, object->got_size,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.19 2003/09/04 19:33:49 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.20 2003/09/04 19:37:08 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -455,7 +455,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 	if (object->obj_type == OBJTYPE_LDR || !lazy || pltgot == NULL) {
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
-		return;
 	}
 
 	if (object->got_size != 0)
