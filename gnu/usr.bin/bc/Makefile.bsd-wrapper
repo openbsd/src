@@ -1,6 +1,10 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2000/08/04 10:05:13 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 2002/12/03 10:44:34 miod Exp $
 
 SUBDIR=bcwrap
+
+.if (${MACHINE_ARCH} == "alpha")
+COPTS+=	-fno-stack-protector
+.endif
 
 MAN=	doc/bc.1 doc/dc.1
 MLINKS=	bc.1 gnubc.1
