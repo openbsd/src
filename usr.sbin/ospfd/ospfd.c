@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.2 2005/01/28 17:53:33 norby Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.3 2005/02/02 18:52:32 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -45,10 +45,10 @@
 #include "log.h"
 #include "rde.h"
 
-void	main_sig_handler(int, short, void *);
-void	usage(void);
-void	ospfd_shutdown(void);
-int	check_child(pid_t, const char *);
+void		main_sig_handler(int, short, void *);
+__dead void	usage(void);
+void		ospfd_shutdown(void);
+int		check_child(pid_t, const char *);
 
 void	main_dispatch_ospfe(int, short, void *);
 void	main_dispatch_rde(int, short, void *);
@@ -102,7 +102,7 @@ main_sig_handler(int sig, short event, void *arg)
 	}
 }
 
-void
+__dead void
 usage(void)
 {
 	extern char *__progname;

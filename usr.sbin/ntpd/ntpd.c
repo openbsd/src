@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.28 2005/01/28 12:32:24 henning Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.29 2005/02/02 18:52:32 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,13 +33,13 @@
 
 #include "ntpd.h"
 
-void	sighdlr(int);
-void	usage(void);
-int	main(int, char *[]);
-int	check_child(pid_t, const char *);
-int	dispatch_imsg(struct ntpd_conf *);
-void	ntpd_adjtime(double);
-void	ntpd_settime(double);
+void		sighdlr(int);
+__dead void	usage(void);
+int		main(int, char *[]);
+int		check_child(pid_t, const char *);
+int		dispatch_imsg(struct ntpd_conf *);
+void		ntpd_adjtime(double);
+void		ntpd_settime(double);
 
 volatile sig_atomic_t	 quit = 0;
 volatile sig_atomic_t	 reconfig = 0;
@@ -63,7 +63,7 @@ sighdlr(int sig)
 	}
 }
 
-void
+__dead void
 usage(void)
 {
 	extern char *__progname;

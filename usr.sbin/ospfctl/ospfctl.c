@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.2 2005/01/28 17:26:05 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.3 2005/02/02 18:52:32 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -36,7 +36,7 @@
 #include "parser.h"
 #include "log.h"
 
-void		 usage(void);
+__dead void	 usage(void);
 int		 show_summary_msg(struct imsg *, int);
 int		 show_interface_msg(struct imsg *);
 void		 print_baudrate(u_long);
@@ -57,7 +57,7 @@ int		 show_nbr_detail_msg(struct imsg *);
 
 struct imsgbuf	*ibuf;
 
-void
+__dead void
 usage(void)
 {
 	extern char *__progname;

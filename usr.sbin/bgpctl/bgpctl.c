@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.72 2004/12/23 17:55:59 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.73 2005/02/02 18:52:32 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -41,7 +41,7 @@ enum neighbor_views {
 	NV_TIMERS
 };
 
-void		 usage(void);
+__dead void	 usage(void);
 int		 main(int, char *[]);
 char		*fmt_peer(const struct peer_config *, int);
 void		 show_summary_head(void);
@@ -70,7 +70,7 @@ int		 show_rib_summary_msg(struct imsg *);
 
 struct imsgbuf	*ibuf;
 
-void
+__dead void
 usage(void)
 {
 	extern char	*__progname;
