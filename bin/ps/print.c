@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.26 2002/03/19 23:54:41 millert Exp $	*/
+/*	$OpenBSD: print.c,v 1.27 2002/06/18 03:21:33 provos Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.26 2002/03/19 23:54:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.27 2002/06/18 03:21:33 provos Exp $";
 #endif
 #endif /* not lint */
 
@@ -241,6 +241,8 @@ state(k, ve)
 		*cp++ = 'N';
 	if (flag & P_TRACED)
 		*cp++ = 'X';
+	if (flag & P_SYSTRACE)
+		*cp++ = 'x';
 	if (flag & P_WEXIT && p->p_stat != SZOMB)
 		*cp++ = 'E';
 	if (flag & P_PPWAIT)
