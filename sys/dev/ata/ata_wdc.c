@@ -141,7 +141,8 @@ wdc_ata_bio(drvp, ata_bio)
 		return WDC_TRY_AGAIN;
 	if (ata_bio->flags & ATA_POLL)
 		xfer->c_flags |= C_POLL;
-	if ((drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
+	if (!(ata_bio->flags & ATA_POLL) &&
+	    (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) &&
 	    (ata_bio->flags & ATA_SINGLE) == 0)
 		xfer->c_flags |= C_DMA;
 	xfer->drive = drvp->drive;
@@ -394,62 +395,31 @@ wdc_ata_bio_intr(chp, xfer, irq)
 	}
 
 	/*
-	 * if we missed an interrupt in a PIO transfer, reset and restart.
-	 * Don't try to continue transfer, we may have missed cycles.
+	 * reset on timeout. This will cause extra resets in the case
+	 * of occasional lost interrupts
 	 */
-	if ((xfer->c_flags & (C_TIMEOU | C_DMA)) == C_TIMEOU) {
-		ata_bio->error = TIMEOUT;
-		wdc_ata_bio_done(chp, xfer);
-		return 1;
-	}
+	if (xfer->c_flags & C_TIMEOU)
+		goto timeout;
 
 	/* Ack interrupt done by wait_for_unbusy */
 	if (wait_for_unbusy(chp,
 	    (irq == 0) ? ATA_DELAY : 0) < 0) {
-		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
+		if (irq)
 			return 0; /* IRQ was not for us */
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip%d\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    xfer->c_bcount, xfer->c_skip);
 
-		/* if we were using DMA, stop channel and deal with error */
-		if (xfer->c_flags & C_DMA) {
-			chp->wdc->dma_status =
-			    (*chp->wdc->dma_finish)(chp->wdc->dma_arg, 
-				chp->channel,
-				xfer->drive);
-			ata_dmaerr(drvp);
-		}
-
-		ata_bio->error = TIMEOUT;
-		wdc_ata_bio_done(chp, xfer);
-		return 1;
+		goto timeout;
 	}
 
 	drv_err = wdc_ata_err(drvp, ata_bio);
 
-	/* If we were using DMA, Turn off the DMA channel and check for error */
 	if (xfer->c_flags & C_DMA) {
-		if (ata_bio->flags & ATA_POLL) {
-			/*
-			 * IDE drives deassert WDCS_BSY before transfer is
-			 * complete when using DMA. Polling for DRQ to deassert
-			 * is not enouth DRQ is not required to be
-			 * asserted for DMA transfers, so poll for DRDY.
-			 */
-			if (wdcwait(chp, WDCS_DRDY | WDCS_DRQ, WDCS_DRDY,
-			    ATA_DELAY) < 0) {
-				printf("%s:%d:%d: polled transfer timed out "
-				    "(st=0x%x)\n", chp->wdc->sc_dev.dv_xname,
-				    chp->channel, xfer->drive, chp->ch_status);
-				ata_bio->error = TIMEOUT;
-				drv_err = WDC_ATA_ERR;
-			}
-		}
-
 		chp->wdc->dma_status =
-		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg, chp->channel,
-			xfer->drive);
+		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg, 
+			chp->channel, xfer->drive);
+
 		if (chp->wdc->dma_status != 0) {
 			if (drv_err != WDC_ATA_ERR) {
 				ata_bio->error = ERR_DMA;
@@ -510,6 +480,18 @@ end:
 		ata_bio->error = NOERROR;
 		wdc_ata_bio_done(chp, xfer);
 	}
+	return 1;
+
+timeout:
+	if (xfer->c_flags & C_DMA) {
+		chp->wdc->dma_status =
+		    (*chp->wdc->dma_finish)(chp->wdc->dma_arg, 
+			chp->channel, xfer->drive);	
+		ata_dmaerr(drvp);
+	}
+
+	ata_bio->error = TIMEOUT;
+	wdc_ata_bio_done(chp, xfer);
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.58 2001/07/20 05:56:25 csapuntz Exp $     */
+/*      $OpenBSD: pciide.c,v 1.59 2001/07/31 06:14:05 csapuntz Exp $     */
 /*	$NetBSD: pciide.c,v 1.110 2001/03/20 17:56:46 bouyer Exp $	*/
 
 /*
@@ -176,6 +176,7 @@ struct pciide_softc {
 		char		*name;
 		int		hw_ok;		/* hardware mapped & OK? */
 		int		compat;		/* is it compat? */
+		int             dma_in_progress;
 		void		*ih;		/* compat or pci handle */
 		bus_space_handle_t ctl_baseioh;	/* ctrl regs blk, native mode */
 		/* DMA tables and DMA map for xfer, for each drive */
@@ -479,6 +480,8 @@ void	pciide_unmap_compat_intr __P(( struct pci_attach_args *,
 	    struct pciide_channel *, int, int));
 int	pciide_compat_intr __P((void *));
 int	pciide_pci_intr __P((void *));
+int     pciide_intr_flag(struct pciide_channel *);
+
 const struct pciide_product_desc* pciide_lookup_product __P((u_int32_t));
 
 const struct pciide_product_desc *
@@ -787,10 +790,44 @@ pciide_mapreg_dma(sc, pa)
 }
 
 int
+pciide_intr_flag(struct pciide_channel *cp) 
+{
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+
+	if (cp->dma_in_progress) {
+		int retry = 10;
+		int status;
+
+		/* Check the status register */
+		for (retry = 10; retry > 0; retry--) {
+			status = bus_space_read_1(sc->sc_dma_iot, 
+			    sc->sc_dma_ioh,
+			    IDEDMA_CTL + IDEDMA_SCH_OFFSET * 
+			    cp->wdc_channel.channel);
+			if (status & IDEDMA_CTL_INTR) {
+				break;
+			}
+			DELAY(5);
+		}
+		
+		/* Not for us.  */
+		if (retry == 0)
+			return (0);
+
+		return (1);
+	}
+
+	return (-1);
+}
+
+int
 pciide_compat_intr(arg)
 	void *arg;
 {
 	struct pciide_channel *cp = arg;
+
+	if (pciide_intr_flag(cp) == 0)
+		return 0;
 
 #ifdef DIAGNOSTIC
 	/* should only be called for a compat channel */
@@ -819,6 +856,9 @@ pciide_pci_intr(arg)
 			continue;
 		/* if this channel not waiting for intr, skip */
 		if ((wdc_cp->ch_flags & WDCF_IRQ_WAIT) == 0)
+			continue;
+
+		if (pciide_intr_flag(cp) == 0)
 			continue;
 
 		crv = wdcintr(wdc_cp);
@@ -1046,6 +1086,8 @@ pciide_dma_start(v, channel, drive)
 	    IDEDMA_CMD + IDEDMA_SCH_OFFSET * channel,
 	    bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 		IDEDMA_CMD + IDEDMA_SCH_OFFSET * channel) | IDEDMA_CMD_START);
+
+	sc->pciide_channels[channel].dma_in_progress = 1;
 }
 
 int
@@ -1058,6 +1100,8 @@ pciide_dma_finish(v, channel, drive)
 	int error = 0;
 	struct pciide_dma_maps *dma_maps =
 	    &sc->pciide_channels[channel].dma_maps[drive];
+
+	sc->pciide_channels[channel].dma_in_progress = 0;
 
 	status = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 	    IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel);
@@ -3304,7 +3348,7 @@ hpt_pci_intr(arg)
 		if ((dmastat & IDEDMA_CTL_INTR) == 0)
 		    continue;
 		cp = &sc->pciide_channels[i];
-		wdc_cp = &cp->wdc_channel;
+		wdc_cp = &cp->wdc_channel;	       
 		crv = wdcintr(wdc_cp);
 		if (crv == 0) {
 			printf("%s:%d: bogus intr\n",
@@ -3640,6 +3684,7 @@ pdc20265_pci_intr(arg)
 		    sc->sc_dma_ioh, IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
 		if((dmastat & IDEDMA_CTL_INTR) == 0)
 		    continue;
+
 		crv = wdcintr(wdc_cp);
 		if (crv == 0)
 			printf("%s:%d: bogus intr\n",
