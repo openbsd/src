@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.40 2002/05/28 11:23:20 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.41 2002/06/01 07:44:21 deraadt Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ conf_set_now (char *section, char *tag, char *value, int override,
   node = calloc (1, sizeof *node);
   if (!node)
     {
-      log_error ("conf_set: calloc (1, %d) failed", sizeof *node);
+      log_error ("conf_set: calloc (1, %lu) failed", (unsigned long)sizeof *node);
       return 1;
     }
   node->section = strdup (section);
@@ -593,15 +593,15 @@ conf_reinit (void)
       new_conf_addr = malloc (sz);
       if (!new_conf_addr)
         {
-	  log_error ("conf_reinit: malloc (%d) failed", sz);
+	  log_error ("conf_reinit: malloc (%lu) failed", (unsigned long)sz);
 	  goto fail;
 	}
 
       /* XXX I assume short reads won't happen here.  */
       if (read (fd, new_conf_addr, sz) != sz)
         {
-	    log_error ("conf_reinit: read (%d, %p, %d) failed",
-		       fd, new_conf_addr, sz);
+	    log_error ("conf_reinit: read (%d, %p, %lu) failed",
+		       fd, new_conf_addr, (unsigned long)sz);
 	    goto fail;
 	}
       close (fd);
@@ -921,7 +921,8 @@ conf_trans_node (int transaction, enum conf_op op)
   node = calloc (1, sizeof *node);
   if (!node)
     {
-      log_error ("conf_trans_node: calloc (1, %d) failed", sizeof *node);
+      log_error ("conf_trans_node: calloc (1, %lu) failed",
+	(unsigned long)sizeof *node);
       return 0;
     }
   node->trans = transaction;

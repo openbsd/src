@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.31 2001/10/26 12:03:07 ho Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.32 2002/06/01 07:44:21 deraadt Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -94,16 +94,16 @@ ike_phase_1_initiator_send_SA (struct message *msg)
   transform = calloc (conf->cnt, sizeof *transform);
   if (!transform)
     {
-      log_error ("ike_phase_1_initiator_send_SA: calloc (%d, %d) failed",
-		 conf->cnt, sizeof *transform);
+      log_error ("ike_phase_1_initiator_send_SA: calloc (%d, %lu) failed",
+		 conf->cnt, (unsigned long)sizeof *transform);
       goto bail_out;
     }
 
   transform_len = calloc (conf->cnt, sizeof *transform_len);
   if (!transform_len)
     {
-      log_error ("ike_phase_1_initiator_send_SA: calloc (%d, %d) failed",
-		 conf->cnt, sizeof *transform_len);
+      log_error ("ike_phase_1_initiator_send_SA: calloc (%d, %lu) failed",
+		 conf->cnt, (unsigned long)sizeof *transform_len);
       goto bail_out;
     }
 
@@ -266,8 +266,8 @@ ike_phase_1_initiator_send_SA (struct message *msg)
   proposal = malloc (proposal_len);
   if (!proposal)
     {
-      log_error ("ike_phase_1_initiator_send_SA: malloc (%d) failed",
-		 proposal_len);
+      log_error ("ike_phase_1_initiator_send_SA: malloc (%lu) failed",
+		 (unsigned long)proposal_len);
       goto bail_out;
     }
 
@@ -280,8 +280,8 @@ ike_phase_1_initiator_send_SA (struct message *msg)
   proto = calloc (1, sizeof *proto);
   if (!proto)
     {
-      log_error ("ike_phase_1_initiator_send_SA: calloc (1, %d) failed",
-		 sizeof *proto);
+      log_error ("ike_phase_1_initiator_send_SA: calloc (1, %lu) failed",
+		 (unsigned long)sizeof *proto);
       goto bail_out;
     }
 
@@ -295,7 +295,8 @@ ike_phase_1_initiator_send_SA (struct message *msg)
   sa_buf = malloc (sa_len);
   if (!sa_buf)
     {
-      log_error ("ike_phase_1_initiator_send_SA: malloc (%d) failed", sa_len);
+      log_error ("ike_phase_1_initiator_send_SA: malloc (%lu) failed",
+	(unsigned long)sa_len);
       goto bail_out;
     }
 
@@ -335,8 +336,8 @@ ike_phase_1_initiator_send_SA (struct message *msg)
   ie->sa_i_b = malloc (ie->sa_i_b_len);
   if (!ie->sa_i_b)
     {
-      log_error ("ike_phase_1_initiator_send_SA: malloc (%d) failed",
-		 ie->sa_i_b_len);
+      log_error ("ike_phase_1_initiator_send_SA: malloc (%lu) failed",
+		 (unsigned long)ie->sa_i_b_len);
       goto bail_out;
     }
   memcpy (ie->sa_i_b,
@@ -497,8 +498,8 @@ ike_phase_1_responder_recv_SA (struct message *msg)
   if (!ie->sa_i_b)
     {
       /* XXX How to notify peer?  */
-      log_error ("ike_phase_1_responder_recv_SA: malloc (%d) failed",
-		 ie->sa_i_b_len);
+      log_error ("ike_phase_1_responder_recv_SA: malloc (%lu) failed",
+		 (unsigned long)ie->sa_i_b_len);
       return -1;
     }
   memcpy (ie->sa_i_b, sa_p->p + ISAKMP_GEN_SZ, ie->sa_i_b_len);
@@ -589,8 +590,8 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
   if (!ie->g_xy)
     {
       /* XXX How to notify peer?  */
-      log_error ("ike_phase_1_post_exchange_KE_NONCE: malloc (%d) failed",
-		 ie->g_x_len);
+      log_error ("ike_phase_1_post_exchange_KE_NONCE: malloc (%lu) failed",
+		 (unsigned long)ie->g_x_len);
       return -1;
     }
   if (dh_create_shared (ie->group, ie->g_xy,
@@ -620,8 +621,8 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
   if (!ie->skeyid_d)
     {
       /* XXX How to notify peer?  */
-      log_error ("ike_phase_1_post_exchange_KE_NONCE: malloc (%d) failed",
-		 ie->skeyid_len);
+      log_error ("ike_phase_1_post_exchange_KE_NONCE: malloc (%lu) failed",
+		 (unsigned long)ie->skeyid_len);
       return -1;
     }
   prf = prf_alloc (ie->prf_type, hash->type, ie->skeyid, ie->skeyid_len);
@@ -643,8 +644,8 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
   ie->skeyid_a = malloc (ie->skeyid_len);
   if (!ie->skeyid_a)
     {
-      log_error ("ike_phase_1_post_exchange_KE_NONCE: malloc (%d) failed",
-		 ie->skeyid_len);
+      log_error ("ike_phase_1_post_exchange_KE_NONCE: malloc (%lu) failed",
+		 (unsigned long)ie->skeyid_len);
       prf_free (prf);
       return -1;
     }
@@ -663,8 +664,8 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
   if (!ie->skeyid_e)
     {
       /* XXX How to notify peer?  */
-      log_error ("ike_phase_1_post_exchange_KE_NONCE: malloc (%d) failed",
-		 ie->skeyid_len);
+      log_error ("ike_phase_1_post_exchange_KE_NONCE: malloc (%lu) failed",
+		 (unsigned long)ie->skeyid_len);
       prf_free (prf);
       return -1;
     }
@@ -810,7 +811,7 @@ ike_phase_1_send_ID (struct message *msg)
   buf = malloc (sz);
   if (!buf)
     {
-      log_error ("ike_phase_1_send_ID: malloc (%d) failed", sz);
+      log_error ("ike_phase_1_send_ID: malloc (%lu) failed", (unsigned long)sz);
       return -1;
     }
 
@@ -866,7 +867,7 @@ ike_phase_1_send_ID (struct message *msg)
   *id = malloc (*id_len);
   if (!*id)
     {
-      log_error ("ike_phase_1_send_ID: malloc (%d) failed", *id_len);
+      log_error ("ike_phase_1_send_ID: malloc (%lu) failed", (unsigned long)*id_len);
       return -1;
     }
   memcpy (*id, buf + ISAKMP_GEN_SZ, *id_len);
@@ -941,7 +942,7 @@ ike_phase_1_recv_ID (struct message *msg)
       rid = malloc (sz);
       if (!rid)
 	{
-	  log_error ("ike_phase_1_recv_ID: malloc (%d) failed", sz);
+	  log_error ("ike_phase_1_recv_ID: malloc (%lu) failed", (unsigned long)sz);
 	  return -1;
 	}
 
@@ -1021,7 +1022,7 @@ ike_phase_1_recv_ID (struct message *msg)
   *id = malloc (*id_len);
   if (!*id)
     {
-      log_error ("ike_phase_1_recv_ID: malloc (%d) failed", *id_len);
+      log_error ("ike_phase_1_recv_ID: malloc (%lu) failed", *id_len);
       return -1;
     }
   memcpy (*id, payload->p + ISAKMP_GEN_SZ, *id_len);
@@ -1247,7 +1248,7 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	  node = malloc (sizeof *node);
 	  if (!node)
 	    {
-	      log_error ("attribute_unacceptable: malloc (%d) failed",
+	      log_error ("attribute_unacceptable: malloc (%lu) failed",
 			 sizeof *node);
 	      return 1;
 	    }
@@ -1352,7 +1353,7 @@ attribute_unacceptable (u_int16_t type, u_int8_t *value, u_int16_t len,
 	  node = malloc (sizeof *node);
 	  if (!node)
 	    {
-	      log_error ("attribute_unacceptable: malloc (%d) failed",
+	      log_error ("attribute_unacceptable: malloc (%lu) failed",
 			 sizeof *node);
 	      return 1;
 	    }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.64 2002/02/21 20:09:18 angelos Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.65 2002/06/01 07:44:21 deraadt Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -676,7 +676,8 @@ ipsec_get_keystate (struct message *msg)
       ks = malloc (sizeof *ks);
       if (!ks)
 	{
-	  log_error ("ipsec_get_keystate: malloc (%d) failed", sizeof *ks);
+	  log_error ("ipsec_get_keystate: malloc (%lu) failed",
+		(unsigned long)sizeof *ks);
 	  return 0;
 	}
       memcpy (ks, msg->exchange->keystate, sizeof *ks);
@@ -1482,7 +1483,7 @@ ipsec_g_x (struct message *msg, int peer, u_int8_t *buf)
   *g_x = malloc (ie->g_x_len);
   if (!*g_x)
     {
-      log_error ("ipsec_g_x: malloc (%d) failed", ie->g_x_len);
+      log_error ("ipsec_g_x: malloc (%lu) failed", (unsigned long)ie->g_x_len);
       return -1;
     }
   memcpy (*g_x, buf, ie->g_x_len);
@@ -1502,8 +1503,8 @@ ipsec_gen_g_x (struct message *msg)
   buf = malloc (ISAKMP_KE_SZ + ie->g_x_len);
   if (!buf)
     {
-      log_error ("ipsec_gen_g_x: malloc (%d) failed",
-		 ISAKMP_KE_SZ + ie->g_x_len);
+      log_error ("ipsec_gen_g_x: malloc (%lu) failed",
+		 ISAKMP_KE_SZ + (unsigned long)ie->g_x_len);
       return -1;
     }
 
@@ -1996,7 +1997,7 @@ ipsec_build_id (char *section, size_t *sz)
   p = malloc (*sz);
   if (!p)
     {
-      log_print ("ipsec_build_id: malloc(%d) failed", *sz);
+      log_print ("ipsec_build_id: malloc(%lu) failed", (unsigned long)*sz);
       return 0;
     }
 
@@ -2035,7 +2036,7 @@ ipsec_clone_id (u_int8_t **did, size_t *did_len, u_int8_t *id, size_t id_len)
   if (!*did)
     {
       *did_len = 0;
-      log_error ("ipsec_clone_id: malloc(%d) failed", id_len);
+      log_error ("ipsec_clone_id: malloc(%lu) failed", (unsigned long)id_len);
       return -1;
     }
 
@@ -2128,8 +2129,8 @@ ipsec_add_contact (struct message *msg)
       new_contacts = realloc (contacts, cnt * sizeof contacts[0]);
       if (!new_contacts)
 	{
-	  log_error ("ipsec_add_contact: realloc (%p, %d) failed", contacts,
-		     cnt * sizeof contacts[0]);
+	  log_error ("ipsec_add_contact: realloc (%p, %lu) failed", contacts,
+		     cnt * (unsigned long)sizeof contacts[0]);
 	  return -1;
 	}
       contact_limit = cnt;
@@ -2177,8 +2178,8 @@ ipsec_add_hash_payload (struct message *msg, size_t hashsize)
   buf = malloc (ISAKMP_HASH_SZ + hashsize);
   if (!buf)
     {
-      log_error ("ipsec_add_hash_payload: malloc (%d) failed",
-		 ISAKMP_HASH_SZ + hashsize);
+      log_error ("ipsec_add_hash_payload: malloc (%lu) failed",
+		 ISAKMP_HASH_SZ + (unsigned long)hashsize);
       return 0;
     }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.9 2002/03/06 13:55:12 ho Exp $	*/
+/*	$OpenBSD: key.c,v 1.10 2002/06/01 07:44:21 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -69,7 +69,8 @@ key_serialize (int type, int private, void *key, u_int8_t **data, size_t *datale
 	  *data = p = malloc (*datalen);
 	  if (!p)
 	    {
-	      log_error("key_serialize: malloc (%d) failed", *datalen);
+	      log_error("key_serialize: malloc (%lu) failed",
+		(unsigned long)*datalen);
 	      return;
 	    }
 	  *datalen = LC (i2d_RSAPublicKey, ((RSA *)key, &p));
@@ -80,7 +81,8 @@ key_serialize (int type, int private, void *key, u_int8_t **data, size_t *datale
 	  *data = p = malloc (*datalen);
 	  if (!p)
 	    {
-	      log_error("key_serialize: malloc (%d) failed", *datalen);
+	      log_error("key_serialize: malloc (%lu) failed",
+		(unsigned long)*datalen);
 	      return;
 	    }
 	  *datalen = LC (i2d_RSAPrivateKey, ((RSA *)key, &p));

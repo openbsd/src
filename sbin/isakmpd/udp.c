@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.c,v 1.54 2002/01/03 16:27:41 ho Exp $	*/
+/*	$OpenBSD: udp.c,v 1.55 2002/06/01 07:44:22 deraadt Exp $	*/
 /*	$EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ udp_make (struct sockaddr *laddr)
   t = calloc (1, sizeof *t);
   if (!t)
     {
-      log_print ("udp_make: malloc (%d) failed", sizeof *t);
+      log_print ("udp_make: malloc (%lu) failed", (unsigned long)sizeof *t);
       return 0;
     }
 
@@ -181,9 +181,9 @@ udp_make (struct sockaddr *laddr)
 		  wildcardaddress ? SO_REUSEPORT : SO_REUSEADDR,
 		  (void *)&on, sizeof on) == -1)
     {
-      log_error ("udp_make: setsockopt (%d, %d, %d, %p, %d)", s, SOL_SOCKET,
+      log_error ("udp_make: setsockopt (%d, %d, %d, %p, %lu)", s, SOL_SOCKET,
 		 wildcardaddress ? SO_REUSEPORT : SO_REUSEADDR,
-		 &on, sizeof on);
+		 &on, (unsigned long)sizeof on);
       goto err;
     }
 
@@ -193,10 +193,12 @@ udp_make (struct sockaddr *laddr)
     {
       char *tstr;
       if (sockaddr2text (t->src, &tstr, 0))
-	  log_error ("udp_make: bind (%d, %p, %d)", s, &t->src, sizeof t->src);
+	  log_error ("udp_make: bind (%d, %p, %lu)", s, &t->src,
+		(unsigned long)sizeof t->src);
       else
 	{
-	  log_error ("udp_make: bind (%d, %s, %d)", s, tstr, sizeof t->src);
+	  log_error ("udp_make: bind (%d, %s, %lu)", s, tstr,
+		(unsigned long)sizeof t->src);
 	  free (tstr);
 	}
       goto err;
@@ -230,7 +232,7 @@ udp_clone (struct udp_transport *u, struct sockaddr *raddr)
   t = malloc (sizeof *u);
   if (!t)
     {
-      log_error ("udp_clone: malloc (%d) failed", sizeof *u);
+      log_error ("udp_clone: malloc (%lu) failed", (unsigned long)sizeof *u);
       return 0;
     }
   u2 = (struct udp_transport *)t;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.50 2002/05/28 10:09:46 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.51 2002/06/01 07:44:21 deraadt Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -248,7 +248,7 @@ message_parse_payloads (struct message *msg, struct payload *p, u_int8_t next,
   do
     {
       LOG_DBG ((LOG_MESSAGE, 50,
-		"message_parse_payloads: offset 0x%x payload %s",
+		"message_parse_payloads: offset %p payload %s",
 		buf - (u_int8_t *)msg->iov[0].iov_base,
 		constant_name (isakmp_payload_cst, next)));
 
@@ -1289,16 +1289,16 @@ message_add_payload (struct message *msg, u_int8_t payload, u_int8_t *buf,
   payload_node = malloc (sizeof *payload_node);
   if (!payload_node)
     {
-      log_error ("message_add_payload: malloc (%d) failed",
-		 sizeof *payload_node);
+      log_error ("message_add_payload: malloc (%lu) failed",
+		 (unsigned long)sizeof *payload_node);
       return -1;
     }
   new_iov
     = (struct iovec *)realloc (msg->iov, (msg->iovlen + 1) * sizeof *msg->iov);
   if (!new_iov)
     {
-      log_error ("message_add_payload: realloc (%p, %d) failed", msg->iov,
-		 (msg->iovlen + 1) * sizeof *msg->iov);
+      log_error ("message_add_payload: realloc (%p, %lu) failed", msg->iov,
+		 (msg->iovlen + 1) * (unsigned long)sizeof *msg->iov);
       free (payload_node);
       return -1;
     }
@@ -1428,7 +1428,7 @@ message_send_info (struct message *msg)
   buf = calloc (1, sz);
   if (!buf)
     {
-      log_error ("message_send_info: calloc (1, %d) failed", sz);
+      log_error ("message_send_info: calloc (1, %lu) failed", (unsigned long)sz);
       message_free (msg);
       return -1;
     }
@@ -1609,8 +1609,8 @@ message_encrypt (struct message *msg)
   buf = realloc (msg->iov[1].iov_base, sz);
   if (!buf)
     {
-      log_error ("message_encrypt: realloc (%p, %d) failed",
-		 msg->iov[1].iov_base, sz);
+      log_error ("message_encrypt: realloc (%p, %lu) failed",
+		 msg->iov[1].iov_base, (unsigned long)sz);
       return -1;
     }
   msg->iov[1].iov_base = buf;
@@ -1922,7 +1922,8 @@ message_add_sa_payload (struct message *msg)
       sa_buf = malloc (sa_len);
       if (!sa_buf)
 	{
-	  log_error ("message_add_sa_payload: malloc (%d) failed", sa_len);
+	  log_error ("message_add_sa_payload: malloc (%lu) failed",
+		(unsigned long)sa_len);
 	  goto cleanup;
 	}
 
@@ -1939,32 +1940,32 @@ message_add_sa_payload (struct message *msg)
       transforms = calloc (nprotos, sizeof *transforms);
       if (!transforms)
 	{
-	  log_error ("message_add_sa_payload: calloc (%d, %d) failed", nprotos,
-		     sizeof *transforms);
+	  log_error ("message_add_sa_payload: calloc (%d, %lu) failed", nprotos,
+		     (unsigned long)sizeof *transforms);
 	  goto cleanup;
 	}
 
       transform_lens = calloc (nprotos, sizeof *transform_lens);
       if (!transform_lens)
 	{
-	  log_error ("message_add_sa_payload: calloc (%d, %d) failed", nprotos,
-		     sizeof *transform_lens);
+	  log_error ("message_add_sa_payload: calloc (%d, %lu) failed", nprotos,
+		     (unsigned long)sizeof *transform_lens);
 	  goto cleanup;
 	}
 
       proposals = calloc (nprotos, sizeof *proposals);
       if (!proposals)
 	{
-	  log_error ("message_add_sa_payload: calloc (%d, %d) failed", nprotos,
-		     sizeof *proposals);
+	  log_error ("message_add_sa_payload: calloc (%d, %lu) failed", nprotos,
+		     (unsigned long)sizeof *proposals);
 	  goto cleanup;
 	}
 
       proposal_lens = calloc (nprotos, sizeof *proposal_lens);
       if (!proposal_lens)
 	{
-	  log_error ("message_add_sa_payload: calloc (%d, %d) failed", nprotos,
-		     sizeof *proposal_lens);
+	  log_error ("message_add_sa_payload: calloc (%d, %lu) failed", nprotos,
+		     (unsigned long)sizeof *proposal_lens);
 	  goto cleanup;
 	}
 
@@ -1976,8 +1977,8 @@ message_add_sa_payload (struct message *msg)
 	  transforms[i] = malloc (transform_lens[i]);
 	  if (!transforms[i])
 	    {
-	      log_error ("message_add_sa_payload: malloc (%d) failed",
-			 transform_lens[i]);
+	      log_error ("message_add_sa_payload: malloc (%lu) failed",
+			 (unsigned long)transform_lens[i]);
 	      goto cleanup;
 	    }
 
@@ -2000,8 +2001,8 @@ message_add_sa_payload (struct message *msg)
 	  proposals[i] = malloc (proposal_lens[i]);
 	  if (!proposals[i])
 	    {
-	      log_error ("message_add_sa_payload: malloc (%d) failed",
-			 proposal_lens[i]);
+	      log_error ("message_add_sa_payload: malloc (%lu) failed",
+			 (unsigned long)proposal_lens[i]);
 	      goto cleanup;
 	    }
 

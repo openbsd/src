@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.62 2002/05/28 11:23:20 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.63 2002/06/01 07:44:21 deraadt Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -176,7 +176,8 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	  buf = malloc (*keylen);
 	  if (!buf)
 	    {
-	      log_print ("ike_auth_get_key: malloc (%d) failed", *keylen);
+	      log_print ("ike_auth_get_key: malloc (%lu) failed",
+		(unsigned long)*keylen);
 	      return 0;
 	    }
 	  if (hex2raw (key + 2, buf, *keylen))
@@ -239,8 +240,8 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	  buf = calloc (size + 1, sizeof (char));
 	  if (!buf)
 	    {
-	      log_print ("ike_auth_get_key: failed allocating %d bytes",
-			 size + 1);
+	      log_print ("ike_auth_get_key: failed allocating %lu bytes",
+			 (unsigned long)size + 1);
 	      free (keyfile);
 	      return 0;
 	    }
@@ -249,7 +250,8 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	    {
 	      free (buf);
 	      log_print ("ike_auth_get_key: "
-			 "failed reading %d bytes from \"%s\"", size, keyfile);
+			 "failed reading %lu bytes from \"%s\"",
+			(unsigned long)size, keyfile);
 	      free (keyfile);
 	      return 0;
 	    }
@@ -369,8 +371,8 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
 			+ ISAKMP_GEN_SZ + 1, sizeof (char));
 	  if (!buf)
 	    {
-              log_print ("pre_shared_gen_skeyid: malloc (%d) failed",
-			 exchange->id_i_len - ISAKMP_ID_DATA_OFF
+              log_print ("pre_shared_gen_skeyid: malloc (%lu) failed",
+			 (unsigned long)exchange->id_i_len - ISAKMP_ID_DATA_OFF
 			 + ISAKMP_GEN_SZ + 1);
 	      return 0;
 	    }
@@ -401,7 +403,8 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
   exchange->recv_keytype = ISAKMP_KEY_PASSPHRASE;
   if (!exchange->recv_key)
     {
-      log_error ("pre_shared_gen_skeyid: malloc (%d) failed", keylen);
+      log_error ("pre_shared_gen_skeyid: malloc (%lu) failed",
+	(unsigned long)keylen);
       return 0;
     }
   memcpy (exchange->recv_key, key, keylen);
@@ -415,7 +418,8 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
   skeyid = malloc (*sz);
   if (!skeyid)
     {
-      log_error ("pre_shared_gen_skeyid: malloc (%d) failed", *sz);
+      log_error ("pre_shared_gen_skeyid: malloc (%lu) failed",
+	(unsigned long)*sz);
       prf_free (prf);
       return 0;
     }
@@ -460,13 +464,14 @@ sig_gen_skeyid (struct exchange *exchange, size_t *sz)
   skeyid = malloc (*sz);
   if (!skeyid)
     {
-      log_error ("sig_gen_skeyid: malloc (%d) failed", *sz);
+      log_error ("sig_gen_skeyid: malloc (%lu) failed",
+	(unsigned long)*sz);
       prf_free (prf);
       return 0;
     }
 
-  LOG_DBG((LOG_NEGOTIATION, 80, "sig_gen_skeyid: g^xy length %d",
-      ie->g_x_len));
+  LOG_DBG((LOG_NEGOTIATION, 80, "sig_gen_skeyid: g^xy length %lu",
+      (unsigned long)ie->g_x_len));
   LOG_DBG_BUF((LOG_NEGOTIATION, 80,
       "sig_gen_skeyid: SKEYID fed with g^xy", ie->g_xy, ie->g_x_len));
 
@@ -547,7 +552,8 @@ pre_shared_decode_hash (struct message *msg)
   *hash_p = malloc (hashsize);
   if (!*hash_p)
     {
-      log_error ("pre_shared_decode_hash: malloc (%d) failed", hashsize);
+      log_error ("pre_shared_decode_hash: malloc (%lu) failed",
+	(unsigned long)hashsize);
       return -1;
     }
 
@@ -856,7 +862,8 @@ rsa_sig_decode_hash (struct message *msg)
     {
       free (*hash_p);
       *hash_p = 0;
-      log_print ("rsa_sig_decode_hash: len %d != hashsize %d", len, hashsize);
+      log_print ("rsa_sig_decode_hash: len %lu != hashsize %lu",
+	(unsigned long)len, (unsigned long)hashsize);
       return -1;
     }
 
@@ -1035,8 +1042,8 @@ rsa_sig_encode_hash (struct message *msg)
 		     sizeof (char));
       if (!buf2)
         {
-	  log_print ("rsa_sig_encode_hash: malloc (%d) failed",
-		     id_len - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1);
+	  log_print ("rsa_sig_encode_hash: malloc (%lu) failed",
+		     (unsigned long)id_len - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ + 1);
 	  return 0;
 	}
       memcpy (buf2, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
@@ -1092,7 +1099,8 @@ rsa_sig_encode_hash (struct message *msg)
   buf = malloc (hashsize);
   if (!buf)
     {
-      log_error ("rsa_sig_encode_hash: malloc (%d) failed", hashsize);
+      log_error ("rsa_sig_encode_hash: malloc (%lu) failed",
+	(unsigned long)hashsize);
       return -1;
     }
 

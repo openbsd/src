@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.64 2002/01/23 18:24:34 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.65 2002/06/01 07:44:21 deraadt Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -614,7 +614,8 @@ exchange_create (int phase, int initiator, int doi, int type)
   exchange = calloc (1, sizeof *exchange);
   if (!exchange)
     {
-      log_error ("exchange_create: calloc (1, %d) failed", sizeof *exchange);
+      log_error ("exchange_create: calloc (1, %lu) failed",
+	(unsigned long)sizeof *exchange);
       return 0;
     }
   exchange->phase = phase;
@@ -636,8 +637,8 @@ exchange_create (int phase, int initiator, int doi, int type)
       exchange->data = calloc (1, exchange->doi->exchange_size);
       if (!exchange->data)
 	{
-	  log_error ("exchange_create: calloc (1, %d) failed",
-		     exchange->doi->exchange_size);
+	  log_error ("exchange_create: calloc (1, %lu) failed",
+		(unsigned long)exchange->doi->exchange_size);
 	  exchange_free (exchange);
 	  return 0;
 	}
@@ -701,8 +702,8 @@ exchange_add_finalization (struct exchange *exchange,
   node = malloc (sizeof *node);
   if (!node)
     {
-      log_error ("exchange_add_finalization: malloc (%d) failed",
-		 sizeof *node);
+      log_error ("exchange_add_finalization: malloc (%lu) failed",
+		 (unsigned long)sizeof *node);
       free (arg);
       return;
     }
@@ -1492,7 +1493,7 @@ exchange_nonce (struct exchange *exchange, int peer, size_t nonce_sz,
   *nonce = malloc (nonce_sz);
   if (!*nonce)
     {
-      log_error ("exchange_nonce: malloc (%d) failed", nonce_sz);
+      log_error ("exchange_nonce: malloc (%lu) failed", (unsigned long)nonce_sz);
       return -1;
     }
   memcpy (*nonce, buf, nonce_sz);
@@ -1511,8 +1512,8 @@ exchange_gen_nonce (struct message *msg, size_t nonce_sz)
   buf = malloc (ISAKMP_NONCE_SZ + nonce_sz);
   if (!buf)
     {
-      log_error ("exchange_gen_nonce: malloc (%d) failed",
-		 ISAKMP_NONCE_SZ + nonce_sz);
+      log_error ("exchange_gen_nonce: malloc (%lu) failed",
+		 ISAKMP_NONCE_SZ + (unsigned long)nonce_sz);
       return -1;
     }
   getrandom (buf + ISAKMP_NONCE_DATA_OFF, nonce_sz);

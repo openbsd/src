@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.69 2002/03/06 10:02:32 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.70 2002/06/01 07:44:22 deraadt Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -570,8 +570,8 @@ x509_hash_init (void)
 
   x509_tab = malloc ((bucket_mask + 1) * sizeof (struct x509_list));
   if (!x509_tab)
-    log_fatal ("x509_hash_init: malloc (%d) failed",
-	       (bucket_mask + 1) * sizeof (struct x509_list));
+    log_fatal ("x509_hash_init: malloc (%lu) failed",
+	       (bucket_mask + 1) * (unsigned long)sizeof (struct x509_list));
   for (i = 0; i <= bucket_mask; i++)
     {
       LIST_INIT (&x509_tab[i]);
@@ -640,7 +640,8 @@ x509_hash_enter (X509 *cert)
       if (!certh)
         {
           cert_free_subjects (n, id, len);
-          log_error ("x509_hash_enter: calloc (1, %d) failed", sizeof *certh);
+          log_error ("x509_hash_enter: calloc (1, %lu) failed",
+		(unsigned long)sizeof *certh);
           return 0;
         }
 
@@ -1008,8 +1009,8 @@ x509_certreq_decode (u_int8_t *asn, u_int32_t len)
     memcpy (ret, &naca, sizeof (struct x509_aca));
   else
     {
-      log_error ("x509_certreq_decode: malloc (%d) failed",
-		 sizeof (struct x509_aca));
+      log_error ("x509_certreq_decode: malloc (%lu) failed",
+		 (unsigned long)sizeof (struct x509_aca));
       x509_free_aca (&aca);
     }
 
@@ -1169,16 +1170,16 @@ x509_cert_get_subjects (void *scert, int *cnt, u_int8_t ***id,
   *id = calloc (*cnt, sizeof **id);
   if (!*id)
     {
-      log_print ("x509_cert_get_subject: malloc (%d) failed",
-		 *cnt * sizeof **id);
+      log_print ("x509_cert_get_subject: malloc (%lu) failed",
+		 *cnt * (unsigned long)sizeof **id);
       goto fail;
     }
 
   *id_len = malloc (*cnt * sizeof **id_len);
   if (!*id_len)
     {
-      log_print ("x509_cert_get_subject: malloc (%d) failed",
-		 *cnt * sizeof **id_len);
+      log_print ("x509_cert_get_subject: malloc (%lu) failed",
+		 *cnt * (unsigned long)sizeof **id_len);
       goto fail;
     }
 

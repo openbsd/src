@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_cfg.c,v 1.7 2001/10/26 12:03:07 ho Exp $	*/
+/*	$OpenBSD: isakmp_cfg.c,v 1.8 2002/06/01 07:44:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -101,8 +101,8 @@ initiator_send_ATTR (struct message *msg)
       hashp = malloc (ISAKMP_HASH_SZ + hashsize);
       if (!hashp)
 	{
-	  log_error ("responder_send_ATTR: malloc (%d) failed",
-		     ISAKMP_HASH_SZ + hashsize);
+	  log_error ("responder_send_ATTR: malloc (%lu) failed",
+		     ISAKMP_HASH_SZ + (unsigned long)hashsize);
 	  return -1;
 	}
       if (message_add_payload (msg, ISAKMP_PAYLOAD_HASH, hashp,
@@ -191,8 +191,8 @@ responder_recv_ATTR (struct message *msg)
       comp_hash = malloc (hash_len - ISAKMP_GEN_SZ);
       if (!comp_hash)
 	{
-	  log_error ("responder_recv_ATTR: malloc (%d) failed",
-		     hash_len - ISAKMP_GEN_SZ);
+	  log_error ("responder_recv_ATTR: malloc (%lu) failed",
+		     (unsigned long)hash_len - ISAKMP_GEN_SZ);
 	  return -1;
 	}
 
@@ -285,8 +285,8 @@ responder_send_ATTR (struct message *msg)
       hashp = malloc (ISAKMP_HASH_SZ + hashsize);
       if (!hashp)
 	{
-	  log_error ("responder_send_ATTR: malloc (%d) failed",
-		     ISAKMP_HASH_SZ + hashsize);
+	  log_error ("responder_send_ATTR: malloc (%lu) failed",
+		     ISAKMP_HASH_SZ + (unsigned long)hashsize);
 	  goto fail;
 	}
       if (message_add_payload (msg, ISAKMP_PAYLOAD_HASH, hashp,
@@ -347,7 +347,8 @@ responder_send_ATTR (struct message *msg)
   attrp = calloc (1, attrlen);
   if (!attrp)
     {
-      log_error ("responder_send_ATTR: calloc (1, %d) failed", attrlen);
+      log_error ("responder_send_ATTR: calloc (1, %lu) failed",
+	(unsigned long)attrlen);
       goto fail;
     }
 
@@ -517,7 +518,8 @@ decode_attribute (u_int16_t type, u_int8_t *value, u_int16_t len, void *vie)
   attr = calloc (1, sizeof *attr);
   if (!attr)
     {
-      log_error ("decode_attribute: calloc (1, %d) failed", sizeof *attr);
+      log_error ("decode_attribute: calloc (1, %lu) failed",
+	(unsigned long)sizeof *attr);
       return -1;
     }
   attr->type = type;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmpd.c,v 1.40 2002/05/26 09:24:35 deraadt Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.41 2002/06/01 07:44:21 deraadt Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
@@ -383,10 +383,10 @@ main (int argc, char *argv[])
   mask_size = howmany (n, NFDBITS) * sizeof (fd_mask);
   rfds = (fd_set *)malloc (mask_size);
   if (!rfds)
-    log_fatal ("main: malloc (%d) failed", mask_size);
+    log_fatal ("main: malloc (%lu) failed", (unsigned long)mask_size);
   wfds = (fd_set *)malloc (mask_size);
   if (!wfds)
-    log_fatal ("main: malloc (%d) failed", mask_size);
+    log_fatal ("main: malloc (%lu) failed", (unsigned long)mask_size);
 
   while (1)
     {

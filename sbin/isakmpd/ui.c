@@ -1,4 +1,4 @@
-/*	$OpenBSD: ui.c,v 1.28 2002/03/19 04:00:59 angelos Exp $	*/
+/*	$OpenBSD: ui.c,v 1.29 2002/06/01 07:44:22 deraadt Exp $	*/
 /*	$EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	*/
 
 /*
@@ -409,7 +409,7 @@ ui_handler (void)
       buf = malloc (sz);
       if (!buf)
 	{
-	  log_print ("ui_handler: malloc (%d) failed", sz);
+	  log_print ("ui_handler: malloc (%lu) failed", (unsigned long)sz);
 	  return;
 	}
       p = buf;
@@ -422,7 +422,8 @@ ui_handler (void)
       new_buf = realloc (buf, sz * 2);
       if (!new_buf)
 	{
-	  log_print ("ui_handler: realloc (%p, %d) failed", buf, sz * 2);
+	  log_print ("ui_handler: realloc (%p, %lu) failed", buf,
+		(unsigned long)sz * 2);
 	  free (buf);
 	  buf = 0;
 	  return;
@@ -436,7 +437,8 @@ ui_handler (void)
   n = read (ui_socket, p, resid);
   if (n == -1)
     {
-      log_error ("ui_handler: read (%d, %p, %d)", ui_socket, p, resid);
+      log_error ("ui_handler: read (%d, %p, %lu)", ui_socket, p,
+	(unsigned long)resid);
       return;
     }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.56 2002/05/28 10:09:46 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.57 2002/06/01 07:44:22 deraadt Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -92,8 +92,8 @@ sa_init (void)
   bucket_mask = (1 << INITIAL_BUCKET_BITS) - 1;
   sa_tab = malloc ((bucket_mask + 1) * sizeof (struct sa_list));
   if (!sa_tab)
-    log_fatal ("sa_init: malloc (%d) failed",
-	       (bucket_mask + 1) * sizeof (struct sa_list));
+    log_fatal ("sa_init: malloc (%lu) failed",
+	       (bucket_mask + 1) * (unsigned long)sizeof (struct sa_list));
   for (i = 0; i <= bucket_mask; i++)
     {
       LIST_INIT (&sa_tab[i]);
@@ -367,7 +367,7 @@ sa_create (struct exchange *exchange, struct transport *t)
   sa = calloc (1, sizeof *sa);
   if (!sa)
     {
-      log_error ("sa_create: calloc (1, %d) failed", sizeof *sa);
+      log_error ("sa_create: calloc (1, %lu) failed", (unsigned long)sizeof *sa);
       return -1;
     }
   sa->transport = t;
@@ -385,7 +385,8 @@ sa_create (struct exchange *exchange, struct transport *t)
       sa->data = calloc (1, sa->doi->sa_size);
       if (!sa->data)
 	{
-	  log_error ("sa_create: calloc (1, %d) failed", sa->doi->sa_size);
+	  log_error ("sa_create: calloc (1, %lu) failed",
+		(unsigned long)sa->doi->sa_size);
 	  free (sa);
 	  return -1;
 	}
@@ -825,7 +826,8 @@ sa_add_transform (struct sa *sa, struct payload *xf, int initiator,
     {
       proto = calloc (1, sizeof *proto);
       if (!proto)
-	log_error ("sa_add_transform: calloc (1, %d) failed", sizeof *proto);
+	log_error ("sa_add_transform: calloc (1, %lu) failed",
+		(unsigned long)sizeof *proto);
     }
   else
     /* Find the protection suite that were chosen.  */
@@ -843,8 +845,8 @@ sa_add_transform (struct sa *sa, struct payload *xf, int initiator,
       proto->data = calloc (1, sa->doi->proto_size);
       if (!proto->data)
 	{
-	  log_error ("sa_add_transform: calloc (1, %d) failed",
-		     sa->doi->proto_size);
+	  log_error ("sa_add_transform: calloc (1, %lu) failed",
+		     (unsigned long)sa->doi->proto_size);
 	  goto cleanup;
 	}
     }

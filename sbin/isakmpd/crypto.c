@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.11 2001/02/24 04:42:48 angelos Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.12 2002/06/01 07:44:21 deraadt Exp $	*/
 /*	$EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	*/
 
 /*
@@ -283,7 +283,8 @@ crypto_init (struct crypto_xf *xf, u_int8_t *key, u_int16_t len,
   ks = calloc (1, sizeof *ks);
   if (!ks)
     {
-      log_error ("crypto_init: calloc (1, %d) failed", sizeof *ks);
+      log_error ("crypto_init: calloc (1, %lu) failed",
+	(unsigned long)sizeof *ks);
       *err = ENOCRYPTO;
       return 0;
     }
@@ -365,7 +366,8 @@ crypto_clone_keystate (struct keystate *oks)
   ks = malloc (sizeof *ks);
   if (!ks)
     {
-      log_error ("crypto_clone_keystate: malloc (%d) failed", sizeof *ks);
+      log_error ("crypto_clone_keystate: malloc (%lu) failed",
+	(unsigned long)sizeof *ks);
       return 0;
     }
   memcpy (ks, oks, sizeof *ks);

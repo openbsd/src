@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_group.c,v 1.13 2001/04/09 22:09:52 ho Exp $	*/
+/*	$OpenBSD: math_group.c,v 1.14 2002/06/01 07:44:21 deraadt Exp $	*/
 /*	$EOM: math_group.c,v 1.25 2000/04/07 19:53:26 niklas Exp $	*/
 
 /*
@@ -237,7 +237,7 @@ group_get (int id)
   new = malloc (sizeof *new);
   if (!new)
     {
-      log_error ("group_get: malloc (%d) failed", sizeof *new);
+      log_error ("group_get: malloc (%lu) failed", (unsigned long)sizeof *new);
       return 0;
     }
 
@@ -289,7 +289,7 @@ modp_clone (struct group *new, struct group *clone)
   new_grp = malloc (sizeof *new_grp);
   if (!new_grp)
     {
-      log_print ("modp_clone: malloc (%d) failed", sizeof *new_grp);
+      log_print ("modp_clone: malloc (%lu) failed", (unsigned long)sizeof *new_grp);
       free (new);
       return 0;
     }
@@ -351,7 +351,7 @@ modp_init (struct group *group)
 
   grp = malloc (sizeof *grp);
   if (!grp)
-    log_fatal ("modp_init: malloc (%d) failed", sizeof *grp);
+    log_fatal ("modp_init: malloc (%lu) failed", (unsigned long)sizeof *grp);
 
   group->bits = dscr->bits;
 
@@ -390,7 +390,7 @@ ec2n_clone (struct group *new, struct group *clone)
   new_grp = malloc (sizeof *new_grp);
   if (!new_grp)
     {
-      log_error ("ec2n_clone: malloc (%d) failed", sizeof *new_grp);
+      log_error ("ec2n_clone: malloc (%lu) failed", (unsigned long)sizeof *new_grp);
       free (new);
       return 0;
     }
@@ -450,7 +450,7 @@ ec2n_init (struct group *group)
 
   grp = malloc (sizeof *grp);
   if (!grp)
-    log_fatal ("ec2n_init: malloc (%d) failed", sizeof *grp);
+    log_fatal ("ec2n_init: malloc (%lu) failed", (unsigned long)sizeof *grp);
 
   group->bits = dscr->bits;
 
