@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.50 2002/06/08 22:24:47 art Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.51 2002/06/08 23:16:03 angelos Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -169,7 +169,8 @@ struct ctlname {
 #define KERN_CRYPTODEVALLOWSOFT	53	/* int: cryptodevallowsoft */
 #define KERN_SPLASSERT		54	/* int: splassert */
 #define KERN_PROC_ARGS		55	/* node: proc args and env */
-#define	KERN_MAXID		56	/* number of valid kern ids */
+#define	KERN_NFILES		56	/* int: number of open files */
+#define	KERN_MAXID		57	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -227,6 +228,8 @@ struct ctlname {
 	{ "usercrypto", CTLTYPE_INT }, \
 	{ "cryptodevallowsoft", CTLTYPE_INT }, \
 	{ "splassert", CTLTYPE_INT }, \
+	{ "procargs", CTLTYPE_NODE }, \
+	{ "nfiles", CTLTYPE_INT }, \
 }
 
 /*
