@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.19 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: file.h,v 1.20 2003/07/18 23:02:58 tedu Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ struct file {
 		int	(*fo_close)(struct file *fp, struct proc *p);
 	} *f_ops;
 	off_t	f_offset;
-	caddr_t	f_data;		/* private data */
+	void 	*f_data;	/* private data */
 	int	f_iflags;	/* internal flags */
 	int	f_usecount;	/* number of users (temporary references). */
 };

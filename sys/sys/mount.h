@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.54 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: mount.h,v 1.55 2003/07/18 23:02:58 tedu Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -357,7 +357,7 @@ struct mount {
 	int		mnt_flag;		/* flags */
 	int		mnt_maxsymlinklen;	/* max size of short symlink */
 	struct statfs	mnt_stat;		/* cache of filesystem stats */
-	qaddr_t		mnt_data;		/* private data */
+	void		*mnt_data;		/* private data */
 };
 
 /*
