@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote.y,v 1.12 2002/05/27 06:29:14 deraadt Exp $ */
+/* $OpenBSD: keynote.y,v 1.13 2003/04/02 23:01:10 millert Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -598,7 +598,11 @@ str: str DOTT str    {  if (keynote_exceptionflag || keynote_donteval)
 				return -1;
 			    }
  
+#if !defined(HAVE_SNPRINTF)
+			    sprintf($$, "%s%s", $1, $3);
+#else /* !HAVE_SNPRINTF */
 			    snprintf($$, len, "%s%s", $1, $3);
+#endif /* !HAVE_SNPRINTF */
 			    free($1);
 			    free($3);
 			    if (keynote_lex_add($$, LEXTYPE_CHAR) == -1)

@@ -1,4 +1,4 @@
-/* $OpenBSD: environment.c,v 1.16 2001/09/03 20:14:51 deraadt Exp $ */
+/* $OpenBSD: environment.c,v 1.17 2003/04/02 23:01:10 millert Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -82,6 +82,7 @@ static char *
 keynote_get_action_authorizers(char *name)
 {
     struct keylist *kl;
+    size_t cachesize;
     int len;
 
     if (!strcmp(name, KEYNOTE_CALLBACK_CLEANUP) ||
@@ -99,16 +100,17 @@ keynote_get_action_authorizers(char *name)
     if (keynote_current_session->ks_authorizers_cache != (char *) NULL)
       return keynote_current_session->ks_authorizers_cache;
 
-    for (len = 0, kl = keynote_current_session->ks_action_authorizers;
+    for (cachesize = 0, kl = keynote_current_session->ks_action_authorizers;
 	 kl != (struct keylist *) NULL;
 	 kl = kl->key_next)
       if (kl->key_stringkey != (char *) NULL)
-        len += strlen(kl->key_stringkey) + 1;
+        cachesize += strlen(kl->key_stringkey) + 1;
 
-    if (len == 0)
+    if (cachesize == 0)
       return "";
 
-    keynote_current_session->ks_authorizers_cache = (char *) calloc(len, sizeof(char));
+    keynote_current_session->ks_authorizers_cache =
+	(char *) calloc(cachesize, sizeof(char));
     if (keynote_current_session->ks_authorizers_cache == (char *) NULL)
     {
 	keynote_errno = ERROR_MEMORY;
@@ -120,8 +122,13 @@ keynote_get_action_authorizers(char *name)
 	 kl = kl->key_next)
       if (kl->key_stringkey != (char *) NULL)
       {
-	  sprintf(keynote_current_session->ks_authorizers_cache + len, "%s,",
-		  kl->key_stringkey);
+#if !defined(HAVE_SNPRINTF)
+	  sprintf(keynote_current_session->ks_authorizers_cache + len,
+		  "%s,", kl->key_stringkey);
+#else /* !HAVE_SNPRINTF */
+	  snprintf(keynote_current_session->ks_authorizers_cache + len,
+		   cachesize - len, "%s,", kl->key_stringkey);
+#endif /* !HAVE_SNPRINTF */	
 	  len += strlen(kl->key_stringkey) + 1;
       }
 
@@ -136,6 +143,7 @@ static char *
 keynote_get_values(char *name)
 {
     int i, len;
+    size_t cachesize;
 
     if (!strcmp(name, KEYNOTE_CALLBACK_CLEANUP) ||
         !strcmp(name, KEYNOTE_CALLBACK_INITIALIZE))
@@ -152,24 +160,29 @@ keynote_get_values(char *name)
     if (keynote_current_session->ks_values_cache != (char *) NULL)
       return keynote_current_session->ks_values_cache;
 
-    for (len = 0, i = 0; i < keynote_current_session->ks_values_num; i++)
-      len += strlen(keynote_current_session->ks_values[i]) + 1;
+    for (cachesize = 0, i = 0; i < keynote_current_session->ks_values_num; i++)
+      cachesize += strlen(keynote_current_session->ks_values[i]) + 1;
 
-    keynote_current_session->ks_values_cache = (char *) calloc(len,
-							       sizeof(char));
+    if (cachesize == 0)
+      return "";
+
+    keynote_current_session->ks_values_cache =
+	(char *) calloc(cachesize, sizeof(char));
     if (keynote_current_session->ks_values_cache == (char *) NULL)
     {
 	keynote_errno = ERROR_MEMORY;
 	return (char *) NULL;
     }
 
-    if (len == 0)
-      return "";
-
     for (len = 0, i = 0; i < keynote_current_session->ks_values_num; i++)
     {
-	sprintf(keynote_current_session->ks_values_cache + len, "%s,",
-		keynote_current_session->ks_values[i]);
+#if !defined(HAVE_SNPRINTF)
+	sprintf(keynote_current_session->ks_values_cache + len,
+		"%s,", keynote_current_session->ks_values[i]);
+#else /* !HAVE_SNPRINTF */
+	snprintf(keynote_current_session->ks_values_cache + len,
+		 cachesize - len, "%s,", keynote_current_session->ks_values[i]);
+#endif /* !HAVE_SNPRINTF */	
 	len += strlen(keynote_current_session->ks_values[i]) + 1;
     }
 
