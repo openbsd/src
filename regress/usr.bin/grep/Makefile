@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2003/07/02 07:07:49 pvalchev Exp $
+# $OpenBSD: Makefile,v 1.2 2003/07/02 20:26:59 pvalchev Exp $
 
 REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10
 
@@ -24,13 +24,13 @@ t7:
 	grep -x line ${.CURDIR}/in | diff - ${.CURDIR}/t7.out
 
 t8:
-	fgrep line. ${.CURDIR}/in | diff - ${.CURDIR}/empty
+	fgrep line. ${.CURDIR}/in | diff - /dev/null
 
 t9:
-	grep non.existent ${.CURDIR}/in | diff - ${.CURDIR}/empty
+	grep non.existent ${.CURDIR}/in | diff - /dev/null
 
 t10:
-	grep -s foo nonexistentfile | diff - ${.CURDIR}/empty
+	grep -s foo nonexistentfile | diff - /dev/null
 
 .PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10
 
