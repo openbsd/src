@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.722 2004/04/14 04:46:59 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.723 2004/04/14 17:04:05 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -876,9 +876,12 @@
 /* Creative Labs */
 #define	PCI_PRODUCT_CREATIVELABS_SBLIVE	0x0002		/* SoundBlaster Live */
 #define	PCI_PRODUCT_CREATIVELABS_AUDIGY	0x0004		/* SoundBlaster Audigy */
+#define	PCI_PRODUCT_CREATIVELABS_SBLIVE2	0x0006		/* SoundBlaster Live */
+#define	PCI_PRODUCT_CREATIVELABS_AUDIGYLS	0x0007		/* SoundBlaster Audigy LS */
 #define	PCI_PRODUCT_CREATIVELABS_FIWIRE	0x4001		/* Firewire */
-#define	PCI_PRODUCT_CREATIVELABS_DIGIN	0x7002		/* SoundBlaster Live Digital Input */
+#define	PCI_PRODUCT_CREATIVELABS_SBJOY	0x7002		/* PCI Gameport Joystick */
 #define	PCI_PRODUCT_CREATIVELABS_AUDIGIN	0x7003		/* SoundBlaster Audigy Digital Input */
+#define	PCI_PRODUCT_CREATIVELABS_SBJOY2	0x7004		/* PCI Gameport Joystick */
 #define	PCI_PRODUCT_CREATIVELABS_EV1938	0x8938		/* Ectiva 1938 */
 
 /* Cyclades products */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.722 2004/04/14 04:46:59 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.723 2004/04/14 17:04:05 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2027,16 +2027,28 @@ static const struct pci_known_product pci_known_products[] = {
 	    "SoundBlaster Audigy",
 	},
 	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBLIVE2,
+	    "SoundBlaster Live",
+	},
+	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_AUDIGYLS,
+	    "SoundBlaster Audigy LS",
+	},
+	{
 	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_FIWIRE,
 	    "Firewire",
 	},
 	{
-	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_DIGIN,
-	    "SoundBlaster Live Digital Input",
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBJOY,
+	    "PCI Gameport Joystick",
 	},
 	{
 	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_AUDIGIN,
 	    "SoundBlaster Audigy Digital Input",
+	},
+	{
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBJOY2,
+	    "PCI Gameport Joystick",
 	},
 	{
 	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_EV1938,
