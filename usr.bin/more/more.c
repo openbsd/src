@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.2 1996/09/28 22:20:49 etheisen Exp $	*/
+/*	$OpenBSD: more.c,v 1.3 1996/10/14 03:45:46 etheisen Exp $	*/
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
  * All rights reserved.
@@ -194,7 +194,9 @@ char *argv[];
 	else noscroll = 1;
     }
     if (dlines == 0)
-	dlines = Lpp - (noscroll ? 1 : 2);
+//	dlines = Lpp - (noscroll ? 1 : 2);
+	dlines = Lpp - 1;			/* XXX - maybe broken on dumb
+						         terminals. */
     left = dlines;
     if (nfiles > 1)
 	prnames++;
@@ -1039,12 +1041,14 @@ register FILE *f;
 		Fseek(f, 0L);
 		Currline = 0;	/* skiplns() will make Currline correct */
 		skiplns(initline, f);
-		if (! noscroll) {
+		/* if (! noscroll) {
 		    ret(dlines + 1);
-		}
-		else {
+		 }
+		 else {
 		    ret(dlines);
-		}
+		 } */ 
+		ret(dlines);			/* XXX - Maybe broken on dumb
+							 terminals */
 	    }
 	case ' ':
 	case 'z':
