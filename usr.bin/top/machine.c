@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.39 2004/06/11 01:00:58 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.40 2004/06/11 01:32:11 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -75,13 +75,13 @@ struct handle {
  *  These definitions control the format of the per-process area
  */
 static char header[] =
-	"  PID X        PRI NICE  SIZE   RES STATE WAIT     TIME    CPU COMMAND";
+	"  PID X        PRI NICE  SIZE   RES STATE    WAIT     TIME    CPU COMMAND";
 
 /* 0123456   -- field to fill in starts at header+6 */
 #define UNAME_START 6
 
 #define Proc_format \
-	"%5d %-8.8s %3d %4d %5s %5s %-5s %-6.6s %6s %5.2f%% %.14s"
+	"%5d %-8.8s %3d %4d %5s %5s %-8s %-6.6s %6s %5.2f%% %.11s"
 
 /* process state names for the "STATE" column of the display */
 /*
@@ -90,7 +90,7 @@ static char header[] =
  */
 
 char	*state_abbrev[] = {
-	"", "start", "run", "sleep", "stop", "zomb", "onproc"
+	"", "start", "run", "sleep", "stop", "zomb", "dead", "onproc"
 };
 
 static int      stathz;
@@ -365,6 +365,16 @@ get_process_info(struct system_info *si, struct process_select *sel,
 char fmt[MAX_COLS];	/* static area where result is built */
 
 char *
+state_abbr(struct kinfo_proc2 *pp)
+{
+	static char buf[10];
+
+	snprintf(buf, sizeof buf, "%s/%d",
+	    state_abbrev[(unsigned char)pp->p_stat], pp->p_cpuid);
+	return buf;
+}
+
+char *
 format_next_process(caddr_t handle, char *(*get_userid)(uid_t))
 {
 	char *p_wait, waddr[sizeof(void *) * 2 + 3];	/* Hexify void pointer */
@@ -410,7 +420,7 @@ format_next_process(caddr_t handle, char *(*get_userid)(uid_t))
 	    format_k(pagetok(PROCSIZE(pp))),
 	    format_k(pagetok(pp->p_vm_rssize)),
 	    (pp->p_stat == SSLEEP && pp->p_slptime > maxslp) ?
-	    "idle" : state_abbrev[(unsigned char)pp->p_stat],
+	    "idle" : state_abbr(pp),
 	    p_wait, format_time(cputime), 100.0 * pct,
 	    printable(pp->p_comm));
 
