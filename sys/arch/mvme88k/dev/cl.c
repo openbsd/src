@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.29 2003/08/15 20:32:14 tedu Exp $ */
+/*	$OpenBSD: cl.c,v 1.30 2003/09/28 14:26:25 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -529,7 +529,7 @@ clopen(dev, flag, mode, p)
 		tp = cl->tty;
 	} else {
 		tp = cl->tty = ttymalloc();
-/*		tty_attach(tp);*/  
+		tty_attach(tp);
 	}
 	tp->t_oproc = clstart;
 	tp->t_param = clparam;
