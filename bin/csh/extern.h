@@ -1,5 +1,5 @@
-/*	$OpenBSD: extern.h,v 1.2 1996/06/23 14:19:21 deraadt Exp $	*/
-/*	$NetBSD: extern.h,v 1.7 1995/03/21 14:51:58 mycroft Exp $	*/
+/*	$OpenBSD: extern.h,v 1.3 1996/11/02 01:00:32 millert Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 1996/10/31 23:50:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -217,6 +217,7 @@ int	  prefix __P((Char *, Char *));
 Char	**saveblk __P((Char **));
 void	  setzero __P((char *, int));
 Char	 *strip __P((Char *));
+Char	 *quote __P((Char *));
 char	 *strsave __P((char *));
 char	 *strspl __P((char *, char *));
 void	  udvar __P((Char *));
