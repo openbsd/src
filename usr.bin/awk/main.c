@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.9 1999/12/08 23:09:45 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.10 2000/11/21 14:08:22 aaron Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -64,7 +64,9 @@ int main(int argc, char *argv[])
 
 	cmdname = __progname;
 	if (argc == 1) {
-		fprintf(stderr, "Usage: %s [-f programfile | 'program'] [-Ffieldsep] [-v var=value] [-safe] [-mrn] [-mfn] [files]\n", cmdname);
+		fprintf(stderr, "usage: %s [-F fs] [-v var=value] [-safe] "
+		    "[-mr n] [-mf n] [prog | -f progfile] file ...\n",
+		    cmdname);
 		exit(1);
 	}
 	signal(SIGFPE, fpecatch);
