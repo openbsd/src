@@ -353,8 +353,7 @@ case "${targ}" in
     targ_defvec=m88kbcs_vec
     targ_underscore=yes
     ;;
-
-  mips-arc-openbsd*)
+  mips-*-openbsd*)
     targ_defvec=bfd_elf32_littlemips_vec
     targ_selvecs=bfd_elf32_bigmips_vec
     ;;
@@ -363,14 +362,6 @@ case "${targ}" in
     targ_selvecs=ecoff_little_vec
     ;;
   mips-dec-netbsd*)
-    targ_defvec=bfd_elf32_littlemips_vec
-    targ_selvecs=bfd_elf32_bigmips_vec
-    ;;
-  mips-dec-openbsd*)
-    targ_defvec=bfd_elf32_littlemips_vec
-    targ_selvecs=bfd_elf32_bigmips_vec
-    ;;
-  mips-arc-openbsd*)
     targ_defvec=bfd_elf32_littlemips_vec
     targ_selvecs=bfd_elf32_bigmips_vec
     ;;

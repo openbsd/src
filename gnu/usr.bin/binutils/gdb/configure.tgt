@@ -148,7 +148,7 @@ m88*-*-*)		gdb_target=m88k ;;
 
 mips64*-big-*)		gdb_target=bigmips64 ;;
 mips*-big-*)		gdb_target=bigmips ;;
-mips*-arc-*)		gdb_target=arcmips ;;
+mips*-*-openbsd*)	gdb_target=arcmips ;;
 mips*-dec-mach3*)	gdb_target=mach3 ;;
 mips*-dec-*)		gdb_target=decstation ;;
 mips64*el-*-ecoff*)	gdb_target=embedl64 ;;
@@ -170,7 +170,6 @@ mips*-sgi-irix5*)	gdb_target=irix5 ;;
 mips*-sgi-*)		gdb_target=irix3 ;;
 mips*-sony-*)		gdb_target=bigmips ;;
 mips*-*-mach3*)		gdb_target=mach3 ;;
-mips*-*-openbsd*)	gdb_target=obsd ;;
 mips*-*-sysv4*)		gdb_target=mipsv4 ;;
 mips*-*-sysv*)		gdb_target=bigmips ;;
 mips*-*-riscos*)	gdb_target=bigmips ;;
