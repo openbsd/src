@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.96 2002/11/22 09:50:08 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.97 2002/11/22 16:47:28 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -108,7 +108,6 @@ struct	session session0;
 struct	pgrp pgrp0;
 struct	proc proc0;
 struct	pcred cred0;
-struct	filedesc0 filedesc0;
 struct	plimit limit0;
 struct	vmspace vmspace0;
 struct	sigacts sigacts0;
@@ -270,14 +269,7 @@ main(framep)
 	p->p_ucred->cr_ngroups = 1;	/* group 0 */
 
 	/* Create the file descriptor table. */
-	p->p_fd = &filedesc0.fd_fd;
-	filedesc0.fd_fd.fd_refcnt = 1;
-	filedesc0.fd_fd.fd_cmask = cmask;
-	filedesc0.fd_fd.fd_ofiles = filedesc0.fd_dfiles;
-	filedesc0.fd_fd.fd_ofileflags = filedesc0.fd_dfileflags;
-	filedesc0.fd_fd.fd_nfiles = NDFILE;
-	filedesc0.fd_fd.fd_himap = filedesc0.fd_dhimap;
-	filedesc0.fd_fd.fd_lomap = filedesc0.fd_dlomap;
+	p->p_fd = fdinit(NULL);
 
 	/* Create the limits structures. */
 	p->p_limit = &limit0;
@@ -385,13 +377,13 @@ main(framep)
 		panic("cannot mount root");
 	CIRCLEQ_FIRST(&mountlist)->mnt_flag |= MNT_ROOTFS;
 
-	/* Get the vnode for '/'.  Set filedesc0.fd_fd.fd_cdir to reference it. */
+	/* Get the vnode for '/'.  Set p->p_fd->fd_cdir to reference it. */
 	if (VFS_ROOT(mountlist.cqh_first, &rootvnode))
 		panic("cannot find root vnode");
-	filedesc0.fd_fd.fd_cdir = rootvnode;
-	VREF(filedesc0.fd_fd.fd_cdir);
+	p->p_fd->fd_cdir = rootvnode;
+	VREF(p->p_fd->fd_cdir);
 	VOP_UNLOCK(rootvnode, 0, p);
-	filedesc0.fd_fd.fd_rdir = NULL;
+	p->p_fd->fd_rdir = NULL;
 
 	uvm_swap_init();
 
