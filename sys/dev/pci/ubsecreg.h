@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.3 2000/06/12 19:50:35 deraadt Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.4 2000/06/18 03:37:22 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -71,23 +71,25 @@
 
 #define	UBSEC_CARD(sid)		(((sid) & 0xf0000000) >> 28)
 #define	UBSEC_SID(crd,ses)	(((crd) << 28) | ((ses) & 0x7ff))
-#define	MAX_SCATTER		10
+#define	MAX_SCATTER		64
 
 struct ubsec_pktctx {
-	u_int8_t	pc_deskey[24];		/* 3DES key */
-	u_int8_t	pc_hminner[20];		/* hmac inner state */
-	u_int8_t	pc_hmouter[20];		/* hmac outer state */
-	u_int8_t	pc_iv[8];		/* 3DES iv */
-	u_int32_t	pc_flags;
+	u_int32_t	pc_deskey[6];		/* 3DES key */
+	u_int32_t	pc_hminner[5];		/* hmac inner state */
+	u_int32_t	pc_hmouter[5];		/* hmac outer state */
+	u_int32_t	pc_iv[2];		/* [3]DES iv */
+	u_int16_t	pc_flags;		/* flags, below */
+	u_int16_t	pc_offset;		/* crypto offset */
+	u_int32_t	pc_paddr;
+	u_int8_t	pad[16];
 };
-#define	UBS_PKTCTX_COFFSET	0xffff0000	/* cryto to mac offset */
-#define	UBS_PKTCTX_ENC_3DES	0x00008000	/* use 3des */
-#define	UBS_PKTCTX_ENC_NONE	0x00000000	/* no encryption */
-#define	UBS_PKTCTX_INBOUND	0x00004000	/* inbound packet */
-#define	UBS_PKTCTX_AUTH		0x00003000	/* authentication mask */
-#define	UBS_PKTCTX_AUTH_NONE	0x00000000	/* no authentication */
-#define	UBS_PKTCTX_AUTH_MD5	0x00001000	/* use hmac-md5 */
-#define	UBS_PKTCTX_AUTH_SHA1	0x00002000	/* use hmac-sha1 */
+#define	UBS_PKTCTX_ENC_3DES	0x8000		/* use 3des */
+#define	UBS_PKTCTX_ENC_NONE	0x0000		/* no encryption */
+#define	UBS_PKTCTX_INBOUND	0x4000		/* inbound packet */
+#define	UBS_PKTCTX_AUTH		0x3000		/* authentication mask */
+#define	UBS_PKTCTX_AUTH_NONE	0x0000		/* no authentication */
+#define	UBS_PKTCTX_AUTH_MD5	0x1000		/* use hmac-md5 */
+#define	UBS_PKTCTX_AUTH_SHA1	0x2000		/* use hmac-sha1 */
 
 struct ubsec_pktbuf {
 	volatile u_int32_t	pb_addr;	/* address of buffer start */

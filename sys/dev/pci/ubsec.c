@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.12 2000/06/14 14:09:36 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.13 2000/06/18 03:37:22 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -86,6 +86,8 @@ int	ubsec_feed __P((struct ubsec_softc *));
 
 #define WRITE_REG(sc,reg,val) \
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, reg, val)
+
+#define	SWAP32(x) (x) = swap32((x))
 
 int
 ubsec_probe(parent, match, aux)
@@ -416,34 +418,42 @@ ubsec_process(crp)
 
 		if (enccrd->crd_flags & CRD_F_ENCRYPT) {
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, q->q_ctx.pc_iv,
-				    sizeof(q->q_ctx.pc_iv));
+				bcopy(enccrd->crd_iv, &q->q_ctx.pc_iv[0], 8);
 			else
-				get_random_bytes(q->q_ctx.pc_iv,
-				    sizeof(q->q_ctx.pc_iv));
+				get_random_bytes(&q->q_ctx.pc_iv[0], 8);
+
+			m_copyback(q->q_src_m, enccrd->crd_inject, 8,
+			    (caddr_t)&q->q_ctx.pc_iv);
 
 			if ((enccrd->crd_flags & CRD_F_IV_PRESENT) == 0)
 				m_copyback(q->q_src_m, enccrd->crd_inject,
-				    sizeof(q->q_ctx.pc_iv), q->q_ctx.pc_iv);
+				    8, (caddr_t)&q->q_ctx.pc_iv[0]);
 		} else {
 			q->q_ctx.pc_flags |= UBS_PKTCTX_INBOUND;
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, q->q_ctx.pc_iv,
-				    sizeof(q->q_ctx.pc_iv));
+				bcopy(enccrd->crd_iv, &q->q_ctx.pc_iv[0], 8);
 			else
 				m_copydata(q->q_src_m, enccrd->crd_inject,
-				    sizeof(q->q_ctx.pc_iv), q->q_ctx.pc_iv);
+				    8, (caddr_t)&q->q_ctx.pc_iv[0]);
 		}
 
 		if (enccrd->crd_alg == CRYPTO_DES_CBC) {
 			/* Cheat: des == 3des with two of the keys the same */
 			bcopy(enccrd->crd_key, &q->q_ctx.pc_deskey[0], 8);
-			bcopy(enccrd->crd_key, &q->q_ctx.pc_deskey[8], 8);
-			bcopy(enccrd->crd_key, &q->q_ctx.pc_deskey[16], 8);
+			bcopy(enccrd->crd_key, &q->q_ctx.pc_deskey[2], 8);
+			bcopy(enccrd->crd_key, &q->q_ctx.pc_deskey[4], 8);
 		} else
 			bcopy(enccrd->crd_key, &q->q_ctx.pc_deskey[0], 24);
 
+		SWAP32(q->q_ctx.pc_iv[0]);
+		SWAP32(q->q_ctx.pc_iv[1]);
+		SWAP32(q->q_ctx.pc_deskey[0]);
+		SWAP32(q->q_ctx.pc_deskey[1]);
+		SWAP32(q->q_ctx.pc_deskey[2]);
+		SWAP32(q->q_ctx.pc_deskey[3]);
+		SWAP32(q->q_ctx.pc_deskey[4]);
+		SWAP32(q->q_ctx.pc_deskey[5]);
 	}
 
 	if (maccrd) {
@@ -455,7 +465,7 @@ ubsec_process(crp)
 
 		/* XXX not right */
 		bcopy(maccrd->crd_key, &q->q_ctx.pc_hminner[0],
-		    maccrd->crd_klen >> 3);
+		    maccrd->crd_klen >> 5);
 
 	}
 
@@ -468,7 +478,7 @@ ubsec_process(crp)
 		dskip = sskip = macoffset + encoffset;
 		coffset = 0;
 	}
-	q->q_ctx.pc_flags |= (coffset << 16);
+	q->q_ctx.pc_offset = coffset << 2;
 
 	q->q_src_l = mbuf2pages(q->q_src_m, &q->q_src_npa, q->q_src_packp,
 	    q->q_src_packl, MAX_SCATTER, &err);
@@ -530,7 +540,7 @@ ubsec_process(crp)
 	q->q_dst_l = mbuf2pages(q->q_dst_m, &q->q_dst_npa, q->q_dst_packp,
 	    q->q_dst_packl, MAX_SCATTER, NULL);
 
-	q->q_mcr.mcr_pktlen = q->q_dst_l - sskip;
+	q->q_mcr.mcr_pktlen = q->q_dst_l - dskip;
 
 #ifdef UBSEC_DEBUG
 	printf("src skip: %d\n", sskip);
