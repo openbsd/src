@@ -1,3 +1,6 @@
+.\"	$OpenBSD: iostat.8,v 1.2 1996/03/03 02:52:33 tholo Exp $
+.\"	$NetBSD: iostat.8,v 1.8 1995/11/28 20:16:30 thorpej Exp $
+.\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -30,11 +33,10 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)iostat.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: iostat.8,v 1.1.1.1 1995/10/18 08:47:37 deraadt Exp $
 .\"
-.Dd June 6, 1993
+.Dd Jan 18, 1996
 .Dt IOSTAT 8
-.Os BSD 4
+.Os NetBSD 1.1
 .Sh NAME
 .Nm iostat
 .Nd report
@@ -42,6 +44,7 @@
 statistics
 .Sh SYNOPSIS
 .Nm iostat
+.Op Fl CdDIT
 .Op Fl c Ar count
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -51,8 +54,19 @@ statistics
 .Nm Iostat
 displays kernel
 .Tn I/O
-statistics on terminal, disk and cpu
-operations.
+statistics on terminal, disk and cpu operations.  By default,
+.Nm iostat
+displays one line of statistics averaged over the machine's run time.
+The use of 
+.Fl c
+presents successive lines averaged over the
+.Ar wait
+period.
+The
+.Fl I
+option causes
+.Nm iostat
+to print raw, unaveraged values.
 .Pp
 The options are as follows:
 .Bl -tag -width flag
@@ -60,18 +74,44 @@ The options are as follows:
 Repeat the display
 .Ar count
 times.
-The first display is for the time since a reboot and each subsequent
-report is for the time period since the last display.
+Unless the
+.Fl I
+flag is in effect, the first display is for the time since a reboot and
+each subsequent report is for the time period since the last display.
 If no
 .Ar wait
 interval is specified, the default is 1 second.
+.It Fl C
+Show cpu statistics.  This is enabled by default unless the
+.Fl d, 
+.Fl D,
+or 
+.Fl T
+flags are used.
+.It Fl d
+Show disk statistics.  This is the default.  Displays kilobytes per
+transfer, number of transfers, and megabytes transfered.  Use of this
+flag disables display of cpu and tty statistics.
+.It Fl D
+Show alternate disk statistics.  Displays kilobytes transfered, number of 
+transfers, and time spent in transfers.  Use of this flag disables the
+default display.
+.It Fl I
+Show the running total values, rather than an average.
 .It Fl M
 Extract values associated with the name list from the specified core
 instead of the default
-.Dq Pa /dev/kmem .
+.Dq Pa /dev/mem .
 .It Fl N
 Extract the name list from the specified system instead of the default
 .Dq Pa /netbsd .
+.It Fl T
+Show tty statistics.  This is enabled by default unless the
+.Fl C, 
+.Fl d,
+or 
+.Fl D
+flags are used.
 .It Fl w
 Pause
 .Ar wait
@@ -92,7 +132,7 @@ characters read from terminals
 characters written to terminals
 .El
 .It disks
-Disk operations (this field is system dependent). 
+Disk operations. 
 The header of the field is the disk name and unit number.
 If more than four disk drives are configured in the system,
 .Nm iostat
@@ -103,13 +143,24 @@ to display specific drives, their names may be supplied on the command
 line.
 .Pp
 .Bl -tag -width indent -compact
-.It sps
-sectors transferred per second
-.It tps
+.It K/t
+Kilobytes transferred per disk transfer
+.It t/s
 transfers per second
-.It msps
-milliseconds per average seek (including implied
-seeks and rotational latency)
+.It Mb/s
+Megabytes transferred per second
+.Pp
+.El
+The alternate display format, (selected with
+.Fl D
+), presents the following values.
+.Bl -tag -width indent -compact
+.It Kb
+Kilobytes transferred
+.It xfr
+Disk transfers
+.It time
+Seconds spent in disk activity
 .El
 .It cpu
 .Bl -tag -width indent -compact
@@ -124,10 +175,10 @@ seeks and rotational latency)
 .El
 .El
 .Sh FILES
-.Bl -tag -width /dev/kmem -compact
+.Bl -tag -width /dev/mem -compact
 .It Pa /netbsd
 Default kernel namelist.
-.It Pa /dev/kmem
+.It Pa /dev/mem
 Default memory file.
 .El
 .Sh SEE ALSO
