@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fgetln.3,v 1.4 1999/07/21 12:21:29 aaron Exp $
+.\"	$OpenBSD: fgetln.3,v 1.5 1999/09/15 21:26:58 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,8 +56,7 @@ The length of the line, including the final newline,
 is stored in the memory location to which
 .Fa len
 points.
-(Note, however, that if the line is the last
-in a file that does not end in a newline,
+(Note, however, that if the last line in the stream does not end in a newline,
 the returned text will not contain a newline.)
 .Sh RETURN VALUES
 Upon successful completion a pointer is returned;
@@ -112,6 +111,36 @@ for any of the errors specified for the routines
 .Xr stat 2 ,
 or
 .Xr realloc 3 .
+.Sh CAVEATS
+Since the returned buffer is not a C string (it is not null terminated), a
+common practice is to replace the newline character with
+.Sq \e0 .
+However, if the last line in a file does not contain a newline,
+the returned text won't contain a newline either.
+The following code demonstrates how to deal with this problem by allocating a
+temporary buffer:
+.Bd -literal
+	char *buf, *lbuf;
+	size_t len;
+
+	lbuf = NULL;
+	while ((buf = fgetln(fp, &len))) {
+		if (buf[len - 1] == '\en')
+			buf[len - 1] = '\e0';
+		else {
+			lbuf = (char *)malloc(len + 1);
+			memcpy(lbuf, buf, len);
+			lbuf[len] = '\e0';
+			buf = lbuf;
+		}
+		printf("%s\en", buf);
+
+		if (lbuf != NULL) {
+			free(lbuf);
+			lbuf = NULL;
+		}
+	}
+.Ed
 .Sh SEE ALSO
 .Xr ferror 3 ,
 .Xr fgets 3 ,
