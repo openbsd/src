@@ -194,55 +194,55 @@ cfg_initiator_send_ATTR (struct message *msg)
 		"cfg_initiator_send_ATTR: REQ/REPLY mode"));
 
       alist = conf_get_list (id_string, "Attributes");
-      if (!alist)
-	continue;
-
-      for (anode = TAILQ_FIRST (&alist->fields); anode;
-	   anove = TAILQ_NEXT (anode, link))
+      if (alist)
 	{
-	  if (strcasecmp (anode->field, "Address") == 0)
+	  for (anode = TAILQ_FIRST (&alist->fields); anode;
+	       anode = TAILQ_NEXT (anode, link))
 	    {
-	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS);
-	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS);
-	      attrlen += ISAKMP_ATTR_SZ * 2;
+	      if (strcasecmp (anode->field, "Address") == 0)
+		{
+		  bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_ADDRESS);
+		  bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_ADDRESS);
+		  attrlen += ISAKMP_ATTR_SZ * 2;
+		}
+	      else if (strcasecmp (anode->field, "Netmask") == 0)
+		{
+		  bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_NETMASK);
+		  bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_NETMASK);
+		  attrlen += ISAKMP_ATTR_SZ * 2;
+		}
+	      else if (strcasecmp (anode->field, "Nameserver") == 0)
+		{
+		  bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_DNS);
+		  bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_DNS);
+		  attrlen += ISAKMP_ATTR_SZ * 2;
+		}
+	      else if (strcasecmp (anode->field, "WINS-server") == 0)
+		{
+		  bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_NBNS);
+		  bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS);
+		  attrlen += ISAKMP_ATTR_SZ * 2;
+		}
+	      else if (strcasecmp (anode->field, "DHCP-server") == 0)
+		{
+		  bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_DHCP);
+		  bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_DHCP);
+		  attrlen += ISAKMP_ATTR_SZ * 2;
+		}
+	      else if (strcasecmp (anode->field, "Lifetime") == 0)
+		{
+		  bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_ADDRESS_EXPIRY);
+		  attrlen += ISAKMP_ATTR_SZ;
+		}
+	      else
+		{
+		  log_print ("cfg_initiator_send_ATTR: unknown attribute "
+			     "%.20s in section [%s]", anode->field, id_string);
+		}
 	    }
-	  else if (strcasecmp (anode->field, "Netmask") == 0)
-	    {
-	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_NETMASK);
-	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_NETMASK);
-	      attrlen += ISAKMP_ATTR_SZ * 2;
-	    }
-	  else if (strcasecmp (anode->field, "Nameserver") == 0)
-	    {
-	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_DNS);
-	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_DNS);
-	      attrlen += ISAKMP_ATTR_SZ * 2;
-	    }
-	  else if (strcasecmp (anode->field, "WINS-server") == 0)
-	    {
-	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_NBNS);
-	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_NBNS);
-	      attrlen += ISAKMP_ATTR_SZ * 2;
-	    }
-	  else if (strcasecmp (anode->field, "DHCP-server") == 0)
-	    {
-	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP4_DHCP);
-	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_IP6_DHCP);	
-	      attrlen += ISAKMP_ATTR_SZ * 2;
-	    }
-	  else if (strcasecmp (anode->field, "Lifetime") == 0)
-	    {
-	      bit_set (attrbits, ISAKMP_CFG_ATTR_INTERNAL_ADDRESS_EXPIRY);
-	      attrlen += ISAKMP_ATTR_SZ;
-	    }
-	  else
-	    {
-	      log_print ("cfg_initiator_send_ATTR: unknown attribute %.20s "
-			 "in section [%s]", anode->field, id_string);
-	    }
-	}
 
-      conf_free_list (alist);
+	  conf_free_list (alist);
+	}
     }
   
   if (attrlen == 0)
