@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.5 2000/10/09 22:52:18 brian Exp $	*/
+/*	$OpenBSD: client.c,v 1.6 2001/01/12 06:12:54 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -539,6 +539,7 @@ timer_set(sec)
 	u_int sec;
 {
 	struct sigaction act;
+	struct itimerval it;
 
 	timer_alarm = 0;
 	if (sigemptyset(&act.sa_mask) < 0)
@@ -547,17 +548,32 @@ timer_set(sec)
 	act.sa_handler = timer_handler;
 	if (sigaction(SIGALRM, &act, &timer_oact) < 0)
 		return (-1);
-	alarm(sec);
+
+	timerclear(&it.it_interval);
+	timerclear(&it.it_value);
+	it.it_value.tv_sec = sec;
+	if (setitimer(ITIMER_REAL, &it, NULL) == -1) {
+		sigaction(SIGALRM, &timer_oact, NULL);
+		return (-1);
+	}
+
 	return (0);
 }
 
 int
 timer_clr(void)
 {
-	alarm(0);
-	if (sigaction(SIGALRM, &timer_oact, NULL) < 0)
-		return (-1);
+	struct itimerval it;
+	int r1, r2;
+
+	timerclear(&it.it_interval);
+	timerclear(&it.it_value);
+	r1 = setitimer(ITIMER_REAL, &it, NULL);
+	r2 = sigaction(SIGALRM, &timer_oact, NULL);
 	timer_alarm = 0;
+
+	if (r1 || r2)
+		return (-1);
 	return (0);
 }
 
