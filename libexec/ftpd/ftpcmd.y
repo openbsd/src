@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.32 2002/01/23 10:28:50 mpech Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.33 2002/01/23 16:38:12 mpech Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.32 2002/01/23 10:28:50 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.33 2002/01/23 16:38:12 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -1077,7 +1077,7 @@ lookup(p, cmd)
 	for (; p->name != NULL; p++)
 		if (strcmp(cmd, p->name) == 0)
 			return (p);
-	return (0);
+	return (NULL);
 }
 
 #include <arpa/telnet.h>
@@ -1219,7 +1219,7 @@ yylex()
 			upper(cbuf);
 			p = lookup(cmdtab, cbuf);
 			cbuf[cpos] = c;
-			if (p != 0) {
+			if (p != NULL) {
 				if (p->implemented == 0) {
 					nack(p->name);
 					return (LEXERR);
@@ -1243,7 +1243,7 @@ yylex()
 			upper(cp);
 			p = lookup(sitetab, cp);
 			cbuf[cpos] = c;
-			if (p != 0) {
+			if (p != NULL) {
 				if (p->implemented == 0) {
 					state = CMD;
 					nack(p->name);
@@ -1470,7 +1470,7 @@ help(ctab, s)
 	}
 	upper(s);
 	c = lookup(ctab, s);
-	if (c == (struct tab *)0) {
+	if (c == NULL) {
 		reply(502, "Unknown command %s.", s);
 		return;
 	}
