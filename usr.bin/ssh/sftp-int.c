@@ -28,7 +28,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.17 2001/02/08 17:57:59 stevesk Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.18 2001/02/08 22:28:07 stevesk Exp $");
 
 #include "buffer.h"
 #include "xmalloc.h"
@@ -169,13 +169,13 @@ void
 local_do_ls(const char *args)
 {
 	if (!args || !*args)
-		local_do_shell("ls");
+		local_do_shell(_PATH_LS);
 	else {
-		int len = sizeof("/bin/ls ") + strlen(args) + 1;
+		int len = strlen(_PATH_LS " ") + strlen(args) + 1;
 		char *buf = xmalloc(len);
 
 		/* XXX: quoting - rip quoting code from ftp? */
-		snprintf(buf, len, "/bin/ls %s", args);
+		snprintf(buf, len, _PATH_LS " %s", args);
 		local_do_shell(buf);
 		xfree(buf);
 	}
