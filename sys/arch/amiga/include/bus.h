@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.5 1997/09/09 22:41:42 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.6 1997/09/17 19:27:21 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Niklas Hallqvist.
@@ -86,7 +86,8 @@ bus_space_read_1(bus_space_tag_t bst, bus_space_handle_t bsh, bus_addr_t ba)
 static __inline u_int16_t
 bus_space_read_2(bus_space_tag_t bst, bus_space_handle_t bsh, bus_addr_t ba)
 {
-	u_int16_t x = *(volatile u_int16_t *)(bsh + (ba << bst->bs_shift));
+	u_int16_t x =
+	    *(volatile u_int16_t *)((bsh & ~1) + (ba << bst->bs_shift));
 
 	return bst->bs_swapped ? swap(x) : x;
 }
@@ -144,7 +145,7 @@ static __inline void
 bus_space_write_2(bus_space_tag_t bst, bus_space_handle_t bsh, bus_addr_t ba,
     u_int16_t x)
 {
-	*(volatile u_int16_t *)(bsh + (ba << bst->bs_shift)) =
+	*(volatile u_int16_t *)((bsh & ~1) + (ba << bst->bs_shift)) =
             bst->bs_swapped ? swap(x) : x;
 }
 
@@ -199,8 +200,8 @@ bus_space_read_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
 	register u_int16_t *buf16 = (u_int16_t *)buf;
 
 	while (cnt) {
-		register u_int16_t x =
-		    *(volatile u_int16_t *)(bsh + (ba << bst->bs_shift));
+		register u_int16_t x = *(volatile u_int16_t *)
+		    ((bsh & ~1) + (ba << bst->bs_shift));
 
 		*buf16++ = bst->bs_swapped ? x : swap(x);
 		cnt -= 2;
@@ -225,7 +226,7 @@ bus_space_write_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
 	register const u_int16_t *buf16 = (const u_int16_t *)buf;
 
 	while (cnt) {
-		*(volatile u_int16_t *)(bsh + (ba << bst->bs_shift)) =
+		*(volatile u_int16_t *)((bsh & ~1) + (ba << bst->bs_shift)) =
 		    bst->bs_swapped ? *buf16 : swap(*buf16);
 		buf16++;
 		cnt -= 2;
