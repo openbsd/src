@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: client.c,v 1.2 2004/07/26 16:01:22 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -71,9 +71,6 @@ static FILE  *cvs_server_inlog;
 static FILE  *cvs_server_outlog;
 
 static char   cvs_client_buf[4096];
-
-/* last directory sent with `Directory' */
-static char   cvs_lastdir[MAXPATHLEN] = "";
 
 
 
@@ -451,19 +448,17 @@ cvs_client_senddir(const char *dir)
 {
 	char repo[MAXPATHLEN], buf[MAXPATHLEN];
 
-	/* don't bother sending if it's the same as the last Directory sent */
-	if (strcmp(dir, cvs_lastdir) == 0)
-		return (0);
-
-	if (cvs_readrepo(dir, repo, sizeof(repo)) < 0)
-		return (-1);
-
-	snprintf(buf, sizeof(buf), "%s/%s", cvs_root->cr_dir, repo);
+	if (cvs_readrepo(dir, repo, sizeof(repo)) < 0) {
+		repo[0] = '\0';
+		strlcpy(buf, cvs_root->cr_dir, sizeof(buf));
+	}
+	else {
+		snprintf(buf, sizeof(buf), "%s/%s", cvs_root->cr_dir, repo);
+	}
 
 	if ((cvs_client_sendreq(CVS_REQ_DIRECTORY, dir, 0) < 0) ||
 	    (cvs_client_sendln(buf) < 0))
 		return (-1);
-	strlcpy(cvs_lastdir, dir, sizeof(cvs_lastdir));
 
 	return (0);
 }
