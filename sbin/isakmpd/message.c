@@ -1,5 +1,5 @@
-/*	$OpenBSD: message.c,v 1.15 1999/04/19 20:59:27 niklas Exp $	*/
-/*	$EOM: message.c,v 1.120 1999/04/17 23:20:41 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.16 1999/04/27 21:10:14 niklas Exp $	*/
+/*	$EOM: message.c,v 1.124 1999/04/27 18:44:37 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -958,19 +958,13 @@ message_recv (struct message *msg)
       if (!msg->exchange)
 	{
 	  log_print ("message_recv: phase 1 message after ISAKMP SA is ready");
-
-	  /*
-	   * Retransmit final message of the exchange that set up the
-	   * ISAKMP SA.
-	   */
-	  if (msg->isakmp_sa->last_sent_in_setup)
-	    {
-	      log_debug (LOG_MESSAGE, 80,
-			 "message_recv: resending last message from phase 1");
-	      message_send (msg->isakmp_sa->last_sent_in_setup);
-	    }
-
 	  return -1;
+	}
+      else if (msg->exchange->last_sent)
+	{
+	  log_debug (LOG_MESSAGE, 80,
+		     "message_recv: resending last message from phase 1");
+	  message_send (msg->exchange->last_sent);
 	}
     }
 
@@ -1438,7 +1432,13 @@ message_check_duplicate (struct message *msg)
 	  && memcmp (pkt, exchange->last_received->orig, sz) == 0)
 	{
 	  log_debug (LOG_MESSAGE, 80, "message_check_duplicate: dropping dup");
-	  /* XXX Should we do an early retransmit of our last message?  */
+
+	  /*
+	   * Retransmit if the previos sent message was the last of an
+	   * exchange, otherwise just wait for the ordinary retransmission.
+	   */
+	  if (exchange->last_sent->flags & MSG_LAST)
+	    message_send (exchange->last_sent);
 	  message_free (msg);
 	  return -1;
 	}
