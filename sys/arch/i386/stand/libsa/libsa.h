@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.26 1998/07/08 19:28:53 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.27 1998/07/13 04:03:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -46,7 +46,6 @@ void apmprobe __P((void));
 void pciprobe __P((void));
 
 void devboot __P((dev_t, char *));
-void *alloca __P((size_t));
 void machdep __P((void));
 
 extern const char bdevs[][4];
