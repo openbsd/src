@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.16 2000/11/09 23:31:56 aaron Exp $	*/
+/*	$OpenBSD: date.c,v 1.17 2001/03/26 15:22:16 millert Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: date.c,v 1.16 2000/11/09 23:31:56 aaron Exp $";
+static char rcsid[] = "$OpenBSD: date.c,v 1.17 2001/03/26 15:22:16 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ main(argc, argv)
 	rflag = 0;
 	while ((ch = getopt(argc, argv, "d:nr:ut:")) != -1)
 		switch((char)ch) {
-		case 'd':		/* daylight savings time */
+		case 'd':		/* daylight saving time */
 			tz.tz_dsttime = atoi(optarg) ? 1 : 0;
 			break;
 		case 'n':		/* don't set network */
@@ -116,7 +116,7 @@ main(argc, argv)
 	argv += optind;
 
 	/*
-	 * If -d or -t, set the timezone or daylight savings time; this
+	 * If -d or -t, set the timezone or daylight saving time; this
 	 * doesn't belong here, the kernel should not know about either.
 	 */
 	if ((tz.tz_minuteswest || tz.tz_dsttime) &&
