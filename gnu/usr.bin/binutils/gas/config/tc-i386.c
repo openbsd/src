@@ -4343,6 +4343,8 @@ md_apply_fix3 (fixP, valp, seg)
   else if (use_rela_relocations)
     {
       fixP->fx_no_overflow = 1;
+      /* Remember value for tc_gen_reloc.  */
+      fixP->fx_addnumber = value;
       value = 0;
     }
   md_number_to_chars (p, value, fixP->fx_size);
@@ -4804,9 +4806,23 @@ tc_gen_reloc (section, fixp)
   /* Use the rela in 64bit mode.  */
   else
     {
-      rel->addend = fixp->fx_offset;
-      if (fixp->fx_pcrel)
-	rel->addend -= fixp->fx_size;
+      if (!fixp->fx_pcrel)
+	rel->addend = fixp->fx_offset;
+      else
+	switch (code)
+	  {
+	  case BFD_RELOC_X86_64_PLT32:
+	  case BFD_RELOC_X86_64_GOT32:
+	  case BFD_RELOC_X86_64_GOTPCREL:
+	    rel->addend = fixp->fx_offset - fixp->fx_size;
+	    break;
+	  default:
+	    rel->addend = (section->vma
+			   - fixp->fx_size
+			   + fixp->fx_addnumber
+			   + md_pcrel_from (fixp));
+	    break;
+	  }
     }
 
   rel->howto = bfd_reloc_type_lookup (stdoutput, code);
