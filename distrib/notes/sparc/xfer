@@ -133,7 +133,7 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 
 	The floppy image is used only for booting, and can be placed in
 	a partition that will be overwritten during the install process,
-	since it actually runs off of a ram-disk image in the kernel.  In
+	since it actually runs off a ram-disk image in the kernel.  In
 	contrast the miniroot is a normal unix root filesystem and you
 	must place in a partition that will not be overwritten until you've
 	completed the installation process.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.g,v 1.3 1997/11/15 21:51:33 todd Exp $
+.\"	$OpenBSD: csh.g,v 1.4 1998/09/24 07:08:38 pjanzen Exp $
 .\"	$NetBSD: csh.g,v 1.3 1995/03/21 09:03:42 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1993
@@ -934,7 +934,7 @@ file then this will not work and you must use
 .I logout
 to log off the \s-2UNIX\s0 system (2.8).
 .IP \&.logout
-When you log off of \s-2UNIX\s0 the shell will execute commands from
+When you log off \s-2UNIX\s0 the shell will execute commands from
 the file
 .I \&.logout
 in your

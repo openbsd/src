@@ -268,5 +268,5 @@ functional:
 
 	loadbsd -a bsd
 
-When it boots off of the hard drive, you will have a complete
+When it boots off the hard drive, you will have a complete
 OpenBSD system!  CONGRATULATIONS! (You really deserve them!!!)
