@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.42 2003/02/12 21:46:00 miod Exp $
+#	$OpenBSD: files.hppa,v 1.43 2003/02/12 22:17:18 mickey Exp $
 #
 # hppa-specific configuration info
 
@@ -114,9 +114,23 @@ device	mongoose: isabus, eisabus
 attach	mongoose at mainbus
 file	arch/hppa/dev/mongoose.c	mongoose
 
+# Dino, GSC to PCI bridge. Includes ps/2, serial, and flying toaster interfaces
+# Cujo is a 64-bit data path Dino
 device	dino: pcibus
-attach	dino at mainbus
+attach	dino at phantomas
 file	arch/hppa/dev/dino.c		dino
+
+# EPIC, Excalibur PCI Interface Chip. Integrated IOA
+# SAGA is a 64-bit data path EPIC
+#device	epic: pcibus
+#attach	epic at mainbus
+#file	arch/hppa/dev/epic.c		epic
+
+# Astro, integrated Runway to Ropes bridge, Memory controller, and IOA.
+
+# Elroy, Ropes to PCI Bridge. Supports 4X PCI and dual address cycle.
+
+# U2/Uturn, Runway to GSC Bus bridge & IOA.
 
 attach	sti at mainbus with sti_sgc
 file	arch/hppa/dev/sti_sgc.c		sti_sgc
