@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-int.h,v 1.5 1996/07/26 03:43:43 deraadt Exp $	*/
+/*	$OpenBSD: pcap-int.h,v 1.6 1996/08/03 12:38:44 niklas Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995
@@ -103,8 +103,4 @@ int	pcap_read(pcap_t *, int cnt, pcap_handler, u_char *);
 #if defined(ultrix) || defined(__alpha)
 #define       PCAP_FDDIPAD 3
 #endif
-#endif
-
-#ifdef __OpenBSD__
-#define HAVE_STRERROR
 #endif
