@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.111 2002/11/20 10:40:01 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.112 2002/11/20 10:55:26 pb Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1207,12 +1207,14 @@ antispoof_rule = "antispoof" [ "log" ] [ "quick" ]
 		 "for" ( interface-name | "{" interface-list "}" )
 		 [ af ] .
 
-altq_rule      = "altq" "on" interface-name "scheduler" "cbq" "bandwidth"
-		 number [ "Kb" | "Mb" | "Gb" ] [ "queue" "{" queue-list "}" ] .
+altq_rule      = "altq" "on" interface-name "scheduler" "cbq"
+		 [ "bandwidth" number ( "b" | "Kb" | "Mb" | "Gb" ) ]
+		 "queue" ( string | "{" queue-list "}" ) .
 
-queue_rule     = "queue" string "bandwidth" number [ "kb" | "Mb" | "Gb" | "%" ]
+queue_rule     = "queue" string "bandwidth" number
+		 ( "b" | "Kb" | "Mb" | "Gb" | "%" )
 		 [ "priority" number ] [ cbq-def ]
-	         [ "queue" ( string | "{" queue-list "}" ) ] .
+	         [ string | "{" queue-list "}" ] .
 
 action         = "pass" | "block" [ return ] | "scrub" .
 return         = "drop" |
