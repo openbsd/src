@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.16 1997/08/24 18:29:39 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.17 1997/11/24 03:25:29 deraadt Exp $	*/
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -703,8 +703,8 @@ struct	frentry	*fr;
 		return -1;
 
 	while (**cp && (!strncasecmp(**cp, "ipopt", 5) ||
-	       !strncasecmp(**cp, "not", 3) || !strncasecmp(**cp, "opt", 4) ||
-	       !strncasecmp(**cp, "frag", 3) || !strncasecmp(**cp, "no", 2) ||
+	       !strncasecmp(**cp, "not", 3) || !strncasecmp(**cp, "opt", 3) ||
+	       !strncasecmp(**cp, "frag", 4) || !strncasecmp(**cp, "no", 2) ||
 	       !strncasecmp(**cp, "short", 5))) {
 		if (***cp == 'n' || ***cp == 'N') {
 			notopt = 1;
