@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6.4,v 1.3 1999/12/25 02:10:37 itojun Exp $
+.\"	$OpenBSD: inet6.4,v 1.4 2000/01/06 02:17:13 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	KAME Id: inet6.4,v 1.1.1.1 1999/08/08 23:30:37 itojun Exp
+.\"	KAME Id: inet6.4,v 1.3 2000/01/06 02:13:43 itojun Exp
 .\"
 .Dd January 29, 1999
 .Dt INET6 4
@@ -110,40 +110,55 @@ can be obtained by setting
 field into 0, or by using the address contained in variable
 .Dv in6addr_any .
 .Pp
-The implementation intentionally does not support RFC2553 IPv4 mapped address
-.Pq IPv4 traffic on top of AF_INET6 socket ,
-due to its possible negative impact to security and access control.
-.Pp
-IPv6 defines scoped address such as link-local or site-local address.
-To manipulate link-local addresses properly from the userland,
+IPv6 specification defines scoped address,
+like link-local or site-local address.
+A scoped address is ambiguous to the kernel, 
+if it is specified without scope identifier.
+To manipulate scoped addresses properly from the userland,
 programs must use advanced API defined in RFC2292.
-Otherwise, the address is ambiguous to the kernel and error will be generated.
-Scoped address is not for daily use at this moment both from specification
-and implementation point of view.
-Most of normal userland program
+Compact description on the advanced API is available in
+.Xr ip6 4 .
+If scoped addresses are specified without explicit scope,
+the kernel may raise error.
+Note that scoped addresses are not for daily use at this moment,
+both from specification and implementation point of view.
+.Pp
+KAME implementation supports extended numeric IPv6 address notation
+for link-local addresses,
 like
+.Dq Li fe80::1@de0
+to specify
+.Do
+.Li fe80::1
+on
+.Li de0
+interface
+.Dc .
+The notation is supported by
+.Xr getaddrinfo 3
+and
+.Xr getnameinfo 3 .
+Some of normal userland programs, such as
 .Xr telnet 1
 or
-.Xr telnetd 8
-cannot handle scoped address properly.
-Only special programs,
+.Xr ftp 8 ,
+are able to use the notation.
+With special programs
 like
 .Xr ping6 8 ,
-supports scoped address.
-For example,
-.Xr ping6 8
-has special option for specifying outgoing interface
+you can specify outgoing interface by extra command line option
 to disambiguate scoped addresses.
 .Pp
 Scoped addresses are handled specially in the kernel.
-Scoped addresses will have its interface index embedded into the address,
-in routing table or interface structure.
+In the kenrel structures like routing tables or interface structure,
+scoped addresses will have its interface index embedded into the address.
 Therefore,
 the address on some of the kernel structure is not the same as that on the wire.
-The embedded index will be visible on
+The embedded index will become visible on
 .Dv PF_ROUTE
-socket and results from
-.Xr ifconfig 8 ,
+socket, kernel memory accesses via 
+.Xr kvm 3
+and some other occasions.
 HOWEVER, users should never use the embedded form.
 For details please consult
 .Pa IMPLEMENTATION
@@ -285,6 +300,15 @@ code as much as possible, as you will need to support both
 .Xr inet 4
 and
 .Nm inet6 .
+.Sh STANDARDS
+.Rs
+.%A Tatsuya Jinmei
+.%A Atsushi Onoe
+.%T "An Extension of Format for IPv6 Scoped Addresses"
+.%R internet draft
+.%N draft-ietf-ipngwg-scopedaddr-format-00.txt
+.%O work in progress material
+.Re
 .Sh HISTORY
 The
 .Nm
