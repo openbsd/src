@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.22 2002/04/06 20:31:56 millert Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.23 2002/04/06 21:58:12 millert Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -91,11 +91,16 @@
 #define WI_PCI_PLX		0x02	/* PLX 905x dumb bridge */
 #define WI_PCI_TMD		0x03	/* TMD 7160 dumb bridge */
 
+/* For printing CIS of the actual PCMCIA card */
+#define CIS_MFG_NAME_OFFSET	0x16
+#define CIS_INFO_SIZE		256
+
 const struct wi_pci_product *wi_pci_lookup(struct pci_attach_args *pa);
 int	wi_pci_match(struct device *, void *, void *);
 void	wi_pci_attach(struct device *, struct device *, void *);
+int	wi_pci_handle_cis(struct wi_softc *);
 int	wi_intr(void *);
-int	wi_attach(struct wi_softc *, int);
+int	wi_attach(struct wi_softc *);
 
 struct cfattach wi_pci_ca = {
 	sizeof (struct wi_softc), wi_pci_match, wi_pci_attach
@@ -282,7 +287,12 @@ wi_pci_attach(parent, self, aux)
 		if (localsize != 0)
 			bus_space_unmap(localt, localh, localsize);
 
-		wi_attach(sc, 1);
+		/*
+		 * For PLX bridge cards, check for a PCMCIA card and
+		 * print its CIS strings.
+		 */
+		if (localsize != 0 && wi_pci_handle_cis(sc) != 0)
+			return;
 		break;
 	case WI_PCI_PRISM:
 		bus_space_write_2(iot, ioh, WI_PCI_COR_OFFSET,
@@ -291,8 +301,6 @@ wi_pci_attach(parent, self, aux)
 		bus_space_write_2(iot, ioh, WI_PCI_COR_OFFSET, WI_COR_CLEAR);
 		DELAY(100*1000); /* 100 m sec */
 		sc->wi_cor_offset = WI_PCI_COR_OFFSET;
-
-		wi_attach(sc, 0);
 		break;
 	case WI_PCI_TMD:
 		bus_space_write_1(localt, localh, WI_TMD_COR_OFFSET,
@@ -301,8 +309,44 @@ wi_pci_attach(parent, self, aux)
 		if (bus_space_read_1(localt, localh, 0) != WI_TMD_COR_VALUE)
 			printf(": unable to initialize TMD7160 ");
 		sc->wi_cor_offset = WI_TMD_COR_OFFSET;
-
-		wi_attach(sc, 1);
 		break;
 	}
+	wi_attach(sc);
+}
+
+int
+wi_pci_handle_cis(sc)
+	struct wi_softc *sc;
+{
+	int i, stringno;
+	char cisbuf[CIS_INFO_SIZE];
+	char *cis_strings[3];
+	u_int8_t value;
+	const u_int8_t cis_magic[] = {
+		0x01, 0x03, 0x00, 0x00, 0xff, 0x17, 0x04, 0x67
+	};
+
+	/* Make sure there really is a card there. */
+	for (i = 0; i < 8; i++) {
+		value = bus_space_read_1(sc->wi_ltag, sc->wi_lhandle, i * 2);
+		if (value != cis_magic[i]) {
+			printf("\n%s: no PCMCIA card detected in bridge card\n",
+			    WI_PRT_ARG(sc));
+			return (ENODEV);
+		}
+	}
+
+	cis_strings[0] = cisbuf;
+	stringno = 0;
+	for (i = 0; i < CIS_INFO_SIZE && stringno < 3; i++) {
+		cisbuf[i] = bus_space_read_1(sc->wi_ltag,
+		    sc->wi_lhandle, (CIS_MFG_NAME_OFFSET + i) * 2);
+		if (cisbuf[i] == '\0' && ++stringno < 3)
+			cis_strings[stringno] = &cisbuf[i + 1];
+	}
+	cisbuf[CIS_INFO_SIZE - 1] = '\0';
+	printf("\n%s: \"%s, %s, %s\"", WI_PRT_ARG(sc),
+	    cis_strings[0], cis_strings[1], cis_strings[2]);
+
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.46 2002/04/06 20:31:56 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.47 2002/04/06 21:58:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.46 2002/04/06 20:31:56 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.47 2002/04/06 21:58:12 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -152,7 +152,7 @@ STATIC int wi_seek(struct wi_softc *, int, int, int);
 STATIC int wi_alloc_nicmem(struct wi_softc *, int, int *);
 STATIC void wi_inquire(void *);
 STATIC int wi_setdef(struct wi_softc *, struct wi_req *);
-STATIC void wi_get_id(struct wi_softc *, int);
+STATIC void wi_get_id(struct wi_softc *);
 
 STATIC int wi_media_change(struct ifnet *);
 STATIC void wi_media_status(struct ifnet *, struct ifmediareq *);
@@ -165,7 +165,7 @@ STATIC int wi_set_pm(struct wi_softc *, struct ieee80211_power *);
 STATIC int wi_get_pm(struct wi_softc *, struct ieee80211_power *);
 
 int	wi_intr(void *);
-int	wi_attach(struct wi_softc *, int);
+int	wi_attach(struct wi_softc *);
 void	wi_init(struct wi_softc *);
 void	wi_stop(struct wi_softc *);
 
@@ -175,9 +175,8 @@ struct cfdriver wi_cd = {
 };
 
 int
-wi_attach(sc, print_cis)
+wi_attach(sc)
 	struct wi_softc *sc;
-	int print_cis;
 {
 	struct wi_ltv_macaddr	mac;
 	struct wi_ltv_gen	gen;
@@ -199,7 +198,7 @@ wi_attach(sc, print_cis)
 	bcopy((char *)&mac.wi_mac_addr, (char *)&sc->arpcom.ac_enaddr,
 	    ETHER_ADDR_LEN);
 
-	wi_get_id(sc, print_cis);
+	wi_get_id(sc);
 	printf("address %s", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	ifp = &sc->arpcom.ac_if;
@@ -1923,35 +1922,12 @@ wi_shutdown(arg)
 }
 
 STATIC void
-wi_get_id(sc, print_cis)
+wi_get_id(sc)
 	struct wi_softc *sc;
-	int print_cis;
 {
 	struct wi_ltv_ver	ver;
-	struct wi_ltv_cis	cis;
 	u_int16_t		pri_fw_ver[3];
 	const char		*p;
-
-	if (print_cis) {
-		/*
-		 * For PCI attachments the CIS strings won't have been printed
-		 * so print them here.
-		 * XXX - messes up each odd character on Symbol cards
-		 */
-		cis.wi_type = WI_RID_CIS;
-		cis.wi_len = sizeof(cis.wi_cis);
-		if (wi_read_record(sc, (struct wi_ltv_gen *)&cis) == 0) {
-			char *cis_strings[3];
-
-			cis_strings[0] = (char *)&cis.wi_cis[11];
-			cis_strings[1] = cis_strings[0] +
-			    strlen(cis_strings[0]) + 1;
-			cis_strings[2] = cis_strings[1] +
-			    strlen(cis_strings[1]) + 1;
-			printf("\n%s: \"%s, %s, %s\"", WI_PRT_ARG(sc),
-			    cis_strings[0], cis_strings[1], cis_strings[2]);
-		}
-	}
 
 	/* get chip identity */
 	bzero(&ver, sizeof(ver));
