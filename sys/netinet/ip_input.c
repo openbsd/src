@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.122 2004/07/31 21:27:31 brad Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.123 2004/09/23 17:38:10 brad Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -64,16 +64,7 @@
 #include <netinet/ip_ipsp.h>
 #endif /* IPSEC */
 
-#ifndef	IPSENDREDIRECTS
-#define	IPSENDREDIRECTS	1
-#endif
-
-#ifndef IPMTUDISC
-#define IPMTUDISC	1
-#endif
-#ifndef IPMTUDISCTIMEOUT
 #define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
-#endif
 
 struct ipqhead ipq;
 
@@ -93,24 +84,14 @@ char ipsec_def_enc[20];
 char ipsec_def_auth[20];
 char ipsec_def_comp[20];
 
-/*
- * Note: DIRECTED_BROADCAST is handled this way so that previous
- * configuration using this option will Just Work.
- */
-#ifndef IPDIRECTEDBCAST
-#ifdef DIRECTED_BROADCAST
-#define IPDIRECTEDBCAST	1
-#else
-#define	IPDIRECTEDBCAST	0
-#endif /* DIRECTED_BROADCAST */
-#endif /* IPDIRECTEDBCAST */
-int	ipforwarding = 0;	/* no forwarding unless sysctl'd to enable */
-int	ipsendredirects = IPSENDREDIRECTS;
-int	ip_dosourceroute = 0;	/* no src-routing unless sysctl'd to enable */
+/* values controllable via sysctl */
+int	ipforwarding = 0;
+int	ipsendredirects = 1;
+int	ip_dosourceroute = 0;
 int	ip_defttl = IPDEFTTL;
-int	ip_mtudisc = IPMTUDISC;
+int	ip_mtudisc = 1;
 u_int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
-int	ip_directedbcast = IPDIRECTEDBCAST;
+int	ip_directedbcast = 0;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
 #endif
