@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.305 2003/06/21 23:02:32 krw Exp $
+#	$OpenBSD: install.sub,v 1.306 2003/06/23 00:38:57 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -693,12 +693,6 @@ isalphanumeric() {
 enable_network() {
 	local _netfile
 
-	# Check for required hosts file.
-	if [ ! -f /mnt/etc/hosts ]; then
-		echo "ERROR: no /mnt/etc/hosts!"
-		return 1
-	fi
-
 	# Copy any required or optional files found
 	for _netfile in hosts dhclient.conf resolv.conf resolv.conf.tail protocols services; do
 		if [ -f /mnt/etc/${_netfile} ]; then
@@ -826,8 +820,6 @@ enable_network() {
 	else
 		echo "\nResolver not enabled."
 	fi
-
-	return 0
 }
 
 # Install a user-selected subset of the files in $2 from the source

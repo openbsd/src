@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.48 2002/12/08 19:30:40 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.49 2003/06/23 00:38:57 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -79,25 +79,21 @@ echo	"Done."
 # The fstab, hosts and myname files are required.
 for _file in fstab hosts myname; do
 	if [ ! -f /mnt/etc/$_file ]; then
-		echo "ERROR: no /etc/${_file}!"
+		echo "ERROR: no /mnt/etc/${_file}!"
 		exit
 	fi
 	cp /mnt/etc/$_file /tmp/$_file
 done
 hostname $(< /tmp/myname)
 
-# Start up the network in same/similar configuration as the installed system
-# uses.
 ask "Enable network using configuration stored on root filesystem?" y
 case $resp in
-y*|Y*)
-	if ! enable_network; then
-		echo "ERROR: can't enable network!"
-		exit
-	fi
-
-	manual_net_cfg
+y*|Y*) enable_network ;;
 esac
+
+# Offer the user to opportunity to tweak, repair, or create the network
+# configuration by hand.
+manual_net_cfg
 
 cat << __EOT
 
