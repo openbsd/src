@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.h,v 1.7 2002/02/16 21:27:17 millert Exp $	*/
+/*	$OpenBSD: login_cap.h,v 1.8 2002/06/03 12:14:30 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -69,7 +69,7 @@
 /*
  * bits which can be returned by authenticate()/auth_scan()
  */
-#define	AUTH_OKAY	0x01			/* user authentciated */
+#define	AUTH_OKAY	0x01			/* user authenticated */
 #define	AUTH_ROOTOKAY	0x02			/* authenticated as root */
 #define	AUTH_SECURE	0x04			/* secure login */
 #define	AUTH_SILENT	0x08			/* silent rejection */
