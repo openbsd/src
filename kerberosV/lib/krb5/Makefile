@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.18 2001/07/31 20:17:25 deraadt Exp $
+# $OpenBSD: Makefile,v 1.19 2002/02/06 09:13:34 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -6,9 +6,10 @@ KRBDEPTH=../..
 LIB=	krb5
 
 INCLUDE_FILES=	${KRB5SRC}/lib/krb5/{krb5.h,krb5-protos.h,krb5-private.h} \
-		${KRB5DIR}/include/krb5-types.h krb5_err.h heim_err.h
+		${KRB5DIR}/include/krb5-types.h \
+		krb5_err.h heim_err.h k524_err.h
 
-includes:	krb5_err.h heim_err.h
+includes:	krb5_err.h heim_err.h k524_err.h
 
 MAN=	krb5.conf.5
 
@@ -138,7 +139,6 @@ MLINKS+=krb5_verify_user.3 krb5_verify_user_lrealm.3
 
 SRCS=	add_et_list.c \
 	addr_families.c \
-	address.c \
 	aname_to_localname.c \
 	appdefault.c \
 	asn1_glue.c \
@@ -228,7 +228,8 @@ SRCS=	add_et_list.c \
 	warn.c \
 	write_message.c \
 	krb5_err.c \
-	heim_err.c
+	heim_err.c \
+	k524_err.c
 
 # These are files in libroken that are needed in libkrb5 to make it independant
 # from libroken.
@@ -237,12 +238,14 @@ SRCS+=	base64.c		\
 	getaddrinfo_hostspec.c	\
 	getarg.c		\
 	get_window_size.c	\
+	getprogname.c \
 	parse_time.c		\
 	parse_units.c		\
 	resolve.c		\
 	roken_gethostby.c	\
 	roken_net_write.c	\
 	roken_net_read.c	\
+	setprogname.c \
 	strupr.c 		\
 	strlwr.c		\
 	strsep_copy.c		\
@@ -253,13 +256,13 @@ SRCS+=	afskrb5.c
 
 # There is a net_write.c and net_read.c both in lib/roken and lib/krb5.
 # This stinks.
-roken_net_write.c:	net_write.c
+roken_net_write.c:	${KRB5SRC}/lib/roken/net_write.c
 	ln -sf ${KRB5SRC}/lib/roken/net_write.c roken_net_write.c
-roken_net_read.c:	net_read.c
+roken_net_read.c:	${KRB5SRC}/lib/roken/net_read.c
 	ln -sf ${KRB5SRC}/lib/roken/net_read.c roken_net_read.c
 
 
-CLEANFILES+=	krb5_err.[ch] heim_err.[ch]
+CLEANFILES+=	krb5_err.[ch] heim_err.[ch] k524_err.[ch]
 
 .PATH:	${KRB5SRC}/lib/krb5 ${KRB5SRC}/lib/roken ${KRB5SRC}/lib/kafs
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/ \
@@ -271,5 +274,8 @@ krb5_err.c krb5_err.h:	${KRB5SRC}/lib/krb5/krb5_err.et
 
 heim_err.c heim_err.h:	${KRB5SRC}/lib/krb5/heim_err.et
 	compile_et ${KRB5SRC}/lib/krb5/heim_err.et
+
+k524_err.c k524_err.h:	${KRB5SRC}/lib/krb5/k524_err.et
+	compile_et ${KRB5SRC}/lib/krb5/k524_err.et
 
 .include <bsd.lib.mk>

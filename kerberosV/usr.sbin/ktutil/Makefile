@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2001/07/18 20:24:19 deraadt Exp $
+# $OpenBSD: Makefile,v 1.5 2002/02/06 09:13:34 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -6,7 +6,15 @@ KRBDEPTH=../..
 PROG=	ktutil
 MAN=	ktutil.8
 
-SRCS=	add.c change.c copy.c get.c ktutil.c list.c purge.c remove.c
+SRCS=	add.c \
+	change.c \
+	copy.c \
+	get.c \
+	ktutil.c \
+	list.c \
+	purge.c \
+	remove.c \
+	rename.c
 
 .PATH:	${KRB5SRC}/admin
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/kadm5

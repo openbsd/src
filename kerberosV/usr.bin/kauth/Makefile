@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2001/06/23 00:17:46 hin Exp $
+# $OpenBSD: Makefile,v 1.4 2002/02/06 09:13:34 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -6,7 +6,7 @@ KRBDEPTH=../..
 PROG=	kauth
 NOMAN=
 
-SRCS=	kinit.c kauth_options.c
+SRCS=	kinit.c
 
 .PATH:	${KRB5SRC}/kuser
 
