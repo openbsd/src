@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.27 1999/03/11 01:35:04 pjanzen Exp $
+.\"	$OpenBSD: options.4,v 1.28 1999/03/15 15:38:16 deraadt Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt 
@@ -667,6 +667,10 @@ See
 and
 .Xr sysctl 3
 for details.
+.It Cd option KEY
+Enables PFKEYv2 (RFC 2367) support.  While not IP specific, this option
+is usually used in conjunction with option
+.Em IPSEC .
 .El
 .Ss SCSI Subsystem Options
 .Bl -ohang
