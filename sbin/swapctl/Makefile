@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.2 2000/02/26 04:06:23 hugh Exp $
 #	$NetBSD: Makefile,v 1.2 1997/06/12 16:18:50 mrg Exp $
 
 PROG=	swapctl

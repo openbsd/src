@@ -1,3 +1,4 @@
+/*	$OpenBSD: swaplist.c,v 1.3 2000/02/26 04:06:23 hugh Exp $	*/
 /*	$NetBSD: swaplist.c,v 1.8 1998/10/08 10:00:31 mrg Exp $	*/
 
 /*
