@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2000/08/08 01:08:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.11 2000/10/13 19:17:09 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -31,11 +31,20 @@ all ${IMAGE}:
 .else
 
 # mix config is not needed.
-all:	${BSD_RD}
+all:	${BSD_RD} cd
 
 ${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
 	cp bsd ${BSD_RD}
 	${.OBJDIR}/rdsetroot ${BSD_RD} < ${IMAGE}
+
+cd: ${BSD_RD}
+	-rm -rf ${.OBJDIR}/cd-dir/
+	-@mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/powerpc/
+	cp bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/powerpc/bsd.rd
+	-rm ${.OBJDIR}/cd-dir/bsd.rd
+	ln ${.OBJDIR}/cd-dir/${OSREV}/powerpc/bsd.rd ${.OBJDIR}/cd-dir/bsd.rd
+	cp ${DESTDIR}/usr/mdec/ofwboot ${.OBJDIR}/cd-dir/
+	mkhybrid -r -part -hfs -o ${.OBJDIR}/cd${OSrev}.fs ${.OBJDIR}/cd-dir
 
 
 ${IMAGE}: rd_setup do_files rd_teardown
@@ -71,7 +80,7 @@ unconfig:
 .PRECIOUS:	${IMAGE}
 
 install:
-	cp ${BSD_RD} ${DESTDIR}/snapshot/${BSD_RD}
+	cp ${BSD_RD} cd${REV}.fs ${DESTDIR}/snapshot/
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CBIN}.conf
 	crunchgen -E -D ${.CURDIR}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
@@ -90,7 +99,7 @@ clean cleandir:
 	rdsetroot
 
 beforeinstall:
-	cp ${BSD.RD} ${DESTDIR}/snapshot
+	cp ${BSD.RD} cd${REV}.fs ${DESTDIR}/snapshot
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
