@@ -130,8 +130,8 @@ sdopen(struct open_file *f, ...)
 		bcopy(buf + DOSPARTOFF, &dp, NDOSPART * sizeof(dp));
 		for (dp2=&dp, i=0; i < NDOSPART; i++, dp2++) {
 			if (dp2->dp_size) {
-				if((dp2->dp_typ == DOSPTYP_386BSD) ||
-				   (dp2->dp_typ == DOSPTYP_OPENBSD)) {
+				if((dp2->dp_typ == DOSPTYP_OPENBSD) ||
+				   (dp2->dp_typ == DOSPTYP_FREEBSD)) {
 					labelsector += dp2->dp_start;
 					break;
 				}
