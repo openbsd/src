@@ -1,4 +1,4 @@
-/*	$OpenBSD: vga.c,v 1.8 1997/08/25 08:26:43 deraadt Exp $	*/
+/*	$OpenBSD: vga.c,v 1.9 1997/11/06 02:53:41 niklas Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #include <machine/bus.h>
 
 #include <alpha/wscons/wsconsvar.h>
-#include <alpha/dev/vgavar.h>
+#include <dev/ic/vgavar.h>
 
 #define	VGA_IO_D_6845_ADDR	0x4
 #define	VGA_IO_D_6845_DATA	0x5
@@ -248,7 +248,7 @@ vgammap(v, offset, prot)
 		return (-1);
 
 	port = (u_int32_t *)(h << 5);
-	return alpha_btop(port);
+	return alpha_btop(port);		/* XXX */
 }
 
 /*

@@ -37,9 +37,8 @@
 #include <machine/pte.h>
 
 #include <dev/isa/isavar.h>
-
-#include <alpha/dev/vgavar.h>
-#include <alpha/isa/vga_isavar.h>
+#include <dev/ic/vgavar.h>
+#include <dev/isa/vga_isavar.h>
 
 struct vga_isa_softc {
 	struct device sc_dev; 

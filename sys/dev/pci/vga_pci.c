@@ -42,8 +42,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <alpha/dev/vgavar.h>
-#include <alpha/pci/vga_pcivar.h>
+#include <dev/ic/vgavar.h>
+#include <dev/pci/vga_pcivar.h>
 
 struct vga_pci_softc {
 	struct device sc_dev; 

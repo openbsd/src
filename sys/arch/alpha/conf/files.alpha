@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.14 1997/07/09 02:58:32 deraadt Exp $
+#	$OpenBSD: files.alpha,v 1.15 1997/11/06 02:53:44 niklas Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -8,17 +8,10 @@ maxpartitions 16
 
 maxusers 2 8 64
 
-# a wscons output device; used later, but needs to be near the top for
-# common file (e.g. vga) definitions.
-define  wsconsdev {[console = -1]}
-
 # this loses, but there's no way to define attributes which have attributes
 define	alpha_shared_intr
 file	arch/alpha/dev/shared_intr.c	alpha_shared_intr | dec_eb164 |
 					dec_kn20aa
-
-device	vga: wsconsdev
-file	arch/alpha/dev/vga.c		vga
 
 #
 # Bus-independent devices
@@ -165,9 +158,6 @@ device	pms
 attach	pms at pcppi
 file	arch/alpha/isa/pms.c		pms
 
-attach	vga at isa with vga_isa
-file	arch/alpha/isa/vga_isa.c	vga_isa		needs-flag
-
 # National Semiconductor DS8390/WD83C690-based boards
 # (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
 # XXX conflicts with other ports; can't be in files.isa
@@ -237,11 +227,6 @@ file	arch/alpha/pci/tga.c		tga		needs-flag
 file	arch/alpha/pci/tga_conf.c	tga
 file	arch/alpha/pci/tga_bt463.c	tga
 file	arch/alpha/pci/tga_bt485.c	tga
-
-
-attach	vga at pci with vga_pci
-file	arch/alpha/pci/vga_pci.c	vga_pci		needs-flag
-
 
 #
 # Devices that can live on multiple busses

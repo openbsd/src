@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.11 1997/07/03 07:22:54 deraadt Exp $
+#	$OpenBSD: files.pci,v 1.12 1997/11/06 02:53:43 niklas Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config.new file and device description for machine-independent PCI code.
@@ -9,6 +9,10 @@ device	pci {[dev = -1], [function = -1]}
 attach	pci at pcibus
 file	dev/pci/pci.c			pci needs-flag
 file	dev/pci/pci_subr.c		pci
+
+# Generic VGA
+attach	vga at pci with vga_pci
+file	dev/pci/vga_pci.c		vga_pci	needs-flag
 
 # Adaptec 3940, 2940, and aic78[5678]0 SCSI controllers
 # device declaration in sys/conf/files

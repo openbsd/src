@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.34 1997/09/11 21:30:48 gene Exp $
+#	$OpenBSD: files.isa,v 1.35 1997/11/06 02:53:42 niklas Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -67,6 +67,10 @@ file	dev/isa/cy_isa.c		cy_isa
 # 8255A-based PC parallel ports
 attach	lpt at isa with lpt_isa
 file	dev/isa/lpt_isa.c		lpt_isa needs-flag
+
+# Generic VGA
+attach	vga at isa with vga_isa
+file	dev/isa/vga_isa.c		vga_isa	needs-flag
 
 #
 # SCSI host adapters

@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.66 1997/11/04 09:10:50 provos Exp $
+#	$OpenBSD: files,v 1.67 1997/11/06 02:53:48 niklas Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -27,6 +27,10 @@ define	fddi
 define	ncr5380sbc	# NCR 5380 SCSI Bus Controller
 define	ncr53c9x	# NCR 53c9x or Emulex ESP SCSI Controller
 define	pdq		# DEC FDDI chipset
+
+# a wscons output device; used later, but needs to be near the top for
+# common file (e.g. vga) definitions.
+define  wsconsdev {[console = -1]}
 
 # "Chipset" drivers.  These are the bus-independent routines which
 # contain the cfdrivers.  Attachments are provided by files.<bus>
@@ -65,6 +69,22 @@ file	dev/ic/cy.c		cy & (cy_isa | cy_pci)	needs-flag
 # PC parallel ports (XXX what chip?)
 device	lpt
 file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica | lpt_algor) needs-flag
+
+# VGA
+device	vga: wsconsdev
+file	dev/ic/vga.c		vga & (vga_isa | vga_pci)
+
+#
+# "Workstation Console" glue; attaches frame buffer to emulator & kbd.
+#
+#device	wscons
+#attach	wscons at wsconsdev
+#file	dev/wscons/wscons.c	wscons	needs-flag
+#file	dev/wscons/wscons_emul.c	wscons
+
+#file	dev/wscons/event.c	wscons
+#file	dev/wscons/kbd.c	wscons
+#file	dev/wscons/ms.c		wscons
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
