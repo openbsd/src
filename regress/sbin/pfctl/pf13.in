@@ -6,11 +6,11 @@ pass out quick on tun0 route-to tun1 all
 pass out quick on tun0 route-to tun1 from any to 192.168.1.1
 pass out quick on tun0 route-to tun1 from any to fec0::1
 
-block in on tun0 dup-to tun1:192.168.1.1 proto tcp from any to any port = 21
-block in on tun0 dup-to tun1:fec0::1 proto tcp from any to any port = 21
+block in on tun0 dup-to (tun1 192.168.1.1) proto tcp from any to any port = 21
+block in on tun0 dup-to (tun1 fec0::1) proto tcp from any to any port = 21
 
 pass in quick on tun0 route-to tun1 from 192.168.1.1/32 to 10.1.1.1/32
 pass in quick on tun0 route-to tun1 from fec0::1/64 to fec1::2/128
 
-pass in quick on tun0 dup-to tun1:192.168.1.100 from 192.168.1.1/32 to 10.1.1.1/32
-pass in quick on tun0 dup-to tun1:fec1::2 from fec0::1/64 to fec1::2/128
+pass in quick on tun0 dup-to (tun1 192.168.1.100) from 192.168.1.1/32 to 10.1.1.1/32
+pass in quick on tun0 dup-to (tun1 fec1::2) from fec0::1/64 to fec1::2/128
