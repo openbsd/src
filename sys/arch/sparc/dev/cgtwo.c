@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwo.c,v 1.12 1998/11/20 15:57:22 deraadt Exp $	*/
+/*	$OpenBSD: cgtwo.c,v 1.13 1999/09/10 23:32:02 art Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
 
 /*
@@ -189,7 +189,7 @@ cgtwoattach(parent, self, args)
 	    1152, 900, node, ca->ca_bustype);
 
 	sc->sc_fb.fb_type.fb_cmsize = 256;
-	sc->sc_fb.fb_type.fb_size = roundup(CG2_MAPPED_SIZE, NBPG);
+	sc->sc_fb.fb_type.fb_size = round_page(CG2_MAPPED_SIZE);
 	printf(": %s, %d x %d", nam,
 	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgfourteen.c,v 1.3 1999/04/22 16:52:47 art Exp $	*/
+/*	$OpenBSD: cgfourteen.c,v 1.4 1999/09/10 23:32:01 art Exp $	*/
 /*	$NetBSD: cgfourteen.c,v 1.7 1997/05/24 20:16:08 pk Exp $ */
 
 /*
@@ -204,8 +204,8 @@ cgfourteenattach(parent, self, args)
 	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
 	    1152, 900, node, ca->ca_bustype);
 
-	ramsize = roundup(sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes,
-		NBPG);
+	ramsize = round_page(sc->sc_fb.fb_type.fb_height *
+			     sc->sc_fb.fb_linebytes);
 
 	sc->sc_fb.fb_type.fb_cmsize = CG14_CLUT_SIZE;
 	sc->sc_fb.fb_type.fb_size = ramsize;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.8 1998/11/20 15:57:22 deraadt Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.9 1999/09/10 23:32:02 art Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -209,8 +209,8 @@ cgthreeattach(parent, self, args)
 		nam = "cgRDI";
 	}
 
-	ramsize = roundup(sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes,
-		NBPG);
+	ramsize = round_page(sc->sc_fb.fb_type.fb_height *
+			     sc->sc_fb.fb_linebytes);
 	sc->sc_fb.fb_type.fb_cmsize = 256;
 	sc->sc_fb.fb_type.fb_size = ramsize;
 	printf(": %s, %d x %d", nam,
