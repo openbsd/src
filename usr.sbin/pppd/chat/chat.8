@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
-.\" $Id: chat.8,v 1.1.1.1 1995/10/18 08:48:00 deraadt Exp $
+.\" $Id: chat.8,v 1.2 1997/05/31 06:03:09 deraadt Exp $
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -98,7 +98,7 @@ In actual practice, simple scripts are rare. At the vary least, you
 should include sub-expect sequences should the original string not be
 received. For example, consider the following script:
 .IP
-ogin:--ogin: ppp ssowrd: hello2u2
+ogin:--ogin: ppp ssword: hello2u2
 .LP
 This would be a better script than the simple one used earlier. This would look
 for the same login: prompt, however, if one was not received, a single
@@ -161,7 +161,7 @@ parameter.
 To change the timeout value for the next expect string, the following
 example may be used:
 .IP
-ATZ OK ATDT5551212 CONNECT TIMEOUT 10 ogin:--ogin: TIMEOUT 5 assowrd: hello2u2
+ATZ OK ATDT5551212 CONNECT TIMEOUT 10 ogin:--ogin: TIMEOUT 5 assword: hello2u2
 .LP
 This will change the timeout to 10 seconds when it expects the login:
 prompt. The timeout is then changed to 5 seconds when it looks for the
