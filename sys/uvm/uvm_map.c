@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.41 2002/02/28 18:50:26 provos Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.42 2002/03/07 01:08:57 provos Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -83,6 +83,7 @@
 #include <sys/shm.h>
 #endif
 
+#define RB_AUGMENT(x) uvm_rb_augment(x)
 #define UVM_MAP
 #include <uvm/uvm.h>
 
@@ -186,7 +187,10 @@ static void		uvm_map_entry_unwire __P((vm_map_t, vm_map_entry_t));
 static void		uvm_map_reference_amap __P((vm_map_entry_t, int));
 static void		uvm_map_unreference_amap __P((vm_map_entry_t, int));
 
+int			uvm_map_spacefits __P((vm_map_t, vaddr_t *, vsize_t, vm_map_entry_t, voff_t, vsize_t));
+
 int _uvm_tree_sanity(vm_map_t map, char *name);
+static int		uvm_rb_subtree_space __P((vm_map_entry_t));
 
 static __inline int
 uvm_compare(vm_map_entry_t a, vm_map_entry_t b)
@@ -200,20 +204,85 @@ uvm_compare(vm_map_entry_t a, vm_map_entry_t b)
 }
 
 
+static __inline void
+uvm_rb_augment(vm_map_entry_t entry)
+{
+	entry->space = uvm_rb_subtree_space(entry);
+}
+
 RB_PROTOTYPE(uvm_tree, vm_map_entry, rb_entry, uvm_compare);
 
 RB_GENERATE(uvm_tree, vm_map_entry, rb_entry, uvm_compare);
 
+static __inline int
+uvm_rb_space(vm_map_t map, vm_map_entry_t entry)
+{
+	vm_map_entry_t next;
+	vaddr_t space;
+
+	if ((next = entry->next) == &map->header)
+		space = map->max_offset - entry->end;
+	else {
+		KASSERT(next);
+		space = next->start - entry->end;
+	}
+	return (space);
+}
+		
+static int
+uvm_rb_subtree_space(vm_map_entry_t entry)
+{
+	vaddr_t space, tmp;
+
+	space = entry->ownspace;
+	if (RB_LEFT(entry, rb_entry)) {
+		tmp = RB_LEFT(entry, rb_entry)->space;
+		if (tmp > space)
+			space = tmp;
+	}
+
+	if (RB_RIGHT(entry, rb_entry)) {
+		tmp = RB_RIGHT(entry, rb_entry)->space;
+		if (tmp > space)
+			space = tmp;
+	}
+
+	return (space);
+}
+
+static __inline void
+uvm_rb_fixup(vm_map_t map, vm_map_entry_t entry)
+{
+	/* We need to traverse to the very top */
+	do {
+		entry->ownspace = uvm_rb_space(map, entry);
+		entry->space = uvm_rb_subtree_space(entry);
+	} while ((entry = RB_PARENT(entry, rb_entry)) != NULL);
+}
+
 static __inline void
 uvm_rb_insert(vm_map_t map, vm_map_entry_t entry)
 {
+	vaddr_t space = uvm_rb_space(map, entry);
+
+	entry->ownspace = entry->space = space;
 	RB_INSERT(uvm_tree, &(map)->rbhead, entry);
+	uvm_rb_fixup(map, entry);
+	if (entry->prev != &map->header)
+		uvm_rb_fixup(map, entry->prev);
 }
 
 static __inline void
 uvm_rb_remove(vm_map_t map, vm_map_entry_t entry)
 {
+	vm_map_entry_t parent;
+
+	parent = RB_PARENT(entry, rb_entry);
 	RB_REMOVE(uvm_tree, &(map)->rbhead, entry);
+	if (entry->prev != &map->header)
+		uvm_rb_fixup(map, entry->prev);
+	if (parent)
+		uvm_rb_fixup(map, parent);
 }
 
 #define uvm_tree_sanity(x,y)
@@ -224,8 +293,22 @@ _uvm_tree_sanity(vm_map_t map, char *name)
 	vm_map_entry_t tmp, trtmp;
 	int n = 0, i = 1;
 
+	RB_FOREACH(tmp, uvm_tree, &map->rbhead) {
+		if (tmp->ownspace != uvm_rb_space(map, tmp)) {
+			printf("%s: %d/%d ownspace %x != %x %s\n",
+			    name, n + 1, map->nentries,
+			    tmp->ownspace, uvm_rb_space(map, tmp),
+			    tmp->next == &map->header ? "(last)" : "");
+			goto error;
+		}
+	}
 	trtmp = NULL;
 	RB_FOREACH(tmp, uvm_tree, &map->rbhead) {
+		if (tmp->space != uvm_rb_subtree_space(tmp)) {
+			printf("%s: space %d != %d\n",
+			    name, tmp->space, uvm_rb_subtree_space(tmp));
+			goto error;
+		}
 		if (trtmp != NULL && trtmp->start >= tmp->start) {
 			printf("%s: corrupt: %p >= %p\n",
 			    name, trtmp->start, tmp->start);
@@ -540,6 +623,8 @@ uvm_map_clip_end(map, entry, end)
 	if (entry->aref.ar_amap)
 		amap_splitref(&entry->aref, &new_entry->aref, new_adj);
 	
+	uvm_rb_fixup(map, entry);
+
 	uvm_map_entry_link(map, entry, new_entry);
 
 	if (UVM_ET_ISSUBMAP(entry)) {
@@ -731,6 +816,7 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 		}
 
 		prev_entry->end += size;
+		uvm_rb_fixup(map, prev_entry);
 		map->size += size;
 
 		uvm_tree_sanity(map, "map leave 2");
@@ -938,6 +1024,41 @@ uvm_map_lookup_entry(map, address, entry)
 }
 
 /*
+ * Checks if address pointed to be phint fits into the empty
+ * space before the vm_map_entry after.  Takes aligment and
+ * offset into consideration.
+ */
+
+int
+uvm_map_spacefits(vm_map_t map, vaddr_t *phint, vsize_t length,
+    vm_map_entry_t after, voff_t uoffset, vsize_t align)
+{
+	vaddr_t hint = *phint;
+	vaddr_t end;
+
+#ifdef PMAP_PREFER
+	/*
+	 * push hint forward as needed to avoid VAC alias problems.
+	 * we only do this if a valid offset is specified.
+	 */
+	if (uoffset != UVM_UNKNOWN_OFFSET)
+		PMAP_PREFER(uoffset, &hint);
+#endif
+	if (align != 0)
+		if ((hint & (align - 1)) != 0)
+			hint = roundup(hint, align);
+	*phint = hint;
+
+	end = hint + length;
+	if (end > map->max_offset || end < hint)
+		return (FALSE);
+	if (after != NULL && after != &map->header && after->start < end)
+		return (FALSE);
+	
+	return (TRUE);
+}
+
+/*
  * uvm_map_findspace: find "length" sized space in "map".
  *
  * => "hint" is a hint about where we want it, unless FINDSPACE_FIXED is
@@ -962,6 +1083,7 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
 	int flags;
 {
 	vm_map_entry_t entry, next, tmp;
+	vm_map_entry_t child, prev = NULL;
 
 	vaddr_t end, orig_hint;
 	UVMHIST_FUNC("uvm_map_findspace");
@@ -1028,6 +1150,90 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
 		return(NULL); /* only one shot at it ... */
 	}
 
+	/* Try to find the space in the red-black tree */
+
+	/* Check slot before any entry */
+	if (uvm_map_spacefits(map, &hint, length, entry->next, uoffset, align))
+		goto found;
+	
+	/* If there is not enough space in the whole tree, we fail */
+	tmp = RB_ROOT(&map->rbhead);
+	if (tmp == NULL || tmp->space < length)
+		goto error;
+
+	/* Find an entry close to hint that has enough space */
+	for (; tmp;) {
+		if (tmp->end >= hint &&
+		    (prev == NULL || tmp->end < prev->end)) {
+			if (tmp->ownspace >= length)
+				prev = tmp;
+			else if ((child = RB_RIGHT(tmp, rb_entry)) != NULL &&
+			    child->space >= length)
+				prev = tmp;
+		}
+		if (tmp->end < hint)
+			child = RB_RIGHT(tmp, rb_entry);
+		else if (tmp->end > hint)
+			child = RB_LEFT(tmp, rb_entry);
+		else {
+			if (tmp->ownspace >= length)
+				break;
+			child = RB_RIGHT(tmp, rb_entry);
+		}
+		if (child == NULL || child->space < length)
+			break;
+		tmp = child;
+	}
+	
+	if (tmp != NULL && hint < tmp->end + tmp->ownspace) {
+		/* 
+		 * Check if the entry that we found satifies the
+		 * space requirement
+		 */
+		if (hint < tmp->end)
+			hint = tmp->end;
+		if (uvm_map_spacefits(map, &hint, length, tmp->next, uoffset,
+			align)) {
+			entry = tmp;
+			goto found;
+		} else if (tmp->ownspace >= length)
+			goto listsearch;
+	}
+	if (prev == NULL)
+		goto error;
+	
+	hint = prev->end;
+	if (uvm_map_spacefits(map, &hint, length, prev->next, uoffset,
+		align)) {
+		entry = prev;
+		goto found;
+	} else if (prev->ownspace >= length)
+		goto listsearch;
+	
+	tmp = RB_RIGHT(prev, rb_entry);
+	for (;;) {
+		KASSERT(tmp && tmp->space >= length);
+		child = RB_LEFT(tmp, rb_entry);
+		if (child && child->space >= length) {
+			tmp = child;
+			continue;
+		}
+		if (tmp->ownspace >= length)
+			break;
+		tmp = RB_RIGHT(tmp, rb_entry);
+	}
+	
+	hint = tmp->end;
+	if (uvm_map_spacefits(map, &hint, length, tmp->next, uoffset, align)) {
+		entry = tmp;
+		goto found;
+	}
+
+	/* 
+	 * The tree fails to find an entry because of offset or alignment
+	 * restrictions.  Search the list instead.
+	 */
+ listsearch:
 	/*
 	 * Look through the rest of the map, trying to fit a new region in
 	 * the gap between existing regions, or after the very last region.
@@ -2999,6 +3205,8 @@ uvmspace_exec(p, start, end)
 		map->min_offset = start;
 		uvm_tree_sanity(map, "resize enter");
 		map->max_offset = end;
+		if (map->header.prev != &map->header)
+			uvm_rb_fixup(map, map->header.prev);
 		uvm_tree_sanity(map, "resize leave");
 		vm_map_unlock(map);
 	

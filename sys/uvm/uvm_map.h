@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.24 2002/02/28 18:50:26 provos Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.25 2002/03/07 01:08:57 provos Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /* 
@@ -140,6 +140,8 @@ union vm_map_object {
  */
 struct vm_map_entry {
 	RB_ENTRY(vm_map_entry)	rb_entry;	/* tree information */
+	vaddr_t			ownspace;	/* free space after */
+	vaddr_t			space;		/* space in subtree */
 	struct vm_map_entry	*prev;		/* previous entry */
 	struct vm_map_entry	*next;		/* next entry */
 	vaddr_t			start;		/* start address */
