@@ -1,5 +1,5 @@
-/*	$OpenBSD: ypmatch.c,v 1.3 1996/05/05 16:19:36 deraadt Exp $ */
-/*	$NetBSD: ypmatch.c,v 1.6 1996/04/30 22:58:31 jtc Exp $	*/
+/*	$OpenBSD: ypmatch.c,v 1.4 1996/05/10 13:03:14 deraadt Exp $ */
+/*	$NetBSD: ypmatch.c,v 1.8 1996/05/07 01:24:52 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.3 1996/05/05 16:19:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.4 1996/05/10 13:03:14 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -85,6 +85,7 @@ char **argv;
 	extern int optind;
 	int outbuflen, key, notrans;
 	int c, r, i;
+	int rval;
 
 	notrans = key = 0;
 	yp_get_default_domain(&domainname);
@@ -119,6 +120,8 @@ char **argv;
 			if( strcmp(inmap, ypaliases[i].alias) == 0)
 				inmap = ypaliases[i].name;
 	}
+
+	rval = 0;
 	for(; optind < argc-1; optind++) {
 		inkey = argv[optind];
 
@@ -127,7 +130,7 @@ char **argv;
 		switch(r) {
 		case 0:
 			if(key)
-				printf("%s ", inkey);
+				printf("%s: ", inkey);
 			printf("%*.*s\n", outbuflen, outbuflen, outbuf);
 			break;
 		case YPERR_YPBIND:
@@ -136,8 +139,9 @@ char **argv;
 		default:
 			fprintf(stderr, "Can't match key %s in map %s. Reason: %s\n",
 				inkey, inmap, yperr_string(r));
-			exit(1);
+			rval = 1;
+			break;
 		}
 	}
-	exit(0);
+	exit(rval);
 }
