@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.10 2000/06/30 16:00:03 millert Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.11 2000/07/19 19:42:31 mickey Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: chmod.c,v 1.10 2000/06/30 16:00:03 millert Exp $";
+static char rcsid[] = "$OpenBSD: chmod.c,v 1.11 2000/07/19 19:42:31 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ static char rcsid[] = "$OpenBSD: chmod.c,v 1.10 2000/06/30 16:00:03 millert Exp 
 #include <limits.h>
 #include <locale.h>
 
-int ischown, ischgrp, ischmod;
+int ischflags, ischown, ischgrp, ischmod;
 extern char *__progname;
 
 gid_t a_gid __P((const char *));
@@ -83,7 +83,8 @@ main(argc, argv)
 	int Hflag, Lflag, Pflag, Rflag, ch, fflag, fts_options, hflag, rval;
 	uid_t uid;
 	gid_t gid;
-	char *ep, *mode, *cp;
+	u_int32_t fclear, fset;
+	char *ep, *mode, *cp, *flags;
 #ifdef lint
 	set = NULL;
 	oct = omode = 0;
@@ -94,6 +95,7 @@ main(argc, argv)
 	ischown = __progname[2] == 'o';
 	ischgrp = __progname[2] == 'g';
 	ischmod = __progname[2] == 'm';
+	ischflags = __progname[2] == 'f';
 
 	uid = -1;
 	gid = -1;
@@ -165,7 +167,26 @@ done:	argv += optind;
 		}
 	}
 
-	if (ischmod) {
+	if (ischflags) {
+		flags = *argv;
+		if (*flags >= '0' && *flags <= '7') {
+			errno = 0;
+			val = strtoul(flags, &ep, 8);
+			if (val > UINT_MAX)
+				errno = ERANGE;
+			if (errno)
+				err(1, "invalid flags: %s", flags);
+			if (*ep)
+				errx(1, "invalid flags: %s", flags);
+			fset = val;
+			oct = 1;
+		} else {
+			if (strtofflags(&flags, &fset, &fclear))
+				errx(1, "invalid flag: %s", flags);
+			fclear = ~fclear;
+			oct = 0;
+		}
+	} else if (ischmod) {
 		mode = *argv;
 		if (*mode >= '0' && *mode <= '7') {
 			errno = 0;
@@ -230,16 +251,28 @@ done:	argv += optind;
 			 * don't point to anything and ones that we found
 			 * doing a physical walk.
 			 */
-			if (ischmod || !hflag)
+			if (ischflags || ischmod || !hflag)
 				continue;
 		default:
 			break;
 		}
-		if (ischmod && chmod(p->fts_accpath, oct ? omode :
+		if (ischflags) {
+			if (oct) {
+				if (!chflags(p->fts_accpath, fset))
+					continue;
+			} else {
+				p->fts_statp->st_flags |= fset;
+				p->fts_statp->st_flags &= fclear;
+				if (!chflags(p->fts_accpath, p->fts_statp->st_flags))
+					continue;
+			}
+			warn("%s", p->fts_path);
+			rval = 1;
+		} else if (ischmod && chmod(p->fts_accpath, oct ? omode :
 		    getmode(set, p->fts_statp->st_mode)) && !fflag) {
 			warn("%s", p->fts_path);
 			rval = 1;
-		} else if (!ischmod &&
+		} else if (!ischmod && !ischflags &&
 		    (hflag ? lchown(p->fts_accpath, uid, gid) :
 		    chown(p->fts_accpath, uid, gid)) && !fflag) {
 			warn("%s", p->fts_path);
@@ -298,10 +331,10 @@ a_gid(s)
 void
 usage()
 {
-	if (ischmod)
+	if (ischmod || ischflags)
 		fprintf(stderr,
-		    "usage: %s [-R [-H | -L | -P]] mode file ...\n",
-		    __progname);
+		    "usage: %s [-R [-H | -L | -P]] %s file ...\n",
+		    __progname, (ischmod? "mode" : "flags"));
 	else
 		fprintf(stderr,
 		    "usage: %s [-R [-H | -L | -P]] [-f] [-h] %s file ...\n",
