@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.14 2001/02/16 08:47:12 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.15 2001/02/16 16:08:01 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.58 2001/02/08 10:57:00 itojun Exp $	*/
 
 /*
@@ -1075,16 +1075,12 @@ nd6_dad_start(ifa, tick)
 	} else {
 		int ntick;
 
-#ifdef __OpenBSD__
 #define random	arc4random
-#endif
 		if (*tick == 0)
 			ntick = random() % (MAX_RTR_SOLICITATION_DELAY * hz);
 		else
 			ntick = *tick + random() % (hz / 2);
-#ifdef __OpenBSD__
 #undef random
-#endif
 		*tick = ntick;
 		nd6_dad_starttimer(dp, ntick);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.2 2001/02/16 16:01:00 itojun Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.3 2001/02/16 16:08:01 itojun Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.65 2001/02/08 18:36:17 itojun Exp $	*/
 
 /*
@@ -280,10 +280,8 @@ rip6_ctlinput(cmd, sa, d)
 		notify = in6_rtchange, d = NULL;
 	else if (cmd == PRC_HOSTDEAD)
 		d = NULL;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	else if (cmd == PRC_MSGSIZE)
 		; /* special code is present, see below */
-#endif
 	else if (inet6ctlerrmap[cmd] == 0)
 		return;
 
@@ -304,7 +302,6 @@ rip6_ctlinput(cmd, sa, d)
 		nxt = -1;
 	}
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	if (ip6 && cmd == PRC_MSGSIZE) {
 		struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
 		int valid = 0;
@@ -318,14 +315,8 @@ rip6_ctlinput(cmd, sa, d)
 		 * from icmp6_notify_error()
 		 */
 		in6p = NULL;
-#ifdef __NetBSD__
-		in6p = in6_pcblookup_connect(&rawin6pcb,
-		    &sa6->sin6_addr, 0,
-		    (struct in6_addr *)&sa6_src->sin6_addr, 0, 0);
-#elif defined(__OpenBSD__)
 		in6p = in6_pcbhashlookup(&rawin6pcbtable, &sa6->sin6_addr, 0,
 		    (struct in6_addr *)&sa6_src->sin6_addr, 0);
-#endif
 #if 0
 		if (!in6p) {
 			/*
@@ -335,14 +326,9 @@ rip6_ctlinput(cmd, sa, d)
 			 * We should at least check if the local
 			 * address (= s) is really ours.
 			 */
-#ifdef __NetBSD__
-			in6p = in6_pcblookup_bind(&rawin6pcb,
-			    &sa6->sin6_addr, 0, 0))
-#elif defined(__OpenBSD__)
 			in6p = in_pcblookup(&rawin6pcbtable, &sa6->sin6_addr, 0,
 			    (struct in6_addr *)&sa6_src->sin6_addr, 0,
 			    INPLOOKUP_WILDCARD | INPLOOKUP_IPV6);
-#endif
 		}
 #endif
 
@@ -367,15 +353,9 @@ rip6_ctlinput(cmd, sa, d)
 		 * destination and want to know the path MTU.
 		 */
 	}
-#endif
 
-#ifdef __OpenBSD__
 	(void) in6_pcbnotify(&rawin6pcbtable, sa, 0,
 	    (struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
-#else
-	(void) in6_pcbnotify(&rawin6pcb, sa, 0,
-	    (struct sockaddr *)sa6_src, 0, cmd, cmdarg, notify);
-#endif
 }
 
 /*
