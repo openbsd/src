@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.3 1996/05/02 06:43:11 niklas Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.4 1996/05/04 20:04:28 niklas Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.34 1996/04/27 20:48:47 veego Exp $	*/
 
 /*
@@ -201,6 +201,7 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "ser", simple_devprint);
 	config_found(dp, "par", simple_devprint);
 	config_found(dp, "kbd", simple_devprint);
+	config_found(dp, "ms", simple_devprint);
 	config_found(dp, "ms", simple_devprint);
 	config_found(dp, "grfcc", simple_devprint);
 	config_found(dp, "fdc", simple_devprint);
