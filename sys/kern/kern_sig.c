@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.50 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.51 2002/01/07 16:16:32 millert Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -302,18 +302,17 @@ setsigvec(p, signum, sa)
 			p->p_flag |= P_NOCLDSTOP;
 		else
 			p->p_flag &= ~P_NOCLDSTOP;
-		if (sa->sa_flags & SA_NOCLDWAIT) {
-			/*
-			 * Paranoia: since SA_NOCLDWAIT is implemented by
-			 * reparenting the dying child to PID 1 (and
-			 * trust it to reap the zombie), PID 1 itself is
-			 * forbidden to set SA_NOCLDWAIT.
-			 */
-			if (p->p_pid == 1)
-				p->p_flag &= ~P_NOCLDWAIT;
-			else
-				p->p_flag |= P_NOCLDWAIT;
-		} else
+		/*
+		 * If the SA_NOCLDWAIT flag is set or the handler
+		 * is SIG_IGN we reparent the dying child to PID 1
+		 * (init) which will reap the zombie.  Because we use
+		 * init to do our dirty work we never set P_NOCLDWAIT
+		 * for PID 1.
+		 */
+		if (p->p_pid != 1 && ((sa->sa_flags & SA_NOCLDWAIT) ||
+		    sa->sa_handler == SIG_IGN))
+			p->p_flag |= P_NOCLDWAIT;
+		else
 			p->p_flag &= ~P_NOCLDWAIT;
 	}
 	if ((sa->sa_flags & SA_RESETHAND) != 0)

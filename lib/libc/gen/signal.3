@@ -1,4 +1,4 @@
-.\"	$OpenBSD: signal.3,v 1.16 2001/11/07 18:46:58 deraadt Exp $
+.\"	$OpenBSD: signal.3,v 1.17 2002/01/07 16:16:32 millert Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -159,6 +159,30 @@ further occurrences of the signal are
 automatically blocked and
 .Fa func
 is called.
+.Pp
+If the
+.Fa func
+is set to
+.Dv SIG_IGN
+for the
+.Dv SIGCHLD
+signal, the system will not create zombie processes when children of
+the calling process exit.
+If the calling process subsequently issues a
+.Xr wait 2
+(or equivalent), it blocks until all of the calling process's child
+processes terminate, and then returns a value of \-1 with
+.Va errno
+set to
+.Dv ECHILD .
+.Bf -symbolic
+This differs from historical
+.Bx
+behavior but is consistent with
+.At V
+as well as the
+.St -xpg4.2 .
+.Ef
 .Pp
 The handled signal is unblocked when
 .Fa func
