@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.48 2004/12/26 02:10:22 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.49 2004/12/30 05:44:15 krw Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -3056,7 +3056,6 @@ bge_ioctl(ifp, command, data)
 			error = ifmedia_ioctl(ifp, ifr, &mii->mii_media,
 			    command);
 		}
-		error = 0;
 		break;
 	default:
 		error = EINVAL;
