@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.25 2002/03/19 15:27:43 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.26 2002/03/24 20:41:19 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -110,6 +110,7 @@
 #define		AUICH_GSTS_BITS	"\020\01gsci\02miict\03moint\06piint\07point\010mint\011pcr\012scr\013pri\014sri\015b1s12\016b2s12\017b3s12\020rcs\021ad3\022md3"
 #define	AUICH_CAS		0x34	/* 1/8 bit */
 #define	AUICH_SEMATIMO		1000	/* us */
+#define	AUICH_RESETIMO		500000	/* us */
 
 /*
  * according to the dev/audiovar.h AU_RING_SIZE is 2^16, what fits
@@ -391,7 +392,7 @@ auich_read_codec(v, reg, val)
 	for (i = AUICH_SEMATIMO; i-- &&
 	    bus_space_read_1(sc->iot, sc->aud_ioh, AUICH_CAS) & 1; DELAY(1));
 
-	if (i > 0) {
+	if (i >= 0) {
 		*val = bus_space_read_2(sc->iot, sc->mix_ioh, reg);
 		DPRINTF(AUICH_DEBUG_CODECIO, ("%s: read_codec(%x, %x)\n",
 		    sc->sc_dev.dv_xname, reg, *val));
@@ -417,7 +418,7 @@ auich_write_codec(v, reg, val)
 	for (i = AUICH_SEMATIMO; i-- &&
 	    bus_space_read_1(sc->iot, sc->aud_ioh, AUICH_CAS) & 1; DELAY(1));
 
-	if (i > 0) {
+	if (i >= 0) {
 		DPRINTF(AUICH_DEBUG_CODECIO, ("%s: write_codec(%x, %x)\n",
 		    sc->sc_dev.dv_xname, reg, val));
 		bus_space_write_2(sc->iot, sc->mix_ioh, reg, val);
@@ -445,9 +446,19 @@ auich_reset_codec(v)
 	void *v;
 {
 	struct auich_softc *sc = v;
+	int i;
+
 	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_GCTRL, 0);
 	DELAY(10);
 	bus_space_write_4(sc->iot, sc->aud_ioh, AUICH_GCTRL, AUICH_CRESET);
+
+	for (i = AUICH_RESETIMO; i-- &&
+	    !(bus_space_read_4(sc->iot, sc->aud_ioh, AUICH_GSTS) & AUICH_PCR);
+	    DELAY(1));
+
+	if (i < 0)
+		DPRINTF(AUICH_DEBUG_CODECIO,
+		    ("%s: write_codec timeout\n", sc->sc_dev.dv_xname));
 }
 
 int
