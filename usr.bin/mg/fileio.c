@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.45 2005/02/01 16:04:15 henning Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.46 2005/03/09 16:20:48 jfb Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -24,8 +24,11 @@ ffropen(const char *fn, BUFFER *bp)
 {
 	struct stat	statbuf;
 
-	if ((ffp = fopen(fn, "r")) == NULL)
-		return (FIOFNF);
+	if ((ffp = fopen(fn, "r")) == NULL) {
+		if (errno == ENOENT)
+			return (FIOFNF);
+		return (FIOERR);
+	}
 	if (bp && fstat(fileno(ffp), &statbuf) == 0) {
 		/* set highorder bit to make sure this isn't all zero */
 		bp->b_fi.fi_mode = statbuf.st_mode | 0x8000;

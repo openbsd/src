@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.9 2002/05/29 12:41:42 vincent Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.10 2005/03/09 16:20:48 jfb Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -137,7 +137,7 @@ static struct funmap functnames[] = {
 	{forwisearch, "isearch-forward",},
 	{justone, "just-one-space",},
 	{ctrlg, "keyboard-quit",},
-	{killbuffer, "kill-buffer",},
+	{killbuffer_cmd, "kill-buffer",},
 	{killline, "kill-line",},
 	{killpara, "kill-paragraph",},
 	{killregion, "kill-region",},

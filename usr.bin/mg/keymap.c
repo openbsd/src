@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.26 2002/12/09 08:20:46 deraadt Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.27 2005/03/09 16:20:48 jfb Exp $	*/
 
 /*
  * Keyboard maps.  This is character set dependent.  The terminal specific
@@ -130,7 +130,7 @@ static PF cXcar[] = {
 	rescan,			/* h */
 	fileinsert,		/* i */
 	rescan,			/* j */
-	killbuffer,		/* k */
+	killbuffer_cmd,		/* k */
 	rescan,			/* l */
 	rescan,			/* m */
 	nextwind,		/* n */

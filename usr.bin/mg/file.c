@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.29 2004/07/22 01:25:25 vincent Exp $	*/
+/*	$OpenBSD: file.c,v 1.30 2005/03/09 16:20:48 jfb Exp $	*/
 
 /*
  *	File commands.
@@ -54,8 +54,13 @@ filevisit(int f, int n)
 	curbp = bp;
 	if (showbuffer(bp, curwp, WFHARD) != TRUE)
 		return FALSE;
-	if (bp->b_fname[0] == 0)
-		return readin(adjf);
+	if (bp->b_fname[0] == 0) {
+		int status;
+
+		if ((status = readin(adjf)) != TRUE)
+			killbuffer(bp);
+		return status;
+	}
 	return TRUE;
 }
 
@@ -96,8 +101,13 @@ poptofile(int f, int n)
 		return FALSE;
 	curbp = bp;
 	curwp = wp;
-	if (bp->b_fname[0] == 0)
-		return readin(adjf);
+	if (bp->b_fname[0] == 0) {
+		int status;
+
+		if ((status = readin(adjf)) != TRUE)
+			killbuffer(bp);
+		return status;
+	}
 	return TRUE;
 }
 
@@ -140,7 +150,10 @@ readin(char *fname)
 	/* might be old */
 	if (bclear(curbp) != TRUE)
 		return TRUE;
-	status = insertfile(fname, fname, TRUE);
+	if ((status = insertfile(fname, fname, TRUE)) != TRUE) {
+		ewprintf("File is not readable: %s", fname);
+		return FALSE;
+	}
 
 	/*
 	 * Call auto-executing function if we need to.

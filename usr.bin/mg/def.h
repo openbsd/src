@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.56 2004/07/22 01:25:24 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.57 2005/03/09 16:20:48 jfb Exp $	*/
 
 #include <sys/queue.h>
 
@@ -379,7 +379,8 @@ MGWIN   *wpopup(void);
 int	 togglereadonly(int, int);
 BUFFER  *bfind(const char *, int);
 int	 poptobuffer(int, int);
-int	 killbuffer(int, int);
+int	 killbuffer(BUFFER *);
+int	 killbuffer_cmd(int, int);
 int	 savebuffers(int, int);
 int	 listbuffers(int, int);
 int	 addlinef(BUFFER *, char *, ...);
