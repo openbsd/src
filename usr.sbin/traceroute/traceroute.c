@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.50 2002/08/12 02:40:52 stevesk Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.51 2002/08/31 00:05:20 stevesk Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.50 2002/08/12 02:40:52 stevesk Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.51 2002/08/31 00:05:20 stevesk Exp $";
 #endif
 #endif /* not lint */
 
@@ -447,6 +447,9 @@ main(int argc, char *argv[])
 		memcpy(&to.sin_addr, hp->h_addr, hp->h_length);
 		if ((hostname = strdup(hp->h_name)) == NULL)
 			err(1, "malloc");
+		if (hp->h_addr_list[1] != NULL)
+			warnx("Warning: %s has multiple addresses; using %s",
+			    hostname, inet_ntoa(to.sin_addr));
 	}
 	if (*++argv)
 		datalen = atoi(*argv);
