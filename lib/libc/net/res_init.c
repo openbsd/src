@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.14 1997/04/13 21:30:43 provos Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.15 1997/07/15 18:33:50 flipk Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.14 1997/04/13 21:30:43 provos Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.15 1997/07/15 18:33:50 flipk Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -399,7 +399,11 @@ res_init()
 	if (_res.defdname[0] == 0 &&
 	    gethostname(buf, sizeof(_res.defdname) - 1) == 0 &&
 	    (cp = strchr(buf, '.')) != NULL)
-		strcpy(_res.defdname, cp + 1);
+	{
+		strncpy(_res.defdname, cp + 1,
+		        sizeof(_res.defdname) - 1);
+		_res.defdname[sizeof(_res.defdname) - 1] = '\0';
+	}
 
 	/* find components of local domain that might be searched */
 	if (havesearch == 0) {
