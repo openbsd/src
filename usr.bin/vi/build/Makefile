@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/07/27 22:27:53 downsj Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/07/27 23:29:12 downsj Exp $
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
 CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../include
@@ -40,3 +40,4 @@ CATALOGS=	dutch english french german ru_SU.KOI8-R spanish swedish
 afterinstall:
 	install -d ${DESTDIR}/usr/share/vi/catalog
 	(cd ${.CURDIR}/../catalog && install -m ${NONBINMODE} -c ${CATALOGS} ${DESTDIR}/usr/share/vi/catalog )
+	install -m ${BINMODE} -o ${BINOWN} -g ${BINGRP} -c ${.CURDIR}/recover ${DESTDIR}/usr/libexec/vi.recover
