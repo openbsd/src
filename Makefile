@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.88 2002/09/17 16:19:49 miod Exp $
+#	$OpenBSD: Makefile,v 1.89 2003/01/05 22:52:19 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -114,12 +114,12 @@ CROSSENV=	AR=${CROSSDIR}/usr/bin/ar AS=${CROSSDIR}/usr/bin/as \
 		LD=${CROSSDIR}/usr/bin/ld NM=${CROSSDIR}/usr/bin/nm \
 		LORDER=/usr/bin/lorder RANLIB=${CROSSDIR}/usr/bin/ranlib \
 		SIZE=${CROSSDIR}/usr/bin/size STRIP=${CROSSDIR}/usr/bin/strip \
-		HOSTCC="${CC}" HOSTCXX="${CXX}" NOMAN= DESTDIR=${CROSSDIR} \
-		HOSTCFLAGS="${CFLAGS}" HOSTCXXFLAGS="${CXXFLAGS}" \
-		HOSTLDFLAGS="${LDFLAGS}" \
-		CFLAGS="${CROSSCFLAGS}" CPPFLAGS="${CROSSCPPFLAGS}" \
-		CXXFLAGS="${CROSSCXXFLAGS}" \
-		LDFLAGS="${CROSSLDFLAGS}"
+		HOSTCC=\"${CC}\" HOSTCXX=\"${CXX}\" NOMAN= DESTDIR=${CROSSDIR} \
+		HOSTCFLAGS=\"${CFLAGS}\" HOSTCXXFLAGS=\"${CXXFLAGS}\" \
+		HOSTLDFLAGS=\"${LDFLAGS} \" \
+		CFLAGS=\"${CROSSCFLAGS}\" CPPFLAGS=\"${CROSSCPPFLAGS}\" \
+		CXXFLAGS=\"${CROSSCXXFLAGS}\" \
+		LDFLAGS=\"${CROSSLDFLAGS}\"
 CROSSPATH=	${PATH}:${CROSSDIR}/usr/bin
 CROSSLANGS?=	c c++
 
