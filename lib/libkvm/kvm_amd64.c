@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_amd64.c,v 1.1 2004/02/27 17:36:13 deraadt Exp $	*/
+/*	$OpenBSD: kvm_amd64.c,v 1.2 2004/05/05 16:45:55 marc Exp $	*/
 /*	$NetBSD: kvm_x86_64.c,v 1.3 2002/06/05 22:01:55 fvdl Exp $	*/
 
 /*-
@@ -115,7 +115,7 @@ _kvm_kvatop(kd, va, pa)
 	/*
 	 * Level 4.
 	 */
-	pde_pa = cpu_kh->ptdpaddr + (pl4_i(va) * sizeof(pd_entry_t));
+	pde_pa = cpu_kh->ptdpaddr + (pl4_pi(va) * sizeof(pd_entry_t));
 	if (pread(kd->pmfd, (void *)&pde, sizeof(pde),
 	    _kvm_pa2off(kd, pde_pa)) != sizeof(pde)) {
 		_kvm_syserr(kd, 0, "could not read PT level 4 entry");
@@ -129,7 +129,7 @@ _kvm_kvatop(kd, va, pa)
 	/*
 	 * Level 3.
 	 */
-	pde_pa = (pde_pa + PG_FRAME) + (pl3_i(va) * sizeof(pd_entry_t));
+	pde_pa = (pde & PG_FRAME) + (pl3_pi(va) * sizeof(pd_entry_t));
 	if (pread(kd->pmfd, (void *)&pde, sizeof(pde),
 	    _kvm_pa2off(kd, pde_pa)) != sizeof(pde)) {
 		_kvm_syserr(kd, 0, "could not read PT level 3 entry");
@@ -143,7 +143,7 @@ _kvm_kvatop(kd, va, pa)
 	/*
 	 * Level 2.
 	 */
-	pde_pa = (pde_pa & PG_FRAME) + (pl2_i(va) * sizeof(pd_entry_t));
+	pde_pa = (pde & PG_FRAME) + (pl2_pi(va) * sizeof(pd_entry_t));
 	if (pread(kd->pmfd, (void *)&pde, sizeof(pde),
 	    _kvm_pa2off(kd, pde_pa)) != sizeof(pde)) {
 		_kvm_syserr(kd, 0, "could not read PT level 2 entry");
@@ -158,7 +158,7 @@ _kvm_kvatop(kd, va, pa)
 	/*
 	 * Level 1.
 	 */
-	pte_pa = (pde_pa & PG_FRAME) + (pl1_i(va) * sizeof(pt_entry_t));
+	pte_pa = (pde & PG_FRAME) + (pl1_pi(va) * sizeof(pt_entry_t));
 	if (pread(kd->pmfd, (void *) &pte, sizeof(pte),
 	    _kvm_pa2off(kd, pte_pa)) != sizeof(pte)) {
 		_kvm_syserr(kd, 0, "could not read PTE");
