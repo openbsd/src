@@ -45,7 +45,7 @@ static char  *license_msg[] = {
  */
 
 #ifdef RCSID
-static char rcsid[] = "$Id: gzip.c,v 1.2 1997/03/25 21:09:47 deraadt Exp $";
+static char rcsid[] = "$Id: gzip.c,v 1.3 1998/01/02 04:22:45 deraadt Exp $";
 #endif
 
 #include <ctype.h>
@@ -521,7 +521,13 @@ int main (argc, argv)
             if (*optarg == '.') optarg++;
 #endif
             z_len = strlen(optarg);
-            strcpy(z_suffix, optarg);
+	    if (z_len > z_suffix-1) {
+		fprintf(stderr, "%s: -S suffix too long\n", progname);
+		usage();
+		do_exit(ERROR);
+	    }
+            strncpy(z_suffix, optarg, sizeof z_suffix-1);
+	    z_suffix[sizeof z_suffix-1] = '\0';
             break;
 	case 't':
 	    test = decompress = to_stdout = 1;
@@ -1005,6 +1011,13 @@ local int get_istat(iname, sbuf)
 #ifdef NO_MULTIPLE_DOTS
     char *dot; /* pointer to ifname extension, or NULL */
 #endif
+
+    if (strlen(iname) >= sizeof(ifname) - 3) {
+	errno = ENAMETOOLONG;
+	perror(iname);
+	exit_code = ERROR;
+	return ERROR;
+    }
 
     strcpy(ifname, iname);
 
