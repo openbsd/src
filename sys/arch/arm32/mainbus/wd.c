@@ -1049,7 +1049,7 @@ wdgetdisklabel(wd)
 	if (wd->sc_state > RECAL)
 		wd->sc_state = RECAL;
 	errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit, RAW_PART),
-	    wdstrategy, lp, wd->sc_dk.dk_cpulabel);
+	    wdstrategy, lp, wd->sc_dk.dk_cpulabel, 0);
 	if (errstring) {
 		/*
 		 * This probably happened because the drive's default
@@ -1060,7 +1060,7 @@ wdgetdisklabel(wd)
 		if (wd->sc_state > GEOMETRY)
 			wd->sc_state = GEOMETRY;
 		errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit, RAW_PART),
-		    wdstrategy, lp, wd->sc_dk.dk_cpulabel);
+		    wdstrategy, lp, wd->sc_dk.dk_cpulabel, 0);
 	}
 	if (errstring) {
 		printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);

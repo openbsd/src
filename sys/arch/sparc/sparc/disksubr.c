@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.20 1998/05/02 03:57:51 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.21 1998/10/03 21:18:56 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -132,11 +132,12 @@ dk_establish(dk, dev)
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp)
+readdisklabel(dev, strat, lp, clp, spoofonly)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
+	int spoofonly;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -156,6 +157,10 @@ readdisklabel(dev, strat, lp, clp)
 	lp->d_partitions[0].p_offset = 0;
 	lp->d_bbsize = 8192;
 	lp->d_sbsize = 64*1024;		/* XXX ? */
+
+	/* don't read the on-disk label if we are in spoofed-only mode */
+	if (spoofonly)
+		return (NULL);
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);

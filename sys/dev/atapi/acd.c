@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.32 1998/07/12 01:20:20 deraadt Exp $	*/
+/*	$OpenBSD: acd.c,v 1.33 1998/10/03 21:18:59 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -1070,10 +1070,10 @@ acdgetdisklabel(acd)
 		 * does not yet work, for unknown reasons.
 		 */
 		errstring = readdisklabel(MAKECDDEV(0, acd->sc_dev.dv_unit,
-		    data_track), acdstrategy, lp, acd->sc_dk.dk_cpulabel);
+		    data_track), acdstrategy, lp, acd->sc_dk.dk_cpulabel, 0);
 #else
 		errstring = readdisklabel(MAKECDDEV(0, acd->sc_dev.dv_unit,
-		    RAW_PART), acdstrategy, lp, acd->sc_dk.dk_cpulabel);
+		    RAW_PART), acdstrategy, lp, acd->sc_dk.dk_cpulabel, 0);
 #endif
 		/*if (errstring)
 			printf("%s: %s\n", acd->sc_dev.dv_xname, errstring);*/

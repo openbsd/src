@@ -1,4 +1,4 @@
-/*	$OpenBSD: rz.c,v 1.14 1998/05/12 15:52:09 millert Exp $	*/
+/*	$OpenBSD: rz.c,v 1.15 1998/10/03 21:18:58 millert Exp $	*/
 /*	$NetBSD: rz.c,v 1.38 1998/05/08 00:05:19 simonb Exp $	*/
 
 /*
@@ -148,10 +148,6 @@ static struct size rzdefaultpart[MAXPARTITIONS] = {
 	{	0,	 0 }	/* P */
 };
 
-
-extern char *
-readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-		   struct disklabel *lp, struct cpu_disklabel *osdep));
 
 /*
  * Ultrix disklabel declarations
@@ -913,7 +909,7 @@ rzgetinfo(dev)
 	/*
 	 * Now try to read the disklabel
 	 */
-	if ((msg = readdisklabel(dev, rzstrategy, lp, &cd)) == NULL)
+	if ((msg = readdisklabel(dev, rzstrategy, lp, &cd, 0)) == NULL)
 		return;
 	printf("rz%d: WARNING: %s\n", unit, msg);
 

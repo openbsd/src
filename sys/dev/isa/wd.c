@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.36 1998/10/01 04:23:54 millert Exp $	*/
+/*	$OpenBSD: wd.c,v 1.37 1998/10/03 21:19:00 millert Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -577,7 +577,7 @@ wdgetdisklabel(dev, wd)
 	if (d_link->sc_state > RECAL)
 		d_link->sc_state = RECAL;
 	errstring = readdisklabel(WDLABELDEV(dev), wdstrategy, lp,
-	    wd->sc_dk.dk_cpulabel);
+	    wd->sc_dk.dk_cpulabel, 0);
 	if (errstring) {
 		/*
 		 * This probably happened because the drive's default
@@ -588,7 +588,7 @@ wdgetdisklabel(dev, wd)
 		if (d_link->sc_state > GEOMETRY)
 			d_link->sc_state = GEOMETRY;
 		errstring = readdisklabel(WDLABELDEV(dev), wdstrategy, lp,
-		    wd->sc_dk.dk_cpulabel);
+		    wd->sc_dk.dk_cpulabel, 0);
 	}
 	if (errstring) {
 		/*printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);*/

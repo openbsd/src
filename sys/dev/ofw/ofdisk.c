@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdisk.c,v 1.3 1997/11/07 08:07:22 niklas Exp $	*/
+/*	$OpenBSD: ofdisk.c,v 1.4 1998/10/03 21:19:01 millert Exp $	*/
 /*	$NetBSD: ofdisk.c,v 1.3 1996/10/13 01:38:13 christos Exp $	*/
 
 /*
@@ -176,8 +176,8 @@ ofdopen(dev, flags, fmt, p)
 		lp->d_partitions[RAW_PART].p_offset = 0;
 		lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 		
-		readdisklabel(MAKEDISKDEV(major(dev), unit, RAW_PART), ofdstrategy,
-			      lp, of->sc_dk.dk_cpulabel);
+		readdisklabel(MAKEDISKDEV(major(dev), unit, RAW_PART),
+		    ofdstrategy, lp, of->sc_dk.dk_cpulabel, 0);
 	}
 
 	switch (fmt) {

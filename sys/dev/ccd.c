@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.36 1998/08/04 21:26:35 millert Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.37 1998/10/03 21:19:00 millert Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1591,7 +1591,7 @@ ccdgetdisklabel(dev)
 	 * Call the generic disklabel extraction routine.
 	 */
 	errstring = readdisklabel(CCDLABELDEV(dev), ccdstrategy,
-	    cs->sc_dkdev.dk_label, cs->sc_dkdev.dk_cpulabel);
+	    cs->sc_dkdev.dk_label, cs->sc_dkdev.dk_cpulabel, 0);
 	if (errstring)
 		ccdmakedisklabel(cs);
 

@@ -52,11 +52,12 @@
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, spoofonly)
 	dev_t dev;
 	void (*strat)();
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int spoofonly;
 {
 	register struct buf *bp;
 	struct disklabel *dlp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.9 1998/05/07 05:19:34 millert Exp $	*/
+/*	$OpenBSD: hd.c,v 1.10 1998/10/03 21:18:57 millert Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -522,7 +522,7 @@ hdgetinfo(dev)
 	/*
 	 * Now try to read the disklabel
 	 */
-	errstring = readdisklabel(hdlabdev(dev), hdstrategy, lp, NULL);
+	errstring = readdisklabel(hdlabdev(dev), hdstrategy, lp, NULL, 0);
 	if (errstring) {
 		printf("%s: WARNING: %s, defining `c' partition as entire disk\n",
 		    rs->sc_dev.dv_xname, errstring);

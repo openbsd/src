@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.13 1998/05/10 04:01:23 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.14 1998/10/03 21:18:56 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.14 1997/01/15 00:55:43 jonathan Exp $	*/
 
 /*
@@ -55,10 +55,6 @@ compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
 
 #endif
 
-char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-		       register struct disklabel *lp,
-		       struct cpu_disklabel *osdep));
-
 /*
  * Attempt to read a disk label from a device
  * using the indicated stategy routine.
@@ -68,11 +64,12 @@ char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, spoofonly)
 	dev_t dev;
 	void (*strat) __P((struct buf *bp));
 	register struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int spoofonly;
 {
 	register struct buf *bp;
 	struct disklabel *dlp;
@@ -85,6 +82,10 @@ readdisklabel(dev, strat, lp, osdep)
 		lp->d_partitions[0].p_size = 0x1fffffff;
 	lp->d_partitions[0].p_offset = 0;
 
+	/* don't read the on-disk label if we are in spoofed-only mode */
+	if (spoofonly)
+		return (NULL);
+
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
@@ -93,7 +94,8 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_cylin = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp)) {
-		msg = "I/O error";
+		/* XXX we return the faked label built so far */
+		msg = "disk label I/O error";
 	} else {
 		dlp = (struct disklabel *)bp->b_un.b_addr + LABELOFFSET;
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {

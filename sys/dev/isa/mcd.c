@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.24 1998/04/26 21:02:49 provos Exp $ */
+/*	$OpenBSD: mcd.c,v 1.25 1998/10/03 21:19:00 millert Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -747,7 +747,7 @@ mcdgetdefaultlabel(dev, sc, lp)
 	 * Call the generic disklabel extraction routine
 	 */
 	errstring = readdisklabel(MCDLABELDEV(dev), mcdstrategy, lp,
-	    sc->sc_dk.dk_cpulabel);
+	    sc->sc_dk.dk_cpulabel, 0);
 	if (errstring) {
 		/*printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);*/
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.8 1998/05/02 05:09:59 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.9 1998/10/03 21:18:54 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.9 1997/04/01 03:12:13 scottr Exp $	*/
 
 /*
@@ -65,11 +65,12 @@ dk_establish(dk, dev)
  * string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, spoofonly)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int spoofonly;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -89,6 +90,10 @@ readdisklabel(dev, strat, lp, osdep)
 		lp->d_partitions[0].p_size = 0x1fffffff;
 	lp->d_partitions[0].p_offset = 0;
 
+	/* don't read the on-disk label if we are in spoofed-only mode */
+	if (spoofonly)
+		return (NULL);
+
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
@@ -97,7 +102,7 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp))
-		msg = "I/O error";
+		msg = "disk label I/O error";
 	else for (dlp = (struct disklabel *)bp->b_data;
 	    dlp <= (struct disklabel *)((char *)bp->b_data +
 	    DEV_BSIZE - sizeof(*dlp));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.11 1997/08/08 21:46:53 niklas Exp $	*/
+/*	$OpenBSD: xd.c,v 1.12 1998/10/03 21:18:58 millert Exp $	*/
 /*	$NetBSD: xd.c,v 1.10 1996/10/13 03:47:39 christos Exp $	*/
 
 /*
@@ -309,7 +309,7 @@ xdgetdisklabel(xd, b)
 
 	err = readdisklabel(MAKEDISKDEV(0, xd->sc_dev.dv_unit, RAW_PART),
 			    xddummystrat,
-			    xd->sc_dk.dk_label, xd->sc_dk.dk_cpulabel);
+			    xd->sc_dk.dk_label, xd->sc_dk.dk_cpulabel, 0);
 	if (err) {
 		printf("%s: %s\n", xd->sc_dev.dv_xname, err);
 		return(XD_ERR_FAIL);

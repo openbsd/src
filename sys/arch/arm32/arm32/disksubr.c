@@ -107,11 +107,12 @@ filecore_checksum(bootblock)
  */
 
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, spoofonly)
 	dev_t dev;
 	void (*strat)();
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int spoofony;
 {
 	struct riscbsd_partition *rp = osdep->partitions;
 	struct dkbad *bdp = &osdep->bad;
@@ -143,6 +144,9 @@ readdisklabel(dev, strat, lp, osdep)
 		lp->d_partitions[RAW_PART].p_offset = 0; 
 		lp->d_partitions[RAW_PART].p_size = 0x1fffffff;
 	}
+
+	if (spoofonly)
+		return (NULL);
 
 /* obtain buffer to probe drive with */
     

@@ -302,7 +302,7 @@ xdgetdisklabel(xd, b)
 
 	err = readdisklabel(MAKEDISKDEV(0, xd->sc_dev.dv_unit, RAW_PART),
 			    xddummystrat,
-			    xd->sc_dk.dk_label, xd->sc_dk.dk_cpulabel);
+			    xd->sc_dk.dk_label, xd->sc_dk.dk_cpulabel, 0);
 	if (err) {
 		printf("%s: %s\n", xd->sc_dev.dv_xname, err);
 		return(XD_ERR_FAIL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.15 1998/05/17 03:09:39 mickey Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.16 1998/10/03 21:19:01 millert Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.41 1996/05/10 23:07:37 mark Exp $	*/
 
 /*
@@ -350,7 +350,7 @@ u_int	 dkcksum __P((struct disklabel *));
 int	 setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
 	    struct cpu_disklabel *));
 char	*readdisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
-	    struct cpu_disklabel *));
+	    struct cpu_disklabel *, int));
 int	 writedisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
 	    struct cpu_disklabel *));
 int	 bounds_check_with_label __P((struct buf *, struct disklabel *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.12 1997/10/01 22:54:22 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.13 1998/10/03 21:18:56 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.14 1996/09/26 18:10:21 gwr Exp $	*/
 
 /*
@@ -79,11 +79,12 @@ static int disklabel_bsd_to_sun(struct disklabel *, char *);
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp)
+readdisklabel(dev, strat, lp, clp, spoofonly)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
+	int spoofonly;
 {
 	struct buf *bp;
 	struct disklabel *dlp;
@@ -100,6 +101,10 @@ readdisklabel(dev, strat, lp, clp)
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
+
+	/* don't read the on-disk label if we are in spoofed-only mode */
+	if (spoofonly)
+		return (NULL);
 
 	/* next, dig out disk label */
 	bp->b_dev = dev;

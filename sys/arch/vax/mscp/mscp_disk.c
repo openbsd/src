@@ -1,4 +1,4 @@
-/*	$OpenBSD: mscp_disk.c,v 1.5 1997/09/12 09:25:51 maja Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.6 1998/10/03 21:18:59 millert Exp $	*/
 /*	$NetBSD: mscp_disk.c,v 1.13 1997/06/24 01:12:40 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -240,7 +240,7 @@ ra_putonline(ra)
 
 	printf("%s", ra->ra_dev.dv_xname);
 	if ((msg = readdisklabel(raminor(ra->ra_dev.dv_unit, 0),
-	    rastrategy, dl, NULL)) != NULL)
+	    rastrategy, dl, NULL, 0)) != NULL)
 		printf(": %s", msg);
 	else
 		ra->ra_havelabel = 1;

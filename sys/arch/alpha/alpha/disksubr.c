@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.22 1998/05/02 03:33:33 millert Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.23 1998/10/03 21:18:54 millert Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -71,15 +71,15 @@
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALPHA) || defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
 void	swapdisklabel __P((struct disklabel *d));
 char   *readbsdlabel __P((struct buf *, void (*) __P((struct buf *)), int, int,
-    int, int, struct disklabel *));
+    int, int, struct disklabel *, int));
 #endif
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
 char   *readdoslabel __P((struct buf *, void (*) __P((struct buf *)),
-    struct disklabel *, struct cpu_disklabel *, int *, int *));
+    struct disklabel *, struct cpu_disklabel *, int *, int *, int));
 #endif
 #if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
 char   *readamigalabel __P((struct buf *, void (*) __P((struct buf *)),
-    struct disklabel *, struct cpu_disklabel *));
+    struct disklabel *, struct cpu_disklabel *, int));
 #endif
 
 static enum disklabel_tag probe_order[] = { LABELPROBES, -1 };
@@ -144,11 +144,12 @@ swapdisklabel(dlp)
  * Try to read a standard BSD disklabel at a certain sector.
  */
 char *
-readbsdlabel(bp, strat, cyl, sec, off, endian, lp)
+readbsdlabel(bp, strat, cyl, sec, off, endian, lp, spoofonly)
 	struct buf *bp;
 	void (*strat) __P((struct buf *));
 	int cyl, sec, off, endian;
 	struct disklabel *lp;
+	int spoofonly;
 {
 	struct disklabel *dlp;
 	char *msg = NULL;
@@ -157,6 +158,10 @@ readbsdlabel(bp, strat, cyl, sec, off, endian, lp)
 
 	if (endian != LITTLE_ENDIAN && endian != BIG_ENDIAN)
 		panic("readbsdlabel: unsupported byteorder %d", endian);
+
+	/* don't read the on-disk label if we are in spoofed-only mode */
+	if (spoofonly)
+		return (NULL);
 
 	bp->b_blkno = sec;
 	bp->b_cylin = cyl;
@@ -223,11 +228,12 @@ readbsdlabel(bp, strat, cyl, sec, off, endian, lp)
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, osdep)
+readdisklabel(dev, strat, lp, osdep, spoofonly)
 	dev_t dev;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int spoofonly;
 {
 	struct buf *bp;
 	char *msg = "no disk label";
@@ -259,13 +265,13 @@ readdisklabel(dev, strat, lp, osdep)
 		case DLT_ALPHA:
 #if defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL)
 			msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR,
-			    ALPHA_LABELOFFSET, LITTLE_ENDIAN, lp);
+			    ALPHA_LABELOFFSET, LITTLE_ENDIAN, lp, spoofonly);
 #endif
 			break;
 
 		case DLT_I386:
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
-			msg = readdoslabel(bp, strat, lp, osdep, 0, 0);
+			msg = readdoslabel(bp, strat, lp, osdep, 0, 0, spoofonly);
 			if (msg)
 				/* Fallback alternative */
 				fallbacklabel = *lp;
@@ -274,7 +280,7 @@ readdisklabel(dev, strat, lp, osdep)
 
 		case DLT_AMIGA:
 #if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
-			msg = readamigalabel(bp, strat, lp, osdep);
+			msg = readamigalabel(bp, strat, lp, osdep, spoofonly);
 #endif
 			break;
 
@@ -317,13 +323,14 @@ readdisklabel(dev, strat, lp, osdep)
  * MBR is valid.
  */
 char *
-readdoslabel(bp, strat, lp, osdep, partoffp, cylp)
+readdoslabel(bp, strat, lp, osdep, partoffp, cylp, spoofonly)
 	struct buf *bp;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 	int *partoffp;
 	int *cylp;
+	int spoofonly;
 {
 	struct dos_partition *dp = osdep->u._i386.dosparts, *dp2;
 	struct dkbad *db, *bdp = &DKBAD(osdep);
@@ -477,7 +484,7 @@ donot:
 
 	/* next, dig out disk label */
 	msg = readbsdlabel(bp, strat, cyl, dospartoff + I386_LABELSECTOR, -1,
-	    LITTLE_ENDIAN, lp);
+	    LITTLE_ENDIAN, lp, spoofonly);
 	if (msg)
 		return (msg);
 
@@ -534,16 +541,17 @@ donot:
  * XXX RDB parsing is missing still.
  */
 char *
-readamigalabel(bp, strat, lp, osdep)
+readamigalabel(bp, strat, lp, osdep, spoofonly)
 	struct buf *bp;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int spoofonly;
 {
 	char *msg;
 
 	msg = readbsdlabel(bp, strat, 0, AMIGA_LABELSECTOR, AMIGA_LABELOFFSET,
-	    BIG_ENDIAN, lp);
+	    BIG_ENDIAN, lp, spoofonly);
 	return (msg);
 }
 #endif
@@ -649,7 +657,7 @@ writedisklabel(dev, strat, lp, osdep)
 		case DLT_ALPHA:
 #if defined(DISKLABEL_ALPHA) || defined(DISKLABEL_ALL)
 			msg = readbsdlabel(bp, strat, 0, ALPHA_LABELSECTOR,
-			    ALPHA_LABELOFFSET, LITTLE_ENDIAN, &dl);
+			    ALPHA_LABELOFFSET, LITTLE_ENDIAN, &dl, 0);
 			labeloffset = ALPHA_LABELOFFSET;
 			endian = LITTLE_ENDIAN;
 #endif
@@ -658,7 +666,7 @@ writedisklabel(dev, strat, lp, osdep)
 		case DLT_I386:
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
 			msg = readdoslabel(bp, strat, &dl, &cdl, &partoff,
-			    &cyl);
+			    &cyl, 0);
 			labeloffset = I386_LABELOFFSET;
 			endian = LITTLE_ENDIAN;
 #endif
@@ -666,7 +674,7 @@ writedisklabel(dev, strat, lp, osdep)
 
 		case DLT_AMIGA:
 #if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
-			msg = readamigalabel(bp, strat, &dl, &cdl);
+			msg = readamigalabel(bp, strat, &dl, &cdl, 0);
 			labeloffset = AMIGA_LABELOFFSET;
 			endian = BIG_ENDIAN;
 #endif

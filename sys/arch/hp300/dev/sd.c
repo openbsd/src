@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.19 1998/05/07 05:19:33 millert Exp $	*/
+/*	$OpenBSD: sd.c,v 1.20 1998/10/03 21:18:57 millert Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -499,7 +499,7 @@ sdgetinfo(dev)
 		lp->d_magic2 = DISKMAGIC;
 		lp->d_checksum = dkcksum(lp);
 
-		errstring = readdisklabel(sdlabdev(dev), sdstrategy, lp, NULL);
+		errstring = readdisklabel(sdlabdev(dev), sdstrategy, lp, NULL, 0);
 	}
 
 	if (errstring) {

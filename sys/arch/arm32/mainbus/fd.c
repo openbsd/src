@@ -1222,7 +1222,7 @@ fdioctl(dev, cmd, addr, flag)
 		buffer.d_type = DTYPE_FLOPPY;
 		buffer.d_secsize = FDC_BSIZE;
 
-		if (readdisklabel(dev, fdstrategy, &buffer, NULL) != NULL)
+		if (readdisklabel(dev, fdstrategy, &buffer, NULL, 0) != NULL)
 			return EINVAL;
 
 		*(struct disklabel *)addr = buffer;

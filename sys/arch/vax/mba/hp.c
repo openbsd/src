@@ -1,4 +1,4 @@
-/*	$OpenBSD: hp.c,v 1.8 1997/09/12 09:23:59 maja Exp $ */
+/*	$OpenBSD: hp.c,v 1.9 1998/10/03 21:18:59 millert Exp $ */
 /*	$NetBSD: hp.c,v 1.15 1997/06/24 01:09:37 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -163,7 +163,7 @@ hpattach(parent, self, aux)
 	 * Read in label.
 	 */
 	if ((msg = readdisklabel(makedev(0, self->dv_unit * 8), hpstrategy,
-	    dl, NULL)) != NULL)
+	    dl, NULL, 0)) != NULL)
 		printf(": %s", msg);
 	printf(": %s, size = %d sectors\n", dl->d_typename, dl->d_secperunit);
 	/*

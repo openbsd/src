@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.15 1997/10/02 01:01:22 deraadt Exp $ */
+/*	$OpenBSD: disksubr.c,v 1.16 1998/10/03 21:18:55 millert Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -106,14 +106,33 @@ dk_establish(dk, dev)
  * Returns null on success and an error string on failure.
  */
 char *
-readdisklabel(dev, strat, lp, clp)
+readdisklabel(dev, strat, lp, clp, spoofonly)
 	dev_t dev;
 	void (*strat)();
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
+	int spoofonly;
 {
 	struct buf *bp;
 	char *msg = NULL;
+
+	/* minimal requirements for archetypal disk label */
+	if (lp->d_secsize == 0)
+		lp->d_secsize = DEV_BSIZE;
+	if (lp->d_secperunit == 0)
+		lp->d_secperunit = 0x1fffffff;
+	lp->d_npartitions = RAW_PART + 1;
+	for (i = 0; i < RAW_PART; i++) {
+		lp->d_partitions[i].p_size = 0;
+		lp->d_partitions[i].p_offset = 0;
+	}
+	if (lp->d_partitions[0].p_size == 0)
+		lp->d_partitions[0].p_size = 0x1fffffff;
+	lp->d_partitions[0].p_offset = 0;
+
+	/* don't read the on-disk label if we are in spoofed-only mode */
+	if (spoofonly)
+		return (NULL);
 
 	/* obtain buffer to probe drive with */
 	bp = geteblk((int)lp->d_secsize);
@@ -144,7 +163,7 @@ readdisklabel(dev, strat, lp, clp)
 	}
 	cputobsdlabel(lp, clp);
 #ifdef DEBUG
-	if(disksubr_debug > 0) {
+	if (disksubr_debug > 0) {
 		printlp(lp, "readdisklabel:bsd label");
 		printclp(clp, "readdisklabel:cpu label");
 	}
