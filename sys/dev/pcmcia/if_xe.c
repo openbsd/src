@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_xe.c,v 1.14 2000/04/24 21:15:33 niklas Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.15 2000/06/02 02:17:37 bjc Exp $	*/
 
 /*
- * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
+ * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1138,6 +1138,7 @@ xe_start(ifp)
 	if (len < ETHER_MIN_LEN - ETHER_CRC_LEN)
 		pad = ETHER_MIN_LEN - ETHER_CRC_LEN - len;
 
+	PAGE(sc, 0);
 	space = bus_space_read_2(bst, bsh, offset + TSO0) & 0x7fff;
 	if (len + pad + 2 > space) {
 		DPRINTF(XED_FIFO,
@@ -1159,7 +1160,6 @@ xe_start(ifp)
 	 */
 	s = splhigh();
 
-	PAGE(sc, 0);
 	bus_space_write_2(bst, bsh, offset + TSO2, (u_int16_t)len + pad + 2);
 	bus_space_write_2(bst, bsh, offset + EDP, (u_int16_t)len + pad);
 	for (m = m0; m; ) {
