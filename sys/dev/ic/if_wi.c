@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.29 2002/03/30 18:52:08 markus Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.30 2002/03/30 20:18:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.29 2002/03/30 18:52:08 markus Exp $";
+	"$OpenBSD: if_wi.c,v 1.30 2002/03/30 20:18:45 mickey Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -259,7 +259,7 @@ wi_attach(sc, print_cis)
 	  */
 	gen.wi_type = WI_RID_SUPPORT_RATE;
 	gen.wi_len = 2;
-	if (wi_read_record(sc, &gen))
+	if (!sc->sc_prism2 || wi_read_record(sc, &gen))
 		sc->wi_supprates = WI_SUPPRATES_1M | WI_SUPPRATES_2M |
 		    WI_SUPPRATES_5M | WI_SUPPRATES_11M;
 	else
