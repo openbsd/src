@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.22 2005/01/18 15:03:38 grange Exp $ */
+/*	$OpenBSD: machdep.c,v 1.23 2005/02/20 15:39:04 miod Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -846,6 +846,16 @@ boot(int howto)
 		stacktrace();
 #endif
 
+	if (cold) {
+		/*
+		 * If the system is cold, just halt, unless the user
+		 * explicitely asked for reboot.
+		 */
+		if ((howto & RB_USERREQ) == 0)
+			howto |= RB_HALT;
+		goto haltsys;
+	}
+
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		extern struct proc proc0;
@@ -862,9 +872,20 @@ boot(int howto)
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
 		 */
-		resettodr();
+		if ((howto & RB_TIMEBAD) == 0) {
+			resettodr();
+		} else {
+			printf("WARNING: not updating battery clock\n");
+		}
 	}
+
 	(void) splhigh();		/* extreme priority */
+
+	if (howto & RB_DUMP)
+		dumpsys();
+
+haltsys:
+	doshutdownhooks();
 
 	if (howto & RB_HALT) {
 		if (howto & RB_POWERDOWN) {
@@ -877,16 +898,13 @@ boot(int howto)
 			Bios_EnterInteractiveMode();
 		}
 		printf("Didn't want to die!!! Reset manually.\n");
-		while(1); /* Forever */
 	} else {
-		if (howto & RB_DUMP)
-			dumpsys();
 		printf("System restart.\n");
 		delay(1000000);
 		Bios_Reboot();
 		printf("Restart failed!!! Reset manually.\n");
-		while(1); /* Forever */
 	}
+	for (;;) ;
 	/*NOTREACHED*/
 }
 
