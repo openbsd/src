@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.35 1999/03/11 18:55:24 deraadt Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.36 1999/03/11 19:47:25 deraadt Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1727,6 +1727,9 @@ vfs_unmountall()
 void
 vfs_shutdown()
 {
+	register struct buf *bp;
+	int iter, nbusy;
+
 	/* XXX Should suspend scheduling. */
 	(void) spl0();
 
@@ -1748,40 +1751,24 @@ vfs_shutdown()
 		vfs_unmountall();
 	}
 
-	if (vfs_syncwait(1))
-		printf("giving up\n");
-	else
-		printf("done\n");
-}
-
-/*
- * perform sync() operation and wait for buffers to flush.
- * assumtions: called w/ scheduler disabled and physical io enabled
- * for now called at spl0() XXX
- */
-int
-vfs_syncwait(verbose)
-	int verbose;
-{
-	register struct buf *bp;
-	int iter, nbusy;
-
+	/* Sync again after unmount, just in case. */
 	sys_sync(&proc0, (void *)0, (register_t *)0);
- 
+
 	/* Wait for sync to finish. */
 	for (iter = 0; iter < 20; iter++) {
 		nbusy = 0;
 		for (bp = &buf[nbuf]; --bp >= buf; )
 			if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
 				nbusy++;
-			if (nbusy == 0)
-				break;
-			if (verbose)
-				printf("%d ", nbusy);
-			DELAY(40000 * iter);
-	}   
-
-	return nbusy;
+		if (nbusy == 0)
+			break;
+		printf("%d ", nbusy);
+		DELAY(40000 * iter);
+	}
+	if (nbusy)
+		printf("giving up\n");
+	else
+		printf("done\n");
 }
 
 /*
