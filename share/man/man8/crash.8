@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crash.8,v 1.12 2001/08/03 15:21:17 mpech Exp $
+.\"	$OpenBSD: crash.8,v 1.13 2001/08/22 08:16:50 niklas Exp $
 .\"
 .\" Copyright (c) 1980, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -246,15 +246,13 @@ Examples of use:
 .Pp
 The
 .Fl O Ar paddr
-option gives the last 6 hexadecimal digits of the
+option prints each process'
 .Li struct proc
-pointer for each process.
+address, but with the value of KERNBASE masked off.
 This is very useful information if you are analyzing process contexts in
 .Xr gdb 1 .
-The preceding digits have to be guessed, but that is not very difficult;
-they are the start of the kvm space and is defined by machine-dependent
-sizes given in
-.Pa /usr/include/$ARCH/vmparam.h .
+You need to add back KERNBASE though, that value can be found in
+.Pa /usr/include/$ARCH/param.h .
 .Pp
 .Bd -literal
     # vmstat -N /var/crash/bsd.0 -M /var/crash/bsd.0.core -m
