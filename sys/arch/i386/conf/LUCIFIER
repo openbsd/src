@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.6 1997/10/13 00:19:33 mickey Exp $
+#	$OpenBSD: LUCIFIER,v 1.7 1997/10/13 05:19:40 mickey Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -187,14 +187,8 @@ fdc1	at isa? port 0x370 irq ? drq ?
 fd*	at fdc? drive ?
 
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
-
-scd0	at isa? port 0x300		# Sony CD-ROM drives
-scd0	at isa? port 0x310		# Sony CD-ROM drives
-scd0	at isa? port 0x320		# Sony CD-ROM drives
-scd0	at isa? port 0x330		# Sony CD-ROM drives
-scd0	at isa? port 0x340		# Sony CD-ROM drives
-scd0	at isa? port 0x350		# Sony CD-ROM drives
-scd0	at isa? port 0x360		# Sony CD-ROM drives
+scd0	at isa? port 0x300 irq 10	# Sony CD-ROM drives
+#pcd0	at isa? port 0x300 irq 10	# Panasonic CD-ROM drives
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15
