@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.14 2001/06/23 05:57:03 deraadt Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.15 2001/08/05 18:57:08 itojun Exp $
 .\"	$KAME: getnameinfo.3,v 1.20 2001/01/05 13:37:37 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -220,13 +220,6 @@ if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0,
 printf("host=%s\en", hbuf);
 .Ed
 .\"
-.Sh FILES
-.Bl -tag -width /etc/resolv.conf -compact
-.It Pa /etc/hosts
-.It Pa /etc/host.conf
-.It Pa /etc/resolv.conf
-.El
-.\"
 .Sh DIAGNOSTICS
 The function indicates successful completion by a zero return value;
 a non-zero return value indicates failure.
@@ -259,6 +252,7 @@ The error code can be found in errno.
 .Xr gethostbyaddr 3 ,
 .Xr getservbyport 3 ,
 .Xr hosts 5 ,
+.Xr resolv.conf 5 ,
 .Xr services 5 ,
 .Xr hostname 7 ,
 .Xr named 8
