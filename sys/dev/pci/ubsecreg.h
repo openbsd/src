@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.17 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.18 2002/04/23 22:16:05 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -170,4 +170,10 @@ struct ubsec_ctx_rngbypass {
 	volatile u_int16_t	rbp_len;	/* command length, 64 */
 	volatile u_int16_t	rbp_op;		/* rng bypass, 0x41 */
 	volatile u_int8_t	rbp_pad[60];	/* padding */
+};
+
+struct ubsec_ctx_modexp {
+	volatile u_int16_t	me_len;		/* command length */
+	volatile u_int16_t	me_op;		/* modexp, 0x47 */
+	volatile u_int8_t	me_N[2048/8];	/* N of C = M^E mod N */
 };
