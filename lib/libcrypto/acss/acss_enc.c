@@ -1,4 +1,4 @@
-/*	$Id: */
+/*	$OpenBSD: acss_enc.c,v 1.3 2004/01/23 19:23:33 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004 The OpenBSD project
  *

@@ -1,4 +1,4 @@
-/*	$Id: */
+/*	$OpenBSD: acss_skey.c,v 1.2 2004/01/23 19:23:33 hshoexer Exp $	*/
 /*
  * Copyright (c) 2004 The OpenBSD project
  *
