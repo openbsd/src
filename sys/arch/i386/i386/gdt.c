@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt.c,v 1.10 1996/05/30 09:30:06 deraadt Exp $	*/
+/*	$OpenBSD: gdt.c,v 1.11 1999/02/26 04:32:36 art Exp $	*/
 /*	$NetBSD: gdt.c,v 1.8 1996/05/03 19:42:06 christos Exp $	*/
 
 /*-
@@ -44,6 +44,10 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/gdt.h>
 
@@ -165,10 +169,16 @@ gdt_init()
 	min_len = MINGDTSIZ * sizeof(union descriptor);
 	gdt_size = MINGDTSIZ;
 
+#if defined(UVM)
+	dynamic_gdt = (union descriptor *)uvm_km_valloc(kernel_map, max_len);
+	uvm_map_pageable(kernel_map, (vaddr_t)dynamic_gdt,
+	    (vaddr_t)dynamic_gdt + min_len, FALSE);
+#else
 	dynamic_gdt = (union descriptor *)kmem_alloc_pageable(kernel_map,
 	    max_len);
 	vm_map_pageable(kernel_map, (vm_offset_t)dynamic_gdt,
 	    (vm_offset_t)dynamic_gdt + min_len, FALSE);
+#endif
 	bcopy(gdt, dynamic_gdt, NGDT * sizeof(union descriptor));
 
 	setregion(&region, dynamic_gdt, max_len - 1);
@@ -184,8 +194,13 @@ gdt_grow()
 	gdt_size <<= 1;
 	new_len = old_len << 1;
 
+#if defined(UVM)
+	uvm_map_pageable(kernel_map, (vaddr_t)dynamic_gdt + old_len,
+	    (vaddr_t)dynamic_gdt + new_len, FALSE);
+#else
 	vm_map_pageable(kernel_map, (vm_offset_t)dynamic_gdt + old_len,
 	    (vm_offset_t)dynamic_gdt + new_len, FALSE);
+#endif
 }
 
 void
@@ -196,9 +211,13 @@ gdt_shrink()
 	old_len = gdt_size * sizeof(union descriptor);
 	gdt_size >>= 1;
 	new_len = old_len >> 1;
-
+#if defined(UVM)
+	uvm_map_pageable(kernel_map, (vaddr_t)dynamic_gdt + new_len,
+	    (vaddr_t)dynamic_gdt + old_len, TRUE);
+#else
 	vm_map_pageable(kernel_map, (vm_offset_t)dynamic_gdt + new_len,
 	    (vm_offset_t)dynamic_gdt + old_len, TRUE);
+#endif
 }
 
 /*
