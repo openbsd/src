@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.146 2000/01/08 04:34:37 angelos Exp $
+#	$OpenBSD: files,v 1.147 2000/01/11 01:48:33 fgsch Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -570,7 +570,6 @@ file netns/ns_proto.c			ns
 file netns/spp_debug.c			ns
 file netns/spp_usrreq.c			ns
 file netipx/ipx.c			ipx
-file netipx/ipx_error.c			ipx
 file netipx/ipx_input.c			ipx
 file netipx/ipx_ip.c			ipx
 file netipx/ipx_outputfl.c		ipx
