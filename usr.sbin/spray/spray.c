@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: spray.c,v 1.2 2002/05/30 19:09:05 deraadt Exp $
+ *	$Id: spray.c,v 1.3 2002/06/02 06:42:29 deraadt Exp $
  */
 
 #include <stdio.h>
@@ -149,36 +149,35 @@ main(argc, argv)
 	fflush (stdout);
 
 	for (i = 0; i < count; i++) {
-		clnt_call(cl, SPRAYPROC_SPRAY, xdr_sprayarr, &host_array, xdr_void, NULL, ONE_WAY);
+		clnt_call(cl, SPRAYPROC_SPRAY, xdr_sprayarr, &host_array,
+		    xdr_void, NULL, ONE_WAY);
 
-		if (delay) {
+		if (delay)
 			usleep(delay);
-		}
 	}
 
 
 	/* Collect statistics from server */
-	if (clnt_call(cl, SPRAYPROC_GET, xdr_void, NULL, xdr_spraycumul, &host_stats, TIMEOUT) != RPC_SUCCESS) {
+	if (clnt_call(cl, SPRAYPROC_GET, xdr_void, NULL, xdr_spraycumul,
+	    &host_stats, TIMEOUT) != RPC_SUCCESS) {
 		clnt_perror(cl, progname);
 		exit(1);
 	}
 
 	xmit_time = host_stats.clock.sec +
-			(host_stats.clock.usec / 1000000.0);
+	    (host_stats.clock.usec / 1000000.0);
 
 	printf ("\n\tin %.2f seconds elapsed time\n", xmit_time);
-
 
 	/* report dropped packets */
 	if (host_stats.counter != count) {
 		int packets_dropped = count - host_stats.counter;
 
 		printf("\t%d packets (%.2f%%) dropped\n",
-			packets_dropped,
-			100.0 * packets_dropped / count );
-	} else {
+		    packets_dropped,
+		    100.0 * packets_dropped / count );
+	} else
 		printf("\tno packets dropped\n");
-	}
 
 	printf("Sent:");
 	print_xferstats(count, length, xmit_time);

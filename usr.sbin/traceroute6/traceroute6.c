@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute6.c,v 1.21 2002/05/26 13:24:54 deraadt Exp $	*/
+/*	$OpenBSD: traceroute6.c,v 1.22 2002/06/02 06:42:29 deraadt Exp $	*/
 /*	$KAME: traceroute6.c,v 1.50 2002/05/26 13:12:07 itojun Exp $	*/
 
 /*
@@ -407,7 +407,7 @@ main(argc, argv)
 	seq = 0;
 	
 	while ((ch = getopt(argc, argv, "df:g:lm:np:q:rs:w:v")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'd':
 			options |= SO_DEBUG;
 			break;
@@ -843,7 +843,7 @@ main(argc, argv)
 						lastaddr = Rcv.sin6_addr;
 					}
 					printf("  %g ms", deltaT(&t1, &t2));
-					switch(i - 1) {
+					switch (i - 1) {
 					case ICMP6_DST_UNREACH_NOROUTE:
 						++unreachable;
 						printf(" !N");
@@ -1200,7 +1200,7 @@ get_udphdr(ip6, lim)
 	cp += sizeof(struct ip6_hdr);
 
 	while (lim - cp >= 8) {
-		switch(nh) {
+		switch (nh) {
 		case IPPROTO_ESP:
 		case IPPROTO_TCP:
 		case IPPROTO_ICMPV6:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdevs.c,v 1.7 2002/05/30 19:09:05 deraadt Exp $	*/
+/*	$OpenBSD: usbdevs.c,v 1.8 2002/06/02 06:42:29 deraadt Exp $	*/
 /*	$NetBSD: usbdevs.c,v 1.19 2002/02/21 00:34:31 christos Exp $	*/
 
 /*
@@ -181,7 +181,7 @@ main(int argc, char **argv)
 	int ncont;
 
 	while ((ch = getopt(argc, argv, "a:df:v?")) != -1) {
-		switch(ch) {
+		switch (ch) {
 		case 'a':
 			addr = atoi(optarg);
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch.c,v 1.6 1997/07/21 19:21:17 deraadt Exp $ */
+/*	$OpenBSD: ypmatch.c,v 1.7 2002/06/02 06:42:28 deraadt Exp $ */
 /*	$NetBSD: ypmatch.c,v 1.8 1996/05/07 01:24:52 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.6 1997/07/21 19:21:17 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypmatch.c,v 1.7 2002/06/02 06:42:28 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -92,7 +92,7 @@ char **argv;
 	domainname = NULL;
 	notrans = key = 0;
 	while( (c=getopt(argc, argv, "xd:kt")) != -1)
-		switch(c) {
+		switch (c) {
 		case 'x':
 			for(i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
 				printf("Use \"%s\" for \"%s\"\n",
@@ -132,7 +132,7 @@ char **argv;
 
 		r = yp_match(domainname, inmap, inkey,
 			strlen(inkey), &outbuf, &outbuflen);
-		switch(r) {
+		switch (r) {
 		case 0:
 			if(key)
 				printf("%s: ", inkey);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.11 1999/03/20 15:36:12 maja Exp $	*/
+/*	$OpenBSD: ypwhich.c,v 1.12 2002/06/02 06:42:28 deraadt Exp $	*/
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypwhich.c,v 1.11 1999/03/20 15:36:12 maja Exp $";
+static char rcsid[] = "$Id: ypwhich.c,v 1.12 2002/06/02 06:42:28 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -162,7 +162,7 @@ main(argc, argv)
 		errx(1, "YP domain name not set");
 
 	while ((c = getopt(argc, argv, "xd:h:mt")) != -1)
-		switch(c) {
+		switch (c) {
 		case 'x':
 			for (i=0; i<sizeof ypaliases/sizeof ypaliases[0]; i++)
 				printf("Use \"%s\" for \"%s\"\n",
@@ -187,7 +187,7 @@ main(argc, argv)
 	argv += optind;
 
 	if (mode == 0) {
-		switch(argc) {
+		switch (argc) {
 		case 0:
 			memset(&sin, 0, sizeof sin);
 			sin.sin_family = AF_INET;
@@ -259,7 +259,7 @@ main(argc, argv)
 		r = yp_maplist(domain, &ypml);
 	}
 	r = 0;
-	switch(r) {
+	switch (r) {
 	case 0:
 		for (y = ypml; y; ) {
 			ypml = y;
@@ -269,7 +269,7 @@ main(argc, argv)
 			} else {
 				r = yp_master(domain, ypml->map, &master);
 			}
-			switch(r) {
+			switch (r) {
 			case 0:
 				printf("%s %s\n", ypml->map, master);
 				free(master);

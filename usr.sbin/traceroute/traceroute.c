@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.43 2002/05/26 13:24:54 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.44 2002/06/02 06:42:29 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.43 2002/05/26 13:24:54 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.44 2002/06/02 06:42:29 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -745,7 +745,7 @@ send_probe(seq, ttl, iflag, to)
 	ip->ip_ttl = ttl;
 	ip->ip_id = htons(ident+seq);
 
-	switch(proto) {
+	switch (proto) {
 	case IPPROTO_ICMP:
 		icmpp->icmp_type = icmp_type;
 		icmpp->icmp_code = icmp_code;
@@ -868,9 +868,8 @@ packet_ok(buf, cc, from, seq, iflag)
 		hip = &icp->icmp_ip;
 		hlen = hip->ip_hl << 2;
 
-		switch(proto) {
+		switch (proto) {
 		case IPPROTO_ICMP:
-
 			if (icmp_type == ICMP_ECHO &&
 			    type == ICMP_ECHOREPLY &&
 			    icp->icmp_id == htons(ident) &&
