@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.30 2000/02/16 22:34:18 kjell Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.31 2000/02/18 07:47:02 kjell Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -273,6 +273,7 @@ int iplattach()
 	else
 		defpass = "no-match -> block";
 
+#if !defined(__OpenBSD__)
 	printf("IP Filter: initialized.  Default = %s all, Logging = %s\n",
 		defpass,
 # ifdef	IPFILTER_LOG
@@ -281,6 +282,8 @@ int iplattach()
 		"disabled");
 # endif
 	printf("%s\n", ipfilter_version);
+#endif
+
 #ifdef	_KERNEL
 # if (__FreeBSD_version >= 300000) && defined(_KERNEL)
 	ipfr_slowtimer_ch = timeout(ipfr_slowtimer, NULL, hz/2);
