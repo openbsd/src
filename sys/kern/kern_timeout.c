@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.2 2000/03/23 10:27:05 art Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.3 2000/03/23 11:07:34 art Exp $	*/
 /*
  * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -100,7 +100,7 @@ timeout_set(to, fn, arg)
 
 	to->to_func = fn;
 	to->to_arg = arg;
-	to->to_flags = 0;
+	to->to_flags = TIMEOUT_INITIALIZED;
 }
 
 void
@@ -237,7 +237,7 @@ timeout(fn, arg, to_ticks)
 	timeout_list_unlock(s);
 
 	timeout_set(to, fn, arg);
-	to->to_flags = TIMEOUT_STATIC;
+	to->to_flags |= TIMEOUT_STATIC;
 	timeout_add(to, to_ticks);
 }
 
