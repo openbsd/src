@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.1.1.2 2000/06/13 03:40:05 rahnds Exp $ */
+/*	$OpenBSD: loader.c,v 1.2 2000/09/11 02:36:37 rahnds Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -284,12 +284,15 @@ _dl_boot(const char **argv, const char **envp, const int loff,
 
 	_dl_debug_state();
 
-	if(_dl_debug) {
+	if(_dl_debug || _dl_traceld) {
 		void _dl_show_objects(); /* remove -Wall warning */
 		_dl_show_objects();
 		_dl_printf("dynamic loading done.\n");
 	}
 	_dl_unmaphints();
+	if (_dl_traceld) {
+		_dl_exit(0);
+	}
 	return(dl_data[AUX_entry]);
 }
 
