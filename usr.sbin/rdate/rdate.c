@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.11 1997/07/25 20:12:18 mickey Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.12 2001/08/15 19:39:09 stevesk Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: rdate.c,v 1.11 1997/07/25 20:12:18 mickey Exp $";
+static char rcsid[] = "$OpenBSD: rdate.c,v 1.12 2001/08/15 19:39:09 stevesk Exp $";
 #endif
 #endif				/* lint */
 
@@ -152,6 +152,13 @@ main(argc, argv)
 	(void) close(s);
 	tim = ntohl(tim) - DIFFERENCE;
 
+	if (slidetime) {
+		struct timeval tv_current;
+		if (gettimeofday(&tv_current, NULL) == -1)
+			err(1, "Could not get local time of day");
+		adjustment = tim - tv_current.tv_sec;
+	}
+
 	if (!pr) {
 		struct timeval  tv;
 		if (!slidetime) {
@@ -162,10 +169,7 @@ main(argc, argv)
 				err(1, "Could not set time of day");
 			logwtmp("{", "date", "");
 		} else {
-			struct timeval tv_current;
-			if (gettimeofday(&tv_current, NULL) == -1)
-				err(1, "Could not get local time of day");
-			adjustment = tv.tv_sec = tim - tv_current.tv_sec;
+			tv.tv_sec = adjustment;
 			tv.tv_usec = 0;
 			if (adjtime(&tv, NULL) == -1)
 				err(1, "Could not adjust time of day");
@@ -177,7 +181,7 @@ main(argc, argv)
 		char		buf[80];
 
 		ltm = localtime(&tim);
-		(void) strftime(buf, 80, "%a %b %e %H:%M:%S %Z %Y\n", ltm);
+		(void) strftime(buf, sizeof buf, "%a %b %e %H:%M:%S %Z %Y\n", ltm);
 		(void) fputs(buf, stdout);
 
 		if (slidetime)
