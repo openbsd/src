@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.c,v 1.22 1998/05/18 21:10:15 provos Exp $	*/
+/*	$OpenBSD: encap.c,v 1.23 1998/05/24 14:13:57 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -328,6 +328,35 @@ encap_enable_spi(u_int32_t spi, struct in_addr dst,
 	bzero((caddr_t) &encapgw, sizeof(struct sockaddr_encap));
 
 	flow = flow2 = flow3 = flow4 = (struct flow *) NULL;
+
+	/* Retrieve source and destination masks from routing entry */
+	if (flags & ENABLE_FLAG_MODIFY) {
+		struct route_enc re0, *re = &re0;
+		struct sockaddr_encap *dest, *mask;
+
+		bzero((caddr_t) re, sizeof(*re));
+		dest = (struct sockaddr_encap *) &re->re_dst;
+		dest->sen_family = AF_ENCAP;
+		dest->sen_len = SENT_IP4_LEN;
+		dest->sen_type = SENT_IP4;
+		dest->sen_ip_src = tdbp->tdb_src;
+		dest->sen_ip_dst = dst;
+		dest->sen_proto = protocol;
+		dest->sen_sport = sport;
+		dest->sen_dport = dport;
+		rtalloc((struct route *) re);
+		if (re->re_rt == NULL)
+			return (ENOENT);
+
+		mask = (struct sockaddr_encap *) (rt_mask(re->re_rt));
+		if (mask == NULL)
+			return (ENOENT);
+
+		ismask.s_addr = mask->sen_ip_src.s_addr;
+		idmask.s_addr = mask->sen_ip_dst.s_addr;
+
+		RTFREE(re->re_rt);
+	}
 
 	isrc.s_addr &= ismask.s_addr;
 	idst.s_addr &= idmask.s_addr;
@@ -884,6 +913,35 @@ va_dcl
             if (tdbp == NULL)
               SENDERR(ENOENT);
 
+	    /* Retrieve source and destination masks from routing entry */
+	    if (emp->em_ena_flags & ENABLE_FLAG_MODIFY) {
+		    struct route_enc re0, *re = &re0;
+		    struct sockaddr_encap *dest, *mask;
+	      
+		    bzero((caddr_t) re, sizeof(*re));
+		    dest = (struct sockaddr_encap *) &re->re_dst;
+		    dest->sen_family = AF_ENCAP;
+		    dest->sen_len = SENT_IP4_LEN;
+		    dest->sen_type = SENT_IP4;
+		    dest->sen_ip_src = tdbp->tdb_src;
+		    dest->sen_ip_dst = emp->em_ena_dst;
+		    dest->sen_proto = emp->em_ena_protocol;
+		    dest->sen_sport = emp->em_ena_sport;
+		    dest->sen_dport = emp->em_ena_dport;
+		    rtalloc((struct route *) re);
+		    if (re->re_rt == NULL)
+			    return (ENOENT);
+
+		    mask = (struct sockaddr_encap *) (rt_mask(re->re_rt));
+		    if (mask == NULL)
+			    return (ENOENT);
+
+		    emp->em_ena_ismask.s_addr = mask->sen_ip_src.s_addr;
+		    emp->em_ena_idmask.s_addr = mask->sen_ip_dst.s_addr;
+
+		    RTFREE(re->re_rt);
+	    }
+
 	    emp->em_ena_isrc.s_addr &= emp->em_ena_ismask.s_addr;
 	    emp->em_ena_idst.s_addr &= emp->em_ena_idmask.s_addr;
 
@@ -941,6 +999,20 @@ va_dcl
 		      (struct sockaddr *) 0,
 		      (struct sockaddr *) &encapnetmask, 0,
 		      (struct rtentry **) 0);
+
+	    if (emp->em_ena_flags & ENABLE_FLAG_MODIFY) {
+		    encapgw.sen_len = SENT_IPSP_LEN;
+		    encapgw.sen_family = AF_ENCAP;
+		    encapgw.sen_type = SENT_IPSP;
+		    encapgw.sen_ipsp_dst.s_addr = emp->em_ena_dst.s_addr;
+		    encapgw.sen_ipsp_spi = htonl(1);
+		    encapgw.sen_ipsp_sproto = IPPROTO_ESP;
+		    error = rtrequest(RTM_ADD, (struct sockaddr *) &encapdst,
+				      (struct sockaddr *) &encapgw,
+				      (struct sockaddr *) &encapnetmask,
+				      RTF_UP | RTF_GATEWAY | RTF_STATIC,
+				      (struct rtentry **) 0);
+	    }
 	    
 	    if (emp->em_ena_flags & ENABLE_FLAG_LOCAL)
 	    {
@@ -953,6 +1025,20 @@ va_dcl
 			  (struct sockaddr *) &encapnetmask, 0,
 			  (struct rtentry **) 0);
 		
+		if (emp->em_ena_flags & ENABLE_FLAG_MODIFY) {
+			encapgw.sen_len = SENT_IPSP_LEN;
+			encapgw.sen_family = AF_ENCAP;
+			encapgw.sen_type = SENT_IPSP;
+			encapgw.sen_ipsp_dst.s_addr = emp->em_ena_dst.s_addr;
+			encapgw.sen_ipsp_spi = htonl(1);
+			encapgw.sen_ipsp_sproto = IPPROTO_ESP;
+			error = rtrequest(RTM_ADD, 
+					  (struct sockaddr *) &encapdst,
+					  (struct sockaddr *) &encapgw,
+					  (struct sockaddr *) &encapnetmask,
+					  RTF_UP | RTF_GATEWAY | RTF_STATIC,
+					  (struct rtentry **) 0);
+		}
 		delete_flow(flow2, tdbp);
 	    }
 

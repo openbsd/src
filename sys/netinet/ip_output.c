@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.28 1998/05/19 18:42:01 deraadt Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.29 1998/05/24 14:14:00 provos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -82,6 +82,7 @@ int (*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **));
 #endif
 
 #ifdef IPSEC
+extern void	encap_sendnotify __P((int, struct tdb *, void *));
 extern int ipsec_auth_default_level;
 extern int ipsec_esp_trans_default_level;
 extern int ipsec_esp_network_default_level;
@@ -239,6 +240,28 @@ ip_output(m0, va_alist)
 			RTFREE(re->re_rt);
 			error = EHOSTUNREACH;
 			goto bad;
+		}
+
+		/* 
+		 * For VPNs a route with a reserved SPI of 1 is used to
+		 * indicate the need for an SA when none is established.
+		 */
+		if (ntohl(gw->sen_ipsp_spi) == 0x1) {
+			struct tdb tmptdb;
+
+			sa_require = NOTIFY_SATYPE_CONF | NOTIFY_SATYPE_AUTH |
+				NOTIFY_SATYPE_TUNNEL;
+			tmptdb.tdb_dst.s_addr = gw->sen_ipsp_dst.s_addr;
+			tmptdb.tdb_satype = sa_require;
+			       
+			/* Request SA with key management */
+			encap_sendnotify(NOTIFY_REQUEST_SA, &tmptdb, NULL);
+			
+			/* 
+			 * When sa_require is set, the packet will be dropped
+			 * at no_encap.
+			 */
+			goto no_encap;
 		}
 
 		ip->ip_len = htons((u_short)ip->ip_len);
@@ -432,11 +455,9 @@ no_encap:
 		/* This is for possible future use, don't move or delete */
 		if (re->re_rt)
 			RTFREE(re->re_rt);
-		/* We did no IPSec encapsulation but the socket required it */
-		if (sa_require) {
-			error = EHOSTUNREACH;
+		/* No IPSec processing though it was required, drop packet */
+		if (sa_require)
 			goto done;
-		}
 	}
 #endif /* IPSEC */
 

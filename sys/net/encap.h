@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.h,v 1.12 1998/05/18 21:10:18 provos Exp $	*/
+/*	$OpenBSD: encap.h,v 1.13 1998/05/24 14:13:59 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -261,8 +261,9 @@ struct encap_msghdr
     } Eu;
 };
 
-#define ENABLE_FLAG_REPLACE    	1
-#define ENABLE_FLAG_LOCAL      	2
+#define ENABLE_FLAG_REPLACE    	1	/* Replace existing flow with new */
+#define ENABLE_FLAG_LOCAL      	2	/* Add routes for 0.0.0.0 */
+#define ENABLE_FLAG_MODIFY     	4	/* Keep routing masks */
 
 #define ENCAP_MSG_FIXED_LEN    	(2 * sizeof(u_int32_t))
 
