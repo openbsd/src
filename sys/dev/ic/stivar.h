@@ -1,4 +1,4 @@
-/*	$OpenBSD: stivar.h,v 1.14 2003/08/19 03:13:07 mickey Exp $	*/
+/*	$OpenBSD: stivar.h,v 1.15 2003/12/16 06:07:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -43,7 +43,9 @@ struct sti_softc {
 	int	sc_bpp;
 
 	bus_space_tag_t iot, memt;
-	bus_space_handle_t ioh, romh, fbh;
+	bus_space_handle_t romh;
+	bus_addr_t base, fbaddr;
+	bus_size_t fblen;
 
 	struct sti_dd sc_dd;		/* in word format */
 	struct sti_font sc_curfont;

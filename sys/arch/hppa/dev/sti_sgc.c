@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.18 2003/10/30 19:25:12 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.19 2003/12/16 06:07:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -55,7 +55,6 @@
 
 #include <hppa/dev/cpudevs.h>
 
-#define	STI_MEMSIZE	0x2000000
 #define	STI_ROMSIZE	0x8000
 #define	STI_ID_FDDI	0x280b31af	/* Medusa FDDI ROM id */
 
@@ -202,33 +201,15 @@ sti_sgc_attach(parent, self, aux)
 	paddr_t rom;
 	int rv;
 
-	rom = sti_sgc_getrom(sc->sc_dev.dv_cfdata->cf_unit, ca);
-
-#ifdef STIDEBUG
-	printf("sti: hpa=%x, rom=%x\n", ca->ca_hpa, rom);
-#endif
 	sc->memt = sc->iot = ca->ca_iot;
+	sc->base = ca->ca_hpa;
 
-	if ((rv = bus_space_map(ca->ca_iot, ca->ca_hpa, STI_MEMSIZE, 0,
-	    &sc->ioh))) {
-#ifdef STIDEBUG
-		printf(": cannot map io space (%d)\n", rv);
-#endif
-		return;
-	}
-
-	/* if it does not map, probably part of the lasi space */
-	if (rom == ca->ca_hpa)
-		sc->romh = sc->ioh;
-	else if ((rv = bus_space_map(ca->ca_iot, rom, STI_ROMSIZE, 0, &sc->romh))) {
+	rom = sti_sgc_getrom(sc->sc_dev.dv_cfdata->cf_unit, ca);
+	if ((rv = bus_space_map(ca->ca_iot, rom, STI_ROMSIZE, 0, &sc->romh))) {
 		if ((rom & HPPA_IOBEGIN) == HPPA_IOBEGIN)
 			sc->romh = rom;
 		else {
-#ifdef STIDEBUG
 			printf (": cannot map rom space (%d)\n", rv);
-#endif
-			/* in this case i have no freaking idea */
-			bus_space_unmap(ca->ca_iot, sc->ioh,  STI_MEMSIZE);
 			return;
 		}
 	}
@@ -237,9 +218,6 @@ sti_sgc_attach(parent, self, aux)
 	if (cpu_type == hpcxl2)
 		eaio_l2(0x8 >> (((ca->ca_hpa >> 25) & 3) - 2));
 
-#ifdef STIDEBUG
-	printf("sti: ioh=%x, romh=%x\n", sc->ioh, sc->romh);
-#endif
 	sc->sc_devtype = bus_space_read_1(sc->iot, sc->romh, 3);
 	if (ca->ca_hpa == (hppa_hpa_t)PAGE0->mem_cons.pz_hpa)
 		sc->sc_flags |= STI_CONSOLE;
