@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.47 2001/06/22 14:28:58 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.48 2001/06/27 05:50:06 kjc Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -234,6 +234,13 @@ if_attachsetup(ifp)
 	sdl->sdl_len = masklen;
 	while (namelen != 0)
 		sdl->sdl_data[--namelen] = 0xff;
+#ifdef ALTQ
+	ifp->if_snd.altq_type = 0;
+	ifp->if_snd.altq_disc = NULL;
+	ifp->if_snd.altq_flags &= ALTQF_CANTCHANGE;
+	ifp->if_snd.altq_tbr  = NULL;
+	ifp->if_snd.altq_ifp  = ifp;
+#endif
 }
 
 void
@@ -339,6 +346,12 @@ if_detach(ifp)
 	/* If there is a bpf device attached, detach from it.  */
 	if (ifp->if_bpf)
 		bpfdetach(ifp);
+#endif
+#ifdef ALTQ
+	if (ALTQ_IS_ENABLED(&ifp->if_snd))
+		altq_disable(&ifp->if_snd);
+	if (ALTQ_IS_ATTACHED(&ifp->if_snd))
+		altq_detach(&ifp->if_snd);
 #endif
 
 	/*
@@ -579,7 +592,7 @@ if_down(ifp)
 	microtime(&ifp->if_lastchange);
 	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0; ifa = ifa->ifa_list.tqe_next)
 		pfctlinput(PRC_IFDOWN, ifa->ifa_addr);
-	if_qflush(&ifp->if_snd);
+	IFQ_PURGE(&ifp->if_snd);
 	rt_ifmsg(ifp);
 
 	/*

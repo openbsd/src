@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.87 2001/06/26 18:17:54 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.88 2001/06/27 05:50:07 kjc Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -353,6 +353,12 @@ ipv4_input(m)
 		m->m_pkthdr.csum &= ~M_IPV4_CSUM_IN_OK;
 		ipstat.ips_inhwcsum++;
 	}
+
+#ifdef ALTQ
+	if (altq_input != NULL && (*altq_input)(m, AF_INET) == 0)
+		/* packet is dropped by traffic conditioner */
+		return;
+#endif
 
 	/*
 	 * Convert fields to host representation.
