@@ -57,12 +57,14 @@ on
 .Xr pci 4
 and
 .Xr agp 4
-busses.  For example, enabling write-combining allows bus-write transfers
-to be combined into a larger transfer before bursting over the bus.  This
-can increase performance of write operations 2.5 times or more. 
+busses.
+For example, enabling write-combining allows bus-write transfers
+to be combined into a larger transfer before bursting over the bus.
+This can increase performance of write operations 2.5 times or more.
 .Pp
 .Fa mtrrp
-is a pointer to one or more mtrr structures, as described below. The
+is a pointer to one or more mtrr structures, as described below.
+The
 .Fa n
 argument is a pointer to an integer containing the number of structures
 pointed to by
@@ -135,19 +137,20 @@ entry is valid
 .Pp
 The
 .Em owner
-member the PID of the user process which claims the mapping.  It is
-only valid if MTRR_PRIVATE is set in
+member is the PID of the user process which claims the mapping.
+It is only valid if MTRR_PRIVATE is set in
 .Em flags .
 To clear/reset MTRRs, use a
 .Em flags
 field without MTRR_VALID set.
 .Sh RETURN VALUES
-Upon successful completion zero is returned, otherwise -1 is returned
+Upon successful completion zero is returned, otherwise \-1 is returned
 on failure, and the global variable
 .Va errno
-is set to indicate the error. The integer value pointed to by
+is set to indicate the error.
+The integer value pointed to by
 .Fa n
-will be container the number of successfully processed mtrr structures
+will contain the number of successfully processed mtrr structures
 in both cases.
 .Sh ERRORS
 .Bl -tag -width [EINVAL]
