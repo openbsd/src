@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.19 2004/07/20 20:20:52 art Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.20 2004/11/10 11:00:00 grange Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -200,7 +200,12 @@ timeout_del(struct timeout *to)
 int
 timeout_hardclock_update(void)
 {
+	int ret;
+
 	mtx_enter(&timeout_mutex);
+
+	ticks++;
+
 	MOVEBUCKET(0, ticks);
 	if (MASKWHEEL(0, ticks) == 0) {
 		MOVEBUCKET(1, ticks);
@@ -210,8 +215,10 @@ timeout_hardclock_update(void)
 				MOVEBUCKET(3, ticks);
 		}
 	}
+	ret = !CIRCQ_EMPTY(&timeout_todo);
 	mtx_leave(&timeout_mutex);
-	return (!CIRCQ_EMPTY(&timeout_todo));
+
+	return (ret);
 }
 
 void

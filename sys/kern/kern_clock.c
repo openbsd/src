@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.51 2004/09/15 17:48:52 grange Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.52 2004/11/10 11:00:00 grange Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -271,7 +271,6 @@ hardclock(struct clockframe *frame)
 	 * if we are still adjusting the time (see adjtime()),
 	 * ``tickdelta'' may also be added in.
 	 */
-	ticks++;
 
 	delta = tick;
 
