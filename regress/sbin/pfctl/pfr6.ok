@@ -1,5 +1,4 @@
 # create
-1 table added.
 # pass add -n 1.1.1.1 !1.1.1.2 10.10 !10.11 ::1 !::2
 6/6 addresses added (dummy).
 # pass add -nf-
@@ -146,5 +145,5 @@ A !fe80:fe80::/32
 1/2 addresses match.
 # kill
 1 table deleted.
-ktable: 26 allocated, 26 released, 0 leaked.
+ktable: 27 allocated, 27 released, 0 leaked.
 kentry: 95 allocated, 95 released, 0 leaked.

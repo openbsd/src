@@ -1,5 +1,4 @@
 # create
-1 table added.
 # pass replace -n ::/0 ::/1 ::/2 ::/3 ::/4 ::/5 ::/6 ::/7
 8 addresses added (dummy).
 # pass replace -nf-
@@ -815,5 +814,5 @@ D  ::/119
    ::/127
 # kill
 1 table deleted.
-ktable: 81 allocated, 81 released, 0 leaked.
+ktable: 82 allocated, 82 released, 0 leaked.
 kentry: 640 allocated, 640 released, 0 leaked.

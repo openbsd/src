@@ -9,7 +9,7 @@ KT_R=0`vmstat -m | awk '/pfrktable/{print $5}'`
 KE_A=0`vmstat -m | awk '/pfrkentry/{print $3}'`
 KE_R=0`vmstat -m | awk '/pfrkentry/{print $5}'`
 echo "# create"
-pfctl -t regress -Tc 2>&1 || exit 1
+echo "table <regress> persist" | pfctl -f - 2>&1 || exit 1
 for LINE in `sed -e "s/ /_/g" $1`; do 
 	RESULT=`echo $LINE | awk '{split($1,a,"_");print a[1]}'`
 	case $RESULT in
