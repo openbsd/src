@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.69 2001/06/27 04:49:40 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.70 2001/06/27 07:02:45 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -88,7 +88,6 @@
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
-#include <vm/vm_pageout.h>
 
 #include <uvm/uvm.h>
 
