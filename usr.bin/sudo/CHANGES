@@ -1775,4 +1775,6 @@ Sudo 1.6.8p6 released.
 
 560) Better PAM error handling and messages.
 
+561) Fixed setting of $USER when env_reset is enabled.
+
 Sudo 1.6.8p7 released.

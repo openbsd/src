@@ -69,7 +69,7 @@ static const char rcsid[] = "$Sudo: env.c,v 1.42 2004/09/08 15:57:49 millert Exp
 #undef DID_LOGNAME
 #define DID_LOGNAME	0x10
 #undef DID_USER
-#define DID_USER    	0x12
+#define DID_USER    	0x20
 
 #undef VNULL
 #define	VNULL	(VOID *)NULL
