@@ -1,4 +1,4 @@
-/*	$OpenBSD: sid.h,v 1.6 2000/04/26 03:08:42 bjc Exp $	*/
+/*	$OpenBSD: sid.h,v 1.7 2001/01/30 17:06:47 hugh Exp $	*/
 /*	$NetBSD: sid.h,v 1.12 1999/12/11 17:55:13 ragge Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 
 /*
  * Board-Type (?_BTYP_?) and Sub-Type (?_STYP_?) are synonima.
+ * Michael Kukat changed this 01/27/2001, STYP is relly a subtype now.
  * other synonima are:
  */
 #define cpudata	    vax_cpudata
@@ -156,11 +157,16 @@
 #define VAX_TYP_NVAX	19
 #define VAX_TYP_V13	19
  
-#define VAX_BTYP_69D	0x13000001	/* VAX 4000 model 500 */
-#define VAX_BTYP_1301	0x13000001	/* VAX 4000 model 100 */
+#define VAX_BTYP_680	0x13000001	/* VAX 4000 model [45]00 */
+#define VAX_STYP_675	0x0000000c	/* VAX 4000 model 400 */
+#define VAX_STYP_680	0x00000006	/* VAX 4000 model 500 */
 #define VAX_BTYP_1302	0x13000002
-#define VAX_BTYP_1303	0x13000003
-#define VAX_BTYP_49	0x13000004	/* MicroVAX 3100 model 90 */
+#define VAX_BTYP_1303	0x13000003	/* Cheetah machines */
+#define VAX_STYP_50	0x00000008	/* KA50 Cheetah, unknown model */
+#define VAX_STYP_51	0x00000009	/* MicroVAX 3100 model 90 / 95 */
+#define VAX_STYP_52	0x0000000a	/* VAX 4000 model 100 */
+#define VAX_STYP_53	0x0000000b	/* VAX 4000 model 105A */
+#define VAX_BTYP_49	0x13000004	/* VaxStation 4000 model 90 */
 
 /*
  * SOC chip series (1991)
