@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 1999/11/09 14:30:39 art Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 2000/07/14 14:28:56 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.37 1996/11/20 18:57:22 gwr Exp $	*/
 
 /*-
@@ -82,6 +82,13 @@ configure()
 	swapgeneric();
 	swapconf();
 	dumpconf();
+	
+	/*
+	 * Now that device autoconfiguration is finished,
+	 * we can safely enable interrupts.
+	 */
+	printf("enabling interrupts\n");
+	(void)spl0();
 	cold = 0;
 }
 
