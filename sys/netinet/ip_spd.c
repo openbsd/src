@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.49 2004/06/21 20:44:54 itojun Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.50 2004/06/21 23:50:37 tholo Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -386,7 +386,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		if (ipo->ipo_last_searched <= ipsec_last_added)	{
 			/* "Touch" the entry. */
 			if (dignore == 0)
-				ipo->ipo_last_searched = time.tv_sec;
+				ipo->ipo_last_searched = time_second;
 
 			/* Find an appropriate SA from the existing ones. */
 			ipo->ipo_tdb =
@@ -500,7 +500,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		/* Find whether there exists an appropriate SA. */
 		if (ipo->ipo_last_searched <= ipsec_last_added)	{
 			if (dignore == 0)
-				ipo->ipo_last_searched = time.tv_sec;
+				ipo->ipo_last_searched = time_second;
 
 			ipo->ipo_tdb =
 			    gettdbbysrc(dignore ? &ssrc : &ipo->ipo_dst,
@@ -1005,7 +1005,7 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 			 */
 			if (inp->inp_ipo->ipo_last_searched <=
 			    ipsec_last_added) {
-				inp->inp_ipo->ipo_last_searched = time.tv_sec;
+				inp->inp_ipo->ipo_last_searched = time_second;
 
 				/* Do we have an SA already established ? */
 				if (gettdbbysrc(&inp->inp_ipo->ipo_dst,
@@ -1058,7 +1058,7 @@ ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
 		if (inp->inp_ipo != NULL) {
 			if (inp->inp_ipo->ipo_last_searched <=
 			    ipsec_last_added) {
-				inp->inp_ipo->ipo_last_searched = time.tv_sec;
+				inp->inp_ipo->ipo_last_searched = time_second;
 
 				/* Update, just in case. */
 				ipsec_update_policy(inp, inp->inp_ipo, af,

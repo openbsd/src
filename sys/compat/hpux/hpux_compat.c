@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.24 2003/08/15 20:32:15 tedu Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.25 2004/06/21 23:50:35 tholo Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
@@ -728,7 +728,7 @@ hpux_shmctl1(p, uap, retval, isnew)
 			shp->shm_perm.gid = sbuf.shm_perm.gid;
 			shp->shm_perm.mode = (shp->shm_perm.mode & ~0777)
 				| (sbuf.shm_perm.mode & 0777);
-			shp->shm_ctime = time.tv_sec;
+			shp->shm_ctime = time_second;
 		}
 		return (error);
 	}
@@ -1354,7 +1354,7 @@ hpux_sys_utime_6x(p, v, retval)
 		if (error)
 			return (error);
 	} else
-		tv[0] = tv[1] = time.tv_sec;
+		tv[0] = tv[1] = time_second;
 	vattr_null(&vattr);
 	vattr.va_atime.tv_sec = tv[0];
 	vattr.va_atime.tv_nsec = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_arcsubr.c,v 1.20 2004/06/21 17:20:59 tholo Exp $	*/
+/*	$OpenBSD: if_arcsubr.c,v 1.21 2004/06/21 23:50:36 tholo Exp $	*/
 /*	$NetBSD: if_arcsubr.c,v 1.8 1996/05/07 02:40:29 thorpej Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ arc_output(ifp, m0, dst, rt0)
 		}
 		if (rt->rt_flags & RTF_REJECT)
 			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time.tv_sec < rt->rt_rmx.rmx_expire)
+			    time_second < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 

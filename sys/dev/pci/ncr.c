@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.68 2003/11/07 10:16:45 jmc Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.69 2004/06/21 23:50:35 tholo Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1466,7 +1466,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.68 2003/11/07 10:16:45 jmc Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.69 2004/06/21 23:50:35 tholo Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -4788,7 +4788,7 @@ static int32_t ncr_start (struct scsi_xfer * xp)
 
 	cp->jump_ccb.l_cmd	= SCR_BO((SCR_JUMP ^ IFFALSE (DATA (cp->tag))));
 #ifdef __OpenBSD__
-	cp->tlimit		= mono_time.tv_sec + xp->timeout / 1000 + 2;
+	cp->tlimit		= time_uptime + xp->timeout / 1000 + 2;
 #else
 	cp->tlimit		= time.tv_sec + xp->timeout / 1000 + 2;
 #endif
@@ -5765,7 +5765,7 @@ static void ncr_timeout (void *arg)
 {
 	ncb_p	np = arg;
 #ifdef __OpenBSD__
-	u_long	thistime = mono_time.tv_sec;
+	u_long	thistime = time_uptime;
 #else
 	u_long	thistime = time.tv_sec;
 #endif
@@ -6090,7 +6090,7 @@ void ncr_exception (ncb_p np)
 	*/
 
 #ifdef __OpenBSD__
-	if (mono_time.tv_sec - np->regtime.tv_sec>10) {
+	if (time_uptime - np->regtime.tv_sec>10) {
 		int i;
 		np->regtime = mono_time;
 #else

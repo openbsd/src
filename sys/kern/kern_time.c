@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.41 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.42 2004/06/21 23:50:36 tholo Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ settime(struct timeval *tv)
 	 */
 	if (securelevel > 1 && timercmp(tv, &time, <)) {
 		printf("denied attempt to set clock back %ld seconds\n",
-		    time.tv_sec - tv->tv_sec);
+		    time_second - tv->tv_sec);
 		return (EPERM);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.53 2003/12/18 09:23:14 ho Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.54 2004/06/21 23:50:37 tholo Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -126,7 +126,7 @@ arptimer(arg)
 		struct rtentry *rt = la->la_rt;
 
 		nla = LIST_NEXT(la, la_list);
-		if (rt->rt_expire && rt->rt_expire <= time.tv_sec)
+		if (rt->rt_expire && rt->rt_expire <= time_second)
 			arptfree(la); /* timer has expired; clear */
 	}
 	splx(s);
@@ -155,8 +155,8 @@ arp_rtrequest(req, rt, info)
 		 * We generate expiration times from time.tv_sec
 		 * so avoid accidently creating permanent routes.
 		 */
-		if (time.tv_sec == 0) {
-			time.tv_sec++;
+		if (time_second == 0) {
+			time_second++;
 		}
 
 		timeout_set(&arptimer_to, arptimer, &arptimer_to);
@@ -207,7 +207,7 @@ arp_rtrequest(req, rt, info)
 			 * it's a "permanent" route, so that routes cloned
 			 * from it do not need their expiration time set.
 			 */
-			rt->rt_expire = time.tv_sec;
+			rt->rt_expire = time_second;
 			/*
 			 * linklayers with particular link MTU limitation.
 			 */
@@ -401,7 +401,7 @@ arpresolve(ac, rt, m, dst, desten)
 	 * Check the address family and length is valid, the address
 	 * is resolved; otherwise, try to resolve.
 	 */
-	if ((rt->rt_expire == 0 || rt->rt_expire > time.tv_sec) &&
+	if ((rt->rt_expire == 0 || rt->rt_expire > time_second) &&
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
 		bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
 		return 1;
@@ -425,13 +425,13 @@ arpresolve(ac, rt, m, dst, desten)
 		/* This should never happen. (Should it? -gwr) */
 		printf("arpresolve: unresolved and rt_expire == 0\n");
 		/* Set expiration time to now (expired). */
-		rt->rt_expire = time.tv_sec;
+		rt->rt_expire = time_second;
 	}
 #endif
 	if (rt->rt_expire) {
 		rt->rt_flags &= ~RTF_REJECT;
-		if (la->la_asked == 0 || rt->rt_expire != time.tv_sec) {
-			rt->rt_expire = time.tv_sec;
+		if (la->la_asked == 0 || rt->rt_expire != time_second) {
+			rt->rt_expire = time_second;
 			if (la->la_asked++ < arp_maxtries)
 				arprequest(&ac->ac_if,
 				    &(SIN(rt->rt_ifa->ifa_addr)->sin_addr.s_addr),
@@ -657,7 +657,7 @@ in_arpinput(m)
 		bcopy(ea->arp_sha, LLADDR(sdl),
 		    sdl->sdl_alen = sizeof(ea->arp_sha));
 		if (rt->rt_expire)
-			rt->rt_expire = time.tv_sec + arpt_keep;
+			rt->rt_expire = time_second + arpt_keep;
 		rt->rt_flags &= ~RTF_REJECT;
 		la->la_asked = 0;
 		if (la->la_hold) {

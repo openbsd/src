@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_x25subr.c,v 1.15 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: if_x25subr.c,v 1.16 2004/06/21 23:50:37 tholo Exp $	*/
 /*	$NetBSD: if_x25subr.c,v 1.13 1996/05/09 22:29:25 scottr Exp $	*/
 
 /*
@@ -170,7 +170,6 @@ x25_ifinput(m, v)
 	struct llinfo_x25 *lx = (struct llinfo_x25 *) lcp->lcd_upnext;
 	struct ifnet *ifp;
 	struct ifqueue *inq;
-	extern struct timeval time;
 	int             s, isr;
 
 	if (m == 0 || lcp->lcd_state != DATA_TRANSFER)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.46 2004/01/20 03:44:06 tedu Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.47 2004/06/21 23:50:38 tholo Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -941,7 +941,7 @@ ffs_fragextend(ip, cg, bprev, osize, nsize)
 		brelse(bp);
 		return (0);
 	}
-	cgp->cg_time = time.tv_sec;
+	cgp->cg_time = time_second;
 	bno = dtogd(fs, bprev);
 	for (i = numfrags(fs, osize); i < frags; i++)
 		if (isclr(cg_blksfree(cgp), bno + i)) {
@@ -1008,7 +1008,7 @@ ffs_alloccg(ip, cg, bpref, size)
 		brelse(bp);
 		return (0);
 	}
-	cgp->cg_time = time.tv_sec;
+	cgp->cg_time = time_second;
 	if (size == fs->fs_bsize) {
 		bno = ffs_alloccgblk(ip, bp, bpref);
 		bdwrite(bp);
@@ -1339,7 +1339,7 @@ ffs_nodealloccg(ip, cg, ipref, mode)
 		brelse(bp);
 		return (0);
 	}
-	cgp->cg_time = time.tv_sec;
+	cgp->cg_time = time_second;
 	if (ipref) {
 		ipref %= fs->fs_ipg;
 		if (isclr(cg_inosused(cgp), ipref))
@@ -1432,7 +1432,7 @@ ffs_blkfree(ip, bno, size)
 		brelse(bp);
 		return;
 	}
-	cgp->cg_time = time.tv_sec;
+	cgp->cg_time = time_second;
 	bno = dtogd(fs, bno);
 	if (size == fs->fs_bsize) {
 		blkno = fragstoblks(fs, bno);
@@ -1538,7 +1538,7 @@ ffs_freefile(struct inode *pip, ino_t ino, int mode)
 		brelse(bp);
 		return (0);
 	}
-	cgp->cg_time = time.tv_sec;
+	cgp->cg_time = time_second;
 	ino %= fs->fs_ipg;
 	if (isclr(cg_inosused(cgp), ino)) {
 		printf("dev = 0x%x, ino = %d, fs = %s\n",

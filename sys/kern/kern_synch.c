@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.57 2004/06/20 03:00:16 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.58 2004/06/21 23:50:36 tholo Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -764,6 +764,7 @@ mi_switch()
 	/*
 	 * Compute the amount of time during which the current
 	 * process was running, and add that to its total so far.
+	 * XXX -- comparing wall time with uptime here!
 	 */
 	microtime(&tv);
 #ifdef __HAVE_CPUINFO

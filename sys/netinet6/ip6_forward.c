@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.29 2004/06/21 19:26:02 mcbride Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.30 2004/06/21 23:50:37 tholo Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -115,8 +115,8 @@ ip6_forward(m, srcrt)
 	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
 		ip6stat.ip6s_cantforward++;
 		/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard) */
-		if (ip6_log_time + ip6_log_interval < time.tv_sec) {
-			ip6_log_time = time.tv_sec;
+		if (ip6_log_time + ip6_log_interval < time_second) {
+			ip6_log_time = time_second;
 			log(LOG_DEBUG,
 			    "cannot forward "
 			    "from %s to %s nxt %d received on %s\n",
@@ -289,8 +289,8 @@ ip6_forward(m, srcrt)
 		ip6stat.ip6s_badscope++;
 		in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard);
 
-		if (ip6_log_time + ip6_log_interval < time.tv_sec) {
-			ip6_log_time = time.tv_sec;
+		if (ip6_log_time + ip6_log_interval < time_second) {
+			ip6_log_time = time_second;
 			log(LOG_DEBUG,
 			    "cannot forward "
 			    "src %s, dst %s, nxt %d, rcvif %s, outif %s\n",

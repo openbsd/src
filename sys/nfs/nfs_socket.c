@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.35 2003/12/08 09:33:36 mickey Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.36 2004/06/21 23:50:38 tholo Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -911,7 +911,7 @@ tryagain:
 	TAILQ_INSERT_TAIL(&nfs_reqq, rep, r_chain);
 
 	/* Get send time for nqnfs */
-	reqtime = time.tv_sec;
+	reqtime = time_second;
 
 	/*
 	 * If backing off another request or avoiding congestion, don't
@@ -1022,8 +1022,8 @@ tryagain:
 				error == NFSERR_TRYLATER) {
 				m_freem(mrep);
 				error = 0;
-				waituntil = time.tv_sec + trylater_delay;
-				while (time.tv_sec < waituntil)
+				waituntil = time_second + trylater_delay;
+				while (time_second < waituntil)
 					(void) tsleep((caddr_t)&lbolt,
 						PSOCK, "nqnfstry", 0);
 				trylater_delay *= nfs_backoff[trylater_cnt];
@@ -1664,7 +1664,7 @@ nfs_getreq(nd, nfsd, has_header)
 
 			tvout.tv_sec = fxdr_unsigned(long, tvout.tv_sec);
 			tvout.tv_usec = fxdr_unsigned(long, tvout.tv_usec);
-			if (nuidp->nu_expire < time.tv_sec ||
+			if (nuidp->nu_expire < time_second ||
 			    nuidp->nu_timestamp.tv_sec > tvout.tv_sec ||
 			    (nuidp->nu_timestamp.tv_sec == tvout.tv_sec &&
 			     nuidp->nu_timestamp.tv_usec > tvout.tv_usec)) {

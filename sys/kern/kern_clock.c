@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.44 2004/06/13 21:49:26 niklas Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.45 2004/06/21 23:50:35 tholo Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -105,6 +105,9 @@ int	tickfix, tickfixinterval;	/* used if tick not really integral */
 static int tickfixcnt;			/* accumulated fractional error */
 
 long cp_time[CPUSTATES];
+
+volatile time_t time_second;
+volatile time_t time_uptime;
 
 volatile struct	timeval time
 	__attribute__((__aligned__(__alignof__(quad_t))));
@@ -234,6 +237,8 @@ hardclock(struct clockframe *frame)
 
 	BUMPTIME(&time, delta);
 	BUMPTIME(&mono_time, delta);
+	time_second = time.tv_sec;
+	time_uptime = mono_time.tv_sec;
 
 #ifdef CPU_CLOCKUPDATE
 	CPU_CLOCKUPDATE();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.135 2004/06/21 19:26:01 mcbride Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.136 2004/06/21 23:50:36 tholo Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -2241,11 +2241,7 @@ bridge_ipsec(int dir, int af, int hlen, struct mbuf *m)
 		if (tdb != NULL && (tdb->tdb_flags & TDBF_INVALID) == 0 &&
 		    tdb->tdb_xform != NULL) {
 			if (tdb->tdb_first_use == 0) {
-				int pri;
-
-				pri = splhigh();
-				tdb->tdb_first_use = time.tv_sec;
-				splx(pri);
+				tdb->tdb_first_use = time_second;
 
 				tv.tv_usec = 0;
 

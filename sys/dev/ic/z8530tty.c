@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.14 2003/10/03 16:44:51 miod Exp $ */
+/*	$OpenBSD: z8530tty.c,v 1.15 2004/06/21 23:50:35 tholo Exp $ */
 /*	$NetBSD: z8530tty.c,v 1.13 1996/10/16 20:42:14 gwr Exp $	*/
 
 /*
@@ -1091,8 +1091,8 @@ zsoverrun(zst, ptime, what)
 	char *what;
 {
 
-	if (*ptime != time.tv_sec) {
-		*ptime = time.tv_sec;
+	if (*ptime != time_second) {
+		*ptime = time_second;
 		log(LOG_WARNING, "%s: %s overrun\n",
 			zst->zst_dev.dv_xname, what);
 	}

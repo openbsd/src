@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.19 2004/06/13 21:49:29 niklas Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.20 2004/06/21 23:50:38 tholo Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ static void uvm_loadav(struct loadavg *);
 void
 uvm_meter()
 {
-	if ((time.tv_sec % 5) == 0)
+	if ((time_second % 5) == 0)
 		uvm_loadav(&averunnable);
 	if (proc0.p_slptime > (maxslp / 2))
 		wakeup(&proc0);

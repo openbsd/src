@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_id.c,v 1.12 2004/03/22 04:37:20 deraadt Exp $ */
+/* $OpenBSD: ip_id.c,v 1.13 2004/06/21 23:50:37 tholo Exp $ */
 
 /*
  * Copyright 1998 Niels Provos <provos@citi.umich.edu>
@@ -154,7 +154,7 @@ ip_initid(void)
 	ru_g = pmod(RU_GEN,j,RU_N);
 	ru_counter = 0;
 
-	ru_reseed = time.tv_sec + RU_OUT;
+	ru_reseed = time_second + RU_OUT;
 	ru_msb = ru_msb == 0x8000 ? 0 : 0x8000;
 }
 
@@ -163,7 +163,7 @@ ip_randomid(void)
 {
 	int i, n;
 
-	if (ru_counter >= RU_MAX || time.tv_sec > ru_reseed)
+	if (ru_counter >= RU_MAX || time_second > ru_reseed)
 		ip_initid();
 
 #if 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.17 2003/08/14 05:34:47 kevlo Exp $	*/
+/*	$OpenBSD: time.h,v 1.18 2004/06/21 23:50:38 tholo Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -169,6 +169,9 @@ struct clockinfo {
 #define TIMER_ABSTIME	0x1	/* absolute timer */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
+extern volatile time_t time_second;	/* Seconds since epoch, wall time. */
+extern volatile time_t time_uptime;	/* Seconds since reboot. */
+
 int	itimerfix(struct timeval *tv);
 int	itimerdecr(struct itimerval *itp, int usec);
 void	microtime(struct timeval *tv);

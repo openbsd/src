@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.76 2004/04/17 00:09:01 henning Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.77 2004/06/21 23:50:36 tholo Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -277,7 +277,7 @@ ether_output(ifp, m0, dst, rt0)
 		}
 		if (rt->rt_flags & RTF_REJECT)
 			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time.tv_sec < rt->rt_rmx.rmx_expire)
+			    time_second < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 

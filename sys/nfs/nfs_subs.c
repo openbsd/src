@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.44 2004/05/14 04:00:34 tedu Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.45 2004/06/21 23:50:38 tholo Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -1250,7 +1250,7 @@ nfs_loadattrcache(vpp, mdp, dposp, vaper)
 		} else
 			np->n_size = vap->va_size;
 	}
-	np->n_attrstamp = time.tv_sec;
+	np->n_attrstamp = time_second;
 	if (vaper != NULL) {
 		bcopy((caddr_t)vap, (caddr_t)vaper, sizeof(*vap));
 		if (np->n_flag & NCHG) {
@@ -1269,7 +1269,7 @@ nfs_attrtimeo (np)
 {
 	struct vnode *vp = np->n_vnode;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
-	int tenthage = (time.tv_sec - np->n_mtime) / 10;
+	int tenthage = (time_second - np->n_mtime) / 10;
 	int minto, maxto;
 
 	if (vp->v_type == VDIR) {
@@ -1302,7 +1302,7 @@ nfs_getattrcache(vp, vaper)
 	struct nfsnode *np = VTONFS(vp);
 	struct vattr *vap;
 
-	if ((time.tv_sec - np->n_attrstamp) >= nfs_attrtimeo(np)) {
+	if ((time_second - np->n_attrstamp) >= nfs_attrtimeo(np)) {
 		nfsstats.attrcache_misses++;
 		return (ENOENT);
 	}

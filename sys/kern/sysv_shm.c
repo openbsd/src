@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.43 2004/05/03 17:38:48 millert Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.44 2004/06/21 23:50:36 tholo Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ shm_delete_mapping(struct vmspace *vm, struct shmmap_state *shmmap_s)
 	size = round_page(shmseg->shm_segsz);
 	uvm_deallocate(&vm->vm_map, shmmap_s->va, size);
 	shmmap_s->shmid = -1;
-	shmseg->shm_dtime = time.tv_sec;
+	shmseg->shm_dtime = time_second;
 	if ((--shmseg->shm_nattch <= 0) &&
 	    (shmseg->shm_perm.mode & SHMSEG_REMOVED)) {
 		shm_deallocate_segment(shmseg);
@@ -286,7 +286,7 @@ sys_shmat1(struct proc *p, void *v, register_t *retval, int findremoved)
 	shmmap_s->va = attach_va;
 	shmmap_s->shmid = SCARG(uap, shmid);
 	shmseg->shm_lpid = p->p_pid;
-	shmseg->shm_atime = time.tv_sec;
+	shmseg->shm_atime = time_second;
 	shmseg->shm_nattch++;
 	*retval = attach_va;
 	return (0);
@@ -329,7 +329,7 @@ sys_shmctl(struct proc *p, void *v, register_t *retval)
 		shmseg->shm_perm.mode =
 		    (shmseg->shm_perm.mode & ~ACCESSPERMS) |
 		    (inbuf.shm_perm.mode & ACCESSPERMS);
-		shmseg->shm_ctime = time.tv_sec;
+		shmseg->shm_ctime = time_second;
 		break;
 	case IPC_RMID:
 		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_M)) != 0)
@@ -446,7 +446,7 @@ shmget_allocate_segment(struct proc *p,
 	shmseg->shm_cpid = p->p_pid;
 	shmseg->shm_lpid = shmseg->shm_nattch = 0;
 	shmseg->shm_atime = shmseg->shm_dtime = 0;
-	shmseg->shm_ctime = time.tv_sec;
+	shmseg->shm_ctime = time_second;
 	shmseg->shm_internal = shm_handle;
 
 	*retval = IXSEQ_TO_IPCID(segnum, shmseg->shm_perm);

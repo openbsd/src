@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_id.c,v 1.3 2003/12/12 06:57:12 itojun Exp $	*/
+/*	$OpenBSD: ip6_id.c,v 1.4 2004/06/21 23:50:37 tholo Exp $	*/
 /*	$NetBSD: ip6_id.c,v 1.7 2003/09/13 21:32:59 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 
@@ -210,7 +210,7 @@ initid(struct randomtab *p)
 	p->ru_g = pmod(p->ru_gen, j, p->ru_n);
 	p->ru_counter = 0;
 
-	p->ru_reseed = time.tv_sec + p->ru_out;
+	p->ru_reseed = time_second + p->ru_out;
 	p->ru_msb = p->ru_msb ? 0 : (1U << (p->ru_bits - 1));
 }
 
@@ -219,7 +219,7 @@ randomid(struct randomtab *p)
 {
 	int i, n;
 
-	if (p->ru_counter >= p->ru_max || time.tv_sec > p->ru_reseed)
+	if (p->ru_counter >= p->ru_max || time_second > p->ru_reseed)
 		initid(p);
 
 	/* Skip a random number of ids */

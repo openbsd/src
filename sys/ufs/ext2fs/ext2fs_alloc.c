@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_alloc.c,v 1.14 2004/01/20 03:44:06 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_alloc.c,v 1.15 2004/06/21 23:50:38 tholo Exp $	*/
 /*	$NetBSD: ext2fs_alloc.c,v 1.10 2001/07/05 08:38:27 toshii Exp $	*/
 
 /*
@@ -176,8 +176,8 @@ ext2fs_inode_alloc(struct inode *pip, int mode, struct ucred *cred,
 	/*
 	 * Set up a new generation number for this inode.
 	 */
-	if (++ext2gennumber < (u_long)time.tv_sec)
-		ext2gennumber = time.tv_sec;
+	if (++ext2gennumber < (u_long)time_second)
+		ext2gennumber = time_second;
 	ip->i_e2fs_gen = ext2gennumber;
 	return (0);
 noinodes:

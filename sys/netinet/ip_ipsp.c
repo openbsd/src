@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.158 2004/04/14 20:10:04 markus Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.159 2004/06/21 23:50:37 tholo Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -690,7 +690,7 @@ puttdb(struct tdb *tdbp)
 
 	tdb_count++;
 
-	ipsec_last_added = time.tv_sec;
+	ipsec_last_added = time_second;
 
 	splx(s);
 }
@@ -858,7 +858,7 @@ tdb_alloc(void)
 	TAILQ_INIT(&tdbp->tdb_policy_head);
 
 	/* Record establishment time. */
-	tdbp->tdb_established = time.tv_sec;
+	tdbp->tdb_established = time_second;
 	tdbp->tdb_epoch = kernfs_epoch - 1;
 
 	/* Initialize timeouts. */
@@ -919,7 +919,7 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer, size_t buflen)
 	    "\tEstablished %d seconds ago\n"
 	    "\tSource = %s",
 	    ntohl(tdb->tdb_spi), ipsp_address(tdb->tdb_dst), tdb->tdb_sproto,
-	    time.tv_sec - tdb->tdb_established,
+	    time_second - tdb->tdb_established,
 	    ipsp_address(tdb->tdb_src));
 	l = strlen(buffer);
 
@@ -931,10 +931,10 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer, size_t buflen)
 	snprintf(buffer + l, buflen - l, "\n");
 	l += strlen(buffer + l);
 
-	if (tdb->tdb_mtu && tdb->tdb_mtutimeout > time.tv_sec) {
+	if (tdb->tdb_mtu && tdb->tdb_mtutimeout > time_second) {
 		snprintf(buffer + l, buflen - l,
 		    "\tMTU: %d, expires in %llu seconds\n",
-		    tdb->tdb_mtu, tdb->tdb_mtutimeout - time.tv_sec);
+		    tdb->tdb_mtu, tdb->tdb_mtutimeout - time_second);
 		l += strlen(buffer + l);
 	}
 
@@ -1053,14 +1053,14 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer, size_t buflen)
 	if (tdb->tdb_last_used) {
 		snprintf(buffer + l, buflen - l,
 		    "\tLast used %llu seconds ago\n",
-		    time.tv_sec - tdb->tdb_last_used);
+		    time_second - tdb->tdb_last_used);
 		l += strlen(buffer + l);
 	}
 
 	if (tdb->tdb_last_marked) {
 		snprintf(buffer + l, buflen - l,
 		    "\tLast marked/unmarked %llu seconds ago\n",
-		    time.tv_sec - tdb->tdb_last_marked);
+		    time_second - tdb->tdb_last_marked);
 		l += strlen(buffer + l);
 	}
 
@@ -1071,14 +1071,14 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer, size_t buflen)
 	if (tdb->tdb_flags & TDBF_TIMER) {
 		snprintf(buffer + l, buflen -l,
 		    "\t\tHard expiration(1) in %llu seconds\n",
-		    tdb->tdb_established + tdb->tdb_exp_timeout - time.tv_sec);
+		    tdb->tdb_established + tdb->tdb_exp_timeout - time_second);
 		l += strlen(buffer + l);
 	}
 	if (tdb->tdb_flags & TDBF_SOFT_TIMER) {
 		snprintf(buffer + l, buflen -l,
 		    "\t\tSoft expiration(1) in %llu seconds\n",
 		    tdb->tdb_established + tdb->tdb_soft_timeout -
-		    time.tv_sec);
+		    time_second);
 		l += strlen(buffer + l);
 	}
 	if (tdb->tdb_flags & TDBF_BYTES) {
@@ -1110,7 +1110,7 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer, size_t buflen)
 			snprintf(buffer + l, buflen -l,
 			    "\t\tHard expiration(2) in %llu seconds\n",
 			    (tdb->tdb_first_use + tdb->tdb_exp_first_use) -
-			    time.tv_sec);
+			    time_second);
 			l += strlen(buffer + l);
 		} else {
 			snprintf(buffer + l, buflen -l,
@@ -1126,7 +1126,7 @@ ipsp_print_tdb(struct tdb *tdb, char *buffer, size_t buflen)
 			snprintf(buffer + l, buflen -l,
 			    "\t\tSoft expiration(2) in %llu seconds\n",
 			    (tdb->tdb_first_use + tdb->tdb_soft_first_use) -
-			    time.tv_sec);
+			    time_second);
 			l += strlen(buffer + l);
 		} else {
 			snprintf(buffer + l, buflen -l,
@@ -1336,7 +1336,7 @@ ipsp_skipcrypto_mark(struct tdb_ident *tdbi)
 	tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
 	if (tdb != NULL) {
 		tdb->tdb_flags |= TDBF_SKIPCRYPTO;
-		tdb->tdb_last_marked = time.tv_sec;
+		tdb->tdb_last_marked = time_second;
 	}
 	splx(s);
 }
@@ -1351,7 +1351,7 @@ ipsp_skipcrypto_unmark(struct tdb_ident *tdbi)
 	tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
 	if (tdb != NULL) {
 		tdb->tdb_flags &= ~TDBF_SKIPCRYPTO;
-		tdb->tdb_last_marked = time.tv_sec;
+		tdb->tdb_last_marked = time_second;
 	}
 	splx(s);
 }

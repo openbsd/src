@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.29 2004/06/21 23:11:39 markus Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.30 2004/06/21 23:50:37 tholo Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -131,11 +131,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	 * Register first use if applicable, setup relevant expiration timer.
 	 */
 	if (tdb->tdb_first_use == 0) {
-		int pri;
-
-		pri = splhigh();
-		tdb->tdb_first_use = time.tv_sec;
-		splx(pri);
+		tdb->tdb_first_use = time_second;
 
 		tv.tv_usec = 0;
 
@@ -338,7 +334,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	struct tdb_ident *tdbi;
 	struct m_tag *mtag;
 
-	tdb->tdb_last_used = time.tv_sec;
+	tdb->tdb_last_used = time_second;
 
 	if ((tdb->tdb_flags & TDBF_UDPENCAP) != 0) {
 		struct mbuf *mi;
@@ -535,7 +531,7 @@ ipsec_adjust_mtu(struct mbuf *m, u_int32_t mtu)
 
 		mtu -= adjust;
 		tdbp->tdb_mtu = mtu;
-		tdbp->tdb_mtutimeout = time.tv_sec + ip_mtudisc_timeout;
+		tdbp->tdb_mtutimeout = time_second + ip_mtudisc_timeout;
 	}
 
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inode.h,v 1.25 2004/01/20 03:44:06 tedu Exp $	*/
+/*	$OpenBSD: inode.h,v 1.26 2004/06/21 23:50:38 tholo Exp $	*/
 /*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
 
 /*
@@ -274,7 +274,7 @@ struct indir {
 			(ip)->i_modrev++;				\
 		}							\
 		if ((ip)->i_flag & IN_CHANGE)				\
-			(ip)->i_ffs_ctime = time.tv_sec;		\
+			(ip)->i_ffs_ctime = time_second;		\
 		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);	\
 	}								\
 }
@@ -289,7 +289,7 @@ struct indir {
 			(ip)->i_modrev++;				\
 		}							\
 		if ((ip)->i_flag & IN_CHANGE)				\
-			(ip)->i_e2fs_ctime = time.tv_sec;		\
+			(ip)->i_e2fs_ctime = time_second;		\
 		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);	\
 	}								\
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.38 2003/08/15 20:32:20 tedu Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.39 2004/06/21 23:50:38 tholo Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -360,7 +360,7 @@ sys_nfssvc(p, v, retval)
 				    nuidp->nu_cr.cr_ngroups = NGROUPS;
 				nuidp->nu_cr.cr_ref = 1;
 				nuidp->nu_timestamp = nsd->nsd_timestamp;
-				nuidp->nu_expire = time.tv_sec + nsd->nsd_ttl;
+				nuidp->nu_expire = time_second + nsd->nsd_ttl;
 				/*
 				 * and save the session key in nu_key.
 				 */
@@ -1124,7 +1124,7 @@ nfs_getnickauth(nmp, cred, auth_str, auth_len, verf_str, verf_len)
 		if (nuidp->nu_cr.cr_uid == cred->cr_uid)
 			break;
 	}
-	if (!nuidp || nuidp->nu_expire < time.tv_sec)
+	if (!nuidp || nuidp->nu_expire < time_second)
 		return (EACCES);
 
 	/*
@@ -1189,7 +1189,7 @@ nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
 
 		ktvout.tv_sec = fxdr_unsigned(long, ktvout.tv_sec);
 		ktvout.tv_usec = fxdr_unsigned(long, ktvout.tv_usec);
-		deltasec = time.tv_sec - ktvout.tv_sec;
+		deltasec = time_second - ktvout.tv_sec;
 		if (deltasec < 0)
 			deltasec = -deltasec;
 		/*
@@ -1209,7 +1209,7 @@ nfs_savenickauth(nmp, cred, len, key, mdp, dposp, mrep)
 			}
 			nuidp->nu_flag = 0;
 			nuidp->nu_cr.cr_uid = cred->cr_uid;
-			nuidp->nu_expire = time.tv_sec + NFS_KERBTTL;
+			nuidp->nu_expire = time_second + NFS_KERBTTL;
 			nuidp->nu_timestamp = ktvout;
 			nuidp->nu_nickname = nick;
 			bcopy(key, nuidp->nu_key, sizeof (NFSKERBKEY_T));

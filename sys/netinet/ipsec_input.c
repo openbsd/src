@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.73 2004/06/21 20:44:54 itojun Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.74 2004/06/21 23:50:37 tholo Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -242,11 +242,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	
 	/* Register first use, setup expiration timer. */
 	if (tdbp->tdb_first_use == 0) {
-		int pri;
-
-		pri = splhigh();
-		tdbp->tdb_first_use = time.tv_sec;
-		splx(pri);
+		tdbp->tdb_first_use = time_second;
 
 		tv.tv_usec = 0;
 
@@ -295,7 +291,7 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 	af = tdbp->tdb_dst.sa.sa_family;
 	sproto = tdbp->tdb_sproto;
 
-	tdbp->tdb_last_used = time.tv_sec;
+	tdbp->tdb_last_used = time_second;
 
 	/* Sanity check */
 	if (m == NULL) {
@@ -868,7 +864,7 @@ ipsec_common_ctlinput(int cmd, struct sockaddr *sa, void *v, int proto)
 
 			/* Store adjusted MTU in tdb */
 			tdbp->tdb_mtu = mtu;
-			tdbp->tdb_mtutimeout = time.tv_sec +
+			tdbp->tdb_mtutimeout = time_second +
 			    ip_mtudisc_timeout;
 		}
 		splx(s);

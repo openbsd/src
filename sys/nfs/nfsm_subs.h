@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsm_subs.h,v 1.13 2003/06/02 23:28:20 millert Exp $	*/
+/*	$OpenBSD: nfsm_subs.h,v 1.14 2004/06/21 23:50:38 tholo Exp $	*/
 /*	$NetBSD: nfsm_subs.h,v 1.10 1996/03/20 21:59:56 fvdl Exp $	*/
 
 /*
@@ -259,7 +259,7 @@
 			*tl = nfs_false;					\
 		}								\
 		if ((a)->va_atime.tv_sec != VNOVAL) {				\
-			if ((a)->va_atime.tv_sec != time.tv_sec) {		\
+			if ((a)->va_atime.tv_sec != time_second) {		\
 				nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);	\
 				*tl++ = txdr_unsigned(NFSV3SATTRTIME_TOCLIENT);	\
 				txdr_nfsv3time(&(a)->va_atime, tl);		\
@@ -272,7 +272,7 @@
 			*tl = txdr_unsigned(NFSV3SATTRTIME_DONTCHANGE);		\
 		}								\
 		if ((a)->va_mtime.tv_sec != VNOVAL) {				\
-			if ((a)->va_mtime.tv_sec != time.tv_sec) {		\
+			if ((a)->va_mtime.tv_sec != time_second) {		\
 				nfsm_build(tl, u_int32_t *, 3 * NFSX_UNSIGNED);	\
 				*tl++ = txdr_unsigned(NFSV3SATTRTIME_TOCLIENT);	\
 				txdr_nfsv3time(&(a)->va_mtime, tl);		\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_alloc.c,v 1.10 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: lfs_alloc.c,v 1.11 2004/06/21 23:50:38 tholo Exp $	*/
 /*	$NetBSD: lfs_alloc.c,v 1.4 1996/03/25 12:53:37 pk Exp $	*/
 
 /*
@@ -129,8 +129,8 @@ lfs_valloc(v)
 	ip->i_din.ffs_din.di_inumber = new_ino;
 
 	/* Set a new generation number for this inode. */
-	if (++nextgennumber < (u_long)time.tv_sec)
-		nextgennumber = time.tv_sec;
+	if (++nextgennumber < (u_long)time_second)
+		nextgennumber = time_second;
 	ip->i_ffs_gen = nextgennumber;
 
 	/* Insert into the inode hash table. */

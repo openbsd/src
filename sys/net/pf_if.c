@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.13 2004/05/19 17:50:52 dhartmei Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.14 2004/06/21 23:50:36 tholo Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -565,7 +565,7 @@ pfi_if_create(const char *name, struct pfi_kif *q, int flags)
 	RB_INIT(&p->pfik_ext_gwy);
 	p->pfik_flags = flags;
 	p->pfik_parent = q;
-	p->pfik_tzero = time.tv_sec;
+	p->pfik_tzero = time_second;
 
 	RB_INSERT(pfi_ifhead, &pfi_ifs, p);
 	if (q != NULL) {
@@ -705,7 +705,7 @@ pfi_clr_istats(const char *name, int *nzero, int flags)
 {
 	struct pfi_kif	*p;
 	int		 n = 0, s;
-	long		 tzero = time.tv_sec;
+	long		 tzero = time_second;
 
 	s = splsoftnet();
 	ACCEPT_FLAGS(PFI_FLAG_GROUP|PFI_FLAG_INSTANCE);

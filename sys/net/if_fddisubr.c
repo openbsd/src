@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.37 2004/04/17 00:09:01 henning Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.38 2004/06/21 23:50:36 tholo Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -196,7 +196,7 @@ fddi_output(ifp, m0, dst, rt0)
 		}
 		if (rt->rt_flags & RTF_REJECT)
 			if (rt->rt_rmx.rmx_expire == 0 ||
-			    time.tv_sec < rt->rt_rmx.rmx_expire)
+			    time_second < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 

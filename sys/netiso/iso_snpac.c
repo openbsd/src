@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso_snpac.c,v 1.10 2003/12/10 07:22:44 itojun Exp $	*/
+/*	$OpenBSD: iso_snpac.c,v 1.11 2004/06/21 23:50:37 tholo Exp $	*/
 /*	$NetBSD: iso_snpac.c,v 1.13 1996/05/07 02:45:16 thorpej Exp $	*/
 
 /*-
@@ -90,8 +90,6 @@ SOFTWARE.
 
 int             iso_systype = SNPA_ES;	/* default to be an ES */
 extern short    esis_holding_time, esis_config_time, esis_esconfig_time;
-extern struct timeval time;
-extern int      hz;
 
 LIST_HEAD(, llinfo_llc) llinfo_llc;
 
@@ -478,7 +476,7 @@ add:
 	}
 	if ((lc = (struct llinfo_llc *) rt->rt_llinfo) == 0)
 		panic("snpac_rtrequest");
-	rt->rt_rmx.rmx_expire = ht + time.tv_sec;
+	rt->rt_rmx.rmx_expire = ht + time_second;
 	lc->lc_flags = SNPA_VALID | type;
 	if ((type & SNPA_IS) && !(iso_systype & SNPA_IS))
 		snpac_logdefis(rt);
@@ -633,7 +631,7 @@ snpac_age(v)
 		nlc = lc->lc_list.le_next;
 		if (lc->lc_flags & SNPA_VALID) {
 			rt = lc->lc_rt;
-			if (rt->rt_rmx.rmx_expire && rt->rt_rmx.rmx_expire < time.tv_sec)
+			if (rt->rt_rmx.rmx_expire && rt->rt_rmx.rmx_expire < time_second)
 				snpac_free(lc);
 		}
 	}

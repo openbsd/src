@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.33 2004/06/04 08:06:04 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.34 2004/06/21 23:50:38 tholo Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ ext2fs_mount(mp, path, data, ndp, p)
 	if (fs->e2fs_fmod != 0) {	/* XXX */
 		fs->e2fs_fmod = 0;
 		if (fs->e2fs.e2fs_state == 0)
-			fs->e2fs.e2fs_wtime = time.tv_sec;
+			fs->e2fs.e2fs_wtime = time_second;
 		else
 			printf("%s: file system not clean; please fsck(8)\n",
 				mp->mnt_stat.f_mntfromname);
@@ -812,7 +812,7 @@ ext2fs_sync(mp, waitfor, cred, p)
 	 */
 	if (fs->e2fs_fmod != 0) {
 		fs->e2fs_fmod = 0;
-		fs->e2fs.e2fs_wtime = time.tv_sec;
+		fs->e2fs.e2fs_wtime = time_second;
 		if ((error = ext2fs_cgupdate(ump, waitfor)))
 			allerror = error;
 	}
@@ -924,8 +924,8 @@ ext2fs_vget(mp, ino, vpp)
 	 * already have one. This should only happen on old filesystems.
 	 */
 	if (ip->i_e2fs_gen == 0) {
-		if (++ext2gennumber < (u_long)time.tv_sec)
-			ext2gennumber = time.tv_sec;
+		if (++ext2gennumber < (u_long)time_second)
+			ext2gennumber = time_second;
 		ip->i_e2fs_gen = ext2gennumber;
 		if ((vp->v_mount->mnt_flag & MNT_RDONLY) == 0)
 			ip->i_flag |= IN_MODIFIED;

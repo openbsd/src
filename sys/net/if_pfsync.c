@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.34 2004/06/04 22:25:09 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.35 2004/06/21 23:50:36 tholo Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -37,6 +37,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/timeout.h>
+#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -99,9 +100,6 @@ void	pfsync_bulkfail(void *);
 
 int	pfsync_sync_ok;
 extern int ifqmaxlen;
-extern struct timeval time;
-extern struct timeval mono_time;
-extern int hz;
 
 void
 pfsyncattach(int npfsync)
@@ -209,8 +207,8 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 	pf_state_peer_ntoh(&sp->dst, &st->dst);
 
 	bcopy(&sp->rt_addr, &st->rt_addr, sizeof(st->rt_addr));
-	st->creation = ntohl(sp->creation) + time.tv_sec;
-	st->expire = ntohl(sp->expire) + time.tv_sec;
+	st->creation = ntohl(sp->creation) + time_second;
+	st->expire = ntohl(sp->expire) + time_second;
 
 	st->af = sp->af;
 	st->proto = sp->proto;
@@ -452,7 +450,7 @@ pfsync_input(struct mbuf *m, ...)
 			}
 			pf_state_peer_ntoh(&sp->src, &st->src);
 			pf_state_peer_ntoh(&sp->dst, &st->dst);
-			st->expire = ntohl(sp->expire) + time.tv_sec;
+			st->expire = ntohl(sp->expire) + time_second;
 			st->timeout = sp->timeout;
 		}
 		if (stale && sc->sc_mbuf != NULL)
@@ -576,7 +574,7 @@ pfsync_input(struct mbuf *m, ...)
 			}
 			pf_state_peer_ntoh(&up->src, &st->src);
 			pf_state_peer_ntoh(&up->dst, &st->dst);
-			st->expire = ntohl(up->expire) + time.tv_sec;
+			st->expire = ntohl(up->expire) + time_second;
 			st->timeout = up->timeout;
 		}
 		if ((update_requested || stale) && sc->sc_mbuf)
@@ -629,7 +627,7 @@ pfsync_input(struct mbuf *m, ...)
 			key.creatorid = rup->creatorid;
 
 			if (key.id == 0 && key.creatorid == 0) {
-				sc->sc_ureq_received = mono_time.tv_sec;
+				sc->sc_ureq_received = time_uptime;
 				if (pf_status.debug >= PF_DEBUG_MISC)
 					printf("pfsync: received "
 					    "bulk update request\n");
@@ -669,7 +667,7 @@ pfsync_input(struct mbuf *m, ...)
 				    "update start\n");
 			break;
 		case PFSYNC_BUS_END:
-			if (mono_time.tv_sec - ntohl(bus->endtime) >=
+			if (time_uptime - ntohl(bus->endtime) >=
 			    sc->sc_ureq_sent) {
 				/* that's it, we're happy */
 				sc->sc_ureq_sent = 0;
@@ -809,7 +807,7 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			imo->imo_multicast_loop = 0;
 
 			/* Request a full state table update. */
-			sc->sc_ureq_sent = mono_time.tv_sec;
+			sc->sc_ureq_sent = time_uptime;
 #if NCARP > 0
 			if (pfsync_sync_ok)
 				carp_suppress_preempt++;
@@ -990,9 +988,9 @@ pfsync_pack_state(u_int8_t action, struct pf_state *st, int compress)
 		}
 	}
 
-	secs = time.tv_sec;
+	secs = time_second;
 
-	st->pfsync_time = mono_time.tv_sec;
+	st->pfsync_time = time_uptime;
 	TAILQ_REMOVE(&state_updates, st, u.s.entry_updates);
 	TAILQ_INSERT_TAIL(&state_updates, st, u.s.entry_updates);
 
@@ -1210,7 +1208,7 @@ pfsync_send_bus(struct pfsync_softc *sc, u_int8_t status)
 		bus = sc->sc_statep.b;
 		bus->creatorid = pf_status.hostid;
 		bus->status = status;
-		bus->endtime = htonl(mono_time.tv_sec - sc->sc_ureq_received);
+		bus->endtime = htonl(time_uptime - sc->sc_ureq_received);
 		pfsync_sendout(sc);
 	}
 }
@@ -1244,7 +1242,7 @@ pfsync_bulk_update(void *v)
 			/* send an update and move to end of list */
 			if (!state->sync_flags)
 				pfsync_pack_state(PFSYNC_ACT_UPD, state, 0);
-			state->pfsync_time = mono_time.tv_sec;
+			state->pfsync_time = time_uptime;
 			TAILQ_REMOVE(&state_updates, state, u.s.entry_updates);
 			TAILQ_INSERT_TAIL(&state_updates, state,
 			    u.s.entry_updates);

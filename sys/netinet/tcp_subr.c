@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.81 2004/06/08 19:47:24 markus Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.82 2004/06/21 23:50:37 tholo Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -1128,7 +1128,7 @@ tcp_rndiss_init()
 {
 	get_random_bytes(tcp_rndiss_sbox, sizeof(tcp_rndiss_sbox));
 
-	tcp_rndiss_reseed = time.tv_sec + TCP_RNDISS_OUT;
+	tcp_rndiss_reseed = time_second + TCP_RNDISS_OUT;
 	tcp_rndiss_msb = tcp_rndiss_msb == 0x8000 ? 0 : 0x8000;
 	tcp_rndiss_cnt = 0;
 }
@@ -1137,7 +1137,7 @@ tcp_seq
 tcp_rndiss_next()
 {
         if (tcp_rndiss_cnt >= TCP_RNDISS_MAX ||
-	    time.tv_sec > tcp_rndiss_reseed)
+	    time_second > tcp_rndiss_reseed)
                 tcp_rndiss_init();
 
 	/* (arc4random() & 0x7fff) ensures a 32768 byte gap between ISS */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pk_acct.c,v 1.6 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: pk_acct.c,v 1.7 2004/06/21 23:50:37 tholo Exp $	*/
 /*	$NetBSD: pk_acct.c,v 1.9 1996/02/13 22:05:11 christos Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ pk_acct (lcp)
 	if (sa -> x25_opts.op_flags & X25_REVERSE_CHARGE)
 		acbuf.x25acct_revcharge = 1;
 	acbuf.x25acct_stime = lcp -> lcd_stime;
-	acbuf.x25acct_etime = time.tv_sec - acbuf.x25acct_stime;
+	acbuf.x25acct_etime = time_second - acbuf.x25acct_stime;
 	acbuf.x25acct_uid = curproc -> p_cred -> p_ruid;
 	acbuf.x25acct_psize = sa -> x25_opts.op_psize;
 	acbuf.x25acct_net = sa -> x25_net;

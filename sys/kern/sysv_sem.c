@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_sem.c,v 1.29 2004/05/03 17:38:48 millert Exp $	*/
+/*	$OpenBSD: sysv_sem.c,v 1.30 2004/06/21 23:50:36 tholo Exp $	*/
 /*	$NetBSD: sysv_sem.c,v 1.26 1996/02/09 19:00:25 christos Exp $	*/
 
 /*
@@ -296,7 +296,7 @@ sys___semctl(struct proc *p, void *v, register_t *retval)
 		semaptr->sem_perm.gid = sbuf.sem_perm.gid;
 		semaptr->sem_perm.mode = (semaptr->sem_perm.mode & ~0777) |
 		    (sbuf.sem_perm.mode & 0777);
-		semaptr->sem_ctime = time.tv_sec;
+		semaptr->sem_ctime = time_second;
 		break;
 
 	case IPC_STAT:
@@ -475,7 +475,7 @@ sys_semget(struct proc *p, void *v, register_t *retval)
 		    (semseqs[semid] + 1) & 0x7fff;
 		semaptr_new->sem_nsems = nsems;
 		semaptr_new->sem_otime = 0;
-		semaptr_new->sem_ctime = time.tv_sec;
+		semaptr_new->sem_ctime = time_second;
 		sema[semid] = semaptr_new;
 		semtot += nsems;
 	} else {

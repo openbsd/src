@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.22 2004/01/15 17:51:42 miod Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.23 2004/06/21 23:50:35 tholo Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -781,7 +781,7 @@ ncr53c9x_scsi_cmd(xs)
 			return (TRY_AGAIN_LATER);
 		}
 		bzero(li, sizeof(*li));
-		li->last_used = time.tv_sec;
+		li->last_used = time_second;
 		li->lun = lun;
 		s = splbio();
 		LIST_INSERT_HEAD(&ti->luns, li, link);
@@ -927,7 +927,7 @@ ncr53c9x_sched(sc)
 			if (lun < NCR_NLUN)
 				ti->lun[lun] = li;
 		}
-		li->last_used = time.tv_sec;
+		li->last_used = time_second;
 		if (!tag) {
 			/* Try to issue this as an un-tagged command */
 			if (!li->untagged)
@@ -2787,7 +2787,7 @@ ncr53c9x_watch(arg)
 	struct ncr53c9x_linfo *li;
 	int t, s;
 	/* Delete any structures that have not been used in 10min. */
-	time_t old = time.tv_sec - (10*60);
+	time_t old = time_second - (10*60);
 
 	s = splbio();
 	for (t=0; t<NCR_NTARG; t++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_bio.c,v 1.10 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: lfs_bio.c,v 1.11 2004/06/21 23:50:38 tholo Exp $	*/
 /*	$NetBSD: lfs_bio.c,v 1.5 1996/02/09 22:28:49 christos Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ lfs_bwrite(v)
 		++locked_queue_count;
 		bp->b_flags |= B_LOCKED;
 		TAILQ_INSERT_TAIL(&bdirties, bp, b_synclist);
-		bp->b_synctime = time.tv_sec + 30;
+		bp->b_synctime = time_second + 30;
 		s = splbio();
 		if (bdirties.tqh_first == bp) {
 			if (timeout_triggered(&wakeup_timeout))

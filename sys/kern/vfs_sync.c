@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.25 2003/09/01 18:06:03 henning Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.26 2004/06/21 23:50:36 tholo Exp $  */
 
 /*
  *  Portions of this code are:
@@ -147,7 +147,7 @@ sched_sync(p)
 	syncerproc = curproc;
 
 	for (;;) {
-		starttime = time.tv_sec;
+		starttime = time_second;
 
 		/*
 		 * Push files whose dirty time has expired.
@@ -222,7 +222,7 @@ sched_sync(p)
 		 * matter as we are just trying to generally pace the
 		 * filesystem activity.
 		 */
-		if (time.tv_sec == starttime)
+		if (time_second == starttime)
 			tsleep(&lbolt, PPAUSE, "syncer", 0);
 	}
 }

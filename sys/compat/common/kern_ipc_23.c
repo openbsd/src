@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ipc_23.c,v 1.3 2002/12/17 23:11:31 millert Exp $	*/
+/*	$OpenBSD: kern_ipc_23.c,v 1.4 2004/06/21 23:50:35 tholo Exp $	*/
 
 /*
  * Implementation of SVID semaphores
@@ -182,7 +182,7 @@ compat_23_sys_msgctl(p, v, retval)
 		msqptr->msg_perm.mode = (msqptr->msg_perm.mode & ~0777) |
 		    (omsqbuf.msg_perm.mode & 0777);
 		msqptr->msg_qbytes = omsqbuf.msg_qbytes;
-		msqptr->msg_ctime = time.tv_sec;
+		msqptr->msg_ctime = time_second;
 		break;
 
 	case IPC_STAT:
@@ -258,7 +258,7 @@ compat_23_sys_shmctl(p, v, retval)
 		shmseg->shm_perm.mode =
 		    (shmseg->shm_perm.mode & ~ACCESSPERMS) |
 		    (oinbuf.shm_perm.mode & ACCESSPERMS);
-		shmseg->shm_ctime = time.tv_sec;
+		shmseg->shm_ctime = time_second;
 		break;
 	case IPC_RMID:
 		if ((error = ipcperm(cred, &shmseg->shm_perm, IPC_M)) != 0)
@@ -347,7 +347,7 @@ compat_23_sys___semctl(p, v, retval)
 		semaptr->sem_perm.gid = osbuf.sem_perm.gid;
 		semaptr->sem_perm.mode = (semaptr->sem_perm.mode & ~0777) |
 		    (osbuf.sem_perm.mode & 0777);
-		semaptr->sem_ctime = time.tv_sec;
+		semaptr->sem_ctime = time_second;
 		break;
 
 	case IPC_STAT:

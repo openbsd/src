@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.h,v 1.21 2003/10/22 04:45:54 jmc Exp $	*/
+/*	$OpenBSD: nfs.h,v 1.22 2004/06/21 23:50:37 tholo Exp $	*/
 /*	$NetBSD: nfs.h,v 1.10.4.1 1996/05/27 11:23:56 fvdl Exp $	*/
 
 /*
@@ -126,9 +126,9 @@
 #if 0 /* replaced by nfs_attrtimeo() in nfs_subs.c */
 #define	NFS_ATTRTIMEO(np) \
 	((((np)->n_flag & NMODIFIED) || \
-	 (time.tv_sec - (np)->n_mtime) / 10 < NFS_MINATTRTIMO) ? NFS_MINATTRTIMO : \
-	 ((time.tv_sec - (np)->n_mtime) / 10 > NFS_MAXATTRTIMO ? NFS_MAXATTRTIMO : \
-	  (time.tv_sec - (np)->n_mtime) / 10))
+	 (time_second - (np)->n_mtime) / 10 < NFS_MINATTRTIMO) ? NFS_MINATTRTIMO : \
+	 ((time_second - (np)->n_mtime) / 10 > NFS_MAXATTRTIMO ? NFS_MAXATTRTIMO : \
+	  (time_second - (np)->n_mtime) / 10))
 #endif
 
 /*

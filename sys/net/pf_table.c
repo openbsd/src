@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.56 2004/06/11 05:21:20 mcbride Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.57 2004/06/21 23:50:37 tholo Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -240,7 +240,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	struct pfr_kentry	*p, *q;
 	struct pfr_addr		 ad;
 	int			 i, rv, s, xadd = 0;
-	long			 tzero = time.tv_sec;
+	long			 tzero = time_second;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_FEEDBACK);
 	if (pfr_validate_table(tbl, 0, flags & PFR_FLAG_USERIOCTL))
@@ -407,7 +407,7 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	struct pfr_kentry	*p, *q;
 	struct pfr_addr		 ad;
 	int			 i, rv, s, xadd = 0, xdel = 0, xchange = 0;
-	long			 tzero = time.tv_sec;
+	long			 tzero = time_second;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_FEEDBACK);
 	if (pfr_validate_table(tbl, 0, flags & PFR_FLAG_USERIOCTL))
@@ -595,7 +595,7 @@ pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 	struct pfr_walktree	 w;
 	struct pfr_kentryworkq	 workq;
 	int			 rv, s;
-	long			 tzero = time.tv_sec;
+	long			 tzero = time_second;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC); /* XXX PFR_FLAG_CLSTATS disabled */
 	if (pfr_validate_table(tbl, 0, 0))
@@ -1115,7 +1115,7 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 	struct pfr_ktableworkq	 addq, changeq;
 	struct pfr_ktable	*p, *q, *r, key;
 	int			 i, rv, s, xadd = 0;
-	long			 tzero = time.tv_sec;
+	long			 tzero = time_second;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY);
 	SLIST_INIT(&addq);
@@ -1267,7 +1267,7 @@ pfr_get_tstats(struct pfr_table *filter, struct pfr_tstats *tbl, int *size,
 	struct pfr_ktable	*p;
 	struct pfr_ktableworkq	 workq;
 	int			 s, n, nn;
-	long			 tzero = time.tv_sec;
+	long			 tzero = time_second;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC|PFR_FLAG_ALLRSETS);
 					/* XXX PFR_FLAG_CLSTATS disabled */
@@ -1315,7 +1315,7 @@ pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 	struct pfr_ktableworkq	 workq;
 	struct pfr_ktable	*p, key;
 	int			 i, s, xzero = 0;
-	long			 tzero = time.tv_sec;
+	long			 tzero = time_second;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY+PFR_FLAG_ADDRSTOO);
 	SLIST_INIT(&workq);
@@ -1568,7 +1568,7 @@ pfr_ina_commit(struct pfr_table *trs, u_int32_t ticket, int *nadd,
 	struct pfr_ktableworkq	 workq;
 	struct pf_ruleset	*rs;
 	int			 s, xadd = 0, xchange = 0;
-	long			 tzero = time.tv_sec;
+	long			 tzero = time_second;
 
 	ACCEPT_FLAGS(PFR_FLAG_ATOMIC+PFR_FLAG_DUMMY);
 	rs = pf_find_ruleset(trs->pfrt_anchor);
@@ -1977,7 +1977,7 @@ pfr_attach_table(struct pf_ruleset *rs, char *name)
 		strlcpy(tbl.pfrt_anchor, ac->name, sizeof(tbl.pfrt_anchor));
 	kt = pfr_lookup_table(&tbl);
 	if (kt == NULL) {
-		kt = pfr_create_ktable(&tbl, time.tv_sec, 1);
+		kt = pfr_create_ktable(&tbl, time_second, 1);
 		if (kt == NULL)
 			return (NULL);
 		if (ac != NULL) {

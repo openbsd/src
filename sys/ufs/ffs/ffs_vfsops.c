@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.65 2004/06/04 08:06:05 tedu Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.66 2004/06/21 23:50:38 tholo Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -1340,7 +1340,7 @@ ffs_sbupdate(mp, waitfor)
 	bp = getblk(mp->um_devvp, SBOFF >> (fs->fs_fshift - fs->fs_fsbtodb),
 		    (int)fs->fs_sbsize, 0, 0);
 	fs->fs_fmod = 0;
-	fs->fs_time = time.tv_sec;
+	fs->fs_time = time_second;
 	bcopy((caddr_t)fs, bp->b_data, (u_int)fs->fs_sbsize);
 	/* Restore compatibility to old file systems.		   XXX */
 	dfs = (struct fs *)bp->b_data;				/* XXX */

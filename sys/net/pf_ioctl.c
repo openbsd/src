@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.126 2004/06/14 20:53:27 cedric Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.127 2004/06/21 23:50:36 tholo Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1047,9 +1047,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EEXIST;
 		else {
 			pf_status.running = 1;
-			pf_status.since = time.tv_sec;
+			pf_status.since = time_second;
 			if (pf_status.stateid == 0) {
-				pf_status.stateid = time.tv_sec;
+				pf_status.stateid = time_second;
 				pf_status.stateid = pf_status.stateid << 32;
 			}
 			DPFPRINTF(PF_DEBUG_MISC, ("pf: started\n"));
@@ -1061,7 +1061,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENOENT;
 		else {
 			pf_status.running = 0;
-			pf_status.since = time.tv_sec;
+			pf_status.since = time_second;
 			DPFPRINTF(PF_DEBUG_MISC, ("pf: stopped\n"));
 		}
 		break;
@@ -1551,7 +1551,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		state->nat_rule.ptr = NULL;
 		state->anchor.ptr = NULL;
 		state->rt_kif = NULL;
-		state->creation = time.tv_sec;
+		state->creation = time_second;
 		state->pfsync_time = 0;
 		state->packets[0] = state->packets[1] = 0;
 		state->bytes[0] = state->bytes[1] = 0;
@@ -1590,8 +1590,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		    -1 : state->anchor.ptr->nr;
 		splx(s);
 		ps->state.expire = pf_state_expires(state);
-		if (ps->state.expire > time.tv_sec)
-			ps->state.expire -= time.tv_sec;
+		if (ps->state.expire > time_second)
+			ps->state.expire -= time_second;
 		else
 			ps->state.expire = 0;
 		break;
@@ -1619,7 +1619,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		TAILQ_FOREACH(kif, &pfi_statehead, pfik_w_states)
 			RB_FOREACH(state, pf_state_tree_ext_gwy,
 			    &kif->pfik_ext_gwy) {
-				int	secs = time.tv_sec;
+				int	secs = time_second;
 
 				if ((nr+1) * sizeof(*p) > (unsigned)ps->ps_len)
 					break;
@@ -2671,7 +2671,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		s = splsoftnet();
 		p = psn->psn_src_nodes;
 		RB_FOREACH(n, pf_src_tree, &tree_src_tracking) {
-			int	secs = time.tv_sec;
+			int	secs = time_second;
 
 			if ((nr + 1) * sizeof(*p) > (unsigned)psn->psn_len)
 				break;

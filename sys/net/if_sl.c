@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.27 2004/04/25 18:50:01 henning Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.28 2004/06/21 23:50:36 tholo Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -758,15 +758,15 @@ slinput(c, tp)
 			 * this one is within the time limit.
 			 */
 			if (sc->sc_abortcount &&
-			    time.tv_sec >= sc->sc_starttime + ABT_WINDOW)
+			    time_second >= sc->sc_starttime + ABT_WINDOW)
 				sc->sc_abortcount = 0;
 			/*
 			 * If we see an abort after "idle" time, count it;
 			 * record when the first abort escape arrived.
 			 */
-			if (time.tv_sec >= sc->sc_lasttime + ABT_IDLE) {
+			if (time_second >= sc->sc_lasttime + ABT_IDLE) {
 				if (++sc->sc_abortcount == 1)
-					sc->sc_starttime = time.tv_sec;
+					sc->sc_starttime = time_second;
 				if (sc->sc_abortcount >= ABT_COUNT) {
 					slclose(tp);
 					return;
@@ -774,7 +774,7 @@ slinput(c, tp)
 			}
 		} else
 			sc->sc_abortcount = 0;
-		sc->sc_lasttime = time.tv_sec;
+		sc->sc_lasttime = time_second;
 	}
 
 	switch (c) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc90cx6.c,v 1.8 2004/05/26 19:56:31 brad Exp $ */
+/*	$OpenBSD: smc90cx6.c,v 1.9 2004/06/21 23:50:35 tholo Exp $ */
 /*	$NetBSD: smc90cx6.c,v 1.17 1996/05/07 01:43:18 thorpej Exp $ */
 
 /*
@@ -1064,7 +1064,7 @@ bahintr(sc)
 		 * time if necessary.
 		 */
 
-		newsec = time.tv_sec;
+		newsec = time_second;
 		if (newsec - sc->sc_recontime > 2 * sc->sc_reconcount) {
 			sc->sc_recontime = newsec;
 			sc->sc_reconcount = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.165 2004/06/21 19:26:01 mcbride Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.166 2004/06/21 23:50:37 tholo Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -618,7 +618,7 @@ sendit:
 		/* Check if we are allowed to fragment */
 		if (ip_mtudisc && (ip->ip_off & htons(IP_DF)) && tdb->tdb_mtu &&
 		    ntohs(ip->ip_len) > tdb->tdb_mtu &&
-		    tdb->tdb_mtutimeout > time.tv_sec) {
+		    tdb->tdb_mtutimeout > time_second) {
 			struct rtentry *rt = NULL;
 			int rt_mtucloned = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eon.c,v 1.23 2004/01/03 14:08:54 espie Exp $	*/
+/*	$OpenBSD: if_eon.c,v 1.24 2004/06/21 23:50:37 tholo Exp $	*/
 /*	$NetBSD: if_eon.c,v 1.15 1996/05/09 22:29:37 scottr Exp $	*/
 
 /*-
@@ -104,8 +104,6 @@ SOFTWARE.
 #include <netiso/eonvar.h>
 
 #include <sys/stdarg.h>
-
-extern struct timeval time;
 
 #define EOK 0
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.88 2004/06/10 14:22:54 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.89 2004/06/21 23:50:36 tholo Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -176,7 +176,7 @@ void
 pf_purge_expired_fragments(void)
 {
 	struct pf_fragment	*frag;
-	u_int32_t		 expire = time.tv_sec -
+	u_int32_t		 expire = time_second -
 				    pf_default_rule.timeout[PFTM_FRAG];
 
 	while ((frag = TAILQ_LAST(&pf_fragqueue, pf_fragqueue)) != NULL) {
@@ -287,7 +287,7 @@ pf_find_fragment(struct ip *ip, struct pf_frag_tree *tree)
 	frag = RB_FIND(pf_frag_tree, tree, &key);
 	if (frag != NULL) {
 		/* XXX Are we sure we want to update the timeout? */
-		frag->fr_timeout = time.tv_sec;
+		frag->fr_timeout = time_second;
 		if (BUFFER_FRAGMENTS(frag)) {
 			TAILQ_REMOVE(&pf_fragqueue, frag, frag_next);
 			TAILQ_INSERT_HEAD(&pf_fragqueue, frag, frag_next);
@@ -352,7 +352,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment **frag,
 		(*frag)->fr_dst = frent->fr_ip->ip_dst;
 		(*frag)->fr_p = frent->fr_ip->ip_p;
 		(*frag)->fr_id = frent->fr_ip->ip_id;
-		(*frag)->fr_timeout = time.tv_sec;
+		(*frag)->fr_timeout = time_second;
 		LIST_INIT(&(*frag)->fr_queue);
 
 		RB_INSERT(pf_frag_tree, &pf_frag_tree, *frag);
@@ -554,7 +554,7 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment **frag, int mff,
 		(*frag)->fr_dst = h->ip_dst;
 		(*frag)->fr_p = h->ip_p;
 		(*frag)->fr_id = h->ip_id;
-		(*frag)->fr_timeout = time.tv_sec;
+		(*frag)->fr_timeout = time_second;
 
 		cur->fr_off = off;
 		cur->fr_end = max;
@@ -1539,8 +1539,8 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 #define TS_MAX_IDLE	(24*24*60*60)
 #define TS_MAX_CONN	(12*24*60*60)	/* XXX remove when better tsecr check */
 	if (src->scrub && (src->scrub->pfss_flags & PFSS_PAWS) &&
-	    (mono_time.tv_sec - src->scrub->pfss_last.tv_sec > TS_MAX_IDLE ||
-	    time.tv_sec - state->creation > TS_MAX_CONN))  {
+	    (time_uptime - src->scrub->pfss_last.tv_sec > TS_MAX_IDLE ||
+	    time_second - state->creation > TS_MAX_CONN))  {
 		if (pf_status.debug >= PF_DEBUG_MISC) {
 			DPFPRINTF(("src idled out of PAWS\n"));
 			pf_print_state(state);
@@ -1550,7 +1550,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 		    | PFSS_PAWS_IDLED;
 	}
 	if (dst->scrub && (dst->scrub->pfss_flags & PFSS_PAWS) &&
-	    mono_time.tv_sec - dst->scrub->pfss_last.tv_sec > TS_MAX_IDLE) {
+	    time_uptime - dst->scrub->pfss_last.tv_sec > TS_MAX_IDLE) {
 		if (pf_status.debug >= PF_DEBUG_MISC) {
 			DPFPRINTF(("dst idled out of PAWS\n"));
 			pf_print_state(state);
