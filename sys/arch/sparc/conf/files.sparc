@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.25 1998/12/29 09:33:35 deraadt Exp $
+#	$OpenBSD: files.sparc,v 1.26 1999/02/01 13:09:51 jason Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -287,6 +287,14 @@ attach mtty at magma
 device mbpp
 attach mbpp at magma
 file    arch/sparc/dev/magma.c          magma | mtty | mbpp needs-flag
+
+device spif {}
+attach spif at sbus
+device stty
+attach stty at spif
+device sbpp
+attach sbpp at spif
+file	arch/sparc/dev/spif.c		spif | stty | sbpp needs-flag
 
 device bpp {}
 attach bpp at sbus
