@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2004/06/23 00:21:49 tom Exp $
+#	$OpenBSD: Makefile,v 1.2 2004/08/06 21:33:37 deraadt Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -27,7 +27,7 @@ DPADD=	${LIBSA} ${LIBZ}
 ${PROG}: $(OBJS) $(DPADD)
 	$(LD) $(LDFLAGS) -o ${PROG} $(OBJS) $(LDADD)
 	@$(SIZE) ${PROG}
-	@if [ -x ${.OBJDIR}/${PROG} ]; then \
+	if [ -x ${.OBJDIR}/${PROG} ]; then \
 		objcopy -O binary ${PROG} ${.OBJDIR}/.tmp;\
 		mv -f ${.OBJDIR}/.tmp ${.OBJDIR}/${PROG}; \
 		ls -l ${.OBJDIR}/${PROG}; \
