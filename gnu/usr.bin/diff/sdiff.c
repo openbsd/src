@@ -84,16 +84,14 @@ static void usage PARAMS((void));
 
 /* this lossage until the gnu libc conquers the universe */
 #if HAVE_TMPNAM
-char *private_tempnam()
+char *private_tempnam(int *fd)
 {
 	char *p;
-	int fd;
 
 	p = strdup("/tmp/sdiff.XXXXXXXXXX");
-	fd = mkstemp(p);
-	if (fd < 0)
+	*fd = mkstemp(p);
+	if (*fd < 0)
 	  return NULL;
-	close(fd);
 	return p;
 }
 #else
@@ -946,13 +944,19 @@ edit (left, lenl, right, lenr, outfile)
 	case 'q':
 	  return 0;
 	case 'e':
-	  if (! tmpname && ! (tmpname = private_tempnam ()))
-	    perror_fatal ("temporary file name");
-
-	  tmpmade = 1;
-
 	  {
-	    FILE *tmp = ck_fopen (tmpname, "w+");
+	    FILE *tmp;
+	    int fd == -1;
+
+	    tmpmade = 1;
+
+	    if (! tmpname && ! (tmpname = private_tempnam (&fd)))
+	      perror_fatal ("temporary file name");
+
+	    if (fd != -1)
+	      tmp = fdopen (fd, "w+");
+	    else
+	      tmp = fopen (tmpnam, "w+");
 
 	    if (cmd1 == 'l' || cmd1 == 'b')
 	      lf_copy (left, lenl, tmp);
