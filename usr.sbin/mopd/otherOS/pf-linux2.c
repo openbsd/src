@@ -14,8 +14,8 @@
  * Supports:
  *	Linux SOCK_PACKET
  *	
- * $Author: maja $
- * $Revision: 1.1 $
+ * $Author: bitblt $
+ * $Revision: 1.2 $
  *
  *
  * Modified for use with the linux-mopd port by Karl Maftoum 
@@ -153,7 +153,8 @@ int s;
 char *interface;
 u_char *addr;
 {
-  strcpy(ifr.ifr_name, interface);
+  strncpy(ifr.ifr_name, interface, sizeof (ifr.ifr_name) -1);
+  ifr.ifr_name[sizeof(ifr.ifr_name)] = 0;
   ifr.ifr_addr.sa_family = AF_INET;
   if (ioctl(s, SIOCGIFHWADDR, &ifr) < 0) {
     perror("SIOCGIFHWADDR");
@@ -176,7 +177,8 @@ u_char *addr;
 {
   int sock;
 
-  strcpy(ifr.ifr_name, interface);
+  strncpy(ifr.ifr_name, interface, sizeof (ifr.ifr_name) - 1);
+  ifr.ifr_name[sizeof(ifr.ifr_name)] = 0;
 
   ifr.ifr_addr.sa_family = AF_UNSPEC;
   bcopy((char *)addr, ifr.ifr_addr.sa_data, 6);
@@ -212,7 +214,8 @@ u_char *addr;
 {
   int sock;
 
-  strcpy(ifr.ifr_name, interface);
+  strncpy(ifr.ifr_name, interface, sizeof (ifr.ifr_name) - 1);
+  ifr.ifr_name[sizeof(ifr.ifr_name)] = 0;
 
   ifr.ifr_addr.sa_family = AF_UNSPEC;
   bcopy((char *)addr, ifr.ifr_addr.sa_data, 6);
