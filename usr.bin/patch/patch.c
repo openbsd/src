@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.21 2003/07/21 14:32:21 deraadt Exp $	*/
+/*	$OpenBSD: patch.c,v 1.22 2003/07/21 21:01:45 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: patch.c,v 1.21 2003/07/21 14:32:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: patch.c,v 1.22 2003/07/21 21:01:45 otto Exp $";
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -838,11 +838,8 @@ dump_line(LINENUM line)
 {
 	char	*s, R_newline = '\n';
 
-	s = ifetch(line, 0);
-	if (s == NULL)
-		return;
 	/* Note: string is not null terminated. */
-	for (; putc(*s, ofp) != R_newline; s++)
+	for (s=ifetch(line, 0); putc(*s, ofp) != R_newline; s++)
 		;
 }
 
@@ -874,8 +871,6 @@ patch_match(LINENUM base, LINENUM offset, LINENUM fuzz)
 bool
 similar(char *a, char *b, int len)
 {
-	if (a == NULL || b == NULL)
-		return FALSE;
 	while (len) {
 		if (isspace(*b)) {	/* whitespace (or \n) to match? */
 			if (!isspace(*a))	/* no corresponding whitespace? */

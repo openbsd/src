@@ -1,7 +1,7 @@
-/*	$OpenBSD: inp.c,v 1.14 2003/07/21 14:32:21 deraadt Exp $	*/
+/*	$OpenBSD: inp.c,v 1.15 2003/07/21 21:01:45 otto Exp $	*/
 
 #ifndef lint
-static char     rcsid[] = "$OpenBSD: inp.c,v 1.14 2003/07/21 14:32:21 deraadt Exp $";
+static char     rcsid[] = "$OpenBSD: inp.c,v 1.15 2003/07/21 21:01:45 otto Exp $";
 #endif				/* not lint */
 
 #include "EXTERN.h"
@@ -320,7 +320,7 @@ ifetch(LINENUM line, int whichbuf)
 {
 	if (line < 1 || line > input_lines) {
 		say("No such line %ld in input file, ignoring\n", line);
-		return NULL;
+		return "";
 	}
 	if (using_plan_a)
 		return i_ptr[line];
