@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.6 2000/03/23 04:12:48 rahnds Exp $	*/
+/*	$OpenBSD: clock.c,v 1.7 2000/03/31 04:14:18 rahnds Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <sys/kernel.h>
 
 #include <machine/pio.h>
+#include <machine/intr.h>
 
 #if 0
 #include <powerpc/pci/mpc106reg.h>
@@ -185,6 +186,8 @@ decr_intr(frame)
 	 */
 	if (!ticks_per_intr)
 		return;
+
+	intrcnt[PPC_CLK_IRQ]++;
 
 	/*
 	 * Based on the actual time delay since the last decrementer reload,
