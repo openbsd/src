@@ -447,3 +447,4 @@
 ./usr/mipsel-unknown-openbsd2.7/bin
 ./usr/mipsel-unknown-openbsd2.7/lib
 ./usr/mipsel-unknown-openbsd2.7/lib/ldscripts
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/urio.ph

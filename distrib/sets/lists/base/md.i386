@@ -829,6 +829,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/ucomvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/uhcireg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/uhcivar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/usb.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/usb_mem.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/usb/usb_port.ph
