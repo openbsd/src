@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.25 2001/05/05 23:25:43 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.26 2001/05/06 00:45:50 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.61 1996/05/03 19:42:35 christos Exp $	*/
 
 /*-
@@ -283,8 +283,7 @@ setredzone(pte, vaddr)
 
 /*
  * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
+ * Both addresses are assumed to reside in the Sysmap.
  */
 void
 pagemove(from, to, size)

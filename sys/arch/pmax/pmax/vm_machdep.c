@@ -244,8 +244,7 @@ cpu_coredump(p, vp, cred, chdr)
 
 /*
  * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
+ * Both addresses are assumed to reside in the Sysmap.
  */
 void
 pagemove(from, to, size)

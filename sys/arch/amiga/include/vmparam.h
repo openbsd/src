@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.10 2001/05/05 20:56:33 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.11 2001/05/06 00:45:48 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.16 1997/07/12 16:18:36 perry Exp $	*/
 
 /*
@@ -134,17 +134,6 @@
  * by the page replacement algorithm.  Basically this says that if you are
  * swapped in you deserve some resources.  We protect the last SAFERSS
  * pages against paging and will just swap you out rather than paging you.
- * Note that each process has at least UPAGES+CLSIZE pages which are not
- * paged anyways (this is currently 8+2=10 pages or 5k bytes), so this
- * number just means a swapped in process is given around 25k bytes.
- * Just for fun: current memory prices are 4600$ a megabyte on VAX (4/22/81),
- * so we loan each swapped in process memory worth 100$, or just admit
- * that we don't consider it worthwhile and swap it out to disk which costs
- * $30/mb or about $0.75.
- * Update: memory prices have changed recently (9/96). At the current
- * value of $6 per megabyte, we lend each swapped in process memory worth
- * $0.15, or just admit that we don't consider it worthwhile and swap it out
- * to disk which costs $0.20/MB, or just under half a cent.
  */
 #define	SAFERSS		4		/* nominal ``small'' resident set size
 					   protected against replacement */

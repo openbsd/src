@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.20 2001/04/13 03:07:29 art Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.21 2001/05/06 00:45:45 art Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -312,8 +312,7 @@ cpu_swapout(p)
 
 /*
  * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to have valid page table pages
- * and size must be a multiple of CLSIZE.
+ * Both addresses are assumed to have valid page table pages.
  *
  * Note that since all kernel page table pages are pre-allocated
  * and mapped in, we can use the Virtual Page Table.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.23 2001/05/05 21:26:39 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.24 2001/05/06 00:45:54 art Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -500,7 +500,6 @@ badpaddr(caddr_t pa, int size)
 
 /*
  * Move pages from one kernel virtual address to another.
- * Size must be a multiple of CLSIZE.
  */
 void
 pagemove(caddr_t from, caddr_t to, size_t size)

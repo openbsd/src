@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.18 2001/05/05 20:56:35 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.19 2001/05/06 00:45:48 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.47 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -222,8 +222,7 @@ cpu_coredump(p, vp, cred, chdr)
 
 /*
  * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap,
- * and size must be a multiple of CLSIZE.
+ * Both addresses are assumed to reside in the Sysmap.
  */
 void
 pagemove(from, to, size)
