@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.6 2003/07/15 05:01:47 jason Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.7 2004/08/19 21:47:54 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -147,9 +147,6 @@ com_puc_attach2(sc)
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
 
-	timeout_set(&sc->sc_dtr_tmo, com_raisedtr, sc);
-	timeout_set(&sc->sc_diag_tmo, comdiag, sc);
-
 	/*
 	 * Probe for all known forms of UART.
 	 */
@@ -260,6 +257,11 @@ com_puc_attach2(sc)
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		sc->sc_fifolen = 32;
 		break;
+	case COM_UART_TI16750:
+		printf(": ti16750, 64 byte fifo\n");
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		sc->sc_fifolen = 64;
+		break;
 #if NPCCOM > 0
 #ifdef i386
 	case COM_UART_XR16850:
@@ -270,11 +272,34 @@ com_puc_attach2(sc)
 #endif
 #endif
 	default:
-		panic("comattach: bad fifo type");
+		panic("com_puc_attach2: bad fifo type");
 	}
 
 	/* clear and disable fifo */
 	bus_space_write_1(iot, ioh, com_fifo, FIFO_RCV_RST | FIFO_XMT_RST);
 	(void)bus_space_read_1(iot, ioh, com_data);
 	bus_space_write_1(iot, ioh, com_fifo, 0);
+
+	sc->sc_mcr = 0;
+	bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
+
+	timeout_set(&sc->sc_diag_tmo, comdiag, sc);
+	timeout_set(&sc->sc_dtr_tmo, com_raisedtr, sc);
+#if NCOM > 0
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	sc->sc_si = softintr_establish(IPL_TTY, comsoft, sc);
+	if (sc->sc_si == NULL)
+		panic("%s: can't establish soft interrupt.",
+		    sc->sc_dev.dv_xname);
+#else
+	timeout_set(&sc->sc_comsoft_tmo, comsoft, sc);
+#endif
+#endif
+
+	/*
+	 * If there are no enable/disable functions, assume the device
+	 * is always enabled.
+	 */
+	if (!sc->enable)
+		sc->enabled = 1;
 }
