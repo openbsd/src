@@ -1,3 +1,4 @@
+# $OpenBSD
 # $NetBSD
 #
 # Copyright (c) 1994 Christopher G. Demetriou

@@ -1,4 +1,6 @@
 #!/bin/csh -f
+#	$OpenBSD: checkflist,v 1.3 2000/03/01 22:10:08 todd Exp $
+
 
 if (! $?DESTDIR) then
 	echo DESTDIR must be set

@@ -1,3 +1,4 @@
+/*	$OpenBSD: rdsetroot.c,v 1.3 2000/03/01 22:10:04 todd Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -26,7 +27,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rdsetroot.c,v 1.2 1997/11/26 02:32:25 deraadt Exp $
  */
 
 /*

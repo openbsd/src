@@ -1,4 +1,5 @@
 #
+# $OpenBSD: mini_xx.list,v 1.4 2000/03/01 22:10:10 todd Exp $
 # $NetBSD: mini_xx.list,v 1.1.6.1 1996/08/29 03:14:53 gwr Exp $
 # Build -static versions of some programs.
 #

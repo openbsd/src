@@ -1,3 +1,4 @@
+#	$OpenBSD: RunList.awk,v 1.3 2000/03/01 22:10:09 todd Exp $
 #	$NetBSD: RunList.awk,v 1.1.1.1.6.1 1996/08/29 03:10:58 gwr Exp $
 
 BEGIN {

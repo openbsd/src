@@ -1,4 +1,6 @@
 #!/bin/csh -f
+#	$OpenBSD: makeflist,v 1.5 2000/03/01 22:10:08 todd Exp $
+
 
 set arch=`machine`
 set listsdir=`pwd`/lists

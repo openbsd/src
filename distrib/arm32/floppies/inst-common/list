@@ -1,3 +1,4 @@
+# $OpenBSD: list,v 1.3 2000/03/01 22:09:59 todd Exp $
 # $NetBSD: list,v 1.1 1996/05/16 19:59:08 mark Exp $
 
 # copy the crunched binary, link to it, and kill it

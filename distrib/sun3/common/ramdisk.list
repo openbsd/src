@@ -1,3 +1,4 @@
+#	$OpenBSD: ramdisk.list,v 1.2 2000/03/01 22:10:10 todd Exp $
 #	$NetBSD: ramdisk.list,v 1.1.1.1 1995/10/08 23:07:46 gwr Exp $
 
 # copy the MAKEDEV script and make some devices

@@ -1,4 +1,5 @@
 #!/bin/sh
+# $OpenBSD: mr.etc.rc,v 1.2 2000/03/01 22:10:10 todd Exp $
 # $NetBSD: mr.etc.rc,v 1.2 1995/10/13 16:38:27 gwr Exp $
 
 # This is run by /sbin/init as:

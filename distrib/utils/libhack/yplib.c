@@ -1,3 +1,4 @@
+/*	$OpenBSD: yplib.c,v 1.2 2000/03/01 22:10:12 todd Exp $	*/
 /*	$NetBSD: yplib.c,v 1.1.1.1 1995/10/08 23:08:48 gwr Exp $	*/
 
 /*

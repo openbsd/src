@@ -1,5 +1,6 @@
 #!/bin/sh
 #
+#	$OpenBSD: install.sh,v 1.6 2000/03/01 22:10:01 todd Exp $
 #	$NetBSD: install.sh,v 1.2 1995/08/25 19:17:28 leo Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou

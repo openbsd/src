@@ -1,4 +1,5 @@
 #
+#	$OpenBSD: mr.profile,v 1.5 2000/03/01 22:10:10 todd Exp $
 #	$NetBSD: mr.profile,v 1.2.6.1 1996/08/29 03:21:13 gwr Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe

@@ -1,5 +1,6 @@
 #!/bin/sh
 #
+# $OpenBSD: upgrade.sh,v 1.2 2000/03/01 22:10:00 todd Exp $
 # $NetBSD: upgrade.sh,v 1.1 1996/05/16 19:59:21 mark Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou

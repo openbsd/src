@@ -1,5 +1,6 @@
 # 
 # etc/protocols (ramdisk version)
+# $OpenBSD: rd.protocols,v 1.2 2000/03/01 22:10:11 todd Exp $
 # $NetBSD: rd.protocols,v 1.1.1.1 1995/10/08 23:07:49 gwr Exp $
 #
 ip	0	IP

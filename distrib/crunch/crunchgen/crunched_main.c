@@ -1,3 +1,5 @@
+/*	$OpenBSD: crunched_main.c,v 1.2 2000/03/01 22:10:03 todd Exp $	*/
+
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.

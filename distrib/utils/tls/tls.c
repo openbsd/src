@@ -1,3 +1,4 @@
+/*	$OpenBSD: tls.c,v 1.2 2000/03/01 22:10:13 todd Exp $	*/
 /*	$NetBSD: tls.c,v 1.1.1.1 1995/10/08 23:08:47 gwr Exp $	*/
 
 /*

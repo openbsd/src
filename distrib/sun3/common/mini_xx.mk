@@ -1,4 +1,5 @@
 #
+# $OpenBSD: mini_xx.mk,v 1.3 2000/03/01 22:10:10 todd Exp $
 # $NetBSD: mini_xx.mk,v 1.1.6.1 1996/08/29 03:17:15 gwr Exp $
 # Hacks for re-linking some programs -static
 #

@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.2 2000/03/01 22:10:15 todd Exp $
 #	$NetBSD: Makefile,v 1.1 1995/10/01 21:22:45 ragge Exp $
 #
 #	Create TK50 files and tapes.

@@ -1,4 +1,5 @@
 # .sshrc
+# $OpenBSD: rd.sshrc,v 1.2 2000/03/01 22:10:11 todd Exp $
 # $NetBSD: rd.sshrc,v 1.2 1995/10/13 16:38:34 gwr Exp $
 path /sbin:/bin
 run cat /.welcome

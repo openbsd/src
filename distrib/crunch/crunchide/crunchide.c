@@ -1,3 +1,5 @@
+/*	$OpenBSD: crunchide.c,v 1.12 2000/03/01 22:10:03 todd Exp $	*/
+
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.

@@ -1,3 +1,4 @@
+/*	$OpenBSD: inject.c,v 1.4 2000/03/01 22:10:07 todd Exp $	*/
 /*
  * Copyright (c) 1995 Matthias Pfaller.
  * All rights reserved.
@@ -27,7 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: inject.c,v 1.3 1997/11/26 02:32:27 deraadt Exp $
  */
 
 #include <stdio.h>

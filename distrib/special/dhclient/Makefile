@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile,v 1.3 2000/03/01 22:10:09 todd Exp $
+
 .include <bsd.own.mk>
 
 .PATH:	${.CURDIR}/../../../usr.sbin/dhcp/dhclient

@@ -1,5 +1,6 @@
 #!/bin/sh
 #
+# $OpenBSD: inst.sh,v 1.2 2000/03/01 22:09:59 todd Exp $
 # $NetBSD: inst.sh,v 1.1 1996/05/16 19:59:05 mark Exp $
 #
 # Copyright (c) 1995-1996 Mark Brinicombe
@@ -39,7 +40,7 @@
 # by people installing NetBSD.
 #
 
-VERSION=`echo '$Revision: 1.1 $' | cut '-d ' -f2`
+VERSION=`echo '$Revision: 1.2 $' | cut '-d ' -f2`
 
 Load_tape()
 {

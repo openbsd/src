@@ -1,3 +1,4 @@
+/*	$OpenBSD: go.c,v 1.4 2000/03/01 22:10:07 todd Exp $	*/
 /*
  * Copyright (c) 1995 Matthias Pfaller.
  * All rights reserved.
@@ -27,7 +28,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: go.c,v 1.3 1996/09/05 21:26:53 deraadt Exp $
  */
 
 #include <sys/reboot.h>

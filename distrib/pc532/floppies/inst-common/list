@@ -1,4 +1,4 @@
-#	$Id: list,v 1.6 1996/09/05 21:26:56 deraadt Exp $
+#	$OpenBSD: list,v 1.7 2000/03/01 22:10:07 todd Exp $
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV

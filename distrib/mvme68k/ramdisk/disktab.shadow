@@ -1,4 +1,5 @@
 #
+#	$OpenBSD: disktab.shadow,v 1.2 2000/03/01 22:10:05 todd Exp $
 #	$NetBSD: disktab.shadow,v 1.1.1.1 1996/05/19 19:43:39 leo Exp $
 #
 # Disk geometry and partition layout tables. 

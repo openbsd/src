@@ -1,4 +1,5 @@
 #!/bin/sh
+# $OpenBSD: mr.remount,v 1.2 2000/03/01 22:10:10 todd Exp $
 # $NetBSD: mr.remount,v 1.1 1995/11/01 23:53:29 gwr Exp $
 #
 # Find out what the root is mounted on,
