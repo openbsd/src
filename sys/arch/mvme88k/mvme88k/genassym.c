@@ -1,4 +1,4 @@
-/*	$OpenBSD: genassym.c,v 1.7 2001/02/01 03:38:20 smurph Exp $	*/
+/*	$OpenBSD: genassym.c,v 1.8 2001/04/10 01:12:39 miod Exp $	*/
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,12 +32,8 @@
  * SUCH DAMAGE.
  *
  *	@(#)genassym.c	7.8 (Berkeley) 5/7/91
- *	$Id: genassym.c,v 1.7 2001/02/01 03:38:20 smurph Exp $
+ *	$Id: genassym.c,v 1.8 2001/04/10 01:12:39 miod Exp $
  */
-
-#ifndef KERNEL
-#define KERNEL
-#endif /* KERNEL */
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -50,10 +46,6 @@
 #include <machine/psl.h>
 #include <machine/vmparam.h>
 #include <sys/syscall.h>
-#include <vm/vm.h>
-#ifdef UVM
-#include <uvm/uvm_extern.h>
-#endif 
 #include <sys/user.h>
 
 #define pair(TOKEN, ELEMENT) \
@@ -65,55 +57,27 @@ main()
 {
 	register struct proc *p = (struct proc *)0;
 	struct m88100_saved_state *ss = (struct m88100_saved_state *) 0;
-#ifdef UVM
-	register struct uvmexp *uvm = (struct uvmexp *)0;
-#else
-	register struct vmmeter *vm = (struct vmmeter *)0;
-#endif 
-	register struct user *up = (struct user *)0;
-	register struct rusage *rup = (struct rusage *)0;
-	struct vmspace *vms = (struct vmspace *)0;
-	pmap_t pmap = (pmap_t)0;
 	struct pcb *pcb = (struct pcb *)0;
 	struct m88100_pcb *ks = (struct m88100_pcb *)0;
-
-	register unsigned i;
 
 	printf("#ifndef __GENASSYM_INCLUDED\n");
 	printf("#define __GENASSYM_INCLUDED 1\n\n");
 
 	printf("#define\tP_FORW %d\n", &p->p_forw);
 	printf("#define\tP_BACK %d\n", &p->p_back);
-	printf("#define\tP_VMSPACE %d\n", &p->p_vmspace);
 	printf("#define\tP_ADDR %d\n", &p->p_addr);
-	printf("#define\tP_PRIORITY %d\n", &p->p_priority);
 	printf("#define\tP_STAT %d\n", &p->p_stat);
 	printf("#define\tP_WCHAN %d\n", &p->p_wchan);
 	printf("#define\tSRUN %d\n", SRUN);
-#if 1
-	printf("#define\tVM_PMAP %d\n", &vms->vm_pmap);
-#else 
-	printf("#define\tVM_PMAP %d\n", &vms->vm_map.pmap);
-#endif 
-#ifdef UVM
-	printf("#define\tUVMEXP_INTRS %d\n", &uvm->intrs);
-#else
-	printf("#define\tV_INTR %d\n", &vm->v_intr);
-#endif
 	printf("#define\tUPAGES %d\n", UPAGES);
-	printf("#define\tPGSHIFT %d\n", PGSHIFT);
 	printf("#define\tUSIZE %d\n", USPACE);
 	printf("#define\tNBPG %d\n", NBPG);
 
-	printf("#define\tU_PROF %d\n", &up->u_stats.p_prof);
-	printf("#define\tU_PROFSCALE %d\n", &up->u_stats.p_prof.pr_scale);
 	printf("#define\tPCB_ONFAULT %d\n", &pcb->pcb_onfault);
-	printf("#define\tSIZEOF_PCB %d\n", sizeof(struct pcb));
 
 	printf("#define\tPCB_USER_STATE %d\n", &pcb->user_state);
 
 	printf("#define\tSYS_exit %d\n", SYS_exit);
-	printf("#define\tSYS_execve %d\n", SYS_execve);
 	printf("#define\tSYS_sigreturn %d\n", SYS_sigreturn);
 	
 	pair("EF_R0",	int_offset_of_element(ss->r[0]));
