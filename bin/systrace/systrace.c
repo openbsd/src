@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.19 2002/06/21 15:26:06 provos Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.20 2002/06/22 00:03:35 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -105,8 +105,9 @@ trans_cb(int fd, pid_t pid, int policynr,
 		p = output + strlen(output);
 		size = sizeof(output) - strlen(output);
 
-		intercept_replace_add(&repl, tl->off,
-		    tl->trans_data, tl->trans_size);
+		if (tl->trans_size)
+			intercept_replace_add(&repl, tl->off,
+			    tl->trans_data, tl->trans_size);
 	}
 
 	action = filter_evaluate(tls, pflq, &ipid->uflags);
