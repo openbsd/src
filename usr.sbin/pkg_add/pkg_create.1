@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.7 2004/07/14 10:44:03 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.8 2004/08/06 08:45:11 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -56,7 +56,8 @@ The
 command creates a binary package named
 .Ar pkg-name ,
 for subsequent use with
-.Xr pkg_add 1
+.Xr pkg_add 1 ,
+.Xr pkg_delete 1
 and
 .Xr pkg_info 1 .
 .Ar pkg-name
@@ -180,26 +181,34 @@ The
 .Dq packing list
 format (see
 .Fl f )
-is fairly simple, being basically a list of filenames to include in
-the package.
+is fairly simple, being basically a list of filenames and directory names
+to include in the package.
+.Pp
+Directory names are denoted by a trailing slash.
+.Pp
 There are a few annotations that can be inserted for better control.
 All these commands start with an 
 .Sq @ .
 Here is a list:
 .Bl -tag -width indent
+.It Cm @file Ar filename
+Default annotation, to use if
+.Ar filename
+begins with @.
+.Ar filename
+is always a relative path, relative to the current
+.Cm @cwd .
 .It Cm @arch Ar arches
 List of architectures for which this package is intended.
-.It Cm @cwd Ar directory
-Set the internal directory pointer to point to
-.Ar directory .
-All subsequent filenames will be assumed relative to this directory.
-Note:
-.Cm @cd
-is also an alias for this command.
+.It Cm @cwd Ar pathname
+Set the package current directory.
+All subsequent filenames will be assumed relative to 
+.Ar pathname .
 .It Cm @exec Ar command
 Execute
 .Ar command
-as part of the unpacking process.
+during
+.Xr pkg_add 1 .
 If
 .Ar command
 contains any of the following sequences somewhere in it, they will
@@ -239,33 +248,18 @@ in the example case,
 .It Cm @unexec Ar command
 Execute
 .Ar command
-as part of the deinstallation process.
+during
+.Xr pkg_delete 1 .
 Expansion of special
 .Cm \&%
 sequences is the same as for
 .Cm @exec .
-This command is not executed during the package add, as
-.Cm @exec
-is, but rather when the package is deleted.
-This is useful
-for deleting links and other ancillary files that were created
-as a result of adding the package, but not directly known to
-the package's table of contents (and hence not automatically
-removable).
-The advantage of using
-.Cm @unexec
-over a deinstallation script is that you can use the
-.Dq special sequence expansion
-to get at files regardless of where they've
-been potentially redirected (see
-.Fl p ) .
 .It Cm @mode Ar mode
 Set default permission for all subsequently extracted files to
 .Ar mode .
 Format is the same as that used by the
-.Cm chmod
-command (well, considering that it's later handed off to it, that's
-no surprise).
+.Xr chmod 1
+command.
 Use without an arg to set back to default (extraction) permissions.
 .It Cm @owner Ar user
 Set default ownership for all subsequently extracted files to
@@ -284,13 +278,12 @@ may trip someone up later.
 .It Cm @ignore
 Used internally to tell extraction to ignore the next file (don't
 copy it anywhere), as it's used for some special purpose.
-.It Cm @localbase
+.It Cm @localbase Ar base
 Used internally to record the settings of
 .Fl L
 option.
-.It Cm @name Ar name
+.It Cm @name Ar pkgname
 Set the name of the package.
-This is mandatory and is usually put at the top.
 This name is potentially different than the name of
 the file it came in, and is used when keeping track of the package
 for later deinstallation.
@@ -298,23 +291,33 @@ Note that
 .Nm
 will derive this field from the package name and add it automatically
 if none is given.
-.It Cm @dir Ar name
+.It Cm @dir Ar directoryname
 Create directory 
-.Pa name 
-at install time, taking @mode, @group, @owner into account, 
-and remove it at deinstall time.
-.It Cm @dirrm Ar name
-Declare directory
-.Pa name
-to be deleted at deinstall time.
-By default, directories created by a
-package installation are not deleted when the package is deinstalled;
-this provides an explicit directory cleanup method.
-The
-.Pa name
-directory will not be removed unless it is empty after the package is
-de-installed.
+.Pa directoryname 
+at 
+.Xr pkg_add 1
+time, taking 
+.Cm @mode ,
+.Cm @group ,
+.Cm @owner
+into account, and remove it during
+.Xr pkg_delete 1 .
 Directories to remove can be shared between packages.
+If
+.Ar name
+does not begin with an @, same as
+.Bd -literal -offset
+name/
+.Bd
+.It Cm @dirrm Ar directoryname
+Declare directory
+.Pa directoryname
+to be deleted at deinstall time.
+Deprecated, use
+.Bd -literal -offset
+directoryname/
+.Ed
+instead, as it handles proper directory creation as well.
 .It Cm @extra Ar file
 Declare extra file
 .Pa file
@@ -322,6 +325,8 @@ to be deleted at deinstall time, if user sets
 .Fl c
 option.
 Those files are extra configuration files that are normally not deleted.
+.Ar file
+can be an absolute path.
 If
 .Pa file
 ends with a slash, it is a directory.
@@ -329,6 +334,24 @@ ends with a slash, it is a directory.
 Extra
 .Ar command
 to execute when removing extra files.
+.It Cm @sample Ar filename
+Last preceding
+.Cm @file
+item is a sample configuration file, to be copied to
+.Ar filename
+at
+.Xr pkg_add 1
+time and to be removed at
+.Xr pkg_delete 1
+time.
+During installation, existing configuration files are untouched.
+During deinstallation, configuration files are only removed if unchanged.
+.Ar filename
+can be an absolute path.
+If
+.Ar filename
+ends with a slash,
+it refers to a configuration directory instead.
 .It Cm @display Ar name
 Declare
 .Pa name
