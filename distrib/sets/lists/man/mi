@@ -1466,6 +1466,7 @@
 ./usr/share/man/cat8/mount_null.0
 ./usr/share/man/cat8/mount_portal.0
 ./usr/share/man/cat8/mount_procfs.0
+./usr/share/man/cat8/mount_tcfs.0
 ./usr/share/man/cat8/mount_ufs.0
 ./usr/share/man/cat8/mount_umap.0
 ./usr/share/man/cat8/mount_union.0

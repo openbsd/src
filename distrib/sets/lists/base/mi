@@ -53,6 +53,7 @@
 ./etc/isakmpd/private
 ./etc/kerberosIV
 ./etc/mail
+./etc/mail/sendmail-IPv4only.cf
 ./etc/mtree
 ./etc/ppp
 ./etc/sliphome
@@ -106,6 +107,7 @@
 ./sbin/mount_null
 ./sbin/mount_portal
 ./sbin/mount_procfs
+./sbin/mount_tcfs
 ./sbin/mount_ufs
 ./sbin/mount_umap
 ./sbin/mount_union
@@ -1942,6 +1944,7 @@
 ./usr/share/sendmail/cf/mailspool.cs.mc
 ./usr/share/sendmail/cf/nettan.mc
 ./usr/share/sendmail/cf/openbsd-lists.mc
+./usr/share/sendmail/cf/openbsd-proto-IPv4only.mc
 ./usr/share/sendmail/cf/openbsd-proto.mc
 ./usr/share/sendmail/cf/python.cs.mc
 ./usr/share/sendmail/cf/s2k-osf1.mc

@@ -363,6 +363,9 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/ic/stivar.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcireg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cmpcivar.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cy82c693reg.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cy82c693var.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/pciide_opti_reg.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dev/usb/urio.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/dirent.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/disktab.ph
@@ -459,6 +462,15 @@
 ./usr/libdata/perl5/site_perl/mips-openbsd/md5.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/memory.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/menu.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/miscfs/tcfs
+./usr/libdata/perl5/site_perl/mips-openbsd/miscfs/tcfs/tcfs.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/miscfs/tcfs/tcfs_cipher.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/miscfs/tcfs/tcfs_cmd.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/miscfs/tcfs/tcfs_fileinfo.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/miscfs/tcfs/tcfs_keytab.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/miscfs/tcfs/tcfs_mount.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/miscfs/tcfs/tcfs_rw.ph
+./usr/libdata/perl5/site_perl/mips-openbsd/miscfs/tcfs/tcfs_version.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/mpool.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/ncurses.ph
 ./usr/libdata/perl5/site_perl/mips-openbsd/ndbm.ph
@@ -710,6 +722,3 @@
 ./usr/share/info/ld.info-1
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cy82c693reg.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/cy82c693var.ph
-./usr/libdata/perl5/site_perl/mips-openbsd/dev/pci/pciide_opti_reg.ph
