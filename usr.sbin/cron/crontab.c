@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.21 2001/08/11 20:47:14 millert Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.22 2001/08/19 18:30:38 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: crontab.c,v 1.21 2001/08/11 20:47:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: crontab.c,v 1.22 2001/08/19 18:30:38 millert Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -285,7 +285,8 @@ edit_cmd(void) {
 	FILE *f;
 	int ch, t, x;
 	struct stat statbuf;
-	time_t mtime;
+	struct timespec mtimespec;
+	struct timeval tv[2];
 	off_t size;
 	WAIT_T waiter;
 	PID_T pid, xpid;
@@ -307,6 +308,15 @@ edit_cmd(void) {
 			exit(ERROR_EXIT);
 		}
 	}
+
+	if (fstat(fileno(f), &statbuf) < 0) {
+		perror("fstat");
+		goto fatal;
+	}
+	size = statbuf.st_size;
+	memcpy(&mtimespec, &statbuf.st_mtimespec, sizeof(mtimespec));
+	TIMESPEC_TO_TIMEVAL(&tv[0], &statbuf.st_atimespec);
+	TIMESPEC_TO_TIMEVAL(&tv[1], &statbuf.st_mtimespec);
 
 	/* Turn off signals. */
 	(void)signal(SIGHUP, SIG_IGN);
@@ -367,6 +377,7 @@ edit_cmd(void) {
 		perror(Filename);
 		exit(ERROR_EXIT);
 	}
+	(void)futimes(t, tv);
  again:
 	rewind(NewCrontab);
 	if (ferror(NewCrontab)) {
@@ -376,12 +387,6 @@ edit_cmd(void) {
 		unlink(Filename);
 		exit(ERROR_EXIT);
 	}
-	if (fstat(t, &statbuf) < 0) {
-		perror("fstat");
-		goto fatal;
-	}
-	mtime = statbuf.st_mtime;
-	size = statbuf.st_size;
 
 	if (((editor = getenv("VISUAL")) == NULL || *editor == '\0') &&
 	    ((editor = getenv("EDITOR")) == NULL || *editor == '\0')) {
@@ -461,7 +466,8 @@ edit_cmd(void) {
 		perror("fstat");
 		goto fatal;
 	}
-	if (mtime == statbuf.st_mtime && size == statbuf.st_size) {
+	if (timespeccmp(&mtimespec, &statbuf.st_mtimespec, -) == 0 &&
+	    size == statbuf.st_size) {   
 		fprintf(stderr, "%s: no changes made to crontab\n",
 			ProgramName);
 		goto remove;

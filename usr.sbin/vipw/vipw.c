@@ -43,7 +43,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)vipw.c	8.3 (Berkeley) 4/2/94";
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/time.h>
 #include <sys/stat.h>
 
 #include <err.h>
@@ -96,7 +96,7 @@ main(argc, argv)
 		pw_edit(0, NULL);
 		if (stat(_PATH_MASTERPASSWD_LOCK, &end))
 			pw_error(_PATH_MASTERPASSWD_LOCK, 1, 1);
-		if (begin.st_mtime == end.st_mtime &&
+		if (!timespeccmp(&begin.st_mtimespec, &end.st_mtimespec, -) &&
 		    begin.st_size == end.st_size) {
 			warnx("no changes made");
 			pw_error((char *)NULL, 0, 0);
@@ -114,19 +114,28 @@ copyfile(from, to)
 {
 	int nr, nw, off;
 	char buf[8*1024];
+	struct stat sb;
+	struct timeval tv[2];
 	
+	if (fstat(from, &sb) == -1)
+		pw_error(_PATH_MASTERPASSWD, 1, 1);
 	while ((nr = read(from, buf, sizeof(buf))) > 0)
 		for (off = 0; off < nr; nr -= nw, off += nw)
 			if ((nw = write(to, buf + off, nr)) < 0)
 				pw_error(_PATH_MASTERPASSWD_LOCK, 1, 1);
 	if (nr < 0)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
+
+	TIMESPEC_TO_TIMEVAL(&tv[0], &sb.st_atimespec);
+	TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);
+	(void) futimes(to, tv);
 }
 
 void
 usage()
 {
+	extern char *__progname;
 
-	(void)fprintf(stderr, "usage: vipw\n");
+	(void)fprintf(stderr, "usage: %s\n", __progname);
 	exit(1);
 }
