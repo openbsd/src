@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.28 1999/11/25 18:35:21 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.29 1999/12/12 03:16:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -1535,12 +1535,15 @@ pmap_is_referenced(pg)
 }
 
 void
-pmap_changebit(pa, set, reset)
-	paddr_t pa;
+pmap_changebit(pg, set, reset)
+	vm_page_t pg;
 	u_int set, reset;
 {
 	register struct pv_entry *pv;
+	register paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	int s;
+
+printf("pmap_changebit(%p[%x], %x, %x)\n", pg, pa, set, reset);
 
 	s = splimp();
 	if (!(pv = pmap_find_pv(pa)) || !pv->pv_pmap) {
