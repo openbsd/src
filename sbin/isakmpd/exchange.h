@@ -1,8 +1,8 @@
-/*	$OpenBSD: exchange.h,v 1.6 1999/03/31 01:51:05 niklas Exp $	*/
-/*	$EOM: exchange.h,v 1.19 1999/03/31 01:29:53 niklas Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.7 1999/04/02 01:08:41 niklas Exp $	*/
+/*	$EOM: exchange.h,v 1.20 1999/04/02 00:39:58 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -104,6 +104,9 @@ struct exchange {
   /* 1 if we are the initiator, 0 if we are the responder.  */
   u_int8_t initiator;
 
+  /* A reference counter for this structure.  */
+  u_int32_t refcnt;
+
   /* Various flags, look below for descriptions.  */
   u_int32_t flags;
 
@@ -156,8 +159,10 @@ struct exchange {
 					 | EXCHANGE_FLAG_HE_COMMITTED)
 #define EXCHANGE_FLAG_ENCRYPT		4
 
+extern int exchange_add_certs (struct message *);
 extern void exchange_finalize (struct message *);
 extern void exchange_free (struct exchange *);
+extern void exchange_free_aca_list (struct exchange *);
 extern void exchange_establish (char *name, void (*) (void *), void *);
 extern void exchange_establish_p1 (struct transport *, u_int8_t, u_int32_t,
 				   char *, void *, void (*) (void *), void *);
@@ -168,12 +173,12 @@ extern void exchange_init (void);
 extern struct exchange *exchange_lookup (u_int8_t *, int);
 extern struct exchange *exchange_lookup_by_name (char *, int);
 extern struct exchange *exchange_lookup_from_icookie (u_int8_t *);
+extern void exchange_reference (struct exchange *);
+extern void exchange_release (struct exchange *);
 extern void exchange_report (void);
 extern void exchange_run (struct message *);
 extern int exchange_save_nonce (struct message *);
 extern int exchange_save_certreq (struct message *);
-extern void exchange_free_aca_list (struct exchange *);
-extern int exchange_add_certs (struct message *);
 extern u_int16_t *exchange_script (struct exchange *);
 extern struct exchange *exchange_setup_p1 (struct message *, u_int32_t);
 extern struct exchange *exchange_setup_p2 (struct message *, u_int8_t);
