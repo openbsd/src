@@ -1,4 +1,4 @@
-/*      $OpenBSD: parse.y,v 1.4 2001/07/17 16:07:47 millert Exp $ */
+/*      $OpenBSD: parse.y,v 1.5 2001/07/17 17:39:42 marc Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -184,7 +184,11 @@ quick:					{ $$ = 0; }
 
 iface:					{ $$.string = NULL; }
 		| ON STRING		{ $$.string = strdup($2); }
-		| ON '!' STRING		{ $$.string = strdup($3); $$.not = 1;}
+		| ON '!' STRING		{
+			if (! natmode)
+				yyerror("can't '!' interface in pf rule");
+			$$.string = strdup($3); $$.not = 1;
+		}
 		;
 
 proto:					{ $$ = proto; }
