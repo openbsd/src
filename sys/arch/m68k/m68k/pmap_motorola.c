@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.23 2003/02/25 16:57:24 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.24 2003/03/01 00:28:48 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -551,7 +551,8 @@ pmap_alloc_pv()
 	int i;
 
 	if (pv_nfree == 0) {
-		pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, PAGE_SIZE);
+		pvp = (struct pv_page *)uvm_km_kmemalloc(kernel_map,
+		    uvm.kernel_object, PAGE_SIZE, UVM_KMF_NOWAIT);
 		if (pvp == NULL)
 			return NULL;
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
@@ -603,36 +604,6 @@ pmap_free_pv(pv)
 		uvm_km_free(kernel_map, (vaddr_t)pvp, PAGE_SIZE);
 		break;
 	}
-}
-
-/*
- * pmap_map:
- *
- *	Used to map a range of physical addresses into kernel
- *	virtual address space.
- *
- *	For now, VM is already on, we only need to map the
- *	specified memory.
- *
- *	Note: THIS FUNCTION IS DEPRECATED, AND SHOULD BE REMOVED!
- */
-vaddr_t
-pmap_map(va, spa, epa, prot)
-	vaddr_t va;
-	paddr_t spa, epa;
-	int prot;
-{
-
-	PMAP_DPRINTF(PDB_FOLLOW,
-	    ("pmap_map(%lx, %lx, %lx, %x)\n", va, spa, epa, prot));
-
-	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, 0);
-		va += PAGE_SIZE;
-		spa += PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
-	return (va);
 }
 
 /*
@@ -1157,7 +1128,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 					splx(s);
 					return (ENOMEM);
 				} else
-					panic("pmap_enter: uvm_km_zalloc() failed");
+					panic("pmap_enter: pmap_alloc_pv() failed");
 			}
 			npv->pv_va = va;
 			npv->pv_pmap = pmap;
@@ -2160,7 +2131,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 				    pv->pv_pmap, pv->pv_va, pv->pv_next);
 #endif
 			pmap_remove_mapping(pmap_kernel(), ptpva,
-			    NULL, PRM_TFLUSH|PRM_CFLUSH);
+			    PT_ENTRY_NULL, PRM_TFLUSH|PRM_CFLUSH);
 			uvm_pagefree(pg);
 			PMAP_DPRINTF(PDB_REMOVE|PDB_PTPAGE,
 			    ("remove: PT page 0x%lx (0x%lx) freed\n",
@@ -2843,6 +2814,36 @@ pmap_check_wiring(str, va)
 
 /* XXX this should go out soon */
 #ifdef mac68k
+/*
+ * pmap_map:
+ *
+ *	Used to map a range of physical addresses into kernel
+ *	virtual address space.
+ *
+ *	For now, VM is already on, we only need to map the
+ *	specified memory.
+ *
+ *	Note: THIS FUNCTION IS DEPRECATED, AND SHOULD BE REMOVED!
+ */
+vaddr_t
+pmap_map(va, spa, epa, prot)
+	vaddr_t va;
+	paddr_t spa, epa;
+	int prot;
+{
+
+	PMAP_DPRINTF(PDB_FOLLOW,
+	    ("pmap_map(%lx, %lx, %lx, %x)\n", va, spa, epa, prot));
+
+	while (spa < epa) {
+		pmap_enter(pmap_kernel(), va, spa, prot, 0);
+		va += PAGE_SIZE;
+		spa += PAGE_SIZE;
+	}
+	pmap_update(pmap_kernel());
+	return (va);
+}
+
 void
 mac68k_set_pte(va, pge)
 	vaddr_t va;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.h,v 1.7 2003/01/27 19:37:30 miod Exp $	*/
+/*	$OpenBSD: pmap_motorola.h,v 1.8 2003/03/01 00:28:45 miod Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -138,8 +138,6 @@ extern char		*vmmap;		/* map for mem, dumps, etc. */
 void	pmap_prefer(vaddr_t, vaddr_t *);
 #define	PMAP_PREFER(foff, vap)	pmap_prefer((foff), (vap))
 #endif
-
-vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, int);
 
 #ifdef COMPAT_HPUX
 int	pmap_mapmulti(pmap_t, vaddr_t);
