@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.13 1997/01/31 10:33:46 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.14 1997/04/08 22:46:50 deraadt Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -582,9 +582,15 @@ nfs_setattr(v)
 	u_quad_t tsize = 0;
 
 	/*
+	 * Setting of flags is not supported.
+	 */
+	if (vap->va_flags != VNOVAL)
+		return (EOPNOTSUPP);
+
+	/*
 	 * Disallow write attempts if the filesystem is mounted read-only.
 	 */
-  	if ((vap->va_flags != VNOVAL || vap->va_uid != (uid_t)VNOVAL ||
+  	if ((vap->va_uid != (uid_t)VNOVAL ||
 	    vap->va_gid != (gid_t)VNOVAL || vap->va_atime.tv_sec != VNOVAL ||
 	    vap->va_mtime.tv_sec != VNOVAL || vap->va_mode != (mode_t)VNOVAL) &&
 	    (vp->v_mount->mnt_flag & MNT_RDONLY))
