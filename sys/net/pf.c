@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.143 2001/09/04 08:55:37 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.144 2001/09/04 12:32:53 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1607,26 +1607,27 @@ pf_calc_skip_steps(struct pf_rulequeue *rules)
 	r = TAILQ_FIRST(rules);
 	while (r != NULL) {
 		a = 0;
-		for (i = 0; i < 5; ++i) {
+		for (i = 0; i < 6; ++i) {
 			a |= 1 << i;
 			r->skip[i] = TAILQ_NEXT(r, entries);
 		}
 		s = TAILQ_NEXT(r, entries);
 		while (a && s != NULL) {
-			PF_CALC_SKIP_STEP(0, s->proto == r->proto);
-			PF_CALC_SKIP_STEP(1,
+			PF_CALC_SKIP_STEP(0, s->ifp == r->ifp);
+			PF_CALC_SKIP_STEP(1, s->proto == r->proto);
+			PF_CALC_SKIP_STEP(2,
 			    s->src.addr == r->src.addr &&
 			    s->src.mask == r->src.mask &&
 			    s->src.not == r->src.not);
-			PF_CALC_SKIP_STEP(2,
+			PF_CALC_SKIP_STEP(3,
 			    s->src.port[0] == r->src.port[0] &&
 			    s->src.port[1] == r->src.port[1] &&
 			    s->src.port_op == r->src.port_op);
-			PF_CALC_SKIP_STEP(3,
+			PF_CALC_SKIP_STEP(4,
 			    s->dst.addr == r->dst.addr &&
 			    s->dst.mask == r->dst.mask &&
 			    s->dst.not == r->dst.not);
-			PF_CALC_SKIP_STEP(4,
+			PF_CALC_SKIP_STEP(5,
 			    s->dst.port[0] == r->dst.port[0] &&
 			    s->dst.port[1] == r->dst.port[1] &&
 			    s->dst.port_op == r->dst.port_op);
@@ -2039,23 +2040,23 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			continue;
 		}
 		r->evaluations++;
-		if (r->proto && r->proto != h->ip_p)
+		if (r->ifp != NULL && r->ifp != ifp)
 			r = r->skip[0];
+		else if (r->proto && r->proto != h->ip_p)
+			r = r->skip[1];
 		else if (r->src.mask && !pf_match_addr(r->src.not,
 		    r->src.addr, r->src.mask, h->ip_src.s_addr))
-			r = r->skip[1];
+			r = r->skip[2];
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
 		    r->src.port[0], r->src.port[1], th->th_sport))
-			r = r->skip[2];
+			r = r->skip[3];
 		else if (r->dst.mask && !pf_match_addr(r->dst.not,
 		    r->dst.addr, r->dst.mask, h->ip_dst.s_addr))
-			r = r->skip[3];
+			r = r->skip[4];
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], th->th_dport))
-			r = r->skip[4];
+			r = r->skip[5];
 		else if (r->direction != direction)
-			r = TAILQ_NEXT(r, entries);
-		else if (r->ifp != NULL && r->ifp != ifp)
 			r = TAILQ_NEXT(r, entries);
 		else if ((r->flagset & th->th_flags) != r->flags)
 			r = TAILQ_NEXT(r, entries);
@@ -2234,23 +2235,23 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 			continue;
 		}
 		r->evaluations++;
-		if (r->proto && r->proto != h->ip_p)
+		if (r->ifp != NULL && r->ifp != ifp)
 			r = r->skip[0];
+		else if (r->proto && r->proto != h->ip_p)
+			r = r->skip[1];
 		else if (r->src.mask && !pf_match_addr(r->src.not,
 		    r->src.addr, r->src.mask, h->ip_src.s_addr))
-			r = r->skip[1];
+			r = r->skip[2];
 		else if (r->src.port_op && !pf_match_port(r->src.port_op,
 		    r->src.port[0], r->src.port[1], uh->uh_sport))
-			r = r->skip[2];
+			r = r->skip[3];
 		else if (r->dst.mask && !pf_match_addr(r->dst.not,
 		    r->dst.addr, r->dst.mask, h->ip_dst.s_addr))
-			r = r->skip[3];
+			r = r->skip[4];
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 		    r->dst.port[0], r->dst.port[1], uh->uh_dport))
-			r = r->skip[4];
+			r = r->skip[5];
 		else if (r->direction != direction)
-			r = TAILQ_NEXT(r, entries);
-		else if (r->ifp != NULL && r->ifp != ifp)
 			r = TAILQ_NEXT(r, entries);
 		else {
 			rm = r;
@@ -2382,17 +2383,17 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			continue;
 		}
 		r->evaluations++;
-		if (r->proto && r->proto != h->ip_p)
+		if (r->ifp != NULL && r->ifp != ifp)
 			r = r->skip[0];
+		else if (r->proto && r->proto != h->ip_p)
+			r = r->skip[1];
 		else if (r->src.mask && !pf_match_addr(r->src.not,
 		    r->src.addr, r->src.mask, h->ip_src.s_addr))
-			r = r->skip[1];
+			r = r->skip[2];
 		else if (r->dst.mask && !pf_match_addr(r->dst.not,
 		    r->dst.addr, r->dst.mask, h->ip_dst.s_addr))
-			r = r->skip[3];
+			r = r->skip[4];
 		else if (r->direction != direction)
-			r = TAILQ_NEXT(r, entries);
-		else if (r->ifp != NULL && r->ifp != ifp)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->type && r->type != ih->icmp_type + 1)
 			r = TAILQ_NEXT(r, entries);
@@ -2485,17 +2486,17 @@ pf_test_other(int direction, struct ifnet *ifp, struct mbuf *m, struct ip *h)
 			continue;
 		}
 		r->evaluations++;
-		if (r->proto && r->proto != h->ip_p)
+		if (r->ifp != NULL && r->ifp != ifp)
 			r = r->skip[0];
+		else if (r->proto && r->proto != h->ip_p)
+			r = r->skip[1];
 		else if (r->src.mask && !pf_match_addr(r->src.not,
 		    r->src.addr, r->src.mask, h->ip_src.s_addr))
-			r = r->skip[1];
+			r = r->skip[2];
 		else if (r->dst.mask && !pf_match_addr(r->dst.not,
 		    r->dst.addr, r->dst.mask, h->ip_dst.s_addr))
-			r = r->skip[3];
+			r = r->skip[4];
 		else if (r->direction != direction)
-			r = TAILQ_NEXT(r, entries);
-		else if (r->ifp != NULL && r->ifp != ifp)
 			r = TAILQ_NEXT(r, entries);
 		else {
 			rm = r;
