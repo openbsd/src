@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.6 2000/06/16 21:47:13 provos Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.7 2000/08/05 18:52:34 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -470,6 +470,7 @@ gdt_scsi_cmd(xs)
 	struct scsi_rw_big *rwb;
 	bus_dmamap_t xfer;
 	int error;
+	gdt_lock_t lock;
 
 	GDT_DPRINTF(GDT_D_CMD, ("gdt_scsi_cmd "));
 
@@ -482,15 +483,16 @@ gdt_scsi_cmd(xs)
 	xs->error = XS_NOERROR;
 	ccb = NULL;
 
-	GDT_LOCK_GDT(gdt);
-	if (!gdt_polling && gdt->sc_test_busy(gdt)) {
+	lock = GDT_LOCK_GDT(gdt);
+	if (!gdt_polling && !(xs->flags & SCSI_POLL) &&
+	    gdt->sc_test_busy(gdt)) {
 		/* Don't double enqueue if we came from gdt_chain. */
 		if (xs != LIST_FIRST(&gdt->sc_queue))
 			gdt_enqueue(gdt, xs, 0);
-		GDT_UNLOCK_GDT(gdt);
+		GDT_UNLOCK_GDT(gdt, lock);
 		return (SUCCESSFULLY_QUEUED);
 	}
-	GDT_UNLOCK_GDT(gdt);
+	GDT_UNLOCK_GDT(gdt, lock);
 
 	switch (xs->cmd->opcode) {
 	case TEST_UNIT_READY:
@@ -499,7 +501,6 @@ gdt_scsi_cmd(xs)
 	case MODE_SENSE:
 	case START_STOP:
 	case READ_CAPACITY:
-	case SYNCHRONIZE_CACHE:
 #if 0
 	case VERIFY:
 #endif
@@ -516,7 +517,8 @@ gdt_scsi_cmd(xs)
 	case READ_BIG:
 	case WRITE_COMMAND:
 	case WRITE_BIG:
-		GDT_LOCK_GDT(gdt);
+	case SYNCHRONIZE_CACHE:
+		lock = GDT_LOCK_GDT(gdt);
 
 		/*
 		 * When chaining commands we may get called with the
@@ -539,7 +541,7 @@ gdt_scsi_cmd(xs)
 			if (LIST_FIRST(&gdt->sc_queue) != NULL) {
 				/* If order cannot be preserved, punt.  */
 				if (dontqueue) {
-					GDT_UNLOCK_GDT(gdt);
+					GDT_UNLOCK_GDT(gdt, lock);
 					xs->error = XS_DRIVER_STUFFUP;
 					return (TRY_AGAIN_LATER);
 				}
@@ -553,25 +555,28 @@ gdt_scsi_cmd(xs)
 			}
 		}
 
-		if (xs->cmdlen == 6) {
-			rw = (struct scsi_rw *)xs->cmd;
-			blockno =
-			    _3btol(rw->addr) & (SRW_TOPADDR << 16 | 0xffff);
-			blockcnt = rw->length ? rw->length : 0x100;
-		} else {
-			rwb = (struct scsi_rw_big *)xs->cmd;
-			blockno = _4btol(rwb->addr);
-			blockcnt = _2btol(rwb->length);
-		}
-		if (blockno >= gdt->sc_hdr[target].hd_size ||
-		    blockno + blockcnt > gdt->sc_hdr[target].hd_size) {
-			GDT_UNLOCK_GDT(gdt);
-			printf("%s: out of bounds %u-%u >= %u\n",
-			    gdt->sc_dev.dv_xname, blockno, blockcnt,
-			    gdt->sc_hdr[target].hd_size);
-			scsi_done(xs);
-			xs->error = XS_DRIVER_STUFFUP;
-			return (COMPLETE);
+		if (xs->cmd->opcode != SYNCHRONIZE_CACHE) {
+			/* A read or write operation. */
+			if (xs->cmdlen == 6) {
+				rw = (struct scsi_rw *)xs->cmd;
+				blockno = _3btol(rw->addr) &
+				    (SRW_TOPADDR << 16 | 0xffff);
+				blockcnt = rw->length ? rw->length : 0x100;
+			} else {
+				rwb = (struct scsi_rw_big *)xs->cmd;
+				blockno = _4btol(rwb->addr);
+				blockcnt = _2btol(rwb->length);
+			}
+			if (blockno >= gdt->sc_hdr[target].hd_size ||
+			    blockno + blockcnt > gdt->sc_hdr[target].hd_size) {
+				GDT_UNLOCK_GDT(gdt, lock);
+				printf("%s: out of bounds %u-%u >= %u\n",
+				    gdt->sc_dev.dv_xname, blockno, blockcnt,
+				    gdt->sc_hdr[target].hd_size);
+				scsi_done(xs);
+				xs->error = XS_DRIVER_STUFFUP;
+				return (COMPLETE);
+			}
 		}
 
 		ccb = gdt_get_ccb(gdt, xs->flags);
@@ -582,20 +587,20 @@ gdt_scsi_cmd(xs)
 		 */
 		if (ccb == NULL) {
 			if (dontqueue) {
-				GDT_UNLOCK_GDT(gdt);
+				GDT_UNLOCK_GDT(gdt, lock);
 				scsi_done(xs);
 				xs->error = XS_DRIVER_STUFFUP;
 				return (COMPLETE);
 			}
 			if (xs->error) {
-				GDT_UNLOCK_GDT(gdt);
+				GDT_UNLOCK_GDT(gdt, lock);
 				scsi_done(xs);
 				return (COMPLETE);
 			}
 
 			/* Put back on the queue, in the front.  */
 			gdt_enqueue(gdt, xs, 1);
-			GDT_UNLOCK_GDT(gdt);
+			GDT_UNLOCK_GDT(gdt, lock);
 			return (SUCCESSFULLY_QUEUED);
 		}
 
@@ -606,31 +611,35 @@ gdt_scsi_cmd(xs)
 		ccb->gc_service = GDT_CACHESERVICE;
 		gdt_ccb_set_cmd(ccb, GDT_GCF_SCSI);
 
-		xfer = ccb->gc_dmamap_xfer;
-		error = bus_dmamap_load(gdt->sc_dmat, xfer, xs->data, 
-		    xs->datalen, NULL, (xs->flags & SCSI_NOSLEEP) ? 
-		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
-		if (error) {
-			printf("%s: gdt_scsi_cmd: ", gdt->sc_dev.dv_xname); 
-			if (error == EFBIG)
-				printf("more than %d dma segs\n",
-				    GDT_MAXOFFSETS);
-			else
-				printf("error %d loading dma map\n", error);
+		if (xs->cmd->opcode != SYNCHRONIZE_CACHE) {
+			xfer = ccb->gc_dmamap_xfer;
+			error = bus_dmamap_load(gdt->sc_dmat, xfer, xs->data, 
+			    xs->datalen, NULL, (xs->flags & SCSI_NOSLEEP) ? 
+			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+			if (error) {
+				printf("%s: gdt_scsi_cmd: ",
+				    gdt->sc_dev.dv_xname); 
+				if (error == EFBIG)
+					printf("more than %d dma segs\n",
+					    GDT_MAXOFFSETS);
+				else
+					printf("error %d loading dma map\n",
+					    error);
 		
-			xs->error = XS_DRIVER_STUFFUP;
-			gdt_free_ccb(gdt, ccb);
-			return (COMPLETE);
+				xs->error = XS_DRIVER_STUFFUP;
+				gdt_free_ccb(gdt, ccb);
+				return (COMPLETE);
+			}
+			bus_dmamap_sync(gdt->sc_dmat, xfer,
+			    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+			    BUS_DMASYNC_PREWRITE);
 		}
-		bus_dmamap_sync(gdt->sc_dmat, xfer,
-		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
-		    BUS_DMASYNC_PREWRITE);
 
 		gdt_enqueue_ccb(gdt, ccb);
 		/* XXX what if enqueue did not start a transfer? */
-		if (gdt_polling) {
+		if (gdt_polling || (xs->flags & SCSI_POLL)) {
 			if (!gdt_wait(gdt, ccb, ccb->gc_timeout)) {
-				GDT_UNLOCK_GDT(gdt);
+				GDT_UNLOCK_GDT(gdt, lock);
 				printf("%s: command %d timed out\n",
 				    gdt->sc_dev.dv_xname, ccb->gc_cmd_index);
 				xs->error = XS_TIMEOUT;
@@ -638,9 +647,9 @@ gdt_scsi_cmd(xs)
 			}
 		}
 
-		GDT_UNLOCK_GDT(gdt);
+		GDT_UNLOCK_GDT(gdt, lock);
 
-		if (gdt_polling) {
+		if (gdt_polling || (xs->flags & SCSI_POLL)) {
  			scsi_done(xs);
 			return (COMPLETE);
 		}
@@ -684,8 +693,14 @@ gdt_exec_ccb(ccb)
 
 	switch (xs->cmd->opcode) {
 	case PREVENT_ALLOW:
-		/* XXX PREVENT_ALLOW support goes here */
-
+	case SYNCHRONIZE_CACHE:
+		if (xs->cmd->opcode == PREVENT_ALLOW) {
+			/* XXX PREVENT_ALLOW support goes here */
+		} else {
+			GDT_DPRINTF(GDT_D_CMD,
+			    ("SYNCHRONIZE CACHE tgt %d ", target));
+			gdt->sc_cmd[GDT_CMD_OPCODE] = GDT_FLUSH;
+		}
 		gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_BLOCKNO,
 		    1);
 		sg_canz = 0;
@@ -703,36 +718,43 @@ gdt_exec_ccb(ccb)
 		break;
 	}
 
-	if (xs->cmd->opcode != PREVENT_ALLOW) {
+	if (xs->cmd->opcode != PREVENT_ALLOW &&
+	    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
 		gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_BLOCKNO,
 		    ccb->gc_blockno);
 		gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_BLOCKCNT,
 		    ccb->gc_blockcnt);
-	}
 
-	xfer = ccb->gc_dmamap_xfer;
-	if (gdt->sc_cache_feat & GDT_SCATTER_GATHER) {
-		gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_DESTADDR,
-		    0xffffffff);
-		for (i = 0; i < xfer->dm_nsegs; i++) {
-			gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION +
-			    GDT_CACHE_SG_LST + i * GDT_SG_SZ + GDT_SG_PTR,
-			    xfer->dm_segs[i].ds_addr);
-			gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION +
-			    GDT_CACHE_SG_LST + i * GDT_SG_SZ + GDT_SG_LEN,
-			    xfer->dm_segs[i].ds_len);
-			GDT_DPRINTF(GDT_D_IO, ("#%d va %p pa %p len %x\n", i,
-			    buf, xfer->dm_segs[i].ds_addr,
-			    xfer->dm_segs[i].ds_len));
+		xfer = ccb->gc_dmamap_xfer;
+		if (gdt->sc_cache_feat & GDT_SCATTER_GATHER) {
+			gdt_enc32(
+			    gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_DESTADDR,
+			    0xffffffff);
+			for (i = 0; i < xfer->dm_nsegs; i++) {
+				gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION +
+				    GDT_CACHE_SG_LST + i * GDT_SG_SZ +
+				    GDT_SG_PTR,
+				    xfer->dm_segs[i].ds_addr);
+				gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION +
+				    GDT_CACHE_SG_LST + i * GDT_SG_SZ +
+				    GDT_SG_LEN,
+				    xfer->dm_segs[i].ds_len);
+				GDT_DPRINTF(GDT_D_IO,
+				    ("#%d va %p pa %p len %x\n", i, buf,
+				    xfer->dm_segs[i].ds_addr,
+				    xfer->dm_segs[i].ds_len));
+			}
+			sg_canz = xfer->dm_nsegs;
+			gdt_enc32(
+			    gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_SG_LST +
+			    sg_canz * GDT_SG_SZ + GDT_SG_LEN, 0);
+		} else {
+			/* XXX Hardly correct */
+			gdt_enc32(
+			    gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_DESTADDR,
+			    xfer->dm_segs[0].ds_addr);
+			sg_canz = 0;
 		}
-		sg_canz = xfer->dm_nsegs;
-		gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_SG_LST +
-		    sg_canz * GDT_SG_SZ + GDT_SG_LEN, 0);
-	} else {
-		/* XXX Hardly correct */
-		gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_DESTADDR,
-		    xfer->dm_segs[0].ds_addr);
-		sg_canz = 0;
 	}
 	gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_SG_CANZ, sg_canz);
 
@@ -804,10 +826,6 @@ gdt_internal_cache_cmd(xs)
 #endif
 		GDT_DPRINTF(GDT_D_CMD, ("opc %d tgt %d ", xs->cmd->opcode,
 		    target));
-		break;
-
-	case SYNCHRONIZE_CACHE:
-		GDT_DPRINTF(GDT_D_CMD, ("SYNCHRONIZE CACHE tgt %d ", target));
 		break;
 
 	case REQUEST_SENSE:
@@ -965,6 +983,7 @@ gdt_intr(arg)
 	struct scsi_xfer *xs;
 	int prev_cmd;
 	struct gdt_ccb *ccb;
+	gdt_lock_t lock;
 
 	GDT_DPRINTF(GDT_D_INTR, ("gdt_intr(%p) ", gdt));
 
@@ -973,11 +992,12 @@ gdt_intr(arg)
 		return (0);
 
 	if (!gdt_polling)
-		GDT_LOCK_GDT(gdt);
+		lock = GDT_LOCK_GDT(gdt);
 
 	ctx.istatus = gdt->sc_get_status(gdt);
 	if (!ctx.istatus) {
-		GDT_UNLOCK_GDT(gdt);
+		if (!gdt_polling)
+			GDT_UNLOCK_GDT(gdt, lock);
 		gdt->sc_status = GDT_S_NO_STATUS;
 		return (0);
 	}
@@ -1013,10 +1033,13 @@ gdt_intr(arg)
 		untimeout(gdt_timeout, ccb);
 	ctx.service = ccb->gc_service;
 	prev_cmd = ccb->gc_flags & GDT_GCF_CMD_MASK;
-	bus_dmamap_sync(gdt->sc_dmat, ccb->gc_dmamap_xfer,
-	    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
-	    BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_unload(gdt->sc_dmat, ccb->gc_dmamap_xfer);
+	if (xs && xs->cmd->opcode != PREVENT_ALLOW &&
+	    xs->cmd->opcode != SYNCHRONIZE_CACHE) {
+		bus_dmamap_sync(gdt->sc_dmat, ccb->gc_dmamap_xfer,
+		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(gdt->sc_dmat, ccb->gc_dmamap_xfer);
+	}
 	gdt_free_ccb(gdt, ccb);
 	switch (prev_cmd) {
 	case GDT_GCF_UNUSED:
@@ -1032,7 +1055,7 @@ gdt_intr(arg)
 
  finish:
 	if (!gdt_polling)
-		GDT_UNLOCK_GDT(gdt);
+		GDT_UNLOCK_GDT(gdt, lock);
 
 	switch (sync_val) {
 	case 1:
@@ -1187,10 +1210,11 @@ gdt_get_ccb(gdt, flags)
 	int flags;
 {
 	struct gdt_ccb *ccb;
+	gdt_lock_t lock;
 
 	GDT_DPRINTF(GDT_D_QUEUE, ("gdt_get_ccb(%p, 0x%x) ", gdt, flags));
 
-	GDT_LOCK_GDT(gdt);
+	lock = GDT_LOCK_GDT(gdt);
 
 	for (;;) {
 		ccb = TAILQ_FIRST(&gdt->sc_free_ccb);
@@ -1204,7 +1228,7 @@ gdt_get_ccb(gdt, flags)
 	TAILQ_REMOVE(&gdt->sc_free_ccb, ccb, gc_chain);
 
  bail_out:
-	GDT_UNLOCK_GDT(gdt);
+	GDT_UNLOCK_GDT(gdt, lock);
 	return (ccb);
 }
 
@@ -1213,9 +1237,11 @@ gdt_free_ccb(gdt, ccb)
 	struct gdt_softc *gdt;
 	struct gdt_ccb *ccb;
 {
+	gdt_lock_t lock;
+
 	GDT_DPRINTF(GDT_D_QUEUE, ("gdt_free_ccb(%p, %p) ", gdt, ccb));
 
-	GDT_LOCK_GDT(gdt);
+	lock = GDT_LOCK_GDT(gdt);
 
 	TAILQ_INSERT_HEAD(&gdt->sc_free_ccb, ccb, gc_chain);
 
@@ -1223,7 +1249,7 @@ gdt_free_ccb(gdt, ccb)
 	if (TAILQ_NEXT(ccb, gc_chain) == NULL)
 		wakeup(&gdt->sc_free_ccb);
 
-	GDT_UNLOCK_GDT(gdt);
+	GDT_UNLOCK_GDT(gdt, lock);
 }
 
 void
@@ -1280,6 +1306,7 @@ gdt_timeout(arg)
 	struct gdt_ccb *ccb = arg;
 	struct scsi_link *link = ccb->gc_xs->sc_link;
 	struct gdt_softc *gdt = link->adapter_softc;
+	gdt_lock_t lock;
 
 	sc_print_addr(link);
 	printf("timed out\n");
@@ -1287,9 +1314,9 @@ gdt_timeout(arg)
 	/* XXX Test for multiple timeouts */
 
 	ccb->gc_xs->error = XS_TIMEOUT;
-	GDT_LOCK_GDT(gdt);
+	lock = GDT_LOCK_GDT(gdt);
 	gdt_enqueue_ccb(gdt, ccb);
-	GDT_UNLOCK_GDT(gdt);
+	GDT_UNLOCK_GDT(gdt, lock);
 }
 
 void
@@ -1299,9 +1326,10 @@ gdt_watchdog(arg)
 	struct gdt_ccb *ccb = arg;
 	struct scsi_link *link = ccb->gc_xs->sc_link;
 	struct gdt_softc *gdt = link->adapter_softc;
+	gdt_lock_t lock;
 
-	GDT_LOCK_GDT(gdt);
+	lock = GDT_LOCK_GDT(gdt);
 	ccb->gc_flags &= ~GDT_GCF_WATCHDOG;
 	gdt_start_ccbs(gdt);
-	GDT_UNLOCK_GDT(gdt);
+	GDT_UNLOCK_GDT(gdt, lock);
 }

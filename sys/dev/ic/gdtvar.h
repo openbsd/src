@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.3 2000/03/01 22:38:51 niklas Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.4 2000/08/05 18:52:34 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -209,8 +209,6 @@ struct gdt_softc {
 	u_int16_t sc_raw_feat;
 	u_int16_t sc_cache_feat;
 
-	int sc_spl;
-
 	void (*sc_copy_cmd) __P((struct gdt_softc *, struct gdt_ccb *));
 	u_int8_t (*sc_get_status) __P((struct gdt_softc *));
 	void (*sc_intr) __P((struct gdt_softc *, struct gdt_intr_ctx *));
@@ -220,8 +218,9 @@ struct gdt_softc {
 };
 
 /* XXX These have to become spinlocks in case of SMP */
-#define GDT_LOCK_GDT(gdt) (gdt)->sc_spl = splbio()
-#define GDT_UNLOCK_GDT(gdt) splx((gdt)->sc_spl)
+#define GDT_LOCK_GDT(gdt) splbio()
+#define GDT_UNLOCK_GDT(gdt, lock) splx(lock)
+typedef int gdt_lock_t;
 
 void	gdtminphys __P((struct buf *));
 int	gdt_attach __P((struct gdt_softc *));
