@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipifuncs.c,v 1.1 2004/06/25 11:03:27 art Exp $	*/
+/*	$OpenBSD: ipifuncs.c,v 1.2 2004/06/25 17:27:01 andreas Exp $	*/
 /*	$NetBSD: ipifuncs.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $ */
 
 /*-
@@ -62,6 +62,7 @@
 #include <machine/fpu.h>
 
 #include <ddb/db_output.h>
+#include <machine/db_machdep.h>
 
 void x86_64_ipi_halt(struct cpu_info *);
 
@@ -89,6 +90,7 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 	pmap_do_tlb_shootdown,
 	x86_64_reload_mtrr,
 	gdt_reload_cpu,
+	x86_ipi_db,
 };
 
 void

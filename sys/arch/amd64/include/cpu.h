@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.9 2004/06/25 11:03:28 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.10 2004/06/25 17:27:01 andreas Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -101,7 +101,6 @@ struct cpu_info {
 
 	int		ci_want_resched;
 	int		ci_astpending;
-	struct trapframe *ci_ddb_regs;
 
 	struct x86_cache_info ci_cinfo[CAI_COUNT];
 
@@ -112,11 +111,16 @@ struct cpu_info {
 
 	char		*ci_gdt;
 
+	volatile int	ci_ddb_paused;
+#define CI_DDB_RUNNING		0
+#define CI_DDB_SHOULDSTOP	1
+#define CI_DDB_STOPPED		2
+#define CI_DDB_ENTERDDB		3
+#define CI_DDB_INDDB		4
+
 	struct x86_64_tss	ci_doubleflt_tss;
-	struct x86_64_tss	ci_ddbipi_tss;
 
 	char *ci_doubleflt_stack;
-	char *ci_ddbipi_stack;
 
 	struct evcnt ci_ipi_events[X86_NIPI];
 };

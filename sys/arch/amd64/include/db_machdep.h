@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.1 2004/01/28 01:39:39 mickey Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.2 2004/06/25 17:27:01 andreas Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.2 2003/04/29 17:06:04 scw Exp $	*/
 
 /* 
@@ -42,14 +42,9 @@ typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
-#ifndef MULTIPROCESSOR
+
 extern db_regs_t ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
-#else
-extern db_regs_t *ddb_regp;
-#define DDB_REGS	(ddb_regp)
-#define ddb_regs	(*ddb_regp)
-#endif
 
 #if defined(lint)
 #define	PC_REGS(regs)	((regs)->tf_rip)
@@ -125,6 +120,18 @@ void		db_task_name(/* task_t */);
 #define db_thread_fp_used(thread)	((thread)->pcb->ims.ifps != 0)
 
 int kdb_trap(int, int, db_regs_t *);
+
+void db_machine_init(void);
+int db_enter_ddb(void);
+void db_startcpu(int cpu);
+void db_stopcpu(int cpu);
+void x86_ipi_db(struct cpu_info *);
+
+extern struct SIMPLELOCK ddb_mp_slock;
+
+#define DDB_STATE_NOT_RUNNING	0
+#define DDB_STATE_RUNNING	1
+#define DDB_STATE_EXITING	2
 
 /*
  * We define some of our own commands

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.2 2004/06/25 11:03:27 art Exp $	*/
+/*	$OpenBSD: vector.S,v 1.3 2004/06/25 17:27:01 andreas Exp $	*/
 /*	$NetBSD: vector.S,v 1.2 2003/05/04 23:46:41 fvdl Exp $	*/
 
 /*
@@ -319,21 +319,6 @@ IDTVEC(intr_lapic_ipi)
 	sti
 	INTRFASTEXIT
 
-#if defined(DDB)
-IDTVEC(intrddb)
-1:
-	pushq	$0
-	pushq	$T_BPTFLT
-	INTRENTRY
-	movl	$0xf,%eax
-	movq	%rax,%cr8
-	movl	$0,_C_LABEL(local_apic)+LAPIC_EOI
-	sti
-	call	_C_LABEL(ddb_ipi)
-	xorl	%eax,%eax
-	movq	%rax,%cr8
-	INTRFASTEXIT
-#endif /* DDB */
 #endif /* MULTIPROCESSOR */
 	
 	/*
