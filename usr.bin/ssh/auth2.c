@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.8 2000/05/08 17:42:24 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.9 2000/06/18 01:09:10 markus Exp $");
 
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
@@ -69,7 +69,7 @@ void	protocol_error(int type, int plen);
 /* auth */
 int	ssh2_auth_none(struct passwd *pw);
 int	ssh2_auth_password(struct passwd *pw);
-int	ssh2_auth_pubkey(struct passwd *pw, unsigned char *raw, unsigned int rlen);
+int  	ssh2_auth_pubkey(struct passwd *pw, char *service);
 
 /* helper */
 struct passwd*	 auth_set_user(char *u, char *s);
@@ -150,17 +150,14 @@ input_userauth_request(int type, int plen)
 {
 	static void (*authlog) (const char *fmt,...) = verbose;
 	static int attempt = 0;
-	unsigned int len, rlen;
+	unsigned int len;
 	int authenticated = 0;
-	char *raw, *user, *service, *method, *authmsg = NULL;
+	char *user, *service, *method, *authmsg = NULL;
 	struct passwd *pw;
 
 	if (++attempt == AUTH_FAIL_MAX)
 		packet_disconnect("too many failed userauth_requests");
 
-	raw = packet_get_raw(&rlen);
-	if (plen != rlen)
-		fatal("plen != rlen");
 	user = packet_get_string(&len);
 	service = packet_get_string(&len);
 	method = packet_get_string(&len);
@@ -174,7 +171,7 @@ input_userauth_request(int type, int plen)
 		} else if (strcmp(method, "password") == 0) {
 			authenticated =	ssh2_auth_password(pw);
 		} else if (strcmp(method, "publickey") == 0) {
-			authenticated =	ssh2_auth_pubkey(pw, raw, rlen);
+			authenticated =	ssh2_auth_pubkey(pw, service);
 		}
 	}
 	if (authenticated && pw && pw->pw_uid == 0 && !options.permit_root_login) {
@@ -252,7 +249,7 @@ ssh2_auth_password(struct passwd *pw)
 	return authenticated;
 }
 int
-ssh2_auth_pubkey(struct passwd *pw, unsigned char *raw, unsigned int rlen)
+ssh2_auth_pubkey(struct passwd *pw, char *service)
 {
 	Buffer b;
 	Key *key;
@@ -263,10 +260,6 @@ ssh2_auth_pubkey(struct passwd *pw, unsigned char *raw, unsigned int rlen)
 
 	if (options.dsa_authentication == 0) {
 		debug("pubkey auth disabled");
-		return 0;
-	}
-	if (datafellows & SSH_BUG_PUBKEYAUTH) {
-		log("bug compatibility with ssh-2.0.13 pubkey not implemented");
 		return 0;
 	}
 	have_sig = packet_get_char();
@@ -284,10 +277,18 @@ ssh2_auth_pubkey(struct passwd *pw, unsigned char *raw, unsigned int rlen)
 			packet_done();
 			buffer_init(&b);
 			buffer_append(&b, session_id2, session_id2_len);
+
+			/* reconstruct packet */
 			buffer_put_char(&b, SSH2_MSG_USERAUTH_REQUEST);
-			if (slen + 4 > rlen)
-				fatal("bad rlen/slen");
-			buffer_append(&b, raw, rlen - slen - 4);
+			buffer_put_cstring(&b, pw->pw_name);
+			buffer_put_cstring(&b,
+			    datafellows & SSH_BUG_PUBKEYAUTH ?
+			    "ssh-userauth" :
+			    service);
+			buffer_put_cstring(&b, "publickey");
+			buffer_put_char(&b, have_sig);
+			buffer_put_cstring(&b, KEX_DSS);
+			buffer_put_string(&b, pkblob, blen);
 #ifdef DEBUG_DSS
 			buffer_dump(&b);
 #endif
