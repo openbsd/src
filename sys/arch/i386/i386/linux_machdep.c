@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.26 2003/04/17 03:42:14 drahn Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.27 2003/05/04 05:01:04 drahn Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -112,6 +112,7 @@ linux_sendsig(catcher, sig, mask, code, type, val)
 	union sigval val;
 {
 	struct proc *p = curproc;
+	struct pmap *pmap = vm_map_pmap(&p->p_vmspace->vm_map);
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
 	struct sigacts *psp = p->p_sigacts;
@@ -184,7 +185,8 @@ linux_sendsig(catcher, sig, mask, code, type, val)
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = p->p_sigcode;
-	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_cs = pmap->pm_nxpages > 0?
+	    GSEL(GUCODE1_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
