@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.25 2000/02/25 17:23:38 niklas Exp $
-#	$EOM: Makefile,v 1.62 2000/02/20 19:58:36 niklas Exp $
+#	$OpenBSD: Makefile,v 1.26 2000/04/07 22:06:28 niklas Exp $
+#	$EOM: Makefile,v 1.68 2000/04/07 20:02:41 niklas Exp $
 
 #
 # Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
+# Copyright (c) 2000 Håkan Olsson.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -41,15 +42,18 @@
 #
 
 # openbsd means 2.5 or newer, openbsd-encap is for older kernels with PF_ENCAP
-# linux is the name for Linux with FreeS/WAN integrated, freebsd means FreeBSD
-# with KAME IPsec.
+# linux is the name for Linux with FreeS/WAN integrated, freebsd/netbsd means
+# FreeBSD/NetBSD with KAME IPsec.
 OS=		openbsd
 #OS=		openbsd-encap
+#OS=		netbsd
 #OS=		freebsd
 #OS=		linux
 
 # Compile-time configuration of otherwise optional features
+#FEATURES=	tripledes blowfish cast policy x509 ec aggressive debug gmp
 FEATURES=	tripledes blowfish cast policy x509 ec aggressive debug
+#FEATURES=
 
 .PATH:		${.CURDIR}/sysdep/${OS}
 
@@ -76,7 +80,7 @@ CFLAGS+=	-Wall -DNEED_SYSDEP_APP \
 # Different debugging & profiling suggestions
 
 # Include symbolic debugging info
-DEBUG=		-g
+#DEBUG=		-g
 
 # Do execution time profiles
 #CFLAGS+=	-pg
@@ -117,11 +121,12 @@ DEBUG=		-g
 
 SUBDIR=		apps
 
-.if ${FEATURES} != ""
-CFLAGS+=	${FEATURES:U:S/^/-DUSE_/}
-.endif
-
 .include "sysdep/${OS}/Makefile.sysdep"
+
+.if ${FEATURES} != ""
+FEATURES_UC!=	echo ${FEATURES} | tr '[:lower:]' '[:upper:]'
+CFLAGS+=	${FEATURES_UC:S/^/-DUSE_/}
+.endif
 
 .if !make(install) && !defined(NO_REGRESS)
 SUBDIR+=	regress
@@ -132,6 +137,14 @@ SUBDIR+=	regress
 .include "features/${FEATURE}"
 .endif
 .endfor
+
+.ifdef USE_GMP
+CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_GMP
+LDADD+=		-lgmp
+DPADD+=		${LIBGMP}
+.else
+CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_OPENSSL
+.endif
 
 .ifdef HAVE_DLOPEN
 CFLAGS+=	-DHAVE_DLOPEN
