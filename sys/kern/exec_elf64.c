@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf64.c,v 1.4 1999/09/19 16:16:49 kstailey Exp $	*/
+/*	$OpenBSD: exec_elf64.c,v 1.5 1999/09/20 11:09:37 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -597,8 +597,8 @@ exec_elf64_makecmds(p, epp)
 			goto bad;
 
 		case PT_INTERP:
+			/* Already did this one */
 		case PT_NOTE:
-			/* Already did these */
 		case PT_DYNAMIC:
 			break;
 
@@ -689,7 +689,6 @@ exec_elf64_fixup(p, epp)
 	struct	elf_args *ap;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
 	u_long	pos = epp->ep_interp_pos;
-	size_t len;
 
 	if(epp->ep_interp == 0) {
 		return (0);
@@ -716,13 +715,12 @@ exec_elf64_fixup(p, epp)
 	}
 	kill_vmcmds(&epp->ep_vmcmds);
 
-	a = ai;
-
 	/*
 	 * Push extra arguments on the stack needed by dynamically
 	 * linked binaries
 	 */
 	if (error == 0) {
+		a = ai;
 
 		a->au_id = AUX_phdr;
 		a->au_v = ap->arg_phaddr;
@@ -751,14 +749,13 @@ exec_elf64_fixup(p, epp)
 		a->au_id = AUX_entry;
 		a->au_v = ap->arg_entry;
 		a++;
+
+		a->au_id = AUX_null;
+		a->au_v = 0;
+		a++;
+
+		error = copyout(ai, epp->ep_emul_argp, sizeof ai);
 	}
-
-	a->au_id = AUX_null;
-	a->au_v = 0;
-	a++;
-
-	len = (a - ai) * sizeof(AuxInfo);
-	error = copyout(ai, epp->ep_emul_argp, len);
 	free((char *)ap, M_TEMP);
 	free((char *)interp, M_TEMP);
 	return (error);
