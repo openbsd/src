@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.56 2001/06/05 00:17:46 niklas Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.57 2001/06/05 01:03:40 itojun Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -134,7 +134,9 @@ static u_int32_t pf_key_v2_seq (void);
 static u_int32_t pf_key_v2_write (struct pf_key_v2_msg *);
 static int pf_key_v2_remove_conf (char *);
 static int pf_key_v2_conf_refhandle (int, char *);
+#ifdef SADB_X_ASKPOLICY
 static int pf_key_v2_conf_refinc (int, char *);
+#endif
 
 /* The socket to use for PF_KEY interactions.  */
 static int pf_key_v2_socket;
@@ -1980,6 +1982,7 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
   return error;
 }
 
+#ifdef SADB_X_ASKPOLICY
 /* Increase reference count of refcounted sections. */
 static int
 pf_key_v2_conf_refinc (int af, char *section)
@@ -1998,6 +2001,7 @@ pf_key_v2_conf_refinc (int af, char *section)
     conf_set (af, section, "Refcount", conn, 1, 0);
     return 0;
 }
+#endif
 
 /*
  * Return 0 if the section didn't exist or was removed, non-zero otherwise.
