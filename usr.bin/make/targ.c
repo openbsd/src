@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: targ.c,v 1.33 2001/05/29 12:17:06 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.34 2001/05/29 12:53:43 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -103,6 +103,7 @@
  */
 
 #include <sys/types.h>
+#include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>

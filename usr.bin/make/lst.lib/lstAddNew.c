@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstAddNew.c,v 1.2 2001/05/23 12:34:53 espie Exp $	*/
+/*	$OpenBSD: lstAddNew.c,v 1.3 2001/05/29 12:53:44 espie Exp $	*/
 /* ex:ts=8 sw=4:
  */
 
@@ -31,11 +31,7 @@
  */
 
 #include	"lstInt.h"
-
-#ifndef lint
-UNUSED
-static char rcsid[] = "$OpenBSD: lstAddNew.c,v 1.2 2001/05/23 12:34:53 espie Exp $";
-#endif /* not lint */
+#include	<stddef.h>
 
 /* Add datum to the end of a list only if it wasn't there already.
  * Returns false if datum was already there.

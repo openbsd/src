@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstInsert.c,v 1.13 2001/05/23 12:34:56 espie Exp $	*/
+/*	$OpenBSD: lstInsert.c,v 1.14 2001/05/29 12:53:46 espie Exp $	*/
 /*	$NetBSD: lstInsert.c,v 1.5 1996/11/06 17:59:44 christos Exp $	*/
 
 /*
@@ -44,16 +44,9 @@
  */
 
 #include "lstInt.h"
+#include <sys/types.h>
+#include <stdlib.h>
 #include "memory.h"
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lstInsert.c 8.1 (Berkeley) 6/6/93";
-#else
-UNUSED
-static char rcsid[] = "$OpenBSD: lstInsert.c,v 1.13 2001/05/23 12:34:56 espie Exp $";
-#endif
-#endif /* not lint */
 
 /*-
  *-----------------------------------------------------------------------

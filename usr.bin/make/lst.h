@@ -2,7 +2,7 @@
 #define _LST_H_
 
 /*	$OpenPackages$ */
-/*	$OpenBSD: lst.h,v 1.20 2001/05/23 12:34:45 espie Exp $ */
+/*	$OpenBSD: lst.h,v 1.21 2001/05/29 12:53:41 espie Exp $ */
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $ */
 
 /*
@@ -49,10 +49,6 @@
  * lst.h --
  *	Header for using the list library
  */
-#include	<sys/param.h>
-#ifdef __STDC__
-#include	<stdlib.h>
-#endif
 
 /* These data structures are PRIVATE !!!
  * Here for efficiency, so that some functions can be recoded as inlines,

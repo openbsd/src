@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.48 2001/05/23 12:34:46 espie Exp $ */
+/*	$OpenBSD: main.c,v 1.49 2001/05/29 12:53:41 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifndef MAKE_BOOTSTRAP
@@ -47,6 +48,7 @@
 #endif
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "config.h"

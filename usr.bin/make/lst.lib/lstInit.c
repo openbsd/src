@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstInit.c,v 1.12 2001/05/23 12:34:56 espie Exp $	*/
+/*	$OpenBSD: lstInit.c,v 1.13 2001/05/29 12:53:46 espie Exp $	*/
 /*	$NetBSD: lstInit.c,v 1.5 1996/11/06 17:59:43 christos Exp $	*/
 
 /*
@@ -44,15 +44,7 @@
  */
 
 #include	"lstInt.h"
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lstInit.c	8.1 (Berkeley) 6/6/93";
-#else
-UNUSED
-static char rcsid[] = "$OpenBSD: lstInit.c,v 1.12 2001/05/23 12:34:56 espie Exp $";
-#endif
-#endif /* not lint */
+#include	<stddef.h>
 
 /*-
  *-----------------------------------------------------------------------

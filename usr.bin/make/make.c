@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: make.c,v 1.26 2001/05/23 12:34:46 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.27 2001/05/29 12:53:42 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -73,6 +73,7 @@
  *				and perform the .USE actions if so.
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include "config.h"
 #include "defines.h"

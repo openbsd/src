@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstMember.c,v 1.10 2001/05/23 12:34:57 espie Exp $	*/
+/*	$OpenBSD: lstMember.c,v 1.11 2001/05/29 12:53:47 espie Exp $	*/
 /*	$NetBSD: lstMember.c,v 1.5 1996/11/06 17:59:48 christos Exp $	*/
 
 /*
@@ -44,15 +44,7 @@
  */
 
 #include    "lstInt.h"
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lstMember.c 8.1 (Berkeley) 6/6/93";
-#else
-UNUSED
-static char rcsid[] = "$OpenBSD: lstMember.c,v 1.10 2001/05/23 12:34:57 espie Exp $";
-#endif
-#endif /* not lint */
+#include    <stddef.h>
 
 LstNode
 Lst_Member(l, d)

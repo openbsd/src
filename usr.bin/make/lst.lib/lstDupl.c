@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstDupl.c,v 1.15 2001/05/23 12:34:55 espie Exp $	*/
+/*	$OpenBSD: lstDupl.c,v 1.16 2001/05/29 12:53:46 espie Exp $	*/
 /*	$NetBSD: lstDupl.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*
@@ -45,15 +45,7 @@
  */
 
 #include    "lstInt.h"
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lstDupl.c	8.1 (Berkeley) 6/6/93";
-#else
-UNUSED
-static char rcsid[] = "$OpenBSD: lstDupl.c,v 1.15 2001/05/23 12:34:55 espie Exp $";
-#endif
-#endif /* not lint */
+#include <stddef.h>
 
 /*-
  *-----------------------------------------------------------------------

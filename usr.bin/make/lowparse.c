@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lowparse.c,v 1.10 2001/05/29 12:17:05 espie Exp $ */
+/*	$OpenBSD: lowparse.c,v 1.11 2001/05/29 12:53:41 espie Exp $ */
 
 /* low-level parsing functions. */
 
@@ -33,6 +33,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include "config.h"

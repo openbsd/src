@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: lstConcat.c,v 1.13 2001/05/23 12:34:54 espie Exp $	*/
+/*	$OpenBSD: lstConcat.c,v 1.14 2001/05/29 12:53:45 espie Exp $	*/
 /*	$NetBSD: lstConcat.c,v 1.6 1996/11/06 17:59:34 christos Exp $	*/
 
 /*
@@ -44,16 +44,9 @@
  */
 
 #include "lstInt.h"
+#include <sys/types.h>
+#include <stddef.h>
 #include "memory.h"
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)lstConcat.c 8.1 (Berkeley) 6/6/93";
-#else
-UNUSED
-static char rcsid[] = "$OpenBSD: lstConcat.c,v 1.13 2001/05/23 12:34:54 espie Exp $";
-#endif
-#endif /* not lint */
 
 /*-
  *-----------------------------------------------------------------------

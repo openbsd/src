@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: dir.c,v 1.33 2001/05/27 08:34:10 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.34 2001/05/29 12:53:39 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -66,11 +66,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "config.h"
 #include "defines.h"
@@ -603,7 +606,7 @@ DirExpandCurlyi(word, endw, path, expansions)
 
 	for (;;) {
 	    char	*file;	/* To hold current expansion */
-	    const char	*cp;
+	    const char	*cp;	/* Current position in brace clause */
 	
 	    /* Find the end of the current expansion */
 	    for (bracelevel = 0, cp = start; 
