@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.12 1997/09/20 17:33:45 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.13 1997/10/06 23:32:49 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.12 1997/09/20 17:33:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.13 1997/10/06 23:32:49 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -948,8 +948,9 @@ fts_alloc(sp, name, namelen)
 	if ((p = malloc(len)) == NULL)
 		return (NULL);
 
-	/* Copy the name plus the trailing NULL. */
-	memmove(p->fts_name, name, namelen + 1);
+	/* Copy the name and guarantee NULL termination. */
+	memmove(p->fts_name, name, namelen);
+	p->fts_name[namelen] = '\0';
 
 	if (!ISSET(FTS_NOSTAT))
 		p->fts_statp = (struct stat *)ALIGN(p->fts_name + namelen + 2);
