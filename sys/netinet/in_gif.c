@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.1 1999/12/08 06:50:19 itojun Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.2 1999/12/09 03:45:21 angelos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -33,29 +33,13 @@
  * in_gif.c
  */
 
-#ifdef __FreeBSD__
-#include "opt_mrouting.h"
-#endif
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
-#include "opt_inet.h"
-#ifdef __NetBSD__	/*XXX*/
-#include "opt_ipsec.h"
-#endif
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>
-#ifdef __FreeBSD__
-#include <sys/kernel.h>
-#include <sys/sysctl.h>
-#endif
-#if !defined(__FreeBSD__) || __FreeBSD__ < 3
 #include <sys/ioctl.h>
-#endif
 #include <sys/protosw.h>
 
 #include <net/if.h>
@@ -90,10 +74,6 @@ int ip_gif_ttl = GIF_TTL;
 #else
 int ip_gif_ttl = 0;
 #endif
-#ifdef __FreeBSD__
-SYSCTL_INT(_net_inet_ip, IPCTL_GIF_TTL, gifttl, CTLFLAG_RW,
-	&ip_gif_ttl,	0, "");
-#endif
 
 int
 in_gif_output(ifp, family, m, rt)
@@ -107,7 +87,7 @@ in_gif_output(ifp, family, m, rt)
 	struct sockaddr_in *sin_src = (struct sockaddr_in *)sc->gif_psrc;
 	struct sockaddr_in *sin_dst = (struct sockaddr_in *)sc->gif_pdst;
 	struct ip iphdr;	/* capsule IP header, host byte ordered */
-	int proto, error;
+	int proto;
 	u_int8_t tos;
 
 	if (sin_src == NULL || sin_dst == NULL ||
@@ -234,12 +214,8 @@ in_gif_output(ifp, family, m, rt)
 	m->m_pkthdr.rcvif = NULL;
 #endif
 #endif /*IPSEC*/
-#ifndef __OpenBSD__
-	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL);
-#else
-	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL, NULL);
-#endif
-	return(error);
+
+	return ip_output(m, NULL, &sc->gif_ro, 0, NULL, NULL);
 }
 
 void
