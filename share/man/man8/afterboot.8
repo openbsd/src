@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.38 2000/04/16 17:56:57 aaron Exp $
+.\"	$OpenBSD: afterboot.8,v 1.39 2000/04/16 20:19:45 deraadt Exp $
 .Dd October 20, 1997
 .Dt AFTERBOOT 8
 \!\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
@@ -374,27 +374,27 @@ are available and can be FTP installed, as long as you meet the following
 .Ss Outside the USA, no restrictions apply
 Since the RSA algorithm patent by RSA Inc. only applies in the United States
 you can use the free
-.Pa ssl26.tgz
+.Pa ssl27.tgz
 package.
 System install scripts on machine architectures that support
 shared libraries will offer to let you install this package when you
 are installing your system.
 To see if you have it installed, type:
 .Bl -tag -width Ds
-.It Ic pkg_info ssl26
+.It Ic pkg_info ssl27
 .El
 .Pp
 If the
-.Pa ssl26
+.Pa ssl27
 package is not installed, 
 .Xr pkg_info 8 
-will display a message that it can't find package `ssl26'.
+will display a message that it can't find package `ssl27'.
 If you did not install the package when you installed your system, 
 You can install it with a 
 .Xr pkg_add 8
 command similar to:
 .Bl -tag -width Ds
-.It Ic pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/<a>/ssl26.tgz
+.It Ic pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/<a>/ssl27.tgz
 .El
 .Pp
 replacing
@@ -404,13 +404,13 @@ with your machine architechture, e.g.,
 for Intel-based machines.
 .Ss Inside the USA, non-commercial use of RSAREF is permitted
 Non-commercial entities in the USA may install the
-.Pa sslUSA26.tgz
+.Pa sslUSA27.tgz
 package, which uses RSAREF.
 You install this with a 
 .Xr pkg_add 8
 command similar to: 
 .Bl -tag -width Ds
-.It Ic pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.6/packages/<a>/sslUSA26.tgz
+.It Ic pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/2.7/packages/<a>/sslUSA27.tgz
 .El
 .Pp
 replacing
@@ -427,9 +427,9 @@ These packages update your system by installing shared libraries in
 .Pa /usr/local/lib. 
 This only works if your machine architecture supports shared libraries.
 The
-.Pa ssl26
+.Pa ssl27
 and 
-.Pa sslUSA26
+.Pa sslUSA27
 packages are only available for machines which support shared libraries.
 If your architecture does not support shared libraries and you wish it
 did, consider donating hardware, cash, or quality time to the project
@@ -796,7 +796,7 @@ With
 you can change the device configuration in the kernel file directly:
 .Bd -literal 
 .Li #\  Ic config Fl e o Ar bsd.new /bsd
-OpenBSD 2.6-beta (GENERIC.rz0) #0: Mon Oct  4 03:57:22 MEST 1999
+OpenBSD 2.7-beta (GENERIC.rz0) #0: Mon Oct  4 03:57:22 MEST 1999
     root@winona:/usr/src/sys/arch/pmax/compile/GENERIC.rz0
 Enter 'help' for information
 ukc>
