@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.23 2001/09/01 07:16:40 mjacob Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.24 2001/09/29 01:23:54 mjacob Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -1091,7 +1091,7 @@ isp_pci_intr(void *arg)
 		isp->isp_osinfo.onintstack = 1;
 		isp_intr(isp, isr, sema, mbox);
 		isp->isp_osinfo.onintstack = 0;
-		return (0);
+		return (1);
 	}
 }
 
