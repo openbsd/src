@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.46 2001/08/11 02:06:24 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.47 2001/08/17 23:39:59 art Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -430,5 +430,14 @@ extern void *malloc __P((unsigned long size, int type, int flags));
 extern void free __P((void *addr, int type));
 extern int sysctl_malloc __P((int *, u_int, void *, size_t *, void *, size_t,
 			      struct proc *));
+
+#ifdef MALLOC_DEBUG
+int	debug_malloc(unsigned long, int, int, void **);
+int	debug_free(void *, int);
+void	debug_malloc_init(void);
+
+void	debug_malloc_print(void);
+void	debug_malloc_printit(int (*)(const char *, ...), vaddr_t);
+#endif /* MALLOC_DEBUG */
 #endif /* _KERNEL */
 #endif /* !_SYS_MALLOC_H_ */

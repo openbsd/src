@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.37 2001/08/02 11:06:38 art Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.38 2001/08/17 23:39:58 art Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -64,12 +64,6 @@ int buckstring_init = 0;
 char *memname[] = INITKMEMNAMES;
 char *memall = NULL;
 extern struct lock sysctl_kmemlock;
-#endif
-
-#ifdef MALLOC_DEBUG
-extern int debug_malloc __P((unsigned long, int, int, void **));
-extern int debug_free __P((void *, int));
-extern void debug_malloc_init __P((void));
 #endif
 
 #ifdef DIAGNOSTIC

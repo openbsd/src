@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc_debug.c,v 1.10 2001/07/26 13:33:52 art Exp $	*/
+/*	$OpenBSD: kern_malloc_debug.c,v 1.11 2001/08/17 23:39:59 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -58,16 +58,16 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/pool.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <uvm/uvm.h>
-#include <uvm/uvm_page.h>
 
 /*
- * malloc_deb_type and malloc_deb_size define the type and size of
- * memory to be debugged. Use 0 for a wildcard. malloc_deb_size_lo
- * is the lower limit and malloc_deb_size_hi the upper limit of sizes
+ * debug_malloc_type and debug_malloc_size define the type and size of
+ * memory to be debugged. Use 0 for a wildcard. debug_malloc_size_lo
+ * is the lower limit and debug_malloc_size_hi the upper limit of sizes
  * being debugged; 0 will not work as a wildcard for the upper limit.
  * For any debugging to take place, type must be != -1, size must be >= 0,
  * and if the limits are being used, size must be set to 0.
@@ -77,10 +77,10 @@
  * if any memory chunks of this type are used. It's ok to change the size
  * in runtime.
  */
-int malloc_deb_type = -1;
-int malloc_deb_size = -1;
-int malloc_deb_size_lo = -1;
-int malloc_deb_size_hi = -1;
+int debug_malloc_type = -1;
+int debug_malloc_size = -1;
+int debug_malloc_size_lo = -1;
+int debug_malloc_size_hi = -1;
 
 /*
  * MALLOC_DEBUG_CHUNKS is the number of memory chunks we require on the
@@ -88,73 +88,58 @@ int malloc_deb_size_hi = -1;
  */
 #define MALLOC_DEBUG_CHUNKS 16
 
-/* returns 0 if normal malloc/free should be used */
-int debug_malloc __P((unsigned long, int, int, void **));
-int debug_free __P((void *, int));
-void debug_malloc_init __P((void));
+void debug_malloc_allocate_free(int);
 
-void malloc_deb_allocate_free __P((int));
-void debug_malloc_print __P((void));
-void debug_malloc_printit __P((int (*) __P((const char *, ...)), vaddr_t));
-
-struct malloc_deb_entry {
-	TAILQ_ENTRY(malloc_deb_entry) md_list;
+struct debug_malloc_entry {
+	TAILQ_ENTRY(debug_malloc_entry) md_list;
 	vaddr_t md_va;
 	paddr_t md_pa;
 	size_t md_size;
 	int md_type;
 };
 
-TAILQ_HEAD(,malloc_deb_entry) malloc_deb_free;
-TAILQ_HEAD(,malloc_deb_entry) malloc_deb_used;
+TAILQ_HEAD(,debug_malloc_entry) debug_malloc_freelist;
+TAILQ_HEAD(,debug_malloc_entry) debug_malloc_usedlist;
 
-int malloc_deb_allocs;
-int malloc_deb_frees;
-int malloc_deb_pages;
-int malloc_deb_chunks_on_freelist;
+int debug_malloc_allocs;
+int debug_malloc_frees;
+int debug_malloc_pages;
+int debug_malloc_chunks_on_freelist;
 
-#ifndef M_DEBUG
-#define M_DEBUG M_TEMP
-#endif
+struct pool debug_malloc_pool;
 
 int
-debug_malloc(size, type, flags, addr)
-	unsigned long size;
-	int type, flags;
-	void **addr;
+debug_malloc(unsigned long size, int type, int flags, void **addr)
 {
-	struct malloc_deb_entry *md = NULL;
-	int s;
-	int wait = flags & M_NOWAIT;
+	struct debug_malloc_entry *md = NULL;
+	int s, wait = flags & M_NOWAIT;
 
 	/* Careful not to compare unsigned long to int -1 */
-	if ((type != malloc_deb_type && malloc_deb_type != 0) ||
-	    (size != malloc_deb_size && malloc_deb_size != 0) ||
-	    (malloc_deb_size_lo != -1 && size < malloc_deb_size_lo) ||
-	    (malloc_deb_size_hi != -1 && size > malloc_deb_size_hi) ||
-	    type == M_DEBUG)
-		return 0;
+	if ((type != debug_malloc_type && debug_malloc_type != 0) ||
+	    (size != debug_malloc_size && debug_malloc_size != 0) ||
+	    (debug_malloc_size_lo != -1 && size < debug_malloc_size_lo) ||
+	    (debug_malloc_size_hi != -1 && size > debug_malloc_size_hi))
+		return (0);
 
 	/* XXX - fix later */
 	if (size > PAGE_SIZE)
-		return 0;
+		return (0);
 
-	s = splimp();
-	if (malloc_deb_chunks_on_freelist < MALLOC_DEBUG_CHUNKS)
-		malloc_deb_allocate_free(wait);
+	s = splvm();
+	if (debug_malloc_chunks_on_freelist < MALLOC_DEBUG_CHUNKS)
+		debug_malloc_allocate_free(wait);
 
-	md = TAILQ_FIRST(&malloc_deb_free);
+	md = TAILQ_FIRST(&debug_malloc_freelist);
 	if (md == NULL) {
 		splx(s);
-		return 0;
+		return (0);
 	}
-	TAILQ_REMOVE(&malloc_deb_free, md, md_list);
-	malloc_deb_chunks_on_freelist--;
+	TAILQ_REMOVE(&debug_malloc_freelist, md, md_list);
+	debug_malloc_chunks_on_freelist--;
 
-	TAILQ_INSERT_HEAD(&malloc_deb_used, md, md_list);
-	malloc_deb_allocs++;
+	TAILQ_INSERT_HEAD(&debug_malloc_usedlist, md, md_list);
+	debug_malloc_allocs++;
 	splx(s);
-
 
 	pmap_kenter_pa(md->md_va, md->md_pa, VM_PROT_ALL);
 
@@ -166,29 +151,26 @@ debug_malloc(size, type, flags, addr)
 	 * ends. roundup to get decent alignment.
 	 */
 	*addr = (void *)(md->md_va + PAGE_SIZE - roundup(size, sizeof(long)));
-	return 1;
+	return (1);
 }
 
 int
-debug_free(addr, type)
-	void *addr;
-	int type;
+debug_free(void *addr, int type)
 {
-	struct malloc_deb_entry *md;
-	int s;
+	struct debug_malloc_entry *md;
 	vaddr_t va;
+	int s;
 
-	if ((type != malloc_deb_type && malloc_deb_type != 0) ||
-	    type == M_DEBUG)
-		return 0;
+	if (type != debug_malloc_type && debug_malloc_type != 0)
+		return (0);
 
 	/*
 	 * trunc_page to get the address of the page.
 	 */
 	va = trunc_page((vaddr_t)addr);
 
-	s = splimp();
-	TAILQ_FOREACH(md, &malloc_deb_used, md_list)
+	s = splvm();
+	TAILQ_FOREACH(md, &debug_malloc_usedlist, md_list)
 		if (md->md_va == va)
 			break;
 
@@ -200,67 +182,68 @@ debug_free(addr, type)
 		/*
 		 * sanity check. Check for multiple frees.
 		 */
-		TAILQ_FOREACH(md, &malloc_deb_free, md_list)
+		TAILQ_FOREACH(md, &debug_malloc_freelist, md_list)
 			if (md->md_va == va)
 				panic("debug_free: already free");
 		splx(s);
-		return 0;
+		return (0);
 	}
 
-	malloc_deb_frees++;
-	TAILQ_REMOVE(&malloc_deb_used, md, md_list);
+	debug_malloc_frees++;
+	TAILQ_REMOVE(&debug_malloc_usedlist, md, md_list);
 
-	TAILQ_INSERT_TAIL(&malloc_deb_free, md, md_list);
-	malloc_deb_chunks_on_freelist++;
+	TAILQ_INSERT_TAIL(&debug_malloc_freelist, md, md_list);
+	debug_malloc_chunks_on_freelist++;
 	/*
 	 * unmap the page.
 	 */
 	pmap_kremove(md->md_va, PAGE_SIZE);
 	splx(s);
 
-	return 1;
+	return (1);
 }
 
 void
-debug_malloc_init()
+debug_malloc_init(void)
 {
-	TAILQ_INIT(&malloc_deb_free);
-	TAILQ_INIT(&malloc_deb_used);
 
-	malloc_deb_allocs = 0;
-	malloc_deb_frees = 0;
-	malloc_deb_pages = 0;
-	malloc_deb_chunks_on_freelist = 0;
+	TAILQ_INIT(&debug_malloc_freelist);
+	TAILQ_INIT(&debug_malloc_usedlist);
+
+	debug_malloc_allocs = 0;
+	debug_malloc_frees = 0;
+	debug_malloc_pages = 0;
+	debug_malloc_chunks_on_freelist = 0;
+
+	pool_init(&debug_malloc_pool, sizeof(struct debug_malloc_entry),
+	    0, 0, 0, "mdbepl", 0, NULL, NULL, 0);
 }
 
 /*
  * Add one chunk to the freelist.
  *
- * called at splimp.
+ * called at splvm.
  */
 void
-malloc_deb_allocate_free(wait)
-	int wait;
+debug_malloc_allocate_free(int wait)
 {
 	vaddr_t va, offset;
 	struct vm_page *pg;
-	struct malloc_deb_entry *md;
+	struct debug_malloc_entry *md;
 
-	md = malloc(sizeof(struct malloc_deb_entry), M_DEBUG,
-		    wait ? M_WAITOK : M_NOWAIT);
+	md = pool_get(&debug_malloc_pool, wait ? PR_WAITOK : PR_NOWAIT);
 	if (md == NULL)
 		return;
 
-	va = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
-			      PAGE_SIZE * 2,
-			      UVM_KMF_VALLOC | (wait ? UVM_KMF_NOWAIT : 0));
+	va = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object, PAGE_SIZE * 2,
+	    UVM_KMF_VALLOC | (wait ? UVM_KMF_NOWAIT : 0));
 	if (va == 0) {
-		free(md, M_DEBUG);
+		pool_put(&debug_malloc_pool, md);
 		return;
 	}
 
 	offset = va - vm_map_min(kernel_map);
-	do {
+	for (;;) {
 		simple_lock(&uvmexp.kmem_object->vmobjlock);
 		pg = uvm_pagealloc(uvmexp.kmem_object, offset, NULL, 0);
 		if (pg) {
@@ -274,35 +257,34 @@ malloc_deb_allocate_free(wait)
 
 		if (wait == 0) {
 			uvm_unmap(kmem_map, va, va + PAGE_SIZE * 2);
-			free(md, M_DEBUG);
+			pool_put(&debug_malloc_pool, md);
 			return;
 		}
 		uvm_wait("debug_malloc");
-	} while (1);
+	}
 
 	md->md_va = va;
 	md->md_pa = VM_PAGE_TO_PHYS(pg);
 
-	malloc_deb_pages++;
-	TAILQ_INSERT_HEAD(&malloc_deb_free, md, md_list);
-	malloc_deb_chunks_on_freelist++;
+	debug_malloc_pages++;
+	TAILQ_INSERT_HEAD(&debug_malloc_freelist, md, md_list);
+	debug_malloc_chunks_on_freelist++;
 }
 
 void
-debug_malloc_print()
+debug_malloc_print(void)
 {
+
 	debug_malloc_printit(printf, NULL);
 }
 
 void
-debug_malloc_printit(pr, addr)
-        int (*pr) __P((const char *, ...));
-	vaddr_t addr;
+debug_malloc_printit(int (*pr)(const char *, ...), vaddr_t addr)
 {
-	struct malloc_deb_entry *md;
+	struct debug_malloc_entry *md;
 
 	if (addr) {
-		TAILQ_FOREACH(md, &malloc_deb_free, md_list) {
+		TAILQ_FOREACH(md, &debug_malloc_freelist, md_list) {
 			if (addr >= md->md_va &&
 			    addr < md->md_va + 2 * PAGE_SIZE) {
 				(*pr)("Memory at address 0x%x is in a freed "
@@ -311,7 +293,7 @@ debug_malloc_printit(pr, addr)
 				return;
 			}
 		}
-		TAILQ_FOREACH(md, &malloc_deb_used, md_list) {
+		TAILQ_FOREACH(md, &debug_malloc_usedlist, md_list) {
 			if (addr >= md->md_va + PAGE_SIZE &&
 			    addr < md->md_va + 2 * PAGE_SIZE) {
 				(*pr)("Memory at address 0x%x is just outside "
@@ -324,20 +306,18 @@ debug_malloc_printit(pr, addr)
 		return;
 	}
 
-	(*pr)("allocs: %d\n", malloc_deb_allocs);
-	(*pr)("frees: %d\n", malloc_deb_frees);
-	(*pr)("pages used: %d\n", malloc_deb_pages);
-	(*pr)("chunks on freelist: %d\n", malloc_deb_chunks_on_freelist);
+	(*pr)("allocs: %d\n", debug_malloc_allocs);
+	(*pr)("frees: %d\n", debug_malloc_frees);
+	(*pr)("pages used: %d\n", debug_malloc_pages);
+	(*pr)("chunks on freelist: %d\n", debug_malloc_chunks_on_freelist);
 
 	(*pr)("\taddr:\tsize:\n");
 	(*pr)("free chunks:\n");
-	TAILQ_FOREACH(md, &malloc_deb_free, md_list)
+	TAILQ_FOREACH(md, &debug_malloc_freelist, md_list)
 		(*pr)("\t0x%x\t0x%x\t%d\n", md->md_va, md->md_size,
 		      md->md_type);
 	(*pr)("used chunks:\n");
-	TAILQ_FOREACH(md, &malloc_deb_used, md_list)
+	TAILQ_FOREACH(md, &debug_malloc_usedlist, md_list)
 		(*pr)("\t0x%x\t0x%x\t%d\n", md->md_va, md->md_size,
 		      md->md_type);
 }
-
-
