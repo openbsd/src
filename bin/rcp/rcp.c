@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.39 2004/04/01 12:19:57 markus Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.40 2004/07/08 12:53:42 dtucker Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-static const char rcsid[] = "$OpenBSD: rcp.c,v 1.39 2004/04/01 12:19:57 markus Exp $";
+static const char rcsid[] = "$OpenBSD: rcp.c,v 1.40 2004/07/08 12:53:42 dtucker Exp $";
 #endif
 #endif /* not lint */
 
@@ -738,14 +738,18 @@ bad:			run_err("%s: %s", np, strerror(errno));
 		}
 		if (pflag) {
 			if (exists || omode != mode)
-				if (fchmod(ofd, omode))
+				if (fchmod(ofd, omode)) {
 					run_err("%s: set mode: %s",
 					    np, strerror(errno));
+					wrerr = DISPLAYED;
+				}
 		} else {
 			if (!exists && omode != mode)
-				if (fchmod(ofd, omode & ~mask))
+				if (fchmod(ofd, omode & ~mask)) {
 					run_err("%s: set mode: %s",
 					    np, strerror(errno));
+					wrerr = DISPLAYED;
+				}
 		}
 		(void)close(ofd);
 		(void)response();
