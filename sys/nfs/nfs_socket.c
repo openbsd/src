@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.38 2004/07/10 20:39:15 marius Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.39 2004/07/14 18:32:34 pedro Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -328,10 +328,10 @@ nfs_reconnect(rep)
 	 * on old socket.
 	 */
 	TAILQ_FOREACH(rp, &nfs_reqq, r_chain) {
-		if (rp->r_nmp == nmp)
+		if (rp->r_nmp == nmp) {
 			rp->r_flags |= R_MUSTRESEND;
-
-		rp->r_rexmit = 0;
+			rp->r_rexmit = 0;
+		}
 	}
 	return (0);
 }
