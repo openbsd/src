@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.7 1997/11/06 05:59:10 csapuntz Exp $	*/
+/*	$OpenBSD: queue.h,v 1.8 1997/11/28 22:50:15 mickey Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ struct {								\
 /*
  * Simple queue definitions.
  */
-#define SIMPLEQ_HEAD(name, type)						\
+#define SIMPLEQ_HEAD(name, type)					\
 struct name {								\
 	struct type *sqh_first;	/* first element */			\
 	struct type **sqh_last;	/* addr of last next element */		\
@@ -151,13 +151,13 @@ struct {								\
 	(head)->sqh_last = &(head)->sqh_first;				\
 } while (0)
 
-#define SIMPLEQ_INSERT_HEAD(head, elm, field) do {				\
+#define SIMPLEQ_INSERT_HEAD(head, elm, field) do {			\
 	if (((elm)->field.sqe_next = (head)->sqh_first) == NULL)	\
 		(head)->sqh_last = &(elm)->field.sqe_next;		\
 	(head)->sqh_first = (elm);					\
 } while (0)
 
-#define SIMPLEQ_INSERT_TAIL(head, elm, field) do {				\
+#define SIMPLEQ_INSERT_TAIL(head, elm, field) do {			\
 	(elm)->field.sqe_next = NULL;					\
 	*(head)->sqh_last = (elm);					\
 	(head)->sqh_last = &(elm)->field.sqe_next;			\
@@ -169,7 +169,7 @@ struct {								\
 	(listelm)->field.sqe_next = (elm);				\
 } while (0)
 
-#define SIMPLEQ_REMOVE_HEAD(head, elm, field) do {				\
+#define SIMPLEQ_REMOVE_HEAD(head, elm, field) do {			\
 	if (((head)->sqh_first = (elm)->field.sqe_next) == NULL)	\
 		(head)->sqh_last = &(head)->sqh_first;			\
 } while (0)
@@ -206,7 +206,7 @@ struct {								\
 	(head)->tqh_last = &(head)->tqh_first;				\
 } while (0)
 
-#define TAILQ_INSERT_HEAD(head, elm, field) do {				\
+#define TAILQ_INSERT_HEAD(head, elm, field) do {			\
 	if (((elm)->field.tqe_next = (head)->tqh_first) != NULL)	\
 		(head)->tqh_first->field.tqe_prev =			\
 		    &(elm)->field.tqe_next;				\
@@ -216,14 +216,14 @@ struct {								\
 	(elm)->field.tqe_prev = &(head)->tqh_first;			\
 } while (0)
 
-#define TAILQ_INSERT_TAIL(head, elm, field) do {				\
+#define TAILQ_INSERT_TAIL(head, elm, field) do {			\
 	(elm)->field.tqe_next = NULL;					\
 	(elm)->field.tqe_prev = (head)->tqh_last;			\
 	*(head)->tqh_last = (elm);					\
 	(head)->tqh_last = &(elm)->field.tqe_next;			\
 } while (0)
 
-#define TAILQ_INSERT_AFTER(head, listelm, elm, field) do {			\
+#define TAILQ_INSERT_AFTER(head, listelm, elm, field) do {		\
 	if (((elm)->field.tqe_next = (listelm)->field.tqe_next) != NULL)\
 		(elm)->field.tqe_next->field.tqe_prev = 		\
 		    &(elm)->field.tqe_next;				\
@@ -298,7 +298,7 @@ struct {								\
 	(listelm)->field.cqe_prev = (elm);				\
 } while (0)
 
-#define CIRCLEQ_INSERT_HEAD(head, elm, field) do {				\
+#define CIRCLEQ_INSERT_HEAD(head, elm, field) do {			\
 	(elm)->field.cqe_next = (head)->cqh_first;			\
 	(elm)->field.cqe_prev = (void *)(head);				\
 	if ((head)->cqh_last == (void *)(head))				\
@@ -308,7 +308,7 @@ struct {								\
 	(head)->cqh_first = (elm);					\
 } while (0)
 
-#define CIRCLEQ_INSERT_TAIL(head, elm, field) do {				\
+#define CIRCLEQ_INSERT_TAIL(head, elm, field) do {			\
 	(elm)->field.cqe_next = (void *)(head);				\
 	(elm)->field.cqe_prev = (head)->cqh_last;			\
 	if ((head)->cqh_first == (void *)(head))			\
