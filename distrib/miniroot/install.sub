@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.132 1999/09/23 21:33:43 aaron Exp $
+#	$OpenBSD: install.sub,v 1.133 1999/10/02 13:32:43 aaron Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1768,7 +1768,7 @@ __EOT
 
 	cat << __EOT
 
-You will now be given the chance to install the missing set(s).  You can can
+You will now be given the chance to install the missing set(s).  You can
 enter '!' at the prompt to escape to a shell and fix things by hand if you wish.
 
 __EOT
