@@ -1,4 +1,4 @@
-.\"	$OpenBSD: enc.4,v 1.2 1999/10/07 20:56:16 angelos Exp $
+.\"	$OpenBSD: enc.4,v 1.3 1999/10/08 01:50:37 aaron Exp $
 .Dd October 7, 1999
 .Dt ENC 4
 .Os
@@ -9,7 +9,7 @@
 .Cd "pseudo-device enc 1"
 .Sh DESCRIPTION
 The
-.Nm enc
+.Nm
 interface is a software loopback mechanism that allows hosts or
 firewalls to filter
 .Xr ipsec 4
@@ -20,7 +20,7 @@ The
 manpage shows an example of such a setup.
 .Pp
 The other use of the
-.Nm enc
+.Nm
 interface is to allow an administrator to see outgoing packets before
 they have been processed by
 .Xr ipsec 4 ,
@@ -28,9 +28,9 @@ or incoming packets after they have been similarly processed, via
 .Xr tcpdump 1 .
 .Pp
 There is only one
-.Nm enc
+.Nm
 interface, named
-.Sy enc Ns Ar 0 ,
+.Dq enc0 ,
 regardless of the argument given on the
 .Sy pseudo-device
 line in the kernel configuration file.
@@ -52,7 +52,7 @@ or all incoming packets after they have been similarly processed:
 .Xr vpn 8
 .Sh BUGS
 The
-.Fa PROMISC
-flag is not cleared on the
-.Sy enc Ns Ar 0
-interface after tcpdump is stopped.
+.Cm PROMISC
+flag is not cleared on the enc0 interface after
+.Xr tcpdump
+is stopped.
