@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.5 2004/12/25 20:40:19 deraadt Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.6 2004/12/28 23:07:32 jsg Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -556,7 +556,7 @@ struct ieee80211_duration {
 	uint16_t	d_rts_dur;
 	uint16_t	d_data_dur;
 	uint16_t	d_plcp_len;
-	uint8_t		d_plcp_svc;
+	uint8_t		d_residue;	/* unused octets in time slot */
 };
 
 /* One Time Unit (TU) is 1Kus = 1024 microseconds. */

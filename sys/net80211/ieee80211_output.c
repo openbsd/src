@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.3 2004/12/23 12:27:25 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.4 2004/12/28 23:07:32 jsg Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -273,56 +273,51 @@ bad:
  *
  * Arguments out:
  *
- * d:       802.11 Duration field for data frame,
+ * d:       802.11 Duration field for RTS,
+ *          802.11 Duration field for data frame,
  *          PLCP Length for data frame,
- *          PLCP Service field for data frame,
- *          802.11 Duration field for RTS
+ *          residual octets at end of data slot
  */
 static int
-ieee80211_compute_duration1(int len, uint32_t flags, int rate,
+ieee80211_compute_duration1(int len, int use_ack, uint32_t flags, int rate,
     struct ieee80211_duration *d)
 {
-	int ack, bitlen, cts, data_dur, remainder;
+	int pre, ctsrate;
+	int ack, bitlen, data_dur, remainder;
 
 	/* RTS reserves medium for SIFS | CTS | SIFS | (DATA) | SIFS | ACK
 	 * DATA reserves medium for SIFS | ACK
+	 *
+	 * XXXMYC: no ACK on multicast/broadcast or control packets
 	 */
 
 	bitlen = len * 8;
 
-#if 0
-	/* RTS is always sent at 1 Mb/s.  (XXX Really?) */
-	d->d_rts_plcp_len = sizeof(struct ieee80211_frame_rts) * 8;
-#endif
-	d->d_plcp_svc = 0;
+	pre = IEEE80211_DUR_DS_SIFS;
+	if ((flags & IEEE80211_F_SHPREAMBLE) != 0)
+		pre += IEEE80211_DUR_DS_SHORT_PREAMBLE + IEEE80211_DUR_DS_FAST_PLCPHDR;
+	else
+		pre += IEEE80211_DUR_DS_LONG_PREAMBLE + IEEE80211_DUR_DS_SLOW_PLCPHDR;
+
+	d->d_residue = 0;
+	data_dur = (bitlen * 2) / rate;
+	remainder = (bitlen * 2) % rate;
+	if (remainder != 0) {
+		d->d_residue = (rate - remainder) / 16;
+		data_dur++;
+	}
 
 	switch (rate) {
 	case 2:		/* 1 Mb/s */
 	case 4:		/* 2 Mb/s */
-		data_dur = (bitlen * 2) / rate;
-
 		/* 1 - 2 Mb/s WLAN: send ACK/CTS at 1 Mb/s */
-		cts = IEEE80211_DUR_DS_SLOW_CTS;
-		ack = IEEE80211_DUR_DS_SLOW_ACK;
+		ctsrate = 2;
 		break;
-	case 44:	/* 22  Mb/s */
-		d->d_plcp_svc = IEEE80211_PLCP_SERVICE_PBCC;
-		/*FALLTHROUGH*/
 	case 11:	/* 5.5 Mb/s */
 	case 22:	/* 11  Mb/s */
-		remainder = (bitlen * 2) % rate;
-
-		if (remainder != 0)
-			data_dur = (bitlen * 2) / rate + 1;
-		else
-			data_dur = (bitlen * 2) / rate;
-
-		if (rate == 22 && remainder <= 6)
-			d->d_plcp_svc |= IEEE80211_PLCP_SERVICE_LENEXT;
-
+	case 44:	/* 22  Mb/s */
 		/* 5.5 - 11 Mb/s WLAN: send ACK/CTS at 2 Mb/s */
-		cts = IEEE80211_DUR_DS_FAST_CTS;
-		ack = IEEE80211_DUR_DS_FAST_ACK;
+		ctsrate = 4;
 		break;
 	default:
 		/* TBD */
@@ -331,25 +326,15 @@ ieee80211_compute_duration1(int len, uint32_t flags, int rate,
 
 	d->d_plcp_len = data_dur;
 
-	d->d_rts_dur = data_dur + 3 * (IEEE80211_DUR_DS_SIFS +
-	    IEEE80211_DUR_DS_SHORT_PREAMBLE +
-	    IEEE80211_DUR_DS_FAST_PLCPHDR) + cts + ack;
+	ack = (use_ack) ? pre + (IEEE80211_DUR_DS_SLOW_ACK * 2) / ctsrate : 0;
 
-	/* Note that this is the amount of time reserved *after*
-	 * the packet is transmitted: just long enough for a SIFS
-	 * and an ACK.
-	 */
-	d->d_data_dur = IEEE80211_DUR_DS_SIFS +
-	    IEEE80211_DUR_DS_SHORT_PREAMBLE + IEEE80211_DUR_DS_FAST_PLCPHDR +
+	d->d_rts_dur =
+	    pre + (IEEE80211_DUR_DS_SLOW_CTS * 2) / ctsrate +
+	    pre + data_dur +
 	    ack;
 
-	if ((flags & IEEE80211_F_SHPREAMBLE) != 0)
-		return 0;
+	d->d_data_dur = ack;
 
-	d->d_rts_dur += 3 * IEEE80211_DUR_DS_PREAMBLE_DIFFERENCE +
-			3 * IEEE80211_DUR_DS_PLCPHDR_DIFFERENCE;
-	d->d_data_dur += IEEE80211_DUR_DS_PREAMBLE_DIFFERENCE +
-			 IEEE80211_DUR_DS_PLCPHDR_DIFFERENCE;
 	return 0;
 }
 
@@ -382,7 +367,7 @@ ieee80211_compute_duration(struct ieee80211_frame *wh, int len,
     uint32_t flags, int fraglen, int rate, struct ieee80211_duration *d0,
     struct ieee80211_duration *dn, int *npktp, int debug)
 {
-	int rc;
+	int ack, rc;
 	int firstlen, hdrlen, lastlen, lastlen0, npkt, overlen, paylen;
 
 	if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
@@ -392,28 +377,17 @@ ieee80211_compute_duration(struct ieee80211_frame *wh, int len,
 
 	paylen = len - hdrlen;
 
-	if ((flags & IEEE80211_F_WEPON) != 0) {
+	if ((flags & IEEE80211_F_WEPON) != 0)
 		overlen = IEEE80211_WEP_TOTLEN + IEEE80211_CRC_LEN;
-#if 0	/* 802.11 lets us extend a fragment's length by the length of
-	 * a WEP header, AFTER fragmentation.  Might want to disable
-	 * this while fancy link adaptations are running.
-	 */
-		fraglen -= IEEE80211_WEP_TOTLEN;
-#endif
-#if 0	/* Ditto CRC? */
-		fraglen -= IEEE80211_CRC_LEN;
-#endif
-	} else
+	else
 		overlen = IEEE80211_CRC_LEN;
 
 	npkt = paylen / fraglen;
 	lastlen0 = paylen % fraglen;
 
-	if (npkt == 0) {
-		/* no fragments */
+	if (npkt == 0)			/* no fragments */
 		lastlen = paylen + overlen;
-	} else if (lastlen0 != 0) {
-		/* a short fragment */
+	else if (lastlen0 != 0) {	/* a short "tail" fragment */
 		lastlen = lastlen0 + overlen;
 		npkt++;
 	} else
@@ -433,7 +407,12 @@ ieee80211_compute_duration(struct ieee80211_frame *wh, int len,
 		    __func__, npkt, firstlen, lastlen0, lastlen, fraglen,
 		    overlen, len, rate, flags);
 	}
-	rc = ieee80211_compute_duration1(firstlen + hdrlen, flags, rate, d0);
+
+	ack = !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
+	    (wh->i_fc[1] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL;
+
+	rc = ieee80211_compute_duration1(firstlen + hdrlen,
+	    ack, flags, rate, d0);
 	if (rc == -1)
 		return rc;
 
@@ -441,7 +420,8 @@ ieee80211_compute_duration(struct ieee80211_frame *wh, int len,
 		*dn = *d0;
 		return 0;
 	}
-	return ieee80211_compute_duration1(lastlen + hdrlen, flags, rate, dn);
+	return ieee80211_compute_duration1(lastlen + hdrlen, ack, flags, rate,
+	    dn);
 }
 
 /*
