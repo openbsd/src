@@ -1,4 +1,4 @@
-.\" Copyright (c) 1998, 1999 Sendmail, Inc. and its suppliers.
+.\" Copyright (c) 1998-2000 Sendmail, Inc. and its suppliers.
 .\"	 All rights reserved.
 .\"
 .\" By using this file, you agree to the terms and conditions set
@@ -6,7 +6,7 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"	$Sendmail: praliases.8,v 8.12 1999/09/01 22:15:16 gshapiro Exp $
+.\"	$Sendmail: praliases.8,v 8.14 2000/03/17 07:32:46 gshapiro Exp $
 .\"
 .TH PRALIASES 1 "April 25, 1996"
 .SH NAME
@@ -18,6 +18,9 @@
 .IR file ]
 .RB [ \-f
 .IR file ]
+.RB [\c
+.IR key
+.IR ... ]
 .SH DESCRIPTION
 The
 .B praliases
@@ -36,6 +39,9 @@ configuration file.
 Read the specified file instead of the configured
 .B sendmail
 system aliases file(s).
+.PP
+If one or more keys are specified on the command line,
+only entries which match those keys are displayed.
 .PP
 The
 .B praliases
