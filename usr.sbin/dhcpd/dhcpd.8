@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.3 2004/04/20 00:27:57 henning Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.4 2004/04/20 03:46:19 henning Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -99,24 +99,6 @@ file,
 reads the
 .Pa dhcpd.leases
 file to refresh its memory about what leases have been assigned.
-.Pp
-New leases are appended to the end of the
-.Pa dhcpd.leases
-file.
-In order to prevent the file from becoming arbitrarily large,
-from time to time
-.Nm
-creates a new
-.Pa dhcpd.leases
-file from its in-core lease database.
-Once this file has been written to disk, the old file is renamed
-.Pa dhcpd.leases~ ,
-and the new file is renamed
-.Pa dhcpd.leases .
-If the system crashes in the middle of this process, whichever
-.Pa dhcpd.leases
-file remains will contain all the lease information, so there is no need for
-a special crash recovery process.
 .Pp
 BOOTP support is also provided by this server.
 Unlike DHCP, the BOOTP protocol does not provide a protocol for recovering
@@ -344,9 +326,7 @@ file syntax is provided in
 .It /etc/dhcpd.conf
 DHCPD configuration file.
 .It /var/db/dhcpd.leases
-Current DHCPD lease file.
-.It /var/db/dhcpd.leases~
-Backup DHCPD lease file.
+DHCPD lease file.
 .It /var/run/dhcpd.pid
 DHCPD PID.
 .El

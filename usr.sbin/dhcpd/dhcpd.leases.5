@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.leases.5,v 1.2 2004/04/15 08:34:20 jmc Exp $
+.\"	$OpenBSD: dhcpd.leases.5,v 1.3 2004/04/20 03:46:19 henning Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -51,38 +51,6 @@ Every time a lease is acquired, renewed or released, its new value is
 recorded at the end of the lease file.
 So if more than one declaration appears for a given lease,
 the last one in the file is the current one.
-.Pp
-When
-.Xr dhcpd 8
-is first installed, there is no lease database.
-However, dhcpd requires that a lease database be present before it will start.
-To make the initial lease database, just create an empty file called
-.Pa /var/db/dhcpd.leases .
-.Pp
-In order to prevent the lease database from growing without bound, the
-file is rewritten from time to time.
-First, a temporary lease database is created and all known leases are
-dumped to it.
-Then, the old lease database is renamed
-.Pa /var/db/dhcpd.leases~ .
-Finally, the newly written lease database is moved into place.
-.Pp
-There is a window of vulnerability where if the dhcpd process is
-killed or the system crashes after the old lease database has been
-renamed but before the new one has been moved into place, there will
-be no
-.Pa /var/db/dhcpd.leases .
-In this case, dhcpd will refuse to start,
-and will require manual intervention.
-.Em DO NOT
-simply create a new lease file when this happens \- if you do,
-you will lose all your old bindings, and chaos will ensue.
-Instead, rename
-.Pa /var/db/dhcpd.leases~
-to
-.Pa /var/db/dhcpd.leases ,
-restoring the old, valid lease file, and then start dhcpd.
-This guarantees that a valid lease file will be restored.
 .Sh FORMAT
 Lease descriptions are stored in a format that is parsed by the same
 recursive descent parser used to read the
@@ -134,8 +102,6 @@ and the second also a number from 0 to 59.
 .Pp
 Lease times are specified in Coordinated Universal Time (UTC), not in the
 local time zone.
-.Qq Li date -u
-will show the current time in UTC.
 .Pp
 The MAC address of the network interface that was used to acquire the
 lease is recorded with the
@@ -169,7 +135,7 @@ statement.
 .Pp
 If the client sends its hostname using the
 .Ic Hostname
-option, as Windows 95 does, it is recorded using the
+option it is recorded using the
 .Ic hostname
 statement.
 .Pp
@@ -204,7 +170,6 @@ In that case, the address is immediately assigned to the client.
 .Sh FILES
 .Bl -tag -width Ds -compact
 .It /var/db/dhcpd.leases
-.It /var/db/dhcpd.leases~
 .El
 .Sh SEE ALSO
 .Xr dhcp-options 5 ,
