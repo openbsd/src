@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.32 2004/05/07 18:06:35 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.33 2004/07/31 13:38:32 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -394,9 +394,8 @@ m8820x_setup_board_config()
 			    vme188_config, max_cpus, max_cmmus);
 		}
 	} else {
-		panic("unsupported MVME%x board configuration "
-		    "#%X (%d CPUs %d CMMUs)",
-		    brdtyp, vme188_config, max_cpus, max_cmmus);
+		panic("unrecognized MVME%x board configuration #%X",
+		    brdtyp, vme188_config);
 	}
 #endif
 
@@ -965,49 +964,49 @@ m8820x_cmmu_parity_enable()
 }
 
 /*
- * Find out the CPU number from accessing CMMU
- * Better be at splhigh, or even better, with interrupts
- * disabled.
+ * Find out the CPU number from accessing CMMU.
+ * On MVME187, there is only one CPU, so this is trivial.
+ * On MVME188, we access the WHOAMI register, which is in data space;
+ * its value will let us know which data CMMU has been used to perform
+ * the read, and we can reliably compute the CPU number from it.
  */
-#define ILLADDRESS	0x0f000000 	/* any faulty address */
-
 unsigned
 m8820x_cmmu_cpu_number()
 {
-	unsigned cmmu_no;
-	int i, cpu;
+#ifdef MVME188
+	u_int32_t whoami;
+	unsigned int cpu;
+#endif
 
-	CMMU_LOCK;
+#ifdef MVME187
+	if (brdtyp != BRD_188)
+		return 0;
+#endif
 
-	for (i = 0; i < 10; i++) {
-		/* clear CMMU p-bus status registers */
-		for (cmmu_no = 0; cmmu_no < MAX_CMMUS; cmmu_no++) {
-			if (m8820x_cmmu[cmmu_no].cmmu_alive == CMMU_AVAILABLE &&
-			    m8820x_cmmu[cmmu_no].cmmu_type == DATA_CMMU)
-				m8820x_cmmu[cmmu_no].cmmu_regs[CMMU_PFSR] = 0;
-		}
-
-		/* access faulting address */
-		badwordaddr((vaddr_t)ILLADDRESS);
-
-		/* check which CMMU reporting the fault  */
-		for (cmmu_no = 0; cmmu_no < MAX_CMMUS; cmmu_no++) {
-			if (m8820x_cmmu[cmmu_no].cmmu_alive == CMMU_AVAILABLE &&
-			    m8820x_cmmu[cmmu_no].cmmu_type == DATA_CMMU &&
-			    CMMU_PFSR_FAULT(m8820x_cmmu[cmmu_no].
-			      cmmu_regs[CMMU_PFSR]) != CMMU_PFSR_SUCCESS) {
-				/* clean register, just in case... */
-				m8820x_cmmu[cmmu_no].cmmu_regs[CMMU_PFSR] = 0;
-				m8820x_cmmu[cmmu_no].cmmu_alive = CMMU_MARRIED;
-				cpu = m8820x_cmmu[cmmu_no].cmmu_cpu;
-				CMMU_UNLOCK;
+#ifdef MVME188
+	whoami = *(u_int32_t *volatile)MVME188_WHOAMI;
+	switch ((whoami & 0xf0) >> 4) {
+	/* 2 CMMU per CPU multiprocessor modules */
+	case 0:
+	case 5:
+		for (cpu = 0; cpu < 4; cpu++)
+			if (whoami & (1 << cpu))
 				return cpu;
-			}
-		}
+		break;
+	/* 4 CMMU per CPU dual processor modules */
+	case 1:
+		for (cpu = 0; cpu < 4; cpu++)
+			if (whoami & (1 << cpu))
+				return cpu >> 1;
+		break;
+	/* single processor modules */
+	case 2:
+	case 6:
+	case 0x0a:
+		return 0;
 	}
-	CMMU_UNLOCK;
-
-	panic("m8820x_cmmu_cpu_number: could not determine my cpu number");
+	panic("can't figure out cpu number from whoami register %x", whoami);
+#endif
 }
 
 void
