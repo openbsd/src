@@ -1,4 +1,4 @@
-/*	$OpenBSD: crtbegin.c,v 1.10 2004/10/10 18:29:15 kettenis Exp $	*/
+/*	$OpenBSD: crtbegin.c,v 1.11 2004/10/26 20:18:24 kettenis Exp $	*/
 /*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
 
 /*
@@ -49,8 +49,12 @@ struct dwarf2_eh_object {
 	void *space[8];
 };
 
-extern void __register_frame_info(const void *,
-    struct dwarf2_eh_object *) __attribute__((weak));
+void __register_frame_info(const void *, struct dwarf2_eh_object *)
+    __attribute__((weak));
+
+void __register_frame_info(const void *begin, struct dwarf2_eh_object *ob)
+{
+}
 
 static const char __EH_FRAME_BEGIN__[]
     __attribute__((section(".eh_frame"), aligned(4))) = { };
@@ -114,8 +118,7 @@ __do_init()
 	if (!initialized) {
 		initialized = 1;
 
-		if (__register_frame_info != NULL)
-			__register_frame_info(__EH_FRAME_BEGIN__, &object);
+		__register_frame_info(__EH_FRAME_BEGIN__, &object);
 
 		(__ctors)();
 
