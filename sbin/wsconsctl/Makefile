@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.14 2004/01/28 17:45:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.15 2004/01/29 02:55:48 deraadt Exp $
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "hppa" || ${MACHINE} == "macppc" || \
     ${MACHINE} == "sparc" || ${MACHINE} == "sparc64" || \
-    ${MACHINE} == "pegasos" || ${MACHINE} == "alpha"
+    ${MACHINE} == "pegasos" || ${MACHINE} == "alpha" ||
+    ${MACHINE} == "cats"
 
 PROG=	wsconsctl
 SRCS=	display.c keyboard.c keysym.c map_parse.y map_scan.l \
