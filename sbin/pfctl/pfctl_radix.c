@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.9 2003/01/20 20:47:10 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.10 2003/01/25 23:17:34 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -38,10 +38,8 @@
 #include <netinet/in.h>
 #include <net/pfvar.h>
 
-#include <string.h>
 #include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
+#include <string.h>
 
 #include "pfctl.h"
 
@@ -68,7 +66,7 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 
 	if (size < 0 || (size && tbl == NULL)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
@@ -88,7 +86,7 @@ pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 
 	if (size < 0 || (size && tbl == NULL)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
@@ -108,7 +106,7 @@ pfr_get_tables(struct pfr_table *tbl, int *size, int flags)
 
 	if (size == NULL || *size < 0 || (*size && tbl == NULL)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
@@ -127,7 +125,7 @@ pfr_get_tstats(struct pfr_tstats *tbl, int *size, int flags)
 
 	if (size == NULL || *size < 0 || (*size && tbl == NULL)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
@@ -146,7 +144,7 @@ pfr_clr_addrs(struct pfr_table *tbl, int *ndel, int flags)
 
 	if (tbl == NULL) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
@@ -166,7 +164,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 
 	if (tbl == NULL || size < 0 || (size && addr == NULL)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
@@ -188,7 +186,7 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 
 	if (tbl == NULL || size < 0 || (size && addr == NULL)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
@@ -210,7 +208,7 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 
 	if (tbl == NULL || size < 0 || (size && addr == NULL)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
@@ -233,13 +231,13 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 
 int
 pfr_get_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int *size,
-	int flags)
+    int flags)
 {
 	struct pfioc_table io;
 
 	if (tbl == NULL || size == NULL || *size < 0 || (*size && addr == NULL)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
@@ -254,13 +252,13 @@ pfr_get_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int *size,
 
 int
 pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
-	int flags)
+    int flags)
 {
 	struct pfioc_table io;
 
 	if (tbl == NULL || size == NULL || *size < 0 || (*size && addr == NULL)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
@@ -281,7 +279,7 @@ pfr_clr_astats(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 
 	if (tbl == NULL || size < 0 || (size && addr == NULL)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
@@ -302,7 +300,7 @@ pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 
 	if (size < 0 || (size && !tbl)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
@@ -317,13 +315,13 @@ pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 
 int
 pfr_set_tflags(struct pfr_table *tbl, int size, int setflag, int clrflag,
-	int *nchange, int *ndel, int flags)
+    int *nchange, int *ndel, int flags)
 {
 	struct pfioc_table io;
 
 	if (size < 0 || (size && !tbl)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
@@ -342,13 +340,13 @@ pfr_set_tflags(struct pfr_table *tbl, int size, int setflag, int clrflag,
 
 int
 pfr_tst_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
-	int *nmatch, int flags)
+    int *nmatch, int flags)
 {
 	struct pfioc_table io;
 
 	if (tbl == NULL || size < 0 || (size && addr == NULL)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
@@ -397,13 +395,13 @@ pfr_ina_commit(int ticket, int *nadd, int *nchange, int flags)
 
 int
 pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
-	int *nadd, int *naddr, int ticket, int flags)
+    int *nadd, int *naddr, int ticket, int flags)
 {
 	struct pfioc_table io;
 
 	if (tbl == NULL || size < 0 || (size && addr == NULL)) {
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;

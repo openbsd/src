@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.28 2003/01/25 18:16:05 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.29 2003/01/25 23:17:34 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -39,22 +39,19 @@
 #include <net/pfvar.h>
 #include <arpa/inet.h>
 
+#include <assert.h>
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <time.h>
-#include <fcntl.h>
-#include <limits.h>
 #include <netdb.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <ctype.h>
-#include <assert.h>
+#include <time.h>
 
-#include "pfctl.h"
 #include "pfctl_parser.h"
+#include "pfctl.h"
 
 #define BUF_SIZE 256
 
@@ -493,7 +490,7 @@ print_addrx(struct pfr_addr *ad, struct pfr_addr *rad, int dns)
 {
 	char		ch, buf[BUF_SIZE] = "{error}";
 	char		fb[] = { ' ', 'M', 'A', 'D', 'C', 'Z', 'X', ' ', 'Y' };
-	unsigned	fback, hostnet;
+	unsigned int	fback, hostnet;
 
 	fback = (rad != NULL) ? rad->pfra_fback : ad->pfra_fback;
 	ch = (fback < sizeof(fb)/sizeof(*fb)) ? fb[fback] : '?';
