@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.9 2001/11/13 18:51:24 dhartmei Exp $
+.\"	$OpenBSD: pf.4,v 1.10 2001/11/13 19:09:59 dhartmei Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -269,14 +269,14 @@ int main(int argc, char *argv[])
 	struct pfioc_natlook nl;
 
 	if (argc != 5) {
-		printf("%s <gwy addr> <gwy port> <ext addr> <ext port>\n",
+		printf("%s <gwy addr> <gwy port> <ext addr> <ext port>\\n",
 		    argv[0]);
 		return 1;
 	}
 
 	dev = open("/dev/pf", O_RDWR);
 	if (dev == -1)
-		err(0, "open(\"/dev/pf\") failed");
+		err(0, "open(\\"/dev/pf\\") failed");
 
 	memset(&nl, 0, sizeof(struct pfioc_natlook));
 	nl.saddr.v4.s_addr	= read_address(argv[1]);
@@ -291,7 +291,7 @@ int main(int argc, char *argv[])
 		err(0, "DIOCNATLOOK");
 
 	printf("internal host "); print_address(nl.rsaddr.v4.s_addr);
-	printf(":%u\n", ntohs(nl.rsport));
+	printf(":%u\\n", ntohs(nl.rsport));
 
 	close(dev);
 	return 0;
