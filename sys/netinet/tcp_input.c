@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.70 2000/09/18 22:06:38 provos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.71 2000/09/18 23:59:39 fgsch Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2750,7 +2750,10 @@ tcp_mss(tp, offer)
 	struct ifnet *ifp;
 	register int rtt, mss, mssopt;
 	u_long bufsize;
-	int iphlen, is_ipv6 = 0;
+	int iphlen;
+#ifdef INET6
+	int is_ipv6 = 0;
+#endif
 	struct inpcb *inp;
 	struct socket *so;
 
