@@ -157,12 +157,14 @@ Sample code which searchs a directory for entry ``name'' is:
 .Bd -literal -offset indent
 len = strlen(name);
 dirp = opendir(".");
-while ((dp = readdir(dirp)) != NULL)
-	if (dp->d_namlen == len && !strcmp(dp->d_name, name)) {
-		(void)closedir(dirp);
-		return FOUND;
-	}
-(void)closedir(dirp);
+if (dirp) {
+	while ((dp = readdir(dirp)) != NULL)
+		if (dp->d_namlen == len && !strcmp(dp->d_name, name)) {
+			(void)closedir(dirp);
+			return FOUND;
+		}
+	(void)closedir(dirp);
+}
 return NOT_FOUND;
 .Ed
 .Sh SEE ALSO
