@@ -1,6 +1,5 @@
 	           Concurrent Versions System (CVS)
 		    ported to Microsoft Windows NT
-			   Cyclic Software
 
 Check the ../INSTALL file for information on the most recent version
 of CVS which has been known to be tested with NT and/or Win95.
@@ -17,16 +16,26 @@ confuse the makefile for Visual C++.
 To compile, use Microsoft Visual C++ on the file cvsnt.mak in the
 distribution's top directory.  At least with the tar port I'm using,
 the sources get extracted without carriage returns and you must add
-carriage returns to the end of every line in cvsnt.mak.  I also had to
-add them to src/server.c.  It doesn't seem to be necessary to add them
-to any other file.  This makefile was generated with Visual C++ 4.x.
-For Visual C++ 5.x use cvsnet.dsp (which is probably more likely to be
-up to date than cvsnt.mak anyway).  For Visual C++ 2.x you probably
-are in the position of digging through old versions of CVS for a
-cvsnt.mak and then updating it.  Feel free to let us know about
-problems of this sort as with other bug reports; our impression thus
-far is that relatively few people care about which versions of Visual
-C++ work.
+carriage returns to the end of every line in cvsnt.mak.  It doesn't
+seem to be necessary to add them to any other file.  This makefile was
+generated with Visual C++ 4.x.  For Visual C++ 5.x you can try
+cvsnet.dsp.  For Visual C++ 2.x you probably are in the position of
+digging through old versions of CVS for a cvsnt.mak and then updating
+it.  Feel free to let us know about problems of this sort as with
+other bug reports.
+
+Update as of 13 Oct 1998: I (Jim Kingdon) do build CVS successfully
+with Visual C++ on a regular basis.  The builds on download.cyclic.com
+(CVS 1.10, CVS 1.10.3, &c) are built using Visual C++ 4.0 and
+cvsnt.mak from the Debug (not release) configuration.  I have pretty
+much given up on getting the Visual C++ IDE to generate a makefile
+that works for anyone except me :-(.  If I knew an easy fix for this,
+I'd do it, but it is easier to just complain about Microsoft's finicky
+IDE and makefile/project file format du jour :-).  Having people send
+in "fixed" versions of cvsnt.mak and cvsnt.dsp regularly, as has been
+happening, is fine but it isn't an "easy fix", unfortunately, as it is
+rarely clear to me whether a particular submission will improve things
+or not.
 
 Send bug reports to bug-cvs@gnu.org.
 
@@ -43,30 +52,11 @@ of CVS (1.8 and older), you also need gzip.  Note that you do NOT need
 an rsh client if you are using the :server: access method (which uses
 the internal rsh client), except perhaps for debugging.
 
-To operate in local mode, you will need GNU patch, GNU diffutils,
-and rcs version 5.7 installed on your system.  Make
-sure NOT to get a version of rcs less than 5.7 (gr564bnt.zip was
-particularly bad), because those versions insist on putting their
-files in their own directory structure, making them incompatible with
-CVS.
+To operate in local mode, you should need nothing other than CVS (that
+is, you no longer need RCS, diff, &c, in order to run CVS).
 
-Noel Cragg, who did the latest mods to the Windows NT port, used the
-following packages:
-
-	ftp://wuarchive.wustl.edu/systems/ibmpc/gnuish/patch212.zip
-	ftp://ftp.netcom.com/pub/al/alexande/rcs57nt.zip
-	ftp://ftp.netcom.com/pub/al/alexande/diff57nt.zip
-
-Copies of these zip files can be also be found in the windows-nt
-directory for the latest CVS release (cvs-1.9/windows-nt, for example)
-under:
-
-	ftp://ftp.cyclic.com/pub/cvs/ or
-	http://www.cyclic.com/archive/pub/cvs/
-
-If you want to try other versions of these utilities, you might have
-luck with the Congruent ports of these packages to Windows NT, binary
-and source:
+One useful site may be the Congruent ports of various packages to
+Windows NT, binary and source:
 
 	ftp://microlib.cc.utexas.edu/microlib/nt/gnu/
 
@@ -75,9 +65,10 @@ which support long file names, which you will need to unpack the CVS
 source distribution.
 
 The CYGWIN32 package is a port of various GNU tools for NT, providing
-bash as the shell and gcc as the compiler.  The tools are still in
-development, but they are useful for running a modified version of
-sanity.sh:
+bash as the shell and gcc as the compiler.  Basically, you don't want
+the stuff in this directory for CVS running under cygwin32; you want
+the same stuff as for unix (../configure, Makefile.in, &c).  For
+cygwin32 information see
 
 	http://www.cygnus.com/misc/gnu-win32/
 
@@ -106,6 +97,8 @@ The following harmless warnings are known:
 .\lib\getdate.c(1612) : warning C4102: 'yyerrlab' : unreferenced label
 .\lib\getdate.c(1612) : warning C4102: 'yynewstate' : unreferenced label
 
+Oct 1998 update: there are more now.  I've gotten lax about removing
+the warnings lately :-( -kingdon.
 
 CODING STANDARDS for Windows
 

@@ -11,9 +11,8 @@ $ CC savecwd.c
 $ CC sighandle.c
 $ CC stripslash.c
 $ CC valloc.c
-$ CC vasprintf.c
 $ CC xgetwd.c
 $ CC yesno.c
 $ library/create gnulib.olb fnmatch.obj,getdate.obj,getline.obj,-
 getopt.obj,getopt1.obj,md5.obj,regex.obj,savecwd.obj,sighandle.obj,-
-stripslash.obj,valloc.obj,vasprintf.obj,xgetwd.obj,yesno.obj
+stripslash.obj,valloc.obj,xgetwd.obj,yesno.obj

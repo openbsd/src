@@ -147,8 +147,8 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 		       + strlen (msg)
 		       + (where ? strlen (where) : 0)
 		       + (extra_arg ? strlen (extra_arg) : 0));
-	sprintf (buf, "%c-> do_module (%s, %s, %s, %s)\n",
-		 (server_active) ? 'S' : ' ',
+	sprintf (buf, "%s-> do_module (%s, %s, %s, %s)\n",
+		 CLIENT_SERVER_STR,
 		 mname, msg, where ? where : "",
 		 extra_arg ? extra_arg : "");
 	cvs_outerr (buf, 0);
@@ -192,13 +192,13 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 	{
 	    do
 		*cp-- = '\0';
-	    while (isspace (*cp));
+	    while (isspace ((unsigned char) *cp));
 	}
 	else
 	{
 	    /* Always strip trailing spaces */
 	    cp = strchr (val.dptr, '\0');
-	    while (cp > val.dptr && isspace(*--cp))
+	    while (cp > val.dptr && isspace ((unsigned char) *--cp))
 		*cp = '\0';
 	}
 
@@ -315,7 +315,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 	    {
 		do
 		    *cp2-- = '\0';
-		while (isspace (*cp2));
+		while (isspace ((unsigned char) *cp2));
 	    }
 	    value = val.dptr;
 
@@ -362,7 +362,7 @@ do_module (db, mname, m_type, msg, callback_proc, where,
 	spec_opt = cp + 1;		/* save the options for later */
 
 	if (cp != value)		/* strip whitespace if necessary */
-	    while (isspace (*--cp))
+	    while (isspace ((unsigned char) *--cp))
 		*cp = '\0';
 
 	if (cp == value)
@@ -609,13 +609,13 @@ module `%s' is a request for a file in a module which is not a directory",
 	    /* strip whitespace off the end */
 	    do
 		*cp = '\0';
-	    while (isspace (*--cp));
+	    while (isspace ((unsigned char) *--cp));
 	}
 	else
 	    next_opt = NULL;
 
 	/* strip whitespace from front */
-	while (isspace (*spec_opt))
+	while (isspace ((unsigned char) *spec_opt))
 	    spec_opt++;
 
 	if (*spec_opt == '\0')
@@ -836,15 +836,15 @@ save_d (k, ks, d, ds)
     cp = d;
     *(cp + ds) = '\0';	/* Assumes an extra byte at end of static dbm buffer */
 
-    while (isspace (*cp))
+    while (isspace ((unsigned char) *cp))
 	cp++;
     /* Turn <spaces> into one ' ' -- makes the rest of this routine simpler */
     while (*cp)
     {
-	if (isspace (*cp))
+	if (isspace ((unsigned char) *cp))
 	{
 	    *cp2++ = ' ';
-	    while (isspace (*cp))
+	    while (isspace ((unsigned char) *cp))
 		cp++;
 	}
 	else

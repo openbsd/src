@@ -27,8 +27,7 @@
 @c http://www.ft.uni-erlangen.de/~mskuhn/iso-paper.html
 @c for more on paper sizes.  Insuring that margins are
 @c big enough to print on either A4 or US letter does
-@c indeed  seem to be the usual approach (according to
-@c an internet draft by Jacob Palme).
+@c indeed seem to be the usual approach (RFC2346).
 
 @c This document seems to get overfull hboxes with some
 @c frequency (probably because the tendency is to
@@ -556,6 +555,14 @@ which will vary with your operating system, for example
 @code{vi} for unix or @code{notepad} for Windows
 NT/95.
 
+@cindex VISUAL, environment variable
+In addition, @sc{cvs} checks the @code{$VISUAL} environment
+variable.  Opinions vary on whether this behavior is desirable and
+whether future releases of @sc{cvs} should check @code{$VISUAL} or
+ignore it.  You will be OK either way if you make sure that
+@code{$VISUAL} is either unset or set to the same thing as
+@code{$EDITOR}.
+
 @c This probably should go into some new node
 @c containing detailed info on the editor, rather than
 @c the intro.  In fact, perhaps some of the stuff with
@@ -624,7 +631,7 @@ $ cvs release -d tc
 M driver.c
 ? tc
 You have [1] altered files in this repository.
-Are you sure you want to release (and delete) module `tc': n
+Are you sure you want to release (and delete) directory `tc': n
 ** `release' aborted by user choice.
 @end example
 
@@ -686,7 +693,7 @@ $ cd ..
 $ cvs release -d tc
 ? tc
 You have [0] altered files in this repository.
-Are you sure you want to release (and delete) module `tc': y
+Are you sure you want to release (and delete) directory `tc': y
 @end example
 
 @c ---------------------------------------------------------------------
@@ -818,10 +825,8 @@ repository, it will remember where its repository is
 The @code{-d} option and the @file{CVS/Root} file both
 override the @code{$CVSROOT} environment variable.  If
 @code{-d} option differs from @file{CVS/Root}, the
-former is used (and specifying @code{-d} will cause
-@file{CVS/Root} to be updated).  Of course, for proper
-operation they should be two ways of referring to the
-same repository.
+former is used.  Of course, for proper operation they
+should be two ways of referring to the same repository.
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node Repository storage
@@ -1349,6 +1354,14 @@ silently ignore files which are in the directory but
 which are not documented here, to allow for future
 expansion.
 
+The files are stored according to the text file
+convention for the system in question.  This means that
+working directories are not portable between systems
+with differing conventions for storing text files.
+This is intentional, on the theory that the files being
+managed by CVS probably will not be portable between
+such systems either.
+
 @table @file
 @item Root
 This file contains the current @sc{cvs} root, as
@@ -1390,19 +1403,15 @@ or
 yoyodyne/tc
 @end example
 
+If the particular working directory does not correspond
+to a directory in the repository, then @file{Repository}
+should contain @file{CVSROOT/Emptydir}.
+
 @cindex Entries file, in CVS directory
 @cindex CVS/Entries file
 @item Entries
 This file lists the files and directories in the
-working directory.  It is a text file according to the
-conventions appropriate for the operating system in
-question.
-@c Using OS text file conventions makes it impossible (it
-@c would seem) to share a working directory via a
-@c networked file system between systems with diverse
-@c text file conventions.  But that might be correct,
-@c because the text files under CVS control are subject
-@c to the same problem.  It is also the status quo.
+working directory.
 The first character of each line indicates what sort of
 line it is.  If the character is unrecognized, programs
 reading the file should silently skip that line, to
@@ -1464,6 +1473,8 @@ all the @var{filler} fields should be silently ignored,
 for future expansion.  Programs which modify
 @code{Entries} files should preserve these fields.
 
+The lines in the @file{Entries} file can be in any order.
+
 @cindex Entries.Log file, in CVS directory
 @cindex CVS/Entries.Log file
 @item Entries.Log
@@ -1491,6 +1502,9 @@ future expansion).  If the second character of the line
 in @file{Entries.Log} is not a space, then it was
 written by an older version of @sc{cvs} (not documented
 here).
+
+Programs which are writing rather than reading can
+safely ignore @file{Entries.Log} if they so choose.
 
 @cindex Entries.Backup file, in CVS directory
 @cindex CVS/Entries.Backup file
@@ -1706,22 +1720,30 @@ to check out the working directory
 (@pxref{Specifying a repository}).
 
 The big advantage of having multiple repositories is
-that they can reside on different servers.  The big
-disadvantage is that you cannot have a single @sc{cvs}
-command recurse into directories which comes from
-different repositories.  Generally speaking, if you are
-thinking of setting up several repositories on the same
-machine, you might want to consider using several
-directories within the same repository.
-@c FIXCVS: the thing about recursing into diverse roots
-@c would be nice to fix.  But it gets hairy if they are
-@c on diverse servers--it isn't clear this is really
-@c all that useful.
+that they can reside on different servers.  With @sc{cvs}
+version 1.10, a single command cannot recurse into
+directories from different repositories.  With development
+versions of @sc{cvs}, you can check out code from multiple
+servers into your working directory.  @sc{cvs} will
+recurse and handle all the details of making
+connections to as many server machines as necessary to
+perform the requested command.  Here is an example of
+how to set up a working directory:
+
+@example
+cvs -d server1:/cvs co dir1
+cd dir1
+cvs -d server2:/root co sdir
+cvs update
+@end example
+
+The @code{cvs co} commands set up the working
+directory, and then the @code{cvs update} command will
+contact server2, to update the dir1/sdir subdirectory,
+and server1, to update everything else.
+
 @c FIXME: Does the FAQ have more about this?  I have a
 @c dim recollection, but I'm too lazy to check right now.
-
-None of the examples in this manual show multiple
-repositories.
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node Creating a repository
@@ -1755,7 +1777,7 @@ approximately one working directory for each developer
 (either the entire tree or a portion of it, depending
 on what each developer uses).
 
-The repository should be accessable
+The repository should be accessible
 (directly or via a networked file system) from all
 machines which want to use @sc{cvs} in server or local
 mode; the client machines need not have any access to
@@ -1863,14 +1885,12 @@ see @ref{Working directory storage}, for information on
 the @file{CVS/Repository} and @file{CVS/Root} files, but
 unless you are sure you want to bother, it probably
 isn't worth it.
-@c FIXME: This should be made unnecessary by:
-@c 1) a new -d should affect CVS/Root files throughout
-@c the tree, not just at the top level.
-@c 2) the RELATIVE_REPOS code should be fixed and made the
-@c default.  I think that CVS already reads
-@c CVS/Repository files which are absolute or
-@c relative.  FIXME: needs more investigation and
-@c documentation in "Working directory storage".
+@c FIXME: Surgery on CVS/Repository should be avoided
+@c by making RELATIVE_REPOS the default.
+@c FIXME-maybe: might want some documented way to
+@c change the CVS/Root files in some particular tree.
+@c But then again, I don't know, maybe just having
+@c people do this in perl/shell/&c isn't so bad...
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node Remote repositories
@@ -1926,6 +1946,7 @@ described in @ref{Connecting via rsh}.
 * Password authenticated::      Direct connections using passwords
 * GSSAPI authenticated::        Direct connections using GSSAPI
 * Kerberos authenticated::      Direct connections with kerberos
+* Connecting via fork::         Using a forked @code{cvs server} to connect
 @end menu
 
 @node Server requirements
@@ -2027,19 +2048,19 @@ operations, so the remote user host needs to have a
 user.
 
 For example, suppose you are the user @file{mozart} on
-the local machine @file{toe.grunge.com}, and the
-server machine is @file{chainsaw.yard.com}.  On
-chainsaw, put the following line into the file
+the local machine @file{toe.example.com}, and the
+server machine is @file{faun.example.org}.  On
+faun, put the following line into the file
 @file{.rhosts} in @file{bach}'s home directory:
 
 @example
-toe.grunge.com  mozart
+toe.example.com  mozart
 @end example
 
 Then test that @code{rsh} is working with
 
 @example
-rsh -l bach chainsaw.yard.com 'echo $PATH'
+rsh -l bach faun.example.org 'echo $PATH'
 @end example
 
 @cindex CVS_SERVER, environment variable
@@ -2063,6 +2084,9 @@ There is no need to edit @code{inetd.conf} or start a
 
 @cindex :server:, setting up
 @cindex :ext:, setting up
+@cindex Kerberos, using kerberized rsh
+@cindex SSH (rsh replacement)
+@cindex rsh replacements (Kerberized, SSH, &c)
 There are two access methods that you use in CVSROOT
 for rsh.  @code{:server:} specifies an internal rsh
 client, which is supported only by some CVS ports.
@@ -2095,10 +2119,10 @@ replacement.
 Continuing our example, supposing you want to access
 the module @file{foo} in the repository
 @file{/usr/local/cvsroot/}, on machine
-@file{chainsaw.yard.com}, you are ready to go:
+@file{faun.example.org}, you are ready to go:
 
 @example
-cvs -d :ext:bach@@chainsaw.yard.com:/usr/local/cvsroot checkout foo
+cvs -d :ext:bach@@faun.example.org:/usr/local/cvsroot checkout foo
 @end example
 
 (The @file{bach@@} can be omitted if the username is
@@ -2183,14 +2207,8 @@ cvspserver      2401/tcp
 @code{inetd}, or do whatever is necessary to force it
 to reread its initialization files.
 
-@c FIXME: should be documenting how to troubleshoot
-@c this.  One strange situation I ran into recently
-@c was that if inetd.conf specifies a non-existent
-@c cvs (e.g. /usr/local/bin/cvs doesn't exist in
-@c the above example), the client says
-@c   cvs-1.8 [login aborted]: unrecognized auth response from harvey:
-@c which is a very unhelpful response (can it be
-@c improved?  does inetd log somewhere?)
+If you are having trouble setting this up, see
+@ref{Connection}.
 
 @cindex CVS passwd file
 @cindex passwd (admin file)
@@ -2247,11 +2265,11 @@ anyone:1sOp854gDF3DY:spwang
 @end example
 
         Thus, someone remotely accessing the repository
-on @file{chainsaw.yard.com} with the following
+on @file{faun.example.org} with the following
 command:
 
 @example
-cvs -d :pserver:cvs@@chainsaw.yard.com:/usr/local/cvsroot checkout foo
+cvs -d :pserver:cvs@@faun.example.org:/usr/local/cvsroot checkout foo
 @end example
 
         would end up running the server under the
@@ -2274,6 +2292,9 @@ Right now, the only way to put a password in the
 @sc{cvs} @file{passwd} file is to paste it there from
 somewhere else.  Someday, there may be a @code{cvs
 passwd} command.
+Unlike many of the files in @file{$CVSROOT/CVSROOT},
+you edit the @file{passwd} file directly, rather than
+via @sc{cvs}.
 @c We might also suggest using the @code{htpasswd} command
 @c from freely available web servers as well, but that
 @c would open up a can of worms in that the users next
@@ -2301,7 +2322,7 @@ argument or the @code{CVSROOT} environment variable.
 password:
 
 @example
-cvs -d :pserver:bach@@chainsaw.yard.com:/usr/local/cvsroot login
+cvs -d :pserver:bach@@faun.example.org:/usr/local/cvsroot login
 CVS password:
 @end example
 
@@ -2314,7 +2335,7 @@ connect directly to the server and authenticate with
 the stored password:
 
 @example
-cvs -d :pserver:bach@@chainsaw.yard.com:/usr/local/cvsroot checkout foo
+cvs -d :pserver:bach@@faun.example.org:/usr/local/cvsroot checkout foo
 @end example
 
 The @samp{:pserver:} is necessary because without it,
@@ -2338,7 +2359,7 @@ administrator who happens to look at that file).
 @c FIXME: seems to me this needs somewhat more
 @c explanation.
 @cindex Logout (subcommand)
-The password for the currently choosen remote repository
+The password for the currently chosen remote repository
 can be removed from the CVS_PASSFILE by using the
 @code{cvs logout} command.
 
@@ -2421,6 +2442,7 @@ security, get Kerberos.
 @cindex GSSAPI
 @cindex security, GSSAPI
 @cindex :gserver:, setting up
+@cindex Kerberos, using :gserver:
 GSSAPI is a generic interface to network security
 systems such as Kerberos 5.
 If you have a working GSSAPI library, you can have
@@ -2465,13 +2487,13 @@ To connect using GSSAPI, use @samp{:gserver:}.  For
 example,
 
 @example
-cvs -d :gserver:chainsaw.yard.com:/usr/local/cvsroot checkout foo
+cvs -d :gserver:faun.example.org:/usr/local/cvsroot checkout foo
 @end example
 
 @node Kerberos authenticated
 @subsection Direct connection with kerberos
 
-@cindex kerberos
+@cindex Kerberos, using :kserver:
 @cindex security, kerberos
 @cindex :kserver:, setting up
 The easiest way to use kerberos is to use the kerberos
@@ -2513,11 +2535,46 @@ which allows you to log into the server machine.  Then
 you are ready to go:
 
 @example
-cvs -d :kserver:chainsaw.yard.com:/usr/local/cvsroot checkout foo
+cvs -d :kserver:faun.example.org:/usr/local/cvsroot checkout foo
 @end example
 
 Previous versions of @sc{cvs} would fall back to a
 connection via rsh; this version will not do so.
+
+@node Connecting via fork
+@subsection Connecting with fork
+
+@cindex fork, access method
+@cindex :fork:, setting up
+This access method allows you to connect to a
+repository on your local disk via the remote protocol.
+In other words it does pretty much the same thing as
+@code{:local:}, but various quirks, bugs and the like are
+those of the remote @sc{cvs} rather than the local
+@sc{cvs}.
+
+For day-to-day operations you might prefer either
+@code{:local:} or @code{:fork:}, depending on your
+preferences.  Of course @code{:fork:} comes in
+particularly handy in testing or
+debugging @code{cvs} and the remote protocol.
+Specifically, we avoid all of the network-related
+setup/configuration, timeouts, and authentication
+inherent in the other remote access methods but still
+create a connection which uses the remote protocol.
+
+To connect using the @code{fork} method, use
+@samp{:fork:} and the pathname to your local
+repository.  For example:
+
+@example
+cvs -d :fork:/usr/local/cvsroot checkout foo
+@end example
+
+@cindex CVS_SERVER, and :fork:
+As with @code{:ext:}, the server is called @samp{cvs}
+by default, or the value of the @code{CVS_SERVER}
+environment variable.
 
 @c ---------------------------------------------------------------------
 @node Read-only access
@@ -2778,7 +2835,7 @@ details).  Then create the appropriate directories in
 files into the appropriate directories in the @sc{cvs}
 repository (the name in the repository must be the name
 of the source file with @samp{,v} added; the files go
-directly in the appopriate directory of the repository,
+directly in the appropriate directory of the repository,
 not in an @file{RCS} subdirectory).  This is one of the
 few times when it is a good idea to access the @sc{cvs}
 repository directly, rather than using @sc{cvs}
@@ -2956,6 +3013,10 @@ numeric revision in each file.
 * Versions revisions releases::  Terminology used in this manual
 * Assigning revisions::         Assigning revisions
 * Tags::                        Tags--Symbolic revisions
+* Tagging the working directory::  The cvs tag command
+* Tagging by date/tag::         The cvs rtag command
+* Modifying tags::              Adding, renaming, and deleting tags
+* Tagging add/remove::          Tags with adding and removing files
 * Sticky tags::                 Certain tags are persistent
 @end menu
 
@@ -3144,7 +3205,7 @@ taginfo file (@pxref{user-defined logging}).
 @cindex tag, example
 The following example shows how you can add a tag to a
 file.  The commands must be issued inside your working
-copy of the module.  That is, you should issue the
+directory.  That is, you should issue the
 command in the directory where @file{backend.c}
 resides.
 
@@ -3165,6 +3226,9 @@ File: backend.c         Status: Up-to-date
         rel-0-4                     (revision: 1.4)
 
 @end example
+
+For a complete summary of the syntax of @code{cvs tag},
+including the various options, see @ref{Invoking CVS}.
 
 There is seldom reason to tag a file in isolation.  A more common use is
 to tag all the files that constitute a module with the same tag at
@@ -3201,7 +3265,9 @@ This is useful, for instance, if someone claims that there is a bug in
 that release, but you cannot find the bug in the current working copy.
 
 You can also check out a module as it was at any given date.
-@xref{checkout options}.
+@xref{checkout options}.  When specifying @samp{-r} to
+any of these commands, you will need beware of sticky
+tags; see @ref{Sticky tags}.
 
 When you tag more than one file with the same tag you
 can think about the tag as "a curve drawn through a
@@ -3243,6 +3309,182 @@ like this:
                                 1.5
 @end group
 @end example
+
+@node Tagging the working directory
+@section Specifying what to tag from the working directory
+
+@cindex Tag (subcommand)
+The example in the previous section demonstrates one of
+the most common ways to choose which revisions to tag.
+Namely, running the @code{cvs tag} command without
+arguments causes @sc{cvs} to select the revisions which
+are checked out in the current working directory.  For
+example, if the copy of @file{backend.c} in working
+directory was checked out from revision 1.4, then
+@sc{cvs} will tag revision 1.4.  Note that the tag is
+applied immediately to revision 1.4 in the repository;
+tagging is not like modifying a file, or other
+operations in which one first modifies the working
+directory and then runs @code{cvs commit} to transfer
+that modification to the repository.
+
+One potentially surprising aspect of the fact that
+@code{cvs tag} operates on the repository is that you
+are tagging the checked-in revisions, which may differ
+from locally modified files in your working directory.
+If you want to avoid doing this by mistake, specify the
+@samp{-c} option to @code{cvs tag}.  If there are any
+locally modified files, @sc{cvs} will abort with an
+error before it tags any files:
+
+@example
+$ cvs tag -c rel-0-4
+cvs tag: backend.c is locally modified
+cvs [tag aborted]: correct the above errors first!
+@end example
+
+@node Tagging by date/tag
+@section Specifying what to tag by date or revision
+@cindex Rtag (subcommand)
+
+The @code{cvs rtag} command tags the repository as of a
+certain date or time (or can be used to tag the latest
+revision).  @code{rtag} works directly on the
+repository contents (it requires no prior checkout and
+does not look for a working directory).
+
+The following options specify which date or revision to
+tag.  See @ref{Common options}, for a complete
+description of them.
+
+@table @code
+@item -D @var{date}
+Tag the most recent revision no later than @var{date}.
+
+@item -f
+Only useful with the @samp{-D @var{date}} or @samp{-r @var{tag}}
+flags.  If no matching revision is found, use the most
+recent revision (instead of ignoring the file).
+
+@item -r @var{tag}
+Only tag those files that contain existing tag @var{tag}.
+@end table
+
+The @code{cvs tag} command also allows one to specify
+files by revision or date, using the same @samp{-r},
+@samp{-D}, and @samp{-f} options.  However, this
+feature is probably not what you want.  The reason is
+that @code{cvs tag} chooses which files to tag based on
+the files that exist in the working directory, rather
+than the files which existed as of the given tag/date.
+Therefore, you are generally better off using @code{cvs
+rtag}.  The exceptions might be cases like:
+
+@example
+cvs tag -r 1.4 backend.c
+@end example
+
+@node Modifying tags
+@section Deleting, moving, and renaming tags
+
+@c Also see:
+@c  "How do I move or rename a magic branch tag?"
+@c in the FAQ (I think the issues it talks about still
+@c apply, but this could use some sanity.sh work).
+
+Normally one does not modify tags.  They exist in order
+to record the history of the repository and so deleting
+them or changing their meaning would, generally, not be
+what you want.
+
+However, there might be cases in which one uses a tag
+temporarily or accidentally puts one in the wrong
+place.  Therefore, one might delete, move, or rename a
+tag.  Warning: the commands in this section are
+dangerous; they permanently discard historical
+information and it can difficult or impossible to
+recover from errors.  If you are a @sc{cvs}
+administrator, you may consider restricting these
+commands with taginfo (@pxref{user-defined logging}).
+
+@cindex deleting tags
+@cindex removing tags
+@cindex tags, deleting
+To delete a tag, specify the @samp{-d} option to either
+@code{cvs tag} or @code{cvs rtag}.  For example:
+
+@example
+cvs rtag -d rel-0-4 tc
+@end example
+
+deletes the tag @code{rel-0-4} from the module @code{tc}.
+
+@cindex moving tags
+@cindex tags, moving
+When we say @dfn{move} a tag, we mean to make the same
+name point to different revisions.  For example, the
+@code{stable} tag may currently point to revision 1.4
+of @file{backend.c} and perhaps we want to make it
+point to revision 1.6.  To move a tag, specify the
+@samp{-F} option to either @code{cvs tag} or @code{cvs
+rtag}.  For example, the task just mentioned might be
+accomplished as:
+
+@example
+cvs tag -r 1.6 -F stable backend.c
+@end example
+
+@cindex renaming tags
+@cindex tags, renaming
+When we say @dfn{rename} a tag, we mean to make a
+different name point to the same revisions as the old
+tag.  For example, one may have misspelled the tag name
+and want to correct it (hopefully before others are
+relying on the old spelling).  To rename a tag, first
+create a new tag using the @samp{-r} option to
+@code{cvs rtag}, and then delete the old name.  This
+leaves the new tag on exactly the same files as the old
+tag.  For example:
+
+@example
+cvs rtag -r old-name-0-4 rel-0-4 tc
+cvs rtag -d old-name-0-4 tc
+@end example
+
+@node Tagging add/remove
+@section Tagging and adding and removing files
+
+The subject of exactly how tagging interacts with
+adding and removing files is somewhat obscure; for the
+most part @sc{cvs} will keep track of whether files
+exist or not without too much fussing.  By default,
+tags are applied to only files which have a revision
+corresponding to what is being tagged.  Files which did
+not exist yet, or which were already removed, simply
+omit the tag, and @sc{cvs} knows to treat the absence
+of a tag as meaning that the file didn't exist as of
+that tag.
+
+However, this can lose a small amount of information.
+For example, suppose a file was added and then removed.
+Then, if the tag is missing for that file, there is no
+way to know whether the tag refers to the time before
+the file was added, or the time after it was removed.
+If you specify the @samp{-r} option to @code{cvs rtag},
+then @sc{cvs} tags the files which have been removed,
+and thereby avoids this problem.  For example, one
+might specify @code{-r HEAD} to tag the head.
+
+On the subject of adding and removing files, the
+@code{cvs rtag} command has a @samp{-a} option which
+means to clear the tag from removed files that would
+not otherwise be tagged.  For example, one might
+specify this option in conjunction with @samp{-F} when
+moving a tag.  If one moved a tag without @samp{-a},
+then the tag in the removed files might still refer to
+the old revision, rather than reflecting the fact that
+the file had been removed.  I don't think this is
+necessary if @samp{-r} is specified, as noted above.
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node Sticky tags
@@ -3315,18 +3557,11 @@ tag with @code{cvs update -A}.  Likewise, use of the
 sets a @dfn{sticky date}, which, similarly, causes that
 date to be used for future retrievals.
 
-@cindex Restoring old version of removed file
-@cindex Resurrecting old version of dead file
-Many times you will want to retrieve an old version of
-a file without setting a sticky tag.  The way to do
-that is with the @samp{-p} option to @code{checkout} or
+People often want to retrieve an old version of
+a file without setting a sticky tag.  This can
+be done with the @samp{-p} option to @code{checkout} or
 @code{update}, which sends the contents of the file to
-standard output.  For example, suppose you have a file
-named @file{file1} which existed as revision 1.1, and
-you then removed it (thus adding a dead revision 1.2).
-Now suppose you want to add it again, with the same
-contents it had previously.  Here is how to do it:
-
+standard output.  For example:
 @example
 $ cvs update -p -r 1.1 file1 >file1
 ===================================================================
@@ -3334,16 +3569,15 @@ Checking out file1
 RCS:  /tmp/cvs-sanity/cvsroot/first-dir/Attic/file1,v
 VERS: 1.1
 ***************
-$ cvs add file1
-cvs add: re-adding file file1 (in place of dead revision 1.2)
-cvs add: use 'cvs commit' to add this file permanently
-$ cvs commit -m test
-Checking in file1;
-/tmp/cvs-sanity/cvsroot/first-dir/file1,v  <--  file1
-new revision: 1.3; previous revision: 1.2
-done
 $
 @end example
+
+However, this isn't the easiest way, if you are asking
+how to undo a previous checkin (in this example, put
+@file{file1} back to the way it was as of revision
+1.1).  In that case you are better off using the
+@samp{-j} option to @code{update}; for further
+discussion see @ref{Merging two revisions}.
 
 @c ---------------------------------------------------------------------
 @node Branching and merging
@@ -3610,12 +3844,16 @@ The following figure illustrates branching with an
 example.
 
 @example
+@c This example used to have a 1.2.2.4 revision, which
+@c might help clarify that development can continue on
+@c 1.2.2.  Might be worth reinstating if it can be done
+@c without overfull hboxes.
 @group
-                                      +-------------+
-           Branch 1.2.2.3.2 ->        ! 1.2.2.3.2.1 !
-                                    / +-------------+
-                                   /
-                                  /
+                                                      +-------------+
+                           Branch 1.2.2.3.2 ->        ! 1.2.2.3.2.1 !
+                                                    / +-------------+
+                                                   /
+                                                  /
                  +---------+    +---------+    +---------+
 Branch 1.2.2 -> _! 1.2.2.1 !----! 1.2.2.2 !----! 1.2.2.3 !
                / +---------+    +---------+    +---------+
@@ -3866,15 +4104,36 @@ $ cvs update -j 1.5 -j 1.3 backend.c
 @end example
 
 @noindent
-will @emph{remove} all changes made between revision
+will undo all changes made between revision
 1.3 and 1.5.  Note the order of the revisions!
 
 If you try to use this option when operating on
 multiple files, remember that the numeric revisions will
-probably be very different between the various files
-that make up a module.  You almost always use symbolic
+probably be very different between the various files.
+You almost always use symbolic
 tags rather than revision numbers when operating on
 multiple files.
+
+@cindex Restoring old version of removed file
+@cindex Resurrecting old version of dead file
+Specifying two @samp{-j} options can also undo file
+removals or additions.  For example, suppose you have
+a file
+named @file{file1} which existed as revision 1.1, and
+you then removed it (thus adding a dead revision 1.2).
+Now suppose you want to add it again, with the same
+contents it had previously.  Here is how to do it:
+
+@example
+$ cvs update -j 1.2 -j 1.1 file1
+U file1
+$ cvs commit -m test
+Checking in file1;
+/tmp/cvs-sanity/cvsroot/first-dir/file1,v  <--  file1
+new revision: 1.3; previous revision: 1.2
+done
+$
+@end example
 
 @node Merging adds and removals
 @section Merging can add or remove files
@@ -3962,7 +4221,7 @@ subdirectories
 
 @item
 @samp{cvs update .} or just @samp{cvs update} updates
-all files in the @code{tc} module
+all files in the @code{tc} directory
 @end itemize
 
 If no arguments are given to @code{update} it will
@@ -4124,7 +4383,7 @@ later merge the additions to another branch if you want
 @c be its own section, for example, as could the
 @c various bits about undoing mistakes in adding and
 @c removing).
-Modules change.  New files are added, and old files
+Directories change.  New files are added, and old files
 disappear.  Still, you want to be able to retrieve an
 exact copy of old releases.
 
@@ -4375,7 +4634,7 @@ files inside the repository.  Read this entire section
 before trying it out!
 
 @example
-$ cd $CVSROOT/@var{module}
+$ cd $CVSROOT/@var{dir}
 $ mv @var{old},v @var{new},v
 @end example
 
@@ -4395,7 +4654,7 @@ Disadvantages:
 
 @itemize @bullet
 @item
-Old releases of the module cannot easily be fetched from the
+Old releases cannot easily be fetched from the
 repository.  (The file will show up as @var{new} even
 in revisions from the time before it was renamed).
 
@@ -4417,10 +4676,10 @@ repository.  It is safe, but not without drawbacks.
 
 @example
 # @r{Copy the @sc{rcs} file inside the repository}
-$ cd $CVSROOT/@var{module}
+$ cd $CVSROOT/@var{dir}
 $ cp @var{old},v @var{new},v
 # @r{Remove the old file}
-$ cd ~/@var{module}
+$ cd ~/@var{dir}
 $ rm @var{old}
 $ cvs remove @var{old}
 $ cvs commit @var{old}
@@ -4433,7 +4692,7 @@ $ cvs tag -d @var{tag2} @var{new}
 @end example
 
 By removing the tags you will be able to check out old
-revisions of the module.
+revisions.
 
 @noindent
 Advantages:
@@ -4492,16 +4751,16 @@ like this:
 
 @enumerate
 @item
-Inform everyone who has a copy of the module that the
+Inform everyone who has a checked out copy of the directory that the
 directory will be renamed.  They should commit all
-their changes, and remove their working copies of the
-module, before you take the steps below.
+their changes, and remove their working copies,
+before you take the steps below.
 
 @item
 Rename the directory inside the repository.
 
 @example
-$ cd $CVSROOT/@var{module}
+$ cd $CVSROOT/@var{parent-dir}
 $ mv @var{old-dir} @var{new-dir}
 @end example
 
@@ -4510,12 +4769,12 @@ Fix the @sc{cvs} administrative files, if necessary (for
 instance if you renamed an entire module).
 
 @item
-Tell everyone that they can check out the module and continue
+Tell everyone that they can check out again and continue
 working.
 
 @end enumerate
 
-If someone had a working copy of the module the @sc{cvs} commands will
+If someone had a working copy the @sc{cvs} commands will
 cease to work for him, until he removes the directory
 that disappeared inside the repository.
 
@@ -5032,7 +5291,7 @@ is almost automatic.
 @c FIXME? should probably use the word "watch" here, to
 @c tie this into the text below and above.
 @sc{Cvs} also supports mechanisms which facilitate
-various kinds of communcation, without actually
+various kinds of communication, without actually
 enforcing rules like reserved checkouts do.
 
 The rest of this chapter describes how these various
@@ -5293,8 +5552,7 @@ these options, see @ref{Invoking CVS}.
 When you want to update or merge a file, use the @code{update}
 command.  For files that are not up to date this is roughly equivalent
 to a @code{checkout} command: the newest revision of the file is
-extracted from the repository and put in your working copy of the
-module.
+extracted from the repository and put in your working directory.
 
 Your modifications to a file are never lost when you
 use @code{update}.  If no newer revision exists,
@@ -5770,7 +6028,7 @@ files (@pxref{Intro administrative files}).  This
 file follows the usual conventions for administrative
 files (@pxref{syntax}), where each line is a regular
 expression followed by a command to execute.  The
-command should contain a single ocurrence of @samp{%s}
+command should contain a single occurrence of @samp{%s}
 which will be replaced by the user to notify; the rest
 of the information regarding the notification will be
 supplied to the command on standard input.  The
@@ -5906,7 +6164,7 @@ repository since the last time you updated.
 
 When using client/server @sc{cvs}, you can use the
 @code{cvs edit} and @code{cvs unedit} commands even if
-@sc{cvs} is unable to succesfully communicate with the
+@sc{cvs} is unable to successfully communicate with the
 server; the notifications will be sent upon the next
 successful @sc{cvs} command.
 
@@ -6086,8 +6344,8 @@ goal, which is to get software written.
 @comment   version control, so we must not accidentally
 @comment   include a valid keyword in the running text.
 
-As long as you edit source files inside your working
-copy of a module you can always find out the state of
+As long as you edit source files inside a working
+directory you can always find out the state of
 your files via @samp{cvs status} and @samp{cvs log}.
 But as soon as you export the files from your
 development environment it becomes harder to identify
@@ -6146,17 +6404,16 @@ filename is without a path.
 
 @cindex Name keyword
 @item $@asis{Name}$
-Tag name used to check out this file.
-@c FIXME: should supply an example (e.g. "if you use
-@c "cvs update -r foo" then Name expands to "foo").  Also
-@c should add Name to testsuite (best way to ensure
-@c that the example is correct!)
+Tag name used to check out this file.  The keyword is
+expanded only if one checks out with an explicit tag
+name.  For example, when running the command @code{cvs
+co -r first}, the keyword expands to @samp{Name: first}.
 
 @cindex Locker keyword
 @item $@asis{Locker}$
 The login name of the user who locked the revision
-(empty if not locked, and thus almost always useless
-when you are using @sc{cvs}).
+(empty if not locked, which is the normal case unless
+@code{cvs admin -l} is in use).
 
 @cindex Log keyword
 @item $@asis{Log}$
@@ -6328,7 +6585,8 @@ keyword.
 @item -kkvl
 Like @samp{-kkv}, except that a locker's name is always
 inserted if the given revision is currently locked.
-This option is normally not useful when @sc{cvs} is used.
+The locker's name is only relevant if @code{cvs admin
+-l} is in use.
 
 @item -kk
 Generate only keyword names in keyword strings; omit
@@ -6451,9 +6709,9 @@ placed on the main trunk, and made the `head'
 revision.
 
 @menu
-* First import::                Importing a module for the first time
-* Update imports::              Updating a module with the import command
-* Reverting local changes::     Reverting a module to the latest vendor release
+* First import::                Importing for the first time
+* Update imports::              Updating with the import command
+* Reverting local changes::     Reverting to the latest vendor release
 * Binary files in imports::     Binary files require special handling
 * Keywords in imports::         Keyword substitution might be undesirable
 * Multiple vendor branches::    What if you get sources from several places?
@@ -6461,7 +6719,7 @@ revision.
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node First import
-@section Importing a module for the first time
+@section Importing for the first time
 @cindex Importing modules
 
 @c Should mention naming conventions for vendor tags,
@@ -6506,7 +6764,7 @@ example, and the only release tag assigned is
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node Update imports
-@section Updating a module with the import command
+@section Updating with the import command
 
 When a new release of the source arrives, you import it into the
 repository with the same @code{import} command that you used to set up
@@ -6867,6 +7125,15 @@ reference to @sc{cvs} commands, @pxref{Invoking CVS}).
 @c in the process reorganizing the manual to be
 @c organized around what the user wants to do, not
 @c organized around CVS commands.
+@c
+@c Note that many users do expect a manual which is
+@c organized by command.  At least some users do.
+@c One good addition to the "organized by command"
+@c section (if any) would be "see also" links.
+@c The awk manual might be a good example; it has a
+@c reference manual which is more verbose than Invoking
+@c CVS but probably somewhat less verbose than CVS
+@c Commands.
 
 @menu
 * Structure::                   Overall structure of CVS commands
@@ -6883,9 +7150,7 @@ reference to @sc{cvs} commands, @pxref{Invoking CVS}).
 * import::                      Import sources into CVS, using vendor branches
 * log::                         Show log messages for files
 * rdiff::                       'patch' format diffs between releases
-* release::                     Indicate that a Module is no longer in use
-* rtag::                        Add a tag to a module
-* tag::                         Add a tag to checked out version
+* release::                     Indicate that a directory is no longer in use
 * update::                      Bring work tree in sync with repository
 @end menu
 
@@ -7329,14 +7594,18 @@ are:
 @c bizarre and it has lots of gratuitous multiple ways
 @c to specify the same thing.
 
-For more details about ISO8601 dates, see:
+There are a lot more ISO8601 date formats, and CVS
+accepts many of them, but you probably don't want to
+hear the @emph{whole} long story :-).
 
-@example
-http://www.ft.uni-erlangen.de/~mskuhn/iso-time.html
-@end example
-@c Perhaps we want to also cite other sources in
-@c case that page goes away.  For example:
+@c Citing a URL here is kind of problematic given how
+@c much they change and people who have old versions of
+@c this manual, but in case we want to reinstate an
+@c ISO8601 URL, a few are:
 @c http://www.saqqara.demon.co.uk/datefmt.htm
+@c http://www.cl.cam.ac.uk/~mgk25/iso-time.html
+@c Citing some other ISO8601 source is probably even
+@c worse :-).
 
 In addition to the dates allowed in Internet e-mail
 itself, @sc{cvs} also allows some of the fields to be
@@ -7499,7 +7768,7 @@ revision you last checked out into the current working directory.
 @c special tags, ".thead" for the head of the trunk,
 @c and ".bhead" for the head of the current branch.
 @c Then deprecate HEAD.  This has the advantage of
-@c not suprising people with a change to HEAD, and a
+@c not surprising people with a change to HEAD, and a
 @c side benefit of also phasing out the poorly-named
 @c HEAD (see discussion of reserved tag names in node
 @c "Tags").  Of course, .thead and .bhead should be
@@ -8260,13 +8529,16 @@ invoking an editor.
 @node commit examples
 @appendixsubsec commit examples
 
+@c FIXME: this material wants to be somewhere
+@c in "Branching and merging".
+
 @appendixsubsubsec Committing to a branch
 
 You can commit to a branch revision (one that has an
 even number of dots) with the @samp{-r} option.  To
 create a branch revision, use the @samp{-b} option
-of the @code{rtag} or @code{tag} commands (@pxref{tag}
-or @pxref{rtag}).  Then, either @code{checkout} or
+of the @code{rtag} or @code{tag} commands
+(@pxref{Branching and merging}).  Then, either @code{checkout} or
 @code{update} can be used to base your sources on the
 newly created branch.  From that point on, all
 @code{commit} changes made within these working sources
@@ -9239,8 +9511,7 @@ last change to a file was.
 
 @item -u
 Use the unidiff format for the context diffs.
-This option is not available if your @code{diff} does not
-support the unidiff format.  Remember that old versions
+Remember that old versions
 of the @code{patch} program can't handle the unidiff
 format, so if you plan to post this patch to the net
 you should probably not use @samp{-u}.
@@ -9257,14 +9528,14 @@ way that @sc{rcs} version 5 does.
 @node rdiff examples
 @appendixsubsec rdiff examples
 
-Suppose you receive mail from @t{foo@@bar.com} asking for an
+Suppose you receive mail from @t{foo@@example.net} asking for an
 update from release 1.2 to 1.4 of the tc compiler.  You
 have no such patches on hand, but with @sc{cvs} that can
 easily be fixed with a command such as this:
 
 @example
 $ cvs rdiff -c -r FOO1_2 -r FOO1_4 tc | \
-$$ Mail -s 'The patches you asked for' foo@@bar.com
+$$ Mail -s 'The patches you asked for' foo@@example.net
 @end example
 
 Suppose you have made release 1.3, and forked a branch
@@ -9395,7 +9666,7 @@ sources, this file will be lost.
 @node release examples
 @appendixsubsec release examples
 
-Release the module, and delete your local working copy
+Release the @file{tc} directory, and delete your local working copy
 of the files.
 
 @example
@@ -9403,243 +9674,9 @@ $ cd ..         # @r{You must stand immediately above the}
                 # @r{sources when you issue @samp{cvs release}.}
 $ cvs release -d tc
 You have [0] altered files in this repository.
-Are you sure you want to release (and delete) module `tc': y
+Are you sure you want to release (and delete) directory `tc': y
 $
 @end example
-
-@node rtag
-@appendixsec rtag---Add a symbolic tag to a module
-@cindex Rtag (subcommand)
-
-@itemize @bullet
-@item
-rtag [-falnR] [-b] [-d] [-r tag | -Ddate] symbolic_tag modules@dots{}
-@item
-Requires: repository.
-@item
-Changes: repository.
-@item
-Synonym: rfreeze
-@end itemize
-
-You can use this command to assign symbolic tags to
-particular, explicitly specified source revisions in
-the repository.  @code{rtag} works directly on the
-repository contents (and requires no prior checkout).
-Use @code{tag} instead (@pxref{tag}), to base the
-selection of revisions on the contents of your
-working directory.
-
-If you attempt to use a tag name that already exists,
-@sc{cvs} will complain and not overwrite that tag.  Use
-the @samp{-F} option to force the new tag value.
-
-@menu
-* rtag options::                rtag options
-@end menu
-
-@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-@node rtag options
-@appendixsubsec rtag options
-
-These standard options are supported by @code{rtag}
-(@pxref{Common options}, for a complete description of
-them):
-
-@table @code
-@item -D @var{date}
-Tag the most recent revision no later than @var{date}.
-
-@item -f
-Only useful with the @samp{-D @var{date}} or @samp{-r @var{tag}}
-flags.  If no matching revision is found, use the most
-recent revision (instead of ignoring the file).
-
-@item -F
-Overwrite an existing tag of the same name on a
-different revision.
-@c FIXME: Needs an example, and/or more explanation.
-@c Also needs to contrast this with the behavior if -F
-@c is not specified, and the description needs to be
-@c moved somewhere where it is shared between "tag" and
-@c "rtag" (probably some sub-node of Revisions and
-@c branches).  Also should be clear about whether this
-@c applies to branch tags, non-branch tags, or both.
-@c Also this is *not* a common option.
-
-@item -l
-Local; run only in current working directory.
-
-@item -n
-Do not run any tag program that was specified with the
-@samp{-t} flag inside the @file{modules} file.
-(@pxref{modules}).
-
-@item -R
-Tag directories recursively.  This is on by default.
-
-@c FIXME: this discussion is confusing.  What part of
-@c the rename operation being discussed relates to
-@c "rtag -r" (that whole discussion needs an example,
-@c and probably to be moved somewhere else)?
-@item -r @var{tag}
-Only tag those files that contain @var{tag}.  This can
-be used to rename a tag: tag only the files identified
-by the old tag, then delete the old tag, leaving the
-new tag on exactly the same files as the old tag.
-@end table
-
-In addition to the above common options, these options
-are available:
-
-@table @code
-@item -a
-@c FIXME: What does this option mean in terms of user
-@c concepts, not CVS internals?
-Use the @samp{-a} option to have @code{rtag} look in the
-@file{Attic} (@pxref{Attic}) for removed files
-that contain the specified tag.  The tag is removed from
-these files, which makes it convenient to re-use a
-symbolic tag as development continues (and files get
-removed from the up-coming distribution).
-
-@item -b
-Make the tag a branch tag.  @xref{Branching and merging}.
-
-@item -d
-Delete the tag instead of creating it.
-
-In general, tags (often the symbolic names of software
-distributions) should not be removed, but the @samp{-d}
-option is available as a means to remove completely
-obsolete symbolic names if necessary (as might be the
-case for an Alpha release, or if you mistagged a
-module).
-@end table
-
-@ignore
-@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-@c @node rtag examples
-@appendixsubsec rtag examples
-
-@c -- Examples here!
-@end ignore
-
-@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-@node tag
-@appendixsec tag---Add a symbolic tag to checked out versions of files
-@c --                    //////// - unnecessary. Also
-@c --                               in a lot of other
-@c --                               places.
-@cindex Tag (subcommand)
-
-@itemize @bullet
-@item
-tag [-lR] [-b] [-c] [-d] symbolic_tag [files@dots{}]
-@item
-Requires: working directory, repository.
-@item
-Changes: repository.
-@item
-Synonym: freeze
-@end itemize
-
-Use this command to assign symbolic tags to the nearest
-repository versions to your working sources.  The tags
-are applied immediately to the repository, as with
-@code{rtag}, but the versions are supplied implicitly by the
-@sc{cvs} records of your working files' history rather than
-applied explicitly.
-
-One use for tags is to record a snapshot of the
-current sources when the software freeze date of a
-project arrives.  As bugs are fixed after the freeze
-date, only those changed sources that are to be part of
-the release need be re-tagged.
-
-The symbolic tags are meant to permanently record which
-revisions of which files were used in creating a
-software distribution.  The @code{checkout} and
-@code{update} commands allow you to extract an exact
-copy of a tagged release at any time in the future,
-regardless of whether files have been changed, added,
-or removed since the release was tagged.
-
-This command can also be used to delete a symbolic tag,
-or to create a branch.  See the options section below.
-
-If you attempt to use a tag name that already exists,
-@sc{cvs} will complain and not overwrite that tag.  Use
-the @samp{-F} option to force the new tag value.
-
-
-@menu
-* tag options::                 tag options
-@end menu
-
-@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-@node tag options
-@appendixsubsec tag options
-
-These standard options are supported by @code{tag}
-(@pxref{Common options}, for a complete description of
-them):
-
-@table @code
-@cindex renaming tags
-@cindex tags, renaming
-@cindex moving tags
-@c FIXME: Where does this talk about renaming tags?
-@c And what about rtag?  This needs to be moved to
-@c the body of the manual.
-@c Also see:
-@c  "How do I move or rename a magic branch tag?"
-@c in the FAQ (I think the issues it talks about still
-@c apply, but this could use some sanity.sh work).
-@item -F
-Overwrite an existing tag of the same name on a
-different revision.
-@c FIXME: See "rtag -F" for comments on this.
-
-@item -l
-Local; run only in current working directory.
-
-@item -R
-Tag directories recursively.  This is on by default.
-@end table
-
-Two special options are available:
-
-@table @code
-@item -b
-Make the tag a branch tag
-(@pxref{Branching and merging}), allowing concurrent, isolated
-development.  This is most useful for creating a patch
-to a previously released software distribution.
-
-@item -c
-Check that all files which are to be tagged are
-unmodified.  This can be used to make sure that you can reconstruct the
-current file contents.
-
-@item -d
-Delete a tag.
-
-If you use @samp{cvs tag -d symbolic_tag}, the symbolic
-tag you specify is deleted instead of being added.
-Warning: Be very certain of your ground before you
-delete a tag; doing this permanently discards some
-historical information, which may later turn out to
-be valuable.
-@end table
-
-@ignore
-@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-@c @node tag examples
-@appendixsubsec tag examples
-
-@c -- FIXME
-@end ignore
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node update
@@ -10483,43 +10520,42 @@ behavior}.
 @end table
 
 @item rtag [@var{options}] @var{tag} @var{modules}@dots{}
-Add a symbolic tag to a module.  See @ref{rtag}.
+Add a symbolic tag to a module.
+See @ref{Revisions} and @ref{Branching and merging}.
 
 @table @code
-@c Is this one of those dumb options which used to
-@c work around the lack of death support?
 @item -a
 Clear tag from removed files that would not otherwise
-be tagged.  See @ref{rtag options}.
+be tagged.  See @ref{Tagging add/remove}.
 
 @item -b
-Create a branch named @var{tag}.  See @ref{rtag options}.
+Create a branch named @var{tag}.  See @ref{Branching and merging}.
 
 @item -D @var{date}
-Tag revisions as of @var{date}.  See @ref{rtag options}.
+Tag revisions as of @var{date}.  See @ref{Tagging by date/tag}.
 
 @item -d
-Delete the given tag.  See @ref{rtag options}.
+Delete @var{tag}.  See @ref{Modifying tags}.
 
 @item -F
-Move tag if it already exists.  See @ref{rtag options}.
+Move @var{tag} if it already exists.  See @ref{Modifying tags}.
 
 @item -f
 Force a head revision match if tag/date not found.
-See @ref{rtag options}.
+See @ref{Tagging by date/tag}.
 
 @item -l
 Local; run only in current working directory.  See @ref{Recursive behavior}.
 
 @item -n
-No execution of tag program.  See @ref{rtag options}.
+No execution of tag program.  See @ref{Common options}.
 
 @item -R
 Operate recursively (default).  @xref{Recursive
 behavior}.
 
-@item -r @var{tag}
-Tag existing tag @var{tag}.  See @ref{rtag options}.
+@item -r @var{rev}
+Tag existing tag @var{rev}.  See @ref{Tagging by date/tag}.
 @end table
 
 @item status [@var{options}] @var{files}@dots{}
@@ -10540,37 +10576,38 @@ Include tag information for file.  See @ref{Tags}.
 
 @item tag [@var{options}] @var{tag} [@var{files}@dots{}]
 Add a symbolic tag to checked out version of files.
-See @ref{tag}.
+See @ref{Revisions} and @ref{Branching and merging}.
 
 @table @code
 @item -b
-Create a branch named @var{tag}.  See @ref{tag options}.
+Create a branch named @var{tag}.  See @ref{Branching and merging}.
+
+@item -c
+Check that working files are unmodified.  See
+@ref{Tagging the working directory}.
 
 @item -D @var{date}
-Tag revisions as of @var{date}.  See @ref{tag options}.
+Tag revisions as of @var{date}.  See @ref{Tagging by date/tag}.
 
 @item -d
-Delete the given tag.  See @ref{tag options}.
+Delete @var{tag}.  See @ref{Modifying tags}.
 
 @item -F
-Move tag if it already exists.  See @ref{tag options}.
+Move @var{tag} if it already exists.  See @ref{Modifying tags}.
 
 @item -f
 Force a head revision match if tag/date not found.
-See @ref{tag options}.
+See @ref{Tagging by date/tag}.
 
 @item -l
 Local; run only in current working directory.  See @ref{Recursive behavior}.
-
-@item -n
-No execution of tag program.  See @ref{tag options}.
 
 @item -R
 Operate recursively (default).  @xref{Recursive
 behavior}.
 
-@item -r @var{tag}
-Tag existing tag @var{tag}.  See @ref{tag options}.
+@item -r @var{rev}
+Tag existing tag @var{rev}.  See @ref{Tagging by date/tag}.
 @end table
 
 @item unedit [@var{options}] [@var{files}@dots{}]
@@ -11055,12 +11092,19 @@ this module.
 @c should be better motivated (e.g. start with the
 @c problems, then explain how the feature solves it).
 
+Wrappers refers to a @sc{cvs} feature which lets you
+control certain settings based on the name of the file
+which is being operated on.  The settings are @samp{-k}
+for binary files, and @samp{-m} for nonmergeable text
+files.
+
+@ignore
 Wrappers allow you to set a hook which transforms files on
 their way in and out of @sc{cvs}.
 
 The file @file{cvswrappers} defines the script that will be
 run on a file when its name matches a regular
-expresion. There are two scripts that can be run on a
+expression. There are two scripts that can be run on a
 file or directory. One script is executed on the file/directory
 before being checked into the repository (this is denoted
 with the @code{-t} flag) and the other when the file is
@@ -11071,9 +11115,10 @@ not work with client/server @sc{cvs}.
 @c file converts to/from a single file, as opposed to
 @c the file<->directory case.  Could use more
 @c investigation...
+@end ignore
 
-The @file{cvswrappers} also has a @samp{-m} option to
-specify the merge methodology that should be used when
+The @samp{-m} option
+specifies the merge methodology that should be used when
 a non-binary file is updated.  @code{MERGE} means the usual
 @sc{cvs} behavior: try to merge the files.  @code{COPY}
 means that @code{cvs update} will refuse to merge
@@ -11104,14 +11149,17 @@ The basic format of the file @file{cvswrappers} is:
 wildcard     [option value][option value]...
 
 where option is one of
+@ignore
 -f           from cvs filter         value: path to filter
 -t           to cvs filter           value: path to filter
+@end ignore
 -m           update methodology      value: MERGE or COPY
 -k           keyword expansion       value: expansion mode
 
 and value is a single-quote delimited value.
 @end example
 
+@ignore
 @example
 *.nib    -f 'unwrap %s' -t 'wrap %s %s' -m 'COPY'
 *.c      -t 'indent %s %s'
@@ -11171,8 +11219,11 @@ options}).
 @c This is, of course, a serious design flaw in -t/-f.
 @c Probably the whole functionality needs to be
 @c redesigned (starting from requirements) to fix this.
+@end ignore
 
-For another example, the following command imports a
+@c FIXME: We don't document -W or point to where it is
+@c documented.  Or .cvswrappers.
+For example, the following command imports a
 directory, treating files whose name ends in
 @samp{.exe} as binary:
 
@@ -11346,9 +11397,11 @@ removed, and modified files).
 
 @cindex exit status, of commitinfo
 The first line with a regular expression matching the
-relative path to the module will be used.  If the
+directory within the repository will be used.  If the
 command returns a non-zero exit status the commit will
 be aborted.
+@c FIXME: need example(s) of what "directory within the
+@c repository" means.
 
 @cindex DEFAULT in commitinfo
 If the repository name does not match any of the
@@ -11356,7 +11409,7 @@ regular expressions in this file, the @samp{DEFAULT}
 line is used, if it is specified.
 
 @cindex ALL in commitinfo
-All occurances of the name @samp{ALL} appearing as a
+All occurrences of the name @samp{ALL} appearing as a
 regular expression are used in addition to the first
 matching regular expression or the name @samp{DEFAULT}.
 
@@ -11408,7 +11461,7 @@ One thing that should be noted is that the @samp{ALL}
 keyword is not supported.  If more than one matching
 line is found, the first one is used.  This can be
 useful for specifying a default verification script in a
-module, and then overriding it in a subdirectory.
+directory, and then overriding it in a subdirectory.
 
 @cindex DEFAULT in verifymsg
 If the repository name does not match any of the
@@ -11615,7 +11668,7 @@ If the repository name does not match any of the
 regular expressions in this file, the @samp{DEFAULT}
 line is used, if it is specified.
 
-All occurances of the name @samp{ALL} appearing as a
+All occurrences of the name @samp{ALL} appearing as a
 regular expression are used in addition to the first
 matching regular expression or @samp{DEFAULT}.
 
@@ -11780,7 +11833,7 @@ If the repository name does not match any of the
 regular expressions in this file, the @samp{DEFAULT}
 line is used, if it is specified.
 
-All occurances of the name @samp{ALL} appearing as a
+All occurrences of the name @samp{ALL} appearing as a
 regular expression are used in addition to the first
 matching regular expression or @samp{DEFAULT}.
 
@@ -11791,7 +11844,7 @@ matching regular expression or @samp{DEFAULT}.
 @c whether it is hardwired into CVS or who creates
 @c it or anything.  In particular we should say
 @c how to version control the template file.  A
-@c probably better answer than the /usr/cvsssupport
+@c probably better answer than the /usr/cvssupport
 @c stuff is to use checkoutlist (with xref to the
 @c checkoutlist doc).
 @c Also I am starting to see a connection between
@@ -11964,7 +12017,7 @@ One may want to know about various pieces of
 information internal to @sc{cvs}.  A @sc{cvs} internal
 variable has the syntax @code{$@{@var{variable}@}},
 where @var{variable} starts with a letter and consists
-of alphanumberic characters and @samp{_}.  If the
+of alphanumeric characters and @samp{_}.  If the
 character following @var{variable} is a
 non-alphanumeric character other than @samp{_}, the
 @samp{@{} and @samp{@}} can be omitted.  The @sc{cvs}
@@ -12089,6 +12142,28 @@ each command.  It also provides a place for the
 @samp{CVS/Template} file (@pxref{Working directory
 storage}).
 
+@cindex LockDir, in CVSROOT/config
+@item LockDir=@var{directory}
+Put CVS lock files in @var{directory} rather than
+directly in the repository.  This is useful if you want
+to let users read from the repository while giving them
+write access only to @var{directory}, not to the
+repository.  You need to create @var{directory}, but
+CVS will create subdirectories of @var{directory} as it
+needs them.  For information on CVS locks, see
+@ref{Concurrency}.
+
+@c Mention this in Compatibility section?
+Before enabling the LockDir option, make sure that you
+have tracked down and removed any copies of CVS 1.9 or
+older.  Such versions neither support LockDir, nor will
+give an error indicating that they don't support it.
+The result, if this is allowed to happen, is that some
+CVS users will put the locks one place, and others will
+put them another place, and therefore the repository
+could become corrupted.  CVS 1.10 does not support
+LockDir but it will print a warning if run on a
+repository with LockDir enabled.
 @end table
 
 @c ---------------------------------------------------------------------
@@ -12138,6 +12213,7 @@ directory.
 
 @item $EDITOR
 @itemx $CVSEDITOR
+@itemx $VISUAL
 Specifies the program to use for recording log messages
 during commit.  @code{$CVSEDITOR} overrides
 @code{$EDITOR}.  See @ref{Committing your changes}.
@@ -12209,7 +12285,12 @@ seconds so that you can attach to it with a debugger.
 
 @cindex CVS_IGNORE_REMOTE_ROOT, environment variable
 @item $CVS_IGNORE_REMOTE_ROOT
-(What is the purpose of this variable?)
+For @sc{cvs} 1.10 and older, setting this variable
+prevents @sc{cvs} from overwriting the @file{CVS/Root}
+file when the @samp{-d} global option is specified.
+Later versions of @sc{cvs} do not rewrite
+@file{CVS/Root}, so CVS_IGNORE_REMOTE_ROOT has no
+effect.
 
 @cindex COMSPEC, environment variable
 @item $COMSPEC
@@ -12557,7 +12638,7 @@ every place it appears in your @code{modules}
 file.  For more information on the @code{modules} file,
 see @ref{modules}.
 
-@c This messsage comes from "co", and I believe is
+@c This message comes from "co", and I believe is
 @c possible only with older versions of CVS which call
 @c co.  The problem with being able to create the bogus
 @c RCS file still exists, though (and I think maybe
@@ -12621,6 +12702,15 @@ logfile to be specified with a @samp{-f} option.  Of
 course, if you don't need @file{log.pl} you can just
 comment it out of @file{loginfo}.
 
+@item cvs [login aborted]: unrecognized auth response from @var{server}
+This message typically means that the server is not set
+up properly.  For example, if @file{inetd.conf} points
+to a nonexistent cvs executable.  To debug it further,
+find the log file which inetd writes
+(@file{/var/log/messages} or whatever inetd uses on
+your system).  For details, see @ref{Connection}, and
+@ref{Password authentication server}.
+
 @item cvs commit: Up-to-date check failed for `@var{file}'
 This means that someone else has committed a change to
 that file since the last time that you did a @code{cvs
@@ -12664,6 +12754,10 @@ Double-check your installation against the instructions
 for setting up the CVS server.
 @c FIXCVS: should be printing CR as \r or \015 or some
 @c such, probably.
+
+@item cvs commit: [@var{time}] waiting for @var{user}'s lock in @var{directory}
+This is a normal message, not an error.  See
+@ref{Concurrency}, for more details.
 
 @item cvs commit: warning: editor session failed
 @cindex exit status, of editor

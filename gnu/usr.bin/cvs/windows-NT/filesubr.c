@@ -369,6 +369,41 @@ readlink (char *path, char *buf, int buf_size)
     return -1;
 }
 
+/* Rename for NT which works for read only files.  Apparently if we are
+   accessing FROM and TO via a Novell network, this is an issue.  */
+int
+wnt_rename (from, to)
+    const char *from;
+    const char *to;
+{
+    int result, save_errno;
+    int readonly = !iswritable (from);
+
+    if (readonly)
+    {
+	if (chmod (from, S_IWRITE) < 0)
+	    return -1;
+    }
+    result = rename (from, to);
+    save_errno = errno;
+    if (readonly)
+    {
+	if (result == 0)
+	{
+	    if (chmod (to, S_IREAD) < 0)
+		return -1;
+	}
+	else
+	{
+	    /* We have a choice of which error to report, if there is
+	       one here too; report the one from rename ().  */
+	    chmod (from, S_IREAD);
+	}
+	errno = save_errno;
+    }
+    return result;
+}
+
 /*
  * Rename a file and die if it fails
  */
@@ -390,7 +425,7 @@ rename_file (from, to)
     /* Win32 unlink is stupid --- it fails if the file is read-only  */
     chmod(to, S_IWRITE);
     unlink(to);
-    if (rename (from, to) < 0)
+    if (CVS_RENAME (from, to) < 0)
 	error (1, errno, "cannot rename file %s to %s", from, to);
 }
 

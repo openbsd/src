@@ -1,3 +1,119 @@
+1999-02-09  Jim Kingdon  <http://www.cyclic.com>
+
+	* configure.in (AC_REPLACE_FUNCS): Remove vasprintf; see
+	lib/ChangeLog for rationale.
+	* configure: Regenerated.
+
+1999-01-31  Assar Westerlund of sics.se
+	    and Jim Kingdon
+
+	* configure.in: The GSSAPI code in CVS requires krb5.h which
+	Solaris 2.7 doesn't have.  Check for it.
+	* configure: Regenerated.
+
+1999-01-12  Jim Kingdon  <http://www.cyclic.com>
+
+	* COPYING, COPYING.LIB: Remove obsolete snail address of the Free
+	Software Foundation.
+
+1998-12-01  Jim Kingdon
+
+	* TODO (195): Check in a few clarifications from Andrew Tridgell,
+	the rsync author.
+
+1998-11-11  Jim Kingdon
+
+	* HACKING: Change prep.ai.mit.edu to gnu.org.
+
+1998-10-26  Jim Kingdon
+
+	* INSTALL: Add information for Sequent DYNIX/ptx4.0, from a report
+	by Marco Franzen.
+
+1998-10-14  Jim Kingdon
+
+	* configure.in (AC_OUTPUT): Remove contrib/elib/Makefile.
+	* configure: Regenerated using autoconf 2.10.
+
+1998-10-13  Jim Kingdon
+
+	* TODO (149): Update since -d doesn't rewrite CVS/Root any more.
+
+1998-10-03  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* TODO (31): Mention the ,foo.c, and SIGINT issue.
+
+1998-09-25  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* FAQ: Update from FAQ-O-Matic.  This features fewer blank lines
+	and a few more minor formatting changes (not sure whether the
+	FAQ-O-Matic changed or whether this is because I upgraded Lynx).
+	I read through the diffs, and the real changes are: (A) In
+	/Advanced_Topics_/Setting_up_and_Manag/, #1, describe "cvs init",
+	don't describe committing modules file twice
+	(no longer needed now that mkmodules is not a separate program),
+	don't mention "cvs import" here. (B)
+	/Advanced_Topics_/Setting_up_and_Manag/, #5, describe special
+	issues with pserver and repository permissions,
+	(C), /Advanced_Topics_/Tricks_of_the_Trade/, renumber the question
+	"Why do timestamps sometimes get set to the date of the revision"
+	from #17 to #9.  Renumber the questions between #9 and #17
+	accordingly, (D) /User_Tasks_/Less_Common_User_Tas/, "8. How do I
+	split a file into pieces, retaining revision histories?", include
+	a script which may help with this, (E)
+	/What_is_CVS_/How_does_CVS_differ_/, correct the name of SABLIME,
+	(F) /What_is_CVS_/Where_do_I_find_CVS_/, "2. Is there an archive
+	of CVS material?", note that http://www.delos.com/cvs doesn't
+	exist any more.
+
+	* NEWS: Mention :fork:.
+
+1998-09-24  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL (Tested platforms): Update SCO OpenServer information,
+	from a report by Robert Lipe@DIGI.
+
+1998-09-22  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Add items about multiple roots and -d not updating
+	CVS/Root.
+
+1998-09-09  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* configure.in (AC_OUTPUT): Remove tools/pcl-cvs/Makefile.
+	* configure: Regenerated using autoconf 2.10.
+
+1998-09-07  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Add item about LockDir.
+
+1998-08-31  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL (Tested platforms): Add Solaris x86 (reported by Jeremy of
+	exit109.com) and Irix 6.4 (reported by Russ Allbery).
+
+	* INSTALL (Tested platforms): Add Solaris 2.6 (reported by Russ
+	Allbery).
+
+1998-08-28  Noel Cragg  <noel@swish.red-bean.com>
+
+	* TODO (196): new item.
+
+1998-08-26  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* TESTS: Update comments concerning Solaris sort and LC_COLLATE.
+
+1998-08-17  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Update Irix, Ultrix, and NetBSD/Alpha with test results
+	from Noel.
+
+1998-08-14  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Add NetBSD/mac68k (reported by Hauke Fath of melog.de).
+	Add alpha-dec-osf4.0 and update SunOS and linux entries (reported
+	by Jim Kingdon and Noel Cragg).
+
 1998-08-06  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* INSTALL: Update for SCO OpenServer 5 (reported by Jeffery

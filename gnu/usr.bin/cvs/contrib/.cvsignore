@@ -5,9 +5,6 @@ commit_prep
 cvs2vendor
 cvs_acls
 cvscheck
-Debug
-listen2.mdp
-listen2.ncb
 log
 log_accum
 mfpipe

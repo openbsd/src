@@ -375,9 +375,9 @@ admin (argc, argv)
 
 	check_numeric (admin_data.delete_revs + 2, argc, argv);
 	p = strchr (admin_data.delete_revs + 2, ':');
-	if (p != NULL && isdigit (p[1]))
+	if (p != NULL && isdigit ((unsigned char) p[1]))
 	    check_numeric (p + 1, argc, argv);
-	else if (p != NULL && p[1] == ':' && isdigit(p[2]))
+	else if (p != NULL && p[1] == ':' && isdigit ((unsigned char) p[2]))
 	    check_numeric (p + 2, argc, argv);
     }
 
@@ -414,8 +414,8 @@ admin (argc, argv)
 	for (i = 0; i < admin_data.ac; ++i)
 	    send_arg (admin_data.av[i]);
 
-	send_file_names (argc, argv, SEND_EXPAND_WILD);
 	send_files (argc, argv, 0, 0, SEND_NO_CONTENTS);
+	send_file_names (argc, argv, SEND_EXPAND_WILD);
 	send_to_server ("admin\012", 0);
         err = get_responses_and_close ();
 	goto return_it;
@@ -492,7 +492,7 @@ admin_fileproc (callerdat, finfo)
     if (admin_data->branch != NULL)
     {
 	char *branch = &admin_data->branch[2];
-	if (*branch != '\0' && ! isdigit (*branch))
+	if (*branch != '\0' && ! isdigit ((unsigned char) *branch))
 	{
 	    branch = RCS_whatbranch (rcs, admin_data->branch + 2);
 	    if (branch == NULL)
@@ -604,12 +604,9 @@ admin_fileproc (callerdat, finfo)
     if (admin_data->kflag != NULL)
     {
 	char *kflag = admin_data->kflag + 2;
-	if (!rcs->expand || strcmp (rcs->expand, kflag) != 0)
-	{
-	    if (rcs->expand)
-		free (rcs->expand);
-	    rcs->expand = xstrdup (kflag);
-	}
+	char *oldexpand = RCS_getexpand (rcs);
+	if (oldexpand == NULL || strcmp (oldexpand, kflag) != 0)
+	    RCS_setexpand (rcs, kflag);
     }
 
     /* Handle miscellaneous options.  TODO: decide whether any or all

@@ -1,3 +1,31 @@
+1998-10-13  Jim Kingdon
+
+	* README: Update information about make/project files, cygwin and
+	the (lack of) need for RCS 5.7.  Tweak a few more things.
+
+1998-10-03  Jim Kingdon
+
+	* win32.c: Include cvs.h and only check server_active if
+	SERVER_SUPPORT is defined.
+
+1998-10-02  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	(This was reported by someone else but I don't remember who).
+	* config.h: Define SYSTEM_CLEANUP.
+	* win32.c (wnt_cleanup): New function, implements it.
+
+1998-09-28  Johannes Stezenbach <johannes.stezenbach@propack-data.de>
+	    and Jim Kingdon
+
+	* config.h (CVS_RENAME): Define.
+	* filesubr.c, config.h (wnt_rename): New function.
+	* filesubr.c (rename_file): Call CVS_RENAME not rename.
+
+1998-09-04  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* win32.c (gethostname): Expand comment about gethostname
+	vs. GetComputerName (reported by Randy Coulman).
+
 1998-07-01  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* startserver.c (wnt_shutdown_server): Check for errors from close().

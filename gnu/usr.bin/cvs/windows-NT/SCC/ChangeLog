@@ -1,3 +1,7 @@
+1998-09-21  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.txt: Also mention HAHTsite.
+
 1998-03-22  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* pubscc.h: Describe how SccGetCommandOptions works.

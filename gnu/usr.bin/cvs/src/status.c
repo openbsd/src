@@ -77,8 +77,6 @@ cvsstatus (argc, argv)
       if (local)
 	send_arg("-l");
 
-      send_file_names (argc, argv, SEND_EXPAND_WILD);
-
       /* For a while, we tried setting SEND_NO_CONTENTS here so this
 	 could be a fast operation.  That prevents the
 	 server from updating our timestamp if the timestamp is
@@ -93,6 +91,8 @@ cvsstatus (argc, argv)
 	 reasons, it seems better to not rely too much on them.  */
 
       send_files (argc, argv, local, 0, 0);
+
+      send_file_names (argc, argv, SEND_EXPAND_WILD);
 
       send_to_server ("status\012", 0);
       err = get_responses_and_close ();
@@ -242,7 +242,7 @@ status_fileproc (callerdat, finfo)
 	    }
 	    else
 	    {
-		if (isdigit (edata->tag[0]))
+		if (isdigit ((unsigned char) edata->tag[0]))
 		{
 		    cvs_output ("   Sticky Tag:\t\t", 0);
 		    cvs_output (edata->tag, 0);

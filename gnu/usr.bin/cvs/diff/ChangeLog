@@ -1,3 +1,35 @@
+1999-02-17  Jim Kingdon  <http://www.cyclic.com>
+	and Hallvard B Furuseth.
+
+	* util.c: Use __STDC__ consistently with ./system.h.
+	* system.h: Add comment about PARAMS.
+
+1999-01-12  Jim Kingdon  <http://www.cyclic.com>
+
+	* Makefile.in, analyze.c, cmpbuf.c, cmpbuf.h, context.c, diff.c,
+	diff.h, diff3.c, diffrun.h, dir.c, ed.c, io.c, normal.c, system.h,
+	util.c: Remove paragraph containing the old snail mail address of
+	the Free Software Foundation.
+
+1998-09-21  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* util.c (printf_output): Make msg static; avoids auto
+	initializer, which is not portable to SunOS4 /bin/cc.
+	Reported by Mike Sutton@SAIC.
+
+1998-09-14  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (DISTFILES): Add diagmeet.note.
+
+1998-08-15  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* diffrun.h (struct diff_callbacks): Change calling convention of
+	write_output so that a zero length means to output zero bytes.
+	The cvs_output convention is just too ugly/error-prone.
+	* util.c (printf_output): Rewrite to parse format string
+	overselves rather than calling vasprintf, which cannot be
+	implemented in portable C.
+
 1998-08-06  David Masterson of kla-tencor.com
 
 	* util.c (flush_output): Don't prototype.

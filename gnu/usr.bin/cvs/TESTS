@@ -17,11 +17,13 @@ can set the TESTDIR environment variable to the desired location
 before running them.
 
 You will probably need GNU expr, which is part of the GNU sh-utils
-package.  You may also need sort from the GNU textutils; Solaris
-in particular has been reported to have a sort program which does not
-behave the way that the testsuite expects (with Solaris, lines
-starting with tabs sort before blank lines).  These programs are just
-for running the tests; CVS itself doesn't require expr or sort.
+package.  This is just for running the tests; CVS itself doesn't
+require expr.
+
+With CVS 1.10 people also had trouble with the Solaris sort program
+not behaving the way that the testsuite expects (with Solaris, lines
+starting with tabs sort before blank lines).  I suspect this is fixed
+now that the testsuite sets LC_COLLATE.
 
 If there is some unexpected output, that is a failure which can be
 somewhat hard to track down.  Finding out which test is producing the

@@ -15,6 +15,8 @@
 #include <winsock.h>
 #include <stdlib.h>
 
+#include "cvs.h"
+
 void
 init_winsock ()
 {
@@ -27,6 +29,25 @@ init_winsock ()
     }
 }
 
+void
+wnt_cleanup (void)
+{
+    if (WSACleanup ())
+    {
+#ifdef SERVER_ACTIVE
+	if (server_active || error_use_protocol)
+	    /* FIXME: how are we supposed to report errors?  As of now
+	       (Sep 98), error() can in turn call us (if it is out of
+	       memory) and in general is built on top of lots of
+	       stuff.  */
+	    ;
+	else
+#endif
+	    fprintf (stderr, "cvs: cannot WSACleanup: %s\n",
+		     sock_strerror (WSAGetLastError ()));
+    }
+}
+
 unsigned sleep(unsigned seconds)
 {
 	Sleep(1000*seconds);
@@ -34,7 +55,15 @@ unsigned sleep(unsigned seconds)
 }
 
 #if 0
-/* This is available from the WinSock library.  */
+
+/* WinSock has a gethostname.  But note that WinSock gethostname may
+   want to talk to the network, which is kind of bogus in the
+   non-client/server case.  I'm not sure I can think of any obvious
+   solution.  Most of the ways I can think of to figure out whether
+   to call gethostname or GetComputerName seem kind of kludgey, and/or
+   might result in picking the name in a potentially confusing way
+   (I'm not sure exactly how the name(s) are set).  */
+
 int gethostname(char* name, int namelen)
 {
 	DWORD dw = namelen;

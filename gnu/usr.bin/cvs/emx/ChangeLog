@@ -1,3 +1,8 @@
+1998-08-24  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (rcscmds.o): New rule, so we can supply -I for
+	diffrun.h.
+
 1998-04-09  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* filesubr.c (link_file): Remove; no longer used.

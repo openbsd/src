@@ -71,6 +71,7 @@ relying on it.
    5.03 but not version 4, version 5.0, or 16 bit Powerbuilder.).
 * Premia's CodeWright editor 
   (versions 5.00b and 5.00c; not sure about older versions).
+* HAHTsite (not sure what versions).
 
 SPECIFICATIONS OR OTHER DOCUMENTS DESCRIBING THE SCC
 

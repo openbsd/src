@@ -1,3 +1,12 @@
+1998-12-29  Jim Kingdon  <http://www.cyclic.com>
+
+	* Makefile.in: Use the getdate.c in ../lib rather than the one
+	here.  I don't know whether it compiles with Watcom and/or IBM's
+	compiler, but having a copy of getdate.c in this directory has
+	proven to be unworkable (the version I am removing still had Y2K
+	bugs which were fixed in lib/getdate.c, for example).
+	* getdate.c: Removed.
+
 1998-04-09  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* filesubr.c (link_file): Remove; no longer used.

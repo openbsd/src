@@ -240,8 +240,8 @@ add (argc, argv)
 		free (repository);
 		free (filedir);
 	    }
-	send_file_names (argc, argv, SEND_EXPAND_WILD);
 	send_files (argc, argv, 0, 0, SEND_BUILD_DIRS | SEND_NO_CONTENTS);
+	send_file_names (argc, argv, SEND_EXPAND_WILD);
 	send_to_server ("add\012", 0);
 	if (message)
 	    free (message);
@@ -420,7 +420,7 @@ file `%s' will be added on branch `%s' from version %s",
 re-adding file %s (in place of dead revision %s)",
 				   finfo.fullname, vers->vn_rcs);
 			Register (entries, finfo.file, "0", vers->ts_user,
-				  NULL,
+				  vers->options,
 				  vers->tag, NULL, NULL);
 			++added_files;
 		    }
