@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.131 2002/07/21 01:37:46 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.132 2002/07/21 21:28:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1420,8 +1420,8 @@ route		: /* empty */			{
 			$$.rt = PF_FASTROUTE;
 			$$.addr = NULL;
 		}
-		| ROUTETO STRING ':' address {
-			$$.string = strdup($2);
+		| ROUTETO '(' STRING address ')' {
+			$$.string = strdup($3);
 			$$.rt = PF_ROUTETO;
 			if ($4->addr.addr_dyn != NULL) {
 				yyerror("route-to does not support"
