@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2001/07/31 09:02:18 wilfried Exp $	*/
+/*	$OpenBSD: parse.y,v 1.17 2001/08/11 09:54:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -38,6 +38,7 @@
 
 #include <stdio.h>
 #include <netdb.h>
+#include <stdarg.h>
 #include <errno.h>
 #include <string.h>
 #include <ctype.h>
@@ -52,7 +53,7 @@ static int lineno = 1;
 static int errors = 0;
 static int natmode = 0;
 
-static int proto = 0;	/* this is a synthesysed attribute */
+static int proto = 0;	/* this is a synthesized attribute */
 
 int			 rule_consistent(struct pf_rule *);
 int			 yyparse(void);
@@ -110,10 +111,10 @@ pfrule:		action direction log quick iface proto fromto flags icmpspec keep nodf 
 		{
 			struct pf_rule r;
 
-			if (natmode)
-				errx(1, "line %d: filter rule in nat mode",
-				    lineno);
-
+			if (natmode) {
+				yyerror("filter rule not permitted in nat mode");
+				YYERROR;
+			}
 			memset(&r, 0, sizeof(r));
 
 			r.action = $1.b1;
@@ -127,7 +128,7 @@ pfrule:		action direction log quick iface proto fromto flags icmpspec keep nodf 
 			if ($5.string)
 				memcpy(r.ifname, $5.string, sizeof(r.ifname));
 			r.proto = $6;
-			proto = 0;	/* reset syntesysed attribute */
+			proto = 0;	/* reset synthesized attribute */
 
 			memcpy(&r.src, $7.src, sizeof(r.src));
 			free($7.src);
@@ -146,7 +147,7 @@ pfrule:		action direction log quick iface proto fromto flags icmpspec keep nodf 
 				r.min_ttl = $12;
 
 			if (rule_consistent(&r) < 0)
-				warnx("skipping rule due to errors");
+				yyerror("skipping rule due to errors");
 			else
 				pfctl_add_rule(pf, &r);
 		}
@@ -167,8 +168,7 @@ blockspec:				{ $$.b2 = 0; $$.w = 0; }
 			struct icmpcodeent *p;
 
 			if ((p = geticmpcodebyname(ICMP_UNREACH, $3)) == NULL) {
-				warnx("line %d: unknown icmp code %s",
-				    lineno, $3);
+				yyerror("unknown icmp code %s", $3);
 				YYERROR;
 			}
 			$$.w = (p->type << 8) | p->code;
@@ -193,7 +193,7 @@ iface:					{ $$.string = NULL; }
 		| ON STRING		{ $$.string = strdup($2); }
 		| ON '!' STRING		{
 			if (! natmode) {
-				warnx("can't '!' interface in pf rule");
+				yyerror("can't '!' interface in pf rule");
 				YYERROR;
 			}
 			$$.string = strdup($3); $$.not = 1;
@@ -205,8 +205,7 @@ proto:					{ $$ = proto; }
 			struct protoent *p;
 
 			if ((p = getprotobynumber($2)) == NULL) {
-				warnx("line %d: unknown protocol %d", lineno,
-				    $2);
+				yyerror("unknown protocol %d", $2);
 				YYERROR;
 			}
 			proto = $$ = p->p_proto;
@@ -215,8 +214,7 @@ proto:					{ $$ = proto; }
 			struct protoent *p;
 
 			if ((p = getprotobyname($2)) == NULL) {
-				warnx("line %d: unknown protocol %s", lineno,
-				    $2);
+				yyerror("unknown protocol %s", $2);
 				YYERROR;
 			}
 			proto = $$ = p->p_proto;
@@ -258,7 +256,7 @@ host:		address		{
 		|
 		address '/' NUMBER	{
 			if ($3 < 0 || $3 > 32) {
-				warnx("illegal netmask value %d", $3);
+				yyerror("illegal netmask value %d", $3);
 				YYERROR;
 			}
 			$$ = new_addr();
@@ -272,8 +270,7 @@ address:	STRING {
 
 			if (inet_pton(AF_INET, $1, &$$) != 1) {
 				if ((hp = gethostbyname($1)) == NULL) {
-					warnx("line %d: cannot resolve %s",
-					    lineno, $1);
+					yyerror("cannot resolve %s", $1);
 					YYERROR;
 				}
 				memcpy(&$$, hp->h_addr, sizeof(u_int32_t));
@@ -282,7 +279,7 @@ address:	STRING {
 		| NUMBER '.' NUMBER '.' NUMBER '.' NUMBER {
 			if ($1 < 0 || $3 < 0 || $5 < 0 || $7 < 0 ||
 			    $1 > 255 || $3 > 255 || $5 > 255 || $7 > 255) {
-				warnx("illegal ip address %d.%d.%d.%d",
+				yyerror("illegal ip address %d.%d.%d.%d",
 				    $1, $3, $5, $7);
 				YYERROR;
 			}
@@ -306,7 +303,7 @@ portspec:	PORT PORTUNARY port	{
 
 port:		NUMBER			{
 			if (0 > $1 || $1 > 65535) {
-				warnx("illegal port value %d", $1);
+				yyerror("illegal port value %d", $1);
 				YYERROR;
 			}
 			$$ = htons($1);
@@ -314,13 +311,12 @@ port:		NUMBER			{
 		| STRING		{
 			struct servent *s = NULL;
 
-			/* use synthesysed attribute */
+			/* use synthesized attribute */
 			if (proto) {
 				s = getservbyname($1,
 				    proto == IPPROTO_TCP ? "tcp" : "udp");
 				if (s == NULL) {
-					warnx("line %d: unknown protocol %s",
-					    lineno, $1);
+					yyerror("unknown protocol %s", $1);
 					YYERROR;
 				}
 				$$ = s->s_port;
@@ -335,7 +331,7 @@ flags:					{ $$.b1 = 0; $$.b2 = 0; }
 			int f;
 
 			if ((f = parse_flags($2)) < 0) {
-				warnx("line %d: bad flags %s", lineno, $2);
+				yyerror("bad flags %s", $2);
 				YYERROR;
 			}
 			$$.b1 = f;
@@ -345,12 +341,12 @@ flags:					{ $$.b1 = 0; $$.b2 = 0; }
 			int f;
 
 			if ((f = parse_flags($2)) < 0) {
-				warnx("line %d: bad flags %s", lineno, $2);
+				yyerror("bad flags %s", $2);
 				YYERROR;
 			}
 			$$.b1 = f;
 			if ((f = parse_flags($4)) < 0) {
-				warnx("line %d: bad flags %s", lineno, $4);
+				yyerror("bad flags %s", $4);
 				YYERROR;
 			}
 			$$.b2 = f;
@@ -360,7 +356,7 @@ flags:					{ $$.b1 = 0; $$.b2 = 0; }
 
 			$$.b1 = 0;
 			if ((f = parse_flags($3)) < 0) {
-				warnx("line %d: bad flags %s", lineno, $3);
+				yyerror("bad flags %s", $3);
 				YYERROR;
 			}
 			$$.b2 = f;
@@ -371,7 +367,7 @@ icmpspec:				{ $$.b1 = 0; $$.b2 = 0; }
 		| ICMPTYPE icmptype	{ $$.b1 = $2; $$.b2 = 0; }
 		| ICMPTYPE icmptype CODE NUMBER	{
 			if ($4 < 0 || $4 > 255) {
-				warnx("illegal icmp code %d", $4);
+				yyerror("illegal icmp code %d", $4);
 				YYERROR;
 			}
 			$$.b1 = $2;
@@ -382,8 +378,7 @@ icmpspec:				{ $$.b1 = 0; $$.b2 = 0; }
 
 			$$.b1 = $2;
 			if ((p = geticmpcodebyname($2, $4)) == NULL) {
-				warnx("line %d: unknown icmp-code %s",
-				    lineno, $4);
+				yyerror("unknown icmp-code %s", $4);
 				YYERROR;
 			}
 			$$.b2 = p->code + 1;
@@ -394,15 +389,14 @@ icmptype:	STRING			{
 			struct icmptypeent *p;
 
 			if ((p = geticmptypebyname($1)) == NULL) {
-				warnx("line %d: unknown icmp-type %s",
-				    lineno, $1);
+				yyerror("unknown icmp-type %s", $1);
 				YYERROR;
 			}
 			$$ = p->type + 1;
 		}
 		| NUMBER		{
 			if ($1 < 0 || $1 > 255) {
-				warnx("illegal icmp type %d", $1);
+				yyerror("illegal icmp type %d", $1);
 				YYERROR;
 			}
 			$$ = $1 + 1;
@@ -417,7 +411,7 @@ keep:					{ $$ = 0; }
 minttl:					{ $$ = 0; }
 		| MINTTL NUMBER		{
 			if ($2 < 0 || $2 > 255) {
-				warnx("illegal min-ttl value %d", $2);
+				yyerror("illegal min-ttl value %d", $2);
 				YYERROR;
 			}
 			$$ = $2;
@@ -432,9 +426,10 @@ natrule:	NAT iface proto FROM ipspec TO ipspec ARROW address
 		{
 			struct pf_nat nat;
 
-			if (!natmode)
-				errx(1, "line %d: nat rule in filter mode",
-				    lineno);
+			if (!natmode) {
+				yyerror("nat rule not permitted in filter mode");
+				YYERROR;
+			}
 
 			memset(&nat, 0, sizeof(nat));
 
@@ -444,7 +439,7 @@ natrule:	NAT iface proto FROM ipspec TO ipspec ARROW address
 				nat.ifnot = $2.not;
 			}
 			nat.proto = $3;
-			proto = 0;	/* reset syntesysed attribute */
+			proto = 0;	/* reset synthesized attribute */
 
 			nat.saddr = $5->addr;
 			nat.smask = $5->mask;
@@ -467,8 +462,8 @@ rdrrule:	RDR { proto = IPPROTO_TCP; } iface proto FROM ipspec TO ipspec dport AR
 			struct pf_rdr rdr;
 
 			if (!natmode) {
-				errx(1, "line %d: nat rule in filter mode",
-				    lineno);
+				yyerror("rdr rule not permitted in filter mode");
+				YYERROR;
 			}
 
 			memset(&rdr, 0, sizeof(rdr));
@@ -479,7 +474,7 @@ rdrrule:	RDR { proto = IPPROTO_TCP; } iface proto FROM ipspec TO ipspec dport AR
 				rdr.ifnot = $3.not;
 			}
 			rdr.proto = $4;
-			proto = 0;	/* reset syntesysed attribute */
+			proto = 0;	/* reset synthesized attribute */
 
 			rdr.saddr = $6->addr;
 			rdr.smask = $6->mask;
@@ -529,10 +524,17 @@ rport:		PORT port			{
 %%
 
 int
-yyerror(char *s)
+yyerror(char *fmt, ...)
 {
+	va_list ap;
+	extern char *infile;
 	errors = 1;
-	warnx("%s near line %d", s, lineno);
+
+	va_start(ap, fmt);
+	fprintf(stderr, "%s:%d: ", infile, lineno);
+	vfprintf(stderr, fmt, ap);
+	fprintf(stderr, "\n");
+	va_end(ap);
 	return (0);
 }
 
@@ -543,42 +545,42 @@ rule_consistent(struct pf_rule *r)
 
 	if (r->action == PF_SCRUB) {
 		if (r->quick) {
-			warnx("quick does not apply to scrub");
+			yyerror("quick does not apply to scrub");
 			problems++;
 		}
 		if (r->keep_state) {
-			warnx("keep state does not apply to scrub");
+			yyerror("keep state does not apply to scrub");
 			problems++;
 		}
 		if (r->src.port_op) {
-			warnx("src port does not apply to scrub");
+			yyerror("src port does not apply to scrub");
 			problems++;
 		}
 		if (r->dst.port_op) {
-			warnx("dst port does not apply to scrub");
+			yyerror("dst port does not apply to scrub");
 			problems++;
 		}
 		if (r->type || r->code) {
-			warnx("icmp-type/code does not apply to scrub");
+			yyerror("icmp-type/code does not apply to scrub");
 			problems++;
 		}
 	} else {
 		if (r->rule_flag & PFRULE_NODF) {
-			warnx("nodf applies only to scrub");
+			yyerror("nodf only applies to scrub");
 			problems++;
 		}
 		if (r->min_ttl) {
-			warnx("min-ttl applies only to scrub");
+			yyerror("min-ttl only applies to scrub");
 			problems++;
 		}
 	}
 	if (r->proto != IPPROTO_TCP && r->proto != IPPROTO_UDP &&
 	    (r->src.port_op || r->dst.port_op)) {
-		warnx("ports do only apply to tcp/udp");
+		yyerror("port only applies to tcp/udp");
 		problems++;
 	}
 	if (r->proto != IPPROTO_ICMP && (r->type || r->code)) {
-		warnx("icmp-type/code does only apply to icmp");
+		yyerror("icmp-type/code only applies to icmp");
 		problems++;
 	}
 	return (-problems);
@@ -636,19 +638,39 @@ lookup(char *s)
 }
 
 int
+lgetc(FILE *fin)
+{
+	int c, next;
+
+restart:
+	c = getc(fin);
+	if (c == '\\') {
+		next = getc(fin);
+		if (next != '\n') {
+			ungetc(next, fin);
+			return (c);
+		}
+		lineno++;
+		goto restart;
+	}
+	return (c);
+}
+
+int
 yylex(void)
 {
 	char *p, buf[8096];
 	int c, next;
 	int token;
 
-	while ((c = getc(fin)) == ' ' || c == '\t')
+	while ((c = lgetc(fin)) == ' ' || c == '\t')
 		;
+	
 	if (c == '#')
-		while ((c = getc(fin)) != '\n' && c != EOF)
+		while ((c = lgetc(fin)) != '\n' && c != EOF)
 			;
 	if (c == '-') {
-		next = getc(fin);
+		next = lgetc(fin);
 		if (next == '>')
 			return (ARROW);
 		ungetc(next, fin);
@@ -658,7 +680,7 @@ yylex(void)
 		yylval.i = PF_OP_EQ;
 		return (PORTUNARY);
 	case '!':
-		next = getc(fin);
+		next = lgetc(fin);
 		if (next == '=') {
 			yylval.i = PF_OP_NE;
 			return (PORTUNARY);
@@ -666,7 +688,7 @@ yylex(void)
 		ungetc(next, fin);
 		break;
 	case '<':
-		next = getc(fin);
+		next = lgetc(fin);
 		if (next == '>') {
 			yylval.i = PF_OP_XRG;
 			return (PORTBINARY);
@@ -679,7 +701,7 @@ yylex(void)
 		return (PORTUNARY);
 		break;
 	case '>':
-		next = getc(fin);
+		next = lgetc(fin);
 		if (next == '<') {
 			yylval.i = PF_OP_IRG;
 			return (PORTBINARY);
@@ -697,11 +719,11 @@ yylex(void)
 		do {
 			u_int64_t n = (u_int64_t)yylval.number * 10 + c - '0';
 			if (n > 0xffffffff) {
-				warnx("line %d: number is too large", lineno);
+				yyerror("number is too large");
 				return (ERROR);
 			}
 			yylval.number = (u_int32_t)n;
-		} while ((c = getc(fin)) != EOF && isdigit(c));
+		} while ((c = lgetc(fin)) != EOF && isdigit(c));
 		ungetc(c, fin);
 		if (debug > 1)
 			fprintf(stderr, "number: %d\n", yylval.number);
@@ -709,26 +731,18 @@ yylex(void)
 	}
 
 #define allowed_in_string(x) \
-	isalnum(x) || \
-	( ispunct(x) && \
-	x != '(' && \
-	x != ')' && \
-	x != '<' && \
-	x != '>' && \
-	x != '!' && \
-	x != '=' && \
-	x != '/' && \
-	x != '#' )
+	isalnum(x) || (ispunct(x) && x != '(' && x != ')' && x != '<' \
+	&& x != '>' && x != '!' && x != '=' && x != '/' && x != '#')
 
 	if (isalnum(c)) {
 		p = buf;
 		do {
 			*p++ = c;
 			if (p-buf >= sizeof buf) {
-				warnx("line %d: string too long", lineno);
+				yyerror("string too long");
 				return (ERROR);
 			}
-		} while ((c = getc(fin)) != EOF && (allowed_in_string(c)));
+		} while ((c = lgetc(fin)) != EOF && (allowed_in_string(c)));
 		ungetc(c, fin);
 		*p = '\0';
 		token = lookup(buf);

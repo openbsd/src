@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.30 2001/07/26 12:55:15 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.31 2001/08/11 09:54:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -74,6 +74,8 @@ char	*logopt;
 char	*natopt;
 char	*rulesopt;
 char	*showopt;
+
+char	*infile;
 
 void
 usage()
@@ -286,10 +288,13 @@ pfctl_rules(int dev, char *filename, int opts)
 	struct pfioc_rule	pr;
 	struct pfctl		pf;
 
-	if (strcmp(filename, "-") == 0)
+	if (strcmp(filename, "-") == 0) {
+		infile = "stdin";
 		fin = stdin;
-	else
+	} else {
 		fin = fopen(filename, "r");
+		infile = filename;
+	}
 	if (fin == NULL)
 		return (1);
 	if ((opts & PF_OPT_NOACTION) == 0) {
@@ -323,10 +328,13 @@ pfctl_nat(int dev, char *filename, int opts)
 	struct pfioc_rdr	pr;
 	struct pfctl		pf;
 
-	if (strcmp(filename, "-") == 0)
+	if (strcmp(filename, "-") == 0) {
 		fin = stdin;
-	else
+		infile = "stdin";
+	} else {
 		fin = fopen(filename, "r");
+		infile = filename;
+	}
 	if (fin == NULL)
 		return (1);
 

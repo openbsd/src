@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.6 2001/07/16 21:09:38 markus Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.7 2001/08/11 09:54:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -49,11 +49,11 @@ int	 parse_rules(FILE *, struct pfctl *);
 int	 parse_nat(FILE *, struct pfctl *);
 int	 parse_flags(char *);
 
-void	 print_rule (struct pf_rule *);
-void	 print_nat (struct pf_nat *);
-void	 print_rdr (struct pf_rdr *);
-void	 print_state (struct pf_state *);
-void	 print_status (struct pf_status *);
+void	 print_rule(struct pf_rule *);
+void	 print_nat(struct pf_nat *);
+void	 print_rdr(struct pf_rdr *);
+void	 print_state(struct pf_state *);
+void	 print_status(struct pf_status *);
 
 struct icmptypeent {
 	char *name;
@@ -66,9 +66,9 @@ struct icmpcodeent {
 	u_int8_t code;
 };
 
-struct icmptypeent * geticmptypebynumber(u_int8_t);
-struct icmptypeent * geticmptypebyname(char *);
-struct icmpcodeent * geticmpcodebynumber(u_int8_t, u_int8_t);
-struct icmpcodeent * geticmpcodebyname(u_long, char *);
+struct icmptypeent *geticmptypebynumber(u_int8_t);
+struct icmptypeent *geticmptypebyname(char *);
+struct icmpcodeent *geticmpcodebynumber(u_int8_t, u_int8_t);
+struct icmpcodeent *geticmpcodebyname(u_long, char *);
 
 #endif /* _PFCTL_PARSER_H_ */
