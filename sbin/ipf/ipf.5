@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.5,v 1.16 1999/09/09 19:20:21 aaron Exp $
+.\"	$OpenBSD: ipf.5,v 1.17 2000/01/07 05:20:15 kjell Exp $
 .Dd July 9, 1999
 .Dt IPF 5
 .Os
@@ -40,17 +40,18 @@ proto	= "proto" protocol .
 ip	= srcdst [ flags ] [ with withopt ] [ icmp ] [ keep ] .
 group	= [ "head" decnumber ] [ "group" decnumber ] .
 
-block	= "block" [ "return-icmp"[return-code] | "return-rst" ] .
+block	= "block" [ icmp[return-code] | "return-rst" ] .
 auth    = "auth" | "preauth" .
-log	= "log" [ "body" ] [ "first" ] [ "or-block" ] .
+log	= "log" [ "body" ] [ "first" ] [ "or-block" ] [ "level" loglevel ] .
 call	= "call" [ "now" ] function-name .
 skip	= "skip" decnumber .
 dup	= "dup-to" interface-name[":"ipaddr] .
 froute	= "fastroute" | "to" interface-name .
 protocol = "tcp/udp" | "udp" | "tcp" | "icmp" | decnumber .
 srcdst	= "all" | fromto .
-fromto	= "from" object "to" object .
+fromto	= "from" [ "!" ] object "to" [ "!" ] object .
 
+icmp	= "return-icmp" | "return-icmp-as-dest" .
 object	= addr [ port-comp | port-range ] .
 addr	= "any" | nummask | host-name [ "mask" ipaddr | "mask" hexnumber ] .
 port-comp = "port" compare port-num .
@@ -60,6 +61,7 @@ with	= "with" | "and" .
 icmp	= "icmp-type" icmp-type [ "code" decnumber ] .
 return-code = "("icmp-code")" .
 keep	= "keep" "state" | "keep" "frags" .
+loglevel = facility"."priority | priority .
 
 nummask	= host-name [ "/" decnumber ] .
 host-name = ipaddr | hostname | "any" .
@@ -83,6 +85,12 @@ icmp-code = decumber | "net-unr" | "host-unr" | "proto-unr" | "port-unr" |
 optlist	= "nop" | "rr" | "zsu" | "mtup" | "mtur" | "encode" | "ts" |
 	  "tr" | "sec" | "lsrr" | "e-sec" | "cipso" | "satid" | "ssrr" |
 	  "addext" | "visa" | "imitd" | "eip" | "finn" .
+facility = "kern" | "user" | "mail" | "daemon" | "auth" | "syslog" |
+	   "lpr" | "news" | "uucp" | "cron" | "ftp" | "authpriv" |
+	   "audit" | "logalert" | "local0" | "local1" | "local2" |
+	   "local3" | "local4" | "local5" | "local6" | "local7" .
+priority = "emerg" | "alert" | "crit" | "err" | "warn" | "notice" |
+	   "info" | "debug" . 
 
 hexnumber = "0" "x" hexstring .
 hexstring = hexdigit [ hexstring ] .
@@ -127,18 +135,36 @@ of the filter rule. Each rule
 .Em must
 have an action. The following actions are recognized:
 .Pp
-.Bl -tag -width preauth -offset indent
+.Bl -tag -width XXXXXXXX -offset indent
 .It block
 indicates that the packet should be flagged to be dropped. In response
 to blocking a packet, the filter may be instructed to send a reply
-packet, either an ICMP packet (
-.Cm return-icmp )
-or a TCP reset (
-.Cm return-rst ) .
+packet, either an ICMP packet
+.Pq Cm return-icmp ,
+an ICMP packet masquerading as being from the original packet's destination (
+.Pq Cm return-icmp-as-dest ,
+or a TCP reset
+.Pq Cm return-rst .
 An ICMP packet may be generated in response to
 any IP packet, and its type may optionally be specified, but a TCP
 reset may only be used with a rule which is being applied to TCP
-packets.
+packets. When using
+.Cm return-icmp
+or
+.Cm return-icmp-as-dest ,
+it is possible to specify the actual unreachable `type'. That is, whether
+it is a network unreachable, port unreachable or even administratively
+prohibited. This is done by enclosing the ICMP code associated with it
+in parenthesis directly following
+.Cm return-icmp
+or
+.Cm return-icmp-as-dest
+as follows:
+.Bd -literal -offset indent
+block return-icmp(11) ...
+.Ed
+.Pp
+would return a Type-Of-Service (TOS) ICMP unreachable error.
 .It pass
 will flag the packet to be let through the filter.
 .It log
@@ -156,12 +182,32 @@ must conform to a specific calling interface. Customized actions and
 semantics can thus be implemented to supplement those available. This
 feature is for use by knowledgeable hackers, and is not currently
 documented.
-.It skip
-This action is not currently implemented.
+.It "skip <n>"
+causes the filter to skip over the next
+.Cm n
+filter rules.  If a rule is inserted or deleted inside the region being
+skipped over, then the value of
+.Cm n
+is adjusted appropriately.
 .It auth
-This action is not currently implemented.
+this allows authentication to be performed by a user-space program running
+and waiting for packet information to validate.  The packet is held for a
+period of time in an internal buffer whilst it waits for the program to return
+to the kernel the
+.Em real
+flags for whether it should be allowed through
+or not.  Such a program might look at the source address and request some sort
+of authentication from the user (such as a password) before allowing the
+packet through or telling the kernel to drop it if from an unrecognised source.
 .It preauth
-This action is not currently implemented.
+tells the filter that for packets of this class, it should look in the
+pre-authenticated list for further clarification.  If no further matching
+rule is found, the packet will be dropped (the FR_PREAUTH is not the same
+as FR_PASS).  If a further matching rule is found, the result from that is
+used in its instead.  This might be used in a situation where a person
+.Em logs in
+to the firewall and it sets up some temporary rules defining
+the access for that person.
 .El
 .Pp
 The next word must be either 
@@ -272,10 +318,14 @@ address/mask, or as a hostname
 .Cm mask
 netmask.  The hostname
 may either be a valid hostname, from either the hosts file or DNS
-(depending on your configuration and library) or of the dotted numeric
+(depending on your configuration and library), an interface name
+(in the case of IP address aliases, only the first IP address is used)
+or of the dotted numeric
 form.  There is no special designation for networks but network names
 are recognized.  Note that having your filter rules depend on DNS
-results can introduce an avenue of attack, and is discouraged.
+results can introduce an avenue of attack, and is
+.Em highly
+discouraged.
 .Pp
 There is a special case for the hostname
 .Cm any
@@ -409,7 +459,7 @@ with which they are associated can be used.  The most important from
 a security point of view is the ICMP redirect.
 .El
 .Sh KEEP HISTORY
-The second last parameter which can be set for a filter rule is whether on not
+The second last parameter that can be set for a filter rule is whether or not
 to record historical information for that packet, and what sort to keep. The
 following information can be kept:
 .Pp
@@ -428,15 +478,29 @@ than going through the access control list.
 The last pair of parameters control filter rule "grouping".  By default, all
 filter rules are placed in group 0 if no other group is specified.  To add a
 rule to a non-default group, the group must first be started by creating a
-group \fIhead\fP.  If a packet matches a rule which is the \fIhead\fP of a
-group, the filter processing then switches to the group, using that rule as
-the default for the group.  If \fBquick\fP is used with a \fBhead\fP rule, rule
-processing isn't stopped until it has returned from processing the group.
+group
+.Cm head .
+If a packet matches a rule which is the
+.Cm head
+of a group, the filter processing then switches to the group, using
+that rule as the default for the group.  If
+.Cm quick
+is used with a
+.Cm head
+rule, rule processing isn't stopped until it has returned from processing
+the group.
 .Pp
 A rule may be both the head for a new group and a member of a non-default
-group (\fBhead\fP and \fBgroup\fP may be used together in a rule).
+group (
+.Cm head
+and
+.Cm group
+may be used together in a rule).
 .Pp
-There may be only one \fBhead\fP rule per group.
+There may be only one
+.Cm head
+rule per
+.Cm group.
 .Bl -tag -width XXXXXXXXX -offset indent
 .It "head <n>"
 indicates that a new group (number n) should be created.
@@ -453,9 +517,23 @@ following qualifiers may be used (in order):
 indicates that the first 128 bytes of the packet contents will be
 logged after the headers.
 .It first
-??
+If log is being used in conjunction with a
+.Cm keep
+option, it is recommended that this option is also applied so that only
+the triggering packet is logged and not every packet which thereafter
+matches state information.
 .It or-block
-indicates that, if for some reason the filter is unable to log the packet (such as the log reader being too slow) then the rule should be interpreted as if the action was \fBblock\fP for this packet.
+indicates that, if for some reason the filter is unable to log the
+packet (such as the log reader being too slow) then the rule should be
+interpreted as if the action was
+.Cm block
+for this packet.
+.It "level <loglevel>"
+indicates the logging facility and priority that will be used to log
+information about this packet using
+.Xr ipmon 8 's
+.Fl s
+option. If no facility is specified, the default facility is assumed. If no facility is specified, the default facility is assumed.
 .El
 .Pp
 See

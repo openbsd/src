@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ipf.8,v 1.16 1999/10/12 05:05:00 ericj Exp $
-.Dd July 7, 1999
+.\"	$OpenBSD: ipf.8,v 1.17 2000/01/07 05:20:16 kjell Exp $
+.Dd January 6, 2000
 .Dt IPF 8
 .Os
 .Sh NAME
@@ -7,7 +7,7 @@
 .Nd "manage IP packet filtering and firewalling rules"
 .Sh SYNOPSIS
 .Nm ipf
-.Op Fl AdDEInorsUvyzZ
+.Op Fl AdDEInoPrsUvVyzZ
 .Op Fl l Ar category
 .Op Fl F Ar list
 .Op Fl F Ar table
@@ -157,6 +157,13 @@ as
 .Dq 4/4 ;
 any deviations indicate a connection that has not completed the three-way
 handshake.
+.It Fl P
+Add rules as temporary entries in the authentication rule table.
+.It Fl V
+Show version information.  This will display the version information compiled
+into the ipf binary and retrieve it from the kernel code (if running/present).
+If it is present in the kernel, information about its current state will be
+displayed (whether logging is active, default filtering, etc).
 .It Fl d
 Enable debug mode. Causes a hexdump of filter rules to be generated as it
 processes each one.
@@ -195,10 +202,10 @@ from actually changing the state of the in-kernel filtering configuration.
 .It Fl o
 Force rules to be added/deleted to/from the output list rather than the
 (default) input list.
-.It Fl s
-Swap the active and inactive rulesets.
 .It Fl r
 Remove matching filter rules rather than add them to the in-kernel lists.
+.It Fl s
+Swap the active and inactive rulesets.
 .It Fl v
 Enable verbose mode.
 .Nm
