@@ -93,11 +93,13 @@ joyprobe(parent, match, aux)
 	void   *match, *aux;
 
 {
-	dev->id_iosize = 1;
+	struct isa_attach_args *ia = aux;
+
+	ia->ia_iosize = 1;
 #ifdef WANT_JOYSTICK_CONNECTED
-	outb(dev->id_iobase, 0xff);
+	outb(ia->ia_iobase, 0xff);
 	DELAY(10000);		/* 10 ms delay */
-	return (inb(dev->id_iobase) & 0x0f) != 0x0f;
+	return (inb(ia->ia_iobase) & 0x0f) != 0x0f;
 #else
 	return 1;
 #endif
