@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fhopen.2,v 1.4 2000/10/18 05:12:09 aaron Exp $
+.\"	$OpenBSD: fhopen.2,v 1.5 2003/02/21 09:14:37 jmc Exp $
 .\"	$NetBSD: fhopen.2,v 1.2 1999/12/02 21:42:36 kleink Exp $
 .\"
 .\" Copyright (c) 1999 National Aeronautics & Space Administration
@@ -40,8 +40,6 @@
 .Nm fhstat ,
 .Nm fhstatfs
 .Nd access file via file handle
-.Sh LIBRARY
-.Lb libc
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/stat.h>
@@ -80,7 +78,7 @@ provide the functionality of the
 .Xr fstat 2
 and
 .Xr fstatfs 2
-calls except that they return information for the file refered to by
+calls except that they return information for the file referred to by
 .Fa fhp
 rather than an open file.
 .Sh RETURN VALUES
@@ -119,10 +117,10 @@ The file handle
 is no longer valid.
 .El
 .Sh SEE ALSO
-.Xr getfh 2 ,
-.Xr open 2 ,
 .Xr fstat 2 ,
-.Xr fstatfs 2
+.Xr fstatfs 2 ,
+.Xr getfh 2 ,
+.Xr open 2
 .Sh HISTORY
 The
 .Fn fhopen ,

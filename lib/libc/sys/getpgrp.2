@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpgrp.2,v 1.9 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: getpgrp.2,v 1.10 2003/02/21 09:14:37 jmc Exp $
 .\"	$NetBSD: getpgrp.2,v 1.8 1995/02/27 12:33:09 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -78,11 +78,11 @@ always succeeds, however
 will succeed unless:
 .Bl -tag -width Er
 .It Bq Er EPERM
-if the current process and the process
+The current process and the process
 .Fa pid
 are not in the same session.
 .It Bq Er ESRCH
-if there is no process with a process ID equal to
+There is no process with a process ID equal to
 .Fa pid .
 .El
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpeername.2,v 1.16 2001/06/26 19:56:52 dugsong Exp $
+.\"	$OpenBSD: getpeername.2,v 1.17 2003/02/21 09:14:37 jmc Exp $
 .\"	$NetBSD: getpeername.2,v 1.6 1995/10/12 15:40:56 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -79,7 +79,7 @@ should be used.
 .Li sockaddr_storage
 is large enough to hold any of the other sockaddr_* variants.
 On return, it can be cast to the correct sockaddr type,
-based the protocol family contained in its ss_family field.
+based on the protocol family contained in its ss_family field.
 .Pp
 .Fa namelen
 Indicates the amount of space pointed to by
@@ -131,8 +131,8 @@ process address space.
 .Sh SEE ALSO
 .Xr accept 2 ,
 .Xr bind 2 ,
-.Xr getsockname 2 ,
 .Xr getpeereid 2 ,
+.Xr getsockname 2 ,
 .Xr socket 2
 .Sh HISTORY
 The

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsid.2,v 1.8 2000/09/12 17:30:45 millert Exp $
+.\"	$OpenBSD: getsid.2,v 1.9 2003/02/21 09:14:37 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Peter Wemm <peter@freebsd.org>
 .\"
@@ -57,11 +57,11 @@ to indicate an error.
 will succeed unless:
 .Bl -tag -width Er
 .It Bq Er EPERM
-if the current process and the process
+The current process and the process
 .Fa pid
 are not in the same session.
 .It Bq Er ESRCH
-if there is no process with a process ID equal to
+There is no process with a process ID equal to
 .Fa pid .
 .El
 .Sh SEE ALSO

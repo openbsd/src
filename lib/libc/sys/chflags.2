@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.2,v 1.16 2001/11/29 18:51:25 millert Exp $
+.\"	$OpenBSD: chflags.2,v 1.17 2003/02/21 09:14:37 jmc Exp $
 .\"	$NetBSD: chflags.2,v 1.6 1995/02/27 12:32:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1993
@@ -98,7 +98,7 @@ Otherwise, \-1 is returned and the global variable
 is set to indicate the error.
 .Sh ERRORS
 .Fn chflags
-will fail it:
+will fail if:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.

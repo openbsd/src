@@ -1,4 +1,4 @@
-.\"	$OpenBSD: flock.2,v 1.13 2002/04/30 16:31:42 mpech Exp $
+.\"	$OpenBSD: flock.2,v 1.14 2003/02/21 09:14:37 jmc Exp $
 .\"	$NetBSD: flock.2,v 1.5 1995/02/27 12:32:32 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -63,8 +63,8 @@ or
 .Dv LOCK_EX
 with the optional addition of
 .Dv LOCK_NB .
-To unlock an existing lock
-.Dv operation
+To unlock an existing lock,
+.Fa operation
 should be
 .Dv LOCK_UN .
 .Pp
@@ -132,7 +132,7 @@ is an invalid descriptor.
 .It Bq Er EINVAL
 The argument
 .Fa operation
-have an invalid value.
+has an invalid value.
 .It Bq Er EOPNOTSUPP
 The referenced descriptor is not of the correct type.
 .El

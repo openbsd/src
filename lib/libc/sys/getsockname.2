@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockname.2,v 1.17 2003/01/05 20:07:44 deraadt Exp $
+.\"	$OpenBSD: getsockname.2,v 1.18 2003/02/21 09:14:37 jmc Exp $
 .\"	$NetBSD: getsockname.2,v 1.6 1995/10/12 15:41:00 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -73,11 +73,11 @@ can be used.
 .Fn getsockname
 takes three parameters:
 .Pp
-.Fa s ,
+.Fa s
 Contains the file descriptor for the socket to be looked up.
 .Pp
 .Fa name
-points to a
+Points to a
 .Li sockaddr
 structure which will hold the resulting address information.
 Normal use requires one to use a structure
@@ -150,8 +150,8 @@ process address space.
 .Sh SEE ALSO
 .Xr accept 2 ,
 .Xr bind 2 ,
-.Xr getpeername 2 ,
 .Xr getpeereid 2 ,
+.Xr getpeername 2 ,
 .Xr socket 2
 .Sh BUGS
 Names bound to sockets in the UNIX domain are inaccessible;
