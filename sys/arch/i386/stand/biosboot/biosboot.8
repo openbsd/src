@@ -1,4 +1,4 @@
-.\"	$OpenBSD: biosboot.8,v 1.10 1999/07/09 13:35:33 aaron Exp $
+.\"	$OpenBSD: biosboot.8,v 1.11 1999/09/15 18:54:55 mickey Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
 .\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
 .\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" OR SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
 .\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 .\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
@@ -35,7 +35,7 @@
 .Sh NAME
 .Nm biosboot
 .Nd
-first-stage system bootstrap
+i386-specific first-stage system bootstrap
 .Sh DESCRIPTION
 This small program (roughly 256 bytes of code) is responsible for
 loading the second stage
@@ -116,8 +116,6 @@ system code
 .Xr fdisk 8 ,
 .Xr installboot 8
 .Sh BUGS
-It contains a fake partition table and associated things that it should not.
-.Pp
 It should do a checksum over the loaded /boot image, and check that against
 a value that
 .Xr installboot 8
