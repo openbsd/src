@@ -14,11 +14,12 @@ Identity and host key generation and maintenance.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-keygen.c,v 1.7 1999/11/16 22:27:54 markus Exp $");
+RCSID("$Id: ssh-keygen.c,v 1.8 1999/11/16 22:49:28 markus Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
 #include "xmalloc.h"
+#include "fingerprint.h"
 
 /* Generated private key. */
 RSA *private_key;
@@ -39,6 +40,9 @@ int change_passphrase = 0;
 int change_comment = 0;
 
 int quiet = 0;
+
+/* Flag indicating that we just want to see the key fingerprint */
+int print_fingerprint = 0;
 
 /* This is set to the identity file name if given on the command line. */
 char *identity_file = NULL;
@@ -77,6 +81,56 @@ get_filename(struct passwd *pw, const char *prompt)
   }
   return xstrdup(buf);
 }
+
+void
+do_fingerprint(struct passwd *pw)
+{
+  char *file, *comment;
+  RSA *public_key;
+  struct stat st;
+
+  file = get_filename(pw, "Enter file in which the key is");
+  if (stat(file, &st) < 0)
+    {
+      perror(file);
+      exit(1);
+    }
+  public_key = RSA_new();
+  if (!load_public_key(file, public_key, &comment)) {
+    char *cp, line[1024];
+    BIGNUM *e, *n;
+    int dummy, invalid = 0;
+    FILE *f = fopen(file, "r");
+    n = BN_new();
+    e = BN_new();
+    if (f && fgets(line, sizeof(line), f)) {
+      cp = line;
+      line[strlen(line)-1] = '\0';
+      if (auth_rsa_read_key(&cp, &dummy, e, n)) {
+        public_key->e = e;
+        public_key->n = n;
+	comment = xstrdup(cp ? cp : "no comment");
+      } else {
+        invalid = 1;
+      } 
+    } else {
+      invalid = 1;
+    }
+    if (invalid) {
+      printf("%s is not a valid key file.\n", file);
+      BN_free(e);
+      BN_free(n);
+      exit(1);
+    }
+  }
+    
+  printf("%d %s %s\n", BN_num_bits(public_key->n),
+	 fingerprint(public_key->e, public_key->n),
+	 comment);
+  RSA_free(public_key);
+  exit(0);
+}
+
 
 void
 do_change_passphrase(struct passwd *pw)
@@ -330,7 +384,7 @@ main(int ac, char **av)
       error("Could not create directory '%s'.", buf);
 
   /* Parse command line arguments. */
-  while ((opt = getopt(ac, av, "qpcb:f:P:N:C:")) != EOF)
+  while ((opt = getopt(ac, av, "qpclb:f:P:N:C:")) != EOF)
     {
       switch (opt)
 	{
@@ -341,6 +395,10 @@ main(int ac, char **av)
 	      printf("Bits has bad value.\n");
 	      exit(1);
 	    }
+	  break;
+
+	case 'l':
+	  print_fingerprint = 1;
 	  break;
 
 	case 'p':
@@ -388,6 +446,9 @@ main(int ac, char **av)
       printf("Can only have one of -p and -c.\n");
       exit(1);
     }
+
+  if (print_fingerprint)
+    do_fingerprint(pw);
 
   /* If the user requested to change the passphrase, do it now.  This
      function never returns. */

@@ -2,9 +2,9 @@
 
 LIB=	ssh
 SRCS=   authfd.c authfile.c bufaux.c buffer.c canohost.c channels.c \
-	cipher.c compat.c compress.c crc32.c deattack.c hostfile.c \
-	log.c match.c mpaux.c nchan.c packet.c readpass.c rsa.c \
-	tildexpand.c ttymodes.c uidswap.c xmalloc.c
+	cipher.c compat.c compress.c crc32.c deattack.c fingerprint.c \
+	hostfile.c log.c match.c mpaux.c nchan.c packet.c readpass.c \
+	rsa.c tildexpand.c ttymodes.c uidswap.c xmalloc.c
 
 NOPROFILE= yes
 NOPIC=	yes

@@ -14,12 +14,13 @@ Adds an identity to the authentication server, or removes an identity.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-add.c,v 1.10 1999/11/15 20:53:24 markus Exp $");
+RCSID("$Id: ssh-add.c,v 1.11 1999/11/16 22:49:28 markus Exp $");
 
 #include "rsa.h"
 #include "ssh.h"
 #include "xmalloc.h"
 #include "authfd.h"
+#include "fingerprint.h"
 
 void
 delete_file(AuthenticationConnection *ac, const char *filename)
@@ -103,7 +104,7 @@ add_file(AuthenticationConnection *ac, const char *filename)
 }
 
 void
-list_identities(AuthenticationConnection *ac)
+list_identities(AuthenticationConnection *ac, int fp)
 {
   BIGNUM *e, *n;
   int status;
@@ -117,21 +118,25 @@ list_identities(AuthenticationConnection *ac)
        status;
        status = ssh_get_next_identity(ac, e, n, &comment))
     {
-      char *ebuf, *nbuf;
+      unsigned int bits = BN_num_bits(n);
       had_identities = 1;
-      ebuf = BN_bn2dec(e);
-      if (ebuf == NULL) {
-	error("list_identities: BN_bn2dec(e) failed.");
-      }else{
-        nbuf = BN_bn2dec(n);
-        if (nbuf == NULL) {
-	  error("list_identities: BN_bn2dec(n) failed.");
-        }else{
-          unsigned int bits = BN_num_bits(n);
-          printf("%d %s %s %s\n", bits, ebuf, nbuf, comment);
-          free(nbuf);
-        }
-        free(ebuf);
+      if (fp) {
+	printf("%d %s %s\n", bits, fingerprint(e, n), comment);
+      } else {
+	char *ebuf, *nbuf;
+	ebuf = BN_bn2dec(e);
+	if (ebuf == NULL) {
+	  error("list_identities: BN_bn2dec(e) failed.");
+	}else{
+	  nbuf = BN_bn2dec(n);
+	  if (nbuf == NULL) {
+	    error("list_identities: BN_bn2dec(n) failed.");
+	  }else{
+	    printf("%d %s %s %s\n", bits, ebuf, nbuf, comment);
+	    free(nbuf);
+	  }
+	  free(ebuf);
+	}
       }
       xfree(comment);
     }
@@ -170,9 +175,10 @@ main(int argc, char **argv)
 
   for (i = 1; i < argc; i++)
     {
-      if (strcmp(argv[i], "-l") == 0)
+      if ((strcmp(argv[i], "-l") == 0) ||
+          (strcmp(argv[i], "-L") == 0))
 	{
-	  list_identities(ac);
+	  list_identities(ac, argv[i][1] == 'l' ? 1 : 0);
 	  no_files = 0; /* Don't default-add/delete if -l. */
 	  continue;
 	}

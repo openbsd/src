@@ -15,7 +15,7 @@ login (authentication) dialog.
 */
 
 #include "includes.h"
-RCSID("$Id: sshconnect.c,v 1.32 1999/11/16 20:44:42 markus Exp $");
+RCSID("$Id: sshconnect.c,v 1.33 1999/11/16 22:49:28 markus Exp $");
 
 #include <ssl/bn.h>
 #include "xmalloc.h"
@@ -1199,10 +1199,12 @@ void ssh_login(int host_key_valid,
 	fatal("No host key is known for %.200s and you have requested strict checking.", host);
       } else if (options.strict_host_key_checking == 2) { /* The default */
 	char prompt[1024];
+        char *fp = fingerprint(host_key->e, host_key->n);
 	snprintf(prompt, sizeof(prompt),
 		 "The authenticity of host '%.200s' can't be established.\n"
-		 "Are you sure you want to continue connecting (yes/no)? ",
-		 host);
+                 "Key fingerprint is %d %s.\n"
+ 		 "Are you sure you want to continue connecting (yes/no)? ",
+		 host, BN_num_bits(host_key->n), fp);
 	if (!read_yes_or_no(prompt, -1))
 	  fatal("Aborted by user!\n");
       }
