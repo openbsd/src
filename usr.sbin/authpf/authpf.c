@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.17 2002/06/07 08:36:56 deraadt Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.18 2002/06/07 08:51:44 beck Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -71,12 +71,10 @@ int dev;			/* pf device */
 int Delete_Rules;		/* for parse_rules callbacks */
 
 FILE *pidfp;
-int ufd = -1;
 char *infile;			/* infile name needed by parse_[rules|nat] */
 char luser[MAXLOGNAME];		/* username */
 char ipsrc[256];		/* ip as a string */
 char pidfile[MAXPATHLEN];	/* we save pid in this file. */
-char userfile[MAXPATHLEN];	/* we save username in this file */
 
 struct timeval Tstart, Tend;		/* start and end times of session */
 
@@ -152,10 +150,8 @@ main(int argc, char *argv[])
 		    pw->pw_name, pw->pw_uid);
 		goto die;
 	}
-	strlcpy(luser, pw->pw_name, sizeof(luser));
 
-	/* Make our entry in /var/run as /var/run/authpf-ipaddr */
-	snprintf(pidfile, sizeof pidfile, "%s-%s", PATH_PIDFILE, ipsrc);
+	strlcpy(luser, pw->pw_name, sizeof(luser));
 
 	/*
 	 * If someone else is already using this ip, then this person
@@ -171,8 +167,10 @@ main(int argc, char *argv[])
 	 * tell them to log out before switching users it is an invitation
 	 * for abuse.
 	 */
+
 	do {
 		int save_errno, otherpid = -1;
+		char otherluser[33];
 
 		if ((pidfd = open(pidfile, O_RDWR|O_CREAT, 0644)) == -1 ||
 		    (pidfp = fdopen(pidfd, "r+")) == NULL) {
@@ -186,9 +184,11 @@ main(int argc, char *argv[])
 		if (flock(fileno(pidfp), LOCK_EX|LOCK_NB) == 0)
 			break;
 		save_errno = errno;
+		
+		/* Mark our pid, and username to our file. */   
 
 		rewind(pidfp);
-		if (fscanf(pidfp, "%d", &otherpid) != 1)
+		if (fscanf(pidfp, "%d\n%32s\n", &otherpid, otherluser) != 2) 
 			otherpid = -1;
 		syslog(LOG_DEBUG,
 		    "Tried to lock %s, in use by pid %d: %s",
@@ -197,7 +197,7 @@ main(int argc, char *argv[])
 		if (otherpid > 0) {
 			syslog(LOG_INFO,
 			    "killing prior auth (pid %d) of %s by user %s",
-			    otherpid, ipsrc, luser);
+			    otherpid, ipsrc, otherluser);
 			if (kill((pid_t) otherpid, SIGTERM) == -1) {
 				syslog(LOG_INFO,
 				    "Couldn't kill process %d: (%m)",
@@ -224,26 +224,9 @@ main(int argc, char *argv[])
 		fclose(pidfp);
 	} while (1);
 
-	/*
-	 * Make an entry in file /var/authpf/ipaddr, containing the username.
-	 * this lets external applications check for authentication by looking
-	 * for the ipaddress in that directory, and retrieving the username
-	 * from it.
-	 */
-	snprintf(userfile, sizeof(userfile), "%s/%s", PATH_USERFILE, ipsrc);
-	if ((ufd = open(userfile, O_CREAT|O_WRONLY, 0640)) == -1) {
-		syslog(LOG_ERR, "Can't open \"%s\" ! (%m)", userfile);
-		goto dogdeath;
-	}
-
 	/* revoke privs */
 	seteuid(getuid());
 	setuid(getuid());
-
-	/*
-	 * Now we are unable to unlink /var/authpf/$ipsec and /var/run/$pid
-	 * and instead have to settle for only truncating them.
-	 */
 
 	if (!check_luser(PATH_BAN_DIR, luser) || !allowed_luser(luser))
 		do_death(0);
@@ -253,12 +236,9 @@ main(int argc, char *argv[])
 
 	/* We appear to be making headway, so actually mark our pid */
 	rewind(pidfp);
-	fprintf(pidfp, "%ld\n", (long)getpid());
+	fprintf(pidfp, "%ld\n%s\n", (long)getpid(), luser);
 	fflush(pidfp);
 	(void) ftruncate(fileno(pidfp), ftell(pidfp));
-
-	write(ufd, luser, strlen(luser));
-	write(ufd, "\n", 1);
 
 	if (changefilter(1, luser, ipsrc) == -1) {
 		printf("Unable to modify filters\r\n");
@@ -675,8 +655,10 @@ changefilter(int add, char *luser, char *ipsrc)
 	if (from_fd == -1) {
 		snprintf(natfile, sizeof natfile, PATH_NATRULES);
 		if ((from_fd = open(natfile, O_RDONLY, 0)) == -1) {
-			if (errno == ENOENT)
+			if (errno == ENOENT) {
+				ret = 0;
 				goto out; /* NAT is optional */
+			}
 			else {
 				syslog(LOG_ERR, "can't open %s (%m)", natfile);
 				if (unlink(template) == -1)
@@ -825,11 +807,8 @@ do_death(int active)
 	if (pidfp)
 		ftruncate(fileno(pidfp), 0);
 	if (pidfile[0])
-		unlink(pidfile);
-	if (ufd)
-		ftruncate(ufd, 0);
-	if (userfile[0])
-		unlink(userfile);
+		if (unlink(pidfile) == -1)
+			syslog(LOG_ERR, "can't unlink %s (%m)", pidfile);
 	exit(ret);
 }
 
