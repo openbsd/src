@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.179 2004/06/29 22:14:30 henning Exp $
+# $OpenBSD: Makefile,v 1.180 2004/07/03 19:31:34 henning Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -56,11 +56,11 @@ PFAIL_TARGETS+=pfail${n}
 PFAIL_UPDATES+=pfail${n}-update
 
 pfail${n}:
-	${SUDO} pfctl -nv -f - < ${.CURDIR}/pfail${n}.in 2>&1 | \
+	pfctl -nv -f - < ${.CURDIR}/pfail${n}.in 2>&1 | \
 	    diff -u ${.CURDIR}/pfail${n}.ok /dev/stdin
 
 pfail${n}-update:
-	if ${SUDO} pfctl -nv -f - < ${.CURDIR}/pfail${n}.in > \
+	if pfctl -nv -f - < ${.CURDIR}/pfail${n}.in > \
 	    ${.CURDIR}/pfail${n}.ok 2>&1; then \
 		true; \
 	fi;
@@ -77,15 +77,15 @@ PF_TARGETS+=pf${n}
 PF_UPDATES+=pf${n}-update
 
 pf${n}:
-	${SUDO} pfctl -nv -f - < ${.CURDIR}/pf${n}.in | \
+	pfctl -nv -f - < ${.CURDIR}/pf${n}.in | \
 	    diff -u ${.CURDIR}/pf${n}.ok /dev/stdin
 
 pf${n}-update:
-	${SUDO} pfctl -nv -f - < ${.CURDIR}/pf${n}.in > ${.CURDIR}/pf${n}.ok
+	pfctl -nv -f - < ${.CURDIR}/pf${n}.in > ${.CURDIR}/pf${n}.ok
 
 SELFPF_TARGETS+=selfpf${n}
 selfpf${n}:
-	${SUDO} pfctl -nv -f - < ${.CURDIR}/pf${n}.ok | \
+	pfctl -nv -f - < ${.CURDIR}/pf${n}.ok | \
 	    diff -u ${.CURDIR}/pf${n}.ok /dev/stdin
 
 .endfor
@@ -101,7 +101,7 @@ UPDATE_TARGETS+=pf-update
 PFSIMPLE_TARGETS+=pfsimple${n}
 
 pfsimple${n}:
-	${SUDO} pfctl -nf - < ${.CURDIR}/pfsimple${n}.in
+	pfctl -nf - < ${.CURDIR}/pfsimple${n}.in
 
 .endfor
 
@@ -176,12 +176,12 @@ PFOPT_TARGETS+=pfopt${n}
 PFOPT_UPDATES+=pfopt${n}-update
 
 pfopt${n}:
-	${SUDO} pfctl -nv -f - `cat ${.CURDIR}/pfopt${n}.opts` \
+	pfctl -nv -f - `cat ${.CURDIR}/pfopt${n}.opts` \
 	    < ${.CURDIR}/pfopt${n}.in | \
 	    diff -u ${.CURDIR}/pfopt${n}.ok /dev/stdin
 
 pfopt${n}-update:
-	${SUDO} pfctl -nv -f - `cat ${.CURDIR}/pfopt${n}.opts` \
+	pfctl -nv -f - `cat ${.CURDIR}/pfopt${n}.opts` \
 	    < ${.CURDIR}/pfopt${n}.in > ${.CURDIR}/pfopt${n}.ok
 
 .endfor
@@ -197,13 +197,13 @@ PFSETUP_UPDATES+=pfsetup${n}-update
 
 pfsetup${n}:
 	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.setup
-	${SUDO} pfctl -nv -f - < ${.CURDIR}/pfsetup${n}.in | \
+	pfctl -nv -f - < ${.CURDIR}/pfsetup${n}.in | \
 	    diff -u ${.CURDIR}/pfsetup${n}.ok /dev/stdin
 	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.clean
 
 pfsetup${n}-update:
 	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.setup
-	${SUDO} pfctl -nv -f - < ${.CURDIR}/pfsetup${n}.in \
+	pfctl -nv -f - < ${.CURDIR}/pfsetup${n}.in \
 	    > ${.CURDIR}/pfsetup${n}.ok
 	${SUDO} ${SHELL} ${.CURDIR}/pfsetup${n}.clean
 
