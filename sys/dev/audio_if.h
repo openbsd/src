@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.17 2002/05/06 23:07:25 nate Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.18 2002/05/30 20:28:31 mickey Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -43,6 +43,10 @@
  */
 
 struct audio_softc;
+struct audio_device;
+struct audio_encoding;
+struct mixer_devinfo;
+struct mixer_ctrl;
 
 struct audio_params {
 	u_long	sample_rate;			/* sample rate */
@@ -104,10 +108,10 @@ struct audio_hw_if {
 	int	(*setfd)(void *, int);
 	
 	/* Mixer (in/out ports) */
-	int	(*set_port)(void *, mixer_ctrl_t *);
-	int	(*get_port)(void *, mixer_ctrl_t *);
+	int	(*set_port)(void *, struct mixer_ctrl *);
+	int	(*get_port)(void *, struct mixer_ctrl *);
 
-	int	(*query_devinfo)(void *, mixer_devinfo_t *);
+	int	(*query_devinfo)(void *, struct mixer_devinfo *);
 	
 	/* Allocate/free memory for the ring buffer. Usually malloc/free. */
 	/* The _old interfaces have been deprecated and will not be
@@ -134,6 +138,7 @@ struct audio_attach_args {
 #define	AUDIODEV_TYPE_MIDI	1
 #define AUDIODEV_TYPE_OPL	2
 #define AUDIODEV_TYPE_MPU	3
+#define AUDIODEV_TYPE_RADIO	4
 
 /* Attach the MI driver(s) to the MD driver. */
 struct device *audio_attach_mi(struct audio_hw_if *, void *, 
