@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.24 2002/07/19 20:59:40 deraadt Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.25 2002/09/06 19:13:10 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv.c,v 1.24 2002/07/19 20:59:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv.c,v 1.25 2002/09/06 19:13:10 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -401,7 +401,7 @@ main(int argc, char *argv[])
 {
 	int xflag = 0, allowv1 = 0, ch, sock, proto;
 	struct sockaddr_in saddr;
-	int asize = sizeof (saddr);
+	socklen_t asize = sizeof (saddr);
 	extern char *optarg;
 	SVCXPRT *transp;
 
@@ -438,7 +438,7 @@ main(int argc, char *argv[])
 		exit(1);
 
 	if (getsockname(0, (struct sockaddr *)&saddr, &asize) == 0) {
-		int ssize = sizeof (int);
+		socklen_t ssize = sizeof (int);
 
 		if (saddr.sin_family != AF_INET)
 			exit(1);
