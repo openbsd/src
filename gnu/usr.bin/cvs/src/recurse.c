@@ -25,16 +25,16 @@ static List *filelist = NULL; /* holds list of files on which to operate */
 static List *dirlist = NULL; /* holds list of directories on which to operate */
 
 struct recursion_frame {
-  FILEPROC fileproc;
-  FILESDONEPROC filesdoneproc;
-  DIRENTPROC direntproc;
-  DIRLEAVEPROC dirleaveproc;
-  void *callerdat;
-  Dtype flags;
-  int which;
-  int aflag;
-  int readlock;
-  int dosrcs;
+    FILEPROC fileproc;
+    FILESDONEPROC filesdoneproc;
+    DIRENTPROC direntproc;
+    DIRLEAVEPROC dirleaveproc;
+    void *callerdat;
+    Dtype flags;
+    int which;
+    int aflag;
+    int readlock;
+    int dosrcs;
 };
 
 static int do_recursion PROTO ((struct recursion_frame *frame));
@@ -563,6 +563,39 @@ do_dir_proc (p, closure)
     int err = 0;
     struct saved_cwd cwd;
     char *saved_update_dir;
+
+    if (fncmp (dir, CVSADM) == 0)
+    {
+	/* This seems to most often happen when users (beginning users,
+	   generally), try "cvs ci *" or something similar.  On that
+	   theory, it is possible that we should just silently skip the
+	   CVSADM directories, but on the other hand, using a wildcard
+	   like this isn't necessarily a practice to encourage (it operates
+	   only on files which exist in the working directory, unlike
+	   regular CVS recursion).  */
+
+	/* FIXME-reentrancy: printed_cvs_msg should be in a "command
+	   struct" or some such, so that it gets cleared for each new
+	   command (this is possible using the remote protocol and a
+	   custom-written client).  The struct recursion_frame is not
+	   far back enough though, some commands (commit at least)
+	   will call start_recursion several times.  An alternate solution
+	   would be to take this whole check and move it to a new function
+	   validate_arguments or some such that all the commands call
+	   and which snips the offending directory from the argc,argv
+	   vector.  */
+	static int printed_cvs_msg = 0;
+	if (!printed_cvs_msg)
+	{
+	    error (0, 0, "warning: directory %s specified in argument",
+		   dir);
+	    error (0, 0, "\
+but CVS uses %s for its own purposes; skipping %s directory",
+		   CVSADM, dir);
+	    printed_cvs_msg = 1;
+	}
+	return 0;
+    }
 
     saved_update_dir = update_dir;
     update_dir = xmalloc (strlen (saved_update_dir)

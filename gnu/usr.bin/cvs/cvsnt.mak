@@ -534,6 +534,21 @@ LINK32_OBJS= \
 # Begin Source File
 
 SOURCE=.\src\mkmodules.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_MKMOD=\
+	".\src\cvs.h"\
+	".\lib\savecwd.h"\
+	".\lib\getline.h"\
+	
+
+"$(INTDIR)\mkmodules.obj" : $(SOURCE) $(DEP_CPP_MKMOD) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_MKMOD=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -567,11 +582,27 @@ NODEP_CPP_MKMOD=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\subr.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_SUBR_=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	
+
+"$(INTDIR)\subr.obj" : $(SOURCE) $(DEP_CPP_SUBR_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_SUBR_=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -604,11 +635,26 @@ NODEP_CPP_SUBR_=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\admin.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_ADMIN=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\admin.obj" : $(SOURCE) $(DEP_CPP_ADMIN) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_ADMIN=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -640,11 +686,32 @@ NODEP_CPP_ADMIN=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\server.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_SERVE=\
+	".\src\cvs.h"\
+	".\src\watch.h"\
+	".\src\edit.h"\
+	".\src\fileattr.h"\
+	".\lib\getline.h"\
+	".\src\buffer.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	
+
+"$(INTDIR)\server.obj" : $(SOURCE) $(DEP_CPP_SERVE) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_SERVE=\
 	".\src\cvs.h"\
 	".\src\watch.h"\
@@ -681,11 +748,26 @@ NODEP_CPP_SERVE=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\diff.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_DIFF_=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\diff.obj" : $(SOURCE) $(DEP_CPP_DIFF_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_DIFF_=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -717,11 +799,31 @@ NODEP_CPP_DIFF_=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\client.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_CLIEN=\
+	".\windows-NT\config.h"\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	".\src\edit.h"\
+	".\src\buffer.h"\
+	".\lib\md5.h"\
+	
+
+"$(INTDIR)\client.obj" : $(SOURCE) $(DEP_CPP_CLIEN) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_CLIEN=\
 	".\windows-NT\config.h"\
 	".\src\cvs.h"\
@@ -757,11 +859,26 @@ NODEP_CPP_CLIEN=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\checkout.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_CHECK=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\checkout.obj" : $(SOURCE) $(DEP_CPP_CHECK) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_CHECK=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -793,11 +910,26 @@ NODEP_CPP_CHECK=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\no_diff.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_NO_DI=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\no_diff.obj" : $(SOURCE) $(DEP_CPP_NO_DI) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_NO_DI=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -829,11 +961,27 @@ NODEP_CPP_NO_DI=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\entries.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_ENTRI=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	
+
+"$(INTDIR)\entries.obj" : $(SOURCE) $(DEP_CPP_ENTRI) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_ENTRI=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -866,11 +1014,27 @@ NODEP_CPP_ENTRI=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\tag.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_TAG_C=\
+	".\src\cvs.h"\
+	".\lib\savecwd.h"\
+	
+
+"$(INTDIR)\tag.obj" : $(SOURCE) $(DEP_CPP_TAG_C) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_TAG_C=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -903,11 +1067,26 @@ NODEP_CPP_TAG_C=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\rtag.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_RTAG_=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\rtag.obj" : $(SOURCE) $(DEP_CPP_RTAG_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_RTAG_=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -939,11 +1118,26 @@ NODEP_CPP_RTAG_=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\status.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_STATU=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\status.obj" : $(SOURCE) $(DEP_CPP_STATU) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_STATU=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -975,11 +1169,27 @@ NODEP_CPP_STATU=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\root.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_ROOT_=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	
+
+"$(INTDIR)\root.obj" : $(SOURCE) $(DEP_CPP_ROOT_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_ROOT_=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1012,11 +1222,27 @@ NODEP_CPP_ROOT_=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\myndbm.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_MYNDB=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	
+
+"$(INTDIR)\myndbm.obj" : $(SOURCE) $(DEP_CPP_MYNDB) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_MYNDB=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1049,11 +1275,26 @@ NODEP_CPP_MYNDB=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\hash.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_HASH_=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\hash.obj" : $(SOURCE) $(DEP_CPP_HASH_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_HASH_=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -1085,11 +1326,27 @@ NODEP_CPP_HASH_=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\repos.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_REPOS=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	
+
+"$(INTDIR)\repos.obj" : $(SOURCE) $(DEP_CPP_REPOS) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_REPOS=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1122,11 +1379,27 @@ NODEP_CPP_REPOS=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\parseinfo.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_PARSE=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	
+
+"$(INTDIR)\parseinfo.obj" : $(SOURCE) $(DEP_CPP_PARSE) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_PARSE=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1159,11 +1432,26 @@ NODEP_CPP_PARSE=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\vers_ts.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_VERS_=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\vers_ts.obj" : $(SOURCE) $(DEP_CPP_VERS_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_VERS_=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -1195,11 +1483,28 @@ NODEP_CPP_VERS_=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\checkin.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_CHECKI=\
+	".\src\cvs.h"\
+	".\src\fileattr.h"\
+	".\src\edit.h"\
+	
+
+"$(INTDIR)\checkin.obj" : $(SOURCE) $(DEP_CPP_CHECKI) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_CHECKI=\
 	".\src\cvs.h"\
 	".\src\fileattr.h"\
@@ -1233,11 +1538,29 @@ NODEP_CPP_CHECKI=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\commit.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_COMMI=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	".\src\edit.h"\
+	".\src\fileattr.h"\
+	
+
+"$(INTDIR)\commit.obj" : $(SOURCE) $(DEP_CPP_COMMI) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_COMMI=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1272,11 +1595,26 @@ NODEP_CPP_COMMI=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\version.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_VERSI=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\version.obj" : $(SOURCE) $(DEP_CPP_VERSI) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_VERSI=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -1308,11 +1646,27 @@ NODEP_CPP_VERSI=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\cvsrc.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_CVSRC=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	
+
+"$(INTDIR)\cvsrc.obj" : $(SOURCE) $(DEP_CPP_CVSRC) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_CVSRC=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1345,11 +1699,26 @@ NODEP_CPP_CVSRC=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\remove.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_REMOV=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\remove.obj" : $(SOURCE) $(DEP_CPP_REMOV) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_REMOV=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -1381,11 +1750,32 @@ NODEP_CPP_REMOV=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\update.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_UPDAT=\
+	".\src\cvs.h"\
+	".\lib\savecwd.h"\
+	".\lib\md5.h"\
+	".\src\watch.h"\
+	".\src\fileattr.h"\
+	".\src\edit.h"\
+	".\lib\getline.h"\
+	
+
+"$(INTDIR)\update.obj" : $(SOURCE) $(DEP_CPP_UPDAT) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_UPDAT=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -1423,11 +1813,27 @@ NODEP_CPP_UPDAT=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\logmsg.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_LOGMS=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	
+
+"$(INTDIR)\logmsg.obj" : $(SOURCE) $(DEP_CPP_LOGMS) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_LOGMS=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1460,11 +1866,26 @@ NODEP_CPP_LOGMS=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\classify.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_CLASS=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\classify.obj" : $(SOURCE) $(DEP_CPP_CLASS) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_CLASS=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -1496,11 +1917,27 @@ NODEP_CPP_CLASS=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\history.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_HISTO=\
+	".\src\cvs.h"\
+	".\lib\savecwd.h"\
+	
+
+"$(INTDIR)\history.obj" : $(SOURCE) $(DEP_CPP_HISTO) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_HISTO=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -1533,11 +1970,27 @@ NODEP_CPP_HISTO=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\add.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_ADD_C=\
+	".\src\cvs.h"\
+	".\lib\savecwd.h"\
+	
+
+"$(INTDIR)\add.obj" : $(SOURCE) $(DEP_CPP_ADD_C) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_ADD_C=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -1570,11 +2023,26 @@ NODEP_CPP_ADD_C=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\lock.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_LOCK_=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\lock.obj" : $(SOURCE) $(DEP_CPP_LOCK_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_LOCK_=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -1606,11 +2074,29 @@ NODEP_CPP_LOCK_=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\recurse.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_RECUR=\
+	".\src\cvs.h"\
+	".\lib\savecwd.h"\
+	".\src\fileattr.h"\
+	".\src\edit.h"\
+	
+
+"$(INTDIR)\recurse.obj" : $(SOURCE) $(DEP_CPP_RECUR) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_RECUR=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -1645,11 +2131,27 @@ NODEP_CPP_RECUR=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\modules.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_MODUL=\
+	".\src\cvs.h"\
+	".\lib\savecwd.h"\
+	
+
+"$(INTDIR)\modules.obj" : $(SOURCE) $(DEP_CPP_MODUL) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_MODUL=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -1682,11 +2184,26 @@ NODEP_CPP_MODUL=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\find_names.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_FIND_=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\find_names.obj" : $(SOURCE) $(DEP_CPP_FIND_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_FIND_=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -1718,11 +2235,26 @@ NODEP_CPP_FIND_=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\rcs.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_RCS_C=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\rcs.obj" : $(SOURCE) $(DEP_CPP_RCS_C) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_RCS_C=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -1754,11 +2286,26 @@ NODEP_CPP_RCS_C=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\create_adm.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_CREAT=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\create_adm.obj" : $(SOURCE) $(DEP_CPP_CREAT) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_CREAT=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -1790,11 +2337,26 @@ NODEP_CPP_CREAT=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\main.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_MAIN_=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\main.obj" : $(SOURCE) $(DEP_CPP_MAIN_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_MAIN_=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -1826,11 +2388,27 @@ NODEP_CPP_MAIN_=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\patch.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_PATCH=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	
+
+"$(INTDIR)\patch.obj" : $(SOURCE) $(DEP_CPP_PATCH) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_PATCH=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1863,11 +2441,27 @@ NODEP_CPP_PATCH=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\release.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_RELEA=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	
+
+"$(INTDIR)\release.obj" : $(SOURCE) $(DEP_CPP_RELEA) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_RELEA=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -1900,11 +2494,26 @@ NODEP_CPP_RELEA=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\rcscmds.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_RCSCM=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\rcscmds.obj" : $(SOURCE) $(DEP_CPP_RCSCM) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_RCSCM=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -1936,11 +2545,27 @@ NODEP_CPP_RCSCM=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\import.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_IMPOR=\
+	".\src\cvs.h"\
+	".\lib\savecwd.h"\
+	
+
+"$(INTDIR)\import.obj" : $(SOURCE) $(DEP_CPP_IMPOR) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_IMPOR=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
@@ -1973,11 +2598,27 @@ NODEP_CPP_IMPOR=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\ignore.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_IGNOR=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	
+
+"$(INTDIR)\ignore.obj" : $(SOURCE) $(DEP_CPP_IGNOR) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_IGNOR=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -2010,11 +2651,26 @@ NODEP_CPP_IGNOR=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\log.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_LOG_C=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\log.obj" : $(SOURCE) $(DEP_CPP_LOG_C) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_LOG_C=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -2046,11 +2702,27 @@ NODEP_CPP_LOG_C=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\wrapper.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_WRAPP=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	
+
+"$(INTDIR)\wrapper.obj" : $(SOURCE) $(DEP_CPP_WRAPP) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_WRAPP=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -2083,11 +2755,26 @@ NODEP_CPP_WRAPP=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\error.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_ERROR=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\error.obj" : $(SOURCE) $(DEP_CPP_ERROR) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_ERROR=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -2119,11 +2806,27 @@ NODEP_CPP_ERROR=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\expand_path.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_EXPAN=\
+	".\src\cvs.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	
+
+"$(INTDIR)\expand_path.obj" : $(SOURCE) $(DEP_CPP_EXPAN) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_EXPAN=\
 	".\src\cvs.h"\
 	{$(INCLUDE)}"\sys\Types.h"\
@@ -2155,11 +2858,30 @@ NODEP_CPP_EXPAN=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\edit.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_EDIT_=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	".\src\watch.h"\
+	".\src\edit.h"\
+	".\src\fileattr.h"\
+	
+
+"$(INTDIR)\edit.obj" : $(SOURCE) $(DEP_CPP_EDIT_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_EDIT_=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -2195,11 +2917,28 @@ NODEP_CPP_EDIT_=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\fileattr.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_FILEA=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	".\src\fileattr.h"\
+	
+
+"$(INTDIR)\fileattr.obj" : $(SOURCE) $(DEP_CPP_FILEA) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_FILEA=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -2233,11 +2972,29 @@ NODEP_CPP_FILEA=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\watch.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_WATCH=\
+	".\src\cvs.h"\
+	".\src\edit.h"\
+	".\src\fileattr.h"\
+	".\src\watch.h"\
+	
+
+"$(INTDIR)\watch.obj" : $(SOURCE) $(DEP_CPP_WATCH) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_WATCH=\
 	".\src\cvs.h"\
 	".\src\edit.h"\
@@ -2272,11 +3029,27 @@ NODEP_CPP_WATCH=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\login.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_LOGIN=\
+	".\src\cvs.h"\
+	".\lib\getline.h"\
+	
+
+"$(INTDIR)\login.obj" : $(SOURCE) $(DEP_CPP_LOGIN) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_LOGIN=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
@@ -2309,11 +3082,26 @@ NODEP_CPP_LOGIN=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\scramble.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_SCRAM=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\scramble.obj" : $(SOURCE) $(DEP_CPP_SCRAM) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_SCRAM=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -2345,11 +3133,27 @@ NODEP_CPP_SCRAM=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\buffer.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_BUFFE=\
+	".\src\cvs.h"\
+	".\src\buffer.h"\
+	
+
+"$(INTDIR)\buffer.obj" : $(SOURCE) $(DEP_CPP_BUFFE) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_BUFFE=\
 	".\src\cvs.h"\
 	".\src\buffer.h"\
@@ -2382,11 +3186,29 @@ NODEP_CPP_BUFFE=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=.\src\zlib.c
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_ZLIB_=\
+	".\src\cvs.h"\
+	".\src\buffer.h"\
+	".\zlib\zlib.h"\
+	".\zlib\zconf.h"\
+	
+
+"$(INTDIR)\zlib.obj" : $(SOURCE) $(DEP_CPP_ZLIB_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_ZLIB_=\
 	".\src\cvs.h"\
 	".\src\buffer.h"\
@@ -2420,6 +3242,8 @@ NODEP_CPP_ZLIB_=\
 "$(INTDIR)\zlib.obj" : $(SOURCE) $(DEP_CPP_ZLIB_) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
+
+!ENDIF 
 
 # End Source File
 ################################################################################
@@ -2685,6 +3509,19 @@ DEP_CPP_VASPR=\
 # Begin Source File
 
 SOURCE=".\windows-NT\mkdir.c"
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_MKDIR=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\mkdir.obj" : $(SOURCE) $(DEP_CPP_MKDIR) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_MKDIR=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -2716,11 +3553,26 @@ NODEP_CPP_MKDIR=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=".\windows-NT\run.c"
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_RUN_C=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\run.obj" : $(SOURCE) $(DEP_CPP_RUN_C) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_RUN_C=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -2752,6 +3604,8 @@ NODEP_CPP_RUN_C=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
@@ -2770,6 +3624,19 @@ DEP_CPP_PWD_C=\
 # Begin Source File
 
 SOURCE=".\windows-NT\filesubr.c"
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_FILES=\
+	".\src\cvs.h"\
+	
+
+"$(INTDIR)\filesubr.obj" : $(SOURCE) $(DEP_CPP_FILES) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_FILES=\
 	".\src\cvs.h"\
 	".\windows-NT\config.h"\
@@ -2800,6 +3667,8 @@ NODEP_CPP_FILES=\
 "$(INTDIR)\filesubr.obj" : $(SOURCE) $(DEP_CPP_FILES) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
+
+!ENDIF 
 
 # End Source File
 ################################################################################
@@ -2857,6 +3726,20 @@ SOURCE=".\windows-NT\stripslash.c"
 # Begin Source File
 
 SOURCE=".\windows-NT\rcmd.c"
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_RCMD_=\
+	".\src\cvs.h"\
+	".\windows-NT\rcmd.h"\
+	
+
+"$(INTDIR)\rcmd.obj" : $(SOURCE) $(DEP_CPP_RCMD_) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_RCMD_=\
 	".\src\cvs.h"\
 	".\windows-NT\rcmd.h"\
@@ -2889,11 +3772,27 @@ NODEP_CPP_RCMD_=\
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
 
+!ENDIF 
+
 # End Source File
 ################################################################################
 # Begin Source File
 
 SOURCE=".\windows-NT\startserver.c"
+
+!IF  "$(CFG)" == "cvsnt - Win32 Release"
+
+DEP_CPP_START=\
+	".\src\cvs.h"\
+	".\windows-NT\rcmd.h"\
+	
+
+"$(INTDIR)\startserver.obj" : $(SOURCE) $(DEP_CPP_START) "$(INTDIR)"
+   $(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+!ELSEIF  "$(CFG)" == "cvsnt - Win32 Debug"
+
 DEP_CPP_START=\
 	".\src\cvs.h"\
 	".\windows-NT\rcmd.h"\
@@ -2925,6 +3824,8 @@ NODEP_CPP_START=\
 "$(INTDIR)\startserver.obj" : $(SOURCE) $(DEP_CPP_START) "$(INTDIR)"
    $(CPP) $(CPP_PROJ) $(SOURCE)
 
+
+!ENDIF 
 
 # End Source File
 ################################################################################

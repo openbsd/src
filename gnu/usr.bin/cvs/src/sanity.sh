@@ -85,6 +85,10 @@ PROG=`basename ${testcvs}`
 # not allowed in usernames.  Other than that I'm not sure.
 username="[a-zA-Z0-9][a-zA-Z0-9]*"
 
+# Regexp to match the name of a temporary file (from cvs_temp_name).
+# This appears in certain diff output.
+tempname="[-a-zA-Z0-9/.%_]*"
+
 # FIXME: try things (what things? checkins?) without -m.
 #
 # Some of these tests are written to expect -Q.  But testing with
@@ -448,6 +452,11 @@ cd ${TESTDIR}
 mkdir home
 HOME=${TESTDIR}/home; export HOME
 
+# Make sure this variable is not defined to anything that would
+# change the format of rcs dates.  Otherwise people using e.g.,
+# RCSINIT=-zLT get lots of spurious failures.
+RCSINIT=; export RCSINIT
+
 # Remaining arguments are the names of tests to run.
 #
 # The testsuite is broken up into (hopefully manageably-sized)
@@ -730,6 +739,9 @@ File: sfile1           	Status: Locally Added
 	  dotest basicb-4 "${testcvs} add sfile2" \
 "${PROG} [a-z]*: scheduling file .sfile2. for addition
 ${PROG} [a-z]*: use .cvs commit. to add this file permanently"
+	  dotest basicb-4a "${testcvs} -q ci CVS" \
+"${PROG} [a-z]*: warning: directory CVS specified in argument
+${PROG} [a-z]*: but CVS uses CVS for its own purposes; skipping CVS directory"
 	  cd ..
 	  dotest basicb-5 "${testcvs} -q ci -m add" \
 'RCS file: /tmp/cvs-sanity/cvsroot/first-dir/sdir1/sfile1,v
@@ -1947,7 +1959,7 @@ ${PROG} [a-z]*: use .${PROG} commit. to remove this file permanently"
 ===================================================================
 RCS file: file1
 diff -N file1
-\*\*\* [-a-zA-Z0-9/.%_]*[ 	][	]*[a-zA-Z0-9: ]*
+\*\*\* ${tempname}[ 	][	]*[a-zA-Z0-9: ]*
 --- /dev/null[ 	][ 	]*[a-zA-Z0-9: ]*
 \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
 \*\*\* 1 \*\*\*\*
@@ -1971,7 +1983,7 @@ done'
 ===================================================================
 RCS file: file1
 diff -N file1
-\*\*\* [-a-zA-Z0-9/.%_]*[ 	][	]*[a-zA-Z0-9: ]*
+\*\*\* ${tempname}[ 	][	]*[a-zA-Z0-9: ]*
 --- /dev/null[ 	][ 	]*[a-zA-Z0-9: ]*
 \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
 \*\*\* 1 \*\*\*\*
@@ -1986,7 +1998,7 @@ diff -N file1
 ===================================================================
 RCS file: file1
 diff -N file1
-\*\*\* [-a-zA-Z0-9/.%]*[ 	][	]*[a-zA-Z0-9: ]*
+\*\*\* ${tempname}[ 	][	]*[a-zA-Z0-9: ]*
 --- /dev/null[ 	][ 	]*[a-zA-Z0-9: ]*
 \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
 \*\*\* 1 \*\*\*\*
@@ -2023,7 +2035,7 @@ diff -c first-dir/file1:1\.1 first-dir/file1:removed
 RCS file: file1
 diff -N file1
 \*\*\* /dev/null[ 	][ 	]*[a-zA-Z0-9: ]*
---- [-a-zA-Z0-9/.%_]*[ 	][ 	]*[a-zA-Z0-9: ]*
+--- ${tempname}[ 	][ 	]*[a-zA-Z0-9: ]*
 \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
 \*\*\* 0 \*\*\*\*
 --- 1 ----
@@ -2095,7 +2107,7 @@ done'
 RCS file: file3
 diff -N file3
 \*\*\* /dev/null[ 	][ 	]*[a-zA-Z0-9: ]*
---- [-a-zA-Z0-9/.%_]*[ 	][ 	]*[a-zA-Z0-9: ]*
+--- ${tempname}[ 	][ 	]*[a-zA-Z0-9: ]*
 \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
 \*\*\* 0 \*\*\*\*
 --- 1 ----
@@ -2137,7 +2149,7 @@ Index: file2
 RCS file: file2
 diff -N file2
 \*\*\* /dev/null[ 	][ 	]*[a-zA-Z0-9: ]*
---- [-a-zA-Z0-9/.%_]*[ 	][ 	]*[a-zA-Z0-9: ]*
+--- ${tempname}[ 	][ 	]*[a-zA-Z0-9: ]*
 \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
 \*\*\* 0 \*\*\*\*
 --- 1 ----
@@ -2147,7 +2159,7 @@ Index: file3
 RCS file: file3
 diff -N file3
 \*\*\* /dev/null[ 	][ 	]*[a-zA-Z0-9: ]*
---- [-a-zA-Z0-9/.%_]*[ 	][ 	]*[a-zA-Z0-9: ]*
+--- ${tempname}[ 	][ 	]*[a-zA-Z0-9: ]*
 \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
 \*\*\* 0 \*\*\*\*
 --- 1 ----
@@ -2180,7 +2192,7 @@ ${PROG} [a-z]*: file3 is no longer in the repository"
 RCS file: file1
 diff -N file1
 \*\*\* /dev/null[ 	][ 	]*[a-zA-Z0-9: ]*
---- [-a-zA-Z0-9/.%_]*[ 	][ 	]*[a-zA-Z0-9: ]*
+--- ${tempname}[ 	][ 	]*[a-zA-Z0-9: ]*
 \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
 \*\*\* 0 \*\*\*\*
 --- 1 ----
@@ -5593,7 +5605,11 @@ done'
 	  # such as whether a second user can check out the files.  But
 	  # it would be awkward to test the consequences, so we don't.
 
-	  export -n CVSUMASK # if unset, defaults to 002
+	  # Solaris /bin/sh doesn't support export -n.  I'm not sure
+	  # what we can do about this, other than hope that whoever
+	  # is running the tests doesn't have CVSUMASK set.
+	  #export -n CVSUMASK # if unset, defaults to 002
+
 	  umask 077
 	  mkdir 1; cd 1
 	  dotest modes-1 "${testcvs} -q co -l ." ''

@@ -1,3 +1,8 @@
+Tue Mar 18 13:05:37 1997  Jim Meyering  <meyering@totoro.cyclic.com>
+
+	* Makefile.in (DISTFILES): Change glob pattern so that it doesn't
+	match `Makefile'.  Add Make_vms.com explicitly.
+
 1997-01-01  Fred Fish  <fnf@ninemoons.com>
 
 	* Makefile.in (CC): Use @CC@ rather than hard coded "cc".

@@ -1,3 +1,45 @@
+Mon Mar 24 13:50:24 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Creating a branch): Add comment about -r in branch
+	example.
+
+	* cvsclient.texi (Responses): Discuss meaning of tagspec and
+	future expansion in Set-sticky.  The behavior described is the one
+	which CVS has always implemented.
+
+Fri Mar 21 14:19:05 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Requests): Revise meaning of "Case" per change
+	to CVS.
+
+Tue Mar 18 15:50:47 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	The following reorganization hopefully presents numeric revisions
+	in a slightly more coherent fashion.  The only new material is the
+	paragraph about assigning revisions for added files.
+	* cvs.texinfo (A sample session): Bring in a sentence from Basic
+	concepts node, defining a repository.
+	(Revisions and branches): Renamed from Branches (it has always
+	covered non-branch tags too).  Bring in nodes "Revision numbers" and
+	"Versions revisions releases" from Basic concepts, the former in
+	particular was way too detailed for an intro section.
+	(A sample session): Add comment about how we need an introduction
+	and what might go into one.  Also bring in the paragraph from
+	Basic concepts introducing modules, but comment it out.
+	(Viewing differences): Add comment about 
+	(Basic concepts): Removed; its content has been farmed out as
+	described above, and as the comment said, it was fundamentally
+	flawed.
+	(Assigning revisions): New node.  Incorporates the "New major
+	release number" subsubsec which was in "commit examples".  Add
+	paragraph concerning how CVS assigns revisions on added files.
+	(commit options): Refer to that node under -r.
+	(Invoking CVS): Add comment about text for -r.
+
+Tue Mar 18 13:04:30 1997  Jim Meyering  <meyering@totoro.cyclic.com>
+
+	* Makefile.in: (install-info): Depend on installdirs.
+
 Sun Mar 16 12:37:12 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* cvs.texinfo (File permissions): CVSUMASK now works for RCS

@@ -58,9 +58,11 @@ static const char spacetab[] = {
 #define whitespace(c)	(spacetab[(unsigned char)c] != 0)
 
 
-/*
- * Parse an rcsfile given a user file name and a repository
- */
+/* Parse an rcsfile given a user file name and a repository.  If there is
+   an error, we print an error message and return NULL.  If the file
+   does not exist, we return NULL without printing anything (I'm not
+   sure this allows the caller to do anything reasonable, but it is
+   the current behavior).  */
 RCSNode *
 RCS_parse (file, repos)
     const char *file;
@@ -111,6 +113,67 @@ RCS_parse (file, repos)
 	retval = NULL;
 	goto out;
     }
+#if defined (SERVER_SUPPORT) && !defined (FILENAMES_CASE_INSENSITIVE)
+    else if (ign_case)
+    {
+	int status;
+	char *found_path;
+
+	/* The client might be asking for a file which we do have
+	   (which the client doesn't know about), but for which the
+	   filename case differs.  We only consider this case if the
+	   regular CVS_FOPENs fail, because fopen_case is such an
+	   expensive call.  */
+	(void) sprintf (rcsfile, "%s/%s%s", repos, file, RCSEXT);
+	status = fopen_case (rcsfile, "rb", &fp, &found_path);
+	if (status == 0)
+	{
+	    rcs = RCS_parsercsfile_i (fp, rcsfile);
+	    if (rcs != NULL) 
+		rcs->flags |= VALID;
+
+	    fclose (fp);
+	    free (rcs->path);
+	    rcs->path = found_path;
+	    retval = rcs;
+	    goto out;
+	}
+	else if (! existence_error (status))
+	{
+	    error (0, status, "cannot open %s", rcsfile);
+	    free (found_path);
+	    retval = NULL;
+	    goto out;
+	}
+	free (found_path);
+
+	(void) sprintf (rcsfile, "%s/%s/%s%s", repos, CVSATTIC, file, RCSEXT);
+	status = fopen_case (rcsfile, "rb", &fp, &found_path);
+	if (status == 0)
+	{
+	    rcs = RCS_parsercsfile_i (fp, rcsfile);
+	    if (rcs != NULL)
+	    {
+		rcs->flags |= INATTIC;
+		rcs->flags |= VALID;
+	    }
+
+	    fclose (fp);
+	    free (rcs->path);
+	    rcs->path = found_path;
+	    retval = rcs;
+	    goto out;
+	}
+	else if (! existence_error (status))
+	{
+	    error (0, status, "cannot open %s", rcsfile);
+	    free (found_path);
+	    retval = NULL;
+	    goto out;
+	}
+	free (found_path);
+    }
+#endif
     retval = NULL;
 
  out:

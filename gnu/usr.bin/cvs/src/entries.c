@@ -671,6 +671,9 @@ ParseTag (tagp, datep)
 		*tagp = xstrdup (line + 1);
 	    else if (*line == 'D' && datep)
 		*datep = xstrdup (line + 1);
+	    /* if not 'T' or 'D' silently ignore it; it may have been
+	       written by a future version of CVS which extends the
+	       syntax.  */
 	}
 	(void) fclose (fp);
 	free (line);

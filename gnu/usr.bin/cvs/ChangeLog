@@ -1,3 +1,15 @@
+Wed Mar 19 14:06:40 1997  Jim Meyering  <meyering@totoro.cyclic.com>
+
+	* configure.in (test for shadow passwords): Use AC_MSG_RESULT
+ 	rather than echo, so configure obeys --quiet.
+	Use yes and no in message rather than yup and nope.
+
+19 Mar 1997  Jim Kingdon
+
+	* cvsnt.mak: Now Visual C++ wants to add a bunch of dependencies
+	for the Release configuration as well as the Debug one.  Why it
+	didn't do this before, I have no idea.
+
 13 Mar 1997  Jim Kingdon
 
 	* cvsnt.mak: Recent changes have added a number of getline.h

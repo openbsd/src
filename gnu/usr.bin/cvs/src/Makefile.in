@@ -85,8 +85,7 @@ saber_cvs:
 lint:
 	@cd ..; $(MAKE) lint SUBDIRS=src
 
-# CYGNUS LOCAL: Do not depend upon installdirs
-install:
+install: installdirs
 	@for prog in $(PROGS); do \
 	  echo Installing $$prog in $(bindir); \
 	  $(INSTALL) $$prog $(bindir)/$$prog ; \

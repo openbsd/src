@@ -48,6 +48,11 @@ Classify_File (finfo, tag, date, options, force_tag_match, aflag, versp,
 	    if (vers->ts_user == NULL)
 	    {
 		/* there is no user file */
+		/* FIXME: Why do we skip this message if vers->tag or
+		   vers->date is set?  It causes "cvs update -r tag98 foo"
+		   to silently do nothing, which is seriously confusing
+		   behavior.  "cvs update foo" gives this message, which
+		   is what I would expect.  */
 		if (!force_tag_match || !(vers->tag || vers->date))
 		    if (!really_quiet)
 			error (0, 0, "nothing known about %s", finfo->fullname);
@@ -56,6 +61,11 @@ Classify_File (finfo, tag, date, options, force_tag_match, aflag, versp,
 	    else
 	    {
 		/* there is a user file */
+		/* FIXME: Why do we skip this message if vers->tag or
+		   vers->date is set?  It causes "cvs update -r tag98 foo"
+		   to silently do nothing, which is seriously confusing
+		   behavior.  "cvs update foo" gives this message, which
+		   is what I would expect.  */
 		if (!force_tag_match || !(vers->tag || vers->date))
 		    if (!really_quiet)
 			error (0, 0, "use `cvs add' to create an entry for %s",

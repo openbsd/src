@@ -139,12 +139,11 @@ This info manual describes how to use and administer
 @menu
 * Preface::                     About this manual
 * What is CVS?::                What is CVS?
-* Basic concepts::              Basic concepts of revision management
 * A sample session::            A tour of basic CVS usage
 * Repository::                  Where all your sources are stored
 * Starting a new project::      Starting a project with CVS
 * Multiple developers::         How CVS helps a group of developers
-* Branches::                    Parallel development explained
+* Revisions and branches::      Numeric, symbolic, and branch revisions
 * Merging::                     How to move changes between branches
 * Recursive behavior::          CVS descends directories
 * Adding files::                Adding files
@@ -622,142 +621,6 @@ only once they have been proven.
 @end table
 
 @c ---------------------------------------------------------------------
-@node Basic concepts
-@chapter Basic concepts
-@cindex Modules (intro)
-
-@c This node doesn't know what it wants.  We don't talk
-@c about *all* the concepts of CVS, just a few random ones
-@c which don't make any sense in isolation.  Nor do we
-@c start with what a beginner most needs to know.  We also
-@c jump into branches, which are a very advanced topic for
-@c this stage in the manual.  I'd just nuke the node if
-@c I could figure out where this stuff should go instead.
-@c The real intro to the repository is in Repository
-@sc{cvs} stores all files in a centralized
-@dfn{repository} (@pxref{Repository}).
-
-The repository contains directories and files, in an
-arbitrary tree.  The @dfn{modules} feature can be used
-to group together a set of directories or files into a
-single entity (@pxref{modules}).  A typical usage is to
-define one module per project.
-
-@menu
-* Revision numbers::            The meaning of a revision number
-* Versions revisions releases::  Terminology used in this manual
-@end menu
-
-@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-@node Revision numbers
-@section Revision numbers
-@cindex Revision numbers
-@cindex Revision tree
-@cindex Linear development
-@cindex Number, revision-
-@cindex Decimal revision number
-@cindex Main trunk (intro)
-@cindex Branch number
-@cindex Number, branch
-
-Each version of a file has a unique @dfn{revision
-number}.  Revision numbers look like @samp{1.1},
-@samp{1.2}, @samp{1.3.2.2} or even @samp{1.3.2.2.4.5}.
-A revision number always has an even number of
-period-separated decimal integers.  By default revision
-1.1 is the first revision of a file.  Each successive
-revision is given a new number by increasing the
-rightmost number by one.  The following figure displays
-a few revisions, with newer revisions to the right.
-
-@example
-       +-----+    +-----+    +-----+    +-----+    +-----+
-       ! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !
-       +-----+    +-----+    +-----+    +-----+    +-----+
-@end example
-
-@sc{cvs} is not limited to linear development.  The
-@dfn{revision tree} can be split into @dfn{branches},
-where each branch is a self-maintained line of
-development.  Changes made on one branch can easily be
-moved back to the main trunk.  
-
-Each branch has a @dfn{branch number}, consisting of an
-odd number of period-separated decimal integers.  The
-branch number is created by appending an integer to the
-revision number where the corresponding branch forked
-off.  Having branch numbers allows more than one branch
-to be forked off from a certain revision.
-
-@need 3500
-All revisions on a branch have revision numbers formed
-by appending an ordinal number to the branch number.
-The following figure illustrates branching with an
-example.
-
-@example
-@group
-                                                     +-------------+
-                          Branch 1.2.2.3.2 ->        ! 1.2.2.3.2.1 !
-                                                   / +-------------+
-                                                  /
-                                                 /
-                 +---------+    +---------+    +---------+    +---------+
-Branch 1.2.2 -> _! 1.2.2.1 !----! 1.2.2.2 !----! 1.2.2.3 !----! 1.2.2.4 !
-               / +---------+    +---------+    +---------+    +---------+
-              /
-             /
-+-----+    +-----+    +-----+    +-----+    +-----+
-! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !      <- The main trunk
-+-----+    +-----+    +-----+    +-----+    +-----+
-                !
-                !
-                !   +---------+    +---------+    +---------+
-Branch 1.2.4 -> +---! 1.2.4.1 !----! 1.2.4.2 !----! 1.2.4.3 !
-                    +---------+    +---------+    +---------+
-
-@end group
-@end example
-
-@c --   However, at least for me the figure is not enough.  I suggest more
-@c --   text to accompany it.  "A picture is worth a thousand words", so you
-@c --   have to make sure the reader notices the couple of hundred words
-@c --   *you* had in mind more than the others!
-
-@c --   Why an even number of segments?  This section implies that this is
-@c --   how the main trunk is distinguished from branch roots, but you never
-@c --   explicitly say that this is the purpose of the [by itself rather
-@c --   surprising] restriction to an even number of segments.
-
-The exact details of how the branch number is
-constructed is not something you normally need to be
-concerned about, but here is how it works: When
-@sc{cvs} creates a branch number it picks the first
-unused even integer, starting with 2.  So when you want
-to create a branch from revision 6.4 it will be
-numbered 6.4.2.  All branch numbers ending in a zero
-(such as 6.4.0) are used internally by @sc{cvs}
-(@pxref{Magic branch numbers}).  The branch 1.1.1 has a
-special meaning.  @xref{Tracking sources}.
-
-@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-@node Versions revisions releases
-@section Versions, revisions and releases
-@cindex Revisions, versions and releases
-@cindex Versions, revisions and releases
-@cindex Releases, revisions and versions
-
-A file can have several versions, as described above.
-Likewise, a software product can have several versions.
-A software product is often given a version number such
-as @samp{4.1.1}.
-
-Versions in the first sense are called @dfn{revisions}
-in this document, and versions in the second sense are
-called @dfn{releases}.  To avoid confusion, the word
-@dfn{version} is almost never used in this document.
-
-@c ---------------------------------------------------------------------
 @node A sample session
 @chapter A sample session
 @cindex A sample session
@@ -767,9 +630,39 @@ called @dfn{releases}.  To avoid confusion, the word
 @cindex tc, Trivial Compiler (example)
 @cindex Trivial Compiler (example)
 
-This section describes a typical work-session using
-@sc{cvs}.  It assumes that a repository is set up
-(@pxref{Repository}).
+@c I think an example is a pretty good way to start.  But
+@c somewhere in here, maybe after the sample session,
+@c we need something which is kind of
+@c a "roadmap" which is more directed at sketching out
+@c the functionality of CVS and pointing people to
+@c various other parts of the manual.  As it stands now
+@c people who read in order get dumped right into all
+@c manner of hair regarding remote repositories,
+@c creating a repository, etc.
+@c 
+@c The following was in the old Basic concepts node.  I don't
+@c know how good a job it does at introducing modules,
+@c or whether they need to be introduced so soon, but 
+@c something of this sort might go into some
+@c introductory material somewhere.
+@ignore
+@cindex Modules (intro)
+The repository contains directories and files, in an
+arbitrary tree.  The @dfn{modules} feature can be used
+to group together a set of directories or files into a
+single entity (@pxref{modules}).  A typical usage is to
+define one module per project.
+@end ignore
+
+As a way of introducing @sc{cvs}, we'll go through a
+typical work-session using @sc{cvs}.  The first thing
+to understand is that @sc{cvs} stores all files in a
+centralized @dfn{repository} (@pxref{Repository}); this
+section assumes that a repository is set up.
+@c I'm not sure that the sentence concerning the
+@c repository quite tells the user what they need to
+@c know at this point.  Might need to expand on "centralized"
+@c slightly (maybe not here, maybe further down in the example?)
 
 Suppose you are working on a simple compiler.  The source
 consists of a handful of C files and a @file{Makefile}.
@@ -928,6 +821,7 @@ This command runs @code{diff} to compare the version of @file{driver.c}
 that you checked out with your working copy.  When you see the output
 you remember that you added a command line option that enabled the
 optimization pass.  You check it in, and release the module.
+@c FIXME: we haven't yet defined the term "check in".
 
 @example
 $ cvs commit -m "Added an optimization pass" driver.c
@@ -3250,28 +3144,201 @@ best of both the reserved checkout and unreserved
 checkout worlds.
 
 @c ---------------------------------------------------------------------
-@node Branches
-@chapter Branches
+@node Revisions and branches
+@chapter Revisions and branches
 @cindex Branches
 @cindex Main trunk and branches
 @cindex Revision tree, making branches
 
-So far, all revisions shown in this manual have been on
-the @dfn{main trunk}
-of the revision tree, i.e., all revision numbers
-have been of the form @var{x}.@var{y}.  One useful
-feature, especially when maintaining several releases
-of a software product at once, is the ability to make
-branches on the revision tree.  @dfn{Tags}, symbolic
-names for revisions, will also be
-introduced in this chapter.
+For many uses of @sc{cvs}, one doesn't need to worry
+too much about revision numbers; @sc{cvs} assigns
+numbers such as @code{1.1}, @code{1.2}, and so on, and
+that is all one needs to know.  However, some people
+prefer to have more knowledge and control concerning
+how @sc{cvs} assigns revision numbers.
+
+If one wants to keep track of a set of revisions
+involving more than one file, such as which revisions
+went into a particular release, one uses a @dfn{tag},
+which is a symbolic revision which can be assigned to a
+numeric revision in each file.
+
+Another useful feature, especially when maintaining
+several releases of a software product at once, is the
+ability to make branches on the revision tree.
+@c FIXME: probably want another sentence or two, very
+@c briefly motivating branches.
 
 @menu
+* Revision numbers::            The meaning of a revision number
+* Versions revisions releases::  Terminology used in this manual
+* Assigning revisions::         Assigning revisions
 * Tags::                        Tags--Symbolic revisions
 * Branches motivation::         What branches are good for
 * Creating a branch::           Creating a branch
 * Sticky tags::                 Sticky tags
 @end menu
+
+@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+@node Revision numbers
+@section Revision numbers
+@cindex Revision numbers
+@cindex Revision tree
+@cindex Linear development
+@cindex Number, revision-
+@cindex Decimal revision number
+@cindex Main trunk (intro)
+@cindex Branch number
+@cindex Number, branch
+
+Each version of a file has a unique @dfn{revision
+number}.  Revision numbers look like @samp{1.1},
+@samp{1.2}, @samp{1.3.2.2} or even @samp{1.3.2.2.4.5}.
+A revision number always has an even number of
+period-separated decimal integers.  By default revision
+1.1 is the first revision of a file.  Each successive
+revision is given a new number by increasing the
+rightmost number by one.  The following figure displays
+a few revisions, with newer revisions to the right.
+
+@example
+       +-----+    +-----+    +-----+    +-----+    +-----+
+       ! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !
+       +-----+    +-----+    +-----+    +-----+    +-----+
+@end example
+
+@c Probably should move the following down a few
+@c sections, until after "branch motivation".
+@sc{cvs} is not limited to linear development.  The
+@dfn{revision tree} can be split into @dfn{branches},
+where each branch is a self-maintained line of
+development.  Changes made on one branch can easily be
+moved back to the main trunk.  
+
+Each branch has a @dfn{branch number}, consisting of an
+odd number of period-separated decimal integers.  The
+branch number is created by appending an integer to the
+revision number where the corresponding branch forked
+off.  Having branch numbers allows more than one branch
+to be forked off from a certain revision.
+
+@need 3500
+All revisions on a branch have revision numbers formed
+by appending an ordinal number to the branch number.
+The following figure illustrates branching with an
+example.
+
+@example
+@group
+                                                     +-------------+
+                          Branch 1.2.2.3.2 ->        ! 1.2.2.3.2.1 !
+                                                   / +-------------+
+                                                  /
+                                                 /
+                 +---------+    +---------+    +---------+    +---------+
+Branch 1.2.2 -> _! 1.2.2.1 !----! 1.2.2.2 !----! 1.2.2.3 !----! 1.2.2.4 !
+               / +---------+    +---------+    +---------+    +---------+
+              /
+             /
++-----+    +-----+    +-----+    +-----+    +-----+
+! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !      <- The main trunk
++-----+    +-----+    +-----+    +-----+    +-----+
+                !
+                !
+                !   +---------+    +---------+    +---------+
+Branch 1.2.4 -> +---! 1.2.4.1 !----! 1.2.4.2 !----! 1.2.4.3 !
+                    +---------+    +---------+    +---------+
+
+@end group
+@end example
+
+@c --   However, at least for me the figure is not enough.  I suggest more
+@c --   text to accompany it.  "A picture is worth a thousand words", so you
+@c --   have to make sure the reader notices the couple of hundred words
+@c --   *you* had in mind more than the others!
+
+@c --   Why an even number of segments?  This section implies that this is
+@c --   how the main trunk is distinguished from branch roots, but you never
+@c --   explicitly say that this is the purpose of the [by itself rather
+@c --   surprising] restriction to an even number of segments.
+
+The exact details of how the branch number is
+constructed is not something you normally need to be
+concerned about, but here is how it works: When
+@sc{cvs} creates a branch number it picks the first
+unused even integer, starting with 2.  So when you want
+to create a branch from revision 6.4 it will be
+numbered 6.4.2.  All branch numbers ending in a zero
+(such as 6.4.0) are used internally by @sc{cvs}
+(@pxref{Magic branch numbers}).  The branch 1.1.1 has a
+special meaning.  @xref{Tracking sources}.
+
+@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+@node Versions revisions releases
+@section Versions, revisions and releases
+@cindex Revisions, versions and releases
+@cindex Versions, revisions and releases
+@cindex Releases, revisions and versions
+
+A file can have several versions, as described above.
+Likewise, a software product can have several versions.
+A software product is often given a version number such
+as @samp{4.1.1}.
+
+Versions in the first sense are called @dfn{revisions}
+in this document, and versions in the second sense are
+called @dfn{releases}.  To avoid confusion, the word
+@dfn{version} is almost never used in this document.
+
+@node Assigning revisions
+@section Assigning revisions
+
+@c We avoid the "major revision" terminology.  It seems
+@c like jargon.  Hopefully "first number" is clear enough.
+By default, @sc{cvs} will assign numeric revisions by
+leaving the first number the same and incrementing the
+second number.  For example, @code{1.1}, @code{1.2},
+@code{1.3}, etc.
+
+When adding a new file, the second number will always
+be one and the first number will equal the highest
+first number of any file in that directory.  For
+example, the current directory contains files whose
+highest numbered revisions are @code{1.7}, @code{3.1},
+and @code{4.12}, then an added file will be given the
+numeric revision @code{4.1}.
+
+@c This is sort of redundant with something we said a
+@c while ago.  Somewhere we need a better way of
+@c introducing how the first number can be anything
+@c except "1", perhaps.  Also I don't think this
+@c presentation is clear on why we are discussing releases
+@c and first numbers of numeric revisions in the same
+@c breath.
+Normally there is no reason to care
+about the revision numbers---it is easier to treat them
+as internal numbers that @sc{cvs} maintains, and tags
+provide a better way to distinguish between things like
+release 1 versus release 2 of your product
+(@pxref{Tags}).  However, if you want to set the
+numeric revisions, the @samp{-r} option to @code{cvs
+commit} can do that.
+
+For example, to bring all your files up to the @sc{rcs}
+revision 3.0 (including those that haven't changed),
+you might invoke:
+
+@c Why does this not require -f to get the "those that
+@c haven't changed" part?  That isn't clear to me.
+@example
+$ cvs commit -r 3.0
+@end example
+
+Note that the number you specify with @samp{-r} must be
+larger than any existing revision number.  That is, if
+revision 3.0 exists, you cannot @samp{cvs commit
+-r 1.3}.  If you want to maintain several releases in
+parallel, you need to use a branch (@pxref{Revisions and branches}).
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node Tags
@@ -3494,6 +3561,13 @@ does not require that you have a working copy of the
 module.  @xref{rtag}.  (You can also use the @code{tag}
 command; @pxref{tag}).
 
+@c Why does this example use -r?  That seems like a
+@c confusing thing to do in an example where we are
+@c introducing branches.  One user thought it was
+@c a mandatory part of creating a branch for example.
+@c And we are not sufficiently
+@c "step by step" in terms of explaining
+@c what argument one should give to -r.
 @example
 $ cvs rtag -b -r release-1-0 release-1-0-patches tc
 @end example
@@ -4018,7 +4092,7 @@ $ cvs commit -m "Early version. Not yet compilable." backend.c
 @end example
 
 When you add a file it is added only on the branch
-which you are working on (@pxref{Branches}).  You can
+which you are working on (@pxref{Revisions and branches}).  You can
 later merge the additions to another branch if you want
 (@pxref{Merging adds and removals}).
 @c Should we mention that earlier versions of CVS
@@ -4134,7 +4208,7 @@ U oj.c
 @end example
 
 When you remove a file it is removed only on the branch
-which you are working on (@pxref{Branches}).  You can
+which you are working on (@pxref{Revisions and branches}).  You can
 later merge the removals to another branch if you want
 (@pxref{Merging adds and removals}).
 
@@ -6496,8 +6570,10 @@ Commit directories recursively.  This is on by default.
 @item -r @var{revision}
 Commit to @var{revision}.  @var{revision} must be
 either a branch, or a revision on the main trunk that
-is higher than any existing revision number.  You
+is higher than any existing revision number
+(@pxref{Assigning revisions}).  You
 cannot commit to a specific revision on a branch.
+@c FIXME: Need xref for branch case.
 @end table
 
 @code{commit} also supports these options:
@@ -6537,36 +6613,6 @@ invoking an editor.
 @c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
 @node commit examples
 @appendixsubsec commit examples
-
-@appendixsubsubsec New major release number
-
-@c "commit examples" seems like a bad place for this.
-@c What is the right place?
-By default, @sc{cvs} will assign numeric revisions by
-leaving the first number the same and incrementing the
-second number.  For example, @code{1.1}, @code{1.2},
-@code{1.3}, etc.  Normally there is no reason to care
-about the revision numbers---it is easier to treat them
-as internal numbers that @sc{cvs} maintains, and tags
-provide a better way to distinguish between things like
-release 1 versus release 2 of your product
-(@pxref{Tags}).  However, if you want to set the
-numeric revisions, the @samp{-r} option to @code{cvs
-commit} can do that.
-
-For example, to bring all your files up to the @sc{rcs}
-revision 3.0 (including those that haven't changed),
-you might invoke:
-
-@example
-$ cvs commit -r 3.0
-@end example
-
-Note that the number you specify with @samp{-r} must be
-larger than any existing revision number.  That is, if
-revision 3.0 exists, you cannot @samp{cvs commit
--r 1.3}.  If you want to maintain several releases in
-parallel, you need to use a branch (@pxref{Branches}).
 
 @appendixsubsubsec Committing to a branch
 
@@ -7775,7 +7821,7 @@ symbolic tag as development continues (and files get
 removed from the up-coming distribution).
 
 @item -b
-Make the tag a branch tag.  @xref{Branches}.
+Make the tag a branch tag.  @xref{Revisions and branches}.
 
 @item -d
 Delete the tag instead of creating it.
@@ -7946,7 +7992,7 @@ Two special options are available:
 @table @code
 @item -b
 The -b option makes the tag a branch tag
-(@pxref{Branches}), allowing concurrent, isolated
+(@pxref{Revisions and branches}), allowing concurrent, isolated
 development.  This is most useful for creating a patch
 to a previously released software distribution.
 
@@ -8394,6 +8440,9 @@ behavior}.
 
 @item -r @var{rev}
 Commit to @var{rev}.  See @ref{commit options}.
+@c FIXME: should be dragging over text from
+@c commit options, especially if it can be cleaned up
+@c and made concise enough.
 @end table
 
 @item diff [@var{options}] [@var{files}@dots{}]

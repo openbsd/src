@@ -722,3 +722,116 @@ expand_wild (argc, argv, pargc, pargv)
     for (i = 0; i < argc; ++i)
 	(*pargv)[i] = xstrdup (argv[i]);
 }
+
+#ifdef SERVER_SUPPORT
+/* Case-insensitive string compare.  I know that some systems
+   have such a routine, but I'm not sure I see any reasons for
+   dealing with the hair of figuring out whether they do (I haven't
+   looked into whether this is a performance bottleneck; I would guess
+   not).  */
+int
+cvs_casecmp (str1, str2)
+    char *str1;
+    char *str2;
+{
+    char *p;
+    char *q;
+    int pqdiff;
+
+    p = str1;
+    q = str2;
+    while ((pqdiff = tolower (*p) - tolower (*q)) == 0)
+    {
+	if (*p == '\0')
+	    return 0;
+	++p;
+	++q;
+    }
+    return pqdiff;
+}
+
+/* Case-insensitive file open.  As you can see, this is an expensive
+   call.  We don't regard it as our main strategy for dealing with
+   case-insensitivity.  Returns errno code or 0 for success.  Puts the
+   new file in *FP.  NAME and MODE are as for fopen.  If PATHP is not
+   NULL, then put a malloc'd string containing the pathname as found
+   into *PATHP.  Note that a malloc'd string is put into *PATHP
+   even if we return an error.  It doesn't mean anything, but it still
+   must be freed.
+
+   Might be cleaner to separate the file finding (which just gives
+   *PATHP) from the file opening (which the caller can do).  For one
+   thing, might make it easier to know whether to put NAME or *PATHP
+   into error messages.  */
+int
+fopen_case (name, mode, fp, pathp)
+    char *name;
+    char *mode;
+    FILE **fp;
+    char **pathp;
+{
+    struct dirent *dp;
+    DIR *dirp;
+    char *dir;
+    char *fname;
+    char *found_name;
+    int retval;
+
+    /* Separate NAME into directory DIR and filename within the directory
+       FNAME.  */
+    dir = xstrdup (name);
+    fname = strrchr (dir, '/');
+    if (fname == NULL)
+	error (1, 0, "internal error: relative pathname in fopen_case");
+    *fname++ = '\0';
+
+    found_name = NULL;
+    dirp = CVS_OPENDIR (dir);
+    if (dirp == NULL)
+	error (1, errno, "cannot read directory %s", dir);
+    errno = 0;
+    while ((dp = readdir (dirp)) != NULL)
+    {
+	if (cvs_casecmp (dp->d_name, fname) == 0)
+	{
+	    if (found_name != NULL)
+		error (1, 0, "%s is ambiguous; could mean %s or %s",
+		       fname, dp->d_name, found_name);
+	    found_name = xstrdup (dp->d_name);
+	}
+    }
+    if (errno != 0)
+	error (1, errno, "cannot read directory %s", dir);
+    closedir (dirp);
+
+    if (found_name == NULL)
+    {
+	*fp = NULL;
+	retval = ENOENT;
+    }
+    else
+    {
+	char *p;
+
+	/* Copy the found name back into DIR.  We are assuming that
+	   found_name is the same length as fname, which is true as
+	   long as the above code is just ignoring case and not other
+	   aspects of filename syntax.  */
+	p = dir + strlen (dir);
+	*p++ = '/';
+	strcpy (p, found_name);
+	*fp = fopen (dir, mode);
+	if (*fp == NULL)
+	    retval = errno;
+	else
+	    retval = 0;
+    }
+
+    if (pathp == NULL)
+	free (dir);
+    else
+	*pathp = dir;
+    free (found_name);
+    return retval;
+}
+#endif /* SERVER_SUPPORT */

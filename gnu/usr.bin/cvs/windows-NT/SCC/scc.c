@@ -14,6 +14,12 @@
 typedef long SCC_return;
 #define SCC_return_success 0
 #define SCC_return_unknown_project -2
+/* The file is not under SCC control.  */
+#define SCC_return_non_scc_file -11
+/* This operation is not supported.  I believe this status can only
+   be returned from SccGet, SccAdd, SccRemove, SccHistory, or
+   SccQueryInfo.  I'm not really sure what happens if it is returned
+   from other calls.  */
 #define SCC_return_not_supported -14
 #define SCC_return_non_specific_error -15
 enum SCC_command
@@ -257,7 +263,16 @@ SccCheckout (void *context_arg, HWND window, LONG num_files,
              LPSTR *file_names, LPSTR comment, LONG options,
              void *prov_options)
 {
-    return SCC_return_not_supported;
+    struct context *context = (struct context *)context_arg;
+    fprintf (context->debuglog, "SccCheckout num_files=%ld\n", num_files);
+    fflush (context->debuglog);
+    /* For the moment we say that all files are not ours.  I'm not sure
+       whether this is ever necessary; that is, whether the IDE will call
+       us except where we have told the IDE that a file is under source
+       control.  */
+    /* I'm not sure what we would do if num_files > 1 and we wanted to
+       return different statuses for different files.  */
+    return SCC_return_non_scc_file;
 }
 
 /* cvs ci.  */

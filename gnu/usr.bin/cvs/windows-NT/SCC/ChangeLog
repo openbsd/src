@@ -1,3 +1,10 @@
+21 Mar 1997  Jim Kingdon
+
+	* scc.c (SccCheckout): Write to debuglog and return
+	-11 instead of -14.  I though maybe that this may be
+	related to the crashes I've been seeing, but those
+	crashes persisted when I deinstalled the SCC DLL.
+
 14 Mar 1997  Jim Kingdon
 
 	* scc.c: Go back to using debuglog not outproc for

@@ -47,7 +47,13 @@ struct rcsnode
 {
     int refcount;
     int flags;
+
+    /* File name of the RCS file.  This is not necessarily the name
+       as specified by the user, but it is a name which can be passed to
+       system calls and a name which is OK to print in error messages
+       (the various names might differ in case).  */
     char *path;
+
     char *head;
     char *branch;
     char *symbols_data;

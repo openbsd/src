@@ -432,12 +432,20 @@ recent @code{Directory} request.
 @c requests, but isn't documented and should be.
 
 @item Case \n
-Response expected: no.
-Tell the server that filenames should be matched against ignore patterns
-in a case-insensitive fashion.  Note that this does not apply to other
-comparisons---for example the filenames given in @code{Entry} and
-@code{Modified} requests for the same file must match in case regardless
-of whether the @code{Case} request is sent.
+Response expected: no.  Tell the server that filenames should be matched
+in a case-insensitive fashion.  Note that this is not the primary
+mechanism for achieving case-insensitivity; for the most part the client
+keeps track of the case which the server wants to use and takes care to
+always use that case regardless of what the user specifies.  For example
+the filenames given in @code{Entry} and @code{Modified} requests for the
+same file must match in case regardless of whether the @code{Case}
+request is sent.  The latter mechanism is more general (it could also be
+used for 8.3 filenames, VMS filenames with more than one @samp{.}, and
+any other situation in which there is a predictable mapping between
+filenames in the working directory and filenames in the protocol), but
+there are some situations it cannot handle (ignore patterns, or
+situations where the user specifies a filename and the client does not
+know about that file).
 
 @item Argument @var{text} \n
 Response expected: no.
@@ -731,8 +739,10 @@ Like @code{Set-static-directory}, but clear, not set, the flag.
 Additional data: @var{tagspec} \n.  Tell the client to set a sticky tag
 or date, which should be supplied with the @code{Sticky} request for
 future operations.  @var{pathname} ends in a slash; its purpose is to
-specify a directory, not a file within a directory.  The first character
-of @var{tagspec} is @samp{T} for a tag, or @samp{D} for a date.  The
+specify a directory, not a file within a directory.  The client should
+store @var{tagspec} and pass it back to the server as-is, to allow for
+future expansion.  The first character of @var{tagspec} is @samp{T} for
+a tag, @samp{D} for a date, or something else for future expansion.  The
 remainder of @var{tagspec} contains the actual tag or date.
 
 @item Clear-sticky @var{pathname} \n

@@ -1,4 +1,59 @@
+Tue Mar 25 13:26:52 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* version.c: Version 1.9.6.
+
+Mon Mar 24 13:02:04 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* entries.c (ParseTag): Add comment about unrecognized characters
+	in CVS/Tag file.
+
+	* classify.c (Classify_File): Add comment about how specifying a
+	tag (bogusly?) suppresses certain messages.
+
+Fri Mar 21 13:37:46 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* rcs.h (struct rcsnode): Add comment about case of PATH.
+	* rcs.c (RCS_parse): If ign_case, then try opening the file with
+	fopen_case.
+	* ignore.c (ign_case): Adjust comment.
+	* cvs.h, filesubr.c (cvs_casecmp, fopen_case): New functions.
+
+20 Mar 1997  Jim Kingdon
+
+	* client.c (send_repository): When sending Directory request,
+	send any ISDIRSEP character as '/'.  Fixes
+	"cvs log foo\bar\baz.c" on NT & friends.
+
+	* client.c (send_file_names): Don't try to read Entries file if
+	CVSADM directory does not exist.  Fixes fairly serious regression
+	(warning on all fresh checkouts) introduced by 1997-01-08 change.
+
+Tue Mar 18 13:03:33 1997  Jim Meyering  <meyering@totoro.cyclic.com>
+
+	* sanity.sh (RCSINIT): Define to be empty and export, to hide any
+	existing value that might cause spurious failures.
+
+	* Makefile.in: (install): Depend on installdirs.
+	Remove `CYGNUS LOCAL' comment saying not to.
+
+Tue Mar 18 09:36:26 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* recurse.c (struct recursion_frame): Reindent.
+	(do_dir_proc): Print message if we try to recurse into a CVSADM
+	directory.
+	* sanity.sh (basicb): New test basicb-4a tests for above fix.
+
 Sun Mar 16 10:18:28 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (death2): Replace regexp matching temporary file name
+	with new variable ${tempname}.  For most of the tests this is a
+	cosmetic change, but death2-diff-6 had been missing _ which caused
+	it to fail on Solaris (at least sometimes).
+
+	* sanity.sh (modes): Don't use export -n; it doesn't seem
+	to be sufficiently portable.
+
+	* version.c: Change version number to 1.9.5.
 
 	* version.c: Version 1.9.4.
 
