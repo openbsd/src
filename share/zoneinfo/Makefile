@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1998/01/18 23:22:33 millert Exp $
+#	$OpenBSD: Makefile,v 1.4 1999/03/04 03:44:37 niklas Exp $
 #	$NetBSD: Makefile,v 1.14 1995/04/22 12:10:17 cgd Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
@@ -53,6 +53,8 @@ DATA=		$(YDATA) $(NDATA) $(SDATA) $(TABDATA) leapseconds # yearistype.sh
 USNO=		usno1988 usno1989 usno1989a usno1995 usno1997
 
 ZIC=zic
+
+all:	${YEARISTYPECOPY}
 
 ${YEARISTYPECOPY}:
 	cp ${YEARISTYPE} yearistypecopy
