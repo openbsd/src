@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.74 2001/07/01 18:27:37 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.75 2001/07/01 18:33:50 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1982,6 +1982,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
       *reslen = idlen - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ;
       memcpy (res, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, *reslen);
       *idtype = SADB_IDENTTYPE_FQDN;
+      LOG_DBG ((LOG_SYSDEP, 40, "pf_key_v2_convert_id: FQDN %s", res));
       return res;
 
     case IPSEC_ID_USER_FQDN:
@@ -1993,6 +1994,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
       *reslen = idlen - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ;
       memcpy (res, id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ, *reslen);
       *idtype = SADB_IDENTTYPE_USERFQDN;
+      LOG_DBG ((LOG_SYSDEP, 40, "pf_key_v2_convert_id: UFQDN %s", res));
       return res;
 
     case IPSEC_ID_IPV4_ADDR: /* XXX CONNECTION ? */
@@ -2005,6 +2007,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
       if (!res)
 	return 0;
       *idtype = SADB_IDENTTYPE_PREFIX;
+      LOG_DBG ((LOG_SYSDEP, 40, "pf_key_v2_convert_id: IPv4 address %s", res));
       return res;
 
     case IPSEC_ID_IPV6_ADDR: /* XXX CONNECTION ? */
@@ -2016,6 +2019,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
       res = strdup (addrbuf);
       if (!res)
 	return 0;
+      LOG_DBG ((LOG_SYSDEP, 40, "pf_key_v2_convert_id: IPv6 address %s", res));
       *idtype = SADB_IDENTTYPE_PREFIX;
       return res;
 
@@ -2031,6 +2035,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
       if (!res)
 	return 0;
       *idtype = SADB_IDENTTYPE_PREFIX;
+      LOG_DBG ((LOG_SYSDEP, 40, "pf_key_v2_convert_id: IPv4 subnet %s", res));
       return res;
 
     case IPSEC_ID_IPV6_ADDR_SUBNET: /* XXX PREFIX */
@@ -2043,6 +2048,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, int *reslen, int *idtype)
       res = strdup (addrbuf);
       if (!res)
 	return 0;
+      LOG_DBG ((LOG_SYSDEP, 40, "pf_key_v2_convert_id: IPv6 subnet %s", res));
       *idtype = SADB_IDENTTYPE_PREFIX;
       return res;
 
