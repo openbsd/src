@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.22 2003/08/11 19:10:30 millert Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.23 2004/03/02 01:00:11 deraadt Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-static const char rcsid[] = "$OpenBSD: nfsd.c,v 1.22 2003/08/11 19:10:30 millert Exp $";
+static const char rcsid[] = "$OpenBSD: nfsd.c,v 1.23 2004/03/02 01:00:11 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -214,7 +214,7 @@ main(int argc, char *argv[])
 			err(1, "can't register with portmap for TCP.");
 		return (0);
 	}
-	openlog("nfsd:", LOG_PID, LOG_DAEMON);
+	openlog("nfsd", LOG_PID, LOG_DAEMON);
 
 	for (i = 0; i < nfsdcnt; i++) {
 		switch (fork()) {
