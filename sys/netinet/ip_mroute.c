@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.35 2004/01/03 14:08:53 espie Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.36 2004/01/06 17:28:32 markus Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -755,6 +755,8 @@ vif_delete(ifp)
 	numvifs = i;
 
 	for (i = 0; i < MFCTBLSIZ; i++) {
+		if (nexpire[i] == 0)
+			continue;
 		LIST_FOREACH(rt, &mfchashtbl[i], mfc_hash) {
 			for (rte = rt->mfc_stall; rte; rte = rte->next) {
 				if (rte->ifp == ifp)
