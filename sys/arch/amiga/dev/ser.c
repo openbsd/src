@@ -1,5 +1,5 @@
-/*	$OpenBSD: ser.c,v 1.7 1997/09/18 13:39:59 niklas Exp $	*/
-/*	$NetBSD: ser.c,v 1.39 1996/12/23 09:10:29 veego Exp $	*/
+/*	$OpenBSD: ser.c,v 1.8 1998/02/22 20:36:11 niklas Exp $	*/
+/*	$NetBSD: ser.c,v 1.43 1998/01/12 10:40:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -153,6 +153,8 @@ u_char	even_parity[] = {
 u_char	last_ciab_pra;
 
 extern struct tty *constty;
+
+extern int ser_open_speed;	/* current speed of open serial device */
 
 #ifdef KGDB
 #include <machine/remote-sl.h>
@@ -329,6 +331,7 @@ done:
 	 * use of the tty with a dialin open waiting.
 	 */
 	tp->t_dev = dev;
+	ser_open_speed = tp->t_ispeed;
 	return((*linesw[tp->t_line].l_open)(dev, tp));
 }
 
@@ -341,6 +344,7 @@ serclose(dev, flag, mode, p)
 {
 	struct tty *tp;
 	int unit;
+	int closebits;
 
 	unit = SERUNIT(dev);
 
@@ -357,14 +361,21 @@ serclose(dev, flag, mode, p)
 	custom.intreq = INTF_RBF | INTF_TBE;		/* clear intr req */
 
 	/*
-	 * If the device is closed, it's close, no matter whether we deal with
-	 * modem control signals nor not.
+	 * If HUPCL is not set, leave DTR unchanged.
 	 */
-#if 0
-	if (tp->t_cflag & HUPCL || tp->t_state & TS_WOPEN ||
-	    (tp->t_state & TS_ISOPEN) == 0)
-#endif
-		(void) sermctl(dev, 0, DMSET);
+	if (tp->t_cflag & HUPCL)
+		closebits = 0;
+	else
+		closebits = sermctl(dev, 0, DMGET) & TIOCM_DTR;
+
+	(void) sermctl(dev, closebits, DMSET);
+
+	/*
+	 * Idea from dev/isa/com.c: 
+	 * sleep a bit so that other side will notice, even if we reopen
+	 * immediately.
+	 */
+	(void)tsleep(tp, TTIPRI, ttclos, hz);
 	ttyclose(tp);
 #if not_yet
 	if (tp != &ser_cons) {
@@ -373,6 +384,7 @@ serclose(dev, flag, mode, p)
 		ser_tty[unit] = (struct tty *) NULL;
 	}
 #endif
+	ser_open_speed = tp->t_ispeed;
 	return (0);
 }
 
@@ -441,15 +453,15 @@ ser_fastint()
 	if (ints == 0)
 		return;
 
-	/* 
-	 * clear interrupt 
-	 */
-	custom.intreq = ints;
-
 	/*
 	 * this register contains both data and status bits!
 	 */
 	code = custom.serdatr;
+
+	/* 
+	 * clear interrupt 
+	 */
+	custom.intreq = ints;
 
 	/*
 	 * check for buffer overflow.
@@ -719,6 +731,7 @@ serparam(tp, t)
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = cflag;
+	ser_open_speed = tp->t_ispeed;
 
 	/*
 	 * enable interrupts
@@ -905,7 +918,7 @@ serstop(tp, flag)
 			tp->t_state |= TS_FLUSH;
 	}
 	splx(s);
-	return 0;
+	return (0);
 }
 
 int
