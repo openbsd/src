@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.6 2002/04/18 22:38:20 miod Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.44 2002/04/17 22:53:04 miod Exp 
+#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.7 2002/04/21 23:37:05 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.45 2002/04/21 23:37:02 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.56 2002/04/18 22:38:34 miod Exp $
+#	$OpenBSD: MAKEDEV,v 1.57 2002/04/21 23:37:30 miod Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -41,6 +41,7 @@
 #	st*	SCSI tapes
 #	sd*	SCSI disks
 #	cd*	SCSI cdrom drives
+#	rd*	"rd" pseudo-disks
 #	ch*	SCSI media changer
 #	vnd*	"file" pseudo-disks
 #	ccd*	concatenated disk devices
@@ -320,6 +321,10 @@ ch*)
 	M ch$U c 17 $U 660 operator
 	;;
 
+rd*)
+	dodisk2 rd $U 13 18 $U 0
+	;;
+
 cd*)
 	dodisk2 cd $U 6 15 $U 0
 	;;
@@ -335,7 +340,8 @@ st*)
 	;;
 
 ramdisk)
-	R bpf0 std pty0 tty00 tty01 asc0 adb st0 st1 sd0 sd1 sd2 sd3
+	R bpf0 std pty0 tty00 tty01 asc0 adb rd0 rd1 st0 st1 sd0 sd1
+	R sd2 sd3
 	;;
 
 local)
@@ -349,11 +355,11 @@ fd)
 	;;
 
 all)
-	R ccd0 ccd1 ccd2 ccd3 cd0 cd1 tun0 tun1 tun2 tun3 bpf0 bpf1
-	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0
-	R ss0 ss1 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 local
-	R grf0 grf1 grf2 grf3 adb asc0 uk0 random lkm ttye0 tty00
-	R tty01 pf altq std st0 st1 fd
+	R ccd0 ccd1 ccd2 ccd3 cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0
+	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2
+	R xfs0 ss0 ss1 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
+	R local grf0 grf1 grf2 grf3 adb asc0 uk0 random lkm ttye0
+	R tty00 tty01 pf altq std st0 st1 fd
 	;;
 
 sd*|ccd*)
