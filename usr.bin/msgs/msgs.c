@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgs.c,v 1.11 1997/09/11 19:02:55 deraadt Exp $	*/
+/*	$OpenBSD: msgs.c,v 1.12 1998/06/23 23:30:19 deraadt Exp $	*/
 /*	$NetBSD: msgs.c,v 1.7 1995/09/28 06:57:40 tls Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)msgs.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: msgs.c,v 1.11 1997/09/11 19:02:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: msgs.c,v 1.12 1998/06/23 23:30:19 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -255,11 +255,14 @@ main(argc, argv)
 	snprintf(fname, sizeof(fname), "%s/%s", _PATH_MSGS, BOUNDS);
 	bounds = fopen(fname, "r");
 
-	if (bounds != NULL) {
-		fscanf(bounds, "%d %d\n", &firstmsg, &lastmsg);
-		fclose(bounds);
-		blast = lastmsg;	/* save upper bound */
+	if (bounds == NULL) {
+		perror(fname);
+		exit(1);
 	}
+
+	fscanf(bounds, "%d %d\n", &firstmsg, &lastmsg);
+	fclose(bounds);
+	blast = lastmsg;	/* save upper bound */
 
 	if (clean)
 		keep = t - (rcback? rcback : NDAYS) DAYS;
