@@ -1,5 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2002/01/01 23:05:30 art Exp $
-#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:33 lukem Exp $
+#	$OpenBSD: Makefile,v 1.16 2002/02/18 15:28:16 art Exp $
 
 FIBOMAX=25
 M4=m4
@@ -56,6 +55,6 @@ test-args:
 test-esyscmd:
 	${M4} ${.CURDIR}/esyscmd.m4 | diff -u - ${.CURDIR}/esyscmd.out
 
-.PHONY:	${ALL_TESTS}
+.PHONY:	${REGRESSTARGETS}
 
 .include <bsd.regress.mk>
