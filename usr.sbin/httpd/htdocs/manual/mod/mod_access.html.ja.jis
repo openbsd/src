@@ -7,7 +7,7 @@
     <title>Apache module mod_access</title>
 
   </head>
-  <!-- English revision: 1.32 -->
+  <!-- English revision: 1.33 -->
   <!-- Background white, links blue (unvisited), navy (visited), red (active) -->
   <body bgcolor="#ffffff" text="#000000" link="#0000ff"
   vlink="#000080" alink="#ff0000">
@@ -120,7 +120,11 @@
       この設定をすると、サーバは
       <a href="core.html#hostnamelookups">HostnameLookups</a>
       の設定に関わらず、クライアントの IP アドレスに対して
-      DNS の逆引きを行ないます。</dd>
+      DNS の二重の逆引きを行ないます。これは IP アドレスで DNS
+      の逆引きを行なってそれに関連付けられたホスト名を見つけ、
+      それからホスト名で正引きを行なってオリジナルの IP
+      アドレスと一致するか確認します。アクセスは正引きと逆引きに矛盾が無く、
+      ホスト名が一致した場合に限り許可されます。</dd>
 
       <dt>完全な IP アドレス</dt>
 
