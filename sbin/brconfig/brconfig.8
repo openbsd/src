@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.45 2003/06/25 09:44:55 henning Exp $
+.\"	$OpenBSD: brconfig.8,v 1.46 2003/06/27 13:10:51 henning Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -289,6 +289,15 @@ The above commands will set up a filter so that 0:1:2:3:4:5 can send frames
 through fxp0 only to 5:4:3:2:1, and 5:4:3:2:1:0 can return frames through
 fxp0 to 0:1:2:3:4:5.
 All other traffic trying to go into and be sent from fxp0 will be blocked.
+.It Cm "# brconfig bridge0 rule pass in on fxp0 src 9:8:7:6:5:4 tag boss"
+.It Cm "# brconfig bridge0 rule pass out on fxp0 dst 9:8:7:6:5:4 tag boss"
+These commands will tag packets from and to 9:8:7:6:5:4 on fxp0 so that
+.Xr pf 4
+can refer to them using the
+.Ar tagged
+directive:
+.Pp
+.Dl pass tagged boss keep state queue q_med
 .El
 .Sh IPSEC BRIDGE
 The bridge can also be used to tunnel ethernet frames over IPv4 or
