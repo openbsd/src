@@ -1,8 +1,10 @@
-#	$OpenBSD: Makefile,v 1.4 1997/06/23 23:45:16 kstailey Exp $
+#	$OpenBSD: Makefile,v 1.5 1997/08/29 22:28:22 mickey Exp $
 
 PROG=	installboot
 MAN=	installboot.8
 
+LDADD=	-lutil
+DPADD=	${LIBUTIL}
 # Need this to work in the miniroot
 LDSTATIC=	-static
 
