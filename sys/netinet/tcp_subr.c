@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.34 2000/10/10 15:16:02 provos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.35 2000/10/13 17:58:36 itojun Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -771,6 +771,10 @@ tcp6_ctlinput(cmd, sa, d)
 		if (IN6_IS_ADDR_LINKLOCAL(&ip6_tmp.ip6_dst))
 			ip6_tmp.ip6_dst.s6_addr16[1] =
 				htons(m->m_pkthdr.rcvif->if_index);
+
+		/* check if we can safely examine src and dst ports */
+		if (m->m_pkthdr.len < off + sizeof(th))
+			return;
 
 		if (m->m_len < off + sizeof(th)) {
 			/*
