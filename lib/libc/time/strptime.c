@@ -36,7 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: strptime.c,v 1.3 1998/03/15 23:31:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: strptime.c,v 1.4 1998/03/17 09:04:51 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -329,6 +329,7 @@ literal:
 			if (!(_conv_num(&bp, &i, 0, INT_MAX)))
 				return (0);
 
+			relyear = -1;
 			tm->tm_year = i - TM_YEAR_BASE;
 			break;
 
