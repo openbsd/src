@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.23 2000/10/29 18:42:49 deraadt Exp $     */
+/*      $OpenBSD: wdc.c,v 1.24 2001/01/23 08:50:28 aaron Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -912,10 +912,8 @@ wdcintr(arg)
 	chp->ch_flags &= ~WDCF_IRQ_WAIT;
 	xfer = chp->ch_queue->sc_xfer.tqh_first;
         ret = xfer->c_intr(chp, xfer, 1);
-#if notyet
-	if (ret == 0)
+	if (ret == 0)	/* irq was not for us, still waiting for irq */
 		chp->ch_flags |= WDCF_IRQ_WAIT;
-#endif
 	return (ret);
 }
 
