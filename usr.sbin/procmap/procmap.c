@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.12 2004/02/23 19:48:40 tedu Exp $ */
+/*	$OpenBSD: procmap.c,v 1.13 2004/02/23 20:53:21 tedu Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -91,7 +91,7 @@ struct cache_entry {
 	LIST_ENTRY(cache_entry) ce_next;
 	struct vnode *ce_vp, *ce_pvp;
 	u_long ce_cid, ce_pcid;
-	int ce_nlen;
+	unsigned int ce_nlen;
 	char ce_name[256];
 };
 
@@ -868,12 +868,13 @@ search_cache(kvm_t *kd, struct kbit *vp, char **name, char *buf, size_t blen)
 		if (ce && ce->ce_vp == P(&svp) && ce->ce_cid == cid) {
 			if (o != e)
 				*(--o) = '/';
+			if (o - ce->ce_nlen <= buf)
+				break;
 			o -= ce->ce_nlen;
-			memcpy(o, ce->ce_name, (unsigned)ce->ce_nlen);
+			memcpy(o, ce->ce_name, ce->ce_nlen);
 			P(&svp) = ce->ce_pvp;
 			cid = ce->ce_pcid;
-		}
-		else
+		} else
 			break;
 	} while (1/*CONSTCOND*/);
 	*e = '\0';
@@ -948,7 +949,7 @@ cache_enter(struct namecache *ncp)
 	ce->ce_pvp = ncp->nc_dvp;
 	ce->ce_cid = ncp->nc_vpid;
 	ce->ce_pcid = ncp->nc_dvpid;
-	ce->ce_nlen = ncp->nc_nlen;
+	ce->ce_nlen = (unsigned)ncp->nc_nlen;
 	strlcpy(ce->ce_name, ncp->nc_name, sizeof(ce->ce_name));
 
 	LIST_INSERT_HEAD(&lcache, ce, ce_next);
