@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.9 2001/08/26 02:39:05 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.10 2001/10/14 02:56:34 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -520,9 +520,6 @@ iha_append_free_scb(sc, pScb)
 	int s;
 
 	s = splbio();
-
-	if (pScb->SCB_Xs != NULL)
-		timeout_del(&pScb->SCB_Xs->stimeout);
 
 	if (pScb == sc->HCS_ActScb)
 		sc->HCS_ActScb = NULL;
@@ -2483,10 +2480,11 @@ iha_done_scb(sc, pScb)
 			bus_dmamap_unload(sc->sc_dmat, pScb->SCB_Dmamap);
 		}
 
+		timeout_del(&xs->stimeout);
 		xs->flags |= ITSDONE;
 		scsi_done(xs);
 	}
-
+	
 	iha_append_free_scb(sc, pScb);
 }
 
