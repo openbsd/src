@@ -42,10 +42,10 @@
 ./usr/lib/libg2c.so.6.0
 ./usr/lib/libgssapi.so.1.0
 ./usr/lib/libiberty.so.4.2
-./usr/lib/libkadm.so.6.0
-./usr/lib/libkafs.so.8.0
+./usr/lib/libkadm.so.7.0
+./usr/lib/libkafs.so.9.0
 ./usr/lib/libkdb.so.6.0
-./usr/lib/libkrb.so.9.0
+./usr/lib/libkrb.so.10.0
 ./usr/lib/libkrb5.so.4.0
 ./usr/lib/libkvm.so.6.0
 ./usr/lib/libm.so.0.1
@@ -1037,7 +1037,6 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet6/in6.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet6/in6_gif.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet6/in6_ifattach.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/netinet6/in6_prefix.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet6/in6_var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet6/ip6_mroute.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/netinet6/ip6_var.ph
