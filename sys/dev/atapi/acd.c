@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.22 1997/02/23 18:48:13 niklas Exp $	*/
+/*	$OpenBSD: acd.c,v 1.23 1997/03/26 01:53:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -984,11 +984,6 @@ acdgetdisklabel(acd)
 	bzero(acd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = acd->params.blksize;
-#if 0
-	/* I don't think this is necessary anymore.  */
-	if (lp->d_secsize > 2048)
-		lp->d_secsize = 2048;
-#endif
 	lp->d_ntracks = 1;
 	lp->d_nsectors = 100;
 	lp->d_ncylinders = (acd->params.disksize / 100) + 1;
@@ -1130,6 +1125,8 @@ acd_size(acd, flags)
 	}
 
 	acd->params.blksize = _4btol((u_int8_t*)&rdcap.blksize);
+	if (acd->params.blksize < 512 || acd->params.blksize > 2048)
+		acd->params.blksize = 2048;	/* some drives lie ! */
 	acd->params.disksize = _4btol((u_int8_t*)&rdcap.size);
 
 	ATAPI_DEBUG_PRINT(("acd_size: %ld %ld\n", acd->params.blksize,
