@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.13 1997/07/07 17:02:06 niklas Exp $ */
+/*	$OpenBSD: aic6360.c,v 1.14 1997/07/07 18:37:19 niklas Exp $ */
 /*	$NetBSD: aic6360.c,v 1.46 1996/05/12 23:51:37 mycroft Exp $	*/
 
 #define	integrate	static inline
@@ -130,7 +130,6 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
-#include <machine/pio.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_message.h>
@@ -823,7 +822,7 @@ void
 aic_reset(sc)
 	struct aic_softc *sc;
 {
-	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	/*
@@ -870,7 +869,7 @@ void
 aic_scsi_reset(sc)
 	struct aic_softc *sc;
 {
-	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	bus_space_write_1(iot, ioh, SCSISEQ, SCSIRSTO);
@@ -886,7 +885,7 @@ void
 aic_init(sc)
 	struct aic_softc *sc;
 {
-	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct aic_acb *acb;
 	int r;
@@ -1096,7 +1095,7 @@ aic_poll(sc, xs, count)
 	struct scsi_xfer *xs;
 	int count;
 {
-	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	AIC_TRACE(("aic_poll  "));
@@ -1124,7 +1123,7 @@ aic_sched_msgout(sc, m)
 	struct aic_softc *sc;
 	u_char m;
 {
-	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	if (sc->sc_msgpriq == 0)
@@ -1141,7 +1140,7 @@ aic_setsync(sc, ti)
 	struct aic_tinfo *ti;
 {
 #if AIC_USE_SYNCHRONOUS
-	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	if (ti->offset != 0)
@@ -1161,7 +1160,7 @@ aic_select(sc, acb)
 	struct aic_softc *sc;
 	struct aic_acb *acb;
 {
-	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct scsi_link *sc_link = acb->xs->sc_link;
 	int target = sc_link->target;
@@ -1265,7 +1264,7 @@ void
 aic_sched(sc)
 	register struct aic_softc *sc;
 {
-	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct aic_acb *acb;
 	struct scsi_link *sc_link;
@@ -1430,7 +1429,7 @@ void
 aic_msgin(sc)
 	register struct aic_softc *sc;
 {
-	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char sstat1;
 	int n;
@@ -1710,7 +1709,7 @@ void
 aic_msgout(sc)
 	register struct aic_softc *sc;
 {
-	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 #if AIC_USE_SYNCHRONOUS
 	struct aic_tinfo *ti;
@@ -1905,7 +1904,7 @@ aic_dataout_pio(sc, p, n)
 	u_char *p;
 	int n;
 {
-	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	register u_char dmastat = 0;
 	int out = 0;
@@ -1940,11 +1939,11 @@ aic_dataout_pio(sc, p, n)
 			out += DOUTAMOUNT;
 
 #if AIC_USE_DWORDS
-			bus_space_write_multi_4(iot, ioh, DMADATALONG, p,
-			    DOUTAMOUNT >> 2);
+			bus_space_write_multi_4(iot, ioh, DMADATALONG,
+			    (u_int32_t *)p, DOUTAMOUNT >> 2);
 #else
-			bus_space_write_multi_2(iot, ioh, DMADATA, p,
-			    DOUTAMOUNT >> 1);
+			bus_space_write_multi_2(iot, ioh, DMADATA,
+			    (u_int16_t *)p, DOUTAMOUNT >> 1);
 #endif
 
 			p += DOUTAMOUNT;
@@ -1960,14 +1959,14 @@ aic_dataout_pio(sc, p, n)
 #if AIC_USE_DWORDS
 			if (xfer >= 12) {
 				bus_space_write_multi_4(iot, ioh, DMADATALONG,
-				    p, xfer >> 2);
+				    (u_int32_t *)p, xfer >> 2);
 				p += xfer & ~3;
 				xfer &= 3;
 			}
 #else
 			if (xfer >= 8) {
-				bus_space_write_multi_2(iot, ioh,  DMADATA, p,
-				    xfer >> 1);
+				bus_space_write_multi_2(iot, ioh,  DMADATA,
+				    (u_int16_t *)p, xfer >> 1);
 				p += xfer & ~1;
 				xfer &= 1;
 			}
@@ -2047,7 +2046,7 @@ aic_datain_pio(sc, p, n)
 	u_char *p;
 	int n;
 {
-	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	register u_char dmastat;
 	int in = 0;
@@ -2080,11 +2079,11 @@ aic_datain_pio(sc, p, n)
 			in += DINAMOUNT;
 
 #if AIC_USE_DWORDS
-			bus_space_read_multi_4(iot, ioh, DMADATALONG, p,
-			    DINAMOUNT >> 2);
+			bus_space_read_multi_4(iot, ioh, DMADATALONG,
+			    (u_int32_t *)p, DINAMOUNT >> 2);
 #else
-			bus_space_read_multi_2(iot, ioh, DMADATA, p,
-			    DINAMOUNT >> 1);
+			bus_space_read_multi_2(iot, ioh, DMADATA,
+			    (u_int16_t *)p, DINAMOUNT >> 1);
 #endif
 
 			p += DINAMOUNT;
@@ -2100,14 +2099,14 @@ aic_datain_pio(sc, p, n)
 #if AIC_USE_DWORDS
 			if (xfer >= 12) {
 				bus_space_read_multi_4(iot, ioh, DMADATALONG,
-				    p, xfer >> 2);
+				    (u_int32_t *)p, xfer >> 2);
 				p += xfer & ~3;
 				xfer &= 3;
 			}
 #else
 			if (xfer >= 8) {
-				bus_space_read_multi_2(iot, ioh, DMADATA, p,
-				    xfer >> 1);
+				bus_space_read_multi_2(iot, ioh, DMADATA,
+				    (u_int16_t *)p, xfer >> 1);
 				p += xfer & ~1;
 				xfer &= 1;
 			}
@@ -2168,7 +2167,7 @@ aicintr(arg)
 	void *arg;
 {
 	register struct aic_softc *sc = arg;
-	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_char sstat0, sstat1;
 	register struct aic_acb *acb;
@@ -2647,7 +2646,7 @@ void
 aic_dump6360(sc)
 	struct aic_softc *sc;
 {
-	bus_space_handle_t iot = sc->sc_iot;
+	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	printf("aic6360: SCSISEQ=%x SXFRCTL0=%x SXFRCTL1=%x SCSISIG=%x\n",
