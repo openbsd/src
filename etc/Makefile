@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.87 1998/05/23 19:22:30 millert Exp $
+#	$OpenBSD: Makefile,v 1.88 1998/07/05 12:53:30 art Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -87,7 +87,7 @@ distribution-etc-root-var: distrib-dirs
 		    ${DESTDIR}/etc/kerberosIV; \
 		${INSTALL} -c -o root -g wheel -m 644 krb.conf \
 		    ${DESTDIR}/etc/kerberosIV; \
-		${INSTALL} -c -o root -g wheel -m 444 krb.realms \
+		${INSTALL} -c -o root -g wheel -m 644 krb.realms \
 		    ${DESTDIR}/etc/kerberosIV)
 	(cd amd; \
 		${INSTALL} -c -o root -g wheel -m 644 master.sample \
