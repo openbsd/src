@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rlogind.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: rlogind.c,v 1.7 1996/07/31 09:25:46 deraadt Exp $";
+static char *rcsid = "$Id: rlogind.c,v 1.8 1996/08/02 10:13:35 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -718,46 +718,4 @@ usage()
 #else
 	syslog(LOG_ERR, "usage: rlogind [-aln]");
 #endif
-}
-
-/*
- * Check whether host h is in our local domain,
- * defined as sharing the last two components of the domain part,
- * or the entire domain part if the local domain has only one component.
- * If either name is unqualified (contains no '.'),
- * assume that the host is local, as it will be
- * interpreted as such.
- */
-int
-local_domain(h)
-	char *h;
-{
-	char localhost[MAXHOSTNAMELEN];
-	char *p1, *p2;
-
-	localhost[0] = 0;
-	(void) gethostname(localhost, sizeof(localhost));
-	p1 = topdomain(localhost);
-	p2 = topdomain(h);
-	if (p1 == NULL || p2 == NULL || !strcasecmp(p1, p2))
-		return (1);
-	return (0);
-}
-
-char *
-topdomain(h)
-	char *h;
-{
-	register char *p;
-	char *maybe = NULL;
-	int dots = 0;
-
-	for (p = h + strlen(h); p >= h; p--) {
-		if (*p == '.') {
-			if (++dots == 2)
-				return (p);
-			maybe = p;
-		}
-	}
-	return (maybe);
 }
