@@ -1,4 +1,4 @@
-/*	$OpenBSD: acl.h,v 1.3 1996/06/26 21:26:37 maja Exp $ */
+/*	$OpenBSD: acl.h,v 1.4 1996/06/30 19:46:05 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -79,6 +79,7 @@ __BEGIN_DECLS
 int		acl_check_host __P((struct in_addr *));
 int		acl_init __P((char *));
 int		acl_securenet __P((char *));
+void		acl_reset __P((void));
 __END_DECLS
 
 #endif /* !_ACL_H_ */

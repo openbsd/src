@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv.c,v 1.4 1996/06/26 21:26:38 maja Exp $ */
+/*	$OpenBSD: ypserv.c,v 1.5 1996/06/30 19:46:08 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv.c,v 1.4 1996/06/26 21:26:38 maja Exp $";
+static char rcsid[] = "$OpenBSD: ypserv.c,v 1.5 1996/06/30 19:46:08 maja Exp $";
 #endif
 
 #include "yp.h"
@@ -57,9 +57,8 @@ static char rcsid[] = "$OpenBSD: ypserv.c,v 1.4 1996/06/26 21:26:38 maja Exp $";
 #endif
 #include "acl.h"
 #include "yplog.h"
+#include "ypdef.h"
 #include <sys/wait.h>
-
-#define YP_SECURENET_FILE "/var/yp/securenet"
 
 #ifdef __STDC__
 #define SIG_PF void(*)(int)
@@ -76,8 +75,10 @@ static int _rpcsvcdirty;	/* Still serving ? */
 
 int	usedns = FALSE;
 char   *progname = "ypserv";
+char   *aclfile = NULL;
 
 void sig_child();
+void sig_hup();
 
 static
 void _msgout(char* msg)
@@ -244,7 +245,6 @@ char *argv[];
 	int	 xflag = 0;
 	char	 ch;
 	extern	 char *optarg;
-	char	 *aclfile = NULL;
 	
 	while ((ch = getopt(argc, argv, "a:dx")) != EOF)
 		switch (ch) {
@@ -328,6 +328,13 @@ char *argv[];
 	chdir("/");
 	
 	(void)signal(SIGCHLD, sig_child);
+	(void)signal(SIGHUP, sig_hup);
+	{ FILE *pidfile = fopen(YPSERV_PID_PATH, "w");
+	  if (pidfile != NULL) {
+		fprintf(pidfile, "%d\n", getpid());
+		fclose(pidfile);
+	  }
+	}
 
 	if ((_rpcfdtype == 0) || (_rpcfdtype == SOCK_DGRAM)) {
 		transp = svcudp_create(sock);
@@ -380,3 +387,15 @@ sig_child()
 	while (wait3((int *)NULL, WNOHANG, (struct rusage *)NULL) > 0);
 }
 
+void
+sig_hup()
+{
+	acl_reset();
+	if (aclfile != NULL) {
+		yplog("sig_hup: reread %s",aclfile);
+		(void)acl_init(aclfile);
+	} else {
+		yplog("sig_hup: reread %s",YP_SECURENET_FILE);
+		(void)acl_securenet(YP_SECURENET_FILE);
+	}
+}

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypserv.8,v 1.4 1996/06/26 21:26:38 maja Exp $
+.\"	$OpenBSD: ypserv.8,v 1.5 1996/06/30 19:46:06 maja Exp $
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
 .\"
@@ -66,7 +66,15 @@ Before the author of this server had seen
 another format was implemented
 .Xr ypserv.acl 5 .
 This file format makes it possible to allow and deny hosts and networks
-access to the server.
+access to the server. This file can have any name since it's given by
+the argument to
+.Fl a 
+(use full path). 
+.Pp
+The file used can be reread by sending a SIGHUP to ypserv. The process pid
+can be found in the file
+.Nm /var/run/ypserv.pid
+.
 .Pp
 If a host isn't secure all queries to the server will result in a YP_NODOM
 result. It would be better to add the security to
@@ -101,7 +109,7 @@ or
 .Bl -tag -width /var/yp/ypserv.log -compact
 .It Pa /var/yp/ypserv.log
 .It Pa /var/yp/securenet
-.It Pa /var/yp/ypserv.acl
+.It Pa /var/run/ypserv.pid
 .El
 .Sh SEE ALSO
 .Xr yp 8 ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acl.c,v 1.3 1996/06/26 21:26:36 maja Exp $ */
+/*	$OpenBSD: acl.c,v 1.4 1996/06/30 19:46:04 maja Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: acl.c,v 1.3 1996/06/26 21:26:36 maja Exp $";
+static char rcsid[] = "$OpenBSD: acl.c,v 1.4 1996/06/30 19:46:04 maja Exp $";
 #endif
 
 #include <sys/types.h>
@@ -598,3 +598,14 @@ char *file;
 
 }
 
+void
+acl_reset()
+{
+	struct aclent *p;
+
+	while (acl_root != NULL) {
+		p = acl_root->next;
+		free(acl_root);
+		acl_root = p;
+	}
+}
