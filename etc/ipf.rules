@@ -1,10 +1,11 @@
-#	$OpenBSD: ipf.rules,v 1.4 1997/02/26 04:38:01 kstailey Exp $
+#	$OpenBSD: ipf.rules,v 1.5 1997/04/09 07:32:13 deraadt Exp $
 #
 # IP filtering rules.  See the ipf(5) man page for more
 # information on the format of this file, and /usr/share/ipf
 # for example configuration files.
 #
 # Pass all packets by default.
+# edit the ipfilter= line in /etc/netstart to enable IP filtering
 #
 pass in from any to any
 pass out from any to any
