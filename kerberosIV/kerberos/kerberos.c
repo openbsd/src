@@ -69,6 +69,14 @@ static int max_age = -1;
 static int pause_int = -1;
 static char progname[]="kerberos";
 
+#ifndef MAX
+#define MAX(a,b) (((a)>(b))?(a):(b))
+#endif /* MAX */
+
+#ifndef MIN
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#endif /* MIN */
+
 /*
  * Print usage message and exit.
  */
@@ -273,8 +281,8 @@ kerberos(unsigned char *buf, int len,
 	    strcpy((char*)rpkt->dat, krb_get_err_text(err));
 	    return err;
 	}
-	life = min(life, s_name.max_life);
-	life = min(life, a_name.max_life);
+	life = MIN(life, s_name.max_life);
+	life = MIN(life, a_name.max_life);
     
 	des_new_random_key(&session);
 	copy_to_key(&s_name.key_low, &s_name.key_high, key);
@@ -353,11 +361,11 @@ kerberos(unsigned char *buf, int len,
 	    strcpy((char*)rpkt->dat, krb_get_err_text(err));
 	    return err;
 	}
-	life = min(life, 
+	life = MIN(life, 
 		   krb_time_to_life(kerb_time.tv_sec, 
 				    krb_life_to_time(ad.time_sec, 
 						     ad.life)));
-	life = min(life, s_name.max_life);
+	life = MIN(life, s_name.max_life);
 	copy_to_key(&s_name.key_low, &s_name.key_high, key);
 	unseal(&key);
 	des_new_random_key(&session);
@@ -906,7 +914,7 @@ loop(struct descr *fds, int nfds)
 		continue;
 	    }
 	    FD_SET(n->s, &readfds);
-	    maxfd = max(maxfd, n->s);
+	    maxfd = MAX(maxfd, n->s);
 	}
 	/* add more space for sockets */
 	if(minfree == NULL){
