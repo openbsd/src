@@ -1,15 +1,15 @@
+.\" $OpenBSD: ssh-agent.1,v 1.7 1999/10/28 08:43:10 markus Exp $
+.\"
 .\"  -*- nroff -*-
 .\"
 .\" ssh-agent.1
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
-.\"
+pp.\"
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
 .\"                    All rights reserved
 .\"
 .\" Created: Sat Apr 23 20:10:43 1995 ylo
-.\"
-.\" $Id: ssh-agent.1,v 1.6 1999/10/17 00:31:06 deraadt Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH-AGENT 1
@@ -19,21 +19,46 @@
 .Nd authentication agent
 .Sh SYNOPSIS
 .Nm ssh-agent 
+.Op Fl c Li | Fl s
+.Op Fl k
+.Oo
 .Ar command
+.Op Ar args ...
+.Oc
 .Sh DESCRIPTION 
 .Nm
 is a program to hold authentication private keys.  The
 idea is that
 .Nm
 is started in the beginning of an X-session or a login session, and
-all other windows or programs are started as children of the ssh-agent
-program (the
-.Ar command
-normally starts X or is the user shell).  Programs started under
-the agent inherit a connection to the agent, and the agent is
-automatically used for RSA authentication when logging to other
+all other windows or programs are started as clients to the ssh-agent
+program.  Through use of environment variables the agent can be located
+and automatically used for RSA authentication when logging in to other
 machines using
 .Xr ssh 1 .
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c
+Generate C-shell commands on
+.Dv stdout .
+This is the default if
+.Ev SHELL
+looks like it's a csh style of shell.
+.It Fl s
+Generate Bourne shell commands on
+.Dv stdout .
+This is the default if
+.Ev SHELL
+does not look like it's a csh style of shell.
+.It Fl k
+Kill the current agent (given by the
+.Ev SSH_AGENT_PID
+environment variable).
+.El
+.Pp
+If a commandline is given, this is executed as a subprocess of the agent.
+When the command dies, so does the agent.
 .Pp
 The agent initially does not have any private keys.  Keys are added
 using
@@ -58,15 +83,29 @@ However, the connection to the agent is forwarded over SSH
 remote logins, and the user can thus use the privileges given by the
 identities anywhere in the network in a secure way.
 .Pp
-A connection to the agent is inherited by child programs:
+There are two main ways to get an agent setup:  Either you let the agent
+start a new subcommand into which some environment variables are exported, or
+you let the agent print the needed shell commands (either
+.Xr sh 1
+or
+.Xr csh 1
+syntax can be generated) which can be evalled in the calling shell.
+Later
+.Xr ssh 1
+look at these variables and use them to establish a connection to the agent.
+.Pp
 A unix-domain socket is created
-.Pq Pa /tmp/ssh-XXXX/agent.<pid> ,
+.Pq Pa /tmp/ssh-XXXXXXXX/agent.<pid> ,
 and the name of this socket is stored in the
 .Ev SSH_AUTH_SOCK
 environment
 variable.  The socket is made accessible only to the current user.
 This method is easily abused by root or another instance of the same
 user.
+.Pp
+The
+.Ev SSH_AGENT_PID
+environment variable holds the agent's PID.
 .Pp
 The agent exits automatically when the command given on the command
 line terminates.
