@@ -1,11 +1,11 @@
 #
-#	$OpenBSD: Makefile.inc,v 1.1 1997/04/13 17:17:52 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 1997/04/14 10:57:11 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1995/07/18 04:13:14 briggs Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
 
-CBIN?=		raminst
+CBIN?=		instbin
 COMMONDIR=	${TOP}/ramdisk
 
 MOUNT_POINT?=	${TOP}/${BASE}/fs

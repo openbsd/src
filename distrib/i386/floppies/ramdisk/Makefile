@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 1997/04/13 17:17:52 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/04/14 10:57:09 deraadt Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -8,24 +8,72 @@ IMAGE=		miniroot-${REV}.fs
 CRUNCHCONF?=    ${.CURDIR}/${CBIN}.conf
 BASE=miniroot
 
-MOUNT_POINT=	/mnt1
+MOUNT_POINT=	/mnt
 BDEV=		/dev/rd0a
 CDEV=		/dev/rrd0a
 RDEV=		/dev/rd0c
 
-KERNEL=		/sys/arch/i386/compile/RAMDISK/bsd
-
-all: ${CBIN} ${IMAGE}
-	@echo "all done"
+VND?=		vnd0
+VND_DEV=	/dev/${VND}a
+VND_RDEV=	/dev/r${VND}a
+VND_CRDEV=	/dev/r${VND}c
+PID!=		echo $$$$
+REALIMAGE!=	echo /tmp/image.${PID}
+LISTFLOPPY=	${.CURDIR}/list_floppy
 
 .include "Makefile.inc"
+
+all:	floppy
+
+floppy: bsd.gz
+.ifndef FLOPPY3
+	dd if=/dev/zero of=${REALIMAGE} bs=10k count=120
+	vnconfig -v -c ${VND} ${REALIMAGE}
+	disklabel -w -r ${VND} floppy5
+	newfs -m 0 -o space -i 8192 -c 80 ${VND_RDEV} floppy5
+.else
+	dd if=/dev/zero of=${REALIMAGE} bs=10k count=144
+	vnconfig -v -c ${VND} ${REALIMAGE}
+	disklabel -w -r ${VND} floppy3
+	newfs -m 0 -o space -i 6500 -c 80 ${VND_RDEV} floppy3
+.endif
+	mount ${VND_DEV} ${MOUNT_POINT}
+	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTFLOPPY}
+	sync
+	cat /*bin/* > /dev/null
+	sync
+	/usr/mdec/installboot -v /mnt/boot ${DESTDIR}/usr/mdec/biosboot ${VND_CRDEV}
+	@echo ""
+	@df -i ${MOUNT_POINT}
+	@echo ""
+	sync
+	cat /*bin/* > /dev/null
+	sync
+	umount ${MOUNT_POINT}
+	vnconfig -u ${VND}
+	cp ${REALIMAGE} ${IMAGE}
+	rm ${REALIMAGE}
 
 DISKTYPE=       rdroot
 NBLKS=          4046
 # old format, minfree, opt, b/i  trks, sects, cpg
 NEWFSARGS= -t ffs -m 0 -o space -c 16 -i 4096
 
-${IMAGE}:	do_prep do_mount do_files do_umount_copy do_unconfig
+bsd.gz: bsd.rd
+	gzip -c9 bsd.rd > bsd.gz
+
+bsd.rd: ${IMAGE} bsd rdsetroot
+	cp bsd bsd.rd
+	${.CURDIR}/${__objdir}/rdsetroot bsd.rd < ${IMAGE}
+
+bsd:
+	cd ${.CURDIR}/../../../../sys/arch/i386/conf && config RAMDISK
+	cd ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK && \
+	    make clean && make depend && make
+	cp ${.CURDIR}/../../../../sys/arch/i386/compile/RAMDISK/bsd bsd
+
+${IMAGE}:	do_prep do_mount do_files do_umount_copy do_unconfig ${CBIN}
 	mv -f ${IMAGE}.tmp ${IMAGE}
 	-if [ -e ${.CURDIR}/${__objdir}/rd.pid ] ; then \
 	kill `cat ${.CURDIR}/${__objdir}/rd.pid`; \
@@ -34,12 +82,6 @@ ${IMAGE}:	do_prep do_mount do_files do_umount_copy do_unconfig
 
 rdsetroot:	${TOP}/common/rdsetroot.c
 	${HOSTCC} -DDEBUG -o rdsetroot ${TOP}/common/rdsetroot.c
-
-setroot: ${IMAGE} bsd 
-	${.CURDIR}/${__objdir}/rdsetroot bsd < ${IMAGE}
-
-bsd:	${KERNEL}
-	cp ${KERNEL} bsd
 
 writetape:
 	echo rewinding tape < /dev/rst0
@@ -71,6 +113,10 @@ do_unconfig:
 	rm ${.CURDIR}/${__objdir}/rd.pid; \
 	fi
 
+unconfig:
+	-umount -f ${MOUNT_POINT}
+	-vnconfig -u ${VND}
+	-/bin/rm -f ${IMAGE}
 
 .PRECIOUS:	${IMAGE}
 
