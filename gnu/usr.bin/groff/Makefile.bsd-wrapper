@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 1997/04/07 13:30:24 downsj Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.6 1997/04/21 17:42:33 kstailey Exp $
 
 #
 # groff config
@@ -63,6 +63,7 @@ gnu_build:
 		indexdir=${INDEXDIR} \
 		common_words_file=${COMMON_WORDS}
 
+.if !defined(NOMAN)
 install: ${MAN_BUILD1} ${MAN_BUILD5} ${MAN_BUILD7} maninstall
 	${MAKE} ${GNUCFLAGS} ${GNUCXXFLAGS} LDFLAGS=${LDSTATIC} \
 		prefix=${DESTDIR}${PREFIX} \
@@ -74,6 +75,19 @@ install: ${MAN_BUILD1} ${MAN_BUILD5} ${MAN_BUILD7} maninstall
 		install
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/tmac/tmac.an \
                 ${DESTDIR}${DATASUBDIR}/tmac/tmac.an.old
+.else
+install:
+	${MAKE} ${GNUCFLAGS} ${GNUCXXFLAGS} LDFLAGS=${LDSTATIC} \
+		prefix=${DESTDIR}${PREFIX} \
+		datasubdir=${DESTDIR}${DATASUBDIR} \
+		fontdir=${DESTDIR}${FONTDIR} \
+		indexdir=${DESTDIR}${INDEXDIR} \
+		common_words_file=${DESTDIR}${COMMON_WORDS} \
+		INSTALL_MAN= TMAC_AN= TMAC_ANDOC= MDOCFILES= tmac_an= \
+		install
+	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/tmac/tmac.an \
+                ${DESTDIR}${DATASUBDIR}/tmac/tmac.an.old
+.endif
 
 clean cleandir:
 	rm -f ${CLEANFILES}
