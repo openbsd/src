@@ -1,4 +1,4 @@
-#	$OpenBSD: LOKI,v 1.2 1997/07/08 21:26:30 deraadt Exp $
+#	$OpenBSD: LOKI,v 1.3 1997/09/26 16:49:20 kstailey Exp $
 #
 # LOKI, an Alpha AXPPCI33 (NoName) kernel.
 #
@@ -32,7 +32,7 @@ option		KERNFS		# /kern
 option		MFS		# memory file system
 #option		MSDOSFS		# MS-DOS file system
 #option		NULLFS		# mount directories on directories
-#option		PORTAL		# call processes via the FS
+#option		PORTAL		# dynamically created filesystem objects
 option		PROCFS		# access the insides of procs via the FS
 #option		UMAPFS		# NULLFS + uid and gid remapping
 #option		UNION		# union file system
