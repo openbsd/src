@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.1 1999/12/08 06:50:23 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.2 1999/12/08 12:13:37 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1108,10 +1108,12 @@ nd6_dad_timer(ifa)
 			 */
 			ia->ia6_flags &= ~IN6_IFF_TENTATIVE;
 
+#ifdef DEBUG
 			/* XXXJRT This is probably a purely debugging message */
 			printf("%s: DAD complete for %s - no duplicates "
 			    "found\n", if_name(ifa->ifa_ifp),
 			    ip6_sprintf(&ia->ia_addr.sin6_addr));
+#endif
 
 			TAILQ_REMOVE(&dadq, (struct dadq *)dp, dad_list);
 			free(dp, M_IP6NDP);
