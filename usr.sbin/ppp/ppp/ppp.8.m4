@@ -1,3 +1,5 @@
+changequote({,})dnl
+changecom(,)dnl
 .\"
 .\" Copyright (c) 2001 Brian Somers <brian@Awfulhak.org>
 .\" All rights reserved.
@@ -23,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8,v 1.118 2001/08/02 20:52:58 brian Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.1 2001/08/09 02:27:13 jsyn Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -63,9 +65,10 @@ This allows
 .Nm
 to act as a NAT or masquerading engine for all machines on an internal
 LAN.
-Refer to
+ifdef({LOCALNAT},{},{Refer to
 .Xr libalias 3
 for details.
+})dnl
 .Pp
 The
 .Fl quiet
@@ -204,7 +207,7 @@ When you are connected to the remote peer and it starts to talk
 detects it and switches to packet mode automatically.
 Once you have
 determined the proper sequence for connecting with the remote host, you
-can write a chat script to define the necessary dialing and login
+can write a chat script to {define} the necessary dialing and login
 procedure for later convenience.
 .It Supports on-demand dialup capability.
 By using
@@ -286,13 +289,14 @@ An extension to PAP and CHAP,
 allows authentication information to be stored in a central or
 distributed database along with various per-user framed connection
 characteristics.
-If
-.Pa libradius
+ifdef({LOCALRAD},{},{If
+.Xr libradius 3
 is available at compile time,
 .Nm
 will use it to make
 .Em RADIUS
 requests when configured to do so.
+})dnl
 .It Supports Proxy Arp.
 .Nm
 can be configured to make one or more proxy arp entries on behalf of
@@ -300,13 +304,13 @@ the peer.
 This allows routing from the peer to the LAN without
 configuring each machine on that LAN.
 .It Supports packet filtering.
-User can define four kinds of filters: the
+User can {define} four kinds of filters: the
 .Em in
 filter for incoming packets, the
 .Em out
 filter for outgoing packets, the
 .Em dial
-filter to define a dialing trigger packet and the
+filter to {define} a dialing trigger packet and the
 .Em alive
 filter for keeping a connection alive with the trigger packet.
 .It Tunnel driver supports bpf.
@@ -424,7 +428,7 @@ When you first run
 you may need to deal with some initial configuration details.
 .Bl -bullet
 .It
-Your kernel must include a tunnel device (the GENERIC kernel includes
+Your kernel must {include} a tunnel device (the GENERIC kernel includes
 one by default).
 If it doesn't, or if you require more than one tun
 interface, you'll need to rebuild your kernel with the following line in
@@ -776,10 +780,10 @@ character is treated as a comment line.
 Leading whitespace are ignored when identifying comment lines.
 .It
 An inclusion is a line beginning with the word
-.Sq !include .
-It must have one argument - the file to include.
+.Sq {!include} .
+It must have one argument - the file to {include}.
 You may wish to
-.Dq !include ~/.ppp.conf
+.Dq {!include} ~/.ppp.conf
 for compatibility with older versions of
 .Nm ppp .
 .It
@@ -945,7 +949,7 @@ You must also specify the destination label in
 to use.
 It must contain the
 .Dq set ifaddr
-command to define the remote peers IP address.
+command to {define} the remote peers IP address.
 (refer to
 .Pa /usr/share/examples/ppp/ppp.conf.sample )
 .Bd -literal -offset indent
@@ -2162,7 +2166,7 @@ In general, the serial speed should be about four times the modem speed.
 .It
 Use the
 .Dq set ifaddr
-command to define the IP address.
+command to {define} the IP address.
 .Bl -bullet
 .It
 If you know what IP address your provider uses, then use it as the remote
@@ -2184,7 +2188,7 @@ specify third and forth arguments of
 This will force your ISP to assign a number.
 (The third argument will
 be ignored as it is less restrictive than the default mask for your
-.Sq src_addr .
+.Sq src_addr ) .
 .El
 .Pp
 An example for a connection where you don't know your IP number or your
@@ -3112,8 +3116,10 @@ The option can only be enabled if network address translation is enabled
 .Pp
 With this option enabled,
 .Nm
-will pass traffic for old interface addresses through the NAT engine
-.Pq see Xr libalias 3 ,
+will pass traffic for old interface addresses through the NAT 
+ifdef({LOCALNAT},{engine,},{engine
+(see
+.Xr libalias 3 ) ,})
 resulting in the ability (in
 .Fl auto
 mode) to properly connect the process that caused the PPP link to
@@ -3301,16 +3307,18 @@ you wish to map to specific machines behind your gateway.
 .It nat deny_incoming yes|no
 If set to yes, this command will refuse all incoming packets where an
 aliasing link doesn't already exist.
-Refer to the
+ifdef({LOCALNAT},{},{Refer to the
 .Sx CONCEPTUAL BACKGROUND
 section of
 .Xr libalias 3
 for a description of what an
 .Dq aliasing link
 is.
+})dnl
 .Pp
-It should be noted under what circumstances an aliasing link is created by
-.Xr libalias 3 .
+It should be noted under what circumstances an aliasing link is 
+ifdef({LOCALNAT},{created.},{created by
+.Xr libalias 3 .})
 It may be necessary to further protect your network from outside
 connections using the
 .Dq set filter
@@ -3394,11 +3402,12 @@ for example:
 This command tells
 .Nm
 to proxy certain connections, redirecting them to a given server.
-Refer to the description of
+ifdef({LOCALNAT},{},{Refer to the description of
 .Fn PacketAliasProxyRule
 in
 .Xr libalias 3
 for details of the available commands.
+})dnl
 .It nat same_ports yes|no
 When enabled, this command will tell the network address translation engine to
 attempt to avoid changing the port number on outgoing packets.
@@ -3407,8 +3416,9 @@ if you want to support protocols such as RPC and LPD which require
 connections to come from a well known port.
 .It nat target Op Ar address
 Set the given target address or clear it if no address is given.
-The target address is used by libalias to specify how to NAT incoming
-packets by default.
+The target address is used
+ifdef({LOCALNAT},{},{by libalias })dnl
+to specify how to NAT incoming packets by default.
 If a target address is not set or if
 .Dq default
 is given, packets are not altered and are allowed to route to the internal
@@ -3416,7 +3426,10 @@ network.
 .Pp
 The target address may be set to
 .Dq MYADDR ,
-in which case libalias will redirect all packets to the interface address.
+in which case 
+ifdef({LOCALNAT},{all packets will be redirected},
+{libalias will redirect all packets})
+to the interface address.
 .It nat use_sockets yes|no
 When enabled, this option tells the network address translation engine to
 create a socket so that it can guarantee a correct incoming ftp data or
@@ -4108,7 +4121,7 @@ In server mode,
 will accept any of the given protocols - but the client
 .Em must
 request one of them.
-If you wish callback to be optional, you must include
+If you wish callback to be optional, you must {include}
 .Ar none
 as an option.
 .Pp
@@ -5188,7 +5201,7 @@ would result in a default route to
 .Pp
 All RADIUS routes are applied after any sticky routes are applied, making
 RADIUS routes override configured routes.
-This also applies for RADIUS routes that don't include the
+This also applies for RADIUS routes that don't {include} the
 .Dv MYADDR
 or
 .Dv HISADDR
@@ -5655,7 +5668,10 @@ This socket is used to pass links between different instances of
 .Xr tcpdump 1 ,
 .Xr telnet 1 ,
 .Xr kldload 2 ,
-.Xr libalias 3 ,
+ifdef({LOCALNAT},{},{.Xr libalias 3 ,
+})dnl
+ifdef({LOCALRAD},{},{.Xr libradius 3 ,
+})dnl
 .Xr syslog 3 ,
 .Xr uucplock 3 ,
 .Xr netgraph 4 ,
