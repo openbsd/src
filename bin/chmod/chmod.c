@@ -1,4 +1,4 @@
-/*	$OpenBSD: chmod.c,v 1.11 2000/07/19 19:42:31 mickey Exp $	*/
+/*	$OpenBSD: chmod.c,v 1.12 2000/07/31 19:02:38 ericj Exp $	*/
 /*	$NetBSD: chmod.c,v 1.12 1995/03/21 09:02:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-static char rcsid[] = "$OpenBSD: chmod.c,v 1.11 2000/07/19 19:42:31 mickey Exp $";
+static char rcsid[] = "$OpenBSD: chmod.c,v 1.12 2000/07/31 19:02:38 ericj Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ main(argc, argv)
 	uid = -1;
 	gid = -1;
 	Hflag = Lflag = Pflag = Rflag = fflag = hflag = 0;
-	while ((ch = getopt(argc, argv, "HLPRXfgorstuwx")) != -1)
+	while ((ch = getopt(argc, argv, "HLPRXfghorstuwx")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
