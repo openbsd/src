@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.12 2005/03/11 23:09:53 beck Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.13 2005/03/11 23:27:12 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -257,7 +257,7 @@ extern char *__progname;
 static int
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-a ip] [-d ip]\n", __progname);
+	fprintf(stderr, "usage: %s [-Tt] [-a key] [-d key]\n", __progname);
 	exit(1);
 }
 
