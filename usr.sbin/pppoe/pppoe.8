@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.8,v 1.3 2000/06/20 05:09:16 jason Exp $
+.\"	$OpenBSD: pppoe.8,v 1.4 2000/06/20 05:11:43 jason Exp $
 .\"
 .\" Copyright (c) 2000 Network Security Technologies, Inc.
 .\" (http://www.netsec.net)
@@ -93,15 +93,15 @@ the specified
 if no
 .Ar system
 is specified):
-.Bl -tag -width XXX -offset XXX
-.It set mtu 1492
-.It set mru 1492
-.It set speed sync
-.It disable acfcomp
-.It deny acfcomp
-.It disable protocomp
-.It set device !/usr/sbin/pppoe
-.El
+.Bd -literal -offset indent
+set mtu 1492
+set mru 1492
+set speed sync
+disable acfcomp
+deny acfcomp
+disable protocomp
+set device !/usr/sbin/pppoe
+.Ed
 .Pp
 Additionally, the authentication mechanism for the connection
 must be specified as well as any other parameters.
