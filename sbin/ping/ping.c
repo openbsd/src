@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.10 1996/12/14 02:16:42 bitblt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.11 1996/12/14 15:35:26 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.10 1996/12/14 02:16:42 bitblt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.11 1996/12/14 15:35:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -606,7 +606,6 @@ pr_pack(buf, cc, from)
 		return;
 	}
 
-
 	/* Now the ICMP part */
 	cc -= hlen;
 	icp = (struct icmp *)(buf + hlen);
@@ -646,7 +645,6 @@ pr_pack(buf, cc, from)
 		if (options & F_FLOOD)
 			(void)write(STDOUT_FILENO, &BSPACE, 1);
 		else {
- 
 			(void)printf("%d bytes from %s: icmp_seq=%u", cc,
 			   inet_ntoa(*(struct in_addr *)&from->sin_addr.s_addr),
 			   icp->icmp_seq);
@@ -677,13 +675,11 @@ pr_pack(buf, cc, from)
 		/* We've got something other than an ECHOREPLY */
 		if (!(options & F_VERBOSE))
 			return;
-                ip2 = (struct ip *) (buf + hlen + sizeof (struct icmp));
-                hlen2 = ip2->ip_hl << 2; 
- 	        if ((cc >= hlen2 + 8) && check_icmph(
-                         (struct ip *)(icp + sizeof (struct icmp))) != 1)
-                     return;
-
-
+		ip2 = (struct ip *) (buf + hlen + sizeof (struct icmp));
+		hlen2 = ip2->ip_hl << 2; 
+		if (cc >= hlen2 + 8 && check_icmph((struct ip *)(icp +
+		    sizeof (struct icmp))) != 1)
+			return;
 		(void)printf("%d bytes from %s: ", cc,
 		    pr_addr(from->sin_addr.s_addr));
 		pr_icmph(icp);
@@ -865,8 +861,6 @@ void
 pr_icmph(icp)
 	struct icmp *icp;
 {
-
-      
 	switch(icp->icmp_type) {
 	case ICMP_ECHOREPLY:
 		(void)printf("Echo Reply\n");
@@ -1106,7 +1100,6 @@ fill(bp, patp)
 	}
 }
 
-
 /* 
  * when we get types of ICMP message with parts of the orig. datagram
  * we want to try to assure ourselves that it is from this instance
@@ -1116,29 +1109,28 @@ int
 check_icmph(iph)
 	struct ip *iph;
 {
-  struct icmp *icmph;
+	struct icmp *icmph;
 
-  /* only allow IP version 4 */
-  if (iph->ip_v != 4)
-    return 0;
+	/* only allow IP version 4 */
+	if (iph->ip_v != 4)
+		return 0;
 
-  /* Only allow ICMP */
-  if (iph->ip_p != IPPROTO_ICMP)
-    return 0;
+	/* Only allow ICMP */
+	if (iph->ip_p != IPPROTO_ICMP)
+		return 0;
 
-  icmph = (struct icmp *) (iph + (4 * iph->ip_hl));
+	icmph = (struct icmp *) (iph + (4 * iph->ip_hl));
 
-  /* make sure it is in response to an ECHO request */
-  if (icmph->icmp_type != 8)
-    return 0;
+	/* make sure it is in response to an ECHO request */
+	if (icmph->icmp_type != 8)
+		return 0;
 
-  /* ok, make sure it has the right id on it */
-  if (icmph->icmp_hun.ih_idseq.icd_id != ident)
-    return 0;
+	/* ok, make sure it has the right id on it */
+	if (icmph->icmp_hun.ih_idseq.icd_id != ident)
+		return 0;
 
-  return 1;
+	return 1;
 }
-
 
 void
 usage()
