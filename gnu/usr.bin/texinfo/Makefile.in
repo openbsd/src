@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 # Makefile.am for texinfo.
-# $Id: Makefile.in,v 1.10 2002/06/10 13:51:01 espie Exp $
+# $Id: Makefile.in,v 1.11 2002/08/29 16:45:57 todd Exp $
 # Process this file with automake to produce Makefile.in in all directories.
 #
 # This file is free software; as a special exception the author gives
@@ -176,7 +176,7 @@ stamp-h1: $(srcdir)/config.in $(top_builddir)/config.status
 
 $(srcdir)/config.in:  $(top_srcdir)/configure.ac $(ACLOCAL_M4) 
 	cd $(top_srcdir) && $(AUTOHEADER)
-	touch $(srcdir)/config.in
+	#touch $(srcdir)/config.in
 
 distclean-hdr:
 	-rm -f config.h
