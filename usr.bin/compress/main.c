@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.41 2003/07/27 19:04:22 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.42 2003/07/29 07:09:07 millert Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.41 2003/07/27 19:04:22 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.42 2003/07/29 07:09:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -628,7 +628,7 @@ decompress(const char *in, char *out, const struct compressor *method,
 		if (list) {
 			if (info.mtime == 0)
 				info.mtime = (u_int32_t)sb->st_mtime;
-			list_stats(pipin ? "stdout" : out, method, &info);
+			list_stats(cat ? "stdout" : out, method, &info);
 		} else if (verbose > 0) {
 			verbose_info(out, info.total_in, info.total_out,
 			    info.hlen);
