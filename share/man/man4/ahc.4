@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ahc.4,v 1.9 2000/04/03 21:19:35 aaron Exp $
+.\"	$OpenBSD: ahc.4,v 1.10 2000/04/09 20:53:59 aaron Exp $
 .\"	$NetBSD: ahc.4,v 1.1.2.1 1996/08/25 17:22:14 thorpej Exp $
 .\"
 .\" Copyright (c) 1995, 1996
@@ -105,7 +105,7 @@ and
 .Pp
 Driver features include support for twin and wide busses,
 fast, ultra and ultra2 synchronous transfers depending on controller type,
-and SCB paging.
+tagged queueing, and SCB paging.
 .Pp
 Memory mapped I/O can be enabled for PCI devices with the
 .Dq Dv AHC_ALLOW_MEMIO
