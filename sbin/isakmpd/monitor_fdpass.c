@@ -94,6 +94,10 @@ mm_receive_fd(int socket)
 		return -1;
 	}
 	cmsg = CMSG_FIRSTHDR(&msg);
+	if (cmsg == NULL) {
+		log_error("%s: no message header", __func__);
+		return -1;
+	}
 	if (cmsg->cmsg_type != SCM_RIGHTS) {
 		log_error("%s: expected type %d got %d", __func__, SCM_RIGHTS,
 		    cmsg->cmsg_type);
