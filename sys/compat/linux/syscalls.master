@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.35 2002/10/28 03:35:53 fgsch Exp $
+	$OpenBSD: syscalls.master,v 1.36 2002/10/30 20:10:48 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -269,19 +269,19 @@
 				struct timespec *rmtp); }
 163	STD		{ int linux_sys_mremap(void *old_address, size_t old_size, \
 			    size_t new_size, long flags); }
-164	STD		{ int linux_sys_setresuid16(uid_t ruid, uid_t euid, \
-			    uid_t suid); }
-165	NOARGS		linux_getresuid16 { int linux_sys_getresuid( \
-			    uid_t *ruid, uid_t *euid, uid_t *suid); }
+164	STD		{ int linux_sys_setresuid16(u_int16_t ruid, \
+			    u_int16_t euid, u_int16_t suid); }
+165	STD		{ int linux_sys_getresuid16(u_int16_t *ruid, \
+			    u_int16_t *euid, u_int16_t *suid); }
 166	STD		{ int linux_sys_vm86(void); }
 167	STD		{ int linux_sys_query_module(void); }
 168	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 169	STD		{ int linux_sys_nfsservctl(void); }
-170	STD		{ int linux_sys_setresgid16(gid_t rgid, gid_t egid, \
-			    gid_t sgid); }
-171	STD		{ int linux_sys_getresgid16(gid_t *rgid, gid_t *egid, \
-			    gid_t *sgid); }
+170	STD		{ int linux_sys_setresgid16(u_int16_t rgid, \
+			    u_int16_t egid, u_int16_t sgid); }
+171	STD		{ int linux_sys_getresgid16(u_int16_t *rgid, \
+			    u_int16_t *egid, u_int16_t *sgid); }
 172	STD		{ int linux_sys_prctl(void); }
 173	STD     	{ int linux_sys_rt_sigreturn( \
 	                    struct linux_rt_sigframe *sfp); }
@@ -336,11 +336,14 @@
 205	NOARGS		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
 206	NOARGS		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
 207	NOARGS		{ int linux_sys_fchown(void); }
-208	NOARGS		{ int linux_sys_setresuid(void); }
-209	STD		{ int linux_sys_getresuid(uid_t *ruid, uid_t *euid, \
+208	NOARGS		{ int sys_setresuid(uid_t ruid, uid_t euid, \
+			    uid_t suid); }
+209	NOARGS		{ int sys_getresuid(uid_t *ruid, uid_t *euid, \
 			    uid_t *suid); }
-210	NOARGS		{ int linux_sys_setresgid(void); }
-211	NOARGS		{ int linux_sys_getresgid(void); }
+210	NOARGS		{ int sys_setresgid(gid_t rgid, gid_t egid, \
+			    gid_t sgid); }
+211	NOARGS		{ int sys_getresgid(gid_t *rgid, gid_t *egid, \
+			    gid_t *sgid); }
 212	NOARGS		{ int linux_sys_chown(void); }
 213	NOARGS		{ int sys_setuid(uid_t uid); }
 214	NOARGS		{ int sys_setgid(gid_t gid); }

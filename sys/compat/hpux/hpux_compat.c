@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_compat.c,v 1.20 2002/08/02 18:06:25 millert Exp $	*/
+/*	$OpenBSD: hpux_compat.c,v 1.21 2002/10/30 20:10:48 millert Exp $	*/
 /*	$NetBSD: hpux_compat.c,v 1.35 1997/05/08 16:19:48 mycroft Exp $	*/
 
 /*
@@ -994,31 +994,6 @@ hpux_sys_setpgrp2(p, v, retval)
 	if (SCARG(uap, pgid) < 0 || SCARG(uap, pgid) >= 30000)
 		return (EINVAL);
 	return (sys_setpgid(p, uap, retval));
-}
-
-/*
- * XXX Same as BSD setre[ug]id right now.  Need to consider saved ids.
- */
-int
-hpux_sys_setresuid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct hpux_sys_setresuid_args *uap = v;
-
-	return (compat_43_sys_setreuid(p, uap, retval));
-}
-
-int
-hpux_sys_setresgid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct hpux_sys_setresgid_args *uap = v;
-
-	return (compat_43_sys_setregid(p, uap, retval));
 }
 
 int

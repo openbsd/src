@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.8 2002/03/14 00:42:25 miod Exp $
+	$OpenBSD: syscalls.master,v 1.9 2002/10/30 20:10:48 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.13 1997/03/16 03:48:04 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -195,8 +195,10 @@
 123	NOARGS		{ int sys_fchown(int fd, int uid, int gid); }
 124	NOARGS		{ int sys_fchmod(int fd, int mode); }
 125	UNIMPL
-126	STD		{ int hpux_sys_setresuid(uid_t r, uid_t e, uid_t s); }
-127	STD		{ int hpux_sys_setresgid(gid_t r, gid_t e, gid_t s); }
+126	NOARGS		{ int sys_setresuid(uid_t ruid, uid_t uide, \
+			    uid_t suid); }
+127	NOARGS		{ int sys_setresgid(gid_t rgid, gid_t egid, \
+			    gid_t sgid); }
 128	STD		{ int hpux_sys_rename(char *from, char *to); }
 129	STD		{ int hpux_sys_truncate(char *path, long length); }
 130	NOARGS		{ int compat_43_sys_ftruncate(int fd, long length); }

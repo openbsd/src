@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.18 2002/07/06 19:14:20 nordin Exp $
+	$OpenBSD: syscalls.master,v 1.19 2002/10/30 20:10:48 millert Exp $
 ;	$NetBSD: syscalls.master,v 1.3 1995/10/10 18:28:40 mycroft Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -531,8 +531,10 @@
 308	UNIMPL		kldstat
 309	UNIMPL		kldfirstmod
 310	UNIMPL		getsid
-311	UNIMPL		setresuid
-312	UNIMPL		setresgid
+311	NOARGS		{ int sys_setresuid(uid_t ruid, uid_t euid, \
+			    uid_t suid); }
+312	NOARGS		{ int sys_setresgid(gid_t rgid, gid_t egid, \
+			    gid_t sgid); }
 313	UNIMPL		signanosleep
 314	UNIMPL		aio_return
 315	UNIMPL		aio_suspend
