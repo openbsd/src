@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.68 2001/06/08 21:29:58 angelos Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.69 2001/06/26 18:34:41 angelos Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -867,7 +867,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    sa.tdb_spi = reserve_spi(sprng->sadb_spirange_min,
 				     sprng->sadb_spirange_max,
 				     &sa.tdb_src, &sa.tdb_dst,
-				     sa.tdb_sproto, &rval);
+				     sa.tdb_sproto, &rval, smsg->sadb_msg_seq);
 	    if (sa.tdb_spi == 0)
 	      goto ret;
 

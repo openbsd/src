@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.110 2001/06/26 03:52:42 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.111 2001/06/26 18:34:40 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -287,6 +287,7 @@ struct tdb {				/* tunnel descriptor block */
 	struct timeout	tdb_stimer_tmo;
 	struct timeout	tdb_sfirst_tmo;
 
+	u_int32_t	tdb_seq;		/* Tracking number for PFKEY */
 	u_int32_t	tdb_exp_allocations;	/* Expire after so many flows */
 	u_int32_t	tdb_soft_allocations;	/* Expiration warning */
 	u_int32_t	tdb_cur_allocations;	/* Total number of allocs */
@@ -490,12 +491,12 @@ extern char *ipsp_address(union sockaddr_union);
 /* TDB management routines */
 extern void tdb_add_inp(struct tdb *, struct inpcb *, int);
 extern u_int32_t reserve_spi(u_int32_t, u_int32_t, union sockaddr_union *,
-			     union sockaddr_union *, u_int8_t, int *);
+    union sockaddr_union *, u_int8_t, int *, u_int32_t);
 extern struct tdb *gettdb(u_int32_t, union sockaddr_union *, u_int8_t);
 extern struct tdb *gettdbbyaddr(union sockaddr_union *, struct ipsec_policy *,
-				struct mbuf *, int);
+    struct mbuf *, int);
 extern struct tdb *gettdbbysrc(union sockaddr_union *, struct ipsec_policy *,
-			       struct mbuf *, int);
+    struct mbuf *, int);
 extern void puttdb(struct tdb *);
 extern void tdb_delete(struct tdb *);
 extern struct tdb *tdb_alloc(void);
@@ -520,7 +521,7 @@ extern int ip4_input6 __P((struct mbuf **, int *, int));
 
 /* XF_ETHERIP */
 extern int etherip_output(struct mbuf *, struct tdb *, struct mbuf **,
-			  int, int);
+    int, int);
 extern void etherip_input __P((struct mbuf *, ...));
 
 /* XF_AH */
@@ -569,19 +570,19 @@ extern int esp6_input_cb __P((struct mbuf *, int, int));
 /* XF_TCPSIGNATURE */
 extern int tcp_signature_tdb_attach __P((void));
 extern int tcp_signature_tdb_init __P((struct tdb *, struct xformsw *,
-				       struct ipsecinit *));
+    struct ipsecinit *));
 extern int tcp_signature_tdb_zeroize __P((struct tdb *));
 extern int tcp_signature_tdb_input __P((struct mbuf *, struct tdb *, int,
-					int));
+    int));
 extern int tcp_signature_tdb_output __P((struct mbuf *, struct tdb *,
-					 struct mbuf **, int, int));
+    struct mbuf **, int, int));
 
 /* Padding */
 extern caddr_t m_pad(struct mbuf *, int);
 
 /* Replay window */
 extern int checkreplaywindow32(u_int32_t, u_int32_t, u_int32_t *, u_int32_t,
-                               u_int32_t *);
+    u_int32_t *);
 
 extern unsigned char ipseczeroes[];
 
@@ -589,17 +590,15 @@ extern unsigned char ipseczeroes[];
 extern int ipsp_process_packet(struct mbuf *, struct tdb *, int, int);
 extern int ipsp_process_done(struct mbuf *, struct tdb *);
 extern struct tdb *ipsp_spd_lookup(struct mbuf *, int, int, int *, int,
-                                   struct tdb *, struct inpcb *);
+    struct tdb *, struct inpcb *);
 extern struct tdb *ipsp_spd_inp(struct mbuf *, int, int, int *, int,
     struct tdb *, struct inpcb *, struct ipsec_policy *);
 extern int ipsec_common_input_cb(struct mbuf *, struct tdb *, int, int,
-				 struct m_tag *);
+    struct m_tag *);
 extern int ipsp_acquire_sa(struct ipsec_policy *, union sockaddr_union *,
-			   union sockaddr_union *, struct sockaddr_encap *,
-			   struct mbuf *);
+    union sockaddr_union *, struct sockaddr_encap *, struct mbuf *);
 extern struct ipsec_policy *ipsec_add_policy(struct sockaddr_encap *,
-					     struct sockaddr_encap *,
-					     union sockaddr_union *, int, int);
+    struct sockaddr_encap *, union sockaddr_union *, int, int);
 extern int ipsec_delete_policy(struct ipsec_policy *);
 extern struct ipsec_acquire *ipsp_pending_acquire(union sockaddr_union *);
 extern struct ipsec_acquire *ipsec_get_acquire(u_int32_t);

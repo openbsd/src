@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.26 2001/06/26 03:52:42 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.27 2001/06/26 18:34:40 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -399,7 +399,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		switch (ipo->ipo_type) {
 		case IPSP_IPSEC_REQUIRE:
 			/* Acquire SA through key management. */
-			if (ipsp_acquire_sa(ipo, dignore ? &sdst : &ipo->ipo_dst,
+			if (ipsp_acquire_sa(ipo,
+			    dignore ? &sdst : &ipo->ipo_dst,
 			    signore ? NULL : &ipo->ipo_src, ddst, m) != 0) {
 				*error = EACCES;
 				return NULL;
@@ -412,7 +413,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 		case IPSP_IPSEC_ACQUIRE:
 			/* Acquire SA through key management. */
-			if (ipsp_acquire_sa(ipo, dignore ? &sdst : &ipo->ipo_dst,
+			if (ipsp_acquire_sa(ipo,
+			    dignore ? &sdst : &ipo->ipo_dst,
 			    signore ? NULL : &ipo->ipo_src, ddst, NULL) != 0) {
 				*error = EACCES;
 				return NULL;
@@ -478,7 +480,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			 * policy.
 			 */
 			if (ipo->ipo_sproto == ipo->ipo_tdb->tdb_sproto &&
-			    !bcmp(&ipo->ipo_tdb->tdb_src, dignore ? &ssrc : &ipo->ipo_dst,
+			    !bcmp(&ipo->ipo_tdb->tdb_src
+				, dignore ? &ssrc : &ipo->ipo_dst,
 				ipo->ipo_tdb->tdb_src.sa.sa_len))
 				goto skipinputsearch;
 
@@ -564,7 +567,8 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 		    0, (struct rtentry **) 0);
 
 	if (ipo->ipo_tdb)
-		TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo, ipo_tdb_next);
+		TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
+		    ipo_tdb_next);
 
 	TAILQ_REMOVE(&ipsec_policy_head, ipo, ipo_list);
 
@@ -672,10 +676,10 @@ ipsp_clear_acquire(struct tdb *tdb)
 					    sizeof(struct ip))
 						break;
 
-					/* Same as in ip_output() --
-                                         *  massage the header.
+					/*
+					 * Same as in ip_output() --
+                                         * massage the header.
 					 */
-
 					ip->ip_len =
 					    htons((u_short) ip->ip_len);
 					ip->ip_off =

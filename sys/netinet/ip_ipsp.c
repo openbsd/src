@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.136 2001/06/26 03:52:40 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.137 2001/06/26 18:34:39 angelos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -180,7 +180,7 @@ tdb_hash(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
  */
 u_int32_t
 reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
-    union sockaddr_union *dst, u_int8_t sproto, int *errval)
+    union sockaddr_union *dst, u_int8_t sproto, int *errval, u_int32_t seq)
 {
 	struct tdb *tdbp;
 	u_int32_t spi;
@@ -229,6 +229,7 @@ reserve_spi(u_int32_t sspi, u_int32_t tspi, union sockaddr_union *src,
 		tdbp->tdb_sproto = sproto;
 		tdbp->tdb_flags |= TDBF_INVALID; /* Mark SA invalid for now */
 		tdbp->tdb_satype = SADB_SATYPE_UNSPEC;
+		tdbp->tdb_seq = seq;
 		puttdb(tdbp);
 
 		/* Setup a "silent" expiration (since TDBF_INVALID's set) */
