@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.20 2002/06/09 01:58:54 kjell Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.21 2002/07/01 00:00:31 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.20 2002/06/09 01:58:54 kjell Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.21 2002/07/01 00:00:31 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -388,6 +388,7 @@ main(argc, argv, envp)
 	if (chroot_dir != NULL) {
 		struct stat sb;
 
+		tzset();
 		if (chroot(chroot_dir) < 0) {
 			fprintf(stderr, "chroot %s failed: %s\n", chroot_dir,
 				strerror(errno));
