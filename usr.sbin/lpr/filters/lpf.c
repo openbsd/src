@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpf.c,v 1.10 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: lpf.c,v 1.11 2004/04/14 20:52:20 millert Exp $	*/
 /*	$NetBSD: lpf.c,v 1.8 2000/04/29 00:12:32 abs Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: lpf.c,v 1.10 2003/06/02 23:36:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpf.c,v 1.11 2004/04/14 20:52:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,7 @@ main(int argc, char **argv)
 	int done, linedone, maxrep, ch;
 	char *limit;
 
-	while ((ch = getopt(argc, argv, "crh:i:l:n:w:")) != -1) {
+	while ((ch = getopt(argc, argv, "crh:i:j:l:n:w:")) != -1) {
 		switch (ch) {
 		case 'n':
 			name = optarg;
@@ -107,6 +107,8 @@ main(int argc, char **argv)
 			break;
 		case 'c':	/* Print control chars */
 			literal++;
+			break;
+		case 'j':	/* ignore job name */
 			break;
 		default:
 			usage();

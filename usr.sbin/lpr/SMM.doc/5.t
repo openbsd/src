@@ -1,4 +1,4 @@
-.\" $OpenBSD: 5.t,v 1.4 2003/06/02 23:36:53 millert Exp $
+.\" $OpenBSD: 5.t,v 1.5 2004/04/14 20:52:20 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,7 +70,7 @@ The
 .B if
 filter is passed the following parameters.
 .DS
-\fIfilter\fP [\|\fB\-c\fP\|] \fB\-w\fPwidth \fB\-l\fPlength \fB\-i\fPindent \fB\-n\fP login \fB\-h\fP host accounting_file
+\fIfilter\fP [\|\fB\-c\fP\|] \fB\-w\fPwidth \fB\-l\fPlength \fB\-i\fPindent \fB\-n\fP login \fB\-j\fP jobname \fB\-h\fP host accounting_file
 .DE
 The
 .B \-c
@@ -94,10 +94,13 @@ and
 parameters specify the login name and host name of the job owner.
 The last argument is the name of the accounting file from
 .IR printcap .
+The
+.B \-j
+parameter is optional and specifies the name of the print job if available.
 .PP
 All other filters are called with the following arguments:
 .DS
-\fIfilter\fP \fB\-x\fPwidth \fB\-y\fPlength \fB\-n\fP login \fB\-h\fP host accounting_file
+\fIfilter\fP \fB\-x\fPwidth \fB\-y\fPlength \fB\-n\fP login \fB\-j\fP jobname \fB\-h\fP host accounting_file
 .DE
 The
 .B \-x

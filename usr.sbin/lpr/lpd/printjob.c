@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.38 2004/04/13 23:23:02 millert Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.39 2004/04/14 20:52:20 millert Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -545,7 +545,7 @@ print(int format, char *file)
 	ssize_t nread;
 	struct stat stb;
 	pid_t pid;
-	char *prog, *av[15], buf[BUFSIZ];
+	char *prog, *av[17], buf[BUFSIZ];
 	int fd, status, serrno;
 	int n, fi, fo, p[2], stopped = 0, nofile;
 
@@ -702,6 +702,10 @@ print(int format, char *file)
 		av[0] = prog;
 	av[n++] = "-n";
 	av[n++] = logname;
+	if (*jobname != '\0' && strcmp(jobname, " ") != 0) {
+		av[n++] = "-j";
+		av[n++] = jobname;
+	}
 	av[n++] = "-h";
 	av[n++] = fromhost;
 	av[n++] = AF;

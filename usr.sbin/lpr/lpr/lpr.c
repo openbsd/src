@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpr.c,v 1.34 2003/06/02 23:36:53 millert Exp $ */
+/*	$OpenBSD: lpr.c,v 1.35 2004/04/14 20:52:20 millert Exp $ */
 /*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
@@ -46,7 +46,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.34 2003/06/02 23:36:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.35 2004/04/14 20:52:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -301,7 +301,7 @@ main(int argc, char **argv)
 	tfd = nfile(tfname);
 	card('H', host);
 	card('P', person);
-	if (hdr && !SH) {
+	if (hdr) {
 		if (jobname == NULL) {
 			if (argc == 0)
 				jobname = "stdin";
