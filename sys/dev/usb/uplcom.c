@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.11 2003/11/07 20:22:35 jmc Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.12 2004/05/26 22:25:54 markus Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -167,6 +167,8 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_TDK, USB_PRODUCT_TDK_UPA9664 },
 	/* Ericsson DCU-10 & DCU-11, made by Susteen, Inc. */
 	{ USB_VENDOR_SUSTEEN, USB_PRODUCT_SUSTEEN_DCU11 },
+	/* Sitecom USB to Serial. */
+	{ USB_VENDOR_SITECOM, USB_PRODUCT_SITECOM_CN104 },
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 
