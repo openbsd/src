@@ -84,15 +84,15 @@ int if_register_socket (info)
 	flag = IPSEC_LEVEL_BYPASS;
 	if (setsockopt (sock, IPPROTO_IP, IP_AUTH_LEVEL,
 			(char *)&flag, sizeof flag) == -1)
-		if (errno != ENODEV)
+		if (errno != EOPNOTSUPP)
 			error ("Can't bypass auth IPsec on dhcp socket: %m");
 	if (setsockopt (sock, IPPROTO_IP, IP_ESP_TRANS_LEVEL,
 			(char *)&flag, sizeof flag) == -1)
-		if (errno != ENODEV)
+		if (errno != EOPNOTSUPP)
 			error ("Can't bypass ESP transport on dhcp socket: %m");
 	if (setsockopt (sock, IPPROTO_IP, IP_ESP_NETWORK_LEVEL,
 			(char *)&flag, sizeof flag) == -1)
-		if (errno != ENODEV)
+		if (errno != EOPNOTSUPP)
 			error ("Can't bypass ESP network on dhcp socket: %m");
 
 	return sock;
