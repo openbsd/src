@@ -37,7 +37,7 @@ author.
 <td>
 
 <div align=right>
-<table cellspacing=0 cellpadding=5 border=0 bgcolor="#ccccff" width=300>
+<table cellspacing=0 cellpadding=5 border=0 bgcolor="#ccccff" width=350>
 <tr>
 <td bgcolor="#333399">
 <font face="Arial,Helvetica" color="#ccccff">
@@ -69,7 +69,7 @@ author.
     <a name="<get-var ref>"></a>
     <strong id="faq">%body</strong>\
     &nbsp;&nbsp;
-    [<a href="http://www.modssl.org/docs/2.4/ssl_faq.html#<get-var ref>"><b>L</b></a>]
+    [<a href="http://www.modssl.org/docs/2.5/ssl_faq.html#<get-var ref>"><b>L</b></a>]
     <p>
 <restore toc>
 <restore ref>
@@ -140,6 +140,57 @@ it is originally derived?
     possibilities sufficient for your situation?"), quality of problem tracing
     ("is it possible for you to easily trace down the problems via logfiles,
     etc?"), etc. pp.
+
+<faq ref="apssl-diff" toc="mod_ssl vs. commercial alternatives?">
+What are the major differences between mod_ssl and
+the commercial alternatives like Raven or Stronghold?
+</faq>
+
+    As of this writing (end of the year 1999) the major difference is
+    the RSA license which one receives (very cheaply in contrast to
+    a direct licensing from RSA DSI) with the commercial Apache SSL
+    products. On the other hand, one needs this license only in the
+    US, of course. So for non-US citizens this point is useless. And
+    even for US citizens the situations is at least solved next year
+    (September 20th, 2000) when the RSA patent expires.
+        
+    <p>
+    Second, there is the point that one has guarrantied support from
+    the commercial vendors. On the other hand, if you monitored the
+    Open Source quality of mod_ssl and the support activities
+    found on <a href="mailto:modssl-users@modssl.org">
+    <code>modssl-users@modssl.org</code></a>, you could ask yourself
+    whether you are really convinced that you can get better support
+    from a commercial vendor.
+    
+    <p>
+    Third, people often think they would receive perhaps at least a
+    better technical SSL solution than mod_ssl from the commercial
+    vendors. But this is not really the truth, because all commercial
+    alternatives (Raven 1.4.x, Stronghold 3.x, RedHat SWS 2.x, etc.)
+    <i>are</i> actually based on mod_ssl and OpenSSL. The reason for
+    this common misunderstanding is mainly because some vendors make no
+    attempt to make it reasonably clear that their product is actually
+    mod_ssl based. So, do not think, just because the commercial
+    alternatives are usually more expensive, that you are also receiving
+    an alternative <i>technical</i> SSL solution. This is usually not
+    the case. Actually the vendors versions of Apache, mod_ssl and OpenSSL
+    often stay behind the latest free versions and this way still do not
+    include perhaps important bug and security fixes. On the other hand,
+    it sometimes occurs that a vendor version includes useful changes
+    which are not available through the official freely available
+    packages. But most vendors play fair and contribute back those
+    changes to the free software world, of course.
+    
+    <p>
+    So, in short: There are lots of commercial versions of the popular
+    Apache+mod_ssl+OpenSSL server combination available. And until the
+    RSA patent expires in the year 2000, US citizens have no chance,
+    of course. They have to buy one of the commercial versions. Non-US
+    citizens are not forced into this situation and should decide
+    carefully whether they really need to buy a commercial version or
+    whether it would not be sufficient to directly use the free and
+    official versions of the Apache, mod_ssl and OpenSSL packages.
 
 <faq ref="what-version" toc="mod_ssl/Apache versions?">
 How do I know which mod_ssl version is for which Apache version?
@@ -302,6 +353,18 @@ When I use the MM library and the shared memory cache each process grows
     all processes, i.e. the 1.5MB are allocated only once per Apache
     instance and not once per Apache server process.
 
+<faq ref="mmpath" toc="Shared memory and pathname?">
+Apache creates files in a directory declared by the internal
+EAPI_MM_CORE_PATH define. Is there a way to override the path using a
+configuration directive?
+</faq>
+
+    No, there is not configuration directive, because for technical
+    bootstrapping reasons, a directive not possible at all. Instead
+    use ``<code>CFLAGS='-DEAPI_MM_CORE_PATH="/path/to/wherever/"'
+    ./configure ...</code>'' when building Apache or use option
+    <b>-d</b> when starting <code>httpd</code>.
+
 </ul>
 
 <p>
@@ -351,7 +414,7 @@ How can I speak HTTPS manually for testing purposes?
     SSL handshake.  For a more general command line client which directly
     understands both the HTTP and HTTPS scheme, can perform GET and POST
     methods, can use a proxy, supports byte ranges, etc. you should have a
-    look at nifty <a href="http://www.fts.frontec.se/~dast/curl/">cURL</a>
+    look at nifty <a href="http://curl.haxx.nu/">cURL</a>
     tool.  With it you can directly check if your Apache is running fine on
     Port 80 and 443 as following:
     <p>
@@ -383,6 +446,14 @@ installed Apache+mod_ssl server via HTTPS?
     ``<tt>&lt;VirtualHost&gt;</tt>'' directives.  And if all fails, please do
     yourself a favor and start over with the default configuration mod_ssl
     provides you. 
+
+<faq ref="env-vars" toc="Why are the SSL_XXX variables missing?">
+In my CGI programs and SSI scripts the various documented
+<code>SSL_XXX</code> variables do not exists. Why?
+</faq>
+
+    Just make sure you have ``<code>SSLOptions +StdEnvVars</code>''
+    enabled for the context of your CGI/SSI requests.
 
 <faq ref="relative-links" toc="How to switch with relative hyperlinks?">
 How can I use relative hyperlinks to switch between HTTP and HTTPS?
@@ -807,6 +878,20 @@ ID) also with mod_ssl?
     automatically handled by mod_ssl under run-time. For details please read
     the <tt>README.GlobalID</tt> document in the mod_ssl distribution.
 
+<faq ref="gid" toc="Global IDs and Cert Chain?">
+After I have installed my new Verisign Global ID server certificate, the
+browsers complain that they cannot verify the server certificate?
+</faq>
+
+    That is because Verisign uses an intermediate CA certificate between
+    the root CA certificate (which is installed in the browsers) and
+    the server certificate (which you installed in the server). You
+    should have received this additional CA certificate from Verisign.
+    If not, complain to them. Then configure this certificate with the
+    <code>SSLCertificateChainFile</code> directive in the server. This
+    makes sure the intermediate CA certificate is send to the browser
+    and this way fills the gap in the certificate chain.
+
 </ul>
 
 <p>
@@ -823,6 +908,16 @@ Why has my webserver a higher load now that I run SSL there?
     number crunching. And because when you request a webpage via HTTPS even
     the images are transfered encrypted. So, when you have a lot of HTTPS
     traffic the load increases.
+
+<faq ref="random" toc="Why are connections horribly slow?">
+Often HTTPS connections to my server require up to 30 seconds for establishing
+the connection, although sometimes it works faster?
+</faq>
+
+    Usually this is caused by using a <code>/dev/random</code> device for
+    <code>SSLRandomSeed</code> which is blocking in read(2) calls if not
+    enough entropy is available. Read more about this problem in the refernce
+    chapter under <code>SSLRandomSeed</code>.
 
 <faq ref="ciphers" toc="Which ciphers are supported?">
 What SSL Ciphers are supported by mod_ssl?
@@ -846,6 +941,35 @@ What SSL Ciphers are supported by mod_ssl?
     run the following command:
     <p>
     <code><strong>$ openssl ciphers -v</strong></code><br>
+
+<faq ref="cipher-adh" toc="How to use Anonymous-DH ciphers">
+I want to use Anonymous Diffie-Hellman (ADH) ciphers, but I always get ``no
+shared cipher'' errors?
+</faq>
+
+    In order to use Anonymous Diffie-Hellman (ADH) ciphers, it is not enough
+    to just put ``<code>ADH</code>'' into your <code>SSLCipherSuite</code>.
+    Additionally you have to build OpenSSL with
+    ``<code>-DSSL_ALLOW_ADH</code>''. Because per default OpenSSL does not
+    allow ADH ciphers for security reasons. So if you are actually enabling
+    these ciphers make sure you are informed about the side-effects.
+
+<faq ref="cipher-shared" toc="Why do I get 'no shared ciphers'?">
+I always just get a 'no shared ciphers' error if
+I try to connect to my freshly installed server?
+</faq>
+  
+    Either you have messed up your <code>SSLCipherSuite</code>
+    directive (compare it with the pre-configured example in
+    <code>httpd.conf-dist</code>) or you have choosen the DSA/DH
+    algorithms instead of RSA under "<code>make certificate</code>"
+    and ignored or overseen the warnings. Because if you have choosen
+    DSA/DH, then your server no longer speaks RSA-based SSL ciphers
+    (at least not until you also configure an additional RSA-based
+    certificate/key pair). But current browsers like NS or IE only speak
+    RSA ciphers. The result is the "no shared ciphers" error. To fix
+    this, regenerate your server certificate/key pair and this time
+    choose the RSA algorithm.
 
 <faq ref="vhosts" toc="HTTPS and name-based vhosts">
 Why can't I use SSL with name-based/non-IP-based virtual hosts?
@@ -927,8 +1051,8 @@ In case of problems you should search here first.
 <p>
 <ol>
 <li><em>Answers in the User Manual's F.A.Q. List (this)</em><br>
-    <a href="http://www.modssl.org/docs/2.4/ssl_faq.html">
-    http://www.modssl.org/docs/2.4/ssl_faq.html</a><br>
+    <a href="http://www.modssl.org/docs/2.5/ssl_faq.html">
+    http://www.modssl.org/docs/2.5/ssl_faq.html</a><br>
     First look inside the F.A.Q. (this text), perhaps your problem is such
     popular that it was already answered a lot of times in the past.
 <p>
@@ -1047,11 +1171,11 @@ Follow the following steps:
     make sure that the core-dump file can be written. You then should get a
     <code>/tmp/core</code> or <code>/tmp/httpd.core</code> file. When you
     don't get this, try to run your server under an UID != 0 (root), because
-    most "current" kernels Most "current" kernels do not allow a process to
-    dump core after it has done a <code>setuid()</code> (unless it does an
-    <code>exec()</code>) for security reasons (there can be privileged
-    information left over in memory).  Additionally you can run
-    ``<code>/path/to/httpd -X</code>'' manually to force Apache not not fork.
+    most "current" kernels do not allow a process to dump core after it has
+    done a <code>setuid()</code> (unless it does an <code>exec()</code>) for
+    security reasons (there can be privileged information left over in
+    memory).  Additionally you can run ``<code>/path/to/httpd -X</code>''
+    manually to force Apache not not fork.
 <p>
 <li>Analyze the core-dump. For this run ``<code>gdb /path/to/httpd
     /tmp/httpd.core</code>'' or a similar command has to run. In GDB you then

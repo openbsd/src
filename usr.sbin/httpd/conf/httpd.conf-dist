@@ -319,7 +319,7 @@ DocumentRoot "@@ServerRoot@@/htdocs"
 # Note that "MultiViews" must be named *explicitly* --- "Options All"
 # doesn't give it to you.
 #
-    Options Indexes FollowSymLinks
+    Options Indexes FollowSymLinks MultiViews
 
 #
 # This controls which options the .htaccess files in directories can
@@ -352,10 +352,10 @@ UserDir public_html
 #        Order allow,deny
 #        Allow from all
 #    </Limit>
-#    <Limit PUT DELETE PATCH PROPPATCH MKCOL COPY MOVE LOCK UNLOCK>
+#    <LimitExcept GET POST OPTIONS PROPFIND>
 #        Order deny,allow
 #        Deny from all
-#    </Limit>
+#    </LimitExcept>
 #</Directory>
 
 #
@@ -638,34 +638,64 @@ AddEncoding x-gzip gz tgz
 #
 # AddLanguage allows you to specify the language of a document. You can
 # then use content negotiation to give a browser a file in a language
-# it can understand.  Note that the suffix does not have to be the same
-# as the language keyword --- those with documents in Polish (whose
-# net-standard language code is pl) may wish to use "AddLanguage pl .po" 
-# to avoid the ambiguity with the common suffix for perl scripts.
+# it can understand.  
 #
+# Note 1: The suffix does not have to be the same as the language 
+# keyword --- those with documents in Polish (whose net-standard 
+# language code is pl) may wish to use "AddLanguage pl .po" to 
+# avoid the ambiguity with the common suffix for perl scripts.
+#
+# Note 2: The example entries below illustrate that in quite
+# some cases the two character 'Language' abbriviation is not
+# identical to the two character 'Country' code for it's country,
+# E.g. 'Danmark/dk' versus 'Danish/da'.
+#
+# Note 3: In the case of 'ltz' we violate the RFC by using a three char 
+# specifier. But there is 'work in progress' to fix this and get 
+# the reference data for rfc1766 cleaned up.
+#
+# Danish (da) - Dutch (nl) - English (en) - Estonian (ee)
+# French (fr) - German (de) - Greek-Modern (el)
+# Italian (it) -Portugese (pt) - Luxembourgeois* (ltz)
+# Spanish (es) - Swedish (sv) - Catalan (ca) - Czech(cz)
+#
+AddLanguage da .dk
+AddLanguage nl .nl
 AddLanguage en .en
+AddLanguage et .ee
 AddLanguage fr .fr
 AddLanguage de .de
-AddLanguage da .da
 AddLanguage el .el
 AddLanguage it .it
+AddLanguage pt .pt
+AddLanguage ltz .lu
+AddLanguage ca .ca
+AddLanguage es .es
+AddLanguage sv .se
+AddLanguage cz .cz
 
-#
 # LanguagePriority allows you to give precedence to some languages
 # in case of a tie during content negotiation.
-# Just list the languages in decreasing order of preference.
 #
-LanguagePriority en fr de
+# Just list the languages in decreasing order of preference. We have
+# more or less alphabetized them here. You probably want to change this.
+#
+LanguagePriority en da nl et fr de el it pt ltz ca es sv
 
 #
 # AddType allows you to tweak mime.types without actually editing it, or to
 # make certain files to be certain types.
 #
-# For example, the PHP3 module (not part of the Apache distribution - see
+# For example, the PHP 3.x module (not part of the Apache distribution - see
 # http://www.php.net) will typically use:
 #
 #AddType application/x-httpd-php3 .php3
 #AddType application/x-httpd-php3-source .phps
+#
+# And for PHP 4.x, use:
+#
+#AddType application/x-httpd-php .php
+#AddType application/x-httpd-php-source .phps
 
 AddType application/x-tar .tgz
 
@@ -904,6 +934,13 @@ SSLMutex  file:logs/ssl_mutex
 #   Pseudo Random Number Generator (PRNG):
 #   Configure one or more sources to seed the PRNG of the 
 #   SSL library. The seed data should be of good random quality.
+#   WARNING! On some platforms /dev/random blocks if not enough entropy
+#   is available. This means you then cannot use the /dev/random device
+#   because it would lead to very long connection times (as long as
+#   it requires to make more entropy available). But usually those
+#   platforms additionally provide a /dev/urandom device which doesn't
+#   block. So, if available, use this one instead. Read the mod_ssl User
+#   Manual for more details.
 SSLRandomSeed startup builtin
 SSLRandomSeed connect builtin
 #SSLRandomSeed startup file:/dev/random  512
@@ -952,13 +989,19 @@ SSLEngine on
 #   the certificate is encrypted, then you will be prompted for a
 #   pass phrase.  Note that a kill -HUP will prompt again. A test
 #   certificate can be generated with `make certificate' under
-#   built time.
+#   built time. Keep in mind that if you've both a RSA and a DSA
+#   certificate you can configure both in parallel (to also allow
+#   the use of DSA ciphers, etc.)
 SSLCertificateFile @@ServerRoot@@/conf/ssl.crt/server.crt
+#SSLCertificateFile @@ServerRoot@@/conf/ssl.crt/server-dsa.crt
 
 #   Server Private Key:
 #   If the key is not combined with the certificate, use this
-#   directive to point at the key file.
+#   directive to point at the key file.  Keep in mind that if
+#   you've both a RSA and a DSA private key you can configure
+#   both in parallel (to also allow the use of DSA ciphers, etc.)
 SSLCertificateKeyFile @@ServerRoot@@/conf/ssl.key/server.key
+#SSLCertificateKeyFile @@ServerRoot@@/conf/ssl.key/server-dsa.key
 
 #   Server Certificate Chain:
 #   Point SSLCertificateChainFile at a file containing the
@@ -1014,43 +1057,55 @@ SSLCertificateKeyFile @@ServerRoot@@/conf/ssl.key/server.key
 
 #   SSL Engine Options:
 #   Set various options for the SSL engine.
-#   FakeBasicAuth:
+#   o FakeBasicAuth:
 #     Translate the client X.509 into a Basic Authorisation.  This means that
 #     the standard Auth/DBMAuth methods can be used for access control.  The
 #     user name is the `one line' version of the client's X.509 certificate.
 #     Note that no password is obtained from the user. Every entry in the user
 #     file needs this password: `xxj31ZMTZzkVA'.
-#   ExportCertData:
+#   o ExportCertData:
 #     This exports two additional environment variables: SSL_CLIENT_CERT and
 #     SSL_SERVER_CERT. These contain the PEM-encoded certificates of the
 #     server (always existing) and the client (only existing when client
 #     authentication is used). This can be used to import the certificates
 #     into CGI scripts.
-#   CompatEnvVars:
+#   o StdEnvVars:
+#     This exports the standard SSL/TLS related `SSL_*' environment variables.
+#     Per default this exportation is switched off for performance reasons,
+#     because the extraction step is an expensive operation and is usually
+#     useless for serving static content. So one usually enables the
+#     exportation for CGI and SSI requests only.
+#   o CompatEnvVars:
 #     This exports obsolete environment variables for backward compatibility
 #     to Apache-SSL 1.x, mod_ssl 2.0.x, Sioux 1.0 and Stronghold 2.x. Use this
 #     to provide compatibility to existing CGI scripts.
-#   StrictRequire:
+#   o StrictRequire:
 #     This denies access when "SSLRequireSSL" or "SSLRequire" applied even
 #     under a "Satisfy any" situation, i.e. when it applies access is denied
 #     and no other module can change it.
-#   OptRenegotiate:
+#   o OptRenegotiate:
 #     This enables optimized SSL connection renegotiation handling when SSL
 #     directives are used in per-directory context. 
 #SSLOptions +FakeBasicAuth +ExportCertData +CompatEnvVars +StrictRequire
+<Files ~ "\.(cgi|shtml)$">
+    SSLOptions +StdEnvVars
+</Files>
+<Directory "@@ServerRoot@@/cgi-bin">
+    SSLOptions +StdEnvVars
+</Directory>
 
 #   SSL Protocol Adjustments:
 #   The safe and default but still SSL/TLS standard compliant shutdown
 #   approach is that mod_ssl sends the close notify alert but doesn't wait for
 #   the close notify alert from client. When you need a different shutdown
 #   approach you can use one of the following variables:
-#   ssl-unclean-shutdown:
+#   o ssl-unclean-shutdown:
 #     This forces an unclean shutdown when the connection is closed, i.e. no
 #     SSL close notify alert is send or allowed to received.  This violates
 #     the SSL/TLS standard but is needed for some brain-dead browsers. Use
 #     this when you receive I/O errors because of the standard approach where
 #     mod_ssl sends the close notify alert.
-#   ssl-accurate-shutdown:
+#   o ssl-accurate-shutdown:
 #     This forces an accurate shutdown when the connection is closed, i.e. a
 #     SSL close notify alert is send and mod_ssl waits for the close notify
 #     alert of the client. This is 100% SSL/TLS standard compliant, but in

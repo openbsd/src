@@ -244,7 +244,7 @@ static int check_speling(request_rec *r)
     }
 
     /* We've already got a file of some kind or another */
-    if (r->proxyreq || (r->finfo.st_mode != 0)) {
+    if (r->proxyreq != NOT_PROXY || (r->finfo.st_mode != 0)) {
         return DECLINED;
     }
 
@@ -408,10 +408,11 @@ static int check_speling(request_rec *r)
 	    && (candidates->nelts == 1
 		|| variant[0].quality != variant[1].quality)) {
 
-            nuri = ap_pstrcat(r->pool, url, variant[0].name, r->path_info,
-			      r->parsed_uri.query ? "?" : "",
-			      r->parsed_uri.query ? r->parsed_uri.query : "",
-			      NULL);
+            nuri = ap_escape_uri(r->pool, ap_pstrcat(r->pool, url,
+						     variant[0].name,
+						     r->path_info, NULL));
+	    if (r->parsed_uri.query)
+		nuri = ap_pstrcat(r->pool, nuri, "?", r->parsed_uri.query, NULL);
 
             ap_table_setn(r->headers_out, "Location",
 			  ap_construct_url(r->pool, nuri, r));
@@ -556,3 +557,10 @@ module MODULE_VAR_EXPORT speling_module =
     NULL,                       /* child_exit */
     NULL                        /* post read-request */
 };
+
+#ifdef NETWARE
+int main(int argc, char *argv[]) 
+{
+    ExitThread(TSR_THREAD, 0);
+}
+#endif

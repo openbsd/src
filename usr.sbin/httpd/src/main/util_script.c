@@ -200,7 +200,7 @@ API_EXPORT(void) ap_add_common_vars(request_rec *r)
     conn_rec *c = r->connection;
     const char *rem_logname;
     char *env_path;
-#ifdef WIN32
+#if defined(WIN32) || defined(OS2)
     char *env_temp;
 #endif
     const char *host;
@@ -250,7 +250,7 @@ API_EXPORT(void) ap_add_common_vars(request_rec *r)
 	}
     }
 
-    if (!(env_path = getenv("PATH"))) {
+    if (!(env_path = ap_pstrdup(r->pool, getenv("PATH")))) {
 	env_path = DEFAULT_PATH;
     }
 
@@ -263,6 +263,21 @@ API_EXPORT(void) ap_add_common_vars(request_rec *r)
     }
     if (env_temp = getenv("WINDIR")) {
         ap_table_addn(e, "WINDIR", env_temp);
+    }
+#endif
+
+#ifdef OS2
+    if (env_temp = getenv("COMSPEC")) {
+        ap_table_addn(e, "COMSPEC", env_temp);            
+    }
+    if (env_temp = getenv("ETC")) {
+        ap_table_addn(e, "ETC", env_temp);            
+    }
+    if (env_temp = getenv("DPATH")) {
+        ap_table_addn(e, "DPATH", env_temp);            
+    }
+    if (env_temp = getenv("PERLLIB_PREFIX")) {
+        ap_table_addn(e, "PERLLIB_PREFIX", env_temp);            
     }
 #endif
 
@@ -471,8 +486,12 @@ API_EXPORT(int) ap_scan_script_header_err_core(request_rec *r, char *buffer,
 	/* Delete terminal (CR?)LF */
 
 	p = strlen(w);
+        /* Indeed, the host's '\n':
+           '\012' for UNIX; '\015' for MacOS; '\025' for OS/390
+           -- whatever the script generates.
+        */
 	if (p > 0 && w[p - 1] == '\n') {
-	    if (p > 1 && w[p - 2] == '\015') {
+	    if (p > 1 && w[p - 2] == CR) {
 		w[p - 2] = '\0';
 	    }
 	    else {
@@ -1019,7 +1038,9 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
             i++;
         }
 
-        if (CreateProcess(NULL, pCommand, NULL, NULL, TRUE, DETACHED_PROCESS, pEnvBlock,
+        if (CreateProcess(NULL, pCommand, NULL, NULL, TRUE, 
+                          0,
+                          pEnvBlock,
                           ap_make_dirstr_parent(r->pool, r->filename),
                           &si, &pi)) {
             if (fileType == eFileTypeEXE16) {
@@ -1043,7 +1064,7 @@ API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
         }
         return (pid);
     }
-
+#elif defined(NETWARE)
 #else
     if (ap_suexec_enabled
 	&& ((r->server->server_uid != ap_user_id)

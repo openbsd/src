@@ -9,7 +9,7 @@
 */
 
 /* ====================================================================
- * Copyright (c) 1998-1999 Ralf S. Engelschall. All rights reserved.
+ * Copyright (c) 1998-2000 Ralf S. Engelschall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -346,18 +346,8 @@ void ssl_init_TmpKeysHandle(int action, server_rec *s, pool *p)
 
         /* generate 512 bit RSA key */
         if ((rsa = RSA_generate_key(512, RSA_F4, NULL, NULL)) == NULL) {
-#ifdef __OpenBSD__
-            ssl_log(s, SSL_LOG_ERROR, "Init: Failed to generate temporary 512 bit RSA private key");
-            ssl_log(s, SSL_LOG_ERROR, "Init: (SSL won't work without an RSA capable shared library)");
-            ssl_log(s, SSL_LOG_ERROR, "Init: See ssl(8)");
-            /* harmless in http only case. We'll get a fatal error below
-             * if this didn't work and we try to init https servers
-             */
-            return;
-#else
             ssl_log(s, SSL_LOG_ERROR, "Init: Failed to generate temporary 512 bit RSA private key");
             ssl_die();
-#endif
         }
         asn1 = (ssl_asn1_t *)ssl_ds_table_push(mc->tTmpKeys, "RSA:512");
         asn1->nData  = i2d_RSAPrivateKey(rsa, NULL);
@@ -714,7 +704,14 @@ void ssl_init_ConfigureServer(server_rec *s, pool *p, SSLSrvConfigRec *sc)
                         cpVHostID, (i == SSL_AIDX_RSA ? "RSA" : "DSA"), pathlen);
             }
             if (SSL_X509_getCN(p, sc->pPublicCert[i], &cp)) {
-                if (strNE(s->server_hostname, cp)) {
+                if (ap_is_fnmatch(cp) &&
+                    !ap_fnmatch(cp, s->server_hostname, FNM_PERIOD|FNM_CASE_BLIND)) {
+                    ssl_log(s, SSL_LOG_WARN,
+                        "Init: (%s) %s server certificate wildcard CommonName (CN) `%s' "
+                        "does NOT match server name!?", cpVHostID, 
+                        (i == SSL_AIDX_RSA ? "RSA" : "DSA"), cp);
+                }
+                else if (strNE(s->server_hostname, cp)) {
                     ssl_log(s, SSL_LOG_WARN,
                         "Init: (%s) %s server certificate CommonName (CN) `%s' "
                         "does NOT match server name!?", cpVHostID, 
@@ -883,7 +880,7 @@ void ssl_init_CheckServers(server_rec *sm, pool *p)
     ap_destroy_pool(sp);
     if (bConflict)
         ssl_log(sm, SSL_LOG_WARN,
-                "Init: You cannot use name-based virtual hosts in conjunction with SSL!!");
+                "Init: You should not use name-based virtual hosts in conjunction with SSL!!");
 
     return;
 }

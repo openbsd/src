@@ -78,7 +78,7 @@
  *            for suEXEC.  For most systems, 500 or 100 is common.
  */
 #ifndef UID_MIN
-#define UID_MIN 1000
+#define UID_MIN 100
 #endif
 
 /*
@@ -86,7 +86,7 @@
  *            for suEXEC.  For most systems, 100 is common.
  */
 #ifndef GID_MIN
-#define GID_MIN 1000
+#define GID_MIN 100
 #endif
 
 /*
@@ -120,7 +120,7 @@
  *             debugging purposes.
  */
 #ifndef LOG_EXEC
-#define LOG_EXEC "/var/log/suexec_log"	/* Need me? */
+#define LOG_EXEC "/usr/local/apache/logs/cgi.log"	/* Need me? */
 #endif
 
 /*
@@ -129,7 +129,7 @@
  *             that can be used for suEXEC behavior.
  */
 #ifndef DOC_ROOT
-#define DOC_ROOT "/var/www/htdocs"
+#define DOC_ROOT "/usr/local/apache/htdocs"
 #endif
 
 /*
@@ -137,7 +137,7 @@
  *
  */
 #ifndef SAFE_PATH
-#define SAFE_PATH "/usr/bin:/bin:/usr/local/bin"
+#define SAFE_PATH "/usr/local/bin:/usr/bin:/bin"
 #endif
 
 #endif /* _SUEXEC_H */

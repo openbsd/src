@@ -7,7 +7,7 @@
  mod_ssl                               ``Ralf Engelschall has released an
  Apache Interface to OpenSSL             excellent module that integrates
  http://www.modssl.org/                  Apache and SSLeay.''                 
- Version 2.4                                               -- Tim J. Hudson
+ Version 2.5                                               -- Tim J. Hudson
                                            
  SYNOPSIS
 
@@ -60,11 +60,12 @@
    ssl_util_table.c ........ the hash table library source
    ssl_util_table.h ........ the hash table library header
 
- The source files are written in clean ANSI C and pass the ``gcc -O -g -ggdb3
- -Wall -Wshadow -Wpointer-arith -Wcast-align -Wmissing-prototypes
- -Wmissing-declarations -Wnested-externs -Winline'' compiler test without any
- complains. When you make changes or additions make sure the source still
- passes this compiler test.
+ The source files are written in clean ANSI C and pass the ``gcc -O -g
+ -ggdb3 -Wall -Wshadow -Wpointer-arith -Wcast-align -Wmissing-prototypes
+ -Wmissing-declarations -Wnested-externs -Winline'' compiler test
+ (assuming `gcc' is GCC 2.95.2 or newer) without any complains. When
+ you make changes or additions make sure the source still passes this
+ compiler test.
 
  FUNCTIONS
   

@@ -624,7 +624,9 @@ void ap_init_alloc_shared(int early)
         mm_size = ap_mm_maxsize();
         if (mm_size > EAPI_MM_CORE_MAXSIZE)
             mm_size = EAPI_MM_CORE_MAXSIZE;
-        mm_path = ap_server_root_relative(permanent_pool, EAPI_MM_CORE_PATH);
+        mm_path = ap_server_root_relative(permanent_pool, 
+                  ap_psprintf(permanent_pool, "%s.%ld", 
+                              EAPI_MM_CORE_PATH, (long)getpid()));
         if ((mm = ap_mm_create(mm_size, mm_path)) == NULL) {
             fprintf(stderr, "Ouch! ap_mm_create(%d, \"%s\") failed\n", mm_size, mm_path);
             err1 = ap_mm_error();
@@ -634,7 +636,6 @@ void ap_init_alloc_shared(int early)
             if (err2 == NULL)
                 err2 = "-unknown-";
             fprintf(stderr, "Error: MM: %s: OS: %s\n", err1, err2);
-            abort();
             exit(1);
         }
     }
@@ -2225,7 +2226,7 @@ API_EXPORT(int) ap_pclosesocket(pool *a, int sock)
 
     ap_block_alarms();
     res = closesocket(sock);
-#ifdef WIN32
+#if defined(WIN32) || defined(NETWARE)
     errno = WSAGetLastError();
 #endif /* WIN32 */
     save_errno = errno;
@@ -2305,7 +2306,7 @@ how) {
 #endif /* WIN32 */
 
 /* for ap_fdopen, to get binary mode */
-#if defined (OS2) || defined (WIN32)
+#if defined (OS2) || defined (WIN32) || defined (NETWARE)
 #define BINMODE	"b"
 #else
 #define BINMODE
@@ -2378,7 +2379,7 @@ static pid_t spawn_child_core(pool *p, int (*func) (void *, child_info *),
 	if (pipe_err) {
 	    hStdErr = dup(fileno(stderr));
 	    if(dup2(err_fds[1], fileno(stderr)))
-		ap_log_error(APLOG_MARK, APLOG_ERR, NULL, "dup2(stdin) failed");
+		ap_log_error(APLOG_MARK, APLOG_ERR, NULL, "dup2(stderr) failed");
 	    close(err_fds[1]);
 	}
 
@@ -2430,6 +2431,10 @@ static pid_t spawn_child_core(pool *p, int (*func) (void *, child_info *),
 	 */
 
     }
+#elif defined(NETWARE)
+     /* NetWare currently has no pipes yet. This will
+        be solved with the new libc for NetWare soon. */
+     pid = 0;
 #elif defined(OS2)
     {
         int save_in=-1, save_out=-1, save_err=-1;
@@ -2891,6 +2896,7 @@ static void free_proc_chain(struct process_chain *procs)
     for (p = procs; p; p = p->next) {
 	CloseHandle((HANDLE) p->pid);
     }
+#elif defined(NETWARE)
 #else
 #ifndef NEED_WAITPID
     /* Pick up all defunct processes */

@@ -9,7 +9,7 @@
 */
 
 /* ====================================================================
- * Copyright (c) 1998-1999 Ralf S. Engelschall. All rights reserved.
+ * Copyright (c) 1998-2000 Ralf S. Engelschall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -296,6 +296,7 @@ static char *ssl_ext_mp_new_connection(request_rec *r, BUFF *fb)
     char *errmsg;
     int rc;
     char *cpVHostID;
+    char *cpVHostMD5;
 
     if (ap_ctx_get(r->ctx, "ssl::proxy::enabled") == PFALSE)
         return NULL;
@@ -312,7 +313,13 @@ static char *ssl_ext_mp_new_connection(request_rec *r, BUFF *fb)
         return errmsg;
     }
     SSL_clear(ssl);
-    SSL_set_session_id_context(ssl, (unsigned char *)cpVHostID, strlen(cpVHostID));
+    cpVHostMD5 = ap_md5(r->pool, cpVHostID);
+    if (!SSL_set_session_id_context(ssl, (unsigned char *)cpVHostMD5, strlen(cpVHostMD5))) {
+        errmsg = ap_pstrcat(r->pool, "Unable to set session id context to `%s': ", cpVHostMD5,
+                            ERR_reason_error_string(ERR_get_error()), NULL);
+        ap_ctx_set(fb->ctx, "ssl", NULL);
+        return errmsg;
+    }
     SSL_set_fd(ssl, fb->fd);
     ap_ctx_set(fb->ctx, "ssl", ssl);
 

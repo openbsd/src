@@ -97,7 +97,8 @@ int ap_proxy_http_canon(request_rec *r, char *url, const char *scheme, int def_p
 	search = r->args;
 
 /* process path */
-    path = ap_proxy_canonenc(r->pool, url, strlen(url), enc_path, r->proxyreq);
+    path = ap_proxy_canonenc(r->pool, url, strlen(url), enc_path,
+			     r->proxyreq);
     if (path == NULL)
 	return HTTP_BAD_REQUEST;
 
@@ -263,6 +264,7 @@ int ap_proxy_http_handler(request_rec *r, cache_req *c, char *url,
 	return HTTP_INTERNAL_SERVER_ERROR;
     }
 
+#ifndef TPF
     if (conf->recv_buffer_size) {
 	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
 		       (const char *) &conf->recv_buffer_size, sizeof(int))
@@ -271,6 +273,7 @@ int ap_proxy_http_handler(request_rec *r, cache_req *c, char *url,
 			 "setsockopt(SO_RCVBUF): Failed to set ProxyReceiveBufferSize, using default");
 	}
     }
+#endif
 
 #ifdef SINIX_D_RESOLVER_BUG
     {

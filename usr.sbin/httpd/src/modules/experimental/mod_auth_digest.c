@@ -130,6 +130,12 @@
 #include "util_uri.h"
 #include "util_md5.h"
 #include "ap_sha1.h"
+
+#ifdef WIN32
+/* Crypt APIs are available on Win95 with OSR 2 */
+#include <wincrypt.h>
+#endif
+
 #ifdef HAVE_SHMEM_MM
 #include "mm.h"
 #endif	/* HAVE_SHMEM_MM */
@@ -160,7 +166,7 @@ typedef struct digest_config_struct {
 
 
 #define NONCE_TIME_LEN	(((sizeof(time_t)+2)/3)*4)
-#define NONCE_HASH_LEN	40
+#define NONCE_HASH_LEN	(2*SHA_DIGESTSIZE)
 #define NONCE_LEN	(NONCE_TIME_LEN + NONCE_HASH_LEN)
 
 #define	SECRET_LEN	20
@@ -172,7 +178,7 @@ typedef struct hash_entry {
     unsigned long      key;			/* the key for this entry    */
     struct hash_entry *next;			/* next entry in the bucket  */
     unsigned long      nonce_count;		/* for nonce-count checking  */
-    char               ha1[17];			/* for algorithm=MD5-sess    */
+    char               ha1[2*MD5_DIGESTSIZE+1];	/* for algorithm=MD5-sess    */
     char               last_nonce[NONCE_LEN+1];	/* for one-time nonce's      */
 } client_entry;
 
@@ -206,7 +212,8 @@ typedef struct digest_header_struct {
     /* the following fields are not (directly) from the header */
     time_t                nonce_time;
     enum hdr_sts          auth_hdr_sts;
-    uri_components       *request_uri;
+    const char           *raw_request_uri;
+    uri_components       *psd_request_uri;
     int                   needed_auth;
     client_entry         *client;
 } digest_header_rec;
@@ -271,10 +278,34 @@ static void cleanup_tables(void *not_used)
 }
 #endif	/* HAVE_SHMEM_MM */
 
+#ifdef WIN32
+/* TODO: abstract out the random number generation. APR? */
+static void initialize_secret(server_rec *s)
+{
+    HCRYPTPROV hProv;
+
+    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, s,
+		 "Digest: generating secret for digest authentication ...");
+    if (!CryptAcquireContext(&hProv,NULL,NULL,PROV_RSA_FULL,0)) {
+        ap_log_error(APLOG_MARK, APLOG_CRIT, s, 
+                     "Digest: Error acquiring context. Errno = %d",
+                     GetLastError());
+        exit(EXIT_FAILURE);
+    }
+    if (!CryptGenRandom(hProv,sizeof(secret),secret)) {
+        ap_log_error(APLOG_MARK, APLOG_CRIT, s, 
+                     "Digest: Error generating secret. Errno = %d",
+                     GetLastError());
+        exit(EXIT_FAILURE);
+    }
+
+    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, s, "Digest: done");
+}
+#else
 static void initialize_secret(server_rec *s)
 {
 #ifdef	DEV_RANDOM
-    FILE *rnd;
+    int rnd;
     size_t got, tot;
 #else
     extern int randbyte(void);	/* from the truerand library */
@@ -287,24 +318,19 @@ static void initialize_secret(server_rec *s)
 #ifdef	DEV_RANDOM
 #define	XSTR(x)	#x
 #define	STR(x)	XSTR(x)
-    if ((rnd = fopen(STR(DEV_RANDOM), "rb")) == NULL) {
+    if ((rnd = open(STR(DEV_RANDOM), O_RDONLY)) == -1) {
 	ap_log_error(APLOG_MARK, APLOG_CRIT, s,
 		     "Digest: Couldn't open " STR(DEV_RANDOM));
 	exit(EXIT_FAILURE);
     }
-    if (setvbuf(rnd, NULL, _IONBF, 0) != 0) {
-	ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_CRIT, s,
-		     "Digest: Error trying to disable buffering for " STR(DEV_RANDOM));
-	exit(EXIT_FAILURE);
-    }
     for (tot=0; tot<sizeof(secret); tot += got) {
-	if ((got = fread(secret+tot, 1, sizeof(secret)-tot, rnd)) < 1) {
+	if ((got = read(rnd, secret+tot, sizeof(secret)-tot)) < 0) {
 	    ap_log_error(APLOG_MARK, APLOG_CRIT, s,
 			 "Digest: Error reading " STR(DEV_RANDOM));
 	    exit(EXIT_FAILURE);
 	}
     }
-    fclose(rnd);
+    close(rnd);
 #undef	STR
 #undef	XSTR
 #else	/* use truerand */
@@ -317,6 +343,7 @@ static void initialize_secret(server_rec *s)
 
     ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, s, "Digest: done");
 }
+#endif
 
 #ifdef HAVE_SHMEM_MM
 static void initialize_tables(server_rec *s)
@@ -472,9 +499,9 @@ static const char *set_realm(cmd_parms *cmd, void *config, const char *realm)
      * and directives outside a virtual host section)
      */
     ap_SHA1Init(&conf->nonce_ctx);
+    ap_SHA1Update_binary(&conf->nonce_ctx, secret, sizeof(secret));
     ap_SHA1Update_binary(&conf->nonce_ctx, (const unsigned char *) realm,
 			 strlen(realm));
-    ap_SHA1Update_binary(&conf->nonce_ctx, secret, sizeof(secret));
 
     return DECLINE_CMD;
 }
@@ -799,14 +826,14 @@ static client_entry *get_client(unsigned long key, const request_rec *r)
 /* Parse the Authorization header, if it exists */
 static int get_digest_rec(request_rec *r, digest_header_rec *resp)
 {
-    const char *auth_line = ap_table_get(r->headers_in,
-					 r->proxyreq ? "Proxy-Authorization"
-						     : "Authorization");
+    const char *auth_line;
     size_t l;
     int vk = 0, vv = 0;
     char *key, *value;
 
-
+    auth_line = ap_table_get(r->headers_in,
+			     r->proxyreq == STD_PROXY ? "Proxy-Authorization"
+						      : "Authorization");
     if (!auth_line) {
 	resp->auth_hdr_sts = NO_HEADER;
 	return !OK;
@@ -885,7 +912,8 @@ static int get_digest_rec(request_rec *r, digest_header_rec *resp)
     }
 
     if (!resp->username || !resp->realm || !resp->nonce || !resp->uri
-	|| !resp->digest) {
+	|| !resp->digest
+	|| (resp->message_qop && (!resp->cnonce || !resp->nonce_count))) {
 	resp->auth_hdr_sts = INVALID;
 	return !OK;
     }
@@ -918,7 +946,8 @@ static int update_nonce_count(request_rec *r)
 	return DECLINED;
 
     resp = ap_pcalloc(r->pool, sizeof(digest_header_rec));
-    resp->request_uri = &r->parsed_uri;
+    resp->raw_request_uri = r->unparsed_uri;
+    resp->psd_request_uri = &r->parsed_uri;
     resp->needed_auth = 0;
     ap_set_module_config(r->request_config, &digest_auth_module, resp);
 
@@ -1075,12 +1104,12 @@ static const char *get_session(const request_rec *r,
     if (ha1 == NULL || ha1[0] == '\0') {
 	urp = get_userpw_hash(r, resp, conf);
 	ha1 = ap_md5(r->pool,
-		     (unsigned char *) ap_pstrcat(r->pool, ha1, ":", resp->nonce,
+		     (unsigned char *) ap_pstrcat(r->pool, urp, ":", resp->nonce,
 						  ":", resp->cnonce, NULL));
 	if (!resp->client)
 	    resp->client = gen_client(r);
 	if (resp->client)
-	    memcpy(resp->client->ha1, ha1, 17);
+	    memcpy(resp->client->ha1, ha1, sizeof(resp->client->ha1));
     }
 
     return ha1;
@@ -1241,20 +1270,23 @@ static void note_digest_auth_failure(request_rec *r,
      * unneccessarily (it's usually > 200 bytes!).
      */
 
-    if (conf->uri_list)
+    if (r->proxyreq != NOT_PROXY)
+	domain = NULL;	/* don't send domain for proxy requests */
+    else if (conf->uri_list)
 	domain = conf->uri_list;
     else {
 	/* They didn't specify any domain, so let's guess at it */
-	domain = guess_domain(r->pool, resp->request_uri->path, r->filename,
+	domain = guess_domain(r->pool, resp->psd_request_uri->path, r->filename,
 			      conf->dir_name);
 	if (domain[0] == '/' && domain[1] == '\0')
-	    domain = "";	/* "/" is the default, so no need to send it */
+	    domain = NULL;	/* "/" is the default, so no need to send it */
 	else
 	    domain = ap_pstrcat(r->pool, ", domain=\"", domain, "\"", NULL);
     }
 
     ap_table_mergen(r->err_headers_out,
-		    r->proxyreq ? "Proxy-Authenticate" : "WWW-Authenticate",
+		    r->proxyreq == STD_PROXY ? "Proxy-Authenticate"
+					     : "WWW-Authenticate",
 		    ap_psprintf(r->pool, "Digest realm=\"%s\", nonce=\"%s\", "
 					 "algorithm=%s%s%s%s%s",
 				ap_auth_name(r), nonce, conf->algorithm,
@@ -1432,6 +1464,36 @@ static const char *new_digest(const request_rec *r,
 }
 
 
+static void copy_uri_components(uri_components *dst, uri_components *src,
+				request_rec *r) {
+    if (src->scheme && src->scheme[0] != '\0')
+	dst->scheme = src->scheme;
+    else
+	dst->scheme = (char *) "http";
+
+    if (src->hostname && src->hostname[0] != '\0') {
+	dst->hostname = ap_pstrdup(r->pool, src->hostname);
+	ap_unescape_url(dst->hostname);
+    }
+    else
+	dst->hostname = (char *) ap_get_server_name(r);
+
+    if (src->port_str && src->port_str[0] != '\0')
+	dst->port = src->port;
+    else
+	dst->port = ap_get_server_port(r);
+
+    if (src->path && src->path[0] != '\0') {
+	dst->path = ap_pstrdup(r->pool, src->path);
+	ap_unescape_url(dst->path);
+    }
+
+    if (src->query && src->query[0] != '\0') {
+	dst->query = ap_pstrdup(r->pool, src->query);
+	ap_unescape_url(dst->query);
+    }
+}
+
 /* These functions return 0 if client is OK, and proper error status
  * if not... either AUTH_REQUIRED, if we made a check, and it failed, or
  * SERVER_ERROR, if things are so totally confused that we couldn't
@@ -1493,8 +1555,9 @@ static int authenticate_digest_user(request_rec *r)
 			  "`%s': %s", resp->scheme, r->uri);
 	else if (resp->auth_hdr_sts == INVALID)
 	    ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
-			  "Digest: missing user, realm, nonce, uri, or digest "
-			  "in authorization header: %s", r->uri);
+			  "Digest: missing user, realm, nonce, uri, digest, "
+			  "cnonce, or nonce_count in authorization header: %s",
+			  r->uri);
 	/* else (resp->auth_hdr_sts == NO_HEADER) */
 	note_digest_auth_failure(r, conf, resp, 0);
 	return AUTH_REQUIRED;
@@ -1506,23 +1569,60 @@ static int authenticate_digest_user(request_rec *r)
 
     /* check the auth attributes */
 
-    if (strcmp(resp->uri, resp->request_uri->path)) {
-	uri_components *r_uri = resp->request_uri, d_uri;
-	ap_parse_uri_components(r->pool, resp->uri, &d_uri);
+    if (strcmp(resp->uri, resp->raw_request_uri)) {
+	/* Hmm, the simple match didn't work (probably a proxy modified the
+	 * request-uri), so lets do a more sophisticated match
+	 */
+	uri_components r_uri, d_uri;
 
-	if ((d_uri.hostname && d_uri.hostname[0] != '\0'
-	     && strcasecmp(d_uri.hostname, r->server->server_hostname))
-	    || (d_uri.port_str && d_uri.port != r->server->port)
-	    || (!d_uri.port_str && r->server->port != 80)
-	    || strcmp(d_uri.path, r_uri->path)
-	    || (d_uri.query != r_uri->query
-		&& (!d_uri.query || !r_uri->query
-		    || strcmp(d_uri.query, r_uri->query)))
+	copy_uri_components(&r_uri, resp->psd_request_uri, r);
+	if (ap_parse_uri_components(r->pool, resp->uri, &d_uri) != HTTP_OK) {
+	    ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
+			  "Digest: invalid uri <%s> in Authorization header",
+			  resp->uri);
+	    return BAD_REQUEST;
+	}
+
+	if (d_uri.hostname)
+	    ap_unescape_url(d_uri.hostname);
+	if (d_uri.path)
+	    ap_unescape_url(d_uri.path);
+	if (d_uri.query)
+	    ap_unescape_url(d_uri.query);
+
+	if (r->method_number == M_CONNECT) {
+	    if (strcmp(resp->uri, r_uri.hostinfo)) {
+		ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
+			      "Digest: uri mismatch - <%s> does not match "
+			      "request-uri <%s>", resp->uri, r_uri.hostinfo);
+		return BAD_REQUEST;
+	    }
+	}
+	else if (
+	    /* check hostname matches, if present */
+	    (d_uri.hostname && d_uri.hostname[0] != '\0'
+	      && strcasecmp(d_uri.hostname, r_uri.hostname))
+	    /* check port matches, if present */
+	    || (d_uri.port_str && d_uri.port != r_uri.port)
+	    /* check that server-port is default port if no port present */
+	    || (d_uri.hostname && d_uri.hostname[0] != '\0'
+		&& !d_uri.port_str && r_uri.port != ap_default_port(r))
+	    /* check that path matches */
+	    || (d_uri.path != r_uri.path
+		/* either exact match */
+	        && (!d_uri.path || !r_uri.path
+		    || strcmp(d_uri.path, r_uri.path))
+		/* or '*' matches empty path in scheme://host */
+	        && !(d_uri.path && !r_uri.path && resp->psd_request_uri->hostname
+		    && d_uri.path[0] == '*' && d_uri.path[1] == '\0'))
+	    /* check that query matches */
+	    || (d_uri.query != r_uri.query
+		&& (!d_uri.query || !r_uri.query
+		    || strcmp(d_uri.query, r_uri.query)))
 	    ) {
 	    ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, r,
 			  "Digest: uri mismatch - <%s> does not match "
-			  "request-uri <%s>", resp->uri,
-			  ap_unparse_uri_components(r->pool, r_uri, 0));
+			  "request-uri <%s>", resp->uri, resp->raw_request_uri);
 	    return BAD_REQUEST;
 	}
     }
@@ -1785,9 +1885,8 @@ static int add_auth_info(request_rec *r)
 	 */
 	char *entity_info =
 	    ap_md5(r->pool,
-		   (unsigned char *) ap_pstrcat(r->pool,
-		       ap_unparse_uri_components(r->pool,
-						 resp->request_uri, 0), ":",
+		   (unsigned char *) ap_pstrcat(r->pool, resp->raw_request_uri,
+		       ":",
 		       r->content_type ? r->content_type : ap_default_type(r), ":",
 		       hdr(r->headers_out, "Content-Length"), ":",
 		       r->content_encoding ? r->content_encoding : "", ":",
@@ -1818,7 +1917,8 @@ static int add_auth_info(request_rec *r)
 				   gen_nonce(r->pool, r->request_time,
 					     resp->opaque, r->server, conf),
 				   "\"", NULL);
-	    resp->client->nonce_count = 0;
+	    if (resp->client)
+		resp->client->nonce_count = 0;
 	}
     }
     else if (conf->nonce_lifetime == 0 && resp->client) {
@@ -1887,8 +1987,8 @@ static int add_auth_info(request_rec *r)
 
     if (ai && ai[0])
 	ap_table_mergen(r->headers_out,
-			r->proxyreq ? "Proxy-Authentication-Info" :
-				      "Authentication-Info",
+			r->proxyreq == STD_PROXY ? "Proxy-Authentication-Info"
+						 : "Authentication-Info",
 			ai);
     return OK;
 }

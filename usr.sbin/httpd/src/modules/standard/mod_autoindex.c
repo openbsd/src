@@ -95,6 +95,7 @@ module MODULE_VAR_EXPORT autoindex_module;
 #define SUPPRESS_PREAMBLE 64
 #define SUPPRESS_COLSORT 128
 #define NO_OPTIONS 256
+#define FOLDERS_FIRST 512
 
 #define K_PAD 1
 #define K_NOPAD 0
@@ -124,6 +125,7 @@ module MODULE_VAR_EXPORT autoindex_module;
  * Other default dimensions.
  */
 #define DEFAULT_NAME_WIDTH 23
+#define DEFAULT_DESC_WIDTH 23
 
 struct item {
     char *type;
@@ -140,13 +142,14 @@ typedef struct ai_desc_t {
 } ai_desc_t;
 
 typedef struct autoindex_config_struct {
-
     char *default_icon;
     int opts;
     int incremented_opts;
     int decremented_opts;
     int name_width;
     int name_adjust;
+    int desc_width;
+    int desc_adjust;
     int icon_width;
     int icon_height;
     char *default_order;
@@ -400,6 +403,9 @@ static const char *add_opts(cmd_parms *cmd, void *d, const char *optstr)
         else if (!strcasecmp(w, "SuppressColumnSorting")) {
             option = SUPPRESS_COLSORT;
 	}
+        else if (!strcasecmp(w, "FoldersFirst")) {
+            option = FOLDERS_FIRST;
+	}
 	else if (!strcasecmp(w, "None")) {
 	    if (action != '\0') {
 		return "Cannot combine '+' or '-' with 'None' keyword";
@@ -459,6 +465,31 @@ static const char *add_opts(cmd_parms *cmd, void *d, const char *optstr)
 		}
 		d_cfg->name_width = width;
 		d_cfg->name_adjust = K_NOADJUST;
+	    }
+	}
+	else if (!strcasecmp(w, "DescriptionWidth")) {
+	    if (action != '-') {
+		return "DescriptionWidth with no value may only appear as "
+		       "'-DescriptionWidth'";
+	    }
+	    d_cfg->desc_width = DEFAULT_DESC_WIDTH;
+	    d_cfg->desc_adjust = K_NOADJUST;
+	}
+	else if (!strncasecmp(w, "DescriptionWidth=", 17)) {
+	    if (action == '-') {
+		return "Cannot combine '-' with DescriptionWidth=n";
+	    }
+	    if (w[17] == '*') {
+		d_cfg->desc_adjust = K_ADJUST;
+	    }
+	    else {
+		int width = atoi(&w[17]);
+
+		if (width < 12) {
+		    return "DescriptionWidth value must be greater than 12";
+		}
+		d_cfg->desc_width = width;
+		d_cfg->desc_adjust = K_NOADJUST;
 	    }
 	}
 	else {
@@ -572,6 +603,8 @@ static void *create_autoindex_config(pool *p, char *dummy)
     new->icon_height = 0;
     new->name_width = DEFAULT_NAME_WIDTH;
     new->name_adjust = K_UNSET;
+    new->desc_width = DEFAULT_DESC_WIDTH;
+    new->desc_adjust = K_UNSET;
     new->icon_list = ap_make_array(p, 4, sizeof(struct item));
     new->alt_list = ap_make_array(p, 4, sizeof(struct item));
     new->desc_list = ap_make_array(p, 4, sizeof(ai_desc_t));
@@ -659,6 +692,17 @@ static void *merge_autoindex_configs(pool *p, void *basev, void *addv)
 	new->name_width = add->name_width;
 	new->name_adjust = add->name_adjust;
     }
+    /*
+     * Likewise for DescriptionWidth.
+     */
+    if (add->desc_adjust == K_UNSET) {
+	new->desc_width = base->desc_width;
+	new->desc_adjust = base->desc_adjust;
+    }
+    else {
+	new->desc_width = add->desc_width;
+	new->desc_adjust = add->desc_adjust;
+    }
 
     new->default_order = (add->default_order != NULL)
 	? add->default_order : base->default_order;
@@ -681,6 +725,8 @@ struct ent {
     time_t lm;
     struct ent *next;
     int ascending;
+    int isdir;
+    int checkdir;
     char key;
 };
 
@@ -924,6 +970,10 @@ static void do_emit_plain(request_rec *r, FILE *f)
     ap_rputs("</PRE>\n", r);
 }
 
+/* See mod_include */
+#define SUB_REQ_STRING	"Sub request to mod_include"
+#define PARENT_STRING	"Parent request to mod_include"
+
 /*
  * Handle the preamble through the H1 tag line, inclusive.  Locate
  * the file with a subrequests.  Process text/html documents by actually
@@ -966,6 +1016,11 @@ static void emit_head(request_rec *r, char *header_fname, int suppress_amble,
 		if (! suppress_amble) {
 		    emit_preamble(r, title);
 		}
+
+		/* See mod_include */
+		ap_table_add(r->notes, PARENT_STRING, "");
+		ap_table_add(rr->notes, SUB_REQ_STRING, "");
+
 		/*
 		 * If there's a problem running the subrequest, display the
 		 * preamble if we didn't do it before -- the header file
@@ -976,6 +1031,7 @@ static void emit_head(request_rec *r, char *header_fname, int suppress_amble,
 		    emit_amble = suppress_amble;
 		    emit_H1 = 1;
 		}
+		ap_table_unset(r->notes, PARENT_STRING);	/* cleanup */
 	    }
 	    else if (!strncasecmp("text/", rr->content_type, 5)) {
 		/*
@@ -1041,11 +1097,17 @@ static void emit_tail(request_rec *r, char *readme_fname, int suppress_amble)
 	if (rr->content_type != NULL) {
 	    if (!strcasecmp(ap_field_noparam(r->pool, rr->content_type),
 			    "text/html")) {
+
+		/* See mod_include */
+		ap_table_add(r->notes, PARENT_STRING, "");
+		ap_table_add(rr->notes, SUB_REQ_STRING, "");
+
 		if (ap_run_sub_req(rr) == OK) {
 		    /* worked... */
 		    suppress_sig = 1;
 		    suppress_post = suppress_amble;
 		}
+		ap_table_unset(r->notes, PARENT_STRING);	/* cleanup */
 	    }
 	    else if (!strncasecmp("text/", rr->content_type, 5)) {
 		/*
@@ -1147,6 +1209,14 @@ static struct ent *make_autoindex_entry(char *name, int autoindex_opts,
     p->alt = NULL;
     p->desc = NULL;
     p->lm = -1;
+    p->isdir = 0;
+    /*
+     * It's obnoxious to have to include this in every entry, but the qsort()
+     * comparison routine only takes two arguments..  The alternative would
+     * add another function call to each invocation.  Let's use memory
+     * rather than CPU.
+     */
+    p->checkdir = ((d->opts & FOLDERS_FIRST) != 0);
     p->key = ap_toupper(keyid);
     p->ascending = (ap_toupper(direction) == D_ASCENDING);
 
@@ -1156,6 +1226,7 @@ static struct ent *make_autoindex_entry(char *name, int autoindex_opts,
 	if (rr->finfo.st_mode != 0) {
 	    p->lm = rr->finfo.st_mtime;
 	    if (S_ISDIR(rr->finfo.st_mode)) {
+		p->isdir = 1;
 	        if (!(p->icon = find_icon(d, rr, 1))) {
 		    p->icon = find_default_icon(d, "^^DIRECTORY^^");
 		}
@@ -1193,19 +1264,27 @@ static struct ent *make_autoindex_entry(char *name, int autoindex_opts,
 }
 
 static char *terminate_description(autoindex_config_rec *d, char *desc,
-				   int autoindex_opts)
+				   int autoindex_opts, int desc_width)
 {
-    int maxsize = 23;
+    int maxsize = desc_width;
     register int x;
 
-    if (autoindex_opts & SUPPRESS_LAST_MOD) {
-	maxsize += 19;
-    }
-    if (autoindex_opts & SUPPRESS_SIZE) {
-	maxsize += 7;
+    /*
+     * If there's no DescriptionWidth in effect, default to the old
+     * behaviour of adjusting the description size depending upon
+     * what else is being displayed.  Otherwise, stick with the
+     * setting.
+     */
+    if (d->desc_adjust == K_UNSET) {
+	if (autoindex_opts & SUPPRESS_LAST_MOD) {
+	    maxsize += 19;
+	}
+	if (autoindex_opts & SUPPRESS_SIZE) {
+	    maxsize += 7;
+	}
     }
 
-    for (x = 0; desc[x] && (maxsize > 0 || desc[x]=='<'); x++) {
+    for (x = 0; desc[x] && ((maxsize > 0) || (desc[x] == '<')); x++) {
 	if (desc[x] == '<') {
 	    while (desc[x] != '>') {
 		if (!desc[x]) {
@@ -1271,6 +1350,7 @@ static void output_directories(struct ent **ar, int n,
     int static_columns = (autoindex_opts & SUPPRESS_COLSORT);
     pool *scratch = ap_make_sub_pool(r->pool);
     int name_width;
+    int desc_width;
     char *name_scratch;
     char *pad_scratch;
 
@@ -1278,6 +1358,17 @@ static void output_directories(struct ent **ar, int n,
 	name = "/";
     }
 
+    desc_width = d->desc_width;
+    if (d->desc_adjust == K_ADJUST) {
+	for (x = 0; x < n; x++) {
+	    if (ar[x]->desc != NULL) {
+		int t = strlen(ar[x]->desc);
+		if (t > desc_width) {
+		    desc_width = t;
+		}
+	    }
+	}
+    }
     name_width = d->name_width;
     if (d->name_adjust == K_ADJUST) {
 	for (x = 0; x < n; x++) {
@@ -1377,17 +1468,17 @@ static void output_directories(struct ent **ar, int n,
 
 	    nwidth = strlen(t2);
 	    if (nwidth > name_width) {
-	      memcpy(name_scratch, t2, name_width - 3);
-	      name_scratch[name_width - 3] = '.';
-	      name_scratch[name_width - 2] = '.';
-	      name_scratch[name_width - 1] = '>';
-	      name_scratch[name_width] = 0;
-	      t2 = name_scratch;
-	      nwidth = name_width;
+		memcpy(name_scratch, t2, name_width - 3);
+		name_scratch[name_width - 3] = '.';
+		name_scratch[name_width - 2] = '.';
+		name_scratch[name_width - 1] = '>';
+		name_scratch[name_width] = 0;
+		t2 = name_scratch;
+		nwidth = name_width;
 	    }
 	    ap_rvputs(r, " <A HREF=\"", anchor, "\">",
-	      ap_escape_html(scratch, t2), "</A>", pad_scratch + nwidth,
-	      NULL);
+		      ap_escape_html(scratch, t2), "</A>",
+		      pad_scratch + nwidth, NULL);
 	    /*
 	     * The blank before the storm.. er, before the next field.
 	     */
@@ -1411,7 +1502,8 @@ static void output_directories(struct ent **ar, int n,
 	    if (!(autoindex_opts & SUPPRESS_DESC)) {
 		if (ar[x]->desc) {
 		    ap_rputs(terminate_description(d, ar[x]->desc,
-						   autoindex_opts), r);
+						   autoindex_opts,
+						   desc_width), r);
 		}
 	    }
 	}
@@ -1449,6 +1541,15 @@ static int dsortf(struct ent **e1, struct ent **e2)
     }
     if (is_parent((*e2)->name)) {
         return 1;
+    }
+    /*
+     * Now see if one's a directory and one isn't, AND we're listing
+     * directories first.
+     */
+    if ((*e1)->checkdir) {
+	if ((*e1)->isdir != (*e2)->isdir) {
+	    return (*e1)->isdir ? -1 : 1;
+	}
     }
     /*
      * All of our comparisons will be of the c1 entry against the c2 one,

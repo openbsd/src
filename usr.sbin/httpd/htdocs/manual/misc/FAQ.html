@@ -21,7 +21,7 @@
 
   <H1 ALIGN="CENTER">Apache Server Frequently Asked Questions</H1>
   <P>
-  $Revision: 1.4 $ ($Date: 1999/09/29 06:29:00 $)
+  $Revision: 1.5 $ ($Date: 2000/01/25 18:29:23 $)
   </P>
   <P>
   The latest version of this FAQ is always available from the main
@@ -251,6 +251,9 @@
         window, I get a message like "<samp>Cannot determine host name.
 	Use ServerName directive to set it manually.</samp>"  What does
 	this mean?</A>
+   </LI>
+   <LI><A HREF="#ws2_32dll">When I try to start Apache for Windows, I get a message
+	like "<samp>Unable To Locate WS2_32.DLL...</samp>". What should I do?</A>
    </LI>
   </OL>
  </LI>
@@ -483,6 +486,8 @@
    </LI>
    <LI><A HREF="#search">Does Apache include a search engine?</A>
    </LI>
+   <LI><A HREF="#rotate">How can I rotate my log files?</A>
+   </LI>
   </OL>
  </LI>
 
@@ -560,6 +565,25 @@
   A cute name which stuck. Apache is &quot;<STRONG>A
   PA</STRONG>t<STRONG>CH</STRONG>y server&quot;.  It was
   based on some existing code and a series of &quot;patch files&quot;.
+  </P>
+
+  <P>
+  For many developers it is also a reverant connotation to the Native
+  American Indian tribe of Apache, <A
+  HREF="http://www.indians.org/welker/apache.htm">well-known for their
+  superior skills in warfare strategy and inexhaustible endurance</A>.
+  Online information about the Apache Nation is tough to locate; we 
+  suggest searching 
+  <A HREF="http://www.google.com/search?q=Apache+Nation">Google</A>, 
+  <A HREF="http://www.northernlight.com/nlquery.fcg?qr=Apache+Nation">Northernlight</A>, 
+  <A HREF="http://infoseek.go.com/Titles?qt=Apache+Nation">Infoseek</A>, or 
+  <A HREF="http://www.alltheweb.com/cgi-bin/asearch?query=Apache+Nation">AllTheWeb</A>.
+  </P>
+  <P>
+  In addition, <A
+  HREF="http://www.indian.org/">http://www.indian.org/</A> and <A
+  HREF="http://www.nativeweb.com/">http://www.nativeweb.com/</A> are
+  two excellent resources for Native American information.
   </P>
   <HR>
  </LI>
@@ -840,6 +864,36 @@
   (see <A HREF="../new_features_1_3.html#misc">year-2000 improvements in
   Apache 1.3</A> for details).
   </P>
+  <p>
+  The Apache HTTP Server project is an open-source software product of
+  the Apache Software Foundation.  The project and the Foundation
+  <b>cannot</b> offer legal assurances regarding any suitability
+  of the software for your application.  There are several commercial
+  Apache support organizations and derivative server products available
+  that may be able to stand behind the software and provide you with
+  any assurances you may require.  You may find links to some of these
+  vendors at
+  <samp>&lt;<a href="http://www.apache.org/info/support.cgi"
+            >http://www.apache.org/info/support.cgi</a>&gt;</samp>.
+  </p>
+  <p>
+  The Apache HTTP server software is distributed with the following
+  disclaimer, found in the software license:
+  </p>
+  <pre>
+   THIS SOFTWARE IS PROVIDED BY THE APACHE GROUP ``AS IS'' AND ANY
+   EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+   PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE APACHE GROUP OR
+   ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+   SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+   NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+   LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+   HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+   STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+   OF THE POSSIBILITY OF SUCH DAMAGE.
+  </pre>
   <HR>
  </LI>
 
@@ -1394,8 +1448,31 @@
   </dl>
   <p>
   in the file.  Correct it if there one there with wrong information, or
-  add one if you don't already have one.  Then try to start the server
+  add one if you don't already have one.
+  </p>
+  <p>
+  Also, make sure that your Windows system has DNS enabled.  See the TCP/IP
+  setup component of the Networking or Internet Options control panel.
+  </p>
+  <p>
+  After verifying that DNS is enabled and that you have a valid hostname
+  in your <samp>ServerName</samp> directive, try to start the server
   again.
+  </p>
+  <hr>
+ </LI>
+ <LI><A name="ws2_32dll">
+       <b>When I try to start Apache for Windows, I get a message
+	like "<samp>Unable To Locate WS2_32.DLL...</samp>". What should I do?</b></A>
+  <p>
+  Short answer: You need to install Winsock 2, available from
+  <A HREF="http://www.microsoft.com/windows95/downloads/">http://www.microsoft.com/windows95/downloads/</A>
+  </p>
+  <p>
+  Detailed answer: Prior to version 1.3.9, Apache for Windows used Winsock 1.1. Beginning with
+  version 1.3.9, Apache began using Winsock 2 features (specifically, WSADuplicateSocket()).
+  WS2_32.DLL implements the Winsock 2 API. Winsock 2 ships with Windows NT 4.0 and Windows 98.
+  Some of the earlier releases of Windows 95 did not include Winsock 2.
   </p>
   <hr>
  </LI>
@@ -2865,6 +2942,27 @@
   Apache include <A HREF="http://www.htdig.org/">ht://Dig</A> and <A
   HREF="http://sunsite.berkeley.edu/SWISH-E/">SWISH-E</A>.
   </P>
+  <HR>
+ </LI>
+ <LI><A NAME="rotate">
+      <STRONG>How can I rotate my log files?</STRONG>
+     </A>
+  <P>The simple answer: by piping the transfer log into an appropriate
+  log file rotation utility.</P>
+  <P>The longer answer: In the src/support/ directory, you will find a
+  utility called <CODE>rotatelogs</CODE> which can be used like this:<PRE>
+   TransferLog "|/path/to/rotatelogs /path/to/logs/access_log 86400"
+  </PRE> to enable daily rotation of the log files.<BR>
+  A more sophisticated solution of a logfile rotation utility is
+  available under the name <CODE>cronolog</CODE> from Andrew Ford's site at
+  <A HREF="http://www.ford-mason.co.uk/resources/cronolog/"
+  >http://www.ford-mason.co.uk/resources/cronolog/</A>. It can automatically
+  create logfile subdirectories based on time and date, and can have a
+  constant symlink point to the rotating logfiles. (As of version 1.6.1,
+  cronolog is available under the <A HREF="../LICENSE">Apache License</A>).
+  Use it like this:<PRE>
+   CustomLog "|/path/to/cronolog --symlink=/usr/local/apache/logs/access_log /usr/local/apache/logs/%Y/%m/access_log" combined
+  </PRE></P>
   <HR>
  </LI>
 </OL>

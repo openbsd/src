@@ -102,11 +102,7 @@ static int ftp_check_string(const char *x)
 	    ch = ap_proxy_hex2c(&x[i + 1]);
 	    i += 2;
 	}
-#ifndef CHARSET_EBCDIC
-	if (ch == '\015' || ch == '\012' || (ch & 0x80))
-#else /*CHARSET_EBCDIC*/
-	if (ch == '\r' || ch == '\n' || (os_toascii[ch] & 0x80))
-#endif /*CHARSET_EBCDIC*/
+	if (ch == CR || ch == LF || (OS_ASC(ch) & 0x80))
 	    return 0;
     }
     return 1;
@@ -140,7 +136,8 @@ int ap_proxy_ftp_canon(request_rec *r, char *url)
     strp = strchr(url, ';');
     if (strp != NULL) {
 	*(strp++) = '\0';
-	parms = ap_proxy_canonenc(p, strp, strlen(strp), enc_parm, r->proxyreq);
+	parms = ap_proxy_canonenc(p, strp, strlen(strp), enc_parm,
+				  r->proxyreq);
 	if (parms == NULL)
 	    return HTTP_BAD_REQUEST;
     }
@@ -153,15 +150,15 @@ int ap_proxy_ftp_canon(request_rec *r, char *url)
     if (!ftp_check_string(path))
 	return HTTP_BAD_REQUEST;
 
-    if (!r->proxyreq && r->args != NULL) {
+    if (r->proxyreq == NOT_PROXY && r->args != NULL) {
 	if (strp != NULL) {
-	    strp = ap_proxy_canonenc(p, r->args, strlen(r->args), enc_parm, 1);
+	    strp = ap_proxy_canonenc(p, r->args, strlen(r->args), enc_parm, STD_PROXY);
 	    if (strp == NULL)
 		return HTTP_BAD_REQUEST;
 	    parms = ap_pstrcat(p, parms, "?", strp, NULL);
 	}
 	else {
-	    strp = ap_proxy_canonenc(p, r->args, strlen(r->args), enc_fpath, 1);
+	    strp = ap_proxy_canonenc(p, r->args, strlen(r->args), enc_fpath, STD_PROXY);
 	    if (strp == NULL)
 		return HTTP_BAD_REQUEST;
 	    path = ap_pstrcat(p, path, "?", strp, NULL);
@@ -420,7 +417,7 @@ static long int send_dir(BUFF *f, request_rec *r, cache_req *c, char *cwd)
  */
 static int ftp_unauthorized (request_rec *r, int log_it)
 {
-    r->proxyreq = 0;
+    r->proxyreq = NOT_PROXY;
     /* Log failed requests if they supplied a password
      * (log username/password guessing attempts)
      */
@@ -564,6 +561,7 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
 	return HTTP_INTERNAL_SERVER_ERROR;
     }
 
+#ifndef TPF
     if (conf->recv_buffer_size > 0
 	&& setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
 		       (const char *) &conf->recv_buffer_size, sizeof(int))
@@ -571,6 +569,7 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
 	    ap_log_rerror(APLOG_MARK, APLOG_ERR, r,
 			 "setsockopt(SO_RCVBUF): Failed to set ProxyReceiveBufferSize, using default");
     }
+#endif
 
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *) &one,
 		   sizeof(one)) == -1) {
@@ -778,7 +777,7 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
 
     if (parms[0] != 'a') {
 	/* set type to image */
-	/* TM - Added \015\012 to the end of TYPE I, otherwise it hangs the
+	/* TM - Added CRLF to the end of TYPE I, otherwise it hangs the
 	   connection */
 	ap_bputs("TYPE I" CRLF, f);
 	ap_bflush(f);
@@ -816,6 +815,7 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
 	return HTTP_INTERNAL_SERVER_ERROR;
     }
 
+#ifndef TPF
     if (conf->recv_buffer_size) {
 	if (setsockopt(dsock, SOL_SOCKET, SO_RCVBUF,
 	       (const char *) &conf->recv_buffer_size, sizeof(int)) == -1) {
@@ -823,6 +823,7 @@ int ap_proxy_ftp_handler(request_rec *r, cache_req *c, char *url)
 			 "setsockopt(SO_RCVBUF): Failed to set ProxyReceiveBufferSize, using default");
 	}
     }
+#endif
 
     ap_bputs("PASV" CRLF, f);
     ap_bflush(f);

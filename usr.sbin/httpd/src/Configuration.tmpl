@@ -53,8 +53,13 @@
 #
 # o The SSL_EXPERIMENTAL rule can be used to enable still experimental code
 #   inside mod_ssl. These are usually new features which need some more
-#   testing before they can be considered stable. So, enabled this on your own
+#   testing before they can be considered stable. So, enable this on your own
 #   risk and only when you like to see Apache+mod_ssl dump core ;-)
+#
+# o The SSL_CONSERVATIVE rule can be used to disable some non-conservative
+#   code inside mod_ssl. These are usually recently introduced features 
+#   which some people still want to consider unstable. So, to be maximum 
+#   conservative, one can enable this flag and this way remove such code.
 #
 # o The SSL_VENDOR rule can be used to enable code inside mod_ssl which can be
 #   used by product vendors to extend mod_ssl via EAPI hooks without patching
@@ -66,6 +71,7 @@
 Rule SSL_COMPAT=yes
 Rule SSL_SDBM=default
 Rule SSL_EXPERIMENTAL=no
+Rule SSL_CONSERVATIVE=no
 Rule SSL_VENDOR=no
 
 ################################################################

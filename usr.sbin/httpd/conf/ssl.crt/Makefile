@@ -1,6 +1,6 @@
 ##
 ##  Makefile to keep the hash symlinks in SSLCACertificatePath up to date
-##  Copyright (c) 1998-1999 Ralf S. Engelschall, All Rights Reserved. 
+##  Copyright (c) 1998-2000 Ralf S. Engelschall, All Rights Reserved. 
 ##
 
 SSL_PROGRAM=

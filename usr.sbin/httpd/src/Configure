@@ -82,9 +82,14 @@ APLIBDIRS=""
 
 ####################################################################
 ## Now handle any arguments, which, for now, is -file
-## to select an alternate Configuration file
+## to select an alternate Configuration file and -v
+## to turn on verbose mode
 ##
 while [ "x$1" != "x" ]; do
+  if [ "x$1" = "x-v" ] ; then
+    shift 1;
+    vflag="-v";
+  fi
   if [ "x$1" = "x-file" ] ; then
     shift 1; file=$1; shift 1
     if [ ! -r $file ]; then
@@ -273,10 +278,11 @@ case "$PLAT" in
 	DEF_WANTHSREGEX=yes
 	;;
     *MPE/iX*)
-	OS='MPE/iX'
+	export OS='MPE/iX'
+	OSDIR='os/mpeix'
 	CFLAGS="$CFLAGS -DMPE -D_POSIX_SOURCE -D_SOCKET_SOURCE"
-	LIBS="$LIBS -lsocket -lsvipc"
-	LDFLAGS="$LDFLAGS -Xlinker \"-WL,cap=ia,ba,ph,pm;nmstack=1024000\""
+	LIBS="$LIBS -lsocket -lsvipc -lcurses"
+	LDFLAGS="$LDFLAGS -Xlinker \"-WL,cap=ia,ba,ph;nmstack=1024000\""
 	CAT="/bin/cat" # built-in cat is badly broken for stdin redirection
 	;;
     *-apple-aux3*)
@@ -621,7 +627,8 @@ case "$PLAT" in
     BS2000*-siemens-sysv4*)
 	OS='BS2000'
 	OSDIR='os/bs2000'
-	CC='c89 -XLLML -XLLMK -XL'
+	# If you are using a CPP before V3.0, delete the -Kno_integer_overflow flag
+	CC='c89 -XLLML -XLLMK -XL -Kno_integer_overflow'
 	CFLAGS="$CFLAGS -DCHARSET_EBCDIC -DSVR4 -D_XPG_IV"
 	DEF_WANTHSREGEX=yes
 	DBM_LIB=""
@@ -778,6 +785,14 @@ case "$PLAT" in
 	CFLAGS="-D_TANDEM_SOURCE -D_XOPEN_SOURCE_EXTENDED=1"
 	CC='c89'
 	;;
+    *-IBM-OS390*)
+       OS='OS390'
+       OSDIR='os/os390'
+       CC='c89'
+       CFLAGS="$CFLAGS -DOS390 -DCHARSET_EBCDIC -D_ALL_SOURCE"
+       DEF_WANTHSREGEX=yes
+       LIBS="$LIBS"
+       ;;
     *) # default: Catch systems we don't know about
 	OS='Unknown and unsupported OS'
     	echo Sorry, but we cannot grok \"$PLAT\"
@@ -825,6 +840,7 @@ echo >>Makefile.config "OSDIR=\$(SRCDIR)/$OSDIR"
 echo >>Makefile.config "INCDIR=\$(SRCDIR)/include"
 echo >>Makefile.config "INCLUDES0=-I\$(OSDIR) -I\$(INCDIR)"
 echo >>Makefile.config "SHELL=$SHELL"
+echo >>Makefile.config "OS=$OS"
 
 ####################################################################
 ## And adjust/override WANTHSREGEX as needed
@@ -892,9 +908,9 @@ fi
 ##
 TCPP=`egrep '^CPP=' Makefile.config | tail -1 | awk -F= '{print $2}'`
 if [ "x$TCPP" != "x" ]; then
-    CPP=`CC=$CC CPP=$TCPP ./helpers/findcpp.sh`
+    CPP=`CPP="$TCPP"; export CPP CC; ./helpers/findcpp.sh`
 else
-    CPP=`CC=$CC ./helpers/findcpp.sh`
+    CPP=`export CC; ./helpers/findcpp.sh`
 fi
 if [ "x$TCPP" = "x" ]; then
     echo "CPP=$CPP" >> Makefile.config
@@ -915,12 +931,14 @@ echo "#ifndef AP_CONFIG_AUTO_H" >>$AP_CONFIG_AUTO_H
 echo "#define AP_CONFIG_AUTO_H" >>$AP_CONFIG_AUTO_H
 
 echo " + checking for system header files"
-CHECK_FOR_HEADERS="dlfcn.h dl.h bstring.h crypt.h unistd.h sys/resource.h sys/select.h sys/processor.h"
+CHECK_FOR_HEADERS="dlfcn.h dl.h bstring.h crypt.h unistd.h sys/resource.h sys/select.h sys/processor.h sys/param.h"
+(
+export CPP
 for header in $CHECK_FOR_HEADERS; do
     echo "" >>$AP_CONFIG_AUTO_H
     echo "/* check: #include <$header> */" >>$AP_CONFIG_AUTO_H
     name="`echo $header | sed -e 's:/:_:g' -e 's:\.:_:g' | tr '[a-z]' '[A-Z]'`"
-    CPP=$CPP ./helpers/checkheader.sh $header
+    ./helpers/checkheader.sh $header
     if [ $? -eq 0 ]; then
 	echo "#ifndef HAVE_${name}" >>$AP_CONFIG_AUTO_H
 	echo "#define HAVE_${name} 1" >>$AP_CONFIG_AUTO_H
@@ -931,6 +949,7 @@ for header in $CHECK_FOR_HEADERS; do
 	echo "#endif" >>$AP_CONFIG_AUTO_H
     fi
 done
+)
 
 ####################################################################
 # Special AIX 4.x support: need to check for sys/processor.h
@@ -983,11 +1002,18 @@ if [ "x$using_shlib" = "x1" ] ; then
     DEF_SHARED_CORE=no
     DEF_SHARED_CHAIN=no
     SHLIB_SUFFIX_NAME=so
+    SHMOD_SUFFIX_NAME=so
     SHLIB_SUFFIX_DEPTH=all
     SHLIB_EXPORT_FILES=no
     SHARED_CORE_EP='lib$(TARGET).ep'
     SHCORE_IMPLIB=''
     case "$PLAT" in
+	*MPE/iX*)
+	    LD_SHLIB=ld	
+	    LDFLAGS_SHLIB='-b -a archive'
+	    LDFLAGS_MOD_SHLIB=$LDFLAGS_SHLIB
+	    LIBS_SHLIB='$(OSDIR)/mpe_dl_stub.o'	
+	    ;;
 	*-linux1)
 	    CFLAGS_SHLIB="-fpic"
 	    LDFLAGS_SHLIB="-Bshareable"
@@ -1142,7 +1168,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 		*/gcc|gcc ) CFLAGS_SHLIB="-fpic" ;;
 		*/cc|cc   ) CFLAGS_SHLIB="" ;;
 	    esac
-	    LDFLAGS_SHLIB="-shared -expect_unresolved '*' -s"
+	    LDFLAGS_SHLIB='-shared -expect_unresolved "*" -s'
 	    LDFLAGS_MOD_SHLIB=$LDFLAGS_SHLIB
 	    LDFLAGS_SHLIB_EXPORT=""
 	    ;;
@@ -1219,6 +1245,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 	    LDFLAGS_SHLIB="-b"
 	    LDFLAGS_MOD_SHLIB=$LDFLAGS_SHLIB
 	    LDFLAGS_SHLIB_EXPORT="-Wl,-E -Wl,-B,deferred"
+	    SHLIB_SUFFIX_NAME=sl
 	    ;;
 	*-hp-hpux10.*|*-hp-hpux11.*)
 	    case $CC in
@@ -1228,6 +1255,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 	    LDFLAGS_SHLIB="-b"
 	    LDFLAGS_MOD_SHLIB=$LDFLAGS_SHLIB
 	    LDFLAGS_SHLIB_EXPORT="-Wl,-E -Wl,-B,deferred -Wl,+s"
+	    SHLIB_SUFFIX_NAME=sl
 	    ;;
 	*-ibm-aix*)
 	    case $CC in
@@ -1261,6 +1289,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 	    LDFLAGS_SHLIB="`echo $LDFLAGS|sed -e s/-Zexe//` -Zdll"
 	    LDFLAGS_MOD_SHLIB=$LDFLAGS_SHLIB
 	    SHLIB_SUFFIX_NAME=dll
+	    SHMOD_SUFFIX_NAME=dll
 	    SHLIB_SUFFIX_DEPTH=0
 	    LD_SHLIB=$CC
 	    LD_SHCORE_DEF="ApacheCoreOS2.def"
@@ -1366,7 +1395,7 @@ case "$OS" in
     'HI-UX')
 	case "$CC" in
 	    */cc|cc )
-		CFLAGS="$CFLAGS -Aa -D_HIUX_SOURCE"
+		CFLAGS="$CFLAGS -Aa -Ae -D_HIUX_SOURCE"
 		OPTIM=" "
 		TOPTIM=""
 	    ;;
@@ -1375,7 +1404,7 @@ case "$OS" in
     'HP-UX'|'HP-UX 10'|'HP-UX 11')
 	case "$CC" in
 	    */cc|cc )
-		CFLAGS="$CFLAGS -Aa -D_HPUX_SOURCE"
+		CFLAGS="$CFLAGS -Aa -Ae -D_HPUX_SOURCE"
 		OPTIM=" "
 		TOPTIM=""
 	    ;;
@@ -1457,6 +1486,15 @@ case "$PLAT" in
 	fi
 	;;
     BS2000*-siemens-sysv4*)
+	# Activate RISC compilation if this is a SR2000 machine
+	# (test written by Thomas Dorner <Thomas.Dorner@start.de>
+	# for perl5 port):
+	ISSR2000="`bs2cmd SHOW-SYSTEM-INFO | grep 'HSI-ATT'`"
+	case "$ISSR2000" in
+	    *TYPE*SR*)
+	        CFLAGS="$CFLAGS -Krisc_4000"
+	        ;;
+	esac
 	# Depending on the BS2000 OS and compiler/crte release,
 	# -lnsl may be available (or may be not).
 	# In standard SVR4 systems, -lsocket relies on some symbols
@@ -1653,7 +1691,7 @@ for modfile in $MODFILES ; do
 		    modlibs="$modlibs $modlibs1"
 		fi
 		rm -f $tmpfile2 $tmpfile3
-		if [ "x$ext" != "x$SHLIB_SUFFIX_NAME" ]; then
+		if [ "x$ext" != "x$SHMOD_SUFFIX_NAME" ]; then
 		    ext=o
 		fi
 	fi
@@ -1661,11 +1699,11 @@ for modfile in $MODFILES ; do
 		modname=`echo $modbase | sed 's/^.*\///' | \
 			sed 's/^mod_//' | sed 's/^lib//' | sed 's/$/_module/'`
 	fi
-	if [ "x$ext" != "x$SHLIB_SUFFIX_NAME" ]; then
+	if [ "x$ext" != "x$SHMOD_SUFFIX_NAME" ]; then
 		echo "Module $modname $modbase.$ext" >>$tmpfile
 	fi
 	#   optionally generate export file for some linkers 
-	if [ "x$ext" = "x$SHLIB_SUFFIX_NAME" -a "x$SHLIB_EXPORT_FILES" = "xyes" ]; then
+	if [ "x$ext" = "x$SHMOD_SUFFIX_NAME" -a "x$SHLIB_EXPORT_FILES" = "xyes" ]; then
 		echo "$modname" >$modbase.exp
 	fi
 done
@@ -1803,7 +1841,7 @@ if [ "x$using_shlib" = "x1" ] ; then
 	#    select the special subtarget for shared core generation
 	SUBTARGET=target_shared
 	#    determine additional suffixes for libhttpd.so
-	V=1 R=3 P=9
+	V=1 R=3 P=11
 	if [ "x$SHLIB_SUFFIX_DEPTH" = "x0" ]; then
 	    SHLIB_SUFFIX_LIST=""
 	fi
@@ -1820,6 +1858,14 @@ if [ "x$using_shlib" = "x1" ] ; then
 	    SHLIB_SUFFIX_LIST="$V $V.$R $V.$R.$P"
 	fi
     fi
+fi
+
+####################################################################
+## Don't force DL emulation, if not necessary. Currently only used
+## by os/unix/os.c. 
+##
+if [ "x$using_shlib" != "x1" ] ; then
+    CFLAGS="$CFLAGS -DNO_DL_NEEDED"
 fi
 
 ####################################################################
@@ -1989,6 +2035,7 @@ echo "" >>Makefile
 echo "SUBDIRS=$SUBDIRS lib modules" >> Makefile
 echo "SUBTARGET=$SUBTARGET" >> Makefile
 echo "SHLIB_SUFFIX_NAME=$SHLIB_SUFFIX_NAME" >> Makefile
+echo "SHMOD_SUFFIX_NAME=$SHMOD_SUFFIX_NAME" >> Makefile
 echo "SHLIB_SUFFIX_LIST=$SHLIB_SUFFIX_LIST" >> Makefile
 echo "SHLIB_EXPORT_FILES=$SHLIB_EXPORT_FILES" >> Makefile
 echo "" >> Makefile
@@ -2124,7 +2171,7 @@ if [ "x$AP_TYPE_OFF_T" != "x$AP_TYPE_LONG" ]; then
 else
     echo "" >>$AP_CONFIG_AUTO_H
     echo "/* determine: is off_t a quad */" >>$AP_CONFIG_AUTO_H
-    echo "#ifndef AP_OFF_T_IS_QUAD" >>$AP_CONFIG_AUTO_H
+    echo "#ifdef AP_OFF_T_IS_QUAD" >>$AP_CONFIG_AUTO_H
     echo "#undef AP_OFF_T_IS_QUAD" >>$AP_CONFIG_AUTO_H
     echo "#endif" >>$AP_CONFIG_AUTO_H
 fi
@@ -2146,7 +2193,7 @@ if [ "x$AP_TYPE_VOID_P" = "x$AP_TYPE_QUAD" ]; then
 else
     echo "" >>$AP_CONFIG_AUTO_H
     echo "/* determine: is void * a quad */" >>$AP_CONFIG_AUTO_H
-    echo "#ifndef AP_VOID_P_IS_QUAD" >>$AP_CONFIG_AUTO_H
+    echo "#ifdef AP_VOID_P_IS_QUAD" >>$AP_CONFIG_AUTO_H
     echo "#undef AP_VOID_P_IS_QUAD" >>$AP_CONFIG_AUTO_H
     echo "#endif" >>$AP_CONFIG_AUTO_H
 fi
@@ -2206,17 +2253,26 @@ if [ "x$OS" = "xTPF" ] ; then
     :
 else
    echo " + doing sanity check on compiler and options"
-   if ./helpers/TestCompile sanity; then
+   if ./helpers/TestCompile $vflag sanity; then
       :
    else
-   echo "** A test compilation with your Makefile configuration"
-   echo "** failed. This is most likely because your C compiler"
-   echo "** is not ANSI. Apache requires an ANSI C Compiler, such"
-   echo "** as gcc. The above error message from your compiler"
-   echo "** will also provide a clue."
-   echo " Aborting!"
-   exitcode=1
-   exit 1
+      if [ "x$vflag" = "x-v" ] ; then
+         WHEREERR="above"
+      else
+         WHEREERR="below"
+      fi
+      echo "** A test compilation with your Makefile configuration"
+      echo "** failed.  The $WHEREERR error output from the compilation"
+      echo "** test will give you an idea what is failing. Note that"
+      echo "** Apache requires an ANSI C Compiler, such as gcc. "
+      echo ""
+      echo "======== Error Output for sanity check ========"
+      (./helpers/TestCompile -v sanity)
+      echo "============= End of Error Report ============="
+      echo ""
+      echo " Aborting!"
+      exitcode=1
+      exit 1
    fi
 fi
 
@@ -2287,7 +2343,10 @@ all clean distclean depend ::
 	@for i in \$(MODULES) ""; do \\
 	  if [ "x\$\$i" != "x" ]; then \\
 	    echo "===> \$(SDP)modules/\$\$i"; \\
-		(cd \$\$i && \$(MAKE) \$(MFLAGS_STATIC) SDP='\$(SDP)' CC='\$(CC)' AUX_CFLAGS='\$(CFLAGS)' RANLIB='\$(RANLIB)' \$@) || exit 1; \\
+		case "x\$(OS)" in \\
+		  xOS390 | xTPF) (cd \$\$i && \$(MAKE) SDP='\$(SDP)' \$@) || exit 1;; \\
+		              *) (cd \$\$i && \$(MAKE) \$(MFLAGS_STATIC) SDP='\$(SDP)' CC='\$(CC)' AUX_CFLAGS='\$(CFLAGS)' RANLIB='\$(RANLIB)' \$@) || exit 1;; \\
+		esac; \\
 		echo "<=== \$(SDP)modules/\$\$i"; \\
 	  fi; \\
 	done

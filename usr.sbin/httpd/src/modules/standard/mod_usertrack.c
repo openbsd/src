@@ -137,7 +137,11 @@ static void make_cookie(request_rec *r)
     struct tms mpe_tms;
 #elif !defined(WIN32)
     struct timeval tv;
+#ifdef NETWARE
+    time_t tz = 0;
+#else
     struct timezone tz = {0, 0};
+#endif /* defined(NETWARE) */
 #endif
     /* 1024 == hardcoded constant */
     char cookiebuf[1024];
@@ -158,6 +162,9 @@ static void make_cookie(request_rec *r)
     ap_snprintf(cookiebuf, sizeof(cookiebuf), "%s.%d%ld%ld", rname,
 		(int) getpid(),
                 (long) r->request_time, (long) mpe_tms.tms_utime);
+#elif defined(NETWARE)
+    ap_snprintf(cookiebuf, sizeof(cookiebuf), "%s.%d%ld%ld", rname,
+        (int) getpid(), (long) r->request_time, (long) clock());                
 #elif defined(WIN32)
     /*
      * We lack gettimeofday() and we lack times(). So we'll use a combination
@@ -375,3 +382,12 @@ module MODULE_VAR_EXPORT usertrack_module = {
     NULL,                       /* child_exit */
     NULL                        /* post read-request */
 };
+
+
+#ifdef NETWARE
+int main(int argc, char *argv[]) 
+{
+    ExitThread(TSR_THREAD, 0);
+}
+#endif
+

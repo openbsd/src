@@ -68,7 +68,7 @@
  * GET /server-info?module_name - Returns configuration for a single module
  * GET /server-info?list - Returns quick list of included modules
  *
- * Rasmus Lerdorf <rasmus@vex.net>, May 1996
+ * Rasmus Lerdorf <rasmus@php.net>, May 1996
  *
  * 05.01.96 Initial Version
  *
@@ -693,3 +693,11 @@ module MODULE_VAR_EXPORT info_module =
     NULL,                       /* child_exit */
     NULL                        /* post read-request */
 };
+
+
+#ifdef NETWARE
+int main(int argc, char *argv[]) 
+{
+    ExitThread(TSR_THREAD, 0);
+}
+#endif

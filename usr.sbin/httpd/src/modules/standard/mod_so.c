@@ -267,6 +267,14 @@ static const char *load_module(cmd_parms *cmd, void *dummy,
                           "' in file ", szModuleFile, " is garbled -"
                           " perhaps this is not an Apache module DSO?", NULL);
     }
+#ifdef EAPI
+    if (modp->magic == MODULE_MAGIC_COOKIE_AP13) {
+        ap_log_error(APLOG_MARK, APLOG_WARNING|APLOG_NOERRNO, NULL,
+                     "Loaded DSO %s uses plain Apache 1.3 API, "
+                     "this module might crash under EAPI! "
+                     "(please recompile it with -DEAPI)", filename);
+    }
+#endif
 
     /* 
      * Add this module to the Apache core structures

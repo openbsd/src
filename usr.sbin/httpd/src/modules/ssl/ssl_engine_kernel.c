@@ -9,7 +9,7 @@
 */
 
 /* ====================================================================
- * Copyright (c) 1998-1999 Ralf S. Engelschall. All rights reserved.
+ * Copyright (c) 1998-2000 Ralf S. Engelschall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -134,6 +134,7 @@ void ssl_hook_NewConnection(conn_rec *conn)
     SSL *ssl;
     char *cp;
     char *cpVHostID;
+    char *cpVHostMD5;
     X509 *xs;
     int rc;
     int n;
@@ -186,7 +187,15 @@ void ssl_hook_NewConnection(conn_rec *conn)
         return;
     }
     SSL_clear(ssl);
-    SSL_set_session_id_context(ssl, (unsigned char *)cpVHostID, strlen(cpVHostID));
+    cpVHostMD5 = ap_md5(conn->pool, cpVHostID);
+    if (!SSL_set_session_id_context(ssl, (unsigned char *)cpVHostMD5, strlen(cpVHostMD5))) {
+        ssl_log(conn->server, SSL_LOG_ERROR|SSL_ADD_SSLERR,
+                "Unable to set session id context to `%s'", cpVHostMD5);
+        ap_ctx_set(fb->ctx, "ssl", NULL);
+        ap_bsetflag(fb, B_EOF|B_EOUT, 1);
+        conn->aborted = 1;
+        return;
+    }
     SSL_set_app_data(ssl, conn);
     apctx = ap_ctx_new(conn->pool);
     ap_ctx_set(apctx, "ssl::request_rec", NULL);
@@ -902,7 +911,7 @@ int ssl_hook_Access(request_rec *r)
     }
 #endif /* SSL_EXPERIMENTAL */
 
-#ifndef SSL_EXPERIMENTAL 
+#ifdef SSL_CONSERVATIVE 
     /* 
      *  SSL renegotiations in conjunction with HTTP
      *  requests using the POST method are not supported.
@@ -911,10 +920,10 @@ int ssl_hook_Access(request_rec *r)
         ssl_log(r->server, SSL_LOG_ERROR,
                 "SSL Re-negotiation in conjunction with POST method not supported!");
         ssl_log(r->server, SSL_LOG_INFO,
-                "There is only experimental support which has to be enabled first");
+                "You have to compile without -DSSL_CONSERVATIVE to enabled support for this.");
         return METHOD_NOT_ALLOWED;
     }
-#endif /* not SSL_EXPERIMENTAL */
+#endif /* SSL_CONSERVATIVE */
 
     /*
      * now do the renegotiation if anything was actually reconfigured
@@ -967,7 +976,7 @@ int ssl_hook_Access(request_rec *r)
                 SSL_set_session_id_context(ssl, (unsigned char *)&(r->main), sizeof(r->main));
             else
                 SSL_set_session_id_context(ssl, (unsigned char *)&r, sizeof(r));
-#ifdef SSL_EXPERIMENTAL
+#ifndef SSL_CONSERVATIVE
             ssl_io_suck(r, ssl);
 #endif
             SSL_renegotiate(ssl);

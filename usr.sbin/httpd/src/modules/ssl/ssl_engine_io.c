@@ -9,7 +9,7 @@
 */
 
 /* ====================================================================
- * Copyright (c) 1998-1999 Ralf S. Engelschall. All rights reserved.
+ * Copyright (c) 1998-2000 Ralf S. Engelschall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,7 +70,7 @@
 **  _________________________________________________________________
 */
 
-#ifdef SSL_EXPERIMENTAL
+#ifndef SSL_CONSERVATIVE
 
 /*
  * Background:
@@ -285,7 +285,7 @@ static int ssl_io_suck_read(SSL *ssl, char *buf, int len)
 /* override SSL_read in the following code... */
 #define SSL_read ssl_io_suck_read
 
-#endif /* SSL_EXPERIMENTAL */
+#endif /* !SSL_CONSERVATIVE */
 
 /*  _________________________________________________________________
 **

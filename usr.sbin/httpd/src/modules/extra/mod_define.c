@@ -1,68 +1,38 @@
-/* ====================================================================
- * Copyright (c) 1995-1998 The Apache Group.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
- *
- * 4. The names "Apache Server" and "Apache Group" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    apache@apache.org.
- *
- * 5. Products derived from this software may not be called "Apache"
- *    nor may "Apache" appear in their names without prior written
- *    permission of the Apache Group.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the Apache Group
- *    for use in the Apache HTTP server project (http://www.apache.org/)."
- *
- * THIS SOFTWARE IS PROVIDED BY THE APACHE GROUP ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE APACHE GROUP OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This software consists of voluntary contributions made by many
- * individuals on behalf of the Apache Group and was originally based
- * on public domain software written at the National Center for
- * Supercomputing Applications, University of Illinois, Urbana-Champaign.
- * For more information on the Apache Group and the Apache HTTP server
- * project, please see <http://www.apache.org/>.
- *
- */
+/*
+**  mod_define.c - Apache module for configuration defines ($xxx)
+**
+**  Copyright (c) 1998-2000 Ralf S. Engelschall <rse@engelschall.com>
+**  Copyright (c) 1998-2000 Christian Reiber <chrei@en.muc.de>
+**
+**  Permission to use, copy, modify, and distribute this software for
+**  any purpose with or without fee is hereby granted, provided that
+**  the above copyright notice and this permission notice appear in all
+**  copies.
+**
+**  THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESSED OR IMPLIED
+**  WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+**  MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+**  IN NO EVENT SHALL THE AUTHORS AND COPYRIGHT HOLDERS AND THEIR
+**  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+**  SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+**  LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+**  USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+**  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+**  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+**  OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+**  SUCH DAMAGE.
+*/
 
 /*
-**  mod_define.c -- Apache module for configuration defines ($xxx)
-**  v1.0: Originally written in December 1998 by 
-**        Ralf S. Engelschall <rse@engelschall.com> and
-**        Christian Reiber <chrei@en.muc.de>
-**  v1.1: Completely Overhauled in August 1999 by
-**        Ralf S. Engelschall <rse@engelschall.com>
-*/
+ *  HISTORY
+ *
+ *  v1.0: Originally written in December 1998 by
+ *        Ralf S. Engelschall <rse@engelschall.com> and
+ *        Christian Reiber <chrei@en.muc.de>
+ *
+ *  v1.1: Completely Overhauled in August 1999 by
+ *        Ralf S. Engelschall <rse@engelschall.com>
+ */
 
 #include "ap_config.h"
 #include "ap_ctype.h"
@@ -76,14 +46,14 @@
 #error "This module requires the Extended API (EAPI) facilities."
 #endif
 
-/* 
+/*
  * The global table of defines
  */
 
 static table *tDefines         = NULL;   /* global table of defines */
 static int    bOnceSeenADefine = FALSE;  /* optimization flag */
 
-/* 
+/*
  * Forward declaration
  */
 static int   DefineIndex      (pool *, char *, int *, int *, char **);
@@ -97,8 +67,8 @@ static char *DefineRewriteHook(cmd_parms *, void *, const char *);
  * Character classes for scanner function
  */
 typedef enum {
-    CC_ESCAPE, CC_DOLLAR, CC_BRACEOPEN, CC_BRACECLOSE, 
-    CC_IDCHAR1, CC_IDCHAR, CC_OTHER, CC_EOS   
+    CC_ESCAPE, CC_DOLLAR, CC_BRACEOPEN, CC_BRACECLOSE,
+    CC_IDCHAR1, CC_IDCHAR, CC_OTHER, CC_EOS
 } CharClass;
 
 /*
@@ -170,11 +140,11 @@ static int DefineIndex(pool *p, char *cpLine, int *pos, int *len, char **cpVar)
         switch (s) {
             case SS_NONE:
                 switch (cc) {
-                    case CC_ESCAPE: 
+                    case CC_ESCAPE:
                         s = SS_SKIP;
                         break;
-                    case CC_DOLLAR: 
-                        s = SS_DOLLAR; 
+                    case CC_DOLLAR:
+                        s = SS_DOLLAR;
                         break;
                     default:
                         break;
@@ -186,38 +156,38 @@ static int DefineIndex(pool *p, char *cpLine, int *pos, int *len, char **cpVar)
                 break;
             case SS_DOLLAR:
                 switch (cc) {
-                    case CC_BRACEOPEN: 
-                        s = SS_TOKEN_BRACED;   
-                        *pos = cp-cpLine-1; 
-                        (*len) = 2; 
-                        *cpVar = cp+1; 
+                    case CC_BRACEOPEN:
+                        s = SS_TOKEN_BRACED;
+                        *pos = cp-cpLine-1;
+                        (*len) = 2;
+                        *cpVar = cp+1;
                         break;
-                    case CC_IDCHAR1: 
-                        s = SS_TOKEN_UNBRACED; 
-                        *pos = cp-cpLine-1; 
-                        (*len) = 2; 
-                        *cpVar = cp; 
+                    case CC_IDCHAR1:
+                        s = SS_TOKEN_UNBRACED;
+                        *pos = cp-cpLine-1;
+                        (*len) = 2;
+                        *cpVar = cp;
                         break;
                     case CC_ESCAPE:
-                        s = SS_SKIP; 
+                        s = SS_SKIP;
                         break;
-                    default: 
-                        s = SS_NONE; 
+                    default:
+                        s = SS_NONE;
                         break;
                 }
                 break;
             case SS_TOKEN_BRACED:
                 switch (cc) {
                     case CC_IDCHAR1:
-                    case CC_IDCHAR: 
-                        (*len)++; 
+                    case CC_IDCHAR:
+                        (*len)++;
                         break;
-                    case CC_BRACECLOSE: 
-                        (*len)++; 
+                    case CC_BRACECLOSE:
+                        (*len)++;
                         cp2 = ap_palloc(p, cp-*cpVar+1);
-                        ap_cpystrn(cp2, *cpVar, cp-*cpVar+1); 
+                        ap_cpystrn(cp2, *cpVar, cp-*cpVar+1);
                         *cpVar = cp2;
-                        s = SS_FOUND; 
+                        s = SS_FOUND;
                         break;
                     default:
                         cpError = ap_psprintf(p, "Illegal character '%c' in identifier", *cp);
@@ -228,14 +198,14 @@ static int DefineIndex(pool *p, char *cpLine, int *pos, int *len, char **cpVar)
             case SS_TOKEN_UNBRACED:
                 switch (cc) {
                     case CC_IDCHAR1:
-                    case CC_IDCHAR: 
-                        (*len)++; 
+                    case CC_IDCHAR:
+                        (*len)++;
                         break;
                     default:
                         cp2 = ap_palloc(p, cp-*cpVar+1);
-                        ap_cpystrn(cp2, *cpVar, cp-*cpVar+1); 
+                        ap_cpystrn(cp2, *cpVar, cp-*cpVar+1);
                         *cpVar = cp2;
-                        s = SS_FOUND; 
+                        s = SS_FOUND;
                         break;
                 }
                 break;
@@ -281,10 +251,10 @@ static char *DefineExpand(pool *p, char *cpToken, int tok_len, char *cpVal)
 
     val_len  = strlen(cpVal);
     rest_len = strlen(cpToken+tok_len);
-    if (val_len < tok_len) 
+    if (val_len < tok_len)
         memcpy(cpToken+val_len, cpToken+tok_len, rest_len+1);
     else if (val_len > tok_len)
-        for (cp = cpToken+strlen(cpToken); cp > cpToken+tok_len-1; cp--)  
+        for (cp = cpToken+strlen(cpToken); cp > cpToken+tok_len-1; cp--)
             *(cp+(val_len-tok_len)) = *cp;
     memcpy(cpToken, cpVal, val_len);
     return NULL;
@@ -333,7 +303,7 @@ static char *DefineRewriteHook(cmd_parms *cmd, void *config, const char *line)
         for (i = 0; i < len; i++)
             marker[i] = '^';
         marker[i] = '\0';
-        fprintf(stderr, 
+        fprintf(stderr,
                 "Found variable `%s' (pos: %d, len: %d)\n"
                 "  %s\n"
                 "  %s%s\n",
@@ -346,16 +316,16 @@ static char *DefineRewriteHook(cmd_parms *cmd, void *config, const char *line)
             cpLine = cpBuf;
         }
         if ((cpVal = DefineFetch(p, cpVar)) == NULL) {
-            ap_log_error(APLOG_MARK, APLOG_ERR, s, 
-                         "mod_define: Variable '%s' not defined: file %s, line %d", 
+            ap_log_error(APLOG_MARK, APLOG_ERR, s,
+                         "mod_define: Variable '%s' not defined: file %s, line %d",
                          cpVar, cmd->config_file->name,
                          cmd->config_file->line_number);
             cpBuf = NULL;
             break;
         }
         if ((cpError = DefineExpand(p, cpLine+pos, len, cpVal)) != NULL) {
-            ap_log_error(APLOG_MARK, APLOG_ERR, s, 
-                         "mod_define: %s: file %s, line %d", 
+            ap_log_error(APLOG_MARK, APLOG_ERR, s,
+                         "mod_define: %s: file %s, line %d",
                          cpError, cmd->config_file->name,
                          cmd->config_file->line_number);
             cpBuf = NULL;
@@ -368,7 +338,7 @@ static char *DefineRewriteHook(cmd_parms *cmd, void *config, const char *line)
 /*
  * Implementation of the `Define' configuration directive
  */
-static const char *cmd_define(cmd_parms *cmd, void *config, 
+static const char *cmd_define(cmd_parms *cmd, void *config,
                               char *cpVar, char *cpVal)
 {
     if (tDefines == NULL)
@@ -406,7 +376,7 @@ static void DefineCleanup(void *data)
     return;
 }
 
-/* 
+/*
  * Module Directive lists
  */
 static const command_rec DefineDirectives[] = {
@@ -415,11 +385,11 @@ static const command_rec DefineDirectives[] = {
     { NULL }
 };
 
-/* 
+/*
  * Module API dispatch list
  */
 module MODULE_VAR_EXPORT define_module = {
-    STANDARD_MODULE_STUFF, 
+    STANDARD_MODULE_STUFF,
     NULL,                  /* module initializer                  */
     NULL,                  /* create per-dir    config structures */
     NULL,                  /* merge  per-dir    config structures */

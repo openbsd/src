@@ -62,7 +62,9 @@
 
 #include <stdio.h>
 #include <ctype.h>
+#ifndef NETWARE
 #include <sys/types.h>
+#endif
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
@@ -82,7 +84,6 @@ typedef enum {
 #define AP_LONGEST_LONG		long
 #endif
 #define NUL			'\0'
-#define INT_NULL		((int *)0)
 #define WIDE_INT		long
 #define WIDEST_INT		AP_LONGEST_LONG
 
@@ -130,7 +131,7 @@ static char *ap_cvt(double arg, int ndigits, int *decpt, int *sign, int eflag, c
     register int r2;
     double fi, fj;
     register char *p, *p1;
-
+    
     if (ndigits >= NDIG - 1)
 	ndigits = NDIG - 2;
     r2 = 0;
@@ -401,18 +402,19 @@ static char *conv_10(register wide_int num, register bool_int is_unsigned,
     return (p);
 }
 
-static char *conv_10_quad(register widest_int num, register bool_int is_unsigned,
+static char *conv_10_quad(widest_int num, register bool_int is_unsigned,
 		     register bool_int *is_negative, char *buf_end,
 		     register int *len)
 {
     register char *p = buf_end;
-    register u_widest_int magnitude;
+    u_widest_int magnitude;
 
     /*
-     * If the value is less than the maximum unsigned long value,
-     * then we know we aren't using quads, so use the faster function
+     * We see if we can use the faster non-quad version by checking the
+     * number against the largest long value it can be. If <=, we
+     * punt to the quicker version.
      */
-    if (num <= ULONG_MAX)
+    if ((num <= ULONG_MAX && is_unsigned) || (num <= LONG_MAX && !is_unsigned))
     	return(conv_10( (wide_int)num, is_unsigned, is_negative,
 	       buf_end, len));
 
@@ -445,7 +447,7 @@ static char *conv_10_quad(register widest_int num, register bool_int is_unsigned
      * We use a do-while loop so that we write at least 1 digit 
      */
     do {
-	register u_widest_int new_magnitude = magnitude / 10;
+	u_widest_int new_magnitude = magnitude / 10;
 
 	*--p = (char) (magnitude - new_magnitude * 10 + '0');
 	magnitude = new_magnitude;
@@ -618,7 +620,7 @@ static char *conv_p2(register u_wide_int num, register int nbits,
     return (p);
 }
 
-static char *conv_p2_quad(register u_widest_int num, register int nbits,
+static char *conv_p2_quad(u_widest_int num, register int nbits,
 		     char format, char *buf_end, register int *len)
 {
     register int mask = (1 << nbits) - 1;

@@ -99,6 +99,8 @@ extern "C" {
 #define HTTPD_ROOT "/apache"
 #elif defined(BEOS)
 #define HTTPD_ROOT "/boot/home/apache"
+#elif defined(NETWARE)
+#define HTTPD_ROOT "sys:/apache"
 #else
 #define HTTPD_ROOT "/usr/local/apache"
 #endif
@@ -252,7 +254,7 @@ extern "C" {
 
 /* The default path for CGI scripts if none is currently set */
 #ifndef DEFAULT_PATH
-#define DEFAULT_PATH "/bin:/usr/bin:local/bin"
+#define DEFAULT_PATH "/bin:/usr/bin:/usr/ucb:/usr/bsd:/usr/local/bin"
 #endif
 
 /* The path to the shell interpreter, for parsed docs */
@@ -449,7 +451,7 @@ extern "C" {
  * Example: "Apache/1.1.0 MrWidget/0.1-alpha" 
  */
 
-#define SERVER_BASEVERSION "Apache/1.3.9"	/* SEE COMMENTS ABOVE */
+#define SERVER_BASEVERSION "Apache/1.3.11"	/* SEE COMMENTS ABOVE */
 #define SERVER_VERSION  SERVER_BASEVERSION
 enum server_token_type {
     SrvTk_MIN,		/* eg: Apache/1.3.0 */
@@ -468,7 +470,7 @@ API_EXPORT(void) ap_add_config_define(const char *define);
  * Always increases along the same track as the source branch.
  * For example, Apache 1.4.2 would be '10402100', 2.5b7 would be '20500007'.
  */
-#define APACHE_RELEASE 10309100
+#define APACHE_RELEASE 10311100
 
 #define SERVER_PROTOCOL "HTTP/1.1"
 #ifndef SERVER_SUPPORT
@@ -630,6 +632,8 @@ API_EXPORT(void) ap_add_config_define(const char *define);
 #ifndef CHARSET_EBCDIC
 #define LF 10
 #define CR 13
+#define CRLF "\015\012"
+#define OS_ASC(c) (c)
 #else /* CHARSET_EBCDIC */
 #include "ebcdic.h"
 /* OSD_POSIX uses the EBCDIC charset. The transition ASCII->EBCDIC is done in
@@ -641,6 +645,8 @@ API_EXPORT(void) ap_add_config_define(const char *define);
  */
 #define CR '\r'
 #define LF '\n'
+#define CRLF "\r\n"
+#define OS_ASC(c) (os_toascii[c])
 #endif /* CHARSET_EBCDIC */
 
 /* Possible values for request_rec.read_body (set by handling module):
@@ -685,6 +691,12 @@ typedef struct listen_rec listen_rec;
 
 #include "util_uri.h"
 
+enum proxyreqtype {
+    NOT_PROXY=0,
+    STD_PROXY,
+    PROXY_PASS
+};
+
 struct request_rec {
 
     ap_pool *pool;
@@ -708,7 +720,7 @@ struct request_rec {
 
     char *the_request;		/* First line of request, so we can log it */
     int assbackwards;		/* HTTP/0.9, "simple" request */
-    int proxyreq;		/* A proxy request (calculated during
+    enum proxyreqtype proxyreq;/* A proxy request (calculated during
 				 * post_read_request or translate_name) */
     int header_only;		/* HEAD request, as opposed to GET */
     char *protocol;		/* Protocol, as given to us, or HTTP/0.9 */
@@ -972,7 +984,7 @@ struct listen_rec {
     listen_rec *next;
     struct sockaddr_in local_addr;	/* local IP address and port */
     int fd;
-    int used;			/* Only used during restart */
+    int used;			/* Only used during restart */        
 /* more stuff here, like which protocol is bound to the port */
 };
 

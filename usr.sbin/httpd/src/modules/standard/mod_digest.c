@@ -136,9 +136,7 @@ static char *get_hash(request_rec *r, char *user, char *auth_pwfile)
 
 static int get_digest_rec(request_rec *r, digest_header_rec * response)
 {
-    const char *auth_line = ap_table_get(r->headers_in,
-                                    r->proxyreq ? "Proxy-Authorization"
-                                    : "Authorization");
+    const char *auth_line;
     int l;
     int s, vk = 0, vv = 0;
     const char *t;
@@ -154,6 +152,9 @@ static int get_digest_rec(request_rec *r, digest_header_rec * response)
 	return SERVER_ERROR;
     }
 
+    auth_line = ap_table_get(r->headers_in,
+			     r->proxyreq == STD_PROXY ? "Proxy-Authorization"
+			                              : "Authorization");
     if (!auth_line) {
 	ap_note_digest_auth_failure(r);
 	return AUTH_REQUIRED;
@@ -388,3 +389,11 @@ module MODULE_VAR_EXPORT digest_module =
     NULL,			/* child_exit */
     NULL			/* post read-request */
 };
+
+
+#ifdef NETWARE
+int main(int argc, char *argv[]) 
+{
+    ExitThread(TSR_THREAD, 0);
+}
+#endif

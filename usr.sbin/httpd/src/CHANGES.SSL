@@ -17,11 +17,77 @@
   _INTENTIONALLY_ no contributor names attached to the entries. Instead all
   contributors are listed in the CREDITS file.
 
+      ____    ____  
+     |___ \  | ___| 
+       __) | |___ \ 
+      / __/ _ ___) |
+  __ |_____(_)____/___________________________________________
+               
+  Changes with mod_ssl 2.5.0 (08-Jan-2000 to 22-Jan-2000)
+
+   *) Switched the old "POST for HTTPS" support code from
+      defined(SSL_EXPERIMENTAL) to !defined(SSL_CONSERVATIVE), because this
+      code is both already stable (even it's not a conservative approach) and
+      important. This way POST support is now available per default, but still
+      can be disabled/removed by very conservative people with an easy
+      --enable-rule=SSL_CONSERVATIVE.
+
+   *) Added SSL_CONSERVATIVE rule to src/Configuration.tmpl which
+      complements SSL_EXPERIMENTAL. Both rules are per default set
+      to "no", i.e. disabled. But while SSL_EXPERIMENTAL still enables
+      experimental code, enables SSL_CONSERVATIVE conservative code.  That is,
+      actually per default some non-conservative things might be enabled which
+      can be _disabled_ by forcing mod_ssl to use only conservative
+      approaches.
+
+   *) Added entry about "no shared ciphers" to FAQ.
+
+   *) Upgraded to the new Apache version: 1.3.11 (BTW, Apache 1.3.10
+      was never released). This moves the mod_ssl community to the
+      latest Apache state and this way implicitly provides them over 70
+      bugfixes and cleanups which 1.3.11 provides over 1.3.9.
+
       ____   _  _   
      |___ \ | || |  
        __) || || |_ 
       / __/ |__   _|
   __ |_____(_) |_| ___________________________________________
+
+  Changes with mod_ssl 2.4.10 (24-Nov-1999 to 08-Jan-2000)
+
+   *) Mentioned MD5-encrypted password in ssl_reference.wml in addition
+      to DES-encrypted password.
+   
+   *) Added a new FAQ entry about the path internally pre-defined by
+      EAPI_MM_CORE_PATH.
+
+   *) Adjust the name-based-vhost complain: Talk say "you should not
+      use" instead of "you cannot use", because first there are
+      situations where it can be reasonable to use name-based vhosts with
+      SSL and second there is no technical restriction on the mod_ssl side,
+      of course.
+
+   *) Changed the license on mod_define.c from the BSD/Apache-style
+      license to a even less restrictive MIT-style license to allow
+      everyone to do with this module what they want.
+
+   *) Fixed a compile-time warning under very strict compilers by using
+      a more correct `ssl_verify_t' (enum based) instead of `int' in
+      ssl_engine_config.c.
+
+   *) Various minor documentation updates.
+
+   *) Made the EAPI-vs-plain-API complain in mod_so more clear.
+
+   *) Adjusted all copyright messages to contain the new year 2000 ;)
+
+   *) Fixed INSTALL.W32 document for latest OpenSSL versions.
+
+   *) Fixed SSL session id context configuration: the value is now an
+      MD5 of `server:port' and this way always a string of just 32 bytes,
+      so OpenSSL's SSL_set_session_id_context() doesn't fail.
+
+   *) Removed old CVS informations from etc/patch.tar tarball.
 
   Changes with mod_ssl 2.4.9 (05-Nov-1999 to 24-Nov-1999)
 

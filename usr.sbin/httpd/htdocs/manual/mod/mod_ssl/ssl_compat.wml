@@ -17,16 +17,17 @@ them are more compatible than others.
 <td>
 
 <big H>ere we talk about backward compatibility to other SSL solutions. As you
-perhaps know mod_ssl is not the only existing SSL solution for Apache.
-Actually there are four additional products available: Ben Laurie's freely
-available <a href="http://www.apache-ssl.org/">Apache-SSL</a> (from where
-mod_ssl were originally derived), RedHat's commercial <a
+perhaps know, mod_ssl is not the only existing SSL solution for Apache.
+Actually there are four additional major products available on the market: Ben
+Laurie's freely available <a href="http://www.apache-ssl.org/">Apache-SSL</a>
+(from where mod_ssl were originally derived in 1998), RedHat's commercial <a
 href="http://www.redhat.com/products/product-details.phtml?id=rhsa">Secure Web
 Server</a> (which is based on mod_ssl), Covalent's commercial <a
-href="http://raven.covalent.net/">Raven SSL Module</a> (also based on
-Apache-SSL) and finally C2Net's commercial product <a
+href="http://raven.covalent.net/">Raven SSL Module</a> (also based on mod_ssl)
+and finally C2Net's commercial product <a
 href="http://www.c2.net/products/stronghold/">Stronghold</a> (based on a
-different evolution branch named Sioux).
+different evolution branch named Sioux up to Stronghold 2.x and based on
+mod_ssl since Stronghold 3.x).
 
 </td>
 <td>

@@ -93,7 +93,7 @@ redirection or even to an internal proxy throughput.
 
 <P>
 But all this functionality and flexibility has its drawback: complexity. So
-don't expect to understand this module in it's whole in just one day.
+don't expect to understand this module in its whole in just one day.
 
 <P>
 This module was invented and originally written in April 1996<BR>
@@ -1016,10 +1016,9 @@ expanded constructs in addition to plain text:
 <CODE>$N</CODE>
 </STRONG></BLOCKQUOTE>
 
-(1 &lt;= N &lt;= 9) which provide access to the grouped parts (parenthesis!)
-of the
-pattern from the corresponding <CODE>RewriteRule</CODE> directive (the one
-following the current bunch of <CODE>RewriteCond</CODE> directives).
+(0 &lt;= N &lt;= 9) which provide access to the grouped parts (parenthesis!)
+of the pattern from the corresponding <CODE>RewriteRule</CODE> directive (the
+one following the current bunch of <CODE>RewriteCond</CODE> directives).
 
 <P>
 <LI><STRONG>RewriteCond backreferences</STRONG>: These are backreferences of
@@ -1437,7 +1436,7 @@ which is substituted for (or replaces) the original URL for which
 <LI><A HREF="#mapfunc">mapping-function</A> calls (<CODE>${mapname:key|default}</CODE>)
 </OL>
 
-Back-references are <CODE>$</CODE><STRONG>N</STRONG> (<STRONG>N</STRONG>=1..9) identifiers which
+Back-references are <CODE>$</CODE><STRONG>N</STRONG> (<STRONG>N</STRONG>=0..9) identifiers which
 will be replaced by the contents of the <STRONG>N</STRONG>th group of the matched
 <EM>Pattern</EM>. The server-variables are the same as for the
 <EM>TestString</EM> of a <CODE>RewriteCond</CODE> directive. The
@@ -1863,15 +1862,10 @@ SCRIPT_URI=http://en1.engelschall.com/u/rse/
 
 <H2><A NAME="Solutions">Practical Solutions</A></H2>
 
-There is a comprehensive collection of practical solutions for URL-based
-problems available by the author of mod_rewrite.  Here you will find real-life
-rulesets and additional information.
-
-<BLOCKQUOTE>
-<STRONG>Apache URL Rewriting Guide</STRONG><BR>
-<STRONG><A HREF="http://www.engelschall.com/pw/apache/rewriteguide/"
-        >http://www.engelschall.com/pw/apache/rewriteguide/</A></STRONG>
-</BLOCKQUOTE>
+We also have an <a href="../misc/rewriteguide.html">URL Rewriting
+Guide</a> available, which provides a collection of practical solutions
+for URL-based problems. There you can find real-life rulesets and
+additional information about mod_rewrite.
 
 <HR>
 

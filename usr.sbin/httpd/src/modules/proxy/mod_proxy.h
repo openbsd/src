@@ -128,13 +128,6 @@ enum enctype {
 /* maximum  'CacheDirLevels*CacheDirLength' value */
 #define CACHEFILE_LEN 20	/* must be less than HASH_LEN/2 */
 
-#ifdef CHARSET_EBCDIC
-#define CRLF   "\r\n"
-#else /*CHARSET_EBCDIC*/
-#define CRLF   "\015\012"
-#endif /*CHARSET_EBCDIC*/
-
-
 #define	SEC_ONE_DAY		86400	/* one day, in seconds */
 #define	SEC_ONE_HR		3600	/* one hour, in seconds */
 
@@ -193,13 +186,21 @@ struct nocache_entry {
 struct cache_conf {
     const char *root;		/* the location of the cache directory */
     off_t space;			/* Maximum cache size (in 1024 bytes) */
+    char space_set;
     time_t maxexpire;		/* Maximum time to keep cached files in secs */
+    char maxexpire_set;
     time_t defaultexpire;	/* default time to keep cached file in secs */
+    char defaultexpire_set;
     double lmfactor;		/* factor for estimating expires date */
+    char lmfactor_set;
     time_t gcinterval;		/* garbage collection interval, in seconds */
+    char gcinterval_set;
     int dirlevels;		/* Number of levels of subdirectories */
+    char dirlevels_set;
     int dirlength;		/* Length of subdirectory names */
+    char dirlength_set;
     float cache_completion;	/* Force cache completion after this point */
+    char cache_completion_set;
 };
 
 typedef struct {
@@ -213,13 +214,16 @@ typedef struct {
     array_header *allowed_connect_ports;
     char *domain;		/* domain name to use in absence of a domain name in the request */
     int req;			/* true if proxy requests are enabled */
+    char req_set;
     enum {
       via_off,
       via_on,
       via_block,
       via_full
     } viaopt;                   /* how to deal with proxy Via: headers */
+    char viaopt_set;
     size_t recv_buffer_size;
+    char recv_buffer_size_set;
 } proxy_server_conf;
 
 struct hdr_entry {
@@ -289,7 +293,7 @@ int ap_proxy_http_handler(request_rec *r, cache_req *c, char *url,
 int ap_proxy_hex2c(const char *x);
 void ap_proxy_c2hex(int ch, char *x);
 char *ap_proxy_canonenc(pool *p, const char *x, int len, enum enctype t,
-		     int isenc);
+			enum proxyreqtype isenc);
 char *ap_proxy_canon_netloc(pool *p, char **const urlp, char **userp,
 			 char **passwordp, char **hostp, int *port);
 const char *ap_proxy_date_canon(pool *p, const char *x);

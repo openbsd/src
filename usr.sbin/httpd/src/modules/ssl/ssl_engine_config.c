@@ -9,7 +9,7 @@
 */
 
 /* ====================================================================
- * Copyright (c) 1998-1999 Ralf S. Engelschall. All rights reserved.
+ * Copyright (c) 1998-2000 Ralf S. Engelschall. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -619,7 +619,7 @@ const char *ssl_cmd_SSLVerifyClient(
     cmd_parms *cmd, SSLDirConfigRec *dc, char *level)
 {
     SSLSrvConfigRec *sc = mySrvConfig(cmd->server);
-    int id;
+    ssl_verify_t id;
 
     if (strEQ(level, "0") || strcEQ(level, "none"))
         id = SSL_CVERIFY_NONE;

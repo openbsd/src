@@ -1,7 +1,7 @@
 #!/bin/sh
 ##
 ##  mkcert.sh -- Make SSL Certificate Files for `make certificate' command
-##  Copyright (c) 1998-1999 Ralf S. Engelschall, All Rights Reserved. 
+##  Copyright (c) 1998-2000 Ralf S. Engelschall, All Rights Reserved. 
 ##
 
 #   parameters
@@ -53,7 +53,7 @@ esac
 
 #   display header
 echo "${T_MD}SSL Certificate Generation Utility${T_ME} (mkcert.sh)"
-echo "Copyright (c) 1998-1999 Ralf S. Engelschall, All Rights Reserved."
+echo "Copyright (c) 1998-2000 Ralf S. Engelschall, All Rights Reserved."
 
 #   on request view certificates only
 if [ ".$view" != . ]; then
@@ -63,7 +63,7 @@ if [ ".$view" != . ]; then
         echo "______________________________________________________________________"
         $openssl x509 -noout -text -in $sslcrtdir/ca.crt
         echo ""
-        if [ ".`$openssl x509 -noout -text -in $sslcrtdir/ca.crt | grep "Signature Algorithm" | grep -i RSA`" != . ]; then
+        if [ ".`$openssl x509 -noout -text -in $sslcrtdir/ca.crt | grep 'Signature Algorithm' | grep -i RSA`" != . ]; then
             echo "${T_MD}CA RSA Private Key${T_ME} [ca.key]"
             echo "______________________________________________________________________"
             $openssl rsa -noout -text -in $sslkeydir/ca.key
@@ -79,7 +79,7 @@ if [ ".$view" != . ]; then
         echo "______________________________________________________________________"
         $openssl x509 -noout -text -in $sslcrtdir/server.crt
         echo ""
-        if [ ".`$openssl x509 -noout -text -in $sslcrtdir/server.crt | grep "Signature Algorithm" | grep -i RSA`" != . ]; then
+        if [ ".`$openssl x509 -noout -text -in $sslcrtdir/server.crt | grep 'Signature Algorithm' | grep -i RSA`" != . ]; then
             echo "${T_MD}Server RSA Private Key${T_ME} [server.key]"
             echo "______________________________________________________________________"
             $openssl rsa -noout -text -in $sslkeydir/server.key
@@ -145,6 +145,7 @@ case $type in
             cp $sslcrtdir/snakeoil-dsa.crt $sslcrtdir/server.crt
             cp $sslkeydir/snakeoil-dsa.key $sslkeydir/server.key
         fi
+        chmod 600 $sslkeydir/server.key
         echo "${T_MD}RESULT: Server Certification Files${T_ME}"
         echo ""
         echo "o  ${T_MD}conf/ssl.key/server.key${T_ME}"
@@ -190,6 +191,15 @@ case $type in
                 fi
             done
         fi
+        if [ ".$algo" = ".DSA" ]; then
+            echo ""
+            echo "${T_MD}WARNING!${T_ME} You're generating a DSA based certificate/key pair."
+            echo "         This implies that RSA based ciphers won't be available later,"
+            echo "         which for your web server currently still means that mostly all"
+            echo "         popular web browsers cannot connect to it. At least not until"
+            echo "         you also generate an additional RSA based certificate/key pair"
+            echo "         and configure them in parallel."
+        fi
         echo "______________________________________________________________________"
         echo ""
         echo "${T_MD}STEP 1: Generating $algo private key (1024 bit) [server.key]${T_ME}"
@@ -218,6 +228,7 @@ case $type in
                 exit 1
             fi
         fi
+        chmod 600 $sslkeydir/server.key
         echo "______________________________________________________________________"
         echo ""
         echo "${T_MD}STEP 2: Generating X.509 certificate signing request [server.csr]${T_ME}"
@@ -254,6 +265,12 @@ EOT
             exit 1
         fi
         rm -f .mkcert.cfg
+        prompt="8. Certificate Validity     (days)          [365]:"
+        echo dummy | awk '{ printf("%s", prompt); }' "prompt=$prompt"
+        read days
+        if [ ".$days" = . ]; then
+            days=365
+        fi
         echo "______________________________________________________________________"
         echo ""
         echo "${T_MD}STEP 3: Generating X.509 certificate signed by Snake Oil CA [server.crt]${T_ME}"
@@ -275,7 +292,7 @@ EOT
         fi
         if [ ".$algo" = .RSA ]; then
             $openssl x509 $extfile \
-                          -days 365 \
+                          -days $days \
                           -CAserial .mkcert.serial \
                           -CA $sslcrtdir/snakeoil-ca-rsa.crt \
                           -CAkey $sslkeydir/snakeoil-ca-rsa.key \
@@ -283,7 +300,7 @@ EOT
                           -out $sslcrtdir/server.crt
         else
             $openssl x509 $extfile \
-                          -days 365 \
+                          -days $days \
                           -CAserial .mkcert.serial \
                           -CA $sslcrtdir/snakeoil-ca-dsa.crt \
                           -CAkey $sslkeydir/snakeoil-ca-dsa.key \
@@ -350,6 +367,7 @@ EOT
             fi
             cp $sslkeydir/server.key.crypt $sslkeydir/server.key
             rm -f $sslkeydir/server.key.crypt
+            chmod 600 $sslkeydir/server.key
             echo "Fine, you're using an encrypted $algo private key."
         else
             echo "Warning, you're using an unencrypted $algo private key."
@@ -408,6 +426,15 @@ EOT
                 fi
             done
         fi
+        if [ ".$algo" = ".DSA" ]; then
+            echo ""
+            echo "${T_MD}WARNING!${T_ME} You're generating DSA based certificate/key pairs."
+            echo "         This implies that RSA based ciphers won't be available later,"
+            echo "         which for your web server currently still means that mostly all"
+            echo "         popular web browsers cannot connect to it. At least not until"
+            echo "         you also generate an additional RSA based certificate/key pair"
+            echo "         and configure them in parallel."
+        fi
         echo "______________________________________________________________________"
         echo ""
         echo "${T_MD}STEP 1: Generating $algo private key for CA (1024 bit) [ca.key]${T_ME}"
@@ -439,6 +466,7 @@ EOT
                 exit 1
             fi
         fi
+        chmod 600 $sslkeydir/ca.key
         echo "______________________________________________________________________"
         echo ""
         echo "${T_MD}STEP 2: Generating X.509 certificate signing request for CA [ca.csr]${T_ME}"
@@ -475,6 +503,12 @@ EOT
             exit 1
         fi
         rm -f .mkcert.cfg
+        prompt="8. Certificate Validity     (days)          [365]:"
+        echo dummy | awk '{ printf("%s", prompt); }' "prompt=$prompt"
+        read days
+        if [ ".$days" = . ]; then
+            days=365
+        fi
         echo "______________________________________________________________________"
         echo ""
         echo "${T_MD}STEP 3: Generating X.509 certificate for CA signed by itself [ca.crt]${T_ME}"
@@ -493,7 +527,7 @@ nsCertType       = sslCA
 EOT
         fi
         $openssl x509 $extfile \
-                      -days 365 \
+                      -days $days \
                       -signkey $sslkeydir/ca.key \
                       -in      $sslcsrdir/ca.csr -req \
                       -out     $sslcrtdir/ca.crt
@@ -546,6 +580,7 @@ EOT
                 exit 1
             fi
         fi
+        chmod 600 $sslkeydir/server.key
         echo "______________________________________________________________________"
         echo ""
         echo "${T_MD}STEP 5: Generating X.509 certificate signing request for SERVER [server.csr]${T_ME}"
@@ -582,6 +617,12 @@ EOT
             exit 1
         fi
         rm -f .mkcert.cfg
+        prompt="8. Certificate Validity     (days)          [365]:"
+        echo dummy | awk '{ printf("%s", prompt); }' "prompt=$prompt"
+        read days
+        if [ ".$days" = . ]; then
+            days=365
+        fi
         echo "______________________________________________________________________"
         echo ""
         echo "${T_MD}STEP 6: Generating X.509 certificate signed by own CA [server.crt]${T_ME}"
@@ -602,7 +643,7 @@ EOT
             echo '01' >.mkcert.serial
         fi
         $openssl x509 $extfile \
-                      -days 365 \
+                      -days $days \
                       -CAserial .mkcert.serial \
                       -CA    $sslcrtdir/ca.crt \
                       -CAkey $sslkeydir/ca.key \
@@ -664,6 +705,7 @@ EOT
             fi
             cp $sslkeydir/ca.key.crypt $sslkeydir/ca.key
             rm -f $sslkeydir/ca.key.crypt
+            chmod 600 $sslkeydir/ca.key
             echo "Fine, you're using an encrypted private key."
         else
             echo "Warning, you're using an unencrypted private key."
@@ -703,6 +745,7 @@ EOT
             fi
             cp $sslkeydir/server.key.crypt $sslkeydir/server.key
             rm -f $sslkeydir/server.key.crypt
+            chmod 600 $sslkeydir/server.key
             echo "Fine, you're using an encrypted $algo private key."
         else
             echo "Warning, you're using an unencrypted $algo private key."
@@ -770,6 +813,7 @@ EOT
             sed -e '/-----BEGIN ... PRIVATE KEY/,/-----END ... PRIVATE KEY/p' -e '/.*/d' \
                 <$key >$sslkeydir/server.key
         fi
+        chmod 600 $sslkeydir/server.key
         $openssl x509 -noout -in $sslcrtdir/server.crt
         if [ $? -ne 0 ]; then
             echo "mkcert.sh:Error: Failed to check certificate contents: $crt" 1>&2

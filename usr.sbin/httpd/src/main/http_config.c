@@ -512,11 +512,6 @@ int ap_invoke_handler(request_rec *r)
         }
     }
 
-    if (result == HTTP_INTERNAL_SERVER_ERROR && r->handler) {
-        ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_WARNING, r,
-            "handler \"%s\" not found for: %s", r->handler, r->filename);
-    }
-
     /* Pass two --- wildcard matches */
 
     for (handp = wildhandlers; handp->hr.content_type; ++handp) {
@@ -529,6 +524,10 @@ int ap_invoke_handler(request_rec *r)
          }
     }
 
+    if (result == HTTP_INTERNAL_SERVER_ERROR && r->handler && r->filename) {
+        ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_WARNING, r,
+            "handler \"%s\" not found for: %s", r->handler, r->filename);
+    }
     return HTTP_INTERNAL_SERVER_ERROR;
 }
 
@@ -728,6 +727,7 @@ void ap_setup_prelinked_modules()
         sizeof(module *)*(total_modules+DYNAMIC_MODULE_LIMIT+1));
     if (ap_loaded_modules == NULL) {
 	fprintf(stderr, "Ouch!  Out of memory in ap_setup_prelinked_modules()!\n");
+	exit(1);
     }
     for (m = ap_preloaded_modules, m2 = ap_loaded_modules; *m != NULL; )
         *m2++ = *m++;
@@ -910,7 +910,7 @@ static const char *invoke_cmd(const command_rec *cmd, cmd_parms *parms,
 	w2 = *args ? ap_getword_conf(parms->pool, &args) : NULL;
 	w3 = *args ? ap_getword_conf(parms->pool, &args) : NULL;
 
-	if (*w == '\0' || (*w2 && !w3) || *args != 0)
+	if (*w == '\0' || (w2 && *w2 && !w3) || *args != 0)
 	    return ap_pstrcat(parms->pool, cmd->name,
 			    " takes one or three arguments",
 			    cmd->errmsg ? ", " : NULL, cmd->errmsg, NULL);
@@ -1694,6 +1694,11 @@ void ap_show_modules()
     int n;
 
     printf("Compiled-in modules:\n");
-    for (n = 0; ap_loaded_modules[n]; ++n)
+    for (n = 0; ap_loaded_modules[n]; ++n) {
 	printf("  %s\n", ap_loaded_modules[n]->name);
+    }
+    printf("suexec: %s\n",
+	   ap_suexec_enabled
+	       ? "enabled; valid wrapper " SUEXEC_BIN
+	       : "disabled; invalid wrapper " SUEXEC_BIN);
 }

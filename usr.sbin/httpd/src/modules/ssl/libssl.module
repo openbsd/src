@@ -10,7 +10,7 @@
 
 ##
 ##  ====================================================================
-##  Copyright (c) 1998-1999 Ralf S. Engelschall. All rights reserved.
+##  Copyright (c) 1998-2000 Ralf S. Engelschall. All rights reserved.
 ## 
 ##  Redistribution and use in source and binary forms, with or without
 ##  modification, are permitted provided that the following conditions
@@ -139,11 +139,13 @@ ConfigStart
         my_rule_SSL_COMPAT=$SSL_COMPAT
         my_rule_SSL_SDBM=$SSL_SDBM
         my_rule_SSL_EXPERIMENTAL=$SSL_EXPERIMENTAL
+        my_rule_SSL_CONSERVATIVE=$SSL_CONSERVATIVE
         my_rule_SSL_VENDOR=$SSL_VENDOR
     else
         my_rule_SSL_COMPAT=`./helpers/CutRule SSL_COMPAT $file`
         my_rule_SSL_SDBM=`./helpers/CutRule SSL_SDBM $file`
         my_rule_SSL_EXPERIMENTAL=`./helpers/CutRule SSL_EXPERIMENTAL $file`
+        my_rule_SSL_CONSERVATIVE=`./helpers/CutRule SSL_CONSERVATIVE $file`
         my_rule_SSL_VENDOR=`./helpers/CutRule SSL_VENDOR $file`
     fi
 
@@ -165,6 +167,16 @@ ConfigStart
         SSL_CFLAGS="$SSL_CFLAGS -DSSL_EXPERIMENTAL"
     else
         echo "$my_prefix SSL interface experimental code: disabled"
+    fi
+
+    #
+    #   determine conservative mode
+    #
+    if [ ".$my_rule_SSL_CONSERVATIVE" = .yes ]; then
+        echo "$my_prefix SSL interface conservative code: enabled"
+        SSL_CFLAGS="$SSL_CFLAGS -DSSL_CONSERVATIVE"
+    else
+        echo "$my_prefix SSL interface conservative code: disabled"
     fi
 
     # 
@@ -300,12 +312,8 @@ ConfigStart
             fi
         done
         if [ ".$SSL_BINDIR" = . ]; then
-#            echo "Error: Cannot find SSL binaries in $PATH" 1>&2
-#            exit 1
-# 	     Kludge for OpenBSD - Make sure we work even if the stuff
-# isn't there yet. 
-             SSL_BINDIR="/usr/sbin"
-	     SSL_PROGRAM="/usr/sbin/openssl"
+            echo "Error: Cannot find SSL binaries in $PATH" 1>&2
+            exit 1
         fi
     else
         for name in openssl ssleay; do
@@ -329,18 +337,15 @@ ConfigStart
     #
     #   SSL version
     #
-# kludged for OpenBSD - Don't want this retarded shit breaking make build
-# when openssl isn't there yet. 
-#    SSL_VERSION_ID="`$SSL_PROGRAM version`"
-#    echo "$my_prefix SSL library version: $SSL_VERSION_ID"
-#    case $SSL_VERSION_ID in
-#        *0.[5678].*|*0.9.[012]* )
-#            echo "Error: OpenSSL VERSIONS BELOW 0.9.3 ARE NO LONGER SUPPORTED."
-#            echo "Hint:  Use OpenSSL version 0.9.3 or higher!"
-#            exit 1
-#            ;;
-#    esac
-    SSL_VERSION_ID=0.9.4
+    SSL_VERSION_ID="`$SSL_PROGRAM version`"
+    echo "$my_prefix SSL library version: $SSL_VERSION_ID"
+    case $SSL_VERSION_ID in
+        *0.[5678].*|*0.9.[012]* )
+            echo "Error: OpenSSL VERSIONS BELOW 0.9.3 ARE NO LONGER SUPPORTED."
+            echo "Hint:  Use OpenSSL version 0.9.3 or higher!"
+            exit 1
+            ;;
+    esac
 
     #
     #   determine location of OpenSSL headers

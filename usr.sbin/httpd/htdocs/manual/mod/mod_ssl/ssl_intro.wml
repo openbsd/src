@@ -619,7 +619,7 @@ is what mod_ssl provides to you for the Apache webserver...
      http://www.rsa.com/rsalabs/pubs/PKCS/</a>.
 <p>
 <li><a name="MIME"></a>
-[MIME] N. Freed, N. Borenstein, <em>ultipurpose Internet Mail Extensions
+[MIME] N. Freed, N. Borenstein, <em>Multipurpose Internet Mail Extensions
        (MIME) Part One: Format of Internet Message Bodies</em>, RFC2045.
        See for instance <a href="ftp://ftp.isi.edu/in-notes/rfc2045.txt">
        ftp://ftp.isi.edu/in-notes/rfc2045.txt</a>.

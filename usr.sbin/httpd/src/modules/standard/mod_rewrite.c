@@ -92,7 +92,9 @@
 #include "mod_rewrite.h"
 
 #ifndef NO_WRITEV
+#ifndef NETWARE
 #include <sys/types.h>
+#endif
 #include <sys/uio.h>
 #endif
 
@@ -1121,7 +1123,7 @@ static int hook_uri2file(request_rec *r)
             }
 
             /* now make sure the request gets handled by the proxy handler */
-            r->proxyreq = 1;
+            r->proxyreq = PROXY_PASS;
             r->handler  = "proxy-server";
 
             rewritelog(r, 1, "go-ahead with proxy request %s [OK]",
@@ -1129,13 +1131,19 @@ static int hook_uri2file(request_rec *r)
             return OK;
         }
         else if (  (strlen(r->filename) > 7 &&
-                    strncasecmp(r->filename, "http://", 7) == 0)
+                    strncasecmp(r->filename, "http://",   7) == 0)
                 || (strlen(r->filename) > 8 &&
-                    strncasecmp(r->filename, "https://", 8) == 0)
+                    strncasecmp(r->filename, "https://",  8) == 0)
                 || (strlen(r->filename) > 9 &&
                     strncasecmp(r->filename, "gopher://", 9) == 0)
                 || (strlen(r->filename) > 6 &&
-                    strncasecmp(r->filename, "ftp://", 6) == 0)    ) {
+                    strncasecmp(r->filename, "ftp://",    6) == 0)
+                || (strlen(r->filename) > 5 &&
+                    strncasecmp(r->filename, "ldap:",     5) == 0)
+                || (strlen(r->filename) > 5 &&
+                    strncasecmp(r->filename, "news:",     5) == 0)
+                || (strlen(r->filename) > 7 &&
+                    strncasecmp(r->filename, "mailto:",   7) == 0)) {
             /* it was finally rewritten to a remote URL */
 
             /* skip 'scheme:' */
@@ -1155,8 +1163,8 @@ static int hook_uri2file(request_rec *r)
 
             /* append the QUERY_STRING part */
             if (r->args != NULL) {
-               r->filename = ap_pstrcat(r->pool, r->filename,
-                                        "?", r->args, NULL);
+                r->filename = ap_pstrcat(r->pool, r->filename, "?", 
+                                         ap_escape_uri(r->pool, r->args), NULL);
             }
 
             /* determine HTTP redirect response code */
@@ -1200,7 +1208,7 @@ static int hook_uri2file(request_rec *r)
             /* it was finally rewritten to a local path */
 
             /* expand "/~user" prefix */
-#ifndef WIN32
+#if !defined(WIN32) && !defined(NETWARE)
             r->filename = expand_tildepaths(r, r->filename);
 #endif
             rewritelog(r, 2, "local path result: %s", r->filename);
@@ -1373,15 +1381,13 @@ static int hook_fixup(request_rec *r)
              * (r->path_info was already appended by the
              * rewriting engine because of the per-dir context!)
              */
-            if (r->args != NULL
-                && r->uri == r->unparsed_uri) {
-                /* see proxy_http:proxy_http_canon() */
+            if (r->args != NULL) {
                 r->filename = ap_pstrcat(r->pool, r->filename,
                                          "?", r->args, NULL);
             }
 
             /* now make sure the request gets handled by the proxy handler */
-            r->proxyreq = 1;
+            r->proxyreq = PROXY_PASS;
             r->handler  = "proxy-server";
 
             rewritelog(r, 1, "[per-dir %s] go-ahead with proxy request "
@@ -1389,13 +1395,19 @@ static int hook_fixup(request_rec *r)
             return OK;
         }
         else if (  (strlen(r->filename) > 7 &&
-                    strncmp(r->filename, "http://", 7) == 0)
+                    strncasecmp(r->filename, "http://",   7) == 0)
                 || (strlen(r->filename) > 8 &&
-                    strncmp(r->filename, "https://", 8) == 0)
+                    strncasecmp(r->filename, "https://",  8) == 0)
                 || (strlen(r->filename) > 9 &&
-                    strncmp(r->filename, "gopher://", 9) == 0)
+                    strncasecmp(r->filename, "gopher://", 9) == 0)
                 || (strlen(r->filename) > 6 &&
-                    strncmp(r->filename, "ftp://", 6) == 0)    ) {
+                    strncasecmp(r->filename, "ftp://",    6) == 0)
+                || (strlen(r->filename) > 5 &&
+                    strncasecmp(r->filename, "ldap:",     5) == 0)
+                || (strlen(r->filename) > 5 &&
+                    strncasecmp(r->filename, "news:",     5) == 0)
+                || (strlen(r->filename) > 7 &&
+                    strncasecmp(r->filename, "mailto:",   7) == 0)) {
             /* it was finally rewritten to a remote URL */
 
             /* because we are in a per-dir context
@@ -1444,8 +1456,8 @@ static int hook_fixup(request_rec *r)
 
             /* append the QUERY_STRING part */
             if (r->args != NULL) {
-                r->filename = ap_pstrcat(r->pool, r->filename,
-                                         "?", r->args, NULL);
+                r->filename = ap_pstrcat(r->pool, r->filename, "?", 
+                                         ap_escape_uri(r->pool, r->args), NULL);
             }
 
             /* determine HTTP redirect response code */
@@ -1845,7 +1857,7 @@ static int apply_rewrite_rule(request_rec *r, rewriterule_entry *p,
                 /*  One condition is false, but another can be
                  *  still true, so we have to continue...
                  */
-	        ap_table_unset(r->notes, VARY_KEY_THIS);
+                ap_table_unset(r->notes, VARY_KEY_THIS);
                 continue;
             }
             else {
@@ -1871,11 +1883,11 @@ static int apply_rewrite_rule(request_rec *r, rewriterule_entry *p,
                 break;
             }
         }
-	vary = ap_table_get(r->notes, VARY_KEY_THIS);
-	if (vary != NULL) {
-	    ap_table_merge(r->notes, VARY_KEY, vary);
-	    ap_table_unset(r->notes, VARY_KEY_THIS);
-	}
+        vary = ap_table_get(r->notes, VARY_KEY_THIS);
+        if (vary != NULL) {
+            ap_table_merge(r->notes, VARY_KEY, vary);
+            ap_table_unset(r->notes, VARY_KEY_THIS);
+        }
     }
     /*  if any condition fails the complete rule fails  */
     if (failed) {
@@ -1891,7 +1903,7 @@ static int apply_rewrite_rule(request_rec *r, rewriterule_entry *p,
      */
     if ((vary = ap_table_get(r->notes, VARY_KEY)) != NULL) {
         ap_table_merge(r->headers_out, "Vary", vary);
-	ap_table_unset(r->notes, VARY_KEY);
+        ap_table_unset(r->notes, VARY_KEY);
     }
 
     /*
@@ -2003,10 +2015,13 @@ static int apply_rewrite_rule(request_rec *r, rewriterule_entry *p,
     i = strlen(r->filename);
     if (   prefixstrip
         && !(   r->filename[0] == '/'
-             || (   (i > 7 && strncasecmp(r->filename, "http://", 7) == 0)
-                 || (i > 8 && strncasecmp(r->filename, "https://", 8) == 0)
+             || (   (i > 7 && strncasecmp(r->filename, "http://",   7) == 0)
+                 || (i > 8 && strncasecmp(r->filename, "https://",  8) == 0)
                  || (i > 9 && strncasecmp(r->filename, "gopher://", 9) == 0)
-                 || (i > 6 && strncasecmp(r->filename, "ftp://", 6) == 0)))) {
+                 || (i > 6 && strncasecmp(r->filename, "ftp://",    6) == 0)
+                 || (i > 5 && strncasecmp(r->filename, "ldap:",     5) == 0)
+                 || (i > 5 && strncasecmp(r->filename, "news:",     5) == 0)
+                 || (i > 7 && strncasecmp(r->filename, "mailto:",   7) == 0)))) {
         rewritelog(r, 3, "[per-dir %s] add per-dir prefix: %s -> %s%s",
                    perdir, r->filename, perdir, r->filename);
         r->filename = ap_pstrcat(r->pool, perdir, r->filename, NULL);
@@ -2071,10 +2086,13 @@ static int apply_rewrite_rule(request_rec *r, rewriterule_entry *p,
      *  directly force an external HTTP redirect.
      */
     i = strlen(r->filename);
-    if (   (i > 7 && strncasecmp(r->filename, "http://", 7)   == 0)
-        || (i > 8 && strncasecmp(r->filename, "https://", 8)  == 0)
+    if (   (i > 7 && strncasecmp(r->filename, "http://",   7) == 0)
+        || (i > 8 && strncasecmp(r->filename, "https://",  8) == 0)
         || (i > 9 && strncasecmp(r->filename, "gopher://", 9) == 0)
-        || (i > 6 && strncasecmp(r->filename, "ftp://", 6)    == 0)) {
+        || (i > 6 && strncasecmp(r->filename, "ftp://",    6) == 0)
+        || (i > 5 && strncasecmp(r->filename, "ldap:",     5) == 0)
+        || (i > 5 && strncasecmp(r->filename, "news:",     5) == 0)
+        || (i > 7 && strncasecmp(r->filename, "mailto:",   7) == 0) ) {
         if (perdir == NULL) {
             rewritelog(r, 2,
                        "implicitly forcing redirect (rc=%d) with %s",
@@ -2431,10 +2449,13 @@ static void fully_qualify_uri(request_rec *r)
     int port;
 
     i = strlen(r->filename);
-    if (!(   (i > 7 && strncasecmp(r->filename, "http://", 7)   == 0)
-          || (i > 8 && strncasecmp(r->filename, "https://", 8)  == 0)
+    if (!(   (i > 7 && strncasecmp(r->filename, "http://",   7) == 0)
+          || (i > 8 && strncasecmp(r->filename, "https://",  8) == 0)
           || (i > 9 && strncasecmp(r->filename, "gopher://", 9) == 0)
-          || (i > 6 && strncasecmp(r->filename, "ftp://", 6)    == 0))) {
+          || (i > 6 && strncasecmp(r->filename, "ftp://",    6) == 0)
+          || (i > 5 && strncasecmp(r->filename, "ldap:",     5) == 0)
+          || (i > 5 && strncasecmp(r->filename, "news:",     5) == 0)
+          || (i > 7 && strncasecmp(r->filename, "mailto:",   7) == 0))) {
 
         thisserver = ap_get_server_name(r);
         port = ap_get_server_port(r);
@@ -2470,34 +2491,37 @@ static void fully_qualify_uri(request_rec *r)
 static void expand_backref_inbuffer(pool *p, char *buf, int nbuf,
                                     backrefinfo *bri, char c)
 {
-    int i;
+    register int i;
 
-    if (bri->nsub < 1) {
-        return;
-    }
-
-    if (c != '$') {
-        /* safe existing $N backrefs and replace <c>N with $N backrefs */
-        for (i = 0; buf[i] != '\0' && i < nbuf; i++) {
-            if (buf[i] == '$' && (buf[i+1] >= '0' && buf[i+1] <= '9')) {
-                buf[i++] = '\001';
-            }
-            else if (buf[i] == c && (buf[i+1] >= '0' && buf[i+1] <= '9')) {
-                buf[i++] = '$';
-            }
+    /* protect existing $N and & backrefs and replace <c>N with $N backrefs */
+    for (i = 0; buf[i] != '\0' && i < nbuf; i++) {
+        if (buf[i] == '\\' && (buf[i+1] != '\0' && i < (nbuf-1))) {
+            i++; /* protect next */
+        }
+        else if (buf[i] == '&') {
+            buf[i] = '\001';
+        }
+        else if (c != '$' && buf[i] == '$' && (buf[i+1] >= '0' && buf[i+1] <= '9')) {
+            buf[i] = '\002';
+            i++; /* speedup */
+        }
+        else if (buf[i] == c && (buf[i+1] >= '0' && buf[i+1] <= '9')) {
+            buf[i] = '$';
+            i++; /* speedup */
         }
     }
 
-    /* now apply the pregsub() function */
+    /* now apply the standard regex substitution function */
     ap_cpystrn(buf, ap_pregsub(p, buf, bri->source,
-                         bri->nsub+1, bri->regmatch), nbuf);
+                               bri->nsub+1, bri->regmatch), nbuf);
 
-    if (c != '$') {
-        /* restore the original $N backrefs */
-        for (i = 0; buf[i] != '\0' && i < nbuf; i++) {
-            if (buf[i] == '\001' && (buf[i+1] >= '0' && buf[i+1] <= '9')) {
-                buf[i++] = '$';
-            }
+    /* restore the original $N and & backrefs */
+    for (i = 0; buf[i] != '\0' && i < nbuf; i++) {
+        if (buf[i] == '\001') {
+            buf[i] = '&';
+        }
+        else if (buf[i] == '\002') {
+            buf[i] = '$';
         }
     }
 }
@@ -2509,7 +2533,7 @@ static void expand_backref_inbuffer(pool *p, char *buf, int nbuf,
 **  Unix /etc/passwd database information
 **
 */
-#ifndef WIN32
+#if !defined(WIN32) && !defined(NETWARE)
 static char *expand_tildepaths(request_rec *r, char *uri)
 {
     char user[LONG_STRING_LEN];
@@ -3023,16 +3047,14 @@ static void rewrite_rand_init(void)
 
 static int rewrite_rand(int l, int h)
 {
-    int i;
-    char buf[50];
-
     rewrite_rand_init();
-    ap_snprintf(buf, sizeof(buf), "%.0f", 
-                (((double)(rand()%RAND_MAX)/RAND_MAX)*(h-l)));
-    i = atoi(buf)+1;
-    if (i < l) i = l;
-    if (i > h) i = h;
-    return i;
+
+    /* Get [0,1) and then scale to the appropriate range. Note that using
+     * a floating point value ensures that we use all bits of the rand()
+     * result. Doing an integer modulus would only use the lower-order bits
+     * which may not be as uniformly random.
+     */
+    return ((double)(rand() % RAND_MAX) / RAND_MAX) * (h - l + 1) + l;
 }
 
 static char *select_random_value_part(request_rec *r, char *value)
@@ -3274,7 +3296,7 @@ static void rewritelock_create(server_rec *s, pool *p)
                      "file %s", lockname);
         exit(1);
     }
-#if !defined(OS2) && !defined(WIN32)
+#if !defined(OS2) && !defined(WIN32) && !defined(NETWARE)
     /* make sure the childs have access to this file */
     if (geteuid() == 0 /* is superuser */)
         chown(lockname, ap_user_id, -1 /* no gid change */);
@@ -3437,6 +3459,8 @@ static int rewritemap_program_child(void *cmd, child_info *pinfo)
             child_pid = pi.dwProcessId;
         }
     }
+#elif defined(NETWARE)
+   // Need something here!!! Spawn????
 #elif defined(OS2)
     /* IBM OS/2 */
     execl(SHELL_PATH, SHELL_PATH, "/c", (char *)cmd, NULL);
@@ -3615,7 +3639,7 @@ static char *lookup_variable(request_rec *r, char *var)
     }
     else if (strcasecmp(var, "API_VERSION") == 0) { /* non-standard */
         ap_snprintf(resultbuf, sizeof(resultbuf), "%d:%d",
-		    MODULE_MAGIC_NUMBER_MAJOR, MODULE_MAGIC_NUMBER_MINOR);
+                    MODULE_MAGIC_NUMBER_MAJOR, MODULE_MAGIC_NUMBER_MINOR);
         result = resultbuf;
     }
 
@@ -3709,7 +3733,7 @@ static char *lookup_variable(request_rec *r, char *var)
         LOOKAHEAD(ap_sub_req_lookup_file)
     }
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(NETWARE)
     /* Win32 has a rather different view of file ownerships.
        For now, just forget it */
 
@@ -3744,7 +3768,7 @@ static char *lookup_variable(request_rec *r, char *var)
             }
         }
     }
-#endif /* ndef WIN32 */
+#endif /* ndef WIN32 && NETWARE*/
 
 #ifdef EAPI
     else {
@@ -3776,7 +3800,7 @@ static char *lookup_header(request_rec *r, const char *name)
             continue;
         }
         if (strcasecmp(hdrs[i].key, name) == 0) {
-	    ap_table_merge(r->notes, VARY_KEY_THIS, name);
+            ap_table_merge(r->notes, VARY_KEY_THIS, name);
             return hdrs[i].val;
         }
     }
@@ -4268,5 +4292,11 @@ static int compare_lexicography(char *cpNum1, char *cpNum2)
     return 0;
 }
 
+#ifdef NETWARE
+int main(int argc, char *argv[]) 
+{
+    ExitThread(TSR_THREAD, 0);
+}
+#endif
 
 /*EOF*/

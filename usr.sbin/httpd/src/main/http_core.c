@@ -2171,6 +2171,8 @@ static const char *set_daemons_to_start(cmd_parms *cmd, void *dummy, char *arg)
 {
 #ifdef WIN32
     fprintf(stderr, "WARNING: StartServers has no effect on Win32\n");
+#elif defined(NETWARE)
+    fprintf(stderr, "WARNING: StartServers has no effect on NetWare\n");
 #else
     const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
     if (err != NULL) {
@@ -2390,12 +2392,25 @@ static const char *set_bind_address(cmd_parms *cmd, void *dummy, char *arg)
     return NULL;
 }
 
+#ifdef NETWARE
+static const char *set_threadstacksize(cmd_parms *cmd, void *dummy, char *stacksize)
+{
+    const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
+    if (err != NULL) {
+        return err;
+    }
+    
+    ap_thread_stack_size = atoi(stacksize);    
+    return NULL;
+}
+#endif
+
 static const char *set_listener(cmd_parms *cmd, void *dummy, char *ips)
 {
     listen_rec *new;
     char *ports;
     unsigned short port;
-
+    
     const char *err = ap_check_cmd_context(cmd, GLOBAL_ONLY);
     if (err != NULL) {
         return err;
@@ -2842,7 +2857,7 @@ static const command_rec core_cmds[] = {
 { "ContentDigest", set_content_md5, NULL, OR_OPTIONS,
   FLAG, "whether or not to send a Content-MD5 header with each request" },
 { "UseCanonicalName", set_use_canonical_name, NULL,
-  RSRC_CONF, TAKE1,
+  RSRC_CONF|ACCESS_CONF, TAKE1,
   "How to work out the ServerName : Port when constructing URLs" },
 { "StartServers", set_daemons_to_start, NULL, RSRC_CONF, TAKE1,
   "Number of child processes launched at server startup" },
@@ -2881,6 +2896,10 @@ static const command_rec core_cmds[] = {
    OR_ALL, TAKE12, "soft/hard limits for max number of processes per uid" },
 { "BindAddress", set_bind_address, NULL, RSRC_CONF, TAKE1,
   "'*', a numeric IP address, or the name of a host with a unique IP address"},
+#ifdef NETWARE
+{ "ThreadStackSize", set_threadstacksize, NULL, RSRC_CONF, TAKE1,
+  "Stack size each created thread will use."},
+#endif
 { "Listen", set_listener, NULL, RSRC_CONF, TAKE1,
   "A port number or a numeric IP address and a port number"},
 { "SendBufferSize", set_send_buffer_size, NULL, RSRC_CONF, TAKE1,
@@ -2937,7 +2956,7 @@ static int core_translate(request_rec *r)
     void *sconf = r->server->module_config;
     core_server_config *conf = ap_get_module_config(sconf, &core_module);
   
-    if (r->proxyreq) {
+    if (r->proxyreq != NOT_PROXY) {
         return HTTP_FORBIDDEN;
     }
     if ((r->uri[0] != '/') && strcmp(r->uri, "*")) {
@@ -3037,23 +3056,17 @@ static int default_handler(request_rec *r)
     }
 
     if (r->finfo.st_mode == 0 || (r->path_info && *r->path_info)) {
-	char *emsg;
-
-	emsg = "File does not exist: ";
-	if (r->path_info == NULL) {
-	    emsg = ap_pstrcat(r->pool, emsg, r->filename, NULL);
-	}
-	else {
-	    emsg = ap_pstrcat(r->pool, emsg, r->filename, r->path_info, NULL);
-	}
-	ap_log_rerror(APLOG_MARK, APLOG_ERR|APLOG_NOERRNO, r, "%s", emsg);
+	ap_log_rerror(APLOG_MARK, APLOG_ERR|APLOG_NOERRNO, r,
+		      "File does not exist: %s",r->path_info ?
+		      ap_pstrcat(r->pool, r->filename, r->path_info, NULL)
+		      : r->filename);
 	return HTTP_NOT_FOUND;
     }
     if (r->method_number != M_GET) {
         return METHOD_NOT_ALLOWED;
     }
 	
-#if defined(OS2) || defined(WIN32)
+#if defined(OS2) || defined(WIN32) || defined(NETWARE)
     /* Need binary mode for OS/2 */
     f = ap_pfopen(r->pool, r->filename, "rb");
 #else
@@ -3075,6 +3088,19 @@ static int default_handler(request_rec *r)
         return errstatus;
     }
 
+#ifdef CHARSET_EBCDIC
+    /* To make serving of "raw ASCII text" files easy (they serve faster
+     * since they don't have to be converted from EBCDIC), a new
+     * "magic" type prefix was invented: text/x-ascii-{plain,html,...}
+     * If we detect one of these content types here, we simply correct
+     * the type to the real text/{plain,html,...} type. Otherwise, we
+     * set a flag that translation is required later on.
+     *
+     * Note: convert_flag is not used in the MMAP path;
+     * ap_checkconv() sets a request_req flag based on content_type
+     */ 
+    convert_flag = ap_checkconv(r);
+#endif
 #ifdef USE_MMAP_FILES
     ap_block_alarms();
     if ((r->finfo.st_size >= MMAP_THRESHOLD)
@@ -3098,14 +3124,6 @@ static int default_handler(request_rec *r)
 #endif
 
 #ifdef CHARSET_EBCDIC
-	/* To make serving of "raw ASCII text" files easy (they serve faster
-	 * since they don't have to be converted from EBCDIC), a new
-	 * "magic" type prefix was invented: text/x-ascii-{plain,html,...}
-	 * If we detect one of these content types here, we simply correct
-	 * the type to the real text/{plain,html,...} type. Otherwise, we
-	 * set a flag that translation is required later on.
-	 */
-	convert_flag = ap_checkconv(r);
 	if (d->content_md5 & 1) {
 	    ap_table_setn(r->headers_out, "Content-MD5",
 			  ap_md5digest(r->pool, f, convert_flag));

@@ -1,3 +1,332 @@
+Changes with Apache 1.3.11
+
+  *) MPE builds are no longer stripped, which caused the executable
+     to not work. [Mark Bixby]
+
+Changes with Apache 1.3.10
+
+  *) Fixed parsing of TAKE13-based configuration directives.
+     [Steffen Roller <sr@daa.de>] PR#5550
+
+  *) rename the lookup() function to hashTableLookup() (in expat-lite)
+     to prevent name clashes with modules / third-party software.
+     [Ralf S. Engelschall, Greg Stein]
+
+  *) Reduce the time that a parent waits for its children to die
+     after SIGKILL has been sent, since there isn't much point in waiting
+     another 16 seconds beyond the initial SIGTERM waiting period.
+     [Ed Korthof]
+
+  *) Add --suexec-umask option to configure, and severity levels
+     to suexec log messages.  Also clarify a couple of those messages,
+     which were perhaps a bit too cryptic.  [Ken Coar] PR#4178
+
+  *) The end_chunk() code forgot to convert the trailing CRLF pair
+     from EBCDIC to ASCII. Fixed. [Martin Kraemer]
+
+  *) An Action set for a Location that didn't correspond to a file didn't
+     work. Fixed.
+     [Manoj Kasichainula, Ben Laurie]
+
+  *) ProxyPass and mod_rewrite's proxy mode erroneously converted 
+     authentication requests to proxy authentication requests.
+     [Ben Laurie]
+
+  *) Reverse a patch which broke HPUX shared builds. Basically
+     we comment out the SHLIB_SUFFIX_NAME=sl line in Configure.
+     [Ryan Bloom]
+
+  *) Added the mod_rewrite `URL Rewriting Guide' to the online
+     documentation (htdocs/manual/misc/rewriteguide.html). This paper
+     provides a large collection of practical solutions to URL based
+     problems a webmaster is often confronted with.
+     [Ralf S. Engelschall]
+
+  *) Add a suexec status report to the '-l' (compiled-in modules)
+     output. [Ken Coar]
+
+  *) Changes to enable server-parsed mod_autoindex Header and
+     Readme files. [Raymond S Brand <rsbx@rsbx.net>]
+
+  *) Add back support for UseCanonicalName in <Directory> containers
+     [Manoj Kasichainula]
+
+  *) More rigorous checking of Host: headers to fix security problems
+     with mass name-based virtual hosting (whether using mod_rewrite
+     or mod_vhost_alias).
+     [Ben Hyde, Tony Finch]
+
+  *) Updated README.config to reflect current APACI state.
+     [Brian Slesinsky <bslesins@best.com>] PR#5397
+
+  *) Added SuSE and BSDI layouts to config.layout for convinience reasons.
+     [Sebastian Helms <sebastian.helms@gmx.de>, Timur Bakeyev
+     <timur@com.bat.ru>] PR#5112 PR#5154
+
+  *) Consistency cleanup of the complete APXS tool and corresponding manpage.
+     [Ralf S. Engelschall]
+
+  *) Add %q logging format directive (logs "?" and the query string part
+     of a query, or the empty string if no query).
+     Can be used in combination with %m, %U and %H: "%m %U%q %H" is the
+     same as "%r".  [Peter Watkins <peterw@usa.net>]
+
+  *) Improve OS390 port to work on older system releases
+     [Paul Gilmartin <pg@sweng.stortek.com>]
+
+  *) Enhance mod_mime with an AddCharset directive to properly handle
+     that negotiation dimension.
+     [Youichirou Koga <y-koga@isoternet.org>]
+
+  *) OS: Added first cut at support for IBM's OS/390.
+     [Ovies Brabson <oviesb@us.ibm.com>]
+
+  *) Replace all occurrences of "\012\015" by a macro CRLF. This makes
+     the code (somewhat) more readable, and improves the portability
+     to character sets other than ASCII (e.g., EBCDIC).
+     This patch results in no functional change whatsoever on ASCII
+     machines, but allows EBCDIC platforms to live without the
+     ebcdic2ascii_strictly() kludge.
+     [Paul Gilmartin <pg@sweng.stortek.com>, slightly modified
+     by Martin Kraemer]
+
+  *) more fixes to mod_auth_digest:
+     - better comparing of request-uri with uri parameter in Authorization
+       header
+     - added a check for a MUST condition in the spec
+     - fixed SEGV
+     [Ronald Tschalär]
+
+  *) mod_proxy now works on TPF.
+     [Joe Moenich <moenich@us.ibm.com>]
+
+  *) Enhance mod_actions' Script handling to be able to deal with
+     arbitrary methods and not just the well-known ones.  This allows
+     experimental or organisation-private methods to be used without
+     waiting for Apache to catch up.
+     [Ken Coar]
+
+  *) Fix various compile time warnings in hashbang_emul code which
+     prevent successful compilation on OS/390  [Ovies Brabson
+     <oviesb@us.ibm.com>, Paul Gilmartin <pg@sweng.stortek.com>]
+
+  *) EBCDIC: Fixed binary upload capability (plain and chunked) for
+     all methods using the ap_*_client_block() functions, most notably
+     POST and PUT. The functionality to switch input between protocol
+     parts (chunks) and (possibly binary) data had been missing all
+     the time, making chunked PUT impossible until now.
+     [Martin Kraemer]
+
+  *) Fixed a recently introduced off-by-one-character bug in 
+     mod_rewrite's expansion of expression back-references.
+     [Cliff Woolley <jwoolley@wlu.edu>] PR#4766 PR#5389
+
+  *) Add IndexOptions DescriptionWidth so that the width of the
+     description field in fancy-indexed directory listings can
+     be specified.
+     [Ken Coar] PR#2324, plus lots that are closed unsatisfied
+
+  *) EBCDIC: Escaped characters were encoding the ebcdic representation
+     of the special characters, not the latin1 representation. This
+     would result in invalid URI's for, e.g., filenames (with special chars)
+     in mod_autoindex.c [Martin Kraemer]
+
+  *) EBCDIC: Fix Byte Ranges for EBCDIC platforms. The necessary switch
+     between implied conversion for protocol parts and configured
+     conversion for document data was missing. The effect of this was that
+     PDF files could not be read by Acrobat Reader (which sends long
+     lists of byte ranges in each request) when the server was apache
+     on ebcdic machines.
+     [Noted by Oliver Reh <Oliver.Reh@FAEDV-N.Bayern.de>, solved by Martin
+     Kraemer, warnings fixed by Ovies Brabson <oviesb@us.ibm.com>]
+
+  *) Add IndexOptions FoldersFirst to allow fancy-indexed directory
+     listings to have the subdirectories always listed at the top.
+     [Ken Coar]
+
+  *) BS2000: Use send() instead of write() in the core buff routines
+     for better performance and fewer restrictions (max. transfer size)
+     [Martin Kraemer]
+
+  *) If the compiler sanity check fails, force the verbose output
+     for TestCompile so people can have a clue what the problem
+     is. [Jim Jagielski]
+
+  *) Add --iconsdir, --htdocsdir, and --cgidir option to top-level
+     configure script to allow one to override the corresponding 
+     variables from config.layout.
+     [Ralf S. Engelschall]
+
+  *) Fixed `quad integer' (aka `long long') handling in ap_snprintf.c
+     [Jim Jagielski, Ralf S. Engelschall]
+
+  *) Fixed error handling in dbmmanage script.
+     [Andrew McRae <andrew@liquid.com>] PR#4973
+
+  *) Fixed NEXT/OpenStep building by adding an fallback typedef for 
+     rlim_t to ap_config.h.
+     [Mark Miller <markm@swoon.net>] PR#4906
+
+  *) Fix SHARED_CORE feature for HPUX by backing-out a change (comitted
+     between 1.3.7 and 1.3.9) which changed the DSO extension from `sl' to
+     `so'. This worked only for modules (where we load the DSO manually), but
+     horribly fails under HPUX for DSO-based/shared libraries (where our
+     $SHLIB_SUFFIX_NAME is used, too).
+     [Gary Silverman <gary.silverman@abnamro.com>] PR#4974
+ 
+  *) Added support for Berkeley-DB/3.x to mod_auth_db.
+     [Steve Atkins <steve@blighty.com>, Ralf S. Engelschall] PR#5382
+
+  *) Fixed mod_auth_digest.c: result of an open() call was being 
+     checked against the wrong failure value.
+     [Rick Ohnemus <rjohnemus@systemware-inc.com>] PR#5292
+
+  *) Removed the variable name "template" from a prototype for SunOS4 
+     in ap_config.h to make C++ compiler happy, too.
+     [SAKAI Kiyotaka <ksakai@netwk.ntt-at.co.jp>] PR#5363
+
+  *) Added missing links to htdocs/manual/mod/directives.html 
+     for AllowCONNECT and ProxyDomain. [Patrik Grip-Jansson 
+     <patrikj@gnulix.org>, Ralf S. Engelschall] PR#5319
+
+  *) Fixed typo in htdocs/manual/install.html.
+     [Chris Pepper <pepper@tgg.com>] PR#5360
+
+  *) Fix $AWK/awk usage in top-level configure script: We confused ourself and
+     replaced the wrong "$AWK" with a plain "awk" in the last releases. So we
+     now both fix this and move the comment which already tried to explain it
+     more closer to the location to which it applies.
+     [Paul Gilmartin <pg@sweng.stortek.com>, Ralf S. Engelschall] PR#5304
+ 
+  *) Replaced pipes with commas in GuessOS' fallback output (displayed for not
+     explicitly recognized platforms) to avoid side-effects with APACI's
+     --shadow feature and similar uses where GuessOS' output is used directly
+     on the filesystem (where pipes are meta-characters!).
+     [Paul Gilmartin <pg@sweng.stortek.com>] PR#5303
+
+  *) Made stripping of a trailing slash in directory names in top-level
+     configure script more robust and this way support also a plain `/' 
+     as the argument without resulting in an empty name.
+     [Matthias Lohmann <lohm@lynet.de>, Ralf S. Engelschall] PR#5291
+ 
+  *) Made `tr' usage in top-level configure script more portable 
+     by always using square brackets consistently.
+     [Masashi Kizaki <kizaki@cpo.dnp.co.jp>] PR#5230
+
+  *) Fixed ap_config_auto.h generation in src/Configure: there for the ``quad
+     integer'' stuff ``#ifndef+#undef+#endif'' pairs were generated instead of
+     ``#ifdef+#undef+#endif'' pairs.
+     [Greg Siebers <gsiebers@vignette.com>] PR#5231
+  
+  *) EBCDIC: fix the hsregex package to correctly deal with [a-zA-Z] type
+     character ranges (the alphabet is non-contiguous in EBCDIC) and with
+     the special [:cntrl:] range (the control character class is determined
+     dynamically at run time). [Martin Kraemer]
+
+  *) Add --with-port option to APACI. [Ian Kallen <spidaman@salon.com>]
+
+  *) Fixed QUERY_STRING handling for `RewriteRule ... [P]'
+     in per-directory context.
+     [Martin Zeh <martin.zeh@sat1.de>] PR#5073
+
+  *) Overhauled mod_rewrite's general substitution function
+     (expand_backref_inbuffer): 1. The `$0' backreference is now officially
+     allowed and documented and references the while pattern space; 2. the
+     ampersamp (&) backreference (which is equal to $0) is no longer expanded,
+     because it was never documented and only leads to confusion with
+     QUERY_STRINGS; 3. backslashes (\) are honored correctly, that is `\$N'
+     now really forces the dollar to be an ordinary character and $N is
+     not expanded. 
+     [Ralf S. Engelschall] PR#4766 PR#4161
+
+  *) Make sure mod_rewrite escapes QUERY_STRINGS on redirects.
+     [Klaus Johannes Rusch <KlausRusch@atmedia.net>] PR#4734
+
+  *) Make sure mod_rewrite matches URL schemes case-insensitive and also allow
+     additional (commonly used) URL schemes ldap:, news: and mailto:.
+     [Ralf S. Engelschall, Klaus Johannes Rusch <KlausRusch@atmedia.net>] PR#3140
+
+  *) Overhauled ApacheBench (ab) manpage ab.8.
+     [Simon Baldwin <simonb@sco.com>] PR#5139
+
+  *) Made sure ApacheBench (ab) performs no more requests than 
+     specified on command line (option -n).
+     [Jim Cox <jc@superlink.net>] PR#4839
+
+  *) Support DSOs properly on 32-bit HP-UX 11.0
+     [Dilip Khandekar <dilip@cup.hp.com>]
+
+  *) Fix problem with proxy configuration where globally set configuration
+     options were overridden inside virtual hosts.
+     [Graham Leggett <minfrin@sharp.fm>]
+
+  *) Fix ProxyReceiveBufferSize where default value was left uninitialised.
+     [Graham Leggett <minfrin@sharp.fm>]
+
+  *) Added a CLF '-' respecting %B to the log format.
+     Suggested by Ragnar Kjørstad [dirkx]
+
+  *) Added protocol(%m)/method(%H) logging to the log format.
+     Suggested by Peter W <peterw@usa.net> [dirkx]
+
+  *) Added a HEAD method to 'ab'. [dirkx]
+
+  *) When generating the Location: header, mod_speling forgot
+     to escape the spelling-fixed uri. [Martin Kraemer]
+
+  *) Update for the next release of the TPF OS (PUT11)
+     [David McCreedy <McCreedy@us.ibm.com>]
+
+  *) Add some compile-time flags to the output when -V is used for TPF
+     [David McCreedy <McCreedy@us.ibm.com>]
+
+  *) mod_auth_digest fixes:
+     - Use unix-io instead of stdio to read /dev/random (fixes problems
+       on FreeBSD)
+       [Kano <tomo@crane-inc.co.jp>] PR#4967
+     - Correctly unescape all parts of the request uri and the uri
+       attribute of the Authorization header before doing comparison
+       [Joe Orton <joe@orton.demon.co.uk>, Ronald Tschalär]
+     - Fixes for MD5-sess
+       [Joe Orton <joe@orton.demon.co.uk>]
+     - Don't send a domain attribute in Proxy-Authenticate
+       [Ronald Tschalär]
+
+  *) ap_base64decode_binary does not null-terminate the output anymore
+     [Bill Stoddard, Ronald Tschalär]
+
+  *) WIN32: The following bugs introduced in Apache 1.3.9 have been fixed
+     - CGIs broken if script calls other programs which deliver on stdout
+       (Search this file for "DETACHED")
+     - 16 bit CGIs should work now
+     - Server will not start if passed the -d option with spaces in the
+       argument. [Bill Stoddard]
+
+  *) WIN32: GetExtensionVersion() comparison in mod_isapi fails when
+     using some non-MS compilers [Bill Stoddard]
+     PR#3597, PR#3782, PR#3781, PR#4887
+
+  *) Allow BeOS to use its native closesocket() call
+     [David Reid <abb37@dial.pipex.com>]
+
+  *) More TPF changes. Code reorganization for cleanliness, regex
+     changes for testing, as well as doc and build updates.
+     [David McCreedy <McCreedy@us.ibm.com> and others at IBM]
+
+  *) Add TPF processing for the socket read to the rfc1413 code.
+     [David McCreedy <McCreedy@us.ibm.com> and others at IBM]
+
+  *) Require the batch (-b) option and default to MD5 on TPF in htpasswd.
+     [David McCreedy <McCreedy@us.ibm.com> and others at IBM]
+
+  *) Move "handler not found" warning message to below the check
+     for a wildcard handler.  [Dirk <dirkm@teleport.com>, Roy Fielding]
+     PR#2584, PR#2751, PR#3349, PR#3436, PR#3548, PR#4384, PR#4795, PR#4807
+
+  *) Build errors in src/support stop with an error, just like all the
+     other recursive make calls. [David Harris <dharris@drh.net>]
+
+
 Changes with Apache 1.3.9
 
   *) Remove bogus error message when a redirect doesn't set Location.

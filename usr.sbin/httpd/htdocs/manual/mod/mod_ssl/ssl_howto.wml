@@ -155,7 +155,7 @@ solution is:
 \#   be liberal in general
 SSLCipherSuite ALL:!ADH:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP:+eNULL
 &lt;Location /strong/area&gt;
-\#   but https://hostname/string/area/ and below requires strong ciphers
+\#   but https://hostname/strong/area/ and below requires strong ciphers
 SSLCipherSuite HIGH:MEDIUM
 &lt;/Location&gt;
 </config>

@@ -2,7 +2,7 @@
 =cut
 #endif
 /* ====================================================================
- * Copyright (c) 1998 The Apache Group.  All rights reserved.
+ * Copyright (c) 1998-2000 The Apache Group.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -697,8 +697,8 @@ ap_ctx(3)
 
 =head1 HISTORY
 
-The ap_hook(3) interface was originally designed and implemented in October
-1998 by Ralf S. Engelschall as part of the mod_ssl project.
+The ap_hook(3) interface was originally designed and 
+implemented in October 1998 by Ralf S. Engelschall.
 
 =head1 AUTHOR
 

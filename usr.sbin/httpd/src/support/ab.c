@@ -97,7 +97,7 @@
  *   only an issue for loopback usage
  */
 
-#define VERSION "1.3a"
+#define VERSION "1.3c"
 
 /*  -------------------------------------------------------------------- */
 
@@ -128,7 +128,9 @@
 #include "ebcdic.h"
 #endif
 #include <fcntl.h>
+#ifndef MPE
 #include <sys/time.h>
+#endif
 
 #ifndef NO_WRITEV
 #include <sys/types.h>
@@ -224,6 +226,16 @@ struct data *stats;		/* date for each request */
 fd_set readbits, writebits;	/* bits for select */
 struct sockaddr_in server;	/* server addr structure */
 
+#ifndef BEOS
+#define ab_close(s) close(s)
+#define ab_read(a,b,c) read(a,b,c)
+#define ab_write(a,b,c) write(a,b,c)
+#else
+#define ab_close(s) closesocket(s)
+#define ab_read(a,b,c) recv(a,b,c,0)
+#define ab_write(a,b,c) send(a,b,c,0)
+#endif
+
 /* --------------------------------------------------------- */
 
 /* simple little function to perror and exit */
@@ -254,7 +266,7 @@ static void write_request(struct connection * c)
     out[0].iov_base = request;
     out[0].iov_len = reqlen;
 
-    if (posting) {
+    if (posting>0) {
 	out[1].iov_base = postdata;
 	out[1].iov_len = postlen;
 	outcnt = 2;
@@ -262,9 +274,9 @@ static void write_request(struct connection * c)
     }
     writev(c->fd,out, outcnt);
 #else
-    write(c->fd,request,reqlen);
-    if (posting) {
-        write(c->fd,postdata,postlen);
+    ab_write(c->fd,request,reqlen);
+    if (posting>0) {
+        ab_write(c->fd,postdata,postlen);
         totalposted += (reqlen + postlen);
     }
 #endif
@@ -281,7 +293,11 @@ static void write_request(struct connection * c)
 static void nonblock(int fd)
 {
     int i = 1;
+#ifdef BEOS
+    setsockopt(fd, SOL_SOCKET, SO_NONBLOCK, &i, sizeof(i));
+#else
     ioctl(fd, FIONBIO, &i);
+#endif
 }
 
 /* --------------------------------------------------------- */
@@ -331,7 +347,7 @@ static void output_results(void)
     if (keepalive)
 	printf("Keep-Alive requests:    %d\n", doneka);
     printf("Total transferred:      %d bytes\n", totalread);
-    if (posting)
+    if (posting>0)
 	printf("Total POSTed:           %d\n", totalposted);
     printf("HTML transferred:       %d bytes\n", totalbread);
 
@@ -340,7 +356,7 @@ static void output_results(void)
 	printf("Requests per second:    %.2f\n", 1000 * (float) (done) / timetaken);
 	printf("Transfer rate:          %.2f kb/s received\n",
 	       (float) (totalread) / timetaken);
-	if (posting) {
+	if (posting>0) {
 	    printf("                        %.2f kb/s sent\n",
 		   (float) (totalposted) / timetaken);
 	    printf("                        %.2f kb/s total\n",
@@ -429,7 +445,7 @@ static void output_html_results(void)
     printf("<tr %s><th colspan=2 %s>Total transferred:</th>"
 	   "<td colspan=2 %s>%d bytes</td></tr>\n",
 	   trstring, tdstring, tdstring, totalread);
-    if (posting)
+    if (posting>0)
 	printf("<tr %s><th colspan=2 %s>Total POSTed:</th>"
 	       "<td colspan=2 %s>%d</td></tr>\n",
 	       trstring, tdstring, tdstring, totalposted);
@@ -445,7 +461,7 @@ static void output_html_results(void)
 	printf("<tr %s><th colspan=2 %s>Transfer rate:</th>"
 	       "<td colspan=2 %s>%.2f kb/s received</td></tr>\n",
 	     trstring, tdstring, tdstring, (float) (totalread) / timetaken);
-	if (posting) {
+	if (posting>0) {
 	    printf("<tr %s><td colspan=2 %s>&nbsp;</td>"
 		   "<td colspan=2 %s>%.2f kb/s sent</td></tr>\n",
 		   trstring, tdstring, tdstring,
@@ -526,7 +542,7 @@ static void start_connect(struct connection * c)
 	    return;
 	}
 	else {
-	    close(c->fd);
+	    ab_close(c->fd);
 	    err_conn++;
 	    if (bad++ > 10) {
 		err("\nTest aborted after 10 failures\n\n");
@@ -536,7 +552,8 @@ static void start_connect(struct connection * c)
     }
 
     /* connected first time */
-    write_request(c);
+    c->state = STATE_CONNECTING;
+    FD_SET(c->fd, &writebits);
 }
 
 /* --------------------------------------------------------- */
@@ -570,7 +587,7 @@ static void close_connection(struct connection * c)
 	}
     }
 
-    close(c->fd);
+    ab_close(c->fd);
     FD_CLR(c->fd, &readbits);
     FD_CLR(c->fd, &writebits);
 
@@ -589,7 +606,8 @@ static void read_connection(struct connection * c)
     char *part;
     char respcode[4];		/* 3 digits and null */
 
-    r = read(c->fd, buffer, sizeof(buffer));
+    r = ab_read(c->fd, buffer, sizeof(buffer));
+
     if (r == 0 || (r < 0 && errno != EAGAIN)) {
 	good++;
 	close_connection(c);
@@ -635,7 +653,7 @@ static void read_connection(struct connection * c)
 		return;
 	    else {
 		/* header is in invalid or too big - close connection */
-		close(c->fd);
+		ab_close(c->fd);
 		if (bad++ > 10) {
 		    err("\nTest aborted after 10 failures\n\n");
 		}
@@ -703,7 +721,8 @@ static void read_connection(struct connection * c)
 	totalbread += r;
     }
 
-    if (c->keepalive && (c->bread >= c->length)) {
+    /* cater for the case where we're using keepalives and doing HEAD requests */
+    if (c->keepalive && ((c->bread >= c->length) || (posting < 0))) {
 	/* finished a keep-alive connection */
 	good++;
 	doneka++;
@@ -769,13 +788,14 @@ static void test(void)
     FD_ZERO(&writebits);
 
     /* setup request */
-    if (!posting) {
-	sprintf(request, "GET %s HTTP/1.0\r\n"
+    if (posting <= 0) {
+	sprintf(request, "%s %s HTTP/1.0\r\n"
 		"User-Agent: ApacheBench/%s\r\n"
 		"%s" "%s" "%s"
 		"Host: %s\r\n"
 		"Accept: */*\r\n"
-		"\r\n" "%s",
+		"%s" "\r\n",
+		(posting == 0) ? "GET" : "HEAD",
 		path,
 		VERSION,
 		keepalive ? "Connection: Keep-Alive\r\n" : "",
@@ -864,14 +884,14 @@ static void test(void)
 static void copyright(void)
 {
     if (!use_html) {
-	printf("This is ApacheBench, Version %s\n", VERSION);
+	printf("This is ApacheBench, Version %s\n", VERSION " <$Revision: 1.4 $> apache-1.3");
 	printf("Copyright (c) 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/\n");
 	printf("Copyright (c) 1998-1999 The Apache Group, http://www.apache.org/\n");
 	printf("\n");
     }
     else {
 	printf("<p>\n");
-	printf(" This is ApacheBench, Version %s<br>\n", VERSION);
+	printf(" This is ApacheBench, Version %s <i>&lt;%s&gt;</i> apache-1.3<br>\n", VERSION, "$Revision: 1.4 $");
 	printf(" Copyright (c) 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/<br>\n");
 	printf(" Copyright (c) 1998-1999 The Apache Group, http://www.apache.org/<br>\n");
 	printf("</p>\n<p>\n");
@@ -890,6 +910,7 @@ static void usage(char *progname)
     fprintf(stderr, "    -T content-type Content-type header for POSTing\n");
     fprintf(stderr, "    -v verbosity    How much troubleshooting info to print\n");
     fprintf(stderr, "    -w              Print out results in HTML tables\n");
+    fprintf(stderr, "    -i              Use HEAD instead of GET\n");
     fprintf(stderr, "    -x attributes   String to insert as table attributes\n");
     fprintf(stderr, "    -y attributes   String to insert as tr attributes\n");
     fprintf(stderr, "    -z attributes   String to insert as td or th attributes\n");
@@ -983,7 +1004,7 @@ int main(int argc, char **argv)
     auth[0] = '\0';
     hdrs[0] = '\0';
     optind = 1;
-    while ((c = getopt(argc, argv, "n:c:t:T:p:v:kVhwx:y:z:C:H:P:A:")) > 0) {
+    while ((c = getopt(argc, argv, "n:c:t:T:p:v:kVhwix:y:z:C:H:P:A:")) > 0) {
 	switch (c) {
 	case 'n':
 	    requests = atoi(optarg);
@@ -997,7 +1018,16 @@ int main(int argc, char **argv)
 	case 'c':
 	    concurrency = atoi(optarg);
 	    break;
+	case 'i':
+	    if (posting==1) 
+		err("Cannot mix POST and HEAD");
+
+	    posting = -1;
+	    break;
 	case 'p':
+	    if (posting!=0) 
+		err("Cannot mix POST and HEAD");
+
 	    if (0 == (r = open_postfile(optarg))) {
 		posting = 1;
 	    }
