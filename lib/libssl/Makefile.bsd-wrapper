@@ -11,6 +11,12 @@ LNDIR=          /usr/bin/lndir
 .if ${MACHINE_ARCH} == "i386"
 SSLCONF=	OpenBSD-x86
 .else
+.if ${MACHINE_ARCH} == "pmax"
+SSLCONF=	OpenBSD-pmax
+.else
+.if ${MACHINE_ARCH} == "arc"
+SSLCONF=	OpenBSD-arc
+.else
 .if ${MACHINE_ARCH} == "alpha"
 SSLCONF=	OpenBSD-alpha
 .else
@@ -19,6 +25,8 @@ SSLCONF=	OpenBSD-bigendian
 .else
 ##UNTESTED!	
 SSLCONF=	OpenBSD-bigendian
+.endif
+.endif
 .endif
 .endif
 .endif

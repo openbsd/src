@@ -135,6 +135,8 @@ $x86_bsdi_asm="asm/bn86bsdi.o:asm/dx86bsdi.o asm/yx86bsdi.o:asm/bx86bsdi.o:asm/m
 "OpenBSD-alpha","gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall::SIXTY_FOUR_BIT_LONGS DES_INT DES_PTR DES_RISC2:::",
 "OpenBSD-x86",   "gcc:-DTERMIOS -DBN_ASM -DL_ENDIAN -D_ANSI_SOURCE -fomit-frame-pointer -O3 -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
 "OpenBSD-bigendian", "gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall -DB_ENDIAN::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
+"OpenBSD-pmax", "gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall -DL_ENDIAN::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
+"OpenBSD-arc", "gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall -DL_ENDIAN::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL:::",
 "FreeBSD",   "gcc:-DTERMIOS -DBN_ASM -DL_ENDIAN -D_ANSI_SOURCE -fomit-frame-pointer -O3 -m486 -Wall::BN_LLONG $x86_gcc_des $x86_gcc_opts:$x86_out_asm",
 #"bsdi-gcc",     "gcc:-O3 -ffast-math -DBN_ASM -DL_ENDIAN -DPERL5 -m486::RSA_LLONG $x86_gc_des $x86_gcc_opts:$x86_bsdi_asm",
 "nextstep",	"cc:-O3 -Wall -DBN_ASM::BN_LLONG $x86_gcc_des $x86_gcc_opts:::",
