@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.40 2003/10/05 02:26:03 mickey Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.41 2003/11/07 16:43:08 mickey Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -389,7 +389,7 @@ pchb_print(aux, pnp)
 
 /*
  * Should do FIPS testing as per:
- *	http://csrc.nist.gov/fips/fips1401.htm
+ *	http://csrc.nist.gov/publications/fips/fips140-1/fips1401.htm
  */
 void
 pchb_rnd(v)
