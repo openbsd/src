@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.31 2004/12/20 22:20:43 millert Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.32 2004/12/20 22:30:10 millert Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -59,7 +59,7 @@ are stored in
 .Fa host
 and
 .Fa serv
-which have size parameters
+which have length parameters
 .Fa hostlen
 and
 .Fa servlen .
@@ -71,10 +71,12 @@ and
 the maximum value for 
 .Fa servlen
 is
-.Dv NI_MAXSERV
-- 32,
+.Dv NI_MAXSERV ,
 as defined by
 .Aq Pa netdb.h .
+If a length parameter is zero, no string will be stored.
+Otherwise, enough space must be provided to store the
+host name or service string plus a byte for the NUL terminator.
 .Pp
 The
 .Fa flags
