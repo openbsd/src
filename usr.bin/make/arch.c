@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.11 1997/10/13 14:47:14 pefo Exp $	*/
+/*	$OpenBSD: arch.c,v 1.12 1998/07/02 20:47:25 millert Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$OpenBSD: arch.c,v 1.11 1997/10/13 14:47:14 pefo Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.12 1998/07/02 20:47:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1064,7 +1064,7 @@ Arch_MemMTime (gn)
 	    nameStart = strchr (pgn->name, '(') + 1;
 	    nameEnd = strchr (nameStart, ')');
 
-	    if (pgn->make &&
+	    if (pgn->make && nameStart != (char *)1 && nameEnd != NULL &&
 		strncmp(nameStart, gn->name, nameEnd - nameStart) == 0) {
 				     gn->mtime = Arch_MTime(pgn);
 	    }

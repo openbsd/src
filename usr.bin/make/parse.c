@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.15 1997/07/25 21:05:35 mickey Exp $	*/
+/*	$OpenBSD: parse.c,v 1.16 1998/07/02 20:47:26 millert Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.15 1997/07/25 21:05:35 mickey Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.16 1998/07/02 20:47:26 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -943,7 +943,8 @@ ParseDoDependency (line)
 		    gn = Suff_AddTransform (targName);
 		}
 
-		(void)Lst_AtEnd (targets, (ClientData)gn);
+		if (gn != NULL)
+		    (void)Lst_AtEnd (targets, (ClientData)gn);
 	    }
 	} else if (specType == ExPath && *line != '.' && *line != '\0') {
 	    Parse_Error(PARSE_WARNING, "Extra target (%s) ignored", line);

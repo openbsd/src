@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.5 1996/11/30 21:09:04 millert Exp $	*/
+/*	$OpenBSD: suff.c,v 1.6 1998/07/02 20:47:28 millert Exp $	*/
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$OpenBSD: suff.c,v 1.5 1996/11/30 21:09:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: suff.c,v 1.6 1998/07/02 20:47:28 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -633,6 +633,12 @@ Suff_AddTransform (line)
     gn->type = OP_TRANSFORM;
 
     (void)SuffParseTransform(line, &s, &t);
+    /*
+     * If there is nothing to transform to, *t->name will be NUL.
+     * The rest is paranoia.
+     */
+    if (!s->name || !t->name || !*s->name || !*t->name)
+	return(NULL);
 
     /*
      * link the two together in the proper relationship and order
@@ -1685,6 +1691,8 @@ SuffFindArchiveDeps(gn, slst)
      */
     eoarch = strchr (gn->name, '(');
     eoname = strchr (eoarch, ')');
+    if (eoarch == NULL || eoname == NULL)
+	return;
 
     *eoname = '\0';	  /* Nuke parentheses during suffix search */
     *eoarch = '\0';	  /* So a suffix can be found */
