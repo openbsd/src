@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.18 2002/03/14 01:27:18 millert Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.19 2002/06/11 09:45:16 art Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -136,6 +136,10 @@ struct vm_page {
 						 * to read: [O or P]
 						 * to modify: [O _and_ P] */
 	paddr_t			phys_addr;	/* physical address of page */
+
+#ifdef __HAVE_VM_PAGE_MD
+	struct vm_page_md	mdpage;		/* pmap-specific data */
+#endif
 #if defined(UVM_PAGE_TRKOWN)
 	/* debugging fields to track page ownership */
 	pid_t			owner;		/* proc that set PG_BUSY */

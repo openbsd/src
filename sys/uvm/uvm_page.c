@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.42 2002/03/14 01:27:18 millert Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.43 2002/06/11 09:45:16 art Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -308,6 +308,9 @@ uvm_page_init(kvm_startp, kvm_endp)
 		paddr = ptoa(vm_physmem[lcv].start);
 		for (i = 0 ; i < n ; i++, paddr += PAGE_SIZE) {
 			vm_physmem[lcv].pgs[i].phys_addr = paddr;
+#ifdef __HAVE_VM_PAGE_MD
+			VM_MDPAGE_INIT(&vm_physmem[lcv].pgs[i]);
+#endif
 			if (atop(paddr) >= vm_physmem[lcv].avail_start &&
 			    atop(paddr) <= vm_physmem[lcv].avail_end) {
 				uvmexp.npages++;
