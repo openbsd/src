@@ -1,13 +1,16 @@
-$Id: README.openssh2,v 1.4 2000/04/25 10:30:38 markus Exp $
+$Id: README.openssh2,v 1.5 2000/04/26 21:03:53 markus Exp $
 
 howto:
 	1) generate server key:
-		$ umask 077
-		$ openssl dsaparam 1024 -out dsa1024.pem
-		$ openssl gendsa -out /etc/ssh_dsa_key dsa1024.pem -rand /dev/arandom
+		$ ssh-keygen -d -f /etc/ssh_dsa_key -N ''
 	2) enable ssh2:
 		server: add 'Protocol 2,1' to /etc/sshd_config
 		client: ssh -o 'Protocol 2,1', or add to .ssh/config
+	3) interop w/ ssh.com dsa-keys:
+		ssh-keygen -f /key/from/ssh.com -X >> ~/.ssh/authorized_keys2
+	   and vice versa
+		ssh-keygen -f /privatekey/from/openssh -x > ~/.ssh2/mykey.pub
+		echo Key mykey.pub >> ~/.ssh2/authorization
 
 works:
 	secsh-transport: works w/o rekey
@@ -38,4 +41,4 @@ todo:
 	sftp
 
 -markus
-$Date: 2000/04/25 10:30:38 $
+$Date: 2000/04/26 21:03:53 $
