@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.75 2001/06/27 05:50:04 kjc Exp $	*/
+/*	$OpenBSD: conf.c,v 1.76 2001/07/03 22:49:05 niklas Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -117,6 +117,13 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 
+/* open, close, ioctl -- XXX should be a generic device */
+#define cdev_oci_init(c,n) { \
+        dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+        (dev_type_stop((*))) enodev, 0,  seltrue, \
+        (dev_type_mmap((*))) enodev, 0 }
+
 /* open, close, ioctl, select -- XXX should be a generic device */
 #define cdev_ocis_init(c,n) { \
         dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
@@ -212,6 +219,8 @@ cdev_decl(urio);
 cdev_decl(ucom);
 #include "cz.h"
 cdev_decl(cztty);
+#include "iop.h"
+cdev_decl(iop);
 
 /* XXX -- this needs to be supported by config(8)! */
 #if (NCOM > 0) && (NPCCOM > 0)
@@ -339,6 +348,7 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_pf_init(NPF,pf),		/* 73: packet filter */
 	cdev_altq_init(NALTQ,altq),	/* 74: ALTQ control interface */
+	cdev_oci_init(NIOP,iop),	/* 75: I2O controller */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
