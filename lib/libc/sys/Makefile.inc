@@ -11,11 +11,14 @@ SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S \
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-SRCS+=	ftruncate.c lseek.c mmap.c semctl.c truncate.c
+SRCS+=	ftruncate.c lseek.c mmap.c semctl.c truncate.c \
+	timer_create.c timer_delete.c timer_getoverrun.c timer_gettime.c \
+	timer_settime.c
 
 # modules with default implementations on all architectures:
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
-	chown.o chroot.o close.o connect.o dup.o dup2.o execve.o fchdir.o \
+	chown.o chroot.o clock_gettime.o clock_settime.o clock_getres.o \
+	close.o connect.o dup.o dup2.o execve.o fchdir.o \
 	fchflags.o fchmod.o fchown.o fcntl.o flock.o fpathconf.o fstat.o \
 	fstatfs.o fsync.o futimes.o getdirentries.o getegid.o geteuid.o \
 	getfh.o getfsstat.o getgid.o getgroups.o getitimer.o getpeername.o \
@@ -26,7 +29,7 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	link.o listen.o lstat.o madvise.o mincore.o minherit.o mkdir.o \
 	mkfifo.o mknod.o mlock.o \
 	mount.o mprotect.o msgctl.o msgget.o msgrcv.o msgsnd.o msync.o \
-	munlock.o munmap.o nfssvc.o \
+	munlock.o munmap.o nanosleep.o nfssvc.o \
 	ntp_gettime.o ntp_adjtime.o \
 	open.o pathconf.o poll.o profil.o quotactl.o \
 	read.o readlink.o readv.o reboot.o recvfrom.o recvmsg.o rename.o \
@@ -115,7 +118,8 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	kill.2 ktrace.2 link.2 \
 	listen.2 lseek.2 mkdir.2 mkfifo.2 mknod.2 madvise.2 mincore.2 \
 	minherit.2 mlock.2 \
-	mmap.2 mount.2 mprotect.2 msync.2 munmap.2 nfssvc.2 open.2 pathconf.2 \
+	mmap.2 mount.2 mprotect.2 msync.2 munmap.2 nanosleep.2 \
+	nfssvc.2 open.2 pathconf.2 \
 	pipe.2 profil.2 poll.2 ptrace.2 quotactl.2 read.2 readlink.2 reboot.2 \
 	recv.2 rename.2 revoke.2 rfork.2 rmdir.2 select.2 send.2 setgroups.2 \
 	setpgid.2 setsid.2 setuid.2 shutdown.2 sigaction.2 sigaltstack.2 \
