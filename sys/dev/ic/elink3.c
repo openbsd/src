@@ -969,11 +969,6 @@ epbusyeeprom(sc)
 	bus_io_handle_t ioh = sc->sc_ioh;
 	int i = 100, j;
 
-	if (sc->bustype == EP_BUS_PCMCIA) {
-		delay(1000);
-		return 0;
-	}
-
 	while (i--) {
 		j = bus_io_read_2(bc, ioh, EP_W0_EEPROM_COMMAND);
 		if (j & EEPROM_BUSY)
@@ -986,7 +981,7 @@ epbusyeeprom(sc)
 		    sc->sc_dev.dv_xname);
 		return (1);
 	}
-	if (j & EEPROM_TST_MODE) {
+	if (sc->bustype != EP_BUS_PCMCIA && j & EEPROM_TST_MODE) {
 		printf("\n%s: erase pencil mark, or disable plug-n-play mode!\n",
 		    sc->sc_dev.dv_xname);
 		return (1);
