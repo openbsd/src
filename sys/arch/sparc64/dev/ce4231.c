@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.3 2002/01/11 17:26:34 jason Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.4 2002/01/20 23:21:54 ericj Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -153,9 +153,9 @@ int	ce4231_getdev		__P((void *, struct audio_device *));
 int	ce4231_set_port		__P((void *, mixer_ctrl_t *));
 int	ce4231_get_port		__P((void *, mixer_ctrl_t *));
 int	ce4231_query_devinfo	__P((void *addr, mixer_devinfo_t *));
-void *	ce4231_alloc		__P((void *, u_long, int, int));
+void *	ce4231_alloc		__P((void *, int, size_t, int, int));
 void	ce4231_free		__P((void *, void *, int));
-u_long	ce4231_round_buffersize	__P((void *, u_long));
+size_t	ce4231_round_buffersize	__P((void *, int, size_t));
 int	ce4231_get_props	__P((void *));
 int	ce4231_trigger_output __P((void *, void *, void *, int,
     void (*intr)__P((void *)), void *arg, struct audio_params *));
@@ -1280,10 +1280,11 @@ ce4231_query_devinfo(addr, dip)
 	return (err);
 }
 
-u_long
-ce4231_round_buffersize(addr, size)
+size_t
+ce4231_round_buffersize(addr, direction, size)
 	void *addr;
-	u_long size;
+	int direction;
+	size_t size;
 {
 	return (size);
 }
@@ -1359,9 +1360,10 @@ ce4231_pintr(v)
 }
 
 void *
-ce4231_alloc(addr, size, pool, flags)
+ce4231_alloc(addr, direction, size, pool, flags)
 	void *addr;
-	u_long size;
+	int direction;
+	size_t size;
 	int pool;
 	int flags;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.10 2002/01/18 14:29:35 jason Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.11 2002/01/20 23:21:54 ericj Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -135,9 +135,9 @@ int	cs4231_getdev		__P((void *, struct audio_device *));
 int	cs4231_set_port		__P((void *, mixer_ctrl_t *));
 int	cs4231_get_port		__P((void *, mixer_ctrl_t *));
 int	cs4231_query_devinfo	__P((void *addr, mixer_devinfo_t *));
-void *	cs4231_alloc		__P((void *, u_long, int, int));
+void *	cs4231_alloc		__P((void *, int, size_t, int, int));
 void	cs4231_free		__P((void *, void *, int));
-u_long	cs4231_round_buffersize	__P((void *, u_long));
+size_t	cs4231_round_buffersize	__P((void *, int, size_t));
 int	cs4231_get_props	__P((void *));
 int	cs4231_trigger_output __P((void *, void *, void *, int,
     void (*intr)__P((void *)), void *arg, struct audio_params *));
@@ -1371,9 +1371,10 @@ cs4231_query_devinfo(addr, dip)
 }
 
 void *
-cs4231_alloc(addr, size, pool, flags)
+cs4231_alloc(addr, direction, size, pool, flags)
 	void *addr;
-	u_long size;
+	int direction;
+	size_t size;
 	int pool;
 	int flags;
 {
@@ -1416,10 +1417,11 @@ cs4231_free(addr, ptr, pool)
 	printf("%s: attempt to free rogue pointer\n", sc->sc_dev.dv_xname);
 }
 
-u_long
-cs4231_round_buffersize(addr, size)
+size_t
+cs4231_round_buffersize(addr, direction, size)
 	void *addr;
-	u_long size;
+	int direction;
+	size_t size;
 {
 	return (size);
 }
