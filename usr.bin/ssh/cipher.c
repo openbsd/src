@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: cipher.c,v 1.30 2000/09/07 20:27:50 deraadt Exp $");
+RCSID("$OpenBSD: cipher.c,v 1.31 2000/09/12 00:38:32 deraadt Exp $");
 
 #include "ssh.h"
 #include "cipher.h"
@@ -141,7 +141,7 @@ static char *cipher_names[] =
 	"des",
 	"3des",
 	"tss",
-	"rc4",
+	"rc4",		/* Alleged RC4 */
 	"blowfish",
 	"reserved",
 	"blowfish-cbc",
