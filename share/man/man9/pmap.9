@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pmap.9,v 1.2 2002/09/02 06:01:01 wcobb Exp $
+.\"	$OpenBSD: pmap.9,v 1.3 2002/09/10 20:54:21 wcobb Exp $
 .\"
 .\" Copyright (c) 2001, 2002 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -289,9 +289,9 @@ that are no longer in demand.
 .Sh PHYSICAL PAGE INITIALIZATION
 .nr nS 1
 .Ft void
-.Fn pmap_copy_page "paddr_t src" "paddr_t dst"
+.Fn pmap_copy_page "struct vm_page *src" "struct vm_page *dst"
 .Ft void
-.Fn pmap_zero_page "paddr_t phys"
+.Fn pmap_zero_page "struct vm_page *page"
 .nr nS 0
 .Pp
 The
@@ -303,8 +303,8 @@ to physical page
 .Pp
 The
 .Fn pmap_zero_page
-function fills the page at
-.Fa phys
+function fills
+.Fa page
 with zeroes.
 .Sh INTERNAL DATA STRUCTURE MANAGEMENT
 .nr nS 1
