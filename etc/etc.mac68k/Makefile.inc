@@ -1,12 +1,12 @@
-#	$OpenBSD: Makefile.inc,v 1.5 1998/02/16 02:04:39 gene Exp $
+#	$OpenBSD: Makefile.inc,v 1.6 1998/02/19 20:58:00 ryker Exp $
 #	etc.mac68k/Makefile.inc -- mac68k-specific etc Makefile targets
 
 .ifdef DESTDIR
 snap_md: bsd-generic bsd-genericsbc
-	(cd ${.CURDIR}/../sys/arch/mac68k/compile/GENERIC;
+	(cd ${.CURDIR}/../sys/arch/mac68k/compile/GENERIC; \
 	 tar cf - bsd \
 	 | ${GZIP} ${GZIPFLAGS} >${DESTDIR}/snapshot/bsd-generic.tar${GZIPEXT})
-	(cd ${.CURDIR}/../sys/arch/mac68k/compile/GENERICSBC;
+	(cd ${.CURDIR}/../sys/arch/mac68k/compile/GENERICSBC; \
 	 tar cf - bsd \
 	 | ${GZIP} ${GZIPFLAGS} >${DESTDIR}/snapshot/bsd-genericsbc.tar${GZIPEXT})
 bsd-generic:
