@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	#	OpenBSD: pnpdevs,v 1.37 1998/11/26 20:58:30 deraadt Exp 
+ *	#	OpenBSD: pnpdevs,v 1.38 1998/11/27 08:42:40 deraadt Exp 
  */
 
 struct isapnp_knowndev isapnp_knowndevs[] = {
@@ -17,8 +17,6 @@ struct isapnp_knowndev isapnp_knowndevs[] = {
 	{ "PNP80D6", "ne" },
 	{ "PNP80D8", "le" },
 	{ "PNP80F1", "ep" },
-	{ "PNP80F3", "ep" },
-	{ "PNP80F4", "ep" },
 	{ "PNP80F6", "ep" },
 	{ "PNP80F7", "ep" },
 	{ "PNP80F8", "ep" },
