@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.2 2000/08/29 19:00:36 jason Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.3 2001/04/11 05:47:51 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -81,7 +81,10 @@ int brgphy_probe(parent, match, aux)
 	struct mii_attach_args *ma = aux;
 
 	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxBROADCOM &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5400)
+	    (MII_MODEL(ma->mii_id2) == MII_MODEL_xxBROADCOM_BCM5400 ||
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5400 ||
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5401 ||
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_BCM5411))
 		return(10);
 
 	return(0);
@@ -103,17 +106,18 @@ brgphy_attach(parent, self, aux)
 	sc->mii_pdata = mii;
 	sc->mii_flags |= MIIF_NOISOLATE;
 
-#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
-	    BMCR_ISO);
-
 	mii_phy_reset(sc);
+
+	sc->mii_capabilities =
+	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
+	if (sc->mii_capabilities & BMSR_MEDIAMASK)
+		mii_phy_add_media(sc);
+
+#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, 0, sc->mii_inst),
 	    BRGPHY_BMCR_FDX);
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, IFM_FDX, sc->mii_inst), 0);
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst), 0);
 
 #undef ADD
 }
@@ -125,7 +129,7 @@ brgphy_service(sc, mii, cmd)
 	int cmd;
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	int reg;
+	int reg, speed;
 
 	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
 		return (ENXIO);
@@ -174,17 +178,31 @@ brgphy_service(sc, mii, cmd)
 			(void) brgphy_mii_phy_auto(sc, 1);
 			break;
 		case IFM_1000_TX:
+			speed = BRGPHY_S1000;
+			goto setit;
+		case IFM_100_T4:
+			speed = BRGPHY_S100;
+			goto setit;
+		case IFM_100_TX:
+			speed = BRGPHY_S100;
+			goto setit;
+		case IFM_10_T:
+			speed = BRGPHY_S10;
+		setit:
 			if ((ife->ifm_media & IFM_GMASK) == IFM_FDX) {
 				PHY_WRITE(sc, BRGPHY_MII_BMCR,
-				    BRGPHY_BMCR_FDX|BRGPHY_BMCR_SPD1);
+				    BRGPHY_BMCR_FDX|speed);
 			} else {
-				PHY_WRITE(sc, BRGPHY_MII_BMCR,
-				    BRGPHY_BMCR_SPD1);
+				PHY_WRITE(sc, BRGPHY_MII_BMCR, speed);
 			}
 			PHY_WRITE(sc, BRGPHY_MII_ANAR, BRGPHY_SEL_TYPE);
 
+			if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_TX)
+				break;
+
 			/*
-			 * When settning the link manually, one side must
+			 * On IFM_1000_X only,
+			 * when setting the link manually, one side must
 			 * be the master and the other the slave. However
 			 * ifmedia doesn't give us a good way to specify
 			 * this, so we fake it by using one of the LINK
@@ -199,9 +217,6 @@ brgphy_service(sc, mii, cmd)
 				    BRGPHY_1000CTL_MSE);
 			}
 			break;
-		case IFM_100_T4:
-		case IFM_100_TX:
-		case IFM_10_T:
 		default:
 			return (EINVAL);
 		}
@@ -262,7 +277,8 @@ brgphy_status(sc)
 	struct mii_softc *sc;
 {
 	struct mii_data *mii = sc->mii_pdata;
-	int bmsr, bmcr, anlpar;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	int bmsr, bmcr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -283,22 +299,33 @@ brgphy_status(sc)
 			return;
 		}
 
-		mii->mii_media_active |= IFM_1000_TX;
-		anlpar = PHY_READ(sc, BRGPHY_MII_AUXSTS);
-		if ((anlpar & BRGPHY_AUXSTS_AN_RES) == BRGPHY_RES_1000FD)
-			mii->mii_media_active |= IFM_FDX;
-		if ((anlpar & BRGPHY_AUXSTS_AN_RES) == BRGPHY_RES_1000HD)
-			mii->mii_media_active |= IFM_HDX;
+		switch (PHY_READ(sc, BRGPHY_MII_AUXSTS) & BRGPHY_AUXSTS_AN_RES) {
+		case BRGPHY_RES_1000FD:
+			mii->mii_media_active |= IFM_1000_TX | IFM_FDX;
+			break;
+		case BRGPHY_RES_1000HD:
+			mii->mii_media_active |= IFM_1000_TX | IFM_HDX;
+			break;
+		case BRGPHY_RES_100FD:
+			mii->mii_media_active |= IFM_100_TX | IFM_FDX;
+			break;
+		case BRGPHY_RES_100T4:
+			mii->mii_media_active |= IFM_100_T4;
+			break;
+		case BRGPHY_RES_100HD:
+			mii->mii_media_active |= IFM_100_TX | IFM_HDX;
+			break;
+		case BRGPHY_RES_10FD:
+			mii->mii_media_active |= IFM_10_T | IFM_FDX;
+			break;
+		case BRGPHY_RES_10HD:
+			mii->mii_media_active |= IFM_10_T | IFM_HDX;
+			break;
+		}
 		return;
 	}
 
-	mii->mii_media_active |= IFM_1000_TX;
-	if (bmcr & BRGPHY_BMCR_FDX)
-		mii->mii_media_active |= IFM_FDX;
-	else
-		mii->mii_media_active |= IFM_HDX;
-
-	return;
+	mii->mii_media_active = ife->ifm_media;
 }
 
 

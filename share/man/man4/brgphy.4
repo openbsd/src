@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brgphy.4,v 1.4 2000/10/18 02:38:21 aaron Exp $
+.\"	$OpenBSD: brgphy.4,v 1.5 2001/04/11 05:47:52 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -34,13 +34,14 @@
 .Os
 .Sh NAME
 .Nm brgphy
-.Nd Broadcom BCM5400 Gigabit Ethernet PHY driver
+.Nd Broadcom BCM5400/5401/5411 Gigabit Ethernet PHY driver
 .Sh SYNOPSIS
 .Cd "brgphy* at mii? phy ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports Broadcom BCM5400 1000baseTX PHY interfaces.
+driver supports Broadcom BCM5400 100/1000TX PHY interfaces, as well as
+the BCM5401 and BCM5411 10/100/1000baseTX PHY interfaces.
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
