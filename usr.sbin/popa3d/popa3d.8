@@ -1,4 +1,4 @@
-.\"	$OpenBSD: popa3d.8,v 1.5 2002/03/27 14:08:43 camield Exp $
+.\"	$OpenBSD: popa3d.8,v 1.6 2003/05/12 19:28:22 camield Exp $
 .Dd August 15, 2001
 .Dt POPA3D 8
 .Os
@@ -12,7 +12,7 @@
 .Nm
 is a POP3 server.
 It offers network access to user mailboxes through the POP3 protocol.
-The server uses the 
+The server uses the
 .Tn TCP
 protocol
 and listens at the port specified in the
@@ -99,7 +99,7 @@ The following commands are supported in the transaction state.
 .It DELE msg Ta "mark message for deletion"
 .It LAST Ta "show highest message number accessed (obsolete)"
 .It LIST [msg] Ta "list message number and size"
-.It NOOP Ta "do nothing" 
+.It NOOP Ta "do nothing"
 .It QUIT Ta "quit; enter update state"
 .It RETR msg Ta "retrieve message"
 .It RSET Ta "clear deletion marks"

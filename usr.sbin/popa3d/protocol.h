@@ -1,4 +1,4 @@
-/* $OpenBSD: protocol.h,v 1.2 2001/09/21 20:22:06 camield Exp $ */
+/* $OpenBSD: protocol.h,v 1.3 2003/05/12 19:28:22 camield Exp $ */
 
 /*
  * POP protocol handling.
@@ -31,7 +31,7 @@ struct pop_command {
  * Internal POP command buffer.
  */
 struct pop_buffer {
-	int ptr, size;
+	unsigned int ptr, size;
 	char data[POP_BUFFER_SIZE];
 };
 
@@ -92,10 +92,10 @@ extern int pop_reply_error(void);
 /*
  * Produces a multi-line POP response, reading the data from the supplied
  * file descriptor for up to the requested size or number of lines of the
- * message body, if that number is non-negative. Returns a non-zero value
- * on error; the POP session then has to crash.
+ * message body, if that number is non-negative. Returns POP_OK or one of
+ * the POP_CRASH_* event codes.
  */
-extern int pop_reply_multiline(int fd, long size, int lines);
+extern int pop_reply_multiline(int fd, unsigned long size, int lines);
 
 /*
  * Terminates a multi-line POP response. Returns a non-zero value on error;

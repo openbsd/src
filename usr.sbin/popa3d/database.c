@@ -1,4 +1,4 @@
-/* $OpenBSD: database.c,v 1.1 2001/08/19 13:05:57 deraadt Exp $ */
+/* $OpenBSD: database.c,v 1.2 2003/05/12 19:28:22 camield Exp $ */
 
 /*
  * Message database management.
@@ -27,10 +27,12 @@ int db_add(struct db_message *msg)
 {
 	struct db_message *entry;
 
-	if (db.total_count >= MAX_MAILBOX_MESSAGES) return 1;
+	if (db.total_count >= MAX_MAILBOX_MESSAGES) goto out_fail;
+	if (++db.total_count <= 0) goto out_undo_count;
+	if ((db.total_size += msg->size) < msg->size) goto out_undo_size;
 
 	entry = malloc(sizeof(struct db_message));
-	if (!entry) return 1;
+	if (!entry) goto out_undo_size;
 
 	memcpy(entry, msg, sizeof(struct db_message));
 	entry->next = NULL;
@@ -41,10 +43,16 @@ int db_add(struct db_message *msg)
 	else
 		db.tail = db.head = entry;
 
-	if (++db.total_count <= 0) return 1;
-	if ((db.total_size += entry->size) < 0 || entry->size < 0) return 1;
-
 	return 0;
+
+out_undo_size:
+	db.total_size -= msg->size;
+
+out_undo_count:
+	db.total_count--;
+
+out_fail:
+	return 1;
 }
 
 int db_delete(struct db_message *msg)
@@ -62,9 +70,9 @@ int db_delete(struct db_message *msg)
 
 int db_fix(void)
 {
-	int size;
+	unsigned long size;
 	struct db_message *entry;
-	int index;
+	unsigned int index;
 
 	db.visible_count = db.total_count;
 	db.visible_size = db.total_size;
@@ -72,7 +80,6 @@ int db_fix(void)
 	if (!db.total_count) return 0;
 
 	size = sizeof(struct db_message *) * db.total_count;
-	if (size <= 0) return 1;
 	if (size / sizeof(struct db_message *) != db.total_count) return 1;
 
 	db.array = malloc(size);

@@ -1,4 +1,4 @@
-/* $OpenBSD: pop_auth.c,v 1.2 2001/09/21 20:22:06 camield Exp $ */
+/* $OpenBSD: pop_auth.c,v 1.3 2003/05/12 19:28:22 camield Exp $ */
 
 /*
  * AUTHORIZATION state handling.
@@ -46,7 +46,7 @@ static struct pop_command pop_auth_commands[] = {
 	{"QUIT", pop_auth_quit},
 	{"USER", pop_auth_user},
 	{"PASS", pop_auth_pass},
-	{NULL}
+	{NULL, NULL}
 };
 
 int do_pop_auth(int channel)

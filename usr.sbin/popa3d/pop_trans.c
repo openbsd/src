@@ -1,10 +1,9 @@
-/* $OpenBSD: pop_trans.c,v 1.3 2002/09/06 19:17:52 deraadt Exp $ */
+/* $OpenBSD: pop_trans.c,v 1.4 2003/05/12 19:28:22 camield Exp $ */
 
 /*
  * TRANSACTION state handling.
  */
 
-#include <sys/types.h>
 #include <stdio.h>
 #include <syslog.h>
 
@@ -28,8 +27,34 @@ static int pop_trans_noop(char *params)
 static int pop_trans_stat(char *params)
 {
 	if (params) return POP_ERROR;
-	if (pop_reply("+OK %d %ld", db.visible_count, db.visible_size))
+	if (pop_reply("+OK %u %lu", db.visible_count, db.visible_size))
 		return POP_CRASH_NETFAIL;
+	return POP_QUIET;
+}
+
+static int pop_trans_list_or_uidl_all(int uidl)
+{
+	unsigned int number;
+	struct db_message *msg;
+
+	if (pop_reply_ok()) return POP_CRASH_NETFAIL;
+	for (number = 1; number <= db.total_count; number++) {
+		msg = db.array[number - 1];
+		if (msg->flags & MSG_DELETED) continue;
+		if (uidl) {
+			if (pop_reply("%u "
+			    "%02x%02x%02x%02x%02x%02x%02x%02x",
+			    number,
+			    msg->hash[3], msg->hash[2],
+			    msg->hash[1], msg->hash[0],
+			    msg->hash[7], msg->hash[6],
+			    msg->hash[5], msg->hash[4]))
+				return POP_CRASH_NETFAIL;
+		} else
+			if (pop_reply("%u %lu", number, msg->size))
+				return POP_CRASH_NETFAIL;
+	}
+	if (pop_reply_terminate()) return POP_CRASH_NETFAIL;
 	return POP_QUIET;
 }
 
@@ -38,46 +63,26 @@ static int pop_trans_list_or_uidl(char *params, int uidl)
 	int number;
 	struct db_message *msg;
 
-	if (params) {
-		number = pop_get_int(&params);
-		if (number < 1 || number > db.total_count || params)
-			return POP_ERROR;
-		msg = db.array[number - 1];
-		if (msg->flags & MSG_DELETED) return POP_ERROR;
-		if (uidl) {
-			if (pop_reply("+OK %d "
-			    "%02x%02x%02x%02x%02x%02x%02x%02x",
-			    number,
-			    msg->hash[3], msg->hash[2],
-			    msg->hash[1], msg->hash[0],
-			    msg->hash[7], msg->hash[6],
-			    msg->hash[5], msg->hash[4]))
-				return POP_CRASH_NETFAIL;
-		} else
-			if (pop_reply("+OK %d %ld", number, msg->size))
-				return POP_CRASH_NETFAIL;
-		return POP_QUIET;
-	}
+	if (!params)
+		return pop_trans_list_or_uidl_all(uidl);
 
-	if (pop_reply_ok()) return POP_CRASH_NETFAIL;
-	for (number = 1; number <= db.total_count; number++) {
-		msg = db.array[number - 1];
-		if (msg->flags & MSG_DELETED) continue;
-		if (uidl) {
-			if (pop_reply("%d "
-			    "%02x%02x%02x%02x%02x%02x%02x%02x",
-			    number,
-			    msg->hash[3], msg->hash[2],
-			    msg->hash[1], msg->hash[0],
-			    msg->hash[7], msg->hash[6],
-			    msg->hash[5], msg->hash[4]))
-				return POP_CRASH_NETFAIL;
-		} else
-			if (pop_reply("%d %ld", number, msg->size))
-				return POP_CRASH_NETFAIL;
-	}
-	if (pop_reply_terminate()) return POP_CRASH_NETFAIL;
-
+	number = pop_get_int(&params);
+	if (number < 1 || number > db.total_count || params)
+		return POP_ERROR;
+	msg = db.array[number - 1];
+	if (msg->flags & MSG_DELETED) return POP_ERROR;
+	if (uidl) {
+		if (pop_reply("+OK %d "
+		    "%02x%02x%02x%02x%02x%02x%02x%02x",
+		    number,
+		    msg->hash[3], msg->hash[2],
+		    msg->hash[1], msg->hash[0],
+		    msg->hash[7], msg->hash[6],
+		    msg->hash[5], msg->hash[4]))
+			return POP_CRASH_NETFAIL;
+	} else
+		if (pop_reply("+OK %d %lu", number, msg->size))
+			return POP_CRASH_NETFAIL;
 	return POP_QUIET;
 }
 
@@ -164,7 +169,7 @@ static int pop_trans_rset(char *params)
 static int pop_trans_last(char *params)
 {
 	if (params) return POP_ERROR;
-	if (pop_reply("+OK %d", db.last)) return POP_CRASH_NETFAIL;
+	if (pop_reply("+OK %u", db.last)) return POP_CRASH_NETFAIL;
 	return POP_QUIET;
 }
 #endif
@@ -182,7 +187,7 @@ static struct pop_command pop_trans_commands[] = {
 #if POP_SUPPORT_LAST
 	{"LAST", pop_trans_last},
 #endif
-	{NULL}
+	{NULL, NULL}
 };
 
 static int db_load(char *spool, char *mailbox)
@@ -201,7 +206,7 @@ static int db_load(char *spool, char *mailbox)
 
 int do_pop_trans(char *spool, char *mailbox)
 {
-	int result;
+	int event;
 
 	if (!pop_sane()) return 1;
 
@@ -213,14 +218,14 @@ int do_pop_trans(char *spool, char *mailbox)
 		return 0;
 	}
 
-	syslog(SYSLOG_PRI_LO, "%d message%s (%ld byte%s) loaded",
+	syslog(SYSLOG_PRI_LO, "%u message%s (%lu byte%s) loaded",
 		db.total_count, db.total_count == 1 ? "" : "s",
 		db.total_size, db.total_size == 1 ? "" : "s");
 
 	if (pop_reply_ok())
-		result = POP_CRASH_NETFAIL;
+		event = POP_CRASH_NETFAIL;
 	else
-	switch ((result = pop_handle_state(pop_trans_commands))) {
+	switch ((event = pop_handle_state(pop_trans_commands))) {
 	case POP_STATE:
 		if (mailbox_update()) {
 			if (db.flags & DB_STALE) break;
@@ -231,7 +236,7 @@ int do_pop_trans(char *spool, char *mailbox)
 			break;
 		}
 
-		syslog(SYSLOG_PRI_LO, "%d (%ld) deleted, %d (%ld) left",
+		syslog(SYSLOG_PRI_LO, "%u (%lu) deleted, %u (%lu) left",
 			db.total_count - db.visible_count,
 			db.total_size - db.visible_size,
 			db.visible_count,
@@ -250,7 +255,7 @@ int do_pop_trans(char *spool, char *mailbox)
 	if (db.flags & DB_STALE)
 		syslog(SYSLOG_PRI_LO, "Another MUA active, giving up");
 	else
-	if (result == POP_CRASH_SERVER)
+	if (event == POP_CRASH_SERVER)
 		syslog(SYSLOG_PRI_ERROR,
 			"Server failure accessing %s/%s",
 			spool, mailbox);

@@ -20,13 +20,19 @@ Well, the goals themselves are obvious; they're probably the same for
 most other POP3 servers as well.  It's their priority that differs.
 For popa3d, the goals are:
 
-1. Security (to the extent that is possible with POP3 at all, of course).
-2. Reliability (again, as limited by the mailbox format and the protocol).
-3. RFC compliance (slightly relaxed to work with real-world POP3 clients).
+1. Security (to the extent that is possible with POP3 at all, of
+course).
+
+2. Reliability (again, as limited by the mailbox format and the
+protocol).
+
+3. RFC compliance (slightly relaxed to work with real-world POP3
+clients).
+
 4. Performance (limited by the more important goals, above).
 
-Obviously, just like the comments indicate, none of the goals can be met
-completely, and balanced decisions need to be made.
+Obviously, just like the comments indicate, none of the goals can be
+met completely, and balanced decisions need to be made.
 
 
 	Security.
@@ -171,7 +177,7 @@ unavailability of a protocol extension.
 
 There's however one place where popa3d's RFC compliance is
 deliberately relaxed: popa3d accepts commands terminated by single
-LF's, even though the RFC says the commands are terminated by a CRLF
+LFs, even though the RFC says the commands are terminated by a CRLF
 pair.
 
 
@@ -184,8 +190,8 @@ mailbox copying compensate for the extra fork's.
 Here's some real performance data that I've collected (popa3d running
 via inetd; larger sites would use the standalone mode instead):
 
-   24864     295.50re      16.92cp   popa3d*
-   12749    4578.88re      15.50cp   popa3d
+	24864     295.50re      16.92cp   popa3d*
+	12749    4578.88re      15.50cp   popa3d
 
 That is, 12749 POP3 sessions took 32.42 minutes of CPU time (on a 350
 MHz Pentium II); of those, more than a half was spent in the temporary
@@ -196,9 +202,9 @@ an (intentionally) expensive crypt(3) that got accounted to the child
 Before upgrading to popa3d, the same machine was running qpopper (out
 of inetd, too):
 
-   12025    3169.38re      35.56cp   popper
+	12025    3169.38re      35.56cp   popper
 
 It used to take a bit more CPU for less POP3 sessions.
 
 --
-Solar Designer <solar@openwall.com>
+Solar Designer <solar at openwall.com>

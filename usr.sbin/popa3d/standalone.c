@@ -1,4 +1,4 @@
-/* $OpenBSD: standalone.c,v 1.4 2002/09/06 19:17:40 deraadt Exp $ */
+/* $OpenBSD: standalone.c,v 1.5 2003/05/12 19:28:22 camield Exp $ */
 
 /*
  * Standalone POP server: accepts connections, checks the anti-flood limits,
@@ -37,8 +37,7 @@ extern int log_error(char *s);
 extern int do_pop_startup(void);
 extern int do_pop_session(void);
 
-typedef sig_atomic_t a_int;
-typedef volatile a_int va_int;
+typedef volatile sig_atomic_t va_int;
 
 /*
  * Active POP sessions. Those that were started within the last MIN_DELAY
@@ -48,7 +47,7 @@ typedef volatile a_int va_int;
  */
 static struct {
 	struct in_addr addr;		/* Source IP address */
-	a_int pid;			/* PID of the server, or 0 for none */
+	volatile int pid;		/* PID of the server, or 0 for none */
 	clock_t start;			/* When the server was started */
 	clock_t log;			/* When we've last logged a failure */
 } sessions[MAX_SESSIONS];
@@ -57,7 +56,7 @@ static va_int child_blocked;		/* We use blocking to avoid races */
 static va_int child_pending;		/* Are any dead children waiting? */
 
 /*
- * SIGCHLD handler; can also be called directly with a zero signum.
+ * SIGCHLD handler.
  */
 static void handle_child(int signum)
 {
@@ -80,7 +79,7 @@ static void handle_child(int signum)
 				}
 	}
 
-	if (signum) signal(SIGCHLD, handle_child);
+	signal(SIGCHLD, handle_child);
 
 	errno = saved_errno;
 }
@@ -117,7 +116,7 @@ int main(void)
 	socklen_t addrlen;
 	pid_t pid;
 	struct tms buf;
-	clock_t now;
+	clock_t now, log;
 	int i, j, n;
 
 	if (do_pop_startup()) return 1;
@@ -160,11 +159,13 @@ int main(void)
 	signal(SIGCHLD, handle_child);
 
 	memset((void *)sessions, 0, sizeof(sessions));
+	log = 0;
+
 	new = 0;
 
 	while (1) {
 		child_blocked = 0;
-		if (child_pending) handle_child(0);
+		if (child_pending) raise(SIGCHLD);
 
 		if (new > 0)
 		if (close(new)) return log_error("close");
@@ -181,6 +182,7 @@ int main(void)
 		if (new < 0) continue;
 
 		now = times(&buf);
+		if (!now) now = 1;
 
 		child_blocked = 1;
 
@@ -211,8 +213,13 @@ int main(void)
 		}
 
 		if (j < 0) {
-			syslog(SYSLOG_PRI_HI, "%s: sessions limit reached",
-				inet_ntoa(addr.sin_addr));
+			if (!log ||
+			    now < log || now - log >= MIN_DELAY * CLK_TCK) {
+				syslog(SYSLOG_PRI_HI,
+					"%s: sessions limit reached",
+					inet_ntoa(addr.sin_addr));
+				log = now;
+			}
 			continue;
 		}
 

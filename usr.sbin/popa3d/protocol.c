@@ -1,4 +1,4 @@
-/* $OpenBSD: protocol.c,v 1.2 2001/09/21 20:22:06 camield Exp $ */
+/* $OpenBSD: protocol.c,v 1.3 2003/05/12 19:28:22 camield Exp $ */
 
 /*
  * POP protocol handling.
@@ -11,6 +11,7 @@
 #include <setjmp.h>
 #include <string.h>
 #include <stdarg.h>
+#include <errno.h>
 
 #include "misc.h"
 #include "params.h"
@@ -34,8 +35,8 @@ void pop_clean(void)
 
 int pop_sane(void)
 {
-	return (unsigned int)pop_buffer.size <= sizeof(pop_buffer.data) &&
-	    (unsigned int)pop_buffer.ptr <= (unsigned int)pop_buffer.size;
+	return pop_buffer.size <= sizeof(pop_buffer.data) &&
+	    pop_buffer.ptr <= pop_buffer.size;
 }
 
 static void pop_timeout(int signum)
@@ -44,24 +45,28 @@ static void pop_timeout(int signum)
 	siglongjmp(pop_timed_out, 1);
 }
 
-static int pop_fetch(void)
+static void pop_fetch(void)
 {
+	int size;
+
 	signal(SIGALRM, pop_timeout);
 	alarm(POP_TIMEOUT);
 
-	pop_buffer.size = read(0, pop_buffer.data, sizeof(pop_buffer.data));
+	size = read(0, pop_buffer.data, sizeof(pop_buffer.data));
 
 	alarm(0);
 	signal(SIGALRM, SIG_DFL);
 
 	pop_buffer.ptr = 0;
-	return pop_buffer.size <= 0;
+	pop_buffer.size = (size >= 0) ? size : 0;
 }
 
 static int pop_get_char(void)
 {
-	if (pop_buffer.ptr >= pop_buffer.size)
-	if (pop_fetch()) return -1;
+	if (pop_buffer.ptr >= pop_buffer.size) {
+		pop_fetch();
+		if (!pop_buffer.size) return -1;
+	}
 
 	return (unsigned char)pop_buffer.data[pop_buffer.ptr++];
 }
@@ -163,10 +168,17 @@ int pop_get_int(char **params)
 	long value;
 
 	if ((param = pop_get_param(params))) {
+/* SUSv2 says:
+ * "Because 0, LONG_MIN and LONG_MAX are returned on error and are also
+ * valid returns on success, an application wishing to check for error
+ * situations should set errno to 0, then call strtol(), then check errno." */
+		errno = 0;
 		value = strtol(param, &error, 10);
-		if (!*param || *error || (value & ~0x3FFFFFFFL)) return -1;
+		if (errno || !*param || *error ||
+		    value < 0 || (long)(int)value != value)
+			return -1;
 
-		return value;
+		return (int)value;
 	}
 
 	return -1;
@@ -205,7 +217,7 @@ int pop_reply_error(void)
 	return pop_reply("-ERR");
 }
 
-int pop_reply_multiline(int fd, long size, int lines)
+int pop_reply_multiline(int fd, unsigned long size, int lines)
 {
 	char *in_buffer, *out_buffer;
 	char *in, *out;
@@ -214,10 +226,10 @@ int pop_reply_multiline(int fd, long size, int lines)
 
 	if (lines >= 0) lines++;
 
-	if (pop_reply_ok()) return 1;
+	if (pop_reply_ok()) return POP_CRASH_NETFAIL;
 
 	in_buffer = malloc(RETR_BUFFER_SIZE * 3);
-	if (!in_buffer) return 1;
+	if (!in_buffer) return POP_CRASH_SERVER;
 	out_buffer = &in_buffer[RETR_BUFFER_SIZE];
 
 	start = 1;
@@ -229,7 +241,7 @@ int pop_reply_multiline(int fd, long size, int lines)
 			in_block = read(fd, in_buffer, size);
 		if (in_block <= 0) {
 			free(in_buffer);
-			return 1;
+			return POP_CRASH_SERVER;
 		}
 
 		in = in_buffer;
@@ -255,7 +267,7 @@ int pop_reply_multiline(int fd, long size, int lines)
 		out_block = out - out_buffer;
 		if (write_loop(1, out_buffer, out_block) != out_block) {
 			free(in_buffer);
-			return 1;
+			return POP_CRASH_NETFAIL;
 		}
 
 		size -= in_block;
@@ -264,9 +276,9 @@ int pop_reply_multiline(int fd, long size, int lines)
 	free(in_buffer);
 
 	if (!start)
-	if (pop_reply("%s", "")) return 1;
+	if (pop_reply("%s", "")) return POP_CRASH_NETFAIL;
 
-	return 0;
+	return POP_OK;
 }
 
 int pop_reply_terminate(void)

@@ -1,4 +1,4 @@
-/* $OpenBSD: params.h,v 1.7 2002/03/27 14:08:43 camield Exp $ */
+/* $OpenBSD: params.h,v 1.8 2003/05/12 19:28:22 camield Exp $ */
 
 /*
  * Global POP daemon parameters.
@@ -133,8 +133,9 @@
  * Introduce some sane limits on the mailbox size in order to prevent
  * a single huge mailbox from stopping the entire POP service.
  */
-#define MAX_MAILBOX_MESSAGES		100000
-#define MAX_MAILBOX_BYTES		100000000
+#define MAX_MAILBOX_MESSAGES		200000
+#define MAX_MAILBOX_OPEN_BYTES		200000000
+#define MAX_MAILBOX_WORK_BYTES		250000000
 
 #if !VIRTUAL_ONLY
 
@@ -190,7 +191,7 @@
  * Locking method your system uses for user mailboxes. It is important
  * that you set this correctly.
  *
- * *BSD's use flock(2), others typically use fcntl(2).
+ * *BSDs use flock(2), others typically use fcntl(2).
  */
 #define LOCK_FCNTL			0
 #define LOCK_FLOCK			1

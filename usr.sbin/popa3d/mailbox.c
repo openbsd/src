@@ -1,4 +1,4 @@
-/* $OpenBSD: mailbox.c,v 1.5 2003/04/02 00:07:53 deraadt Exp $ */
+/* $OpenBSD: mailbox.c,v 1.6 2003/05/12 19:28:22 camield Exp $ */
 
 /*
  * Mailbox access.
@@ -24,7 +24,7 @@
 
 static int mailbox_fd;			/* fd for the mailbox, or -1 */
 static time_t mailbox_mtime;		/* mtime, as of the last check */
-static long mailbox_size;		/* Its original size */
+static unsigned long mailbox_size;	/* Its original size */
 
 static struct db_message *cmp;
 
@@ -53,12 +53,13 @@ static int db_compare(struct db_message *msg)
  * string s2, of n2 chars.
  */
 #ifdef __GNUC__
-__inline
+__inline__
 #endif
-static int linecmp(char *s1, int n1, char *s2, int n2)
+static int eq(char *s1, int n1, char *s2, int n2)
 {
-	if (s1[0] != s2[0] || n1 < n2) return 1;
-	return memcmp(s1, s2, n2);
+	if (n1 < n2) return 0;
+	if (!memcmp(s1, s2, n2)) return 1;
+	return !strncasecmp(s1, s2, n2);
 }
 
 /*
@@ -76,11 +77,13 @@ static int mailbox_parse(int init)
 	MD5_CTX hash;				/* Its hash being computed */
 	int (*db_op)(struct db_message *msg);	/* db_add or db_compare */
 	char *file_buffer, *line_buffer;	/* Our internal buffers */
-	long file_offset, line_offset, offset;	/* Their offsets in the file */
+	unsigned long file_offset, line_offset;	/* Their offsets in the file */
+	unsigned long offset;			/* A line fragment's offset */
 	char *current, *next, *line;		/* Line pointers */
 	int block, saved, extra, length;	/* Internal block sizes */
 	int done, start, end;			/* Various boolean flags: */
-	int blank, header, body, fixed;		/* the state information */
+	int blank, header, body;		/* the state information */
+	int fixed, received;			/* ...and more of it */
 
 	if (fstat(mailbox_fd, &stat)) return 1;
 
@@ -88,19 +91,21 @@ static int mailbox_parse(int init)
 /* Prepare for the database initialization */
 		if (!S_ISREG(stat.st_mode)) return 1;
 		mailbox_mtime = stat.st_mtime;
+		if (stat.st_size > MAX_MAILBOX_OPEN_BYTES ||
+		    stat.st_size > ~0UL) return 1;
 		mailbox_size = stat.st_size;
-		if (mailbox_size < 0) return 1;
 		if (!mailbox_size) return 0;
-		if (mailbox_size > MAX_MAILBOX_BYTES) return 1;
 		db_op = db_add;
 	} else {
 /* Prepare for checking against the database */
 		if (mailbox_mtime == stat.st_mtime) return 0;
 		if (!mailbox_size) return 0;
-		if (mailbox_size > (long)stat.st_size) {
+		if (stat.st_size < mailbox_size) {
 			db.flags |= DB_STALE;
 			return 1;
 		}
+		if (stat.st_size > MAX_MAILBOX_WORK_BYTES ||
+		    stat.st_size > ~0UL) return 1;
 		if (lseek(mailbox_fd, 0, SEEK_SET) < 0) return 1;
 		db_op = db_compare; cmp = db.head;
 	}
@@ -120,7 +125,8 @@ static int mailbox_parse(int init)
 	blank = 1;	/* Assume we've seen a blank line: look for "From " */
 	header = 0;	/* Not in message headers, */
 	body = 0;	/* and not in message body */
-	fixed = 0;	/* Not in a "fixed" part of a message */
+	fixed = 0;	/* Not in a "fixed" part of a message, */
+	received = 0;	/* and haven't got a Received: header yet */
 
 /*
  * The main loop. Its first part extracts the line fragments, while the
@@ -157,7 +163,7 @@ static int mailbox_parse(int init)
 				current = next; block -= length;
 			}
 		} else {
-/* No more LF's in the file buffer */
+/* No more LFs in the file buffer */
 			if (saved || block <= LINE_BUFFER_SIZE) {
 /* Have this line's beginning in the line buffer: combine them */
 /* Not enough data to process right now: buffer it */
@@ -181,13 +187,10 @@ static int mailbox_parse(int init)
 			if (!block) {
 /* We've emptied the file buffer: fetch some more data */
 				current = file_buffer;
-				if (init)
-					block = FILE_BUFFER_SIZE;
-				else {
+				block = FILE_BUFFER_SIZE;
+				if (!init &&
+				    block > mailbox_size - file_offset)
 					block = mailbox_size - file_offset;
-					if (block > FILE_BUFFER_SIZE)
-						block = FILE_BUFFER_SIZE;
-				}
 				block = read(mailbox_fd, file_buffer, block);
 				if (block < 0) break;
 				file_offset += block;
@@ -217,12 +220,16 @@ static int mailbox_parse(int init)
 
 /* Check for a new message if we've just seen a blank line */
 		if (blank && start)
-		if (!linecmp(line, length, "From ", 5)) {
+		if (line[0] == 'F' && length >= 5 &&
+		    line[1] == 'r' && line[2] == 'o' && line[3] == 'm' &&
+		    line[4] == ' ') {
 /* Process the previous one first, if exists */
 			if (offset) {
-				if (!header && !body) break;
+/* If we aren't at the very beginning, there must have been a message */
+				if (!msg.data_offset) break;
 				msg.raw_size = offset - msg.raw_offset;
-				msg.data_size = offset - 1 - msg.data_offset;
+				msg.data_size = offset - body - msg.data_offset;
+				msg.size -= body << 1;
 				MD5Final(msg.hash, &hash);
 				if (db_op(&msg)) break;
 			}
@@ -231,6 +238,7 @@ static int mailbox_parse(int init)
 			msg.data_offset = 0;
 			MD5Init(&hash);
 			header = 1; body = 0;
+			fixed = received = 0;
 			continue;
 		}
 
@@ -241,31 +249,69 @@ static int mailbox_parse(int init)
 			msg.size = 0;
 		}
 
-/* Count this fragment, with LF's as CRLF, into the message size */
+/* Count this fragment, with LFs as CRLF, into the message size */
 		if (msg.data_offset)
 			msg.size += length + end;
 
 /* If we see LF at start of line, then this is a blank line :-) */
 		blank = start && line[0] == '\n';
 
-/* Blank line in headers means start of the message body */
-		if (header && blank) {
-			header = 0; body = 1;
+		if (!header) {
+/* If we're no longer in message headers and we see more data, then it's
+ * the body. */
+			if (msg.data_offset)
+				body = 1;
+/* The rest of actions in this loop are for header lines only */
+			continue;
+		}
+
+/* Blank line ends message headers */
+		if (blank) {
+			header = 0;
+			continue;
 		}
 
 /* Some header lines are known to remain fixed over MUA runs */
-		if (header && start)
-		if (!linecmp(line, length, "Received:", 9) ||
-		    !linecmp(line, length, "Date:", 5) ||
-		    !linecmp(line, length, "Message-Id:", 11) ||
-		    !linecmp(line, length, "Subject:", 8))
-			fixed = 1;
+		if (start)
+		switch (line[0]) {
+		case '\t':
+		case ' ':
+/* Inherit "fixed" from the previous line */
+			break;
 
-/* We can hash all fragments of those lines (until "end"), for UIDL */
-		if (fixed) {
-			MD5Update(&hash, (u_char *)line, length);
-			if (end) fixed = 0;
+		case 'R':
+		case 'r':
+/* One Received: header from the local MTA should be sufficient */
+			fixed = !received &&
+				(received = eq(line, length, "Received:", 9));
+			break;
+
+		case 'D':
+		case 'd':
+			fixed = eq(line, length, "Delivered-To:", 13) ||
+				(!received && eq(line, length, "Date:", 5));
+			break;
+
+		case 'M':
+		case 'm':
+			fixed = !received &&
+				eq(line, length, "Message-ID:", 11);
+			break;
+
+		case 'X':
+/* Let the local delivery agent help generate unique IDs but don't blindly
+ * trust this header alone as it could just as easily come from the remote. */
+			fixed = eq(line, length, "X-Delivery-ID:", 14);
+			break;
+
+		default:
+			fixed = 0;
+			continue;
 		}
+
+/* We can hash all fragments of those lines, for UIDL */
+		if (fixed)
+			MD5Update(&hash, (u_char *)line, length);
 	} while (1);
 
 	free(file_buffer);
@@ -273,9 +319,10 @@ static int mailbox_parse(int init)
 	if (done) {
 /* Process the last message */
 		if (offset != mailbox_size) return 1;
-		if (!header && !body) return 1;
+		if (!msg.data_offset) return 1;
 		msg.raw_size = offset - msg.raw_offset;
-		msg.data_size = offset - blank - msg.data_offset;
+		msg.data_size = offset - (blank & body) - msg.data_offset;
+		msg.size -= (blank & body) << 1;
 		MD5Final(msg.hash, &hash);
 		if (db_op(&msg)) return 1;
 
@@ -353,12 +400,19 @@ static int mailbox_changed(void)
 
 int mailbox_get(struct db_message *msg, int lines)
 {
+	int event;
+
 	if (mailbox_changed()) return POP_CRASH_SERVER;
 
-	if (lseek(mailbox_fd, msg->data_offset, SEEK_SET) < 0)
+/* The calls to mailbox_changed() will set DB_STALE if that is the case */
+	if (lseek(mailbox_fd, msg->data_offset, SEEK_SET) < 0) {
+		mailbox_changed();
 		return POP_CRASH_SERVER;
-	if (pop_reply_multiline(mailbox_fd, msg->data_size, lines))
-		return POP_CRASH_NETFAIL;
+	}
+	if ((event = pop_reply_multiline(mailbox_fd, msg->data_size, lines))) {
+		if (event == POP_CRASH_SERVER) mailbox_changed();
+		return event;
+	}
 
 	if (mailbox_changed()) return POP_CRASH_SERVER;
 
@@ -370,7 +424,8 @@ int mailbox_get(struct db_message *msg, int lines)
 static int mailbox_write(char *buffer)
 {
 	struct db_message *msg;
-	long old, new;
+	unsigned long old, new;
+	unsigned long size;
 	int block;
 
 	msg = db.head;
@@ -384,10 +439,11 @@ static int mailbox_write(char *buffer)
 			continue;
 		}
 
-		while ((block = msg->raw_size - (old - msg->raw_offset))) {
+		while ((size = msg->raw_size - (old - msg->raw_offset))) {
 			if (lseek(mailbox_fd, old, SEEK_SET) < 0) return 1;
-			if (block > FILE_BUFFER_SIZE) block = FILE_BUFFER_SIZE;
-			block = read(mailbox_fd, buffer, block);
+			if (size > FILE_BUFFER_SIZE)
+				size = FILE_BUFFER_SIZE;
+			block = read(mailbox_fd, buffer, size);
 			if (!block && old == mailbox_size) break;
 			if (block <= 0) return 1;
 
@@ -407,9 +463,10 @@ static int mailbox_write(char *buffer)
 		if (block < 0) return 1;
 
 		if (lseek(mailbox_fd, new, SEEK_SET) < 0) return 1;
-		if (write(mailbox_fd, buffer, block) != block) return 1;
+		if (write_loop(mailbox_fd, buffer, block) != block) return 1;
 
-		old += block; new += block;
+/* Cannot overflow unless locking is bypassed */
+		if ((old += block) < block || (new += block) < block) return 1;
 	}
 
 	if (ftruncate(mailbox_fd, new)) return 1;

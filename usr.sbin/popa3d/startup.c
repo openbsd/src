@@ -1,4 +1,4 @@
-/* $OpenBSD: startup.c,v 1.1 2001/09/21 20:22:06 camield Exp $ */
+/* $OpenBSD: startup.c,v 1.2 2003/05/12 19:28:22 camield Exp $ */
 
 /*
  * Command line option parsing.
@@ -12,12 +12,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* pop_root.c */
-extern int do_pop_startup(void);
-extern int do_pop_session(void);
+/* version.c */
+extern char popa3d_version[];
+extern char popa3d_date[];
 
 /* standalone.c */
 extern int do_standalone(void);
+
+/* pop_root.c */
+extern int do_pop_startup(void);
+extern int do_pop_session(void);
 
 #ifdef HAVE_PROGNAME
 extern char *__progname;
@@ -28,8 +32,14 @@ static char *progname;
 
 static void usage(void)
 {
-	fprintf(stderr, "Usage: %s [-D]\n", progname);
+	fprintf(stderr, "Usage: %s [-D] [-V]\n", progname);
 	exit(1);
+}
+
+static void version(void)
+{
+	printf("popa3d version %s (%.10s)\n", popa3d_version, popa3d_date + 7);
+	exit(0);
 }
 
 int main(int argc, char **argv)
@@ -42,11 +52,14 @@ int main(int argc, char **argv)
 		progname = POP_SERVER;
 #endif
 
-	while ((c = getopt(argc, argv, "D")) != -1) {
+	while ((c = getopt(argc, argv, "DV")) != -1) {
 		switch (c) {
 		case 'D':
 			standalone++;
 			break;
+
+		case 'V':
+			version();
 
 		default:
 			usage();
