@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.12 1996/11/24 03:05:02 niklas Exp $
+#	$OpenBSD: bsd.README,v 1.13 1997/02/09 16:41:50 deraadt Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -287,7 +287,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 
 			LIBC		/lib/libc.a
 			LIBCOMPAT	/usr/lib/libcompat.a
-			LIBCRYPT	/usr/lib/libcrypt.a
 			LIBCURSES	/usr/lib/libcurses.a
 			LIBDBM		/usr/lib/libdbm.a
 			LIBDES		/usr/lib/libdes.a
@@ -304,6 +303,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 			LIBTERMCAP	/usr/lib/libtermcap.a
 			LIBTERMLIB	/usr/lib/libtermlib.a
 			LIBUTIL		/usr/lib/libutil.a
+			LIBZ		/usr/lib/libz.a
 
 SHAREDSTRINGS	If defined, a new .c.o rule is used that results in shared
 		strings, using xstr(1). Note that this will not work with

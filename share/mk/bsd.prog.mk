@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.9 1997/02/09 16:11:15 mickey Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.10 1997/02/09 16:41:50 deraadt Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -20,7 +20,6 @@ CRTEND?=         ${DESTDIR}/usr/lib/crtend.o
 LIBCRT0?=	${DESTDIR}/usr/lib/crt0.o
 LIBC?=		${DESTDIR}/usr/lib/libc.a
 LIBCOMPAT?=	${DESTDIR}/usr/lib/libcompat.a
-LIBCRYPT?=	${DESTDIR}/usr/lib/libcrypt.a
 LIBCURSES?=	${DESTDIR}/usr/lib/libcurses.a
 LIBDBM?=	${DESTDIR}/usr/lib/libdbm.a
 LIBDES?=	${DESTDIR}/usr/lib/libdes.a
