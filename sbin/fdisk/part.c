@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.16 2000/06/10 15:56:42 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.17 2000/06/11 16:11:55 markus Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -66,6 +66,7 @@ static struct part_type {
 	{ 0x0F, "Extended LBA", "Extended DOS LBA-mapped"},
 	{ 0x10, "OPUS        ", "OPUS"},
 	{ 0x12, "Compaq Diag.", "Compaq Diagnostics"},
+	{ 0x39, "Plan 9      ",	"Plan 9"},
 	{ 0x40, "VENIX 286   ", "VENIX 286"},
 	{ 0x4d, "QNX 4.2 Pri ", "QNX 4.2 Primary"},
 	{ 0x4e, "QNX 4.2 Sec ", "QNX 4.2 Secondary"},
