@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.14 2001/06/22 12:15:45 mpech Exp $
+.\"	$OpenBSD: hifn.4,v 1.15 2001/06/22 19:12:49 jason Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -31,13 +31,14 @@
 .Os
 .Sh NAME
 .Nm hifn
-.Nd Hi/fn 7751 symmetric crypto accelerator
+.Nd Hi/fn 7751/7951 symmetric crypto accelerator
 .Sh SYNOPSIS
 .Cd "hifn* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports various cards containing the Hi/fn 7751 chipset, such as
+driver supports various cards containing the Hi/fn 7751 or Hi/Fn 7951 chipsets,
+such as
 .Bl -tag -width namenamenamena -offset indent
 .It Invertex AEON
 No longer being made.  Came as 128KB SRAM model, or 2MB DRAM model.
@@ -58,6 +59,12 @@ The
 driver registers itself to accelerate DES, Triple-DES, MD5-HMAC96,
 and SHA1-HMAC96 operations in
 .Xr ipsec 4 .
+.Pp
+The
+.Tn Hi/Fn 7951
+will also supply data to the kernel
+.Xr random 4
+number generator.
 .Sh BUGS
 The 7751 chip starts out at initialization by only supporting compression.
 A proprietary algorithm, which has been reverse engineered, is required to
