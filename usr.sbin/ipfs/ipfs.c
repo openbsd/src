@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipfs.c,v 1.1 2001/01/17 06:31:07 fgsch Exp $	*/
+/*	$OpenBSD: ipfs.c,v 1.2 2001/01/17 07:26:58 fgsch Exp $	*/
 
 /*
  * Copyright (C) 1999 by Darren Reed.
@@ -43,7 +43,7 @@
 #include "ipf.h"
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)$IPFilter: ipfs.c,v 2.6.2.2 2000/11/27 10:29:32 darrenr Exp $";
+static const char rcsid[] = "@(#)$IPFilter: ipfs.c,v 2.6.2.3 2001/01/10 06:20:12 darrenr Exp $";
 #endif
 
 #ifndef	IPF_SAVEDIR
@@ -453,6 +453,11 @@ char *file;
 			return 1;
 		}
 		is = (ipstate_save_t *)malloc(sizeof(*is));
+		if(!is) {
+			fprintf(stderr, "malloc failed\n");
+			return 1;
+		}
+
 		bcopy((char *)&ips, (char *)is, sizeof(ips));
 
 		/*
