@@ -1,4 +1,4 @@
-/*	$OpenBSD: magic.c,v 1.3 1997/09/05 04:32:41 millert Exp $	*/
+/*	$OpenBSD: magic.c,v 1.4 1998/05/08 04:52:26 millert Exp $	*/
 
 /*
  * magic.c - PPP Magic Number routines.
@@ -21,9 +21,9 @@
 
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: magic.c,v 1.6 1996/04/04 03:58:41 paulus Exp";
+static char rcsid[] = "Id: magic.c,v 1.7 1998/03/25 03:07:49 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: magic.c,v 1.3 1997/09/05 04:32:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: magic.c,v 1.4 1998/05/08 04:52:26 millert Exp $";
 #endif
 #endif
 
@@ -52,7 +52,7 @@ magic_init()
     struct timeval t;
 
     gettimeofday(&t, NULL);
-    seed = gethostid() ^ t.tv_sec ^ t.tv_usec ^ getpid();
+    seed = get_host_seed() ^ t.tv_sec ^ t.tv_usec ^ getpid();
     srand48(seed);
 }
 

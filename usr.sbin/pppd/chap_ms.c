@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap_ms.c,v 1.4 1998/01/17 20:30:20 millert Exp $	*/
+/*	$OpenBSD: chap_ms.c,v 1.5 1998/05/08 04:52:22 millert Exp $	*/
 
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: chap_ms.c,v 1.5 1997/11/27 06:08:10 paulus Exp $";
+static char rcsid[] = "Id: chap_ms.c,v 1.8 1998/04/01 00:15:43 paulus Exp $";
 #else
-static char rcsid[] = "$Id: chap_ms.c,v 1.4 1998/01/17 20:30:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: chap_ms.c,v 1.5 1998/05/08 04:52:22 millert Exp $";
 #endif
 #endif
 
@@ -51,6 +51,9 @@ static char rcsid[] = "$Id: chap_ms.c,v 1.4 1998/01/17 20:30:20 millert Exp $";
 #include <syslog.h>
 #include <unistd.h>
 #include <md4.h>
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
+#endif
 
 #include "pppd.h"
 #include "chap.h"

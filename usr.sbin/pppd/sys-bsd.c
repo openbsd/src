@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.13 1998/03/20 03:10:03 angelos Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.14 1998/05/08 04:52:33 millert Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -24,9 +24,9 @@
 
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: sys-bsd.c,v 1.29 1997/11/27 06:10:04 paulus Exp $";
+static char rcsid[] = "Id: sys-bsd.c,v 1.31 1998/04/02 12:04:19 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.13 1998/03/20 03:10:03 angelos Exp $";
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.14 1998/05/08 04:52:33 millert Exp $";
 #endif
 #endif
 
@@ -50,7 +50,6 @@ static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.13 1998/03/20 03:10:03 angelos Ex
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 
 #ifdef PPP_FILTER
 #include <net/bpf.h>
@@ -63,7 +62,16 @@ static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.13 1998/03/20 03:10:03 angelos Ex
 #include <netinet/in.h>
 
 #if RTM_VERSION >= 3
+#include <sys/param.h>
+#if defined(NetBSD) && (NetBSD >= 199703)
+#include <netinet/if_inarp.h>
+#else	/* NetBSD 1.2D or later */
+#if defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <netinet/if_ether.h>
+#else
+#include <net/if_ether.h>
+#endif
+#endif
 #endif
 
 #include "pppd.h"
@@ -1518,6 +1526,15 @@ GetMask(addr)
     }
 
     return mask;
+}
+
+/*
+ * Use the hostid as part of the random number seed.
+ */
+int
+get_host_seed()
+{
+    return gethostid();
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipxcp.c,v 1.4 1998/01/17 20:30:22 millert Exp $	*/
+/*	$OpenBSD: ipxcp.c,v 1.5 1998/05/08 04:52:25 millert Exp $	*/
 
 /*
  * ipxcp.c - PPP IPX Control Protocol.
@@ -22,9 +22,9 @@
 #ifdef IPX_CHANGE
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: ipxcp.c,v 1.5 1997/03/04 03:39:32 paulus Exp";
+static char rcsid[] = "Id: ipxcp.c,v 1.6 1998/03/25 03:08:16 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ipxcp.c,v 1.4 1998/01/17 20:30:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: ipxcp.c,v 1.5 1998/05/08 04:52:25 millert Exp $";
 #endif
 #endif
 
@@ -1361,9 +1361,9 @@ ipxcp_printpkt(p, plen, printer, arg)
 		    while (p < optend) {
 			GETCHAR(code, p);
 			if (code >= 0x20 && code <= 0x7E)
-			    printer (arg, "%c", code);
+			    printer (arg, "%c", (int) (unsigned int) (unsigned char) code);
 			else
-			    printer (arg, " \\%.2x", code);
+			    printer (arg, " \\%.2x", (int) (unsigned int) (unsigned char) code);
 		    }
 		    printer (arg, "\"");
 		}
@@ -1380,7 +1380,7 @@ ipxcp_printpkt(p, plen, printer, arg)
 
 	    while (p < optend) {
 		GETCHAR(code, p);
-		printer(arg, " %.2x", code);
+		printer(arg, " %.2x", (int) (unsigned int) (unsigned char) code);
 	    }
 	    printer(arg, ">");
 	}
@@ -1400,7 +1400,7 @@ ipxcp_printpkt(p, plen, printer, arg)
     /* print the rest of the bytes in the packet */
     for (; len > 0; --len) {
 	GETCHAR(code, p);
-	printer(arg, " %.2x", code);
+	printer(arg, " %.2x", (int) (unsigned int) (unsigned char) code);
     }
 
     return p - pstart;

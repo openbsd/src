@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcp.h,v 1.4 1997/09/05 04:32:39 millert Exp $	*/
+/*	$OpenBSD: ipcp.h,v 1.5 1998/05/08 04:52:24 millert Exp $	*/
 
 /*
  * ipcp.h - IP Control Protocol definitions.
@@ -18,7 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: ipcp.h,v 1.10 1997/03/04 03:39:20 paulus Exp
+ * Id: ipcp.h,v 1.11 1998/04/28 23:38:11 paulus Exp $
  */
 
 /*
@@ -28,10 +28,10 @@
 #define CI_COMPRESSTYPE	2	/* Compression Type */
 #define	CI_ADDR		3
 
-#define CI_MS_WINS1	128	/* Primary WINS value */
 #define CI_MS_DNS1	129	/* Primary DNS value */
-#define CI_MS_WINS2	130	/* Secondary WINS value */
+#define CI_MS_WINS1	130	/* Primary WINS value */
 #define CI_MS_DNS2	131	/* Secondary DNS value */
+#define CI_MS_WINS2	132	/* Secondary WINS value */
 
 #define MAX_STATES 16		/* from slcompress.h */
 
