@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.6 1997/01/15 23:24:42 maja Exp $ */
+/*	$OpenBSD: param.h,v 1.7 1997/01/16 14:26:25 maja Exp $ */
 /*      $NetBSD: param.h,v 1.22 1997/01/11 11:06:17 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,7 +76,9 @@
 
 #define BLKDEV_IOSIZE 2048
 #define	MAXPHYS		(63 * 1024)	/* max raw I/O transfer size */
+#ifdef 0
 #define	MAXBSIZE	0x4000		/* max FS block size - XXX */
+#endif
 
 #define	CLSIZELOG2    1
 #define	CLSIZE	      2
