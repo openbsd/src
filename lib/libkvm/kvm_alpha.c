@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_alpha.c,v 1.3 1997/02/26 16:46:29 niklas Exp $	*/
+/*	$OpenBSD: kvm_alpha.c,v 1.4 2000/06/09 04:01:50 ericj Exp $	*/
 /*	$NetBSD: kvm_alpha.c,v 1.5 1996/10/01 21:12:05 cgd Exp $	*/
 
 /*
@@ -136,7 +136,6 @@ _kvm_kvatop(kd, va, pa)
 			goto lose;
 		}
 		*pa = ALPHA_PTE_TO_PFN(pte) * cpu_kh->page_size + page_off;
-		    vatopte(va) * sizeof(alpha_pt_entry_t);
 		rv = cpu_kh->page_size - page_off;
 	} else {
 		/*
