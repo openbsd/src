@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.1 1998/09/11 06:55:27 fgsch Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.2 1998/09/12 07:48:07 fgsch Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -100,8 +100,8 @@
 #include <net/if_dl.h>
 #ifdef __NetBSD__
 #include <net/if_ether.h>
-#include <net/if_media.h> 
 #endif
+#include <net/if_media.h> 
 
 #ifdef INET
 #include <netinet/in.h> 
@@ -160,25 +160,21 @@ const char *smc91cxx_idstrs[] = {
 	NULL,				/* 15 */
 };
 
-#ifdef __NetBSD__
 /* Supported media types. */
 const int smc91cxx_media[] = {
 	IFM_ETHER|IFM_10_T,
 	IFM_ETHER|IFM_10_5,
 };
 #define	NSMC91CxxMEDIA	(sizeof(smc91cxx_media) / sizeof(smc91cxx_media[0]))
-#endif
 
 struct cfdriver sm_cd = {
 	NULL, "sm", DV_IFNET
 };
 
-#ifdef __NetBSD__
 int	smc91cxx_mediachange __P((struct ifnet *));
 void	smc91cxx_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
 int	smc91cxx_set_media __P((struct smc91cxx_softc *, int));
-#endif
 
 void	smc91cxx_init __P((struct smc91cxx_softc *));
 void	smc91cxx_read __P((struct smc91cxx_softc *));
@@ -293,14 +289,12 @@ smc91cxx_attach(sc, myea)
 	ether_ifattach(ifp);
 #endif
 
-#ifdef __NetBSD__
 	/* Initialize the media structures. */
 	ifmedia_init(&sc->sc_media, 0, smc91cxx_mediachange,
 	    smc91cxx_mediastatus);
 	for (i = 0; i < NSMC91CxxMEDIA; i++)
 		ifmedia_add(&sc->sc_media, smc91cxx_media[i], 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | (aui ? IFM_10_5 : IFM_10_T));
-#endif
 
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_arpcom.ac_if.if_bpf, ifp, DLT_EN10MB,
@@ -312,7 +306,6 @@ smc91cxx_attach(sc, myea)
 #endif
 }
 
-#ifdef __NetBSD__
 /*
  * Change media according to request.
  */
@@ -389,7 +382,6 @@ smc91cxx_mediastatus(ifp, ifmr)
 	ifmr->ifm_active =
 	    IFM_ETHER | ((tmp & CR_AUI_SELECT) ? IFM_10_5 : IFM_10_T);
 }
-#endif
 
 /*
  * Reset and initialize the chip.
@@ -400,8 +392,9 @@ smc91cxx_init(sc)
 {
 #ifdef __NetBSD__
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-#endif
+#else
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+#endif
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	u_int16_t tmp;
@@ -465,9 +458,7 @@ smc91cxx_init(sc)
 	/*
 	 * Set current media.
 	 */
-#ifdef __NetBSD__
 	smc91cxx_set_media(sc, sc->sc_media.ifm_cur->ifm_media);
-#endif
 
 	/*
 	 * Set the receive filter.  We want receive enable and auto
@@ -1166,12 +1157,10 @@ smc91cxx_ioctl(ifp, cmd, data)
 		}
 		break;
 
-#ifdef __NetBSD__
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
-#endif
 
 	default:
 		error = EINVAL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxxvar.h,v 1.1 1998/09/11 06:55:30 fgsch Exp $	*/
+/*	$OpenBSD: smc91cxxvar.h,v 1.2 1998/09/12 07:48:07 fgsch Exp $	*/
 /*	$NetBSD: smc91cxxvar.h,v 1.4 1997/10/15 05:56:13 explorer Exp $	*/
 
 /*-
@@ -52,10 +52,7 @@ struct smc91cxx_softc {
 	bus_space_tag_t sc_bst;		/* bus space */
 	bus_space_handle_t sc_bsh;
 
-#ifdef __NetBSD__
 	struct	ifmedia sc_media;	/* our media info */
-#endif
-	int sc_media;			/* our media info */
 
 	/* Power management hooks and state. */
 	int	(*sc_enable) __P((struct smc91cxx_softc *));
