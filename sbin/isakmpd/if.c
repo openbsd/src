@@ -1,8 +1,8 @@
-/*	$OpenBSD: if.c,v 1.5 1999/03/02 15:12:00 niklas Exp $	*/
-/*	$EOM: if.c,v 1.8 1999/03/02 14:26:12 niklas Exp $	*/
+/*	$OpenBSD: if.c,v 1.6 1999/04/05 20:59:49 niklas Exp $	*/
+/*	$EOM: if.c,v 1.11 1999/04/05 18:26:30 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -43,6 +43,7 @@
 
 #include "sysdep.h"
 
+#include "log.h"
 #include "if.h"
 
 /* XXX Unsafe if either x or y has side-effects.  */
@@ -78,7 +79,10 @@ siocgifconf (struct ifconf *ifcp)
       ifcp->ifc_len = len;
       new_buf = realloc (buf, len);
       if (!new_buf)
-	goto err;
+	{
+	  log_error ("siocgifconf: realloc (%p, %d) failed", buf, len);
+	  goto err;
+	}
       ifcp->ifc_buf = buf = new_buf;
       if (ioctl (s, SIOCGIFCONF, ifcp) == -1)
 	goto err;
@@ -124,5 +128,6 @@ if_map (void (*func) (struct ifreq *, void *), void *arg)
 	+ MAX (ifrp->ifr_addr.sa_len, sizeof ifrp->ifr_addr);
 #endif
     }
+  free (ifc.ifc_buf);
   return 0;
 }
