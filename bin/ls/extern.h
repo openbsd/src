@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 1999/02/20 18:59:24 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 1999/05/01 23:54:47 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/03/21 09:06:24 cgd Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ int	 sizecmp __P((const FTSENT *, const FTSENT *));
 int	 revsizecmp __P((const FTSENT *, const FTSENT *));
 
 char	*flags_to_string __P((u_long, char *));
-void	 prcopy __P((char *, char *, int));
+int	 putname __P((char *));
 void	 printcol __P((DISPLAY *));
 void	 printacol __P((DISPLAY *));
 void	 printlong __P((DISPLAY *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.4 1999/02/20 18:59:26 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.5 1999/05/01 23:54:48 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1995/09/07 06:43:02 jtc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: util.c,v 1.4 1999/02/20 18:59:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.5 1999/05/01 23:54:48 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,17 +57,15 @@ static char rcsid[] = "$OpenBSD: util.c,v 1.4 1999/02/20 18:59:26 deraadt Exp $"
 #include "ls.h"
 #include "extern.h"
 
-void
-prcopy(src, dest, len)
-	char *src, *dest;
-	int len;
+int
+putname(name)
+	char *name;
 {
-	int ch;
+	int len;
 
-	while (len--) {
-		ch = *src++;
-		*dest++ = isprint(ch) ? ch : '?';
-	}
+	for(len = 0; *name; len++, name++)
+		putchar((!isprint(*name) && f_nonprint) ? '?' : *name);
+	return len;
 }
 
 void

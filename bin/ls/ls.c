@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.12 1999/02/24 16:48:02 aaron Exp $	*/
+/*	$OpenBSD: ls.c,v 1.13 1999/05/01 23:54:47 deraadt Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.12 1999/02/24 16:48:02 aaron Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.13 1999/05/01 23:54:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -466,8 +466,6 @@ display(p, list)
 				continue;
 			}
 		}
-		if (f_nonprint)
-			prcopy(cur->fts_name, cur->fts_name, cur->fts_namelen);
 		if (cur->fts_namelen > maxlen)
 			maxlen = cur->fts_namelen;
 		if (needstats) {

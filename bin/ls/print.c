@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.10 1999/02/20 18:59:25 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.11 1999/05/01 23:54:48 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.10 1999/02/20 18:59:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.11 1999/05/01 23:54:48 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ printlong(dp)
 			printtime(sp->st_ctime);
 		else
 			printtime(sp->st_mtime);
-		(void)printf("%s", p->fts_name);
+		(void)putname(p->fts_name);
 		if (f_type || (f_typedir && S_ISDIR(sp->st_mode)))
 			(void)printtype(sp->st_mode);
 		if (S_ISLNK(sp->st_mode))
@@ -221,7 +221,7 @@ printaname(p, inodefield, sizefield)
 	if (f_size)
 		chcnt += printf("%*qd ",
 		    (int)sizefield, howmany(sp->st_blocks, blocksize));
-	chcnt += printf("%s", p->fts_name);
+	chcnt += putname(p->fts_name);
 	if (f_type || (f_typedir && S_ISDIR(sp->st_mode)))
 		chcnt += printtype(sp->st_mode);
 	return (chcnt);
@@ -376,5 +376,6 @@ printlink(p)
 		return;
 	}
 	path[lnklen] = '\0';
-	(void)printf(" -> %s", path);
+	(void)printf(" -> ");
+	(void)putname(path);
 }
