@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fxp.4,v 1.13 2000/04/03 21:19:36 aaron Exp $
+.\"	$OpenBSD: fxp.4,v 1.14 2000/09/17 05:17:18 aaron Exp $
 .\"
 .\" Copyright (c) 1997 David E. O'Brien
 .\"
@@ -32,7 +32,8 @@
 .Nd
 Intel EtherExpress PRO/100 Ethernet device driver
 .Sh SYNOPSIS
-.Cd "fxp* at pci?"
+.Cd "fxp* at pci? dev ? function ?"
+.Cd "fxp* at cardbus? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -44,13 +45,15 @@ models:
 .Pp
 .Bl -item -offset indent -compact
 .It
-Intel EtherExpress PRO/100
+Intel EtherExpress PRO/100 PCI
 .It
-Intel EtherExpress PRO/100B
+Intel EtherExpress PRO/100B PCI
 .It
-Intel EtherExpress PRO/100+
+Intel EtherExpress PRO/100+ PCI
 .It
-Intel EtherExpress PRO/100 Dual-Port
+Intel EtherExpress PRO/100 Dual-Port PCI
+.It
+Intel PRO/100 CardBus I/II PC Card
 .El
 .Pp
 Other models of Intel network cards are supported by the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cardbus.4,v 1.4 2000/08/17 22:03:41 mickey Exp $
+.\"	$OpenBSD: cardbus.4,v 1.5 2000/09/17 05:17:18 aaron Exp $
 .\" $NetBSD: cardbus.4,v 1.4 2000/02/02 19:57:17 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,8 +68,10 @@ drivers, sorted by function and driver name:
 .Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset ind -compact
+.It Xr fxp 4
+Intel PRO/100 CardBus I/II Ethernet interfaces.
 .It Xr xl 4
-3Com 3c575TX, 3c575BTX, and 3c575CTX Ethernet interfaces.
+3Com 3c575 and 3c656-based Ethernet interfaces.
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
