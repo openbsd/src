@@ -1,4 +1,4 @@
-/*	$OpenBSD: kauaiata.c,v 1.1 2003/06/05 05:17:04 drahn Exp $ */
+/*	$OpenBSD: kauaiata.c,v 1.2 2003/06/05 18:29:06 grange Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -27,15 +27,14 @@
  */
 
 /*
- *  Glue to to attach kauai ata to the macobio_wdc 
+ * Glue to to attach kauai ata to the macobio_wdc
  * which it heavily resembles.
  */
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-  
+
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
@@ -59,11 +58,11 @@ int kauaiata_print(void *aux, const char *dev);
 
 
 struct cfattach kauaiata_ca = {
-        sizeof(struct kauaiata_softc), kauaiatamatch, kauaiataattach,
+	sizeof(struct kauaiata_softc), kauaiatamatch, kauaiataattach,
 };
 
 struct cfdriver kauaiata_cd = {
-        NULL, "kauaiata", DV_DULL,
+	NULL, "kauaiata", DV_DULL,
 };
 
 int
@@ -126,7 +125,7 @@ vendor 0x106b product 0x003b (class undefined unknown subclass 0x00, rev 0x00) a
 	name[namelen] = 0;
 
 	/* config read */
-	sc->sc_membus_space.bus_base = 
+	sc->sc_membus_space.bus_base =
 	    pci_conf_read(pc, pa->pa_tag, PCI_MAPREG_START);
 #if 0
 	pci_conf_write(pc, pa->pa_tag, PCI_MAPREG_START, 0xffffffff);
