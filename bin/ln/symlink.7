@@ -1,4 +1,4 @@
-.\"	$OpenBSD: symlink.7,v 1.12 2001/08/10 18:42:43 hugh Exp $
+.\"	$OpenBSD: symlink.7,v 1.13 2001/10/04 22:35:28 pjanzen Exp $
 .\"	$NetBSD: symlink.7,v 1.4 1996/04/25 15:44:56 mycroft Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -50,16 +50,16 @@ Changes to a file are independent of the name used to reference the
 file.
 Hard links may not refer to directories and may not reference files
 on different file systems.
-A symbolic link contains the name of the file to which it is linked,
-i.e., it is a pointer to another name, and not to an underlying object.
+A symbolic link contains the name of the file to which it is linked;
+i.e., it is a pointer to a name, and not to an underlying object.
 For this reason, symbolic links may reference directories and may span
 file systems.
 .Pp
 Because a symbolic link and its referenced object coexist in the filesystem
 name space, confusion can arise in distinguishing between the link itself
 and the referenced object.
-Historically, commands and system calls have adopted their own link
-following conventions in a somewhat ad-hoc fashion.
+Historically, commands and system calls have adopted their own
+link-following conventions in a somewhat ad-hoc fashion.
 Rules for more a uniform approach, as they are implemented in this system,
 are outlined here.
 It is important that local applications conform to these rules, too,
@@ -77,7 +77,7 @@ not a symbolic link is found,
 a symbolic link which references a file which doesn't exist is found,
 or a loop is detected.
 (Loop detection is done by placing an upper limit on the number of
-links that may be followed, and an error results if this limit is
+links that may be followed, with an error resulting if this limit is
 exceeded.)
 .Pp
 There are three separate areas that need to be discussed.
@@ -150,38 +150,39 @@ would display the contents of the file
 .Pp
 It is important to realize that this rule includes commands which may
 optionally traverse file trees, e.g., the command
-.Dq Li "chown file"
+.Dq Li "chown owner file"
 is included in this rule, while the command
-.Dq Li "chown -R file"
+.Dq Li "chown -R owner file"
 is not.
 (The latter is described in the third area, below.)
 .Pp
 If it is explicitly intended that the command operate on the symbolic
-link instead of following the symbolic link, e.g., it is desired that
-.Dq Li "file slink"
-display the type of file that
-.Dq Li slink
-is, whether it is a symbolic link or not, the
+link instead of following the symbolic link -- e.g., it is desired that
+.Dq Li "chown owner slink"
+change the ownership of
+.Dq Li slink ,
+not of what it points to -- the
 .Fl h
 option should be used.
 In the above example,
-.Dq Li "file slink"
-would report the type of the file referenced by
-.Dq Li slink ,
+.Dq Li "chown owner slink"
+would change the owner of
+.Dq Li afile
+to
+.Dq Li owner ,
 while
-.Dq Li "file -h slink"
-would report that
-.Dq Li slink
-was a symbolic link.
+.Dq Li "chown -h owner slink"
+would change the ownership of
+.Dq Li slink .
 .Pp
-There are three exceptions to this rule.
+There are several exceptions to this rule.
 The
 .Xr mv 1
 and
 .Xr rm 1
 commands do not follow symbolic links named as arguments,
 but respectively attempt to rename and delete them.
-(Note, if the symbolic link references a file via a relative path,
+(Note that if the symbolic link references a file via a relative path,
 moving it to another directory may very well cause it to stop working,
 since the path may no longer be correct.)
 .Pp
@@ -209,11 +210,27 @@ options are not specified.
 option is specified,
 .Nm ls
 always follows symbolic links.
-.Nm ls
-is the only command where the
+The
 .Fl L
 option affects its behavior even though it is not doing a walk of
 a file tree.)
+.Pp
+The
+.Xr file 1
+command behaves as
+.Xr ls 1
+in that the
+.Fl L
+option makes it follow a symbolic link.  By default,
+.Dq Li "file slink"
+will report that
+.Dq Li slink
+is a symbolic link.
+This behavior is different from
+.Xr file 1
+on some other systems, where the
+.Fl h
+convention is followed.
 .Pp
 The
 .Bx 4.4
@@ -222,7 +239,10 @@ system differs from historical 4BSD systems in that the
 .Nm chgrp ,
 and
 .Nm file
-commands follow symbolic links specified on the command line.
+commands follow symbolic links specified on the command line
+(unless the
+.Fl h
+option is used).
 .Ss Commands traversing a file tree
 The following commands either optionally or always traverse file trees:
 .Xr chflags 1 ,
@@ -291,7 +311,8 @@ of the type of file they reference, by specifying the
 flag.
 This flag is intended to make the command-line name space look
 like the logical name space.
-(Note, for commands that do not always do file tree traversals, the
+(Note:
+for commands that do not always do file tree traversals, the
 .Fl H
 flag will be ignored if the
 .Fl R
@@ -301,7 +322,7 @@ For example, the command
 .Dq Li "chown -HR user slink"
 will traverse the file hierarchy rooted in the file pointed to by
 .Dq Li slink .
-Note, the
+The
 .Fl H
 is not the same as the previously discussed
 .Fl h
@@ -323,7 +344,8 @@ the type of file they reference, by specifying the
 flag.
 This flag is intended to make the entire name space look like
 the logical name space.
-(Note, for commands that do not always do file tree traversals, the
+(Note:
+for commands that do not always do file tree traversals, the
 .Fl L
 flag will be ignored if the
 .Fl R
