@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.47 2001/05/08 17:30:56 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.48 2001/06/24 20:52:05 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -459,8 +459,9 @@ static __inline void add_entropy_words __P((const u_int32_t *, u_int n));
 static __inline void extract_entropy __P((register u_int8_t *, int));
 
 static __inline u_int8_t arc4_getbyte __P((void));
-void arc4_stir __P((void));
+static __inline void arc4_stir __P((void));
 void arc4_reinit __P((void *v));
+void arc4maybeinit __P((void));
 
 /* Arcfour random stream generator.  This code is derived from section
  * 17.1 of Applied Cryptography, second edition, which describes a
@@ -480,7 +481,7 @@ void arc4_reinit __P((void *v));
  * RC4 is a registered trademark of RSA Laboratories.
  */
 
-void
+static __inline void
 arc4_stir(void)
 {
 	u_int8_t buf[256];
@@ -528,24 +529,28 @@ arc4_getbyte(void)
 	return arc4random_state.s[(si + sj) & 0xff];
 }
 
-static __inline void
+void
 arc4maybeinit(void)
 {
+	extern int hz;
+
 	if (!arc4random_initialized) {
 		arc4random_initialized++;
 		arc4_stir();
+		/* 10 minutes, per dm@'s suggestion */
+		timeout_add(&arc4_timeout, 10 * 60 * hz);
 	}
 }
 
+/*
+ * called by timeout to mark arc4 for stirring,
+ * actuall stirring happens on any access attempt.
+ */
 void
 arc4_reinit(v)
 	void *v;
 {
-	extern int hz;
-
 	arc4random_initialized = 0;
-	/* 10 minutes, per dm@'s suggestion */
-	timeout_add(&arc4_timeout, 10 * 60 * hz);
 }
 
 int
@@ -747,7 +752,7 @@ enqueue_randomness(state, val)
 
 		/*
 		 * the logic is to drop low-entropy entries,
-		 * in hope for dequeuing to be more sourcefull
+		 * in hope for dequeuing to be more randomfull
 		 */
 		if (rnd_qlen() > QEVSLOW && nbits < QEVSBITS) {
 			rndstats.rnd_drople++;
