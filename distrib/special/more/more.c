@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.21 2003/06/04 03:37:01 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.22 2003/06/04 03:49:53 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.21 2003/06/04 03:37:01 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.22 2003/06/04 03:49:53 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1552,7 +1552,7 @@ handle_signal(int sig)
 			nscroll = Lpp/2 - 1;
 			if (nscroll <= 0)
 				nscroll = 1;
-			dlines = Lpp - (noscroll ? 1 : 2);
+			dlines = Lpp - 1;
 		}
 		if (win.ws_col != 0)
 			Mcol = win.ws_col;
