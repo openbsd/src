@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamdb.c,v 1.10 2004/04/26 18:21:20 itojun Exp $	*/
+/*	$OpenBSD: spamdb.c,v 1.11 2004/04/27 21:25:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -40,7 +40,7 @@ dbupdate(char *dbname, char *ip, int add)
 	struct gdata	gd;
 	time_t		now;
 	int		r;
-	struct addrinfo hints;
+	struct addrinfo hints, *res;
 
 	now = time(NULL);
 	memset(&btreeinfo, 0, sizeof(btreeinfo));
@@ -51,10 +51,11 @@ dbupdate(char *dbname, char *ip, int add)
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
-	if (getaddrinfo(ip, NULL, &hints, NULL) != 0) {
+	if (getaddrinfo(ip, NULL, &hints, &res) != 0) {
 		warnx("invalid ip address %s", ip);
 		goto bad;
 	}
+	freeaddrinfo(res);
 	memset(&dbk, 0, sizeof(dbk));
 	dbk.size = strlen(ip);
 	dbk.data = ip;
