@@ -3,10 +3,10 @@
 lan_if = lo0
 ext_if = nothere0
 
-altq on $ext_if bandwidth 512Kb cbq queue { q_ext_std }
+altq on $ext_if bandwidth 512Kb tbrsize 33224 cbq queue { q_ext_std }
 queue q_ext_std bandwidth 100% cbq(default) { q_ext_p2p }
 queue   q_ext_p2p bandwidth 25% cbq(red ecn)
 
-altq on $lan_if bandwidth 512Kb cbq queue { q_lan_std }
+altq on $lan_if bandwidth 512Kb tbrsize 33224 cbq queue { q_lan_std }
 queue q_lan_std bandwidth 100% cbq(default) { q_lan_p2p }
 queue   q_lan_p2p bandwidth 25% cbq(red ecn)
