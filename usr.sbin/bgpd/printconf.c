@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.1 2004/02/08 23:44:57 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.2 2004/02/09 01:38:55 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -22,6 +22,9 @@
 #include "session.h"
 
 void		 print_op(enum comp_ops);
+void		 print_mainconf(struct bgpd_config *);
+void		 print_peer(struct peer_config *);
+void		 print_rule(struct peer *, struct filter_rule *);
 
 void
 print_op(enum comp_ops op)
@@ -49,6 +52,74 @@ print_op(enum comp_ops op)
 		printf("?");
 		break;
 	}
+}
+
+void
+print_mainconf(struct bgpd_config *conf)
+{
+	struct in_addr	ina;
+
+	printf("AS %u\n", conf->as);
+	ina.s_addr = conf->bgpid;
+	printf("router-id %s\n", inet_ntoa(ina));
+	if (conf->holdtime)
+		printf("holdtime %u\n", conf->holdtime);
+	if (conf->min_holdtime)
+		printf("holdtime min %u\n", conf->min_holdtime);
+
+	if (conf->flags & BGPD_FLAG_NO_FIB_UPDATE)
+		printf("fib-update no\n");
+	else
+		printf("fib-update yes\n");
+
+	if (conf->log & BGPD_LOG_UPDATES)
+		printf("log updates\n");
+
+	if (conf->listen_addr.sin_addr.s_addr != INADDR_ANY)
+		printf("listen-on %s\n", inet_ntoa(conf->listen_addr.sin_addr));
+}
+
+void
+print_peer(struct peer_config *p)
+{
+	const char	*tab	= "\t";
+	const char	*nada	= "";
+	const char	*c;
+
+	if (p->group[0]) {
+		printf("group \"%s\" {\n", p->group);
+		c = tab;
+	} else
+		c = nada;
+
+	printf("%sneighbor %s {\n", c, log_addr(&p->remote_addr));
+	printf("%s\tdescr \"%s\"\n", c, p->descr);
+	printf("%s\tremote-as %u\n", c, p->remote_as);
+	if (p->distance > 1)
+		printf("%s\tmultihop %u\n", c, p->distance);
+	if (p->passive)
+		printf("%s\tpassive\n", c);
+	if (p->local_addr.af)
+		printf("%s\tlocal-address %s\n", c, log_addr(&p->local_addr));
+	if (p->max_prefix != ULONG_MAX)
+		printf("%s\tmax-prefix %lu\n", c, p->max_prefix);
+	if (p->holdtime)
+		printf("%s\tholdtime %u\n", c, p->holdtime);
+	if (p->min_holdtime)
+		printf("%s\tholdtime min %u\n", c, p->min_holdtime);
+	if (p->announce_type == ANNOUNCE_SELF)
+		printf("%s\tannounce self\n", c);
+	else if (p->announce_type == ANNOUNCE_NONE)
+		printf("%s\tannounce none\n", c);
+	else if (p->announce_type == ANNOUNCE_ALL)
+		printf("%s\tannounce all\n", c);
+	else
+		printf("%s\tannounce ???\n", c);
+	if (p->tcp_md5_key[0])
+		printf("%s\ttcp md5sig\n", c);
+	printf("%s}\n", c);
+	if (p->group[0])
+		printf("}\n");
 }
 
 void
@@ -134,4 +205,20 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 	}
 
 	printf("\n");
+}
+
+void
+print_config(struct bgpd_config *conf, struct peer *peer_l,
+    struct filter_head *rules_l)
+{
+	struct peer		*p;
+	struct filter_rule	*r;
+
+	print_mainconf(conf);
+	printf("\n");
+	for (p = peer_l; p != NULL; p = p->next)
+		print_peer(&p->conf);
+	printf("\n");
+	TAILQ_FOREACH(r, rules_l, entries)
+		print_rule(peer_l, r);
 }
