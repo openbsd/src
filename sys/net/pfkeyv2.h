@@ -235,6 +235,7 @@ struct sadb_protocol {
 #define SADB_X_SAFLAGS_TUNNEL	 	0x04    /* Force tunneling */
 #define SADB_X_SAFLAGS_CHAINDEL  	0x08    /* Delete whole SA chain */
 #define SADB_X_SAFLAGS_REPLACEFLOW	0x20    /* Replace existing flow */
+#define SADB_X_SAFLAGS_INGRESS_FLOW     0x40    /* Ingress ACL entry */
 
 #define SADB_IDENTTYPE_RESERVED   0
 #define SADB_IDENTTYPE_PREFIX     1

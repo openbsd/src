@@ -1352,7 +1352,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    struct sockaddr_encap encapdst, encapgw, encapnetmask;
 	    struct flow *flow2 = NULL, *old_flow = NULL, *old_flow2 = NULL;
 	    union sockaddr_union *src, *dst, *srcmask, *dstmask;
-	    u_int8_t sproto = 0, replace;
+	    u_int8_t sproto = 0, replace, ingress ;
 	    struct rtentry *rt;
 	
 	    ssa = (struct sadb_sa *) headers[SADB_EXT_SA];
@@ -1361,10 +1361,12 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    /*
 	     * SADB_X_SAFLAGS_REPLACEFLOW set means we should remove any
-	     * potentially conflicting flow while we are adding this new one.
+	     * potentially conflicting egress flow while we are adding this
+	     * new one.
 	     */
 	    replace = ssa->sadb_sa_flags &  SADB_X_SAFLAGS_REPLACEFLOW;
-	    if (replace && delflag) 
+	    ingress = ssa->sadb_sa_flags & SADB_X_SAFLAGS_INGRESS_FLOW;
+	    if ((replace && delflag) || (replace && ingress))
 	    {
 		rval = EINVAL;
 		goto ret;
@@ -1406,7 +1408,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    s = spltdb();
 
-	    if (!delflag)
+	    if (!delflag || ingress)
 	    {
 		/* Find the relevant SA */
 		sa2 = gettdb(ssa->sadb_sa_spi, sunionp,
@@ -1419,15 +1421,25 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		}
 	    }
 
-
-	    flow = find_global_flow(src, srcmask, dst, dstmask, sproto);
-	    if (!replace &&
-		((delflag && (flow == NULL)) || (!delflag && (flow != NULL))))
+	    /* For non-ingress flows... */
+	    if (!ingress)
 	    {
-		rval = delflag ? ESRCH : EEXIST;
-		goto splxret;
+		/*
+		 * ...if the requested flow already exists and we aren't
+		 * asked to replace or delete it, or if it doesn't exist
+		 * and we're asked to delete it, fail.
+		 */
+		flow = find_global_flow(src, srcmask, dst, dstmask, sproto);
+		if (!replace &&
+		    ((delflag && (flow == NULL)) ||
+		     (!delflag && (flow != NULL))))
+		{
+		    rval = delflag ? ESRCH : EEXIST;
+		    goto splxret;
+		}
 	    }
 
+	    /* If we're not deleting a flow, add in the TDB */
 	    if (!delflag)
 	    {
 		if (replace)
@@ -1439,8 +1451,31 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		bcopy(srcmask, &flow->flow_srcmask, srcmask->sa.sa_len);
 		bcopy(dstmask, &flow->flow_dstmask, dstmask->sa.sa_len);
 		flow->flow_proto = sproto;
-		put_flow(flow, sa2);
+		put_flow(flow, sa2, ingress);
+
+		/* If this is an ACL entry, we're done */
+		if (ingress)
+		{
+		    splx(s);
+		    break;
+		}
 	    }
+	    else
+	      if (ingress)
+	      {
+		  /* If we're deleting a flow... */
+		  flow = find_flow(src, dst, srcmask, dstmask, sproto,
+				   sa2, FLOW_INGRESS);
+		  if (flow == NULL)
+		  {
+		      rval = ESRCH;
+		      goto splxret;
+		  }
+
+		  delete_flow(flow, sa2, FLOW_INGRESS);
+		  splx(s);
+		  break;
+	      }
 
 	    /* Setup the encap fields */
 	    encapdst.sen_family = PF_KEY;
@@ -1535,7 +1570,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			 * should be checked at establishment time. 
 			 */
 			rval = EPFNOSUPPORT;
-			delete_flow(flow, flow->flow_sa);
+			delete_flow(flow, flow->flow_sa, FLOW_EGRESS);
 			goto splxret;
 		}
 	    }
@@ -1548,7 +1583,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			  (struct sockaddr *) &encapnetmask,
 			  0, (struct rtentry **) 0);
 
-		delete_flow(flow, flow->flow_sa);
+		delete_flow(flow, flow->flow_sa, FLOW_EGRESS);
 	    }
 	    else if (!replace)
 	    {
@@ -1560,10 +1595,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    
 		if (rval)
 		{
-		    delete_flow(flow, sa2);
+		    delete_flow(flow, sa2, FLOW_EGRESS);
 
 		    if (flow2)
-		      delete_flow(flow2, sa2);
+		      delete_flow(flow2, sa2, FLOW_EGRESS);
 
 		    goto splxret;
 		}
@@ -1584,10 +1619,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		    if (rval)
 		    {
-			delete_flow(flow, sa2);
+			delete_flow(flow, sa2, FLOW_EGRESS);
 
 			if (flow2)
-			  delete_flow(flow2, sa2);
+			  delete_flow(flow2, sa2, FLOW_EGRESS);
 
 			goto splxret;
 		    }
@@ -1596,10 +1631,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 				    (struct sockaddr *) &encapgw))
 		{
 		    rval = ENOMEM;
-		    delete_flow(flow, sa2);
+		    delete_flow(flow, sa2, FLOW_EGRESS);
 
 		    if (flow2)
-		      delete_flow(flow2, sa2);
+		      delete_flow(flow2, sa2, FLOW_EGRESS);
 
 		    goto splxret;
 		}
@@ -1610,10 +1645,10 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    if (replace)
 	    {
 		if (old_flow != NULL)
-		  delete_flow(old_flow, old_flow->flow_sa);
+		  delete_flow(old_flow, old_flow->flow_sa, FLOW_EGRESS);
 
 		if (old_flow2 != NULL)
-		  delete_flow(old_flow2, old_flow2->flow_sa);
+		  delete_flow(old_flow2, old_flow2->flow_sa, FLOW_EGRESS);
 	    }
 
 	    /* If we are adding flows, check for allocation expirations */
