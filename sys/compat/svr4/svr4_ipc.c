@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_ipc.c,v 1.7 2001/08/26 06:25:10 deraadt Exp $	*/
+/*	$OpenBSD: svr4_ipc.c,v 1.8 2001/11/02 00:27:05 millert Exp $	*/
 /*	$NetBSD: svr4_ipc.c,v 1.3 1997/03/30 17:21:02 christos Exp $	*/
 
 /*
@@ -146,7 +146,7 @@ svr4_to_bsd_semid_ds(sds, bds)
 	struct semid_ds *bds;
 {
 	svr4_to_bsd_ipc_perm(&sds->sem_perm, &bds->sem_perm);
-	bds->sem_base = (struct sem *) bds->sem_base;
+	bds->sem_base = (struct sem *) sds->sem_base;
 	bds->sem_nsems = sds->sem_nsems;
 	bds->sem_otime = sds->sem_otime;
 	bds->sem_pad1 = sds->sem_pad1;
