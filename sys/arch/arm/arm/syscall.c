@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.2 2004/02/11 22:03:17 miod Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.3 2004/02/12 04:11:42 drahn Exp $	*/
 /*	$NetBSD: syscall.c,v 1.24 2003/11/14 19:03:17 scw Exp $	*/
 
 /*-
@@ -289,7 +289,7 @@ syscall_plain(struct trapframe *frame, struct proc *p, u_int32_t insn)
 	scdebug_call(p, code, args);
 #endif
 	rval[0] = 0;
-	rval[1] = 0;
+	rval[1] = frame->tf_r1;
 	error = (*callp->sy_call)(p, args, rval);
 
 	switch (error) {
