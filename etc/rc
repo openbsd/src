@@ -93,6 +93,14 @@ rm -f /var/spool/uucp/STST/*
 echo -n 'starting rpc daemons:'
 echo -n ' portmap';		portmap
 
+if [ -d /var/yp/`domainname`]; then
+	echo -n 'ypserv';		ypserv -d
+	#echo -n 'ypxfrd';		ypxfrd
+	if [ `ypwhich -m passwd` = `hostname`]; then
+		echo -n 'rpc.yppasswdd'; rpc.yppasswdd
+	fi
+fi
+
 if [ -f /usr/sbin/ypbind -a -d /var/yp ]; then
 	echo -n ' ypbind';		ypbind
 fi
