@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.30 2004/08/09 19:52:06 deraadt Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.31 2005/01/04 21:19:15 espie Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -252,7 +252,8 @@ pcibios_pir_init(sc)
 		struct pcibios_pir_header *pirh;
 		int i;
 
-		pirh = (struct pcibios_pir_header *)p = ISA_HOLE_VADDR(pa);
+		p = ISA_HOLE_VADDR(pa);
+		pirh = (struct pcibios_pir_header *)p;
 		/*
 		 * Some laptops (such as the Toshiba Libretto L series)
 		 * use _PIR instead of the standard $PIR for the signature
