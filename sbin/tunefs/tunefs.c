@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.8 1997/11/07 23:27:04 deraadt Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.9 2001/03/22 21:30:00 gluk Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: tunefs.c,v 1.8 1997/11/07 23:27:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tunefs.c,v 1.9 2001/03/22 21:30:00 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,8 @@ again:
 		if (*special != '/') {
 			if (*special == 'r')
 				special++;
-			(void)sprintf(device, "%s/%s", _PATH_DEV, special);
+			(void)snprintf(device, sizeof(device), "%s/%s",
+				       _PATH_DEV, special);
 			special = device;
 			goto again;
 		}
