@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.3 1998/11/28 01:29:05 deraadt Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.4 1998/11/28 02:29:29 deraadt Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -59,7 +59,6 @@
 #include "bpfilter.h"
 #include "we.h"
 
-#define WE_DEBUG
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
