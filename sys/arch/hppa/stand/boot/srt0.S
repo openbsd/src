@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.1.1.1 1998/06/23 18:46:41 mickey Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.2 1998/07/20 18:40:30 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -41,45 +41,15 @@
 ; Startup code for standalone HP700 system.
 ;
 
-#include <sys/reboot.h>
+#define	_LOCORE
+#include <machine/iomod.h>
 
-;
-; Define our Stack Unwind spaces/variables.
-;
-	.SPACE	$TEXT$
-;	.SUBSPA	$UNWIND_START$,QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=56
-	.EXPORT	$UNWIND_START
-$UNWIND_START
-;	.SUBSPA	$UNWIND_END$,QUAD=0,ALIGN=8,ACCESS=0x2c,SORT=73
-	.EXPORT	$UNWIND_END
-$UNWIND_END
+#include <machine/asm.h>
 
+/*
+ */
+	ENTRY(begin)
 
-	.space  $PRIVATE$
-	.subspa $DATA$
-	.import howto,data
-	.import rstaddr,data
-	.import stack_base,data
-
-;
-; Execution begins here.
-;
-; We are called by the PDC as:
-;
-;	begin(interactive, endaddr)
-;
-; Where:
-;
-;	interactive - 0 if not interactive, 1 if interactive.
-;
-	.SPACE	$TEXT$
-;	.SUBSPA	$FIRST$
-	.EXPORT	begin,entry
-	.IMPORT	boot,code
-	.IMPORT	pdc_init,code
-	.IMPORT	end,DATA
-
-begin
 	blr	%r0,%r5			; Get address of 'boff' into 'r5',
 	ldo	begin-boff(%r5),%r5	;   and subtract to get 'begin'.
 boff
@@ -137,71 +107,28 @@ loop	addib,>,n -16,%r21,loop		; Decrement by cache line size (16).
 	nop
 	nop
 	nop
-	bv	%r0(%rp)		; Jump to relocated start
-	stw	%rp,rstaddr-$global$(%dp) ;   saving address for _rtt.
+	EXIT(begin)			/* jump to relocated code */
 
 start
 	ldil	L%stack_base,%sp
 	ldo	R%stack_base(%sp),%sp
 	dep	%r0,31,6,%sp		;   and ensure maximum alignment.	
 
-;	bl	pdc_init,%rp		; Initialize PDC and related variables
-;	ldo	64(%sp),%sp		;   and push our first stack frame.
+	b,n	boot			; Call boot(),
 
-	b	boot			; Call boot(),
-	ldw	rstaddr-$global$(%dp),%rp ;   a return will go back to start().
+/*
+ * rtt - restart the box
+ */
+	ENTRY(_rtt)
+	ldi     CMD_RESET,r26
+	ldil    L%LBCAST_ADDR,r25
+	stw     r26,R%48(r25)		; iomod->io_command
+forever                                 ; Loop until bus reset takes effect.
+	b,n     forever
 
-;
-; rtt - restart boot device selection (after ^C, etc).
-;
-	.IMPORT	howto,DATA
-	.IMPORT	rstaddr,DATA
-	.EXPORT	_rtt
-_rtt
-	ldi	RB_ASKNAME+RB_SINGLE,%r1     ; Restarts get RB_SINGLE|RB_ASKNAME
-	stw	%r1,howto-$global$(%dp)		;   and save in 'howto'.
-	ldw	rstaddr-$global$(%dp),%rp	; Load restart address into 'rp'
-	bv,n	%r0(%rp)			;   and branch to it.
-	or	%r0,%r0,%r0
-#if 0
-	.EXPORT	execute,entry
-	.IMPORT	pdc,DATA
-	.PROC
-	.CALLINFO
-	.ENTRY
-execute	
-	mtsm	%r0			; Disable traps and interrupts.
-	mtctl	%r0,%cr17		; Clear two-level IIA Space Queue
-	mtctl	%r0,%cr17		;    effectively setting kernel space.
-	mtctl	%arg0,%cr18		; Stuff entry point into head of IIA
-	ldo	4(%arg0),%arg0		;    Offset Queue, and entry point + 4
-	mtctl	%arg0,%cr18		;    into tail of IIA Offset Queue.
-	ldi	0x9,%arg0		; Set PSW Q & I bits (collect intrpt
-	mtctl	%arg0,%ipsw		;    state, allow external intrpts).
-	copy	%arg2,%arg0
-	.EXIT
-	rfi				; Begin execution of kernel.
-	nop
-	.PROCEND
+	ldo     -48(sp),sp
+	EXIT(_rtt)
 
-	.export getdp
-getdp	.proc
-	.callinfo
-
-	bv	0(%rp)
-	or	%dp,%r0,%ret0
-
-	.procend
-
-	.export getsp
-getsp	.proc
-	.callinfo
-
-	bv	0(%rp)
-	or	%sp,%r0,%ret0
-
-	.procend
-#endif
 	.SPACE	$PRIVATE$
 ;	.SUBSPA	$GLOBAL$
 	.EXPORT	$global$
