@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.21 1998/03/01 00:37:33 niklas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.22 1998/05/25 06:52:36 downsj Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -146,6 +146,11 @@ struct cpu_cpuid_nameclass {
 		const char *cpu_models[CPU_MAXMODEL+2];
 		void (*cpu_setup) __P((const char *));
 	} cpu_family[CPU_MAXFAMILY - CPU_MINFAMILY + 1];
+};
+
+struct cpu_cpuid_feature {
+	int feature_bit;
+	const char *feature_name;
 };
 
 #ifdef _KERNEL

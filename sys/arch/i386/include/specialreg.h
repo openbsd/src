@@ -1,3 +1,4 @@
+/*	$OpenBSD: specialreg.h,v 1.5 1998/05/25 06:52:38 downsj Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -86,26 +87,28 @@
 #define CR4_PCE	0x00000100	/* enable RDPMC instruction for all cpls */
 
 /*
- * CPUID "features" bits:
+ * CPUID "features" (and "extended features") bits:
  */
 
-#define CPUID_FPU	0x0001	/* processor has an FPU? */
-#define CPUID_VME	0x0002	/* has virtual mode (%cr4's VME/PVI) */
-#define CPUID_DE	0x0004	/* has debugging extension */
-#define CPUID_PSE	0x0008	/* has page 4MB page size extension */
-#define CPUID_TSC	0x0010	/* has time stamp counter */
-#define CPUID_MSR	0x0020	/* has mode specific registers */
-#define CPUID_PAE	0x0040	/* has phys address extension */
-#define CPUID_MCE	0x0080	/* has machine check exception */
-#define CPUID_CX8	0x0100	/* has CMPXCHG8B instruction */
-#define CPUID_APIC	0x0200	/* has enabled APIC */
-#define CPUID_B10	0x0400	/* reserved, MTRR */
-#define CPUID_B11	0x0800	/* has SYSENTER/SYSEXIT extension */
-#define CPUID_MTRR	0x1000	/* has memory type range register */
-#define CPUID_PGE	0x2000	/* has page global extension */
-#define CPUID_MCA	0x4000	/* has machine check architecture */
-#define CPUID_CMOV	0x8000	/* has CMOVcc instruction */
-/* bits 16->22: unknown, 23=MMX supported, 24-31 reserved */
+#define CPUID_FPU	0x00000001	/* processor has an FPU? */
+#define CPUID_VME	0x00000002	/* has virtual mode (%cr4's VME/PVI) */
+#define CPUID_DE	0x00000004	/* has debugging extension */
+#define CPUID_PSE	0x00000008	/* has page 4MB page size extension */
+#define CPUID_TSC	0x00000010	/* has time stamp counter */
+#define CPUID_MSR	0x00000020	/* has mode specific registers */
+#define CPUID_PAE	0x00000040	/* has phys address extension */
+#define CPUID_MCE	0x00000080	/* has machine check exception */
+#define CPUID_CX8	0x00000100	/* has CMPXCHG8B instruction */
+#define CPUID_APIC	0x00000200	/* has enabled APIC */
+#define CPUID_SYS1	0x00000400	/* has SYSCALL/SYSRET inst. (Cyrix) */
+#define CPUID_SYS2	0x00000800	/* has SYSCALL/SYSRET inst. (AMD) */
+#define CPUID_MTRR	0x00001000	/* has memory type range register */
+#define CPUID_PGE	0x00002000	/* has page global extension */
+#define CPUID_MCA	0x00004000	/* has machine check architecture */
+#define CPUID_CMOV	0x00008000	/* has CMOVcc instruction */
+#define CPUID_MMX	0x00800000	/* has MMX instructions */
+#define CPUID_EMMX	0x01000000	/* has extended MMX (Cyrix) */
+#define CPUID_3D	0x80000000	/* has AMD-3D instructions (AMD) */
 
 /*
  * the following four 3-byte registers control the non-cacheable regions.
