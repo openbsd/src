@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.30 1999/05/20 12:56:40 aaron Exp $	*/
+/*	$OpenBSD: systm.h,v 1.31 1999/07/21 21:12:51 deraadt Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -179,6 +179,9 @@ void	bcopy __P((const void *, void *, size_t));
 void	ovbcopy __P((const void *, void *, size_t));
 void	bzero __P((void *, size_t));
 int	bcmp __P((const void *, const void *, size_t));
+void	*memcpy __P((void *, const void *, size_t));
+void	*memmove __P((void *, const void *, size_t));
+void	*memset __P((void *, int, size_t));
 
 int	copystr __P((const void *, void *, size_t, size_t *));
 int	copyinstr __P((const void *, void *, size_t, size_t *));
