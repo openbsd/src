@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.24 1999/04/29 22:56:00 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.25 1999/05/02 18:49:57 millert Exp $
 #
 # Build wrapper for Perl 5.005_03.
 #
@@ -88,7 +88,7 @@ INST_PROG='/usr/bin/install -c'
 
 .pod.cat1:
 	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.IMPSRC} | ${NROFF} -man > ${.TARGET}"
-	./perl -I$./lib ./pod/pod2man --section=1 --official ${.IMPSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+	./perl -I./lib ./pod/pod2man --section=1 --official ${.IMPSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 # XXX - '/' needs to become :: when installed (need own maninstall target?)
 .pm.cat3p:
 	@echo "./perl -I./lib ./pod/pod2man --section=3p --official ${.IMPSRC} | ${NROFF} -man > ${.TARGET}"
@@ -141,51 +141,51 @@ x2p/cflags:
 
 utils/c2ph.cat1: utils/c2ph
 	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
-	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+	./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 utils/h2ph.cat1: utils/h2ph
 	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
-	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+	./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 utils/h2xs.cat1: utils/h2xs
 	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
-	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+	./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 utils/perldoc.cat1: utils/perldoc
 	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
-	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+	./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 utils/perlbug.cat1: utils/perlbug
 	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
-	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+	./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 utils/pl2pm.cat1: utils/pl2pm
 	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
-	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+	./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 utils/splain.cat1: utils/splain
 	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
-	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+	./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 x2p/s2p.cat1: x2p/s2p
 	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
-	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+	./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 pod/pod2man.cat1: pod/pod2man
 	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
-	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+	./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 pod/pod2html.cat1: pod/pod2html
 	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
-	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+	./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 utils/pstruct.cat1: utils/pstruct
 	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
-	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+	./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 xsubpp.cat1: lib/ExtUtils/xsubpp
 	@echo "./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET}"
-	./perl -I$./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
+	./perl -I./lib ./pod/pod2man --section=1 --official ${.ALLSRC} | ${NROFF} -man > ${.TARGET} || (rm -f ${.TARGET}; false)
 
 .ifdef NOMAN
 maninstall:
