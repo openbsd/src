@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.5 1998/11/08 00:21:25 aaron Exp $
+.\"	$OpenBSD: adduser.8,v 1.6 1998/12/29 12:04:37 deraadt Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -48,6 +48,7 @@
 .Op Fl uid_start Ar uid_start
 .Op Fl uid_end Ar uid_end
 .Op Fl v | verbose
+.Op Fl unencrypted
 .Sh DESCRIPTION
 .Nm adduser 
 is a simple program for adding new users.
@@ -142,6 +143,7 @@ straightforward.
 .It Sy -batch username [group[,group]...] [fullname] [password]
 Enter batch mode in which multiple users are specified on the command-line
 in a compact format.
+By default the password is assumed to already be properly encrypted.
 .It Sy -check_only
 Check the passwd, group, and shells databases for consistency and problems
 then exit without performing any other operation.
@@ -192,6 +194,12 @@ Causes the program to print fewer warnings, questions, and bug reports.
 Use UIDs from 
 .Ar uid
 up when automatically generating UIDs.
+.It Sy -unencrypted
+Causes the program to assume that the password given in batch mode is
+unencrypted. The password will be encrypted before it's added to the
+password file.
+Use of this option will leave username and cleartext password displayable
+for any user.
 .It Sy -verbose,-v
 Causes the program to print many warnings and questions.
 This option is recommended for novice users.
@@ -215,7 +223,7 @@ Start
 .Nm adduser
 in interactive mode.
 .Pp
-$ adduser -batch falken guest,staff,beer 'Prof. Falken' joshua
+$ adduser -unencrypted -batch falken guest,staff,beer 'Prof. Falken' joshua
 .Pp
 Create user
 .Dq falken
