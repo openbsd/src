@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.24 2004/01/27 14:50:52 espie Exp $
+# $OpenBSD: pkg_add,v 1.25 2004/01/27 17:47:45 sturm Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -448,7 +448,11 @@ while (my $pkg = shift @todo) {
 		$cache->{$pkg} = pre_add($pkg, $opt_n);
 	}
 	my $handle = $cache->{$pkg};
-	next unless defined $handle;
+	if ($errors > 0) {
+		last unless defined $handle;
+	} else {
+		next unless defined $handle;
+	}
 
 	my $plist = $handle->{plist};
 
