@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.26 2003/12/26 00:27:23 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.27 2003/12/26 00:49:52 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -514,7 +514,33 @@ kroute_nexthop_add(in_addr_t key)
 		}
 	} else
 		kroute_nexthop_insert(key, &nh);
+
 	send_nexthop_update(&nh);
+}
+
+void
+kroute_nexthop_delete(in_addr_t key)
+{
+	struct knexthop_node	*a, *b, s;
+
+	s.nexthop = key;
+
+	if ((a = RB_FIND(knexthop_tree, &knt, &s)) == NULL)
+		return;
+
+	/*
+	 * check wether there's another nexthop depending on this kroute
+	 * if not remove the flag
+	 */
+
+	for (b = RB_MIN(knexthop_tree, &knt); b != NULL &&
+	    b->kroute != a->kroute; b = RB_NEXT(knexthop_tree, &knt, b))
+		;	/* nothing */
+
+	if (b == NULL)
+		a->kroute->flags &= ~F_NEXTHOP;
+
+	RB_REMOVE(knexthop_tree, &knt, a);
 }
 
 void
