@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_pci.c,v 1.3 2004/11/23 09:39:29 reyk Exp $   */
+/*      $OpenBSD: if_ath_pci.c,v 1.4 2005/01/03 19:59:18 jsg Exp $   */
 /*	$NetBSD: if_ath_pci.c,v 1.7 2004/06/30 05:58:17 mycroft Exp $	*/
 
 /*-
@@ -107,9 +107,6 @@ struct cfattach ath_pci_ca = {
 	ath_pci_match,
 	ath_pci_attach, 
 	ath_pci_detach
-};
-struct cfdriver ath_cd = {
-	0, "ath", DV_IFNET
 };
 
 /*
