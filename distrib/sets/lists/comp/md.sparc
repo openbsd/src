@@ -1,5 +1,9 @@
+./usr/bin/addr2line
+./usr/bin/gasp
 ./usr/bin/gdb
+./usr/bin/objcopy
 ./usr/bin/objdump
+./usr/bin/readelf
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/dlfcn.h
@@ -81,6 +85,10 @@
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.1/2.95.3/include/syslimits.h
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.1/2.95.3/include/typeinfo
 ./usr/lib/gcc-lib/sparc-unknown-openbsd3.1/2.95.3/libgcc.a
+./usr/lib/crtbegin.o
+./usr/lib/crtbeginS.o
+./usr/lib/crtend.o
+./usr/lib/crtendS.o
 ./usr/lib/lib45_pic.a
 ./usr/lib/libacl_pic.a
 ./usr/lib/libasn1_pic.a
@@ -130,6 +138,12 @@
 ./usr/lib/libwrap_pic.a
 ./usr/lib/libz_pic.a
 ./usr/lib/scrt0.o
+./usr/libdata/ldscripts/elf32_sparc.x
+./usr/libdata/ldscripts/elf32_sparc.xbn
+./usr/libdata/ldscripts/elf32_sparc.xn
+./usr/libdata/ldscripts/elf32_sparc.xr
+./usr/libdata/ldscripts/elf32_sparc.xs
+./usr/libdata/ldscripts/elf32_sparc.xu
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umct.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umidi_quirks.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/umidireg.ph
