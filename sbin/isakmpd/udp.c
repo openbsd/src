@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.22 2000/08/03 07:23:55 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.50 2000/07/17 18:57:59 provos Exp $	*/
+/*	$OpenBSD: udp.c,v 1.23 2000/10/16 23:27:23 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.52 2000/10/15 22:02:55 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -299,7 +299,7 @@ udp_bind_if (struct ifreq *ifrp, void *arg)
   /*
    * If we are explicit about what addresses we can listen to, be sure
    * to respect that option.
-   * XXX This is quite wasteful redoing the list-run for every interface,
+   * This is quite wasteful redoing the list-run for every interface,
    * but who cares?  This is not an operation that needs to be fast.
    */
   listen_on = conf_get_list ("General", "Listen-on");
@@ -601,21 +601,27 @@ udp_decode_ids (struct transport *t)
   static char result[1024];
   char idsrc[256], iddst[256];
 
+#ifdef HAVE_GETNAMEINFO
   if (getnameinfo ((struct sockaddr *)&((struct udp_transport *)t)->src,
 		   sizeof ((struct udp_transport *)t)->src,
-		  idsrc, sizeof(idsrc), NULL, 0, NI_NUMERICHOST) != 0)
+		   idsrc, sizeof idsrc, NULL, 0, NI_NUMERICHOST) != 0)
     {
-      log_error ("ipsec_ipv4toa: getnameinfo() failed");
+      log_print ("udp_decode_ids: getnameinfo () failed");
       strcpy (idsrc, "<error>");
     }
 
   if (getnameinfo ((struct sockaddr *)&((struct udp_transport *)t)->dst,
 		   sizeof ((struct udp_transport *)t)->dst,
-		  iddst, sizeof(iddst), NULL, 0, NI_NUMERICHOST) != 0)
+		   iddst, sizeof iddst, NULL, 0, NI_NUMERICHOST) != 0)
     {
-      log_error ("ipsec_ipv4toa: getnameinfo() failed");
+      log_error ("udp_decode_ids: getnameinfo () failed");
       strcpy (iddst, "<error>");
     }
+#else
+  strcpy (idsrc, inet_ntoa (((struct udp_transport *)t)->src.sin_addr));
+  strcpy (iddst, inet_ntoa (((struct udp_transport *)t)->src.sin_addr));
+#endif /* HAVE_GETNAMEINFO */
+
   sprintf (result, "src: %s dst: %s", idsrc, iddst);
 
   return result;
