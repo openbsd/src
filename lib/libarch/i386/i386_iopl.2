@@ -1,4 +1,4 @@
-.\"	$OpenBSD: i386_iopl.2,v 1.10 2003/02/25 08:26:38 jmc Exp $
+.\"	$OpenBSD: i386_iopl.2,v 1.11 2003/03/14 10:56:32 jmc Exp $
 .\"	$NetBSD: i386_iopl.2,v 1.3 1996/02/27 22:57:25 jtc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,6 +51,12 @@
 sets the i386 I/O privilege level to the value specified by
 .Ar iopl .
 This call is restricted to the superuser.
+.Pp
+.Sy Note:
+Code using the
+.Fn i386_iopl
+function must be compiled using
+.Cm -li386 .
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn i386_iopl

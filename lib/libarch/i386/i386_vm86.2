@@ -1,4 +1,4 @@
-.\"	$OpenBSD: i386_vm86.2,v 1.8 2003/02/25 08:26:38 jmc Exp $
+.\"	$OpenBSD: i386_vm86.2,v 1.9 2003/03/14 10:56:32 jmc Exp $
 .\"	$NetBSD: i386_vm86.2,v 1.1 1996/02/21 00:21:52 jtk Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ bit is set, then the process is
 delivered a signal when an INT instruction is executed.
 .Pp
 Since MS-DOS puts many DOS functions onto interrupt 21, it is handled
-specially:  the
+specially: the
 .Ar k Ns Li th
 bit in the
 .Ar vmcp->int21_byuser
@@ -88,6 +88,12 @@ is requested and the
 .Ar ah
 register is
 .Ar k .
+.Pp
+.Sy Note:
+Code using the
+.Fn i386_vm86
+function must be compiled using
+.Cm -li386 .
 .Sh RETURN VALUES
 This routine does not normally return: 32-bit mode will be restored by
 the delivery of a signal to the process.

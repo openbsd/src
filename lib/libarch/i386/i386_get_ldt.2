@@ -68,6 +68,14 @@ can be either segment_descriptor or gate_descriptor, as defined in
 .Ao Pa i386/segments.h Ac .
 These structures are defined by the architecture
 as disjoint bit-fields, so care must be taken in constructing them.
+.Pp
+.Sy Note:
+Code using the
+.Fn i386_get_ldt
+and
+.Fn i386_set_ldt
+functions must be compiled using
+.Cm -li386 .
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn i386_get_ldt
