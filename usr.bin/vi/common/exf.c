@@ -1,4 +1,4 @@
-/*	$OpenBSD: exf.c,v 1.13 2001/06/18 21:39:25 millert Exp $	*/
+/*	$OpenBSD: exf.c,v 1.14 2001/09/17 04:42:55 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -185,6 +185,11 @@ file_init(sp, frp, rcv_name, flags)
 	 */
 	oname = frp->name;
 	if (LF_ISSET(FS_OPENERR) || oname == NULL || !exists) {
+		/*
+		 * Don't try to create a temporary support file twice.
+		 */
+		if (frp->tname != NULL)
+			goto err;
 		if (opts_empty(sp, O_DIRECTORY, 0))
 			goto err;
 		(void)snprintf(tname, sizeof(tname),
