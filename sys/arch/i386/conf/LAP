@@ -1,4 +1,4 @@
-#	$OpenBSD: LAP,v 1.1 1996/05/04 09:19:58 deraadt Exp $
+#	$OpenBSD: LAP,v 1.2 1996/05/06 11:49:24 deraadt Exp $
 #	$NetBSD: TDR,v 1.64 1996/03/25 05:45:49 perry Exp $
 #
 #	TDR -- Theo Deraadt's 486
@@ -28,7 +28,7 @@ options		SWAPPAGER	# paging; REQUIRED
 options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
 
-#options	DDB		# in-kernel debugger
+options		DDB		# in-kernel debugger
 #options	DIAGNOSTIC	# internal consistency checks
 options		KTRACE		# system call tracing, a la ktrace(1)
 
