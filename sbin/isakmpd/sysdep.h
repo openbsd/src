@@ -1,5 +1,5 @@
-/*	$OpenBSD: sysdep.h,v 1.3 1998/11/17 11:10:20 niklas Exp $	*/
-/*	$EOM: sysdep.h,v 1.11 1998/10/12 22:15:15 niklas Exp $	*/
+/*	$OpenBSD: sysdep.h,v 1.4 1999/02/26 03:50:38 niklas Exp $	*/
+/*	$EOM: sysdep.h,v 1.13 1999/02/25 11:21:55 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -39,14 +39,17 @@
 
 #include <sys/types.h>
 
+#include "sysdep-os.h"
+
 struct proto;
 struct sa;
 
 extern void sysdep_app_handler (int);
 extern int sysdep_app_open (void);
+extern void sysdep_conf_init_hook (void);
 extern int sysdep_cleartext (int);
 extern int sysdep_ipsec_delete_spi (struct sa *, struct proto *, int);
-extern int sysdep_ipsec_enable_spi (struct sa *, int);
+extern int sysdep_ipsec_enable_sa (struct sa *, int);
 extern u_int8_t *sysdep_ipsec_get_spi (size_t *, u_int8_t, void *, size_t);
 extern int sysdep_ipsec_group_spis (struct sa *, struct proto *,
 				    struct proto *, int);
