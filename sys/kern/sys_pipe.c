@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.22 1999/11/25 13:39:38 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.23 2000/01/27 18:56:13 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -42,7 +42,6 @@
 #include <sys/signalvar.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/vmmeter.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
