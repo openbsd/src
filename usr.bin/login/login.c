@@ -427,10 +427,12 @@ main(argc, argv)
 #endif
 
 	if (!quietlog) {
+#if 0
 		(void)printf("%s\n\t%s  %s\n\n",
 	    "Copyright (c) 1980, 1983, 1986, 1988, 1990, 1991, 1993, 1994",
 		    "The Regents of the University of California. ",
 		    "All rights reserved.");
+#endif
 		motd();
 		(void)snprintf(tbuf,
 		    sizeof(tbuf), "%s/%s", _PATH_MAILDIR, pwd->pw_name);
