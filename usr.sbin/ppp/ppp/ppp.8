@@ -1,4 +1,4 @@
-.\" $OpenBSD: ppp.8,v 1.87 2000/07/11 22:13:03 brian Exp $
+.\" $OpenBSD: ppp.8,v 1.88 2000/07/12 16:33:53 brian Exp $
 .Dd 20 September 1995
 .nr XX \w'\fC00'
 .Dt PPP 8
@@ -1541,7 +1541,8 @@ set filter
 .Op estab
 .Op syn
 .Op finrst
-.Oc Op timeout Ar secs
+.Op timeout Ar secs
+.Oc
 .Bl -enum
 .It
 .Ar Name
@@ -4395,7 +4396,8 @@ as they travel across the link.
 .Op estab
 .Op syn
 .Op finrst
-.Oc Op timeout Ar secs
+.Op timeout Ar secs
+.Oc
 .Xc
 .Nm
 supports four filter sets.
