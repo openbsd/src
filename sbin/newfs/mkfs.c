@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.10 1997/06/03 22:27:17 grr Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.11 1997/11/17 09:14:05 niklas Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.10 1997/06/03 22:27:17 grr Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.11 1997/11/17 09:14:05 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -1006,7 +1006,8 @@ iput(ip, ino)
 	register struct dinode *ip;
 	register ino_t ino;
 {
-	struct dinode buf[MAXINOPB];
+	struct dinode *buf =
+	   (struct dinode *)malloc(MAXINOPB * sizeof (struct dinode));
 	daddr_t d;
 	int c;
 
@@ -1034,6 +1035,7 @@ iput(ip, ino)
 	rdfs(d, sblock.fs_bsize, buf);
 	buf[ino_to_fsbo(&sblock, ino)] = *ip;
 	wtfs(d, sblock.fs_bsize, buf);
+	free(buf);
 }
 
 /*
