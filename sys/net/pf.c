@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.56 2001/06/26 19:01:55 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.57 2001/06/26 19:09:43 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -2080,8 +2080,9 @@ pf_test(int direction, struct ifnet *ifp, struct mbuf *m)
 	}
 
 	if (m->m_pkthdr.len < sizeof(*h)) {
-		printf("pf: ip header too short\n");
 		action = PF_DROP;
+		reason = PFRES_SHORT;
+		log = 1;
 		goto done;
 	}
 	h = mtod(m, struct ip *);
