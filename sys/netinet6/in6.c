@@ -1,5 +1,5 @@
-/*	$OpenBSD: in6.c,v 1.54 2004/02/23 05:06:41 itojun Exp $	*/
-/*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.55 2004/06/15 04:03:20 itojun Exp $	*/
+/*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -796,6 +796,7 @@ in6_update_ifa(ifp, ifra, ia)
 	struct in6_ifaddr *oia;
 	struct sockaddr_in6 dst6;
 	struct in6_addrlifetime *lt;
+	struct in6_multi *in6m;
 	struct in6_multi_mship *imm;
 	struct rtentry *rt;
 
@@ -1067,16 +1068,20 @@ in6_update_ifa(ifp, ifra, ia)
 			llsol.sin6_addr.s6_addr32[3] =
 			    ifra->ifra_addr.sin6_addr.s6_addr32[3];
 			llsol.sin6_addr.s6_addr8[12] = 0xff;
-			imm = in6_joingroup(ifp, &llsol.sin6_addr, &error);
-			if (imm) {
+			IN6_LOOKUP_MULTI(llsol.sin6_addr, ifp, in6m);
+			if (!in6m) {
+				imm = in6_joingroup(ifp, &llsol.sin6_addr,
+				    &error);
+				if (!imm) {
+					nd6log((LOG_ERR, "in6_update_ifa: "
+					    "addmulti failed for %s on %s "
+					    "(errno=%d)\n",
+					    ip6_sprintf(&llsol.sin6_addr),
+					    ifp->if_xname, error));
+					goto cleanup;
+				}
 				LIST_INSERT_HEAD(&ia->ia6_memberships, imm,
 				    i6mm_chain);
-			} else {
-				nd6log((LOG_ERR, "in6_update_ifa: addmulti "
-				    "failed for %s on %s (errno=%d)\n",
-				    ip6_sprintf(&llsol.sin6_addr),
-				    ifp->if_xname, error));
-				goto cleanup;
 			}
 		}
 
@@ -1135,33 +1140,39 @@ in6_update_ifa(ifp, ifra, ia)
 #ifndef SCOPEDROUTING
 		mltaddr.sin6_scope_id = zoneid;	/* XXX */
 #endif
-		imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
-		if (imm) {
-			LIST_INSERT_HEAD(&ia->ia6_memberships, imm,
-			    i6mm_chain);
-		} else {
-			nd6log((LOG_WARNING,
-			    "in6_update_ifa: addmulti failed for "
-			    "%s on %s (errno=%d)\n",
-			    ip6_sprintf(&mltaddr.sin6_addr),
-			    ifp->if_xname, error));
-			goto cleanup;
+		IN6_LOOKUP_MULTI(mltaddr.sin6_addr, ifp, in6m);
+		if (!in6m) {
+			imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
+			if (!imm) {
+				nd6log((LOG_WARNING,
+				    "in6_update_ifa: addmulti failed for "
+				    "%s on %s (errno=%d)\n",
+				    ip6_sprintf(&mltaddr.sin6_addr),
+				    ifp->if_xname, error));
+				goto cleanup;
+			}
+			LIST_INSERT_HEAD(&ia->ia6_memberships, imm, i6mm_chain);
 		}
 
 		/*
 		 * join node information group address
 		 */
 		if (in6_nigroup(ifp, hostname, hostnamelen, &mltaddr) == 0) {
-			imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
-			if (imm) {
-				LIST_INSERT_HEAD(&ia->ia6_memberships, imm,
-				    i6mm_chain);
-			} else {
-				nd6log((LOG_WARNING, "in6_update_ifa: "
-				    "addmulti failed for %s on %s (errno=%d)\n",
-				    ip6_sprintf(&mltaddr.sin6_addr),
-				    ifp->if_xname, error));
-				/* XXX not very fatal, go on... */
+			IN6_LOOKUP_MULTI(mltaddr.sin6_addr, ifp, in6m);
+			if (!in6m) {
+				imm = in6_joingroup(ifp, &mltaddr.sin6_addr,
+				    &error);
+				if (!imm) {
+					nd6log((LOG_WARNING, "in6_update_ifa: "
+					    "addmulti failed for %s on %s "
+					    "(errno=%d)\n",
+					    ip6_sprintf(&mltaddr.sin6_addr),
+					    ifp->if_xname, error));
+					/* XXX not very fatal, go on... */
+				} else {
+					LIST_INSERT_HEAD(&ia->ia6_memberships,
+					    imm, i6mm_chain);
+				}
 			}
 		}
 
@@ -1201,17 +1212,20 @@ in6_update_ifa(ifp, ifra, ia)
 			} else {
 				RTFREE(rt);
 			}
-			imm = in6_joingroup(ifp, &mltaddr.sin6_addr, &error);
-			if (imm) {
+			IN6_LOOKUP_MULTI(mltaddr.sin6_addr, ifp, in6m);
+			if (!in6m) {
+				imm = in6_joingroup(ifp, &mltaddr.sin6_addr,
+				    &error);
+				if (!imm) {
+					nd6log((LOG_WARNING, "in6_update_ifa: "
+					    "addmulti failed for %s on %s "
+					    "(errno=%d)\n",
+					    ip6_sprintf(&mltaddr.sin6_addr),
+					    ifp->if_xname, error));
+					goto cleanup;
+				}
 				LIST_INSERT_HEAD(&ia->ia6_memberships, imm,
 				    i6mm_chain);
-			} else {
-				nd6log((LOG_WARNING, "in6_update_ifa: "
-				    "addmulti failed for %s on %s "
-				    "(errno=%d)\n",
-				    ip6_sprintf(&mltaddr.sin6_addr),
-				    ifp->if_xname, error));
-				goto cleanup;
 			}
 		}
 	}
