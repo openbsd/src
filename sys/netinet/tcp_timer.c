@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.14 1999/09/01 21:38:21 provos Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.15 1999/11/15 05:50:59 hugh Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -177,7 +177,7 @@ tcp_timers(tp, timer)
 	register struct tcpcb *tp;
 	int timer;
 {
-	register int rexmt;
+	short rto;
 #ifdef TCP_SACK
 	struct sackhole *p, *q;
 	/*
@@ -229,8 +229,11 @@ tcp_timers(tp, timer)
 			break;
 		}
 		tcpstat.tcps_rexmttimeo++;
-		rexmt = TCP_REXMTVAL(tp) * tcp_backoff[tp->t_rxtshift];
-		TCPT_RANGESET((long) tp->t_rxtcur, rexmt,
+		rto = TCP_REXMTVAL(tp);
+		if (rto < tp->t_rttmin)
+			rto = tp->t_rttmin;
+		TCPT_RANGESET((long) tp->t_rxtcur,
+		    rto * tcp_backoff[tp->t_rxtshift],
 		    tp->t_rttmin, TCPTV_REXMTMAX);
 		tp->t_timer[TCPT_REXMT] = tp->t_rxtcur;
 		/*
@@ -306,9 +309,12 @@ tcp_timers(tp, timer)
 		 * (no responses to probes) reaches the maximum
 		 * backoff that we would use if retransmitting.
 		 */
+		rto = TCP_REXMTVAL(tp);
+		if (rto < tp->t_rttmin)
+			rto = tp->t_rttmin;
 		if (tp->t_rxtshift == TCP_MAXRXTSHIFT &&
 		    (tp->t_idle >= tcp_maxpersistidle ||
-		     tp->t_idle >= TCP_REXMTVAL(tp) * tcp_totbackoff)) {
+		     tp->t_idle >= rto * tcp_totbackoff)) {
 			tcpstat.tcps_persistdrop++;
 			tp = tcp_drop(tp, ETIMEDOUT);
 			break;

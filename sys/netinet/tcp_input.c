@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.50 1999/11/04 11:24:23 ho Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.51 1999/11/15 05:50:59 hugh Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2551,6 +2551,7 @@ tcp_xmit_timer(tp, rtt)
 	short rtt;
 {
 	register short delta;
+	short rttmin;
 
 	tcpstat.tcps_rttupdated++;
 	--rtt;
@@ -2603,8 +2604,11 @@ tcp_xmit_timer(tp, rtt)
 	 * statistical, we have to test that we don't drop below
 	 * the minimum feasible timer (which is 2 ticks).
 	 */
-	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp),
-	    rtt + 2, TCPTV_REXMTMAX);
+	if (tp->t_rttmin > rtt + 2)
+		rttmin = tp->t_rttmin;
+	else
+		rttmin = rtt + 2;
+	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp), rttmin, TCPTV_REXMTMAX);
 	
 	/*
 	 * We received an ack for a packet that wasn't retransmitted;
@@ -2704,7 +2708,9 @@ tcp_mss(tp, offer)
 		 * is also a minimum value; this is subject to time.
 		 */
 		if (rt->rt_rmx.rmx_locks & RTV_RTT)
-			tp->t_rttmin = rtt / (RTM_RTTUNIT / PR_SLOWHZ);
+			TCPT_RANGESET(tp->t_rttmin,
+			    rtt / (RTM_RTTUNIT / PR_SLOWHZ),
+			    TCPTV_MIN, TCPTV_REXMTMAX);
 		tp->t_srtt = rtt / (RTM_RTTUNIT / (PR_SLOWHZ * TCP_RTT_SCALE));
 		if (rt->rt_rmx.rmx_rttvar)
 			tp->t_rttvar = rt->rt_rmx.rmx_rttvar /
