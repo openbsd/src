@@ -1,0 +1,321 @@
+.\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
+.\"
+.\" Copyright (c) 1996 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Paul Kranenburg.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE
+.\" LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd Jun 16, 1996
+.Dt MALLOC 9
+.Os
+.Sh NAME
+.Nm malloc
+.Nd kernel memory allocator
+.Sh SYNOPSIS
+.Ft void *
+.Fn malloc "unsigned long size" "int type" "int flags"
+.Fn MALLOC "space" "cast" "unsigned long size" "int type" "int flags"
+.Ft void
+.Fn free "void *addr" "int type"
+.Fn FREE "void *addr" "int type"
+.Sh DESCRIPTION
+The
+.Fn malloc
+function allocates uninitialized memory in kernel address space for an
+object whose size is specified by
+.Fa size .
+.Fn free
+releases memory at address
+.Fa addr
+that was previously allocated by
+.Fn malloc
+for re-use.
+The
+.Fn MALLOC
+macro variant is functionally equivalent to
+.Bd -literal -offset indent
+(space) = (cast)malloc((u_long)(size), type, flags)
+.Ed
+.Pp
+and the
+.Fn FREE
+macro variant is equivalent to
+.Bd -literal -offset indent
+free((caddr_t)(addr), type)
+.Ed
+.Pp
+Unlike its standard C library counterpart
+.Pq Xr malloc 3 ,
+the kernel version takes two more arguments.  The
+.Fa flags
+argument further qualifies
+.Fn malloc No Ns 's
+operational charateristics as follows:
+.Bl -tag -offset indent
+.It Dv M_NOWAIT
+Causes
+.Fn malloc
+to return
+.Dv NULL
+if the request cannot be immediately fulfilled due to resource shortage.
+Otherwise,
+.Fn malloc
+may call sleep to wait for resources to be released by other processes.
+If this flag is not set,
+.Fn malloc
+will never return
+.Dv NULL .
+Note that
+.Dv M_WAITOK
+is conveniently defined to be 0, and hence maybe or'ed into the
+.Fa flags
+argument to indicate that it's Ok to wait for resources.
+.El
+.Pp
+Currently, only one flag is defined.
+.Pp
+The
+.Fa type
+argument broadly identifies the the kernel subsystem for which the allocated
+memory was needed, and is commonly used to maintain statistics about
+kernel memory usage. The following types are currently defined:
+.Pp
+.Bl -tag -offset indent -width XXXXXXXXXXXXXX -compact
+.It Dv M_FREE
+Should be on free list.
+.It Dv M_MBUF
+Mbuf  memory.
+.It Dv M_DEVBUF
+Device driver memory.
+.It Dv M_SOCKET
+Socket structure.
+.It Dv M_PCB
+Protocol control block.
+.It Dv M_RTABLE
+Routing tables.
+.It Dv M_HTABLE
+IMP host tables.
+.It Dv M_FTABLE
+Fragment reassembly header.
+.It Dv M_ZOMBIE
+Zombie proc status
+.It Dv M_IFADDR
+Interface address.
+.It Dv M_SOOPTS
+Socket options.
+.It Dv M_SONAME
+Socket name.
+.It Dv M_NAMEI
+Namei path name buffer.
+.It Dv M_GPROF
+Kernel profiling buffer.
+.It Dv M_IOCTLOPS
+Ioctl data buffer.
+.It Dv M_MAPMEM
+Mapped memory descriptors.
+.It Dv M_CRED
+Credentials.
+.It Dv M_PGRP
+Process group header.
+.It Dv M_SESSION
+Session header.
+.It Dv M_IOV
+Large iov's.
+.It Dv M_MOUNT
+Vfs mount struct.
+.It Dv M_FHANDLE
+Network file handle.
+.It Dv M_NFSREQ
+NFS request header.
+.It Dv M_NFSMNT
+NFS mount structure.
+.It Dv M_NFSNODE
+NFS vnode private part.
+.It Dv M_VNODE
+Dynamically allocated vnodes.
+.It Dv M_CACHE
+Dynamically allocated cache entries.
+.It Dv M_DQUOT
+UFS quota entries.
+.It Dv M_UFSMNT
+UFS mount structure.
+.It Dv M_SHM
+SVID compatible shared memory segments.
+.It Dv M_VMMAP
+VM map structures.
+.It Dv M_VMMAPENT
+VM map entry structures.
+.It Dv M_VMOBJ
+VM object structure.
+.It Dv M_VMOBJHASH
+VM object hash structure.
+.It Dv M_VMPMAP
+VM pmap.
+.It Dv M_VMPVENT
+VM phys-virt mapping entry.
+.It Dv M_VMPAGER
+XXX: VM pager struct.
+.It Dv M_VMPGDATA
+XXX: VM pager private data.
+.It Dv M_FILE
+Open file structure.
+.It Dv M_FILEDESC
+Open file descriptor table.
+.It Dv M_LOCKF
+Byte-range locking structures.
+.It Dv M_PROC
+Proc structures.
+.It Dv M_SUBPROC
+Proc sub-structures.
+.It Dv M_SEGMENT
+Segment for LFS.
+.It Dv M_LFSNODE
+LFS vnode private part.
+.It Dv M_FFSNODE
+FFS vnode private part.
+.It Dv M_MFSNODE
+MFS vnode private part.
+.It Dv M_NQLEASE
+Nqnfs lease.
+.It Dv M_NQMHOST
+Nqnfs host address table.
+.It Dv M_NETADDR
+Export host address structure.
+.It Dv M_NFSSVC
+Nfs server structure.
+.It Dv M_NFSUID
+Nfs uid mapping structure.
+.It Dv M_NFSD
+Nfs server daemon structure.
+.It Dv M_IPMOPTS
+Internet multicast options.
+.It Dv M_IPMADDR
+Internet multicast address.
+.It Dv M_IFMADDR
+Link-level multicast address.
+.It Dv M_MRTABLE
+Multicast routing tables.
+.It Dv M_ISOFSMNT
+ISOFS mount structure.
+.It Dv M_ISOFSNODE
+ISOFS vnode private part.
+.It Dv M_MSDOSFSMNT
+MSDOS FS mount structure.
+.It Dv M_MSDOSFSFAT
+MSDOS FS fat table.
+.It Dv M_MSDOSFSNODE
+MSDOS FS vnode private part.
+.It Dv M_TTYS
+Allocated tty structures.
+.It Dv M_EXEC
+Argument lists & other mem used by exec.
+.It Dv M_MISCFSMNT
+Miscfs mount structures.
+.It Dv M_MISCFSNODE
+Miscfs vnode private part.
+.It Dv M_ADOSFSMNT
+Adosfs mount structures.
+.It Dv M_ADOSFSNODE
+ADosfs vnode private part.
+.It Dv M_ANODE
+Adosfs anode structures and tables.
+.It Dv M_IPQ
+IP packet queue entry.
+.It Dv M_AFS
+Andrew File System.
+.It Dv M_ADOSFSBITMAP
+Adosfs bitmap.
+.It Dv M_TEMP
+Misc temporary data buffers.
+.El
+.Pp
+Statistics based on the
+.Fa type
+argument is maintained only if the kernel option
+.Dv KMEMSTATS
+is used when compiling the kernel
+.Po the default in current
+.Nx
+kernels
+.Pc
+and can be examined by using
+.Sq vmstat -m .
+.Sh RETURN VALUES
+.Fn malloc
+returns a kernel virtual address that is suitably aligned for storage of
+any type of object.
+.Sh SEE ALSO
+.Xr vmstat 8
+.Sh DIAGNOSTICS
+A kernel compiled with the
+.Dv DIAGNOSTIC
+configuration option attempts to detect detect memory corruption caused by
+such things as writing outside the allocated area and imbalanced calls to the
+.Fn malloc
+and
+.Fn free
+functions. Failing consistency checks will cause a panic or a system console
+message:
+.Bl -bullet -offset indent -compact
+.Pp
+.It
+panic:
+.Dq malloc - bogus type
+.It
+panic:
+.Dq malloc: out of space in kmem_map
+.It
+panic:
+.Dq malloc: allocation too large
+.It
+panic:
+.Dq malloc: wrong bucket
+.It
+panic:
+.Dq malloc: lost data
+.It
+panic:
+.Dq free: unaligned addr
+.It
+panic:
+.Dq free: duplicated free
+.It
+panic:
+.Dq free: multiple frees
+.It
+panic:
+.Dq init: minbucket too small/struct freelist too big
+.It
+.Dq multiply freed item Aq addr
+.It
+.Dq Data modified on freelist: Aq data object description
+.El
