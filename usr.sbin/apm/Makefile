@@ -1,7 +1,6 @@
-# $Id: Makefile,v 1.2 1996/11/14 15:04:51 mickey Exp $
+# $Id: Makefile,v 1.3 1997/03/26 00:35:49 deraadt Exp $
 
 SRCS=	apm.c apmsubr.c
-#LDADD+=	-lutil
 
 .PATH:	${.CURDIR}/../apmd
 

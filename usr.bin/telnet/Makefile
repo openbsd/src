@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1996/09/05 09:10:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/03/26 00:35:39 deraadt Exp $
 #	$NetBSD: Makefile,v 1.6 1996/02/28 21:03:49 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ CFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO -DSKEY -Dunix
 CFLAGS+=-DENV_HACK
 CFLAGS+=-I${.CURDIR}/../../lib
 LDADD+=	-ltermcap -ltelnet
-DPADD=	${LIBTERMCAP}
+DPADD=	${LIBTERMCAP} ${LIBTELNET}
 
 
 SRCS=	authenc.c commands.c main.c network.c ring.c sys_bsd.c telnet.c \

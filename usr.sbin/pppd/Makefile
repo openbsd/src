@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1996/12/23 13:22:36 mickey Exp $
+#	$OpenBSD: Makefile,v 1.9 1997/03/26 00:35:57 deraadt Exp $
 #	$NetBSD: Makefile,v 1.12 1996/03/19 03:03:04 jtc Exp $
 
 PROG=	pppd
@@ -11,9 +11,7 @@ SUBDIR=	pppstats chat
 BINMODE=4555
 BINOWN=	root
 
-#LDADD=	-lcrypt -lutil
 LDADD=	-lutil
-#DPADD=	${LIBCRYPT} ${LIBUTIL}
 DPADD=	${LIBUTIL}
 CFLAGS+= -I. -I${.CURDIR} -DHAVE_PATHS_H -DIPX_CHANGE
 CLEANFILES=y.tab.h grammar.c scanner.c
