@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.98 1999/02/23 04:10:12 marc Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.99 1999/02/23 21:18:27 marc Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1940,7 +1940,9 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	extern char cpu_vendor[];
 	extern int cpu_id;
 	extern int cpu_feature;
+#if NAPM > 0
 	extern int cpu_apmwarn;
+#endif
 	dev_t dev;
 
 	switch (name[0]) {
@@ -1985,8 +1987,10 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdint(oldp, oldlenp, newp, cpu_id));
 	case CPU_CPUFEATURE:
 		return (sysctl_rdint(oldp, oldlenp, newp, cpu_feature));
+#if NAPM > 0
 	case CPU_APMWARN:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_apmwarn));
+#endif
 	default:
 		return EOPNOTSUPP;
 	}
