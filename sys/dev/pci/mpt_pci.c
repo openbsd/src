@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_pci.c,v 1.4 2004/06/22 18:57:18 marco Exp $	*/
+/*	$OpenBSD: mpt_pci.c,v 1.5 2004/06/22 19:00:53 marco Exp $	*/
 /*	$NetBSD: mpt_pci.c,v 1.2 2003/07/14 15:47:26 lukem Exp $	*/
 
 /*
@@ -73,7 +73,6 @@
 #include <dev/pci/pcidevs.h>
 
 #define	MPT_PCI_MMBA		(PCI_MAPREG_START+0x04)
-
 #define PCI_MAPREG_ROM	0x30
 
 void mpt_pci_attach(struct device *, struct device *, void *);
@@ -125,7 +124,6 @@ static const struct mpt_pci_product {
 	  MPP_F_FC },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_FC919_1,
 	  MPP_F_FC },
-
 	{ 0,			0,
 	  0 },
 };
