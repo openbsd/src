@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.234 2005/03/10 22:01:06 deraadt Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.235 2005/04/06 12:26:06 dtucker Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -865,6 +865,8 @@ ssh_init_forwarding(void)
 	for (i = 0; i < options.num_remote_forwards; i++) {
 		debug("Remote connections from %.200s:%d forwarded to "
 		    "local address %.200s:%d",
+		    (options.remote_forwards[i].listen_host == NULL) ? 
+		    (options.gateway_ports ? "*" : "LOCALHOST") : 
 		    options.remote_forwards[i].listen_host,
 		    options.remote_forwards[i].listen_port,
 		    options.remote_forwards[i].connect_host,
