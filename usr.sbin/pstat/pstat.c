@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.6 1996/11/24 23:42:11 millert Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.7 1996/12/22 03:29:03 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.6 1996/11/24 23:42:11 millert Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.7 1996/12/22 03:29:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -208,8 +208,10 @@ main(argc, argv)
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
 	 */
-	if (nlistf != NULL || memf != NULL)
+	if (nlistf != NULL || memf != NULL) {
+		(void)setegid(getgid());
 		(void)setgid(getgid());
+	}
 
 	if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, buf)) == 0)
 		errx(1, "kvm_openfiles: %s", buf);

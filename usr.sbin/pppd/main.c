@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 1996/08/20 04:48:27 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 1996/12/22 03:29:01 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.11 1996/08/20 04:48:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.12 1996/12/22 03:29:01 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -1010,7 +1010,10 @@ device_script(program, in, out)
                 close(errfd);
             }
         }
+	/* revoke privs */
+	seteuid(getuid());
 	setuid(getuid());
+	setegid(getgid());
 	setgid(getgid());
 	execl("/bin/sh", "sh", "-c", program, (char *)0);
 	syslog(LOG_ERR, "could not exec /bin/sh: %m");

@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)timedc.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.1.1.1 $"
+#ident "$Revision: 1.2 $"
 #endif
 
 #include "timedc.h"
@@ -77,6 +77,9 @@ main(int argc, char *argv[])
 		fprintf(stderr, "Could not get privileged resources\n");
 		exit(1);
 	}
+	/* revoke privs */
+
+	(void) seteuid(getuid());
 	(void) setuid(getuid());
 
 	if (--argc > 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: slstats.c,v 1.6 1996/12/10 15:14:33 deraadt Exp $	*/
+/*	$OpenBSD: slstats.c,v 1.7 1996/12/22 03:29:06 deraadt Exp $	*/
 /*	$NetBSD: slstats.c,v 1.6.6.1 1996/06/07 01:42:30 thorpej Exp $	*/
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: slstats.c,v 1.6 1996/12/10 15:14:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: slstats.c,v 1.7 1996/12/22 03:29:06 deraadt Exp $";
 #endif
 
 #define INET
@@ -133,8 +133,10 @@ main(argc, argv)
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
 	 */
-	if (kmemf != NULL || kernel != NULL)
+	if (kmemf != NULL || kernel != NULL) {
+		setegid(getgid());
 		setgid(getgid());
+	}
 
 	memset(errbuf, 0, sizeof(errbuf));
 	if ((kd = kvm_openfiles(kernel, kmemf, NULL, O_RDONLY, errbuf)) == NULL)

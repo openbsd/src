@@ -312,6 +312,9 @@ main(argc, argv)
 		err(5, "icmp socket");
 	if ((sndsock = socket(AF_INET, SOCK_RAW, IPPROTO_RAW)) < 0)
 		err(5, "raw socket");
+
+	/* revoke privs */
+	seteuid(getuid());
 	setuid(getuid());
 
 	lsrr = 0;
