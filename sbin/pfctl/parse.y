@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.334 2003/03/02 12:37:49 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.335 2003/03/02 23:37:24 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3059,7 +3059,8 @@ expand_altq(struct pf_altq *a, struct node_if *interfaces,
 					errs++;
 
 			if (pf->opts & PF_OPT_VERBOSE) {
-				print_altq(&pf->paltq->altq, 0);
+				print_altq(&pf->paltq->altq, 0,
+				    bwspec.bw_percent);
 				if (nqueues && nqueues->tail) {
 					printf("queue { ");
 					LOOP_THROUGH(struct node_queue, queue,
@@ -3208,21 +3209,21 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 			    bwspec.bw_percent))
 				if (!pfctl_add_altq(pf, a))
 					added++;
-
-			if ((pf->opts & PF_OPT_VERBOSE) && found == 1) {
-				print_altq(&pf->paltq->altq, 0);
-				if (nqueues && nqueues->tail) {
-					printf("{ ");
-					LOOP_THROUGH(struct node_queue, queue,
-					    nqueues,
-						printf("%s ", queue->queue);
-					);
-					printf("}");
-				}
-				printf("\n");
-			}
 		}
 	);
+
+	if ((pf->opts & PF_OPT_VERBOSE) && found > 0) {
+		print_altq(&pf->paltq->altq, 0, bwspec.bw_percent);
+		if (nqueues && nqueues->tail) {
+			printf("{ ");
+			LOOP_THROUGH(struct node_queue, queue,
+			    nqueues,
+				printf("%s ", queue->queue);
+			);
+			printf("}");
+		}
+		printf("\n");
+	}
 
 	FREE_LIST(struct node_queue, nqueues);
 

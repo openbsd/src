@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.39 2003/03/02 12:37:49 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.40 2003/03/02 23:37:24 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -161,10 +161,10 @@ qid_to_qname(u_int32_t qid, const char *ifname)
 }
 
 void
-print_altq(const struct pf_altq *a, unsigned level)
+print_altq(const struct pf_altq *a, unsigned level, u_int16_t bwpercent)
 {
 	if (a->qname[0] != NULL) {
-		print_queue(a, level);
+		print_queue(a, level, bwpercent);
 		return;
 	}
 
@@ -188,14 +188,18 @@ print_altq(const struct pf_altq *a, unsigned level)
 		break;
 	}
 
-	printf("bandwidth %s ", rate2str((double)a->ifbandwidth));
+	if (bwpercent > 0) {
+		if (bwpercent < 100)
+			printf("bandwidth %u%% ", bwpercent);
+	} else
+		printf("bandwidth %s ", rate2str((double)a->ifbandwidth));
 	if (a->qlimit != DEFAULT_QLIMIT)
 		printf("qlimit %u ", a->qlimit);
 	printf("tbrsize %u ", a->tbrsize);
 }
 
 void
-print_queue(const struct pf_altq *a, unsigned level)
+print_queue(const struct pf_altq *a, unsigned level, u_int16_t bwpercent)
 {
 	unsigned	i;
 
@@ -203,8 +207,13 @@ print_queue(const struct pf_altq *a, unsigned level)
 	for (i = 0; i < level; ++i)
 		printf(" ");
 	printf("%s ", a->qname);
-	if (a->scheduler == ALTQT_CBQ || a->scheduler == ALTQT_HFSC)
-		printf("bandwidth %s ", rate2str((double)a->bandwidth));
+	if (a->scheduler == ALTQT_CBQ || a->scheduler == ALTQT_HFSC) {
+		if (bwpercent > 0) {
+			if (bwpercent < 100)
+				printf("bandwidth %u%% ", bwpercent);
+		} else
+			printf("bandwidth %s ", rate2str((double)a->bandwidth));
+	}
 	if (a->priority != DEFAULT_PRIORITY)
 		printf("priority %u ", a->priority);
 	if (a->qlimit != DEFAULT_QLIMIT)
