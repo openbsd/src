@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.9 1997/11/06 22:15:52 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.10 2001/01/23 07:06:23 csapuntz Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -398,17 +398,22 @@ unionread:
 		} else
 #	endif
 	{
+		u_int  nbytes = SCARG(uap, count);
+
+		nbytes = min(nbytes, MAXBSIZE);
+
 		kuio = auio;
 		kuio.uio_iov = &kiov;
 		kuio.uio_segflg = UIO_SYSSPACE;
-		kiov.iov_len = SCARG(uap, count);
-		MALLOC(dirbuf, caddr_t, SCARG(uap, count), M_TEMP, M_WAITOK);
+		kiov.iov_len = nbytes;
+		dirbuf = (caddr_t)malloc(nbytes, M_TEMP, M_WAITOK);
 		kiov.iov_base = dirbuf;
+
 		error = VOP_READDIR(vp, &kuio, fp->f_cred, &eofflag,
 				    0, 0);
 		fp->f_offset = kuio.uio_offset;
 		if (error == 0) {
-			readcnt = SCARG(uap, count) - kuio.uio_resid;
+			readcnt = nbytes - kuio.uio_resid;
 			edp = (struct dirent *)&dirbuf[readcnt];
 			for (dp = (struct dirent *)dirbuf; dp < edp; ) {
 #				if (BYTE_ORDER == LITTLE_ENDIAN)
