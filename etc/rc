@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.148 2000/07/13 16:26:13 millert Exp $
+#	$OpenBSD: rc,v 1.149 2000/08/05 06:38:55 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -112,18 +112,6 @@ rm -f /fastboot		# XXX (root now writeable)
 echo 'setting tty flags'
 ttyflags -a
 
-# if there's no /var/db/host.random, make one through /dev/urandom
-if [ ! -f /var/db/host.random ]; then
-	dd if=/dev/urandom of=/var/db/host.random bs=1024 count=64 \
-		>/dev/null 2>&1
-	chmod 600 /var/db/host.random >/dev/null 2>&1
-else
-	dd if=/var/db/host.random of=/dev/urandom bs=1024 count=64 \
-	    > /dev/null 2>&1
-	dd if=/var/db/host.random of=/dev/arandom bs=1024 count=64 \
-	    > /dev/null 2>&1
-fi
-
 if [ -f /etc/sysctl.conf ]; then
 (
 	# delete comments and blank lines
@@ -141,6 +129,18 @@ echo 'starting network'
 
 mount /usr >/dev/null 2>&1
 mount /var >/dev/null 2>&1
+
+# if there's no /var/db/host.random, make one through /dev/urandom
+if [ ! -f /var/db/host.random ]; then
+	dd if=/dev/urandom of=/var/db/host.random bs=1024 count=64 \
+		>/dev/null 2>&1
+	chmod 600 /var/db/host.random >/dev/null 2>&1
+else
+	dd if=/var/db/host.random of=/dev/urandom bs=1024 count=64 \
+	    > /dev/null 2>&1
+	dd if=/var/db/host.random of=/dev/arandom bs=1024 count=64 \
+	    > /dev/null 2>&1
+fi
 
 # clean up left-over files
 rm -f /etc/nologin
