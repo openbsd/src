@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.4 2000/07/28 13:03:24 rahnds Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.5 2001/03/29 22:54:37 drahn Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -45,7 +45,7 @@ static void	mbattach __P((struct device *, struct device *, void *));
 static int	mbprint __P((void *, const char *));
 
 struct cfattach mainbus_ca = {
-	sizeof(struct device), mbmatch, mbattach
+	sizeof(struct mainbus_softc), mbmatch, mbattach
 };
 struct cfdriver mainbus_cd = {
 	NULL, "mainbus", DV_DULL, NULL, 0
