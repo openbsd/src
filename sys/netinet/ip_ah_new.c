@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.1 1997/07/11 23:37:55 provos Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.2 1997/07/12 14:57:01 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -217,7 +217,7 @@ ah_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     }
 
     for (i = 0; i < blocklen; i++)
-      buffer[i] ^= (HMAC_IPAD_VAL ^ HMAC_IPAD_VAL);
+      buffer[i] ^= (HMAC_IPAD_VAL ^ HMAC_OPAD_VAL);
 
     switch (xd->amx_hash_algorithm)
     {
@@ -536,7 +536,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     	    MD5Final((unsigned char *) (aho->ah_data), &md5ctx);
     	    md5ctx = xd->amx_md5_octx;
     	    MD5Update(&md5ctx, (unsigned char *) (aho->ah_data),
-		      AH_HMAC_HASHLEN);
+		      AH_MD5_ALEN);
     	    MD5Final((unsigned char *) (aho->ah_data), &md5ctx);
 	    break;
 
@@ -544,7 +544,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     	    SHA1Final((unsigned char *) (aho->ah_data), &sha1ctx);
     	    sha1ctx = xd->amx_sha1_octx;
     	    SHA1Update(&sha1ctx, (unsigned char *) (aho->ah_data),
-		       AH_HMAC_HASHLEN);
+		       AH_SHA1_ALEN);
     	    SHA1Final((unsigned char *) (aho->ah_data), &sha1ctx);
 	    break;
     }
