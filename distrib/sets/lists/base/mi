@@ -1802,3 +1802,7 @@
 ./var/yp/Makefile.yp
 ./var/yp/Makefile.yp.dist
 ./var/yp/README
+./usr/share/smtpd
+./usr/share/smtpd/example.antispam
+./usr/share/smtpd/example.features
+./usr/share/smtpd/example.norelay
