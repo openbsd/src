@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.60 2001/10/26 13:29:26 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.61 2001/12/16 22:39:09 deraadt Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -1786,8 +1786,8 @@ ipsec_get_id (char *section, int *id, struct sockaddr **addr,
 
       if (text2sockaddr (address, NULL, addr))
 	{
-	  log_print ("ipsec_get_id: invalid address %s in section %s", section,
-		     address);
+	  log_print ("ipsec_get_id: invalid address %s in section %s", address,
+		     section);
 	  return -1;
 	}
 
