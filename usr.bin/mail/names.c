@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.7 1997/07/24 17:27:12 millert Exp $	*/
+/*	$OpenBSD: names.c,v 1.8 1997/07/31 02:48:14 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: names.c,v 1.7 1997/07/24 17:27:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: names.c,v 1.8 1997/07/31 02:48:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,10 +101,12 @@ extract(line, ntype)
 {
 	register char *cp;
 	register struct name *top, *np, *t;
-	char nbuf[BUFSIZ];
+	char *nbuf;
 
 	if (line == NULL || *line == '\0')
 		return(NIL);
+	if ((nbuf = (char *)malloc(strlen(line) + 1)) == NULL)
+		panic("Out of memory");
 	top = NIL;
 	np = NIL;
 	cp = line;
@@ -117,6 +119,7 @@ extract(line, ntype)
 		t->n_blink = np;
 		np = t;
 	}
+	(void)free(nbuf);
 	return(top);
 }
 
