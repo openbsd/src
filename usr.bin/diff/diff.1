@@ -1,4 +1,4 @@
-.\" $OpenBSD: diff.1,v 1.21 2003/09/07 18:50:58 jmc Exp $
+.\" $OpenBSD: diff.1,v 1.22 2003/09/18 09:38:33 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,7 +84,7 @@ and writes to the standard output the list of changes necessary to
 convert one file into the other.
 No output is produced if the files are identical.
 .Pp
-Output options:
+Output options (mutually exclusive):
 .Bl -tag -width Ds
 .It Fl c
 Produces a diff with 3 lines of context.
@@ -107,10 +107,6 @@ both files with
 .Sq !\ \& .
 Changes which lie within 3 lines of each other are grouped together on
 output.
-.It Fl d
-Try very hard to produce a diff as small as possible.
-This may consume a lot of processing power and memory when processing
-large files with many changes.
 .It Fl e
 Produces output in a form suitable as input for the editor utility,
 .Xr ed 1 ,
@@ -187,6 +183,10 @@ Treat all files as ASCII.
 .It Fl b
 Causes trailing blanks (spaces and tabs) to be ignored, and other
 strings of blanks to compare equal.
+.It Fl d
+Try very hard to produce a diff as small as possible.
+This may consume a lot of processing power and memory when processing
+large files with many changes.
 .It Fl i
 Ignores the case of letters.
 E.g.,
