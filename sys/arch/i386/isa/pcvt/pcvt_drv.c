@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.27 1999/11/25 21:00:35 aaron Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.28 1999/11/26 23:06:29 aaron Exp $	*/
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *
@@ -608,7 +608,7 @@ pccnputc(Dev_t dev, U_char c)
 #if PCVT_SW0CNOUTP
 
 	if(current_video_screen != 0)
-		switch_screen(0, 0);
+		switch_screen(0, 0, 0);
 
 #endif /* PCVT_SW0CNOUTP */
 
