@@ -1,4 +1,4 @@
-.\"     $OpenBSD: getnewvnode.9,v 1.3 2003/03/10 19:56:29 tedu Exp $
+.\"     $OpenBSD: getnewvnode.9,v 1.4 2004/12/06 01:53:25 jaredy Exp $
 .\"
 .\" Copyright (C) 2001 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -41,7 +41,7 @@
 .Fo getnewvnode
 .Fa "enum vtagtype tag"
 .Fa "struct mount *mp"
-.Fa "int (**vops) __P((void *))"
+.Fa "int (**vops)((void *))"
 .Fa "struct vnode **vpp"
 .Fc
 .Sh DESCRIPTION
