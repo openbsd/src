@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.543 2002/09/09 17:35:00 gluk Exp 
+ *		OpenBSD: pcidevs,v 1.544 2002/09/14 09:07:12 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2901,6 +2901,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82802AC,
 	    "82802AC Firmware Hub 8Mbit",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21152,
+	    "S21152BB PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21154,
+	    "S21154AE/BE PCI-PCI",
 	},
 	{
 	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D50T,
