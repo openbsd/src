@@ -47,6 +47,8 @@
 #include <sys/param.h>
 #include <sys/mbuf.h>
 
+#include <netinet/in.h>
+
 /*
  * Checksum routine for Internet Protocol family headers.
  *
