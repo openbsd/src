@@ -1,3 +1,5 @@
+/*	$OpenBSD: regexp.c,v 1.2 1996/07/24 05:39:11 downsj Exp $	*/
+
 /*
  * regcomp and regexec -- regsub and regerror are elsewhere
  *
@@ -34,7 +36,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: regexp.c,v 1.1.1.1 1995/10/18 08:42:35 deraadt Exp $";
+static char *rcsid = "$OpenBSD: regexp.c,v 1.2 1996/07/24 05:39:11 downsj Exp $";
 #endif /* not lint */
 
 #include <regexp.h>
@@ -149,7 +151,7 @@ static char *rcsid = "$Id: regexp.c,v 1.1.1.1 1995/10/18 08:42:35 deraadt Exp $"
 #define	UCHARAT(p)	((int)*(p)&CHARBITS)
 #endif
 
-#define	FAIL(m)	{ regerror(m); return(NULL); }
+#define	FAIL(m)	{ v8_regerror(m); return(NULL); }
 #define	ISMULT(c)	((c) == '*' || (c) == '+' || (c) == '?')
 
 /*
@@ -205,7 +207,7 @@ STATIC int strcspn __P((char *, char *));
  * of the structure of the compiled regexp.
  */
 regexp *
-regcomp(exp)
+v8_regcomp(exp)
 const char *exp;
 {
 	register regexp *r;
@@ -789,7 +791,7 @@ STATIC char *regprop __P((char *));
  - regexec - match a regexp against a string
  */
 int
-regexec(prog, string)
+v8_regexec(prog, string)
 register const regexp *prog;
 register const char *string;
 {
@@ -797,13 +799,13 @@ register const char *string;
 
 	/* Be paranoid... */
 	if (prog == NULL || string == NULL) {
-		regerror("NULL parameter");
+		v8_regerror("NULL parameter");
 		return(0);
 	}
 
 	/* Check validity of program. */
 	if (UCHARAT(prog->program) != MAGIC) {
-		regerror("corrupted program");
+		v8_regerror("corrupted program");
 		return(0);
 	}
 
@@ -1069,7 +1071,7 @@ char *prog;
 			return(1);	/* Success! */
 			break;
 		default:
-			regerror("memory corruption");
+			v8_regerror("memory corruption");
 			return(0);
 			break;
 		}
@@ -1081,7 +1083,7 @@ char *prog;
 	 * We get here only if there's trouble -- normally "case END" is
 	 * the terminating point.
 	 */
-	regerror("corrupted pointers");
+	v8_regerror("corrupted pointers");
 	return(0);
 }
 
@@ -1122,7 +1124,7 @@ char *p;
 		}
 		break;
 	default:		/* Oh dear.  Called inappropriately. */
-		regerror("internal foulup");
+		v8_regerror("internal foulup");
 		count = 0;	/* Best compromise. */
 		break;
 	}
@@ -1279,7 +1281,7 @@ char *op;
 		p = "WORDZ";
 		break;
 	default:
-		regerror("corrupted opcode");
+		v8_regerror("corrupted opcode");
 		break;
 	}
 	if (p != NULL)
