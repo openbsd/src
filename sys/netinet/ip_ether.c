@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.20 2001/02/01 20:19:24 jason Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.21 2001/02/02 08:28:20 jason Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -99,6 +99,7 @@ va_dcl
     struct ether_header eh;
     struct mbuf *mrest, *m0;
     int iphlen, clen;
+    struct etherip_header eip;
     u_int8_t v;
     va_list ap;
 
@@ -122,11 +123,11 @@ va_dcl
     }
 
     /*
-     * Make sure there's at least an ethernet header's plus one byte
-     * (EtherIP header) worth of data after the outer IP header.
+     * Make sure there's at least an ethernet header's and an EtherIP header's
+     * worth of worth of data after the outer IP header.
      */
     if (m->m_pkthdr.len < iphlen + sizeof(struct ether_header) +
-	sizeof(u_int8_t))
+	sizeof(struct etherip_header))
     {
 	DPRINTF(("etherip_input(): encapsulated packet too short\n"));
 	etheripstat.etherip_hdrops++;
@@ -135,32 +136,34 @@ va_dcl
     }
 
     /* Verify EtherIP version number */
-    m_copydata(m, iphlen, sizeof(u_int8_t), &v);
-    if ((v & ETHERIP_VERSION_MASK) != ETHERIP_VERSION)
+    m_copydata(m, iphlen, sizeof(struct etherip_header), (caddr_t)&eip);
+    if ((eip.eip_ver & ETHERIP_VER_VERS_MASK) != ETHERIP_VERSION)
     {
-	/*
-	 * Note that the other potential failure of the above check is that the
-	 * second nibble of the EtherIP header (the reserved part) is not
-	 * zero; this is also invalid protocol behaviour.
-	 */
-	if (v & ETHERIP_RSVD_MASK)
-	{
-	    DPRINTF(("etherip_input(): received invalid EtherIP header (reserved field non-zero\n"));
-	}
-	else
-	{
-	    DPRINTF(("etherip_input(): received EtherIP version number %d not suppoorted\n", (v >> 4) & 0xff));
-	}
+	DPRINTF(("etherip_input(): received EtherIP version number %d not suppoorted\n", (v >> 4) & 0xff));
+	etheripstat.etherip_adrops++;
+	m_freem(m);
+	return;
+    }
+
+    /*
+     * Note that the other potential failure of the above check is that the
+     * second nibble of the EtherIP header (the reserved part) is not
+     * zero; this is also invalid protocol behaviour.
+     */
+    if (eip.eip_ver & ETHERIP_VER_RSVD_MASK)
+    {
+	DPRINTF(("etherip_input(): received EtherIP invalid EtherIP header (reserved field non-zero\n"));
 	etheripstat.etherip_adrops++;
 	m_freem(m);
 	return;
     }
 
     /* Make sure the ethernet header at least is in the first mbuf. */
-    if (m->m_len < iphlen + sizeof(struct ether_header) + sizeof(u_int8_t))
+    if (m->m_len < iphlen + sizeof(struct ether_header) +
+      sizeof(struct etherip_header))
     {
 	if ((m = m_pullup(m, iphlen + sizeof(struct ether_header) +
-			  sizeof(u_int8_t))) == 0)
+	  sizeof(struct etherip_header))) == NULL)
 	{
 	    DPRINTF(("etherip_input(): m_pullup() failed\n"));
 	    etheripstat.etherip_adrops++;
@@ -173,7 +176,7 @@ va_dcl
     bzero(&ssrc, sizeof(ssrc));
     bzero(&sdst, sizeof(sdst));
 
-    m_copydata(m, 0, sizeof(u_int8_t), &v);
+    v = *mtod(m, u_int8_t *);
     switch (v >> 4)
     {
 #ifdef INET
@@ -205,9 +208,7 @@ va_dcl
     }
 
     /* Chop off the `outer' IP and EtherIP headers and reschedule. */
-    m->m_len -= (iphlen + sizeof(u_int8_t));
-    m->m_pkthdr.len -= (iphlen + sizeof(u_int8_t));
-    m->m_data += (iphlen + sizeof(u_int8_t));
+    m_adj(m, iphlen + sizeof(struct etherip_header));
 
     /* Statistics */
     etheripstat.etherip_ibytes += m->m_pkthdr.len;
@@ -222,11 +223,8 @@ va_dcl
 	  sizeof(etherbroadcastaddr)) == 0)
 	    m->m_flags |= M_BCAST;
 	else
-	    m->m_flags |= M_BCAST;
+	    m->m_flags |= M_MCAST;
     }
-
-    if (m->m_flags & (M_BCAST|M_MCAST))
-      m->m_pkthdr.rcvif->if_imcasts++;
 
     /* Trim the beginning of the mbuf, to remove the ethernet header */
     m_adj(m, sizeof(struct ether_header));
@@ -283,10 +281,12 @@ va_dcl
 #if NBRIDGE > 0
     /*
      * Tap the packet off here for a bridge. bridge_input() returns
-     * NULL if it has consumed the packet, otherwise, it
-     * gets processed as normal.
+     * NULL if it has consumed the packet.  In the case of gif's,
+     * bridge_input() returns non-NULL when an error occurs.
      */
     m->m_pkthdr.rcvif = &gif[i].gif_if;
+    if (m->m_flags & (M_BCAST|M_MCAST))
+      gif[i].gif_if.if_imcasts++;
     m = bridge_input(&gif[i].gif_if, &eh, m);
     if (m == NULL)
       return;
@@ -311,9 +311,9 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     struct ip6_hdr *ip6;
 #endif /* INET6 */
 
+    struct etherip_header eip;
     struct mbuf *m0;
     ushort hlen;
-    u_int8_t v;
 
     /* Some address family sanity checks */
     if ((tdb->tdb_src.sa.sa_family != 0) &&
@@ -363,7 +363,7 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     }
 
     /* Don't forget the EtherIP header */
-    hlen += sizeof(u_int8_t);
+    hlen += sizeof(struct etherip_header);
 
     MGETHDR(m0, M_DONTWAIT, MT_DATA);
     if (m0 == NULL) {
@@ -424,8 +424,9 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     }
 
     /* Set the version number */
-    v = ETHERIP_VERSION & ETHERIP_VERSION_MASK;
-    m_copyback(m, hlen - sizeof(u_int8_t), sizeof(u_int8_t), &v);
+    eip.eip_ver = ETHERIP_VERSION & ETHERIP_VER_VERS_MASK;
+    m_copyback(m, hlen - sizeof(struct etherip_header),
+	sizeof(struct etherip_header), (caddr_t)&eip);
 
     *mp = m;
 
