@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.69 1999/02/24 20:15:48 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.70 1999/02/27 18:28:13 rohee Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.69 1999/02/24 20:15:48 marc Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.70 1999/02/27 18:28:13 rohee Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -744,9 +744,10 @@ MASTER_SITE_TEX_CTAN+=  \
         ftp://ftp.dante.de/tex-archive/%SUBDIR%/
 
 MASTER_SITE_SUNSITE+=	\
-	ftp://sunsite.unc.edu/pub/Linux/%SUBDIR%/ \
+	ftp://metalab.unc.edu/pub/Linux/%SUBDIR%/ \
 	ftp://ftp.infomagic.com/pub/mirrors/linux/sunsite/%SUBDIR%/ \
-	ftp://ftp.funet.fi/pub/mirrors/sunsite.unc.edu/pub/Linux/%SUBDIR%/
+	ftp://ftp.funet.fi/pub/mirrors/sunsite.unc.edu/pub/Linux/%SUBDIR%/ \
+	ftp://ftp.lip6.fr/pub/linux/sunsite/%SUBDIR%
 
 # Empty declaration to avoid "variable MASTER_SITES recursive" error
 MASTER_SITES?=
