@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.7 2000/03/02 18:50:00 ho Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.8 2000/06/18 20:44:36 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -66,7 +66,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wicontrol.c,v 1.7 2000/03/02 18:50:00 ho Exp $";
+	"@(#) $Id: wicontrol.c,v 1.8 2000/06/18 20:44:36 aaron Exp $";
 #endif
 
 static void wi_getval		__P((char *, struct wi_req *));
@@ -93,7 +93,7 @@ static void wi_getval(iface, wreq)
 
 	bzero((char *)&ifr, sizeof(ifr));
 
-	strcpy(ifr.ifr_name, iface);
+	strlcpy(ifr.ifr_name, iface, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)wreq;
 
 	s = socket(AF_INET, SOCK_DGRAM, 0);
@@ -118,7 +118,7 @@ static void wi_setval(iface, wreq)
 
 	bzero((char *)&ifr, sizeof(ifr));
 
-	strcpy(ifr.ifr_name, iface);
+	strlcpy(ifr.ifr_name, iface, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)wreq;
 
 	s = socket(AF_INET, SOCK_DGRAM, 0);
