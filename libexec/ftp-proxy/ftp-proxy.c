@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.28 2003/01/23 23:15:16 djm Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.29 2003/03/20 01:34:48 david Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -166,9 +166,9 @@ static void
 usage(void)
 {
 	syslog(LOG_NOTICE,
-	    "usage: %s [-AnrVw] [-t timeout] [-D debuglevel] %s %s",
-	    __progname, "[-g group] [-u user] [-m min_port]",
-	    "[-M max_port]");
+	    "usage: %s [-AnrVw] [-D debuglevel] [-g group] %s %s",
+	    __progname, "[-m minport] [-M maxport] [-t timeout]",
+	    "[-u user]");
 	exit(EX_USAGE);
 }
 
