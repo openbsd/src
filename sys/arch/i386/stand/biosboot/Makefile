@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 1997/10/22 23:25:37 mickey Exp $
+#	$OpenBSD: Makefile,v 1.12 1998/03/30 07:00:28 deraadt Exp $
 
 PROG=	biosboot
 SRCS=	biosboot.S
@@ -23,5 +23,5 @@ ${PROG}: $(OBJS) $(DPADD)
 .include <bsd.prog.mk>
 
 CPPFLAGS+=-DLOADADDR=$(LOADADDR) -DBOOTMAGIC=$(BOOTMAGIC) -DBOOTREL=$(BOOTREL)
-CPPFLAGS+=${DEBUGFLAGS} -DBEMBR
+CPPFLAGS+=${DEBUGFLAGS} -DBEMBR -DDEBUG
 #AFLAGS+=-Wa,-a

@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.22 1998/02/24 22:06:39 weingart Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.23 1998/03/30 07:00:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -39,11 +39,7 @@
 #define addr32  .byte 0x67
 #define data32  .byte 0x66
 
-#ifdef	DEBUG
 #define	BLKCNT	12	/* Max without colliding with the partition table */
-#else
-#define	BLKCNT	16
-#endif
 
 #define BOOTSEG		0x07c0	/* boot loaded here */
 #define BOOTSTACK	0xfffc	/* stack starts here */
@@ -253,6 +249,9 @@ halt:
 	movw	$0x10, %eax
 	movl	%ax, %ds
 	movl	%ax, %ss
+	movl	%ax, %es
+	movl	%ax, %fs
+	movl	%ax, %gs
 	movl	$BOOTSTACK, %esp
 
 #ifdef	DEBUG
