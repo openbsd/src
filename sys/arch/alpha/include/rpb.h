@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpb.h,v 1.6 1997/01/24 19:57:20 niklas Exp $	*/
+/*	$OpenBSD: rpb.h,v 1.7 1998/06/28 01:09:58 angelos Exp $	*/
 /*	$NetBSD: rpb.h,v 1.11 1996/11/13 22:26:41 cgd Exp $	*/
 
 /*
@@ -72,6 +72,9 @@ struct rpb {
 #define	ST_EB164		26		/* EB164 (PCI/ISA) */
 #define	ST_DEC_1000A		27		/* "Noritake" (?) */
 #define	ST_DEC_ALPHAVME_224	28		/* "Cortex" (?) */
+#define ST_DEC_550              30              /* "Miata" (PCI/ISA) */
+#define ST_DEC_EV56_PBP         32              /* "Takara" (?) */
+#define ST_DEC_ALPHAVME_320     33              /* "Yukon" (VME?) */
 
 	u_int64_t	rpb_type;		/*  50: */
 
@@ -125,6 +128,25 @@ struct rpb {
 #define	SV_ST_MUSTANG2_4_233	0x00001000	/* Mustang II;	200 4/233 */
 #define	SV_ST_AVANTI_XXX	0x00001400	/* also Avanti;	400 4/233 */
 #define	SV_ST_MUSTANG2_4_100	0x00002400	/* Mustang II;	200 4/100 */
+
+/*
+ * System types for the EB164 Family
+ */
+#define SV_ST_EB164_266         0x00000400      /* EB164, 266MHz */
+#define SV_ST_EB164_300         0x00000800      /* EB164, 300MHz */
+#define SV_ST_ALPHAPC164_366    0x00000c00      /* AlphaPC164, 366MHz */
+#define SV_ST_ALPHAPC164_400    0x00001000      /* AlphaPC164, 400MHz */
+#define SV_ST_ALPHAPC164_433    0x00001400      /* AlphaPC164, 433MHz */
+#define SV_ST_ALPHAPC164_466    0x00001800      /* AlphaPC164, 466MHz */
+#define SV_ST_ALPHAPC164_500    0x00001c00      /* AlphaPC164, 500MHz */
+#define SV_ST_ALPHAPC164LX_400  0x00002000      /* AlphaPC164LX, 400MHz */
+#define SV_ST_ALPHAPC164LX_466  0x00002400      /* AlphaPC164LX, 466MHz */
+#define SV_ST_ALPHAPC164LX_533  0x00002800      /* AlphaPC164LX, 533MHz */
+#define SV_ST_ALPHAPC164LX_600  0x00002c00      /* AlphaPC164LX, 600MHz */
+#define SV_ST_ALPHAPC164SX_400  0x00003000      /* AlphaPC164SX, 400MHz */
+#define SV_ST_ALPHAPC164SX_466  0x00003400      /* AlphaPC164SX, 433MHz */
+#define SV_ST_ALPHAPC164SX_533  0x00003800      /* AlphaPC164SX, 533MHz */
+#define SV_ST_ALPHAPC164SX_600  0x00003c00      /* AlphaPC164SX, 600MHz */
 
 	u_int64_t	rpb_variation;		/*  58 */
 
