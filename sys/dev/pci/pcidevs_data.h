@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.76 1998/08/10 16:46:38 millert Exp 
+ *	OpenBSD: pcidevs,v 1.77 1998/08/11 12:54:21 maja Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -67,6 +67,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c905B 100Base-T4",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C980TX,
+	    0,
+	    "3Com",
+	    "3c980 100Base-TX",
 	},
 	{
 	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO,
