@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.73 1999/03/01 19:44:18 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.74 1999/03/03 04:16:03 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.73 1999/03/01 19:44:18 marc Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.74 1999/03/03 04:16:03 marc Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -889,8 +889,13 @@ PKGFILE?=		${PKGREPOSITORY}/${PKGNAME}${PKG_SUFX}
 PKGFILE?=		${PKGNAME}${PKG_SUFX}
 .endif
 
-CONFIGURE_SCRIPT?=	${WRKSRC}/configure
-CONFIGURE_ENV+=		PATH=.:${PORTPATH}
+CONFIGURE_SCRIPT?=	configure
+.if defined(SEPARATE_BUILD)
+_CONFIGURE_SCRIPT=${WRKSRC}/${CONFIGURE_SCRIPT}
+.else
+_CONFIGURE_SCRIPT=./${CONFIGURE_SCRIPT}
+.endif
+CONFIGURE_ENV+=		PATH=${PORTPATH}
 
 .if defined(GNU_CONFIGURE)
 CONFIGURE_ARGS+=	--prefix=${PREFIX}
@@ -1305,7 +1310,7 @@ do-configure: ${WRKBUILD}
 		INSTALL="/usr/bin/install -c -o ${BINOWN} -g ${BINGRP}" \
 		INSTALL_PROGRAM="${INSTALL_PROGRAM}" INSTALL_MAN="${INSTALL_MAN}" \
 		INSTALL_SCRIPT="${INSTALL_SCRIPT}" INSTALL_DATA="${INSTALL_DATA}" \
-		${CONFIGURE_ENV} ${CONFIGURE_SCRIPT} ${CONFIGURE_ARGS})
+		${CONFIGURE_ENV} ${_CONFIGURE_SCRIPT} ${CONFIGURE_ARGS})
 .endif
 .if defined(USE_IMAKE)
 	@(cd ${WRKSRC} && ${SETENV} ${MAKE_ENV} ${XMKMF})
