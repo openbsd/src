@@ -48,7 +48,7 @@
 ./etc/namedb/localhost.rev
 ./etc/namedb/named.boot
 ./etc/namedb/root.cache
-./etc/nat.rules
+./etc/ipnat.rules
 ./etc/netstart
 ./etc/networks
 ./etc/newsyslog.conf

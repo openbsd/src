@@ -1806,3 +1806,5 @@
 ./usr/share/smtpd/example.antispam
 ./usr/share/smtpd/example.features
 ./usr/share/smtpd/example.norelay
+./usr/libexec/kauthd
+./usr/share/man/cat8/kauthd.0
