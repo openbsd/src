@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.7 1997/05/03 07:50:15 tholo Exp $
+#	$OpenBSD: install.md,v 1.8 1997/05/03 23:12:04 tholo Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #
 
 # Machine-dependent install sets
-MDSETS=""
+MDSETS="kernel"
 
 md_set_term() {
 	if [ ! -z "$TERM" ]; then
@@ -230,9 +230,9 @@ __md_prep_disklabel_1
 }
 
 md_copy_kernel() {
-	echo -n "Copying kernel..."
-	cp -p /bsd /mnt/bsd
-	echo "done."
+	#echo -n "Copying kernel..."
+	#cp -p /bsd /mnt/bsd
+	#echo "done."
 }
 
 md_welcome_banner() {
