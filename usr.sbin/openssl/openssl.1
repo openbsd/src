@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.42 2004/04/19 12:25:41 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.43 2004/05/27 09:08:41 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -585,7 +585,7 @@ There should be options to change the format of input lines.
 The output of some ASN.1 types is not well handled
 .Pq if at all .
 .\"
-.\" ca
+.\" CA
 .\"
 .Sh CA
 .Nm openssl ca
@@ -616,7 +616,7 @@ The output of some ASN.1 types is not well handled
 .Op Fl in Ar file
 .Op Fl key Ar keyfile
 .Op Fl keyfile Ar arg
-.Op Fl keyform Ar PEM | ENGINE
+.Op Fl keyform Ar ENGINE | PEM
 .Op Fl md Ar arg
 .Op Fl name Ar section
 .Op Fl out Ar file
@@ -698,7 +698,7 @@ with the
 utility) this option should be used with caution.
 .It Fl keyfile Ar file
 The private key to sign requests with.
-.It Fl keyform Ar PEM | ENGINE
+.It Fl keyform Ar ENGINE | PEM
 Private key file format.
 .It Fl md Ar alg
 The message digest to use.
@@ -1672,7 +1672,7 @@ and
 .Ar COMPLEMENTOFDEFAULT
 selection options were added in version 0.9.7.
 .\"
-.\" crl
+.\" CRL
 .\"
 .Sh CRL
 .Nm openssl crl
@@ -1857,7 +1857,7 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Op Fl d
 .Op Fl hex
 .Op Fl engine Ar id
-.Op Fl keyform Ar PEM | ENGINE
+.Op Fl keyform Ar ENGINE | PEM
 .Op Fl out Ar file
 .Op Fl prverify Ar file
 .Op Fl rand Ar file ...
@@ -1906,7 +1906,7 @@ Digest is to be output as a hex dump.
 This is the default case for a
 .Qq normal
 digest as opposed to a digital signature.
-.It Fl keyform Ar PEM | ENGINE
+.It Fl keyform Ar ENGINE | PEM
 Key file format.
 .It Fl out Ar file
 file to output to, or standard output by default.
@@ -6267,45 +6267,45 @@ The cipher and start time should be printed out in human readable form.
 .Sh SMIME
 .Nm openssl smime
 .Bk -words
-.Op Fl encrypt
-.Op Fl decrypt
-.Op Fl sign
-.Op Fl verify
-.Op Fl pk7out
 .Oo Xo
-.Fl des | des3 | rc2-40 | rc2-64 |
-.Fl rc2-128 | aes128 | aes192 | aes256
+.Fl aes128 | aes192 | aes256 | des |
+.Fl des3 | rc2-40 | rc2-64 | rcs-128
 .Xc
 .Oc
-.Op Fl nointern
-.Op Fl noverify
-.Op Fl nochain
-.Op Fl nosigs
-.Op Fl nocerts
-.Op Fl noattr
 .Op Fl binary
-.Op Fl nodetach
-.Op Fl in Ar file
-.Op Fl certfile Ar file
-.Op Fl signer Ar file
-.Op Fl recip Ar file
-.Op Fl inform Ar SMIME | DER | PEM
-.Op Fl passin Ar arg
-.Op Fl inkey Ar file
-.Op Fl keyform Ar PEM | ENGINE
-.Op Fl out Ar file
-.Op Fl outform Ar SMIME | DER | PEM
-.Op Fl content Ar file
-.Op Fl to Ar addr
-.Op Fl from Ar addr
-.Op Fl subject Ar s
-.Op Fl text
-.Op Fl CAfile Ar file
-.Op Fl CApath Ar directory
 .Op Fl crl_check
 .Op Fl crl_check_all
+.Op Fl decrypt
+.Op Fl encrypt
+.Op Fl noattr
+.Op Fl nocerts
+.Op Fl nochain
+.Op Fl nodetach
+.Op Fl nointern
+.Op Fl nosigs
+.Op Fl noverify
+.Op Fl pk7out
+.Op Fl sign
+.Op Fl text
+.Op Fl verify
+.Op Fl CAfile Ar file
+.Op Fl CApath Ar directory
+.Op Fl certfile Ar file
+.Op Fl content Ar file
 .Op Fl engine Ar id
+.Op Fl from Ar addr
+.Op Fl in Ar file
+.Op Fl inform Ar DER | PEM | SMIME
+.Op Fl inkey Ar file
+.Op Fl keyform Ar ENGINE | PEM
+.Op Fl out Ar file
+.Op Fl outform Ar DER | PEM | SMIME
+.Op Fl passin Ar arg
 .Op Fl rand Ar file ...
+.Op Fl recip Ar file
+.Op Fl signer Ar file
+.Op Fl subject Ar s
+.Op Fl to Ar addr
 .Op Ar cert.pem ...
 .Ek
 .Pp
@@ -6314,27 +6314,29 @@ The
 command handles
 .Em S/MIME
 mail.
-It can encrypt, decrypt, sign and verify
+It can encrypt, decrypt, sign, and verify
 .Em S/MIME
 messages.
 .Pp
 There are five operation options that set the type of operation to be performed.
 The meaning of the other options varies according to the operation type.
 .Pp
-The options are as follows:
+The five operation options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl encrypt
-Encrypt mail for the given recipient certificates.
-Input file is the message to be encrypted.
-The output file is the encrypted mail in
-.Em MIME
-format.
 .It Fl decrypt
 Decrypt mail using the supplied certificate and private key.
 Expects an encrypted mail message in
 .Em MIME
 format for the input file.
 The decrypted mail is written to the output file.
+.It Fl encrypt
+Encrypt mail for the given recipient certificates.
+Input file is the message to be encrypted.
+The output file is the encrypted mail in
+.Em MIME
+format.
+.It Fl pk7out
+Takes an input message and writes out a PEM-encoded PKCS#7 structure.
 .It Fl sign
 Sign mail using the supplied certificate and private key.
 Input file is the message to be signed.
@@ -6345,17 +6347,104 @@ format is written to the output file.
 Verify signed mail.
 Expects a signed mail message on input and outputs the signed data.
 Both clear text and opaque signing is supported.
-.It Fl pk7out
-Takes an input message and writes out a PEM-encoded PKCS#7 structure.
+.El
+.Pp
+The reamaining options are as follows:
+.Bl -tag -width "XXXX"
+.It Xo
+.Fl aes128 | aes192 | aes256 | des |
+.Fl des3 | rc2-40 | rc2-64 | rc2-128
+.Xc
+The encryption algorithm to use.
+128-, 192-, or 256-bit AES,
+DES
+.Pq 56 bits ,
+triple DES
+.Pq 168 bits ,
+or 40-, 64-, or 128-bit RC2, respectively;
+if not specified, 40-bit RC2 is
+used.
+Only used with
+.Fl encrypt .
+.It Fl binary
+Normally, the input message is converted to
+.Qq canonical
+format which is effectively using CR and LF as end of line \-
+as required by the
+.Em S/MIME
+specification.
+When this option is present no translation occurs.
+This is useful when handling binary data which may not be in
+.Em MIME
+format.
+.It Fl CAfile Ar file
+A
+.Ar file
+containing trusted CA certificates; only used with
+.Fl verify .
+.It Fl CApath Ar directory
+A
+.Ar directory
+containing trusted CA certificates; only used with
+.Fl verify .
+This directory must be a standard certificate directory:
+that is, a hash of each subject name (using
+.Nm x509 -hash )
+should be linked to each certificate.
+.It Ar cert.pem ...
+One or more certificates of message recipients: used when encrypting
+a message.
+.It Fl certfile Ar file
+Allows additional certificates to be specified.
+When signing, these will be included with the message.
+When verifying, these will be searched for the signers' certificates.
+The certificates should be in PEM format.
+.It Fl content Ar file
+This specifies a file containing the detached content.
+This is only useful with the
+.Fl verify
+command.
+This is only usable if the PKCS#7 structure is using the detached
+signature form where the content is not included.
+This option will override any content if the input format is
+.Em S/MIME
+and it uses the multipart/signed
+.Em MIME
+content type.
+.It Fl crl_check
+Check revocation status of signer's certificate using CRLs.
+.It Fl crl_check_all
+Check revocation status of signer's certificate chain using CRLs.
+.It Fl engine Ar id
+Specifying an engine (by it's unique
+.Ar id
+string) will cause
+.Nm smime
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed.
+The engine will then be set as the default
+for all available algorithms.
+.It Xo
+.Fl from Ar addr ,
+.Fl subject Ar s ,
+.Fl to Ar addr
+.Xc
+The relevant mail headers.
+These are included outside the signed
+portion of a message so they may be included manually.
+When signing, many
+.Em S/MIME
+mail clients check that the signer's certificate email
+address matches the From: address.
 .It Fl in Ar file
 The input message to be encrypted or signed or the
 .Em MIME
 message to
 be decrypted or verified.
-.It Fl inform Ar SMIME | DER | PEM
+.It Fl inform Ar DER | PEM | SMIME
 This specifies the input format for the PKCS#7 structure.
 The default is
-.Em SMIME
+.Em SMIME ,
 which reads an
 .Em S/MIME
 format message.
@@ -6370,14 +6459,60 @@ structure; if no PKCS#7 structure is being input (for example with
 or
 .Fl sign ) ,
 this option has no effect.
+.It Fl inkey Ar file
+The private key to use when signing or decrypting.
+This must match the corresponding certificate.
+If this option is not specified, the private key must be included
+in the certificate file specified with
+the
+.Fl recip
+or
+.Fl signer
+file.
+.It Fl keyform Ar ENGINE | PEM
+Input private key format.
+.It Fl noattr
+Normally, when a message is signed a set of attributes are included which
+include the signing time and supported symmetric algorithms.
+With this option they are not included.
+.It Fl nocerts
+When signing a message, the signer's certificate is normally included;
+with this option it is excluded.
+This will reduce the size of the signed message but the verifier must
+have a copy of the signer's certificate available locally (passed using the
+.Fl certfile
+option, for example).
+.It Fl nochain
+Do not do chain verification of signers' certificates: that is,
+don't use the certificates in the signed message as untrusted CAs.
+.It Fl nodetach
+When signing a message use opaque signing: this form is more resistant
+to translation by mail relays but it cannot be read by mail agents that
+do not support
+.Em S/MIME .
+Without this option cleartext signing with the
+.Em MIME
+type multipart/signed is used.
+.It Fl nointern
+When verifying a message, normally certificates
+.Pq if any
+included in the message are searched for the signing certificate.
+With this option, only the certificates specified in the
+.Fl certfile
+option are used.
+The supplied certificates can still be used as untrusted CAs however.
+.It Fl nosigs
+Don't try to verify the signatures on the message.
+.It Fl noverify
+Do not verify the signer's certificate of a signed message.
 .It Fl out Ar file
 The message text that has been decrypted or verified, or the output
 .Em MIME
 format message that has been signed or verified.
-.It Fl outform Ar SMIME | DER | PEM
+.It Fl outform Ar DER | PEM | SMIME
 This specifies the output format for the PKCS#7 structure.
 The default is
-.Em SMIME
+.Em SMIME ,
 which writes an
 .Em S/MIME
 format message.
@@ -6392,124 +6527,6 @@ structure; if no PKCS#7 structure is being output (for example with
 or
 .Fl decrypt )
 this option has no effect.
-.It Fl content Ar file
-This specifies a file containing the detached content.
-This is only useful with the
-.Fl verify
-command.
-This is only usable if the PKCS#7 structure is using the detached
-signature form where the content is not included.
-This option will override any content if the input format is
-.Em S/MIME
-and it uses the multipart/signed
-.Em MIME
-content type.
-.It Fl text
-This option adds plain text
-.Pq text/plain
-.Em MIME
-headers to the supplied message if encrypting or signing.
-If decrypting or verifying it strips off text headers:
-if the decrypted or verified message is not of
-.Em MIME
-type text/plain then an error occurs.
-.It Fl CAfile Ar file
-A
-.Ar file
-containing trusted CA certificates; only used with
-.Fl verify .
-.It Fl CApath Ar directory
-A
-.Ar directory
-containing trusted CA certificates; only used with
-.Fl verify .
-This directory must be a standard certificate directory;
-that is, a hash of each subject name (using
-.Nm x509 -hash )
-should be linked to each certificate.
-.It Xo
-.Fl des | des3 | rc2-40 | rc2-64 |
-.Fl rc2-128 | aes128 | aes192 | aes256
-.Xc
-The encryption algorithm to use.
-DES
-.Pq 56 bits ,
-triple DES
-.Pq 168 bits ,
-40-, 64-, or 128-bit RC2, or 128-, 192-, or 256-bit AES, respectively;
-if not specified, 40-bit RC2 is
-used.
-Only used with
-.Fl encrypt .
-.It Fl nointern
-When verifying a message, normally certificates
-.Pq if any
-included in the message are searched for the signing certificate.
-With this option, only the certificates specified in the
-.Fl certfile
-option are used.
-The supplied certificates can still be used as untrusted CAs however.
-.It Fl noverify
-Do not verify the signer's certificate of a signed message.
-.It Fl nochain
-Do not do chain verification of signers' certificates: that is,
-don't use the certificates in the signed message as untrusted CAs.
-.It Fl nosigs
-Don't try to verify the signatures on the message.
-.It Fl nocerts
-When signing a message, the signer's certificate is normally included;
-with this option it is excluded.
-This will reduce the size of the signed message but the verifier must
-have a copy of the signer's certificate available locally (passed using the
-.Fl certfile
-option, for example).
-.It Fl noattr
-Normally, when a message is signed a set of attributes are included which
-include the signing time and supported symmetric algorithms.
-With this option they are not included.
-.It Fl binary
-Normally, the input message is converted to
-.Qq canonical
-format which is effectively using CR and LF as end of line: as required by the
-.Em S/MIME
-specification.
-When this option is present no translation occurs.
-This is useful when handling binary data which may not be in
-.Em MIME
-format.
-.It Fl nodetach
-When signing a message use opaque signing: this form is more resistant
-to translation by mail relays but it cannot be read by mail agents that
-do not support
-.Em S/MIME .
-Without this option cleartext signing with the
-.Em MIME
-type multipart/signed is used.
-.It Fl certfile Ar file
-Allows additional certificates to be specified.
-When signing these will be included with the message.
-When verifying these will be searched for the signers' certificates.
-The certificates should be in PEM format.
-.It Fl signer Ar file
-The signer's certificate when signing a message.
-If a message is being verified, the signer's certificates will be
-written to this file if the verification was successful.
-.It Fl recip Ar file
-The recipients certificate when decrypting a message.
-This certificate
-must match one of the recipients of the message or an error occurs.
-.It Fl inkey Ar file
-The private key to use when signing or decrypting.
-This must match the corresponding certificate.
-If this option is not specified, the private key must be included
-in the certificate file specified with
-the
-.Fl recip
-or
-.Fl signer
-file.
-.It Fl keyform Ar PEM | ENGINE
-Input private key format.
 .It Fl passin Ar arg
 The private key password source.
 For more information about the format of
@@ -6517,19 +6534,6 @@ For more information about the format of
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
-.It Fl crl_check
-Check revocation status of signer's certificate using CRLs.
-.It Fl crl_check_all
-Check revocation status of signer's certificate chain using CRLs.
-.It Fl engine Ar id
-Specifying an engine (by it's unique
-.Ar id
-string) will cause
-.Nm smime
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed.
-The engine will then be set as the default
-for all available algorithms.
 .It Fl rand Ar file ...
 A file or files
 containing random data used to seed the random number generator,
@@ -6537,17 +6541,23 @@ or an EGD socket (see
 .Xr RAND_egd 3 ) .
 Multiple files can be specified separated by a
 .Sq \&: .
-.It Ar cert.pem ...
-One or more certificates of message recipients: used when encrypting
-a message.
-.It Fl to , from , subject
-The relevant mail headers.
-These are included outside the signed
-portion of a message so they may be included manually.
-When signing, many
-.Em S/MIME
-mail clients check the signer's certificate email
-address matches that specified in the From: address.
+.It Fl recip Ar file
+The recipients certificate when decrypting a message.
+This certificate
+must match one of the recipients of the message or an error occurs.
+.It Fl signer Ar file
+The signer's certificate when signing a message.
+If a message is being verified, the signer's certificates will be
+written to this file if the verification was successful.
+.It Fl text
+This option adds plain text
+.Pq text/plain
+.Em MIME
+headers to the supplied message if encrypting or signing.
+If decrypting or verifying, it strips off text headers:
+if the decrypted or verified message is not of
+.Em MIME
+type text/plain then an error occurs.
 .El
 .Sh SMIME NOTES
 The
@@ -6654,7 +6664,7 @@ Send encrypted mail using triple DES:
 .Bd -literal -offset indent
 $ openssl smime -encrypt -in in.txt -from steve@openssl.org \e
 	-to someone@somewhere -subject "Encrypted message" \e
-	-des3 user.pem -out mail.msg
+	-des3 -out mail.msg user.pem
 .Ed
 .Pp
 Sign and encrypt mail:
@@ -7318,8 +7328,8 @@ option was added in
 .Sh X509
 .Nm openssl x509
 .Bk -words
-.Op Fl inform Ar DER | PEM | NET
-.Op Fl outform Ar DER | PEM | NET
+.Op Fl inform Ar DER | NET | PEM
+.Op Fl outform Ar DER | NET | PEM
 .Op Fl keyform Ar DER | PEM
 .Op Fl CAform Ar DER | PEM
 .Op Fl CAkeyform Ar DER | PEM
@@ -7379,7 +7389,7 @@ Since there are a large number of options, they are split up into
 various sections.
 .Sh X509 INPUT, OUTPUT, AND GENERAL PURPOSE OPTIONS
 .Bl -tag -width "XXXX"
-.It Fl inform Ar DER | PEM | NET
+.It Fl inform Ar DER | NET | PEM
 This specifies the input format.
 Normally, the command will expect an X509 certificate,
 but this can change if other options such as
@@ -7394,7 +7404,7 @@ The
 .Ar NET
 option is an obscure Netscape server format that is now
 obsolete.
-.It Fl outform Ar DER | PEM | NET
+.It Fl outform Ar DER | NET | PEM
 This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
