@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.42 2002/05/21 00:46:44 deraadt Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.43 2002/05/26 13:24:54 deraadt Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.42 2002/05/21 00:46:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.43 2002/05/26 13:24:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -227,6 +227,7 @@ static char rcsid[] = "$OpenBSD: traceroute.c,v 1.42 2002/05/21 00:46:44 deraadt
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
+#include <sys/sysctl.h>
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -309,6 +310,8 @@ main(argc, argv)
 	struct ip *ip;
 	u_int32_t tmprnd;
 	int sump = 0;
+	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
+	size_t size = sizeof(max_ttl);
 
 	if ((pe = getprotobyname("icmp")) == NULL) {
 		fprintf(stderr, "icmp: unknown protocol\n");
@@ -322,6 +325,9 @@ main(argc, argv)
 	/* revoke privs */
 	seteuid(getuid());
 	setuid(getuid());
+
+	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &max_ttl, &size,
+	    NULL, 0);
 
 	ttl_flag = 0;
 	lsrr = 0;
