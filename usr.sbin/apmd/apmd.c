@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.22 2001/12/12 17:03:39 mickey Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.23 2002/02/22 00:32:16 mickey Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -391,7 +391,13 @@ main(int argc, char *argv[])
 	if ((ctl_fd = open(fname, O_RDWR)) == -1)
 		error("cannot open device file `%s'", fname);
 
+	if (fcntl(ctl_fd, F_SETFD, 1) == -1)
+		error("cannot set close-on-exec for `%s'", fname);
+
 	sock_fd = bind_socket(sockname);
+
+	if (fcntl(sock_fd, F_SETFD, 1) == -1)
+		error("cannot set close-on-exec for the socket", NULL);
 
 	power_status(ctl_fd, 1, 0);
 
