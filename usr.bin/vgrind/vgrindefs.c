@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgrindefs.c,v 1.4 2003/02/19 07:32:36 deraadt Exp $	*/
+/*	$OpenBSD: vgrindefs.c,v 1.5 2003/02/19 07:33:34 deraadt Exp $	*/
 /*	$NetBSD: vgrindefs.c,v 1.5 1994/12/20 12:05:29 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vgrindefs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: vgrindefs.c,v 1.4 2003/02/19 07:32:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vgrindefs.c,v 1.5 2003/02/19 07:33:34 deraadt Exp $";
 #endif /* not lint */
 
 #define	BUFSIZ	1024
@@ -152,7 +152,7 @@ tnchktc()
 	/* p now points to beginning of last field */
 	if (p[0] != 't' || p[1] != 'c')
 		return(1);
-	strcpy(tcname,p+3);
+	strlcpy(tcname, p+3, sizeof tcname);
 	q = tcname;
 	while (q && *q != ':')
 		q++;
