@@ -63,6 +63,9 @@
 ./etc/ssl
 ./etc/ssl/lib
 ./etc/ssl/private
+./etc/systrace
+./etc/systrace/usr_sbin_lpd
+./etc/systrace/usr_sbin_named
 ./etc/tcfs
 ./etc/termcap
 ./home
