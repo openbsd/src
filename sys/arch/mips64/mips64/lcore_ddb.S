@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_ddb.S,v 1.6 2004/09/17 13:12:17 miod Exp $ */
+/*	$OpenBSD: lcore_ddb.S,v 1.7 2004/09/27 19:16:06 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -39,8 +39,6 @@
 #include "assym.h"
 
 	.set	noreorder		# Noreorder is default style!
-
-#define	ITLBNOPFIX	nop;nop;nop;nop;nop;nop;nop;nop;nop;nop;
 
 #ifdef __LP64__
 LEAF(kdbpeekd, 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.7 2004/09/27 17:41:56 pefo Exp $ */
+/*	$OpenBSD: context.S,v 1.8 2004/09/27 19:16:06 pefo Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -41,8 +41,6 @@
 	.set	mips3
 
 	.set	noreorder		# Noreorder is default style!
-
-#define	ITLBNOPFIX	nop;nop;nop;nop;nop;nop;nop;nop;nop;nop;
 
 /*
  * Save registers and state used by reboot to take snapshot.

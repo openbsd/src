@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_float.S,v 1.6 2004/09/10 08:58:27 pefo Exp $ */
+/*	$OpenBSD: lcore_float.S,v 1.7 2004/09/27 19:16:06 pefo Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -41,8 +41,6 @@
 	.set	noreorder		# Noreorder is default style!
 
 	.set	mips3
-
-#define	ITLBNOPFIX	nop;nop;nop;nop;nop;nop;nop;nop;nop;nop;
 
 /*----------------------------------------------------------------------------
  *
