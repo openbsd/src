@@ -321,6 +321,8 @@
 ./usr/lib/libusbhid_pic.a
 ./usr/lib/libutil_pic.a
 ./usr/lib/libwrap_pic.a
+./usr/lib/libx86_64.a
+./usr/lib/libx86_64_p.a
 ./usr/lib/libz_pic.a
 ./usr/libdata/ldscripts
 ./usr/libdata/ldscripts/elf_i386.x
