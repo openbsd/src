@@ -1,4 +1,4 @@
-/* $Id: scio.c,v 1.5 2001/07/02 20:07:09 rees Exp $ */
+/* $Id: scio.c,v 1.6 2001/07/16 22:01:22 rees Exp $ */
 
 /*
 copyright 1997
@@ -46,6 +46,7 @@ such damages.
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <termios.h>
 #include <signal.h>
 #include <fcntl.h>
@@ -374,15 +375,17 @@ int
 scgetc(int ttyn, unsigned char *cp, int ms)
 {
     int fd = sc[ttyn].fd;
-    fd_set fdset;
+    fd_set *fdset;
     struct timeval tv, *tvp;
 
 #ifdef BYTECOUNT
     num_getc++;
 #endif /* BYTECOUNT */
     
-    FD_ZERO(&fdset);
-    FD_SET(fd, &fdset);
+    fdset = (fd_set *)calloc(howmany(fd + 1, NFDBITS), sizeof(fd_mask));
+    if (fdset == NULL)
+	return SCENOMEM;
+    FD_SET(fd, fdset);
 
     if (ms == -1)
 	tvp = NULL;
@@ -392,7 +395,7 @@ scgetc(int ttyn, unsigned char *cp, int ms)
 	tvp = &tv;
     }
 
-    if (select(fd + 1, &fdset, NULL, NULL, tvp) != 1)
+    if (select(fd + 1, fdset, NULL, NULL, tvp) != 1)
 	return SCTIMEO;
 
     if (read(fd, cp, 1) != 1)
