@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.46 2005/04/02 10:36:18 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.47 2005/04/02 10:37:01 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -909,8 +909,7 @@ ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	case IEEE80211_S_RUN:
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-			if (ic->ic_opmode != IEEE80211_M_HOSTAP)
-				ral_set_bssid(sc, ic->ic_bss->ni_bssid);
+			ral_set_bssid(sc, ic->ic_bss->ni_bssid);
 			ral_update_slot(sc);
 		}
 
