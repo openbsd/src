@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.12 2001/06/27 04:37:18 art Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.13 2001/06/29 06:55:36 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -54,6 +54,9 @@
 #include <machine/intr.h>
 #include <machine/psl.h>
 #include <machine/pio.h>
+#include <machine/powerpc.h>
+
+#include <dev/ofw/openfirm.h>
 
 #define ICU_LEN 64
 #define LEGAL_IRQ(x) ((x >= 0) && (x < ICU_LEN))

@@ -125,7 +125,6 @@ adbattach(parent, self, aux)
 	int totaladbs;
 	int adbindex, adbaddr;
 
-	extern adb_intr();
 	extern volatile u_char *Via1Base;
 
 	ca->ca_reg[0] += ca->ca_baseaddr;

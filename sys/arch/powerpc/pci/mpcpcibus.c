@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.30 2001/06/26 18:19:43 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.31 2001/06/29 06:55:36 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -47,6 +47,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/bat.h>
+#include <machine/powerpc.h>
 
 #if 0
 #include <dev/isa/isareg.h>
@@ -60,8 +61,8 @@
 #include <powerpc/pci/pcibrvar.h>
 #include <powerpc/pci/mpc106reg.h>
 
+#include <dev/ofw/openfirm.h>
 extern vm_map_t phys_map;
-extern ofw_eth_addr[];
 
 int	 mpcpcibrmatch __P((struct device *, void *, void *));
 void	 mpcpcibrattach __P((struct device *, struct device *, void *));
@@ -184,42 +185,6 @@ mpcpcibrattach(parent, self, aux)
 	int of_node = 0;
 
 	switch(system_type) {
-	case POWER4e:
-		lcp = sc->sc_pcibr = &mpc_config;
-
-		addbatmap(MPC106_V_PCI_MEM_SPACE,
-			  MPC106_P_PCI_MEM_SPACE, BAT_I);
-
-		sc->sc_membus_space.bus_base = MPC106_V_PCI_MEM_SPACE;
-		sc->sc_membus_space.bus_reverse = 1;
-		sc->sc_iobus_space.bus_base = MPC106_V_PCI_IO_SPACE;
-		sc->sc_iobus_space.bus_reverse = 1;
-
-		lcp->lc_pc.pc_conf_v = lcp;
-		lcp->lc_pc.pc_attach_hook = mpc_attach_hook;
-		lcp->lc_pc.pc_bus_maxdevs = mpc_bus_maxdevs;
-		lcp->lc_pc.pc_make_tag = mpc_make_tag;
-		lcp->lc_pc.pc_decompose_tag = mpc_decompose_tag;
-		lcp->lc_pc.pc_conf_read = mpc_conf_read;
-		lcp->lc_pc.pc_conf_write = mpc_conf_write;
-		lcp->lc_pc.pc_ether_hw_addr = mpc_ether_hw_addr;
-		lcp->lc_iot = &sc->sc_iobus_space;
-		lcp->lc_memt = &sc->sc_membus_space;
-
-	        lcp->lc_pc.pc_intr_v = lcp;
-		lcp->lc_pc.pc_intr_map = mpc_intr_map;
-		lcp->lc_pc.pc_intr_string = mpc_intr_string;
-		lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
-		lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
-
-		printf(": MPC106, Revision 0x%x.\n", 
-				mpc_cfg_read_1(lcp, MPC106_PCI_REVID));
-#if 0
-		mpc_cfg_write_2(lcp, MPC106_PCI_STAT, 0xff80); /* Reset status */
-#endif
-		bridge = "MPC106";
-		break;
-
 	case OFWMACH:
 	case PWRSTK:
 		{
@@ -383,7 +348,7 @@ mpcpcibrattach(parent, self, aux)
 				printf("range lookup failed, node %x\n",
 				ca->ca_node);
 			}
-			/* translate byte(s) into item count/*/
+			/* translate byte(s) into item count*/
 			rangelen /= sizeof(struct ranges_new);
 
 			lcp = sc->sc_pcibr = &sc->pcibr_config;
@@ -848,7 +813,8 @@ mpc_gen_config_reg(cpv, tag, offset)
 		}
 	} else {
 		/* config mechanism #2, type 0
-		/* standard cf8/cfc config */
+		 * standard cf8/cfc config
+		 */
 		reg =  0x80000000 | tag  | offset;
 
 	}
@@ -972,51 +938,6 @@ mpc_intr_map(lcv, bustag, buspin, line, ihp)
                 printf("mpc_intr_map: bad interrupt pin %d\n", buspin);
                 error = 1;
         }
-
-#if 0
-	/* this hack belongs elsewhere */
-	if(system_type == POWER4e) {
-		pci_decompose_tag(pc, bustag, NULL, &device, NULL);
-		route = in32rb(MPC106_PCI_CONF_SPACE + 0x860);
-		switch(device) {
-		case 1:			/* SCSI */
-			line = 6;
-			route &= ~0x0000ff00;
-			route |= line << 8;
-			break;
-
-		case 2:			/* Ethernet */
-			line = 14;
-			route &= ~0x00ff0000;
-			route |= line << 16;
-			break;
-
-		case 3:			/* Tundra VME */
-			line = 15;
-			route &= ~0xff000000;
-			route |= line << 24;
-			break;
-
-		case 4:			/* PMC Slot */
-			line = 9;
-			route &= ~0x000000ff;
-			route |= line;
-			break;
-
-		default:
-			printf("mpc_intr_map: bad dev slot %d!\n", device);
-			error = 1;
-			break;
-		}
-
-		lvl = isa_inb(0x04d0);
-		lvl |= isa_inb(0x04d1) << 8;
-		lvl |= 1L << line;
-		isa_outb(0x04d0, lvl);
-		isa_outb(0x04d1, lvl >> 8);
-		out32rb(MPC106_PCI_CONF_SPACE + 0x860, route);
-	}
-#endif
 
 	if(!error)
 		*ihp = line;

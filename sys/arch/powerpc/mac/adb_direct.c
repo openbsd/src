@@ -259,7 +259,6 @@ void	pm_init_adb_device __P((void));
 #ifdef ADB_DEBUG
 void	print_single __P((u_char *));
 #endif
-void	adb_intr __P((void));
 void	adb_intr_II __P((void));
 void	adb_intr_IIsi __P((void));
 void	adb_intr_cuda __P((void));
@@ -290,6 +289,7 @@ int	adb_prog_switch_enable __P((void));
 int	adb_prog_switch_disable __P((void));
 /* we should create this and it will be the public version */
 int	send_adb __P((u_char *, void *, void *));
+int setsoftadb __P((void));
 
 #ifdef ADB_DEBUG
 /*
@@ -742,8 +742,8 @@ adb_guess_next_device(void)
  * This routine simply transfers control over to the appropriate
  * code for the machine we are running on.
  */
-void
-adb_intr(void)
+int
+adb_intr(void *arg)
 {
 	switch (adbHardware) {
 	case ADB_HW_II:
@@ -765,6 +765,7 @@ adb_intr(void)
 	case ADB_HW_UNKNOWN:
 		break;
 	}
+	return 1;
 }
 
 

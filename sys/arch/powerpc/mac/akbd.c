@@ -521,7 +521,7 @@ akbd_cngetc(v, type, data)
 	adb_polling = 1;
 
 	while (polledkey == -1) {
-		adb_intr();
+		adb_intr(NULL); /* adb does not use the argument */
 		DELAY(10000);				/* XXX */
 	}
 

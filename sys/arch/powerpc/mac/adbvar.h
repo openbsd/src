@@ -127,3 +127,5 @@ int	SetADBInfo __P((ADBSetInfoBlock * info, int adbAddr));
 int	ADBOp __P((Ptr buffer, Ptr compRout, Ptr data, short commandNum));
 int	adb_read_date_time __P((unsigned long *t));
 int	adb_set_date_time __P((unsigned long t));
+int	adb_intr __P((void *arg));
+void	adb_cuda_autopoll __P((void));

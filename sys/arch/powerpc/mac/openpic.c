@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.14 2001/06/27 04:37:19 art Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.15 2001/06/29 06:55:36 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -54,7 +54,9 @@
 #include <machine/intr.h>
 #include <machine/psl.h>
 #include <machine/pio.h>
+#include <machine/powerpc.h>
 #include <powerpc/mac/openpicreg.h>
+#include <dev/ofw/openfirm.h>
 
 #define ICU_LEN 128
 #define LEGAL_IRQ(x) ((x >= 0) && (x < ICU_LEN))
