@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.35 2005/04/04 09:03:07 deraadt Exp $ */
+/*	$OpenBSD: arp.c,v 1.36 2005/04/04 16:14:45 deraadt Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -96,12 +96,10 @@ extern int h_errno;
 int
 main(int argc, char *argv[])
 {
-	int	ch, func, rtn;
+	int	ch, func = 0, rtn;
 
 	pid = getpid();
 	opterr = 0;
-	func = 0;
-
 	while ((ch = getopt(argc, argv, "andSsFf")) != -1) {
 		switch (ch) {
 		case 'a':
@@ -237,13 +235,11 @@ set(int argc, char *argv[])
 	struct sockaddr_inarp *sin;
 	struct sockaddr_dl *sdl;
 	struct rt_msghdr *rtm;
-	char *eaddr;
+	char *eaddr = argv[1], *host = argv[0];
 	struct ether_addr *ea;
-	char *host = argv[0];
 
 	sin = &sin_m;
 	rtm = &(m_rtmsg.m_rtm);
-	eaddr = argv[1];
 
 	getsocket();
 	argc -= 2;
@@ -261,6 +257,7 @@ set(int argc, char *argv[])
 	while (argc-- > 0) {
 		if (strncmp(argv[0], "temp", 4) == 0) {
 			struct timeval time;
+
 			gettimeofday(&time, 0);
 			expire_time = time.tv_sec + 20 * 60;
 			if (flags & RTF_PERMANENT_ARP) {
@@ -268,12 +265,10 @@ set(int argc, char *argv[])
 				usage();
 				return (0);
 			}
-		}
-		else if (strncmp(argv[0], "pub", 3) == 0) {
+		} else if (strncmp(argv[0], "pub", 3) == 0) {
 			flags |= RTF_ANNOUNCE;
 			doing_proxy = SIN_PROXY;
-		}
-		else if (strncmp(argv[0], "permanent", 9) == 0) {
+		} else if (strncmp(argv[0], "permanent", 9) == 0) {
 			flags |= RTF_PERMANENT_ARP;
 			if (expire_time != 0) {
 				/* temp or permanent, not both */
@@ -459,9 +454,8 @@ void
 print_entry(struct sockaddr_dl *sdl, struct sockaddr_inarp *sin,
     struct rt_msghdr *rtm)
 {
-	char *host;
+	char ifname[IFNAMSIZ], *host;
 	struct hostent *hp;
-	char ifname[IFNAMSIZ];
 
 	if (nflag == 0)
 		hp = gethostbyaddr((caddr_t)&(sin->sin_addr),
