@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.10 2002/01/03 21:58:59 jason Exp $
+#	$OpenBSD: files.sbus,v 1.11 2002/01/12 20:19:40 jason Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -59,3 +59,11 @@ file	dev/sbus/cgsix.c		cgsix
 device	cgthree: wsemuldisplaydev, wsrasteremulops, wsemul_sun
 attach	cgthree at sbus
 file	dev/sbus/cgthree.c		cgthree
+
+device magma {}
+attach magma at sbus
+device mtty
+attach mtty at magma
+device mbpp
+attach mbpp at magma
+file	dev/sbus/magma.c		magma | mtty | mbpp needs-flag

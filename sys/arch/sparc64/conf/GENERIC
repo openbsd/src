@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.37 2002/01/06 22:18:39 jason Exp $
+#	$OpenBSD: GENERIC,v 1.38 2002/01/12 20:19:40 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -90,6 +90,11 @@ qe*		at qec?
 be*		at qec?
 
 hme*		at sbus? slot ? offset ?
+
+# Magma serial/parallel port devices
+magma*		at sbus? slot ? offset ?
+mtty*		at magma?
+mbpp*		at magma?
 
 pciide*	at pci? dev ? function ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0a00

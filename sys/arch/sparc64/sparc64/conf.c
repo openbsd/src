@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.19 2002/01/04 16:00:34 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.20 2002/01/12 20:19:40 jason Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -89,10 +89,10 @@
 #include "com.h"
 #ifdef notyet
 #include "bpp.h"
-#include "magma.h"		/* has NMTTY and NMBPP */
+#else
+#define	NBPP 0
 #endif
-#define NBPP 0
-#define NMAGMA 0
+#include "magma.h"		/* has NMTTY and NMBPP */
 
 #ifdef notyet
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
@@ -236,8 +236,8 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 68 */
 	cdev_audio_init(NAUDIO,audio),	/* 69: /dev/audio */
 	cdev_openprom_init(1,openprom),	/* 70: /dev/openprom */
-	cdev_notdef(),			/* 71 */
-	cdev_notdef(),			/* 72 */
+	cdev_tty_init(NMTTY,mtty),	/* 71: magma serial ports */
+	cdev_gen_init(NMBPP,mbpp),	/* 72: magma parallel ports */
 	cdev_pf_init(NPF,pf),		/* 73: packet filter */
 	cdev_altq_init(NALTQ,altq),	/* 74: ALTQ control interface */
 	cdev_crypto_init(NCRYPTO,crypto), /* 75: /dev/crypto */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.7 2002/01/04 16:00:34 jason Exp $	*/
+/*	$OpenBSD: conf.h,v 1.8 2002/01/12 20:19:40 jason Exp $	*/
 /*	$NetBSD: conf.h,v 1.9 2001/03/26 12:33:26 lukem Exp $	*/
 
 /*-
@@ -54,6 +54,11 @@ cdev_decl(openprom);
 	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
 
+#define	cdev_gen_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
+	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev }
+
 cdev_decl(cn);
 
 cdev_decl(zs);
@@ -105,3 +110,6 @@ cdev_decl(ulpt);
 cdev_decl(urio);
 cdev_decl(ucom);
 cdev_decl(uscanner);
+
+cdev_decl(mtty);
+cdev_decl(mbpp);
