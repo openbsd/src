@@ -152,10 +152,6 @@ all: config.h
 
 .SUFFIXES:
 
-$(srcdir)/Makefile.in:  Makefile.am  $(top_srcdir)/configure.in $(ACLOCAL_M4)
-	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --gnu  Makefile
-
 Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	cd $(top_builddir) && \
 	  CONFIG_HEADERS= CONFIG_LINKS= \
@@ -163,12 +159,6 @@ Makefile:  $(srcdir)/Makefile.in  $(top_builddir)/config.status
 
 config.status: $(srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	$(SHELL) ./config.status --recheck
-
-$(srcdir)/configure:  $(srcdir)/configure.in $(ACLOCAL_M4) $(CONFIGURE_DEPENDENCIES)
-	cd $(srcdir) && $(AUTOCONF)
-
-$(ACLOCAL_M4):  configure.in acinclude.m4
-	cd $(srcdir) && $(ACLOCAL) $(ACLOCAL_AMFLAGS)
 
 config.h: stamp-h1
 	@if test ! -f $@; then \
@@ -182,16 +172,6 @@ stamp-h1: $(srcdir)/config.h.in $(top_builddir)/config.status
 	  && CONFIG_FILES= CONFIG_HEADERS=config.h \
 	     $(SHELL) ./config.status
 	@mv stamp-h1T stamp-h1
-$(srcdir)/config.h.in:  $(srcdir)/./stamp-h1.in
-	@if test ! -f $@; then \
-		rm -f $(srcdir)/./stamp-h1.in; \
-		$(MAKE) $(srcdir)/./stamp-h1.in; \
-	else :; fi
-$(srcdir)/./stamp-h1.in: $(top_srcdir)/configure.in $(ACLOCAL_M4) $(top_srcdir)/acconfig.h
-	@rm -f $(srcdir)/./stamp-h1.in $(srcdir)/./stamp-h1.inT
-	@echo timestamp > $(srcdir)/./stamp-h1.inT 2> /dev/null
-	cd $(top_srcdir) && $(AUTOHEADER)
-	@mv $(srcdir)/./stamp-h1.inT $(srcdir)/./stamp-h1.in
 
 distclean-hdr:
 	-rm -f config.h
