@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.56 2004/07/30 10:45:27 ho Exp $
+#	$OpenBSD: Makefile,v 1.57 2004/08/23 11:16:49 ho Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -47,10 +47,10 @@ OS=		openbsd
 # Compile-time configuration of otherwise optional features
 #FEATURES=	tripledes des blowfish cast aes
 #FEATURES+=	policy x509 ec aggressive debug gmp
-#FEATURES+=	rawkey isakmp_cfg dnssec privsep dpd nat_traversal
+#FEATURES+=	rawkey isakmp_cfg dnssec privsep nat_traversal dpd
 FEATURES=	tripledes des blowfish cast aes
 FEATURES+=	policy x509 ec aggressive debug
-FEATURES+=	rawkey isakmp_cfg privsep nat_traversal
+FEATURES+=	rawkey isakmp_cfg privsep nat_traversal dpd
 
 .PATH:		${.CURDIR}/sysdep/${OS}
 
