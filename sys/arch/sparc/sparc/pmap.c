@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.38 1999/11/05 18:07:10 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.39 1999/11/05 19:21:02 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -351,8 +351,6 @@ int	cpmemarr;		/* pmap_next_page() state */
 /*static*/ paddr_t	avail_next;	/* pmap_next_page() state:
 					   next free physical page */
 #endif
-/*static*/ paddr_t	unavail_start;	/* first stolen free physical page */
-/*static*/ paddr_t	unavail_end;	/* last stolen free physical page */
 /*static*/ vaddr_t	virtual_avail;	/* first free virtual page number */
 /*static*/ vaddr_t	virtual_end;	/* last free virtual page number */
 
@@ -811,36 +809,14 @@ static void
 pmap_page_upload()
 {
 	int	n = 0;
-	paddr_t start, end, avail_next;
-
-	avail_next = avail_start;
-	if (unavail_start != 0) {
-		/* First, the gap we created in pmap_bootstrap() */
-		if (avail_next != unavail_start)
-			/* Avoid empty ranges */
-#if defined(UVM)
-			uvm_page_physload(
-				atop(avail_next),
-				atop(unavail_start),
-				atop(avail_next),
-				atop(unavail_start),
-				VM_FREELIST_DEFAULT);
-#else
-			vm_page_physload(
-				atop(avail_next),
-				atop(unavail_start),
-				atop(avail_next),
-				atop(unavail_start));
-#endif
-		avail_next = unavail_end;
-	}
+	paddr_t start, end;
 
 	for (n = 0; n < npmemarr; n++) {
 		/*
-		 * Assume `avail_next' is always in the first segment; we
+		 * Assume `avail_start' is always in the first segment; we
 		 * already made that assumption in pmap_bootstrap()..
 		 */
-		start = (n == 0) ? avail_next : pmemarr[n].addr;
+		start = (n == 0) ? avail_start : pmemarr[n].addr;
 		end = pmemarr[n].addr + pmemarr[n].len;
 		if (start == end)
 			continue;
@@ -904,8 +880,7 @@ pmap_next_page(paddr)
 		if (++cpmemarr == npmemarr)
 			return FALSE;
 		avail_next = pmemarr[cpmemarr].addr;
-	} else if (avail_next == unavail_start)
-		avail_next = unavail_end;
+	}
 
 #ifdef DIAGNOSTIC
         /* Any available memory remaining? */
@@ -2903,7 +2878,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	 * for /dev/mem, all with no associated physical memory.
 	 */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
-	avail_start = (int)p - KERNBASE;
+	avail_start = (paddr_t)p - KERNBASE;
 
 	get_phys_mem();
 
@@ -3170,7 +3145,6 @@ pmap_bootstrap4m(void)
 		p = esym;
 #endif
 
-
 	/* Allocate context administration */
 	pmap_kernel()->pm_ctx = cpuinfo.ctxinfo = ci = (union ctxinfo *)p;
 	p += ncontext * sizeof *ci;
@@ -3182,7 +3156,6 @@ pmap_bootstrap4m(void)
 	ctxbusyvector[0] = 1;	/* context 0 is always in use */
 #endif
 
-
 	/*
 	 * Set up the `constants' for the call to vm_init()
 	 * in main().  All pages beginning at p (rounded up to
@@ -3190,18 +3163,12 @@ pmap_bootstrap4m(void)
 	 * of available pages are free.
 	 */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
-	avail_start = (int)p - KERNBASE;
-
-	get_phys_mem();
 
 	/*
 	 * Reserve memory for MMU pagetables. Some of these have severe
 	 * alignment restrictions. We allocate in a sequence that
 	 * minimizes alignment gaps.
-	 * The amount of physical memory that becomes unavailable for
-	 * general VM use is marked by [unavail_start, unavail_end>.
 	 */
-	unavail_start = (paddr_t)p - KERNBASE;
 	pagetables_start = p;
 	/*
 	 * Allocate context table.
@@ -3244,7 +3211,10 @@ pmap_bootstrap4m(void)
 	/* Round to next page and mark end of stolen pages */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
 	pagetables_end = p;
-	unavail_end = (paddr_t)p - KERNBASE;
+
+	avail_start = (paddr_t)p - KERNBASE;
+
+	get_phys_mem();
 
 	/*
 	 * Since we've statically allocated space to map the entire kernel,
@@ -3365,11 +3335,6 @@ pmap_bootstrap4m(void)
 		struct regmap *rp;
 		struct segmap *sp;
 		int pte;
-
-		if ((int)q >= KERNBASE + avail_start &&
-		    (int)q < KERNBASE + unavail_start)
-			/* This gap is part of VM-managed pages */
-			continue;
 
 		/*
 		 * Now install entry for current page.
