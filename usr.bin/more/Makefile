@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.4 1996/09/28 22:20:48 etheisen Exp $
 #	@(#)Makefile	5.11 (Berkeley) 6/25/90
 
 PROG=	more
