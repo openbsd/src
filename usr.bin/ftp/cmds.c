@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.23 1997/09/04 04:37:13 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.24 1997/09/10 20:55:08 millert Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.23 1997/09/04 04:37:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.24 1997/09/10 20:55:08 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1221,7 +1221,7 @@ shell(argc, argv)
 	pid_t pid;
 	sig_t old1, old2;
 	char shellnam[MAXPATHLEN], *shell, *namep;
-	union wait status;
+	int wait_status;
 
 	old1 = signal (SIGINT, SIG_IGN);
 	old2 = signal (SIGQUIT, SIG_IGN);
@@ -1257,7 +1257,7 @@ shell(argc, argv)
 		exit(1);
 	}
 	if (pid > 0)
-		while (wait((int *)&status) != pid)
+		while (wait(&wait_status) != pid)
 			;
 	(void)signal(SIGINT, old1);
 	(void)signal(SIGQUIT, old2);
