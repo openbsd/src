@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.6 2003/06/25 21:46:25 miod Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.7 2003/06/28 13:30:17 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  *
@@ -133,9 +133,7 @@ struct	tslot_data {
 	/* Socket status */
 	int			td_slot;
 	int			td_status;
-#define	TS_UNKNOWN	-1
-#define	TS_EMPTY	0
-#define	TS_CARD		1
+#define	TS_CARD			0x0001
 };
 
 struct	tslot_softc {
@@ -303,7 +301,7 @@ void
 tslot_reset(struct tslot_data *td, u_int32_t iosize)
 {
 	struct pcmciabus_attach_args paa;
-	int ctl;
+	int ctl, status;
 
 	paa.paa_busname = "pcmcia";
 	paa.pct = (pcmcia_chipset_tag_t)td->td_parent->sc_pct;
@@ -322,10 +320,8 @@ tslot_reset(struct tslot_data *td, u_int32_t iosize)
 	}
 
 	/*
-	 * Reset slot and initialize it
+	 * Initialize the slot
 	 */
-
-	TSLOT_WRITE(td, TS102_REG_CARD_A_INT, TS102_CARD_INT_SOFT_RESET);
 
 	ctl = TSLOT_READ(td, TS102_REG_CARD_A_CTL);
 	/* force low addresses */
@@ -347,13 +343,12 @@ tslot_reset(struct tslot_data *td, u_int32_t iosize)
 	TSLOT_WRITE(td, TS102_REG_CARD_A_INT,
 	    TS102_CARD_INT_MASK_CARDDETECT_STATUS);
 
-	/*
-	 * Force immediate probe - this will depend on the worker
-	 * thread, so will not really happen until interrupts are enabled,
-	 * which is exactly what we need.
-	 */
-	td->td_status = TS_UNKNOWN;
-	tslot_slot_intr(td, TS102_CARD_INT_STATUS_CARDDETECT_STATUS_CHANGED);
+	status = TSLOT_READ(td, TS102_REG_CARD_A_STS);
+	if (status & TS102_CARD_STS_PRES) {
+		td->td_status = TS_CARD;
+		pcmcia_card_attach(td->td_pcmcia);
+	} else
+		td->td_status = 0;
 }
 
 /* XXX there ought to be a common function for this... */
@@ -515,20 +510,50 @@ void
 tslot_slot_enable(pcmcia_chipset_handle_t pch)
 {
 	struct tslot_data *td = (struct tslot_data *)pch;
-	int status, i;
+	int status, intr, i;
+
 #ifdef TSLOT_DEBUG
 	printf("%s: enable slot %d\n",
 	    td->td_parent->sc_dev.dv_xname, td->td_slot);
 #endif
 
+	/* Pover down the socket to reset it */
+	status = TSLOT_READ(td, TS102_REG_CARD_A_STS);
+	TSLOT_WRITE(td, TS102_REG_CARD_A_STS, status | TS102_CARD_STS_VCCEN);
+
+	/*
+	 * wait 300ms until power fails (Tpf).  Then, wait 100ms since we
+	 * are changing Vcc (Toff).
+	 */
+	DELAY((300 + 100) * 1000);
+
 	/*
 	 * Power on the card if not already done, and enable card access
 	 */
-	status = TSLOT_READ(td, TS102_REG_CARD_A_STS);
 	status |= TS102_CARD_STS_ACEN;
 	status &= ~TS102_CARD_STS_VCCEN;
 	TSLOT_WRITE(td, TS102_REG_CARD_A_STS, status);
-	DELAY(200 * 1000);
+
+	/*
+	 * wait 100ms until power raise (Tpr) and 20ms to become
+	 * stable (Tsu(Vcc)).
+	 */
+	DELAY((100 + 20) * 1000);
+
+	status &= ~TS102_CARD_STS_VPP1_MASK;
+	status |= TS102_CARD_STS_VPP1_VCC;
+	TSLOT_WRITE(td, TS102_REG_CARD_A_STS, status);
+
+	/*
+	 * hold RESET at least 20us.
+	 */
+	intr = TSLOT_READ(td, TS102_REG_CARD_A_INT);
+	TSLOT_WRITE(td, TS102_REG_CARD_A_INT, TS102_CARD_INT_SOFT_RESET);
+	DELAY(20);
+	TSLOT_WRITE(td, TS102_REG_CARD_A_INT, intr);
+
+	/* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
+	DELAY(20 * 1000);
 
 	/*
 	 * Wait until the card is unbusy. If it is still busy after 3 seconds,
@@ -557,6 +582,8 @@ tslot_slot_enable(pcmcia_chipset_handle_t pch)
 	 * never get set, despite what the documentation says!
 	 */
 	if (pcmcia_card_gettype(td->td_pcmcia) == PCMCIA_IFTYPE_IO) {
+		TSLOT_WRITE(td, TS102_REG_CARD_A_STS,
+		    TSLOT_READ(td, TS102_REG_CARD_A_STS) | TS102_CARD_STS_IO);
 		TSLOT_WRITE(td, TS102_REG_CARD_A_INT,
 		    TS102_CARD_INT_MASK_CARDDETECT_STATUS |
 		    TS102_CARD_INT_MASK_IRQ);
@@ -605,10 +632,17 @@ tslot_event_thread(void *v)
 			td = &sc->sc_slot[te->te_slot];
 			switch (te->te_what) {
 			case TSLOT_EVENT_INSERT:
-				pcmcia_card_attach(td->td_pcmcia);
+				if ((td->td_status & TS_CARD) == 0) {
+					td->td_status |= TS_CARD;
+					pcmcia_card_attach(td->td_pcmcia);
+				}
 				break;
 			case TSLOT_EVENT_REMOVE:
-				pcmcia_card_detach(td->td_pcmcia, DETACH_FORCE);
+				if ((td->td_status & TS_CARD) != 0) {
+					td->td_status &= ~TS_CARD;
+					pcmcia_card_detach(td->td_pcmcia,
+					    DETACH_FORCE);
+				}
 				break;
 			default:
 				printf("%s: invalid event type %d on slot %d\n",
@@ -712,16 +746,11 @@ tslot_slot_intr(struct tslot_data *td, int intreg)
 
 	if (intreg & TS102_CARD_INT_STATUS_CARDDETECT_STATUS_CHANGED) {
 		if (status & TS102_CARD_STS_PRES) {
-			if (sockstat != TS_CARD) {
-				if (tslot_queue_event(td->td_parent,
-				    td->td_slot, TSLOT_EVENT_INSERT) == 0)
-					td->td_status = TS_CARD;
-			}
+			tslot_queue_event(td->td_parent,
+			    td->td_slot, TSLOT_EVENT_INSERT);
 		} else {
-			if (sockstat != TS_EMPTY &&
-			    tslot_queue_event(td->td_parent, td->td_slot,
-			      TSLOT_EVENT_REMOVE) == 0)
-				td->td_status = TS_EMPTY;
+			tslot_queue_event(td->td_parent, td->td_slot,
+			    TSLOT_EVENT_REMOVE);
 		}
 #ifdef TSLOT_DEBUG
 		printf("%s: slot %d status changed from %d to %d\n",
