@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.2 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: cache.h,v 1.3 2004/12/09 19:54:09 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -28,10 +28,8 @@
 #define CACHE_H
 
 #include <sys/types.h>
-#include <sys/stat.h>
 
-#include <signal.h>
-
+#include "rcs.h"
 
 int       rcs_cache_init    (u_int);
 RCSFILE  *rcs_cache_fetch   (const char *path);
