@@ -1,4 +1,4 @@
-/*	$OpenBSD: modstat.c,v 1.18 2002/05/24 07:03:35 ericj Exp $	*/
+/*	$OpenBSD: modstat.c,v 1.19 2002/12/12 00:00:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -147,7 +147,7 @@ main(argc, argv)
 	setgid(getgid());
 
 	printf("Type     Id Off %-*s Size %-*s Rev Module Name\n",
-		POINTERSIZE, "Loadaddr", POINTERSIZE, "Info");
+	    POINTERSIZE, "Loadaddr", POINTERSIZE, "Info");
 
 	if (modnum != -1 || modname != NULL) {
 		if (dostat(devfd, modnum, modname))
@@ -156,8 +156,8 @@ main(argc, argv)
 	}
 
 	/* Start at 0 and work up until we receive EINVAL. */
- 	for (modnum = 0; dostat(devfd, modnum, NULL) < 2; modnum++)
- 		;
+	for (modnum = 0; dostat(devfd, modnum, NULL) < 2; modnum++)
+		;
 
 	exit(0);
 }
