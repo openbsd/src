@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.9 1996/09/27 20:40:46 pefo Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.10 1996/11/12 08:42:09 niklas Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -194,7 +194,31 @@ extern pcopen(dev_t, int, int, struct proc *);
 #define	KBD_DELAY \
 		DELAY(10);
 
-static inline int
+/*
+ * bcopy variant that only moves word-aligned 16-bit entities,
+ * for stupid VGA cards.  cnt is required to be an even vale.
+ */
+static __inline void
+wcopy(src, tgt, cnt)
+	void *src, *tgt;
+	u_int cnt;
+{
+	u_int16_t *from = src;
+	u_int16_t *to = tgt;
+
+	cnt >>= 1;
+	if (to < from || to >= from + cnt)
+		while(cnt--)
+			*to++ = *from++;
+	else {
+		to += cnt;
+		from += cnt;
+		while(cnt--)
+			*--to = *--from;
+	}
+}
+
+static __inline int
 kbd_wait_output()
 {
 	u_int i;
@@ -207,7 +231,7 @@ kbd_wait_output()
 	return 0;
 }
 
-static inline int
+static __inline int
 kbd_wait_input()
 {
 	u_int i;
@@ -220,7 +244,7 @@ kbd_wait_input()
 	return 0;
 }
 
-static inline void
+static __inline void
 kbd_flush_input()
 {
 	u_char c;
@@ -1271,9 +1295,15 @@ sput(cp, n)
 					else if (cx > nrow)
 						cx = nrow;
 					if (cx < nrow)
+#ifdef PCCONS_FORCE_WORD
+						wcopy(crtAt + vs.ncol * cx,
+						    crtAt, vs.ncol * (nrow -
+						    cx) * CHR);
+#else
 						bcopy(crtAt + vs.ncol * cx,
 						    crtAt, vs.ncol * (nrow -
 						    cx) * CHR);
+#endif
 					fillw((vs.at << 8) | ' ',
 					    crtAt + vs.ncol * (nrow - cx),
 					    vs.ncol * cx);
@@ -1287,9 +1317,15 @@ sput(cp, n)
 					else if (cx > vs.nrow)
 						cx = vs.nrow;
 					if (cx < vs.nrow)
+#ifdef PCCONS_FORCE_WORD
+						wcopy(Crtat + vs.ncol * cx,
+						    Crtat, vs.ncol * (vs.nrow -
+						    cx) * CHR);
+#else
 						bcopy(Crtat + vs.ncol * cx,
 						    Crtat, vs.ncol * (vs.nrow -
 						    cx) * CHR);
+#endif
 					fillw((vs.at << 8) | ' ',
 					    Crtat + vs.ncol * (vs.nrow - cx),
 					    vs.ncol * cx);
@@ -1307,10 +1343,17 @@ sput(cp, n)
 					else if (cx > nrow)
 						cx = nrow;
 					if (cx < nrow)
+#ifdef PCCONS_FORCE_WORD
+						wcopy(crtAt,
+						    crtAt + vs.ncol * cx,
+						    vs.ncol * (nrow - cx) *
+						    CHR);
+#else
 						bcopy(crtAt,
 						    crtAt + vs.ncol * cx,
 						    vs.ncol * (nrow - cx) *
 						    CHR);
+#endif
 					fillw((vs.at << 8) | ' ', crtAt,
 					    vs.ncol * cx);
 					vs.state = 0;
@@ -1323,10 +1366,17 @@ sput(cp, n)
 					else if (cx > vs.nrow)
 						cx = vs.nrow;
 					if (cx < vs.nrow)
+#ifdef PCCONS_FORCE_WORD
+						wcopy(Crtat,
+						    Crtat + vs.ncol * cx,
+						    vs.ncol * (vs.nrow - cx) *
+						    CHR);
+#else
 						bcopy(Crtat,
 						    Crtat + vs.ncol * cx,
 						    vs.ncol * (vs.nrow - cx) *
 						    CHR);
+#endif
 					fillw((vs.at << 8) | ' ', Crtat,
 					    vs.ncol * cx);
 					/* crtat += vs.ncol * cx; /* XXX */
@@ -1406,8 +1456,13 @@ sput(cp, n)
 						    PUSER, "pcputc", 0);
 					splx(s);
 				}
+#if PCCONS_FORCE_WORD
+				wcopy(Crtat + vs.ncol, Crtat,
+				    (vs.nchr - vs.ncol) * CHR);
+#else
 				bcopy(Crtat + vs.ncol, Crtat,
 				    (vs.nchr - vs.ncol) * CHR);
+#endif
 				fillw((vs.at << 8) | ' ',
 				    Crtat + vs.nchr - vs.ncol,
 				    vs.ncol);
@@ -1854,7 +1909,7 @@ pc_xmode_off()
 #define	PMS_BSIZE	1020	/* buffer size */
 
 
-static inline void
+static __inline void
 pms_dev_cmd(value)
 	u_char value;
 {
@@ -1864,7 +1919,7 @@ pms_dev_cmd(value)
 	outb(kbd_datap, value);
 }
 
-static inline void
+static __inline void
 pms_aux_cmd(value)
 	u_char value;
 {
@@ -1872,7 +1927,7 @@ pms_aux_cmd(value)
 	outb(kbd_cmdp, value);
 }
 
-static inline void
+static __inline void
 pms_pit_cmd(value)
 	u_char value;
 {
