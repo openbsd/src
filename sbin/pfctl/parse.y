@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.361 2003/04/13 21:51:10 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.362 2003/04/13 22:45:28 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1040,6 +1040,7 @@ hfscopts_list	: hfscopts_item				{
 		}
 		| hfscopts_list comma hfscopts_item	{
 			$$.flags |= $3.flags;
+		}
 		;
 
 hfscopts_item	: STRING	{
