@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.24 2000/11/06 20:08:57 mickey Exp $
+$OpenBSD: usbdevs,v 1.25 2000/11/08 18:12:48 aaron Exp $
 /* $NetBSD: usbdevs,v 1.88 2000/04/03 12:09:43 augustss Exp $ */
 
 /*
@@ -21,7 +21,7 @@ $OpenBSD: usbdevs,v 1.24 2000/11/06 20:08:57 mickey Exp $
  *    must display the following acknowledgement:
  *        This product includes software developed by the NetBSD
  *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
+ * 4. nEITher the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -110,6 +110,7 @@ vendor ATEN		0x0557	ATEN International Co. Ltd.
 vendor MUSTEK		0x055f	Mustek Systems, Inc.
 vendor TELEX		0x0562	Telex Communications, Inc.
 vendor PERACOM		0x0565	Peracom Networks, Inc.
+vendor ALCOR2		0x0566	Alcor Micro, Inc.
 vendor WACOM		0x056a	WACOM Corp. Ltd.
 vendor ETEK		0x056c	e-TEK Labs
 vendor EIZO		0x056d	EIZO
@@ -197,6 +198,7 @@ vendor ACCTON		0x083a	Accton Technology Corp.
 vendor DIAMOND		0x0841	Diamond
 vendor NETGEAR		0x0846	BayNETGEAR, Inc.
 vendor ACTIVEWIRE	0x0854	ActiveWire, Inc.
+vendor METRICOM		0x0870	Metricom
 vendor ADESSOKBTEK	0x087c	ADESSO/Kbtek America, Inc.
 vendor APT		0x0880	APT Technologies, Inc.
 vendor BOCARESEARCH	0x0885	Boca Research, Inc.
@@ -273,6 +275,9 @@ product ELECOM MOUSE29UO	0x0002	mouse 29UO
 
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
+
+/* Alcor Micro, Inc. products */
+product ALCOR2 KBD_HUB		0x2802	Kbd Hub
 
 /* Altec Lansing products */
 product ALTEC ADA70		0x0070	ADA70 Speakers
@@ -506,6 +511,9 @@ product MCT USB232		0x0210	USB-232 Interface
 
 /* Melco, Inc products */
 product MELCO LUATX		0x0001	LU-ATX Ethernet
+
+/* Metricom products */
+product METRICOM RICOCHET_GS	0x0001	Ricochet GS
 
 /* Microsoft products */
 product MICROSOFT SIDEPREC	0x0008	SideWinder Precision Pro
