@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.71 2000/06/18 19:02:24 todd Exp $
+#	$OpenBSD: netstart,v 1.72 2000/09/02 15:59:29 todd Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -157,6 +157,8 @@ for hn in /etc/hostname.*; do
 		bcaddr=$ext1
 		ext1=$ext2
 		ext2=
+	    else
+		alias=
 	    fi
 	    cmd="ifconfig $if $af $alias $name "
 	    case "$dt" in
