@@ -18,7 +18,7 @@
 
 #include "sample.h"
 
-RCSID("$KTH: sample_server.c,v 1.14 1999/11/13 06:28:49 assar Exp $");
+RCSID("$KTH: sample_server.c,v 1.14.2.1 2000/06/28 19:08:00 assar Exp $");
 
 static void
 usage (void)

@@ -33,7 +33,7 @@
 
 #include "kauth.h"
 
-RCSID("$KTH: kauthd.c,v 1.25 1999/12/02 16:58:31 joda Exp $");
+RCSID("$KTH: kauthd.c,v 1.25.2.1 2000/06/28 19:07:58 assar Exp $");
 
 krb_principal princ;
 static char locuser[SNAME_SZ];
