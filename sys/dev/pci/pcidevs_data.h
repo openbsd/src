@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.35 1998/03/17 10:49:26 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.36 1998/03/17 11:05:23 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -123,6 +123,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "M4803",
 	},
 	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7810,
+	    0,
+	    "Adaptec",
+	    "AIC-7810",
+	},
+	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7850,
 	    0,
 	    "Adaptec",
@@ -205,6 +211,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Adaptec",
 	    "AHA-3940 Ultra",
+	},
+	{
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_398XU,
+	    0,
+	    "Adaptec",
+	    "AHA-398X Ultra",
 	},
 	{
 	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2944U,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.35 1998/03/17 10:49:26 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.36 1998/03/17 11:05:23 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -552,6 +552,7 @@
 #define	PCI_PRODUCT_ALI_M4803	0x5215		/* M4803 */
 
 /* Adaptec products */
+#define	PCI_PRODUCT_ADP_AIC7810	0x1078		/* AIC-7810 */
 #define	PCI_PRODUCT_ADP_AIC7850	0x5078		/* AIC-7850 */
 #define	PCI_PRODUCT_ADP_AIC7855	0x5578		/* AIC-7855 */
 #define	PCI_PRODUCT_ADP_AIC5900	0x5900		/* AIC-5900 ATM */
@@ -566,6 +567,7 @@
 #define	PCI_PRODUCT_ADP_AIC7880	0x8078		/* AIC-7880 Ultra */
 #define	PCI_PRODUCT_ADP_2940U	0x8178		/* AHA-2940 Ultra */
 #define	PCI_PRODUCT_ADP_3940U	0x8278		/* AHA-3940 Ultra */
+#define	PCI_PRODUCT_ADP_398XU	0x8378		/* AHA-398X Ultra */
 #define	PCI_PRODUCT_ADP_2944U	0x8478		/* AHA-2944 Ultra */
 
 /* Alliance products */
