@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2002/02/15 14:41:38 markus Exp $
+#	$OpenBSD: Makefile,v 1.4 2002/02/18 11:40:42 markus Exp $
 
 REGRESSTARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -58,7 +58,6 @@ t7: t7.out
 
 .for t in ${LTESTS}
 REGRESSTARGETS+=t-${t}
-REGRESSSLOWTARGETS+=t-${t}
 t-${t}:
 	sh ${.CURDIR}/test-exec.sh ${.OBJDIR} ${.CURDIR}/${t}.sh
 .endfor
