@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.24 2001/03/14 22:02:16 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.25 2001/03/22 01:15:35 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -2876,6 +2876,7 @@ pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa,
 Retry:
 
 	PMAP_LOCK(pmap, spl);
+	users = pmap->cpus_using;
 
 	/*
 	 * Expand pmap to include this pte. Assume that
@@ -2896,8 +2897,6 @@ Retry:
 	 */
 	old_pa = M88K_PTOB(pte->pfn);
 	if (old_pa == pa) {
-
-		users = pmap->cpus_using;
 		if (pmap == kernel_pmap) {
 			kflush = 1;
 		} else {
@@ -5274,6 +5273,8 @@ pmap_virtual_space(vm_offset_t *startp, vm_offset_t *endp)
 	*endp = virtual_end;
 }
 
+#if !defined(MACHINE_NEW_NONCONTIG)
+
 unsigned int
 pmap_free_pages(void)
 {
@@ -5290,6 +5291,8 @@ pmap_next_page(vm_offset_t *addrp)
 	avail_next += PAGE_SIZE;
 	return TRUE;
 }
+
+#endif
 
 #if USING_BATC
    #ifdef OMRON_PMAP
