@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.111 2004/01/21 19:03:44 tedu Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.112 2004/03/14 23:12:11 tedu Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -205,8 +205,7 @@ main(framep)
 	 */
 	config_init();		/* init autoconfiguration data structures */
 	consinit();
-	printf(copyright);
-	printf("\n");
+	printf("%s\n", copyright);
 
 	uvm_init();
 	disk_init();		/* must come before autoconfiguration */
