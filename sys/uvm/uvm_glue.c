@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.33 2002/06/09 02:11:47 jsyn Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.34 2003/01/29 22:57:10 mickey Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -377,12 +377,13 @@ uvm_swapin(p)
 	struct proc *p;
 {
 	vaddr_t addr;
-	int s;
+	int rv, s;
 
 	addr = (vaddr_t)p->p_addr;
 	/* make P_INMEM true */
-	uvm_fault_wire(kernel_map, addr, addr + USPACE,
-	    VM_PROT_READ | VM_PROT_WRITE);
+	if ((rv = uvm_fault_wire(kernel_map, addr, addr + USPACE,
+	    VM_PROT_READ | VM_PROT_WRITE)) != KERN_SUCCESS)
+		panic("uvm_swapin: uvm_fault_wire failed: %d", rv);
 
 	/*
 	 * Some architectures need to be notified when the user area has
