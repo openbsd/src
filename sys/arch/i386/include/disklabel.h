@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.19 1998/02/24 04:22:37 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.20 1999/03/23 16:36:18 millert Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp $	*/
 
 /*
@@ -80,6 +80,7 @@ struct dos_mbr {
 } __attribute__((packed));
 
 #define DOSMBR_SIGNATURE	(0xaa55)
+#define DOSMBR_SIGNATURE_OFF	(0x1fe)
 
 #include <sys/dkbad.h>
 struct cpu_disklabel {

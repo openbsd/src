@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.13 1998/02/24 04:22:36 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.14 1999/03/23 16:36:17 millert Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.3 1996/03/09 20:52:54 ghudson Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #define DOSACTIVE	0x80
 #define	NDOSPART	4
 #define DOSMBR_SIGNATURE	0xAA55
+#define DOSMBR_SIGNATURE_OFF	0x1FE
 
 struct dos_partition {
 	u_int8_t	dp_flag;	/* bootstrap flags */

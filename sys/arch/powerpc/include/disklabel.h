@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.10 1998/02/19 20:36:35 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.11 1999/03/23 16:36:18 millert Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -46,6 +46,7 @@
 #define	DOSMAGIC	0xaa55		/* Actual magic number */
 #define	MBRMAGIC	DOSMAGIC
 #define DOSMBR_SIGNATURE MBRMAGIC
+#define DOSMBR_SIGNATURE_OFF DOSMAGICOFF
 #define	DOSACTIVE	0x80
 
 struct dos_partition {
