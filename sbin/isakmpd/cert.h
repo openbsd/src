@@ -1,4 +1,4 @@
-/* $OpenBSD: cert.h,v 1.13 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: cert.h,v 1.14 2004/05/14 08:42:56 hshoexer Exp $	 */
 /* $EOM: cert.h,v 1.8 2000/09/28 12:53:27 niklas Exp $	 */
 
 /*
@@ -56,22 +56,22 @@
 
 struct cert_handler {
 	u_int16_t id;	/* ISAKMP Cert Encoding ID */
-	int	(*cert_init) (void);
-	int	(*crl_init) (void);
-	void	*(*cert_get) (u_int8_t *, u_int32_t);
-	int	(*cert_validate) (void *);
-	int	(*cert_insert) (int, void *);
-	void	(*cert_free) (void *);
-	int	(*certreq_validate) (u_int8_t *, u_int32_t);
-	void	*(*certreq_decode) (u_int8_t *, u_int32_t);
-	void	(*free_aca) (void *);
-	int	(*cert_obtain) (u_int8_t *, size_t, void *,
-		    u_int8_t **, u_int32_t *);
-	int	(*cert_get_key) (void *, void *);
-	int	(*cert_get_subjects) (void *, int *, u_int8_t ***,
-		    u_int32_t **);
+	int	 (*cert_init)(void);
+	int	 (*crl_init)(void);
+	void	*(*cert_get)(u_int8_t *, u_int32_t);
+	int	 (*cert_validate)(void *);
+	int	 (*cert_insert)(int, void *);
+	void	 (*cert_free)(void *);
+	int	 (*certreq_validate)(u_int8_t *, u_int32_t);
+	void	*(*certreq_decode)(u_int8_t *, u_int32_t);
+	void	 (*free_aca)(void *);
+	int	 (*cert_obtain)(u_int8_t *, size_t, void *, u_int8_t **,
+		     u_int32_t *);
+	int	 (*cert_get_key) (void *, void *);
+	int	 (*cert_get_subjects) (void *, int *, u_int8_t ***,
+		     u_int32_t **);
 	void	*(*cert_dup) (void *);
-	void	(*cert_serialize) (void *, u_int8_t **, u_int32_t *);
+	void	 (*cert_serialize) (void *, u_int8_t **, u_int32_t *);
 	char	*(*cert_printable) (void *);
 	void	*(*cert_from_printable) (char *);
 };

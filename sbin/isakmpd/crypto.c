@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.20 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: crypto.c,v 1.21 2004/05/14 08:42:56 hshoexer Exp $	 */
 /* $EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	 */
 
 /*
@@ -101,7 +101,7 @@ struct crypto_xf transforms[] = {
 #endif
 
 enum cryptoerr
-des1_init(struct keystate * ks, u_int8_t * key, u_int16_t len)
+des1_init(struct keystate *ks, u_int8_t *key, u_int16_t len)
 {
 	/* des_set_key returns -1 for parity problems, and -2 for weak keys */
 	des_set_odd_parity(DC key);
@@ -114,20 +114,20 @@ des1_init(struct keystate * ks, u_int8_t * key, u_int16_t len)
 }
 
 void
-des1_encrypt(struct keystate * ks, u_int8_t * d, u_int16_t len)
+des1_encrypt(struct keystate *ks, u_int8_t *d, u_int16_t len)
 {
 	des_cbc_encrypt(DC d, DC d, len, ks->ks_des[0], DC ks->riv, DES_ENCRYPT);
 }
 
 void
-des1_decrypt(struct keystate * ks, u_int8_t * d, u_int16_t len)
+des1_decrypt(struct keystate *ks, u_int8_t *d, u_int16_t len)
 {
 	des_cbc_encrypt(DC d, DC d, len, ks->ks_des[0], DC ks->riv, DES_DECRYPT);
 }
 
 #ifdef USE_TRIPLEDES
 enum cryptoerr
-des3_init(struct keystate * ks, u_int8_t * key, u_int16_t len)
+des3_init(struct keystate *ks, u_int8_t *key, u_int16_t len)
 {
 	des_set_odd_parity(DC key);
 	des_set_odd_parity(DC(key + 8));
@@ -142,30 +142,30 @@ des3_init(struct keystate * ks, u_int8_t * key, u_int16_t len)
 }
 
 void
-des3_encrypt(struct keystate * ks, u_int8_t * data, u_int16_t len)
+des3_encrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 {
 	u_int8_t        iv[MAXBLK];
 
 	memcpy(iv, ks->riv, ks->xf->blocksize);
-	des_ede3_cbc_encrypt(DC data, DC data, len, ks->ks_des[0], ks->ks_des[1],
-			     ks->ks_des[2], DC iv, DES_ENCRYPT);
+	des_ede3_cbc_encrypt(DC data, DC data, len, ks->ks_des[0],
+	    ks->ks_des[1], ks->ks_des[2], DC iv, DES_ENCRYPT);
 }
 
 void
-des3_decrypt(struct keystate * ks, u_int8_t * data, u_int16_t len)
+des3_decrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 {
 	u_int8_t        iv[MAXBLK];
 
 	memcpy(iv, ks->riv, ks->xf->blocksize);
-	des_ede3_cbc_encrypt(DC data, DC data, len, ks->ks_des[0], ks->ks_des[1],
-			     ks->ks_des[2], DC iv, DES_DECRYPT);
+	des_ede3_cbc_encrypt(DC data, DC data, len, ks->ks_des[0],
+	    ks->ks_des[1], ks->ks_des[2], DC iv, DES_DECRYPT);
 }
 #undef DC
 #endif				/* USE_TRIPLEDES */
 
 #ifdef USE_BLOWFISH
 enum cryptoerr
-blf_init(struct keystate * ks, u_int8_t * key, u_int16_t len)
+blf_init(struct keystate *ks, u_int8_t *key, u_int16_t len)
 {
 	blf_key(&ks->ks_blf, key, len);
 
@@ -173,7 +173,7 @@ blf_init(struct keystate * ks, u_int8_t * key, u_int16_t len)
 }
 
 void
-blf_encrypt(struct keystate * ks, u_int8_t * data, u_int16_t len)
+blf_encrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 {
 	u_int16_t       i, blocksize = ks->xf->blocksize;
 	u_int8_t       *iv = ks->liv;
@@ -193,13 +193,14 @@ blf_encrypt(struct keystate * ks, u_int8_t * data, u_int16_t len)
 }
 
 void
-blf_decrypt(struct keystate * ks, u_int8_t * data, u_int16_t len)
+blf_decrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 {
 	u_int16_t       i, blocksize = ks->xf->blocksize;
 	u_int32_t       xl, xr;
 
 	data += len - blocksize;
-	for (i = len - blocksize; i >= blocksize; data -= blocksize, i -= blocksize) {
+	for (i = len - blocksize; i >= blocksize; data -= blocksize,
+	    i -= blocksize) {
 		xl = GET_32BIT_BIG(data);
 		xr = GET_32BIT_BIG(data + 4);
 		Blowfish_decipher(&ks->ks_blf, &xl, &xr);
@@ -219,14 +220,14 @@ blf_decrypt(struct keystate * ks, u_int8_t * data, u_int16_t len)
 
 #ifdef USE_CAST
 enum cryptoerr
-cast_init(struct keystate * ks, u_int8_t * key, u_int16_t len)
+cast_init(struct keystate *ks, u_int8_t *key, u_int16_t len)
 {
 	cast_setkey(&ks->ks_cast, key, len);
 	return EOKAY;
 }
 
 void
-cast1_encrypt(struct keystate * ks, u_int8_t * data, u_int16_t len)
+cast1_encrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 {
 	u_int16_t       i, blocksize = ks->xf->blocksize;
 	u_int8_t       *iv = ks->liv;
@@ -241,12 +242,13 @@ cast1_encrypt(struct keystate * ks, u_int8_t * data, u_int16_t len)
 }
 
 void
-cast1_decrypt(struct keystate * ks, u_int8_t * data, u_int16_t len)
+cast1_decrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 {
 	u_int16_t       i, blocksize = ks->xf->blocksize;
 
 	data += len - blocksize;
-	for (i = len - blocksize; i >= blocksize; data -= blocksize, i -= blocksize) {
+	for (i = len - blocksize; i >= blocksize; data -= blocksize,
+	    i -= blocksize) {
 		cast_decrypt(&ks->ks_cast, data, data);
 		XOR64(data, data - blocksize);
 	}
@@ -257,7 +259,7 @@ cast1_decrypt(struct keystate * ks, u_int8_t * data, u_int16_t len)
 
 #ifdef USE_AES
 enum cryptoerr
-aes_init(struct keystate * ks, u_int8_t * key, u_int16_t len)
+aes_init(struct keystate *ks, u_int8_t *key, u_int16_t len)
 {
 	AES_set_encrypt_key(key, len << 3, &ks->ks_aes[0]);
 	AES_set_decrypt_key(key, len << 3, &ks->ks_aes[1]);
@@ -265,7 +267,7 @@ aes_init(struct keystate * ks, u_int8_t * key, u_int16_t len)
 }
 
 void
-aes_encrypt(struct keystate * ks, u_int8_t * data, u_int16_t len)
+aes_encrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 {
 	u_int8_t        iv[MAXBLK];
 
@@ -274,7 +276,7 @@ aes_encrypt(struct keystate * ks, u_int8_t * data, u_int16_t len)
 }
 
 void
-aes_decrypt(struct keystate * ks, u_int8_t * data, u_int16_t len)
+aes_decrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 {
 	u_int8_t        iv[MAXBLK];
 
@@ -296,20 +298,21 @@ crypto_get(enum transform id)
 }
 
 struct keystate *
-crypto_init(struct crypto_xf * xf, u_int8_t * key, u_int16_t len,
-	    enum cryptoerr * err)
+crypto_init(struct crypto_xf *xf, u_int8_t *key, u_int16_t len,
+    enum cryptoerr *err)
 {
 	struct keystate *ks;
 
 	if (len < xf->keymin || len > xf->keymax) {
-		LOG_DBG((LOG_CRYPTO, 10, "crypto_init: invalid key length %d", len));
+		LOG_DBG((LOG_CRYPTO, 10, "crypto_init: invalid key length %d",
+		    len));
 		*err = EKEYLEN;
 		return 0;
 	}
 	ks = calloc(1, sizeof *ks);
 	if (!ks) {
 		log_error("crypto_init: calloc (1, %lu) failed",
-			  (unsigned long) sizeof *ks);
+		    (unsigned long)sizeof *ks);
 		*err = ENOCRYPTO;
 		return 0;
 	}
@@ -324,7 +327,7 @@ crypto_init(struct crypto_xf * xf, u_int8_t * key, u_int16_t len,
 	*err = xf->init(ks, key, len);
 	if (*err != EOKAY) {
 		LOG_DBG((LOG_CRYPTO, 30, "crypto_init: weak key found for %s",
-			 xf->name));
+		    xf->name));
 		free(ks);
 		return 0;
 	}
@@ -332,7 +335,7 @@ crypto_init(struct crypto_xf * xf, u_int8_t * key, u_int16_t len,
 }
 
 void
-crypto_update_iv(struct keystate * ks)
+crypto_update_iv(struct keystate *ks)
 {
 	u_int8_t       *tmp;
 
@@ -341,34 +344,34 @@ crypto_update_iv(struct keystate * ks)
 	ks->liv = tmp;
 
 	LOG_DBG_BUF((LOG_CRYPTO, 50, "crypto_update_iv: updated IV", ks->riv,
-		     ks->xf->blocksize));
+	    ks->xf->blocksize));
 }
 
 void
-crypto_init_iv(struct keystate * ks, u_int8_t * buf, size_t len)
+crypto_init_iv(struct keystate *ks, u_int8_t *buf, size_t len)
 {
 	memcpy(ks->riv, buf, len);
 
 	LOG_DBG_BUF((LOG_CRYPTO, 50, "crypto_init_iv: initialized IV", ks->riv,
-		     len));
+	    len));
 }
 
 void
-crypto_encrypt(struct keystate * ks, u_int8_t * buf, u_int16_t len)
+crypto_encrypt(struct keystate *ks, u_int8_t *buf, u_int16_t len)
 {
 	LOG_DBG_BUF((LOG_CRYPTO, 10, "crypto_encrypt: before encryption", buf,
-		     len));
+	    len));
 	ks->xf->encrypt(ks, buf, len);
 	memcpy(ks->liv, buf + len - ks->xf->blocksize, ks->xf->blocksize);
 	LOG_DBG_BUF((LOG_CRYPTO, 30, "crypto_encrypt: after encryption", buf,
-		     len));
+	    len));
 }
 
 void
-crypto_decrypt(struct keystate * ks, u_int8_t * buf, u_int16_t len)
+crypto_decrypt(struct keystate *ks, u_int8_t *buf, u_int16_t len)
 {
 	LOG_DBG_BUF((LOG_CRYPTO, 10, "crypto_decrypt: before decryption", buf,
-		     len));
+	    len));
 	/*
 	 * XXX There is controversy about the correctness of updating the IV
 	 * like this.
@@ -376,19 +379,19 @@ crypto_decrypt(struct keystate * ks, u_int8_t * buf, u_int16_t len)
 	memcpy(ks->liv, buf + len - ks->xf->blocksize, ks->xf->blocksize);
 	ks->xf->decrypt(ks, buf, len);
 	LOG_DBG_BUF((LOG_CRYPTO, 30, "crypto_decrypt: after decryption", buf,
-		     len));
+	    len));
 }
 
 /* Make a copy of the keystate pointed to by OKS.  */
 struct keystate *
-crypto_clone_keystate(struct keystate * oks)
+crypto_clone_keystate(struct keystate *oks)
 {
 	struct keystate *ks;
 
 	ks = malloc(sizeof *ks);
 	if (!ks) {
 		log_error("crypto_clone_keystate: malloc (%lu) failed",
-			  (unsigned long) sizeof *ks);
+		    (unsigned long)sizeof *ks);
 		return 0;
 	}
 	memcpy(ks, oks, sizeof *ks);

@@ -1,4 +1,4 @@
-/* $OpenBSD: dnssec.c,v 1.18 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: dnssec.c,v 1.19 2004/05/14 08:42:56 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -63,8 +63,8 @@ struct dns_rdata_key {
 	unsigned char  *data;
 };
 
-void           *
-dns_get_key(int type, struct message * msg, int *keylen)
+void *
+dns_get_key(int type, struct message *msg, int *keylen)
 {
 	struct exchange *exchange = msg->exchange;
 	struct rrsetinfo *rr;
@@ -114,8 +114,8 @@ dns_get_key(int type, struct message * msg, int *keylen)
 		if (id_len < sizeof ip4)
 			return 0;
 		memcpy(&ip4, id + ISAKMP_ID_DATA_OFF, sizeof ip4);
-		snprintf(name, sizeof name, "%d.%d.%d.%d.in-addr.arpa.", ip4 >> 24,
-		    (ip4 >> 16) & 0xFF, (ip4 >> 8) & 0xFF, ip4 & 0xFF);
+		snprintf(name, sizeof name, "%d.%d.%d.%d.in-addr.arpa.", ip4
+		    >> 24, (ip4 >> 16) & 0xFF, (ip4 >> 8) & 0xFF, ip4 & 0xFF);
 		break;
 
 	case IPSEC_ID_IPV6_ADDR:
@@ -126,7 +126,7 @@ dns_get_key(int type, struct message * msg, int *keylen)
 	case IPSEC_ID_FQDN:
 		if ((id_len + 1) >= sizeof name)
 			return 0;
-		/* ID is not NULL-terminated. Add trailing dot and terminate.  */
+		/* ID is not NULL-terminated. Add trailing dot and terminate. */
 		memcpy(name, id + ISAKMP_ID_DATA_OFF, id_len);
 		*(name + id_len) = '.';
 		*(name + id_len + 1) = '\0';
@@ -140,7 +140,8 @@ dns_get_key(int type, struct message * msg, int *keylen)
 		if ((id_len + sizeof(DNS_UFQDN_SEPARATOR)) >= sizeof name)
 			return 0;
 		/* Look for the '@' separator.  */
-		for (umark = id + ISAKMP_ID_DATA_OFF; (umark - id) < id_len; umark++)
+		for (umark = id + ISAKMP_ID_DATA_OFF; (umark - id) < id_len;
+		    umark++)
 			if (*umark == '@')
 				break;
 		if (*umark != '@') {
@@ -164,8 +165,8 @@ dns_get_key(int type, struct message * msg, int *keylen)
 	ret = getrrsetbyname(name, C_IN, T_KEY, 0, &rr);
 
 	if (ret) {
-		LOG_DBG((LOG_MISC, 30, "dns_get_key: no DNS responses (error %d)",
-		    ret));
+		LOG_DBG((LOG_MISC, 30, "dns_get_key: no DNS responses "
+		    "(error %d)", ret));
 		return 0;
 	}
 	LOG_DBG((LOG_MISC, 80,
@@ -189,7 +190,8 @@ dns_get_key(int type, struct message * msg, int *keylen)
 
 	/*
 	 * Find a key with the wanted algorithm, if any.
-	 * XXX If there are several keys present, we currently only find the first.
+	 * XXX If there are several keys present, we currently only find the
+	 * first.
          */
 	for (i = 0; i < rr->rri_nrdatas && key_rr.datalen == 0; i++) {
 		key_rr.flags = ntohs((u_int16_t) * rr->rri_rdatas[i].rdi_data);
@@ -197,7 +199,8 @@ dns_get_key(int type, struct message * msg, int *keylen)
 		key_rr.algorithm = *(rr->rri_rdatas[i].rdi_data + 3);
 
 		if (key_rr.protocol != DNS_KEYPROTO_IPSEC) {
-			LOG_DBG((LOG_MISC, 50, "dns_get_key: ignored non-IPsec key"));
+			LOG_DBG((LOG_MISC, 50, "dns_get_key: ignored "
+			    "non-IPsec key"));
 			continue;
 		}
 		if (key_rr.algorithm != algorithm) {
@@ -212,13 +215,15 @@ dns_get_key(int type, struct message * msg, int *keylen)
 			continue;
 		}
 		/* This key seems to fit our requirements... */
-		key_rr.data = (char *) malloc(key_rr.datalen);
+		key_rr.data = (char *)malloc(key_rr.datalen);
 		if (!key_rr.data) {
-			log_error("dns_get_key: malloc (%d) failed", key_rr.datalen);
+			log_error("dns_get_key: malloc (%d) failed",
+			    key_rr.datalen);
 			freerrset(rr);
 			return 0;
 		}
-		memcpy(key_rr.data, rr->rri_rdatas[i].rdi_data + 4, key_rr.datalen);
+		memcpy(key_rr.data, rr->rri_rdatas[i].rdi_data + 4,
+		    key_rr.datalen);
 		*keylen = key_rr.datalen;
 	}
 
@@ -230,11 +235,11 @@ dns_get_key(int type, struct message * msg, int *keylen)
 }
 
 int
-dns_RSA_dns_to_x509(u_int8_t * key, int keylen, RSA ** rsa_key)
+dns_RSA_dns_to_x509(u_int8_t *key, int keylen, RSA **rsa_key)
 {
-	RSA            *rsa;
-	int             key_offset;
-	u_int8_t        e_len;
+	RSA	*rsa;
+	int	 key_offset;
+	u_int8_t e_len;
 
 	if (!key || keylen <= 0) {
 		log_print("dns_RSA_dns_to_x509: invalid public key");
@@ -278,7 +283,7 @@ dns_RSA_dns_to_x509(u_int8_t * key, int keylen, RSA ** rsa_key)
 
 #if notyet
 int
-dns_RSA_x509_to_dns(RSA * rsa_key, u_int8_t * key, int *keylen)
+dns_RSA_x509_to_dns(RSA *rsa_key, u_int8_t *key, int *keylen)
 {
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.13 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: crypto.h,v 1.14 2004/05/14 08:42:56 hshoexer Exp $	 */
 /* $EOM: crypto.h,v 1.12 2000/10/15 21:56:41 niklas Exp $	 */
 
 /*
@@ -158,18 +158,17 @@ struct crypto_xf {
 	u_int16_t       keymin, keymax;	/* Possible Keying Bytes */
 	u_int16_t       blocksize;	/* Need to keep IV in the state */
 	struct keystate *state;	/* Key information, can also be passed sep. */
-	enum cryptoerr  (*init) (struct keystate *, u_int8_t *, u_int16_t);
-	void            (*encrypt) (struct keystate *, u_int8_t *, u_int16_t);
-	void            (*decrypt) (struct keystate *, u_int8_t *, u_int16_t);
+	enum cryptoerr  (*init)(struct keystate *, u_int8_t *, u_int16_t);
+	void            (*encrypt)(struct keystate *, u_int8_t *, u_int16_t);
+	void            (*decrypt)(struct keystate *, u_int8_t *, u_int16_t);
 };
 
 extern struct keystate *crypto_clone_keystate(struct keystate *);
 extern void     crypto_decrypt(struct keystate *, u_int8_t *, u_int16_t);
 extern void     crypto_encrypt(struct keystate *, u_int8_t *, u_int16_t);
 extern struct crypto_xf *crypto_get(enum transform);
-extern struct keystate *
-crypto_init(struct crypto_xf *, u_int8_t *,
-	    u_int16_t, enum cryptoerr *);
+extern struct keystate *crypto_init(struct crypto_xf *, u_int8_t *, u_int16_t,
+		    enum cryptoerr *);
 extern void     crypto_init_iv(struct keystate *, u_int8_t *, size_t);
 extern void     crypto_update_iv(struct keystate *);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.66 2004/04/23 14:15:55 ho Exp $	 */
+/* $OpenBSD: conf.c,v 1.67 2004/05/14 08:42:56 hshoexer Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -61,15 +61,15 @@ static int      conf_find_trans_xf(int, char *);
 
 struct conf_trans {
 	TAILQ_ENTRY(conf_trans) link;
-	int             trans;
+	int	 trans;
 	enum conf_op {
 		CONF_SET, CONF_REMOVE, CONF_REMOVE_SECTION
-	}               op;
-	char           *section;
-	char           *tag;
-	char           *value;
-	int             override;
-	int             is_default;
+	}	 op;
+	char	*section;
+	char	*tag;
+	char	*value;
+	int	 override;
+	int	 is_default;
 };
 
 #define CONF_SECT_MAX 256
@@ -104,20 +104,20 @@ const u_int8_t  asc2bin[] =
 
 struct conf_binding {
 	LIST_ENTRY(conf_binding) link;
-	char           *section;
-	char           *tag;
-	char           *value;
-	int             is_default;
+	char	*section;
+	char	*tag;
+	char	*value;
+	int	 is_default;
 };
 
-char           *conf_path = CONFIG_FILE;
+char	*conf_path = CONFIG_FILE;
 LIST_HEAD(conf_bindings, conf_binding) conf_bindings[256];
 
-static char    *conf_addr;
+static char	*conf_addr;
 static __inline__ u_int8_t
 conf_hash(char *s)
 {
-	u_int8_t        hash = 0;
+	u_int8_t hash = 0;
 
 	while (*s) {
 		hash = ((hash << 1) | (hash >> 7)) ^ tolower(*s);
@@ -134,13 +134,14 @@ conf_remove_now(char *section, char *tag)
 {
 	struct conf_binding *cb, *next;
 
-	for (cb = LIST_FIRST(&conf_bindings[conf_hash(section)]); cb; cb = next) {
+	for (cb = LIST_FIRST(&conf_bindings[conf_hash(section)]); cb;
+	    cb = next) {
 		next = LIST_NEXT(cb, link);
 		if (strcasecmp(cb->section, section) == 0
 		    && strcasecmp(cb->tag, tag) == 0) {
 			LIST_REMOVE(cb, link);
-			LOG_DBG((LOG_MISC, 95, "[%s]:%s->%s removed", section, tag,
-			    cb->value));
+			LOG_DBG((LOG_MISC, 95, "[%s]:%s->%s removed", section,
+			    tag, cb->value));
 			free(cb->section);
 			free(cb->tag);
 			free(cb->value);
@@ -155,15 +156,16 @@ static int
 conf_remove_section_now(char *section)
 {
 	struct conf_binding *cb, *next;
-	int             unseen = 1;
+	int	unseen = 1;
 
-	for (cb = LIST_FIRST(&conf_bindings[conf_hash(section)]); cb; cb = next) {
+	for (cb = LIST_FIRST(&conf_bindings[conf_hash(section)]); cb;
+	    cb = next) {
 		next = LIST_NEXT(cb, link);
 		if (strcasecmp(cb->section, section) == 0) {
 			unseen = 0;
 			LIST_REMOVE(cb, link);
-			LOG_DBG((LOG_MISC, 95, "[%s]:%s->%s removed", section, cb->tag,
-			    cb->value));
+			LOG_DBG((LOG_MISC, 95, "[%s]:%s->%s removed", section,
+			    cb->tag, cb->value));
 			free(cb->section);
 			free(cb->tag);
 			free(cb->value);
@@ -179,7 +181,7 @@ conf_remove_section_now(char *section)
  */
 static int
 conf_set_now(char *section, char *tag, char *value, int override,
-	     int is_default)
+    int is_default)
 {
 	struct conf_binding *node = 0;
 
@@ -187,14 +189,14 @@ conf_set_now(char *section, char *tag, char *value, int override,
 		conf_remove_now(section, tag);
 	else if (conf_get_str(section, tag)) {
 		if (!is_default)
-			log_print("conf_set_now: duplicate tag [%s]:%s, ignoring...\n",
-			    section, tag);
+			log_print("conf_set_now: duplicate tag [%s]:%s, "
+			    "ignoring...\n", section, tag);
 		return 1;
 	}
 	node = calloc(1, sizeof *node);
 	if (!node) {
-		log_error("conf_set_now: calloc (1, %lu) failed", (unsigned long) sizeof
-		    *node);
+		log_error("conf_set_now: calloc (1, %lu) failed",
+		    (unsigned long)sizeof *node);
 		return 1;
 	}
 	node->section = strdup(section);
@@ -203,8 +205,8 @@ conf_set_now(char *section, char *tag, char *value, int override,
 	node->is_default = is_default;
 
 	LIST_INSERT_HEAD(&conf_bindings[conf_hash(section)], node, link);
-	LOG_DBG((LOG_MISC, 95, "conf_set_now: [%s]:%s->%s", node->section, node->tag,
-	    node->value));
+	LOG_DBG((LOG_MISC, 95, "conf_set_now: [%s]:%s->%s", node->section,
+	    node->tag, node->value));
 	return 0;
 }
 
@@ -215,11 +217,11 @@ conf_set_now(char *section, char *tag, char *value, int override,
 static void
 conf_parse_line(int trans, char *line, size_t sz)
 {
-	char           *val;
-	size_t          i;
-	int             j;
-	static char    *section = 0;
-	static int      ln = 0;
+	char	*val;
+	size_t	 i;
+	int	 j;
+	static char *section = 0;
+	static int ln = 0;
 
 	ln++;
 
@@ -242,8 +244,8 @@ conf_parse_line(int trans, char *line, size_t sz)
 		}
 		section = malloc(i);
 		if (!section) {
-			log_print("conf_parse_line: %d: malloc (%lu) failed", ln,
-			    (unsigned long) i);
+			log_print("conf_parse_line: %d: malloc (%lu) failed",
+			    ln, (unsigned long)i);
 			return;
 		}
 		strlcpy(section, line + 1, i);
@@ -261,7 +263,8 @@ conf_parse_line(int trans, char *line, size_t sz)
 			line[strcspn(line, " \t=")] = '\0';
 			val = line + i + 1 + strspn(line + i + 1, " \t");
 			/* Skip trailing whitespace, if any */
-			for (j = sz - (val - line) - 1; j > 0 && isspace(val[j]); j--)
+			for (j = sz - (val - line) - 1; j > 0 &&
+			    isspace(val[j]); j--)
 				val[j] = '\0';
 			/* XXX Perhaps should we not ignore errors?  */
 			conf_set(trans, section, line, val, 0, 0);
@@ -277,9 +280,9 @@ conf_parse_line(int trans, char *line, size_t sz)
 static void
 conf_parse(int trans, char *buf, size_t sz)
 {
-	char           *cp = buf;
-	char           *bufend = buf + sz;
-	char           *line;
+	char	*cp = buf;
+	char	*bufend = buf + sz;
+	char	*line;
 
 	line = cp;
 	while (cp < bufend) {
@@ -321,15 +324,15 @@ conf_parse(int trans, char *buf, size_t sz)
  */
 
 /* Find the value for a section+tag in the transaction list.  */
-static char    *
+static char *
 conf_get_trans_str(int trans, char *section, char *tag)
 {
 	struct conf_trans *node, *nf = 0;
 
 	for (node = TAILQ_FIRST(&conf_trans_queue); node;
-	     node = TAILQ_NEXT(node, link))
-		if (node->trans == trans && strcasecmp(section, node->section) == 0
-		    && strcasecmp(tag, node->tag) == 0) {
+	    node = TAILQ_NEXT(node, link))
+		if (node->trans == trans && strcasecmp(section, node->section)
+		    == 0 && strcasecmp(tag, node->tag) == 0) {
 			if (!nf)
 				nf = node;
 			else if (node->override)
@@ -344,11 +347,11 @@ static int
 conf_find_trans_xf(int phase, char *xf)
 {
 	struct conf_trans *node;
-	char           *p;
+	char	*p;
 
 	/* Find the relevant transforms and suites, if any.  */
 	for (node = TAILQ_FIRST(&conf_trans_queue); node;
-	     node = TAILQ_NEXT(node, link))
+	    node = TAILQ_NEXT(node, link))
 		if ((phase == 1 && strcmp("Transforms", node->tag) == 0) ||
 		    (phase == 2 && strcmp("Suites", node->tag) == 0)) {
 			p = node->value;
@@ -443,28 +446,25 @@ conf_load_defaults_qm(int tr, char *qme, char *qmh, char *dhg, char *qme_p,
 static void
 conf_load_defaults(int tr)
 {
-	int             enc, auth, hash, group, proto, mode, pfs;
-	char            *dflt;
+	int	 enc, auth, hash, group, proto, mode, pfs;
+	char	*dflt;
 	
-	char           *mm_auth[] = {"PRE_SHARED", "DSS", "RSA_SIG", 0};
-	char           *mm_auth_p[] = {"", "-DSS", "-RSA_SIG", 0};
-	char           *mm_hash[] = {"MD5", "SHA", 0};
-	char           *mm_enc[] = {"DES_CBC", "BLOWFISH_CBC", "3DES_CBC",
-				    "CAST_CBC", "AES_CBC", 0};
-	char           *mm_enc_p[] = {"DES", "BLF", "3DES", "CAST", "AES", 0};
-	char           *dhgroup[] = {"MODP_1024", "MODP_768", "MODP_1024",
-				     "MODP_1536", "MODP_2048", 0};
-	char           *dhgroup_p[] = {"", "-GRP1", "-GRP2", "-GRP5", "-GRP14",
-				       0};
-	char           *qm_enc[] = {"DES", "3DES", "CAST", "BLOWFISH", "AES",
-				    0};
-	char           *qm_enc_p[] = {"-DES", "-3DES", "-CAST", "-BLF",
-				      "-AES", 0};
-	char           *qm_hash[] = {"HMAC_MD5", "HMAC_SHA", "HMAC_RIPEMD",
-				     "HMAC_SHA2_256", "HMAC_SHA2_384",
-				     "HMAC_SHA2_512", "NONE", 0};
-	char           *qm_hash_p[] = {"-MD5", "-SHA", "-RIPEMD", "-SHA2-256",
-				       "-SHA2-384", "-SHA2-512", "", 0};
+	char	*mm_auth[] = {"PRE_SHARED", "DSS", "RSA_SIG", 0};
+	char	*mm_auth_p[] = {"", "-DSS", "-RSA_SIG", 0};
+	char	*mm_hash[] = {"MD5", "SHA", 0};
+	char	*mm_enc[] = {"DES_CBC", "BLOWFISH_CBC", "3DES_CBC", "CAST_CBC",
+		    "AES_CBC", 0};
+	char	*mm_enc_p[] = {"DES", "BLF", "3DES", "CAST", "AES", 0};
+	char	*dhgroup[] = {"MODP_1024", "MODP_768", "MODP_1024",
+		    "MODP_1536", "MODP_2048", 0};
+	char	*dhgroup_p[] = {"", "-GRP1", "-GRP2", "-GRP5", "-GRP14", 0};
+	char	*qm_enc[] = {"DES", "3DES", "CAST", "BLOWFISH", "AES", 0};
+	char	*qm_enc_p[] = {"-DES", "-3DES", "-CAST", "-BLF", "-AES", 0};
+	char	*qm_hash[] = {"HMAC_MD5", "HMAC_SHA", "HMAC_RIPEMD",
+		    "HMAC_SHA2_256", "HMAC_SHA2_384", "HMAC_SHA2_512", "NONE",
+		    0};
+	char	*qm_hash_p[] = {"-MD5", "-SHA", "-RIPEMD", "-SHA2-256",
+		    "-SHA2-384", "-SHA2-512", "", 0};
 
 	/* General and X509 defaults */
 	conf_set(tr, "General", "Retransmits", CONF_DFLT_RETRANSMITS, 0, 1);
@@ -486,28 +486,28 @@ conf_load_defaults(int tr)
 #endif
 
 #ifdef USE_KEYNOTE
-	conf_set(tr, "KeyNote", "Credential-directory", CONF_DFLT_KEYNOTE_CRED_DIR,
-		 0, 1);
+	conf_set(tr, "KeyNote", "Credential-directory",
+	    CONF_DFLT_KEYNOTE_CRED_DIR, 0, 1);
 #endif
 
 	/* Lifetimes. XXX p1/p2 vs main/quick mode may be unclear.  */
 	dflt = conf_get_trans_str(tr, "General", "Default-phase-1-lifetime");
 	conf_set(tr, CONF_DFLT_TAG_LIFE_MAIN_MODE, "LIFE_TYPE",
-		 CONF_DFLT_TYPE_LIFE_MAIN_MODE, 0, 1);
+	    CONF_DFLT_TYPE_LIFE_MAIN_MODE, 0, 1);
 	conf_set(tr, CONF_DFLT_TAG_LIFE_MAIN_MODE, "LIFE_DURATION",
-		 (dflt ? dflt : CONF_DFLT_VAL_LIFE_MAIN_MODE), 0, 1);
+	    (dflt ? dflt : CONF_DFLT_VAL_LIFE_MAIN_MODE), 0, 1);
 
 	dflt = conf_get_trans_str(tr, "General", "Default-phase-2-lifetime");
 	conf_set(tr, CONF_DFLT_TAG_LIFE_QUICK_MODE, "LIFE_TYPE",
-		 CONF_DFLT_TYPE_LIFE_QUICK_MODE, 0, 1);
+	    CONF_DFLT_TYPE_LIFE_QUICK_MODE, 0, 1);
 	conf_set(tr, CONF_DFLT_TAG_LIFE_QUICK_MODE, "LIFE_DURATION",
-		 (dflt ? dflt : CONF_DFLT_VAL_LIFE_QUICK_MODE), 0, 1);
+	    (dflt ? dflt : CONF_DFLT_VAL_LIFE_QUICK_MODE), 0, 1);
 
 	/* Default Phase-1 Configuration section */
 	conf_set(tr, CONF_DFLT_TAG_PHASE1_CONFIG, "EXCHANGE_TYPE",
-		 CONF_DFLT_PHASE1_EXCH_TYPE, 0, 1);
+	    CONF_DFLT_PHASE1_EXCH_TYPE, 0, 1);
 	conf_set(tr, CONF_DFLT_TAG_PHASE1_CONFIG, "Transforms",
-		 CONF_DFLT_PHASE1_TRANSFORMS, 0, 1);
+	    CONF_DFLT_PHASE1_TRANSFORMS, 0, 1);
 
 	/* Main modes */
 	for (enc = 0; mm_enc[enc]; enc++)
@@ -535,7 +535,7 @@ conf_load_defaults(int tr)
 				for (pfs = 0; pfs < 2; pfs++)
 					for (hash = 0; qm_hash[hash]; hash++)
 						for (group = 0;
-						     dhgroup_p[group]; group++)
+						    dhgroup_p[group]; group++)
 							conf_load_defaults_qm(
 							    tr, qm_enc[enc],
 							    qm_hash[hash],
@@ -549,7 +549,7 @@ conf_load_defaults(int tr)
 void
 conf_init(void)
 {
-	unsigned int    i;
+	unsigned int i;
 
 	for (i = 0; i < sizeof conf_bindings / sizeof conf_bindings[0]; i++)
 		LIST_INIT(&conf_bindings[i]);
@@ -562,11 +562,11 @@ void
 conf_reinit(void)
 {
 	struct conf_binding *cb = 0;
-	int             fd, trans;
-	unsigned int    i;
-	size_t          sz;
-	char           *new_conf_addr = 0;
-	struct stat     sb;
+	int	 fd, trans;
+	unsigned int i;
+	size_t	 sz;
+	char	*new_conf_addr = 0;
+	struct stat sb;
 
 	if ((monitor_stat(conf_path, &sb) == 0) || (errno != ENOENT)) {
 		if (check_file_secrecy(conf_path, &sz))
@@ -574,18 +574,20 @@ conf_reinit(void)
 
 		fd = monitor_open(conf_path, O_RDONLY, 0);
 		if (fd == -1) {
-			log_error("conf_reinit: open (\"%s\", O_RDONLY) failed", conf_path);
+			log_error("conf_reinit: open (\"%s\", O_RDONLY) failed",
+			    conf_path);
 			return;
 		}
 		new_conf_addr = malloc(sz);
 		if (!new_conf_addr) {
-			log_error("conf_reinit: malloc (%lu) failed", (unsigned long) sz);
+			log_error("conf_reinit: malloc (%lu) failed",
+			    (unsigned long)sz);
 			goto fail;
 		}
 		/* XXX I assume short reads won't happen here.  */
-		if (read(fd, new_conf_addr, sz) != (int) sz) {
+		if (read(fd, new_conf_addr, sz) != (int)sz) {
 			log_error("conf_reinit: read (%d, %p, %lu) failed",
-				  fd, new_conf_addr, (unsigned long) sz);
+			    fd, new_conf_addr, (unsigned long)sz);
 			goto fail;
 		}
 		close(fd);
@@ -602,9 +604,10 @@ conf_reinit(void)
 
 	/* Free potential existing configuration.  */
 	if (conf_addr) {
-		for (i = 0; i < sizeof conf_bindings / sizeof conf_bindings[0]; i++)
+		for (i = 0; i < sizeof conf_bindings / sizeof conf_bindings[0];
+		    i++)
 			for (cb = LIST_FIRST(&conf_bindings[i]); cb;
-			     cb = LIST_FIRST(&conf_bindings[i]))
+			    cb = LIST_FIRST(&conf_bindings[i]))
 				conf_remove_now(cb->section, cb->tag);
 		free(conf_addr);
 	}
@@ -625,7 +628,7 @@ fail:
 int
 conf_get_num(char *section, char *tag, int def)
 {
-	char           *value = conf_get_str(section, tag);
+	char	*value = conf_get_str(section, tag);
 
 	if (value)
 		return atoi(value);
@@ -640,7 +643,7 @@ conf_get_num(char *section, char *tag, int def)
 struct sockaddr *
 conf_get_address(char *section, char *tag)
 {
-	char           *value = conf_get_str(section, tag);
+	char	*value = conf_get_str(section, tag);
 	struct sockaddr *sa;
 
 	if (!value)
@@ -654,45 +657,45 @@ conf_get_address(char *section, char *tag)
 int
 conf_match_num(char *section, char *tag, int x)
 {
-	char           *value = conf_get_str(section, tag);
-	int             val, min, max, n;
+	char	*value = conf_get_str(section, tag);
+	int	 val, min, max, n;
 
 	if (!value)
 		return 0;
 	n = sscanf(value, "%d,%d:%d", &val, &min, &max);
 	switch (n) {
 	case 1:
-		LOG_DBG((LOG_MISC, 90, "conf_match_num: %s:%s %d==%d?", section, tag,
-			 val, x));
+		LOG_DBG((LOG_MISC, 90, "conf_match_num: %s:%s %d==%d?",
+		    section, tag, val, x));
 		return x == val;
 	case 3:
-		LOG_DBG((LOG_MISC, 90, "conf_match_num: %s:%s %d<=%d<=%d?", section,
-			 tag, min, x, max));
+		LOG_DBG((LOG_MISC, 90, "conf_match_num: %s:%s %d<=%d<=%d?",
+		    section, tag, min, x, max));
 		return min <= x && max >= x;
 	default:
-		log_error("conf_match_num: section %s tag %s: invalid number spec %s",
-			  section, tag, value);
+		log_error("conf_match_num: section %s tag %s: invalid number "
+		    "spec %s", section, tag, value);
 	}
 	return 0;
 }
 
 /* Return the string value denoted by TAG in section SECTION.  */
-char           *
+char *
 conf_get_str(char *section, char *tag)
 {
 	struct conf_binding *cb;
 
 	for (cb = LIST_FIRST(&conf_bindings[conf_hash(section)]); cb;
-	     cb = LIST_NEXT(cb, link))
-		if (strcasecmp(section, cb->section) == 0
-		    && strcasecmp(tag, cb->tag) == 0) {
-			LOG_DBG((LOG_MISC, 95, "conf_get_str: [%s]:%s->%s", section,
-				 tag, cb->value));
+	    cb = LIST_NEXT(cb, link))
+		if (strcasecmp(section, cb->section) == 0 &&
+		    strcasecmp(tag, cb->tag) == 0) {
+			LOG_DBG((LOG_MISC, 95, "conf_get_str: [%s]:%s->%s",
+			    section, tag, cb->value));
 			return cb->value;
 		}
 	LOG_DBG((LOG_MISC, 95,
 	     "conf_get_str: configuration value not found [%s]:%s", section,
-		 tag));
+	     tag));
 	return 0;
 }
 
@@ -703,7 +706,7 @@ conf_get_str(char *section, char *tag)
 struct conf_list *
 conf_get_list(char *section, char *tag)
 {
-	char           *liststr = 0, *p, *field, *t;
+	char	*liststr = 0, *p, *field, *t;
 	struct conf_list *list = 0;
 	struct conf_list_node *node;
 
@@ -764,7 +767,7 @@ conf_get_tag_list(char *section)
 	TAILQ_INIT(&list->fields);
 	list->cnt = 0;
 	for (cb = LIST_FIRST(&conf_bindings[conf_hash(section)]); cb;
-	     cb = LIST_NEXT(cb, link))
+	    cb = LIST_NEXT(cb, link))
 		if (strcasecmp(section, cb->section) == 0) {
 			list->cnt++;
 			node = calloc(1, sizeof *node);
@@ -785,10 +788,10 @@ cleanup:
 
 /* Decode a PEM encoded buffer.  */
 int
-conf_decode_base64(u_int8_t * out, u_int32_t * len, u_char * buf)
+conf_decode_base64(u_int8_t *out, u_int32_t *len, u_char *buf)
 {
-	u_int32_t       c = 0;
-	u_int8_t        c1, c2, c3, c4;
+	u_int32_t	c = 0;
+	u_int8_t	c1, c2, c3, c4;
 
 	while (*buf) {
 		if (*buf > 127 || (c1 = asc2bin[*buf]) == 255)
@@ -807,7 +810,7 @@ conf_decode_base64(u_int8_t * out, u_int32_t * len, u_char * buf)
 			if (c2 & 0xF)
 				return 0;
 
-			if (strcmp((char *) buf, "==") == 0)
+			if (strcmp((char *)buf, "==") == 0)
 				buf++;
 			else
 				return 0;
@@ -822,7 +825,7 @@ conf_decode_base64(u_int8_t * out, u_int32_t * len, u_char * buf)
 				if (c3 & 3)
 					return 0;
 
-				if (strcmp((char *) buf, "="))
+				if (strcmp((char *)buf, "="))
 					return 0;
 
 			} else if (*buf > 127 || (c4 = asc2bin[*buf]) == 255)
@@ -843,7 +846,7 @@ conf_decode_base64(u_int8_t * out, u_int32_t * len, u_char * buf)
 }
 
 void
-conf_free_list(struct conf_list * list)
+conf_free_list(struct conf_list *list)
 {
 	struct conf_list_node *node = TAILQ_FIRST(&list->fields);
 
@@ -860,7 +863,7 @@ conf_free_list(struct conf_list * list)
 int
 conf_begin(void)
 {
-	static int      seq = 0;
+	static int	seq = 0;
 
 	return ++seq;
 }
@@ -873,7 +876,7 @@ conf_trans_node(int transaction, enum conf_op op)
 	node = calloc(1, sizeof *node);
 	if (!node) {
 		log_error("conf_trans_node: calloc (1, %lu) failed",
-			  (unsigned long) sizeof *node);
+		    (unsigned long)sizeof *node);
 		return 0;
 	}
 	node->trans = transaction;
@@ -885,7 +888,7 @@ conf_trans_node(int transaction, enum conf_op op)
 /* Queue a set operation.  */
 int
 conf_set(int transaction, char *section, char *tag, char *value, int override,
-	 int is_default)
+    int is_default)
 {
 	struct conf_trans *node;
 
@@ -961,7 +964,8 @@ conf_remove_section(int transaction, char *section)
 		goto fail;
 	node->section = strdup(section);
 	if (!node->section) {
-		log_error("conf_remove_section: strdup (\"%s\") failed", section);
+		log_error("conf_remove_section: strdup (\"%s\") failed",
+		    section);
 		goto fail;
 	}
 	return 0;
@@ -989,14 +993,15 @@ conf_end(int transaction, int commit)
 					    node->is_default);
 					break;
 				case CONF_REMOVE:
-					conf_remove_now(node->section, node->tag);
+					conf_remove_now(node->section,
+					    node->tag);
 					break;
 				case CONF_REMOVE_SECTION:
 					conf_remove_section_now(node->section);
 					break;
 				default:
-					log_print("conf_end: unknown operation: %d",
-					    node->op);
+					log_print("conf_end: unknown "
+					    "operation: %d", node->op);
 				}
 			TAILQ_REMOVE(&conf_trans_queue, node, link);
 			if (node->section)
@@ -1016,8 +1021,8 @@ conf_end(int transaction, int commit)
  * Configuration is "stored in reverse order", so reverse it again.
  */
 struct dumper {
-	char           *s, *v;
-	struct dumper  *next;
+	char	*s, *v;
+	struct dumper *next;
 };
 
 static void
@@ -1042,11 +1047,11 @@ void
 conf_report(void)
 {
 	struct conf_binding *cb, *last = 0;
-	unsigned int    i, len;
-	char           *current_section = (char *) 0;
+	unsigned int	i, len;
+	char           *current_section = (char *)0;
 	struct dumper  *dumper, *dnode;
 
-	dumper = dnode = (struct dumper *) calloc(1, sizeof *dumper);
+	dumper = dnode = (struct dumper *)calloc(1, sizeof *dumper);
 	if (!dumper)
 		goto mem_fail;
 
@@ -1054,13 +1059,14 @@ conf_report(void)
 
 	for (i = 0; i < sizeof conf_bindings / sizeof conf_bindings[0]; i++)
 		for (cb = LIST_FIRST(&conf_bindings[i]); cb;
-		     cb = LIST_NEXT(cb, link)) {
+		    cb = LIST_NEXT(cb, link)) {
 			if (!cb->is_default) {
 				/* Dump this entry.  */
-				if (!current_section ||
-				    strcmp(cb->section, current_section)) {
+				if (!current_section || strcmp(cb->section,
+				    current_section)) {
 					if (current_section) {
-						len = strlen(current_section) + 3;
+						len = strlen(current_section)
+						    + 3;
 						dnode->s = malloc(len);
 						if (!dnode->s)
 							goto mem_fail;

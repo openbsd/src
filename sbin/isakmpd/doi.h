@@ -1,4 +1,4 @@
-/* $OpenBSD: doi.h,v 1.13 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: doi.h,v 1.14 2004/05/14 08:42:56 hshoexer Exp $	 */
 /* $EOM: doi.h,v 1.29 2000/07/02 18:47:15 provos Exp $	 */
 
 /*
@@ -57,40 +57,44 @@ struct doi {
 	size_t          proto_size;
 
 #ifdef USE_DEBUG
-	int             (*debug_attribute) (u_int16_t, u_int8_t *, u_int16_t, void *);
+	int             (*debug_attribute)(u_int16_t, u_int8_t *, u_int16_t,
+			    void *);
 #endif
-	void            (*delete_spi) (struct sa *, struct proto *, int);
-	int16_t        *(*exchange_script) (u_int8_t);
-	void            (*finalize_exchange) (struct message *);
-	void            (*free_exchange_data) (void *);
-	void            (*free_proto_data) (void *);
-	void            (*free_sa_data) (void *);
-	struct keystate *(*get_keystate) (struct message *);
-	u_int8_t       *(*get_spi) (size_t *, u_int8_t, struct message *);
-	int             (*handle_leftover_payload) (struct message *, u_int8_t,
-					                  struct payload *);
-	int             (*informational_post_hook) (struct message *);
-	int             (*informational_pre_hook) (struct message *);
-	int             (*is_attribute_incompatible) (u_int16_t, u_int8_t *, u_int16_t, void *);
-	void            (*proto_init) (struct proto *, char *);
-	void            (*setup_situation) (u_int8_t *);
-	                size_t(*situation_size) (void);
-	                u_int8_t(*spi_size) (u_int8_t);
-	int             (*validate_attribute) (u_int16_t, u_int8_t *, u_int16_t, void *);
-	int             (*validate_exchange) (u_int8_t);
-	int             (*validate_id_information) (u_int8_t, u_int8_t *, u_int8_t *, size_t,
-					                 struct exchange *);
-	int             (*validate_key_information) (u_int8_t *, size_t);
-	int             (*validate_notification) (u_int16_t);
-	int             (*validate_proto) (u_int8_t);
-	int             (*validate_situation) (u_int8_t *, size_t *, size_t);
-	int             (*validate_transform_id) (u_int8_t, u_int8_t);
-	int             (*initiator) (struct message * msg);
-	int             (*responder) (struct message * msg);
-	char           *(*decode_ids) (char *, u_int8_t *, size_t, u_int8_t *, size_t, int);
+	void            (*delete_spi)(struct sa *, struct proto *, int);
+	int16_t        *(*exchange_script)(u_int8_t);
+	void            (*finalize_exchange)(struct message *);
+	void            (*free_exchange_data)(void *);
+	void            (*free_proto_data)(void *);
+	void            (*free_sa_data)(void *);
+	struct keystate *(*get_keystate)(struct message *);
+	u_int8_t       *(*get_spi)(size_t *, u_int8_t, struct message *);
+	int             (*handle_leftover_payload)(struct message *, u_int8_t,
+			    struct payload *);
+	int             (*informational_post_hook)(struct message *);
+	int             (*informational_pre_hook)(struct message *);
+	int             (*is_attribute_incompatible)(u_int16_t, u_int8_t *,
+			    u_int16_t, void *);
+	void            (*proto_init)(struct proto *, char *);
+	void            (*setup_situation)(u_int8_t *);
+	size_t		(*situation_size)(void);
+	u_int8_t	(*spi_size)(u_int8_t);
+	int             (*validate_attribute)(u_int16_t, u_int8_t *,
+			    u_int16_t, void *);
+	int             (*validate_exchange)(u_int8_t);
+	int             (*validate_id_information)(u_int8_t, u_int8_t *,
+			    u_int8_t *, size_t, struct exchange *);
+	int             (*validate_key_information)(u_int8_t *, size_t);
+	int             (*validate_notification)(u_int16_t);
+	int             (*validate_proto)(u_int8_t);
+	int             (*validate_situation)(u_int8_t *, size_t *, size_t);
+	int             (*validate_transform_id)(u_int8_t, u_int8_t);
+	int             (*initiator)(struct message * msg);
+	int             (*responder)(struct message * msg);
+	char           *(*decode_ids)(char *, u_int8_t *, size_t, u_int8_t *,
+			    size_t, int);
 };
 
-extern void     doi_init(void);
+extern void	doi_init(void);
 extern struct doi *doi_lookup(u_int8_t);
 extern void     doi_register(struct doi *);
 

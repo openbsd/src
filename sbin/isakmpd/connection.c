@@ -1,4 +1,4 @@
-/* $OpenBSD: connection.c,v 1.27 2004/05/13 06:56:33 ho Exp $	 */
+/* $OpenBSD: connection.c,v 1.28 2004/05/14 08:42:56 hshoexer Exp $	 */
 /* $EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	 */
 
 /*
@@ -101,26 +101,28 @@ connection_init(void)
 		for (conn = TAILQ_FIRST(&conns->fields); conn;
 		    conn = TAILQ_NEXT(conn, link)) {
 			if (connection_setup(conn->field))
-				log_print("connection_init: could not setup \"%s\"",
-				    conn->field);
+				log_print("connection_init: could not setup "
+				    "\"%s\"", conn->field);
 
 			/* XXX Break/abort here if connection_setup failed?  */
 
 			/*
-			 * XXX This code (i.e. the attribute lookup) seems like a
-			 * likely candidate for factoring out into a function of its
-			 * own.
+			 * XXX This code (i.e. the attribute lookup) seems
+			 * like a likely candidate for factoring out into a
+			 * function of its own.
 		         */
 			attrs = conf_get_list(conn->field, "Flags");
 			if (attrs)
 				for (attr = TAILQ_FIRST(&attrs->fields); attr;
 				    attr = TAILQ_NEXT(attr, link))
-					if (strcasecmp("active-only", attr->field) == 0)
+					if (strcasecmp("active-only",
+					    attr->field) == 0)
 						break;
 			if (!attrs || (attrs && !attr))
 				if (connection_record_passive(conn->field))
-					log_print("connection_init: could not record "
-					    "connection \"%s\"", conn->field);
+					log_print("connection_init: could not "
+					    "record connection \"%s\"",
+					    conn->field);
 			if (attrs)
 				conf_free_list(attrs);
 
@@ -132,8 +134,8 @@ connection_init(void)
 		for (conn = TAILQ_FIRST(&conns->fields); conn;
 		    conn = TAILQ_NEXT(conn, link))
 			if (connection_record_passive(conn->field))
-				log_print("connection_init: could not record passive "
-				    "connection \"%s\"", conn->field);
+				log_print("connection_init: could not record "
+				    "passive connection \"%s\"", conn->field);
 		conf_free_list(conns);
 	}
 }
@@ -160,7 +162,8 @@ connection_lookup(char *name)
 {
 	struct connection *conn;
 
-	for (conn = TAILQ_FIRST(&connections); conn; conn = TAILQ_NEXT(conn, link))
+	for (conn = TAILQ_FIRST(&connections); conn;
+	    conn = TAILQ_NEXT(conn, link))
 		if (strcasecmp(conn->name, name) == 0)
 			return conn;
 	return 0;
@@ -214,8 +217,8 @@ connection_passive_lookup_by_ids(u_int8_t *id1, u_int8_t *id2)
 			continue;
 
 		/*
-		 * If both IDs match what we have saved, return the name.  Don't bother
-		 * in which order they are.
+		 * If both IDs match what we have saved, return the name.
+		 * Don't bother in which order they are.
 	         */
 		if ((compare_ids(id1, conn->local_id, conn->local_sz) == 0 &&
 		    compare_ids(id2, conn->remote_id, conn->remote_sz) == 0) ||
@@ -270,7 +273,7 @@ connection_setup(char *name)
 	conn = calloc(1, sizeof *conn);
 	if (!conn) {
 		log_error("connection_setup: calloc (1, %lu) failed",
-		    (unsigned long) sizeof *conn);
+		    (unsigned long)sizeof *conn);
 		goto fail;
 	}
 	conn->name = strdup(name);
@@ -279,8 +282,8 @@ connection_setup(char *name)
 		goto fail;
 	}
 	gettimeofday(&now, 0);
-	conn->ev = timer_add_event("connection_checker",
-	    connection_checker, conn, &now);
+	conn->ev = timer_add_event("connection_checker", connection_checker,
+	    conn, &now);
 	if (!conn->ev) {
 		log_print("connection_setup: could not add timer event");
 		goto fail;
@@ -321,7 +324,7 @@ connection_record_passive(char *name)
 	conn = calloc(1, sizeof *conn);
 	if (!conn) {
 		log_error("connection_record_passive: calloc (1, %lu) failed",
-		    (unsigned long) sizeof *conn);
+		    (unsigned long)sizeof *conn);
 		return -1;
 	}
 	conn->name = strdup(name);
@@ -403,7 +406,7 @@ connection_report(void)
 
 	gettimeofday(&now, 0);
 	for (conn = TAILQ_FIRST(&connections); conn;
-	     conn = TAILQ_NEXT(conn, link))
+	    conn = TAILQ_NEXT(conn, link))
 		LOG_DBG((LOG_REPORT, 0,
 		    "connection_report: connection %s next check %ld seconds",
 		    (conn->name ? conn->name : "<unnamed>"),

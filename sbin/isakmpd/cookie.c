@@ -1,4 +1,4 @@
-/* $OpenBSD: cookie.c,v 1.13 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: cookie.c,v 1.14 2004/05/14 08:42:56 hshoexer Exp $	 */
 /* $EOM: cookie.c,v 1.21 1999/08/05 15:00:04 niklas Exp $	 */
 
 /*
@@ -60,13 +60,13 @@ cookie_gen(struct transport *t, struct exchange *exchange, u_int8_t *buf,
 	struct sockaddr *name;
 
 	hash->Init(hash->ctx);
-	(*t->vtbl->get_dst) (t, &name);
-	hash->Update(hash->ctx, (u_int8_t *) name, sysdep_sa_len(name));
-	(*t->vtbl->get_src) (t, &name);
-	hash->Update(hash->ctx, (u_int8_t *) name, sysdep_sa_len(name));
+	(*t->vtbl->get_dst)(t, &name);
+	hash->Update(hash->ctx, (u_int8_t *)name, sysdep_sa_len(name));
+	(*t->vtbl->get_src)(t, &name);
+	hash->Update(hash->ctx, (u_int8_t *)name, sysdep_sa_len(name));
 	if (exchange->initiator == 0)
-		hash->Update(hash->ctx, exchange->cookies + ISAKMP_HDR_ICOOKIE_OFF,
-		    ISAKMP_HDR_ICOOKIE_LEN);
+		hash->Update(hash->ctx, exchange->cookies +
+		    ISAKMP_HDR_ICOOKIE_OFF, ISAKMP_HDR_ICOOKIE_LEN);
 	getrandom(tmpsecret, COOKIE_SECRET_SIZE);
 	hash->Update(hash->ctx, tmpsecret, COOKIE_SECRET_SIZE);
 	hash->Final(hash->digest, hash->ctx);

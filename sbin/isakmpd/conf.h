@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.h,v 1.28 2004/04/23 14:15:55 ho Exp $	 */
+/* $OpenBSD: conf.h,v 1.29 2004/05/14 08:42:56 hshoexer Exp $	 */
 /* $EOM: conf.h,v 1.13 2000/09/18 00:01:47 ho Exp $	 */
 
 /*
@@ -72,18 +72,18 @@
 
 struct conf_list_node {
 	TAILQ_ENTRY(conf_list_node) link;
-	char           *field;
+	char	*field;
 };
 
 struct conf_list {
-	size_t          cnt;
-	                TAILQ_HEAD(conf_list_fields_head, conf_list_node) fields;
+	size_t	cnt;
+	TAILQ_HEAD(conf_list_fields_head, conf_list_node) fields;
 };
 
 extern char    *conf_path;
 
 extern int      conf_begin(void);
-extern int      conf_decode_base64(u_int8_t * out, u_int32_t * len, u_char * buf);
+extern int      conf_decode_base64(u_int8_t *, u_int32_t *, u_char *);
 extern int      conf_end(int, int);
 extern void     conf_free_list(struct conf_list *);
 extern struct sockaddr *conf_get_address(char *, char *);

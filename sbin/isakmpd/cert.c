@@ -1,4 +1,4 @@
-/* $OpenBSD: cert.c,v 1.26 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: cert.c,v 1.27 2004/05/14 08:42:56 hshoexer Exp $	 */
 /* $EOM: cert.c,v 1.18 2000/09/28 12:53:27 niklas Exp $	 */
 
 /*
@@ -77,11 +77,11 @@ struct cert_handler cert_handler[] = {
 int
 cert_init(void)
 {
-	size_t          i;
-	int             err = 1;
+	size_t	i;
+	int	err = 1;
 
 	for (i = 0; i < sizeof cert_handler / sizeof cert_handler[0]; i++)
-		if (cert_handler[i].cert_init && !(*cert_handler[i].cert_init) ())
+		if (cert_handler[i].cert_init && !(*cert_handler[i].cert_init)())
 			err = 0;
 
 	return err;
@@ -90,11 +90,11 @@ cert_init(void)
 int
 crl_init(void)
 {
-	size_t          i;
-	int             err = 1;
+	size_t	i;
+	int	err = 1;
 
 	for (i = 0; i < sizeof cert_handler / sizeof cert_handler[0]; i++)
-		if (cert_handler[i].crl_init && !(*cert_handler[i].crl_init) ())
+		if (cert_handler[i].crl_init && !(*cert_handler[i].crl_init)())
 			err = 0;
 
 	return err;
@@ -103,7 +103,7 @@ crl_init(void)
 struct cert_handler *
 cert_get(u_int16_t id)
 {
-	size_t          i;
+	size_t	i;
 
 	for (i = 0; i < sizeof cert_handler / sizeof cert_handler[0]; i++)
 		if (id == cert_handler[i].id)
@@ -139,7 +139,7 @@ certreq_decode(u_int16_t type, u_int8_t *data, u_int32_t datalen)
 	ret = malloc(sizeof aca);
 	if (!ret) {
 		log_error("certreq_decode: malloc (%lu) failed",
-		    (unsigned long) sizeof aca);
+		    (unsigned long)sizeof aca);
 		handler->free_aca(aca.data);
 		return 0;
 	}
@@ -150,7 +150,7 @@ certreq_decode(u_int16_t type, u_int8_t *data, u_int32_t datalen)
 void
 cert_free_subjects(int n, u_int8_t **id, u_int32_t *len)
 {
-	int             i;
+	int	i;
 
 	for (i = 0; i < n; i++)
 		free(id[i]);

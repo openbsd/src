@@ -1,4 +1,4 @@
-/* $OpenBSD: dnssec.h,v 1.6 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: dnssec.h,v 1.7 2004/05/14 08:42:56 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -27,8 +27,8 @@
 #include "libcrypto.h"
 #include "message.h"
 
-void           *dns_get_key(int, struct message *, int *);
-int             dns_RSA_dns_to_x509(u_int8_t *, int, RSA **);
+void	*dns_get_key(int, struct message *, int *);
+int	 dns_RSA_dns_to_x509(u_int8_t *, int, RSA **);
 
 #ifndef DNS_KEYALG_RSA
 #define DNS_KEYALG_RSA 1
