@@ -1,4 +1,4 @@
-/*	$OpenBSD: pl_main.c,v 1.3 1999/01/18 06:20:53 pjanzen Exp $	*/
+/*	$OpenBSD: pl_main.c,v 1.4 1999/03/26 02:35:53 pjanzen Exp $	*/
 /*	$NetBSD: pl_main.c,v 1.5 1995/04/24 12:25:25 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: pl_main.c,v 1.3 1999/01/18 06:20:53 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: pl_main.c,v 1.4 1999/03/26 02:35:53 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ initialize()
 {
 	struct File *fp;
 	struct ship *sp;
-	char captain[80];
+	char captain[20];
 	char message[60];
 	int load;
 	int n;
@@ -201,9 +201,8 @@ reprint:
 		if (!*captain)
 			(void) strcpy(captain, "no name");
 		else
-		    captain[strlen(captain) - 1] = '\0';
+		    captain[sizeof(captain) - 1] = '\0';
 	}
-	captain[sizeof captain - 1] = '\0';
 	Writestr(W_CAPTAIN, ms, captain);
 	for (n = 0; n < 2; n++) {
 		char buf[10];
@@ -211,7 +210,7 @@ reprint:
 		printf("\nInitial broadside %s (grape, chain, round, double): ",
 			n ? "right" : "left");
 		(void) fflush(stdout);
-		(void) scanf("%s", buf);
+		(void) scanf("%9s", buf);
 		switch (*buf) {
 		case 'g':
 			load = L_GRAPE;
