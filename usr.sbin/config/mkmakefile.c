@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkmakefile.c,v 1.3 1996/04/21 23:40:18 deraadt Exp $	*/
+/*	$OpenBSD: mkmakefile.c,v 1.4 1996/05/10 12:10:04 mickey Exp $	*/
 /*	$NetBSD: mkmakefile.c,v 1.29 1996/03/17 13:18:23 cgd Exp $	*/
 
 /*
@@ -297,7 +297,7 @@ emitfiles(fp, suffix)
 				    "$S/arch/%s/%s/swapgeneric.c",
 				    machine, machine);
 			else
-				(void)sprintf(swapname, "swap%s.c",
+				(void)sprintf(swapname, "./swap%s.c",
 				    cf->cf_name);
 			len = strlen(swapname);
 			if (lpos + len > 72) {
