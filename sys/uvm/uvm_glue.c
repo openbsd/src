@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.10 2001/04/02 21:43:12 niklas Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.11 2001/04/03 15:28:06 aaron Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.23 1999/05/28 20:49:51 thorpej Exp $	*/
 
 /* 
@@ -329,6 +329,7 @@ uvm_exit(p)
 
 	uvmspace_free(p->p_vmspace);
 	uvm_km_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
+	p->p_addr = NULL;
 }
 
 /*
@@ -467,9 +468,7 @@ loop:
 		printf("scheduler: no room for pid %d(%s), free %d\n",
 	   p->p_pid, p->p_comm, uvmexp.free);
 #endif
-	(void) splhigh();
 	uvm_wait("schedpwait");
-	(void) spl0();
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
 		printf("scheduler: room again, free %d\n", uvmexp.free);
