@@ -135,9 +135,11 @@ be configured as follows:
 
 Device		Name	Port	IRQ	DRQ	Misc
 ------		----	----	---	---	----
-Serial ports	com0	0x3f8	4		[8250/16450/16550/clones]
-		com1	0x2f8	3		[8250/16450/16550/clones]
-		com2	0x3e8	5		[8250/16450/16550/clones]
+Serial ports	pccom0	0x3f8	4		[8250/16450/16550/clones]
+		pccom1	0x2f8	3		[8250/16450/16550/clones]
+		pccom2	0x3e8	5		[8250/16450/16550/clones]
+		pccom3	0x2e8	3		[PCMCIA modem cards]
+		ast0	0x1a0	5		[AST 4-port serial card]
 
 Parallel ports	lpt0	0x378	7		[interrupt-driven or polling]
 		lpt1	0x278			[polling only]
@@ -152,21 +154,34 @@ Floppy controller
 
 AHA-154x, AHA-174x (in compatibility mode), or BT-54x SCSI host adapters
 		aha0	0x330	any	any
+		aha1	0x334	any	any
 
 AHA-174x SCSI host adapters (in enhanced mode)
 		ahb0	any	any	any
 
+AHA-284x,274x,2940, aic7770 SCSI host adapters
+		ahc0	any	any
+
 BT445, BT74x, or BT9xx SCSI host adapters
 		bt0	0x330	any	any
+		bt1	0x334	any	any
 
 Ultrastor 14f, 24f (if it works), or 34f SCSI host adapters
 		uha0	0x330	any	any
+		uha1	0x334	any	any
 
 AHA-152x, AIC-6260- or AIC-6360-based SCSI host adapters
 		aic0	0x340	11	6
 
+Seagate ST0[12], Future Domain TMC-8xx based SCSI controllers 
+		sea0		5		iomem 0xc8000
+
 Symbios Logic/NCR 53C8xx based PCI SCSI host adapters
 		ncr0	any	any	any
+
+WD7000 and TMC-7000 SCSI host adapters
+		wds0	0x350	15	6
+		wds1	0x358	11	5
 
 SCSI disks	sd0	first SCSI disk (by SCSI id)
 		sd1	second SCSI disk (by SCSI id)
@@ -181,15 +196,25 @@ SCSI CD-ROMs	cd0	first SCSI CD-ROM (by SCSI id)
 
 SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards, 3c503,
 Novell NE1000, or NE2000 Ethernet boards
-		ed0	0x280	2		iomem 0xd0000
-		ed1	0x250	2		iomem 0xd8000
+		ed0	0x280	9		iomem 0xd0000
+		ed1	0x250	9		iomem 0xd8000
 		ed2	0x300	10		iomem 0xcc000 [X SEE BELOW]
+		ed3	0x240   9		iomem 0xd8000
+
+3COM 3c501 Ethernet boards
+		el0	0x300	9
+
+3COM 3c505/Etherlink+ Ethernet boards
+		eg0	0x310	5
 
 3COM 3c509, 3c579, 3c595, 3c900, 3c905 Ethernet boards
 		ep0	any	any
 
 AT&T StarLAN 10, EN100, or StarLAN Fiber, or 3COM 3c507 Ethernet boards
 		ie0	0x360	7		iomem 0xd0000
+
+EtherExpress boards
+		ie1	0x300	10
 
 PCNet-PCI based Ethernet boards; see above for partial list
 		le0	any	any	[you must assign an interrupt in your
