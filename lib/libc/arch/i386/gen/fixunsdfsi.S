@@ -34,16 +34,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fixunsdfsi.s	5.1	12/17/90
- *	$Id: fixunsdfsi.S,v 1.1.1.1 1995/10/18 08:41:23 deraadt Exp $
+ *	$Id: fixunsdfsi.S,v 1.2 1995/12/30 08:15:21 deraadt Exp $
  */
+
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: fixunsdfsi.S,v 1.1.1.1 1995/10/18 08:41:23 deraadt Exp $"
+	.asciz "$Id: fixunsdfsi.S,v 1.2 1995/12/30 08:15:21 deraadt Exp $"
 #endif
-
-#include "DEFS.h"
-#include "SYS.h"
 
 ENTRY(__fixunsdfsi)
 	fldl	4(%esp)		/* argument double to accum stack */

@@ -34,12 +34,14 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)setjmp.s	5.1 (Berkeley) 4/23/90
- *	$Id: setjmp.S,v 1.1.1.1 1995/10/18 08:41:24 deraadt Exp $
+ *	$Id: setjmp.S,v 1.2 1995/12/30 08:15:23 deraadt Exp $
  */
+
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: setjmp.S,v 1.1.1.1 1995/10/18 08:41:24 deraadt Exp $"
+	.asciz "$Id: setjmp.S,v 1.2 1995/12/30 08:15:23 deraadt Exp $"
 #endif
 
 /*
@@ -51,9 +53,6 @@
  * by restoring registers from the stack.
  * The previous signal state is restored.
  */
-
-#include "DEFS.h"
-#include "SYS.h"
 
 ENTRY(setjmp)
 	pushl	$0
