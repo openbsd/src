@@ -1,0 +1,18 @@
+sucessfully opened fifo
+
+Testing empty FIFO:
+	testing POLLIN|POLLOUT
+		1 fd(s) ready, revents == POLLOUT
+	testing POLLIN
+		0 fd(s) ready
+	testing POLLOUT
+		1 fd(s) ready, revents == POLLOUT
+
+Testing full FIFO:
+	testing POLLIN|POLLOUT
+		1 fd(s) ready, revents == POLLIN POLLOUT
+	testing POLLIN
+		1 fd(s) ready, revents == POLLIN
+	testing POLLOUT
+		1 fd(s) ready, revents == POLLOUT
+	received 'test' from FIFO
