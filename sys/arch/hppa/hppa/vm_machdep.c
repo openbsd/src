@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.36 2002/03/28 07:21:12 deraadt Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.37 2002/04/01 16:05:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -286,21 +286,18 @@ vmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
+	struct proc *p = bp->b_proc;
+	struct vm_map *map = &p->p_vmspace->vm_map;
 	vaddr_t addr, kva;
-	paddr_t pa;
 	vsize_t size, off;
+	paddr_t pa;
 	int npf;
-	struct proc *p;
-	struct vm_map *map;
 
 #ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 #endif
-	p = bp->b_proc;
-	map = &p->p_vmspace->vm_map;
-	bp->b_saveaddr = bp->b_data;
-	addr = (vaddr_t)bp->b_saveaddr;
+	addr = (vaddr_t)(bp->b_saveaddr = bp->b_data);
 	off = addr & PGOFSET;
 	size = round_page(bp->b_bcount + off);
 
@@ -314,27 +311,21 @@ vmapbuf(bp, len)
 	while (1) {
 		kva = vm_map_min(phys_map);
 		if (uvm_map(phys_map, &kva, size, NULL, addr, 0,
-		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
-		    UVM_INH_NONE, UVM_ADV_RANDOM, 0)) == 0)
+		    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+		    UVM_INH_NONE, UVM_ADV_RANDOM, 0)) == 0) {
+			bp->b_data = (caddr_t)(kva + off);
 			break;
+		}
 		tsleep(phys_map, PVM, "vallocwait", 0);
 	}
 
-	bp->b_data = (caddr_t)(kva + off);
-	addr = trunc_page(addr);
-	npf = btoc(size);
-	while (npf--) {
-		/* not needed, thanks to PMAP_PREFER() */
-		/* fdcache(vm_map_pmap(map)->pmap_space, addr, PAGE_SIZE); */
-
+	fdcache(vm_map_pmap(map)->pm_space, addr, size);
+	for (npf = btoc(size), addr = trunc_page(addr); npf--;
+	     addr += PAGE_SIZE, kva += PAGE_SIZE)
 		if (pmap_extract(vm_map_pmap(map), addr, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), kva, pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
-
-		addr += PAGE_SIZE;
-		kva += PAGE_SIZE;
-	}
+		else
+			pmap_kenter_pa(kva, pa, UVM_PROT_RW);
 }
 
 /*
