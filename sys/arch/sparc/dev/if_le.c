@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.21 1995/06/23 13:19:44 pk Exp $ */
+/*	$NetBSD: if_le.c,v 1.20 1995/04/12 08:47:21 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -181,7 +181,6 @@ lematch(parent, vcf, aux)
 		return (0);
 	if (ca->ca_bustype == BUS_SBUS)
 		return (1);
-	ra->ra_len = NBPG;
 	return (probeget(ra->ra_vaddr, 2) != -1);
 }
 
@@ -455,7 +454,6 @@ leinit(unit)
 	register struct ifnet *ifp = &sc->sc_if;
 	register int s;
 
-	/* not yet, if address still unknown */
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
 		s = splimp();
 		ifp->if_flags |= IFF_RUNNING;
