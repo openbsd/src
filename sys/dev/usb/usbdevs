@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.140 2005/03/09 13:24:16 deraadt Exp $
+$OpenBSD: usbdevs,v 1.141 2005/03/10 02:11:31 dlg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -393,6 +393,7 @@ vendor BELKIN2		0x1293	Belkin Components
 vendor AINCOMM		0x12fd	Aincomm
 vendor MOBILITY		0x1342	Mobility
 vendor DICKSMITH	0x1371	Dick Smith Electronics
+vendor CISCOLINKSYS	0x13b1	Cisco-Linksys
 vendor SHARK		0x13d2	Shark
 vendor SILICOM		0x1485	Silicom
 vendor SILICONPORTALS	0x1527	Silicon Portals
@@ -694,6 +695,9 @@ product CHPRODUCTS PROTHROTTLE	0x00f1	Pro Throttle
 product CHPRODUCTS PROPEDALS	0x00f2	Pro Pedals
 product CHPRODUCTS FIGHTERSTICK	0x00f3	Fighterstick
 product CHPRODUCTS FLIGHTYOKE	0x00ff	Flight Sim Yoke
+
+/* Cisco-Linksys products */
+product CISCOLINKSYS WUSB54G 	0x000d	Wireless-G USB Network Adapter
 
 /* Compaq products */
 product COMPAQ IPAQPOCKETPC	0x0003	iPAQ PocketPC
