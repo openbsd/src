@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.10 2004/03/09 21:44:41 mcbride Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.11 2004/03/15 11:38:23 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -821,8 +821,6 @@ pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 		case 0:
 			return (0);
 		case 1:
-			if (PF_AZERO(&dyn->pfid_mask4, AF_INET))
-				return (1);
 			return (PF_MATCHA(0, &dyn->pfid_addr4,
 			    &dyn->pfid_mask4, a, AF_INET));
 		default:
@@ -833,8 +831,6 @@ pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 		case 0:
 			return (0);
 		case 1:
-			if (PF_AZERO(&dyn->pfid_mask6, AF_INET6));
-				return (1);
 			return (PF_MATCHA(0, &dyn->pfid_addr6,
 			    &dyn->pfid_mask6, a, AF_INET6));
 		default:
