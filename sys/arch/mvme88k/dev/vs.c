@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.44 2004/07/19 20:31:51 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.45 2004/07/19 20:32:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -91,6 +91,7 @@ struct cfdriver vs_cd = {
 
 int	do_vspoll(struct vs_softc *, int, int);
 void	thaw_queue(struct vs_softc *, int);
+void	thaw_all_queues(struct vs_softc *);
 M328_SG	vs_alloc_scatter_gather(void);
 M328_SG	vs_build_memory_structure(struct vs_softc *, struct scsi_xfer *,
 	    bus_addr_t);
@@ -275,6 +276,15 @@ thaw_queue(struct vs_softc *sc, int target)
 }
 
 void
+thaw_all_queues(struct vs_softc *sc)
+{
+	int i;
+
+	for (i = 1; i <= 7; i++)
+		thaw_queue(sc, i);
+}
+
+void
 vs_scsidone(struct vs_softc *sc, struct scsi_xfer *xs, int stat)
 {
 	int tgt;
@@ -289,7 +299,6 @@ vs_scsidone(struct vs_softc *sc, struct scsi_xfer *xs, int stat)
 	tgt = vs_queue_number(xs->sc_link->target, sc->sc_pid);
 	xs->flags |= ITSDONE;
 
-	/* thaw all work queues */
 	thaw_queue(sc, tgt);
 	scsi_done(xs);
 }
@@ -657,8 +666,7 @@ vs_reset(struct vs_softc *sc)
 		CRB_CLR_DONE;
 	}
 
-	/* thaw all work queues */
-	thaw_queue(sc, 0xff);
+	thaw_all_queues(sc);
 
 	splx(s);
 }
@@ -807,7 +815,7 @@ vs_eintr(void *vsc)
 		CRB_CLR_ER;
 	CRB_CLR_DONE;
 
-	thaw_queue(sc, 0xff);
+	thaw_all_queues(sc);
 	vs_clear_return_info(sc);
 	splx(s);
 
