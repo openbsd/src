@@ -1,4 +1,4 @@
-/*	$OpenBSD: yacc.c,v 1.2 1996/06/26 05:32:31 deraadt Exp $	*/
+/*	$OpenBSD: yacc.c,v 1.3 2000/07/25 19:26:23 deraadt Exp $	*/
 /*	$NetBSD: yacc.c,v 1.3 1995/03/26 20:14:12 glass Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)yacc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: yacc.c,v 1.2 1996/06/26 05:32:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yacc.c,v 1.3 2000/07/25 19:26:23 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ y_entries()
 			in_rule = NO;
 			break;
 		default:
-			if (in_rule || !isalpha(c) && c != '.' && c != '_')
+			if (in_rule || (!isalpha(c) && c != '.' && c != '_'))
 				break;
 			sp = tok;
 			*sp++ = c;
