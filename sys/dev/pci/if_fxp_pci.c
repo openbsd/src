@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.21 2003/09/29 19:29:22 mickey Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.22 2003/12/23 16:44:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -138,10 +138,9 @@ fxp_pci_attach(parent, self, aux)
 
 	if (pci_mapreg_map(pa, FXP_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_st, &sc->sc_sh, NULL, &iosize, 0)) {
-		printf(": can't find i/o space\n");
+		printf(": can't map i/o space\n");
 		return;
 	}
-
 	sc->sc_dmat = pa->pa_dmat;
 
 	/*
@@ -199,6 +198,11 @@ fxp_pci_attach(parent, self, aux)
 		sc->not_82557 = 0;
 		break;
 	}
+
+	/* enable bus mastering */
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    PCI_COMMAND_MASTER_ENABLE |
+	    pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG));
 
 	/* Do generic parts of attach. */
 	if (fxp_attach_common(sc, enaddr, intrstr)) {
