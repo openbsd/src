@@ -1881,7 +1881,6 @@
 ./usr/share/man/cat8/nsupdate.0
 ./usr/share/man/cat8/ntalkd.0
 ./usr/share/man/cat8/pac.0
-./usr/share/man/cat8/pcnfsd.0
 ./usr/share/man/cat8/pfctl.0
 ./usr/share/man/cat8/pflogd.0
 ./usr/share/man/cat8/ping.0
@@ -1930,7 +1929,6 @@
 ./usr/share/man/cat8/routed.0
 ./usr/share/man/cat8/rpc.bootparamd.0
 ./usr/share/man/cat8/rpc.lockd.0
-./usr/share/man/cat8/rpc.pcnfsd.0
 ./usr/share/man/cat8/rpc.rquotad.0
 ./usr/share/man/cat8/rpc.rstatd.0
 ./usr/share/man/cat8/rpc.rusersd.0

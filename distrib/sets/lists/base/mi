@@ -1631,7 +1631,6 @@
 ./usr/sbin/route6d
 ./usr/sbin/rpc.bootparamd
 ./usr/sbin/rpc.lockd
-./usr/sbin/rpc.pcnfsd
 ./usr/sbin/rpc.yppasswdd
 ./usr/sbin/rtadvd
 ./usr/sbin/rtsold
