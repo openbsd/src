@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.35 2004/08/11 04:24:27 dlg Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.36 2004/08/11 04:25:53 dlg Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -110,7 +110,7 @@ int uhcinoloop = 0;
 
 /*
  * The UHCI controller is little endian, so on big endian machines
- * the data strored in memory needs to be swapped.
+ * the data stored in memory needs to be swapped.
  */
 #if defined(__FreeBSD__)
 #if BYTE_ORDER == BIG_ENDIAN
@@ -1177,10 +1177,9 @@ uhci_intr(void *arg)
 	if (sc->sc_dying)
 		return (0);
 
-	DPRINTFN(15,("uhci_intr: real interrupt\n"));
 	if (sc->sc_bus.use_polling) {
 #ifdef DIAGNOSTIC
-		printf("uhci_intr: ignored interrupt while polling\n");
+		DPRINTFN(16, ("uhci_intr: ignored interrupt while polling\n"));
 #endif
 		return (0);
 	}
@@ -1250,7 +1249,7 @@ uhci_intr1(uhci_softc_t *sc)
 	sc->sc_bus.no_intrs++;
 	usb_schedsoftintr(&sc->sc_bus);
 
-	DPRINTFN(10, ("%s: uhci_intr: exit\n", USBDEVNAME(sc->sc_bus.bdev)));
+	DPRINTFN(15, ("%s: uhci_intr: exit\n", USBDEVNAME(sc->sc_bus.bdev)));
 
 	return (1);
 }
