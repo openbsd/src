@@ -1,4 +1,4 @@
-/* $OpenBSD: syslogc.c,v 1.8 2004/09/14 22:33:38 deraadt Exp $ */
+/* $OpenBSD: syslogc.c,v 1.9 2005/04/03 03:42:47 djm Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller
@@ -108,7 +108,6 @@ main(int argc, char **argv)
 			ctlsock_path = optarg;
 			break;
 		default:
-			fprintf(stderr, "Invalid commandline option.\n");
 			usage();
 			break;
 		}
@@ -133,7 +132,7 @@ main(int argc, char **argv)
 
 	if ((ctlsock = socket(PF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "socket");
-	if (connect(ctlsock, (struct sockaddr*)&ctl, sizeof(ctl)) == -1)
+	if (connect(ctlsock, (struct sockaddr *)&ctl, sizeof(ctl)) == -1)
 		err(1, "connect: %s", ctl.sun_path);
 	if ((ctlf = fdopen(ctlsock, "r+")) == NULL)
 		err(1, "fdopen");
