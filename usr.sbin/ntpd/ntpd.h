@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.3 2004/06/01 21:58:09 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.4 2004/06/02 10:08:59 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/queue.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include <stdarg.h>
 
 #define	NTPD_USER	"_ntp"
@@ -132,3 +133,4 @@ int	 cmdline_symset(char *);
 /* config.c */
 int	 check_file_secrecy(int, const char *);
 int	 host(const char *, struct sockaddr *, u_int8_t *);
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.h,v 1.2 2004/06/01 22:02:32 henning Exp $ */
+/*	$OpenBSD: ntp.h,v 1.3 2004/06/02 10:08:59 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -134,3 +134,14 @@ struct ntp_msg {
 #define	MODE_RES2	7	/* reserved for private use */
 
 #define	JAN_1970	2208988800UL	/* 1970 - 1900 in seconds */
+
+/* prototypes */
+
+/* ntp_msg.c */
+void	get_ts(struct l_fixedpt *);
+int	ntp_getmsg(char *, ssize_t, struct ntp_msg *);
+int	ntp_sendmsg(int, struct sockaddr *, struct ntp_msg *, ssize_t, int);
+
+/* server.c */
+int	setup_listeners(struct servent *, struct ntpd_conf *);
+int	ntp_reply(int, struct sockaddr *, struct ntp_msg *, int);

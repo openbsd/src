@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.3 2004/06/01 21:58:08 henning Exp $
+#	$OpenBSD: Makefile,v 1.4 2004/06/02 10:08:59 henning Exp $
 
 .PATH:		${.CURDIR}/..
 
 PROG=	ntpd
-SRCS=	ntpd.c buffer.c log.c imsg.c ntp.c parse.y config.c
+SRCS=	ntpd.c buffer.c log.c imsg.c ntp.c ntp_msg.c parse.y config.c \
+	server.c
 CFLAGS+= -Wall -I${.CURDIR}
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+= -Wmissing-declarations
