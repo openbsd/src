@@ -1,7 +1,30 @@
-/*	$OpenBSD: pcnfsd_test.c,v 1.4 2001/08/19 19:16:12 ericj Exp $	*/
+/*	$OpenBSD: pcnfsd_test.c,v 1.5 2003/02/15 12:15:04 deraadt Exp $	*/
 /*	$NetBSD: pcnfsd_test.c,v 1.2 1995/07/25 22:21:01 gwr Exp $	*/
 
-/* RE_SID: @(%)/usr/dosnfs/shades_SCCS/unix/pcnfsd/v2/src/SCCS/s.pcnfsd_test.c 1.2 92/01/27 18:00:39 SMI */
+/*
+**=====================================================================
+** Copyright (c) 1986,1987,1988,1989,1990,1991 by Sun Microsystems, Inc.
+**	@(#)pcnfsd_v1.c	1.1	9/3/91
+**
+** pcnfsd is copyrighted software, but is freely licensed. This
+** means that you are free to redistribute it, modify it, ship it
+** in binary with your system, whatever, provided:
+**
+** - you leave the Sun copyright notice in the source code
+** - you make clear what changes you have introduced and do
+**   not represent them as being supported by Sun.
+**
+** If you make changes to this software, we ask that you do so in
+** a way which allows you to build either the "standard" version or
+** your custom version from a single source file. Test it, lint
+** it (it won't lint 100%, very little does, and there are bugs in
+** some versions of lint :-), and send it back to Sun via email
+** so that we can roll it into the source base and redistribute
+** it. We'll try to make sure your contributions are acknowledged
+** in the source, but after all these years it's getting hard to
+** remember who did what.
+**=====================================================================
+*/
 
 #include <stdio.h>
 #include <rpc/rpc.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcnfsd_v2.c,v 1.5 2003/02/15 11:53:45 deraadt Exp $	*/
+/*	$OpenBSD: pcnfsd_v2.c,v 1.6 2003/02/15 12:15:04 deraadt Exp $	*/
 /*	$NetBSD: pcnfsd_v2.c,v 1.4 1995/08/14 19:50:10 gwr Exp $	*/
 
 /*
@@ -13,8 +13,6 @@
 ** - you leave the Sun copyright notice in the source code
 ** - you make clear what changes you have introduced and do
 **   not represent them as being supported by Sun.
-** - you do not charge money for the source code (unlikely, given
-**   its free availability)
 **
 ** If you make changes to this software, we ask that you do so in
 ** a way which allows you to build either the "standard" version or
