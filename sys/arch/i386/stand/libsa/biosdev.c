@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.21 1997/08/06 18:49:14 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.22 1997/08/07 11:49:15 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -137,12 +137,12 @@ biosopen(struct open_file *f, ...)
 	case 6:  /* cd */
 	case 18: /* acd */
 #ifdef DEBUG
-		printf("no any CD supported at this time\n");
+		printf("Booting from CD is not yet supported\n");
 #endif
 	case 3:  /* wt */
 #ifdef DEBUG
 		if (maj == 3)
-			printf("Wangtek is unsupported\n");
+			printf("Booting from Wangtek is not supported\n");
 #endif
 	default:
 		free(bd, 0);
@@ -328,8 +328,10 @@ biosstrategy(void *devdata, int rw,
 		/* use a bounce buffer to not cross 64k DMA boundary */
 		if ((((u_int32_t)buf) & ~0xffff) !=
 		    (((u_int32_t)buf + n * DEV_BSIZE) & ~0xffff)) {
-			/* XXX we beleive that all the io is buffered
-			   by fs routines, so no big reads anyway */
+			/*
+			 * XXX we believe that all the io is buffered
+			 * by fs routines, so no big reads anyway
+			 */
 			bb = alloca(n * DEV_BSIZE);
 			if (rw != F_READ)
 				bcopy (buf, bb, n * DEV_BSIZE);
