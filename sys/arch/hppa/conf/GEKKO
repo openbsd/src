@@ -1,12 +1,12 @@
-#	$OpenBSD: GEKKO,v 1.1 1998/11/04 02:28:07 mickey Exp $
+#	$OpenBSD: GEKKO,v 1.2 1998/11/04 02:32:42 mickey Exp $
 #
-# Ram disk kernel.
+# HP 9000/712/* boxens
 #
 
 machine hppa
 
 # Need to set locally
-maxusers	8
+maxusers	16
 
 # Support for various CPU types
 option		HP7100LC
