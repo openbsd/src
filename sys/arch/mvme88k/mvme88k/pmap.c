@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.105 2004/01/05 20:07:03 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.106 2004/01/07 23:43:54 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -485,7 +485,7 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 			curproc, start, end, virt, prot, cmode);
 #endif
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	/* Check for zero if we map the very end of the address space... */
 	if (start > end && end != 0) {
 		panic("pmap_map: start greater than end address");
@@ -1005,8 +1005,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 * Switch to using new page tables
 	 */
 
-	kernel_pmap->pm_apr =
-	    (atop(kmap) << PG_SHIFT) | CACHE_WT | CACHE_GLOBAL | APR_V;
+	kernel_pmap->pm_apr = (atop(kmap) << PG_SHIFT) | CACHE_WT | APR_V;
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
 		show_apr(kernel_pmap->pm_apr);
@@ -1017,8 +1016,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	for (i = 0; i < MAX_CPUS; i++)
 		if (cpu_sets[i]) {
 			/* Invalidate entire kernel TLB. */
-			cmmu_flush_tlb(i, TRUE, VM_MIN_KERNEL_ADDRESS,
-			    VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS);
+			cmmu_flush_tlb(i, 1, 0, -1);
 			/* still physical */
 			/*
 			 * Set valid bit to DT_INVALID so that the very first
@@ -1170,8 +1168,7 @@ pmap_create(void)
 	if (pmap_extract(kernel_pmap, (vaddr_t)segdt,
 	    (paddr_t *)&stpa) == FALSE)
 		panic("pmap_create: pmap_extract failed!");
-	pmap->pm_apr =
-	    (atop(stpa) << PG_SHIFT) | CACHE_WT | CACHE_GLOBAL | APR_V;
+	pmap->pm_apr = (atop(stpa) << PG_SHIFT) | CACHE_GLOBAL | APR_V;
 
 #ifdef DEBUG
 	if (!PAGE_ALIGNED(stpa))
@@ -1498,7 +1495,7 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte)
 void
 pmap_remove_range(pmap_t pmap, vaddr_t s, vaddr_t e)
 {
-	vaddr_t va, seva;
+	vaddr_t va;
 
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_RM) {
@@ -1512,22 +1509,19 @@ pmap_remove_range(pmap_t pmap, vaddr_t s, vaddr_t e)
 	/*
 	 * Loop through the range in vm_page_size increments.
 	 */
-	for (va = s; va < e;) {
+	for (va = s; va < e; va += PAGE_SIZE) {
 		sdt_entry_t *sdt;
 
 		sdt = SDTENT(pmap, va);
-		seva = (va & SDT_MASK) + (1 << SDT_SHIFT);
 
 		/* If no segment table, skip a whole segment */
 		if (!SDT_VALID(sdt)) {
-			va = seva;
+			va &= SDT_MASK;
+			va += (1 << SDT_SHIFT) - PAGE_SIZE;
 			continue;
 		}
 
-		if (seva > e)
-			seva = e;
-		for (; va < seva; va += PAGE_SIZE)
-			pmap_remove_pte(pmap, va, pmap_pte(pmap, va));
+		pmap_remove_pte(pmap, va, pmap_pte(pmap, va));
 	}
 }
 
@@ -1561,7 +1555,7 @@ pmap_remove(pmap_t pmap, vaddr_t s, vaddr_t e)
 	if (pmap == PMAP_NULL)
 		return;
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	if (s >= e)
 		panic("pmap_remove: start greater than end address");
 #endif
@@ -1648,16 +1642,26 @@ remove_all_Retry:
 		pte = pmap_pte(pmap, va);
 
 		if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
-			pvl = pvl->pv_next;	/* no page mapping */
-		} else {
-			pmap_remove_pte(pmap, va, pte);
-
-			/*
-			 * Do not free any page tables,
-			 * leave that for when VM calls pmap_collect().
-			 */
+			pvl = pvl->pv_next;
+			goto next;	/* no page mapping */
+		}
+		if (pmap_pte_w(pte)) {
+#ifdef DEBUG
+			if (pmap_con_dbg & CD_RMAL)
+				printf("pmap_remove_all: wired mapping for %lx not removed\n",
+				    pg);
+#endif
+			pvl = pvl->pv_next;
+			goto next;
 		}
 
+		pmap_remove_pte(pmap, va, pte);
+
+		/*
+		 * Do not free any page tables,
+		 * leaves that for when VM calls pmap_collect().
+		 */
+next:
 		simple_unlock(&pmap->pm_lock);
 	}
 	SPLX(spl);
@@ -1692,16 +1696,16 @@ pmap_protect(pmap_t pmap, vaddr_t s, vaddr_t e, vm_prot_t prot)
 {
 	int spl;
 	pt_entry_t *pte, ap;
-	vaddr_t va, seva;
+	vaddr_t va;
 	u_int users;
 	boolean_t kflush;
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	if (s >= e)
 		panic("pmap_protect: start grater than end address");
 #endif
 
-	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
+	if ((prot & VM_PROT_READ) == 0) {
 		pmap_remove(pmap, s, e);
 		return;
 	}
@@ -1718,37 +1722,31 @@ pmap_protect(pmap_t pmap, vaddr_t s, vaddr_t e, vm_prot_t prot)
 	/*
 	 * Loop through the range in vm_page_size increments.
 	 */
-	for (va = s; va < e;) {
+	for (va = s; va < e; va += PAGE_SIZE) {
 		sdt_entry_t *sdt;
 
 		sdt = SDTENT(pmap, va);
-		seva = (va & SDT_MASK) + (1 << SDT_SHIFT);
 
 		/* If no segment table, skip a whole segment */
 		if (!SDT_VALID(sdt)) {
-			va = seva;
+			va &= SDT_MASK;
+			va += (1 << SDT_SHIFT) - PAGE_SIZE;
 			continue;
 		}
 
-		if (seva > e)
-			seva = e;
-		for (; va < seva; va += PAGE_SIZE) {
-			pte = pmap_pte(pmap, va);
-			if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
-				continue;	 /* no page mapping */
-			}
-
-			if ((*pte & PG_PROT) ^ ap) {
-				/*
-				 * Invalidate pte temporarily to avoid the
-				 * modified bit and/or the reference bit being
-				 * written back by any other cpu.
-				 */
-				*pte = (invalidate_pte(pte) ^ PG_PROT);
-				flush_atc_entry(users, va, kflush);
-			}
-			pte++;
+		pte = pmap_pte(pmap, va);
+		if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
+			continue;	 /* no page mapping */
 		}
+
+		/*
+		 * Invalidate pte temporarily to avoid the
+		 * modified bit and/or the reference bit being
+		 * written back by any other cpu.
+		 */
+		*pte = (invalidate_pte(pte) & ~PG_PROT) | ap;
+		flush_atc_entry(users, va, kflush);
+		pte++;
 	}
 	PMAP_UNLOCK(pmap, spl);
 }
@@ -1923,7 +1921,7 @@ int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	int spl;
-	pt_entry_t *pte, opte, template;
+	pt_entry_t *pte, template;
 	paddr_t old_pa;
 	pv_entry_t pv_e, pvl;
 	u_int users;
@@ -1967,23 +1965,25 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	/*
 	 * Special case if the physical page is already mapped at this address.
 	 */
-	opte = *pte;
-	old_pa = ptoa(PG_PFNUM(opte));
+	old_pa = ptoa(PG_PFNUM(*pte));
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_ENT)
-		printf("(pmap_enter) old_pa %x pte %x\n", old_pa, opte);
+		printf("(pmap_enter) old_pa %x pte %x\n", old_pa, *pte);
 #endif
 	if (old_pa == pa) {
 		/* May be changing its wired attributes or protection */
-		if (wired && !(pmap_pte_w(&opte)))
+		if (wired && !(pmap_pte_w(pte)))
 			pmap->pm_stats.wired_count++;
-		else if (!wired && pmap_pte_w(&opte))
+		else if (!wired && pmap_pte_w(pte))
 			pmap->pm_stats.wired_count--;
+
+		pvl = NULL;
 	} else { /* if (pa == old_pa) */
-		if (old_pa != NULL) {
-			if (va < phys_map_vaddr1 || va >= phys_map_vaddr_end)
-				pmap_remove_pte(pmap, va, pte);
-		}
+		/* Remove old mapping from the PV list if necessary. */
+		if (va >= phys_map_vaddr1 && va < phys_map_vaddr_end)
+			flush_atc_entry(users, va, TRUE);
+		else
+			pmap_remove_pte(pmap, va, pte);
 
 		pg = PHYS_TO_VM_PAGE(pa);
 #ifdef DEBUG
@@ -1993,7 +1993,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				    phys_map_vaddr1, phys_map_vaddr2, va, old_pa,
 				    pg != NULL ? 1 : 0);
 				printf("pte %x pfn %x valid %x\n",
-				    pte, PG_PFNUM(opte), PDT_VALID(&opte));
+				    pte, PG_PFNUM(*pte), PDT_VALID(pte));
 			}
 		}
 #endif
@@ -2049,14 +2049,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 				pv_e->pv_flags = 0;
 				pvl->pv_next = pv_e;
 			}
-
-			/*
-			 * Cache attribute flags
-			 */
-			if (flags & VM_PROT_WRITE)
-				pvl->pv_flags |= PG_U | PG_M;
-			else if (flags & VM_PROT_ALL)
-				pvl->pv_flags |= PG_U;
 		}
 
 		/*
@@ -2076,26 +2068,29 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	else
 		template |= CACHE_GLOBAL;
 
-	template |= (opte & (PG_U | PG_M)) | pa;
+	if (flags & VM_PROT_WRITE)
+		template |= PG_U | PG_M;
+	else if (flags & VM_PROT_ALL)
+		template |= PG_U;
+
 	/*
-	 * No need to flush anything if it's just a wiring change...
+	 * Invalidate pte temporarily to avoid being written
+	 * back the modified bit and/or the reference bit by
+	 * any other cpu.
 	 */
-	if ((template ^ opte) == PG_W) {
-		*pte = template;
-	} else {
-		/*
-		 * Invalidate pte temporarily to avoid being written
-		 * back the modified bit and/or the reference bit by
-		 * any other cpu.
-		 */
-		invalidate_pte(pte);
-		*pte = template;
-		flush_atc_entry(users, va, kflush);
-	}
+	template |= invalidate_pte(pte) & (PG_U | PG_M);
+	*pte = template | pa;
+	flush_atc_entry(users, va, kflush);
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_ENT)
-		printf("(pmap_enter) set pte to %x\n", template);
+		printf("(pmap_enter) set pte to %x\n", *pte);
 #endif
+
+	/*
+	 * Cache attribute flags
+	 */
+	if (pvl != NULL)
+		pvl->pv_flags |= (template & (PG_U | PG_M));
 
 	PMAP_UNLOCK(pmap, spl);
 
@@ -2125,14 +2120,11 @@ pmap_unwire(pmap_t pmap, vaddr_t v)
 
 	PMAP_LOCK(pmap, spl);
 
-	pte = pmap_pte(pmap, v);
-#ifdef DEBUG
-	if (pte == PT_ENTRY_NULL)
+	if ((pte = pmap_pte(pmap, v)) == PT_ENTRY_NULL)
 		panic("pmap_unwire: pte missing");
-#endif
 
 	if (pmap_pte_w(pte)) {
-		/* unwire mapping */
+		/* unwired mapping */
 		pmap->pm_stats.wired_count--;
 		*pte &= ~PG_W;
 	}
@@ -2177,7 +2169,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	int i;
 #endif
 
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 	if (pmap == PMAP_NULL)
 		panic("pmap_extract: pmap is NULL");
 #endif
@@ -2327,7 +2319,7 @@ pmap_collect(pmap_t pmap)
  *	apr template into UAPR (user area pointer register) in the
  *	CMMUs connected to the specified CPU.
  *
- *	Then, it flushes the TLBs mapping user virtual space, in the CMMUs
+ *	Then it flushes the TLBs mapping user virtual space, in the CMMUs
  *	connected to the specified CPU.
  */
 void
@@ -2363,6 +2355,7 @@ pmap_activate(struct proc *p)
 			*(register_t *)&batc_entry[n] = pmap->pm_ibatc[n].bits;
 #else
 		cmmu_set_uapr(pmap->pm_apr);
+		cmmu_flush_tlb(cpu, FALSE, 0, -1);
 #endif	/* PMAP_USE_BATC */
 
 		/*
@@ -2371,12 +2364,6 @@ pmap_activate(struct proc *p)
 		SETBIT_CPUSET(cpu, &(pmap->pm_cpus));
 		simple_unlock(&pmap->pm_lock);
 	}
-#ifdef	PMAP_USE_BATC
-	else
-#endif
-
-	cmmu_flush_tlb(cpu, FALSE, VM_MIN_ADDRESS,
-	    VM_MAX_ADDRESS - VM_MIN_ADDRESS);
 }
 
 /*
@@ -2857,7 +2844,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 {
 	int spl;
 	u_int users;
-	vaddr_t e, seva;
+	vaddr_t e;
 
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_RM)
@@ -2870,36 +2857,33 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	PMAP_LOCK(kernel_pmap, spl);
 	users = kernel_pmap->pm_cpus;
 
-	for (e = va + len; va < e;) {
+	e = va + round_page(len);
+	for (; va < e; va += PAGE_SIZE) {
 		sdt_entry_t *sdt;
 		pt_entry_t *pte;
 
 		sdt = SDTENT(kernel_pmap, va);
-		seva = (va & SDT_MASK) + (1 << SDT_SHIFT);
 
 		/* If no segment table, skip a whole segment */
 		if (!SDT_VALID(sdt)) {
-			va = seva;
+			va &= SDT_MASK;
+			va += (1 << SDT_SHIFT) - PAGE_SIZE;
 			continue;
 		}
 
-		if (seva > e)
-			seva = e;
-		for (; va < seva; va += PAGE_SIZE) {
-			pte = pmap_pte(kernel_pmap, va);
-			if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
-				continue;	 /* no page mapping */
-			}
-
-			/*
-			 * Update the counts
-			 */
-			kernel_pmap->pm_stats.resident_count--;
-			kernel_pmap->pm_stats.wired_count--;
-
-			invalidate_pte(pte);
-			flush_atc_entry(users, va, TRUE);
+		pte = pmap_pte(kernel_pmap, va);
+		if (pte == PT_ENTRY_NULL || !PDT_VALID(pte)) {
+			continue;	 /* no page mapping */
 		}
+
+		/*
+		 * Update the counts
+		 */
+		kernel_pmap->pm_stats.resident_count--;
+		kernel_pmap->pm_stats.wired_count--;
+
+		invalidate_pte(pte);
+		flush_atc_entry(users, va, TRUE);
 	}
 	PMAP_UNLOCK(map, spl);
 }
