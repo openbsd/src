@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.2 2004/11/26 21:21:28 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.3 2004/12/02 22:00:31 martin Exp $	*/
 /*	$NetBSD: intr.c,v 1.2 1998/08/25 04:03:56 scottr Exp $	*/
 
 /*-
@@ -64,8 +64,66 @@ void	netintr(void);
 int	intr_debug = 0;
 #endif
 
-struct intrhand intrs[NISR];
+/*
+ * Some of the below are not used yet, but might be used someday on the
+ * Q700/900/950 where the interrupt controller may be reprogrammed to
+ * interrupt on different levels as listed in locore.s
+ */
+u_short	mac68k_ttyipl;
+u_short	mac68k_bioipl;
+u_short	mac68k_netipl;
+u_short	mac68k_impipl;
+u_short	mac68k_clockipl;
+u_short	mac68k_statclockipl;
+
+struct	intrhand intrs[NISR];
 extern	int intrcnt[];		/* from locore.s */
+
+void	intr_computeipl(void);
+
+void
+intr_init()
+{
+	/* Standard spl(9) interrupt priorities */
+	mac68k_ttyipl = (PSL_S | PSL_IPL1);
+	mac68k_bioipl = (PSL_S | PSL_IPL2);
+	mac68k_netipl = (PSL_S | PSL_IPL2);
+	mac68k_impipl = (PSL_S | PSL_IPL2);
+	mac68k_clockipl = (PSL_S | PSL_IPL2);
+	mac68k_statclockipl = (PSL_S | PSL_IPL2);
+	
+	if (current_mac_model->class == MACH_CLASSAV)
+		mac68k_bioipl = mac68k_netipl = (PSL_S | PSL_IPL4);
+
+	intr_computeipl();
+}
+
+/*
+ * Compute the interrupt levels for the spl*()
+ * calls.  This doesn't have to be fast.
+ */
+void
+intr_computeipl()
+{
+	/*
+	 * Enforce `bio <= net <= tty <= imp <= statclock <= clock'
+	 * as defined in spl(9)
+	 */
+	if (mac68k_bioipl > mac68k_netipl)
+		mac68k_netipl = mac68k_bioipl;
+	
+	if (mac68k_netipl > mac68k_ttyipl)
+		mac68k_ttyipl = mac68k_netipl;
+
+	if (mac68k_ttyipl > mac68k_impipl)
+		mac68k_impipl = mac68k_ttyipl;
+
+	if (mac68k_impipl > mac68k_statclockipl)
+		mac68k_statclockipl = mac68k_impipl;
+
+	if (mac68k_statclockipl > mac68k_clockipl)
+		mac68k_clockipl = mac68k_statclockipl;
+}
 
 /*
  * Establish an autovectored interrupt handler.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.114 2004/12/02 19:37:25 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.115 2004/12/02 22:00:31 martin Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -201,19 +201,6 @@ int	physmem = MAXMEM;	/* max supported memory, changes to actual */
 int	safepri = PSL_LOWIPL;
 
 /*
- * Some of the below are not used yet, but might be used someday on the
- * Q700/900/950 where the interrupt controller may be reprogrammed to
- * interrupt on different levels as listed in locore.s
- */
-unsigned short  mac68k_ttyipl = PSL_S | PSL_IPL2;
-unsigned short  mac68k_bioipl = PSL_S | PSL_IPL2;
-unsigned short  mac68k_netipl = PSL_S | PSL_IPL2;
-unsigned short  mac68k_impipl = PSL_S | PSL_IPL2;
-unsigned short  mac68k_clockipl = PSL_S | PSL_IPL2;
-unsigned short  mac68k_statclockipl = PSL_S | PSL_IPL2;
-
-
-/*
  * Extent maps to manage all memory space, including I/O ranges.  Allocate
  * storage for 8 regions in each, initially.  Later, iomem_malloc_safe
  * will indicate that it's safe to use malloc() to dynamically allocate
@@ -288,6 +275,9 @@ mac68k_init()
 	iomem_ex = extent_create("iomem", 0x0, 0xffffffff, M_DEVBUF,
 	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);
+
+	/* Initialize the interrupt handlers. */
+	intr_init();
 
 	/* Initialize the VIAs */
 	via_init();
@@ -2485,10 +2475,6 @@ mac68k_set_io_offsets(base)
 		sccA = (volatile u_char *)base + 0x4000;
 		SCSIBase = base + 0x18000;
 		PSCBase = (volatile u_char *)base + 0x31000;
-		mac68k_bioipl = PSL_S | PSL_IPL4;
-		mac68k_netipl = PSL_S | PSL_IPL4;
-		mac68k_impipl = PSL_S | PSL_IPL4;
-		mac68k_statclockipl = PSL_S | PSL_IPL4;
 		break;
 	case MACH_CLASSII:
 	case MACH_CLASSPB:
