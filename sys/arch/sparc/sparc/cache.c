@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.7 1999/03/22 07:17:13 deraadt Exp $	*/
+/*	$OpenBSD: cache.c,v 1.8 1999/07/05 16:09:05 art Exp $	*/
 /*	$NetBSD: cache.c,v 1.33 1997/07/29 09:41:56 fair Exp $ */
 
 /*
@@ -251,9 +251,6 @@ swift_cache_enable()
 				sta(i, ASI_DCACHETAG, 0);
 		}
 
-	/* XXX - assume that an MS2 with ecache is really a turbo in disguise */
-	if (CACHEINFO.ec_totalsize == 0)
-		cpuinfo.flags |= CPUFLG_CACHEPAGETABLES; /* Ok to cache PTEs */
 	CACHEINFO.c_enabled = 1;
 	printf("cache enabled\n");
 }
