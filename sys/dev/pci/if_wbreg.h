@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wbreg.h,v 1.4 1999/11/19 02:29:27 jason Exp $	*/
+/*	$OpenBSD: if_wbreg.h,v 1.5 2001/02/03 05:37:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -366,6 +366,7 @@ struct wb_softc {
 	struct device		sc_dev;		/* generic device structure */
 	void *			sc_ih;		/* interrupt handler cookie */
 	struct arpcom		arpcom;		/* interface info */
+	struct timeout		wb_tick_tmo;
 	mii_data_t		sc_mii;
 	bus_space_handle_t	wb_bhandle;
 	bus_space_tag_t		wb_btag;

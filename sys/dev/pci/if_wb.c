@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.6 2000/10/16 17:08:08 aaron Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.7 2001/02/03 05:37:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -96,6 +96,7 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/queue.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -1329,8 +1330,8 @@ wb_tick(xsc)
 
 	s = splimp();
 	mii_tick(&sc->sc_mii);
-	timeout(wb_tick, sc, hz);
 	splx(s);
+	timeout_add(&sc->wb_tick_tmo, hz);
 }
 
 /*
@@ -1631,7 +1632,8 @@ void wb_init(xsc)
 
 	(void)splx(s);
 
-	timeout(wb_tick, sc, hz);
+	timeout_set(&sc->wb_tick_tmo, wb_tick, sc);
+	timeout_add(&sc->wb_tick_tmo, hz);
 
 	return;
 }
@@ -1773,7 +1775,7 @@ void wb_stop(sc)
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_timer = 0;
 
-	untimeout(wb_tick, sc);
+	timeout_del(&sc->wb_tick_tmo);
 
 	WB_CLRBIT(sc, WB_NETCFG, (WB_NETCFG_RX_ON|WB_NETCFG_TX_ON));
 	CSR_WRITE_4(sc, WB_IMR, 0x00000000);
