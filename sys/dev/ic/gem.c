@@ -748,7 +748,7 @@ if (gem_opdebug) printf("in init\n");
 
 	/* step 4. TX MAC registers & counters */
 	gem_init_regs(sc);
-	v = ETHERMTU +
+	v = ETHERMTU + sizeof(struct ether_header) +
 #if NVLAN > 0
 	    EVL_ENCAPLEN +
 #endif
