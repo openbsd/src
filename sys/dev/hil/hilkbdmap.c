@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbdmap.c,v 1.4 2004/04/06 18:51:22 miod Exp $	*/
+/*	$OpenBSD: hilkbdmap.c,v 1.5 2005/01/18 18:52:31 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -30,6 +30,145 @@
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 #include <dev/hil/hilkbdmap.h>
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+#include <dev/wscons/wskbdraw.h>
+
+/*
+ * Translate HIL keycodes to US keyboard XT scancodes, for proper
+ * X11-over-wsmux operation.
+ */
+const u_int8_t hilkbd_raw[0x80] = {
+	RAWKEY_Control_R,
+	RAWKEY_Null,
+	RAWKEY_Alt_R,
+	RAWKEY_Alt_L,
+	RAWKEY_Shift_R,
+	RAWKEY_Shift_L,
+	RAWKEY_Control_L,
+	RAWKEY_Null,		/* 7 Break/Reset */
+	RAWKEY_KP_Left,
+	RAWKEY_KP_Up,
+	RAWKEY_KP_Begin,
+	RAWKEY_KP_Prior,
+	RAWKEY_KP_Right,
+	RAWKEY_KP_Home,
+	RAWKEY_comma,		/* numeric pad */
+	RAWKEY_KP_Enter,
+	RAWKEY_KP_End,
+	RAWKEY_KP_Divide,
+	RAWKEY_KP_Down,
+	RAWKEY_KP_Add,
+	RAWKEY_KP_Next,
+	RAWKEY_KP_Multiply,
+	RAWKEY_KP_Insert,
+	RAWKEY_KP_Subtract,
+	RAWKEY_b,
+	RAWKEY_v,
+	RAWKEY_c,
+	RAWKEY_x,
+	RAWKEY_z,
+	RAWKEY_Null,		/* 29 Kanji Left */
+	RAWKEY_Null,		/* 30 */
+	RAWKEY_Escape,
+	RAWKEY_Null,
+	RAWKEY_f10,
+	RAWKEY_Null,
+	RAWKEY_f11,
+	RAWKEY_KP_Delete,
+	RAWKEY_f9,
+	RAWKEY_Tab,
+	RAWKEY_f12,
+	RAWKEY_h,
+	RAWKEY_g,
+	RAWKEY_f,
+	RAWKEY_d,
+	RAWKEY_s,
+	RAWKEY_a,
+	RAWKEY_Null,		/* 46 */
+	RAWKEY_Caps_Lock,
+	RAWKEY_u,
+	RAWKEY_y,
+	RAWKEY_t,
+	RAWKEY_r,
+	RAWKEY_e,
+	RAWKEY_w,
+	RAWKEY_q,
+	RAWKEY_Tab,
+	RAWKEY_7,
+	RAWKEY_6,
+	RAWKEY_5,
+	RAWKEY_4,
+	RAWKEY_3,
+	RAWKEY_2,
+	RAWKEY_1,
+	RAWKEY_grave,
+	RAWKEY_Null,		/* 64 */
+	RAWKEY_Null,		/* 65 */
+	RAWKEY_Null,		/* 66 */
+	RAWKEY_Null,		/* 67 */
+	RAWKEY_Null,		/* 68 */
+	RAWKEY_Null,		/* 69 */
+	RAWKEY_Null,		/* 70 */
+	RAWKEY_Null,		/* 71 */
+	RAWKEY_Print_Screen,
+	RAWKEY_f4,
+	RAWKEY_f3,
+	RAWKEY_f2,
+	RAWKEY_f1,
+	RAWKEY_Null,		/* 77 */
+	RAWKEY_Hold_Screen,
+	RAWKEY_Return,
+	RAWKEY_Num_Lock,
+	RAWKEY_f5,
+	RAWKEY_f6,
+	RAWKEY_f7,
+	RAWKEY_f8,
+	RAWKEY_Null,		/* 85 */
+	RAWKEY_Null,		/* 86 Clear line */
+	RAWKEY_Null,		/* 87 Clear display */
+	RAWKEY_8,
+	RAWKEY_9,
+	RAWKEY_0,
+	RAWKEY_minus,
+	RAWKEY_equal,
+	RAWKEY_BackSpace,
+	RAWKEY_Null,		/* 94 Insert line */
+	RAWKEY_Null,		/* 95 Delete line */
+	RAWKEY_i,
+	RAWKEY_o,
+	RAWKEY_p,
+	RAWKEY_bracketleft,
+	RAWKEY_bracketright,
+	RAWKEY_backslash,
+	RAWKEY_Insert,
+	RAWKEY_Delete,
+	RAWKEY_j,
+	RAWKEY_k,
+	RAWKEY_l,
+	RAWKEY_semicolon,
+	RAWKEY_apostrophe,
+	RAWKEY_Return,
+	RAWKEY_Home,
+	RAWKEY_Prior,
+	RAWKEY_m,
+	RAWKEY_comma,
+	RAWKEY_period,
+	RAWKEY_slash,
+	RAWKEY_Null,		/* 116 */
+	RAWKEY_End,
+	RAWKEY_Null,		/* 118 */
+	RAWKEY_Next,
+	RAWKEY_n,
+	RAWKEY_space,
+	RAWKEY_Null,		/* 122 */
+	RAWKEY_Null,		/* 123 Kanji Right */
+	RAWKEY_Left,
+	RAWKEY_Down,
+	RAWKEY_Up,
+	RAWKEY_Right
+};
+#endif
 
 #define KC(n) KS_KEYCODE(n)
 
@@ -67,6 +206,7 @@ const keysym_t hilkbd_keydesc_us[] = {
     KC(26),			KS_c,
     KC(27),			KS_x,
     KC(28),			KS_z,
+    /* 29 Kanji Left */
 
     KC(31), KS_Cmd_Debugger,	KS_Escape,	KS_Delete,
     KC(33), KS_Cmd_Screen9,	KS_f10,		/* also KS_KP_F2 */
@@ -81,7 +221,7 @@ const keysym_t hilkbd_keydesc_us[] = {
     KC(43),			KS_d,
     KC(44),			KS_s,
     KC(45),			KS_a,
-
+    /* 46 Mode_Switch ??? */
     KC(47),			KS_Caps_Lock,
     KC(48),			KS_u,
     KC(49),			KS_y,
@@ -140,7 +280,6 @@ const keysym_t hilkbd_keydesc_us[] = {
     KC(109),			KS_Return,
     KC(110),			KS_Home,
     KC(111), KS_Cmd_ScrollBack,	KS_Prior,
-
     KC(112),			KS_m,
     KC(113),			KS_comma,	KS_less,
     KC(114),			KS_period,	KS_greater,
@@ -152,6 +291,7 @@ const keysym_t hilkbd_keydesc_us[] = {
     KC(120),			KS_n,
     KC(121),			KS_space,
 
+    /* 123 Kanji Right */
     KC(124),			KS_Left,
     KC(125),			KS_Down,
     KC(126),			KS_Up,
@@ -307,7 +447,7 @@ const kbd_t hilkbd_layouts[MAXHILKBDLAYOUT] = {
 	-1,	/* 04 Portuguese */
 	-1,	/* 05 Arabic */
 	-1,	/* 06 Hebrew */
-	-1,	/* 07 Canada English */
+	-1,	/* 07 Canadian English */
 	-1,	/* 08 Turkish */
 	-1,	/* 09 Greek */
 	-1,	/* 0a Thai */
@@ -320,11 +460,11 @@ const kbd_t hilkbd_layouts[MAXHILKBDLAYOUT] = {
 	-1,	/* 11 Traditional Chinese */
 	-1,	/* 12 Swiss French 2 */
 	-1,	/* 13 Euro Spanish */
-	-1,	/* 14 Swiss German 2*/
+	-1,	/* 14 Swiss German 2 */
 	-1,	/* 15 Belgian */
 	-1,	/* 16 Finnish */
 	KB_UK,	/* 17 UK English */
-	-1,	/* 18 Canada French */
+	-1,	/* 18 Canadian French */
 	-1,	/* 19 Swiss German */
 	-1,	/* 1a Norwegian */
 	KB_FR,	/* 1b French */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbd.c,v 1.9 2003/02/26 20:22:54 miod Exp $	*/
+/*	$OpenBSD: hilkbd.c,v 1.10 2005/01/18 18:52:31 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -30,6 +30,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/timeout.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
@@ -43,6 +45,9 @@
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+#include <dev/wscons/wskbdraw.h>
+#endif
 
 #include <dev/hil/hilkbdmap.h>
 
@@ -55,6 +60,15 @@ struct hilkbd_softc {
 	int		sc_console;
 
 	struct device	*sc_wskbddev;
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int		sc_rawkbd;
+	int		sc_nrep;
+	char		sc_rep[HILBUFSIZE * 2];
+	struct timeout	sc_rawrepeat_ch;
+#define	REP_DELAY1	400
+#define	REP_DELAYN	100
+#endif
 };
 
 int	hilkbdprobe(struct device *, void *, void *);
@@ -102,6 +116,7 @@ void	hilkbd_bell(struct hil_softc *, u_int, u_int, u_int);
 void	hilkbd_callback(struct hildev_softc *, u_int, u_int8_t *);
 void	hilkbd_decode(u_int8_t, u_int8_t, u_int *, int *);
 int	hilkbd_is_console(int);
+void	hilkbd_rawrepeat(void *);
 
 int	seen_hilkbd_console;
 
@@ -154,6 +169,10 @@ hilkbdattach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	timeout_set(&sc->sc_rawrepeat_ch, hilkbd_rawrepeat, sc);
+#endif
 
 	a.console = hilkbd_is_console(ha->ha_console);
 	a.keymap = &hilkbd_keymapdata;
@@ -263,6 +282,12 @@ hilkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSKBDIO_GETLEDS:
 		*(int *)data = sc->sc_ledstate;
 		return 0;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	case WSKBDIO_SETMODE:
+		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
+		timeout_del(&sc->sc_rawrepeat_ch);
+		return 0;
+#endif
 	case WSKBDIO_COMPLEXBELL:
 #define	d ((struct wskbd_bell_data *)data)
 		hilkbd_bell((struct hil_softc *)sc->hd_parent,
@@ -331,7 +356,7 @@ hilkbd_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 	struct hilkbd_softc *sc = (struct hilkbd_softc *)dev;
 	u_int type;
 	int key;
-	int i;
+	int i, s;
 
 	/*
 	 * Ignore packet if we don't need it
@@ -339,12 +364,54 @@ hilkbd_callback(struct hildev_softc *dev, u_int buflen, u_int8_t *buf)
 	if (sc->sc_enabled == 0)
 		return;
 
-	if (buflen > 1 && *buf == HIL_KBDDATA) {
+	if (buflen == 0 || *buf != HIL_KBDDATA)
+		return;
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	if (sc->sc_rawkbd) {
+		u_char cbuf[HILBUFSIZE * 2];
+		int c, j, npress;
+
+		npress = j = 0;
+		for (i = 1, buf++; i < buflen; i++) {
+			hilkbd_decode(0, *buf++, &type, &key);
+			c = hilkbd_raw[key];
+			if (c == RAWKEY_Null)
+				continue;
+			/* fake extended scancode if necessary */
+			if (c & 0x80)
+				cbuf[j++] = 0xe0;
+			cbuf[j] = c & 0x7f;
+			if (type == WSCONS_EVENT_KEY_UP)
+				cbuf[j] |= 0x80;
+			else {
+				/* remember pressed keys for autorepeat */
+				if (c & 0x80)
+					sc->sc_rep[npress++] = 0xe0;
+				sc->sc_rep[npress++] = c & 0x7f;
+			}
+			j++;
+		}
+
+		s = spltty();
+		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
+		splx(s);
+		timeout_del(&sc->sc_rawrepeat_ch);
+		sc->sc_nrep = npress;
+		if (npress != 0) {
+			timeout_add(&sc->sc_rawrepeat_ch,
+			    (hz * REP_DELAY1) / 1000);
+		}
+	} else
+#endif
+	{
+		s = spltty();
 		for (i = 1, buf++; i < buflen; i++) {
 			hilkbd_decode(0, *buf++, &type, &key);
 			if (sc->sc_wskbddev != NULL)
 				wskbd_input(sc->sc_wskbddev, type, key);
 		}
+		splx(s);
 	}
 }
 
@@ -369,3 +436,17 @@ hilkbd_is_console(int hil_is_console)
 	seen_hilkbd_console = 1;
 	return (1);
 }
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+void
+hilkbd_rawrepeat(void *v)
+{
+	struct hilkbd_softc *sc = v;
+	int s;
+
+	s = spltty();
+	wskbd_rawinput(sc->sc_wskbddev, sc->sc_rep, sc->sc_nrep);
+	splx(s);
+	timeout_add(&sc->sc_rawrepeat_ch, (hz * REP_DELAYN) / 1000);
+}
+#endif
