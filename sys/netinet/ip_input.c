@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.22 1997/02/13 16:26:58 deraadt Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.23 1997/02/22 05:56:48 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <netinet/if_ether.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
@@ -139,6 +140,8 @@ static	struct ip_srcrt {
 } ip_srcrt;
 
 static void save_rte __P((u_char *, struct in_addr));
+static int ip_weadvertise(u_int32_t);
+
 /*
  * IP initialization: fill in IP protocol switch table.
  * All protocols not implemented in kernel go to raw IP protocol handler.
@@ -935,6 +938,37 @@ save_rte(option, dst)
 }
 
 /*
+ * Check whether we do proxy ARP for this address and we point to ourselves.
+ * Code shamelessly copied from arplookup().
+ */
+static int
+ip_weadvertise(addr)
+        u_int32_t addr;
+{
+        register struct rtentry *rt;
+	struct sockaddr_inarp sin;
+    
+	sin.sin_len = sizeof(sin);
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = addr;
+	sin.sin_other = SIN_PROXY;
+	rt = rtalloc1(sintosa(&sin), 0);
+	if (rt == 0)
+	  return 0;
+	
+	RTFREE(rt);
+	
+	if ((rt->rt_flags & RTF_GATEWAY) || (rt->rt_flags & RTF_LLINFO) == 0 
+	    || rt->rt_gateway->sa_family != AF_LINK)
+	  return 0;
+
+	if(ifa_ifwithaddr(sintosa(&sin)))
+	  return 1;
+
+	return 0;
+}
+
+/*
  * Retrieve incoming source route for use in replies,
  * in the same form used by setsockopt.
  * The first hop is placed before the options, will be removed later.
@@ -1116,11 +1150,14 @@ ip_forward(m, srcrt)
 	 * and if packet was not source routed (or has any options).
 	 * Also, don't send redirect if forwarding using a default route
 	 * or a route modified by a redirect.
+	 * Don't send redirect if we advertise destination's arp address
+	 * as ours (proxy arp).
 	 */
 	if (rt->rt_ifp == m->m_pkthdr.rcvif &&
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0 &&
 	    satosin(rt_key(rt))->sin_addr.s_addr != 0 &&
-	    ipsendredirects && !srcrt) {
+	    ipsendredirects && !srcrt &&
+	    !ip_weadvertise(satosin(rt_key(rt))->sin_addr.s_addr)) {
 		if (rt->rt_ifa &&
 		    (ip->ip_src.s_addr & ifatoia(rt->rt_ifa)->ia_subnetmask) ==
 		    ifatoia(rt->rt_ifa)->ia_subnet) {
