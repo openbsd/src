@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.51 2005/01/22 09:18:41 jmc Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.52 2005/02/04 23:06:30 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -321,15 +321,25 @@ qualifiers can be used to specify a desired direction.
 .It Ar proto
 Restrict the match to a particular protocol.
 Possible protocols are:
+.Cm ah ,
 .Cm arp ,
+.Cm atalk ,
 .Cm decnet ,
+.Cm esp ,
 .Cm ether ,
 .Cm fddi ,
+.Cm icmp ,
+.Cm icmp6 ,
+.Cm igmp ,
+.Cm igrp ,
 .Cm ip ,
+.Cm ipv6 ,
 .Cm lat ,
 .Cm mopdl ,
 .Cm moprc ,
+.Cm pim ,
 .Cm rarp ,
+.Cm sca ,
 .Cm tcp ,
 and
 .Cm udp .
@@ -498,8 +508,8 @@ True if the packet is IP/TCP or IP/UDP and has a destination port value of
 .Ar port .
 The
 .Ar port
-can be a number or a name used in
-.Pa /etc/services
+can be a number or name from
+.Xr services 5
 (see
 .Xr tcp 4
 and
@@ -548,7 +558,9 @@ True if the packet is an IP packet (see
 of protocol type
 .Ar proto .
 .Ar proto
-can be a number or one of the names
+can be a number or name from
+.Xr protocols 5 ,
+such as
 .Cm icmp ,
 .Cm udp ,
 or
@@ -580,7 +592,9 @@ True if the packet is an IP multicast packet.
 True if the packet is of ether type
 .Ar proto .
 .Ar proto
-can be a number or a name like
+can be a number or name from
+.Xr protocols 5 ,
+such as
 .Cm ip ,
 .Cm arp ,
 or
@@ -672,18 +686,20 @@ and
 .Ar block
 (applies only to packets logged by
 .Xr pf 4 ) .
-.It Xo Cm ip ,
+.It Xo
+.Cm atalk ,
+.Cm ip ,
+.Cm ipv6 ,
 .Cm arp ,
-.Cm rarp ,
 .Cm decnet ,
 .Cm lat ,
 .Cm moprc ,
-.Cm mopdl
+.Cm mopdl ,
+.Cm rarp ,
+.Cm sca
 .Xc
 Abbreviations for:
-.Pp
-.D1 Cm ether proto Ar p
-.Pp
+.Cm ether proto Ar p
 where
 .Ar p
 is one of the above protocols.
@@ -693,7 +709,17 @@ does not currently know how to parse
 .Cm moprc ,
 or
 .Cm mopdl .
-.It Cm tcp , udp , icmp
+.It Xo
+.Cm ah ,
+.Cm esp ,
+.Cm icmp ,
+.Cm icmp6 ,
+.Cm igmp ,
+.Cm igrp ,
+.Cm pim ,
+.Cm tcp ,
+.Cm udp
+.Xc
 Abbreviations for:
 .Cm ip proto Ar p
 where
@@ -1667,7 +1693,9 @@ interrupt.
 .Xr tcp 4 ,
 .Xr udp 4 ,
 .Xr networks 5 ,
-.Xr pf.os 5
+.Xr pf.os 5 ,
+.Xr protocols 5 ,
+.Xr services 5
 .Rs
 .%R RFC 793
 .%T Transmission Control Protocol
