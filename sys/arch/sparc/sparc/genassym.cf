@@ -1,0 +1,188 @@
+#	$OpenBSD: genassym.cf,v 1.1 1997/06/25 14:47:12 downsj Exp $
+#
+# Copyright (c) 1992, 1993
+#	The Regents of the University of California.  All rights reserved.
+#
+# This software was developed by the Computer Systems Engineering group
+# at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+# contributed to Berkeley.
+#
+# All advertising materials mentioning features or use of this software
+# must display the following acknowledgement:
+#	This product includes software developed by the University of
+#	California, Lawrence Berkeley Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. All advertising materials mentioning features or use of this software
+#    must display the following acknowledgement:
+#	This product includes software developed by the University of
+#	California, Berkeley and its contributors.
+# 4. Neither the name of the University nor the names of its contributors
+#    may be used to endorse or promote products derived from this software
+#    without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+#	@(#)genassym.c	8.1 (Berkeley) 6/11/93
+#
+
+include <sys/param.h>
+include <sys/buf.h>
+include <sys/proc.h>
+include <sys/map.h>
+include <sys/proc.h>
+include <sys/mbuf.h>
+include <sys/msgbuf.h>
+include <sys/syscall.h>
+include <sys/user.h>
+include <sys/device.h>
+include <sys/disklabel.h>
+include <sys/disk.h>
+
+include <machine/pmap.h>
+include <machine/cpu.h>
+
+include <machine/oldmon.h>
+include <machine/bsd_openprom.h>
+
+ifdef notyet
+include <sparc/dev/zsreg.h>
+include <sparc/dev/zsvar.h>
+endif
+include <dev/ic/am7930reg.h>
+include <sparc/dev/amd7930var.h>
+
+include <sparc/dev/fdreg.h>
+include <sparc/dev/fdvar.h>
+
+# general constants
+define	BSD		BSD
+define	SUN4_PGSHIFT	SUN4_PGSHIFT
+define	SUN4CM_PGSHIFT	SUN4CM_PGSHIFT
+define	USRSTACK	USRSTACK
+
+# proc fields and values
+define	P_ADDR		offsetof(struct proc, p_addr)
+define	P_STAT		offsetof(struct proc, p_stat)
+define	P_WCHAN		offsetof(struct proc, p_wchan)
+define	P_VMSPACE	offsetof(struct proc, p_vmspace)
+define	SRUN		SRUN
+
+# VM structure fields
+define	VM_PMAP		offsetof(struct vmspace, vm_pmap)
+define	VM_PMAP_CTX	offsetof(struct vmspace, vm_pmap.pm_ctx)
+define	VM_PMAP_CTXNUM	offsetof(struct vmspace, vm_pmap.pm_ctxnum)
+
+# interrupt/fault metering
+define	V_SWTCH		offsetof(struct vmmeter, v_swtch)
+define	V_INTR		offsetof(struct vmmeter, v_intr)
+define	V_FAULTS	offsetof(struct vmmeter, v_faults)
+
+# PTE bits and related information
+define	PG_W		PG_W
+define	PG_VSHIFT	PG_VSHIFT
+define	PG_PROTSHIFT	PG_PROTSHIFT
+define	PG_PROTUREAD	PG_PROTUREAD
+define	PG_PROTUWRITE	PG_PROTUWRITE
+ifdef SUN4M
+define	SRMMU_TETYPE	SRMMU_TETYPE
+define	SRMMU_TEPTE	SRMMU_TEPTE
+define	SRMMU_PROT_MASK	SRMMU_PROT_MASK
+define	PPROT_R_RW	PPROT_R_RW
+define	PPROT_RX_RX	PPROT_RX_RX
+define	PPROT_RWX_RWX	PPROT_RWX_RWX
+define	PPROT_WRITE	PPROT_WRITE
+endif
+
+# FPU state
+define	FS_REGS		offsetof(struct fpstate, fs_regs)
+define	FS_FSR		offsetof(struct fpstate, fs_fsr)
+define	FS_QSIZE	offsetof(struct fpstate, fs_qsize)
+define	FS_QUEUE	offsetof(struct fpstate, fs_queue)
+define	FSR_QNE		FSR_QNE
+
+# system calls
+define	SYS_sigreturn	SYS_sigreturn
+define	SYS_execve	SYS_execve
+define	SYS_exit	SYS_exit
+
+# errno
+define	EFAULT		EFAULT
+define	ENAMETOOLONG	ENAMETOOLONG
+
+# PCB fields
+define	PCB_NSAVED	offsetof(struct pcb, pcb_nsaved)
+define	PCB_ONFAULT	offsetof(struct pcb, pcb_onfault)
+define	PCB_PSR		offsetof(struct pcb, pcb_psr)
+define	PCB_RW		offsetof(struct pcb, pcb_rw)
+define	PCB_SP		offsetof(struct pcb, pcb_sp)
+define	PCB_PC		offsetof(struct pcb, pcb_pc)
+define	PCB_UW		offsetof(struct pcb, pcb_uw)
+define	PCB_WIM		offsetof(struct pcb, pcb_wim)
+
+# interrupt enable register PTE
+define	IE_REG_PTE_PG	PG_V | PG_W | PG_S | PG_NC | PG_OBIO
+
+ifdef notyet
+# ZSCC interrupt fields
+define	ZSC_A		offsetof(struct zs_softc, sc_a)
+define	ZSC_B		offsetof(struct zs_softc, sc_b)
+# define	ZL_WREG		offsetof(struct zs_line, zl_wreg)
+define	ZL_TBC		offsetof(struct zs_line, zl_tbc)
+define	ZL_TBA		offsetof(struct zs_line, zl_tba)
+define	ZL_RBPUT	offsetof(struct zs_line, zl_rbput)
+define	ZL_RBUF		offsetof(struct zs_line, zl_rbuf)
+define	ZSRR1_DO_bit	ffs(ZSRR1_DO) - 1
+endif
+
+# audio trap handler fields
+define	AU_AMD		offsetof(struct auio, au_amd)
+define	AU_RDATA	offsetof(struct auio, au_rdata)
+define	AU_REND		offsetof(struct auio, au_rend)
+define	AU_PDATA	offsetof(struct auio, au_pdata)
+define	AU_PEND		offsetof(struct auio, au_pend)
+define	AU_EVCNT	offsetof(struct auio, au_intrcnt.ev_count)
+
+define	AMD_IR		offsetof(struct amd7930, ir)
+define	AMD_BBRB	offsetof(struct amd7930, bbrb)
+define	AMD_BBTB	offsetof(struct amd7930, bbtb)
+
+define	PROM_BASE	PROM_BASE
+
+define	PV_NODEOPS	offsetof(struct promvec, pv_nodeops)
+define	PV_HALT		offsetof(struct promvec, pv_halt)
+define	PV_EVAL		offsetof(struct promvec, pv_fortheval.v0_eval)
+define	PV_ROMVEC_VERS	offsetof(struct promvec, pv_romvec_vers)
+
+define	NO_NEXTNODE	offsetof(struct nodeops, no_nextnode)
+define	NO_GETPROP	offsetof(struct nodeops, no_getprop)
+
+define	OLDMON_PRINTF	offsetof(struct om_vector, printf)
+define	OLDMON_HALT	offsetof(struct om_vector, exitToMon)
+
+# floppy trap handler fields
+define	FDC_REG_MSR	offsetof(struct fdcio, fdcio_reg_msr)
+define	FDC_REG_FIFO	offsetof(struct fdcio, fdcio_reg_fifo)
+define	FDC_ISTATE	offsetof(struct fdcio, fdcio_istate)
+define	FDC_STATUS	offsetof(struct fdcio, fdcio_status)
+define	FDC_NSTAT	offsetof(struct fdcio, fdcio_nstat)
+define	FDC_DATA	offsetof(struct fdcio, fdcio_data)
+define	FDC_TC		offsetof(struct fdcio, fdcio_tc)
+define	FDC_EVCNT	offsetof(struct fdcio, fdcio_intrcnt.ev_count)

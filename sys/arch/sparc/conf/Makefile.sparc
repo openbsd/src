@@ -1,6 +1,7 @@
+#	$OpenBSD: Makefile.sparc,v 1.10 1997/06/25 14:47:11 downsj Exp $
 # 	$NetBSD: Makefile.sparc,v 1.32.4.1 1996/06/12 20:26:32 pk Exp $
 
-# Makefile for NetBSD
+# Makefile for OpenBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -27,23 +28,29 @@ CPP?=	cpp
 LD?=	ld
 MKDEP?=	mkdep
 STRIP?=	strip
-TOUCH?=	touch -f -c
+TOUCH?=	touch
 
 # source tree is located via $S relative to the compilation directory
-S=	../../../..
-SPARC=	../..
+.ifndef S
+S!=	cd ../../../..; pwd
+.endif
+SPARC=	$S/arch/sparc
 
-INCLUDES=	-I. -I$S/arch -I$S
+INCLUDES=	-nostdinc -I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL
-GCCWFLAGS=	#-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
-CFLAGS=		${DEBUG} -O2 ${GCCWFLAGS}
+
+CDIAGFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-Wno-uninitialized -Wno-format
+
+CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
 # add `-mno-fpu' to work around gcc (last noticed in v2.7.2) bug
 CFLAGS+=	-mno-fpu
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -p -Ttext F8004000 -e start
 STRIPFLAGS=	-d
+TOUCHFLAGS=	-f -c
 
-HOSTCC?=	${CC}
+HOSTCC=	${CC}
 HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
 HOSTED_CFLAGS=	${CFLAGS}
 
@@ -71,13 +78,13 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
-
 DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
+
+HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %OBJS
 
@@ -110,14 +117,10 @@ LINKFLAGS+=	-x
 
 %LOAD
 
-assym.h: genassym
-	./genassym >assym.h
-
-genassym: genassym.o
-	${HOSTCC} -o $@ genassym.o
-
-genassym.o: ${SPARC}/sparc/genassym.c
-	${HOSTED_C}
+assym.h: $S/kern/genassym.sh ${SPARC}/sparc/genassym.cf
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
+	    ${PARAM} < ${SPARC}/sparc/genassym.cf > assym.h.tmp && \
+	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -162,8 +165,6 @@ depend:: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${SPARC}/sparc/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} ${PARAM} \
-		 ${SPARC}/sparc/genassym.c
 
 
 # depend on root or device configuration
@@ -173,7 +174,7 @@ autoconf.o conf.o: Makefile
 uipc_proto.o vfs_conf.o: Makefile 
 
 # depend on maxusers
-genassym.o machdep.o: Makefile
+machdep.o: Makefile
 
 # depend on CPU configuration 
 bwtwo.o cgsix.o cgthree.o cgtwo.o cons.o dma.o esp.o fb.o if_ie.o: Makefile
