@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.79 2001/06/27 21:34:57 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.80 2001/06/27 22:05:20 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1182,7 +1182,7 @@ get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
 		if (r->ifp == ifp &&
 		    (!r->proto || r->proto == proto) &&
 		    match_addr(r->not, r->daddr, r->dmask, addr) &&
-		    r->dport == port)
+		    ((r->dport == 0) || (r->dport == port)))
 			rm = r;
 		else
 			r = TAILQ_NEXT(r, entries);
@@ -1233,7 +1233,8 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 			baddr = h->ip_dst.s_addr;
 			bport = th->th_dport;
 			change_ap(&h->ip_dst.s_addr, &th->th_dport,
-			    &h->ip_sum, &th->th_sum, rdr->raddr, rdr->rport);
+			    &h->ip_sum, &th->th_sum, rdr->raddr, 
+			    rdr->rport ? rdr->rport : th->th_dport);
 			rewrite++;
 		}
 	}
@@ -1382,7 +1383,8 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 			baddr = h->ip_dst.s_addr;
 			bport = uh->uh_dport;
 			change_ap(&h->ip_dst.s_addr, &uh->uh_dport,
-			    &h->ip_sum, &uh->uh_sum, rdr->raddr, rdr->rport);
+			    &h->ip_sum, &uh->uh_sum, rdr->raddr, 
+			    rdr->rport ? rdr->rport : uh->uh_dport);
 			rewrite++;
 		}
 	}
