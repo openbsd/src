@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.62 2003/05/18 19:37:47 ho Exp $	*/
+/*	$OpenBSD: policy.c,v 1.63 2003/06/03 12:51:39 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -248,7 +248,7 @@ policy_callback (char *name)
 	pfs = "yes";
 
       is = policy_isakmp_sa->data;
-      snprintf (phase1_group, PMAX, "%u", is->group_desc);
+      snprintf (phase1_group, sizeof phase1_group, "%u", is->group_desc);
 
       for (proto = TAILQ_FIRST (&policy_sa->protos); proto;
 	   proto = TAILQ_NEXT (proto, link))
@@ -393,20 +393,20 @@ policy_callback (char *name)
 		      if (lifetype == IPSEC_DURATION_SECONDS)
 			{
 			  if (len == 2)
-			    snprintf (ah_life_seconds, PMAX, "%u",
-				      decode_16 (value));
+			    snprintf (ah_life_seconds, sizeof ah_life_seconds,
+				      "%u", decode_16 (value));
 			  else
-			    snprintf (ah_life_seconds, PMAX, "%u",
-				      decode_32 (value));
+			    snprintf (ah_life_seconds, sizeof ah_life_seconds,
+				      "%u", decode_32 (value));
 			}
 		      else
 			{
 			  if (len == 2)
-			    snprintf (ah_life_kbytes, PMAX, "%u",
-				      decode_16 (value));
+			    snprintf (ah_life_kbytes, sizeof ah_life_kbytes,
+				      "%u", decode_16 (value));
 			  else
-			    snprintf (ah_life_kbytes, PMAX, "%u",
-				      decode_32 (value));
+			    snprintf (ah_life_kbytes, sizeof ah_life_kbytes,
+				      "%u", decode_32 (value));
 			}
 
 		      break;
@@ -415,19 +415,23 @@ policy_callback (char *name)
 		      if (lifetype == IPSEC_DURATION_SECONDS)
 			{
 			  if (len == 2)
-			    snprintf (esp_life_seconds, PMAX, "%u",
+			    snprintf (esp_life_seconds,
+				      sizeof esp_life_seconds, "%u",
 				      decode_16 (value));
 			  else
-			    snprintf (esp_life_seconds, PMAX, "%u",
+			    snprintf (esp_life_seconds,
+				      sizeof esp_life_seconds, "%u",
 				      decode_32 (value));
 			}
 		      else
 			{
 			  if (len == 2)
-			    snprintf (esp_life_kbytes, PMAX, "%u",
+			    snprintf (esp_life_kbytes,
+				      sizeof esp_life_kbytes, "%u",
 				      decode_16 (value));
 			  else
-			    snprintf (esp_life_kbytes, PMAX, "%u",
+			    snprintf (esp_life_kbytes,
+				      sizeof esp_life_kbytes, "%u",
 				      decode_32 (value));
 			}
 
@@ -437,19 +441,23 @@ policy_callback (char *name)
 		      if (lifetype == IPSEC_DURATION_SECONDS)
 			{
 			  if (len == 2)
-			    snprintf (comp_life_seconds, PMAX, "%u",
+			    snprintf (comp_life_seconds,
+				      sizeof comp_life_seconds, "%u",
 				      decode_16 (value));
 			  else
-			    snprintf (comp_life_seconds, PMAX, "%u",
+			    snprintf (comp_life_seconds,
+				      sizeof comp_life_seconds, "%u",
 				      decode_32 (value));
 			}
 		      else
 			{
 			  if (len == 2)
-			    snprintf (comp_life_kbytes, PMAX, "%u",
+			    snprintf (comp_life_kbytes,
+				      sizeof comp_life_kbytes, "%u",
 				      decode_16 (value));
 			  else
-			    snprintf (comp_life_kbytes, PMAX, "%u",
+			    snprintf (comp_life_kbytes,
+				      sizeof comp_life_kbytes, "%u",
 				      decode_32 (value));
 			}
 
@@ -461,16 +469,17 @@ policy_callback (char *name)
 		  switch (proto->proto)
 		    {
 		    case IPSEC_PROTO_IPSEC_AH:
-		      snprintf (ah_group_desc, PMAX, "%u", decode_16 (value));
+		      snprintf (ah_group_desc, sizeof ah_group_desc, "%u",
+				decode_16 (value));
 		      break;
 
 		    case IPSEC_PROTO_IPSEC_ESP:
-		      snprintf (esp_group_desc, PMAX, "%u",
+		      snprintf (esp_group_desc, sizeof esp_group_desc, "%u",
 			       decode_16 (value));
 		      break;
 
 		    case IPSEC_PROTO_IPCOMP:
-		      snprintf (comp_group_desc, PMAX, "%u",
+		      snprintf (comp_group_desc, sizeof comp_group_desc, "%u",
 			       decode_16 (value));
 		      break;
 		    }
@@ -585,11 +594,12 @@ policy_callback (char *name)
 		  switch (proto->proto)
 		    {
 		    case IPSEC_PROTO_IPSEC_AH:
-		      snprintf (ah_key_length, PMAX, "%u", decode_16 (value));
+		      snprintf (ah_key_length, sizeof ah_key_length, "%u",
+				decode_16 (value));
 		      break;
 
 		    case IPSEC_PROTO_IPSEC_ESP:
-		      snprintf (esp_key_length, PMAX, "%u",
+		      snprintf (esp_key_length, sizeof esp_key_length, "%u",
 			       decode_16 (value));
 		      break;
 		    }
@@ -599,22 +609,25 @@ policy_callback (char *name)
 		  switch (proto->proto)
 		    {
 		    case IPSEC_PROTO_IPSEC_AH:
-		      snprintf (ah_key_rounds, PMAX, "%u", decode_16 (value));
+		      snprintf (ah_key_rounds, sizeof ah_key_rounds, "%u",
+				decode_16 (value));
 		      break;
 
 		    case IPSEC_PROTO_IPSEC_ESP:
-		      snprintf (esp_key_rounds, PMAX, "%u",
+		      snprintf (esp_key_rounds, sizeof esp_key_rounds, "%u",
 			       decode_16 (value));
 		      break;
 		    }
 		  break;
 
 		case IPSEC_ATTR_COMPRESS_DICTIONARY_SIZE:
-		  snprintf (comp_dict_size, PMAX, "%u", decode_16 (value));
+		  snprintf (comp_dict_size, sizeof comp_dict_size, "%u",
+			    decode_16 (value));
 		  break;
 
 		case IPSEC_ATTR_COMPRESS_PRIVATE_ALGORITHM:
-		  snprintf (comp_private_alg, PMAX, "%u", decode_16 (value));
+		  snprintf (comp_private_alg, sizeof comp_private_alg, "%u",
+			    decode_16 (value));
 		  break;
 		}
 	    }
@@ -910,12 +923,13 @@ policy_callback (char *name)
 #endif
 
  	default:
-	  snprintf (remote_id_proto_num, 3, "%d", id[1]);
+	  snprintf (remote_id_proto_num, sizeof remote_id_proto_num, "%d",
+		    id[1]);
 	  remote_id_proto = remote_id_proto_num;
 	  break;
 	}
 
-      snprintf (remote_id_port, sizeof remote_id_port - 1, "%u",
+      snprintf (remote_id_port, sizeof remote_id_port, "%u",
 		decode_16 (id + 2));
 
       if (policy_exchange->initiator)
@@ -1185,14 +1199,15 @@ policy_callback (char *name)
 #endif
 
  	    default:
-	      snprintf (remote_filter_proto_num, 3, "%d",
-		       idremote[ISAKMP_GEN_SZ + 1]);
+	      snprintf (remote_filter_proto_num,
+			sizeof remote_filter_proto_num, "%d",
+			idremote[ISAKMP_GEN_SZ + 1]);
 	      remote_filter_proto = remote_filter_proto_num;
 	      break;
 	    }
 
-	  snprintf (remote_filter_port, sizeof remote_filter_port - 1,
-		    "%u", decode_16 (idremote + ISAKMP_GEN_SZ + 2));
+	  snprintf (remote_filter_port, sizeof remote_filter_port, "%u",
+		    decode_16 (idremote + ISAKMP_GEN_SZ + 2));
 	}
       else
         {
@@ -1477,14 +1492,14 @@ policy_callback (char *name)
 #endif
 
  	    default:
-	      snprintf (local_filter_proto_num, 3, "%d",
-		       idlocal[ISAKMP_GEN_SZ + 1]);
+	      snprintf (local_filter_proto_num, sizeof local_filter_proto_num,
+			"%d", idlocal[ISAKMP_GEN_SZ + 1]);
 	      local_filter_proto = local_filter_proto_num;
 	      break;
 	    }
 
-	  snprintf (local_filter_port, sizeof local_filter_port - 1,
-		    "%u", decode_16 (idlocal + ISAKMP_GEN_SZ + 2));
+	  snprintf (local_filter_port, sizeof local_filter_port, "%u",
+		    decode_16 (idlocal + ISAKMP_GEN_SZ + 2));
 	}
       else
         {

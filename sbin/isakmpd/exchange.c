@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.79 2003/05/15 02:28:55 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.80 2003/06/03 12:51:38 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1577,7 +1577,8 @@ exchange_nonce (struct exchange *exchange, int peer, size_t nonce_sz,
       return -1;
     }
   memcpy (*nonce, buf, nonce_sz);
-  snprintf (header, 32, "exchange_nonce: NONCE_%c", initiator ? 'i' : 'r');
+  snprintf (header, sizeof header, "exchange_nonce: NONCE_%c",
+	    initiator ? 'i' : 'r');
   LOG_DBG_BUF ((LOG_EXCHANGE, 80, header, *nonce, nonce_sz));
   return 0;
 }

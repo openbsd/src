@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.53 2003/05/18 19:37:46 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.54 2003/06/03 12:51:38 ho Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -461,7 +461,7 @@ conf_load_defaults (int tr)
       for (auth = 0; mm_auth[auth]; auth ++)
 	for (group = 0; dh_group_p[group]; group ++) /* special */
 	  {
-	    snprintf (sect, CONF_MAX, "%s-%s%s%s", mm_enc_p[enc],
+	    snprintf (sect, sizeof sect, "%s-%s%s%s", mm_enc_p[enc],
 		      mm_hash[hash], dh_group_p[group], mm_auth_p[auth]);
 
 #if 0
@@ -510,7 +510,7 @@ conf_load_defaults (int tr)
 		{
 		  char tmp[CONF_MAX];
 
-		  snprintf (tmp, CONF_MAX, "QM-%s%s%s%s%s%s", PROTO (proto),
+		  snprintf (tmp, sizeof tmp, "QM-%s%s%s%s%s%s", PROTO (proto),
 			    MODE_p (mode), qm_enc_p[enc], qm_hash_p[hash],
 			    PFS (pfs), dh_group_p[group]);
 
@@ -527,7 +527,7 @@ conf_load_defaults (int tr)
 
 		  conf_set (tr, sect, "Protocols", tmp, 0, 1);
 
-		  snprintf (sect, CONF_MAX, "IPSEC_%s", PROTO (proto));
+		  snprintf (sect, sizeof sect, "IPSEC_%s", PROTO (proto));
 		  conf_set (tr, tmp, "PROTOCOL_ID", sect, 0, 1);
 
 		  strlcpy (sect, tmp, CONF_MAX);

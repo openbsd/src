@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnssec.c,v 1.14 2002/06/10 18:08:58 ho Exp $	*/
+/*	$OpenBSD: dnssec.c,v 1.15 2003/06/03 12:51:38 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -102,7 +102,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
 
   id = exchange->initiator ? exchange->id_r : exchange->id_i;
   id_len = exchange->initiator ? exchange->id_r_len : exchange->id_i_len;
-  memset (name, 0, MAXHOSTNAMELEN);
+  memset (name, 0, sizeof name);
 
   if (!id || id_len == 0)
     {
@@ -121,7 +121,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
       if (id_len < sizeof ip4)
 	return 0;
       memcpy (&ip4, id + ISAKMP_ID_DATA_OFF, sizeof ip4);
-      snprintf (name, MAXHOSTNAMELEN, "%d.%d.%d.%d.in-addr.arpa.", ip4 >> 24,
+      snprintf (name, sizeof name, "%d.%d.%d.%d.in-addr.arpa.", ip4 >> 24,
 	       (ip4 >> 16) & 0xFF, (ip4 >> 8) & 0xFF, ip4 & 0xFF);
       break;
 
@@ -131,7 +131,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
       break;
 
     case IPSEC_ID_FQDN:
-      if ((id_len + 1) >= MAXHOSTNAMELEN)
+      if ((id_len + 1) >= sizeof name)
 	return 0;
       /* ID is not NULL-terminated. Add trailing dot and terminate.  */
       memcpy (name, id + ISAKMP_ID_DATA_OFF, id_len);
@@ -144,7 +144,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
        * Some special handling here. We want to convert the ID
        * 'user@host.domain' string into 'user._ipsec.host.domain.'.
        */
-      if ((id_len + sizeof (DNS_UFQDN_SEPARATOR)) >= MAXHOSTNAMELEN)
+      if ((id_len + sizeof (DNS_UFQDN_SEPARATOR)) >= sizeof name)
 	return 0;
       /* Look for the '@' separator.  */
       for (umark = id + ISAKMP_ID_DATA_OFF; (umark - id) < id_len; umark++)
@@ -157,7 +157,7 @@ dns_get_key (int type, struct message *msg, int *keylen)
 	}
       *umark++ = '\0';
       /* id is now terminated. 'umark', however, is not.  */
-      snprintf (name, MAXHOSTNAMELEN, "%s%s", id + ISAKMP_ID_DATA_OFF,
+      snprintf (name, sizeof name, "%s%s", id + ISAKMP_ID_DATA_OFF,
 		DNS_UFQDN_SEPARATOR);
       memcpy (name + strlen (name), umark, id_len - strlen (id) - 1);
       *(name + id_len + sizeof (DNS_UFQDN_SEPARATOR) - 2) = '.';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: constants.c,v 1.6 1999/04/19 19:54:53 niklas Exp $	*/
+/*	$OpenBSD: constants.c,v 1.7 2003/06/03 12:51:38 ho Exp $	*/
 /*	$EOM: constants.c,v 1.7 1999/04/02 00:57:31 niklas Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ constant_name (struct constant_map *map, int value)
 
   if (!retval)
     {
-      snprintf (tmp, 32, "<Unknown %d>", value);
+      snprintf (tmp, sizeof tmp, "<Unknown %d>", value);
       return tmp;
     }
   return retval;
@@ -101,6 +101,6 @@ constant_name_maps (struct constant_map **maps, int value)
       if (retval)
 	return retval;
     }
-  snprintf (tmp, 32, "<Unknown %d>", value);
+  snprintf (tmp, sizeof tmp, "<Unknown %d>", value);
   return tmp;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.79 2003/04/09 15:46:48 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.80 2003/06/03 12:51:39 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -302,9 +302,9 @@ x509_generate_kn (int id, X509 *cert)
 
 	  /* Stupid UTC tricks.  */
 	  if (tm->data[0] < '5')
-	    snprintf (before, 15, "20%s", tm->data);
+	    snprintf (before, sizeof before, "20%s", tm->data);
 	  else
-	    snprintf (before, 15, "19%s", tm->data);
+	    snprintf (before, sizeof before, "19%s", tm->data);
 	}
       else
         { /* V_ASN1_GENERICTIME */
@@ -337,7 +337,7 @@ x509_generate_kn (int id, X509 *cert)
 	      return 0;
 	    }
 
-	  snprintf (before, 15, "%s", tm->data);
+	  snprintf (before, sizeof before, "%s", tm->data);
 	}
 
       /* Fix missing seconds.  */
@@ -418,9 +418,9 @@ x509_generate_kn (int id, X509 *cert)
 
 	  /* Stupid UTC tricks.  */
 	  if (tm->data[0] < '5')
-	    snprintf (after, 15, "20%s", tm->data);
+	    snprintf (after, sizeof after, "20%s", tm->data);
 	  else
-	    snprintf (after, 15, "19%s", tm->data);
+	    snprintf (after, sizeof after, "19%s", tm->data);
 	}
       else
         { /* V_ASN1_GENERICTIME */
@@ -453,7 +453,7 @@ x509_generate_kn (int id, X509 *cert)
 	      return 0;
 	    }
 
-	  snprintf (after, 15, "%s", tm->data);
+	  snprintf (after, sizeof after, "%s", tm->data);
         }
 
       /* Fix missing seconds.  */

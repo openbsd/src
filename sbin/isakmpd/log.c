@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.32 2003/05/18 19:37:46 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.33 2003/06/03 12:51:39 ho Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -150,27 +150,27 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
   struct timeval now;
   time_t t;
 
-  len = vsnprintf (buffer, LOG_SIZE, fmt, ap);
-  if (len > 0 && len < LOG_SIZE - 1 && error)
-    snprintf (buffer + len, LOG_SIZE - len, ": %s", strerror (errno));
+  len = vsnprintf (buffer, sizeof buffer, fmt, ap);
+  if (len > 0 && len < sizeof buffer - 1 && error)
+    snprintf (buffer + len, sizeof buffer - len, ": %s", strerror (errno));
   if (log_output)
     {
       gettimeofday (&now, 0);
       t = now.tv_sec;
       tm = localtime (&t);
       if (class >= 0)
-	snprintf (nbuf, LOG_SIZE + 32, "%02d%02d%02d.%06ld %s %02d ",
+	snprintf (nbuf, sizeof nbuf, "%02d%02d%02d.%06ld %s %02d ",
 		  tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec,
 		  _log_get_class (class), level);
       else /* LOG_PRINT (-1) or LOG_REPORT (-2) */
-	snprintf (nbuf, LOG_SIZE + 32, "%02d%02d%02d.%06ld %s ", tm->tm_hour,
+	snprintf (nbuf, sizeof nbuf, "%02d%02d%02d.%06ld %s ", tm->tm_hour,
 		  tm->tm_min, tm->tm_sec, now.tv_usec,
 		  class == LOG_PRINT ? "Default" : "Report>");
-      strlcat (nbuf, buffer, LOG_SIZE + 32);
+      strlcat (nbuf, buffer, sizeof nbuf);
 #if defined (USE_PRIVSEP)
       strlcat (nbuf, getuid() ? "" : " [priv]", LOG_SIZE + 32);
 #endif
-      strlcat (nbuf, "\n", LOG_SIZE + 32);
+      strlcat (nbuf, "\n", sizeof nbuf);
 
       if (fwrite (nbuf, strlen (nbuf), 1, log_output) == 0)
 	{
@@ -232,7 +232,7 @@ log_debug_buf (int cls, int level, const char *header, const u_int8_t *buf,
   log_debug (cls, level, "%s:", header);
   for (i = j = 0; i < sz;)
     {
-      snprintf (s + j, 73 - j, "%02x", buf[i++]);
+      snprintf (s + j, sizeof s - j, "%02x", buf[i++]);
       j += 2;
       if (i % 4 == 0)
 	{

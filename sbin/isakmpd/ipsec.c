@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.74 2003/05/14 17:37:22 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.75 2003/06/03 12:51:39 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -1247,11 +1247,11 @@ ipsec_debug_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
 
   /* XXX Transient solution.  */
   if (len == 2)
-    snprintf (val, 20, "%d", decode_16 (value));
+    snprintf (val, sizeof val, "%d", decode_16 (value));
   else if (len == 4)
-    snprintf (val, 20, "%d", decode_32 (value));
+    snprintf (val, sizeof val, "%d", decode_32 (value));
   else
-    snprintf (val, 20, "unrepresentable");
+    snprintf (val, sizeof val, "unrepresentable");
 
   LOG_DBG ((LOG_MESSAGE, 50, "Attribute %s value %s",
 	    constant_name (msg->exchange->phase == 1
@@ -1496,7 +1496,7 @@ ipsec_g_x (struct message *msg, int peer, u_int8_t *buf)
       return -1;
     }
   memcpy (*g_x, buf, ie->g_x_len);
-  snprintf (header, 32, "ipsec_g_x: g^x%c", initiator ? 'i' : 'r');
+  snprintf (header, sizeof header, "ipsec_g_x: g^x%c", initiator ? 'i' : 'r');
   LOG_DBG_BUF ((LOG_MISC, 80, header, *g_x, ie->g_x_len));
   return 0;
 }
@@ -2245,8 +2245,8 @@ ipsec_fill_in_hash (struct message *msg)
   for (i = 2; i < msg->iovlen; i++)
     {
       /* XXX Misleading payload type printouts.  */
-      snprintf (header, 80, "ipsec_fill_in_hash: payload %d after HASH(1)",
-		i - 1);
+      snprintf (header, sizeof header,
+		"ipsec_fill_in_hash: payload %d after HASH(1)",	i - 1);
       LOG_DBG_BUF ((LOG_MISC, 90, header, msg->iov[i].iov_base,
 		    msg->iov[i].iov_len));
       prf->Update (prf->prfctx, msg->iov[i].iov_base, msg->iov[i].iov_len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.70 2003/05/18 20:39:25 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.71 2003/06/03 12:51:39 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -461,7 +461,7 @@ sa_dump (int cls, int level, char *header, struct sa *sa)
       for (i = 0; i < 2; i++)
 	if (proto->spi[i])
 	  {
-	    snprintf (spi_header, 80, "%s: spi[%d]", header, i);
+	    snprintf (spi_header, sizeof spi_header, "%s: spi[%d]", header, i);
 	    LOG_DBG_BUF ((cls, level, spi_header, proto->spi[i],
 			  proto->spi_sz[i]));
 	  }
@@ -480,7 +480,7 @@ report_spi (FILE *fd, const u_int8_t *buf, size_t sz, int spi)
 
   for (i = j = 0; i < sz;)
     {
-      snprintf (s + j, SBUFSZ - j, "%02x", buf[i++]);
+      snprintf (s + j, sizeof s - j, "%02x", buf[i++]);
       j += 2;
       if (i % 4 == 0)
 	{

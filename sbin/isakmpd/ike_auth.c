@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.74 2003/05/18 19:37:46 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.75 2003/06/03 12:51:39 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -557,7 +557,7 @@ pre_shared_decode_hash (struct message *msg)
     }
 
   memcpy (*hash_p, payload->p + ISAKMP_HASH_DATA_OFF, hashsize);
-  snprintf (header, 80, "pre_shared_decode_hash: HASH_%c",
+  snprintf (header, sizeof header, "pre_shared_decode_hash: HASH_%c",
 	    initiator ? 'R' : 'I');
   LOG_DBG_BUF ((LOG_MISC, 80, header, *hash_p, hashsize));
 
@@ -866,7 +866,8 @@ rsa_sig_decode_hash (struct message *msg)
       return -1;
     }
 
-  snprintf (header, 80, "rsa_sig_decode_hash: HASH_%c", initiator ? 'R' : 'I');
+  snprintf (header, sizeof header, "rsa_sig_decode_hash: HASH_%c",
+	    initiator ? 'R' : 'I');
   LOG_DBG_BUF ((LOG_MISC, 80, header, *hash_p, hashsize));
 
   p->flags |= PL_MARK;
@@ -892,7 +893,7 @@ pre_shared_encode_hash (struct message *msg)
   if (ike_auth_hash (exchange, buf + ISAKMP_HASH_DATA_OFF) == -1)
     return -1;
 
-  snprintf (header, 80, "pre_shared_encode_hash: HASH_%c",
+  snprintf (header, sizeof header, "pre_shared_encode_hash: HASH_%c",
 	    initiator ? 'I' : 'R');
   LOG_DBG_BUF ((LOG_MISC, 80, header, buf + ISAKMP_HASH_DATA_OFF, hashsize));
   return 0;
@@ -1126,7 +1127,8 @@ rsa_sig_encode_hash (struct message *msg)
       return -1;
     }
 
-  snprintf (header, 80, "rsa_sig_encode_hash: HASH_%c", initiator ? 'I' : 'R');
+  snprintf (header, sizeof header, "rsa_sig_encode_hash: HASH_%c",
+	    initiator ? 'I' : 'R');
   LOG_DBG_BUF ((LOG_MISC, 80, header, buf, hashsize));
 
 #if !defined (USE_PRIVSEP)
@@ -1166,7 +1168,8 @@ rsa_sig_encode_hash (struct message *msg)
     }
   memmove (buf + ISAKMP_SIG_SZ, buf, datalen);
 
-  snprintf (header, 80, "rsa_sig_encode_hash: SIG_%c", initiator ? 'I' : 'R');
+  snprintf (header, sizeof header, "rsa_sig_encode_hash: SIG_%c",
+	    initiator ? 'I' : 'R');
   LOG_DBG_BUF ((LOG_MISC, 80, header, buf + ISAKMP_SIG_DATA_OFF, datalen));
   if (message_add_payload (msg, ISAKMP_PAYLOAD_SIG, buf,
 			   ISAKMP_SIG_SZ + datalen, 1))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.67 2002/09/11 09:50:43 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.68 2003/06/03 12:51:39 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -1860,7 +1860,7 @@ responder_send_HASH_SA_NONCE (struct message *msg)
   for (i = 2; i < msg->iovlen; i++)
     {
       /* XXX Misleading payload type printouts.  */
-      snprintf (header, 80,
+      snprintf (header, sizeof header,
 		"responder_send_HASH_SA_NONCE: payload %d after HASH(2)",
 		i - 1);
       LOG_DBG_BUF ((LOG_NEGOTIATION, 90, header, msg->iov[i].iov_base,
@@ -1869,7 +1869,7 @@ responder_send_HASH_SA_NONCE (struct message *msg)
     }
   prf->Final (buf + ISAKMP_HASH_DATA_OFF, prf->prfctx);
   prf_free (prf);
-  snprintf (header, 80, "responder_send_HASH_SA_NONCE: HASH_%c",
+  snprintf (header, sizeof header, "responder_send_HASH_SA_NONCE: HASH_%c",
 	    initiator ? 'I' : 'R');
   LOG_DBG_BUF ((LOG_NEGOTIATION, 80, header, buf + ISAKMP_HASH_DATA_OFF,
 		hashsize));
