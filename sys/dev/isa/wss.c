@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss.c,v 1.6 1996/03/19 21:10:36 mickey Exp $	*/
+/*	$OpenBSD: wss.c,v 1.7 1996/03/20 01:01:06 mickey Exp $	*/
 /*	$NetBSD: wss.c,v 1.9 1996/02/16 08:18:36 mycroft Exp $	*/
 
 /*
@@ -251,7 +251,7 @@ wssattach(parent, self, aux)
     isa_establish(&sc->sc_id, &sc->sc_dev);
 #endif
     sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_AUDIO, ad1848_intr,
-				   &sc->sc_ad1848);
+				   &sc->sc_ad1848, sc->sc_dev.dv_xname);
 
     ad1848_attach(&sc->sc_ad1848);
     

@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_le.c,v 1.6 1996/03/19 21:10:22 mickey Exp $       */
+/*    $OpenBSD: if_le.c,v 1.7 1996/03/20 01:00:54 mickey Exp $       */
 /*    $NetBSD: if_le.c,v 1.38 1995/12/24 02:31:35 mycroft Exp $       */
 
 /*-
@@ -399,7 +399,7 @@ leattach(parent, self, aux)
 			isa_dmacascade(ia->ia_drq);
 
 		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET,
-		    leintredge, sc);
+		    leintredge, sc, sc->sc_dev.dv_xname);
 	}
 #endif
 

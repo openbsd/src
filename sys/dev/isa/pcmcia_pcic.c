@@ -249,7 +249,7 @@ pcicattach(parent, self, aux)
 	    timeout((void (*)(void *))pcic_intr, pcic, pcic->sc_polltimo);
 	} else {
 	    pcic->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE,
-					     IPL_NET, pcic_intr, pcic);
+					     IPL_NET, pcic_intr, pcic, pcic->sc_dev.dv_xname);
 	    pcic->sc_polltimo = 0;
 	}
 }

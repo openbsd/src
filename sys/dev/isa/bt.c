@@ -1,4 +1,4 @@
-/*    $OpenBSD: bt.c,v 1.5 1996/03/19 21:10:08 mickey Exp $      */
+/*    $OpenBSD: bt.c,v 1.6 1996/03/20 01:00:41 mickey Exp $      */
 /*    $NetBSD: bt742a.c,v 1.50 1995/12/24 02:31:13 mycroft Exp $      */
 
 /*
@@ -614,7 +614,7 @@ btattach(parent, self, aux)
 	isa_establish(&bt->sc_id, &bt->sc_dev);
 #endif
 	bt->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, btintr,
-	    bt);
+	    bt, bt->sc_dev.dv_xname);
 
 	/*
 	 * ask the adapter what subunits are present

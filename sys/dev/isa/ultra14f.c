@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultra14f.c,v 1.10 1996/03/19 21:10:33 mickey Exp $	*/
+/*	$OpenBSD: ultra14f.c,v 1.11 1996/03/20 01:01:04 mickey Exp $	*/
 /*	$NetBSD: ultra14f.c,v 1.61 1996/02/09 17:38:09 mycroft Exp $	*/
 
 /*
@@ -609,7 +609,7 @@ uhaattach(parent, self, aux)
 	isa_establish(&uha->sc_id, &uha->sc_dev);
 #endif
 	uha->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO,
-	    uha->intr, uha);
+	    uha->intr, uha, sc->sc_dev.dv_xname);
 
 	/*
 	 * ask the adapter what subunits are present

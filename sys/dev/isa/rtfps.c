@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtfps.c,v 1.5 1996/03/19 21:10:30 mickey Exp $       */
+/*	$OpenBSD: rtfps.c,v 1.6 1996/03/20 01:01:01 mickey Exp $       */
 /*	$NetBSD: rtfps.c,v 1.14 1995/12/24 02:31:48 mycroft Exp $       */
 
 /*
@@ -149,7 +149,7 @@ rtfpsattach(parent, self, aux)
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, rtfpsintr,
-				       sc);
+				       sc, sc->sc_dev.dv_xname);
 }
 
 int

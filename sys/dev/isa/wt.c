@@ -250,7 +250,7 @@ wtattach(parent, self, aux)
 	sc->dens = -1;			/* unknown density */
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, wtintr,
-	    sc);
+	    sc, sc->sc_dev.dv_xname);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.7 1996/03/19 21:10:25 mickey Exp $ */
+/*	$OpenBSD: mcd.c,v 1.8 1996/03/20 01:00:56 mickey Exp $ */
 /*	$NetBSD: mcd.c,v 1.45 1996/01/30 18:28:05 thorpej Exp $ */
 
 /*
@@ -229,7 +229,7 @@ mcdattach(parent, self, aux)
 	mcd_soft_reset(sc);
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_BIO, mcdintr,
-	    sc);
+	    sc, sc->sc_dev.dv_xname);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_ie.c,v 1.5 1996/03/19 21:10:21 mickey Exp $       */
+/*    $OpenBSD: if_ie.c,v 1.6 1996/03/20 01:00:52 mickey Exp $       */
 /*    $NetBSD: if_ie.c,v 1.45 1995/12/24 02:31:33 mycroft Exp $       */
 
 /*-
@@ -778,7 +778,7 @@ ieattach(parent, self, aux)
 #endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NET, ieintr,
-	    sc);
+	    sc, sc->sc_dev.dv_xname);
 }
 
 /*
