@@ -1496,8 +1496,10 @@ __dlsym(fd, sym)
 		src_map = smp;
 
 	np = lookup(sym, &src_map, 1);
-	if (np == NULL)
+	if (np == NULL) {
+		dlerrno = ENOENT;
 		return NULL;
+	}
 
 	/* Fixup jmpslot so future calls transfer directly to target */
 	addr = np->nz_value;
@@ -1515,6 +1517,7 @@ __dlctl(fd, cmd, arg)
 	switch (cmd) {
 	case DL_GETERRNO:
 		*(int *)arg = dlerrno;
+		dlerrno = 0;
 		return 0;
 	default:
 		dlerrno = EOPNOTSUPP;
