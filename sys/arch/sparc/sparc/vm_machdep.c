@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.17 2000/02/21 21:05:59 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.18 2000/02/28 16:34:28 deraadt Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -286,23 +286,21 @@ vmapbuf(bp, sz)
 	struct buf *bp;
 	vsize_t sz;
 {
-	vaddr_t addr, kva;
+	vaddr_t uva, kva;
 	paddr_t pa;
 	vsize_t size, off;
-	int npf;
-	struct proc *p;
-	struct vm_map *map;
+	struct pmap *pmap;
 
 #ifdef DIAGNOSTIC
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 #endif
-	p = bp->b_proc;
-	map = &p->p_vmspace->vm_map;
+	pmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+
 	bp->b_saveaddr = bp->b_data;
-	addr = (vaddr_t)bp->b_saveaddr;
-	off = addr & PGOFSET;
-	size = round_page(bp->b_bcount + off);
+	uva = trunc_page((vaddr_t)bp->b_data);
+	off = (vaddr_t)bp->b_data - uva;
+	size = round_page(off + sz);
 #if defined(UVM)
 	/*
 	 * Note that this is an expanded version of:
@@ -312,7 +310,7 @@ vmapbuf(bp, sz)
 	 */
 	while (1) {
 		kva = vm_map_min(kernel_map);
-		if (uvm_map(kernel_map, &kva, size, NULL, addr,
+		if (uvm_map(kernel_map, &kva, size, NULL, uva,
 		    UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL,
 		    UVM_INH_NONE, UVM_ADV_RANDOM, 0)) == KERN_SUCCESS)
 			break;
@@ -322,10 +320,9 @@ vmapbuf(bp, sz)
 	kva = kmem_alloc_wait(kernel_map, size);
 #endif
 	bp->b_data = (caddr_t)(kva + off);
-	addr = trunc_page(addr);
-	npf = btoc(size);
-	while (npf--) {
-		pa = pmap_extract(vm_map_pmap(map), (vaddr_t)addr);
+
+	while (size > 0) {
+		pa = pmap_extract(pmap, uva);
 		if (pa == 0)
 			panic("vmapbuf: null page frame");
 
@@ -336,8 +333,9 @@ vmapbuf(bp, sz)
 		pmap_enter(pmap_kernel(), kva, pa | PMAP_NC,
 			   VM_PROT_READ | VM_PROT_WRITE, 1, 0);
 
-		addr += PAGE_SIZE;
+		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
+		size -= PAGE_SIZE;
 	}
 }
 
@@ -356,15 +354,14 @@ vunmapbuf(bp, sz)
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
-	kva = (vaddr_t)bp->b_data;
-	off = kva & PGOFSET;
-	size = round_page(bp->b_bcount + off);
+	kva = trunc_page((vaddr_t)bp->b_data);
+	off = (vaddr_t)bp->b_data - kva;
+	size = round_page(sz + off);
 
-	kva = trunc_page(kva);
 #if defined(UVM)
-	uvm_km_free_wakeup(kernel_map, trunc_page(kva), size);
+	uvm_km_free_wakeup(kernel_map, kva, size);
 #else
-	kmem_free_wakeup(kernel_map, trunc_page(kva), size);
+	kmem_free_wakeup(kernel_map, kva, size);
 #endif
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
