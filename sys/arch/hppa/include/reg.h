@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.4 1999/04/20 19:50:19 mickey Exp $	*/
+/*	$OpenBSD: reg.h,v 1.5 2000/01/25 02:45:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -86,15 +86,15 @@
 #define	CR_VTOP		25
 #define	CR_TR2		26
 #define	CR_TR3		27
-#define	CR_TR4		28
+#define	CR_HVTP		28	/* points to a faulted HVT slot on LC cpus */
 #define	CR_TR5		29
-#define	CR_TR6		30
+#define	CR_UPADDR	30	/* paddr of U-area of curproc */
 #define	CR_TR7		31
 
 #define CCR_MASK 0xff
 
 #define	HPPA_NREGS	(32)
-#define	HPPA_NFPREGS	(32)
+#define	HPPA_NFPREGS	(33)	/* 33rd is used for r0 in fpemul */
 
 #ifndef _LOCORE
 
