@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.746 2004/07/14 18:16:23 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.747 2004/07/16 06:08:05 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -181,6 +181,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C9201,
 	    "3c9201 100Base-TX",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C920BEMBW,
+	    "3c920B-EMB-WNM",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CSHO100BTX,
