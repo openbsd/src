@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.42 1998/08/21 06:57:19 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.43 1998/08/24 04:46:14 marc Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -494,7 +494,7 @@ MTREE_FILE=	/etc/mtree/BSD.local.dist
 .endif
 .endif
 MTREE_CMD?=	/usr/sbin/mtree
-MTREE_ARGS?=	-U -f ${MTREE_FILE} -d -e -p
+MTREE_ARGS?=	-U -f ${MTREE_FILE} -d -e -q -p
 
 .if (${OPSYS} == "OpenBSD")
 .include <bsd.own.mk>
