@@ -1,4 +1,4 @@
-/*	$OpenBSD: ho-i386.h,v 1.2 1998/02/15 18:49:15 niklas Exp $	*/
+/*	$OpenBSD: ho-i386.h,v 1.3 1998/04/26 14:36:24 niklas Exp $	*/
 
 /* ho-i386.h  i386 specific header file.
    Copyright (C) 1987, 1991, 1992 Free Software Foundation, Inc.
@@ -20,9 +20,5 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #define HO_I386 1
-
-#define NO_STDARG
-
-#include "ho-sysv.h"
 
 /* end of ho-i386.h */
