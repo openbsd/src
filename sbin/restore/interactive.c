@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.5 1997/08/06 01:45:26 deraadt Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.6 1998/01/31 23:08:49 millert Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: interactive.c,v 1.5 1997/08/06 01:45:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: interactive.c,v 1.6 1998/01/31 23:08:49 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -376,7 +376,7 @@ getnext:
 		(void)strcat(output, rawname);
 		canon(output, name);
 	}
-	if (glob(name, GLOB_ALTDIRFUNC, NULL, &ap->glob) < 0)
+	if (glob(name, GLOB_ALTDIRFUNC | GLOB_NOESCAPE, NULL, &ap->glob) < 0)
 		fprintf(stderr, "%s: out of memory\n", ap->cmd);
 	if (ap->glob.gl_pathc == 0)
 		return;
