@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.1,v 1.13 1998/05/26 00:17:45 deraadt Exp $
+.\" $OpenBSD: ipsecadm.1,v 1.14 1998/07/17 17:44:15 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -167,6 +167,10 @@ are:
 and
 .Nm 3des
 for both old and new esp.
+Notice that hardware crackers for DES can be (and have been) built for
+US$250,000. Use DES for encryption of critical information at your risk.
+We suggest using of 3DES instead. The DES support is kept for interoperability
+(with old implementations) purposes only.
 Blowfish encryption
 .Nm blf
 and
