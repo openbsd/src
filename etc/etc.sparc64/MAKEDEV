@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.23 2002/07/31 16:47:50 jason Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.51 2002/08/29 23:43:16 todd Exp 
+#	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.24 2002/10/16 15:48:31 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.52 2002/10/16 15:48:31 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
 #
@@ -494,12 +494,12 @@ tty[C-F]*)
 
 wscons)
 	R wsmouse0 wsmouse1 wsmouse2 wsmouse3 wskbd0 wskbd1 wskbd2
-	R wskbd3 wsmux ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
-	R ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb ttyFcfg ttyF0 ttyF1
-	R ttyF2 ttyF3 ttyF4 ttyF5 ttyF6 ttyF7 ttyF8 ttyF9 ttyFa ttyFb
-	R ttyEcfg ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
-	R ttyE8 ttyE9 ttyEa ttyEb ttyDcfg ttyD0 ttyD1 ttyD2 ttyD3
-	R ttyD4 ttyD5 ttyD6 ttyD7 ttyD8 ttyD9 ttyDa ttyDb
+	R wskbd3 wsmux ttyFcfg ttyF0 ttyF1 ttyF2 ttyF3 ttyF4 ttyF5
+	R ttyF6 ttyF7 ttyF8 ttyF9 ttyFa ttyFb ttyEcfg ttyE0 ttyE1
+	R ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7 ttyE8 ttyE9 ttyEa ttyEb
+	R ttyDcfg ttyD0 ttyD1 ttyD2 ttyD3 ttyD4 ttyD5 ttyD6 ttyD7
+	R ttyD8 ttyD9 ttyDa ttyDb ttyCcfg ttyC0 ttyC1 ttyC2 ttyC3
+	R ttyC4 ttyC5 ttyC6 ttyC7 ttyC8 ttyC9 ttyCa ttyCb
 	;;
 
 rd*)

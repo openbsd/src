@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.8 2002/05/16 21:11:20 miod Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.49 2002/06/18 00:53:45 fgsch Exp 
+#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.9 2002/10/16 15:48:31 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.52 2002/10/16 15:48:31 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
 #
@@ -344,8 +344,8 @@ st*)
 	;;
 
 ramdisk)
-	R bpf0 std pty0 tty00 tty01 asc0 adb rd0 rd1 st0 st1 sd0 sd1
-	R sd2 sd3
+	R pty0 tty00 tty01 asc0 adb rd0 rd1 st0 st1 sd0 sd1 sd2 sd3
+	R bpf0 std
 	;;
 
 local)
