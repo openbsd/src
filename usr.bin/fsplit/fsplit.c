@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsplit.c,v 1.5 1999/12/06 00:34:26 deraadt Exp $	*/
+/*	$OpenBSD: fsplit.c,v 1.6 2000/01/30 02:28:37 espie Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,15 +44,17 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: fsplit.c,v 1.5 1999/12/06 00:34:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fsplit.c,v 1.6 2000/01/30 02:28:37 espie Exp $";
 #endif				/* not lint */
 
 #include <ctype.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/fcntl.h>
 #include <err.h>
 
 void badparms __P(());
@@ -96,8 +98,11 @@ char   *look(), *skiplab(), *functs();
 
 #define TRUE 1
 #define FALSE 0
-int     extr = FALSE, extrknt = -1, extrfnd[100];
-char    extrbuf[1000], *extrnames[100];
+int     extr = FALSE, extrknt = -1;
+int maxextrknt;
+
+int *extrfnd;
+char **extrnames;
 struct stat sbuf;
 
 #define trim(p)	while (*p == ' ' || *p == '\t') p++
@@ -111,8 +116,13 @@ main(argc, argv)
 	register char *ptr;
 	int     nflag,		/* 1 if got name of subprog., 0 otherwise */
 	        retval, i;
-	char    name[20], *extrptr = extrbuf;
+	/* must be as large as max(sizeof(x), sizeof(mainp), sizeof(blockp)) */
+	char    name[20];	
 
+	maxextrknt = 100;
+	extrnames = malloc(sizeof(char *) * maxextrknt);
+	if (extrnames == NULL)
+		errx(1, "out of memory");
 	/* scan -e options */
 	while (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'e') {
 		extr = TRUE;
@@ -125,28 +135,46 @@ main(argc, argv)
 			ptr = argv[1];
 		}
 		extrknt = extrknt + 1;
-		extrnames[extrknt] = extrptr;
-		extrfnd[extrknt] = FALSE;
-		while (*ptr)
-			*extrptr++ = *ptr++;
-		*extrptr++ = 0;
+		if (extrknt >= maxextrknt) {
+			extrnames = realloc(extrnames, 
+			    sizeof(char *) * maxextrknt);
+			if (extrnames == NULL)
+				errx(1, "too many -e arguments");
+		}
+		if ((extrnames[extrknt] = strdup(ptr)) == NULL)
+			errx(1, "out of memory");
 		argc--;
 		argv++;
 	}
+
+	extrfnd = calloc(extrknt+1, sizeof(int));
+	if (extrfnd == NULL)
+		errx(1, "out of memory");
 
 	if (argc > 2)
 		badparms();
 	else
 		if (argc == 2) {
 			if ((ifp = fopen(argv[1], "r")) == NULL)
-				err(1, argv[1]);
+				err(1, "%s", argv[1]);
 		} else
 			ifp = stdin;
 	for (;;) {
+		int fd;
+
 		/* look for a temp file that doesn't correspond to an existing
 		 * file */
 		get_name(x, 3);
-		ofp = fopen(x, "w");
+
+		fd = open(x, O_CREAT|O_EXCL|O_RDWR, 0666);
+		if (fd == -1)
+			err(1, x);
+		ofp = fdopen(fd, "w");
+		if (ofp == NULL) {
+			close(fd);
+			unlink(x);
+			err(1, x);
+		}
 		nflag = 0;
 		rv = 0;
 		while (getline() > 0) {
@@ -196,7 +224,8 @@ main(argc, argv)
 void
 badparms()
 {
-	err(1, "usage:  fsplit [-e efile] ... [file]");
+	fprintf(stderr, "usage:  fsplit [-e efile] ... [file]\n");
+	exit(1);
 }
 
 int
@@ -204,16 +233,18 @@ saveit(name)
 	char   *name;
 {
 	int     i;
-	char    fname[50], *fptr = fname;
+	size_t 	n;
 
 	if (!extr)
 		return (1);
-	while (*name)
-		*fptr++ = *name++;
-	*--fptr = 0;
-	*--fptr = 0;
+
+	n = strlen(name);
+	if (n < 2)
+		return (0);
+
 	for (i = 0; i <= extrknt; i++)
-		if (strcmp(fname, extrnames[i]) == 0) {
+		if (strncmp(name, extrnames[i], n - 2) == 0 &&
+		extrnames[i][n-2] == '\0') {
 			extrfnd[i] = TRUE;
 			return (1);
 		}
@@ -312,7 +343,7 @@ lname(s)
 	/* copy to buffer and converting to lower case */
 	p = ptr;
 	while (*p && p <= &buf[71]) {
-		*iptr = isupper(*p) ? tolower(*p) : *p;
+		*iptr = tolower(*p);
 		iptr++;
 		p++;
 	}
