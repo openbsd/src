@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.44 2002/05/17 15:51:06 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.45 2002/05/24 21:32:56 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -57,7 +57,8 @@ skeychallenge(mp, name, ss)
 	rval = skeylookup(mp, name);
 	switch (rval) {
 	case 0:		/* Lookup succeeded, return challenge */
-		(void)sprintf(ss, "otp-%.*s %d %.*s", SKEY_MAX_HASHNAME_LEN,
+		(void)snprintf(ss, SKEY_MAX_CHALLENGE,
+		    "otp-%.*s %d %.*s", SKEY_MAX_HASHNAME_LEN,
 			      skey_get_algorithm(), mp->n - 1,
 			      SKEY_MAX_SEED_LEN, mp->seed);
 		return (0);
@@ -491,12 +492,9 @@ skey_fakeprompt(username, skeyprompt)
 		memset(up, 0, 20); /* SHA1 specific */
 		free(up);
 
-		(void)sprintf(skeyprompt,
-			      "otp-%.*s %d %.*s",
-			      SKEY_MAX_HASHNAME_LEN,
-			      skey_get_algorithm(),
-			      ptr, SKEY_MAX_SEED_LEN,
-			      pbuf);
+		(void)snprintf(skeyprompt, SKEY_MAX_CHALLENGE,
+		    "otp-%.*s %d %.*s", SKEY_MAX_HASHNAME_LEN,
+		    skey_get_algorithm(), ptr, SKEY_MAX_SEED_LEN, pbuf);
 	} else {
 		/* Base last 8 chars of seed on username */
 		u = username;
@@ -514,10 +512,9 @@ skey_fakeprompt(username, skeyprompt)
 		} while (--i != 0);
 		pbuf[12] = '\0';
 
-		(void)sprintf(skeyprompt, "otp-%.*s %d %.*s",
-			      SKEY_MAX_HASHNAME_LEN,
-			      skey_get_algorithm(),
-			      99, SKEY_MAX_SEED_LEN, pbuf);
+		(void)snprintf(skeyprompt, SKEY_MAX_CHALLENGE,
+		    "otp-%.*s %d %.*s", SKEY_MAX_HASHNAME_LEN,
+		    skey_get_algorithm(), 99, SKEY_MAX_SEED_LEN, pbuf);
 	}
 }
 
