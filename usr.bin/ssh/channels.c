@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: channels.c,v 1.54 2000/05/01 20:21:40 markus Exp $");
+RCSID("$Id: channels.c,v 1.55 2000/05/02 19:33:12 markus Exp $");
 
 #include "ssh.h"
 #include "packet.h"
@@ -147,8 +147,25 @@ channel_lookup(int id)
 	return c;
 }
 
+void
+set_nonblock(int fd)
+{
+	int val;
+	val = fcntl(fd, F_GETFL, 0);
+	if (val < 0) {
+		error("fcntl(%d, F_GETFL, 0): %s", fd, strerror(errno));
+		return;
+	}
+	if (val & O_NONBLOCK)
+		return;
+	debug("fd %d setting O_NONBLOCK", fd);
+	val |= O_NONBLOCK;
+	if (fcntl(fd, F_SETFL, val) == -1)
+		error("fcntl(%d, F_SETFL, O_NONBLOCK): %s", fd, strerror(errno));
+}
+
 /*
- * register filedescriptors for a channel, used when allocating a channel or
+ * Register filedescriptors for a channel, used when allocating a channel or
  * when the channel consumer/producer is ready, e.g. shell exec'd
  */
 
@@ -163,11 +180,18 @@ channel_register_fds(Channel *c, int rfd, int wfd, int efd, int extusage)
 	if (efd > channel_max_fd_value)
 		channel_max_fd_value = efd;
 	/* XXX set close-on-exec -markus */
+
 	c->rfd = rfd;
 	c->wfd = wfd;
 	c->sock = (rfd == wfd) ? rfd : -1;
 	c->efd = efd;
 	c->extended_usage = extusage;
+	if (rfd != -1)
+		set_nonblock(rfd);
+	if (wfd != -1)
+		set_nonblock(wfd);
+	if (efd != -1)
+		set_nonblock(efd);
 }
 
 /*
