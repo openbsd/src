@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.48 2004/06/25 20:05:40 henning Exp $	*/
+/*	$OpenBSD: main.c,v 1.49 2004/06/29 08:18:20 henning Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.48 2004/06/25 20:05:40 henning Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.49 2004/06/29 08:18:20 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,6 +99,8 @@ struct nlist nl[] = {
 	{ "_clnp_stat"},
 #define	IN_NOTUSED	16
 	{ "_tp_inpcb" },
+#define	ISO_NOTUSED	16
+	{ "_tp_refinfo" },
 #define	N_TPSTAT	18
 	{ "_tp_stat" },
 #define	N_ESISSTAT	19
