@@ -635,6 +635,7 @@
 ./usr/include/netinet/in_var.h
 ./usr/include/netinet/ip.h
 ./usr/include/netinet/ip_ah.h
+./usr/include/netinet/ip_auth.h
 ./usr/include/netinet/ip_blf.h
 ./usr/include/netinet/ip_cast.h
 ./usr/include/netinet/ip_castsb.h
@@ -647,6 +648,7 @@
 ./usr/include/netinet/ip_ipsp.h
 ./usr/include/netinet/ip_mroute.h
 ./usr/include/netinet/ip_nat.h
+./usr/include/netinet/ip_proxy.h
 ./usr/include/netinet/ip_rmd160.h
 ./usr/include/netinet/ip_sha1.h
 ./usr/include/netinet/ip_state.h

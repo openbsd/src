@@ -897,3 +897,8 @@
 ./usr/share/man/cat9/splstatclock.0
 ./usr/share/man/cat9/spltty.0
 ./usr/share/man/cat9/splx.0
+./usr/share/man/cat5/ipsend.0
+./usr/share/man/cat1/kauth.0
+./usr/share/man/cat1/ipsend.0
+./usr/share/man/cat1/iptest.0
+./usr/share/man/cat1/ipresend.0

@@ -225,6 +225,7 @@
 ./usr/bin/ipcs
 ./usr/bin/join
 ./usr/bin/jot
+./usr/bin/kauth
 ./usr/bin/kdestroy
 ./usr/bin/kdump
 ./usr/bin/kinit
@@ -684,6 +685,8 @@
 ./usr/libexec/getNAME
 ./usr/libexec/getty
 ./usr/libexec/identd
+./usr/libexec/kadmind
+./usr/libexec/kerberos
 ./usr/libexec/kpropd
 ./usr/libexec/locate.bigram
 ./usr/libexec/locate.code
@@ -785,13 +788,10 @@
 ./usr/sbin/ipsend
 ./usr/sbin/iptest
 ./usr/sbin/kadmin
-./usr/sbin/kadmind
-./usr/sbin/kauth
 ./usr/sbin/kdb_destroy
 ./usr/sbin/kdb_edit
 ./usr/sbin/kdb_init
 ./usr/sbin/kdb_util
-./usr/sbin/kerberos
 ./usr/sbin/kprop
 ./usr/sbin/ksrvutil
 ./usr/sbin/kstash
@@ -900,6 +900,7 @@
 ./usr/share/calendar/calendar.holiday
 ./usr/share/calendar/calendar.judaic
 ./usr/share/calendar/calendar.music
+./usr/share/calendar/calendar.pagan
 ./usr/share/calendar/calendar.russian
 ./usr/share/calendar/calendar.usholiday
 ./usr/share/calendar/calendar.world
