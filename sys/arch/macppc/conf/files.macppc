@@ -1,0 +1,240 @@
+#	$OpenBSD: files.macppc,v 1.1 2001/09/01 15:59:31 drahn Exp $
+
+#
+# macppc-specific configuration info
+#
+maxpartitions 16
+
+maxusers 2 8 64
+
+file	arch/macppc/macppc/autoconf.c
+file	arch/macppc/macppc/clock.c
+file	arch/macppc/macppc/conf.c
+file	arch/macppc/macppc/disksubr.c			disk
+file	arch/macppc/macppc/machdep.c
+file	arch/macppc/macppc/wscons_machdep.c
+file	arch/macppc/macppc/mem.c
+file	arch/macppc/macppc/dma.c
+file	arch/macppc/macppc/ofw_machdep.c
+file	arch/macppc/macppc/openfirm.c
+file	dev/cons.c
+file	dev/cninit.c
+file	arch/macppc/macppc/db_memrw.c			ddb
+file	arch/macppc/macppc/db_disasm.c		ddb
+file	arch/macppc/macppc/db_interface.c		ddb
+file	arch/macppc/macppc/db_trace.c			ddb
+file	arch/macppc/macppc/ofwreal.S
+
+#
+# Media Indepedent Interface (mii)
+#
+include "../../../dev/mii/files.mii"
+
+#
+# MAC generic
+#
+file	arch/macppc/mac/dbdma.c
+
+#
+# Openfirmware support
+#
+
+define	mainbus {}
+device	mainbus
+attach	mainbus at root
+file	arch/macppc/macppc/mainbus.c			mainbus
+
+device	cpu
+attach	cpu at mainbus
+file	arch/macppc/macppc/cpu.c
+
+include "../../../dev/ofw/files.ofw"
+file	arch/macppc/macppc/opendev.c
+major	{ ofdisk = 4 }
+
+
+device	memc {}
+attach	memc at mainbus
+file	arch/macppc/mac/uni_n.c			memc
+
+major	{rd = 17}
+major	{sd = 2}
+major	{cd = 3}
+
+include "../../../scsi/files.scsi"
+
+#
+# I2O
+#
+include "../../../dev/i2o/files.i2o"
+
+include "dev/pci/files.pci"
+file	arch/macppc/pci/pciide_machdep.c	pciide
+
+device	mpcpcibr {} : pcibus
+attach	mpcpcibr at mainbus
+file	arch/macppc/pci/mpcpcibus.c			mpcpcibr
+#file	arch/macppc/pci/pci_addr_fixup.c		mpcpcibr
+
+#
+# "workstation console" routines
+#
+
+include "dev/wscons/files.wscons"
+
+
+#device	ofb: wsemuldisplaydev, wsrasteremulops
+device	ofb
+attach	ofb at pci
+file	arch/macppc/mac/ofb.c				ofb needs-flag
+
+
+#
+# mac peripheral pieces.
+#
+
+#file	arch/macppc/pci/bandit.c			pci
+
+#PCI-Host bridge chipsets
+device	pchb
+attach	pchb at pci
+file	arch/macppc/pci/pchb.c				pchb
+
+
+#
+# Machine-independent ATAPI drivers
+#
+
+include "../../../dev/atapiscsi/files.atapiscsi"
+include "../../../dev/ata/files.ata"
+
+# MAC periph
+
+device	macobio {}
+attach	macobio at pci
+file	arch/macppc/pci/macobio.c			macobio
+
+#device	esp: scsi, ncr53c9x
+#attach	esp at macobio
+#file	arch/macppc/dev/esp.c				esp
+
+device	mesh: scsi
+attach	mesh at macobio
+file	arch/macppc/dev/mesh.c				mesh
+
+device	mc: ifnet, ether
+attach	mc at macobio
+file	arch/macppc/dev/if_mc.c			mc
+file	arch/macppc/dev/am79c950.c			mc
+
+device	bm: ether, ifnet, ifmedia
+attach	bm at macobio
+file	arch/macppc/dev/if_bm.c			bm
+
+device	gm: ether, ifnet, ifmedia, mii
+attach	gm at pci
+file	arch/macppc/dev/if_gm.c			gm needs-flag
+
+device	macintr {}
+attach	macintr at macobio
+file	arch/macppc/dev/macintr.c			macintr
+
+device	openpic {}
+attach	openpic at macobio
+file	arch/macppc/dev/openpic.c			openpic
+
+device	zsc {channel = -1}
+attach	zsc at macobio
+file	arch/macppc/dev/zs.c				zsc needs-flag
+file	dev/ic/z8530sc.c				zsc
+
+device	zstty: tty
+attach	zstty at zsc
+file	dev/ic/z8530tty.c				zstty needs-flag
+
+device	adb {}
+attach	adb at macobio
+file	arch/macppc/dev/adb.c				adb needs-flag
+file	arch/macppc/dev/adb_direct.c			adb
+file	arch/macppc/dev/pm_direct.c			adb
+
+device	aed
+attach	aed at adb
+file	arch/macppc/dev/aed.c				aed needs-flag
+
+#??
+#define wskbddev {[console = -1]}
+#define wsmousedev {}
+#??
+
+device	akbd: wskbddev
+attach	akbd at adb
+file	arch/macppc/dev/akbd.c				akbd needs-flag
+
+device	ams: wsmousedev
+attach	ams at adb
+file	arch/macppc/dev/ams.c				ams
+
+device	abtn
+attach	abtn at adb
+file	arch/macppc/dev/abtn.c				abtn
+
+device	awacs: audio, auconv, mulaw
+attach	awacs at macobio
+file	arch/macppc/dev/awacs.c			awacs
+
+device	nvram
+attach	nvram at macobio
+file	arch/macppc/dev/nvram.c			nvram needs-flag
+
+device	gpio {}
+attach	gpio at macobio with gpio_obio
+attach	gpio at gpio with gpio_gpio
+file	arch/macppc/dev/gpio.c				gpio
+
+attach	wdc at macobio with wdc_obio
+file	arch/macppc/dev/wdc_obio.c			wdc_obio
+
+attach	wi at macobio with wi_obio
+file	arch/macppc/dev/if_wi_obio.c			wi_obio
+
+define	grfdev {}
+
+device	grfati: grfdev
+attach	grfati at pci
+file	arch/macppc/dev/grf_ati.c			grfati needs-flag
+
+device	grf {}
+attach	grf at grfdev
+file	arch/macppc/dev/grf.c				grf needs-flag
+file	arch/macppc/dev/grf_subr.c			grf
+
+device	ite: tty
+attach	ite at grf
+file	arch/macppc/dev/ite.c				ite needs-flag
+
+
+# VGA framebuffer
+device	vgafb: wsemuldisplaydev, wsrasteremulops
+file	arch/macppc/pci/vgafb.c			vgafb & vgafb_pci
+
+# Generic VGA Framebuffer version
+attach	vgafb at pci with vgafb_pci
+file	arch/macppc/pci/vgafb_pci.c			vgafb_pci needs-flag
+
+
+#
+# CARDBUS
+#
+include	"dev/cardbus/files.cardbus"
+#file	arch/macppc/macppc/rbus_machdep.c		cardbus
+
+#
+# Machine-independent PCMCIA drivers
+#
+include "dev/pcmcia/files.pcmcia"
+
+#
+# Machine-independent USB drivers
+#
+include "dev/usb/files.usb"

@@ -1,9 +1,9 @@
-#	$OpenBSD: GENERIC,v 1.45 2001/07/09 06:44:11 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.1 2001/09/01 15:59:31 drahn Exp $
 #
 # PPC GENERIC config file
 #
 
-machine		powerpc
+machine		macppc powerpc
 
 maxusers	32
 

@@ -1,15 +1,15 @@
-#	$OpenBSD: Makefile.powerpc,v 1.12 2001/07/18 23:56:32 mickey Exp $
+#	$OpenBSD: Makefile.macppc,v 1.1 2001/09/01 15:59:31 drahn Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
-#	/sys/arch/powerpc/conf/``machineid''
+#	/sys/arch/macppc/conf/``machineid''
 # after which you should do
 #	config machineid
 # Machine generic makefile changes should be made in
-#	/sys/arch/powerpc/conf/Makefile.powerpc
+#	/sys/arch/macppc/conf/Makefile.macppc
 # after which config should be rerun for all machines of that type.
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
@@ -37,11 +37,11 @@ SIZE?=	size
 .ifndef	S
 S!=	cd ../../../..; pwd
 .endif
-PPC=	$S/arch/powerpc
+MACPPC=	$S/arch/macppc
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc -L${DESTDIR}/usr/include
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
-		-Dpowerpc
+		-Dmacppc
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
@@ -117,9 +117,9 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${PPC}/powerpc/genassym.cf
+assym.h: $S/kern/genassym.sh ${MACPPC}/macppc/genassym.cf
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	    < ${PPC}/powerpc/genassym.cf > assym.h.tmp && \
+	    < ${MACPPC}/macppc/genassym.cf > assym.h.tmp && \
 	    mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -142,7 +142,7 @@ clean::
 
 lint:
 	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
-		${PPC}/powerpc/Locore.c ${CFILES} ${PPC}/powerpc/swapgeneric.c \
+		${MACPPC}/macppc/Locore.c ${CFILES} ${MACPPC}/macppc/swapgeneric.c \
 		ioconf.c param.c | \
 		grep -v 'static function .* unused'
 
@@ -157,11 +157,11 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${PPC}/powerpc/locore.S \
+SRCS=	${MACPPC}/macppc/locore.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${PPC}/powerpc/locore.S
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MACPPC}/macppc/locore.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
@@ -180,7 +180,7 @@ genassym.o machdep.o: Makefile
 locore.o machdep.o: Makefile
 
 
-locore.o: ${PPC}/powerpc/locore.S assym.h
+locore.o: ${MACPPC}/macppc/locore.S assym.h
 	${NORMAL_S}
 
 # The install target can be redefined by putting a
