@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmdline.c,v 1.4 1996/09/22 01:18:00 downsj Exp $	*/
+/*	$OpenBSD: cmdline.c,v 1.5 1996/10/14 03:55:08 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -300,8 +300,13 @@ getcmdline(firstc, count)
 				c = hkmap(c);
 #endif
 		}
-		if (c == Ctrl('C'))
-			got_int = FALSE;	/* ignore got_int when CTRL-C was typed here */
+
+		/*
+		 * Ignore got_int when CTRL-C was typed here.
+		 * Don't ignore it in :global, we really need to break then.
+		 */
+		if (c == Ctrl('C') && !global_busy)
+			got_int = FALSE;
 
 			/* free old command line when finished moving around in the
 			 * history list */
@@ -4529,7 +4534,8 @@ showmatches(buff)
 		flushbuf();					/* show one line at a time */
 		if (got_int)
 		{
-			got_int = FALSE;
+			if (!global_busy)
+				got_int = FALSE;
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: normal.c,v 1.4 1996/09/26 14:13:07 downsj Exp $	*/
+/*	$OpenBSD: normal.c,v 1.5 1996/10/14 03:55:20 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -720,7 +720,7 @@ goto_line:
 				--n;
 		}
 		else
-			n = Prenum;
+			n = Prenum1 - 1;
 		op_motion_type = MLINE;
 		setpcmark();
 		curwin->w_cursor.lnum = curwin->w_topline + n;
@@ -734,10 +734,10 @@ goto_line:
 		op_motion_type = MLINE;
 		setpcmark();
 		curwin->w_cursor.lnum = curwin->w_botline - 1;
-		if (Prenum >= curwin->w_cursor.lnum)
+		if (Prenum1 - 1 >= curwin->w_cursor.lnum)
 			curwin->w_cursor.lnum = 1;
 		else
-			curwin->w_cursor.lnum -= Prenum;
+			curwin->w_cursor.lnum -= Prenum1 - 1;
 		cursor_correct();		/* correct for 'so' */
 		beginline(MAYBE);
 		break;
@@ -968,6 +968,7 @@ lineop:
 					 */
 					if (Prenum1 == 1 && vim_strchr(p_cpo, CPO_CW) != NULL)
 					{
+						op_inclusive = TRUE;
 						op_motion_type = MCHAR;
 						break;
 					}
@@ -985,6 +986,7 @@ lineop:
 					 * "cw" will change only one character! This is done by
 					 * setting flag2.
 					 */
+					op_inclusive = TRUE;
 					flag = FALSE;
 					flag2 = TRUE;
 				}
@@ -2415,6 +2417,16 @@ do_pending_operator(c, nchar, finish_op, searchbuff, command_busy,
 				colnr_t		start, end;
 
 				op_block_mode = TRUE;
+
+				/* make the start the upper left corner of the block */
+				if (curbuf->b_op_start.col > curbuf->b_op_end.col)
+				{
+					int t;
+
+					t = curbuf->b_op_start.col;
+					curbuf->b_op_start.col = curbuf->b_op_end.col;
+					curbuf->b_op_end.col = t;
+				}
 				getvcol(curwin, &(curbuf->b_op_start),
 										  &op_start_vcol, NULL, &op_end_vcol);
 				if (!redo_VIsual_busy)

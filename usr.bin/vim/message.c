@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.3 1996/09/22 01:18:03 downsj Exp $	*/
+/*	$OpenBSD: message.c,v 1.4 1996/10/14 03:55:16 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -278,7 +278,8 @@ wait_return(redraw)
 		do
 		{
 			c = vgetc();
-			got_int = FALSE;
+			if (!global_busy)
+				got_int = FALSE;
 		} while (c == Ctrl('C')
 #ifdef USE_GUI
 								|| c == K_SCROLLBAR || c == K_HORIZ_SCROLLBAR

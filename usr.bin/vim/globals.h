@@ -1,4 +1,4 @@
-/*	$OpenBSD: globals.h,v 1.3 1996/09/22 01:18:02 downsj Exp $	*/
+/*	$OpenBSD: globals.h,v 1.4 1996/10/14 03:55:11 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -261,7 +261,7 @@ EXTERN int		arrow_used;				/* Normally FALSE, set to TRUE after
 #ifdef INSERT_EXPAND
 EXTERN char_u	*edit_submode INIT(= NULL);	/* msg for CTRL-X submode */
 EXTERN char_u	*edit_submode_extra INIT(= NULL);/* extra info for msg */
-EXTERN int		edit_submode_highl;			/* extra info highlighted */
+EXTERN int		edit_submode_highl;		/* highlight method for extra info */
 EXTERN int		ctrl_x_mode INIT(= 0);	/* Which Ctrl-X mode are we in? */
 #endif
 
@@ -406,7 +406,7 @@ EXTERN char_u e_abort[]		INIT(="Command aborted");
 EXTERN char_u e_ambmap[]	INIT(="Ambiguous mapping");
 EXTERN char_u e_argreq[]	INIT(="Argument required");
 EXTERN char_u e_backslash[]	INIT(="\\ should be followed by /, ? or &");
-EXTERN char_u e_curdir[]	INIT(="Command not allowed from from .exrc/.vimrc in current dir");
+EXTERN char_u e_curdir[]	INIT(="Command not allowed from exrc/vimrc in current dir or tag search");
 EXTERN char_u e_errorf[]	INIT(="No errorfile name");
 EXTERN char_u e_exists[]	INIT(="File exists (use ! to override)");
 EXTERN char_u e_failed[] 	INIT(="Command failed");

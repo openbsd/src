@@ -1,4 +1,4 @@
-*vim_arch.txt*  For Vim version 4.4.  Last modification: 1996 Mar 6
+*vim_arch.txt*  For Vim version 4.5.  Last modification: 1996 Mar 6
 
 This file contains the particularities for the Archimedes version of Vim.
 

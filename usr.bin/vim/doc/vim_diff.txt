@@ -1,4 +1,4 @@
-*vim_diff.txt*  For Vim version 4.4.  Last modification: 1996 July 18
+*vim_diff.txt*  For Vim version 4.5.  Last modification: 1996 July 18
 
 This is a summary of the differences between VIM and vi. It is not complete.
 see also |vim_ref.txt|, look for comments in {}, like "{not in Vi}".

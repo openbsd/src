@@ -1,4 +1,4 @@
-*vim_mint.txt*  For Vim version 4.4.  Last modification 1996 June 11
+*vim_mint.txt*  For Vim version 4.5.  Last modification 1996 June 11
 
 This file contains the particularities for the Atari MiNT version of Vim.
 

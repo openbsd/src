@@ -1,4 +1,4 @@
-/*	$OpenBSD: option.c,v 1.2 1996/09/21 06:23:14 downsj Exp $	*/
+/*	$OpenBSD: option.c,v 1.3 1996/10/14 03:55:24 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -263,7 +263,7 @@ static struct option options[] =
 	{"hidden",		"hid",	P_BOOL,				(char_u *)&p_hid,
 							(char_u *)FALSE},
 	{"highlight",	"hl",	P_STRING,			(char_u *)&p_hl,
-							(char_u *)"8b,db,es,hs,mb,Mn,nu,rs,sr,tb,vr,ws"},
+							(char_u *)"8b,db,es,mb,Mn,nu,rs,sr,tb,vr,ws"},
 	{"history",		"hi", 	P_NUM,				(char_u *)&p_hi,
 #ifdef COMPATIBLE
 							(char_u *)0L},

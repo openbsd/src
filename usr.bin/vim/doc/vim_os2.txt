@@ -1,4 +1,4 @@
-*vim_os2.txt*   For Vim version 4.4.  Last modification: 1996 July 20
+*vim_os2.txt*   For Vim version 4.5.  Last modification: 1996 Sep 17
 
 This file contains the particularities for the OS/2 version of Vim.
 
@@ -7,10 +7,10 @@ NOTE
 
 This OS/2 port works well for me and a couple of other OS/2 users; however,
 since I haven't had much feedback, that either means no (OS/2-specific) bugs
-exist (besides the one mentioned below), or no one has yet created a situation
-in which any bugs are apparent.  Report any problems or other comments to
-paul@wau.mis.ah.nl (email valid up to at least September 1996, after that try
-paul@wurtel.hobby.nl, paul@murphy.nl, or paulS@toecompst.nl).
+exist (besides the ones mentioned below), or no one has yet created a
+situation in which any bugs are apparent.  Report any problems or other
+comments to paul@wau.mis.ah.nl (email valid up to at least November 1996,
+after that try paul@wurtel.demon.nl, paul@murphy.nl, or paulS@toecompst.nl).
 Textmode/notextmode, binary mode, and FAT handling all seem to work well,
 which would seem to be the most likely places for trouble.
 
@@ -25,6 +25,11 @@ This can be reproduced with ":!start epm". Now quit Vim, and start Vim again
 with the file that was in the buffer at the time epm was started.  I'm working
 on this!
 
+A second problem is that Vim doesn't understand the situation when using it
+when accessing the OS/2 system via the network, e.g. using telnet from a Unix
+system, and then starting Vim. This will be looked into as soon as I get my
+network running with OS/2... In the meantime any help will be appreciated.
+
 
 PREREQUISITES
 
@@ -37,10 +42,11 @@ I've included a copy of emx.dll, which should be copied to one of the
 directories listed in your LIBPATH. Emx is GPL'ed, but the emx.dll library is
 not (read COPYING.EMX to find out what that means to you).
 
-This emx.dll is from the emxfix04.zip package, which unfortunately has a bug
-in select().  Versions of Vim before 3.27 will appear to hang when starting
-(actually, while processing vimrc). Hit return a couple of times until Vim
-starts working if this happens.  Next, get an up to date version of Vim!
+This emx.dll is from the emxfix04.zip package, which unfortunately has a bug,
+eh, I mean a POSIX feature, in select().  Versions of Vim before 3.27 will
+appear to hang when starting (actually, while processing vimrc). Hit return a
+couple of times until Vim starts working if this happens.  Next, get an up to
+date version of Vim!
 
 
 HELP AND VIMRC FILE

@@ -1,4 +1,4 @@
-*vim_idx.txt*   For Vim version 4.4.  Last modification: 1996 Aug 4
+*vim_idx.txt*   For Vim version 4.5.  Last modification: 1996 Sep 16
 
 This file contains a list of all commands for each mode, with a tag and a
 short description.  The list is sorted on ASCII value.
@@ -805,6 +805,7 @@ arguments.
 |:dsearch|	:ds[earch]	list one #define
 |:dsplit|	:dsp[lit]	split window and jump to #define
 |:edit|		:e[dit]		edit a file
+|:endif|	:en[dif]	end previous :if
 |:ex|		:ex		same as ":edit"
 |:exit|		:exi[t]		same as ":xit"
 |:file|		:f[ile]		show or set the current file name
@@ -814,6 +815,7 @@ arguments.
 |:gui|		:gu[i]		start the GUI
 |:gvim|		:gv[im]		start the GUI
 |:help|		:h[elp]		open a help window
+|:if|		:if		ignore all commands until matching :endif
 |:insert|	:i[nsert]	insert text
 |:iabbrev|	:ia[bbrev]	like ":abbrev" but for Insert mode
 |:iabclear|	:iabc[lear]	like ":abclear" but for Insert mode

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memfile.c,v 1.2 1996/09/21 06:23:07 downsj Exp $	*/
+/*	$OpenBSD: memfile.c,v 1.3 1996/10/14 03:55:15 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -48,19 +48,21 @@
 #endif
 
 /* 
- * Some systems have the page size in statfs, some in stat
+ * Some systems have the page size in statfs.f_bsize, some in stat.st_blksize
  */
-#ifdef HAVE_SYS_STATFS_H
-# include <sys/statfs.h>
-# define STATFS statfs
-# define F_BSIZE f_bsize
-# ifdef MINT
-#  define fstatfs(fd, buf, len, nul) fstat((fd), (buf))
-# endif
-#else
+#ifdef HAVE_ST_BLKSIZE
 # define STATFS stat
 # define F_BSIZE st_blksize
 # define fstatfs(fd, buf, len, nul) fstat((fd), (buf))
+#else
+# ifdef HAVE_SYS_STATFS_H
+#  include <sys/statfs.h>
+#  define STATFS statfs
+#  define F_BSIZE f_bsize
+#  ifdef MINT				/* do we still need this? */
+#   define fstatfs(fd, buf, len, nul) fstat((fd), (buf))
+#  endif
+# endif
 #endif
 
 /*
@@ -131,7 +133,8 @@ mf_open(fname, trunc_file)
 	MEMFILE			*mfp;
 	int				i;
 	off_t			size;
-#ifdef UNIX
+#if defined(STATFS) && defined(UNIX) && !defined(__QNX__)
+# define USE_FSTATFS
 	struct STATFS 	stf;
 #endif
 
@@ -168,7 +171,7 @@ mf_open(fname, trunc_file)
 	}
 	mfp->mf_page_size = MEMFILE_PAGE_SIZE;
 
-#ifdef UNIX
+#ifdef USE_FSTATFS
 	/*
 	 * Try to set the page size equal to the block size of the device.
 	 * Speeds up I/O a lot.

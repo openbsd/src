@@ -1,4 +1,4 @@
-*vim_dos.txt*   For Vim version 4.4.  Last modification: 1996 Aug 17
+*vim_dos.txt*   For Vim version 4.5.  Last modification: 1996 Sep 29
 
 This file contains the particularities for the MS-DOS version of Vim.
 
@@ -327,9 +327,11 @@ HOW TO COPY/PASTE TEXT FROM/TO VIM IN A DOS BOX
 
 (posted to comp.editors by John Velman <velman@igate1.hac.com>)
 
-1) to get VIM to run in a window, instead of full screen, press alt+enter
-   (I've always used alt+shift+enter, but either one seems to work). This
-   toggles back and forth between full screen and a dos window.
+1) to get VIM to run in a window, instead of full screen, press alt+enter.
+   This toggles back and forth between full screen and a dos window.
+   NOTE: In Windows 95 you must have the property "Fast Pasting" unchecked!
+   In the properties dialog box for the MS-DOS window, go to "MS-DOS
+   Prompt/Misc/Fast pasting" and make sure that it is NOT checked.
 
 2) To paste something *into* vim, put vim in insert mode.
 

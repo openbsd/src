@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.3 1996/09/21 23:12:32 downsj Exp $	*/
+/*	$OpenBSD: edit.c,v 1.4 1996/10/14 03:55:10 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -304,7 +304,12 @@ edit(initstr, startln, count)
 		emsg_on_display = FALSE;		/* may remove error message now */
 
 		c = vgetc();
-		if (c == Ctrl('C'))
+
+		/*
+		 * Ignore got_int when CTRL-C was typed here.
+		 * Don't ignore it in :global, we really need to break then.
+		 */
+		if (c == Ctrl('C') && !global_busy)
 			got_int = FALSE;
 
 #ifdef RIGHTLEFT
@@ -1567,7 +1572,7 @@ docomplete:
 										(p_ws || done_dir == BOTH_DIRECTIONS))
 				{
 					edit_submode_extra = e_patnotf;
-					edit_submode_highl = TRUE;
+					edit_submode_highl = 'e';
 				}
 				else if (curr_match != NULL && complete_direction == FORWARD &&
 											curr_match->next != NULL)
@@ -1657,12 +1662,12 @@ docomplete:
 					else if (tot == 0)
 					{
 						edit_submode_extra = e_patnotf;
-						edit_submode_highl = TRUE;
+						edit_submode_highl = 'e';
 					}
 				}
 
 				/* eat the ESC to avoid leaving insert mode */
-				if (got_int)
+				if (got_int && !global_busy)
 				{
 					(void)vgetc();
 					got_int = FALSE;
@@ -1681,7 +1686,7 @@ docomplete:
 					if (curr_match == NULL || curr_match->original)
 					{
 						edit_submode_extra = (char_u *)"Back at original";
-						edit_submode_highl = TRUE;
+						edit_submode_highl = 'w';
 					}
 					else if (first_match != NULL &&
 							first_match->next != NULL &&
@@ -1689,7 +1694,7 @@ docomplete:
 							 first_match->next->original))
 					{
 						edit_submode_extra = (char_u *)"(the only match)";
-						edit_submode_highl = FALSE;
+						edit_submode_highl = NUL;
 					}
 				}
 
@@ -2754,11 +2759,16 @@ insertchar(c, force_formatting, second_indent)
 	/*
 	 * If there's any pending input, grab up to INPUT_BUFLEN at once.
 	 * This speeds up normal text input considerably.
+	 * Don't do this when 'cindent' is set, because we might need to re-indent
+	 * at a ':', or any other character.
 	 */
 #define INPUT_BUFLEN 100
 	if (!ISSPECIAL(c) && vpeekc() != NUL && State != REPLACE
+#ifdef CINDENT
+											&& !curbuf->b_p_cin
+#endif
 #ifdef RIGHTLEFT
-																&& !p_ri
+											&& !p_ri
 #endif
 																		)
 	{

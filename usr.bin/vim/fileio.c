@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.2 1996/09/21 06:22:58 downsj Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.3 1996/10/14 03:55:11 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -2138,14 +2138,13 @@ vim_tempname(extra_char)
 	return NULL;
 #else
 
-# ifndef USE_TMPNAM		 /* tmpnam() will make its own name */
-	STRCPY(itmp, TEMPNAME);
-# endif
-	if ((p = vim_strchr(itmp, '?')) != NULL)
-		*p = extra_char;
 # ifdef USE_TMPNAM
+	/* tmpnam() will make its own name */
 	if (*tmpnam((char *)itmp) == NUL)
 # else
+	STRCPY(itmp, TEMPNAME);
+	if ((p = vim_strchr(itmp, '?')) != NULL)
+		*p = extra_char;
 	if (*mktemp((char *)itmp) == NUL)
 # endif
 		return NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.2 1996/09/21 06:23:21 downsj Exp $	*/
+/*	$OpenBSD: tag.c,v 1.3 1996/10/14 03:55:28 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -1103,7 +1103,7 @@ jumpto_tag(lbuf,
 	}
 	else		/* not a search command, just copy it */
 	{
-		for (p = pbuf; *str && *str != '\n'; )
+		for (p = pbuf; *str && *str != '\n' && *str != '\r'; )
 		{
 #ifdef EMACS_TAGS
 			if (is_etag && *str == ',')		/* stop at ',' after line number */

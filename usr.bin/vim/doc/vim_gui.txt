@@ -1,4 +1,4 @@
-*vim_gui.txt*   For Vim version 4.4.  Last modification: 1996 Sep 12
+*vim_gui.txt*   For Vim version 4.5.  Last modification: 1996 Oct 5
 
 
 		       Vim's Graphical User Interface
@@ -112,6 +112,12 @@ which make Motif applications look even better, highly recommended!
 
 Don't use "Vim*geometry" in the defaults.  This will break the menus.  Use
 "Vim.geometry" instead.
+
+If you get an error message "Cannot allocate colormap entry for "gray60",
+try adding this to your Vim resources (change the colors to your liking):
+
+Vim*scrollBackground:		Black
+Vim*scrollForeground:		Blue
 
 The resources can also be set with arguments to vim:
 

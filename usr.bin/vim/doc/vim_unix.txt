@@ -1,4 +1,4 @@
-*vim_unix.txt*  For Vim version 4.4.  Last modification: 1996 Apr 23
+*vim_unix.txt*  For Vim version 4.5.  Last modification: 1996 Sep 20
 
 This file contains the particularities for the Unix version of Vim.
 
@@ -30,6 +30,7 @@ When using Vim in an xterm the mouse clicks can be used by Vim by setting
 'mouse' to "a". If you then still want the xterm copy/paste with the mouse,
 press the shift key when using the mouse.  See |mouse_using|.
 
+							*colors*
 To use colors in Vim you can use the following example (if your terminal
 supports colors!):
 	:set t_me=^[[0;1;36m     " normal mode (undoes t_mr and t_md)
@@ -39,6 +40,8 @@ supports colors!):
 	:set t_so=^[[1;32;45m    " standout mode
 	:set t_ue=^[[0;1;36m     " underline end
 	:set t_us=^[[1;32m       " underline mode start
+
+[the ^[ is an <Esc>, type CTRL-V <Esc> to enter it]
 
 The file "tools/Vim132" is a shell script that can be used to put Vim in 132
 column mode on a vt100 and lookalikes.

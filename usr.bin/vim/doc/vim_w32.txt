@@ -1,4 +1,4 @@
-*vim_w32.txt*   For Vim version 4.4.  Last modification: 1996 Aug 12
+*vim_w32.txt*   For Vim version 4.5.  Last modification: 1996 Sep 30
 
 This file documents the idiosyncrasies of the Win32 version of Vim.
 
@@ -278,7 +278,7 @@ Q. So if the Win32 version updates the screen so slowly on Windows 95 and the
    Win32 version?
 A. Firstly, the Win32 version isn't that slow, especially when the screen is
    set to some non-standard number of 'lines' or 'columns'.  Secondly, the
-   16-bit DOS version has some severe limitations: it can't edit big files and
+   16-bit DOS version has some severe limitations: It can't do big changes and
    it doesn't know about long filenames.  The Win32 version doesn't have these
    limitations and it's faster overall (the same is true for the 32-bit DJGPP
    DOS version of Vim).  The Win32 version is smarter about handling the
@@ -327,7 +327,12 @@ A. You don't.  The console mode input routines simply do not work correctly in
    reportedly do work.
 
 Q. How do I type dead keys on Windows NT?
-A. Dead keys work on NT.  Just type them as you would in any other application.
+A. Dead keys work on NT 3.51.  Just type them as you would in any other
+   application.
+   On NT 4.0, you need to make sure that the default locale (set in the
+   Keyboard part of the Control Panel) is the same as the currently active
+   locale.  Otherwise the NT code will get confused and crash!  This is a NT
+   4.0 problem, not really a Vim problem.
 
 Q. When will a real GUI version of Vim (gvim) for Win32 with scrollbars,
    menus, pasting from the clipboard, and so on become available?

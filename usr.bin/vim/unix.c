@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.2 1996/09/21 06:23:24 downsj Exp $	*/
+/*	$OpenBSD: unix.c,v 1.3 1996/10/14 03:55:32 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -108,7 +108,7 @@ static char_u	*oldicon = NULL;
 static char_u	*extra_shell_arg = NULL;
 static int		show_shell_mess = TRUE;
 #endif
-static int		core_dump = FALSE;			/* core dump in mch_windexit() */
+static int		deadly_signal = 0;			/* The signal we caught */
 
 #ifdef SYS_SIGLIST_DECLARED
 /*
@@ -126,67 +126,66 @@ static struct
 {
 	int		sig;		/* Signal number, eg. SIGSEGV etc */
 	char	*name;		/* Signal name (not char_u!). */
-	int		dump;		/* Should this signal cause a core dump? */
 } signal_info[] =
 {
 #ifdef SIGHUP
-	{SIGHUP,		"HUP",		FALSE},
+	{SIGHUP,		"HUP"},
 #endif
 #ifdef SIGINT
-	{SIGINT,		"INT",		FALSE},
+	{SIGINT,		"INT"},
 #endif
 #ifdef SIGQUIT
-	{SIGQUIT,		"QUIT",		TRUE},
+	{SIGQUIT,		"QUIT"},
 #endif
 #ifdef SIGILL
-	{SIGILL,		"ILL",		TRUE},
+	{SIGILL,		"ILL"},
 #endif
 #ifdef SIGTRAP
-	{SIGTRAP,		"TRAP",		TRUE},
+	{SIGTRAP,		"TRAP"},
 #endif
 #ifdef SIGABRT
-	{SIGABRT,		"ABRT",		TRUE},
+	{SIGABRT,		"ABRT"},
 #endif
 #ifdef SIGEMT
-	{SIGEMT,		"EMT",		TRUE},
+	{SIGEMT,		"EMT"},
 #endif
 #ifdef SIGFPE
-	{SIGFPE,		"FPE",		TRUE},
+	{SIGFPE,		"FPE"},
 #endif
 #ifdef SIGBUS
-	{SIGBUS,		"BUS",		TRUE},
+	{SIGBUS,		"BUS"},
 #endif
 #ifdef SIGSEGV
-	{SIGSEGV,		"SEGV",		TRUE},
+	{SIGSEGV,		"SEGV"},
 #endif
 #ifdef SIGSYS
-	{SIGSYS,		"SYS",		TRUE},
+	{SIGSYS,		"SYS"},
 #endif
 #ifdef SIGALRM
-	{SIGALRM,		"ALRM",		FALSE},
+	{SIGALRM,		"ALRM"},
 #endif
 #ifdef SIGTERM
-	{SIGTERM,		"TERM",		FALSE},
+	{SIGTERM,		"TERM"},
 #endif
 #ifdef SIGVTALRM
-	{SIGVTALRM,		"VTALRM",	FALSE},
+	{SIGVTALRM,		"VTALRM"},
 #endif
 #ifdef SIGPROF
-	{SIGPROF,		"PROF",		FALSE},
+	{SIGPROF,		"PROF"},
 #endif
 #ifdef SIGXCPU
-	{SIGXCPU,		"XCPU",		TRUE},
+	{SIGXCPU,		"XCPU"},
 #endif
 #ifdef SIGXFSZ
-	{SIGXFSZ,		"XFSZ",		TRUE},
+	{SIGXFSZ,		"XFSZ"},
 #endif
 #ifdef SIGUSR1
-	{SIGUSR1,		"USR1",		FALSE},
+	{SIGUSR1,		"USR1"},
 #endif
 #ifdef SIGUSR2
-	{SIGUSR2,		"USR2",		FALSE},
+	{SIGUSR2,		"USR2"},
 #endif
-	{-1,			"Unknown!",	-1}
+	{-1,			"Unknown!"}
 };
 
 	void
@@ -395,15 +394,11 @@ deathtrap SIGDEFARG(sigarg)
 #ifdef SIGHASARG
 	int		i;
 
-	for (i = 0; signal_info[i].dump != -1; i++)
-	{
+	/* try to find the name of this signal */
+	for (i = 0; signal_info[i].sig != -1; i++)
 		if (sigarg == signal_info[i].sig)
-		{
-			if (signal_info[i].dump)
-				core_dump = TRUE;
 			break;
-		}
-	}
+	deadly_signal = sigarg;
 #endif
 
 	/*
@@ -518,7 +513,7 @@ catch_signals(func)
 {
 	int		i;
 
-	for (i = 0; signal_info[i].dump != -1; i++)
+	for (i = 0; signal_info[i].sig != -1; i++)
 		signal(signal_info[i].sig, func);
 }
 
@@ -1318,11 +1313,11 @@ mch_windexit(r)
 	static void
 may_core_dump()
 {
-#ifdef SIGQUIT
-	signal(SIGQUIT, SIG_DFL);
-	if (core_dump)
-		kill(getpid(), SIGQUIT);		/* force a core dump */
-#endif
+	if (deadly_signal != 0)
+	{
+		signal(deadly_signal, SIG_DFL);
+		kill(getpid(), deadly_signal);	/* Die using the signal we caught */
+	}
 }
 
 static int curr_tmode = 0;	/* contains current raw/cooked mode (0 = cooked) */
@@ -2423,7 +2418,10 @@ RealWaitForChar(fd, msec)
 	FD_ZERO(&rfds);	/* calls bzero() on a sun */
 	FD_ZERO(&efds);
 	FD_SET(fd, &rfds);
+#ifndef __QNX__
+	/* For QNX select() always returns 1 if this is set.  Why? */
 	FD_SET(fd, &efds);
+#endif
 	return (select(fd + 1, &rfds, NULL, &efds, (msec >= 0) ? &tv : NULL) > 0);
 #endif
 }

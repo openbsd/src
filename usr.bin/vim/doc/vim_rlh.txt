@@ -1,4 +1,4 @@
-*vim_rlh.txt*   For Vim version 4.4.  Last modification: 1996 June 11
+*vim_rlh.txt*   For Vim version 4.5.  Last modification: 1996 June 11
 
 Right to Left and Hebrew Mapping for Vim		*hebrew*
 ========================================

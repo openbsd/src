@@ -1,4 +1,4 @@
-*vim_40.txt*    For Vim version 4.4.  Last modification: 1996 Sep 1
+*vim_40.txt*    For Vim version 4.5.  Last modification: 1996 Sep 1
 
 
 Welcome to Vim Version 4.0!

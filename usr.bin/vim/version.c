@@ -1,5 +1,6 @@
-/*	$OpenBSD: version.c,v 1.2 1996/09/21 06:23:25 downsj Exp $	*/
+/*	$OpenBSD: version.c,v 1.3 1996/10/14 03:55:34 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
+ * vi:set comments=sbl\:*\ -,mb\:*,el\:*\ -,sr\:/\*,mb\:*,el\:*\/,fb\:- :
  *
  * VIM - Vi IMproved		by Bram Moolenaar
  *
@@ -18,6 +19,33 @@
  * All the remarks about older versions have been removed, they are not very
  * interesting.  Differences between version 3.0 and 4.x can be found in
  * "../doc/vim_40.txt".
+ *
+ * Changes between version 4.4 BETA and 4.5:
+ * - Ignore CR in line from tags file, also when there is no search command.
+ * - Fixed small cindent problem, when using 'cino' with non-zero after '}'.
+ * - Corrected error message for security violation for tag file commands.
+ * - Fixed bug: When 'shell' set to "sh", "!echo text >x<Tab>" would create
+ *   the file "x*".  Now completion of file names starts after a ">", "<" and
+ *   following "&" and "!" characters.
+ * - Added a few more changes for QNX.
+ * - Fixed: when 'showmode' was not set, CTRL-X submode (error) messages would
+ *   not be shown correctly.
+ * - MSDOS: Fixed computation of mouse area again, didn't work for 50 lines
+ *   screen.
+ * - Fixed: Cursor was not positioned after ":move" command.
+ * - Fixed a few compiler warnings for Athena on Sun OS 5.2.
+ * - Added 'w' flag to 'cpoptions', to fix vi incompatibility for "cw" on a
+ *   row of blanks.
+ * - Fixed making a core dump on certain signals.
+ * - Fixed check for Sun OS 4.x.x for xxd.c.
+ * - Fixed problem with expanding two-character directory names for Win32
+ *   version.
+ * - Fixed: highlight mode for completion sub-messages was always 'r', now it
+ *   depends on the type of message: 'e' for errors, 'w' for warnings.
+ * - Fixed: 'cindentkeys' were not checked when inserting text from a mapping.
+ * - Fixed: a ":global" that requires input, could not be broken with CTRL-C.
+ * - Fixed: "1H" and "1L" were off by one line.
+ * - Included version 1.5 of ctags.
  *
  * Changes between version 4.3 BETA and 4.4 BETA:
  * - Moved outputting newline from getout() to mch_windexit().  Helps when
@@ -43,7 +71,7 @@
  * - Fixed: With GUI Athena the scrollbar could get stuck at the bottom.
  * - Fixed: When using :imenu to insert more than one line of text, only the
  *   first line could be undone.
- * - Fixed: Word completion (CTRL-N) in Insert mode, when there was not
+ * - Fixed: Word completion (CTRL-N) in Insert mode, when there was no
  *   matching word, the "Pattern not found" message was not shown.
  * - Fixed: Pattern completion (CTRL-X I) in Insert mode; the file name shown
  *   was overwritten with the mode message.
@@ -300,11 +328,11 @@
 
 #include "version.h"
 
-char		   *Version = "VIM 4.4";
+char		   *Version = "VIM 4.5";
 #ifdef HAVE_DATE_TIME
-char		   *longVersion = "VIM - Vi IMproved 4.4 BETA (1996 Sep 11, compiled " __DATE__ " " __TIME__ ")";
+char		   *longVersion = "VIM - Vi IMproved 4.5 (1996 Oct 7, compiled " __DATE__ " " __TIME__ ")";
 #else
-char		   *longVersion = "VIM - Vi IMproved 4.4 BETA (1996 Sep 11)";
+char		   *longVersion = "VIM - Vi IMproved 4.5 (1996 Oct 7)";
 #endif
 
 static void version_msg __ARGS((char *s));

@@ -1,4 +1,4 @@
-*vim_help.txt*	For Vim version 4.4.  Last modification: 1996 Aug 3
+*vim_help.txt*	For Vim version 4.5.  Last modification: 1996 Sep 30
 
 			VIM help file
 
@@ -861,8 +861,8 @@ Short explanation of each option:		*option_list*
 |:range|	%		equal to 1,$ (the entire file)
 |:range|	*		equal to '<,'> (visual area)
 |:range|	't		position of mark t
-|:range|	/{pattern}	the next line where {pattern} matches
-|:range|	?{pattern}	the previous line where {pattern} matches
+|:range|	/{pattern}[/]	the next line where {pattern} matches
+|:range|	?{pattern}[?]	the previous line where {pattern} matches
 
 |:range|	+[num]		add [num] to the preceding line number
 				   (default: 1)
@@ -1130,9 +1130,11 @@ There are three mailing lists for Vim:
 				beta-test versions and ports to different
 				systems.
 
-NOTE: You can only send messages to these lists if you have subscribed!  Also:
-you need to send the messages from the same location as the one you subscribed
-from (yes, Majordomo is inflexible).
+NOTE:
+- You can only send messages to these lists if you have subscribed!
+- You need to send the messages from the same location as where you subscribed
+  from (yes, Majordomo is inflexible).
+- Maximum message size is 40000 characters.
 
 If you want to join, send a message to
 	<majordomo@prz.tu-berlin.de>

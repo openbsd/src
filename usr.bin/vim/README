@@ -1,6 +1,6 @@
-$OpenBSD: README,v 1.2 1996/09/21 06:22:50 downsj Exp $
+$OpenBSD: README,v 1.3 1996/10/14 03:55:06 downsj Exp $
 
-README for version 4.4 of Vim: Vi IMproved.
+README for version 4.5 of Vim: Vi IMproved.
 
 Vim is an almost compatible version of the UNIX editor vi.  Only the "Q"
 command is missing.  Many new features have been added: multi level undo,

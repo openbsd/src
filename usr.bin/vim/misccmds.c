@@ -1,4 +1,4 @@
-/*	$OpenBSD: misccmds.c,v 1.3 1996/09/22 01:18:04 downsj Exp $	*/
+/*	$OpenBSD: misccmds.c,v 1.4 1996/10/14 03:55:18 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -3485,6 +3485,7 @@ get_c_indent()
 						 *            asdfasdf);
 						 *     here;
 						 */
+term_again:
 						l = ml_get_curline();
 						if (find_last_paren(l) &&
 								(trypos = find_match_paren(ind_maxparen,
@@ -3523,7 +3524,10 @@ get_c_indent()
 						if (*skipwhite(l) == '}' &&
 								   (trypos = find_start_brace(ind_maxcomment))
 															!= NULL) /* XXX */
+						{
 							curwin->w_cursor.lnum = trypos->lnum;
+							goto term_again;
+						}
 					}
 				}
 			}

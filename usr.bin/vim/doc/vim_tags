@@ -1389,6 +1389,7 @@ cmdline_history	vim_ref.txt	/\*cmdline_history\*
 cmdline_lines	vim_ref.txt	/\*cmdline_lines\*
 cmdline_ranges	vim_ref.txt	/\*cmdline_ranges\*
 cmdline_special	vim_ref.txt	/\*cmdline_special\*
+colors	vim_unix.txt	/\*colors\*
 compilation	vim_40.txt	/\*compilation\*
 compl_current	vim_ref.txt	/\*compl_current\*
 compl_define	vim_ref.txt	/\*compl_define\*
@@ -1727,6 +1728,7 @@ scroll-smooth	vim_tips.txt	/\*scroll-smooth\*
 scrolling	vim_ref.txt	/\*scrolling\*
 search_offset	vim_ref.txt	/\*search_offset\*
 search_pattern	vim_ref.txt	/\*search_pattern\*
+search_range	vim_ref.txt	/\*search_range\*
 section	vim_ref.txt	/\*section\*
 sentence	vim_ref.txt	/\*sentence\*
 set_option	vim_ref.txt	/\*set_option\*

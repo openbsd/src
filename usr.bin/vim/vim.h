@@ -1,4 +1,4 @@
-/*	$OpenBSD: vim.h,v 1.2 1996/09/21 06:23:27 downsj Exp $	*/
+/*	$OpenBSD: vim.h,v 1.3 1996/10/14 03:55:36 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -420,7 +420,7 @@ enum auto_events
 
 #define	TERMBUFSIZE	1024
 
-#if defined(AMIGA) || defined(__linux__)
+#if defined(AMIGA) || defined(__linux__) || defined(__QNX__)
 # define TBUFSZ 2048			/* buffer size for termcap entry */
 #else
 # define TBUFSZ 1024			/* buffer size for termcap entry */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.2 1996/09/21 06:23:18 downsj Exp $	*/
+/*	$OpenBSD: screen.c,v 1.3 1996/10/14 03:55:27 downsj Exp $	*/
 /* vi:set ts=4 sw=4:
  *
  * VIM - Vi IMproved		by Bram Moolenaar
@@ -2985,14 +2985,14 @@ showmode()
 				if (edit_submode_extra != NULL)
 				{
 					msg_outchar(' ');		/* add a space in between */
-					if (edit_submode_highl)
+					if (edit_submode_highl != NUL)
 					{
 						stop_highlight();
-						set_highlight('r');		/* Highlight mode */
+						set_highlight(edit_submode_highl);	/* Highlight mode */
 						start_highlight();
 					}
 					msg_outstr(edit_submode_extra);
-					if (edit_submode_highl)
+					if (edit_submode_highl != NUL)
 					{
 						stop_highlight();
 						set_highlight('M');		/* Highlight mode */
