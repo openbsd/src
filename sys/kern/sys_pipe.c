@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.36 2001/06/27 04:49:46 art Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.37 2001/07/05 07:15:07 art Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -45,17 +45,10 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/event.h>
+#include <sys/lock.h>
 
 #include <vm/vm.h>
-#include <vm/vm_prot.h>
-#include <vm/vm_param.h>
-#include <sys/lock.h>
-#include <vm/vm_object.h>
 #include <vm/vm_kern.h>
-#include <vm/vm_extern.h>
-#include <vm/pmap.h>
-#include <vm/vm_map.h>
-#include <vm/vm_page.h>
 
 #include <uvm/uvm_extern.h>
 
