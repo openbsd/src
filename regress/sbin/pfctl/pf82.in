@@ -12,5 +12,5 @@ pass inet from <bar>
 pass from <bar>
 pass inet6 from <foo>
 pass from <foo>
-pass from no-route
 pass inet from no-route
+pass from no-route
