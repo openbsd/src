@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.28 2004/10/02 18:13:24 millert Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.29 2004/11/26 20:09:56 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.28 2004/10/02 18:13:24 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.29 2004/11/26 20:09:56 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -165,7 +165,7 @@ static struct dirent **
 slurpdir(char *path, char **bufp, int enoentok)
 {
 	char *buf, *ebuf, *cp;
-	size_t bufsize;
+	size_t bufsize, have, need;
 	long base;
 	int fd, nbytes, entries;
 	struct stat sb;
@@ -181,28 +181,35 @@ slurpdir(char *path, char **bufp, int enoentok)
 		}
 		return (&dummy);
 	}
-	fstat(fd, &sb);
+	if (fstat(fd, &sb) == -1) {
+		warn("%s", path);
+		close(fd);
+		return (NULL);
+	}
 
-	bufsize = 0;
-	ebuf = buf = NULL;
+	need = roundup(sb.st_blksize, sizeof(struct dirent));
+	have = bufsize = roundup(MAX(sb.st_size, sb.st_blksize),
+	    sizeof(struct dirent)) + need;
+	ebuf = buf = emalloc(bufsize);
+
 	do {
-		bufsize += roundup(MAX(sb.st_size, sb.st_blksize),
-		    sizeof(struct dirent));
-		if (buf == NULL)
-		    buf = ebuf = emalloc(bufsize);
-		else {
+		if (have < need) {
+		    bufsize += need;
+		    have += need;
 		    cp = erealloc(buf, bufsize);
 		    ebuf = cp + (ebuf - buf);
 		    buf = cp;
 		}
-		nbytes = getdirentries(fd, ebuf, bufsize, &base);
+		nbytes = getdirentries(fd, ebuf, have, &base);
 		if (nbytes == -1) {
-			free(buf);
 			warn("%s", path);
+			free(buf);
+			close(fd);
 			return (NULL);
 		}
 		ebuf += nbytes;
-	} while (nbytes == bufsize);
+		have -= nbytes;
+	} while (nbytes != 0);
 	close(fd);
 
 	/*
@@ -232,7 +239,7 @@ slurpdir(char *path, char **bufp, int enoentok)
 	}
 	dirlist[entries] = NULL;
 
-	qsort(dirlist, entries, sizeof(struct dir *), dircompare);
+	qsort(dirlist, entries, sizeof(struct dirent *), dircompare);
 
 	*bufp = buf;
 	return (dirlist);
