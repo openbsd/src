@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.43 2004/10/22 21:17:37 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.44 2004/11/05 23:39:46 dtucker Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -120,11 +120,12 @@ client_query(struct ntp_peer *p)
 	}
 
 	if (p->query->fd == -1) {
+		struct sockaddr *sa = (struct sockaddr *)&p->addr->ss;
+
 		if ((p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM,
 		    0)) == -1)
 			fatal("client_query socket");
-		if (connect(p->query->fd, (struct sockaddr *)&p->addr->ss,
-		    p->addr->ss.ss_len) == -1) {
+		if (connect(p->query->fd, sa, SA_LEN(sa)) == -1) {
 			if (errno == ECONNREFUSED || errno == ENETUNREACH ||
 			    errno == EHOSTUNREACH) {
 				client_nextaddr(p);
