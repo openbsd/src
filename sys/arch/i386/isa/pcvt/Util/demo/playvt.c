@@ -1,3 +1,5 @@
+/*	$OpenBSD: playvt.c,v 1.3 1999/01/13 07:26:03 niklas Exp $	*/
+
 /*
  * Copyright (c) 1995 Hellmuth Michaelis
  *

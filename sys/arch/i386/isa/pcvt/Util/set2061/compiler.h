@@ -1,3 +1,5 @@
+/*	$OpenBSD: compiler.h,v 1.2 1999/01/13 07:26:07 niklas Exp $	*/
+
 /* $XFree86: mit/server/ddx/x386/common/compiler.h,v 2.3 1993/10/03 14:55:28 dawes Exp $ */
 /*
  * Copyright 1990,91 by Thomas Roell, Dinkelscherben, Germany.
@@ -20,7 +22,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  *
- * $Header: /home/cvs/src/sys/arch/i386/isa/pcvt/Util/set2061/Attic/compiler.h,v 1.1.1.1 1995/10/18 08:50:48 deraadt Exp $
+ * $Header: /home/cvs/src/sys/arch/i386/isa/pcvt/Util/set2061/Attic/compiler.h,v 1.2 1999/01/13 07:26:07 niklas Exp $
  */
 
 

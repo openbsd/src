@@ -1,3 +1,5 @@
+/*	$OpenBSD: kbdio.y,v 1.2 1999/01/13 07:26:05 niklas Exp $	*/
+
 /* Hello emacs, this should be edited in -*- Fundamental -*- mode */
 %{
 /*
@@ -34,7 +36,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident "$Header: /home/cvs/src/sys/arch/i386/isa/pcvt/Util/kbdio/Attic/kbdio.y,v 1.1.1.1 1995/10/18 08:50:45 deraadt Exp $"
+#ident "$Header: /home/cvs/src/sys/arch/i386/isa/pcvt/Util/kbdio/Attic/kbdio.y,v 1.2 1999/01/13 07:26:05 niklas Exp $"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: mcon.c,v 1.4 1999/01/13 07:26:06 niklas Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995 Joerg Wunsch
  *

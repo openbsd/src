@@ -1,3 +1,5 @@
+/*	$OpenBSD: main.c,v 1.3 1999/01/13 07:26:07 niklas Exp $	*/
+
 /*
  * Copyright (c) 1994 Hellmuth Michaelis
  *

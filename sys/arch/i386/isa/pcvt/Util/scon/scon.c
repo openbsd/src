@@ -1,3 +1,5 @@
+/*	$OpenBSD: scon.c,v 1.11 1999/01/13 07:26:06 niklas Exp $	*/
+
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch
  *

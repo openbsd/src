@@ -1,3 +1,5 @@
+/*	$OpenBSD: ICD2061Aalt.c,v 1.2 1999/01/13 07:26:07 niklas Exp $	*/
+
 /*
  * This code is derived from code available from the STB bulletin board
  */

@@ -1,3 +1,5 @@
+/*	$OpenBSD: main.c,v 1.2 1999/01/13 07:26:08 niklas Exp $	*/
+
 /*
                                VTTEST.C
 

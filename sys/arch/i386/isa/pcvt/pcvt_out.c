@@ -1,3 +1,5 @@
+/*	$OpenBSD: pcvt_out.c,v 1.7 1999/01/13 07:26:02 niklas Exp $	*/
+
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *

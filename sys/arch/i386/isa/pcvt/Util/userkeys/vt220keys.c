@@ -1,3 +1,5 @@
+/*	$OpenBSD: vt220keys.c,v 1.4 1999/01/13 07:26:07 niklas Exp $	*/
+
 /*
  *      Trivial program to load VT220 Function keys with strings,
  *      note that the values only get sent when the key is shifted

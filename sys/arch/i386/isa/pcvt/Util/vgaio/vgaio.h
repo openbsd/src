@@ -1,3 +1,5 @@
+/*	$OpenBSD: vgaio.h,v 1.3 1999/01/13 07:26:07 niklas Exp $	*/
+
 /*
  * Copyright (c) 1994 Joerg Wunsch
  *
@@ -37,6 +39,9 @@
  * The author may be reached unter <joerg_wunsch@uriah.sax.de>
  *
  * $Log: vgaio.h,v $
+ * Revision 1.3  1999/01/13 07:26:07  niklas
+ * RCSIds
+ *
  * Revision 1.2  1996/03/19 21:09:52  mickey
  * Merging w/ NetBSD 021796.
  * speaker upgraded to the current.

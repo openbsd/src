@@ -1,3 +1,5 @@
+#	$OpenBSD: ttys.pcvt.netbsd,v 1.3 1999/01/13 07:26:02 niklas Exp $
+
 #---------------------------------------------------------------------------
 #
 #	sample /etc/ttys file for pcvt driver and pcvt25 terminal emulation

@@ -1,3 +1,4 @@
+/*	$OpenBSD: nvram.h,v 1.5 1999/01/13 07:26:01 niklas Exp $	*/
 /*	$NetBSD: nvram.h,v 1.5 1995/05/05 22:08:43 mycroft Exp $	*/
 
 /*-
