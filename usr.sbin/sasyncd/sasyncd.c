@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.2 2005/03/30 18:56:19 ho Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.3 2005/04/03 12:03:43 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -155,9 +155,6 @@ main(int argc, char **argv)
 
 	log_init(__progname);
 	timer_init();
-
-	pfkey_snapshot(0);
-	exit(1);
 
 	r = conf_init(argc, argv);
 	if (r > 1) {
