@@ -207,15 +207,16 @@ void ssl_pphrase_Handle(server_rec *s, pool *p)
              * the callback function which serves the pass
              * phrases to OpenSSL
              */
-            myCtxVarSet(mc, 1, pServ);
-            myCtxVarSet(mc, 2, p);
-            myCtxVarSet(mc, 3, aPassPhrase);
-            myCtxVarSet(mc, 4, &nPassPhraseCur);
-            myCtxVarSet(mc, 5, &cpPassPhraseCur);
-            myCtxVarSet(mc, 6, cpVHostID);
-            myCtxVarSet(mc, 7, &nPassPhraseDialog);
-            myCtxVarSet(mc, 8, &nPassPhraseDialogCur);
-            myCtxVarSet(mc, 9, &bPassPhraseDialogOnce);
+            myCtxVarSet(mc,  1, pServ);
+            myCtxVarSet(mc,  2, p);
+            myCtxVarSet(mc,  3, aPassPhrase);
+            myCtxVarSet(mc,  4, &nPassPhraseCur);
+            myCtxVarSet(mc,  5, &cpPassPhraseCur);
+            myCtxVarSet(mc,  6, cpVHostID);
+            myCtxVarSet(mc,  7, an);
+            myCtxVarSet(mc,  8, &nPassPhraseDialog);
+            myCtxVarSet(mc,  9, &nPassPhraseDialogCur);
+            myCtxVarSet(mc, 10, &bPassPhraseDialogOnce);
 
             nPassPhraseCur        = 0;
             nPassPhraseRetry      = 0;
@@ -395,6 +396,7 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int ask_twice)
     int *pnPassPhraseCur;
     char **cppPassPhraseCur;
     char *cpVHostID;
+    char *cpAlgoType;
     int *pnPassPhraseDialog;
     int *pnPassPhraseDialogCur;
     BOOL *pbPassPhraseDialogOnce;
@@ -404,15 +406,16 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int ask_twice)
     /*
      * Reconnect to the context of ssl_phrase_Handle()
      */
-    s                      = myCtxVarGet(mc, 1, server_rec *);
-    p                      = myCtxVarGet(mc, 2, pool *);
-    aPassPhrase            = myCtxVarGet(mc, 3, ssl_ds_array *);
-    pnPassPhraseCur        = myCtxVarGet(mc, 4, int *);
-    cppPassPhraseCur       = myCtxVarGet(mc, 5, char **);
-    cpVHostID              = myCtxVarGet(mc, 6, char *);
-    pnPassPhraseDialog     = myCtxVarGet(mc, 7, int *);
-    pnPassPhraseDialogCur  = myCtxVarGet(mc, 8, int *);
-    pbPassPhraseDialogOnce = myCtxVarGet(mc, 9, BOOL *);
+    s                      = myCtxVarGet(mc,  1, server_rec *);
+    p                      = myCtxVarGet(mc,  2, pool *);
+    aPassPhrase            = myCtxVarGet(mc,  3, ssl_ds_array *);
+    pnPassPhraseCur        = myCtxVarGet(mc,  4, int *);
+    cppPassPhraseCur       = myCtxVarGet(mc,  5, char **);
+    cpVHostID              = myCtxVarGet(mc,  6, char *);
+    cpAlgoType             = myCtxVarGet(mc,  7, char *);
+    pnPassPhraseDialog     = myCtxVarGet(mc,  8, int *);
+    pnPassPhraseDialogCur  = myCtxVarGet(mc,  9, int *);
+    pbPassPhraseDialogOnce = myCtxVarGet(mc, 10, BOOL *);
     sc                     = mySrvConfig(s);
 
     (*pnPassPhraseDialog)++;
@@ -460,7 +463,7 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int ask_twice)
         if (*pbPassPhraseDialogOnce) {
             *pbPassPhraseDialogOnce = FALSE;
             fprintf(stderr, "\n");
-            fprintf(stderr, "Server %s\n", cpVHostID);
+            fprintf(stderr, "Server %s (%s)\n", cpVHostID, cpAlgoType);
         }
 
         /*
@@ -498,7 +501,7 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int ask_twice)
                 "Init: Requesting pass phrase from dialog filter program (%s)",
                 sc->szPassPhraseDialogPath);
 
-        cmd = ap_psprintf(p, "%s %s", sc->szPassPhraseDialogPath, cpVHostID);
+        cmd = ap_psprintf(p, "%s %s %s", sc->szPassPhraseDialogPath, cpVHostID, cpAlgoType);
         result = ssl_util_readfilter(s, p, cmd);
         ap_cpystrn(buf, result, bufsize);
         len = strlen(buf);

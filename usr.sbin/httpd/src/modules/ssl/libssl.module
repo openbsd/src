@@ -229,7 +229,17 @@ ConfigStart
                 exit 1
             fi
         fi
-        #   4. finally configure the chosen DBM lib
+        #   4. override decision on a few brain-dead platforms
+        if [ ".$my_rule_SSL_SDBM" = .default ]; then
+            case "$OS" in
+                Linux )
+                    #   force Linux boxes to use builtin SDBM per default because 
+                    #   of too much broken vendor DBM libraries on this platform
+                    SSL_DBM_NAME=''
+                    ;;
+            esac
+        fi
+        #   5. finally configure the chosen DBM lib
         if [ ".$SSL_DBM_NAME" != . ]; then
             echo "$my_prefix SSL interface plugin: $SSL_DBM_NAME"
             my_dbm_already_used=`echo $LIBS | grep -- " $SSL_DBM_FLAG"`

@@ -592,7 +592,6 @@ static const struct {
     { SSL3_TXT_RSA_RC4_128_MD5           /*RC4-MD5*/,                128, 128 },
     { SSL3_TXT_RSA_RC4_128_SHA           /*RC4-SHA*/,                128, 128 },
     { SSL3_TXT_RSA_RC2_40_MD5            /*EXP-RC2-CBC-MD5*/,         40, 128 },
-    { SSL3_TXT_RSA_IDEA_128_SHA          /*IDEA-CBC-MD5*/,           128, 128 },
     { SSL3_TXT_RSA_DES_40_CBC_SHA        /*EXP-DES-CBC-SHA*/,         40,  56 },
     { SSL3_TXT_RSA_DES_64_CBC_SHA        /*DES-CBC-SHA*/ ,            56,  56 },
     { SSL3_TXT_RSA_DES_192_CBC3_SHA      /*DES-CBC3-SHA*/ ,          168, 168 },
@@ -617,6 +616,7 @@ static const struct {
     { SSL3_TXT_FZA_DMS_FZA_SHA           /*FZA-FZA-CBC-SHA*/,          0,   0 },
     { SSL3_TXT_FZA_DMS_RC4_SHA           /*FZA-RC4-SHA*/,            128, 128 },
 
+    { SSL2_TXT_IDEA_128_CBC_WITH_MD5     /*IDEA-CBC-MD5*/,           128, 128 },
     { SSL2_TXT_DES_64_CFB64_WITH_MD5_1   /*DES-CFB-M1*/,              56,  56 },
     { SSL2_TXT_RC2_128_CBC_WITH_MD5      /*RC2-CBC-MD5*/,            128, 128 },
     { SSL2_TXT_DES_64_CBC_WITH_MD5       /*DES-CBC-MD5*/,             56,  56 },

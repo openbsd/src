@@ -23,6 +23,50 @@
       / __/ |__   _|
   __ |_____(_) |_| ___________________________________________
 
+  Changes with mod_ssl 2.4.5 (28-Sep-1999 to 01-Oct-1999)
+
+   *) Now ``make certificate'' displays a warning message if one generates a
+      DSA certificate with it to make sure the user is aware of the fact that
+      a DSA-only webserver is currently useless because the popular browsers
+      do not speak DH-based ciphers. A hint is given that a DSA cert/key pair
+      is only useful in _combination_ with a parallel configured RSA
+      cert/key pair.
+
+   *) Enhanced the pass phrase dialog: Now ``Server <host>:<port> (<algo>)''
+      is displayed instead of just ``Server <host>:<port>'' and the
+      ``SSLPassPhraseDialog exec:/path/to/program'' is called with arguments
+      ``<host>:<port> <algo>'' instead of just ``<host>:<port>'' to allow the
+      distinction between RSA and DSA keys both to the user and to the
+      program.  This is important, because a single virtual host can use both
+      a RSA and a DSA cert/key at the same time.
+
+   *) Added pre-configured (but commented out) SSLCertificate[Key]File
+      directives to conf/httpd.conf-dist which explains the use of the
+      additional DSA cert/key.
+
+   *) Now the default for SSL_SDBM is 'yes' on Linux boxes because it occurrs
+      too often that Linux boxes with broken DBM libraries are used and people
+      are wondering why their session cache operations segfault the server. If
+      you really want to use the vendor DBM library on Linux you now have to
+      use --disable-rule=SSL_SDBM. But I recommend you to use SDBM except
+      you know what you're doing.
+
+   *) Fixed typo in FAQ: SSLSessioCache -> SSLSessionCache.
+   
+   *) Enhanced the logging facility: First the "Connection to child x"
+      messages now also contain the client IP address, second every
+      logfile entry now has a prefix which contains also the process id in
+      addition to the time. This way it's easier to identify logfile entries
+      written by different processes.
+   
+   *) Fixed ssl_engine_vars.c: SSL3_TXT_RSA_IDEA_128_SHA was contained twice
+      in a table. Instead the second occurrence should be
+      SSL2_TXT_IDEA_128_CBC_WITH_MD5.
+
+   *) Fixed the `union semun' situation for SSLMutex again, this time for
+      brain-dead anchient Linux versions which have incorrect semctl(2)
+      prototypes. We now enable IPC semaphores only on glibc 2.1 boxes.
+
   Changes with mod_ssl 2.4.4 (27-Sep-1999 to 28-Sep-1999)
 
    *) Fixed the `union semun' situation for SSLMutex which was broken in 2.4.3
@@ -200,7 +244,7 @@
 
    *) Added support for latest OpenSSL 0.9.4-dev snapshot version.
 
-   *) Fixed initialization and cleanup relazed problems with SSLMutex: The
+   *) Fixed initialization and cleanup related problems with SSLMutex: The
       mutex is now closed before the chown and the mutex is removed only in
       the parent on module shutdown.
 

@@ -162,8 +162,8 @@ void ssl_hook_NewConnection(conn_rec *conn)
      * later access inside callback functions
      */
     cpVHostID = ssl_util_vhostid(conn->pool, srvr);
-    ssl_log(srvr, SSL_LOG_INFO, "Connection to child %d established (server %s)",
-            conn->child_num, cpVHostID);
+    ssl_log(srvr, SSL_LOG_INFO, "Connection to child %d established "
+            "(server %s, client %s)", conn->child_num, cpVHostID, conn->remote_ip);
 
     /*
      * Seed the Pseudo Random Number Generator (PRNG)
@@ -505,8 +505,9 @@ void ssl_hook_CloseConnection(conn_rec *conn)
 
     /* and finally log the fact that we've closed the connection */
     ssl_log(conn->server, SSL_LOG_INFO,
-            "Connection to child %d closed with %s shutdown (server %s)",
-            conn->child_num, cpType, ssl_util_vhostid(conn->pool, conn->server));
+            "Connection to child %d closed with %s shutdown (server %s, client %s)",
+            conn->child_num, cpType, ssl_util_vhostid(conn->pool, conn->server),
+            conn->remote_ip);
     return;
 }
 

@@ -222,7 +222,9 @@ void ssl_log(server_rec *s, int level, const char *msg, ...)
         tstr[0] = NUL;
     else {
         t = ap_get_gmtoff(&timz);
-        strftime(tstr, 80, "[%d/%b/%Y %H:%M:%S] ", t);
+        strftime(tstr, 80, "[%d/%b/%Y %H:%M:%S", t);
+        i = strlen(tstr);
+        ap_snprintf(tstr+i, 80-i, " %05d] ", (unsigned int)getpid());
     }
 
     /*  determine whether newline should be writteni  */

@@ -257,7 +257,8 @@
 #endif
 #if defined(USE_SYSVSEM_SERIALIZED_ACCEPT) ||\
     defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) ||\
-    (defined(LINUX) && LINUX >= 2) ||\
+    (defined(LINUX) && defined(__GLIBC__) && defined(__GLIBC_MINOR__) && \
+     LINUX >= 2 && __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 1) ||\
     defined(SOLARIS2)
 #define SSL_CAN_USE_SEM
 #define SSL_HAVE_IPCSEM
@@ -521,7 +522,7 @@ typedef struct {
     ssl_ds_table   *tPublicCert;
     ssl_ds_table   *tPrivateKey;
     struct {
-        void *pV1, *pV2, *pV3, *pV4, *pV5, *pV6, *pV7, *pV8, *pV9;
+        void *pV1, *pV2, *pV3, *pV4, *pV5, *pV6, *pV7, *pV8, *pV9, *pV10;
     } rCtx;
 #ifdef SSL_VENDOR
     ap_ctx         *ctx;
