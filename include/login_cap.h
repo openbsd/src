@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.h,v 1.11 2004/08/03 21:00:06 millert Exp $	*/
+/*	$OpenBSD: login_cap.h,v 1.12 2004/08/09 21:15:08 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -51,6 +51,7 @@
 #define	LOGIN_SETRESOURCES	0x0010	/* Set resource limits */
 #define	LOGIN_SETUMASK		0x0020	/* Set umask */
 #define	LOGIN_SETUSER		0x0040	/* Set user */
+#define	LOGIN_SETENV		0x0080	/* Set environment */
 #define	LOGIN_SETALL 		0x007f	/* Set all. */
 
 #define	BI_AUTH		"authorize"		/* Accepted authentication */
