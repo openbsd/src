@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.226 2002/11/29 15:32:14 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.227 2002/11/29 15:37:23 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2544,10 +2544,12 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 {
 	struct	node_queue *n;
 	u_int8_t	added = 0;
+	u_int8_t	found = 0;
 
 	LOOP_THROUGH(struct node_queue, tqueue, queues,
 		if (!strncmp(a->qname, tqueue->queue, PF_QNAME_SIZE)) {
 			/* found ourselve in queues */
+			found++;
 			LOOP_THROUGH(struct node_queue, queue, nqueues,
 				n = calloc(1, sizeof(struct node_queue));
 				if (n == NULL)
@@ -2572,7 +2574,7 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 				if(!pfctl_add_altq(pf, a))
 					added++;
 
-			if (pf->opts & PF_OPT_VERBOSE) {
+			if ((pf->opts & PF_OPT_VERBOSE) && found == 1) {
 				print_altq(&pf->paltq->altq, 0);
 				if (nqueues && nqueues->tail) {
 					printf("{ ");
