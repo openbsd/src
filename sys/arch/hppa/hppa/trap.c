@@ -1,7 +1,7 @@
-/*	$OpenBSD: trap.c,v 1.57 2003/01/08 07:00:58 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.58 2003/01/09 20:48:56 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2001 Michael Shalayeff
+ * Copyright (c) 1998-2003 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,8 +23,8 @@
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF MIND,
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -344,7 +344,7 @@ trap(type, frame)
 		 */
 		if (type & T_USER && va >= VM_MAXUSER_ADDRESS) {
 			sv.sival_int = va;
-			trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+			trapsignal(p, SIGSEGV, vftype, SEGV_ACCERR, sv);
 			break;
 		}
 
@@ -362,10 +362,14 @@ trap(type, frame)
 			map = &vm->vm_map;
 
 		if (map->pmap->pm_space != space) {
-			printf("trap: space missmatch %d != %d\n",
-			    space, map->pmap->pm_space);
-			/* actually dump the user, crap the kernel */
-			goto dead_end;
+			if (map->pmap->pm_space != HPPA_SID_KERNEL) {
+				sv.sival_int = va;
+				trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+			} else {
+				printf("trap: space missmatch %d != %d\n",
+				    space, map->pmap->pm_space);
+				goto dead_end;
+			}
 		}
 
 #ifdef TRAPDEBUG
