@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.32 2000/02/02 16:50:29 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.33 2000/04/04 20:09:56 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -36,7 +36,7 @@
  * List of known PCMCIA vendors
  */
 
-vendor FUJITSU			0x0004  Fujitsu
+vendor FUJITSU			0x0004	Fujitsu
 vendor SANDISK			0x0045	Sandisk
 vendor NEWMEDIA			0x0057	NewMedia
 vendor INTEL			0x0089	Intel
@@ -63,8 +63,9 @@ vendor COMPAQ2			0x0183	Compaq
 vendor KINGSTON			0x0186	Kingston
 vendor DAYNA			0x0194	Dayna
 vendor RAYTHEON			0x01a6	Raytheon
-vendor BAY                      0x01eb  Bay Networks
+vendor BAY			0x01eb	Bay Networks
 vendor IODATA			0x01bf	I-O DATA
+vendor NOKIA			0x023d	Nokia Communications
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor LASAT			0x3401	Lasat
 vendor LEXARMEDIA		0x4e01	Lexar Media
@@ -100,6 +101,7 @@ product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
 
 /* Bay Networks */
 product BAY STACK_650		0x0804 BayStack 650
+product BAY SURFER_PRO		0x0806 AirSurfer Pro
 product BAY STACK_660		0x0807 BayStack 660
 
 /* BreezeCOM */
@@ -132,11 +134,14 @@ product IBM INFOMOVER		0x0002 National Semiconductor InfoMover
 product IBM TROPIC		0x001e Token Ring 4/16
 product IBM PORTABLE_CDROM	0x002d PCMCIA Portable CD-ROM Drive
 product IBM HOME_AND_AWAY	0x002e IBM Home&Away
-product IBM WIRELESS_LAN_ENTRY	0x0032 Wireless LAN Entry 
+product IBM WIRELESS_LAN_ENTRY	0x0032 Wireless LAN Entry
 product IBM ETHERJET		0x003f IBM EtherJet
 
 /* I-O DATA */
 product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
+
+/* Nokia Products */
+product NOKIA C020_WLAN		0x20c0 Nokia C020
 
 /* Intel */
 product INTEL EEPRO100		0x010a Intel EtherExpress PRO/100
@@ -160,7 +165,7 @@ product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
 product LUCENT WAVELAN_IEEE	0x0002 WaveLAN/IEEE
 
 /* Megahertz */
-product MEGAHERTZ XJEM3336 	0x0006 Megahertz X-JACK
+product MEGAHERTZ XJEM3336	0x0006 Megahertz X-JACK
 product MEGAHERTZ XJ4288	0x0023 Megahertz XJ4288
 product MEGAHERTZ XJ4336	0x0027 Megahertz XJ4336
 product MEGAHERTZ XJ5560	0x0034 Megahertz X-JACK 56kbps
@@ -224,14 +229,14 @@ product XIRCOM XIR_CEM_10	0x110a Xircom CEM-10
 product XIRCOM XIR_CEM_28	0x110b Xircom CEM-28
 
 /* Cards we know only by their cis */
-vendor PREMAX			-1 	Premax
-vendor PLANET			-1 	Planet
+vendor PREMAX			-1	Premax
+vendor PLANET			-1	Planet
 vendor PLANEX			-1	Planex
-vendor DLINK			-1 	D-Link
-vendor RPTI			-1 	RPTI
-vendor ACCTON			-1 	ACCTON
-vendor YEDATA			-1 	Y-E DATA
-vendor DIGITAL			-1 	Digital
+vendor DLINK			-1	D-Link
+vendor RPTI			-1	RPTI
+vendor ACCTON			-1	ACCTON
+vendor YEDATA			-1	Y-E DATA
+vendor DIGITAL			-1	Digital
 vendor TEAC			-1	TEAC
 vendor SVEC			-1	SVEC/Hawking
 vendor AMBICOM			-1	AmbiCom
@@ -241,6 +246,8 @@ vendor MELCO			-1	Melco Inc
 vendor EDIMAX			-1	Edimax
 vendor CNET			-1	CNet
 vendor SHUTTLE			-1	Shuttle
+vendor ICOM			-1	ICOM Inc
+vendor AMD			-1	AMD
 
 product MEGAHERTZ XJ2288	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL }
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL }
@@ -279,3 +286,5 @@ product PROXIM SYMPHONY		{ "PROXIM", "LAN&spPC&spCARD", "SYMPHONY", NULL }
 product EDIMAX NE2000		{ "PCMCIA", "Ethernet", NULL, NULL }
 product CNET NE2000		{ "CNet", "CN40BC&spEthernet", "D", "NE2000" }
 product SHUTTLE IDE_ATAPI	{ "SHUTTLE&spTECHNOLOGY&spLTD.", "PCCARD-IDE/ATAPI&spAdapter", NULL, NULL }
+product ICOM SL200	{ "Icom", "SL-200", NULL, NULL }
+product AMD AM79C930	{ "AMD", "Am79C930", NULL, NULL }
