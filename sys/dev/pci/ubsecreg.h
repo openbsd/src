@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.16 2002/01/19 21:15:37 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.17 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -26,6 +26,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Effort sponsored in part by the Defense Advanced Research Projects
+ * Agency (DARPA) and Air Force Research Laboratory, Air Force
+ * Materiel Command, USAF, under agreement number F30602-01-2-0537.
+ *
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.35 2002/04/03 05:12:41 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.36 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -25,6 +25,11 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Effort sponsored in part by the Defense Advanced Research Projects
+ * Agency (DARPA) and Air Force Research Laboratory, Air Force
+ * Materiel Command, USAF, under agreement number F30602-01-2-0537.
+ *
  */
 
 #include <sys/param.h>

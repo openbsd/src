@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_ebus.c,v 1.1 2002/02/18 17:52:08 jason Exp $	*/
+/*	$OpenBSD: pckbc_ebus.c,v 1.2 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -34,6 +34,11 @@
 /*
  * Driver for i8042 keyboard controller found on some PCI based
  * UltraSPARCs
+ *
+ * Effort sponsored in part by the Defense Advanced Research Projects
+ * Agency (DARPA) and Air Force Research Laboratory, Air Force
+ * Materiel Command, USAF, under agreement number F30602-01-2-0537.
+ *
  */
 
 #include <sys/types.h>

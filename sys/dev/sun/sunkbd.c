@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.3 2002/02/25 20:23:33 maja Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.4 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -29,7 +29,13 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Effort sponsored in part by the Defense Advanced Research Projects
+ * Agency (DARPA) and Air Force Research Laboratory, Air Force
+ * Materiel Command, USAF, under agreement number F30602-01-2-0537.
+ *
  */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
