@@ -1,4 +1,4 @@
-/*	$OpenBSD: nohup.c,v 1.3 1996/10/28 00:50:13 millert Exp $	*/
+/*	$OpenBSD: nohup.c,v 1.4 1997/06/20 13:31:17 deraadt Exp $	*/
 /*	$NetBSD: nohup.c,v 1.6 1995/08/31 23:35:25 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nohup.c	5.4 (Berkeley) 6/1/90";
 #endif
-static char rcsid[] = "$OpenBSD: nohup.c,v 1.3 1996/10/28 00:50:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: nohup.c,v 1.4 1997/06/20 13:31:17 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -127,7 +127,7 @@ dofile()
 	(void)fprintf(stderr, "nohup: can't open a nohup.out file.\n");
 	exit(EXIT_MISC);
 
-dupit:	(void)lseek(fd, 0L, SEEK_END);
+dupit:	(void)lseek(fd, 0, SEEK_END);
 	if (dup2(fd, STDOUT_FILENO) == -1) {
 		(void)fprintf(stderr, "nohup: %s\n", strerror(errno));
 		exit(EXIT_MISC);
