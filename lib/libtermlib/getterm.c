@@ -1,4 +1,4 @@
-/*	$OpenBSD: getterm.c,v 1.13 1996/12/14 07:18:47 tholo Exp $	*/
+/*	$OpenBSD: getterm.c,v 1.14 1997/12/16 02:56:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: getterm.c,v 1.13 1996/12/14 07:18:47 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getterm.c,v 1.14 1997/12/16 02:56:08 millert Exp $";
 #endif
 
 #include <stdlib.h>
@@ -413,7 +413,7 @@ _ti_getterm(name)
 	     */
 	    if ((s = getenv("LINES")) != NULL)
 		LINES = atoi(s);
-	    if ((s = getenv("COLS")) != NULL)
+	    if ((s = getenv("COLUMNS")) != NULL)
 		COLS = atoi(s);
 	}
 	lines = LINES;
