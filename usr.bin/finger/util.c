@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.7 1997/06/17 21:00:01 kstailey Exp $	*/
+/*	$OpenBSD: util.c,v 1.8 1997/06/30 06:24:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)util.c	5.14 (Berkeley) 1/17/91";*/
-static char rcsid[] = "$OpenBSD: util.c,v 1.7 1997/06/17 21:00:01 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.8 1997/06/30 06:24:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -194,7 +194,7 @@ enter_lastlog(pn)
 	}
 	if (fd == -1 ||
 	    lseek(fd, (off_t)(pn->uid * sizeof(ll)), SEEK_SET) !=
-	    (long)pn->uid * sizeof(ll) ||
+	    (long)(pn->uid * sizeof(ll)) ||
 	    read(fd, (char *)&ll, sizeof(ll)) != sizeof(ll)) {
 			/* as if never logged in */
 			ll.ll_line[0] = ll.ll_host[0] = '\0';
