@@ -6,10 +6,12 @@ TOP=		${.CURDIR}/..
 IMAGE=		miniroot-${REV}.fs
 CRUNCHCONF?=    ${TOP}/miniroot/${CBIN}.conf
 BASE=miniroot
+KERNEL=		${SRCSYSDIR}/arch/powerpc/compile/MINI/bsd
 
 MOUNT_POINT=	/mnt1
 BDEV=		/dev/rd0a
-CDEV=		/dev/rrd0c
+CDEV=		/dev/rrd0a
+RDEV=		/dev/rd0c
 
 .include "${TOP}/inst-common/Makefile.inc"
 
@@ -28,13 +30,22 @@ ${IMAGE}:	do_prep do_mount do_files do_umount_copy do_unconfig
 	rm rd.pid;\
 	fi
 
+elfrdsetroot:	${TOP}//elfrdsetroot.c
+	${HOSTCC} -o elfrdsetroot ${TOP}/elfrdsetroot.c
+
+setroot: ${IMAGE} bsd elfrdsetroot
+	elfrdsetroot bsd < ${IMAGE}
+
+bsd:	${KERNEL}
+	cp ${KERNEL} bsd
+
 do_prep: ${CBIN} do_unconfig
-	sh ${.CURDIR}/start_rdconfig.sh ${CDEV} ${NBLKS}
+	sh ${.CURDIR}/start_rdconfig.sh ${RDEV} ${NBLKS}
 	dd if=/usr/mdec/sdboot of=${CDEV}
 	disklabel -w ${CDEV} ${DISKTYPE}
 	
 do_mount:
-	-newfs ${NEWFSARGS} -s ${NBLKS} ${BDEV} ${DISKTYPE}
+	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
 	mount ${BDEV} ${MOUNT_POINT}
  
 do_umount_copy:
