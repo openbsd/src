@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.20 2003/06/02 07:06:56 deraadt Exp $ */
+/*	$OpenBSD: nvram.c,v 1.21 2003/09/28 22:10:41 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -325,10 +325,12 @@ inittodr(base)
 		cl->cl_csr &= ~CLK_READ;	/* time wears on... */
 	}
 	if ((time.tv_sec = chiptotime(sec, min, hour, day, mon, year)) == 0) {
-		printf("WARNING: bad date in nvram\n");
-		printf("day = %d, mon = %d, year = %d, hour = %d, min = %d, sec = %d",
+		printf("WARNING: bad date in nvram");
+#ifdef DEBUG
+		printf("\nday = %d, mon = %d, year = %d, hour = %d, min = %d, sec = %d",
 		       FROMBCD(day), FROMBCD(mon), FROMBCD(year) + YEAR0,
 		       FROMBCD(hour), FROMBCD(min), FROMBCD(sec));
+#endif
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the clock.
