@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.304 2000/08/25 09:37:52 niklas Exp $
+	$OpenBSD: pcidevs,v 1.305 2000/09/01 00:16:18 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -523,7 +523,8 @@ vendor INVERTEX		0x14e1	Invertex
 vendor AIRONET		0x14b9	Aironet
 vendor BROADCOM		0x14e4	Broadcom
 vendor DELTA		0x1500	Delta
-vendor BLUESTEEL	0x15AB	Bluesteel Networks
+vendor BLUESTEEL	0x15ab	Bluesteel Networks
+vendor VMWARE		0x15ad	VMware
 vendor NETSEC		0x1660	NetSec
 vendor SYMPHONY2	0x1c1c	Symphony Labs(2)
 vendor TEKRAM2		0x1de1	Tekram Technology(2)
@@ -706,6 +707,10 @@ product AMD PBC756_IDE		0x7409  756 IDE
 product AMD PBC756_PMC		0x740B  756 Power Management
 product AMD PBC756_USB		0x740C  756 USB Host
 
+/* AMI */
+product AMI MEGARAID1200	0x9010	MegaRAID Enterprise 1200
+product AMI MEGARAID1300	0x9060	MegaRAID Enterprise 1300
+
 /* Apple products */
 product APPLE BANDIT		0x0001	Bandit
 product APPLE GC		0x0002	GC
@@ -865,7 +870,7 @@ product COMPAQ USB		0x7020	USB
 product COMPAQ FXP		0xa0f0	Netelligent FXP
 product COMPAQ PCI_ISA_BRIDGE1	0xa0f3	PCI-ISA
 product COMPAQ N100TX		0xae32	Netelligent 10/100 TX
-product COMPAQ Nunknown		0xae33	Netelligent unknown
+product COMPAQ IDE		0xae33	Netelligent IDE
 product COMPAQ N10T		0xae34	Netelligent 10 T
 product COMPAQ IntNF3P		0xae35	Integrated NetFlex 3/P
 product COMPAQ DPNet100TX	0xae40	Dual Port Netelligent 10/100 TX
@@ -1030,6 +1035,7 @@ product INTEL EEPRO100		0x1227	EE Pro 100
 product INTEL EEPRO100S		0x1228	EE Pro 100 Smart
 product INTEL 82557		0x1229	82557
 product INTEL 82559		0x1030	82559
+product INTEL 82806AA_APIC	0x1161	82806AA PCI64 APIC
 product INTEL 82437FX		0x122d	82437FX (Triton)
 product INTEL 82371FB_ISA	0x122e	82371FB (Triton) PCI-ISA
 product INTEL 82371FB_IDE	0x1230	82371FB (Triton) IDE
@@ -1038,7 +1044,11 @@ product INTEL 82437MX		0x1235	82437 (Triton MX) PCI/CACHECOMP/DRAM
 product INTEL 82441FX		0x1237	82441FX
 product INTEL 82380AB		0x123c	82380AB Mobile PCI-ISA
 product INTEL 82380FB		0x124b	82380FB Mobile PCI-PCI
+product INTEL 82806AA		0x1360	82806AA PCI64
 product INTEL 82439HX		0x1250	82439HX (Triton II)
+product INTEL 82840_HB		0x1a21	82840 Host
+product INTEL 82840_AGP		0x1a23	82840 AGP
+product INTEL 82840_PCI		0x1a24	82840 PCI
 product INTEL 82801AA_LPC	0x2410	82801AA LPC Interface
 product INTEL 82801AA_IDE       0x2411  82801AA IDE
 product INTEL 82801AA_USB       0x2412  82801AA USB
@@ -1082,17 +1092,13 @@ product INTEL 82440MX_PM	0x719b	82440MX Power Management
 product INTEL 82440BX		0x71a0	82440BX PCI-AGP
 product INTEL 82440BX_AGP	0x71a1	82440BX AGP
 product INTEL 82443GX		0x71a2	82443GX
+product INTEL 82740		0x7800	82740 AGP
 product INTEL PCI450_PB		0x84c4	82450KX/GX (Orion)
 product INTEL PCI450_MC		0x84c5	82450KX/GX (Orion) Memory
-product INTEL 82840_HB		0x1a21	82840 Host
-product INTEL 82840_AGP		0x1a23	82840 AGP
-product INTEL 82840_PCI		0x1a24	82840 PCI
-product INTEL 82806AA		0x1360	82806AA PCI64
-product INTEL 82806AA_APIC	0x1161	82806AA PCI64 APIC
-product INTEL 82802AB		0x89ad	82802AB Firmware Hub 4Mbit
-product INTEL 82802AC		0x89ac	82802AC Firmware Hub 8Mbit
 product INTEL 82451NX		0x84ca	82451NX Mem & IO
 product INTEL 82454NX		0x84cb	82454NX PXB
+product INTEL 82802AB		0x89ad	82802AB Firmware Hub 4Mbit
+product INTEL 82802AC		0x89ac	82802AC Firmware Hub 8Mbit
 
 /* Intergraph products */
 product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
@@ -1710,6 +1716,9 @@ product VLSI 82C535		0x0104	82C535
 product VLSI 82C147		0x0105	82C147
 product VLSI 82C975		0x0200	82C975
 product VLSI 82C925		0x0280	82C925
+
+/* VMware */
+product VMWARE VIRTUAL		0x0710	Virtual
 
 /* Weitek products */
 product WEITEK P9000		0x9001	P9000
