@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.7 1997/04/01 22:59:38 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.8 1997/09/18 07:58:41 deraadt Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.7 1997/04/01 22:59:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.8 1997/09/18 07:58:41 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -561,16 +561,12 @@ mastercmp(a, b)
 		else
 			return (namecmp(*a, *b));
 
-	if (a_info == b_info)
-		return (sortfcn(*a, *b));
-
-	if ((*a)->fts_level == FTS_ROOTLEVEL)
+	if (a_info != b_info &&
+	    (*a)->fts_level == FTS_ROOTLEVEL && !f_listdir) {
 		if (a_info == FTS_D)
 			return (1);
-		else if (b_info == FTS_D)
+		if (b_info == FTS_D)
 			return (-1);
-		else
-			return (sortfcn(*a, *b));
-	else
-		return (sortfcn(*a, *b));
+	}
+	return (sortfcn(*a, *b));
 }
