@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.29 2004/12/22 00:38:25 david Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.30 2005/01/06 19:56:38 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -165,7 +165,7 @@ static struct cvs_cmd {
 		NULL,
 	},
 	{
-		CVS_OP_IMPORT, "import",   { "im",  "imp" }, NULL,
+		CVS_OP_IMPORT, "import",   { "im",  "imp" }, cvs_import,
 		"[-d] [-b branch] [-I ign] [-k subst] [-m msg] "
 		"repository vendor-tag release-tags ...",
 		"b:dI:k:m:",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.2 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: import.c,v 1.3 2005/01/06 19:56:38 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <amni@pandora.be>
  * All rights reserved.
@@ -36,14 +36,18 @@
 #include <string.h>
 #include <sysexits.h>
 
-#include "cvs.h"
 #include "log.h"
 #include "file.h"
+#include "cvs.h"
 #include "proto.h"
 
-static int do_import(struct cvsroot *, char **);
-static int cvs_import_dir(struct cvsroot *, char *, char *);
-static int cvs_import_file(struct cvsroot *, CVSFILE *);
+
+#define CVS_IMPORT_DEFBRANCH    "1.1.1"
+
+
+
+int cvs_import_file(CVSFILE *, void *);
+char repo[MAXPATHLEN];
 
 /*
  * cvs_import()
@@ -54,14 +58,26 @@ int
 cvs_import(int argc, char **argv)
 {
 	int ch, flags;
-	char *repo, *vendor, *release;
+	char *branch, *ep;
 	struct cvsroot *root;
+	RCSNUM *bnum;
 
-	flags = CF_IGNORE|CF_NOSYMS;
+	branch = CVS_IMPORT_DEFBRANCH;
+	flags = CF_RECURSE | CF_IGNORE | CF_NOSYMS;
 
 	while ((ch = getopt(argc, argv, "b:dI:k:m:")) != -1) {
 		switch (ch) {
 		case 'b':
+			branch = optarg;
+			if ((bnum = rcsnum_alloc()) == NULL)
+				return (-1);
+			if ((rcsnum_aton(branch, &ep, bnum) < 0) ||
+			    (*ep != '\0')) {
+				cvs_log(LP_ERR, "%s is not a numeric branch",
+				    branch);
+				return (EX_USAGE);
+			}
+			break;
 		case 'd':
 			break;
 		case 'I':
@@ -91,167 +107,82 @@ cvs_import(int argc, char **argv)
 		return (EX_DATAERR);
 
 	root = CVS_DIR_ROOT(cvs_files);
+	if (root == NULL) {
+		cvs_log(LP_ERR,
+		    "No CVSROOT specified!  Please use the `-d' option");
+		cvs_log(LP_ERR,
+		    "or set the CVSROOT environment variable.");
+		return (EX_USAGE);
+	}
+
+	if ((cvs_msg == NULL) &&
+	    (cvs_msg = cvs_logmsg_get(NULL, NULL, NULL, NULL)) == NULL)
+		return (-1);
+
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		cvs_connect(root);
+		if ((cvs_connect(root) < 0) ||
+		    (cvs_sendarg(root, "-b", 0) < 0) ||
+		    (cvs_sendarg(root, branch, 0) < 0) ||
+		    (cvs_logmsg_send(root, cvs_msg) < 0) ||
+		    (cvs_sendarg(root, argv[0], 0) < 0) ||
+		    (cvs_sendarg(root, argv[1], 0) < 0) ||
+		    (cvs_sendarg(root, argv[2], 0) < 0))
+			return (EX_PROTOCOL);
+	}
 
-		/* Do it */
-		do_import(root, argv);
+	snprintf(repo, sizeof(repo), "%s/%s", root->cr_dir, argv[0]);
+	cvs_file_examine(cvs_files, cvs_import_file, NULL);
 
-		cvs_disconnect(root);
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		if (cvs_senddir(root, cvs_files) < 0 ||
+		    cvs_sendreq(root, CVS_REQ_IMPORT, NULL) < 0)
+			return (EX_PROTOCOL);
 	}
 
 	return (0);
 }
 
 /*
- * Import a module using a server
+ * cvs_import_file()
+ *
+ * Perform the import of a single file or directory.
  */
-static int
-do_import(struct cvsroot *root, char **argv)
+int
+cvs_import_file(CVSFILE *cfp, void *arg)
 {
-	char repository[MAXPATHLEN];
+	int ret;
+	struct cvsroot *root;
+	char fpath[MAXPATHLEN], repodir[MAXPATHLEN];
 
-	/* XXX temporary */
-	if (cvs_sendarg(root, "-m testlog", 0) < 0) {
-		cvs_log(LP_ERR, "failed to send temporary logmessage");
-		return (-1);
-	}
+	root = CVS_DIR_ROOT(cfp);
 
-	/* send arguments */
-	if (cvs_sendarg(root, argv[0], 0) < 0 ||
-	    cvs_sendarg(root, argv[1], 0) < 0 ||
-	    cvs_sendarg(root, argv[2], 0) < 0) {
-		cvs_log(LP_ERR, "failed to send arguments");
-		return (-1);
-	}
+	cvs_file_getpath(cfp, fpath, sizeof(fpath));
+	printf("Importing %s\n", fpath);
 
-	/* create the repository name */
-	snprintf(repository, sizeof(repository), "%s/%s",
-	    root->cr_dir, argv[0]);
-
-	cvs_files = cvs_file_get(".", 0);
-	if (cvs_files == NULL) {
-		cvs_log(LP_ERR, "failed to obtain info on root");
-		return (-1);
-	}
-
-	/* walk the root directory */
-	cvs_import_dir(root, ".", repository);
-
-	/* send import request */
-	if (cvs_senddir(root, cvs_files) < 0 ||
-	    cvs_sendraw(root, repository, strlen(repository) < 0 ||
-	    cvs_sendraw(root, "\n", 1) < 0 ||
-	    cvs_sendreq(root, CVS_REQ_IMPORT, NULL) < 0))
-		cvs_log(LP_ERR, "failed to import repository %s",
-		    repository);
-
-
-	/* done */
-	return (0);
-}
-
-static int
-cvs_import_dir(struct cvsroot *root, char *dirname, char *repo)
-{
-	char *cwd;
-	char *basedir;
-	char cvsdir[MAXPATHLEN];
-	CVSFILE *parent, *fp;
-
-	if ((basedir = strrchr(dirname, '/')) != NULL)
-		basedir++;
-	else
-		basedir = dirname;
-
-	/* save current directory */
-	if ((cwd = getcwd(NULL, MAXPATHLEN)) == NULL) {
-		cvs_log(LP_ERR, "couldn't save current directory");
-		return (-1);
-	}
-
-	/* Switch to the new directory */
-	if (chdir(basedir) < 0) {
-		cvs_log(LP_ERR, "failed to switch to directory %s", dirname);
-		return (-1);
-	}
-
-	if (!strcmp(dirname, "."))
-		strlcpy(cvsdir, repo, sizeof(cvsdir));
-	else
-		snprintf(cvsdir, sizeof(cvsdir), "%s/%s", repo, dirname);
-
-	/* Obtain information about the directory */
-	parent = cvs_file_get(".", CF_SORT|CF_RECURSE|CF_IGNORE);
-	if (parent == NULL) {
-		cvs_log(LP_ERR, "couldn't obtain info on %s", dirname);
-		return (-1);
-	}
-
-	if (cvs_sendreq(root, CVS_REQ_DIRECTORY, dirname) < 0 ||
-	    cvs_sendraw(root, cvsdir, strlen(cvsdir)) < 0 ||
-	    cvs_sendraw(root, "\n", 1) < 0)
-		return (-1);
-
-	printf("Importing %s\n", dirname);
-
-	/* Walk the directory */
-	TAILQ_FOREACH(fp, &(parent->cf_ddat->cd_files), cf_list) {
-		/* If we have a sub directory, skip it for now */
-		if (fp->cf_type == DT_DIR)
-			continue;
-
-		/* Import the file */
-		if (cvs_import_file(root, fp) < 0)
-#if 0
-			cvs_log(LP_ERR, "failed to import %s", fp->cf_path);
-#else
-			cvs_log(LP_ERR, "failed to import %s", NULL);
-#endif
-	}
-
-	/* Walk the subdirectories */
-	TAILQ_FOREACH(fp, &(parent->cf_ddat->cd_files), cf_list) {
-		if (fp->cf_type != DT_DIR)
-			continue;
-		if (!strcmp(CVS_FILE_NAME(fp), ".") ||
-		    !strcmp(CVS_FILE_NAME(fp), ".."))
-			continue;
-
-		if (strcmp(dirname, "."))
-			snprintf(cvsdir, sizeof(cvsdir), "%s/%s",
-			    dirname, CVS_FILE_NAME(fp));
+	if (cfp->cf_type == DT_DIR) {
+		if (!strcmp(CVS_FILE_NAME(cfp), "."))
+			strlcpy(repodir, repo, sizeof(repodir));
 		else
-			strlcpy(cvsdir, CVS_FILE_NAME(fp), sizeof(cvsdir));
-		if (cvs_import_dir(root, cvsdir, repo) < 0)
-			cvs_log(LP_ERR, "failed to import directory %s",
-			    CVS_FILE_NAME(fp));
+			snprintf(repodir, sizeof(repodir), "%s/%s", repo, fpath);
+		if (root->cr_method != CVS_METHOD_LOCAL) {
+			ret = cvs_sendreq(root, CVS_REQ_DIRECTORY, fpath);
+			if (ret == 0)
+				ret = cvs_sendln(root, repodir);
+		} else {
+			/* create the directory */
+		}
+
+		return (0);
 	}
 
-	cvs_file_free(parent);
-
-	/* restore working directory */
-	if (chdir(cwd) < 0) {
-		cvs_log(LP_ERR, "failed to restore directory %s", cwd);
-		return (-1);
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		if (cvs_sendreq(root, CVS_REQ_MODIFIED, CVS_FILE_NAME(cfp)) < 0)
+			return (-1);
+		if (cvs_sendfile(root, fpath) < 0)
+			return (-1);
+	} else {
+		/* local import */
 	}
-
-	return (0);
-}
-
-/*
- * Import a file
- */
-static int
-cvs_import_file(struct cvsroot *root, CVSFILE *fp)
-{
-	/* Send a Modified response follwed by the
-	 * file's mode, length and contents
-	 */
-	if (cvs_sendreq(root, CVS_REQ_MODIFIED, CVS_FILE_NAME(fp)) < 0)
-		return (-1);
-	if (cvs_sendfile(root, CVS_FILE_NAME(fp)) < 0)
-		return (-1);
 
 	return (0);
 }
