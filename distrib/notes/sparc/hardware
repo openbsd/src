@@ -48,7 +48,7 @@ Supported devices {:-include-:}:
 		SBus AMD Lance ethernet cards, 
 		on-board Intel 82586 ethernet (ie0 on 4/100's and 4/200's), 
 		VME Intel 82586 ethernet cards
-		SBus SunSwift and Quad FastEthernet cards (hme)
+		SBus SunSwift and Quad FastEthernet cards (hme, qfe)
 		SBus FastEthernet cards (qec+be)
 		SBus QuadEthernet cards (qec+qe)
 
