@@ -1,3 +1,4 @@
+.\"	$OpenBSD: ftpd.8,v 1.3 1996/06/18 10:09:17 downsj Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -33,7 +34,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd April 19, 1994
+.Dd June 18, 1996
 .Dt FTPD 8
 .Os BSD 4.2
 .Sh NAME
@@ -42,9 +43,10 @@
 Internet File Transfer Protocol server
 .Sh SYNOPSIS
 .Nm ftpd
-.Op Fl dl
+.Op Fl dlU
 .Op Fl T Ar maxtimeout
 .Op Fl t Ar timeout
+.Op Fl u Ar mask
 .Sh DESCRIPTION
 .Nm Ftpd
 is the
@@ -68,6 +70,13 @@ session is logged using syslog with a facility of LOG_FTP.
 If this option is specified twice, the retrieve (get), store (put), append,
 delete, make directory, remove directory and rename operations and
 their filename arguments are also logged.
+.It Fl U
+Each concurrent
+.Xr ftp 1
+session is logged to the file
+.Pa /var/run/utmp ,
+making them visible to commands such as
+.Xr who 1 .
 .It Fl T
 A client may also request a different timeout period;
 the maximum period allowed may be set to
@@ -80,6 +89,9 @@ The default limit is 2 hours.
 The inactivity timeout period is set to
 .Ar timeout
 seconds (the default is 15 minutes).
+.It Fl u
+The default umask is set to
+.Ar mask .
 .El
 .Pp
 The file
@@ -296,10 +308,13 @@ Welcome notice.
 Welcome notice after login.
 .It Pa /etc/nologin
 Displayed and access refused.
+.It Pa /var/run/utmp
+List of users on the system.
 .El
 .Sh SEE ALSO
 .Xr ftp 1 ,
 .Xr skey 1 ,
+.Xr who 1 ,
 .Xr getusershell 3 ,
 .Xr syslogd 8
 .Sh BUGS

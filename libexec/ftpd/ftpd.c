@@ -1,3 +1,4 @@
+/*	$OpenBSD: ftpd.c,v 1.2 1996/06/18 10:09:20 downsj Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -82,6 +83,7 @@ static char rcsid[] = "$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $"
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#include <utmp.h>
 
 #include "pathnames.h"
 #include "extern.h"
@@ -117,6 +119,7 @@ int	type;
 int	form;
 int	stru;			/* avoid C keyword */
 int	mode;
+int	doutmp = 0;		/* update utmp file */
 int	usedefault = 1;		/* for data transfers */
 int	pdata = -1;		/* for passive mode */
 sig_atomic_t transflag;
@@ -132,6 +135,7 @@ char	hostname[MAXHOSTNAMELEN];
 char	remotehost[MAXHOSTNAMELEN];
 static char ttyline[20];
 char	*tty = ttyline;		/* for klogin */
+static struct utmp utmp;	/* for utmp */
 
 #if defined(KERBEROS)
 int	notickets = 1;
@@ -235,9 +239,9 @@ main(argc, argv, envp)
 	debug = 0;
 
 	/* set this here so klogin can use it... */
-	(void)sprintf(ttyline, "ftp%d", getpid());
+	(void)snprintf(ttyline, sizeof(ttyline), "ftp%d", getpid());
 
-	while ((ch = getopt(argc, argv, "dlt:T:u:v")) != EOF) {
+	while ((ch = getopt(argc, argv, "dlt:T:u:Uv")) != EOF) {
 		switch (ch) {
 		case 'd':
 			debug = 1;
@@ -270,6 +274,10 @@ main(argc, argv, envp)
 				defumask = val;
 			break;
 		    }
+
+		case 'U':
+			doutmp = 1;
+			break;
 
 		case 'v':
 			debug = 1;
@@ -521,8 +529,11 @@ end_login()
 {
 
 	(void) seteuid((uid_t)0);
-	if (logged_in)
+	if (logged_in) {
 		logwtmp(ttyline, "", "");
+		if (doutmp)
+			logout(utmp.ut_line);
+	}
 	pw = NULL;
 	logged_in = 0;
 	guest = 0;
@@ -597,6 +608,17 @@ skip:
 
 	/* open wtmp before chroot */
 	logwtmp(ttyline, pw->pw_name, remotehost);
+
+	/* open utmp before chroot */
+	if (doutmp) {
+		memset((void *)&utmp, 0, sizeof(utmp));
+		(void)time(&utmp.ut_time);
+		(void)strncpy(utmp.ut_name, pw->pw_name, sizeof(utmp.ut_name));
+		(void)strncpy(utmp.ut_host, remotehost, sizeof(utmp.ut_host));
+		(void)strncpy(utmp.ut_line, ttyline, sizeof(utmp.ut_line));
+		login(&utmp);
+	}
+
 	logged_in = 1;
 
 	dochroot = checkuser(_PATH_FTPCHROOT, pw->pw_name);
@@ -1394,6 +1416,8 @@ dologout(status)
 	if (logged_in) {
 		(void) seteuid((uid_t)0);
 		logwtmp(ttyline, "", "");
+		if (doutmp)
+			logout(utmp.ut_line);
 #if defined(KERBEROS)
 		if (!notickets && krbtkfile_env)
 			unlink(krbtkfile_env);
