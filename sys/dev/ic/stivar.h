@@ -1,4 +1,4 @@
-/*	$OpenBSD: stivar.h,v 1.11 2003/08/17 02:47:47 mickey Exp $	*/
+/*	$OpenBSD: stivar.h,v 1.12 2003/08/17 05:52:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -33,6 +33,7 @@ struct sti_softc {
 	struct device sc_dev;
 	void *sc_ih;
 
+	u_int	sc_wsmode;
 	u_int	sc_flags;
 #define	STI_TEXTMODE	0x0001
 #define	STI_CLEARSCR	0x0002

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.28 2003/08/17 02:55:08 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.29 2003/08/17 05:52:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -312,6 +312,7 @@ sti_attach_common(sc)
 		return;
 	}
 
+	sc->sc_wsmode = WSDISPLAYIO_MODE_EMUL;
 	printf(": %s rev %d.%02d;%d, ID 0x%016llX\n"
 	    "%s: %dx%d frame buffer, %dx%dx%d display, offset %dx%d\n",
 	    cfg.name, dd->dd_grrev >> 4, dd->dd_grrev & 0xf, dd->dd_lrrev,
@@ -562,8 +563,26 @@ sti_ioctl(v, cmd, data, flag, p)
 {
 	struct sti_softc *sc = v;
 	struct wsdisplay_fbinfo *wdf;
+	u_int mode;
+	int ret;
 
+	ret = 0;
 	switch (cmd) {
+	case WSDISPLAYIO_GMODE:
+		*(u_int *)data = sc->sc_wsmode;
+		break;
+
+	case WSDISPLAYIO_SMODE:
+		mode = *(u_int *)data;
+		if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL &&
+		    mode == WSDISPLAYIO_MODE_DUMBFB)
+			ret = sti_init(sc, 0);
+		else if (sc->sc_wsmode == WSDISPLAYIO_MODE_DUMBFB &&
+		    mode == WSDISPLAYIO_MODE_EMUL)
+			ret = sti_init(sc, STI_TEXTMODE);
+		sc->sc_wsmode = mode;
+		break;
+
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_STI;
 		break;
@@ -593,7 +612,7 @@ sti_ioctl(v, cmd, data, flag, p)
 		return (-1);	/* not supported yet */
 	}
 
-	return (0);
+	return (ret);
 }
 
 paddr_t
