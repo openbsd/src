@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.17 2002/10/12 01:09:43 krw Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.18 2003/06/16 00:37:35 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -547,7 +547,7 @@ of_display_console()
 			panic(": no address");
 		}
 	}
-	len = OF_getprop(display_node, "backlight-control",
+	len = OF_getprop(stdout_node, "backlight-control",
 	    backlight_control, sizeof(backlight_control));
 	if (len > 0)
 		cons_backlight_available = 1;
