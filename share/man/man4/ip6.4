@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.19 2005/01/01 03:35:53 jmc Exp $
+.\"	$OpenBSD: ip6.4,v 1.20 2005/01/02 18:18:15 jmc Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -385,13 +385,9 @@ Get or set the
 .Xr ipsec 4
 authentication level.
 .It Dv IPV6_ESP_TRANS_LEVEL Fa "int *"
-Get or set the
-.Xr esp 4
-transport level.
+Get or set the ESP transport level.
 .It Dv IPV6_ESP_NETWORK_LEVEL Fa "int *"
-Get or set the
-.Xr esp 4
-encapsulation level.
+Get or set the ESP encapsulation level.
 .It Dv IPV6_IPCOMP_LEVEL Fa "int *"
 Get or set the
 .Xr ipcomp 4
