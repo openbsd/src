@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.72 2002/07/26 18:34:06 miod Exp $
+#	$OpenBSD: GENERIC,v 1.73 2002/09/18 04:34:41 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -48,8 +48,10 @@ vgafb*		at pci? dev ? function ?
 wsdisplay*	at vgafb?
 
 # PCI crypto
-hifn*		at pci? dev ? function ?
-ubsec*		at pci? dev ? function ?
+hifn*		at pci? dev ? function ?	# Hifn 7751/7811/7951
+#nofn*		at pci? dev ? function ?	# Hifn 7814/7851/7854
+lofn*		at pci? dev ? function ?	# Hifn 6500
+ubsec*		at pci? dev ? function ?	# Broadcom 580[125]/582[012]
 
 # PCI sound
 autri*		at pci? dev ? function ?	# Trident 4D WAVE
