@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_openbsd.h,v 1.7 2000/02/20 21:22:41 mjacob Exp $ */
+/*	$OpenBSD: isp_openbsd.h,v 1.8 2000/03/05 22:20:09 mjacob Exp $ */
 /*
  * OpenBSD Specific definitions for the Qlogic ISP Host Adapter
  *
@@ -63,7 +63,7 @@
 #include <vm/pmap.h>
 
 #define	ISP_PLATFORM_VERSION_MAJOR	0
-#define	ISP_PLATFORM_VERSION_MINOR	8
+#define	ISP_PLATFORM_VERSION_MINOR	9
 
 #define	ISP_SCSI_XFER_T		struct scsi_xfer
 struct isposinfo {
