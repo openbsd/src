@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.7 1996/08/28 08:55:30 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.8 1996/09/18 22:03:48 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.3 1996/01/07 16:53:15 ragge Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -67,7 +67,7 @@ all)
 
 std)
 	mknod console		c 0 0
-	mknod drum		c 7 0	; chmod 640 drum ; chgrp kmem drum
+	mknod drum		c 7 0	; chmod 640 drum ; chown root.kmem drum
 	mknod floppy		c 8 0
 	mknod crl		c 35 0
 	mknod csa1		c 51 0
@@ -75,8 +75,8 @@ std)
 	mknod tu0		b 8 0
 	mknod tu1		b 8 1
 	mknod kUmem		c 3 3	; chmod 600 kUmem
-	mknod kmem		c 3 1	; chmod 640 kmem ; chgrp kmem kmem
-	mknod mem		c 3 0	; chmod 640 mem ; chgrp kmem mem
+	mknod kmem		c 3 1	; chmod 640 kmem ; chown root.kmem kmem
+	mknod mem		c 3 0	; chmod 640 mem ; chown root.kmem mem
 	mknod null		c 3 2	; chmod 666 null
 	mknod zero              c 3 12  ; chmod 666 zero
 	mknod tty		c 2 0	; chmod 666 tty
@@ -212,7 +212,7 @@ hp*|hk*|up*|ra*|kra*|rl*|rb*|ccd*|vnd*)
 		mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
 		mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
 		fi
-		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+		chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 		;;
 	*)

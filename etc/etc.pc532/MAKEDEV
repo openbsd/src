@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.6 1996/08/28 08:55:26 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.7 1996/09/18 22:03:45 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -78,9 +78,9 @@ floppy)
 std)
 	rm -f console drum mem kmem null zero io tty klog stdin stdout stderr
 	mknod console		c 0 0
-	mknod drum		c 4 0	; chmod 640 drum ; chgrp kmem drum
-	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
-	mknod mem		c 2 0	; chmod 640 mem	; chgrp kmem mem
+	mknod drum		c 4 0	; chmod 640 drum ; chown root.kmem drum
+	mknod kmem		c 2 1	; chmod 640 kmem ; chown root.kmem kmem
+	mknod mem		c 2 0	; chmod 640 mem	; chown root.kmem mem
 	mknod null		c 2 2	; chmod 666 null
 	mknod zero		c 2 12	; chmod 666 zero
 	mknod tty		c 1 0	; chmod 666 tty
@@ -105,7 +105,7 @@ rd*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	mknod rd${unit} b 3 $unit
 	mknod rrd${unit} c 9 $unit
-	chgrp operator rd${unit} rrd${unit}
+	chown root.operator rd${unit} rrd${unit}
 	chmod 640 rd${unit} rrd${unit}
 	umask 77
 	;;
@@ -134,7 +134,7 @@ sd*|vnd*|ccd*)
 	mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
 	mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
 	mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
-	chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+	chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 	chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 	umask 77
 	;;
@@ -184,7 +184,7 @@ st*)
 	mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
 	mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
 	mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
-	chgrp operator ${name}${unit} n${name}${unit} \
+	chown root.operator ${name}${unit} n${name}${unit} \
 		e$name$unit en$name$unit \
 		r${name}${unit} nr${name}${unit} \
 		er${name}${unit} enr${name}${unit} 
@@ -205,7 +205,7 @@ cd*)
 	mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
 	mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
 	mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
-	chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+	chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 	chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 	umask 77
 	;;

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.13 1996/08/29 13:22:22 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.14 1996/09/18 22:03:38 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -121,9 +121,9 @@ std)
 	rm -f console drum kmem mem reload null zero tty
 	rm -f klog stdin stdout stderr
 	mknod console		c 0 0
-	mknod drum		c 3 0	; chmod 640 drum ; chgrp kmem drum
-	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
-	mknod mem		c 2 0	; chmod 640 mem ; chgrp kmem mem
+	mknod drum		c 3 0	; chmod 640 drum ; chown root.kmem drum
+	mknod kmem		c 2 1	; chmod 640 kmem ; chown root.kmem kmem
+	mknod mem		c 2 0	; chmod 640 mem ; chown root.kmem mem
 	mknod reload		c 2 20	; chmod 600 reload
 	mknod zero		c 2 12	; chmod 666 zero
 	mknod null		c 2 2	; chmod 666 null
@@ -164,7 +164,7 @@ st*)
 		mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
 		mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
 		mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
-		chgrp operator ${name}${unit} n${name}${unit} \
+		chown root.operator ${name}${unit} n${name}${unit} \
 			e$name$unit en$name$unit \
 			r${name}${unit} nr${name}${unit} \
 			er${name}${unit} enr${name}${unit} 
@@ -189,7 +189,7 @@ fd*)
 		mknod fd${unit}b b 2 `expr $unit '*' 16 + 1`
 		mknod rfd${unit}a c 18 `expr $unit '*' 16`
 		mknod rfd${unit}b c 18 `expr $unit '*' 16 + 1`
-		chgrp operator fd$unit? rfd$unit?
+		chown root.operator fd$unit? rfd$unit?
 		chmod 640 fd$unit? rfd$unit?
 		;;
 	*)
@@ -245,7 +245,7 @@ sd*|vnd*|ccd*|wd*)
 		mknod r${name}${unit}o	c $chr `expr $unit '*' 16 + 14`
 		mknod r${name}${unit}p	c $chr `expr $unit '*' 16 + 15`
 		fi
-		chgrp operator ${name}${unit}[a-p] r${name}${unit}[a-p]
+		chown root.operator ${name}${unit}[a-p] r${name}${unit}[a-p]
 		chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
 		;;
 	*)
@@ -268,7 +268,7 @@ cd*|acd*)
 		mknod ${name}${unit}c   b $blk `expr $unit '*' 8 + 2`
 		mknod r${name}${unit}a  c $chr `expr $unit '*' 8 + 0`
 		mknod r${name}${unit}c  c $chr `expr $unit '*' 8 + 2`
-		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+		chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 		;;
 	*)
@@ -288,7 +288,7 @@ tty0*|ttyA*)
 			rm -f tty0${unit} ttym${unit}
 			mknod tty0${unit} c 12 0
 			mknod ttym${unit} c 12 128
-			chown uucp:wheel tty0${unit} ttym${unit}
+			chown uucp.wheel tty0${unit} ttym${unit}
 			;;
 		*)
 			echo bad unit for tty0 in: $i
@@ -300,7 +300,7 @@ tty0*|ttyA*)
 			rm -f ttyA${unit} ttyM${unit}
 			mknod ttyA${unit} c 17 $unit
 			mknod ttyM${unit} c 17 `expr 128 + $unit`
-			chown uucp:wheel ttyA${unit} ttyM${unit}
+			chown uucp.wheel ttyA${unit} ttyM${unit}
 			;;
 		*)
 			echo bad unit for ttyA in: $i
@@ -468,7 +468,7 @@ tun*)
 lkm)
         rm -f lkm
         mknod lkm c 24 0
-        chown root:kmem lkm
+        chown root.kmem lkm
         chmod 640 lkm
         ;;
 

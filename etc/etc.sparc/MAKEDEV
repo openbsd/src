@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.8 1996/09/12 05:07:52 downsj Exp $
+#	$OpenBSD: MAKEDEV,v 1.9 1996/09/18 22:03:47 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -90,13 +90,13 @@ all)
 std)
 	mknod console		c 0 0
 	mknod tty		c 2 0	; chmod 666 tty
-	mknod kmem		c 3 1	; chmod 640 kmem ; chgrp kmem kmem
-	mknod mem		c 3 0	; chmod 640 mem ; chgrp kmem mem
+	mknod kmem		c 3 1	; chmod 640 kmem ; chown root.kmem kmem
+	mknod mem		c 3 0	; chmod 640 mem ; chown root.kmem mem
 	mknod null		c 3 2	; chmod 666 null
 	mknod zero		c 3 12	; chmod 666 zero
-	mknod eeprom		c 3 11  ; chmod 640 eeprom ; chgrp kmem eeprom
+	mknod eeprom		c 3 11  ; chmod 640 eeprom ; chown root.kmem eeprom
 	mknod openprom		c 70 0  ; chmod 644 openprom
-	mknod drum		c 7 0	; chmod 640 drum ; chgrp kmem drum
+	mknod drum		c 7 0	; chmod 640 drum ; chown root.kmem drum
 	mknod klog		c 16 0	; chmod 600 klog
 	mknod stdin		c 24 0	; chmod 666 stdin
 	mknod stdout		c 24 1	; chmod 666 stdout
@@ -210,7 +210,7 @@ ccd*|fd*|sd*|xd*|xy*|cd*|vnd*)
 		mknod r${name}${unit}n	c $chr `expr $unit '*' 16 + 13`
 		mknod r${name}${unit}o	c $chr `expr $unit '*' 16 + 14`
 		mknod r${name}${unit}p	c $chr `expr $unit '*' 16 + 15`
-		chgrp operator ${name}${unit}[a-p] r${name}${unit}[a-p]
+		chown root.operator ${name}${unit}[a-p] r${name}${unit}[a-p]
 		chmod 640 ${name}${unit}[a-p] r${name}${unit}[a-p]
 		;;
 	*)
@@ -235,7 +235,7 @@ st*)
 	mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
 	mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
 	mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
-	chgrp operator ${name}${unit} n${name}${unit} \
+	chown root.operator ${name}${unit} n${name}${unit} \
 		e$name$unit en$name$unit \
 		r${name}${unit} nr${name}${unit} \
 		er${name}${unit} enr${name}${unit} 
@@ -253,7 +253,7 @@ ch*)
 	esac
 	rm -f $name$unit
 	mknod ${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-	chgrp operator ${name}${unit}
+	chown root.operator ${name}${unit}
 	chmod 640 ${name}${unit}
 	umask 77
 	;;

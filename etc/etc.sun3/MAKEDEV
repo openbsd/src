@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.8 1996/08/28 08:55:29 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.9 1996/09/18 22:03:47 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.8 1996/03/03 16:54:17 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -105,9 +105,9 @@ std)
 	mk klog		c 16 0 600
 	mk fb		c 22 0
 	mk kbd		c 29 0
-      mk stdin        c 23 0
-      mk stdout       c 23 1
-      mk stderr       c 23 2
+	mk stdin        c 23 0
+	mk stdout       c 23 1
+	mk stderr       c 23 2
 	;;
 
 fd)

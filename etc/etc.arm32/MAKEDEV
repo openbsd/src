@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.5 1996/08/28 08:55:22 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.6 1996/09/18 22:03:40 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.3 1996/04/26 20:10:24 mark Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -105,11 +105,11 @@ floppy)
 std)
 	rm -f console drum mem kmem null zero tty klog stdin stdout stderr kbd
 	rm -f kbdctl vidcvideo0 vidc iic rtc0
-	mknod mem		c 0 0	; chmod 640 mem	; chgrp kmem mem
-	mknod kmem		c 0 1	; chmod 640 kmem ; chgrp kmem kmem
+	mknod mem		c 0 0	; chmod 640 mem	; chown root.kmem mem
+	mknod kmem		c 0 1	; chmod 640 kmem ; chown root.kmem kmem
 	mknod null		c 0 2	; chmod 666 null
 	mknod zero		c 0 3	; chmod 666 zero
-	mknod drum		c 1 0	; chmod 640 drum ; chgrp kmem drum
+	mknod drum		c 1 0	; chmod 640 drum ; chown root.kmem drum
 	mknod console		c 2 0
 	mknod tty		c 3 0	; chmod 666 tty
 	mknod klog		c 5 0	; chmod 600 klog
@@ -168,7 +168,7 @@ fd*|sd*|vnd*|wd*|ccd*)
 	mknod r${name}${unit}f	c $chr `expr $unit '*' 8 + 5`
 	mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
 	mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
-	chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+	chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 	chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 	umask 77
 	;;
@@ -219,7 +219,7 @@ st*)
 	mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
 	mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
 	mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
-	chgrp operator ${name}${unit} n${name}${unit} \
+	chown root.operator ${name}${unit} n${name}${unit} \
 		e$name$unit en$name$unit \
 		r${name}${unit} nr${name}${unit} \
 		er${name}${unit} enr${name}${unit} 
@@ -237,7 +237,7 @@ ch*)
 	esac
 	rm -f $name$unit
 	mknod ${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-	chgrp operator ${name}${unit}
+	chown root.operator ${name}${unit}
 	chmod 640 ${name}${unit}
 	umask 77
 	;;
@@ -249,7 +249,7 @@ uk*)
 	esac
 	rm -f $name$unit
 	mknod ${name}${unit}	c $chr $unit
-	chgrp operator ${name}${unit}
+	chown root.operator ${name}${unit}
 	chmod 640 ${name}${unit}
 	umask 77
 	;;
@@ -261,7 +261,7 @@ ss*)
 	esac
 	rm -f $name$unit
 	mknod ${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-	chgrp operator ${name}${unit}
+	chown root.operator ${name}${unit}
 	chmod 640 ${name}${unit}
 	umask 77
 	;;
@@ -276,7 +276,7 @@ cd*)
 	mknod ${name}${unit}d	b $blk `expr $unit '*' 8 + 3`
 	mknod r${name}${unit}a	c $chr `expr $unit '*' 8 + 0`
 	mknod r${name}${unit}d	c $chr `expr $unit '*' 8 + 3`
-	chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+	chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 	chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 	umask 77
 	;;

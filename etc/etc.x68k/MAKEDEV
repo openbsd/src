@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.4 1996/07/23 06:33:01 etheisen Exp $
+#	$OpenBSD: MAKEDEV,v 1.5 1996/09/18 22:03:49 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.1.1.1.4.1 1996/06/17 02:36:16 oki Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -34,7 +34,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.4 1996/07/23 06:33:01 etheisen Exp $
+#	$Id: MAKEDEV,v 1.5 1996/09/18 22:03:49 deraadt Exp $
 #
 #	from:
 #	hp300/MAKEDEV (1/15/94), from:
@@ -113,10 +113,10 @@ std)
 	rm -f console drum kmem mem reload null zero tty
 	rm -f klog stdin stdout stderr
 	mknod console		c 0 0
-	mknod drum		c 3 0	; chmod 640 drum ; chgrp kmem drum
-	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
-	mknod mem		c 2 0	; chmod 640 mem ; chgrp kmem mem
-	mknod reload		c 2 20	; chmod 640 mem ; chgrp kmem mem
+	mknod drum		c 3 0	; chmod 640 drum ; chown root.kmem drum
+	mknod kmem		c 2 1	; chmod 640 kmem ; chown root.kmem kmem
+	mknod mem		c 2 0	; chmod 640 mem ; chown root.kmem mem
+	mknod reload		c 2 20	; chmod 640 mem ; chown root.kmem mem
 	mknod zero		c 2 12	; chmod 666 zero
 	mknod null		c 2 2	; chmod 666 null
 	mknod tty		c 1 0	; chmod 666 tty
@@ -155,7 +155,7 @@ st*)
 		mknod nr${name}${unit}	c $chr `expr $unit '*' 16 + 1`
 		mknod er${name}${unit}	c $chr `expr $unit '*' 16 + 2`
 		mknod enr${name}${unit}	c $chr `expr $unit '*' 16 + 3`
-		chgrp operator ${name}${unit} n${name}${unit} \
+		chown root.operator ${name}${unit} n${name}${unit} \
 			e$name$unit en$name$unit \
 			r${name}${unit} nr${name}${unit} \
 			er${name}${unit} enr${name}${unit} 
@@ -192,7 +192,7 @@ fd*)
 		mknod rfd${unit}f c 18 `expr $unit '*' 8 + 5`
 		mknod rfd${unit}g c 18 `expr $unit '*' 8 + 6`
 		mknod rfd${unit}h c 18 `expr $unit '*' 8 + 7`
-		chgrp operator fd$unit? rfd$unit?
+		chown root.operator fd$unit? rfd$unit?
 		chmod 640 fd$unit? rfd$unit?
 		;;
 	*)
@@ -231,7 +231,7 @@ sd*|vnd*|ccd*)
 		mknod r${name}${unit}g	c $chr `expr $unit '*' 8 + 6`
 		mknod r${name}${unit}h	c $chr `expr $unit '*' 8 + 7`
 		fi
-		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+		chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 		;;
 	*)
@@ -252,7 +252,7 @@ cd*)
 		mknod ${name}${unit}a   b $blk `expr $unit '*' 8 + 0`
 		mknod ${name}${unit}d   b $blk `expr $unit '*' 8 + 3`
 		mknod r${name}${unit}a  c $chr `expr $unit '*' 8 + 0`
-		chgrp operator ${name}${unit}[a-h] r${name}${unit}[a-h]
+		chown root.operator ${name}${unit}[a-h] r${name}${unit}[a-h]
 		chmod 640 ${name}${unit}[a-h] r${name}${unit}[a-h]
 		;;
 	*)
@@ -269,7 +269,7 @@ ss*)
 	esac
 	rm -f $name$unit
 	mknod ${name}${unit}	c $chr `expr $unit '*' 16 + 0`
-	chgrp operator ${name}${unit}
+	chown root.operator ${name}${unit}
 	chmod 640 ${name}${unit}
 	umask 77
 	;;
@@ -282,7 +282,7 @@ tty0*)
 		rm -f tty0${unit} ttym${unit}
 		mknod tty0${unit} c 12 $unit
 		mknod ttym${unit} c 12 `expr 128 + $unit`
-		chown uucp:wheel tty0${unit} ttym${unit}
+		chown uucp.wheel tty0${unit} ttym${unit}
 		;;
 	*)
 		echo bad unit for ser in: $i
@@ -298,7 +298,7 @@ com*)
 	0|1)
 		rm -f com${unit}
 		mknod com${unit} c 16 $unit
-		chown uucp:wheel com${unit}
+		chown uucp.wheel com${unit}
 		;;
 	*)
 		echo bad unit for com in: $i
@@ -425,7 +425,7 @@ bpf*)
 	unit=`expr $i : 'bpf\(.*\)'`
 	rm -f bpf$unit
 	mknod bpf$unit c 22 $unit
-	chown root:wheel bpf$unit
+	chown root.wheel bpf$unit
 	;;
 
 tun*)
@@ -433,13 +433,13 @@ tun*)
 	rm -f tun$unit
 	mknod tun$unit c 31 $unit
 	chmod 600 tun$unit
-	chown root:wheel tun$unit
+	chown root.wheel tun$unit
 	;;
 
 lkm)
         rm -f lkm
         mknod lkm c 24 0
-        chown root:kmem lkm
+        chown root.kmem lkm
         chmod 640 lkm
         ;;
 
@@ -448,14 +448,14 @@ audio*)
 	mknod adpcm c 17 0
 	mknod pcm   c 17 64
 	mknod audio c 17 128
-	chown root:wheel adpcm pcm audio
+	chown root.wheel adpcm pcm audio
 	chmod 666 adpcm pcm audio
 	;;
 
 sram)
 	rm -f sram
 	mknod sram c 23 0
-	chown root:wheel sram
+	chown root.wheel sram
 	chmod 644 sram
 	;;
 
@@ -479,7 +479,7 @@ pow*)
 bell*)
 	rm -f bell
 	mknod bell c 33 0
-	chown root:wheel bell 
+	chown root.wheel bell 
 	chmod 666 bell
 	;;
 
