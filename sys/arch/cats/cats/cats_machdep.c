@@ -1,4 +1,4 @@
-/*	$OpenBSD: cats_machdep.c,v 1.8 2004/03/11 09:53:28 tom Exp $	*/
+/*	$OpenBSD: cats_machdep.c,v 1.9 2004/09/16 21:52:50 miod Exp $	*/
 /*	$NetBSD: cats_machdep.c,v 1.50 2003/10/04 14:28:28 chris Exp $	*/
 
 /*
@@ -97,16 +97,6 @@
  * This is machine architecture dependant as it varies depending
  * on where the ROM appears when you turn the MMU off.
  */
-
-void debugled(u_int32_t val);
-
-#define DEBUG_LED_OFFSET 0x8c0
-u_int32_t *debugledaddr = (void*)(DC21285_PCI_IO_BASE+DEBUG_LED_OFFSET);
-void
-debugled(u_int32_t val)
-{
-	*debugledaddr = val;
-}
 
 u_int cpu_reset_address = DC21285_ROM_BASE;
 
@@ -234,7 +224,7 @@ void
 boot(howto)
 	int howto;
 {
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	/* info */
 	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
 #endif
@@ -369,7 +359,6 @@ initarm(bootargs)
 	pv_addr_t kernel_l1pt;
 	extern u_int cpu_get_control(void);
 
-debugled(0x1000);
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
@@ -406,12 +395,11 @@ debugled(0x1000);
 	    && ebsabootinfo.bt_magic != BT_MAGIC_NUMBER_CATS)
 		panic("Incompatible magic number passed in boot args");
 
-/*	{
-	int loop;
+#ifdef DEBUG
 	for (loop = 0; loop < 8; ++loop) {
 		printf("%08x\n", *(((int *)bootinfo)+loop));
 	}
-	}*/
+#endif
 
 	/*
 	 * Ok we have the following memory map
@@ -444,7 +432,9 @@ debugled(0x1000);
 	 */
 	process_kernel_args((char *)ebsabootinfo.bt_args);
 
+#ifdef DEBUG
 	printf("initarm: Configuring system ...\n");
+#endif
 
 	/*
 	 * Set up the variables that define the availablilty of
@@ -458,9 +448,11 @@ debugled(0x1000);
     
 	physmem = (physical_end - physical_start) / PAGE_SIZE;
 
+#ifdef DEBUG
 	/* Tell the user about the memory */
 	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
 	    physical_start, physical_end - 1);
+#endif
 
 	/*
 	 * Ok the kernel occupies the bottom of physical memory.
@@ -687,7 +679,8 @@ debugled(0x1000);
 	 * Note can not have both SYST and ROM enabled together, the results
 	 * are "undefined"
 	 */
-	cpu_control(CPU_CONTROL_SYST_ENABLE | CPU_CONTROL_ROM_ENABLE, CPU_CONTROL_SYST_ENABLE);
+	cpu_control(CPU_CONTROL_SYST_ENABLE | CPU_CONTROL_ROM_ENABLE,
+	    CPU_CONTROL_SYST_ENABLE);
 #ifdef VERBOSE_INIT_ARM
 	printf("switching domains\n");
 #endif
@@ -707,7 +700,7 @@ debugled(0x1000);
 #endif
 	
 	setttb(kernel_l1pt.pv_pa);
-debugledaddr = (void*)(DC21285_PCI_IO_VBASE+DEBUG_LED_OFFSET);
+
 	cpu_tlb_flushID();
 	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
 	/*
@@ -972,9 +965,11 @@ process_kernel_args(args)
 			++args;
 	}
 
+#ifdef DEBUG
 	/* XXX too early for console */
 	printf("bootfile: %s\n", boot_file);
 	printf("bootargs: %s\n", boot_args);
+#endif
 }
 
 extern struct bus_space footbridge_pci_io_bs_tag;

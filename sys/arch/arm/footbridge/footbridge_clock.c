@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_clock.c,v 1.6 2004/08/18 13:25:26 drahn Exp $	*/
+/*	$OpenBSD: footbridge_clock.c,v 1.7 2004/09/16 21:52:46 miod Exp $	*/
 /*	$NetBSD: footbridge_clock.c,v 1.17 2003/03/23 14:12:25 chris Exp $	*/
 
 /*
@@ -141,11 +141,6 @@ clockhandler(aframe)
 	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
 	    TIMER_1_CLEAR, 0);
 	hardclock(frame);
-	{
-		void debugled(u_int32_t);
-		extern int ticks;
-		debugled(ticks);
-	}
 	return(-1);	/* Pass the interrupt on down the chain */
 }
 
