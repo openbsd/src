@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.8 2002/02/12 04:37:47 jason Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.9 2002/03/05 20:10:51 jason Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -401,6 +401,8 @@ zskbd_attach(parent, self, aux)
 
 		splx(s);
 	}
+
+	printf("\n");
 
 	a.console = console;
 	a.keymap = &sunkbd_keymapdata;
