@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2002/02/16 21:28:00 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2003/04/16 17:43:37 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/03/19 03:21:38 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.15 2002/02/16 21:28:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.16 2003/04/16 17:43:37 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,6 @@ char vflag;
 
 char *symbol_prefix;
 char *file_prefix = "y";
-char *temp_form = "yacc.XXXXXXXXXXX";
 
 int lineno;
 int outline;
@@ -306,67 +305,38 @@ unsigned n;
     return (p);
 }
 
+#define TEMPNAME(s, c, d, l)	\
+	(asprintf(&(s), "%.*s/yacc.%xXXXXXXXXXX", (int)(l), (d), (c)))
+
 void
 create_file_names()
 {
-    int i, len;
+    size_t len;
     char *tmpdir;
 
-    if (!(tmpdir = getenv("TMPDIR")))
+    if ((tmpdir = getenv("TMPDIR")) == NULL || *tmpdir == '\0')
 	tmpdir = _PATH_TMP;
 
     len = strlen(tmpdir);
-    i = len + strlen(temp_form) + 1;
-    if (len && tmpdir[len-1] != '/')
-	++i;
+    if (tmpdir[len-1] == '/')
+	len--;
 
-    action_file_name = MALLOC(i);
-    if (action_file_name == 0) no_space();
-    text_file_name = MALLOC(i);
-    if (text_file_name == 0) no_space();
-    union_file_name = MALLOC(i);
-    if (union_file_name == 0) no_space();
+    if (TEMPNAME(action_file_name, 'a', tmpdir, len) == -1 ||
+	TEMPNAME(text_file_name, 'r', tmpdir, len) == -1 ||
+	TEMPNAME(union_file_name, 'u', tmpdir, len) == -1)
+	no_space();
 
-    strcpy(action_file_name, tmpdir);
-    strcpy(text_file_name, tmpdir);
-    strcpy(union_file_name, tmpdir);
-
-    if (len && tmpdir[len - 1] != '/')
+    if (output_file_name == NULL)
     {
-	action_file_name[len] = '/';
-	text_file_name[len] = '/';
-	union_file_name[len] = '/';
-	++len;
-    }
-
-    strcpy(action_file_name + len, temp_form);
-    strcpy(text_file_name + len, temp_form);
-    strcpy(union_file_name + len, temp_form);
-
-    action_file_name[len + 5] = 'a';
-    text_file_name[len + 5] = 't';
-    union_file_name[len + 5] = 'u';
-
-    len = strlen(file_prefix);
-
-    if (!output_file_name)
-    {
-        output_file_name = MALLOC(len + 7);
-        if (output_file_name == 0)
+	if (asprintf(&output_file_name, "%s%s", file_prefix, OUTPUT_SUFFIX)
+	    == -1)
 	    no_space();
-        strcpy(output_file_name, file_prefix);
-        strcpy(output_file_name + len, OUTPUT_SUFFIX);
     }
 
-    if (rflag)
-    {
-	code_file_name = MALLOC(len + 8);
-	if (code_file_name == 0)
+    if (rflag) {
+	if (asprintf(&code_file_name, "%s%s", file_prefix, CODE_SUFFIX) == -1)
 	    no_space();
-	strcpy(code_file_name, file_prefix);
-	strcpy(code_file_name + len, CODE_SUFFIX);
-    }
-    else
+    } else
 	code_file_name = output_file_name;
 
     if (dflag)
@@ -375,10 +345,9 @@ create_file_names()
 	{
 	    char *suffix;
 
-	    defines_file_name = MALLOC(strlen(output_file_name)+1);
+	    defines_file_name = strdup(output_file_name);
 	    if (defines_file_name == 0)
 	        no_space();
-	    strcpy(defines_file_name, output_file_name);
 
             /* does the output_file_name have a known suffix */
             if ((suffix = strrchr(output_file_name, '.')) != 0 &&
@@ -403,21 +372,17 @@ create_file_names()
 	}
 	else
 	{
-	    defines_file_name = MALLOC(len + 7);
-	    if (defines_file_name == 0)
+	    if (asprintf(&defines_file_name, "%s%s", file_prefix,
+		DEFINES_SUFFIX) == -1)
 	        no_space();
-	    strcpy(defines_file_name, file_prefix);
-	    strcpy(defines_file_name + len, DEFINES_SUFFIX);
 	}
     }
 
     if (vflag)
     {
-	verbose_file_name = MALLOC(len + 8);
-	if (verbose_file_name == 0)
+	if (asprintf(&verbose_file_name, "%s%s", file_prefix,
+	    VERBOSE_SUFFIX) == -1)
 	    no_space();
-	strcpy(verbose_file_name, file_prefix);
-	strcpy(verbose_file_name + len, VERBOSE_SUFFIX);
     }
 }
 
