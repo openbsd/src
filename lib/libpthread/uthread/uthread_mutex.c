@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_mutex.c,v 1.9 1999/11/25 07:01:38 d Exp $	*/
+/*	$OpenBSD: uthread_mutex.c,v 1.10 2000/01/06 07:18:46 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -188,10 +188,10 @@ pthread_mutex_init(pthread_mutex_t * mutex,
 					pmutex->m_prio = 0;
 				pmutex->m_saved_prio = 0;
 				_MUTEX_INIT_LINK(pmutex);
-				memset(&pmutex->lock, 0, sizeof(pmutex->lock));
+				_SPINLOCK_INIT(&pmutex->lock);
 				*mutex = pmutex;
 			} else {
-				free(pmutex);
+				free((void *)pmutex);
 				*mutex = NULL;
 			}
 		}
@@ -228,7 +228,7 @@ pthread_mutex_destroy(pthread_mutex_t * mutex)
 			 * structure:
 			 */
 			_MUTEX_ASSERT_NOT_OWNED(*mutex);
-			free(*mutex);
+			free((void *)*mutex);
 
 			/*
 			 * Leave the caller's pointer NULL now that
@@ -304,6 +304,7 @@ pthread_mutex_trylock(pthread_mutex_t * mutex)
 				_MUTEX_ASSERT_NOT_OWNED(*mutex);
 				TAILQ_INSERT_TAIL(&_thread_run->mutexq,
 				    (*mutex), m_qe);
+
 			} else if ((*mutex)->m_owner == _thread_run)
 				ret = mutex_self_trylock(*mutex);
 			else
@@ -1353,7 +1354,8 @@ mutex_queue_enq(pthread_mutex_t mutex, pthread_t pthread)
 	 * at the tail of the queue.
 	 */
 	if ((tid == NULL) || (pthread->active_priority <= tid->active_priority))
-		TAILQ_INSERT_TAIL(&mutex->m_queue, pthread, qe);
+		TAILQ_INSERT_TAIL(&mutex->m_queue, pthread, qe); 
+		/* (pthread)->qe.tqe_prev = ((&mutex->m_queue))->tqh_last; */
 	else {
 		tid = TAILQ_FIRST(&mutex->m_queue);
 		while (pthread->active_priority <= tid->active_priority)
