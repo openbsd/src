@@ -1,4 +1,4 @@
-.\" $OpenBSD: packages-specs.7,v 1.1 2001/04/09 14:57:37 espie Exp $
+.\" $OpenBSD: packages-specs.7,v 1.2 2001/07/16 00:27:02 espie Exp $
 .\"
 .\" Copyright (c) 2001 Marc Espie
 .\"
@@ -140,7 +140,7 @@ If the flavor specification is left blank, any flavor will do.
 Note that most default package names don't contain flavor specification,
 which means that any flavor will do. For instance, in
 .Bd -literal -offset indent
-LIB_DEPENDS=aalib.1.2::graphics/aalib
+LIB_DEPENDS=aa.1.2::graphics/aalib
 .Ed
 .Pp
 both 
@@ -158,7 +158,7 @@ append
 .Sq -!f .
 In the preceding case, one may use
 .Bd -literal -offset indent
-LIB_DEPENDS=aalib.1.2:aalib-1.2-!no_x11:graphics/aalib
+LIB_DEPENDS=aa.1.2:aalib-1.2-!no_x11:graphics/aalib
 .Ed
 .Pp
 to ensure the no_x11 flavor is not picked.
