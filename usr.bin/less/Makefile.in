@@ -64,7 +64,7 @@ filename.${O}: ${srcdir}/filename.c
 help.${O}: ${srcdir}/help.c
 	${CC} -I. ${CFLAGS_COMPILE_ONLY} -DHELPFILE=\"${datadir}/${LESS_HLP}\" ${CPPFLAGS} ${CFLAGS} ${srcdir}/help.c
 
-install: all ${srcdir}/lesskey.nro
+install: all
 	${INSTALL_PROGRAM} less ${bindir}/${binprefix}less
 	${INSTALL_PROGRAM} lesskey ${bindir}/${binprefix}lesskey
 
