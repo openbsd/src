@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.25 2003/07/21 22:44:50 tedu Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.26 2003/10/31 11:10:41 markus Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -164,16 +164,14 @@ hashinit(elements, type, flags, hashmask)
 	int elements, type, flags;
 	u_long *hashmask;
 {
-	long hashsize;
+	u_long hashsize, i;
 	LIST_HEAD(generic, generic) *hashtbl;
-	int i;
 
 	if (elements <= 0)
 		panic("hashinit: bad cnt");
-	for (hashsize = 1; hashsize <= elements; hashsize <<= 1)
+	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
 		continue;
-	hashsize >>= 1;
-	hashtbl = malloc((u_long)hashsize * sizeof(*hashtbl), type, flags);
+	hashtbl = malloc(hashsize * sizeof(*hashtbl), type, flags);
 	if (hashtbl == NULL)
 		return NULL;
 	for (i = 0; i < hashsize; i++)
