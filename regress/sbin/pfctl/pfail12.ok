@@ -2,4 +2,4 @@ stdin:2: dst port only applies to tcp/udp
 stdin:2: rpool port only applies to tcp/udp
 stdin:2: skipping rule due to errors
 stdin:2: rule expands to no valid combination
-pfctl: Syntax error in file: pf rules not loaded
+pfctl: Syntax error in config file: pf rules not loaded

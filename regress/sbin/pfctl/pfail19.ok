@@ -5,4 +5,4 @@ stdin:5: invalid use of table <sometable> as the source address of a binat rule
 stdin:6: invalid use of table <sometable> in a route expression
 stdin:7: invalid use of table <sometable> in a route expression
 stdin:8: invalid use of table <sometable> in a route expression
-pfctl: Syntax error in file: pf rules not loaded
+pfctl: Syntax error in config file: pf rules not loaded

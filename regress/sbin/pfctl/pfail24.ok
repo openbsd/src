@@ -9,4 +9,4 @@ stdin:8: fromto parameter not supported in binat-anchor
 stdin:9: fromto parameter not supported in binat-anchor
 stdin:10: fromto parameter not supported in binat-anchor
 stdin:11: fromto parameter not supported in binat-anchor
-pfctl: Syntax error in file: pf rules not loaded
+pfctl: Syntax error in config file: pf rules not loaded

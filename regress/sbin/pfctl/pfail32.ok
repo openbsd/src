@@ -1,5 +1,5 @@
 queue zwei already exists on interface gif3
-pfctl: Syntax error in file: pf rules not loaded
+pfctl: Syntax error in config file: pf rules not loaded
 altq on gif3 cbq bandwidth 100Kb tbrsize 1280 queue { eins zwei }
 queue eins cbq( default ) { zwei }
 queue zwei 

@@ -1,4 +1,4 @@
 stdin:5: Rules must be in order: options, normalization, queueing, translation, filtering
-pfctl: Syntax error in file: pf rules not loaded
+pfctl: Syntax error in config file: pf rules not loaded
 scrub in on lo0 all fragment reassemble 
 pass in on lo1 all 

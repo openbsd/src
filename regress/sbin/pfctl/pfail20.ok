@@ -1,4 +1,4 @@
 stdin:3: address family not given and translation address expands to multiple address families
 stdin:4: address family not given and translation address expands to multiple address families
 stdin:5: rule expands to no valid combination
-pfctl: Syntax error in file: pf rules not loaded
+pfctl: Syntax error in config file: pf rules not loaded
