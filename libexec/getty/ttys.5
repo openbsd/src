@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ttys.5,v 1.7 2001/11/13 14:06:10 mpech Exp $
+.\"	$OpenBSD: ttys.5,v 1.8 2003/06/02 12:55:59 jmc Exp $
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -128,6 +128,10 @@ may be followed by a quoted command string which
 will execute
 .Em before
 starting the command specified by the second field.
+.Sh FILES
+.Bl -tag -width /etc/ttys -compact
+.It Pa /etc/ttys
+.El
 .Sh EXAMPLES
 .Bd -literal
 # root login on console at 1200 baud
@@ -144,10 +148,6 @@ ttyv0	"/usr/new/xterm -L :0"		vs100	on window="/usr/new/Xvs100 0"
 ttyp0	none	network
 ttyp1	none	network	off
 .Ed
-.Sh FILES
-.Bl -tag -width /etc/ttys -compact
-.It Pa /etc/ttys
-.El
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr getttyent 3 ,
