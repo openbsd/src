@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.10 2003/11/06 17:49:31 espie Exp $
+# $OpenBSD: pkg_delete,v 1.11 2003/11/06 18:42:01 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -272,6 +272,7 @@ sub delete_package
 		die "Package $pkgname real name does not match";
 	}
 
+	$ENV{'PKG_PREFIX'} = $plist->prefix();
 	if ($plist->has(REQUIRE)) {
 		$plist->get(REQUIRE)->delete($state);
 	}
