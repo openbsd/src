@@ -1,0 +1,8 @@
+testenc.sh tests encryption routines
+testdsa.sh tests DSA certificate generation
+test_server.sh starts a tls1 server using the above generated certificate
+test_client.sh starts a client to talk to the server.
+testrsa.sh tests RSA certificate generation - this SHOULD FAIL with the
+           version of the library in openbsd because all the RSA routines 
+	   are (currently) stubbed.
+
