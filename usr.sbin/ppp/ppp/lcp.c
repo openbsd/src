@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lcp.c,v 1.37 2002/06/15 08:02:00 brian Exp $
+ * $OpenBSD: lcp.c,v 1.38 2003/04/07 23:58:53 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -1227,7 +1227,8 @@ LcpDecodeConfig(struct fsm *fp, u_char *cp, u_char *end, int mode_type,
       pos = 0;
       desc[0] = sz ? ' ' : '\0';
       for (pos = 0; sz--; pos++)
-        sprintf(desc+(pos<<1)+1, "%02x", opt->data[pos]);
+        snprintf(desc+(pos<<1)+1, sizeof desc - ((pos<<1)+1),
+	  "%02x", opt->data[pos]);
 
       log_Printf(LogLCP, "%s%s\n", request, desc);
 

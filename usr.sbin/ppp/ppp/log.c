@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: log.c,v 1.16 2002/06/15 08:02:00 brian Exp $
+ *	$OpenBSD: log.c,v 1.17 2003/04/07 23:58:53 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -365,7 +365,7 @@ log_DumpBp(int lev, const char *hdr, const struct mbuf *bp)
       f = bp->m_len;
       ptr = CONST_MBUF_CTOP(bp);
       while (f--) {
-	sprintf(b, " %02x", (int) *ptr);
+	snprintf(b, buf + sizeof buf - b, " %02x", (int) *ptr);
         *c++ = isprint(*ptr) ? *ptr : '.';
         ptr++;
         b += 3;
@@ -400,7 +400,7 @@ log_DumpBuff(int lev, const char *hdr, const u_char *ptr, int n)
       b = buf;
       c = b + 50;
       for (b = buf; b != buf + 48 && n--; b += 3, ptr++) {
-	sprintf(b, " %02x", (int) *ptr);
+	snprintf(b, buf + sizeof buf - b, " %02x", (int) *ptr);
         *c++ = isprint(*ptr) ? *ptr : '.';
       }
       memset(b, ' ', 50 - (b - buf));

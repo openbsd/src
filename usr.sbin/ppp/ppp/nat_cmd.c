@@ -24,7 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: nat_cmd.c,v 1.22 2002/05/16 01:13:39 brian Exp $
+ *	$OpenBSD: nat_cmd.c,v 1.23 2003/04/07 23:58:53 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -402,7 +402,7 @@ nat_ProxyRule(struct cmdargs const *arg)
       break;
     if (len)
       cmd[pos++] = ' ';
-    strcpy(cmd + pos, arg->argv[f]);
+    strlcpy(cmd + pos, arg->argv[f], sizeof cmd - pos);
     pos += len;
   }
 

@@ -145,7 +145,7 @@ ng_MessageOut(struct ngdevice *dev, struct physical *p, const char *data)
       fmt[pos++] = '%';
     fmt[pos++] = data[dpos++];
   }
-  strcpy(fmt + pos, " %s");
+  strlcpy(fmt + pos, " %s", len + 4 - pos);
   data += dpos;
 
   data += strspn(data, " \t");
@@ -519,7 +519,7 @@ ng_Create(struct physical *p)
         }
       } else {
         /* Use lasthook as the hook name */
-        strcpy(hook, lasthook);
+        strlcpy(hook, lasthook, sizeof hook);
         devp++;
       }
 

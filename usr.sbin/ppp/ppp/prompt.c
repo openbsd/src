@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: prompt.c,v 1.14 2003/04/04 20:25:06 deraadt Exp $
+ *	$OpenBSD: prompt.c,v 1.15 2003/04/07 23:58:53 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -394,7 +394,7 @@ prompt_vPrintf(struct prompt *p, const char *fmt, va_list ap)
       if (len && len < sizeof nfmt - 1 && fmt[len-1] == '\n' &&
           (len == 1 || fmt[len-2] != '\r')) {
         strlcpy(nfmt, fmt, sizeof nfmt);
-        strcpy(nfmt + len - 1, "\r\n");
+        strlcpy(nfmt + len - 1, "\r\n", sizeof nfmt - (len - 1));
         pfmt = nfmt;
       } else
         pfmt = fmt;

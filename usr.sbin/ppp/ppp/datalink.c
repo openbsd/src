@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: datalink.c,v 1.42 2002/06/15 08:02:00 brian Exp $
+ *	$OpenBSD: datalink.c,v 1.43 2003/04/07 23:58:53 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -1427,14 +1427,16 @@ datalink_NextName(struct datalink *dl)
 {
   int f, n;
   char *name, *oname;
+  size_t len;
 
-  n = strlen(dl->name);
-  name = (char *)malloc(n+3);
-  for (f = n - 1; f >= 0; f--)
+  len = strlen(dl->name);
+  name = (char *)malloc(len+3);
+  for (f = len - 1; f >= 0; f--)
     if (!isdigit(dl->name[f]))
       break;
-  n = sprintf(name, "%.*s-", dl->name[f] == '-' ? f : f + 1, dl->name);
-  sprintf(name + n, "%d", atoi(dl->name + f + 1) + 1);
+  snprintf(name, len+3, "%.*s-", dl->name[f] == '-' ? f : f + 1, dl->name);
+  n = strlen(name);
+  snprintf(name + n, len+3 - n, "%d", atoi(dl->name + f + 1) + 1);
   oname = dl->name;
   dl->name = name;
   /* our physical link name isn't updated (it probably isn't created yet) */

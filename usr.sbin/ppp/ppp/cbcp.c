@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: cbcp.c,v 1.16 2002/06/15 08:02:00 brian Exp $
+ *	$OpenBSD: cbcp.c,v 1.17 2003/04/07 23:58:53 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -430,7 +430,7 @@ cbcp_AdjustResponse(struct cbcp *cbcp, struct cbcp_data *data)
           for (next = strtok(list, ","); next; next = strtok(NULL, ","))
             if (!strcmp(next, addr->addr)) {
               cbcp->fsm.type = CBCP_SERVERNUM;
-              strcpy(cbcp->fsm.phone, next);
+              strlcpy(cbcp->fsm.phone, next, sizeof cbcp->fsm.phone);
               return 1;
             }
         }
@@ -456,7 +456,7 @@ cbcp_AdjustResponse(struct cbcp *cbcp, struct cbcp_data *data)
             for (next = strtok(list, ","); next; next = strtok(NULL, ","))
               if (!strcmp(next, addr->addr)) {
                 cbcp->fsm.type = CBCP_LISTNUM;
-                strcpy(cbcp->fsm.phone, next);
+                strlcpy(cbcp->fsm.phone, next, sizeof cbcp->fsm.phone);
                 return 1;
               }
           } else
@@ -531,7 +531,7 @@ cbcp_CheckResponse(struct cbcp *cbcp, struct cbcp_data *data)
           log_Printf(LogPHASE, "CBCP: Unrecognised address type %d !\n",
                      addr->type);
         else {
-          strcpy(cbcp->fsm.phone, addr->addr);
+          strlcpy(cbcp->fsm.phone, addr->addr, sizeof cbcp->fsm.phone);
           cbcp->fsm.delay = data->delay;
           return CBCP_ACTION_ACK;
         }
@@ -554,7 +554,7 @@ cbcp_CheckResponse(struct cbcp *cbcp, struct cbcp_data *data)
           list[sizeof list - 1] = '\0';
           for (next = strtok(list, ","); next; next = strtok(NULL, ","))
             if (!strcmp(addr->addr, next)) {
-              strcpy(cbcp->fsm.phone, next);
+              strlcpy(cbcp->fsm.phone, next, sizeof cbcp->fsm.phone);
               cbcp->fsm.delay = data->delay;
               return CBCP_ACTION_ACK;
             }

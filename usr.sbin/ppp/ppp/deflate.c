@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: deflate.c,v 1.15 2002/06/15 01:33:23 brian Exp $
+ *	$OpenBSD: deflate.c,v 1.16 2003/04/07 23:58:53 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -435,7 +435,7 @@ DeflateDispOpts(struct fsm_opt *o)
 {
   static char disp[7];		/* Must be used immediately */
 
-  sprintf(disp, "win %d", (o->data[0]>>4) + 8);
+  snprintf(disp, sizeof disp, "win %d", (o->data[0]>>4) + 8);
   return disp;
 }
 

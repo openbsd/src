@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: route.c,v 1.27 2003/04/04 20:25:06 deraadt Exp $
+ * $OpenBSD: route.c,v 1.28 2003/04/07 23:58:53 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -125,7 +125,7 @@ p_sockaddr(struct prompt *prompt, struct sockaddr *phost,
 
           MAC = (u_char *)dl->sdl_data + dl->sdl_nlen;
           for (f = 0; f < dl->sdl_alen; f++)
-            sprintf(buf+f*3, "%02x:", MAC[f]);
+            snprintf(buf+f*3, sizeof buf - (f*3), "%02x:", MAC[f]);
           buf[f*3-1] = '\0';
         } else
           strlcpy(buf, "??:??:??:??:??:??", sizeof buf);

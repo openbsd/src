@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: mp.c,v 1.31 2003/04/04 20:25:06 deraadt Exp $
+ *	$OpenBSD: mp.c,v 1.32 2003/04/07 23:58:53 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -932,7 +932,8 @@ mp_Enddisc(u_char c, const char *address, int len)
       if (len > sizeof result - header - 1)
         len = sizeof result - header - 1;
       for (f = 0; f < len; f++)
-        sprintf(result + header + 2 * f, "%02x", address[f]);
+        snprintf(result + header + 2 * f, sizeof result - (header + 2 * f),
+	  "%02x", address[f]);
       break;
 
     case ENDDISC_PSN:
@@ -945,7 +946,8 @@ mp_Enddisc(u_char c, const char *address, int len)
       if (len > sizeof result - header - 1)
         len = sizeof result - header - 1;
       for (f = 0; f < len; f++)
-        sprintf(result + header + 2 * f, "%02x", address[f]);
+        snprintf(result + header + 2 * f, sizeof result - (header + 2 * f),
+	  "%02x", address[f]);
       break;
   }
   return result;
@@ -980,7 +982,8 @@ mp_SetEnddisc(struct cmdargs const *arg)
   } else if (arg->argc > arg->argn) {
     if (!strcasecmp(arg->argv[arg->argn], "label")) {
       mp->cfg.enddisc.class = ENDDISC_LOCAL;
-      strcpy(mp->cfg.enddisc.address, arg->bundle->cfg.label);
+      strlcpy(mp->cfg.enddisc.address, arg->bundle->cfg.label,
+	sizeof mp->cfg.enddisc.address);
       mp->cfg.enddisc.len = strlen(mp->cfg.enddisc.address);
     } else if (!strcasecmp(arg->argv[arg->argn], "ip")) {
       if (arg->bundle->ncp.ipcp.my_ip.s_addr == INADDR_ANY)
@@ -1027,7 +1030,8 @@ mp_SetEnddisc(struct cmdargs const *arg)
     } else if (!strcasecmp(arg->argv[arg->argn], "psn")) {
       if (arg->argc > arg->argn+1) {
         mp->cfg.enddisc.class = ENDDISC_PSN;
-        strcpy(mp->cfg.enddisc.address, arg->argv[arg->argn+1]);
+        strlcpy(mp->cfg.enddisc.address, arg->argv[arg->argn+1],
+	  sizeof mp->cfg.enddisc.address);
         mp->cfg.enddisc.len = strlen(mp->cfg.enddisc.address);
       } else {
         log_Printf(LogWARN, "PSN endpoint requires additional data\n");

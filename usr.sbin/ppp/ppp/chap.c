@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: chap.c,v 1.37 2003/04/04 20:25:06 deraadt Exp $
+ * $OpenBSD: chap.c,v 1.38 2003/04/07 23:58:53 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -609,7 +609,7 @@ chap_Failure(struct authinfo *authp)
       ptr += strlen(ptr);
     }
 
-    sprintf(ptr, " V=3 M=Invalid!");
+    snprintf(ptr, buf + sizeof buf - ptr, " V=3 M=Invalid!");
     msg = buf;
   } else
 #endif
