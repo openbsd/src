@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.obj.mk,v 1.3 1996/04/22 01:28:34 deraadt Exp $
+#	$OpenBSD: bsd.obj.mk,v 1.4 1996/08/23 17:45:10 niklas Exp $
 #	$NetBSD: bsd.obj.mk,v 1.9 1996/04/10 21:08:05 thorpej Exp $
 
 .if !target(obj)
