@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.32 1998/12/27 09:41:56 deraadt Exp $	*/
+/*	$OpenBSD: aha.c,v 1.33 1999/01/07 06:14:46 niklas Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -353,11 +353,6 @@ ahaprobe(parent, match, aux)
 			return 0;
 #endif
 
-#ifdef NEWCONFIG
-	if (ia->ia_iobase == IOBASEUNK)
-		return 0;
-#endif
-
 	/* See if there is a unit at this location. */
 	if (aha_find(ia, NULL, 0) != 0)
 		return 0;
@@ -403,9 +398,6 @@ ahaattach(parent, self, aux)
 	sc->sc_link.device = &aha_dev;
 	sc->sc_link.openings = 2;
 
-#ifdef NEWCONFIG
-	isa_establish(&sc->sc_id, &sc->sc_dev);
-#endif
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
 	    IPL_BIO, ahaintr, sc, sc->sc_dev.dv_xname);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.17 1999/01/02 00:02:47 niklas Exp $	*/
+/*	$OpenBSD: sb.c,v 1.18 1999/01/07 06:14:49 niklas Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -194,27 +194,6 @@ sbmatch(sc)
 	} else
 		sc->sc_drq16 = sc->sc_drq8;
 	
-#ifdef NEWCONFIG
-	/*
-	 * If the IRQ wasn't compiled in, auto-detect it.
-	 */
-	if (sc->sc_irq == IRQUNK) {
-		sc->sc_irq = isa_discoverintr(sbforceintr, sc);
-		sbdsp_reset(sc);
-		if (ISSBPROCLASS(sc)) {
-			if (!SBP_IRQ_VALID(sc->sc_irq)) {
-				DPRINTF(("%s: couldn't auto-detect interrupt\n", sc->sc_dev.dv_xname));
-				return 0;
-			}
-		}
-		else {
-			if (!SB_IRQ_VALID(sc->sc_irq)) {
-				DPRINTF(("%s: couldn't auto-detect interrupt\n", sc->sc_dev.dv_xname));
-				return 0;
-			}
-		}
-	} else
-#endif
 	if (ISSBPROCLASS(sc)) {
 		if (!SBP_IRQ_VALID(sc->sc_irq)) {
 			DPRINTF(("%s: configured irq %d invalid\n",

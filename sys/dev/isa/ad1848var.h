@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848var.h,v 1.7 1998/05/08 18:37:20 csapuntz Exp $	*/
+/*	$OpenBSD: ad1848var.h,v 1.8 1999/01/07 06:14:46 niklas Exp $	*/
 /*	$NetBSD: ad1848var.h,v 1.22 1998/01/19 22:18:26 augustss Exp $	*/
 
 /*
@@ -58,11 +58,9 @@ struct ad1848_softc {
 	u_int	sc_lastcc;		/* size of last DMA xfer */
 	int	sc_mode;		/* half-duplex record/play */
 	
-#ifndef NEWCONFIG
 	int	sc_dma_flags;
 	void	*sc_dma_bp;
 	u_int	sc_dma_cnt;
-#endif
 
 	char	sc_playrun;		/* running in continuous mode */
 	char	sc_recrun;		/* running in continuous mode */

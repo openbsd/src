@@ -1,4 +1,4 @@
-/*	$OpenBSD: wds.c,v 1.13 1998/01/18 18:48:40 niklas Exp $	*/
+/*	$OpenBSD: wds.c,v 1.14 1999/01/07 06:14:49 niklas Exp $	*/
 /*	$NetBSD: wds.c,v 1.13 1996/11/03 16:20:31 mycroft Exp $	*/
 
 #undef	WDSDIAG
@@ -249,11 +249,6 @@ wdsprobe(parent, match, aux)
 {
 	register struct isa_attach_args *ia = aux;
 
-#ifdef NEWCONFIG
-	if (ia->ia_iobase == IOBASEUNK)
-		return 0;
-#endif
-
 	/* See if there is a unit at this location. */
 	if (wds_find(ia, NULL) != 0)
 		return 0;
@@ -311,9 +306,6 @@ wdsattach(parent, self, aux)
 	/* It gives Vendor Error 26 whenever I try it.     */
 	sc->sc_link.openings = 1;
 
-#ifdef NEWCONFIG
-	isa_establish(&sc->sc_id, &sc->sc_dev);
-#endif
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
 	    IPL_BIO, wdsintr, sc, sc->sc_dev.dv_xname);
 

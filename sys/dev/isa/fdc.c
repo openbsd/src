@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc.c,v 1.11 1998/08/08 23:01:15 downsj Exp $	*/
+/*	$OpenBSD: fdc.c,v 1.12 1999/01/07 06:14:48 niklas Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -83,9 +83,6 @@
 
 /* controller driver configuration */
 int fdcprobe __P((struct device *, void *, void *));
-#ifdef NEWCONFIG
-void fdcforceintr __P((void *));
-#endif
 void fdcattach __P((struct device *, struct device *, void *));
 
 struct cfattach fdc_ca = {
@@ -113,11 +110,6 @@ fdcprobe(parent, match, aux)
 	iot = ia->ia_iot;
 	rv = 0;
 
-#ifdef NEWCONFIG
-	if (ia->ia_iobase == IOBASEUNK || ia->ia_drq == DRQUNK)
-		return 0;
-#endif
-
 	/* Map the i/o space. */
 	if (bus_space_map(iot, ia->ia_iobase, FDC_NPORT, 0, &ioh))
 		return 0;
@@ -136,19 +128,6 @@ fdcprobe(parent, match, aux)
 	out_fdc(iot, ioh, 0xdf);
 	out_fdc(iot, ioh, 2);
 
-#ifdef NEWCONFIG
-	if (ia->ia_irq == IRQUNK) {
-		ia->ia_irq = isa_discoverintr(fdcforceintr, aux);
-		if (ia->ia_irq == IRQNONE)
-			goto out;
-
-		/* reset it again */
-		bus_space_write_1(iot, ioh, fdout, 0);
-		delay(100);
-		bus_space_write_1(iot, ioh, fdout, FDO_FRST);
-	}
-#endif
-
 	rv = 1;
 	ia->ia_iosize = FDC_NPORT;
 	ia->ia_msize = 0;
@@ -158,26 +137,6 @@ fdcprobe(parent, match, aux)
 	bus_space_unmap(iot, ioh_ctl, FDCTL_NPORT);
 	return rv;
 }
-
-#ifdef NEWCONFIG
-/*
- * XXX This is broken, and needs fixing.  In general, the interface needs
- * XXX to change.
- */
-void
-fdcforceintr(aux)
-	void *aux;
-{
-	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
-
-	/* the motor is off; this should generate an error with or
-	   without a disk drive present */
-	out_fdc(iot, ioh, NE7CMD_SEEK);
-	out_fdc(iot, ioh, 0);
-	out_fdc(iot, ioh, 0);
-}
-#endif
 
 void
 fdcattach(parent, self, aux)
@@ -210,10 +169,6 @@ fdcattach(parent, self, aux)
 
 	printf("\n");
 
-#ifdef NEWCONFIG
-	at_setup_dmachan(fdc->sc_drq, FDC_MAXIOSIZE);
-	isa_establish(&fdc->sc_id, &fdc->sc_dev);
-#endif
 	fdc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, fdcintr, fdc, fdc->sc_dev.dv_xname);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isavar.h,v 1.31 1998/11/28 01:27:40 deraadt Exp $	*/
+/*	$OpenBSD: isavar.h,v 1.32 1999/01/07 06:14:48 niklas Exp $	*/
 /*	$NetBSD: isavar.h,v 1.26 1997/06/06 23:43:57 thorpej Exp $	*/
 
 /*-
@@ -397,13 +397,6 @@ char	*isa_intr_typename __P((int type));
 
 void	isascan __P((struct device *parent, void *match));
 int	isaprint __P((void *, const char *));
-
-#ifdef NEWCONFIG
-/*
- * Establish a device as being on the ISA bus (XXX NOT IMPLEMENTED).
- */
-void isa_establish __P((struct isadev *, struct device *));
-#endif
 
 /*
  * Some ISA devices (e.g. on a VLB) can perform 32-bit DMA.  This

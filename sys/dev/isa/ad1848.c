@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.14 1998/12/29 09:10:29 deraadt Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.15 1999/01/07 06:14:46 niklas Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -267,33 +267,6 @@ ad1848_dump_regs(sc)
 }
 #endif
 
-#ifdef NEWCONFIG
-void
-ad1848_forceintr(sc)
-    struct ad1848_softc *sc;
-{
-    static char dmabuf;
-
-    /*
-     * Set up a DMA read of one byte.
-     * XXX Note that at this point we haven't called 
-     * at_setup_dmachan().  This is okay because it just
-     * allocates a buffer in case it needs to make a copy,
-     * and it won't need to make a copy for a 1 byte buffer.
-     * (I think that calling at_setup_dmachan() should be optional;
-     * if you don't call it, it will be called the first time
-     * it is needed (and you pay the latency).  Also, you might
-     * never need the buffer anyway.)
-     */
-    isa_dmastart(sc->sc_isa, sc->sc_drq, &dmabuf, 1, NULL,
-	DMAMODE_READ, BUS_DMA_NOWAIT);
-
-    ad_write(sc, SP_LOWER_BASE_COUNT, 0);
-    ad_write(sc, SP_UPPER_BASE_COUNT, 0);
-    ad_write(sc, SP_INTERFACE_CONFIG, PLAYBACK_ENABLE);
-}
-#endif
-    
 /*
  * Map and probe for the ad1848 chip
  */

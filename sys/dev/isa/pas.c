@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.18 1999/01/02 00:02:46 niklas Exp $	*/
+/*	$OpenBSD: pas.c,v 1.19 1999/01/07 06:14:48 niklas Exp $	*/
 /*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
@@ -373,19 +373,6 @@ pasprobe(parent, match, aux)
 		DPRINTF(("pas: configured dma chan %d invalid\n", ia->ia_drq));
 		goto unmap;
 	}
-#ifdef NEWCONFIG
-	/*
-	 * If the IRQ wasn't compiled in, auto-detect it.
-	 */
-	if (ia->ia_irq == IRQUNK) {
-		ia->ia_irq = isa_discoverintr(pasforceintr, aux);
-		sbdsp_reset(&sc->sc_sbdsp);
-		if (!SB_IRQ_VALID(ia->ia_irq)) {
-			DPRINTF(("pas: couldn't auto-detect interrupt"));
-			goto unmap;
-		}
-	} else
-#endif
 	if (!SB_IRQ_VALID(ia->ia_irq)) {
 		DPRINTF(("pas: configured irq chan %d invalid\n", ia->ia_irq));
 		goto unmap;
@@ -407,34 +394,6 @@ pasprobe(parent, match, aux)
 	bus_space_unmap(sc->sc_sbdsp.sc_iot, sc->sc_sbdsp.sc_ioh, SBP_NPORT);
 	return 0;
 }
-
-#ifdef NEWCONFIG
-void
-pasforceintr(aux)
-	void *aux;
-{
-	static char dmabuf;
-	struct isa_attach_args *ia = aux;
-	int iobase = ia->ia_iobase;
-
-	/*
-	 * Set up a DMA read of one byte.
-	 * XXX Note that at this point we haven't called 
-	 * at_setup_dmachan().  This is okay because it just
-	 * allocates a buffer in case it needs to make a copy,
-	 * and it won't need to make a copy for a 1 byte buffer.
-	 * (I think that calling at_setup_dmachan() should be optional;
-	 * if you don't call it, it will be called the first time
-	 * it is needed (and you pay the latency).  Also, you might
-	 * never need the buffer anyway.)
-	 */
-	at_dma(DMAMODE_READ, &dmabuf, 1, ia->ia_drq);
-	if (pas_wdsp(iobase, SB_DSP_RDMA) == 0) {
-		(void)pas_wdsp(iobase, 0);
-		(void)pas_wdsp(iobase, 0);
-	}
-}
-#endif
 
 /*
  * Attach hardware to driver, attach hardware driver to audio

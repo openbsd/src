@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_isa.c,v 1.2 1998/10/05 07:34:43 fgsch Exp $	*/
+/*	$OpenBSD: aic_isa.c,v 1.3 1999/01/07 06:14:47 niklas Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 /*
@@ -100,11 +100,6 @@ aic_isa_probe(parent, match, aux)
 	bus_space_handle_t ioh;
 	int rv;
 
-#ifdef NEWCONFIG
-	if (ia->ia_iobase == IOBASEUNK)
-		return (0);
-#endif
-
 	if (bus_space_map(iot, ia->ia_iobase, AIC_NPORTS, 0, &ioh))
 		return (0);
 
@@ -112,28 +107,6 @@ aic_isa_probe(parent, match, aux)
 	rv = aic_find(iot, ioh);
 
 	bus_space_unmap(iot, ioh, AIC_NPORTS);
-
-#ifdef NEWCONFIG
-	if (ia->ia_irq != IRQUNK) {
-		if (ia->ia_irq != sc->sc_irq) {
-			printf("%s: irq mismatch; ", sc->sc_dev.dv_xname);
-			printf("kernel configured %d != board configured %d\n",
-			    ia->ia_irq, sc->sc_irq);
-			return (0);
-		}
-	} else
-		ia->ia_irq = sc->sc_irq;
-
-	if (ia->ia_drq != DRQUNK) {
-		if (ia->ia_drq != sc->sc_drq) {
-			printf("%s: drq mismatch; ", sc->sc_dev.dv_xname);
-			printf("kernel configured %d != board configured %d\n",
-			    ia->ia_drq, sc->sc_drq);
-			return (0);
-		}
-	} else
-		ia->ia_drq = sc->sc_drq;
-#endif
 
 	if (rv) {
 		ia->ia_msize = 0;
@@ -162,10 +135,6 @@ aic_isa_attach(parent, self, aux)
 	sc->sc_ioh = ioh;
 
 	printf("\n");
-
-#ifdef NEWCONFIG
-	isa_establish(&sc->sc_id, &sc->sc_dev);
-#endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, aicintr, sc, sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.39 1998/10/03 21:19:00 millert Exp $	*/
+/*	$OpenBSD: fd.c,v 1.40 1999/01/07 06:14:48 niklas Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -695,13 +695,8 @@ loop:
 		 }}
 #endif
 		read = bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE;
-#ifdef NEWCONFIG
-		at_dma(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
-		    fdc->sc_drq);
-#else
 		isadma_start(bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    fdc->sc_drq, read);
-#endif
 		bus_space_write_1(iot, ioh_ctl, fdctl, type->rate);
 #ifdef FD_DEBUG
 		printf("fdintr: %s drive %d track %d head %d sec %d nblks %d\n",
@@ -766,11 +761,7 @@ loop:
 		goto doio;
 
 	case IOTIMEDOUT:
-#ifdef NEWCONFIG
-		at_dma_abort(fdc->sc_drq);
-#else
 		isadma_abort(fdc->sc_drq);
-#endif
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
@@ -783,11 +774,7 @@ loop:
 		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
 
 		if (fdcresult(fdc) != 7 || (st0 & 0xf8) != 0) {
-#ifdef NEWCONFIG
-			at_dma_abort(fdc->sc_drq);
-#else
 			isadma_abort(fdc->sc_drq);
-#endif
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
@@ -797,12 +784,8 @@ loop:
 			fdretry(fd);
 			goto loop;
 		}
-#ifdef NEWCONFIG
-		at_dma_terminate(fdc->sc_drq);
-#else
 		read = bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE;
 		isadma_done(fdc->sc_drq);
-#endif
 		if (fdc->sc_errors) {
 			diskerr(bp, "fd", "soft error", LOG_PRINTF,
 			    fd->sc_skip / fd_bsize, (struct disklabel *)NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pss.c,v 1.17 1999/01/02 00:02:46 niklas Exp $ */
+/*	$OpenBSD: pss.c,v 1.18 1999/01/07 06:14:49 niklas Exp $ */
 /*	$NetBSD: pss.c,v 1.38 1998/01/12 09:43:44 thorpej Exp $	*/
 
 /*
@@ -110,9 +110,6 @@
 
 struct pss_softc {
 	struct	device sc_dev;		/* base device */
-#ifdef NEWCONFIG
-	struct	isadev sc_id;		/* ISA device */
-#endif
 	void	*sc_ih;			/* interrupt vectoring */
 
 	int	sc_iobase;		/* I/O port base address */
@@ -134,9 +131,6 @@ struct pss_softc {
 #ifdef notyet
 struct mpu_softc {
 	struct	device sc_dev;		/* base device */
-#ifdef NEWCONFIG
-	struct	isadev sc_id;		/* ISA device */
-#endif
 	void	*sc_ih;			/* interrupt vectoring */
     
 	int	sc_iobase;		/* MIDI I/O port base address */
@@ -145,9 +139,6 @@ struct mpu_softc {
 
 struct pcd_softc {
 	struct	device sc_dev;		/* base device */
-#ifdef NEWCONFIG
-	struct	isadev sc_id;		/* ISA device */
-#endif
 	void	*sc_ih;			/* interrupt vectoring */
 
 	int	sc_iobase;		/* CD I/O port base address */
@@ -1030,10 +1021,6 @@ pssattach(parent, self, aux)
     sc->sc_iobase = iobase;
     sc->sc_drq = ia->ia_drq;
 
-#ifdef NEWCONFIG
-    isa_establish(&sc->sc_id, &sc->sc_dev);
-#endif
-
     /* Setup interrupt handler for PSS */
     sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, IPL_AUDIO,
 	pssintr, sc, sc->sc_dev.dv_xname);
@@ -1066,10 +1053,6 @@ spattach(parent, self, aux)
     sc->sc_iobase = iobase;
     sc->sc_drq = cf->cf_drq;
 
-#ifdef NEWCONFIG
-    isa_establish(&sc->sc_id, &sc->sc_dev);
-#endif
-
     sc->sc_ih = isa_intr_establish(ic, cf->cf_irq, IST_EDGE, IPL_AUDIO,
 	ad1848_intr, sc, sc->sc_dev.dv_xname);
 
@@ -1092,10 +1075,6 @@ mpuattach(parent, self, aux)
     int iobase = cf->cf_iobase;
 
     sc->sc_iobase = iobase;
-
-#ifdef NEWCONFIG
-    isa_establish(&sc->sc_id, &sc->sc_dev);
-#endif
 
     sc->sc_ih = isa_intr_establish(ic, cf->cf_irq, IST_EDGE, IPL_AUDIO,
         mpuintr, sc, sc->sc_dev.dv_xname);
@@ -1121,10 +1100,6 @@ pcdattach(parent, self, aux)
      * used after this to handle the device.
      */
     sc->sc_iobase = iobase;
-
-#ifdef NEWCONFIG
-    isa_establish(&sc->sc_id, &sc->sc_dev);
-#endif
 
     /* XXX might use pssprint func ?? */
     printf(" port 0x%x-0x%x irq %d\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt.c,v 1.22 1998/01/18 18:58:40 niklas Exp $	*/
+/*	$OpenBSD: bt.c,v 1.23 1999/01/07 06:14:47 niklas Exp $	*/
 /*	$NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp $	*/
 
 #undef BTDIAG
@@ -327,11 +327,6 @@ btprobe(parent, match, aux)
 {
 	register struct isa_attach_args *ia = aux;
 
-#ifdef NEWCONFIG
-	if (ia->ia_iobase == IOBASEUNK)
-		return 0;
-#endif
-
 	/* See if there is a unit at this location. */
 	if (bt_find(ia, NULL) != 0)
 		return 0;
@@ -374,9 +369,6 @@ btattach(parent, self, aux)
 	sc->sc_link.device = &bt_dev;
 	sc->sc_link.openings = 4;
 
-#ifdef NEWCONFIG
-	isa_establish(&sc->sc_id, &sc->sc_dev);
-#endif
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq, IST_EDGE,
 	    IPL_BIO, btintr, sc, sc->sc_dev.dv_xname);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: seagate.c,v 1.11 1997/11/07 08:07:10 niklas Exp $	*/
+/*	$OpenBSD: seagate.c,v 1.12 1999/01/07 06:14:49 niklas Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -444,9 +444,6 @@ seaattach(parent, self, aux)
   
 	printf("\n");
 
-#ifdef NEWCONFIG
-	isa_establish(&sea->sc_id, &sea->sc_deV);
-#endif
 	sea->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_BIO, seaintr, sea, sea->sc_dev.dv_xname);
 
