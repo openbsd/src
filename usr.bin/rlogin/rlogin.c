@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.15 1997/07/25 21:05:38 mickey Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.16 1997/08/06 06:43:40 deraadt Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.15 1997/07/25 21:05:38 mickey Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.16 1997/08/06 06:43:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -445,17 +445,18 @@ catch_child(signo)
 	int signo;
 {
 	union wait status;
+	int save_errno = errno;
 	int pid;
 
 	for (;;) {
 		pid = wait3((int *)&status, WNOHANG|WUNTRACED, NULL);
 		if (pid == 0)
-			return;
+			break;
 		/* if the child (reader) dies, just quit */
 		if (pid < 0 || (pid == child && !WIFSTOPPED(status)))
 			done((int)(status.w_termsig | status.w_retcode));
 	}
-	/* NOTREACHED */
+	errno = save_errno;
 }
 
 /*
@@ -635,6 +636,7 @@ oob(signo)
 {
 	struct termios tty;
 	int atmark, n, rcvd;
+	int save_errno = errno;
 	char waste[BUFSIZ], mark;
 
 	rcvd = 0;
@@ -649,16 +651,21 @@ oob(signo)
 			if (rcvcnt < sizeof(rcvbuf)) {
 				n = read(rem, rcvbuf + rcvcnt,
 				    sizeof(rcvbuf) - rcvcnt);
-				if (n <= 0)
+				if (n <= 0) {
+					errno = save_errno;
 					return;
+				}
 				rcvd += n;
 			} else {
 				n = read(rem, waste, sizeof(waste));
-				if (n <= 0)
+				if (n <= 0) {
+					errno = save_errno;
 					return;
+				}
 			}
 			continue;
 		default:
+			errno = save_errno;
 			return;
 		}
 	}
@@ -709,6 +716,7 @@ oob(signo)
 	 */
 	if (rcvd && rcvstate == READING)
 		longjmp(rcvtop, 1);
+	errno = save_errno;
 }
 
 /* reader: read from remote: line -> 1 */
@@ -809,7 +817,9 @@ void
 copytochild(signo)
 	int signo;
 {
+	int save_errno = errno;
 	(void)kill(child, SIGURG);
+	errno = save_errno;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.3 1997/01/17 07:13:32 millert Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.4 1997/08/06 06:43:45 deraadt Exp $	*/
 /*	$NetBSD: tftp.c,v 1.5 1995/04/29 05:55:25 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tftp.c,v 1.3 1997/01/17 07:13:32 millert Exp $";
+static char rcsid[] = "$OpenBSD: tftp.c,v 1.4 1997/08/06 06:43:45 deraadt Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -449,11 +449,14 @@ static void
 timer(sig)
 	int sig;
 {
+	int save_errno = errno;
 
 	timeout += rexmtval;
 	if (timeout >= maxtimeout) {
 		printf("Transfer timed out.\n");
+		errno = save_errno;
 		longjmp(toplevel, -1);
 	}
+	errno = save_errno;
 	longjmp(timeoutbuf, 1);
 }
