@@ -1113,7 +1113,6 @@
 ./usr/libdata/ssh/Ssh.bin
 ./usr/libexec
 ./usr/libexec/afsd
-./usr/libexec/atrun
 ./usr/libexec/auth
 ./usr/libexec/auth/login_activ
 ./usr/libexec/auth/login_chpass
@@ -3751,7 +3750,6 @@
 ./var/account
 ./var/at
 ./var/at/jobs
-./var/at/spool
 ./var/audit
 ./var/authpf
 ./var/backups
