@@ -1,4 +1,4 @@
-/* $OpenBSD: rf_openbsdkintf.c,v 1.26 2004/02/15 02:45:47 tedu Exp $	*/
+/* $OpenBSD: rf_openbsdkintf.c,v 1.27 2004/11/28 02:47:14 pedro Exp $	*/
 /* $NetBSD: rf_netbsdkintf.c,v 1.109 2001/07/27 03:30:07 oster Exp $	*/
 
 /*-
@@ -2603,9 +2603,8 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 
 	if (vp != NULL) {
 		if (auto_configured == 1) {
-			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, 0);
+			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED, p);
 			vrele(vp);
-
 		} else {
 			if (VOP_ISLOCKED(vp))
 				VOP_UNLOCK(vp, 0, p);
@@ -2615,7 +2614,6 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 		printf("vnode was NULL\n");
 	}
 }
-
 
 void
 rf_UnconfigureVnodes(RF_Raid_t *raidPtr)
