@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet6.c,v 1.26 2003/03/13 09:09:33 deraadt Exp $	*/
+/*	$OpenBSD: inet6.c,v 1.27 2003/03/16 19:10:46 sturm Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-/*__RCSID("$OpenBSD: inet6.c,v 1.26 2003/03/13 09:09:33 deraadt Exp $");*/
+/*__RCSID("$OpenBSD: inet6.c,v 1.27 2003/03/16 19:10:46 sturm Exp $");*/
 /*__RCSID("KAME Id: inet6.c,v 1.10 2000/02/09 10:49:31 itojun Exp");*/
 #endif
 #endif /* not lint */
@@ -1054,7 +1054,7 @@ inet6print(struct in6_addr *in6, int port, char *proto)
 	if (len <= 0)
 		goto bail;
 
-	cp += len;
+	cp = strchr(line, '\0');
 	if (!nflag && port)
 		GETSERVBYPORT6(port, proto, sp);
 	if (sp || port == 0)
