@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.42 2004/01/27 16:49:53 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.43 2004/01/28 23:31:28 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -92,7 +92,7 @@ typedef struct {
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
 %token	DUMP MSG IN TABLE
 %token	LOG UPDATES
-%token	TCP MD5SIG KEY
+%token	TCP MD5SIG PASSWORD KEY
 %token	ERROR
 %token	<v.string>	STRING
 %type	<v.number>	number optnumber yesno
@@ -343,16 +343,36 @@ peeropts	: REMOTEAS number	{
 		| MAXPREFIX number {
 			curpeer->conf.max_prefix = $2;
 		}
+		| TCP MD5SIG PASSWORD string {
+			strlcpy(curpeer->conf.tcp_md5_key, $4,
+			    sizeof(curpeer->conf.tcp_md5_key));
+		}
 		| TCP MD5SIG KEY string {
-			unsigned i;
+			unsigned	i;
+			char		s[3];
 
-			for (i = 0; i < strlen($4); i++)
-				if (!isxdigit($4[i])) {
-					yyerror("key should be in hex");
+			if (strlen($4) / 2 >=
+			    sizeof(curpeer->conf.tcp_md5_key)) {
+				yyerror("key too long");
+				YYERROR;
+			}
+
+			if (strlen($4) % 2) {
+				yyerror("key must be of even length");
+				YYERROR;
+			}
+
+			for (i = 0; i < strlen($4) / 2; i++) {
+				s[0] = $4[2*i];
+				s[1] = $4[2*i + 1];
+				s[2] = 0;
+				if (!isxdigit(s[0]) || !isxdigit(s[1])) {
+					yyerror("key must be specified in hex");
 					YYERROR;
 				}
-			strlcpy(curpeer->conf.tcp_sign_key, $4,
-			    sizeof(curpeer->conf.tcp_sign_key));
+				curpeer->conf.tcp_md5_key[i] =
+				    strtoul(s, NULL, 16);
+			}
 		}
 		;
 
@@ -411,6 +431,7 @@ lookup(char *s)
 		{ "network",		NETWORK},
 		{ "on",			ON},
 		{ "passive",		PASSIVE},
+		{ "password",		PASSWORD},
 		{ "remote-as",		REMOTEAS},
 		{ "router-id",		ROUTERID},
 		{ "table",		TABLE},

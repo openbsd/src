@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.11 2004/01/28 20:03:30 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.12 2004/01/28 23:31:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -58,10 +58,7 @@ pfkey_send(int sd, uint8_t mtype, struct bgpd_addr *src,
 	ssize_t			n;
 	int			klen = 0;
 	int			len = 0;
-	int			i;
 	int			iov_cnt;
-	char			realkey[TCP_SIGN_KEY_LEN];
-	char			s[3];
 	struct sockaddr_storage	ssrc, sdst;
 
 	/* we need clean sockaddr... no ports set */
@@ -134,22 +131,11 @@ pfkey_send(int sd, uint8_t mtype, struct bgpd_addr *src,
 	case SADB_ADD:
 	case SADB_UPDATE:
 		bzero(&sa_key, sizeof(sa_key));
-		klen = strlen(key) / 2;
+		klen = strlen(key);
 		sa_key.sadb_key_exttype = SADB_EXT_KEY_AUTH;
 		sa_key.sadb_key_len = (sizeof(sa_key) +
 		    ((klen + 7) / 8) * 8) / 8;
 		sa_key.sadb_key_bits = 8 * klen;
-
-		for (i = 0; i < klen; i++) {
-			s[0] = key[2*i];
-			s[1] = key[2*i + 1];
-			s[2] = 0;
-			if (!isxdigit(s[0]) || !isxdigit(s[1])) {
-				log_warnx("tcpmd5 must be specified in hex");
-				return (-1);
-			}
-			realkey[i] = strtoul(s, NULL, 16);
-		}
 		break;
 	}
 
@@ -204,7 +190,7 @@ pfkey_send(int sd, uint8_t mtype, struct bgpd_addr *src,
 		iov[iov_cnt].iov_base = &sa_key;
 		iov[iov_cnt].iov_len = sizeof(sa_key);
 		iov_cnt++;
-		iov[iov_cnt].iov_base = realkey;
+		iov[iov_cnt].iov_base = key;
 		iov[iov_cnt].iov_len = ((klen + 7) / 8) * 8;
 		smsg.sadb_msg_len += sa_key.sadb_key_len;
 		iov_cnt++;
@@ -306,17 +292,17 @@ pfkey_sa_remove(struct bgpd_addr *src, struct bgpd_addr *dst, u_int32_t *spi)
 int
 pfkey_auth_establish(struct peer *p)
 {
-	if (!p->conf.tcp_sign_key[0])
+	if (!p->conf.tcp_md5_key[0])
 		return (0);
 
 	if (!p->auth.spi_out)
 		if (pfkey_sa_add(&p->conf.local_addr, &p->conf.remote_addr,
-		    p->conf.tcp_sign_key, &p->auth.spi_out) == -1)
+		    p->conf.tcp_md5_key, &p->auth.spi_out) == -1)
 			return (-1);
 
 	if (!p->auth.spi_in)
 		if (pfkey_sa_add(&p->conf.remote_addr, &p->conf.local_addr,
-		    p->conf.tcp_sign_key, &p->auth.spi_in) == -1)
+		    p->conf.tcp_md5_key, &p->auth.spi_in) == -1)
 			return (-1);
 
 	return (0);
