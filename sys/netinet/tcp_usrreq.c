@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.37 1999/12/08 06:50:20 itojun Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.38 1999/12/20 16:06:25 itojun Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -545,13 +545,7 @@ tcp_ctloutput(op, so, level, optname, mp)
 #endif /* INET6 */
 	if (level != IPPROTO_TCP) {
 #ifdef INET6
-		/*
-		 * Not sure if this is the best approach.
-		 * It seems to be, but we don't set tp->pf until the connection
-		 * is established, which may lead to confusion in the case of
-		 * AF_INET6 sockets which get SET/GET options for IPv4.
-		 */
-		if (tp->pf == PF_INET6)
+		if (so->so_proto->pr_domain->dom_family == PF_INET6)
 			error = ip6_ctloutput(op, so, level, optname, mp);
 		else
 #endif /* INET6 */
