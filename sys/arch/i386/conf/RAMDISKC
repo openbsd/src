@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.15 2001/03/06 04:57:34 deraadt Exp $
+#	$OpenBSD: RAMDISKC,v 1.16 2001/03/12 04:51:42 jason Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -248,6 +248,7 @@ iophy*	at mii? phy ?				# Intel 82553 PHYs
 icsphy*	at mii? phy ?				# ICS 1890 PHYs
 #lxtphy*	at mii? phy ?			# Level1 LXT970 PHYs
 nsphy*	at mii? phy ?				# NS and compatible PHYs
+nsphyter*	at mii? phy ?			# NS and compatible PHYs
 #qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 #sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
 rlphy* at mii? phy ?				# RealTek 8139 internal PHYs

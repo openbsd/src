@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.247 2001/03/09 11:36:23 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.248 2001/03/12 04:51:41 jason Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -342,6 +342,7 @@ iophy*	at mii? phy ?				# Intel 82553 PHYs
 icsphy*	at mii? phy ?				# ICS 1890 PHYs
 lxtphy*	at mii? phy ?				# Level1 LXT970 PHYs
 nsphy*	at mii? phy ?				# NS and compatible PHYs
+nsphyter*	at mii? phy ?			# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
 rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
