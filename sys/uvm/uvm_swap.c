@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.3 1999/06/02 13:23:22 mickey Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.4 1999/06/04 00:15:42 art Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.23 1998/12/26 06:25:59 marc Exp $	*/
 
 /*
@@ -496,19 +496,6 @@ swapdrum_getsdp(pgno)
 				return sdp;
 			}
 	return NULL;
-}
-
-
-/*XXX
- *XXX
- *XXX*/
-int
-sys_swapon(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return EINVAL;
 }
 
 /*
@@ -1964,3 +1951,4 @@ uvm_swap_aiodone(aio)
 	 * done!
 	 */
 }
+
