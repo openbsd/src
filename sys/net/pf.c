@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.50 2001/06/26 12:27:16 wilfried Exp $ */
+/*	$OpenBSD: pf.c,v 1.51 2001/06/26 15:33:00 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -163,15 +163,15 @@ struct pf_state	*pf_test_state_icmp(int, struct ifnet *, struct mbuf **,
 void		*pull_hdr(struct ifnet *, struct mbuf **, int, int, void *, int,
 		    struct ip *, int *);
 int		 pf_test(int, struct ifnet *, struct mbuf **);
-int		 pflog_packet(struct mbuf *, int, short,int,
+int		 pflog_packet(struct mbuf *, int, u_short, u_short, u_short,
 		    struct pf_rule *);
 
 #if NPFLOG > 0
-#define		 PFLOG_PACKET(x,a,b,c,d,e) \
+#define		 PFLOG_PACKET(x,a,b,c,d,e,f) \
 		do { \
 			HTONS((x)->ip_len); \
 			HTONS((x)->ip_off); \
-			pflog_packet(a,b,c,d,e); \
+			pflog_packet(a,b,c,d,e,f); \
 			NTOHS((x)->ip_len); \
 			NTOHS((x)->ip_off); \
 		} while (0)
@@ -356,7 +356,8 @@ tree_remove(struct pf_tree_node **p, struct pf_tree_key *key)
 }
 
 int
-pflog_packet(struct mbuf *m, int af, short dir, int nr, struct pf_rule *rm)
+pflog_packet(struct mbuf *m, int af, u_short dir, u_short reason,
+    u_short nr, struct pf_rule *rm)
 {
 #if NBPFILTER > 0
         struct ifnet *ifn, *ifp = rm->ifp;
@@ -1272,7 +1273,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf **m,
 
 	/* XXX will log packet before rewrite */
 	if ((rm != NULL) && rm->log)
-		PFLOG_PACKET(h, *m, AF_INET, direction, mnr, rm);
+		PFLOG_PACKET(h, *m, AF_INET, direction, PFRES_MATCH, mnr, rm);
 
 	if ((rm != NULL) && (rm->action == PF_DROP_RST)) {
 		/* undo NAT/RST changes, if they have taken place */
@@ -1418,7 +1419,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf **m,
 
 	/* XXX will log packet before rewrite */
 	if (rm != NULL && rm->log)
-		PFLOG_PACKET(h, *m, AF_INET, direction, mnr, rm);
+		PFLOG_PACKET(h, *m, AF_INET, direction, PFRES_MATCH, mnr, rm);
 
 	if (rm != NULL && rm->action != PF_PASS)
 		return (PF_DROP);
@@ -1528,7 +1529,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf **m,
 
 	/* XXX will log packet before rewrite */
 	if (rm != NULL && rm->log)
-		PFLOG_PACKET(h, *m, AF_INET, direction, mnr, rm);
+		PFLOG_PACKET(h, *m, AF_INET, direction, PFRES_MATCH, mnr, rm);
 
 	if (rm != NULL && rm->action != PF_PASS)
 		return (PF_DROP);

@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pflog.h,v 1.2 2001/06/25 23:02:19 provos Exp $ */
+/* $OpenBSD: if_pflog.h,v 1.3 2001/06/26 15:33:00 provos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -43,9 +43,10 @@ struct pflog_softc {
 struct pfloghdr {
 	u_int32_t af;
 	char ifname[IFNAMSIZ];
-	int rnr;
-	short dir;
-	short action;
+	u_short rnr;
+	u_short reason;
+	u_short action;
+	u_short dir;
 };
 
 #define PFLOG_HDRLEN	sizeof(struct pfloghdr)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.13 2001/06/26 04:17:11 frantzen Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.14 2001/06/26 15:33:01 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -187,6 +187,8 @@ struct pfioc_if {
 #define DIOCSETSTATUSIF _IOWR('D', 20, struct pfioc_if)
 #define DIOCGETSTATUS	_IOWR('D', 21, struct pf_status)
 
+/* Reasons code for passing/dropping a packet */
+#define PFRES_MATCH	0		/* Explicit match of a rule */
 
 #ifdef _KERNEL
 
