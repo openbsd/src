@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.81 2003/06/11 06:22:12 deraadt Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.82 2003/06/25 21:11:48 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.81 2003/06/11 06:22:12 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.82 2003/06/25 21:11:48 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1188,7 +1188,6 @@ editit(void)
 {
 	pid_t pid, xpid;
 	int stat, len;
-	extern char *getenv();
 	char *argp[] = {"sh", "-c", NULL, NULL};
 	char *ed, *p;
 
