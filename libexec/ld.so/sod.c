@@ -1,4 +1,4 @@
-/*      $OpenBSD: sod.c,v 1.1.1.1 2000/06/13 03:40:14 rahnds Exp $       */
+/*      $OpenBSD: sod.c,v 1.2 2001/05/11 16:21:11 art Exp $       */
 /*  
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -147,7 +147,7 @@ _dl_maphints()
 	hsize = PAGSIZ;
 	addr = (void *) _dl_mmap(0, hsize, PROT_READ, MAP_COPY, hfd, 0);
 
-	if (addr == (caddr_t)-1) {
+	if (addr == MAP_FAILED) {
 		_dl_close(hfd);
 		hheader = (struct hints_header *)-1;
 		return;
