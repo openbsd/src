@@ -1,6 +1,6 @@
 # Master makefile for RCS
 
-#	$Id: Makefile.in,v 1.1 1996/08/12 04:07:33 millert Exp $
+#	$Id: Makefile.in,v 1.2 1996/08/12 04:26:12 millert Exp $
 
 # Copyright 1995 Paul Eggert
 #   Distributed under license by the Free Software Foundation, Inc.
@@ -37,17 +37,6 @@ INSTALL_MAN = man
 # All other subdirs:
 SUBDIRS = src $(INSTALL_MAN)
 
-FLAGS_TO_PASS = \
-	CC='$(CC)' \
-	CFLAGS='$(CFLAGS)' \
-	LDFLAGS='$(LDFLAGS)' \
-	LIBS='$(LIBS)' \
-	MAKE='$(MAKE)' \
-	bindir='$(bindir)' \
-	mandir='$(mandir)' \
-	prefix='$(prefix)' \
-	exec_prefix='$(exec_prefix)'
-
 default :: all
 
 standard_GNU_targets = \
@@ -60,7 +49,7 @@ maintainer-clean ::
 
 $(standard_GNU_targets) installcheck installdebug ::
 	@for subdir in $(SUBDIRS); do \
-	  ( cd $$subdir && $(MAKE) $(FLAGS_TO_PASS) $@ ) || exit 1; \
+	  ( cd $$subdir && $(MAKE) $@ ) || exit 1; \
 	done
 
 dist :: $(srcdir)/configure
