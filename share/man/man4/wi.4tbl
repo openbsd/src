@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.50 2004/08/10 13:20:30 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.51 2004/09/06 20:16:01 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -346,6 +346,7 @@ command.
 .Sh SEE ALSO
 .Xr an 4 ,
 .Xr arp 4 ,
+.Xr atw 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
 .Xr macobio 4 ,
