@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.50 1997/09/30 04:54:50 millert Exp $
+#	$OpenBSD: rc,v 1.51 1997/10/15 16:28:29 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -242,6 +242,7 @@ sed '1,/^$/d' < /etc/motd >> $T
 cmp -s $T /etc/motd || cp $T /etc/motd
 rm -f $T
 
+# nvi file recovery
 if [ ! -d /var/tmp/vi.recover ]; then
 	if [ -e /var/tmp/vi.recover ]; then
 		echo "Warning!  /var/tmp/vi.recover is not a directory!"
@@ -250,11 +251,29 @@ if [ ! -d /var/tmp/vi.recover ]; then
 		chmod 1777 /var/tmp/vi.recover
 	fi
 fi
+vibackup=/var/tmp/vi.recover/vi.*
+if [ "$vibackup" != "/var/tmp/vi.recover/vi.*" ]; then
+	for i in $vibackup; do
+		# Unmodified nvi editor backup files either have the
+		# execute bit set or are zero length.  Delete them.
+		if test -x $i -o ! -s $i; then
+			rm $i
+		fi
+	done
+fi
 virecovery=/var/tmp/vi.recover/recover.*
 if [ "$virecovery" != "/var/tmp/vi.recover/recover.*" ]; then
 	echo preserving editor files
 	for i in $virecovery; do
-		sendmail -t < $i
+		# Delete any recovery files that are zero length, corrupted,
+		# or that have no corresponding backup file.  Else send mail
+		# to the user.
+		recfile=`awk '/^X-vi-recover-path:/{print $2}' < $i`
+		if test -n "$recfile" -a -s "$recfile"; then
+			sendmail -t < $i
+		else
+			rm $i
+		fi
 	done
 fi
 
