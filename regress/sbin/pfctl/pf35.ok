@@ -1,7 +1,7 @@
 intf = "lo0"
 developerhosts = "10.0.0.0/24"
 employeehosts = "10.0.1.0/24"
-altq on lo0 cbq( red ecn ) bandwidth 10.00Mb qlimit 100 tbrsize 5000 queue { std http mail ssh }
+altq on lo0 cbq( red ecn ) bandwidth 10Mb qlimit 100 tbrsize 5000 queue { std http mail ssh }
 queue std bandwidth 10% qlimit 1 cbq( default ) 
 queue http bandwidth 60% priority 2 cbq( red borrow ) { employees developers }
 queue developers 
