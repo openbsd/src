@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.16 2004/07/15 15:28:59 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.59 2004/07/15 07:19:46 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.17 2004/07/15 15:39:40 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.60 2004/07/15 07:20:46 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.59 2004/07/15 07:19:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.60 2004/07/15 07:20:46 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -1187,8 +1187,6 @@ atw_init(struct ifnet *ifp)
 
 	ATW_WRITE(sc, ATW_IER, sc->sc_inten);
 	ATW_WRITE(sc, ATW_STSR, 0xffffffff);
-	if (sc->sc_intr_ack != NULL)
-		(*sc->sc_intr_ack)(sc);
 
 	DPRINTF(sc, ("%s: ATW_IER %08x, inten %08x\n",
 	    sc->sc_dev.dv_xname, ATW_READ(sc, ATW_IER), sc->sc_inten));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_cardbus.c,v 1.1 2004/06/22 23:55:23 millert Exp $	*/
+/*	$OpenBSD: if_atw_cardbus.c,v 1.2 2004/07/15 15:39:41 millert Exp $	*/
 /*	$NetBSD: if_atw_cardbus.c,v 1.7 2004/05/08 23:40:01 dyoung Exp $	*/
 
 /*-
@@ -133,8 +133,6 @@ int	atw_cardbus_enable(struct atw_softc *);
 void	atw_cardbus_disable(struct atw_softc *);
 void	atw_cardbus_power(struct atw_softc *, int);
 
-void	atw_cardbus_intr_ack(struct atw_softc *);
-
 const struct atw_cardbus_product *atw_cardbus_lookup
    (const struct cardbus_attach_args *);
 
@@ -202,8 +200,6 @@ atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_enable = atw_cardbus_enable;
 	sc->sc_disable = atw_cardbus_disable;
 	sc->sc_power = atw_cardbus_power;
-
-	sc->sc_intr_ack = atw_cardbus_intr_ack;
 
 	/* Get revision info. */
 	rev = PCI_REVISION(ca->ca_class);
@@ -283,12 +279,6 @@ atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	 * Power down the socket.
 	 */
 	Cardbus_function_disable(csc->sc_ct);
-}
-
-void
-atw_cardbus_intr_ack(struct atw_softc *sc)
-{
-	ATW_WRITE(sc, ATW_FER, ATW_FER_INTR);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atwvar.h,v 1.3 2004/07/15 12:00:31 millert Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.4 2004/07/15 15:39:41 millert Exp $	*/
 /*	$NetBSD: atwvar.h,v 1.10 2004/07/15 06:06:53 dyoung Exp $	*/
 
 /*
@@ -253,9 +253,6 @@ struct atw_softc {
 	u_int32_t	sc_rxint_mask;	/* mask of Rx interrupts we want */
 	u_int32_t	sc_txint_mask;	/* mask of Tx interrupts we want */
 	u_int32_t	sc_linkint_mask;/* link-state interrupts mask */
-
-	/* interrupt acknowledge hook */
-	void (*sc_intr_ack)(struct atw_softc *);
 
 	enum atw_rftype		sc_rftype;
 	enum atw_bbptype	sc_bbptype;
