@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.22 2002/06/09 08:13:07 todd Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.23 2002/09/11 09:50:44 ho Exp $	*/
 /*	$EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ sysdep_ipsec_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
     {
       *sz = IPSEC_SPI_SIZE;
       /* XXX should be random instead I think.  */
-      return strdup ("\x12\x34\x56\x78");
+      return (u_int8_t *)strdup ("\x12\x34\x56\x78");
     }
   return KEY_API (get_spi) (sz, proto, src, dst, seq);
 }

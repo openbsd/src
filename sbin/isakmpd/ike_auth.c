@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.65 2002/06/10 18:08:58 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.66 2002/09/11 09:50:43 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -180,7 +180,7 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 		(unsigned long)*keylen);
 	      return 0;
 	    }
-	  if (hex2raw (key + 2, buf, *keylen))
+	  if (hex2raw (key + 2, (unsigned char *)buf, *keylen))
 	    {
 	      free (buf);
 	      log_print ("ike_auth_get_key: invalid hex key %s", key);
@@ -337,8 +337,8 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
   struct prf *prf;
   struct ipsec_exch *ie = exchange->data;
   u_int8_t *skeyid;
-  u_int8_t *key;
   u_int8_t *buf = 0;
+  unsigned char *key;
   size_t keylen;
 
   /*
@@ -386,7 +386,8 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
    * Get the pre-shared key for our peer. This will work even if the key
    * has been passed to us through a mechanism like PFKEYv2.
    */
-  key = ike_auth_get_key (IKE_AUTH_PRE_SHARED, exchange->name, buf, &keylen);
+  key = ike_auth_get_key (IKE_AUTH_PRE_SHARED, exchange->name, (char *)buf,
+			  &keylen);
   if (buf)
     free (buf);
 
@@ -436,7 +437,8 @@ sig_gen_skeyid (struct exchange *exchange, size_t *sz)
 {
   struct prf *prf;
   struct ipsec_exch *ie = exchange->data;
-  u_int8_t *skeyid, *key;
+  u_int8_t *skeyid;
+  unsigned char *key;
 
   key = malloc (exchange->nonce_i_len + exchange->nonce_r_len);
   if (!key)
@@ -448,7 +450,7 @@ sig_gen_skeyid (struct exchange *exchange, size_t *sz)
   LOG_DBG((LOG_NEGOTIATION, 80, "sig_gen_skeyid: PRF type %d, hash %d",
       ie->prf_type, ie->hash->type));
   LOG_DBG_BUF((LOG_NEGOTIATION, 80, "sig_gen_skeyid: SKEYID initialized with",
-      key, exchange->nonce_i_len + exchange->nonce_r_len));
+      (u_int8_t *)key, exchange->nonce_i_len + exchange->nonce_r_len));
 
   prf = prf_alloc (ie->prf_type, ie->hash->type, key,
 		   exchange->nonce_i_len + exchange->nonce_r_len);
@@ -916,7 +918,7 @@ rsa_sig_encode_hash (struct message *msg)
   id_len = initiator ? exchange->id_i_len : exchange->id_r_len;
 
   /* We may have been provided these by the kernel */
-  buf = conf_get_str (exchange->name, "Credentials");
+  buf = (u_int8_t *)conf_get_str (exchange->name, "Credentials");
   if (buf
       && (idtype = conf_get_num (exchange->name, "Credential_Type", -1) != -1))
     {
@@ -928,7 +930,7 @@ rsa_sig_encode_hash (struct message *msg)
 	  return -1;
 	}
 
-      exchange->sent_cert = handler->cert_from_printable (buf);
+      exchange->sent_cert = handler->cert_from_printable ((char *)buf);
       if (!exchange->sent_cert)
 	{
 	  log_print ("rsa_sig_encode_hash: failed to retrieve certificate");
@@ -1053,11 +1055,11 @@ rsa_sig_encode_hash (struct message *msg)
     }
 
   /* Again, we may have these from the kernel */
-  buf = conf_get_str (exchange->name, "OKAuthentication");
+  buf = (u_int8_t *)conf_get_str (exchange->name, "OKAuthentication");
   if (buf)
     {
-      key_from_printable (ISAKMP_KEY_RSA, ISAKMP_KEYTYPE_PRIVATE, buf, &data,
-			  &datalen);
+      key_from_printable (ISAKMP_KEY_RSA, ISAKMP_KEYTYPE_PRIVATE, (char *)buf,
+			  &data, &datalen);
       if (!data || datalen == -1)
 	{
 	  log_print ("rsa_sig_encode_hash: badly formatted RSA private key");
@@ -1078,7 +1080,7 @@ rsa_sig_encode_hash (struct message *msg)
   else /* Try through the regular means.  */
     {
       exchange->sent_key = ike_auth_get_key (IKE_AUTH_RSA_SIG, exchange->name,
-					     buf2, 0);
+					     (char *)buf2, 0);
       free (buf2);
 
       /* Did we find a key?  */

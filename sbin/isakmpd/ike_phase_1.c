@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.34 2002/07/04 17:00:35 ho Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.35 2002/09/11 09:50:43 ho Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -201,7 +201,8 @@ ike_phase_1_initiator_send_SA (struct message *msg)
                     {
                       value = htonl (value);
 		      attr = attribute_set_var (attr, IKE_ATTR_LIFE_DURATION,
-                                                (char *)&value, sizeof value);
+                                                (u_int8_t *)&value,
+						sizeof value);
                     }
                 }
 	    }
@@ -233,9 +234,9 @@ ike_phase_1_initiator_send_SA (struct message *msg)
 	   * Make sure that if a group description is specified, it is
 	   * specified for all transforms equally.
 	   */
-	  attr = conf_get_str (xf->field, "GROUP_DESCRIPTION");
+	  attr = (u_int8_t *)conf_get_str (xf->field, "GROUP_DESCRIPTION");
 	  new_group_desc
-	    = attr ? constant_value (ike_group_desc_cst, attr) : 0;
+	    = attr ? constant_value (ike_group_desc_cst, (char *)attr) : 0;
 	  if (group_desc == -1)
 	    group_desc = new_group_desc;
 	  else if (group_desc != new_group_desc)
@@ -634,7 +635,7 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
   prf->Init (prf->prfctx);
   prf->Update (prf->prfctx, ie->g_xy, ie->g_x_len);
   prf->Update (prf->prfctx, exchange->cookies, ISAKMP_HDR_COOKIES_LEN);
-  prf->Update (prf->prfctx, "\0", 1);
+  prf->Update (prf->prfctx, (unsigned char *)"\0", 1);
   prf->Final (ie->skeyid_d, prf->prfctx);
   LOG_DBG_BUF ((LOG_NEGOTIATION, 80,
 		"ike_phase_1_post_exchange_KE_NONCE: SKEYID_d",	ie->skeyid_d,
@@ -653,7 +654,7 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
   prf->Update (prf->prfctx, ie->skeyid_d, ie->skeyid_len);
   prf->Update (prf->prfctx, ie->g_xy, ie->g_x_len);
   prf->Update (prf->prfctx, exchange->cookies, ISAKMP_HDR_COOKIES_LEN);
-  prf->Update (prf->prfctx, "\1", 1);
+  prf->Update (prf->prfctx, (unsigned char *)"\1", 1);
   prf->Final (ie->skeyid_a, prf->prfctx);
   LOG_DBG_BUF ((LOG_NEGOTIATION, 80,
 		"ike_phase_1_post_exchange_KE_NONCE: SKEYID_a",	ie->skeyid_a,
@@ -673,7 +674,7 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
   prf->Update (prf->prfctx, ie->skeyid_a, ie->skeyid_len);
   prf->Update (prf->prfctx, ie->g_xy, ie->g_x_len);
   prf->Update (prf->prfctx, exchange->cookies, ISAKMP_HDR_COOKIES_LEN);
-  prf->Update (prf->prfctx, "\2", 1);
+  prf->Update (prf->prfctx, (unsigned char *)"\2", 1);
   prf->Final (ie->skeyid_e, prf->prfctx);
   prf_free (prf);
   LOG_DBG_BUF ((LOG_NEGOTIATION, 80,
@@ -712,7 +713,7 @@ ike_phase_1_post_exchange_KE_NONCE (struct message *msg)
 	}
 
       prf->Init (prf->prfctx);
-      prf->Update (prf->prfctx, "\0", 1);
+      prf->Update (prf->prfctx, (unsigned char *)"\0", 1);
       prf->Final (key, prf->prfctx);
 
       for (len = prf->blocksize, p = key; len < exchange->key_length;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: prf.h,v 1.6 2002/09/06 21:36:52 deraadt Exp $	*/
+/*	$OpenBSD: prf.h,v 1.7 2002/09/11 09:50:44 ho Exp $	*/
 /*	$EOM: prf.h,v 1.1 1998/07/11 20:06:22 provos Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ struct prf_hash_ctx {
   void *ctx, *ctx2;		/* Contexts we need for later */
 };
 
-struct prf *prf_alloc (enum prfs, int, char *, int);
+struct prf *prf_alloc (enum prfs, int, unsigned char *, int);
 void prf_free (struct prf *);
 
 #endif /* _PRF_H_ */

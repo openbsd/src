@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.11 2002/06/10 18:08:58 ho Exp $	*/
+/*	$OpenBSD: key.c,v 1.12 2002/09/11 09:50:44 ho Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -58,7 +58,7 @@ key_serialize (int type, int private, void *key, u_int8_t **data, size_t *datale
     {
     case ISAKMP_KEY_PASSPHRASE:
       *datalen = strlen ((char *)key);
-      *data = strdup ((char *)key);
+      *data = (u_int8_t *)strdup ((char *)key);
       break;
     case ISAKMP_KEY_RSA:
       switch (private)
@@ -130,7 +130,7 @@ key_internalize (int type, int private, u_int8_t *data, int datalen)
   switch (type)
     {
     case ISAKMP_KEY_PASSPHRASE:
-      return strdup (data);
+      return strdup ((char *)data);
     case ISAKMP_KEY_RSA:
       switch (private)
 	{
@@ -161,13 +161,13 @@ key_internalize (int type, int private, u_int8_t *data, int datalen)
 /* Convert from printable to serialized */
 void
 key_from_printable (int type, int private, char *key, u_int8_t **data,
-		    int *datalen)
+		    u_int32_t *datalen)
 {
   switch (type)
     {
     case ISAKMP_KEY_PASSPHRASE:
       *datalen = strlen (key);
-      *data = strdup (key);
+      *data = (u_int8_t *)strdup (key);
       break;
 
     case ISAKMP_KEY_RSA:

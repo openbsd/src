@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.56 2002/07/09 14:31:45 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.57 2002/09/11 09:50:44 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ message_alloc (struct transport *t, u_int8_t *buf, size_t sz)
   msg->iovlen = 1;
   if (buf)
     memcpy (msg->iov[0].iov_base, buf, sz);
-  msg->nextp = msg->iov[0].iov_base + ISAKMP_HDR_NEXT_PAYLOAD_OFF;
+  msg->nextp = (u_int8_t *)msg->iov[0].iov_base + ISAKMP_HDR_NEXT_PAYLOAD_OFF;
   msg->transport = t;
   transport_reference (t);
   for (i = ISAKMP_PAYLOAD_SA; i < ISAKMP_PAYLOAD_RESERVED_MIN; i++)
@@ -379,8 +379,8 @@ message_validate_attribute (struct message *msg, struct payload *p)
   /* If we don't have an exchange yet, create one.  */
   if (!msg->exchange)
     {
-      if (zero_test (msg->iov[0].iov_base + ISAKMP_HDR_MESSAGE_ID_OFF,
-		     ISAKMP_HDR_MESSAGE_ID_LEN))
+      if (zero_test ((u_int8_t *)msg->iov[0].iov_base
+		     + ISAKMP_HDR_MESSAGE_ID_OFF, ISAKMP_HDR_MESSAGE_ID_LEN))
 	msg->exchange = exchange_setup_p1 (msg, IPSEC_DOI_IPSEC);
       else
 	msg->exchange = exchange_setup_p2 (msg, IPSEC_DOI_IPSEC);
@@ -456,8 +456,8 @@ message_validate_delete (struct message *msg, struct payload *p)
   /* If we don't have an exchange yet, create one.  */
   if (!msg->exchange)
     {
-      if (zero_test (msg->iov[0].iov_base + ISAKMP_HDR_MESSAGE_ID_OFF,
-		     ISAKMP_HDR_MESSAGE_ID_LEN))
+      if (zero_test ((u_int8_t *)msg->iov[0].iov_base
+		     + ISAKMP_HDR_MESSAGE_ID_OFF, ISAKMP_HDR_MESSAGE_ID_LEN))
 	msg->exchange = exchange_setup_p1 (msg, doi->id);
       else
 	msg->exchange = exchange_setup_p2 (msg, doi->id);
@@ -581,8 +581,8 @@ message_validate_notify (struct message *msg, struct payload *p)
   /* If we don't have an exchange yet, create one.  */
   if (!msg->exchange)
     {
-      if (zero_test (msg->iov[0].iov_base + ISAKMP_HDR_MESSAGE_ID_OFF,
-		     ISAKMP_HDR_MESSAGE_ID_LEN))
+      if (zero_test ((u_int8_t *)msg->iov[0].iov_base
+		     + ISAKMP_HDR_MESSAGE_ID_OFF, ISAKMP_HDR_MESSAGE_ID_LEN))
 	msg->exchange = exchange_setup_p1 (msg, doi->id);
       else
 	msg->exchange = exchange_setup_p2 (msg, doi->id);
@@ -893,9 +893,10 @@ message_sort_payloads (struct message *msg, u_int8_t next)
   for (i = ISAKMP_PAYLOAD_SA; i < ISAKMP_PAYLOAD_RESERVED_MIN; i++)
     if (i != ISAKMP_PAYLOAD_PROPOSAL && i != ISAKMP_PAYLOAD_TRANSFORM)
       SET (i, &payload_set);
-  sz = message_parse_payloads (msg, 0, next,
-			       msg->iov[0].iov_base + ISAKMP_HDR_SZ,
-			       &payload_set, message_index_payload);
+  sz =
+    message_parse_payloads (msg, 0, next,
+			    (u_int8_t *)msg->iov[0].iov_base + ISAKMP_HDR_SZ,
+			    &payload_set, message_index_payload);
   if (sz == -1)
     return -1;
   msg->iov[0].iov_len = ISAKMP_HDR_SZ + sz;
@@ -2161,7 +2162,8 @@ message_copy (struct message *msg, size_t offset, size_t *szp)
   p = buf;
   for (i = skip + 1; i < msg->iovlen; i++)
     {
-      memcpy (p, msg->iov[i].iov_base + start, msg->iov[i].iov_len - start);
+      memcpy (p, (u_int8_t *)msg->iov[i].iov_base + start,
+	      msg->iov[i].iov_len - start);
       p += msg->iov[i].iov_len - start;
       start = 0;
     }

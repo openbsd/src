@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.44 2002/08/07 13:19:20 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.45 2002/09/11 09:50:43 ho Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
@@ -828,7 +828,7 @@ conf_decode_base64 (u_int8_t *out, u_int32_t *len, u_char *buf)
 	  if (c2 & 0xF)
 	    return 0;
 
-	  if (strcmp (buf, "==") == 0)
+	  if (strcmp ((char *)buf, "==") == 0)
 	    buf++;
 	  else
 	    return 0;
@@ -846,7 +846,7 @@ conf_decode_base64 (u_int8_t *out, u_int32_t *len, u_char *buf)
 	      if (c3 & 3)
 		return 0;
 
-	      if (strcmp (buf, "="))
+	      if (strcmp ((char *)buf, "="))
 		return 0;
 
 	    }

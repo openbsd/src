@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.70 2002/09/08 12:38:04 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.71 2002/09/11 09:50:43 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ static int ipsec_contacted (struct message *msg);
 static int ipsec_debug_attribute (u_int16_t, u_int8_t *, u_int16_t, void *);
 #endif
 static void ipsec_delete_spi (struct sa *, struct proto *, int);
-static u_int16_t *ipsec_exchange_script (u_int8_t);
+static int16_t *ipsec_exchange_script (u_int8_t);
 static void ipsec_finalize_exchange (struct message *);
 static void ipsec_free_exchange_data (void *);
 static void ipsec_free_proto_data (void *);
@@ -643,7 +643,7 @@ ipsec_free_proto_data (void *viproto)
 }
 
 /* Return exchange script based on TYPE.  */
-static u_int16_t *
+static int16_t *
 ipsec_exchange_script (u_int8_t type)
 {
   switch (type)
@@ -1880,7 +1880,7 @@ ipsec_get_id (char *section, int *id, struct sockaddr **addr,
  * we cannot fit the information in the supplied buffer.
  */
 static void
-ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
+ipsec_decode_id (char *buf, int size, u_int8_t *id, size_t id_len,
 		 int isakmpform)
 {
   int id_type;
@@ -2010,7 +2010,7 @@ ipsec_build_id (char *section, size_t *sz)
     }
 
   SET_ISAKMP_ID_TYPE (p, id);
-  SET_ISAKMP_ID_DOI_DATA (p, "\000\000\000");
+  SET_ISAKMP_ID_DOI_DATA (p, (unsigned char *)"\000\000\000");
 
   memcpy (p + ISAKMP_ID_DATA_OFF, sockaddr_addrdata (addr),
 	  sockaddr_addrlen (addr));

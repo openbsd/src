@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.h,v 1.21 2002/06/09 08:13:06 todd Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.22 2002/09/11 09:50:43 ho Exp $	*/
 /*	$EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	*/
 
 /*
@@ -233,7 +233,7 @@ extern void exchange_report (void);
 extern void exchange_run (struct message *);
 extern int exchange_save_nonce (struct message *);
 extern int exchange_save_certreq (struct message *);
-extern u_int16_t *exchange_script (struct exchange *);
+extern int16_t *exchange_script (struct exchange *);
 extern struct exchange *exchange_setup_p1 (struct message *, u_int32_t);
 extern struct exchange *exchange_setup_p2 (struct message *, u_int8_t);
 extern void exchange_upgrade_p1 (struct message *);

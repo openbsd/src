@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.55 2002/06/15 19:27:06 angelos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.56 2002/09/11 09:50:44 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -781,13 +781,13 @@ policy_callback (char *name)
 	  for (i = 0; i < 16; i++)
 	    net.s6_addr[i] &= mask.s6_addr[i];
 
-	  my_inet_ntop6 ((char *) &net, remote_id_addr_lower,
+	  my_inet_ntop6 ((unsigned char *) &net, remote_id_addr_lower,
 			 sizeof remote_id_addr_lower - 1);
 
 	  for (i = 0; i < 16; i++)
 	    net.s6_addr[i] |= ~mask.s6_addr[i];
 
-	  my_inet_ntop6 ((char *) &net, remote_id_addr_upper,
+	  my_inet_ntop6 ((unsigned char *) &net, remote_id_addr_upper,
 			 sizeof remote_id_addr_upper - 1);
 
 	  len = strlen (remote_id_addr_upper) + strlen (remote_id_addr_lower)
@@ -1058,13 +1058,13 @@ policy_callback (char *name)
 	      for (i = 0; i < 16; i++)
 		net.s6_addr[i] &= mask.s6_addr[i];
 
-	      my_inet_ntop6 ((char *) &net, remote_filter_addr_lower,
+	      my_inet_ntop6 ((unsigned char *) &net, remote_filter_addr_lower,
 			     sizeof remote_filter_addr_lower - 1);
 
 	      for (i = 0; i < 16; i++)
 		net.s6_addr[i] |= ~mask.s6_addr[i];
 
-	      my_inet_ntop6 ((char *) &net, remote_filter_addr_upper,
+	      my_inet_ntop6 ((unsigned char *) &net, remote_filter_addr_upper,
 			     sizeof remote_filter_addr_upper - 1);
 
 	      len = strlen (remote_filter_addr_upper)
@@ -1350,13 +1350,13 @@ policy_callback (char *name)
 	      for (i = 0; i < 16; i++)
 		net.s6_addr[i] &= mask.s6_addr[i];
 
-	      my_inet_ntop6 ((char *) &net, local_filter_addr_lower,
+	      my_inet_ntop6 ((unsigned char *) &net, local_filter_addr_lower,
 			     sizeof local_filter_addr_lower - 1);
 
 	      for (i = 0; i < 16; i++)
 		net.s6_addr[i] |= ~mask.s6_addr[i];
 
-	      my_inet_ntop6 ((char *) &net, local_filter_addr_upper,
+	      my_inet_ntop6 ((unsigned char *) &net, local_filter_addr_upper,
 			     sizeof local_filter_addr_upper - 1);
 
 	      len = strlen (local_filter_addr_upper)
@@ -2169,7 +2169,7 @@ void
 keynote_serialize (void *cert, u_int8_t **data, u_int32_t *datalen)
 {
   *datalen = strlen ((char *)cert) + 1;
-  *data = strdup (cert); /* So we allocate an extra character at the end... */
+  *data = (u_int8_t *)strdup (cert); /* i.e an extra character at the end... */
   if (*data == NULL)
     log_error ("keynote_serialize: malloc (%d) failed", *datalen);
 }

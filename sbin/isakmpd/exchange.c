@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.69 2002/09/05 17:30:03 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.70 2002/09/11 09:50:43 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -171,7 +171,7 @@ int16_t script_informational[] = {
  * Check what exchange SA is negotiated with and return a suitable validation
  * script.
  */
-u_int16_t *
+int16_t *
 exchange_script (struct exchange *exchange)
 {
   switch (exchange->type)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.66 2002/06/14 12:43:11 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.67 2002/09/11 09:50:43 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -652,7 +652,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
                               attr =
                                 attribute_set_var (attr,
                                                    IPSEC_ATTR_SA_LIFE_DURATION,
-                                                   (char *)&value,
+                                                   (u_int8_t *)&value,
 						   sizeof value);
                             }
                         }
@@ -718,9 +718,11 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 		   * Make sure that if a group description is specified, it is
 		   * specified for all transforms equally.
 		   */
-		  attr = conf_get_str (xf->field, "GROUP_DESCRIPTION");
+		  attr = (u_int8_t *)conf_get_str (xf->field,
+						   "GROUP_DESCRIPTION");
 		  new_group_desc
-		    = attr ? constant_value (ike_group_desc_cst, attr) : 0;
+		    = attr ? constant_value (ike_group_desc_cst,
+					     (char *)attr) : 0;
 		  if (group_desc == -1)
 		    group_desc = new_group_desc;
 		  else if (group_desc != new_group_desc)
@@ -1044,7 +1046,7 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
 
   /* Allocate the prf and start calculating our HASH(1).  XXX Share?  */
   LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_recv_HASH_SA_NONCE: SKEYID_a",
-		isa->skeyid_a, isa->skeyid_len));
+		(u_int8_t *)isa->skeyid_a, isa->skeyid_len));
   prf = prf_alloc (isa->prf_type, hash->type, isa->skeyid_a, isa->skeyid_len);
   if (!prf)
     return -1;
@@ -1299,7 +1301,7 @@ initiator_send_HASH (struct message *msg)
   if (!prf)
     return -1;
   prf->Init (prf->prfctx);
-  prf->Update (prf->prfctx, "\0", 1);
+  prf->Update (prf->prfctx, (unsigned char *)"\0", 1);
   LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_send_HASH: message_id",
 		exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
   prf->Update (prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
@@ -1933,7 +1935,7 @@ responder_recv_HASH (struct message *msg)
   if (!prf)
     goto cleanup;
   prf->Init (prf->prfctx);
-  prf->Update (prf->prfctx, "\0", 1);
+  prf->Update (prf->prfctx, (unsigned char *)"\0", 1);
   LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "responder_recv_HASH: message_id",
 		exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN));
   prf->Update (prf->prfctx, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);

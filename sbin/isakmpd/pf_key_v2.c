@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.116 2002/08/29 15:15:45 itojun Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.117 2002/09/11 09:50:44 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -876,7 +876,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
   size_t len;
   int keylen, hashlen, err;
 #ifndef KAME
-  char *pp;
+  u_int8_t *pp;
   int idtype;
 #else /* KAME */
   struct sadb_x_sa2 ssa2;
@@ -2159,9 +2159,8 @@ pf_key_v2_flow (struct sockaddr *laddr, struct sockaddr *lmask,
 static u_int8_t *
 pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 {
-  u_int8_t *res = 0;
+  u_int8_t *addr, *res = 0;
   char addrbuf[ADDRESS_MAX + 5];
-  char *addr;
 
   switch (id[0])
     {
@@ -2195,7 +2194,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 	return 0;
       *reslen = strlen (addrbuf) + 3;
       strlcat (addrbuf, "/32", ADDRESS_MAX + 5);
-      res = strdup (addrbuf);
+      res = (u_int8_t *)strdup (addrbuf);
       if (!res)
 	return 0;
       *idtype = SADB_IDENTTYPE_PREFIX;
@@ -2208,7 +2207,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 	return 0;
       *reslen = strlen (addrbuf) + 4;
       strlcat (addrbuf, "/128", ADDRESS_MAX + 5);
-      res = strdup (addrbuf);
+      res = (u_int8_t *)strdup (addrbuf);
       if (!res)
 	return 0;
       LOG_DBG ((LOG_SYSDEP, 40, "pf_key_v2_convert_id: IPv6 address %s", res));
@@ -2224,7 +2223,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 					       *(addr +
 						 sizeof (struct in_addr))));
       *reslen = strlen (addrbuf);
-      res = strdup (addrbuf);
+      res = (u_int8_t *)strdup (addrbuf);
       if (!res)
 	return 0;
       *idtype = SADB_IDENTTYPE_PREFIX;
@@ -2239,7 +2238,7 @@ pf_key_v2_convert_id (u_int8_t *id, int idlen, size_t *reslen, int *idtype)
 		"/%d", pf_key_v2_mask6_to_bits (addr +
 						sizeof (struct in6_addr)));
       *reslen = strlen (addrbuf);
-      res = strdup (addrbuf);
+      res = (u_int8_t *)strdup (addrbuf);
       if (!res)
 	return 0;
       LOG_DBG ((LOG_SYSDEP, 40, "pf_key_v2_convert_id: IPv6 subnet %s", res));
@@ -2358,7 +2357,7 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
 static int
 pf_key_v2_conf_refinc (int af, char *section)
 {
-  unsigned char conn[22];
+  char conn[22];
   int num;
 
   if (!section)
@@ -2381,7 +2380,7 @@ pf_key_v2_conf_refinc (int af, char *section)
 static int
 pf_key_v2_conf_refhandle (int af, char *section)
 {
-  unsigned char conn[22];
+  char conn[22];
   int num;
 
   if (!section)
@@ -3795,7 +3794,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  /* We may have been provided with authentication material. */
 	  if (sauth)
 	    {
-	      u_int8_t *authm;
+	      char *authm;
 
 	      /* Convert to bytes in-place. */
 	      sauth->sadb_x_cred_len *= PF_KEY_V2_CHUNK;

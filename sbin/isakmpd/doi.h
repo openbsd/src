@@ -1,4 +1,4 @@
-/*	$OpenBSD: doi.h,v 1.9 2000/08/03 07:23:00 niklas Exp $	*/
+/*	$OpenBSD: doi.h,v 1.10 2002/09/11 09:50:43 ho Exp $	*/
 /*	$EOM: doi.h,v 1.29 2000/07/02 18:47:15 provos Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ struct doi {
   int (*debug_attribute) (u_int16_t, u_int8_t *, u_int16_t, void *);
 #endif
   void (*delete_spi) (struct sa *, struct proto *, int);
-  u_int16_t *(*exchange_script) (u_int8_t);
+  int16_t *(*exchange_script) (u_int8_t);
   void (*finalize_exchange) (struct message *);
   void (*free_exchange_data) (void *);
   void (*free_proto_data) (void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.76 2002/09/05 15:47:22 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.77 2002/09/11 09:50:44 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -1280,7 +1280,7 @@ x509_cert_get_subjects (void *scert, int *cnt, u_int8_t ***id,
   int type;
   u_int8_t *altname;
   u_int32_t altlen;
-  char *buf = 0;
+  u_int8_t *buf = 0;
   unsigned char *ubuf;
   int i;
 
