@@ -1,7 +1,8 @@
-/*	$OpenBSD: biostime.S,v 1.6 1997/04/28 07:39:01 weingart Exp $	*/
+/*	$OpenBSD: biostime.S,v 1.7 1997/04/29 00:16:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
+ * Copyright (c) 1997 Tobias Weingartner
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,7 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
+ *	This product includes software developed by
+ *	Michael Shalayeff and Tobias Weingartner.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -31,6 +33,7 @@
  * SUCH DAMAGE.
  *
  */
+
 #include <machine/asm.h>
 #define	_LOCORE
 #include "biosdev.h"
