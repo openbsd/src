@@ -1,17 +1,16 @@
 #
-#	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
+#	SARUMAN -- i486DX/50 EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.17 1996/11/05 03:57:15 tholo Exp $
+#	$OpenBSD: SARUMAN,v 1.1 1996/11/05 03:57:16 tholo Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
 
 #option		I386_CPU	# CPU classes; at least one is REQUIRED
-#option		I486_CPU
-option		I586_CPU
+option		I486_CPU
+#option		I586_CPU
 #option		GPL_MATH_EMULATE	# floating point emulation
 
-option		PCIVERBOSE	# verbose PCI device information
 option		EISAVERBOSE	# verbose EISA device information
 
 option		DUMMY_NOPS	# speed hack; recommanded
@@ -26,7 +25,7 @@ option		NTP		# High precision timekeeping support
 option		SWAPPAGER	# paging; REQUIRED
 option		DEVPAGER	# mmap() of devices
 
-#option		DDB		# in-kernel debugger
+option		DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
 option		DIAGNOSTIC	# internally consistency checks
 option		KTRACE		# system call tracing, a la ktrace(1)
@@ -52,14 +51,14 @@ option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 option		LKM		# loadable kernel modules
 
 option		FFS		# UFS
-option		QUOTA		# UFS quotas
+#option		QUOTA		# UFS quotas
 #option		LFS		# log-structured file system
 option		MFS		# memory file system
 
 option		NFSCLIENT	# Network File System client
 option		NFSSERVER	# Network File System server
 
-option		CD9660		# ISO 9660 + Rock Ridge file system
+#option		CD9660		# ISO 9660 + Rock Ridge file system
 option		MSDOSFS		# MS-DOS file system
 option		FDESC		# /dev/fd
 option		FIFO		# FIFOs; RECOMMENDED
@@ -77,14 +76,12 @@ option		INET		# IP + ICMP + TCP + UDP
 #option		ISO,TPIP	# OSI
 #option		EON		# OSI tunneling over IP
 #option		CCITT,LLC,HDLC	# X.25
-option		"NMBCLUSTERS=1024"
 
-config		bsd	root on sd0a swap on sd0b and sd1b dumps on sd0b
+config		bsd	root on wd0a swap on wd0b dumps on wd0b
 
 mainbus0 at root
 
 isa0	at mainbus0
-pci0	at mainbus0 bus ?
 eisa0	at mainbus0
 
 npx0	at isa?	port 0xf0 irq 13	# math coprocessor
@@ -95,7 +92,6 @@ pc0	at isa? port 0x60 irq 1		# generic PC console device
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
-com2	at isa? port 0x3e8 irq 5
 
 lpt0	at isa? port 0x378		# standard PC parallel ports
 
@@ -104,31 +100,15 @@ joy0	at isa? port 0x201		# Game port
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controller
 fd*	at fdc? drive ?
 
-ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controller
-scsibus* at ahb?
-
-sd*	at scsibus? target ? lun ?	# SCSI disk drives
-st*	at scsibus? target ? lun ?	# SCSI tape drives
-cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-ch*	at scsibus? target ? lun ?	# SCSI autochangers
-#ss*	at scsibus? target ? lun ?	# SCSI scanners
-uk*	at scsibus? target ? lun ?	# SCSI unknown devices
-
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-wdc1	at isa? port 0x170 irq 15	# ST506, ESDI, and IDE controllers
 wd*	at wdc? drive ?
 
-ep*	at eisa? slot ?			# 3C579 ethernet card
+ep0	at isa? port ? irq ?		# 3C509 ethernet cards
 
-gus0	at isa? port 0x220 irq 12 drq 5 flags 6 # Gravis UltraSound (flags is record drq)
 spkr0	at pckbd?			# PC speaker
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	bpfilter	8	# packet filter
-#pseudo-device	sl		2	# CSLIP
-pseudo-device	ppp		1	# PPP
-#pseudo-device	tun		2	# network tunneling over tty
 
 pseudo-device	pty		64	# pseudo-terminals
-#pseudo-device	tb		1	# tablet line discipline
 pseudo-device	vnd		4	# paging to files

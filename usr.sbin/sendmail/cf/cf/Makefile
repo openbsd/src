@@ -24,7 +24,7 @@ RM=	rm -f
 
 ALL=	boat-anchor.cf chimera.cf pain.cf sun-lamp.cf trinity.cf \
 	clientproto.cf netbsd-proto.cf tcpproto.cf uucpproto.cf \
-	gandalf.cf
+	gandalf.cf saruman.cf
 
 all: $(ALL)
 
