@@ -54,7 +54,20 @@ need to:
 
 	$ ssh-add -s 1
 
+(7) Optional: If you don't want to use a card passphrase, change the
+    acl on the private key file:
+
+	$ sectok
+	sectok> login -d
+	sectok> acl 0012 world: w 
+	 world: w 
+	 AUT0: w inval 
+	sectok> quit
+
+	If you do this, anyone who has access to your card
+	can assume your identity.  This is not recommended.
+
 -markus,
 Tue Jul 17 23:54:51 CEST 2001
 
-$OpenBSD: README.smartcard,v 1.7 2002/03/25 16:47:17 rees Exp $
+$OpenBSD: README.smartcard,v 1.8 2002/03/26 18:56:23 rees Exp $
