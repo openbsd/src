@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.86 2001/08/23 16:56:46 markus Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.87 2001/08/24 13:47:21 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -263,7 +263,7 @@ pf_key_v2_msg_free (struct pf_key_v2_msg *msg)
 
 /* Just return a new sequence number.  */
 static u_int32_t
-pf_key_v2_seq ()
+pf_key_v2_seq (void)
 {
   static u_int32_t seq = 0;
 
@@ -524,7 +524,7 @@ pf_key_v2_find_ext (struct pf_key_v2_msg *msg, u_int16_t type)
  * Return -1 for failure and -2 if no notifies will show up.
  */
 int
-pf_key_v2_open ()
+pf_key_v2_open (void)
 {
   int fd = -1, err;
   struct sadb_msg msg;
@@ -583,11 +583,36 @@ pf_key_v2_open ()
 
   /* XXX Register the accepted transforms.  */
 
+  pf_key_v2_msg_free (ret);
+  ret = 0;
+
+#ifdef SADB_X_SATYPE_IPCOMP
+  msg.sadb_msg_seq = 0;
+  msg.sadb_msg_type = SADB_REGISTER;
+  msg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
+  regmsg = pf_key_v2_msg_new (&msg, 0);
+  if (!regmsg)
+    goto cleanup;
+  ret = pf_key_v2_call (regmsg);
+  pf_key_v2_msg_free (regmsg);
+  if (!ret)
+    goto cleanup;
+  err = ((struct sadb_msg *)TAILQ_FIRST (ret)->seg)->sadb_msg_errno;
+  if (err)
+    {
+      log_print ("pf_key_v2_open: REGISTER: %s", strerror (err));
+      goto cleanup;
+    }
+
+  /* XXX Register the accepted transforms.  */
+
+  pf_key_v2_msg_free (ret);
+#endif /* SADB_X_SATYPE_IPCOMP */
+
 #ifdef KAME
   TAILQ_INIT (&pf_key_v2_sa_seq_map);
 #endif
 
-  pf_key_v2_msg_free (ret);
   return fd;
 
  cleanup:
@@ -630,6 +655,11 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
     case IPSEC_PROTO_IPSEC_AH:
       msg.sadb_msg_satype = SADB_SATYPE_AH;
       break;
+#ifdef SADB_X_SATYPE_IPCOMP
+    case IPSEC_PROTO_IPCOMP:
+      msg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
+      break;
+#endif
     default:
       log_print ("pf_key_v2_get_spi: invalid proto %d", proto);
       goto cleanup;
@@ -732,11 +762,18 @@ pf_key_v2_get_spi (size_t *sz, u_int8_t proto, struct sockaddr *src,
     }
   sa = ext->seg;
 
-  *sz = sizeof sa->sadb_sa_spi;
+  /* IPCOMP CPIs are only 16 bits long.  */
+  *sz = (proto == IPSEC_PROTO_IPCOMP) ? sizeof (u_int16_t)
+    : sizeof sa->sadb_sa_spi;
   spi = malloc (*sz);
   if (!spi)
     goto cleanup;
-  memcpy (spi, &sa->sadb_sa_spi, *sz);
+  /* XXX This is ugly.  */
+  if (proto == IPSEC_PROTO_IPCOMP)
+    (u_int16_t)*spi = *(u_int16_t *)sa->sadb_sa_spi;
+  else
+    memcpy (spi, &sa->sadb_sa_spi, *sz);
+
 #ifdef KAME
   if (!pf_key_v2_register_sa_seq (spi, *sz, proto, dst, dst->sa_len,
 				  ((struct sadb_msg *)(TAILQ_FIRST (ret)->seg))
@@ -922,6 +959,46 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 	  goto cleanup;
 	}
       break;
+
+#ifdef SADB_X_SATYPE_IPCOMP
+    case IPSEC_PROTO_IPCOMP:
+      msg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
+      ssa.sadb_sa_auth = SADB_AALG_NONE;
+      keylen = 0;
+      hashlen = 0;
+
+      /* Put compression algorithm type in the sadb_sa_encrypt field.  */
+      switch (proto->id)
+	{
+#ifdef SADB_X_CALG_OUI
+	case IPSEC_IPCOMP_OUI:
+	  ssa.sadb_sa_encrypt = SADB_X_CALG_OUI;
+	  break;
+#endif
+
+#ifdef SADB_X_CALG_DEFLATE
+	case IPSEC_IPCOMP_DEFLATE:
+	  ssa.sadb_sa_encrypt = SADB_X_CALG_DEFLATE;
+	  break;
+#endif
+
+#ifdef SADB_X_CALG_LSZ
+	case IPSEC_IPCOMP_LZS:
+	  ssa.sadb_sa_encrypt = SADB_X_CALG_LSZ;
+	  break;
+#endif
+
+#ifdef SADB_X_CALG_V42BIS
+	case IPSEC_IPCOMP_V42BIS:
+	  ssa.sadb_sa_encrypt = SADB_X_CALG_V42BIS;
+	  break;
+#endif
+
+	default:
+	  break;
+	}
+      break;
+#endif /* SADB_X_SATYPE_IPCOMP */
 
     default:
       log_print ("pf_key_v2_set_spi: invalid proto %d", proto->proto);
@@ -2398,6 +2475,11 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
     case IPSEC_PROTO_IPSEC_AH:
       msg.sadb_msg_satype = SADB_SATYPE_AH;
       break;
+#ifdef SADB_X_SATYPE_IPCOMP
+    case IPSEC_PROTO_IPCOMP:
+      msg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
+      break;
+#endif
     default:
       log_print ("pf_key_v2_delete_spi: invalid proto %d", proto->proto);
       goto cleanup;
@@ -2625,12 +2707,28 @@ pf_key_v2_expire (struct pf_key_v2_msg *pmsg)
    * protection suites consisting of more than one protocol, any
    * expired individual IPsec stack SA will be seen as an expiration
    * of the full suite.
-   *
-   * XXX When anything else than AH and ESP is supported this needs to change.
    */
-  sa = ipsec_sa_lookup (dstaddr, ssa->sadb_sa_spi,
-			msg->sadb_msg_satype == SADB_SATYPE_ESP
-			? IPSEC_PROTO_IPSEC_ESP : IPSEC_PROTO_IPSEC_AH);
+  switch (msg->sadb_msg_satype)
+    {
+    case SADB_SATYPE_ESP:
+      sa = ipsec_sa_lookup (dstaddr, ssa->sadb_sa_spi, IPSEC_PROTO_IPSEC_ESP);
+      break;
+
+    case SADB_SATYPE_AH:
+      sa = ipsec_sa_lookup (dstaddr, ssa->sadb_sa_spi, IPSEC_PROTO_IPSEC_AH);
+      break;
+
+#ifdef SADB_X_SATYPE_IPCOMP
+    case SADB_X_SATYPE_IPCOMP:
+      sa = ipsec_sa_lookup (dstaddr, ssa->sadb_sa_spi, IPSEC_PROTO_IPCOMP);
+      break;
+#endif
+
+    default:
+      /* XXX Log? */
+      sa = 0;
+      break;
+    }
 
   /* If the SA is already gone, don't do anything.  */
   if (!sa)
@@ -3830,6 +3928,11 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
     case IPSEC_PROTO_IPSEC_AH:
       msg.sadb_msg_satype = SADB_SATYPE_AH;
       break;
+#ifdef SADB_X_SATYPE_IPCOMP
+    case IPSEC_PROTO_IPCOMP:
+      msg.sadb_msg_satype = SADB_X_SATYPE_IPCOMP;
+      break;
+#endif
     default:
       log_print ("pf_key_v2_group_spis: invalid proto %d", proto1->proto);
       goto cleanup;
@@ -3924,6 +4027,11 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
     case IPSEC_PROTO_IPSEC_AH:
       protocol.sadb_protocol_proto = SADB_SATYPE_AH;
       break;
+#ifdef SADB_X_SATYPE_IPCOMP
+    case IPSEC_PROTO_IPCOMP:
+      protocol.sadb_protocol_proto = SADB_X_SATYPE_IPCOMP;
+      break;
+#endif
     default:
       log_print ("pf_key_v2_group_spis: invalid proto %d", proto2->proto);
       goto cleanup;
