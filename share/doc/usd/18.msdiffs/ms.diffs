@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ms.diffs,v 1.4 2004/05/26 10:11:01 jmc Exp $
+.\"	$OpenBSD: ms.diffs,v 1.5 2004/12/05 04:31:58 jsg Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -165,7 +165,7 @@ If you place footnotes in a separate file,
 you can use .IP macros with \e\(**\(**\| as a hanging tag;
 this will give you numbers at the left-hand margin.
 With some styles of endnotes,
-you would want to use .PP rather then .IP macros,
+you would want to use .PP rather than .IP macros,
 and specify \e\(**\(** before the reference begins.
 .PP
 There are four new macros to help produce a table of contents.
