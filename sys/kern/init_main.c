@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.100 2003/01/09 22:27:12 miod Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.101 2003/03/06 17:06:18 mickey Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -170,12 +170,11 @@ int
 main(framep)
 	void *framep;				/* XXX should go away */
 {
-	register struct proc *p;
-	register struct pdevinit *pdev;
+	struct proc *p;
+	struct pdevinit *pdev;
 	struct timeval rtv;
-	register int i;
 	quad_t lim;
-	int s;
+	int s, i;
 	register_t rval[2];
 	extern struct pdevinit pdevinit[];
 	extern void scheduler_start(void);
@@ -187,8 +186,7 @@ main(framep)
 	 * Initialize the current process pointer (curproc) before
 	 * any possible traps/probes to simplify trap processing.
 	 */
-	p = &proc0;
-	curproc = p;
+	curproc = p = &proc0;
 
 	/*
 	 * Attempt to find console and initialize
@@ -217,8 +215,6 @@ main(framep)
 	 * Initialize timeouts.
 	 */
 	timeout_startup();
-
-	cpu_configure();
 
 	/* Initialize sysctls (must be done before any processes run) */
 	sysctl_init();
@@ -268,6 +264,11 @@ main(framep)
 	p->p_ucred = crget();
 	p->p_ucred->cr_ngroups = 1;	/* group 0 */
 
+	/* Initialize signal state for process 0. */
+	signal_init();
+	p->p_sigacts = &sigacts0;
+	siginit(p);
+
 	/* Create the file descriptor table. */
 	p->p_fd = fdinit(NULL);
 
@@ -304,7 +305,11 @@ main(framep)
 	 */
 	(void)chgproccnt(0, 1);
 
+	/* Initialize run queues */
 	rqinit();
+
+	/* Configure the devices */
+	cpu_configure();
 
 	/* Configure virtual memory system, set vm rlimits. */
 	uvm_init_limits(p);
@@ -360,11 +365,6 @@ main(framep)
 
 	/* Start the scheduler */
 	scheduler_start();
-
-	/* Initialize signal state for process 0. */
-	signal_init();
-	p->p_sigacts = &sigacts0;
-	siginit(p);
 
 	dostartuphooks();
 
