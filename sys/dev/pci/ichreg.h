@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichreg.h,v 1.1 2004/02/19 21:35:56 grange Exp $	*/
+/*	$OpenBSD: ichreg.h,v 1.2 2004/09/25 13:58:44 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -39,6 +39,7 @@
 /*
  * Power management I/O registers
  */
+#define ICH_PM_TMR	0x08		/* PM timer */
 /* ICHx-M only */
 #define ICH_PM_CNTL	0x20		/* power management control */
 #define ICH_PM_ARB_DIS		0x01		/* disable arbiter */

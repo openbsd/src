@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.3 2004/06/06 17:34:37 grange Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.4 2004/09/25 13:58:44 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -18,13 +18,17 @@
 /*
  * Special driver for the Intel ICHx/ICHx-M LPC bridges that attaches
  * instead of pcib(4). In addition to the core pcib(4) functionality this
- * driver provides support for the Intel SpeedStep technology.
+ * driver provides support for the Intel SpeedStep technology and
+ * power management timer.
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/sysctl.h>
+#ifdef __HAVE_TIMECOUNTER
+#include <sys/timetc.h>
+#endif
 
 #include <machine/bus.h>
 
@@ -49,6 +53,19 @@ int	ichss_setperf(int);
 
 /* arch/i386/pci/pcib.c */
 void    pcibattach(struct device *, struct device *, void *);
+
+#ifdef __HAVE_TIMECOUNTER
+u_int	ichpcib_get_timecount(struct timecounter *tc);
+
+struct timecounter ichpcib_timecounter = {
+	ichpcib_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0xffffff,		/* counter_mask */
+	14318180 / 4,		/* frequency */
+	"ICH",			/* name */
+	1000			/* quality */
+};
+#endif	/* __HAVE_TIMECOUNTER */
 
 struct cfattach ichpcib_ca = {
 	sizeof(struct ichpcib_softc),
@@ -96,7 +113,6 @@ ichpcib_match(struct device *parent, void *match, void *aux)
 void
 ichpcib_attach(struct device *parent, struct device *self, void *aux)
 {
-#ifndef SMALL_KERNEL
 	struct ichpcib_softc *sc = (struct ichpcib_softc *)self;
 	struct pci_attach_args *pa = aux;
 	pcireg_t pmbase;
@@ -110,6 +126,13 @@ ichpcib_attach(struct device *parent, struct device *self, void *aux)
 		goto corepcib;
 	}
 
+#ifdef __HAVE_TIMECOUNTER
+	/* Hook into the kern_tc */
+	ichpcib_timecounter.tc_priv = sc;
+	tc_init(&ichpcib_timecounter);
+#endif	/* __HAVE_TIMECOUNTER */
+
+#ifndef SMALL_KERNEL
 	/* Check for SpeedStep */
 	if (ichss_present(pa)) {
 		printf(": SpeedStep");
@@ -124,9 +147,9 @@ ichpcib_attach(struct device *parent, struct device *self, void *aux)
 		cpu_setperf = ichss_setperf;
 		setperf_prio = 2;
 	}
+#endif	/* !SMALL_KERNEL */
 
 corepcib:
-#endif	/* !SMALL_KERNEL */
 	/* Provide core pcib(4) functionality */
 	pcibattach(parent, self, aux);
 }
@@ -220,3 +243,23 @@ ichss_setperf(int level)
 	return (0);
 }
 #endif	/* !SMALL_KERNEL */
+
+#ifdef __HAVE_TIMECOUNTER
+u_int
+ichpcib_get_timecount(struct timecounter *tc)
+{
+	struct ichpcib_softc *sc = tc->tc_priv;
+	u_int u1, u2, u3;
+
+	u2 = bus_space_read_4(sc->sc_pm_iot, sc->sc_pm_ioh, ICH_PM_TMR);
+	u3 = bus_space_read_4(sc->sc_pm_iot, sc->sc_pm_ioh, ICH_PM_TMR);
+	do {
+		u1 = u2;
+		u2 = u3;
+		u3 = bus_space_read_4(sc->sc_pm_iot, sc->sc_pm_ioh,
+		    ICH_PM_TMR);
+	} while (u1 > u2 || u2 > u3);
+
+	return (u2);
+}
+#endif	/* __HAVE_TIMECOUNTER */
