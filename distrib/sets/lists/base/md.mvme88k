@@ -1,0 +1,16 @@
+./usr/include/mvme88k
+./usr/include/readline
+./usr/lib/gcc-lib/m88k-unknown-openbsd2.3
+./usr/lib/gcc-lib/m88k-unknown-openbsd2.3/2.8.1
+./usr/lib/gcc-lib/m88k-unknown-openbsd2.3/2.8.1/include
+./usr/lib/gcc-lib/m88k-unknown-openbsd2.3/2.8.1/include/objc
+./usr/m88k-unknown-openbsd2.3
+./usr/m88k-unknown-openbsd2.3/bin
+./usr/m88k-unknown-openbsd2.3/lib
+./usr/m88k-unknown-openbsd2.3/lib/ldscripts
+./usr/mdec/bootsd
+./usr/mdec/bootst
+./usr/mdec/bootxx
+./usr/mdec/installboot
+./usr/mdec/netboot
+./usr/mdec/stboot

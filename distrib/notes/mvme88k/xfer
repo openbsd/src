@@ -1,0 +1,96 @@
+Installation is supported from several media types, including:
+	NFS partitions
+	FTP
+	Tape
+
+The steps necessary to prepare the distribution sets
+for installation depend on which method of installation
+you choose.  The various methods are explained below.
+
+To prepare for installing via an NFS partition:
+
+	Place the OpenBSD software you wish to install into
+	a directory on an NFS server, and make that directory
+	mountable by the machine which you will be installing
+	OpenBSD on.  This will probably require modifying the
+	/etc/exports file of the NFS server and resetting
+	mountd, acts which will require superuser privileges.
+	Note the numeric IP address of the NFS server and of
+	the router closest to the the new OpenBSD machine,
+	if the NFS server is not on a network which is
+	directly attached to the OpenBSD machine.
+
+	If you are using a diskless setup to install OpenBSD on
+	your machine, you can take advantage of the fact that
+	the above has already been done on your machine's server.
+	So, you can conveniently put the OpenBSD filesets in your
+	machine's root filesystem on the server where the install
+	program can find them.
+
+	Once you have done this, you can proceed to the next
+	step in the installation process, preparing your
+	system for OpenBSD installation.
+
+To prepare for installing via FTP:
+
+	NOTE: this method of installation is recommended
+	      only for those already familiar with using
+	      the BSD network-manipulation commands and
+	      interfaces.  If you aren't, this documentation
+	      should help, but is not intended to be
+	      all-encompassing.
+
+	The preparations for this method of installation
+	are easy: all you have to do is make sure that
+	there's some FTP site from which you can retrieve
+	the OpenBSD installation when it's time to do
+	the install.  You should know the numeric IP
+	address of that site, the numeric IP address of
+	your nearest router if one is necessary
+
+	Once you have done this, you can proceed to the next
+	step in the installation process, preparing your
+	system for OpenBSD installation.
+
+To prepare for installing via a tape:
+
+	To install OpenBSD from a tape, you need to somehow
+	make a boot tape on the appropriate kind of tape.  
+	The files needed for this are:
+	
+	stboot 	  - The Motorola VID block
+	bootst 	  - The bootstrap program
+	bsd.rd.gz - The ramdisk installation kernel
+	
+	If you're making the tape on a UN*X system, the easiest
+	way to do so is:
+	
+	dd obs=512 if=stboot of=<no-rewind tape_device>
+	dd obs=512 if=bootst of=<no-rewind tape_device>
+	dd conv=sync obs=512 if=bsd.rd.gz of=<no-rewind tape_device>
+	
+	where "<no-rewind tape_device>" is the name of the tape device
+	that describes the tape drive you're using (possibly
+	something like /dev/nrst0, but we make no guarantees 8-).
+		
+	Now you need to get the OpenBSD filesets you wish to 
+	install on your system on to the appropriate kind of tape,
+	in tar format.
+
+	If you're making the tape on a UN*X system, the easiest
+	way to do so is:
+
+		tar cvf <tape_device> <files>
+
+	where "<tape_device>" is the name of the tape device
+	that describes the tape drive you're using (possibly
+	something like /dev/nrst0, but again, we make no guarantees 8-).
+	Under SunOS 5.x, this would be something like /dev/rmt/0mbn.
+	Again, your mileage may vary.  If you can't figure it out,
+	ask your system administrator.  "<files>" are the names
+	of the "set_name.nnn" files which you want to be placed
+	on the tape.
+
+	Once you have done this, you can proceed to the next
+	step in the installation process, preparing your 
+	system for OpenBSD installation.

@@ -1,0 +1,43 @@
+#	$OpenBSD: list,v 1.1 1998/12/17 02:16:31 smurph Exp $
+#	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
+
+# Amiga extra's
+LINK	instbin			sbin/disklabel
+LINK	instbin			sbin/mount_ados
+LINK	instbin			sbin/mount_msdos
+
+SYMLINK	../../instbin		usr/bin/basename
+SYMLINK ../../instbin		usr/bin/cksum usr/bin/sum
+SYMLINK ../../instbin		usr/bin/grep usr/bin/egrep usr/bin/fgrep
+SYMLINK ../../instbin		usr/bin/netstat
+SYMLINK ../../instbin		usr/bin/rsh
+SYMLINK ../../instbin		usr/bin/tset usr/bin/reset
+SYMLINK	../../instbin		usr/bin/less usr/bin/more
+SYMLINK	../../instbin		usr/sbin/sysctl
+
+# Minimize use of MFS
+SYMLINK	/tmp	var/tmp
+
+# copy the MAKEDEV script and make some devices
+COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
+COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
+SPECIAL	cd dev; sh MAKEDEV all
+#SPECIAL	/bin/rm dev/MAKEDEV
+
+# and a few useful bits of the termcap file (512K and still growing 8-)
+# COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
+SPECIAL sed -n -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^vt.*|/,/:[ 	]*$/p' ${CURDIR}/../../share/termcap/termcap.src > usr/share/misc/termcap
+
+# copy the kernel
+COPY	bsd	bsd
+
+# various files that we need in /etc for the install
+COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
+SYMLINK	/tmp/disktab.shadow		etc/disktab
+SYMLINK	/tmp/fstab.shadow		etc/fstab
+SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
+SYMLINK	/tmp/hosts			etc/hosts
+
+# and the installation tools
+COPY	${ARCHDIR}/dot.profile		.profile
+COPY	${ARCHDIR}/../install.md	install.md

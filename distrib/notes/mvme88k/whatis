@@ -1,0 +1,6 @@
+OpenBSD/mvme88k 2.3 was written because the MVME187 existed in a computer 
+company basement.  Nivas Madhur started the port.  Steve Murphree, Jr. 
+finished the port in December 1998.  Code by Dale Rahn, Theo de Raadt, 
+and Chuck Cranor was used as a starting point. Currently this port runs 
+on MVME187 and perhaps other models also.
+

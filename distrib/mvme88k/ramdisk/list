@@ -1,0 +1,97 @@
+#	$OpenBSD: list,v 1.1 1998/12/17 02:16:33 smurph Exp $
+
+COPY	${OBJDIR}/raminst		raminst
+LINK	raminst			bin/cat
+LINK	raminst			bin/chmod
+LINK	raminst			bin/cp
+LINK	raminst			bin/df
+LINK	raminst			bin/dd
+LINK	raminst			bin/ed
+LINK	raminst			bin/expr
+LINK	raminst			bin/ln
+LINK	raminst			bin/ls
+LINK	raminst			bin/kill
+LINK	raminst			bin/hostname
+LINK	raminst			bin/mkdir
+LINK	raminst			bin/mt
+LINK	raminst			bin/mv
+LINK	raminst			bin/pwd
+LINK	raminst			bin/rm
+LINK	raminst			bin/sh
+LINK	bin/sh			bin/-sh
+LINK	bin/sh			bin/bash
+LINK	raminst			bin/stty
+LINK	raminst			bin/sleep
+LINK	raminst			bin/sync
+LINK	raminst			bin/test
+LINK	raminst			bin/pax bin/tar bin/cpio
+LINK	raminst			bin/[
+LINK	raminst			sbin/disklabel
+LINK	raminst			sbin/fsck
+LINK	raminst			sbin/halt
+LINK	raminst			sbin/ifconfig
+LINK	raminst			sbin/init
+LINK	raminst			sbin/mknod
+LINK	raminst			sbin/mount
+LINK	raminst			sbin/mount_cd9660
+LINK	raminst			sbin/mount_ffs
+LINK	raminst			sbin/mount_kernfs
+LINK	raminst			sbin/mount_nfs
+LINK	raminst			sbin/mount_mfs
+LINK	raminst			sbin/newfs
+LINK	raminst			sbin/reboot
+LINK	raminst			sbin/route
+LINK	raminst			sbin/slattach
+LINK	raminst			sbin/umount
+LINK	raminst			usr/bin/chgrp
+LINK	raminst			usr/bin/cut
+LINK	raminst			usr/bin/ftp
+LINK	raminst			usr/bin/egrep
+LINK	raminst			usr/bin/grep
+LINK	raminst			usr/bin/gzip
+LINK	raminst			usr/bin/more
+LINK	raminst			usr/bin/less
+LINK	raminst			usr/bin/sed
+LINK	raminst			usr/bin/sort
+LINK	raminst			usr/bin/tar
+LINK	raminst			usr/bin/pax
+LINK	raminst			usr/bin/tip
+LINK	raminst			usr/sbin/chown
+SPECIAL	/bin/rm raminst
+
+# copy the MAKEDEV script and make some devices
+COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV
+SPECIAL	cd dev; sh MAKEDEV raminst
+
+# we need the contents of /usr/mdec (XXX)
+# COPY	${DESTDIR}/usr/mdec/*	usr/mdec
+
+# various files that we need in /etc for the install
+COPY	${DESTDIR}/etc/group		etc
+COPY	${DESTDIR}/etc/master.passwd	etc
+COPY	${DESTDIR}/etc/passwd		etc
+COPY	${DESTDIR}/etc/protocols	etc
+COPY	${DESTDIR}/etc/pwd.db		etc
+COPY	${DESTDIR}/etc/services		etc
+COPY	${DESTDIR}/etc/spwd.db		etc
+
+# and the common installation tools
+COPY	${TOPDIR}/common/dot.commonutils	.commonutils
+COPY	${TOPDIR}/common/termcap.vt	usr/share/misc/termcap
+
+# the disktab explanation file
+COPY	disktab.preinstall		etc
+
+# and the installation tools
+LINK    sbin/init                 	usr/bin/vi
+COPY	dot.profile			.profile
+COPY	dot.instutils			.instutils
+COPY	install.sh			install
+COPY	install.md			install.md
+COPY	install.sub			install.sub
+COPY	disktab.shadow			etc/disktab.shadow
+COPY    ${DESTDIR}/usr/mdec/installboot usr/mdec
+COPY    ${DESTDIR}/usr/mdec/bootxx 	usr/mdec
+COPY    ${DESTDIR}/usr/mdec/bootsd 	usr/mdec
+
+SPECIAL	chmod 755 install
