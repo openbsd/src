@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.39 2002/10/28 17:10:10 itojun Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.40 2002/12/09 07:24:56 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -119,7 +119,7 @@ make_output(char *output, size_t outlen, const char *binname,
 
 	TAILQ_FOREACH(tl, tls, next) {
 		if (!tl->trans_valid)
-			break;
+			continue;
 		line = intercept_translate_print(tl);
 		if (line == NULL)
 			continue;

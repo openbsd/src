@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.h,v 1.19 2002/11/16 14:27:17 itojun Exp $	*/
+/*	$OpenBSD: systrace.h,v 1.20 2002/12/09 07:24:56 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -47,6 +47,7 @@ struct logic {
 	void *filterdata;
 	size_t filterlen;
 	int (*filter_match)(struct intercept_translate *, struct logic *);
+	void *filterarg;
 };
 
 #define LOGIC_NEEDEXPAND	0x01
@@ -220,6 +221,8 @@ extern struct intercept_translate ic_gidt;
 extern struct intercept_translate ic_trargv;
 extern struct intercept_translate ic_sockdom;
 extern struct intercept_translate ic_socktype;
+extern struct intercept_translate ic_pidname;
+extern struct intercept_translate ic_signame;
 
 extern struct intercept_translate ic_linux_oflags;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.h,v 1.1 2002/07/19 14:38:57 itojun Exp $	*/
+/*	$OpenBSD: filter.h,v 1.2 2002/12/09 07:24:56 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -36,4 +36,5 @@ int filter_negstringmatch(struct intercept_translate *, struct logic *);
 int filter_substrmatch(struct intercept_translate *, struct logic *);
 int filter_negsubstrmatch(struct intercept_translate *, struct logic *);
 int filter_inpath(struct intercept_translate *, struct logic *);
+int filter_regex(struct intercept_translate *, struct logic *);
 int filter_true(struct intercept_translate *, struct logic *);

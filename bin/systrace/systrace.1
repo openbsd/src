@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.29 2002/10/31 23:04:09 itojun Exp $
+.\"	$OpenBSD: systrace.1,v 1.30 2002/12/09 07:24:56 itojun Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -126,7 +126,8 @@ expression = symbol | "not" expression | "(" expression ")" |
 symbol = string typeoff "match" cmdstring |
     string typeoff "eq" cmdstring | string typeoff "neq" cmdstring |
     string typeoff "sub" cmdstring | string typeoff "nsub" cmdstring |
-    string typeoff "inpath" cmdstring | "true"
+    string typeoff "inpath" cmdstring | string typeoff "re" cmdstring |
+    "true"
 typeoff = /* empty */ | "[" number "]"
 action = "permit" | "deny"
 errorcode = /* empty */ | "[" string "]"
@@ -193,6 +194,9 @@ This is the logical negation of
 .It inpath
 Evaluates to true if the system call argument is a subpath of
 .Va cmdstring .
+.It re
+Evaluates to true if the system call arguments matches
+the specified regular expression.
 .El
 .Pp
 By appending the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.23 2002/12/09 07:22:52 itojun Exp $	*/
+/*	$OpenBSD: filter.c,v 1.24 2002/12/09 07:24:56 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <regex.h>
 #include <fnmatch.h>
 #include <err.h>
 
@@ -95,7 +96,7 @@ filter_match(struct intercept_pid *icpid, struct intercept_tlq *tls,
 
 	TAILQ_FOREACH(tl, tls, next) {
 		if (!tl->trans_valid)
-			return (0);
+			continue;
 
 		if (strcasecmp(tl->name, logic->type))
 			continue;
@@ -366,7 +367,7 @@ filter_parse_simple(char *rule, short *paction, short *pfuture)
 	if (isfuture)
 		*pfuture = *paction;
 
-	return (NULL);
+	return (0);
 }
 
 void
@@ -499,7 +500,7 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 			line[0] = '\0';
 			TAILQ_FOREACH(tl, tls, next) {
 				if (!tl->trans_valid)
-					break;
+					continue;
 				l = intercept_translate_print(tl);
 				if (l == NULL)
 					continue;
@@ -767,6 +768,34 @@ filter_inpath(struct intercept_translate *tl, struct logic *logic)
 		return (0);
 
 	return (1);
+}
+
+int
+filter_regex(struct intercept_translate *tl, struct logic *logic)
+{
+	regex_t tmpre, *re;
+	char *line;
+	int res;
+
+	if ((line = intercept_translate_print(tl)) == NULL)
+		return (0);
+
+	re = logic->filterarg;
+	if (re == NULL) {
+		/* If regex does not compute, we just do not match */
+		if (regcomp(&tmpre, logic->filterdata,
+			REG_EXTENDED | REG_NOSUB) != 0)
+			return (0);
+		re = &tmpre;
+	}
+
+	res = regexec(re, line, 0, NULL, 0);
+
+	/* Clean up temporary memory associated with regex */
+	if (re == &tmpre)
+		regfree(re);
+
+	return (res == 0);
 }
 
 int
