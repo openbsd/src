@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.17 1999/05/16 19:56:15 alex Exp $
-.\" $EOM: isakmpd.conf.5,v 1.19 1999/05/01 20:21:10 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.18 1999/06/02 06:34:27 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.23 1999/06/02 06:26:41 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -115,6 +115,16 @@ A list of directed IPSec "connection" names that should be brought up
 automatically, either on first use if the system supports it, or at
 startup of the daemon.  These names are section names where further
 information can be found.  Look at <IPSec-connection> below.
+Normally any connection mentioned here are treated as part of the
+"Passive-connection" list we present below, however there is a
+flag: "Active-only" that disables this behaviour.  This too is
+mentioned in the <IPSec-connection> section, in the "Flags" tag.
+.It Em Passive-connections
+A list of IPSec "connection" names we recognize and accept initiations for.
+These names are section names where further information can be found.  Look
+at <IPSec-connection> below.  Currently only the Local-ID and Remote-ID tags
+are looked at in those sections, as they are matched against the IDs given
+by the initiator.
 .El
 .El
 .Ss Referred-to sections
@@ -219,17 +229,27 @@ The name of the IPSec-configuration section to use.  Look at
 .It Em Local-ID
 If existent, the name of the section that describes the
 optional local client ID that we should present to our peer.
+It is also used when we act as responders to find out what
+<IPSec-connection> we are dealing with.
 Look at <IPSec-ID> below.
 .It Em Remote-ID
 If existent, the name of the section that describes the
 optional remote client ID that we should present to our peer.
+It is also used  when we act as responders to find out what
+<IPSec-connection> we are dealing with.
 Look at <IPSec-ID> below.
 .It Em Flags
 A comma-separated list of flags controlling the further
-handling of the IPSec SA.  Currently only one flag is defined:
-.Dv Stayalive ,
-which means that after the expiration of an IPSec SA, the initiator
-side will automatically renegotiate for a new SA of the same name.
+handling of the IPSec SA.  Currently these flags are defined:
+.Bl -tag -width 12n
+.It Em Stayalive
+This means that after the expiration of an IPSec SA, a new SA of the same name
+will automatically be renegotiated.
+.It Em Active-only
+If this flag is given and this <IPSec-connection> is part of the phase 2
+connections we automatically keep up, it will not automatically be used for
+accepting connections from the peer.
+.El
 .El
 .It Em <IPSec-configuration>
 .Bl -tag -width 12n
