@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usb.4,v 1.35 2004/10/05 02:01:17 jsg Exp $
+.\"	$OpenBSD: usb.4,v 1.36 2004/10/08 13:30:28 jaredy Exp $
 .\"	$NetBSD: usb.4,v 1.15 1999/07/29 14:20:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@
 .Cd "usb*    at ohci? flags 0x00"
 .Cd "uhub*   at usb?"
 .Cd "uhub*   at uhub?"
+.Pp
+.Cd option	USBVERBOSE
 .Pp
 .Fd "#include <dev/usb/usb.h>"
 .Fd "#include <dev/usb/usbhid.h>"
@@ -294,8 +296,10 @@ driver can attach.
 .Sh USB CONTROLLER INTERFACE
 Use the following to get access to the
 .Tn USB
-specific structures and defines.
+specific structures and defines:
+.Bd -literal
 .Fd #include <dev/usb/usb.h>
+.Ed
 .Pp
 The
 .Pa /dev/usbN
@@ -315,26 +319,40 @@ commands are supported on the controller device:
 .\" If any devices attached or detached from the bus they will be
 .\" processed during this command.
 .\" This is the only way that new devices are found on the bus.
-.It Dv USB_DEVICEINFO Fa "struct usb_device_info"
+.It Dv USB_DEVICEINFO Fa "struct usb_device_info *"
 This command can be used to retrieve some information about a device
 on the bus.
 The
-.Va addr
+.Va udi_addr
 field should be filled before the call and the other fields will
 be filled by information about the device on that address.
-Should no such device exist an error is reported.
+Should no such device exist, an error is reported.
 .Bd -literal
+#define USB_MAX_DEVNAMES 4
+#define USB_MAX_DEVNAMELEN 16
 struct usb_device_info {
-	uByte	addr;		/* device address */
-	char	product[USB_MAX_STRING_LEN];
-	char	vendor[USB_MAX_STRING_LEN];
-	char	release[8];
-	uByte	class;
-	uByte	config;
-	uByte	lowspeed;
-	int	power;
-	int	nports;
-	uByte	ports[16];
+	u_int8_t	udi_bus;
+	u_int8_t	udi_addr;	/* device address */
+	usb_event_cookie_t udi_cookie;
+	char		udi_product[USB_MAX_STRING_LEN];
+	char		udi_vendor[USB_MAX_STRING_LEN];
+	char		udi_release[8];
+	u_int16_t	udi_productNo;
+	u_int16_t	udi_vendorNo;
+	u_int16_t	udi_releaseNo;
+	u_int8_t	udi_class;
+	u_int8_t	udi_subclass;
+	u_int8_t	udi_protocol;
+	u_int8_t	udi_config;
+	u_int8_t	udi_speed;
+#define USB_SPEED_LOW  1
+#define USB_SPEED_FULL 2
+#define USB_SPEED_HIGH 3
+	int		udi_power;	/* power consumption */
+	int		udi_nports;
+	char		udi_devnames[USB_MAX_DEVNAMES]
+			    [USB_MAX_DEVNAMELEN];
+	u_int8_t	udi_ports[16];	/* hub only */
 #define USB_PORT_ENABLED 0xff
 #define USB_PORT_SUSPENDED 0xfe
 #define USB_PORT_POWERED 0xfd
@@ -343,60 +361,116 @@ struct usb_device_info {
 .Ed
 .Pp
 The
-.Va product ,
-.Va vendor ,
+.Va udi_bus
+field contains the device unit number of the device.
+.Pp
+The
+.Va udi_product ,
+.Va udi_vendor ,
 and
-.Va release
+.Va udi_release
 fields contain self-explanatory descriptions of the device.
+The
+.Va udi_productNo ,
+.Va udi_vendorNo ,
+and
+.Va udi_releaseNo
+fields contain numeric identifiers for the device.
 .Pp
 The
-.Va class
-field contains the device class.
+.Va udi_class
+and
+.Va udi_subclass
+fields contain the device class and subclass.
 .Pp
 The
-.Va config
+.Va udi_config
 field shows the current configuration of the device.
 .Pp
 The
-.Va lowspeed
-field
-is set if the device is a
-.Tn USB
-low speed device.
+.Va udi_protocol
+field contains the device protocol as given from the device.
 .Pp
 The
-.Va power
-field shows the power consumption in milli-amps drawn at 5 volts,
-or zero if the device is self powered.
+.Va udi_speed
+field
+contains the speed of the device.
 .Pp
-If the device is a hub the
-.Va nports
+The
+.Va udi_power
+field shows the power consumption in milli-amps drawn at 5 volts
+or is zero if the device is self powered.
+.Pp
+The
+.Va udi_devnames
+field contains the names and instance numbers of the device drivers
+for the devices attached to this device.
+.Pp
+If the device is a hub, the
+.Va udi_nports
 field is non-zero and the
-.Va ports
+.Va udi_ports
 field contains the addresses of the connected devices.
-If no device is connected to a port one of the
-.Va USB_PORT_*
+If no device is connected to a port, one of the
+.Dv USB_PORT_*
 values indicates its status.
-.It Dv USB_DEVICESTATS Fa "struct usb_device_stats"
+.It Dv USB_DEVICESTATS Fa "struct usb_device_stats *"
 This command retrieves statistics about the controller.
-.Bd -literal
+.Bd -unfilled
 struct usb_device_stats {
-	u_long	requests[4];
+	u_long	uds_requests[4];
 };
 .Ed
 .Pp
 The
-.Va requests
-field is indexed by the transfer kind, i.e.
-.Va UE_* ,
+.Va uds_requests
+field is indexed by the transfer kind, i.e.\&
+.Dv UE_* ,
 and indicates how many transfers of each kind that has been completed
 by the controller.
-.It Dv USB_REQUEST Fa "struct usb_ctl_request"
+.It Dv USB_REQUEST Fa "struct usb_ctl_request *"
 This command can be used to execute arbitrary requests on the control pipe.
 This is
 .Em DANGEROUS
 and should be used with great care since it
 can destroy the bus integrity.
+.Pp
+The
+.Vt usb_ctl_request
+structure has the following definition:
+.Bd -literal
+typedef struct {
+        uByte           bmRequestType;
+        uByte           bRequest;
+        uWord           wValue;
+        uWord           wIndex;
+        uWord           wLength;
+} UPACKED usb_device_request_t;
+
+struct usb_ctl_request {
+	int	ucr_addr;
+	usb_device_request_t ucr_request;
+	void	*ucr_data;
+	int	ucr_flags;
+#define USBD_SHORT_XFER_OK 0x04	/* allow short reads */
+	int	ucr_actlen;	/* actual length transferred */
+};
+.Ed
+.Pp
+The
+.Va ucr_addr
+field identifies the device on which to perform the request.
+The
+.Va ucr_request
+field identifies parameters of the request, such as length and type.
+The
+.Va ucr_data
+field contains the location where data will be read from or written to.
+The
+.Va ucr_flags
+field specifies options for the request, and the
+.Va ucr_actlen
+field contains the actual length transferred as the result of the request.
 .El
 .Pp
 The include file
@@ -414,6 +488,10 @@ sized fields must be accessed by the
 .Fn UGETW field
 and
 .Fn USETW field value
+macros and double word (32-bit) sized fields must be accessed by the
+.Fn UGETDW field
+and
+.Fn USETDW field value
 macros to handle byte order and alignment properly.
 .Pp
 The include file
@@ -424,6 +502,8 @@ Human Interface Devices
 .Sh SEE ALSO
 .Xr usbhidaction 1 ,
 .Xr usbhidctl 1 ,
+.Xr ioctl 2 ,
+.Xr usbhid 3 ,
 .Xr aue 4 ,
 .Xr axe 4 ,
 .Xr cardbus 4 ,
@@ -436,6 +516,7 @@ Human Interface Devices
 .Xr kue 4 ,
 .Xr pci 4 ,
 .Xr pcmcia 4 ,
+.Xr scsi 4 ,
 .Xr uaudio 4 ,
 .Xr ubsa 4 ,
 .Xr ucom 4 ,
@@ -463,6 +544,7 @@ Human Interface Devices
 .Xr uvscom 4 ,
 .Xr uyap 4 ,
 .Xr wi 4 ,
+.Xr config 8 ,
 .Xr usbdevs 8
 .Pp
 The
