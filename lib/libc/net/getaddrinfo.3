@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.11 2000/08/09 23:12:04 itojun Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.12 2000/08/13 07:23:48 deraadt Exp $
 .\"	$KAME: getaddrinfo.3,v 1.22 2000/08/09 21:16:17 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -88,7 +88,7 @@ The
 .Fa nodename
 and
 .Fa servname
-arguments are pointers to null-terminated strings or
+arguments are pointers to NUL-terminated strings or
 .Dv NULL .
 One or both of these two arguments must be a non-null pointer.
 In the normal client scenario, both the
@@ -102,7 +102,7 @@ is specified.
 A non-null
 .Fa nodename
 string can be either a node name or a numeric host address string
-(i.e., a dotted-decimal IPv4 address or an IPv6 hex address)
+(i.e., a dotted-decimal IPv4 address or an IPv6 hex address).
 A non-null
 .Fa servname
 string can be either a service name or a decimal port number.
@@ -232,7 +232,7 @@ structure, then upon successful return the
 .Fa ai_canonname
 member of the first
 .Li addrinfo
-structure in the linked list will point to a null-terminated string
+structure in the linked list will point to a NUL-terminated string
 containing the canonical name of the specified
 .Fa nodename .
 .Pp
