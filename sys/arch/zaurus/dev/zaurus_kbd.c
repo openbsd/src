@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.17 2005/03/15 00:34:25 drahn Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.18 2005/03/15 16:05:17 drahn Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -311,7 +311,7 @@ zkbd_poll(void *v)
 		pxa2x0_gpio_set_bit(pin);
 		pxa2x0_gpio_set_dir(pin, GPIO_OUT);
 
-		/* wait activate (and discharge, overlapped) delay */
+		/* wait activate delay */
 		delay(10);
 
 		/* read row */
@@ -329,6 +329,8 @@ zkbd_poll(void *v)
 
 		/* reset_col */
 		pxa2x0_gpio_set_dir(pin, GPIO_IN);
+		/* wait discharge delay */
+		delay(10);
 	}
 	/* charge all */
 	for (i = 0; i < sc->sc_nstrobe; i++) {
