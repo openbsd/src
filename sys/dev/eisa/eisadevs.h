@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD
+ *	OpenBSD: eisadevs,v 1.2 1996/04/21 22:20:29 deraadt Exp 
  */
 /*	$NetBSD: eisadevs,v 1.1 1996/02/26 23:46:22 cgd Exp $	*/
 
@@ -63,5 +63,6 @@
 /* ??? DEC DEFEA */
 
 /* 3Com products */
+#define	EISA_PRODUCT_TCM5091	"3Com 3C509 Ethernet"
 #define	EISA_PRODUCT_TCM5092	"3Com 3C579-TP Ethernet"
 #define	EISA_PRODUCT_TCM5093	"3Com 3C579 Ethernet"

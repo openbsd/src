@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD
+ *	OpenBSD: eisadevs,v 1.2 1996/04/21 22:20:29 deraadt Exp 
  */
 /*	$NetBSD: eisadevs,v 1.1 1996/02/26 23:46:22 cgd Exp $	*/
 
@@ -97,6 +97,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    0,
 	    "DEC4250",
 	    EISA_PRODUCT_DEC4250,
+	},
+	{
+	    0,
+	    "TCM5091",
+	    EISA_PRODUCT_TCM5091,
 	},
 	{
 	    0,
