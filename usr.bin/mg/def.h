@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.21 2001/05/24 10:43:16 art Exp $	*/
+/*	$OpenBSD: def.h,v 1.22 2002/01/08 12:29:27 millert Exp $	*/
 
 /*
  * This file is the general header file for all parts
@@ -78,7 +78,7 @@ typedef int	(*PF)();	/* generally useful type */
 #define CMODE	2		/* Mode line color.		 */
 
 /*
- * Flags for keyboard involked functions.
+ * Flags for keyboard invoked functions.
  */
 #define FFUNIV		1	/* universal argument		 */
 #define FFNEGARG	2	/* negitive only argument	 */
