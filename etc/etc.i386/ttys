@@ -1,13 +1,18 @@
 #
 #	from: @(#)ttys	5.1 (Berkeley) 4/17/89
-#	$Id: ttys,v 1.5 1996/08/17 05:42:43 deraadt Exp $
+#	$Id: ttys,v 1.6 1997/01/01 20:15:34 graichen Exp $
 #
 # name	getty				type	status		comments
 #
 console	"/usr/libexec/getty Pc"		pc3	off secure
-ttyC0	"/usr/libexec/getty Pc"		pc3	on secure
-ttyC1	"/usr/libexec/getty Pc"		vt220	on secure
-ttyC2	"/usr/libexec/getty Pc"		vt220	on secure
+ttyC0	"/usr/libexec/getty Pc"		pc3	on  secure
+#
+# if you want to start xdm via init - comment out
+# the line above and uncomment the following line
+#
+#ttyC0	"/usr/X11R6/bin/xdm -nodaemon"	xterm	on  secure
+ttyC1	"/usr/libexec/getty Pc"		vt220	on  secure
+ttyC2	"/usr/libexec/getty Pc"		vt220	on  secure
 ttyC3	"/usr/libexec/getty Pc"		vt220	off secure
 ttyC4	"/usr/libexec/getty Pc"		vt220	off secure
 ttyC5	"/usr/libexec/getty Pc"		vt220	off secure
