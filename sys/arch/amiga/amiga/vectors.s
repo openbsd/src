@@ -1,3 +1,4 @@
+/*	$OpenBSD: vectors.s,v 1.2 1996/05/07 09:59:45 niklas Exp $	*/
 /*	$NetBSD: vectors.s,v 1.8 1994/10/26 02:02:12 cgd Exp $	*/
 
 /*
@@ -35,7 +36,8 @@
  *
  *	@(#)vectors.s	7.2 (Berkeley) 5/7/91
  */
-	.text
+
+	.data
 	.globl	_buserr,_addrerr
 	.globl	_illinst,_zerodiv,_chkinst,_trapvinst,_privinst,_trace
 	.globl	_badtrap
@@ -45,7 +47,8 @@
 	.globl	_fpfline, _fpunsupp, _fpfault
 	.globl	_trap12
 
-Lvectab:
+	.globl	_vectab
+_vectab:
 	.long	0x4ef80400	/* 0: jmp 0x400:w (unused reset SSP) */
 	.long	0		/* 1: NOT USED (reset PC) */
 	.long	_buserr		/* 2: bus error */
@@ -113,7 +116,6 @@ Lvectab:
 	.long	_fpfault	/* 53: FPCP overflow */
 	.long	_fpfault	/* 54: FPCP signalling NAN */
 #endif
-
 
 	.long	_fpunsupp	/* 55: FPCP unimplemented data type */
 	.long	_badtrap	/* 56: unassigned, reserved */
