@@ -1,4 +1,4 @@
-/*	$OpenBSD: wizard.c,v 1.7 1998/08/31 02:29:47 pjanzen Exp $	*/
+/*	$OpenBSD: wizard.c,v 1.8 2001/03/22 22:31:47 pjanzen Exp $	*/
 /*	$NetBSD: wizard.c,v 1.3 1995/04/24 12:21:41 cgd Exp $	*/
 
 /*-
@@ -43,12 +43,13 @@
 #if 0
 static char sccsid[] = "@(#)wizard.c	8.1 (Berkeley) 6/2/93";
 #else
-static char rcsid[] = "$OpenBSD: wizard.c,v 1.7 1998/08/31 02:29:47 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: wizard.c,v 1.8 2001/03/22 22:31:47 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 /*	Re-coding of advent in C: privileged operations			*/
 
+#include <sys/param.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -130,13 +131,17 @@ void
 ciao()
 {
 	char   *c;
-	char    fname[80];
+	char    fname[MAXPATHLEN];
 
 	printf("What would you like to call the saved version?\n");
-	for (c = fname;; c++)
+	for (c = fname; c - fname < MAXPATHLEN; c++)
 		if ((*c = getchar()) == '\n' || *c == EOF)
 			break;
-	*c = 0;
+	if (c - fname == MAXPATHLEN) {
+		c--;
+		FLUSHLINE;
+	}
+	*c = '\0';
 	if (save(fname) != 0)
 		return;		/* Save failed */
 	printf("To resume, say \"adventure %s\".\n", fname);
