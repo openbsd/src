@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.40 2004/12/01 21:20:17 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.41 2004/12/01 23:02:55 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -85,7 +85,6 @@
 	.text
 GLOBAL(kernel_text)
 
-#include <mac68k/mac68k/vectors.s>
 #include <mac68k/mac68k/macglobals.s>
 
 /*
@@ -118,6 +117,8 @@ GLOBAL(sanity_check)
 
 	.space	4 * NBPG
 ASLOCAL(tmpstk)
+
+#include <mac68k/mac68k/vectors.s>
 
 BSS(esym,4)
 
