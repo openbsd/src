@@ -59,6 +59,7 @@ SRCS+=	bn_add.c bn_div.c bn_exp.c bn_lib.c bn_mod.c
 SRCS+=	bn_mul.c bn_print.c bn_rand.c bn_shift.c bn_sub.c
 SRCS+=	bn_word.c bn_blind.c bn_gcd.c bn_prime.c bn_err.c
 SRCS+=	bn_sqr.c bn_recp.c bn_mont.c bn_mpi.c		
+SRCS+=  bn_mulw.c 
 CFLAGS+= -I${LCRYPTO_SRC}/rsa
 SRCS+=	rsa_eay.c rsa_gen.c rsa_lib.c rsa_sign.c 	
 SRCS+=	rsa_saos.c rsa_err.c rsa_pk1.c rsa_ssl.c 	
