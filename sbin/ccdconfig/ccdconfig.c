@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccdconfig.c,v 1.11 1998/07/08 22:24:54 deraadt Exp $	*/
+/*	$OpenBSD: ccdconfig.c,v 1.12 1998/08/15 20:16:34 deraadt Exp $	*/
 /*	$NetBSD: ccdconfig.c,v 1.6 1996/05/16 07:11:18 thorpej Exp $	*/
 
 /*-
@@ -328,6 +328,7 @@ do_all(action)
 	char *cp, **argv;
 	int argc, rval = 0;
 	gid_t egid;
+	char **nargv;
 
 	egid = getegid();
 	setegid(getgid());
@@ -351,11 +352,12 @@ do_all(action)
 		for (cp = line; (cp = strtok(cp, " \t")) != NULL; cp = NULL) {
 			if (*cp == '#')
 				break;
-			if ((argv = realloc(argv,
+			if ((nargv = realloc(argv,
 			    sizeof(char *) * ++argc)) == NULL) {
 				warnx("no memory to configure ccds");
 				return (1);
 			}
+			argv = nargv;
 			argv[argc - 1] = cp;
 			/*
 			 * If our action is to unconfigure all, then pass

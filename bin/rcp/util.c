@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 1997/09/01 18:30:24 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 1998/08/15 20:14:08 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.2 1995/03/21 08:19:08 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: util.c,v 1.5 1997/09/01 18:30:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.6 1998/08/15 20:14:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -143,6 +143,7 @@ allocbuf(bp, fd, blksize)
 {
 	struct stat stb;
 	size_t size;
+	char *p;
 
 	if (fstat(fd, &stb) < 0) {
 		run_err("fstat: %s", strerror(errno));
@@ -153,11 +154,15 @@ allocbuf(bp, fd, blksize)
 		size = blksize;
 	if (bp->cnt >= size)
 		return (bp);
-	if ((bp->buf = realloc(bp->buf, size)) == NULL) {
+	if ((p = realloc(bp->buf, size)) == NULL) {
+		if (bp->buf)
+			free(bp->buf);
+		bp->buf = NULL;
 		bp->cnt = 0;
 		run_err("%s", strerror(errno));
 		return (0);
 	}
+	bp->buf = p;
 	bp->cnt = size;
 	return (bp);
 }
