@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.34 2004/05/24 15:47:00 tom Exp $
+dnl	$OpenBSD: hardware,v 1.35 2004/09/16 07:58:04 brad Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, and G4 Cube, as well
 as PowerBook and iBook machines.
 
@@ -9,9 +9,9 @@ OpenBSD/MACHINE has been tested on iMac Revs A-C as well as on iMac DV(+)
 machines, Power Macintosh G4 systems (single and dual processor), as well as
 the G4 Cube, B&W G3 and LCD iMac.
 
-For portables, PowerBook G3, PowerBook G4 (12", 15", 17"), iBook, and iBook2
-have been tested.  Note that power saving features on portables are very
-limited, limited power management features are available, suspend/sleep
+For portables, PowerBook G3, PowerBook G4 (12", 15", 17"), iBook, iBook2
+and iBook G4 have been tested.  Note that power saving features on portables
+are very limited, limited power management features are available, suspend/sleep
 is not supported.  However battery level and status charging/AC
 connected/AC disconnected is supported via an APM emulation layer.
 
