@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.13 1996/08/30 16:32:08 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.14 1996/08/31 17:56:52 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -248,7 +248,7 @@ rresvport(alport)
 	if (s < 0)
 		return (-1);
 	sin.sin_port = htons((u_short)*alport);
-	if (alport != IPPORT_RESERVED - 1) {
+	if (*alport != IPPORT_RESERVED - 1) {
 		if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
 			return (s);
 		if (errno != EADDRINUSE) {
