@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.30 2004/04/27 18:51:17 millert Exp $
+.\"	$OpenBSD: recv.2,v 1.31 2004/07/26 08:59:00 jmc Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -115,10 +115,16 @@ The
 argument to a recv call is formed by
 .Tn OR Ns ing
 one or more of the values:
-.Bl -column MSG_WAITALL -offset indent
-.It Dv MSG_OOB Ta process out-of-band data
-.It Dv MSG_PEEK Ta peek at incoming message
-.It Dv MSG_WAITALL Ta wait for full request or error
+.Pp
+.Bl -tag -width "MSG_DONTWAITXX" -offset indent -compact
+.It Dv MSG_OOB
+process out-of-band data
+.It Dv MSG_PEEK
+peek at incoming message
+.It Dv MSG_WAITALL
+wait for full request or error
+.It Dv MSG_DONTWAIT
+don't block
 .El
 .Pp
 The
@@ -140,6 +146,14 @@ the full request is satisfied.
 However, the call may still return less data than requested
 if a signal is caught, an error or disconnect occurs,
 or the next data to be received is of a different type than that returned.
+The
+.Dv MSG_DONTWAIT
+flag requests the call to return when it would block otherwise.
+If no data is available,
+.Va errno
+is set to
+.Er EAGAIN .
+This flag is not available in strict ANSI or C99 compilation mode.
 .Pp
 The
 .Fn recvmsg
@@ -147,7 +161,7 @@ call uses a
 .Fa msghdr
 structure to minimize the number of directly supplied parameters.
 This structure has the following form, as defined in
-.Ao Pa sys/socket.h Ac :
+.Aq Pa sys/socket.h :
 .Bd -literal
 struct msghdr {
 	void		*msg_name;	/* optional address */
@@ -210,24 +224,25 @@ The
 .Fa msg_flags
 field is set on return according to the message received.
 It will contain zero or more of the following values:
-.Bl -column MSG_CTRUNC -offset indent
-.It Dv MSG_EOR Ta
+.Pp
+.Bl -tag -width MSG_CTRUNC -offset indent -compact
+.It Dv MSG_OOB
+Returned to indicate that expedited or out-of-band data was received.
+.It Dv MSG_EOR
 Indicates end-of-record;
 the data returned completed a record (generally used with sockets of type
 .Dv SOCK_SEQPACKET ) .
-.It Dv MSG_TRUNC Ta
+.It Dv MSG_TRUNC
 Indicates that
 the trailing portion of a datagram was discarded because the datagram
 was larger than the buffer supplied.
-.It Dv MSG_CTRUNC Ta
+.It Dv MSG_CTRUNC
 Indicates that some
 control data were discarded due to lack of space in the buffer
 for ancillary data.
-.It Dv MSG_OOB Ta
-Returned to indicate that expedited or out-of-band data was received.
-.It Dv MSG_BCAST Ta
+.It Dv MSG_BCAST
 Indicates that the packet was received as broadcast.
-.It Dv MSG_MCAST Ta
+.It Dv MSG_MCAST
 Indicates that the packet was received as multicast.
 .El
 .Sh RETURN VALUES
@@ -238,7 +253,7 @@ These calls return the number of bytes received, or \-1 if an error occurred.
 and
 .Fn recvmsg
 fail if:
-.Bl -tag -width Er
+.Bl -tag -width "[EHOSTUNREACH]"
 .It Bq Er EBADF
 The argument
 .Fa s
@@ -264,6 +279,13 @@ any data were available.
 .It Bq Er EFAULT
 The receive buffer pointer(s) point outside the process's
 address space.
+.It Bq Er EHOSTUNREACH
+A socket operation was attempted to an unreachable host.
+.It Bq Er EHOSTDOWN
+A socket operation failed
+because the destination host was down.
+.It Bq Er ENETDOWN
+A socket operation encountered a dead network.
 .El
 .Pp
 In addition,
@@ -281,7 +303,7 @@ was larger than
 Also,
 .Fn recv
 may return the following error:
-.Bl -tag -width Er
+.Bl -tag -width "[ECONNREFUSED]"
 .It Bq Er ECONNREFUSED
 The socket is associated with a connection-oriented protocol
 and the connection was forcefully rejected (see
@@ -308,6 +330,7 @@ was less than 0 or larger than
 .Dv IOV_MAX .
 .El
 .Sh SEE ALSO
+.Xr connect 2 ,
 .Xr fcntl 2 ,
 .Xr getsockopt 2 ,
 .Xr poll 2 ,
