@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_qe.c,v 1.15 2003/02/04 02:03:51 hugh Exp $	*/
+/*	$OpenBSD: if_qe.c,v 1.16 2003/02/05 00:05:15 hugh Exp $	*/
 /*      $NetBSD: if_qe.c,v 1.51 2002/06/08 12:28:37 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -212,7 +212,6 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	struct	qe_softc *sc = (struct qe_softc *)self;
 	struct	ifnet *ifp = (struct ifnet *)&sc->sc_if;
 	struct	qe_ring *rp;
-	u_int8_t enaddr[ETHER_ADDR_LEN];
 	int i, error;
 
 	sc->sc_iot = ua->ua_iot;
@@ -303,12 +302,12 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	 * Read out ethernet address and tell which type this card is.
 	 */
 	for (i = 0; i < 6; i++)
-		enaddr[i] = QE_RCSR(i * 2) & 0xff;
+		sc->sc_ac.ac_enaddr[i] = QE_RCSR(i * 2) & 0xff;
 
 	QE_WCSR(QE_CSR_VECTOR, sc->sc_intvec | 1);
 	printf("\n%s: %s, hardware address %s\n", sc->sc_dev.dv_xname,
 		QE_RCSR(QE_CSR_VECTOR) & 1 ? "delqa":"deqna",
-		ether_sprintf(enaddr));
+		ether_sprintf(sc->sc_ac.ac_enaddr));
 
 	QE_WCSR(QE_CSR_VECTOR, QE_RCSR(QE_CSR_VECTOR) & ~1); /* ??? */
 
@@ -560,7 +559,7 @@ qeintr(void *arg)
 			if (ifp->if_bpf) {
 				bpf_mtap(ifp->if_bpf, m);
 				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-				    bcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+				    bcmp(sc->sc_ac.ac_enaddr, eh->ether_dhost,
 				    ETHER_ADDR_LEN) != 0 &&
 				    ((eh->ether_dhost[0] & 1) == 0)) {
 					m_freem(m);
@@ -573,7 +572,7 @@ qeintr(void *arg)
 			 */
 			if ((ifp->if_flags & IFF_ALLMULTI) &&
 			    ((eh->ether_dhost[0] & 1) == 0) &&
-			    bcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
+			    bcmp(sc->sc_ac.ac_enaddr, eh->ether_dhost,
 			    ETHER_ADDR_LEN)) {
 				m_freem(m);
 				continue;
@@ -762,7 +761,7 @@ qe_setup(struct qe_softc *sc)
 	struct ether_multistep step;
 	struct qe_cdata *qc = sc->sc_qedata;
 	struct ifnet *ifp = &sc->sc_if;
-	u_int8_t *enaddr = LLADDR(ifp->if_sadl);
+	u_int8_t *enaddr = sc->sc_ac.ac_enaddr;
 	int i, j, k, idx, s;
 
 	s = splnet();
