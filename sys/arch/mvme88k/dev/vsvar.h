@@ -1,4 +1,4 @@
-/*	$OpenBSD: vsvar.h,v 1.12 2004/05/22 21:00:44 miod Exp $	*/
+/*	$OpenBSD: vsvar.h,v 1.13 2004/05/22 21:02:38 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -98,6 +98,7 @@ struct vs_softc {
 	struct evcnt		sc_intrcnt_e, sc_intrcnt_n;
 	int			sc_ipl;
 	int			sc_evec, sc_nvec;
+	int			sc_pid, sc_sid;
 	struct scsi_link	sc_link;
 };
 
@@ -114,6 +115,7 @@ struct vs_softc {
 #define	cib_write(w,o,v)	vs_write(w, sh_CIB + (o), (v))
 #define	crb_read(w,o)		vs_read(w, sh_CRB + (o))
 #define	crb_write(w,o,v)	vs_write(w, sh_CRB + (o), (v))
+#define	csb_read(w,o)		vs_read(w, sh_CSS + (o))
 #define	mce_read(w,o)		vs_read(w, sh_MCE + (o))
 #define	mce_write(w,o,v)	vs_write(w, sh_MCE + (o), (v))
 #define	mce_iopb_read(w,o)	vs_read(w, sh_MCE_IOPB + (o))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.38 2004/05/22 19:34:12 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.39 2004/05/22 21:02:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -110,6 +110,7 @@ void	vs_resync(struct vs_softc *);
 void	vs_scsidone(struct vs_softc *, struct scsi_xfer *, int);
 
 static __inline__ void vs_clear_return_info(struct vs_softc *);
+static __inline__ int vs_queue_number(int, int);
 
 int
 vsmatch(struct device *device, void *cf, void *args)
@@ -145,21 +146,25 @@ vsattach(struct device *parent, struct device *self, void *args)
 	if (ca->ca_ipl < 0)
 		ca->ca_ipl = IPL_BIO;
 
-	printf(" vec 0x%x", evec);
+	printf(" vec 0x%x: ", evec);
 
 	sc->sc_paddr = ca->ca_paddr;
 	sc->sc_iot = ca->ca_iot;
 	if (bus_space_map(sc->sc_iot, sc->sc_paddr, S_SHORTIO, 0,
 	    &sc->sc_ioh) != 0) {
-		printf(": can't map registers!\n");
+		printf("can't map registers!\n");
 		return;
 	}
 
 	sc->sc_ipl = ca->ca_ipl;
 	sc->sc_nvec = ca->ca_vec;
 	sc->sc_evec = evec;
+
+	if (vs_initialize(sc))
+		return;
+
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_target = 7;
+	sc->sc_link.adapter_target = sc->sc_pid;
 	sc->sc_link.adapter = &vs_scsiswitch;
 	sc->sc_link.device = &vs_scsidev;
 	sc->sc_link.luns = 1;
@@ -174,9 +179,6 @@ vsattach(struct device *parent, struct device *self, void *args)
 	sc->sc_ih_e.ih_arg = sc;
 	sc->sc_ih_e.ih_wantframe = 0;
 	sc->sc_ih_e.ih_ipl = ca->ca_ipl;
-
-	if (vs_initialize(sc))
-		return;
 
 	vmeintr_establish(sc->sc_nvec, &sc->sc_ih_n);
 	vmeintr_establish(sc->sc_evec, &sc->sc_ih_e);
@@ -273,11 +275,11 @@ vs_scsidone(struct vs_softc *sc, struct scsi_xfer *xs, int stat)
 
 	while (xs->status == SCSI_CHECK) {
 		vs_chksense(xs);
-		tgt = xs->sc_link->target + 1;
+		tgt = vs_queue_number(xs->sc_link->target, sc->sc_pid);
 		thaw_queue(sc, tgt);
 	}
 
-	tgt = xs->sc_link->target + 1;
+	tgt = vs_queue_number(xs->sc_link->target, sc->sc_pid);
 	xs->flags |= ITSDONE;
 
 	/* thaw all work queues */
@@ -351,7 +353,7 @@ vs_scsicmd(struct scsi_xfer *xs)
 	vs_write(2, cqep + CQE_IOPB_ADDR, iopb);
 	vs_write(1, cqep + CQE_IOPB_LENGTH, iopb_len);
 	vs_write(1, cqep + CQE_WORK_QUEUE,
-	    flags & SCSI_POLL ? 0 : slp->target + 1);
+	    flags & SCSI_POLL ? 0 : vs_queue_number(slp->target, sc->sc_pid));
 
 	MALLOC(m328_cmd, M328_CMD*, sizeof(M328_CMD), M_DEVBUF, M_WAITOK);
 
@@ -464,7 +466,35 @@ vs_getiopb(struct vs_softc *sc)
 int
 vs_initialize(struct vs_softc *sc)
 {
-	int i;
+	int i, msr;
+
+	/*
+	 * Reset the board, and wait for it to get ready.
+	 * The reset signal is applied for 70 usec, and the board status
+	 * is not tested until 100 usec after the reset signal has been
+	 * cleared, per the manual (MVME328/D1) pages 4-6 and 4-9.
+	 */
+
+	mcsb_write(2, MCSB_MCR, M_MCR_RES | M_MCR_SFEN);
+	delay(70);
+	mcsb_write(2, MCSB_MCR, M_MCR_SFEN);
+
+	delay(100);
+	i = 0;
+	for (;;) {
+		msr = mcsb_read(2, MCSB_MSR);
+		if ((msr & (M_MSR_BOK | M_MSR_CNA)) == M_MSR_BOK)
+			break;
+		if (++i > 5000) {
+			printf("board reset failed, status %x\n", msr);
+			return 1;
+		}
+		delay(1000);
+	}
+
+	/* initialize channels id */
+	sc->sc_pid = csb_read(1, CSB_PID);
+	sc->sc_sid = csb_read(1, CSB_SID);
 
 	CRB_CLR_DONE;
 	mcsb_write(2, MCSB_QHDP, 0);
@@ -474,8 +504,8 @@ vs_initialize(struct vs_softc *sc)
 	cib_write(2, CIB_BURST, 0);
 	cib_write(2, CIB_NVECT, (sc->sc_ipl << 8) | sc->sc_nvec);
 	cib_write(2, CIB_EVECT, (sc->sc_ipl << 8) | sc->sc_evec);
-	cib_write(2, CIB_PID, 7);
-	cib_write(2, CIB_SID, 0);
+	cib_write(2, CIB_PID, sc->sc_pid);
+	cib_write(2, CIB_SID, 0);	/* disable second channel */
 	cib_write(2, CIB_CRBO, sh_CRB);
 	cib_write(4, CIB_SELECT, SELECTION_TIMEOUT);
 	cib_write(4, CIB_WQTIMO, 4);
@@ -551,7 +581,7 @@ vs_initialize(struct vs_softc *sc)
 	vs_reset(sc);
 	/* sync all devices */
 	vs_resync(sc);
-	printf(": SCSI ID %d\n", sc->sc_link.adapter_target);
+	printf("SCSI ID %d\n", sc->sc_pid);
 	return 0;
 }
 
@@ -560,7 +590,10 @@ vs_resync(struct vs_softc *sc)
 {
 	int i;
 
-	for (i = 0; i < 7; i++) {
+	for (i = 0; i < 8; i++) {
+		if (i == sc->sc_pid)
+			continue;
+
 		vs_bzero(sh_MCE_IOPB, IOPB_SHORT_SIZE);
 		mce_iopb_write(2, DRCF_CMD, CNTR_DEV_REINIT);
 		mce_iopb_write(2, DRCF_OPTION, 0); /* no interrupts yet */
@@ -777,6 +810,19 @@ static void
 vs_clear_return_info(struct vs_softc *sc)
 {
 	vs_bzero(sh_RET_IOPB, CRB_SIZE + IOPB_LONG_SIZE);
+}
+
+/*
+ * Choose the work queue number for a specific target.
+ *
+ * Targets on the primary channel should be mapped to queues 1-7,
+ * so we assign each target the queue matching its own number, except for
+ * target zero which gets assigned to the queue matching the controller id.
+ */
+static int
+vs_queue_number(int target, int host)
+{
+	return target == 0 ? host : target;
 }
 
 /*
