@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.114 2001/09/21 22:14:03 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.115 2001/09/25 01:04:01 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1854,6 +1854,11 @@ var
 # ./var/account
 account
 # ./var/account
+..
+
+# ./var/empty
+empty		mode=0755
+# ./var/empty
 ..
 
 # ./var/at
