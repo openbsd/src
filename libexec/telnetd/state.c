@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)state.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: state.c,v 1.1.1.1 1995/10/18 08:43:24 deraadt Exp $";
+static char *rcsid = "$Id: state.c,v 1.2 1995/10/28 02:33:51 deraadt Exp $";
 #endif /* not lint */
 
 #include "telnetd.h"
@@ -1050,6 +1050,18 @@ int env_ovalue = -1;
 # define env_ovalue OLD_ENV_VALUE
 #endif	/* ENV_HACK */
 
+/* envvarok(char*) */
+/* check that variable is safe to pass to login or shell */
+static int
+envvarok(varp)
+	char *varp;
+{
+	return (strncmp(varp, "LD_", strlen("LD_")) &&
+		strncmp(varp, "_RLD_", strlen("_RLD_")) &&
+		strcmp(varp, "LIBPATH") &&
+		strcmp(varp, "IFS"));
+}
+
 /*
  * suboption()
  *
@@ -1388,10 +1400,12 @@ suboption()
 		case NEW_ENV_VAR:
 		case ENV_USERVAR:
 			*cp = '\0';
-			if (valp)
-				(void)setenv(varp, valp, 1);
-			else
-				unsetenv(varp);
+			if (envvarok(varp)) {
+				if (valp)
+					(void)setenv(varp, valp, 1);
+				else
+					unsetenv(varp);
+			}
 			cp = varp = (char *)subpointer;
 			valp = 0;
 			break;
@@ -1407,10 +1421,12 @@ suboption()
 		}
 	}
 	*cp = '\0';
-	if (valp)
-		(void)setenv(varp, valp, 1);
-	else
-		unsetenv(varp);
+	if (envvarok(varp)) {
+		if (valp)
+			(void)setenv(varp, valp, 1);
+		else
+			unsetenv(varp);
+	}
 	break;
     }  /* end of case TELOPT_NEW_ENVIRON */
 #if	defined(AUTHENTICATION)
