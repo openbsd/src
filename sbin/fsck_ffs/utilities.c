@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.17 2002/08/23 09:09:04 gluk Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.18 2003/04/26 00:39:28 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: utilities.c,v 1.17 2002/08/23 09:09:04 gluk Exp $";
+static const char rcsid[] = "$OpenBSD: utilities.c,v 1.18 2003/04/26 00:39:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -417,7 +417,7 @@ freeblk(daddr_t blkno, long frags)
  * Find a pathname
  */
 void
-getpathname(char *namebuf, ino_t curdir, ino_t ino)
+getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 {
 	int len;
 	char *cp;
@@ -425,12 +425,12 @@ getpathname(char *namebuf, ino_t curdir, ino_t ino)
 	static int busy = 0;
 
 	if (curdir == ino && ino == ROOTINO) {
-		(void)strcpy(namebuf, "/");
+		(void)strlcpy(namebuf, "/", namebuflen);
 		return;
 	}
 	if (busy ||
 	    (statemap[curdir] != DSTATE && statemap[curdir] != DFOUND)) {
-		(void)strcpy(namebuf, "?");
+		(void)strlcpy(namebuf, "?", namebuflen);
 		return;
 	}
 	busy = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.13 2002/08/23 09:09:04 gluk Exp $	*/
+/*	$OpenBSD: dir.c,v 1.14 2003/04/26 00:39:28 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static const char rcsid[] = "$OpenBSD: dir.c,v 1.13 2002/08/23 09:09:04 gluk Exp $";
+static const char rcsid[] = "$OpenBSD: dir.c,v 1.14 2003/04/26 00:39:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -283,7 +283,7 @@ fileerror(ino_t cwd, ino_t ino, char *errmesg)
 	pwarn("%s ", errmesg);
 	pinode(ino);
 	printf("\n");
-	getpathname(pathbuf, cwd, ino);
+	getpathname(pathbuf, sizeof pathbuf, cwd, ino);
 	if (ino < ROOTINO || ino > maxino) {
 		pfatal("NAME=%s\n", pathbuf);
 		return;
@@ -544,7 +544,7 @@ makeentry(ino_t parent, ino_t ino, char *name)
 	}
 	if ((ckinode(dp, &idesc) & ALTERED) != 0)
 		return (1);
-	getpathname(pathbuf, parent, parent);
+	getpathname(pathbuf, sizeof pathbuf, parent, parent);
 	dp = ginode(parent);
 	if (expanddir(dp, pathbuf) == 0)
 		return (0);

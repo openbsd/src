@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.15 2003/04/16 02:57:51 deraadt Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.16 2003/04/26 00:39:28 deraadt Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass2.c,v 1.15 2003/04/16 02:57:51 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pass2.c,v 1.16 2003/04/26 00:39:28 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -172,7 +172,8 @@ pass2(void)
 				inodirty();
 			}
 		} else if ((inp->i_isize & (DIRBLKSIZ - 1)) != 0) {
-			getpathname(pathbuf, inp->i_number, inp->i_number);
+			getpathname(pathbuf, sizeof pathbuf,
+			    inp->i_number, inp->i_number);
 			if (usedsoftdep)
 			        pfatal("%s %s: LENGTH %ld NOT MULTIPLE of %d",
 				       "DIRECTORY", pathbuf, (long)inp->i_isize,
@@ -466,9 +467,10 @@ again:
 		case DFOUND:
 			inp = getinoinfo(dirp->d_ino);
 			if (inp->i_parent != 0 && idesc->id_entryno > 2) {
-				getpathname(pathbuf, idesc->id_number,
-				    idesc->id_number);
-				getpathname(namebuf, dirp->d_ino, dirp->d_ino);
+				getpathname(pathbuf, sizeof pathbuf,
+				    idesc->id_number, idesc->id_number);
+				getpathname(namebuf, sizeof namebuf,
+				    dirp->d_ino, dirp->d_ino);
 				pwarn("%s %s %s\n", pathbuf,
 				    "IS AN EXTRANEOUS HARD LINK TO DIRECTORY",
 				    namebuf);
