@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.23 2000/10/23 20:07:30 deraadt Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.24 2000/11/08 13:12:40 art Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -370,20 +370,23 @@ pchb_rnd(v)
 	void *v;
 {
 	struct pchb_softc *sc = v;
-	int s, ret;
+	int ret;
 
-	s = splhigh();
-	while (!(bus_space_read_1(sc->bt, sc->bh, I82802_RNG_RNGST) &
-	    I82802_RNG_RNGST_DATAV));
+	/*
+	 * Don't wait for data to be ready. If it's not there, we'll check
+	 * next time.
+	 */
+	if (!(bus_space_read_1(sc->bt, sc->bh, I82802_RNG_RNGST) &
+	    I82802_RNG_RNGST_DATAV))
+		goto out;
 	ret = bus_space_read_1(sc->bt, sc->bh, I82802_RNG_DATA);
 
 	if (sc->i--) {
 		sc->ax = (sc->ax << 8) | ret;
-		splx(s);
 	} else {
 		sc->i = 4;
-		splx(s);
 		add_true_randomness(sc->ax);
 	}
+out:
 	timeout_add(&sc->sc_tmo, 1);
 }
