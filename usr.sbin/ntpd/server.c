@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.10 2004/07/13 19:41:26 alexander Exp $ */
+/*	$OpenBSD: server.c,v 1.11 2004/07/14 20:16:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -122,7 +122,7 @@ server_dispatch(int fd, struct ntpd_conf *conf)
 	else
 		reply.status |= MODE_SYM_PAS;
 
-	reply.stratum =	conf->status.stratum;
+	reply.stratum =	2;
 	reply.ppoll = query.ppoll;
 	reply.precision = conf->status.precision;
 	reply.rectime = d_to_lfp(rectime);

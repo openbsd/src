@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.23 2004/07/13 19:41:26 alexander Exp $ */
+/*	$OpenBSD: ntp.c,v 1.24 2004/07/14 20:16:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -281,7 +281,7 @@ ntp_adjtime(struct ntpd_conf *conf)
 {
 	struct ntp_peer	*p;
 	double		 offset_median = 0;
-	int		 offset_cnt = 0, stratum = 254;
+	int		 offset_cnt = 0;
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
 		if (!p->update.good)
@@ -297,9 +297,6 @@ ntp_adjtime(struct ntpd_conf *conf)
 
 		offset_median += p->update.offset;
 		offset_cnt++;
-
-		if (p->update.status.stratum < stratum)
-			stratum = p->update.status.stratum;	/* XXX */
 	}
 
 	if (offset_cnt > 0) {
@@ -308,7 +305,6 @@ ntp_adjtime(struct ntpd_conf *conf)
 		    &offset_median, sizeof(offset_median));
 
 		conf->status.reftime = gettime();
-		conf->status.stratum = stratum + 1;
 		conf->status.leap = LI_NOWARNING;		/* XXX */
 	}
 }

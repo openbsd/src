@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.25 2004/07/13 19:41:26 alexander Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.26 2004/07/14 20:16:31 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -72,7 +72,6 @@ struct ntp_addr {
 
 struct ntp_status {
 	u_int8_t	leap;
-	u_int8_t	stratum;
 	int8_t		precision;
 	double		rootdelay;
 	double		rootdispersion;
