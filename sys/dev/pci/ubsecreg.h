@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.12 2001/05/22 22:53:39 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.13 2001/05/30 02:26:14 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -83,8 +83,6 @@ struct ubsec_pktctx {
 	u_int32_t	pc_iv[2];		/* [3]DES iv */
 	u_int16_t	pc_flags;		/* flags, below */
 	u_int16_t	pc_offset;		/* crypto offset */
-	u_int32_t	pc_paddr;
-	u_int8_t	pad[16];
 };
 #define	UBS_PKTCTX_ENC_3DES	0x8000		/* use 3des */
 #define	UBS_PKTCTX_ENC_NONE	0x0000		/* no encryption */

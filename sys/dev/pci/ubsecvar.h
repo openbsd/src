@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.17 2001/05/23 04:46:41 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.18 2001/05/30 02:26:14 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -28,10 +28,11 @@
  */
 
 struct ubsec_dma_alloc {
-	u_int64_t		dma_paddr;
+	u_int32_t		dma_paddr;
 	caddr_t			dma_vaddr;
 	bus_dmamap_t		dma_map;
 	bus_dma_segment_t	dma_seg;
+	bus_size_t		dma_size;
 	int			dma_nseg;
 };
 
@@ -46,8 +47,7 @@ struct ubsec_q2_rng {
 	struct ubsec_dma_alloc		rng_buf;
 	int				rng_used;
 };
-#define UBSEC_RNG_BUFSIZ	16
-
+#define	UBSEC_RNG_BUFSIZ	16		/* measured in 32bit words */
 
 struct ubsec_softc {
 	struct	device		sc_dv;		/* generic device */
@@ -67,8 +67,8 @@ struct ubsec_softc {
 	int			sc_nsessions;	/* # of sessions */
 	struct ubsec_session	*sc_sessions;	/* sessions */
 	struct timeout		sc_rngto;	/* rng timeout */
-	int			sc_rnghz;	/* rng frequency */
-	struct ubsec_q2_rng	sc_rng;		/* rng structures */
+	int			sc_rnghz;	/* rng poll time */
+	struct ubsec_q2_rng	sc_rng;
 };
 
 #define	UBS_FLAGS_KEY		0x01		/* has key accelerator */
@@ -78,27 +78,25 @@ struct ubsec_q {
 	SIMPLEQ_ENTRY(ubsec_q)		q_next;
 	struct cryptop			*q_crp;
 	struct ubsec_mcr		*q_mcr;
-	struct ubsec_dma_alloc		q_mcr_dma;
 	struct ubsec_pktbuf		q_srcpkt[MAX_SCATTER-1];
 	struct ubsec_pktbuf		q_dstpkt[MAX_SCATTER-1];
-	struct ubsec_dma_alloc		q_ctx_dma;
+	struct ubsec_pktctx		q_ctx;
+	struct ubsec_pktctx_long	q_ctxl;
 
-	struct ubsec_softc		*q_sc;
 	struct mbuf 		      	*q_src_m, *q_dst_m;
 	struct uio			*q_src_io, *q_dst_io;
 
 	long				q_src_packp[MAX_SCATTER];
 	int				q_src_packl[MAX_SCATTER];
 	int				q_src_npa, q_src_l;
-	int				q_flags;
 
 	long				q_dst_packp[MAX_SCATTER];
 	int				q_dst_packl[MAX_SCATTER];
 	int				q_dst_npa, q_dst_l;
 	u_int32_t			q_macbuf[5];
 	int				q_sesn;
+	int				q_flags;
 };
-
 #define	UBSEC_QFLAGS_COPYOUTIV		0x1
 
 struct ubsec_session {
