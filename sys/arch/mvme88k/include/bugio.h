@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.h,v 1.5 1999/02/09 06:36:25 smurph Exp $ */
+/*	$OpenBSD: bugio.h,v 1.6 1999/04/11 03:26:28 smurph Exp $ */
 #include "sys/cdefs.h"
 
 struct bugdisk_io {
@@ -49,6 +49,21 @@ struct bugbrdid {
 	short	type;
 	short	dev;
 	int	option;
+	char	version[4];
+	char	serial[12];			/* SBC serial number */
+	char	id[16];				/* SBC id */
+	char	pwa[16];				/* printed wiring assembly number */
+	char	speed[4];			/* cpu speed */
+	char	etheraddr[6];		/* mac address, all zero if no ether */
+	char	fill[2];		
+	char	scsiid[2];			/* local SCSI id */
+	char	sysid[8];			/* system id - nothing on mvme187 */
+	char	brd1_pwb[8];		/* memory board 1 pwb */
+	char	brd1_serial[8];	/* memory board 1 serial */
+	char	brd2_pwb[8];		/* memory board 2 pwb */
+	char	brd2_serial[8];	/* memory board 2 serial */
+	char	reserved[153];
+	char	cksum[1];
 };
 
 struct bugniocall {
@@ -57,11 +72,11 @@ struct bugniocall {
 	unsigned char ci;
 	unsigned char cd;
 #define	NETCTRL_INITDEVICE	0
-#define	NETCTRL_GETHDW		1
-#define	NETCTRL_TX		2
-#define	NETCTRL_RX		3
-#define	NETCTRL_FLUSH		4
-#define	NETCTRL_RESET		5
+#define	NETCTRL_GETHDW			1
+#define	NETCTRL_TX				2
+#define	NETCTRL_RX				3
+#define	NETCTRL_FLUSH			4
+#define	NETCTRL_RESET			5
 	unsigned long cid;
 	unsigned long memaddr;
 	unsigned long nbytes;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.3 1999/01/11 05:11:43 millert Exp $ */
+/*	$OpenBSD: nvram.c,v 1.4 1999/04/11 03:26:27 smurph Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -40,6 +40,7 @@
 #include <sys/malloc.h>
 #include <machine/psl.h>
 #include <machine/autoconf.h>
+#include <machine/bugio.h>
 #include <machine/cpu.h>
 #include <machine/mioctl.h>
 #include <machine/vmparam.h>
@@ -70,13 +71,31 @@ int
 nvrammatch(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
-	{
+{
+	int ret;
 	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
-
+	struct bugrtc rtc;
 /*X*/	if (ca->ca_vaddr == (void *)-1)
 /*X*/		return (1);
-	return (!badvaddr(ca->ca_vaddr, 1));
+
+#if 0
+	bugrtcrd(&rtc);
+	ret = badvaddr(IIOV(ca->ca_vaddr), 1);
+	if (ret != 0)  
+	    ret = badvaddr(IIOV(ca->ca_vaddr), 2);
+	if (ret != 0) 
+	    ret = badvaddr(IIOV(ca->ca_vaddr), 4);
+	
+	if (ret != 0){
+	    printf("==> nvram: address 0x%x failed check\n", ca->ca_vaddr);
+	    return(0);
+	} else
+	    return(1);
+#else
+	bugrtcrd(&rtc);
+	return(1);
+#endif
 }
 
 void

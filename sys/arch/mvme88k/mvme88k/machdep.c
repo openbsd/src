@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.11 1999/02/09 06:36:29 smurph Exp $	*/
+/* $OpenBSD: machdep.c,v 1.12 1999/04/11 03:26:28 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -83,6 +83,7 @@
 #include <machine/board.h>
 #include <machine/trap.h>
 #include <machine/bug.h>
+#include <machine/prom.h>
 
 #include <dev/cons.h>
 
@@ -309,11 +310,44 @@ size_memory(void)
     return(trunc_page((unsigned)look));
 }
 
+int
+getcpuspeed(void)
+{
+    struct bugbrdid brdid;
+    int speed = 0;
+    int i, c;
+    bugbrdid(&brdid);
+    for (i=0; i<4; i++){
+        c=(unsigned char)brdid.speed[i];
+        c-= '0';
+        speed *=10;
+        speed +=c;
+    }
+    speed = speed / 100;
+    return(speed);
+}
+
+int
+getscsiid(void)
+{
+    struct bugbrdid brdid;
+    int scsiid = 0;
+    int i, c;
+    bugbrdid(&brdid);
+    for (i=0; i<2; i++){
+        c=(unsigned char)brdid.scsiid[i];
+        c-= '0';
+        scsiid *=10;
+        scsiid +=c;
+    }
+    return(7);
+}
+
 void
 identifycpu()
 {
-	/* XXX -take this one out. It can be done in m187_bootstrap() */
-	strcpy(cpu_model, "Motorola M88K");
+    cpuspeed = getcpuspeed();
+    sprintf(cpu_model, "Motorola MVME%x %dMhz", cputyp, cpuspeed);
 	printf("\nModel: %s\n", cpu_model);
 }
 
@@ -333,9 +367,10 @@ identifycpu()
 void
 save_u_area(struct proc *p, vm_offset_t va)
 {
-    p->p_md.md_upte[0] = kvtopte(va)->bits;
-    p->p_md.md_upte[1] = kvtopte(va + NBPG)->bits;
-    p->p_md.md_upte[2] = kvtopte(va + NBPG + NBPG)->bits;
+   int i; 
+	for (i=0; i<UPAGES; i++) {
+		p->p_md.md_upte[i] = kvtopte(va + (i * NBPG))->bits;
+	}
 }
 
 void
@@ -343,15 +378,14 @@ load_u_area(struct proc *p)
 {
     pte_template_t *t;
 
-    t = kvtopte(UADDR);
-    t->bits = p->p_md.md_upte[0];
-    t = kvtopte(UADDR + NBPG);
-    t->bits = p->p_md.md_upte[1];
-    t = kvtopte(UADDR + NBPG + NBPG);
-    t->bits = p->p_md.md_upte[2];
-    cmmu_flush_tlb(1, UADDR, NBPG);
-    cmmu_flush_tlb(1, UADDR + NBPG, NBPG);
-    cmmu_flush_tlb(1, UADDR + NBPG + NBPG, NBPG);
+	int i; 
+	for (i=0; i<UPAGES; i++) {
+		t = kvtopte(UADDR + (i * NBPG));
+		t->bits = p->p_md.md_upte[i];
+}
+	for (i=0; i<UPAGES; i++) {
+		cmmu_flush_tlb(1, UADDR + (i * NBPG), NBPG);
+	}
 }
 
 void
@@ -1516,8 +1550,10 @@ myetheraddr(cp)
 	u_char *cp;
 {
 	struct bugniocall niocall;
-	char *cp2 = (char*) 0xFFC1F2C; /* BBRAM Ethernet hw addr */
-	
+        struct bugbrdid brdid;
+	bugbrdid(&brdid);
+	bcopy(&brdid.etheraddr, cp, 6);
+/*
 	niocall.clun = 0;
 	niocall.dlun = 0;
 	niocall.ci = 0;
@@ -1525,8 +1561,8 @@ myetheraddr(cp)
 	niocall.cid = NETCTRL_GETHDW;
 	niocall.memaddr = (unsigned long)cp;
 	niocall.nbytes = 6;
-
 	bugnetctrl(&niocall);
+*/
 
 /*	if (cp[0] == '\0') {
 	    strncpy(cp, cp2, 6);
