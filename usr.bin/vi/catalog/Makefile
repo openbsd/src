@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.4 2001/09/11 22:31:29 heko Exp $
+#	$OpenBSD: Makefile,v 1.5 2002/11/19 17:00:22 mickey Exp $
 #	@(#)Makefile	8.29 (Berkeley) 10/19/96
 
-CAT=	dutch english french german ru_RU.KOI8-R spanish swedish
+CAT=	dutch english french german polish ru_RU.KOI8-R spanish \
+	swedish uk_UA.KOI8-U
 FILES=	../cl/*.c ../common/*.c ../ex/*.c ../tk/*.c ../vi/*.c
 
 all: dump ${CAT}
@@ -35,7 +36,8 @@ ${CAT}: english.base
 	fi
 
 CHK=	dutch.check english.check french.check german.check \
-	ru_RU.KOI8-R.check spanish.check swedish.check
+	polish.check ru_RU.KOI8-R.check spanish.check swedish.check \
+	uk_UA.KOI8-U
 check: ${CHK}
 ${CHK}: ${CAT}
 	@echo "... $@";							\
