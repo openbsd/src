@@ -29,7 +29,7 @@
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.7/2.8.1/include
 ./usr/lib/gcc-lib/mipsel-unknown-openbsd2.7/2.8.1/include/objc
 ./usr/lib/libacl.so.4.1
-./usr/lib/libc.so.24.5
+./usr/lib/libc.so.25.0
 ./usr/lib/libcrypto.so.2.2
 ./usr/lib/libcurses++.so.1.1
 ./usr/lib/libcurses.so.5.0
