@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.13 2003/06/26 21:59:10 deraadt Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.14 2003/07/31 18:21:42 avsm Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static const char sccsid[] = "@(#)ttymsg.c	8.2 (Berkeley) 11/16/93";
 #endif
-static const char rcsid[] = "$OpenBSD: ttymsg.c,v 1.13 2003/06/26 21:59:10 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ttymsg.c,v 1.14 2003/07/31 18:21:42 avsm Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,8 +53,8 @@ static const char rcsid[] = "$OpenBSD: ttymsg.c,v 1.13 2003/06/26 21:59:10 deraa
 char *ttymsg(struct iovec *, int, char *, int);
 
 /*
- * Display the contents of a uio structure on a terminal.  Used by wall(1),
- * syslogd(8), and talkd(8).  Forks and finishes in child if write would block,
+ * Display the contents of a uio structure on a terminal.  Used by wall(1)
+ * and talkd(8).  Forks and finishes in child if write would block,
  * waiting up to tmout seconds.  Returns pointer to error string on unexpected
  * error; string is not newline-terminated.  Various "normal" errors are
  * ignored (exclusive-use, lack of permission, etc.).
