@@ -1,19 +1,24 @@
-#	$OpenBSD: Makefile,v 1.1 2001/08/31 10:55:43 art Exp $
+#	$OpenBSD: Makefile,v 1.2 2002/07/15 21:29:16 mickey Exp $
+
+
+S=${.CURDIR}/../..
+.include "$S/kern/Make.tags.inc"
 
 NOPROG=	noprog
 NOMAN=	noman
 
 SUBDIR=	stand
 
-TSPARC64=	../sparc64/tags
-SSPARC64=	../sparc64/sparc64/*.[ch] ../sparc64/include/*.h ../sparc64/tc/*.[ch]
-ASPARC64=	../sparc64/sparc64/*.S
+TSPARC64=	$S/arch/sparc64/tags
+SSPARC64=	$S/arch/sparc64/sparc64/*.[ch] $S/arch/sparc64/include/*.h \
+		$S/arch/sparc64/dev/*.[ch] $S/arch/sparc64/fpu/*.[ch]
+ASPARC64=	$S/arch/sparc64/sparc64/*.S $S/lib/libkern/arch/sparc64/*.[sS]
 
 # Directories in which to place sparc64 tags links
-DSPARC64=	tc include
+DSPARC64=	sparc64 dev fpu include
 
 tags:
-	-ctags -dtf ${TSPARC64} ${COMM} ${SSPARC64}
+	-ctags -wdtf ${TSPARC64} ${COMM} ${SSPARC64}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ASPARC64} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 		>> ${TSPARC64}
@@ -21,7 +26,7 @@ tags:
 
 links:
 	-for i in ${DSPARC64}; do \
-	    (cd $$i && rm -f tags; ln -s ../tags tags); done
+	    (cd $$i && rm -f tags; ln -s ${TSPARC64} tags); done
 
 obj: _SUBDIRUSE
 
