@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pctr.4,v 1.4 1997/09/16 07:52:17 deraadt Exp $
+.\"	$OpenBSD: pctr.4,v 1.5 1998/02/06 23:49:03 deraadt Exp $
 .\"
 .\" Pentium performance counter driver for OpenBSD.
 .\" Copyright 1996 David Mazieres <dm@lcs.mit.edu>.
@@ -45,10 +45,10 @@ which takes an argument of type
 .Bd -literal -offset indent
 #define PCTR_NUM 2
 struct pctrst {
-  u_int pctr_fn[PCTR_NUM];
-  pctrval pctr_tsc;
-  pctrval pctr_hwc[PCTR_NUM];
-  pctrval pctr_idl;
+	u_int pctr_fn[PCTR_NUM];
+	pctrval pctr_tsc;
+	pctrval pctr_hwc[PCTR_NUM];
+	pctrval pctr_idl;
 };
 .Ed
 
@@ -79,14 +79,11 @@ available on a given cpu:
 ctrval id = __cpuid();
 if (__hasp5ctr(id)) {
 	/* The machine has Pentium counters */
-}
-else if (__hasp6ctr(id)) {
+} else if (__hasp6ctr(id)) {
 	/* The machine has Pentium Pro counters */
-}
-else if (__hastsc(id)) {
+} else if (__hastsc(id)) {
 	/* The machine just has a time stamp counter */
-}
-else {
+} else {
 	/* No counters at all */
 }
 .Ed
