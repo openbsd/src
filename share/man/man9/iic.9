@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.9,v 1.1 2004/05/23 18:37:06 grange Exp $
+.\"	$OpenBSD: iic.9,v 1.2 2004/05/23 22:10:53 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -98,7 +98,7 @@ temperature sensors, fan controllers, real-time clocks, tuners,
 and other types of integrated circuits.
 The
 .Nm iic
-interface provides an means of communicating with I2C-connected devices.
+interface provides a means of communicating with I2C-connected devices.
 The System Management Bus, or SMBus, is a variant of the I2C bus with
 a simplified command protocol and some electrical differences.
 .Sh DATA TYPES
@@ -174,7 +174,7 @@ If
 .Fa cmdlen
 is non-zero, the command pointed to by
 .Fa cmdbuf
-is then send to the device.
+is then sent to the device.
 If
 .Fa buflen
 is non-zero,
@@ -196,21 +196,24 @@ flag indicates to
 .Fn iic_exec
 that sleeping is not permitted.
 .It Fn iic_smbus_write_byte "ic" "addr" "cmd" "data" "flags"
-Perform an SMBus WRITE BYTE operation.  This is equivalent to
+Perform an SMBus WRITE BYTE operation.
+This is equivalent to
 I2C_OP_WRITE_WITH_STOP with
 .Fa cmdlen
 of 1 and
 .Fa len
 of 1.
 .It Fn iic_smbus_read_byte "ic" "addr" "cmd" "datap" "flags"
-Perform an SMBus READ BYTE operation.  This is equivalent to
+Perform an SMBus READ BYTE operation.
+This is equivalent to
 I2C_OP_READ_WITH_STOP with
 .Fa cmdlen
 of 1 and
 .Fa len
 of 1.
 .It Fn iic_smbus_receive_byte "ic" "addr" "datap" "flags"
-Perform an SMBus RECEIVE BYTE operation.  This is equivalent to
+Perform an SMBus RECEIVE BYTE operation.
+This is equivalent to
 I2C_OP_READ_WITH_STOP with
 .Fa cmdlen
 of 0 and
