@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.143 1999/11/30 07:55:55 cmetz Exp $
+#	$OpenBSD: GENERIC,v 1.144 1999/12/01 15:29:57 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -13,6 +13,8 @@ option		I486_CPU
 option		I586_CPU
 option		I686_CPU
 option		GPL_MATH_EMULATE	# floating point emulation
+
+option		UVM		# use the UVM virtual memory system
 
 #option		VM86		# Virtual 8086 emulation
 #option		USER_LDT	# user-settable LDT; used by WINE

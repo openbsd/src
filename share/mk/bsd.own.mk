@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.26 1999/10/29 14:15:19 art Exp $
+#	$OpenBSD: bsd.own.mk,v 1.27 1999/12/01 15:29:56 deraadt Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -9,7 +9,7 @@
 .endif
 
 # XXX - This is temporary until everyone uses UVM
-.if (${MACHINE_ARCH} == "sparc")
+.if (${MACHINE_ARCH} == "sparc") || (${MACHINE_ARCH} == "i386")
 UVM?=		yes
 .else
 UVM?=		no

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.7 1999/11/30 08:42:17 cmetz Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.8 1999/12/01 15:29:57 deraadt Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -14,6 +14,8 @@ option		I486_CPU
 option		I586_CPU
 option		I686_CPU
 option		GPL_MATH_EMULATE	# floating point emulation
+
+option		UVM		# use the UVM virtual memory system
 
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value
