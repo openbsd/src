@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.13 2001/06/26 19:56:52 dugsong Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.14 2001/10/26 10:39:31 art Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -623,32 +623,113 @@ unp_externalize(rights)
 	struct mbuf *rights;
 {
 	struct proc *p = curproc;		/* XXX */
-	register struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
-	struct file **rp = (struct file **)(cm + 1), *fp;
-	int newfds = (cm->cmsg_len - sizeof(*cm)) / sizeof (int);
-	int i, f, *ip;
+	struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
+	int i, *fdp;
+	struct file **rp;
+	struct file *fp;
+	int nfds, error = 0;
 
-	if (!fdavail(p, newfds)) {
-		for (i = 0; i < newfds; i++) {
-			fp = *rp;
-			unp_discard(fp);
-			*rp++ = 0;
+	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) /
+	    sizeof(struct file *);
+	rp = (struct file **)CMSG_DATA(cm);
+
+	fdp = malloc(nfds * sizeof(int), M_TEMP, M_WAITOK);
+
+#ifdef notyet
+	/* Make sure the recipient should be able to see the descriptors.. */
+	if (p->p_cwdi->cwdi_rdir != NULL) {
+		rp = (struct file **)CMSG_DATA(cm);
+		for (i = 0; i < nfds; i++) {
+			fp = *rp++;
+			/*
+			 * If we are in a chroot'ed directory, and
+			 * someone wants to pass us a directory, make
+			 * sure it's inside the subtree we're allowed
+			 * to access.
+			 */
+			if (fp->f_type == DTYPE_VNODE) {
+				struct vnode *vp = (struct vnode *)fp->f_data;
+				if ((vp->v_type == VDIR) &&
+				    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, p)) {
+					error = EPERM;
+					break;
+				}
+			}
 		}
-		return (EMSGSIZE);
 	}
-	ip = (int *)rp;
-	for (i = 0; i < newfds; i++) {
-		if (fdalloc(p, 0, &f))
-			panic("unp_externalize");
-		bcopy(rp, &fp, sizeof fp);
-		rp++;
-		p->p_fd->fd_ofiles[f] = fp;
+#endif
+
+restart:
+	rp = (struct file **)CMSG_DATA(cm);
+	if (error != 0) {
+		for (i = 0; i < nfds; i++) {
+			fp = *rp;
+			/*
+			 * zero the pointer before calling unp_discard,
+			 * since it may end up in unp_gc()..
+			 */
+			*rp++ = 0;
+			unp_discard(fp);
+		}
+		goto out;
+	}
+
+	/*
+	 * First loop -- allocate file descriptor table slots for the
+	 * new descriptors.
+	 */
+	for (i = 0; i < nfds; i++) {
+		fp = *rp++;
+		if ((error = fdalloc(p, 0, &fdp[i])) != 0) {
+			/*
+			 * Back out what we've done so far.
+			 */
+			for (--i; i >= 0; i--)
+				fdremove(p->p_fd, fdp[i]);
+
+			if (error == ENOSPC) {
+				fdexpand(p);
+				error = 0;
+			} else {
+				/*
+				 * This is the error that has historically
+				 * been returned, and some callers may
+				 * expect it.
+				 */
+				error = EMSGSIZE;
+			}
+			goto restart;
+		}
+
+		/*
+		 * Make the slot reference the descriptor so that
+		 * fdalloc() works properly.. We finalize it all
+		 * in the loop below.
+		 */
+		p->p_fd->fd_ofiles[fdp[i]] = fp;
+	}
+
+	/*
+	 * Now that adding them has succeeded, update all of the
+	 * descriptor passing state.
+	 */
+	rp = (struct file **)CMSG_DATA(cm);
+	for (i = 0; i < nfds; i++) {
+		fp = *rp++;
 		fp->f_msgcount--;
 		unp_rights--;
-		bcopy(&f, ip, sizeof f);
-		ip++;
 	}
-	return (0);
+
+	/*
+	 * Copy temporary array to message and adjust length, in case of
+	 * transition from large struct file pointers to ints.
+	 */
+	memcpy(CMSG_DATA(cm), fdp, nfds * sizeof(int));
+	cm->cmsg_len = CMSG_LEN(nfds * sizeof(int));
+	rights->m_len = CMSG_SPACE(nfds * sizeof(int));
+ out:
+	free(fdp, M_TEMP);
+	return (error);
 }
 
 int
