@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.10 1997/06/13 23:26:34 millert Exp $
+#	$OpenBSD: services,v 1.11 1997/07/23 04:28:57 denny Exp $
 #
 # Network services, Internet style
 #
@@ -188,3 +188,10 @@ supfiledbg	1127/tcp		# SUP debugging
 radius		1645/udp		# radius authentication
 radacct		1646/udp		# radius accounting
 icb		7326/tcp		# Internet Citizen's Band
+#
+# Appletalk
+#
+rtmp		1/ddp			# Routing Table Maintenance Protocol
+nbp		2/ddp			# Name Binding Protocol
+echo		4/ddp			# AppleTalk Echo Protocol
+zip		6/ddp			# Zone Information Protocol
