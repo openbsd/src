@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.36 2001/01/30 08:34:09 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.37 2001/01/30 23:58:50 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -153,7 +153,7 @@ all)
 	sh $this ccd0 ccd1 ccd2 ccd3
 	sh $this raid0 raid1 raid2 raid3
 	sh $this rd0 ipl
-	sh $this ttyo0 ttyC0 ttyCcfg
+	sh $this ttyC0 ttyCcfg
 	sh $this tty00 tty01 tty02 tty03 pty0 pty1
 	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh $this tun0 tun1 tun2 tun3
@@ -169,7 +169,6 @@ ramdisk)
 	sh $this wd0 wd1 wd2 wd3 
 	sh $this sd0 sd1 sd2 sd3 sd4 st0 st1 cd0 cd1
 	sh $this rd0
-	sh $this ttyo0 
 	sh $this random
 	sh $this tty00 tty01 pty0
 	sh $this wscons0
@@ -312,20 +311,6 @@ vnd*)
 	umask 77
 	;;
 
-ttyo*)
-	unit=${i##*[a-z]}
-	rm -f ser${unit} tty${unit} ttyo${unit}
-	case ${unit} in
-	0|1)
-		mknod ttyo${unit} c 14 ${unit}
-		chown uucp.dialer ttyo${unit}
-		chmod 660 ttyo${unit}
-		;;
-	*)
-		echo bad unit for serial tty in: $i
-		;;
-	esac
-	;;
 tty0*)
 	unit=${i##tty0}
 	rm -f tty0$unit cua0$unit
