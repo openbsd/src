@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-#    $OpenBSD: rc.vpn,v 1.8 2000/01/10 08:32:03 angelos Exp $
+#    $OpenBSD: rc.vpn,v 1.9 2000/01/13 05:19:10 angelos Exp $
 #
 # Richard Reiner, Ph.D., FSC Internet Corp.
 # rreiner@fscinternet.com
@@ -84,11 +84,14 @@ $DEBUG $ipsecadm new esp -src $GW_PEER -dst $GW_LOCAL \
 # Create the flows
 #
 
-# Gateway to gateway
+# Gateway to gateway (both egress and ingress flows)
 $DEBUG $ipsecadm flow -proto esp -dst $GW_PEER -spi $SPI_OUT \
     -addr $GW_LOCAL 255.255.255.255 $GW_PEER 255.255.255.255
+$DEBUG $ipsecadm flow -proto esp -dst $GW_LOCAL -spi $SPI_IN \
+    -addr $GW_PEER 255.255.255.255 $GW_LOCAL 255.255.255.255 -ingress
 
-# Flows from each local, to each remote, subnet
+# Flows from each local to each remote subnet, and vice versa for
+# ACL entries
 mycount=0
 while :
 do
@@ -108,6 +111,10 @@ do
 		$DEBUG $ipsecadm flow \
 		    -proto esp -dst $GW_PEER -spi $SPI_OUT \
 		    -addr $local_net $local_mask $remote_net $remote_mask
+
+		$DEBUG $ipsecadm flow \
+		    -proto esp -dst $GW_LOCAL -spi $SPI_IN -ingress \
+		    -addr $remote_net $remote_mask $local_net $local_mask
 		peercount=$(($peercount + 1))
 	    else
 		break;
@@ -121,7 +128,7 @@ done
 
 # XXX Stuff below is mainly for testing, may be removed later.
 
-# Flows from local gw to each remote subnet
+# Flows from local gw to each remote subnet, and vice versa
 peercount=0
 while :
 do
@@ -133,13 +140,17 @@ do
 	$DEBUG $ipsecadm flow \
 	    -proto esp -dst $GW_PEER -spi $SPI_OUT \
 	    -addr $GW_LOCAL 255.255.255.255 $remote_net $remote_mask
+
+	$DEBUG $ipsecadm flow \
+	    -proto esp -dst $GW_LOCAL -spi $SPI_IN -ingress\
+	    -addr $remote_net $remote_mask $GW_LOCAL 255.255.255.255 
 	peercount=$(($peercount + 1))
     else
 	break;
     fi
 done
 
-# Flows from local subnets to the remote gw
+# Flows from local subnets to the remote gw and vice versa
 mycount=0
 while :
 do
@@ -151,6 +162,10 @@ do
 	$DEBUG $ipsecadm flow \
 	    -proto esp -dst $GW_PEER -spi $SPI_OUT \
 	    -addr $local_net $local_mask $GW_PEER 255.255.255.255
+
+	$DEBUG $ipsecadm flow \
+	    -proto esp -dst $GW_LOCAL -spi $SPI_IN -ingress\
+	    -addr $GW_PEER 255.255.255.255 $local_net $local_mask 
 	mycount=$(($mycount + 1))
     else
 	break;
