@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.851 2005/04/05 17:29:46 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.852 2005/04/05 21:27:23 fgsch Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -446,6 +446,7 @@
 #define	PCI_PRODUCT_ALI_M5247	0x5247		/* M5247 AGP/PCI-PCI */
 #define	PCI_PRODUCT_ALI_M5243	0x5243		/* M5243 AGP/PCI-PCI */
 #define	PCI_PRODUCT_ALI_M5451	0x5451		/* M5451 Audio */
+#define	PCI_PRODUCT_ALI_M5457	0x5457		/* M5457 Modem */
 #define	PCI_PRODUCT_ALI_M7101	0x7101		/* M7101 Power Mgmt */
 
 /* ADMtek products */
