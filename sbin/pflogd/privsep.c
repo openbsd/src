@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.9 2004/04/03 10:21:18 avsm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.10 2004/04/08 12:26:06 avsm Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -147,13 +147,13 @@ priv_init(void)
 			fd = open(filename,
 			    O_RDWR|O_CREAT|O_APPEND|O_NONBLOCK|O_NOFOLLOW,
 			    0600);
-			send_fd(socks[0], fd);
 			if (fd < 0)
 				logmsg(LOG_NOTICE,
 				    "[priv]: failed to open %s: %s",
 				    filename, strerror(errno));
 			else
 				close(fd);
+			send_fd(socks[0], fd);
 			break;
 
 		default:
