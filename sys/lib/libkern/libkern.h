@@ -1,4 +1,5 @@
-/*	$NetBSD: libkern.h,v 1.5 1995/09/23 20:35:47 leo Exp $	*/
+/*	$OpenBSD: libkern.h,v 1.2 1996/02/29 13:27:49 niklas Exp $	*/
+/*	$NetBSD: libkern.h,v 1.6 1996/02/13 23:48:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -111,7 +112,10 @@ u_long	 random __P((void));
 char	*rindex __P((const char *, int));
 int	 scanc __P((u_int, u_char *, u_char *, int));
 int	 skpc __P((int, int, char *));
+size_t	 strlen __P((const char *));
 char	*strcat __P((char *, const char *));
 char	*strcpy __P((char *, const char *));
-size_t	 strlen __P((const char *));
 char	*strncpy __P((char *, const char *, size_t));
+int	 strcmp __P((const char *, const char *));
+int	 strncmp __P((const char *, const char *, size_t));
+int	 strncasecmp __P((const char *, const char *, size_t));

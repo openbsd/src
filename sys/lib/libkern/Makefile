@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.24 1995/10/20 01:10:06 cgd Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/02/29 13:27:47 niklas Exp $
+#	$NetBSD: Makefile,v 1.25 1996/02/02 20:34:38 mycroft Exp $
 
 LIB=	kern
 NOPIC=
 
-DIR=${KERNREL}${KERNDIR}
+DIR=	${KERNREL}${KERNDIR}
 
-CC=	${KERNCC}
-CFLAGS=	-I${DIR}/arch/${MACHINE_ARCH} \
-	${KERNCFLAGS:S/-D_KERNEL//:S@-I.@-I${KERNREL}.@g}
+CPPFLAGS=	-I${DIR}/arch/${MACHINE_ARCH} \
+		${KERNCPPFLAGS:S/-D_KERNEL//:S@-I.@-I${KERNREL}.@g}
 
 .if exists (${DIR}/arch/${MACHINE_ARCH}/Makefile.inc)
 .PATH:	${DIR}/arch/${MACHINE_ARCH}
