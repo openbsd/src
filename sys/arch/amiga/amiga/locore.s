@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.21 1997/04/29 00:46:27 michaels Exp $	*/
+/*	$OpenBSD: locore.s,v 1.22 1997/07/20 07:35:37 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.72 1996/12/17 11:09:10 is Exp $	*/
 
 /*
@@ -49,6 +49,8 @@
  */
 
 #include "assym.h"
+
+#include <machine/asm.h>
 
 	.globl	_kernel_text
 _kernel_text:
@@ -101,93 +103,108 @@ _doadump:
 /*
  * Trap/interrupt vector routines
  */
+#include <m68k/m68k/trap_subr.s>
 
 	.globl	_trap, _nofault, _longjmp
-_buserr:
-	tstl	_nofault		| device probe?
-	jeq	_addrerr		| no, handle as usual
-	movl	_nofault,sp@-		| yes,
-	jbsr	_longjmp		|  longjmp(nofault)
-_addrerr:
+#if defined(M68040) || defined(M68060)
+	.globl _addrerr4060
+_addrerr4060:
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
 	movl	a0,sp@(FR_SP)		|   in the savearea
-	lea	sp@(FR_HW),a1		| grab base of HW berr frame
-	cmpl	#MMU_68040,_mmutype
-	jne	Lbe030
-	movl	a1@(8),sp@-		| V = exception address
+	movl	sp@(FR_HW+8),sp@-
 	clrl	sp@-			| dummy code
-	moveq	#0,d0
-	movw	a1@(6),d0		| get vector offset
-	andw	#0x0fff,d0
-	cmpw	#12,d0			| is it address error
-	jeq	Lisaerr
-#ifdef M68060
-	btst	#7,_machineid+3		| is it 68060?
-	jeq	Lbe040
-	movel	a1@(12),d0		| FSLW
+	movl	#T_ADDRERR,sp@-		| mark address error
+	jra	_ASM_LABEL(faultstkadj)	| and deal with it
+#endif
+
+#if defined(M68060)
+	.globl _buserr60
+_buserr60:
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-		| save user registers
+	movl	usp,a0			| save the user SP
+	movl	a0,sp@(FR_SP)		|   in the savearea
+	movel	sp@(FR_HW+12),d0	| FSLW
 	btst	#2,d0			| branch prediction error?
 	jeq	Lnobpe			
 	movc	cacr,d2
 	orl	#IC60_CABC,d2		| clear all branch cache entries
 	movc	d2,cacr
 	movl	d0,d1
-	andl	#0x7ffd,d1
 	addql	#1,L60bpe
-	jeq	Lbpedone
+	andl	#0x7ffd,d1
+	jeq	_ASM_LABEL(faultstkadjnotrap2)
 Lnobpe:
-	movl	d0,sp@			| code is FSLW now.
 | we need to adjust for misaligned addresses
-	movl	a1@(8),d1		| grab VA
+	movl	sp@(FR_HW+8),d1		| grab VA
 	btst	#27,d0			| check for mis-aligned access
 	jeq	Lberr3			| no, skip
 	addl	#28,d1			| yes, get into next page
 					| operand case: 3,
 					| instruction case: 4+12+12
-					| XXX instr. case not done yet
 	andl	#PG_FRAME,d1            | and truncate
 Lberr3:
-	movl	d1,sp@(4)
+	movl	d1,sp@-
+	movl	d0,sp@-			| code is FSLW now.
 	andw	#0x1f80,d0 
 	jeq	Lisberr
-	jra	Lismerr
-Lbe040:
+	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
+	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 #endif
-	movl	a1@(20),d1		| get fault address
+#if defined(M68040)
+	.globl _buserr40
+_buserr40:
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-		| save user registers
+	movl	usp,a0			| save the user SP
+	movl	a0,sp@(FR_SP)		|   in the savearea
+	movl	sp@(FR_HW+20),d1	| get fault address
 	moveq	#0,d0
-	movw	a1@(12),d0		| get SSW
+	movw	sp@(FR_HW+12),d0	| get SSW
 	btst	#11,d0			| check for mis-aligned
 	jeq	Lbe1stpg		| no skip
 	addl	#3,d1			| get into next page
 	andl	#PG_FRAME,d1		| and truncate
 Lbe1stpg:
-	movl	d1,sp@(4)		| pass fault address.
-	movl	d0,sp@			| pass SSW as code
+	movl	d1,sp@-			| pass fault address.
+	movl	d0,sp@-			| pass SSW as code
 	btst	#10,d0			| test ATC
 	jeq	Lisberr			| it is a bus error
-	jra	Lismerr
-Lbe030:
+	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
+	jra	_ASM_LABEL(faultstkadj)	| and deal with it
+#endif
+
+_buserr:
+_addrerr:
+#if !(defined(M68020) || defined(M68030))
+	jra	_badtrap
+#else
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-		| save user registers
+	movl	usp,a0			| save the user SP
+	movl	a0,sp@(FR_SP)		|   in the savearea
 	moveq	#0,d0
-	movw	a1@(10),d0		| grab SSW for fault processing
+	movw	sp@(FR_HW+10),d0	| grab SSW for fault processing
 	btst	#12,d0			| RB set?
 	jeq	LbeX0			| no, test RC
 	bset	#14,d0			| yes, must set FB
-	movw	d0,a1@(10)		| for hardware too
+	movw	d0,sp@(FR_HW+10)	| for hardware too
 LbeX0:
 	btst	#13,d0			| RC set?
 	jeq	LbeX1			| no, skip
 	bset	#15,d0			| yes, must set FC
-	movw	d0,a1@(10)		| for hardware too
+	movw	d0,sp@(FR_HW+10)	| for hardware too
 LbeX1:
 	btst	#8,d0			| data fault?
 	jeq	Lbe0			| no, check for hard cases
-	movl	a1@(16),d1		| fault address is as given in frame
+	movl	sp@(FR_HW+16),d1	| fault address is as given in frame
 	jra	Lbe10			| thats it
 Lbe0:
-	btst	#4,a1@(6)		| long (type B) stack frame?
+	btst	#4,sp@(FR_HW+6)		| long (type B) stack frame?
 	jne	Lbe4			| yes, go handle
-	movl	a1@(2),d1		| no, can use save PC
+	movl	sp@(FR_HW+2),d1		| no, can use save PC
 	btst	#14,d0			| FB set?
 	jeq	Lbe3			| no, try FC
 	addql	#4,d1			| yes, adjust address
@@ -198,14 +215,14 @@ Lbe3:
 	addql	#2,d1			| yes, adjust address
 	jra	Lbe10			| done
 Lbe4:
-	movl	a1@(36),d1		| long format, use stage B address
+	movl	sp@(FR_HW+36),d1	| long format, use stage B address
 	btst	#15,d0			| FC set?
 	jeq	Lbe10			| no, all done
 	subql	#2,d1			| yes, adjust address
 Lbe10:
 	movl	d1,sp@-			| push fault VA
 	movl	d0,sp@-			| and padded SSW
-	movw	a1@(6),d0		| get frame format/vector offset
+	movw	sp@(FR_HW+8+6),d0	| get frame format/vector offset
 	andw	#0x0FFF,d0		| clear out frame format
 	cmpw	#12,d0			| address error vector?
 	jeq	Lisaerr			| yes, go to it
@@ -215,7 +232,7 @@ Lbe10:
 	jne	Lbe10a
 	movql	#1,d0			| user program access FC
 					| (we dont seperate data/program)
-	btst	#5,a1@			| supervisor mode?
+	btst	#5,sp@(FR_HW+8)		| supervisor mode?
 	jeq	Lbe10a			| if no, done
 	movql	#5,d0			| else supervisor program access
 Lbe10a:
@@ -236,36 +253,22 @@ Lmightnotbemerr:
 	jeq	Lisberr1		| yes, was not WPE, must be bus err
 Lismerr:
 	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
-	jra	Ltrapnstkadj		| and deal with it
+	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 Lisaerr:
 	movl	#T_ADDRERR,sp@-		| mark address error
-	jra	Ltrapnstkadj		| and deal with it
+	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 Lisberr1:
 	clrw	sp@			| re-clear pad word
-Lisberr:
+#endif
+Lisberr:				| also used by M68040/60
+	tstl	_nofault		| device probe?
+	jeq	LberrIsProbe		| no, handle as usual
+	movl	_nofault,sp@-		| yes,
+	jbsr	_longjmp		|  longjmp(nofault)
+	/* NOTREACHED */
+LberrIsProbe:
 	movl	#T_BUSERR,sp@-		| mark bus error
-Ltrapnstkadj:
-	jbsr	_trap			| handle the error
-Lbpedone:
-	lea	sp@(12),sp		| pop value args
-	movl	sp@(FR_SP),a0		| restore user SP
-	movl	a0,usp			|   from save area
-	movw	sp@(FR_ADJ),d0		| need to adjust stack?
-	jne	Lstkadj			| yes, go to it
-	moveml	sp@+,#0x7FFF		| no, restore most user regs
-	addql	#8,sp			| toss SSP and stkadj
-	jra	rei			| all done
-Lstkadj:
-	lea	sp@(FR_HW),a1		| pointer to HW frame
-	addql	#8,a1			| source pointer
-	movl	a1,a0			| source
-	addw	d0,a0			|  + hole size = dest pointer
-	movl	a1@-,a0@-		| copy
-	movl	a1@-,a0@-		|  8 bytes
-	movl	a0,sp@(FR_SP)		| new SSP
-	moveml	sp@+,#0x7FFF		| restore user registers
-	movl	sp@,sp			| and our SP
-	jra	rei			| all done
+	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 
 /*
  * FP exceptions.
@@ -277,16 +280,19 @@ _fpfline:
 #ifdef FPSP
 	.globl fpsp_unimp
 	jmp	fpsp_unimp		| yes, go handle it
-#else
-	clrl	sp@-			| stack adjust count
-	moveml	#0xFFFF,sp@-		| save registers
-	moveq	#T_FPEMULI,d0		| denote as FP emulation trap
-	jra	fault			| do it
 #endif
-#else
-	jra	_illinst
 #endif
 
+#ifdef FPU_EMULATE
+	.globl _fpemuli
+_fpemuli:
+	addql	#1,Lfpecnt
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-		| save registers
+	movql	#T_FPEMULI,d0		| denote as FP emulation trap
+	jra	fault			| do it
+#endif
+	
 _fpunsupp:
 #if defined(M68040)
 	cmpl	#MMU_68040,_mmutype	| 68040?
@@ -297,7 +303,7 @@ _fpunsupp:
 #else
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save registers
-	moveq	#T_FPEMULD,d0		| denote as FP emulation trap
+	movql	#T_FPEMULD,d0		| denote as FP emulation trap
 	jra	fault			| do it
 #endif
 #else
@@ -308,11 +314,6 @@ _fpunsupp:
  * Note that since some FP exceptions generate mid-instruction frames
  * and may cause signal delivery, we need to test for stack adjustment
  * after the trap call.
- *
- * XXX I don't really understand what they do for the 68881/82, for which
- * I dont have docs at the moment. I don't find anything which looks like
- * it is intended in the 68040 FP docs. I pretend for the moment I don't
- * need to do anything for the 68060. -is
  */
 	.globl	_fpfault
 _fpfault:
@@ -325,6 +326,7 @@ _fpfault:
 	movl	_curpcb,a0	| current pcb
 	lea	a0@(PCB_FPCTX),a0 | address of FP savearea
 	fsave	a0@		| save state
+#if defined(M68020) || defined(M68030)
 #if defined(M68060) || defined(M68040)
 	movb	_machineid+3,d0
 	andb	#0x90,d0	| AMIGA_68060 | AMIGA_68040
@@ -336,87 +338,19 @@ _fpfault:
 	movb	a0@(1),d0	| get frame size
 	bset	#3,a0@(0,d0:w)	| set exc_pend bit of BIU
 Lfptnull:
+#endif
 	fmovem	fpsr,sp@-	| push fpsr as code argument
 	frestore a0@		| restore state
 	movl	#T_FPERR,sp@-	| push type arg
-	jra	Ltrapnstkadj	| call trap and deal with stack cleanup
+	jra	_ASM_LABEL(faultstkadj) | call trap and deal with stack cleanup
 #else
 	jra	_badtrap	| treat as an unexpected trap
 #endif
 
 /*
- * Coprocessor and format errors can generate mid-instruction stack
- * frames and cause signal delivery hence we need to check for potential
- * stack adjustment.
- */
-_coperr:
-	clrl	sp@-		| stack adjust count
-	moveml	#0xFFFF,sp@-
-	movl	usp,a0		| get and save
-	movl	a0,sp@(FR_SP)	|   the user stack pointer
-	clrl	sp@-		| no VA arg
-	clrl	sp@-		| or code arg
-	movl	#T_COPERR,sp@-	| push trap type
-	jra	Ltrapnstkadj	| call trap and deal with stack adjustments
-
-_fmterr:
-	clrl	sp@-		| stack adjust count
-	moveml	#0xFFFF,sp@-
-	movl	usp,a0		| get and save
-	movl	a0,sp@(FR_SP)	|   the user stack pointer
-	clrl	sp@-		| no VA arg
-	clrl	sp@-		| or code arg
-	movl	#T_FMTERR,sp@-	| push trap type
-	jra	Ltrapnstkadj	| call trap and deal with stack adjustments
-
-/*
  * Other exceptions only cause four and six word stack frame and require
  * no post-trap stack adjustment.
  */
-_illinst:
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	moveq	#T_ILLINST,d0
-	jra	fault
-
-_zerodiv:
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	moveq	#T_ZERODIV,d0
-	jra	fault
-
-_chkinst:
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	moveq	#T_CHKINST,d0
-	jra	fault
-
-_trapvinst:
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	moveq	#T_TRAPVINST,d0
-	jra	fault
-
-_privinst:
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	moveq	#T_PRIVINST,d0
-	jra	fault
-
-	.globl	fault
-fault:
-	movl	usp,a0			| get and save
-	movl	a0,sp@(FR_SP)		|   the user stack pointer
-	clrl	sp@-			| no VA arg
-	clrl	sp@-			| or code arg
-	movl	d0,sp@-			| push trap type
-	jbsr	_trap			| handle trap
-	lea	sp@(12),sp		| pop value args
-	movl	sp@(FR_SP),a0		| restore
-	movl	a0,usp			|   user SP
-	moveml	sp@+,#0x7FFF		| restore most user regs
-	addql	#8,sp			| pop SP and stack adjust
-	jra	rei			| all done
 
 	.globl	_straytrap
 _badtrap:
