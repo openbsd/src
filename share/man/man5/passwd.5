@@ -101,6 +101,11 @@ machine.  This is almost invariably a mistake.
 Because these files contain the encrypted user passwords, they should
 not be readable by anyone without appropriate privileges.
 .Pp
+Which type of cipher is used to encrypt the password information
+depends on the configuration in
+.Xr passwd.conf 5 .
+It can be different for local and YP passwords.
+.Pp
 The group field is the group that the user will be placed in upon login.
 Since this system supports multiple groups (see
 .Xr groups 1 )
@@ -213,6 +218,7 @@ containing:
 .Xr chpass 1 ,
 .Xr login 1 ,
 .Xr passwd 1 ,
+.Xr passwd.conf 5 ,
 .Xr getpwent 3 ,
 .Xr netgroup 5 ,
 .Xr adduser 8 ,
