@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.30 2004/01/20 12:50:52 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.31 2004/01/20 13:03:39 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -131,18 +131,6 @@ main(int argc, char *argv[])
 	struct imsg		 imsg;
 	enum actions		 action = SHOW_SUMMARY;
 	struct bgpd_addr	 addr;
-	int			 ch;
-
-	while ((ch = getopt(argc, argv, "")) != -1) {
-		switch (ch) {
-		default:
-			usage();
-			/* not reached */
-		}
-	}
-
-	argc -= optind;
-	argv += optind;
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 		err(1, "control_init: socket");
