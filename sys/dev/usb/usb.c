@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.6 1999/11/07 21:30:19 fgsch Exp $	*/
+/*	$OpenBSD: usb.c,v 1.7 1999/11/11 15:57:40 ho Exp $	*/
 /*	$NetBSD: usb.c,v 1.28 1999/10/13 08:10:57 augustss Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ USB_ATTACH(usb)
 			USB_ATTACH_ERROR_RETURN;
 		}
 		sc->sc_bus->root_hub = dev;
-#if 1
+#if 0
 		/* 
 		 * Turning this code off will delay attachment of USB devices
 		 * until the USB event thread is running, which means that
