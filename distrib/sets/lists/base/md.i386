@@ -2044,6 +2044,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/timeb.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/timeout.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/times.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/timetc.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/tprintf.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/tree.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/tty.ph

@@ -1527,6 +1527,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/timeb.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/timeout.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/times.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/timetc.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/tprintf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/tree.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/tty.ph

@@ -2028,6 +2028,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/timeb.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/timeout.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/times.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/sys/timetc.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/tprintf.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/tree.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/tty.ph

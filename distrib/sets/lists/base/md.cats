@@ -2086,6 +2086,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/timeb.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/timeout.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/times.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/sys/timetc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/tprintf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/tree.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/tty.ph
