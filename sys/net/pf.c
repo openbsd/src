@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.161 2001/10/02 08:44:21 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.162 2001/10/13 23:07:19 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2415,6 +2415,7 @@ pf_send_reset(int off, struct tcphdr *th, struct pf_pdesc *pd, int af)
 		th2->th_sum = in6_cksum(m, IPPROTO_TCP,
 		    sizeof(struct ip6_hdr), sizeof(*th));
 
+		h2_6->ip6_vfc |= IPV6_VERSION;
 		h2_6->ip6_hlim = 128;
 
 		ip6_output(m, NULL, NULL, 0, NULL, NULL);
