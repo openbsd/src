@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.297 2004/05/20 03:04:37 marco Exp $
+#	$OpenBSD: files,v 1.298 2004/05/23 17:33:43 grange Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -16,6 +16,7 @@ define	mii {[phy = -1]}
 define	midibus { }
 define	midisyn
 define	radiobus {}
+define	i2cbus {}
 
 # audio device attributes
 define	mulaw
@@ -73,6 +74,10 @@ define	wsemuldisplaydev {[console = -1]}
 define	wskbddev {[console = -1], [mux = -1]}
 define	wsmousedev {[mux = -1]}
 define	wsrasteremulops
+
+# i2c device attributes
+define	i2cexec
+define	i2c_bitbang
 
 # SMC 93Cx6 Serial EEPROM devices
 define	smc93cx6
