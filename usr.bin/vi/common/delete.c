@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)delete.c	10.11 (Berkeley) 9/15/96";
+static const char sccsid[] = "@(#)delete.c	10.12 (Berkeley) 10/23/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -26,13 +26,13 @@ static const char sccsid[] = "@(#)delete.c	10.11 (Berkeley) 9/15/96";
 #include "common.h"
 
 /*
- * delete --
+ * del --
  *	Delete a range of text.
  *
- * PUBLIC: int delete __P((SCR *, MARK *, MARK *, int));
+ * PUBLIC: int del __P((SCR *, MARK *, MARK *, int));
  */
 int
-delete(sp, fm, tm, lmode)
+del(sp, fm, tm, lmode)
 	SCR *sp;
 	MARK *fm, *tm;
 	int lmode;

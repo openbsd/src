@@ -1,10 +1,10 @@
-# @(#)interp	8.4 (Berkeley) 1/13/95
+# @(#)interp	8.5 (Berkeley) 10/19/96
 			Nvi Interpreter API
 
 Introduction:
     The intention is to provide a way to graft a fairly generic extension
     language into nvi.  I think that the obvious candidates are Tcl/Rush,
-    Scheme, Python and Perl5.  Since the interpretation language chosen
+    Scheme, Python and Perl.  Since the interpretation language chosen
     is often a religious issue, the method should be as flexible as
     possible.  I don't expect to rewrite the editor in the interpreted
     language, so that isn't a consideration.

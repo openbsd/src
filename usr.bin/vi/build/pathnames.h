@@ -1,3 +1,4 @@
+/*	$OpenBSD: pathnames.h,v 1.3 1997/07/27 22:27:54 downsj Exp $	*/
 /* @(#)pathnames.h.in	8.4 (Berkeley) 6/26/96 */
 
 #ifndef	_PATH_BSHELL
@@ -9,7 +10,7 @@
 #endif
 
 #ifndef	_PATH_MSGCAT
-#define	_PATH_MSGCAT	"./"
+#define	_PATH_MSGCAT	"/usr/share/vi/catalog/"
 #endif
 
 #ifndef	_PATH_NEXRC

@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)vs_refresh.c	10.43 (Berkeley) 9/26/96";
+static const char sccsid[] = "@(#)vs_refresh.c	10.44 (Berkeley) 10/13/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -66,8 +66,12 @@ vs_refresh(sp, forcepaint)
 	SCR *sp;
 	int forcepaint;
 {
+	GS *gp;
 	SCR *tsp;
+	int need_refresh;
 	u_int priv_paint, pub_paint;
+
+	gp = sp->gp;
 
 	/*
 	 * 1: Refresh the screen.
@@ -76,8 +80,8 @@ vs_refresh(sp, forcepaint)
 	 * that we can find, including status lines.
 	 */
 	if (F_ISSET(sp, SC_SCR_REDRAW))
-		for (tsp = sp->gp->dq.cqh_first;
-		    tsp != (void *)&sp->gp->dq; tsp = tsp->q.cqe_next)
+		for (tsp = gp->dq.cqh_first;
+		    tsp != (void *)&gp->dq; tsp = tsp->q.cqe_next)
 			if (tsp != sp)
 				F_SET(tsp, SC_SCR_REDRAW | SC_STATUS);
 
@@ -94,8 +98,8 @@ vs_refresh(sp, forcepaint)
 	priv_paint = VIP_CUR_INVALID | VIP_N_REFRESH;
 	if (O_ISSET(sp, O_NUMBER))
 		priv_paint |= VIP_N_RENUMBER;
-	for (tsp = sp->gp->dq.cqh_first;
-	    tsp != (void *)&sp->gp->dq; tsp = tsp->q.cqe_next)
+	for (tsp = gp->dq.cqh_first;
+	    tsp != (void *)&gp->dq; tsp = tsp->q.cqe_next)
 		if (tsp != sp && !F_ISSET(tsp, SC_EXIT | SC_EXIT_FORCE) &&
 		    (F_ISSET(tsp, pub_paint) ||
 		    F_ISSET(VIP(tsp), priv_paint))) {
@@ -126,11 +130,18 @@ vs_refresh(sp, forcepaint)
 	 * the user wait.  We depend heavily on there not being any other lines
 	 * currently waiting to be displayed and the message truncation code in
 	 * the msgq_status routine working.
+	 *
+	 * And, finally, if we updated any status lines, make sure the cursor
+	 * gets back to where it belongs.
 	 */
-	for (tsp = sp->gp->dq.cqh_first;
-	    tsp != (void *)&sp->gp->dq; tsp = tsp->q.cqe_next)
-		if (F_ISSET(tsp, SC_STATUS))
-			vs_resolve(tsp, 0);
+	for (need_refresh = 0, tsp = gp->dq.cqh_first;
+	    tsp != (void *)&gp->dq; tsp = tsp->q.cqe_next)
+		if (F_ISSET(tsp, SC_STATUS)) {
+			need_refresh = 1;
+			vs_resolve(tsp, sp, 0);
+		}
+	if (need_refresh)
+		(void)gp->scr_refresh(sp, 0);
 
 	/*
 	 * A side-effect of refreshing the screen is that it's now ready

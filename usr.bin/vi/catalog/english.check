@@ -17,6 +17,7 @@ MESSAGES WITH THE SAME MESSAGE ID's (FIX!):
 =========================
 Duplicate messages, both id and message (this is okay):
    2 209 "The file is empty"
+   2 304 "Shell expansion failed"
 =========================
 Duplicate messages, just message (this is okay):
    2 %s exists, not written; use ! to overrideX

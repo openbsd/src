@@ -103,16 +103,16 @@ Illegal address: only %lu lines in the fileX
 Illegal address: the file is emptyX
 The %s command doesn't permit an address of 0X
 No abbreviations to displayX
-Abbreviations must end with a \"word\" characterX
+Abbreviations must end with a "word" characterX
 Abbreviations may not contain tabs or spacesX
 Abbreviations may not mix word/non-word characters, except at the endX
-\"%s\" is not an abbreviationX
+"%s" is not an abbreviationX
 Vi command failed: mapped keys discardedX
 No more files to editX
 No previous files to editX
 No previous files to rewindX
 No file list to displayX
-No previous command to replace \"!\"X
+No previous command to replace "!"X
 No filename to substitute for %%X
 No filename to substitute for #X
 Error: execl: %sX
@@ -132,7 +132,7 @@ No following lines to joinX
 No input map entriesX
 No command map entriesX
 The %s character may not be remappedX
-\"%s\" isn't currently mappedX
+"%s" isn't currently mappedX
 Mark names must be a single characterX
 %s exists, not written; use ! to overrideX
 New exrc file: %sX
@@ -306,7 +306,7 @@ No %s edit option specifiedX
 Vi was not loaded with a Perl interpreterX
 No ex command to executeX
 Enter <CR> to execute a command, :q to exitX
-Use \"cscope help\" for helpX
+Use "cscope help" for helpX
 No cscope connections runningX
 %s: unknown search type: use one of %sX
 %d: no such cscope sessionX
@@ -314,3 +314,4 @@ set: the %s option may never be turned onX
 set: the %s option may never be set to 0X
 %s: appended: %lu lines, %lu charactersX
 Unexpected resize eventX
+%d files to editX

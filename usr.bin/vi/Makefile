@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile,v 1.6 1997/07/27 22:27:52 downsj Exp $
 #	$NetBSD: Makefile,v 1.7 1996/05/20 03:47:00 mrg Exp $
 
 SUBDIR= build

@@ -8,7 +8,7 @@
 .\"
 .\" See the LICENSE file for redistribution information.
 .\"
-.\"     @(#)vi.ref	8.83 (Berkeley) 8/20/96
+.\"     @(#)vi.ref	8.88 (Berkeley) 10/19/96
 .\"
 .\"
 .so ref.so
@@ -16,7 +16,7 @@
 .(l C
 .ps 12
 .ft B
-Ex/Vi Reference Manual
+Vi/Ex Reference Manual
 .ft
 .ps
 .sp
@@ -96,7 +96,7 @@ Scrolling and reworking for
 was done by Elan Amir.
 .pp
 George Neville-Neil added the Tcl interpreter,
-and Sven Verdoolaege added the Perl5 interpreter.
+and Sven Verdoolaege added the Perl interpreter.
 .pp
 Rob Mayoff added Cscope support.
 .pp
@@ -112,8 +112,8 @@ The financial support of UUNET Communications Services is gratefully
 acknowledged.
 .)q
 .sy echo -n >index
-.oh 'Nvi/Nex Reference''USD:13-%'
-.eh 'USD:13-%''Nvi/Nex Reference'
+.oh 'Vi/Ex Reference''USD:13-%'
+.eh 'USD:13-%''Vi/Ex Reference'
 .bp 4
 .SH 1 Description
 .pp
@@ -272,7 +272,7 @@ The
 .CO ":perld[o] cmd"
 and
 .CO ":tc[l] cmd"
-commands execute Perl5 and Tcl/Tk commands, respectively,
+commands execute Perl and Tcl/Tk commands, respectively,
 on lines from the edit buffer.
 See the
 .QB "Scripting Languages"
@@ -543,38 +543,19 @@ not yet have this bit set.
 This is due to the method in which the files are created.)
 Such files should be deleted when the system reboots.
 .pp
-A simple way to do this cleanup is to insert the following Bourne
-shell script into your
+A simple way to do this cleanup is to run the Bourne shell script
+.CO recover ,
+from your
 .LI /etc/rc.local
-(or other startup) file.
+(or other system startup) file.
 The script should work with the historic Bourne shell,
 a POSIX 1003.2 shell or the Korn shell.
-(A copy of this script is included as
-.LI nvi/install/recover.script
-in the
+The
+.CO recover
+script is installed as part of the
 .EV nex nvi
-distribution.)
-.sp
-.(b
-.ft C
-.so ../../../recover/recover.script
-.ft R
-.)b
-.sp
+installation process.
 .pp
-If you are not using the default value for the
-.OP recdir
-option, be sure to substitute the value you're using for the
-.LI RECDIR
-value in the recovery script.
-.pp
-If the path of your system's
-.CO sendmail
-program (or whatever mailer you're using) is not
-.LI /usr/lib/sendmail ,
-be sure to substitute the correct pathname for the
-.LI SENDMAIL
-value in the recovery script.
 Consult the manual page for details on recovering preserved or
 aborted editing sessions.
 .SH 1 "Sizing the Screen"
@@ -1209,9 +1190,9 @@ will be discarded.)
 .pp
 The
 .CO nvi
-editor currently supports two scripting languages, Tcl/Tk and Perl5.
-(Note that Perl4 isn't sufficient, and that the Perl5 must be version
-5.002 or later.
+editor currently supports two scripting languages, Tcl/Tk and Perl.
+(Note that Perl4 isn't sufficient, and that the Perl5 used must be
+version 5.002 or later.
 See the
 .QB "Building Nvi"
 section for more information.
@@ -1662,11 +1643,11 @@ This character is almost always treated identically to a
 .LI <control-M>
 character, but differs in that it cannot be escaped into the file text or
 into a command.
-.oh 'Nvi/Nex Reference (Vi Commands)''USD:13-%'
-.eh 'USD:13-%''Nvi/Nex Reference (Vi Commands)'
+.oh 'Vi/Ex Reference (Vi Commands)''USD:13-%'
+.eh 'USD:13-%''Vi/Ex Reference (Vi Commands)'
 .so vi.cmd.roff
-.oh 'Nvi/Nex Reference''USD:13-%'
-.eh 'USD:13-%''Nvi/Nex Reference'
+.oh 'Vi/Ex Reference''USD:13-%'
+.eh 'USD:13-%''Vi/Ex Reference'
 .SH 1 "Ex Addressing"
 .pp
 Addressing in
@@ -1833,14 +1814,14 @@ The first address must be less than or equal to the second address.
 The first address must be greater than or equal to the first line of the
 file, and the last address must be less than or equal to the last line
 of the file.
-.oh 'Nvi/Nex Reference (Ex Commands)''USD:13-%'
-.eh 'USD:13-%''Nvi/Nex Reference (Ex Commands)'
+.oh 'Vi/Ex Reference (Ex Commands)''USD:13-%'
+.eh 'USD:13-%''Vi/Ex Reference (Ex Commands)'
 .so ex.cmd.roff
-.oh 'Nvi/Nex Reference (Options)''USD:13-%'
-.eh 'USD:13-%''Nvi/Nex Reference (Options)'
+.oh 'Vi/Ex Reference (Options)''USD:13-%'
+.eh 'USD:13-%''Vi/Ex Reference (Options)'
 .so set.opt.roff
-.oh 'Nvi/Nex Reference''USD:13-%'
-.eh 'USD:13-%''Nvi/Nex Reference'
+.oh 'Vi/Ex Reference''USD:13-%'
+.eh 'USD:13-%''Vi/Ex Reference'
 .bp
 .SH 1 Index
 .lp
@@ -1849,6 +1830,8 @@ of the file.
 .nf
 .so index.so
 .fi
+.\" Force the TOC to an odd page, in case it's a duplex printer.
+.if o .bp
 .bp 3
 .1c
 .ce 1

@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.2 1996/07/24 16:15:04 mickey Exp $
-#	@(#)Makefile	8.24 (Berkeley) 6/12/96
+#	$OpenBSD: Makefile,v 1.3 1997/07/27 22:27:55 downsj Exp $
+#	@(#)Makefile	8.29 (Berkeley) 10/19/96
 
-CAT=	dutch english german ru_SU.KOI8-R swedish
-FILES=	../cl/*.c ../common/*.c ../ex/*.c ../perl_api/*.c ../tcl_api/*.c \
-	../tk/*.c ../vi/*.c
+CAT=	dutch english french german ru_SU.KOI8-R spanish swedish
+FILES=	../cl/*.c ../common/*.c ../ex/*.c ../tk/*.c ../vi/*.c
 
 all: dump ${CAT}
 
@@ -35,8 +34,8 @@ ${CAT}: english.base
 		grep 'NOT LEGAL' $@;					\
 	fi
 
-CHK=	dutch.check english.check german.check ru_SU.KOI8-R.check \
-	swedish.check
+CHK=	dutch.check english.check french.check german.check \
+	ru_SU.KOI8-R.check spanish.check swedish.check
 check: ${CHK}
 ${CHK}: ${CAT}
 	@echo "... $@";							\
@@ -75,7 +74,8 @@ english.base: dump ${FILES} #Makefile
 	./dump ${FILES} |\
 	sed -e '/|/!d' \
 	    -e 's/|/ "/' \
-	    -e 's/^"//' |\
+	    -e 's/^"//' \
+	    -e 's/\\"/"/g' |\
 	sort -n > $@
 
 dump: dump.c

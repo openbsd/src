@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)vs_msg.c	10.76 (Berkeley) 9/26/96";
+static const char sccsid[] = "@(#)vs_msg.c	10.77 (Berkeley) 10/13/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -646,14 +646,11 @@ vs_ex_resolve(sp, continuep)
  * vs_resolve --
  *	Deal with message output.
  *
- * This routine is called from the main vi loop to periodically ensure that
- * the user has seen any messages that have been displayed.
- *
- * PUBLIC: int vs_resolve __P((SCR *, int));
+ * PUBLIC: int vs_resolve __P((SCR *, SCR *, int));
  */
 int
-vs_resolve(sp, forcewait)
-	SCR *sp;
+vs_resolve(sp, csp, forcewait)
+	SCR *sp, *csp;
 	int forcewait;
 {
 	EVENT ev;
@@ -663,11 +660,20 @@ vs_resolve(sp, forcewait)
 	size_t oldy, oldx;
 	int redraw;
 
+	/*
+	 * Vs_resolve is called from the main vi loop and the refresh function
+	 * to periodically ensure that the user has seen any messages that have
+	 * been displayed and that any status lines are correct.  The sp screen
+	 * is the screen we're checking, usually the current screen.  When it's
+	 * not, csp is the current screen, used for final cursor positioning.
+	 */
 	gp = sp->gp;
 	vip = VIP(sp);
+	if (csp == NULL)
+		csp = sp;
 
 	/* Save the cursor position. */
-	(void)gp->scr_cursor(sp, &oldy, &oldx);
+	(void)gp->scr_cursor(csp, &oldy, &oldx);
 
 	/* Ring the bell if it's scheduled. */
 	if (F_ISSET(gp, G_BELLSCHED)) {
@@ -742,7 +748,7 @@ vs_resolve(sp, forcewait)
 		(void)vs_repaint(sp, &ev);
 
 	/* Restore the cursor position. */
-	(void)gp->scr_move(sp, oldy, oldx);
+	(void)gp->scr_move(csp, oldy, oldx);
 
 	return (0);
 }

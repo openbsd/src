@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)vi.c	10.56 (Berkeley) 9/25/96";
+static const char sccsid[] = "@(#)vi.c	10.57 (Berkeley) 10/13/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -92,7 +92,7 @@ vi(spp)
 
 	for (vip = VIP(sp), rval = 0;;) {
 		/* Resolve messages. */
-		if (!MAPPED_KEYS_WAITING(sp) && vs_resolve(sp, 0))
+		if (!MAPPED_KEYS_WAITING(sp) && vs_resolve(sp, NULL, 0))
 			goto ret;
 
 		/*

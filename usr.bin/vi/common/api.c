@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)api.c	8.24 (Berkeley) 9/18/96";
+static const char sccsid[] = "@(#)api.c	8.26 (Berkeley) 10/14/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -421,11 +421,13 @@ api_opts_get(sp, name, value, boolvalue)
 	char *name, **value;
 	int *boolvalue;
 {
-	int offset;
 	OPTLIST const *op;
+	int offset;
 
-	if ((op = opts_search(name)) == NULL)
+	if ((op = opts_search(name)) == NULL) {
+		opts_nomatch(sp, name);
 		return (1);
+	}
 
 	offset = op - optlist;
 	if (boolvalue != NULL)
@@ -441,7 +443,7 @@ api_opts_get(sp, name, value, boolvalue)
 		break;
 	case OPT_NUM:
 		MALLOC_RET(sp, *value, char *, 20);
-		(void)sprintf(*value, "%ld", (u_long)O_VAL(sp, offset));
+		(void)sprintf(*value, "%lu", (u_long)O_VAL(sp, offset));
 		break;
 	case OPT_STR:
 		if (O_STR(sp, offset) == NULL) {
@@ -461,19 +463,51 @@ api_opts_get(sp, name, value, boolvalue)
  * api_opts_set --
  *	Set options.
  *
- * PUBLIC: int api_opts_set __P((SCR *, char *));
+ * PUBLIC: int api_opts_set __P((SCR *, char *, char *, u_long, int));
  */
-int 
-api_opts_set(sp, name)
+int
+api_opts_set(sp, name, str_value, num_value, bool_value)
 	SCR *sp;
-	char *name;
+	char *name, *str_value;
+	u_long num_value;
+	int bool_value;
 {
-	ARGS *ap[2], a;
-	EXCMD cmd;
+	ARGS *ap[2], a, b;
+	OPTLIST const *op;
+	int rval;
+	size_t blen;
+	char *bp;
 
-	ex_cinit(&cmd, C_SET, 0, OOBLNO, OOBLNO, 0, ap);
-	ex_cadd(&cmd, &a, name, strlen(name));
-	return (cmd.cmd->fn(sp, &cmd));
+	if ((op = opts_search(name)) == NULL) {
+		opts_nomatch(sp, name);
+		return (1);
+	}
+
+	switch (op->type) {
+	case OPT_0BOOL:
+	case OPT_1BOOL:
+		GET_SPACE_RET(sp, bp, blen, 64);
+		a.len = snprintf(bp, 64, "%s%s", bool_value ? "" : "no", name);
+		break;
+	case OPT_NUM:
+		GET_SPACE_RET(sp, bp, blen, 64);
+		a.len = snprintf(bp, 64, "%s=%lu", name, num_value);
+		break;
+	case OPT_STR:
+		GET_SPACE_RET(sp, bp, blen, 1024);
+		a.len = snprintf(bp, 1024, "%s=%s", name, str_value);
+		break;
+	}
+	a.bp = bp;
+	b.len = 0;
+	b.bp = NULL;
+	ap[0] = &a;
+	ap[1] = &b;
+	rval = opts_set(sp, ap, NULL);
+
+	FREE_SPACE(sp, bp, blen);
+
+	return (rval);
 }
 
 /*

@@ -1,4 +1,4 @@
-@(#)FAQ	8.12 (Berkeley) 8/17/96
+@(#)FAQ	8.13 (Berkeley) 10/14/96
 
 Q: How can I get vi to display my character set?
 A: Vi uses the C library routine isprint(3) to determine if a character
@@ -148,3 +148,13 @@ Q: When I update a file I already have open, and use :e to reread it, I
    get nul's for the rest of the file!
 A: Your system's implementation of mmap(2) has a bug; you will have to
    exit vi and re-execute it.
+
+Q: Where can I get cscope?
+A: Cscope is available on UNIXWare System V Release 4.0 variants such as
+   Sun Solaris 2.x (/opt/SUNWspro/bin) and UNIXWare System V Release 4.1.
+
+   You can buy version 13.3 source with an unrestricted license for $400
+   from AT&T Software Solutions by calling +1-800-462-8146.  Binary
+   redistribution of cscope is an additional $1500, one-time flat fee.
+
+   For more information, see http://www.unipress.com/att/new/cscope.html.

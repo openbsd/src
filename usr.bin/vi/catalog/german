@@ -103,16 +103,16 @@ Ungueltige Adresse: nur %lu Zeilen in der DateiX
 Ungueltige Adresse: die Datei ist leerX
 Das Kommando %s erlaubt keine Adresse 0X
 Keine Abkuerzungen zum AnzeigenX
-Abkuerzungen muessen mit einem \"Wort\"-Zeichen endenX
+Abkuerzungen muessen mit einem "Wort"-Zeichen endenX
 Abkuerzungen duerfen keine Tabulator- oder Leerzeichen enthaltenX
 In Abkuerzungen duerfen ausser am Ende Wort- und Nicht-Wort-Zeichen nicht gemischt werdenX
-\"%s\" ist keine AbkuerzungX
+"%s" ist keine AbkuerzungX
 Vi Kommando misslungen: umdefinierte Tasten ungueltigX
 Keine weiteren Dateien zu edierenX
 Keine vorhergehenden Dateien zu edierenX
 Keine vorhergehenden Dateien fuer rewindX
 Keine Dateiliste zum AnzeigenX
-Kein vorhergehendes Kommando um \"!\" zu ersetzenX
+Kein vorhergehendes Kommando um "!" zu ersetzenX
 Kein Dateiname fuer %%X
 Kein Dateiname fuer #X
 Fehler: execl: %sX
@@ -132,7 +132,7 @@ Keine folgenden Zeilen zum VerbindenX
 Kein Eingabe-Map EintragX
 Kein Kommando-Map EintragX
 Das %s Zeichen kann nicht umgemappt werdenX
-\"%s\" ist momentan nicht gemapptX
+"%s" ist momentan nicht gemapptX
 Markennamen muessen einzelne Buchstaben seinX
 %s existiert, nicht geschrieben; verwende ! zum UeberschreibenX
 Neue .exrc Datei: %s. X
@@ -306,10 +306,12 @@ Es ist keine %s Edieroption angegebenX
 Vi wurde nicht mit einem Perl Interpreter geladenX
 Kein ex Kommando auszufuehrenX
 Druecke <CR> um ein Kommando auszufuehren, :q zum verlassenX
-Verwende \"cscope help\" fuer HilestellungX
+Verwende "cscope help" fuer HilestellungX
 Keine cscope Verbindung aktivX
 %s: unbekannter Suchtyp: verwende einen aus %sX
 %d: keine solche cscope VerbindungX
 set: die %s Option kann nicht eingeschaltet werdenX
 set: die %s Option kann nicht auf 0 gesetzt werdenX
 %s: angefuegt: %lu Zeilen, %lu ZeichenX
+unerwartetes Groessenveraenderungs - EreignisX
+%d Dateien zu edierenX

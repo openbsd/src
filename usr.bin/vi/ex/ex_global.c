@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_global.c	10.21 (Berkeley) 6/30/96";
+static const char sccsid[] = "@(#)ex_global.c	10.22 (Berkeley) 10/10/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,6 +70,7 @@ ex_g_setup(sp, cmdp, cmd)
 	EXCMD *cmdp;
 	enum which cmd;
 {
+	CHAR_T *ptrn, *p, *t;
 	EXCMD *ecp;
 	MARK abs;
 	RANGE *rp;
@@ -79,7 +80,7 @@ ex_g_setup(sp, cmdp, cmd)
 	regmatch_t match[1];
 	size_t len;
 	int cnt, delim, eval;
-	char *ptrn, *p, *t;
+	char *dbp;
 
 	NEEDFILE(sp, cmdp);
 
@@ -172,7 +173,7 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 	 * because the ex parser may step on the command string when it's
 	 * parsing it.
 	 */
-	if ((len = strlen(p)) == 0) {
+	if ((len = cmdp->argv[0]->len - (p - cmdp->argv[0]->bp)) == 0) {
 		p = "pp";
 		len = 1;
 	}
@@ -212,11 +213,12 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 			btype = BUSY_UPDATE;
 			cnt = INTERRUPT_CHECK;
 		}
-		if (db_get(sp, start, DBG_FATAL, &p, &len))
+		if (db_get(sp, start, DBG_FATAL, &dbp, &len))
 			return (1);
 		match[0].rm_so = 0;
 		match[0].rm_eo = len;
-		switch (eval = regexec(&sp->re_c, p, 0, match, REG_STARTEND)) {
+		switch (eval =
+		    regexec(&sp->re_c, dbp, 0, match, REG_STARTEND)) {
 		case 0:
 			if (cmd == V)
 				continue;

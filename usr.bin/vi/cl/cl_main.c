@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)cl_main.c	10.35 (Berkeley) 9/24/96";
+static const char sccsid[] = "@(#)cl_main.c	10.36 (Berkeley) 10/14/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -40,7 +40,7 @@ sigset_t __sigblockset;				/* GLOBAL: Blocked signals. */
 static void	   cl_func_std __P((GS *));
 static CL_PRIVATE *cl_init __P((GS *));
 static GS	  *gs_init __P((char *));
-static void	   nomem __P((char *));
+static void	   perr __P((char *, char *));
 static int	   setsig __P((int, struct sigaction *, void (*)(int)));
 static void	   sig_end __P((GS *));
 static void	   term_init __P((char *, char *));
@@ -127,7 +127,7 @@ main(argc, argv)
 	/* Add the terminal type to the global structure. */
 	if ((OG_D_STR(gp, GO_TERM) =
 	    OG_STR(gp, GO_TERM) = strdup(ttype)) == NULL)
-		nomem(gp->progname);
+		perr(gp->progname, NULL);
 
 	/* Figure out how big the screen is. */
 	if (cl_ssize(NULL, 0, &rows, &cols, NULL))
@@ -204,7 +204,7 @@ gs_init(name)
 	/* Allocate the global structure. */
 	CALLOC_NOMSG(NULL, gp, GS *, 1, sizeof(GS));
 	if (gp == NULL)
-		nomem(name);
+		perr(name, NULL);
 
 
 	gp->progname = name;
@@ -225,7 +225,7 @@ cl_init(gp)
 	/* Allocate the CL private structure. */
 	CALLOC_NOMSG(NULL, clp, CL_PRIVATE *, 1, sizeof(CL_PRIVATE));
 	if (clp == NULL)
-		nomem(gp->progname);
+		perr(gp->progname, NULL);
 	gp->cl_private = clp;
 
 	/*
@@ -248,8 +248,7 @@ cl_init(gp)
 			goto tcfail;
 	} else if ((fd = open(_PATH_TTY, O_RDONLY, 0)) != -1) {
 		if (tcgetattr(fd, &clp->orig) == -1) {
-tcfail:			(void)fprintf(stderr, "%s: tcgetattr: %s\n",
-			    gp->progname, strerror(errno));
+tcfail:			perr(gp->progname, "tcgetattr");
 			exit (1);
 		}
 		(void)close(fd);
@@ -355,8 +354,7 @@ sig_init(gp, sp)
 		    setsig(SIGWINCH, &clp->oact[INDX_WINCH], h_winch)
 #endif
 		    ) {
-			(void)fprintf(stderr,
-			    "%s: %s\n", gp->progname, strerror(errno));
+			perr(gp->progname, NULL);
 			return (1);
 		}
 	} else
@@ -458,13 +456,16 @@ cl_func_std(gp)
 }
 
 /*
- * nomem --
- *	No memory error.
+ * perr --
+ *	Print system error.
  */
 static void
-nomem(name)
-	char *name;
+perr(name, msg)
+	char *name, *msg;
 {
-	(void)fprintf(stderr, "%s: %s\n", name, strerror(errno));
+	(void)fprintf(stderr, "%s:", name);
+	if (msg != NULL)
+		(void)fprintf(stderr, "%s:", msg);
+	(void)fprintf(stderr, "%s\n", strerror(errno));
 	exit(1);
 }

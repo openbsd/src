@@ -59,6 +59,7 @@ Sy
 TANDARDS
 TIOCGWINSZ
 TMPDIR
+TOC
 Tagnext
 Tagprev
 Tcl
@@ -107,6 +108,7 @@ bg
 bigword
 bigwords
 bostic
+bp
 brev
 bsd
 bugs.current
@@ -300,6 +302,7 @@ showmode
 sidescroll
 slowopen
 sm
+smd
 sourceany
 sp
 spell.ok
@@ -388,6 +391,7 @@ viusage
 wa
 whitespace
 wi
+windowname
 wl
 wm
 wn
@@ -400,5 +404,6 @@ ws
 www
 xaw
 xit
+xterm
 ya
 yy

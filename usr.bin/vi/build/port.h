@@ -1,3 +1,4 @@
+/*	$OpenBSD: port.h,v 1.3 1997/07/27 22:27:54 downsj Exp $	*/
 /* @(#)port.h.in	8.13 (Berkeley) 6/12/96 */
 
 /*

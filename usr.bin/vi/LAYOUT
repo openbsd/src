@@ -1,4 +1,4 @@
-#	@(#)LAYOUT	8.11 (Berkeley) 8/11/96
+#	@(#)LAYOUT	8.12 (Berkeley) 10/10/96
 
 LAYOUT
 	This file: the layout of the nvi sources.
@@ -103,11 +103,6 @@ include/
 
 	bitstring.h	-- The 4.4BSD bitstring operations.
 	sys/queue.h	-- The 4.4BSD queue operations.
-
-install/
-	Things to install on the local system.
-
-	recover.script	-- Vi recovery script.
 
 perl_api/
 	Source code supporting the Perl scripting language for nvi.

@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_delete.c	10.8 (Berkeley) 5/19/96";
+static const char sccsid[] = "@(#)v_delete.c	10.9 (Berkeley) 10/23/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@ v_delete(sp, vp)
 		return (1);
 
 	/* Delete the lines. */
-	if (delete(sp, &vp->m_start, &vp->m_stop, lmode))
+	if (del(sp, &vp->m_start, &vp->m_stop, lmode))
 		return (1);
 
 	/*

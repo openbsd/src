@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_itxt.c	10.15 (Berkeley) 9/25/96";
+static const char sccsid[] = "@(#)v_itxt.c	10.16 (Berkeley) 10/23/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -362,7 +362,7 @@ v_change(sp, vp)
 		bp = NULL;
 
 	/* Delete the text. */
-	if (delete(sp, &vp->m_start, &vp->m_stop, lmode))
+	if (del(sp, &vp->m_start, &vp->m_stop, lmode))
 		return (1);
 
 	/* If replacing entire lines, insert a replacement line. */

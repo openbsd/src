@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_cmd.c	10.19 (Berkeley) 7/12/96";
+static const char sccsid[] = "@(#)ex_cmd.c	10.20 (Berkeley) 10/10/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -152,8 +152,8 @@ EXCMDLIST const cmds[] = {
 /* C_DISPLAY */
 	{"display",	ex_display,	0,
 	    "w1r",
-	    "display b[uffers] | s[creens] | t[ags]",
-	    "display buffers, screens or tags"},
+	    "display b[uffers] | c[onnections] | s[creens] | t[ags]",
+	    "display buffers, connections, screens or tags"},
 /* C_EDIT */
 	{"edit",	ex_edit,	E_NEWSCREEN,
 	    "f1o",

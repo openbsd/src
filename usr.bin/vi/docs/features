@@ -2,7 +2,7 @@ List of things that should be added:
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 + X11 (Tk, Motif, Xaw) interface.
-+ Interpreted language (Perl5, Scheme, Tcl/Rush, Python)
++ Interpreted language (Perl, Scheme, Tcl/Rush, Python)
 + Additional ports: Windows, Windows NT, MSDOS
 + Forms editing package; use RE's to verify field contents.
 + Internationalization, including wide character and multibyte support.

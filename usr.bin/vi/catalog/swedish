@@ -30,7 +30,7 @@ rad %luX
 Filen %s är ingen meddelandekatalogX
 Kan inte sätta standardvärde för %s flagganX
 Användning: %sX
-set: %s är en okänd flagga: \"set all\" visar alla flaggorX
+set: %s är en okänd flagga: "set all" visar alla flaggorX
 set: [no]%s flaggan kan inte ges ett värdeX
 set: %s flaggan är inte boleanskX
 set: %s flaggan: %sX
@@ -79,7 +79,7 @@ Söker...X
 Inga icke skrivbara tecken funnaX
 Okänt kommandonamnX
 
-%s: kommandot är inte tillgängligt i \"ex\" lägeX
+%s: kommandot är inte tillgängligt i "ex" lägeX
 Talet får inte vara nollX
 %s: Ogiltig radspecifikationX
 Fel i intern syntaxtabell (%s: %s)X
@@ -103,16 +103,16 @@ Otillåten adress: bara %lu rader finns i filenX
 Otillåten adress: filen är tomX
 %s kommandot tillåter inte en adress som är 0X
 Inga förkortningar att visaX
-Förkortningar måste sluta med ett \"ord\" teckenX
+Förkortningar måste sluta med ett "ord" teckenX
 Förkortningar kan inte innehålla mellanslag eller tabX
-Förkortningar kan inte blanda \"ord\"/\"icke ord\" tecken, utom i slutetX
-\"%s\" är ingen förkortningX
+Förkortningar kan inte blanda "ord"/"icke ord" tecken, utom i slutetX
+"%s" är ingen förkortningX
 Vi kommando misslyckades: omdefinierade tangenter ignoreradeX
 Inga fler filer att editeraX
 Inga tidigare filer att editeraX
 Inga tidigare filer att spela tillbakaX
 Ingen fillista att visaX
-Inget tidigare kommando att ersätta \"!\" medX
+Inget tidigare kommando att ersätta "!" medX
 Inget filnamn att ersätta %% medX
 Inget filnamn att ersätta # medX
 Fel: execl: %sX
@@ -120,8 +120,8 @@ I/O fel: %sX
 Filen ändrad efter sista skrivning; spara eller använd !X
 Kan inte hitta hemkatalogX
 Ny nuvarande katalog: %sX
-Inga \"cut buffers\" att visaX
-%s kommandot kan inte används som del i ett \"global\" eller v kommandoX
+Inga "cut buffers" att visaX
+%s kommandot kan inte används som del i ett "global" eller v kommandoX
 %s/%s: inte läst: varken du eller root är ägareX
 %s/%s: inte läst: du är inte ägareX
 %s/%s: inte läst: skrivbar av annan än ägarenX
@@ -132,7 +132,7 @@ Ingen nästa rad att sätta ihop medX
 Det finns inget i inmatningsmappningenX
 Det finns inget i kommandomappningenX
 %s tecknet kan inte mappas omX
-\"%s\" är inte ommappat just nuX
+"%s" är inte ommappat just nuX
 Namn på markeringar måste vara ett tecken långaX
 %s finns, inget sparat; använd ! för att sparaX
 Ny exrc fil: %sX
@@ -147,13 +147,13 @@ Endast vanliga filer och namngivna rör kan läsasX
 Läser...X
 %s: %lu rader, %lu teckenX
 Inga bakgrundsfönster att visaX
-Script kommandot finns bara i \"vi\" lägeX
+Script kommandot finns bara i "vi" lägeX
 Inget kommando att exekveraX
 shiftwidth flaggan satt till 0X
 Talet har för stort värdeX
 Talet har för litet värdeX
 Reguljärt uttryck är givet; r flaggan är meningslösX
-#, l och p flaggorna kan inte kombineras med c flaggan i \"vi\" lägeX
+#, l och p flaggorna kan inte kombineras med c flaggan i "vi" lägeX
 Ingen matchande text funnenX
 Inget tidigare märke har givitsX
 Det är färre än %s märken i stacken; använd :display t[ags]X
@@ -189,7 +189,7 @@ Tecken efter söksträng, radoffset och/eller z kommandotX
 Ingen tidigare söksträngX
 Sökningen slog runt till ursprungliga positionenX
 Förkortning överskred expanderingsgränsen: tecken har tagits bortX
-Ogiltigt tecken; använd \"quote\" för att sätta inX
+Ogiltigt tecken; använd "quote" för att sätta inX
 Redan i början på insättningenX
 Inga fler tecken att ta bortX
 Försök att gå bortom slutet på filenX
@@ -201,10 +201,10 @@ Redan i första kolumnenX
 Buffertar måste anges före kommandotX
 Redan i slutet av filenX
 Redan på slutet av radenX
-%s är inte ett \"vi\" kommandoX
+%s är inte ett "vi" kommandoX
 Användning: %sX
 Inga tecken att ta bortX
-Q kommandot kräver \"ex\" i terminallägeX
+Q kommandot kräver "ex" i terminallägeX
 Inget kommando att repeteraX
 Filen är tomX
 %s kan inte användas som ett förflyttningskommandoX
@@ -269,8 +269,8 @@ bekräfta? [ynq]X
 Tryck på en tangent för att fortsätta: X
 Tryck på en tangent för att fortsätta [: för att ge fler kommandon]: X
 Tryck på en tangent för att fortsätta [q för att avsluta]: X
-Den formen av %s kräver \"ex\" i terminallägeX
-Går till \"ex\" inmatningsläge.X
+Den formen av %s kräver "ex" i terminallägeX
+Går till "ex" inmatningsläge.X
 Kommandot misslyckades, ingen fil inläst ännu.X
  forts?X
 Oväntad teckenhändelseX
@@ -280,7 +280,7 @@ Oväntad avbrottshändelseX
 Oväntad avslutningshändelseX
 Oväntad omritningshändelseX
 Redan vid sista märket i denna gruppX
-%s kommandot kräver \"ex\" i terminallägeX
+%s kommandot kräver "ex" i terminallägeX
 Den formen av %s är inte tillgänglig när secure edit flaggan är sattX
 Oväntad stränghändelseX
 Oväntad tidshändelseX
@@ -304,12 +304,14 @@ Filen har ändrats efter den sparats.X
 Skalexpansion misslyckadesX
 Ingen %s edit flagga givenX
 Vi har inte länkats med en Perl tolkX
-Inga \"ex\" kommandon att exekveraX
+Inga "ex" kommandon att exekveraX
 Tryck <CR> för att exekvera kommando, :q för att avslutaX
-Gör \"cscope help\" för hjälpX
+Gör "cscope help" för hjälpX
 Inga cscope kopplingar körsX
 %s: okänd söktyp: använd en av %sX
 %d: ingen sådan cscope sessionX
 set: %s flaggan får aldrig slås påX
 set: %s flaggan får aldrig sättas till 0X
 %s: tillagt: %lu rader, %lu teckenX
+Oväntad storleksändringX
+%d filer att editeraX

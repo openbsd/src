@@ -1,3 +1,16 @@
+1.78 -> 1.79 (10/23/96)
+	+ Rename delete() to del(), for C++.
+	+ Add Spanish to the list of translations.
+	+ Update to Perl 5.003_06, and other Perl interpreter updates.
+	+ Update the set-edit-option interface for the scripting languages.
+	+ Rework ex command parsing to match historic practice for backslash
+	  escaped <newline> characters inside of global commands.
+	+ Enhance the comment edit option to skip C++ comments.
+	+ Change installation to configure the recovery shell script to match
+	  the system pathnames and to install it into the vi data directory.
+	  Move the recover script into the build directory, and delete the
+	  recover directory.
+	+ Enhance LynxOS support.
 1.76 -> 1.78 (10/01/96)
 	+ Fix bugs when both the leftright scrolling and number edit options
 	  were on.

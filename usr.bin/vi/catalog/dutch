@@ -103,16 +103,16 @@ Ongeldig adres: slechts %lu regels in het bestand aanwezigX
 Ongeldig adres: het bestand is leegX
 Het %s commando staat het adres 0 niet toeX
 Geen afkortingen om weer te gevenX
-Afkortingen moeten eindigen met een \"woord\" letterX
+Afkortingen moeten eindigen met een "woord" letterX
 Afkortingen mogen geen tabulaties of spaties bevattenX
 Afkortingen mogen geen woord/niet-woord karakters mengen, behalve aan het eindeX
-\"%s\" is geen afkortingX
+"%s" is geen afkortingX
 Vi commando mislukt: gemappede toetsen genegeerdX
 Dit is het laatste bestandX
 Dit is het eerste bestandX
 Dit is het eerste bestandX
 lijst met bestanden is leegX
-Geen voorgaand commando om \"!\" te vervangenX
+Geen voorgaand commando om "!" te vervangenX
 Geen bestandsnaam voor %%X
 Geen bestandsnaam voor #X
 Fout: execl: %sX
@@ -132,7 +132,7 @@ Geen volgende regel om samen te voegenX
 Geen input map entriesX
 Geen command map entriesX
 Het %s karakter kan niet ge-remapped wordenX
-\"%s\" is niet gemappedX
+"%s" is niet gemappedX
 Merk naam moet een enkel karakter zijnX
 %s bestaat al, niet weggeschreven; gebruik ! om het te forcerenX
 Nieuw .exrc bestand: %s. X
@@ -306,10 +306,12 @@ Geen %s edit optie opgegevenX
 Vi was niet geladen met een Perl interpreterX
 Geen ex commando om uit te voerenX
 Kies <CR> om commando uit te voeren, :q om te stoppenX
-Gebruik \"cscope help\" voor uitlegX
+Gebruik "cscope help" voor uitlegX
 Nog geen cscope connectie aanwezigX
 %s: onbekend zoek type: gebruik een van %sX
 %d: onbekende cscope sessieX
 set: de %s optie mag nooit aangezet wordenX
 set: de %s optie mag nooit op 0 gezet wordenX
 %s: toegevoegd: %lu regels, %lu karaktersX
+Onverwacht resize eventX
+%d bestanden te wijzigenX
