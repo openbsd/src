@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.32 2003/05/13 03:49:04 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.33 2003/05/26 16:25:32 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -477,15 +477,12 @@ pmap_protect(pmap, sva, eva, prot)
 	vaddr_t sva, eva;
 	vm_prot_t prot;
 {
-	if ((prot & (VM_PROT_WRITE|VM_PROT_EXECUTE)) ==
-	    (VM_PROT_WRITE|VM_PROT_EXECUTE))
-		return;
-
-	if ((prot & (VM_PROT_READ|VM_PROT_EXECUTE)) ==
-	    (VM_PROT_READ|VM_PROT_EXECUTE)) {
-		pmap_write_protect(pmap, sva, eva, prot);
-	} else {
-		pmap_remove(pmap, sva, eva);
+	if ((prot & VM_PROT_WRITE) == 0) {
+		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
+			pmap_write_protect(pmap, sva, eva, prot);
+		} else {
+			pmap_remove(pmap, sva, eva);
+		}
 	}
 }
 
