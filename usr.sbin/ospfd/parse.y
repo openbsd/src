@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.2 2005/01/28 17:53:33 norby Exp $ */
+/*	$OpenBSD: parse.y,v 1.3 2005/02/02 19:47:20 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -191,9 +191,9 @@ conf_main	: METRIC number {
 			defaults.dead_interval = $2;
 		}
 		| TRANSMITDELAY number {
-			if ($2 < MIN_TRANSIT_DELAY || $2 > MAX_TRANSIT_DELAY) {
+			if ($2 < MIN_TRANSMIT_DELAY || $2 > MAX_TRANSMIT_DELAY) {
 				yyerror("transfer-delay out of range (%d-%d)",
-				    MIN_TRANSIT_DELAY, MAX_TRANSIT_DELAY);
+				    MIN_TRANSMIT_DELAY, MAX_TRANSMIT_DELAY);
 				YYERROR;
 			}
 			defaults.transfer_delay = $2;
@@ -311,9 +311,9 @@ areaoptsl	: interface nl
 			area->dead_interval = $2;
 		}
 		| TRANSMITDELAY number nl {
-			if ($2 < MIN_TRANSIT_DELAY || $2 > MAX_TRANSIT_DELAY) {
+			if ($2 < MIN_TRANSMIT_DELAY || $2 > MAX_TRANSMIT_DELAY) {
 				yyerror("transfer-delay out of range (%d-%d)",
-				    MIN_TRANSIT_DELAY, MAX_TRANSIT_DELAY);
+				    MIN_TRANSMIT_DELAY, MAX_TRANSMIT_DELAY);
 				YYERROR;
 			}
 			area->transfer_delay = $2;
@@ -394,9 +394,9 @@ interfaceoptsl	: authkey nl
 			iface->dead_interval = $2;
 		}
 		| TRANSMITDELAY number nl {
-			if ($2 < MIN_TRANSIT_DELAY || $2 > MAX_TRANSIT_DELAY) {
+			if ($2 < MIN_TRANSMIT_DELAY || $2 > MAX_TRANSMIT_DELAY) {
 				yyerror("transfer-delay out of range (%d-%d)",
-				    MIN_TRANSIT_DELAY, MAX_TRANSIT_DELAY);
+				    MIN_TRANSMIT_DELAY, MAX_TRANSMIT_DELAY);
 				YYERROR;
 			}
 			iface->transfer_delay = $2;
@@ -682,7 +682,7 @@ parse_config(char *filename, int opts)
 	}
 
 	defaults.dead_interval = DEFAULT_RTR_DEAD_TIME;
-	defaults.transfer_delay = DEFAULT_TRANSIT_DELAY;
+	defaults.transfer_delay = DEFAULT_TRANSMIT_DELAY;
 	defaults.hello_interval = DEFAULT_HELLO_INTERVAL;
 	defaults.rxmt_interval = DEFAULT_RXMT_INTERVAL;
 	defaults.metric = DEFAULT_METRIC;

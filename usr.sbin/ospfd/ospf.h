@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.3 2005/02/01 21:15:40 norby Exp $ */
+/*	$OpenBSD: ospf.h,v 1.4 2005/02/02 19:47:20 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -52,9 +52,9 @@
 #define MIN_RXMT_INTERVAL	5
 #define MAX_RXMT_INTERVAL	3600
 
-#define DEFAULT_TRANSIT_DELAY	1
-#define MIN_TRANSIT_DELAY	1
-#define MAX_TRANSIT_DELAY	3600
+#define DEFAULT_TRANSMIT_DELAY	1
+#define MIN_TRANSMIT_DELAY	1
+#define MAX_TRANSMIT_DELAY	3600
 
 #define DEFAULT_ADJ_TMOUT	60	/* XXX sane value? */
 
