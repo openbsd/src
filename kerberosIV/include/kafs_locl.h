@@ -1,4 +1,4 @@
-/*	$OpenBSD: kafs_locl.h,v 1.2 1998/02/18 11:53:34 art Exp $	*/
+/*	$OpenBSD: kafs_locl.h,v 1.3 1998/09/18 00:59:32 art Exp $	*/
 /* $KTH: kafs_locl.h,v 1.7 1997/10/14 22:57:11 joda Exp $ */
 
 /*
@@ -65,8 +65,6 @@
 
 #include <kerberosIV/krb.h>
 #include <kerberosIV/kafs.h>
-
-#include "afssysdefs.h"
 
 struct kafs_data;
 typedef int (*afslog_uid_func_t)(struct kafs_data*, const char*, uid_t);
