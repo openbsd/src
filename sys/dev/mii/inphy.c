@@ -1,5 +1,5 @@
-/*	$OpenBSD: inphy.c,v 1.5 1999/12/07 22:01:30 jason Exp $	*/
-/*	$NetBSD: inphy.c,v 1.10.6.1 1999/04/23 15:39:09 perry Exp $	*/
+/*	$OpenBSD: inphy.c,v 1.6 2000/08/26 20:04:17 nate Exp $	*/
+/*	$NetBSD: inphy.c,v 1.18 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,8 @@ int	inphymatch __P((struct device *, void *, void *));
 void	inphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach inphy_ca = {
-	sizeof(struct mii_softc), inphymatch, inphyattach
+	sizeof(struct mii_softc), inphymatch, inphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 struct cfdriver inphy_cd = {
@@ -133,21 +134,16 @@ inphyattach(parent, self, aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = inphy_service;
+	sc->mii_status = inphy_status;
 	sc->mii_pdata = mii;
-
-	/*
-	 * i82557 wedges if all of its PHYs are isolated!
-	 */
-	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "fxp") == 0 &&
-	    mii->mii_instance == 0)
-		sc->mii_flags |= MIIF_NOISOLATE;
+	sc->mii_flags = mii->mii_flags;
 
 	mii_phy_reset(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_MEDIAMASK)
-		mii_add_media(sc);
+		mii_phy_add_media(sc);
 }
 
 int
@@ -158,6 +154,9 @@ inphy_service(sc, mii, cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -185,18 +184,7 @@ inphy_service(sc, mii, cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		switch (IFM_SUBTYPE(ife->ifm_media)) {
-		case IFM_AUTO:
-			/*
-			 * If we're already in auto mode, just return.
-			 */
-			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
-				return (0);
-			(void) mii_phy_auto(sc, 1);
-			break;
-		default:
-			mii_phy_setmedia(sc);
-		}
+		mii_phy_setmedia(sc);
 		break;
 
 	case MII_TICK:
@@ -206,37 +194,7 @@ inphy_service(sc, mii, cmd)
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 
-		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			return (0);
-
-		/*
-		 * Is the interface even up?
-		 */
-		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
-			return (0);
-
-		/*
-		 * Check to see if we have link.  If we do, we don't
-		 * need to restart the autonegotiation process.  Read
-		 * the BMSR twice in case it's latched.
-		 */
-		reg = PHY_READ(sc, MII_BMSR) |
-		    PHY_READ(sc, MII_BMSR);
-		if (reg & BMSR_LINK)
-			return (0);
-
-		/*
-		 * Only retry autonegotiation every 5 seconds.
-		 */
-		if (++sc->mii_ticks != 5)
-			return (0);
-
-		sc->mii_ticks = 0;
-		mii_phy_reset(sc);
-		if (mii_phy_auto(sc, 0) == EJUSTRETURN)
+		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return (0);
 		break;
 
@@ -246,13 +204,10 @@ inphy_service(sc, mii, cmd)
 	}
 
 	/* Update the media status. */
-	inphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
-	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
-		sc->mii_active = mii->mii_media_active;
-	}
+	mii_phy_update(sc, cmd);
 	return (0);
 }
 

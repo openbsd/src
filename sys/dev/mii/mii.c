@@ -1,8 +1,8 @@
-/*	$OpenBSD: mii.c,v 1.8 2000/04/27 07:37:13 niklas Exp $	*/
-/*	$NetBSD: mii.c,v 1.9 1998/11/05 04:08:02 thorpej Exp $	*/
+/*	$OpenBSD: mii.c,v 1.9 2000/08/26 20:04:17 nate Exp $	*/
+/*	$NetBSD: mii.c,v 1.19 2000/02/02 17:09:44 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -66,71 +66,163 @@ int	mii_submatch __P((struct device *, void *, void *));
  * to the network interface driver parent.
  */
 void
-mii_phy_probe(parent, mii, capmask)
+mii_attach(parent, mii, capmask, phyloc, offloc, flags)
 	struct device *parent;
 	struct mii_data *mii;
-	int capmask;
+	int capmask, phyloc, offloc, flags;
 {
 	struct mii_attach_args ma;
 	struct mii_softc *child;
+	int bmsr, offset = 0;
+	int phymin, phymax;
 
-	LIST_INIT(&mii->mii_phys);
+	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
+		panic("mii_attach: phyloc and offloc specified");
 
-	for (ma.mii_phyno = 0; ma.mii_phyno < MII_NPHY; ma.mii_phyno++) {
+	if (phyloc == MII_PHY_ANY) {
+		phymin = 0;
+		phymax = MII_NPHY - 1;
+	} else
+		phymin = phymax = phyloc;
+
+	if ((mii->mii_flags & MIIF_INITDONE) == 0) {
+		LIST_INIT(&mii->mii_phys);
+		mii->mii_flags |= MIIF_INITDONE;
+	}
+
+	for (ma.mii_phyno = phymin; ma.mii_phyno <= phymax; ma.mii_phyno++) {
 		/*
-		 * Check to see if there is a PHY at this address.  If
-		 * the register contains garbage, assume no.
+		 * Make sure we haven't already configured a PHY at this
+		 * address.  This allows mii_attach() to be called
+		 * multiple times.
+		 */
+		for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
+		     child = LIST_NEXT(child, mii_list)) {
+			if (child->mii_phy == ma.mii_phyno) {
+				/*
+				 * Yes, there is already something
+				 * configured at this address.
+				 */
+				offset++;
+				continue;
+			}
+		}
+
+		/*
+		 * Check to see if there is a PHY at this address.  Note,
+		 * many braindead PHYs report 0/0 in their ID registers,
+		 * so we test for media in the BMSR.
+		 */
+		bmsr = (*mii->mii_readreg)(parent, ma.mii_phyno, MII_BMSR);
+		if (bmsr == 0 || bmsr == 0xffff ||
+		    (bmsr & BMSR_MEDIAMASK) == 0) {
+			/* Assume no PHY at this address. */
+			continue;
+		}
+
+		/*
+		 * There is a PHY at this address.  If we were given an
+		 * `offset' locator, skip this PHY if it doesn't match.
+		 */
+		if (offloc != MII_OFFSET_ANY && offloc != offset) {
+			offset++;
+			continue;
+		}
+
+		/*
+		 * Extract the IDs.  Braindead PHYs will be handled by
+		 * the `ukphy' driver, as we have no ID information to
+		 * match on.
 		 */
 		ma.mii_id1 = (*mii->mii_readreg)(parent, ma.mii_phyno,
 		    MII_PHYIDR1);
 		ma.mii_id2 = (*mii->mii_readreg)(parent, ma.mii_phyno,
 		    MII_PHYIDR2);
-		if ((ma.mii_id1 == 0 || ma.mii_id1 == 0xffff) &&
-		    (ma.mii_id2 == 0 || ma.mii_id2 == 0xffff)) {
-			/*
-			 * ARGH!!  3Com internal PHYs report 0/0 in their
-			 * ID registers!  If we spot this, check to see
-			 * if the BMSR has reasonable data in it.
-			 * And if that wasn't enough there are PHYs
-			 * reporting 0xffff/0xffff too.
-			 */
-			if ((MII_OUI(ma.mii_id1, ma.mii_id2) == 0 &&
-			    MII_MODEL(ma.mii_id2) == 0) ||
-			    (MII_OUI(ma.mii_id1, ma.mii_id2) == 0x3fffff &&
-			    MII_MODEL(ma.mii_id2) == 0x3f)) {
-				int bmsr = (*mii->mii_readreg)(parent,
-				    ma.mii_phyno, MII_BMSR);
-				if (bmsr == 0 || bmsr == 0xffff ||
-				    (bmsr & BMSR_MEDIAMASK) == 0)
-					continue;
-			} else
-				continue;
-		}
 
 		ma.mii_data = mii;
 		ma.mii_capmask = capmask;
+		ma.mii_flags = flags;
 
 		if ((child = (struct mii_softc *)config_found_sm(parent, &ma,
 		    mii_print, mii_submatch)) != NULL) {
 			/*
 			 * Link it up in the parent's MII data.
 			 */
+#if defined(__NetBSD__)
+			callout_init(&child->mii_nway_ch);
+#endif
 			LIST_INSERT_HEAD(&mii->mii_phys, child, mii_list);
+			child->mii_offset = offset;
 			mii->mii_instance++;
+		}
+		offset++;
+	}
+}
+
+void
+mii_activate(mii, act, phyloc, offloc)
+	struct mii_data *mii;
+	enum devact act;
+	int phyloc, offloc;
+{
+	struct mii_softc *child;
+
+	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
+		panic("mii_activate: phyloc and offloc specified");
+
+	if ((mii->mii_flags & MIIF_INITDONE) == 0)
+		return;
+
+	for (child = LIST_FIRST(&mii->mii_phys);
+	     child != NULL; child = LIST_NEXT(child, mii_list)) {
+		if (phyloc != MII_PHY_ANY || offloc != MII_OFFSET_ANY) {
+			if (phyloc != MII_PHY_ANY &&
+			    phyloc != child->mii_phy)
+				continue;
+			if (offloc != MII_OFFSET_ANY &&
+			    offloc != child->mii_offset)
+				continue;
+		}
+		switch (act) {
+		case DVACT_ACTIVATE:
+			panic("mii_activate: DVACT_ACTIVATE");
+			break;
+
+		case DVACT_DEACTIVATE:
+			if (config_deactivate(&child->mii_dev) != 0)
+				panic("%s: config_activate(%d) failed\n",
+				    child->mii_dev.dv_xname, act);
 		}
 	}
 }
 
-int
-mii_detach(msc, flags)
-	struct mii_softc *msc;
-	int flags;
+void
+mii_detach(mii, phyloc, offloc)
+	struct mii_data *mii;
+	int phyloc, offloc;
 {
-	LIST_REMOVE(msc, mii_list);
-	/* XXX The following condition should always be true.  */
-	if (msc->mii_inst == msc->mii_pdata->mii_instance - 1)
-		msc->mii_pdata->mii_instance--;
-	return config_detach(&msc->mii_dev, flags);
+	struct mii_softc *child, *nchild;
+
+	if (phyloc != MII_PHY_ANY && offloc != MII_PHY_ANY)
+		panic("mii_detach: phyloc and offloc specified");
+
+	if ((mii->mii_flags & MIIF_INITDONE) == 0)
+		return;
+
+	for (child = LIST_FIRST(&mii->mii_phys);
+	     child != NULL; child = nchild) {
+		nchild = LIST_NEXT(child, mii_list);
+		if (phyloc != MII_PHY_ANY || offloc != MII_OFFSET_ANY) {
+			if (phyloc != MII_PHY_ANY &&
+			    phyloc != child->mii_phy)
+				continue;
+			if (offloc != MII_OFFSET_ANY &&
+			    offloc != child->mii_offset)
+				continue;
+		}
+		LIST_REMOVE(child, mii_list);
+		(void) config_detach(&child->mii_dev, DETACH_FORCE);
+	}
 }
 
 int
@@ -223,10 +315,10 @@ mii_pollstat(mii)
 void
 mii_down(mii)
 	struct mii_data *mii;
-{ 
+{
 	struct mii_softc *child;
- 
+
 	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
 	     child = LIST_NEXT(child, mii_list))
 		(void) (*child->mii_service)(child, mii, MII_DOWN);
-}  
+}

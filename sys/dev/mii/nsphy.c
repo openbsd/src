@@ -1,5 +1,5 @@
-/*	$OpenBSD: nsphy.c,v 1.8 2000/01/18 04:20:49 jason Exp $	*/
-/*	$NetBSD: nsphy.c,v 1.18 1999/07/14 23:57:36 thorpej Exp $	*/
+/*	$OpenBSD: nsphy.c,v 1.9 2000/08/26 20:04:18 nate Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.25 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,8 @@ int	nsphymatch __P((struct device *, void *, void *));
 void	nsphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach nsphy_ca = {
-	sizeof(struct mii_softc), nsphymatch, nsphyattach
+	sizeof(struct mii_softc), nsphymatch, nsphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 struct cfdriver nsphy_cd = {
@@ -135,21 +136,16 @@ nsphyattach(parent, self, aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = nsphy_service;
+	sc->mii_status = nsphy_status;
 	sc->mii_pdata = mii;
-
-	/*
-	 * i82557 wedges if all of its PHYs are isolated!
-	 */
-	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "fxp") == 0 &&
-	    mii->mii_instance == 0)
-		sc->mii_flags |= MIIF_NOISOLATE;
+	sc->mii_flags = mii->mii_flags;
 
 	nsphy_reset(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_MEDIAMASK)
-		mii_add_media(sc);
+		mii_phy_add_media(sc);
 }
 
 int
@@ -160,6 +156,9 @@ nsphy_service(sc, mii, cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -217,18 +216,7 @@ nsphy_service(sc, mii, cmd)
 
 		PHY_WRITE(sc, MII_NSPHY_PCR, reg);
 
-		switch (IFM_SUBTYPE(ife->ifm_media)) {
-		case IFM_AUTO:
-			/*
-			 * If we're already in auto mode, just return.
-			 */
-			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
-				return (0);
-			(void) mii_phy_auto(sc, 1);
-			break;
-		default:
-			mii_phy_setmedia(sc);
-		}
+		mii_phy_setmedia(sc);
 		break;
 
 	case MII_TICK:
@@ -278,13 +266,10 @@ nsphy_service(sc, mii, cmd)
 	}
 
 	/* Update the media status. */
-	nsphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
-	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
-		sc->mii_active = mii->mii_media_active;
-	}
+	mii_phy_update(sc, cmd);
 	return (0);
 }
 

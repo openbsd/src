@@ -1,5 +1,5 @@
-/*	$OpenBSD: exphy.c,v 1.7 2000/02/16 05:06:01 jason Exp $	*/
-/*	$NetBSD: exphy.c,v 1.15.6.1 1999/04/23 15:39:33 perry Exp $	*/
+/*	$OpenBSD: exphy.c,v 1.8 2000/08/26 20:04:17 nate Exp $	*/
+/*	$NetBSD: exphy.c,v 1.23 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -89,7 +89,8 @@ int	exphymatch __P((struct device *, void *, void *));
 void	exphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach exphy_ca = {
-	sizeof(struct mii_softc), exphymatch, exphyattach
+	sizeof(struct mii_softc), exphymatch, exphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 struct cfdriver exphy_cd = {
@@ -147,7 +148,9 @@ exphyattach(parent, self, aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = exphy_service;
+	sc->mii_status = ukphy_status;
 	sc->mii_pdata = mii;
+	sc->mii_flags = mii->mii_flags;
 
 	/*
 	 * The 3Com PHY can never be isolated, so never allow non-zero
@@ -165,7 +168,7 @@ exphyattach(parent, self, aux)
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_MEDIAMASK)
-		mii_add_media(sc);
+		mii_phy_add_media(sc);
 }
 
 int
@@ -175,6 +178,9 @@ exphy_service(sc, mii, cmd)
 	int cmd;
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	/*
 	 * We can't isolate the 3Com PHY, so it has to be the only one!
@@ -193,18 +199,7 @@ exphy_service(sc, mii, cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		switch (IFM_SUBTYPE(ife->ifm_media)) {
-		case IFM_AUTO:
-			/*
-			 * If we're already in auto mode, just return.
-			 */
-			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
-				return (0);
-			(void) mii_phy_auto(sc, 1);
-			break;
-		default:
-			mii_phy_setmedia(sc);
-		}
+		mii_phy_setmedia(sc);
 		break;
 
 	case MII_TICK:
@@ -214,16 +209,9 @@ exphy_service(sc, mii, cmd)
 		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
 			return (0);
 
-		/*
-		 * Is the interface even up?
-		 */
-		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
+		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return (0);
 
-		/*
-		 * The 3Com PHY's autonegotiation doesn't need to be
-		 * kicked; it continues in the background.
-		 */
 		break;
 
 	case MII_DOWN:
@@ -232,13 +220,10 @@ exphy_service(sc, mii, cmd)
 	}
 
 	/* Update the media status. */
-	ukphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
-	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
-		sc->mii_active = mii->mii_media_active;
-	}
+	mii_phy_update(sc, cmd);
 	return (0);
 }
 

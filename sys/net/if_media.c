@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_media.c,v 1.4 2000/03/21 23:18:13 mickey Exp $	*/
-/*	$NetBSD: if_media.c,v 1.7 1999/11/03 23:06:35 thorpej Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.5 2000/08/26 20:04:16 nate Exp $	*/
+/*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ ifmedia_init(ifm, dontcare_mask, change_callback, status_callback)
 	ifm_stat_cb_t status_callback;
 {
 
-	LIST_INIT(&ifm->ifm_list);
+	TAILQ_INIT(&ifm->ifm_list);
 	ifm->ifm_cur = NULL;
 	ifm->ifm_media = 0;
 	ifm->ifm_mask = dontcare_mask;		/* IF don't-care bits */
@@ -157,7 +157,7 @@ ifmedia_add(ifm, mword, data, aux)
 	entry->ifm_data = data;
 	entry->ifm_aux = aux;
 
-	LIST_INSERT_HEAD(&ifm->ifm_list, entry, ifm_list);
+	TAILQ_INSERT_TAIL(&ifm->ifm_list, entry, ifm_list);
 }
 
 /*
@@ -303,7 +303,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 		(*ifm->ifm_status)(ifp, ifmr);
 
 		count = 0;
-		ep = LIST_FIRST(&ifm->ifm_list);
+		ep = TAILQ_FIRST(&ifm->ifm_list);
 
 		if (ifmr->ifm_count != 0) {
 			kptr = (int *)malloc(ifmr->ifm_count * sizeof(int),
@@ -313,7 +313,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 			 * Get the media words from the interface's list.
 			 */
 			for (; ep != NULL && count < ifmr->ifm_count;
-			    ep = LIST_NEXT(ep, ifm_list), count++)
+			    ep = TAILQ_NEXT(ep, ifm_list), count++)
 				kptr[count] = ep->ifm_media;
 
 			if (ep != NULL)
@@ -326,7 +326,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 		 * to 0 on the first call to know how much space to
 		 * callocate.
 		 */
-		for (; ep != NULL; ep = LIST_NEXT(ep, ifm_list))
+		for (; ep != NULL; ep = TAILQ_NEXT(ep, ifm_list))
 			count++;
 
 		/*
@@ -373,8 +373,8 @@ ifmedia_match(ifm, target, mask)
 	match = NULL;
 	mask = ~mask;
 
-	for (next = LIST_FIRST(&ifm->ifm_list); next != NULL;
-	    next = LIST_NEXT(next, ifm_list)) {
+	for (next = TAILQ_FIRST(&ifm->ifm_list); next != NULL;
+	     next = TAILQ_NEXT(next, ifm_list)) {
 		if ((next->ifm_media & mask) == (target & mask)) {
 #if defined(IFMEDIA_DEBUG) || defined(DIAGNOSTIC)
 			if (match) {
@@ -399,16 +399,38 @@ ifmedia_delete_instance(ifm, inst)
 {
 	struct ifmedia_entry *ife, *nife;
 
-	for (ife = LIST_FIRST(&ifm->ifm_list); ife != NULL;
+	for (ife = TAILQ_FIRST(&ifm->ifm_list); ife != NULL;
 	     ife = nife) {
-		
-		nife = LIST_NEXT(ife, ifm_list);
+		nife = TAILQ_NEXT(ife, ifm_list);
 		if (inst == IFM_INST_ANY ||
 		    inst == IFM_INST(ife->ifm_media)) {
-			LIST_REMOVE(ife, ifm_list);
+			TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
 			free(ife, M_DEVBUF);
 		}
 	}
+}
+
+/*
+ * Compute the interface `baudrate' from the media, for the interface
+ * metrics (used by routing daemons).
+ */
+struct ifmedia_baudrate ifmedia_baudrate_descriptions[] =
+    IFM_BAUDRATE_DESCRIPTIONS;
+
+int
+ifmedia_baudrate(mword)
+	int mword;
+{
+	int i;
+
+	for (i = 0; ifmedia_baudrate_descriptions[i].ifmb_word != 0; i++) {
+		if ((mword & (IFM_NMASK|IFM_TMASK)) ==
+		    ifmedia_baudrate_descriptions[i].ifmb_word)
+			return (ifmedia_baudrate_descriptions[i].ifmb_baudrate);
+	}
+
+	/* Not known. */
+	return (0);
 }
 
 #ifdef IFMEDIA_DEBUG

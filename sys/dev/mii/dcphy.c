@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcphy.c,v 1.2 2000/04/18 19:35:32 jason Exp $	*/
+/*	$OpenBSD: dcphy.c,v 1.3 2000/08/26 20:04:17 nate Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -90,7 +90,8 @@ int	dcphy_match	__P((struct device *, void *, void *));
 void	dcphy_attach	__P((struct device *, struct device *, void *));
 
 struct cfattach dcphy_ca = {
-	sizeof(struct mii_softc), dcphy_match, dcphy_attach
+	sizeof(struct mii_softc), dcphy_match, dcphy_attach, mii_phy_detach,
+	    mii_phy_activate
 };
 	  
 struct cfdriver dcphy_cd = {
@@ -135,7 +136,9 @@ dcphy_attach(parent, self, aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = dcphy_service;
+	sc->mii_status = dcphy_status;
 	sc->mii_pdata = mii;
+	sc->mii_flags = mii->mii_flags;
 
 	sc->mii_flags |= MIIF_NOISOLATE;
 	mii->mii_instance++;
@@ -162,10 +165,8 @@ dcphy_attach(parent, self, aux)
 	}
 
 	sc->mii_capabilities &= ma->mii_capmask;
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
-		printf("no media present");
-	else
-		mii_add_media(sc);
+	if (sc->mii_capabilities & BMSR_MEDIAMASK)
+		mii_phy_add_media(sc);
 #undef ADD
 }
 
@@ -179,6 +180,9 @@ dcphy_service(sc, mii, cmd)
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
 	u_int32_t mode;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	dc_sc = mii->mii_ifp->if_softc;
 
@@ -333,13 +337,10 @@ dcphy_service(sc, mii, cmd)
 	}
 
 	/* Update the media status. */
-	dcphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
-	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
-		sc->mii_active = mii->mii_media_active;
-	}
+	mii_phy_update(sc, cmd);
 	return (0);
 }
 

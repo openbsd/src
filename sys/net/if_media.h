@@ -1,8 +1,8 @@
-/*	$OpenBSD: if_media.h,v 1.6 2000/03/21 23:18:13 mickey Exp $	*/
-/*	$NetBSD: if_media.h,v 1.11 1998/08/12 23:23:29 thorpej Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.7 2000/08/26 20:04:16 nate Exp $	*/
+/*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -101,7 +101,7 @@ typedef	void (*ifm_stat_cb_t) __P((struct ifnet *ifp, struct ifmediareq *req));
  * In-kernel representation of a single supported media type.
  */
 struct ifmedia_entry {
-	LIST_ENTRY(ifmedia_entry) ifm_list;
+	TAILQ_ENTRY(ifmedia_entry) ifm_list;
 	int	ifm_media;	/* description of this media attachment */
 	int	ifm_data;	/* for driver-specific use */
 	void	*ifm_aux;	/* for driver-specific use */
@@ -115,7 +115,7 @@ struct ifmedia {
 	int	ifm_mask;	/* mask of changes we don't care about */
 	int	ifm_media;	/* current user-set media word */
 	struct ifmedia_entry *ifm_cur;	/* currently selected media */
-	LIST_HEAD(, ifmedia_entry) ifm_list; /* list of all supported media */
+	TAILQ_HEAD(, ifmedia_entry) ifm_list; /* list of all supported media */
 	ifm_change_cb_t	ifm_change;	/* media change driver callback */
 	ifm_stat_cb_t	ifm_status;	/* media status driver callback */
 };
@@ -145,13 +145,15 @@ struct	ifmedia_entry *ifmedia_match __P((struct ifmedia *ifm,
 /* Delete all media for a given media instance */
 void	ifmedia_delete_instance __P((struct ifmedia *, int));
 
+/* Compute baudrate for a given media. */
+int	ifmedia_baudrate __P((int));
 #endif /*_KERNEL */
 
 /*
  * if_media Options word:
  *	Bits	Use
  *	----	-------
- *	0-4	Media variant		MAX SUBTYPE == 31!
+ *	0-4	Media subtype		MAX SUBTYPE == 31!
  *	5-7	Media type
  *	8-15	Type specific options
  *	16-19	RFU
@@ -171,14 +173,13 @@ void	ifmedia_delete_instance __P((struct ifmedia *, int));
 #define	IFM_100_T4	8		/* 100BaseT4 - 4 pair cat 3 */
 #define	IFM_100_VG	9		/* 100VG-AnyLAN */
 #define	IFM_100_T2	10		/* 100BaseT2 */
-#define	IFM_1000_FX	11		/* 1000BaseFX - gigabit over fiber */
+#define	IFM_1000_SX	11		/* 1000BaseSX - multi-mode fiber */
 #define	IFM_10_STP	12		/* 10BaseT over shielded TP */
 #define	IFM_10_FL	13		/* 10BaseFL - Fiber */
-#define	IFM_1000_SX	14		/* 1000baseSX Multi-mode Fiber */
-#define	IFM_1000_LX	15		/* 1000baseLX Single-mode Fiber */
-#define	IFM_1000_CX	16		/* 1000baseCX 150ohm STP */
-#define	IFM_1000_TX	17		/* 1000baseTX 4 pair cat 5 */
-#define	IFM_HPNA_1	18		/* HomePNA 1.0 (1Mb/s) */
+#define	IFM_1000_LX	14		/* 1000baseLX - single-mode fiber */
+#define	IFM_1000_CX	15		/* 1000baseCX - 150ohm STP */
+#define	IFM_1000_TX	16		/* 1000baseTX - 4 pair cat 5 */
+#define	IFM_HPNA_1	17		/* HomePNA 1.0 (1Mb/s) */
 
 /*
  * Token ring
@@ -335,18 +336,20 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_100_VG,		"100VG" },			\
 	{ IFM_ETHER|IFM_100_T2,		"100baseT2" },			\
 	{ IFM_ETHER|IFM_100_T2,		"100T2" },			\
-	{ IFM_ETHER|IFM_1000_FX,	"1000baseFX" },			\
-	{ IFM_ETHER|IFM_1000_FX,	"1000FX" },			\
+	{ IFM_ETHER|IFM_1000_SX,	"1000baseSX" },			\
+	{ IFM_ETHER|IFM_1000_SX,	"1000SX" },			\
 	{ IFM_ETHER|IFM_10_STP,		"10baseSTP" },			\
 	{ IFM_ETHER|IFM_10_STP,		"STP" },			\
 	{ IFM_ETHER|IFM_10_STP,		"10STP" },			\
 	{ IFM_ETHER|IFM_10_FL,		"10baseFL" },			\
 	{ IFM_ETHER|IFM_10_FL,		"FL" },				\
 	{ IFM_ETHER|IFM_10_FL,		"10FL" },			\
-	{ IFM_ETHER|IFM_1000_SX,	"1000baseSX" },			\
 	{ IFM_ETHER|IFM_1000_LX,	"1000baseLX" },			\
+	{ IFM_ETHER|IFM_1000_LX,	"1000LX" },			\
 	{ IFM_ETHER|IFM_1000_CX,	"1000baseCX" },			\
+	{ IFM_ETHER|IFM_1000_CX,	"1000CX" },			\
 	{ IFM_ETHER|IFM_1000_TX,	"1000baseTX" },			\
+	{ IFM_ETHER|IFM_1000_TX,	"1000TX" },			\
 	{ IFM_ETHER|IFM_HPNA_1,		"HomePNA1" },			\
 	{ IFM_ETHER|IFM_HPNA_1,		"HPNA1" },			\
 									\
@@ -401,6 +404,50 @@ struct ifmedia_description {
 	{ IFM_IEEE80211|IFM_IEEE80211_ADHOC,	"adhoc" },		\
 									\
 	{ 0, NULL },							\
+}
+
+/*
+ * Baudrate descriptions for the various media types.
+ */
+struct ifmedia_baudrate {
+	int	ifmb_word;		/* media word */
+	int	ifmb_baudrate;		/* corresponding baudrate */
+};
+
+#define	IFM_BAUDRATE_DESCRIPTIONS {					\
+	{ IFM_ETHER|IFM_10_T,		IF_Mbps(10) },			\
+	{ IFM_ETHER|IFM_10_2,		IF_Mbps(10) },			\
+	{ IFM_ETHER|IFM_10_5,		IF_Mbps(10) },			\
+	{ IFM_ETHER|IFM_100_TX,		IF_Mbps(100) },			\
+	{ IFM_ETHER|IFM_100_FX,		IF_Mbps(100) },			\
+	{ IFM_ETHER|IFM_100_T4,		IF_Mbps(100) },			\
+	{ IFM_ETHER|IFM_100_VG,		IF_Mbps(100) },			\
+	{ IFM_ETHER|IFM_100_T2,		IF_Mbps(100) },			\
+	{ IFM_ETHER|IFM_1000_SX,	IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_10_STP,		IF_Mbps(10) },			\
+	{ IFM_ETHER|IFM_10_FL,		IF_Mbps(10) },			\
+	{ IFM_ETHER|IFM_1000_LX,	IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_1000_CX,	IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_1000_TX,	IF_Mbps(1000) },		\
+	{ IFM_ETHER|IFM_HPNA_1,		IF_Mbps(1) },			\
+									\
+	{ IFM_TOKEN|IFM_TOK_STP4,	IF_Mbps(4) },			\
+	{ IFM_TOKEN|IFM_TOK_STP16,	IF_Mbps(16) },			\
+	{ IFM_TOKEN|IFM_TOK_UTP4,	IF_Mbps(4) },			\
+	{ IFM_TOKEN|IFM_TOK_UTP16,	IF_Mbps(16) },			\
+									\
+	{ IFM_FDDI|IFM_FDDI_SMF,	IF_Mbps(100) },			\
+	{ IFM_FDDI|IFM_FDDI_MMF,	IF_Mbps(100) },			\
+	{ IFM_FDDI|IFM_FDDI_UTP,	IF_Mbps(100) },			\
+									\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH1, IF_Mbps(1) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_FH2, IF_Mbps(2) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS2, IF_Mbps(2) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS5, IF_Mbps(5) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS11, IF_Mbps(11) },		\
+	{ IFM_IEEE80211|IFM_IEEE80211_DS1, IF_Mbps(1) },		\
+									\
+	{ 0, 0 },							\
 }
 
 /*

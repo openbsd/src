@@ -1,5 +1,5 @@
-/*	$OpenBSD: tlphy.c,v 1.5 1999/12/07 22:01:32 jason Exp $	*/
-/*	$NetBSD: tlphy.c,v 1.16.6.1 1999/04/23 15:40:13 perry Exp $	*/
+/*	$OpenBSD: tlphy.c,v 1.6 2000/08/26 20:04:18 nate Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.24 2000/02/02 17:50:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -105,7 +105,8 @@ struct cfdriver tlphy_cd = {
 };
 
 struct cfattach tlphy_ca = {
-	sizeof(struct tlphy_softc), tlphymatch, tlphyattach
+	sizeof(struct tlphy_softc), tlphymatch, tlphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 int	tlphy_service __P((struct mii_softc *, struct mii_data *, int));
@@ -144,7 +145,9 @@ tlphyattach(parent, self, aux)
 	sc->sc_mii.mii_inst = mii->mii_instance;
 	sc->sc_mii.mii_phy = ma->mii_phyno;
 	sc->sc_mii.mii_service = tlphy_service;
+	sc->sc_mii.mii_status = tlphy_status;
 	sc->sc_mii.mii_pdata = mii;
+	sc->sc_mii.mii_flags = mii->mii_flags;
 
 	mii_phy_reset(&sc->sc_mii);
 
@@ -162,9 +165,22 @@ tlphyattach(parent, self, aux)
 	else
 		sc->sc_mii.mii_capabilities = 0;
 
+	if (sc->sc_tlphycap) {
+		if (sc->sc_tlphycap & TLPHY_MEDIA_10_2)
+			ifmedia_add(&mii->mii_media,
+				    IFM_MAKEWORD(IFM_ETHER, IFM_10_2, 0,
+						 sc->sc_mii.mii_inst),
+				    0, NULL);
+		else if (sc->sc_tlphycap & TLPHY_MEDIA_10_5)
+			ifmedia_add(&mii->mii_media,
+				    IFM_MAKEWORD(IFM_ETHER, IFM_10_5, 0,
+						 sc->sc_mii.mii_inst),
+				    0, NULL);
+		}
+	}
+
 	if (sc->sc_mii.mii_capabilities & BMSR_MEDIAMASK) {
-		mii_add_media(mii, sc->sc_mii.mii_capabilities,
-		    sc->sc_mii.mii_inst);
+		mii_phy_add_media(&sc->sc_mii);
 	}
 }
 
@@ -177,6 +193,9 @@ tlphy_service(self, mii, cmd)
 	struct tlphy_softc *sc = (struct tlphy_softc *)self;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->sc_mii.mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	if ((sc->sc_mii.mii_flags & MIIF_DOINGAUTO) == 0 && sc->sc_need_acomp)
 		tlphy_acomp(sc);
@@ -237,55 +256,23 @@ tlphy_service(self, mii, cmd)
 			return (0);
 
 		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			return (0);
-
-		/*
-		 * Is the interface even up?
-		 */
-		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
-			return (0);
-
-		/*
-		 * Check to see if we have link.  If we do, we don't
-		 * need to restart the autonegotiation process.  Read
-		 * the BMSR twice in case it's latched.
-		 *
 		 * XXX WHAT ABOUT CHECKING LINK ON THE BNC/AUI?!
 		 */
-		reg = PHY_READ(&sc->sc_mii, MII_BMSR) |
-		    PHY_READ(&sc->sc_mii, MII_BMSR);
-		if (reg & BMSR_LINK)
-			return (0);
 
-		/*
-		 * Only retry autonegotiation every 5 seconds.
-		 */
-		if (++sc->sc_mii.mii_ticks != 5)
-			return (0);
-
-		sc->sc_mii.mii_ticks = 0;
-		mii_phy_reset(&sc->sc_mii);
-		if (tlphy_auto(sc, 0) == EJUSTRETURN)
+		if (mii_phy_tick(&sc->sc_mii) == EJUSTRETURN)
 			return (0);
 		break;
 
 	case MII_DOWN:
-		mii_phy_down(sc);
+		mii_phy_down(&sc->sc_mii);
 		return (0);
 	}
 
 	/* Update the media status. */
-	tlphy_status(sc);
+	mii_phy_status(&sc->sc_mii);
 
 	/* Callback if something changed. */
-	if (sc->sc_mii.mii_active != mii->mii_media_active ||
-	    cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->sc_mii.mii_dev.dv_parent);
-		sc->sc_mii.mii_active = mii->mii_media_active;
-	}
+	mii_phy_update(&sc->sc_mii, cmd);
 	return (0);
 }
 
@@ -391,4 +378,5 @@ tlphy_acomp(sc)
 			return;
 		}
 	}
+	PHY_WRITE(&sc->sc_mii, MII_BMCR, 0);
 }

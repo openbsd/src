@@ -1,5 +1,5 @@
-/*	$OpenBSD: icsphy.c,v 1.5 1999/12/07 22:01:30 jason Exp $	*/
-/*	$NetBSD: icsphy.c,v 1.8.6.1 1999/04/23 15:40:56 perry Exp $	*/
+/*	$OpenBSD: icsphy.c,v 1.6 2000/08/26 20:04:17 nate Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.17 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,10 +90,10 @@
 
 int	icsphymatch __P((struct device *, void *, void *));
 void	icsphyattach __P((struct device *, struct device *, void *));
-int	icsphydetach __P((struct device *, int));
 
 struct cfattach icsphy_ca = {
-	sizeof(struct mii_softc), icsphymatch, icsphyattach, icsphydetach
+	sizeof(struct mii_softc), icsphymatch, icsphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 struct cfdriver icsphy_cd = {
@@ -134,22 +134,16 @@ icsphyattach(parent, self, aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = icsphy_service;
+	sc->mii_status = icsphy_status;
 	sc->mii_pdata = mii;
+	sc->mii_flags = mii->mii_flags;
 
 	icsphy_reset(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_MEDIAMASK)
-		mii_add_media(sc);
-}
-
-int
-icsphydetach(dev, flags)
-	struct device *dev;
-	int flags;
-{
-	return (0);
+		mii_phy_add_media(sc);
 }
 
 int
@@ -160,6 +154,9 @@ icsphy_service(sc, mii, cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -187,18 +184,7 @@ icsphy_service(sc, mii, cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		switch (IFM_SUBTYPE(ife->ifm_media)) {
-		case IFM_AUTO:
-			/*
-			 * If we're already in auto mode, just return.
-			 */
-			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
-				return (0);
-			(void) mii_phy_auto(sc, 1);
-			break;
-		default:
-			mii_phy_setmedia(sc);
-		}
+		mii_phy_setmedia(sc);
 		break;
 
 	case MII_TICK:
@@ -208,22 +194,8 @@ icsphy_service(sc, mii, cmd)
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 
-		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return (0);
-
-		/*
-		 * Is the interface even up?
-		 */
-		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
-			return (0);
-
-		/*
-		 * The ICS1890's autonegotiation doesn't need to be
-		 * kicked; it continues in the background.
-		 */
 		break;
 
 	case MII_DOWN:
@@ -232,13 +204,10 @@ icsphy_service(sc, mii, cmd)
 	}
 
 	/* Update the media status. */
-	icsphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
-	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
-		sc->mii_active = mii->mii_media_active;
-	}
+	mii_phy_update(sc, cmd);
 	return (0);
 }
 

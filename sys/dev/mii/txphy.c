@@ -1,4 +1,4 @@
-/*	$OpenBSD: txphy.c,v 1.1 1999/12/10 21:48:20 jason Exp $	*/
+/*	$OpenBSD: txphy.c,v 1.2 2000/08/26 20:04:18 nate Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -54,7 +54,8 @@ int	txphymatch __P((struct device *, void *, void *));
 void	txphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach txphy_ca = {
-	sizeof(struct mii_softc), txphymatch, txphyattach
+	sizeof(struct mii_softc), txphymatch, txphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 struct cfdriver txphy_cd = {
@@ -92,14 +93,16 @@ txphyattach(parent, self, aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = txphy_service;
+	sc->mii_status = ukphy_status;
 	sc->mii_pdata = mii;
+	sc->mii_flags = mii->mii_flags;
 
 	mii_phy_reset(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_MEDIAMASK)
-		mii_add_media(sc);
+		mii_phy_add_media(sc);
 }
 
 int
@@ -109,6 +112,9 @@ txphy_service(sc, mii, cmd)
 	int cmd;
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	/*
 	 * Can't isolate the RTL8139 phy, so it has to be the only one.
@@ -128,36 +134,12 @@ txphy_service(sc, mii, cmd)
 			break;
 
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
-		case IFM_AUTO:
-			/*
-			 * If we're already in auto mode, just return.
-			 */
-			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
-				return (0);
-			(void) mii_phy_auto(sc, 1);
-			break;
-		default:
-			mii_phy_setmedia(sc);
-		}
+		  mii_phy_setmedia(sc);
 		break;
 
 	case MII_TICK:
-		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return (0);
-
-		/*
-		 * Is the interface even up?
-		 */
-		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
-			return (0);
-
-		/*
-		 * The TNETE2101 autonegotiation doesn't need to be
-		 * kicked; it continues in the background.
-		 */
 		break;
 
 	case MII_DOWN:
@@ -166,12 +148,9 @@ txphy_service(sc, mii, cmd)
 	}
 
 	/* Update the media status. */
-	ukphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
-	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
-		sc->mii_active = mii->mii_media_active;
-	}
+	mii_phy_update(sc, cmd);
 	return (0);
 }

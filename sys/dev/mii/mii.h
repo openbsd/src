@@ -1,5 +1,5 @@
-/*	$OpenBSD: mii.h,v 1.1 1998/09/10 17:17:33 jason Exp $	*/
-/*	$NetBSD: mii.h,v 1.1 1998/08/10 23:55:17 thorpej Exp $	*/
+/*	$OpenBSD: mii.h,v 1.2 2000/08/26 20:04:17 nate Exp $	*/
+/*	$NetBSD: mii.h,v 1.2 1999/09/29 22:49:33 thorpej Exp $	*/
  
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -68,6 +68,7 @@
 #define	BMSR_100TXHDX	0x2000	/* 100 base Tx half duplex capable */
 #define	BMSR_10TFDX	0x1000	/* 10 base T full duplex capable */
 #define	BMSR_10THDX	0x0800	/* 10 base T half duplex capable */
+#define	BMSR_MFPS	0x0040	/* MII Frame Preamble Suppression */
 #define	BMSR_ACOMP	0x0020	/* Autonegotiation complete */
 #define	BMSR_RFAULT	0x0010	/* Link partner fault */
 #define	BMSR_ANEG	0x0008	/* Autonegotiation capable */
@@ -99,6 +100,7 @@
 #define ANAR_NP		0x8000	/* Next page (ro) */
 #define	ANAR_ACK	0x4000	/* link partner abilities acknowledged (ro) */
 #define ANAR_RF		0x2000	/* remote fault (ro) */
+#define	ANAR_FC		0x0400	/* local device supports PAUSE */
 #define ANAR_T4		0x0200	/* local device supports 100bT4 */
 #define ANAR_TX_FD	0x0100	/* local device supports 100bTx FD */
 #define ANAR_TX		0x0080	/* local device supports 100bTx */
@@ -110,6 +112,7 @@
 #define ANLPAR_NP	0x8000	/* Next page (ro) */
 #define	ANLPAR_ACK	0x4000	/* link partner accepted ACK (ro) */
 #define ANLPAR_RF	0x2000	/* remote fault (ro) */
+#define	ANLPAR_FC	0x0400	/* link partner supports PAUSE */
 #define ANLPAR_T4	0x0200	/* link partner supports 100bT4 */
 #define ANLPAR_TX_FD	0x0100	/* link partner supports 100bTx FD */
 #define ANLPAR_TX	0x0080	/* link partner supports 100bTx */
