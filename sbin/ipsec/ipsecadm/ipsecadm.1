@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.1,v 1.11 1998/05/24 22:57:18 angelos Exp $
+.\" $OpenBSD: ipsecadm.1,v 1.12 1998/05/24 23:00:02 provos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -201,11 +201,7 @@ option.
 .It iv
 The initialization vector used for encryption. In old esp mode you need
 to specify it as either four or eight byte long value. In new esp mode
-the iv has to be eight bytes for
-.Nm cast
-and
-.Nm blf .
-The other transforms can either use an eight byte iv or will derive one
+the transforms can either use an eight byte iv or will derive one
 when none is specified with
 .Xr ipsecadm 1 .
 .It proto
