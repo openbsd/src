@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.17 1996/11/06 02:09:39 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.18 1996/11/10 09:49:14 downsj Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -206,10 +206,6 @@ setroot()
 #if NWDC > 0
 extern	struct cfdriver wd_cd;
 #endif
-#include "fd.h"
-#if NFD > 0
-extern	struct cfdriver fd_cd;
-#endif
 #include "sd.h"
 #if NSD > 0
 extern	struct cfdriver sd_cd;
@@ -225,6 +221,10 @@ extern	struct cfdriver mcd_cd;
 #include "acd.h"
 #if NACD > 0
 extern	struct cfdriver acd_cd;
+#endif
+#include "fd.h"
+#if NFD > 0
+extern	struct cfdriver fd_cd;
 #endif
 
 struct	genericconf {
@@ -244,11 +244,11 @@ struct	genericconf {
 #if NMCD > 0
 	{ &mcd_cd, "mcd", 7 },
 #endif
-#if NFDC > 0
-	{ &fd_cd,  "fd",  20 },
-#endif
 #if NACD > 0
 	{ &acd_cd,  "acd",  18 },
+#endif
+#if NFDC > 0
+	{ &fd_cd,  "fd",  20 },
 #endif
 	{ 0 }
 };
@@ -264,7 +264,7 @@ setconf()
 	char *num;
 
 #ifdef INSTALL
-	if (((bootdev >> B_TYPESHIFT) & B_TYPEMASK) == 2) {
+	if (((bootdev >> B_TYPESHIFT) & B_TYPEMASK) == 20) {
 		printf("\n\nInsert file system floppy...\n");
 		if (!(boothowto & RB_ASKNAME))
 			cngetc();
