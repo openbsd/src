@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.15 2001/08/12 23:58:34 millert Exp $	*/
+/*	$OpenBSD: param.c,v 1.16 2001/08/23 12:02:04 art Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -92,7 +92,6 @@ int	maxproc = NPROC;
 #define	NVNODE (NPROC * 2 + NTEXT + 100)
 int	desiredvnodes = NVNODE;
 int	maxfiles = 3 * (NPROC + MAXUSERS) + 80;
-int	ntimeout = (16 + NPROC) * 2;
 int	nmbclusters = NMBCLUSTERS;
 
 #ifndef MBLOWAT
@@ -170,7 +169,6 @@ int	nbuf, nswbuf;
  * them here forces loader errors if this file is omitted
  * (if they've been externed everywhere else; hah!).
  */
-struct 	timeout *timeouts;
 struct	buf *buf, *swbuf;
 char	*buffers;
 

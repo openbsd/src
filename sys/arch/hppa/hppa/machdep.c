@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.36 2001/07/25 13:25:31 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.37 2001/08/23 12:02:04 art Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -475,7 +475,6 @@ hptsize=256;	/* XXX one page for now */
 	v = vstart;
 #define valloc(name, type, num) (name) = (type *)v; v = (vaddr_t)((name)+(num))
 
-	valloc(timeouts, struct timeout, ntimeout);
 	valloc(buf, struct buf, nbuf);
 
 #ifdef SYSVSHM

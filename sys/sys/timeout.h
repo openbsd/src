@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.8 2001/08/23 08:18:59 miod Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.9 2001/08/23 12:02:04 art Exp $	*/
 /*
  * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -97,9 +97,4 @@ void timeout_init __P((void));
  */
 int timeout_hardclock_update __P((void));
 
-/*
- * XXX - this should go away.
- */
-extern int ntimeout;
-extern struct timeout *timeouts;
 #endif	/* _SYS_TIMEOUT_H_ */

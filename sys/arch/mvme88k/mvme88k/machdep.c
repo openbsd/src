@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.51 2001/08/23 08:47:34 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.52 2001/08/23 12:02:04 art Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -740,7 +740,6 @@ allocsys(v)
 #define	valloc(name, type, num) \
 	    v = (caddr_t)(((name) = (type *)v) + (num))
 
-	valloc(timeouts, struct timeout, ntimeout);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
