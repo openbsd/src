@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.87 2002/10/17 22:11:02 art Exp $	*/
+/*	$OpenBSD: com.c,v 1.88 2002/12/19 01:22:40 mickey Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -919,6 +919,7 @@ comioctl(dev, cmd, data, flag, p)
 	return 0;
 }
 
+/* already called at spltty */
 int
 comparam(tp, t)
 	struct tty *tp;
@@ -930,7 +931,6 @@ comparam(tp, t)
 	int ospeed = comspeed(sc->sc_frequency, t->c_ospeed);
 	u_char lcr;
 	tcflag_t oldcflag;
-	int s;
 
 	/* check requested parameters */
 	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
@@ -962,8 +962,6 @@ comparam(tp, t)
 
 	sc->sc_lcr = lcr;
 
-	s = spltty();
-
 	if (ospeed == 0) {
 		CLR(sc->sc_mcr, MCR_DTR);
 		bus_space_write_1(iot, ioh, com_mcr, sc->sc_mcr);
@@ -993,7 +991,6 @@ comparam(tp, t)
 				    TTOPRI | PCATCH, "comprm", 0);
 				--sc->sc_halt;
 				if (error) {
-					splx(s);
 					comstart(tp);
 					return (error);
 				}
@@ -1060,7 +1057,6 @@ comparam(tp, t)
 	}
 
 	/* Just to be sure... */
-	splx(s);
 	comstart(tp);
 	return 0;
 }
@@ -1420,22 +1416,22 @@ com_common_putc(iot, ioh, c)
 	bus_space_handle_t ioh;
 	int c;
 {
-	int s = splhigh();
+	int s = spltty();
 	int timo;
 
 	/* wait for any pending transmission to finish */
-	timo = 150000;
+	timo = 2000;
 	while (!ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
-		continue;
+		delay(1);
 
 	bus_space_write_1(iot, ioh, com_data, c);
 	bus_space_barrier(iot, ioh, 0, COM_NPORTS,
 	    (BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE));
 
 	/* wait for this transmission to complete */
-	timo = 1500000;
+	timo = 2000;
 	while (!ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
-		continue;
+		delay(1);
 
 	splx(s);
 }
