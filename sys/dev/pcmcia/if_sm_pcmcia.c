@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.5 1999/08/08 01:17:23 niklas Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.6 1999/08/16 07:55:40 fgsch Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -121,38 +121,18 @@ struct sm_pcmcia_product {
 	u_int32_t	spp_vendor;	/* vendor ID */
 	u_int32_t	spp_product;	/* product ID */
 	int		spp_expfunc;	/* expected function */
-	const char	*spp_name;	/* product name */
-} sm_pcmcia_products[] = {
+} sm_pcmcia_prod[] = {
 	{ PCMCIA_VENDOR_MEGAHERTZ2,	PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,
-	  0,				PCMCIA_STR_MEGAHERTZ2_XJACK },
+	  0 },
 
 	{ PCMCIA_VENDOR_NEWMEDIA,	PCMCIA_PRODUCT_NEWMEDIA_BASICS,
-	  0,				PCMCIA_STR_NEWMEDIA_BASICS },
+	  0 },
 
 #if 0
 	{ PCMCIA_VENDOR_SMC,		PCMCIA_PRODUCT_SMC_8020BT,
-	  0,				PCMCIA_STR_SMC_8020BT },
+	  0 }
 #endif
-
-	{ 0,				0,
-	  0,				NULL },
 };
-
-struct sm_pcmcia_product *sm_pcmcia_lookup __P((struct pcmcia_attach_args *));
-
-struct sm_pcmcia_product *
-sm_pcmcia_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	struct sm_pcmcia_product *spp;
-
-	for (spp = sm_pcmcia_products; spp->spp_name != NULL; spp++)
-		if (pa->manufacturer == spp->spp_vendor &&
-		    pa->product == spp->spp_product &&
-		    pa->pf->number == spp->spp_expfunc)
-			return (spp);
-	return (NULL);
-}
 
 int
 sm_pcmcia_match(parent, match, aux)
@@ -160,9 +140,13 @@ sm_pcmcia_match(parent, match, aux)
 	void *match, *aux;
 {
 	struct pcmcia_attach_args *pa = aux;
+	int i;
 
-	if (sm_pcmcia_lookup(pa) != NULL)
-		return (1);
+	for (i = 0; i < sizeof(sm_pcmcia_prod)/sizeof(sm_pcmcia_prod[0]); i++)
+		if (pa->manufacturer == sm_pcmcia_prod[i].spp_vendor &&
+		    pa->product == sm_pcmcia_prod[i].spp_product &&
+		    pa->pf->number == sm_pcmcia_prod[i].spp_expfunc)
+			return (1);
 	return (0);
 }
 
@@ -176,7 +160,6 @@ sm_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	u_int8_t myla[ETHER_ADDR_LEN], *enaddr = NULL;
-	struct sm_pcmcia_product *spp;
 
 	psc->sc_pf = pa->pf;
 	cfe = pa->pf->cfe_head.sqh_first;
@@ -211,12 +194,6 @@ sm_pcmcia_attach(parent, self, aux)
 	}
 
 	printf(" port 0x%lx/%d", psc->sc_pcioh.addr, cfe->iospace[0].length);
-
-	spp = sm_pcmcia_lookup(pa);
-	if (spp == NULL)
-		panic("sm_pcmcia_attach: impossible");
-
-	printf(": %s", spp->spp_name);
 
 	/*
 	 * First try to get the Ethernet address from FUNCE/LANNID tuple.
