@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.2 2003/10/19 18:40:11 espie Exp $
+# $OpenBSD: pkg_info,v 1.3 2003/10/23 17:48:07 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -62,61 +62,11 @@ sub get_line
 our ($opt_c, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_L, $opt_m,
     $opt_p, $opt_q, $opt_R, $opt_r, $opt_v, $opt_h, $opt_e, $opt_l, $opt_a);
 
-getopts('cDdfIikLmpqRrvhe:l:a');
-
-if (defined $opt_e) {
-	die "Error: -e is not yet supported";
-}
-
-unless ($opt_c || $opt_D || $opt_d || $opt_f || $opt_I || $opt_i ||
-	$opt_k || $opt_L || $opt_m || $opt_p || $opt_R || $opt_r) {
-	if (@ARGV == 0) {
-		$opt_I = $opt_a = 1;
-	} else {
-		$opt_c = $opt_d = $opt_R = 1;
-	}
-}
-
-if ($opt_v) {
-	$opt_c = $opt_d = $opt_f = $opt_i = $opt_k = $opt_r = $opt_D =
-	    $opt_m = $opt_R = 1;
-}
-
-if (!defined $opt_p) {
-	$opt_p = "";
-}
-
-if (@ARGV == 0 && !$opt_a) {
-	die "Missing package name(s)";
-}
-
-if (@ARGV > 0 && $opt_a) {
-	die "Can't specify package name(s) with -a";
-}
-
-if (@ARGV == 0) {
-	@ARGV = sort(installed_packages());
-}
-
-for my $pkg (@ARGV) {
-	my $dir = installed_info($pkg);
+sub print_info
+{
+	my ($pkg, $dir) = @_;
 	unless (-d $dir) {
-		if (OpenBSD::PackageName::is_stem($pkg)) {
-			my @l = OpenBSD::PackageName::findstem($pkg, installed_packages());
-			if (@l == 1) {
-				$dir = installed_info($l[0]);
-			} elsif (@l != 0) {
-				print STDERR "$pkg: ambiguous (", join(" ",@l), ")\n";
-				next;
-			}
-		}
-	}
-				
-	unless (-d $dir) {
-		my $true_package = OpenBSD::PackageLocator->find($pkg);
-		next unless $true_package;
-		$dir = $true_package->info();
-		$true_package->close();
+		print STDERR "Error printing info for $pkg: no info ?\n";
 	}
 	if ($opt_I) {
 		my $l = 20 - length($pkg);
@@ -183,4 +133,63 @@ for my $pkg (@ARGV) {
 		}
 		print $opt_p, "\n" unless $opt_q;
 	}
+}
+
+getopts('cDdfIikLmpqRrvhe:l:a');
+
+if (defined $opt_e) {
+	die "Error: -e is not yet supported";
+}
+
+unless ($opt_c || $opt_D || $opt_d || $opt_f || $opt_I || $opt_i ||
+	$opt_k || $opt_L || $opt_m || $opt_p || $opt_R || $opt_r) {
+	if (@ARGV == 0) {
+		$opt_I = $opt_a = 1;
+	} else {
+		$opt_c = $opt_d = $opt_R = 1;
+	}
+}
+
+if ($opt_v) {
+	$opt_c = $opt_d = $opt_f = $opt_i = $opt_k = $opt_r = $opt_D =
+	    $opt_m = $opt_R = 1;
+}
+
+if (!defined $opt_p) {
+	$opt_p = "";
+}
+
+if (@ARGV == 0 && !$opt_a) {
+	die "Missing package name(s)";
+}
+
+if (@ARGV > 0 && $opt_a) {
+	die "Can't specify package name(s) with -a";
+}
+
+if (@ARGV == 0) {
+	@ARGV = sort(installed_packages());
+}
+
+for my $pkg (@ARGV) {
+	if (is_installed($pkg)) {
+		print_info($pkg, installed_info($pkg));
+		next;
+	}
+	if (OpenBSD::PackageName::is_stem($pkg)) {
+		my @l = sort (OpenBSD::PackageName::findstem($pkg, installed_packages()));
+		if (@l != 0) {
+			for my $p (@l) {
+				print_info($p, installed_info($p));
+			}
+			next;
+		}
+	}
+				
+	my $true_package = OpenBSD::PackageLocator->find($pkg);
+	next unless $true_package;
+	my $dir = $true_package->info();
+	$true_package->close();
+
+	print_info($pkg, $dir);
 }

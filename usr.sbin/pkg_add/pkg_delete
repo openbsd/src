@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.2 2003/10/19 18:42:55 espie Exp $
+# $OpenBSD: pkg_delete,v 1.3 2003/10/23 17:48:07 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -213,7 +213,7 @@ sub delete
 	my $opt_v = $state->{verbose};
 	my $opt_n = $state->{not};
 	my $pkgname = $state->{pkgname};
-	print "Deinstall script: $dir",DEINSTALL ,"$pkgname DEINSTALL\n" if $opt_v or $opt_n;
+	print "Deinstall script: $dir",DEINSTALL ," $pkgname DEINSTALL\n" if $opt_v or $opt_n;
 	unless ($opt_n) {
 		chmod 0755, $dir.DEINSTALL;
 		system($dir.DEINSTALL, $pkgname, "DEINSTALL") == 0 or 
@@ -294,6 +294,16 @@ do {
 	$removed = 0;
 	for my $pkgname (@ARGV) {
 		next if $done{$pkgname};
+		unless (is_installed($pkgname)) {
+			if (OpenBSD::PackageName::is_stem($pkgname)) {
+			    my @l = OpenBSD::PackageName::findstem($pkgname, installed_packages());
+			    if (@l == 1) {
+			    	$pkgname = $l[0];
+			    } elsif (@l != 0) {
+			    	print "Ambiguous: $pkgname could be ", join(' ', @l),"\n";
+			    }
+			}
+		}
 		unless (is_installed($pkgname)) {
 			print "$pkgname was not installed\n";
 			$done{$pkgname} = 1;
