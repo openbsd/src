@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.33 2004/05/17 17:15:07 mickey Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.34 2004/06/04 22:25:09 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -767,6 +767,10 @@ pfsyncioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				sc->sc_mbuf_net = NULL;
 				sc->sc_statep_net.s = NULL;
 				splx(s);
+			}
+			if (imo->imo_num_memberships > 0) {
+				in_delmulti(imo->imo_membership[--imo->imo_num_memberships]);
+				imo->imo_multicast_ifp = NULL;
 			}
 			break;
 		}
