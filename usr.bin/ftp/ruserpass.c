@@ -1,4 +1,4 @@
-/*	$OpenBSD: ruserpass.c,v 1.9 1997/07/25 21:56:22 millert Exp $	*/
+/*	$OpenBSD: ruserpass.c,v 1.10 1997/09/05 00:02:30 millert Exp $	*/
 /*	$NetBSD: ruserpass.c,v 1.14 1997/07/20 09:46:01 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.9 1997/07/25 21:56:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: ruserpass.c,v 1.10 1997/09/05 00:02:30 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ next:
 				(void)fclose(cfile);
 				return (0);
 			}
-			while ((c=getc(cfile)) != EOF)
+			while ((c = fgetc(cfile)) != EOF)
 				if (c != ' ' && c != '\t')
 					break;
 			if (c == EOF || c == '\n') {
@@ -203,7 +203,7 @@ next:
 			}
 			tmp = macros[macnum].mac_name;
 			*tmp++ = c;
-			for (i=0; i < 8 && (c=getc(cfile)) != EOF &&
+			for (i=0; i < 8 && (c = fgetc(cfile)) != EOF &&
 			    !isspace(c); ++i) {
 				*tmp++ = c;
 			}
@@ -214,7 +214,7 @@ next:
 			}
 			*tmp = '\0';
 			if (c != '\n') {
-				while ((c=getc(cfile)) != EOF && c != '\n');
+				while ((c = fgetc(cfile)) != EOF && c != '\n');
 			}
 			if (c == EOF) {
 				fputs(
@@ -230,7 +230,7 @@ next:
 			}
 			tmp = macros[macnum].mac_start;
 			while (tmp != macbuf + 4096) {
-				if ((c=getc(cfile)) == EOF) {
+				if ((c = fgetc(cfile)) == EOF) {
 				fputs(
 "Macro definition missing null line terminator.\n", ttyout);
 					goto bad;
@@ -273,24 +273,24 @@ token()
 
 	if (feof(cfile) || ferror(cfile))
 		return (0);
-	while ((c = getc(cfile)) != EOF &&
+	while ((c = fgetc(cfile)) != EOF &&
 	    (c == '\n' || c == '\t' || c == ' ' || c == ','))
 		continue;
 	if (c == EOF)
 		return (0);
 	cp = tokval;
 	if (c == '"') {
-		while ((c = getc(cfile)) != EOF && c != '"') {
+		while ((c = fgetc(cfile)) != EOF && c != '"') {
 			if (c == '\\')
-				c = getc(cfile);
+				c = fgetc(cfile);
 			*cp++ = c;
 		}
 	} else {
 		*cp++ = c;
-		while ((c = getc(cfile)) != EOF
+		while ((c = fgetc(cfile)) != EOF
 		    && c != '\n' && c != '\t' && c != ' ' && c != ',') {
 			if (c == '\\')
-				c = getc(cfile);
+				c = fgetc(cfile);
 			*cp++ = c;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.22 1997/09/04 04:37:16 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.23 1997/09/05 00:02:29 millert Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.22 1997/09/04 04:37:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.23 1997/09/05 00:02:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -283,18 +283,18 @@ getreply(expecteof)
 	for (line = 0 ;; line++) {
 		dig = n = code = 0;
 		cp = current_line;
-		while ((c = getc(cin)) != '\n') {
+		while ((c = fgetc(cin)) != '\n') {
 			if (c == IAC) {     /* handle telnet commands */
-				switch (c = getc(cin)) {
+				switch (c = fgetc(cin)) {
 				case WILL:
 				case WONT:
-					c = getc(cin);
+					c = fgetc(cin);
 					fprintf(cout, "%c%c%c", IAC, DONT, c);
 					(void)fflush(cout);
 					break;
 				case DO:
 				case DONT:
-					c = getc(cin);
+					c = fgetc(cin);
 					fprintf(cout, "%c%c%c", IAC, WONT, c);
 					(void)fflush(cout);
 					break;
@@ -623,7 +623,7 @@ sendrequest(cmd, local, remote, printnames)
 		break;
 
 	case TYPE_A:
-		while ((c = getc(fin)) != EOF) {
+		while ((c = fgetc(fin)) != EOF) {
 			if (c == '\n') {
 				while (hash && (!progress || filesize < 0) &&
 				    (bytes >= hashbytes)) {
@@ -958,7 +958,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 				goto done;
 			n = restart_point;
 			for (i = 0; i++ < n;) {
-				if ((ch = getc(fout)) == EOF)
+				if ((ch = fgetc(fout)) == EOF)
 					goto done;
 				if (ch == '\n')
 					i++;
@@ -973,7 +973,7 @@ done:
 				return;
 			}
 		}
-		while ((c = getc(din)) != EOF) {
+		while ((c = fgetc(din)) != EOF) {
 			if (c == '\n')
 				bare_lfs++;
 			while (c == '\r') {
@@ -984,7 +984,7 @@ done:
 					hashbytes += mark;
 				}
 				bytes++;
-				if ((c = getc(din)) != '\n' || tcrflag) {
+				if ((c = fgetc(din)) != '\n' || tcrflag) {
 					if (ferror(fout))
 						goto break2;
 					(void)putc('\r', fout);
