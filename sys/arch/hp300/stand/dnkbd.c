@@ -1,5 +1,5 @@
-/*	$OpenBSD: dnkbd.c,v 1.1 1997/04/16 11:56:37 downsj Exp $	*/
-/*	$NetBSD: dnkbd.c,v 1.1 1997/04/14 19:03:13 thorpej Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.2 1997/07/13 07:21:47 downsj Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.3 1997/05/12 07:47:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,11 +45,12 @@
 
 #include <sys/param.h>
 
+#include <hp300/dev/frodoreg.h>		/* for apci offsets */
 #include <hp300/dev/dcareg.h>		/* for the register bit defintions */
 #include <hp300/dev/apcireg.h>		/* for the apci registers */
 
-#include "samachdep.h"
-#include "kbdvar.h"
+#include <hp300/stand/samachdep.h>
+#include <hp300/stand/kbdvar.h>
 
 #ifndef SMALL
 
@@ -100,7 +101,8 @@ int	dnkbd_ignore;		/* for ignoring mouse packets */
 int
 dnkbd_getc()
 {
-	struct apciregs *apci = (struct apciregs *)0x41c000;	/* XXX */
+	struct apciregs *apci =
+	    (struct apciregs *)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(0));
 	int c;
 
 	/* default to `no key' */
@@ -158,12 +160,22 @@ dnkbd_init()
 {
 
 	/*
+	 * 400, 425, and 433 models can have a Domain keyboard.
+	 */
+	switch (machineid) {
+	case HP_400:
+	case HP_425:
+	case HP_433:
+		break;
+	default:
+		return (0);
+	}
+
+	/*
 	 * Look for a Frodo utility chip.  If we find one, assume there
 	 * is a Domain keyboard attached.
-	 *
-	 * XXX This could be improved.
 	 */
-	if (badaddr(0x41c000))
+	if (badaddr((caddr_t)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(0))))
 		return (0);
 
 	/*

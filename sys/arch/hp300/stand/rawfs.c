@@ -1,4 +1,4 @@
-/*	$OpenBSD: rawfs.c,v 1.1 1997/01/17 08:36:52 downsj Exp $	*/
+/*	$OpenBSD: rawfs.c,v 1.2 1997/07/13 07:21:51 downsj Exp $	*/
 /*	$NetBSD: rawfs.c,v 1.2 1996/10/06 19:07:53 thorpej Exp $	*/
 
 /*
@@ -40,8 +40,9 @@
  */
 
 #include <sys/param.h>
-#include <stand.h>
-#include <rawfs.h>
+
+#include <lib/libsa/stand.h>
+#include <hp300/stand/rawfs.h>
 
 extern int debug;
 

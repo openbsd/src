@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.2 1997/01/17 08:32:59 downsj Exp $	*/
+/*	$OpenBSD: sd.c,v 1.3 1997/07/13 07:21:53 downsj Exp $	*/
 /*	$NetBSD: sd.c,v 1.9 1996/12/21 21:34:41 thorpej Exp $	*/
 
 /*
@@ -49,8 +49,10 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
-#include "stand.h"
-#include "samachdep.h"
+
+#include <lib/libsa/stand.h>
+
+#include <hp300/stand/samachdep.h>
 
 #define _IOCTL_
 #include <hp300/dev/scsireg.h>
@@ -115,13 +117,6 @@ sdreset(ctlr, unit)
 {
 }
 
-#ifdef COMPAT_NOLABEL
-struct	sdminilabel defaultpinfo = {
-	8,
-	{ 1024, 17408, 0, 17408, 115712, 218112, 82944, 115712 }
-};
-#endif
-
 char io_buf[MAXBSIZE];
 
 sdgetinfo(ss)
@@ -152,15 +147,10 @@ sdgetinfo(ss)
 	if (msg) {
 		printf("sd(%d,%d,%d): WARNING: %s, ",
 		       ss->sc_ctlr, ss->sc_unit, ss->sc_part, msg);
-#ifdef COMPAT_NOLABEL
-		printf("using old default partitioning\n");
-		*pi = defaultpinfo;
-#else
 		printf("defining `c' partition as entire disk\n");
 		pi->npart = 3;
 		pi->offset[0] = pi->offset[1] = -1;
 		pi->offset[2] = 0;
-#endif
 	} else {
 		pi->npart = lp->d_npartitions;
 		for (i = 0; i < pi->npart; i++)

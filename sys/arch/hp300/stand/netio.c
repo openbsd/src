@@ -1,4 +1,4 @@
-/*	$OpenBSD: netio.c,v 1.3 1997/02/03 04:48:06 downsj Exp $	*/
+/*	$OpenBSD: netio.c,v 1.4 1997/07/13 07:21:51 downsj Exp $	*/
 /*	$NetBSD: netio.c,v 1.5 1997/01/30 10:32:56 thorpej Exp $	*/
 
 /*
@@ -57,12 +57,12 @@
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
 
-#include "stand.h"
-#include "samachdep.h"
-#include "net.h"
-#include "netif.h"
-#include "bootparam.h"
-#include "nfs.h"
+#include <lib/libsa/stand.h>
+#include <hp300/stand/samachdep.h>
+#include <lib/libsa/net.h>
+#include <lib/libsa/netif.h>
+#include <lib/libsa/bootparam.h>
+#include <lib/libsa/nfs.h>
 
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 

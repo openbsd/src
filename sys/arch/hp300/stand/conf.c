@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 1997/02/03 07:19:03 downsj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.4 1997/07/13 07:21:45 downsj Exp $	*/
 /*	$NetBSD: conf.c,v 1.12 1996/10/14 07:29:15 thorpej Exp $	*/
 
 /*
@@ -38,8 +38,9 @@
 
 #include <sys/param.h>
 
-#include "stand.h"
-#include "samachdep.h"
+#include <lib/libsa/stand.h>
+
+#include <hp300/stand/samachdep.h>
 
 #include <sys/socket.h>
 #include <net/if.h>
@@ -47,9 +48,9 @@
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
 
-#include "nfs.h"
-#include "rawfs.h"
-#include "ufs.h"
+#include <lib/libsa/nfs.h>
+#include <hp300/stand/rawfs.h>
+#include <lib/libsa/ufs.h>
 
 int	debug = 0;	/* XXX */
 

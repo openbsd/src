@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.s,v 1.3 1997/03/21 07:16:21 downsj Exp $	*/
+/*	$OpenBSD: srt0.s,v 1.4 1997/07/13 07:21:53 downsj Exp $	*/
 /*	$NetBSD: srt0.s,v 1.2 1997/03/10 08:00:47 thorpej Exp $	*/
 
 /*
@@ -90,8 +90,7 @@ vecloop:
 	movl	#NMIRESET,a0	| NMI keyboard reset addr
 	movl	#nmi,a0@	| catch in reset routine
 /*
- * Determine our CPU type and look for internal HP-IB
- * (really only care about detecting 320 (no DIO-II) right now).
+ * Determine our SPU type and look for internal HP-IB
  */
 	lea	_machineid,a0
 	movl	#0x808,d0
@@ -101,8 +100,13 @@ vecloop:
 	movc	cacr,d0		| read it back
 	tstl	d0		| zero?
 	jeq	not68030	| yes, we have 68020/68040
+
 	movl	#0x808,d0
 	movc	d0,cacr		| clear data freeze bit again
+
+	/*
+	 * 68030 models
+	 */
 
 	movl	#0x80,MMUCMD	| set magic cookie
 	movl	MMUCMD,d0	| read it back
@@ -115,14 +119,32 @@ vecloop:
 	jeq	ihpibcheck	| no, a 370
 	movl	#5,a0@		| yes, must be a 340
 	jra	ihpibcheck
+
 not370:
 	movl	#3,a0@		| type is at least a 360
 	movl	#0,MMUCMD	| clear magic cookie2
 	movl	MMUCMD,d0	| read it back
 	btst	#16,d0		| still on?
 	jeq	ihpibcheck	| no, a 360
-	movl	#6,a0@		| yes, must be a 345/375/400
+	lsrl	#8,d0		| save MMU ID
+	andl	#0xff,d0
+	cmpb	#1,d0		| are we a 345?
+	jeq	isa345
+	cmpb	#3,d0		| how about a 375?
+	jeq	isa375
+	movl	#8,a0@		| must be a 400
 	jra	ihpibcheck
+isa345:
+	movl	#6,a0@
+	jra	ihpibcheck
+isa375:
+	movl	#7,a0@
+	jra	ihpibcheck
+
+	/*
+	 * End of 68030 section
+	 */
+
 not68030:
 	bset	#31,d0		| data cache enable bit
 	movc	d0,cacr		|   only exists on 68040
@@ -131,20 +153,45 @@ not68030:
 	beq	is68020		| yes, we have 68020
 	moveq	#0,d0		| now turn it back off
 	movec	d0,cacr		|   before we access any data
+
 	.long	0x4e7b0004	| movc d0,itt0
 	.long	0x4e7b0005	| movc d0,itt1
 	.long	0x4e7b0006	| movc d0,dtt0
 	.long	0x4e7b0007	| movc d0,dtt1
 	.word	0xf4d8		| cinva bc
+
+	/*
+	 * 68040 models
+	 */
+
 	movl	MMUCMD,d0	| get MMU register
-	lsrl	#8,d0		| get apparent ID
-	cmpb	#6,d0		| id == 6?
-	jeq	is33mhz		| yes, we have a 433s
-	movl	#7,a0@		| no, we have a 380/425t
+	lsrl	#8,d0
+	andl	#0xff,d0
+	cmpb	#5,d0		| are we a 425t?
+	jeq	isa425
+	cmpb	#7,d0		| how about 425s?
+	jeq	isa425
+	cmpb	#4,d0		| or a 433t?
+	jeq	isa433
+	cmpb	#6,d0		| last chance...
+	jeq	isa433
+	movl	#9,a0@		| guess we're a 380
 	jra	ihpibcheck
-is33mhz:
-	movl	#8,a0@		| 433s (XXX 425s returns same ID, ugh!)
+isa425:
+	movl	#10,a0@
 	jra	ihpibcheck
+isa433:
+	movl	#11,a0@
+	jra	ihpibcheck
+
+	/*
+	 * End 68040 section
+	 */
+
+	/*
+	 * 68020 models
+	 */
+
 is68020:
 	movl	#1,a0@		| consider a 330 for now
 	movl	#1,MMUCMD	| a 68020, write HP MMU location
@@ -157,6 +204,11 @@ is68020:
 	btst	#7,d0		| cookie still on?
 	jeq	ihpibcheck	| no, just a 320
 	movl	#2,a0@		| yes, a 350
+
+	/*
+	 * End 68020 section
+	 */
+
 ihpibcheck:
 	movl	#0,MMUCMD	| make sure MMU is off
 	btst	#5,SYSFLAG	| do we have an internal HP-IB?
@@ -250,19 +302,18 @@ Lstop:
 
 nmi:
 	movw	#18,BOOTTYPE	| mark as system switch
-	jsr	_kbdnmi		| clear the interrupt
-	jra	begin		| start over
+	jsr	_kbdnmi		| clear the interrupt, and
+				|   reset the system
+	stop	#0		| SCREEEECH!
 
 	.globl _call_req_reboot
 _call_req_reboot:
 	jmp	0x1A4		| call ROM reboot function
 	rts			| XXX: just in case?
 
-#ifdef ROMPRF
 	.globl	_romout
 _romout:
 	movl	sp@(4),d0	| line number
 	movl	sp@(8),a0	| string
 	jsr	0x150		| do it
 	rts
-#endif

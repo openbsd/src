@@ -1,5 +1,5 @@
-/*	$OpenBSD: uboot.c,v 1.7 1997/04/16 12:38:23 downsj Exp $	*/
-/*	$NetBSD: uboot.c,v 1.2 1996/10/14 07:33:45 thorpej Exp $	*/
+/*	$OpenBSD: uboot.c,v 1.8 1997/07/13 07:21:54 downsj Exp $	*/
+/*	$NetBSD: uboot.c,v 1.3 1997/04/27 21:17:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -40,8 +40,10 @@
 #include <sys/reboot.h>
 #include <machine/exec.h>
 #include <a.out.h>
-#include "stand.h"
-#include "samachdep.h"
+
+#include <lib/libsa/stand.h>
+
+#include <hp300/stand/samachdep.h>
 
 /*
  * Boot program... bits in `howto' determine whether boot stops to

@@ -1,5 +1,5 @@
-/*	$OpenBSD: hpib.c,v 1.3 1997/02/03 04:48:04 downsj Exp $	*/
-/*	$NetBSD: hpib.c,v 1.5 1997/01/30 10:32:53 thorpej Exp $	*/
+/*	$OpenBSD: hpib.c,v 1.4 1997/07/13 07:21:48 downsj Exp $	*/
+/*	$NetBSD: hpib.c,v 1.2 1997/05/12 07:48:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -42,13 +42,16 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 
+#include <lib/libsa/stand.h>
+
 #include <hp300/stand/device.h>
 #include <hp300/stand/hpibvar.h>
 
-#include "stand.h"
-#include "samachdep.h"
+#include <hp300/stand/samachdep.h>
 
-int	internalhpib = IIOV(0x478000);
+#include <hp300/dev/dioreg.h>
+
+int	internalhpib = IIOV(DIO_IHPIBADDR);
 int	fhpibppoll(), nhpibppoll();
 
 struct	hpib_softc hpib_softc[NHPIB];

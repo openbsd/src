@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.2 1997/01/17 08:32:42 downsj Exp $	*/
+/*	$OpenBSD: ct.c,v 1.3 1997/07/13 07:21:46 downsj Exp $	*/
 /*	$NetBSD: ct.c,v 1.9 1996/10/14 07:29:57 thorpej Exp $	*/
 
 /*
@@ -43,8 +43,9 @@
 
 #include <hp300/dev/ctreg.h>
 
-#include "stand.h"
-#include "samachdep.h"
+#include <lib/libsa/stand.h>
+
+#include <hp300/stand/samachdep.h>
 
 struct	ct_iocmd ct_ioc;
 struct	ct_rscmd ct_rsc;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cons.c,v 1.2 1997/01/17 08:32:40 downsj Exp $	*/
-/*	$NetBSD: cons.c,v 1.9 1995/10/04 06:54:42 thorpej Exp $	*/
+/*	$OpenBSD: cons.c,v 1.3 1997/07/13 07:21:45 downsj Exp $	*/
+/*	$NetBSD: cons.c,v 1.2 1997/05/12 07:44:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,6 +56,9 @@ struct consdev constab[] = {
 #ifdef DCACONSOLE
 	{ dcaprobe,	dcainit,	dcagetchar,	dcaputchar },
 #endif
+#ifdef APCICONSOLE
+	{ apciprobe,	apciinit,	apcigetchar,	apciputchar },
+#endif
 #ifdef DCMCONSOLE
 	{ dcmprobe,	dcminit,	dcmgetchar,	dcmputchar },
 #endif
@@ -89,10 +92,16 @@ cninit()
 		noconsole = 0;
 #if 0
 		printf("console: ");
-		if (cons_scode == -1)
+		switch (cons_scode) {
+		case -2:
+			printf("apci\n");
+			break;
+		case -1:
 			printf("internal grf\n");
-		else
+			break;
+		default:
 			printf("scode %d\n", cons_scode);
+		}
 #endif
 	}
 }
@@ -113,14 +122,9 @@ cnputc(c)
 {
 
 	/* Note: the dev_t arguments are not used! */
-#ifdef ROMPRF
-	extern int userom;
-
 	if (userom)
 		romputchar(c);
-	else
-#endif
-	if (cn_tab)
+	else if (cn_tab)
 		(*cn_tab->cn_putc)(0, c);
 
 	return (0);

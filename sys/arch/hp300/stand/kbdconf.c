@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbdconf.c,v 1.1 1997/04/16 11:56:39 downsj Exp $	*/
+/*	$OpenBSD: kbdconf.c,v 1.2 1997/07/13 07:21:50 downsj Exp $	*/
 /*	$NetBSD: kbdconf.c,v 1.1 1997/04/14 19:00:12 thorpej Exp $	*/
 
 /*-
@@ -45,8 +45,8 @@
 
 #include <sys/param.h>
 
-#include "samachdep.h"
-#include "kbdvar.h"
+#include <hp300/stand/samachdep.h>
+#include <hp300/stand/kbdvar.h>
 
 #ifndef SMALL
 

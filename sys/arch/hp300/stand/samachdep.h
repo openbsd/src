@@ -1,5 +1,5 @@
-/*	$OpenBSD: samachdep.h,v 1.3 1997/02/03 07:19:09 downsj Exp $	*/
-/*	$NetBSD: samachdep.h,v 1.7 1996/10/14 07:34:48 thorpej Exp $	*/
+/*	$OpenBSD: samachdep.h,v 1.4 1997/07/13 07:21:52 downsj Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.3 1997/05/12 07:54:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -37,6 +37,7 @@
  */
 
 #include <sys/types.h>
+#include <machine/hp300spu.h>
 
 #define	NHPIB		4
 #define	NSCSI		2
@@ -47,21 +48,12 @@
 #define NITE		4
 
 /* from cpu.h */
+#define	INTIOBASE	(0x00400000)
 #define IIOV(x)		(x)
 #define DIOBASE		(0x600000)
 #define	DIOCSIZE	(0x10000)
 #define DIOIIBASE	(0x01000000)
 #define DIOIICSIZE	(0x00400000)
-
-#define HP_320		0	/* 16Mhz 68020+HP MMU+16K external cache */
-#define HP_330		1	/* 16Mhz 68020+68851 MMU */
-#define HP_350		2	/* 25Mhz 68020+HP MMU+32K external cache */
-#define HP_360		3	/* 25Mhz 68030 */
-#define HP_370		4	/* 33Mhz 68030+64K external cache */
-#define HP_340		5	/* 16Mhz 68030 */
-#define HP_375		6	/* 50Mhz 68030+32K external cache */
-#define HP_380		7	/* 25Mhz 68040 */
-#define HP_433		8	/* 33Mhz 68040 */
 
 #define MHZ_8		1
 #define MHZ_16		2
@@ -75,6 +67,9 @@ extern	int cons_scode;
 extern	u_int opendev;
 extern	u_int bootdev;
 extern	char *getmachineid();
+
+extern	int userom;
+extern	void romputchar __P((int));
 
 #define DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
 

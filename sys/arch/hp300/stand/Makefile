@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 1997/04/21 07:37:36 downsj Exp $
+#	$OpenBSD: Makefile,v 1.11 1997/07/13 07:21:43 downsj Exp $
 #	$NetBSD: Makefile,v 1.22 1996/10/18 06:03:25 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
@@ -10,14 +10,14 @@ NOMAN=	noman
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
 
-CONS=	-DDCACONSOLE -DITECONSOLE -DDCMCONSOLE
+CONS=	-DDCACONSOLE -DITECONSOLE -DDCMCONSOLE -DAPCICONSOLE
 CONS+=	-DHIL_KEYBOARD -DUK_KEYBOARD -DDOMAIN_KEYBOARD
-DEFS=	-DSTANDALONE -DCOMPAT_NOLABEL ${CONS} -Dhp300 # -DROMPRF
+DEFS=	-DSTANDALONE ${CONS} -Dhp300
 #DEFS+=	-DNETIF_DEBUG -DRPC_DEBUG -DNFS_DEBUG -DRARP_DEBUG -DNET_DEBUG
 #DEFS+=	-DLE_DEBUG
-CFLAGS=	-O3 ${INCPATH} ${DEFS}
+CFLAGS=	-O3 -msoft-float ${INCPATH} ${DEFS}
 
-SRCS=	autoconf.c cons.c ct.c dca.c dcm.c devopen.c dnkbd.c fhpib.c \
+SRCS=	apci.c autoconf.c cons.c ct.c dca.c dcm.c devopen.c dnkbd.c fhpib.c \
 	hd.c hil.c hpib.c if_le.c ite.c ite_dv.c ite_gb.c ite_rb.c \
 	ite_subr.c ite_tc.c ite_hy.c kbd.c kbdconf.c kbdvar.h machdep.c \
 	nhpib.c prf.c scsi.c sd.c version.c
@@ -51,11 +51,9 @@ all: ${ALL}
 
 ${BOOTS}: ${LIBS}
 
-# depend on DEFS
+# depend on CFLAGS
 
-devopen.o machdep.o srt0.o: Makefile
-cons.o dca.o hil.o: Makefile
-ite.o ite_subr.o ite_dv.o ite_gb.o ite_hy.o ite_rb.o ite_tc.o: Makefile
+${OBJS}: Makefile
 
 # startups
 

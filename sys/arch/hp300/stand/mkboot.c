@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.2 1997/01/17 08:32:53 downsj Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.3 1997/07/13 07:21:50 downsj Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -46,14 +46,14 @@ static char copyright[] =
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 static char rcsid[] = "$NetBSD: mkboot.c,v 1.5 1994/10/26 07:27:45 cgd Exp $";
 #endif
-static char rcsid[] = "$OpenBSD: mkboot.c,v 1.2 1997/01/17 08:32:53 downsj Exp $";
+static char rcsid[] = "$OpenBSD: mkboot.c,v 1.3 1997/07/13 07:21:50 downsj Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>
 #include <a.out.h>
 
-#include "volhdr.h"
+#include <hp300/stand/volhdr.h>
 
 #include <stdio.h>
 #include <ctype.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.3 1997/02/03 07:19:04 downsj Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.4 1997/07/13 07:21:47 downsj Exp $	*/
 /*	$NetBSD: devopen.c,v 1.7 1996/10/14 07:31:47 thorpej Exp $	*/
 
 /*-
@@ -33,8 +33,9 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 
-#include "stand.h"
-#include "samachdep.h"
+#include <lib/libsa/stand.h>
+
+#include <hp300/stand/samachdep.h>
 
 u_int opendev;
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.5 1997/04/16 11:26:36 downsj Exp $	*/
-/*	$NetBSD: machdep.c,v 1.6 1996/10/14 07:33:46 thorpej Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.6 1997/07/13 07:21:50 downsj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 1997/06/28 07:20:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/param.h>
-#include "samachdep.h"
+#include <hp300/stand/samachdep.h>
 
 char *
 getmachineid()
@@ -59,6 +59,8 @@ getmachineid()
 		cp = "318/319/330"; break;
 	case HP_340:
 		cp = "340"; break;
+	case HP_345:
+		cp = "345"; break;
 	case HP_350:
 		cp = "350"; break;
 	case HP_360:
@@ -66,9 +68,13 @@ getmachineid()
 	case HP_370:
 		cp = "370"; break;
 	case HP_375:
-		cp = "345/375/400"; break;
+		cp = "375"; break;
 	case HP_380:
-		cp = "380/425"; break;
+		cp = "380"; break;
+	case HP_400:
+		cp = "400"; break;
+	case HP_425:
+		cp = "425"; break;
 	case HP_433:
 		cp = "433"; break;
 	default:
@@ -77,9 +83,7 @@ getmachineid()
 	return(cp);
 }
 
-#ifdef ROMPRF
 int userom;
-#endif
 
 struct trapframe {
 	int dregs[8];
@@ -98,9 +102,11 @@ trap(fp)
 	if (intrap)
 		return(0);
 	intrap = 1;
-#ifdef ROMPRF
+
+#if 0
 	userom = 1;
 #endif
+
 	printf("Got unexpected trap: format=%x vector=%x ps=%x pc=%x\n",
 		  (fp->frame>>12)&0xF, fp->frame&0xFFF, fp->sr, fp->pc);
 	printf("dregs: %x %x %x %x %x %x %x %x\n",
@@ -109,23 +115,25 @@ trap(fp)
 	printf("aregs: %x %x %x %x %x %x %x %x\n",
 	       fp->aregs[0], fp->aregs[1], fp->aregs[2], fp->aregs[3], 
 	       fp->aregs[4], fp->aregs[5], fp->aregs[6], fp->aregs[7]);
-#ifdef ROMPRF
+
+#if 0
 	userom = 0;
 #endif
+
 	intrap = 0;
 	return(0);
 }
 
-#ifdef ROMPRF
-#define ROWS	46
-#define COLS	128
+#define ROWS	24
+#define COLS	80
 
+void
 romputchar(c)
-	register int c;
+	int c;
 {
 	static char buf[COLS];
 	static int col = 0, row = 0;
-	register int i;
+	int i;
 
 	switch (c) {
 	case '\0':
@@ -155,7 +163,6 @@ romputchar(c)
 		break;
 	}
 }
-#endif
 
 void
 machdep_start(entry, howto, loadaddr, ssym, esym)
@@ -170,10 +177,10 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 	esym = (char *)round_to_size(esym - (char *)loadaddr);
 #undef round_to_size
 
-	asm("movl %0,d7" : : "m" (howto));
-	asm("movl %0,d6" : : "m" (opendev));
-	asm("movl %0,d5" : : "m" (cons_scode));
-	asm("movl %0,a5" : : "a" (loadaddr));
-	asm("movl %0,a4" : : "a" (esym));
+	__asm __volatile ("movl %0,d7" : : "m" (howto));
+	__asm __volatile ("movl %0,d6" : : "m" (opendev));
+	__asm __volatile ("movl %0,d5" : : "m" (cons_scode));
+	__asm __volatile ("movl %0,a5" : : "a" (loadaddr));
+	__asm __volatile ("movl %0,a4" : : "a" (esym));
 	(*((int (*)())entry))();
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.1 1997/02/03 07:19:06 downsj Exp $	*/
+/*	$OpenBSD: hd.c,v 1.2 1997/07/13 07:21:47 downsj Exp $	*/
 /*	$NetBSD: rd.c,v 1.11 1996/12/21 21:34:40 thorpej Exp $	*/
 
 /*
@@ -48,9 +48,10 @@
  */
 #include <sys/param.h>
 #include <sys/disklabel.h>
-#include "stand.h"
-#include "samachdep.h"
 
+#include <lib/libsa/stand.h>
+
+#include <hp300/stand/samachdep.h>
 #include <hp300/dev/hdreg.h>
 
 struct	hd_iocmd hd_ioc;
@@ -196,53 +197,6 @@ hdident(ctlr, unit)
 	return(id);
 }
 
-#ifdef COMPAT_NOLABEL
-int hdcyloff[][8] = {
-	{ 1, 143, 0, 143, 0,   0,   323, 503, },	/* 7945A */
-	{ 1, 167, 0, 0,	  0,   0,   0,	 0,   },	/* 9134D */
-	{ 0, 0,	  0, 0,	  0,   0,   0,	 0,   },	/* 9122S */
-	{ 0, 71,  0, 221, 292, 542, 221, 0,   },	/* 7912P */
-	{ 1, 72,  0, 72,  362, 802, 252, 362, },	/* 7914P */
-	{ 1, 28,  0, 140, 167, 444, 140, 721, },	/* 7933H */
-	{ 1, 200, 0, 200, 0,   0,   450, 600, },	/* 9134L */
-	{ 1, 105, 0, 105, 380, 736, 265, 380, },	/* 7957A */
-	{ 1, 65,  0, 65,  257, 657, 193, 257, },	/* 7958A */
-	{ 1, 128, 0, 128, 518, 918, 388, 518, },	/* 7957B */
-	{ 1, 44,  0, 44,  174, 496, 131, 174, },	/* 7958B */
-	{ 1, 44,  0, 44,  218, 1022,174, 218, },	/* 7959B */
-	{ 1, 37,  0, 37,  183, 857, 147, 183, },	/* 2200A */
-	{ 1, 19,  0, 94,  112, 450, 94,	 788, },	/* 2203A */
-	{ 1, 20,  0, 98,  117, 256, 98,	 397, },	/* 7936H */
-	{ 1, 11,  0, 53,  63,  217, 53,	 371, },	/* 7937H */
-};
-
-struct hdcompatinfo {
-	int	nbpc;
-	int	*cyloff;
-} hdcompatinfo[] = {
-	NHD7945ABPT*NHD7945ATRK, hdcyloff[0],
-	NHD9134DBPT*NHD9134DTRK, hdcyloff[1],
-	NHD9122SBPT*NHD9122STRK, hdcyloff[2],
-	NHD7912PBPT*NHD7912PTRK, hdcyloff[3],
-	NHD7914PBPT*NHD7914PTRK, hdcyloff[4],
-	NHD7958ABPT*NHD7958ATRK, hdcyloff[8],
-	NHD7957ABPT*NHD7957ATRK, hdcyloff[7],
-	NHD7933HBPT*NHD7933HTRK, hdcyloff[5],
-	NHD9134LBPT*NHD9134LTRK, hdcyloff[6],
-	NHD7936HBPT*NHD7936HTRK, hdcyloff[14],
-	NHD7937HBPT*NHD7937HTRK, hdcyloff[15],
-	NHD7914PBPT*NHD7914PTRK, hdcyloff[4],
-	NHD7945ABPT*NHD7945ATRK, hdcyloff[0],
-	NHD9122SBPT*NHD9122STRK, hdcyloff[2],
-	NHD7957BBPT*NHD7957BTRK, hdcyloff[9],
-	NHD7958BBPT*NHD7958BTRK, hdcyloff[10],
-	NHD7959BBPT*NHD7959BTRK, hdcyloff[11],
-	NHD2200ABPT*NHD2200ATRK, hdcyloff[12],
-	NHD2203ABPT*NHD2203ATRK, hdcyloff[13],
-};
-int	nhdcompatinfo = sizeof(hdcompatinfo) / sizeof(hdcompatinfo[0]);
-#endif					
-
 char io_buf[MAXBSIZE];
 
 hdgetinfo(rs)
@@ -273,22 +227,10 @@ hdgetinfo(rs)
 	if (msg) {
 		printf("hd(%d,%d,%d): WARNING: %s, ",
 		       rs->sc_ctlr, rs->sc_unit, rs->sc_part, msg);
-#ifdef COMPAT_NOLABEL
-		{
-			register struct hdcompatinfo *ci;
-
-			printf("using old default partitioning\n");
-			ci = &hdcompatinfo[rs->sc_type];
-			pi->npart = 8;
-			for (i = 0; i < pi->npart; i++)
-				pi->offset[i] = ci->cyloff[i] * ci->nbpc;
-		}
-#else
 		printf("defining `c' partition as entire disk\n");
 		pi->npart = 3;
 		pi->offset[0] = pi->offset[1] = -1;
 		pi->offset[2] = 0;
-#endif
 	} else {
 		pi->npart = lp->d_npartitions;
 		for (i = 0; i < pi->npart; i++)
