@@ -1,0 +1,10 @@
+# Recursion on variables.
+A=$B
+B=$C
+C=$A
+
+a:
+	echo $A
+
+b:
+	echo "business as usual"
