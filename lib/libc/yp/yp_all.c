@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: yp_all.c,v 1.5 1996/12/14 06:49:46 tholo Exp $";
+static char *rcsid = "$OpenBSD: yp_all.c,v 1.6 2002/01/02 20:58:37 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -61,18 +61,18 @@ u_long *objp;
 	int r;
 
 	memset(&out, 0, sizeof out);
-	while(1) {
-		if( !xdr_ypresp_all(xdrs, &out)) {
+	while (1) {
+		if (!xdr_ypresp_all(xdrs, &out)) {
 			xdr_free(xdr_ypresp_all, (char *)&out);
 			*objp = (u_long)YP_YPERR;
 			return FALSE;
 		}
-		if(out.more == 0) {
+		if (out.more == 0) {
 			xdr_free(xdr_ypresp_all, (char *)&out);
 			return FALSE;
 		}
 		status = out.ypresp_all_u.val.stat;
-		switch(status) {
+		switch (status) {
 		case YP_TRUE:
 			size = out.ypresp_all_u.val.key.keydat_len;
 			if ((key = malloc(size + 1)) != NULL) {
@@ -87,8 +87,7 @@ u_long *objp;
 				    out.ypresp_all_u.val.val.valdat_val,
 				    size);
 				val[size] = '\0';
-			}
-			else {
+			} else {
 				free(key);
 				key = NULL;
 			}
@@ -103,7 +102,7 @@ u_long *objp;
 			*objp = status;
 			free(key);
 			free(val);
-			if(r)
+			if (r)
 				return TRUE;
 			break;
 		case YP_NOMORE:
@@ -159,7 +158,7 @@ yp_all(indomain, inmap, incallback)
 	(void) clnt_call(clnt, YPPROC_ALL,
 	    xdr_ypreq_nokey, &yprnk, xdr_ypresp_all_seq, &status, tv);
 	clnt_destroy(clnt);
-	if(status != YP_FALSE)
+	if (status != YP_FALSE)
 		r = ypprot_err(status);
 out:
 	_yp_unbind(ysd);
