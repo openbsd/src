@@ -1,4 +1,4 @@
-/*	$OpenBSD: psychoreg.h,v 1.8 2002/01/30 23:58:02 jason Exp $	*/
+/*	$OpenBSD: psychoreg.h,v 1.9 2002/03/04 02:32:51 jason Exp $	*/
 /*	$NetBSD: psychoreg.h,v 1.6.4.2 2001/09/13 01:14:40 thorpej Exp $ */
 
 /*
@@ -93,8 +93,8 @@ struct psychoreg {
 	u_int64_t	pcia_slot3_int;		/* PCI bus a slot 3 irq map reg (IIi)*/	/* 1fe.0000.0c18 */
 	u_int64_t	pcib_slot0_int;		/* PCI bus b slot 0 irq map reg */	/* 1fe.0000.0c20 */
 	u_int64_t	pcib_slot1_int;		/* PCI bus b slot 1 irq map reg */	/* 1fe.0000.0c28 */
-	u_int64_t	pcib_slot2_int;		/* PCI bus b slot 1 irq map reg */	/* 1fe.0000.0c30 */
-	u_int64_t	pcib_slot3_int;		/* PCI bus b slot 1 irq map reg */	/* 1fe.0000.0c38 */
+	u_int64_t	pcib_slot2_int;		/* PCI bus b slot 2 irq map reg */	/* 1fe.0000.0c30 */
+	u_int64_t	pcib_slot3_int;		/* PCI bus b slot 3 irq map reg */	/* 1fe.0000.0c38 */
 
 	u_int64_t	pad4[120];
 
