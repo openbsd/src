@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.39 2002/06/07 15:00:54 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.40 2002/06/08 00:00:59 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -452,7 +452,12 @@ in6_control(so, cmd, data, ifp, p)
 			return(EADDRNOTAVAIL);
 		/* FALLTHROUGH */
 	case SIOCAIFADDR_IN6:
-		if (ifra->ifra_addr.sin6_family != AF_INET6)
+		/*
+		 * We always require users to specify a valid IPv6 address for
+		 * the corresponding operation.
+		 */
+		if (ifra->ifra_addr.sin6_family != AF_INET6 ||
+		    ifra->ifra_addr.sin6_len != sizeof(struct sockaddr_in6))
 			return(EAFNOSUPPORT);
 		if (!privileged)
 			return(EPERM);
