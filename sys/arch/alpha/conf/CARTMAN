@@ -1,0 +1,131 @@
+#	$OpenBSD: CARTMAN,v 1.1 1998/03/18 01:05:03 angelos Exp $
+#	$NetBSD: ALPHA,v 1.30 1996/12/03 17:25:27 cgd Exp $
+#
+# Alpha kernel with all the options you'd want, and more.
+
+machine	alpha
+option		SWAPPAGER, DEVPAGER
+maxusers 32
+
+# CPU Support
+options		DEC_EB164	# EB164:	AlphaPC 164
+
+# needs to be set per system
+options		TIMEZONE=0		# Minutes west of GMT (for param.c)
+options		DST=0			# Daylight savings rules (for param.c)
+
+# Standard system options
+options		DEBUG, DIAGNOSTIC	# Extra kernel debugging
+options		KTRACE			# System call tracing support
+
+# File system options
+options		FIFO		# POSIX fifo support (in all file systems)
+options		FFS		# Fast file system
+options		QUOTA		# User and group quotas for the FFS
+options		MFS		# Memory-based file system
+options		CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
+options		MSDOSFS		# MS-DOS-compatible file system
+options		NFSSERVER	# Sun NFS-compatible file system server
+options		NFSCLIENT	# Sun NFS-compatible file system client
+options		KERNFS		# Kernel variable file system (/kern)
+options		FDESC		# File descriptor file system (/dev/fd)
+
+# Networking options
+options		INET		# Internet protocol suite
+options		GATEWAY		# packet forwarding and more mbuf space
+options		IPSEC
+options		ENCDEBUG
+
+# Compatibility with 4.2BSD implementation of TCP/IP.  Not suggested.
+#options	TCP_COMPAT_42
+
+# 4.3BSD compatibility.  Should be optional, but necessary for now.
+options		COMPAT_43
+
+# Binary compatibility with previous versions of NetBSD.
+#options	COMPAT_09
+options		COMPAT_10
+options		COMPAT_11
+options		COMPAT_12
+
+# OSF/1 binary compatibility -- CURRENTLY DOES NOT WORK
+#options	COMPAT_OSF1
+
+# System V-like message queues
+options		SYSVMSG
+
+# System V-like semaphores
+options		SYSVSEM
+
+# System V-like shared memory
+options		SYSVSHM
+#options	SHMMAXPGS=1024		# 1024 pages is the default
+
+# Loadable Kernel Modules
+options		LKM
+
+# Disable kernel security.
+#options	INSECURE
+
+# Misc. options
+options		EISAVERBOSE		# recognize "unknown" EISA devices
+#options	EXTENT_DEBUG		# extent alloc/dealloc code debugging
+options		FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
+options		PCIVERBOSE		# recognize "unknown" PCI devices
+options		TCVERBOSE		# recognize "unknown" TC devices
+options		SANE_PROM
+
+config		bsd	swap generic
+#config		bsd	root on sd0 swap on sd0
+#config		bsd	root nfs swap nfs
+
+mainbus0 at	root
+cpu*	at	mainbus0
+
+# PCI host bus adapter support
+cia*	at	mainbus?
+
+# PCI bus support
+pci*	at	cia?
+
+# PCI devices
+#ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI (NOT 64-BIT)
+de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
+en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
+ep*	at	pci? dev ? function ?		# 3COM 3c59x (untested)
+#fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI cards
+#le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
+#ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+#pceb*	at	pci? dev ? function ?		# Intel PCI-EISA brige
+vga*	at	pci? dev ? function ?		# PCI VGA graphics
+#ppb*	at	pci? dev ? function ?		# PCI-PCI bridges
+sio*	at	pci? dev ? function ?		# Intel PCI-ISA bridge
+#tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] graphics
+
+# ISA/EISA bus support
+isa*	at	sio?
+
+# ISA devices
+mcclock* at	isa? port 0x70
+pcppi*	at	isa?				# PC prog. periph. interface
+pckbd*	at	pcppi?				# PC keyboard (kbd port)
+pms*	at	pcppi?				# PS/2-style mouse (aux port)
+com*	at	isa? port 0x3f8 irq 4		# standard serial ports
+com*	at	isa? port 0x2f8 irq 3
+lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
+vga*	at	isa?				# ISA (EISA: XXX) VGA
+#wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+
+# Workstation Console attachments
+wscons*	at	vga?
+
+pseudo-device	bpfilter	16
+pseudo-device	loop
+pseudo-device	ppp		4
+pseudo-device	pty		64
+pseudo-device	rd		1
+pseudo-device	sl		4
+pseudo-device	strip		4
+pseudo-device	tun		4
+pseudo-device	vnd		4
+pseudo-device	enc		1
