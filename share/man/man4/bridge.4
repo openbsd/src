@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.8 1999/03/31 02:00:29 jason Exp $
+.\"	$OpenBSD: bridge.4,v 1.9 1999/05/17 14:57:43 jason Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -156,11 +156,11 @@ needs to be in advance.
 The argument structure is defined as follows:
 .Bd -literal -offset indent
 struct ifbareq {
-	char ifba_name[IFNAMSIZ];    /* brdg nam */
-	char ifba_ifsname[IFNAMSIZ]; /* dest ifs */
-	u_int8_t ifba_age;           /* addr age */
-	u_int8_t ifba_flags;         /* addr age */
-	struct ether_addr ifba_dst;  /* dst addr */
+	char ifba_name[IFNAMSIZ];   /* brdg nam */
+	char ifba_ifsname[IFNAMSIZ];/* dest ifs */
+	u_int8_t ifba_age;          /* addr age */
+	u_int8_t ifba_flags;        /* addr flag */
+	struct ether_addr ifba_dst; /* dst addr */
 };
 
 #define IFBAF_TYPEMASK 0x03  /* addr type mask */
@@ -285,7 +285,7 @@ The
 command and the
 .Xr bridge 4
 kernel interface were written by Jason L. Wright <jason@thought.net> as
-part of an undergraduate indenpendent study
+part of an undergraduate independent study
 at the University of North Carolina at Greensboro.
 .Sh BUGS
 There is currently no loop detection.  Care must be taken to make sure
