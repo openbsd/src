@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.15 1997/01/30 02:00:26 deraadt Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.16 1997/01/30 02:01:54 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Theo de Raadt <deraadt@theos.com>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypbind.c,v 1.15 1997/01/30 02:00:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypbind.c,v 1.16 1997/01/30 02:01:54 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -889,7 +889,7 @@ int force;
 	char path[MAXPATHLEN];
 	int fd;
 
-	if (strchr(dom, "/") || strchr(dom, ".")
+	if (strchr(dom, '/') || strchr(dom, '.'))
 		return;
 
 #ifdef DEBUG
