@@ -1,4 +1,4 @@
-/* $OpenBSD: ftp-proxy.c,v 1.6 2001/08/19 15:19:28 beck Exp $ */
+/* $OpenBSD: ftp-proxy.c,v 1.7 2001/08/19 15:37:01 beck Exp $ */
 
 /*
  * Copyright (c) 1996-2001
@@ -677,7 +677,7 @@ do_server_reply(struct csiob *server, struct csiob *client)
 {
 	int code, i, j, rv;
 	struct in_addr *iap;
-	char tbuf[100], *sendbuf;
+	char tbuf[100], *sendbuf, *p;
 
 	log_control_command((char *)server->line_buffer, 0);
 
@@ -694,7 +694,11 @@ do_server_reply(struct csiob *server, struct csiob *client)
 	/*
 	 * Watch out for "227 Entering Passive Mode ..." replies
 	 */
-	code = atoi((char *)server->line_buffer);
+	code = strtol((char *)server->line_buffer, &p, 10);
+	if (!*(server->line_buffer) || (*p != ' ' && *p != '-')) {
+		syslog(LOG_INFO, "malformed control reply");
+		exit(EX_DATAERR);
+	}
 	if (code <= 0 || code > 999) {
 		syslog(LOG_INFO, "invalid server reply code %d", code);
 		exit(EX_DATAERR);
@@ -810,6 +814,7 @@ main(int argc, char **argv)
 	int one = 1;
 
 	while ((ch = getopt(argc, argv, argstr)) != -1) {
+		char *p;
 		switch (ch) {
 		case 'A':
 			AnonFtpOnly = 1; /* restrict to anon usernames only */
@@ -821,10 +826,14 @@ main(int argc, char **argv)
 			Verbose = 1;
 			break;
 		case 't':
-			timeout_seconds = atoi(optarg);
+			timeout_seconds = strtol(optarg, &p, 10);
+			if (!*optarg || *p)
+				usage();
 			break;
 		case 'D':
-			Debug_Level = atoi(optarg);
+			Debug_Level = strtol(optarg, &p, 10);
+			if (!*optarg || *p)
+				usage();
 			break;
 		case 'r':
 			Use_Rdns = 1; /* look up hostnames */
@@ -833,13 +842,17 @@ main(int argc, char **argv)
 			NatMode = 1; /* pass all passives, we're using NAT */
 			break;
 		case 'm':
-			min_port = atoi(optarg);
+			min_port = strtol(optarg, &p, 10);
+			if (!*optarg || *p)
+				usage();
 			if (min_port < 0 || min_port > USHRT_MAX)
 				usage();
 			break;
 		case 'M':
-			max_port = atoi(optarg);
-			if (min_port < 0 || min_port > USHRT_MAX)
+			max_port = strtol(optarg, &p, 10);
+			if (!*optarg || *p)
+				usage();
+			if (max_port < 0 || max_port > USHRT_MAX)
 				usage();
 			break;
 		default:
