@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.21 2001/02/27 14:55:34 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.22 2001/03/21 10:11:22 art Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -625,7 +625,15 @@ redo:
 			bawrite(last_bp);
 		} else if (len) {
 			bp = getblk(vp, start_lbn, size, 0, 0);
-			bawrite(bp);
+			/*
+			 * The buffer could have already been flushed out of
+			 * the cache. If that has happened, we'll get a new
+			 * buffer here with random data, just drop it.
+			 */
+			if ((bp->b_flags & B_DELWRI) == 0)
+				brelse(bp);
+			else
+				bawrite(bp);
 		}
 		return;
 	}
