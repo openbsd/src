@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.80 2004/01/10 17:50:45 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.81 2004/01/10 20:28:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -268,7 +268,8 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 				nextaction = p->IdleHoldResetTimer;
 
 			/* are we waiting for a write? */
-			if (p->wbuf.queued > 0)
+			p->events = POLLIN;
+			if (p->wbuf.queued > 0 || p->state == STATE_CONNECT)
 				p->events |= POLLOUT;
 
 			/* poll events */
