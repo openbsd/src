@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.52 2001/03/06 06:29:16 angelos Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.53 2001/03/19 23:58:38 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1053,7 +1053,7 @@ bridgeintr_frame(sc, m)
 	if ((ifl->bif_flags & IFBIF_STP) &&
 	    (ifl->bif_state == BSTP_IFSTATE_DISABLED ||
 	     ifl->bif_state == BSTP_IFSTATE_BLOCKING)) {
-		m_free(m);
+		m_freem(m);
 		return;
 	}
 	if (bridge_filterrule(&ifl->bif_brlout, &eh) == BRL_ACTION_BLOCK) {
