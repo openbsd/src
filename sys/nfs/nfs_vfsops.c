@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.15 1996/12/24 20:14:32 dm Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.16 1997/01/15 03:52:27 kstailey Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -453,7 +453,7 @@ nfs_decode_args(nmp, argp)
 	struct nfs_args *argp;
 {
 	int s;
-	int adjsock;
+	int adjsock = 0;
 	int maxio;
 
 	s = splsoftnet();
