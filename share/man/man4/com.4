@@ -1,4 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.13 2004/02/07 20:08:53 miod Exp $
+.\"	$OpenBSD: com.4,v 1.14 2004/02/13 20:46:03 mickey Exp $
 .\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -65,6 +65,7 @@
 .Cd "com0 at gsc? offset 0x23000 irq 5"
 .Cd "com1 at gsc? offset 0x22000 irq 6"
 .Cd "com2 at gsc? offset ? irq 13"
+.Cd "com1 at dino? irq 11"
 .Pp
 .Cd "# pegasos"
 .Cd "com0 at isa? port 0x2f8 irq 3"
@@ -128,6 +129,7 @@ with the code listed.
 .Xr asio 4 ,
 .Xr ast 4 ,
 .Xr boca 4 ,
+.Xr dino 4 ,
 .Xr ebus 4 ,
 .Xr gsc 4 ,
 .Xr hsq 4 ,
