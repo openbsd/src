@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 1996/08/25 15:39:13 downsj Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.17 1996/08/26 21:25:20 niklas Exp $
 
 MAN=		cccp.1 gcc.1 cp/g++.1 f/g77.1
 MLINKS+=	gcc.1 cc.1
@@ -38,8 +38,11 @@ install:	maninstall
 	if [ -e ${DESTDIR}/usr/lib/libf2c.a ]; then \
 		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/lib/libf2c.a; \
 		chmod 444 ${DESTDIR}/usr/lib/libf2c.a; \
-	fi
-
+	fi; \
+	__target=`sed -n '/^target=/s/target=//p' Makefile`; \
+	__version=`sed -n '/^version=/s/version=//p' Makefile`; \
+	ln -fs /usr/lib/gcc-lib/$$__target/$$__version/cpp \
+		${DESTDIR}/usr/libexec
 
 clean cleandir:
 	rm -f ${CLEANFILES}
