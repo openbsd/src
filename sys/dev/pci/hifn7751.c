@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.27 2000/04/10 18:40:47 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.28 2000/04/11 16:22:09 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -146,8 +146,7 @@ hifn_attach(parent, self, aux)
 	caddr_t kva;
 
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	cmd |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE;
+	cmd |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
 	cmd = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 
@@ -175,9 +174,6 @@ hifn_attach(parent, self, aux)
 		return;
 	}
 	sc->sc_st1 = pa->pa_memt;
-#ifdef HIFN_DEBUG
-	printf(" mem %x %x", sc->sc_sh0, sc->sc_sh1);
-#endif
 
 	sc->sc_dmat = pa->pa_dmat;
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(*sc->sc_dma), PAGE_SIZE, 0,
@@ -283,7 +279,7 @@ hifn_attach(parent, self, aux)
 		crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC96,
 		    NULL, NULL, NULL);
 		crypto_register(sc->sc_cid, CRYPTO_DES_CBC,
-		    hifn_newsession, hifn_freesession, hifn_process);
+		    NULL, NULL, NULL);
 	}
 }
 
@@ -559,7 +555,7 @@ hifn_sramsize(sc)
 	hifn_reset_board(sc);
 	hifn_init_dma(sc);
 	hifn_init_pci_registers(sc);
-	end = 1 << 21;	/* 2MB */
+	end = 1 << 20;	/* 1MB */
 	for (a = 0; a < end; a += 16384) {
 		if (hifn_checkramaddr(sc, a) < 0)
 			return (0);
@@ -1515,7 +1511,8 @@ errout:
 	else
 		hifnstats.hst_nomem++;
 	crp->crp_etype = err;
-	return (crp->crp_callback(crp));
+	crp->crp_callback(crp);
+	return (0);
 }
 
 void
@@ -1550,7 +1547,7 @@ hifn_callback(cmd, macbuf)
 			    crd->crd_alg != CRYPTO_SHA1_HMAC96)
 				continue;
 			m_copyback((struct mbuf *)crp->crp_buf,
-				   crd->crd_inject, 12, macbuf);
+			    crd->crd_inject, 12, macbuf);
 			break;
 		}
 	}
