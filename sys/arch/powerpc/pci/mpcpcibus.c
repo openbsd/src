@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.13 2000/03/20 07:10:50 rahnds Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.14 2000/03/24 06:56:41 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -99,17 +99,12 @@ struct {
 	int config_type;
 } config_offsets[] = {
 	{"grackle",		0x00c00cf8, 0x00e00cfc, 0 },
-#if 1
-	{"uni-north",		0x00800000, 0x00c00000, 5 },
-#else
-	{"uni-north",		0x00800cf8, 0x00c00cfc, 0 },
-#endif
+	{"uni-north",		0x00800000, 0x00c00000, 1 },
 	{"legacy",		0x00000cf8, 0x00000cfc, 0 },
 	{"IBM,27-82660",	0x00000cf8, 0x00000cfc, 0 },
 	{NULL,			0x00000000, 0x00000000, 0 },
 };
 
-#if 1
 struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	NULL,
 	_dmamap_create,
@@ -126,7 +121,6 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_dmamem_unmap,
 	_dmamem_mmap
 };
-#endif
 
 /*
  * Code from "pci/if_de.c" used to calculate crc32 of ether rom data.
@@ -496,19 +490,13 @@ mpcpcibrattach(parent, self, aux)
 		return;
 	}
 
-#if 1
 	pba.pba_dmat = &pci_bus_dma_tag;
-#endif
 
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_iobus_space;
 	pba.pba_memt = &sc->sc_membus_space;
 	pba.pba_pc = &lcp->lc_pc;
-	if (lcp->config_type & 4) {
-		pba.pba_bus = 1;
-	} else {
-		pba.pba_bus = 0;
-	}
+	pba.pba_bus = 0;
 	config_found(self, &pba, mpcpcibrprint);
 
 }
@@ -655,30 +643,28 @@ mpc_conf_read(cpv, tag, offset)
 		return(~0);
 	}
 
-#if 0
-	printf("mpc_conf_read tag %x offset %x: ", tag, offset);
-#endif
-
-
 	mpc_decompose_tag(cpv, tag, &bus, &dev, &fcn);
-#if 0
-	printf(" bus %x dev %x fcn %x ", bus, dev, fcn);
-#endif
 
-	if (cp->config_type & 1 && bus == 0) {
-		/*
-		 * Need to do config type 1 operation
-		 * 80800000 | 1 << dev | fcn << 8 | reg
-		 */
-		if ( dev > 11) {
-#if 0
-			printf("invalid device\n", dev);
-#endif
+	if ((cp->config_type & 1) && (bus == 0)) {
+		if (dev > (30 - 11)) {
 			return 0xffffffff;
 		}
-		reg = 0x80800000  | 1 << dev | fcn << 8 | offset;
+#if 0
+	printf(" bus %x dev %x fcn %x offset %x", bus, dev, fcn, offset);
+#endif
+		/*
+		 * Need to do config type 1 operation
+		 *  1 << (11+dev) | fcn << 8 | reg
+		 */
+		reg = 1 << (11+dev) | fcn << 8 | offset;
+		if ((cp->config_type & 2) && (offset & 0x4)) {
+			daddr += 4;
+		}
 		
 	} else {
+#if 0
+	printf(" bus %x dev %x fcn %x offset %x", bus, dev, fcn, offset);
+#endif
 		/* Config type 0 operation
 		 * 80000000 | tag | offset
 		 */
@@ -688,15 +674,16 @@ mpc_conf_read(cpv, tag, offset)
 		}
 
 	}
-	if ((cp->config_type & 2) && (offset & 0x4)) {
-		daddr += 4;
-		
-	}
-
+#if 0
+	printf(" daddr %x reg %x",daddr, reg);
+#endif
 	s = splhigh();
 
 	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, reg);
+	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
 	data = bus_space_read_4(cp->lc_iot, cp->ioh_cfc, daddr);
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, 0); /* disable */
+	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
 
 	splx(s);
 #if 0
@@ -731,7 +718,7 @@ mpc_conf_write(cpv, tag, offset, data)
 		 * 80800000 | 1 << dev | fcn << 8 | reg
 		 */
 		if ( dev > 11) {
-#if 1
+#if 0
 			printf("invalid device\n", dev);
 #endif
 			return;
@@ -748,7 +735,10 @@ mpc_conf_write(cpv, tag, offset, data)
 	}
 
 	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, reg);
+	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
 	bus_space_write_4(cp->lc_iot, cp->ioh_cfc, 0, data);
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, 0); /* disable */
+	bus_space_read_4(cp->lc_iot, cp->ioh_cf8, 0); /* XXX */
 
 	splx(s);
 }
