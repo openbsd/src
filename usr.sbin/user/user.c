@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.27 2001/11/15 20:09:08 danh Exp $ */
+/* $OpenBSD: user.c,v 1.28 2001/12/05 18:20:57 millert Exp $ */
 /* $NetBSD: user.c,v 1.40 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -56,14 +56,14 @@
 
 /* this struct describes a uid range */
 typedef struct range_t {
-	int	r_from;		/* low uid */
-	int	r_to;		/* high uid */
+	uid_t	r_from;		/* low uid */
+	uid_t	r_to;		/* high uid */
 } range_t;
 
 /* this struct encapsulates the user information */
 typedef struct user_t {
 	int		u_flags;		/* see below */
-	int		u_uid;			/* uid of user */
+	uid_t		u_uid;			/* uid of user */
 	char		*u_password;		/* encrypted password */
 	char		*u_comment;		/* comment field */
 	char		*u_home;		/* home directory */
@@ -76,10 +76,10 @@ typedef struct user_t {
 	int		u_inactive;		/* inactive */
 	char		*u_skeldir;		/* directory for startup files */
 	char		*u_class;		/* login class */
-	unsigned	u_rsize;		/* size of range array */
-	unsigned	u_rc;			/* # of ranges */
+	unsigned int	u_rsize;		/* size of range array */
+	unsigned int	u_rc;			/* # of ranges */
 	range_t		*u_rv;			/* the ranges */
-	unsigned	u_defrc;		/* # of ranges in defaults */
+	unsigned int	u_defrc;		/* # of ranges in defaults */
 	int		u_preserve;		/* preserve uids on deletion */
 } user_t;
 
@@ -212,7 +212,7 @@ asystem(const char *fmt, ...)
 
 /* remove a users home directory, returning 1 for success (ie, no problems encountered) */
 static int
-removehomedir(const char *user, int uid, const char *dir)
+removehomedir(const char *user, uid_t uid, const char *dir)
 {
 	struct stat st;
 
@@ -276,7 +276,7 @@ checkeuid(void)
 
 /* copy any dot files into the user's home directory */
 static int
-copydotfiles(char *skeldir, int uid, int gid, char *dir)
+copydotfiles(char *skeldir, uid_t uid, gid_t gid, char *dir)
 {
 	struct dirent	*dp;
 	DIR		*dirp;
@@ -300,14 +300,14 @@ copydotfiles(char *skeldir, int uid, int gid, char *dir)
 		(void) asystem("cd %s; %s -rw -pe %s . %s", 
 				skeldir, PAX, (verbose) ? "-v" : "", dir);
 	}
-	(void) asystem("%s -R -P %d:%d %s", CHOWN, uid, gid, dir);
+	(void) asystem("%s -R -P %u:%u %s", CHOWN, uid, gid, dir);
 	(void) asystem("%s -R u+w %s", CHMOD, dir);
 	return n;
 }
 
 /* create a group entry with gid `gid' */
 static int
-creategid(char *group, int gid, char *name)
+creategid(char *group, gid_t gid, char *name)
 {
 	struct stat	st;
 	FILE		*from;
@@ -352,7 +352,7 @@ creategid(char *group, int gid, char *name)
 			return 0;
 		}
 	}
-	(void) fprintf(to, "%s:*:%d:%s\n", group, gid, name);
+	(void) fprintf(to, "%s:*:%u:%s\n", group, gid, name);
 	(void) fclose(from);
 	(void) fclose(to);
 	if (rename(f, _PATH_GROUP) < 0) {
@@ -571,7 +571,7 @@ valid_group(char *group)
 
 /* find the next gid in the range lo .. hi */
 static int
-getnextgid(int *gidp, int lo, int hi)
+getnextgid(uid_t *gidp, uid_t lo, uid_t hi)
 {
 	for (*gidp = lo ; *gidp < hi ; *gidp += 1) {
 		if (getgrgid((gid_t)*gidp) == NULL) {
@@ -768,7 +768,7 @@ read_defaults(user_t *up)
 
 /* return the next valid unused uid */
 static int
-getnextuid(int sync_uid_gid, int *uid, int low_uid, int high_uid)
+getnextuid(int sync_uid_gid, uid_t *uid, uid_t low_uid, uid_t high_uid)
 {
 	for (*uid = low_uid ; *uid <= high_uid ; (*uid)++) {
 		if (getpwuid((uid_t)(*uid)) == NULL && *uid != NOBODY_UID) {
@@ -794,11 +794,11 @@ adduser(char *login, user_t *up)
 	time_t		expire;
 	char		password[PasswordLength + 1];
 	char		home[MaxFileNameLen];
-	char		buf[MaxFileNameLen];
+	char		buf[LINE_MAX];
 	int		sync_uid_gid;
 	int		masterfd;
 	int		ptmpfd;
-	int		gid;
+	gid_t		gid;
 	int		cc;
 	int		i;
 
@@ -826,7 +826,7 @@ adduser(char *login, user_t *up)
 	}
 	/* if no uid was specified, get next one in [low_uid..high_uid] range */
 	sync_uid_gid = (strcmp(up->u_primgrp, "=uid") == 0);
-	if (up->u_uid == -1) {
+	if (up->u_uid == UID_MAX) {
 		for (i = 0 ; i < up->u_rc ; i++) {
 			if (getnextuid(sync_uid_gid, &up->u_uid, up->u_rv[i].r_from, up->u_rv[i].r_to)) {
 				break;
@@ -835,21 +835,21 @@ adduser(char *login, user_t *up)
 		if (i == up->u_rc) {
 			(void) close(ptmpfd);
 			(void) pw_abort();
-			errx(EXIT_FAILURE, "can't get next uid for %d", up->u_uid);
+			errx(EXIT_FAILURE, "can't get next uid for %u", up->u_uid);
 		}
 	}
 	/* check uid isn't already allocated */
 	if (!(up->u_flags & F_DUPUID) && getpwuid((uid_t)(up->u_uid)) != NULL) {
 		(void) close(ptmpfd);
 		(void) pw_abort();
-		errx(EXIT_FAILURE, "uid %d is already in use", up->u_uid);
+		errx(EXIT_FAILURE, "uid %u is already in use", up->u_uid);
 	}
 	/* if -g=uid was specified, check gid is unused */
 	if (sync_uid_gid) {
 		if (getgrgid((gid_t)(up->u_uid)) != NULL) {
 			(void) close(ptmpfd);
 			(void) pw_abort();
-			errx(EXIT_FAILURE, "gid %d is already in use", up->u_uid);
+			errx(EXIT_FAILURE, "gid %u is already in use", up->u_uid);
 		}
 		gid = up->u_uid;
 	} else if ((grp = getgrnam(up->u_primgrp)) != NULL) {
@@ -897,7 +897,8 @@ adduser(char *login, user_t *up)
 				up->u_password, password);
 		}
 	}
-	cc = snprintf(buf, sizeof(buf), "%s:%s:%d:%d:%s:%d:%ld:%s:%s:%s\n",
+
+	cc = snprintf(buf, sizeof(buf), "%s:%s:%u:%u:%s:%d:%ld:%s:%s:%s\n",
 			login,
 			password,
 			up->u_uid,
@@ -912,7 +913,7 @@ adduser(char *login, user_t *up)
 			up->u_comment,
 			home,
 			up->u_shell);
-	if (cc >= sizeof(buf) ||
+	if (cc >= sizeof(buf) || cc == -1 ||
 	    (strchr(up->u_comment, '&') != NULL &&
 	     cc + strlen(login) >= sizeof(buf))) {
 		(void) close(ptmpfd);
@@ -1030,7 +1031,7 @@ moduser(char *login, char *newlogin, user_t *up)
 			if (!(up->u_flags & F_DUPUID) && getpwuid((uid_t)(up->u_uid)) != NULL) {
 				(void) close(ptmpfd);
 				(void) pw_abort();
-				errx(EXIT_FAILURE, "uid %d is already in use", up->u_uid);
+				errx(EXIT_FAILURE, "uid %u is already in use", up->u_uid);
 			}
 			pwp->pw_uid = up->u_uid;
 		}
@@ -1040,7 +1041,7 @@ moduser(char *login, char *newlogin, user_t *up)
 				if (getgrgid((gid_t)(up->u_uid)) != NULL) {
 					(void) close(ptmpfd);
 					(void) pw_abort();
-					errx(EXIT_FAILURE, "gid %d is already in use", up->u_uid);
+					errx(EXIT_FAILURE, "gid %u is already in use", up->u_uid);
 				}
 				pwp->pw_gid = up->u_uid;
 			} else if ((grp = getgrnam(up->u_primgrp)) != NULL) {
@@ -1254,7 +1255,7 @@ useradd(int argc, char **argv)
 
 	(void) memset(&u, 0, sizeof(u));
 	read_defaults(&u);
-	u.u_uid = -1;
+	u.u_uid = UID_MAX;
 	defaultfield = bigD = 0;
 	while ((c = getopt(argc, argv, "DG:b:c:d:e:f:g:k:mou:s:" ADD_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
@@ -1568,7 +1569,7 @@ groupadd(int argc, char **argv)
 	int	gid;
 	int	c;
 
-	gid = -1;
+	gid = GID_MAX;
 	dupgid = 0;
 	while ((c = getopt(argc, argv, "g:o" GROUP_ADD_OPT_EXTENSIONS)) != -1) {
 		switch(c) {
@@ -1662,7 +1663,7 @@ groupmod(int argc, char **argv)
 	int		cc;
 	int		c;
 
-	gid = -1;
+	gid = GID_MAX;
 	dupgid = 0;
 	newname = NULL;
 	while ((c = getopt(argc, argv, "g:on:" GROUP_MOD_OPT_EXTENSIONS)) != -1) {
@@ -1704,17 +1705,23 @@ groupmod(int argc, char **argv)
 	if (newname != NULL && !valid_group(newname)) {
 		warn("warning - invalid group name `%s'", newname);
 	}
-	cc = snprintf(buf, sizeof(buf), "%s:%s:%d:",
-			(newname) ? newname : grp->gr_name, grp->gr_passwd,
-			(gid < 0) ? grp->gr_gid : gid);
-	for (cpp = grp->gr_mem ; *cpp && cc < sizeof(buf) ; cpp++) {
-		cc += snprintf(&buf[cc], sizeof(buf) - cc, "%s%s", *cpp,
-			(cpp[1] == NULL) ? "" : ",");
-	}
-	if (cc < sizeof(buf))
-		cc += snprintf(&buf[cc], sizeof(buf) - cc, "\n");
-	else
+	cc = snprintf(buf, sizeof(buf), "%s:%s:%u:",
+	    (newname) ? newname : grp->gr_name, grp->gr_passwd,
+	    (gid < 0) ? grp->gr_gid : gid);
+	if (cc >= sizeof(buf) || cc == -1)
 		err(EXIT_FAILURE, "group `%s' entry too long", grp->gr_name);
+
+	for (cpp = grp->gr_mem ; *cpp; cpp++) {
+		cc = strlcat(buf, *cpp, sizeof(buf)) + 1;
+		if (cc >= sizeof(buf))
+			err(EXIT_FAILURE, "group `%s' entry too long",
+			    grp->gr_name);
+		if (cpp[1] == NULL)
+			buf[cc - 1] = '\n';
+		else
+			buf[cc - 1] = ',';
+		buf[cc] = '\0';
+	}
 
 	if (!modify_gid(*argv, buf))
 		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
@@ -1757,9 +1764,9 @@ userinfo(int argc, char **argv)
 	}
 	(void) printf("login\t%s\n", pwp->pw_name);
 	(void) printf("passwd\t%s\n", pwp->pw_passwd);
-	(void) printf("uid\t%d\n", pwp->pw_uid);
+	(void) printf("uid\t%u\n", pwp->pw_uid);
 	if ((grp = getgrgid(pwp->pw_gid)) == NULL)
-		(void) printf("groups\t%d", pwp->pw_gid);
+		(void) printf("groups\t%u", pwp->pw_gid);
 	else
 		(void) printf("groups\t%s", grp->gr_name);
 	while ((grp = getgrent()) != NULL) {
@@ -1816,7 +1823,7 @@ groupinfo(int argc, char **argv)
 	}
 	(void) printf("name\t%s\n", grp->gr_name);
 	(void) printf("passwd\t%s\n", grp->gr_passwd);
-	(void) printf("gid\t%d\n", grp->gr_gid);
+	(void) printf("gid\t%u\n", grp->gr_gid);
 	(void) printf("members\t");
 	for (cpp = grp->gr_mem ; *cpp ; cpp++) {
 		(void) printf("%s ", *cpp);
