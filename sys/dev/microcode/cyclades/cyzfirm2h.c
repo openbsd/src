@@ -1,4 +1,4 @@
-/*	$OpenBSD: cyzfirm2h.c,v 1.1 2001/06/21 13:21:49 nate Exp $	*/
+/*	$OpenBSD: cyzfirm2h.c,v 1.2 2002/01/23 01:14:26 ericj Exp $	*/
 /*	$NetBSD: cyzfirm2h.c,v 1.1 2000/05/17 17:58:10 thorpej Exp $	*/
 
 /*-
@@ -131,7 +131,8 @@ main(int argc, char *argv[])
 void
 usage()
 {
+	extern char *__progname;
 
-	fprintf(stderr, "usage: %s infile outfile\n", getprogname());
+	fprintf(stderr, "usage: %s infile outfile\n", __progname);
 	exit(1);
 }
