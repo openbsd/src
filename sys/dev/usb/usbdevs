@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.44 2002/06/10 01:22:33 nate Exp $
+$OpenBSD: usbdevs,v 1.45 2002/06/17 16:24:41 nate Exp $
 /* $NetBSD: usbdevs,v 1.240 2002/03/31 00:41:37 ichiro Exp $ */
 
 /*
@@ -649,7 +649,7 @@ product FREECOM DVD		0xfc01	Connector for DVD drive
 /* Future Technology Devices products */
 product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
 product FTDI PS2KBDMS		0x8371	PS/2 Keyboard/Mouse
-product FTDI SERIAL		0x8372	Serial converter
+product FTDI SERIAL_8U100AX	0x8372	Serial converter
 
 /* Fuji photo products */
 product FUJIPHOTO MASS0100	0x0100	Mass Storage
@@ -1215,6 +1215,7 @@ product DIAMOND2 SUPRAEXPRESS56K 0x07da	Supra Express 56K
 product DIAMOND2 SUPRA2890	0x0b4a	SupraMax 2890 56K
 product DIAMOND2 RIO600USB	0x5001	Rio 600
 product DIAMOND2 RIO800USB	0x5002	Rio 800 USB
+product DIAMOND2 PSAPLAY120	0x5003	Nike psa[play 120
 
 /* Tangtop products */
 product TANGTOP USBPS2		0x0001	USBPS2
