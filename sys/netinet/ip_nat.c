@@ -209,13 +209,10 @@ int direction;
 		dport = tcp->th_dport;
 	}
 
-	MUTEX_ENTER(&ipf_nat);
-
 	/* Give me a new nat */
-	if (!(nat = (nat_t *)KMALLOC(sizeof(*nat)))) {
-		MUTEX_EXIT(&ipf_nat);
+	if (!(nat = (nat_t *)KMALLOC(sizeof(*nat))))
 		return NULL;
-	}
+
 
 	/*
 	 * Search the current table for a match.
@@ -342,7 +339,6 @@ int direction;
 
 	nat_stats.ns_added++;
 	nat_inuse++;
-	MUTEX_EXIT(&ipf_nat);
 	return nat;
 }
 

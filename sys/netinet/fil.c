@@ -639,7 +639,7 @@ int out;
 
 			frstats[0].fr_ret++;
 		} else if (pass & FR_RETRST &&
-			   (fin->fin_fi.fi_fl & FI_SHORT)) {
+			   !(fin->fin_fi.fi_fl & FI_SHORT)) {
 			if (SEND_RESET(ip, qif, q) == 0)
 				frstats[1].fr_ret++;
 		}
