@@ -1,5 +1,5 @@
 #!./perl
-#	$OpenBSD: installperl,v 1.4 1996/09/06 17:35:29 downsj Exp $
+#	$OpenBSD: installperl,v 1.5 1997/07/24 21:12:15 kstailey Exp $
 #
 # This is hacked up, in order to support DESTDIR and INSTALL_STRIP.
 #
@@ -102,8 +102,12 @@ if ($d_shrplib) {
 
 # First we install the version-numbered executables.
 
+$installcmd = $ENV{"INSTALL"}
+	. " " . $ENV{"INSTALL_COPY"}
+	. " " . $ENV{"INSTALL_STRIP"};
+
 &safe_unlink("$installbin/perl$ver$exe_ext");
-&cmd("cp perl$exe_ext $installbin/perl$ver$exe_ext");
+&cmd("$installcmd perl$exe_ext $installbin/perl$ver$exe_ext");
 
 &safe_unlink("$installbin/sperl$ver$exe_ext");
 if ($d_dosuid) {
@@ -123,9 +127,6 @@ if (! &samepath($installbin, '.')) {
 }
 
 if (! &samepath($installbin, 'x2p')) {
-    $installcmd = $ENV{"INSTALL"}
-	. " " . $ENV{"INSTALL_COPY"}
-	. " " . $ENV{"INSTALL_STRIP"};
     &safe_unlink("$installbin/a2p$exe_ext");
     &cmd("$installcmd x2p/a2p$exe_ext $installbin");
     &chmod(0755, "$installbin/a2p$exe_ext");
