@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raid.4,v 1.4 1999/06/05 04:16:07 aaron Exp $
+.\"	$OpenBSD: raid.4,v 1.5 1999/07/08 09:41:43 hugh Exp $
 .\"
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides RAID 0, 1, 4, and 5 (and more!) capabilities to NetBSD.  This
+driver provides RAID 0, 1, 4, and 5 (and more!) capabilities.  This
 document assumes that the reader has at least some familiarity with RAID
 and RAID concepts.  The reader is also assumed to know how to configure
 disks and pseudo-devices into kernels, how to generate kernels, and how 
@@ -115,7 +115,7 @@ actively used in an existing filesystem.  Should a disk fail, the
 driver is capable of reconstructing the failed disk onto a hot spare.
 If the components are hot swapable, the failed disk can then be
 removed, a new disk put in it's place, and a copyback operation
-performed.  The copyback operation, as it's name indicates, will copy
+performed.  The copyback operation, as its name indicates, will copy
 the reconstructed data from the hot spare to the previously failed
 (and now replaced) disk.
 .Pp
@@ -160,7 +160,7 @@ SCSI ID 5 fails,
 and the system reboots, the old /dev/sd2e will show up as /dev/sd1e.
 If the RAID driver is automatically configured, it will only detect
 that /dev/sd2e has failed, and will not notice that /dev/sd2e has
-actually become /dev/sd1e.  Hopefully this will change withing a few
+actually become /dev/sd1e.  Hopefully this will change within a few
 days of this writing with the addition of MD5 checksums to each of the
 components.
 .Pp
@@ -249,7 +249,7 @@ structures developed by the folks at the Parallel Data Laboratory at
 Carnegie Mellon University (CMU).  RAIDframe, as originally distributed
 by CMU, provides a RAID simulator for a number of different
 architectures, and a user-level device driver and a kernel device
-driver for for Digital Unix.  The 
+driver for Digital Unix.  The 
 .Nm
 driver is a kernelized version of RAIDframe v1.1.
 .Pp

@@ -59,7 +59,7 @@ two commands
 .I xxx
 is any sequence of characters terminated by a space or a newline;
 the first character should be printed at the current position,
-the the current horizontal position should be increased by
+the current horizontal position should be increased by
 the width of the first character, and so on for each character.
 The width of the character is that given in the font file,
 appropriately scaled for the current point size, and rounded
