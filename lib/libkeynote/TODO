@@ -1,4 +1,4 @@
-# $OpenBSD: TODO,v 1.3 1999/05/27 01:09:43 angelos Exp $
+# $OpenBSD: TODO,v 1.4 1999/06/21 19:58:21 angelos Exp $
 
 Short term TODOs:
 	- More interesting/comprehensive testsuite
@@ -6,6 +6,7 @@ Short term TODOs:
 	- Write key/signature algorithm draft(s)
 	- autoconf
 	- Document X509 support
+	- Callbacks should get a pointer to the assertion
 
 Long term TODOs:
 	- Some sort of tcl/tk GUI
