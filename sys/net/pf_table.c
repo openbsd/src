@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.55 2004/06/07 13:16:19 cedric Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.56 2004/06/11 05:21:20 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1730,10 +1730,12 @@ pfr_insert_ktable(struct pfr_ktable *kt)
 void
 pfr_setflags_ktables(struct pfr_ktableworkq *workq)
 {
-	struct pfr_ktable	*p;
+	struct pfr_ktable	*p, *q;
 
-	SLIST_FOREACH(p, workq, pfrkt_workq)
+	for (p = SLIST_FIRST(workq); p; p = q) {
+		q = SLIST_NEXT(p, pfrkt_workq);
 		pfr_setflags_ktable(p, p->pfrkt_nflags);
+	}
 }
 
 void
