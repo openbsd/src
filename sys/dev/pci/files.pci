@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.136 2002/06/03 16:13:21 mickey Exp $
+#	$OpenBSD: files.pci,v 1.137 2002/06/05 22:35:16 mickey Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -441,3 +441,9 @@ file	dev/pci/if_stge.c		stge
 device	gx: ether, ifnet, mii, ifmedia, mii_phy
 attach	gx at pci
 file	dev/pci/if_gx.c			gx
+
+# AMD 768MPX power management controller
+device	amdpm {}
+attach	amdpm at pci
+file	dev/pci/amdpm.c			amdpm
+

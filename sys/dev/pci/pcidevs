@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.516 2002/06/03 21:48:31 mickey Exp $
+	$OpenBSD: pcidevs,v 1.517 2002/06/05 22:35:16 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -780,32 +780,39 @@ product ALTEON BCM5701		0x0004	BCM5701 (Broadcom)
 product ALTIMA AC100X		0x03e8	AC100X
 
 /* AMD products */
-product AMD PCNET_PCI		0x2000	79c970 PCnet-PCI LANCE
-product AMD PCHOME_PCI		0x2001	79c978 PChome-PCI LANCE
-product AMD PCSCSI_PCI		0x2020	53c974 PCscsi-PCI SCSI
-product AMD PCNETS_PCI		0x2040	79C974 PCnet-PCI Ether+SCSI
-product AMD ELANSC520		0x3000	ElanSC520 Host-PCI
+product	AMD PCNET_PCI		0x2000	79c970 PCnet-PCI LANCE
+product	AMD PCHOME_PCI		0x2001	79c978 PChome-PCI LANCE
+product	AMD PCSCSI_PCI		0x2020	53c974 PCscsi-PCI SCSI
+product	AMD PCNETS_PCI		0x2040	79C974 PCnet-PCI Ether+SCSI
+product	AMD ELANSC520		0x3000	ElanSC520 Host-PCI
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/21910.pdf */
-product AMD SC751_SC		0x7006	751 System Controller
-product AMD SC751_PPB		0x7007	751 PCI-PCI
+product	AMD SC751_SC		0x7006	751 System Controller
+product	AMD SC751_PPB		0x7007	751 PCI-PCI
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/24462.pdf */
-product AMD 762_PCHB		0x700c	762 Host-PCI
-product AMD 762_PPB		0x700d	762 PCI-PCI
-product AMD 761_PCHB		0x700e	761 Host-PCI
-product AMD 761_PPB		0x700f	761 PCI-PCI
-product AMD 755_ISA		0x7400	755 PCI-ISA
-product AMD 755_IDE		0x7401	755 IDE
-product AMD 755_PMC		0x7403	755 Power Mgmt
-product AMD 755_USB		0x7404	755 USB
+product	AMD 762_PCHB		0x700c	762 Host-PCI
+product	AMD 762_PPB		0x700d	762 PCI-PCI
+product	AMD 761_PCHB		0x700e	761 Host-PCI
+product	AMD 761_PPB		0x700f	761 PCI-PCI
+product	AMD 755_ISA		0x7400	755 PCI-ISA
+product	AMD 755_IDE		0x7401	755 IDE
+product	AMD 755_PMC		0x7403	755 Power Mgmt
+product	AMD 755_USB		0x7404	755 USB
 /* http://www.amd.com/products/cpg/athlon/techdocs/pdf/22548.pdf */
-product AMD PBC756_ISA		0x7408	756 PCI-ISA
-product AMD PBC756_IDE		0x7409	756 IDE
-product AMD PBC756_PMC		0x740b	756 Power Mgmt
-product AMD PBC756_USB		0x740c	756 USB Host
-product AMD 766_ISA		0x7410	766 PCI-ISA
-product AMD 766_IDE		0x7411	766 IDE
-product AMD 766_USB		0x7412	766 USB
-product AMD 766_PMC		0x7413	766 Power Mgmt
+product	AMD PBC756_ISA		0x7408	756 PCI-ISA
+product	AMD PBC756_IDE		0x7409	756 IDE
+product	AMD PBC756_PMC		0x740b	756 Power Mgmt
+product	AMD PBC756_USB		0x740c	756 USB Host
+product	AMD 766_ISA		0x7410	766 PCI-ISA
+product	AMD 766_IDE		0x7411	766 IDE
+product	AMD 766_USB		0x7412	766 USB
+product	AMD 766_PMC		0x7413	766 Power Mgmt
+product	AMD PBC768_ISA		0x7440	768 PCI-ISA
+product	AMD PBC768_IDE		0x7441	768 IDE
+product	AMD PBC768_PMC		0x7443	768 Power Mgmt
+product	AMD PBC768_AC		0x7445	768 AC97 Audio
+product	AMD PBC768_MD		0x7446	768 AC97 Modem
+product	AMD PBC768_PPB		0x7448	768 PCI-PCI
+product	AMD PBC768_USB		0x7449	768 USB
 
 /* AMI */
 product AMI MEGARAID		0x1960	MegaRAID
