@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.68 2004/04/02 20:17:45 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.69 2004/04/02 20:34:43 mickey Exp $	*/
 
 /*
  * rnd.c -- A strong random number generator
@@ -192,28 +192,29 @@
  *	echo "Saving random seed..."
  *	dd if=/dev/urandom of=/etc/random-seed count=1
  *
- * For example, on many Linux systems, the appropriate scripts are
- * usually /etc/rc.d/rc.local and /etc/rc.d/rc.0, respectively.
+ * For example, on OpenBSD systems, the appropriate scripts are
+ * usually /etc/rc.local and /etc/rc.shutdown, respectively.
  *
  * Effectively, these commands cause the contents of the entropy pool
  * to be saved at shutdown time and reloaded into the entropy pool at
  * start-up.  (The 'dd' in the addition to the bootup script is to
  * make sure that /etc/random-seed is different for every start-up,
- * even if the system crashes without executing rc.0.)  Even with
+ * even if the system crashes without executing rc.shutdown) Even with
  * complete knowledge of the start-up activities, predicting the state
  * of the entropy pool requires knowledge of the previous history of
  * the system.
  *
- * Configuring the /dev/random driver under Linux
+ * Configuring the random(4) driver under OpenBSD
  * ==============================================
  *
- * The /dev/random driver under Linux uses minor numbers 8 and 9 of
- * the /dev/mem major number (#1).  So if your system does not have
- * /dev/random and /dev/urandom created already, they can be created
- * by using the commands:
+ * The special files for the random(4) driver should have been created
+ * during the installation process.  However, if your system does not have
+ * /dev/random and /dev/[s|u|p|a]random created already, they can be created
+ * by using the MAKEDEV(8) script in /dev:
  *
- *	mknod /dev/random c 1 8
- *	mknod /dev/urandom c 1 9
+ *	/dev/MAKEDEV random
+ *
+ * Check MAKEDEV for information about major and minor numbers.
  *
  * Acknowledgements:
  * =================
