@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.38 2003/07/23 20:53:52 deraadt Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.39 2003/09/25 21:49:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -333,6 +333,11 @@ const struct ac97_codecid {
 	{ 0x00, 0xf0, 0xf, 0,	"RL5306" },
 	{ 0x10, 0xf0, 0xf, 0,	"RL5382" },
 	{ 0x20, 0xf0, 0xf, 0,	"RL5383" },
+}, ac97_cm[] = {
+	{ 0x41,	0xff, 0, 0,	"CMI9738" },
+	{ 0x61,	0xff, 0, 0,	"CMI9739" },
+}, ac97_cr[] = {
+	{ 0x84,	0xff, 0, 0,	"EV1938" },
 }, ac97_cs[] = {
 	{ 0x00,	0xf8, 7, 0,	"CS4297" },
 	{ 0x10,	0xf8, 7, 0,	"CS4297A" },
@@ -342,6 +347,11 @@ const struct ac97_codecid {
 	{ 0x40,	0xf8, 7, 0,	"CS4201" },
 	{ 0x50,	0xf8, 7, 0,	"CS4205" },
 	{ 0x60,	0xf8, 7, 0,	"CS4291" },
+}, ac97_cx[] = {
+	{ 0x29, 0xff, 0, 0,	"CX20468" },
+}, ac97_em[] = {
+	{ 0x23, 0xff, 0, 0,	"EM28023" },
+	{ 0x28, 0xff, 0, 0,	"EM28028" },
 }, ac97_es[] = {
 	{ 0x08, 0xff, 0, 0,	"ES1921" },
 }, ac97_is[] = {
@@ -352,6 +362,9 @@ const struct ac97_codecid {
 }, ac97_ns[] = {
 	{ 0x00,	0xff, 0, 0,	"LM454[03568]" },
 	{ 0x31,	0xff, 0, 0,	"LM4549" },
+}, ac97_ps[] = {
+	{ 0x01,	0xff, 0, 0,	"UCB1510" },
+	{ 0x04,	0xff, 0, 0,	"UCB1400" },
 }, ac97_sl[] = {
 	{ 0x22,	0xff, 0, 0,	"Si3036" },
 	{ 0x23,	0xff, 0, 0,	"Si3038" },
@@ -393,19 +406,24 @@ const struct ac97_vendorid {
 	const struct ac97_codecid * const codecs;
 	u_int8_t num;
 } ac97_vendors[] = {
+	{ 0x01408300, "Creative",		cl(ac97_cr) },
 	{ 0x41445300, "Analog Devices",		cl(ac97_ad) },
-	{ 0x414B4D00, "Asahi Kasei",		cl(ac97_ak) },
-	{ 0x414c4700, "Avance Logic",		cl(ac97_av) },
+	{ 0x414b4D00, "Asahi Kasei",		cl(ac97_ak) },
 	{ 0x414c4300, "Realtek",		cl(ac97_rl) },
-	{ 0x56494100, "VIA Technologies",	cl(ac97_vi) },
+	{ 0x414c4700, "Avance Logic",		cl(ac97_av) },
+	{ 0x434d4900, "C-Media Electronics",	cl(ac97_cm) },
 	{ 0x43525900, "Cirrus Logic",		cl(ac97_cs) },
+	{ 0x43585400, "Conexant",		cl(ac97_cx) },
+	{ 0x454d4300, "eMicro",			cl(ac97_em) },
 	{ 0x45838300, "ESS Technology",		cl(ac97_es) },
 	{ 0x48525300, "Intersil",		cl(ac97_is) },
 	{ 0x49434500, "ICEnsemble",		cl(ac97_ic) },
 	{ 0x4e534300, "National Semiconductor", cl(ac97_ns) },
+	{ 0x50534300, "Philips Semiconductor",	cl(ac97_ps) },
 	{ 0x53494c00, "Silicon Laboratory",	cl(ac97_sl) },
 	{ 0x54524100, "TriTech Microelectronics", cl(ac97_tt) },
 	{ 0x54584e00, "Texas Instruments",	cl(ac97_ti) },
+	{ 0x56494100, "VIA Technologies",	cl(ac97_vi) },
 	{ 0x57454300, "Winbond",		cl(ac97_wb) },
 	{ 0x574d4c00, "Wolfson",		cl(ac97_wo) },
 	{ 0x594d4800, "Yamaha",			cl(ac97_ym) },
