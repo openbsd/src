@@ -914,7 +914,7 @@ if test "${with_cross_host+set}" = set; then
 fi
 
 
-  glibcpp_basedir=$srcdir/$toprel/./libstdc++-v3
+  glibcpp_basedir=$srcdir/$toprel/./libstdc++
   
 
   # Never versions of autoconf add an underscore to these functions.
