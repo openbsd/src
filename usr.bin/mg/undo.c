@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.3 2002/02/21 03:24:14 vincent Exp $ */
+/* $OpenBSD: undo.c,v 1.4 2002/02/21 04:16:27 vincent Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  *							 All rights reserved.
@@ -373,58 +373,61 @@ undo_add_change(LINE *lp, int offset, int size)
 }
 
 int
-undo(void)
+undo(int f, int n)
 {
 	struct undo_rec *rec;
 	LINE *ln;
 	int off;
 
- again:
-	rec = LIST_FIRST(&undo_list);
-	if (rec == NULL) {
-		ewprintf("Nothing to undo!");
-		return FALSE;
-	}
-	if (rec->buf != curbp)
-		popbuf(rec->buf);
-
-	LIST_REMOVE(rec, next);
-	if (rec->type == BOUNDARY)
-		goto again;
-
 	/*
-	 * Let called functions know they are below us (for example, ldelete
-	 * don't want to record an undo record when called by us)
+	 * Let called functions know they are below us (for
+	 * example, ldelete don't want to record an undo record
+	 * when called by us)
 	 */
 	undoaction++;
 
-	find_linep(rec->pos, &ln, &off);
-	if (ln == NULL)
-		return FALSE;
-	
-	/*
-	 * Move to where this record has to apply
-	 */
-	curwp->w_dotp = ln;
-	curwp->w_doto = off;
+	while (n-- > 0) {
+		rec = LIST_FIRST(&undo_list);
+		if (rec == NULL) {
+			ewprintf("Nothing to undo!");
+			return FALSE;
+		}
+		if (rec->buf != curbp)
+			popbuf(rec->buf);
+		
+		LIST_REMOVE(rec, next);
+		if (rec->type == BOUNDARY) {
+			n++;	/* XXX */
+			continue;
+		}
 
-	switch (rec->type) {
-	case INSERT:
-		ldelete(rec->region.r_size, KFORW);
-		break;
-	case DELETE:
-		region_put_data(rec->content, rec->region.r_size);
-		break;
-	case CHANGE:
-		forwchar(0, rec->region.r_size);
-		lreplace(rec->region.r_size, rec->content, 1);
-		break;
-	default:
-		break;
+		find_linep(rec->pos, &ln, &off);
+		if (ln == NULL)
+			return FALSE;
+		
+		/*
+		 * Move to where this record has to apply
+		 */
+		curwp->w_dotp = ln;
+		curwp->w_doto = off;
+		
+		switch (rec->type) {
+		case INSERT:
+			ldelete(rec->region.r_size, KFORW);
+			break;
+		case DELETE:
+			region_put_data(rec->content, rec->region.r_size);
+			break;
+		case CHANGE:
+			forwchar(0, rec->region.r_size);
+			lreplace(rec->region.r_size, rec->content, 1);
+			break;
+		default:
+			break;
+		}
+		
+		free_undo_record(rec);
 	}
-
-	free_undo_record(rec);
-
 	undoaction--;
 	
 	return TRUE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.31 2002/02/21 00:02:04 deraadt Exp $	*/
+/*	$OpenBSD: def.h,v 1.32 2002/02/21 04:16:27 vincent Exp $	*/
 
 #include <sys/queue.h>
 
@@ -578,7 +578,7 @@ int	 undo_add_boundary(void);
 int	 undo_add_insert(LINE *, int, int);
 int	 undo_add_delete(LINE *, int, int);
 int	 undo_add_change(LINE *, int, int);
-int	 undo(void);
+int	 undo(int, int);
 
 /*
  * Externals.
