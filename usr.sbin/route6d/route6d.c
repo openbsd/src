@@ -1,4 +1,4 @@
-/*	$OpenBSD: route6d.c,v 1.21 2001/12/01 23:27:23 miod Exp $	*/
+/*	$OpenBSD: route6d.c,v 1.22 2002/01/11 03:51:08 itojun Exp $	*/
 /*	$KAME: route6d.c,v 1.73 2001/09/05 01:12:34 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #if 0
-static char _rcsid[] = "$OpenBSD: route6d.c,v 1.21 2001/12/01 23:27:23 miod Exp $";
+static char _rcsid[] = "$OpenBSD: route6d.c,v 1.22 2002/01/11 03:51:08 itojun Exp $";
 #endif
 
 #include <stdio.h>
@@ -349,6 +349,14 @@ main(argc, argv)
 		nflag = 1;
 		fprintf(stderr, "No kernel update is allowed\n");
 	}
+
+	if (dflag == 0) {
+		if (daemon(0, 0) < 0) {
+			fatal("daemon");
+			/*NOTREACHED*/
+		}
+	}
+
 	openlog(progname, LOG_NDELAY|LOG_PID, LOG_DAEMON);
 	logopened++;
 
@@ -384,21 +392,6 @@ main(argc, argv)
 	if (dflag)
 		ifrtdump(0);
 
-	if (dflag == 0) {
-#if 1
-		if (daemon(0, 0) < 0) {
-			fatal("daemon");
-			/*NOTREACHED*/
-		}
-#else
-		if (fork())
-			exit(0);
-		if (setsid() < 0) {
-			fatal("setid");
-			/*NOTREACHED*/
-		}
-#endif
-	}
 	pidfile(NULL);
 
 	if ((ripbuf = (struct rip6 *)malloc(RIP6_MAXMTU)) == NULL) {
