@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.61 2001/10/24 10:01:10 brian Exp $
+ *	$OpenBSD: bundle.c,v 1.62 2001/11/23 11:17:03 brian Exp $
  */
 
 #include <sys/param.h>
@@ -1034,7 +1034,7 @@ bundle_ShowStatus(struct cmdargs const *arg)
                 arg->bundle->iface->name, arg->bundle->bandwidth);
 
   if (arg->bundle->upat) {
-    int secs = time(NULL) - arg->bundle->upat;
+    int secs = bundle_Uptime(arg->bundle);
 
     prompt_Printf(arg->prompt, ", up time %d:%02d:%02d", secs / 3600,
                   (secs / 60) % 60, secs % 60);
@@ -1924,4 +1924,13 @@ bundle_ChangedPID(struct bundle *bundle)
 #ifdef TUNSIFPID
   ioctl(bundle->dev.fd, TUNSIFPID, 0);
 #endif
+}
+
+int
+bundle_Uptime(struct bundle *bundle)
+{
+  if (bundle->upat)
+    return time(NULL) - bundle->upat;
+
+  return 0;
 }

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: log.c,v 1.14 2001/08/19 23:22:18 brian Exp $
+ *	$OpenBSD: log.c,v 1.15 2001/11/23 11:17:03 brian Exp $
  */
 
 #include <sys/types.h>
@@ -194,6 +194,8 @@ static int
 syslogLevel(int lev)
 {
   switch (lev) {
+  case LogLOG:
+    return LOG_INFO;
   case LogDEBUG:
   case LogTIMER:
     return LOG_DEBUG;
@@ -210,6 +212,8 @@ syslogLevel(int lev)
 const char *
 log_Name(int id)
 {
+  if (id == LogLOG)
+    return "LOG";
   return id < LogMIN || id > LogMAX ? "Unknown" : LogNames[id - 1];
 }
 
@@ -261,6 +265,8 @@ log_DiscardAllLocal(u_long *mask)
 int
 log_IsKept(int id)
 {
+  if (id == LogLOG)
+    return LOG_KEPT_SYSLOG;
   if (id < LogMIN || id > LogMAX)
     return 0;
   if (id > LogMAXCONF)

@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: defs.h,v 1.21 2001/06/13 21:33:40 brian Exp $
+ * $OpenBSD: defs.h,v 1.22 2001/11/23 11:17:03 brian Exp $
  */
 
 /* Check the following definitions for your machine environment */
@@ -134,3 +134,4 @@ extern const char *ex_desc(int);
 extern void SetTitle(const char *);
 extern fd_set *mkfdset(void);
 extern void zerofdset(fd_set *);
+extern void Concatinate(char *, size_t, int, const char *const *);

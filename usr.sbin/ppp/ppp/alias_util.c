@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2001 Charles Mott <cmott@scientech.com>
+ * Copyright (c) 2001 Charles Mott <cm@linktel.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_util.c,v 1.5 2001/06/07 09:32:55 brian Exp $
+ * $OpenBSD: alias_util.c,v 1.6 2001/11/23 11:17:03 brian Exp $
  */
 
 /*

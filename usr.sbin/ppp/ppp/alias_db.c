@@ -1,7 +1,7 @@
 /*  -*- mode: c; tab-width: 8; c-basic-indent: 4; -*- */
 
 /*-
- * Copyright (c) 2001 Charles Mott <cmott@scientech.com>
+ * Copyright (c) 2001 Charles Mott <cm@linktel.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_db.c,v 1.19 2001/08/21 04:09:15 brian Exp $
+ * $OpenBSD: alias_db.c,v 1.20 2001/11/23 11:17:03 brian Exp $
  */
 
 /*

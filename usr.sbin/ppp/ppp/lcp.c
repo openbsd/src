@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lcp.c,v 1.33 2001/10/24 10:01:15 brian Exp $
+ * $OpenBSD: lcp.c,v 1.34 2001/11/23 11:17:03 brian Exp $
  */
 
 #include <sys/param.h>
@@ -518,7 +518,7 @@ lcp_SendIdentification(struct lcp *lcp)
              msg + 4);
   fsm_Output(&lcp->fsm, CODE_IDENT, id++, msg, 4 + strlen(msg + 4), MB_LCPOUT);
 
-  free(exp[0]);
+  command_Free(1, exp);
   return 1;
 }
 

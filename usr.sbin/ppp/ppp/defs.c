@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: defs.c,v 1.20 2001/06/15 13:58:16 brian Exp $
+ *	$OpenBSD: defs.c,v 1.21 2001/11/23 11:17:03 brian Exp $
  */
 
 
@@ -386,4 +386,21 @@ void
 zerofdset(fd_set *s)
 {
   memset(s, '\0', howmany(getdtablesize(), NFDBITS) * sizeof (fd_mask));
+}
+
+void
+Concatinate(char *buf, size_t sz, int argc, const char *const *argv)
+{
+  int i, n, pos;
+
+  *buf = '\0';
+  for (pos = i = 0; i < argc; i++) {
+    n = snprintf(buf + pos, sz - pos, "%s%s", i ? " " : "", argv[i]);
+    if (n < 0) {
+      buf[pos] = '\0';
+      break;
+    }
+    if ((pos += n) >= sz)
+      break;
+  }
 }

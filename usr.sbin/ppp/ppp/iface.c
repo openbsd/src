@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: iface.c,v 1.20 2001/08/21 11:06:04 brian Exp $
+ *	$OpenBSD: iface.c,v 1.21 2001/11/23 11:17:03 brian Exp $
  */
 
 #include <sys/param.h>
@@ -343,7 +343,7 @@ iface_addr_Add(const char *name, struct iface_addr *addr, int s)
                  end, ncprange_ntoa(&addr->ifa), strerror(errno));
     else {
       snprintf(dst, sizeof dst, "%s", ncpaddr_ntoa(&addr->peer));
-      log_Printf(LogWARN, "iface add: ioctl(SIOCDIFADDR%s, %s -> %s): %s\n",
+      log_Printf(LogWARN, "iface add: ioctl(SIOCAIFADDR%s, %s -> %s): %s\n",
                  end, ncprange_ntoa(&addr->ifa), dst, strerror(errno));
     }
   }

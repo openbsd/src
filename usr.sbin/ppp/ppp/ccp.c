@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ccp.c,v 1.24 2001/08/19 23:22:17 brian Exp $
+ * $OpenBSD: ccp.c,v 1.25 2001/11/23 11:17:03 brian Exp $
  */
 
 #include <sys/param.h>
@@ -134,8 +134,11 @@ protoname(int proto)
   };
 
   if (proto < 0 || proto > sizeof cftypes / sizeof *cftypes ||
-      cftypes[proto] == NULL)
+      cftypes[proto] == NULL) {
+    if (proto == -1)
+      return "none";
     return HexStr(proto, NULL, 0);
+  }
 
   return cftypes[proto];
 }

@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: command.h,v 1.8 2001/06/13 21:33:40 brian Exp $
+ * $OpenBSD: command.h,v 1.9 2001/11/23 11:17:03 brian Exp $
  */
 
 struct cmdtab;
@@ -63,6 +63,7 @@ extern const char Version[];
 
 extern void command_Expand(char **, int, char const *const *, struct bundle *,
                            int, pid_t);
+extern void command_Free(int, char **);
 extern int command_Expand_Interpret(char *, int, char *vector[MAXARGS], int);
 extern int command_Interpret(char *, int, char *vector[MAXARGS]);
 extern void command_Run(struct bundle *, int, char const *const *,

@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2001 Charles Mott <cmott@scientech.com>
+ * Copyright (c) 2001 Charles Mott <cm@linktel.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_ftp.c,v 1.12 2001/10/24 10:01:07 brian Exp $
+ * $OpenBSD: alias_ftp.c,v 1.13 2001/11/23 11:17:03 brian Exp $
  */
 
 /*
