@@ -1,4 +1,4 @@
-/*	$OpenBSD: fancy.c,v 1.6 1998/09/02 06:46:51 pjanzen Exp $	*/
+/*	$OpenBSD: fancy.c,v 1.7 1999/07/31 21:57:40 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: fancy.c,v 1.6 1998/09/02 06:46:51 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: fancy.c,v 1.7 1999/07/31 21:57:40 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -666,7 +666,7 @@ cline()
 
 int
 getcaps(s)
-	char   *s;
+	const char   *s;
 {
 	char   **code;		/* two letter code */
 	char ***cap;		/* pointer to cap string */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttext1.c,v 1.2 1998/03/19 11:13:33 pjanzen Exp $	*/
+/*	$OpenBSD: ttext1.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,17 +37,17 @@
 #if 0
 static char sccsid[] = "@(#)ttext1.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: ttext1.c,v 1.2 1998/03/19 11:13:33 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: ttext1.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "back.h"
 #include "tutor.h"
 
-char   *opts = " QIMRHEDSPT";
-char   *prompt = "-->";
+const char   *const opts = " QIMRHEDSPT";
+const char   *const prompt = "-->";
 
-char   *list[] = {
+const char   *const list[] = {
 	"\n\n\tI\tIntroduction to Backgammon",
 	"\tM\tMoves and Points",
 	"\tR\tRemoving Men from the Board",
@@ -63,7 +63,7 @@ char   *list[] = {
 	0
 };
 
-char   *hello[] = {
+const char   *const hello[] = {
 	"\n   This introduction is comprised of text describing how to play",
 	"Backgammon followed by a tutorial session where you play a practice",
 	"game against the computer.  When using this program, think carefully",
@@ -79,7 +79,7 @@ char   *hello[] = {
 	0
 };
 
-char   *intro1[] = {
+const char   *const intro1[] = {
 	"\nIntroduction:",
 	"\n   Backgammon is a game involving the skill of two players and",
 	"the luck of two dice.  Both of the two players, red and white,",
@@ -90,7 +90,7 @@ char   *intro1[] = {
 	"",
 	0};
 
-char   *intro2[] = {
+const char   *const intro2[] = {
 	"",
 	"\n   Although they are not shown on the board, the players' homes are",
 	"located just to the right of the board.  A player's men are placed",
@@ -104,7 +104,7 @@ char   *intro2[] = {
 	"",
 	0};
 
-char   *moves[] = {
+const char   *const moves[] = {
 	"\nMoves and Points:",
 	"\n   Moves are made along the positions on the board according to",
 	"their numbers.  Red moves in the positive direction (clockwise from",
@@ -134,7 +134,7 @@ char   *moves[] = {
 	"",
 	0};
 
-char   *removepiece[] = {
+const char   *const removepiece[] = {
 	"\nRemoving Men from the Board:",
 	"\n   The most important part of the game is removing men, since",
 	"that is how you win the game.  Once a man is removed, he stays",
@@ -157,7 +157,7 @@ char   *removepiece[] = {
 	"",
 	0};
 
-char   *hits[] = {
+const char   *const hits[] = {
 	"\nHitting Blots:",
 	"\n   Although two men on a position form an impenetrable point, a",
 	"lone man is not so secure.  Such a man is called a 'blot' and has",
@@ -175,7 +175,7 @@ char   *hits[] = {
 	"",
 	0};
 
-char   *endgame[] = {
+const char   *const endgame[] = {
 	"\nEnding the Game and Scoring:",
 	"\n   Winning a game usually wins one point, the normal value of a",
 	"game.  However, if the losing player has not removed any men yet,",

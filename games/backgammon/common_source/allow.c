@@ -1,4 +1,4 @@
-/*	$OpenBSD: allow.c,v 1.2 1998/03/19 11:13:13 pjanzen Exp $	*/
+/*	$OpenBSD: allow.c,v 1.3 1999/07/31 21:57:40 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)allow.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: allow.c,v 1.2 1998/03/19 11:13:13 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: allow.c,v 1.3 1999/07/31 21:57:40 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ movallow()
 				g[i] = bar + cturn * D1;
 			else
 				g[i] = bar + cturn * D0;
-			if (r = makmove(i)) {
+			if ((r = makmove(i))) {
 				if (d0 || m == 4)
 					break;
 				swap;

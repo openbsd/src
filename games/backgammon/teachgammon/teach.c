@@ -1,4 +1,4 @@
-/*	$OpenBSD: teach.c,v 1.5 1998/08/29 23:19:12 pjanzen Exp $	*/
+/*	$OpenBSD: teach.c,v 1.6 1999/07/31 21:57:41 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)teach.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: teach.c,v 1.5 1998/08/29 23:19:12 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: teach.c,v 1.6 1999/07/31 21:57:41 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ static char rcsid[] = "$OpenBSD: teach.c,v 1.5 1998/08/29 23:19:12 pjanzen Exp $
 
 extern speed_t ospeed;		/* tty output speed for termlib */
 
-char   *helpm[] = {
+const char   *const helpm[] = {
 	"\nEnter a space or newline to roll, or",
 	"     b   to display the board",
 	"     d   to double",
@@ -60,7 +60,7 @@ char   *helpm[] = {
 	0
 };
 
-char   *contin[] = {
+const char   *const contin[] = {
 	"",
 	0
 };
@@ -104,42 +104,42 @@ main(argc, argv)
 			break;
 
 		case 2:
-			if (i = text(intro1))
+			if ((i = text(intro1)))
 				break;
 			wrboard();
-			if (i = text(intro2))
+			if ((i = text(intro2)))
 				break;
 		
 		case 3:
-			if (i = text(moves))
+			if ((i = text(moves)))
 				break;
 		
 		case 4:
-			if (i = text(removepiece))
+			if ((i = text(removepiece)))
 				break;
 		
 		case 5:
-			if (i = text(hits))
+			if ((i = text(hits)))
 				break;
 		
 		case 6:
-			if (i = text(endgame))
+			if ((i = text(endgame)))
 				break;
 		
 		case 7:
-			if (i = text(doubl))
+			if ((i = text(doubl)))
 				break;
 		
 		case 8:
-			if (i = text(stragy))
+			if ((i = text(stragy)))
 				break;
 		
 		case 9:
-			if (i = text(prog))
+			if ((i = text(prog)))
 				break;
 		
 		case 10:
-			if (i = text(lastch))
+			if ((i = text(lastch)))
 				break;
 		}
 	tutor();
@@ -154,7 +154,7 @@ leave()
 	else
 		writec('\n');
 	fixtty(&old);
-	execl(EXEC, "backgammon", args, "n", 0);
+	execl(EXEC, "backgammon", "-n", args, 0);
 	writel("Help! Backgammon program is missing\007!!\n");
 	exit(-1);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: table.c,v 1.2 1998/03/19 11:13:27 pjanzen Exp $	*/
+/*	$OpenBSD: table.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,13 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: table.c,v 1.2 1998/03/19 11:13:27 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: table.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "back.h"
 
-char   *help2[] = {
+const char   *const help2[] = {
 	"   Enter moves as <s>-<f> or <s>/<r> where <s> is the starting",
 	"position, <f> is the finishing position, and <r> is the roll.",
 	"Remember, each die roll must be moved separately.",
@@ -56,7 +56,7 @@ struct state {
 	int     newst;
 };
 
-struct state atmata[] = {
+static const struct state atmata[] = {
 
 	{'R', 1, 0},	{'?', 7, 0},	{'Q', 0, -3},	{'B', 8, 25},
 	{'9', 2, 25},	{'8', 2, 25},	{'7', 2, 25},	{'6', 2, 25},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: back.h,v 1.3 1998/09/02 06:46:51 pjanzen Exp $	*/
+/*	$OpenBSD: back.h,v 1.4 1999/07/31 21:57:40 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -69,8 +69,8 @@ extern FILE	*trace;
  *
  */
 
-extern	char	EXEC[];		/* object for main program */
-extern	char	TEACH[];	/* object for tutorial program */
+extern	const char	EXEC[];		/* object for main program */
+extern	const char	TEACH[];	/* object for tutorial program */
 
 extern	int	pnum;		/* color of player:
 					-1 = white
@@ -124,9 +124,10 @@ extern	char	cin[100];	/* input line of current move
 				   (used for reconstructing input after
 				   a backspace) */
 
-extern	char	*color[];	 /* colors as strings */
-extern	char	**colorptr;	/* color of current player */
-extern	char	**Colorptr;	/* color of current player, capitalized */
+extern	const char	*const color[];	 /* colors as strings */
+extern	const char	*const *colorptr;	/* color of current player */
+extern	const char	*const *Colorptr;	/* color of current player,
+						 * capitalized */
 extern	int	colen;		/* length of color of current player */
 
 extern	struct termios	old, noech, raw;/* original tty status */
@@ -156,7 +157,7 @@ void	fixcol __P((int, int, int, int, int));
 void	fixpos __P((int, int, int, int, int));
 void	fixtty __P((struct termios *));
 void	getarg __P((int, char **));
-int	getcaps __P((char *));
+int	getcaps __P((const char *));
 void	getmove __P((void));
 void	getout __P((int));	/* function to exit backgammon cleanly */
 void	gwrite __P((void));
@@ -169,22 +170,22 @@ void	moverr __P((int));
 int	movokay __P((int));
 void	newpos __P((void));
 void	nexturn __P((void));
-void	norec __P((char *));
+void	norec __P((const char *));
 void	odds __P((int, int, int));
 void	proll __P((void));
 int	quit __P((void));
 int	readc __P((void));
-void	recover __P((char *));
+void	recover __P((const char *));
 void	refresh __P((void));
 void	roll __P((void));
 int	rsetbrd __P((void));
 void	save __P((int));
-int	text __P((char **));
+int	text __P((const char *const *));
 void	wrboard __P((void));
 void	wrbsub __P((void));
 void	wrhit __P((int));
 void	wrint __P((int));
 void	writec __P((char));
-void	writel __P((char *));
+void	writel __P((const char *));
 void	wrscore __P((void));
 int	yorn __P((char));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: check.c,v 1.2 1998/03/19 11:13:18 pjanzen Exp $	*/
+/*	$OpenBSD: check.c,v 1.3 1999/07/31 21:57:40 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)check.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: check.c,v 1.2 1998/03/19 11:13:18 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: check.c,v 1.3 1999/07/31 21:57:40 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ movokay(mv)
 			writel("Men still on bar.\n");
 			return(0);
 		}
-		if (m = makmove(i)) {
+		if ((m = makmove(i))) {
 			moverr(i);
 			switch (m) {
 			case 1:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subs.c,v 1.7 1998/11/29 19:45:10 pjanzen Exp $	*/
+/*	$OpenBSD: subs.c,v 1.8 1999/07/31 21:57:41 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: subs.c,v 1.7 1998/11/29 19:45:10 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: subs.c,v 1.8 1999/07/31 21:57:41 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,11 +46,11 @@ static char rcsid[] = "$OpenBSD: subs.c,v 1.7 1998/11/29 19:45:10 pjanzen Exp $"
 int     buffnum;
 char    outbuff[BUFSIZ];
 
-static char plred[] = "Player is red, computer is white.";
-static char plwhite[] = "Player is white, computer is red.";
-static char nocomp[] = "(No computer play.)";
+static const char plred[] = "Player is red, computer is white.";
+static const char plwhite[] = "Player is white, computer is red.";
+static const char nocomp[] = "(No computer play.)";
 
-char   *descr[] = {
+const char   *const descr[] = {
 	"Usage:  backgammon [-] [-nrwb] [-p [r|w|b]] [-t <term>] [-s <file>]\n",
 	"\t-h\tget this list\n\t-n\tdon't ask for rules or instructions",
 	"\t-r\tplayer is red (implies n)\n\t-w\tplayer is white (implies n)",
@@ -134,10 +134,10 @@ writec(c)
 
 void
 writel(l)
-	char   *l;
+	const char   *l;
 {
 #ifdef DEBUG
-	char   *s;
+	const char   *s;
 
 	if (trace == NULL)
 		trace = fopen("bgtrace", "w");

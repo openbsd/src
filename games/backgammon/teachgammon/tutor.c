@@ -1,4 +1,4 @@
-/*	$OpenBSD: tutor.c,v 1.2 1998/03/19 11:13:35 pjanzen Exp $	*/
+/*	$OpenBSD: tutor.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,14 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)tutor.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: tutor.c,v 1.2 1998/03/19 11:13:35 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: tutor.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "back.h"
 #include "tutor.h"
 
-static char better[] = "That is a legal move, but there is a better one.\n";
+static const char better[] = "That is a legal move, but there is a better one.\n";
 
 void
 tutor()
@@ -171,9 +171,9 @@ clrest()
 
 int
 brdeq(b1, b2)
-	int    *b1, *b2;
+	const int    *b1, *b2;
 {
-	int    *e;
+	const int    *e;
 
 	e = b1 + 26;
 	while (b1 < e)

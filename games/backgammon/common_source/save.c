@@ -1,4 +1,4 @@
-/*	$OpenBSD: save.c,v 1.4 1998/08/29 23:19:09 pjanzen Exp $	*/
+/*	$OpenBSD: save.c,v 1.5 1999/07/31 21:57:41 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,23 +37,23 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: save.c,v 1.4 1998/08/29 23:19:09 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: save.c,v 1.5 1999/07/31 21:57:41 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include <errno.h>
 #include "back.h"
 
-static char confirm[] = "Are you sure you want to leave now?";
-static char prompt[] = "Enter a file name:  ";
-static char exist1[] = "The file '";
-static char exist2[] =
+static const char confirm[] = "Are you sure you want to leave now?";
+static const char prompt[] = "Enter a file name:  ";
+static const char exist1[] = "The file '";
+static const char exist2[] =
 	"' already exists.\nAre you sure you want to use this file?";
-static char cantuse[] = "\nCan't use ";
-static char saved[] = "This game has been saved on the file '";
-static char type[] = "'.\nType \"backgammon -s ";
-static char rec[] = "\" to recover your game.\n\n";
-static char cantrec[] = "Can't recover file:  ";
+static const char cantuse[] = "\nCan't use ";
+static const char saved[] = "This game has been saved on the file '";
+static const char type[] = "'.\nType \"backgammon -s ";
+static const char rec[] = "\" to recover your game.\n\n";
+static const char cantrec[] = "Can't recover file:  ";
 
 void
 save(n)
@@ -148,7 +148,7 @@ save(n)
 
 void
 recover(s)
-	char   *s;
+	const char   *s;
 {
 	int     fdesc;
 
@@ -171,9 +171,9 @@ recover(s)
 
 void
 norec(s)
-	char   *s;
+	const char   *s;
 {
-	char   *c;
+	const char   *c;
 
 	tflag = 0;
 	writel(cantrec);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1998/08/29 23:19:07 pjanzen Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1999/07/31 21:57:35 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.5 1998/08/29 23:19:07 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.6 1999/07/31 21:57:35 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,17 +54,17 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.5 1998/08/29 23:19:07 pjanzen Exp $"
 #define MVPAUSE	5		/* time to sleep when stuck */
 /* #define MAXUSERS 35	*/		/* maximum number of users */
 
-char   *instr[];		/* text of instructions */
-speed_t ospeed;			/* tty output speed */
+extern const char   *const instr[];		/* text of instructions */
+speed_t ospeed;				/* tty output speed */
 
-char   *helpm[] = {		/* help message */
+const char   *const helpm[] = {		/* help message */
 	"Enter a space or newline to roll, or",
 	"     R   to reprint the board\tD   to double",
 	"     S   to save the game\tQ   to quit",
 	0
 };
 
-char   *contin[] = {		/* pause message */
+const char   *const contin[] = {		/* pause message */
 	"(Type a newline to continue.)",
 	"",
 	0
@@ -80,23 +80,23 @@ char   *contin[] = {		/* pause message */
  * static char user2b[] =
  * 	" users on the system, so you cannot play\nanother game.  ";
  */
-static char rules[] = "\nDo you want the rules of the game?";
-static char noteach[] = "Teachgammon not available!\n\007";
-static char need[] = "Do you need instructions for this program?";
-static char askcol[] =
+static const char rules[] = "\nDo you want the rules of the game?";
+static const char noteach[] = "Teachgammon not available!\n\007";
+static const char need[] = "Do you need instructions for this program?";
+static const char askcol[] =
 	"Enter 'r' to play red, 'w' to play white, 'b' to play both:";
-static char rollr[] = "Red rolls a ";
-static char rollw[] = ".  White rolls a ";
-static char rstart[] = ".  Red starts.\n";
-static char wstart[] = ".  White starts.\n";
-static char toobad1[] = "Too bad, ";
-static char unable[] = " is unable to use that roll.\n";
-static char toobad2[] = ".  Too bad, ";
-static char cantmv[] = " can't move.\n";
-static char bgammon[] = "Backgammon!  ";
-static char gammon[] = "Gammon!  ";
-static char again[] = ".\nWould you like to play again?";
-static char svpromt[] = "Would you like to save this game?";
+static const char rollr[] = "Red rolls a ";
+static const char rollw[] = ".  White rolls a ";
+static const char rstart[] = ".  Red starts.\n";
+static const char wstart[] = ".  White starts.\n";
+static const char toobad1[] = "Too bad, ";
+static const char unable[] = " is unable to use that roll.\n";
+static const char toobad2[] = ".  Too bad, ";
+static const char cantmv[] = " can't move.\n";
+static const char bgammon[] = "Backgammon!  ";
+static const char gammon[] = "Gammon!  ";
+static const char again[] = ".\nWould you like to play again?";
+static const char svpromt[] = "Would you like to save this game?";
 
 int
 main (argc,argv)
@@ -150,7 +150,7 @@ main (argc,argv)
 	fixtty(&raw);		/* go into raw mode */
 
 	/* check if restored game and save flag for later */
-	if (rfl = rflag) {
+	if ((rfl = rflag)) {
 		wrboard();	/* print board */
 		/* if new game, pretend to be a non-restored game */
 		if (cturn == 0)

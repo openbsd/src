@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.2 1998/03/19 11:13:21 pjanzen Exp $	*/
+/*	$OpenBSD: init.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.2 1998/03/19 11:13:21 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,8 @@ FILE	*trace;
 #endif
 
 /* name of executable object programs */
-char    EXEC[] = "/usr/games/backgammon";
-char    TEACH[] = "/usr/games/teachgammon";
+const char    EXEC[] = "/usr/games/backgammon";
+const char    TEACH[] = "/usr/games/teachgammon";
 
 int     pnum = 2;		/* color of player:
 						-1 = white
@@ -73,11 +73,11 @@ int     tflag = 0;		/* cursor addressing flag */
 int     iroll = 0;		/* special flag for inputting rolls */
 int     rfl = 0;
 
-char   *color[] = {"White", "Red", "white", "red"};
+const char   *const color[] = {"White", "Red", "white", "red"};
 
 
-char	**Colorptr;
-char	**colorptr;
+const char	*const *Colorptr;
+const char	*const *colorptr;
 int	*inopp;
 int	*inptr;
 int	*offopp;

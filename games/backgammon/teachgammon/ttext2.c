@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttext2.c,v 1.2 1998/03/19 11:13:34 pjanzen Exp $	*/
+/*	$OpenBSD: ttext2.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,14 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)ttext2.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: ttext2.c,v 1.2 1998/03/19 11:13:34 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: ttext2.c,v 1.3 1999/07/31 21:57:41 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "back.h"
 #include "tutor.h"
 
-char   *doubl[] = {
+const char   *const doubl[] = {
 	"\nDoubling:",
 	"\n   If a player thinks he is in a good position, he may double the",
 	"value of the game.  However, his opponent may not accept the proposal",
@@ -59,7 +59,7 @@ char   *doubl[] = {
 	"",
 	0};
 
-char   *stragy[] = {
+const char   *const stragy[] = {
 	"\nStrategy:",
 	"\n   Some general hints when playing:  Try not to leave men open:",
 	"it is good to make as many points as possible.  Often, two men",
@@ -75,7 +75,7 @@ char   *stragy[] = {
 	"",
 	0};
 
-char   *prog[] = {
+const char   *const prog[] = {
 	"\nThe Program and How It Works:",
 	"\n   A general rule of thumb is to type a question mark if you",
 	"don't know what to do:  you should get some help.  When it is your",
@@ -107,7 +107,7 @@ char   *prog[] = {
 	"",
 	0};
 
-char   *lastch[] = {
+const char   *const lastch[] = {
 	"\nTutorial (Practice Game):",
 	"\n   This tutorial, for simplicity's sake, will let you play one",
 	"predetermined game.  All the rolls have been pre-arranged, and",
@@ -127,12 +127,12 @@ char   *lastch[] = {
 
 int
 text(txt)
-	char  **txt;
+	const char  *const *txt;
 {
-	char  **begin;
-	char   *a;
+	const char  *const *begin;
+	const char   *a;
 	char    b;
-	char   *c;
+	const char   *c;
 	int     i;
 
 	fixtty(&noech);

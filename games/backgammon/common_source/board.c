@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.c,v 1.2 1998/03/19 11:13:17 pjanzen Exp $	*/
+/*	$OpenBSD: board.c,v 1.3 1999/07/31 21:57:40 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)board.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: board.c,v 1.2 1998/03/19 11:13:17 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: board.c,v 1.3 1999/07/31 21:57:40 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -50,9 +50,9 @@ void
 wrboard()
 {
 	int     l;
-	static char bl[] =
+	static const char bl[] =
 	"|                       |   |                       |\n";
-	static char sv[] =
+	static const char sv[] =
 	"|                       |   |                       |    \n";
 
 	fixtty(&noech);
