@@ -1,4 +1,4 @@
-/*	$OpenBSD: asio.c,v 1.1 2002/03/06 16:09:46 jason Exp $	*/
+/*	$OpenBSD: asio.c,v 1.2 2002/03/08 04:34:37 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -52,6 +52,8 @@
 #include <dev/sbus/asioreg.h>
 #include <dev/ic/comvar.h>
 
+#include "com.h"
+
 #define BAUD_BASE       (1843200)
 
 struct asio_port {
@@ -74,12 +76,14 @@ struct asio_attach_args {
 	int aaa_port;
 	bus_space_tag_t aaa_iot;
 	bus_space_handle_t aaa_ioh;
+	u_int32_t aaa_pri;
+	u_int8_t aaa_inten;
 };
 
 int	asio_match __P((struct device *, void *, void *));
 void	asio_attach __P((struct device *, struct device *, void *));
 int	asio_print __P((void *, const char *));
-int	asio_intr __P((void *));
+void	asio_intr_enable __P((struct device *, u_int8_t));
 
 struct cfattach asio_ca = {
 	sizeof(struct asio_softc), asio_match, asio_attach
@@ -117,10 +121,21 @@ asio_attach(parent, self, aux)
 	struct asio_softc *sc = (void *)self;
 	struct sbus_attach_args *sa = aux;
 	struct asio_attach_args aaa;
-	int i, map;
-	u_int8_t csr;
+	int i;
+	char *model;
 
 	sc->sc_bt = sa->sa_bustag;
+	sc->sc_nports = 2;
+
+	model = getpropstring(sa->sa_node, "model");
+	if (model == NULL) {
+		printf(": empty model, unsupported\n");
+		return;
+	}
+	if (strcmp(model, "210sj") != 0) {
+		printf(": unsupported model %s\n", model);
+		return;
+	}
 
 	if (sa->sa_nreg < 3) {
 		printf(": %d registers expected, got %d\n",
@@ -137,7 +152,7 @@ asio_attach(parent, self, aux)
 		return;
 	}
 
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < sc->sc_nports; i++) {
 		if (sbus_bus_map(sa->sa_bustag,
 		    sa->sa_reg[i + 1].sbr_slot,
 		    sa->sa_reg[i + 1].sbr_offset,
@@ -148,42 +163,19 @@ asio_attach(parent, self, aux)
 		}
 	}
 
-	/* XXX: revision specific*/
 	sc->sc_ports[0].ap_inten = ASIO_CSR_SJ_UART0_INTEN;
 	sc->sc_ports[1].ap_inten = ASIO_CSR_UART1_INTEN;
 
-	printf("\n");
-
-	sc->sc_nports = 2;
+	printf(": %s\n", model);
 
 	for (i = 0; i < sc->sc_nports; i++) {
 		aaa.aaa_name = "com";
 		aaa.aaa_port = i;
 		aaa.aaa_iot = sc->sc_bt;
 		aaa.aaa_ioh = sc->sc_ports[i].ap_bh;
+		aaa.aaa_inten = sc->sc_ports[i].ap_inten;
+		aaa.aaa_pri = sa->sa_intr[0].sbi_pri;
 		sc->sc_ports[i].ap_dev = config_found(self, &aaa, asio_print);
-	}
-
-	/* XXX won't work if pio comes along later and zots this.. */
-	csr = ASIO_CSR_SBUS_INT5;
-	for (map = 0, i = 0; i < sc->sc_nports; i++) {
-		if (sc->sc_ports[i].ap_dev != NULL) {
-			map = 1;
-			csr |= sc->sc_ports[i].ap_inten;
-		}
-	}
-	csr |= 2;
-	bus_space_write_1(sc->sc_bt, sc->sc_csr_h, ASIO_CSR, csr);
-
-	if (map == 0)
-		return;
-
-	sc->sc_ih = bus_intr_establish(sa->sa_bustag, sa->sa_pri,
-	    IPL_TTY, 0, asio_intr, sc);
-	if (sc->sc_ih == NULL) {
-		printf("%s: failed to map interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return;
 	}
 }
 
@@ -200,16 +192,18 @@ asio_print(aux, name)
 	return (UNCONF);
 }
 
-int
-asio_intr(vsc)
-	void *vsc;
+void
+asio_intr_enable(dv, en)
+	struct device *dv;
+	u_int8_t en;
 {
-	struct asio_softc *sc = vsc;
-	int i, r = 0;
+	struct asio_softc *sc = (struct asio_softc *)dv;
+	u_int8_t csr;
 
-	for (i = 0; i < sc->sc_nports; i++)
-		r += comintr(sc->sc_ports[i].ap_dev);
-	return (r);
+	csr = bus_space_read_1(sc->sc_bt, sc->sc_csr_h, 0);
+	csr &= ~(ASIO_CSR_SBUS_INT7 | ASIO_CSR_SBUS_INT6);
+	csr |= ASIO_CSR_SBUS_INT5 | en;
+	bus_space_write_1(sc->sc_bt, sc->sc_csr_h, 0, csr);
 }
 
 int
@@ -235,5 +229,14 @@ com_asio_attach(parent, self, aux)
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
 	sc->sc_frequency = BAUD_BASE;
+
+	sc->sc_ih = bus_intr_establish(aaa->aaa_iot, aaa->aaa_pri,
+	    IPL_TTY, 0, comintr, sc);
+	if (sc->sc_ih == NULL) {
+		printf(": cannot allocate intr\n");
+		return;
+	}
+	asio_intr_enable(parent, aaa->aaa_inten);
+
 	com_attach_subr(sc);
 }
