@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.237 2000/04/10 12:20:31 millert Exp 
+ *		OpenBSD: pcidevs,v 1.238 2000/04/10 13:45:16 millert Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -215,14 +215,14 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4500,
 	    0,
-	    "Aironet Wireless Communications",
-	    "Aironet PC4500 Wireless LAN Adapter",
+	    "Aironet",
+	    "PC4500 Wireless LAN Adapter",
 	},
 	{
 	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4800,
 	    0,
-	    "Aironet Wireless Communications",
-	    "Aironet PC4800 Wireless LAN Adapter",
+	    "Aironet",
+	    "PC4800 Wireless LAN Adapter",
 	},
 	{
 	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188,
@@ -7463,7 +7463,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_AIRONET, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Aironet Wireless Communications",
+	    "Aironet",
 	    NULL,
 	},
 	{

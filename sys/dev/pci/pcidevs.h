@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.237 2000/04/10 12:20:31 millert Exp 
+ *		OpenBSD: pcidevs,v 1.238 2000/04/10 13:45:16 millert Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -519,7 +519,7 @@
 #define	PCI_VENDOR_SUNDANCE	0x13f0		/* Sundance */
 #define	PCI_VENDOR_CMI	0x13f6		/* C-Media Electronics Inc. */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
-#define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet Wireless Communications */
+#define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs(2) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology(2) */
@@ -592,8 +592,8 @@
 #define	PCI_PRODUCT_3DLABS_PERMEDIA2	0x0007		/* GLINT Permedia 2 */
 
 /* Aironet Products */
-#define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* Aironet PC4500 Wireless LAN Adapter */
-#define	PCI_PRODUCT_AIRONET_PC4800	0x4800		/* Aironet PC4800 Wireless LAN Adapter */
+#define	PCI_PRODUCT_AIRONET_PC4500	0x4500		/* PC4500 Wireless LAN Adapter */
+#define	PCI_PRODUCT_AIRONET_PC4800	0x4800		/* PC4800 Wireless LAN Adapter */
 
 /* ACC Products */
 #define	PCI_PRODUCT_ACC_2188	0x0000		/* ACCM 2188 VL-PCI */
