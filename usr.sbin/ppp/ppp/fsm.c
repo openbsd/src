@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: fsm.c,v 1.15 2000/07/19 11:06:33 brian Exp $
+ * $OpenBSD: fsm.c,v 1.16 2001/01/26 01:40:43 brian Exp $
  *
  *  TODO:
  */
@@ -349,10 +349,12 @@ fsm_Close(struct fsm *fp)
     break;
   case ST_OPENED:
     (*fp->fn->LayerDown)(fp);
-    FsmInitRestartCounter(fp, FSM_TRM_TIMER);
-    FsmSendTerminateReq(fp);
-    NewState(fp, ST_CLOSING);
-    (*fp->parent->LayerDown)(fp->parent->object, fp);
+    if (fp->state == ST_OPENED) {
+      FsmInitRestartCounter(fp, FSM_TRM_TIMER);
+      FsmSendTerminateReq(fp);
+      NewState(fp, ST_CLOSING);
+      (*fp->parent->LayerDown)(fp->parent->object, fp);
+    }
     break;
   case ST_REQSENT:
   case ST_ACKRCVD:
