@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.6 2000/04/17 21:43:13 deraadt Exp $
+.\"	$OpenBSD: pci.4,v 1.7 2000/04/28 06:53:26 deraadt Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -85,7 +85,7 @@ AdvanSys PCI
 .Tn SCSI
 interfaces.
 .It Xr ahc 4
-Adaptec 29xx, 39xx, and other AIC-7xxx-based
+Adaptec 27xx, 29xx, 39xx, 29160, and other AIC-7xxx-based
 .Tn SCSI
 interfaces.
 .It Xr bt 4
@@ -112,6 +112,8 @@ interfaces.
 .Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset ind
+.It Xr an 4
+Aironet Communications 4500/4800 IEEE 802.11DS wireless network adapter.
 .It Xr dc 4
 Various Tulip-like Ethernet
 interfaces such as the DEC/Intel 21143;
@@ -181,8 +183,6 @@ Winbond W89C840F Ethernet interfaces.
 Intel Gigabit Ethernet interfaces.
 .It Xr xl 4
 3Com 3c900, 3c905, 3c980, and 3cSOHO Ethernet interfaces.
-.It Xr an 4
-Aironet Communications 4500/4800 IEEE 802.11DS wireless network adapter.
 .El
 .Pp
 .Ss Serial interfaces
@@ -200,6 +200,10 @@ Ensoniq AudioPCI sound device.
 ESS Solo-1 PCI AudioDrive sound device.
 .It Xr sv 4
 S3 SonicVibes sound device.
+.It Xr neo 4
+NeoMagic 256AV/ZX audio driver.
+.It Xr cmpci 4
+C-Media CMI8x38 PCI device driver.
 .El
 .Pp
 .Ss Miscellaneous devices
