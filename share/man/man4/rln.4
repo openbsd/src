@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rln.4,v 1.5 1999/07/14 07:31:07 d Exp $
+.\"	$OpenBSD: rln.4,v 1.6 1999/07/31 06:46:53 d Exp $
 .Dd 2 April, 1999
 .Dt RLN 4
 .Os
@@ -6,7 +6,7 @@
 .Nm rln
 .Nd device driver for RangeLAN2-based wireless network cards
 .Sh SYNOPSIS
-.\" .Cd "rln0 at isa? port ? irq ? flags ?"
+.Cd "rln0 at isa? port 0x270 irq ? flags ?"
 .\" .Cd "rln* at isapnp? flags ?"
 .Cd "rln* at pcmcia? function ? flags ?"
 .Sh DESCRIPTION
@@ -14,14 +14,14 @@ The
 .Nm
 device driver supports at least the following cards:
 .Bl -bullet -compact
-.\" .It
-.\" Proxim RangeLAN2 7100 ISA Card
+.It
+Proxim RangeLAN2 7100 ISA Card
 .\" .It
 .\" Proxim RangeLAN2 630x Mini ISA OEM Module
 .\" .It
 .\" Proxim RangeLAN2 633x Micro design-in module
-.\" .It
-.\" Symphony PC Cards
+.It
+Symphony PC Cards
 .\" .It
 .\" Symphony PnP ISA Card
 .It
@@ -95,15 +95,14 @@ run. Check the cpu load.
 An expected response to the command did not appear within a reasonable time.
 .It "rln0: unknown RangeLAN2 wireless network card"
 The card model was not matched in the known-card tables.
-Please send output of
+Please send in the output of
 .Xr dmesg 8
-and a description of your card in using
-.Xr sendbug 1
-so that this can be rectified.
+and a description of your card (via
+.Xr sendbug 1 ) .
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
-.\" .Xr isa 4 ,
+.Xr isa 4 ,
 .\" .Xr isapnp 4 ,
 .Xr pcmcia 4 ,
 .Xr cnw 4 ,
