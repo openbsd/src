@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.7 1997/06/17 14:43:33 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.8 1997/07/01 18:54:50 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.22 1996/01/04 20:11:20 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.7 1997/06/17 14:43:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.8 1997/07/01 18:54:50 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -154,7 +154,7 @@ struct	cmd {
 void 	adjust_nsellength();
 int	getinfo __P((struct ifreq *));
 void	getsock __P((int));
-void	printif __P((struct ifreq *));
+void	printif __P((struct ifreq *, int));
 void 	printb __P((char *, unsigned short, char *));
 void 	status __P((int));
 void 	usage();
@@ -206,13 +206,17 @@ main(argc, argv)
 {
 	register struct afswtch *rafp;
 	int aflag = 0;
+	int ifaliases = 0;
 
 	if (argc < 2) 
 		usage();
 	argc--, argv++;
 	if (!strcmp(*argv, "-a"))
 		aflag = 1;
-	else
+	else if (!strcmp(*argv, "-A")) {
+		aflag = 1;
+		ifaliases = 1;
+	} else
 		strncpy(name, *argv, sizeof(name));
 	argc--, argv++;
 	if (argc > 0) {
@@ -227,12 +231,12 @@ main(argc, argv)
 	if (aflag) {
 		if (argc > 0)
 			usage();
-		printif(NULL);
+		printif(NULL, ifaliases);
 		exit(0);
 	}
 	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (argc == 0) {
-		printif(&ifr);
+		printif(&ifr, 1);
 		exit(0);
 	}
 
@@ -349,13 +353,14 @@ getinfo(ifr)
 }
 
 void
-printif(ifrm)
+printif(ifrm, ifaliases)
 	struct ifreq *ifrm;
 {
 	char *inbuf = NULL;
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifrp;
 	int i, len = 8192;
+	int noinet = 1;
 
 	getsock(af);
 	if (s < 0)
@@ -389,12 +394,15 @@ printif(ifrm)
 			if (getinfo(&ifreq) < 0)
 				continue;
 			status(1);
+			noinet = 1;
 			continue;
 		}
 		if (!strncmp(ifreq.ifr_name, ifrp->ifr_name,
 		    sizeof(ifrp->ifr_name))) {
 			register struct afswtch *p = afp;
 
+			if (ifaliases == 0 && noinet == 0)
+				continue;
 			ifr = *ifrp;
 			if ((p = afp) != NULL) {
 				(*p->af_status)(1);
@@ -402,6 +410,7 @@ printif(ifrm)
 				ifr.ifr_addr.sa_family = p->af_af;
 				(*p->af_status)(0);
 			}
+			noinet = 0;
 			continue;
 		}
 	}
@@ -932,6 +941,6 @@ usage()
 		"\t[ arp | -arp ]\n"
 		"\t[ -802.2 | -802.3 | -802.2tr | -snap | -EtherII ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
-		"       ifconfig -a [ af ]\n");
+		"       ifconfig [-a | -A] [ af ]\n");
 	exit(1);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.5 1997/05/28 22:01:29 deraadt Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.6 1997/07/01 18:54:49 deraadt Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -51,6 +51,10 @@
 .Nm ifconfig
 .Ar interface
 .Op Ar protocol_family
+.Nm ifconfig
+.Fl a
+.Nm ifconfig
+.Fl A
 .Sh DESCRIPTION
 .Nm Ifconfig
 is used to assign an address
@@ -266,8 +270,13 @@ Ifconfig will report only the details specific to that protocol family.
 .Pp
 The interface name
 .Ar -a
-is reserved, and causes information on all interfaces to be displayed.
+causes information on all interfaces to be displayed.
 The protocol family may be specified as well.
+.Pp
+The interface name
+.Ar A
+causes full interface alias information for each interface to be
+displayed.
 .Pp
 Only the super-user may modify the configuration of a network interface.
 .Sh DIAGNOSTICS
