@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.66 2000/08/01 19:05:23 itojun Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.67 2000/08/03 11:33:37 itojun Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.66 2000/08/01 19:05:23 itojun Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.67 2000/08/03 11:33:37 itojun Exp $";
 #endif /* not lint */
 
 /*
@@ -639,7 +639,13 @@ dg_badinput(sa)
 		port = ntohs(((struct sockaddr_in6 *)sa)->sin6_port);
 		if (IN6_IS_ADDR_MULTICAST(in6) || IN6_IS_ADDR_UNSPECIFIED(in6))
 			goto bad;
-		if (IN6_IS_ADDR_V4MAPPED(in6) || IN6_IS_ADDR_V4COMPAT(in6)) {
+		/*
+		 * OpenBSD does not support IPv4 mapped adderss (RFC2553
+		 * inbound behavior) at all.  We should drop it.
+		 */
+		if (IN6_IS_ADDR_V4MAPPED(in6))
+			goto bad;
+		if (IN6_IS_ADDR_V4COMPAT(in6)) {
 			memcpy(&in, &in6->s6_addr[12], sizeof(in));
 			in.s_addr = ntohl(in.s_addr);
 			goto v4chk;
