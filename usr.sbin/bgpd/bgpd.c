@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.55 2004/01/05 18:21:51 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.56 2004/01/05 19:10:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -38,6 +38,7 @@
 void	sighdlr(int);
 void	usage(void);
 int	main(int, char *[]);
+int	check_child(pid_t, const char *);
 int	reconfigure(char *, struct bgpd_config *, struct mrt_config *,
 	    struct peer *);
 int	dispatch_imsg(struct imsgbuf *, int, struct mrt_config *);
@@ -47,6 +48,7 @@ int			rfd = -1;
 volatile sig_atomic_t	mrtdump = 0;
 volatile sig_atomic_t	quit = 0;
 volatile sig_atomic_t	reconfig = 0;
+volatile sig_atomic_t	sigchld = 0;
 struct imsgbuf		ibuf_se;
 struct imsgbuf		ibuf_rde;
 
@@ -56,8 +58,10 @@ sighdlr(int sig)
 	switch (sig) {
 	case SIGTERM:
 	case SIGINT:
-	case SIGCHLD:
 		quit = 1;
+		break;
+	case SIGCHLD:
+		sigchld = 1;
 		break;
 	case SIGHUP:
 		reconfig = 1;
@@ -281,6 +285,14 @@ main(int argc, char *argv[])
 			reconfig = 0;
 		}
 
+		if (sigchld) {
+			if (check_child(io_pid, "session engine"))
+				quit = 1;
+			if (check_child(rde_pid, "route decision engine"))
+				quit = 1;
+			sigchld = 0;
+		}
+
 		if (mrtdump == 1) {
 			mrt_alrm(&mrtconf, &ibuf_rde);
 			mrtdump = 0;
@@ -306,6 +318,26 @@ main(int argc, char *argv[])
 	kroute_shutdown();
 
 	logit(LOG_CRIT, "Terminating");
+	return (0);
+}
+
+int
+check_child(pid_t pid, const char *pname)
+{
+	int	status;
+
+	if (waitpid(pid, &status, WNOHANG) > 0) {
+		if (WIFEXITED(status)) {
+			logit(LOG_CRIT, "Lost child: %s exited", pname);
+			return (1);
+		}
+		if (WIFSIGNALED(status)) {
+			logit(LOG_CRIT, "Lost child: %s terminated; signal %d",
+			    pname, WTERMSIG(status));
+			return (1);
+		}
+	}
+
 	return (0);
 }
 
