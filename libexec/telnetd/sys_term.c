@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_term.c,v 1.6 1997/02/16 05:59:43 deraadt Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.7 1997/07/14 01:40:38 millert Exp $	*/
 /*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
@@ -39,13 +39,14 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.6 1997/02/16 05:59:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.7 1997/07/14 01:40:38 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include "telnetd.h"
 #include "pathnames.h"
 
+#include <util.h>
 #include <sys/cdefs.h>
 #define P __P
 
@@ -181,6 +182,9 @@ struct termios termbuf, termbuf2;	/* pty control structure */
 int ttyfd = -1;
 # endif
 #endif	/* USE_TERMIO */
+
+int cleanopen P((char *));
+void scrub_env P((void));
 
 /*
  * init_termbuf()
@@ -1073,10 +1077,9 @@ extern void utmp_sig_notify P((int));
  * getptyslave()
  *
  * Open the slave side of the pty, and do any initialization
- * that is necessary.  The return value is a file descriptor
- * for the slave side.
+ * that is necessary.
  */
-	int
+	void
 getptyslave()
 {
 	register int t = -1;
@@ -1394,7 +1397,6 @@ startslave(host, autologin, autoname)
 	char *autoname;
 {
 	register int i;
-	char name[256];
 #ifdef	NEWINIT
 	extern char *ptyip;
 	struct init_request request;
@@ -1552,7 +1554,6 @@ start_login(host, autologin, name)
 	int autologin;
 	char *name;
 {
-	register char *cp;
 	register char **argv;
 	char **addarg();
 	extern char *getenv();
@@ -1845,6 +1846,7 @@ addarg(argv, val)
  * Remove a few things from the environment that
  * don't need to be there.
  */
+	void
 scrub_env()
 {
 	register char **cpp, **cpp2;
@@ -2262,7 +2264,7 @@ rmut()
 				if (SCMPN(u->ut_line, line+5) ||
 				    u->ut_name[0]==0)
 					continue;
-				(void) lseek(f, ((long)u)-((long)utmp), L_SET);
+				(void) lseek(f, ((off_t)u)-((off_t)utmp), L_SET);
 				SCPYN(u->ut_name, "");
 				SCPYN(u->ut_host, "");
 				(void) time(&u->ut_time);
@@ -2306,7 +2308,7 @@ char *line;
 	/* write it out only if it exists */
 	if (utptr) {
 		utptr->ut_type = DEAD_PROCESS;
-		utptr->ut_time = time((long *) 0);
+		utptr->ut_time = time((time_t *) 0);
 		(void) pututline(utptr);
 		/* set wtmp entry if wtmp file exists */
 		if ((fd = open(wtmpf, O_WRONLY | O_APPEND)) >= 0) {

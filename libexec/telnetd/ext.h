@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext.h,v 1.2 1996/03/28 23:21:56 niklas Exp $	*/
+/*	$OpenBSD: ext.h,v 1.3 1997/07/14 01:40:38 millert Exp $	*/
 /*	$NetBSD: ext.h,v 1.6 1996/02/28 20:38:13 thorpej Exp $	*/
 
 /*
@@ -153,6 +153,7 @@ extern void
 
 extern int
 	end_slc P((unsigned char **)),
+	getent P((char *, char *)),
 	getnpty P((void)),
 #ifndef convex
 	getpty P((int *)),

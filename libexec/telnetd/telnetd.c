@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnetd.c,v 1.6 1997/01/15 23:41:05 millert Exp $	*/
+/*	$OpenBSD: telnetd.c,v 1.7 1997/07/14 01:40:39 millert Exp $	*/
 /*	$NetBSD: telnetd.c,v 1.6 1996/03/20 04:25:57 tls Exp $	*/
 
 /*
@@ -45,15 +45,21 @@ static char copyright[] =
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: telnetd.c,v 1.5 1996/02/28 20:38:23 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: telnetd.c,v 1.6 1997/01/15 23:41:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: telnetd.c,v 1.7 1997/07/14 01:40:39 millert Exp $";
 #endif
 #endif /* not lint */
 
+#include <term.h>
 #include "telnetd.h"
 #include "pathnames.h"
 
 #include <sys/cdefs.h>
 #define P __P
+
+void doit P((struct sockaddr_in *));
+void startslave P((char *, int, char *));
+int terminaltypeok P((char *));
+
 
 #if	defined(_SC_CRAY_SECURE_SYS) && !defined(SCM_SECURITY)
 /*
@@ -170,6 +176,7 @@ char valid_opts[] = {
 	'\0'
 };
 
+	int
 main(argc, argv)
 	char *argv[];
 {
@@ -776,11 +783,11 @@ extern void telnet P((int, int, char *));
 /*
  * Get a pty, scan input lines.
  */
+	void
 doit(who)
 	struct sockaddr_in *who;
 {
 	char *host, *inet_ntoa();
-	int t;
 	struct hostent *hp;
 	int level;
 	int ptynum;
