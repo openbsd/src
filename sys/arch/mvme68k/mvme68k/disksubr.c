@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.5 1996/05/04 16:07:47 deraadt Exp $ */
+/*	$OpenBSD: disksubr.c,v 1.6 1996/05/10 03:15:15 chuck Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -358,6 +358,23 @@ bsdtocpulabel(lp, clp)
 	clp->checksum = lp->d_checksum;
 	bcopy(&lp->d_partitions[0], clp->vid_4, sizeof(struct partition) * 4);
 	bcopy(&lp->d_partitions[4], clp->cfg_4, sizeof(struct partition) * 12);
+
+	/*
+ 	 * here are the parts of the cpu_disklabel the kernel must init.
+ 	 * see disklabel.h for more details
+ 	 * [note: this used to be handled by 'wrtvid']
+ 	 */
+	bcopy(VID_ID, clp->vid_id, sizeof(clp->vid_id));
+	clp->vid_oss = VID_OSS;
+	clp->vid_osl = VID_OSL;
+	clp->vid_osa_u = VID_OSAU;
+	clp->vid_osa_l = VID_OSAL;
+	clp->vid_cas = VID_CAS;
+	clp->vid_cal = VID_CAL;
+	bcopy(VID_MOT, clp->vid_mot, sizeof(clp->vid_mot));
+	clp->cfg_rec = CFG_REC;
+	clp->cfg_psm = CFG_PSM;
+
 }
 
 static void
