@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2001/02/21 00:03:46 brad Exp $
+#	$OpenBSD: Makefile,v 1.12 2002/01/15 22:37:02 fgsch Exp $
 
 # libc_r will be depreceated and replaced by libpthread
 # when all supported architectures support weak symbols.
@@ -12,15 +12,16 @@ LIBC_RSRCDIR = ${.CURDIR}
 LIB=		c_r
 LINTFLAGS=	-z
 CFLAGS+=	-DPTHREAD_KERNEL -D_POSIX_THREADS -D_THREAD_SAFE 
-CFLAGS+=	-D_PTHREADS_INVARIANTS
-CFLAGS+=	-DNOPOLL -I${LIBC_RSRCDIR}/uthread
-CFLAGS+=	-I${LIBC_RSRCDIR}/include
+CFLAGS+=	-I${LIBC_RSRCDIR}/uthread -I${LIBC_RSRCDIR}/include
 CFLAGS+=	-I${LIBCSRCDIR}/include
 
 # Uncomment this if you want libc_r to contain debug information for
 # thread locking.
 CFLAGS+=	-D_LOCK_DEBUG
 #DEBUG=		-ggdb -Wall
+
+# enable extra internal consistency checks
+CFLAGS+=	-D_PTHREADS_INVARIANTS
 
 .include "${LIBCSRCDIR}/Makefile.inc"
 
