@@ -1,4 +1,4 @@
-/*	$OpenBSD: telnet.c,v 1.6 1998/07/27 15:29:29 millert Exp $	*/
+/*	$OpenBSD: telnet.c,v 1.7 1999/07/23 15:04:48 aaron Exp $	*/
 /*	$NetBSD: telnet.c,v 1.7 1996/02/28 21:04:15 thorpej Exp $	*/
 
 /*
@@ -1992,7 +1992,7 @@ telsnd()
 		}
 		if ((sc == '\n') || (sc == '\r'))
 			bol = 1;
-	} else if (sc == escape) {
+	} else if (escape != _POSIX_VDISABLE && sc == escape) {
 	    /*
 	     * Double escape is a pass through of a single escape character.
 	     */
