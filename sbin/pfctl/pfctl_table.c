@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.3 2003/01/03 21:53:35 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.4 2003/01/03 21:55:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -315,7 +315,7 @@ _pfctl_table(int argc, char *argv[], char *tname, char *command,
 			    sizeof(buffer.addrs[0]));
 		}
 		RVTEST(pfr_tst_addrs(&table, buffer.addrs, size, &nmatch,
-			flags));
+		    flags));
 		if (!(opts & PF_OPT_QUIET))
 			printf("%d/%d addresses match.\n", nmatch, size);
 		if (opts & PF_OPT_VERBOSE && !(opts & PF_OPT_VERBOSE2))
