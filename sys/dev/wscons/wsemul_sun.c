@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.10 2002/09/15 12:54:49 fgsch Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.11 2002/09/23 18:10:09 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -282,7 +282,10 @@ wsemul_sun_output_lowchars(edp, c, kernel)
 		break;
 
 	case ASCII_FF:		/* "Form Feed (FF)" */
-		wsemul_sun_resetop(edp, WSEMUL_CLEARSCREEN);
+		(*edp->emulops->eraserows)(edp->emulcookie, 0, edp->nrows,
+		    edp->bkgdattr);
+		edp->ccol = edp->crow = 0;
+		CLR(edp->flags, SUNFL_LASTCHAR);
 		break;
 
 	case ASCII_VT:		/* "Reverse Line Feed" */
@@ -826,7 +829,7 @@ wsemul_sun_resetop(cookie, op)
 		break;
 	case WSEMUL_CLEARSCREEN:
 		(*edp->emulops->eraserows)(edp->emulcookie, 0, edp->nrows,
-					   edp->bkgdattr);
+		    edp->bkgdattr);
 		edp->ccol = edp->crow = 0;
 		CLR(edp->flags, SUNFL_LASTCHAR);
 		(*edp->emulops->cursor)(edp->emulcookie, 1, 0, 0);
