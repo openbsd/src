@@ -1,7 +1,10 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.27 1999/08/27 13:58:58 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.28 1999/11/23 05:17:20 millert Exp $
 #
 # Build wrapper for Perl 5.005_03.
 #
+
+# For ``NOMAN''
+.include <bsd.own.mk>
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -10,8 +13,6 @@ LNDIR=		/usr/bin/lndir
 # Note: using the in-tree version means you must already have a perl installed
 H2PH=		/usr/bin/h2ph
 POD2MAN=	/usr/bin/pod2man
-
-.include <bsd.own.mk>
 
 .ifndef NOMAN
 MANALL=	perl.cat1 perlapio.cat1 perlbook.cat1 perlbot.cat1 perlcall.cat1 \
@@ -79,6 +80,14 @@ MANALL=
 
 MANLOCALBUILD=	yes
 
+LIB=	perl
+
+SRCS=	gv.c toke.c perly.c op.c regcomp.c dump.c util.c mg.c byterun.c hv.c \
+	av.c run.c pp_hot.c sv.c pp.c scope.c pp_ctl.c pp_sys.c doop.c doio.c \
+	regexec.c taint.c deb.c universal.c globals.c perl.c perlio.c
+
+CFLAGS+= -DPERL_CORE -I.
+
 .if defined (INSTALL_STRIP) && ${INSTALL_STRIP} == "-s"
 INST_PROG='/usr/bin/install -cs'
 .else
@@ -99,7 +108,7 @@ CLEANFILES=	config.sh Policy.sh ${MANALL}
 
 all:	perl.build ${MANALL}
 
-perl.build:	${GENERATED}
+perl.build:	perl.lib
 	(cd ${.OBJDIR}; ${MAKE})
 
 config.sh:
@@ -593,7 +602,7 @@ maninstall:
 	@echo NOMAN is set
 .endif
 
-install: install.perl maninstall
+install: install.lib install.perl maninstall
 	-mkdir -p ${DESTDIR}/usr/libdata/perl5/site_perl/${MACHINE_ARCH}-openbsd
 	(cd ${DESTDIR}/usr/include; ${H2PH} \
 		-d ${DESTDIR}/usr/libdata/perl5/site_perl/${MACHINE_ARCH}-openbsd \
@@ -602,7 +611,7 @@ install: install.perl maninstall
 
 install.perl:
 	(cd ${.OBJDIR}; INSTALL=${INSTALL} INSTALL_COPY=${INSTALL_COPY} \
-	 INSTALL_STRIP=${INSTALL_STRIP} ${MAKE} install.perl)
+	 INSTALL_STRIP=${INSTALL_STRIP} NOLIBINSTALL=1 ${MAKE} install.perl)
 
 test:
 	-@if [ -e Makefile ]; then ${MAKE} test; fi
@@ -611,20 +620,42 @@ clean:
 	-@if [ -e Makefile ]; then ${MAKE} realclean; fi
 
 cleandir:
-	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
-	-@rm -f ${CLEANFILES}
+	-@if [ ${.CURDIR} != ${.OBJDIR} ]; then \
+	    rm -rf *; \
+	else \
+	    test -e Makefile && ${MAKE} distclean; \
+	    rm -f ${CLEANFILES}; \
+	fi
 
-depend:
-	# Nothing here so far...
+.include <bsd.lib.mk>
 
-lint:
-	# Nothing here so far...
+# These have to come after the inclusion of <bsd.lib.mk>
+perl.lib:	${GENERATED} ${_LIBS}
 
-tags:
-	# Nothing here so far...
-
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
-.ifndef NOMAN
-.include <bsd.man.mk>
+install.lib:
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 lib${LIB}.a \
+	    ${DESTDIR}${LIBDIR}
+.if (${INSTALL_COPY} != "-p")
+	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
+.endif
+	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}.a
+.if !defined(NOPROFILE)
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
+	    lib${LIB}_p.a ${DESTDIR}${LIBDIR}
+.if (${INSTALL_COPY} != "-p")
+	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
+.endif
+	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
+.endif
+.if !defined(NOPIC) && (${MACHINE_ARCH} != "mips") 
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
+	    lib${LIB}_pic.a ${DESTDIR}${LIBDIR}
+.if (${INSTALL_COPY} != "-p")
+	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
+.endif
+	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
+.endif
+.if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
+	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	    lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} ${DESTDIR}${LIBDIR}
 .endif
