@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.distribution,v 1.2 1999/05/27 01:09:43 angelos Exp $
+# $OpenBSD: Makefile.distribution,v 1.3 1999/05/31 18:29:17 angelos Exp $
 #
 # The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 #
@@ -39,7 +39,7 @@ YACCFLAGS2 = -d -p kv -b z
 YACCFLAGS = -d -p kn -b k
 LEXFLAGS2 = -Pkv -s -i
 LEXFLAGS = -Cr -Pkn -s -i
-CFLAGS = -O2 #-Wall -g
+CFLAGS = -O2 -Wall # -g
 RMFLAGS2 = -rf
 RMFLAGS = -f
 NROFFFLAGS = -mandoc

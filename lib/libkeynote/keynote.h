@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote.h,v 1.2 1999/05/25 21:42:23 angelos Exp $ */
+/* $OpenBSD: keynote.h,v 1.3 1999/05/31 18:29:18 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
@@ -34,6 +34,7 @@
 #include "ssl/err.h"
 #include "ssl/rand.h"
 #include "ssl/x509.h"
+#include "ssl/pem.h"
 #endif /* CRYPTO */
 
 #ifdef WIN32

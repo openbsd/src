@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.2 1999/05/25 21:42:23 angelos Exp $ */
+/* $OpenBSD: signature.c,v 1.3 1999/05/31 18:29:19 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
@@ -415,7 +415,7 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
     EVP_PKEY *pPublicKey;
 #endif /* CRYPTO */
     unsigned char *ptr = (char *) NULL, *decoded = (char *) NULL;
-    int encoding, internalencoding, len;
+    int encoding, internalencoding, len = 0;
 
     keynote_errno = 0;
     if (keytype == KEYNOTE_PRIVATE_KEY)
@@ -476,12 +476,12 @@ kn_decode_key(struct keynote_deckey *dc, char *key, int keytype)
 
 	case ENCODING_NATIVE:
 	    decoded = strdup(key);
-	    len = strlen(key);
 	    if (decoded == (unsigned char *) NULL)
 	    {
 		keynote_errno = ERROR_MEMORY;
 		return -1;
 	    }
+	    len = strlen(key);
 	    ptr = decoded;
 	    break;
 
@@ -728,9 +728,9 @@ keynote_sigverify_assertion(struct assertion *as)
     unsigned char res2[20];
     SHA_CTX shscontext;
     MD5_CTX md5context;
+    int len = 0;
     DSA *dsa;
     RSA *rsa;
-    int len;
 #endif /* CRYPTO */
     if ((as->as_signature == (char *) NULL) ||
 	(as->as_startofsignature == (char *) NULL) ||
@@ -828,6 +828,7 @@ keynote_sigverify_assertion(struct assertion *as)
 		keynote_errno = ERROR_MEMORY;
 		return -1;
 	    }
+	    len = strlen(sig);
 	    ptr = decoded;
 	    break;
 
