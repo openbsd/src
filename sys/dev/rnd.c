@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.3 1996/04/24 21:26:41 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.4 1996/08/10 19:41:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
@@ -463,7 +463,7 @@ add_net_randomness(isr)
 		return;
 
 	add_timer_randomness(&random_state, &net_timer_state[isr],
-			     ENT_NET + isr);
+	    ENT_NET + isr);
 }
 
 void
@@ -474,7 +474,7 @@ add_blkdev_randomness(dev)
 		return;
 
 	add_timer_randomness(&random_state, &blkdev_timer_state[major(dev)],
-			     ENT_BLKDEV + major(dev));
+	    ENT_BLKDEV + major(dev));
 }
 
 void
@@ -486,7 +486,7 @@ add_tty_randomness(dev, c)
 		return;
 
 	add_timer_randomness(&random_state, &tty_timer_state[major(dev)],
-			     ENT_TTY + c);
+	    ENT_TTY + c);
 }
 
 #if POOLWORDS % 16
@@ -572,70 +572,62 @@ rndread(dev, uio, ioflag)
 	int	ioflag;
 {
 	int	ret = 0;
-	int	s;
+	int	s, i;
 	
 	if (uio->uio_resid == 0)
 		return 0;
 
 	while (!ret && uio->uio_resid > 0) {
-		u_int32_t	buf[ POOLWORDS ];
+		u_int32_t buf[ POOLWORDS ];
 		int	n = min(sizeof(buf), uio->uio_resid);
 
 		s = splhigh();
-		switch(minor(dev))
-		{
-			case RND_RND:
-				break;
-			case RND_SRND:
-				if (random_state.entropy_count < 8) {
-					if (ioflag & IO_NDELAY) {
-						ret = EWOULDBLOCK;
-						break;
-					}
-#ifdef	DEBUG
-					if (rnd_debug & RD_WAIT)
-						printf("rnd: sleep[%d]\n",
-							rnd_sleep);
-#endif
-					rnd_sleep++;
-					ret = tsleep(&rnd_sleep, PWAIT | PCATCH,
-						     "rndrd", 0);
-#ifdef	DEBUG
-					if (rnd_debug & RD_WAIT)
-						printf("rnd: awakened(%d)\n",
-							ret);
-#endif
-					if (ret)
-						break;
+		switch(minor(dev)) {
+		case RND_RND:
+			break;
+		case RND_SRND:
+			if (random_state.entropy_count < 8) {
+				if (ioflag & IO_NDELAY) {
+					ret = EWOULDBLOCK;
+					break;
 				}
-				n = min(n, random_state.entropy_count / 8);
 #ifdef	DEBUG
-				if (rnd_debug & RD_OUTPUT)
-					printf("rnd: %u possible output\n",
-						n );
+				if (rnd_debug & RD_WAIT)
+					printf("rnd: sleep[%d]\n",
+					    rnd_sleep);
 #endif
-			case RND_URND:
-				n = extract_entropy(&random_state, buf, n);
+				rnd_sleep++;
+				ret = tsleep(&rnd_sleep, PWAIT | PCATCH,
+				    "rndrd", 0);
 #ifdef	DEBUG
-				if (rnd_debug & RD_OUTPUT)
-					printf("rnd: %u bytes for output\n",
-						n );
+				if (rnd_debug & RD_WAIT)
+					printf("rnd: awakened(%d)\n", ret);
 #endif
-				break;
-			case RND_PRND:	
-				{
-					int i = (n + 3) / 4;
-					while(i--)
-						buf[i] = random();
-				}
-				break;
-
+				if (ret)
+					break;
+			}
+			n = min(n, random_state.entropy_count / 8);
+#ifdef	DEBUG
+			if (rnd_debug & RD_OUTPUT)
+				printf("rnd: %u possible output\n", n);
+#endif
+		case RND_URND:
+			n = extract_entropy(&random_state, buf, n);
+#ifdef	DEBUG
+			if (rnd_debug & RD_OUTPUT)
+				printf("rnd: %u bytes for output\n", n);
+#endif
+			break;
+		case RND_PRND:	
+			i = (n + 3) / 4;
+			while (i--)
+				buf[i] = random();
+			break;
 		}
 		splx(s);
 		if (n != 0 && ret == 0)
 			ret = uiomove((caddr_t)buf, n, uio);
 	}
-
 	return ret;
 }
 
@@ -646,12 +638,11 @@ rndselect(dev, rw, p)
 	struct proc *p;
 {
 	switch (rw) {
-		case FREAD:
-			return random_state.entropy_count > 0;
-		case FWRITE:
-			return 1;
+	case FREAD:
+		return random_state.entropy_count > 0;
+	case FWRITE:
+		return 1;
 	}
-				
 	return 0;
 }
 
@@ -682,7 +673,6 @@ rndwrite(dev, uio, flags)
 				add_entropy_word(&random_state, buf[i]);
 		}
 	}
-
 	return ret;
 }
 
@@ -695,36 +685,29 @@ rndioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	int	ret;
+	u_int	cnt;
 	
 	switch (cmd) {
-
-		case RNDGETENTCNT:
-			ret = copyout(&random_state.entropy_count, data,
-				      sizeof(random_state.entropy_count));
-			break;
-
-		case RNDADDTOENTCNT:
-			if (suser(p->p_ucred, &p->p_acflag) != 0)
-				return EPERM;
-			{
-				u_int	cnt;
-				copyin(&cnt, data, sizeof(cnt));
-				random_state.entropy_count += cnt;
-			}
-			if (random_state.entropy_count > POOLBITS)
-				random_state.entropy_count = POOLBITS;
-			break;
-
-		case RNDZAPENTCNT:
-			if (suser(p->p_ucred, &p->p_acflag) != 0)
-				return EPERM;
-			random_state.entropy_count = 0;
-			break;
-
-		default:
-			ret = EINVAL;
+	case RNDGETENTCNT:
+		ret = copyout(&random_state.entropy_count, data,
+		    sizeof(random_state.entropy_count));
+		break;
+	case RNDADDTOENTCNT:
+		if (suser(p->p_ucred, &p->p_acflag) != 0)
+			return EPERM;
+		copyin(&cnt, data, sizeof(cnt));
+		random_state.entropy_count += cnt;
+		if (random_state.entropy_count > POOLBITS)
+			random_state.entropy_count = POOLBITS;
+		break;
+	case RNDZAPENTCNT:
+		if (suser(p->p_ucred, &p->p_acflag) != 0)
+			return EPERM;
+		random_state.entropy_count = 0;
+		break;
+	default:
+		ret = EINVAL;
 	}
-
 	return ret;
 }
 #endif
