@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.h,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.h,v 1.3 2005/01/14 00:55:11 drahn Exp $ */
 /*	$wasabi$	*/
 
 /*
@@ -45,19 +45,24 @@
  * call this function with the virtual address of the
  * GPIO controller's registers
  */
-extern void pxa2x0_gpio_bootstrap(vaddr_t);
+void pxa2x0_gpio_bootstrap(vaddr_t);
 
 /*
  * GPIO pin function query/manipulation functions
  */
-extern u_int pxa2x0_gpio_get_function(u_int);
-extern u_int pxa2x0_gpio_set_function(u_int, u_int);
+u_int pxa2x0_gpio_get_function(u_int);
+u_int pxa2x0_gpio_set_function(u_int, u_int);
+int pxa2x0_gpio_get_bit(u_int gpio);
+void pxa2x0_gpio_set_bit(u_int gpio);
+void pxa2x0_gpio_clear_bit(u_int gpio);
+void pxa2x0_gpio_set_dir(u_int gpio, int dir);
+void pxa2x0_gpio_clear_intr(u_int gpio);
 
 /*
  * Establish/Disestablish interrupt handlers for GPIO pins
  */
-extern void *pxa2x0_gpio_intr_establish(u_int, int, int,
-		int (*)(void *), void *, char *);
-extern void pxa2x0_gpio_intr_disestablish(void *);
+void *pxa2x0_gpio_intr_establish(u_int, int, int, int (*)(void *), void *,
+    char *);
+void pxa2x0_gpio_intr_disestablish(void *);
 
 #endif /* _PXA2X0_GPIO_H */
