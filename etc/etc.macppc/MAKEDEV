@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.5 2002/02/23 17:02:03 matthieu Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.43 2002/04/11 20:28:49 deraadt Exp 
+#	OpenBSD: etc.macppc/MAKEDEV.md,v 1.6 2002/04/21 07:04:28 deraadt Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.44 2002/04/17 22:53:04 miod Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.26 2002/04/11 20:29:42 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.27 2002/04/21 07:04:45 deraadt Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -221,7 +221,7 @@ ttyE*)
 	case $type in
 	E)	major=25; minor=$unit ;;
 	esac
-	M tty$type$unit c $major $minor
+	M tty$type$unit c $major $minor 660
 	;;
 
 pci)
