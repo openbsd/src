@@ -17,18 +17,6 @@ diff -r1.7 Makefile
 < 	${CC} ${CFLAGS} ${.CURDIR}/mksyntax.c -o $@
 ---
 > 	${HOSTCC} ${CFLAGS} ${.CURDIR}/mksyntax.c -o $@
-Index: src/gnu/usr.bin/Makefile
-# perl does not build due to dynamic library requirements
-# Powerpc does not yet have dynamic libaries.
-===================================================================
-RCS file: /cvs/src/gnu/usr.bin/Makefile,v
-retrieving revision 1.18
-diff -r1.18 Makefile
-5c5,6
-< SUBDIR+=	gzip perl rcs sdiff sendbug sort sudo
----
-> SUBDIR+=	gzip rcs sdiff sendbug sort sudo
-> #SUBDIR+=	gzip perl rcs sdiff sendbug sort sudo
 Index: src/lib/libc/stdlib/strtod.c
 #	what define should be used here,
 #	port currently defines both.
@@ -47,13 +35,13 @@ RCS file: /cvs/src/lib/libkvm/kvm.c,v
 retrieving revision 1.4
 diff -r1.4 kvm.c
 1c1
-< /*	$OpenBSD: patches,v 1.1 1997/01/02 03:29:40 rahnds Exp $ */
+< /*	$OpenBSD: patches,v 1.2 1997/01/02 19:45:34 rahnds Exp $ */
 ---
-> /*	$OpenBSD: patches,v 1.1 1997/01/02 03:29:40 rahnds Exp $ */
+> /*	$OpenBSD: patches,v 1.2 1997/01/02 19:45:34 rahnds Exp $ */
 45c45
-< static char *rcsid = "$OpenBSD: patches,v 1.1 1997/01/02 03:29:40 rahnds Exp $";
+< static char *rcsid = "$OpenBSD: patches,v 1.2 1997/01/02 19:45:34 rahnds Exp $";
 ---
-> static char *rcsid = "$OpenBSD: patches,v 1.1 1997/01/02 03:29:40 rahnds Exp $";
+> static char *rcsid = "$OpenBSD: patches,v 1.2 1997/01/02 19:45:34 rahnds Exp $";
 361a362
 > #if #defined(__powerpc__)
 368a370
@@ -227,9 +215,9 @@ RCS file: /cvs/src/sys/conf/param.c,v
 retrieving revision 1.2
 diff -r1.2 param.c
 1c1
-< /*	$OpenBSD: patches,v 1.1 1997/01/02 03:29:40 rahnds Exp $	*/
+< /*	$OpenBSD: patches,v 1.2 1997/01/02 19:45:34 rahnds Exp $	*/
 ---
-> /*	$OpenBSD: patches,v 1.1 1997/01/02 03:29:40 rahnds Exp $	*/
+> /*	$OpenBSD: patches,v 1.2 1997/01/02 19:45:34 rahnds Exp $	*/
 103c103
 < int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
 ---
