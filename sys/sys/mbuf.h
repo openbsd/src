@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.71 2003/07/28 10:10:16 markus Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.72 2003/08/12 05:09:17 mickey Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -555,7 +555,7 @@ struct  mbuf *m_inject(struct mbuf *, int, int, int);
 struct  mbuf *m_getptr(struct mbuf *, int, int *);
 void	m_adj(struct mbuf *, int);
 int	m_clalloc(int, int);
-void	m_copyback(struct mbuf *, int, int, caddr_t);
+void	m_copyback(struct mbuf *, int, int, const void *);
 void	m_freem(struct mbuf *);
 void	m_reclaim(void *, int);
 void	m_copydata(struct mbuf *, int, int, caddr_t);
