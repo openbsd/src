@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.4 2002/02/16 21:27:39 millert Exp $
+.\"     $OpenBSD: mbuf.9,v 1.5 2002/06/12 07:25:35 aaron Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -167,7 +167,8 @@ union mcluster {
 .Sh DESCRIPTION
 The
 .Nm
-functions provide a way to manage the memory buffers used by the
+functions provide a way to manage the memory buffers used by the kernel's
+networking subsystem.
 Several functions and macros are used to allocate and deallocate mbufs,
 but also to get, inject, remove, copy, modify, prepend or append data
 inside these mbufs.
