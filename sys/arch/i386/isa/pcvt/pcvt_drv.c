@@ -159,6 +159,9 @@ pcattach(struct isa_device *dev)
 
 	int i;
 
+	if(do_initialization)
+		vt_coldinit();
+
 	vt_coldmalloc();		/* allocate memory for screens */
 
 #if PCVT_NETBSD || PCVT_FREEBSD

@@ -1367,6 +1367,7 @@ void	vt_clreol ( struct video_state *svsp );
 void	vt_clreos ( struct video_state *svsp );
 void	vt_clrtab ( struct video_state *svsp );
 int	vt_col ( struct video_state *svsp, int cols );
+void	vt_coldinit ( void );
 void	vt_coldmalloc ( void );
 void	vt_cub ( struct video_state *svsp );
 void	vt_cud ( struct video_state *svsp );
