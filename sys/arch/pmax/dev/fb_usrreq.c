@@ -245,6 +245,9 @@ fbmmap(dev, off, prot)
 	int len;
 	register struct fbinfo *fi;
 
+	if (off < 0)
+		return (-1);
+
 	if (minor(dev) >= fbcd.cd_ndevs ||
 	    (fi = fbcd.cd_devs[minor(dev)]) == NULL)
 	    return(-1);
