@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.80 2002/01/30 20:45:34 nordin Exp $	*/
+/*	$OpenBSD: com.c,v 1.81 2002/02/05 04:15:30 mickey Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1504,7 +1504,11 @@ comcnprobe(cp)
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
+#ifdef __hppa__
+	found = 1;
+#else
 	found = comprobe1(iot, ioh);
+#endif
 	bus_space_unmap(iot, ioh, COM_NPORTS);
 	if (!found) {
 		cp->cn_pri = CN_DEAD;
@@ -1518,14 +1522,13 @@ comcnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(commajor, CONUNIT);
-	cp->cn_pri = CN_NORMAL;
+	cp->cn_pri = CN_REMOTE;
 }
 
 void
 comcninit(cp)
 	struct consdev *cp;
 {
-
 	comconsaddr = CONADDR;
 
 	if (bus_space_map(comconsiot, comconsaddr, COM_NPORTS, 0, &comconsioh))
