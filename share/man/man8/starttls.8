@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.9 2003/07/10 08:30:36 jmc Exp $
+.\" $OpenBSD: starttls.8,v 1.10 2003/07/11 05:37:55 david Exp $
 .\"
 .\" Copyright (c) 2001 Jose Nazario <jose@monkey.org>
 .\" All rights reserved.
@@ -323,10 +323,11 @@ the role based granularity as well:
 .Pp
 Force strong (112 bit) encryption for communications for this server:
 .Pp
-.D1 server1.example.net	ENCR:112
+.Dl server1.example.net	ENCR:112
 .Pp
 For a TLS client, force string verification depths to at least 80 bits:
-.D1 TLS_Clt:desktop.example:net VERIFY:80
+.Pp
+.Dl TLS_Clt:desktop.example:net VERIFY:80
 .Pp
 Much more complicated access maps are possible, and error conditions (such
 as permanent or temporary, PERM+ or TEMP+) can be set on the basis of
