@@ -1,4 +1,4 @@
-.\"	$OpenBSD: jot.1,v 1.5 2000/07/06 04:06:54 aaron Exp $
+.\"	$OpenBSD: jot.1,v 1.6 2001/03/08 01:38:51 pjanzen Exp $
 .\"	$NetBSD: jot.1,v 1.2 1994/11/14 20:27:36 jtc Exp $
 .\"
 .\" Copyright (c) 1993
@@ -157,7 +157,7 @@ and the strings xaa through xaz with
 .Pp
 while 20 random 8-letter strings are produced with
 .Pp
-.Dl jot \-r \-c 160 a z | rs \-g 0 8
+.Dl "jot \-r \-c 160 a z | rs \-g 0 8"
 .Pp
 Infinitely many
 .Xr yes 1 's
@@ -189,7 +189,7 @@ from column 10 and ending in column 132, use
 .Pp
 and to print all lines 80 characters or longer,
 .Pp
-.Dl grep \`jot \-s "" \-b . 80\`
+.Dl grep \`jot \-s \&"\&" \-b . 80\`
 .Pp
 .Sh SEE ALSO
 .Xr ed 1 ,
