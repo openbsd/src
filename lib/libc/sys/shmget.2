@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shmget.2,v 1.11 2002/10/07 21:27:56 henning Exp $
+.\"	$OpenBSD: shmget.2,v 1.12 2003/02/28 21:34:37 jmc Exp $
 .\"	$NetBSD: shmget.2,v 1.2 1997/03/27 08:20:39 mikel Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -85,7 +85,7 @@ is set to the lower 9 bits of
 .Va shm_atime ,
 and
 .Va shm_dtime
-are set to 0
+are set to 0.
 .It
 .Va shm_ctime
 is set to the current time.
@@ -130,8 +130,8 @@ There is not enough memory left to create a shared memory segment of the
 requested size.
 .El
 .Sh SEE ALSO
-.Xr ipcs 1 ,
 .Xr ipcrm 1 ,
+.Xr ipcs 1 ,
 .Xr mmap 2 ,
 .Xr shmat 2 ,
 .Xr shmctl 2

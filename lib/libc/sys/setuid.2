@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setuid.2,v 1.13 2002/09/17 09:08:31 deraadt Exp $
+.\"	$OpenBSD: setuid.2,v 1.14 2003/02/28 21:34:37 jmc Exp $
 .\"	$NetBSD: setuid.2,v 1.3 1995/02/27 12:37:06 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -69,7 +69,7 @@ will set the effective user ID to the real user ID.
 .Pp
 The
 .Fn setgid
-function sets the real and effective groups IDs and the saved set-group-ID
+function sets the real and effective group IDs and the saved set-group-ID
 of the current process to the specified value.
 The
 .Fn setgid
@@ -100,7 +100,7 @@ Upon success, these functions return 0;
 otherwise \-1 is returned.
 .Pp
 If the user is not the superuser, or the UID
-specified is not the real, effective ID, or saved ID,
+specified is not the real, effective, or saved ID,
 these functions return \-1.
 .Sh SEE ALSO
 .Xr getgid 2 ,

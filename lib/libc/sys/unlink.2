@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unlink.2,v 1.12 2002/01/24 21:18:36 mickey Exp $
+.\"	$OpenBSD: unlink.2,v 1.13 2003/02/28 21:34:37 jmc Exp $
 .\"	$NetBSD: unlink.2,v 1.7 1995/02/27 12:39:13 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -55,7 +55,7 @@ If that decrement reduces the link count of the file
 to zero,
 and no process has the file open, then
 all resources associated with the file are reclaimed.
-If one or more process have the file open when the last link is removed,
+If one or more processes have the file open when the last link is removed,
 the link is removed, but the removal of the file is delayed until
 all references to it have been closed.
 .Sh RETURN VALUES

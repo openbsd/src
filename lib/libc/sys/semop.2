@@ -1,4 +1,4 @@
-.\"   $OpenBSD: semop.2,v 1.10 2002/05/31 03:57:17 pjanzen Exp $
+.\"   $OpenBSD: semop.2,v 1.11 2003/02/28 21:34:37 jmc Exp $
 .\"	$NetBSD: semop.2,v 1.1 1995/10/16 23:49:28 jtc Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -137,7 +137,8 @@ The calling process has no permission to access the specified semaphore set.
 The value of
 .Fa nsops
 is too big.
-The maximum is specified in MAX_SOPS in <sys/sem.h>
+The maximum is specified in MAX_SOPS in
+.Aq Pa sys/sem.h .
 .It Bq Er EFBIG
 .Va sem_num
 in one of the sem_buf structures is less than 0, or greater than the actual
