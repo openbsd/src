@@ -1,4 +1,4 @@
-/*	$OpenBSD: whois.c,v 1.16 2002/09/05 17:22:16 fgsch Exp $	*/
+/*	$OpenBSD: whois.c,v 1.17 2002/12/17 20:17:49 millert Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,24 +34,26 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1980, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: whois.c,v 1.16 2002/09/05 17:22:16 fgsch Exp $";
+static const char rcsid[] = "$OpenBSD: whois.c,v 1.17 2002/12/17 20:17:49 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -76,18 +78,16 @@ static char rcsid[] = "$OpenBSD: whois.c,v 1.16 2002/09/05 17:22:16 fgsch Exp $"
 #define WHOIS_INIC_FALLBACK	0x02
 #define WHOIS_QUICK		0x04
 
-static void usage(void);
-static void whois(char *, struct addrinfo *, int);
+static __dead void usage(void);
+static int whois(char *, struct addrinfo *, int);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
-	int ch, i, j, error;
+	int ch, i, j, error, rval;
 	int use_qnichost, flags;
-	char *host;
-	char *qnichost;
+	size_t len;
+	char *host, *qnichost, *name;
 	struct addrinfo hints, *res;
 
 #ifdef SOCKS
@@ -98,6 +98,7 @@ main(argc, argv)
 	qnichost = NULL;
 	flags = 0;
 	use_qnichost = 0;
+	rval = 0;
 	while ((ch = getopt(argc, argv, "adgh:ilmpqQrR")) != -1)
 		switch((char)ch) {
 		case 'a':
@@ -156,22 +157,21 @@ main(argc, argv)
 		if (!(flags & WHOIS_QUICK))
 			flags |= WHOIS_INIC_FALLBACK | WHOIS_RECURSE;
 	}
-	while (argc--) {
+	for (name = *argv; (name = *argv) != NULL; argv++) {
 		if (use_qnichost) {
 			if (qnichost) {
 				free(qnichost);
 				qnichost = NULL;
 			}
-			for (i = j = 0; (*argv)[i]; i++)
-				if ((*argv)[i] == '.')
+			for (i = j = 0; name[i]; i++)
+				if (name[i] == '.')
 					j = i;
 			if (j != 0) {
-				int len = i - j + 1 + strlen(QNICHOST_TAIL);
-
-				qnichost = (char *) calloc(len, sizeof(char));
+				len = i - j + 1 + strlen(QNICHOST_TAIL);
+				qnichost = (char *)calloc(len, sizeof(char));
 				if (!qnichost)
-					err(1, "malloc");
-				strlcpy(qnichost, *argv + j + 1, len);
+					err(1, "calloc");
+				strlcpy(qnichost, name + j + 1, len);
 				strlcat(qnichost, QNICHOST_TAIL, len);
 				memset(&hints, 0, sizeof(hints));
 				hints.ai_flags = 0;
@@ -179,9 +179,12 @@ main(argc, argv)
 				hints.ai_socktype = SOCK_STREAM;
 				error = getaddrinfo(qnichost, "whois",
 				    &hints, &res);
-				if (error != 0)
-					errx(EX_NOHOST, "%s: %s", qnichost,
+				if (error) {
+					warnx("%s: %s", qnichost,
 					    gai_strerror(error));
+					rval++;
+					continue;
+				}
 			}
 		}
 		if (!qnichost) {
@@ -190,30 +193,30 @@ main(argc, argv)
 			hints.ai_family = AF_UNSPEC;
 			hints.ai_socktype = SOCK_STREAM;
 			error = getaddrinfo(host, "whois", &hints, &res);
-			if (error != 0)
-				errx(EX_NOHOST, "%s: %s", host,
-				    gai_strerror(error));
+			if (error) {
+				warnx("%s: %s", host, gai_strerror(error));
+				rval++;
+				continue;
+			}
 		}
 
-		whois(*argv++, res, flags);
+		whois(name, res, flags);
 		freeaddrinfo(res);
 	}
-	exit(0);
+	exit(rval);
 }
 
-static void
-whois(name, res, flags)
-	char *name;
-	struct addrinfo *res;
-	int flags;
+static int
+whois(char *name, struct addrinfo *res, int flags)
 {
 	FILE *sfi, *sfo;
 	char *buf, *p, *nhost, *nbuf = NULL;
 	size_t len;
-	int s, nomatch;
+	int s, nomatch, rval;
 	const char *reason = NULL;
 
 	s = -1;
+	rval = 0;
 	for (/*nothing*/; res; res = res->ai_next) {
 		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 		if (s < 0) {
@@ -231,9 +234,10 @@ whois(name, res, flags)
 	}
 	if (s < 0) {
 		if (reason)
-			err(EX_OSERR, "%s", reason);
+			warn("%s", reason);
 		else
-			errx(EX_OSERR, "unknown error in connection attempt");
+			warn("unknown error in connection attempt");
+		return (rval + 1);
 	}
 
 	sfi = fdopen(s, "r");
@@ -250,7 +254,8 @@ whois(name, res, flags)
 		else if (buf[len - 1] == '\n')
 			buf[len - 1] = '\0';
 		else {
-			nbuf = malloc(len + 1);
+			if ((nbuf = malloc(len + 1)) == NULL)
+				err(1, "malloc");
 			memcpy(nbuf, buf, len);
 			nbuf[len] = '\0';
 			buf = nbuf;
@@ -292,19 +297,20 @@ whois(name, res, flags)
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_socktype = SOCK_STREAM;
 		error = getaddrinfo(nhost, "whois", &hints, &res2);
-		if (error != 0) {
+		if (error) {
 			warnx("%s: %s", nhost, gai_strerror(error));
-			return;
+			return (rval + 1);
 		}
 		if (!nomatch)
 			free(nhost);
-		whois(name, res2, 0);
+		rval += whois(name, res2, 0);
 		freeaddrinfo(res2);
 	}
+	return (rval);
 }
 
-static void
-usage()
+static __dead void
+usage(void)
 {
 
 	(void)fprintf(stderr,
