@@ -1,4 +1,4 @@
-.\" $OpenBSD: bge.4,v 1.14 2004/08/15 22:52:40 jmc Exp $
+.\" $OpenBSD: bge.4,v 1.15 2004/08/17 23:49:14 jaredy Exp $
 .\" Copyright (c) 2001 Wind River Systems
 .\" Copyright (c) 1997, 1998, 1999, 2000, 2001
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
@@ -37,14 +37,14 @@
 .Os
 .Sh NAME
 .Nm bge
-.Nd "Broadcom BCM570x PCI gigabit Ethernet adapter driver"
+.Nd "Broadcom BCM570x PCI Gigabit Ethernet adapter driver"
 .Sh SYNOPSIS
 .Cd "bge* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for various NICs based on the Broadcom BCM570x
-family of gigabit Ethernet controller chips, including the
+family of Gigabit Ethernet controller chips, including the
 following:
 .Pp
 .Bl -bullet -compact
@@ -117,7 +117,7 @@ or
 .Cm half-duplex
 modes.
 .It Cm 100baseTX
-Set 100Mbps (fast Ethernet) operation.
+Set 100Mbps (Fast Ethernet) operation.
 The
 .Xr ifconfig 8
 .Ic mediaopt
@@ -133,7 +133,7 @@ and
 .Cm half-duplex
 modes are supported.
 .It Cm 1000baseSX
-Set 1000Mbps (gigabit Ethernet) operation.
+Set 1000Mbps (Gigabit Ethernet) operation.
 Both
 .Cm full-duplex
 and
