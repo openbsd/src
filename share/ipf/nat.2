@@ -1,2 +1,9 @@
+		 Miscellaneous NAT Configuration Tips
+
 Don't forget to add "option GATEWAY" to the kernel config file or NAT will
-not work.
+not work.  NAT requires IP packet forwarding.
+
+You must have IPF enabled even if you aren't using it for anything or
+NAT will not work.  The standard way to do this is to make sure
+/etc/ipf.rules is installed and edit /etc/rc.conf changing
+"ipfilter=NO" to "ipfilter=YES" then reboot.
