@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.6 2001/04/10 16:10:21 ho Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.7 2001/04/18 09:14:14 niklas Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -31,7 +31,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.6 2001/04/10 16:10:21 ho Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.7 2001/04/18 09:14:14 niklas Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -525,7 +525,8 @@ ike_cfg_attribute_print (register u_char *buf, register int attr_type,
 
 	u_char    af   = buf[0] >> 7;
 	u_int16_t type = (buf[0] & 0x7f) << 8 | buf[1];
-	u_int16_t len  = buf[2] << 8 | buf[3], p;
+	u_int16_t len  = af ? 2 : buf[2] << 8 | buf[3], p;
+	u_char   *val  = af ? buf + 2 : buf + 4;
 
 	printf("\n\t\%sattribute %s = ", ike_tab_offset(),
 	       type < (sizeof attrs / sizeof attrs[0]) ? attrs[type] : 
@@ -537,25 +538,20 @@ ike_cfg_attribute_print (register u_char *buf, register int attr_type,
 		return maxlen;
 	}
 
-	if (af == 0) {
-		for (p = 0; p < len; p++)
-			printf ("%02x", (char)*(buf + 4 + p));
-		return len + 4;
-	}
-
-	/* AF is 1 */
-	if (len == 0) {
+	/* XXX The 2nd term is for bug compatibility with PGPnet.  */
+	if (len == 0 || (af && !val[0] && !val[1])) {
 		printf ("<none>");
 		return 4;
 	}
 	
+	/* XXX Generally lengths are not checked well below.  */
 	switch (type) {
 	case IKE_CFG_ATTR_INTERNAL_IP4_ADDRESS:
 	case IKE_CFG_ATTR_INTERNAL_IP4_NETMASK:
 	case IKE_CFG_ATTR_INTERNAL_IP4_DNS:
 	case IKE_CFG_ATTR_INTERNAL_IP4_NBNS:
 	case IKE_CFG_ATTR_INTERNAL_IP4_DHCP:
-		memcpy (&in.s_addr, buf + 4, sizeof in);
+		memcpy (&in.s_addr, val, sizeof in);
 		printf ("%s", inet_ntoa (in));
 		break;
 		
@@ -564,38 +560,38 @@ ike_cfg_attribute_print (register u_char *buf, register int attr_type,
 	case IKE_CFG_ATTR_INTERNAL_IP6_DNS:
 	case IKE_CFG_ATTR_INTERNAL_IP6_NBNS:
 	case IKE_CFG_ATTR_INTERNAL_IP6_DHCP:
-		printf ("%s", inet_ntop (AF_INET6, buf + 4, ntop_buf, 
+		printf ("%s", inet_ntop (AF_INET6, val, ntop_buf,
 					 sizeof ntop_buf));
 		break;
 
 	case IKE_CFG_ATTR_INTERNAL_IP4_SUBNET:
-		memcpy(&in.s_addr, buf + 4, sizeof in);
+		memcpy(&in.s_addr, val, sizeof in);
 		printf("%s/", inet_ntoa (in));
-		memcpy(&in.s_addr, buf + 8, sizeof in);
+		memcpy(&in.s_addr, val + sizeof in, sizeof in);
 		printf("%s", inet_ntoa (in));
 		break;
 		
 	case IKE_CFG_ATTR_INTERNAL_IP6_SUBNET:
-		printf("%s/%u", inet_ntop (AF_INET6, buf + 4, ntop_buf, 
+		printf("%s/%u", inet_ntop (AF_INET6, val, ntop_buf, 
 					   sizeof ntop_buf),
-		       *(buf + 4 + 16));
+		       val[16]);
 		break;
 		
 	case IKE_CFG_ATTR_INTERNAL_ADDRESS_EXPIRY:
-		printf("%u seconds", *(u_int32_t *)(buf + 4));
+		printf("%u seconds",
+		       val[0] << 24 | val[1] << 16 | val[2] << 8 | val[3]);
 		break;
 
 	case IKE_CFG_ATTR_APPLICATION_VERSION:
 		for (p = 0; p < len; p++)
-			printf("%c", isprint(*(buf + 4 + p)) ? 
-			       *(buf + 4 + p) : '.');
+			printf("%c", isprint(val[p]) ? val[p] : '.');
 		break;
 		
 	case IKE_CFG_ATTR_SUPPORTED_ATTRIBUTES:
 		printf("<%d attributes>", len / 2);
 		ike_tab_level++;
 		for (p = 0; p < len; p += 2) {
-			type = (buf[4 + p] << 8 | buf[4 + p + 1]) & 0x7fff;
+			type = (val[p] << 8 | val[p + 1]) & 0x7fff;
 			printf("\n\t%s%s", ike_tab_offset(),
 			       type < (sizeof attrs/sizeof attrs[0]) ?
 			       attrs[type] : "<unknown>");
@@ -606,7 +602,7 @@ ike_cfg_attribute_print (register u_char *buf, register int attr_type,
 	default:
 		break;
 	}
-	return len + 4;
+	return af ? 4 : len + 4;
 }
 
 void
