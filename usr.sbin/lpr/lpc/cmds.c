@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.12 2001/06/25 04:08:35 pjanzen Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.13 2001/06/25 04:47:13 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.12 2001/06/25 04:08:35 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.13 2001/06/25 04:47:13 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ doabort(argc, argv)
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (cp1 - prbuf) < sizeof(prbuf) - 1)
 				*cp1++ = c;
 			*cp1 = '\0';
 			abortpr(1);
@@ -247,7 +247,7 @@ clean(argc, argv)
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (cp1 - prbuf) < sizeof(prbuf) - 1)
 				*cp1++ = c;
 			*cp1 = '\0';
 			cleanpr();
@@ -406,7 +406,7 @@ enable(argc, argv)
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (cp1 - prbuf) < sizeof(prbuf) - 1)
 				*cp1++ = c;
 			*cp1 = '\0';
 			enablepr();
@@ -475,7 +475,7 @@ disable(argc, argv)
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (cp1 - prbuf) < sizeof(prbuf) - 1)
 				*cp1++ = c;
 			*cp1 = '\0';
 			disablepr();
@@ -553,7 +553,7 @@ down(argc, argv)
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (cp1 - prbuf) < sizeof(prbuf) - 1)
 				*cp1++ = c;
 			*cp1 = '\0';
 			putmsg(argc - 2, argv + 2);
@@ -632,7 +632,7 @@ putmsg(argc, argv)
 	cp1 = buf;
 	while (--argc >= 0) {
 		cp2 = *argv++;
-		while ((cp1 - buf) < sizeof(buf) && (*cp1++ = *cp2++))
+		while ((cp1 - buf) < sizeof(buf) - 1 && (*cp1++ = *cp2++))
 			;
 		cp1[-1] = ' ';
 	}
@@ -675,7 +675,7 @@ restart(argc, argv)
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (cp1 - prbuf) < sizeof(prbuf) - 1)
 				*cp1++ = c;
 			*cp1 = '\0';
 			abortpr(0);
@@ -721,7 +721,7 @@ startcmd(argc, argv)
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (cp1 - prbuf) < sizeof(prbuf) - 1)
 				*cp1++ = c;
 			*cp1 = '\0';
 			startpr(1);
@@ -791,7 +791,7 @@ status(argc, argv)
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (cp1 - prbuf) < sizeof(prbuf) - 1)
 				*cp1++ = c;
 			*cp1 = '\0';
 			prstat();
@@ -898,7 +898,7 @@ stop(argc, argv)
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (cp1 - prbuf) < sizeof(prbuf) - 1)
 				*cp1++ = c;
 			*cp1 = '\0';
 			stoppr();
@@ -1147,7 +1147,7 @@ up(argc, argv)
 			cp1 = prbuf;
 			cp2 = bp;
 			while ((c = *cp2++) && c != '|' && c != ':' &&
-			    (cp1 - prbuf) < sizeof(prbuf))
+			    (cp1 - prbuf) < sizeof(prbuf) - 1)
 				*cp1++ = c;
 			*cp1 = '\0';
 			startpr(2);
