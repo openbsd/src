@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.120 2004/09/23 21:08:54 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.121 2004/10/14 17:10:17 mickey Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -483,7 +483,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		 * Safety harness.
 		 */
 		if ((stackgap < ALIGNBYTES && stackgap != 0) ||
-		    !powerof2(stackgap) || stackgap >= 256 * 1024 * 1024)
+		    !powerof2(stackgap) || stackgap >= MAXSSIZ)
 			return (EINVAL);
 		stackgap_random = stackgap;
 		return (0);
