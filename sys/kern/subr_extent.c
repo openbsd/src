@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.22 2002/06/11 05:59:25 art Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.23 2002/06/28 20:45:44 jason Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -1130,8 +1130,8 @@ extent_print(ex)
 	if (ex == NULL)
 		panic("extent_print: NULL extent");
 
-	db_printf("extent `%s' (0x%lx - 0x%lx), flags = 0x%x\n", ex->ex_name,
-	    ex->ex_start, ex->ex_end, ex->ex_flags);
+	db_printf("extent `%s' (0x%lx - 0x%lx), flags=%b\n", ex->ex_name,
+	    ex->ex_start, ex->ex_end, ex->ex_flags, EXF_BITS);
 
 	for (rp = ex->ex_regions.lh_first; rp != NULL;
 	    rp = rp->er_link.le_next)
