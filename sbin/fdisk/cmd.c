@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.12 1997/10/19 23:37:25 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.13 1997/10/19 23:58:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -80,7 +80,9 @@ Xreinit(cmd, disk, mbr, tt, offset)
 	PRT_fix_BN(disk, &mbr->part[3]);                                            
 
 	/* Tell em we did something */
-	printf("In memory copy is initialized.\n");
+	printf("In memory copy is initialized to:\n");
+	printf("Offset: %d\t", offset);
+	MBR_print(mbr);
 	printf("Use 'write' to update disk.\n");
 
 	return (CMD_DIRTY);
