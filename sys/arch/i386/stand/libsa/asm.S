@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.S,v 1.2 1997/04/15 06:23:35 mickey Exp $	*/
+/*	$OpenBSD: asm.S,v 1.3 1997/08/07 01:20:33 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,20 +38,6 @@
  *	@(#)srt0.c	5.3 (Berkeley) 4/28/91
  */
 
-	.globl	_inb
-_inb:	movl	4(%esp),%edx
-	subl	%eax,%eax	# clr eax
-	NOP
-	inb	%dx,%al
-	ret
-
-	.globl	_outb
-_outb:	movl	4(%esp),%edx
-	NOP
-	movl	8(%esp),%eax
-	outb	%al,%dx
-	ret
-
 	.globl ___udivsi3
 ___udivsi3:
 	movl 4(%esp),%eax
@@ -66,35 +52,3 @@ ___divsi3:
 	cltd
 	idivl 8(%esp)
 	ret
-
-	.globl	_insw
-_insw:
-	pushl	%edi
-	movw	8(%esp),%dx
-	movl	12(%esp),%edi
-	movl	16(%esp),%ecx
-	NOP
-	cld
-	nop
-	.byte 0x66,0xf2,0x6d	# rep insw
-	nop
-	movl	%edi,%eax
-	popl	%edi
-	ret
-
-	# outsw(port,addr,cnt)
-	.globl	_outsw
-_outsw:
-	pushl	%esi
-	movw	8(%esp),%dx
-	movl	12(%esp),%esi
-	movl	16(%esp),%ecx
-	NOP
-	cld
-	nop
-	.byte 0x66,0xf2,0x6f	# rep outsw
-	nop
-	movl	%esi,%eax
-	popl	%esi
-	ret
-
