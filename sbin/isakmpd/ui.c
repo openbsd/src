@@ -1,5 +1,5 @@
-/*	$OpenBSD: ui.c,v 1.12 2000/02/25 17:23:42 niklas Exp $	*/
-/*	$EOM: ui.c,v 1.37 2000/02/20 19:58:42 niklas Exp $	*/
+/*	$OpenBSD: ui.c,v 1.13 2000/03/08 08:42:38 niklas Exp $	*/
+/*	$EOM: ui.c,v 1.38 2000/03/07 20:22:14 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -148,13 +148,13 @@ ui_config (char *cmd)
 	goto fail;
       conf_set (trans, section, tag, value, override);
     }
-  else if (strcasecmp (cmd, "rm") == 0)
+  else if (strcasecmp (subcmd, "rm") == 0)
     {
       if (sscanf (cmd, "C %*s [%80[^]]]:%80s", section, tag) != 2)
 	goto fail;
       conf_remove (trans, section, tag);
     }
-  else if (strcasecmp (cmd, "rms") == 0)
+  else if (strcasecmp (subcmd, "rms") == 0)
     {
       if (sscanf (cmd, "C %*s [%80[^]]]", section) != 1)
 	goto fail;
