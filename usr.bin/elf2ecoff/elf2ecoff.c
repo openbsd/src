@@ -1,4 +1,9 @@
+/*	$OpenBSD: elf2ecoff.c,v 1.2 1997/10/13 20:08:21 maja Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.8 1997/07/20 03:50:54 jonathan Exp $	*/
+
 /*
+ * Copyright (c) 1997 Jonathan Stone
+ *    All rights reserved.
  * Copyright (c) 1995
  *	Ted Lemon (hereinafter referred to as the author)
  *
@@ -25,6 +30,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/* elf2ecoff.c
+
+   This program converts an elf executable to an ECOFF executable.
+   No symbol table is retained.   This is useful primarily in building
+   net-bootable kernels for machines (e.g., DECstation and Alpha) which
+   only support the ECOFF object file format. */
 
 #include <sys/types.h>
 #include <fcntl.h>
@@ -311,6 +323,21 @@ fprintf (stderr, "writing %d bytes...\n", ph [i].p_filesz);
 	  cur_vma = ph [i].p_vaddr + ph [i].p_filesz;
 	}
     }
+
+  /*
+   * Write a page of padding for boot PROMS that read entire pages.
+   * Without this, they may attempt to read past the end of the
+   * data section, incur an error, and refuse to boot.
+   */
+   {
+     char obuf [4096];
+     memset (obuf, 0, sizeof obuf);
+     if (write(outfile, obuf, sizeof(obuf)) != sizeof(obuf)) {
+	fprintf(stderr, "Error writing PROM padding: %s\n",
+		strerror(errno));
+	exit(1);
+     }
+   }
 
   /* Looks like we won... */
   exit (0);
