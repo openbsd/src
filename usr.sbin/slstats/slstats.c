@@ -1,4 +1,4 @@
-/*	$OpenBSD: slstats.c,v 1.11 2001/07/31 19:50:16 deraadt Exp $	*/
+/*	$OpenBSD: slstats.c,v 1.12 2001/08/09 08:45:32 deraadt Exp $	*/
 /*	$NetBSD: slstats.c,v 1.6.6.1 1996/06/07 01:42:30 thorpej Exp $	*/
 
 /*
@@ -25,7 +25,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: slstats.c,v 1.11 2001/07/31 19:50:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: slstats.c,v 1.12 2001/08/09 08:45:32 deraadt Exp $";
 #endif
 
 #define INET
@@ -79,7 +79,7 @@ main(argc, argv)
 	struct ifreq ifr;
 	int ch;
 
-	(void)strcpy(interface, "sl0");
+	(void)strlcpy(interface, "sl0", sizeof(interface));
 
 	while ((ch = getopt(argc, argv, "i:M:N:v")) != -1) {
 		switch (ch) {
@@ -103,17 +103,16 @@ main(argc, argv)
 	if (argc > 1)
 		usage();
 
-	if (argc > 0) {
-		(void)strncpy(interface, argv[0], sizeof(interface) - 1);
-		interface[sizeof(interface) - 1] = '\0';
-	}
-	if (sscanf(interface, "sl%d", &unit) != 1)
+	if (argc > 0)
+		(void)strlcpy(interface, argv[0], sizeof(interface));
+
+	if (sscanf(interface, "sl%d", &unit) != 1 || unit < 0)
 		errx(1, "invalid interface '%s' specified", interface);
 
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (s < 0)
 		err(1, "couldn't create IP socket");
-	(void)strcpy(ifr.ifr_name, interface);
+	(void)strlcpy(ifr.ifr_name, interface, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0)
 		errx(1, "nonexistent interface '%s' specified", interface);
 
@@ -141,8 +140,7 @@ get_sl_stats(curp)
 	struct ifslstatsreq req;
 
 	memset(&req, 0, sizeof(req));
-	(void)strncpy(req.ifr_name, interface, sizeof(req.ifr_name) - 1);
-	req.ifr_name[sizeof(req.ifr_name) - 1] = '\0';
+	(void)strlcpy(req.ifr_name, interface, sizeof(req.ifr_name));
 
 	if (ioctl(s, SIOCGSLSTATS, &req) < 0) {
 		if (errno == ENOTTY)
@@ -162,9 +160,9 @@ get_sl_stats(curp)
 void
 intpr()
 {
-	int line = 0;
-	int oldmask;
 	struct sl_stats cur, old;
+	sigset_t mask, oldmask;
+	int line = 0;
 
 	bzero(&old, sizeof(old));
 	while (1) {
@@ -190,13 +188,10 @@ intpr()
 		    V(vj.vjs_uncompressedin), V(vj.vjs_errorin));
 		if (vflag)
 			printf(" %6u %6u", V(vj.vjs_tossed),
-			    V(sl.sl_ipackets) -
-			    V(vj.vjs_compressedin) -
-			    V(vj.vjs_uncompressedin) -
-			    V(vj.vjs_errorin));
+			    V(sl.sl_ipackets) - V(vj.vjs_compressedin) -
+			    V(vj.vjs_uncompressedin) - V(vj.vjs_errorin));
 		printf(" | %8u %6d %6u %6u %6u", V(sl.sl_obytes),
-		    V(sl.sl_opackets),
-		    V(vj.vjs_compressed),
+		    V(sl.sl_opackets), V(vj.vjs_compressed),
 		    V(vj.vjs_packets) - V(vj.vjs_compressed),
 		    V(sl.sl_opackets) - V(vj.vjs_packets));
 		if (vflag)
@@ -206,10 +201,15 @@ intpr()
 		putchar('\n');
 		fflush(stdout);
 		line++;
-		oldmask = sigblock(sigmask(SIGALRM));
-		if (!signalled)
-			sigpause(0);
-		sigsetmask(oldmask);
+
+		sigemptyset(&mask);
+		sigaddset(&mask, SIGALRM);
+		sigprocmask(SIG_BLOCK, &mask, &oldmask);
+		if (!signalled) {
+			sigemptyset(&mask);
+			sigsuspend(&mask);
+		}
+		sigprocmask(SIG_BLOCK, &oldmask, NULL);
 		signalled = 0;
 		(void)alarm(interval);
 		old = cur;

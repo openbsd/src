@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppstats.c,v 1.5 1998/05/08 04:52:37 millert Exp $	*/
+/*	$OpenBSD: pppstats.c,v 1.6 2001/08/09 08:45:31 deraadt Exp $	*/
 
 /*
  * print PPP statistics:
@@ -37,7 +37,7 @@
 #if 0
 static char rcsid[] = "Id: pppstats.c,v 1.22 1998/03/31 23:48:03 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: pppstats.c,v 1.5 1998/05/08 04:52:37 millert Exp $";
+static char rcsid[] = "$OpenBSD: pppstats.c,v 1.6 2001/08/09 08:45:31 deraadt Exp $";
 #endif
 #endif
 
@@ -69,21 +69,20 @@ int	s;			/* socket file descriptor */
 int	signalled;		/* set if alarm goes off "early" */
 char	interface[IFNAMSIZ];
 
-static void usage __P((void));
-static void catchalarm __P((int));
-static void get_ppp_stats __P((struct ppp_stats *));
-static void get_ppp_cstats __P((struct ppp_comp_stats *));
-static void intpr __P((void));
-
+void usage __P((void));
+void catchalarm __P((int));
+void get_ppp_stats __P((struct ppp_stats *));
+void get_ppp_cstats __P((struct ppp_comp_stats *));
+void intpr __P((void));
 int main __P((int, char *argv[]));
 
-static void
+void
 usage()
 {
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "Usage: %s [-a|-d] [-v|-r|-z] [-c count] [-w wait] [interface]\n",
+	    "Usage: %s [-adrvz] [-c count] [-w wait] [interface]\n",
 	    __progname);
 	exit(1);
 }
@@ -92,23 +91,21 @@ usage()
  * Called if an interval expires before intpr has completed a loop.
  * Sets a flag to not wait for the alarm.
  */
-static void
+void
 catchalarm(arg)
 	int arg;
 {
-
 	signalled = 1;
 }
 
-static void
+void
 get_ppp_stats(curp)
 	struct ppp_stats *curp;
 {
 	struct ifpppstatsreq req;
 
 	memset(&req, 0, sizeof(req));
-	(void)strncpy(req.ifr_name, interface, sizeof(req.ifr_name) - 1);
-	req.ifr_name[sizeof(req.ifr_name) - 1] = '\0';
+	(void)strlcpy(req.ifr_name, interface, sizeof(req.ifr_name));
 
 	if (ioctl(s, SIOCGPPPSTATS, &req) < 0) {
 		if (errno == ENOTTY)
@@ -119,15 +116,14 @@ get_ppp_stats(curp)
 	*curp = req.stats;
 }
 
-static void
+void
 get_ppp_cstats(csp)
 	struct ppp_comp_stats *csp;
 {
 	struct ifpppcstatsreq creq;
 
 	memset(&creq, 0, sizeof(creq));
-	(void)strncpy(creq.ifr_name, interface, sizeof(creq.ifr_name) - 1);
-	creq.ifr_name[sizeof(creq.ifr_name) - 1] = '\0';
+	(void)strlcpy(creq.ifr_name, interface, sizeof(creq.ifr_name));
 
 	if (ioctl(s, SIOCGPPPCSTATS, &creq) < 0) {
 		if (errno == ENOTTY) {
@@ -156,7 +152,7 @@ get_ppp_cstats(csp)
  * collected over that interval.  Assumes that interval is non-zero.
  * First line printed is cumulative.
  */
-static void
+void
 intpr()
 {
 	register int line = 0;
@@ -312,7 +308,7 @@ main(argc, argv)
 	int c;
 	struct ifreq ifr;
 
-	(void)strcpy(interface, "ppp0");
+	(void)strlcpy(interface, "ppp0", sizeof(interface));
 
 	while ((c = getopt(argc, argv, "advrzc:w:")) != -1) {
 		switch (c) {
@@ -359,17 +355,16 @@ main(argc, argv)
 
 	if (argc > 1)
 		usage();
-	if (argc > 0) {
-		(void)strncpy(interface, argv[0], sizeof(interface) - 1);
-		interface[sizeof(interface) - 1] = '\0';
-	}
-	if (sscanf(interface, "ppp%d", &unit) != 1)
+	if (argc > 0)
+		(void)strlcpy(interface, argv[0], sizeof(interface));
+
+	if (sscanf(interface, "ppp%d", &unit) != 1 || unit < 0)
 		errx(1, "invalid interface '%s' specified", interface);
 
 	s = socket(AF_INET, SOCK_DGRAM, 0);
 	if (s < 0)
 		err(1, "couldn't create IP socket");
-	(void)strcpy(ifr.ifr_name, interface);
+	(void)strlcpy(ifr.ifr_name, interface, sizeof(ifr.ifr_name));
 	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&ifr) < 0)
 		errx(1, "nonexistent interface '%s' specified", interface);
 

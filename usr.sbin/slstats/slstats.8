@@ -1,4 +1,4 @@
-.\"	$OpenBSD: slstats.8,v 1.9 2000/11/09 17:53:24 aaron Exp $
+.\"	$OpenBSD: slstats.8,v 1.10 2001/08/09 08:45:32 deraadt Exp $
 .\"	$NetBSD: slstats.8,v 1.2.6.1 1996/06/07 01:42:24 thorpej Exp $
 .Dd July 5, 1993
 .Dt SLSTATS 8
@@ -8,10 +8,8 @@
 .Nd report slip statistics
 .Sh SYNOPSIS
 .Nm slstats
-.Op Fl M Ar core
-.Op Fl N Ar system
 .Op Fl v
-.Op Fl i Ar interval
+.Op Fl w Ar interval
 .Op Ar unit-number
 .Sh DESCRIPTION
 The
@@ -41,14 +39,9 @@ The options are as follows:
 Display additional statistics demonstrating the efficacy of VJ header
 compression and providing more explicit information on failure
 distribution.
-.It Fl i
+.It Fl w
 Specifies the interval between reports.
 The default interval is 5 seconds.
-.It Fl M Ar core
-Extract values associated with the name list from the specified.
-.It Fl N Ar system
-Extract the name list from the specified system instead of the default
-.Pa /bsd .
 .El
 .Pp
 The following fields are printed on the input side:
