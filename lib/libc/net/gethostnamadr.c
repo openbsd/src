@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.26 1997/07/09 01:08:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.27 1997/11/08 20:46:56 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -193,7 +193,7 @@ getanswer(answer, anslen, qname, qtype)
 #endif
 		break;
 	default:
-		return (NULL);	/* XXX should be abort(); */
+		return (NULL);
 	}
 	/*
 	 * find first satisfactory answer
@@ -388,8 +388,6 @@ getanswer(answer, anslen, qname, qtype)
 			buflen -= n;
 			cp += n;
 			break;
-		default:
-			abort();
 		}
 		if (!had_error)
 			haveanswer++;
@@ -648,8 +646,6 @@ gethostbyaddr(addr, len, af)
 		}
 		strcpy(qp, "ip6.int");
 		break;
-	default:
-		abort();
 	}
 
 	bcopy(_res.lookups, lookups, sizeof lookups);
