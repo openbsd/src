@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.2 1999/12/11 10:33:28 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.3 2000/03/13 06:16:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -167,21 +167,22 @@ if_getmtu(char *name)
 	return(ifr.ifr_mtu);
 #endif
 #ifdef __bsdi__
-	struct ifaddrs *ifa;
+	struct ifaddrs *ifap, *ifa;
 	struct if_data *ifd;
 
-	if (getifaddrs(&ifa) < 0)
+	if (getifaddrs(&ifap) < 0)
 		return(0);
-	while (ifa) {
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if (strcmp(ifa->ifa_name, name) == 0) {
 			ifd = ifa->ifa_data;
+			freeifaddrs(ifap);
 			if (ifd)
 				return ifd->ifi_mtu;
 			else
 				return 0;
 		}
-		ifa = ifa->ifa_next;
 	}
+	freeifaddrs(ifap);
 	return 0;
 #endif
 	/* last resort */

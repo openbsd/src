@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.h,v 1.2 1999/12/11 10:33:29 itojun Exp $	*/
+/*	$OpenBSD: rtadvd.h,v 1.3 2000/03/13 06:16:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -43,11 +43,20 @@
 #define DEF_ADVVALIDLIFETIME 2592000
 #define DEF_ADVPREFERREDLIFETIME 604800
 
+/*XXX int-to-double comparison for INTERVAL items */
+#ifndef MIP6
+#define mobileip6 0
+#endif
+
 #define MAXROUTERLIFETIME 9000
-#define MIN_MAXINTERVAL 4
+#define MIN_MAXINTERVAL (mobileip6 ? 1.5 : 4.0)
 #define MAX_MAXINTERVAL 1800
-#define MIN_MININTERVAL 3
+#define MIN_MININTERVAL	(mobileip6 ? 0.5 : 3)
 #define MAXREACHABLETIME 3600000
+
+#ifndef MIP6
+#undef miobileip6
+#endif
 
 #define MAX_INITIAL_RTR_ADVERT_INTERVAL  16
 #define MAX_INITIAL_RTR_ADVERTISEMENTS    3
@@ -63,6 +72,9 @@ struct prefix {
 	u_int32_t preflifetime;	/* AdvPreferredLifetime */
 	u_int onlinkflg;	/* bool: AdvOnLinkFlag */
 	u_int autoconfflg;	/* bool: AdvAutonomousFlag */
+#ifdef MIP6
+	u_int routeraddr;	/* bool: RouterAddress */
+#endif
 	int	prefixlen;
 	struct in6_addr prefix;
 };
@@ -90,12 +102,20 @@ struct	rainfo {
 	u_int	mininterval;	/* MinRtrAdvInterval */
 	int 	managedflg;	/* AdvManagedFlag */
 	int	otherflg;	/* AdvOtherConfigFlag */
+#ifdef MIP6
+	int	haflg;		/* HAFlag */
+#endif
 	u_int32_t linkmtu;	/* AdvLinkMTU */
 	u_int32_t reachabletime; /* AdvReachableTime */
 	u_int32_t retranstimer;	/* AdvRetransTimer */
 	u_int	hoplimit;	/* AdvCurHopLimit */
 	struct prefix prefix;	/* AdvPrefixList(link head) */
 	int	pfxs;		/* number of prefixes */
+
+#ifdef MIP6
+	u_short	hapref;		/* Home Agent Preference */
+	u_short	hatime;		/* Home Agent Lifetime */
+#endif
 
 	/* actual RA packet data and its length */
 	size_t ra_datalen;
@@ -104,3 +124,7 @@ struct	rainfo {
 
 void ra_timeout __P((void *));
 void ra_timer_update __P((void *, struct timeval *));
+
+#ifdef MIP6
+extern int mobileip6;
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.3 2000/02/02 04:10:37 itojun Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.4 2000/03/13 06:16:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -47,6 +47,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <err.h>
 #include <errno.h>
 #include <string.h>
@@ -60,14 +61,19 @@
 #include "config.h"
 
 struct msghdr rcvmhdr;
-static u_char rcvcmsgbuf[CMSG_SPACE(sizeof(struct in6_pktinfo)) +
-			CMSG_SPACE(sizeof(int))];
+static u_char *rcvcmsgbuf;
+static size_t rcvcmsgbuflen;
+static u_char *sndcmsgbuf = NULL;
+static size_t sndcmsgbuflen;
 struct msghdr sndmhdr;
 struct iovec rcviov[2];
 struct iovec sndiov[2];
 struct sockaddr_in6 from;
 struct sockaddr_in6 sin6_allnodes = {sizeof(sin6_allnodes), AF_INET6};
 int sock, rtsock;
+#ifdef MIP6
+int mobileip6 = 0;
+#endif
 int accept_rr = 0;
 int dflag = 0, sflag = 0;
 
@@ -142,7 +148,13 @@ main(argc, argv)
 	openlog(*argv, LOG_NDELAY|LOG_PID, LOG_DAEMON);
 
 	/* get command line options and arguments */
-	while ((ch = getopt(argc, argv, "c:dDfRs")) != -1) {
+#ifdef MIP6
+#define OPTIONS "c:dDfmRs"
+#else
+#define OPTIONS "c:dDfRs"
+#endif
+	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
+#undef OPTIONS
 		switch(ch) {
 		 case 'c':
 			 conffile = optarg;
@@ -156,6 +168,11 @@ main(argc, argv)
 		 case 'f':
 			 fflag = 1;
 			 break;
+#ifdef MIP6
+		 case 'm':
+			 mobileip6 = 1;
+			 break;
+#endif
 		 case 'R':
 			 accept_rr = 1;
 			 break;
@@ -168,7 +185,11 @@ main(argc, argv)
 	argv += optind;
 	if (argc == 0) {
 		fprintf(stderr,
-			"usage: rtadvd [-dDfsR] [-c conffile] "
+#ifdef MIP6
+			"usage: rtadvd [-dDfmRs] [-c conffile] "
+#else
+			"usage: rtadvd [-dDfRs] [-c conffile] "
+#endif
 			"interfaces...\n");
 		exit(1);
 	}
@@ -463,7 +484,7 @@ rtadvd_input()
 	 * be modified if we had received a message before setting
 	 * receive options.
 	 */
-	rcvmhdr.msg_controllen = sizeof(rcvcmsgbuf);
+	rcvmhdr.msg_controllen = rcvcmsgbuflen;
 	if ((i = recvmsg(sock, &rcvmhdr, 0)) < 0)
 		return;
 
@@ -1076,8 +1097,22 @@ sock_open()
 	int on;
 	/* XXX: should be max MTU attached to the node */
 	static u_char answer[1500];
-	static u_char sndcmsgbuf[CMSG_SPACE(sizeof(struct in6_pktinfo)) + 
-				CMSG_SPACE(sizeof(int))];
+
+	rcvcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) +
+				CMSG_SPACE(sizeof(int));
+	rcvcmsgbuf = (u_char *)malloc(rcvcmsgbuflen);
+	if (rcvcmsgbuf == NULL) {
+		syslog(LOG_ERR, "<%s> not enough core", __FUNCTION__);
+		exit(1);
+	}
+
+	sndcmsgbuflen = CMSG_SPACE(sizeof(struct in6_pktinfo)) + 
+				CMSG_SPACE(sizeof(int));
+	sndcmsgbuf = (u_char *)malloc(sndcmsgbuflen);
+	if (sndcmsgbuf == NULL) {
+		syslog(LOG_ERR, "<%s> not enough core", __FUNCTION__);
+		exit(1);
+	}
 
 	if ((sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0) {
 		syslog(LOG_ERR, "<%s> socket: %s", __FUNCTION__,
@@ -1162,14 +1197,14 @@ sock_open()
 	rcvmhdr.msg_iov = rcviov;
 	rcvmhdr.msg_iovlen = 1;
 	rcvmhdr.msg_control = (caddr_t) rcvcmsgbuf;
-	rcvmhdr.msg_controllen = sizeof(rcvcmsgbuf);
+	rcvmhdr.msg_controllen = rcvcmsgbuflen;
 
 	/* initialize msghdr for sending packets */
 	sndmhdr.msg_namelen = sizeof(struct sockaddr_in6);
 	sndmhdr.msg_iov = sndiov;
 	sndmhdr.msg_iovlen = 1;
 	sndmhdr.msg_control = (caddr_t)sndcmsgbuf;
-	sndmhdr.msg_controllen = sizeof(sndcmsgbuf);
+	sndmhdr.msg_controllen = sndcmsgbuflen;
 	
 	return;
 }

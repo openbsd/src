@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtadvd.8,v 1.7 2000/02/02 04:10:37 itojun Exp $
+.\"	$OpenBSD: rtadvd.8,v 1.8 2000/03/13 06:16:11 itojun Exp $
 .\" 
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     KAME Id: rtadvd.8,v 1.4 2000/02/02 03:55:44 itojun Exp
+.\"     KAME Id: rtadvd.8,v 1.5 2000/02/08 05:19:36 itojun Exp
 .\"
 .Dd May 17, 1998
 .Dt RTADVD 8
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl c Ar configfile
-.Op Fl dDfsR
+.Op Fl dDfRs
 .Ar interface ...
 .Sh DESCRIPTION
 .Nm Rtadvd
@@ -89,11 +89,15 @@ Print debugging information.
 Even more debugging information is printed.
 .It Fl f
 Foreground mode (useful when debugging).
-.It Fl s
-Do not monitor routing table changes (static prefix).
+.\".It Fl m
+.\"Enables mobile IPv6 support.
+.\"This changes the content of router advertisement option, as well as
+.\"permitted configuration directives.
 .It Fl R
 Accept router renumbering requests.
 If you enable it, certain IPsec setup is suggested for security reasons.
+.It Fl s
+Do not monitor routing table changes (static prefix).
 .El
 .Pp
 Use
