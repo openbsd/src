@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.10 2001/03/08 00:03:22 miod Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.11 2001/03/08 22:24:59 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -30,9 +30,9 @@
 #define __MACHINE_M88K_ASM_MACRO_H__
 
 /*
- ** Various compiler macros used for speed and efficiency.
- ** Anyone can include.
-  */
+ * Various compiler macros used for speed and efficiency.
+ * Anyone can include.
+ */
 
 /*
  * PSR_TYPE is the type of the Process Status Register.
@@ -93,7 +93,7 @@ static __inline__ m88k_psr_type enable_interrupts_return_psr(void)
 #define db_disable_interrupt disable_interrupt
 
 /*
- * flushes the data pipeline.
+ * Flushes the data pipeline.
  */
 static __inline__ void flush_pipeline(void)
 {
@@ -102,7 +102,7 @@ static __inline__ void flush_pipeline(void)
 #define db_flush_pipeline flush_pipeline
 
 /*
- * gets the current stack pointer.
+ * Gets the current stack pointer.
  */
 static __inline__ unsigned long stack_pointer(void)
 {
@@ -111,5 +111,13 @@ static __inline__ unsigned long stack_pointer(void)
 	return(sp);
 }
 
+/*
+ * Provide access from C code to the assembly instruction ff1
+ */
+static __inline__ unsigned ff1(register unsigned val)
+{
+	__asm__ ("ff1 %0, %0" : "=r" (val) : "0" (val));
+	return val;
+}
 
 #endif __MACHINE_M88K_ASM_MACRO_H__

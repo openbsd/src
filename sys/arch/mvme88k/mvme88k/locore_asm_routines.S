@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_asm_routines.S,v 1.11 2001/03/07 23:40:35 miod Exp $	*/
+/* $OpenBSD: locore_asm_routines.S,v 1.12 2001/03/08 22:25:06 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -174,11 +174,6 @@ ENTRY(do_xmem_byte)	/* do_xmem_byte(address, data, supervisor) */
 	br	2f
 1:	xmem.bu	r3,r2,r0
 2:	jmp	r1
-
-ENTRY(ff1)
-	jmp.n	r1
-	ff1	r2, r2
-
 
    .data
 
