@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.20 1999/05/02 19:17:18 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.105 1999/05/02 18:17:42 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.21 1999/06/02 06:33:00 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.106 1999/05/21 14:12:57 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -368,8 +368,8 @@ exchange_run (struct message *msg)
 	}
 
       log_debug (LOG_EXCHANGE, 40, 
-		 "exchange_run: finished step %d, advancing...",
-		 exchange->step);
+		 "exchange_run: exchange %p finished step %d, advancing...",
+		 exchange, exchange->step);
       exchange->step++;
       while (*exchange->exch_pc != EXCHANGE_SCRIPT_SWITCH
 	     && *exchange->exch_pc != EXCHANGE_SCRIPT_END)

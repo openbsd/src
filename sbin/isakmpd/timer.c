@@ -1,5 +1,5 @@
-/*	$OpenBSD: timer.c,v 1.5 1999/04/19 20:57:25 niklas Exp $	*/
-/*	$EOM: timer.c,v 1.11 1999/04/13 20:00:41 ho Exp $	*/
+/*	$OpenBSD: timer.c,v 1.6 1999/06/02 06:33:00 niklas Exp $	*/
+/*	$EOM: timer.c,v 1.12 1999/05/21 14:12:59 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -92,12 +92,14 @@ timer_add_event (char *name, void (*func) (void *), void *arg,
 {
   struct event *ev = (struct event *)malloc (sizeof *ev);
   struct event *n;
+  struct timeval now;
 
   if (!ev)
     return 0;
   ev->name = name;
   ev->func = func;
   ev->arg = arg;
+  gettimeofday (&now, 0);
   memcpy (&ev->expiration, expiration, sizeof *expiration);
   for (n = TAILQ_FIRST (&events);
        n && timercmp (expiration, &n->expiration, >=);
@@ -106,14 +108,16 @@ timer_add_event (char *name, void (*func) (void *), void *arg,
   if (n)
     {
       log_debug (LOG_TIMER, 10,
-		 "timer_add_event: event %s(%p) added before %s(%p)", name,
-		 arg, n->name, n->arg);
+		 "timer_add_event: event %s(%p) added before %s(%p), "
+		 "expiration in %ds", name,
+		 arg, n->name, n->arg, expiration->tv_sec - now.tv_sec);
       TAILQ_INSERT_BEFORE (n, ev, link);
     }
   else
     {
-      log_debug (LOG_TIMER, 10, "timer_add_event: event %s(%p) added last",
-		 name, arg);
+      log_debug (LOG_TIMER, 10, "timer_add_event: event %s(%p) added last, "
+		 "expiration in %ds", name, arg, 
+		 expiration->tv_sec - now.tv_sec);
       TAILQ_INSERT_TAIL (&events, ev, link);
     }
   return ev;
