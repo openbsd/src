@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.1 2001/03/07 01:57:56 miod Exp $	*/
+/*	$OpenBSD: ssh.c,v 1.2 2001/03/07 23:47:20 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -50,21 +50,18 @@
 #include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+
+#include <vm/pmap.h>
+
+#include <machine/autoconf.h>
+#include <machine/mmu.h>
+#include <machine/pmap.h>
+
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-#include <machine/autoconf.h>
-#if defined(MVME187)
+
 #include <mvme88k/dev/sshreg.h>
 #include <mvme88k/dev/sshvar.h>
-#else
-#include <mvme68k/dev/sshreg.h>
-#include <mvme68k/dev/sshvar.h>
-#endif /* MVME187 */
-
-#if defined(MVME187)
-#include "machine/mmu.h"
-#endif /* defined(MVME187) */
-
 
 extern u_int	kvtop();
 
@@ -90,14 +87,11 @@ int  sshintr __P((struct ssh_softc *));
 void scsi_period_to_ssh __P((struct ssh_softc *, int));
 void ssh_start __P((struct ssh_softc *, int, int, u_char *, int, u_char *, int)); 
 void ssh_dump_acb __P((struct ssh_acb *));
+void sshinitialize __P((struct ssh_softc *sc));
 
 /* 53C710 script */
 const
-#if defined(MVME187)
 #include <mvme88k/dev/ssh_script.out>
-#else
-#include <mvme68k/dev/ssh_script.out>
-#endif /* MVME187 */
 
 u_long scsi_nosync = 0;
 int shift_nosync;
@@ -189,6 +183,8 @@ int kludge_city = 1;
 /*
  * dummy routine to debug while loops
  */
+void wdummy __P((void));
+
 void
 wdummy(void)
 {
@@ -224,7 +220,7 @@ ssh_scsicmd(xs)
 	struct ssh_acb *acb;
 	struct ssh_softc *sc;
 	struct scsi_link *slp;
-	int flags, s, i;
+	int flags, s;
 
 	slp = xs->sc_link;
 	sc = slp->adapter_softc;
@@ -259,7 +255,6 @@ ssh_scsicmd(xs)
 	acb->daddr = xs->data;
 	acb->dleft = xs->datalen;
 
-#if defined(MVME187)
 	/*
 	 * Since the 187 doesn't support cache snooping, we have
 	 * to flush the cache for a write and flush with inval for
@@ -273,7 +268,7 @@ ssh_scsicmd(xs)
 		dma_cachectl((vm_offset_t)xs->data, xs->datalen,
 							DMA_CACHE_SYNC);
 	}
-#endif
+
 	s = splbio();
 	TAILQ_INSERT_TAIL(&sc->ready_list, acb, chain);
 
@@ -360,7 +355,7 @@ ssh_sched(sc)
 {
 	struct scsi_link *slp;
 	struct ssh_acb *acb;
-	int stat, i;
+	int i;
 
 #ifdef DEBUG
 	if (sc->sc_nexus) {
@@ -413,7 +408,7 @@ ssh_scsidone(acb, stat)
 	struct scsi_xfer *xs = acb->xs;
 	struct scsi_link *slp = xs->sc_link;
 	struct ssh_softc *sc = slp->adapter_softc;
-	int s, dosched = 0;
+	int dosched = 0;
 
 	if (acb == NULL || (xs = acb->xs) == NULL) {
 #ifdef DIAGNOSTIC
@@ -527,7 +522,9 @@ sshabort(sc, rp, where)
 	ssh_regmap_p rp;
 	char *where;
 {
+#ifdef fix_this
 	int i;
+#endif
 
 	printf ("%s: abort %s: dstat %02x, sstat0 %02x sbcl %02x\n",
 	    sc->sc_dev.dv_xname,
@@ -698,7 +695,7 @@ sshreset(sc)
 			sc->sc_nexus->xs->error = XS_DRIVER_STUFFUP;
 			ssh_scsidone(sc->sc_nexus, sc->sc_nexus->stat[0]);
 		}
-		while (acb = sc->nexus_list.tqh_first) {
+		while ((acb = sc->nexus_list.tqh_first) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
 			ssh_scsidone(acb, acb->stat[0]);
 		}
@@ -731,7 +728,6 @@ ssh_start (sc, target, lun, cbuf, clen, buf, len)
 	int len;
 {
 	ssh_regmap_p rp = sc->sc_sshp;
-	int i;
 	int nchain;
 	int count, tcount;
 	char *addr, *dmaend;
@@ -842,6 +838,8 @@ ssh_start (sc, target, lun, cbuf, clen, buf, len)
 	}
 #ifdef DEBUG
 	if (nchain != 1 && len != 0 && ssh_debug & 3) {
+		int i;
+
 		printf ("DMA chaining set: %d\n", nchain);
 		for (i = 0; i < nchain; ++i) {
 			printf ("  [%d] %8x %4x\n", i, acb->ds.chain[i].databuf,
@@ -857,7 +855,6 @@ ssh_start (sc, target, lun, cbuf, clen, buf, len)
 #endif
 	dma_cachectl((vm_offset_t)cbuf, clen, DMA_CACHE_SYNC);
 
-#if defined(MVME187)
 	/*
 	 * Flushing the buf from data cache is very important for MVME187
 	 * since the board does not snoop the local bus.
@@ -872,7 +869,6 @@ ssh_start (sc, target, lun, cbuf, clen, buf, len)
 			dma_cachectl((vm_offset_t)buf, len, DMA_CACHE_SYNC);
 		}
 	}
-#endif
 
 #ifdef DEBUG
 	if (ssh_debug & 0x100 && rp->ssh_sbcl & SSH_BSY) {
@@ -928,7 +924,9 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 	struct ssh_acb *acb = sc->sc_nexus;
 	int	target = 0;
 	int	dfifo, dbc, sstat1;
+#ifdef DEBUG
 	int	dummy;
+#endif
 
 	dfifo = rp->ssh_dfifo;
 	dbc = rp->ssh_dbc0;
@@ -1356,7 +1354,9 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 		return (0);
 	}
 	if (dstat & SSH_DSTAT_SIR && rp->ssh_dsps == 0xff04) {
+#ifdef DEBUG
 		u_short ctest2 = rp->ssh_ctest2;
+#endif
 
 		/* reselect was interrupted (by Sig_P or select) */
 #ifdef DEBUG
@@ -1627,7 +1627,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 	    		rp->ssh_dsp, *((long *)&rp->ssh_dcmd),
 			rp->ssh_dsps);
 
-		if (*((long *)&rp->ssh_dcmd) & 0xf8000000 == 0x48000000) { /* wait disconnect */
+		if ((*((long *)&rp->ssh_dcmd) & 0xf8000000) == 0x48000000) { /* wait disconnect */
 			printf("SSH was executing wait disconnect\n");
 		}
 	}
@@ -1721,7 +1721,7 @@ sshintr (sc)
 	if ((istat & (SSH_ISTAT_SIP | SSH_ISTAT_DIP)) == 0) {
 	/* is this possible? we won't come here if there is not int!!! XXX */
 		splx(s);
-		return;
+		return (0);
 	}
 
 	/* Got a valid interrupt on this device */
@@ -1785,6 +1785,8 @@ sshintr (sc)
 		}
 	}
 	splx(s);
+
+	return (1);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshdma.c,v 1.1 2001/03/07 01:57:56 miod Exp $	*/
+/*	$OpenBSD: sshdma.c,v 1.2 2001/03/07 23:47:20 miod Exp $	*/
 
 /*
  * Copyright (c) 1996 Nivas Madhur
@@ -42,40 +42,25 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <vm/pmap.h>
+
+#include <machine/autoconf.h>
+#include <machine/board.h>
+#include <machine/mmu.h>
+#include <machine/pmap.h>
+
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-#include <machine/autoconf.h>
-#if defined(MVME187)
-#include <machine/board.h>
-#endif /* MVME187 */
 
-#if defined(MVME187)
 #include <mvme88k/dev/sshreg.h>
 #include <mvme88k/dev/sshvar.h>
-#else
-#include <mvme68k/dev/sshreg.h>
-#include <mvme68k/dev/sshvar.h>
-#endif /* defined(MVME187) */
 
-#if !defined(MVME187)
-#include "mc.h"
-#endif /* MVME187 */
 #include "pcctwo.h"
-
-#if NMC > 0
-#include <mvme68k/dev/mcreg.h>
-#endif
 #if NPCCTWO > 0
-#if defined(MVME187)
+#include <mvme88k/dev/pcctwofunc.h>
 #include <mvme88k/dev/pcctworeg.h>
-#else
-#include <mvme68k/dev/pcctworeg.h>
-#endif /* defined(MVME187) */
 #endif
-
-#if defined(MVME187)
-#include "machine/mmu.h"
-#endif /* defined(MVME187) */
 
 extern struct pmap	kernel_pmap_store;
 #define	pmap_kernel()		(&kernel_pmap_store)
@@ -85,7 +70,7 @@ void	afscattach	__P((struct device *, struct device *, void *));
 
 int	afscprint	__P((void *auxp, char *));
 int	sshintr	__P((struct ssh_softc *));
-int	afsc_dmaintr	__P((struct ssh_softc *));
+int	afsc_dmaintr	__P((void *));
 
 struct scsi_adapter afsc_scsiswitch = {
 	ssh_scsicmd,
@@ -114,11 +99,10 @@ afscmatch(pdp, vcf, args)
 	struct device *pdp;
 	void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 	int ret;
 
-	if ((ret = badvaddr(IIOV(ca->ca_vaddr), 4)) <=0){
+	if ((ret = badvaddr((vm_offset_t)IIOV(ca->ca_vaddr), 4)) <=0){
 	    printf("==> ssh: failed address check returning %ld.\n", ret);
 	    return(0);
 	}
@@ -145,11 +129,6 @@ afscattach(parent, self, auxp)
 	 * XXX does the clock frequency change for the 33MHz processors?
 	 */
 	sc->sc_clock_freq = cpuspeed * 2;
-#ifdef MVME177
-	/* XXX this is a guess! */
-	if (cputyp == CPU_177)
-		sc->sc_clock_freq = cpuspeed;
-#endif
 	sc->sc_dcntl = SSH_DCNTL_EA;
 /*X*/	if (sc->sc_clock_freq <= 25)
 /*X*/		sc->sc_dcntl |= (2 << 6);
@@ -162,14 +141,10 @@ afscattach(parent, self, auxp)
 
 	sc->sc_ctest0 = SSH_CTEST0_BTD | SSH_CTEST0_EAN;
 
-#ifdef MVME187
 	/*
 	 * MVME187 doesn't implement snooping...
 	 */
 	sc->sc_ctest7 = SSH_CTEST7_TT1;
-#else
-	sc->sc_ctest7 = SSH_CTEST7_SNOOP | SSH_CTEST7_TT1 | SSH_CTEST7_STD;
-#endif /* MVME187 */
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;		/* XXXX should ask ROM */
@@ -179,25 +154,15 @@ afscattach(parent, self, auxp)
 
 	sc->sc_ih.ih_fn = afsc_dmaintr;
 	sc->sc_ih.ih_arg = sc;
+	sc->sc_ih.ih_wantframe = 0;
 	sc->sc_ih.ih_ipl = ca->ca_ipl;
 
 	sshinitialize(sc);
 
 	switch (ca->ca_bustype) {
-#if NMC > 0
-	case BUS_MC:
-	    {
-		struct mcreg *mc = (struct mcreg *)ca->ca_master;
-
-		mcintr_establish(MCV_NCR, &sc->sc_ih);
-		mc->mc_ncrirq = ca->ca_ipl | MC_IRQ_IEN;
-		break;
-	    }
-#endif
 #if NPCCTWO > 0
 	case BUS_PCCTWO:
 	    {
-#if defined(MVME187)
 		/*
 		 * Disable caching for the softc. Actually, I want
 		 * to disable cache for acb structures, but they are
@@ -210,7 +175,7 @@ afscattach(parent, self, auxp)
 		pmap_cache_ctrl(pmap_kernel(), M88K_TRUNC_PAGE((vm_offset_t)sc),
 			M88K_ROUND_PAGE((vm_offset_t)sc + sizeof(*sc)),
 			CACHE_INH);
-#endif
+
 		pcctwointr_establish(PCC2V_NCR, &sc->sc_ih);
 /*		intr_establish(PCC2_VECT + SCSIIRQ, &sc->sc_ih);*/
 		/* enable interrupts at ca_ipl */
@@ -247,9 +212,11 @@ afscprint(auxp, pnp)
 }
 
 int
-afsc_dmaintr(sc)
-	struct ssh_softc *sc;
+afsc_dmaintr(arg)
+	void *arg;
 {
+	struct ssh_softc *sc = arg;
+
 	ssh_regmap_p rp;
 	u_char	istat;
 
