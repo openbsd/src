@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizo.c,v 1.12 2003/05/11 04:44:22 jason Exp $	*/
+/*	$OpenBSD: schizo.c,v 1.13 2003/05/11 19:20:36 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -193,7 +193,6 @@ schizo_init(struct schizo_softc *sc, int busa)
 	match = bus_space_read_8(sc->sc_bust, sc->sc_ctrlh,
 	    (busa ? SCZ_PCIA_IO_MATCH : SCZ_PCIB_IO_MATCH));
 	pbm->sp_confpaddr = match & ~0x8000000000000000UL;
-	printf("config paddr: %llx\n", pbm->sp_confpaddr);
 
 	pbm->sp_memt = schizo_alloc_mem_tag(pbm);
 	pbm->sp_iot = schizo_alloc_io_tag(pbm);
