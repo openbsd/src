@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.818 2005/01/16 20:10:35 brad Exp 
+ *	OpenBSD: pcidevs,v 1.819 2005/01/16 20:22:43 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -219,6 +219,7 @@
 #define	PCI_VENDOR_CMI	0x13f6		/* C-Media Electronics */
 #define	PCI_VENDOR_LAVA	0x1407		/* Lava */
 #define	PCI_VENDOR_SUNIX	0x1409		/* Sunix */
+#define	PCI_VENDOR_MICROSOFT	0x1414		/* Microsoft */
 #define	PCI_VENDOR_OXFORD2	0x1415		/* Oxford */
 #define	PCI_VENDOR_TAMARACK	0x143d		/* Tamarack Microelectronics */
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey */
@@ -1711,6 +1712,10 @@
 /* Mentor */
 #define	PCI_PRODUCT_MENTOR_PCI0660	0x0660		/* PCI */
 #define	PCI_PRODUCT_MENTOR_PCI0661	0x0661		/* PCI-PCI */
+
+/* Microsoft products */
+#define	PCI_PRODUCT_MICROSOFT_MN120	0x0001		/* MN-120 10/100 */
+#define	PCI_PRODUCT_MICROSOFT_MN130	0x0002		/* MN-130 10/100 */
 
 /* Mitsubishi Electronics */
 #define	PCI_PRODUCT_MITSUBISHIELEC_4D30T	0x0301		/* Powerstorm 4D30T */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.818 2005/01/16 20:10:35 brad Exp 
+ *	OpenBSD: pcidevs,v 1.819 2005/01/16 20:22:43 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4747,6 +4747,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCI-PCI",
 	},
 	{
+	    PCI_VENDOR_MICROSOFT, PCI_PRODUCT_MICROSOFT_MN120,
+	    "MN-120 10/100",
+	},
+	{
+	    PCI_VENDOR_MICROSOFT, PCI_PRODUCT_MICROSOFT_MN130,
+	    "MN-130 10/100",
+	},
+	{
 	    PCI_VENDOR_MITSUBISHIELEC, PCI_PRODUCT_MITSUBISHIELEC_4D30T,
 	    "Powerstorm 4D30T",
 	},
@@ -8989,6 +8997,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_SUNIX,
 	    "Sunix",
+	},
+	{
+	    PCI_VENDOR_MICROSOFT,
+	    "Microsoft",
 	},
 	{
 	    PCI_VENDOR_OXFORD2,
