@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccitt_addr.c,v 1.3 1997/06/24 03:15:22 millert Exp $	*/
+/*	$OpenBSD: ccitt_addr.c,v 1.4 1997/06/24 04:05:37 millert Exp $	*/
 /*	$NetBSD: ccitt_addr.c,v 1.8 1995/04/23 10:33:41 cgd Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 #include <sys/socket.h>
 #include <netccitt/x25.h>
 
-static char *copychar ();
+static char *copychar __P((char *, char *));
 
 int
 ccitt_addr (addr, xp)

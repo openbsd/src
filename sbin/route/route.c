@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.21 1997/06/24 03:45:43 millert Exp $	*/
+/*	$OpenBSD: route.c,v 1.22 1997/06/24 04:05:38 millert Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: route.c,v 1.21 1997/06/24 03:45:43 millert Exp $";
+static char rcsid[] = "$OpenBSD: route.c,v 1.22 1997/06/24 04:05:38 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,14 +95,25 @@ int	iflag, verbose, aflen = sizeof (struct sockaddr_in);
 int	locking, lockrest, debugonly;
 struct	rt_metrics rt_metrics;
 u_long  rtm_inits;
-struct	in_addr inet_makeaddr();
-char	*routename(), *netname();
-void   flushroutes(), newroute(), monitor(), sockaddr(), sodump();
-void   print_getmsg(), print_rtmsg(), pmsg_common(), pmsg_addrs();
-void   bprintf(), mask_addr();
-int	getaddr(), rtmsg(), x25_makemask();
-extern	char *inet_ntoa(), *iso_ntoa(), *link_ntoa();
-extern void show();
+
+char	*routename __P((struct sockaddr *));
+char	*netname __P((struct sockaddr *));
+void	 flushroutes __P((int, char **));
+void	 newroute __P((int, char **));
+void	 monitor __P((void));
+void	 sockaddr __P((char *, struct sockaddr *));
+void	 sodump __P((sup, char *));
+void	 print_getmsg __P((struct rt_msghdr *, int));
+void	 print_rtmsg __P((struct rt_msghdr *, int));
+void	 pmsg_common __P((struct rt_msghdr *));
+void	 pmsg_addrs __P((char *, int));
+void	 bprintf __P((FILE *, int, u_char *));
+void	 mask_addr __P((void));
+int	 getaddr __P((int, char *, struct hostent **));
+int	 rtmsg __P((int, int));
+int	 x25_makemask __P((void));
+
+extern void show __P((int, char **));	/* XXX - from show.c */
 
 __dead void
 usage(cp)
@@ -1292,7 +1303,7 @@ print_getmsg(rtm, msglen)
 	register char *cp;
 	register int i;
 
-	(void) printf("   route to: %s\n", routename(&so_dst));
+	(void) printf("   route to: %s\n", routename(&so_dst.sa));
 	if (rtm->rtm_version != RTM_VERSION) {
 		(void)fprintf(stderr,
 		    "routing message version %d not understood\n",
