@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.29 2002/12/18 19:40:41 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.30 2002/12/19 16:25:51 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -608,14 +608,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		/*
 		 * Rules are about to get freed, clear rule pointers in states
 		 */
-		if (ruleset == &pf_main_ruleset) {
-			if (rs_num == PF_RULESET_RULE)
+		if (rs_num == PF_RULESET_RULE) {
+			if (ruleset == &pf_main_ruleset)
 				RB_FOREACH(n, pf_state_tree, &tree_ext_gwy)
 					n->state->rule.ptr = NULL;
-			else
-				RB_FOREACH(n, pf_state_tree, &tree_ext_gwy)
-					n->state->nat_rule = NULL;
-		}
+		} else
+			RB_FOREACH(n, pf_state_tree, &tree_ext_gwy)
+				n->state->nat_rule = NULL;
 		old_rules = ruleset->rules[rs_num].active.ptr;
 		ruleset->rules[rs_num].active.ptr =
 		    ruleset->rules[rs_num].inactive.ptr;
@@ -800,13 +799,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (pcr->action == PF_CHANGE_REMOVE) {
 			struct pf_tree_node	*n;
 
-			if (ruleset == &pf_main_ruleset) {
-				RB_FOREACH(n, pf_state_tree, &tree_ext_gwy) {
-					if (n->state->rule.ptr == oldrule)
-						n->state->rule.ptr = NULL;
-					if (n->state->nat_rule == oldrule)
-						n->state->nat_rule = NULL;
-				}
+			RB_FOREACH(n, pf_state_tree, &tree_ext_gwy) {
+				if (n->state->rule.ptr == oldrule)
+					n->state->rule.ptr = NULL;
+				if (n->state->nat_rule == oldrule)
+					n->state->nat_rule = NULL;
 			}
 			pf_rm_rule(ruleset->rules[rs_num].active.ptr, oldrule);
 		} else {
