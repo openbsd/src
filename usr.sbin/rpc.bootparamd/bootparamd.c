@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparamd.c,v 1.13 2002/07/14 03:53:05 deraadt Exp $	*/
+/*	$OpenBSD: bootparamd.c,v 1.14 2002/07/19 02:18:06 deraadt Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -18,6 +18,8 @@
 #include <rpcsvc/bootparam_prot.h>
 #include <rpcsvc/ypclnt.h>
 #include <rpcsvc/yp_prot.h>
+#include <arpa/inet.h>
+
 #include <stdio.h>
 #include <netdb.h>
 #include <ctype.h>
@@ -44,8 +46,7 @@ int	_rpcsvcdirty = 0;
 int	_rpcpmstart = 0;
 int	debug = 0;
 int	dolog = 0;
-in_addr_t route_addr;
-in_addr_t inet_addr();
+struct in_addr route_addr;
 struct sockaddr_in my_addr;
 extern char *__progname;
 char   *bootpfile = _PATH_BOOTPARAMS;
@@ -79,16 +80,15 @@ main(int argc, char *argv[])
 			debug = 1;
 			break;
 		case 'r':
-			if (isdigit(*optarg)) {
-				route_addr = inet_addr(optarg);
+			if (inet_aton(optarg, &route_addr) == 1)
 				break;
-			}
 			he = gethostbyname(optarg);
 			if (!he) {
 				warnx("no such host: %s", optarg);
 				usage();
 			}
-			bcopy(he->h_addr, (char *) &route_addr, sizeof(route_addr));
+			bcopy(he->h_addr, (char *) &route_addr.s_addr,
+			    sizeof(route_addr.s_addr));
 			break;
 		case 'f':
 			bootpfile = optarg;
@@ -109,9 +109,10 @@ main(int argc, char *argv[])
 	if (stat(bootpfile, &buf))
 		err(1, "%s", bootpfile);
 
-	if (!route_addr) {
+	if (!route_addr.s_addr) {
 		get_myaddress(&my_addr);
-		bcopy(&my_addr.sin_addr.s_addr, &route_addr, sizeof(route_addr));
+		bcopy(&my_addr.sin_addr.s_addr, &route_addr.s_addr,
+		    sizeof(route_addr.s_addr));
 	}
 	if (!debug) {
 		if (daemon(0, 0))
@@ -171,7 +172,7 @@ bootparamproc_whoami_1_svc(bp_whoami_arg *whoami, struct svc_req *rqstp)
 
 		if (res.router_address.address_type != IP_ADDR_TYPE) {
 			res.router_address.address_type = IP_ADDR_TYPE;
-			bcopy(&route_addr,
+			bcopy(&route_addr.s_addr,
 			    &res.router_address.bp_address_u.ip_addr, 4);
 		}
 		if (debug)
