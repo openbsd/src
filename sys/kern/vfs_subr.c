@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.39 1999/05/31 17:34:48 millert Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.40 1999/08/08 00:34:38 niklas Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1211,6 +1211,23 @@ vfinddev(dev, type, vpp)
 	}
 	simple_unlock(&spechash_slock);
 	return (rc);
+}
+
+/*
+ * Revoke all the vnodes corresponding to the specified minor number
+ * range (endpoints inclusive) of the specified major.
+ */
+void
+vdevgone(maj, minl, minh, type)
+	int maj, minl, minh;
+	enum vtype type;
+{
+	struct vnode *vp;
+	int mn;
+
+	for (mn = minl; mn <= minh; mn++)
+		if (vfinddev(makedev(maj, mn), type, &vp))
+			VOP_REVOKE(vp, REVOKEALL);
 }
 
 /*
