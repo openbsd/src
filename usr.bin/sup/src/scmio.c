@@ -1,4 +1,4 @@
-/*	$OpenBSD: scmio.c,v 1.8 2001/05/07 02:06:48 millert Exp $	*/
+/*	$OpenBSD: scmio.c,v 1.9 2001/05/07 13:09:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -445,13 +445,11 @@ readdata(count, data)		/* read raw data from network */
 	int n, m, x;
 	int tries;
 	struct timeval timout;
+	static size_t rfdsize;
 	static fd_set *readfds;
 	static int bufcnt = 0;
 	static char *bufptr;
 	static char buffer[FILEXFER];
-
-	if (readfds)
-		free(readfds);
 
 	if (count < 0) {
 		if (bufptr + count < buffer)
@@ -476,6 +474,13 @@ readdata(count, data)		/* read raw data from network */
 		data += bufcnt;
 		count -= bufcnt;
 	}
+	if (rfdsize < howmany(netfile+1, NFDBITS) * sizeof(fd_mask)) {
+		rfdsize = howmany(netfile+1, NFDBITS) * sizeof(fd_mask);
+		p = readfds ? realloc(readfds, rfdsize) : malloc(rfdsize);
+		if (p == NULL)
+			return (SCMERR);
+		readfds = (fd_set *) p;
+	}
 	bufptr = buffer;
 	bufcnt = 0;
 	timout.tv_usec = 0;
@@ -483,10 +488,6 @@ readdata(count, data)		/* read raw data from network */
 	p = buffer;
 	n = FILEXFER;
 	m = count;
-	readfds = (fd_set *) calloc(howmany(netfile+1, NFDBITS),
-	    sizeof(fd_mask));
-	if (readfds == NULL)
-		return (SCMERR);
 	while (m > 0) {
 		tries = 0;
 		for (;;) {
