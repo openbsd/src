@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.122 2001/08/01 23:07:36 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.123 2001/08/11 12:05:00 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -63,8 +63,7 @@
 #include "bpfilter.h"
 #include "pflog.h"
 
-int pf_debug = 0;
-#define DPFPRINTF(x)	if (pf_debug) printf x
+#define DPFPRINTF(n, x)	if (pf_status.debug >= (n)) printf x
 
 /*
  * Tree data structure
@@ -498,19 +497,22 @@ pf_insert_state(struct pf_state *state)
 	key.port[1] = state->ext.port;
 	/* sanity checks can be removed later, should never occur */
 	if ((s = pf_find_state(tree_lan_ext, &key)) != NULL) {
-		printf("pf: ERROR! insert invalid\n");
-		printf("    key already in tree_lan_ext\n");
-		printf("    key: proto = %u, lan = ", state->proto);
-		pf_print_host(key.addr[0].s_addr, key.port[0]);
-		printf(", ext = ");
-		pf_print_host(key.addr[1].s_addr, key.port[1]);
-		printf("\n    state: ");
-		pf_print_state(s);
-		printf("\n");
+		if (pf_status.debug >= PF_DEBUG_URGENT) {
+			printf("pf: ERROR! insert invalid\n");
+			printf("    key already in tree_lan_ext\n");
+			printf("    key: proto = %u, lan = ", state->proto);
+			pf_print_host(key.addr[0].s_addr, key.port[0]);
+			printf(", ext = ");
+			pf_print_host(key.addr[1].s_addr, key.port[1]);
+			printf("\n    state: ");
+			pf_print_state(s);
+			printf("\n");
+		}
 	} else {
 		pf_tree_insert(&tree_lan_ext, NULL, &key, state);
 		if (pf_find_state(tree_lan_ext, &key) != state)
-			printf("pf: ERROR! insert failed\n");
+			DPFPRINTF(PF_DEBUG_URGENT,
+			    ("pf: ERROR! insert failed\n"));
 	}
 
 	key.proto = state->proto;
@@ -519,19 +521,22 @@ pf_insert_state(struct pf_state *state)
 	key.addr[1].s_addr = state->gwy.addr;
 	key.port[1] = state->gwy.port;
 	if ((s = pf_find_state(tree_ext_gwy, &key)) != NULL) {
-		printf("pf: ERROR! insert invalid\n");
-		printf("    key already in tree_ext_gwy\n");
-		printf("    key: proto = %u, ext = ", state->proto);
-		pf_print_host(key.addr[0].s_addr, key.port[0]);
-		printf(", gwy = ");
-		pf_print_host(key.addr[1].s_addr, key.port[1]);
-		printf("\n    state: ");
-		pf_print_state(s);
-		printf("\n");
+		if (pf_status.debug >= PF_DEBUG_URGENT) {
+			printf("pf: ERROR! insert invalid\n");
+			printf("    key already in tree_ext_gwy\n");
+			printf("    key: proto = %u, ext = ", state->proto);
+			pf_print_host(key.addr[0].s_addr, key.port[0]);
+			printf(", gwy = ");
+			pf_print_host(key.addr[1].s_addr, key.port[1]);
+			printf("\n    state: ");
+			pf_print_state(s);
+			printf("\n");
+		}
 	} else {
 		pf_tree_insert(&tree_ext_gwy, NULL, &key, state);
 		if (pf_find_state(tree_ext_gwy, &key) != state)
-			printf("pf: ERROR! insert failed\n");
+			DPFPRINTF(PF_DEBUG_URGENT,
+			    ("pf: ERROR! insert failed\n"));
 	}
 	pf_status.fcounters[FCNT_STATE_INSERT]++;
 	pf_status.states++;
@@ -553,10 +558,12 @@ pf_purge_expired_states(void)
 			key.port[1] = cur->state->ext.port;
 			/* remove state from second tree */
 			if (pf_find_state(tree_lan_ext, &key) != cur->state)
-				printf("pf: ERROR: remove invalid!\n");
+				DPFPRINTF(PF_DEBUG_URGENT,
+				    ("pf: ERROR: remove invalid!\n"));
 			pf_tree_remove(&tree_lan_ext, NULL, &key);
 			if (pf_find_state(tree_lan_ext, &key) != NULL)
-				printf("pf: ERROR: remove failed\n");
+				DPFPRINTF(PF_DEBUG_URGENT,
+				    ("pf: ERROR: remove failed\n"));
 			if (STATE_TRANSLATE(cur->state))
 				pf_put_sport(cur->state->proto,
 					htons(cur->state->gwy.port));
@@ -573,8 +580,8 @@ pf_purge_expired_states(void)
 				pf_tree_remove(&tree_ext_gwy, NULL, &cur->key);
 				cur = pf_tree_search(tree_ext_gwy, &key);
 				if (cur == NULL)
-					printf(
-					    "pf: ERROR: next not refound\n");
+					DPFPRINTF(PF_DEBUG_URGENT,
+					    ("pf: ERROR: next not found\n"));
 			} else {
 				pf_tree_remove(&tree_ext_gwy, NULL, &cur->key);
 				cur = NULL;
@@ -733,7 +740,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			pf_status.states = states;
 			microtime(&pftv);
 			pf_status.since = pftv.tv_sec;
-			printf("pf: started\n");
+			DPFPRINTF(PF_DEBUG_MISC, ("pf: started\n"));
 		}
 		break;
 
@@ -742,7 +749,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENOENT;
 		else {
 			pf_status.running = 0;
-			printf("pf: stopped\n");
+			DPFPRINTF(PF_DEBUG_MISC, ("pf: stopped\n"));
 		}
 		break;
 
@@ -1136,6 +1143,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pf_status.states = states;
 		break;
 	}
+
 	case DIOCNATLOOK: {
 		struct pf_natlook *pnl = (struct pf_natlook *)addr;
 		struct pf_state *st;
@@ -1181,6 +1189,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		break;
 	}
+
+	case DIOCSETDEBUG: {
+		u_int32_t *level = (u_int32_t *)addr;
+		pf_status.debug = *level;
+		break;
+	}
+
 	default:
 		error = ENODEV;
 		break;
@@ -2238,18 +2253,18 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		return (PF_PASS);
 
 	} else {
-		/* XXX Remove these printfs before release */
-		printf("pf: BAD state: ");
-		pf_print_state(*state);
-		pf_print_flags(th->th_flags);
-		printf(" seq=%lu ack=%lu len=%u ", seq, ack, len);
-		printf("\n");
-		printf("State failure: %c %c %c %c\n",
-		    SEQ_GEQ(src->seqhi, end) ? ' ' : '1',
-		    SEQ_GEQ(seq, src->seqlo - dst->max_win) ? ' ': '2',
-		    (ackskew >= -MAXACKWINDOW) ? ' ' : '3',
-		    (ackskew <= MAXACKWINDOW) ? ' ' : '4');
-
+		if (pf_status.debug >= PF_DEBUG_MISC) {
+			printf("pf: BAD state: ");
+			pf_print_state(*state);
+			pf_print_flags(th->th_flags);
+			printf(" seq=%lu ack=%lu len=%u ", seq, ack, len);
+			printf("\n");
+			printf("State failure: %c %c %c %c\n",
+			    SEQ_GEQ(src->seqhi, end) ? ' ' : '1',
+			    SEQ_GEQ(seq, src->seqlo - dst->max_win) ? ' ': '2',
+			    (ackskew >= -MAXACKWINDOW) ? ' ' : '3',
+			    (ackskew <= MAXACKWINDOW) ? ' ' : '4');
+		}
 		return (PF_DROP);
 	}
 }
@@ -2374,7 +2389,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 		ipoff2 = off + ICMP_MINLEN;	/* offset of h2 in mbuf chain */
 		if (!pf_pull_hdr(m, ipoff2, &h2, sizeof(h2), NULL, NULL)) {
-			printf("pf: ICMP error message too short (ip)\n");
+			DPFPRINTF(PF_DEBUG_MISC,
+			    ("pf: ICMP error message too short (ip)\n"));
 			return (PF_DROP);
 		}
 
@@ -2398,8 +2414,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			 * th_seq, an ackskew test is not possible.
 			 */
 			if (!pf_pull_hdr(m, off2, &th, 8, NULL, NULL)) {
-				printf("pf: "
-				    "ICMP error message too short (tcp)\n");
+				DPFPRINTF(PF_DEBUG_MISC,
+				    ("pf: ICMP error message too short (tcp)\n"));
 				return (PF_DROP);
 			}
 			seq = ntohl(th.th_seq);
@@ -2427,10 +2443,11 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 			if (!SEQ_GEQ(src->seqhi, seq) ||
 			    !SEQ_GEQ(seq, src->seqlo - dst->max_win)) {
-
-				printf("pf: BAD ICMP state: ");
-				pf_print_state(*state);
-				printf(" seq=%lu\n", seq);
+				if (pf_status.debug >= PF_DEBUG_MISC) {
+					printf("pf: BAD ICMP state: ");
+					pf_print_state(*state);
+					printf(" seq=%lu\n", seq);
+				}
 				return (PF_DROP);
 			}
 
@@ -2466,7 +2483,8 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 
 			if (!pf_pull_hdr(m, off2, &uh, sizeof(uh),
 			    NULL, NULL)) {
-				printf("pf: ICMP error message too short (udp)\n");
+				DPFPRINTF(PF_DEBUG_MISC,
+				    ("pf: ICMP error message too short (udp)\n"));
 				return (PF_DROP);
 			}
 
@@ -2509,8 +2527,59 @@ pf_test_state_icmp(struct pf_state **state, int direction, struct ifnet *ifp,
 			return (PF_PASS);
 			break;
 		}
+		case IPPROTO_ICMP: {
+			struct icmp iih;
+			struct pf_tree_key key;
+
+			if (!pf_pull_hdr(m, off2, &iih, ICMP_MINLEN,
+			    NULL, NULL)) {
+				DPFPRINTF(PF_DEBUG_MISC,
+				    ("pf: ICMP error message too short (icmp)\n"));
+				return (PF_DROP);
+			}
+
+			key.proto   = IPPROTO_ICMP;
+			key.addr[0] = h2.ip_dst;
+			key.port[0] = iih.icmp_id;
+			key.addr[1] = h2.ip_src;
+			key.port[1] = iih.icmp_id;
+
+			if (direction == PF_IN)
+				*state = pf_find_state(tree_ext_gwy, &key);
+			else
+				*state = pf_find_state(tree_lan_ext, &key);
+			if (*state == NULL)
+				return (PF_DROP);
+
+			if (STATE_TRANSLATE(*state)) {
+				if (direction == PF_IN) {
+					pf_change_icmp(&h2.ip_src.s_addr,
+					    &iih.icmp_id, &h->ip_dst.s_addr,
+					    (*state)->lan.addr,
+					    (*state)->lan.port, NULL,
+					    &h2.ip_sum, &ih->icmp_cksum,
+					    &h->ip_sum);
+				} else {
+					pf_change_icmp(&h2.ip_dst.s_addr,
+					    &iih.icmp_id, &h->ip_src.s_addr,
+					    (*state)->gwy.addr,
+					    (*state)->gwy.port, NULL,
+					    &h2.ip_sum, &ih->icmp_cksum,
+					    &h->ip_sum);
+				}
+				m_copyback(m, off, ICMP_MINLEN, (caddr_t)ih);
+				m_copyback(m, ipoff2, sizeof(h2),
+				    (caddr_t)&h2);
+				m_copyback(m, off2, ICMP_MINLEN,
+				    (caddr_t)&iih);
+			}
+
+			return (PF_PASS);
+			break;
+		}
 		default:
-			printf("pf: ICMP error message for bad proto\n");
+			DPFPRINTF(PF_DEBUG_MISC,
+			    ("pf: ICMP error message for bad proto\n"));
 			return (PF_DROP);
 		}
 

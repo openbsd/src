@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.39 2001/07/19 00:07:36 krw Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.40 2001/08/11 12:05:00 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -348,10 +348,21 @@ print_status(struct pf_status *s)
 	time_t t = time(NULL);
 	int i;
 
-	printf("Status: %s  Time: %u  Since: %u\n",
+	printf("Status: %s  Time: %u  Since: %u  Debug: ",
 	    s->running ? "Enabled" : "Disabled",
 	    t, s->since);
-	printf("Bytes In: %-10llu  Bytes Out: %-10llu\n",
+	switch (s->debug) {
+		case 0:
+			printf("None");
+			break;
+		case 1:
+			printf("Urgent");
+			break;
+		case 2:
+			printf("Misc");
+			break;
+	}
+	printf("\nBytes In: %-10llu  Bytes Out: %-10llu\n",
 	    s->bcounters[PF_IN], s->bcounters[PF_OUT]);
 	printf("Inbound Packets:  Passed: %-10llu  Dropped: %-10llu\n",
 	    s->pcounters[PF_IN][PF_PASS],

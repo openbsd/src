@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.31 2001/08/11 09:54:59 deraadt Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.32 2001/08/11 12:05:00 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -67,6 +67,7 @@ int	 pfctl_show_status(int);
 int	 pfctl_rules(int, char *, int);
 int	 pfctl_nat(int, char *, int);
 int	 pfctl_log(int, char *, int);
+int	 pfctl_debug(int, u_int32_t, int);
 
 int	 opts = 0;
 char	*clearopt;
@@ -74,6 +75,7 @@ char	*logopt;
 char	*natopt;
 char	*rulesopt;
 char	*showopt;
+char	*debugopt;
 
 char	*infile;
 
@@ -84,7 +86,7 @@ usage()
 
 	fprintf(stderr, "usage: %s [-dehnqv] [-F set] [-l interface] ",
 	    __progname);
-	fprintf(stderr, "[-N file] [-R file] [-s set]\n");
+	fprintf(stderr, "[-N file] [-R file] [-s set] [-x level]\n");
 	exit(1);
 }
 
@@ -383,6 +385,32 @@ pfctl_log(int dev, char *ifname, int opts)
 }
 
 int
+pfctl_debug(int dev, u_int32_t level, int opts)
+{
+	if (ioctl(dev, DIOCSETDEBUG, &level))
+		err(1, "DIOCSETDEBUG");
+	if ((opts & PF_OPT_QUIET) == 0) {
+		printf("debug level set to '");
+		switch (level) {
+			case PF_DEBUG_NONE:
+				printf("none");
+				break;
+			case PF_DEBUG_URGENT:
+				printf("urgent");
+				break;
+			case PF_DEBUG_MISC:
+				printf("misc");
+				break;
+			default:
+				printf("<invalid>");
+				break;
+		}
+		printf("'\n");
+	}
+	return (0);
+}
+
+int
 main(int argc, char *argv[])
 {
 	extern char *optarg;
@@ -394,7 +422,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "deqF:hl:nN:R:s:v")) != -1) {
+	while ((ch = getopt(argc, argv, "deqF:hl:nN:R:s:vx:")) != -1) {
 		switch (ch) {
 		case 'd':
 			opts |= PF_OPT_DISABLE;
@@ -426,6 +454,9 @@ main(int argc, char *argv[])
 		case 'v':
 			opts |= PF_OPT_VERBOSE;
 			break;
+		case 'x':
+			debugopt = optarg;
+			break;
 		case 'h':
 		default:
 			usage();
@@ -446,7 +477,7 @@ main(int argc, char *argv[])
 	} else {
 		/* turn off options */
 		opts &= ~ (PF_OPT_DISABLE | PF_OPT_ENABLE);
-		clearopt = logopt = showopt = NULL;
+		clearopt = logopt = showopt = debugopt = NULL;
 	}
 
 	if (opts & PF_OPT_DISABLE)
@@ -521,6 +552,23 @@ main(int argc, char *argv[])
 	if (opts & PF_OPT_ENABLE)
 		if (pfctl_enable(dev, opts))
 			error = 1;
+
+	if (debugopt != NULL) {
+		switch (*debugopt) {
+		case 'n':
+			pfctl_debug(dev, PF_DEBUG_NONE, opts);
+			break;
+		case 'u':
+			pfctl_debug(dev, PF_DEBUG_URGENT, opts);
+			break;
+		case 'm':
+			pfctl_debug(dev, PF_DEBUG_MISC, opts);
+			break;
+		default:
+			warnx("Unknown debug level '%s'", debugopt);
+			error = 1;
+		}
+	}
 
 	close(dev);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.38 2001/08/01 23:07:36 provos Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.39 2001/08/11 12:04:59 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -40,6 +40,7 @@ enum	{ PF_IN=0, PF_OUT=1 };
 enum	{ PF_PASS=0, PF_DROP=1, PF_SCRUB=2 };
 enum	{ PF_OP_IRG=1, PF_OP_EQ=2, PF_OP_NE=3, PF_OP_LT=4,
 	  PF_OP_LE=5, PF_OP_GT=6, PF_OP_GE=7, PF_OP_XRG=8 };
+enum	{ PF_DEBUG_NONE=0, PF_DEBUG_URGENT=1, PF_DEBUG_MISC=2 };
 
 struct pf_rule_addr {
 	u_int32_t	addr;
@@ -233,6 +234,7 @@ struct pf_status {
 	u_int32_t	running;
 	u_int32_t	states;
 	u_int32_t	since;
+	u_int32_t	debug;
 };
 
 /*
@@ -293,6 +295,7 @@ struct pfioc_if {
 #define DIOCGETSTATUS	_IOWR('D', 21, struct pf_status)
 #define DIOCCLRSTATUS	_IO  ('D', 22)
 #define DIOCNATLOOK	_IOWR('D', 23, struct pf_natlook)
+#define DIOCSETDEBUG	_IOWR('D', 24, u_int32_t)
 
 #ifdef _KERNEL
 
@@ -316,7 +319,6 @@ void	pf_purge_expired_fragments(void);
 
 extern struct pf_rulequeue *pf_rules_active;
 extern struct pf_status pf_status;
-extern int pf_debug;
 #endif /* _KERNEL */
 
 #endif /* _NET_PFVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.5 2001/08/02 06:59:25 deraadt Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.6 2001/08/11 12:05:00 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -93,7 +93,7 @@ int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 #define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */
 #define PFFRAG_FRAG_HIWAT	1000	/* Number of fragmented packets */
 
-#define DPFPRINTF(x)		if (pf_debug) printf x
+#define DPFPRINTF(x)		if (pf_status.debug) printf x
 
 #if NPFLOG > 0
 #define		 PFLOG_PACKET(x,a,b,c,d,e) \
