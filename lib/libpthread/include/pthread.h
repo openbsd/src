@@ -30,18 +30,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * $OpenBSD: pthread.h,v 1.10 2000/01/04 22:34:23 alex Exp $
+ * $OpenBSD: pthread.h,v 1.11 2000/01/06 07:06:00 d Exp $
  *
  * $FreeBSD: pthread.h,v 1.13 1999/07/31 08:36:07 rse Exp $
  */
 #ifndef _PTHREAD_H_
 #define _PTHREAD_H_
 
+/* Previous releases of OpenBSD used a hacked gcc that defined this */
 #ifdef _POSIX_THREADS
-#ifdef notyet
-#warning -pthread option no longer needed - upgrade gcc
-#endif
-#undef _POSIX_THREADS
+#undef _POSIX_THREADS	/* Allow to be defined below */
 #endif
 
 /*
@@ -129,11 +127,11 @@ struct pthread_rwlockattr;
  */
 typedef struct	pthread			*pthread_t;
 typedef struct	pthread_attr		*pthread_attr_t;
-typedef struct	pthread_mutex		*pthread_mutex_t;
+typedef volatile struct pthread_mutex	*pthread_mutex_t;
 typedef struct	pthread_mutex_attr	*pthread_mutexattr_t;
 typedef struct	pthread_cond		*pthread_cond_t;
 typedef struct	pthread_cond_attr	*pthread_condattr_t;
-typedef int     			pthread_key_t;
+typedef volatile int  			pthread_key_t;
 typedef struct	pthread_once		pthread_once_t;
 typedef struct	pthread_rwlock		*pthread_rwlock_t;
 typedef struct	pthread_rwlockattr	*pthread_rwlockattr_t;
