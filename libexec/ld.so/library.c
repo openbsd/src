@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.9 2001/08/21 01:19:35 drahn Exp $ */
+/*	$OpenBSD: library.c,v 1.10 2001/09/22 04:33:36 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -119,9 +119,6 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type)
 		}
 		if(*(path - 1) != '/') {/* Make sure '/' after dir path */
 			*path++ = '/';
-		}
-		if(*pp) {		/* ':' if not end. skip over. */
-			pp++;
 		}
 		while(path < lp + PATH_MAX && (*path++ = *ln++)) {};
 		if(path < lp + PATH_MAX) {
