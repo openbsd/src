@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.45 2004/06/20 20:45:06 aaron Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.46 2004/12/21 10:07:34 mpf Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -37,14 +37,8 @@ int crypto_pool_initialized = 0;
 struct cryptop *crp_req_queue = NULL;
 struct cryptop **crp_req_queue_tail = NULL;
 
-struct cryptop *crp_ret_queue = NULL;
-struct cryptop **crp_ret_queue_tail = NULL;
-
 struct cryptkop *krp_req_queue = NULL;
 struct cryptkop **krp_req_queue_tail = NULL;
-
-struct cryptkop *krp_ret_queue = NULL;
-struct cryptkop **krp_ret_queue_tail = NULL;
 
 /*
  * Create a new session.
@@ -632,8 +626,8 @@ crypto_getreq(int num)
 void
 crypto_thread(void)
 {
-	struct cryptop *crp, *crpt;
-	struct cryptkop *krp, *krpt;
+	struct cryptop *crp;
+	struct cryptkop *krp;
 	int s;
 
 	s = splimp();
@@ -641,10 +635,7 @@ crypto_thread(void)
 	for (;;) {
 		crp = crp_req_queue;
 		krp = krp_req_queue;
-		crpt = crp_ret_queue;
-		krpt = krp_ret_queue;
-		if (crp == NULL && krp == NULL &&
-		    crpt == NULL && krpt == NULL) {
+		if (crp == NULL && krp == NULL) {
 			(void) tsleep(&crp_req_queue, PLOCK, "crypto_wait", 0);
 			continue;
 		}
@@ -659,24 +650,6 @@ crypto_thread(void)
 			krp_req_queue = krp->krp_next;
 			crypto_kinvoke(krp);
 		}
-		if (crpt) {
-			/* Remove from the queue. */
-			crp_ret_queue = crpt->crp_next;
-			splx(s);
-			crpt->crp_callback(crpt);
-			s = splimp();
-		}
-		if (krpt) {
-			/* Remove from the queue. */
-			krp_ret_queue = krpt->krp_next;
-			/*
-			 * Cheat. For public key ops, we know that
-			 * all that's done is a wakeup() for the
-			 * userland process, so don't bother to
-			 * change the processor priority.
-			 */
-			krpt->krp_callback(krpt);
-		}
 	}
 }
 
@@ -686,29 +659,8 @@ crypto_thread(void)
 void
 crypto_done(struct cryptop *crp)
 {
-	int s;
-
-	if (crp->crp_flags & CRYPTO_F_NOQUEUE) {
-		/* not from the crypto queue, wakeup the userland
-		 * process 
-		 */
-		crp->crp_flags |= CRYPTO_F_DONE;
-		crp->crp_callback(crp);
-	} else {
-		s = splimp();
-		crp->crp_flags |= CRYPTO_F_DONE;
-		crp->crp_next = NULL;
-		if (crp_ret_queue == NULL) {
-			crp_ret_queue = crp;
-			crp_ret_queue_tail = &(crp->crp_next);
-			splx(s);
-			wakeup((caddr_t) &crp_req_queue); /* Shared wait channel. */
-		} else {
-			*crp_ret_queue_tail = crp;
-			crp_ret_queue_tail = &(crp->crp_next);
-			splx(s);
-		}
-	}
+	crp->crp_flags |= CRYPTO_F_DONE;
+	crp->crp_callback(crp);
 }
 
 /*
@@ -717,19 +669,7 @@ crypto_done(struct cryptop *crp)
 void
 crypto_kdone(struct cryptkop *krp)
 {
-	int s = splimp();
-
-	krp->krp_next = NULL;
-	if (krp_ret_queue == NULL) {
-		krp_ret_queue = krp;
-		krp_ret_queue_tail = &(krp->krp_next);
-		splx(s);
-		wakeup((caddr_t) &crp_req_queue); /* Shared wait channel. */
-	} else {
-		*krp_ret_queue_tail = krp;
-		krp_ret_queue_tail = &(krp->krp_next);
-		splx(s);
-	}
+	krp->krp_callback(krp);
 }
 
 int
