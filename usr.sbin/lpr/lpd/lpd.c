@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.34 2002/06/08 18:09:30 millert Exp $ */
+/*	$OpenBSD: lpd.c,v 1.35 2002/06/08 18:13:34 millert Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.34 2002/06/08 18:09:30 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.35 2002/06/08 18:13:34 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -309,8 +309,8 @@ main(int argc, char **argv)
 		syslog(LOG_ERR, "ubind: %m");
 		exit(1);
 	}
-	chmod(_PATH_SOCKETNAME, 0660)
-	chown(_PATH_SOCKETNAME, -1, real_gid)
+	chmod(_PATH_SOCKETNAME, 0660);
+	chown(_PATH_SOCKETNAME, -1, real_gid);
 	PRIV_END;
 	(void)umask(0);		/* XXX */
 	sigprocmask(SIG_SETMASK, &omask, NULL);
