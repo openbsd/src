@@ -1,28 +1,10 @@
-/*	$OpenBSD: tty.c,v 1.3 2004/12/18 20:55:52 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.4 2004/12/18 22:12:23 millert Exp $	*/
 
 #include "sh.h"
 #include <sys/stat.h>
 #define EXTERN
 #include "tty.h"
 #undef EXTERN
-
-int
-get_tty(fd, ts)
-	int fd;
-	TTY_state *ts;
-{
-	return tcgetattr(fd, ts);
-}
-
-int
-set_tty(fd, ts, flags)
-	int fd;
-	TTY_state *ts;
-	int flags;
-{
-	return tcsetattr(fd, TCSADRAIN, ts);
-}
-
 
 /* Initialize tty_fd.  Used for saving/reseting tty modes upon
  * foreground job completion and for setting up tty process group.
@@ -70,7 +52,7 @@ tty_init(init_ttystate)
 		close(tty_fd);
 		tty_fd = -1;
 	} else if (init_ttystate)
-		get_tty(tty_fd, &tty_state);
+		tcgetattr(tty_fd, &tty_state);
 	if (do_close)
 		close(tfd);
 }

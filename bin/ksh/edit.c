@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.22 2004/12/18 22:11:43 millert Exp $	*/
+/*	$OpenBSD: edit.c,v 1.23 2004/12/18 22:12:23 millert Exp $	*/
 
 /*
  * Command line editing - common code
@@ -170,7 +170,7 @@ x_mode(onoff)
 	x_cur_mode = onoff;
 
 	if (onoff) {
-		TTY_state	cb;
+		struct termios	cb;
 		X_chars		oldchars;
 		
 		oldchars = edchars;
@@ -191,7 +191,7 @@ x_mode(onoff)
 		cb.c_cc[VTIME] = 0;
 		cb.c_cc[VMIN] = 1;
 
-		set_tty(tty_fd, &cb, TF_WAIT);
+		tcsetattr(tty_fd, TCSADRAIN, &cb);
 
 		/* Convert unset values to internal `unset' value */
 		if (edchars.erase == _POSIX_VDISABLE)
@@ -212,8 +212,7 @@ x_mode(onoff)
 #endif
 		}
 	} else {
-		/* TF_WAIT doesn't seem to be necessary when leaving xmode */
-		set_tty(tty_fd, &tty_state, TF_NONE);
+		tcsetattr(tty_fd, TCSADRAIN, &tty_state);
 	}
 
 	return prev;
