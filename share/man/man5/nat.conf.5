@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.5 2001/07/10 00:49:24 millert Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.6 2001/07/10 11:05:40 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -57,7 +57,6 @@ rule specifies an incoming connection to be redirected
 to another host and optionally a different port.
 .Sh GRAMMAR
 Syntax for filter rules in BNF:
-.Pp
 .Bd -literal
 rule      = nat_rule | rdr_rule
 
@@ -87,8 +86,7 @@ An
 .Li address
 is an IP address.
 If specified,
-.Li
-mask-bits
+.Li mask-bits
 refers to the number of bits in the netmask.
 The negation character,
 .Sq ! ,
