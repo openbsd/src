@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.48 2002/01/23 17:51:52 art Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.49 2002/01/25 15:50:22 art Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -96,7 +96,6 @@ struct	pool mbpool;		/* mbuf pool */
 struct	pool mclpool;		/* mbuf cluster pool */
 
 struct vm_map *mb_map;
-int	needqueuedrain;
 
 void	*mclpool_alloc __P((struct pool *, int));
 void	mclpool_release __P((struct pool *, void *));
@@ -122,6 +121,9 @@ mbinit()
 
 	pool_init(&mbpool, MSIZE, 0, 0, 0, "mbpl", NULL);
 	pool_init(&mclpool, MCLBYTES, 0, 0, 0, "mclpl", &mclpool_allocator);
+
+	pool_set_drain_hook(&mbpool, m_reclaim, NULL);
+	pool_set_drain_hook(&mclpool, m_reclaim, NULL);
 
 	/*
 	 * Set the hard limit on the mclpool to the number of
@@ -156,65 +158,13 @@ mclpool_release(struct pool *pp, void *v)
 	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);
 }
 
-/*
- * When MGET failes, ask protocols to free space when short of memory,
- * then re-attempt to allocate an mbuf.
- */
-struct mbuf *
-m_retry(i, t)
-	int i, t;
-{
-	register struct mbuf *m;
-
-	if (i & M_DONTWAIT) {
-		needqueuedrain = 1;
-		setsoftnet();
-		return (NULL);
-	}
-	m_reclaim();
-#define m_retry(i, t)	NULL
-	MGET(m, i, t);
-#undef m_retry
-	if (m != NULL)
-		mbstat.m_wait++;
-	else
-		mbstat.m_drops++;
-	return (m);
-}
-
-/*
- * As above; retry an MGETHDR.
- */
-struct mbuf *
-m_retryhdr(i, t)
-	int i, t;
-{
-	register struct mbuf *m;
-
-	if (i & M_DONTWAIT) {
-		needqueuedrain = 1;
-		setsoftnet();
-		return (NULL);
-	}
-	m_reclaim();
-#define m_retryhdr(i, t) NULL
-	MGETHDR(m, i, t);
-#undef m_retryhdr
-	if (m != NULL)
-		mbstat.m_wait++;
-	else
-		mbstat.m_drops++;
-	return (m);
-}
-
 void
-m_reclaim()
+m_reclaim(void *arg, int flags)
 {
 	register struct domain *dp;
 	register struct protosw *pr;
 	int s = splimp();
 
-	needqueuedrain = 0;
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
 			if (pr->pr_drain)

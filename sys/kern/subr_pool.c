@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.21 2002/01/23 01:44:20 art Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.22 2002/01/25 15:50:22 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -439,6 +439,8 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	pp->pr_hardlimit_ratecap.tv_usec = 0;
 	pp->pr_hardlimit_warning_last.tv_sec = 0;
 	pp->pr_hardlimit_warning_last.tv_usec = 0;
+	pp->pr_drain_hook = NULL;
+	pp->pr_drain_hook_arg = NULL;
 	pp->pr_serial = ++pool_serial;
 	if (pool_serial == 0)
 		panic("pool_init: too much uptime");
@@ -577,6 +579,20 @@ pool_destroy(struct pool *pp)
 #endif
 }
 
+void
+pool_set_drain_hook(struct pool *pp, void (*fn)(void *, int), void *fnarg)
+{
+	/*
+	 * XXX - no locking, must be called just after pool_init.
+	 */
+#ifdef DIAGNOSTIC
+	if (pp->pr_drain_hook != NULL)
+		panic("pool_set_drain_hook(%s): already set", pp->pr_wchan);
+#endif
+	pp->pr_drain_hook = fn;
+	pp->pr_drain_hook_arg = fnarg;
+}
+
 static __inline struct pool_item_header *
 pool_alloc_item_header(struct pool *pp, caddr_t storage, int flags)
 {
@@ -644,6 +660,19 @@ pool_get(struct pool *pp, int flags)
 	}
 #endif
 	if (__predict_false(pp->pr_nout == pp->pr_hardlimit)) {
+		if (pp->pr_drain_hook != NULL) {
+			/*
+			 * Since the drain hook is likely to free memory
+			 * to this pool unlock, call hook, relock and check
+			 * hardlimit condition again.
+			 */
+			simple_unlock(&pp->pr_slock);
+			(*pp->pr_drain_hook)(pp->pr_drain_hook_arg, flags);
+			simple_lock(&pp->pr_slock);
+			if (pp->pr_nout < pp->pr_hardlimit)
+				goto startover;
+		}
+
 		if ((flags & PR_WAITOK) && !(flags & PR_LIMITFAIL)) {
 			/*
 			 * XXX: A warning isn't logged in this case.  Should
@@ -1247,9 +1276,17 @@ pool_reclaim(struct pool *pp)
 	if (pp->pr_roflags & PR_STATIC)
 		return 0;
 
+	if (pp->pr_drain_hook != NULL) {
+		/*
+		 * The drain hook must be called with the pool unlocked.
+		 */
+		(*pp->pr_drain_hook)(pp->pr_drain_hook_arg, PR_NOWAIT);
+	}
+
 	if (simple_lock_try(&pp->pr_slock) == 0)
 		return 0;
 	pr_enter(pp, file, line);
+
 	TAILQ_INIT(&pq);
 
 	/*
@@ -1905,8 +1942,19 @@ pool_allocator_alloc(struct pool *org, int flags)
 	do {
 		if ((res = (*pa->pa_alloc)(org, flags)) != NULL)
 			return (res);
-		if ((flags & PR_WAITOK) == 0)
+		if ((flags & PR_WAITOK) == 0) {
+			/*
+			 * We only run the drain hook here if PR_NOWAIT.
+			 * In other cases the hook will be run in
+			 * pool_reclaim.
+			 */
+			if (org->pr_drain_hook == NULL)
+				break;
+			(*org->pr_drain_hook)(org->pr_drain_hook_arg, flags);
+			if ((res = (*pa->pa_alloc)(org, flags)) != NULL)
+				continue;
 			break;
+		}
 
 		/*
 		 * Drain all pools, except 'org', that use this allocator.
@@ -1917,6 +1965,8 @@ pool_allocator_alloc(struct pool *org, int flags)
 		 *  have potentially sleeping pool_reclaim, non-sleeping
 		 *  locks on pool_allocator and some stirring of drained
 		 *  pools in the allocator.
+		 * XXX - maybe we should use pool_head_slock for locking
+		 *  the allocators?
 		 */
 		freed = 0;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.6 2002/01/23 01:44:20 art Exp $	*/
+/*	$OpenBSD: pool.h,v 1.7 2002/01/25 15:50:23 art Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -190,6 +190,8 @@ struct pool {
 
 	const char	*pr_entered_file; /* reentrancy check */
 	long		pr_entered_line;
+	void		(*pr_drain_hook)(void *, int);
+	void		*pr_drain_hook_arg;
 };
 #endif /* __POOL_EXPOSE */
 
@@ -202,9 +204,12 @@ extern struct pool_allocator pool_allocator_nointr;
 /* Standard pool allocator, provided here for reference. */
 extern struct pool_allocator pool_allocator_kmem;
 
-void		pool_init(struct pool *, size_t, u_int, u_int,
-				int, const char *, struct pool_allocator *);
+void		pool_init(struct pool *, size_t, u_int, u_int, int,
+		    const char *, struct pool_allocator *);
 void		pool_destroy(struct pool *);
+
+void		pool_set_drain_hook(struct pool *, void (*)(void *, int),
+		    void *);
 
 void		*pool_get(struct pool *, int);
 void		pool_put(struct pool *, void *);
