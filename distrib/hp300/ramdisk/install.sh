@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.6 1997/10/31 05:41:28 downsj Exp $
+#	$OpenBSD: install.sh,v 1.7 1998/03/27 05:50:11 millert Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ THESETS="$ALLSETS $MDSETS"
 
 if [ "`df /`" = "`df /mnt`" ]; then
 	# Good {morning,afternoon,evening,night}.
+	echo ==================================================
 	md_welcome_banner
 	echo -n "Proceed with installation? [n] "
 else
@@ -124,82 +125,100 @@ if [ "`df /`" = "`df /mnt`" ]; then
 		cp /etc/disktab.shadow /tmp/disktab.shadow
 	fi
 
-	while [ "X${ROOTDISK}" = "X" ]; do
-		getrootdisk
-	done
+	while : ; do
+		if [ "X${ROOTDISK}" = "X" ]; then
+			while [ "X${ROOTDISK}" = "X" ]; do
+				getrootdisk
+			done
+			DISK=$ROOTDISK
+		else
+			DISK=""
+			while [ "X${DISK}" = "X" ]; do
+				getanotherdisk
+			done
+			if [ "${DISK}" = "done" ]; then
+				break
+			fi
+		fi
 
-	# Deal with disklabels, including editing the root disklabel
-	# and labeling additional disks.  This is machine-dependent since
-	# some platforms may not be able to provide this functionality.
-	md_prep_disklabel ${ROOTDISK}
+		# Deal with disklabels, including editing the root disklabel
+		# and labeling additional disks.  This is machine-dependent since
+		# some platforms may not be able to provide this functionality.
+		md_prep_disklabel ${DISK}
 
-	# Assume partition 'a' of $ROOTDISK is for the root filesystem.
-	# Loop and get the rest.
-	# XXX ASSUMES THAT THE USER DOESN'T PROVIDE BOGUS INPUT.
-	cat << __get_filesystems_1
+		# Assume partition 'a' of $ROOTDISK is for the root filesystem.
+		# Loop and get the rest.
+		# XXX ASSUMES THAT THE USER DOESN'T PROVIDE BOGUS INPUT.
+		cat << __get_filesystems_1
 
-You will now have the opportunity to enter filesystem information.  You will be
-prompted for the mount point (full path, including the prepending '/' character)
-for each BSD partition on ${ROOTDISK}.  Enter "none" to skip a partition or
-"done" when you are finished.
+You will now have the opportunity to enter filesystem information for ${DISK}.
+You will be prompted for the mount point (full path, including the prepending
+'/' character) for each BSD partition on ${DISK}.  Enter "none" to skip a
+partition or "done" when you are finished.
 __get_filesystems_1
 
-	echo	"The following will be used for the root filesystem and swap:"
-	echo	"	${ROOTDISK}a	/"
-	echo	"	${ROOTDISK}b	swap"
+		if [ "${DISK}" = "${ROOTDISK}" ]; then
+			echo
+			echo	"The following partitions will be used for the root filesystem and swap:"
+			echo	"	${ROOTDISK}a	/"
+			echo	"	${ROOTDISK}b	swap"
 
-	echo	"${ROOTDISK}a /" > ${FILESYSTEMS}
+			echo	"${ROOTDISK}a /" > ${FILESYSTEMS}
+		fi
 
-	# XXX - allow the user to name mount points on disks other than ROOTDISK
-	#	also allow a way to enter non-BSD partitions (but don't newfs!)
-	# Get the list of BSD partitions and store sizes
-	_npartitions=0
-	for _p in `disklabel ${ROOTDISK} 2>&1 | grep '^ *[a-p]:.*BSD' | sed 's/^ *\([a-p]\): *\([0-9][0-9]*\) .*/\1\2/'`; do
-		case $_p in
-			a*)	# We already have an 'a'
-				;;
-			*)	_pp=`firstchar ${_p}`
-				_ps=`echo ${_p} | sed 's/^.//'`
-				_partitions[${_npartitions}]=${_pp}
-				_psizes[${_npartitions}]=${_ps}
-				_npartitions=$(( ${_npartitions} + 1 ))
-				;;
-		esac
-	done
-
-	# Now prompt the user for the mount points.  Loop until "done"
-	echo	""
-	_i=0
-	resp="X"
-	while [ $_npartitions -gt 0 -a X${resp} != X"done" ]; do
-		_pp=${_partitions[${_i}]}
-		_ps=$(( ${_psizes[${_i}]} / 2 ))
-		_mp=${_mount_points[${_i}]}
-
-		# Get the mount point from the user
-		while : ; do
-			echo -n "Mount point for ${ROOTDISK}${_pp} (size=${_ps}k) [$_mp]? "
-			getresp "$_mp"
-			case "X${resp}" in
-				X/*)	_mount_points[${_i}]=$resp
-					break ;;
-				Xdone|Xnone|X)	break ;;
-				*)	echo "mount point must be an absolute path!";;
-			esac
+		# XXX - allow the user to name mount points on disks other than ROOTDISK
+		#	also allow a way to enter non-BSD partitions (but don't newfs!)
+		# Get the list of BSD partitions and store sizes
+		_npartitions=0
+		for _p in `disklabel ${DISK} 2>&1 | grep '^ *[a-p]:.*BSD' | sed 's/^ *\([a-p]\): *\([0-9][0-9]*\) .*/\1\2/'`; do
+			_pp=`firstchar ${_p}`
+			if [ "${DISK}" = "${ROOTDISK}" -a "$_pp" = "a" ]; then
+				continue
+			fi
+			_ps=`echo ${_p} | sed 's/^.//'`
+			_partitions[${_npartitions}]=${_pp}
+			_psizes[${_npartitions}]=${_ps}
+			_npartitions=$(( ${_npartitions} + 1 ))
 		done
-		_i=$(( ${_i} + 1 ))
-		if [ $_i -ge $_npartitions ]; then
-			_i=0
-		fi
-	done
 
-	# Now write it out
-	_i=0
-	while test $_i -lt $_npartitions; do
-		if [ -n "${_mount_points[${_i}]}" ]; then
-			echo "${ROOTDISK}${_partitions[${_i}]} ${_mount_points[${_i}]}" >> ${FILESYSTEMS}
-		fi
-		_i=$(( ${_i} + 1 ))
+		# Now prompt the user for the mount points.  Loop until "done"
+		echo	""
+		_i=0
+		resp="X"
+		while [ $_npartitions -gt 0 -a X${resp} != X"done" ]; do
+			_pp=${_partitions[${_i}]}
+			_ps=$(( ${_psizes[${_i}]} / 2 ))
+			_mp=${_mount_points[${_i}]}
+
+			# Get the mount point from the user
+			while : ; do
+				echo -n "Mount point for ${DISK}${_pp} (size=${_ps}k) [$_mp, RET, none, or done]? "
+				getresp "$_mp"
+				case "X${resp}" in
+					X/*)	_mount_points[${_i}]=$resp
+						break ;;
+					Xdone|X)
+						break ;;
+					Xnone)	_mount_points[${_i}]=
+						break;;
+					*)	echo "mount point must be an absolute path!";;
+				esac
+			done
+			_i=$(( ${_i} + 1 ))
+			if [ $_i -ge $_npartitions ]; then
+				_i=0
+			fi
+		done
+
+		# Now write it out
+		_i=0
+		while test $_i -lt $_npartitions; do
+			if [ -n "${_mount_points[${_i}]}" ]; then
+				echo "${DISK}${_partitions[${_i}]} ${_mount_points[${_i}]}" >> ${FILESYSTEMS}
+				_mount_points[${_i}]=""
+			fi
+			_i=$(( ${_i} + 1 ))
+		done
 	done
 
 	echo	""
@@ -319,6 +338,7 @@ case "$resp" in
 			echo "domain $FQDN" > /tmp/resolv.conf
 			echo "nameserver $resp" >> /tmp/resolv.conf
 			echo "search $FQDN" >> /tmp/resolv.conf
+			echo "lookup file bind" >> /tmp/resolv.conf
 
 			echo -n "Would you like to use the nameserver now? [y] "
 			getresp "y"
@@ -338,11 +358,12 @@ case "$resp" in
 			echo "The host table is as follows:"
 			echo ""
 			cat /tmp/hosts
-			echo ""
-			echo "You may want to edit the host table in the event that"
-			echo "you are doing an NFS installation or an FTP installation"
-			echo "without a name server and want to refer to the server by"
-			echo "name rather than by its numeric ip address."
+		cat << __hosts_table_1
+
+You may want to edit the host table in the event that you are doing an
+NFS installation or an FTP installation without a name server and want
+to refer to the server by name rather than by its numeric ip address.
+__hosts_table_1
 			echo -n "Would you like to edit the host table with ${EDITOR}? [n] "
 			getresp "n"
 			case "$resp" in
