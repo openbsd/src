@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.17 2003/09/20 18:15:32 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.18 2004/02/20 20:34:32 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.17 2003/09/20 18:15:32 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.18 2004/02/20 20:34:32 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -430,15 +430,11 @@ send(c)
 
 	cc = c;
 	parwrite(FD, &cc, 1);
-#ifdef notdef
 	if (number(value(CDELAY)) > 0 && c != '\r')
-		nap(number(value(CDELAY)));
-#endif
+		usleep(number(value(CDELAY)));
 	if (!boolean(value(ECHOCHECK))) {
-#ifdef notdef
 		if (number(value(LDELAY)) > 0 && c == '\r')
-			nap(number(value(LDELAY)));
-#endif
+			usleep(number(value(LDELAY)));
 		return;
 	}
 tryagain:
