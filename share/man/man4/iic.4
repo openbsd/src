@@ -1,0 +1,96 @@
+.\"	$OpenBSD: iic.4,v 1.1 2004/05/23 18:37:06 grange Exp $
+.\"
+.\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd May 15, 2004
+.Dt IIC 4
+.Os
+.Sh NAME
+.Nm iic
+.Nd Inter IC (I2C) bus
+.Sh SYNOPSIS
+.Cd "iic* at gscsio?"
+.Sh DESCRIPTION
+.Tn I2C
+is a two-wire bus developed by Philips used for connecting
+integrated circuits.
+It is commonly used for connecting devices such as EEPROMs,
+temperature sensors, fan controllers, real-time clocks, tuners,
+and other types of integrated circuits.
+.Pp
+The
+.Nm
+driver provides uniform programming interface layer between
+.Tn I2C
+master controllers and various
+.Tn I2C
+slave devices.
+Each
+.Tn I2C
+master controller attaches an
+.Xr iic 4
+framework, several slave devices can be attached then to the
+.Xr iic 4
+bus.
+.Pp
+All
+.Tn I2C
+slave devices are uniquely identified by the address on the bus.
+Master accesses particular slave device using its address.
+Device address should be specified in the kernel configuration file
+with the
+.Cd addr
+locator.
+.Pp
+System Management Bus (SMBus) protocol is also supported by emulating
+it with the
+.Tn I2C
+commands.
+.Sh SUPPORTED DEVICES
+.Bl -tag -width XXXX -compact
+.It Master controllers
+.Bl -tag -width XXXX -compact
+.It Xr gscsio 4
+National Semiconductor Geode SC1100 Super I/O ACCESS.bus
+.El
+.It Slave devices
+.Bl -tag -width XXXX -compact
+.It Xr lmtemp 4
+National Semiconductor LM75/LM77 temperature sensor
+.El
+.El
+.Sh SEE ALSO
+.Xr gscsio 4 ,
+.Xr intro 4 ,
+.Xr lmtemp 4 ,
+.Xr iic 9
+.Sh HISTORY
+The
+.Tn I2C
+framework first appeared in
+.Nx 2.0 .
+.Ox
+support was added in
+.Ox 3.6 .
+.Sh AUTHORS
+The
+.Tn I2C
+framework was written by
+Steve C. Woodford and Jason R. Thorpe for
+.Nx
+and then ported to
+.Ox
+by
+.An Alexander Yurchenko Aq grange@openbsd.org .
