@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.81 2001/06/23 18:45:29 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.82 2001/06/23 18:54:44 angelos Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -333,17 +333,20 @@ ipv4_input(m)
 	}
 
 	if ((m->m_pkthdr.csum & M_IPV4_CSUM_IN_OK) == 0) {
-		if (m->m_pkthdr.csum & M_IPV4_CSUM_IN_BAD ||
-		    in_cksum(m, hlen) != 0) {
-			ipstat.ips_badsum++;
+		if (m->m_pkthdr.csum & M_IPV4_CSUM_IN_BAD) {
 			ipstat.ips_inhwcsum++;
+			ipstat.ips_badsum++;
 			goto bad;
 		}
 
-		ipstat.ips_inhwcsum++;
+		if (in_cksum(m, hlen) != 0) {
+			ipstat.ips_badsum++;
+			goto bad;
+		}
+	} else {
 		m->m_pkthdr.csum &= ~M_IPV4_CSUM_IN_OK;
-	} else
 		ipstat.ips_inhwcsum++;
+	}
 
 	/*
 	 * Convert fields to host representation.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.96 2001/06/23 06:03:11 angelos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.97 2001/06/23 18:54:44 angelos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -521,8 +521,10 @@ tcp_input(m, va_alist)
 				tcpstat.tcps_rcvbadsum++;
 				goto drop;
 			}
-		} else
+		} else {
+			m->m_pkthdr.csum &= ~M_TCP_CSUM_IN_OK;
 			tcpstat.tcps_inhwcsum++;
+		}
 		break;
 	    }
 #ifdef INET6

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.69 2001/06/23 16:15:56 fgsch Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.70 2001/06/23 18:54:44 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -298,10 +298,6 @@ udp_input(m, va_alist)
 #endif /* INET6 */
 	if (uh->uh_sum) {
 		if ((m->m_pkthdr.csum & M_UDP_CSUM_IN_OK) == 0) {
-			bzero(((struct ipovly *)ip)->ih_x1,
-			      sizeof ((struct ipovly *)ip)->ih_x1);
-			((struct ipovly *)ip)->ih_len = uh->uh_ulen;
-		
 			if (m->m_pkthdr.csum & M_UDP_CSUM_IN_BAD) {
 				udpstat.udps_badsum++;
 				udpstat.udps_inhwcsum++;
@@ -309,15 +305,20 @@ udp_input(m, va_alist)
 				return;
 			}
 
+			bzero(((struct ipovly *)ip)->ih_x1,
+			      sizeof ((struct ipovly *)ip)->ih_x1);
+			((struct ipovly *)ip)->ih_len = uh->uh_ulen;
+		
 			if ((uh->uh_sum = in_cksum(m, len +
 			    sizeof (struct ip))) != 0) {
 				udpstat.udps_badsum++;
 				m_freem(m);
 				return;
 			}
-		} else
+		} else {
+			m->m_pkthdr.csum &= ~M_UDP_CSUM_IN_OK;
 			udpstat.udps_inhwcsum++;
-			
+		}
 	} else
 		udpstat.udps_nosum++;
 
