@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.4 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.5 2002/06/09 03:47:23 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -145,7 +145,7 @@ wi_obio_detach(dev, flags)
 {
 	struct wi_obio_softc *psc = (struct wi_obio_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 	/*
 	obio_io_unmap(psc->sc_pf, psc->sc_io_window);
@@ -166,7 +166,7 @@ wi_obio_activate(dev, act)
 {
 	struct wi_obio_softc *psc = (struct wi_obio_softc *)dev;
 	struct wi_softc *sc = &psc->sc_wi;
-	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int s;
 
 	s = splnet();
