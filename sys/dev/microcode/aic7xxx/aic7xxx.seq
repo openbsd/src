@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.seq,v 1.5 1996/11/28 23:27:59 niklas Exp $	*/
+/*	$OpenBSD: aic7xxx.seq,v 1.6 1996/12/03 11:28:32 niklas Exp $	*/
 /*	$NetBSD: aic7xxx.seq,v 1.6 1996/10/08 03:04:06 gibbs Exp $	*/
 
 /*+M***********************************************************************
@@ -46,7 +46,10 @@
 
 VERSION AIC7XXX_SEQ_VER "$NetBSD: aic7xxx.seq,v 1.6 1996/10/08 03:04:06 gibbs Exp $"
 
-#if defined(__NetBSD__)
+#if defined(__OpenBSD__)
+#include <dev/ic/aic7xxxreg.h>
+#include <scsi/scsi_message.h>
+#elif defined(__NetBSD__)
 #include "../../ic/aic7xxxreg.h"
 #include "../../../scsi/scsi_message.h"
 #elif defined(__FreeBSD__)
