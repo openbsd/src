@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 2004/01/15 17:55:13 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.19 2004/02/21 01:03:11 espie Exp $
 
-MAN=		cccp.1 gcc.1 gcc-local.1 protoize.1 gcov.1
+MAN=		cpp.1 gcc.1 protoize.1 gcov.1
 MLINKS+=	gcc.1 cc.1
-MLINKS+=	cccp.1 cpp.1
 MLINKS+=	protoize.1 unprotoize.1
 
 .if defined(BOOTSTRAP)
@@ -13,6 +12,36 @@ MAN+=		cp/g++.1 f/g77.1
 MLINKS+=	g++.1 c++.1
 MLINKS+=	g77.1 f77.1
 .endif
+
+FAKE_FILES=	/usr/share/info/cpp.info-4 \
+		/usr/share/info/cpp.info-5 \
+		/usr/share/info/cppinternals.info \
+		/usr/share/info/gccint.info \
+		/usr/share/info/gccint.info-1 \
+		/usr/share/info/gccint.info-2 \
+		/usr/share/info/gccint.info-3 \
+		/usr/share/info/gccint.info-4 \
+		/usr/share/info/gccint.info-5 \
+		/usr/share/info/gccint.info-6 \
+		/usr/share/info/gccint.info-7 \
+		/usr/share/info/gccint.info-8 \
+		/usr/share/info/gccint.info-9 \
+		/usr/share/info/gccint.info-10 \
+		/usr/share/info/gccint.info-11 \
+		/usr/share/info/gccint.info-12 \
+		/usr/share/info/gccint.info-13 \
+		/usr/share/info/gccint.info-14 \
+		/usr/share/info/gccint.info-15 \
+		/usr/share/info/gccint.info-16 \
+		/usr/share/info/gccint.info-17 \
+		/usr/share/info/gccint.info-18 \
+		/usr/share/info/gccint.info-19 \
+		/usr/share/info/gccint.info-20 \
+		/usr/share/info/gccint.info-21 \
+		/usr/share/info/gccint.info-22 \
+		/usr/share/info/gccint.info-23 \
+		/usr/share/info/gccint.info-24 \
+		/usr/share/info/gccint.info-25
 
 LIBIBERTY_INCLUDES=${.CURDIR}/../../lib/libiberty/include
 GNUCFLAGS=	${CFLAGS} ${COPTS} -DOPENBSD_NATIVE \
@@ -133,13 +162,16 @@ install:	maninstall target_path
 		ln -f ${DESTDIR}/usr/bin/g77 ${DESTDIR}/usr/bin/f77
 #	ln -fs `cat target-path`/cpp \
 #		${DESTDIR}/usr/libexec
+	for i in ${FAKE_FILES}; do \
+	    touch ${DESTDIR}$$i; \
+	done
 
 clean cleandir: 
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
 	-rm -f ${CLEANFILES}
 
 depend:
-	# Nothing here so far...
+	ln -sf ${.CURDIR}/cccp.1 ${.OBJDIR}/cpp.1
 
 lint:
 	# Nothing here so far...
