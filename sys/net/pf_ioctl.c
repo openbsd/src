@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.123 2004/05/21 23:10:47 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.124 2004/05/31 20:35:46 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1185,7 +1185,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		pf_mv_pool(&pf_pabuf, &rule->rpool.list);
 		if (((((rule->action == PF_NAT) || (rule->action == PF_RDR) ||
-		    (rule->action == PF_BINAT)) && !pr->anchor[0]) ||
+		    (rule->action == PF_BINAT)) && rule->anchor == NULL) ||
 		    (rule->rt > PF_FASTROUTE)) &&
 		    (TAILQ_FIRST(&rule->rpool.list) == NULL))
 			error = EINVAL;
