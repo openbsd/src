@@ -1,8 +1,0 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1997/05/18 13:17:06 niklas Exp $
-
-IMAGESIZE=		3584
-GZIP?=			gzip
-GZIPFLAGS?=		-9v
-GZIPEXT?=		.gz
-NEWFS_WILL_FAIL=	true
-HOSTCCFLAGS=		-DBROKEN_NMAGIC -DDEBUG
