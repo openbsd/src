@@ -32,7 +32,7 @@
  */
 
 /*
- * $Id: filesys.h,v 1.1 1996/02/03 12:12:58 dm Exp $
+ * $Id: filesys.h,v 1.2 1996/03/05 03:16:18 dm Exp $
  * @(#)filesys.h
  */
 

@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$Id: child.c,v 1.1 1996/02/03 12:12:09 dm Exp $";
+"$Id: child.c,v 1.2 1996/03/05 03:15:56 dm Exp $";
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
 

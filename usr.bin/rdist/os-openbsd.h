@@ -33,7 +33,7 @@
  */
 
 /*
- * $Id: os-openbsd.h,v 1.1 1996/02/03 12:12:33 dm Exp $
+ * $Id: os-openbsd.h,v 1.2 1996/03/05 03:16:09 dm Exp $
  */
 
 /*
@@ -72,7 +72,9 @@
  * Determine what routines we have to get filesystem info.
  */
 #define FSI_TYPE	FSI_GETFSSTAT
-#define FSTYPENAME	1
+#ifndef FSTYPENAME
+#define FSTYPENAME	1		/* For OpenBSD 1.x */
+#endif
 
 /*
  * Type of non-blocking I/O.

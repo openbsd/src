@@ -32,7 +32,7 @@
  */
 #ifndef lint
 static char RCSid[] = 
-"$Id: server.c,v 1.1 1996/02/03 12:13:03 dm Exp $";
+"$Id: server.c,v 1.2 1996/03/05 03:16:21 dm Exp $";
 
 static char sccsid[] = "@(#)server.c	5.3 (Berkeley) 6/7/86";
 
@@ -186,6 +186,8 @@ static int fchog(fd, file, owner, group, mode)
 	static char last_group[128];
 	static char last_owner[128];
 	static GID_T last_gid = (GID_T)-2;
+	static UID_T last_uid = (UID_T)-2;
+	static GID_T last_primegid;
 	extern char *locuser;
 	register int i;
 	UID_T uid;
@@ -196,7 +198,8 @@ static int fchog(fd, file, owner, group, mode)
 	if (userid == 0) {	/* running as root; take anything */
 		if (*owner == ':') {
 			uid = (UID_T) atoi(owner + 1);
-		} else if (pw == NULL || strcmp(owner, last_owner) != 0) {
+		} else if (last_uid == (UID_T)-2 ||
+			   strcmp(owner, last_owner) != 0) {
 			if ((pw = getpwnam(owner)) == NULL) {
 				if (mode != -1 && IS_ON(mode, S_ISUID)) {
 					message(MT_NOTICE,
@@ -209,12 +212,13 @@ static int fchog(fd, file, owner, group, mode)
 					"%s: unknown login name \"%s\"",
 						target, owner);
 			} else {
-				uid = pw->pw_uid;
+				uid	 = last_uid	 = pw->pw_uid;
+				primegid = last_primegid = pw->pw_gid;
 				strcpy(last_owner, owner);
 			}
 		} else {
-			uid = pw->pw_uid;
-			primegid = pw->pw_gid;
+			uid = last_uid;
+			primegid = last_primegid;
 		}
 		if (*group == ':') {
 			gid = (GID_T) atoi(group + 1);
@@ -710,6 +714,24 @@ static char *savetarget(file)
 }
 
 /*
+ * See if buf is all zeros (sparse check)
+ */
+static int iszeros (buf, size)
+	char *buf;
+	off_t size;
+{
+    	while (size > 0) {
+	    if (*buf != CNULL)
+		return(0);
+	    buf++;
+	    size--;
+	}
+
+	return(1);
+}
+
+  
+/*
  * Receive a file
  */
 static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
@@ -722,7 +744,7 @@ static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
 	time_t atime;
 	off_t size;
 {
-	int f, wrerr, olderrno;
+	int f, wrerr, olderrno, lastwashole = 0, wassparse = 0;
 	off_t i;
 	register char *cp;
 	char *savefile = NULL;
@@ -768,7 +790,31 @@ static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
 		amt = BUFSIZ;
 		if (i + amt > size)
 			amt = size - i;
-		if (wrerr == 0 && xwrite(f, buf, amt) != amt) {
+		if (IS_ON(opts, DO_SPARSE) && iszeros(buf, amt)) {
+		    	if (lseek (f, amt, SEEK_CUR) < 0L) {
+			    	olderrno = errno;
+				wrerr++;
+			}
+			lastwashole = 1;
+			wassparse++;
+		} else {
+		    	if (wrerr == 0 && xwrite(f, buf, amt) != amt) {
+			    	olderrno = errno;
+				wrerr++;
+			}
+			lastwashole = 0;
+		}
+	}
+
+	if (lastwashole) {
+#if	defined(HAVE_FTRUNCATE)
+	    	if (write (f, "", 1) != 1 || ftruncate (f, size) < 0)
+#else
+		/* Seek backwards one character and write a null.  */
+		if (lseek (f, (off_t) -1, SEEK_CUR) < 0L
+		    || write (f, "", 1) != 1)
+#endif
+		{
 			olderrno = errno;
 			wrerr++;
 		}
@@ -779,6 +825,7 @@ static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
 		(void) unlink(new);
 		return;
 	}
+
 	if (wrerr) {
 		error("%s: Write error: %s", new, strerror(olderrno));
 		(void) close(f);
@@ -894,6 +941,9 @@ static void recvfile(new, opts, mode, owner, group, mtime, atime, size)
 			(void) unlink(new);
 		}
 	}
+
+	if (wassparse)
+	    	message (MT_NOTICE, "%s: was sparse", target);
 
 	if (IS_ON(opts, DO_COMPARE))
 		message(MT_REMOTE|MT_CHANGE, "%s: updated", target);
@@ -1508,8 +1558,11 @@ extern void server()
 	register int n;
 	extern jmp_buf finish_jmpbuf;
 
-	if (setjmp(finish_jmpbuf))
+	if (setjmp(finish_jmpbuf)) {
+		setjmp_ok = FALSE;
 		return;
+	}
+        setjmp_ok = TRUE;
 	(void) signal(SIGHUP, sighandler);
 	(void) signal(SIGINT, sighandler);
 	(void) signal(SIGQUIT, sighandler);
@@ -1530,17 +1583,20 @@ extern void server()
 	(void) sendcmd(S_VERSION, NULL);
 
 	if (remline(cmdbuf, sizeof(cmdbuf), TRUE) < 0) {
+		setjmp_ok = FALSE;
 		error("server: expected control record");
 		return;
 	}
 
 	if (cmdbuf[0] != S_VERSION || !isdigit(cmdbuf[1])) {
+		setjmp_ok = FALSE;
 		error("Expected version command, received: \"%s\".", cmdbuf);
 		return;
 	}
 
 	proto_version = atoi(&cmdbuf[1]);
 	if (proto_version != VERSION) {
+		setjmp_ok = FALSE;
 		error("Protocol version %d is not supported.", proto_version);
 		return;
 	}
@@ -1553,8 +1609,10 @@ extern void server()
 	 */
 	for ( ; ; ) {
 		n = remline(cp = cmdbuf, sizeof(cmdbuf), TRUE);
-		if (n == -1)		/* EOF */
+		if (n == -1) {		/* EOF */
+			setjmp_ok = FALSE;
 			return;
+		}
 		if (n == 0) {
 			error("server: expected control record");
 			continue;
@@ -1631,6 +1689,7 @@ extern void server()
 		case C_FERRMSG:		/* Fatal error message */
 			if (cp && *cp)
 				message(MT_FERROR|MT_NOREMOTE, "%s", cp);
+			setjmp_ok = FALSE;
 			return;
 
 		default:

@@ -32,7 +32,7 @@
  */
 
 /*
- * $Id: pathnames.h,v 1.2 1996/02/03 12:12:35 dm Exp $
+ * $Id: pathnames.h,v 1.3 1996/03/05 03:16:09 dm Exp $
  * @(#)pathnames.h	5.4 (Berkeley) 8/27/90
  */
 

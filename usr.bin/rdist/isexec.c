@@ -32,7 +32,7 @@
  */
 #ifndef lint
 static char RCSid[] = 
-"$Id: isexec.c,v 1.1 1996/02/03 12:12:27 dm Exp $";
+"$Id: isexec.c,v 1.2 1996/03/05 03:16:06 dm Exp $";
 
 static char sccsid[] = "@(#)client.c";
 

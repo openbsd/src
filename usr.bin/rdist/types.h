@@ -2,7 +2,7 @@
 #define __myTYPES_H__
 
 /*
- * $Id: types.h,v 1.1 1996/02/03 12:12:45 dm Exp $
+ * $Id: types.h,v 1.2 1996/03/05 03:16:15 dm Exp $
  */
 
 /*
@@ -29,6 +29,7 @@
 #define DO_CHKSYM		0x020000
 #define DO_NUMCHKGROUP		0x040000
 #define DO_NUMCHKOWNER		0x080000
+#define DO_SPARSE		0x100000
 
 /*
  * Dist option information

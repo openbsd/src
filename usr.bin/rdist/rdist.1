@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: rdist.1,v 1.2 1996/02/03 12:12:37 dm Exp $
+.\"	$Id: rdist.1,v 1.3 1996/03/05 03:16:10 dm Exp $
 .\"	@(#)rdist.1	6.6 (Berkeley) 5/13/86
 .\"
-.TH RDIST 1 "March 14, 1994"
+.TH RDIST 1 "January 29, 1996"
 .UC 6
 .SH NAME
 rdist \- remote file distribution client program
@@ -452,6 +452,12 @@ Any target file that is updates is first rename from
 .B file
 to
 .B file.OLD.
+.IP \fBsparse\fR
+Enable checking for sparse (aka \fIwholely\fR) files.  One of the most
+common types of sparse files are those produced by
+.B ndbm(3).
+This option adds some additional processing overhead so it should
+only be enabled for targets likely to contain sparse files.
 .RE
 .TP
 .B "\-p \fI<rdistd-path>\fR"

@@ -33,7 +33,7 @@
  */
 
 /*
- * $Id: config-def.h,v 1.1 1996/02/03 12:12:15 dm Exp $
+ * $Id: config-def.h,v 1.2 1996/03/05 03:16:00 dm Exp $
  * @(#)configdef.h
  */
 

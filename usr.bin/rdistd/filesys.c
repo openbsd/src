@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$Id: filesys.c,v 1.1 1996/02/03 12:12:57 dm Exp $";
+"$Id: filesys.c,v 1.2 1996/03/05 03:16:17 dm Exp $";
 
 static char sccsid[] = "@(#)filesys.c";
 
@@ -355,7 +355,11 @@ int is_nfs_mounted(path, statbuf, isvalid)
 	if ((mnt = (mntent_t *) getmntpt(path, statbuf, isvalid)) == NULL)
 		return(-1);
 
-	if (strcmp(mnt->me_type, METYPE_NFS) == 0)
+	/*
+	 * We treat "cachefs" just like NFS
+	 */
+	if ((strcmp(mnt->me_type, METYPE_NFS) == 0) ||
+	    (strcmp(mnt->me_type, "cachefs") == 0))
 		return(1);
 
 	return(0);

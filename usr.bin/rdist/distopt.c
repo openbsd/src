@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$Id: distopt.c,v 1.1 1996/02/03 12:12:20 dm Exp $";
+"$Id: distopt.c,v 1.2 1996/03/05 03:16:02 dm Exp $";
 
 static char sccsid[] = "@(#)distopt.c";
 
@@ -68,6 +68,7 @@ DISTOPTINFO distoptinfo[] = {
 	{ DO_QUIET,		"quiet" },
 	{ DO_REMOVE,		"remove" },
 	{ DO_SAVETARGETS,	"savetargets" },
+	{ DO_SPARSE,            "sparse" },
 	{ DO_VERIFY,		"verify" },
 	{ DO_WHOLE,		"whole" },
 	{ DO_YOUNGER,		"younger" },

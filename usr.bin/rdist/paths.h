@@ -31,83 +31,29 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-static char RCSid[] = 
-"$Id: rdistd.c,v 1.2 1996/03/05 03:16:20 dm Exp $";
-
-static char sccsid[] = "@(#)rdistd.c";
-
-static char copyright[] =
-"@(#) Copyright (c) 1983 Regents of the University of California.\n\
- All rights reserved.\n";
-#endif /* not lint */
-
-
-#include "defs.h"
+/*
+ * $Id: paths.h,v 1.1 1996/03/05 03:20:21 dm Exp $
+ * @(#)paths.h
+ */
 
 /*
- * Print usage message
+ * This file should be used for those systems without their own
+ * <paths.h> system include file.
  */
-static void usage()
-{
-	fprintf(stderr, "usage: %s -S [ -DV ]\n", progname);
-	exit(1);
-}
 
-char	localmsglist[] = "syslog=ferror";
+#ifndef _PATH_SENDMAIL
+#define _PATH_SENDMAIL		"/usr/lib/sendmail"
+#endif
+#ifndef _PATH_TMP
+#define _PATH_TMP		"/tmp"
+#endif
+#ifndef _PATH_DEVNULL
+#define _PATH_DEVNULL		"/dev/null"
+#endif
+#ifndef _PATH_BSHELL
+#define _PATH_BSHELL		"/bin/sh"
+#endif
 
-/*
- * The Beginning
- */
-main(argc, argv, envp)
-	int argc;
-	char **argv;
-	char **envp;
-{
-	char *cp;
-	int c;
-
-	if (init(argc, argv, envp) < 0)
-		exit(1);
-
-	while ((c = getopt(argc, argv, "SDV")) != -1)
-		switch (c) {
-		case 'S':
-			isserver++;
-			break;
-
-		case 'D':
-			debug++;
-			break;
-
-		case 'V':
-			printf("%s\n", getversion());
-			exit(0);
-
-		case '?':
-		default:
-			error("Bad command line option.");
-			usage();
-		}
-
-	if (!isserver) {
-		error("Use the -S option to run this program in server mode.");
-		exit(1);
-	}
-
-	/* Use stdin and stdout for remote descriptors */
-	rem_r = fileno(stdin);
-	rem_w = fileno(stdout);
-
-	/* Set logging */
-	if (cp = msgparseopts(localmsglist, TRUE))
-		fatalerr("Bad message logging option (%s): %s", 
-			 localmsglist, cp);
-
-	/*
-	 * Main processing function
-	 */
-	server();
-
-	exit(nerrs != 0);
-}
+#ifndef _PATH_REMSH
+#define _PATH_REMSH		"/usr/ucb/rsh"		/* Remote shell */
+#endif
