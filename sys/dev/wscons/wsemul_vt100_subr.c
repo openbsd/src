@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.11 2004/04/02 04:39:51 deraadt Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.12 2004/12/23 21:46:56 miod Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -387,7 +387,7 @@ wsemul_vt100_handle_csi(edp, c)
 
 	    case A2('&', 'u'): /* DECRQUPSS request user preferred
 				  supplemental set */
-		wsdisplay_emulinput(edp->emulcookie, "\033P0!u%5\033\\", 9);
+		wsdisplay_emulinput(edp->cbcookie, "\033P0!u%5\033\\", 9);
 		break;
 
 	    case '@': /* ICH insert character VT300 only */
