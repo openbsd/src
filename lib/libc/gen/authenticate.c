@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.8 2002/03/13 21:39:41 millert Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.9 2002/03/20 17:17:15 mpech Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -236,6 +236,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 			login_close(lc);
 		syslog(LOG_ERR, "Invalid %s script: %s", s, approve);
 		_warnx("invalid path to approval script");
+               free(approve);
 		return (0);
 	}
 
@@ -244,6 +245,8 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 			login_close(lc);
 		syslog(LOG_ERR, "%m");
 		_warn(NULL);
+               if (approve)
+                       free(approve);
 		return (0);
 	}
 
@@ -277,6 +280,8 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 		lc->lc_class, type, 0);
 
 out:
+       if (approve)
+               free(approve);
 	if (close_lc_on_exit)
 		login_close(lc);
 
