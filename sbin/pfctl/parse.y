@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.319 2003/02/16 15:11:09 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.320 2003/02/16 15:19:42 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3746,12 +3746,11 @@ parse_rules(FILE *input, struct pfctl *xpf)
 	yyparse();
 
 	/* Check which macros have not been used. */
-	if (pf->opts & PF_OPT_VERBOSE2) {
+	if (pf->opts & PF_OPT_VERBOSE2)
 		for (sym = symhead; sym; sym = sym->next)
 			if (!sym->used)
 				fprintf(stderr, "warning: macro '%s' not "
 				    "used\n", sym->nam);
-	}
 	return (errors ? -1 : 0);
 }
 
