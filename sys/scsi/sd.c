@@ -1,5 +1,5 @@
-/*	$OpenBSD: sd.c,v 1.8 1996/05/02 13:17:55 deraadt Exp $	*/
-/*	$NetBSD: sd.c,v 1.96 1996/04/22 01:46:14 christos Exp $	*/
+/*	$OpenBSD: sd.c,v 1.9 1996/05/06 11:33:37 deraadt Exp $	*/
+/*	$NetBSD: sd.c,v 1.97 1996/05/03 19:48:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -270,8 +270,8 @@ sdopen(dev, flag, fmt, p)
 	sc_link = sd->sc_link;
 
 	SC_DEBUG(sc_link, SDEV_DB1,
-	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
-	    sd_cd.cd_ndevs, part));
+	    ("sdopen: dev=0x%x (unit %d (of %d))\n", dev, unit,
+	    sd_cd.cd_ndevs));
 
 	if ((error = sdlock(sd)) != 0)
 		return error;
@@ -419,7 +419,7 @@ sdstrategy(bp)
 
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdstrategy "));
 	SC_DEBUG(sd->sc_link, SDEV_DB1,
-	    ("%d bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
+	    ("%ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
 	/*
 	 * The transfer must be a whole number of blocks.
 	 */
