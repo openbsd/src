@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.30 2000/11/23 12:56:33 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.31 2000/12/19 19:03:05 mickey Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
 #include "conf.h"
 #include "constants.h"
 #include "exchange.h"
-#include "gmp.h"
 #include "gmp_util.h"
 #include "hash.h"
 #include "ike_auth.h"

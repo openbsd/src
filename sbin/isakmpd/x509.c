@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.33 2000/12/12 01:46:39 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.34 2000/12/19 19:03:06 mickey Exp $	*/
 /*	$EOM: x509.c,v 1.51 2000/12/12 01:38:38 niklas Exp $	*/
 
 /*
@@ -43,7 +43,6 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <fcntl.h>
-#include <gmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
