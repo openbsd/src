@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.33 2004/07/31 16:34:57 brad Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.34 2004/09/23 18:21:41 brad Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #define ETHER_HDR_LEN	((ETHER_ADDR_LEN * 2) + ETHER_TYPE_LEN)
 #define ETHER_MIN_LEN	64	/* Minimum frame length, CRC included	*/
 #define ETHER_MAX_LEN	1518	/* Maximum frame length, CRC included	*/
+#define ETHER_MAX_DIX_LEN	1536	/* Maximum DIX frame length	*/
 #define ETHER_MAX_LEN_JUMBO	9018	/* max jumbo frame len, including CRC */
 
 /*
