@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.15 1997/08/08 21:46:36 niklas Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.16 1997/09/23 12:46:38 pefo Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -142,12 +142,12 @@ readdisklabel(dev, strat, lp, osdep)
 				/* Search for our MBR partition */
 				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
 				    i++, dp2++)
-					if (dp2->dp_size &&
+					if (get_le(&dp2->dp_size) &&
 					    dp2->dp_typ == DOSPTYP_OPENBSD)
 						ourpart = i;
 				for (dp2=dp, i=0; i < NDOSPART && ourpart == -1;
 				    i++, dp2++)
-					if (dp2->dp_size &&
+					if (get_le(&dp2->dp_size) &&
 					    dp2->dp_typ == DOSPTYP_386BSD)
 						ourpart = i;
 				if (ourpart == -1)
@@ -157,13 +157,13 @@ readdisklabel(dev, strat, lp, osdep)
 				 * for SCSI/IDE, cylinder for ESDI/ST506/RLL
 				 */
 				dp2 = &dp[ourpart];
-				dospartoff = dp2->dp_start + part_blkno;
+				dospartoff = get_le(&dp2->dp_start) + part_blkno;
 				cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
 
 				/* XXX build a temporary disklabel */
-				lp->d_partitions[0].p_size = dp2->dp_size;
-				lp->d_partitions[0].p_offset = dp2->dp_start +
-				    part_blkno;
+				lp->d_partitions[0].p_size = get_le(&dp2->dp_size);
+				lp->d_partitions[0].p_offset =
+					get_le(&dp2->dp_start) + part_blkno;
 				if (lp->d_ntracks == 0)
 					lp->d_ntracks = dp2->dp_ehd + 1;
 				if (lp->d_nsectors == 0)
@@ -180,11 +180,11 @@ donot:
 			for (dp2=dp, i=0; i < NDOSPART && n < 8; i++, dp2++) {
 				struct partition *pp = &lp->d_partitions[8+n];
 
-				if (dp2->dp_size)
-					pp->p_size = dp2->dp_size;
-				if (dp2->dp_start)
+				if (get_le(&dp2->dp_size))
+					pp->p_size = get_le(&dp2->dp_size);
+				if (get_le(&dp2->dp_start))
 					pp->p_offset =
-					    dp2->dp_start + part_blkno;
+					    get_le(&dp2->dp_start) + part_blkno;
 
 				switch (dp2->dp_typ) {
 				case DOSPTYP_UNUSED:
@@ -216,9 +216,9 @@ donot:
 					n++;
 					break;
 				case DOSPTYP_EXTEND:
-					part_blkno = dp2->dp_start + extoff;
+					part_blkno = get_le(&dp2->dp_start) + extoff;
 					if (!extoff)
-						extoff = dp2->dp_start;
+						extoff = get_le(&dp2->dp_start);
 					wander = 1;
 					break;
 				default:
@@ -408,10 +408,10 @@ writedisklabel(dev, strat, lp, osdep)
 		    NDOSPART * sizeof(*dp));
 
 		for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
-			if (dp2->dp_size && dp2->dp_typ == DOSPTYP_OPENBSD)
+			if (get_le(&dp2->dp_size) && dp2->dp_typ == DOSPTYP_OPENBSD)
 				ourpart = i;
 		for (dp2=dp, i=0; i < NDOSPART && ourpart == -1; i++, dp2++)
-			if (dp2->dp_size && dp2->dp_typ == DOSPTYP_386BSD)
+			if (get_le(&dp2->dp_size) && dp2->dp_typ == DOSPTYP_386BSD)
 				ourpart = i;
 
 		if (ourpart != -1) {
@@ -421,7 +421,7 @@ writedisklabel(dev, strat, lp, osdep)
 			 * need sector address for SCSI/IDE,
 			 * cylinder for ESDI/ST506/RLL
 			 */
-			dospartoff = dp2->dp_start;
+			dospartoff = get_le(&dp2->dp_start);
 			cyl = DPCYL(dp2->dp_scyl, dp2->dp_ssect);
 		}
 	}
