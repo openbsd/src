@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.9 2002/06/05 16:51:08 provos Exp $
+.\"	$OpenBSD: systrace.1,v 1.10 2002/06/05 18:58:07 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -76,6 +76,26 @@ are added to the policies that
 .Nm
 knows about.
 .El
+.Pp
+.Sh POLICY
+The policy is specified via the following grammar:
+.Bd -literal
+filter = expression "then" action errorcode
+expression = symbol | "not" expression | "(" expression ")" |
+	expression "and" expression | expression "or" expression
+symbol = string typeoff "match" cmdstring |
+	string typeoff "eq" cmdstring |	string typeoff "neq" cmdstring |
+	string typeoff "sub" cmdstring | string typeoff "nsub" cmdstring |
+	string typeoff "inpath" cmdstring | "true"
+typeoff = /* empty */ | "[" number "]"
+action = "permit" | "deny"
+errorcode = /* empty */ | "[" string "]"
+.Ed
+.Pp
+The
+.Va cmd-string
+is an arbitrary string enclosed with quotation marks.
+
 .Sh FILES
 .Bl -tag -width xHOME/xsystrace -compact
 .It Pa /dev/systrace
