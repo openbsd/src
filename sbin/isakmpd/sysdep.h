@@ -1,5 +1,5 @@
-/*	$OpenBSD: sysdep.h,v 1.4 1999/02/26 03:50:38 niklas Exp $	*/
-/*	$EOM: sysdep.h,v 1.13 1999/02/25 11:21:55 niklas Exp $	*/
+/*	$OpenBSD: sysdep.h,v 1.5 1999/03/24 14:45:17 niklas Exp $	*/
+/*	$EOM: sysdep.h,v 1.14 1999/03/24 11:05:08 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -43,17 +43,19 @@
 
 struct proto;
 struct sa;
+struct sockaddr;
 
 extern void sysdep_app_handler (int);
 extern int sysdep_app_open (void);
 extern void sysdep_conf_init_hook (void);
 extern int sysdep_cleartext (int);
 extern int sysdep_ipsec_delete_spi (struct sa *, struct proto *, int);
-extern int sysdep_ipsec_enable_sa (struct sa *, int);
-extern u_int8_t *sysdep_ipsec_get_spi (size_t *, u_int8_t, void *, size_t);
+extern int sysdep_ipsec_enable_sa (struct sa *);
+extern u_int8_t *sysdep_ipsec_get_spi (size_t *, u_int8_t, struct sockaddr *,
+				       int, struct sockaddr *, int);
 extern int sysdep_ipsec_group_spis (struct sa *, struct proto *,
 				    struct proto *, int);
-extern int sysdep_ipsec_set_spi (struct sa *, struct proto *, int, int);
+extern int sysdep_ipsec_set_spi (struct sa *, struct proto *, int);
 extern char *sysdep_progname (void);
 extern u_int32_t sysdep_random (void);
 
