@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.57 2000/01/02 05:21:55 itojun Exp $
+#	$OpenBSD: netstart,v 1.58 2000/01/02 06:32:44 itojun Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -98,6 +98,7 @@ for hn in /etc/hostname.*; do
 	    cmd="dhclient $if"
 	    ;;
 	"rtsol")
+	    ifconfig $if $name $mask $bcaddr $ext1 $ext2 down
 	    rtsolif="$rtsolif $if"
 	    ;;
 	"up")
