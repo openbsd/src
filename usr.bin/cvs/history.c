@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.5 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: history.c,v 1.6 2005/01/31 21:46:43 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -146,6 +146,13 @@ cvs_history(int argc, char **argv)
 		flags |= CVS_HF_O;    /* use -o as default */
 
 	root = cvsroot_get(".");
+	if (root == NULL) {
+		cvs_log(LP_ERR,
+		    "No CVSROOT specified!  Please use the `-d' option");
+		cvs_log(LP_ERR,
+		    "or set the CVSROOT environment variable.");
+		return (EX_USAGE);
+	}
 	if (root->cr_method == CVS_METHOD_LOCAL) {
 		snprintf(histpath, sizeof(histpath), "%s/%s", root->cr_dir,
 		    CVS_PATH_HISTORY);
