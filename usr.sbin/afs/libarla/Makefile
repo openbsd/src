@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2000/09/11 14:40:27 art Exp $
+#	$OpenBSD: Makefile,v 1.4 2001/05/31 15:56:13 todd Exp $
 
 #
 # You don't want to understand this makefile.
@@ -13,7 +13,7 @@ CFLAGS	+= -DHAVE_CONFIG_H -I${.CURDIR}/../src/include -I. \
 	   -I${.CURDIR}/../src/lib/roken -I${.CURDIR}/../src/util \
 	   -I${.CURDIR}/../src -I${.CURDIR}/../libroken
 
-# XXX Until an egtcs bug gets fixed
+# XXX Until an egcs bug gets fixed
 .if (${MACHINE_ARCH} == "alpha")
 CFLAGS	+= -O0
 .endif
