@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.66 2003/05/21 01:17:06 nate Exp $
+$OpenBSD: usbdevs,v 1.67 2003/05/29 19:14:01 nate Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -850,6 +850,7 @@ product IODATA2 USB2SC		0x0a09	USB2.0-SCSI Bridge USB2-SC
 product IOMEGA ZIP100		0x0001	Zip 100
 product IOMEGA ZIP250		0x0030	Zip 250
 product IOMEGA ZIP250_2		0x0032	Zip 250
+product IOMEGA CDRW		0x0055	CDRW 9602
 
 /* Jaton products */
 product JATON EDA		0x5704	Ethernet Device Adapter
