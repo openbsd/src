@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.104 2000/12/24 04:18:05 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.105 2000/12/28 21:34:03 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1131,9 +1131,6 @@ ipsp_kern(int off, char **bufp, int len)
 		l += sprintf(buffer + l, "\tAssociated interface = <%s>\n",
 			     ((struct ifnet *) tdb->tdb_interface)->if_xname);
 
-	      l += sprintf(buffer + l, "\t%u flows have used this SA\n",
-			   tdb->tdb_cur_allocations);
-	    
 	      l += sprintf(buffer + l, "\t%qu bytes processed by this SA\n",
 			 tdb->tdb_cur_bytes);
 	    
