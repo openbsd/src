@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.20 2003/12/17 05:22:38 mickey Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.21 2003/12/22 23:39:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -66,6 +66,8 @@
 #define	STI_INEG_REV	0x60
 #define	STI_INEG_PROM	0xf0011000
 
+extern struct cfdriver sti_cd;
+
 int sti_sgc_probe(struct device *, void *, void *);
 void sti_sgc_attach(struct device *, struct device *, void *);
 
@@ -119,6 +121,10 @@ sti_sgc_probe(parent, match, aux)
 	u_int32_t id, romend;
 	u_char devtype;
 	int rv = 0, romunmapped = 0;
+
+	/* due to the graphic nature of this program do probe only one */
+	if (cf->cf_unit > sti_cd.cd_ndevs)
+		return (0);
 
 	if (ca->ca_type.iodc_type != HPPA_TYPE_FIO)
 		return (0);
