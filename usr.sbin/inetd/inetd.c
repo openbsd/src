@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.113 2003/10/24 20:30:02 avsm Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.114 2003/12/23 15:24:28 mpech Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.113 2003/10/24 20:30:02 avsm Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.114 2003/12/23 15:24:28 mpech Exp $";
 #endif /* not lint */
 
 /*
@@ -407,7 +407,7 @@ main(int argc, char *argv[])
 	sigaddset(&blockmask, SIGHUP);
 	sigaddset(&blockmask, SIGALRM);
 
-	memset((char *)&sa, 0, sizeof(sa));
+	memset(&sa, 0, sizeof(sa));
 	sigemptyset(&sa.sa_mask);
 	sigaddset(&sa.sa_mask, SIGALRM);
 	sigaddset(&sa.sa_mask, SIGCHLD);
@@ -879,7 +879,7 @@ doconfig(void)
 		if (debug)
 			print_service("FREE", sep);
 		freeconfig(sep);
-		free((char *)sep);
+		free(sep);
 	}
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 }
@@ -954,7 +954,7 @@ setup(struct servtab *sep)
 		return;
 	}
 #define	turnon(fd, opt) \
-setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
+setsockopt(fd, SOL_SOCKET, opt, &on, sizeof (on))
 	if (strncmp(sep->se_proto, "tcp", 3) == 0 && (options & SO_DEBUG) &&
 	    turnon(sep->se_fd, SO_DEBUG) < 0)
 		syslog(LOG_ERR, "setsockopt (SO_DEBUG): %m");
@@ -1185,7 +1185,7 @@ more:
 		return (NULL);
 	}
 
-	memset((char *)sep, 0, sizeof *sep);
+	memset(sep, 0, sizeof *sep);
 	arg = skip(&cp, 0);
 	if (arg == NULL) {
 		/* A blank line. */
@@ -1803,7 +1803,7 @@ machtime_stream(s, sep)
 	u_int32_t result;
 
 	result = machtime();
-	(void) write(s, (char *) &result, sizeof(result));
+	(void) write(s, &result, sizeof(result));
 }
 
 /* ARGSUSED */
@@ -1815,13 +1815,13 @@ machtime_dg(int s, struct servtab *sep)
 	socklen_t size;
 
 	size = sizeof(ss);
-	if (recvfrom(s, (char *)&result, sizeof(result), 0,
+	if (recvfrom(s, &result, sizeof(result), 0,
 	    (struct sockaddr *)&ss, &size) < 0)
 		return;
 	if (dg_badinput((struct sockaddr *)&ss))
 		return;
 	result = machtime();
-	(void) sendto(s, (char *) &result, sizeof(result), 0,
+	(void) sendto(s, &result, sizeof(result), 0,
 	    (struct sockaddr *)&ss, size);
 }
 
