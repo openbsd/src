@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ses.4,v 1.8 2002/09/26 07:55:40 miod Exp $
+.\" $OpenBSD: ses.4,v 1.9 2003/04/03 11:02:36 jmc Exp $
 .\"
 .Dd February 22, 2000
 .Dt SES 4
@@ -58,21 +58,22 @@ Environmental Services device can be configured.
 The following
 .Xr ioctl 2
 calls apply to
-.B SES
+.Em SES
 devices.
 They are defined in the header file
-.Fd <scsi/ses.h>
-(\fIq.v.\fR).
+.Aq Pa scsi/ses.h .
 .Pp
 .Bl -tag -width SESIOC_GETENCSTAT
 .It Dv SESIOC_GETNOBJ
 Used to find out how many
-.B SES
+.Em SES
 objects are driven by this particular device instance.
 .It Dv SESIOC_GETOBJMAP
-Read, from the kernel, an array of SES objects which contains
-the object identifier, which subenclosure it is in, and the
-.B SES
+Read, from the kernel, an array of
+.Em SES
+objects which contains the object identifier, which subenclosure it is in,
+and the
+.Em SES
 type of the object.
 .It Dv SESIOC_GETENCSTAT
 Get the overall enclosure status.
@@ -84,21 +85,25 @@ Get the status of a particular object.
 Set the status of a particular object.
 .It Dv SESIOC_GETTEXT
 Get the associated help text for an object (not yet implemented).
-.B SES
-devices often have descriptive text for an object which can tell
-you things like location (e.g., "left power supply").
+.Em SES
+devices often have descriptive text for an object which can provide
+information such as location (e.g. "power supply left").
 .It Dv SESIOC_INIT
 Initialize the enclosure.
 .El
 .Sh FILES
 .Bl -tag -width /dev/sesNN -compact
-.It Pa /dev/ses Ns Ar N
-The \fINth\fR \fBSES\fR device.
+.It /dev/ses Ns Ar N
+The
+.Ar N Ns Li th
+.Em SES
+device.
 .Sh DIAGNOSTICS
 When the kernel is configured with
 .Tn DEBUG
-enabled, the first open to an SES device will spit out overall enclosure
-parameters to the console.
+enabled, the first open to an
+.Em SES
+device will spit out overall enclosure parameters to the console.
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,

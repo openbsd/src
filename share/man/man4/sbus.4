@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sbus.4,v 1.11 2002/11/08 08:08:47 mpech Exp $
+.\"	$OpenBSD: sbus.4,v 1.12 2003/04/03 11:02:36 jmc Exp $
 .\"	$NetBSD: sbus.4,v 1.5 2002/01/21 17:54:10 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,11 +47,11 @@
 .Cd "sbus* at xbox?"
 .Pp
 These
-.Nm sbus
+.Nm
 attachments are specific to the sparc and sparc64 ports.
 .Sh DESCRIPTION
 .Nm
-is a I/O interconnect bus mostly found in
+is an I/O interconnect bus mostly found in
 .Tn SPARC
 workstations and small to medium server class systems.
 It supports both on-board peripherals and extension boards.
@@ -68,10 +68,10 @@ drivers, sorted by device type and driver name:
 .Bl -tag -width 12n -offset ind -compact
 .It Xr audioamd 4
 .Tn AMD
-7990 codecs
+7990 codecs.
 .It Xr audiocs 4
 .Tn "Crystal Semiconductor"
-CS4231A codecs
+CS4231A codecs.
 .El
 .Ss SCSI interfaces
 .Bl -tag -width 12n -offset ind -compact
@@ -86,19 +86,19 @@ interfaces.
 .El
 .Ss Network interfaces
 .Bl -tag -width 12n -offset ind -compact
+.It Xr be 4
+.Dq Big Mac
+.Tn Ethernet
+board.
+.It Xr hme 4
+.Dq Happy Meal
+.Tn Ethernet
+interfaces.
 .It Xr le 4
 .Tn Lance
 7990 series
 .Tn Ethernet
 interfaces.
-.It Xr hme 4
-.Dq Happy Meal
-.Tn Ethernet
-interfaces.
-.It Xr be 4
-.Dq Big Mac
-.Tn Ethernet
-board.
 .It Xr qe 4
 Quad Ethernet Controller
 board.
@@ -121,7 +121,7 @@ framebuffer device.
 .El
 .Ss Serial and parallel interfaces
 .Bl -tag -width 12n -offset ind -compact
-.It Xr apio 4 
+.It Xr apio 4
 Aurora Technologies pio1 parallel port card.
 .It Xr asio 4
 Aurora Technologies pio2 serial port card.
@@ -161,5 +161,6 @@ The machine-independent
 .Nm sbus
 subsystem appeared in
 .Nx 1.3 .
-.Ox support first appeared in
+.Ox
+support first appeared in
 .Ox 2.0 .

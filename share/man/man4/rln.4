@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rln.4,v 1.16 2003/03/06 04:03:40 david Exp $
+.\"	$OpenBSD: rln.4,v 1.17 2003/04/03 11:02:36 jmc Exp $
 .\"
 .\" David Leonard <d@openbsd.org>, 1999. Public Domain.
 .\"
@@ -9,7 +9,7 @@
 .\" from Yoichi Shinoda's <shinoda@cs.washington.edu> BSDI driver, and
 .\" Geoff Voelker's <voelker@cs.washington.edu> Linux port of the same.
 .\"
-.\" 
+.\"
 .Dd April 2, 1999
 .Dt RLN 4
 .Os
@@ -51,7 +51,7 @@ the newer 802.11 cards in general.
 .Pp
 The RangeLAN2 cards communicate using an Ethernet-like protocol
 over the 2.4\(em2.483GHz part of the spectrum.
-This frequency happens to co-incide with that of strong harmonics emitted
+This frequency happens to coincide with that of strong harmonics emitted
 by common consumer microwave ovens.
 You can guess the rest.
 Depending on the channel condition, the NICs operate in one of two
@@ -86,7 +86,7 @@ Check the antenna.
 The interface is automatically marked down.
 .It "rln0: synchronised to ? (?) channel ?/?"
 The card has successfully synchronised with a nearby unit.
-Packets are only transmitted when the unit has synchronisation with
+Packets are only transmitted when the unit has synchronised with
 another.
 .It "rln0: lost sync"
 Synchronisation was lost.
@@ -95,7 +95,8 @@ Check for microwave ovens being used.
 The card was unsuccessful in (re-)synchronising with any other unit,
 and was configured as an alternate master.
 .It "rln0: packet too big (? > ?)"
-The card generate a message bigger than the maximum size allowable for Ethernet.
+The card generated a message bigger than the maximum size allowable for
+Ethernet.
 .It "rln0: command error 0x?? command ??"
 The card reported an error condition in the host-card protocol.
 .It "rln0: reset timeout"

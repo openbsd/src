@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.4,v 1.13 2003/02/18 07:54:53 jmc Exp $
+.\"	$OpenBSD: scsi.4,v 1.14 2003/04/03 11:02:36 jmc Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -110,10 +110,10 @@ the particular bus can be specified as in
 .Cd "scsibus3 at ahc1 bus 1"
 which assigns scsibus 1 to the second bus probed on the ahc1 device.
 .Pp
-When you have a mixture of wired down and counted devices then the
+When there is a mixture of wired down and counted devices then the
 counting begins with the first non-wired down unit for a particular
 type.
-That is, if you have a disk wired down as
+That is, if a disk is wired down as
 .Cd "disk sd1 at scsibus? target ? lun ?" ,
 then the first non-wired disk shall come on line as
 .Em sd2 .
@@ -122,7 +122,7 @@ There are a number of ioctls that work on any
 .Em SCSI
 device.
 They are defined in
-.Fd <sys/scsiio.h>
+.Aq Pa sys/scsiio.h
 and can be applied against any scsi device that permits them.
 For the tape, it must be applied against the control
 device.
@@ -130,7 +130,7 @@ See the manual page for each device type for more information about
 how generic scsi ioctls may be applied to a specific device.
 .Bl -tag -width DIOCSDINFO____
 .It Dv SCIOCRESET*
-reset a device.
+Reset a device.
 .It Dv SCIOCDEBUG
 Turn on debugging.
 All scsi operations originating from this device's driver
@@ -140,7 +140,7 @@ If no debugging is configured into the kernel, debugging will have
 no effect.
 .Em SCSI
 debugging is controlled by the configuration option
-.Em SCSIDEBUG.
+.Em SCSIDEBUG .
 .It Dv SCIOCCOMMAND
 Take a scsi command and data from a user process and apply them to the scsi
 device.
