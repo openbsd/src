@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.8 1996/07/18 09:57:35 downsj Exp $
+#	$OpenBSD: daily,v 1.9 1996/07/27 14:12:24 downsj Exp $
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local
 host=`hostname -s`
@@ -13,7 +13,8 @@ if [ -f /etc/daily.local ];then
 fi
 
 echo ""
-echo "Removing scratch and junk files:"
+echo "NOT Removing scratch and junk files."
+#echo "Removing scratch and junk files:"
 # XXX NOT REMOVING UNTIL SECURITY BUG IS FIXED" 
 #if [ -d /tmp -a ! -h /tmp ]; then
 #	cd /tmp && {
