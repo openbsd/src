@@ -7,15 +7,12 @@ ASENTRY(__cerror)
 	stwu	1, -16(1) 		/* follow the SVR4 ABI */
 	mflr	3			/* error value is in r0, use r3 */
 	stw	3, 20(1)
-#endif
-
-#ifndef  PIC
-	addis 5, 0, errno@H
-	ori 5, 5, errno@L
-#else
 	bl	_GLOBAL_OFFSET_TABLE_@local-4
 	mflr	4
 	lwz	5,_C_LABEL(errno)@got(4)
+#else
+	addis 5, 0, errno@H
+	ori 5, 5, errno@L
 #endif
 
 	stw 0, 0(5)
