@@ -1,4 +1,4 @@
-/*	$OpenBSD: strftime.c,v 1.3 1996/03/09 02:42:58 niklas Exp $	*/
+/*	$OpenBSD: strftime.c,v 1.4 1996/03/25 21:17:36 tholo Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strftime.c	5.11 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: strftime.c,v 1.3 1996/03/09 02:42:58 niklas Exp $";
+static char *rcsid = "$Id: strftime.c,v 1.4 1996/03/25 21:17:36 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -46,8 +46,10 @@ static char *rcsid = "$Id: strftime.c,v 1.3 1996/03/09 02:42:58 niklas Exp $";
 
 static size_t gsize;
 static char *pt;
-static int _add(), _conv(), _secs();
-static size_t _fmt();
+static int _add __P((const char *));
+static int _secs __P((const struct tm *));
+static int _conv __P((int, int, char));
+static size_t _fmt __P((const char *, const struct tm *));
 
 size_t
 strftime(s, maxsize, format, t)
@@ -74,8 +76,8 @@ strftime(s, maxsize, format, t)
 				((t)->tm_wday ? (t)->tm_wday - 1 : 6)) / 7)
 static size_t
 _fmt(format, t)
-	register char *format;
-	struct tm *t;
+	register const char *format;
+	const struct tm *t;
 {
 	for (; *format; ++format) {
 		if (*format == '%') {
@@ -276,7 +278,7 @@ _fmt(format, t)
 
 static int
 _secs(t)
-	struct tm *t;
+	const struct tm *t;
 {
 	static char buf[15];
 	register time_t s;
@@ -292,9 +294,13 @@ _secs(t)
 }
 
 static int
+#if __STDC__
+_conv(int n, int digits, char pad)
+#else
 _conv(n, digits, pad)
 	int n, digits;
 	char pad;
+#endif
 {
 	static char buf[10];
 	register char *p;
@@ -308,7 +314,7 @@ _conv(n, digits, pad)
 
 static int
 _add(str)
-	register char *str;
+	register const char *str;
 {
 	for (;; ++pt, --gsize) {
 		if (!gsize)
