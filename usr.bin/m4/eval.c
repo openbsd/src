@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.47 2003/06/03 02:56:10 millert Exp $	*/
+/*	$OpenBSD: eval.c,v 1.48 2003/06/18 21:08:07 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.47 2003/06/03 02:56:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.48 2003/06/18 21:08:07 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ static char rcsid[] = "$OpenBSD: eval.c,v 1.47 2003/06/03 02:56:10 millert Exp $
 
 #define BUILTIN_MARKER	"__builtin_"
 
+static void 	setup_definition(ndptr, const char *);
 static void	dodefn(const char *);
 static void	dopushdef(const char *, const char *);
 static void	dodump(const char *[], int);
@@ -560,29 +561,22 @@ expand_macro(const char *argv[], int argc)
 		PUTBACK(*p);
 }
 
+
 /*
- * dodefine - install definition in the table
+ * common part to dodefine and dopushdef
  */
-void
-dodefine(const char *name, const char *defn)
+static void 
+setup_definition(ndptr p, const char *defn)
 {
-	ndptr p;
 	int n;
 
-	if (!*name)
-		errx(1, "%s at line %lu: null definition.", CURRENT_NAME,
-		    CURRENT_LINE);
-	if ((p = lookup(name)) == nil)
-		p = addent(name);
-	else if (p->defn != null)
-		free((char *) p->defn);
 	if (strncmp(defn, BUILTIN_MARKER, sizeof(BUILTIN_MARKER)-1) == 0) {
 		n = builtin_type(defn+sizeof(BUILTIN_MARKER)-1);
 		if (n != -1) {
 			p->type = n & TYPEMASK;
 			if ((n & NOARGS) == 0)
 				p->type |= NEEDARGS;
-			p->defn = null;
+			p->defn = xstrdup(defn+sizeof(BUILTIN_MARKER)-1);
 			return;
 		}
 	}
@@ -591,6 +585,24 @@ dodefine(const char *name, const char *defn)
 	else
 		p->defn = xstrdup(defn);
 	p->type = MACRTYPE;
+}
+
+/*
+ * dodefine - install definition in the table
+ */
+void
+dodefine(const char *name, const char *defn)
+{
+	ndptr p;
+
+	if (!*name)
+		errx(1, "%s at line %lu: null definition.", CURRENT_NAME,
+		    CURRENT_LINE);
+	if ((p = lookup(name)) == nil)
+		p = addent(name);
+	else if (p->defn != null)
+		free((char *) p->defn);
+	setup_definition(p, defn);
 	if (STREQ(name, defn))
 		p->type |= RECDEF;
 }
@@ -606,12 +618,12 @@ dodefn(const char *name)
 	char *real;
 
 	if ((p = lookup(name)) != nil) {
-		if (p->defn != null) {
+		if ((p->type & TYPEMASK) == MACRTYPE) {
 			pbstr(rquote);
 			pbstr(p->defn);
 			pbstr(lquote);
-		} else if ((real = builtin_realname(p->type)) != NULL) {
-			pbstr(real);
+		} else {
+			pbstr(p->defn);
 			pbstr(BUILTIN_MARKER);
 		}
 	}
@@ -633,11 +645,7 @@ dopushdef(const char *name, const char *defn)
 		errx(1, "%s at line %lu: null definition", CURRENT_NAME,
 		    CURRENT_LINE);
 	p = addent(name);
-	if (!*defn)
-		p->defn = null;
-	else
-		p->defn = xstrdup(defn);
-	p->type = MACRTYPE;
+	setup_definition(p, defn);
 	if (STREQ(name, defn))
 		p->type |= RECDEF;
 }
@@ -648,16 +656,11 @@ dopushdef(const char *name, const char *defn)
 static void
 dump_one_def(ndptr p)
 {
-	char *real;
-
 	if (mimic_gnu) {
 		if ((p->type & TYPEMASK) == MACRTYPE)
 			fprintf(traceout, "%s:\t%s\n", p->name, p->defn);
 		else {
-			real = builtin_realname(p->type);
-			if (real == NULL)
-				real = null;
-			fprintf(traceout, "%s:\t<%s>\n", p->name, real);
+			fprintf(traceout, "%s:\t<%s>\n", p->name, p->defn);
 	    	}
 	} else
 		fprintf(traceout, "`%s'\t`%s'\n", p->name, p->defn);

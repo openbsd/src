@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.32 2003/06/12 14:36:43 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.33 2003/06/18 21:08:07 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -66,7 +66,6 @@ extern void	remhash(const char *, int);
 /* main.c */
 extern void outputstr(const char *);
 extern int builtin_type(const char *);
-extern char *builtin_realname(int);
 extern void do_emit_synchline(void);
 #define emit_synchline() do { if (synch_lines) do_emit_synchline(); } while(0)
 
