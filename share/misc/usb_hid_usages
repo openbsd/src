@@ -1,5 +1,5 @@
-# $OpenBSD: usb_hid_usages,v 1.1 2001/09/02 17:56:54 pvalchev Exp $
-# $NetBSD: usb_hid_usages,v 1.5 2000/12/28 01:22:40 augustss Exp $
+# $OpenBSD: usb_hid_usages,v 1.2 2001/12/30 06:49:34 pvalchev Exp $
+# $NetBSD: usb_hid_usages,v 1.1 2001/12/28 17:45:27 augustss Exp $
 #
 # USB HID usage table
 # Syntax:
@@ -198,7 +198,7 @@
 	0x39	Gamepad Trigger
 
 7	Keyboard
-	0x00	Reserved (no event indicated)
+	0x00	No Event
 	0x01	Keyboard ErrorRollOver
 	0x02	Keyboard POSTFail
 	0x03	Keyboard ErrorUndefined
@@ -621,6 +621,7 @@
 	0xC9	Show Counter
 	0xCA	Tracking Increment
 	0xCB	Tracking Decrement
+	0xCD	Pause/Play
 	0xE0	Volume
 	0xE1	Balance
 	0xE2	Mute
