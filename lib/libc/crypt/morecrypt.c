@@ -51,12 +51,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: morecrypt.c,v 1.6 1996/08/19 08:19:51 tholo Exp $";
+static char rcsid[] = "$OpenBSD: morecrypt.c,v 1.7 1996/11/14 05:45:15 etheisen Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <pwd.h>
+#include <string.h>
 
 #ifdef DEBUG
 # include <stdio.h>
