@@ -1,32 +1,31 @@
-/*	$OpenBSD: pte.h,v 1.4 1999/02/25 17:26:06 mickey Exp $	*/
+/*	$OpenBSD: pte.h,v 1.5 1999/09/02 05:43:38 mickey Exp $	*/
 
-/*
- * Copyright 1996 1995 by Open Software Foundation, Inc.   
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
- */
-/*
- * pmk1.1
+/* 
+ * Copyright (c) 1990,1993,1994 The University of Utah and
+ * the Computer Systems Laboratory at the University of Utah (CSL).
+ * All rights reserved.
+ *
+ * Permission to use, copy, modify and distribute this software is hereby
+ * granted provided that (1) source code retains these copyright, permission,
+ * and disclaimer notices, and (2) redistributions including binaries
+ * reproduce the notices in supporting documentation, and (3) all advertising
+ * materials mentioning features or use of this software display the following
+ * acknowledgement: ``This product includes software developed by the
+ * Computer Systems Laboratory at the University of Utah.''
+ *
+ * THE UNIVERSITY OF UTAH AND CSL ALLOW FREE USE OF THIS SOFTWARE IN ITS "AS
+ * IS" CONDITION.  THE UNIVERSITY OF UTAH AND CSL DISCLAIM ANY LIABILITY OF
+ * ANY KIND FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ *
+ * CSL requests users of this software to return to csl-dist@cs.utah.edu any
+ * improvements that they make and grant CSL redistribution rights.
+ *
+ * 	Utah $Hdr: pmap.h 1.24 94/12/14$
+ *	Author: Mike Hibler, Bob Wheeler, University of Utah CSL, 9/90
  */
 
 #ifndef	_MACHINE_PTE_H_
 #define	_MACHINE_PTE_H_
-
 
 /* TLB access/protection values */
 #define TLB_REF		0x80000000	/* software only */
@@ -44,8 +43,10 @@
 #define		TLB_AR_URW	0x01f00000
 #define		TLB_AR_URX	0x02f00000
 #define		TLB_AR_URWX	0x03f00000
-#define TLB_UNCACHEABLE	0x00080000
+#define TLB_ZERO	0x00080000	/* software only */
+#define TLB_ICACHE	0x00040000	/* software only */
 #define TLB_NOTUSED	0x00020000      /* software only */
+#define TLB_DCACHE	0x00010000      /* software only */
 #define TLB_PID_MASK	0x0000fffe
 #define TLB_WIRED	0x00000001	/* software only */
 
@@ -55,7 +56,9 @@
 #define TLB_DIRTY_POS	3
 #define TLB_BREAK_POS	4
 #define TLB_ITLB_POS    12
+#define TLB_ICACHE_POS  13
 #define TLB_DTLB_POS    14
+#define TLB_DCACHE_POS  15
 #define TLB_WIRED_POS	31
 
 /* protection for a gateway page */
@@ -64,42 +67,4 @@
 /* protection for break page */
 #define TLB_BREAK_PROT	0x02c00000
 
-#if defined(TLB_STATS) && !defined(_LOCORE)
-struct dtlb_stats {
-	u_int	dtlb_misses;
-	u_int	dtlb_io;
-	u_int	dtlb_misstime;
-	u_int	dtlb_missflts;
-	u_int	dtlb_missinsns;
-	u_int	dtlb_cached;
-	u_int	dtlb_tmp[2];
-};
-
-struct itlb_stats {
-	u_int	itlb_misses;
-	u_int	itlb_gateway;
-	u_int	itlb_misstime;
-	u_int	itlb_missflts;
-	u_int	itlb_missinsns;
-	u_int	itlb_cached;
-	u_int	itlb_dummy[2];
-};
-
-struct	tlbd_stats {
-	u_int	tlbd_dirty;
-	u_int	tlbd_flushes;
-	u_int	tlbd_misstime;
-	u_int	tlbd_missflts;
-	u_int	tlbd_missinsns;
-	u_int	tlbd_dummy[3];
-};
-
-#ifdef _KERNEL
-extern struct dtlb_stats dtlb_stats;
-extern struct itlb_stats dtlb_stats;
-extern struct tlbd_stats dtlb_stats;
-#endif /* _KERNEL */
-
-#endif	/* TLB_STATS && !_LOCORE */
-
-#endif /* _MACHINE_PTE_H_ */
+#endif	/* _MACHINE_PTE_H_ */
