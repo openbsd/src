@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 1997/03/14 04:32:17 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 1997/03/14 05:03:45 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.18 1997/03/13 06:23:19 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.22 1997/03/14 04:32:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.23 1997/03/14 05:03:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,7 @@ main(argc, argv)
 	}
 
 #ifndef SMALLFTP
-	if (fromatty) {
+	if (editing) {
 		el = el_init(__progname, stdin, stdout); /* init editline */
 
 		hist = history_init();		/* init the builtin history */
