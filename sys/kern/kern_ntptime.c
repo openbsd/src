@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ntptime.c,v 1.3 1996/04/19 16:08:57 niklas Exp $	*/
+/*	$OpenBSD: kern_ntptime.c,v 1.4 1996/06/12 07:51:06 deraadt Exp $	*/
 /*	$NetBSD: kern_ntptime.c,v 1.2 1996/03/07 14:31:20 christos Exp $	*/
 
 /******************************************************************************
@@ -287,8 +287,7 @@ ntp_adjtime(p, v, retval)
 	}
 	return error;
 }
-
-
+#endif /* NTP */
 
 /*
  * return information about kernel precision timekeeping
@@ -298,6 +297,9 @@ sysctl_ntptime(where, sizep)
 	register char *where;
 	size_t *sizep;
 {
+#ifndef NTP
+	return (ENOSYS);
+#else /* !NTP */
 	struct timeval atv;
 	struct ntptimeval ntv;
 	int s;
@@ -368,42 +370,5 @@ sysctl_ntptime(where, sizep)
 		ntv.time_state = time_state;
 #endif /* notyet */
 	return (sysctl_rdstruct(where, sizep, NULL, &ntv, sizeof(ntv)));
-}
-
-#else /* !NTP */
-
-/*
- * For kernels configured without the NTP option, emulate the behavior
- * of a kernel with no NTP support (i.e., sys_nosys()). On systems
- * where kernel  NTP support appears present when xntpd is compiled,
- * (e.g., sys/timex.h is present),  xntpd relies on getting a SIGSYS
- * signal in response to an ntp_adjtime() syscal, to inform xntpd that
- * NTP support is not really present, and xntpd should fall back to
- * using a user-level phase-locked loop to discipline the clock.
- */
-int
-ntp_gettime(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return(ENOSYS);
-}
-
-int
-ntp_adjtime(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return(sys_nosys(p, v, retval));
-}
-
-int
-sysctl_ntptime(where, sizep)
-	register char *where;
-	size_t *sizep;
-{
-	return (ENOSYS);
-}
 #endif /* NTP */
+}
