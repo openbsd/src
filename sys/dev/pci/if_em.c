@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.26 2003/06/05 17:51:37 pdeuskar Exp $*/
-/* $OpenBSD: if_em.c,v 1.17 2004/02/12 21:21:06 markus Exp $ */
+/* $OpenBSD: if_em.c,v 1.18 2004/04/03 18:51:01 grange Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1533,13 +1533,13 @@ em_allocate_pci_resources(struct em_softc * sc)
 
 	val = pci_conf_read(pa->pa_pc, pa->pa_tag, EM_MMBA);
 	if (PCI_MAPREG_TYPE(val) != PCI_MAPREG_TYPE_MEM) {
-		printf(": mmba isn't memory");
+		printf(": mmba isn't memory\n");
 		return (ENXIO);
 	}
 	if (pci_mapreg_map(pa, EM_MMBA, PCI_MAPREG_MEM_TYPE(val), 0,
 	    &sc->osdep.mem_bus_space_tag, &sc->osdep.mem_bus_space_handle,
 	    &sc->osdep.em_membase, &sc->osdep.em_memsize, 0)) {
-		printf(": can't find mem space");
+		printf(": can't find mem space\n");
 		return (ENXIO);
 	}
 
@@ -1559,7 +1559,7 @@ em_allocate_pci_resources(struct em_softc * sc)
 				   &sc->osdep.em_iobhandle,
 				   &sc->osdep.em_iobase,
 				   &sc->osdep.em_iosize, 0)) {
-			printf(": can't find io space");
+			printf(": can't find io space\n");
 			return (ENXIO);
 		}
 	}
