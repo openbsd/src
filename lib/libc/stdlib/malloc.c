@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.63 2003/10/15 21:37:01 tedu Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.64 2003/10/16 17:05:05 tedu Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -192,6 +192,12 @@ static int malloc_silent;
 
 /* always realloc ?  */
 static int malloc_realloc;
+
+/* mprotect free pages PROT_NONE? */
+static int malloc_freeprot;
+
+/* use guard pages after allocations? */
+static int malloc_guard = 0;
 
 #if defined(__FreeBSD__) || (defined(__OpenBSD__) && defined(MADV_FREE))
 /* pass the kernel a hint on free pages ?  */
@@ -386,7 +392,7 @@ map_pages(size_t pages)
 	errno = ENOMEM;
 	return (NULL);
     }
-    tail = result + pages;
+    tail = result + pages + malloc_guard;
 
     if (brk(tail) == (char *)-1) {
 #ifdef MALLOC_EXTRA_SANITY
@@ -394,6 +400,8 @@ map_pages(size_t pages)
 #endif /* MALLOC_EXTRA_SANITY */
 	return (NULL);
     }
+    if (malloc_guard)
+	mprotect(result + pages, malloc_pagesize, PROT_NONE);
 
     last_index = ptr2index(tail) - 1;
     malloc_brk = tail;
@@ -500,6 +508,10 @@ malloc_init(void)
 		case 'd': malloc_stats   = 0; break;
 		case 'D': malloc_stats   = 1; break;
 #endif /* MALLOC_STATS */
+		case 'f': malloc_freeprot = 0; break;
+		case 'F': malloc_freeprot = 1; break;
+		case 'g': malloc_guard = 0; break;
+		case 'G': malloc_guard = malloc_pagesize; break;
 #if defined(__FreeBSD__) || (defined(__OpenBSD__) && defined(MADV_FREE))
 		case 'h': malloc_hint    = 0; break;
 		case 'H': malloc_hint    = 1; break;
@@ -586,7 +598,7 @@ malloc_pages(size_t size)
     struct pgfree *pf;
     u_long index;
 
-    size = pageround(size);
+    size = pageround(size) + malloc_guard;
 
     p = NULL;
     /* Look for free pages before asking for more */
@@ -627,10 +639,15 @@ malloc_pages(size_t size)
 	break;
     }
 
+    size -= malloc_guard;
+
 #ifdef MALLOC_EXTRA_SANITY
     if (p != NULL && page_dir[ptr2index(p)] != MALLOC_FREE)
 	wrterror("(ES): allocated non-free page on free-list\n");
 #endif /* MALLOC_EXTRA_SANITY */
+
+    if ((malloc_guard || malloc_freeprot) && p != NULL)
+	mprotect(p, size, PROT_READ|PROT_WRITE);
 
     size >>= malloc_pageshift;
 
@@ -797,6 +814,26 @@ malloc_bytes(size_t size)
     while (!(*lp & u)) {
 	u += u;
 	k++;
+    }
+    
+    if (malloc_guard) {
+	/* Walk to a random position. */
+	i = arc4random() % bp->free;
+	while (i > 0) {
+	    u += u;
+	    k++;
+	    if (k >= MALLOC_BITS) {
+		lp++;
+		u = 1;
+		k = 0;
+	    }
+#ifdef	MALLOC_EXTRA_SANITY
+	if (lp - bp->bits > (bp->total - 1) / MALLOC_BITS)
+		wrterror("chunk overflow\n");
+#endif	/* MALLOC_EXTRA_SANITY */
+	if (*lp & u)
+	    i--;
+	}
     }
     *lp ^= u;
 
@@ -992,13 +1029,17 @@ free_pages(void *ptr, int index, struct pginfo *info)
 	madvise(ptr, l, MADV_FREE);
 #endif
 
+    l += malloc_guard;
     tail = (char *)ptr+l;
+
+    if (malloc_freeprot)
+	mprotect(ptr, tail - ptr, PROT_NONE);
 
     /* add to free-list */
     if (px == NULL)
 	px = imalloc(sizeof *px);	/* This cannot fail... */
     px->page = ptr;
-    px->end =  tail;
+    px->end = tail;
     px->size = l;
 
     if (free_list.next == NULL) {
