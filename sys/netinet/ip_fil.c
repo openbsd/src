@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil.c,v 1.14 1997/06/23 19:03:48 kstailey Exp $	*/
+/*	$OpenBSD: ip_fil.c,v 1.15 1997/12/03 01:25:32 kstailey Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -280,6 +280,33 @@ iplioctl(dev, cmd, data, mode
 	unit = minor(dev);
 	if (unit != 0)
 		return ENXIO;
+
+	if (securelevel > 1) {
+		switch (cmd) {
+#ifndef	IPFILTER_LKM
+		case SIOCFRENB:
+#endif
+		case SIOCSETFF:
+		case SIOCADAFR:
+		case SIOCADIFR:
+		case SIOCINAFR:
+		case SIOCINIFR:
+		case SIOCRMAFR:
+		case SIOCRMIFR:
+		case SIOCZRLST:
+		case SIOCSWAPA:
+		case SIOCFRZST:
+		case SIOCIPFFL:
+#ifdef	IPFILTER_LOG
+		case SIOCIPFFB:
+#endif
+		case SIOCADNAT:
+		case SIOCRMNAT:
+		case SIOCFLNAT:
+		case SIOCCNATL:
+		     return EPERM;
+		}
+	}
 
 	SPLNET(s);
 	switch (cmd) {
