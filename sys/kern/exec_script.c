@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_script.c,v 1.8 1999/01/11 05:12:22 millert Exp $	*/
+/*	$OpenBSD: exec_script.c,v 1.9 1999/10/18 17:07:11 deraadt Exp $	*/
 /*	$NetBSD: exec_script.c,v 1.13 1996/02/04 02:15:06 christos Exp $	*/
 
 /*
@@ -31,10 +31,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
-#define FDSCRIPTS		/* Need this for safe set-id scripts. */
-#endif
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -48,6 +44,10 @@
 #include <vm/vm.h>
 
 #include <sys/exec_script.h>
+
+#if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
+#define FDSCRIPTS		/* Need this for safe set-id scripts. */
+#endif
 
 /*
  * exec_script_makecmds(): Check if it's an executable shell script.
