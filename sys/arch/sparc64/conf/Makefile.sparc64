@@ -148,6 +148,7 @@ depend:: .depend
 
 locore.o: ${SPARC64}/sparc64/locore.s assym.h
 	${NORMAL_S}
+in_cksum.o: assym.h
 
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
