@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.8 2002/03/23 13:30:24 espie Exp $ */
+/*	$OpenBSD: cmd.c,v 1.9 2002/06/01 20:16:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: cmd.c,v 1.8 2002/03/23 13:30:24 espie Exp $";
+static char rcsid[] = "$OpenBSD: cmd.c,v 1.9 2002/06/01 20:16:15 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -343,4 +343,5 @@ int
 Xshmmaxpgs(cmd_t *cmd)
 {
 	int_variable_adjust(cmd, I_SHMMAXPGS, "shmmaxpgs");
+	return (CMD_CONT);
 }
