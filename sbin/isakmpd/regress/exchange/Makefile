@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.3 1998/12/21 01:02:30 niklas Exp $
-#	$EOM: Makefile,v 1.3 1998/08/03 21:05:56 niklas Exp $
+#	$OpenBSD: Makefile,v 1.4 1999/02/26 03:27:44 niklas Exp $
+#	$EOM: Makefile,v 1.5 1999/02/25 15:10:09 niklas Exp $
 
 #
 # Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -34,7 +34,11 @@
 # This code was written under funding by Ericsson Radio Systems.
 #
 
-TOPOBJ!=	cd ${.CURDIR}/../..; printf "all:\n\t@pwd\n" |${MAKE} -f-
+TOPSRC=		${.CURDIR}/../..
+TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
+OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile
+.PATH:		${TOPSRC} ${TOPSRC}/sysdep/${OS} ${TOPOBJ}
+CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall
 RUN=		ISAKMPD=${TOPOBJ}/isakmpd ${.CURDIR}/run.sh
 
 TESTS=		def
