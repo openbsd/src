@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.118 2004/10/30 14:36:28 deraadt Exp $
+$OpenBSD: usbdevs,v 1.119 2004/10/31 00:17:13 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -359,6 +359,7 @@ vendor AGATE		0x0c08	Agate Technologies
 vendor DMI		0x0c0b	DMI
 vendor EASYDISK		0x0c76	EasyDisk
 vendor ZCOM		0x0cde	Z-Com
+vendor ELCON		0x0db7	ELCON Systemtechnik
 vendor TANGTOP		0x0d3d	Tangtop
 vendor PEN		0x0d7d	Pen Drive
 vendor ABC		0x0d8c	ABC
@@ -366,6 +367,7 @@ vendor MSI		0x0db0	Micro Star International
 vendor HAWKING		0x0e66	Hawking
 vendor OTI		0x0ea0	Ours Technology Inc.
 vendor PILOTECH		0x0eaf  Pilotech
+vendor GIGABYTE		0x1044	GIGABYTE
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor PLX		0x10b5	PLX
@@ -390,6 +392,7 @@ vendor DLINK		0x2001	D-Link
 vendor TRIPPLITE	0x2478	Tripp-Lite
 vendor NHJ		0x2770  NHJ
 vendor PLANEX		0x2c02	Planex Communications
+vendor AEI		0x3334	AEI
 vendor PQI		0x3538	PQI
 vendor DAISY		0x3579	Daisy Technology
 vendor NI		0x3923	National Instruments
@@ -470,13 +473,18 @@ product ADAPTEC AWN8020		0x0020	AWN-8020 WLAN
 product ADDONICS2 205		0xa001	Cable 205
 
 /* ADMtek products */
+product ADMTEK PEGASUSII_4	0x07c2	AN986A Ethernet
 product ADMTEK PEGASUS		0x0986	AN986 Ethernet
 product ADMTEK PEGASUSII	0x8511	AN8511 Ethernet
 product ADMTEK PEGASUSII_2	0x8513	AN8513 Ethernet
+product ADMTEK PEGASUSII_3	0x8515	AN8515 Ethernet
 
 /* ADS products */
 product ADS UBS10BT		0x0008	UBS-10BT Ethernet
 product ADS UBS10BTX		0x0009	UBS-10BT Ethernet
+
+/* AEI products */
+product AEI FASTETHERNET	0x1701	Fast Ethernet
 
 /* Agate Technologies products */
 product AGATE QDRIVE		0x0378	Q-Drive
@@ -506,6 +514,9 @@ product ALCOR MA_KBD_HUB	0x9213	MacAlly Kbd Hub
 product ALCOR AU9814		0x9215	AU9814 Hub
 product ALCOR SM_KBD		0x9410	MicroConnectors/StrongMan
 product ALCOR NEC_KBD_HUB	0x9472	NEC Kbd Hub
+
+/* Allied Telesyn International products */
+product ALLIEDTELESYN ATUSB100	0xb100	AT-USB100
 
 /* Altec Lansing products */
 product ALTEC ADA70		0x0070	ADA70 Speakers
@@ -537,6 +548,7 @@ product ASIX AX88172		0x1720	USB 2.0 10/100 ethernet controller
 /* ATen products */
 product ATEN UC1284		0x2001	Parallel
 product ATEN UC10T		0x2002	10Mbps Ethernet
+product ATEN UC110T		0x2007	UC-110T Ethernet
 product ATEN UC232A		0x2008	Serial
 product ATEN DSB650C		0x4000	DSB-650C
 
@@ -720,6 +732,9 @@ product EASYDISK EASYDISK	0x0005	Flash Disk
 product EIZO HUB		0x0000	hub
 product EIZO MONITOR		0x0001	monitor
 
+/* ELCON Systemtechnik products */
+product ELCON PLAN		0x0002	Goldpfeil P-LAN
+
 /* Elecom products */
 product ELECOM MOUSE29UO	0x0002	29UO
 product ELECOM LDUSBTX0		0x200c	LD-USB/TX
@@ -799,6 +814,9 @@ product FUJITSU	AH_F401U	0x105b	AH-F401U Air H device
 product GENESYS GENELINK	0x05e3	GeneLink Host-Host Bridge
 product GENESYS GL650		0x0604	GL650 Hub
 product GENESYS GL641USB	0x0700	GL641USB CompactFlash
+
+/* GIGABYTE products */
+product GIGABYTE GNBR402W	0x8002	GN-BR402W
 
 /* GoHubs products */
 product GOHUBS GOCOM232		0x1001	GoCOM232 Serial converter
@@ -1171,6 +1189,7 @@ product MITSUMI FDD		0x6901	FDD
 
 /* Mobility products */
 product MOBILITY EA		0x0204	Ethernet
+product MOBILITY EASIDOCK	0x0304	EasiDock Ethernet
 
 /* Motorola products */
 product MOTOROLA MC141555	0x1555	MC141555 hub controller
@@ -1237,6 +1256,9 @@ product NHJ CAM2		0x9120	Camera
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1
 product OLYMPUS C700		0x0105	C-700 Ultra Zoom
+
+/* Omnidirectional Control Technology products */
+product SIIG2 USBTOETHER	0x0109	USB TO Ethernet
 
 /* OmniVision Technologies, Inc. products */
 product OMNIVISION OV511	0x0511	OV511
@@ -1482,7 +1504,8 @@ product SMC 2206USB		0x0201	EZ Connect Ethernet
 product SMC2 2020HUB            0x2020  Hub
 
 /* SOHOware products */
-product SOHOWARE NUB100		0x9100	10/100 Ethernet
+product SOHOWARE NUB100		0x9100	NUB100 Ethernet
+product SOHOWARE NUB110		0x9110	NUB110 Ethernet
 
 /* SOLID YEAR products */
 product SOLIDYEAR KEYBOARD	0x2101	Keyboard
