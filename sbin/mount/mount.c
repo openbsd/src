@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.9 1996/12/04 21:29:29 downsj Exp $	*/
+/*	$OpenBSD: mount.c,v 1.10 1996/12/09 13:25:26 deraadt Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.9 1996/12/04 21:29:29 downsj Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.10 1996/12/09 13:25:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,7 @@ void	mangle __P((char *, int *, const char **));
 int	mountfs __P((const char *, const char *, const char *,
 			int, const char *, const char *, int));
 void	prmount __P((struct statfs *));
+int	disklabelcheck __P((struct fstab *));
 void	usage __P((void));
 
 /* Map from mount otions to printable formats. */
@@ -177,6 +178,8 @@ main(argc, argv)
 				if (!selected(fs->fs_vfstype))
 					continue;
 				if (hasopt(fs->fs_mntops, "noauto"))
+					continue;
+				if (disklabelcheck(fs))
 					continue;
 				if (mountfs(fs->fs_vfstype, fs->fs_spec,
 				    fs->fs_file, init_flags, options,
@@ -576,3 +579,23 @@ usage()
 		"[-dfruvw] special | node");
 	exit(1);
 }
+
+int
+disklabelcheck(fs)
+	struct fstab *fs;
+{
+	char *labelfs;
+
+	if (strcmp(fs->fs_vfstype, "nfs") != 0 ||
+	    strpbrk(fs->fs_spec, ":@") == NULL) {
+		labelfs = readlabelfs(fs->fs_spec);
+		if (labelfs == NULL ||
+		    strcmp(labelfs, fs->fs_vfstype) == 0)
+			return (0);
+		warnx("%s: fstab type %s != disklabel type %s",
+		    fs->fs_spec, fs->fs_vfstype, labelfs);
+		return (1);
+	}
+	return (0);
+}
+
