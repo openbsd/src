@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfrdsetroot.c,v 1.7 2005/01/14 08:24:59 grange Exp $	*/
+/*	$OpenBSD: elfrdsetroot.c,v 1.8 2005/01/14 08:27:22 deraadt Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ main(argc,argv)
 		}
 	}
 	if (!found) {
-		printf("%s: can't locate space for rd_root_image!", file);
+		printf("%s: can't locate space for rd_root_image!\n", file);
 		exit(1);
 	}
 
