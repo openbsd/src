@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.2 1997/04/23 20:39:05 gvf Exp $
+#	$OpenBSD: MAKEDEV,v 1.3 1997/05/13 05:35:01 millert Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -209,7 +209,7 @@ random|srandom|urandom|prandom|arandom)
 
 local)
 	umask 0
-	sh MAKEDEV.local
+	test -s MAKEDEV.local && sh MAKEDEV.local
 	;;
 
 *)

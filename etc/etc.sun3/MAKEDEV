@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.14 1997/05/03 15:52:24 kstailey Exp $
+#	$OpenBSD: MAKEDEV,v 1.15 1997/05/13 05:34:59 millert Exp $
 #	$NetBSD: MAKEDEV,v 1.8 1996/03/03 16:54:17 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -234,7 +234,7 @@ ss*)
 
 local)
 	umask 0
-	sh MAKEDEV.local
+	test -s MAKEDEV.local && sh MAKEDEV.local
 	;;
 *)
 	echo $arg: unknown device

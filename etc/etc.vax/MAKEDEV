@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.9 1996/12/14 18:24:03 millert Exp $
+#	$OpenBSD: MAKEDEV,v 1.10 1997/05/13 05:35:00 millert Exp $
 #	$NetBSD: MAKEDEV,v 1.3 1996/01/07 16:53:15 ragge Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -423,7 +423,7 @@ random|srandom|urandom|prandom|arandom)
 	;;
 
 local)
-	sh MAKEDEV.local
+	test -s MAKEDEV.local && sh MAKEDEV.local
 	;;
 esac
 done

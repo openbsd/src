@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.17 1997/04/22 20:26:38 gvf Exp $
+#	$OpenBSD: MAKEDEV,v 1.18 1997/05/13 05:34:54 millert Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.17 1997/04/22 20:26:38 gvf Exp $
+#	$Id: MAKEDEV,v 1.18 1997/05/13 05:34:54 millert Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices,
@@ -415,7 +415,7 @@ ss*)
 
 local)
 	umask 0
-	sh MAKEDEV.local
+	test -s MAKEDEV.local && sh MAKEDEV.local
 	umask 77
 	;;
 

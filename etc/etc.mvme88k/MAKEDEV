@@ -244,7 +244,7 @@ lkm)
 
 local)
 	umask 0
-	sh $0.local
+	test -s MAKEDEV.local && sh MAKEDEV.local
 	;;
 
 esac

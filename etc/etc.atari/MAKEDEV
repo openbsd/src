@@ -428,7 +428,7 @@ ss*)
 
 local)
 	umask 0
-	sh MAKEDEV.local
+	test -s MAKEDEV.local && sh MAKEDEV.local
 	umask 77
 	;;
 

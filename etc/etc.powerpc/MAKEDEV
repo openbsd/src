@@ -1,5 +1,5 @@
 #!/bin/sh -
-#       $OpenBSD: MAKEDEV,v 1.8 1997/05/11 02:18:42 deraadt Exp $
+#       $OpenBSD: MAKEDEV,v 1.9 1997/05/13 05:34:57 millert Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -361,7 +361,7 @@ lkm)
 
 local)
 	umask 0
-	sh MAKEDEV.local
+	test -s MAKEDEV.local && sh MAKEDEV.local
 	;;
 
 *)
