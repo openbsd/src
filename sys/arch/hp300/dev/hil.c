@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.20 1995/12/02 02:48:47 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.21 1996/01/10 20:31:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1012,6 +1012,7 @@ hilqalloc(hilp, qip, p)
 hilqfree(hilp, qnum, p)
 	register struct hil_softc *hilp;
 	register int qnum;
+	struct proc *p;
 {
 
 #ifdef DEBUG
