@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.46 2001/10/02 18:18:28 frantzen Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.47 2001/10/04 21:54:15 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -57,7 +57,7 @@ int	 pfctl_clear_states(int, int);
 int	 pfctl_hint(int, const char *, int);
 int	 pfctl_show_rules(int, int);
 int	 pfctl_show_nat(int);
-int	 pfctl_show_states(int, u_int8_t);
+int	 pfctl_show_states(int, u_int8_t, int);
 int	 pfctl_show_status(int);
 int	 pfctl_rules(int, char *, int);
 int	 pfctl_nat(int, char *, int);
@@ -321,7 +321,7 @@ pfctl_show_nat(int dev)
 }
 
 int
-pfctl_show_states(int dev, u_int8_t proto)
+pfctl_show_states(int dev, u_int8_t proto, int opts)
 {
 	struct pfioc_states ps;
 	struct pf_state *p;
@@ -352,7 +352,7 @@ pfctl_show_states(int dev, u_int8_t proto)
 	p = ps.ps_states;
 	for (i = 0; i < ps.ps_len; i += sizeof(*p)) {
 		if (!proto || (p->proto == proto))
-			print_state(p);
+			print_state(p, opts);
 		p++;
 	}
 	return (0);
@@ -790,7 +790,7 @@ main(int argc, char *argv[])
 			pfctl_show_nat(dev);
 			break;
 		case 's':
-			pfctl_show_states(dev, 0);
+			pfctl_show_states(dev, 0, opts);
 			break;
 		case 'i':
 			pfctl_show_status(dev);
@@ -798,7 +798,7 @@ main(int argc, char *argv[])
 		case 'a':
 			pfctl_show_rules(dev, opts);
 			pfctl_show_nat(dev);
-			pfctl_show_states(dev, 0);
+			pfctl_show_states(dev, 0, opts);
 			pfctl_show_status(dev);
 			break;
 		default:

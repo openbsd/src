@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.50 2001/09/15 23:23:40 wilfried Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.51 2001/10/04 21:54:15 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -531,7 +531,7 @@ print_status(struct pf_status *s)
 }
 
 void
-print_state(struct pf_state *s)
+print_state(struct pf_state *s, int opts)
 {
 	struct pf_state_peer *src, *dst;
 	u_int8_t hrs, min, sec;
@@ -582,28 +582,32 @@ print_state(struct pf_state *s)
 		} else {
 			printf("   <BAD STATE LEVELS>\n");
 		}
-		printf("   ");
-		print_seq(src);
-		printf("  ");
-		print_seq(dst);
-		printf("\n");
+		if (opts & PF_OPT_VERBOSE) {
+			printf("   ");
+			print_seq(src);
+			printf("  ");
+			print_seq(dst);
+			printf("\n");
+		}
 	} else {
 		printf("   %u:%u\n", src->state, dst->state);
 	}
 
-	sec = s->creation % 60;
-	s->creation /= 60;
-	min = s->creation % 60;
-	s->creation /= 60;
-	hrs = s->creation;
-	printf("   age %.2u:%.2u:%.2u", hrs, min, sec);
-	sec = s->expire % 60;
-	s->expire /= 60;
-	min = s->expire % 60;
-	s->expire /= 60;
-	hrs = s->expire;
-	printf(", expires in %.2u:%.2u:%.2u", hrs, min, sec);
-	printf(", %u pkts, %u bytes\n", s->packets, s->bytes);
+	if (opts & PF_OPT_VERBOSE) {
+		sec = s->creation % 60;
+		s->creation /= 60;
+		min = s->creation % 60;
+		s->creation /= 60;
+		hrs = s->creation;
+		printf("   age %.2u:%.2u:%.2u", hrs, min, sec);
+		sec = s->expire % 60;
+		s->expire /= 60;
+		min = s->expire % 60;
+		s->expire /= 60;
+		hrs = s->expire;
+		printf(", expires in %.2u:%.2u:%.2u", hrs, min, sec);
+		printf(", %u pkts, %u bytes\n", s->packets, s->bytes);
+	}
 }
 
 void
