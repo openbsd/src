@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.1 2004/01/28 01:44:45 mickey Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.2 2004/02/09 21:25:08 deraadt Exp $	*/
 /*	$NetBSD: __setjmp14.S,v 1.1 2001/06/19 00:25:02 fvdl Exp $	*/
 
 /*
@@ -51,16 +51,6 @@
  */
 
 ENTRY(setjmp)
-	movq	(%rsp),%r11
-	movq	%rbx,(_JB_RBX * 8)(%rdi)
-	movq	%rbp,(_JB_RBP * 8)(%rdi)
-	movq	%r12,(_JB_R12 * 8)(%rdi)
-	movq	%r13,(_JB_R13 * 8)(%rdi)
-	movq	%r14,(_JB_R14 * 8)(%rdi)
-	movq	%r15,(_JB_R15 * 8)(%rdi)
-	movq	%rsp,(_JB_RSP * 8)(%rdi)
-	movq	%r11,(_JB_PC  * 8)(%rdi)
-
 	pushq	%rdi
 	xorq	%rdi,%rdi
 #ifdef PIC
@@ -70,6 +60,16 @@ ENTRY(setjmp)
 #endif
 	popq	%rdi
 	movq	%rax,(_JB_SIGMASK * 8)(%rdi)
+
+	movq	(%rsp),%r11
+	movq	%rbx,(_JB_RBX * 8)(%rdi)
+	movq	%rbp,(_JB_RBP * 8)(%rdi)
+	movq	%r12,(_JB_R12 * 8)(%rdi)
+	movq	%r13,(_JB_R13 * 8)(%rdi)
+	movq	%r14,(_JB_R14 * 8)(%rdi)
+	movq	%r15,(_JB_R15 * 8)(%rdi)
+	movq	%rsp,(_JB_RSP * 8)(%rdi)
+	movq	%r11,(_JB_PC  * 8)(%rdi)
 
 2:	xorl	%eax,%eax
 	ret
