@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.12 1997/09/01 18:30:03 deraadt Exp $	*/
+/*	$OpenBSD: tar.c,v 1.13 1998/09/26 21:29:41 millert Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: tar.c,v 1.12 1997/09/01 18:30:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tar.c,v 1.13 1998/09/26 21:29:41 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -621,7 +621,7 @@ tar_wr(arcn)
 	len = arcn->nlen;
 	if (arcn->type == PAX_DIR)
 		++len;
-	if (len > sizeof(hd->name)) {
+	if (len >= sizeof(hd->name)) {
 		paxwarn(1, "File name too long for tar %s", arcn->name);
 		return(1);
 	}
@@ -1174,7 +1174,7 @@ name_split(name, len)
 	 * check to see if the file name is small enough to fit in the name
 	 * field. if so just return a pointer to the name.
 	 */
-	if (len <= TNMSZ)
+	if (len < TNMSZ)
 		return(name);
 	if (len > (TPFSZ + TNMSZ + 1))
 		return(NULL);
