@@ -1,5 +1,5 @@
-/*	$OpenBSD: inode.c,v 1.7 1996/10/12 03:06:54 tholo Exp $	*/
-/*	$NetBSD: inode.c,v 1.18 1996/05/21 16:58:12 mycroft Exp $	*/
+/*	$OpenBSD: inode.c,v 1.8 1996/10/20 08:36:34 tholo Exp $	*/
+/*	$NetBSD: inode.c,v 1.23 1996/10/11 20:15:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-static char rcsid[] = "$OpenBSD: inode.c,v 1.7 1996/10/12 03:06:54 tholo Exp $";
+static char rcsid[] = "$OpenBSD: inode.c,v 1.8 1996/10/20 08:36:34 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,11 +55,12 @@ static char rcsid[] = "$OpenBSD: inode.c,v 1.7 1996/10/12 03:06:54 tholo Exp $";
 #include <string.h>
 
 #include "fsck.h"
+#include "fsutil.h"
 #include "extern.h"
 
 static ino_t startinum;
 
-int iblock __P((struct inodesc *, long, quad_t));
+static int iblock __P((struct inodesc *, long, u_int64_t));
 
 int
 ckinode(dp, idesc)
@@ -69,7 +70,7 @@ ckinode(dp, idesc)
 	register ufs_daddr_t *ap;
 	long ret, n, ndb, offset;
 	struct dinode dino;
-	quad_t remsize, sizepb;
+	u_int64_t remsize, sizepb;
 	mode_t mode;
 	char pathbuf[MAXPATHLEN + 1];
 
@@ -94,19 +95,18 @@ ckinode(dp, idesc)
 			if (idesc->id_type == DATA && ndb >= 0) {
 				/* An empty block in a directory XXX */
 				getpathname(pathbuf, idesc->id_number,
-						idesc->id_number);
-                        	pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
-					pathbuf);
-                        	if (reply("ADJUST LENGTH") == 1) {
+				    idesc->id_number);
+				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
+				    pathbuf);
+				if (reply("ADJUST LENGTH") == 1) {
 					dp = ginode(idesc->id_number);
-                                	dp->di_size = (ap - &dino.di_db[0]) *
+					dp->di_size = (ap - &dino.di_db[0]) *
 					    sblock.fs_bsize;
 					printf(
 					    "YOU MUST RERUN FSCK AFTERWARDS\n");
 					rerun = 1;
-                                	inodirty();
-					
-                        	}
+					inodirty();
+				}
 			}
 			continue;
 		}
@@ -131,19 +131,19 @@ ckinode(dp, idesc)
 			if (idesc->id_type == DATA && remsize > 0) {
 				/* An empty block in a directory XXX */
 				getpathname(pathbuf, idesc->id_number,
-						idesc->id_number);
-                        	pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
-					pathbuf);
-                        	if (reply("ADJUST LENGTH") == 1) {
+				    idesc->id_number);
+				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
+				    pathbuf);
+				if (reply("ADJUST LENGTH") == 1) {
 					dp = ginode(idesc->id_number);
-                                	dp->di_size -= remsize;
+					dp->di_size -= remsize;
 					remsize = 0;
 					printf(
 					    "YOU MUST RERUN FSCK AFTERWARDS\n");
 					rerun = 1;
-                                	inodirty();
+					inodirty();
 					break;
-                        	}
+				}
 			}
 		}
 		sizepb *= NINDIR(&sblock);
@@ -152,21 +152,20 @@ ckinode(dp, idesc)
 	return (KEEPON);
 }
 
-int
+static int
 iblock(idesc, ilevel, isize)
 	struct inodesc *idesc;
 	long ilevel;
-	quad_t isize;
+	u_int64_t isize;
 {
 	register daddr_t *ap;
 	register daddr_t *aplim;
 	register struct bufarea *bp;
-	int i, n, (*func)(), nif;
-	quad_t sizepb;
-	char pathbuf[MAXPATHLEN + 1];
+	int i, n, (*func) __P((struct inodesc *)), nif;
+	u_int64_t sizepb;
 	char buf[BUFSIZ];
+	char pathbuf[MAXPATHLEN + 1];
 	struct dinode *dp;
-	extern int pass1check();
 
 	if (idesc->id_type == ADDR) {
 		func = idesc->id_func;
@@ -189,7 +188,7 @@ iblock(idesc, ilevel, isize)
 		for (ap = &bp->b_un.b_indir[nif]; ap < aplim; ap++) {
 			if (*ap == 0)
 				continue;
-			(void)sprintf(buf, "PARTIALLY TRUNCATED INODE I=%lu",
+			(void)sprintf(buf, "PARTIALLY TRUNCATED INODE I=%u",
 				idesc->id_number);
 			if (dofix(idesc, buf)) {
 				*ap = 0;
@@ -214,20 +213,20 @@ iblock(idesc, ilevel, isize)
 			if (idesc->id_type == DATA && isize > 0) {
 				/* An empty block in a directory XXX */
 				getpathname(pathbuf, idesc->id_number,
-						idesc->id_number);
-                        	pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
-					pathbuf);
-                        	if (reply("ADJUST LENGTH") == 1) {
+				    idesc->id_number);
+				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
+				    pathbuf);
+				if (reply("ADJUST LENGTH") == 1) {
 					dp = ginode(idesc->id_number);
-                                	dp->di_size -= isize;
+					dp->di_size -= isize;
 					isize = 0;
 					printf(
 					    "YOU MUST RERUN FSCK AFTERWARDS\n");
 					rerun = 1;
-                                	inodirty();
+					inodirty();
 					bp->b_flags &= ~B_INUSE;
 					return(STOP);
-                        	}
+				}
 			}
 		}
 		isize -= sizepb;
@@ -253,9 +252,9 @@ chkrange(blk, cnt)
 	if (blk < cgdmin(&sblock, c)) {
 		if ((blk + cnt) > cgsblock(&sblock, c)) {
 			if (debug) {
-				printf("blk %ld < cgdmin %ld;",
+				printf("blk %d < cgdmin %d;",
 				    blk, cgdmin(&sblock, c));
-				printf(" blk + cnt %ld > cgsbase %ld\n",
+				printf(" blk + cnt %d > cgsbase %d\n",
 				    blk + cnt, cgsblock(&sblock, c));
 			}
 			return (1);
@@ -263,9 +262,9 @@ chkrange(blk, cnt)
 	} else {
 		if ((blk + cnt) > cgbase(&sblock, c+1)) {
 			if (debug)  {
-				printf("blk %ld >= cgdmin %ld;",
+				printf("blk %d >= cgdmin %d;",
 				    blk, cgdmin(&sblock, c));
-				printf(" blk + cnt %ld > sblock.fs_fpg %ld\n",
+				printf(" blk + cnt %d > sblock.fs_fpg %d\n",
 				    blk+cnt, sblock.fs_fpg);
 			}
 			return (1);
@@ -391,6 +390,7 @@ cacheino(dp, inumber)
 	inpp = &inphead[inumber % numdirs];
 	inp->i_nexthash = *inpp;
 	*inpp = inp;
+	inp->i_child = inp->i_sibling = inp->i_parentp = 0;
 	if (inumber == ROOTINO)
 		inp->i_parent = ROOTINO;
 	else
@@ -514,7 +514,7 @@ pinode(ino)
 	struct passwd *pw;
 	time_t t;
 
-	printf(" I=%lu ", ino);
+	printf(" I=%u ", ino);
 	if (ino < ROOTINO || ino > maxino)
 		return;
 	dp = ginode(ino);
@@ -527,7 +527,7 @@ pinode(ino)
 		printf("%u ", (unsigned)dp->di_uid);
 	printf("MODE=%o\n", dp->di_mode);
 	if (preen)
-		printf("%s: ", cdevname);
+		printf("%s: ", cdevname());
 	printf("SIZE=%qu ", dp->di_size);
 	t = dp->di_mtime;
 	p = ctime(&t);
@@ -541,7 +541,7 @@ blkerror(ino, type, blk)
 	daddr_t blk;
 {
 
-	pfatal("%ld %s I=%lu", blk, type, ino);
+	pfatal("%d %s I=%u", blk, type, ino);
 	printf("\n");
 	switch (statemap[ino]) {
 

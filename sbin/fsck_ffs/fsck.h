@@ -1,5 +1,5 @@
-/*	$OpenBSD: fsck.h,v 1.3 1996/10/12 03:06:53 tholo Exp $	*/
-/*	$NetBSD: fsck.h,v 1.10 1995/04/12 21:24:09 mycroft Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.4 1996/10/20 08:36:32 tholo Exp $	*/
+/*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -80,7 +80,7 @@ struct bufarea sblk;		/* file system superblock */
 struct bufarea cgblk;		/* cylinder group blocks */
 struct bufarea *pdirbp;		/* current directory contents */
 struct bufarea *pbp;		/* current inode block */
-struct bufarea *getdatablk();
+struct bufarea *getdatablk __P((daddr_t, long));
 
 #define	dirty(bp)	(bp)->b_dirty = 1
 #define	initbarea(bp) \
@@ -97,7 +97,8 @@ enum fixstate {DONTKNOW, NOFIX, FIX, IGNORE};
 
 struct inodesc {
 	enum fixstate id_fix;	/* policy on fixing errors */
-	int (*id_func)();	/* function to be applied to blocks of inode */
+	int (*id_func)		/* function to be applied to blocks of inode */
+	    __P((struct inodesc *));
 	ino_t id_number;	/* inode number described */
 	ino_t id_parent;	/* for DATA nodes, their parent */
 	daddr_t id_blkno;	/* current block number being examined */
@@ -155,6 +156,7 @@ struct zlncnt *zlnhead;		/* head of zero link count list */
  */
 struct inoinfo {
 	struct	inoinfo *i_nexthash;	/* next entry in hash chain */
+	struct	inoinfo	*i_child, *i_sibling, *i_parentp;
 	ino_t	i_number;		/* inode number of this entry */
 	ino_t	i_parent;		/* inode number of parent */
 	ino_t	i_dotdot;		/* inode number of `..' */
@@ -164,7 +166,6 @@ struct inoinfo {
 } **inphead, **inpsort;
 long numdirs, listmax, inplast;
 
-char	*cdevname;		/* name of device being checked */
 long	dev_bsize;		/* computed value of DEV_BSIZE */
 long	secsize;		/* actual disk sector size */
 char	nflag;			/* assume a no response */
@@ -175,14 +176,13 @@ int	cvtlevel;		/* convert to newer file system format */
 int	doinglevel1;		/* converting to new cylinder group format */
 int	doinglevel2;		/* converting to new inode format */
 int	newinofmt;		/* filesystem has new inode format */
-char	preen;			/* just fix normal inconsistencies */
-char	hotroot;		/* checking root device */
+int	preen;			/* just fix normal inconsistencies */
 char	havesb;			/* superblock has been read */
 char	skipclean;		/* skip clean file systems if preening */
 int	fsmodified;		/* 1 => write done to file system */
 int	fsreadfd;		/* file descriptor for reading file system */
 int	fswritefd;		/* file descriptor for writing file system */
-int	rerun;			/* rerun fsck. Only used in non-preen mode */
+int	rerun;			/* rerun fsck.  Only used in non-preen mode */
 
 daddr_t	maxfsblock;		/* number of blocks in the file system */
 char	*blockmap;		/* ptr to primary blk allocation map */
@@ -212,8 +212,7 @@ struct	dinode zino;
 #define	ALTERED	0x08
 #define	FOUND	0x10
 
-time_t time();
-struct dinode *ginode();
-struct inoinfo *getinoinfo();
-void getblk();
-ino_t allocino();
+struct dinode *ginode __P((ino_t));
+struct inoinfo *getinoinfo __P((ino_t));
+void getblk __P((struct bufarea *, daddr_t, long));
+ino_t allocino __P((ino_t, int));

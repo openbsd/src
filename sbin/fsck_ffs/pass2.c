@@ -1,5 +1,5 @@
-/*	$OpenBSD: pass2.c,v 1.3 1996/06/23 14:30:31 deraadt Exp $	*/
-/*	$NetBSD: pass2.c,v 1.14 1996/05/21 15:32:16 mycroft Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.4 1996/10/20 08:36:38 tholo Exp $	*/
+/*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: pass2.c,v 1.3 1996/06/23 14:30:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pass2.c,v 1.4 1996/10/20 08:36:38 tholo Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,12 +51,15 @@ static char rcsid[] = "$OpenBSD: pass2.c,v 1.3 1996/06/23 14:30:31 deraadt Exp $
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "fsck.h"
+#include "fsutil.h"
 #include "extern.h"
 
 #define MINDIRSIZE	(sizeof (struct dirtemplate))
 
-int	pass2check(), blksort();
+static int pass2check __P((struct inodesc *));
+static int blksort __P((const void *, const void *));
 
 void
 pass2()
@@ -73,7 +76,7 @@ pass2()
 	case USTATE:
 		pfatal("ROOT INODE UNALLOCATED");
 		if (reply("ALLOCATE") == 0)
-			errexit("");
+			errexit("%s", "");
 		if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
 			errexit("CANNOT ALLOCATE ROOT INODE\n");
 		break;
@@ -87,7 +90,7 @@ pass2()
 			break;
 		}
 		if (reply("CONTINUE") == 0)
-			errexit("");
+			errexit("%s", "");
 		break;
 
 	case FSTATE:
@@ -100,7 +103,7 @@ pass2()
 			break;
 		}
 		if (reply("FIX") == 0)
-			errexit("");
+			errexit("%s", "");
 		dp = ginode(ROOTINO);
 		dp->di_mode &= ~IFMT;
 		dp->di_mode |= IFDIR;
@@ -113,7 +116,6 @@ pass2()
 	default:
 		errexit("BAD STATE %d FOR ROOT INODE", statemap[ROOTINO]);
 	}
-	statemap[ROOTINO] = DFOUND;
 	if (newinofmt) {
 		statemap[WINO] = FSTATE;
 		typemap[WINO] = DT_WHT;
@@ -170,9 +172,6 @@ pass2()
 		inp = *inpp;
 		if (inp->i_parent == 0 || inp->i_isize == 0)
 			continue;
-		if (statemap[inp->i_parent] == DFOUND &&
-		    statemap[inp->i_number] == DSTATE)
-			statemap[inp->i_number] = DFOUND;
 		if (inp->i_dotdot == inp->i_parent ||
 		    inp->i_dotdot == (ino_t)-1)
 			continue;
@@ -200,7 +199,7 @@ pass2()
 	propagate();
 }
 
-int
+static int
 pass2check(idesc)
 	struct inodesc *idesc;
 {
@@ -413,10 +412,6 @@ again:
 			goto again;
 
 		case DSTATE:
-			if (statemap[idesc->id_number] == DFOUND)
-				statemap[dirp->d_ino] = DFOUND;
-			/* fall through */
-
 		case DFOUND:
 			inp = getinoinfo(dirp->d_ino);
 			if (inp->i_parent != 0 && idesc->id_entryno > 2) {
@@ -460,10 +455,10 @@ again:
 /*
  * Routine to sort disk blocks.
  */
-int
+static int
 blksort(inpp1, inpp2)
-	struct inoinfo **inpp1, **inpp2;
+	const void *inpp1, *inpp2;
 {
-
-	return ((*inpp1)->i_blks[0] - (*inpp2)->i_blks[0]);
+	return ((* (struct inoinfo **) inpp1)->i_blks[0] -
+		(* (struct inoinfo **) inpp2)->i_blks[0]);
 }
