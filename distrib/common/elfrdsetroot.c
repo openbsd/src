@@ -1,4 +1,4 @@
-/*	$OpenBSD: elfrdsetroot.c,v 1.1 2001/09/18 15:24:18 jason Exp $	*/
+/*	$OpenBSD: elfrdsetroot.c,v 1.2 2001/09/18 15:27:36 jason Exp $	*/
 /*	$NetBSD: rdsetroot.c,v 1.2 1995/10/13 16:38:39 gwr Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
 #include <unistd.h>
 #include <nlist.h>
 
-#ifdef __alpha__	/* XXXXXXX */
+#if defined(__alpha__) || defined(__sparc64__)	/* XXXXXX */
 #define ELFSIZE 64
 #else
 #define ELFSIZE 32
