@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_machdep.c,v 1.10 2002/05/22 21:00:00 miod Exp $	*/
+/*	$OpenBSD: ofw_machdep.c,v 1.11 2002/06/09 04:13:13 drahn Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -122,6 +122,9 @@ ofw_vmon()
 	fwcall = &fwentry;
 }
 
+int OF_stdout;
+int OF_stdin;
+
 /* code to save and create the necessary mappings for BSD to handle
  * the vm-setup for OpenFirmware
  */
@@ -132,10 +135,6 @@ static struct {
 	vm_offset_t pa;
 	int mode;
 } ofw_mapping[256];
-
-int OF_stdout;
-int OF_stdin;
-
 int
 save_ofw_mapping()
 {
@@ -145,13 +144,13 @@ save_ofw_mapping()
 	if ((chosen = OF_finddevice("/chosen")) == -1) {
 		return 0;
 	}
-	if (OF_getprop(chosen, "stdin", &stdin, sizeof stdin) != sizeof stdin)
-	{
+
+	if (OF_getprop(chosen, "stdin", &stdin, sizeof stdin) != sizeof stdin) {
 		return 0;
 	}
 	OF_stdin = stdin;
-	if (OF_getprop(chosen, "stdout", &stdout, sizeof stdout) != sizeof stdout)
-	{
+	if (OF_getprop(chosen, "stdout", &stdout, sizeof stdout)
+	    != sizeof stdout) {
 		return 0;
 	}
 	if (stdout == 0) {
@@ -165,8 +164,9 @@ save_ofw_mapping()
 	OF_getprop(chosen, "mmu", &mmui, 4);
 	mmu = OF_instance_to_package(mmui);
 	bzero(ofw_mapping, sizeof(ofw_mapping));
-	N_mapping =
-	    OF_getprop(mmu, "translations", ofw_mapping, sizeof(ofw_mapping));
+
+	N_mapping = OF_getprop(mmu, "translations", ofw_mapping,
+	    sizeof(ofw_mapping));
 	N_mapping /= sizeof(ofw_mapping[0]);
 
 	fw = &ofw_firmware;
@@ -210,6 +210,7 @@ void ofw_do_pending_int(void);
 extern int system_type;
 
 void ofw_intr_init(void);
+
 void
 ofrootfound()
 {
@@ -226,6 +227,7 @@ ofrootfound()
 		ofw_intr_init();
 	}
 }
+
 void
 ofw_intr_establish()
 {
@@ -234,6 +236,7 @@ ofw_intr_establish()
 		ofw_intr_init();
 	}
 }
+
 void
 ofw_intr_init()
 {
@@ -264,12 +267,13 @@ ofw_intr_init()
 	imask[IPL_HIGH] = 0xffffffff;
 
 }
+
 void
 ofw_do_pending_int()
 {
 	int pcpl;
 	int emsr, dmsr;
-static int processing;
+	static int processing;
 
 	if(processing)
 		return;
@@ -437,7 +441,6 @@ ofw_find_keyboard()
 	int stdin_node;
 	char iname[32];
 	int len;
-	int node;
 
 	stdin_node = OF_instance_to_package(OF_stdin);
 	len = OF_getprop(stdin_node, "name", iname, 20);
@@ -448,8 +451,7 @@ ofw_find_keyboard()
 	 * detection walk the OFW tree to find keyboards and what type.
 	 */
 
-	node = OF_peer(0);
-	ofw_recurse_keyboard(node);
+	ofw_recurse_keyboard(OF_peer(0));
 
 	if (ofw_have_kbd == 0) {
 		printf("no keyboard found, hoping USB will be present\n");

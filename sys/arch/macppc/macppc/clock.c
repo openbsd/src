@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.2 2002/03/11 15:30:33 drahn Exp $	*/
+/*	$OpenBSD: clock.c,v 1.3 2002/06/09 04:13:13 drahn Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ static volatile u_long lasttb;
 #define YEAR0		1900
 
 typedef int (clock_read_t)(int *sec, int *min, int *hour, int *day,
-         int *mon, int *yr);
+    int *mon, int *yr);
 typedef int (time_read_t)(u_long *sec);
 typedef int (time_write_t)(u_long sec);
 
@@ -75,10 +75,10 @@ int power4e_getclock(int *, int *, int *, int *, int *, int *);
 
 clock_read_t *clock_read = NULL;
 time_read_t  *time_read  = NULL;
-time_write_t  *time_write  = NULL;
+time_write_t *time_write  = NULL;
 
-static u_long
-chiptotime(int sec, int min, int hour, int day, int mon, int year);
+static u_long chiptotime(int sec, int min, int hour, int day, int mon,
+    int year);
 
 /*
  * For now we let the machine run with boot time, not changing the clock
@@ -120,6 +120,7 @@ inittodr(base)
 		/* force failure */
 		time.tv_sec = 0;
 	} 
+
 	if (time.tv_sec == 0) {
 		printf("WARNING: unable to get date/time");
 		/*
@@ -144,6 +145,7 @@ inittodr(base)
 			return;
 		printf("WARNING: clock %s %d days",
 		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
+
 		if (time.tv_sec < base && deltat > 1000 * SECDAY) {
 			printf(", using FS time");
 			time.tv_sec = base;
@@ -228,6 +230,7 @@ decr_intr(frame)
 	asm ("mftb %0; mfdec %1" : "=r"(tb), "=r"(tick));
 	for (nticks = 0; tick < 0; nticks++)
 		tick += ticks_per_intr;
+
 	asm volatile ("mtdec %0" :: "r"(tick));
 	/*
 	 * lasttb is used during microtime. Set it to the virtual
@@ -286,12 +289,13 @@ calc_delayconst()
 		if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0
 		    && !strcmp(name, "cpu")
 		    && OF_getprop(qhandle, "timebase-frequency",
-				  &ticks_per_sec, sizeof ticks_per_sec) >= 0) {
+		    & ticks_per_sec, sizeof ticks_per_sec) >= 0) {
 			/*
 			 * Should check for correct CPU here?		XXX
 			 */
 			asm volatile ("mfmsr %0; andi. %1, %0, %2; mtmsr %1"
-				      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
+			    : "=r"(msr), "=r"(scratch)
+			    : "K"((u_short)~PSL_EE));
 			ns_per_tick = 1000000000 / ticks_per_sec;
 			ticks_per_intr = ticks_per_sec / hz;
 			asm volatile ("mtmsr %0" :: "r"(msr));

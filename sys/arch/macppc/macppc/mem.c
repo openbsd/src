@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 2002/02/23 17:17:04 matthieu Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 2002/06/09 04:13:13 drahn Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -134,7 +134,7 @@ mmrw(dev, uio, flags)
 		}
 		switch (minor(dev)) {
 
-/* minor device 0 is physical memory */
+		/* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
 			c = uio->uio_resid;
@@ -143,27 +143,30 @@ mmrw(dev, uio, flags)
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
-/* minor device 1 is kernel memory */
+		/* minor device 1 is kernel memory */
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
-/* minor device 2 is EOF/RATHOLE */
+		/* minor device 2 is EOF/RATHOLE */
 		case 2:
 			if (uio->uio_rw == UIO_WRITE)
 				uio->uio_resid = 0;
 			return 0;
 
-/* minor device 12 (/dev/zero) is source of nulls on read, rathole on write */
+		/* minor device 12 (/dev/zero) is source of nulls on read,
+		 * rathole on write
+		 */
 		case 12:
 			if (uio->uio_rw == UIO_WRITE) {
 				c = iov->iov_len;
 				break;
 			}
 			if (zeropage == NULL) {
-				zeropage = (caddr_t)malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
+				zeropage = (caddr_t)malloc(PAGE_SIZE, M_TEMP,
+				    M_WAITOK);
 				bzero(zeropage, PAGE_SIZE);
 			}
 			c = min(iov->iov_len, PAGE_SIZE);

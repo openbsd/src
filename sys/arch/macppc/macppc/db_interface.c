@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.3 2002/05/13 17:55:02 drahn Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.4 2002/06/09 04:13:13 drahn Exp $	*/
 /*      $NetBSD: db_interface.c,v 1.12 2001/07/22 11:29:46 wiz Exp $ */
 
 #include <sys/param.h>
@@ -24,8 +24,7 @@ ddb_trap_glue(frame)
 {
 	if (!(frame->srr1 & PSL_PR)
 	    && (frame->exc == EXC_TRC
-		|| (frame->exc == EXC_PGM
-		    && (frame->srr1 & 0x20000))
+		|| (frame->exc == EXC_PGM && (frame->srr1 & 0x20000))
 		|| frame->exc == EXC_BPT)) {
 
 		bcopy(frame->fixreg, DDB_REGS->tf.fixreg,

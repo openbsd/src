@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.3 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.4 2002/06/09 04:13:13 drahn Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.3 2002/03/14 01:26:36 millert Exp $
+ *      $Id: autoconf.c,v 1.4 2002/06/09 04:13:13 drahn Exp $
  */
 
 /*
@@ -66,14 +66,14 @@ struct  device *parsedisk(char *, int, int, dev_t *);
 void    setroot(void);
 void	swapconf(void);
 extern void	dumpconf(void);
-int findblkmajor(struct device *);
-char *findblkname(int);
-static struct device * getdisk(char *, int, int, dev_t *);
-struct device * getdevunit(char *, int);
-static struct devmap * findtype(char **);
-void makebootdev(char *cp);
-int getpno(char **);
-void diskconf(void);
+int	findblkmajor(struct device *);
+char	*findblkname(int);
+static	struct device * getdisk(char *, int, int, dev_t *);
+struct	device * getdevunit(char *, int);
+static	struct devmap * findtype(char **);
+void	makebootdev(char *cp);
+int	getpno(char **);
+void	diskconf(void);
 
 /*
  * The following several variables are related to
@@ -94,11 +94,6 @@ cpu_configure()
 	(void)splhigh();	/* To be really sure.. */
 	calc_delayconst();
 
-	/*
-	if(system_type == OFWMACH) {
-		ofrootfound();
-	}
-	*/
 	if(config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
 	(void)spl0();
@@ -328,7 +323,8 @@ setroot()
 	extern char *nfsbootdevname;
 #endif
 
-printf("bootpath: '%s'\n", bootpath);
+	printf("bootpath: '%s'\n", bootpath);
+
 	makebootdev(bootpath);
 	if(boothowto & RB_DFLTROOT)
 		return;		/* Boot compiled in */
