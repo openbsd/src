@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.13 2003/06/14 04:43:20 jason Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.14 2003/06/16 03:22:45 jason Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -121,7 +121,7 @@ static inline void awacs_write_reg(struct awacs_softc *, int, int);
 void awacs_write_codec(struct awacs_softc *, int);
 void awacs_set_speaker_volume(struct awacs_softc *, int, int);
 void awacs_set_ext_volume(struct awacs_softc *, int, int);
-int awacs_set_rate(struct awacs_softc *, int);
+void awacs_set_rate(struct awacs_softc *, struct audio_params *);
 void awacs_mono16_to_stereo16(void *, u_char *, int);
 void awacs_swap_bytes_mono16_to_stereo16(void *, u_char *, int);
 void awacs_cvt_ulinear_mono_16_be(void *, u_char *, int);
@@ -224,6 +224,20 @@ struct audio_device awacs_device = {
 /* cc1 */
 #define AWACS_MUTE_SPEAKER	0x00000080
 #define AWACS_MUTE_HEADPHONE	0x00000200
+
+const struct awacs_speed_tab {
+	int rate;
+	u_int32_t bits;
+} awacs_speeds[] = {
+	{  7350, AWACS_RATE_7350 },
+	{  8820, AWACS_RATE_8820 },
+	{ 11025, AWACS_RATE_11025 },
+	{ 14700, AWACS_RATE_14700 },
+	{ 17640, AWACS_RATE_17640 },
+	{ 22050, AWACS_RATE_22050 },
+	{ 29400, AWACS_RATE_29400 },
+	{ 44100, AWACS_RATE_44100 },
+};
 
 int
 awacs_match(parent, match, aux)
@@ -604,7 +618,7 @@ awacs_set_params(h, setmode, usemode, play, rec)
 {
 	struct awacs_softc *sc = h;
 	struct audio_params *p;
-	int mode, rate;
+	int mode;
 
 	/*
 	 * This device only has one clock, so make the sample rates match.
@@ -703,11 +717,9 @@ awacs_set_params(h, setmode, usemode, play, rec)
 	}
 
 	/* Set the speed */
-	rate = p->sample_rate;
+	awacs_set_rate(sc, p);
 
-	awacs_set_rate(sc, rate);
-
-	return 0;
+	return (0);
 }
 
 int
@@ -1212,46 +1224,36 @@ awacs_set_ext_volume(sc, left, right)
 	awacs_write_codec(sc, sc->sc_codecctl2);
 }
 
-int
-awacs_set_rate(sc, rate)
-	struct awacs_softc *sc;
-	int rate;
+void
+awacs_set_rate(struct awacs_softc *sc, struct audio_params *p)
 {
-	int c;
+	int selected = -1;
+	size_t n, i;
 
-	switch (rate) {
+	n = sizeof(awacs_speeds)/sizeof(awacs_speeds[0]);
 
-	case 44100:
-		c = AWACS_RATE_44100;
-		break;
-	case 29400:
-		c = AWACS_RATE_29400;
-		break;
-	case 22050:
-		c = AWACS_RATE_22050;
-		break;
-	case 17640:
-		c = AWACS_RATE_17640;
-		break;
-	case 14700:
-		c = AWACS_RATE_14700;
-		break;
-	case 11025:
-		c = AWACS_RATE_11025;
-		break;
-	case 8820:
-		c = AWACS_RATE_8820;
-		break;
-	case 7350:
-		c = AWACS_RATE_7350;
-		break;
-	default:
-		return -1;
+	if (p->sample_rate < awacs_speeds[0].rate)
+		selected = 0;
+	if (p->sample_rate > awacs_speeds[n - 1].rate)
+		selected = n - 1;
+
+	for (i = 1; selected == -1 && i < n; i++) {
+		if (p->sample_rate == awacs_speeds[i].rate)
+			selected = i;
+		else if (p->sample_rate > awacs_speeds[i].rate) {
+			u_int diff1, diff2;
+
+			diff1 = p->sample_rate - awacs_speeds[i - 1].rate;
+			diff2 = awacs_speeds[i].rate - p->sample_rate;
+			selected = (diff1 < diff2) ? i - 1 : i;
+		}
 	}
 
-	sc->sc_soundctl &= ~AWACS_RATE_MASK;
-	sc->sc_soundctl |= c;
-	awacs_write_reg(sc, AWACS_SOUND_CTRL, sc->sc_soundctl);
+	if (selected == -1)
+		selected = 0;
 
-	return 0;
+	sc->sc_soundctl &= ~AWACS_RATE_MASK;
+	sc->sc_soundctl |= awacs_speeds[selected].bits;
+	p->sample_rate = awacs_speeds[selected].rate;
+	awacs_write_reg(sc, AWACS_SOUND_CTRL, sc->sc_soundctl);
 }
