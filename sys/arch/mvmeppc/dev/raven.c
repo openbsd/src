@@ -1,4 +1,4 @@
-/*	$OpenBSD: raven.c,v 1.4 2002/03/14 01:26:41 millert Exp $ */
+/*	$OpenBSD: raven.c,v 1.5 2004/01/29 10:58:06 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -61,36 +61,54 @@ struct cfdriver raven_cd = {
 };
 
 int
-raven_match(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+raven_match(struct device *parent, void *match, void *aux)
 {
-	unsigned *reg = (unsigned *)RAVEN_REG;
+	void *va;
+	u_int32_t probe;
+
+	if ((va = mapiodev((paddr_t)RAVEN_BASE, RAVEN_SIZE)) == NULL)
+		return 0;
 
 	/* check for a live address */
-	if (badaddr((char *)reg, 4))
+	if (badaddr(va, 4) != 0) {
+		unmapiodev(va, RAVEN_SIZE);
 		return 0;
+	}
 	
 	/* now check and see if it's a raven ASIC */	
-	if (*reg != RAVEN_MAGIC)
+	probe = *(u_int32_t*)va;
+	unmapiodev((void *)va, RAVEN_SIZE);
+
+	if (probe != RAVEN_MAGIC)
 		return 0;
 	
 	return 1;
 }
 
+/* need to be global for mpcpcibr.c - XXX */
+u_int8_t *ravenregs;
+
 void
-raven_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+raven_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct mpic_feature *feature = (struct mpic_feature *)MPCIC_FEATURE;
+	struct raven_softc *sc = (void *)self;
+
+	/*
+	 * Map Raven registers and MPCIC
+	 *
+	 * XXX steal them from devio_ex as well!
+	 */
+	ravenregs = sc->sc_regs = mapiodev((paddr_t)RAVEN_BASE, RAVEN_SIZE);
+	if (sc->sc_regs == NULL) {
+		printf(": can't map registers!\n");
+		return;
+	}
 
 	/* set system type */
 	system_type = MVME;		/* We are a Motorola MVME SBC */
 
-	printf(": RAVEN, Version 0x%x.\n", feature->vid);
+	printf(": version 0x%x\n", sc->sc_regs[RAVEN_REVID]);
+
 	while (config_found(self, NULL, NULL))
 		;
 }
-                 
-

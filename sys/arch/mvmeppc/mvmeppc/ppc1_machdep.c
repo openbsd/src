@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppc1_machdep.c,v 1.13 2004/01/28 23:50:19 miod Exp $	*/
+/*	$OpenBSD: ppc1_machdep.c,v 1.14 2004/01/29 10:58:08 miod Exp $	*/
 /*	$NetBSD: ofw_machdep.c,v 1.1 1996/09/30 16:34:50 ws Exp $	*/
 
 /*
@@ -41,7 +41,9 @@
 #include <machine/powerpc.h>
 #include <machine/autoconf.h>
 #include <machine/bugio.h>
+
 #include <mvmeppc/dev/nvramreg.h>
+#include <mvmeppc/dev/ravenreg.h>
 
 #include <dev/cons.h>
 
@@ -223,7 +225,7 @@ PPC1_boot(bootspec)
  * because we need to setup the clocks before autoconf.
  */
 
-vaddr_t	nvram_va;
+vaddr_t	isaspace_va;
 
 void
 nvram_map()
@@ -232,11 +234,12 @@ nvram_map()
 	extern struct extent *devio_ex;
 	extern int ppc_malloc_ok;
 
-	if ((error = extent_alloc_region(devio_ex, NVRAM_PA, NVRAM_SIZE,
-	    EX_NOWAIT | (ppc_malloc_ok ? EX_MALLOCOK : 0))) != 0)
-		panic("nvram_map: can't map NVRAM, extent error %d", error);
+	if ((error = extent_alloc_region(devio_ex, RAVEN_P_ISA_IO_SPACE,
+	    ISA_SIZE, EX_NOWAIT | (ppc_malloc_ok ? EX_MALLOCOK : 0))) != 0)
+		panic("nvram_map: can't map ISA space, extent error %d", error);
 
-	if ((nvram_va = (vaddr_t)mapiodev(NVRAM_PA, NVRAM_SIZE)) == NULL)
+	if ((isaspace_va = (vaddr_t)mapiodev(RAVEN_P_ISA_IO_SPACE,
+	    ISA_SIZE)) == NULL)
 		panic("nvram_map: map failed");
 }
 
@@ -244,9 +247,9 @@ unsigned char
 PPC1_nvram_rd(addr)
 	unsigned long addr;
 {
-	outb(nvram_va + NVRAM_S0, addr);
-	outb(nvram_va + NVRAM_S1, addr>>8);
-	return inb(nvram_va + NVRAM_DATA);
+	outb(isaspace_va + NVRAM_S0, addr);
+	outb(isaspace_va + NVRAM_S1, addr>>8);
+	return inb(isaspace_va + NVRAM_DATA);
 }
 
 void
@@ -254,9 +257,9 @@ PPC1_nvram_wr(addr, val)
 	unsigned long addr; 
 	unsigned char val;
 {
-	outb(nvram_va + NVRAM_S0, addr);
-	outb(nvram_va + NVRAM_S1, addr>>8);
-	outb(nvram_va + NVRAM_DATA, val);
+	outb(isaspace_va + NVRAM_S0, addr);
+	outb(isaspace_va + NVRAM_S1, addr>>8);
+	outb(isaspace_va + NVRAM_DATA, val);
 }
 
 /* Function to get ticks per second. */

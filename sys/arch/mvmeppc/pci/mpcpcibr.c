@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibr.c,v 1.13 2004/01/28 23:50:19 miod Exp $ */
+/*	$OpenBSD: mpcpcibr.c,v 1.14 2004/01/29 10:58:10 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
@@ -124,6 +124,9 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_mmap
 };
 
+extern u_int8_t *ravenregs;
+extern vaddr_t isaspace_va;
+
 int
 mpcpcibrmatch(parent, match, aux)
 	struct device *parent;
@@ -168,8 +171,10 @@ addbatmap(RAVEN_V_PCI_MEM_SPACE, RAVEN_P_PCI_MEM_SPACE, BAT_I);
 	lcp->lc_iot = &sc->sc_iobus_space;
 	lcp->lc_memt = &sc->sc_membus_space;
 
-	lcp->ioh_cf8 = PREP_CONFIG_ADD;
-	lcp->ioh_cfc = PREP_CONFIG_DAT;
+	lcp->ioh_cf8 = (PREP_CONFIG_ADD - RAVEN_P_ISA_IO_SPACE) +
+		(bus_space_handle_t)isaspace_va;
+	lcp->ioh_cfc = (PREP_CONFIG_DAT - RAVEN_P_ISA_IO_SPACE) +
+		(bus_space_handle_t)isaspace_va;
 
 	lcp->config_type = 0;
 
@@ -529,7 +534,7 @@ pci_iack()
 {
 	/* do pci IACK cycle */
 	/* this should be bus allocated. */
-	volatile u_int8_t *iack = (u_int8_t *)RAVEN_PIACK;
+	volatile u_int8_t *iack = ravenregs + RAVEN_PIACK;
 	u_int8_t val;
 
 	val = *iack;
@@ -544,8 +549,7 @@ mpc_cfg_write_1(cp, reg, val)
 {
 	int s;
 	s = splhigh();
-	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0,
-							RAVEN_REGOFFS(reg));
+	bus_space_write_4(cp->lc_iot, cp->ioh_cf8, 0, RAVEN_REGOFFS(reg));
 	bus_space_write_1(cp->lc_iot, cp->ioh_cfc, 0, val);
 	splx(s);
 }

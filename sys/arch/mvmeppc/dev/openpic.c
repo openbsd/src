@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.10 2003/06/02 23:27:53 millert Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.11 2004/01/29 10:58:06 miod Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -58,10 +58,10 @@
 
 #define ICU_LEN 32
 #define LEGAL_IRQ(x) ((x >= 0) && (x < ICU_LEN))
-#define IO_ICU1	(RAVEN_P_ISA_IO_SPACE + 0x20)
-#define IO_ICU2	(RAVEN_P_ISA_IO_SPACE + 0xA0)
-#define IO_ELCR1	(RAVEN_P_ISA_IO_SPACE + 0x4D0)
-#define IO_ELCR2	(RAVEN_P_ISA_IO_SPACE + 0x4D1)
+#define IO_ICU1	(isaspace_va + 0x20)
+#define IO_ICU2	(isaspace_va + 0xA0)
+#define IO_ELCR1	(isaspace_va + 0x4D0)
+#define IO_ELCR2	(isaspace_va + 0x4D1)
 #define IRQ_SLAVE	2
 #define ICU_OFFSET	0
 #define PIC_OFFSET	16
@@ -73,22 +73,20 @@ unsigned char elcr2_val = 0x00;
 
 #define SET_ICUS()	(outb(IO_ICU1 + 1, imen), outb(IO_ICU2 + 1, imen >> 8))
 
-static int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
-static struct intrhand *intrhand[ICU_LEN] = { 0};
-static int hwirq[ICU_LEN], virq[ICU_LEN];
+int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
+struct intrhand *intrhand[ICU_LEN];
+int hwirq[ICU_LEN], virq[ICU_LEN];
 unsigned int imen	/* = 0xffffffff */; /* XXX */
-static int virq_max = 0;
+int virq_max;
 
 struct evcnt evirq[ICU_LEN];
 
-static int fakeintr(void *);
-static char *intr_typename(int type);
-static void intr_calculatemasks(void);
+int fakeintr(void *);
+const char *intr_typename(int type);
+void intr_calculatemasks(void);
 static __inline int cntlzw(int x);
-static int mapirq(int irq);
+int mapirq(int irq);
 void openpic_enable_irq_mask(int irq_mask);
-
-static struct raven_reg *ravenp = (struct raven_reg *)NULL;
 
 #define HWIRQ_MAX 27
 #define HWIRQ_MASK 0x0fffffff
@@ -122,16 +120,14 @@ void  openpic_do_pending_int(void);
 void  ext_intr_openpic(void);
 
 struct cfattach openpic_ca = { 
-	sizeof(struct openpic_softc),
-	openpic_match,
-	openpic_attach
+	sizeof(struct openpic_softc), openpic_match, openpic_attach
 };
 
 struct cfdriver openpic_cd = {
 	NULL, "openpic", DV_DULL
 };
 
-struct pci_route {
+const struct pci_route {
 	int pci;
 	int openpic;
 } pci_routes[] = {
@@ -142,24 +138,17 @@ struct pci_route {
 	{ 0, 0 }
 };
 
-static int isaintrs = 0;
+int isaintrs;
 
 int
 openpic_match(parent, cf, aux) 
-struct device *parent;
-void *cf;
-void *aux;
+	struct device *parent;
+	void *cf;
+	void *aux;
 {
 	/* We must be a child of the raven device */
 	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "raven") != 0)
 		return (0);
-	/* don't attach more than once. */
-	if (ravenp != (struct raven_reg *)NULL) {
-#ifdef DIAGNOSTIC
-		printf("openpic: trying to attach more than once!");
-#endif
-		return (0);
-	}
 	/* If there is a raven, then there is a mpic! */
 	return 1;
 }
@@ -167,8 +156,8 @@ void *aux;
 u_int8_t *interrupt_reg;
 typedef void  (void_f) (void);
 extern void_f *pending_int_f;
-static int abort_switch (void *arg);
-static int i8259_dummy (void *arg);
+int abort_switch (void *arg);
+int i8259_dummy (void *arg);
 
 typedef int mac_intr_handle_t;
 
@@ -176,7 +165,9 @@ typedef void  *(intr_establish_t)(void *, mac_intr_handle_t,
     int, int, int (*)(void *), void *, char *);
 typedef void (intr_disestablish_t)(void *, void *);
 
-static vaddr_t openpic_base;
+vaddr_t openpic_base;
+extern vaddr_t isaspace_va;
+
 void * openpic_intr_establish(void *, int, int, int, int (*)(void *), void *,
     char *);
 void openpic_intr_disestablish(void *, void *);
@@ -184,16 +175,18 @@ void openpic_collect_preconf_intr(void);
 
 void
 openpic_attach(parent, self, aux)
-struct device *parent, *self;
-void *aux;
+	struct device *parent, *self;
+	void *aux;
 {
 	extern intr_establish_t *intr_establish_func;
 	extern intr_disestablish_t *intr_disestablish_func;
-#if 0
-	extern intr_establish_t *mac_intr_establish_func;
-	extern intr_disestablish_t *mac_intr_disestablish_func;
-#endif 
-	openpic_base = (vaddr_t)mapiodev(MPCIC_REG, 0x22000);
+
+	if ((openpic_base = (vaddr_t)mapiodev(MPCIC_BASE, MPCIC_SIZE)) == NULL) {
+		printf(": can't map MPCIC!\n");
+		return;
+	}
+
+	/* the ICU area in isa space already mapped */
 
 	printf(": version 0x%x", openpic_read(OPENPIC_FEATURE) & 0xFF);
 
@@ -203,10 +196,6 @@ void *aux;
 	pending_int_f = openpic_do_pending_int;
 	intr_establish_func  = i8259_intr_establish;
 	intr_disestablish_func  = openpic_intr_disestablish;
-#if 0
-	mac_intr_establish_func  = openpic_intr_establish;
-	mac_intr_disestablish_func  = openpic_intr_disestablish;
-#endif 
 	install_extint(ext_intr_openpic);
 
 #if 1
@@ -242,8 +231,8 @@ openpic_collect_preconf_intr()
 	}
 }
 
-static int
-abort_switch (void *arg)
+int
+abort_switch(void *arg)
 {
 #ifdef DDB
 	printf("Abort button pressed, entering debugger.\n");
@@ -254,15 +243,15 @@ abort_switch (void *arg)
 	return 1;
 }
 
-static int
-i8259_dummy (void *arg)
+int
+i8259_dummy(void *arg)
 {
 	return 1;
 }
 
-static int
+int
 fakeintr(arg)
-void *arg;
+	void *arg;
 {
 
 	return 0;
@@ -273,13 +262,13 @@ void *arg;
  */
 void *
 i8259_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
-void * lcv;
-int irq;
-int type;
-int level;
-int (*ih_fun)(void *);
-void *ih_arg;
-char *name;
+	void * lcv;
+	int irq;
+	int type;
+	int level;
+	int (*ih_fun)(void *);
+	void *ih_arg;
+	char *name;
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand;
@@ -293,9 +282,6 @@ char *name;
 #endif
 	isaintrs++;
 	irq = mapirq(irq + ICU_OFFSET);
-#if 0
-	printf("vI %d ", irq);
-#endif
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
@@ -316,8 +302,8 @@ char *name;
 	case IST_PULSE:
 		if (type != IST_NONE)
 			panic("intr_establish: can't share %s with %s",
-					intr_typename(intrtype[irq]),
-					intr_typename(type));
+			    intr_typename(intrtype[irq]),
+			    intr_typename(type));
 		break;
 	}
 
@@ -359,25 +345,21 @@ char *name;
  */
 void *
 openpic_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
-void * lcv;
-int irq;
-int type;
-int level;
-int (*ih_fun)(void *);
-void *ih_arg;
-char *name;
+	void * lcv;
+	int irq;
+	int type;
+	int level;
+	int (*ih_fun)(void *);
+	void *ih_arg;
+	char *name;
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand;
-	struct pci_route *pr;
+	const struct pci_route *pr;
 	extern int cold;
 
 	fakehand.ih_next = NULL;
 	fakehand.ih_fun  = fakeintr;
-
-#if 0
-	printf("mac_intr_establish, hI %d L %d ", irq, type);
-#endif
 
 	pr = pci_routes;
 	while (pr->pci !=0) {
@@ -386,9 +368,6 @@ char *name;
 	}
 
 	irq = mapirq(irq + PIC_OFFSET);
-#if 0
-	printf("vI %d ", irq);
-#endif
 
 	/* no point in sleeping unless someone can free memory. */
 	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
@@ -409,8 +388,8 @@ char *name;
 	case IST_PULSE:
 		if (type != IST_NONE)
 			panic("intr_establish: can't share %s with %s",
-					intr_typename(intrtype[irq]),
-					intr_typename(type));
+			   intr_typename(intrtype[irq]),
+			   intr_typename(type));
 		break;
 	}
 
@@ -451,8 +430,8 @@ char *name;
  */
 void
 openpic_intr_disestablish(lcp, arg)
-void *lcp;
-void *arg;
+	void *lcp;
+	void *arg;
 {
 	struct intrhand *ih = arg;
 	int irq = ih->ih_irq;
@@ -479,10 +458,9 @@ void *arg;
 		intrtype[irq] = IST_NONE;
 }
 
-
-static char *
+const char *
 intr_typename(type)
-int type;
+	int type;
 {
 
 	switch (type) {
@@ -494,10 +472,9 @@ int type;
 		return ("edge-triggered");
 	case IST_LEVEL:
 		return ("level-triggered");
+#ifdef DIAGNOSTIC
 	default:
 		panic("intr_typename: invalid type %d", type);
-#if 1 /* XXX */
-		return ("unknown");
 #endif
 	}
 }
@@ -508,7 +485,7 @@ int type;
  * would be faster, but the code would be nastier, and we don't expect this to
  * happen very much anyway.
  */
-static void
+void
 intr_calculatemasks()
 {
 	int irq, level;
@@ -582,12 +559,13 @@ intr_calculatemasks()
 	i8259_enable_irq(2, IST_EDGE);
 #endif 
 }
+
 /*
  * Map 64 irqs into 32 (bits).
  */
-static int
+int
 mapirq(irq)
-int irq;
+	int irq;
 {
 	int v;
 
@@ -684,7 +662,7 @@ openpic_do_pending_int()
 
 u_int
 openpic_read(reg)
-int reg;
+	int reg;
 {
 	char *addr = (void *)(openpic_base + reg);
 	
@@ -693,8 +671,8 @@ int reg;
 
 void
 openpic_write(reg, val)
-int reg;
-u_int val;
+	int reg;
+	u_int val;
 {
 	char *addr = (void *)(openpic_base + reg);
 
@@ -703,7 +681,7 @@ u_int val;
 
 void
 openpic_enable_irq_mask(irq_mask)
-int irq_mask;
+	int irq_mask;
 {
 	int irq;
 #ifdef OP_DEBUG
@@ -726,8 +704,8 @@ int irq_mask;
 
 void
 openpic_enable_irq(irq, type)
-int irq;
-int type;
+	int irq;
+	int type;
 {
 	u_int x;
 	/* skip invalid irqs */
@@ -768,7 +746,7 @@ int type;
 
 void
 openpic_disable_irq(irq)
-int irq;
+	int irq;
 {
 	u_int x;
 	/* skip invalid irqs */
@@ -809,7 +787,7 @@ i8259_set_irq_mask(void)
 
 void
 i8259_disable_irq(irq)
-int irq;
+	int irq;
 {
 	if (irq == -1)
 		return;
@@ -825,7 +803,7 @@ int irq;
 
 void 
 i8259_enable_irq(irq, type)
-int irq, type; 
+	int irq, type; 
 {
 	/* skip invalid irqs */
 	if (irq == -1)
@@ -854,7 +832,7 @@ int irq, type;
 
 void
 openpic_set_priority(cpu, pri)
-int cpu, pri;
+	int cpu, pri;
 {
 	u_int x;
 
@@ -866,20 +844,21 @@ int cpu, pri;
 
 int
 openpic_read_irq(cpu)
-int cpu;
+	int cpu;
 {
 	return openpic_read(OPENPIC_IACK(cpu)) & OPENPIC_VECTOR_MASK;
 }
 
 void
 openpic_eoi(cpu)
-int cpu;
+	int cpu;
 {
 	openpic_write(OPENPIC_EOI(cpu), 0);
 	openpic_read(OPENPIC_EOI(cpu));
 }
 
-void i8259_init(void)
+void
+i8259_init(void)
 {
 #if 0
 	/* initialize 8259's */
@@ -897,7 +876,8 @@ void i8259_init(void)
 #endif 
 }
 
-int i8259_intr(void)
+int
+i8259_intr(void)
 {
 	int irq;
 
@@ -991,7 +971,8 @@ ext_intr_openpic()
 	splx(pcpl);		 /* Process pendings. */
 }
 
-void openpic_set_vec_pri(int irq, int pri)
+void
+openpic_set_vec_pri(int irq, int pri)
 {
 	u_int x;
 	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
@@ -1000,7 +981,8 @@ void openpic_set_vec_pri(int irq, int pri)
 	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 }
 
-void openpic_initirq(int irq, int pri, int vec, int pol, int sense)
+void
+openpic_initirq(int irq, int pri, int vec, int pol, int sense)
 {
 	u_int x;
 	x = (vec & OPENPIC_VECTOR_MASK);
