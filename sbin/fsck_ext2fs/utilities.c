@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.10 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.11 2002/02/23 21:23:46 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.6 2001/02/04 21:19:34 christos Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ reply(question)
 	char *question;
 {
 	int persevere;
-	char c;
+	int c;
 
 	if (preen)
 		pfatal("INTERNAL ERROR: GOT TO reply()");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.14 2002/02/16 21:27:34 millert Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.15 2002/02/23 21:23:46 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.14 2002/02/16 21:27:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.15 2002/02/23 21:23:46 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ reply(question)
 	char *question;
 {
 	int persevere;
-	char c;
+	int c;
 
 	if (preen)
 		pfatal("INTERNAL ERROR: GOT TO reply()");
