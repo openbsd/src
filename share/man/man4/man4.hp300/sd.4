@@ -1,0 +1,156 @@
+.\"	$OpenBSD: sd.4,v 1.1 2002/10/01 07:12:30 miod Exp $
+.\"
+.\" Copyright (c) 1996
+.\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\"
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd January 18, 1996
+.Dt SD 4 hp300
+.Os
+.Sh NAME
+.Nm sd
+.Nd SCSI disk driver
+.Sh SYNOPSIS
+.Cd "sd* at oscsi? target ? lun ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for a
+.Tn SCSI
+disk.
+It allows the disk to be divided up into a set of pseudo devices called
+.Em partitions .
+.Pp
+When the
+.Tn SCSI
+adapter is probed during boot, the
+.Tn SCSI
+bus is scanned for devices.
+Any devices found which answer as
+.Sq Em Direct
+type devices will be attached to the
+.Nm
+driver.
+The devices will be attached as
+.Li sdN
+devices, matching their
+.Tn SCSI
+identifiers.
+For example, a disk with
+.Tn SCSI
+id set to 6 will attach as
+.Li sd6 .
+.Sh PARTITIONING
+.Xr disklabel 8
+is used to partition the drive into filesystems.
+.Sh IOCTLS
+The following
+.Xr ioctl 2
+calls apply to
+.Tn SCSI
+disks as well as to other disks.
+They are defined in the header file
+.Aq Pa sys/disklabel.h .
+.Pp
+.Bl -tag -width DIOCSDINFO
+.\".It Dv DIOCSBAD
+.\"Usually used to set up a bad-block mapping system on the disk.
+.\".Tn SCSI
+.\"drive incorporate their own bad-block mapping so this command is not
+.\"implemented.
+.It Dv DIOCGDINFO
+Read, from the kernel, the in-core copy of the disklabel for the
+drive.
+This may be a fictitious disklabel if the drive has never
+been initialized, in which case it will contain information read
+from the
+.Tn SCSI
+inquiry commands.
+.It Dv DIOCSDINFO
+Give the driver a new disklabel to use.
+The driver
+.Em will not
+write the new
+disklabel to the disk.
+.It Dv DIOCWLABEL
+Enable or disable the driver's software
+write protect of the disklabel on the disk.
+.It Dv DIOCWDINFO
+Give the driver a new disklabel to use.
+The driver
+.Em will
+write the new disklabel to the disk.
+.It Dv DIOCLOCK
+Lock the media cartridge into the device, or unlock a cartridge previously
+locked.
+Used to prevent user and software eject while the media is in use.
+.It Dv DIOCEJECT
+Eject the media cartridge from a removable device.
+.El
+.Pp
+In addition, the
+.Tn SCSI
+general
+.Fn ioctl
+commands may be used with the
+.Nm
+driver, but only against the
+.Sq Li c
+(whole disk) partition.
+.Sh NOTES
+If a removable device is attached to the
+.Nm
+driver, then the act of changing the media will invalidate the
+disklabel and information held within the kernel.
+To avoid corruption, all accesses to the device will be discarded until there
+are no more open file descriptors referencing the device.
+During this period, all new open attempts will be rejected.
+When no more open file descriptors reference the device, the first next 
+open will load a new set of parameters (including disklabel) for the drive.
+.Sh FILES
+.Bl -tag -width /dev/rsdXXXXX -compact
+.It Pa /dev/sd Ns Ar u Ns Ar p
+block mode
+.Tn SCSI
+disk unit
+.Ar u ,
+partition
+.Ar p
+.It Pa /dev/rsd Ns Ar u Ns Ar p
+raw mode
+.Tn SCSI
+disk unit
+.Ar u ,
+partition
+.Ar p
+.Sm off
+.El
+.Sh SEE ALSO
+.Xr ct 4 ,
+.Xr hd 4 ,
+.Xr intro 4 ,
+.\" .Xr oscsi 4 ,
+.Xr st 4 ,
+.Xr disklabel 5 ,
+.Xr disklabel 8

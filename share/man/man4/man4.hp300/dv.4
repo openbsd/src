@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dv.4,v 1.6 2001/11/13 13:54:26 mpech Exp $
+.\"	$OpenBSD: dv.4,v 1.7 2002/10/01 07:12:30 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,11 @@
 .Nm dv
 .Nd
 .Tn HP98730
-``DaVinci'' device interface
+``DaVinci'' frame buffer
+.Sh SYNOPSIS
+.Cd "dvbox* at intio?"
+.Cd "dvbox* at dio? scode ?"
+.Cd "grf* at dvbox?"
 .Sh DESCRIPTION
 This driver is for the
 .Tn HP98730
@@ -74,7 +78,7 @@ calls supported, refer to
 .Tn HP-UX
 manuals.
 The
-.Bx
+.Ox
 calls supported are:
 .Bl -tag -width indent
 .It Dv GRFIOCGINFO
@@ -83,7 +87,7 @@ Get Graphics Info
 Get info about device, setting the entries in the
 .Ar grfinfo
 structure, as defined in
-.Aq Pa hpdev/grfioctl.h .
+.Aq Pa machine/grfioctl.h .
 For the standard 98730, the number of planes should be 4.
 The number of colors would therefore be 15, excluding black.
 If one 98732A frame buffer board is installed, there will still be 4 planes, 
@@ -111,64 +115,51 @@ Map Device to user space
 Map in control registers and frame buffer space.
 Once the device file is mapped, the frame buffer structure is accessible.
 The structure describing the 98730 is defined in
-.Aq Pa hpdev/grf_dvreg.h .
+.Aq Pa machine/grf_dvreg.h .
+.El
+.Sh FILES
+.Bl -tag -width /dev/XXXX -compact
+.It Pa /dev/grf?
+.Ox
+special file
 .El
 .Sh EXAMPLES
 This is a short segment of code showing how the device is opened and mapped
 into user process address space assuming that it is
 .Ql grf0 :
-.Bd -literal -offset indent
+.Bd -literal
 struct dvboxfb *dvbox;
 u_char *Addr, frame_buffer;
 struct grfinfo gi;
 int disp_fd;
 
-disp_fd = open("/dev/grf0",1);
+disp_fd = open("/dev/grf0", O_WRONLY);
 
-if (ioctl (disp_fd, GRFIOCGINFO, &gi) < 0) return -1;
+if (ioctl(disp_fd, GRFIOCGINFO, &gi) < 0) return -1;
 
-(void) ioctl (disp_fd, GRFIOCON, 0);
+ioctl(disp_fd, GRFIOCON, 0);
 
-Addr = (u_char *) 0;
-if (ioctl (disp_fd, GRFIOCMAP, &Addr) < 0) {
-(void) ioctl (disp_fd, GRFIOCOFF, 0);
-return -1;
+if (ioctl(disp_fd, GRFIOCMAP, &Addr) < 0) {
+	ioctl(disp_fd, GRFIOCOFF, 0);
+	return -1;
 }
-dvbox = (dvboxfb *) Addr;                  /* Control Registers   */
-frame_buffer=(u_char *)Addr+gi.gd_regsize; /* Frame buffer memory */
+dvbox = (dvboxfb *)Addr;                  /* Control Registers   */
+frame_buffer = (u_char *)Addr + gi.gd_regsize; /* Frame buffer memory */
 .Ed
-.Sh FILES
-.Bl -tag -width /dev/MAKEDEV.hpux -compact
-.It Pa /dev/grf?
-.Bx
-special file
-.It Pa /dev/crt98730
-.It Pa /dev/ocrt98730
-.Tn HP-UX
-.Em starbase
-special files
-.It Pa /dev/MAKEDEV.hpux
-script for creating
-.Tn HP-UX
-special files
-.El
 .Sh DIAGNOSTICS
 None under
-.Bx .
+.Ox .
+The
 .Tn HP-UX
-.Tn CE.utilities
-must be used.
-.Sh ERRORS
-.Bl -tag -width [EINVAL]
-.It Bq Er ENODEV
-no such device.
-.It Bq Er EBUSY
-Another process has the device open.
-.It Bq Er EINVAL
-Invalid ioctl specification.
-.El
+.Tn CE.utilities/Crtadjust
+programs must be used.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr grf 4
+.Xr grf 4 ,
+.Xr gb 4 ,
+.\" .Xr hyper 4 ,
+.Xr intro 4 ,
+.Xr rb 4 ,
+.Xr tc 4
 .Sh BUGS
 Not tested for all configurations of scan board and frame buffer memory boards.

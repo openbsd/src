@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ite.4,v 1.4 2001/05/11 01:24:20 millert Exp $
+.\"	$OpenBSD: ite.4,v 1.5 2002/10/01 07:12:30 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,13 +45,16 @@
 .Nd
 .Tn HP
 Internal Terminal Emulator
+.Sh SYNOPSIS
+.Cd "ite* at grf?"
 .Sh DESCRIPTION
 .Tn TTY
-special files of the form ``ttye?''
+special files of the form
+.Pa /dev/ttye?
 are interfaces to the
 .Tn HP ITE
 for bit-mapped displays as implemented under
-.Bx .
+.Ox .
 An
 .Tn ITE
 is the main system console on most
@@ -95,16 +98,6 @@ device
 to use as the system console
 .Pq Pa /dev/console .
 If a display exists at any hardware address, it will be the console.
-The kernel looks for, in order:
-a 98544, 98545, or 98547 Topcat display,
-a 98700 Gatorbox at a supported address (see
-.Xr gb 4 ) ,
-or a 98720 Renaissance at a supported address (see
-.Xr rb 4 ) .
-Currently there is no
-.Tn ITE
-support for the
-98548, 98549, 98550 and 98556 boards.
 .Pp
 When activated as an
 .Tn ITE
@@ -149,19 +142,17 @@ that is, write over whatever may be on the
 display.
 When the graphics application is finished and
 .Pa /dev/grf0
-closed,
-the
+closed, the
 .Tn ITE
-will be reinitialized with the frame buffer cleared
-and the
+will be reinitialized with the frame buffer cleared and the
 .Tn ITE
 colormap installed.
-.Sh DIAGNOSTICS
-None under
-.Bx .
 .Sh SEE ALSO
+.Xr cons 4 ,
+.Xr dv 4 ,
 .Xr gb 4 ,
 .Xr grf 4 ,
 .Xr hil 4 ,
+.Xr intro 4 ,
 .Xr rb 4 ,
 .Xr tc 4

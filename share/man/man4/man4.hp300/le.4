@@ -1,4 +1,4 @@
-.\"	$OpenBSD: le.4,v 1.5 2001/11/13 13:54:26 mpech Exp $
+.\"	$OpenBSD: le.4,v 1.6 2002/10/01 07:12:30 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,25 +82,11 @@ by setting the
 flag with an
 .Dv SIOCSIFFLAGS
 .Xr ioctl 2 .
-.Sh DIAGNOSTICS
-.Bl -diag
-.It le%d: hardware address %s.
-This is a normal autoconfiguration message noting the 6 byte physical
-ethernet address of the adapter.
-.Pp
-.It de%d: can't handle af%d.
-The interface was handed
-a message with addresses formatted in an unsuitable address
-family; the packet was dropped.
-.Pp
-The following message indicates a possible hardware error performing
-the indicated operation during autoconfiguration or initialization.
-.Pp
-.It le%d: init timeout, stat = 0x%x.
-The hardware did not respond to an initialize command during reset.
-The reset procedure continues anyway.
-.El
 .Sh SEE ALSO
 .Xr arp 4 ,
+.Xr ifmedia 4 ,
 .Xr inet 4 ,
-.Xr intro 4
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8

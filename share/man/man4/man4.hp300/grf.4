@@ -1,4 +1,4 @@
-.\"	$OpenBSD: grf.4,v 1.6 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: grf.4,v 1.7 2002/10/01 07:12:30 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,6 +45,14 @@
 .Nd
 .Tn HP
 graphics frame buffer device interface
+.Sh SYNOPSIS
+.Cd "grf* at dvbox?"
+.Cd "grf* at gbox?"
+.Cd "grf* at hyper?"
+.Cd "grf* at rbox?"
+.Cd "grf* at topcat?"
+.Pp
+.Cd "ite* at grf?"
 .Sh DESCRIPTION
 This is a generic description of the frame buffer device interface.
 The devices to which this applies are the 98544, 98545 and 98547
@@ -60,38 +68,6 @@ Renaissance graphics box,
 and the 98730
 DaVinci graphics box.
 .Pp
-Use of the devices can be effectively approached from two directions.
-The first is through
-.Tn HP-UX
-.Em Starbase
-routines, the second is by direct control in the
-.Bx
-environment.
-In order to use the Starbase libraries,
-code must be compiled in an
-.Tn HP-UX
-environment, either by doing so on an
-.Tn HP-UX
-machine and transferring the binaries to the
-.Bx
-machine, or by compilation
-with the use of the
-.Xr hpux 1
-command.
-Applications using Starbase libraries have been run successfully
-on
-.Bx
-machines using both of these compilation techniques.
-.Pp
-Direct compilation,
-such as that used for the X Window System servers, has also been successful.
-Examples of some frame buffer operations can be found in
-the device dependent X Window system sources, for example the
-.Pa /usr/src/new/X/libhp.fb
-directory.
-These files contain examples of device dependent color map initialization, 
-frame buffer operations, bit moving routines etc.
-.Pp
 The basic programming of the
 .Nm grf Ns ?
 devices involves opening the device
@@ -101,7 +77,7 @@ The address mapping is controlled by an
 .Xr ioctl 2
 call to map the device into user space, and an unmap call when finished.
 The ioctls supported by
-.Bx
+.Ox
 are:
 .Bl -tag -width indent
 .It Dv GRFIOCGINFO
@@ -109,7 +85,8 @@ Get Graphics Info
 .Pp
 Get info about device, setting the entries in the
 .Em grfinfo
-structure, as defined in <hpdev/grfioctl.h>:
+structure, as defined in
+.Aq Pa machine/grfioctl.h :
 .Bd -literal
 struct	grfinfo {
 	int	gd_id;		/* HPUX identifier */
@@ -145,69 +122,58 @@ are not affected.
 .It Dv GRFIOCMAP
 Map Device to user space
 .Pp
-Map in control registers and framebuffer space.
+Map in control registers and frame buffer space.
 Once the device file is mapped, the frame buffer structure is accessible.
 .It Dv GRFIOCUNMAP
 Unmap Device
 .Pp
-Unmap control registers and framebuffer space.
+Unmap control registers and frame buffer space.
 .El
 .Pp
 For further information about the use of ioctl see the man page.
+.Sh FILES
+.Bl -tag -width /dev/XXXX -compact
+.It Pa /dev/grf?
+.Ox
+interface special files
+.El
 .Sh EXAMPLES
 This short code fragment is an example of opening some graphics device and
 mapping in the control and frame buffer space:
 .Bd -literal
 #define GRF_DEV <some_graphics_device>  /* /dev/grfN */
-{
-	struct fbstruct *regs;  /*  fbstruct = gboxfb, rboxfb, etc. */
-	u_char *Addr, frame_buffer;
-	struct grfinfo gi;
-	int disp_fd;
 
-	disp_fd = open(GRF_DEV,1);
-	if (ioctl (disp_fd, GRFIOCGINFO, &gi) < 0) return -1;
-	(void) ioctl (disp_fd, GRFIOCON, 0);
+struct fbstruct *regs;  /*  fbstruct = gboxfb, rboxfb, etc. */
+u_char *Addr, frame_buffer;
+struct grfinfo gi;
+int disp_fd;
 
-	Addr = (u_char *) 0;
-	if (ioctl (disp_fd, GRFIOCMAP, &Addr) < 0) {
-		(void) ioctl (disp_fd, GRFIOCOFF, 0);
-		return -1;
-	}
-	regs = (fbstruct *) Addr;               /* Control Registers   */
-	frame_buffer = (u_char *) Addr + gi.gd_regsize; /* Frame buffer mem */
+disp_fd = open(GRF_DEV, O_WRONLY);
+if (ioctl(disp_fd, GRFIOCGINFO, &gi) < 0) return -1;
+ioctl(disp_fd, GRFIOCON, 0);
+
+if (ioctl(disp_fd, GRFIOCMAP, &Addr) < 0) {
+	ioctl(disp_fd, GRFIOCOFF, 0);
+	return -1;
 }
+regs = (fbstruct *)Addr;               /* Control Registers   */
+frame_buffer = (u_char *)Addr + gi.gd_regsize; /* Frame buffer mem */
 .Ed
-.Sh FILES
-.Bl -tag -width /dev/*crt*? -compact
-.It Pa /dev/grf?
-.Bx
-interface special files
-.It Pa /dev/*crt*
-.Tn HP-UX
-.Em starbase
-interface special files
-.El
 .Sh DIAGNOSTICS
 None under
-.Bx .
+.Ox .
 .Tn HP-UX
 The
 .Tn CE.utilities/Crtadjust
 programs must be used for each specific device.
-.Sh ERRORS
-.Bl -tag -width [EINVAL]
-.It Bq Er ENODEV
-no such device.
-.It Bq Er EBUSY
-Another process has the device open.
-.It Bq Er EINVAL
-Invalid ioctl specification.
-.El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
+.Xr cons 4 ,
 .Xr dv 4 ,
 .Xr gb 4 ,
 .Xr hil 4 ,
+.\" .Xr hyper 4 ,
+.Xr intro 4 ,
+.Xr ite 4 ,
 .Xr rb 4 ,
 .Xr tc 4

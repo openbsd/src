@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tc.4,v 1.7 2001/11/13 13:54:26 mpech Exp $
+.\"	$OpenBSD: tc.4,v 1.8 2002/10/01 07:12:30 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Nm tc
 .Nd
 .Tn HP98544
-98550 ``Topcat'' and ``Catseye'' device interface
+98550 ``Topcat'' and ``Catseye'' frame buffer
 .Sh DESCRIPTION
 This driver is for the
 .Tn HP98544 ,
@@ -73,7 +73,7 @@ The device can also be used as a graphics output device.
 The
 .Xr ioctl 2
 calls supported by the
-.Bx
+.Ox
 system for the Topcat are:
 .Bl -tag -width GRFIOCGINFO
 .It Dv GRFIOCGINFO
@@ -82,7 +82,7 @@ Get Graphics Info
 Get info about device, setting the entries in the
 .Ar grfinfo
 structure, as defined in
-.Aq Pa hpdev/grfioctl.h .
+.Aq Pa machine/grfioctl.h .
 For the 98544 or 98549,
 the number of planes should be 1, as they are monochrome devices.
 The number of planes for a 98545 is 4, translating to 15 colors,
@@ -109,73 +109,54 @@ are not affected.
 .It Dv GRFIOCMAP
 Map Device to user space
 .Pp
-Map in control registers and framebuffer space.
+Map in control registers and frame buffer space.
 Once the device file is mapped, the frame buffer structure is accessible.
 The frame buffer structure describing Topcat/Catseye devices is defined in
-.Aq Pa hpdev/grf_tcreg.h .
+.Aq Pa machine/grf_tcreg.h .
 .El
 .Pp
 For further information about the use of
 .Xr ioctl 2
 see the man page.
+.Sh FILES
+.Bl -tag -width /dev/XXXX -compact
+.It Pa /dev/grf?
+.Ox
+special file
+.El
 .Sh EXAMPLES
 A small example of opening, mapping and using the device is given below.
-For more examples of the details on the behavior of the device, see the device
-dependent source files for the X Window System, in the
-.Pa /usr/src/new/X/libhp
-directory.
 .Bd -literal
 struct tcboxfb *tc;
 u_char *Addr, frame_buffer;
 struct grfinfo gi;
 int disp_fd;
 
-disp_fd = open("/dev/grf0",1);
+disp_fd = open("/dev/grf0", O_WRONLY);
 
-if (ioctl (disp_fd, GRFIOCGINFO, &gi) < 0) return -1;
+if (ioctl(disp_fd, GRFIOCGINFO, &gi) < 0) return -1;
 
-(void) ioctl (disp_fd, GRFIOCON, 0);
+ioctl(disp_fd, GRFIOCON, 0);
 
-Addr = (u_char *) 0;
-if (ioctl (disp_fd, GRFIOCMAP, &Addr) < 0) {
-	(void) ioctl (disp_fd, GRFIOCOFF, 0);
+if (ioctl(disp_fd, GRFIOCMAP, &Addr) < 0) {
+	ioctl(disp_fd, GRFIOCOFF, 0);
 	return -1;
 }
-tc = (tcboxfb *) Addr;                          /* Control Registers   */
-frame_buffer = (u_char *) Addr + gi.gd_regsize; /* Frame buffer memory */
+tc = (tcboxfb *)Addr;                          /* Control Registers   */
+frame_buffer = (u_char *)Addr + gi.gd_regsize; /* Frame buffer memory */
 .Ed
-.Sh FILES
-.Bl -tag -width /dev/MAKEDEV.hpux -compact
-.It Pa /dev/grf?
-.Bx
-special file
-.It Pa /dev/crt9837
-.It Pa /dev/crt98550
-.Tn HP-UX
-.Em starbase
-special files
-.It Pa /dev/MAKEDEV.hpux
-script for creating
-.Tn HP-UX
-special files
-.El
 .Sh DIAGNOSTICS
 None under
-.Bx .
+.Ox .
+The
 .Tn HP-UX
-.Tn /usr/CE.utilities/Crtadjust
+.Tn CE.utilities/Crtadjust
 programs must be used.
-.Sh ERRORS
-.Bl -tag -width [EINVAL]
-.It Bq Er ENODEV
-no such device.
-.It Bq Er EBUSY
-Another process has the device open.
-.It Bq Er EINVAL
-Invalid
-.Xr ioctl 2
-specification.
-.El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr grf 4
+.Xr dv 4 ,
+.Xr gb 4 ,
+.Xr grf 4 ,
+.\" .Xr hyper 4 ,
+.Xr intro 4 ,
+.Xr rb 4

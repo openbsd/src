@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.10 2002/03/29 22:46:00 jason Exp $
+.\"	$OpenBSD: intro.4,v 1.11 2002/10/01 07:12:30 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -109,43 +109,69 @@ for example, new
 drives.
 .Pp
 .Bl -tag -width hpib(4) -compact -offset indent
+.It Xr apci 4
+Apollo utility chip serial interface.
 .It Xr ct 4
 7946/9144 CS/80 cartridge tape.
 .It Xr dca 4
 98644 built-in serial interface.
 .It Xr dcm 4
 HP 98642A communications multiplexer.
-.It Xr dma 4
-98620B DMA controller.
+.\" .It Xr dio 4
+.\" DIO/DIO-II bus.
 .It Xr dv 4
-HP98730 ``DaVinci'' device interface.
+HP98730 ``DaVinci'' frame buffer.
 .It Xr gb 4
-HP98700 ``Gatorbox'' device interface.
+HP98700 ``Gatorbox'' frame buffer.
 .It Xr grf 4
 Topcat/Gatorbox/Renaissance frame buffer.
+.It Xr hd 4
+CS/80 disk interface.
 .It Xr hil 4
 HIL interface.
-.It Xr hpib 4
-Built-in and 98625 HP-IB interface.
+.\" .It Xr hpib 4
+.\" Built-in and 98625 HP-IB interface.
+.\" .It Xr hyper 4
+.\" Hyperion frame buffer.
 .It Xr ite 4
 HP Internal Terminal Emulator.
 .It Xr le 4
 98643 Lance-based ethernet interface.
+.\" .It Xr oscsi
+.\" Old HP300 SCSI driver.
 .It Xr ppi 4
 HP-IB printer/plotter interface.
 .It Xr rb 4
 HP98720 ``Renaissance'' device interface.
-.It Xr rd 4
-CS/80 disk interface.
-.It Xr rmp 4
-HP Remote Maintenance Protocol family.
+.It Xr sd 4
+SCSI disk drives.
 .It Xr st 4
-CCS SCSI tape drive.
+CCS SCSI tape drives.
 .It Xr tc 4
 HP98544-98550 ``Topcat'' and ``Catseye'' device interface.
 .El
 .Sh SEE ALSO
+.Xr apci 4 ,
 .Xr autoconf 4 ,
+.Xr ct 4 ,
+.Xr dca 4 ,
+.Xr dcm 4 ,
+.\" .Xr dio 4 ,
+.Xr dv 4 ,
+.Xr gb 4 ,
+.Xr grf 4 ,
+.Xr hd 4 ,
+.Xr hil 4 ,
+.\" .Xr hpib 4 ,
+.\" .Xr hyper 4 ,
+.Xr ite 4 ,
+.Xr le 4 ,
+.\" .Xr oscsi 4 ,
+.Xr ppi 4 ,
+.Xr rb 4 ,
+.Xr sd 4 ,
+.Xr st 4 ,
+.Xr tc 4 ,
 .Xr config 8
 .Sh HISTORY
 The

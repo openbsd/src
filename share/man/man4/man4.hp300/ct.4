@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ct.4,v 1.6 2001/11/13 13:54:26 mpech Exp $
+.\"	$OpenBSD: ct.4,v 1.7 2002/10/01 07:12:30 miod Exp $
 .\
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -100,9 +100,11 @@ through
 refer to streaming no-rewind interfaces.
 .Sh SEE ALSO
 .Xr mt 1 ,
-.Xr tar 1 ,
-.Xr tp 1 ,
-.Xr mtio 4
+.Xr hd 4 ,
+.Xr intro 4 ,
+.Xr mtio 4 ,
+.Xr sd 4 ,
+.Xr st 4
 .Sh BUGS
 Read and writes of less than 1024 bytes will not behave as expected.
 The 9145 device is currently treated as a 9144.

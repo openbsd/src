@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hil.4,v 1.8 2002/06/30 21:45:25 deraadt Exp $
+.\"	$OpenBSD: hil.4,v 1.9 2002/10/01 07:12:30 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -157,7 +157,7 @@ is used to control the
 .Tn HIL
 device.
 The ioctl commands (see
-.Aq Pa hpdev/hilioctl.h )
+.Aq Pa machine/hilioctl.h )
 listed below are separated into two groups.
 The first are those which provide functions identical to
 .Tn HP-UX .
@@ -268,12 +268,12 @@ Allocate and map into user space,
 an
 .Tn HILQ
 structure as defined in
-.Aq Pa hpdev/hilioctl.h .
+.Aq Pa machine/hilioctl.h .
 .Ar Arg
 is a pointer to a
 .Ar hilqinfo
 structure (also described in
-.Aq Pa hpdev/hilioctl.h )
+.Aq Pa machine/hilioctl.h )
 consisting of a
 .Pa qid
 and an
@@ -356,23 +356,7 @@ Individual
 .Tn HIL
 loop devices.
 .El
-.Sh ERRORS
-.Bl -tag -width [EINVAL]
-.It Bq Er ENODEV
-no such HIL loop device.
-.It Bq Er ENXIO
-HIL loop is inoperative.
-.It Bq Er EBUSY
-Another HP-UX process has the device open, or another
-.Bx
-process has the
-device open, and is using it in
-.Tn HP-UX
-mode.
-.It Bq Er EINVAL
-Invalid
-.Xr ioctl 2
-specification.
-.It Bq Er EMFILE
-No more shared queues available.
-.El
+.Sh SEE ALSO
+.Xr ioctl 2 ,
+.Xr intro 4 ,
+.Xr ite 4

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hd.4,v 1.3 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: hd.4,v 1.4 2002/10/01 07:12:30 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,14 +57,6 @@ drives are supported,
 but others can easily be added by adding tables to the driver.
 It is a typical block-device driver; see
 .Xr physio 9 .
-.Pp
-The script
-.Xr MAKEDEV 8
-should be used to create the
-.Nm hd
-special files; consult
-.Xr mknod 8
-if a special file needs to be made manually.
 .Sh DISK SUPPORT
 The driver interrogates the controller
 to determine the type of drive attached.
@@ -93,7 +85,8 @@ to
 which also corresponds to a minor device number sets: zero to seven,
 eight to 15, 16 to 23 and so forth for drive zero, drive two and drive
 three respectively
-(see physio 9 ) .
+(see
+.Xr physio 9 ) .
 The location and size (in sectors) of the
 partitions for these drives:
 .Bl -column header diskx undefined length
@@ -286,10 +279,10 @@ The final layout is intended for a large, single file system second disk.
 It is also used when writing out the boot program since it is the only
 partition mapping the bootblock area.
 .Sh FILES
-.Bl -tag -width /dev/rhd[0-7][a-h] -compact
-.It Pa /dev/hd[0-7][a-h]
+.Bl -tag -width /dev/rhd[0-7][a-p] -compact
+.It Pa /dev/hd[0-7][a-p]
 block files
-.It Pa /dev/rhd[0-7][a-h]
+.It Pa /dev/rhd[0-7][a-p]
 raw files
 .El
 .Sh DIAGNOSTICS
@@ -298,6 +291,11 @@ raw files
 An unrecoverable data error occurred during transfer of the
 specified block on the specified disk.
 .El
+.Sh SEE ALSO
+.Xr ct 4 ,
+.Xr intro 4 ,
+.Xr sd 4 ,
+.Xr st 4
 .Sh BUGS
 The current disk partitioning is totally bogus.
 .Tn CS/80

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dca.4,v 1.5 2001/09/23 05:55:25 millert Exp $
+.\"	$OpenBSD: dca.4,v 1.6 2002/10/01 07:12:30 miod Exp $
 .\
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,8 @@
 .Tn HP 98644A
 serial communications interface
 .Sh SYNOPSIS
-.Cd "dca0 at dio? scode 9 flags 1"
+.Cd "dca0 at dio? scode 9 flags 1" Pq "on-board serial interfaces"
+.Cd "dca* at dio? scode ?"
 .Sh DESCRIPTION
 The
 .Tn 98644A
@@ -68,8 +69,8 @@ may be set to 1 if the line should be treated as hard-wired
 with carrier always present or 0 if modem control is desired.
 .Sh FILES
 .Bl -tag -width Pa
-.It Pa /dev/tty0
-.It Pa /dev/cua0
+.It Pa /dev/tty[0-3]
+.It Pa /dev/cua[0-3]
 .El
 .Sh DIAGNOSTICS
 .Bl -diag
@@ -79,10 +80,13 @@ The single-character input
 has overflowed and incoming data has been lost.
 .El
 .Sh SEE ALSO
+.Xr apci 4 ,
+.Xr dcm 4 ,
+.Xr intro 4 ,
 .Xr tty 4
 .Sh BUGS
 Data loss is possible on busy systems with baud rates greater than 300.
 The
-.Nm dca
+.Nm
 has never been tested with modem control enabled or on anything but the
 built-in interface.

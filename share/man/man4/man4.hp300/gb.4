@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gb.4,v 1.5 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: gb.4,v 1.6 2002/10/01 07:12:30 miod Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,11 @@
 .Nm gb
 .Nd
 .Tn HP98700
-``Gatorbox'' device interface
+``Gatorbox'' frame buffer
+.Sh SYNOPSIS
+.Cd "gbox* at intio?"
+.Cd "gbox* at dio? scode ?"
+.Cd "grf* at gbox?"
 .Sh DESCRIPTION
 This driver is for the
 .Tn HP98700
@@ -87,7 +91,7 @@ contains further configuration information.
 The
 .Xr ioctl 2
 calls supported by the
-.Bx
+.Ox
 system for the Gatorbox are:
 .Bl -tag -width indent
 .It Dv GRFIOCGINFO
@@ -96,7 +100,7 @@ Get Graphics Info
 Get info about device, setting the entries in the
 .Em grfinfo
 structure, as defined in
-.Aq Pa hpdev/grfioctl.h .
+.Aq Pa machine/grfioctl.h .
 For the standard 98700, the number of planes should be 4.
 The number of colors would therefore be 15, excluding black.
 With the 98701 option installed there will be another 4 planes for a total of 8,
@@ -119,70 +123,57 @@ are not affected.
 .It Dv GRFIOCMAP
 Map Device to user space
 .Pp
-Map in control registers and framebuffer space.
+Map in control registers and frame buffer space.
 Once the device file is mapped, the frame buffer structure is accessible.
 The frame buffer structure describing the 98700
 is given in
-.Aq Pa hpdev/grf_gbreg.h .
+.Aq Pa machine/grf_gbreg.h .
 .It Dv GRFIOCUNMAP
 Unmap Device
 .Pp
-Unmap control registers and framebuffer space.
+Unmap control registers and frame buffer space.
 .Pp
 For further information about the use of ioctl see the man page.
 .El
+.Sh FILES
+.Bl -tag -width /dev/XXXX -compact
+.It Pa /dev/grf?
+.Ox
+special file
+.El
 .Sh EXAMPLES
 A small example of opening, mapping and using the device is given below.
-For more examples of the details on the behavior of the device, see the device
-dependent source files for the X Window System, in the
-.Pa /usr/src/new/X/libhp.fb
-directory.
-.Bd -literal -offset indent
+.Bd -literal
 struct gboxfb *gbox;
 u_char *Addr, frame_buffer;
 struct grfinfo gi;
 int disp_fd;
 
-disp_fd = open("/dev/grf0",1);
+disp_fd = open("/dev/grf0", O_WRONLY);
 
-if (ioctl (disp_fd, GRFIOCGINFO, &gi) < 0) return -1;
+if (ioctl(disp_fd, GRFIOCGINFO, &gi) < 0) return -1;
 
-(void) ioctl (disp_fd, GRFIOCON, 0);
+ioctl(disp_fd, GRFIOCON, 0);
 
-Addr = (u_char *) 0;
-if (ioctl (disp_fd, GRFIOCMAP, &Addr) < 0) {
-(void) ioctl (disp_fd, GRFIOCOFF, 0);
-return -1;
+if (ioctl(disp_fd, GRFIOCMAP, &Addr) < 0) {
+	ioctl (disp_fd, GRFIOCOFF, 0);
+	return -1;
 }
-gbox = (gboxfb *) Addr;                         /* Control Registers   */
-frame_buffer = (u_char *) Addr + gi.gd_regsize; /* Frame buffer memory */
+gbox = (gboxfb *)Addr;                         /* Control Registers   */
+frame_buffer = (u_char *)Addr + gi.gd_regsize; /* Frame buffer memory */
 .Ed
-.Sh FILES
-.Bl -tag -width /dev/crt98700 -compact
-.It Pa /dev/grf?
-.Bx
-special file
-.It Pa /dev/crt98700
-.Tn HP-UX
-.Em starbase
-special file
-.El
 .Sh DIAGNOSTICS
 None under
-.Bx .
-.Tn HP-UX
+.Ox .
 The
+.Tn HP-UX
 .Tn CE.utilities/Crtadjust
 programs must be used.
-.Sh ERRORS
-.Bl -tag -width [EINVAL]
-.It Bq Er ENODEV
-no such device.
-.It Bq Er EBUSY
-Another process has the device open.
-.It Bq Er EINVAL
-Invalid ioctl specification.
-.El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr grf 4
+.Xr dv 4 ,
+.Xr grf 4 ,
+.\" .Xr hyper 4 ,
+.Xr intro 4 ,
+.Xr rb 4 ,
+.Xr tc 4
