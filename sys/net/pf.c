@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.349 2003/05/13 17:45:23 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.350 2003/05/14 04:51:10 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -181,7 +181,8 @@ void			*pf_pull_hdr(struct mbuf *, int, void *, int,
 void			 pf_calc_skip_steps(struct pf_rulequeue *);
 void			 pf_rule_set_qid(struct pf_rulequeue *);
 u_int32_t		 pf_qname_to_qid(char *);
-int			 pf_match_tag(struct mbuf *, struct pf_rule *);
+int			 pf_match_tag(struct mbuf *, struct pf_rule *,
+			     struct pf_rule *);
 
 #ifdef INET6
 void			 pf_poolmask(struct pf_addr *, struct pf_addr*,
@@ -1346,10 +1347,13 @@ pf_match_gid(u_int8_t op, gid_t a1, gid_t a2, gid_t g)
 }
 
 int
-pf_match_tag(struct mbuf *m, struct pf_rule *r)
+pf_match_tag(struct mbuf *m, struct pf_rule *r, struct pf_rule *nat)
 {
 	struct m_tag	*mtag;
 	struct pf_tag	*pftag;
+
+	if (nat != NULL && nat->tag == r->match_tag)
+		return (1);
 
 	if ((mtag = m_tag_find(m, PACKET_TAG_PF_TAG, NULL)) != NULL) {
 		pftag = (struct pf_tag *)(mtag + 1);
@@ -2028,7 +2032,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r))
+		else if (r->match_tag && !pf_match_tag(m, r, nat))
 			r = TAILQ_NEXT(r, entries);
 		else {
 			if (r->anchor == NULL) {
@@ -2288,7 +2292,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		    !pf_match_gid(r->gid.op, r->gid.gid[0], r->gid.gid[1],
 		    gid))
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r))
+		else if (r->match_tag && !pf_match_tag(m, r, nat))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
@@ -2546,7 +2550,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r))
+		else if (r->match_tag && !pf_match_tag(m, r, nat))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
@@ -2742,7 +2746,7 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 			r = TAILQ_NEXT(r, entries);
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r))
+		else if (r->match_tag && !pf_match_tag(m, r, nat))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
@@ -2915,7 +2919,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 		else if (r->src.port_op || r->dst.port_op ||
 		    r->flagset || r->type || r->code)
 			r = TAILQ_NEXT(r, entries);
-		else if (r->match_tag && !pf_match_tag(m, r))
+		else if (r->match_tag && !pf_match_tag(m, r, NULL))
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
