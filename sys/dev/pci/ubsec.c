@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.27 2000/08/15 17:27:56 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.28 2000/08/15 17:39:19 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -653,10 +653,9 @@ ubsec_process(crp)
 		} else {
 			q->q_ctx.pc_flags |= UBS_PKTCTX_INBOUND;
 
-			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT) {
-				q->q_ctx.pc_iv[0] = enccrd->crd_iv[0];
-				q->q_ctx.pc_iv[1] = enccrd->crd_iv[1];
-			} else
+			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
+				bcopy(enccrd->crd_iv, &q->q_ctx.pc_iv[0], 8);
+			else
 				m_copydata(q->q_src_m, enccrd->crd_inject,
 				    8, (caddr_t)&q->q_ctx.pc_iv[0]);
 		}
