@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.3 2003/02/13 21:42:45 mickey Exp $
+#	$OpenBSD: list,v 1.4 2003/10/01 22:01:28 miod Exp $
 
 # hppa extra's
 LINK	instbin				sbin/disklabel
@@ -28,4 +28,3 @@ TERMCAP	vt100,vt220,dumb,hp2392,hpansi,hpsub,hpex,hp700-wy,hp70092		usr/share/mi
 
 # and the installation tools (no upgrade from to 3.3)
 SCRIPT	${ARCHDIR}/install.md		install.md
-REMOVE	upgrade
