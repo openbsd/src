@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.17 1996/12/08 14:25:52 niklas Exp $	*/
+/*	$OpenBSD: systm.h,v 1.18 1997/01/14 02:25:20 kstailey Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -238,7 +238,7 @@ int (*mountroot) __P((void));
 
 #include <lib/libkern/libkern.h>
 
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 /* debugger entry points */
 void	Debugger __P((void));	/* in DDB only */
 int	read_symtab_from_file __P((struct proc *,struct vnode *,const char *));
