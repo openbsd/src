@@ -91,7 +91,6 @@ scc0		at ioasic?
 le0		at ioasic?		# tc onboard lance
 scc1		at ioasic?		# not present on maxine
 # the scsi busses
-oldscsibus*	at sii?
 oldscsibus*	at asc?
 # scsi configuration for old 4.4bsd/pmax decstation scsi driver
 rz0		at oldscsibus? target ? drive ?

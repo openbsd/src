@@ -90,7 +90,6 @@ dc0		at mainbus0
 le0		at tc?			# tc ether "option" on baseboard
 asc0		at tc?			# tc scsi  "option" on baseboard
 # the scsi busses
-oldscsibus*	at sii?
 oldscsibus*	at asc?
 # scsi configuration for old 4.4bsd/pmax decstation scsi driver
 rz0		at oldscsibus? target ? drive ?

@@ -95,7 +95,6 @@ scc1		at ioasic?		# not present on maxine
 xcfb0		at tc?			# tc framebuffer "option"
 dtop0		at ioasic0		# destop bus,  lk501 kbd,  mouse
 # the scsi busses
-oldscsibus*	at sii?
 oldscsibus*	at asc?
 # scsi configuration for old 4.4bsd/pmax decstation scsi driver
 rz0		at oldscsibus? target ? drive ?

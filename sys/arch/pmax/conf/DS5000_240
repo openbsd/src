@@ -92,7 +92,6 @@ asc0		at tc?			# tc scsi  "option" on baseboard
 # for now, pretend this machine has an ioasic
 dc0		at ioasic?		# dc7083 four-port dz device
 # the scsi busses
-oldscsibus*	at sii?
 oldscsibus*	at asc?
 # scsi configuration for old 4.4bsd/pmax decstation scsi driver
 rz0		at oldscsibus? target ? drive ?

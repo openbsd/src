@@ -84,7 +84,6 @@ le*		at mainbus0		# 3100 onboard lance
 sii0		at mainbus0		# onboard scsi
 # the scsi busses
 oldscsibus*	at sii?
-oldscsibus*	at asc?
 # scsi configuration for old 4.4bsd/pmax decstation scsi driver
 rz0		at oldscsibus? target ? drive ?
 rz1		at oldscsibus? target ? drive ?
