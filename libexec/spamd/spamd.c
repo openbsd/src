@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.66 2004/04/03 01:37:18 dhartmei Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.67 2004/06/21 17:05:43 itojun Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -55,7 +55,7 @@ struct con {
 	int state;
 	int laststate;
 	int af;
-	struct sockaddr_in sin;
+	struct sockaddr_storage ss;
 	void *ia;
 	char addr[32];
 	char mail[MAX_MAIL], rcpt[MAX_MAIL];
@@ -94,7 +94,7 @@ int      append_error_string (struct con *, size_t, char *, int, void *);
 void     build_reply(struct  con *);
 void     doreply(struct con *);
 void     setlog(char *, size_t, char *);
-void     initcon(struct con *, int, struct sockaddr_in *);
+void     initcon(struct con *, int, struct sockaddr *);
 void     closecon(struct con *);
 int      match(const char *, const char *);
 void     nextstate(struct con *);
@@ -528,10 +528,11 @@ setlog(char *p, size_t len, char *f)
 }
 
 void
-initcon(struct con *cp, int fd, struct sockaddr_in *sin)
+initcon(struct con *cp, int fd, struct sockaddr *sa)
 {
 	time_t t;
 	char *tmp;
+	int error;
 
 	time(&t);
 	free(cp->obuf);
@@ -545,12 +546,19 @@ initcon(struct con *cp, int fd, struct sockaddr_in *sin)
 	if (grow_obuf(cp, 0) == NULL)
 		err(1, "malloc");
 	cp->fd = fd;
-	memcpy(&cp->sin, sin, sizeof(struct sockaddr_in));
-	cp->af = sin->sin_family;
-	cp->ia = (void *) &cp->sin.sin_addr;
+	if (sa->sa_len > sizeof(cp->ss))
+		errx(1, "sockaddr size");
+	if (sa->sa_family != AF_INET)
+		errx(1, "not supported yet");
+	memcpy(&cp->ss, sa, sa->sa_len);
+	cp->af = sa->sa_family;
+	cp->ia = &((struct sockaddr_in *)sa)->sin_addr;
 	cp->blacklists = sdl_lookup(blacklists, cp->af, cp->ia);
 	cp->stutter = (greylist && cp->blacklists == NULL) ? 0 : stutter;
-	strlcpy(cp->addr, inet_ntoa(sin->sin_addr), sizeof(cp->addr));
+	error = getnameinfo(sa, sa->sa_len, cp->addr, sizeof(cp->addr), NULL, 0,
+	    NI_NUMERICHOST);
+	if (error)
+		errx(1, "%s", gai_strerror(error));
 	tmp = strdup(ctime(&t));
 	if (tmp == NULL)
 		err(1, "malloc");
@@ -1194,7 +1202,7 @@ jail:
 			if (i == maxcon)
 				close(s2);
 			else {
-				initcon(&con[i], s2, &sin);
+				initcon(&con[i], s2, (struct sockaddr *)&sin);
 				syslog_r(LOG_INFO, &sdata,
 				    "%s: connected (%d/%d)%s%s",
 				    con[i].addr, clients, blackcount,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.12 2004/03/13 17:46:15 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.13 2004/06/21 17:05:43 itojun Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#include <netdb.h>
 
 #include "grey.h"
 
@@ -149,10 +150,14 @@ freewhiteaddr(void)
 int
 addwhiteaddr(char *addr)
 {
-	struct in_addr	ia;
-	struct in6_addr	ia6;
+	struct addrinfo hints, *res;
 
-	if (inet_pton(AF_INET, addr, &ia) == 1) {
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_DGRAM;		/*dummy*/
+	hints.ai_protocol = IPPROTO_UDP;	/*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
+
+	if (getaddrinfo(addr, NULL, &hints, &res) == 0) {
 		if (whitecount == whitealloc) {
 			char **tmp;
 
@@ -167,9 +172,7 @@ addwhiteaddr(char *addr)
 		if (whitelist[whitecount] == NULL)
 			return(-1);
 		whitecount++;
-	} else if (inet_pton(AF_INET6, addr, &ia6) == 1) {
-		/* XXX deal with v6 later */
-		return(-1);
+		freeaddrinfo(res);
 	} else
 		return(-1);
 	return(0);
@@ -368,7 +371,12 @@ greyreader(void)
 	char ip[32], from[MAX_MAIL], to[MAX_MAIL], *buf;
 	size_t len;
 	int state;
-	struct in_addr ia;
+	struct addrinfo hints, *res;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_DGRAM;		/*dummy*/
+	hints.ai_protocol = IPPROTO_UDP;	/*dummy*/
+	hints.ai_flags = AI_NUMERICHOST;
 
 	state = 0;
 	if (grey == NULL) {
@@ -389,9 +397,10 @@ greyreader(void)
 			if (strncmp(buf, "IP:", 3) != 0)
 				break;
 			strlcpy(ip, buf+3, sizeof(ip));
-			if (inet_pton(AF_INET, ip, &ia) == 1)
+			if (getaddrinfo(ip, NULL, &hints, &res) == 0) {
+				freeaddrinfo(res);
 				state = 1;
-			else
+			} else
 				state = 0;
 			break;
 		case 1:
