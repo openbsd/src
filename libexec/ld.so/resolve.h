@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.5 2001/06/06 12:31:52 art Exp $ */
+/*	$OpenBSD: resolve.h,v 1.6 2001/09/26 09:16:42 art Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -65,31 +65,31 @@ typedef struct elf_object {
 	union {
 		u_long		info[DT_NUM + DT_PROCNUM];
 		struct {
-			Elf_Word	null;		/* Not used */
-			Elf_Word	needed;		/* Not used */
-			Elf_Word	pltrelsz;
-			Elf_Word	*pltgot;
-			Elf_Word	*hash;
+			Elf_Addr	null;		/* Not used */
+			Elf_Addr	needed;		/* Not used */
+			Elf_Addr	pltrelsz;
+			Elf_Addr	*pltgot;
+			Elf_Addr	*hash;
 			const char	*strtab;
 			const Elf_Sym	*symtab;
 			Elf_RelA	*rela;
-			Elf_Word	relasz;
-			Elf_Word	relaent;
-			Elf_Word	strsz;
-			Elf_Word	syment;
+			Elf_Addr	relasz;
+			Elf_Addr	relaent;
+			Elf_Addr	strsz;
+			Elf_Addr	syment;
 			void		(*init)(void);
 			void		(*fini)(void);
 			const char	*soname;
 			const char	*rpath;
-			Elf_Word	symbolic;
+			Elf_Addr	symbolic;
 			Elf_Rel	*rel;
-			Elf_Word	relsz;
-			Elf_Word	relent;
-			Elf_Word	pltrel;
-			Elf_Word	debug;
-			Elf_Word	textrel;
-			Elf_Word	jmprel;
-			Elf_Word	bind_now;
+			Elf_Addr	relsz;
+			Elf_Addr	relent;
+			Elf_Addr	pltrel;
+			Elf_Addr	debug;
+			Elf_Addr	textrel;
+			Elf_Addr	jmprel;
+			Elf_Addr	bind_now;
 		} u;
 	} Dyn;
 #define dyn Dyn.u
