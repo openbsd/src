@@ -1,5 +1,5 @@
-/*	$OpenBSD: modf_ieee754.c,v 1.2 2004/02/01 05:40:52 drahn Exp $	*/
-/* $NetBSD: modf_ieee754.c,v 1.1 2003/05/12 15:15:16 kleink Exp $ */
+/*	$OpenBSD: modf.c,v 1.1 2004/02/03 16:45:35 drahn Exp $	*/
+/*	$NetBSD: modf.c,v 1.1 1995/02/10 17:50:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,6 +28,10 @@
  * rights to redistribute these changes.
  */
 
+#if defined(LIBC_SCCS) && !defined(lint)
+static char *rcsid = "$OpenBSD: modf.c,v 1.1 2004/02/03 16:45:35 drahn Exp $";
+#endif /* LIBC_SCCS and not lint */
+
 #include <sys/types.h>
 #include <machine/ieee.h>
 #include <errno.h>
@@ -41,38 +45,42 @@
  * Beware signedness when doing subtraction, and also operand size!
  */
 double
-modf(double val, double *iptr)
+modf(val, iptr)
+	double val, *iptr;
 {
-	union ieee_double_u u, v;
+	union doub {
+		double v;
+		struct ieee_double s;
+	} u, v;
 	u_int64_t frac;
 
 	/*
 	 * If input is Inf or NaN, return it and leave i alone.
 	 */
-	u.dblu_d = val;
-	if (u.dblu_dbl.dbl_exp == DBL_EXP_INFNAN)
-		return (u.dblu_d);
+	u.v = val;
+	if (u.s.dbl_exp == DBL_EXP_INFNAN)
+		return (u.v);
 
 	/*
 	 * If input can't have a fractional part, return
 	 * (appropriately signed) zero, and make i be the input.
 	 */
-	if ((int)u.dblu_dbl.dbl_exp - DBL_EXP_BIAS > DBL_FRACBITS - 1) {
-		*iptr = u.dblu_d;
-		v.dblu_d = 0.0;
-		v.dblu_dbl.dbl_sign = u.dblu_dbl.dbl_sign;
-		return (v.dblu_d);
+	if ((int)u.s.dbl_exp - DBL_EXP_BIAS > DBL_FRACBITS - 1) {
+		*iptr = u.v;
+		v.v = 0.0;
+		v.s.dbl_sign = u.s.dbl_sign;
+		return (v.v);
 	}
 
 	/*
 	 * If |input| < 1.0, return it, and set i to the appropriately
 	 * signed zero.
 	 */
-	if (u.dblu_dbl.dbl_exp < DBL_EXP_BIAS) {
-		v.dblu_d = 0.0;
-		v.dblu_dbl.dbl_sign = u.dblu_dbl.dbl_sign;
-		*iptr = v.dblu_d;
-		return (u.dblu_d);
+	if (u.s.dbl_exp < DBL_EXP_BIAS) {
+		v.v = 0.0;
+		v.s.dbl_sign = u.s.dbl_sign;
+		*iptr = v.v;
+		return (u.v);
 	}
 
 	/*
@@ -86,16 +94,16 @@ modf(double val, double *iptr)
 	 * normalization.  Therefore, we take the easy way out, and
 	 * just use subtraction to get the fractional part.
 	 */
-	v.dblu_d = u.dblu_d;
+	v.v = u.v;
 	/* Zero the low bits of the fraction, the sleazy way. */
-	frac = ((u_int64_t)v.dblu_dbl.dbl_frach << 32) + v.dblu_dbl.dbl_fracl;
-	frac >>= DBL_FRACBITS - (u.dblu_dbl.dbl_exp - DBL_EXP_BIAS);
-	frac <<= DBL_FRACBITS - (u.dblu_dbl.dbl_exp - DBL_EXP_BIAS);
-	v.dblu_dbl.dbl_fracl = frac & 0xffffffff;
-	v.dblu_dbl.dbl_frach = frac >> 32;
-	*iptr = v.dblu_d;
+	frac = ((u_int64_t)v.s.dbl_frach << 32) + v.s.dbl_fracl;
+	frac >>= DBL_FRACBITS - (u.s.dbl_exp - DBL_EXP_BIAS);
+	frac <<= DBL_FRACBITS - (u.s.dbl_exp - DBL_EXP_BIAS);
+	v.s.dbl_fracl = frac & 0xffffffff;
+	v.s.dbl_frach = frac >> 32;
+	*iptr = v.v;
 
-	u.dblu_d -= v.dblu_d;
-	u.dblu_dbl.dbl_sign = v.dblu_dbl.dbl_sign;
-	return (u.dblu_d);
+	u.v -= v.v;
+	u.s.dbl_sign = v.s.dbl_sign;
+	return (u.v);
 }
