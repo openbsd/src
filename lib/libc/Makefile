@@ -16,6 +16,8 @@
 
 LIB=c
 CFLAGS+=-DNLS -DYP -DLIBC_SCCS -DSYSLIBC_SCCS -I${.CURDIR}/include
+LINTFLAGS=-z
+LLIBS=
 AINC=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 .if defined(DESTDIR)
 AINC+=	-nostdinc -idirafter ${DESTDIR}/usr/include

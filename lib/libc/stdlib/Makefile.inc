@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
-#	$Id: Makefile.inc,v 1.1.1.1 1995/10/18 08:42:16 deraadt Exp $
+#	$Id: Makefile.inc,v 1.2 1996/03/25 23:31:43 tholo Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/stdlib ${.CURDIR}/stdlib
@@ -13,12 +13,16 @@ SRCS+=	a64l.c abort.c atexit.c atoi.c atof.c atol.c bsearch.c calloc.c \
 
 .if   (${MACHINE_ARCH} == "m68k")
 SRCS+=	abs.S div.c labs.c ldiv.c
+LSRCS+=	abs.c
 .elif (${MACHINE_ARCH} == "i386")
 SRCS+=	abs.S div.S labs.S ldiv.S
+LSRCS+=	abs.c div.c labs.c ldiv.c
 .elif (${MACHINE_ARCH} == "ns32k")
 SRCS+=	abs.S div.c labs.c ldiv.c
+LSRCS+=	abs.c
 .elif (${MACHINE_ARCH} == "tahoe")
 SRCS+=	abs.S div.c labs.c ldiv.c
+LSRCS+=	abs.c
 .elif (${MACHINE_ARCH} == "vax")
 SRCS+=	abs.c div.c labs.c ldiv.c
 .elif (${MACHINE_ARCH} == "alpha")

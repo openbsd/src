@@ -86,6 +86,11 @@ ${PSEUDO}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
+LSRCS+=	protolib.c
+
+protolib.ln:
+	${LINT} ${LINTFLAGS} ${CFLAGS:M-[IDU]*} ${AINC} -i ${.IMPSRC}
+
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	chmod.2 chown.2 chroot.2 close.2 connect.2 dup.2 execve.2 _exit.2 \
 	fcntl.2 flock.2 fork.2 fsync.2 getdirentries.2 getfh.2 getfsstat.2 \
