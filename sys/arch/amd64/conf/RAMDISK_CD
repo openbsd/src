@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.27 2005/01/06 21:32:56 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.28 2005/03/13 17:24:12 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -142,8 +142,8 @@ mpt*	at pci?			# LSI Fusion-MPT SCSI/Fibre
 scsibus* at mpt?
 #dpt*	at pci?			# DPT SmartCache/SmartRAID PCI
 #scsibus* at dpt?
-#gdt*	at pci?			# ICP Vortex GDT RAID controllers
-#scsibus* at gdt?
+gdt*	at pci?			# ICP Vortex GDT RAID controllers
+scsibus* at gdt?
 #aac*	at pci?			# Adaptec FSA RAID controllers
 #scsibus* at aac?
 ami*	at pci?			# AMI MegaRAID controllers
