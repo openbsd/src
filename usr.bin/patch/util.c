@@ -1,7 +1,7 @@
-/*	$OpenBSD: util.c,v 1.17 2003/07/22 17:52:20 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.18 2003/07/25 02:12:45 millert Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: util.c,v 1.17 2003/07/22 17:52:20 deraadt Exp $";
+static const char     rcsid[] = "$OpenBSD: util.c,v 1.18 2003/07/25 02:12:45 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -29,7 +29,6 @@ static const char     rcsid[] = "$OpenBSD: util.c,v 1.17 2003/07/22 17:52:20 der
 int
 move_file(char *from, char *to)
 {
-	char	bakname[MAXPATHLEN], *s;
 	int	i, fromfd;
 
 	/* to stdout? */
@@ -48,114 +47,95 @@ move_file(char *from, char *to)
 		close(fromfd);
 		return 0;
 	}
-	if (origprae) {
-		if (strlcpy(bakname, origprae, sizeof(bakname)) >= sizeof(bakname) ||
-		    strlcat(bakname, to, sizeof(bakname)) >= sizeof(bakname))
-			fatal("filename %s too long for buffer\n", origprae);
-	} else {
-		char	*backupname = find_backup_file_name(to);
-		if (backupname == (char *) 0)
-			fatal("out of memory\n");
-		if (strlcpy(bakname, backupname, sizeof(bakname)) >= sizeof(bakname))
-			fatal("filename %s too long for buffer\n", backupname);
-		free(backupname);
-	}
-
-	if (stat(to, &filestat) == 0) {	/* output file exists */
-		dev_t	to_device = filestat.st_dev;
-		ino_t	to_inode = filestat.st_ino;
-		char	*simplename = bakname;
-
-		for (s = bakname; *s; s++) {
-			if (*s == '/')
-				simplename = s + 1;
-		}
-
-		/*
-		 * Find a backup name that is not the same file. Change the
-		 * first lowercase char into uppercase; if that isn't
-		 * sufficient, chop off the first char and try again.
-		 */
-		while (stat(bakname, &filestat) == 0 &&
-		    to_device == filestat.st_dev && to_inode == filestat.st_ino) {
-			/* Skip initial non-lowercase chars.  */
-			for (s = simplename; *s && !islower(*s); s++)
-				;
-			if (*s)
-				*s = toupper(*s);
-			else
-				memmove(simplename, simplename + 1,
-				    strlen(simplename + 1) + 1);
-		}
-		unlink(bakname);
-
-#ifdef DEBUGGING
-		if (debug & 4)
-			say("Moving %s to %s.\n", to, bakname);
-#endif
-		if (link(to, bakname) < 0) {
-			/*
-			 * Maybe `to' is a symlink into a different file
-			 * system. Copying replaces the symlink with a file;
-			 * using rename would be better.
-			 */
-			int	tofd, bakfd;
-
-			bakfd = creat(bakname, 0666);
-			if (bakfd < 0) {
-				say("Can't backup %s, output is in %s: %s\n",
-				    to, from, strerror(errno));
-				return -1;
-			}
-			tofd = open(to, O_RDONLY);
-			if (tofd < 0)
-				pfatal("internal error, can't open %s", to);
-			while ((i = read(tofd, buf, sizeof buf)) > 0)
-				if (write(bakfd, buf, i) != i)
-					pfatal("write failed");
-			close(tofd);
-			close(bakfd);
-		}
-		unlink(to);
+	if (backup_file(to) < 0) {
+		say("Can't backup %s, output is in %s: %s\n", to, from,
+		    strerror(errno));
+		return -1;
 	}
 #ifdef DEBUGGING
 	if (debug & 4)
 		say("Moving %s to %s.\n", from, to);
 #endif
-	if (link(from, to) < 0) {	/* different file system? */
-		int	tofd;
-
-		tofd = creat(to, 0666);
-		if (tofd < 0) {
+	if (rename(from, to) < 0) {
+		if (errno != EXDEV || copy_file(from, to) < 0) {
 			say("Can't create %s, output is in %s: %s\n",
 			    to, from, strerror(errno));
 			return -1;
 		}
-		fromfd = open(from, O_RDONLY);
-		if (fromfd < 0)
-			pfatal("internal error, can't reopen %s", from);
-		while ((i = read(fromfd, buf, sizeof buf)) > 0)
-			if (write(tofd, buf, i) != i)
-				pfatal("write failed");
-		close(fromfd);
-		close(tofd);
 	}
-	unlink(from);
+	return 0;
+}
+
+/* Backup the original file.  */
+
+int
+backup_file(char *orig)
+{
+	char	bakname[MAXPATHLEN], *s, *simplename;
+	dev_t	orig_device;
+	ino_t	orig_inode;
+
+	if (backup_type == none || stat(orig, &filestat) != 0)
+		return 0;			/* nothing to do */
+	orig_device = filestat.st_dev;
+	orig_inode = filestat.st_ino;
+
+	if (origprae) {
+		if (strlcpy(bakname, origprae, sizeof(bakname)) >= sizeof(bakname) ||
+		    strlcat(bakname, orig, sizeof(bakname)) >= sizeof(bakname))
+			fatal("filename %s too long for buffer\n", origprae);
+	} else {
+		if ((s = find_backup_file_name(orig)) == NULL)
+			fatal("out of memory\n");
+		if (strlcpy(bakname, s, sizeof(bakname)) >= sizeof(bakname))
+			fatal("filename %s too long for buffer\n", s);
+		free(s);
+	}
+
+	if ((simplename = strrchr(bakname, '/')) != NULL)
+		simplename = simplename + 1;
+	else
+		simplename = bakname;
+
+	/*
+	 * Find a backup name that is not the same file. Change the
+	 * first lowercase char into uppercase; if that isn't
+	 * sufficient, chop off the first char and try again.
+	 */
+	while (stat(bakname, &filestat) == 0 &&
+	    orig_device == filestat.st_dev && orig_inode == filestat.st_ino) {
+		/* Skip initial non-lowercase chars.  */
+		for (s = simplename; *s && !islower(*s); s++)
+			;
+		if (*s)
+			*s = toupper(*s);
+		else
+			memmove(simplename, simplename + 1,
+			    strlen(simplename + 1) + 1);
+	}
+#ifdef DEBUGGING
+	if (debug & 4)
+		say("Moving %s to %s.\n", orig, bakname);
+#endif
+	if (rename(orig, bakname) < 0) {
+		if (errno != EXDEV || copy_file(orig, bakname) < 0)
+			return -1;
+	}
 	return 0;
 }
 
 /*
  * Copy a file.
  */
-void
+int
 copy_file(char *from, char *to)
 {
 	int	tofd, fromfd, i;
 
-	tofd = creat(to, 0666);
+	tofd = open(to, O_CREAT|O_TRUNC|O_WRONLY, 0666);
 	if (tofd < 0)
-		pfatal("can't create %s", to);
-	fromfd = open(from, O_RDONLY);
+		return -1;
+	fromfd = open(from, O_RDONLY, 0);
 	if (fromfd < 0)
 		pfatal("internal error, can't reopen %s", from);
 	while ((i = read(fromfd, buf, sizeof buf)) > 0)
@@ -163,6 +143,7 @@ copy_file(char *from, char *to)
 			pfatal("write to %s failed", to);
 	close(fromfd);
 	close(tofd);
+	return 0;
 }
 
 /*

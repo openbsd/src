@@ -1,7 +1,7 @@
-/*	$OpenBSD: pch.c,v 1.23 2003/07/22 17:52:20 deraadt Exp $	*/
+/*	$OpenBSD: pch.c,v 1.24 2003/07/25 02:12:45 millert Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pch.c,v 1.23 2003/07/22 17:52:20 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pch.c,v 1.24 2003/07/25 02:12:45 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1315,8 +1315,10 @@ do_ed_script(void)
 	FILE	*pipefp;
 
 	if (!skip_rest_of_patch) {
-		unlink(TMPOUTNAME);
-		copy_file(filearg[0], TMPOUTNAME);
+		if (copy_file(filearg[0], TMPOUTNAME) < 0) {
+			unlink(TMPOUTNAME);
+			fatal("can't create temp file %s", TMPOUTNAME);
+		}
 		if (verbose)
 			snprintf(buf, sizeof buf, "/bin/ed %s", TMPOUTNAME);
 		else

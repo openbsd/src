@@ -1,4 +1,4 @@
-.\"	$OpenBSD: patch.1,v 1.11 2003/07/24 14:35:22 millert Exp $
+.\"	$OpenBSD: patch.1,v 1.12 2003/07/25 02:12:45 millert Exp $
 .\" Copyright 1986, Larry Wall
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -42,10 +42,10 @@ By default, the patched version is put in place of the original, with
 the original file backed up to the same name with the extension
 .Qq .orig ,
 or as specified by the
-.Fl b ,
 .Fl B ,
+.Fl V ,
 or
-.Fl V
+.Fl z
 options.
 The extension used for making backup files may also be specified in the
 .Ev SIMPLE_BACKUP_SUFFIX
@@ -192,15 +192,20 @@ mentioned previously.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl b , Fl Fl suffix
-Causes the next argument to be interpreted as the backup extension, to be
-used in place of
-.Qq .orig .
+.It Fl b , Fl Fl backup
+Save a backup copy of the file before it is modified.
+By default the original file is saved with a backup extension of
+.Qq .orig
+unless the file already has a numbered backup, in which case a numbered
+backup is made.
+This is equivalent to specifying
+.Qo Fl V Ar existing Qc .
+This option is currently the default but that will change in a future release.
 .It Fl B , Fl Fl prefix
 Causes the next argument to be interpreted as a prefix to the backup file
 name.
 If this argument is specified, any argument from
-.Fl b
+.Fl z
 will be ignored.
 .It Fl c , Fl Fl context
 Forces
@@ -401,7 +406,6 @@ Always make numbered backups.
 .It nil , existing
 Make numbered backups of files that already have them,
 simple backups of the others.
-This is the default.
 .It never , simple
 Always make simple backups.
 .El
@@ -412,6 +416,10 @@ Always make simple backups.
 Sets internal debugging flags, and is of interest only to
 .Nm
 patchers.
+.It Fl z , Fl Fl suffix
+Causes the next argument to be interpreted as the backup extension, to be
+used in place of
+.Qq .orig .
 .El
 .Sh NOTES FOR PATCH SENDERS
 There are several things you should bear in mind if you are going to

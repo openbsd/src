@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.26 2003/07/23 07:31:21 otto Exp $	*/
+/*	$OpenBSD: patch.c,v 1.27 2003/07/25 02:12:45 millert Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: patch.c,v 1.26 2003/07/23 07:31:21 otto Exp $";
+static const char rcsid[] = "$OpenBSD: patch.c,v 1.27 2003/07/25 02:12:45 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -127,13 +127,18 @@ main(int argc, char *argv[])
 	else
 		simple_backup_suffix = ORIGEXT;
 
-	v = getenv("VERSION_CONTROL");
-	backup_type = get_version(v);	/* OK to pass NULL. */
-
 	/* parse switches */
 	Argc = argc;
 	Argv = argv;
 	get_some_switches();
+
+	if (backup_type == none) {
+		v = getenv("VERSION_CONTROL");
+#ifdef notyet
+		if (v != NULL)
+#endif
+			backup_type = get_version(v);	/* OK to pass NULL. */
+	}
 
 	/* make sure we clean up /tmp in case of disaster */
 	set_signals(0);
@@ -371,8 +376,9 @@ reinitialize_almost_everything(void)
 static void
 get_some_switches(void)
 {
-	const char *options = "b:B:cCd:D:eEfF:lnNo:p::r:RstuvV:x:";
+	const char *options = "b::B:cCd:D:eEfF:lnNo:p::r:RstuvV:x:z:";
 	static struct option longopts[] = {
+		{"backup",		no_argument,		0,	'b'},
 		{"batch",		no_argument,		0,	't'},
 		{"check",		no_argument,		0,	'C'},
 		{"context",		no_argument,		0,	'c'},
@@ -393,7 +399,7 @@ get_some_switches(void)
 		{"reverse",		no_argument,		0,	'R'},
 		{"silent",		no_argument,		0,	's'},
 		{"strip",		optional_argument,	0,	'p'},
-		{"suffix",		required_argument,	0,	'b'},
+		{"suffix",		required_argument,	0,	'z'},
 		{"unified",		no_argument,		0,	'u'},
 		{"version",		no_argument,		0,	'v'},
 		{"version-control",	required_argument,	0,	'V'},
@@ -410,6 +416,18 @@ get_some_switches(void)
 	while ((ch = getopt_long(Argc, Argv, options, longopts, NULL)) != -1) {
 		switch (ch) {
 		case 'b':
+#ifdef notyet
+			if (backup_type == none)
+				backup_type = numbered_existing;
+#endif
+			if (optarg == NULL)
+				break;
+			if (verbose)
+				say("Warning, the ``-b suffix'' option has been"
+				    " obsoleted by the -z option.\n");
+			/* FALLTHROUGH */
+		case 'z':
+			/* must directly follow 'b' case for backwards compat */
 			simple_backup_suffix = savestr(optarg);
 			break;
 		case 'B':
@@ -512,9 +530,9 @@ static __dead void
 usage(void)
 {
 	fprintf(stderr,
-"usage: patch [-cCeEflnNRstuv] [-b backup-ext] [-B backup-prefix] [-d directory]\n"
-"             [-D symbol] [-Fmax-fuzz] [-o out-file] [-p[strip-count]]\n"
-"             [-r rej-name] [-V {numbered,existing,simple}]\n"
+"usage: patch [-bcCeEflnNRstuv] [-B backup-prefix] [-d directory] [-D symbol]\n"
+"             [-Fmax-fuzz] [-o out-file] [-p[strip-count]] [-r rej-name]\n"
+"             [-V {numbered,existing,simple}] [-z backup-ext]\n"
 "             [origfile [patchfile]]\n");
 	my_exit(1);
 }
