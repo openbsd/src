@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.3 2001/02/01 03:38:16 smurph Exp $ */
+/*	$OpenBSD: vs.c,v 1.4 2001/03/08 00:03:15 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -70,7 +70,7 @@
 #endif /* MVME187 */
 
 int  vs_checkintr        __P((struct vs_softc *, struct scsi_xfer *, int *));
-int  vs_chksense         __P((struct scsi_xfer *));
+void vs_chksense         __P((struct scsi_xfer *));
 void vs_reset            __P((struct vs_softc *));
 void vs_resync           __P((struct vs_softc *));
 int  vs_initialize       __P((struct vs_softc *));
@@ -181,17 +181,7 @@ vs_poll(sc, xs)
 struct vs_softc *sc;
 struct scsi_xfer *xs;
 {
-	M328_CIB *cib = (M328_CIB *)&sc->sc_vsreg->sh_CIB;
-	M328_CQE *mc = (M328_CQE*)&sc->sc_vsreg->sh_MCE;
-	M328_CRB *crb = (M328_CRB *)&sc->sc_vsreg->sh_CRB;
-	M328_IOPB *riopb = (M328_IOPB *)&sc->sc_vsreg->sh_RET_IOPB;
-	M328_IOPB *miopb = (M328_IOPB *)&sc->sc_vsreg->sh_MCE_IOPB;
-	M328_MCSB *mcsb = (M328_MCSB *)&sc->sc_vsreg->sh_MCSB;
-	M328_CQE *cqep;
-	M328_IOPB *iopb;
-	int i;
 	int status;
-	int s;
 	int to;
 
 	/*s = splbio();*/
@@ -240,7 +230,6 @@ struct scsi_xfer *xs;
 int stat;                             
 {
 	int tgt; 
-	struct scsi_link *slp = xs->sc_link;
 	xs->status = stat;
 
 	while (xs->status == SCSI_CHECK) {
@@ -264,14 +253,12 @@ struct scsi_xfer *xs;
 {
 	struct scsi_link *slp = xs->sc_link;
 	struct vs_softc *sc = slp->adapter_softc;
-	int flags, s, i;
+	int flags;
 	unsigned long buf, len;
 	u_short iopb_len;
 	M328_CQE *mc = (M328_CQE*)&sc->sc_vsreg->sh_MCE;
 	M328_CRB *crb = (M328_CRB *)&sc->sc_vsreg->sh_CRB;
-	M328_IOPB *riopb = (M328_IOPB *)&sc->sc_vsreg->sh_RET_IOPB;
 	M328_IOPB *miopb = (M328_IOPB *)&sc->sc_vsreg->sh_MCE_IOPB;
-	M328_MCSB *mcsb = (M328_MCSB *)&sc->sc_vsreg->sh_MCSB;
 	M328_CQE *cqep;
 	M328_IOPB *iopb;
 	M328_CMD *m328_cmd;
@@ -409,11 +396,11 @@ struct scsi_xfer *xs;
 	return (SUCCESSFULLY_QUEUED);
 }
 
-int
+void
 vs_chksense(xs)
 struct scsi_xfer *xs;
 {
-	int flags, s, i;
+	int s;
 	struct scsi_link *slp = xs->sc_link;
 	struct vs_softc *sc = slp->adapter_softc;
 	struct scsi_sense *ss;
@@ -654,20 +641,10 @@ void
 vs_reset(sc)
 struct vs_softc *sc;
 {
-	struct vsreg * rp;
 	u_int s;
-	u_char  i;
-	struct iopb_reset* iopr;
-	struct cqe *cqep;
-	struct iopb_scsi *iopbs;
-	struct scsi_sense *ss;
-	M328_CIB *cib = (M328_CIB *)&sc->sc_vsreg->sh_CIB;
 	M328_CQE *mc = (M328_CQE*)&sc->sc_vsreg->sh_MCE;
-	M328_CRB *crb = (M328_CRB *)&sc->sc_vsreg->sh_CRB;
 	M328_IOPB *riopb = (M328_IOPB *)&sc->sc_vsreg->sh_RET_IOPB;
-	M328_MCSB *mcsb = (M328_MCSB *)&sc->sc_vsreg->sh_MCSB;
 	M328_SRCF *reset = (M328_SRCF *)&sc->sc_vsreg->sh_MCE_IOPB;  
-	M328_IOPB *iopb;
 
 	vs_zero(reset, sizeof(M328_SRCF));
 	reset->srcf_CMD = IOPB_RESET;
@@ -712,10 +689,8 @@ struct   vs_softc *sc;
 struct scsi_xfer *xs;
 int   *status;
 {
-	struct vsreg * rp = sc->sc_vsreg;
 	int   target = -1;
 	int   lun = -1;
-	M328_CRB *crb = (M328_CRB *)&sc->sc_vsreg->sh_CRB;
 	M328_IOPB *riopb = (M328_IOPB *)&sc->sc_vsreg->sh_RET_IOPB;
 	struct scsi_generic *cmd;
 	u_long buf;
@@ -808,7 +783,6 @@ vs_nintr(sc)
 register struct vs_softc *sc;
 {
 	M328_CRB *crb = (M328_CRB *)&sc->sc_vsreg->sh_CRB;
-	M328_IOPB *riopb = (M328_IOPB *)&sc->sc_vsreg->sh_RET_IOPB;
 	M328_CMD *m328_cmd;
 	struct scsi_xfer *xs;
 	int status;
@@ -861,9 +835,11 @@ register struct vs_softc *sc;
 	M328_CMD *m328_cmd;
 	struct scsi_xfer *xs;
 	int crsw = crb->cevsb_CRSW;
+#ifdef SDEBUG
 	int type = crb->cevsb_TYPE;
 	int length = crb->cevsb_IOPB_LENGTH;
 	int wq = crb->cevsb_WORK_QUEUE;
+#endif
 	int ecode = crb->cevsb_ERROR;
 	int status, s;
 	

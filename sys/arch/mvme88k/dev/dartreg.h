@@ -37,7 +37,7 @@
 
 /* the access to the same command register must be delayed,
    because the chip has some hardware problems in this case */
-#define DELAY_CR   { volatile register i; for ( i=0; i<250; ++i ); }
+#define DELAY_CR   { volatile register int i; for ( i=0; i<250; ++i ); }
 
 /*********************** MC68681 DEFINITIONS ************************/
 #define PORTOFFSET	0x10	/* offset for port b address space */

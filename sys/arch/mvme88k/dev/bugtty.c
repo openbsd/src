@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugtty.c,v 1.5 2001/02/12 08:16:22 smurph Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.6 2001/03/08 00:03:12 miod Exp $ */
 /* Copyright (c) 1998 Steve Murphree, Jr. 
  * Copyright (c) 1995 Dale Rahn.
  * All rights reserved.
@@ -41,7 +41,10 @@
 #include <dev/cons.h>
 
 #include <machine/autoconf.h>
+#include <machine/bugio.h>
 #include <machine/cpu.h>
+
+#include <mvme88k/dev/bugttyfunc.h>
 
 #include "bugtty.h"
 
@@ -60,7 +63,7 @@ struct cfdriver bugtty_cd = {
 int bugttycnprobe __P((struct consdev *cp));
 int bugttycninit __P((struct consdev *cp));
 int bugttycngetc __P((dev_t dev));
-int bugttycnputc __P((dev_t dev, char c));
+void bugttycnputc __P((dev_t dev, char c));
 
 int bugttyopen __P((dev_t dev, int flag, int mode, struct proc *p));
 int bugttyclose __P((dev_t dev, int flag, int mode, struct proc *p));
@@ -68,6 +71,10 @@ int bugttyread __P((dev_t dev, struct uio *uio, int flag));
 int bugttywrite __P((dev_t dev, struct uio *uio, int flag));
 int bugttyioctl __P((dev_t dev, int cmd, caddr_t data, int flag, struct proc *p));
 int bugttystop __P((struct tty *tp, int flag));
+
+struct tty *bugttytty __P((dev_t dev));
+int bugttymctl __P((dev_t dev, int bits, int how));
+int bugttyparam __P((struct tty *tp, struct termios *tm));
 
 #define DIALOUT(x) ((x) & 0x80)
 #define SWFLAGS(dev) (bugttyswflags | (DIALOUT(dev) ? TIOCFLAG_SOFTCAR : 0))
@@ -141,8 +148,6 @@ bugttymctl(dev, bits, how)
 dev_t dev;
 int bits, how;
 {
-	static int settings = TIOCM_DTR | TIOCM_RTS |
-	    TIOCM_CTS | TIOCM_CD | TIOCM_DSR;
 	int s;
 
 	/*printf("mctl: dev %x, bits %x, how %x,",dev, bits, how);*/
@@ -256,7 +261,9 @@ struct proc *p;
 }
 
 int
-bugttyparam()
+bugttyparam(tp, tm)
+	struct tty *tp;
+	struct termios *tm;
 {
 	return (0);
 }
@@ -265,7 +272,7 @@ void
 bugttyoutput(tp)
 struct tty *tp;
 {
-	int cc, s, unit, cnt ;
+	int cc, s, cnt ;
 
 	/* only supports one unit */
 
@@ -314,8 +321,8 @@ int flag;
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
-#if 1
 /* only to be called at splclk() */
+void
 bugtty_chkinput()
 {
 	struct tty *tp;
@@ -324,8 +331,8 @@ bugtty_chkinput()
 	if (tp == NULL )
 		return;
 
-	if (rc = buginstat()) {
-		while (buginstat()) {
+	if ((rc = buginstat()) != 0) {
+		while (buginstat() != 0) {
 			u_char c = buginchr() & 0xff;
 			(*linesw[tp->t_line].l_rint)(c, tp);
 		}
@@ -334,7 +341,6 @@ bugtty_chkinput()
 		*/
 	}
 }
-#endif
 
 int
 bugttywrite(dev, uio, flag)
@@ -510,13 +516,11 @@ dev_t dev;
 	return (buginchr());
 }
 
-int
+void
 bugttycnputc(dev, c)
 dev_t dev;
 char c;
 {
-	int s;
-
 	if (c == '\n')
 		bugoutchr('\r');
 	bugoutchr(c);

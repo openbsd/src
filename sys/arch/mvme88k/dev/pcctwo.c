@@ -1,5 +1,5 @@
 
-/*	$OpenBSD: pcctwo.c,v 1.9 2001/01/12 07:29:27 smurph Exp $ */
+/*	$OpenBSD: pcctwo.c,v 1.10 2001/03/08 00:03:14 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -47,10 +47,13 @@
 #include <sys/syslog.h>
 #include <sys/fcntl.h>
 #include <sys/device.h>
-#include <machine/cpu.h>
+
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
+
 #include <dev/cons.h>
 
+#include <mvme88k/dev/pcctwofunc.h>
 #include <mvme88k/dev/pcctworeg.h>
 
 struct pcctwosoftc {
@@ -62,9 +65,6 @@ struct pcctwosoftc {
 
 void pcctwoattach __P((struct device *, struct device *, void *));
 int  pcctwomatch __P((struct device *, void *, void *));
-#ifdef MVME187
-void	setupiackvectors __P((void));
-#endif /* MVME187 */
 
 struct cfattach pcctwo_ca = {
 	sizeof(struct pcctwosoftc), pcctwomatch, pcctwoattach
@@ -76,12 +76,14 @@ struct cfdriver pcctwo_cd = {
 
 struct pcctworeg *sys_pcc2 = NULL;
 
+int pcctwo_print __P((void *args, const char *bus));
+int pcctwo_scan __P((struct device *parent, void *child, void *args));
+
 int
 pcctwomatch(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
 	struct pcctworeg *pcc2;
 
@@ -98,7 +100,7 @@ pcctwomatch(parent, vcf, args)
       return (0);
    }
 	
-   if (badvaddr(pcc2, 4) <= 0){
+   if (badvaddr((vm_offset_t)pcc2, 4) <= 0){
 	    printf("==> pcctwo: failed address check.\n");
 	    return (0);
 	}
@@ -130,7 +132,6 @@ pcctwo_scan(parent, child, args)
 {
 	struct cfdata *cf = child;
 	struct pcctwosoftc *sc = (struct pcctwosoftc *)parent;
-	struct confargs *ca = args;
 	struct confargs oca;
 
 	if (parent->dv_cfdata->cf_driver->cd_indirect) {
@@ -164,7 +165,6 @@ pcctwoattach(parent, self, args)
 {
 	struct confargs *ca = args;
 	struct pcctwosoftc *sc = (struct pcctwosoftc *)self;
-	int i;
 
 	if (sys_pcc2)
 		panic("pcc2 already attached!");

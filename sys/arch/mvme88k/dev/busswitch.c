@@ -1,4 +1,4 @@
-/*	$OpenBSD: busswitch.c,v 1.2 2001/02/01 03:38:13 smurph Exp $ */
+/*	$OpenBSD: busswitch.c,v 1.3 2001/03/08 00:03:13 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -66,19 +66,21 @@ struct cfdriver busswitch_cd = {
         NULL, "busswitch", DV_DULL, 0
 };
 
+int busswitch_print __P((void *args, const char *bus));
+int busswitch_scan __P((struct device *parent, void *child, void *args));
+
 int
 busswitchmatch(parent, vcf, args)
 	struct device *parent;
 	void *vcf, *args;
 {
-	struct cfdata *cf = vcf;
 	struct confargs *ca = args;
    struct busswitchreg *busswitch;
    /* Don't match if wrong cpu */
 	if (cputyp != CPU_197) return (0);
 	
    busswitch = (struct busswitchreg *)(IIOV(ca->ca_paddr));
-	if (badvaddr(busswitch, 4) <= 0){
+	if (badvaddr((vm_offset_t)busswitch, 4) <= 0){
 	    printf("==> busswitch: failed address check.\n");
 	    return (0);
 	}
@@ -123,7 +125,6 @@ busswitch_scan(parent, child, args)
 {
 	struct cfdata *cf = child;
 	struct busswitchsoftc *sc = (struct busswitchsoftc *)parent;
-	struct confargs *ca = args;
 	struct confargs oca;
 
 	if (parent->dv_cfdata->cf_driver->cd_indirect) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ve.c,v 1.4 2001/02/20 19:39:32 mickey Exp $ */
+/*	$OpenBSD: if_ve.c,v 1.5 2001/03/08 00:03:13 miod Exp $ */
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1982, 1992, 1993
@@ -149,7 +149,6 @@ u_short addr;
 {
 	int i;
 	u_char rcmd = 0;
-	u_char rcmd2= 0;
 	struct vereg1 *reg1 = ((struct ve_softc *)sc)->sc_r1;
 
 	rcmd = addr;
@@ -170,7 +169,6 @@ u_char nvram_addr;
 	u_short val = 0, mask = 0x04000;
 	u_int16_t wbit;
 	/* these used by macros DO NOT CHANGE!*/
-	int i;
 	struct vereg1 *reg1 = ((struct ve_softc *)sc)->sc_r1;
 	sc->csr = 0x4f;
 	ENABLE_NVRAM;
@@ -268,12 +266,8 @@ void *aux;
 	register struct ve_softc *lesc = (struct ve_softc *)self;
 	struct vam7990_softc *sc = &lesc->sc_am7990;
 	struct confargs *ca = aux;
-	register int a;
 	int pri = ca->ca_ipl;
 	caddr_t addr;
-
-	char *cp;
-	int i, ipl;
 
 	addr = ca->ca_vaddr;
 
@@ -337,6 +331,7 @@ void *aux;
 	/* connect the interrupt */
 	lesc->sc_ih.ih_fn = ve_intr;
 	lesc->sc_ih.ih_arg = sc;
+	lesc->sc_ih.ih_wantframe = 0;
 	lesc->sc_ih.ih_ipl = pri;
 	vmeintr_establish(ca->ca_vec + 0, &lesc->sc_ih);
 }

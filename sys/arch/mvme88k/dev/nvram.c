@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.7 2001/01/04 04:01:59 smurph Exp $ */
+/*	$OpenBSD: nvram.c,v 1.8 2001/03/08 00:03:14 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -49,6 +49,8 @@
 #include <machine/cpu.h>
 #include <machine/mioctl.h>
 #include <machine/vmparam.h>
+
+#include <mvme88k/dev/memdevs.h>
 #include <mvme88k/dev/nvramreg.h>
 #include <mvme88k/dev/pcctworeg.h>
 
@@ -71,13 +73,22 @@ struct cfdriver nvram_cd = {
 	NULL, "nvram", DV_DULL, 0
 };
 
+int nvramopen __P((dev_t dev, int flag, int mode));
+int nvramclose __P((dev_t dev, int flag, int mode));
+int nvramioctl __P((dev_t dev, int cmd, caddr_t data, int flag,
+    struct proc *p));
+int nvramread __P((dev_t dev, struct uio *uio, int flags));
+int nvramwrite __P((dev_t dev, struct uio *uio, int flags));
+int nvrammmap __P((dev_t dev, int off, int prot));
+
 int
 nvrammatch(parent, vcf, args)
 struct device *parent;
 void *vcf, *args;
 {
+#if 0
 	int ret;
-	struct cfdata *cf = vcf;
+#endif
 	struct confargs *ca = args;
 	struct bugrtc rtc;
 	ca->ca_vaddr = ca->ca_paddr;   /* map 1:1 */
@@ -233,8 +244,11 @@ struct chiptime {
 	int     year;
 };
 
+void timetochip __P((struct chiptime *c));
+
+void
 timetochip(c)
-register struct chiptime *c;
+	register struct chiptime *c;
 {
 	register int t, t2, t3, now = time.tv_sec;
 
@@ -417,10 +431,11 @@ int flag, mode;
 /*ARGSUSED*/
 int
 nvramioctl(dev, cmd, data, flag, p)
-dev_t   dev;
-caddr_t data;
-int     cmd, flag;
-struct proc *p;
+	dev_t dev;
+	int cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	int unit = minor(dev);
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];
