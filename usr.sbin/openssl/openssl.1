@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.29 2004/01/23 14:31:11 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.30 2004/01/23 21:43:09 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -409,19 +409,19 @@ Since the environment of other processes is visible on certain platforms
 under certain
 .Ux
 OSes) this option should be used with caution.
-.It Ar file : Ns Ar pathname
+.It Ar file : Ns Ar path
 The first line of
-.Ar pathname
+.Ar path
 is the password.
 If the same
-.Ar pathname
+.Ar path
 argument is supplied to
 .Fl passin
 and
 .Fl passout ,
 then the first line will be used for the input password and the next line
 for the output password.
-.Ar pathname
+.Ar path
 need not refer to a regular file:
 it could, for example, refer to a device or named pipe.
 .It Ar fd : Ns Ar number
@@ -441,12 +441,12 @@ Read the password from standard input.
 .Op Fl i
 .Op Fl noout
 .Op Fl dlimit Ar number
-.Op Fl in Ar filename
+.Op Fl in Ar file
 .Op Fl inform Ar DER | PEM | TXT
 .Op Fl length Ar number
 .Op Fl offset Ar number
-.Op Fl oid Ar filename
-.Op Fl out Ar filename
+.Op Fl oid Ar file
+.Op Fl out Ar file
 .Op Fl strparse Ar offset
 .Ek
 .Pp
@@ -467,7 +467,7 @@ Dump unknown data in hex form.
 Indents the output according to the
 .Qq depth
 of the structures.
-.It Fl in Ar filename
+.It Fl in Ar file
 The input file; default is standard input.
 .It Fl inform Ar DER | PEM | TXT
 The input format.
@@ -485,13 +485,13 @@ Number of bytes to parse; default is until end of file.
 Don't output the parsed version of the input file.
 .It Fl offset Ar number
 Starting offset to begin parsing; default is start of file.
-.It Fl oid Ar filename
+.It Fl oid Ar file
 A file containing additional object identifiers
 .Pq OIDs .
 The format of this file is described in the
 .Sx ASN1PARSE NOTES
 section below.
-.It Fl out Ar filename
+.It Fl out Ar file
 Output file to place the
 .Em DER
 encoded data into.
@@ -602,7 +602,7 @@ The output of some ASN.1 types is not well handled
 .Op Fl updatedb
 .Op Fl verbose
 .Op Fl cert Ar file
-.Op Fl config Ar filename
+.Op Fl config Ar file
 .Op Fl crl_CA_compromise Ar time
 .Op Fl crl_compromise Ar time
 .Op Fl crl_hold Ar instruction
@@ -649,7 +649,7 @@ In this mode no questions will be asked
 and all certificates will be certified automatically.
 .It Fl cert Ar file
 The CA certificate file.
-.It Fl config Ar filename
+.It Fl config Ar file
 Specifies the configuration file to use.
 .It Fl days Ar arg
 The number of days to certify the certificate for.
@@ -683,9 +683,9 @@ to read certificate extensions from
 (using the default section unless the
 .Fl extensions
 option is also used).
-.It Fl in Ar filename
+.It Fl in Ar file
 An input
-.Ar filename
+.Ar file
 containing a single certificate request to be signed by the CA.
 .It Fl infiles
 If present, this should be the last option; all subsequent arguments
@@ -698,7 +698,7 @@ Since on some systems the command line arguments are visible
 with the
 .Xr ps 1
 utility) this option should be used with caution.
-.It Fl keyfile Ar filename
+.It Fl keyfile Ar file
 The private key to sign requests with.
 .It Fl keyform Ar PEM | ENGINE
 Private key file format.
@@ -741,7 +741,7 @@ The
 keyword can be used in the configuration file to enable this behaviour.
 .It Fl notext
 Don't output the text form of a certificate to the output file.
-.It Fl out Ar filename
+.It Fl out Ar file
 The output file to output certificates to.
 The default is standard output.
 The certificate details will also be printed out to this file.
@@ -749,7 +749,7 @@ The certificate details will also be printed out to this file.
 The
 .Ar directory
 to output certificates to.
-The certificate will be written to a filename consisting of the
+The certificate will be written to a file consisting of the
 serial number in hex with
 .Qq .pem
 appended.
@@ -777,13 +777,13 @@ This is largely for compatibility with the older IE enrollment control
 which would only accept certificates if their DNs matched the order of the
 request.
 This is not needed for Xenroll.
-.It Fl spkac Ar filename
+.It Fl spkac Ar file
 A file containing a single Netscape signed public key and challenge,
 and additional field values to be signed by the CA.
 See the
 .Sx SPKAC FORMAT
 section for information on the required format.
-.It Fl ss_cert Ar filename
+.It Fl ss_cert Ar file
 A single self-signed certificate to be signed by the CA.
 .It Fl startdate Ar date
 This allows the start date to be explicitly set.
@@ -851,9 +851,9 @@ can't handle V2 CRLs.
 The number of hours before the next CRL is due.
 .It Fl gencrl
 This option generates a CRL based on information in the index file.
-.It Fl revoke Ar filename
+.It Fl revoke Ar file
 A
-.Ar filename
+.Ar file
 containing a certificate to revoke.
 .It Fl subj Ar arg
 Supersedes the subject name given in the request.
@@ -1688,9 +1688,9 @@ selection options were added in version 0.9.7.
 .Op Fl text
 .Op Cm CAfile Ar file
 .Op Cm CApath Ar dir
-.Op Fl in Ar filename
+.Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
-.Op Fl out Ar filename
+.Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Ek
 .Pp
@@ -1719,8 +1719,8 @@ Print the CRL fingerprint.
 .It Fl hash
 Output a hash of the issuer name.
 This can be used to look up CRLs in a directory by issuer name.
-.It Fl in Ar filename
-This specifies the input filename to read from, or standard input if this
+.It Fl in Ar file
+This specifies the input file to read from, or standard input if this
 option is not specified.
 .It Fl inform Ar DER | PEM
 This specifies the input format.
@@ -1741,8 +1741,8 @@ Output the
 field.
 .It Fl noout
 Don't output the encoded version of the CRL.
-.It Fl out Ar filename
-Specifies the output filename to write to, or standard output by
+.It Fl out Ar file
+Specifies the output file to write to, or standard output by
 default.
 .It Fl outform Ar DER | PEM
 This specifies the output format; the options have the same meaning as the
@@ -1780,10 +1780,10 @@ and files too.
 .Nm openssl crl2pkcs7
 .Bk -words
 .Op Fl nocrl
-.Op Fl certfile Ar filename
-.Op Fl in Ar filename
+.Op Fl certfile Ar file
+.Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
-.Op Fl out Ar filename
+.Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Ek
 .Pp
@@ -1796,18 +1796,18 @@ structure.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl certfile Ar filename
+.It Fl certfile Ar file
 Specifies a
-.Ar filename
+.Ar file
 containing one or more certificates in
 .Ar PEM
 format.
 All certificates in the file will be added to the PKCS#7 structure.
 This option can be used more than once to read certificates from multiple
 files.
-.It Fl in Ar filename
+.It Fl in Ar file
 This specifies the input
-.Ar filename
+.Ar file
 to read a CRL from or standard input if this option is not specified.
 .It Fl inform Ar DER | PEM
 This specifies the CRL input format.
@@ -1820,9 +1820,9 @@ is a base64 encoded version of the DER form with header and footer lines.
 Normally, a CRL is included in the output file.
 With this option, no CRL is
 included in the output file and a CRL is not read from the input file.
-.It Fl out Ar filename
+.It Fl out Ar file
 Specifies the output
-.Ar filename
+.Ar file
 to write the PKCS#7 structure to or standard output by default.
 .It Fl outform Ar DER | PEM
 This specifies the PKCS#7 structure output format.
@@ -1875,12 +1875,12 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Op Fl hex
 .Op Fl engine Ar id
 .Op Fl keyform Ar PEM | ENGINE
-.Op Fl out Ar filename
-.Op Fl prverify Ar filename
+.Op Fl out Ar file
+.Op Fl prverify Ar file
 .Op Fl rand Ar file ...
-.Op Fl sign Ar filename
-.Op Fl signature Ar filename
-.Op Fl verify Ar filename
+.Op Fl sign Ar file
+.Op Fl signature Ar file
+.Op Fl verify Ar file
 .Op Ar file ...
 .Ek
 .Pp
@@ -1925,11 +1925,11 @@ This is the default case for a
 digest as opposed to a digital signature.
 .It Fl keyform Ar PEM | ENGINE
 Key file format.
-.It Fl out Ar filename
-Filename to output to, or standard output by default.
-.It Fl prverify Ar filename
+.It Fl out Ar file
+file to output to, or standard output by default.
+.It Fl prverify Ar file
 Verify the signature using the private key in
-.Ar filename .
+.Ar file .
 The output is either
 .Qq Verification OK
 or
@@ -1940,14 +1940,14 @@ generator, or an EGD socket (see
 .Xr RAND_egd 3 ) .
 Multiple files can be specified separated by a
 .Sq \&: .
-.It Fl sign Ar filename
+.It Fl sign Ar file
 Digitally sign the digest using the private key in
-.Ar filename .
-.It Fl signature Ar filename
+.Ar file .
+.It Fl signature Ar file
 The actual signature to verify.
-.It Fl verify Ar filename
+.It Fl verify Ar file
 Verify the signature using the public key in
-.Ar filename .
+.Ar file .
 The output is either
 .Qq Verification OK
 or
@@ -1993,9 +1993,9 @@ below.
 .Op Fl noout
 .Op Fl text
 .Op Fl engine Ar id
-.Op Fl in Ar filename
+.Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
-.Op Fl out Ar filename
+.Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Op Fl rand Ar file ...
 .Op Ar numbits
@@ -2043,9 +2043,9 @@ string) will cause
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
-.It Fl in Ar filename
+.It Fl in Ar file
 This specifies the input
-.Ar filename
+.Ar file
 to read parameters from or standard input if this option is not specified.
 .It Fl inform Ar DER | PEM
 This specifies the input format.
@@ -2067,9 +2067,9 @@ It must be the last option.
 If not present, then a value of 512 is used.
 If this value is present, then the input file is ignored and
 parameters are generated instead.
-.It Fl out Ar filename
+.It Fl out Ar file
 This specifies the output
-.Ar filename
+.Ar file
 to write parameters to.
 Standard output is used if this option is not present.
 The output filename should
@@ -2148,9 +2148,9 @@ option was added in
 .Op Fl pubout
 .Op Fl text
 .Op Fl engine Ar id
-.Op Fl in Ar filename
+.Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
-.Op Fl out Ar filename
+.Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
@@ -2196,9 +2196,9 @@ string) will cause
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
-.It Fl in Ar filename
+.It Fl in Ar file
 This specifies the input
-.Ar filename
+.Ar file
 to read a key from or standard input if this option is not specified.
 If the key is encrypted, a pass phrase will be prompted for.
 .It Fl inform Ar DER | PEM
@@ -2224,9 +2224,9 @@ In the case of a private key, PKCS#8 format is also accepted.
 This option prints out the value of the public key component of the key.
 .It Fl noout
 This option prevents output of the encoded version of the key.
-.It Fl out Ar filename
+.It Fl out Ar file
 This specifies the output
-.Ar filename
+.Ar file
 to write a key to, or standard output if not specified.
 If any encryption options are set then a pass phrase will be
 prompted for.
@@ -2308,9 +2308,9 @@ To just output the public part of a private key:
 .Op Fl noout
 .Op Fl text
 .Op Fl engine Ar id
-.Op Fl in Ar filename
+.Op Fl in Ar file
 .Op Fl inform Ar DER | PEM
-.Op Fl out Ar filename
+.Op Fl out Ar file
 .Op Fl outform Ar DER | PEM
 .Op Fl rand Ar file ...
 .Op Ar numbits
@@ -2338,9 +2338,9 @@ The engine will then be set as the default for all available algorithms.
 .It Fl genkey
 This option will generate a DSA either using the specified or generated
 parameters.
-.It Fl in Ar filename
+.It Fl in Ar file
 This specifies the input
-.Ar filename
+.Ar file
 to read parameters from, or standard input if this option is not specified.
 If the
 .Ar numbits
@@ -2366,9 +2366,9 @@ It must be the last option.
 If this option is included, then the input file
 .Pq if any
 is ignored.
-.It Fl out Ar filename
+.It Fl out Ar file
 This specifies the output
-.Ar filename
+.Ar file
 to write parameters to.
 Standard output is used if this option is not present.
 The output filename should
@@ -2411,12 +2411,12 @@ DSA parameters is often used to generate several distinct keys.
 .Op Fl nosalt
 .Op Fl salt
 .Op Fl bufsize Ar number
-.Op Fl in Ar filename
+.Op Fl in Ar file
 .Op Fl iv Ar IV
 .Op Fl K Ar key
 .Op Fl k Ar password
-.Op Fl kfile Ar filename
-.Op Fl out Ar filename
+.Op Fl kfile Ar file
+.Op Fl out Ar file
 .Op Fl pass Ar arg
 .Op Fl S Ar salt
 .Ek
@@ -2455,9 +2455,9 @@ string) will cause
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
-.It Fl in Ar filename
+.It Fl in Ar file
 The input
-.Ar filename ;
+.Ar file ;
 standard input by default.
 .It Fl iv Ar IV
 The actual
@@ -2510,9 +2510,9 @@ This is for compatibility with previous versions of
 Superseded by the
 .Fl pass
 option.
-.It Fl kfile Ar filename
+.It Fl kfile Ar file
 Read the password to derive the key from the first line of
-.Ar filename .
+.Ar file .
 This is for compatibility with previous versions of
 .Nm OpenSSL .
 Superseded by the
@@ -2528,9 +2528,9 @@ This is the default for compatibility with previous versions of
 .Nm OpenSSL
 and
 .Nm SSLeay .
-.It Fl out Ar filename
+.It Fl out Ar file
 The output
-.Ar filename ,
+.Ar file ,
 standard output by default.
 .It Fl P
 Print out the
@@ -2788,7 +2788,7 @@ above.
 .Fl des | des3
 .Oc
 .Op Fl engine Ar id
-.Op Fl out Ar filename
+.Op Fl out Ar file
 .Op Fl rand Ar file ...
 .Op Ar paramfile
 .Ek
@@ -2818,9 +2818,9 @@ string) will cause
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed.
 The engine will then be set as the default for all available algorithms.
-.It Fl out Ar filename
+.It Fl out Ar file
 The output
-.Ar filename .
+.Ar file .
 If this argument is not specified, standard output is used.
 .It Ar paramfile
 This option specifies the DSA parameter file to use.
@@ -2850,7 +2850,7 @@ much quicker than RSA key generation, for example.
 .Oc
 .Op Fl engine Ar id
 .Op Fl 3 | f4
-.Op Fl out Ar filename
+.Op Fl out Ar file
 .Op Fl passout Ar arg
 .Op Fl rand Ar file ...
 .Op Ar numbits
@@ -2888,9 +2888,9 @@ The default is 65537.
 The size of the private key to generate in bits.
 This must be the last option specified.
 The default is 512.
-.It Fl out Ar filename
+.It Fl out Ar file
 The output
-.Ar filename .
+.Ar file .
 If this argument is not specified, standard output is used.
 .It Fl passout Ar arg
 The output file password source.
@@ -2935,8 +2935,8 @@ they will be much larger
 .Sh NSEQ
 .Nm openssl nseq
 .Op Fl toseq
-.Op Fl in Ar filename
-.Op Fl out Ar filename
+.Op Fl in Ar file
+.Op Fl out Ar file
 .Pp
 The
 .Nm nseq
@@ -2947,13 +2947,13 @@ sequence.
 .Pp
 The options are as follows:
 .Bl -tag -width "-toseq"
-.It Fl in Ar filename
+.It Fl in Ar file
 This specifies the input
-.Ar filename
+.Ar file
 to read or standard input if this option is not specified.
-.It Fl out Ar filename
+.It Fl out Ar file
 Specifies the output
-.Ar filename
+.Ar file
 or standard output by default.
 .It Fl toseq
 Normally, a Netscape certificate sequence will be input and the output
@@ -3000,53 +3000,53 @@ input and output files and allowing multiple certificate files to be used.
 .Sh OCSP
 .Nm openssl ocsp
 .Bk -words
-.Op Fl out Ar file
-.Op Fl issuer Ar file
-.Op Fl cert Ar file
-.Op Fl serial Ar n
-.Op Fl signer Ar file
-.Op Fl signkey Ar file
-.Op Fl sign_other Ar file
+.Op Fl no_cert_checks
+.Op Fl no_cert_verify
 .Op Fl no_certs
+.Op Fl no_chain
+.Op Fl no_intern
+.Op Fl no_nonce
+.Op Fl no_signature_verify
+.Op Fl nonce
+.Op Fl noverify
 .Op Fl req_text
+.Op Fl resp_key_id
+.Op Fl resp_no_certs
 .Op Fl resp_text
 .Op Fl text
-.Op Fl reqout Ar file
-.Op Fl respout Ar file
-.Op Fl reqin Ar file
-.Op Fl respin Ar file
-.Op Fl nonce
-.Op Fl no_nonce
-.Op Fl url Ar URL
+.Op Fl trust_other
+.Op Fl CA Ar file
+.Op Fl CAfile Ar file
+.Op Fl CApath Ar path
+.Op Fl cert Ar file
 .Oo
 .Fl host
 .Ar hostname : Ns Ar port
 .Oc
-.Op Fl path
-.Op Fl CApath Ar dir
-.Op Fl CAfile Ar file
-.Op Fl VAfile Ar file
-.Op Fl validity_period Ar n
-.Op Fl status_age Ar n
-.Op Fl noverify
-.Op Fl verify_other Ar file
-.Op Fl trust_other
-.Op Fl no_intern
-.Op Fl no_signature_verify
-.Op Fl no_cert_verify
-.Op Fl no_chain
-.Op Fl no_cert_checks
-.Op Fl port Ar num
-.Op Fl index Ar file
-.Op Fl CA Ar file
-.Op Fl rsigner Ar file
+.Op Fl index Ar indexfile
+.Op Fl issuer Ar file
+.Op Fl ndays Ar days
+.Op Fl nmin Ar minutes
+.Op Fl nrequest Ar number
+.Op Fl out Ar file
+.Op Fl path Ar path
+.Op Fl port Ar portnum
+.Op Fl reqin Ar file
+.Op Fl reqout Ar file
+.Op Fl respin Ar file
+.Op Fl respout Ar file
 .Op Fl rkey Ar file
 .Op Fl rother Ar file
-.Op Fl resp_no_certs
-.Op Fl nmin Ar n
-.Op Fl ndays Ar n
-.Op Fl resp_key_id
-.Op Fl nrequest Ar n
+.Op Fl rsigner Ar file
+.Op Fl serial Ar number
+.Op Fl sign_other Ar file
+.Op Fl signer Ar file
+.Op Fl signkey Ar file
+.Op Fl status_age Ar age
+.Op Fl url Ar responder_url
+.Op Fl VAfile Ar file
+.Op Fl validity_period Ar nsec
+.Op Fl verify_other Ar file
 .Ek
 .Pp
 The Online Certificate Status Protocol
@@ -3065,49 +3065,67 @@ and behave like a mini OCSP server itself.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl out Ar filename
-Specify output
-.Ar filename ,
-default is standard output.
-.It Fl issuer Ar filename
-This specifies the current issuer certificate.
-This option can be used multiple times.
-The certificate specified in
-.Ar filename
-must be in
-.Ar PEM
-format.
-.It Fl cert Ar filename
+.It Fl CAfile Ar file , Fl CApath Ar path
+.Ar file
+or
+.Ar path
+containing trusted CA certificates.
+These are used to verify the signature on the OCSP response.
+.It Fl cert Ar file
 Add the certificate
-.Ar filename
+.Ar file
 to the request.
 The issuer certificate is taken from the previous
 .Fl issuer
 option, or an error occurs if no issuer certificate is specified.
-.It Fl serial Ar num
-Same as the
-.Fl cert
-option except the certificate with serial number
-.Ar num
-is added to the request.
-The serial number is interpreted as a decimal integer unless preceded by
-.Sq 0x .
-Negative integers can also be specified by preceding the value with a
-.Sq -
-sign.
-.It Fl signer Ar filename , Fl signkey Ar filename
-Sign the OCSP request using the certificate specified in the
-.Fl signer
-option and the private key specified by the
-.Fl signkey
-option.
+.It Xo
+.Fl host Ar hostname : Ns Ar port ,
+.Fl path Ar path
+.Xc
 If the
-.Fl signkey
-option is not present, then the private key is read from the same file
-as the certificate.
-If neither option is specified, then the OCSP request is not signed.
-.It Fl sign_other Ar filename
-Additional certificates to include in the signed request.
+.Fl host
+option is present, then the OCSP request is sent to the host
+.Ar hostname
+on port
+.Ar port .
+.Fl path
+specifies the HTTP path name to use, or
+.Sq /
+by default.
+.It Fl issuer Ar file
+This specifies the current issuer certificate.
+This option can be used multiple times.
+The certificate specified in
+.Ar file
+must be in
+.Ar PEM
+format.
+.It Fl no_cert_checks
+Don't perform any additional checks on the OCSP response signer's certificate.
+That is, do not make any checks to see if the signer's certificate is
+authorised to provide the necessary status information:
+as a result this option should only be used for testing purposes.
+.It Fl no_cert_verify
+Don't verify the OCSP response signer's certificate at all.
+Since this option allows the OCSP response to be signed by any certificate,
+it should only be used for testing purposes.
+.It Fl no_certs
+Don't include any certificates in signed request.
+.It Fl no_chain
+Do not use certificates in the response as additional untrusted CA
+certificates.
+.It Fl no_intern
+Ignore certificates contained in the OCSP response
+when searching for the signer's certificate.
+With this option, the signer's certificate must be specified with either the
+.Fl verify_certs
+or
+.Fl VAfile
+options.
+.It Fl no_signature_verify
+Don't check the signature on the OCSP response.
+Since this option tolerates invalid signatures on OCSP responses,
+it will normally only be used for testing purposes.
 .It Fl nonce , no_nonce
 Add an OCSP
 .Em nonce
@@ -3133,52 +3151,57 @@ a
 is automatically added; specifying
 .Fl no_nonce
 overrides this.
+.It Fl noverify
+Don't attempt to verify the OCSP response signature or the
+.Em nonce
+values.
+This option will normally only be used for debugging
+since it disables all verification of the responder's certificate.
+.It Fl out Ar file
+Specify output
+.Ar file ;
+default is standard output.
 .It Fl req_text , resp_text , text
 Print out the text form of the OCSP request, response, or both, respectively.
-.It Fl reqout Ar file , Fl respout Ar file
-Write out the DER encoded certificate request or response to
-.Ar file .
 .It Fl reqin Ar file , Fl respin Ar file
 Read an OCSP request or response file from
 .Ar file .
 These option are ignored
 if an OCSP request or response creation is implied by other options
 (for example with the
-.Fl serial , cert
+.Fl serial , cert ,
 and
 .Fl host
 options).
-.It Fl url Ar responder_url
-Specify the responder URL.
-Both HTTP and HTTPS
-.Pq SSL/TLS
-URLs can be specified.
-.It Xo
-.Fl host Ar hostname : Ns Ar port ,
-.Fl path Ar pathname
-.Xc
+.It Fl reqout Ar file , Fl respout Ar file
+Write out the
+.Ar DER
+encoded certificate request or response to
+.Ar file .
+.It Fl serial Ar num
+Same as the
+.Fl cert
+option except the certificate with serial number
+.Ar num
+is added to the request.
+The serial number is interpreted as a decimal integer unless preceded by
+.Sq 0x .
+Negative integers can also be specified by preceding the value with a
+.Sq -
+sign.
+.It Fl sign_other Ar file
+Additional certificates to include in the signed request.
+.It Fl signer Ar file , Fl signkey Ar file
+Sign the OCSP request using the certificate specified in the
+.Fl signer
+option and the private key specified by the
+.Fl signkey
+option.
 If the
-.Fl host
-option is present, then the OCSP request is sent to the host
-.Ar hostname
-on port
-.Ar port .
-.Fl path
-specifies the HTTP path name to use, or
-.Sq /
-by default.
-.It Fl CAfile Ar file , Fl CApath Ar pathname
-.Ar file
-or
-.Ar pathname
-containing trusted CA certificates.
-These are used to verify the signature on the OCSP response.
-.It Fl verify_other Ar file
-.Ar file
-containing additional certificates to search when attempting to locate
-the OCSP response signing certificate.
-Some responders omit the actual signer's certificate from the response:
-this option can be used to supply the necessary certificate in such cases.
+.Fl signkey
+option is not present, then the private key is read from the same file
+as the certificate.
+If neither option is specified, then the OCSP request is not signed.
 .It Fl trust_other
 The certificates specified by the
 .Fl verify_certs
@@ -3186,6 +3209,11 @@ option should be explicitly trusted and no additional checks will be
 performed on them.
 This is useful when the complete responder certificate chain is not available
 or trusting a root CA is not appropriate.
+.It Fl url Ar responder_url
+Specify the responder URL.
+Both HTTP and HTTPS
+.Pq SSL/TLS
+URLs can be specified.
 .It Fl VAfile Ar file
 .Ar file
 containing explicitly trusted responder certificates.
@@ -3194,36 +3222,6 @@ Equivalent to the
 and
 .Fl trust_other
 options.
-.It Fl noverify
-Don't attempt to verify the OCSP response signature or the
-.Em nonce
-values.
-This option will normally only be used for debugging
-since it disables all verification of the responders certificate.
-.It Fl no_intern
-Ignore certificates contained in the OCSP response
-when searching for the signer's certificate.
-With this option the signer's certificate must be specified with either the
-.Fl verify_certs
-or
-.Fl VAfile
-options.
-.It Fl no_signature_verify
-Don't check the signature on the OCSP response.
-Since this option tolerates invalid signatures on OCSP responses,
-it will normally only be used for testing purposes.
-.It Fl no_cert_verify
-Don't verify the OCSP response signer's certificate at all.
-Since this option allows the OCSP response to be signed by any certificate,
-it should only be used for testing purposes.
-.It Fl no_chain
-Do not use certificates in the response as additional untrusted CA
-certificates.
-.It Fl no_cert_checks
-Don't perform any additional checks on the OCSP response signer's certificate.
-That is, do not make any checks to see if the signer's certificate is
-authorised to provide the necessary status information:
-as a result this option should only be used for testing purposes.
 .It Fl validity_period Ar nsec , Fl status_age Ar age
 These options specify the range of times, in seconds, which will be tolerated
 in an OCSP response.
@@ -3251,9 +3249,18 @@ field is checked to see it is not older than
 .Ar age
 seconds old.
 By default, this additional check is not performed.
+.It Fl verify_other Ar file
+.Ar file
+containing additional certificates to search when attempting to locate
+the OCSP response signing certificate.
+Some responders omit the actual signer's certificate from the response;
+this option can be used to supply the necessary certificate in such cases.
 .El
 .Sh OCSP SERVER OPTIONS
 .Bl -tag -width "XXXX"
+.It Fl CA Ar file
+CA certificate corresponding to the revocation information in
+.Ar indexfile .
 .It Fl index Ar indexfile
 .Ar indexfile
 is a text index file in
@@ -3289,32 +3296,6 @@ option is present, then the
 and
 .Fl rsigner
 options must also be present.
-.It Fl CA Ar file
-CA certificate corresponding to the revocation information in
-.Ar indexfile .
-.It Fl rsigner Ar file
-The certificate to sign OCSP responses with.
-.It Fl rother Ar file
-Additional certificates to include in the OCSP response.
-.It Fl resp_no_certs
-Don't include any certificates in the OCSP response.
-.It Fl resp_key_id
-Identify the signer certificate using the key ID,
-default is to use the subject name.
-.It Fl rkey Ar file
-The private key to sign OCSP responses with;
-if not present, the file specified in the
-.Fl rsigner
-option is used.
-.It Fl port Ar portnum
-Port to listen for OCSP requests on.
-The port may also be specified using the
-.Fl url
-option.
-.It Fl nrequest Ar number
-The OCSP server will exit after receiving
-.Ar number
-requests, default unlimited.
 .It Fl nmin Ar minutes , Fl ndays Ar days
 Number of
 .Ar minutes
@@ -3326,6 +3307,29 @@ field.
 If neither option is present, then the
 .Em nextUpdate
 field is omitted, meaning fresh revocation information is immediately available.
+.It Fl nrequest Ar number
+The OCSP server will exit after receiving
+.Ar number
+requests, default unlimited.
+.It Fl port Ar portnum
+Port to listen for OCSP requests on.
+The port may also be specified using the
+.Fl url
+option.
+.It Fl resp_key_id
+Identify the signer certificate using the key ID;
+default is to use the subject name.
+.It Fl resp_no_certs
+Don't include any certificates in the OCSP response.
+.It Fl rkey Ar file
+The private key to sign OCSP responses with;
+if not present, the file specified in the
+.Fl rsigner
+option is used.
+.It Fl rother Ar file
+Additional certificates to include in the OCSP response.
+.It Fl rsigner Ar file
+The certificate to sign OCSP responses with.
 .El
 .Sh OCSP RESPONSE VERIFICATION
 OCSP Response follows the rules specified in RFC 2560.
@@ -3423,7 +3427,7 @@ $ openssl ocsp -issuer issuer.pem -cert c1.pem -cert c2.pem \e
 	-url http://ocsp.myhost.com/ -resp_text -respout resp.der
 .Ed
 .Pp
-Read in an OCSP response and print out text form:
+Read in an OCSP response and print out in text form:
 .Pp
 .Dl $ openssl ocsp -respin resp.der -text
 .Pp
@@ -3448,8 +3452,8 @@ $ openssl ocsp -index demoCA/index.txt -rsigner rcert.pem -CA \e
 	demoCA/cacert.pem -issuer demoCA/cacert.pem -serial 1
 .Ed
 .Pp
-Query status information using request read from a file, write response to a
-second file:
+Query status information using request read from a file and write
+the response to a second file:
 .Bd -literal -offset indent
 $ openssl ocsp -index demoCA/index.txt -rsigner rcert.pem -CA \e
 	demoCA/cacert.pem -reqin req.der -respout resp.der
@@ -3554,8 +3558,8 @@ prints
 .Bk -words
 .Op Fl inform Ar DER | PEM
 .Op Fl outform Ar DER | PEM
-.Op Fl in Ar filename
-.Op Fl out Ar filename
+.Op Fl in Ar file
+.Op Fl out Ar file
 .Op Fl print_certs
 .Op Fl text
 .Op Fl noout
@@ -3583,13 +3587,13 @@ is a base64 encoded version of the DER form with header and footer lines.
 This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
-.It Fl in Ar filename
+.It Fl in Ar file
 This specifies the input
-.Ar filename
+.Ar file
 to read from or standard input if this option is not specified.
-.It Fl out Ar filename
+.It Fl out Ar file
 Specifies the output
-.Ar filename
+.Ar file
 to write to or standard output by default.
 .It Fl print_certs
 Prints out any certificates or CRLs contained in the file.
@@ -3650,9 +3654,9 @@ They cannot currently parse, for example, the new CMS as described in RFC 2630.
 .Op Fl topk8
 .Op Fl inform Ar DER | PEM
 .Op Fl outform Ar DER | PEM
-.Op Fl in Ar filename
+.Op Fl in Ar file
 .Op Fl passin Ar arg
-.Op Fl out Ar filename
+.Op Fl out Ar file
 .Op Fl passout Ar arg
 .Op Fl noiter
 .Op Fl nocrypt
@@ -3698,9 +3702,9 @@ format of the traditional format private key is used.
 This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
-.It Fl in Ar filename
+.It Fl in Ar file
 This specifies the input
-.Ar filename
+.Ar file
 to read a key from or standard input if this option is not specified.
 If the key is encrypted, a pass phrase will be prompted for.
 .It Fl passin Ar arg
@@ -3710,9 +3714,9 @@ For more information about the format of
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
-.It Fl out Ar filename
+.It Fl out Ar file
 This specifies the output
-.Ar filename
+.Ar file
 to write a key to or standard output by default.
 If any encryption options are set then a pass phrase will be prompted for.
 The output filename should
@@ -3907,14 +3911,14 @@ compatibility, several of the utilities use the old format at present.
 .Bk -words
 .Op Fl export
 .Op Fl chain
-.Op Fl inkey Ar filename
-.Op Fl certfile Ar filename
+.Op Fl inkey Ar file
+.Op Fl certfile Ar file
 .Op Fl CApath Ar directory
-.Op Fl CAfile Ar filename
+.Op Fl CAfile Ar file
 .Op Fl name Ar name
 .Op Fl caname Ar name
-.Op Fl in Ar filename
-.Op Fl out Ar filename
+.Op Fl in Ar file
+.Op Fl out Ar file
 .Op Fl noout
 .Op Fl nomacver
 .Op Fl nocerts
@@ -3959,14 +3963,14 @@ option
 .Pq see below .
 .Sh PKCS12 PARSING OPTIONS
 .Bl -tag -width "XXXX"
-.It Fl in Ar filename
+.It Fl in Ar file
 This specifies the
-.Ar filename
+.Ar file
 of the PKCS#12 file to be parsed.
 Standard input is used by default.
-.It Fl out Ar filename
+.It Fl out Ar file
 The
-.Ar filename
+.Ar file
 to write certificates and private keys to, standard output by default.
 They are all written in
 .Em PEM
@@ -4024,14 +4028,14 @@ PKCS#12 files unreadable.
 .It Fl export
 This option specifies that a PKCS#12 file will be created rather than
 parsed.
-.It Fl out Ar filename
+.It Fl out Ar file
 This specifies
-.Ar filename
+.Ar file
 to write the PKCS#12 file to.
 Standard output is used by default.
-.It Fl in Ar filename
+.It Fl in Ar file
 The
-.Ar filename
+.Ar file
 to read certificates and private keys from, standard input by default.
 They must all be in
 .Em PEM
@@ -4040,7 +4044,7 @@ The order doesn't matter but one private key and its corresponding
 certificate should be present.
 If additional certificates are present, they will also be included
 in the PKCS#12 file.
-.It Fl inkey Ar filename
+.It Fl inkey Ar file
 File to read private key from.
 If not present then a private key must be present in the input file.
 .It Fl name Ar friendlyname
@@ -4048,12 +4052,12 @@ This specifies the
 .Qq friendly name
 for the certificate and private key.
 This name is typically displayed in list boxes by software importing the file.
-.It Fl certfile Ar filename
-A filename to read additional certificates from.
+.It Fl certfile Ar file
+A file to read additional certificates from.
 .It Fl CApath Ar directory
 Directory of CAs
 .Pq PEM format .
-.It Fl CAfile Ar filename
+.It Fl CAfile Ar file
 File of CAs
 .Pq PEM format .
 .It Fl caname Ar friendlyname
@@ -4334,9 +4338,9 @@ The engine will then be set as the default for all available algorithms.
 .Bk -words
 .Op Fl inform Ar DER | PEM
 .Op Fl outform Ar DER | PEM
-.Op Fl in Ar filename
+.Op Fl in Ar file
 .Op Fl passin Ar arg
-.Op Fl out Ar filename
+.Op Fl out Ar file
 .Op Fl passout Ar arg
 .Op Fl text
 .Op Fl pubkey
@@ -4357,11 +4361,11 @@ The engine will then be set as the default for all available algorithms.
 .Oc
 .Op Fl nodes
 .Op Fl subject
-.Op Fl key Ar filename
+.Op Fl key Ar file
 .Op Fl keyform Ar DER | PEM
-.Op Fl keyout Ar filename
+.Op Fl keyout Ar file
 .Op Fl md5 | sha1 | md2 | md4
-.Op Fl config Ar filename
+.Op Fl config Ar file
 .Op Fl subj Ar arg
 .Op Fl x509
 .Op Fl days Ar n
@@ -4401,9 +4405,9 @@ footer lines.
 This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
-.It Fl in Ar filename
+.It Fl in Ar file
 This specifies the input
-.Ar filename
+.Ar file
 to read a request from, or standard input
 if this option is not specified.
 A request is only read if the creation options
@@ -4418,9 +4422,9 @@ For more information about the format of
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
-.It Fl out Ar filename
+.It Fl out Ar file
 This specifies the output
-.Ar filename
+.Ar file
 to write to, or standard output by default.
 .It Fl passout Ar arg
 The output file password source.
@@ -4465,10 +4469,10 @@ where
 is the number of bits, generates an RSA key
 .Ar nbits
 in size.
-.Ar dsa : Ns Ar filename
+.Ar dsa : Ns Ar file
 generates a DSA key using the parameters in the file
-.Ar filename .
-.It Fl key Ar filename
+.Ar file .
+.It Fl key Ar file
 This specifies the file to read the private key from.
 It also accepts PKCS#8 format private keys for
 .Em PEM
@@ -4479,9 +4483,9 @@ The format of the private key file specified in the
 argument.
 .Ar PEM
 is the default.
-.It Fl keyout Ar filename
+.It Fl keyout Ar file
 This gives the
-.Ar filename
+.Ar file
 to write the newly created private key to.
 If this option is not specified, then the filename present in the
 configuration file is used.
@@ -4494,7 +4498,7 @@ Output the request's subject.
 This specifies the message digest to sign the request with.
 This overrides the digest algorithm specified in the configuration file.
 This option is ignored for DSA requests: they always use SHA1.
-.It Fl config Ar filename
+.It Fl config Ar file
 This allows an alternative configuration file to be specified;
 this overrides the compile time filename or any specified in
 the
@@ -4628,7 +4632,7 @@ It can be overridden by using the
 .Fl newkey
 option.
 .It Ar default_keyfile
-This is the default filename to write a private key to.
+This is the default file to write a private key to.
 If not specified, the key is written to standard output.
 This can be overridden by the
 .Fl keyout
@@ -4647,7 +4651,7 @@ object identifier followed by
 and the numerical form.
 The short and long names are the same when this option is used.
 .It Ar RANDFILE
-This specifies a filename in which random number seed information is
+This specifies a file in which random number seed information is
 placed and read from, or an EGD socket (see
 .Xr RAND_egd 3 ) .
 It is used for private key generation.
@@ -5062,9 +5066,9 @@ should be input by the user.
 .Bk -words
 .Op Fl inform Ar DER | NET | PEM
 .Op Fl outform Ar DER | NET | PEM
-.Op Fl in Ar filename
+.Op Fl in Ar file
 .Op Fl passin Ar arg
-.Op Fl out Ar filename
+.Op Fl out Ar file
 .Op Fl passout Ar arg
 .Op Fl sgckey
 .Oo
@@ -5116,9 +5120,9 @@ section.
 This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
-.It Fl in Ar filename
+.It Fl in Ar file
 This specifies the input
-.Ar filename
+.Ar file
 to read a key from or standard input if this
 option is not specified.
 If the key is encrypted, a pass phrase will be prompted for.
@@ -5129,9 +5133,9 @@ For more information about the format of
 see the
 .Sx PASS PHRASE ARGUMENTS
 section above.
-.It Fl out Ar filename
+.It Fl out Ar file
 This specifies the output
-.Ar filename
+.Ar file
 to write a key to, or standard output if this option is not specified.
 If any encryption options are set then, a pass phrase will be prompted for.
 The output filename should
@@ -5289,14 +5293,14 @@ data using the RSA algorithm.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl in Ar filename
+.It Fl in Ar file
 This specifies the input
-.Ar filename
+.Ar file
 to read data from or standard input
 if this option is not specified.
-.It Fl out Ar filename
+.It Fl out Ar file
 Specifies the output
-.Ar filename
+.Ar file
 to write to or standard output by
 default.
 .It Fl inkey Ar file
@@ -5451,10 +5455,10 @@ which it can be seen agrees with the recovered value above.
 .Fl connect Ar host : Ns Ar port
 .Oc
 .Op Fl verify Ar depth
-.Op Fl cert Ar filename
-.Op Fl key Ar filename
+.Op Fl cert Ar file
+.Op Fl key Ar file
 .Op Fl CApath Ar directory
-.Op Fl CAfile Ar filename
+.Op Fl CAfile Ar file
 .Op Fl reconnect
 .Op Fl pause
 .Op Fl showcerts
@@ -5713,11 +5717,11 @@ We should really report information whenever a session is renegotiated.
 .Op Fl context Ar id
 .Op Fl verify Ar depth
 .Op Fl Verify Ar depth
-.Op Fl cert Ar filename
+.Op Fl cert Ar file
 .Op Fl key Ar keyfile
-.Op Fl dcert Ar filename
+.Op Fl dcert Ar file
 .Op Fl dkey Ar keyfile
-.Op Fl dhparam Ar filename
+.Op Fl dhparam Ar file
 .Op Fl nbio
 .Op Fl nbio_test
 .Op Fl crlf
@@ -5725,7 +5729,7 @@ We should really report information whenever a session is renegotiated.
 .Op Fl msg
 .Op Fl state
 .Op Fl CApath Ar directory
-.Op Fl CAfile Ar filename
+.Op Fl CAfile Ar file
 .Op Fl nocert
 .Op Fl cipher Ar cipherlist
 .Op Fl serverpref
@@ -5770,13 +5774,13 @@ certificate and some require a certificate with a certain public key type:
 for example the DSS cipher suites require a certificate containing a DSS
 .Pq DSA
 key.
-If not specified, then the filename
+If not specified, then the file
 .Pa server.pem
 will be used.
 .It Fl key Ar keyfile
 The private key to use.
 If not specified, then the certificate file will be used.
-.It Fl dcert Ar filename , Fl dkey Ar keyname
+.It Fl dcert Ar file , Fl dkey Ar keyname
 Specify an additional certificate and private key; these behave in the
 same manner as the
 .Fl cert
@@ -5797,7 +5801,7 @@ by using an appropriate certificate.
 If this option is set, then no certificate is used.
 This restricts the cipher suites available to the anonymous ones
 .Pq currently just anonymous DH .
-.It Fl dhparam Ar filename
+.It Fl dhparam Ar file
 The DH parameter file to use.
 The ephemeral DH cipher suites generate keys
 using a set of DH parameters.
@@ -6005,8 +6009,8 @@ utility is currently undocumented.
 .Bk -words
 .Op Fl inform Ar DER | PEM
 .Op Fl outform Ar DER | PEM
-.Op Fl in Ar filename
-.Op Fl out Ar filename
+.Op Fl in Ar file
+.Op Fl out Ar file
 .Op Fl text
 .Op Fl cert
 .Op Fl noout
@@ -6039,13 +6043,13 @@ format base64 encoded with additional header and footer lines.
 This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
-.It Fl in Ar filename
+.It Fl in Ar file
 This specifies the input
-.Ar filename
+.Ar file
 to read session information from, or standard input by default.
-.It Fl out Ar filename
+.It Fl out Ar file
 This specifies the output
-.Ar filename
+.Ar file
 to write session information to, or standard
 output if this option is not specified.
 .It Fl text
@@ -6214,7 +6218,7 @@ Both clear text and opaque signing is supported.
 Takes an input message and writes out a
 .Em PEM
 encoded PKCS#7 structure.
-.It Fl in Ar filename
+.It Fl in Ar file
 The input message to be encrypted or signed or the
 .Em MIME
 message to
@@ -6237,7 +6241,7 @@ structure; if no PKCS#7 structure is being input (for example with
 or
 .Fl sign ) ,
 this option has no effect.
-.It Fl out Ar filename
+.It Fl out Ar file
 The message text that has been decrypted or verified, or the output
 .Em MIME
 format message that has been signed or verified.
@@ -6259,7 +6263,7 @@ structure; if no PKCS#7 structure is being output (for example with
 or
 .Fl decrypt )
 this option has no effect.
-.It Fl content Ar filename
+.It Fl content Ar file
 This specifies a file containing the detached content.
 This is only useful with the
 .Fl verify
@@ -6673,8 +6677,8 @@ for all available algorithms.
 .\"
 .Sh SPKAC
 .Nm openssl spkac
-.Op Fl in Ar filename
-.Op Fl out Ar filename
+.Op Fl in Ar file
+.Op Fl out Ar file
 .Op Fl key Ar keyfile
 .Op Fl passin Ar arg
 .Op Fl challenge Ar string
@@ -6695,16 +6699,16 @@ produce its own SPKACs from a supplied private key.
 .Pp
 The options are as follows:
 .Bl -tag -width "XXXX"
-.It Fl in Ar filename
+.It Fl in Ar file
 This specifies the input
-.Ar filename
+.Ar file
 to read from or standard input if this option is not specified.
 Ignored if the
 .Fl key
 option is used.
-.It Fl out Ar filename
+.It Fl out Ar file
 Specifies the output
-.Ar filename
+.Ar file
 to write to or standard output by default.
 .It Fl key Ar keyfile
 Create an SPKAC file using the private key in
@@ -6889,7 +6893,7 @@ This is useful if the first certificate filename begins with a
 One or more
 .Ar certificates
 to verify.
-If no certificate filenames are included, then an attempt is made to read
+If no certificate files are included, then an attempt is made to read
 a certificate from standard input.
 They should all be in
 .Em PEM
@@ -7196,8 +7200,8 @@ option was added in
 .Op Fl keyform Ar DER | PEM
 .Op Fl CAform Ar DER | PEM
 .Op Fl CAkeyform Ar DER | PEM
-.Op Fl in Ar filename
-.Op Fl out Ar filename
+.Op Fl in Ar file
+.Op Fl out Ar file
 .Op Fl passin Ar arg
 .Op Fl serial
 .Op Fl hash
@@ -7224,18 +7228,18 @@ option was added in
 .Op Fl days Ar arg
 .Op Fl checkend Ar arg
 .Op Fl set_serial Ar n
-.Op Fl signkey Ar filename
+.Op Fl signkey Ar file
 .Op Fl x509toreq
 .Op Fl req
-.Op Fl CA Ar filename
-.Op Fl CAkey Ar filename
+.Op Fl CA Ar file
+.Op Fl CAkey Ar file
 .Op Fl CAcreateserial
-.Op Fl CAserial Ar filename
+.Op Fl CAserial Ar file
 .Op Fl text
 .Op Fl C
 .Op Fl md2 | md5 | sha1
 .Op Fl clrext
-.Op Fl extfile Ar filename
+.Op Fl extfile Ar file
 .Op Fl extensions Ar section
 .Op Fl engine Ar id
 .Ek
@@ -7271,13 +7275,13 @@ obsolete.
 This specifies the output format; the options have the same meaning as the
 .Fl inform
 option.
-.It Fl in Ar filename
+.It Fl in Ar file
 This specifies the input
-.Ar filename
+.Ar file
 to read a certificate from or standard input if this option is not specified.
-.It Fl out Ar filename
+.It Fl out Ar file
 This specifies the output
-.Ar filename
+.Ar file
 to write to or standard output by default.
 .It Fl passin Ar arg
 The key password source.
@@ -7472,7 +7476,7 @@ utility can be used to sign certificates and requests: it
 can thus behave like a
 .Qq mini CA .
 .Bl -tag -width "XXXX"
-.It Fl signkey Ar filename
+.It Fl signkey Ar file
 This option causes the input file to be self-signed using the supplied
 private key.
 .Pp
@@ -7542,7 +7546,7 @@ options) is not used.
 The serial number can be decimal or hex (if preceded by
 .Sq 0x ) .
 Negative serial numbers can also be specified but their use is not recommended.
-.It Fl CA Ar filename
+.It Fl CA Ar file
 Specifies the CA certificate to be used for signing.
 When this option is present,
 .Nm x509
@@ -7558,11 +7562,11 @@ option.
 Without the
 .Fl req
 option, the input is a certificate which must be self-signed.
-.It Fl CAkey Ar filename
+.It Fl CAkey Ar file
 Sets the CA private key to sign a certificate with.
 If this option is not specified, then it is assumed that the CA private key
 is present in the CA certificate file.
-.It Fl CAserial Ar filename
+.It Fl CAserial Ar file
 Sets the CA serial number file to use.
 .Pp
 When the
@@ -7591,7 +7595,7 @@ as its serial number.
 Normally, if the
 .Fl CA
 option is specified and the serial number file does not exist, it is an error.
-.It Fl extfile Ar filename
+.It Fl extfile Ar file
 File containing certificate extensions to use.
 If not specified, then no extensions are added to the certificate.
 .It Fl extensions Ar section
