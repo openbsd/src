@@ -1,4 +1,4 @@
-/*	$OpenBSD: C.c,v 1.3 1997/06/30 06:26:33 deraadt Exp $	*/
+/*	$OpenBSD: C.c,v 1.4 1997/07/21 23:18:45 deraadt Exp $	*/
 /*	$NetBSD: C.c,v 1.3 1995/03/26 20:14:02 glass Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)C.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: C.c,v 1.3 1997/06/30 06:26:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: C.c,v 1.4 1997/07/21 23:18:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -200,6 +200,21 @@ c_entries()
 		 * reserved words.
 		 */
 		default:
+			/*
+			 * to treat following function.
+			 * func      (arg) {
+			 * ....
+			 * }
+			 */
+			if (c == ' ' || c == '\t') {
+				int save = c;
+				while (GETC(!=, EOF) && (c == ' ' || c == '\t'))
+					;
+				if (c == EOF)
+					return;
+				(void)ungetc(c, inf);
+				c = save;
+			}
 	storec:		if (!intoken(c)) {
 				if (sp == tok)
 					break;
@@ -317,6 +332,14 @@ hash_entry()
 	int	curline;		/* line started on */
 	char	*sp;			/* buffer pointer */
 	char	tok[MAXTOKEN];		/* storage buffer */
+
+	/*
+	 * to treat following macro.
+	 * #     macro(arg)        ....
+	 */
+	while (GETC(!=, EOF) && (c == ' ' || c == '\t'))
+		;
+	(void)ungetc(c, inf);
 
 	curline = lineno;
 	for (sp = tok;;) {		/* get next token */
