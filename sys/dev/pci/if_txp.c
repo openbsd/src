@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.36 2001/05/30 04:26:55 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.37 2001/05/30 04:49:32 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -116,8 +116,9 @@ void txp_set_filter __P((struct txp_softc *));
 int txp_cmd_desc_numfree __P((struct txp_softc *));
 int txp_command __P((struct txp_softc *, u_int16_t, u_int16_t, u_int32_t,
     u_int32_t, u_int16_t *, u_int32_t *, u_int32_t *, int));
-int txp_command2 __P((struct txp_softc *, u_int16_t, u_int16_t, u_int32_t,
-    u_int32_t, struct txp_rsp_desc **, int));
+int txp_command2 __P((struct txp_softc *, u_int16_t, u_int16_t,
+    u_int32_t, u_int32_t, struct txp_ext_desc *, u_int8_t,
+    struct txp_rsp_desc **, int));
 int txp_response __P((struct txp_softc *, u_int32_t, u_int16_t, u_int16_t,
     struct txp_rsp_desc **));
 void txp_rsp_fixup __P((struct txp_softc *, struct txp_rsp_desc *,
@@ -1432,19 +1433,22 @@ txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
 }
 
 int
-txp_command2(sc, id, in1, in2, in3, rspp, wait)
+txp_command2(sc, id, in1, in2, in3, in_extp, in_extn, rspp, wait)
 	struct txp_softc *sc;
 	u_int16_t id, in1;
 	u_int32_t in2, in3;
+	struct txp_ext_desc *in_extp;
+	u_int8_t in_extn;
 	struct txp_rsp_desc **rspp;
 	int wait;
 {
 	struct txp_hostvar *hv = sc->sc_hostvar;
 	struct txp_cmd_desc *cmd;
+	struct txp_ext_desc *ext;
 	u_int32_t idx, i;
 	u_int16_t seq;
 
-	if (txp_cmd_desc_numfree(sc) == 0) {
+	if (txp_cmd_desc_numfree(sc) < (in_extn + 1)) {
 		printf("%s: no free cmd descriptors\n", TXP_DEVNAME(sc));
 		return (-1);
 	}
@@ -1453,7 +1457,7 @@ txp_command2(sc, id, in1, in2, in3, rspp, wait)
 	cmd = (struct txp_cmd_desc *)(((u_int8_t *)sc->sc_cmdring.base) + idx);
 	bzero(cmd, sizeof(*cmd));
 
-	cmd->cmd_numdesc = 0;
+	cmd->cmd_numdesc = in_extn;
 	cmd->cmd_seq = seq = sc->sc_seq++;
 	cmd->cmd_id = id;
 	cmd->cmd_par1 = in1;
@@ -1465,6 +1469,16 @@ txp_command2(sc, id, in1, in2, in3, rspp, wait)
 	idx += sizeof(struct txp_cmd_desc);
 	if (idx == sc->sc_cmdring.size)
 		idx = 0;
+
+	for (i = 0; i < in_extn; i++) {
+		ext = (struct txp_ext_desc *)(((u_int8_t *)sc->sc_cmdring.base) + idx);
+		bcopy(in_extp, ext, sizeof(struct txp_ext_desc));
+		in_extp++;
+		idx += sizeof(struct txp_cmd_desc);
+		if (idx == sc->sc_cmdring.size)
+			idx = 0;
+	}
+
 	sc->sc_cmdring.lastwrite = idx;
 
 	WRITE_REG(sc, TXP_H2A_2, sc->sc_cmdring.lastwrite);
@@ -1844,15 +1858,15 @@ txp_capabilities(sc)
 	struct txp_rsp_desc *rsp = NULL;
 	struct txp_ext_desc *ext;
 
-	if (txp_command2(sc, TXP_CMD_OFFLOAD_READ, 0, 0, 0, &rsp, 1))
+	if (txp_command2(sc, TXP_CMD_OFFLOAD_READ, 0, 0, 0, NULL, 0, &rsp, 1))
 		goto out;
 
 	if (rsp->rsp_numdesc != 1)
 		goto out;
 	ext = (struct txp_ext_desc *)(rsp + 1);
 
-	sc->sc_tx_capability = ext->ext_1 & 0xfffffffe;
-	sc->sc_rx_capability = ext->ext_2 & 0xfffffffe;
+	sc->sc_tx_capability = ext->ext_1 & OFFLOAD_MASK;
+	sc->sc_rx_capability = ext->ext_2 & OFFLOAD_MASK;
 
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_MTU;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.26 2001/05/30 04:26:55 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.27 2001/05/30 04:49:33 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -515,6 +515,7 @@ struct txp_hostvar {
 #define	OFFLOAD_VLAN			0x00000080	/* vlan enable */
 #define	OFFLOAD_FILTER			0x00000100	/* filter enable */
 #define	OFFLOAD_TCPSEG			0x00000200	/* tcp segmentation */
+#define	OFFLOAD_MASK			0xfffffffe	/* mask off low bit */
 
 /*
  * Macros for converting array indices to offsets within the descriptor
