@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.13 1997/08/12 19:16:37 mickey Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.14 1997/08/12 19:24:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -39,15 +39,6 @@ int biosstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
 int biosopen __P((struct open_file *, ...));
 int biosclose __P((struct open_file *));
 int biosioctl __P((struct open_file *, u_long, void *));
-
-/* biosdisk.S */
-u_int16_t biosdinfo __P((int dev));
-int biosdreset __P((int dev));
-int biosread  __P((int dev, int cyl, int hd, int sect, int nsect, void *));
-int bioswrite __P((int dev, int cyl, int hd, int sect, int nsect, void *));
-int EDDcheck __P((dev_t));
-int EDDread __P((dev_t, u_int64_t, u_int32_t, void *));
-int EDDwrite __P((dev_t, u_int64_t, u_int32_t, void *));
 
 /* bioskbd.S */
 int kbd_probe __P((void));

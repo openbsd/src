@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.22 1997/08/07 11:49:15 niklas Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.23 1997/08/12 19:24:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -47,16 +47,121 @@ struct BIOS_regs	BIOS_regs;
 
 struct biosdisk {
 	u_int	dinfo;
-	struct {
-		u_int8_t		mboot[DOSPARTOFF];
-		struct dos_partition	dparts[NDOSPART];
-		u_int16_t		signature;
-	}	mbr;
-	struct disklabel disklabel;
 	dev_t	bsddev;
 	u_int8_t biosdev;
 	int edd_flags;
+	struct disklabel disklabel;
 };
+
+/*
+ *
+ * return a word that represents the max number
+ * of sectors and heads for this device
+ *
+ */
+static u_int16_t
+biosdinfo(dev)
+	u_int8_t dev;
+{
+	u_int16_t rv;
+	u_int8_t f;
+	__asm __volatile ("movb $8, %%ah\n\t"
+			  DOINT(0x13) "\n\t"
+			  "setc %b0\n\t"
+			  /* form a word w/ nhead/nsect packed */
+			  "movb %%cl, %b1\n\t"
+			  "andb $0x3f, %b1"
+			  : "=a" (f), "=d" (rv)
+			  : "1" (dev) : "%ecx", "cc");
+	if (f)
+		return 0x0118; /* ds/hd 3" is the default */
+	else
+		return rv;
+}
+
+/*
+ * reset disk system
+ */
+static __inline int
+biosdreset(dev)
+	u_int8_t dev;
+{
+	int rv;
+	__asm __volatile (DOINT(0x13) "\n\t"
+			  "setc %b0"
+			  : "=a" (rv)
+			  : "0" (0), "id" (dev) : "%ecx", "cc");
+	return rv;
+}
+
+static int
+biosd_rw(rw, dev, cyl, head, sect, nsect, buf)
+	u_int8_t dev;
+	int cyl, head, sect, nsect;
+	void *buf;
+{
+	int rv;
+	BIOS_regs.biosr_es = (u_int32_t)buf >> 4;
+	__asm __volatile ("movb %b7, %h1\n\t"
+			  "movb %b6, %%dh\n\t"
+			  "andl $0xf, %4\n\t"
+			  /* cylinder; the highest 2 bits of cyl is in %cl */
+			  "xchgb %%ch, %%cl\n\t"
+			  "rorb  $2, %%cl\n\t"
+			  "orb %b5, %%cl\n\t"
+			  "incb %%cl\n\t"
+			  DOINT(0x13) "\n\t"
+			  "setc %b0"
+			  : "=a" (rv)
+			  : "0" (nsect), "d" (dev), "c" (cyl),
+			    "b" (buf), "m" (sect), "m" (head),
+			    "m" ((rw == F_READ)? 2: 3)
+			  : "cc", "memory");
+
+	return (rv & 0xff)? rv >> 8 : 0;
+}
+
+/*
+ * check the features supported by the bios for the drive
+ */
+static __inline int
+EDDcheck (dev)
+	u_int8_t dev;
+{
+	u_int8_t rv;
+	u_int16_t bm, sgn;
+	__asm __volatile("movb $0x44, %%ah\n\t"
+			 DOINT(0x13) "\n\t"
+			 "setc %b0"
+			 : "=a" (rv), "=c" (bm), "=b" (sgn)
+			 : "2" (0x55aa)
+			 : "%edx", "cc");
+	if (!rv && sgn == 0xaa55)
+		return bm;
+	else
+		return -1;
+}
+
+int
+EDD_rw(int rw, u_int8_t dev, u_int64_t daddr, u_int32_t nblk, void *buf)
+{
+	u_int16_t rv;
+	struct EDD_CB cb;
+
+	cb.edd_len = sizeof(cb);
+	cb.edd_nblk = nblk;
+	cb.edd_buf = (u_int32_t)buf;
+	cb.edd_daddr = daddr;
+
+	__asm __volatile ("movb %b3, %%ah\n\t"
+			  DOINT(0x13) "\n\t"
+			  "setc %b0"
+			  : "=a" (rv)
+			  : "d" (dev), "S" (&cb),
+			    "0" ((rw == F_READ)? 0x4200: 0x4300)
+			  : "%ecx", "cc");
+	return (rv & 0xff)? rv >> 8 : 0;
+}
 
 int
 biosopen(struct open_file *f, ...)
@@ -126,8 +231,10 @@ biosopen(struct open_file *f, ...)
 	case 0:  /* wd */
 	case 4:  /* sd */
 	case 17: /* hd */
-		maj = 17;
 		bd->biosdev = (u_int8_t)(unit | 0x80);
+		if (maj == 17)
+			unit = 0;
+		maj = 17;
 		break;
 	case 2:  /* fd */
 		bd->biosdev = (u_int8_t)unit;
@@ -163,8 +270,13 @@ biosopen(struct open_file *f, ...)
 #endif
 
 	if (maj == 17) {	/* hd, wd, sd */
+		struct {
+			u_int8_t		mboot[DOSPARTOFF];
+			struct dos_partition	dparts[NDOSPART];
+			u_int16_t		signature;
+		}	mbr;
 		if ((errno = biosstrategy(bd, F_READ, DOSBBSECTOR,
-		    DEV_BSIZE, &bd->mbr, NULL)) != 0) {
+		    DEV_BSIZE, &mbr, NULL)) != 0) {
 #ifdef DEBUG
 			if (debug)
 				printf("cannot read MBR\n");
@@ -174,7 +286,7 @@ biosopen(struct open_file *f, ...)
 		}
 
 		/* check mbr signature */
-		if (bd->mbr.signature != 0xaa55) {
+		if (mbr.signature != 0xaa55) {
 #ifdef DEBUG
 			if (debug)
 				printf("bad MBR signature\n");
@@ -184,14 +296,14 @@ biosopen(struct open_file *f, ...)
 		}
 
 		for (off = 0, i = 0; off == 0 && i < NDOSPART; i++)
-			if (bd->mbr.dparts[i].dp_typ == DOSPTYP_OPENBSD)
-				off = bd->mbr.dparts[i].dp_start + LABELSECTOR;
+			if (mbr.dparts[i].dp_typ == DOSPTYP_OPENBSD)
+				off = mbr.dparts[i].dp_start + LABELSECTOR;
 
 		/* just in case */
 		if (off == 0)
 			for (off = 0, i = 0; off == 0 && i < NDOSPART; i++)
-				if (bd->mbr.dparts[i].dp_typ == DOSPTYP_NETBSD)
-					off = bd->mbr.dparts[i].dp_start +
+				if (mbr.dparts[i].dp_typ == DOSPTYP_NETBSD)
+					off = mbr.dparts[i].dp_start +
 						LABELSECTOR;
 
 		if (off == 0) {
@@ -211,7 +323,7 @@ biosopen(struct open_file *f, ...)
 #endif
 	/* read disklabel */
 	if ((errno = biosstrategy(bd, F_READ, off,
-	    DEV_BSIZE, buf, NULL)) != 0) {
+				  DEV_BSIZE, buf, NULL)) != 0) {
 #ifdef DEBUG
 		if (debug)
 			printf("failed to read disklabel\n");
@@ -245,7 +357,7 @@ biosopen(struct open_file *f, ...)
 }
 
 /* BIOS disk errors translation table */
-const struct bd_error {
+static const struct bd_error {
 	u_int8_t bd_id;
 	int	unix_id;
 	char	*msg;
@@ -285,7 +397,6 @@ const struct bd_error {
 	{ 0xE0, EIO    , "status register error" },
 	{ 0xFF, EIO    , "sense operation failed" }
 };
-const int bd_nents = NENTS(bd_errors);
 
 int
 biosstrategy(void *devdata, int rw,
@@ -303,7 +414,8 @@ biosstrategy(void *devdata, int rw,
 
 #ifdef	BIOS_DEBUG
 	if (debug)
-		printf("biosstrategy(%p,%s,%u,%u,%p,%p), dev=%x:%x\nbiosread:",
+		printf("biosstrategy(%p,%s,%u,%u,%p,%p), dev=%x:%x\n"
+		       "biosdread:",
 		       bd, (rw==F_READ?"reading":"writing"), blk, size,
 		       buf, rsize, bd->biosdev, bd->bsddev);
 #endif
@@ -342,27 +454,23 @@ biosstrategy(void *devdata, int rw,
 			printf(" (%d,%d,%d,%d)@%p", cyl, hd, sect, n, bb);
 #endif
 		/* Try to do operation up to 5 times */
-		for (error = 1, j = 5; error && (j > 0); j--) {
-			if(rw == F_READ)
-				error = biosread(bd->biosdev, cyl, hd, sect, n, bb);
-			else
-				error = bioswrite(bd->biosdev, cyl, hd, sect, n, bb);
-
-			switch (error) {
+		for (error = 1, j = 5; j-- && error;)
+			switch (error = biosd_rw(rw, bd->biosdev,
+						 cyl, hd, sect, n, bb)) {
 			case 0x00:	/* No errors */
 			case 0x11:	/* ECC corrected */
 				error = 0;
 				break;
 
 			default:	/* All other errors */
-				for (p = bd_errors; p < &bd_errors[bd_nents] &&
-					p->bd_id != error; p++);
+				for (p = bd_errors;
+				     p < &bd_errors[NENTS(bd_errors)] &&
+					     p->bd_id != error; p++);
 				printf("\nBIOS error %x (%s)\n",
-					p->bd_id, p->msg);
+				       p->bd_id, p->msg);
 				biosdreset(bd->biosdev);
 				break;
 			}
-		}
 
 		if (bb != buf && rw == F_READ)
 			bcopy (bb, buf, n * DEV_BSIZE);
@@ -371,8 +479,9 @@ biosstrategy(void *devdata, int rw,
 #ifdef	BIOS_DEBUG
 	if (debug) {
 		if (error != 0) {
-			for (p = bd_errors; p < &bd_errors[bd_nents] &&
-			     p->bd_id != error; p++);
+			for (p = bd_errors;
+			     p < &bd_errors[NENTS(bd_errors)] &&
+				     p->bd_id != error; p++);
 			printf("=%x(%s)", p->bd_id, p->msg);
 		}
 		putchar('\n');
@@ -395,7 +504,6 @@ biosclose(struct open_file *f)
 int
 biosioctl(struct open_file *f, u_long cmd, void *data)
 {
-
 	return 0;
 }
 

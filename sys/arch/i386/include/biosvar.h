@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.6 1997/08/07 01:08:17 mickey Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.7 1997/08/12 19:24:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -193,7 +193,6 @@
 /* 0x0300 - 0xffff	Reserved		*/
 #define PMEV_DEFAULT		0xffffffff	/* used for customization */
 
-
 #ifdef _LOCORE
 #define	DOINT(n)	int	$0x20+(n)
 #else
@@ -210,6 +209,14 @@ extern struct BIOS_regs {
 	u_int32_t	biosr_ds;
 	u_int32_t	biosr_es;
 }	BIOS_regs;
+
+struct EDD_CB {
+	u_int8_t  edd_len;   /* size of packet */
+	u_int8_t  edd_res;   /* reserved */
+	u_int16_t edd_nblk;  /* # of blocks to transfer */
+	u_int32_t edd_buf;   /* address of buffer */
+	u_int64_t edd_daddr; /* starting block */
+};
 
 #ifdef _KERNEL
 #include <machine/bus.h>
