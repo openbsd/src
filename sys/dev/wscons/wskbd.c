@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.9 2001/02/11 19:14:06 aaron Exp $ */
+/* $OpenBSD: wskbd.c,v 1.10 2001/03/01 03:43:12 aaron Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -240,6 +240,8 @@ struct cfattach wskbd_ca = {
 };
 
 extern struct cfdriver wskbd_cd;
+
+extern int kbd_reset;
 
 #ifndef WSKBD_DEFAULT_BELL_PITCH
 #define	WSKBD_DEFAULT_BELL_PITCH	1500	/* 1500Hz */
@@ -1390,6 +1392,12 @@ internal_command(sc, type, ksym, ksym2)
 		return (1);
 	case KS_Cmd_ResetClose:
 		wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETCLOSE);
+		return (1);
+	case KS_Cmd_KbdReset:
+		if (kbd_reset == 1) {
+			kbd_reset = 0;
+			psignal(initproc, SIGUSR1);
+		}
 		return (1);
 	case KS_Cmd_BacklightOn:
 	case KS_Cmd_BacklightOff:

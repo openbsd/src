@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.4 2001/02/11 19:14:06 aaron Exp $ */
+/*	$OpenBSD: ukbdmap.c,v 1.5 2001/03/01 03:43:12 aaron Exp $ */
 /*	$NetBSD: ukbdmap.c,v 1.5 2000/04/27 15:26:49 augustss Exp $	*/
 
 /*
@@ -143,7 +143,7 @@ Static const keysym_t ukbd_keydesc_us[] = {
     KC(96), 			KS_KP_Up,	KS_KP_8,
     KC(97), 			KS_KP_Prior,	KS_KP_9,
     KC(98), 			KS_KP_Insert,	KS_KP_0,
-    KC(99), 			KS_KP_Delete,	KS_KP_Decimal,
+    KC(99),   KS_Cmd_KbdReset,	KS_KP_Delete,	KS_KP_Decimal,
     KC(100),			KS_backslash,	KS_bar,
     KC(101),			KS_Menu,
 /* ... many unmapped keys ... */
