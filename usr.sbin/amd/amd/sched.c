@@ -1,3 +1,5 @@
+/*	$OpenBSD: sched.c,v 1.10 2003/10/30 16:04:06 millert Exp $	*/
+
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
@@ -32,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sched.c	8.1 (Berkeley) 6/6/93
- *	$Id: sched.c,v 1.9 2003/06/02 23:36:51 millert Exp $
+ *	$Id: sched.c,v 1.10 2003/10/30 16:04:06 millert Exp $
  */
 
 /*
@@ -244,7 +246,7 @@ do_task_notify(void)
 	/*
 	 * Keep taking the first item off the list and processing it.
 	 *
-	 * Done this way because the the callback can, quite reasonably,
+	 * Done this way because the callback can, quite reasonably,
 	 * queue a new task, so no local reference into the list can be
 	 * held here.
 	 */

@@ -1,3 +1,5 @@
+/*	$OpenBSD: mapc.c,v 1.12 2003/10/30 16:04:06 millert Exp $	*/
+
 /*-
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
@@ -34,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mapc.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: mapc.c,v 1.11 2003/06/02 23:36:51 millert Exp $";
+static char *rcsid = "$Id: mapc.c,v 1.12 2003/10/30 16:04:06 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -808,7 +810,7 @@ mapc_keyiter(mnt_map *m, void (*fn)(char *,void *), void *arg)
 }
 
 /*
- * Iterate of the the root map
+ * Iterate over the root map
  * and call (*fn)() on the key
  * of all the nodes.
  * Finally throw away the root map.

@@ -36,7 +36,7 @@
 @c OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 @c
 @c	from: @(#)amdref.texinfo	8.1 (Berkeley) 6/6/93
-@c	$Id: amdref.texinfo,v 1.9 2002/11/25 18:04:10 pvalchev Exp $
+@c	$Id: amdref.texinfo,v 1.10 2003/10/30 16:04:06 millert Exp $
 @c
 @setfilename amdref.info
 @c @setfilename /usr/local/emacs/info/amd
@@ -811,7 +811,7 @@ When the map name begins with the string @samp{hesiod.} lookups are made
 using the @dfn{Hesiod} name server.  The string following the dot is
 used as a name qualifier and is prepended with the key being located.
 The entire string is then resolved in the @code{automount} context.  For
-example, if the the key is @samp{jsp} and map name is
+example, if the key is @samp{jsp} and map name is
 @samp{hesiod.homes} then @dfn{Hesiod} is asked to resolve
 @samp{jsp.homes.automount}.
 
