@@ -1766,6 +1766,7 @@
 ./usr/share/man/cat8/amd64/kbd.0
 ./usr/share/man/cat8/amd64/wsconscfg.0
 ./usr/share/man/cat8/amd64/wsconsctl.0
+./usr/share/man/cat8/amd64/wsfontload.0
 ./usr/share/man/cat8/amd64/wsmoused.0
 ./usr/share/man/cat8/amq.0
 ./usr/share/man/cat8/ancontrol.0
@@ -1786,6 +1787,9 @@
 ./usr/share/man/cat8/bos.0
 ./usr/share/man/cat8/brconfig.0
 ./usr/share/man/cat8/cats
+./usr/share/man/cat8/cats/kbd.0
+./usr/share/man/cat8/cats/wsconscfg.0
+./usr/share/man/cat8/cats/wsfontload.0
 ./usr/share/man/cat8/ccdconfig.0
 ./usr/share/man/cat8/certpatch.0
 ./usr/share/man/cat8/chat.0
