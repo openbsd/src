@@ -1,4 +1,4 @@
-/*	$NetBSD: nm.c,v 1.6 1995/08/31 23:42:00 jtc Exp $	*/
+/*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: nm.c,v 1.6 1995/08/31 23:42:00 jtc Exp $";
+static char rcsid[] = "$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ static char rcsid[] = "$NetBSD: nm.c,v 1.6 1995/08/31 23:42:00 jtc Exp $";
 #include <ar.h>
 #include <ranlib.h>
 #include <unistd.h>
-#include <errno.h>
+#include <err.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -153,7 +153,7 @@ process_file(fname)
 	char magic[SARMAG];
     
 	if (!(fp = fopen(fname, "r"))) {
-		(void)fprintf(stderr, "nm: cannot read %s.\n", fname);
+		warnx("cannot read %s", fname);
 		return(1);
 	}
 
@@ -165,7 +165,7 @@ process_file(fname)
 	 * header, and skip back to the beginning
 	 */
 	if (fread((char *)&exec_head, sizeof(exec_head), (size_t)1, fp) != 1) {
-		(void)fprintf(stderr, "nm: %s: bad format.\n", fname);
+		warnx("%s: bad format", fname);
 		(void)fclose(fp);
 		return(1);
 	}
@@ -175,8 +175,7 @@ process_file(fname)
 	if (N_BADMAG(exec_head)) {
 		if (fread(magic, sizeof(magic), (size_t)1, fp) != 1 ||
 		    strncmp(magic, ARMAG, SARMAG)) {
-			(void)fprintf(stderr,
-			    "nm: %s: not object file or archive.\n", fname);
+			warnx("%s: not object file or archive", fname);
 			(void)fclose(fp);
 			return(1);
 		}
@@ -212,8 +211,7 @@ show_archive(fname, fp)
 	while (fread((char *)&ar_head, sizeof(ar_head), (size_t)1, fp) == 1) {
 		/* bad archive entry - stop processing this archive */
 		if (strncmp(ar_head.ar_fmag, ARFMAG, sizeof(ar_head.ar_fmag))) {
-			(void)fprintf(stderr,
-			    "nm: %s: bad format archive header", fname);
+			warnx("%s: bad format archive header", fname);
 			(void)free(name);
 			return(1);
 		}
@@ -251,8 +249,7 @@ show_archive(fname, fp)
 				p += (long)name;
 			}
 			if (fread(p, len, 1, fp) != 1) {
-				(void)fprintf(stderr,
-				    "nm: %s: premature EOF.\n", name);
+				warnx("%s: premature EOF", name);
 				(void)free(name);
 				return 1;
 			}
@@ -267,20 +264,18 @@ show_archive(fname, fp)
 		/* get and check current object's header */
 		if (fread((char *)&exec_head, sizeof(exec_head),
 		    (size_t)1, fp) != 1) {
-			(void)fprintf(stderr, "nm: %s: premature EOF.\n", name);
+			warnx("%s: premature EOF", name);
 			(void)free(name);
 			return(1);
 		}
 
 		if (N_BADMAG(exec_head)) {
 			if (!ignore_bad_archive_entries) {
-				(void)fprintf(stderr,
-				    "nm: %s: bad format.\n", name);
+				 warnx("%s: bad format", name);
 				rval = 1;
 			}
 		} else {
-			(void)fseek(fp, (long)-sizeof(exec_head),
-			    SEEK_CUR);
+			(void)fseek(fp, (long)-sizeof(exec_head), SEEK_CUR);
 			if (!print_file_each_line)
 				(void)printf("\n%s:\n", name);
 			rval |= show_objfile(name, fp);
@@ -293,8 +288,7 @@ show_archive(fname, fp)
 #define even(x) (((x) + 1) & ~1)
 skip:		if (fseek(fp, last_ar_off + even(atol(ar_head.ar_size)),
 		    SEEK_SET)) {
-			(void)fprintf(stderr,
-			    "nm: %s: %s\n", fname, strerror(errno));
+			warn("%s", fname);
 			(void)free(name);
 			return(1);
 		}
@@ -321,8 +315,7 @@ show_objfile(objname, fp)
 
 	/* read a.out header */
 	if (fread((char *)&head, sizeof(head), (size_t)1, fp) != 1) {
-		(void)fprintf(stderr,
-		    "nm: %s: cannot read header.\n", objname);
+		warnx("%s: cannot read header", objname);
 		return(1);
 	}
 
@@ -331,28 +324,24 @@ show_objfile(objname, fp)
 	 * to the beginning of the a.out header
 	 */
 	if (fseek(fp, (long)-sizeof(head), SEEK_CUR)) {
-		(void)fprintf(stderr,
-		    "nm: %s: %s\n", objname, strerror(errno));
+		warn("%s", objname);
 		return(1);
 	}
 
 	/* stop if this is no valid object file */
 	if (N_BADMAG(head)) {
-		(void)fprintf(stderr,
-		    "nm: %s: bad format.\n", objname);
+		warnx("%s: bad format", objname);
 		return(1);
 	}
 
 	/* stop if the object file contains no symbol table */
 	if (!head.a_syms) {
-		(void)fprintf(stderr,
-		    "nm: %s: no name list.\n", objname);
+		warnx("%s: no name list", objname);
 		return(1);
 	}
 
 	if (fseek(fp, (long)N_SYMOFF(head), SEEK_CUR)) {
-		(void)fprintf(stderr,
-		    "nm: %s: %s\n", objname, strerror(errno));
+		warn("%s", objname);
 		return(1);
 	}
 
@@ -360,8 +349,7 @@ show_objfile(objname, fp)
 	names = emalloc((size_t)head.a_syms);
 	nrawnames = head.a_syms / sizeof(*names);
 	if (fread((char *)names, (size_t)head.a_syms, (size_t)1, fp) != 1) {
-		(void)fprintf(stderr,
-		    "nm: %s: cannot read symbol table.\n", objname);
+		warnx("%s: cannot read symbol table", objname);
 		(void)free((char *)names);
 		return(1);
 	}
@@ -372,8 +360,7 @@ show_objfile(objname, fp)
 	 * _including_ the size specification itself.
 	 */
 	if (fread((char *)&stabsize, sizeof(stabsize), (size_t)1, fp) != 1) {
-		(void)fprintf(stderr,
-		    "nm: %s: cannot read stab size.\n", objname);
+		warnx("%s: cannot read stab size", objname);
 		(void)free((char *)names);
 		return(1);
 	}
@@ -385,8 +372,7 @@ show_objfile(objname, fp)
 	 */
 	stabsize -= 4;		/* we already have the size */
 	if (fread(stab + 4, (size_t)stabsize, (size_t)1, fp) != 1) {
-		(void)fprintf(stderr,
-		    "nm: %s: stab truncated..\n", objname);
+		warnx("%s: stab truncated..", objname);
 		(void)free((char *)names);
 		(void)free(stab);
 		return(1);
@@ -615,7 +601,7 @@ emalloc(size)
 	/* NOSTRICT */
 	if (p = malloc(size))
 		return(p);
-	(void)fprintf(stderr, "nm: %s\n", strerror(errno));
+	err(1, NULL);
 	exit(1);
 }
 
@@ -627,7 +613,7 @@ erealloc(p, size)
 	/* NOSTRICT */
 	if (p = realloc(p, size))
 		return(p);
-	(void)fprintf(stderr, "nm: %s\n", strerror(errno));
+	err(1, NULL);
 	exit(1);
 }
 
