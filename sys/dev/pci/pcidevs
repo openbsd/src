@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.715 2004/02/27 21:30:51 matthieu Exp $
+$OpenBSD: pcidevs,v 1.716 2004/02/28 22:33:13 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -477,8 +477,8 @@ product ALLIANCE AT24		0x6424	AT24
 /* Alteon products */
 product ALTEON ACENIC		0x0001	Acenic
 product ALTEON ACENICT		0x0002	Acenic Copper
-product ALTEON BCM5700		0x0003	BCM5700 (Broadcom)
-product ALTEON BCM5701		0x0004	BCM5701 (Broadcom)
+product ALTEON BCM5700		0x0003	BCM5700
+product ALTEON BCM5701		0x0004	BCM5701
 
 /* Altima products */
 product ALTIMA AC1000		0x03e8	AC1000
@@ -540,7 +540,7 @@ product AMI MEGARAID428		0x9010	MegaRAID Series 428
 product AMI MEGARAID434		0x9060	MegaRAID Series 434
 
 /* Antares Microsystems products */
-product ANTARES TC9021		0x1021	Antares Gigabit Ethernet
+product ANTARES TC9021		0x1021	Antares Gigabit
 
 /* Apple products */
 product APPLE BANDIT		0x0001	Bandit
