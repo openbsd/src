@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.94 2001/11/02 10:06:13 jjbg Exp $
+#	$OpenBSD: files.i386,v 1.95 2002/03/23 14:14:25 deraadt Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -45,7 +45,7 @@ file	arch/i386/i386/wscons_machdep.c	wsdisplay
 major	{vnd = 14}
 
 #
-# Media Indepedent Interface (mii)
+# Media Independent Interface (mii)
 #
 include "../../../dev/mii/files.mii"
 

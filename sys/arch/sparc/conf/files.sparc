@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.40 2001/05/11 07:13:16 deraadt Exp $
+#	$OpenBSD: files.sparc,v 1.41 2002/03/23 14:14:25 deraadt Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -78,7 +78,7 @@ attach sbus at mainbus, iommu, sbus, xbox
 file	arch/sparc/dev/sbus.c			sbus
 
 #
-# Media Indepedent Interface (mii)
+# Media Independent Interface (mii)
 #
 include "../../../dev/mii/files.mii"
 

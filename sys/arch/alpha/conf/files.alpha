@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.55 2002/02/09 07:05:53 ericj Exp $
+#	$OpenBSD: files.alpha,v 1.56 2002/03/23 14:14:25 deraadt Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -32,7 +32,7 @@ major { ccd = 7 }
 major { vnd = 9 }
 
 #
-# Media Indepedent Interface (mii)
+# Media Independent Interface (mii)
 #
 include "../../../dev/mii/files.mii"
 
