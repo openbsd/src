@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.h,v 1.8 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: m88110.h,v 1.9 2001/12/14 04:30:11 smurph Exp $ */
 
 #ifndef	__MACHINE_M88110_H__
 #define	__MACHINE_M88110_H__
@@ -152,8 +152,6 @@ void m88110_cpu_configuration_print __P((int));
 void m88110_cmmu_shutdown_now __P((void));
 void m88110_cmmu_parity_enable __P((void));
 unsigned m88110_cmmu_cpu_number __P((void));
-void m88110_cmmu_remote_set __P((unsigned, unsigned, unsigned, unsigned));
-unsigned m88110_cmmu_remote_get __P((unsigned, unsigned, unsigned));
 unsigned m88110_cmmu_get_idr __P((unsigned));
 void m88110_cmmu_set_sapr __P((unsigned));
 void m88110_cmmu_remote_set_sapr __P((unsigned, unsigned));

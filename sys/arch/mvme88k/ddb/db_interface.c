@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.19 2001/12/13 08:55:51 smurph Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.20 2001/12/14 04:30:11 smurph Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -664,7 +664,7 @@ m88k_db_iflush(addr, have_addr, count, modif)
 	char *modif;
 {
 	addr = 0;
-	cmmu_remote_set(addr, CMMU_SCR, 0, CMMU_FLUSH_CACHE_CBI_ALL);
+        cmmu_flush_inst_cache(addr, -1);
 }
 
 /* flush dcache */
@@ -677,7 +677,8 @@ m88k_db_dflush(addr, have_addr, count, modif)
 	char *modif;
 {
 	addr = 0;
-	cmmu_remote_set(addr, CMMU_SCR, 1, CMMU_FLUSH_CACHE_CBI_ALL);
+	
+	cmmu_flush_cache(addr, -1);
 }
 
 /* probe my cache */
@@ -688,6 +689,7 @@ m88k_db_peek(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
+#if 0
 	int pa12;
 	int valmask;
 
@@ -714,6 +716,7 @@ m88k_db_peek(addr, have_addr, count, modif)
 	    (unsigned)cmmu_remote_get(0, CMMU_CTP1, 0),
 	    (unsigned)cmmu_remote_get(0, CMMU_CTP2, 0),
 	    (unsigned)cmmu_remote_get(0, CMMU_CTP3, 0));
+#endif 
 }
 
 

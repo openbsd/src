@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.21 2001/12/14 02:11:45 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.22 2001/12/14 04:30:11 smurph Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -218,9 +218,7 @@
 #include <machine/board.h>
 #include <machine/param.h>          /* CPU_ and BRD_ defines */
 #include <machine/trap.h>           /* for T_ defines */
-#ifdef MVME188
-#include <machine/mvme188.h>
-#endif
+#include <machine/board.h>
 
 /*
  * The exception frame as defined in "machine/pcb.h" (among other places) is
@@ -570,7 +568,7 @@ GLOBAL(privilege_handler)
 	ldcr    r1, SR2    /* restore r1 */
 	RTE
 1:	PREP("privilege", 6, DEBUG_PRIVILEGE_BIT, Clear_SSBR_Dest, No_Precheck)
-	CALL(_m88100_trap, T_PRIVINFLT, r30)
+	CALL(_m88100_trap, T_PRIVINFLT, r30) 
 	DONE(DEBUG_PRIVILEGE_BIT)
 
 /*
@@ -612,7 +610,7 @@ ASGLOBAL(fp_imprecise_handler)
 GLOBAL(syscall_handler)
 	PREP("syscall", 128, DEBUG_SYSCALL_BIT, No_SSBR_Stuff, No_Precheck)
 	ld   r13, r30, GENREG_OFF(13)
-	CALL(_m18x_syscall, r13, r30) /* system call no. is in r13 */
+	CALL(_m88100_syscall, r13, r30) /* system call no. is in r13 */
 	DONE(DEBUG_SYSCALL_BIT)
 
 /* trap 496 comes here */

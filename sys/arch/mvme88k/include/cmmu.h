@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.7 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.8 2001/12/14 04:30:11 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -86,8 +86,6 @@ struct cmmu_p {
 	void (*cmmu_shutdown_now_func) __P((void));
 	void (*cmmu_parity_enable_func) __P((void));
 	unsigned (*cmmu_cpu_number_func) __P((void));
-	void (*cmmu_remote_set_func) __P((unsigned, unsigned, unsigned, unsigned));
-	unsigned (*cmmu_remote_get_func) __P((unsigned, unsigned, unsigned));
 	unsigned (*cmmu_get_idr_func) __P((unsigned));
 	void (*cmmu_set_sapr_func) __P((unsigned));
 	void (*cmmu_remote_set_sapr_func) __P((unsigned, unsigned));
@@ -130,8 +128,6 @@ extern struct cmmu_p cmmu8820x;
 #define	cmmu_shutdown_now	(cmmu->cmmu_shutdown_now_func)
 #define	cmmu_parity_enable	(cmmu->cmmu_parity_enable_func)
 #define	cmmu_cpu_number		(cmmu->cmmu_cpu_number_func)
-#define	cmmu_remote_set(a, b, c, d)	(cmmu->cmmu_remote_set_func)(a, b, c, d)
-#define	cmmu_remote_get(a, b, c)	(cmmu->cmmu_remote_get_func)(a, b, c)
 #define	cmmu_get_idr(a)		(cmmu->cmmu_get_idr_func)(a)
 #define	cmmu_set_sapr(a)	(cmmu->cmmu_set_sapr_func)(a)
 #define	cmmu_remote_set_sapr(a, b)	(cmmu->cmmu_remote_set_sapr_func)(a, b)

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.73 2001/12/14 01:33:50 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.74 2001/12/14 04:30:12 smurph Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -85,7 +85,7 @@
 #include <machine/board.h>
 #include <machine/bug.h>
 #include <machine/bugio.h>
-#include <machine/cmmu.h>		/* CMMU stuff       */
+#include <machine/cmmu.h>		/* CMMU stuff	*/
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
 #include <machine/kcore.h>
@@ -94,8 +94,8 @@
 #include <machine/reg.h>
 #include <machine/trap.h>
 #ifdef M88100
-#include <machine/m88100.h>
-#endif
+#include <machine/m88100.h>		/* DMT_VALID	*/
+#endif 
 
 #include <dev/cons.h>
 

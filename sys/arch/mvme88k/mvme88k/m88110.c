@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.1 2001/12/13 08:55:52 smurph Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.2 2001/12/14 04:30:12 smurph Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -120,8 +120,6 @@ struct cmmu_p cmmu88110 = {
 	m88110_cmmu_shutdown_now,
 	m88110_cmmu_parity_enable,
 	m88110_cmmu_cpu_number,
-	m88110_cmmu_remote_set,
-	m88110_cmmu_remote_get,
 	m88110_cmmu_get_idr,
 	m88110_cmmu_set_sapr,
 	m88110_cmmu_remote_set_sapr,
@@ -409,26 +407,6 @@ unsigned
 m88110_cmmu_cpu_number(void)
 {
 	return 0; /* to make compiler happy */
-}
-
-/**
- **	Funcitons that actually modify CMMU registers.
- **/
-void
-m88110_cmmu_remote_set(unsigned cpu, unsigned r, unsigned data, unsigned x)
-{
-	panic("m88110_cmmu_remote_set() called!\n");
-}
-
-/*
- * cmmu_cpu_lock should be held when called if read
- * the CMMU_SCR or CMMU_SAR.
- */
-unsigned
-m88110_cmmu_remote_get(unsigned cpu, unsigned r, unsigned data)
-{
-	panic("m88110_cmmu_remote_get() called!\n");
-	return 0;
 }
 
 /* Needs no locking - read only registers */

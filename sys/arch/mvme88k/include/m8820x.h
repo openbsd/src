@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.h,v 1.1 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: m8820x.h,v 1.2 2001/12/14 04:30:11 smurph Exp $ */
 /* 
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -136,8 +136,6 @@ void m8820x_cpu_configuration_print __P((int));
 void m8820x_cmmu_shutdown_now __P((void));
 void m8820x_cmmu_parity_enable __P((void));
 unsigned m8820x_cmmu_cpu_number __P((void));
-void m8820x_cmmu_remote_set __P((unsigned, unsigned, unsigned, unsigned));
-unsigned m8820x_cmmu_remote_get __P((unsigned, unsigned, unsigned));
 unsigned m8820x_cmmu_get_idr __P((unsigned));
 void m8820x_cmmu_set_sapr __P((unsigned));
 void m8820x_cmmu_remote_set_sapr __P((unsigned, unsigned));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme187.h,v 1.1 2001/12/13 08:55:51 smurph Exp $ */
+/*	$OpenBSD: mvme187.h,v 1.2 2001/12/14 04:30:11 smurph Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -65,6 +65,9 @@
 #  endif
 #endif
 #endif
+
+#define SBC_CMMU_I	U(0xFFF77000) 	/* Single Board Computer code CMMU */
+#define SBC_CMMU_D	U(0xFFF7F000) 	/* Single Board Computer data CMMU */
 
 #define M187_ILEVEL	U(0xFFF4203E)	/* interrupt priority level */
 #define M187_IMASK	U(0xFFF4203F)	/* interrupt mask level */

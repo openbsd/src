@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.5 2001/12/14 02:00:56 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.6 2001/12/14 04:30:12 smurph Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -79,6 +79,7 @@
 #define DEBUG_MSG printf
 #endif /* DDB */
 
+
 /* On some versions of 88200, page size flushes don't work. I am using
  * sledge hammer approach till I find for sure which ones are bad XXX nivas */
 #define BROKEN_MMU_MASK	
@@ -111,8 +112,6 @@ struct cmmu_p cmmu8820x = {
 	m8820x_cmmu_shutdown_now,
 	m8820x_cmmu_parity_enable,
 	m8820x_cmmu_cpu_number,
-	m8820x_cmmu_remote_set,
-	m8820x_cmmu_remote_get,
 	m8820x_cmmu_get_idr,
 	m8820x_cmmu_set_sapr,
 	m8820x_cmmu_remote_set_sapr,
