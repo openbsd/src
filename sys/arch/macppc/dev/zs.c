@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.1 2001/09/26 22:45:43 mickey Exp $	*/
+/*	$OpenBSD: zs.c,v 1.2 2001/09/27 02:13:36 mickey Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -224,20 +224,14 @@ zsc_attach(parent, self, aux)
 	struct confargs *ca = aux;
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
-	struct xzs_chanstate *xcs;
 	struct zs_chanstate *cs;
 	struct zsdevice *zsd;
-	int zsc_unit, channel;
-	int s, chip, theflags;
-	int node, intr[2][3];
-	u_int regs[6];
+	int channel;
+	int s, theflags;
+	int node, intr[3][3];
+	u_int regs[16];
 
-	chip = 0;
-	zsc_unit = zsc->zsc_dev.dv_unit;
-
-	ca->ca_reg[0] += ca->ca_baseaddr;
-	zsd = mapiodev(ca->ca_reg[0], ca->ca_reg[1]);
-
+	zsd = mapiodev(ca->ca_baseaddr + ca->ca_reg[0], ca->ca_reg[1]);
 	node = OF_child(ca->ca_node);	/* ch-a */
 
 	for (channel = 0; channel < 2; channel++) {
@@ -273,7 +267,7 @@ zsc_attach(parent, self, aux)
 	 */
 	for (channel = 0; channel < 2; channel++) {
 		zsc_args.channel = channel;
-		zsc_args.hwflags = zs_hwflags[zsc_unit][channel];
+		zsc_args.hwflags = zs_hwflags[0][channel];
 		cs = &zsc->zsc_cs[channel];
 
 		cs->cs_channel = channel;
@@ -293,8 +287,8 @@ zsc_attach(parent, self, aux)
 		if (zsc_args.hwflags & ZS_HWFLAG_CONSOLE)
 			cs->cs_defspeed = zs_get_speed(cs);
 		else
-			cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
-
+			cs->cs_defspeed = zs_defspeed[0][channel];
+#ifdef NOTYET
 		/* Define BAUD rate stuff. */
 		xcs->cs_clocks[0].clk = PCLK;
 		xcs->cs_clocks[0].flags = ZSC_RTXBRG | ZSC_RTXDIV;
@@ -328,7 +322,7 @@ zsc_attach(parent, self, aux)
 		xcs->cs_psource = 0;
 		xcs->cs_cclk_flag = 0;  /* Nothing fancy by default */
 		xcs->cs_pclk_flag = 0;
-
+#endif
 		/*
 		 * XXX - This might be better done with a "stub" driver
 		 * (to replace zstty) that ignores LocalTalk for now.
@@ -345,16 +339,6 @@ zsc_attach(parent, self, aux)
 			 * Baud rate low-enough to not do any damage.
 			 */
 		}
-
-		/*
-		 * We used to disable chip interrupts here, but we now
-		 * do that in zscnprobe, just in case MacOS left the chip on.
-		 */
-
-		xcs->cs_chip = chip;
-
-		/* Stash away a copy of the final H/W flags. */
-		xcs->cs_hwflags = zsc_args.hwflags;
 
 		/*
 		 * Look for a child driver for this channel.
