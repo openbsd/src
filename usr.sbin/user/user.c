@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.7 2000/04/24 22:59:25 jakob Exp $ */
+/* $OpenBSD: user.c,v 1.8 2000/04/24 23:11:14 jakob Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -152,7 +152,7 @@ enum {
 
 #define UNSET_EXPIRY	"Null (unset)"
 
-static int	verbose;
+static int	verbose = 0;
 
 /* if *cpp is non-null, free it, then assign `n' chars of `s' to it */
 static void
