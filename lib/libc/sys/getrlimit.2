@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrlimit.2,v 1.14 2003/09/04 23:35:47 tdeval Exp $
+.\"	$OpenBSD: getrlimit.2,v 1.15 2003/12/12 14:50:07 millert Exp $
 .\"	$NetBSD: getrlimit.2,v 1.8 1995/10/12 15:40:58 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -120,6 +120,27 @@ An
 value for a limit is defined as
 .Dv RLIM_INFINITY .
 .Pp
+A value of
+.Ev RLIM_SAVED_CUR
+or
+.Ev RLIM_SAVED_MAX
+will be stored in
+.Fa rlim_cur
+or
+.Fa rlim_max
+respectively by
+.Fn getrlimit
+if the value for the current or maximum resource limit cannot be stored in an
+.Li rlim_t .
+The values
+.Ev RLIM_SAVED_CUR
+and
+.Ev RLIM_SAVED_MAX
+should not be used in a call to
+.Fn setrlimit
+unless they were returned by a previous call to
+.Fn getrlimit .
+.Pp
 Because this information is stored in the per-process information,
 this system call must be executed directly by the shell if it
 is to affect all future processes created by the shell;
@@ -180,6 +201,13 @@ would have raised the maximum limit value, and the caller is not the superuser.
 .Xr sigaction 2 ,
 .Xr sigaltstack 2 ,
 .Xr sysctl 3
+.Sh STANDARDS
+The
+.Fn getrlimit
+and
+.Fn setrlimit
+function calls are expected to conform to
+.St -p1003.1-03 .
 .Sh HISTORY
 The
 .Fn getrlimit
