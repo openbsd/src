@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.6 1998/11/19 07:01:55 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.7 1998/11/20 02:42:15 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1133,6 +1133,11 @@ static void rl_init(xsc)
 	CSR_WRITE_1(sc, RL_COMMAND, RL_CMD_TX_ENB|RL_CMD_RX_ENB);
 
 	CSR_WRITE_1(sc, RL_CFG1, RL_CFG1_DRVLOAD|RL_CFG1_FULLDUPLEX);
+
+	/*
+	 * Set current media.
+	 */
+	mii_mediachg(&sc->sc_mii);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;

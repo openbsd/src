@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.1 1998/11/18 20:11:31 jason Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.2 1998/11/20 02:42:14 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -207,11 +207,14 @@ void
 rlphy_reset(sc)
 	struct mii_softc *sc;
 {
-	mii_phy_reset(sc);
+	int bmcr;
 
 	/*
 	 * XXX The RTL8139 doesn't set the BMCR properly
 	 * XXX after reset, which breaks autoneg.
 	 */
-	PHY_WRITE(sc, MII_BMCR, BMCR_S100 | BMCR_AUTOEN | BMCR_FDX);
+
+	bmcr = PHY_READ(sc, MII_BMCR);
+	mii_phy_reset(sc);
+	PHY_WRITE(sc, MII_BMCR, bmcr);
 }
