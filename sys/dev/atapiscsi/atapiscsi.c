@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.29 2000/08/09 07:43:14 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.30 2000/08/11 03:59:47 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -947,7 +947,7 @@ wdc_atapi_intr_command(chp, xfer, timeout)
 		    dma_flags);
 	}
 
-	if (xfer->c_bcount == 0)
+	if (xfer->c_bcount == 0 || (xfer->c_flags & C_DMA))
 		as->protocol_phase = as_completed;
 	else
 		as->protocol_phase = as_data;
