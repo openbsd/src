@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.48 2001/06/24 20:52:05 mickey Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.49 2001/09/23 10:16:27 mickey Exp $	*/
 
 /*
  * random.c -- A strong random number generator
@@ -862,7 +862,7 @@ extract_entropy(buf, nbytes)
 
 	while (nbytes) {
 		register u_char *p = buf;
-		register int i = sizeof(buffer);
+		register int i = sizeof(buffer)/2;
 
 		if (i > nbytes) {
 			i = nbytes;
@@ -888,10 +888,10 @@ extract_entropy(buf, nbytes)
 		p[7] ^= p[ 8];
 
 		/* Modify pool so next hash will produce different results */
-		add_entropy_words((u_int32_t*)p, sizeof(buffer)/4);
+		add_entropy_words((u_int32_t*)p, sizeof(buffer)/8);
 
 		/* Copy data to destination buffer */
-		if (i < sizeof(buffer))
+		if (i < sizeof(buffer)/2)
 			bcopy(buffer, buf, i);
 		nbytes -= i;
 		buf += i;
