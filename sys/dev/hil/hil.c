@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.13 2004/03/12 20:29:12 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.14 2004/05/10 05:18:53 jolan Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * All rights reserved.
@@ -63,8 +63,6 @@
  *
  *	@(#)hil.c	8.2 (Berkeley) 1/12/94
  */
-
-#undef	HILDEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
