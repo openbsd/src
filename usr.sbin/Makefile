@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 1997/06/24 09:51:42 downsj Exp $
+#	$OpenBSD: Makefile,v 1.28 1997/08/19 08:30:47 niklas Exp $
 
 # not yet done: catman
 
@@ -11,7 +11,7 @@ SUBDIR=	ac accton adduser amd arp bootpd bootpgw bootpef bootptest \
 	kvm_mkdb lpr map-mbone mrinfo mopd mrouted mtrace mtree named \
 	netgroup_mkdb pkg_install portmap pppd pstat pwd_mkdb quot quotaon \
 	rarpd rbootd rdconfig rdate repquota rmt \
-	rpc.bootparamd rpc.pcnfsd rwhod \
+	rpc.bootparamd rpc.lockd rpc.pcnfsd rwhod \
 	sa sendmail sliplogin slstats spray sysctl \
 	syslogd tcpdump timed traceroute trpt trsp \
 	vipw vnconfig zdump zic
