@@ -33,3 +33,9 @@ minfd.h: gen_minfd
 
 LDADD+=	-lcrypto -lutil -lz
 DPADD+=	${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
+
+.if (${TCP_WRAPPERS} == "yes")
+CFLAGS+= -DLIBWRAP
+LDADD+= -lwrap
+DPADD+= ${LIBWRAP}
+.endif
