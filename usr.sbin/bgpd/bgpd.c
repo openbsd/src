@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.7 2003/12/20 20:53:30 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.8 2003/12/20 21:26:48 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -289,14 +289,14 @@ reconfigure(char *conffile, int se_fd, int *se_waiting, int rde_fd,
 		return (-1);
 	}
 	*se_waiting += imsg_compose(se_fd, IMSG_RECONF_CONF, 0,
-	    (u_char *)conf, sizeof(struct bgpd_config));
+	    conf, sizeof(struct bgpd_config));
 	*rde_waiting += imsg_compose(rde_fd, IMSG_RECONF_CONF, 0,
-	    (u_char *)conf, sizeof(struct bgpd_config));
+	    conf, sizeof(struct bgpd_config));
 	for (p = conf->peers; p != NULL; p = p->next) {
 		*se_waiting += imsg_compose(se_fd, IMSG_RECONF_PEER,
-		    p->conf.id, (u_char *)&p->conf, sizeof(struct peer_config));
+		    p->conf.id, &p->conf, sizeof(struct peer_config));
 		*rde_waiting += imsg_compose(rde_fd, IMSG_RECONF_PEER,
-		    p->conf.id, (u_char *)&p->conf, sizeof(struct peer_config));
+		    p->conf.id, &p->conf, sizeof(struct peer_config));
 	}
 	*se_waiting += imsg_compose(se_fd, IMSG_RECONF_DONE, 0, NULL, 0);
 	*rde_waiting += imsg_compose(rde_fd, IMSG_RECONF_DONE, 0, NULL, 0);
