@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#	$OpenBSD: cfman,v 1.3 2003/03/10 03:55:09 david Exp $
+#	$OpenBSD: cfman,v 1.4 2003/12/16 01:08:50 deraadt Exp $
 
 #
 # cfman - make sure manpages have accurate SEE ALSOs
@@ -8,7 +8,7 @@
 use strict;
 
 my $VERSION = do { 
-    my @r = (q$Revision: 1.3 $ =~ /\d+/g); 
+    my @r = (q$Revision: 1.4 $ =~ /\d+/g); 
     sprintf "%d."."%02d" x $#r, @r;
 }; 
 
@@ -773,7 +773,7 @@ extension.
 
 =item no manpath set, assuming %s.
 
-(W) We're trying to use a hard-coded path, becuase
+(W) We're trying to use a hard-coded path, because
 nothing else worked.
 
 =item no name 
