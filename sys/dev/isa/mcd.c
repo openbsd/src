@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.28 1999/08/10 23:09:49 deraadt Exp $ */
+/*	$OpenBSD: mcd.c,v 1.29 2000/11/11 23:55:57 mickey Exp $ */
 /*	$NetBSD: mcd.c,v 1.60 1998/01/14 12:14:41 drochner Exp $	*/
 
 /*
@@ -72,6 +72,7 @@
 #include <sys/disklabel.h>
 #include <sys/device.h>
 #include <sys/disk.h>
+#include <sys/timeout.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -117,6 +118,7 @@ struct mcd_softc {
 	struct	device sc_dev;
 	struct	disk sc_dk;
 	void *sc_ih;
+	struct timeout sc_pi_tmo;
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -248,6 +250,8 @@ mcdattach(parent, self, aux)
 		printf(": mcd_find failed\n");
 		return;
 	}
+
+	timeout_set(&sc->sc_pi_tmo, mcd_pseudointr, sc);
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -1154,7 +1158,7 @@ mcdintr(arg)
 		mbx->state = MCD_S_WAITMODE;
 
 	case MCD_S_WAITMODE:
-		untimeout(mcd_pseudointr, sc);
+		timeout_del(&sc->sc_pi_tmo);
 		for (i = 20; i; i--) {
 			x = bus_space_read_1(iot, ioh, MCD_XFER);
 			if ((x & MCD_XF_STATUSUNAVAIL) == 0)
@@ -1192,7 +1196,7 @@ mcdintr(arg)
 		mbx->state = MCD_S_WAITREAD;
 
 	case MCD_S_WAITREAD:
-		untimeout(mcd_pseudointr, sc);
+		timeout_del(&sc->sc_pi_tmo);
 	nextblock:
 	loop:
 		for (i = 20; i; i--) {
@@ -1250,7 +1254,7 @@ mcdintr(arg)
 		printf("%s: sleep in state %d\n", sc->sc_dev.dv_xname,
 		    mbx->state);
 #endif
-		timeout(mcd_pseudointr, sc, hz / 100);
+		timeout_add(&sc->sc_pi_tmo, hz / 100);
 		return -1;
 	}
 
