@@ -1,4 +1,4 @@
-#     $OpenBSD: files.amiga,v 1.6 1996/02/26 22:50:33 niklas Exp $
+#     $OpenBSD: files.amiga,v 1.7 1996/03/24 16:50:15 niklas Exp $
 #     $NetBSD: files.amiga,v 1.34 1996/02/24 08:59:21 chopps Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -219,9 +219,10 @@ device	isa at bridge {[port = -1], [size = 0],	# XXX
 		       [iomem = -1], [iosiz = 0],
 		       [irq = -1], [drq = -1]}
 
-# Dummy busses needed for some multi-homed devices specified in files.isa
+# XXX Dummy busses needed for some multi-homed devices specified in files.isa
 define	pci { }
 device	pcmciabus at isa {}
+file	arch/amiga/conf/files.amiga		pcmciabus	needs-flag
 
 include	"../../../dev/isa/files.isa"
 file	arch/amiga/isa/isa_machdep.c	isa		needs-flag # XXX
