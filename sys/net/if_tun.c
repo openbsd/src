@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.63 2004/11/09 14:15:40 henning Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.64 2004/11/11 10:42:04 mpf Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -567,6 +567,11 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	struct tun_softc	*tp = ifp->if_softc;
 	int			 s, len, error;
 	u_int32_t		*af;
+
+	if (!(ifp->if_flags & IFF_UP)) {
+		m_freem(m0);
+		return (EHOSTDOWN);
+	}
 
 	TUNDEBUG(("%s: tun_output\n", ifp->if_xname));
 
