@@ -1,3 +1,4 @@
+/*	$OpenBSD: _setjmp.S,v 1.2 1997/11/07 15:57:32 niklas Exp $	*/
 /*	$NetBSD: _setjmp.S,v 1.2 1994/10/26 06:39:54 cgd Exp $	*/
 
 /*
@@ -43,7 +44,7 @@
 #ifdef notdef
 	.asciz "@(#)_setjmp.s	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$NetBSD: _setjmp.S,v 1.2 1994/10/26 06:39:54 cgd Exp $"
+	.asciz "$OpenBSD: _setjmp.S,v 1.2 1997/11/07 15:57:32 niklas Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*

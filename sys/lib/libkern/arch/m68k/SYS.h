@@ -1,3 +1,4 @@
+/*	$OpenBSD: SYS.h,v 1.2 1997/11/07 15:57:00 niklas Exp $	*/
 /*	$NetBSD: SYS.h,v 1.2 1994/10/26 06:39:23 cgd Exp $	*/
 
 /*-

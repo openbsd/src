@@ -1,3 +1,5 @@
+#	$OpenBSD: bcopy.S,v 1.7 1997/11/07 15:57:17 niklas Exp $
+
 #include "DEFS.h"
 
 

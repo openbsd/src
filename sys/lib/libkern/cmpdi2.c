@@ -1,3 +1,4 @@
+/*	$OpenBSD: cmpdi2.c,v 1.2 1997/11/07 15:56:39 niklas Exp $	*/
 /*	$NetBSD: cmpdi2.c,v 1.5 1995/10/07 09:26:22 mycroft Exp $	*/
 
 /*-
@@ -41,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cmpdi2.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: cmpdi2.c,v 1.5 1995/10/07 09:26:22 mycroft Exp $";
+static char rcsid[] = "$OpenBSD: cmpdi2.c,v 1.2 1997/11/07 15:56:39 niklas Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 

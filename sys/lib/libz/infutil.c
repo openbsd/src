@@ -1,3 +1,5 @@
+/*	$OpenBSD: infutil.c,v 1.2 1997/11/07 15:57:51 niklas Exp $	*/
+
 /* inflate_util.c -- data and routines common to blocks and codes
  * Copyright (C) 1995-1996 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 

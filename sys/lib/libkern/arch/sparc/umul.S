@@ -1,3 +1,4 @@
+/*	$OpenBSD: umul.S,v 1.2 1997/11/07 15:57:42 niklas Exp $	*/
 /*	$NetBSD: umul.S,v 1.2 1994/10/26 06:40:10 cgd Exp $	*/
 
 /*
@@ -43,7 +44,7 @@
 #ifdef notdef
 	.asciz "@(#)umul.s	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$NetBSD: umul.S,v 1.2 1994/10/26 06:40:10 cgd Exp $"
+	.asciz "$OpenBSD: umul.S,v 1.2 1997/11/07 15:57:42 niklas Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*

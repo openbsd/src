@@ -1,3 +1,5 @@
+#	$OpenBSD: htons.S,v 1.4 1997/11/07 15:57:20 niklas Exp $
+
 #include "DEFS.h"
 
 

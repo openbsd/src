@@ -1,3 +1,4 @@
+/*	$OpenBSD: locc.S,v 1.2 1997/11/07 15:57:05 niklas Exp $	*/
 /*	$NetBSD: locc.S,v 1.2 1994/10/26 06:39:28 cgd Exp $	*/
 
 /*

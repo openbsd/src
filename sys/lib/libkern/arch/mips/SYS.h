@@ -1,3 +1,4 @@
+/* *	$OpenBSD: SYS.h,v 1.2 1997/11/07 15:57:15 niklas Exp $*/
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,7 +35,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$Id: SYS.h,v 1.1 1995/11/06 21:15:54 deraadt Exp $
  */
 
 #include <machine/asm.h>

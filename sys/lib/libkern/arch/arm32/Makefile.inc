@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.2 1997/11/04 19:08:04 chuck Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1997/11/07 15:56:57 niklas Exp $
 
 SRCS+=	__main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
 	memchr.c \

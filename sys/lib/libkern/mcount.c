@@ -1,3 +1,4 @@
+/*	$OpenBSD: mcount.c,v 1.4 1997/11/07 15:56:45 niklas Exp $	*/
 /*	$NetBSD: mcount.c,v 1.3.6.1 1996/06/12 04:23:01 cgd Exp $	*/
 
 /*-
@@ -37,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: mcount.c,v 1.3.6.1 1996/06/12 04:23:01 cgd Exp $";
+static char rcsid[] = "$OpenBSD: mcount.c,v 1.4 1997/11/07 15:56:45 niklas Exp $";
 #endif
 #endif
 

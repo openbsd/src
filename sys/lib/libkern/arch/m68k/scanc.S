@@ -1,3 +1,4 @@
+/*	$OpenBSD: scanc.S,v 1.2 1997/11/07 15:57:07 niklas Exp $	*/
 /*	$NetBSD: scanc.S,v 1.2 1994/10/26 06:39:31 cgd Exp $	*/
 
 /*

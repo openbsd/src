@@ -1,3 +1,4 @@
+/*	$OpenBSD: strcat.S,v 1.2 1997/11/07 15:57:08 niklas Exp $	*/
 /*	$NetBSD: strcat.S,v 1.1 1996/04/18 01:53:06 cgd Exp $	*/
 
 /*-
@@ -43,7 +44,7 @@
 #if 0
 	RCSID("from: @(#)strcpy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: strcat.S,v 1.1 1996/04/18 01:53:06 cgd Exp $")
+	RCSID("$OpenBSD: strcat.S,v 1.2 1997/11/07 15:57:08 niklas Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 

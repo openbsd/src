@@ -1,3 +1,5 @@
+/*	$OpenBSD: htons.S,v 1.2 1997/11/07 15:57:36 niklas Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +43,7 @@
 #ifdef notdef
 	.asciz "@(#)htons.s	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$NetBSD: htons.S,v 1.2 1994/10/26 06:39:59 cgd Exp $"
+	.asciz "$OpenBSD: htons.S,v 1.2 1997/11/07 15:57:36 niklas Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* netorder = htons(hostorder) */

@@ -1,3 +1,4 @@
+/*	$OpenBSD: divrem.m4,v 1.2 1997/11/07 15:57:33 niklas Exp $	*/
 /*	$NetBSD: divrem.m4,v 1.3 1995/04/22 09:37:39 pk Exp $	*/
 
 /*
@@ -48,7 +49,7 @@
 #ifdef notdef
 	.asciz "@(#)divrem.m4	8.1 (Berkeley) 6/4/93"
 #endif
-	.asciz "$NetBSD: divrem.m4,v 1.3 1995/04/22 09:37:39 pk Exp $"
+	.asciz "$OpenBSD: divrem.m4,v 1.2 1997/11/07 15:57:33 niklas Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
