@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.19 2004/05/30 22:57:42 deraadt Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.20 2004/06/05 19:18:56 alexander Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -328,14 +328,14 @@ retry:
 	}
 
 	if (length < NTP_PACKET_MIN || length > NTP_PACKET_MAX) {
-		warnx("Invalid NTP packet size, packet reject");
+		warnx("Invalid NTP packet size, packet rejected");
 		return 1;
 	}
 
 	unpack_ntp(data, receive, length);
 
 	if (data->recvck != data->xmitck) {
-		warnx("Invalid cookie received");
+		warnx("Invalid cookie received, packet rejected");
 		return 1;
 	}
 
@@ -351,7 +351,7 @@ retry:
 	}
 
 	if (data->status == STATUS_ALARM) {
-		warnx("Server clock not syncronized, packet rejected");
+		warnx("Server clock not synchronized, packet rejected");
 		return 1;
 	}
 
