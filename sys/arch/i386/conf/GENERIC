@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.237 2001/02/13 14:50:33 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.238 2001/02/13 21:40:35 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -122,6 +122,7 @@ isapnp0	at isa?
 option	WSDISPLAY_COMPAT_USL		# VT handling
 option	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 option	WSDISPLAY_DEFAULTSCREENS=6
+option	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 
 pckbc0		at isa?			# PC keyboard controller
 pckbd*		at pckbc?		# PC keyboard
