@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.1 2004/06/25 11:03:27 art Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.2 2004/06/25 11:31:21 deraadt Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -275,17 +275,16 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_flags = aaa->flags;
 	sc->sc_apicid = aaa->apic_id;
 
-	printf(" apid %d (I/O APIC)\n", aaa->apic_id);
+	printf(" apid %d", aaa->apic_id);
 
 	if (ioapic_find(aaa->apic_id) != NULL) {
-		printf("%s: duplicate apic id (ignored)\n",
-		    sc->sc_pic.pic_dev.dv_xname);
+		printf(": duplicate apic id (ignored)\n");
 		return;
 	}
 
 	ioapic_add(sc);
 	
-	printf("%s: pa 0x%lx", sc->sc_pic.pic_dev.dv_xname, aaa->apic_address);
+	printf(": pa 0x%lx", sc->sc_pic.pic_dev.dv_xname, aaa->apic_address);
 
 	if (x86_mem_add_mapping(aaa->apic_address, PAGE_SIZE, 0, &bh) != 0) {
 		printf(": map failed\n");
