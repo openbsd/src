@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzio.c,v 1.10 2003/02/27 17:29:35 millert Exp $	*/
+/*	$OpenBSD: gzio.c,v 1.11 2003/04/02 21:00:19 deraadt Exp $	*/
 /* gzio.c -- IO on .gz files
  * Copyright (C) 1995-2002 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -82,6 +82,7 @@ local gzFile gz_open (path, mode, fd)
     gz_stream *s;
     char fmode[80]; /* copy of mode, without the compression level */
     char *m = fmode;
+    size_t len;
 
     if (!path || !mode) return Z_NULL;
 
@@ -101,11 +102,12 @@ local gzFile gz_open (path, mode, fd)
     s->msg = NULL;
     s->transparent = 0;
 
-    s->path = (char*)ALLOC(strlen(path)+1);
+    len = strlen(path)+1;
+    s->path = (char*)ALLOC(len);
     if (s->path == NULL) {
         return destroy(s), (gzFile)Z_NULL;
     }
-    strcpy(s->path, path); /* do this early for debugging */
+    strlcpy(s->path, path, len); /* do this early for debugging */
 
     s->mode = '\0';
     do {
@@ -198,7 +200,7 @@ gzFile ZEXPORT gzdopen (fd, mode)
     char name[20];
 
     if (fd < 0) return (gzFile)Z_NULL;
-    sprintf(name, "<fd:%d>", fd); /* for debugging */
+    snprintf(name, sizeof name, "<fd:%d>", fd); /* for debugging */
 
     return gz_open (name, mode, fd);
 }
@@ -856,6 +858,7 @@ const char*  ZEXPORT gzerror (file, errnum)
 {
     char *m;
     gz_stream *s = (gz_stream*)file;
+    size_t len;
 
     if (s == NULL) {
         *errnum = Z_STREAM_ERROR;
@@ -869,10 +872,11 @@ const char*  ZEXPORT gzerror (file, errnum)
     if (m == NULL || *m == '\0') m = (char*)ERR_MSG(s->z_err);
 
     TRYFREE(s->msg);
-    s->msg = (char*)ALLOC(strlen(s->path) + strlen(m) + 3);
+    len = strlen(s->path) + strlen(m) + 3;
+    s->msg = (char*)ALLOC(len);
     if (s->msg == Z_NULL) return (const char*)ERR_MSG(Z_MEM_ERROR);
-    strcpy(s->msg, s->path);
-    strcat(s->msg, ": ");
-    strcat(s->msg, m);
+    strlcpy(s->msg, s->path, len);
+    strlcat(s->msg, ": ", len);
+    strlcat(s->msg, m, len);
     return (const char*)s->msg;
 }
