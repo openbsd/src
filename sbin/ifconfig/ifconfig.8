@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.43 2000/04/26 19:03:46 chris Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.44 2000/05/23 05:02:43 deraadt Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -410,6 +410,11 @@ There is some evidence that a number different from 1 may be useful
 for
 .Tn AFI
 37 type addresses.
+.It Cm nwid Ar id
+(IEEE 802.11 devices only, specifically
+.Xr ray 4 )
+.br
+Configure network ID for IEEE 802.11-based wireless network interfaces.
 .It Cm phase
 The argument following this specifies the version (phase) of the
 AppleTalk network attached to the interface.
