@@ -24,13 +24,14 @@ d_setrgid=$undef
 d_setruid=$undef
 
 #
-# Not all platforms support shared libs...
+# Not all platforms support dynamic loading...
 #
-case `uname -m` in
+case `arch -s` in
 alpha|mips|powerpc|vax)
-	d_dlopen=$undef
+	usedl=$undef
 	;;
 *)
+	usedl=$define
 	d_dlopen=$define
 	d_dlerror=$define
 	# we use -fPIC here because -fpic is *NOT* enough for some of the
