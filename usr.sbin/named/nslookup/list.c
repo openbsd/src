@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.5 1998/09/10 18:38:09 deraadt Exp $	*/
+/*	$OpenBSD: list.c,v 1.6 1998/11/23 18:00:58 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)list.c	5.23 (Berkeley) 3/21/91";
 static char rcsid[] = "$From: list.c,v 8.9 1996/11/26 10:11:26 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: list.c,v 1.5 1998/09/10 18:38:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: list.c,v 1.6 1998/11/23 18:00:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -340,7 +340,7 @@ ListSubr(qtype, domain, cmd)
 	if (cmd == NULL) {
 	    filePtr = stdout;
 	} else {
-	    filePtr = OpenFile(cmd, file);
+	    filePtr = OpenFile(cmd, file, sizeof file);
             if (filePtr == NULL) {
                 fprintf(stderr, "*** Can't open %s for writing\n", file);
 		(void) close(sockFD);
@@ -999,7 +999,7 @@ Finger(string, putToFile)
 	if (!putToFile) {
 	    filePtr = stdout;
 	} else {
-	    filePtr = OpenFile(string, file);
+	    filePtr = OpenFile(string, file, sizeof file);
 	    if (filePtr == NULL) {
 		fprintf(stderr, "*** Can't open %s for writing\n", file);
 		close(sockFD);

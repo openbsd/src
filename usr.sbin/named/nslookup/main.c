@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1998/08/31 18:58:37 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1998/11/23 18:00:58 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -66,7 +66,7 @@ char copyright[] =
 static char sccsid[] = "@(#)main.c	5.42 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: main.c,v 8.4 1996/11/11 06:36:54 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.5 1998/08/31 18:58:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.6 1998/11/23 18:00:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -694,7 +694,7 @@ LookupHost(string, putToFile)
     if (!putToFile) {
 	filePtr = stdout;
     } else {
-	filePtr = OpenFile(string, file);
+	filePtr = OpenFile(string, file, sizeof file);
 	if (filePtr == NULL) {
 	    fprintf(stderr, "*** Can't open %s for writing\n", file);
 	    return(ERROR);
@@ -758,7 +758,7 @@ LookupHostWithServer(string, putToFile)
     if (!putToFile) {
 	filePtr = stdout;
     } else {
-	filePtr = OpenFile(string, file);
+	filePtr = OpenFile(string, file, sizeof file);
 	if (filePtr == NULL) {
 	    fprintf(stderr, "*** Can't open %s for writing\n", file);
 	    return(ERROR);
