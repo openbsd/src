@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.4 1996/04/21 23:41:42 deraadt Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.5 1996/12/10 15:07:08 deraadt Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: rdate.c,v 1.4 1996/04/21 23:41:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rdate.c,v 1.5 1996/12/10 15:07:08 deraadt Exp $";
 #endif
 #endif				/* lint */
 
@@ -117,8 +117,7 @@ main(argc, argv)
 	hname = argv[optind];
 
 	if ((hp = gethostbyname(hname)) == NULL) {
-		(void) fprintf(stderr, "%s: ", __progname);
-		herror(hname);
+		warnx("%s: %s", hname, hstrerror(h_errno));
 		return 1;
 	}
 
