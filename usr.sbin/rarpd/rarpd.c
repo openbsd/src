@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.7 1997/01/22 09:22:01 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.8 1997/02/05 13:41:04 deraadt Exp $ */
 /*	$NetBSD: rarpd.c,v 1.12 1996/03/21 18:28:23 jtc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.7 1997/01/22 09:22:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.8 1997/02/05 13:41:04 deraadt Exp $";
 #endif
 
 
@@ -197,21 +197,27 @@ init_one(ifname)
 	char   *ifname;
 {
 	struct if_info *p;
+	int fd;
 
 	/* first check to see if this "if" was already opened? */
 	for(p = iflist; p; p = p->ii_next)
 		if (!strncmp(p->ii_name, ifname, IFNAMSIZ))
 			return;
 
+	fd = rarp_open(ifname);
+	if (fd < 0)
+		return;
+
 	p = (struct if_info *)malloc(sizeof(*p));
 	if (p == 0) {
 		err(FATAL, "malloc: %s", strerror(errno));
 		/* NOTREACHED */
 	}
+
 	p->ii_next = iflist;
 	iflist = p;
 
-	p->ii_fd = rarp_open(ifname);
+	p->ii_fd = fd;
 	strncpy(p->ii_name, ifname, IFNAMSIZ);
 	lookup_eaddr(ifname, p->ii_eaddr);
 	lookup_ipaddr(ifname, &p->ii_ipaddr, &p->ii_netmask);
@@ -336,6 +342,10 @@ rarp_open(device)
 	}
 	(void) strncpy(ifr.ifr_name, device, sizeof ifr.ifr_name);
 	if (ioctl(fd, BIOCSETIF, (caddr_t) & ifr) < 0) {
+		if (aflag) {	/* for -a skip not ethernet interfaces */
+			close(fd);
+			return -1;
+		}
 		err(FATAL, "BIOCSETIF: %s", strerror(errno));
 		/* NOTREACHED */
 	}
@@ -346,6 +356,10 @@ rarp_open(device)
 		/* NOTREACHED */
 	}
 	if (dlt != DLT_EN10MB) {
+		if (aflag) {	/* for -a skip not ethernet interfaces */
+			close(fd);
+			return -1;
+		}
 		err(FATAL, "%s is not an ethernet", device);
 		/* NOTREACHED */
 	}
