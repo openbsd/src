@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.50 2003/12/15 22:03:41 millert Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.51 2003/12/19 04:51:44 millert Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -706,10 +706,15 @@ mi_switch()
 	 * process was running, and add that to its total so far.
 	 */
 	microtime(&tv);
-	timersub(&tv, &runtime, &tv);
-	timeradd(&p->p_rtime, &tv, &p->p_rtime);
-	if (p->p_rtime.tv_sec < 0)
-		p->p_rtime.tv_sec = p->p_rtime.tv_usec = 0;
+	if (timercmp(&tv, &runtime, <)) {
+#ifdef DIAGNOSTIC
+		printf("time is not monotonic! tv=%ld.%ld, runtime=%ld.%ld\n",
+		    tv.tv_sec, tv.tv_usec, runtime.tv_sec, runtime.tv_usec);
+#endif
+	} else {
+		timersub(&tv, &runtime, &tv);
+		timeradd(&p->p_rtime, &tv, &p->p_rtime);
+	}
 
 	/*
 	 * Check if the process exceeds its cpu resource allocation.
