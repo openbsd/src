@@ -902,25 +902,30 @@ get_date(p, now)
     struct timeb	ftz;
     time_t		Start;
     time_t		tod;
+    time_t nowtime;
 
     yyInput = p;
     if (now == NULL) {
         now = &ftz;
-	(void)time(&ftz.time);
+	(void)time (&nowtime);
 
-	if (! (tm = gmtime (&ftz.time)))
+	if (! (tm = gmtime (&nowtime)))
 	    return -1;
 	gmt = *tm;	/* Make a copy, in case localtime modifies *tm.  */
 
-	if (! (tm = localtime (&ftz.time)))
+	if (! (tm = localtime (&nowtime)))
 	    return -1;
 	
 	ftz.timezone = difftm (&gmt, tm) / 60;
 	if(tm->tm_isdst)
 	    ftz.timezone += 60;
     }
+    else
+    {
+	nowtime = now->time;
+    }
 
-    tm = localtime(&now->time);
+    tm = localtime(&nowtime);
     yyYear = tm->tm_year;
     yyMonth = tm->tm_mon + 1;
     yyDay = tm->tm_mday;
