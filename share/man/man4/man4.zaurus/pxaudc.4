@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: pxaudc.4,v 1.2 2005/02/21 10:15:58 jmc Exp $
+.\" 	$OpenBSD: pxaudc.4,v 1.3 2005/03/09 10:59:18 dlg Exp $
 .\"
 .\" Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
 .\"
@@ -23,16 +23,24 @@
 .Sh SYNOPSIS
 .Cd "pxaudc0 at pxaip?"
 .Sh DESCRIPTION
-The
+The PXA27x USB Device Controller is a programmable USB client device.
+It is also responsible for dynamically switching the physical ports between
+the USB host controller and itself by detecting whether a host or client
+cable is plugged into the connector.
+.Pp
+An appropriate driver can configure the device controller to operate as a
+variety of devices, e.g. an Ethernet or mass storage device, when plugged
+into a USB host.
+.Pp
+Currently, the
 .Nm
 driver disables the functionality of the USB Device Controller and configures
-the physical port to be always connected to the
+the physical port to be always routed to the
 .Xr ohci 4
 controller.
+In this mode the hardware only supports attachement of USB devices,
+it will not operate as a USB device itself.
 .Pp
-The PXA27x USB Device Controller is a programmable USB client device.
-An appropriate driver can configure the device to appear as a variety of USB
-devices, e.g. an Ethernet or mass storage device.
 .Sh SEE ALSO
 .Xr autoconf 4 ,
 .Xr ohci 4 ,
@@ -43,4 +51,5 @@ Intel(R) PXA27x Processor Family Developer's Manual,
 .Pa http://www.intel.com/design/pca/applicationsprocessors/manuals/280000.htm
 .Re
 .Sh BUGS
-There is currently no support for using the Zaurus as a USB Device.
+There is currently no support for using the Zaurus as a USB Device, however,
+it is planned for the future.
