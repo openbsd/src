@@ -59,7 +59,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.49 2001/02/08 19:30:51 itojun Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.50 2001/02/12 22:56:08 deraadt Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -406,6 +406,7 @@ client_wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp,
 
 	if (select((*maxfdp)+1, *readsetp, *writesetp, NULL, NULL) < 0) {
 		char buf[100];
+
 		if (errno == EINTR)
 			return;
 		/* Note: we might still have data in the buffers. */
