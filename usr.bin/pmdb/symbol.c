@@ -1,4 +1,4 @@
-/*	$OpenBSD: symbol.c,v 1.5 2002/03/16 01:12:47 art Exp $	*/
+/*	$OpenBSD: symbol.c,v 1.6 2002/07/24 14:06:27 vincent Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -67,6 +67,8 @@ sym_destroy(struct pstate *ps)
 {
 	struct sym_table *st;
 
+	if (!(ps->ps_flags & PSF_SYMBOLS))
+		return;
 	while ((st = TAILQ_FIRST(&ps->ps_syms)) != NULL) {
 		TAILQ_REMOVE(&ps->ps_syms, st, st_list);
 		(*ps->ps_sops->sop_close)(st);
