@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.9 2001/06/25 01:11:37 mickey Exp $	*/
+/*	$OpenBSD: ami.c,v 1.10 2001/07/04 22:53:25 espie Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -878,6 +878,7 @@ ami_done(sc, idx)
 			break;
 		default:
 			/* no data */
+			break;
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.11 2001/05/18 17:09:09 mickey Exp $	*/
+/*	$OpenBSD: twe.c,v 1.12 2001/07/04 22:53:24 espie Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Michael Shalayeff.  All rights reserved.
@@ -640,6 +640,7 @@ twe_done(sc, idx)
 			break;
 		default:
 			/* no data */
+			break;
 		}
 	}
 
