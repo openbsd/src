@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.11 2003/02/18 18:47:40 jason Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.12 2003/03/31 17:16:56 millert Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -248,6 +248,7 @@ ipcomp_input_cb(op)
 	    (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)) {
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 		tdb_delete(tdb);
+		splx(s);
 		m_freem(m);
 		return ENXIO;
 	}
@@ -696,6 +697,7 @@ ipcomp_output_cb(cp)
 		    ntohl(tdb->tdb_spi)));
 		crypto_freereq(crp);
 		ipcompstat.ipcomps_nopf++;
+		splx(s);
 		return EPFNOSUPPORT;
 		break;
 	}
