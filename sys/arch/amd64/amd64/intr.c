@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.5 2004/06/28 02:14:11 deraadt Exp $	*/
+/*	$OpenBSD: intr.c,v 1.6 2004/07/10 14:21:40 art Exp $	*/
 /*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <machine/i8259.h>
 #include <machine/cpu.h>
 #include <machine/pio.h>
+#include <machine/cpufunc.h>
 
 #include "ioapic.h"
 #include "lapic.h"
@@ -734,17 +735,21 @@ spllower(int nlevel)
 {
 	int olevel;
 	struct cpu_info *ci = curcpu();
+	u_int32_t imask;
+	u_long psl;
 
-	/*
-	 * Since this should only lower the interrupt level,
-	 * the XOR below should only show interrupts that
-	 * are being unmasked.
-	 */
+	imask = IUNMASK(ci, nlevel);
 	olevel = ci->ci_ilevel;
-	if (ci->ci_ipending & IUNMASK(ci,nlevel))
+
+	psl = read_psl();
+	disable_intr();
+
+	if (ci->ci_ipending & imask) {
 		Xspllower(nlevel);
-	else
+	} else {
 		ci->ci_ilevel = nlevel;
+		write_psl(psl);
+	}
 	return (olevel);
 }
 
