@@ -1,3 +1,4 @@
+/*     $OpenBSD: ldscript.head,v 1.2 2005/01/02 19:57:57 drahn Exp $         */
 /*     $NetBSD: ldscript.evbarm,v 1.2 2003/03/05 23:54:22 thorpej Exp $        
 */
 
