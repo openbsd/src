@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.80 2001/06/25 20:27:10 art Exp $
+#	$OpenBSD: GENERIC,v 1.81 2001/06/26 19:02:13 nate Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -43,8 +43,8 @@ mainbus0 at	root
 cpu*	at	mainbus0
 
 # PCI USB Controllers
-uhci*	at pci?				# Universal Host Controller (Intel)
-ohci*	at pci?				# Open Host Controller
+uhci*	at pci? disable			# Universal Host Controller (Intel)
+ohci*	at pci?	disable			# Open Host Controller
 
 # USB bus support
 usb*	at uhci?
