@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.70 2001/08/31 10:54:59 art Exp $
+#	$OpenBSD: Makefile,v 1.71 2001/08/31 12:47:57 brad Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -158,8 +158,7 @@ cross-includes:	cross-dirs
 	    MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH` \
 	    ${MAKE} DESTDIR=${CROSSDIR} includes
 
-.if ${TARGET} == "powerpc" || ${TARGET} == "alpha" || ${TARGET} == "arc" || \
-    ${TARGET} == "pmax" || ${TARGET} == "wgrisc" || ${TARGET} == "hppa" || \
+.if ${TARGET} == "powerpc" || ${TARGET} == "alpha" || ${TARGET} == "hppa" || \
     ${TARGET} == "sparc64"
 cross-binutils: cross-binutils-new
 .else
