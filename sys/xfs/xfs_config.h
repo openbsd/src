@@ -668,7 +668,7 @@
 /* #undef HAVE_VM_VM_ZONE_H */
 
 /* Define if you have the <vm/vnode_pager.h> header file.  */
-#define HAVE_VM_VNODE_PAGER_H 1
+/* #undef HAVE_VM_VNODE_PAGER_H */
 
 /* Define if you have the curses library (-lcurses).  */
 /* #undef HAVE_LIBCURSES */
