@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.12 1996/11/09 07:43:22 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.13 1996/11/09 20:17:17 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.12 1996/11/09 07:43:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.13 1996/11/09 20:17:17 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -97,6 +97,8 @@ void	 dofork __P((void));
 #endif
 
 extern void login __P((struct utmp *));
+extern int check_failedlogin __P((uid_t));
+extern void log_failedlogin __P((uid_t, char *, char *));
 
 #define	TTYGRPNAME	"tty"		/* name of group to own ttys */
 
@@ -322,6 +324,8 @@ main(argc, argv)
 
 		(void)printf("Login incorrect\n");
 		failures++;
+		if (pwd)
+			log_failedlogin(pwd->pw_uid, hostname, tty);
 		/* we allow 10 tries, but after 3 we start backing off */
 		if (++cnt > 3) {
 			if (cnt >= 10) {
@@ -386,6 +390,8 @@ main(argc, argv)
 	(void)strncpy(utmp.ut_line, tty, sizeof(utmp.ut_line));
 	login(&utmp);
 
+	if (!quietlog)
+		(void)check_failedlogin(pwd->pw_uid);
 	dolastlog(quietlog);
 
 	login_fbtab(tty, pwd->pw_uid, pwd->pw_gid);
