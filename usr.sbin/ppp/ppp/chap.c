@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: chap.c,v 1.6 1999/02/18 00:50:44 brian Exp $
+ * $Id: chap.c,v 1.7 1999/02/18 19:12:10 brian Exp $
  *
  *	TODO:
  */
@@ -639,7 +639,8 @@ chap_Input(struct physical *p, struct mbuf *bp)
               if (chap_HaveAnotherGo(chap))
                 break;
               key = NULL;
-            } else if (!lanman && !IsEnabled(p->link.lcp.cfg.chap80nt)) {
+            } else if (!lanman && !IsEnabled(p->link.lcp.cfg.chap80nt) &&
+                       p->link.lcp.want_authtype == 0x80) {
               log_Printf(LogPHASE, "Auth failure: mschap not enabled\n");
               if (chap_HaveAnotherGo(chap))
                 break;
