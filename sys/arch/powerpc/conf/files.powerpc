@@ -1,0 +1,59 @@
+#
+# First try for powerpc-specific configuration info
+#
+maxpartitions 16
+
+maxusers 2 8 64
+
+#
+# Openfirmware support
+#
+include "../../../dev/ofw/files.ofw"
+major	{ofdisk = 0}
+
+file	arch/powerpc/powerpc/Locore.c
+file	arch/powerpc/powerpc/autoconf.c
+file	arch/powerpc/powerpc/bcopy.c
+file	arch/powerpc/powerpc/clock.c
+file	arch/powerpc/powerpc/conf.c
+file	arch/powerpc/powerpc/copyinstr.c
+file	arch/powerpc/powerpc/copyoutstr.c
+file	arch/powerpc/powerpc/copystr.c
+file	arch/powerpc/powerpc/disksubr.c		disk
+file	arch/powerpc/powerpc/fpu.c
+file	arch/powerpc/powerpc/fubyte.c
+file	arch/powerpc/powerpc/fuswintr.c
+file	arch/powerpc/powerpc/in_cksum.c
+file	arch/powerpc/powerpc/ipkdb_glue.c	ipkdb
+file	arch/powerpc/powerpc/machdep.c
+file	arch/powerpc/powerpc/mem.c
+file	arch/powerpc/powerpc/ofw_machdep.c
+file	arch/powerpc/powerpc/openfirm.c
+file	arch/powerpc/powerpc/pmap.c
+file	arch/powerpc/powerpc/process_machdep.c
+file	arch/powerpc/powerpc/subyte.c
+file	arch/powerpc/powerpc/suword.c
+file	arch/powerpc/powerpc/suswintr.c
+file	arch/powerpc/powerpc/sys_machdep.c
+file	arch/powerpc/powerpc/trap.c
+file	arch/powerpc/powerpc/vm_machdep.c
+file	dev/cons.c
+file	dev/cninit.c
+file    arch/ppc/ppc/setjmp.S                   ddb
+file    arch/ppc/ppc/db_memrw.c                 ddb
+file    arch/ppc/ppc/db_disasm.c                ddb
+file    arch/ppc/ppc/db_interface.c             ddb
+file    arch/ppc/ppc/db_trace.c                 ddb
+
+# FirePower specific code
+#device firepower: openfirm
+#attach firepower at root
+
+#file	arch/powerpc/firepower/firedep.c	firepower needs-flag
+#file	arch/powerpc/firepower/fireirq.c	firepower
+
+# FirePower OpenFirmware Bug Workarounds
+file	arch/powerpc/powerpc/ofwreal.S		firepowerbugs
+
+include "../../../scsi/files.scsi"
+

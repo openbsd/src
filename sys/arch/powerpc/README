@@ -1,0 +1,16 @@
+NOT YET READY!!!
+
+This port is heavily based on the NetBSD powerpc port by
+Wolfgang Solfrank. All of the kernel code is derived from there.
+Some modifications have been made, primarily to support ELF.
+
+Until this README file states that the port is ready, it is unlikey
+that the port will build correctly.
+
+Currently, dont even try, go ahead and look at the code, but
+nothing has been tried since It was checked in.
+
+I hope to have this ready before Jan 1997
+
+Dale
+rahnds@cvs.openbsd.org
