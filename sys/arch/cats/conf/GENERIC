@@ -1,7 +1,7 @@
-#	$OpenBSD: GENERIC,v 1.11 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.12 2004/09/16 09:35:36 deraadt Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default OpenBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.

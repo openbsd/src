@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.29 2004/09/16 09:14:04 mickey Exp $
+# 	$OpenBSD: RAMDISK,v 1.30 2004/09/16 09:35:37 deraadt Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -53,7 +53,7 @@ em*	at pci?			# Intel Pro/1000 ethernet
 auxio*	at ebus?
 auxio*	at sbus?
 #com*	at ebus?
-clock*	at sbus?			# Mostek clock 
+clock*	at sbus?			# Mostek clock
 clock*	at ebus?
 rtc*	at ebus?			# DS1287/M5819 clock
 timer*	at mainbus0			# Timer chip

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.34 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.35 2004/09/16 09:35:36 deraadt Exp $
 #
 # PPC GENERIC config file
 #
@@ -47,7 +47,7 @@ siop*		at pci?
 fxp*		at pci?
 de*		at pci?
 #vme*		at pci?
-vgafb0		at pci?		# PCI VGA graphics 
+vgafb0		at pci?		# PCI VGA graphics
 #ep*		at pci?		# 3Com 3c59x
 #ne*		at pci?		# NE2000-compatible Ethernet
 #adv*		at pci?		# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
@@ -82,8 +82,8 @@ mtdphy*		at mii?		# Myson MTD972 PHYs
 sqphy*		at mii?		# Seeq 80220/80221/80223 PHYs
 #tlphy*		at mii?		# ThunderLAN PHYs
 #tqphy*		at mii?		# TDK Semiconductor PHYs
-brgphy*		at mii?		# Broadcom 10/100/1000 PHYs 
-bmtphy*		at mii?		# Broadcom 10/100 PHYs 
+brgphy*		at mii?		# Broadcom 10/100/1000 PHYs
+bmtphy*		at mii?		# Broadcom 10/100 PHYs
 eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
 rgephy*		at mii?		# Realtek 8169S/8110S PHY
 ukphy*		at mii?		# generic unknown PHYs

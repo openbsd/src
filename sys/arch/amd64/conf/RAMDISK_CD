@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.17 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.18 2004/09/16 09:35:36 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -80,7 +80,7 @@ uhub*	at uhub?		# USB Hubs
 #uaudio* at uhub?		# USB Audio
 #ulpt*	at uhub?		# USB Printers
 uhidev*	at uhub?
-ukbd*	at uhidev? 
+ukbd*	at uhidev?
 wskbd*	at ukbd? mux 1
 umass*	at uhub?		# USB Mass Storage devices
 scsibus* at umass?

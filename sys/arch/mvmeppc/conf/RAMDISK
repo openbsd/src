@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.8 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.9 2004/09/16 09:35:36 deraadt Exp $
 #
 # MVMEPPC GENERIC config file
 #
@@ -45,7 +45,7 @@ de*		at pci?
 #vme*		at pci?
 #pciide*	at pci?
 
-# ISA Bus 
+# ISA Bus
 isa*	at	pcib?
 #pckbc0		at isa?			# PC keyboard controller
 #pckbd*		at pckbc?		# PC keyboard
@@ -78,7 +78,7 @@ scsibus*	at siop?
 #scsibus* at atapiscsi?
 
 #### SCSI Bus devices
- 
+
 sd0		at scsibus? target 0 lun 0
 #st*		at scsibus?
 #cd*		at scsibus?

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.40 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.41 2004/09/16 09:35:36 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -282,7 +282,7 @@ wd*	at pciide? flags 0x0000
 #atapiscsi* at wdc?
 atapiscsi* at pciide?
 scsibus* at atapiscsi?
- 
+
 # Workstation Console attachments
 #wsdisplay*	at cfb?
 #wsdisplay*	at sfb?

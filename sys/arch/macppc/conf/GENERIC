@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.59 2004/09/16 09:14:03 mickey Exp $g
+#	$OpenBSD: GENERIC,v 1.60 2004/09/16 09:35:36 deraadt Exp $g
 #
 # PPC GENERIC config file
 #
@@ -43,7 +43,7 @@ siop*		at pci?
 fxp*		at pci?
 de*		at pci?
 #vme*		at pci?
-vgafb0		at pci?		# PCI VGA graphics 
+vgafb0		at pci?		# PCI VGA graphics
 #ep*		at pci?		# 3Com 3c59x
 #ne*		at pci?		# NE2000-compatible Ethernet
 #adv*		at pci?		# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
@@ -53,7 +53,7 @@ ahc*		at pci?		# Adaptec 294x, aic78x0 SCSI
 #pcscp*		at pci?		# AMD Am53c974 PCscsi-PCI SCSI
 pciide*		at pci?
 kauaiata*	at pci?		# Apple ATA 100
-wdc*		at kauaiata? 
+wdc*		at kauaiata?
 macobio0	at pci?
 gem*		at pci?		# GMAC ethernet
 hme*		at pci?		# HME ethernet
@@ -81,8 +81,8 @@ mtdphy*		at mii?		# Myson MTD972 PHYs
 sqphy*		at mii?		# Seeq 8022[013] PHYs
 #tlphy*		at mii?		# ThunderLAN PHYs
 #tqphy*		at mii?		# TDK Semiconductor PHYs
-brgphy*		at mii?		# Broadcom 10/100/1000 PHYs 
-bmtphy*		at mii?		# Broadcom 10/100 PHYs 
+brgphy*		at mii?		# Broadcom 10/100/1000 PHYs
+bmtphy*		at mii?		# Broadcom 10/100 PHYs
 eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
 rgephy*		at mii?		# Realtek 8169S/8110S PHY
 ukphy*		at mii?		# generic unknown PHYs
@@ -183,7 +183,7 @@ ucom*	at uvisor?
 uvscom*	at uhub?		# SUNTAC Slipper U VS-10U serial
 ucom*	at uvscom?
 ubsa*	at uhub?		# Belkin serial adapter
-ucom*	at ubsa? 
+ucom*	at ubsa?
 uftdi*	at uhub?		# FTDI FT8U100AX serial adapter
 ucom*	at uftdi?
 uplcom* at uhub?		# I/O DATA USB-RSAQ2 serial adapter

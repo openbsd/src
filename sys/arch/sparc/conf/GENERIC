@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.76 2004/09/16 09:14:04 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.77 2004/09/16 09:35:36 deraadt Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -111,7 +111,7 @@ spif*	at sbus?					# spif serial cards
 stty*	at spif?
 sbpp*	at spif?
 
-bpp*	at sbus?					# parallel port 
+bpp*	at sbus?					# parallel port
 
 # SUNW,xbox SBus Expansion Subsystem
 xbox*	at sbus?					# SBus Expansion box

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.5 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.6 2004/09/16 09:35:36 deraadt Exp $
 
 machine		luna88k m88k
 
@@ -10,7 +10,7 @@ option		"NCPUS=1"	# number of CPUs supported (max 4)
 option		M88100		# 88100 support; mandatory
 
 # Define this if your processor has the xxx.usr bug (mask C82N)
-option		ERRATA__XXX_USR	
+option		ERRATA__XXX_USR
 
 maxusers	64
 

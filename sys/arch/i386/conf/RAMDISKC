@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.41 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: RAMDISKC,v 1.42 2004/09/16 09:35:36 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -75,7 +75,7 @@ pcic2	at isa? port 0x3e4 iomem 0xd4000 iosiz 0x4000
 pcic*	at isapnp?
 
 # PCI PCMCIA controllers
-pcic*	at pci? dev? 
+pcic*	at pci? dev?
 
 # PCMCIA bus support
 pcmcia*	at pcic?
