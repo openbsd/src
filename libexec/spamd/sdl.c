@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.5 2003/03/03 20:17:50 deraadt Exp $ */
+/*	$OpenBSD: sdl.c,v 1.6 2003/03/03 22:22:23 cloder Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -45,6 +45,9 @@
 #include <string.h>
 #include "sdl.h"
 
+static void sdl_free(struct sdlist *);
+static void sdl_clear(struct sdlist *);
+
 extern int debug;
 struct sdlist *blacklists = NULL;
 int blc = 0, blu = 0;
@@ -61,19 +64,16 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 	 * if a blacklist of same tag name is already there, replace it,
 	 * otherwise append.
 	 */
-
-	for (i = 0; i < blu; i++)
-		if (strcmp(blacklists[i].tag, sdname) == 0)
-			index = i;
+	for (i = 0; i < blu; i++) {
+		if (strcmp(blacklists[i].tag, sdname) == 0) {
+				index = i;
+				break;
+		}
+	}
 	if (index != -1) {
 		if (debug > 0)
 			printf("replacing list %s\n", blacklists[index].tag);
-		free(blacklists[index].tag);
-		blacklists[index].tag = NULL;
-		free(blacklists[index].string);
-		blacklists[index].string = NULL;
-		free(blacklists[index].addrs);
-		blacklists[index].addrs = NULL;
+		sdl_free(&blacklists[index]);
 	} else {
 		if (debug > 0)
 			printf("adding list %s\n", sdname);
@@ -87,9 +87,14 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 			return (-1);
 		blacklists = tmp;
 		blc += 128;
+		sdl_clear(&blacklists[index]);
 	}
-	blacklists[index].tag = strdup(sdname);
-	blacklists[index].string = strdup(sdstring);
+
+	if ((blacklists[index].tag = strdup(sdname)) == NULL)
+		goto misc_error;
+	if ((blacklists[index].string = strdup(sdstring)) == NULL)
+		goto misc_error;
+
 	blacklists[index].naddrs = addrc;
 
 	/*
@@ -99,7 +104,7 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 	 */
 	blacklists[index].addrs = malloc(addrc * sizeof(struct sdentry));
 	if (blacklists[index].addrs == NULL)
-		return (-1);
+		goto misc_error;
 
 	for(i = 0; i < addrc; i++) {
 		int j, k, af;
@@ -154,7 +159,9 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 	return (0);
  parse_error:
 	if (debug > 0)
-		printf("sdl_add: parse error, \"%s\"\n", astring);
+		printf("sdl_add: parse error, \"%s\"\n", addrs[i]);
+ misc_error:
+	sdl_free(&blacklists[index]);
 	return (-1);
 }
 
@@ -239,3 +246,28 @@ sdl_lookup(struct sdlist *head, int af, void * src)
 	}
 	return (sdnew);
 }
+
+static void
+sdl_free(struct sdlist *sdl)
+{
+	if (sdl->tag != NULL)
+		free(sdl->tag);
+
+	if (sdl->string != NULL)
+		free(sdl->string);
+
+	if (sdl->addrs != NULL)
+		free(sdl->addrs);
+
+	sdl_clear(sdl);
+}
+
+static void
+sdl_clear(struct sdlist *sdl)
+{
+	sdl->tag = NULL;
+	sdl->string = NULL;
+	sdl->addrs = NULL;
+	sdl->naddrs = 0;
+}
+
