@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.16 2002/07/27 09:29:50 jakob Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.17 2002/07/27 20:11:34 jakob Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: rdate.c,v 1.16 2002/07/27 09:29:50 jakob Exp $";
+static const char rcsid[] = "$OpenBSD: rdate.c,v 1.17 2002/07/27 20:11:34 jakob Exp $";
 #endif
 #endif				/* lint */
 
@@ -61,12 +61,14 @@ void rfc868time_client (const char *, struct timeval *, struct timeval *);
 void ntp_client (const char *, struct timeval *, struct timeval *);
 
 extern char    *__progname;
+extern int	corrleaps;
 
 void
 usage()
 {
 	(void) fprintf(stderr, "Usage: %s [-npsa] host\n", __progname);
 	(void) fprintf(stderr, "  -n: use SNTP instead of RFC868 time protocol\n");
+	(void) fprintf(stderr, "  -N: use SNTP and correct leap seconds\n");
 	(void) fprintf(stderr, "  -p: just print, don't set\n");
 	(void) fprintf(stderr, "  -s: just set, don't print\n");
 	(void) fprintf(stderr, "  -a: use adjtime instead of instant change\n");
@@ -84,7 +86,7 @@ main(int argc, char **argv)
 
 	struct timeval new, adjust;
 
-	while ((c = getopt(argc, argv, "psanv")) != -1)
+	while ((c = getopt(argc, argv, "psanNv")) != -1)
 		switch (c) {
 		case 'p':
 			pr++;
@@ -100,6 +102,12 @@ main(int argc, char **argv)
 
 		case 'n':
 			ntp++;
+			corrleaps = 0;
+			break;
+
+		case 'N':
+			ntp++;
+			corrleaps = 1;
 			break;
 
 		case 'v':

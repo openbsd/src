@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.8 2002/07/27 08:47:19 jakob Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.9 2002/07/27 20:11:34 jakob Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -111,6 +111,8 @@ void	unpack_ntp(struct ntp_data *, u_char *, int);
 double	current_time(double);
 void	create_timeval(double, struct timeval *, struct timeval *);
 
+int	corrleaps = 0;
+
 void
 ntp_client(const char *hostname, struct timeval *new, struct timeval *adjust)
 {
@@ -126,8 +128,6 @@ ntp_client(const char *hostname, struct timeval *new, struct timeval *adjust)
 		errx(1, "%s: %s", hostname, gai_strerror(error));
 		/*NOTREACHED*/
 	}
-
-	ntpleaps_init();
 
 	s = -1;
 	for (res = res0; res; res = res->ai_next) {
@@ -449,7 +449,8 @@ current_time(double offset)
 	 */
 
 	t = NTPLEAPS_OFFSET + (u_int64_t) current.tv_sec;
-	ntpleaps_sub(&t);
+	if (corrleaps)
+		ntpleaps_sub(&t);
 
 	return offset + ( t - NTPLEAPS_OFFSET ) + 1.0e-6 * current.tv_usec;
 }
