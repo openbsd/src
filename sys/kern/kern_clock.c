@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.49 2004/08/04 21:49:19 art Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.50 2004/08/05 13:45:30 art Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -178,8 +178,8 @@ initclocks()
  * while doing that (signal handling can be heavy).
  *
  * hardclock detects that the itimer has expired, and schedules a timeout
- * to deliver the signal. This works becuse of the following reasons:
- *  - The tiemout structures can be in struct pstats because the timers
+ * to deliver the signal. This works because of the following reasons:
+ *  - The timeout structures can be in struct pstats because the timers
  *    can be only activated on curproc (never swapped). Swapout can
  *    only happen from a kernel thread and softclock runs before threads
  *    are scheduled.
