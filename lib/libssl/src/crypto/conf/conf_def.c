@@ -234,7 +234,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
 		CONFerr(CONF_F_CONF_LOAD_BIO,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
-	strcpy(section,"default");
+	strlcpy(section,"default",10);
 
 	if (_CONF_new_data(conf) == 0)
 		{
@@ -390,7 +390,7 @@ again:
 							ERR_R_MALLOC_FAILURE);
 				goto err;
 				}
-			strcpy(v->name,pname);
+			strlcpy(v->name,pname,strlen(pname)+1);
 			if (!str_copy(conf,psection,&(v->value),start)) goto err;
 
 			if (strcmp(psection,section) != 0)

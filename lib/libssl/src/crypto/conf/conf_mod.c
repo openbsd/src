@@ -561,11 +561,11 @@ char *CONF_get1_default_config_file(void)
 
 	if (!file)
 		return NULL;
-	strcpy(file,X509_get_default_cert_area());
+	strlcpy(file,X509_get_default_cert_area(),len + 1);
 #ifndef OPENSSL_SYS_VMS
-	strcat(file,"/");
+	strlcat(file,"/",len + 1);
 #endif
-	strcat(file,OPENSSL_CONF);
+	strlcat(file,OPENSSL_CONF,len + 1);
 
 	return file;
 	}

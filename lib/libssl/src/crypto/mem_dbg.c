@@ -629,7 +629,7 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
 
 		ami_cnt++;
 		memset(buf,'>',ami_cnt);
-		sprintf(buf + ami_cnt,
+		snprintf(buf + ami_cnt, sizeof buf - ami_cnt,
 			" thread=%lu, file=%s, line=%d, info=\"",
 			amip->thread, amip->file, amip->line);
 		buf_len=strlen(buf);
@@ -641,10 +641,11 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
 			}
 		else
 			{
-			strcpy(buf + buf_len, amip->info);
+			strlcpy(buf + buf_len, amip->info,
+				sizeof buf - buf_len);
 			buf_len = strlen(buf);
 			}
-		sprintf(buf + buf_len, "\"\n");
+		snprintf(buf + buf_len, sizeof buf - buf_len, "\"\n");
 		
 		BIO_puts(l->bio,buf);
 
