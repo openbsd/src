@@ -1,0 +1,226 @@
+.\"	$OpenBSD: sha2.3,v 1.1 2003/05/08 23:34:55 millert Exp $
+.\"
+.\" Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+.\" AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+.\" THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+.\" EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+.\" PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+.\" OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+.\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+.\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\" See http://www.nist.gov/sha/ for the detailed standard
+.\"
+.Dd April 24, 2003
+.Dt SHA2 3
+.Os
+.Sh NAME
+.Nm SHA256_Init ,
+.Nm SHA256_Update ,
+.Nm SHA256_Final ,
+.Nm SHA256_End ,
+.Nm SHA256_File ,
+.Nm SHA256_Data
+.Nd calculate the NIST Secure Hash Standard (version 2)
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sha2.h>
+.Ft void
+.Fn SHA256_Init "SHA256_CTX *context"
+.Ft void
+.Fn SHA256_Update "SHA256_CTX *context" "const u_int8_t *data" "size_t len"
+.Ft void
+.Fn SHA256_Final "u_int8_t digest[SHA256_DIGEST_LENGTH]" "SHA256_CTX *context"
+.Ft "char *"
+.Fn SHA256_End "SHA256_CTX *context" "char buf[SHA256_DIGEST_STRING_LENGTH]"
+.Ft "char *"
+.Fn SHA256_File "char *filename" "char buf[SHA256_DIGEST_STRING_LENGTH]"
+.Ft "char *"
+.Fn SHA256_Data "u_int8_t *data" "u_int len" "char buf[SHA256_DIGEST_STRING_LENGTH]"
+.Ft void
+.Fn SHA384_Init "SHA384_CTX *context"
+.Ft void
+.Fn SHA384_Update "SHA384_CTX *context" "const u_int8_t *data" "size_t len"
+.Ft void
+.Fn SHA384_Final "u_int8_t digest[SHA384_DIGEST_LENGTH]" "SHA384_CTX *context"
+.Ft "char *"
+.Fn SHA384_End "SHA384_CTX *context" "char buf[SHA384_DIGEST_STRING_LENGTH]"
+.Ft "char *"
+.Fn SHA384_File "char *filename" "char buf[SHA384_DIGEST_STRING_LENGTH]"
+.Ft "char *"
+.Fn SHA384_Data "u_int8_t *data" "size_t len" "char buf[SHA384_DIGEST_STRING_LENGTH]"
+.Ft void
+.Fn SHA512_Init "SHA512_CTX *context"
+.Ft void
+.Fn SHA512_Update "SHA512_CTX *context" "const u_int8_t *data" "size_t len"
+.Ft void
+.Fn SHA512_Final "u_int8_t digest[SHA512_DIGEST_LENGTH]" "SHA512_CTX *context"
+.Ft "char *"
+.Fn SHA512_End "SHA512_CTX *context" "char buf[SHA512_DIGEST_STRING_LENGTH]"
+.Ft "char *"
+.Fn SHA512_File "char *filename" "char buf[SHA512_DIGEST_STRING_LENGTH]"
+.Ft "char *"
+.Fn SHA512_Data "u_int8_t *data" "size_t len" "char buf[SHA512_DIGEST_STRING_LENGTH]"
+.Sh DESCRIPTION
+The SHA2 functions implement the NIST Secure Hash Standard,
+FIPS PUB 180-2.
+The SHA2 functions are used to generate a condensed representation of a
+message called a message digest, suitable for use as a digital signature.
+There are three families of functions, with names corresponding to 
+the number of bits in the resulting message digest.
+The SHA-256 functions are limited to processing a message of less
+than 2^64 bits as input.
+The SHA-384 and SHA-512 functions can process a message of at most 2^128 - 1
+bits as input.
+.Pp
+The SHA2 functions are considered to be more secure than the
+.Xr sha1 3
+functions with which they share a similar interface.
+The 256, 384, and 512 bit versions of SHA2 share the same interface.
+For brevity, only the 256 bit variants are described below.
+.Pp
+The
+.Fn SHA256_Init
+function initializes a SHA256_CTX
+.Ar context
+for use with
+.Fn SHA256_Update ,
+and
+.Fn SHA256_Final .
+The
+.Fn SHA256_Update
+function adds
+.Ar data
+of length
+.Ar len
+to the SHA256_CTX specified by
+.Ar context .
+.Fn SHA256_Final
+is called when all data has been added via
+.Fn SHA256_Update
+and stores a message digest in the
+.Ar digest
+parameter.
+When a null pointer is passed to
+.Fn SHA256_Final
+as first argument only the final padding will be applied and the
+current context can still be used with
+.Fn SHA256_Update .
+.Pp
+The
+.Fn SHA256_End
+function is a front end for
+.Fn SHA256_Final
+which converts the digest into an
+.Tn ASCII
+representation of the digest in hexadecimal.
+.Pp
+The
+.Fn SHA256_File
+function calculates the digest for a file and returns the result via
+.Fn SHA256_End .
+If
+.Fn SHA256_File
+is unable to open the file a NULL pointer is returned.
+.Pp
+The
+.Fn SHA256_Data
+function
+calculates the digest of an arbitrary string and returns the result via
+.Fn SHA256_End .
+.Pp
+For each of the
+.Fn SHA256_End ,
+.Fn SHA256_File ,
+and
+.Fn SHA256_Data
+functions the
+.Ar buf
+parameter should either be a string large enough to hold the resulting digest
+(e.g.
+.Ev SHA256_DIGEST_STRING_LENGTH ,
+.Ev SHA384_DIGEST_STRING_LENGTH
+or
+.Ev SHA512_DIGEST_STRING_LENGTH ,
+depending on the function being used)
+or a NULL pointer.
+In the latter case, space will be dynamically allocated via
+.Xr malloc 3
+and should be freed using
+.Xr free 3
+when it is no longer needed.
+.Sh EXAMPLES
+The follow code fragment will calculate the digest for
+the string "abc" which is ``0xa9993e36476816aba3e25717850c26c9cd0d89d''.
+.Bd -literal -offset indent
+SHA256_CTX ctx;
+u_int8_t results[SHA256_DIGEST_LENGTH];
+char *buf;
+int n;
+
+buf = "abc";
+n = strlen(buf);
+SHA256_Init(&ctx);
+SHA256_Update(&ctx, (u_int8_t *)buf, n);
+SHA256_Final(results, &ctx);
+
+/* Print the digest as one long hex value */
+printf("0x");
+for (n = 0; n < SHA256_DIGEST_LENGTH; n++)
+	printf("%02x", results[n]);
+putchar('\en');
+.Ed
+.Pp
+Alternately, the helper functions could be used in the following way:
+.Bd -literal -offset indent
+SHA256_CTX ctx;
+u_int8_t output[SHA256_DIGEST_STRING_LENGTH];
+char *buf = "abc";
+
+printf("0x%s\en", SHA256_Data(buf, strlen(buf), output));
+.Ed
+.Sh CAVEATS
+This implementation of the Secure Hash Standard has not been validated by
+NIST and as such is not in official compliance with the standard.
+.Pp
+If a message digest is to be copied to a multi-byte type (ie:
+an array of five 32-bit integers) it will be necessary to
+perform byte swapping on little endian machines such as the i386, alpha,
+and vax.
+.Sh AUTHORS
+This implementation of the SHA fucntions was written by Aaron D. Gifford.
+.Pp
+The
+.Fn SHA256_End ,
+.Fn SHA256_File ,
+and
+.Fn SHA256_Data
+helper functions are derived from code written by Poul-Henning Kamp.
+.Sh SEE ALSO
+.Xr md4 3 ,
+.Xr md5 3 ,
+.Xr rmd160 3 ,
+.Xr sha1 3
+.Rs
+.%T Secure Hash Standard
+.%O FIPS PUB 180-2
+.Re
+.Sh HISTORY
+The SHA2 functions appeared in
+.Ox 3.4 .
