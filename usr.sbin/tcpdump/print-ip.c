@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip.c,v 1.27 2004/08/10 19:55:35 markus Exp $	*/
+/*	$OpenBSD: print-ip.c,v 1.28 2004/10/15 11:10:29 markus Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.27 2004/08/10 19:55:35 markus Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ip.c,v 1.28 2004/10/15 11:10:29 markus Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -634,6 +634,8 @@ ip_print(register const u_char *bp, register u_int length)
 			(void)printf("%sid %d", sep, (int)ntohs(ip->ip_id));
 			sep = ", ";
 		}
+		(void)printf("%slen %u", sep, ntohs(ip->ip_len));
+		sep = ", ";
 		if ((u_char *)ip + hlen <= snapend) {
 			sum = in_cksum((const u_short *)ip, hlen, 0);
 			if (sum != 0) {
