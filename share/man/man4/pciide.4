@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pciide.4,v 1.37 2003/07/29 18:17:17 grange Exp $
+.\"	$OpenBSD: pciide.4,v 1.38 2004/03/15 21:34:04 grange Exp $
 .\"	$NetBSD: pciide.4,v 1.8 1999/03/16 01:19:17 garbled Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
@@ -40,6 +40,7 @@
 .Sh SYNOPSIS
 .Cd "pciide* at pci ? dev ? function ? flags 0x0000"
 .Pp
+.Cd "option PCIIDE_AMD756_ENABLEDMA"
 .Cd "option PCIIDE_CMD064x_DISABLE"
 .Cd "option PCIIDE_CMD0646U_ENABLEUDMA"
 .Pp
@@ -49,8 +50,10 @@
 The
 .Nm
 driver supports the PCI IDE controllers as specified in the
-"PCI IDE controller specification, revision 1.0" draft, and provides the core
-functions for the
+"PCI IDE controller specification, revision 1.0" draft, as well as the
+Serial ATA controllers working either in parallel ATA compatibility mode or
+in native serial mode.
+It provides the core functions for the
 .Xr wd 4
 and
 .Xr atapiscsi 4
@@ -61,11 +64,11 @@ controllers:
 .Pp
 .Bl -bullet -compact -offset indent
 .It
-Acard ATP850, ATP860
+Acard ATP850U, ATP860, ATP860-A, ATP865-A, ATP865-R
 .It
 Acer Labs M5229
 .It
-Advanced Micro Devices AMD-756, AMD-766
+Advanced Micro Devices AMD-756, AMD-766, AMD-768, AMD-8111
 .It
 CMD Tech PCI0640, PCI0643, PCI0646, PCI0648, PCI0649, PCI0680
 .It
@@ -79,26 +82,23 @@ Intel 82801 (ICH/ICH0/ICH2/ICH3/ICH4/ICH4-M/ICH5/ICH5R)
 .It
 National Semiconductor PC87415
 .It
-NVIDIA nForce/nForce2
+National Semiconductor SCx200 (found on SC1100 SoC)
+.It
+NVIDIA nForce/nForce2 (SATA controllers are not supported)
 .It
 Promise PDC20246, PDC20262, PDC20265, PDC20267, PDC20268, PDC20268R,
-PDC20269, PDC20271, PDC20275, PDC20276, PDC20277
+PDC20269, PDC20271, PDC20275, PDC20276, PDC20277, PDC20376
 .It
-ServerWorks OSB4, CSB5, CSB6
-.It
-Silicon Integrated System 5513 (5597/5598)
-.It
-VIA Technologies VT82C586/A/B, VT82C596A/B, VT82C686A/B, VT8231, VT8366,
-VT8233, VT8235
-.El
-.Pp
-It also supports the following Serial ATA controllers:
-.Pp
-.Bl -bullet -compact -offset indent
-.It
-Promise PDC20376 (only parallel ATA mode tested)
+ServerWorks OSB4, CSB5, CSB6 (including support for the third channel)
 .It
 Silicon Image SiI3112
+.It
+Silicon Integrated System 5513 (5597/5598), 540, 550, 620, 630, 630S,
+633, 635, 640, 645, 645DX, 648, 650, 651, 652, 655, 658, 730, 733, 735,
+740, 745, 746, 748, 750, 751, 752, 755, 962, 963
+.It
+VIA Technologies VT82C586/A/B, VT82C596A/B, VT82C686A/B, VT8231, VT8366,
+VT8233, VT8235, VT8237
 .El
 .Pp
 Some of these controllers are only available in multifunction PCI chips.
@@ -127,20 +127,12 @@ This will be a problem only if the controller has been disabled in the BIOS
 and another controller has been installed which uses the ISA legacy I/O ports
 and interrupts.
 .Pp
-The CMD0646U is reportedly unable to operate properly in UDMA mode.
-UDMA will not be enabled on this controller unless
+The CMD0646U is reportedly unable to operate properly in UltraDMA mode.
+UltraDMA will not be enabled on this controller unless
 .Dv PCIIDE_CMD0646U_ENABLEUDMA
 is specified in the kernel config file.
 .Pp
-The OPTi controller code is disabled by default because the driver
-does not yet work around all bugs in current chipsets.
-.Pp
-For proper operation of UltraDMA 3
-.Pq 44 MB/sec ,
-4
-.Pq 66 MB/sec ,
-or 5
-.Pq 100 MB/sec ,
+For proper operation of UltraDMA 3 and higher modes
 a 40-pin, 80-conductor cable must be used.
 On some controllers, the
 .Nm
