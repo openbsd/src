@@ -1,4 +1,4 @@
-/*	$OpenBSD: opendev.c,v 1.4 2001/07/01 04:34:24 drahn Exp $	*/
+/*	$OpenBSD: opendev.c,v 1.5 2001/08/18 21:59:48 drahn Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ OF_package_to_path(phandle, buf, buflen)
 	};
 	
 	ofw_stack();
-	if (buflen > NBPG)
+	if (buflen > PAGE_SIZE)
 		return -1;
 	args.phandle = phandle;
 	args.buf = OF_buf;
@@ -206,7 +206,7 @@ OF_open(dname)
 	int l;
 	
 	ofw_stack();
-	if ((l = strlen(dname)) >= NBPG)
+	if ((l = strlen(dname)) >= PAGE_SIZE)
 		return -1;
 	ofbcopy(dname, OF_buf, l + 1);
 	args.dname = OF_buf;
@@ -236,7 +236,7 @@ OF_close(handle)
 }
 
 /* 
- * This assumes that character devices don't read in multiples of NBPG.
+ * This assumes that character devices don't read in multiples of PAGE_SIZE.
  */
 int
 OF_read(handle, addr, len)
@@ -263,7 +263,7 @@ OF_read(handle, addr, len)
 	args.ihandle = handle;
 	args.addr = OF_buf;
 	for (; len > 0; len -= l, addr += l) {
-		l = min(NBPG, len);
+		l = min(PAGE_SIZE, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
 			return -1;
@@ -307,7 +307,7 @@ OF_write(handle, addr, len)
 	args.ihandle = handle;
 	args.addr = OF_buf;
 	for (; len > 0; len -= l, addr += l) {
-		l = min(NBPG, len);
+		l = min(PAGE_SIZE, len);
 		ofbcopy(addr, OF_buf, l);
 		args.len = l;
 		if (openfirmware(&args) == -1)
