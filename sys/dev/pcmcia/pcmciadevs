@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.121 2005/02/07 20:09:42 matthieu Exp $
+	$OpenBSD: pcmciadevs,v 1.122 2005/03/06 23:29:25 jsg Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -242,6 +242,7 @@ product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
 product IODATA 8041TX		0x8041 SMC8041TX
 product IODATA2 WNB11PCM	0x0002 I-O DATA WN-B11/PCM
 product IODATA2 WCF12		0x0673 Wireless CF Card
+product ELSA WNB11CFZ		0x0010 I-O DATA WN-B11/CFZ
 
 /* Intel */
 product INTEL PRO_WLAN_2011	0x0001 Intel PRO/Wireless 2011
