@@ -51,7 +51,6 @@ extern int	restartany;	/* restart output on any character state */
 #ifdef DIAGNOSTICS
 extern int	diagnostic;	/* telnet diagnostic capabilities */
 #endif /* DIAGNOSTICS */
-extern int	require_otp;
 #ifdef AUTHENTICATION
 extern int	auth_level;
 #endif
@@ -118,7 +117,7 @@ void tty_tspeed (int val);
 void tty_rspeed (int val);
 void getptyslave (void);
 int cleanopen (char *line);
-void startslave (const char *host, const char *, int autologin, char *autoname);
+void startslave (const char *host, int channel[2]);
 void init_env (void);
 void start_login (const char *host, int autologin, char *name);
 void cleanup (int sig);
@@ -126,7 +125,7 @@ int main (int argc, char **argv);
 int getterminaltype (char *name, size_t);
 void _gettermname (void);
 int terminaltypeok (char *s);
-void my_telnet (int f, int p, const char*, const char *, int, char*);
+void my_telnet (int f, int p, const char *, const char *, int, char *, char *, FILE *);
 void interrupt (void);
 void sendbrk (void);
 void sendsusp (void);

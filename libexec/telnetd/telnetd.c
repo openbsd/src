@@ -37,6 +37,8 @@
 #include <fcntl.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <pwd.h>
+#include <grp.h>
 #include <sys/ioctl.h>
 
 /* RCSID("$KTH: telnetd.c,v 1.64 2001/02/08 16:06:27 assar Exp $"); */
@@ -127,7 +129,9 @@ int debug = 0;
 int keepalive = 1;
 char *progname;
 char *gettyent = "default";
-char *gettytab[2] = { "/etc/gettytab", NULL };
+char *gettytab[2] = { "./etc/gettytab", NULL };
+
+static int issue_fd;
 
 static void usage (void);
 
@@ -194,9 +198,6 @@ main(int argc, char **argv)
 		auth_debug_mode = 1;
 	    } else if (strcasecmp(optarg, "none") == 0) {
 		auth_level = 0;
-	    } else if (strcasecmp(optarg, "otp") == 0) {
-		auth_level = 0;
-		require_otp = 1;
 	    } else if (strcasecmp(optarg, "other") == 0) {
 		auth_level = AUTH_OTHER;
 	    } else if (strcasecmp(optarg, "user") == 0) {
@@ -432,7 +433,8 @@ main(int argc, char **argv)
     }
 #endif	/* _SC_CRAY_SECURE_SYS */
 
-    openlog("telnetd", LOG_PID | LOG_ODELAY, LOG_DAEMON);
+    tzset();
+    openlog("telnetd", LOG_PID | LOG_NDELAY, LOG_DAEMON);
     sa_size = sizeof (__ss);
     if (getpeername(STDIN_FILENO, sa, &sa_size) < 0) {
 	fprintf(stderr, "%s: ", progname);
@@ -473,7 +475,7 @@ usage(void)
 {
     fprintf(stderr, "Usage: telnetd");
 #ifdef	AUTHENTICATION
-    fprintf(stderr, " [-a (debug|other|otp|user|valid|off|none)]\n\t");
+    fprintf(stderr, " [-a (debug|other|user|valid|off|none)]\n\t");
 #endif
     fprintf(stderr, " [-debug]");
 #ifdef DIAGNOSTICS
@@ -680,6 +682,32 @@ char host_name[MAXHOSTNAMELEN];
 char remote_host_name[MAXHOSTNAMELEN];
 char remote_utmp_name[MAXHOSTNAMELEN];
 
+static void
+drop_root(void)
+{
+    struct passwd *pw;
+
+    pw = getpwnam(TELNETD_USER);
+    if (!pw)
+	fatal(-1, "getpwnam: telnetd: No such user");
+
+    /*
+     * Note: we will do another chdir to / later on, after we have
+     * finished accessing files outside the jail.
+     */
+    if (chdir("/"))
+	fatalperror(-1, "chdir");
+    if (chroot(TELNETD_CHROOT))
+	fatalperror(-1, "chroot");
+
+    if (setgroups(0, NULL))
+	fatalperror(-1, "setgroups");
+    if (setgid(pw->pw_gid))
+	fatalperror(-1, "setgid");
+    if (setuid(pw->pw_uid))
+	fatalperror(-1, "setuid");
+}
+
 /*
  * Get a pty, scan input lines.
  */
@@ -688,8 +716,10 @@ doit(struct sockaddr *who, int who_len)
 {
     int level;
     int ptynum;
-    char user_name[256];
+    char user_name[256], *buf;
     int error;
+    int channel[2];
+    FILE *slavef;
 
     /*
      * Find an available pty to use.
@@ -753,6 +783,30 @@ Please contact your net administrator");
 #endif
 
     init_env();
+
+    if (pipe(channel))
+	fatalperror(-1, "pipe");
+
+    startslave(remote_host_name, channel);
+    close(channel[0]);
+
+    issue_fd = open("/etc/issue.net", O_RDONLY);
+    if (issue_fd < 0)
+	issue_fd = open("/etc/issue", O_RDONLY);
+
+    drop_root();
+
+    if (cgetent(&buf, gettytab, gettyent) < 0)
+	buf = NULL;
+
+    /* make the chroot really take effect */
+    if (chdir("/"))
+	fatalperror(-1, "chdir");
+
+    slavef = fdopen(channel[1], "w");
+    if (!slavef)
+	fatalperror(-1, "fdopen");
+
     /*
      * get terminal type.
      */
@@ -771,7 +825,7 @@ Please contact your net administrator");
 
     /* begin server processing */
     my_telnet(net, ourpty, remote_host_name, remote_utmp_name,
-	      level, user_name);
+	      level, user_name, buf, slavef);
     /*NOTREACHED*/
 }  /* end of doit */
 
@@ -781,15 +835,32 @@ show_issue(void)
 {
     FILE *f;
     char buf[128];
-    f = fopen("/etc/issue.net", "r");
-    if(f == NULL)
-	f = fopen("/etc/issue", "r");
+
+    if (issue_fd < 0)
+	return;
+
+    f = fdopen(issue_fd, "r");
     if(f){
 	while(fgets(buf, sizeof(buf)-2, f)){
 	    strcpy(buf + strcspn(buf, "\r\n"), "\r\n");
 	    writenet((unsigned char*)buf, strlen(buf));
 	}
 	fclose(f);
+    } else
+	close(issue_fd);
+}
+
+extern char *goodenv_table[];
+
+static void
+fputenv(FILE *f)
+{
+    char **name, *value;
+
+    for (name = goodenv_table; *name; name++) {
+	value = getenv(*name) ?: "";
+	if (fwrite(value, strlen(value) + 1, 1, f) != 1)
+	    fatalperror(-1, "fwrite");
     }
 }
 
@@ -799,15 +870,12 @@ show_issue(void)
  */
 void
 my_telnet(int f, int p, const char *host, const char *utmp_host,
-	  int level, char *autoname)
+	  int level, char *autoname, char *gettybuf, FILE *slavef)
 {
     int on = 1;
     char *he;
     char *IM;
-    char *buf;
     int nfd;
-    int startslave_called = 0;
-    time_t timeout;
 
     /*
      * Initialize the slc mapping table.
@@ -957,18 +1025,18 @@ my_telnet(int f, int p, const char *host, const char *utmp_host,
     if (getenv("USER"))
 	hostinfo = 0;
 
-    if (cgetent(&buf, gettytab, gettyent) >= 0) {
+    if (gettybuf) {
 	char *HN;
 
-	if (cgetstr(buf, "he", &he) <= 0)
+	if (cgetstr(gettybuf, "he", &he) <= 0)
 	    he = NULL;
-	if (cgetstr(buf, "im", &IM) <= 0)
+	if (cgetstr(gettybuf, "im", &IM) <= 0)
 	    IM = "";
-	if (cgetstr(buf, "hn", &HN) > 0) {
+	if (cgetstr(gettybuf, "hn", &HN) > 0) {
 	    strlcpy(host_name, HN, sizeof host_name);
 	    free(HN);
 	}
-	cgetclose();
+	free(gettybuf);
     } else {
 	IM = DEFAULT_IM;
 	he = NULL;
@@ -990,19 +1058,19 @@ my_telnet(int f, int p, const char *host, const char *utmp_host,
 	output_data("td: Entering processing loop\r\n");
     });
 
+#ifdef AUTHENTICATION
+    if (fwrite(&level, sizeof(level), 1, slavef) != 1 ||
+	fwrite(autoname, strlen(autoname) + 1, 1, slavef) != 1)
+	fatalperror(-1, "fwrite");
+#endif
+
+    fputenv(slavef);
+    fclose(slavef);
 
     nfd = ((f > p) ? f : p) + 1;
-    timeout = time(NULL) + 5;
     for (;;) {
 	fd_set ibits, obits, xbits;
 	int c;
-
-	/* wait for encryption to be turned on, but don't wait
-           indefinitely */
-	if(!startslave_called && (!encrypt_delay() || timeout > time(NULL))){
-	    startslave_called = 1;
-	    startslave(host, utmp_host, level, autoname);
-	}
 
 	if (ncc < 0 && pcc < 0)
 	    break;

@@ -1101,6 +1101,42 @@ make_id (char *tty)
 }
 #endif
 
+static int
+fgets0(char *s, int size, FILE *f)
+{
+    int i, c, trunc;
+
+    i = 0;
+    trunc = 0;
+    while ((c = getc(f)) != EOF && c)
+	if (i < size - 1)
+	    s[i++] = c;
+	else
+	    trunc = 1;
+    s[i] = 0;
+
+    if (c == EOF)
+	fatal(-1, "fgets0: Unexpected EOF");
+
+    return trunc;
+}
+
+extern char *goodenv_table[];
+extern int envvarok(char *varp, char *valp);
+
+static void
+fgetenv(FILE *f)
+{
+    char **name, value[0x100];
+
+    for (name = goodenv_table; *name; name++) {
+	if (fgets0(value, sizeof(value), f) || !value[0])
+	    continue;
+	if (envvarok(*name, value))
+	    setenv(*name, value, 1);
+    }
+}
+
 /*
  * startslave(host)
  *
@@ -1110,12 +1146,19 @@ make_id (char *tty)
 
 /* ARGSUSED */
 void
-startslave(const char *host, const char *utmp_host,
-	   int autologin, char *autoname)
+startslave(const char *host, int channel[2])
 {
     int i;
+    int autologin;
+    char autoname[9];
+    FILE *masterf;
+
+    autologin = -1; /* shouldn't be used */
+    autoname[0] = '\0';
 
 #ifdef AUTHENTICATION
+    autologin = AUTH_REJECT;
+
     if (!autoname || !autoname[0])
 	autologin = 0;
 
@@ -1168,6 +1211,27 @@ startslave(const char *host, const char *utmp_host,
 	utmp_sig_notify(pid);
 # endif	/* PARENT_DOES_UTMP */
     } else {
+	close(channel[1]);
+
+	masterf = fdopen(channel[0], "r");
+	if (!masterf)
+	    fatalperror(-1, "fdopen");
+
+#ifdef AUTHENTICATION
+	if (fread(&autologin, sizeof(autologin), 1, masterf) != 1)
+	    fatalperror(-1, "fread");
+
+	if (fgets0(autoname, sizeof(autoname), masterf)) {
+	    /* Truncation of a username isn't safe */
+	    autologin = AUTH_REJECT;
+	    autoname[0] = 0;
+	}
+#endif
+
+	fgetenv(masterf);
+
+	fclose(masterf);
+
 	getptyslave();
 #if defined(DCE)
 	/* if we authenticated via K5, try and join the PAG */
@@ -1328,15 +1392,8 @@ start_login(const char *host, int autologin, char *name)
 #ifdef AUTHENTICATION
     if (auth_level < 0 || autologin != AUTH_VALID) {
 	if(!no_warn) {
-	    printf("User not authenticated. ");
-	    if (require_otp)
-		printf("Using one-time password\r\n");
-	    else
-		printf("Using plaintext username and password\r\n");
-	}
-	if (require_otp) {
-	    addarg(&argv, "-a");
-	    addarg(&argv, "otp");
+	    printf("User not authenticated. "
+		"Using plaintext username and password\r\n");
 	}
 	if(log_unauth) 
 	    syslog(LOG_INFO, "unauthenticated access from %s (%s)", 

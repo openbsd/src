@@ -895,44 +895,38 @@ int env_ovalue = -1;
 #endif	/* ENV_HACK */
 
 /*
- * variables not to let through.
- * if name ends in =, it is complete variable name
- * if it does not end in =, all variables starting with this name
- * should be dropped.
+ * Environment variables that are safe to let through.
+ * Anything else will simply be dropped.
  */
-char *badenv_table[] = {
-        "IFS=",
-        "LD_",
-        "_RLD_",
-        "SHLIB_PATH=",
-        "LIBPATH=",
-        "KRB",
-        "ENV=",
-        "BASH_ENV=",
-        NULL,
+char *goodenv_table[] = {
+	"TERM",
+	"DISPLAY",
+	"USER",
+	"LOGNAME",
+	"POSIXLY_CORRECT",
+	NULL
 };
 
-/* envvarok(char*) */
 /* check that variable is safe to pass to login or shell */
-static int
-envvarok(varp)
+int
+envvarok(varp, valp)
         char *varp;
+        char *valp;
 {
         int i;
-        int len;
 
         if (strchr(varp, '='))
                 return (0);
-        for (i = 0; badenv_table[i]; i++) {
-                len = strlen(badenv_table[i]);
-                if (badenv_table[i][len-1] == '=' &&
-                    !strncmp(badenv_table[i], varp, len-1) &&
-                    varp[len-2] == '\0')
-                        return (0);
-                if (!strncmp(badenv_table[i], varp, len-1))
-                        return (0);
-        }
-        return (1);
+
+	for (i = 0; goodenv_table[i]; i++) {
+		if (strcmp(goodenv_table[i], varp) != 0)
+			continue;
+		/* disallow variables with slashes or ones that are too long */
+		if (strchr(valp, '/') || strlen(valp) >= 0x100)
+			return (0);
+		return (1);
+	}
+	return (0);
 }
 
 /*
@@ -1225,7 +1219,7 @@ suboption(void)
 	    case NEW_ENV_VAR:
 	    case ENV_USERVAR:
 		*cp = '\0';
-		if(envvarok(varp)) {
+		if (envvarok(varp, valp)) {
 		    if (valp)
 			esetenv(varp, valp, 1);
 		    else
@@ -1246,7 +1240,7 @@ suboption(void)
 	    }
 	}
 	*cp = '\0';
-	if(envvarok(varp)) {
+	if (envvarok(varp, valp)) {
 	    if (valp)
 		esetenv(varp, valp, 1);
 	    else

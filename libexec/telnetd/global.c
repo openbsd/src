@@ -50,7 +50,6 @@ int	restartany;	/* restart output on any character state */
 #ifdef DIAGNOSTICS
 int	diagnostic;	/* telnet diagnostic capabilities */
 #endif /* DIAGNOSTICS */
-int	require_otp;
 
 slcfun	slctab[NSLC + 1];	/* slc mapping table */
 
