@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.33 2002/06/08 04:52:55 fgsch Exp $
+#	$OpenBSD: Makefile.inc,v 1.34 2002/10/16 16:10:24 millert Exp $
 
 # gen sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/gen ${LIBCSRCDIR}/gen
@@ -9,8 +9,8 @@ SRCS+=	alarm.c assert.c auth_subr.c authenticate.c login_cap.c basename.c \
 	errno.c exec.c fnmatch.c fstab.c ftok.c fts.c getbsize.c getcap.c \
 	getcwd.c getdomainname.c getgrent.c getgrouplist.c gethostname.c \
 	getloadavg.c getlogin.c getmntinfo.c getnetgrent.c getpagesize.c \
-	getpwent.c getttyent.c getusershell.c glob.c initgroups.c \
-	isatty.c isctype.c lockf.c login_cap.c nice.c nlist.c opendir.c \
+	getpwent.c getttyent.c getusershell.c glob.c initgroups.c isatty.c \
+	isctype.c isfdtype.c lockf.c login_cap.c nice.c nlist.c opendir.c \
 	pause.c popen.c psignal.c pw_dup.c pwcache.c raise.c readdir.c \
 	readpassphrase.c rewinddir.c scandir.c seekdir.c setdomainname.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c siginterrupt.c \
@@ -49,14 +49,14 @@ MAN+=	alarm.3 auth_subr.3 authenticate.3 basename.3 clock.3 confstr.3 \
 	getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 getmntinfo.3 \
 	getnetgrent.3 getpagesize.3 getpass.3 getpwent.3 getttyent.3 \
 	getusershell.3 glob.3 initgroups.3 isalnum.3 isalpha.3 isascii.3 \
-	isblank.3 iscntrl.3 isdigit.3 isgraph.3 isinf.3 islower.3 isprint.3 \
-	ispunct.3 isspace.3 isupper.3 isxdigit.3 ldexp.3 lockf.3 login_cap.3 \
-	modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pw_dup.3 pwcache.3 \
-	raise.3 readpassphrase.3 scandir.3 setjmp.3 setmode.3 setproctitle.3 \
-	siginterrupt.3 signal.3 sigsetops.3 sleep.3 sysconf.3 sysctl.3 \
-	strtofflags.3 syslog.3 time.3 times.3 timezone.3 toascii.3 tolower.3 \
-	toupper.3 ttyname.3 ualarm.3 uname.3 unvis.3 usleep.3 utime.3 \
-	valloc.3 vis.3
+	isblank.3 iscntrl.3 isdigit.3 isfdtype.3 isgraph.3 isinf.3 islower.3 \
+	isprint.3 ispunct.3 isspace.3 isupper.3 isxdigit.3 ldexp.3 lockf.3 \
+	login_cap.3 modf.3 nice.3 nlist.3 pause.3 popen.3 psignal.3 pw_dup.3 \
+	pwcache.3 raise.3 readpassphrase.3 scandir.3 setjmp.3 setmode.3 \
+	setproctitle.3 siginterrupt.3 signal.3 sigsetops.3 sleep.3 sysconf.3 \
+	sysctl.3 strtofflags.3 syslog.3 time.3 times.3 timezone.3 toascii.3 \
+	tolower.3 toupper.3 ttyname.3 ualarm.3 uname.3 unvis.3 usleep.3 \
+	utime.3 valloc.3 vis.3
 
 MLINKS+=auth_subr.3 auth_open.3 auth_subr.3 auth_call.3 auth_subr.3 \
 	auth_challenge.3 auth_subr.3 auth_check_change.3 auth_subr.3 \
