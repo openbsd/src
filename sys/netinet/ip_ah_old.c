@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_old.c,v 1.18 1999/01/11 22:52:09 deraadt Exp $	*/
+/*	$OpenBSD: ip_ah_old.c,v 1.19 1999/02/24 22:33:00 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -64,10 +64,10 @@
 
 #include <sys/socketvar.h>
 #include <net/raw_cb.h>
-#include <net/encap.h>
 
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
+#include <net/pfkeyv2.h>
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -75,18 +75,16 @@
 #define DPRINTF(x)
 #endif
 
-extern void encap_sendnotify(int, struct tdb *, void *);
-
-struct ah_hash ah_old_hash[] = {
-     { ALG_AUTH_MD5, "Keyed MD5", 
-       AH_MD5_ALEN,
+struct auth_hash ah_old_hash[] = {
+     { SADB_AALG_X_MD5, "Keyed MD5", 
+       0, AH_MD5_ALEN,
        sizeof(MD5_CTX),
        (void (*)(void *))MD5Init, 
        (void (*)(void *, u_int8_t *, u_int16_t))MD5Update, 
        (void (*)(u_int8_t *, void *))MD5Final 
      },
-     { ALG_AUTH_SHA1, "Keyed SHA1",
-       AH_SHA1_ALEN,
+     { SADB_AALG_X_SHA1, "Keyed SHA1",
+       0, AH_SHA1_ALEN,
        sizeof(SHA1_CTX),
        (void (*)(void *))SHA1Init, 
        (void (*)(void *, u_int8_t *, u_int16_t))SHA1Update, 
@@ -101,93 +99,49 @@ struct ah_hash ah_old_hash[] = {
 int
 ah_old_attach()
 {
-    DPRINTF(("ah_old_attach(): setting up\n"));
     return 0;
 }
 
 /*
- * ah_old_init() is called when an SPI is being set up. It interprets the
- * encap_msghdr present in m, and sets up the transformation data.
+ * ah_old_init() is called when an SPI is being set up.
  */
 
 int
-ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
+ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 {
-    struct ah_old_xencap xenc;
-    struct ah_old_xdata *xd;
-    struct encap_msghdr *em;
-    struct ah_hash *thash;
+    struct auth_hash *thash = NULL;
     int i;
 
-    if (m->m_len < ENCAP_MSG_FIXED_LEN)
-    {
-        if ((m = m_pullup(m, ENCAP_MSG_FIXED_LEN)) == NULL)
-        {
-            DPRINTF(("ah_old_init(): m_pullup failed\n"));
-            return ENOBUFS;
-        }
-    }
-
-    em = mtod(m, struct encap_msghdr *);
-    if (em->em_msglen - EMT_SETSPI_FLEN <= AH_OLD_XENCAP_LEN)
-    {
-	DPRINTF(("ah_old_init(): initialization failed\n"));
-	return EINVAL;
-    }
-
-    /* Just copy the standard fields */
-    m_copydata(m, EMT_SETSPI_FLEN, AH_OLD_XENCAP_LEN, (caddr_t) &xenc);
-
     /* Check whether the hash algorithm is supported */
-    for (i=sizeof(ah_old_hash)/sizeof(struct ah_hash)-1; i >= 0; i--) 
-	if (xenc.amx_hash_algorithm == ah_old_hash[i].type)
+    for (i = sizeof(ah_old_hash) / sizeof(struct auth_hash) - 1; i >= 0; i--) 
+      if (ii->ii_authalg == ah_old_hash[i].type)
 	      break;
+
     if (i < 0) 
     {
-	DPRINTF(("ah_old_init(): unsupported authentication algorithm %d specified\n", xenc.amx_hash_algorithm));
-	m_freem(m);
+	DPRINTF(("ah_old_init(): unsupported authentication algorithm %d specified\n", ii->ii_authalg));
 	return EINVAL;
     }
 
-    DPRINTF(("ah_old_init(): initalized TDB with hash algorithm %d: %s\n",
-	     xenc.amx_hash_algorithm, ah_old_hash[i].name));
     thash = &ah_old_hash[i];
 
-    if (xenc.amx_keylen + EMT_SETSPI_FLEN + AH_OLD_XENCAP_LEN != em->em_msglen)
-    {
-	DPRINTF(("ah_old_init(): message length (%d) doesn't match\n",
-		 em->em_msglen));
-	return EINVAL;
-    }
+    DPRINTF(("ah_old_init(): initalized TDB with hash algorithm %s\n",
+	     thash->name));
 
-    MALLOC(tdbp->tdb_xdata, caddr_t, sizeof(struct ah_old_xdata) +
-	   xenc.amx_keylen, M_XDATA, M_WAITOK);
-    if (tdbp->tdb_xdata == NULL)
-    {
-	DPRINTF(("ah_old_init(): MALLOC() failed\n"));
-      	return ENOBUFS;
-    }
-
-    bzero(tdbp->tdb_xdata, sizeof(struct ah_old_xdata) + xenc.amx_keylen);
-    xd = (struct ah_old_xdata *) tdbp->tdb_xdata;
-
-    /* Pointer to the transform */
     tdbp->tdb_xform = xsp;
+    tdbp->tdb_authalgxform = thash;
 
-    xd->amx_keylen = xenc.amx_keylen;
-    xd->amx_hash_algorithm = xenc.amx_hash_algorithm;
-    xd->amx_hash = thash;
+    tdbp->tdb_amxkeylen = ii->ii_authkeylen;
+    MALLOC(tdbp->tdb_amxkey, u_int8_t *, tdbp->tdb_amxkeylen,
+	   M_XDATA, M_WAITOK);
 
-    /* Pass name of auth algorithm for kernfs */
-    tdbp->tdb_authname = xd->amx_hash->name;
+    bcopy(ii->ii_authkey, tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
 
-    /* Copy the key material */
-    m_copydata(m, EMT_SETSPI_FLEN + AH_OLD_XENCAP_LEN, xd->amx_keylen,
-	       (caddr_t) xd->amx_key);
-
-    xd->amx_hash->Init(&(xd->amx_ctx));
-    xd->amx_hash->Update(&(xd->amx_ctx), xd->amx_key, xd->amx_keylen);
-    xd->amx_hash->Final(NULL, &(xd->amx_ctx));
+    MALLOC(tdbp->tdb_ictx, u_int8_t *, thash->ctxsize, M_XDATA, M_WAITOK);
+    bzero(tdbp->tdb_ictx, thash->ctxsize);
+    thash->Init(tdbp->tdb_ictx);
+    thash->Update(tdbp->tdb_ictx, tdbp->tdb_amxkey, tdbp->tdb_amxkeylen);
+    thash->Final(NULL, tdbp->tdb_ictx);
 
     bzero(ipseczeroes, IPSEC_ZEROES_SIZE);	/* paranoid */
 
@@ -201,12 +155,18 @@ ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 int
 ah_old_zeroize(struct tdb *tdbp)
 {
-    DPRINTF(("ah_old_zeroize(): freeing memory\n"));
-    if (tdbp->tdb_xdata)
+    if (tdbp->tdb_amxkey)
     {
-    	FREE(tdbp->tdb_xdata, M_XDATA);
-	tdbp->tdb_xdata = NULL;
+	FREE(tdbp->tdb_amxkey, M_XDATA);
+	tdbp->tdb_amxkey = NULL;
     }
+    
+    if (tdbp->tdb_ictx)
+    {
+    	FREE(tdbp->tdb_ictx, M_XDATA);
+	tdbp->tdb_ictx = NULL;
+    }
+
     return 0;
 }
 
@@ -218,7 +178,7 @@ ah_old_zeroize(struct tdb *tdbp)
 struct mbuf *
 ah_old_input(struct mbuf *m, struct tdb *tdb)
 {
-    struct ah_old_xdata *xd;
+    struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
     struct ip *ip, ipo;
     struct ah_old *ah, *aho;
     int ohlen, len, count, off, alen;
@@ -231,11 +191,7 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
     u_char buffer[40];
 
     aho = (struct ah_old *) buffer;
-
-    xd = (struct ah_old_xdata *) tdb->tdb_xdata;
-
-    alen = xd->amx_hash->hashsize;
-
+    alen = ahx->hashsize;
     ohlen = sizeof(struct ip) + AH_OLD_FLENGTH + alen;
 
     if (m->m_len < ohlen)
@@ -267,6 +223,32 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
     else
       ah = (struct ah_old *) (ip + 1);
 
+    /* Update the counters */
+    tdb->tdb_cur_bytes += ip->ip_len - (ip->ip_hl << 2);
+    ahstat.ahs_ibytes += ip->ip_len - (ip->ip_hl << 2);
+
+    /* Hard expiration */
+    if ((tdb->tdb_flags & TDBF_BYTES) &&
+	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
+      {
+/* XXX
+   encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
+*/
+	  m_freem(m);
+	  tdb_delete(tdb, 0);
+	  return NULL;
+      }
+
+    /* Notify on expiration */
+    if ((tdb->tdb_flags & TDBF_SOFT_BYTES) &&
+	(tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes))
+      {
+/* XXX
+   encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
+*/
+	  tdb->tdb_flags &= ~TDBF_SOFT_BYTES;   /* Turn off checking */
+      }
+
     ipo = *ip;
     ipo.ip_tos = 0;
     ipo.ip_len += (ip->ip_hl << 2);	/* adjusted in ip_intr() */
@@ -276,8 +258,8 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
     ipo.ip_ttl = 0;
     ipo.ip_sum = 0;
 
-    bcopy(&(xd->amx_ctx), &ctx, xd->amx_hash->ctxsize);
-    xd->amx_hash->Update(&ctx, (unsigned char *) &ipo, sizeof(struct ip));
+    bcopy(tdb->tdb_ictx, &ctx, ahx->ctxsize);
+    ahx->Update(&ctx, (unsigned char *) &ipo, sizeof(struct ip));
 
     /* Options */
     if ((ip->ip_hl << 2) > sizeof(struct ip))
@@ -287,13 +269,13 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 	  switch (optval)
 	  {
 	      case IPOPT_EOL:
-		  xd->amx_hash->Update(&ctx, ipseczeroes, 1);
+		  ahx->Update(&ctx, ipseczeroes, 1);
 
 		  off = ip->ip_hl << 2;
 		  break;
 
 	      case IPOPT_NOP:
-		  xd->amx_hash->Update(&ctx, ipseczeroes, 1);
+		  ahx->Update(&ctx, ipseczeroes, 1);
 
 		  off++;
 		  break;
@@ -303,7 +285,7 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 	      case 134:
 		  optval = ((u_int8_t *) ip)[off + 1];
 
-		  xd->amx_hash->Update(&ctx, (u_int8_t *) ip + off, optval);
+		  ahx->Update(&ctx, (u_int8_t *) ip + off, optval);
 
 		  off += optval;
 		  break;
@@ -311,7 +293,7 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 	      default:
 		  optval = ((u_int8_t *) ip)[off + 1];
 
-		  xd->amx_hash->Update(&ctx, ipseczeroes, optval);
+		  ahx->Update(&ctx, ipseczeroes, optval);
 
 		  off += optval;
 		  break;
@@ -319,8 +301,8 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
       }
     
     
-    xd->amx_hash->Update(&ctx, (unsigned char *) ah, AH_OLD_FLENGTH);
-    xd->amx_hash->Update(&ctx, ipseczeroes, alen);
+    ahx->Update(&ctx, (unsigned char *) ah, AH_OLD_FLENGTH);
+    ahx->Update(&ctx, ipseczeroes, alen);
 
     /*
      * Code shamelessly stolen from m_copydata
@@ -333,7 +315,7 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
     {
 	if (m0 == 0)
 	{
-	    DPRINTF(("ah_old_input(): bad mbuf chain for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi)));
+	    DPRINTF(("ah_old_input(): bad mbuf chain for packet from %s to %s, spi %08x\n", inet_ntoa4(ipo.ip_src), inet_ntoa4(ipo.ip_dst), ntohl(tdb->tdb_spi)));
 	    ahstat.ahs_hdrops++;
 	    m_freem(m);
 	    return NULL;
@@ -350,7 +332,7 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
     {
 	if (m0 == 0)
 	{
-	    DPRINTF(("ah_old_input(): bad mbuf chain for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi)));
+	    DPRINTF(("ah_old_input(): bad mbuf chain for packet from %s to %s, spi %08x\n", inet_ntoa4(ipo.ip_src), inet_ntoa4(ipo.ip_dst), ntohl(tdb->tdb_spi)));
 	    ahstat.ahs_hdrops++;
 	    m_freem(m);
 	    return NULL;
@@ -358,15 +340,15 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 	
 	count = min(m0->m_len - off, len);
 
-	xd->amx_hash->Update(&ctx, mtod(m0, unsigned char *) + off, count);
+	ahx->Update(&ctx, mtod(m0, unsigned char *) + off, count);
 
 	len -= count;
 	off = 0;
 	m0 = m0->m_next;
     }
 
-    xd->amx_hash->Update(&ctx, (unsigned char *) xd->amx_key, xd->amx_keylen);
-    xd->amx_hash->Final((unsigned char *) (aho->ah_data), &ctx);
+    ahx->Update(&ctx, (unsigned char *) tdb->tdb_amxkey, tdb->tdb_amxkeylen);
+    ahx->Final((unsigned char *) (aho->ah_data), &ctx);
 
     if (bcmp(aho->ah_data, ah->ah_data, alen))
     {
@@ -399,44 +381,6 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 
     ip->ip_sum = in_cksum(m, (ip->ip_hl << 2));
 
-    /* Update the counters */
-    tdb->tdb_cur_packets++;
-    tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2);
-    ahstat.ahs_ibytes += ntohs(ip->ip_len) - (ip->ip_hl << 2);
-
-    /* Notify on expiration */
-    if (tdb->tdb_flags & TDBF_SOFT_PACKETS)
-    {
-      if (tdb->tdb_cur_packets >= tdb->tdb_soft_packets)
-      {
-	  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
-	  tdb->tdb_flags &= ~TDBF_SOFT_PACKETS;
-      }
-      else
-	if (tdb->tdb_flags & TDBF_SOFT_BYTES)
-	  if (tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes)
-	  {
-	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
-	      tdb->tdb_flags &= ~TDBF_SOFT_BYTES;
-	  }
-    }
-
-    if (tdb->tdb_flags & TDBF_PACKETS)
-    {
-      if (tdb->tdb_cur_packets >= tdb->tdb_exp_packets)
-      {
-	  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
-	  tdb_delete(tdb, 0);
-      }
-      else
-	if (tdb->tdb_flags & TDBF_BYTES)
-	  if (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)
-	  {
-	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
-	      tdb_delete(tdb, 0);
-	  }
-    }
-
     return m;
 }
 
@@ -444,7 +388,7 @@ int
 ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
   	      struct mbuf **mp)
 {
-    struct ah_old_xdata *xd;
+    struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
     struct ip *ip, ipo;
     struct ah_old *ah, aho;
     register int len, off, count;
@@ -457,34 +401,61 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     u_int8_t optval;
     u_char opts[40];
 
+    alen = ahx->hashsize;
+
     ahstat.ahs_output++;
     m = m_pullup(m, sizeof(struct ip));
     if (m == NULL)
     {
-	DPRINTF(("ah_old_output(): m_pullup() failed, SA %x/%08x\n",
-		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	DPRINTF(("ah_old_output(): m_pullup() failed, SA %s/%08x\n",
+		 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	ahstat.ahs_hdrops++;
       	return ENOBUFS;
     }
 
     ip = mtod(m, struct ip *);
 	
-    xd = (struct ah_old_xdata *) tdb->tdb_xdata;
+    /* Update the counters */
+    tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) -
+			  AH_OLD_FLENGTH - alen;
+    ahstat.ahs_obytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) -
+			 AH_OLD_FLENGTH - alen;
+
+    /* Hard expiration */
+    if ((tdb->tdb_flags & TDBF_BYTES) &&
+	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
+    {
+/* XXX
+   encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
+*/
+	tdb_delete(tdb, 0);
+	m_freem(m);
+	return EINVAL;
+    }
+
+    /* Notify on expiration */
+    if ((tdb->tdb_flags & TDBF_SOFT_BYTES) &&
+	(tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes))
+      {
+/* XXX
+   encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
+*/
+	  tdb->tdb_flags &= ~TDBF_SOFT_BYTES;     /* Turn off checking */
+      }
 
     if ((ip->ip_hl << 2) > sizeof(struct ip))
     {
 	if ((m = m_pullup(m, ip->ip_hl << 2)) == NULL)
 	{
-	    DPRINTF(("ah_old_output(): m_pullup() failed, SA &x/%08x\n",
-		     tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	    DPRINTF(("ah_old_output(): m_pullup() failed, SA %s/%08x\n",
+		     ipsp_address(tdb->tdb_dst),
+		     ntohl(tdb->tdb_spi)));
 	    ahstat.ahs_hdrops++;
 	    return ENOBUFS;
 	}
 	
 	ip = mtod(m, struct ip *);
     }
-
-    alen = xd->amx_hash->hashsize;
 
     /* Save the options */
     m_copydata(m, sizeof(struct ip), (ip->ip_hl << 2) - sizeof(struct ip),
@@ -493,9 +464,10 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     ilen = ntohs(ip->ip_len);
 
     ohlen = AH_OLD_FLENGTH + alen;
-    if (ohlen + ilen > IP_MAXPACKET) {
-	DPRINTF(("ah_old_output(): packet in SA %x/%0x8 got too big\n",
-		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+    if (ohlen + ilen > IP_MAXPACKET)
+    {
+	DPRINTF(("ah_old_output(): packet in SA %s/%0x8 got too big\n",
+		 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	m_freem(m);
 	ahstat.ahs_toobig++;
         return EMSGSIZE;
@@ -518,8 +490,8 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     aho.ah_rv = 0;
     aho.ah_spi = tdb->tdb_spi;
 
-    bcopy(&(xd->amx_ctx), &ctx, xd->amx_hash->ctxsize);
-    xd->amx_hash->Update(&ctx, (unsigned char *) &ipo, sizeof(struct ip));
+    bcopy(tdb->tdb_ictx, &ctx, ahx->ctxsize);
+    ahx->Update(&ctx, (unsigned char *) &ipo, sizeof(struct ip));
 
     /* Options */
     if ((ip->ip_hl << 2) > sizeof(struct ip))
@@ -529,13 +501,13 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	  switch (optval)
 	  {
               case IPOPT_EOL:
-		  xd->amx_hash->Update(&ctx, ipseczeroes, 1);
+		  ahx->Update(&ctx, ipseczeroes, 1);
 
                   off = ip->ip_hl << 2;
                   break;
 
               case IPOPT_NOP:
-		  xd->amx_hash->Update(&ctx, ipseczeroes, 1);
+		  ahx->Update(&ctx, ipseczeroes, 1);
 
                   off++;
                   break;
@@ -545,7 +517,7 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
               case 134:
                   optval = ((u_int8_t *) ip)[off + 1];
 
-		  xd->amx_hash->Update(&ctx, (u_int8_t *) ip + off, optval);
+		  ahx->Update(&ctx, (u_int8_t *) ip + off, optval);
 
                   off += optval;
                   break;
@@ -553,15 +525,15 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
               default:
                   optval = ((u_int8_t *) ip)[off + 1];
 
-		  xd->amx_hash->Update(&ctx, ipseczeroes, optval);
+		  ahx->Update(&ctx, ipseczeroes, optval);
 
                   off += optval;
                   break;
           }
       }
 
-    xd->amx_hash->Update(&ctx, (unsigned char *) &aho, AH_OLD_FLENGTH);
-    xd->amx_hash->Update(&ctx, ipseczeroes, alen);
+    ahx->Update(&ctx, (unsigned char *) &aho, AH_OLD_FLENGTH);
+    ahx->Update(&ctx, ipseczeroes, alen);
 
     /* Skip the IP header and any options */
     off = ip->ip_hl << 2;
@@ -577,21 +549,21 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     {
 	if (m0 == 0)
 	{
-	    DPRINTF(("ah_old_output(): M_PREPEND() failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi)));
+	    DPRINTF(("ah_old_output(): M_PREPEND() failed for packet from %s to %s, spi %08x\n", inet_ntoa4(ipo.ip_src), inet_ntoa4(ipo.ip_dst), ntohl(tdb->tdb_spi)));
 	    m_freem(m);
 	    return NULL;
 	}
 	
 	count = min(m0->m_len - off, len);
 
-	xd->amx_hash->Update(&ctx, mtod(m0, unsigned char *) + off, count);
+	ahx->Update(&ctx, mtod(m0, unsigned char *) + off, count);
 
 	len -= count;
 	off = 0;
 	m0 = m0->m_next;
     }
 
-    xd->amx_hash->Update(&ctx, (unsigned char *) xd->amx_key, xd->amx_keylen);
+    ahx->Update(&ctx, (unsigned char *) tdb->tdb_amxkey, tdb->tdb_amxkeylen);
 
     ipo.ip_tos = ip->ip_tos;
     ipo.ip_id = ip->ip_id;
@@ -602,14 +574,14 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     M_PREPEND(m, ohlen, M_DONTWAIT);
     if (m == NULL)
     {
-	DPRINTF(("ah_old_output(): M_PREPEND() failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi)));
+	DPRINTF(("ah_old_output(): M_PREPEND() failed for packet from %s to %s, spi %08x\n", inet_ntoa4(ipo.ip_src), inet_ntoa4(ipo.ip_dst), ntohl(tdb->tdb_spi)));
         return ENOBUFS;
     }
 
     m = m_pullup(m, ohlen + (ipo.ip_hl << 2));
     if (m == NULL)
     {
-	DPRINTF(("ah_old_output(): m_pullup() failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi)));
+	DPRINTF(("ah_old_output(): m_pullup() failed for packet from %s to %s, spi %08x\n", inet_ntoa4(ipo.ip_src), inet_ntoa4(ipo.ip_dst), ntohl(tdb->tdb_spi)));
 	ahstat.ahs_hdrops++;
         return ENOBUFS;
     }
@@ -626,49 +598,9 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     m_copyback(m, sizeof(struct ip), (ip->ip_hl << 2) - sizeof(struct ip),
 	       (caddr_t) opts);
 
-    xd->amx_hash->Final(ah->ah_data, &ctx);
+    ahx->Final(ah->ah_data, &ctx);
 
     *mp = m;
-
-    /* Update the counters */
-    tdb->tdb_cur_packets++;
-    tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) -
-			  AH_OLD_FLENGTH - alen;
-    ahstat.ahs_obytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) -
-			 AH_OLD_FLENGTH - alen;
-
-    /* Notify on expiration */
-    if (tdb->tdb_flags & TDBF_SOFT_PACKETS)
-    {
-      if (tdb->tdb_cur_packets >= tdb->tdb_soft_packets)
-      {
-	  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
-	  tdb->tdb_flags &= ~TDBF_SOFT_PACKETS;
-      }
-      else
-	if (tdb->tdb_flags & TDBF_SOFT_BYTES)
-	  if (tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes)
-	  {
-	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
-	      tdb->tdb_flags &= ~TDBF_SOFT_BYTES;
-	  }
-    }
-
-    if (tdb->tdb_flags & TDBF_PACKETS)
-    {
-      if (tdb->tdb_cur_packets >= tdb->tdb_exp_packets)
-      {
-	  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
-	  tdb_delete(tdb, 0);
-      }
-      else
-	if (tdb->tdb_flags & TDBF_BYTES)
-	  if (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)
-	  {
-	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
-	      tdb_delete(tdb, 0);
-	  }
-    }
 
     return 0;
 }

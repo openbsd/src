@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.16 1998/06/10 23:57:13 provos Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.17 1999/02/24 22:32:59 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -66,16 +66,21 @@
 
 #include <sys/socketvar.h>
 #include <net/raw_cb.h>
-#include <net/encap.h>
 
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
 
-#include <sys/syslog.h>
-
 #include "bpfilter.h"
 
-void	ah_input __P((struct mbuf *, int));
+extern struct ifnet enc_softc;
+
+#ifdef ENCDEBUG
+#define DPRINTF(x)	if (encdebug) printf x
+#else
+#define DPRINTF(x)
+#endif
+
+void ah_input __P((struct mbuf *, int));
 
 /*
  * ah_input gets called when we receive an packet with an AH.
@@ -84,6 +89,7 @@ void	ah_input __P((struct mbuf *, int));
 void
 ah_input(register struct mbuf *m, int iphlen)
 {
+    union sockaddr_union sunion;
     struct ifqueue *ifq = NULL;
     struct ah_old *ahp, ahn;
     struct expiration *exp;
@@ -103,13 +109,10 @@ ah_input(register struct mbuf *m, int iphlen)
     {
 	if ((m = m_pullup(m, iphlen + AH_OLD_FLENGTH)) == 0)
 	{
-#ifdef ENCDEBUG
-	    if (encdebug)
-	      printf("ah_input(): (possibly too short) packet from %x to %x dropped\n", ipo->ip_src, ipo->ip_dst);
-#endif /* ENCDEBUG */
 	    ahstat.ahs_hdrops++;
 	    return;
 	}
+
 	ipo = mtod(m, struct ip *);
     }
 
@@ -121,11 +124,14 @@ ah_input(register struct mbuf *m, int iphlen)
      * IP packet ready to go through input processing.
      */
 
-    tdbp = gettdb(ahp->ah_spi, ipo->ip_dst, IPPROTO_AH);
+    bzero(&sunion, sizeof(sunion));
+    sunion.sin.sin_family = AF_INET;
+    sunion.sin.sin_len = sizeof(struct sockaddr_in);
+    sunion.sin.sin_addr = ipo->ip_dst;
+    tdbp = gettdb(ahp->ah_spi, &sunion, IPPROTO_AH);
     if (tdbp == NULL)
     {
-	if (encdebug)
-	  log(LOG_ERR, "ah_input(): could not find SA for AH packet from %x to %x, spi %08x\n", ipo->ip_src, ipo->ip_dst, ntohl(ahp->ah_spi));
+	DPRINTF(("ah_input(): could not find SA for packet from %s to %s, spi %08x\n", inet_ntoa4(ipo->ip_src), ipsp_address(sunion), ntohl(ahp->ah_spi)));
 	m_freem(m);
 	ahstat.ahs_notdb++;
 	return;
@@ -133,8 +139,7 @@ ah_input(register struct mbuf *m, int iphlen)
 
     if (tdbp->tdb_flags & TDBF_INVALID)
     {
-	if (encdebug)
-	  log(LOG_ALERT, "ah_input(): attempted to use invalid AH SA %08x, packet %x->%x\n", ntohl(ahp->ah_spi), ipo->ip_src, ipo->ip_dst);
+	DPRINTF(("ah_input(): attempted to use invalid SA %08x, packet from %s to %s\n", ntohl(ahp->ah_spi), inet_ntoa4(ipo->ip_src), ipsp_address(sunion)));
 	m_freem(m);
 	ahstat.ahs_invalid++;
 	return;
@@ -142,8 +147,7 @@ ah_input(register struct mbuf *m, int iphlen)
 
     if (tdbp->tdb_xform == NULL)
     {
-	if (encdebug)
-	  log(LOG_ALERT, "ah_input(): attempted to use uninitialized AH SA %08x, packet from %x to %x\n", ntohl(ahp->ah_spi), ipo->ip_src, ipo->ip_dst);
+	DPRINTF(("ah_input(): attempted to use uninitialized SA %08x, packet from %s to %s\n", ntohl(ahp->ah_spi), inet_ntoa4(ipo->ip_src), ipsp_address(sunion)));
 	m_freem(m);
 	ahstat.ahs_noxform++;
 	return;
@@ -159,21 +163,10 @@ ah_input(register struct mbuf *m, int iphlen)
 	if (tdbp->tdb_flags & TDBF_FIRSTUSE)
 	{
 	    exp = get_expiration();
-	    if (exp == (struct expiration *) NULL)
-	    {
-		if (encdebug)
-		  log(LOG_WARNING,
-		      "ah_input(): out of memory for expiration timer\n");
-		ahstat.ahs_hdrops++;
-		m_freem(m);
-		return;
-	    }
-
-	    exp->exp_dst.s_addr = tdbp->tdb_dst.s_addr;
+	    bcopy(&tdbp->tdb_dst, &exp->exp_dst, SA_LEN(&tdbp->tdb_dst.sa));
 	    exp->exp_spi = tdbp->tdb_spi;
 	    exp->exp_sproto = tdbp->tdb_sproto;
 	    exp->exp_timeout = tdbp->tdb_first_use + tdbp->tdb_exp_first_use;
-
 	    put_expiration(exp);
 	}
 
@@ -181,21 +174,10 @@ ah_input(register struct mbuf *m, int iphlen)
 	    (tdbp->tdb_soft_first_use <= tdbp->tdb_exp_first_use))
 	{
 	    exp = get_expiration();
-	    if (exp == (struct expiration *) NULL)
-	    {
-		if (encdebug)
-		  log(LOG_WARNING,
-		      "ah_input(): out of memory for expiration timer\n");
-		ahstat.ahs_hdrops++;
-		m_freem(m);
-		return;
-	    }
-
-	    exp->exp_dst.s_addr = tdbp->tdb_dst.s_addr;
+	    bcopy(&tdbp->tdb_dst, &exp->exp_dst, SA_LEN(&tdbp->tdb_dst.sa));
 	    exp->exp_spi = tdbp->tdb_spi;
 	    exp->exp_sproto = tdbp->tdb_sproto;
 	    exp->exp_timeout = tdbp->tdb_first_use + tdbp->tdb_soft_first_use;
-
 	    put_expiration(exp);
 	}
     }
@@ -206,8 +188,7 @@ ah_input(register struct mbuf *m, int iphlen)
     m = (*(tdbp->tdb_xform->xf_input))(m, tdbp);
     if (m == NULL)
     {
-	if (encdebug)
-	  log(LOG_ALERT, "ah_input(): authentication failed for AH packet from %x to %x, spi %08x\n", ipn.ip_src, ipn.ip_dst, ntohl(ahn.ah_spi));
+	DPRINTF(("ah_input(): authentication failed for AH packet from %s to %s, spi %08x\n", inet_ntoa4(ipn.ip_src), ipsp_address(sunion), ntohl(ahn.ah_spi)));
 	ahstat.ahs_badkcr++;
 	return;
     }
@@ -218,48 +199,42 @@ ah_input(register struct mbuf *m, int iphlen)
 	/* ipn will now contain the inner IP header */
 	m_copydata(m, ipo->ip_hl << 2, sizeof(struct ip), (caddr_t) &ipn);
 	    
-	/* Encapsulating SPI */
-	if (tdbp->tdb_osrc.s_addr && tdbp->tdb_odst.s_addr)
-	{
-	    if (tdbp->tdb_flags & TDBF_UNIQUE)
-		if ((ipn.ip_src.s_addr != ipo->ip_src.s_addr) ||
-		    (ipn.ip_dst.s_addr != ipo->ip_dst.s_addr))
-		{
-		    if (encdebug)
-			log(LOG_ALERT, "ah_input(): AH-tunnel with different internal addresses %x/%x, SA %08x/%x\n", ipo->ip_src, ipo->ip_dst, tdbp->tdb_spi, tdbp->tdb_dst);
-		    m_freem(m);
-		    ahstat.ahs_hdrops++;
-		    return;
-		}
+	if (tdbp->tdb_flags & TDBF_UNIQUE)
+	  if ((ipn.ip_src.s_addr != ipo->ip_src.s_addr) ||
+	      (ipn.ip_dst.s_addr != ipo->ip_dst.s_addr))
+	  {
+	      DPRINTF(("ah_input(): AH-tunnel with different internal addresses %s->%s (%s->%s), SA %s/%08x\n", inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet_ntoa4(ipn.ip_src), ipsp_address(sunion), ipsp_address(tdbp->tdb_dst), ntohl(tdbp->tdb_spi)));
+	      m_freem(m);
+	      ahstat.ahs_hdrops++;
+	      return;
+	  }
 
-	    /*
-	     * XXX Here we should be checking that the inner IP addresses
-	     * XXX are acceptable/authorized.
-	     */
-	}
-	else				/* So we're paranoid */
+	/*
+	 * Check that the inner source address is the same as
+	 * the proxy address, if available.
+	 */
+	if ((tdbp->tdb_proxy.sin.sin_addr.s_addr != INADDR_ANY) &&
+	    (ipn.ip_src.s_addr != tdbp->tdb_proxy.sin.sin_addr.s_addr))
 	{
-	    if (encdebug)
-		log(LOG_ALERT, "ah_input(): AH-tunnel used when expecting AH-transport, SA %08x/%x\n", tdbp->tdb_spi, tdbp->tdb_dst);
-	    m_freem(m);
+	    DPRINTF(("ah_input(): inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", inet_ntoa4(ipo->ip_src), ipsp_address(tdbp->tdb_proxy), ipsp_address(tdbp->tdb_dst), ntohl(tdbp->tdb_spi)));
+	    m_free(m);
 	    ahstat.ahs_hdrops++;
 	    return;
 	}
     }
 
     /*
-     * Check that the source address is an expected one, if we know what
-     * it's supposed to be. This avoids source address spoofing.
+     * Check that the outter source address is an expected one, if we know
+     * what it's supposed to be. This avoids source address spoofing.
      */
-    if (tdbp->tdb_src.s_addr != INADDR_ANY)
-	if (ipo->ip_src.s_addr != tdbp->tdb_src.s_addr)
-	{
-	    if (encdebug)
-		log(LOG_ALERT, "esp_input(): source address %x doesn't correspond to expected source %x, SA %08x/%x\n", ipo->ip_src, tdbp->tdb_src, tdbp->tdb_dst, tdbp->tdb_spi);
-	    m_free(m);
-	    ahstat.ahs_hdrops++;
-	    return;
-	}
+    if ((tdbp->tdb_src.sin.sin_addr.s_addr != INADDR_ANY) &&
+	(ipo->ip_src.s_addr != tdbp->tdb_src.sin.sin_addr.s_addr))
+    {
+	DPRINTF(("ah_input(): source address %s doesn't correspond to expected source %s, SA %s/%08x\n", inet_ntoa4(ipo->ip_src), ipsp_address(tdbp->tdb_src), ipsp_address(tdbp->tdb_dst), ntohl(tdbp->tdb_spi)));
+	m_free(m);
+	ahstat.ahs_hdrops++;
+	return;
+    }
 
     /* Packet is authentic */
     m->m_flags |= M_AUTH;
@@ -279,7 +254,7 @@ ah_input(register struct mbuf *m, int iphlen)
 
 	hdr.af = AF_INET;
 	hdr.spi = tdbp->tdb_spi;
-	hdr.flags = m->m_flags & (M_AUTH|M_CONF|M_TUNNEL);
+	hdr.flags = m->m_flags & (M_AUTH|M_CONF);
 
         m0.m_next = m;
         m0.m_len = ENC_HDRLEN;
@@ -303,10 +278,7 @@ ah_input(register struct mbuf *m, int iphlen)
 	m_freem(m);
 	ahstat.ahs_qfull++;
 	splx(s);
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("ah_input(): dropped packet because of full IP queue\n");
-#endif /* ENCDEBUG */
+	DPRINTF(("ah_input(): dropped packet because of full IP queue\n"));
 	return;
     }
 

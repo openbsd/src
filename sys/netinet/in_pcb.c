@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.29 1999/01/11 02:01:34 deraadt Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.30 1999/02/24 22:32:57 angelos Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -77,7 +77,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #endif /* INET6 */
 
 #ifdef IPSEC
-#include <net/encap.h>
 #include <netinet/ip_ipsp.h>
 
 extern int	check_ipsec_policy  __P((struct inpcb *, u_int32_t));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.23 1999/02/17 20:39:17 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.24 1999/02/24 22:33:06 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -37,119 +37,291 @@
  * IPSP global definitions.
  */
 
-struct expiration {
-	u_int32_t	exp_timeout;
-	struct in_addr	exp_dst;
-	u_int32_t	exp_spi;
-	u_int8_t	exp_sproto;
-	struct expiration *exp_next;
-	struct expiration *exp_prev;
+#include <sys/md5k.h>
+#include <netinet/ip_sha1.h>
+#include <netinet/ip_rmd160.h>
+#include <netinet/ip_blf.h>
+#include <netinet/ip_cast.h>
+#include <sys/socket.h>
+
+/* HMAC key sizes */
+#define MD5HMAC96_KEYSIZE       16
+#define SHA1HMAC96_KEYSIZE      20
+#define RIPEMD160HMAC96_KEYSIZE 20
+
+/* IV lengths */
+#define ESP_DES_IVS		8
+#define ESP_3DES_IVS		8
+#define ESP_BLF_IVS             8
+#define ESP_CAST_IVS            8
+#define ESP_MAX_IVS		8       /* Keep updated */
+
+/* Block sizes -- it is assumed that they're powers of 2 */
+#define ESP_DES_BLKS		8
+#define ESP_3DES_BLKS		8
+#define ESP_BLF_BLKS            8
+#define ESP_CAST_BLKS           8
+#define ESP_MAX_BLKS            8       /* Keep updated */
+
+#define HMAC_BLOCK_LEN		64
+
+#define AH_HMAC_HASHLEN		12	/* 96 bits of authenticator */
+#define AH_HMAC_RPLENGTH        4	/* 32 bits of replay counter */
+#define AH_HMAC_INITIAL_RPL	1	/* Replay counter initial value */
+
+/* HMAC definitions */
+#define HMAC_IPAD_VAL           0x36
+#define HMAC_OPAD_VAL           0x5C
+#define HMAC_BLOCK_LEN          64
+
+/* Authenticator lengths */
+#define AH_MD5_ALEN		16
+#define AH_SHA1_ALEN		20
+#define AH_RMD160_ALEN		20
+#define AH_ALEN_MAX		20 	/* Keep updated */
+
+struct sockaddr_encap
+{
+    u_int8_t	sen_len;		/* length */
+    u_int8_t	sen_family;		/* PF_KEY */
+    u_int16_t	sen_type;		/* see SENT_* */
+    union
+    {
+	u_int8_t	Data[16];	/* other stuff mapped here */
+
+	struct				/* SENT_IP4 */
+	{
+	    struct in_addr Src;
+	    struct in_addr Dst;
+	    u_int16_t Sport;
+	    u_int16_t Dport;
+	    u_int8_t Proto;
+	    u_int8_t Filler[3];
+	} Sip4;
+
+	struct				/* SENT_IPSP */
+	{
+	    struct in_addr Dst;
+	    u_int32_t Spi;
+	    u_int8_t Sproto;
+	    u_int8_t Filler[7];
+	} Sipsp;
+    } Sen;
 };
 
-struct flow {
-	struct flow	*flow_next;	/* Next in flow chain */
-	struct flow	*flow_prev;	/* Previous in flow chain */
-	struct tdb	*flow_sa;	/* Pointer to the SA */
-	struct in_addr	flow_src;   	/* Source address */
-	struct in_addr	flow_srcmask;	/* Source netmask */
-	struct in_addr	flow_dst;	/* Destination address */
-	struct in_addr	flow_dstmask;	/* Destination netmask */
-	u_int16_t	flow_sport;	/* Source port, if applicable */
-	u_int16_t	flow_dport;	/* Destination port, if applicable */
-	u_int8_t	flow_proto;	/* Transport protocol, if applicable */
-	u_int8_t	foo[3];		/* Alignment */
+#define sen_data	Sen.Data
+#define sen_ip_src	Sen.Sip4.Src
+#define sen_ip_dst	Sen.Sip4.Dst
+#define sen_proto	Sen.Sip4.Proto
+#define sen_sport	Sen.Sip4.Sport
+#define sen_dport	Sen.Sip4.Dport
+#define sen_ipsp_dst	Sen.Sipsp.Dst
+#define sen_ipsp_spi	Sen.Sipsp.Spi
+#define sen_ipsp_sproto	Sen.Sipsp.Sproto
+
+/*
+ * The "type" is really part of the address as far as the routing
+ * system is concerned. By using only one bit in the type field
+ * for each type, we sort-of make sure that different types of
+ * encapsulation addresses won't be matched against the wrong type.
+ * 
+ */
+
+#define SENT_IP4	0x0001		/* data is two struct in_addr */
+#define SENT_IPSP	0x0002		/* data as in IP4 plus SPI */
+
+/*
+ * SENT_HDRLEN is the length of the "header"
+ * SENT_*_LEN are the lengths of various forms of sen_data
+ * SENT_*_OFF are the offsets in the sen_data array of various fields
+ */
+
+#define SENT_HDRLEN	(2 * sizeof(u_int8_t) + sizeof(u_int16_t))
+
+#define SENT_IP4_SRCOFF	(0)
+#define SENT_IP4_DSTOFF (sizeof (struct in_addr))
+
+#define SENT_IP4_LEN	20
+#define SENT_IPSP_LEN	20
+
+#define NOTIFY_SOFT_EXPIRE      0       /* Soft expiration of SA */
+#define NOTIFY_HARD_EXPIRE      1       /* Hard expiration of SA */
+#define NOTIFY_REQUEST_SA       2       /* Establish an SA */
+  
+#define NOTIFY_SATYPE_CONF      1       /* SA should do encryption */
+#define NOTIFY_SATYPE_AUTH      2       /* SA should do authentication */
+#define NOTIFY_SATYPE_TUNNEL    4       /* SA should use tunneling */
+
+/*
+ * For encapsulation routes are possible not only for the destination
+ * address but also for the protocol, source and destination ports
+ * if available
+ */
+
+struct route_enc {
+    struct rtentry *re_rt;
+    struct sockaddr_encap re_dst;
 };
 
-struct tdb {				/* tunnel descriptor block */
-	struct tdb	*tdb_hnext;  	/* next in hash chain */
-	struct tdb	*tdb_onext;	/* next in output */
-	struct tdb	*tdb_inext;  	/* next in input (prev!) */
-	struct xformsw *tdb_xform;	/* transformation to use */
-	u_int32_t	tdb_spi;    	/* SPI to use */
-	u_int32_t	tdb_flags;  	/* Flags related to this TDB */
-#define TDBF_UNIQUE	   0x00001	/* This should not be used by others */
-#define TDBF_TIMER         0x00002	/* Absolute expiration timer in use */
-#define TDBF_BYTES         0x00004	/* Check the byte counters */
-#define TDBF_PACKETS       0x00008	/* Check the packet counters */
-#define TDBF_INVALID       0x00010	/* This SPI is not valid yet/anymore */
-#define TDBF_FIRSTUSE      0x00020	/* Expire after first use */
-#define TDBF_TUNNELING     0x00040	/* Do IP-in-IP encapsulation */
-#define TDBF_SOFT_TIMER    0x00080	/* Soft expiration */
-#define TDBF_SOFT_BYTES    0x00100	/* Soft expiration */
-#define TDBF_SOFT_PACKETS  0x00200	/* Soft expiration */
-#define TDBF_SOFT_FIRSTUSE 0x00400	/* Soft expiration */
-#define TDBF_SAME_TTL      0x00800	/* Keep the packet TTL, in tunneling */
-	u_int64_t	tdb_exp_packets; /* Expire after so many packets s|r */
-	u_int64_t	tdb_soft_packets; /* Expiration warning */ 
-	u_int64_t	tdb_cur_packets; /* Current number of packets s|r'ed */
-	u_int64_t	tdb_exp_bytes;	/* Expire after so many bytes passed */
-	u_int64_t	tdb_soft_bytes;	/* Expiration warning */
-	u_int64_t	tdb_cur_bytes;	/* Current count of bytes */
-	u_int64_t	tdb_exp_timeout; /* When does the SPI expire */
-	u_int64_t	tdb_soft_timeout; /* Send a soft-expire warning */
-	u_int64_t	tdb_established; /* When was the SPI established */
-	u_int64_t	tdb_first_use;	/* When was it first used */
-	u_int64_t	tdb_soft_first_use; /* Soft warning */
-	u_int64_t	tdb_exp_first_use; /* Expire if tdb_first_use +
-					   tdb_exp_first_use <= curtime */
-	struct in_addr	tdb_dst;	/* dest address for this SPI */
-	struct in_addr	tdb_src;	/* source address for this SPI,
-					 * used when tunneling */
-	struct in_addr	tdb_osrc;
-	struct in_addr	tdb_odst;	/* Source and destination addresses
-					 * of outer IP header if we're doing
-					 * tunneling */
-	caddr_t		tdb_xdata;	/* transformation data (opaque) */
-	struct flow	*tdb_flow; 	/* Which flows use this SA */
+struct expiration
+{
+    u_int32_t             exp_timeout;
+    union sockaddr_union  exp_dst;
+    u_int32_t             exp_spi;
+    u_int8_t              exp_sproto;
+    struct expiration    *exp_next;
+    struct expiration    *exp_prev;
+};
 
-	u_int8_t	tdb_ttl;	/* TTL used in tunneling */
-	u_int8_t	tdb_sproto;	/* IPsec protocol */
-	u_int16_t	tdb_satype;	/* Alignment */
-	u_int32_t	tdb_epoch;	/* Used by the kernfs interface */
-	u_int8_t	*tdb_confname;	/* Used by the kernfs interface */
-	u_int8_t	*tdb_authname;	/* Used by the kernfs interface */
+struct flow
+{
+    struct flow           *flow_next;	/* Next in flow chain */
+    struct flow           *flow_prev;	/* Previous in flow chain */
+    struct tdb            *flow_sa;	/* Pointer to the SA */
+    union sockaddr_union  flow_src;   	/* Source address */
+    union sockaddr_union  flow_srcmask; /* Source netmask */
+    union sockaddr_union  flow_dst;	/* Destination address */
+    union sockaddr_union  flow_dstmask;	/* Destination netmask */
+    u_int8_t	          flow_proto;	/* Transport protocol, if applicable */
+    u_int8_t	          foo[3];	/* Alignment */
+};
+
+struct tdb				/* tunnel descriptor block */
+{
+    struct tdb	     *tdb_hnext;  	/* Next in hash chain */
+    struct tdb	     *tdb_onext;        /* Next in output */
+    struct tdb	     *tdb_inext;        /* Previous in output */
+
+    struct xformsw   *tdb_xform;	/* Transformation to use */
+    struct enc_xform *tdb_encalgxform;  /* Encryption algorithm xform */
+    struct auth_hash *tdb_authalgxform; /* Authentication algorithm xform */
+
+#define TDBF_UNIQUE	      0x00001	/* This should not be used by others */
+#define TDBF_TIMER            0x00002	/* Absolute expiration timer in use */
+#define TDBF_BYTES            0x00004	/* Check the byte counters */
+#define TDBF_ALLOCATIONS      0x00008	/* Check the flows counters */
+#define TDBF_INVALID          0x00010	/* This SPI is not valid yet/anymore */
+#define TDBF_FIRSTUSE         0x00020	/* Expire after first use */
+#define TDBF_HALFIV           0x00040   /* Use half-length IV (ESP old only) */
+#define TDBF_SOFT_TIMER       0x00080	/* Soft expiration */
+#define TDBF_SOFT_BYTES       0x00100	/* Soft expiration */
+#define TDBF_SOFT_ALLOCATIONS 0x00200	/* Soft expiration */
+#define TDBF_SOFT_FIRSTUSE    0x00400	/* Soft expiration */
+#define TDBF_PFS              0x00800	/* Ask for PFS from Key Mgmt. */
+#define TDBF_TUNNELING        0x01000	/* Force IP-IP encapsulation */
+    u_int32_t	      tdb_flags;  	/* Flags related to this TDB */
+
+    u_int32_t         tdb_exp_allocations;  /* Expire after so many flows */
+    u_int32_t         tdb_soft_allocations; /* Expiration warning */ 
+    u_int32_t         tdb_cur_allocations;  /* Total number of allocations */
+
+    u_int64_t         tdb_exp_bytes;    /* Expire after so many bytes passed */
+    u_int64_t         tdb_soft_bytes;	/* Expiration warning */
+    u_int64_t         tdb_cur_bytes;	/* Current count of bytes */
+
+    u_int64_t         tdb_exp_timeout;	/* When does the SPI expire */
+    u_int64_t         tdb_soft_timeout;	/* Send a soft-expire warning */
+    u_int64_t         tdb_established;	/* When was the SPI established */
+
+    u_int64_t	      tdb_first_use;	  /* When was it first used */
+    u_int64_t         tdb_soft_first_use; /* Soft warning */
+    u_int64_t         tdb_exp_first_use;  /* Expire if tdb_first_use +
+					   * tdb_exp_first_use <= curtime */
+    u_int32_t	      tdb_spi;    	/* SPI */
+    u_int16_t         tdb_amxkeylen;    /* AH-old only */
+    u_int16_t         tdb_ivlen;        /* IV length */
+    u_int8_t	      tdb_sproto;	/* IPsec protocol */
+    u_int8_t          tdb_wnd;          /* Replay window */
+    u_int16_t         tdb_FILLER;       /* Padding */
+    
+    union sockaddr_union tdb_dst;	/* Destination address for this SA */
+    union sockaddr_union tdb_src;	/* Source address for this SA */
+    union sockaddr_union tdb_proxy;
+
+    u_int8_t         *tdb_key;          /* Key material (schedules) */
+    u_int8_t         *tdb_ictx;         /* Authentication contexts */
+    u_int8_t         *tdb_octx;
+    u_int8_t         *tdb_srcid;        /* Source ID for this SA */
+    u_int8_t         *tdb_dstid;        /* Destination ID for this SA */
+    u_int8_t         *tdb_amxkey;       /* AH-old only */
+
+    union
+    {
+	u_int8_t  Iv[ESP_3DES_IVS];     /* That's enough space */
+	u_int32_t Ivl;        	        /* Make sure this is 4 bytes */
+	u_int64_t Ivq; 		        /* Make sure this is 8 bytes! */
+    }IV;
+#define tdb_iv  IV.Iv
+#define tdb_ivl IV.Ivl
+#define tdb_ivq IV.Ivq
+
+    u_int32_t         tdb_rpl;	        /* Replay counter */
+    u_int32_t         tdb_bitmap;       /* Used for replay sliding window */
+    u_int32_t         tdb_initial;	/* Initial replay value */
+
+    u_int32_t         tdb_epoch;	/* Used by the kernfs interface */
+    u_int16_t         tdb_srcid_len;
+    u_int16_t         tdb_dstid_len;
+    u_int16_t         tdb_srcid_type;
+    u_int16_t         tdb_dstid_type;
+
+    struct flow	     *tdb_flow; 	/* Which flows use this SA */
 };
 
 #define TDB_HASHMOD	257
 
-struct xformsw
-{
-	u_short		xf_type;	/* Unique ID of xform */
-	u_short		xf_flags;	/* flags (see below) */
-	char		*xf_name;	/* human-readable name */
-	int		(*xf_attach) __P((void));	/* called at config time */
-
-	/* xform initialization */
-	int		(*xf_init) __P((struct tdb *, struct xformsw *, struct mbuf *));
-
-	int		(*xf_zeroize) __P((struct tdb *));	/* termination */
-
-	/* called when packet received */
-	struct mbuf 	*(*xf_input) __P((struct mbuf *, struct tdb *));
-
-	/* called when packet sent */
-	int		(*xf_output) __P((struct mbuf *, struct sockaddr_encap *,
-			    struct tdb *, struct mbuf **));
+struct auth_hash {
+    int type;
+    char *name;
+    u_int16_t keysize;
+    u_int16_t hashsize; 
+    u_int16_t ctxsize;
+    void (*Init)(void *);
+    void (*Update)(void *, u_int8_t *, u_int16_t);
+    void (*Final)(u_int8_t *, void *);
 };
 
-#define XF_IP4			1	/* IP inside IP */
-#define XF_OLD_AH		2	/* RFCs 1828 & 1852 */
-#define XF_OLD_ESP		3	/* RFCs 1829 & 1851 */
-#define XF_NEW_AH		4	/* AH HMAC 96bits */
-#define XF_NEW_ESP		5	/* ESP + auth 96bits + replay counter */
+struct enc_xform {
+    int type;
+    char *name;
+    u_int16_t blocksize, ivsize;
+    u_int16_t minkey, maxkey;
+    u_int32_t ivmask;           /* Or all possible modes, zero iv = 1 */ 
+    void (*encrypt)(struct tdb *, u_int8_t *);
+    void (*decrypt)(struct tdb *, u_int8_t *);
+};
 
-/* Supported key hash algorithms */
-#define ALG_AUTH_MD5		1
-#define ALG_AUTH_SHA1		2
-#define ALG_AUTH_RMD160		3
+struct ipsecinit
+{
+    u_int8_t       *ii_enckey;
+    u_int8_t       *ii_authkey;
+    u_int16_t       ii_enckeylen;
+    u_int16_t       ii_authkeylen;
+    u_int8_t        ii_encalg;
+    u_int8_t        ii_authalg;
+};
+	  
+struct xformsw
+{
+    u_short		xf_type;	/* Unique ID of xform */
+    u_short		xf_flags;	/* flags (see below) */
+    char		*xf_name;	/* human-readable name */
+    int		(*xf_attach)(void);	/* called at config time */
+    int		(*xf_init)(struct tdb *, struct xformsw *, struct ipsecinit *);
+    int		(*xf_zeroize)(struct tdb *); /* termination */
+    struct mbuf 	*(*xf_input)(struct mbuf *, struct tdb *); /* input */
+    int		(*xf_output)(struct mbuf *, struct sockaddr_encap *,
+			     struct tdb *, struct mbuf **);        /* output */
+};
 
-/* Supported encryption algorithms */
-#define ALG_ENC_DES		1
-#define ALG_ENC_3DES		2
-#define ALG_ENC_BLF		3
-#define ALG_ENC_CAST		4
-#define ALG_ENC_SKIPJACK	5
+/* xform IDs */
+#define XF_IP4		1	/* IP inside IP */
+#define XF_OLD_AH	2	/* RFCs 1828 & 1852 */
+#define XF_OLD_ESP	3	/* RFCs 1829 & 1851 */
+#define XF_NEW_AH	4	/* AH HMAC 96bits */
+#define XF_NEW_ESP	5	/* ESP + auth 96bits + replay counter */
 
+/* xform attributes */
 #define XFT_AUTH	0x0001
 #define XFT_CONF	0x0100
 
@@ -160,11 +332,11 @@ struct xformsw
 static __inline u_int64_t
 htonq(u_int64_t q)
 {
-	register u_int32_t u, l;
-	u = q >> 32;
-	l = (u_int32_t) q;
+    register u_int32_t u, l;
+    u = q >> 32;
+    l = (u_int32_t) q;
         
-	return htonl(u) | ((u_int64_t)htonl(l) << 32);
+    return htonl(u) | ((u_int64_t)htonl(l) << 32);
 }
 
 #define ntohq(_x) htonq(_x)
@@ -178,36 +350,41 @@ htonq(u_int64_t q)
 #error  "Please fix <machine/endian.h>"
 #endif                                          
 
-extern unsigned char ipseczeroes[];
-
 /*
  * Names for IPsec sysctl objects
  */
-#define IPSECCTL_ENCAP			0
+#define IPSECCTL_PFKEY  		0
 #define IPSECCTL_MAXID			1
 
 #define CTL_IPSEC_NAMES {\
-	{ "encap", CTLTYPE_NODE }, \
+	{ "pfkey", CTLTYPE_NODE }, \
+}
+
+#define PFKEYCTL_ENCDEBUG	1
+#define PFKEYCTL_MAXID		2
+
+#define PFKEYCTL_NAMES {\
+	{ 0, 0 }, \
+	{ "encdebug", CTLTYPE_INT }, \
 }
 
 #ifdef _KERNEL
 extern int encdebug;
+extern int ipsec_in_use;
+extern u_int8_t hmac_ipad_buffer[64];
+extern u_int8_t hmac_opad_buffer[64];
 
 struct tdb *tdbh[TDB_HASHMOD];
 struct expiration *explist;
 extern struct xformsw xformsw[], *xformswNXFORMSW;
-u_int32_t notify_msgids;
 
 /* Check if a given tdb has encryption, authentication and/or tunneling */
-#define TDB_ATTRIB(x) \
-    (((x)->tdb_confname != NULL ? NOTIFY_SATYPE_CONF : 0)| \
-    ((x)->tdb_authname != NULL ? NOTIFY_SATYPE_AUTH : 0)| \
-    ((x)->tdb_confname != NULL && \
-    ((x)->tdb_flags & TDBF_TUNNELING) ? NOTIFY_SATYPE_TUNNEL : 0))
+#define TDB_ATTRIB(x) (((x)->tdb_encalgxform ? NOTIFY_SATYPE_CONF : 0)| \
+		       ((x)->tdb_authalgxform ? NOTIFY_SATYPE_AUTH : 0))
 
 /* Traverse spi chain and get attributes */
 
-#define SPI_CHAIN_ATTRIB(have, TDB_DIR, TDBP) { \
+#define SPI_CHAIN_ATTRIB(have, TDB_DIR, TDBP) {\
 	struct tdb *tmptdb = (TDBP); \
 	(have) = 0; \
 	\
@@ -219,32 +396,39 @@ u_int32_t notify_msgids;
         } \
 }
 
+/* Misc. */
+extern char *inet_ntoa4(struct in_addr);
+extern char *ipsp_address(union sockaddr_union);
+
 /* TDB management routines */
-extern u_int32_t reserve_spi(u_int32_t, struct in_addr, u_int8_t, int *);
-extern struct tdb *gettdb(u_int32_t, struct in_addr, u_int8_t);
+extern u_int32_t reserve_spi(u_int32_t, u_int32_t, union sockaddr_union *,
+			     union sockaddr_union *, u_int8_t, int *);
+extern struct tdb *gettdb(u_int32_t, union sockaddr_union *, u_int8_t);
 extern void puttdb(struct tdb *);
 extern int tdb_delete(struct tdb *, int);
+extern int tdb_init (struct tdb *, u_int16_t, struct ipsecinit *);
 
 /* Expiration management routines */
 extern struct expiration *get_expiration(void);
 extern void put_expiration(struct expiration *);
 extern void handle_expirations(void *);
-extern void cleanup_expirations(struct in_addr, u_int32_t, u_int8_t);
+extern void cleanup_expirations(union sockaddr_union *, u_int32_t, u_int8_t);
 
 /* Flow management routines */
 extern struct flow *get_flow(void);
 extern void put_flow(struct flow *, struct tdb *);
 extern void delete_flow(struct flow *, struct tdb *);
-extern struct flow *find_flow(struct in_addr, struct in_addr, struct in_addr,
-			      struct in_addr, u_int8_t, u_int16_t, u_int16_t,
-			      struct tdb *);
-extern struct flow *find_global_flow(struct in_addr, struct in_addr,
-				     struct in_addr, struct in_addr, u_int8_t,
-				     u_int16_t, u_int16_t);
+extern struct flow *find_flow(union sockaddr_union *, union sockaddr_union *,
+			      union sockaddr_union *, union sockaddr_union *,
+			      u_int8_t, struct tdb *);
+extern struct flow *find_global_flow(union sockaddr_union *,
+				     union sockaddr_union *,
+				     union sockaddr_union *,
+				     union sockaddr_union *, u_int8_t);
 
 /* XF_IP4 */
 extern int ipe4_attach(void);
-extern int ipe4_init(struct tdb *, struct xformsw *, struct mbuf *);
+extern int ipe4_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int ipe4_zeroize(struct tdb *);
 extern int ipe4_output(struct mbuf *, struct sockaddr_encap *, struct tdb *,
 		       struct mbuf **);
@@ -253,7 +437,7 @@ extern void ip4_input __P((struct mbuf *, ...));
 
 /* XF_OLD_AH */
 extern int ah_old_attach(void);
-extern int ah_old_init(struct tdb *, struct xformsw *, struct mbuf *);
+extern int ah_old_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int ah_old_zeroize(struct tdb *);
 extern int ah_old_output(struct mbuf *, struct sockaddr_encap *, struct tdb *,
 			 struct mbuf **);
@@ -261,7 +445,7 @@ extern struct mbuf *ah_old_input(struct mbuf *, struct tdb *);
 
 /* XF_NEW_AH */
 extern int ah_new_attach(void);
-extern int ah_new_init(struct tdb *, struct xformsw *, struct mbuf *);
+extern int ah_new_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int ah_new_zeroize(struct tdb *);
 extern int ah_new_output(struct mbuf *, struct sockaddr_encap *, struct tdb *,
 			 struct mbuf **);
@@ -269,7 +453,7 @@ extern struct mbuf *ah_new_input(struct mbuf *, struct tdb *);
 
 /* XF_OLD_ESP */
 extern int esp_old_attach(void);
-extern int esp_old_init(struct tdb *, struct xformsw *, struct mbuf *);
+extern int esp_old_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int esp_old_zeroize(struct tdb *);
 extern int esp_old_output(struct mbuf *, struct sockaddr_encap *, struct tdb *,
 			  struct mbuf **);
@@ -277,7 +461,7 @@ extern struct mbuf *esp_old_input(struct mbuf *, struct tdb *);
 
 /* XF_NEW_ESP */
 extern int esp_new_attach(void);
-extern int esp_new_init(struct tdb *, struct xformsw *, struct mbuf *);
+extern int esp_new_init(struct tdb *, struct xformsw *, struct ipsecinit *);
 extern int esp_new_zeroize(struct tdb *);
 extern int esp_new_output(struct mbuf *, struct sockaddr_encap *, struct tdb *,
 			  struct mbuf **);
@@ -288,5 +472,7 @@ extern caddr_t m_pad(struct mbuf *, int, int);
 
 /* Replay window */
 extern int checkreplaywindow32(u_int32_t, u_int32_t, u_int32_t *, u_int32_t,
-			       u_int32_t *);
+                               u_int32_t *);
+
+extern unsigned char ipseczeroes[];
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.27 1999/02/12 00:46:11 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.28 1999/02/24 22:33:03 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -63,11 +63,11 @@
 
 #include <sys/socketvar.h>
 #include <net/raw_cb.h>
-#include <net/encap.h>
 
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_esp.h>
+#include <net/pfkeyv2.h>
 #include <dev/rndvar.h>
 
 #ifdef ENCDEBUG
@@ -80,187 +80,122 @@ extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);
 extern void des_ecb_encrypt(caddr_t, caddr_t, caddr_t, int);
 extern void des_set_key(caddr_t, caddr_t);
 
-extern int encap_sendnotify(int, struct tdb *, void *);
+static void des1_encrypt(struct tdb *, u_int8_t *);
+static void des3_encrypt(struct tdb *, u_int8_t *);
+static void des1_decrypt(struct tdb *, u_int8_t *);
+static void des3_decrypt(struct tdb *, u_int8_t *);
 
-static void des1_encrypt(void *, u_int8_t *);
-static void des3_encrypt(void *, u_int8_t *);
-static void des1_decrypt(void *, u_int8_t *);
-static void des3_decrypt(void *, u_int8_t *);
-
-struct esp_xform esp_old_xform[] = {
-     { ALG_ENC_DES, "Data Encryption Standard (DES)",
+struct enc_xform esp_old_xform[] = {
+     { SADB_EALG_DESCBC, "Data Encryption Standard (DES)",
        ESP_DES_BLKS, ESP_DES_IVS,
-       8, 8, 8 | 4,
+       8, 8, 8,
        des1_encrypt,
        des1_decrypt 
      },
-     { ALG_ENC_3DES, "Triple DES (3DES)",
+     { SADB_EALG_3DESCBC, "Triple DES (3DES)",
        ESP_3DES_BLKS, ESP_3DES_IVS,
-       24, 24, 8 | 4,
+       24, 24, 8,
        des3_encrypt,
        des3_decrypt 
      }
 };
 
 static void
-des1_encrypt(void *pxd, u_int8_t *blk)
+des1_encrypt(struct tdb *tdb, u_int8_t *blk)
 {
-     struct esp_old_xdata *xd = pxd;
-     des_ecb_encrypt(blk, blk, (caddr_t) (xd->edx_eks[0]), 1);
+    des_ecb_encrypt(blk, blk, tdb->tdb_key, 1);
 }
 
 static void
-des1_decrypt(void *pxd, u_int8_t *blk)
+des1_decrypt(struct tdb *tdb, u_int8_t *blk)
 {
-     struct esp_old_xdata *xd = pxd;
-     des_ecb_encrypt(blk, blk, (caddr_t) (xd->edx_eks[0]), 0);
+    des_ecb_encrypt(blk, blk, tdb->tdb_key, 0);
 }
 
 static void
-des3_encrypt(void *pxd, u_int8_t *blk)
+des3_encrypt(struct tdb *tdb, u_int8_t *blk)
 {
-     struct esp_old_xdata *xd = pxd;
-     des_ecb3_encrypt(blk, blk, (caddr_t) (xd->edx_eks[2]),
-		      (caddr_t) (xd->edx_eks[1]),
-		      (caddr_t) (xd->edx_eks[0]), 1);
+    des_ecb3_encrypt(blk, blk, tdb->tdb_key, tdb->tdb_key + 128,
+		     tdb->tdb_key + 256, 1);
 }
 
 static void
-des3_decrypt(void *pxd, u_int8_t *blk)
+des3_decrypt(struct tdb *tdb, u_int8_t *blk)
 {
-     struct esp_old_xdata *xd = pxd;
-     des_ecb3_encrypt(blk, blk, (caddr_t) (xd->edx_eks[2]),
-		      (caddr_t) (xd->edx_eks[1]),
-		      (caddr_t) (xd->edx_eks[0]), 0);
+    des_ecb3_encrypt(blk, blk, tdb->tdb_key + 256, tdb->tdb_key + 128,
+	             tdb->tdb_key, 0);
 }
 
 int
 esp_old_attach()
 {
-    DPRINTF(("esp_old_attach(): setting up\n"));
     return 0;
 }
 
 /*
- * esp_old_init() is called when an SPI is being set up. It interprets the
- * encap_msghdr present in m, and sets up the transformation data, in
- * this case, the encryption and decryption key schedules
+ * esp_old_init() is called when an SPI is being set up.
  */
 
 int
-esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
+esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 {
-    struct esp_old_xdata *xd;
-    struct esp_old_xencap xenc;
-    struct encap_msghdr *em;
-    struct esp_xform *txform;
-    u_int32_t rk[6];
+    struct enc_xform *txform = NULL;
     int i;
 
-    if (m->m_len < ENCAP_MSG_FIXED_LEN)
-    {
-	if ((m = m_pullup(m, ENCAP_MSG_FIXED_LEN)) == NULL)
-	{
-	    DPRINTF(("esp_old_init(): m_pullup failed\n"));
-	    return ENOBUFS;
-	}
-    }
-
-    em = mtod(m, struct encap_msghdr *);
-    if (em->em_msglen - EMT_SETSPI_FLEN <= ESP_OLD_XENCAP_LEN)
-    {
-	DPRINTF(("esp_old_init(): initialization failed\n"));
-	return EINVAL;
-    }
-
-    /* Just copy the standard fields */
-    m_copydata(m, EMT_SETSPI_FLEN, ESP_OLD_XENCAP_LEN, (caddr_t) &xenc);
-
     /* Check whether the encryption algorithm is supported */
-    for (i=sizeof(esp_old_xform)/sizeof(struct esp_xform)-1; i >= 0; i--) 
-	if (xenc.edx_enc_algorithm == esp_old_xform[i].type)
-	      break;
+    for (i = sizeof(esp_old_xform) / sizeof(struct enc_xform) - 1;
+	 i >= 0; i--) 
+      if (ii->ii_encalg == esp_old_xform[i].type)
+	break;
+
     if (i < 0) 
     {
-	DPRINTF(("esp_old_init(): unsupported encryption algorithm %d specified\n", xenc.edx_enc_algorithm));
+	DPRINTF(("esp_old_init(): unsupported encryption algorithm %d specified\n", ii->ii_encalg));
         return EINVAL;
     }
 
     txform = &esp_old_xform[i];
-    DPRINTF(("esp_old_init(): initialized TDB with enc algorithm %d: %s\n",
-	     xenc.edx_enc_algorithm, esp_old_xform[i].name));
 
-    if (xenc.edx_ivlen + xenc.edx_keylen + EMT_SETSPI_FLEN +
-	ESP_OLD_XENCAP_LEN != em->em_msglen)
+    if (ii->ii_enckeylen < txform->minkey)
     {
-	DPRINTF(("esp_old_init(): message length (%d) doesn't match\n",
-		 em->em_msglen));
+	DPRINTF(("esp_old_init(): keylength %d too small (min length is %d) for algorithm %s\n", ii->ii_enckeylen, txform->minkey, txform->name));
+	return EINVAL;
+    }
+    
+    if (ii->ii_enckeylen > txform->maxkey)
+    {
+	DPRINTF(("esp_old_init(): keylength %d too large (max length is %d) for algorithm %s\n", ii->ii_enckeylen, txform->maxkey, txform->name));
 	return EINVAL;
     }
 
-    /* Check the IV length */
-    if (((xenc.edx_ivlen == 0) && !(txform->ivmask&1)) ||
-	((xenc.edx_ivlen != 0) && (
-	     !(xenc.edx_ivlen & txform->ivmask) ||
-	     (xenc.edx_ivlen & (xenc.edx_ivlen-1)))))
-    {
-	DPRINTF(("esp_old_init(): unsupported IV length %d\n",
-		 xenc.edx_ivlen));
-	return EINVAL;
-    }
-
-    /* Check the key length */
-    if (xenc.edx_keylen < txform->minkey || xenc.edx_keylen > txform->maxkey)
-    {
-	DPRINTF(("esp_old_init(): bad key length %d\n", xenc.edx_keylen));
-	return EINVAL;
-    }
-
-    MALLOC(tdbp->tdb_xdata, caddr_t, sizeof(struct esp_old_xdata),
-	   M_XDATA, M_WAITOK);
-    if (tdbp->tdb_xdata == NULL)
-    {
-	DPRINTF(("esp_old_init(): MALLOC() failed\n"));
-      	return ENOBUFS;
-    }
-
-    bzero(tdbp->tdb_xdata, sizeof(struct esp_old_xdata));
-    xd = (struct esp_old_xdata *) tdbp->tdb_xdata;
-
-    /* Pointer to the transform */
     tdbp->tdb_xform = xsp;
+    tdbp->tdb_encalgxform = txform;
 
-    xd->edx_ivlen = xenc.edx_ivlen;
-    xd->edx_xform = txform;
-    xd->edx_enc_algorithm = xenc.edx_enc_algorithm;
+    DPRINTF(("esp_old_init(): initialized TDB with enc algorithm %s\n",
+	     txform->name));
 
-    /* Pass name of enc algorithm for kernfs */
-    tdbp->tdb_confname = xd->edx_xform->name;
+    tdbp->tdb_ivlen = txform->ivmask;
+    if (tdbp->tdb_flags & TDBF_HALFIV)
+      tdbp->tdb_ivlen /= 2;
 
-    /* Copy the IV */
-    m_copydata(m, EMT_SETSPI_FLEN + ESP_OLD_XENCAP_LEN, xd->edx_ivlen,
-	       (caddr_t) xd->edx_iv);
+    get_random_bytes(tdbp->tdb_iv, tdbp->tdb_ivlen);
 
-    /* Copy the key material */
-    m_copydata(m, EMT_SETSPI_FLEN + ESP_OLD_XENCAP_LEN + xd->edx_ivlen,
-	       xenc.edx_keylen, (caddr_t) rk);
-
-    switch (xd->edx_enc_algorithm)
+    switch (ii->ii_encalg)
     {
-	case ALG_ENC_DES:
-	    des_set_key((caddr_t) rk, (caddr_t) (xd->edx_eks[0]));
+	case SADB_EALG_DESCBC:
+	    MALLOC(tdbp->tdb_key, u_int8_t *, 128, M_XDATA, M_WAITOK);
+	    bzero(tdbp->tdb_key, 128);
+	    des_set_key(ii->ii_enckey, tdbp->tdb_key);
 	    break;
 
-	case ALG_ENC_3DES:
-	    des_set_key((caddr_t) rk, (caddr_t) (xd->edx_eks[0]));
-	    des_set_key((caddr_t) (rk + 2), (caddr_t) (xd->edx_eks[1]));
-	    des_set_key((caddr_t) (rk + 4), (caddr_t) (xd->edx_eks[2]));
+	case SADB_EALG_3DESCBC:
+	    MALLOC(tdbp->tdb_key, u_int8_t *, 384, M_XDATA, M_WAITOK);
+	    bzero(tdbp->tdb_key, 384);
+	    des_set_key(ii->ii_enckey, tdbp->tdb_key);
+	    des_set_key(ii->ii_enckey + 8, tdbp->tdb_key + 128);
+	    des_set_key(ii->ii_enckey + 16, tdbp->tdb_key + 256);
 	    break;
     }
-
-    bzero(rk, 6 * sizeof(u_int32_t));		/* paranoid */
-
-    bzero(ipseczeroes, IPSEC_ZEROES_SIZE);	/* paranoid */
 
     return 0;
 }
@@ -269,12 +204,12 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 int
 esp_old_zeroize(struct tdb *tdbp)
 {
-    DPRINTF(("esp_old_zeroize(): freeing memory\n"));
-    if (tdbp->tdb_xdata)
+    if (tdbp->tdb_key)
     {
-       	FREE(tdbp->tdb_xdata, M_XDATA);
-	tdbp->tdb_xdata = NULL;
+	FREE(tdbp->tdb_key, M_XDATA);
+	tdbp->tdb_key = NULL;
     }
+    
     return 0;
 }
 
@@ -284,7 +219,7 @@ esp_old_zeroize(struct tdb *tdbp)
 struct mbuf *
 esp_old_input(struct mbuf *m, struct tdb *tdb)
 {
-    struct esp_old_xdata *xd;
+    struct enc_xform *espx = (struct enc_xform *) tdb->tdb_encalgxform;
     struct ip *ip, ipo;
     u_char iv[ESP_3DES_IVS], niv[ESP_3DES_IVS], blk[ESP_3DES_BLKS], opts[40];
     u_char *idat, *odat, *ivp, *ivn, *lblk;
@@ -292,9 +227,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
     int ohlen, plen, ilen, i, blks, rest;
     struct mbuf *mi, *mo;
 
-    xd = (struct esp_old_xdata *) tdb->tdb_xdata;
-
-    blks = xd->edx_xform->blocksize;
+    blks = espx->blocksize;
 
     if (m->m_len < sizeof(struct ip))
     {
@@ -323,19 +256,44 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
     }
 
     esp = (struct esp_old *) ((u_int8_t *) ip + (ip->ip_hl << 2));
-
     ipo = *ip;
 
     /* Skip the IP header, IP options, SPI and IV */
     plen = m->m_pkthdr.len - (ip->ip_hl << 2) - sizeof(u_int32_t) -
-	   xd->edx_ivlen;
+	   tdb->tdb_ivlen;
     if ((plen & (blks - 1)) || (plen <= 0))
     {
-	DPRINTF(("esp_old_input(): payload not a multiple of %d octets for packet from %x to %x, spi %08x\n", blks, ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi)));
+	DPRINTF(("esp_old_input(): payload not a multiple of %d octets for packet from %s to %s, spi %08x\n", blks, inet_ntoa4(ipo.ip_src), inet_ntoa4(ipo.ip_dst), ntohl(tdb->tdb_spi)));
 	espstat.esps_badilen++;
 	m_freem(m);
 	return NULL;
     }
+
+    /* Update the counters */
+    tdb->tdb_cur_bytes += plen;
+    espstat.esps_ibytes += plen;
+
+    /* Hard expiration */
+    if ((tdb->tdb_flags & TDBF_BYTES) &&
+	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
+      {
+/* XXX
+   encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
+*/
+	  tdb_delete(tdb, 0);
+	  m_freem(m);
+	  return NULL;
+      }
+    
+    /* Notify on expiration */
+    if ((tdb->tdb_flags & TDBF_SOFT_BYTES) &&
+	(tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes))
+      {
+/* XXX
+   encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
+*/
+	  tdb->tdb_flags &= ~TDBF_SOFT_BYTES;     /* Turn off checking */
+      }
 
     ilen = m->m_len - (ip->ip_hl << 2) - sizeof(u_int32_t) - 4;
     idat = mtod(m, unsigned char *) + (ip->ip_hl << 2) + sizeof(u_int32_t) + 4;
@@ -345,7 +303,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
     iv[1] = esp->esp_iv[1];
     iv[2] = esp->esp_iv[2];
     iv[3] = esp->esp_iv[3];
-    if (xd->edx_ivlen == 4)		/* Half-IV */
+    if (tdb->tdb_ivlen == 4)		/* Half-IV */
     {
 	iv[4] = ~esp->esp_iv[0];
 	iv[5] = ~esp->esp_iv[1];
@@ -399,8 +357,8 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 		mi = (mo = mi)->m_next;
 		if (mi == NULL)
 		{
-		    DPRINTF(("esp_old_input(): bad mbuf chain, SA %x/%08x\n",
-			     tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+		    DPRINTF(("esp_old_input(): bad mbuf chain, SA %s/%08x\n",
+			     ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		    m_freem(m);
 		    espstat.esps_hdrops++;
 		    return NULL;
@@ -411,7 +369,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	    {
 		if ((mi = m_pullup(mi, blks - rest)) == NULL)
 		{
-		    DPRINTF(("esp_old_input(): m_pullup() failed, SA %x/%08x\n", tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+		    DPRINTF(("esp_old_input(): m_pullup() failed, SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		    espstat.esps_hdrops++;
 		    return NULL;
 		}
@@ -430,9 +388,9 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 		bcopy(idat, blk + rest, blks - rest);
 		bcopy(blk, ivn, blks);
 		    
-		xd->edx_xform->decrypt(xd, blk);
+		espx->decrypt(tdb, blk);
 
-		for (i=0; i<blks; i++)
+		for (i=0; i < blks; i++)
 		    blk[i] ^= ivp[i];
 
 		ivp = ivn;
@@ -455,7 +413,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	{
 	    bcopy(idat, ivn, blks);
 
-	    xd->edx_xform->decrypt(xd, idat);
+	    espx->decrypt(tdb, idat);
 
 	    for (i = 0; i < blks; i++)
 		idat[i] ^= ivp[i];
@@ -476,7 +434,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	       (caddr_t) opts);
 
     if (lblk != blk)
-	bcopy(lblk, blk, blks);
+      bcopy(lblk, blk, blks);
 
     /*
      * Now, the entire chain has been decrypted. As a side effect,
@@ -487,24 +445,24 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
      * the padding may be random.
      */
     
-    if (blk[blks - 2] + 2 > m->m_pkthdr.len - (ip->ip_hl << 2) - sizeof(u_int32_t) -
-	xd->edx_ivlen)
+    if (blk[blks - 2] + 2 > m->m_pkthdr.len - (ip->ip_hl << 2) -
+	sizeof(u_int32_t) - tdb->tdb_ivlen)
     {
-	DPRINTF(("esp_old_input(): invalid padding length %d for packet from %x to %x, SA %x/%08x\n", blk[blks - 2], ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	DPRINTF(("esp_old_input(): invalid padding length %d for packet from %s to %s, spi %08x\n", blk[blks - 2], inet_ntoa4(ipo.ip_src), inet_ntoa4(ipo.ip_dst), ntohl(tdb->tdb_spi)));
 	espstat.esps_badilen++;
 	m_freem(m);
 	return NULL;
     }
 
     m_adj(m, - blk[blks - 2] - 2);
-    m_adj(m, 4 + xd->edx_ivlen);
+    m_adj(m, sizeof(u_int32_t) + tdb->tdb_ivlen);
 
     if (m->m_len < (ipo.ip_hl << 2))
     {
 	m = m_pullup(m, (ipo.ip_hl << 2));
 	if (m == NULL)
 	{
-	    DPRINTF(("esp_old_input(): m_pullup() failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	    DPRINTF(("esp_old_input(): m_pullup() failed for packet from %s to %s, spi %08x\n", inet_ntoa4(ipo.ip_src), inet_ntoa4(ipo.ip_dst), ntohl(tdb->tdb_spi)));
 	    espstat.esps_hdrops++;
 	    return NULL;
 	}
@@ -514,7 +472,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
     ipo.ip_p = blk[blks - 1];
     ipo.ip_id = htons(ipo.ip_id);
     ipo.ip_off = 0;
-    ipo.ip_len += (ipo.ip_hl << 2) - sizeof(u_int32_t) - xd->edx_ivlen -
+    ipo.ip_len += (ipo.ip_hl << 2) - sizeof(u_int32_t) - tdb->tdb_ivlen -
 		  blk[blks - 2] - 2;
     ipo.ip_len = htons(ipo.ip_len);
     ipo.ip_sum = 0;
@@ -526,46 +484,6 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 
     ip->ip_sum = in_cksum(m, (ip->ip_hl << 2));
 
-    /* Update the counters */
-    tdb->tdb_cur_packets++;
-    tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) +
-			  blk[blks - 2] + 2;
-    espstat.esps_ibytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) +
-			   blk[blks - 2] + 2;
-
-    /* Notify on expiration */
-    if (tdb->tdb_flags & TDBF_SOFT_PACKETS)
-    {
-      if (tdb->tdb_cur_packets >= tdb->tdb_soft_packets)
-      {
-	  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
-	  tdb->tdb_flags &= ~TDBF_SOFT_PACKETS;
-      }
-      else
-	if (tdb->tdb_flags & TDBF_SOFT_BYTES)
-	  if (tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes)
-	  {
-	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
-	      tdb->tdb_flags &= ~TDBF_SOFT_BYTES;
-	  }
-    }
-
-    if (tdb->tdb_flags & TDBF_PACKETS)
-    {
-      if (tdb->tdb_cur_packets >= tdb->tdb_exp_packets)
-      {
-	  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
-	  tdb_delete(tdb, 0);
-      }
-      else
-	if (tdb->tdb_flags & TDBF_BYTES)
-	  if (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)
-	  {
-	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
-	      tdb_delete(tdb, 0);
-	  }
-    }
-    
     return m;
 }
 
@@ -573,7 +491,7 @@ int
 esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	      struct mbuf **mp)
 {
-    struct esp_old_xdata *xd;
+    struct enc_xform *espx = (struct enc_xform *) tdb->tdb_encalgxform;
     struct ip *ip, ipo;
     int i, ilen, ohlen, nh, rlen, plen, padding, rest;
     u_int32_t spi;
@@ -582,17 +500,15 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     u_char iv[ESP_3DES_IVS], blk[ESP_3DES_IVS], opts[40];
     int iphlen, blks;
 
-    xd = (struct esp_old_xdata *) tdb->tdb_xdata;
-
-    blks = xd->edx_xform->blocksize;
+    blks = espx->blocksize;
 
     espstat.esps_output++;
 
     m = m_pullup(m, sizeof(struct ip));
     if (m == NULL)
     {
-        DPRINTF(("esp_old_output(): m_pullup() failed for SA %x/%08x\n",
-		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+        DPRINTF(("esp_old_output(): m_pullup() failed for SA %s/%08x\n",
+		 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	espstat.esps_hdrops++;
         return ENOBUFS;
     }
@@ -609,8 +525,8 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	m = m_pullup(m, iphlen);
 	if (m == NULL)
         {
-	    DPRINTF(("esp_old_output(): m_pullup() failed for SA %x/%08x\n",
-		     tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	    DPRINTF(("esp_old_output(): m_pullup() failed for SA %s/%08x\n",
+		     ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	    espstat.esps_hdrops++;
 	    return ENOBUFS;
 	}
@@ -623,7 +539,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     }
     
     ilen = ntohs(ip->ip_len);
-    ohlen = sizeof(u_int32_t) + xd->edx_ivlen;
+    ohlen = sizeof(u_int32_t) + tdb->tdb_ivlen;
 
     ipo = *ip;
     nh = ipo.ip_p;
@@ -631,19 +547,46 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     /* Raw payload length  */
     rlen = ilen - iphlen;
     padding = ((blks - ((rlen + 2) % blks)) % blks) + 2;
-    if (iphlen + ohlen + rlen + padding > IP_MAXPACKET) {
-	DPRINTF(("esp_old_output(): packet in SA %x/%0x8 got too big\n",
-		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+    if (iphlen + ohlen + rlen + padding > IP_MAXPACKET)
+    {
+	DPRINTF(("esp_old_output(): packet in SA %s/%0x8 got too big\n",
+		 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	m_freem(m);
 	espstat.esps_toobig++;
         return EMSGSIZE;
     }
 
+    /* Update the counters */
+    tdb->tdb_cur_bytes += rlen;
+    espstat.esps_obytes += rlen;
+
+    /* Hard expiration */
+    if ((tdb->tdb_flags & TDBF_BYTES) &&
+	(tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))
+    {
+/* XXX
+   encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
+*/
+	tdb_delete(tdb, 0);
+	m_freem(m);
+	return EINVAL;
+    }
+
+    /* Notify on expiration */
+    if ((tdb->tdb_flags & TDBF_SOFT_BYTES) &&
+	(tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes))
+    {
+/* XXX
+   encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
+*/
+	tdb->tdb_flags &= ~TDBF_SOFT_BYTES;     /* Turn off checking */
+    }
+
     pad = (u_char *) m_pad(m, padding, 1);
     if (pad == NULL)
     {
-	DPRINTF(("esp_old_output(): m_pad() failed for SA %x/%08x\n",
-		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	DPRINTF(("esp_old_output(): m_pad() failed for SA %s/%08x\n",
+		 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
       	return ENOBUFS;
     }
 
@@ -659,24 +602,24 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
      * We are now ready to encrypt the payload. 
      */
 
-    iv[0] = xd->edx_iv[0];
-    iv[1] = xd->edx_iv[1];
-    iv[2] = xd->edx_iv[2];
-    iv[3] = xd->edx_iv[3];
+    iv[0] = tdb->tdb_iv[0];
+    iv[1] = tdb->tdb_iv[1];
+    iv[2] = tdb->tdb_iv[2];
+    iv[3] = tdb->tdb_iv[3];
 
-    if (xd->edx_ivlen == 4)	/* Half-IV */
+    if (tdb->tdb_ivlen == 4)	/* Half-IV */
     {
-	iv[4] = ~xd->edx_iv[0];
-	iv[5] = ~xd->edx_iv[1];
-	iv[6] = ~xd->edx_iv[2];
-	iv[7] = ~xd->edx_iv[3];
+	iv[4] = ~tdb->tdb_iv[0];
+	iv[5] = ~tdb->tdb_iv[1];
+	iv[6] = ~tdb->tdb_iv[2];
+	iv[7] = ~tdb->tdb_iv[3];
     }
     else
     {
-	iv[4] = xd->edx_iv[4];
-	iv[5] = xd->edx_iv[5];
-	iv[6] = xd->edx_iv[6];
-	iv[7] = xd->edx_iv[7];
+	iv[4] = tdb->tdb_iv[4];
+	iv[5] = tdb->tdb_iv[5];
+	iv[6] = tdb->tdb_iv[6];
+	iv[7] = tdb->tdb_iv[7];
     }
 
     ivp = iv;
@@ -701,8 +644,9 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 		mi = (mo = mi)->m_next;
 		if (mi == NULL)
 		{
-		    DPRINTF(("esp_old_output(): bad mbuf chain, SA %x/%08x\n",
-			     tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+		    DPRINTF(("esp_old_output(): bad mbuf chain, SA %s/%08x\n",
+			     ipsp_address(tdb->tdb_dst),
+			     ntohl(tdb->tdb_spi)));
 		    m_freem(m);
 		    return EINVAL;
 		}
@@ -712,7 +656,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	    {
 		if ((mi = m_pullup(mi, blks - rest)) == NULL)
 		{
-		    DPRINTF(("esp_old_output(): m_pullup() failed, SA %x/%08x\n", tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+		    DPRINTF(("esp_old_output(): m_pullup() failed, SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 		    m_freem(m);
 		    espstat.esps_hdrops++;
 		    return ENOBUFS;
@@ -733,7 +677,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 		for (i=0; i<blks; i++)
 		    blk[i] ^= ivp[i];
 
-		xd->edx_xform->encrypt(xd, blk);
+		espx->encrypt(tdb, blk);
 
 		ivp = blk;
 
@@ -753,7 +697,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	    for (i = 0; i < blks; i++)
 		idat[i] ^= ivp[i];
 
-	    xd->edx_xform->encrypt(xd, idat);
+	    espx->encrypt(tdb, idat);
 
 	    ivp = idat;
 	    idat += blks;
@@ -771,16 +715,16 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     M_PREPEND(m, ohlen, M_DONTWAIT);
     if (m == NULL)
     {
-	DPRINTF(("esp_old_output(): M_PREPEND failed, SA %x/%08x\n",
-		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	DPRINTF(("esp_old_output(): M_PREPEND failed, SA %s/%08x\n",
+		 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
         return ENOBUFS;
     }
 
     m = m_pullup(m, iphlen + ohlen);
     if (m == NULL)
     {
-        DPRINTF(("esp_old_output(): m_pullup() failed, SA %x/%08x\n",
-		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+        DPRINTF(("esp_old_output(): m_pullup() failed, SA %s/%08x\n",
+		 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	espstat.esps_hdrops++;
         return ENOBUFS;
     }
@@ -788,21 +732,21 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     ipo.ip_len = htons(iphlen + ohlen + rlen + padding);
     ipo.ip_p = IPPROTO_ESP;
 
-    iv[0] = xd->edx_iv[0];
-    iv[1] = xd->edx_iv[1];
-    iv[2] = xd->edx_iv[2];
-    iv[3] = xd->edx_iv[3];
+    iv[0] = tdb->tdb_iv[0];
+    iv[1] = tdb->tdb_iv[1];
+    iv[2] = tdb->tdb_iv[2];
+    iv[3] = tdb->tdb_iv[3];
 
-    if (xd->edx_ivlen == 8)
+    if (tdb->tdb_ivlen == 8)
     {
-	iv[4] = xd->edx_iv[4];
-	iv[5] = xd->edx_iv[5];
-	iv[6] = xd->edx_iv[6];
-	iv[7] = xd->edx_iv[7];
+	iv[4] = tdb->tdb_iv[4];
+	iv[5] = tdb->tdb_iv[5];
+	iv[6] = tdb->tdb_iv[6];
+	iv[7] = tdb->tdb_iv[7];
     }
 
     /* Save the last encrypted block, to be used as the next IV */
-    bcopy(ivp, xd->edx_iv, xd->edx_ivlen);
+    bcopy(ivp, tdb->tdb_iv, tdb->tdb_ivlen);
 
     m_copyback(m, 0, sizeof(struct ip), (caddr_t) &ipo);
 
@@ -812,47 +756,9 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 		 (caddr_t) opts);
 
     m_copyback(m, iphlen, sizeof(u_int32_t), (caddr_t) &spi);
-    m_copyback(m, iphlen + sizeof(u_int32_t), xd->edx_ivlen, (caddr_t) iv);
+    m_copyback(m, iphlen + sizeof(u_int32_t), tdb->tdb_ivlen, (caddr_t) iv);
 	
     *mp = m;
-
-    /* Update the counters */
-    tdb->tdb_cur_packets++;
-    tdb->tdb_cur_bytes += rlen + padding;
-    espstat.esps_obytes += rlen + padding;
-
-    /* Notify on expiration */
-    if (tdb->tdb_flags & TDBF_SOFT_PACKETS)
-    {
-      if (tdb->tdb_cur_packets >= tdb->tdb_soft_packets)
-      {
-	  encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
-	  tdb->tdb_flags &= ~TDBF_SOFT_PACKETS;
-      }
-      else
-	if (tdb->tdb_flags & TDBF_SOFT_BYTES)
-	  if (tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes)
-	  {
-	      encap_sendnotify(NOTIFY_SOFT_EXPIRE, tdb, NULL);
-	      tdb->tdb_flags &= ~TDBF_SOFT_BYTES;
-	  }
-    }
-
-    if (tdb->tdb_flags & TDBF_PACKETS)
-    {
-      if (tdb->tdb_cur_packets >= tdb->tdb_exp_packets)
-      {
-	  encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
-	  tdb_delete(tdb, 0);
-      }
-      else
-	if (tdb->tdb_flags & TDBF_BYTES)
-	  if (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)
-	  {
-	      encap_sendnotify(NOTIFY_HARD_EXPIRE, tdb, NULL);
-	      tdb_delete(tdb, 0);
-	  }
-    }
 
     return 0;
 }	

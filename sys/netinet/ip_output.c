@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.39 1999/01/11 00:42:53 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.40 1999/02/24 22:33:07 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -64,11 +64,15 @@
 #include <machine/stdarg.h>
 
 #ifdef IPSEC
-#include <net/encap.h>
 #include <netinet/ip_ipsp.h>
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
-#include <sys/syslog.h>
+
+#ifdef ENCDEBUG
+#define DPRINTF(x)	if (encdebug) printf x
+#else
+#define DPRINTF(x)
+#endif
 
 extern u_int8_t get_sa_require  __P((struct inpcb *));
 
@@ -117,6 +121,7 @@ ip_output(m0, va_alist)
 	struct ip_moptions *imo;
 	va_list ap;
 #ifdef IPSEC
+	union sockaddr_union sunion;
 	struct mbuf *mp;
 	struct udphdr *udp;
 	struct tcphdr *tcp;
@@ -163,7 +168,8 @@ ip_output(m0, va_alist)
 	/*
 	 * Check if the packet needs encapsulation
 	 */
-	if (!(flags & IP_ENCAPSULATED) && 
+	if ((ipsec_in_use != 0) &&
+	    !(flags & IP_ENCAPSULATED) && 
 	    (inp == NULL || 
 	     (inp->inp_seclevel[SL_AUTH] != IPSEC_LEVEL_BYPASS ||
 	      inp->inp_seclevel[SL_ESP_TRANS] != IPSEC_LEVEL_BYPASS ||
@@ -180,7 +186,7 @@ ip_output(m0, va_alist)
 
 		bzero((caddr_t) re, sizeof(*re));
 		ddst = (struct sockaddr_encap *) &re->re_dst;
-		ddst->sen_family = AF_ENCAP;
+		ddst->sen_family = PF_KEY;
 		ddst->sen_len = SENT_IP4_LEN;
 		ddst->sen_type = SENT_IP4;
 		ddst->sen_ip_src = ip->ip_src;
@@ -234,10 +240,8 @@ ip_output(m0, va_alist)
 			goto no_encap;
 
 		if (gw == NULL || gw->sen_type != SENT_IPSP) {
-#ifdef ENCDEBUG
-			if (encdebug)
-				printf("ip_output(): no gw or gw data not IPSP\n");
-#endif /* ENCDEBUG */
+		        DPRINTF(("ip_output(): no gw or gw data not IPSP\n"));
+
 			if (re->re_rt)
 				RTFREE(re->re_rt);
 			error = EHOSTUNREACH;
@@ -250,17 +254,11 @@ ip_output(m0, va_alist)
 		 * indicate the need for an SA when none is established.
 		 */
 		if (ntohl(gw->sen_ipsp_spi) == 0x1) {
-			struct tdb tmptdb;
-
 			sa_require = NOTIFY_SATYPE_AUTH | NOTIFY_SATYPE_TUNNEL;
 			if (gw->sen_ipsp_sproto == IPPROTO_ESP)
 			    sa_require |= NOTIFY_SATYPE_CONF;
 
-			tmptdb.tdb_dst.s_addr = gw->sen_ipsp_dst.s_addr;
-			tmptdb.tdb_satype = sa_require;
-			       
-			/* Request SA with key management */
-			encap_sendnotify(NOTIFY_REQUEST_SA, &tmptdb, NULL);
+			/* XXX PF_KEYv2 notification message */
 			
 			/* 
 			 * When sa_require is set, the packet will be dropped
@@ -280,8 +278,12 @@ ip_output(m0, va_alist)
 		 * and then pass it, along with the packet and the gw,
 		 * to the appropriate transformation.
 		 */
-		tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, gw->sen_ipsp_dst,
-		    gw->sen_ipsp_sproto);
+		bzero(&sunion, sizeof(sunion));
+		sunion.sin.sin_family = AF_INET;
+		sunion.sin.sin_len = sizeof(struct sockaddr_in);
+		sunion.sin.sin_addr = gw->sen_ipsp_dst;
+		tdb = (struct tdb *) gettdb(gw->sen_ipsp_spi, &sunion,
+					    gw->sen_ipsp_sproto);
 
 		/*
 		 * Now we check if this tdb has all the transforms which
@@ -293,10 +295,8 @@ ip_output(m0, va_alist)
 			goto no_encap;
 
 		if (tdb == NULL) {
-#ifdef ENCDEBUG
-			if (encdebug)
-				printf("ip_output(): non-existant TDB for SA %08x/%x/%d\n", ntohl(gw->sen_ipsp_spi), gw->sen_ipsp_dst, gw->sen_ipsp_sproto);
-#endif
+		        DPRINTF(("ip_output(): non-existant TDB for SA %s/%08x/%u\n", inet_ntoa4(gw->sen_ipsp_dst), ntohl(gw->sen_ipsp_spi), gw->sen_ipsp_sproto));
+
 			if (re->re_rt)
                         	RTFREE(re->re_rt);
 			error = EHOSTUNREACH;
@@ -306,8 +306,9 @@ ip_output(m0, va_alist)
 
 		/* Fix the ip_src field if necessary */
 		if (ip->ip_src.s_addr == INADDR_ANY) {
-		    if (tdb && tdb->tdb_src.s_addr != 0)   /* Provided */
-			ip->ip_src = tdb->tdb_src;
+		    if (tdb && tdb->tdb_src.sin.sin_addr.s_addr != 0 &&
+			tdb->tdb_src.sa.sa_family == AF_INET)
+		      ip->ip_src = tdb->tdb_src.sin.sin_addr;
 		    else
 		    {
 			if (ro == 0) {
@@ -349,63 +350,39 @@ ip_output(m0, va_alist)
 		    }
 		}
 
-#ifdef ENCDEBUG
-		if (encdebug) {
-			printf("ip_output(): tdb=%08x, tdb->tdb_xform=0x%x,",
-			    tdb, tdb->tdb_xform);
-			printf(" tdb->tdb_xform->xf_output=%x, sproto=%x\n",
-			    tdb->tdb_xform->xf_output, tdb->tdb_sproto);
-		}
-#endif /* ENCDEBUG */
-
 		while (tdb && tdb->tdb_xform) {
 			/* Check if the SPI is invalid */
 			if (tdb->tdb_flags & TDBF_INVALID) {
-			 	if (encdebug)
-				  log(LOG_ALERT, "ip_output(): attempt to use invalid SA %08x/%x/%x\n", ntohl(tdb->tdb_spi), tdb->tdb_dst,
-				    tdb->tdb_sproto);
+			        DPRINTF(("ip_output(): attempt to use invalid SA %s/%08x/%u\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi), tdb->tdb_sproto));
 				m_freem(m);
 				RTFREE(re->re_rt);
 				return ENXIO;
 			}
 
-#ifdef ENCDEBUG
-			if (encdebug)
-				printf("ip_output(): calling %s\n",
-				       tdb->tdb_xform->xf_name);
-#endif /* ENCDEBUG */
+			DPRINTF(("ip_output(): calling %s\n",
+				tdb->tdb_xform->xf_name));
 
 			/* Register first use, setup expiration timer */
 			if (tdb->tdb_first_use == 0) {
-			    tdb->tdb_first_use = time.tv_sec;
-
-				if (tdb->tdb_flags & TDBF_FIRSTUSE) {
-					exp = get_expiration();
-					if (exp == NULL)
-						goto expbail;
-					exp->exp_dst.s_addr =
-					    tdb->tdb_dst.s_addr;
-					exp->exp_spi = tdb->tdb_spi;
-					exp->exp_sproto = tdb->tdb_sproto;
-					exp->exp_timeout = tdb->tdb_first_use +
-					    tdb->tdb_exp_first_use;
-					put_expiration(exp);
+			        tdb->tdb_first_use = time.tv_sec;
+			    
+ 			        if (tdb->tdb_flags & TDBF_FIRSTUSE) {
+				    exp = get_expiration();
+				    bcopy(&tdb->tdb_dst, &exp->exp_dst,
+					  SA_LEN(&tdb->tdb_dst.sa));
+				    exp->exp_spi = tdb->tdb_spi;
+				    exp->exp_sproto = tdb->tdb_sproto;
+				    exp->exp_timeout = tdb->tdb_first_use +
+						   tdb->tdb_exp_first_use;
+				    put_expiration(exp);
 				}
 
 				if ((tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) &&
 				    (tdb->tdb_soft_first_use <=
 				    tdb->tdb_exp_first_use)) {
 					exp = get_expiration();
-					if (exp == NULL) {
-expbail:
-						if (encdebug)
-						  log(LOG_WARNING, "ip_output(): no memory for exp timer\n");
-						m_freem(m);
-						RTFREE(re->re_rt);
-						return ENOBUFS;
-					}
-					exp->exp_dst.s_addr =
-					    tdb->tdb_dst.s_addr;
+					bcopy(&tdb->tdb_dst, &exp->exp_dst,
+					      SA_LEN(&tdb->tdb_dst.sa));
 					exp->exp_spi = tdb->tdb_spi;
 					exp->exp_sproto = tdb->tdb_sproto;
 					exp->exp_timeout = tdb->tdb_first_use +
@@ -415,12 +392,12 @@ expbail:
 			}
 
 			/* Check for tunneling */
-			if ((tdb->tdb_flags & TDBF_TUNNELING) &&
-			    (tdb->tdb_xform->xf_type != XF_IP4)){
-#ifdef ENCDEBUG
-				if (encdebug)
-					printf("ip_output(): tunneling\n");
-#endif /* ENCDEBUG */
+			if (((tdb->tdb_dst.sin.sin_addr.s_addr !=
+			      ip->ip_dst.s_addr) ||
+			     (tdb->tdb_flags & TDBF_TUNNELING)) &&
+			     (tdb->tdb_xform->xf_type != XF_IP4))
+			{
+			        DPRINTF(("ip_output(): tunneling\n"));
 
 				/*
 				 * Fix checksum here, AH and ESP fix the

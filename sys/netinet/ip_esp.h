@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.20 1999/02/17 20:39:17 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.21 1999/02/24 22:33:01 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -38,181 +38,44 @@
  * Per RFC1827 (Atkinson, 1995)
  */
 
-#ifndef _MD5_H_
-#include <sys/md5k.h>
-#endif
-
-#include <netinet/ip_sha1.h>
-#include <netinet/ip_rmd160.h>
-#include <netinet/ip_blf.h>
-#include <netinet/ip_cast.h>
-#include <netinet/ip_skipjack.h>
-
-/* IV lengths */
-#define ESP_DES_IVS		8
-#define ESP_3DES_IVS		8
-#define ESP_BLF_IVS             8
-#define ESP_CAST_IVS            8
-#define ESP_SKIPJACK_IVS	8
-
-#define ESP_MAX_IVS		ESP_3DES_IVS
-
-/* Block sizes -- it is assumed that they're powers of 2 */
-#define ESP_DES_BLKS		8
-#define ESP_3DES_BLKS		8
-#define ESP_BLF_BLKS            8
-#define ESP_CAST_BLKS           8
-#define ESP_SKIPJACK_BLKS	8
-
-#define ESP_MAX_BLKS            ESP_3DES_BLKS
-
 /* Various defines for the "new" ESP */
 #define ESP_NEW_ALEN		12	/* 96bits authenticator */
-#define ESP_NEW_IPAD_VAL	0x36
-#define	ESP_NEW_OPAD_VAL	0x5C
 
-struct esp_hash {
-	int		type;
-	char		*name;
-	u_int16_t	hashsize; 
-	u_int16_t	ctxsize;
-	void		(*Init) __P((void *));
-	void		(*Update) __P((void *, u_int8_t *, u_int16_t));
-	void		(*Final) __P((u_int8_t *, void *));
+struct esp_old
+{
+    u_int32_t	esp_spi;	/* Security Parameters Index */
+    u_int8_t	esp_iv[8];	/* iv[4] may actually be data! */
 };
 
-struct esp_xform {
-	int		type;
-	char		*name;
-	u_int16_t	blocksize, ivsize;
-	u_int16_t	minkey, maxkey;
-	u_int32_t	ivmask;           /* Or all possible modes, zero iv = 1 */ 
-	void		(*encrypt) __P((void *, u_int8_t *));
-	void		(*decrypt) __P((void *, u_int8_t *));
+#define ESP_OLD_FLENGTH    12
+#define ESP_NEW_FLENGTH    16
+
+struct esp_new
+{
+    u_int32_t   esp_spi;        /* Security Parameter Index */
+    u_int32_t   esp_rpl;        /* Sequence Number, Replay Counter */
+    u_int8_t    esp_iv[8];      /* Data may start already at iv[0]! */
 };
 
-struct esp_old {
-	u_int32_t	esp_spi;	/* Security Parameters Index */
-	u_int8_t	esp_iv[8];	/* iv[4] may actually be data! */
+struct espstat
+{
+    u_int32_t	esps_hdrops;	/* packet shorter than header shows */
+    u_int32_t	esps_notdb;
+    u_int32_t	esps_badkcr;
+    u_int32_t	esps_qfull;
+    u_int32_t	esps_noxform;
+    u_int32_t	esps_badilen;
+    u_int32_t   esps_wrap;	/* Replay counter wrapped around */
+    u_int32_t	esps_badauth;	/* Only valid for transforms with auth */
+    u_int32_t   esps_replay;	/* Possible packet replay detected */
+    u_int32_t	esps_input;	/* Input ESP packets */
+    u_int32_t 	esps_output;	/* Output ESP packets */
+    u_int32_t	esps_invalid;   /* Trying to use an invalid TDB */
+    u_int64_t	esps_ibytes;	/* input bytes */
+    u_int64_t   esps_obytes;	/* output bytes */
+    u_int32_t	esps_toobig;	/* packet got larger than IP_MAXPACKET */
 };
-
-struct esp_new {
-	u_int32_t	esp_spi;        /* Security Parameter Index */
-	u_int32_t	esp_rpl;        /* Sequence Number, Replay Counter */
-	u_int8_t	esp_iv[8];      /* Data may start already at iv[0]! */
-};
-
-struct espstat {
-	u_int32_t	esps_hdrops;	/* packet shorter than header shows */
-	u_int32_t	esps_notdb;
-	u_int32_t	esps_badkcr;
-	u_int32_t	esps_qfull;
-	u_int32_t	esps_noxform;
-	u_int32_t	esps_badilen;
-	u_int32_t	esps_wrap;	/* Replay counter wrapped around */
-	u_int32_t	esps_badauth;	/* Only valid for transforms with auth */
-	u_int32_t	esps_replay;	/* Possible packet replay detected */
-	u_int32_t	esps_input;	/* Input ESP packets */
-	u_int32_t 	esps_output;	/* Output ESP packets */
-	u_int32_t	esps_invalid;   /* Trying to use an invalid TDB */
-	u_int64_t	esps_ibytes;	/* input bytes */
-	u_int64_t	esps_obytes;	/* output bytes */
-	u_int32_t	esps_toobig;	/* packet got larger than IP_MAXPACKET */
-};
-
-struct esp_old_xdata {
-	u_int32_t	edx_enc_algorithm;
-	int32_t		edx_ivlen;      /* 4 or 8 */
-	struct esp_xform *edx_xform;
-	union {
-		u_int8_t  Iv[ESP_3DES_IVS]; /* that's enough space */
-		u_int32_t Ivl;      	/* make sure this is 4 bytes */
-		u_int64_t Ivq; 		/* make sure this is 8 bytes! */
-	} Iu;
-#define edx_iv  Iu.Iv
-#define edx_ivl Iu.Ivl
-#define edx_ivq Iu.Ivq
-	union {
-		u_int8_t  Rk[3][8];
-		u_int32_t Eks[3][16][2];
-	} Xu;
-#define edx_rk  Xu.Rk
-#define edx_eks Xu.Eks
-};
-
-struct esp_old_xencap {
-	u_int32_t	edx_enc_algorithm;
-	u_int32_t	edx_ivlen;
-	u_int32_t	edx_keylen;
-	u_int8_t	edx_data[1];	/* IV + key material */
-};
-
-#define ESP_OLD_XENCAP_LEN	(3 * sizeof(u_int32_t))
-
-struct esp_new_xencap {
-	u_int32_t	edx_enc_algorithm;
-	u_int32_t	edx_hash_algorithm;
-	u_int32_t	edx_ivlen;	/* 0 or 8 */
-	u_int16_t	edx_confkeylen;
-	u_int16_t	edx_authkeylen;
-	int32_t		edx_wnd;
-	u_int32_t	edx_flags;
-	u_int8_t	edx_data[1];	/* IV + key material */
-};
-
-#define ESP_NEW_XENCAP_LEN	(6 * sizeof(u_int32_t))
-
-#define ESP_NEW_FLAG_AUTH	0x00000001	/* Doing authentication too */
-#define ESP_NEW_FLAG_NPADDING	0x00000002	/* New style padding */
-
-struct esp_new_xdata {
-	u_int32_t   edx_enc_algorithm;
-	u_int32_t   edx_hash_algorithm;
-	u_int32_t   edx_ivlen;      /* 0 or 8 */
-	u_int32_t   edx_rpl;	/* Replay counter */
-	int32_t     edx_wnd;		/* Replay window */
-	u_int32_t   edx_bitmap;
-	u_int32_t   edx_flags;
-	u_int32_t   edx_initial;	/* initial replay value */
-	struct esp_hash *edx_hash;
-	struct esp_xform *edx_xform;
-	union {
-		u_int8_t  Iv[ESP_MAX_IVS]; /* that's enough space */
-		u_int32_t Ivl;      	/* make sure this is 4 bytes */
-		u_int64_t Ivq; 		/* make sure this is 8 bytes! */
-	    } Iu;
-	union {
-		u_int8_t  Rk[3][8];
-		u_int32_t Eks[3][16][2];
-		blf_ctx   Bks;
-		cast_key  Cks;
-		u_int8_t  *Sks[10];
-	} Xu;
-	union {
-		MD5_CTX    edx_MD5_ictx;
-		SHA1_CTX   edx_SHA1_ictx;
-	        RMD160_CTX edx_RMD160_ictx;
-	} edx_ictx;
-	union {
-	    	MD5_CTX	   edx_MD5_octx;
-		SHA1_CTX   edx_SHA1_octx;
-	        RMD160_CTX edx_RMD160_octx;
-	} edx_octx;
-};
-
-#define edx_bks         Xu.Bks
-#define edx_cks         Xu.Cks
-#define edx_sks         Xu.Sks
-#define edx_md5_ictx	edx_ictx.edx_MD5_ictx
-#define edx_md5_octx	edx_octx.edx_MD5_octx
-#define edx_sha1_ictx	edx_ictx.edx_SHA1_ictx
-#define edx_sha1_octx	edx_octx.edx_SHA1_octx
-#define edx_rmd160_ictx	edx_ictx.edx_RMD160_ictx
-#define edx_rmd160_octx	edx_octx.edx_RMD160_octx
-
-#define ESP_OLD_FLENGTH		12
-#define ESP_NEW_FLENGTH         16
 
 #ifdef _KERNEL
 struct espstat espstat;
-#endif
+#endif /* _Kernel */

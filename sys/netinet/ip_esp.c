@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.16 1998/06/10 23:57:14 provos Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.17 1999/02/24 22:33:01 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -65,16 +65,22 @@
 
 #include <sys/socketvar.h>
 #include <net/raw_cb.h>
-#include <net/encap.h>
 
 #include <netinet/ip_icmp.h>
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_esp.h>
-#include <sys/syslog.h>
 
 #include "bpfilter.h"
 
-void	esp_input __P((struct mbuf *, int));
+extern struct ifnet enc_softc;
+
+#ifdef ENCDEBUG
+#define DPRINTF(x)	if (encdebug) printf x
+#else
+#define DPRINTF(x)
+#endif
+
+void esp_input __P((struct mbuf *, int));
 
 /*
  * esp_input gets called when we receive an packet with an ESP.
@@ -83,6 +89,7 @@ void	esp_input __P((struct mbuf *, int));
 void
 esp_input(register struct mbuf *m, int iphlen)
 {
+    union sockaddr_union sunion;
     struct ifqueue *ifq = NULL;
     struct expiration *exp;
     struct ip *ipo, ipn;
@@ -101,10 +108,6 @@ esp_input(register struct mbuf *m, int iphlen)
     {
 	if ((m = m_pullup(m, iphlen + sizeof(u_int32_t))) == 0)
 	{
-#ifdef ENCDEBUG
-            if (encdebug)
-              printf("esp_input(): (possibly too short) packet from %x to %x dropped\n", ipo->ip_src, ipo->ip_dst);
-#endif /* ENCDEBUG */
 	    espstat.esps_hdrops++;
 	    return;
 	}
@@ -120,11 +123,14 @@ esp_input(register struct mbuf *m, int iphlen)
      * IP packet ready to go through input processing.
      */
 
-    tdbp = gettdb(spi, ipo->ip_dst, IPPROTO_ESP);
+    bzero(&sunion, sizeof(sunion));
+    sunion.sin.sin_family = AF_INET;
+    sunion.sin.sin_len = sizeof(struct sockaddr_in);
+    sunion.sin.sin_addr = ipo->ip_dst;
+    tdbp = gettdb(spi, &sunion, IPPROTO_ESP);
     if (tdbp == NULL)
     {
-	if (encdebug)
-	  log(LOG_ERR, "esp_input(): could not find SA for ESP packet from %x to %x, spi %08x\n", ipo->ip_src, ipo->ip_dst, ntohl(spi));
+	DPRINTF(("esp_input(): could not find SA for packet from %s to %s, spi %08x\n", inet_ntoa4(ipo->ip_src), ipsp_address(sunion), ntohl(spi)));
 	m_freem(m);
 	espstat.esps_notdb++;
 	return;
@@ -132,8 +138,7 @@ esp_input(register struct mbuf *m, int iphlen)
 	
     if (tdbp->tdb_flags & TDBF_INVALID)
     {
-	if (encdebug)
-          log(LOG_ALERT, "esp_input(): attempted to use invalid ESP SA %08x, packet %x->%x\n", ntohl(spi), ipo->ip_src, ipo->ip_dst);
+	DPRINTF(("esp_input(): attempted to use invalid SA %08x, packet from %s to %s\n", ntohl(spi), inet_ntoa4(ipo->ip_src), ipsp_address(sunion)));
 	m_freem(m);
 	espstat.esps_invalid++;
 	return;
@@ -141,8 +146,7 @@ esp_input(register struct mbuf *m, int iphlen)
 
     if (tdbp->tdb_xform == NULL)
     {
-	if (encdebug)
-          log(LOG_ALERT, "esp_input(): attempted to use uninitialized ESP SA %08x, packet from %x to %x\n", ntohl(spi), ipo->ip_src, ipo->ip_dst);
+	DPRINTF(("esp_input(): attempted to use uninitialized SA %08x, packet from %s to %s\n", ntohl(spi), inet_ntoa4(ipo->ip_src), ipsp_address(sunion)));
 	m_freem(m);
 	espstat.esps_noxform++;
 	return;
@@ -158,21 +162,10 @@ esp_input(register struct mbuf *m, int iphlen)
 	if (tdbp->tdb_flags & TDBF_FIRSTUSE)
 	{
 	    exp = get_expiration();
-	    if (exp == (struct expiration *) NULL)
-	    {
-		if (encdebug)
-		  log(LOG_WARNING,
-		      "esp_input(): out of memory for expiration timer\n");
-		espstat.esps_hdrops++;
-		m_freem(m);
-		return;
-	    }
-
-	    exp->exp_dst.s_addr = tdbp->tdb_dst.s_addr;
+	    bcopy(&tdbp->tdb_dst, &exp->exp_dst, SA_LEN(&tdbp->tdb_dst.sa));
 	    exp->exp_spi = tdbp->tdb_spi;
 	    exp->exp_sproto = tdbp->tdb_sproto;
 	    exp->exp_timeout = tdbp->tdb_first_use + tdbp->tdb_exp_first_use;
-
 	    put_expiration(exp);
 	}
 
@@ -180,21 +173,10 @@ esp_input(register struct mbuf *m, int iphlen)
 	    (tdbp->tdb_soft_first_use <= tdbp->tdb_exp_first_use))
 	{
 	    exp = get_expiration();
-	    if (exp == (struct expiration *) NULL)
-	    {
-		if (encdebug)
-		  log(LOG_WARNING,
-		      "esp_input(): out of memory for expiration timer\n");
-		espstat.esps_hdrops++;
-		m_freem(m);
-		return;
-	    }
-
-	    exp->exp_dst.s_addr = tdbp->tdb_dst.s_addr;
+	    bcopy(&tdbp->tdb_dst, &exp->exp_dst, SA_LEN(&tdbp->tdb_dst.sa));
 	    exp->exp_spi = tdbp->tdb_spi;
 	    exp->exp_sproto = tdbp->tdb_sproto;
 	    exp->exp_timeout = tdbp->tdb_first_use + tdbp->tdb_soft_first_use;
-
 	    put_expiration(exp);
 	}
     }
@@ -205,8 +187,7 @@ esp_input(register struct mbuf *m, int iphlen)
 
     if (m == NULL)
     {
-	if (encdebug)
-	  log(LOG_ALERT, "esp_input(): processing failed for ESP packet from %x to %x, spi %08x\n", ipn.ip_src, ipn.ip_dst, ntohl(spi));
+	DPRINTF(("esp_input(): processing failed for ESP packet from %s to %s, spi %08x\n", inet_ntoa4(ipn.ip_src), ipsp_address(sunion), ntohl(spi)));
 	espstat.esps_badkcr++;
 	return;
     }
@@ -217,30 +198,25 @@ esp_input(register struct mbuf *m, int iphlen)
 	/* ipn will now contain the inner IP header */
 	m_copydata(m, ipo->ip_hl << 2, sizeof(struct ip), (caddr_t) &ipn);
 	
-	/* Encapsulating SPI */
-	if (tdbp->tdb_osrc.s_addr && tdbp->tdb_odst.s_addr)
-	{
-	    if (tdbp->tdb_flags & TDBF_UNIQUE)
-		if ((ipn.ip_src.s_addr != ipo->ip_src.s_addr) ||
-		    (ipn.ip_dst.s_addr != ipo->ip_dst.s_addr))
-		{
-		    if (encdebug)
-			log(LOG_ALERT, "esp_input(): ESP-tunnel with different internal addresses %x/%x, SA %08x/%x\n", ipo->ip_src, ipo->ip_dst, tdbp->tdb_spi, tdbp->tdb_dst);
-		    m_freem(m);
-		    espstat.esps_hdrops++;
-		    return;
-		}
+	if (tdbp->tdb_flags & TDBF_UNIQUE)
+	  if ((ipn.ip_src.s_addr != ipo->ip_src.s_addr) ||
+	      (ipn.ip_dst.s_addr != ipo->ip_dst.s_addr))
+	  {
+	      DPRINTF(("esp_input(): ESP-tunnel with different internal addresses %s->%s (%s->%s), SA %s/%08x\n", inet_ntoa4(ipo->ip_src), inet_ntoa4(ipo->ip_dst), inet_ntoa4(ipn.ip_src), ipsp_address(sunion), ipsp_address(tdbp->tdb_dst), ntohl(tdbp->tdb_spi)));
+	      m_freem(m);
+	      espstat.esps_hdrops++;
+	      return;
+	  }
 
-	    /* 
-	     * XXX Here we should be checking that the inner IP addresses
-	     * XXX are acceptable/authorized.
-	     */
-	}
-	else				/* So we're paranoid */
+	/*
+	 * Check that the inner source address is the same as
+	 * the proxy address, if available.
+	 */
+	if ((tdbp->tdb_proxy.sin.sin_addr.s_addr != INADDR_ANY) &&
+	    (ipn.ip_src.s_addr != tdbp->tdb_proxy.sin.sin_addr.s_addr))
 	{
-	    if (encdebug)
-		log(LOG_ALERT, "esp_input(): ESP-tunnel used when expecting ESP-transport, SA %08x/%x\n", tdbp->tdb_spi, tdbp->tdb_dst);
-	    m_freem(m);
+	    DPRINTF(("esp_input(): inner source address %s doesn't correspond to expected proxy source %s, SA %s/%08x\n", inet_ntoa4(ipo->ip_src), inet_ntoa4(tdbp->tdb_proxy.sin.sin_addr), inet_ntoa4(tdbp->tdb_dst.sin.sin_addr), ntohl(tdbp->tdb_spi)));
+	    m_free(m);
 	    espstat.esps_hdrops++;
 	    return;
 	}
@@ -250,15 +226,14 @@ esp_input(register struct mbuf *m, int iphlen)
      * Check that the source address is an expected one, if we know what
      * it's supposed to be. This avoids source address spoofing.
      */
-    if (tdbp->tdb_src.s_addr != INADDR_ANY)
-	if (ipo->ip_src.s_addr != tdbp->tdb_src.s_addr)
-	{
-	    if (encdebug)
-		log(LOG_ALERT, "esp_input(): source address %x doesn't correspond to expected source %x, SA %08x/%x\n", ipo->ip_src, tdbp->tdb_src, tdbp->tdb_dst, tdbp->tdb_spi);
-	    m_free(m);
-	    espstat.esps_hdrops++;
-	    return;
-	}
+    if ((tdbp->tdb_src.sin.sin_addr.s_addr != INADDR_ANY) &&
+	(ipo->ip_src.s_addr != tdbp->tdb_src.sin.sin_addr.s_addr))
+    {
+	DPRINTF(("esp_input(): source address %s doesn't correspond to expected source %s, SA %s/%08x\n", inet_ntoa4(ipo->ip_src), ipsp_address(tdbp->tdb_src), ipsp_address(tdbp->tdb_dst), ntohl(tdbp->tdb_spi)));
+	m_free(m);
+	espstat.esps_hdrops++;
+	return;
+    }
 
     /* Packet is confidental */
     m->m_flags |= M_CONF;
@@ -278,7 +253,7 @@ esp_input(register struct mbuf *m, int iphlen)
 
 	hdr.af = AF_INET;
 	hdr.spi = tdbp->tdb_spi;
-	hdr.flags = m->m_flags & (M_AUTH|M_CONF|M_TUNNEL);
+	hdr.flags = m->m_flags & (M_AUTH|M_CONF);
 
         m0.m_next = m;
         m0.m_len = ENC_HDRLEN;
@@ -302,10 +277,7 @@ esp_input(register struct mbuf *m, int iphlen)
 	m_freem(m);
 	espstat.esps_qfull++;
 	splx(s);
-#ifdef ENCDEBUG
-        if (encdebug)
-          printf("esp_input(): dropped packet because of full IP queue\n");
-#endif /* ENCDEBUG */
+	DPRINTF(("esp_input(): dropped packet because of full IP queue\n"));
 	return;
     }
 

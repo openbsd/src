@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.10 1999/01/08 01:00:34 deraadt Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.11 1999/02/24 22:32:58 angelos Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -111,7 +111,6 @@ void	iplinit __P((void));
 #endif /* INET6 */
 
 #ifdef IPSEC
-#include <net/encap.h>
 #include <netinet/ip_ipsp.h>
 
 extern void ah_input __P((struct mbuf *, ...));

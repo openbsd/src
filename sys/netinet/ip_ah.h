@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.h,v 1.13 1998/11/25 02:01:28 niklas Exp $	*/
+/*	$OpenBSD: ip_ah.h,v 1.14 1999/02/24 22:32:59 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -38,20 +38,6 @@
  * Per RFC1826 (Atkinson, 1995)
  */
 
-#include <sys/md5k.h>
-#include <netinet/ip_sha1.h>
-#include <netinet/ip_rmd160.h>
-
-struct ah_hash {
-    int type;
-    char *name;
-    u_int16_t hashsize; 
-    u_int16_t ctxsize;
-    void (*Init)(void *);
-    void (*Update)(void *, u_int8_t *, u_int16_t);
-    void (*Final)(u_int8_t *, void *);
-};
-
 struct ah_old
 {
     u_int8_t	ah_nh;			/* Next header (protocol) */
@@ -62,13 +48,6 @@ struct ah_old
 };
 
 #define AH_OLD_FLENGTH		8	/* size of fixed part */
-
-/* Authenticator lengths */
-#define AH_MD5_ALEN		16
-#define AH_SHA1_ALEN		20
-#define AH_RMD160_ALEN		20
-
-#define AH_ALEN_MAX		AH_SHA1_ALEN 	/* Keep this updated */
 
 struct ahstat
 {
@@ -89,14 +68,6 @@ struct ahstat
     u_int32_t	ahs_toobig;	/* packet got larger than IP_MAXPACKET */
 };
 
-#define AH_HMAC_HASHLEN		12	/* 96 bits of authenticator */
-#define AH_HMAC_RPLENGTH        4	/* 32 bits of replay counter */
-#define AH_HMAC_INITIAL_RPL	1	/* Replay counter initial value */
-
-#define HMAC_IPAD_VAL           0x36
-#define HMAC_OPAD_VAL           0x5C
-#define HMAC_BLOCK_LEN		64
-
 struct ah_new
 {
     u_int8_t        ah_nh;                  /* Next header (protocol) */
@@ -109,72 +80,6 @@ struct ah_new
 
 #define AH_NEW_FLENGTH		(sizeof(struct ah_new))
 
-struct ah_new_xencap
-{
-    u_int32_t       amx_hash_algorithm;
-    int32_t         amx_wnd;
-    u_int32_t       amx_keylen;
-    u_int8_t        amx_key[1];
-};
-
-#define AH_NEW_XENCAP_LEN	(3 * sizeof(u_int32_t))
-
-struct ah_new_xdata
-{
-    u_int32_t       amx_hash_algorithm;
-    int32_t         amx_wnd;
-    u_int32_t       amx_rpl;                /* Replay counter */
-    u_int32_t       amx_bitmap;
-    struct ah_hash  *amx_hash;
-    union
-    {
-        MD5_CTX         amx_MD5_ictx;       /* Internal key+padding */
-        SHA1_CTX	amx_SHA1_ictx;
-	RMD160_CTX      amx_RMD160_ictx;
-    } amx_ictx;
-    union 
-    {
-        MD5_CTX         amx_MD5_octx;       /* External key+padding */
-	SHA1_CTX        amx_SHA1_octx;
-	RMD160_CTX      amx_RMD160_octx;
-    } amx_octx;
-};
-
-#define amx_md5_ictx	amx_ictx.amx_MD5_ictx
-#define amx_md5_octx	amx_octx.amx_MD5_octx
-#define amx_sha1_ictx	amx_ictx.amx_SHA1_ictx
-#define amx_sha1_octx	amx_octx.amx_SHA1_octx
-#define amx_rmd160_ictx	amx_ictx.amx_RMD160_ictx
-#define amx_rmd160_octx	amx_octx.amx_RMD160_octx
-
-struct ah_old_xdata
-{
-    u_int32_t       amx_hash_algorithm;
-    u_int32_t       amx_keylen;             /* Key material length */
-    struct ah_hash  *amx_hash;
-    union
-    {
-	MD5_CTX	    amx_MD5_ctx;
-	SHA1_CTX    amx_SHA1_ctx;
-    } amx_ctx;
-    u_int8_t        amx_key[1];             /* Key material */
-};
-
-#define amx_md5_ctx	amx_ctx.amx_MD5_ctx
-#define amx_sha1_ctx 	amx_ctx.amx_SHA1_ctx
-
-struct ah_old_xencap
-{
-    u_int32_t       amx_hash_algorithm;
-    u_int32_t       amx_keylen;
-    u_int8_t        amx_key[1];
-};
-
-#define AH_OLD_XENCAP_LEN	(2 * sizeof(u_int32_t))
-
-#define AH_HMAC_IPAD_VAL	0x36
-#define AH_HMAC_OPAD_VAL	0x5C
-
 #ifdef _KERNEL
 struct ahstat ahstat;
-#endif
+#endif /* _KERNEL */
