@@ -1,5 +1,5 @@
-/*	$OpenBSD: policy.c,v 1.17 2000/10/16 23:28:43 niklas Exp $	*/
-/*	$EOM: policy.c,v 1.48 2000/10/14 20:19:51 angelos Exp $ */
+/*	$OpenBSD: policy.c,v 1.18 2000/11/23 12:56:15 niklas Exp $	*/
+/*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
@@ -733,15 +733,18 @@ policy_callback (char *name)
 		  remote_id_addr_upper);
 	  break;
 
-	case IPSEC_ID_IPV6_ADDR: /* XXX we need decode_128 ().  */
+	case IPSEC_ID_IPV6_ADDR:
+	  /* XXX Not yet implemented.  */
 	  remote_id_type = "IPv6 address";
 	  break;
 
-	case IPSEC_ID_IPV6_RANGE: /* XXX we need decode_128 ().  */
+	case IPSEC_ID_IPV6_RANGE:
+	  /* XXX Not yet implemented.  */
 	  remote_id_type = "IPv6 range";
 	  break;
 
-	case IPSEC_ID_IPV6_ADDR_SUBNET: /* XXX we need decode_128 ().  */
+	case IPSEC_ID_IPV6_ADDR_SUBNET:
+	  /* XXX Not yet implemented.  */
 	  remote_id_type = "IPv6 address";
 	  break;
 
@@ -910,15 +913,18 @@ policy_callback (char *name)
 		      remote_filter_addr_upper);
 	      break;
 
-	    case IPSEC_ID_IPV6_ADDR: /* XXX we need decode_128 (). */
+	    case IPSEC_ID_IPV6_ADDR:
+	      /* XXX Not yet implemented.  */
 	      remote_filter_type = "IPv6 address";
 	      break;
 
-	    case IPSEC_ID_IPV6_RANGE: /* XXX we need decode_128 ().  */
+	    case IPSEC_ID_IPV6_RANGE:
+	      /* XXX Not yet implemented.  */
 	      remote_filter_type = "IPv6 range";
 	      break;
 
-	    case IPSEC_ID_IPV6_ADDR_SUBNET: /* XXX we need decode_128 ().  */
+	    case IPSEC_ID_IPV6_ADDR_SUBNET:
+	      /* XXX Not yet implemented.  */
 	      remote_filter_type = "IPv6 address";
 	      break;
 
@@ -1090,15 +1096,18 @@ policy_callback (char *name)
 		      local_filter_addr_upper);
 	      break;
 
-	    case IPSEC_ID_IPV6_ADDR: /* XXX we need decode_128 ().  */
+	    case IPSEC_ID_IPV6_ADDR:
+	      /* XXX Not yet implemented.  */
 	      local_filter_type = "IPv6 address";
 	      break;
 
-	    case IPSEC_ID_IPV6_RANGE: /* XXX we need decode_128 ().  */
+	    case IPSEC_ID_IPV6_RANGE:
+	      /* XXX Not yet implemented.  */
 	      local_filter_type = "IPv6 range";
 	      break;
 
-	    case IPSEC_ID_IPV6_ADDR_SUBNET: /* XXX we need decode_128 ().  */
+	    case IPSEC_ID_IPV6_ADDR_SUBNET:
+	      /* XXX Not yet implemented.  */
 	      local_filter_type = "IPv6 address";
 	      break;
 
