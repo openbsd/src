@@ -45,6 +45,7 @@
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/syslog.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -69,6 +70,7 @@
 #endif
 int	ipforwarding = IPFORWARDING;
 int	ipsendredirects = IPSENDREDIRECTS;
+int	ip_dosourceroute = 0;	/* no source routing unless sysctl'd to enable */
 int	ip_defttl = IPDEFTTL;
 #ifdef DIAGNOSTIC
 int	ipprintfs = 0;
@@ -80,6 +82,18 @@ u_char	ip_protox[IPPROTO_MAX];
 int	ipqmaxlen = IFQ_MAXLEN;
 struct	in_ifaddrhead in_ifaddr;
 struct	ifqueue ipintrq;
+
+char *
+inet_ntoa(ina)
+	struct in_addr ina;
+{
+	static char buf[4*sizeof "123"];
+	unsigned char *ucp = (unsigned char *)&ina;
+
+	sprintf(buf, "%d.%d.%d.%d", ucp[0] & 0xff, ucp[1] & 0xff,
+	    ucp[2] & 0xff, ucp[3] & 0xff);
+	return (buf);
+}
 
 /*
  * We need to save the IP options in case a protocol wants to respond
@@ -690,6 +704,19 @@ ip_dooptions(m)
 				save_rte(cp, ip->ip_src);
 				break;
 			}
+
+			if (!ip_dosourceroute) {
+				char buf[4*sizeof "123"];
+
+				strcpy(buf, inet_ntoa(ip->ip_dst));
+				log(LOG_WARNING,
+				    "attempted source route from %s to %s\n",
+				    inet_ntoa(ip->ip_src), buf);
+				type = ICMP_UNREACH;
+				code = ICMP_UNREACH_SRCFAIL;
+				goto bad;
+			}
+
 			/*
 			 * locate outgoing interface
 			 */
@@ -993,8 +1020,8 @@ ip_forward(m, srcrt)
 	dest = 0;
 #ifdef DIAGNOSTIC
 	if (ipprintfs)
-		printf("forward: src %x dst %x ttl %x\n", ip->ip_src,
-			ip->ip_dst, ip->ip_ttl);
+		printf("forward: src %lx dst %x ttl %x\n", ip->ip_src.s_addr,
+			ip->ip_dst.s_addr, ip->ip_ttl);
 #endif
 	if (m->m_flags & M_BCAST || in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;
@@ -1139,6 +1166,8 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_DEFMTU:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &ip_mtu));
 #endif
+	case IPCTL_SOURCEROUTE:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &ip_dosourceroute));
 	default:
 		return (EOPNOTSUPP);
 	}
