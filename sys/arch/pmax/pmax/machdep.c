@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 2000/10/27 00:16:16 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.26 2000/11/08 14:38:23 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.67 1996/10/23 20:04:40 mhitch Exp $	*/
 
 /*
@@ -152,7 +152,9 @@ int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
 int	physmem_boardmax;	/* {model,simm}-specific bound on physmem */
 int	pmax_boardtype;		/* Mother board type */
+#ifndef UVM
 u_long	le_iomem;		/* 128K for lance chip via. ASIC */
+#endif
 u_long	asc_iomem;		/* and 7 * 8K buffers for the scsi */
 u_long	ioasic_base;		/* Base address of I/O asic */
 const	struct callback *callv;	/* pointer to PROM entry points */
@@ -648,6 +650,7 @@ mach_init(argc, argv, code, cv)
 
 	maxmem = physmem;
 
+#ifndef UVM
 #if NLE_IOASIC > 0
 	/*
 	 * Grab 128K at the top of physical memory for the lance chip
@@ -660,6 +663,7 @@ mach_init(argc, argv, code, cv)
 		le_iomem = (maxmem << PGSHIFT);
 	}
 #endif /* NLE_IOASIC */
+#endif
 #if NASC > 0
 	/*
 	 * Ditto for the scsi chip. There is probably a way to make asc.c
