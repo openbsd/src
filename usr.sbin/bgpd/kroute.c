@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.6 2003/12/24 19:23:26 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.7 2003/12/24 19:59:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -213,4 +213,14 @@ kroute_compare(struct kroute_node *a, struct kroute_node *b)
 	if (a->r.prefixlen > b->r.prefixlen)
 		return (1);
 	return (0);
+}
+
+void
+kroute_shutdown(int fd)
+{
+	struct kroute_node	*kr;
+
+	RB_FOREACH(kr, kroute_tree, &krt)
+		if ((kr->flags & F_BGPD_INSERTED))
+			kroute_msg(fd, RTM_DELETE, &kr->r);
 }

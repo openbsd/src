@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.17 2003/12/24 19:21:20 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.18 2003/12/24 19:59:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -305,5 +305,6 @@ int	kroute_init(void);
 int	kroute_add(int, struct kroute *);
 int	kroute_change(int, struct kroute *);
 int	kroute_delete(int, struct kroute *);
+void	kroute_shutdown(int);
 
 #endif /* __BGPD_H__ */

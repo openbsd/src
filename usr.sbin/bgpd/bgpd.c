@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.23 2003/12/24 19:22:00 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.24 2003/12/24 19:59:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -281,6 +281,8 @@ main(int argc, char *argv[])
 	do {
 		i = waitpid(-1, NULL, WNOHANG);
 	} while (i > 0 || (i == -1 && errno == EINTR));
+
+	kroute_shutdown(rfd);
 
 	logit(LOG_CRIT, "Terminating");
 	return (0);
