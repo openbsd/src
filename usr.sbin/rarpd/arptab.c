@@ -75,7 +75,9 @@ extern int errno;
 static int pid;
 static int s = -1;
 
-getsocket() {
+void
+getsocket()
+{
 	if (s < 0) {
 		s = socket(PF_ROUTE, SOCK_RAW, 0);
 		if (s < 0) {
@@ -133,11 +135,13 @@ tryagain:
 			goto overwrite;
 		}
 		if (doing_proxy == 0) {
-			syslog(LOG_ERR, "arptab_set: can only proxy for %s\n", inet_ntoa(sin->sin_addr));
+			syslog(LOG_ERR, "arptab_set: can only proxy for %s\n",
+			    inet_ntoa(sin->sin_addr));
 			return (1);
 		}
 		if (sin_m.sin_other & SIN_PROXY) {
-			syslog(LOG_ERR,"arptab_set: proxy entry exists for non 802 device\n");
+			syslog(LOG_ERR,
+			    "arptab_set: proxy entry exists for non 802 device\n");
 			return(1);
 		}
 		sin_m.sin_other = SIN_PROXY;
@@ -146,7 +150,9 @@ tryagain:
 	}
 overwrite:
 	if (sdl->sdl_family != AF_LINK) {
-		syslog(LOG_ERR,"arptab_set: cannot intuit interface index and type for %s\n", inet_ntoa(sin->sin_addr));
+		syslog(LOG_ERR,
+		    "arptab_set: cannot intuit interface index and type for %s\n",
+		    inet_ntoa(sin->sin_addr));
 		return (1);
 	}
 	sdl_m.sdl_type = sdl->sdl_type;
