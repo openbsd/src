@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_mvme.c,v 1.4 2004/01/01 01:11:12 miod Exp $	*/
+/*	$OpenBSD: exec_mvme.c,v 1.5 2004/01/24 21:12:22 miod Exp $	*/
 
 
 /*-
@@ -40,11 +40,6 @@
 
 #include "stand.h"
 #include "libsa.h"
-
-#define RB_NOSYM 0x400
-#define RB_MULTI 0x4000
-#define RB_EXTRA 0x8000
-#define RB_ASKKERN 0x0010  /* ask kernel name  */
 
 vaddr_t ssym, esym;
 
@@ -200,9 +195,9 @@ int     flag;
 	int rval = 1; 
 	char dummy[]="\0";
 
-	if (flag & RB_EXTRA) {
-		printf("exec_mvme: file=%s flag=0x%x cputyp=%x\n", file, flag, bugargs.cputyp);
-	}
+#ifdef DEBUG
+	printf("exec_mvme: file=%s flag=0x%x cputyp=%x\n", file, flag, bugargs.cputyp);
+#endif
 
 	io = open(file, 0);
 	if (io < 0)
