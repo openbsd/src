@@ -6,7 +6,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
 .\" ----------------------------------------------------------------------------
 .\"
-.\" 	$OpenBSD: mdX.3,v 1.7 2004/06/22 01:57:29 jfb Exp $
+.\" 	$OpenBSD: mdX.3,v 1.8 2004/08/24 19:38:17 millert Exp $
 .\"
 .Dd April 29, 2004
 .Dt MDX 3
@@ -208,6 +208,9 @@ and
 .Fn MDXData
 helper functions are derived from code written by Poul-Henning Kamp.
 .Sh BUGS
-Hans Dobbertin has shown collisions for the full version of MD4 and
-found a collision in the compress function of MD5.
-The use of SHA or RIPEMD-160 is recommended instead.
+Collisions have been found for the full versions of both MD4 and MD5.
+The use of
+.Xr sha1 3
+or
+.Xr sha2 3
+is recommended instead.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.26 2004/06/22 01:57:29 jfb Exp $
+.\"	$OpenBSD: rmd160.3,v 1.27 2004/08/24 19:38:17 millert Exp $
 .\"
 .\" Copyright (c) 1997, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -238,3 +238,10 @@ If a message digest is to be copied to a multi-byte type (ie:
 an array of five 32-bit integers) it will be necessary to
 perform byte swapping on little endian machines such as the i386, alpha,
 and vax.
+.Sh BUGS
+Collisions have been found for the full version of RMD-160.
+The use of
+.Xr sha1 3  
+or
+.Xr sha2 3
+is recommended instead.
