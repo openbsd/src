@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.288 2003/12/31 14:09:57 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.289 2004/01/06 09:28:00 cedric Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1673,7 +1673,7 @@ keywords to the
 option.
 For example, if a rule is defined as:
 .Bd -literal -offset indent
-pass out on ppp from any to 10.12/16 keep state (group-locked)
+pass out on ppp from any to 10.12/16 keep state (group-bound)
 .Ed
 .Pp
 A state created on ppp0 would match packets an all PPP interfaces,
