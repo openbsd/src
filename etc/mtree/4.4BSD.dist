@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.130 2002/06/11 17:15:13 beck Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.131 2002/07/07 14:24:04 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1093,6 +1093,10 @@ vax
 
 # ./usr/share/man/cat2
 cat2
+
+# ./usr/share/man/cat2/alpha
+alpha
+..
 
 # ./usr/share/man/cat2/i386
 i386
