@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.10 2002/07/03 22:32:33 deraadt Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.11 2003/03/03 13:41:23 miod Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -34,13 +34,13 @@
  *	-A		add all devices listed as `sw' in /etc/fstab
  *	-t [blk|noblk]	if -A, add either all block device or all non-block
  *			devices
- *	-a <dev>	add this device
- *	-d <dev>	remove this swap device (not supported yet)
+ *	-a <path>	add this device
+ *	-d <path>	remove this swap device
  *	-l		list swap devices
  *	-s		short listing of swap devices
  *	-k		use kilobytes
  *	-p <pri>	use this priority
- *	-c		change priority
+ *	-c <path>	change priority
  *
  * or, if invoked as "swapon" (compatibility mode):
  *
@@ -108,7 +108,6 @@ int	pri;		/* uses 0 as default pri */
 static	void change_priority(char *);
 static	void add_swap(char *);
 static	void del_swap(char *);
-	int  main(int, char *[]);
 static	void do_fstab(void);
 static	void usage(void);
 static	int  swapon_command(int, char **);
