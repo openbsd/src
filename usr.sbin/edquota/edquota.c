@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.8 1996/06/06 12:10:04 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.9 1996/06/06 20:27:49 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -138,11 +138,14 @@ main(argc, argv)
 	fchown(tmpfd, getuid(), getgid());
 	if (tflag) {
 		protoprivs = getprivs(0, quotatype);
-		if (writetimes(protoprivs, tmpfd, quotatype) == 0)
+		if (writetimes(protoprivs, tmpfd, quotatype) == 0) {
+			unlink(tmpfil);
 			exit(1);
+		}
 		if (editit(tmpfil) && readtimes(protoprivs, tmpfd))
 			putprivs(0, quotatype, protoprivs);
 		freeprivs(protoprivs);
+		unlink(tmpfil);
 		exit(0);
 	}
 	for ( ; argc > 0; argc--, argv++) {
