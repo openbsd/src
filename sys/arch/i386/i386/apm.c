@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.45 2001/02/19 04:57:02 ho Exp $	*/
+/*	$OpenBSD: apm.c,v 1.46 2001/06/23 23:13:39 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -319,7 +319,8 @@ apm_suspend()
 {
 	dopowerhooks(PWR_SUSPEND);
 
-	vfs_syncwait(0);
+	if (cold)
+		vfs_syncwait(0);
 
 	(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_SUSPEND);
 }
@@ -329,7 +330,8 @@ apm_standby()
 {
 	dopowerhooks(PWR_STANDBY);
 
-	vfs_syncwait(0);
+	if (cold)
+		vfs_syncwait(0);
 
 	(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_STANDBY);
 }
