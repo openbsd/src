@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.124 2001/06/25 06:09:42 angelos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.125 2001/06/25 06:14:05 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -279,6 +279,12 @@ ip_output(m0, va_alist)
 		/* Do we have any pending SAs to apply ? */
 		mtag = m_tag_find(m, PACKET_TAG_IPSEC_PENDING_TDB, NULL);
 		if (mtag != NULL) {
+#ifdef DIAGNOSTIC
+			if (mtag->m_tag_len != sizeof (struct tdb_ident))
+				panic("ip_output: tag of length %d (should "
+				    "be %d", mtag->m_tag_len,
+				    sizeof (struct tdb_ident));
+#endif
 			tdbi = (struct tdb_ident *)(mtag + 1);
 			tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
 			m_tag_delete(m, mtag);
