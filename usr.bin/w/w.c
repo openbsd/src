@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.22 1997/12/24 19:57:11 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.23 1998/01/16 17:50:43 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -40,7 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
+#else
+static char *rcsid = "$OpenBSD: w.c,v 1.23 1998/01/16 17:50:43 millert Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -345,13 +349,19 @@ pr_args(kp)
 	char **argv, *str;
 	int left;
 
-	if (kp == 0)
+	if (kp == NULL)
 		goto nothing;
 	left = argwidth;
 	argv = kvm_getargv(kd, kp, argwidth+60);  /*+60 for ftpd snip */
-	if (argv == 0)
+	if (argv == NULL)
 		goto nothing;
 
+	if (*argv == NULL || **argv == '\0') {
+		/* Process has zeroed argv[0], display executable name. */
+		fmt_putc('(', &left);
+		fmt_puts(kp->kp_proc.p_comm, &left);
+		fmt_putc(')', &left);
+	}
 	while (*argv) {
 		/* ftp is a special case... */
 		if (strncmp(*argv, "ftpd:", 5) == 0) {
