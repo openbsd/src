@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.6 1998/12/29 22:20:27 mickey Exp $	*/
+/*	$OpenBSD: bus.h,v 1.7 1999/01/03 17:55:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -52,21 +52,10 @@ typedef u_long bus_space_handle_t;
 	__asm __volatile ("rsm %1, %%r0\n\tfdc %%r0(%0)\n\tssm %1, %%r0" \
 			  :: "r" (pa), "i" (PSW_D));
 
-/* no extent handlng for now
-   we won't have overlaps from PDC anyway */
-static __inline int
-bus_space_map (bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
-	       int cacheable, bus_space_handle_t *bshp)
-{
-	*bshp = addr + HPPA_BUS_TAG_BASE(t);
-	return 0;
-}
-
-static __inline void
-bus_space_unmap (bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
-{
-	/* nothing to do */
-}
+int bus_space_map __P((bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
+		       int cacheable, bus_space_handle_t *bshp));
+void bus_space_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
+			  bus_size_t size));
 
 int	bus_space_subregion __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp));

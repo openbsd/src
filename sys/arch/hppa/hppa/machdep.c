@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.1 1998/12/30 02:13:52 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.2 1999/01/03 17:55:13 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -99,6 +99,7 @@
 #include <sys/sysctl.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/extent.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -172,8 +173,14 @@ struct itlb_stats itlb_stats;
 struct tlbd_stats tlbd_stats;
 #endif
 
+int hppa_malloc_ok;
+struct extent *hppa_ex;
+static long mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+
 void delay_init __P((void));
 static __inline void fall __P((int, int, int, int, int)); 
+int bus_mem_add_mapping __P((bus_addr_t bpa, bus_size_t size, int cacheable,
+			     bus_space_handle_t *bshp));
 
 void
 hppa_init()
@@ -247,6 +254,15 @@ hppa_init()
 
 	vstart = hppa_round_page(&end);
 	vend = VM_MAX_KERNEL_ADDRESS;
+
+	/* we hope this won't fail */
+	hppa_ex = extent_create("mem", 0x0, 0xffffffff, M_DEVBUF,
+				(caddr_t)mem_ex_storage,
+				sizeof(mem_ex_storage),
+				EX_NOCOALESCE|EX_NOWAIT);
+	if (extent_alloc_region(hppa_ex, 0, (vm_offset_t)PAGE0->imm_max_mem,
+				EX_NOWAIT))
+		panic("cannot reserve main memory");
 
 	/*
 	 * Allocate space for system data structures.  We are given
@@ -503,6 +519,7 @@ cpu_startup()
 		printf("kernel does not support -c; continuing..\n");
 #endif
 	}
+	hppa_malloc_ok = 1;
 	configure();
 }
 
@@ -685,6 +702,125 @@ btlb_insert(space, va, pa, lenp, prot)
 	return i;
 }
 
+int
+bus_space_map (t, bpa, size, cacheable, bshp)
+	bus_space_tag_t t;
+	bus_addr_t bpa;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
+{
+	extern u_int virtual_avail;
+	register int error;
+
+	bpa += HPPA_BUS_TAG_BASE(t);
+	if ((error = extent_alloc_region(hppa_ex, bpa, size, EX_NOWAIT |
+					 (hppa_malloc_ok? EX_MALLOCOK : 0))))
+		return (error);
+
+	if ((bpa > 0 && bpa < virtual_avail) ||
+	    (bpa > HPPA_IOBEGIN)) {
+		*bshp = bpa;
+		return 0;
+	}
+
+	if ((error = bus_mem_add_mapping(bpa, size, cacheable, bshp))) {
+		if (extent_free(hppa_ex, bpa, size, EX_NOWAIT |
+				(hppa_malloc_ok? EX_MALLOCOK : 0))) {
+			printf ("bus_space_map: pa 0x%lx, size 0x%lx\n",
+				bpa, size);
+			printf ("bus_space_map: can't free region\n");
+		}
+	}
+
+	return 0;
+}
+
+void
+bus_space_unmap (t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+	register u_long sva, eva;
+	register bus_addr_t bpa;
+
+	sva = hppa_trunc_page(bsh);
+	eva = hppa_round_page(bsh + size);
+
+#ifdef DIAGNOSTIC
+	if (eva <= sva)
+		panic("bus_space_unmap: overflow");
+#endif
+
+	bpa = kvtop((caddr_t)bsh);
+	if (bpa != bsh)
+		kmem_free(kernel_map, sva, eva - sva);
+
+	if (extent_free(hppa_ex, bpa, size, EX_NOWAIT |
+			(hppa_malloc_ok? EX_MALLOCOK : 0))) {
+		printf("bus_space_unmap: ps 0x%lx, size 0x%lx\n",
+		       bpa, size);
+		printf("bus_space_unmap: can't free region\n");
+	}
+}
+
+int
+bus_space_alloc (t, rstart, rend, size, align, bndary, cacheable, addrp, bshp)
+	bus_space_tag_t t;
+	bus_addr_t rstart, rend;
+	bus_size_t size, align, bndary;
+	int cacheable;
+	bus_addr_t *addrp;
+	bus_space_handle_t *bshp;
+{
+	return -1;
+}
+
+void
+bus_space_free(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+
+}
+
+int
+bus_mem_add_mapping(bpa, size, cacheable, bshp)
+	bus_addr_t bpa;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
+{
+	register u_long spa, epa;
+	register vm_offset_t va;
+
+	spa = hppa_trunc_page(bpa);
+	epa = hppa_round_page(bpa + size);
+
+#ifdef DIAGNOSTIC
+	if (epa <= spa)
+		panic("bus_mem_add_mapping: overflow");
+#endif
+
+	if (!(va = kmem_alloc_pageable(kernel_map, epa - spa)))
+		return (ENOMEM);
+
+	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
+
+	for (; spa < epa; spa += NBPG, va += NBPG) {
+		pmap_enter(pmap_kernel(), va, spa,
+			   VM_PROT_READ | VM_PROT_WRITE, TRUE);
+		if (!cacheable)
+			pmap_changebit(spa, TLB_UNCACHEABLE, ~0);
+		else
+			pmap_changebit(spa, 0, ~TLB_UNCACHEABLE);
+	}
+ 
+	return 0;
+}
+
 void
 bus_space_barrier(tag, h, off, l, op)
 	bus_space_tag_t tag;
@@ -700,7 +836,8 @@ bus_space_barrier(tag, h, off, l, op)
 	p &= ~dcache_line_mask;
 
 	do {
-		__asm __volatile ("fdc %%r0(%%sr0,%0)":: "r" (p));
+		__asm __volatile ("pdc %%r0(%%sr0,%0)":: "r" (p));
+		__asm __volatile ("fic %%r0(%%sr0,%0)":: "r" (p));
 		p += dcache_line_mask + 1;
 		l -= dcache_line_mask + 1;
 	} while (l);
