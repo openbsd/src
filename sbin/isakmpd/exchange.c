@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.68 2002/09/05 14:54:16 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.69 2002/09/05 17:30:03 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1644,6 +1644,15 @@ exchange_add_certs (struct message *msg)
 
   id = exchange->initiator ? exchange->id_r : exchange->id_i;
   id_len = exchange->initiator ? exchange->id_r_len : exchange->id_i_len;
+
+  /*
+   * Without IDs we cannot handle this yet. Keep the aca_list around for 
+   * a later step/retry to see if we got the ID by then. 
+   * Note: A 'return -1' breaks X509-auth interop in the responder case
+   *       with some IPSec clients that send CERTREQs early (ex SSH Sentinel).
+   */
+  if (!id)
+    return 0;
 
   for (aca = TAILQ_FIRST (&exchange->aca_list); aca;
        aca = TAILQ_NEXT (aca, link))
