@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.34 2000/09/25 09:41:03 provos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.35 2001/05/31 16:27:08 provos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -343,15 +343,18 @@ again:
 		 * but we haven't been called to retransmit,
 		 * len will be -1.  Otherwise, window shrank
 		 * after we sent into it.  If window shrank to 0,
-		 * cancel pending retransmit and pull snd_nxt
-		 * back to (closed) window.  We will enter persist
-		 * state below.  If the window didn't close completely,
-		 * just wait for an ACK.
+		 * cancel pending retransmit, pull snd_nxt back
+		 * to (closed) window, and set the persist timer
+		 * if it isn't already going.  If the window didn't
+		 * close completely, just wait for an ACK.
 		 */
 		len = 0;
 		if (win == 0) {
 			tp->t_timer[TCPT_REXMT] = 0;
+			tp->t_rxtshift = 0;
 			tp->snd_nxt = tp->snd_una;
+			if (tp->t_timer[TCPT_PERSIST] == 0)
+				tcp_setpersist(tp);
 		}
 	}
 	if (len > tp->t_maxseg) {

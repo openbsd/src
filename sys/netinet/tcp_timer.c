@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.20 2000/12/13 09:47:08 provos Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.21 2001/05/31 16:27:08 provos Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -390,7 +390,7 @@ tcp_timers(tp, timer)
 		if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 			goto dropit;
 		if (tp->t_inpcb->inp_socket->so_options & SO_KEEPALIVE &&
-		    tp->t_state <= TCPS_CLOSE_WAIT) {
+		    tp->t_state <= TCPS_CLOSING) {
 			if (tp->t_idle >= tcp_keepidle + tcp_maxidle)
 				goto dropit;
 			/*
