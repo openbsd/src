@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.12 1999/12/09 16:19:50 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.13 2000/02/15 16:32:41 art Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -59,6 +59,7 @@
 #include <sys/exec.h>
 #include <sys/vnode.h>
 #include <sys/map.h>
+#include <sys/extent.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -174,11 +175,12 @@ dvma_mapin(map, va, len, canwait)
 	int		len, canwait;
 {
 	vaddr_t	kva, tva;
-	register int npf, s;
-	register paddr_t pa;
-	long off, pn;
+	int npf, s;
+	paddr_t pa;
+	long off;
 	vaddr_t	ova;
 	int		olen;
+	int error;
 
 	ova = va;
 	olen = len;
@@ -188,23 +190,13 @@ dvma_mapin(map, va, len, canwait)
 	len = round_page(len + off);
 	npf = btoc(len);
 
-	s = splimp();
-	for (;;) {
-
-		pn = rmalloc(dvmamap, npf);
-
-		if (pn != 0)
-			break;
-		if (canwait) {
-			(void)tsleep(dvmamap, PRIBIO+1, "physio", 0);
-			continue;
-		}
-		splx(s);
-		return NULL;
-	}
+	s = splhigh();
+	error = extent_alloc(dvmamap_extent, len, PAGE_SIZE, 0,
+			     canwait ? EX_WAITSPACE : 0, &tva);
 	splx(s);
-
-	kva = tva = rctov(pn);
+	if (error)
+		return NULL;
+	kva = tva;
 
 	while (npf--) {
 		pa = pmap_extract(vm_map_pmap(map), va);
@@ -254,7 +246,8 @@ dvma_mapout(kva, va, len)
 	vaddr_t	kva, va;
 	int		len;
 {
-	register int s, off;
+	int s, off;
+	int error;
 
 	off = (int)kva & PGOFSET;
 	kva -= off;
@@ -267,9 +260,10 @@ dvma_mapout(kva, va, len)
 #endif
 		pmap_remove(pmap_kernel(), kva, kva + len);
 
-	s = splimp();
-	rmfree(dvmamap, btoc(len), vtorc(kva));
-	wakeup(dvmamap);
+	s = splhigh();
+	error = extent_free(dvmamap_extent, kva, len, EX_NOWAIT);
+	if (error)
+		printf("dvma_mapout: extent_free failed\n");
 	splx(s);
 
 	if (CACHEINFO.c_vactype != VAC_NONE)
@@ -345,6 +339,8 @@ vunmapbuf(bp, sz)
 	kva = (vaddr_t)bp->b_data;
 	off = kva & PGOFSET;
 	size = round_page(bp->b_bcount + off);
+
+	kva = trunc_page(kva);
 #if defined(UVM)
 	uvm_km_free_wakeup(kernel_map, trunc_page(kva), size);
 #else

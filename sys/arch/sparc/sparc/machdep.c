@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.43 1999/11/26 16:21:01 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.44 2000/02/15 16:32:41 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -75,6 +75,7 @@
 #endif
 #include <sys/exec.h>
 #include <sys/sysctl.h>
+#include <sys/extent.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -155,8 +156,7 @@ int   safepri = 0;
  * the memory range in `phys_map' (which is mostly a place-holder).
  */
 vaddr_t dvma_base, dvma_end;
-struct map *dvmamap;
-static int ndvmamap;	/* # of entries in dvmamap */
+struct extent *dvmamap_extent;
 
 caddr_t allocsys __P((caddr_t));
 void	dumpsys __P((void));
@@ -329,8 +329,10 @@ cpu_startup()
 	if (kmem_alloc_wait(phys_map, (dvma_end-dvma_base)) != dvma_base)
 		panic("unable to allocate from DVMA map");
 #endif
-	rminit(dvmamap, btoc((dvma_end-dvma_base)),
-		vtorc(dvma_base), "dvmamap", ndvmamap);
+	dvmamap_extent = extent_create("dvmamap", dvma_base, dvma_end,
+				       M_DEVBUF, NULL, 0, EX_NOWAIT);
+	if (dvmamap_extent == 0)
+		panic("unable to allocate extent for dvma");
 
 	/*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
@@ -465,11 +467,6 @@ allocsys(v)
 	valloc(swbuf, struct buf, nswbuf);
 #endif
 	valloc(buf, struct buf, nbuf);
-	/*
-	 * Allocate DVMA slots for 1/4 of the number of i/o buffers
-	 * and one for each process too (PHYSIO).
-	 */
-	valloc(dvmamap, struct map, ndvmamap = maxproc + ((nbuf / 4) &~ 1));
 	return (v);
 }
 
