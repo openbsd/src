@@ -1,4 +1,4 @@
-/*      $OpenBSD: bus_dma.c,v 1.14 2004/05/08 20:12:23 miod Exp $        */
+/*      $OpenBSD: bus_dma.c,v 1.15 2004/05/14 20:38:00 miod Exp $        */
 /*      $NetBSD: bus_dma.c,v 1.2 2001/06/10 02:31:25 briggs Exp $        */
 
 /*-
@@ -204,7 +204,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, p, flags, lastaddrp, segp, first)
                              map->_dm_maxsegsz &&
                             (map->_dm_boundary == 0 ||
                              (map->dm_segs[seg].ds_addr & bmask) ==
-                             (curaddr & bmask)))
+                             (PHYS_TO_PCI_MEM(curaddr) & bmask)))
                                 map->dm_segs[seg].ds_len += sgsize;
                         else {
                                 if (++seg >= map->_dm_segcnt)
