@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.22 2005/01/23 16:53:36 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.23 2005/02/27 22:21:47 miod Exp $
 #
 # Ram disk kernel.
 #
@@ -42,7 +42,9 @@ option		BOOT_CONFIG	# add support for boot -c
 
 # Options for HP hardware
 option		USELEDS		# make the lights twinkle
-#option		CONSCODE="9"	# force console at this select code
+#option		CONSCODE="9"	# force console at this select code for DIO
+				# or DIO-II devices, or 256 + slot number
+				# for SGC devices
 
 # Verbose descriptions of unconfigured DIO devices
 # (Warning: this compiles in a large string table)

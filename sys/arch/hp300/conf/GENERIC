@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.36 2005/01/23 16:53:36 miod Exp $
+#	$OpenBSD: GENERIC,v 1.37 2005/02/27 22:21:47 miod Exp $
 #	$NetBSD: GENERIC,v 1.23 1997/01/31 06:12:57 thorpej Exp $
 #
 # Generic kernel - one size fits all.
@@ -29,7 +29,9 @@ maxusers	32
 
 # Options for HP hardware
 option		USELEDS		# make the lights twinkle
-#option		CONSCODE="9"	# force console at this select code
+#option		CONSCODE="9"	# force console at this select code for DIO
+				# or DIO-II devices, or 256 + slot number
+				# for SGC devices
 
 option		WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes
 
