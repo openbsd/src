@@ -1,5 +1,5 @@
 .\"	$NetBSD: hunt.6,v 1.3 1997/10/10 16:32:30 lukem Exp $
-.\"	$OpenBSD: hunt.6,v 1.8 1999/07/09 13:35:58 aaron Exp $
+.\"	$OpenBSD: hunt.6,v 1.9 1999/08/30 23:33:50 d Exp $
 .\"
 .\"  hunt
 .\"  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -350,45 +350,58 @@ Your score is the decayed average of the ratio of number of kills to number
 of times you entered the game and is only kept for the duration
 of a single session of
 .Nm hunt .
-.Pp
-.Nm
-normally drives up the load average to be approximately
-(number_of_players + 0.5) greater than it would be without a
-.Nm
-game executing.
+.\" .Pp
+.\" .Nm
+.\" normally drives up the load average to be approximately
+.\" (number_of_players + 0.5) greater than it would be without a
+.\" .Nm
+.\" game executing.
 .Sh STATISTICS
 The
 .Fl S
 option fetches the current game statistics.
+.Pp
+Two groups of statistics are presented: the first group of statistics is
+that of the clients currently connected to the game, and is reset each 
+time the client rejoins, while the second group of statistics is on all 
+players (dead or alive) by name, and collected over the lifetime of the 
+game daemon.
+.Pp
 The meaning of the column headings are as follows:
 .Bl -tag -width No -compact -offset
-.It score
+.It Score
 the player's last score
-.It ducked
+.It Ducked
 how many shots a player ducked
-.It absorb
+.It Absorb
 how many shots a player absorbed
-.It faced
+.It Faced
 how many shots were fired at player's face
-.It shot
+.It Shot
 how many shots were fired at player
-.It robbed
+.It Robbed
 how many of player's shots were absorbed
-.It missed
+.It Missed
 how many of player's shots were ducked
-.It slimeK
+.It SlimeK
 how many slime kills player had
-.It enemy
+.It Enemy
 how many enemies were killed
-.It friend
+.It Friend
 how many friends were killed (self and same team)
-.It deaths
+.It Deaths
 how many times player died
-.It still
+.It Still
 how many times player died without typing in any commands
-.It saved
+.It Saved
 how many times a shot/bomb would have killed player if he hadn't
 ducked or absorbed it
+.It Connect
+current connection state(s) of player:
+.Sq p
+for playing,
+.Sq m
+for monitoring
 .El
 .Sh FILES
 .Bl -tag -width Pa -compact
@@ -410,3 +423,9 @@ We hope their significant others will forgive them;
 we certainly don't.
 .Sh BUGS
 To keep up the pace, not everything is as realistic as possible.
+.Pp
+The historic behaviour of
+.Nm
+automatically starting
+.Xr huntd 6
+is no longer supported.
