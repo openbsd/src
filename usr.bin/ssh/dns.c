@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.2 2003/05/14 22:51:56 jakob Exp $	*/
+/*	$OpenBSD: dns.c,v 1.3 2003/05/14 22:56:51 jakob Exp $	*/
 
 /*
  * Copyright (c) 2003 Wesley Griffin. All rights reserved.
@@ -44,7 +44,7 @@
 #include "uuencode.h"
 
 extern char *__progname;
-RCSID("$OpenBSD: dns.c,v 1.2 2003/05/14 22:51:56 jakob Exp $");
+RCSID("$OpenBSD: dns.c,v 1.3 2003/05/14 22:56:51 jakob Exp $");
 
 #ifndef LWRES
 static const char *errset_text[] = {
@@ -90,21 +90,21 @@ dns_read_key(u_int8_t *algorithm, u_int8_t *digest_type,
 
 	switch (key->type) {
 	case KEY_RSA:
-		*algorithm = DNS_KEY_RSA;
+		*algorithm = SSHFP_KEY_RSA;
 		break;
 	case KEY_DSA:
-		*algorithm = DNS_KEY_DSA;
+		*algorithm = SSHFP_KEY_DSA;
 		break;
 	default:
-		*algorithm = DNS_KEY_RESERVED;
+		*algorithm = SSHFP_KEY_RESERVED;
 	}
 
 	if (*algorithm) {
-		*digest_type = DNS_HASH_SHA1;
+		*digest_type = SSHFP_HASH_SHA1;
 		*digest = key_fingerprint_raw(key, SSH_FP_SHA1, digest_len);
 		success = 1;
 	} else {
-		*digest_type = DNS_HASH_RESERVED;
+		*digest_type = SSHFP_HASH_RESERVED;
 		*digest = NULL;
 		*digest_len = 0;
 		success = 0;
@@ -122,8 +122,8 @@ dns_read_rdata(u_int8_t *algorithm, u_int8_t *digest_type,
 {
 	int success = 0;
 
-	*algorithm = DNS_KEY_RESERVED;
-	*digest_type = DNS_HASH_RESERVED;
+	*algorithm = SSHFP_KEY_RESERVED;
+	*digest_type = SSHFP_HASH_RESERVED;
 
 	if (rdata_len >= 2) {
 		*algorithm = rdata[0];
@@ -261,7 +261,7 @@ int
 export_dns_rr(const char *hostname, Key *key, FILE *f, int generic)
 {
 	u_int8_t rdata_pubkey_algorithm = 0;
-	u_int8_t rdata_digest_type = DNS_HASH_SHA1;
+	u_int8_t rdata_digest_type = SSHFP_HASH_SHA1;
 	u_char *rdata_digest;
 	u_int rdata_digest_len;
 
