@@ -1,4 +1,4 @@
-/*	$OpenBSD: lasi.c,v 1.5 2002/02/03 01:50:20 mickey Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.6 2002/02/05 06:50:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -195,8 +195,7 @@ lasi_intr_check(v)
 	imr = sc->sc_trs->lasi_imr;
 	ipr = sc->sc_trs->lasi_ipr;
 	irr = sc->sc_trs->lasi_irr;
-	sc->sc_trs->lasi_imr = 0;
-	sc->sc_trs->lasi_imr = imr &= ~irr;
+	sc->sc_trs->lasi_irr = irr;
 
 #ifdef LASIDEBUG
 	printf ("%s: imr=0x%x, irr=0x%x, ipr=0x%x, iar=0x%x, icr=0x%x\n",
