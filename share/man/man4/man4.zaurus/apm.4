@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.4 2005/03/03 22:54:59 uwe Exp $
+.\"	$OpenBSD: apm.4,v 1.5 2005/03/04 00:34:38 uwe Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -234,33 +234,6 @@ to zero disables all warnings regardless of the
 .Dv APM_IOC_PRN_CTL
 setting.
 .El
-.Pp
-.Em NOT YET SUPPORTED on zaurus:
-As noted above, the operation of the
-.Tn APM
-driver can be modified using the
-.Dv machdep.apmwarn
-.Xr sysctl 8
-variable.
-Another driver modifier is the
-.Dv machdep.apmhalt
-variable.
-When
-.Dv machdep.apmhalt
-is set to 1 the
-.Tn APM
-power down code is modified in a way necessary for correct operation on
-some systems, mainly
-.Tn IBM
-laptops.
-If your system does not power down when given the command
-.Li "halt -p"
-try setting
-.Dv machdep.apmhalt
-to 1 using
-.Xr sysctl 8 .
-The variable can be set at boot time in
-.Xr sysctl.conf 5 .
 .Sh FILES
 .Bl -tag -width /dev/apmctl
 .It Pa /dev/apm
