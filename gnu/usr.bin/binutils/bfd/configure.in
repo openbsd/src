@@ -18,6 +18,21 @@ AC_ARG_ENABLE(targets,
   no)       enable_targets= ;;
   *)        enable_targets=$enableval ;;
 esac])dnl
+AC_ARG_ENABLE(shared,
+[  --enable-shared         build shared BFD library],
+[case "${enableval}" in
+  yes) shared=true ;;
+  no)  shared=false ;;
+  *bfd*) shared=true ;;
+  *) shared=false ;;
+esac])dnl
+AC_ARG_ENABLE(commonbfdlib,
+[  --enable-commonbfdlib   build shared BFD/opcodes/libiberty library],
+[case "${enableval}" in
+  yes) commonbfdlib=true ;;
+  no)  commonbfdlib=false ;;
+  *)   AC_MSG_ERROR([bad value ${enableval} for BFD commonbfdlib option]) ;;
+esac])dnl
 AC_ARG_WITH(mmap,
 [  --with-mmap             try using mmap for BFD input files if available],
 [case "${withval}" in
@@ -40,15 +55,58 @@ target64=false
 
 # host stuff:
 
+ALLLIBS='$(TARGETLIB)'
+PICFLAG=
+SHLIB=unused-shlib
+SHLINK=unused-shlink
+if test "${shared}" = "true"; then
+  PICFLAG=-fpic
+  if test "${commonbfdlib}" = "true"; then
+    ALLLIBS='$(TARGETLIB)'
+  else
+    ALLLIBS='$(TARGETLIB) $(SHLIB) $(SHLINK)'
+changequote(,)dnl
+    SHLIB=libbfd.so.`sed -e 's/[^0-9]*\([0-9.]*\).*/\1/' ${srcdir}/VERSION`
+changequote([,])dnl
+    SHLINK=libbfd.so
+  fi
+fi
+
+AC_PROG_CC
+
 # Permit host specific settings.
 . ${srcdir}/configure.host
 
-AC_PROG_CC
-AC_SUBST(CFLAGS)
 AC_SUBST(HDEFINES)
-AC_CHECK_PROG(AR, ar, ar, :)
-AC_PROG_RANLIB
+AC_CHECK_TOOL(AR, ar)
+AC_CHECK_TOOL(RANLIB, ranlib, :)
 AC_PROG_INSTALL
+
+if test "${shared}" = "true"; then
+  if test "${GCC}" != "yes" && test "${shared_non_gcc}" != "yes"; then
+    AC_MSG_WARN([BFD --enable-shared only supported when using gcc])
+    shared=false
+    ALLLIBS='$(TARGETLIB)'
+    PICFLAG=
+    SHLIB=unused-shlib
+  fi
+fi
+
+AC_SUBST(ALLLIBS)
+AC_SUBST(PICFLAG)
+AC_SUBST(SHLIB)
+AC_SUBST(SHLIB_CC)
+AC_SUBST(SHLIB_CFLAGS)
+if test "${commonbfdlib}" = "true"; then
+  COMMON_SHLIB=yes
+  PICLIST=piclist
+else
+  COMMON_SHLIB=
+  PICLIST=
+fi
+AC_SUBST(COMMON_SHLIB)
+AC_SUBST(PICLIST)
+AC_SUBST(SHLINK)
 
 HOST_64BIT_LONG=0
 if test "x${HOST_64BIT_TYPE}" = "xlong"; then
@@ -59,44 +117,14 @@ AC_SUBST(HOST_64BIT_LONG)
 BFD_CC_FOR_BUILD
 
 AC_CHECK_HEADERS(stddef.h string.h strings.h stdlib.h time.h unistd.h)
-AC_CHECK_HEADERS(fcntl.h sys/file.h)
+AC_CHECK_HEADERS(fcntl.h sys/file.h sys/time.h)
+AC_HEADER_TIME
 AC_CHECK_FUNCS(fcntl getpagesize)
 
 BFD_BINARY_FOPEN
 
-AC_MSG_CHECKING([whether malloc must be declared])
-AC_CACHE_VAL(bfd_cv_decl_needed_malloc,
-[AC_TRY_COMPILE([
-#include <stdio.h>
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif],
-[char *(*pfn) = (char *(*)) malloc],
-bfd_cv_decl_needed_malloc=no, bfd_cv_decl_needed_malloc=yes)])
-AC_MSG_RESULT($bfd_cv_decl_needed_malloc)
-if test $bfd_cv_decl_needed_malloc = yes; then
-  AC_DEFINE(NEED_DECLARATION_MALLOC)
-fi
-
-AC_MSG_CHECKING([whether free must be declared])
-AC_CACHE_VAL(bfd_cv_decl_needed_free,
-[AC_TRY_COMPILE([
-#include <stdio.h>
-#ifdef HAVE_STDLIB_H
-#include <stdlib.h>
-#endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif],
-[int (*pfn) = (int (*)) free],
-bfd_cv_decl_needed_free=no, bfd_cv_decl_needed_free=yes)])
-AC_MSG_RESULT($bfd_cv_decl_needed_free)
-if test $bfd_cv_decl_needed_free = yes; then
-  AC_DEFINE(NEED_DECLARATION_FREE)
-fi
+BFD_NEED_DECLARATION(malloc)
+BFD_NEED_DECLARATION(free)
 
 # If we are configured native, pick a core file support file.
 COREFILE=
@@ -135,14 +163,12 @@ changequote([,])dnl
 changequote(,)dnl
   i[345]86-*-netbsd*)
 changequote([,])dnl
-	COREFILE=trad-core.o
-	AC_DEFINE(TRAD_HEADER,"hosts/i386nbsd.h")
+	COREFILE=netbsd-core.o
 	;;
 changequote(,)dnl
   i[345]86-*-openbsd*)
 changequote([,])dnl
-	COREFILE=trad-core.o
-	AC_DEFINE(TRAD_HEADER,"hosts/i386nbsd.h")
+	COREFILE=netbsd-core.o
 	;;
 changequote(,)dnl
   i[345]86-esix-sysv3*)
@@ -185,12 +211,10 @@ changequote([,])dnl
 	AC_DEFINE(TRAD_HEADER,"hosts/mipsmach3.h")
 	;;
   mips-*-netbsd*)
-	COREFILE=trad-core.o
-	AC_DEFINE(TRAD_HEADER,"hosts/mipsnbsd.h")
+	COREFILE=netbsd-core.o
 	;;
   mips-*-openbsd*)
-	COREFILE=trad-core.o
-	AC_DEFINE(TRAD_HEADER,"hosts/mipsnbsd.h")
+	COREFILE=netbsd-core.o
 	;;
   mips-dec-*)
 	COREFILE=trad-core.o
@@ -209,7 +233,7 @@ changequote([,])dnl
 	;;
   mips-sony-bsd*)
 	COREFILE=trad-core.o
-	AC_DEFINE(TRAD_HEADER,"hosts/news-mips".h)
+	AC_DEFINE(TRAD_HEADER,"hosts/news-mips.h")
 	;;
   m68*-bull*-sysv*)
 	COREFILE=trad-core.o
@@ -220,6 +244,10 @@ changequote([,])dnl
 	COREFILE=trad-core.o
 	AC_DEFINE(TRAD_HEADER,"hosts/hp300bsd.h")
 	;;
+  m68*-*-linux*)
+	COREFILE=trad-core.o
+	AC_DEFINE(TRAD_HEADER,"hosts/m68klinux.h")
+	;;
   m68*-motorola-sysv*)
 	COREFILE=trad-core.o
 	AC_DEFINE(TRAD_HEADER, "hosts/delta68.h")
@@ -229,12 +257,14 @@ changequote([,])dnl
 	AC_DEFINE(TRAD_HEADER,"hosts/news.h")
 	;;
   m68*-*-netbsd*)
-	COREFILE=trad-core.o
-	AC_DEFINE(TRAD_HEADER,"hosts/m68knbsd.h")
+	COREFILE=netbsd-core.o
 	;;
   m68*-*-openbsd*)
+	COREFILE=netbsd-core.o
+	;;
+  m68*-apple-aux*)
 	COREFILE=trad-core.o
-	AC_DEFINE(TRAD_HEADER,"hosts/m68knbsd.h")
+	AC_DEFINE(TRAD_HEADER,"hosts/m68kaux.h")
 	;;
   m88*-*-sysv4*)	;;
   m88*-motorola-sysv*)	COREFILE=ptrace-core.o ;;
@@ -247,12 +277,10 @@ changequote([,])dnl
 	AC_DEFINE(TRAD_HEADER,"hosts/pc532mach.h")
 	;;
   ns32k-*-netbsd*)
-	COREFILE=trad-core.o
-	AC_DEFINE(TRAD_HEADER,"hosts/ns32knbsd.h")
+	COREFILE=netbsd-core.o
 	;;
   ns32k-*-openbsd*)
-	COREFILE=trad-core.o
-	AC_DEFINE(TRAD_HEADER,"hosts/ns32knbsd.h")
+	COREFILE=netbsd-core.o
 	;;
   rs6000-*-lynx*)	COREFILE=lynx-core.o ;;
   rs6000-*-aix4*)	COREFILE=rs6000-core.o ;;
@@ -260,12 +288,10 @@ changequote([,])dnl
   powerpc-*-aix4*)	COREFILE=rs6000-core.o ;;
   powerpc-*-aix*)	COREFILE=rs6000-core.o ;;
   sparc-*-netbsd*)
-	COREFILE=trad-core.o
-	AC_DEFINE(TRAD_HEADER,"hosts/sparcnbsd.h")
+	COREFILE=netbsd-core.o
 	;;
   sparc-*-openbsd*)
-	COREFILE=trad-core.o
-	AC_DEFINE(TRAD_HEADER,"hosts/sparcnbsd.h")
+	COREFILE=netbsd-core.o
 	;;
   tahoe-*-*)
 	COREFILE=trad-core.o
@@ -389,28 +415,32 @@ do
     # This list is alphabetized to make it easy to compare
     # with the two vector lists in targets.c.
     a29kcoff_big_vec)		tb="$tb coff-a29k.o cofflink.o" ;;
-    a_out_adobe_vec)		tb="$tb aout-adobe.o aout32.o stab-syms.o" ;;
+    a_out_adobe_vec)		tb="$tb aout-adobe.o aout32.o" ;;
     armcoff_little_vec)		tb="$tb coff-arm.o cofflink.o " ;;
     armcoff_big_vec)		tb="$tb coff-arm.o cofflink.o " ;;
     armpe_little_vec)		tb="$tb pe-arm.o cofflink.o " ;;
     armpe_big_vec)		tb="$tb pe-arm.o cofflink.o " ;;
     armpei_little_vec)		tb="$tb pei-arm.o cofflink.o " ;;
     armpei_big_vec)		tb="$tb pei-arm.o cofflink.o " ;;
-    aout0_big_vec)		tb="$tb aout0.o aout32.o stab-syms.o" ;;
-    aout_arm_big_vec)		tb="$tb aout-arm.o aout32.o stab-syms.o" ;;
-    aout_arm_little_vec)	tb="$tb aout-arm.o aout32.o stab-syms.o" ;;
-    aout_mips_big_vec)		tb="$tb mipsbsd.o aout32.o stab-syms.o" ;;
-    aout_mips_little_vec)	tb="$tb mipsbsd.o aout32.o stab-syms.o" ;;
+    aout0_big_vec)		tb="$tb aout0.o aout32.o" ;;
+    aout_arm_big_vec)		tb="$tb aout-arm.o aout32.o" ;;
+    aout_arm_little_vec)	tb="$tb aout-arm.o aout32.o" ;;
+    aout_mips_big_vec)		tb="$tb mipsbsd.o aout32.o" ;;
+    aout_mips_little_vec)	tb="$tb mipsbsd.o aout32.o" ;;
     apollocoff_vec)		tb="$tb coff-apollo.o" ;;
-    b_out_vec_big_host)		tb="$tb bout.o aout32.o stab-syms.o" ;;
-    b_out_vec_little_host)	tb="$tb bout.o aout32.o stab-syms.o" ;;
+    b_out_vec_big_host)		tb="$tb bout.o aout32.o" ;;
+    b_out_vec_little_host)	tb="$tb bout.o aout32.o" ;;
     bfd_elf32_big_generic_vec) 	tb="$tb elf32-gen.o elf32.o $elf" ;;
     bfd_elf32_bigmips_vec) 	tb="$tb elf32-mips.o elf32.o $elf ecofflink.o" ;;
+    bfd_elf64_bigmips_vec) 	tb="$tb elf64-mips.o elf64.o elf32-mips.o elf32.o $elf ecofflink.o"
+				target64=true ;;
     bfd_elf32_hppa_vec)		tb="$tb elf32-hppa.o elf32.o $elf" ;;
     bfd_elf32_i386_vec)		tb="$tb elf32-i386.o elf32.o $elf" ;;
     bfd_elf32_i860_vec)		tb="$tb elf32-i860.o elf32.o $elf" ;;
     bfd_elf32_little_generic_vec) tb="$tb elf32-gen.o elf32.o $elf" ;;
     bfd_elf32_littlemips_vec) 	tb="$tb elf32-mips.o elf32.o $elf ecofflink.o" ;;
+    bfd_elf64_littlemips_vec) 	tb="$tb elf64-mips.o elf64.o elf32-mips.o elf32.o $elf ecofflink.o"
+				target64=true ;;
     bfd_elf32_m68k_vec)		tb="$tb elf32-m68k.o elf32.o $elf" ;;
     bfd_elf32_m88k_vec)		tb="$tb elf32-m88k.o elf32.o $elf" ;;
     bfd_elf32_powerpc_vec)	tb="$tb elf32-ppc.o elf32.o $elf" ;;
@@ -423,7 +453,7 @@ do
     bfd_elf64_sparc_vec)	tb="$tb elf64-sparc.o elf64.o $elf"
 				target64=true ;;
     cisco_core_vec)		tb="$tb cisco-core.o" ;;
-    demo_64_vec)		tb="$tb demo64.o aout64.o stab-syms.o"
+    demo_64_vec)		tb="$tb demo64.o aout64.o"
 				target64=true ;;
     ecoff_big_vec)		tb="$tb coff-mips.o ecoff.o ecofflink.o" ;;
     ecoff_little_vec)		tb="$tb coff-mips.o ecoff.o ecofflink.o" ;;
@@ -431,57 +461,61 @@ do
 				target64=true ;;
     h8300coff_vec)		tb="$tb coff-h8300.o reloc16.o" ;;
     h8500coff_vec)		tb="$tb coff-h8500.o reloc16.o" ;;
-    host_aout_vec)		tb="$tb host-aout.o aout32.o stab-syms.o" ;;
-    hp300bsd_vec)		tb="$tb hp300bsd.o aout32.o stab-syms.o" ;;
-    hp300hpux_vec)		tb="$tb hp300hpux.o aout32.o stab-syms.o" ;;
-    i386aout_vec)		tb="$tb i386aout.o aout32.o stab-syms.o" ;;
-    i386bsd_vec)		tb="$tb i386bsd.o aout32.o stab-syms.o" ;;
-    i386dynix_vec)		tb="$tb i386dynix.o aout32.o stab-syms.o" ;;
+    host_aout_vec)		tb="$tb host-aout.o aout32.o" ;;
+    hp300bsd_vec)		tb="$tb hp300bsd.o aout32.o" ;;
+    hp300hpux_vec)		tb="$tb hp300hpux.o aout32.o" ;;
+    i386aout_vec)		tb="$tb i386aout.o aout32.o" ;;
+    i386bsd_vec)		tb="$tb i386bsd.o aout32.o" ;;
     i386coff_vec)		tb="$tb coff-i386.o cofflink.o" ;;
+    i386dynix_vec)		tb="$tb i386dynix.o aout32.o" ;;
+    i386freebsd_vec)		tb="$tb i386freebsd.o aout32.o" ;;
     i386msdos_vec)		tb="$tb i386msdos.o" ;;
     i386pe_vec)			tb="$tb pe-i386.o cofflink.o " ;;
     i386pei_vec)		tb="$tb pei-i386.o cofflink.o" ;;
-    i386linux_vec)		tb="$tb i386linux.o aout32.o stab-syms.o" ;;
-    i386lynx_aout_vec)		tb="$tb i386lynx.o lynx-core.o aout32.o stab-syms.o" ;;
-    i386lynx_coff_vec)		tb="$tb cf-i386lynx.o cofflink.o lynx-core.o stab-syms.o" ;;
-    i386mach3_vec)		tb="$tb i386mach3.o aout32.o stab-syms.o" ;;
-    i386netbsd_vec)		tb="$tb i386netbsd.o aout32.o stab-syms.o" ;;
-    i386os9k_vec)		tb="$tb i386os9k.o aout32.o stab-syms.o" ;;
+    i386linux_vec)		tb="$tb i386linux.o aout32.o" ;;
+    i386lynx_aout_vec)		tb="$tb i386lynx.o lynx-core.o aout32.o" ;;
+    i386lynx_coff_vec)		tb="$tb cf-i386lynx.o cofflink.o lynx-core.o" ;;
+    i386mach3_vec)		tb="$tb i386mach3.o aout32.o" ;;
+    i386netbsd_vec)		tb="$tb i386netbsd.o aout32.o" ;;
+    i386os9k_vec)		tb="$tb i386os9k.o aout32.o" ;;
     i860coff_vec)		tb="$tb coff-i860.o cofflink.o" ;;
     icoff_big_vec)		tb="$tb coff-i960.o cofflink.o" ;;
     icoff_little_vec)		tb="$tb coff-i960.o cofflink.o" ;;
     ieee_vec)			tb="$tb ieee.o" ;;
     m68kcoff_vec)		tb="$tb coff-m68k.o cofflink.o" ;;
     m68kcoffun_vec)		tb="$tb coff-u68k.o coff-m68k.o cofflink.o" ;;
-    m68klynx_aout_vec)		tb="$tb m68klynx.o lynx-core.o aout32.o stab-syms.o" ;;
-    m68klynx_coff_vec)		tb="$tb cf-m68klynx.o coff-m68k.o cofflink.o lynx-core.o stab-syms.o" ;;
-    m68knetbsd_vec)		tb="$tb m68knetbsd.o aout32.o stab-syms.o" ;;
-    m68k4knetbsd_vec)		tb="$tb m68k4knetbsd.o aout32.o stab-syms.o" ;;
+    m68klinux_vec)		tb="$tb m68klinux.o aout32.o" ;;
+    m68klynx_aout_vec)		tb="$tb m68klynx.o lynx-core.o aout32.o" ;;
+    m68klynx_coff_vec)		tb="$tb cf-m68klynx.o coff-m68k.o cofflink.o lynx-core.o" ;;
+    m68knetbsd_vec)		tb="$tb m68knetbsd.o aout32.o" ;;
+    m68k4knetbsd_vec)		tb="$tb m68k4knetbsd.o aout32.o" ;;
+    m68kaux_coff_vec)		tb="$tb coff-aux.o coff-m68k.o cofflink.o" ;;
     m88kbcs_vec)		tb="$tb coff-m88k.o" ;;
-    newsos3_vec)		tb="$tb newsos3.o aout32.o stab-syms.o" ;;
+    newsos3_vec)		tb="$tb newsos3.o aout32.o" ;;
     nlm32_i386_vec)		tb="$tb nlm32-i386.o nlm32.o nlm.o" ;;
     nlm32_sparc_vec)		tb="$tb nlm32-sparc.o nlm32.o nlm.o" ;;
     nlm32_alpha_vec)		tb="$tb nlm32-alpha.o nlm32.o nlm.o"
 				target64=true ;;
-    riscix_vec)			tb="$tb aout32.o riscix.o stab-syms.o" ;;
+    riscix_vec)			tb="$tb aout32.o riscix.o" ;;
     nlm32_powerpc_vec)		tb="$tb nlm32-ppc.o nlm32.o nlm.o" ;;
-    pc532netbsd_vec)		tb="$tb ns32knetbsd.o aout-ns32k.o stab-syms.o" ;;
-    pc532machaout_vec)		tb="$tb pc532-mach.o aout-ns32k.o stab-syms.o" ;;
+    pc532netbsd_vec)		tb="$tb ns32knetbsd.o aout-ns32k.o" ;;
+    pc532machaout_vec)		tb="$tb pc532-mach.o aout-ns32k.o" ;;
     pmac_xcoff_vec)		tb="$tb coff-pmac.o xcofflink.o" ;;
     rs6000coff_vec)		tb="$tb coff-rs6000.o xcofflink.o" ;;
     bfd_powerpc_pe_vec)         tb="$tb pe-ppc.o cofflink.o" ;;  
     bfd_powerpcle_pe_vec)       tb="$tb pe-ppc.o cofflink.o" ;;  
     bfd_powerpc_pei_vec)        tb="$tb pei-ppc.o cofflink.o" ;;
     bfd_powerpcle_pei_vec)      tb="$tb pei-ppc.o cofflink.o" ;;
+    ppcboot_vec)		tb="$tb ppcboot.o" ;;
     shcoff_vec)			tb="$tb coff-sh.o cofflink.o" ;;
     shlcoff_vec)		tb="$tb coff-sh.o cofflink.o" ;;
     som_vec)			tb="$tb som.o" ;;
-    sparclynx_aout_vec)		tb="$tb sparclynx.o lynx-core.o aout32.o stab-syms.o" ;;
-    sparclynx_coff_vec)		tb="$tb cf-sparclynx.o lynx-core.o stab-syms.o" ;;
-    sparcnetbsd_vec)		tb="$tb sparcnetbsd.o aout32.o stab-syms.o" ;;
+    sparclynx_aout_vec)		tb="$tb sparclynx.o lynx-core.o aout32.o" ;;
+    sparclynx_coff_vec)		tb="$tb cf-sparclynx.o lynx-core.o" ;;
+    sparcnetbsd_vec)		tb="$tb sparcnetbsd.o aout32.o" ;;
     sparccoff_vec)		tb="$tb coff-sparc.o" ;;
     srec_vec)			tb="$tb srec.o" ;;
-    sunos_big_vec)		tb="$tb sunos.o aout32.o stab-syms.o" ;;
+    sunos_big_vec)		tb="$tb sunos.o aout32.o" ;;
     symbolsrec_vec)		tb="$tb srec.o" ;;
     tekhex_vec)			tb="$tb tekhex.o" ;;
     we32kcoff_vec)		tb="$tb coff-we32k.o" ;;
@@ -536,6 +570,10 @@ case ${host64}-${target64}-${want64} in
   *true*)
     wordsize=64
     all_backends='$(BFD64_BACKENDS) $(BFD32_BACKENDS)'
+    if test -z "$GCC" && test "$HOST_64BIT_LONG" = "0"; then
+      AC_MSG_WARN([You have requested a 64 bit BFD configuration, but])
+      AC_MSG_WARN([your compiler may not have a 64 bit integral type])
+    fi
     ;;
   false-false-false)
     wordsize=32

@@ -7,31 +7,24 @@
 # in its per-host part.
 
 # This sets the following shell variables:
-#  CC			compiler to use (only if needed and not already set)
-#  CFLAGS		override CFLAGS (only if needed and not already set)
-#  LDFLAGS		override LDFLAGS (only if needed and not already set)
-#  AR			archiver to use (only if needed and not already set)
-#  RANLIB		ranlib to use (only if needed and not already set)
 #  HDEFINES		host specific compiler options
 #  host64		set to true if this is a 64 bit host
 #  HOST_64BIT_TYPE	host 64 bit type
+#  SHLIB_CC		compiler to use when building shared library
+#  SHLIB_CFLAGS		flags to use when building shared library
+#  PICFLAG		may be set to flag to use to compile PIC
+#  SHLINK		may be set to the name to link the shared library to
+#  ALLLIBS		may be set to libraries to build
+#  HLDFLAGS		LDFLAGS specific to the host
+#  RPATH_ENVVAR		environment variable used to find shared libraries
 
 HDEFINES=
 host64=false
 HOST_64BIT_TYPE=
 
 case "${host}" in
-# WHEN ADDING ENTRIES TO THIS MATRIX:
-#  Make sure that the left side always has two dashes.  Otherwise you
-#  can get spurious matches.  Even for unambiguous cases, do this as a
-#  convention, else the table becomes a real mess to understand and maintain.
-#
-# Note that these entries cannot be fully alphabetical.  Don't try.
-# The order of matching is critical when multiple lines could match.
 
 alpha-*-*)		host64=true; HOST_64BIT_TYPE=long ;;
-
-a29k-*-*)		CC=${CC-u3cc}; AR=${AR-u3ar} ;;
 
 hppa*-*-hpux*)		HDEFINES=-DHOST_HPPAHPUX ;;
 hppa*-*-hiux*)		HDEFINES=-DHOST_HPPAHPUX ;;
@@ -41,47 +34,98 @@ hppa*-*-osf*)		HDEFINES=-DHOST_HPPAOSF ;;
 i[345]86-sequent-bsd*)	HDEFINES=-Dshared=genshared ;;
 i[345]86-sequent-sysv4*) ;;
 i[345]86-sequent-sysv*)	HDEFINES=-Dshared=genshared ;;
-i[345]86-ncr*-sysv4*)	CC=${CC-/usr/ccs/ATT/cc}
-			test -z "$CFLAGS" && CFLAGS=" "
-			;;
-i[345]86-*-go32*)	test -z "$CC" && CC="i386-go32-gcc -fno-omit-frame-pointer -O2 -Wl,-S"
-			AR=${AR-i386-go32-ar}
-			RANLIB=${RANLIB-i386-go32-ranlib}
-			;;
-i[345]86-*-win32)	test -z "$CC" && CC="i386-win32-gcc -O2"
-			AR=${AR-i386-win32-ar}
-			RANLIB=${RANLIB-i386-win32-ranlib}
-			;;
 
 mips-dec-netbsd*)	;;
 mips-dec-openbsd*)	;;
 mips-dec-*)		HDEFINES="-G 4"	;;
-mips-sgi-irix3*)	HDEFINES="-G 4"
-			test -z "$LDFLAGS" && LDFLAGS=-lmalloc
-			;;
-mips-sgi-irix4*)	HDEFINES="-G 4"
-			test -z "$LDFLAGS" && LDFLAGS=-lmalloc
-			;;
+mips-sgi-irix3*)	HDEFINES="-G 4" ;;
+mips-sgi-irix4*)	HDEFINES="-G 4" ;;
 mips-*-sysv4*)		;;
 mips-*-sysv*)		HDEFINES="-G 4" ;;
 mips-*-riscos*)		HDEFINES="-G 4" ;;
 
-m68*-apollo*-sysv*)	# sef@cygnus.com says this is how to compile
-			# on an apollo in the SysV environment.
-			test -z "$CC" && CC="cc -A nansi -A cpu,3000 -A runtype,any -A systype,any -DSHORT_ENUM_BUG -DUSG -U__STDC__ -Dm68000=mc68000"
-			;;
 m68*-hp-hpux*)		HDEFINES=-DHOST_HP300HPUX ;;
 
-m88*-*-dgux*)		test -z "$CC" && CC="gcc -Wall -ansi -D__using_DGUX"
-			;;
+esac
 
-romp-*-*)		# hc/pcc just can't cut it
-			CC=${CC-gcc}
-			;;
+# If we are configuring with --enable-shared, adjust the shared
+# library support based on the host.  This support must work for both
+# the BFD and the opcodes libraries.
+HLDFLAGS=
+RPATH_ENVVAR=LD_LIBRARY_PATH
+SHLIB_CC='$(CC)'
+SHLIB_CFLAGS='-shared'
+if [ "${shared}" = "true" ]; then
+  case "${host}" in
+  hppa*-*-*)		picfrag=${srcdir}/../config/mh-papic ;;
+  i[3456]86-*-*)	picfrag=${srcdir}/../config/mh-x86pic ;;
+  *-*-*)		picfrag=${srcdir}/../config/mh-${host_cpu}pic ;;
+  esac
+  if [ -f "${picfrag}" ]; then
+    pic=`sed -n -e 's/^PICFLAG[ 	]*=[ 	]*\(.*\)$/\1/p' ${picfrag}`
+    if [ -n "${pic}" ]; then
+      PICFLAG=${pic}
+    fi
+  fi
 
-rs6000-*-aix4)		HDEFINES=-DHOST_AIX ;;
-rs6000-*-*)		HDEFINES=-DHOST_AIX ;;
-powerpc-*-aix4*)	HDEFINES=-DHOST_AIX ;;
-powerpc-*-aix*)		HDEFINES=-DHOST_AIX ;;
+  case "${host}" in
+  *-dec-osf*)
+    # -fpic is not needed on the Alpha.
+    PICFLAG=
+    HLDFLAGS='-rpath $(libdir)'
+    SHLIB_CFLAGS='-shared -Wl,-soname,$(SONAME)'
+    ;;
+  *-*-hpux*)
+    # HP/UX uses .sl for shared libraries.
+    SHLINK=`echo ${SHLINK} | sed -e 's/so$/sl/'`
+    SHLIB_CFLAGS='-shared $(PICFLAG)'
+    HLDFLAGS='-Wl,+s,+b,$(libdir)'
+    RPATH_ENVVAR=SHLIB_PATH
+    ;;
+  *-*-irix5*)
+    # -fpic is not needed on Irix 5.
+    PICFLAG=
+    SHLIB_CFLAGS='-shared -Wl,-soname,$(SONAME)'
+    HLDFLAGS='-Wl,-rpath,$(libdir)'
+    ;;
+  *-*-linux*aout*)
+    ;;
+  *-*-linux*)
+    SHLIB_CFLAGS='-shared -Wl,-soname,$(SONAME)'
+    case "${libdir}" in
+      /lib | /usr/lib) ;;
+      *) HLDFLAGS='-Wl,-rpath,$(libdir)' ;;
+    esac
+    ;;
+  *-*-sysv4* | *-*-solaris*)
+    SHLIB_CFLAGS='-shared -h $(SONAME)'
+    HLDFLAGS='-R $(libdir)'
+    ;;
+  *-*-sunos*)
+    # Build a libTARGET-bfd.so.VERSION symlink in the object directory.
+    ALLLIBS=`echo ${ALLLIBS} | sed -e 's/\$(SHLINK)/stamp-tshlink/'`
+    ;;
+  esac
+fi
 
+# On SunOS, if the linker supports the -rpath option, use it to
+# prevent ../bfd and ../opcodes from being included in the run time
+# search path.
+case "${host}" in
+  *-*-sunos*)
+    echo 'main () { }' > conftest.c
+    ${CC} -o conftest -Wl,-rpath= conftest.c >/dev/null 2>conftest.t
+    if grep 'unrecognized' conftest.t >/dev/null 2>&1; then
+      :
+    elif grep 'No such file' conftest.t >/dev/null 2>&1; then
+      :
+    elif grep 'do not mix' conftest.t >/dev/null 2>&1; then
+      :
+    elif [ "${shared}" = "true" ]; then
+      HLDFLAGS='-Wl,-rpath=$(libdir)'
+    else
+      HLDFLAGS='-Wl,-rpath='
+    fi
+    rm -f conftest.t conftest.c conftest
+    ;;
 esac

@@ -1,3 +1,4 @@
+#! /bin/bash
 ##############################################################################
 
 ## This file is a shell script fragment that supplies the information
@@ -32,17 +33,17 @@ fi
 
 # these tools are built for the host environment
 #
-host_tools="byacc flex bison binutils ld gas gcc gdb make patch
+host_tools="texinfo byacc flex bison binutils ld gas gcc gdb make patch
 	    prms send-pr gprof gdbtest tgas etc expect dejagnu sim
             m4 autoconf ispell grep diff rcs cvs fileutils shellutils
 	    textutils wdiff find emacs emacs19 uudecode hello tar gzip indent
-	    recode release sed utils"
+	    recode release sed utils guile perl apache inet"
 
 
 # these libraries are built for the target environment, and are built after
 # the host libraries and the host tools (which may be a cross compiler)
 #
-target_libs="target-libiberty target-libgloss target-newlib target-libio target-librx target-libstdc++ target-libg++ target-winsup"
+target_libs="target-libiberty target-libgloss target-newlib target-libio target-librx target-libstdc++ target-libg++"
 
 
 # these tools are built using the target libs, and are intended to run only
@@ -66,7 +67,7 @@ target_tools="target-examples target-groff"
 #
 native_only="autoconf cvs emacs emacs19 fileutils find grep gzip hello
 	     indent ispell m4 rcs recode sed shellutils tar textutils gash
-	     uudecode wdiff gprof target-groff"
+	     uudecode wdiff gprof target-groff guile perl apache inet"
 
 # directories to be built in a cross environment only
 #
@@ -97,10 +98,12 @@ case "${host}" in
   m68k-hp-hpux*)	  host_makefile_frag=config/mh-hp300 ;;
   m68k-apollo-sysv*)      host_makefile_frag=config/mh-apollo68 ;;
   m68k-apollo-bsd*)       host_makefile_frag=config/mh-a68bsd ;;
+  m68k-*-linux*)	  host_makefile_frag=config/mh-linux ;;
   m88k-dg-dgux*)	  host_makefile_frag=config/mh-dgux ;;
   m88k-harris-cxux*)	  host_makefile_frag=config/mh-cxux ;;
   m88k-motorola-sysv*)    host_makefile_frag=config/mh-delta88;;
   mips*-dec-ultrix*)      host_makefile_frag=config/mh-decstation ;;
+  mips*-nec-sysv4*)	  host_makefile_frag=config/mh-necv4 ;;
   mips*-sgi-irix[56]*)    host_makefile_frag=config/mh-irix5 ;;
   mips*-sgi-irix4*)       host_makefile_frag=config/mh-irix4 ;;
   mips*-sgi-irix3*)       host_makefile_frag=config/mh-sysv ;;
@@ -108,13 +111,13 @@ case "${host}" in
   mips*-*-sysv*)	  host_makefile_frag=config/mh-riscos ;;
   i[345]86-ncr-sysv4.3)   host_makefile_frag=config/mh-ncrsvr43 ;;
   i[345]86-ncr-sysv4*)    host_makefile_frag=config/mh-ncr3000 ;;
+  i[345]86-*-sco3.2v5*)   host_makefile_frag=config/mh-sysv ;;
   i[345]86-*-sco*)        host_makefile_frag=config/mh-sco ;;
   i[345]86-*-isc*)	  host_makefile_frag=config/mh-sysv ;;
   i[345]86-*-linux*)      host_makefile_frag=config/mh-linux ;;
   i[345]86-*-solaris2*)   host_makefile_frag=config/mh-sysv4 ;;
   i[345]86-*-aix*)	  host_makefile_frag=config/mh-aix386 ;;
   i[345]86-*-go32*)	  host_makefile_frag=config/mh-go32 ;;
-  i[345]86-*-win32)	  host_makefile_frag=config/mh-i386win32 ;;
   vax-*-ultrix2*)         host_makefile_frag=config/mh-vaxult2 ;;
   *-*-solaris2*)          host_makefile_frag=config/mh-solaris ;;
   m68k-sun-sunos*)	  host_makefile_frag=config/mh-sun3 ;;
@@ -128,9 +131,20 @@ case "${host}" in
 esac
 fi
 
-# See if we can extract a definition of CC from the fragment.
-if [ -z "${CC}" ]; then
-  if [ -n "${host_makefile_frag}" -a -f "${srcdir}/${host_makefile_frag}" ]; then
+# If we aren't going to be using gcc, see if we can extract a definition
+# of CC from the fragment.
+if [ -z "${CC}" -a "${build}" = "${host}" ]; then
+  IFS="${IFS= 	}"; save_ifs="$IFS"; IFS="${IFS}:"
+  found=
+  for dir in $PATH; do
+    test -z "$dir" && dir=.
+    if test -f $dir/gcc; then
+      found=yes
+      break
+    fi
+  done
+  IFS="$save_ifs"
+  if [ -z "${found}" -a -n "${host_makefile_frag}" -a -f "${srcdir}/${host_makefile_frag}" ]; then
     xx=`sed -n -e 's/^[ 	]*CC[ 	]*=[ 	]*\(.*\)$/\1/p' < ${srcdir}/${host_makefile_frag}`
     if [ -n "${xx}" ] ; then
       CC=$xx
@@ -138,48 +152,30 @@ if [ -z "${CC}" ]; then
   fi
 fi
 
-# The Solaris /usr/ucb/cc compiler does not appear to work.
-case "${host}" in
-  sparc-sun-solaris2*)
-      if [ "`/usr/bin/which ${CC-cc}`" = "/usr/ucb/cc" ] ; then
-          could_use=
-          [ -d /opt/SUNWspro/bin ] && could_use="/opt/SUNWspro/bin"
-          if [ -d /opt/cygnus/bin ] ; then
-              if [ "$could_use" = "" ] ; then
-                  could_use="/opt/cygnus/bin"
-              else
-                  could_use="$could_use or /opt/cygnus/bin"
-              fi
-          fi
-        if [ "$could_use" = "" ] ; then
-            echo "Warning: compilation may fail because you're using"
-            echo "/usr/ucb/cc.  You should change your PATH or CC "
-            echo "variable and rerun configure."
-        else
-            echo "Warning: compilation may fail because you're using"
-            echo "/usr/ucb/cc, when you should use the C compiler from"
-            echo "$could_use.  You should change your"
-            echo "PATH or CC variable and rerun configure."
-        fi
-      fi
-  ;;
-esac
-
 # We default to --with-shared on platforms where -fpic is meaningless.
 # Well, we don't yet, but we will.
 if false && [ "${host}" = "${target}" ] && [ x${enable_shared} = x ]; then
   case "${target}" in
     alpha-dec-osf*)	enable_shared=yes ;;
+    alpha-*-linux*)	enable_shared=yes ;;
     mips-sgi-irix5*)	enable_shared=yes ;;
     *)			enable_shared=no ;;
   esac
 fi
 
-if [ x${enable_shared} = xyes ]; then
+case "${enable_shared}" in
+  yes) shared=yes ;;
+  no) shared=no ;;
+  "") shared=no ;;
+  *) shared=yes ;;
+esac
+
+if [ x${shared} = xyes ]; then
   waugh=
   case "${host}" in
     hppa*)		waugh=config/mh-papic ;;
     i[345]86-*)		waugh=config/mh-x86pic ;;
+    sparc64-*)		waugh=config/mh-sparcpic ;;
     *)			waugh=config/mh-${host_cpu}pic ;;
   esac
   if [ -f ${srcdir}/${waugh} ]; then
@@ -297,6 +293,16 @@ elif [ x${with_newlib} = xyes ]; then
   skipdirs=`echo " ${skipdirs} " | sed -e 's/ target-newlib / /'`
 fi
 
+# Default to using --with-stabs for certain targets.
+if [ x${with_stabs} = x ]; then
+  case "${target}" in
+  mips*-*-* | alpha*-*-osf* | i[345]86*-*-sysv4* | i[345]86*-*-unixware*)
+    with_stabs=yes;
+    withoptions="${withoptions} --with-stabs"
+    ;;
+  esac
+fi
+
 # Handle ${copy_dirs}
 set fnord ${copy_dirs}
 shift
@@ -331,7 +337,7 @@ done
 # Configure extra directories which are host specific
 
 case "${host}" in
-  i[345]86-*-win32* | i[345]86-*-go32*)
+	i[345]86-*-go32*)
 	  configdirs="$configdirs dosrel" ;;
 esac
 
@@ -343,39 +349,49 @@ noconfigdirs=""
 
 case "${host}" in
   i[345]86-*-vsta)
-    noconfigdirs="tcl expect dejagnu make texinfo bison patch flex byacc send-pr gprof uudecode dejagnu diff"
+    noconfigdirs="tcl expect dejagnu make texinfo bison patch flex byacc send-pr gprof uudecode dejagnu diff guile perl apache inet"
     ;;
   i[345]86-*-go32)
-    noconfigdirs="tcl tk expect dejagnu make texinfo bison patch flex byacc send-pr gprof uudecode dejagnu diff"
+    noconfigdirs="tcl tk expect dejagnu make texinfo bison patch flex byacc send-pr gprof uudecode dejagnu diff guile perl apache inet"
 	;;
-  i[345]86-*-win32)
-     noconfigdirs="patch diff flex make tk tcl expect dejagnu cvs autoconf texinfo bison send-pr gprof rcs"
+  *-*-cygwin32)
+     noconfigdirs="patch diff tk tcl expect dejagnu cvs autoconf texinfo bison send-pr gprof rcs guile perl apache inet"
+    ;;
+  ppc*-*-pe)
+     noconfigdirs="patch diff make tk tcl expect dejagnu cvs autoconf texinfo bison send-pr gprof rcs guile perl apache inet"
     ;;
 esac
 
 
 case "${target}" in
   *-*-netware)
-    noconfigdirs="$noconfigdirs target-libg++ target-libstdc++ target-librx target-newlib target-libiberty"
+    noconfigdirs="$noconfigdirs target-libg++ target-libstdc++ target-librx target-newlib target-libiberty target-libgloss"
     ;;
-  *-*-vxworks5.1)
-    noconfigdirs="$noconfigdirs target-newlib"
+  *-*-vxworks*)
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss"
+    ;;
+  *-*-ose)
+    noconfigdirs="$noconfigdirs target-libgloss"
     ;;
   alpha-dec-osf*)
     # ld works, but does not support shared libraries.  emacs doesn't
     # work.  newlib is not 64 bit ready.  I'm not sure about fileutils or grep.
-    noconfigdirs="$noconfigdirs ld emacs fileutils grep target-newlib"
+    # gas doesn't generate exception information.
+    noconfigdirs="$noconfigdirs gas ld emacs fileutils grep target-newlib target-libgloss"
     ;;
   alpha*-*-*)
     # newlib is not 64 bit ready
-    noconfigdirs="$noconfigdirs target-newlib"
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss"
+    ;;
+  arm-*-pe*)
+    noconfigdirs="$noconfigdirs target-libgloss"
     ;;
   arm-*-riscix*)
-    noconfigdirs="$noconfigdirs ld"
+    noconfigdirs="$noconfigdirs ld target-libgloss"
     ;;
   h8300*-*-* | \
   h8500-*-*)
-    noconfigdirs="$noconfigdirs target-libg++ target-libstdc++ target-libio target-librx"
+    noconfigdirs="$noconfigdirs target-libg++ target-libstdc++ target-libio target-librx target-libgloss"
     ;;
   hppa*-*-*elf* | \
   hppa*-*-lites*)
@@ -395,27 +411,34 @@ case "${target}" in
     # but don't build gdb
     noconfigdirs="$noconfigdirs gdb target-libg++ target-libstdc++ target-libio target-librx"
     ;;
-
-  i[345]86-*-win32)
-    # Can't build gdb for win32 if not native.
-    # make/glob's configure uses some AC_TRY_RUN type tests
-    if [ x${is_cross_compiler} = xyes ]; then
-	    noconfigdirs="$noconfigdirs gdb tk make"
-    fi
+  *-*-cygwin32)
+    target_configdirs="$target_configdirs target-winsup"
+    noconfigdirs="$noconfigdirs tcl tk expect target-libgloss"
     # always build newlib.
     skipdirs=`echo " ${skipdirs} " | sed -e 's/ target-newlib / /'`
+
+    # Can't build gdb for cygwin32 if not native.
+    case "${host}:${build}" in
+      *-*-cygwin32 | *-*-cygwin32:*-*-cygwin32) ;; # keep gdb
+      *) noconfigdirs="$noconfigdirs gdb"
+    esac
     ;;    
   i[345]86-*-pe)
-    noconfigdirs="$noconfigdirs target-libg++ target-libstdc++ target-libio target-librx"
+    noconfigdirs="$noconfigdirs target-libg++ target-libstdc++ target-libio target-librx target-libgloss"
+    ;;
+  i[345]86-*-sco3.2v5*)
+    # The linker does not yet know about weak symbols in COFF,
+    # and is not configured to handle mixed ELF and COFF.
+    noconfigdirs="$noconfigdirs gprof ld target-libgloss"
     ;;
   i[345]86-*-sco*)
-    noconfigdirs="$noconfigdirs gprof"
+    noconfigdirs="$noconfigdirs gprof target-libgloss"
     ;;
   i[345]86-*-solaris2*)
     # The linker does static linking correctly, but the Solaris C library
     # has bugs such that some important functions won't work when statically
     # linked.  (See man pages for getpwuid, for example.)
-    noconfigdirs="$noconfigdirs ld"
+    noconfigdirs="$noconfigdirs ld target-libgloss"
     ;;
   i[345]86-*-sysv4*)
     # The SYSV4 C compiler doesn't handle Emacs correctly
@@ -424,48 +447,56 @@ case "${target}" in
         *) ;;
     esac
     # but that's okay since emacs doesn't work anyway
-    noconfigdirs="$noconfigdirs emacs emacs19"
+    noconfigdirs="$noconfigdirs emacs emacs19 target-libgloss"
     ;;
   powerpc-*-aix*)
     # copied from rs6000-*-* entry
-    noconfigdirs="$noconfigdirs gprof cvs"
+    noconfigdirs="$noconfigdirs gprof cvs target-libgloss"
+    # This is needed until gcc and ld are fixed to work together.
+    use_gnu_ld=no
     ;;
-  powerpc*-*-winnt* | powerpc*-*-pe*)
-    noconfigdirs="$noconfigdirs gdb"
+  powerpc*-*-winnt* | powerpc*-*-pe* | ppc*-*-pe)
+    target_configdirs="$target_configdirs target-winsup"
+    noconfigdirs="$noconfigdirs gdb tcl tk make expect target-libgloss"
+    # always build newlib.
+    skipdirs=`echo " ${skipdirs} " | sed -e 's/ target-newlib / /'`
+    ;;
+    # This is temporary until we can link against shared libraries
+  powerpcle-*-solaris*)
+    noconfigdirs="$noconfigdirs gdb sim make tcl tk expect"
     ;;
   rs6000-*-lynxos*)
     # The CVS server code doesn't work on the RS/6000
     # Newlib makes problems for libg++ in crosses.
     noconfigdirs="$noconfigdirs target-newlib gprof cvs"
     ;;
+  rs6000-*-aix*)
+    noconfigdirs="$noconfigdirs gprof"
+    # This is needed until gcc and ld are fixed to work together.
+    use_gnu_ld=no
+    ;;
   rs6000-*-*)
     noconfigdirs="$noconfigdirs gprof"
     ;;
-  m68k-*-netbsd*)
-    noconfigdirs="$noconfigdirs gdb"
-    ;;
-  m68k-*-openbsd*)
-    noconfigdirs="$noconfigdirs gdb"
-    ;;
   m68k-apollo-*)
-    noconfigdirs="$noconfigdirs ld binutils gprof"
+    noconfigdirs="$noconfigdirs ld binutils gprof target-libgloss"
     ;;
   mips*-*-irix5*)
     # The GNU linker does not support shared libraries.
     # emacs is emacs 18, which does not work on Irix 5 (emacs19 does work)
-    noconfigdirs="$noconfigdirs ld gprof emacs"
+    noconfigdirs="$noconfigdirs ld gprof emacs target-libgloss"
     ;;
   mips*-dec-bsd*)
-    noconfigdirs="$noconfigdirs gprof"
+    noconfigdirs="$noconfigdirs gprof target-libgloss"
     ;;
   mips*-*-bsd*)
-    noconfigdirs="$noconfigdirs gprof"
+    noconfigdirs="$noconfigdirs gprof target-libgloss"
     ;;
   mips*-*-*)
     noconfigdirs="$noconfigdirs gprof"
     ;;
   romp-*-*)
-    noconfigdirs="$noconfigdirs bfd binutils ld gas opcodes"
+    noconfigdirs="$noconfigdirs bfd binutils ld gas opcodes target-libgloss"
     ;;
   sh-*-*)
     case "${host}" in
@@ -473,26 +504,27 @@ case "${target}" in
       i[345]86-*-go32) ;; # don't add gprof back in
       *) skipdirs=`echo " ${skipdirs} " | sed -e 's/ gprof / /'` ;;
     esac
+    noconfigdirs="$noconfigdirs target-libgloss"
     ;;
   sparc-*-sunos4*)
     if [ x${is_cross_compiler} != xno ] ; then
-           noconfigdirs="$noconfigdirs gdb gdbtest target-newlib"
+           noconfigdirs="$noconfigdirs gdb gdbtest target-newlib target-libgloss"
     else
            use_gnu_ld=no
     fi
     ;;
   v810-*-*)
-    noconfigdirs="$noconfigdirs bfd binutils gas gcc gdb ld target-libg++ target-libstdc++ opcodes"
+    noconfigdirs="$noconfigdirs bfd binutils gas gcc gdb ld target-libio target-libg++ target-libstdc++ opcodes target-libgloss"
     ;;
   vax-*-vms)
-    noconfigdirs="$noconfigdirs bfd binutils gdb ld target-newlib opcodes"
+    noconfigdirs="$noconfigdirs bfd binutils gdb ld target-newlib opcodes target-libgloss"
     ;;
   vax-*-*)
-    noconfigdirs="$noconfigdirs target-newlib"
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     ;;
   *-*-lynxos*)
     # Newlib makes problems for libg++ in crosses.
-    noconfigdirs="$noconfigdirs target-newlib"
+    noconfigdirs="$noconfigdirs target-newlib target-libgloss"
     ;; 
   *-*-macos* | \
   *-*-mpw*)
@@ -501,10 +533,36 @@ case "${target}" in
     ;;    
 esac
 
+# targets that need a second pass
+case "${target}" in
+  *-gm-magic*)
+    noconfigdirs="$noconfigdirs target-libgloss"
+    ;;
+esac
+
+# If we aren't building newlib, then don't build libgloss, since libgloss
+# depends upon some newlib header files.
+case "${noconfigdirs}" in
+  *target-libgloss*) ;;
+  *target-newlib*) noconfigdirs="$noconfigdirs target-libgloss" ;;
+esac
+
 # If we are building a Canadian Cross, discard tools that can not be built
 # using a cross compiler.  FIXME: These tools should be fixed.
 if [ "${build}" != "${host}" ]; then
   noconfigdirs="$noconfigdirs expect dejagnu make texinfo diff"
+fi
+
+# Make sure we don't let GNU ld be added if we didn't want it.
+if [ x$with_gnu_ld = xno ]; then
+  use_gnu_ld=no
+  noconfigdirs="$noconfigdirs ld"
+fi
+
+# Make sure we don't let GNU as be added if we didn't want it.
+if [ x$with_gnu_as = xno ]; then
+  use_gnu_as=no
+  noconfigdirs="$noconfigdirs gas"
 fi
 
 # Remove the entries in $skipdirs and $noconfigdirs from $configdirs and
@@ -564,7 +622,7 @@ if [ -z "${norecursion}" -a -n "${configdirs}" ]; then
   done
 fi
 if [ -z "${norecursion}" -a -n "${target_configdirs}" ]; then
-  for i in `echo ${target_configdirs} | sed -e s/target-//` ; do
+  for i in `echo ${target_configdirs} | sed -e s/target-//g` ; do
     rm -f ${target_subdir}/$i/Makefile
   done
 fi
@@ -631,7 +689,7 @@ if [ x${use_gnu_ld} = x ] ; then
   fi
 fi
 
-if [ x${enable_shared} = xyes ]; then
+if [ x${shared} = xyes ]; then
   case "${target}" in
     hppa*)		target_makefile_frag=config/mt-papic ;;
     i[345]86-*)		target_makefile_frag=config/mt-x86pic ;;
@@ -641,12 +699,86 @@ fi
 
 # post-target:
 
+# Make sure that the compiler is able to generate an executable.  If it
+# can't, we are probably in trouble.  We don't care whether we can run the
+# executable--we might be using a cross compiler--we only care whether it
+# can be created.  At this point the main configure script has set CC.
+echo "int main () { return 0; }" > conftest.c
+${CC} -o conftest ${CFLAGS} ${CPPFLAGS} ${LDFLAGS} conftest.c
+if [ $? = 0 ] && [ -s conftest ]; then
+  :
+else
+  echo 1>&2 "*** The command '${CC} -o conftest ${CFLAGS} ${CPPFLAGS} ${LDFLAGS} conftest.c' failed."
+  echo 1>&2 "*** You must set the environment variable CC to a working compiler."
+  rm -f conftest*
+  exit 1
+fi
+rm -f conftest*
+
+# The Solaris /usr/ucb/cc compiler does not appear to work.
+case "${host}" in
+  sparc-sun-solaris2*)
+      CCBASE="`echo ${CC-cc} | sed 's/ .*$//'`"
+      if [ "`/usr/bin/which $CCBASE`" = "/usr/ucb/cc" ] ; then
+          could_use=
+          [ -d /opt/SUNWspro/bin ] && could_use="/opt/SUNWspro/bin"
+          if [ -d /opt/cygnus/bin ] ; then
+              if [ "$could_use" = "" ] ; then
+                  could_use="/opt/cygnus/bin"
+              else
+                  could_use="$could_use or /opt/cygnus/bin"
+              fi
+          fi
+        if [ "$could_use" = "" ] ; then
+            echo "Warning: compilation may fail because you're using"
+            echo "/usr/ucb/cc.  You should change your PATH or CC "
+            echo "variable and rerun configure."
+        else
+            echo "Warning: compilation may fail because you're using"
+            echo "/usr/ucb/cc, when you should use the C compiler from"
+            echo "$could_use.  You should change your"
+            echo "PATH or CC variable and rerun configure."
+        fi
+      fi
+  ;;
+esac
+
+# If --enable-shared was set, we must set LD_LIBRARY_PATH so that the
+# binutils tools will find libbfd.so.
+if [ "${shared}" = "yes" ]; then
+  sed -e 's/^SET_LIB_PATH[ 	]*=.*$/SET_LIB_PATH = $(REALLY_SET_LIB_PATH)/' \
+      Makefile > Makefile.tem
+  rm -f Makefile
+  mv -f Makefile.tem Makefile
+
+  case "${host}" in
+  *-*-hpux*)
+    sed -e 's/RPATH_ENVVAR[ 	]*=.*$/RPATH_ENVVAR = SHLIB_PATH/' \
+	Makefile > Makefile.tem
+    rm -f Makefile
+    mv -f Makefile.tem Makefile
+    ;;
+  esac
+fi
+
 # Record target_configdirs and the configure arguments in Makefile.
 target_configdirs=`echo "${target_configdirs}" | sed -e 's/target-//g'`
 targargs=`echo "${arguments}" | \
-	sed -e 's/--*norecursion//' \
-	    -e 's/--*cache[a-z-]*=[^ 	]*//' \
-	    -e 's/--*cache[a-z-]*[ 	][ 	]*[^ 	]*//'`
+	sed -e 's/--norecursion//' \
+	    -e 's/--cache[a-z-]*=[^ 	]*//' \
+	    -e 's/--ho[a-z-]*=[^ 	]*//' \
+	    -e 's/--ta[a-z-]*=[^ 	]*//'`
+
+# Passing a --with-cross-host argument lets the target libraries know
+# whether they are being built with a cross-compiler or being built
+# native.  However, it would be better to use other mechanisms to make the
+# sorts of decisions they want to make on this basis.  Please consider
+# this option to be deprecated.  FIXME.
+if [ x${is_cross_compiler} = xyes ]; then
+  targargs="--with-cross-host=${host_alias} ${targargs}"
+fi
+
+targargs="--host=${target_alias} ${targargs}"
 sed -e "s:^TARGET_CONFIGDIRS[ 	]*=.*$:TARGET_CONFIGDIRS = ${target_configdirs}:" \
     -e "s%^CONFIG_ARGUMENTS[ 	]*=.*$%CONFIG_ARGUMENTS = ${targargs}%" \
     -e "s%^TARGET_SUBDIR[ 	]*=.*$%TARGET_SUBDIR = ${target_subdir}%" \

@@ -117,7 +117,7 @@ case "${targ}" in
     ;;
 
   i[345]86-*-sysv4* | i[345]86-*-unixware | i[345]86-*-solaris2* | \
-  i[345]86-*-elf)
+  i[345]86-*-elf | i[345]86-*-sco*elf* | i[345]86-*-freebsdelf*)
     targ_defvec=bfd_elf32_i386_vec
     targ_selvecs=i386coff_vec
     ;;
@@ -129,8 +129,13 @@ case "${targ}" in
     targ_defvec=i386dynix_vec
     targ_underscore=yes
     ;;
-  i[345]86-*-bsd* | i[345]86-*-freebsd*)
+  i[345]86-*-bsd*)
     targ_defvec=i386bsd_vec
+    targ_underscore=yes
+    ;;
+  i[345]86-*-freebsd*)
+    targ_defvec=i386freebsd_vec
+    targ_selvecs=i386bsd_vec
     targ_underscore=yes
     ;;
   i[345]86-*-netbsd*)
@@ -183,7 +188,7 @@ case "${targ}" in
     targ_defvec=bfd_elf32_i386_vec
     targ_selvecs="i386msdos_vec i386aout_vec"
     ;;
-  i[345]86-*-win32 | i[345]86-*-winnt | i[345]86-*-pe)
+  i[345]86-*-cygwin32 | i[345]86-*-winnt | i[345]86-*-pe)
     targ_defvec=i386pe_vec
     targ_selvecs="i386pe_vec i386pei_vec"
     ;;
@@ -203,17 +208,17 @@ case "${targ}" in
 
   i960-*-vxworks4* | i960-*-vxworks5.0)
     targ_defvec=b_out_vec_little_host
-    targ_selvecs="b_out_vec_big_host icoff_little_vec icoff_big_vec"
+    targ_selvecs="b_out_vec_big_host icoff_little_vec icoff_big_vec ieee_vec"
     targ_underscore=yes
     ;;
   i960-*-vxworks5.* | i960-*-coff* | i960-*-sysv*)
     targ_defvec=icoff_little_vec
-    targ_selvecs="icoff_big_vec b_out_vec_little_host b_out_vec_big_host"
+    targ_selvecs="icoff_big_vec b_out_vec_little_host b_out_vec_big_host ieee_vec"
     targ_underscore=yes
     ;;
   i960-*-vxworks* | i960-*-aout* | i960-*-bout* | i960-*-nindy*)
     targ_defvec=b_out_vec_little_host
-    targ_selvecs="b_out_vec_big_host icoff_little_vec icoff_big_vec"
+    targ_selvecs="b_out_vec_big_host icoff_little_vec icoff_big_vec ieee_vec"
     targ_underscore=yes
     ;;
 
@@ -230,23 +235,32 @@ case "${targ}" in
     ;;
   m68*-*-aout*)
     targ_defvec=aout0_big_vec
-    # We include this here, rather than making a separate cisco
+    # We include cisco_core_vec here, rather than making a separate cisco
     # configuration, so that cisco-core.c gets routinely tested at
     # least for compilation.
-    targ_selvecs=cisco_core_vec
+    targ_selvecs="cisco_core_vec ieee_vec"
     targ_underscore=yes
     ;;
   m68*-*-elf* | m68*-*-sysv4*)
     targ_defvec=bfd_elf32_m68k_vec
-    targ_selvecs=m68kcoff_vec
+    targ_selvecs="m68kcoff_vec ieee_vec"
     ;;
   m68*-*-coff* | m68*-*-sysv*)
     targ_defvec=m68kcoff_vec
-    targ_selvecs="m68kcoff_vec versados_vec"
+    targ_selvecs="m68kcoff_vec versados_vec ieee_vec"
     ;;
   m68*-*-hpux*)
     targ_defvec=hp300hpux_vec
     targ_underscore=yes
+    ;;
+  m68*-*-linuxaout*)
+    targ_defvec=m68klinux_vec
+    targ_selvecs=bfd_elf32_m68k_vec
+    targ_underscore=yes
+    ;;
+  m68*-*-linux*)
+    targ_defvec=bfd_elf32_m68k_vec
+    targ_selvecs=m68klinux_vec
     ;;
   m68*-*-lynxos*)
     targ_defvec=m68klynx_coff_vec
@@ -280,6 +294,18 @@ case "${targ}" in
   m68*-ericsson-*)
     targ_defvec=sunos_big_vec
     targ_selvecs="m68kcoff_vec tekhex_vec"
+    targ_underscore=yes
+    ;;
+  m68*-cbm-*)
+    targ_defvec=bfd_elf32_m68k_vec
+    targ_selvecs=m68kcoff_vec
+    ;;
+  m68*-apple-aux*)
+    targ_defvec=m68kaux_coff_vec
+    ;;
+  m68*-*-psos*)
+    targ_defvec=bfd_elf32_m68k_vec
+    targ_selvecs=ieee_vec
     targ_underscore=yes
     ;;
 
@@ -346,11 +372,11 @@ case "${targ}" in
     ;;
   mips*el-*-elf*)
     targ_defvec=bfd_elf32_littlemips_vec
-    targ_selvecs=bfd_elf32_bigmips_vec
+    targ_selvecs="bfd_elf32_bigmips_vec bfd_elf64_bigmips_vec bfd_elf64_littlemips_vec"
     ;;
   mips*-*-elf*)
     targ_defvec=bfd_elf32_bigmips_vec
-    targ_selvecs=bfd_elf32_littlemips_vec
+    targ_selvecs="bfd_elf32_littlemips_vec bfd_elf64_bigmips_vec bfd_elf64_littlemips_vec"
     ;;
 
   ns32k-pc532-mach* | ns32k-pc532-ux*)
@@ -369,9 +395,10 @@ case "${targ}" in
   powerpc-*-aix*)
     targ_defvec=rs6000coff_vec
     ;;
-  powerpc-*-elf* | powerpc-*-sysv4* | powerpc-*-eabi* | powerpc-*-solaris2*)
+  powerpc-*-elf* | powerpc-*-sysv4* | powerpc-*-eabi* | \
+  powerpc-*-solaris2* | powerpc-*-linux*)
     targ_defvec=bfd_elf32_powerpc_vec
-    targ_selvecs="rs6000coff_vec bfd_elf32_powerpcle_vec bfd_powerpcle_pei_vec bfd_powerpc_pei_vec bfd_powerpcle_pe_vec bfd_powerpc_pe_vec"
+    targ_selvecs="rs6000coff_vec bfd_elf32_powerpcle_vec bfd_powerpcle_pei_vec bfd_powerpc_pei_vec bfd_powerpcle_pe_vec bfd_powerpc_pe_vec ppcboot_vec"
     ;;
   powerpc-*-macos* | powerpc-*-mpw*)
     targ_defvec=pmac_xcoff_vec
@@ -381,18 +408,13 @@ case "${targ}" in
     targ_selvecs="nlm32_powerpc_vec rs6000coff_vec"
     ;;
   powerpcle-*-elf* | powerpcle-*-sysv4* | powerpcle-*-eabi* | \
-  powerpcle-*-solaris2*)
+  powerpcle-*-solaris2* | powerpcle-*-linux*)
     targ_defvec=bfd_elf32_powerpcle_vec
-    targ_selvecs="rs6000coff_vec bfd_elf32_powerpc_vec bfd_powerpcle_pei_vec bfd_powerpc_pei_vec bfd_powerpcle_pe_vec bfd_powerpc_pe_vec"
+    targ_selvecs="rs6000coff_vec bfd_elf32_powerpc_vec bfd_powerpcle_pei_vec bfd_powerpc_pei_vec bfd_powerpcle_pe_vec bfd_powerpc_pe_vec ppcboot_vec"
     ;;
 
-  powerpcle-*-pe | powerpcle-*-winnt*)
+  powerpcle-*-pe | powerpcle-*-winnt* | powerpcle-*-cygwin32)
     targ_defvec=bfd_powerpcle_pe_vec
-    targ_selvecs="bfd_powerpcle_pei_vec bfd_powerpc_pei_vec bfd_powerpcle_pe_vec bfd_powerpc_pe_vec"
-    ;;
-
-  powerpc-*-pe | powerpc-*-winnt*)
-    targ_defvec=bfd_powerpc_pe_vec
     targ_selvecs="bfd_powerpcle_pei_vec bfd_powerpc_pei_vec bfd_powerpcle_pe_vec bfd_powerpc_pe_vec"
     ;;
 
@@ -412,7 +434,7 @@ case "${targ}" in
     targ_defvec=sparcnetbsd_vec
     targ_underscore=yes
     ;;
-  sparc-*-solaris2* | sparc-*-sysv4*)
+  sparc-*-elf* | sparc-*-sysv4* | sparc-*-solaris2*)
     targ_defvec=bfd_elf32_sparc_vec
     targ_selvecs=sunos_big_vec
     ;;
@@ -420,7 +442,7 @@ case "${targ}" in
     targ_defvec=sunos_big_vec
     targ_underscore=yes
     ;;
-  sparc64-*-elf* | sparc64-*-sysv4* | sparc64-*-solaris2*)
+  sparc64-*-elf*)
     targ_defvec=bfd_elf64_sparc_vec
     targ_selvecs=bfd_elf32_sparc_vec
     ;;    
