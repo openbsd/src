@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 1997/11/13 08:21:54 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 1998/05/25 09:35:06 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -483,7 +483,7 @@ cfcrosscheck(cf, what, nv)
 			    devminor >= 0)
 				goto loop;
 		(void)fprintf(stderr,
-		    "%s%d: %s says %s on %s, but there's no %s\n",
+		    "%s:%d: %s says %s on %s, but there's no %s\n",
 		    conffile, cf->cf_lineno,
 		    cf->cf_name, what, nv->nv_str, nv->nv_str);
 		errs++;
