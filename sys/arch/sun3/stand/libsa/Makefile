@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1995/09/23 03:42:34 gwr Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 1995/11/18 06:47:43 gwr Exp $
 
 LIB=sa
 
@@ -26,10 +26,12 @@ SRC_here= clock.c dev_disk.c devopen.c dvma.c \
 
 SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_sun3} ${SRC_here}
 
+CLEANFILES+=	SRT0.o SRT1.o
+
 # DBG= -DDEBUG -DNETIF_DEBUG -DNFS_DEBUG -DRPC_DEBUG \
 # 	-DNET_DEBUG -DRARP_DEBUG -DETHER_DEBUG
 
-DEFS= -DCOMPAT_UFS
+DEFS= -DSTANDALONE -DCOMPAT_UFS
 INCL= -I${.CURDIR} -I${S}/lib/libsa -I${S}
 COPTS= -msoft-float
 CFLAGS= -O ${COPTS} ${DEFS} ${DBG} ${INCL}

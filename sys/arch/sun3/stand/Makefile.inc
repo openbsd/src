@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 1995/10/13 21:44:11 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.5.2.1 1995/11/18 06:47:31 gwr Exp $
 
 .if defined(SA_PROG)
 
@@ -9,11 +9,12 @@ S=	${.CURDIR}/../../../..
 RELOC?= 240000
 DEFS?= -DSTANDALONE
 INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
-COPTS?= -msoft-float ${DEFS} ${INCL}
+COPTS?= -msoft-float ${DEFS} ${DBG} ${INCL}
 
 LIBSA?= ../libsa
 SRTOBJ?= ${LIBSA}/SRT0.o ${LIBSA}/SRT1.o
-LIBS?= ${LIBSA}/libsa.a
+SRTLIB?= ${LIBSA}/libsa.a
+
 MDEC_DIR?=/usr/mdec
 
 SRCS?=	${SA_PROG}.c
@@ -29,14 +30,21 @@ ${SA_PROG}.bin : ${SA_PROG}
 	dd if=a.out ibs=32 skip=1 of=$@ obs=1k conv=osync
 	-rm -f a.out
 
-${SA_PROG} : ${SRTOBJ} ${OBJS} ${LIBS}
-	${LD} -N -T ${RELOC} -e start -o $@ ${SRTOBJ} ${OBJS} ${LIBS}
+${SA_PROG} : ${OBJS} ${DPADD}
+	${LD} -N -T ${RELOC} -e start -o $@ \
+	  ${SRTOBJ} ${OBJS} ${LDADD} ${SRTLIB}
 	@size $@
 
 .if !target(clean)
 clean:
 	-rm -f a.out [Ee]rrs mklog core *.core
 	-rm -f ${CLEANFILES} *.o
+.endif
+
+.if !target(install)
+install: ${SA_PROG}.bin
+	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+	  ${SA_PROG}.bin ${DESTDIR}${MDEC_DIR}/${SA_PROG}
 .endif
 
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: README,v 1.2 1995/08/12 18:38:30 gwr Exp $ */
+/*	$NetBSD: README,v 1.2.2.1 1995/11/18 06:47:34 gwr Exp $ */
 
 The sun bootblocks are split into two parts: a small 1st-level program that
 gets written right after the superblock in a partition (and is hence limited
@@ -19,7 +19,10 @@ root filesystem (on `sd0a') using the file `/boot' as the second level
 boot program:
 
 	mount /dev/sd0a /mnt
-	installboot /mnt/ufsboot bootxx /dev/rsd0a
+	cd /usr/mdec
+	cp -p ufsboot /mnt/ufsboot
+	sync ; sleep 1 ; sync
+	./installboot -v /mnt/ufsboot bootxx /dev/rsd0a
 
 The above only works with securelevel <= 0 (see init.8 manual).
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.4 1995/11/07 23:01:40 gwr Exp $ */
+/*	$NetBSD: installboot.c,v 1.3.2.2 1995/11/18 06:47:40 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -292,6 +292,10 @@ int	devfd;
 	 * Open 2nd-level boot program and record the block numbers
 	 * it occupies on the filesystem represented by `devfd'.
 	 */
+
+	/* Make sure the (probably new) boot file is on disk. */
+	sync(); sleep(1);
+
 	if ((fd = open(boot, O_RDONLY)) < 0)
 		err(1, "open: %s", boot);
 

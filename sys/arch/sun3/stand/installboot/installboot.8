@@ -1,4 +1,4 @@
-.\"	$Id: installboot.8,v 1.1.1.1 1995/10/18 08:51:57 deraadt Exp $
+.\"	$Id: installboot.8,v 1.2 1995/11/19 13:53:12 deraadt Exp $
 .\"
 .Dd 31 May 1995
 .Dt INSTALLBOOT 8
@@ -51,7 +51,8 @@ the raw device, but that is not allowed with the kernel
 .Nm securelevel
 variable set to a value greater than zero (the default), so
 .Nm installboot
-only works in single-user mode (or insecure mode - see init.8).
+only works in single-user mode (or insecure mode - see 
+.Xr init 8 ).
 .Sh "SEE ALSO"
-.Xr disklabel 8
+.Xr disklabel 8 ,
 .Xr init 8
