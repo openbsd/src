@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.45 1997/10/26 22:33:00 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.46 1997/10/28 23:33:49 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -399,8 +399,10 @@ biosopen(struct open_file *f, ...)
 		return ENXIO;
 
 	bootdev = bd->bios_info->bsd_dev;
-	bd->bsddev = bootdev = MAKEBOOTDEV(B_TYPE(bootdev), B_ADAPTOR(bootdev),
+	bd->bsddev = MAKEBOOTDEV(B_TYPE(bootdev), B_ADAPTOR(bootdev),
 		B_CONTROLLER(bootdev), unit, part);
+	bootdev = MAKEBOOTDEV(B_TYPE(bootdev), B_ADAPTOR(bootdev),
+		B_CONTROLLER(bootdev), B_UNIT(bootdev), part);
 
 #ifdef BIOS_DEBUG
 	if (debug) {
