@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslot.c,v 1.5 2004/07/15 18:04:16 brad Exp $ */
+/*	$OpenBSD: cardslot.c,v 1.6 2004/07/25 00:13:29 brad Exp $ */
 /*	$NetBSD: cardslot.c,v 1.9 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
@@ -249,7 +249,7 @@ cardslot_event_throw(sc, ev)
 	   ev == CARDSLOT_EVENT_REMOVAL_16 ? "16-bit Card removed" : "???"));
 
   if (NULL == (ce = (struct cardslot_event *)malloc(sizeof (struct cardslot_event), M_TEMP, M_NOWAIT))) {
-    panic("cardslot_enevt");
+    panic("cardslot_event");
   }
 
   ce->ce_type = ev;
