@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.171 2003/07/21 22:31:36 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.172 2003/07/29 19:47:22 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -287,23 +287,23 @@ void
 print_op(u_int8_t op, const char *a1, const char *a2)
 {
 	if (op == PF_OP_IRG)
-		printf("%s >< %s ", a1, a2);
+		printf(" %s >< %s", a1, a2);
 	else if (op == PF_OP_XRG)
-		printf("%s <> %s ", a1, a2);
+		printf(" %s <> %s", a1, a2);
 	else if (op == PF_OP_EQ)
-		printf("= %s ", a1);
+		printf(" = %s", a1);
 	else if (op == PF_OP_NE)
-		printf("!= %s ", a1);
+		printf(" != %s", a1);
 	else if (op == PF_OP_LT)
-		printf("< %s ", a1);
+		printf(" < %s", a1);
 	else if (op == PF_OP_LE)
-		printf("<= %s ", a1);
+		printf(" <= %s", a1);
 	else if (op == PF_OP_GT)
-		printf("> %s ", a1);
+		printf(" > %s", a1);
 	else if (op == PF_OP_GE)
-		printf(">= %s ", a1);
+		printf(" >= %s", a1);
 	else if (op == PF_OP_RRG)
-		printf("%s:%s ", a1, a2);
+		printf(" %s:%s", a1, a2);
 }
 
 void
@@ -317,7 +317,7 @@ print_port(u_int8_t op, u_int16_t p1, u_int16_t p2, const char *proto)
 	p2 = ntohs(p2);
 	snprintf(a1, sizeof(a1), "%u", p1);
 	snprintf(a2, sizeof(a2), "%u", p2);
-	printf("port ");
+	printf(" port");
 	if (s != NULL && (op == PF_OP_EQ || op == PF_OP_NE))
 		print_op(op, s->s_name, a2);
 	else
@@ -331,7 +331,7 @@ print_ugid(u_int8_t op, unsigned u1, unsigned u2, const char *t, unsigned umax)
 
 	snprintf(a1, sizeof(a1), "%u", u1);
 	snprintf(a2, sizeof(a2), "%u", u2);
-	printf("%s ", t);
+	printf(" %s", t);
 	if (u1 == umax && (op == PF_OP_EQ || op == PF_OP_NE))
 		print_op(op, "unknown", a2);
 	else
@@ -360,23 +360,21 @@ print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
 	    PF_AZERO(&dst->addr.v.a.mask, AF_INET6) &&
 	    !src->not && !dst->not &&
 	    !src->port_op && !dst->port_op)
-		printf("all ");
+		printf(" all");
 	else {
-		printf("from ");
+		printf(" from ");
 		if (src->not)
 			printf("! ");
 		print_addr(&src->addr, af, verbose);
-		printf(" ");
 		if (src->port_op)
 			print_port(src->port_op, src->port[0],
 			    src->port[1],
 			    proto == IPPROTO_TCP ? "tcp" : "udp");
 
-		printf("to ");
+		printf(" to ");
 		if (dst->not)
 			printf("! ");
 		print_addr(&dst->addr, af, verbose);
-		printf(" ");
 		if (dst->port_op)
 			print_port(dst->port_op, dst->port[0],
 			    dst->port[1],
@@ -555,22 +553,22 @@ print_rule(struct pf_rule *r, int verbose)
 	if (verbose)
 		printf("@%d ", r->nr);
 	if (r->action > PF_NORDR)
-		printf("action(%d) ", r->action);
+		printf("action(%d)", r->action);
 	else if (r->anchorname[0])
-		printf("%s %s ", anchortypes[r->action], r->anchorname);
+		printf("%s %s", anchortypes[r->action], r->anchorname);
 	else {
-		printf("%s ", actiontypes[r->action]);
+		printf("%s", actiontypes[r->action]);
 		if (r->natpass)
-			printf("pass ");
+			printf(" pass");
 	}
 	if (r->action == PF_DROP) {
 		if (r->rule_flag & PFRULE_RETURN)
-			printf("return ");
+			printf(" return");
 		else if (r->rule_flag & PFRULE_RETURNRST) {
 			if (!r->return_ttl)
-				printf("return-rst ");
+				printf(" return-rst");
 			else
-				printf("return-rst(ttl %d) ", r->return_ttl);
+				printf(" return-rst(ttl %d)", r->return_ttl);
 		} else if (r->rule_flag & PFRULE_RETURNICMP) {
 			const struct icmpcodeent	*ic, *ic6;
 
@@ -581,77 +579,77 @@ print_rule(struct pf_rule *r, int verbose)
 
 			switch(r->af) {
 			case AF_INET:
-				printf("return-icmp");
+				printf(" return-icmp");
 				if (ic == NULL)
-					printf("(%u) ", r->return_icmp & 255);
+					printf("(%u)", r->return_icmp & 255);
 				else
-					printf("(%s) ", ic->name);
+					printf("(%s)", ic->name);
 				break;
 			case AF_INET6:
-				printf("return-icmp6");
+				printf(" return-icmp6");
 				if (ic6 == NULL)
-					printf("(%u) ", r->return_icmp6 & 255);
+					printf("(%u)", r->return_icmp6 & 255);
 				else
-					printf("(%s) ", ic6->name);
+					printf("(%s)", ic6->name);
 				break;
 			default:
-				printf("return-icmp");
+				printf(" return-icmp");
 				if (ic == NULL)
 					printf("(%u, ", r->return_icmp & 255);
 				else
 					printf("(%s, ", ic->name);
 				if (ic6 == NULL)
-					printf("%u) ", r->return_icmp6 & 255);
+					printf("%u)", r->return_icmp6 & 255);
 				else
-					printf("%s) ", ic6->name);
+					printf("%s)", ic6->name);
 				break;
 			}
 		} else
-			printf("drop ");
+			printf(" drop");
 	}
 	if (r->direction == PF_IN)
-		printf("in ");
+		printf(" in");
 	else if (r->direction == PF_OUT)
-		printf("out ");
+		printf(" out");
 	if (r->log == 1)
-		printf("log ");
+		printf(" log");
 	else if (r->log == 2)
-		printf("log-all ");
+		printf(" log-all");
 	if (r->quick)
-		printf("quick ");
+		printf(" quick");
 	if (r->ifname[0]) {
 		if (r->ifnot)
-			printf("on ! %s ", r->ifname);
+			printf(" on ! %s", r->ifname);
 		else
-			printf("on %s ", r->ifname);
+			printf(" on %s", r->ifname);
 	}
 	if (r->rt) {
 		if (r->rt == PF_ROUTETO)
-			printf("route-to ");
+			printf(" route-to");
 		else if (r->rt == PF_REPLYTO)
-			printf("reply-to ");
+			printf(" reply-to");
 		else if (r->rt == PF_DUPTO)
-			printf("dup-to ");
+			printf(" dup-to");
 		else if (r->rt == PF_FASTROUTE)
-			printf("fastroute ");
+			printf(" fastroute");
 		if (r->rt != PF_FASTROUTE) {
-			print_pool(&r->rpool, 0, 0, r->af, PF_PASS);
 			printf(" ");
+			print_pool(&r->rpool, 0, 0, r->af, PF_PASS);
 		}
 	}
 	if (r->af) {
 		if (r->af == AF_INET)
-			printf("inet ");
+			printf(" inet");
 		else
-			printf("inet6 ");
+			printf(" inet6");
 	}
 	if (r->proto) {
 		struct protoent	*p;
 
 		if ((p = getprotobynumber(r->proto)) != NULL)
-			printf("proto %s ", p->p_name);
+			printf(" proto %s", p->p_name);
 		else
-			printf("proto %u ", r->proto);
+			printf(" proto %u", r->proto);
 	}
 	print_fromto(&r->src, &r->dst, r->af, r->proto, verbose);
 	if (r->uid.op)
@@ -661,42 +659,41 @@ print_rule(struct pf_rule *r, int verbose)
 		print_ugid(r->gid.op, r->gid.gid[0], r->gid.gid[1], "group",
 		    GID_MAX);
 	if (r->flags || r->flagset) {
-		printf("flags ");
+		printf(" flags ");
 		print_flags(r->flags);
 		printf("/");
 		print_flags(r->flagset);
-		printf(" ");
 	}
 	if (r->type) {
 		const struct icmptypeent	*it;
 
 		it = geticmptypebynumber(r->type-1, r->af);
 		if (r->af != AF_INET6)
-			printf("icmp-type");
+			printf(" icmp-type");
 		else
-			printf("icmp6-type");
+			printf(" icmp6-type");
 		if (it != NULL)
-			printf(" %s ", it->name);
+			printf(" %s", it->name);
 		else
-			printf(" %u ", r->type-1);
+			printf(" %u", r->type-1);
 		if (r->code) {
 			const struct icmpcodeent	*ic;
 
 			ic = geticmpcodebynumber(r->type-1, r->code-1, r->af);
 			if (ic != NULL)
-				printf("code %s ", ic->name);
+				printf(" code %s", ic->name);
 			else
-				printf("code %u ", r->code-1);
+				printf(" code %u", r->code-1);
 		}
 	}
 	if (r->tos)
-		printf("tos 0x%2.2x ", r->tos);
+		printf(" tos 0x%2.2x", r->tos);
 	if (r->keep_state == PF_STATE_NORMAL)
-		printf("keep state ");
+		printf(" keep state");
 	else if (r->keep_state == PF_STATE_MODULATE)
-		printf("modulate state ");
+		printf(" modulate state");
 	else if (r->keep_state == PF_STATE_SYNPROXY)
-		printf("synproxy state ");
+		printf(" synproxy state");
 	opts = 0;
 	if (r->max_states)
 		opts = 1;
@@ -704,7 +701,7 @@ print_rule(struct pf_rule *r, int verbose)
 		if (r->timeout[i])
 			opts = 1;
 	if (opts) {
-		printf("(");
+		printf(" (");
 		if (r->max_states) {
 			printf("max %u", r->max_states);
 			opts = 0;
@@ -717,47 +714,47 @@ print_rule(struct pf_rule *r, int verbose)
 				printf("%s %u", pf_timeouts[i].name,
 				    r->timeout[i]);
 			}
-		printf(") ");
+		printf(")");
 	}
 	if (r->rule_flag & PFRULE_FRAGMENT)
-		printf("fragment ");
+		printf(" fragment");
 	if (r->rule_flag & PFRULE_NODF)
-		printf("no-df ");
+		printf(" no-df");
 	if (r->rule_flag & PFRULE_RANDOMID)
-		printf("random-id ");
+		printf(" random-id");
 	if (r->min_ttl)
-		printf("min-ttl %d ", r->min_ttl);
+		printf(" min-ttl %d", r->min_ttl);
 	if (r->max_mss)
-		printf("max-mss %d ", r->max_mss);
+		printf(" max-mss %d", r->max_mss);
 	if (r->allow_opts)
-		printf("allow-opts ");
+		printf(" allow-opts");
 	if (r->action == PF_SCRUB) {
 		if (r->rule_flag & PFRULE_REASSEMBLE_TCP)
-			printf("reassemble tcp ");
+			printf(" reassemble tcp");
 
 		if (r->rule_flag & PFRULE_FRAGDROP)
-			printf("fragment drop-ovl ");
+			printf(" fragment drop-ovl");
 		else if (r->rule_flag & PFRULE_FRAGCROP)
-			printf("fragment crop ");
+			printf(" fragment crop");
 		else
-			printf("fragment reassemble ");
+			printf(" fragment reassemble");
 	}
 	if (r->label[0])
-		printf("label \"%s\" ", r->label);
+		printf(" label \"%s\"", r->label);
 	if (r->qname[0] && r->pqname[0])
-		printf("queue(%s, %s) ", r->qname, r->pqname);
+		printf(" queue(%s, %s)", r->qname, r->pqname);
 	else if (r->qname[0])
-		printf("queue %s ", r->qname);
+		printf(" queue %s", r->qname);
 	if (r->tagname[0])
-		printf("tag %s ", r->tagname);
+		printf(" tag %s", r->tagname);
 	if (r->match_tagname[0]) {
 		if (r->match_tag_not)
-			printf("! ");
-		printf("tagged %s ", r->match_tagname);
+			printf(" !");
+		printf(" tagged %s", r->match_tagname);
 	}
 	if (!r->anchorname[0] && (r->action == PF_NAT ||
 	    r->action == PF_BINAT || r->action == PF_RDR)) {
-		printf("-> ");
+		printf(" -> ");
 		print_pool(&r->rpool, r->rpool.proxy_port[0],
 		    r->rpool.proxy_port[1], r->af, r->action);
 	}
