@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.16 2003/02/02 16:57:58 deraadt Exp $	*/
+/*	$OpenBSD: sod.c,v 1.17 2003/05/08 16:30:52 millert Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <nlist.h>
 #include <link.h>
+#include <limits.h>
 #include <machine/exec.h>
 #include <sys/mman.h>
 #include <string.h>
@@ -48,7 +49,6 @@
 #include "util.h"
 #include "sod.h"
 
-#define PAGSIZ	__LDPGSZ
 int _dl_hinthash(char *cp, int vmajor, int vminor);
 
 /*
@@ -129,8 +129,6 @@ backout:
 	sodp->sod_name = (long)_dl_strdup(name);
 }
 
-static int			hfd;
-static long			hsize;
 static struct hints_header	*hheader = NULL;
 static struct hints_bucket	*hbuckets;
 static char			*hstrtab;
@@ -141,48 +139,30 @@ char				*_dl_hint_search_path = NULL;
 void
 _dl_maphints(void)
 {
-	caddr_t		addr;
+	struct stat	sb;
+	caddr_t		addr = MAP_FAILED;
+	long		hsize = 0;
+	int		hfd;
 
-	if ((hfd = _dl_open(_PATH_LD_HINTS, O_RDONLY)) < 0) {
-		hheader = (struct hints_header *)-1;
-		return;
-	}
+	if ((hfd = _dl_open(_PATH_LD_HINTS, O_RDONLY)) < 0)
+		goto bad_hints;
 
-	hsize = PAGSIZ;
-	addr = (void *) _dl_mmap(0, hsize, PROT_READ, MAP_PRIVATE, hfd, 0);
+	if (_dl_fstat(hfd, &sb) != 0 || !S_ISREG(sb.st_mode) ||
+	    sb.st_size < sizeof(struct hints_header) || sb.st_size > LONG_MAX)
+		goto bad_hints;
 
-	if (addr == MAP_FAILED) {
-		_dl_close(hfd);
-		hheader = (struct hints_header *)-1;
-		return;
-	}
+	hsize = (long)sb.st_size;
+	addr = (void *)_dl_mmap(0, hsize, PROT_READ, MAP_PRIVATE, hfd, 0);
+	if (addr == MAP_FAILED)
+		goto bad_hints;
 
 	hheader = (struct hints_header *)addr;
-	if (HH_BADMAG(*hheader)) {
-		_dl_munmap(addr, hsize);
-		_dl_close(hfd);
-		hheader = (struct hints_header *)-1;
-		return;
-	}
+	if (HH_BADMAG(*hheader) || hheader->hh_ehints > hsize)
+		goto bad_hints;
 
 	if (hheader->hh_version != LD_HINTS_VERSION_1 &&
-	    hheader->hh_version != LD_HINTS_VERSION_2) {
-		_dl_munmap(addr, hsize);
-		_dl_close(hfd);
-		hheader = (struct hints_header *)-1;
-		return;
-	}
-
-	if (hheader->hh_ehints > hsize) {
-		if ((caddr_t)_dl_mmap(addr+hsize, hheader->hh_ehints - hsize,
-		    PROT_READ, MAP_PRIVATE|MAP_FIXED,
-		    hfd, hsize) != (caddr_t)(addr+hsize)) {
-			_dl_munmap((caddr_t)hheader, hsize);
-			_dl_close(hfd);
-			hheader = (struct hints_header *)-1;
-			return;
-		}
-	}
+	    hheader->hh_version != LD_HINTS_VERSION_2)
+		goto bad_hints;
 
 	hbuckets = (struct hints_bucket *)(addr + hheader->hh_hashtab);
 	hstrtab = (char *)(addr + hheader->hh_strtab);
@@ -191,6 +171,15 @@ _dl_maphints(void)
 
 	/* close the file descriptor, leaving the hints mapped */
 	_dl_close(hfd);
+
+	return;
+
+bad_hints:
+	if (addr != MAP_FAILED)
+		_dl_munmap(addr, hsize);
+	if (hfd != -1)
+		_dl_close(hfd);
+	hheader = (struct hints_header *)-1;
 }
 
 char *
