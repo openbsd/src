@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.9 1997/11/09 23:05:09 niklas Exp $	*/
+/*	$OpenBSD: endian.h,v 1.10 1997/11/10 05:52:57 niklas Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -36,13 +36,13 @@
 
 #define	__swap32md(x) ({ \
     register u_int32_t __x = (x); \
-    __asm ("rorw #8, %0; swap %0; rorw #8, %0" : "=r" (__x) : "0" (__x)); \
+    __asm ("rorw #8, %0; swap %0; rorw #8, %0" : "=d" (__x) : "0" (__x)); \
     __x; \
 })
 
 #define	__swap16md(x) ({ \
     register u_int16_t __x = (x); \
-    __asm ("rorw #8, %0" : "=r" (__x) : "0" (__x)); \
+    __asm ("rorw #8, %0" : "=d" (__x) : "0" (__x)); \
     __x; \
 })
 
