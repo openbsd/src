@@ -210,7 +210,7 @@ usysdep_initialize (puuconf,iflags)
   if (iuuconf == UUCONF_NOT_FOUND)
     {
 #if HAVE_GETHOSTNAME
-      char ab[256];
+      char ab[MAXHOSTNAMELEN];
 
       if (gethostname (ab, sizeof ab - 1) < 0)
 	ulog (LOG_FATAL, "gethostname: %s", strerror (errno));
