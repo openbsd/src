@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.321 2003/02/16 21:30:13 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.322 2003/02/25 17:54:06 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1642,13 +1642,16 @@ pf_match_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[rs_num].active.ptr);
 	while (r && rm == NULL) {
-		struct pf_rule_addr	*src = NULL;
+		struct pf_rule_addr	*src = NULL, *dst = NULL;
 
 		if (r->action == PF_BINAT && direction == PF_IN) {
+			src = &r->dst;
 			if (r->rpool.cur != NULL)
-				src = &r->rpool.cur->addr;
-		} else
+				dst = &r->rpool.cur->addr;
+		} else {
 			src = &r->src;
+			dst = &r->dst;
+		}
 
 		r->evaluations++;
 		if (r->ifp != NULL && ((r->ifp != ifp && !r->ifnot) ||
@@ -1660,18 +1663,22 @@ pf_match_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 			r = r->skip[PF_SKIP_AF].ptr;
 		else if (r->proto && r->proto != proto)
 			r = r->skip[PF_SKIP_PROTO].ptr;
-		else if (src != NULL &&
-		    PF_MISMATCHAW(&src->addr, saddr, af, src->not))
-			r = r->skip[PF_SKIP_SRC_ADDR].ptr;
-		else if (src != NULL && src->port_op &&
-		    !pf_match_port(src->port_op, src->port[0],
-		    src->port[1], sport))
-			r = r->skip[PF_SKIP_SRC_PORT].ptr;
-		else if (PF_MISMATCHAW(&r->dst.addr, daddr, af, r->dst.not))
-			r = r->skip[PF_SKIP_DST_ADDR].ptr;
-		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
-		    r->dst.port[0], r->dst.port[1], dport))
-			r = r->skip[PF_SKIP_DST_PORT].ptr;
+		else if (PF_MISMATCHAW(&src->addr, saddr, af, src->not))
+			r = r->skip[src == &r->src ? PF_SKIP_SRC_ADDR :
+			    PF_SKIP_DST_ADDR].ptr;
+		else if (src->port_op && !pf_match_port(src->port_op,
+		    src->port[0], src->port[1], sport))
+			r = r->skip[src == &r->src ? PF_SKIP_SRC_PORT :
+			    PF_SKIP_DST_PORT].ptr;
+		else if (dst != NULL &&
+		    PF_MISMATCHAW(&dst->addr, daddr, af, dst->not))
+			r = dst == &r->dst ? r->skip[PF_SKIP_DST_ADDR].ptr :
+			    TAILQ_NEXT(r, entries);
+		else if (dst != NULL && dst->port_op &&
+		    !pf_match_port(dst->port_op, dst->port[0],
+		    dst->port[1], dport))
+			r = dst == &r->dst ? r->skip[PF_SKIP_DST_PORT].ptr :
+			    TAILQ_NEXT(r, entries);
 		else if (r->anchorname[0] && r->anchor == NULL)
 			r = TAILQ_NEXT(r, entries);
 		else if (r->anchor == NULL)
