@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.8 1996/09/06 08:53:43 maja Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.9 1996/09/06 12:43:41 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -757,6 +757,7 @@ userconf_common_dev(dev, len, unit, state, routine)
 
 }
 
+void
 userconf_add_read(prompt,field,dev,len,val)
 	char *prompt;
 	char field;
@@ -806,6 +807,7 @@ userconf_add_read(prompt,field,dev,len,val)
 	}
 }
 
+void
 userconf_add(dev,len,unit,state)
 	char *dev;
 	int len;
@@ -813,7 +815,6 @@ userconf_add(dev,len,unit,state)
 {
 	int i = 0, found = 0;
 	struct cfdata new = {0};
-	char cmd;
 	int  val, max_unit;
 
 	if (userconf_maxdev == userconf_totdev) {
