@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc/MAKEDEV.md,v 1.19 2003/06/18 18:08:59 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.62 2003/10/14 17:58:23 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.63 2003/10/15 02:01:04 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.8 2003/06/18 18:08:59 todd Exp 
 #
 #
