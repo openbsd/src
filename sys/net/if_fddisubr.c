@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.34 2003/10/17 21:04:58 mcbride Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.35 2003/10/25 19:31:05 mcbride Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -436,7 +436,7 @@ fddi_output(ifp, m0, dst, rt0)
 		int error;
 		error = carp_output(ifp, m, NULL, NULL);
 		if (error)
-			return (error);
+			goto bad;
 	}
 #endif
 

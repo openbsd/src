@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.71 2003/10/17 21:04:58 mcbride Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.72 2003/10/25 19:31:05 mcbride Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -565,7 +565,7 @@ ether_output(ifp, m0, dst, rt0)
 		int error;
 		error = carp_output(ifp, m, dst, NULL);
 		if (error)
-			return (error);
+			goto bad;
 	}
 #endif
 
