@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.26 1999/02/26 03:16:47 millert Exp $	*/
+/*	$OpenBSD: systm.h,v 1.27 1999/02/26 03:19:57 art Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -80,8 +80,10 @@ extern char copyright[];	/* system copyright */
 
 extern int nblkdev;		/* number of entries in bdevsw */
 extern int nchrdev;		/* number of entries in cdevsw */
+#if !defined(UVM)
 extern int nswdev;		/* number of swap devices */
 extern int nswap;		/* size of swap space */
+#endif
 
 extern int selwait;		/* select timeout address */
 
@@ -165,6 +167,10 @@ void	ttyprintf __P((struct tty *, const char *, ...))
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
 
 void	tablefull __P((const char *));
+
+#if defined(UVM)
+int	kcopy __P((const void *, void *, size_t));
+#endif
 
 void	bcopy __P((const void *, void *, size_t));
 void	ovbcopy __P((const void *, void *, size_t));
