@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.13 1999/07/10 01:51:10 aaron Exp $
+.\"	$OpenBSD: doc-common,v 1.14 1999/07/10 02:04:28 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -283,11 +283,9 @@
 .de hM
 .ev 1
 .pL
-.if !\\n(cR \{\
-'     sp \\n(Hmu
-.     tl @\\*(Hs\\*(hT\fP@\\*(Vs\\*(vT\fP@\\*(Hs\\*(hT\fP@
-'     sp \\n(Hmu
-.\}
+.if !\\n(cR 'sp \\n(Hmu
+.tl @\\*(Hs\\*(hT\fP@\\*(Vs\\*(vT\fP@\\*(Hs\\*(hT\fP@
+'sp \\n(Hmu
 .ev
 ..
 .de fM
