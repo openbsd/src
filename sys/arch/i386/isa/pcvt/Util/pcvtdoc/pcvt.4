@@ -83,13 +83,25 @@ features not available in
 .Xr pc 4
 standard console device driver. Besides the ability of handling
 multiple virtual screens,
-the probably most important is an emulation of a wide range
+probably the most important is an emulation of a wide range
 of DEC VT-220
 .if t \(tm
 .if n (TM)
 functionality. See
 .Sx Features
 for a detailed description.
+
+.Ss VT Keys
+Despite the complexity of options, if installed in a normal OpenBSD
+configuration with the default options, on a standard i386 architecture
+system, you can use multiple virtual terminals.
+The key sequence used to move among virtual terminals are,
+at least on a North American keyboard, 
+.Em CTRL+ALT+Fn,
+where 
+.Em n
+can be from one to four on the standard system, and higher if you
+have created addition /dev/ttyC* entries.
 
 .Ss Features
 .Bl -bullet
