@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.28 2005/02/03 17:47:27 mickey Exp $	*/
+/*	$OpenBSD: ami.c,v 1.29 2005/03/29 22:20:38 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -44,11 +44,12 @@
  *	Theo de Raadt.
  */
 
-/* #define	AMI_DEBUG */
+#define	AMI_DEBUG
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
@@ -62,17 +63,22 @@
 #include <dev/ic/amireg.h>
 #include <dev/ic/amivar.h>
 
+#include <dev/biovar.h>
+#include "bio.h"
+
 #ifdef AMI_DEBUG
 #define	AMI_DPRINTF(m,a)	if (ami_debug & (m)) printf a
 #define	AMI_D_CMD	0x0001
 #define	AMI_D_INTR	0x0002
 #define	AMI_D_MISC	0x0004
 #define	AMI_D_DMA	0x0008
+#define	AMI_D_IOCTL	0x0010
 int ami_debug = 0
-	| AMI_D_CMD
-	| AMI_D_INTR
+/*	| AMI_D_CMD */
+/*	| AMI_D_INTR */
 /*	| AMI_D_MISC */
 /*	| AMI_D_DMA */
+	| AMI_D_IOCTL
 	;
 #else
 #define	AMI_DPRINTF(m,a)	/* m, a */
@@ -125,6 +131,14 @@ int  ami_complete(struct ami_ccb *ccb);
 int  ami_done(struct ami_softc *sc, int idx);
 void ami_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
 int  ami_inquire(struct ami_softc *sc, u_int8_t op);
+
+#if NBIO > 0
+int ami_ioctl(struct device *, u_long, caddr_t);
+int ami_ioctl_alarm(struct ami_softc *, bioc_alarm *);
+int ami_ioctl_startstop( struct ami_softc *, bioc_startstop *);
+int ami_ioctl_status( struct ami_softc *, bioc_status *);
+int ami_ioctl_passthru(struct ami_softc *, bioc_scsicmd *);
+#endif
 
 struct ami_ccb *
 ami_get_ccb(sc)
@@ -531,7 +545,14 @@ ami_attach(sc)
 		printf("%s: firmware buggy, limiting access to first logical "
 		    "disk\n", sc->sc_dev.dv_xname);
 
+#if NBIO > 0
+        if (bio_register(&sc->sc_dev, ami_ioctl) != 0)
+                printf("%s: controller registration failed",
+                    sc->sc_dev.dv_xname);
+#endif  
+
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
+
 #if 0
 	rsc = malloc(sizeof(struct ami_rawsoftc) * sc->sc_channels,
 	    M_DEVBUF, M_NOWAIT);
@@ -1433,6 +1454,379 @@ ami_intr(v)
 	AMI_DPRINTF(AMI_D_INTR, ("exit "));
 	return (rv);
 }
+
+#if NBIO > 0
+int
+ami_ioctl(dev, cmd, addr)
+        struct device *dev;
+        u_long cmd;
+        caddr_t addr;
+{
+	int error = 0;
+	struct ami_softc *sc = (struct ami_softc *)dev;
+
+	if (sc->sc_quirks & AMI_BROKEN)
+		return ENODEV; /* can't do this to broken device for now */
+
+	switch (cmd) {
+	case BIOCPING:
+		((bioc_ping *)addr)->x++;
+
+		AMI_DPRINTF(AMI_D_IOCTL, ("%s: biocping: %x\n",
+		    sc->sc_dev.dv_xname, ((bioc_ping *)addr)->x));
+		break;
+
+	case BIOCCAPABILITIES:
+		((bioc_capabilities *)addr)->ioctls =
+		    BIOC_ALARM | BIOC_PING | BIOC_SCSICMD | BIOC_STARTSTOP |
+		    BIOC_STATUS;
+
+		((bioc_capabilities *)addr)->raid_types =
+		    BIOC_RAID0 | BIOC_RAID1 | BIOC_RAID5 |
+		    BIOC_RAID10 | BIOC_RAID50;
+
+		AMI_DPRINTF(AMI_D_IOCTL, ("%s: bioccapabilities:  ioctls: "
+		    "%016llx raid_types: %08lx\n",
+		    sc->sc_dev.dv_xname,
+		    ((bioc_capabilities *)addr)->ioctls,
+		    ((bioc_capabilities *)addr)->raid_types));
+		break;
+
+	case BIOCALARM:
+		error = ami_ioctl_alarm(sc, (bioc_alarm *)addr);
+		break;
+
+	case BIOCSTARTSTOP:
+		AMI_DPRINTF(AMI_D_IOCTL, ("start stop unit\n"));
+		error = ami_ioctl_startstop(sc, (bioc_startstop *)addr);
+		break;
+
+	case BIOCSTATUS:
+		AMI_DPRINTF(AMI_D_IOCTL, ("status\n"));
+		error = ami_ioctl_status(sc, (bioc_status *)addr);
+		break;
+
+	case BIOCSCSICMD:
+		AMI_DPRINTF(AMI_D_IOCTL, ("scsi cmd\n"));
+		error = ami_ioctl_passthru(sc, (bioc_scsicmd *)addr);
+		break;
+
+	default:
+		AMI_DPRINTF(AMI_D_IOCTL, ("%s: invalid ioctl\n",
+		    sc->sc_dev.dv_xname));
+		error = EINVAL;
+	}
+
+	return (error);
+}
+
+int
+ami_ioctl_alarm(sc, ra)
+        struct ami_softc *sc;
+	bioc_alarm *ra;
+{
+	int error = 0;
+	struct ami_ccb	*ccb;
+	struct ami_iocmd *cmd;
+	ami_lock_t lock;
+	void	*idata;
+	bus_dmamap_t idatamap;
+	bus_dma_segment_t idataseg[1];
+	paddr_t	pa;
+	u_int8_t *p;
+
+
+	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg,
+	    NBPG, 1, "ioctl data"))) {
+		ami_freemem(sc->dmat, &idatamap, idataseg,
+		    NBPG, 1, "ioctl data");
+		return ENOMEM;
+	}
+
+	pa = idataseg[0].ds_addr;
+	p = idata;
+
+	lock = AMI_LOCK_AMI(sc);
+
+	ccb = ami_get_ccb(sc);
+	ccb->ccb_data = NULL;
+	cmd = ccb->ccb_cmd;
+
+	cmd->acc_cmd = AMI_ALARM;
+	cmd->acc_io.aio_channel = 0;
+	cmd->acc_io.aio_param = 0;
+	cmd->acc_io.aio_data = htole32(pa);
+
+	switch(ra->opcode) {
+	case BIOCSALARM_DISABLE:
+		*p = AMI_ALARM_OFF;
+		break;
+
+	case BIOCSALARM_ENABLE:
+		*p = AMI_ALARM_ON;
+		break;
+
+	case BIOCSALARM_SILENCE:
+		*p = AMI_ALARM_QUIET;
+		break;
+
+	case BIOCGALARM_STATE:
+		*p = AMI_ALARM_GET;
+		break;
+
+	case BIOCSALARM_TEST:
+		*p = AMI_ALARM_TEST;
+		break;
+
+	default:
+		AMI_DPRINTF(AMI_D_IOCTL, ("%s: biocalarm invalid opcode %x\n",
+		    sc->sc_dev.dv_xname, ra->opcode));
+		ami_put_ccb(ccb);
+		AMI_UNLOCK_AMI(sc, lock);
+		return EINVAL;
+	}
+
+	AMI_DPRINTF(AMI_D_IOCTL, ("%s: biocalarm: in: %x ",
+	    sc->sc_dev.dv_xname, *p));
+
+
+	if (ami_cmd(ccb, 0, 1) == 0) {
+		AMI_DPRINTF(AMI_D_IOCTL, ("out %x\n", *p));
+		if (ra->opcode == BIOCGALARM_STATE)
+			ra->state = *p;
+		else
+			ra->state = 0;
+	}
+	else {
+		AMI_DPRINTF(AMI_D_IOCTL, ("failed\n"));
+		error = EINVAL;
+	}
+
+	AMI_UNLOCK_AMI(sc, lock);
+
+	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, 1, "ioctl data");
+
+	return (error);
+}
+
+int
+ami_ioctl_startstop(sc, bs)
+        struct ami_softc *sc;
+	bioc_startstop *bs;
+{
+	int error = 0;
+	struct ami_ccb	*ccb;
+	struct ami_iocmd *cmd;
+	ami_lock_t lock;
+
+	lock = AMI_LOCK_AMI(sc);
+
+	ccb = ami_get_ccb(sc);
+	ccb->ccb_data = NULL;
+	cmd = ccb->ccb_cmd;
+
+	AMI_DPRINTF(AMI_D_IOCTL, ("start/stop %d unit %d %d\n",
+	    bs->opcode, bs->channel, bs->target));
+
+	if (bs->opcode == BIOCSUNIT_START)
+		cmd->acc_cmd = AMI_STARTU;
+	else if (bs->opcode == BIOCSUNIT_STOP)
+		cmd->acc_cmd = AMI_STOPU;
+	else
+		return EINVAL;
+
+	/* FIXME test if channel and target are in range */
+	cmd->acc_io.aio_channel = bs->channel;
+	cmd->acc_io.aio_param = bs->target;
+	cmd->acc_io.aio_pad[0] = AMI_STARTU_SYNC;
+	cmd->acc_io.aio_data = NULL;
+
+	if (ami_cmd(ccb, 0, 1) == 0) {
+		AMI_DPRINTF(AMI_D_IOCTL, ("%s\n",
+		    bs->opcode  == BIOCSUNIT_START ? "started" : "stopped"));
+	}
+	else {
+		AMI_DPRINTF(AMI_D_IOCTL, ("failed\n"));
+		error = EINVAL;
+	}
+
+	AMI_UNLOCK_AMI(sc, lock);
+
+	return (error);
+}
+
+int
+ami_ioctl_status(sc, bs)
+        struct ami_softc *sc;
+	bioc_status *bs;
+{
+	int error = 0;
+	struct ami_ccb	*ccb;
+	struct ami_iocmd *cmd;
+	ami_lock_t lock;
+	void	*idata;
+	bus_dmamap_t idatamap;
+	bus_dma_segment_t idataseg[1];
+	paddr_t	pa;
+	u_int8_t *p;
+
+	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg,
+	    NBPG, 1, "ioctl data"))) {
+		ami_freemem(sc->dmat, &idatamap, idataseg,
+		    NBPG, 1, "ioctl data");
+		return ENOMEM;
+	}
+
+	pa = idataseg[0].ds_addr;
+	p = idata;
+
+	lock = AMI_LOCK_AMI(sc);
+
+	ccb = ami_get_ccb(sc);
+	ccb->ccb_data = NULL;
+	cmd = ccb->ccb_cmd;
+
+	cmd->acc_cmd = AMI_FCOP;
+	cmd->acc_io.aio_channel = AMI_FC_EINQ3;
+	cmd->acc_io.aio_param = AMI_FC_EINQ3_SOLICITED_FULL;
+	cmd->acc_io.aio_data = htole32(pa);
+
+	AMI_DPRINTF(AMI_D_IOCTL, ("status %d\n", bs->opcode));
+
+	if (ami_cmd(ccb, 0, 1) == 0) {
+		AMI_DPRINTF(AMI_D_IOCTL, ("success\n"));
+	}
+	else {
+		AMI_DPRINTF(AMI_D_IOCTL, ("failed\n"));
+		error = EINVAL;
+	}
+
+	AMI_UNLOCK_AMI(sc, lock);
+
+	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, 1, "ioctl data");
+
+	return (error);
+}
+
+int
+ami_ioctl_passthru(sc, bp)
+	struct ami_softc *sc;
+	bioc_scsicmd *bp;
+{
+	int error = 0;
+	struct ami_ccb	*ccb;
+	struct ami_iocmd *cmd;
+	struct ami_passthrough *ps;
+	ami_lock_t lock;
+	void	*idata;
+	bus_dmamap_t idatamap;
+	bus_dma_segment_t idataseg[1];
+	paddr_t	pa;
+	u_int8_t i = 0;
+
+	AMI_DPRINTF(AMI_D_IOCTL, ("in passthrough\n"));
+
+	/* FIXME: validate channel/target pair, or let the firmware bomb it?
+	 */
+
+	if (bp->cdblen > BIOC_MAX_CDB)
+		return (EINVAL);
+
+	if (bp->direction == BIOC_DIRIN &&
+	    (bp->datalen == 0 || bp->data == NULL))
+		/* if userland expects data give us a len and a pointer */
+		return (EINVAL); 
+
+	if (bp->datalen > 1024)
+		return (EINVAL); /* cap at 1k for now */
+
+	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg,
+	    NBPG, 1, "ioctl data"))) {
+		ami_freemem(sc->dmat, &idatamap, idataseg,
+		    NBPG, 1, "ioctl data");
+		return (ENOMEM);
+	}
+
+	pa = idataseg[0].ds_addr;
+	ps = idata;
+
+	lock = AMI_LOCK_AMI(sc);
+
+	ccb = ami_get_ccb(sc);
+	ccb->ccb_data = NULL;
+	cmd = ccb->ccb_cmd;
+
+	cmd->acc_cmd = AMI_PASSTHRU;
+	cmd->acc_passthru.apt_data = htole32(pa);
+
+	memset(ps, 0, sizeof *ps);
+
+	ps->apt_channel = bp->channel;
+	ps->apt_target = bp->target;
+	ps->apt_ncdb = bp->cdblen;
+	ps->apt_nsense = BIOC_MAX_SENSE; /* do not let userland dictate this */
+	memcpy(&ps->apt_cdb[0], &bp->cdb[0], bp->cdblen);
+
+	ps->apt_data = htole32(pa + sizeof *ps);
+	ps->apt_datalen = bp->datalen;
+
+	if (bp->direction == BIOC_DIROUT) {
+		/* userland sent us some data */
+		copyin(bp->data, idata + sizeof *ps, ps->apt_datalen);
+	}
+
+#ifdef AMI_DEBUG
+	AMI_DPRINTF(AMI_D_IOCTL, ("%s: ps->apt_channel: %x, ps->apt_target: %x "
+	    "ps->apt_cdblen: %x ps->apt_data: %x ps->apt_datalen: %x\n%s: cdb: "
+	    , sc->sc_dev.dv_xname, ps->apt_channel, ps->apt_target,
+	    ps->apt_ncdb, ps->apt_data, ps->apt_datalen, sc->sc_dev.dv_xname));
+
+	for (i = 0; i < ps->apt_ncdb; i++) {
+		printf("%0x ", ps->apt_cdb[i]);
+	}
+	printf("\n");
+#endif /* AMI_DEBUG */
+
+	if (ami_cmd(ccb, 0, 1) == 0) {
+		AMI_DPRINTF(AMI_D_IOCTL, ("cdb issued\n"));
+		if (bp->direction == BIOC_DIRIN) {
+			/* userland expects data */
+			bp->datalen = ps->apt_datalen;
+			AMI_DPRINTF(AMI_D_IOCTL, ("%s: passthrough %x\n",
+			    sc->sc_dev.dv_xname, ps->apt_datalen));
+			copyout(idata + sizeof *ps, bp->data, ps->apt_datalen);
+		}
+	}
+	else {
+		/* copy sense data back to user space */
+		memcpy(&bp->sensebuf[0], &ps->apt_sense[0], ps->apt_nsense);
+		bp->senselen = ps->apt_nsense;
+		bp->status = 1;                /* this needs to be checked in
+						* userland since error can't
+						* be set. Setting it prevents
+						* it from being coppied back to
+						* userland */
+
+#ifdef AMI_DEBUG
+		AMI_DPRINTF(AMI_D_IOCTL, ("%s: passthrough failed %x %x\n%s: ",
+		    sc->sc_dev.dv_xname, bp->status, bp->senselen, 
+		    sc->sc_dev.dv_xname));
+
+		for (i = 0; i < bp->senselen; i++) {
+			bp->sensebuf[i] = ps->apt_sense[i];
+			printf("%0x ", bp->sensebuf[i]);
+		}
+		printf("\n");
+#endif /* AMI_DEBUG */
+	}
+
+	AMI_UNLOCK_AMI(sc, lock);
+
+	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, 1, "ioctl data");
+
+	return (error);
+}
+#endif /* NBIO > 0 */
 
 #ifdef AMI_DEBUG
 void
