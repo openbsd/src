@@ -1,5 +1,5 @@
-/*	$OpenBSD: ping6.c,v 1.48 2002/05/31 01:11:31 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.155 2002/05/26 13:18:25 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.49 2002/09/08 14:31:28 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.160 2002/09/08 14:28:18 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -262,7 +262,7 @@ void	 pr_suptypes(struct icmp6_nodeinfo *, size_t);
 void	 pr_nodeaddr(struct icmp6_nodeinfo *, int);
 int	 myechoreply(const struct icmp6_hdr *);
 int	 mynireply(const struct icmp6_nodeinfo *);
-char	*dnsdecode(const u_char **, const u_char *, const u_char *, u_char *,
+char	*dnsdecode(const u_char **, const u_char *, const u_char *, char *,
 	    size_t);
 void	 pr_pack(u_char *, int, struct msghdr *);
 void	 pr_exthdrs(struct msghdr *);
@@ -919,7 +919,8 @@ main(argc, argv)
 		 * get the source address. XXX since we revoked the root
 		 * privilege, we cannot use a raw socket for this.
 		 */
-		int dummy, len = sizeof(src);
+		int dummy;
+		socklen_t len = sizeof(src);
 
 		if ((dummy = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 			err(1, "UDP socket");
@@ -1355,7 +1356,7 @@ dnsdecode(sp, ep, base, buf, bufsiz)
 	const u_char **sp;
 	const u_char *ep;
 	const u_char *base;	/*base for compressed name*/
-	u_char *buf;
+	char *buf;
 	size_t bufsiz;
 {
 	int i;
@@ -1372,7 +1373,7 @@ dnsdecode(sp, ep, base, buf, bufsiz)
 	while (cp < ep) {
 		i = *cp;
 		if (i == 0 || cp != *sp) {
-			if (strlcat(buf, ".", bufsiz) >= bufsiz)
+			if (strlcat((char *)buf, ".", bufsiz) >= bufsiz)
 				return NULL;	/*result overrun*/
 		}
 		if (i == 0)
@@ -2628,7 +2629,7 @@ nigroup(name)
 	char *name;
 {
 	char *p;
-	unsigned char *q;
+	char *q;
 	MD5_CTX ctxt;
 	u_int8_t digest[16];
 	u_int8_t c;
@@ -2646,8 +2647,8 @@ nigroup(name)
 	hbuf[(int)l] = '\0';
 
 	for (q = name; *q; q++) {
-		if (isupper(*q))
-			*q = tolower(*q);
+		if (isupper(*(unsigned char *)q))
+			*q = tolower(*(unsigned char *)q);
 	}
 
 	/* generate 8 bytes of pseudo-random value. */
@@ -2655,7 +2656,7 @@ nigroup(name)
 	MD5Init(&ctxt);
 	c = l & 0xff;
 	MD5Update(&ctxt, &c, sizeof(c));
-	MD5Update(&ctxt, name, l);
+	MD5Update(&ctxt, (unsigned char *)name, l);
 	MD5Final(digest, &ctxt);
 
 	if (inet_pton(AF_INET6, "ff02::2:0000:0000", &in6) != 1)
