@@ -17,7 +17,27 @@ system, using SunOS tools and gnu tar and gunzip (see `Installing from
 SunOS' below).
 
 
-Installing using the OpenBSD floppies.
+This section of the install document is really broken into several parts:
+
+	- About the "new" and "old" Install Scripts
+	- booting from the installation media
+	- the "new" single floppy or miniroot install script
+	- the "old" multiple floppy install script
+	- after completing an installation
+	- installing from Sun OS
+	- net boot or diskless setup information
+
+The first section explains why we have two differnt install scripts.
+The second section gets you up to the point where you've booted the kernel
+from whatever media or setup described in the previous section, to where
+you have to respond to prompts from the install script(s).  The next two
+sections describe the path through the "new" and "old" install scripts, 
+which are quite different, and the remainder are notes which might be
+useful, but outside the bounds of simple "how two" instructions.
+
+
+
+About the "new" and "old" Install Scripts:
 
 The OpenBSD/sparc floppies come in two varieties, a newer single floppy
 version that is not well tested and the older multi-floppy set.  Both
@@ -29,15 +49,50 @@ and filesystems.  The "floppy21.fs" image is the compressed ramdisk form,
 the "kc21.fs" paired with either "inst21.fs" or "upgr21.fs" comprise a
 bootable kernel floppy and associated install/upgrade filesystem floppy.
 
-To put the floppy image(s) on a floppy, you use a dd command like:
-  
-	# dd if=kc21.fs of=/dev/rfd0a bs=36b
+The CD-ROM, miniroot and netboot install scripts are essentially the
+same as the new single floppy install script.
 
-After transferring the floppy image(s) to disk, bring the system down by:
+
+Booting from the Installation Media:
+
+Prior to attempting an installation, you should make sure that everything
+of value on the target system has been backed up.  While installing OpenBSD
+does not neccessarily wipe out all the partitions on the hard disk, errors
+during the install process can have unforseen consequences and you will
+probably render the system unbootable if you start, but do not complete
+the installation.  Have the installation media for the prior installation,
+be it a SunOS CD-ROM or *BSD install diskettes is good insurance if you
+want to be able to "go back" for some reason.
+
+After taking care of all that, bring your system down gracefully using
+the shutdown(8) and/or halt(8) commands.  This will get you to the monitor
+prompt.  Sun PROM monitor commands and setup differ considerably depending
+on the system architecure and age, you may needed to reference the PROM
+monitor manual for your system for details.
+
+There are three main cases:
+
+	sun4 (older servers, deskside workstations):
+		promt is a ">", boot command is "b", uses sd(c,s,p) syntax
+		with s defined as scsi-unit*8+lun in hex
+	OpenBoot Version 1 (newer servers, desktop workstations):
+		prompt is "ok", boot command is "boot" uses sd(c,s,p) syntax
+		with s defined as scsi-unit.
+	OpenBoot Version 2 (newer servers, desktop workstations):
+		prompt is "ok", boot command is "boot" uses diskn:p syntax.
+	
+If you expect your workstation to have an OpenBoot Prom but get a ">", 
+enter then "n" command to enter the "new command mode".  You can set this
+as the default by doing a "setenv sunmon-compat? false" command, followed
+by a "reset" command.
+
+Note that OpenBoot Proms also do the Sun SCSI-ID shuffle for disks, this
+is described elsewere in some detail.  For the purposes of this section,
+drive 0 refers to the internal or first SCSI drive, which usually has a
+SCSI-ID of 3.
+
  
-        # halt
- 
-Then boot the floppy by typing the appropriate command at the PROM:
+Booting from Floppy Disk installation media:
  
         ok boot fd()bsd         # for version 1 OpenBOOT ROMs
         ok boot floppy bsd      # for version 2 OpenBOOT ROMs
@@ -53,45 +108,43 @@ install or upgrade procedure. Proceed to the section `Running the
 installation scripts' below.
 
 
-Installing using the OpenBSD miniroot.
+Booting From CD-ROM installation media:
 
-The miniroot is a self-contained OpenBSD filesystem holding all utilities
-necessary to install OpenBSD on a local disk. It is distributed as a plain
-file designed to be transferred to a raw disk partition from which it can
-be booted using the appropriate PROM command. Usually, the miniroot will
-be loaded into the swap partition of a disk. If needed, you can use another
-unused partition, but remember that the partition will then not available
-during the installation process and avoid using an "a" or "c" parition
-since installing the miniroot at the beginning of a disk will overwrite
-the existing disklabels/parition information for the whole disk.
+	> b sd(,30,0)bsd	# for Sun4 monitors (may not work)
+        ok boot sd(,6,0)bsd	# for version 1 OpenBOOT ROMs
+        ok boot cdrom bsd	# for version 2 OpenBOOT ROMs
 
-Loading the miniroot onto your raw partition is simple. On OpenBSD as well
-as SunOS you use a command like:
+If the boot is successul, you will get a loader version message,
+executable sizes and then the Kernel copyright and device probe
+messages.  Boot failure modes are typically a lot of CD-ROM drive
+action, but no messages or complaints about magic numbers,
+checksums or formats.
 
-	# dd if=miniroot21.fs of=/dev/rsd0b bs=20b
+Not all sparc systems support bootable CDROMS and the current
+boot image is only known to work on sun4c architctures.  If it
+does not work, you'll have to create a boot floppy or bootable
+hard disk using the instructions under preparing boot media.
 
-(here `/dev/rsd0b' is assumed to be your swap partition). There's a
-potential problem here if /dev/rsd0b is actually in use as a swap
-partition by your currently running system. If you don't have another
-disk or partition to spare, you can usually get away with running this
-command in "single user" mode to avoid active swap parition activity.
+After the initial device probe messages you'll asked to start the
+install or upgrade procedure. Proceed to the section `Running the
+installation scripts' below.
 
-After transferring the miniroot to disk, bring the system down by:
 
-	# halt
+Booting from SCSI disk (miniroot or flopy image)
 
-Then boot the miniroot by typing the appropriate command at the PROM:
+Boot the miniroot by typing the appropriate command at the PROM:
 
 	> b sd(,,1)bsd 		# for sun4 monitors
 	ok boot sd(,,1)bsd 	# for version 1 OpenBOOT ROMs
 	ok boot disk:b bsd 	# for version 2 OpenBOOT ROMs
 
-If you've loaded the miniroot onto some other disk than `sd0' adapt
-the boot specifier accordingly, e.g.:
+If you've loaded the miniroot onto some other disk than the default
+drive 0, modify the boot specifier accordingly, keeping in mind the
+drive vs. scsi-id shuffling and partition a=0, b=1... 
 
-        > b sd(0,20,1)bsd       # example - scsi target 4 on sun4 monitors*
-	ok boot sd(0,4,1)bsd	# example - scsi target 4 on V1 OpenBOOT ROM
-	ok boot disk1:b bsd     # example - scsi target 1 on v2 OpenBOOT ROM
+        > b sd(0,10,1)bsd       # example - scsi target 2 on sun4 monitors*
+	ok boot sd(0,3,1)bsd	# example - scsi target 0 on V1 OpenBOOT ROM
+	ok boot disk3:b bsd     # example - scsi target 0 on v2 OpenBOOT ROM
 
 (*) for sun4 this is scsi-target*8+scsi-lun (usually 0) expressed in hex...
 
@@ -110,195 +163,23 @@ If the server runs another operating system, you'll have to consult
 documentation that came with it (on SunOS systems, add_client(8) and
 the Sun System/Networks administrators guide constitute a good start).
 
-The set up is similar to SunOS diskless setup, but not identical, because
-the Sun setup assumes that the bootblocks load a kernel image, which then
-uses NFS to access the exported root partition, while the OpenBSD bootblocks
-use internal NFS routines to load the kernel image directly from the
-exported root partition.
-
-Please understand that no one gets this right the first try, since
-there is a lot of setup and all the host deamons must be running and
-configured correctly.  If you have problems, extract the diskless(8)
-manpage, find someone who's been through it before and use the host
-syslog and tcpdump(8) to get visibility of what's happening (or not).
-
-Your Sparcstation expects to be able to download a second stage bootstrap
-program via TFTP after having acquired its IP address through RevARP when
-instructed to boot "over the net". It will look for a filename composed of
-the machine's IP address followed by the machine's architecture, separated
-by a period. For example, a sun4c machine which has been assigned IP
-address 130.115.144.11, will make an TFTP request for `8273900B.SUN4C'.
-Normally, this file is a symbolic link to an appropriate second-stage
-boot program, which should be located in a place where the TFTP daemon
-can find it (remember, many TFTP daemons run in a chroot'ed environment).
-
-You can find the boot program in `/usr/mdec/boot' in the OpenBSD/sparc
-distribution. Unfortunately, it is necessary to install this file
-differently for sun4 and sun4c clients: the sun4 version needs to have its
-`a.out' header stripped off (otherwise the machine will crash), while the
-sun4c version must retain it (otherwise the PROM will complain).
-
-Here's an example to illustrate this whole mess:
-
-    server# cd /<client-root-dir>/usr/mdec
-    if client is a sun4:
-	server# set SKIP=1
-	server# set KARCH=SUN4
-    else
-	server# set SKIP=0
-	server# set KARCH=SUN4C
-    server# dd if=boot of=/tftpboot/boot.sparc.OpenBSD.$KARCH skip=$SKIP bs=32
-    server# cd /tftpboot
-    server# ln -s boot.sparc.OpenBSD.$KARCH 8273900B.$KARCH
-
-
-After the boot program has been loaded into memory and given control by
-the PROM, it starts locating the machine's remote root directory through
-the BOOTPARAM protocol. First a BOOTPARAM WHOAMI request is broadcast
-on the local net. The answer to this request (if it comes in) contains
-the client's name. This name is used in next step, a BOOTPARAM GETFILE
-request -- sent to the server that responded to the WHOAMI request --
-requesting the name and address of the machine that will serve the client's
-root directory, as well as the path of the client's root on that server.
-
-Finally, this information (if it comes in) is used to issue a REMOTE MOUNT
-request to the client's root filesystem server, asking for an NFS file
-handle corresponding to the root filesystem. If successful, the boot
-rogram starts reading from the remote root filesystem in search of the
-kernel which is then read into memory.
-
-As noted above in the section `Preparing your System for OpenBSD Installation',
-you have several options when choosing a location to store the installation
-filesets. However, the easiest way is to put the *.tar.gz files you want
-to install into the root directory for your client on the server.
-
-Next, unpack `base.tar.gz' and `etc.tar.gz' on the server in the root 
-directory for your machine. If you elect to use a separately NFS-mounted
-filesystem for `/usr' with your diskless setup, make sure the "./usr" base
-files in base.tar.gz end up in the correct location. One way to do this is
-to temporarily use a loopback mount on the server, re-routing <root>/usr to
-your server's exported OpenBSD "/usr" directory. Also put the kernel and the
-install/upgrade scripts into the root directory.
-
-A few configuration files need to be edited:
-
-	<root>/etc/hosts
-		Add the IP addresses of both server and client.
-
-	<root>/etc/myname
-		This files contains the client's hostname; use the same
-		name as in <root>/etc/hosts.
-
-	<root>/etc/fstab
-		Enter the entries for the remotely mounted filesystems.
-		For example:
-			server:/export/root/client       /     nfs  rw 0 0
-			server:/export/exec/sun4.OpenBSD /usr  nfs  rw 0 0
-
-Now you must populate the the `/dev' directory for your client. If you server
-runs SunOS 4.x, you can simply change your working directory to `<root>/dev'
-and run the MAKEDEV script: `sh MAKEDEV all'.
-
-On SunOS 5.x systems, MAKEDEV can also be used, but there'll be error
-messages about unknown user and groups. These errors are inconsequential
-for the purpose of installing OpenBSD. However, you may want to correct them
-if you plan to the diskless setup regularly. In that case, you may re-run
-MAKEDEV on your OpenBSD machine once it has booted.
 
 Boot your workstation from the server by entering the appropriate `boot'
 command at the monitor prompt. Depending on the PROM version in your machine,
 this command takes one of the following forms:
 
-	> b le()bsd -s			# for sun4 monitors
-	ok boot le()bsd -s		# for version 1 OpenBOOT ROMs
-	ok boot net bsd -s		# for version 2 OpenBOOT ROMs
+	> b le()bsd		# for sun4 monitors
+	ok boot le()bsd		# for version 1 OpenBOOT ROMs
+	ok boot net bsd		# for version 2 OpenBOOT ROMs
 
-This will boot the OpenBSD kernel in single-user mode.
-
-[[
-NOTE: the latter two examples assume you operate the OpenBOOT ROM in
-"new command mode". If your machine comes up and gives you a `>' prompt
-instead of `ok', type:
-
-    >n					# enter native OpenBOOT mode
-    ok setenv sunmon-compat? false	# make it permanent
-    ok
-]]
-
-If you use a diskless setup with a separately NFS-mounted /usr filesystem,
-mount /usr by hand now:
-
-OpenBSD# mount /usr
-
-At this point, it's worth checking the disk label and partition sizes on
-the disk you want to install OpenBSD onto. OpenBSD understands SunOS-style
-disklabels, so if your disk was previously used by SunOS there will be
-a usable label on it. Use `disklabel -e <disk>' (where <disk> is the
-device name assigned by the OpenBSD kernel, e.g. `sd0') to view and
-modify the partition sizes. See the section `Preparing your System for
-OpenBSD Installation' above for suggestions about disk partition sizes.
-Make sure all your partitions start and end on cylinder boundaries.
-
-NOTE: if you are installing on a SCSI disk that does *not* have a SunOS
-or OpenBSD label on it, you may still be able to use disklabel(8) but you'll
-have to create all partitions from scratch. If your disk is listed in
-`/etc/disktab', you may use the entry (which in most cases only defines
-a `c' partition to describe the whole disk) to put an initial label on
-the disk.  DO NOT USE `disklabel -r ...' TO INITIALIZE YOUR DISK LABEL;
-THIS WILL LEAD TO UNPREDICTABLE RESULTS. This deficiency will be fixed
-in a next release.
-
-Here follows an example of what you'll see while in the disklabel editor.
-Do not touch any of the parameters except for the `label: ' entry and
-the actual partition size information at the bottom (the lines starting
-with `a:', `b:', ...).
-
-The size and offset fields are given in sector units. Be sure to make
-these numbers multiples of the of the number of sectors per cylinder:
-the kernel might be picky about these things, but aside from this you'll
-have the least chance of wasting disk space.
-Partitions on which you intend to have a mountable filesystem, should
-be given fstype `4.2BSD'. Remember, the `c' partition should describe
-the whole disk.
-The `(Cyl. x - y)' info that appears after the hash (`#') character is
-treated as a comment and need not be filled in when altering partitions.
-
-Special note: the line containing `16 partitions:' is best left alone,
-even if you define less then eight partitions. If this line displays
-a different number and the program complains about it (after you leave
-the editor), then try setting it to `16 partitions:'.
+This will cause the kernel provided by the diskless setup to be booted.
+After the initial probe messages you'll asked to start the install
+or upgrade procedure. Proceed to the section `Running the installation
+scripts' below.
 
 
-<BEGIN SAMPLE DISKLABEL SCREEN>
-OpenBSD# disklabel sd2
- # /dev/rsd2c:
-type: SCSI 
-disk: SCSI disk
-label: Hold Your Breath
-flags:
-bytes/sector: 512
-sectors/track: 64
-tracks/cylinder: 7  
-sectors/cylinder: 448
-cylinders: 1429
-rpm: 3600
-interleave: 1
-trackskew: 0
-cylinderskew: 0
-headswitch: 0           # milliseconds
-track-to-track seek: 0  # milliseconds
-drivedata: 0
-
-16 partitions:
-#        size   offset    fstype   [fsize bsize   cpg]
-  a:    50176        0    4.2BSD        0     0     0   # (Cyl.    0 - 111)
-  b:    64512    50176      swap                        # (Cyl.  112 - 255)
-  c:   640192        0   unknown                        # (Cyl.    0 - 1428)
-  d:   525504   114688    4.2BSD        0     0     0   # (Cyl.  256 - 1428)
-<END SAMPLE DISKLABEL SCREEN>
-
-
-Installing using the new Single Floppy procedure.
+Installing using the "new" Single Floppy, CD-ROM, miniroot or netboot
+procedure:
 
 The following is a walk-through of the steps you will take while
 getting OpenBSD installed on your hard disk.  If any question has a
@@ -308,19 +189,14 @@ at any time, but if you do, you may have to begin the installation
 process again from scratch.  Using Control-Z to suspend the process
 may be a better option. 
 
-	Boot your machine using the floppy21.fs floppy.  When
-	presented with the PROM monitor prompt, type(*):
-		"boot floppy bsd" or "boot fd()bsd"
-        and then hit return.  You should see about the primary and
-	secondary boot and then the kernel should start to load.
+	Boot your machine from the installation media as described above.
 
-	(*) See the PROM monitor information for your system.
-
-	It will take a while to load the kernel from the floppy,
-	most likely more than a minute.  If some action doesn't
-	eventually happen, or the spinning cursor has stopped and
-	nothing further has happened, either your boot floppy is
-	bad or you are having hardware problems.
+	It will take a while to load the kernel especially from a floppy
+	or slow network connection, most likely more than a minute.  If
+	some action doesn't eventually happen, or the spinning cursor has
+	stopped and nothing further has happened, either your boot medias
+	is proably bad, your diskless setup isn't correct or you may have
+	a hardware or configuration problem.
 
 	You will then be presented with the OpenBSD kernel boot
 	messages.  You will want to read them to determine your
@@ -416,6 +292,10 @@ may be a better option.
 		link0 -link1	Use UTP (twisted pair) port
 		-link0 link1 	Use AUI port
 
+*** IMPORTANT - these are the correct setting for Sparc ehternet cards,
+		the suggestions shown by the install script are generic
+		and may or may not be correct...
+
 	After all network interfaces have been configured the install pro-
 	gram will ask for a default route and IP address of the primary
 	name server to use.  You will also be presented with an opportunity
@@ -506,20 +386,6 @@ may be a better option.
 		an image has been compressed, so it will ask for that
 		information before starting the extraction.
 
-        To boot from CD-ROM:
-		The OpenBSD 2.1 distribution CD-ROM is capable of booting
-		sun4c architecture machines.  The CD-ROM boot method has 
-		been tested on SS2 machines, but may work on the other
-		sun4c machines.  The bootable CD-ROM is know *not* to
-		work on sun4, and sun4m systems at this time.
-		To boot from CD-ROM use a command similar to:
-
-			ok b sd(0,6,0) # OpenBOOT v1  
-			ok boot cdrom  # OpenBOOT v2
-               
-		If CD-ROM booting does not work with your machine, you
-		may proceed to use one of the several other boot methods
-		to install of upgrade your system. 
 
 	To install from CD-ROM:
 		When installing from a CD-ROM, you will be asked which
@@ -633,7 +499,6 @@ may be a better option.
 
 Installing using the old Multi-Floppy procedure.
 
-<floppy boot instructions go here >
 
 If you are upgrading a OpenBSD installation, start the upgrade script:
 
@@ -662,6 +527,8 @@ The installation script goes through the following phases:
 	- extraction of the distribution tar files
 	- installation of boot programs
 
+
+After completing an installation:
 
 Now try a reboot.  (If needed, swap your scsi id's first).  Initially
 I'd suggest you "boot sd()bsd -bs", then try multiuser after that.
@@ -805,5 +672,105 @@ After the files have been extracted, setup /mnt/etc/fstab to match
 your actual disk layout.  (Minus the "/mnt" component of each path, of
 course :-)
 
-Now proceed to reboot the machine as described above in "Installing
-using a diskless setup".
+Now proceed to reboot the machine and the customize your installation.
+
+
+Net Boot or Diskless Setup Information:
+
+The set up is similar to SunOS diskless setup, but not identical, because
+the Sun setup assumes that the bootblocks load a kernel image, which then
+uses NFS to access the exported root partition, while the OpenBSD bootblocks
+use internal NFS routines to load the kernel image directly from the
+exported root partition.
+
+Please understand that no one gets this right the first try, since
+there is a lot of setup and all the host deamons must be running and
+configured correctly.  If you have problems, extract the diskless(8)
+manpage, find someone who's been through it before and use the host
+syslog and tcpdump(8) to get visibility of what's happening (or not).
+
+Your Sparcstation expects to be able to download a second stage bootstrap
+program via TFTP after having acquired its IP address through RevARP when
+instructed to boot "over the net". It will look for a filename composed of
+the machine's IP address followed by the machine's architecture, separated
+by a period. For example, a sun4c machine which has been assigned IP
+address 130.115.144.11, will make an TFTP request for `8273900B.SUN4C'.
+Normally, this file is a symbolic link to an appropriate second-stage
+boot program, which should be located in a place where the TFTP daemon
+can find it (remember, many TFTP daemons run in a chroot'ed environment).
+
+You can find the boot program in `/usr/mdec/boot' in the OpenBSD/sparc
+distribution. Unfortunately, it is necessary to install this file
+differently for sun4 and sun4c clients: the sun4 version needs to have its
+`a.out' header stripped off (otherwise the machine will crash), while the
+sun4c version must retain it (otherwise the PROM will complain).
+
+Here's an example to illustrate this whole mess:
+
+    server# cd /<client-root-dir>/usr/mdec
+    if client is a sun4:
+	server# set SKIP=1
+	server# set KARCH=SUN4
+    else
+	server# set SKIP=0
+	server# set KARCH=SUN4C
+    server# dd if=boot of=/tftpboot/boot.sparc.OpenBSD.$KARCH skip=$SKIP bs=32
+    server# cd /tftpboot
+    server# ln -s boot.sparc.OpenBSD.$KARCH 8273900B.$KARCH
+
+
+After the boot program has been loaded into memory and given control by
+the PROM, it starts locating the machine's remote root directory through
+the BOOTPARAM protocol. First a BOOTPARAM WHOAMI request is broadcast
+on the local net. The answer to this request (if it comes in) contains
+the client's name. This name is used in next step, a BOOTPARAM GETFILE
+request -- sent to the server that responded to the WHOAMI request --
+requesting the name and address of the machine that will serve the client's
+root directory, as well as the path of the client's root on that server.
+
+Finally, this information (if it comes in) is used to issue a REMOTE MOUNT
+request to the client's root filesystem server, asking for an NFS file
+handle corresponding to the root filesystem. If successful, the boot
+rogram starts reading from the remote root filesystem in search of the
+kernel which is then read into memory.
+
+You will want export the miniroot21.fs filesystem to the client.  You
+can dd this filesystem image to some spare partition, mount and export
+tat partition or use tar to copy the contents to a more convenient spot.
+
+Alternatively you an build bootable partition from the ditribution sets
+as follows:
+
+Unpack `base.tar.gz' and `etc.tar.gz' on the server in the root directory
+for your target machine. If you elect to use a separately NFS-mounted
+filesystem for `/usr' with your diskless setup, make sure the "./usr" base
+files in base.tar.gz end up in the correct location. One way to do this is
+to temporarily use a loopback mount on the server, re-routing <root>/usr to
+your server's exported OpenBSD "/usr" directory. Also put the kernel and
+the install/upgrade scripts into the root directory.
+
+A few configuration files need to be edited:
+
+	<root>/etc/hosts
+		Add the IP addresses of both server and client.
+
+	<root>/etc/myname
+		This files contains the client's hostname; use the same
+		name as in <root>/etc/hosts.
+
+	<root>/etc/fstab
+		Enter the entries for the remotely mounted filesystems.
+		For example:
+			server:/export/root/client       /     nfs  rw 0 0
+			server:/export/exec/sun4.OpenBSD /usr  nfs  rw 0 0
+
+Now you must populate the the `/dev' directory for your client. If you server
+runs SunOS 4.x, you can simply change your working directory to `<root>/dev'
+and run the MAKEDEV script: `sh MAKEDEV all'.
+
+On SunOS 5.x systems, MAKEDEV can also be used, but there'll be error
+messages about unknown user and groups. These errors are inconsequential
+for the purpose of installing OpenBSD. However, you may want to correct them
+if you plan to the diskless setup regularly. In that case, you may re-run
+MAKEDEV on your OpenBSD machine once it has booted.
+
