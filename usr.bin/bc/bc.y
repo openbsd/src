@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.13 2003/10/19 19:21:48 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.14 2003/10/22 12:24:41 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.13 2003/10/19 19:21:48 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.14 2003/10/22 12:24:41 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -302,6 +302,14 @@ statement	: expression
 			{
 				emit_macro($3, $7);
 				$$ = node($5, $3, cs(" "), END_NODE);
+			}
+		| IF LPAR alloc_macro pop_nesting relational_expression RPAR
+		      opt_statement ELSE alloc_macro pop_nesting opt_statement
+			{
+				emit_macro($3, $7);
+				emit_macro($9, $11);
+				$$ = node($5, $3, cs("e"), $9, cs(" "),
+				    END_NODE);
 			}
 		| WHILE LPAR alloc_macro relational_expression RPAR
 		      opt_statement pop_nesting

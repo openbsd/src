@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bc.1,v 1.8 2003/10/20 09:27:48 jmc Exp $
+.\"	$OpenBSD: bc.1,v 1.9 2003/10/22 12:24:41 otto Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -116,6 +116,7 @@ Statements
 E
 { S ; ... ; S }
 if ( E ) S
+if ( E ) S else S
 while ( E ) S
 for ( E ; E ; E ) S
 null statement
@@ -125,6 +126,7 @@ quit
 a string of characters, enclosed in double quotes
 .Ed
 .Pp
+The if statement with an else branch is a non-portable extension.
 All three E's in a for statement may be empty.
 This is a non-portable extension.
 The continue statement is also a non-portable extension.
