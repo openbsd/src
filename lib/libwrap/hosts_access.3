@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_access.3,v 1.8 2002/05/01 08:03:30 mpech Exp $
+.\"	$OpenBSD: hosts_access.3,v 1.9 2002/06/22 08:26:52 fgsch Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -134,12 +134,6 @@ Access control table (allow list)
 .It Pa /etc/hosts.deny
 Access control table (deny list)
 .El
-.Sh BUGS
-.Fn hosts_access
-uses the
-.Fn strtok
-library function. This may interfere with other code that relies on
-.Fn strtok .
 .Sh AUTHORS
 .Bd -unfilled -offset indent
 Wietse Venema (wietse@wzv.win.tue.nl)
