@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnw.c,v 1.3 2000/02/01 17:00:04 fgsch Exp $	*/
+/*	$OpenBSD: if_cnw.c,v 1.4 2000/02/01 17:39:33 fgsch Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -360,10 +360,11 @@ cnw_match(parent, match, aux)
 
 	if (pa->manufacturer == PCMCIA_VENDOR_XIRCOM &&
 	    pa->product == PCMCIA_PRODUCT_XIRCOM_XIR_CNW_801)
-		return 1;
+		return (1);
 	if (pa->manufacturer == PCMCIA_VENDOR_XIRCOM &&
 	    pa->product == PCMCIA_PRODUCT_XIRCOM_XIR_CNW_802)
-		return 1;
+		return (1);
+	return (0);
 }
 
 
