@@ -1,9 +1,9 @@
-/*	$OpenBSD: conf.c,v 1.3 2001/09/28 02:53:13 mickey Exp $ */
+/*	$OpenBSD: conf.c,v 1.4 2001/09/28 03:14:20 mickey Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
  * Copyright (c) 1997 RTMX Inc, North Carolina
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,31 +34,29 @@
  */
 #include <sys/param.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
 #include <sys/vnode.h>
 
+#include <machine/conf.h>
+
+#include "sd.h"
+#include "st.h"
+#include "cd.h"
+#include "ss.h"
+#include "uk.h"
+#include "rd.h"
 #include "wd.h"
 bdev_decl(wd);
-#include "sd.h"
-bdev_decl(sd);
-#include "cd.h"
-bdev_decl(cd);
+cdev_decl(wd);
 
 #include "ofdisk.h"
 bdev_decl(ofd);
 
-#include "rd.h"
-bdev_decl(rd);
-
 #include "vnd.h"
-bdev_decl(vnd);
 #include "ccd.h"
-bdev_decl(ccd);
 #include "raid.h"
-bdev_decl(raid);
 
 struct bdevsw bdevsw[] = {
 	bdev_disk_init(NWD,wd),		/* 0: ST506/ESDI/IDE disk */
@@ -66,9 +64,9 @@ struct bdevsw bdevsw[] = {
 	bdev_disk_init(NSD,sd),		/* 2 SCSI Disk */
 	bdev_disk_init(NCD,cd),		/* 3 SCSI CD-ROM */
 	bdev_disk_init(NOFDISK,ofd),	/* 4 Openfirmware disk */
-	bdev_notdef(),                  /* 5 unknown*/
-	bdev_notdef(),                  /* 6 unknown*/
-	bdev_notdef(),                  /* 7 unknown*/
+	bdev_notdef(),			/* 5 unknown*/
+	bdev_notdef(),			/* 6 unknown*/
+	bdev_notdef(),			/* 7 unknown*/
 	bdev_lkm_dummy(),		/* 8 */
 	bdev_lkm_dummy(),		/* 9 */
 	bdev_lkm_dummy(),		/* 10 */
@@ -76,30 +74,16 @@ struct bdevsw bdevsw[] = {
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_disk_init(NVND,vnd),	/* 14 vnode disk driver*/
-	bdev_notdef(),                  /* 15 unknown*/
+	bdev_notdef(),			/* 15 unknown*/
 	bdev_disk_init(NCCD,ccd),	/* 16 concatenated disk driver*/
 	bdev_disk_init(NRD,rd),		/* 17 ram disk driver*/
-	bdev_notdef(),                  /* 18 unknown*/
+	bdev_notdef(),			/* 18 unknown*/
 	bdev_disk_init(NRAID,raid),	/* 19: RAIDframe disk driver */
 };
 int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
 
-cdev_decl(cn);
-cdev_decl(ctty);
-#define mmread	mmrw
-#define	mmwrite	mmrw
-cdev_decl(mm);
 #include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
-
 #include "zstty.h"
-cdev_decl(zs);
 
 #include "ofcons.h"
 cdev_decl(ofc);
@@ -108,7 +92,6 @@ cdev_decl(ofd);
 #include "ofrtc.h"
 cdev_decl(ofrtc);
 
-
 cdev_decl(kbd);
 cdev_decl(ms);
 
@@ -116,35 +99,11 @@ cdev_decl(ms);
 #include "wskbd.h"
 #include "wsmouse.h"
 
-cdev_decl(wsdisplay);
-cdev_decl(wskbd);
-cdev_decl(wsmouse);
-
-#include <sd.h>
-#include <st.h>
-#include <cd.h>
-#include <uk.h>
-#include <ss.h>
-cdev_decl(st);  
-cdev_decl(sd);
-cdev_decl(cd);
-cdev_decl(vnd);
-cdev_decl(ccd);
-cdev_decl(rd);  
-#include "raid.h"
 #include "iop.h"
 
-#include <wd.h>
-cdev_decl(wd);
-
-dev_decl(filedesc,open);
-
 #include "bpfilter.h"
-cdev_decl(bpf); 
 
 #include "tun.h"
-cdev_decl(tun);
-cdev_decl(random); 
 
 #ifdef XFS
 #include <xfs/nxfs.h>
@@ -155,8 +114,8 @@ cdev_decl(xfs_dev);
 #define NLKM 1
 #else
 #define NLKM 0
-#endif  
- 
+#endif
+
 cdev_decl(lkm);
 
 #include "ksyms.h"
@@ -175,7 +134,6 @@ cdev_decl(urio);
 cdev_decl(ucom);
 
 #include "wsmux.h"
-cdev_decl(wsmux);
 
 #ifdef USER_PCICONF
 #include "pci.h"
@@ -183,73 +141,72 @@ cdev_decl(pci);
 #endif
 
 #include "audio.h"
-cdev_decl(audio);
 
 #include "pf.h"
 
 #include <altq/altqconf.h>
 
 struct cdevsw cdevsw[] = {
-        cdev_cn_init(1,cn),             /* 0: virtual console */
-        cdev_ctty_init(1,ctty),         /* 1: controlling terminal */
-        cdev_mm_init(1,mm),             /* 2: /dev/{null,mem,kmem,...} */
-        cdev_swap_init(1,sw),           /* 3: /dev/drum (swap pseudo-device) */
-        cdev_tty_init(NPTY,pts),        /* 4: pseudo-tty slave */
-        cdev_ptc_init(NPTY,ptc),        /* 5: pseudo-tty master */
-        cdev_log_init(1,log),           /* 6: /dev/klog */
-        cdev_tty_init(NZSTTY,zs),    /* 7: mac onboard serial ports */ 
-        cdev_disk_init(NSD,sd),         /* 8: SCSI disk */
-        cdev_disk_init(NCD,cd),         /* 9: SCSI CD-ROM */
-        cdev_notdef(),                  /* 10: SCSI changer */
+	cdev_cn_init(1,cn),		/* 0: virtual console */
+	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
+	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
+	cdev_swap_init(1,sw),		/* 3: /dev/drum (swap pseudo-device) */
+	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
+	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
+	cdev_log_init(1,log),		/* 6: /dev/klog */
+	cdev_tty_init(NZSTTY,zs),	/* 7: Serial ports */
+	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
+	cdev_disk_init(NCD,cd),		/* 9: SCSI CD-ROM */
+	cdev_notdef(),			/* 10: SCSI changer */
 	cdev_disk_init(NWD,wd),		/* 11: ST506/ESDI/IDE disk */
-        cdev_notdef(),                  /* 12 */
+	cdev_notdef(),			/* 12 */
 	cdev_disk_init(NOFDISK,ofd),	/* 13 Openfirmware disk */
-        cdev_tty_init(NOFCONS,ofc),	/* 14 Openfirmware console */
-        cdev_notdef(),                  /* 15 */
-        cdev_notdef(),                  /* 16 */
+	cdev_tty_init(NOFCONS,ofc),	/* 14 Openfirmware console */
+	cdev_notdef(),			/* 15 */
+	cdev_notdef(),			/* 16 */
 	cdev_disk_init(NRD,rd),		/* 17 ram disk driver*/
 	cdev_disk_init(NCCD,ccd),	/* 18 concatenated disk driver */
-        cdev_disk_init(NVND,vnd),       /* 19: vnode disk */
-        cdev_tape_init(NST,st),         /* 20: SCSI tape */
-        cdev_fd_init(1,filedesc),       /* 21: file descriptor pseudo-dev */
-        cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */
-        cdev_bpftun_init(NTUN,tun),     /* 23: network tunnel */
-        cdev_lkm_init(NLKM,lkm),        /* 24: loadable module driver */
-        cdev_notdef(),                  /* 25 */
-        cdev_notdef(),                  /* 26 */
-        cdev_notdef(),                  /* 27 */
-        cdev_notdef(),                  /* 28 */
-        cdev_notdef(),                  /* 29 */
-        cdev_notdef(),                  /* 30 */
-        cdev_notdef(),                  /* 31 */
-        cdev_notdef(),                  /* 32 */
-        cdev_lkm_dummy(),               /* 33 */
-        cdev_lkm_dummy(),               /* 34 */
-        cdev_lkm_dummy(),               /* 35 */
-        cdev_lkm_dummy(),               /* 36 */
-        cdev_lkm_dummy(),               /* 37 */
-        cdev_lkm_dummy(),               /* 38 */
-        cdev_pf_init(NPF,pf),		/* 39: packet filter */
-        cdev_random_init(1,random),     /* 40: random data source */
+	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
+	cdev_tape_init(NST,st),		/* 20: SCSI tape */
+	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-dev */
+	cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */
+	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
+	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
+	cdev_notdef(),			/* 25 */
+	cdev_notdef(),			/* 26 */
+	cdev_notdef(),			/* 27 */
+	cdev_notdef(),			/* 28 */
+	cdev_notdef(),			/* 29 */
+	cdev_notdef(),			/* 30 */
+	cdev_notdef(),			/* 31 */
+	cdev_notdef(),			/* 32 */
+	cdev_lkm_dummy(),		/* 33 */
+	cdev_lkm_dummy(),		/* 34 */
+	cdev_lkm_dummy(),		/* 35 */
+	cdev_lkm_dummy(),		/* 36 */
+	cdev_lkm_dummy(),		/* 37 */
+	cdev_lkm_dummy(),		/* 38 */
+	cdev_pf_init(NPF,pf),		/* 39: packet filter */
+	cdev_random_init(1,random),	/* 40: random data source */
 	cdev_uk_init(NUK,uk),		/* 41: unknown SCSI */
-	cdev_ss_init(NSS,ss),           /* 42: SCSI scanner */
+	cdev_ss_init(NSS,ss),		/* 42: SCSI scanner */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 43: Kernel symbols device */
-	cdev_audio_init(NAUDIO,audio),  /* 44: generic audio I/O */
-        cdev_notdef(),                  /* 45 */
-        cdev_notdef(),                  /* 46 */
-        cdev_notdef(),                  /* 47 */
-        cdev_notdef(),                  /* 48 */
-        cdev_notdef(),                  /* 49 */ 
-        cdev_notdef(),                  /* 50 */ 
+	cdev_audio_init(NAUDIO,audio),	/* 44: generic audio I/O */
+	cdev_notdef(),			/* 45 */
+	cdev_notdef(),			/* 46 */
+	cdev_notdef(),			/* 47 */
+	cdev_notdef(),			/* 48 */
+	cdev_notdef(),			/* 49 */
+	cdev_notdef(),			/* 50 */
 #ifdef XFS
 	cdev_xfs_init(NXFS,xfs_dev),	/* 51: xfs communication device */
 #else
-        cdev_notdef(),                  /* 51 */
+	cdev_notdef(),			/* 51 */
 #endif
-        cdev_notdef(),                  /* 52 */ 
-        cdev_notdef(),                  /* 53 */ 
+	cdev_notdef(),			/* 52 */
+	cdev_notdef(),			/* 53 */
 	cdev_disk_init(NRAID,raid),	/* 54: RAIDframe disk driver */
-        cdev_notdef(),                  /* 55 */ 
+	cdev_notdef(),			/* 55 */
 	/* The following slots are reserved for isdn4bsd. */
 	cdev_notdef(),			/* 56: i4b main device */
 	cdev_notdef(),			/* 57: i4b control device */
@@ -260,7 +217,7 @@ struct cdevsw cdevsw[] = {
 	cdev_usb_init(NUSB,usb),	/* 61: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 62: USB generic HID */
 	cdev_ugen_init(NUGEN,ugen),	/* 63: USB generic driver */
-	cdev_ulpt_init(NULPT,ulpt), 	/* 64: USB printers */
+	cdev_ulpt_init(NULPT,ulpt),	/* 64: USB printers */
 	cdev_usbdev_init(NURIO,urio),	/* 65: USB Diamond Rio 500 */
 	cdev_tty_init(NUCOM,ucom),	/* 66: USB tty */
 	cdev_wsdisplay_init(NWSDISPLAY,	/* 67: frame buffers, etc. */
@@ -270,7 +227,7 @@ struct cdevsw cdevsw[] = {
 		wsmouse),
 	cdev_mouse_init(NWSMUX, wsmux),	/* 70: ws multiplexor */
 #ifdef USER_PCICONF
-	cdev_pci_init(NPCI,pci),        /* 71: PCI user */
+	cdev_pci_init(NPCI,pci),	/* 71: PCI user */
 #else
 	cdev_notdef(),
 #endif
@@ -343,7 +300,7 @@ chrtoblk(dev)
 	dev_t dev;
 {
 	int blkmaj;
-	
+
 	if (major(dev) >= nchrdev ||
 	    major(dev) > sizeof(chrtoblktbl)/sizeof(chrtoblktbl[0]))
 		return (NODEV);
