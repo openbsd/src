@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.5 1995/12/22 12:52:09 jonathan Exp $	*/
+/*	$NetBSD: if_le.c,v 1.7 1995/12/28 08:42:15 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -57,39 +57,24 @@
 
 #include <machine/autoconf.h>
 
+#include <dev/tc/tcvar.h>
+#include <dev/tc/ioasicvar.h>
+#include <dev/tc/if_levar.h>
+
 #ifdef pmax
-typedef u_int32_t word_t;
 #define wbflush() MachEmptyWriteBuffer()
 
 /* These should be in a header file, but where? */
-int	pmax_boardtype;		/* Mother board type */
-/*extern u_long le_iomem;*/
 extern u_long asic_base;
-
-/* does this machine have an ASIC? */
-#define SYSTEM_HAS_ASIC() \
-  (pmax_boardtype == DS_MAXINE || pmax_boardtype == DS_3MIN || \
-   pmax_boardtype == DS_3MAXPLUS)
+extern struct cfdriver mainbuscd;	/* XXX really 3100/5100 b'board */
 
 #include <pmax/pmax/kn01.h>
 #include <machine/machConst.h>
-#include <pmax/pmax/pmaxtype.h>
-#include <pmax/tc/tc.h>
 #include <pmax/pmax/asic.h>
-#include <pmax/tc/if_levar.h>
+
 #else /* Alpha */
-
-typedef  u_int64 word_t;
-#define SYSTEM_HAS_ASIC() \
- (hwrpb->rpb_type == ST_DEC_3000_300 || hwrpb->rpb_type == ST_DEC_3000_500)
-
 #include <machine/rpb.h>
-#include <alpha/tc/tc.h>
-#include <alpha/tc/asic.h>
-#include <alpha/tc/if_levar.h>
-
 #endif  /* Alpha */
-
 
 
 #include <dev/ic/am7990reg.h>
@@ -193,10 +178,10 @@ leattach(parent, self, aux)
 	u_char *cp;	/* pointer to MAC address */
 	int i;
 
-	if (sc->sc_dev.dv_unit == 0 && SYSTEM_HAS_ASIC()) {
-		/* It's on the system ASIC */
+	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
+		/* It's on the system IOCTL ASIC */
 		volatile u_int *ldp;
-		word_t dma_mask;
+		tc_addr_t dma_mask;
 
 		sc->sc_r1 = (struct lereg1 *)
 		    MACH_PHYS_TO_UNCACHED(BUS_CVTADDR(ca));
@@ -216,11 +201,11 @@ leattach(parent, self, aux)
 		 * And enable Lance dma through the asic.
 		 */
 		ldp = (volatile u_int *) (ASIC_REG_LANCE_DMAPTR(asic_base));
-		dma_mask = ((word_t)le_iomem << 3);
+		dma_mask = ((tc_addr_t)le_iomem << 3);
 #ifdef alpha
 		/* Set upper 64 bits of DMA mask */
-		dma_mask  = (dma_mask & ~(word_t)0x1f) |
-			(((word_t)le_iomem >> 29) & 0x1f);
+		dma_mask  = (dma_mask & ~(tc_addr_t)0x1f) |
+			(((tc_addr_t)le_iomem >> 29) & 0x1f);
 #endif /*alpha*/
 		*ldp = dma_mask;
 		*(volatile u_int *)ASIC_REG_CSR(asic_base) |=
@@ -228,7 +213,7 @@ leattach(parent, self, aux)
 		wbflush();
 	}
 #ifdef pmax
-	 else if (sc->sc_dev.dv_unit == 0 && (pmax_boardtype == DS_PMAX)) {
+	 else if (parent->dv_cfdata->cf_driver == &mainbuscd) {
 		/* It's on the baseboard, attached directly to mainbus. */
 
 		sc->sc_r1 = (struct lereg1 *)BUS_CVTADDR(ca);
@@ -242,7 +227,8 @@ leattach(parent, self, aux)
 		sc->sc_zerobuf = zerobuf_gap2;
 	}
 #endif
-	else {
+	else
+	if (parent->dv_cfdata->cf_driver == &tccd) {
 		/* It's on the turbochannel proper, or on KN02 baseboard. */
 		sc->sc_r1 = (struct lereg1 *)
 		    (BUS_CVTADDR(ca) + LE_OFFSET_LANCE);
@@ -275,7 +261,7 @@ leattach(parent, self, aux)
 
 	BUS_INTR_ESTABLISH(ca, leintr, sc);
 
-	if (SYSTEM_HAS_ASIC()) {
+	if (parent->dv_cfdata->cf_driver == &ioasiccd) {
 		/* XXX YEECH!!! */
 		*(volatile u_int *)ASIC_REG_IMSK(asic_base) |= ASIC_INTR_LANCE;
 		wbflush();

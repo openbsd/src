@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.h,v 1.1 1995/08/07 07:07:50 jonathan Exp $	*/
+/*	$NetBSD: tc.h,v 1.2 1995/12/28 08:42:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,58 +31,17 @@
  * TurboChannel-specific functions and structures.
  */
 
-/*
- * A junk address to read from, to make sure writes are complete.  See
- * System Programmer's Manual, section 9.3 (p. 9-4), and sacrifice a
- * chicken.
- */
-#define	MAGIC_READ do {							\
-	extern u_int32_t no_optimize;					\
-	no_optimize = *(u_int32_t *)phystok0seg(0x00000001f0080220);	\
-} while (0);
-
-#define	TC_SPACE_IND		0xffffffffe0000003
-#define	TC_SPACE_DENSE		0x0000000000000000
-#define TC_SPACE_DENSE_OFFSET	0x0000000007fffffc
-#define	TC_SPACE_SPARSE		0x0000000010000000
-#define	TC_SPACE_SPARSE_OFFSET	0x000000000ffffff8
-
-#define	TC_DENSE_TO_SPARSE(addr)					\
-	    ((void *)							\
-		(((u_int64_t)addr & TC_SPACE_IND) |			\
-		 TC_SPACE_SPARSE |					\
-		 (((u_int64_t)addr & TC_SPACE_DENSE_OFFSET) << 1)))
-		
-#define	TC_SPARSE_TO_DENSE(addr)					\
-	    ((void *)							\
-		(((u_int64_t)addr & TC_SPACE_IND) |			\
-		 TC_SPACE_DENSE |					\
-		 (((u_int64_t)addr & TC_SPACE_SPARSE_OFFSET) >> 1)))
-		
-
-#define	TC_ROM_LLEN		8
-#define	TC_ROM_SLEN		4
-#define	TC_ROM_TEST_SIZE	16
-
 #define	TC_SLOT_ROM		0x000003e0
 #define	TC_SLOT_PROTOROM	0x003c03e0
 
-typedef struct tc_padchar {
-	u_int8_t	v;
-	u_int8_t	pad[3];
-} tc_padchar_t;
+#include <machine/tc_machdep.h>
+#include <dev/tc/tcreg.h>
 
-struct tc_rommap {
-	tc_padchar_t	tcr_width;
-	tc_padchar_t	tcr_stride;
-	tc_padchar_t	tcr_rsize;
-	tc_padchar_t	tcr_ssize;
-	u_int8_t	tcr_test[TC_ROM_TEST_SIZE];
-	tc_padchar_t	tcr_rev[TC_ROM_LLEN];
-	tc_padchar_t	tcr_vendname[TC_ROM_LLEN];
-	tc_padchar_t	tcr_modname[TC_ROM_LLEN];
-	tc_padchar_t	tcr_firmtype[TC_ROM_SLEN];
-};
+
+/*
+ * Obsolete (pre-NetBSD/1.1-style) tc bus descriptor
+ * and device-attach arguments.
+ */
 
 /* The contents of a cfdata->cf_loc for a TurboChannel device */
 struct tc_cfloc {
