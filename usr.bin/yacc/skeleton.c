@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.11 1998/11/17 06:13:43 dm Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.12 1998/11/18 03:22:55 dm Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -63,11 +63,7 @@ char *banner[] =
 {
     "#ifndef lint",
     "/*static char yysccsid[] = \"from: @(#)yaccpar	1.9 (Berkeley) 02/21/93\";*/",
-    "static char yyrcsid[]",
-    "#if __GNUC__ == 2",
-    "  __attribute__ ((unused))",
-    "#endif /* __GNUC__ == 2 */",
-    "  = \"$OpenBSD: skeleton.c,v 1.11 1998/11/17 06:13:43 dm Exp $\";",
+    "static const char yyrcsid[] = \"$OpenBSD: skeleton.c,v 1.12 1998/11/18 03:22:55 dm Exp $\";",
     "#endif",
     "#include <stdlib.h>",
     "#define YYBYACC 1",
