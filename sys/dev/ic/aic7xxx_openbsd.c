@@ -29,10 +29,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx_openbsd.c,v 1.5 2002/06/28 00:34:54 smurph Exp $
+ * $Id: aic7xxx_openbsd.c,v 1.6 2002/06/28 05:01:28 millert Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_freebsd.c,v 1.26 2001/07/18 21:39:47 gibbs Exp $
- * $OpenBSD: aic7xxx_openbsd.c,v 1.5 2002/06/28 00:34:54 smurph Exp $
+ * $OpenBSD: aic7xxx_openbsd.c,v 1.6 2002/06/28 05:01:28 millert Exp $
  */
 
 #include <dev/ic/aic7xxx_openbsd.h>
@@ -1631,22 +1631,6 @@ ahc_check_tags(ahc, xs)
 {
 	struct ahc_devinfo devinfo;
 
-	if (ahc->scb_data->maxhscbs >= 16 ||
-	    (ahc->flags & AHC_PAGESCBS)) {
-		/* Default to 16 tags */
-		xs->sc_link->openings += 14;
-	} else {
-		/*
-		 * Default to 4 tags on whimpy
-		 * cards that don't have much SCB
-		 * space and can't page.  This prevents
-		 * a single device from hogging all
-		 * slots.  We should really have a better
-		 * way of providing fairness.
-		 */
-		xs->sc_link->openings += 2;
-	}
-	
 	if (xs->sc_link->quirks & SDEV_NOTAGS)
 		return;
 
@@ -1665,6 +1649,21 @@ ahc_check_tags(ahc, xs)
 	printf("%s: target %d using tagged queuing\n",
 	    ahc_name(ahc), XS_SCSI_ID(xs));
 
+	if (ahc->scb_data->maxhscbs >= 16 ||
+	    (ahc->flags & AHC_PAGESCBS)) {
+		/* Default to 16 tags */
+		xs->sc_link->openings += 14;
+	} else {
+		/*	
+		 * Default to 4 tags on whimpy
+		 * cards that don't have much SCB
+		 * space and can't page.  This prevents
+		 * a single device from hogging all
+		 * slots.  We should really have a better
+		 * way of providing fairness.
+		 */
+		xs->sc_link->openings += 2;
+	}
 }
 
 int
