@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1998/07/14 17:20:30 mickey Exp $
+#	$OpenBSD: Makefile,v 1.5 1998/09/29 07:19:25 mickey Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -16,13 +16,13 @@ NOPIC=nopic
 #AS+=	-a
 
 # hppa stuff
-SRCS=	alloca.S machdep.c pdc.c itecons.c dk.c dev_hppa.c exec_hppa.c time.c \
-	ct.c dk.c cache_s.s cache_c.c
+SRCS=	machdep.c pdc.c itecons.c dev_hppa.c exec_hppa.c time.c \
+	ct.c dk.c lf.c lif.c
 
 # stand routines
 SRCS+=	alloc.c exit.c getfile.c gets.c globals.c strcmp.c strlen.c \
 	strncmp.c memcmp.c memcpy.c memset.c printf.c strerror.c strncpy.c \
-	strtol.c ctime.c exec.new.c exec_elf.c exec_som.c
+	strtol.c strchr.c ctime.c exec.new.c exec_elf.c
 
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \
@@ -47,4 +47,4 @@ install:
 
 CPPFLAGS+=-DHEAP_LIMIT=${HEAP_LIMIT} ${DEBUGFLAGS}
 CPPFLAGS+=-I${S}/stand/boot
-CFLAGS+=${SACFLAGS} -D__INTERNAL_LIBSA_CREAD
+CFLAGS+=${SACFLAGS} -D__INTERNAL_LIBSA_CREAD -DCOMPAT_UFS
