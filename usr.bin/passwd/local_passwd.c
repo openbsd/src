@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.30 2003/06/20 16:53:27 deraadt Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.31 2004/03/10 21:23:17 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.30 2003/06/20 16:53:27 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.31 2004/03/10 21:23:17 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -155,10 +155,10 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 		(void)printf("Changing local password for %s.\n", pw->pw_name);
 		if (uid != 0 && pw->pw_passwd[0] != '\0') {
 			p = getpass("Old password:");
-			if (*p == '\0') {
+			if (p == NULL || *p == '\0') {
 				(void)printf(UNCHANGED_MSG);
 				pw_abort();
-				exit(0);
+				exit(p == NULL ? 1 : 0);
 			}
 			if (strcmp(crypt(p, pw->pw_passwd), pw->pw_passwd)) {
 				errno = EACCES;
@@ -171,10 +171,10 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 
 	for (buf[0] = '\0', tries = 0;;) {
 		p = getpass("New password:");
-		if (*p == '\0') {
+		if (p == NULL || *p == '\0') {
 			(void)printf(UNCHANGED_MSG);
 			pw_abort();
-			exit(0);
+			exit(p == NULL ? 1 : 0);
 		}
 		if (strcmp(p, "s/key") == 0) {
 			printf("That password collides with a system feature. Choose another.\n");
@@ -185,7 +185,8 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 		    && pwd_check(pw, lc, p) == 0)
 			continue;
 		strlcpy(buf, p, sizeof(buf));
-		if (!strcmp(buf, getpass("Retype new password:")))
+		p = getpass("Retype new password:");
+		if (p != NULL && strcmp(buf, p) == 0)
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.25 2004/02/20 21:24:57 maja Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.26 2004/03/10 21:23:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.25 2004/02/20 21:24:57 maja Exp $";
+static const char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.26 2004/03/10 21:23:17 millert Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -203,7 +203,8 @@ ypgetnewpasswd(struct passwd *pw, login_cap_t *lc, char **old_pass)
 
 		if (pw->pw_passwd[0]) {
 			p = getpass("Old password:");
-			if (strcmp(crypt(p, pw->pw_passwd), pw->pw_passwd)) {
+			if (p == NULL ||
+			    strcmp(crypt(p, pw->pw_passwd), pw->pw_passwd)) {
 				errno = EACCES;
 				pw_error(NULL, 1, 1);
 			}
@@ -218,9 +219,10 @@ ypgetnewpasswd(struct passwd *pw, login_cap_t *lc, char **old_pass)
 
 	for (buf[0] = '\0', tries = 0;;) {
 		p = getpass("New password:");
-		if (!*p) {
+		if (p == NULL || *p == '\0') {
 			printf("Password unchanged.\n");
-			pw_error(NULL, 0, 0);
+			pw_abort();
+			exit(p == NULL ? 1 : 0);
 		}
 		if (strcmp(p, "s/key") == 0) {
 			printf("That password collides with a system feature. "
@@ -231,7 +233,8 @@ ypgetnewpasswd(struct passwd *pw, login_cap_t *lc, char **old_pass)
 		    && pwd_check(pw, lc, p) == 0)
 			continue;
 		strlcpy(buf, p, sizeof buf);
-		if (!strcmp(buf, getpass("Retype new password:")))
+		p = getpass("Retype new password:");
+		if (p != NULL && strcmp(buf, p) == 0)
 			break;
 		(void)printf("Mismatch; try again, EOF to quit.\n");
 	}
