@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.110 2002/07/31 13:46:15 krw Exp $
+#	$OpenBSD: install.sh,v 1.111 2002/08/18 21:05:47 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -143,20 +143,21 @@ __EOT
 		#       'while read _pp _ps' loop, but our 'sh' runs the last
 		#       element of a pipeline in a subshell and the required side
 		#       effects to _partitions, etc. would be lost.
+		unset _partitions _psizes _mount_points
 		_i=0
 		for _p in $(disklabel ${DISK} 2>&1 | sed -ne '/^ *\([a-p]\): *\([0-9][0-9]*\).*BSD.*/s//\1\2/p'); do
 			# All characters after the initial [a-p] are the partition size
 			_ps=${_p#?}
 			# Removing the partition size leaves us with the partition name
-			_pp=${_p%${_ps}}
+			_pp=${DISK}${_p%${_ps}}
 
-			[ "${DISK}${_pp}" = "$ROOTDEV" ] && continue
+			[ "$_pp" = "$ROOTDEV" ] && continue
 
 			_partitions[$_i]=$_pp
 			_psizes[$_i]=$_ps
 			# If the user assigned a mount point, use it.
 			if [ -f /tmp/fstab.$DISK ]; then
-				_mount_points[$_i]=`sed -n "s:^/dev/${DISK}${_pp}[ 	]*\([^ 	]*\).*:\1:p" < /tmp/fstab.$DISK`
+				_mount_points[$_i]=`sed -n "s:^/dev/${_pp}[ 	]*\([^ 	]*\).*:\1:p" < /tmp/fstab.$DISK`
 			fi
 			: $(( _i += 1 ))
 		done
@@ -174,7 +175,7 @@ __EOT
 			_mp=${_mount_points[$_i]}
 
 			# Get the mount point from the user
-			ask "Mount point for ${DISK}${_pp} (size=${_ps}k), RET, none or done?" "$_mp"
+			ask "Mount point for ${_pp} (size=${_ps}k), RET, none or done?" "$_mp"
 			case $resp in
 			"")	;;
 			none)	_mount_points[$_i]=
@@ -183,11 +184,11 @@ __EOT
 				;;
 			/*)	if [ "$resp" != "$_mp" ]; then	
 					# Try to ensure we don't mount something already mounted
-					_pp=`cat $FILESYSTEMS | grep " $resp" | cutword 1`
+					_pp=`grep " $resp\$" $FILESYSTEMS | cutword 1`
 					_j=0
 					for _mp in ${_mount_points[*]}; do
 						[ "$_mp" = "$resp" ] && \
-							_pp=${DISK}${_partitions[$_j]}
+							_pp=${_partitions[$_j]}
 						: $(( _j += 1 ))
 					done
 					if [ "$_pp" ]; then
@@ -206,38 +207,41 @@ __EOT
 			[ $_i -ge ${#_partitions[*]} ] && _i=0
 		done
 
-		# Now write it out, sorted by mount point
-		for _mp in `bsort ${_mount_points[*]}`; do
-			_i=0
-			while [ $_i -lt ${#_partitions[*]} ] ; do
-				if [ $_mp = "${_mount_points[$_i]}" ]; then
-					echo "${DISK}${_partitions[$_i]} ${_mount_points[$_i]}" >> ${FILESYSTEMS}
-					_mount_points[$_i]=
-					break
-				fi
-				: $(( _i += 1 ))
-			done
+		# Append mount information to $FILESYSTEMS
+		_i=0
+		for _pp in ${_partitions[*]}; do
+			_mnt=${_mount_points[$_i]}
+			[ "$_mnt" ] && echo "$_pp $_mnt" >> $FILESYSTEMS
+			: $(( _i += 1 ))
+		done
+	done
+
+	# Sort $FILESYSTEMS to try and force a rational mount order.
+	_pps=`cat $FILESYSTEMS | cutword 1`
+	_mps=`cat $FILESYSTEMS | cutword 2`
+	rm -f $FILESYSTEMS
+	for _mp in `bsort $_mps`; do
+		_i=1
+		for _pp in $_pps; do
+			[ "$_mp" = "$(echo $_mps | cutword $_i)" ] && \
+				echo "$_pp $_mp" >> $FILESYSTEMS
+			: $(( _i += 1 ))
 		done
 	done
 
 	cat << __EOT
 
+
 You have configured the following devices and mount points:
 
-$(<${FILESYSTEMS})
+$(<$FILESYSTEMS)
 
-============================================================
-The next step will overwrite any existing data on:
+The next step will destroy all existing data on these devices by
+creating a new filesystem on each of them.
+
 __EOT
-	(
-		echo -n "	"
-		while read _device_name _junk; do
-			echo -n "$_device_name "
-		done
-		echo
-	) < ${FILESYSTEMS}
 
-	ask "\nAre you really sure that you're ready to proceed?" n
+	ask "Are you really sure that you're ready to proceed?" n
 	case $resp in
 	y*|Y*)	;;
 	*)	echo "ok, try again later..."
@@ -245,13 +249,10 @@ __EOT
 		;;
 	esac
 
-	# Loop though the file, place filesystems on each device.
-	echo	"Creating filesystems..."
-	(
-		while read _device_name _junk; do
-			newfs -q /dev/r${_device_name}
-		done
-	) < ${FILESYSTEMS}
+	# Create a new filesystem on each device.
+	for _pp in $_pps; do
+		newfs -q /dev/r$_pp
+	done
 fi
 
 # Get network configuration information, and store it for placement in the
@@ -281,7 +282,7 @@ if [ ! -f /etc/fstab ]; then
 			*)	echo /dev/$_dev $_mp ffs rw 1 2;;
 			esac
 		done
-	) < ${FILESYSTEMS} > /tmp/fstab
+	) < $FILESYSTEMS > /tmp/fstab
 
 	munge_fstab
 fi
