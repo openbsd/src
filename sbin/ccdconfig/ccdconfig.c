@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.2 1995/08/23 01:06:59 thorpej Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.2.2.1 1995/11/11 02:43:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.
@@ -107,7 +107,7 @@ main(argc, argv)
 {
 	int ch, options = 0, action = CCD_CONFIG;
 
-	while ((ch = getopt(argc, argv, "cCf:guUv")) != -1) {
+	while ((ch = getopt(argc, argv, "cCf:gM:N:uUv")) != -1) {
 		switch (ch) {
 		case 'c':
 			action = CCD_CONFIG;
@@ -132,7 +132,7 @@ main(argc, argv)
 			break;
 
 		case 'N':
-			core = optarg;
+			kernel = optarg;
 			break;
 
 		case 'u':
