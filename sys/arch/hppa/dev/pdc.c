@@ -1,7 +1,7 @@
-/*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.15 2002/01/25 21:31:53 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2001 Michael Shalayeff
+ * Copyright (c) 1998-2002 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,8 @@ int pdcret[32] PDC_ALIGNMENT;
 char pdc_consbuf[IODC_MINIOSIZ] PDC_ALIGNMENT;
 iodcio_t pdc_cniodc, pdc_kbdiodc;
 pz_device_t *pz_kbd, *pz_cons;
-int CONADDR;
+hppa_hpa_t conaddr;
+int conunit;
 
 int pdcmatch __P((struct device *, void *, void*));
 void pdcattach __P((struct device *, struct device *, void *));
@@ -101,7 +102,27 @@ pdc_init()
 
 	/* XXX make pdc current console */
 	cn_tab = &constab[0];
-	/* TODO: detect that we are on cereal, and set CONADDR */
+
+	/* setup the console */
+	if (PAGE0->mem_cons.pz_class == PCL_DUPLEX) {
+		struct pz_device *pzd = &PAGE0->mem_cons;
+		extern int comdefaultrate;
+#ifdef DEBUG
+		printf("console: class %d flags %b bc %d/%d/%d/%d/%d/%d\n"
+		       "         mod %x layers %x/%x/%x/%x/%/%x hpa %x\n",
+		   pzd->pz_class, pzd->pz_flags, PZF_BITS,
+		   pzd->pz_bc[0], pzd->pz_bc[1], pzd->pz_bc[2],
+		pzd->pz_bc[3], pzd->pz_bc[4], pzd->pz_bc[5], pzd->pz_mod,
+		pzd->pz_layers[0], pzd->pz_layers[1], pzd->pz_layers[2],
+		pzd->pz_layers[3], pzd->pz_layers[4], pzd->pz_layers[5],
+		pzd->pz_hpa);
+#endif
+		conaddr = (u_long)pzd->pz_hpa;
+		conunit = 0;
+		/* TODO detect the baud rate */
+		comdefaultrate = 9600;
+	}
+
 }
 
 int
