@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.12 2001/03/24 10:07:19 ho Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.13 2001/03/24 11:07:50 ho Exp $	*/
 /*	$NetBSD: kbd.c,v 1.28 1997/09/13 19:12:18 pk Exp $ */
 
 /*
@@ -474,7 +474,7 @@ kbdattach(kbd)
 		    kbd_softc.k_state.kbd_id, kbd_softc.k_state.kbd_layout);
 	}
 
-	timeout_set(&k->k_repeat_tmo, kbd_repeat, k);
+	timeout_set(&kbd_softc.k_repeat_tmo, kbd_repeat, k);
 }
 
 void
