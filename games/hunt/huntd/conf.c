@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.2 1999/02/01 06:53:55 d Exp $	*/
+/*	$OpenBSD: conf.c,v 1.3 1999/08/30 23:35:50 d Exp $	*/
 /* David Leonard <d@openbsd.org>, 1999. Public domain. */
 
 #include <stdio.h>
@@ -166,7 +166,6 @@ parse_value(p, kvp, fnm, linep)
 	switch (kvp->type) {
 	case Vint:
 		return parse_int(p, kvp, fnm, linep);
-		break;
 	case Vchar:
 	case Vstring:
 	case Vdouble:
@@ -186,7 +185,6 @@ parse_line(buf, fnm, line)
 	char *word;
 	char *endword;
 	struct kwvar *kvp;
-	int *varp;
 	char savec;
 
 	p = buf;
@@ -214,7 +212,6 @@ parse_line(buf, fnm, line)
 	}
 
 	/* match the configuration variable name */
-	varp = NULL;
 	savec = *endword;
 	*endword = '\0';
 	for (kvp = keywords; kvp->kw; kvp++) 
@@ -264,7 +261,7 @@ load_config(f, fnm)
 	char *	fnm;
 {
 	char buf[BUFSIZ];
-	int len;
+	size_t len;
 	int line;
 	char *p;
 
