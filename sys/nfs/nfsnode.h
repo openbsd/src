@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.19 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.20 2004/03/02 05:46:00 tedu Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -183,6 +183,7 @@ int	nfs_readdir(void *);
 int	nfs_readlink(void *);
 int	nfs_inactive(void *);
 int	nfs_reclaim(void *);
+int	nfsfifo_reclaim(void *);
 #define nfs_lock ((int (*)(void *))vop_generic_lock)
 #define nfs_unlock ((int (*)(void *))vop_generic_unlock)
 #define nfs_islocked ((int (*)(void *))vop_generic_islocked)

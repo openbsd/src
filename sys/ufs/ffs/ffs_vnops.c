@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.30 2003/09/23 16:51:13 millert Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.31 2004/03/02 05:46:01 tedu Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_write_desc, ufsfifo_write },		/* write */
 	{ &vop_fsync_desc, ffs_fsync },			/* fsync */
 	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
-	{ &vop_reclaim_desc, ffs_reclaim },		/* reclaim */
+	{ &vop_reclaim_desc, ffsfifo_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ufs_lock },			/* lock */
 	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
 	{ &vop_print_desc, ufs_print },			/* print */
@@ -311,3 +311,12 @@ ffs_reclaim(v)
 	vp->v_data = NULL;
 	return (0);
 }
+
+#ifdef FIFO
+int
+ffsfifo_reclaim(void *v)
+{
+	fifo_reclaim(v);
+	return (ffs_reclaim(v));
+}
+#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_extern.h,v 1.22 2004/01/07 20:47:47 tedu Exp $	*/
+/*	$OpenBSD: ffs_extern.h,v 1.23 2004/03/02 05:46:01 tedu Exp $	*/
 /*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
 
 /*-
@@ -154,6 +154,7 @@ int ffs_read(void *);
 int ffs_write(void *);
 int ffs_fsync(void *);
 int ffs_reclaim(void *);
+int ffsfifo_reclaim(void *);
 
 
 /*
