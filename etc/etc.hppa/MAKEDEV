@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.4 2002/02/14 13:29:20 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.36 2002/02/19 21:05:10 todd Exp 
+#	OpenBSD: etc.hppa/MAKEDEV.md,v 1.5 2002/02/21 13:06:48 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.37 2002/02/21 13:03:00 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.17 2002/02/19 21:06:00 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.18 2002/02/21 13:19:06 todd Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -54,7 +54,6 @@
 #	lpt*	IEEE 1284 centronics printer
 # Call units:
 # Special purpose devices:
-#	hil	HP300 HIL input devices
 #	fd	makes fd/* for the fdescfs
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
@@ -184,8 +183,7 @@ U=`unt $i`
 case $i in
 ramdisk)
 	R std fd st0 st1 sd0 sd1 sd2 sd3 rd0
-	R pty0 hil com0 com1
-	R bpf0 bpf1 tun0 tun1 lkm random
+	R pty0 bpf0 bpf1 tun0 tun1 lkm random
 	;;
 
 std)

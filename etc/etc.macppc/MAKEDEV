@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.macppc/MAKEDEV.md,v 1.4 2002/02/14 13:29:20 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.36 2002/02/19 21:05:10 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.37 2002/02/21 13:03:00 todd Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.19 2002/02/19 21:06:00 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.20 2002/02/21 13:19:06 todd Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -423,8 +423,8 @@ st*)
 	;;
 
 ramdisk)
-	R bpf0 std pty0 ttyE0 rd0 cd0 cd1 st0 st1 wd0 wd1 wd2 wd3 wd4
-	R sd0 sd1 sd2 sd3 sd4
+	R bpf0 std pty0 rd0 cd0 cd1 st0 st1 wd0 wd1 wd2 wd3 wd4 sd0
+	R sd1 sd2 sd3 sd4
 	;;
 
 local)
