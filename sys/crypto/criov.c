@@ -1,4 +1,4 @@
-/*      $OpenBSD: criov.c,v 1.12 2003/06/03 15:51:28 deraadt Exp $	*/
+/*      $OpenBSD: criov.c,v 1.13 2003/07/31 20:35:10 markus Exp $	*/
 
 /*
  * Copyright (c) 1999 Theo de Raadt
@@ -142,14 +142,15 @@ cuio_apply(struct uio *uio, int off, int len,
 	unsigned int count;
 
 	if (len < 0)
-		panic("%s: len %d < 0", __func__, len);
+		panic("cuio_apply: len %d < 0", len);
 	if (off < 0)
-		panic("%s: off %d < 0", __func__, off);
+		panic("cuio_apply: off %d < 0", off);
 	
 	ind = 0;
 	while (off > 0) {
 		if (ind >= uio->uio_iovcnt)
-			panic("m_apply: null mbuf in skip");
+			panic("cui_apply: ind %d >= uio_iovcnt %d for off",
+			    ind, uio->uio_iovcnt);
 		uiolen = uio->uio_iov[ind].iov_len;
 		if (off < uiolen)
 			break;
@@ -158,7 +159,8 @@ cuio_apply(struct uio *uio, int off, int len,
 	}
 	while (len > 0) {
 		if (ind >= uio->uio_iovcnt)
-			panic("m_apply: null mbuf");
+			panic("cui_apply: ind %d >= uio_iovcnt %d for len",
+			    ind, uio->uio_iovcnt);
 		count = min(uio->uio_iov[ind].iov_len - off, len);
 
 		rval = f(fstate, uio->uio_iov[ind].iov_base + off, count);
