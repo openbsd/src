@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.13 2001/06/24 04:44:19 drahn Exp $	*/
+/*	$OpenBSD: bus.h,v 1.14 2001/06/25 06:21:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -237,6 +237,69 @@ bus_space_write_region_4(bus_space_tag_t tag, bus_space_handle_t bsh,
 #define	bus_space_write_region_8 !!! bus_space_write_region_8 unimplemented !!!
 #endif
 
+/*
+ *	void bus_space_set_multi_N __P((bus_space_tag_t tag,
+ *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *	    size_t count));
+ *
+ * Write the 1, 2, 4, or 8 byte value `val' to bus space described
+ * by tag/handle/offset `count' times.
+ */
+static __inline void bus_space_set_multi_1 __P((bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, u_int8_t, size_t));
+static __inline void bus_space_set_multi_2 __P((bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, u_int16_t, size_t));
+static __inline void bus_space_set_multi_4 __P((bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, u_int32_t, size_t));
+
+static __inline void
+bus_space_set_multi_1(tag, bsh, offset, val, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int8_t val;
+	size_t count;
+{
+	volatile u_int8_t *d = __BA(tag, bsh, offset);
+
+	while (count--)
+		*d = val;
+	__asm__ volatile("eieio; sync");
+}
+
+static __inline void
+bus_space_set_multi_2(tag, bsh, offset, val, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int16_t val;
+	size_t count;
+{
+	volatile u_int16_t *d = __BA(tag, bsh, offset);
+
+	while (count--)
+		__asm__ volatile("sthbrx %0, 0, %1" ::
+			"r"(val), "r"(d));
+	__asm__ volatile("eieio; sync");
+}
+
+static __inline void
+bus_space_set_multi_4(tag, bsh, offset, val, count)
+	bus_space_tag_t tag;
+	bus_space_handle_t bsh;
+	bus_size_t offset;
+	u_int32_t val;
+	size_t count;
+{
+	volatile u_int32_t *d = __BA(tag, bsh, offset);
+
+	while (count--)
+		__asm__ volatile("stwbrx %0, 0, %1" ::
+			"r"(val), "r"(d));
+	__asm__ volatile("eieio; sync");
+}
+
+#define	bus_space_set_multi_8 !!! bus_space_set_multi_8 unimplemented !!!
 
 /* These are OpenBSD extensions to the general NetBSD bus interface.  */
 void
