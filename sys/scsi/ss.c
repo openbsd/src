@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.8 1996/08/11 23:26:05 deraadt Exp $	*/
+/*	$OpenBSD: ss.c,v 1.9 1997/02/27 06:20:23 tholo Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -145,8 +145,10 @@ ssattach(parent, self, aux)
 	SC_DEBUG(sc_link, SDEV_DB2, ("ssattach:\n"));
 	if (!bcmp(sa->sa_inqbuf->vendor, "MUSTEK", 6))
 		mustek_attach(ss, sa);
-	if (!bcmp(sa->sa_inqbuf->vendor, "HP      ", 8))
+	else if (!bcmp(sa->sa_inqbuf->vendor, "HP      ", 8))
 		scanjet_attach(ss, sa);
+	else
+		printf("\n");
 	if (ss->special == NULL) {
 		/* XXX add code to restart a SCSI2 scanner, if any */
 	}
