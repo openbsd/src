@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.23 2001/01/12 18:01:43 deraadt Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.24 2001/01/12 18:53:37 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.109 2000/12/27 11:32:37 itojun Exp $	*/
 
 /*
@@ -970,7 +970,7 @@ main(argc, argv)
 		(void)setitimer(ITIMER_REAL, &itimer, NULL);
 	}
 
-	fdmasks = howmany(s+1, NFDBITS);
+	fdmasks = howmany(s + 1, NFDBITS) * sizeof(fd_mask);
 	if ((fdmaskp = malloc(fdmasks)) == NULL)
 		err(1, "malloc");
 
