@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.24 1998/09/23 22:48:08 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.25 1998/09/24 18:49:31 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -489,19 +489,21 @@ sys_execve(p, v, retval)
 			struct nameidata nd;
 			struct file *fp;
 			int indx;
+			short flags;
+
+			flags = FREAD | (i == 0 ? 0 : FWRITE);
 
 			if (p->p_fd->fd_ofiles[i] == NULL) {
 				if ((error = falloc(p, &fp, &indx)) != 0)
 					continue;
 				NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE,
 				    "/dev/null", p);
-				if ((error = vn_open(&nd, FREAD |
-				    (i == 0 ? 0 : FWRITE), 0)) != 0) {
+				if ((error = vn_open(&nd, flags, 0)) != 0) {
 					ffree(fp);
 					p->p_fd->fd_ofiles[indx] = NULL;
 					break;
 				}
-				fp->f_flag = FREAD | (i == 0 ? 0 : FWRITE);
+				fp->f_flag = flags;
 				fp->f_type = DTYPE_VNODE;
 				fp->f_ops = &vnops;
 				fp->f_data = (caddr_t)nd.ni_vp;
