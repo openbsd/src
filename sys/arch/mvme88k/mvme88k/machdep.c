@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.64 2001/11/07 01:18:00 art Exp $	*/
+/* $OpenBSD: machdep.c,v 1.65 2001/11/27 05:26:36 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -81,7 +81,10 @@
 #include <net/netisr.h>
 
 #include <machine/asm_macro.h>   /* enable/disable interrupts */
+#include <machine/mmu.h>
+#include <machine/board.h>
 #include <machine/bug.h>
+#include <machine/bugio.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/cpu_number.h>
@@ -1411,7 +1414,7 @@ int
 slave_main()
 {
 	printf("slave CPU%d started\n", cpu_number());
-	while (-1); /* spin forever */
+	while (1); /* spin forever */
 	return 0;
 }
 
@@ -2046,6 +2049,8 @@ spl0()
 	return (x);
 }
 
+#ifdef EH_DEBUG
+
 void
 MY_info(f, p, flags, s)
 struct trapframe  *f;
@@ -2063,7 +2068,9 @@ MY_info_done(f, flags)
 	int         flags;
 {
 	regdump(f);
-}  
+} 
+
+#endif
 
 void
 nmihand(void *framep)
