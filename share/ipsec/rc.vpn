@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: rc.vpn,v 1.18 2003/01/20 12:25:45 markus Exp $
+#	$OpenBSD: rc.vpn,v 1.19 2003/03/09 06:08:28 david Exp $
 #
 # Richard Reiner, Ph.D., FSC Internet Corp.
 # rreiner@fscinternet.com
@@ -59,7 +59,7 @@ if [ `/usr/sbin/sysctl -n net.inet.ip.forwarding` == 0 ]; then
 	abort=1
 fi
 if [ ${abort} = 1 ]; then
-	echo "$0: must be enabled in /etc/sysctl.conf. Aborting VPN setup." 
+	echo "$0: must be enabled in /etc/sysctl.conf. Aborting VPN setup."
 	[ ! -n "${DEBUG}" ] && exit 0
 fi
 
