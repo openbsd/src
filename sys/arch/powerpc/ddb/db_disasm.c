@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.11 2003/05/09 21:23:53 drahn Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.12 2003/05/09 21:36:05 drahn Exp $	*/
 /*
  * Copyright (c) 1996, 2001, 2003 Dale Rahn. All rights reserved.
  *
@@ -1143,15 +1143,12 @@ void
 dis_ppc(u_int32_t addr, const struct opcode *opcodeset, instr_t instr)
 {
 	const struct opcode *op;
-	int found = 0;
 	int i;
 	char disasm_str[80];
 
-	for (i=0, op = &opcodeset[0];
-	    found == 0 && op->mask != 0;
-	    i++, op= &opcodeset[i] ) {
+	for (i=0; opcodeset[i].mask != 0; i++) {
+		op = &opcodeset[i];
 		if ((instr & op->mask) == op->code) {
-			found = 1;
 			disasm_fields(addr, op, instr, disasm_str,
 			    sizeof disasm_str);
 			db_printf("%s%s\n", op->name, disasm_str);
