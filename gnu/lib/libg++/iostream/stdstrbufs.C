@@ -16,7 +16,8 @@
 //    Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "ioprivate.h"
-#include <stdio.h>
+#include <std
+io.h>
 
 // This file defines the standard streambufs, corresponding to cin, cout, cerr.
 // We define two sets:
@@ -53,13 +54,15 @@
 #define vt_filebuf __vtbl__7filebuf
 extern char vt_filebuf[1];
 #elif _G_DOLLAR_IN_LABEL
-#if __GNUC_MINOR__ >= 5		// XXX I'm not sure it was introduced in 2.5
+#if __GNUC_MAJOR__ > 2 || __GNUC_MINOR__ >= 5 // XXX I'm not sure it was
+					      // introduced in 2.5
 extern char vt_filebuf[1] asm(UNDERSCORE "_vt$7filebuf");
 #else
 extern char vt_filebuf[1] asm(UNDERSCORE "_vt$filebuf");
 #endif
 #else
-#if __GNUC_MINOR__ >= 5		// XXX I'm not sure it was introduced in 2.5
+#if __GNUC_MAJOR__ > 2 || __GNUC_MINOR__ >= 5 // XXX I'm not sure it was
+					      // introduced in 2.5
 extern char vt_filebuf[1] asm(UNDERSCORE "_vt.7filebuf");
 #else
 extern char vt_filebuf[1] asm(UNDERSCORE "_vt.filebuf");
@@ -93,13 +96,15 @@ DEF_FILEBUF(__std_filebuf_2, 2, (streambuf*)&__std_filebuf_1,
 #define vt_stdiobuf __vtbl__8stdiobuf
 extern char vt_stdiobuf[1];
 #elif _G_DOLLAR_IN_LABEL
-#if __GNUC_MINOR__ >= 5		// XXX I'm not sure it was introduced in 2.5
+#if __GNUC_MAJOR__ > 2 || __GNUC_MINOR__ >= 5 // XXX I'm not sure it was
+					      // introduced in 2.5
 extern char vt_stdiobuf[1] asm(UNDERSCORE "_vt$8stdiobuf");
 #else
 extern char vt_stdiobuf[1] asm(UNDERSCORE "_vt$stdiobuf");
 #endif
 #else
-#if __GNUC_MINOR__ >= 5		// XXX I'm not sure it was introduced in 2.5
+#if __GNUC_MAJOR__ > 2 || __GNUC_MINOR__ >= 5 // XXX I'm not sure it was
+					      // introduced in 2.5
 extern char vt_stdiobuf[1] asm(UNDERSCORE "_vt.8stdiobuf");
 #else
 extern char vt_stdiobuf[1] asm(UNDERSCORE "_vt.stdiobuf");
