@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.13 1995/10/10 21:25:29 gwr Exp $
+#	$NetBSD: files.sun3,v 1.13.2.1 1995/10/30 23:33:41 gwr Exp $
 
 #
 # sun3-specific configuration info
@@ -95,6 +95,12 @@ file arch/sun3/dev/if_le_subr.c		le
 device si at obio, vmes: scsi
 file	arch/sun3/dev/si.c		si
 
+define ncr5380sbc
+file	arch/sun3/dev/ncr5380sbc.c 	ncr5380sbc
+
+device ncr_si at obio, vmes: scsi, ncr5380sbc
+file	arch/sun3/dev/ncr_si.c  	ncr_si
+
 #
 # On-Board MEMory (OBMEM)
 #
@@ -116,7 +122,7 @@ device	xdc at vmel {drive = -1}
 device	xd at xdc: disk
 file	arch/sun3/dev/xd.c		xd needs-flag
 
-device	xyc at vmel {drive = -1}
+device	xyc at vmes {drive = -1}
 device	xy at xyc: disk
 file	arch/sun3/dev/xy.c		xy needs-flag
 
