@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.15 2002/05/09 19:13:09 jason Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.16 2002/05/09 21:13:04 jason Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Jason L. Wright (jason@thought.net)
@@ -153,7 +153,7 @@ lofn_attach(parent, self, aux)
 	/* Enable RNG */
 	WRITE_REG_0(sc, LOFN_REL_CFG2,
 	    READ_REG_0(sc, LOFN_REL_CFG2) | LOFN_CFG2_RNGENA);
-	sc->sc_ier |= LOFN_REL_IER;
+	sc->sc_ier |= LOFN_IER_RDY;
 	WRITE_REG(sc, LOFN_REL_IER, sc->sc_ier);
 
 	/* Enable ALU */
