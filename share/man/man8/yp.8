@@ -34,6 +34,14 @@
 .Nm yp
 .Nd description of the YP subsystem
 .Sh SYNOPSIS
+.Nm ypinit
+.Op Fl m
+.Ar domain
+.Nm ypinit
+.Op Fl s
+.Ar server
+.Ar domain
+.Pp
 .Nm ypbind
 .Op Fl ypset
 .Nm ypbind
@@ -113,6 +121,13 @@ and
 to access distributed and shareable versions
 of their maps through
 .Nm YP .
+.Pp
+.Nm ypinit
+is used to initialize YP as a server or master.  This creates
+various files in
+.Pa /var/yp .
+If setup as a server, the required databases are automatically copied
+from the specified server.
 .Pp
 The
 .Nm YP
