@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.4 2001/02/20 19:39:37 mickey Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.5 2001/03/23 00:16:49 mickey Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -1260,9 +1260,6 @@ i82596_start(ifp)
 			break;
 		}
 
-		head = sc->xchead;
-		xbase = sc->xbds;
-
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == 0)
 			break;
@@ -1277,20 +1274,42 @@ i82596_start(ifp)
 			bpf_mtap(ifp->if_bpf, m0);
 #endif
 
-#ifdef I82596_DEBUG
-		if (sc->sc_debug & IED_ENQ)
-			printf("%s: fill buffer %d\n", sc->sc_dev.dv_xname,
-				sc->xchead);
-#endif
-
 		if (m0->m_pkthdr.len > IE_TBUF_SIZE)
 			printf("%s: tbuf overflow\n", sc->sc_dev.dv_xname);
 
+		head = sc->xchead;
+		sc->xchead = (head + 1) % NTXBUF;
 		buffer = IE_XBUF_ADDR(sc, head);
+
+#ifdef I82596_DEBUG
+		if (sc->sc_debug & IED_ENQ)
+			printf("%s: fill buffer %d offset %x",
+			    sc->sc_dev.dv_xname, head, buffer);
+#endif
+
 		for (m = m0; m != 0; m = m->m_next) {
+#ifdef I82596_DEBUG
+			if (sc->sc_debug & IED_ENQ) {
+				u_int8_t *e, *p = mtod(m, u_int8_t *);
+				static int i;
+				if (m == m0)
+					i = 0;
+				for (e = p + m->m_len; p < e; i++, p += 2) {
+					if (!(i % 8))
+						printf("\n%s:",
+						    sc->sc_dev.dv_xname);
+					printf(" %02x%02x", p[0], p[1]);
+				}
+			}
+#endif
 			(sc->memcopyout)(sc, mtod(m,caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
 		}
+
+#ifdef I82596_DEBUG
+		if (sc->sc_debug & IED_ENQ)
+			printf("\n");
+#endif
 
 		len = max(m0->m_pkthdr.len, ETHER_MIN_LEN);
 		m_freem(m0);
@@ -1299,15 +1318,12 @@ i82596_start(ifp)
 		 * Setup the transmit buffer descriptor here, while we
 		 * know the packet's length.
 		 */
+		xbase = sc->xbds;
 		sc->ie_bus_write16(sc, IE_XBD_FLAGS(xbase, head),
 				       len | IE_TBD_EOL);
 		sc->ie_bus_write16(sc, IE_XBD_NEXT(xbase, head), 0xffff);
 		sc->ie_bus_write24(sc, IE_XBD_BUF(xbase, head),
 				       sc->sc_maddr + IE_XBUF_ADDR(sc, head));
-
-		if (++head == NTXBUF)
-			head = 0;
-		sc->xchead = head;
 
 		s = splnet();
 		/* Start the first packet transmitting. */
@@ -1469,42 +1485,45 @@ void
 i82596_setup_bufs(sc)
 	struct ie_softc *sc;
 {
-	register int n, r, ptr = sc->buf_area;	/* memory pool */
+	int n, r, ptr = sc->buf_area;	/* memory pool */
+	int cl = 16;
 
 	/*
 	 * step 0: zero memory and figure out how many recv buffers and
 	 * frames we can have.
 	 */
-	ptr = (ptr + 3) & ~3;	/* set alignment and stick with it */
-
+	ptr = (ptr + cl - 1) & ~(cl - 1); /* set alignment and stick with it */
 
 	/*
 	 *  step 1: lay out data structures in the shared-memory area
 	 */
 
 	/* The no-op commands; used if "nop-chaining" is in effect */
-	sc->nop_cmds = ptr;
-	ptr += NTXBUF * IE_CMD_NOP_SZ;
+	ptr += cl;
+	sc->nop_cmds = ptr - 2;
+	ptr += NTXBUF * 32;
 
 	/* The transmit commands */
-	sc->xmit_cmds = ptr;
-	ptr += NTXBUF * IE_CMD_XMIT_SZ;
+	ptr += cl;
+	sc->xmit_cmds = ptr - 2;
+	ptr += NTXBUF * 32;
 
 	/* The transmit buffers descriptors */
-	sc->xbds = ptr;
-	ptr += NTXBUF * IE_XBD_SZ;
+	ptr += cl;
+	sc->xbds = ptr - 2;
+	ptr += NTXBUF * 32;
 
 	/* The transmit buffers */
 	sc->xbufs = ptr;
 	ptr += NTXBUF * IE_TBUF_SIZE;
 
-	ptr = (ptr + 3) & ~3;		/* re-align.. just in case */
+	ptr = (ptr + cl - 1) & ~(cl - 1);	/* re-align.. just in case */
 
 	/* Compute free space for RECV stuff */
 	n = sc->buf_area_sz - (ptr - sc->buf_area);
 
 	/* Compute size of one RECV frame */
-	r = IE_RFRAME_SZ + ((IE_RBD_SZ + IE_RBUF_SIZE) * B_PER_F);
+	r = 48 + ((32 + IE_RBUF_SIZE) * B_PER_F);
 
 	sc->nframes = n / r;
 
@@ -1514,12 +1533,14 @@ i82596_setup_bufs(sc)
 	sc->nrxbuf = sc->nframes * B_PER_F;
 
 	/* The receice frame descriptors */
-	sc->rframes = ptr;
-	ptr += sc->nframes * IE_RFRAME_SZ;
+	ptr += cl;
+	sc->rframes = ptr - 2;
+	ptr += sc->nframes * 48;
 
 	/* The receive buffer descriptors */
-	sc->rbds = ptr;
-	ptr += sc->nrxbuf * IE_RBD_SZ;
+	ptr += cl;
+	sc->rbds = ptr - 2;
+	ptr += sc->nrxbuf * 32;
 
 	/* The receive buffers */
 	sc->rbufs = ptr;
