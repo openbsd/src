@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.110 2004/01/28 13:04:57 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.111 2004/04/14 13:43:48 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -66,7 +66,7 @@
 /*
  * VM externals
  */
-extern vaddr_t	avail_start, avail_end;
+extern vaddr_t	avail_start;
 extern vaddr_t	virtual_avail, virtual_end;
 
 /*
@@ -661,10 +661,6 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
  *
  * Parameters:
  *	load_start	PA where kernel was loaded
- *	&phys_start	PA of first available physical page
- *	&phys_end	PA of last available physical page
- *	&virtual_avail	VA of first available page (after kernel bss)
- *	&virtual_end	VA of last available page (end of kernel address space)
  *
  * Extern/Global:
  *
@@ -682,9 +678,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
  * virtual address for which it was (presumably) linked. Immediately
  * following the end of the kernel code/data, sufficient page of
  * physical memory are reserved to hold translation tables for the kernel
- * address space. The 'phys_start' parameter is adjusted upward to
- * reflect this allocation. This space is mapped in virtual memory
- * immediately following the kernel code/data map.
+ * address space.
  *
  *    A pair of virtual pages per cpu are reserved for debugging and
  * IO purposes. They are arbitrarily mapped when needed. They are used,
@@ -697,8 +691,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
  */
 
 void
-pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
-    vaddr_t *virt_start, vaddr_t *virt_end)
+pmap_bootstrap(vaddr_t load_start)
 {
 	kpdt_entry_t kpdt_virt;
 	sdt_entry_t *kmap;
@@ -708,14 +701,6 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	int i;
 	pmap_table_t ptable;
 	extern void *kernelstart, *etext;
-
-#ifdef DEBUG
-	if (pmap_con_dbg & CD_BOOT) {
-		printf("pmap_bootstrap: \"load_start\" 0x%x\n", load_start);
-	}
-	if (!PAGE_ALIGNED(load_start))
-		panic("pmap_bootstrap: \"load_start\" not on the m88k page boundary: 0x%x", load_start);
-#endif
 
 	simple_lock_init(&kernel_pmap->pm_lock);
 
@@ -727,15 +712,15 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 * The calling sequence is
 	 *    ...
 	 *  pmap_bootstrap(&kernelstart, ...);
-	 *  kernelstart is the first symbol in the load image.
-	 *  We link the kernel such that &kernelstart == 0x10000 (size of
-	 *							BUG ROM)
-	 *  The expression (&kernelstart - load_start) will end up as
-	 *	0, making *virt_start == *phys_start, giving a 1-to-1 map)
+	 * kernelstart being the first symbol in the load image.
+	 * The kernel is linked such that &kernelstart == 0x10000 (size of
+	 * BUG reserved memory area).
+	 * The expression (&kernelstart - load_start) will end up as
+	 *	0, making virtual_avail == avail_start, giving a 1-to-1 map)
 	 */
 
-	*phys_start = round_page(*phys_start);
-	*virt_start = *phys_start +
+	avail_start = round_page(avail_start);
+	virtual_avail = avail_start +
 	    (trunc_page((vaddr_t)&kernelstart) - load_start);
 
 	/*
@@ -743,16 +728,9 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 */
 	kernel_pmap->pm_count = 1;
 	kernel_pmap->pm_cpus = 0;
-	kmap = (sdt_entry_t *)(*phys_start);
-	kernel_pmap->pm_stab = (sdt_entry_t *)(*virt_start);
-	kmapva = *virt_start;
-
-#ifdef DEBUG
-	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		printf("kernel_pmap->pm_stab = 0x%x (pa 0x%x)\n",
-		    kernel_pmap->pm_stab, kmap);
-	}
-#endif
+	kmap = (sdt_entry_t *)(avail_start);
+	kernel_pmap->pm_stab = (sdt_entry_t *)virtual_avail;
+	kmapva = virtual_avail;
 
 	/*
 	 * Reserve space for segment table entries.
@@ -769,48 +747,37 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	kernel_pmap_size = 2 * SDT_SIZE;
 
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		printf("kernel segment table size = 0x%x\n", kernel_pmap_size);
-	}
+	printf("kernel segment table size = 0x%x\n", kernel_pmap_size);
 #endif
 	/* init all segment descriptors to zero */
 	bzero(kernel_pmap->pm_stab, kernel_pmap_size);
 
-	*phys_start += kernel_pmap_size;
-	*virt_start += kernel_pmap_size;
+	avail_start += kernel_pmap_size;
+	virtual_avail += kernel_pmap_size;
 
 	/* make sure page tables are page aligned!! XXX smurph */
-	*phys_start = round_page(*phys_start);
-	*virt_start = round_page(*virt_start);
+	avail_start = round_page(avail_start);
+	virtual_avail = round_page(virtual_avail);
 
 	/* save pointers to where page table entries start in physical memory */
-	kpdt_phys = *phys_start;
-	kpdt_virt = (kpdt_entry_t)*virt_start;
+	kpdt_phys = avail_start;
+	kpdt_virt = (kpdt_entry_t)virtual_avail;
 
 	/* might as well round up to a page - XXX smurph */
 	pdt_size = round_page(MAX_KERNEL_PDT_SIZE);
 	kernel_pmap_size += pdt_size;
-	*phys_start += pdt_size;
-	*virt_start += pdt_size;
+	avail_start += pdt_size;
+	virtual_avail += pdt_size;
 
 	/* init all page descriptors to zero */
 	bzero((void *)kpdt_phys, pdt_size);
 #ifdef DEBUG
-	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		printf("--------------------------------------\n");
-		printf("        kernel page start = 0x%x\n", kpdt_phys);
-		printf("   kernel page table size = 0x%x\n", pdt_size);
-		printf("          kernel page end = 0x%x\n", *phys_start);
-	}
-#endif
+	printf("--------------------------------------\n");
+	printf("        kernel page start = 0x%x\n", kpdt_phys);
+	printf("   kernel page table size = 0x%x\n", pdt_size);
+	printf("          kernel page end = 0x%x\n", avail_start);
 
-#ifdef DEBUG
-	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		printf("kpdt_phys = 0x%x\n", kpdt_phys);
-		printf("kpdt_virt = 0x%x\n", kpdt_virt);
-		printf("end of kpdt at (virt)0x%08x, (phys)0x%08x\n",
-		    *virt_start, *phys_start);
-	}
+	printf("kpdt_virt = 0x%x\n", kpdt_virt);
 #endif
 	/*
 	 * init the kpdt queue
@@ -853,15 +820,10 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 * here...
 	 */
 	if (kmapva != vaddr) {
-#ifdef DEBUG
-		if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-			printf("(pmap_bootstrap) correcting vaddr\n");
-		}
-#endif
-		while (vaddr < (*virt_start - kernel_pmap_size))
+		while (vaddr < (virtual_avail - kernel_pmap_size))
 			vaddr = round_page(vaddr + 1);
 	}
-	vaddr = pmap_map(vaddr, (paddr_t)kmap, *phys_start,
+	vaddr = pmap_map(vaddr, (paddr_t)kmap, avail_start,
 	    VM_PROT_WRITE | VM_PROT_READ, CACHE_INH);
 
 #if defined (MVME187) || defined (MVME197)
@@ -872,41 +834,35 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 * XXX -nivas
 	 */
 	if (brdtyp == BRD_187 || brdtyp == BRD_8120 || brdtyp == BRD_197) {
-		*phys_start = vaddr;
+		avail_start = vaddr;
 		etherlen = ETHERPAGES * PAGE_SIZE;
 		etherbuf = (void *)vaddr;
 
-		vaddr = pmap_map(vaddr, *phys_start, *phys_start + etherlen,
+		vaddr = pmap_map(vaddr, avail_start, avail_start + etherlen,
 		    VM_PROT_WRITE | VM_PROT_READ, CACHE_INH);
 
-		*virt_start += etherlen;
-		*phys_start += etherlen;
+		virtual_avail += etherlen;
+		avail_start += etherlen;
 
-		if (vaddr != *virt_start) {
-#ifdef DEBUG
-			if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-				printf("2: vaddr %x *virt_start %x *phys_start %x\n", vaddr,
-				    *virt_start, *phys_start);
-			}
-#endif
-			*virt_start = vaddr;
-			*phys_start = round_page(*phys_start);
+		if (vaddr != virtual_avail) {
+			virtual_avail = vaddr;
+			avail_start = round_page(avail_start);
 		}
 	}
 
 #endif /* defined (MVME187) || defined (MVME197) */
 
-	*virt_start = round_page(*virt_start);
-	*virt_end = VM_MAX_KERNEL_ADDRESS;
+	virtual_avail = round_page(virtual_avail);
+	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
 	/*
 	 * Map two pages per cpu for copying/zeroing.
 	 */
 
-	phys_map_vaddr = *virt_start;
-	phys_map_vaddr_end = *virt_start + 2 * (max_cpus << PAGE_SHIFT);
-	*phys_start += 2 * (max_cpus << PAGE_SHIFT);
-	*virt_start += 2 * (max_cpus << PAGE_SHIFT);
+	phys_map_vaddr = virtual_avail;
+	phys_map_vaddr_end = virtual_avail + 2 * (max_cpus << PAGE_SHIFT);
+	avail_start += 2 * (max_cpus << PAGE_SHIFT);
+	virtual_avail += 2 * (max_cpus << PAGE_SHIFT);
 
 	/*
 	 * Map all IO space 1-to-1. Ideally, I would like to not do this
@@ -919,11 +875,6 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	 */
 
 	ptable = pmap_table_build();
-#ifdef DEBUG
-	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		printf("pmap_bootstrap: -> pmap_table_build\n");
-	}
-#endif
 
 	for (; ptable->size != (vsize_t)(-1); ptable++){
 		if (ptable->size) {
@@ -950,14 +901,14 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 	virt += ((n) * PAGE_SIZE); \
 })
 
-	virt = *virt_start;
+	virt = virtual_avail;
 
 	SYSMAP(caddr_t, vmpte, vmmap, 1);
 	invalidate_pte(vmpte);
 
 	SYSMAP(struct msgbuf *, msgbufmap, msgbufp, btoc(MSGBUFSIZE));
 
-	*virt_start = virt;
+	virtual_avail = virt;
 
 	/*
 	 * Set translation for UPAGES at UADDR. The idea is we want to
@@ -983,11 +934,7 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 
 	kernel_pmap->pm_apr = (atop(kmap) << PG_SHIFT) |
 	    CACHE_GLOBAL | CACHE_WT | APR_V;
-#ifdef DEBUG
-	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		show_apr(kernel_pmap->pm_apr);
-	}
-#endif
+
 	/* Invalidate entire kernel TLB and get ready for address translation */
 	for (i = 0; i < MAX_CPUS; i++)
 		if (cpu_sets[i]) {
@@ -996,18 +943,10 @@ pmap_bootstrap(vaddr_t load_start, paddr_t *phys_start, paddr_t *phys_end,
 			/* Load supervisor pointer to segment table. */
 			cmmu_set_sapr(i, kernel_pmap->pm_apr);
 #ifdef DEBUG
-			if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-				printf("Processor %d running virtual.\n", i);
-			}
+			printf("cpu%d: running virtual\n", i);
 #endif
 			SETBIT_CPUSET(i, &kernel_pmap->pm_cpus);
 		}
-
-#ifdef DEBUG
-	if ((pmap_con_dbg & (CD_BOOT | CD_FULL)) == (CD_BOOT | CD_FULL)) {
-		printf("running virtual - avail_next 0x%x\n", *phys_start);
-	}
-#endif
 }
 
 /*
