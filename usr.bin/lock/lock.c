@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock.c,v 1.4 1996/07/25 01:54:39 deraadt Exp $	*/
+/*	$OpenBSD: lock.c,v 1.5 1996/08/06 18:10:23 deraadt Exp $	*/
 /*	$NetBSD: lock.c,v 1.8 1996/05/07 18:32:31 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lock.c,v 1.4 1996/07/25 01:54:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lock.c,v 1.5 1996/08/06 18:10:23 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -158,7 +158,7 @@ main(argc, argv)
 			(void)tcsetattr(0, TCSADRAIN, &tty);
 			exit(1);
 		}
-		s[0] = NULL;
+		s[0] = '\0';
 		mypw = s1;
 	}
 
@@ -210,7 +210,8 @@ main(argc, argv)
  * for our needs. Instead we roll our own.
  */
 int
-skey_auth(char *user)
+skey_auth(user)
+	char *user;
 {
 	char s[128], *ask, *skey_keyinfo __P((char *name));
 	int ret = 0;
