@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.2 2000/04/20 21:15:23 aaron Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.3 2000/04/26 14:57:39 aaron Exp $ */
 /*	$NetBSD: pccbb.c,v 1.37 2000/03/23 07:01:40 thorpej Exp $	*/
 
 /*
@@ -428,7 +428,6 @@ pccbbattach(parent, self, aux)
 				    " 0x%lx: io mode\n", sc->sc_dev.dv_xname,
 				    sockbase);
 				/* give up... allocate reg space via rbus. */
-				printf("***** HOI!\n");
 				sc->sc_base_memh = 0;
 				pci_conf_write(pc, pa->pa_tag, PCI_SOCKBASE, 0);
 		 	}
