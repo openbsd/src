@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.4 2003/08/25 23:36:46 tedu Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.5 2004/01/11 23:59:22 pvalchev Exp $	*/
 /*	$NetBSD: installboot.c,v 1.8 2001/02/19 22:48:59 cgd Exp $ */
 
 /*-
@@ -69,7 +69,7 @@ char	*boot, *proto, *dev;
 #endif
 #else
 /* XXX: Hack in libc nlist works with both formats */
-#define SYMNAME(a)	__CONCAT("_",a)
+#define SYMNAME(a)	"_"a
 #endif
 
 struct nlist nl[] = {
