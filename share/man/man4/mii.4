@@ -1,0 +1,96 @@
+.\"	$OpenBSD: mii.4,v 1.1 1998/11/11 21:46:28 jason Exp $
+.\"	$NetBSD: mii.4,v 1.1 1998/11/04 05:21:50 thorpej Exp $
+.\"
+.\" Copyright (c) 1998 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+.\" NASA Ames Research Center.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd November 3, 1998
+.Dt MII 4
+.Os OpenBSD
+.Sh NAME
+.Nm mii
+.Nd IEEE 802.3 Media Independent Interface
+.Sh SYNOPSIS
+.Cd "exphy* at mii? phy ?"
+.Cd "icsphy* at mii? phy ?"
+.Cd "inphy* at mii? phy ?"
+.Cd "lxtphy* at mii? phy ?"
+.Cd "nsphy* at mii? phy ?"
+.Cd "qsphy* at mii? phy ?"
+.Cd "sqphy* at mii? phy ?"
+.Cd "tlphy* at mii? phy ?"
+.Sh DESCRIPTION
+Media Independent Interface is an IEEE standard serial bus for
+connecting MACs (network controllers) to PHYs (physical media
+interfaces).  The
+.Nm
+layer allows network device drivers to share support code for
+various PHY models, and allows unused support for PHYs which
+are not present in a system to be removed from the kernel.
+.Pp
+Network device drivers which use the
+.Nm
+layer carry the
+.Dq mii
+autoconfiguration attribute.  This allows kernel configuration
+files to simply specify PHYs as described above in the synopsis.
+.Pp
+The following is an example of the messages displayed when a network
+interface with an attached PHY is detected by the kernel:
+.Bd -literal -offset indent
+epic0 at pci0 dev 12 function 0: SMC EPIC/100 Fast Ethernet
+epic0: interrupting at kn20aa irq 4
+epic0: SMC9432TX, Ethernet address 00:e0:29:07:17:c4
+qsphy0 at epic0 phy 3: QS6612 10/100 media interface, rev. 1
+qsphy0: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto
+.Ed
+.Pp
+All PHY drivers display the media types supported by the PHY when it
+is detected by the kernel.  These media types are valid media keywords
+for use with the
+.Xr ifconfig 8
+program.
+.Sh SEE ALSO
+.Xr exphy 4 ,
+.Xr icsphy 4 ,
+.Xr ifmedia 4 ,
+.Xr inphy 4 ,
+.Xr netintro 4 ,
+.Xr lxtphy 4 ,
+.Xr nsphy 4 ,
+.Xr qsphy 4 ,
+.Xr sqphy 4 ,
+.Xr tlphy 4 ,
+.Xr ifconfig 8
