@@ -1,4 +1,4 @@
-@node How to set up a realm, One-Time Passwords, Installing programs, Top
+@node How to set up a realm, Resolving frequent problems, Installing programs, Top
 @chapter How to set up a realm
 
 @quotation
@@ -621,9 +621,7 @@ authentication method should be used.  The @code{telnetd} program has
 an option ``-a user'' that only allows kerberised and authenticated
 connections.  If this is not included, it falls back to using clear text
 passwords.  For obvious reasons, we recommend that you enable this
-option.  If you want to use one-time passwords (@pxref{One-Time
-Passwords}) you can use the ``-a otp'' option which will allow OTPs or
-kerberised connections.
+option.
 
 @subsection ftp
 @pindex ftp
@@ -633,8 +631,6 @@ default only kerberos authenticated connections are allowed.  You can
 specify additional levels that are thus allowed with these options:
 
 @table @asis
-@item @kbd{-a otp}
-Allow one-time passwords (@pxref{One-Time Passwords}).
 @item @kbd{-a ftp}
 Allow anonymous login (as user ``ftp'' or ``anonymous'').
 @item @kbd{-a safe}

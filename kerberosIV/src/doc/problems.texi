@@ -1,4 +1,4 @@
-@node Resolving frequent problems, Acknowledgments, One-Time Passwords, Top
+@node Resolving frequent problems, Acknowledgments, How to set up a realm, Top
 @chapter Resolving frequent problems
 
 @menu
@@ -7,9 +7,7 @@
 * Is Kerberos year 2000 safe?::  
 @end menu
 
-@node Problems compiling Kerberos, Problems with firewalls, Resolving frequent problems, Resolving frequent problems
-
-@node Problems with firewalls, Common error messages, Problems compiling Kerberos, Resolving frequent problems
+@node Problems with firewalls, Common error messages, Resolving frequent problems, Resolving frequent problems
 @section Problems with firewalls
 
 @cindex firewall

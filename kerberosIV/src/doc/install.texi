@@ -6,14 +6,16 @@
 * Installing a binary distribution::  
 * Finishing the installation::  
 * .klogin::
-* Authentication modules::      
 @end menu
 
 @node Installing from source, Installing a binary distribution, Installing programs, Installing programs
 @comment  node-name,  next,  previous,  up
 @section Installing from source
 
-KerberosIV is by default built by the standard @code{make build} procedure.
+KerberosIV is by default built by the standard @code{make build} procedure,
+so normally you don't need to do anything special.
+But if you're upgrading from OpenBSD 2.6 or earlier, the following
+steps may be necessary:
 
 @table @asis
 
@@ -63,12 +65,7 @@ reason. The old protocols use reserved ports as security, and therefore
 the programs have to be setuid to root. If you don't need this
 functionality consider turning off the setuid bit.
 
-@menu
-* .klogin::
-* Authentication modules::      
-@end menu
-
-@node .klogin, Authentication modules, Finishing the installation, Installing programs
+@node .klogin, , Finishing the installation, Installing programs
 @comment  node-name,  next,  previous,  up
 
 Each user can have an authorization file @file{~@var{user}/.klogin}

@@ -222,7 +222,6 @@ to the following restrictions:
 * What is Kerberos?::           
 * Installing programs::         
 * How to set up a realm::       
-* One-Time Passwords::          
 * Resolving frequent problems::  
 * Acknowledgments::             
 * Index::                       
@@ -235,17 +234,6 @@ Installing programs
 * Installing from source::      
 * Installing a binary distribution::  
 * Finishing the installation::  
-* Authentication modules::      
-
-Finishing the installation
-
-* Authentication modules::      
-
-Authentication modules
-
-* Digital SIA::                 
-* IRIX::                        
-* PAM::                         
 
 How to set up a realm
 
@@ -273,7 +261,6 @@ How to set up the kerberos server
 
 Resolving frequent problems
 
-* Problems compiling Kerberos::  
 * Problems with firewalls::     
 * Common error messages::       
 * Is Kerberos year 2000 safe?::  
