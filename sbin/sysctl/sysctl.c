@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.57 2001/01/04 07:50:33 angelos Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.58 2001/01/04 22:02:02 angelos Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.57 2001/01/04 07:50:33 angelos Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.58 2001/01/04 22:02:02 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,6 @@ struct ctlname hwname[] = CTL_HW_NAMES;
 struct ctlname username[] = CTL_USER_NAMES;
 struct ctlname debugname[CTL_DEBUG_MAXID];
 struct ctlname kernmallocname[] = CTL_KERN_MALLOC_NAMES;
-struct ctlname kernbucketname[] = CTL_KERN_MALLOC_BUCKET_NAMES;
 struct ctlname *vfsname;
 #ifdef CTL_MACHDEP_NAMES
 struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
@@ -1229,7 +1228,6 @@ struct list inetvars[] = {
 };
 
 struct list kernmalloclist = { kernmallocname, KERN_MALLOC_MAXID };
-struct list kernbucketlist = { kernbucketname, KERN_MALLOC_BUCKET_MAXID };
 
 /*
  * handle malloc statistics
