@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 1999/08/30 23:35:50 d Exp $	*/
+/*	$OpenBSD: conf.c,v 1.4 1999/12/12 15:08:14 d Exp $	*/
 /* David Leonard <d@openbsd.org>, 1999. Public domain. */
 
 #include <stdio.h>
@@ -231,7 +231,7 @@ parse_line(buf, fnm, line)
 		p++;
 
 	if (*p++ != '=') {
-		logx(LOG_ERR, "%s:%d: expected `='", fnm, *line);
+		logx(LOG_ERR, "%s:%d: expected `=' after %s", fnm, *line, word);
 		return;
 	}
 
@@ -311,4 +311,16 @@ config()
 		else if (errno != ENOENT)
 			log(LOG_WARNING, "%s", nm);
 	}
+}
+
+/*
+ * Parse a single configuration argument given on the command line
+ */
+void
+config_arg(arg)
+	char *arg;
+{
+	int line = 0;
+
+	parse_line(arg, "*Initialisation*", &line);
 }

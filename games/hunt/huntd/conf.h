@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.2 1999/02/01 06:53:55 d Exp $	*/
+/*	$OpenBSD: conf.h,v 1.3 1999/12/12 15:08:14 d Exp $	*/
 
 /* Configuration option variables for the server: */
 
@@ -51,3 +51,5 @@ extern int conf_mindshot;
 extern int conf_simstep;
 
 void config __P((void));
+void config_arg __P((char *));
+
