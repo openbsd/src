@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.7 1994/12/28 19:43:02 mycroft Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.8 1995/10/15 23:32:02 thorpej Exp $	*/
 
 /*
  * SCSI interface description
@@ -199,7 +199,16 @@ union disk_pages { /* this is the structure copied from osf */
 	   u_char land_zone_2;	/* landing zone cylinder (MSB)	      */
 	   u_char land_zone_1;	/* landing zone cylinder 	      */
 	   u_char land_zone_0;	/* landing zone cylinder (LSB)	      */
+	   u_char sp_sync_ctl;	/* spindle synch control              */
+#define SPINDLE_SYNCH_MASK	0x03	/* mask of valid bits */
+#define SPINDLE_SYNCH_NONE	0x00	/* synch disabled or not supported */
+#define SPINDLE_SYNCH_SLAVE	0x01	/* disk is a slave */
+#define SPINDLE_SYNCH_MASTER	0x02	/* disk is a master */
+#define SPINDLE_SYNCH_MCONTROL	0x03	/* disk is a master control */
+	   u_char rot_offset;	/* rotational offset (for spindle synch) */
 	   u_char reserved1;
+	   u_char rpm_1;	/* media rotation speed (MSB)         */
+	   u_char rpm_0;	/* media rotation speed (LSB)         */
 	   u_char reserved2;
 	   u_char reserved3;
     	} rigid_geometry;
