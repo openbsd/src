@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.15 1998/05/16 06:28:00 deraadt Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.16 1999/05/31 17:26:12 millert Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -168,7 +168,6 @@ struct nfhret {
 #define	ISBGRND	2
 int retrycnt;
 int opflags = 0;
-int nfsproto = IPPROTO_UDP;
 int mnttcp_ok = 1;
 u_short port_no = 0;
 int force2 = 0;
@@ -354,7 +353,7 @@ main(argc, argv)
 				nfsargsp->flags |= NFSMNT_SOFT;
 			if (altflags & ALTF_TCP) {
 				nfsargsp->sotype = SOCK_STREAM;
-				nfsproto = IPPROTO_TCP;
+				mnttcp_ok = 2;
 			}
 			if (altflags & ALTF_PORT)
 				port_no = atoi(strstr(optarg, "port=") + 5);
@@ -392,7 +391,7 @@ main(argc, argv)
 			break;
 		case 'T':
 			nfsargsp->sotype = SOCK_STREAM;
-			nfsproto = IPPROTO_TCP;
+			mnttcp_ok = 2;
 			break;
 		case 't':
 			num = strtol(optarg, &p, 10);
@@ -430,6 +429,10 @@ main(argc, argv)
 
 	spec = *argv++;
 	name = *argv;
+
+	/* Use TCP for NFSV3 by default */
+	if (mnttcp_ok == 1 && (nfsargsp->flags & NFSMNT_NFSV3))
+		nfsargsp->sotype = SOCK_STREAM;
 
 	if (!getnfsargs(spec, nfsargsp))
 		exit(1);
@@ -652,6 +655,15 @@ tryagain:
 		if ((tport = port_no ? port_no : pmap_getport(&saddr,
 		    RPCPROG_NFS, nfsvers, nfsargsp->sotype == SOCK_STREAM ?
 		    IPPROTO_TCP : IPPROTO_UDP)) == 0) {
+			/*
+			 * If user didn't specifically request TCP,
+			 * fall back to UDP for NFSV3 mounts.
+			 */
+			if (nfsvers == NFS_VER3 && mnttcp_ok == 1) {
+				nfsargsp->sotype = SOCK_DGRAM;
+				mnttcp_ok = 0;
+				continue;
+			}
 			if ((opflags & ISBGRND) == 0)
 				clnt_pcreateerror("NFS Portmap");
 		} else {
