@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.90 1998/09/28 00:35:54 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.91 1998/10/06 07:06:59 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -659,6 +659,9 @@
 /* Brooktree products */
 #define	PCI_PRODUCT_BROOKTREE_BT848	0x0350		/* BT848 */
 #define	PCI_PRODUCT_BROOKTREE_BT849	0x0351		/* BT849 */
+#define	PCI_PRODUCT_BROOKTREE_BT878	0x036e		/* BT878 */
+#define	PCI_PRODUCT_BROOKTREE_BT879	0x036f		/* BT879 */
+#define	PCI_PRODUCT_BROOKTREE_BT878_DEV2	0x0878		/* BT878 (2nd device) */
 
 /* BusLogic products */
 #define	PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC	0x0140		/* MultiMaster NC */

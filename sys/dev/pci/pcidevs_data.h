@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.90 1998/09/28 00:35:54 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.91 1998/10/06 07:06:59 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -553,6 +553,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Brooktree",
 	    "BT849",
+	},
+	{
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT878,
+	    0,
+	    "Brooktree",
+	    "BT878",
+	},
+	{
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT879,
+	    0,
+	    "Brooktree",
+	    "BT879",
+	},
+	{
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT878_DEV2,
+	    0,
+	    "Brooktree",
+	    "BT878 (2nd device)",
 	},
 	{
 	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC,
