@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.34 2001/08/26 06:25:10 deraadt Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.35 2001/08/28 18:25:14 jason Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -565,12 +565,14 @@ svr4_sys_sysconfig(p, v, retval)
 	case SVR4_CONFIG_RTSIG_MAX:
 		*retval = 0;
 		break;
+#ifdef SYSVSEM
 	case SVR4_CONFIG_SEM_NSEMS_MAX:
 		*retval = seminfo.semmni;
 		break;
 	case SVR4_CONFIG_SEM_VALUE_MAX:
 		*retval = seminfo.semvmx;
 		break;
+#endif
 	case SVR4_CONFIG_SIGQUEUE_MAX:
 		*retval = 0;	/* XXX: Don't know */
 		break;
