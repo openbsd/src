@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.26 2003/06/23 18:02:47 mickey Exp $	*/
+/*	$OpenBSD: an.c,v 1.27 2003/06/25 22:28:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -656,6 +656,7 @@ an_read_record(sc, ltv)
 #if BYTE_ORDER == BIG_ENDIAN
 	switch (ltv->an_type) {
 	case AN_RID_GENCONFIG:
+	case AN_RID_ACTUALCFG:
 		an_swap16(&ltv->an_val[4], 7); /* an_macaddr, an_rates */
 		an_swap16(&ltv->an_val[63], 8);  /* an_nodename */
 		break;
@@ -717,6 +718,7 @@ an_write_record(sc, ltv)
 #if BYTE_ORDER == BIG_ENDIAN
 	switch (ltv->an_type) {
 	case AN_RID_GENCONFIG:
+	case AN_RID_ACTUALCFG:
 		an_swap16(&ltv->an_val[4], 7); /* an_macaddr, an_rates */
 		an_swap16(&ltv->an_val[63], 8);  /* an_nodename */
 		break;
