@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.134 2001/08/21 01:54:17 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.135 2001/08/21 17:25:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1001,7 +1001,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				TAILQ_INSERT_BEFORE(oldrule, newrule, entries);
 			else
 				TAILQ_INSERT_AFTER(pf_rules_active, oldrule,
-				     newrule, entries);
+				    newrule, entries);
 		}
 
 		TAILQ_FOREACH(oldrule, pf_rules_active, entries)
@@ -2644,8 +2644,8 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 			    SEQ_GEQ(seq, src->seqlo - dst->max_win) ? ' ': '2',
 			    (ackskew >= -MAXACKWINDOW) ? ' ' : '3',
 			    (ackskew <= MAXACKWINDOW) ? ' ' : '4',
-	    		    SEQ_GEQ(src->seqhi + MAXACKWINDOW, end) ?' ' :'5',
-	    		    SEQ_GEQ(seq, src->seqlo - MAXACKWINDOW) ?' ' :'6');
+			    SEQ_GEQ(src->seqhi + MAXACKWINDOW, end) ?' ' :'5',
+			    SEQ_GEQ(seq, src->seqlo - MAXACKWINDOW) ?' ' :'6');
 		}
 		return (PF_DROP);
 	}

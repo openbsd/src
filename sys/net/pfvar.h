@@ -1,7 +1,7 @@
-/*	$OpenBSD: pfvar.h,v 1.44 2001/08/19 20:25:22 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.45 2001/08/21 17:25:59 deraadt Exp $ */
 
 /*
- * Copyright (c) 2001, Daniel Hartmeier
+ * Copyright (c) 2001 Daniel Hartmeier
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
