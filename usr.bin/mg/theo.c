@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.32 2002/07/25 22:37:22 mickey Exp $	*/
+/*	$OpenBSD: theo.c,v 1.33 2002/09/24 08:37:49 henning Exp $	*/
 
 #include "def.h"
 #include "kbd.h"
@@ -94,7 +94,8 @@ static const char *talk[] = {
 	"you have to stop peeing on your breakfast",
 	"feature requests come from idiots",
 	"henning and darren / sitting in a tree / t o k i n g / a joint or three",
-	"KICK ASS. TIME FOR A JASON LOVE IN!  WE CAN ALL GET LOST IN HIS HAIR!"
+	"KICK ASS. TIME FOR A JASON LOVE IN!  WE CAN ALL GET LOST IN HIS HAIR!",
+	"shame on you for following my rules."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
