@@ -488,6 +488,7 @@
 ./usr/bin/whois
 ./usr/bin/window
 ./usr/bin/write
+./usr/bin/x99token
 ./usr/bin/xargs
 ./usr/bin/yes
 ./usr/bin/ypcat
