@@ -1,18 +1,19 @@
-#	$OpenBSD: list,v 1.6 1996/09/22 20:20:43 tholo Exp $
+#	$OpenBSD: list,v 1.7 1996/10/13 17:33:08 niklas Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
 LINK	instbin			bin/cat
 LINK	instbin			bin/chmod
 LINK	instbin			bin/cp
-LINK	instbin			bin/df
 LINK	instbin			bin/dd
+LINK	instbin			bin/df
 LINK	instbin			bin/ed
 LINK	instbin			bin/expr
 LINK	instbin			bin/ln
 LINK	instbin			bin/ls
 LINK	instbin			bin/mkdir
 LINK	instbin			bin/mv
+LINK	instbin			bin/pax
 LINK	instbin			bin/pwd
 LINK	instbin			bin/rm
 LINK	instbin			bin/sh
@@ -24,6 +25,7 @@ LINK	instbin			bin/test
 LINK	instbin			bin/[
 LINK	instbin			sbin/disklabel
 LINK	instbin			sbin/fsck
+LINK	instbin			sbin/fsck_ffs
 LINK	instbin			sbin/ifconfig
 LINK	instbin			sbin/halt
 LINK	instbin			sbin/init
@@ -32,24 +34,33 @@ LINK	instbin			sbin/mount
 LINK	instbin			sbin/mount_cd9660
 LINK	instbin			sbin/mount_ados
 LINK	instbin			sbin/mount_ffs
+LINK	instbin			sbin/mount_msdos
 LINK	instbin			sbin/mount_nfs
+LINK	instbin			sbin/mount_kernfs
 LINK	instbin			sbin/newfs
+LINK	instbin			sbin/ping
 LINK	instbin			sbin/reboot
+LINK	instbin			sbin/restore
 LINK	instbin			sbin/route
 LINK	instbin			sbin/shutdown
 LINK	instbin			sbin/slattach
 LINK	instbin			sbin/umount
+LINK	instbin			usr/bin/awk
 LINK	instbin			usr/bin/chgrp
 LINK	instbin			usr/bin/ftp
+LINK	instbin			usr/bin/gunzip
+LINK	instbin			usr/bin/gzip
+LINK	instbin			usr/bin/less
 LINK	instbin			usr/bin/more
 LINK	instbin			usr/bin/printf
+LINK	instbin			usr/bin/rsh
 LINK	instbin			usr/bin/sed
 LINK	instbin			usr/bin/strings
 LINK	instbin			usr/bin/tip
+LINK	instbin			usr/bin/zcat
 LINK	instbin			usr/sbin/chown
 LINK	instbin			usr/sbin/chroot
 LINK	instbin			usr/sbin/pppd
-LINK	instbin			usr/sbin/update
 SPECIAL	/bin/rm instbin
 
 # copy the MAKEDEV script and make some devices

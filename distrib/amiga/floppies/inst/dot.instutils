@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.instutils,v 1.3 1996/04/25 21:27:28 niklas Exp $
+#	$OpenBSD: dot.instutils,v 1.4 1996/10/13 17:33:06 niklas Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -59,7 +59,7 @@ Configure()
 	fi
 
 	echo	""
-	if [ -e /mnt/etc/sendmail.cf ]; then
+	if [ -e $ETC/sendmail.cf ]; then
 		echo	"WARNING: A default sendmail.cf exists, and probably"
 		echo	"needs to be tuned and/or replaced, to work properly at"
 		echo	"your site!"

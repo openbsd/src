@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#       $OpenBSD: dot.profile,v 1.2 1996/04/25 02:35:50 mickey Exp $
+#       $OpenBSD: dot.profile,v 1.3 1996/10/13 17:33:07 niklas Exp $
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
@@ -43,9 +43,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
 	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
 	echo ''
-
-	# run update, so that installed software is written as it goes.
-	update
 
 	# pull in the functions that people will use from the shell prompt.
 	. /.commonutils

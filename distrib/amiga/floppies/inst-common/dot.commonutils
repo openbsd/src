@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$OpenBSD: dot.commonutils,v 1.5 1996/06/29 05:54:06 tholo Exp $
+#	$OpenBSD: dot.commonutils,v 1.6 1996/10/13 17:33:07 niklas Exp $
 
 # Installation utilites (functions), to get OpenBSD installed on
 # the hard disk.  These are meant to be invoked from the shell prompt,
@@ -41,7 +41,6 @@ fi
 
 # counter for possible shared library confusion
 TAR=/bin/tar
-GUNZIP=/usr/bin/gunzip
 
 Set_tmp_dir()
 {
@@ -119,5 +118,12 @@ Extract()
 		tarverbose=
 		;;
 	esac
-	cat "$1".?? | $GUNZIP | (cd $dest_dir ; $TAR -xp"$tarverbose"f -)
+	export TMPDIR=$dest_dir	# /tmp is RO, tar needs to write a tmp-file
+	if [ -r "$1" ]; then
+		cat "$1" | (cd $dest_dir ; $TAR -zxp"$tarverbose"f -)
+	elif [ -r "$1".tar.gz ]; then
+		cat "$1".tar.gz | (cd $dest_dir ; $TAR -zxp"$tarverbose"f -)
+	else
+		cat "$1"?? | (cd $dest_dir ; $TAR -zxp"$tarverbose"f -)
+	fi
 }
