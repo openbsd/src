@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.21 2002/12/16 23:06:28 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.22 2002/12/17 00:00:08 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -605,9 +605,9 @@ rate2str(double rate)
 	else if (rate >= 1000 * 1000 * 1000)
 		snprintf(buf, RATESTR_MAX, "%.2fGb",
 		    rate / (1000.0 * 1000.0 * 1000.0));
-	else if (rate >= 1024 * 1024)
+	else if (rate >= 1000 * 1000)
 		snprintf(buf, RATESTR_MAX, "%.2fMb", rate / (1000.0 * 1000.0));
-	else if (rate >= 1024)
+	else if (rate >= 1000)
 		snprintf(buf, RATESTR_MAX, "%.2fKb", rate / 1000.0);
 	else
 		snprintf(buf, RATESTR_MAX, "%db", (int)rate);
