@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_msg.c,v 1.4 2004/07/11 03:05:50 dtucker Exp $ */
+/*	$OpenBSD: ntp_msg.c,v 1.5 2004/08/10 19:17:10 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -76,7 +76,7 @@ ntp_getmsg(char *p, ssize_t len, struct ntp_msg *msg)
 
 	if (auth) {
 		memcpy(&msg->keyid, p, sizeof(msg->keyid));
-		p += sizeof(msg->refid);
+		p += sizeof(msg->keyid);
 		for (i = 0; i < NTP_DIGESTSIZE; i++) {
 			memcpy(&msg->digest[i], p, sizeof(msg->digest[i]));
 			p += sizeof(msg->digest[i]);
