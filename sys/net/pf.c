@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.29 2001/06/25 09:46:20 art Exp $ */
+/*	$OpenBSD: pf.c,v 1.30 2001/06/25 09:57:08 art Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -117,7 +117,7 @@ int		 pfopen(dev_t, int, int, struct proc *);
 int		 pfclose(dev_t, int, int, struct proc *);
 int		 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
-u_int16_t	 fix(u_int16_t, u_int16_t, u_int16_t);
+u_int16_t	 cksum_fixup(u_int16_t, u_int16_t, u_int16_t);
 void		 change_ap(u_int32_t *, u_int16_t *, u_int16_t *, u_int16_t *,
 		    u_int32_t, u_int16_t);
 void		 change_a(u_int32_t *, u_int16_t *, u_int32_t);
@@ -765,7 +765,7 @@ done:
 }
 
 u_int16_t
-fix(u_int16_t cksum, u_int16_t old, u_int16_t new)
+cksum_fixup(u_int16_t cksum, u_int16_t old, u_int16_t new)
 {
 	u_int32_t l = cksum + old - new;
 	l = (l >> 16) + (l & 65535); 
@@ -780,9 +780,9 @@ change_ap(u_int32_t *a, u_int16_t *p, u_int16_t *ic, u_int16_t *pc, u_int32_t an
 	u_int32_t ao = *a;
 	u_int16_t po = *p;
 	*a = an;
-	*ic = fix(fix(*ic, ao / 65536, an / 65536), ao % 65536, an % 65536);
+	*ic = cksum_fixup(cksum_fixup(*ic, ao / 65536, an / 65536), ao % 65536, an % 65536);
 	*p = pn;
-	*pc = fix(fix(fix(*pc, ao / 65536, an / 65536), ao % 65536, an % 65536),
+	*pc = cksum_fixup(cksum_fixup(cksum_fixup(*pc, ao / 65536, an / 65536), ao % 65536, an % 65536),
 	    po, pn);
 }
 
@@ -791,7 +791,7 @@ change_a(u_int32_t *a, u_int16_t *c, u_int32_t an)
 {
 	u_int32_t ao = *a;
 	*a = an;
-	*c = fix(fix(*c, ao / 65536, an / 65536), ao % 65536, an % 65536);
+	*c = cksum_fixup(cksum_fixup(*c, ao / 65536, an / 65536), ao % 65536, an % 65536);
 }
 
 void
@@ -802,17 +802,17 @@ change_icmp(u_int32_t *ia, u_int16_t *ip, u_int32_t *oa, u_int32_t na,
 	u_int16_t oip = *ip;
 	/* Change inner protocol port, fix inner protocol checksum. */
 	*ip = np;
-	*pc = fix(*pc, oip, *ip);
-	*ic = fix(*ic, oip, *ip);
-	*ic = fix(*ic, opc, *pc);
+	*pc = cksum_fixup(*pc, oip, *ip);
+	*ic = cksum_fixup(*ic, oip, *ip);
+	*ic = cksum_fixup(*ic, opc, *pc);
 	/* Change inner ip address, fix inner ip checksum and icmp checksum. */
 	*ia = na;
-	*h2c = fix(fix(*h2c, oia / 65536, *ia / 65536), oia % 65536, *ia % 65536);
-	*ic = fix(fix(*ic, oia / 65536, *ia / 65536), oia % 65536, *ia % 65536);
-	*ic = fix(*ic, oh2c, *h2c);
+	*h2c = cksum_fixup(cksum_fixup(*h2c, oia / 65536, *ia / 65536), oia % 65536, *ia % 65536);
+	*ic = cksum_fixup(cksum_fixup(*ic, oia / 65536, *ia / 65536), oia % 65536, *ia % 65536);
+	*ic = cksum_fixup(*ic, oh2c, *h2c);
 	/* Change outer ip address, fix outer ip checksum. */
 	*oa = na;
-	*hc = fix(fix(*hc, ooa / 65536, *oa / 65536), ooa % 65536, *oa % 65536);
+	*hc = cksum_fixup(cksum_fixup(*hc, ooa / 65536, *oa / 65536), ooa % 65536, *oa % 65536);
 }
 
 void
