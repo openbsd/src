@@ -1,4 +1,4 @@
-.\"	$OpenBSD: installboot.8,v 1.6 1997/09/04 23:20:51 deraadt Exp $
+.\"	$OpenBSD: installboot.8,v 1.7 1997/09/20 22:40:40 flipk Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
@@ -80,23 +80,28 @@ If not specified, this defaults to d_ntracks from the disklabel.
 The arguments are:
 .Bl -tag -width biosboot
 .It Ar boot
-The name of the second-stage boot program in the file system
+The name of the second-stage boot program in the mounted file system
 where the first-stage boot program is to be installed.
 .It Ar biosboot
-The name of the prototype file for the first stage boot program.
+The name of the prototype file for the first stage boot program,
+usually /usr/mdec/biosboot.
 .It Ar rawdev
 The name of the raw device in which the first-stage boot program
 is to be installed.  This should correspond to the raw partition
 of the block device on which the file system containing
 .Ar boot
-is mounted.
+is mounted.  Note that you must be in single-user mode or have your
+kernel in insecure mode (see 
+.Xr sysctl 8 's
+kern.securelevel variable or /etc/rc.securelevel) to be able
+to access the raw partition of a mounted disk.
 .El
 .Sh BUGS
 The disklabel d_type field must be set to a value other than "unknown".
 .Pp
 You cannot run
 .Nm installboot
-for drives/partitions others then the one you have loaded /bsd from.
+for drives/partitions others then the one you want /bsd loaded from.
 .Sh SEE ALSO
 .Xr disklabel 8 ,
 .Xr init 8 ,

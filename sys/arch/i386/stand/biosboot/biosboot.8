@@ -1,4 +1,4 @@
-.\"	$OpenBSD: biosboot.8,v 1.4 1997/09/05 21:25:15 weingart Exp $
+.\"	$OpenBSD: biosboot.8,v 1.5 1997/09/20 22:40:33 flipk Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -35,28 +35,28 @@
 .Sh NAME
 .Nm biosboot
 .Nd
-primary system bootstrap program
+first-stage system bootstrap
 .Sh DESCRIPTION
 This small program (roughly 256 bytes of code) is responsible for
 loading the second stage
 .Xr boot 8
 program, which in turn, will load the kernel.
-It is a small piece of code that takes no input or options.
+It takes no input or options directly.
 .Pp
-The location of the
+In order for
+.Nm
+to load the second-stage bootstrap, it has a table inside it which
+describes
+.Xr boot 8 's
+location. 
+.Nm
+must be installed by, and have its block table filled in by, the
+.Xr installboot 8
+program.  As this data is BIOS dependant, you must re-run 
+.Xr installboot 8
+each time you reinstall
 .Xr boot 8
-program that
-.Nm
-loads, is stored in a block table inside the
-.Nm
-program.  The
-.Xr installboot 8
-program is used to fill this table with the location of the
-.Nm
-program.  This location is BIOS dependant, so you have to run the
-.Xr installboot 8
-program to update this table every time you move your disk between
-machines and/or controllers.
+or move your disk or software between machines and/or controllers.
 .Pp
 When 
 .Nm
@@ -76,11 +76,12 @@ any media error, including bad sectors (common on floppy disks),
 and invalid sectors (can occur with messed up geometry translations).
 .It Er Bad magic
 The just loaded /boot image contains a bad magic in it's header.  This
-might indicate some kind of hardware problem,  or it may mean that the
+might indicate some kind of hardware problem, the
 .Ar boot
 argument to the
 .Xr installboot 8
-command was not a valid /boot program.
+command was not a valid /boot program, or /boot or has been moved or
+changed.
 .El
 .Pp
 Other common reasons for these errors to appear is that a wrong BIOS geometry

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.8 1997/09/02 20:36:57 mickey Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.9 1997/09/20 22:40:42 flipk Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -35,8 +35,11 @@
 #include <sys/types.h>
 #include <machine/biosvar.h>
 #include <machine/pio.h>
+#include <machine/bus.h>
 #include <dev/isa/isareg.h>
 #include <dev/ic/mc146818reg.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/ns16450reg.h>
 #include <i386/isa/nvram.h>
 #include <dev/cons.h>
 #include <lib/libsa/stand.h>
@@ -47,6 +50,10 @@
 #else
 #define PRESENT_MASK 0
 #endif
+
+int com_setsp __P((int));
+static int com_speed = 9600;  /* default speed is 9600 baud */
+static const int comports[4] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
 
 void
 pc_probe(cn)
@@ -119,10 +126,11 @@ com_init(cn)
 {
 	register int unit = minor(cn->cn_dev);
 
-	/* 9600-N-1 */
+	/* let bios do necessary init first, 9600-N-1 */
 	__asm __volatile(DOINT(0x14) : : "a" (0xe3), "d" (unit) :
 	    "%ecx", "cc" );
-	printf("using com%d console\n", unit);
+	/* now just set the speed */
+	(void)com_setsp(com_speed);
 }
 
 int
@@ -133,7 +141,7 @@ com_getc(dev)
 
 	if (dev & 0x80) {
 		__asm __volatile(DOINT(0x14) : "=a" (rv) :
-		    "0" (0x300), "d" (minor(dev)) : "%ecx", "cc" );
+		    "0" (0x300), "d" (minor(dev&0x7f)) : "%ecx", "cc" );
 		return ((rv & 0x100) == 0x100);
 	}
 
@@ -143,6 +151,81 @@ com_getc(dev)
 	while (rv & 0x8000);
 
 	return (rv & 0xff);
+}
+
+/* ripped screaming from dev/ic/com.c */
+static int
+comspeed(speed)
+	int speed;
+{
+#define divrnd(n, q)    (((n)*2/(q)+1)/2)       /* divide and round off */
+        int x, err;
+
+	if (speed == 0)
+		return 0;
+	if (speed < 0)
+		return -1;
+	x = divrnd((COM_FREQ / 16), speed);
+	if (x <= 0)
+		return -1;
+	err = divrnd((COM_FREQ / 16) * 1000, speed * x) - 1000;
+	if (err < 0)
+		err = -err;
+	if (err > COM_TOLERANCE)
+		return -1;
+	return x;
+#undef  divrnd(n, q)
+}
+
+/* call with sp == 0 to query the current speed */
+int
+com_setsp(sp)
+	int sp;
+{
+	int unit, i, newsp = comspeed(sp);
+
+	if (sp == 0)
+		return com_speed;
+	/* valid baud rate? */
+	if (sp > 38400 || sp < 75)
+	{
+	badspeed:
+		printf("invalid terminal speed %d\n", sp);
+		return 0;
+	}
+	for (i=sp; i != 75; i >>= 1)
+		if (i & 1)
+			goto badspeed;
+	/* is current console a com device? */
+	if (cn_tab && cn_tab->cn_getc == com_getc)
+	{
+		time_t tt;
+		unit = minor(cn_tab->cn_dev);
+		if (com_speed != sp)
+		{
+			printf("com%d: changing speed from %d to %d\n"
+			       "com%d: change your terminal to match!\n"
+			       "com%d: will change speed in 5 seconds....\n",
+			       unit, com_speed, sp,
+			       unit, unit);
+			/* let the \n get out and the
+			   user change the terminal */
+			for (tt = getsecs() + 5; getsecs() < tt;);
+		}
+		bus_space_write_1(I386_BUS_SPACE_IO, comports[unit],
+				  com_cfcr, LCR_DLAB);
+		bus_space_write_1(I386_BUS_SPACE_IO, comports[unit],
+				  com_dlbl, newsp);
+		bus_space_write_1(I386_BUS_SPACE_IO, comports[unit],
+				  com_dlbh, newsp>>8);
+		bus_space_write_1(I386_BUS_SPACE_IO, comports[unit], 
+				  com_cfcr, LCR_8BITS);
+		printf("using com%d console at %d baud\n", unit, sp);
+	} else {
+		printf("speed on next com device will be %d\n"
+		       "change your terminal to match!\n", sp);
+	}
+	return com_speed = sp;
 }
 
 void

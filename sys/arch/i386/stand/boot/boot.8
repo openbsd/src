@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.5 1997/09/07 03:12:37 mickey Exp $
+.\"	$OpenBSD: boot.8,v 1.6 1997/09/20 22:40:35 flipk Exp $
 .\"
 .\" Copyright (c) 1997 Michael Shalayeff
 .\" All rights reserved.
@@ -35,75 +35,70 @@
 .Sh NAME
 .Nm boot
 .Nd
-secondary system bootstrap program
+second-stage bootstrap
 .Sh DESCRIPTION
 The main purpose of this program is to load the system kernel, dealing with
-all the bugs and bottlenecks of the PC BIOS ``architecture'' and philosophy.
+the downfalls of the PC BIOS architecture.
 .Pp
 As described in
 .Xr boot_i386 8
 this program is loaded by the
 .Xr biosboot 8
-primary bootstrap loader and will give you a convinient way to load the kernel.
-This program acts as an enhanced boot monitor or ROM for PC systems, providing
-a buffer or common interface for the kernel to start from.
+primary bootstrap loader and provides a convenient way to load the kernel.
+This program acts as an enhanced boot monitor for PC systems, providing
+common interface for the kernel to start from.
 .Pp
 Basic operations include:
 .Bl -bullet -compact
 .It
-Detecting and switching between multiple console types.
+Detecting and switching between multiple consoles.
 .It
 Loading kernels from any device supported by your system BIOS.
 .It
 Loading kernels compressed by
-.Xr gzip 1
-program or
-.Xr zlib 3
-routines.
+.Xr gzip 1 .
 .It
 Passing system parameters queried from the BIOS to the kernel.
 .It
 Providing an interactive command line.
 .El
 .Pp
-The sequences of its operation consist of initialization
-followed by an interactive command line. While at the command
-line you have a timeout of 5 seconds (initially, then increasing
-by one second on every subsequent kernel load failure)
-to type any commands, if needed. Upon timeout expiration, the
-kernel will be loaded according to the current variables
-settings (See the
+The sequence of its operation is as follows: initialization,
+parsing the configuration file, then an interactive command line.
+While at the command line you have 5 seconds to type any commands,
+if needed. If time expires, the kernel will be loaded according to
+the current variable settings (See the
 .Nm set
-command for details).
-The sequence of
+command).  Each time a kernel load fails, the timeout
+is increased by one second. The sequence of
 .Nm
 operations is as follows:
 .Bl -enum
 .It
-Setup protected mode involving IDT setup for processor exceptions to
-be caught and reported, and setup a simple real-mode BIOS interface.
+Set up a protected mode environment which catches and reports processor
+exceptions, and provides a simple real-mode BIOS interface.
 .It
-Probe for console devices, which includes the PC VGA+Keyboard console
-and up to four serial consoles connected to the serial ports.
-Corresponding messages report about the found devices to the default
-console device, which is pc0, if present.
+Probe for console devices, which includes the (default) PC VGA+Keyboard
+console (pc0) and up to four serial consoles (com0 through com3) connected
+to the serial ports. Display messages to the default console about the
+devices found.
 .It
-Probe for memory. Conventional memory is probed by quering the BIOS.
-Extended memory is probed by running through the memory probing
-for present pages, which eliminates the BIOS restriction of 64M of memory.
+Detect memory. Conventional memory is detected by quering the BIOS.
+Extended memory is detected by probing page-by-page through the address
+space, rather than asking the BIOS; many BIOS cannot report larger than
+64M of memory.
 All the memory found is reported to the default console device.
 .It
 Probe for APM support in the BIOS. Message printed if support is present.
 .It
-Open, and if successfull process
+If the file
 .Pa /etc/boot.conf
-file on the same filesystem
+exists on the filesystem
 .Nm
-was loaded from. This file may contain any commands
+was loaded from, open and parse it. This file may contain any commands
 .Nm
 accepts at the interactive prompt.
-Usually they are commands that change boot parameters according to your
-environment, although default values are usable in most cases.
+Though default settings usually suffice, they can be changed here.
 .It
 The header line
 .Pp
@@ -133,12 +128,14 @@ Boots kernel image specified by the
 .Ar image
 with options if any. Image specification consists of a pair
 .Nm device : Nm filename ,
-either of each maybe omitted (':' is not needed if both)
+either of each maybe omitted (':' is not needed if both),
 in which case values from
 .Nm
 variables will be used.
-.It echo
-Prints it's arguments.
+.It echo Op Ar args
+Displays
+.Ar args
+on the console device.
 .It help
 Prints a list of available commands and machine dependant
 commands, if any.
@@ -159,12 +156,15 @@ Prints contents of processor registers, if defind for this architecture.
 .It reboot
 Reboots machine by initiating a warm boot procedure.
 .It set Op varname Op value
-If invoked without arguments will print a list of variables with values.
+If invoked without arguments, prints a list of variables and their values.
+If only
+.Ar varname
+is specified, displays contents of that variable.
 If
 .Ar varname
 and
 .Ar value
-present will set variable with that name to the given value.
+are both specified, sets that variable to the given value.
 Variables include:
 .Pp
 .Bl -tag -compact -width boothow
@@ -183,25 +183,37 @@ Active console device name.
 .It image
 File name containing the kernel image.
 .El
+.It stty Op Ar baudrate
+Displays or sets the baudrate for serial console.  If the currently
+active console is a serial console, gives you five seconds of pause
+before changing the baud rate to allow you to change your terminal's
+speed to match.  If the active console is
+.Em not
+a serial console, sets the baudrate value to be used the
+.Em next
+time you switch to a serial console. (The baudrate value is not used
+for the pc0 console.)
+.Pp
+The default baudrate if not specifically
+set is 9600 baud.
 .It time
 Displays system time and date.
 .El
 .Sh FILES
 .Bl -tag -width /usr/mdec/biosbootxx -compact
 .It Pa /usr/mdec/biosboot
-primary bootstrap
+first stage bootstrap
 .It Pa /boot
 system bootstrap
 .It Pa /etc/boot.conf
 system bootstrap's startup file
 .It Pa /bsd
-system code
+kernel image
 .El
 .Sh SEE ALSO
 .Xr boot_i386 8 ,
 .Xr fdisk 8 ,
 .Xr installboot 8 ,
-.Xr boot 8 ,
 .Xr gzip 1 .
 .Pp
 RFC 1950 describes the zlib library interface.

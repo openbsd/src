@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.32 1997/09/17 19:55:34 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.33 1997/09/20 22:40:37 flipk Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -34,6 +34,7 @@
 
 #include <sys/param.h>
 #include <libsa.h>
+#include <biosdev.h>
 #include <sys/reboot.h>
 #include "cmd.h"
 
@@ -52,6 +53,7 @@ static int Ximage __P((void));
 static int Xls __P((void));
 static int Xreboot __P((void));
 static int Xset __P((void));
+static int Xstty __P((void));
 static int Xhowto __P((void));
 static int Xtty __P((void));
 static int Xtime __P((void));
@@ -83,6 +85,7 @@ static const struct cmd_table cmd_table[] = {
 #endif
 	{"reboot", CMDT_CMD, Xreboot},
 	{"set",    CMDT_SET, Xset},
+	{"stty",   CMDT_CMD, Xstty},
 	{"time",   CMDT_CMD, Xtime},
 	{NULL, 0},
 };
@@ -367,6 +370,23 @@ Xset()
 }
 
 static int
+Xstty()
+{
+	int sp;
+	char *cp;
+	if (cmd.argc == 1)
+		printf("com speed is %d\n", com_setsp(0));
+	else {
+		sp = 0;
+		for (cp = cmd.argv[1]; *cp && isdigit(*cp); cp++)
+			sp = sp*10 + (*cp - '0');
+		com_setsp(sp);
+	}
+
+	return 0;
+}
+
+static int
 Xdevice()
 {
 	if (cmd.argc != 2)
@@ -420,8 +440,12 @@ Xtty()
 		dev = ttydev(cmd.argv[1]);
 		if (dev == NODEV)
 			printf("%s not a console device\n", cmd.argv[1]);
-		else if (cnset(dev))
-			printf("%s console not present\n", cmd.argv[1]);
+		else {
+			printf("switching console to %s\n", cmd.argv[1]);
+			if (cnset(dev))
+				printf("%s console not present\n",
+				       cmd.argv[1]);
+		}
 	}
 	return 0;
 }

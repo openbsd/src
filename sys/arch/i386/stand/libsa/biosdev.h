@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.20 1997/09/03 04:32:43 weingart Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.21 1997/09/20 22:40:44 flipk Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -52,6 +52,7 @@ void pc_putc __P((dev_t, int));
 void pc_pollc __P((dev_t, int));
 void com_probe __P((struct consdev *));
 void com_init __P((struct consdev *));
+int com_setsp __P((int));
 int com_getc __P((dev_t));
 void com_putc __P((dev_t, int));
 void com_pollc __P((dev_t, int));
