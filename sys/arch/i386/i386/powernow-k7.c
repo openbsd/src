@@ -1,3 +1,4 @@
+/* $OpenBSD: powernow-k7.c,v 1.2 2004/07/14 05:38:37 tedu Exp $ */
 /*
  * Copyright (c) 2004 Martin Végiard.
  * All rights reserved.
@@ -210,16 +211,12 @@ k7_powernow_setperf(int level)
 void
 k7_powernow_init(uint32_t signature)
 {
-	unsigned int i, freq_names_len, len = 0;
+	unsigned int i;
 	struct state_s *s;
-	char *freq_names;
 
 	s = k7_powernow_getstates(signature);
 	if (s == 0)
 		return;
-
-	freq_names_len =  k7pnow_nstates * (sizeof("9999 ")-1) + 1;
-	freq_names = malloc(freq_names_len, M_TEMP, M_WAITOK);
 
 	k7pnow_freq_table = malloc(sizeof(struct k7pnow_freq_table_s) *
 	    k7pnow_nstates, M_TEMP, M_WAITOK);
@@ -227,17 +224,11 @@ k7_powernow_init(uint32_t signature)
 	for (i = 0; i < k7pnow_nstates; i++, s++) {
 		k7pnow_freq_table[i].frequency = cpufreq(s->fid);
 		k7pnow_freq_table[i].state = s;
-
-		/* XXX len += snprintf is an illegal idiom */ 
-		len += snprintf(freq_names + len, freq_names_len - len, "%d%s",
-		    k7pnow_freq_table[i].frequency,
-		    i < k7pnow_nstates - 1 ? " " : "");
 	}
 
 	/* On bootup the frequency should be at it's max */
 	k7pnow_cur_freq = k7pnow_freq_table[i-1].frequency;
 
-	printf("cpu0: AMD POWERNOW Available frequencies (Mhz): %s\n",
-	    freq_names);
+	printf("cpu0: AMD POWERNOW: %d available states\n", k7pnow_nstates);
 	cpu_setperf = k7_powernow_setperf;
 }
