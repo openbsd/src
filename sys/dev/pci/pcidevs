@@ -1,5 +1,5 @@
-$OpenBSD: pcidevs,v 1.7 1996/04/21 22:25:38 deraadt Exp $
-/*	$NetBSD: pcidevs,v 1.7 1996/04/04 21:46:33 mycroft Exp $ */
+$OpenBSD: pcidevs,v 1.8 1996/05/10 12:38:25 deraadt Exp $
+/*	$NetBSD: pcidevs,v 1.8 1996/05/07 01:59:45 thorpej Exp $ */
 
 
 /*
@@ -421,6 +421,9 @@ product	ADP 2940	0x7178	AHA-2940
 product	ADP AIC7880	0x8078	AIC-7880 Ultra
 product	ADP AIC7870	0x7078	AIC-7870
 product	ADP AIC7850	0x5078	AIC-7850
+
+/* AMD products */
+product AMD PCNET_PCI	0x2000	PCnet-PCI Ethernet
 
 /* ATI products */
 product ATI MACH32	0x4158	Mach32
