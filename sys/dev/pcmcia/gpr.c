@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpr.c,v 1.7 2002/09/25 19:09:02 fgsch Exp $	*/
+/*	$OpenBSD: gpr.c,v 1.8 2002/11/10 03:57:25 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2002, Federico G. Schwindt
@@ -389,7 +389,7 @@ tlvput(struct gpr_softc *sc, int cmd, u_int8_t *data, int len)
 		n = min(resid, 28);
 		resid -= n;
 
-		if (n)
+		if (resid)
 			cmd |= GPR400_CONT;
 		else
 			cmd &= ~GPR400_CONT;
