@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.3 2003/01/26 21:25:39 jason Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.4 2003/01/27 01:38:21 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -590,7 +590,8 @@ harmony_commit_settings(void *vsc)
 		return (0);
 
 	harmony_wait(sc);
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_CNTL, sc->sc_cntlbits);
+	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_CNTL,
+	    sc->sc_cntlbits | CNTL_INCNTL);
 
 	/* set the silence character based on the encoding type */
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_empty_map,
