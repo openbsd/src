@@ -1,10 +1,10 @@
-/*	$OpenBSD: cardbusdevs_data.h,v 1.10 2001/07/09 19:42:00 mickey Exp $	*/
+/*	$OpenBSD: cardbusdevs_data.h,v 1.11 2001/07/09 23:10:04 niklas Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: cardbusdevs,v 1.9 2001/07/09 19:41:38 mickey Exp 
+ *	OpenBSD: cardbusdevs,v 1.10 2001/07/09 23:09:29 niklas Exp 
  */
 /*	$NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp $	*/
 
@@ -113,7 +113,7 @@ struct cardbus_known_product cardbus_known_product[] = {
 	    "56k Modem",
 	},
 	{
-	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_MODEM56,
+	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_CBEM56G,
 	    "CBEM56G Modem",
 	},
 	{ 0, 0, NULL }
