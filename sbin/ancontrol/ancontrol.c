@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.12 2001/04/16 00:39:39 tholo Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.13 2001/04/16 05:10:07 ericj Exp $	*/
 /*
  * Copyright 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -35,7 +35,6 @@
 
 #include <sys/param.h>
 #include <sys/cdefs.h>
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
@@ -61,36 +60,38 @@ static const char rcsid[] =
 
 #define	an_printbool(val) printf(val? "[ On ]" : "[ Off ]")
 
-void an_getval		__P((char *, struct an_req *));
-void an_setval		__P((char *, struct an_req *));
+void an_getval		__P((struct an_req *));
+void an_setval		__P((struct an_req *));
 void an_printwords	__P((u_int16_t *, int));
 void an_printspeeds	__P((u_int8_t*, int));
 void an_printhex	__P((char *, int));
 void an_printstr	__P((char *, int));
-void an_dumpstatus	__P((char *));
-void an_dumpstats	__P((char *));
-void an_dumpconfig	__P((char *));
-void an_dumpcaps	__P((char *));
-void an_dumpssid	__P((char *));
-void an_dumpap		__P((char *));
-void an_setconfig	__P((char *, int, void *));
-void an_setssid		__P((char *, int, void *));
-void an_setap		__P((char *, int, void *));
-void an_setspeed	__P((char *, int, void *));
-void an_readkeyinfo	__P((char *));
+void an_dumpstatus	__P((void));
+void an_dumpstats	__P((void));
+void an_dumpconfig	__P((void));
+void an_dumpcaps	__P((void));
+void an_dumpssid	__P((void));
+void an_dumpap		__P((void));
+void an_setconfig	__P((int, void *));
+void an_setssid		__P((int, void *));
+void an_setap		__P((int, void *));
+void an_setspeed	__P((int, void *));
+void an_readkeyinfo	__P(());
 #ifdef ANCACHE
-void an_zerocache	__P((char *));
-void an_readcache	__P((char *));
+void an_zerocache	__P(());
+void an_readcache	__P(());
 #endif
+void getsock		__P((void));
 static void usage	__P((void));
 int main		__P((int, char **));
 
-#define ACT_DUMPSTATS 1
-#define ACT_DUMPCONFIG 2
-#define ACT_DUMPSTATUS 3
-#define ACT_DUMPCAPS 4
-#define ACT_DUMPSSID 5
-#define ACT_DUMPAP 6
+/* flags to trigger dumping information about configs */
+#define STAT_DUMPAP	0x01
+#define STAT_DUMPCONFIG	0x02
+#define STAT_DUMPCAPS	0x04
+#define STAT_DUMPSSID	0x08
+#define STAT_DUMPSTATUS	0x10
+#define STAT_DUMPSTATS	0x20
 
 #define ACT_SET_OPMODE 7
 #define ACT_SET_SSID1 8
@@ -131,54 +132,37 @@ int main		__P((int, char **));
 #define OPTIONS "a:b:c:d:e:f:i:j:k:l:m:n:o:p:r:s:t:v:w:ACIK:NST:W:"
 #endif /* ANCACHE */
 
+int s;			/* Global socket for ioctl's */
+struct ifreq ifr;	/* Global ifreq */
+
 void
-an_getval(iface, areq)
-	char			*iface;
+getsock()
+{
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+		errx(1, "socket");
+}
+
+void
+an_getval(areq)
 	struct an_req		*areq;
 {
-	struct ifreq		ifr;
-	int			s;
-
-	bzero((char *)&ifr, sizeof(ifr));
-
-	strlcpy(ifr.ifr_name, iface, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)areq;
 
-	s = socket(AF_INET, SOCK_DGRAM, 0);
-
-	if (s == -1)
-		err(1, "socket");
 
 	if (ioctl(s, SIOCGAIRONET, &ifr) == -1)
 		err(1, "SIOCGAIRONET");
-
-	close(s);
 
 	return;
 }
 
 void
-an_setval(iface, areq)
-	char			*iface;
+an_setval(areq)
 	struct an_req		*areq;
 {
-	struct ifreq		ifr;
-	int			s;
-
-	bzero((char *)&ifr, sizeof(ifr));
-
-	strlcpy(ifr.ifr_name, iface, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)areq;
-
-	s = socket(AF_INET, SOCK_DGRAM, 0);
-
-	if (s == -1)
-		err(1, "socket");
 
 	if (ioctl(s, SIOCSAIRONET, &ifr) == -1)
 		err(1, "SIOCSAIRONET");
-
-	close(s);
 
 	return;
 }
@@ -249,16 +233,16 @@ an_printhex(ptr, len)
 }
 
 void
-an_dumpstatus(iface)
-	char			*iface;
+an_dumpstatus()
 {
 	struct an_ltv_status	*sts;
 	struct an_req		areq;
 
+	bzero((char *)&areq, sizeof(struct an_req));
 	areq.an_len = sizeof(areq);
 	areq.an_type = AN_RID_STATUS;
 
-	an_getval(iface, &areq);
+	an_getval(&areq);
 
 	sts = (struct an_ltv_status *)&areq;
 
@@ -313,17 +297,17 @@ an_dumpstatus(iface)
 }
 
 void
-an_dumpcaps(iface)
-	char			*iface;
+an_dumpcaps()
 {
 	struct an_ltv_caps	*caps;
 	struct an_req		areq;
 	u_int16_t		tmp;
 
+	bzero((char *)&areq, sizeof(struct an_req));
 	areq.an_len = sizeof(areq);
 	areq.an_type = AN_RID_CAPABILITIES;
 
-	an_getval(iface, &areq);
+	an_getval(&areq);
 
 	caps = (struct an_ltv_caps *)&areq;
 
@@ -395,17 +379,17 @@ an_dumpcaps(iface)
 }
 
 void
-an_dumpstats(iface)
-	char			*iface;
+an_dumpstats()
 {
 	struct an_ltv_stats	*stats;
 	struct an_req		areq;
 	caddr_t			ptr;
 
+	bzero((char *)&areq, sizeof(struct an_req));
 	areq.an_len = sizeof(areq);
 	areq.an_type = AN_RID_32BITS_CUM;
 
-	an_getval(iface, &areq);
+	an_getval(&areq);
 
 	ptr = (caddr_t)&areq;
 	ptr -= 2;
@@ -563,16 +547,16 @@ an_dumpstats(iface)
 }
 
 void
-an_dumpap(iface)
-	char			*iface;
+an_dumpap()
 {
 	struct an_ltv_aplist	*ap;
 	struct an_req		areq;
 
+	bzero((char *)&areq, sizeof(struct an_req));
 	areq.an_len = sizeof(areq);
 	areq.an_type = AN_RID_APLIST;
 
-	an_getval(iface, &areq);
+	an_getval(&areq);
 
 	ap = (struct an_ltv_aplist *)&areq;
 	printf("Access point 1:\t\t\t");
@@ -589,16 +573,16 @@ an_dumpap(iface)
 }
 
 void
-an_dumpssid(iface)
-	char			*iface;
+an_dumpssid()
 {
 	struct an_ltv_ssidlist	*ssid;
 	struct an_req		areq;
 
+	bzero((char *)&areq, sizeof(struct an_req));
 	areq.an_len = sizeof(areq);
 	areq.an_type = AN_RID_SSIDLIST;
 
-	an_getval(iface, &areq);
+	an_getval(&areq);
 
 	ssid = (struct an_ltv_ssidlist *)&areq;
 	printf("SSID 1:\t\t\t[ %.*s ]\n", ssid->an_ssid1_len, ssid->an_ssid1);
@@ -609,17 +593,17 @@ an_dumpssid(iface)
 }
 
 void
-an_dumpconfig(iface)
-	char			*iface;
+an_dumpconfig()
 {
 	struct an_ltv_genconfig	*cfg;
 	struct an_req		areq;
 	unsigned char		div;
 
+	bzero((char *)&areq, sizeof(struct an_req));
 	areq.an_len = sizeof(areq);
 	areq.an_type = AN_RID_ACTUALCFG;
 
-	an_getval(iface, &areq);
+	an_getval(&areq);
 
 	cfg = (struct an_ltv_genconfig *)&areq;
 
@@ -798,7 +782,7 @@ an_dumpconfig(iface)
 	an_printwords(&cfg->an_arl_delay, 1);
 
 	printf("\n");
-	an_readkeyinfo(iface);
+	an_readkeyinfo();
 
 	return;
 }
@@ -822,8 +806,7 @@ usage()
 }
 
 void
-an_setconfig(iface, act, arg)
-	char			*iface;
+an_setconfig(act, arg)
 	int			act;
 	void			*arg;
 {
@@ -835,14 +818,16 @@ an_setconfig(iface, act, arg)
 	struct ether_addr	*addr;
 	int			i;
 
+	bzero((char *)&areq, sizeof(struct an_req));
+	bzero((char *)&areq_caps, sizeof(struct an_req));
 	areq.an_len = sizeof(areq);
 	areq.an_type = AN_RID_GENCONFIG;
-	an_getval(iface, &areq);
+	an_getval(&areq);
 	cfg = (struct an_ltv_genconfig *)&areq;
 
 	areq_caps.an_len = sizeof(areq);
 	areq_caps.an_type = AN_RID_CAPABILITIES;
-	an_getval(iface, &areq_caps);
+	an_getval(&areq_caps);
 	caps = (struct an_ltv_caps *)&areq_caps;
 
 	switch(act) {
@@ -951,13 +936,11 @@ an_setconfig(iface, act, arg)
 		break;
 	}
 
-	an_setval(iface, &areq);
-	exit(0);
+	an_setval(&areq);
 }
 
 void
-an_setspeed(iface, act, arg)
-	char			*iface;
+an_setspeed(act, arg)
 	int			act;
 	void			*arg;
 {
@@ -965,10 +948,11 @@ an_setspeed(iface, act, arg)
 	struct an_ltv_caps	*caps;
 	u_int16_t		speed;
 
+	bzero((char *)&areq, sizeof(struct an_req));
 	areq.an_len = sizeof(areq);
 	areq.an_type = AN_RID_CAPABILITIES;
 
-	an_getval(iface, &areq);
+	an_getval(&areq);
 	caps = (struct an_ltv_caps *)&areq;
 
 	switch(atoi(arg)) {
@@ -1000,13 +984,11 @@ an_setspeed(iface, act, arg)
 	areq.an_type = AN_RID_TX_SPEED;
 	areq.an_val[0] = speed;
 
-	an_setval(iface, &areq);
-	exit(0);
+	an_setval(&areq);
 }
 
 void
-an_setap(iface, act, arg)
-	char			*iface;
+an_setap(act, arg)
 	int			act;
 	void			*arg;
 {
@@ -1014,10 +996,11 @@ an_setap(iface, act, arg)
 	struct an_req		areq;
 	struct ether_addr	*addr;
 
+	bzero((char *)&areq, sizeof(struct an_req));
 	areq.an_len = sizeof(areq);
 	areq.an_type = AN_RID_APLIST;
 
-	an_getval(iface, &areq);
+	an_getval(&areq);
 	ap = (struct an_ltv_aplist *)&areq;
 
 	addr = ether_aton((char *)arg);
@@ -1047,23 +1030,22 @@ an_setap(iface, act, arg)
 		break;
 	}
 
-	an_setval(iface, &areq);
-	exit(0);
+	an_setval(&areq);
 }
 
 void
-an_setssid(iface, act, arg)
-	char			*iface;
+an_setssid(act, arg)
 	int			act;
 	void			*arg;
 {
 	struct an_ltv_ssidlist	*ssid;
 	struct an_req		areq;
 
+	bzero((char *)&areq, sizeof(struct an_req));
 	areq.an_len = sizeof(areq);
 	areq.an_type = AN_RID_SSIDLIST;
 
-	an_getval(iface, &areq);
+	an_getval(&areq);
 	ssid = (struct an_ltv_ssidlist *)&areq;
 
 	switch (act) {
@@ -1087,14 +1069,12 @@ an_setssid(iface, act, arg)
 		break;
 	}
 
-	an_setval(iface, &areq);
-	exit(0);
+	an_setval(&areq);
 }
 
 #ifdef ANCACHE
 void
-an_zerocache(iface)
-	char			*iface;
+an_zerocache()
 {
 	struct an_req		areq;
 
@@ -1102,14 +1082,13 @@ an_zerocache(iface)
 	areq.an_len = 0;
 	areq.an_type = AN_RID_ZERO_CACHE;
 
-	an_getval(iface, &areq);
+	an_getval(&areq);
 
 	return;
 }
 
 void
-an_readcache(iface)
-	char			*iface;
+an_readcache()
 {
 	struct an_req		areq;
 	int 			*an_sigitems;
@@ -1117,14 +1096,11 @@ an_readcache(iface)
 	char *			pt;
 	int 			i;
 
-	if (iface == NULL)
-		errx(1, "must specify interface name");
-
 	bzero((char *)&areq, sizeof(areq));
 	areq.an_len = AN_MAX_DATALEN;
 	areq.an_type = AN_RID_READ_CACHE;
 
-	an_getval(iface, &areq);
+	an_getval(&areq);
 
 	an_sigitems = (int *) &areq.an_val; 
 	pt = ((char *) &areq.an_val);
@@ -1153,7 +1129,7 @@ an_readcache(iface)
 
 	return;
 }
-#endif
+#endif /* ANCACHE */
 
 int
 an_hex2int(c)
@@ -1197,10 +1173,9 @@ an_str2key(s, k)
 }
 
 void
-an_setkeys(iface, key, keytype)
-	char			*iface;
-	char			*key;
-	int			keytype;
+an_setkeys(key, keytype)
+	char *key;
+	int keytype;
 {
 	struct an_req		areq;
 	struct an_ltv_key	*k;
@@ -1208,10 +1183,8 @@ an_setkeys(iface, key, keytype)
 	bzero((char *)&areq, sizeof(areq));
 	k = (struct an_ltv_key *)&areq;
 
-	if (strlen(key) > 28) {
-		err(1, "encryption key must be no "
-		    "more than 18 characters long");
-	}
+	if (strlen(key) > 28)
+		err(1, "encryption key must be no more than 18 chars long");
 
 	an_str2key(key, k);
 
@@ -1232,14 +1205,13 @@ an_setkeys(iface, key, keytype)
 	areq.an_len = sizeof(struct an_ltv_key);
 	areq.an_type = (keytype & 1)
 	    ? AN_RID_WEP_VOLATILE : AN_RID_WEP_PERMANENT;
-	an_setval(iface, &areq);
+	an_setval(&areq);
 
 	return;
 }
 
 void
-an_readkeyinfo(iface)
-	char			*iface;
+an_readkeyinfo()
 {
 	struct an_req		areq;
 	struct an_ltv_key	*k;
@@ -1252,7 +1224,7 @@ an_readkeyinfo(iface)
 	areq.an_type = AN_RID_WEP_VOLATILE;	/* read first key */
 	for (i = 0; i < 4; i++) {
 		areq.an_len = sizeof(struct an_ltv_key);
-		an_getval(iface, &areq);
+		an_getval(&areq);
 		for (; i < k->kindex && i < 4; i++)
 			printf("\tKey %d is unset\n", i);
 		if (i < 4) {
@@ -1275,15 +1247,14 @@ an_readkeyinfo(iface)
 	}
 	k->kindex = 0xffff;
 	areq.an_len = sizeof(struct an_ltv_key);
-	an_getval(iface, &areq);
+	an_getval(&areq);
 	printf("\tThe active transmit key is %d\n", k->mac[0]);
 
 	return;
 }
 
 void
-an_enable_tx_key(iface, arg)
-	char			*iface;
+an_enable_tx_key(arg)
 	char			*arg;
 {
 	struct an_req		areq;
@@ -1308,52 +1279,54 @@ an_enable_tx_key(iface, arg)
 
 	areq.an_len = sizeof(struct an_ltv_key);
 	areq.an_type = AN_RID_WEP_PERMANENT;
-	an_setval(iface, &areq);
+	an_setval(&areq);
 
 	return;
 }
 
 int
 main(argc, argv)
-	int			argc;
-	char			*argv[];
+	int argc;
+	char *argv[];
 {
-	int			ch;
-	int			act = 0, ifspecified = 0;
-	char			*iface = "an0";
-	int			modifier = 0;
-	void			*arg = NULL;
+	int ch;
+	int act = 0, ifspecified = 0;
+	int modifier = 0;
+	int print_stat = 0;
+	void *arg = NULL;
 
+	/* Grab device name, if one is given. Default to "an0" */
 	if (argc > 1 && argv[1][0] != '-') {
-		iface = argv[1];
+		strlcpy(ifr.ifr_name, argv[1], sizeof(ifr.ifr_name));
 		memcpy(&argv[1], &argv[2], argc * sizeof(char *));
 		argc--;
 		ifspecified = 1;
-	}
+	} else
+		strlcpy(ifr.ifr_name, "an0", sizeof(ifr.ifr_name));
 
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
 		switch(ch) {
 		case 'A':
-			act = ACT_DUMPAP;
+			print_stat |= STAT_DUMPAP;
 			break;
 		case 'C':
-			act = ACT_DUMPCONFIG;
+			print_stat |= STAT_DUMPCONFIG;
 			break;
 		case 'I':
-			act = ACT_DUMPCAPS;
+			print_stat |= STAT_DUMPCAPS;
 			break;
 		case 'K':
 			act = ACT_SET_KEY_TYPE;
 			arg = optarg;
 			break;
 		case 'N':
-			act = ACT_DUMPSSID;
+			print_stat |= STAT_DUMPSSID;
 			break;
 		case 'S':
-			act = ACT_DUMPSTATUS;
+			print_stat |= STAT_DUMPSTATUS;
 			break;
 		case 'T':
-			act = ACT_DUMPSTATS;
+			print_stat |= STAT_DUMPSTATS;
 			break;
 		case 'W':
 			act = ACT_ENABLE_WEP;
@@ -1418,7 +1391,7 @@ main(argc, argv)
 			break;
 		case 'i':
 			if (!ifspecified)
-				iface = optarg;
+				strlcpy(ifr.ifr_name, optarg, sizeof(ifr.ifr_name));
 			break;
 		case 'j':
 			act = ACT_SET_NETJOIN;
@@ -1489,60 +1462,70 @@ main(argc, argv)
 		}
 	}
 
-	if (iface == NULL || !act)
+	if (!print_stat && !act)
 		usage();
 
+	/* Grab a socket to do our ioctl's */
+	getsock();
+
+	/*
+	 * Show configuration status first. Do not allow
+	 * the showing of and setting of options to be done
+	 * on the same command line.
+	 */
+	if (print_stat) {
+		if (print_stat & STAT_DUMPAP)
+			an_dumpap();
+		if (print_stat & STAT_DUMPCONFIG)
+			an_dumpconfig();
+		if (print_stat & STAT_DUMPCAPS)
+			an_dumpcaps();
+		if (print_stat & STAT_DUMPSSID)
+			an_dumpssid();
+		if (print_stat & STAT_DUMPSTATUS)
+			an_dumpstatus();
+		if (print_stat & STAT_DUMPSTATS)
+			an_dumpstats();
+
+		exit(0);
+	}
+
 	switch(act) {
-	case ACT_DUMPSTATUS:
-		an_dumpstatus(iface);
-		break;
-	case ACT_DUMPCAPS:
-		an_dumpcaps(iface);
-		break;
-	case ACT_DUMPSTATS:
-		an_dumpstats(iface);
-		break;
-	case ACT_DUMPCONFIG:
-		an_dumpconfig(iface);
-		break;
-	case ACT_DUMPSSID:
-		an_dumpssid(iface);
-		break;
-	case ACT_DUMPAP:
-		an_dumpap(iface);
-		break;
 	case ACT_SET_SSID1:
 	case ACT_SET_SSID2:
 	case ACT_SET_SSID3:
-		an_setssid(iface, act, arg);
+		an_setssid(act, arg);
 		break;
 	case ACT_SET_AP1:
 	case ACT_SET_AP2:
 	case ACT_SET_AP3:
 	case ACT_SET_AP4:
-		an_setap(iface, act, arg);
+		an_setap(act, arg);
 		break;
 	case ACT_SET_TXRATE:
-		an_setspeed(iface, act, arg);
+		an_setspeed(act, arg);
 		break;
 #ifdef ANCACHE
 	case ACT_ZEROCACHE:
-		an_zerocache(iface);
+		an_zerocache();
 		break;
 	case ACT_DUMPCACHE:
-		an_readcache(iface);
+		an_readcache();
 		break;
 #endif
 	case ACT_SET_KEYS:
-		an_setkeys(iface, arg, modifier);
+		an_setkeys(arg, modifier);
 		break;
 	case ACT_ENABLE_TX_KEY:
-		an_enable_tx_key(iface, arg);
+		an_enable_tx_key(arg);
 		break;
 	default:
-		an_setconfig(iface, act, arg);
+		an_setconfig(act, arg);
 		break;
 	}
 
+	/* Close our socket */
+	if (s)
+		close(s);
 	exit(0);
 }
