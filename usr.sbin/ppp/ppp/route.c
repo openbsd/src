@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: route.c,v 1.28 2003/04/07 23:58:53 deraadt Exp $
+ * $OpenBSD: route.c,v 1.29 2004/05/15 16:26:37 claudio Exp $
  */
 
 #include <sys/param.h>
@@ -708,6 +708,50 @@ memcpy_roundup(char *cp, const void *data, size_t len)
 }
 
 int
+rt_Check(struct bundle *bundle, const struct ncprange *dst)
+{
+  struct rtmsg rtmes;
+  int s, nb, wb, e;
+  char *cp;
+  struct sockaddr_storage sadst, samask;
+
+  s = ID0socket(PF_ROUTE, SOCK_RAW, 0);
+  if (s < 0) {
+    log_Printf(LogERROR, "rt_Set: socket(): %s\n", strerror(errno));
+    return (-1);
+  }
+  memset(&rtmes, '\0', sizeof rtmes);
+  rtmes.m_rtm.rtm_version = RTM_VERSION;
+  rtmes.m_rtm.rtm_type = RTM_GET;
+  rtmes.m_rtm.rtm_addrs = RTA_DST;
+  rtmes.m_rtm.rtm_seq = ++bundle->routing_seq;
+  rtmes.m_rtm.rtm_pid = getpid();
+  rtmes.m_rtm.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
+ 
+  ncprange_getsa(dst, &sadst, &samask);
+  cp = rtmes.m_space;
+  cp += memcpy_roundup(cp, &sadst, sadst.ss_len);
+
+  if (!ncprange_ishost(dst)) {
+    cp += memcpy_roundup(cp, &samask, samask.ss_len);
+    rtmes.m_rtm.rtm_addrs |= RTA_NETMASK;
+  }
+
+  nb = cp - (char *)&rtmes;
+  rtmes.m_rtm.rtm_msglen = nb;
+  wb = ID0write(s, &rtmes, nb);
+  e = errno;
+  close(s);
+  if (wb == -1) {
+    if (rtmes.m_rtm.rtm_errno == ESRCH ||
+        (rtmes.m_rtm.rtm_errno == 0 && e == ESRCH))
+      return (0);
+    return (-1);
+  }
+  return (1);
+}
+
+int
 rt_Set(struct bundle *bundle, int cmd, const struct ncprange *dst,
        const struct ncpaddr *gw, int bang, int quiet)
 {
@@ -722,6 +766,11 @@ rt_Set(struct bundle *bundle, int cmd, const struct ncprange *dst,
     cmdstr = (cmd == RTM_ADD ? "Add!" : "Delete!");
   else
     cmdstr = (cmd == RTM_ADD ? "Add" : "Delete");
+
+  /* check if route is already present */
+  if (cmd == RTM_ADD && rt_Check(bundle, dst) == 1)
+    cmd = RTM_CHANGE;
+
   s = ID0socket(PF_ROUTE, SOCK_RAW, 0);
   if (s < 0) {
     log_Printf(LogERROR, "rt_Set: socket(): %s\n", strerror(errno));
@@ -735,7 +784,7 @@ rt_Set(struct bundle *bundle, int cmd, const struct ncprange *dst,
   rtmes.m_rtm.rtm_pid = getpid();
   rtmes.m_rtm.rtm_flags = RTF_UP | RTF_GATEWAY | RTF_STATIC;
 
-  if (cmd == RTM_ADD) {
+  if (cmd == RTM_ADD || cmd == RTM_CHANGE) {
     if (bundle->ncp.cfg.sendpipe > 0) {
       rtmes.m_rtm.rtm_rmx.rmx_sendpipe = bundle->ncp.cfg.sendpipe;
       rtmes.m_rtm.rtm_inits |= RTV_SPIPE;
@@ -750,7 +799,7 @@ rt_Set(struct bundle *bundle, int cmd, const struct ncprange *dst,
 
   cp = rtmes.m_space;
   cp += memcpy_roundup(cp, &sadst, sadst.ss_len);
-  if (cmd == RTM_ADD) {
+  if (cmd == RTM_ADD || cmd == RTM_CHANGE) {
     if (gw == NULL) {
       log_Printf(LogERROR, "rt_Set: Program error\n");
       close(s);
