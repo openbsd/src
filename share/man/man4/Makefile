@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.27 1997/10/16 10:08:01 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.28 1997/11/24 07:31:38 deraadt Exp $
 #	$NetBSD: Makefile,v 1.22.4.2 1996/07/18 00:51:10 jtc Exp $
 
-MAN=	audio.4 acd.4 ahc.4 bpf.4 ccd.4 cd.4 ch.4 clnp.4 cltp.4 ddb.4 \
+MAN=	atalk.4 audio.4 acd.4 ahc.4 bpf.4 ccd.4 cd.4 ch.4 clnp.4 cltp.4 ddb.4 \
 	de.4 drum.4 \
 	esis.4 fd.4 fpa.4 fxp.4 icmp.4 idp.4 imp.4 inet.4 ip.4 \
 	ipl.4 ipsec.4 iso.4 \
