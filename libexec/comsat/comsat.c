@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.10 1999/02/21 08:30:00 deraadt Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.11 1999/06/23 20:39:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -86,7 +86,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	struct sockaddr_in from;
+	struct sockaddr_storage from;
 	register int cc;
 	int fromlen;
 	char msgbuf[100];
