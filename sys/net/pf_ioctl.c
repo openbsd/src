@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.36 2002/12/31 00:00:44 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.37 2002/12/31 19:18:41 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -156,6 +156,8 @@ pf_get_pool(char *anchorname, char *rulesetname, u_int32_t ticket,
 	if (ruleset == NULL)
 		return (NULL);
 	rs_num = pf_get_ruleset_number(rule_action);
+	if (rs_num >= PF_RULESET_MAX) 
+		return (NULL);
 	if (active) {
 		if (check_ticket && ticket !=
 		    ruleset->rules[rs_num].active.ticket)
@@ -222,11 +224,12 @@ int
 pf_get_ruleset_number(u_int8_t action)
 {
 	switch (action) {
+	case PF_SCRUB:
+		return (PF_RULESET_SCRUB);
+		break;
 	case PF_PASS:
 	case PF_DROP:
-	case PF_SCRUB:
-	default:
-		return (PF_RULESET_RULE);
+		return (PF_RULESET_FILTER);
 		break;
 	case PF_NAT:
 	case PF_NONAT:
@@ -239,6 +242,9 @@ pf_get_ruleset_number(u_int8_t action)
 	case PF_RDR:
 	case PF_NORDR:
 		return (PF_RULESET_RDR);
+		break;
+	default:
+		return (PF_RULESET_MAX);
 		break;
 	}
 }
@@ -525,6 +531,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		rs_num = pf_get_ruleset_number(pr->rule.action);
+		if (rs_num >= PF_RULESET_MAX) {
+			error = EINVAL;
+			break;
+		}
 		while ((rule =
 		    TAILQ_FIRST(ruleset->rules[rs_num].inactive.ptr)) != NULL)
 			pf_rm_rule(ruleset->rules[rs_num].inactive.ptr, rule);
@@ -544,6 +554,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		rs_num = pf_get_ruleset_number(pr->rule.action);
+		if (rs_num >= PF_RULESET_MAX) {
+			error = EINVAL;
+			break;
+		}
 		if (pr->rule.anchorname[0] && ruleset != &pf_main_ruleset) {
 			error = EINVAL;
 			break;
@@ -631,6 +645,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		rs_num = pf_get_ruleset_number(pr->rule.action);
+		if (rs_num >= PF_RULESET_MAX) {
+			error = EINVAL;
+			break;
+		}
 		if (pr->ticket != ruleset->rules[rs_num].inactive.ticket) {
 			error = EBUSY;
 			break;
@@ -641,11 +659,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		/*
 		 * Rules are about to get freed, clear rule pointers in states
 		 */
-		if (rs_num == PF_RULESET_RULE) {
+		if (rs_num == PF_RULESET_FILTER) {
 			if (ruleset == &pf_main_ruleset)
 				RB_FOREACH(n, pf_state_tree, &tree_ext_gwy)
 					n->state->rule.ptr = NULL;
-		} else
+		} else if ((rs_num == PF_RULESET_NAT) ||
+		    (rs_num == PF_RULESET_BINAT) || (rs_num == PF_RULESET_RDR))
 			RB_FOREACH(n, pf_state_tree, &tree_ext_gwy)
 				n->state->nat_rule = NULL;
 		old_rules = ruleset->rules[rs_num].active.ptr;
@@ -677,6 +696,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		rs_num = pf_get_ruleset_number(pr->rule.action);
+		if (rs_num >= PF_RULESET_MAX) {
+			error = EINVAL;
+			break;
+		}
 		s = splsoftnet();
 		tail = TAILQ_LAST(ruleset->rules[rs_num].active.ptr,
 		    pf_rulequeue);
@@ -701,6 +724,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		rs_num = pf_get_ruleset_number(pr->rule.action);
+		if (rs_num >= PF_RULESET_MAX) {
+			error = EINVAL;
+			break;
+		}
 		if (pr->ticket != ruleset->rules[rs_num].active.ticket) {
 			error = EBUSY;
 			break;
@@ -752,6 +779,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		rs_num = pf_get_ruleset_number(pcr->rule.action);
+		if (rs_num >= PF_RULESET_MAX) {
+			error = EINVAL;
+			break;
+		}
 
 		if (pcr->action == PF_CHANGE_GET_TICKET) {
 			pcr->ticket = ++ruleset->rules[rs_num].active.ticket;
@@ -1190,7 +1221,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		s = splsoftnet();
 		TAILQ_FOREACH(rule,
-		    ruleset->rules[PF_RULESET_RULE].active.ptr, entries)
+		    ruleset->rules[PF_RULESET_FILTER].active.ptr, entries)
 			rule->evaluations = rule->packets =
 			    rule->bytes = 0;
 		splx(s);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.43 2002/12/18 19:17:07 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.44 2002/12/31 19:18:41 mcbride Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -800,8 +800,9 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 	int			 ip_len;
 	int			 ip_off;
 
-	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_RULE].active.ptr);
+	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_SCRUB].active.ptr);
 	while (r != NULL) {
+		r->evaluations++;
 		if (r->action != PF_SCRUB)
 			r = r->skip[PF_SKIP_ACTION].ptr;
 		else if (r->ifp != NULL && r->ifp != ifp)
@@ -826,6 +827,8 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 
 	if (r == NULL)
 		return (PF_PASS);
+	else 
+                r->packets++;
 
 	/* Check for illegal packets */
 	if (hlen < (int)sizeof(struct ip))
@@ -1002,8 +1005,9 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 	u_int8_t	 flags;
 	sa_family_t	 af = pd->af;
 
-	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_RULE].active.ptr);
+	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_SCRUB].active.ptr);
 	while (r != NULL) {
+		r->evaluations++;
 		if (r->action != PF_SCRUB)
 			r = r->skip[PF_SKIP_ACTION].ptr;
 		else if (r->ifp != NULL && r->ifp != ifp)
@@ -1040,6 +1044,8 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 
 	if (rm == NULL)
 		return (PF_PASS);
+	else 
+                r->packets++;
 
 	flags = th->th_flags;
 	if (flags & TH_SYN) {
@@ -1097,8 +1103,8 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 
  tcp_drop:
 	REASON_SET(&reason, PFRES_NORM);
-	if (rm != NULL && rm->log)
-		PFLOG_PACKET(ifp, h, m, AF_INET, dir, reason, rm);
+	if (rm != NULL && r->log)
+		PFLOG_PACKET(ifp, h, m, AF_INET, dir, reason, r);
 	return (PF_DROP);
 }
 
