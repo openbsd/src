@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.138 2001/08/25 21:54:25 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.139 2001/08/26 23:23:03 niklas Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3099,7 +3099,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	struct mbuf *m = *m0;
 	struct ip *h;
 	struct pf_rule *r = NULL;
-	struct pf_state *s;
+	struct pf_state *s = NULL;
 	int off;
 
 	if (!pf_status.running ||
