@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.27 1997/10/07 10:57:14 niklas Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.28 1998/02/22 20:34:03 niklas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
 
 /*
@@ -285,6 +285,12 @@ redo_ipl:
 	return opsl;
 }
 #endif
+
+/*
+ * current open serial device speed;  used by some SCSI drivers to reduce
+ * DMA transfer lengths.
+ */
+int	ser_open_speed;
 
 /*
  * Console initialization: called early on from main,
