@@ -881,7 +881,8 @@ mapdev(rr, virt, offset, size, bustype)
 		if (iobase > IODEV_END)	/* unlikely */
 			panic("mapiodev");
 	}
-	ret = (void *)v;
+	ret = (void *)(v | (((u_long)rr->rr_paddr + offset) & PGOFSET));
+			/* note: preserve page offset */
 	pa = trunc_page(rr->rr_paddr + offset);
 #ifdef notyet
 	pmtype = (cputyp == CPU_SUN4M)
