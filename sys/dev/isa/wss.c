@@ -1,4 +1,4 @@
-/*	$OpenBSD: wss.c,v 1.21 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: wss.c,v 1.22 2003/04/27 11:22:53 ho Exp $	*/
 /*	$NetBSD: wss.c,v 1.42 1998/01/19 22:18:23 augustss Exp $	*/
 
 /*
@@ -211,9 +211,9 @@ wss_query_devinfo(addr, dip)
 	dip->mixer_class = WSS_INPUT_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = WSS_MIC_IN_MUTE;
-	strcpy(dip->label.name, AudioNmicrophone);
+	strlcpy(dip->label.name, AudioNmicrophone, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume, sizeof dip->un.v.units.name);
 	break;
 
     case WSS_LINE_IN_LVL:	/* line/CD */
@@ -221,9 +221,9 @@ wss_query_devinfo(addr, dip)
 	dip->mixer_class = WSS_INPUT_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = WSS_LINE_IN_MUTE;
-	strcpy(dip->label.name, AudioNcd);
+	strlcpy(dip->label.name, AudioNcd, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume, sizeof dip->un.v.units.name);
 	break;
 
     case WSS_DAC_LVL:		/*  dacout */
@@ -231,9 +231,9 @@ wss_query_devinfo(addr, dip)
 	dip->mixer_class = WSS_INPUT_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = WSS_DAC_MUTE;
-	strcpy(dip->label.name, AudioNdac);
+	strlcpy(dip->label.name, AudioNdac, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume, sizeof dip->un.v.units.name);
 	break;
 
     case WSS_REC_LVL:	/* record level */
@@ -241,39 +241,39 @@ wss_query_devinfo(addr, dip)
 	dip->mixer_class = WSS_RECORD_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = WSS_RECORD_SOURCE;
-	strcpy(dip->label.name, AudioNrecord);
+	strlcpy(dip->label.name, AudioNrecord, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume, sizeof dip->un.v.units.name);
 	break;
 
     case WSS_MON_LVL:	/* monitor level */
 	dip->type = AUDIO_MIXER_VALUE;
 	dip->mixer_class = WSS_MONITOR_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNmonitor);
+	strlcpy(dip->label.name, AudioNmonitor, sizeof dip->label.name);
 	dip->un.v.num_channels = 1;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume, sizeof dip->un.v.units.name);
 	break;
 
     case WSS_INPUT_CLASS:			/* input class descriptor */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = WSS_INPUT_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCinputs);
+	strlcpy(dip->label.name, AudioCinputs, sizeof dip->label.name);
 	break;
 
     case WSS_MONITOR_CLASS:			/* monitor class descriptor */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = WSS_MONITOR_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCmonitor);
+	strlcpy(dip->label.name, AudioCmonitor, sizeof dip->label.name);
 	break;
 	    
     case WSS_RECORD_CLASS:			/* record source class */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = WSS_RECORD_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCrecord);
+	strlcpy(dip->label.name, AudioCrecord, sizeof dip->label.name);
 	break;
 	
     case WSS_MIC_IN_MUTE:
@@ -296,11 +296,13 @@ wss_query_devinfo(addr, dip)
 	dip->prev = WSS_DAC_LVL;
 	dip->next = AUDIO_MIXER_LAST;
     mute:
-	strcpy(dip->label.name, AudioNmute);
+	strlcpy(dip->label.name, AudioNmute, sizeof dip->label.name);
 	dip->un.e.num_mem = 2;
-	strcpy(dip->un.e.member[0].label.name, AudioNoff);
+	strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+	    sizeof dip->un.e.member[0].label.name);
 	dip->un.e.member[0].ord = 0;
-	strcpy(dip->un.e.member[1].label.name, AudioNon);
+	strlcpy(dip->un.e.member[1].label.name, AudioNon,
+	    sizeof dip->un.e.member[1].label.name);
 	dip->un.e.member[1].ord = 1;
 	break;
 
@@ -309,13 +311,16 @@ wss_query_devinfo(addr, dip)
 	dip->type = AUDIO_MIXER_ENUM;
 	dip->prev = WSS_REC_LVL;
 	dip->next = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNsource);
+	strlcpy(dip->label.name, AudioNsource, sizeof dip->label.name);
 	dip->un.e.num_mem = 3;
-	strcpy(dip->un.e.member[0].label.name, AudioNmicrophone);
+	strlcpy(dip->un.e.member[0].label.name, AudioNmicrophone,
+	    sizeof dip->un.e.member[0].label.name);
 	dip->un.e.member[0].ord = WSS_MIC_IN_LVL;
-	strcpy(dip->un.e.member[1].label.name, AudioNcd);
+	strlcpy(dip->un.e.member[1].label.name, AudioNcd,
+	    sizeof dip->un.e.member[1].label.name);
 	dip->un.e.member[1].ord = WSS_LINE_IN_LVL;
-	strcpy(dip->un.e.member[2].label.name, AudioNdac);
+	strlcpy(dip->un.e.member[2].label.name, AudioNdac,
+	    sizeof dip->un.e.member[2].label.name);
 	dip->un.e.member[2].ord = WSS_DAC_LVL;
 	break;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.31 2003/03/19 20:15:02 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.32 2003/04/27 11:22:53 ho Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -356,8 +356,8 @@ auich_attach(parent, self, aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, auich_intr, sc,
-				       sc->sc_dev.dv_xname);
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, auich_intr,
+				       sc, sc->sc_dev.dv_xname);
 	if (!sc->sc_ih) {
 		printf(": can't establish interrupt");
 		if (intrstr)
@@ -372,9 +372,12 @@ auich_attach(parent, self, aux)
 		if (PCI_PRODUCT(pa->pa_id) == auich_devices[i].product)
 			break;
 
-	sprintf(sc->sc_audev.name, "%s AC97", auich_devices[i].name);
-	sprintf(sc->sc_audev.version, "0x%02x", PCI_REVISION(pa->pa_class));
-	strcpy(sc->sc_audev.config, sc->sc_dev.dv_xname);
+	snprintf(sc->sc_audev.name, sizeof sc->sc_audev.name, "%s AC97",
+		 auich_devices[i].name);
+	snprintf(sc->sc_audev.version, sizeof sc->sc_audev.version, "0x%02x",
+		 PCI_REVISION(pa->pa_class));
+	strlcpy(sc->sc_audev.config, sc->sc_dev.dv_xname,
+		sizeof sc->sc_audev.config);
 
 	printf(": %s, %s\n", intrstr, sc->sc_audev.name);
 
@@ -523,49 +526,49 @@ auich_query_encoding(v, aep)
 {
 	switch (aep->index) {
 	case 0:
-		strcpy(aep->name, AudioEulinear);
+		strlcpy(aep->name, AudioEulinear, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_ULINEAR;
 		aep->precision = 8;
 		aep->flags = 0;
 		return (0);
 	case 1:
-		strcpy(aep->name, AudioEmulaw);
+		strlcpy(aep->name, AudioEmulaw, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_ULAW;
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 2:
-		strcpy(aep->name, AudioEalaw);
+		strlcpy(aep->name, AudioEalaw, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_ALAW;
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 3:
-		strcpy(aep->name, AudioEslinear);
+		strlcpy(aep->name, AudioEslinear, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_SLINEAR;
 		aep->precision = 8;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 4:
-		strcpy(aep->name, AudioEslinear_le);
+		strlcpy(aep->name, AudioEslinear_le, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		aep->precision = 16;
 		aep->flags = 0;
 		return (0);
 	case 5:
-		strcpy(aep->name, AudioEulinear_le);
+		strlcpy(aep->name, AudioEulinear_le, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		aep->precision = 16;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 6:
-		strcpy(aep->name, AudioEslinear_be);
+		strlcpy(aep->name, AudioEslinear_be, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		aep->precision = 16;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 7:
-		strcpy(aep->name, AudioEulinear_be);
+		strlcpy(aep->name, AudioEulinear_be, sizeof aep->name);
 		aep->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		aep->precision = 16;
 		aep->flags = AUDIO_ENCODINGFLAG_EMULATED;

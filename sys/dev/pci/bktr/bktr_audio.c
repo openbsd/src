@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_audio.c,v 1.3 2003/02/11 19:20:28 mickey Exp $	*/
+/*	$OpenBSD: bktr_audio.c,v 1.4 2003/04/27 11:22:54 ho Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp $ */
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -460,8 +460,9 @@ void msp_read_id( bktr_ptr_t bktr ){
     rev1 = msp_dpl_read(bktr, bktr->msp_addr, 0x12, 0x001e);
     rev2 = msp_dpl_read(bktr, bktr->msp_addr, 0x12, 0x001f);
 
-    sprintf(bktr->msp_version_string, "34%02d%c-%c%d",
-      (rev2>>8)&0xff, (rev1&0xff)+'@', ((rev1>>8)&0xff)+'@', rev2&0x1f);
+    snprintf(bktr->msp_version_string, sizeof bktr->msp_version_string,
+      "34%02d%c-%c%d", (rev2>>8)&0xff, (rev1&0xff)+'@', ((rev1>>8)&0xff)+'@',
+      rev2&0x1f);
 
 }
 
@@ -607,8 +608,9 @@ void dpl_read_id( bktr_ptr_t bktr ){
     rev1 = msp_dpl_read(bktr, bktr->dpl_addr, 0x12, 0x001e);
     rev2 = msp_dpl_read(bktr, bktr->dpl_addr, 0x12, 0x001f);
 
-    sprintf(bktr->dpl_version_string, "34%02d%c-%c%d",
-      ((rev2>>8)&0xff)-1, (rev1&0xff)+'@', ((rev1>>8)&0xff)+'@', rev2&0x1f);
+    snprintf(bktr->dpl_version_string, sizeof bktr->dpl_version_string,
+      "34%02d%c-%c%d", ((rev2>>8)&0xff)-1, (rev1&0xff)+'@',
+      ((rev1>>8)&0xff)+'@', rev2&0x1f);
 }
 
 /* Configure the DPL chip to Auto-detect the audio format */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aria.c,v 1.8 2002/03/14 03:16:05 millert Exp $ */
+/*	$OpenBSD: aria.c,v 1.9 2003/04/27 11:22:53 ho Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Roland C. Dowdeswell.  All rights reserved.
@@ -469,7 +469,8 @@ ariaattach(parent, self, aux)
 		printf(", SC18075 mixer");
 	printf("\n");
 
-	sprintf(aria_device.version, "%s", (ARIA_MODEL&sc->sc_hardware?"SC18026":"SC18025"));
+	snprintf(aria_device.version, sizeof aria_device.version, "%s",
+	    (ARIA_MODEL&sc->sc_hardware?"SC18026":"SC18025"));
 
 	if ((err = audio_hardware_attach(&aria_hw_if, sc)) != 0)
 		printf("aria: could not attach to audio pseudo-device driver (%d)\n", err);
@@ -582,11 +583,11 @@ aria_query_encoding(addr, fp)
 
 	switch (fp->index) {
 		case 0:
-			strcpy(fp->name, AudioEmulaw);
+			strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
 			fp->format_id = AUDIO_ENCODING_ULAW;
 			break;
 		case 1:
-			strcpy(fp->name, AudioEpcm16);
+			strlcpy(fp->name, AudioEpcm16, sizeof fp->name);
 			fp->format_id = AUDIO_ENCODING_PCM16;
 			break;
 		default:
@@ -1542,54 +1543,61 @@ aria_mixer_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ARIAMIX_INPUT_CLASS;
 		dip->next = ARIAMIX_MIC_MUTE;
-		strcpy(dip->label.name, AudioNmicrophone);
+		strlcpy(dip->label.name, AudioNmicrophone,
+		    sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case ARIAMIX_LINE_IN_LVL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ARIAMIX_INPUT_CLASS;
 		dip->next = ARIAMIX_LINE_IN_MUTE;
-		strcpy(dip->label.name, AudioNline);
+		strlcpy(dip->label.name, AudioNline, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case ARIAMIX_CD_LVL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ARIAMIX_INPUT_CLASS;
 		dip->next = ARIAMIX_CD_MUTE;
-		strcpy(dip->label.name, AudioNcd);
+		strlcpy(dip->label.name, AudioNcd, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case ARIAMIX_TEL_LVL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ARIAMIX_INPUT_CLASS;
 		dip->next = ARIAMIX_TEL_MUTE;
-		strcpy(dip->label.name, "telephone");
+		strlcpy(dip->label.name, "telephone", sizeof dip->label.name);
 		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case ARIAMIX_DAC_LVL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ARIAMIX_INPUT_CLASS;
 		dip->next = ARIAMIX_DAC_MUTE;
-		strcpy(dip->label.name, AudioNdac);
+		strlcpy(dip->label.name, AudioNdac, sizeof dip->label.name);
 		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case ARIAMIX_AUX_LVL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ARIAMIX_INPUT_CLASS;
 		dip->next = ARIAMIX_AUX_MUTE;
-		strcpy(dip->label.name, AudioNoutput);
+		strlcpy(dip->label.name, AudioNoutput, sizeof dip->label.name);
 		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case ARIAMIX_MIC_MUTE:
@@ -1619,11 +1627,13 @@ aria_mixer_query_devinfo(addr, dip)
 mode:
 		dip->mixer_class = ARIAMIX_INPUT_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
-		strcpy(dip->label.name, AudioNmute);
+		strlcpy(dip->label.name, AudioNmute, sizeof dip->label.name);
 		dip->un.e.num_mem = 2;
-		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = 0;
-		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		strlcpy(dip->un.e.member[1].label.name, AudioNon,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[1].ord = 1;
 		break;
 
@@ -1631,9 +1641,10 @@ mode:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ARIAMIX_OUTPUT_CLASS;
 		dip->next = ARIAMIX_MASTER_TREBLE;
-		strcpy(dip->label.name, AudioNvolume);
+		strlcpy(dip->label.name, AudioNvolume, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case ARIAMIX_MASTER_TREBLE:
@@ -1641,69 +1652,80 @@ mode:
 		dip->mixer_class = ARIAMIX_OUTPUT_CLASS;
 		dip->prev = ARIAMIX_MASTER_LVL;
 		dip->next = ARIAMIX_MASTER_BASS;
-		strcpy(dip->label.name, AudioNmaster);
+		strlcpy(dip->label.name, AudioNmaster, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNtreble);
+		strlcpy(dip->un.v.units.name, AudioNtreble,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case ARIAMIX_MASTER_BASS:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ARIAMIX_OUTPUT_CLASS;
 		dip->prev = ARIAMIX_MASTER_TREBLE;
-		strcpy(dip->label.name, AudioNmaster);
+		strlcpy(dip->label.name, AudioNmaster, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNbass);
+		strlcpy(dip->un.v.units.name, AudioNbass,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case ARIAMIX_OUT_LVL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = ARIAMIX_OUTPUT_CLASS;
-		strcpy(dip->label.name, AudioNoutput);
+		strlcpy(dip->label.name, AudioNoutput, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case ARIAMIX_RECORD_SOURCE:
 		dip->mixer_class = ARIAMIX_RECORD_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
-		strcpy(dip->label.name, AudioNsource);
+		strlcpy(dip->label.name, AudioNsource, sizeof dip->label.name);
 		dip->un.e.num_mem = 6;
-		strcpy(dip->un.e.member[0].label.name, AudioNoutput);
+		strlcpy(dip->un.e.member[0].label.name, AudioNoutput,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = ARIAMIX_AUX_LVL;
-		strcpy(dip->un.e.member[1].label.name, AudioNmicrophone);
+		strlcpy(dip->un.e.member[1].label.name, AudioNmicrophone,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[1].ord = ARIAMIX_MIC_LVL;
-		strcpy(dip->un.e.member[2].label.name, AudioNdac);
+		strlcpy(dip->un.e.member[2].label.name, AudioNdac,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[2].ord = ARIAMIX_DAC_LVL;
-		strcpy(dip->un.e.member[3].label.name, AudioNline);
+		strlcpy(dip->un.e.member[3].label.name, AudioNline,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[3].ord = ARIAMIX_LINE_IN_LVL;
-		strcpy(dip->un.e.member[3].label.name, AudioNcd);
+		strlcpy(dip->un.e.member[3].label.name, AudioNcd,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[4].ord = ARIAMIX_CD_LVL;
-		strcpy(dip->un.e.member[3].label.name, "telephone");
+		strlcpy(dip->un.e.member[3].label.name, "telephone",
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[5].ord = ARIAMIX_TEL_LVL;
 		break;
 
 	case ARIAMIX_INPUT_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = ARIAMIX_INPUT_CLASS;
-		strcpy(dip->label.name, AudioCInputs);
+		strlcpy(dip->label.name, AudioCInputs, sizeof dip->label.name);
 		break;
 
 	case ARIAMIX_OUTPUT_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = ARIAMIX_OUTPUT_CLASS;
-		strcpy(dip->label.name, AudioCOutputs);
+		strlcpy(dip->label.name, AudioCOutputs,
+		    sizeof dip->label.name);
 		break;
 
 	case ARIAMIX_RECORD_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = ARIAMIX_RECORD_CLASS;
-		strcpy(dip->label.name, AudioCRecord);
+		strlcpy(dip->label.name, AudioCRecord, sizeof dip->label.name);
 		break;
 
 	case ARIAMIX_EQ_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = ARIAMIX_EQ_CLASS;
-		strcpy(dip->label.name, AudioCEqualization);
+		strlcpy(dip->label.name, AudioCEqualization,
+		    sizeof dip->label.name);
 		break;
 
 	default:

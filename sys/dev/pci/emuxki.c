@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.13 2003/04/26 08:01:42 jmc Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.14 2003/04/27 11:22:53 ho Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -432,17 +432,18 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 	/* XXX it's unknown wheather APS is made from Audigy as well */
 	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CREATIVELABS_AUDIGY) {
 		sc->sc_type = EMUXKI_AUDIGY;
-		strcpy(sc->sc_audv.name, "Audigy");
+		strlcpy(sc->sc_audv.name, "Audigy", sizeof sc->sc_audv.name);
 	} else if (pci_conf_read(pa->pa_pc, pa->pa_tag,
 	    PCI_SUBSYS_ID_REG) == EMU_SUBSYS_APS) {
 		sc->sc_type = EMUXKI_APS;
-		strcpy(sc->sc_audv.name, "E-mu APS");
+		strlcpy(sc->sc_audv.name, "E-mu APS", sizeof sc->sc_audv.name);
 	} else {
 		sc->sc_type = EMUXKI_SBLIVE;
-		strcpy(sc->sc_audv.name, "SB Live!");
+		strlcpy(sc->sc_audv.name, "SB Live!", sizeof sc->sc_audv.name);
 	}
-	sprintf(sc->sc_audv.version, "0x%02x", PCI_REVISION(pa->pa_class));
-	strcpy(sc->sc_audv.config, "emuxki");
+	snprintf(sc->sc_audv.version, sizeof sc->sc_audv.version, "0x%02x",
+		 PCI_REVISION(pa->pa_class));
+	strlcpy(sc->sc_audv.config, "emuxki", sizeof sc->sc_audv.config);
 
 	if (emuxki_scinit(sc) ||
 	    /* APS has no ac97 XXX */
@@ -1684,49 +1685,49 @@ emuxki_query_encoding(void *addr, struct audio_encoding *fp)
 
 	switch (fp->index) {
 	case 0:
-		strcpy(fp->name, AudioEulinear);
+		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
 	case 1:
-		strcpy(fp->name, AudioEmulaw);
+		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 2:
-		strcpy(fp->name, AudioEalaw);
+		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ALAW;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 3:
-		strcpy(fp->name, AudioEslinear);
+		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 4:
-		strcpy(fp->name, AudioEslinear_le);
+		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
 	case 5:
-		strcpy(fp->name, AudioEulinear_le);
+		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 6:
-		strcpy(fp->name, AudioEslinear_be);
+		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 7:
-		strcpy(fp->name, AudioEulinear_be);
+		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;

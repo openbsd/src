@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.23 2003/02/25 09:12:39 tedu Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.24 2003/04/27 11:22:52 ho Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -893,9 +893,10 @@ gdt_internal_cache_cmd(xs)
 		inq.version = 2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
-		strcpy(inq.vendor, "ICP	   ");
-		sprintf(inq.product, "Host drive  #%02d", target);
-		strcpy(inq.revision, "	 ");
+		strlcpy(inq.vendor, "ICP	   ", sizeof inq.vendor);
+		snprintf(inq.product, sizeof inq.product, "Host drive  #%02d",
+		    target);
+		strlcpy(inq.revision, "	 ", sizeof inq.revision);
 		gdt_copy_internal_data(xs, (u_int8_t *)&inq, sizeof inq);
 		break;
 
@@ -1456,7 +1457,7 @@ gdt_ioctl(dev, cmd, addr)
 			p->revision = osrelease[4] - '0';
 		else
 			p->revision = 0;
-		strcpy(p->name, ostype);
+		strlcpy(p->name, ostype, sizeof p->name);
 		break;
 	}
 

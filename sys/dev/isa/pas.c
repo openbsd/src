@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.23 2002/06/14 21:34:59 todd Exp $	*/
+/*	$OpenBSD: pas.c,v 1.24 2003/04/27 11:22:53 ho Exp $	*/
 /*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
@@ -417,8 +417,10 @@ pasattach(parent, self, aux)
 	
 	sbdsp_attach(&sc->sc_sbdsp);
 
-	sprintf(pas_device.name, "pas,%s", pasnames[sc->model]);
-	sprintf(pas_device.version, "%d", sc->rev);
+	snprintf(pas_device.name, sizeof pas_device.name, "pas,%s",
+	    pasnames[sc->model]);
+	snprintf(pas_device.version, sizeof pas_device.version, "%d",
+	    sc->rev);
 
 	audio_attach_mi(&pas_hw_if, &sc->sc_sbdsp, &sc->sc_sbdsp.sc_dev);
 }

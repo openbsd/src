@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.15 2003/02/11 19:20:28 mickey Exp $ */
+/*      $OpenBSD: sv.c,v 1.16 2003/04/27 11:22:54 ho Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -624,49 +624,49 @@ sv_query_encoding(addr, fp)
 {
 	switch (fp->index) {
 	case 0:
-		strcpy(fp->name, AudioEulinear);
+		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		return (0);
 	case 1:
-		strcpy(fp->name, AudioEmulaw);
+		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 2:
-		strcpy(fp->name, AudioEalaw);
+		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ALAW;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 3:
-		strcpy(fp->name, AudioEslinear);
+		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
         case 4:
-		strcpy(fp->name, AudioEslinear_le);
+		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		return (0);
 	case 5:
-		strcpy(fp->name, AudioEulinear_le);
+		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 6:
-		strcpy(fp->name, AudioEslinear_be);
+		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 7:
-		strcpy(fp->name, AudioEulinear_be);
+		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
@@ -1050,8 +1050,8 @@ sv_query_devinfo(addr, dip)
     dip->type = AUDIO_MIXER_CLASS;
     dip->mixer_class = dip->index;
     dip->next = dip->prev = AUDIO_MIXER_LAST;
-    strcpy(dip->label.name, 
-	   mixer_classes[dip->index]);
+    strlcpy(dip->label.name, mixer_classes[dip->index],
+	    sizeof dip->label.name);
     return (0);
   }
 
@@ -1062,7 +1062,7 @@ sv_query_devinfo(addr, dip)
     int idx = off / SV_DEVICES_PER_PORT;
 
     dip->mixer_class = ports[idx].class;
-    strcpy(dip->label.name, ports[idx].audio);
+    strlcpy(dip->label.name, ports[idx].audio, sizeof dip->label.name);
 
     if (!mute) {
       dip->type = AUDIO_MIXER_VALUE;
@@ -1074,18 +1074,20 @@ sv_query_devinfo(addr, dip)
       else
 	dip->un.v.num_channels = 1;
       
-      strcpy(dip->un.v.units.name, AudioNvolume);
-		
+      strlcpy(dip->un.v.units.name, AudioNvolume, sizeof dip->un.v.units.name);
+
     } else {
       dip->type = AUDIO_MIXER_ENUM;
       dip->prev = dip->index - 1;
       dip->next = AUDIO_MIXER_LAST;
 
-      strcpy(dip->label.name, AudioNmute);
+      strlcpy(dip->label.name, AudioNmute, sizeof dip->label.name);
       dip->un.e.num_mem = 2;
-      strcpy(dip->un.e.member[0].label.name, AudioNoff);
+      strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+	  sizeof dip->un.e.member[0].label.name);
       dip->un.e.member[0].ord = 0;
-      strcpy(dip->un.e.member[1].label.name, AudioNon);
+      strlcpy(dip->un.e.member[1].label.name, AudioNon,
+	  sizeof dip->un.e.member[1].label.name);
       dip->un.e.member[1].ord = 1;
 
     }
@@ -1098,7 +1100,7 @@ sv_query_devinfo(addr, dip)
     dip->mixer_class = SV_RECORD_CLASS;
     dip->prev = AUDIO_MIXER_LAST;
     dip->next = SV_RECORD_GAIN;
-    strcpy(dip->label.name, AudioNsource);
+    strlcpy(dip->label.name, AudioNsource, sizeof dip->label.name);
     dip->type = AUDIO_MIXER_ENUM;
 
     dip->un.e.num_mem = ARRAY_SIZE(record_sources);
@@ -1106,7 +1108,8 @@ sv_query_devinfo(addr, dip)
     {
       int idx;
       for (idx = 0; idx < ARRAY_SIZE(record_sources); idx++) {
-	strcpy(dip->un.e.member[idx].label.name, record_sources[idx].name);
+	strlcpy(dip->un.e.member[idx].label.name, record_sources[idx].name,
+	    sizeof dip->un.e.member[idx].label.name);
 	dip->un.e.member[idx].ord = record_sources[idx].idx;
       }
     }
@@ -1116,30 +1119,32 @@ sv_query_devinfo(addr, dip)
     dip->mixer_class = SV_RECORD_CLASS;
     dip->prev = SV_RECORD_SOURCE;
     dip->next = AUDIO_MIXER_LAST;
-    strcpy(dip->label.name, "gain");
+    strlcpy(dip->label.name, "gain", sizeof dip->label.name);
     dip->type = AUDIO_MIXER_VALUE;
     dip->un.v.num_channels = 1;
-    strcpy(dip->un.v.units.name, AudioNvolume);
+    strlcpy(dip->un.v.units.name, AudioNvolume, sizeof dip->un.v.units.name);
     return (0);
 
   case SV_MIC_BOOST:
     dip->mixer_class = SV_RECORD_CLASS;
     dip->prev = AUDIO_MIXER_LAST;
     dip->next = AUDIO_MIXER_LAST;
-    strcpy(dip->label.name, "micboost");
+    strlcpy(dip->label.name, "micboost", sizeof dip->label.name);
     goto on_off;
 
   case SV_SRS_MODE:
     dip->mixer_class = SV_OUTPUT_CLASS;
     dip->prev = dip->next = AUDIO_MIXER_LAST;
-    strcpy(dip->label.name, AudioNspatial);
+    strlcpy(dip->label.name, AudioNspatial, sizeof dip->label.name);
 
 on_off:
     dip->type = AUDIO_MIXER_ENUM;
     dip->un.e.num_mem = 2;
-    strcpy(dip->un.e.member[0].label.name, AudioNoff);
+    strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+	sizeof dip->un.e.member[0].label.name);
     dip->un.e.member[0].ord = 0;
-    strcpy(dip->un.e.member[1].label.name, AudioNon);
+    strlcpy(dip->un.e.member[1].label.name, AudioNon,
+	sizeof dip->un.e.member[1].label.name);
     dip->un.e.member[1].ord = 1;
     return (0);
   }

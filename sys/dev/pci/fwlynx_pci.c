@@ -90,7 +90,7 @@ fwlynx_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	u_int32_t csr;
 
-        pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+        pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
         printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	psc->psc_sc.sc_dmat = pa->pa_dmat;

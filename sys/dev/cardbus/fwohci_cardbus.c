@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwohci_cardbus.c,v 1.3 2002/12/13 02:15:01 tdeval Exp $	*/
+/*	$OpenBSD: fwohci_cardbus.c,v 1.4 2003/04/27 11:22:52 ho Exp $	*/
 /*	$NetBSD: fwohci_cardbus.c,v 1.5 2002/01/26 16:34:28 ichiro Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ fwohci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	const char *devname = self->dv_xname;
 
-	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo);
+	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo,
 	    CARDBUS_REVISION(ca->ca_class));
 

@@ -29,10 +29,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx_openbsd.c,v 1.11 2003/03/21 14:58:06 drahn Exp $
+ * $Id: aic7xxx_openbsd.c,v 1.12 2003/04/27 11:22:52 ho Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_freebsd.c,v 1.26 2001/07/18 21:39:47 gibbs Exp $
- * $OpenBSD: aic7xxx_openbsd.c,v 1.11 2003/03/21 14:58:06 drahn Exp $
+ * $OpenBSD: aic7xxx_openbsd.c,v 1.12 2003/04/27 11:22:52 ho Exp $
  */
 
 #include <dev/ic/aic7xxx_openbsd.h>
@@ -513,7 +513,7 @@ ahc_attach(ahc)
 	int s;
 	ahc_lock(ahc, &s);
 	
-	ahc_controller_info(ahc, ahc_info);
+	ahc_controller_info(ahc, ahc_info, sizeof ahc_info);
 	printf("%s: %s\n", ahc_name(ahc), ahc_info);
 	/*
 	 * Initialize the software queue.

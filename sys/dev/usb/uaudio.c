@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.13 2002/07/25 04:07:32 nate Exp $ */
+/*	$OpenBSD: uaudio.c,v 1.14 2003/04/27 11:22:54 ho Exp $ */
 /*	$NetBSD: uaudio.c,v 1.60 2002/05/18 15:14:39 kent Exp $	*/
 
 /*
@@ -484,49 +484,49 @@ uaudio_query_encoding(void *addr, struct audio_encoding *fp)
 	idx = fp->index;
 	switch (idx) {
 	case 0:
-		strcpy(fp->name, AudioEulinear);
+		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
 		fp->flags = flags&HAS_8U ? 0 : AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 1:
-		strcpy(fp->name, AudioEmulaw);
+		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
 		fp->flags = flags&HAS_MULAW ? 0 : AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 2:
-		strcpy(fp->name, AudioEalaw);
+		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ALAW;
 		fp->precision = 8;
 		fp->flags = flags&HAS_ALAW ? 0 : AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 3:
-		strcpy(fp->name, AudioEslinear);
+		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = flags&HAS_8 ? 0 : AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 4:
-		strcpy(fp->name, AudioEslinear_le);
+		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		return (0);
 	case 5:
-		strcpy(fp->name, AudioEulinear_le);
+		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 6:
-		strcpy(fp->name, AudioEslinear_be);
+		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return (0);
 	case 7:
-		strcpy(fp->name, AudioEulinear_be);
+		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
@@ -1375,40 +1375,46 @@ uaudio_query_devinfo(void *addr, mixer_devinfo_t *mi)
 			mi->type = AUDIO_MIXER_CLASS;
 			mi->mixer_class = nctls + UAC_OUTPUT;
 			mi->next = mi->prev = AUDIO_MIXER_LAST;
-			strcpy(mi->label.name, AudioCoutputs);
+			strlcpy(mi->label.name, AudioCoutputs,
+			    sizeof mi->label.name);
 			return (0);
 		case UAC_INPUT:
 			mi->type = AUDIO_MIXER_CLASS;
 			mi->mixer_class = nctls + UAC_INPUT;
 			mi->next = mi->prev = AUDIO_MIXER_LAST;
-			strcpy(mi->label.name, AudioCinputs);
+			strlcpy(mi->label.name, AudioCinputs,
+			    sizeof mi->label.name);
 			return (0);
 		case UAC_EQUAL:
 			mi->type = AUDIO_MIXER_CLASS;
 			mi->mixer_class = nctls + UAC_EQUAL;
 			mi->next = mi->prev = AUDIO_MIXER_LAST;
-			strcpy(mi->label.name, AudioCequalization);
+			strlcpy(mi->label.name, AudioCequalization,
+			    sizeof mi->label.name);
 			return (0);
 		default:
 			return (ENXIO);
 		}
 	}
 	mc = &sc->sc_ctls[n];
-	strncpy(mi->label.name, mc->ctlname, MAX_AUDIO_DEV_LEN);
+	strlcpy(mi->label.name, mc->ctlname, sizeof mi->label.name);
 	mi->mixer_class = mc->class;
 	mi->next = mi->prev = AUDIO_MIXER_LAST;	/* XXX */
 	switch (mc->type) {
 	case MIX_ON_OFF:
 		mi->type = AUDIO_MIXER_ENUM;
 		mi->un.e.num_mem = 2;
-		strcpy(mi->un.e.member[0].label.name, AudioNoff);
+		strlcpy(mi->un.e.member[0].label.name, AudioNoff,
+		    sizeof mi->un.e.member[0].label.name);
 		mi->un.e.member[0].ord = 0;
-		strcpy(mi->un.e.member[1].label.name, AudioNon);
+		strlcpy(mi->un.e.member[1].label.name, AudioNon,
+		    sizeof mi->un.e.member[1].label.name);
 		mi->un.e.member[1].ord = 1;
 		break;
 	default:
 		mi->type = AUDIO_MIXER_VALUE;
-		strncpy(mi->un.v.units.name, mc->ctlunit, MAX_AUDIO_DEV_LEN);
+		strlcpy(mi->un.v.units.name, mc->ctlunit,
+		    sizeof mi->un.v.units.name);
 		mi->un.v.num_channels = mc->nchan;
 		mi->un.v.delta = mc->delta;
 		break;

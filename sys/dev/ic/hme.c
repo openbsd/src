@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.27 2003/04/26 08:01:42 jmc Exp $	*/
+/*	$OpenBSD: hme.c,v 1.28 2003/04/27 11:22:52 ho Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -233,7 +233,7 @@ hme_config(sc)
 	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
 
 	/* Initialize ifnet structure. */
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof ifp->if_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = hme_start;
 	ifp->if_ioctl = hme_ioctl;

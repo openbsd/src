@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.14 2002/03/27 15:02:59 niklas Exp $	*/
+/*	$OpenBSD: aac.c,v 1.15 2003/04/27 11:22:52 ho Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -848,9 +848,10 @@ aac_internal_cache_cmd(xs)
 		inq.version = 2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
-		strcpy(inq.vendor, "Adaptec");
-		sprintf(inq.product, "Container #%02d", target);
-		strcpy(inq.revision, "   ");
+		strlcpy(inq.vendor, "Adaptec", sizeof inq.vendor);
+		snprintf(inq.product, sizeof inq.product, "Container #%02d",
+		    target);
+		strlcpy(inq.revision, "   ", sizeof inq.revision);
 		aac_copy_internal_data(xs, (u_int8_t *)&inq, sizeof inq);
 		break;
 

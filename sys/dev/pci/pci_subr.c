@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.14 2002/04/07 19:21:40 tdeval Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.15 2003/04/27 11:22:53 ho Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
@@ -301,10 +301,8 @@ pci_findvendor(pcireg_t id_reg)
 }
 
 void
-pci_devinfo(id_reg, class_reg, showclass, cp)
-	pcireg_t id_reg, class_reg;
-	int showclass;
-	char *cp;
+pci_devinfo(pcireg_t id_reg, pcireg_t class_reg, int showclass, char *cp,
+	    size_t cp_max)
 {
 	pci_vendor_id_t vendor;
 	pci_product_id_t product;
@@ -314,6 +312,7 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 	pci_revision_t revision;
 	const char *vendor_namep = NULL, *product_namep = NULL;
 	const struct pci_class *classp, *subclassp;
+	size_t cp_len = 0;
 #ifdef PCIVERBOSE
 	const struct pci_known_vendor *pkv;
 	const struct pci_known_product *pkp;
@@ -366,32 +365,39 @@ pci_devinfo(id_reg, class_reg, showclass, cp)
 	}
 
 	if (vendor_namep == NULL)
-		cp += sprintf(cp, "%svendor 0x%04x product 0x%04x",
+		snprintf(cp, cp_max, "%svendor 0x%04x product 0x%04x",
 		    unmatched, vendor, product);
 	else if (product_namep != NULL)
-		cp += sprintf(cp, "\"%s %s\"", vendor_namep, product_namep);
+		snprintf(cp, cp_max, "\"%s %s\"", vendor_namep, product_namep);
 	else
-		cp += sprintf(cp, "vendor \"%s\", unknown product 0x%x",
+		snprintf(cp, cp_max, "vendor \"%s\", unknown product 0x%x",
 		    vendor_namep, product);
 	if (showclass && product_namep == NULL) {
-		cp += sprintf(cp, " (");
+		strlcat(cp, " (", cp_max);
+		cp_len = strlen(cp);
 		if (classp->name == NULL)
-			cp += sprintf(cp,
+			snprintf(cp + cp_len, cp_max - cp_len,
 			    "unknown class 0x%02x, subclass 0x%02x",
 			    class, subclass);
-		else {
-			cp += sprintf(cp, "class %s, ", classp->name);
-			if (subclassp == NULL || subclassp->name == NULL)
-				cp += sprintf(cp, "unknown subclass 0x%02x",
-				    subclass);
-			else
-				cp += sprintf(cp, "subclass %s",
-				    subclassp->name);
-		}
+		else if (subclassp == NULL || subclassp->name == NULL)
+			snprintf(cp + cp_len, cp_max - cp_len,
+			    "class %s unknown subclass 0x%02x", classp->name,
+			    subclass);
+		else
+			snprintf(cp + cp_len, cp_max - cp_len,
+			    "class %s subclass %s", classp->name,
+			    subclassp->name);
 #if 0 /* not very useful */
-		cp += sprintf(cp, ", interface 0x%02x", interface);
+		cp_len = strlen(cp);
+		snprintf(cp + cp_len, cp_max - cp_len,
+		    ", interface 0x%02x", interface);
 #endif
-		cp += sprintf(cp, ", rev 0x%02x)", revision);
-	} else
-		cp += sprintf(cp, " rev 0x%02x", revision);
+		cp_len = strlen(cp);
+		snprintf(cp + cp_len, cp_max - cp_len,
+		    ", rev 0x%02x)", revision);
+	} else {
+		cp_len = strlen(cp);
+		snprintf(cp + cp_len, cp_max - cp_len, " rev 0x%02x",
+		    revision);
+	}
 }

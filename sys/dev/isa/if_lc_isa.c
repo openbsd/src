@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lc_isa.c,v 1.2 2002/03/14 01:26:56 millert Exp $ */
+/*	$OpenBSD: if_lc_isa.c,v 1.3 2003/04/27 11:22:53 ho Exp $ */
 /*	$NetBSD: if_lc_isa.c,v 1.10 2001/06/13 10:46:03 wiz Exp $ */
 
 /*-
@@ -197,7 +197,8 @@ lemac_isa_probe(parent, match, aux)
 	struct cfdata *cf = match;
 	struct lemac_softc sc;
 
-	sprintf(sc.sc_dv.dv_xname, "%s%d", lc_cd.cd_name, cf->cf_unit);
+	snprintf(sc.sc_dv.dv_xname, sizeof sc.sc_dv.dv_xname, "%s%d",
+	    lc_cd.cd_name, cf->cf_unit);
     
 	return (lemac_isa_find(&sc, ia, 0));
 }

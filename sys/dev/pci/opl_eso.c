@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl_eso.c,v 1.3 2002/03/14 01:26:59 millert Exp $	*/
+/*	$OpenBSD: opl_eso.c,v 1.4 2003/04/27 11:22:53 ho Exp $	*/
 /*	$NetBSD: opl_eso.c,v 1.1 1999/07/12 15:13:31 kleink Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ opl_eso_attach(parent, self, aux)
 	sc->ioh = esc->sc_sb_ioh;
 	sc->iot = esc->sc_sb_iot;
 	sc->offs = 0;
-	strcpy(sc->syn.name, "ESO ");
+	strlcpy(sc->syn.name, "ESO ", sizeof sc->syn.name);
 	/*sc->spkrctl = 0;
 	  sc->spkrarg = 0;*/
 

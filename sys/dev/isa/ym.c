@@ -1,4 +1,4 @@
-/* $OpenBSD: ym.c,v 1.11 2002/03/14 03:16:05 millert Exp $ */
+/* $OpenBSD: ym.c,v 1.12 2003/04/27 11:22:53 ho Exp $ */
 
 
 /*
@@ -453,8 +453,9 @@ ym_query_devinfo(addr, dip)
 	case YM_EQ_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = dip->index;
-		strcpy(dip->label.name,
-		    mixer_classes[dip->index - YM_INPUT_CLASS]);
+		strlcpy(dip->label.name,
+		    mixer_classes[dip->index - YM_INPUT_CLASS],
+		    sizeof dip->label.name);
 		break;
 
 	case YM_MIDI_LVL:
@@ -472,7 +473,9 @@ ym_query_devinfo(addr, dip)
 
 		dip->next = dip->index + 7;
 
-		strcpy(dip->label.name, mixer_port_names[dip->index - YM_MIDI_LVL]);
+		strlcpy(dip->label.name,
+		    mixer_port_names[dip->index - YM_MIDI_LVL],
+		    sizeof dip->label.name);
 
 		if (dip->index == YM_SPEAKER_LVL ||
 		    dip->index == YM_MIC_LVL)
@@ -480,7 +483,8 @@ ym_query_devinfo(addr, dip)
 		else
 			dip->un.v.num_channels = 2;
 
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case YM_MIDI_MUTE:
@@ -497,11 +501,13 @@ ym_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->prev = dip->index - 7;
 mute:
-		strcpy(dip->label.name, AudioNmute);
+		strlcpy(dip->label.name, AudioNmute, sizeof dip->label.name);
 		dip->un.e.num_mem = 2;
-		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = 0;
-		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		strlcpy(dip->un.e.member[1].label.name, AudioNon,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = 1;
 		break;
 
@@ -510,9 +516,10 @@ mute:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = YM_OUTPUT_CLASS;
 		dip->next = YM_OUTPUT_MUTE;
-		strcpy(dip->label.name, AudioNmaster);
+		strlcpy(dip->label.name, AudioNmaster, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case YM_OUTPUT_MUTE:
@@ -525,9 +532,10 @@ mute:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = YM_RECORD_CLASS;
 		dip->next = YM_RECORD_SOURCE;
-		strcpy(dip->label.name, AudioNrecord);
+		strlcpy(dip->label.name, AudioNrecord, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 
@@ -535,56 +543,69 @@ mute:
 		dip->mixer_class = YM_RECORD_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->prev = YM_REC_LVL;
-		strcpy(dip->label.name, AudioNsource);
+		strlcpy(dip->label.name, AudioNsource, sizeof dip->label.name);
 		dip->un.e.num_mem = 4;
-		strcpy(dip->un.e.member[0].label.name, AudioNmicrophone);
+		strlcpy(dip->un.e.member[0].label.name, AudioNmicrophone,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = MIC_IN_PORT;
-		strcpy(dip->un.e.member[1].label.name, AudioNline);
+		strlcpy(dip->un.e.member[1].label.name, AudioNline,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = LINE_IN_PORT;
-		strcpy(dip->un.e.member[2].label.name, AudioNdac);
+		strlcpy(dip->un.e.member[2].label.name, AudioNdac,
+		    sizeof dip->un.e.member[2].label.name);
 		dip->un.e.member[2].ord = DAC_IN_PORT;
-		strcpy(dip->un.e.member[3].label.name, AudioNcd);
+		strlcpy(dip->un.e.member[3].label.name, AudioNcd,
+		    sizeof dip->un.e.member[3].label.name);
 		dip->un.e.member[3].ord = AUX1_IN_PORT;
 		break;
 
 	case YM_MASTER_EQMODE:
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = YM_EQ_CLASS;
-		strcpy(dip->label.name, AudioNmode);
-		strcpy(dip->un.v.units.name, AudioNmode);
+		strlcpy(dip->label.name, AudioNmode, sizeof dip->label.name);
+		strlcpy(dip->un.v.units.name, AudioNmode,
+		    sizeof dip->un.v.units.name);
 		dip->un.e.num_mem = 4;
-		strcpy(dip->un.e.member[0].label.name, AudioNdesktop);
+		strlcpy(dip->un.e.member[0].label.name, AudioNdesktop,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = SA3_SYS_CTL_YMODE0;
-		strcpy(dip->un.e.member[1].label.name, AudioNlaptop);
+		strlcpy(dip->un.e.member[1].label.name, AudioNlaptop,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = SA3_SYS_CTL_YMODE1;
-		strcpy(dip->un.e.member[2].label.name, AudioNsubnote);
+		strlcpy(dip->un.e.member[2].label.name, AudioNsubnote,
+		    sizeof dip->un.e.member[2].label.name);
 		dip->un.e.member[2].ord = SA3_SYS_CTL_YMODE2;
-		strcpy(dip->un.e.member[3].label.name, AudioNhifi);
+		strlcpy(dip->un.e.member[3].label.name, AudioNhifi,
+		    sizeof dip->un.e.member[3].label.name);
 		dip->un.e.member[3].ord = SA3_SYS_CTL_YMODE3;
 		break;
 
 	case YM_MASTER_TREBLE:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = YM_EQ_CLASS;
-		strcpy(dip->label.name, AudioNtreble);
+		strlcpy(dip->label.name, AudioNtreble, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNtreble);
+		strlcpy(dip->un.v.units.name, AudioNtreble,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case YM_MASTER_BASS:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = YM_EQ_CLASS;
-		strcpy(dip->label.name, AudioNbass);
+		strlcpy(dip->label.name, AudioNbass, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNbass);
+		strlcpy(dip->un.v.units.name, AudioNbass,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case YM_MASTER_WIDE:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = YM_EQ_CLASS;
-		strcpy(dip->label.name, AudioNsurround);
+		strlcpy(dip->label.name, AudioNsurround,
+		    sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNsurround);
+		strlcpy(dip->un.v.units.name, AudioNsurround,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	default:

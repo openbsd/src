@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.22 2002/07/25 02:18:11 nate Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.23 2003/04/27 11:22:54 ho Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.87 2001/08/15 00:04:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -269,13 +269,15 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 	}
 #endif
 	if (vendor != NULL && *vendor)
-		strcpy(v, vendor);
+		strlcpy(v, vendor, USB_MAX_STRING_LEN); /* XXX */
 	else
-		sprintf(v, "vendor 0x%04x", UGETW(udd->idVendor));
+		snprintf(v, USB_MAX_STRING_LEN, "vendor 0x%04x", /* XXX */
+		    UGETW(udd->idVendor));
 	if (product != NULL && *product)
-		strcpy(p, product);
+		strlcpy(p, product, USB_MAX_STRING_LEN); /* XXX */
 	else
-		sprintf(p, "product 0x%04x", UGETW(udd->idProduct));
+		snprintf(p, USB_MAX_STRING_LEN, "product 0x%04x", /* XXX */
+		    UGETW(udd->idProduct));
 }
 
 int

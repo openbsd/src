@@ -1,4 +1,4 @@
-/*	$OpenBSD: pss.c,v 1.21 2002/03/14 01:26:56 millert Exp $ */
+/*	$OpenBSD: pss.c,v 1.22 2003/04/27 11:22:53 ho Exp $ */
 /*	$NetBSD: pss.c,v 1.38 1998/01/12 09:43:44 thorpej Exp $	*/
 
 /*
@@ -1425,9 +1425,10 @@ pss_query_devinfo(addr, dip)
 	dip->mixer_class = PSS_INPUT_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = PSS_MIC_IN_MUTE;
-	strcpy(dip->label.name, AudioNmicrophone);
+	strlcpy(dip->label.name, AudioNmicrophone, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume,
+	    sizeof dip->un.v.units.name);
 	break;
 
     case PSS_LINE_IN_LVL:	/* line/CD */
@@ -1435,9 +1436,10 @@ pss_query_devinfo(addr, dip)
 	dip->mixer_class = PSS_INPUT_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = PSS_LINE_IN_MUTE;
-	strcpy(dip->label.name, AudioNcd);
+	strlcpy(dip->label.name, AudioNcd, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume,
+	    sizeof dip->un.v.units.name);
 	break;
 
     case PSS_DAC_LVL:		/*  dacout */
@@ -1445,9 +1447,10 @@ pss_query_devinfo(addr, dip)
 	dip->mixer_class = PSS_INPUT_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = PSS_DAC_MUTE;
-	strcpy(dip->label.name, AudioNdac);
+	strlcpy(dip->label.name, AudioNdac, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume,
+	    sizeof dip->un.v.units.name);
 	break;
 
     case PSS_REC_LVL:	/* record level */
@@ -1455,18 +1458,20 @@ pss_query_devinfo(addr, dip)
 	dip->mixer_class = PSS_RECORD_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = PSS_RECORD_SOURCE;
-	strcpy(dip->label.name, AudioNrecord);
+	strlcpy(dip->label.name, AudioNrecord, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume,
+	    sizeof dip->un.v.units.name);
 	break;
 
     case PSS_MON_LVL:	/* monitor level */
 	dip->type = AUDIO_MIXER_VALUE;
 	dip->mixer_class = PSS_MONITOR_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNmonitor);
+	strlcpy(dip->label.name, AudioNmonitor, sizeof dip->label.name);
 	dip->un.v.num_channels = 1;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume,
+	    sizeof dip->un.v.units.name);
 	break;
 
     case PSS_MASTER_VOL:	/* master volume */
@@ -1474,55 +1479,57 @@ pss_query_devinfo(addr, dip)
 	dip->mixer_class = PSS_OUTPUT_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = PSS_OUTPUT_MODE;
-	strcpy(dip->label.name, AudioNmaster);
+	strlcpy(dip->label.name, AudioNmaster, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume,
+	    sizeof dip->un.v.units.name);
 	break;
 
     case PSS_MASTER_TREBLE:	/* master treble */
 	dip->type = AUDIO_MIXER_VALUE;
 	dip->mixer_class = PSS_OUTPUT_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNtreble);
+	strlcpy(dip->label.name, AudioNtreble, sizeof dip->label.name);
 	dip->un.v.num_channels = 1;
-	strcpy(dip->un.v.units.name, AudioNtreble);
+	strlcpy(dip->un.v.units.name, AudioNtreble,
+	    sizeof dip->un.v.units.name);
 	break;
 
     case PSS_MASTER_BASS:	/* master bass */
 	dip->type = AUDIO_MIXER_VALUE;
 	dip->mixer_class = PSS_OUTPUT_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNbass);
+	strlcpy(dip->label.name, AudioNbass, sizeof dip->label.name);
 	dip->un.v.num_channels = 1;
-	strcpy(dip->un.v.units.name, AudioNbass);
+	strlcpy(dip->un.v.units.name, AudioNbass, sizeof dip->un.v.units.name);
 	break;
 
     case PSS_OUTPUT_CLASS:			/* output class descriptor */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = PSS_OUTPUT_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCoutputs);
+	strlcpy(dip->label.name, AudioCoutputs, sizeof dip->label.name);
 	break;
 
     case PSS_INPUT_CLASS:			/* input class descriptor */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = PSS_INPUT_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCinputs);
+	strlcpy(dip->label.name, AudioCinputs, sizeof dip->label.name);
 	break;
 
     case PSS_MONITOR_CLASS:			/* monitor class descriptor */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = PSS_MONITOR_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCmonitor);
+	strlcpy(dip->label.name, AudioCmonitor, sizeof dip->label.name);
 	break;
 
     case PSS_RECORD_CLASS:			/* record source class */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = PSS_RECORD_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCrecord);
+	strlcpy(dip->label.name, AudioCrecord, sizeof dip->label.name);
 	break;
 
     case PSS_MIC_IN_MUTE:
@@ -1545,11 +1552,13 @@ pss_query_devinfo(addr, dip)
 	dip->prev = PSS_DAC_LVL;
 	dip->next = AUDIO_MIXER_LAST;
     mute:
-	strcpy(dip->label.name, AudioNmute);
+	strlcpy(dip->label.name, AudioNmute, sizeof dip->label.name);
 	dip->un.e.num_mem = 2;
-	strcpy(dip->un.e.member[0].label.name, AudioNoff);
+	strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+	    sizeof dip->un.e.member[0].label.name);
 	dip->un.e.member[0].ord = 0;
-	strcpy(dip->un.e.member[1].label.name, AudioNon);
+	strlcpy(dip->un.e.member[1].label.name, AudioNon,
+	    sizeof dip->un.e.member[1].label.name);
 	dip->un.e.member[1].ord = 1;
 	break;
 
@@ -1558,15 +1567,19 @@ pss_query_devinfo(addr, dip)
 	dip->type = AUDIO_MIXER_ENUM;
 	dip->prev = PSS_MASTER_VOL;
 	dip->next = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNmode);
+	strlcpy(dip->label.name, AudioNmode, sizeof dip->label.name);
 	dip->un.e.num_mem = 4;
-	strcpy(dip->un.e.member[0].label.name, AudioNmono);
+	strlcpy(dip->un.e.member[0].label.name, AudioNmono,
+	    sizeof dip->un.e.member[0].label.name);
 	dip->un.e.member[0].ord = PSS_SPKR_MONO;
-	strcpy(dip->un.e.member[1].label.name, AudioNstereo);
+	strlcpy(dip->un.e.member[1].label.name, AudioNstereo,
+	    sizeof dip->un.e.member[1].label.name);
 	dip->un.e.member[1].ord = PSS_SPKR_STEREO;
-	strcpy(dip->un.e.member[2].label.name, AudioNpseudo);
+	strlcpy(dip->un.e.member[2].label.name, AudioNpseudo,
+	    sizeof dip->un.e.member[2].label.name);
 	dip->un.e.member[2].ord = PSS_SPKR_PSEUDO;
-	strcpy(dip->un.e.member[3].label.name, AudioNspatial);
+	strlcpy(dip->un.e.member[3].label.name, AudioNspatial,
+	    sizeof dip->un.e.member[3].label.name);
 	dip->un.e.member[3].ord = PSS_SPKR_SPATIAL;
 	break;
 
@@ -1575,13 +1588,16 @@ pss_query_devinfo(addr, dip)
 	dip->type = AUDIO_MIXER_ENUM;
 	dip->prev = PSS_REC_LVL;
 	dip->next = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNsource);
+	strlcpy(dip->label.name, AudioNsource, sizeof dip->label.name);
 	dip->un.e.num_mem = 3;
-	strcpy(dip->un.e.member[0].label.name, AudioNmicrophone);
+	strlcpy(dip->un.e.member[0].label.name, AudioNmicrophone,
+	    sizeof dip->un.e.member[0].label.name);
 	dip->un.e.member[0].ord = PSS_MIC_IN_LVL;
-	strcpy(dip->un.e.member[1].label.name, AudioNcd);
+	strlcpy(dip->un.e.member[1].label.name, AudioNcd,
+	    sizeof dip->un.e.member[1].label.name);
 	dip->un.e.member[1].ord = PSS_LINE_IN_LVL;
-	strcpy(dip->un.e.member[2].label.name, AudioNdac);
+	strlcpy(dip->un.e.member[2].label.name, AudioNdac,
+	    sizeof dip->un.e.member[2].label.name);
 	dip->un.e.member[2].ord = PSS_DAC_LVL;
 	break;
 

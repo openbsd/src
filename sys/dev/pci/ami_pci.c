@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.15 2003/02/28 15:26:23 mickey Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.16 2003/04/27 11:22:53 ho Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -232,10 +232,11 @@ ami_pci_attach(parent, self, aux)
 		for (vp = ami_pci_vendors;
 		     vp->id && vp->id != (csr & 0xffff); vp++);
 		if (vp->id)
-			sprintf(modelbuf, "%s %x", vp->name,
+			snprintf(modelbuf, sizeof modelbuf, "%s %x", vp->name,
 			    (csr >> 16) & 0xffff);
 		else
-			sprintf(modelbuf, "unknown 0x%08x", csr);
+			snprintf(modelbuf, sizeof modelbuf, "unknown 0x%08x",
+			    csr);
 		model = modelbuf;
 	}
 

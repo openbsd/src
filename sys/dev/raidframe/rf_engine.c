@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_engine.c,v 1.14 2003/01/19 14:32:00 tdeval Exp $	*/
+/*	$OpenBSD: rf_engine.c,v 1.15 2003/04/27 11:22:54 ho Exp $	*/
 /*	$NetBSD: rf_engine.c,v 1.10 2000/08/20 16:51:03 thorpej Exp $	*/
 
 /*
@@ -834,7 +834,6 @@ rf_DAGExecutionThread_pre(RF_ThreadArg_t arg)
 {
 	RF_Raid_t *raidPtr;
 	char raidname[16];
-	int len;
 	pid_t oldpid = lastpid;
 
 	raidPtr = (RF_Raid_t *) arg;
@@ -844,11 +843,7 @@ rf_DAGExecutionThread_pre(RF_ThreadArg_t arg)
 	}
 
 	lastpid = RF_ENGINE_PID + raidPtr->raidid - 1;
-	len = sprintf(&raidname[0], "raid%d", raidPtr->raidid);
-#ifdef	DIAGNOSTIC
-	if (len >= sizeof(raidname))
-		panic("raidname expansion too long.");
-#endif	/* DIAGNOSTIC */
+	snprintf(raidname, sizeof raidname, "raid%d", raidPtr->raidid);
 
 	if (RF_CREATE_THREAD(raidPtr->engine_thread, rf_DAGExecutionThread,
 	    raidPtr, &raidname[0])) {

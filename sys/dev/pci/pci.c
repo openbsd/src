@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.32 2003/02/28 15:26:23 mickey Exp $	*/
+/*	$OpenBSD: pci.c,v 1.33 2003/04/27 11:22:53 ho Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -292,12 +292,14 @@ pciprint(aux, pnp)
 	char devinfo[256];
 
 	if (pnp) {
-		pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
+		pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo,
+		    sizeof devinfo);
 		printf("%s at %s", devinfo, pnp);
 	}
 	printf(" dev %d function %d", pa->pa_device, pa->pa_function);
 	if (!pnp) {
-		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo,
+		    sizeof devinfo);
 		printf(" %s", devinfo);
 	}
 

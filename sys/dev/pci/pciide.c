@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.121 2003/04/20 21:09:28 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.122 2003/04/27 11:22:53 ho Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -711,7 +711,8 @@ pciide_attach(parent, self, aux)
 	sc->sc_pp = pciide_lookup_product(pa->pa_id);
 	if (sc->sc_pp == NULL) {
 		sc->sc_pp = &default_product_desc;
-		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo,
+		    sizeof devinfo);
 	}
 
 	sc->sc_pc = pa->pa_pc;

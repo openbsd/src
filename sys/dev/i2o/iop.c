@@ -1,4 +1,4 @@
-/*	$OpenBSD: iop.c,v 1.22 2002/06/07 09:10:13 nordin Exp $	*/
+/*	$OpenBSD: iop.c,v 1.23 2003/04/27 11:22:52 ho Exp $	*/
 /*	$NetBSD: iop.c,v 1.12 2001/03/21 14:27:05 ad Exp $	*/
 
 /*-
@@ -208,7 +208,7 @@ static inline void	iop_outl(struct iop_softc *, int, u_int32_t);
 
 void	iop_config_interrupts(struct device *);
 void	iop_configure_devices(struct iop_softc *, int, int);
-void	iop_devinfo(int, char *);
+void	iop_devinfo(int, char *, size_t);
 int	iop_print(void *, const char *);
 int	iop_reconfigure(struct iop_softc *, u_int);
 void	iop_shutdown(void *);
@@ -781,8 +781,9 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
  		LIST_FOREACH(ii, &sc->sc_iilist, ii_list) {
  			if (ia.ia_tid == ii->ii_tid) {
 				sc->sc_tidmap[i].it_flags |= IT_CONFIGURED;
-				strcpy(sc->sc_tidmap[i].it_dvname,
-				    ii->ii_dv->dv_xname);
+				strlcpy(sc->sc_tidmap[i].it_dvname,
+				    ii->ii_dv->dv_xname,
+				    sizeof sc->sc_tidmap[i].it_dvname);
  				break;
 			}
 		}
@@ -791,7 +792,8 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 		dv = config_found_sm(&sc->sc_dv, &ia, iop_print, iop_submatch);
 		if (dv != NULL) {
  			sc->sc_tidmap[i].it_flags |= IT_CONFIGURED;
-			strcpy(sc->sc_tidmap[i].it_dvname, dv->dv_xname);
+			strlcpy(sc->sc_tidmap[i].it_dvname, dv->dv_xname,
+			    sizeof sc->sc_tidmap[i].it_dvname);
 		}
 	}
 }
@@ -810,7 +812,7 @@ iop_adjqparam(struct iop_softc *sc, int mpi)
 }
 
 void
-iop_devinfo(int class, char *devinfo)
+iop_devinfo(int class, char *devinfo, size_t di_len)
 {
 #ifdef I2OVERBOSE
 	int i;
@@ -820,12 +822,12 @@ iop_devinfo(int class, char *devinfo)
 			break;
 	
 	if (i == sizeof(iop_class) / sizeof(iop_class[0]))
-		sprintf(devinfo, "device (class 0x%x)", class);
+		snprintf(devinfo, di_len, "device (class 0x%x)", class);
 	else
-		strcpy(devinfo, iop_class[i].ic_caption);
+		strlcpy(devinfo, iop_class[i].ic_caption, di_len);
 #else
 
-	sprintf(devinfo, "device (class 0x%x)", class);
+	snprintf(devinfo, di_len, "device (class 0x%x)", class);
 #endif
 }
 
@@ -838,7 +840,7 @@ iop_print(void *aux, const char *pnp)
 	ia = aux;
 
 	if (pnp != NULL) {
-		iop_devinfo(ia->ia_class, devinfo);
+		iop_devinfo(ia->ia_class, devinfo, sizeof devinfo);
 		printf("%s at %s", devinfo, pnp);
 	}
 	printf(" tid %d", ia->ia_tid);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_disks.c,v 1.8 2003/01/19 14:32:00 tdeval Exp $	*/
+/*	$OpenBSD: rf_disks.c,v 1.9 2003/04/27 11:22:54 ho Exp $	*/
 /*	$NetBSD: rf_disks.c,v 1.31 2000/06/02 01:17:14 oster Exp $	*/
 
 /*
@@ -518,7 +518,8 @@ rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 
 				memcpy(&raidPtr->raid_cinfo[r][c].ci_label,
 				    ac->clabel, sizeof(*ac->clabel));
-				sprintf(diskPtr->devname, "/dev/%s",
+				snprintf(diskPtr->devname,
+				    sizeof diskPtr->devname, "/dev/%s",
 				    ac->devname);
 
 				/*
@@ -583,7 +584,8 @@ rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 				 * Component must really be dead.
 				 */
 				disks[r][c].status = rf_ds_failed;
-				sprintf(disks[r][c].devname, "component%d",
+				snprintf(disks[r][c].devname,
+				    sizeof disks[r][c].devname, "component%d",
 				    r * raidPtr->numCol + c);
 				numFailuresThisRow++;
 			}
@@ -651,7 +653,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *buf, RF_RaidDisk_t *diskPtr,
 		/* Strip off the newline. */
 		p[strlen(p) - 1] = '\0';
 	}
-	(void) strcpy(diskPtr->devname, p);
+	(void) strlcpy(diskPtr->devname, p, sizeof diskPtr->devname);
 
 	proc = raidPtr->engine_thread;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.9 2002/11/19 18:40:17 jason Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.10 2003/04/27 11:22:53 ho Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -465,49 +465,49 @@ cmpci_query_encoding(handle, fp)
 	
 	switch (fp->index) {
 	case 0:
-		strcpy(fp->name, AudioEulinear);
+		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 1:
-		strcpy(fp->name, AudioEmulaw);
+		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 2:
-		strcpy(fp->name, AudioEalaw);
+		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ALAW;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 3:
-		strcpy(fp->name, AudioEslinear);
+		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
 	case 4:
-		strcpy(fp->name, AudioEslinear_le);
+		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
 	case 5:
-		strcpy(fp->name, AudioEulinear_le);
+		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 6:
-		strcpy(fp->name, AudioEslinear_be);
+		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 7:
-		strcpy(fp->name, AudioEulinear_be);
+		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
@@ -792,152 +792,177 @@ cmpci_query_devinfo(handle, dip)
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CMPCI_OUTPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNmaster);
+		strlcpy(dip->label.name, AudioNmaster, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		return 0;
 	case CMPCI_FM_VOL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CMPCI_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = CMPCI_FM_IN_MUTE;
-		strcpy(dip->label.name, AudioNfmsynth);
+		strlcpy(dip->label.name, AudioNfmsynth,
+		    sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		return 0;
 	case CMPCI_CD_VOL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CMPCI_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = CMPCI_CD_IN_MUTE;
-		strcpy(dip->label.name, AudioNcd);
+		strlcpy(dip->label.name, AudioNcd, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		return 0;
 	case CMPCI_VOICE_VOL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CMPCI_OUTPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNdac);
+		strlcpy(dip->label.name, AudioNdac, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		return 0;
 	case CMPCI_OUTPUT_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = CMPCI_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCoutputs);
+		strlcpy(dip->label.name, AudioCoutputs,
+		    sizeof dip->label.name);
 		return 0;
 	case CMPCI_MIC_VOL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CMPCI_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = CMPCI_MIC_IN_MUTE;
-		strcpy(dip->label.name, AudioNmicrophone);
+		strlcpy(dip->label.name, AudioNmicrophone,
+		    sizeof dip->label.name);
 		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		return 0;
 	case CMPCI_LINE_IN_VOL:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CMPCI_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = CMPCI_LINE_IN_MUTE;
-		strcpy(dip->label.name, AudioNline);
+		strlcpy(dip->label.name, AudioNline, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		return 0;
 	case CMPCI_RECORD_SOURCE:
 		dip->mixer_class = CMPCI_RECORD_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNsource);
+		strlcpy(dip->label.name, AudioNsource, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_SET;
 #ifdef CMPCI_SPDIF_SUPPORT
 		dip->un.s.num_mem = 5;
 #else
 		dip->un.s.num_mem = 4;
 #endif
-		strcpy(dip->un.s.member[0].label.name, AudioNmicrophone);
+		strlcpy(dip->un.s.member[0].label.name, AudioNmicrophone,
+		    sizeof dip->un.s.member[0].label.name);
 		dip->un.s.member[0].mask = 1 << CMPCI_MIC_VOL;
-		strcpy(dip->un.s.member[1].label.name, AudioNcd);
+		strlcpy(dip->un.s.member[1].label.name, AudioNcd,
+		    sizeof dip->un.s.member[1].label.name);
 		dip->un.s.member[1].mask = 1 << CMPCI_CD_VOL;
-		strcpy(dip->un.s.member[2].label.name, AudioNline);
+		strlcpy(dip->un.s.member[2].label.name, AudioNline,
+		    sizeof dip->un.s.member[2].label.name);
 		dip->un.s.member[2].mask = 1 << CMPCI_LINE_IN_VOL;
-		strcpy(dip->un.s.member[3].label.name, AudioNfmsynth);
+		strlcpy(dip->un.s.member[3].label.name, AudioNfmsynth,
+		    sizeof dip->un.s.member[3].label.name);
 		dip->un.s.member[3].mask = 1 << CMPCI_FM_VOL;
 #ifdef CMPCI_SPDIF_SUPPORT
-		strcpy(dip->un.s.member[4].label.name, CmpciNspdif);
+		strlcpy(dip->un.s.member[4].label.name, CmpciNspdif,
+		    sizeof dip->un.s.member[4].label.name);
 		dip->un.s.member[4].mask = 1 << CMPCI_SPDIF_IN;
 #endif
 		return 0;
 	case CMPCI_BASS:
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNbass);
+		strlcpy(dip->label.name, AudioNbass, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CMPCI_EQUALIZATION_CLASS;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNbass);
+		strlcpy(dip->un.v.units.name, AudioNbass,
+		    sizeof dip->un.v.units.name);
 		return 0;
 	case CMPCI_TREBLE:
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNtreble);
+		strlcpy(dip->label.name, AudioNtreble, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CMPCI_EQUALIZATION_CLASS;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNtreble);
+		strlcpy(dip->un.v.units.name, AudioNtreble,
+		    sizeof dip->un.v.units.name);
 		return 0;
 	case CMPCI_RECORD_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = CMPCI_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCrecord);
+		strlcpy(dip->label.name, AudioCrecord,
+		    sizeof dip->label.name);
 		return 0;
 	case CMPCI_INPUT_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = CMPCI_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCinputs);
+		strlcpy(dip->label.name, AudioCinputs,
+		    sizeof dip->label.name);
 		return 0;
 	case CMPCI_PCSPEAKER:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CMPCI_INPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, "pc_speaker");
+		strlcpy(dip->label.name, "pc_speaker", sizeof dip->label.name);
 		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		return 0;
 	case CMPCI_INPUT_GAIN:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CMPCI_INPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNinput);
+		strlcpy(dip->label.name, AudioNinput,
+		    sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		return 0;
 	case CMPCI_OUTPUT_GAIN:
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = CMPCI_OUTPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNoutput);
+		strlcpy(dip->label.name, AudioNoutput, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		return 0;
 	case CMPCI_AGC:
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = CMPCI_INPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, "agc");
+		strlcpy(dip->label.name, "agc", sizeof dip->label.name);
 		dip->un.e.num_mem = 2;
-		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = 0;
-		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		strlcpy(dip->un.e.member[1].label.name, AudioNon,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = 1;
 		return 0;
 	case CMPCI_EQUALIZATION_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = CMPCI_EQUALIZATION_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCequalization);
+		strlcpy(dip->label.name, AudioCequalization,
+		    sizeof dip->label.name);
 		return 0;
 	case CMPCI_CD_IN_MUTE:
 		dip->prev = CMPCI_CD_VOL;
@@ -976,7 +1001,7 @@ cmpci_query_devinfo(handle, dip)
 		dip->next = AUDIO_MIXER_LAST;
 	swap:
 		dip->mixer_class = CMPCI_INPUT_CLASS;
-		strcpy(dip->label.name, AudioNswap);
+		strlcpy(dip->label.name, AudioNswap, sizeof dip->label.name);
 		goto mute1;
 	case CMPCI_CD_OUT_MUTE:
 		dip->prev = CMPCI_CD_SWAP;
@@ -993,13 +1018,15 @@ cmpci_query_devinfo(handle, dip)
 		dip->next = AUDIO_MIXER_LAST;
 		dip->mixer_class = CMPCI_OUTPUT_CLASS;
 	mute:
-		strcpy(dip->label.name, AudioNmute);
+		strlcpy(dip->label.name, AudioNmute, sizeof dip->label.name);
 	mute1:
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->un.e.num_mem = 2;
-		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = 0;
-		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		strlcpy(dip->un.e.member[1].label.name, AudioNon,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = 1;
 		return 0;
 	}

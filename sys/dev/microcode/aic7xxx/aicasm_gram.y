@@ -1827,10 +1827,7 @@ add_version(const char *verstring)
         versions = realloc(versions, newlen + oldlen + 2);
         if (versions == NULL)
                 stop("Can't allocate version string", EX_SOFTWARE);
-        strcpy(&versions[oldlen], prefix);
-        strcpy(&versions[oldlen + strlen(prefix)], verstring);
-        versions[newlen + oldlen] = '\n';
-        versions[newlen + oldlen + 1] = '\0';
+	snprintf(&versions[oldlen], newlen + 2, "%s%s\n", prefix, verstring);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.21 2003/01/05 22:41:36 deraadt Exp $ */
+/*	$OpenBSD: umass.c,v 1.22 2003/04/27 11:22:54 ho Exp $ */
 /*	$NetBSD: umass.c,v 1.49 2001/01/21 18:56:38 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -864,7 +864,7 @@ USB_MATCH(umass)
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
 	struct umass_softc scs, *sc = &scs;
 	memset(sc, 0, sizeof *sc);
-	strcpy(sc->sc_dev.dv_xname, "umass");
+	strlcpy(sc->sc_dev.dv_xname, "umass", sizeof sc->sc_dev.dv_xname);
 #endif
 
 	if (uaa->iface == NULL)
@@ -3103,7 +3103,7 @@ umass_dump_buffer(struct umass_softc *sc, u_int8_t *buffer, int buflen,
 	s1[0] = '\0';
 	s3[0] = '\0';
 
-	sprintf(s2, " buffer=%p, buflen=%d", buffer, buflen);
+	snprintf(s2, sizeof s2, " buffer=%p, buflen=%d", buffer, buflen);
 	for (i = 0; i < buflen && i < printlen; i++) {
 		j = i % 16;
 		if (j == 0 && i != 0) {
@@ -3111,10 +3111,10 @@ umass_dump_buffer(struct umass_softc *sc, u_int8_t *buffer, int buflen,
 				USBDEVNAME(sc->sc_dev), s1, s2));
 			s2[0] = '\0';
 		}
-		sprintf(&s1[j*2], "%02x", buffer[i] & 0xff);
+		snprintf(&s1[j*2], sizeof s1 - j*2, "%02x", buffer[i] & 0xff);
 	}
 	if (buflen > printlen)
-		sprintf(s3, " ...");
+		snprintf(s3, sizeof s3, " ...");
 	DPRINTF(UDMASS_GEN, ("%s: 0x %s%s%s\n",
 		USBDEVNAME(sc->sc_dev), s1, s2, s3));
 }

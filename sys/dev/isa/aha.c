@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.50 2003/04/10 10:11:24 miod Exp $	*/
+/*	$OpenBSD: aha.c,v 1.51 2003/04/27 11:22:53 ho Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -1162,7 +1162,7 @@ aha_inquire_setup_information(sc)
 	int i;
 	char *p;
 
-	strcpy(sc->sc_model, "unknown");
+	strlcpy(sc->sc_model, "unknown", sizeof sc->sc_model);
 
 	/*
 	 * Assume we have a board at this stage, do an adapter inquire
@@ -1204,23 +1204,23 @@ aha_inquire_setup_information(sc)
 
 	switch (revision.reply.boardid) {
 	case 0x31:
-		strcpy(sc->sc_model, "1540");
+		strlcpy(sc->sc_model, "1540", sizeof sc->sc_model);
 		break;
 	case 0x41:
-		strcpy(sc->sc_model, "1540A/1542A/1542B");
+		strlcpy(sc->sc_model, "1540A/1542A/1542B", sizeof sc->sc_model);
 		break;
 	case 0x42:
-		strcpy(sc->sc_model, "1640");
+		strlcpy(sc->sc_model, "1640", sizeof sc->sc_model);
 		break;
 	case 0x43:
 	case 0x44:		/* Is this 1542C or -CF? */
-		strcpy(sc->sc_model, "1542C");
+		strlcpy(sc->sc_model, "1542C", sizeof sc->sc_model);
 		break;
 	case 0x45:
-		strcpy(sc->sc_model, "1542CF");
+		strlcpy(sc->sc_model, "1542CF", sizeof sc->sc_model);
 		break;
 	case 0x46:
-		strcpy(sc->sc_model, "1542CP");
+		strlcpy(sc->sc_model, "1542CP", sizeof sc->sc_model);
 		break;
 	}
 

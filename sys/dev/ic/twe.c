@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.19 2003/04/09 20:44:57 mickey Exp $	*/
+/*	$OpenBSD: twe.c,v 1.20 2003/04/27 11:22:52 ho Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -850,9 +850,10 @@ twe_scsi_cmd(xs)
 		inq.version = 2;
 		inq.response_format = 2;
 		inq.additional_length = 32;
-		strcpy(inq.vendor, "3WARE  ");
-		sprintf(inq.product, "Host drive  #%02d", target);
-		strcpy(inq.revision, "   ");
+		strlcpy(inq.vendor, "3WARE  ", sizeof inq.vendor);
+		snprintf(inq.product, sizeof inq.product, "Host drive  #%02d",
+		    target);
+		strlcpy(inq.revision, "   ", sizeof inq.revision);
 		twe_copy_internal_data(xs, &inq, sizeof inq);
 		break;
 

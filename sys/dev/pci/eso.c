@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.18 2002/06/09 02:31:20 mickey Exp $	*/
+/*	$OpenBSD: eso.c,v 1.19 2003/04/27 11:22:53 ho Exp $	*/
 /*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -656,13 +656,13 @@ eso_query_encoding(hdl, fp)
 	
 	switch (fp->index) {
 	case 0:
-		strcpy(fp->name, AudioEulinear);
+		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
 	case 1:
-		strcpy(fp->name, AudioEslinear);
+		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
@@ -670,14 +670,14 @@ eso_query_encoding(hdl, fp)
 	case 2:
 		fp->precision = 16;
 		if (fp->flags & AUOPEN_READ) {
-			strcpy(fp->name, AudioEslinear_be);
+			strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 			if (fp->flags & AUOPEN_WRITE)
 				fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 			else
 				fp->flags = 0;
 		} else {
-			strcpy(fp->name, AudioEslinear_le);
+			strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 			fp->flags = 0;
 		}
@@ -685,14 +685,14 @@ eso_query_encoding(hdl, fp)
 	case 3:
 		fp->precision = 16;
 		if (fp->flags & AUOPEN_READ) {
-			strcpy(fp->name, AudioEulinear_be);
+			strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 			if (fp->flags & AUOPEN_WRITE)
 				fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 			else
 				fp->flags = 0;
 		} else {
-			strcpy(fp->name, AudioEulinear_le);
+			strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 			fp->flags = 0;
 		}
@@ -700,10 +700,10 @@ eso_query_encoding(hdl, fp)
 	case 4:
 		fp->precision = 16;
 		if (fp->flags & AUOPEN_READ) {
-			strcpy(fp->name, AudioEslinear_le);
+			strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		} else {
-			strcpy(fp->name, AudioEslinear_be);
+			strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		}
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
@@ -711,22 +711,22 @@ eso_query_encoding(hdl, fp)
 	case 5:
 		fp->precision = 16;
 		if (fp->flags & AUOPEN_READ) {
-			strcpy(fp->name, AudioEulinear_le);
+			strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		} else {
-			strcpy(fp->name, AudioEulinear_be);
+			strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
 			fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		}
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 6:
-		strcpy(fp->name, AudioEmulaw);
+		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 7:
-		strcpy(fp->name, AudioEalaw);
+		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ALAW;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
@@ -916,20 +916,15 @@ eso_getdev(hdl, retp)
 {
 	struct eso_softc *sc = hdl;
 
-	strncpy(retp->name, "ESS Solo-1", sizeof (retp->name));
-#ifdef __OpenBSD__
-	/* This does not overflow. */
-	sprintf(retp->version, "0x%02x", sc->sc_revision);
-#else
-	snprintf(retp->version, sizeof (retp->version), "0x%02x",
+	strlcpy(retp->name, "ESS Solo-1", sizeof retp->name);
+	snprintf(retp->version, sizeof retp->version, "0x%02x",
 	    sc->sc_revision);
-#endif
 	if (sc->sc_revision <=
 	    sizeof (eso_rev2model) / sizeof (eso_rev2model[0]))
-		strncpy(retp->config, eso_rev2model[sc->sc_revision],
-		    sizeof (retp->config));
+		strlcpy(retp->config, eso_rev2model[sc->sc_revision],
+		    sizeof retp->config);
 	else
-		strncpy(retp->config, "unknown", sizeof (retp->config));
+		strlcpy(retp->config, "unknown", sizeof retp->config);
 	
 	return (0);
 }
@@ -1208,243 +1203,282 @@ eso_query_devinfo(hdl, dip)
 	case ESO_DAC_PLAY_VOL:
 		dip->mixer_class = ESO_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNdac);
+		strlcpy(dip->label.name, AudioNdac, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_MIC_PLAY_VOL:
 		dip->mixer_class = ESO_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNmicrophone);
+		strlcpy(dip->label.name, AudioNmicrophone,
+		    sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_LINE_PLAY_VOL:
 		dip->mixer_class = ESO_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNline);
+		strlcpy(dip->label.name, AudioNline, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_SYNTH_PLAY_VOL:
 		dip->mixer_class = ESO_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNfmsynth);
+		strlcpy(dip->label.name, AudioNfmsynth,
+		    sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_MONO_PLAY_VOL:
 		dip->mixer_class = ESO_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, "mono_in");
+		strlcpy(dip->label.name, "mono_in", sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_CD_PLAY_VOL:
 		dip->mixer_class = ESO_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNcd);
+		strlcpy(dip->label.name, AudioNcd, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_AUXB_PLAY_VOL:
 		dip->mixer_class = ESO_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, "auxb");
+		strlcpy(dip->label.name, "auxb", sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case ESO_MIC_PREAMP:
 		dip->mixer_class = ESO_MICROPHONE_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNpreamp);
+		strlcpy(dip->label.name, AudioNpreamp, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->un.e.num_mem = 2;
-		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = 0;
-		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		strlcpy(dip->un.e.member[1].label.name, AudioNon,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = 1;
 		break;
 	case ESO_MICROPHONE_CLASS:
 		dip->mixer_class = ESO_MICROPHONE_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNmicrophone);
+		strlcpy(dip->label.name, AudioNmicrophone,
+		    sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_CLASS;
 		break;
 		
 	case ESO_INPUT_CLASS:
 		dip->mixer_class = ESO_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCinputs);
+		strlcpy(dip->label.name, AudioCinputs, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_CLASS;
 		break;
 		
 	case ESO_MASTER_VOL:
 		dip->mixer_class = ESO_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNmaster);
+		strlcpy(dip->label.name, AudioNmaster, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_PCSPEAKER_VOL:
 		dip->mixer_class = ESO_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, "pc_speaker");
+		strlcpy(dip->label.name, "pc_speaker", sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_MONOOUT_SOURCE:
 		dip->mixer_class = ESO_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, "mono_out");
+		strlcpy(dip->label.name, "mono_out", sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->un.e.num_mem = 3;
-		strcpy(dip->un.e.member[0].label.name, AudioNmute);
+		strlcpy(dip->un.e.member[0].label.name, AudioNmute,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = ESO_MIXREG_MPM_MOMUTE;
-		strcpy(dip->un.e.member[1].label.name, AudioNdac);
+		strlcpy(dip->un.e.member[1].label.name, AudioNdac,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = ESO_MIXREG_MPM_MOA2R;
-		strcpy(dip->un.e.member[2].label.name, AudioNmixerout);
+		strlcpy(dip->un.e.member[2].label.name, AudioNmixerout,
+		    sizeof dip->un.e.member[2].label.name);
 		dip->un.e.member[2].ord = ESO_MIXREG_MPM_MOREC;
 		break;
 	case ESO_SPATIALIZER:
 		dip->mixer_class = ESO_OUTPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = ESO_SPATIALIZER_ENABLE;
-		strcpy(dip->label.name, AudioNspatial);
+		strlcpy(dip->label.name, AudioNspatial,
+		    sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, "level");
+		strlcpy(dip->un.v.units.name, "level",
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_SPATIALIZER_ENABLE:
 		dip->mixer_class = ESO_OUTPUT_CLASS;
 		dip->prev = ESO_SPATIALIZER;
 		dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, "enable");
+		strlcpy(dip->label.name, "enable", sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->un.e.num_mem = 2;
-		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = 0;
-		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		strlcpy(dip->un.e.member[1].label.name, AudioNon,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = 1;
 		break;
 	
 	case ESO_OUTPUT_CLASS:
 		dip->mixer_class = ESO_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCoutputs);
+		strlcpy(dip->label.name, AudioCoutputs,
+		    sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_CLASS;
 		break;
 
 	case ESO_RECORD_MONITOR:
 		dip->mixer_class = ESO_MONITOR_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNmute);
+		strlcpy(dip->label.name, AudioNmute, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->un.e.num_mem = 2;
-		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = 0;
-		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		strlcpy(dip->un.e.member[1].label.name, AudioNon,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = 1;
 		break;
 	case ESO_MONITOR_CLASS:
 		dip->mixer_class = ESO_MONITOR_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCmonitor);
+		strlcpy(dip->label.name, AudioCmonitor,
+		    sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_CLASS;
 		break;
 
 	case ESO_RECORD_VOL:
 		dip->mixer_class = ESO_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNrecord);
+		strlcpy(dip->label.name, AudioNrecord, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_RECORD_SOURCE:
 		dip->mixer_class = ESO_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNsource);
+		strlcpy(dip->label.name, AudioNsource, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->un.e.num_mem = 4;
-		strcpy(dip->un.e.member[0].label.name, AudioNmicrophone);
+		strlcpy(dip->un.e.member[0].label.name, AudioNmicrophone,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = ESO_MIXREG_ERS_MIC;
-		strcpy(dip->un.e.member[1].label.name, AudioNline);
+		strlcpy(dip->un.e.member[1].label.name, AudioNline,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = ESO_MIXREG_ERS_LINE;
-		strcpy(dip->un.e.member[2].label.name, AudioNcd);
+		strlcpy(dip->un.e.member[2].label.name, AudioNcd,
+		    sizeof dip->un.e.member[2].label.name);
 		dip->un.e.member[2].ord = ESO_MIXREG_ERS_CD;
-		strcpy(dip->un.e.member[3].label.name, AudioNmixerout);
+		strlcpy(dip->un.e.member[3].label.name, AudioNmixerout,
+		    sizeof dip->un.e.member[3].label.name);
 		dip->un.e.member[3].ord = ESO_MIXREG_ERS_MIXER;
 		break;
 	case ESO_DAC_REC_VOL:
 		dip->mixer_class = ESO_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNdac);
+		strlcpy(dip->label.name, AudioNdac, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_MIC_REC_VOL:
 		dip->mixer_class = ESO_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNmicrophone);
+		strlcpy(dip->label.name, AudioNmicrophone,
+		    sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_LINE_REC_VOL:
 		dip->mixer_class = ESO_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNline);
+		strlcpy(dip->label.name, AudioNline, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_SYNTH_REC_VOL:
 		dip->mixer_class = ESO_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNfmsynth);
+		strlcpy(dip->label.name, AudioNfmsynth,
+		    sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_MONO_REC_VOL:
 		dip->mixer_class = ESO_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, "mono_in");
+		strlcpy(dip->label.name, "mono_in", sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 1; /* No lies */
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_CD_REC_VOL:
 		dip->mixer_class = ESO_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNcd);
+		strlcpy(dip->label.name, AudioNcd, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_AUXB_REC_VOL:
 		dip->mixer_class = ESO_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, "auxb");
+		strlcpy(dip->label.name, "auxb", sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 	case ESO_RECORD_CLASS:
 		dip->mixer_class = ESO_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCrecord);
+		strlcpy(dip->label.name, AudioCrecord, sizeof dip->label.name);
 		dip->type = AUDIO_MIXER_CLASS;
 		break;
 		

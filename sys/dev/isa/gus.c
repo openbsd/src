@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.24 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: gus.c,v 1.25 2003/04/27 11:22:53 ho Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -2903,9 +2903,10 @@ gusmax_mixer_query_devinfo(addr, dip)
 	dip->mixer_class = GUSMAX_INPUT_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = GUSMAX_MIC_IN_MUTE;
-	strcpy(dip->label.name, AudioNmicrophone);
+	strlcpy(dip->label.name, AudioNmicrophone, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume,
+	    sizeof dip->un.v.units.name);
 	break;
 #endif
 
@@ -2914,9 +2915,10 @@ gusmax_mixer_query_devinfo(addr, dip)
 	dip->mixer_class = GUSMAX_INPUT_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = GUSMAX_MONO_MUTE;
-	strcpy(dip->label.name, AudioNmicrophone);
+	strlcpy(dip->label.name, AudioNmicrophone, sizeof dip->label.name);
 	dip->un.v.num_channels = 1;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume,
+	    sizeof dip->un.v.units.name);
 	break;
 
     case GUSMAX_DAC_LVL:		/*  dacout */
@@ -2924,9 +2926,10 @@ gusmax_mixer_query_devinfo(addr, dip)
 	dip->mixer_class = GUSMAX_INPUT_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = GUSMAX_DAC_MUTE;
-	strcpy(dip->label.name, AudioNdac);
+	strlcpy(dip->label.name, AudioNdac, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume,
+	    sizeof dip->un.v.units.name);
 	break;
 
     case GUSMAX_LINE_IN_LVL:	/* line */
@@ -2934,9 +2937,10 @@ gusmax_mixer_query_devinfo(addr, dip)
 	dip->mixer_class = GUSMAX_INPUT_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = GUSMAX_LINE_IN_MUTE;
-	strcpy(dip->label.name, AudioNline);
+	strlcpy(dip->label.name, AudioNline, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume,
+	    sizeof dip->un.v.units.name);
 	break;
 
     case GUSMAX_CD_LVL:		/* cd */
@@ -2944,9 +2948,10 @@ gusmax_mixer_query_devinfo(addr, dip)
 	dip->mixer_class = GUSMAX_INPUT_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = GUSMAX_CD_MUTE;
-	strcpy(dip->label.name, AudioNcd);
+	strlcpy(dip->label.name, AudioNcd, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume,
+	    sizeof dip->un.v.units.name);
 	break;
 
 
@@ -2955,18 +2960,20 @@ gusmax_mixer_query_devinfo(addr, dip)
 	dip->mixer_class = GUSMAX_MONITOR_CLASS;
 	dip->next = GUSMAX_MONITOR_MUTE;
 	dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNmonitor);
+	strlcpy(dip->label.name, AudioNmonitor, sizeof dip->label.name);
 	dip->un.v.num_channels = 1;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume,
+	    sizeof dip->un.v.units.name);
 	break;
 
     case GUSMAX_OUT_LVL:		/* cs4231 output volume: not useful? */
 	dip->type = AUDIO_MIXER_VALUE;
 	dip->mixer_class = GUSMAX_MONITOR_CLASS;
 	dip->prev = dip->next = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNoutput);
+	strlcpy(dip->label.name, AudioNoutput, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume,
+	    sizeof dip->un.v.units.name);
 	break;
 
     case GUSMAX_SPEAKER_LVL:		/* fake speaker volume */
@@ -2974,9 +2981,10 @@ gusmax_mixer_query_devinfo(addr, dip)
 	dip->mixer_class = GUSMAX_MONITOR_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = GUSMAX_SPEAKER_MUTE;
-	strcpy(dip->label.name, AudioNmaster);
+	strlcpy(dip->label.name, AudioNmaster, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume,
+	    sizeof dip->un.v.units.name);
 	break;
 
     case GUSMAX_LINE_IN_MUTE:
@@ -3020,11 +3028,13 @@ gusmax_mixer_query_devinfo(addr, dip)
 	dip->prev = GUSMAX_SPEAKER_LVL;
 	dip->next = AUDIO_MIXER_LAST;
     mute:
-	strcpy(dip->label.name, AudioNmute);
+	strlcpy(dip->label.name, AudioNmute, sizeof dip->label.name);
 	dip->un.e.num_mem = 2;
-	strcpy(dip->un.e.member[0].label.name, AudioNoff);
+	strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+	    sizeof dip->un.e.member[0].label.name);
 	dip->un.e.member[0].ord = 0;
-	strcpy(dip->un.e.member[1].label.name, AudioNon);
+	strlcpy(dip->un.e.member[1].label.name, AudioNon,
+	    sizeof dip->un.e.member[1].label.name);
 	dip->un.e.member[1].ord = 1;
 	break;
 
@@ -3033,9 +3043,9 @@ gusmax_mixer_query_devinfo(addr, dip)
 	dip->mixer_class = GUSMAX_RECORD_CLASS;
 	dip->prev = AUDIO_MIXER_LAST;
 	dip->next = GUSMAX_RECORD_SOURCE;
-	strcpy(dip->label.name, AudioNrecord);
+	strlcpy(dip->label.name, AudioNrecord, sizeof dip->label.name);
 	dip->un.v.num_channels = 2;
-	strcpy(dip->un.v.units.name, AudioNvolume);
+	strlcpy(dip->un.v.units.name, AudioNvolume, sizeof dip->un.v.units.name);
 	break;
 
     case GUSMAX_RECORD_SOURCE:
@@ -3043,15 +3053,19 @@ gusmax_mixer_query_devinfo(addr, dip)
 	dip->type = AUDIO_MIXER_ENUM;
 	dip->prev = GUSMAX_REC_LVL;
 	dip->next = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioNsource);
+	strlcpy(dip->label.name, AudioNsource, sizeof dip->label.name);
 	dip->un.e.num_mem = 4;
-	strcpy(dip->un.e.member[0].label.name, AudioNoutput);
+	strlcpy(dip->un.e.member[0].label.name, AudioNoutput,
+	    sizeof dip->un.e.member[0].label.name);
 	dip->un.e.member[0].ord = DAC_IN_PORT;
-	strcpy(dip->un.e.member[1].label.name, AudioNmicrophone);
+	strlcpy(dip->un.e.member[1].label.name, AudioNmicrophone,
+	    sizeof dip->un.e.member[1].label.name);
 	dip->un.e.member[1].ord = MIC_IN_PORT;
-	strcpy(dip->un.e.member[2].label.name, AudioNdac);
+	strlcpy(dip->un.e.member[2].label.name, AudioNdac,
+	    sizeof dip->un.e.member[2].label.name);
 	dip->un.e.member[2].ord = AUX1_IN_PORT;
-	strcpy(dip->un.e.member[3].label.name, AudioNline);
+	strlcpy(dip->un.e.member[3].label.name, AudioNline,
+	    sizeof dip->un.e.member[3].label.name);
 	dip->un.e.member[3].ord = LINE_IN_PORT;
 	break;
 
@@ -3059,28 +3073,28 @@ gusmax_mixer_query_devinfo(addr, dip)
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = GUSMAX_INPUT_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCinputs);
+	strlcpy(dip->label.name, AudioCinputs, sizeof dip->label.name);
 	break;
 
     case GUSMAX_OUTPUT_CLASS:			/* output class descriptor */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = GUSMAX_OUTPUT_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCoutputs);
+	strlcpy(dip->label.name, AudioCoutputs, sizeof dip->label.name);
 	break;
 
     case GUSMAX_MONITOR_CLASS:			/* monitor class descriptor */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = GUSMAX_MONITOR_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCmonitor);
+	strlcpy(dip->label.name, AudioCmonitor, sizeof dip->label.name);
 	break;
 
     case GUSMAX_RECORD_CLASS:			/* record source class */
 	dip->type = AUDIO_MIXER_CLASS;
 	dip->mixer_class = GUSMAX_RECORD_CLASS;
 	dip->next = dip->prev = AUDIO_MIXER_LAST;
-	strcpy(dip->label.name, AudioCrecord);
+	strlcpy(dip->label.name, AudioCrecord, sizeof dip->label.name);
 	break;
 
     default:
@@ -3110,9 +3124,11 @@ gus_mixer_query_devinfo(addr, dip)
 		dip->mixer_class = GUSICS_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = GUSICS_MIC_IN_MUTE;
-		strcpy(dip->label.name, AudioNmicrophone);
+		strlcpy(dip->label.name, AudioNmicrophone,
+		    sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case GUSICS_LINE_IN_LVL:	/* line */
@@ -3120,9 +3136,10 @@ gus_mixer_query_devinfo(addr, dip)
 		dip->mixer_class = GUSICS_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = GUSICS_LINE_IN_MUTE;
-		strcpy(dip->label.name, AudioNline);
+		strlcpy(dip->label.name, AudioNline, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case GUSICS_CD_LVL:		/* cd */
@@ -3130,9 +3147,10 @@ gus_mixer_query_devinfo(addr, dip)
 		dip->mixer_class = GUSICS_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = GUSICS_CD_MUTE;
-		strcpy(dip->label.name, AudioNcd);
+		strlcpy(dip->label.name, AudioNcd, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case GUSICS_DAC_LVL:		/*  dacout */
@@ -3140,9 +3158,10 @@ gus_mixer_query_devinfo(addr, dip)
 		dip->mixer_class = GUSICS_INPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = GUSICS_DAC_MUTE;
-		strcpy(dip->label.name, AudioNdac);
+		strlcpy(dip->label.name, AudioNdac, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 	case GUSICS_MASTER_LVL:		/*  master output */
@@ -3150,9 +3169,10 @@ gus_mixer_query_devinfo(addr, dip)
 		dip->mixer_class = GUSICS_OUTPUT_CLASS;
 		dip->prev = AUDIO_MIXER_LAST;
 		dip->next = GUSICS_MASTER_MUTE;
-		strcpy(dip->label.name, AudioNmaster);
+		strlcpy(dip->label.name, AudioNmaster, sizeof dip->label.name);
 		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
+		strlcpy(dip->un.v.units.name, AudioNvolume,
+		    sizeof dip->un.v.units.name);
 		break;
 
 
@@ -3190,11 +3210,13 @@ gus_mixer_query_devinfo(addr, dip)
 		dip->prev = GUSICS_MASTER_LVL;
 		dip->next = AUDIO_MIXER_LAST;
 mute:
-		strcpy(dip->label.name, AudioNmute);
+		strlcpy(dip->label.name, AudioNmute, sizeof dip->label.name);
 		dip->un.e.num_mem = 2;
-		strcpy(dip->un.e.member[0].label.name, AudioNoff);
+		strlcpy(dip->un.e.member[0].label.name, AudioNoff,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = 0;
-		strcpy(dip->un.e.member[1].label.name, AudioNon);
+		strlcpy(dip->un.e.member[1].label.name, AudioNon,
+		    sizeof dip->un.e.member[1].label.name);
 		dip->un.e.member[1].ord = 1;
 		break;
 
@@ -3202,9 +3224,10 @@ mute:
 		dip->mixer_class = GUSICS_RECORD_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNsource);
+		strlcpy(dip->label.name, AudioNsource, sizeof dip->label.name);
 		dip->un.e.num_mem = 1;
-		strcpy(dip->un.e.member[0].label.name, AudioNoutput);
+		strlcpy(dip->un.e.member[0].label.name, AudioNoutput,
+		    sizeof dip->un.e.member[0].label.name);
 		dip->un.e.member[0].ord = GUSICS_MASTER_LVL;
 		break;
 
@@ -3212,21 +3235,21 @@ mute:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = GUSICS_INPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCinputs);
+		strlcpy(dip->label.name, AudioCinputs, sizeof dip->label.name);
 		break;
 
 	case GUSICS_OUTPUT_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = GUSICS_OUTPUT_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCoutputs);
+		strlcpy(dip->label.name, AudioCoutputs, sizeof dip->label.name);
 		break;
 
 	case GUSICS_RECORD_CLASS:
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = GUSICS_RECORD_CLASS;
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioCrecord);
+		strlcpy(dip->label.name, AudioCrecord, sizeof dip->label.name);
 		break;
 
 	default:
@@ -3244,49 +3267,49 @@ gus_query_encoding(addr, fp)
 {
 	switch (fp->index) {
 	case 0:
-		strcpy(fp->name, AudioEmulaw);
+		strlcpy(fp->name, AudioEmulaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 1:
-		strcpy(fp->name, AudioEslinear);
+		strlcpy(fp->name, AudioEslinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
 	case 2:
-		strcpy(fp->name, AudioEslinear_le);
+		strlcpy(fp->name, AudioEslinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
 	case 3:
-		strcpy(fp->name, AudioEulinear);
+		strlcpy(fp->name, AudioEulinear, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR;
 		fp->precision = 8;
 		fp->flags = 0;
 		break;
 	case 4:
-		strcpy(fp->name, AudioEulinear_le);
+		strlcpy(fp->name, AudioEulinear_le, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		break;
 	case 5:
-		strcpy(fp->name, AudioEslinear_be);
+		strlcpy(fp->name, AudioEslinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 6:
-		strcpy(fp->name, AudioEulinear_be);
+		strlcpy(fp->name, AudioEulinear_be, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 7:
-		strcpy(fp->name, AudioEalaw);
+		strlcpy(fp->name, AudioEalaw, sizeof fp->name);
 		fp->encoding = AUDIO_ENCODING_ALAW;
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
@@ -3528,7 +3551,8 @@ gus_subattach(sc, ia)
 	}
 
 	sc->sc_dsize = i;
-	sprintf(gus_device.version, "3.%d", sc->sc_revision);
+	snprintf(gus_device.version, sizeof gus_device.version, "3.%d",
+	    sc->sc_revision);
 
 	printf(": ver 3.%d, %dKB DRAM, ",
 	       sc->sc_revision, sc->sc_dsize);

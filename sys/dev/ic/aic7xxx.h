@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: aic7xxx.h,v 1.6 2003/01/06 11:33:28 miod Exp $
+ * $OpenBSD: aic7xxx.h,v 1.7 2003/04/27 11:22:52 ho Exp $
  * Core definitions and data structures shareable across OS platforms.
  *
  * Copyright (c) 1994-2001 Justin T. Gibbs.
@@ -29,7 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx.h,v 1.6 2003/01/06 11:33:28 miod Exp $
+ * $Id: aic7xxx.h,v 1.7 2003/04/27 11:22:52 ho Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.40 2001/07/18 21:39:47 gibbs Exp $
  */
@@ -1101,7 +1101,8 @@ int		ahc_match_scb(struct ahc_softc *ahc, struct scb *scb,
 /****************************** Initialization ********************************/
 struct ahc_softc	*ahc_alloc(void *platform_arg, char *name);
 int			 ahc_softc_init(struct ahc_softc *);
-void			 ahc_controller_info(struct ahc_softc *ahc, char *buf);
+void			 ahc_controller_info(struct ahc_softc *ahc, char *buf,
+					     size_t buf_len);
 int			 ahc_init(struct ahc_softc *ahc);
 void			 ahc_intr_enable(struct ahc_softc *ahc, int enable);
 void			 ahc_pause_and_flushwork(struct ahc_softc *ahc);

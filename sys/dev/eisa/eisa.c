@@ -1,4 +1,4 @@
-/*	$OpenBSD: eisa.c,v 1.10 2003/03/29 00:17:44 mickey Exp $	*/
+/*	$OpenBSD: eisa.c,v 1.11 2003/04/27 11:22:52 ho Exp $	*/
 /*	$NetBSD: eisa.c,v 1.15 1996/10/21 22:31:01 thorpej Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ struct cfdriver eisa_cd = {
 
 int	eisasubmatch(struct device *, void *, void *);
 int	eisaprint(void *, const char *);
-void	eisa_devinfo(const char *, char *);
+void	eisa_devinfo(const char *, char *, size_t);
 
 int
 eisamatch(parent, match, aux)
@@ -89,7 +89,7 @@ eisaprint(aux, pnp)
 	char devinfo[256]; 
 
 	if (pnp) {
-		eisa_devinfo(ea->ea_idstring, devinfo);
+		eisa_devinfo(ea->ea_idstring, devinfo, sizeof devinfo);
 		printf("%s at %s", devinfo, pnp);
 	}
 	printf(" slot %d", ea->ea_slot);
@@ -231,9 +231,7 @@ struct eisa_knowndev {
 #endif /* EISAVERBOSE */
 
 void
-eisa_devinfo(id, cp)
-	const char *id;
-	char *cp;
+eisa_devinfo(const char *id, char *cp, size_t cp_len)
 {
 	const char *name;
 	int onlyvendor;
@@ -267,9 +265,9 @@ eisa_devinfo(id, cp)
 #endif
 
 	if (name == NULL)
-		cp += sprintf(cp, "%sdevice %s", unmatched, id);
+		snprintf(cp, cp_len, "%sdevice %s", unmatched, id);
 	else if (onlyvendor)			/* never if not EISAVERBOSE */
-		cp += sprintf(cp, "unknown %s device %s", name, id);
+		snprintf(cp, cp_len, "unknown %s device %s", name, id);
 	else
-		cp += sprintf(cp, "%s", name);
+		snprintf(cp, cp_len, "%s", name);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl_ess.c,v 1.2 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: opl_ess.c,v 1.3 2003/04/27 11:22:53 ho Exp $	*/
 /*	$NetBSD: opl_ess.c,v 1.3 1998/12/08 14:26:57 augustss Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ opl_ess_attach(parent, self, aux)
 	sc->offs = 0;
 	sc->spkrctl = ess_speaker_ctl;
 	sc->spkrarg = ssc;
-	strcpy(sc->syn.name, "ESS ");
+	strlcpy(sc->syn.name, "ESS ", sizeof sc->syn.name);
 
 	opl_attach(sc);
 }

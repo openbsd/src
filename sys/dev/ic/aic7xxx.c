@@ -28,10 +28,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: aic7xxx.c,v 1.46 2003/03/30 21:04:18 krw Exp $
+ * $Id: aic7xxx.c,v 1.47 2003/04/27 11:22:52 ho Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.80 2001/12/16 17:38:30 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.46 2003/03/30 21:04:18 krw Exp $
+ * $OpenBSD: aic7xxx.c,v 1.47 2003/04/27 11:22:52 ho Exp $
  */
 
 #ifdef __OpenBSD__
@@ -4148,17 +4148,18 @@ ahc_alloc_scbs(struct ahc_softc *ahc)
 #endif /* __OpenBSD__ */
 
 void
-ahc_controller_info(struct ahc_softc *ahc, char *buf)
+ahc_controller_info(struct ahc_softc *ahc, char *buf, size_t buf_len)
 {
-	int len;
+	int len = 0;
 
-	len = sprintf(buf, "%s: ", ahc_chip_names[ahc->chip & AHC_CHIPID_MASK]);
-	buf += len;
+	snprintf(buf + len, buf_len - len, "%s: ",
+		 ahc_chip_names[ahc->chip & AHC_CHIPID_MASK]);
+	len = strlen(buf);
 	if ((ahc->features & AHC_TWIN) != 0)
- 		len = sprintf(buf, "Twin Channel, A SCSI Id=%d, "
-			      "B SCSI Id=%d, primary %c, ",
-			      ahc->our_id, ahc->our_id_b,
-			      (ahc->flags & AHC_PRIMARY_CHANNEL) + 'A');
+		snprintf(buf + len, buf_len - len,
+			 "Twin Channel, A SCSI Id=%d, B SCSI Id=%d, "
+			 "primary %c, ", ahc->our_id, ahc->our_id_b,
+			 (ahc->flags & AHC_PRIMARY_CHANNEL) + 'A');
 	else {
 		const char *speed;
 		const char *type;
@@ -4176,16 +4177,18 @@ ahc_controller_info(struct ahc_softc *ahc, char *buf)
 		} else {
 			type = "Single";
 		}
-		len = sprintf(buf, "%s%s Channel %c, SCSI Id=%d, ",
-			      speed, type, ahc->channel, ahc->our_id);
+		snprintf(buf + len, buf_len - len,
+			 "%s%s Channel %c, SCSI Id=%d, ",
+			 speed, type, ahc->channel, ahc->our_id);
 	}
-	buf += len;
+	len = strlen(buf);
 
 	if ((ahc->flags & AHC_PAGESCBS) != 0)
-		sprintf(buf, "%d/%d SCBs",
-			ahc->scb_data->maxhscbs, AHC_SCB_MAX);
+		snprintf(buf + len, buf_len - len, "%d/%d SCBs",
+			 ahc->scb_data->maxhscbs, AHC_SCB_MAX);
 	else
-		sprintf(buf, "%d SCBs", ahc->scb_data->maxhscbs);
+		snprintf(buf + len, buf_len - len, "%d SCBs",
+			 ahc->scb_data->maxhscbs);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwohci.c,v 1.12 2003/01/13 07:16:20 tdeval Exp $	*/
+/*	$OpenBSD: fwohci.c,v 1.13 2003/04/27 11:22:53 ho Exp $	*/
 /*	$NetBSD: fwohci.c,v 1.54 2002/03/29 05:06:42 jmc Exp $	*/
 
 /*
@@ -3327,7 +3327,7 @@ fwohci_uid_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *res)
 			}
 		}
 		if (!found) {
-			strcpy(fwa.name, "fwnode");
+			strlcpy(fwa.name, "fwnode", sizeof fwa.name);
 			fwa.link_speed = fu->fu_link_speed;
 			bcopy(fu->fu_uid, fwa.uid, 8);
 			fwa.nodeid = n;
