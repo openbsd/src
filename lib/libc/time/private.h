@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.9 1998/01/19 00:45:30 millert Exp $	*/
+/*	$OpenBSD: private.h,v 1.10 1998/01/23 19:33:51 millert Exp $	*/
 
 #ifndef PRIVATE_H
 
@@ -68,9 +68,11 @@ static char	privatehid[] = "@(#)private.h	7.46";
 #define HAVE_UTMPX_H		0
 #endif /* !defined HAVE_UTMPX_H */
 
+#if 0
 #ifndef LOCALE_HOME
 #define LOCALE_HOME		"/usr/share/locale"
 #endif /* !defined LOCALE_HOME */
+#endif
 
 /*
 ** Nested includes
