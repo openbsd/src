@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2003/05/14 23:48:20 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2003/05/16 19:01:19 hin Exp $
 
 KRB5DIR	= ${.CURDIR}/../../kerberosV
 .include <${.CURDIR}/../libkrb5/Makefile.common.inc>
@@ -6,10 +6,6 @@ KRB5DIR	= ${.CURDIR}/../../kerberosV
 LIB=	gssapi
 
 INCLUDE_FILES=	${KRB5SRC}/lib/gssapi/gssapi.h
-
-beforedepend:	krb5_err.h heim_err.h
-
-CLEANFILES+=	krb5_err.[ch] heim_err.[ch]
 
 SRCS=	8003.c			\
 	accept_sec_context.c	\
@@ -53,7 +49,7 @@ SRCS=	8003.c			\
 
 .PATH:	${KRB5SRC}/lib/gssapi
 CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/ \
-	-I${KRB5SRC}/lib/asn1 -I../asn1 -I. \
+	-I${KRB5SRC}/lib/asn1 -I. \
 	-DSHA1_CTX=SHA_CTX
 
 .include <bsd.lib.mk>
