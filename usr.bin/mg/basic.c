@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.4 2001/01/29 01:58:06 niklas Exp $	*/
+/*	$OpenBSD: basic.c,v 1.5 2001/02/12 21:51:55 millert Exp $	*/
 
 /*
  *		Basic cursor motion commands.
@@ -466,15 +466,15 @@ gotoline(f, n)
 			return s;
 		n = atoi(buf);
 	}
-	if (n > 0) {
-		clp = lforw(curbp->b_linep);	/* "clp" is first line	 */
+	if (n >= 0) {
+		clp = lforw(curbp->b_linep);	/* "clp" is first line */
 		while (--n > 0) {
 			if (lforw(clp) == curbp->b_linep)
 				break;
 			clp = lforw(clp);
 		}
 	} else {
-		clp = lback(curbp->b_linep);	/* clp is last line */
+		clp = lback(curbp->b_linep);	/* "clp" is last line */
 		while (n < 0) {
 			if (lback(clp) == curbp->b_linep)
 				break;
