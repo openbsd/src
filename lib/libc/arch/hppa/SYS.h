@@ -1,7 +1,7 @@
-/*	$OpenBSD: SYS.h,v 1.9 2001/09/20 20:52:09 millert Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.10 2001/10/24 03:17:05 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-1999 Michael Shalayeff
+ * Copyright (c) 1998-2001 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,10 +32,10 @@
 
 #include <sys/syscall.h>
 #include <machine/asm.h>
-#include <machine/vmparam.h>
 #undef _LOCORE
 #define _LOCORE
 #include <machine/frame.h>
+#include <machine/vmparam.h>
 
 #define	__ENTRY(p,x)	ENTRY(__CONCAT(p,x),0)
 #define	__EXIT(p,x)	EXIT(__CONCAT(p,x))
@@ -56,26 +56,29 @@
 	ldi	-1, ret1			!\
 	.label	__CONCAT(x,$noerr)
 
-#define	__RSYSCALL(p,x)			!\
-__ENTRY(p,x)				!\
-	__SYSCALL(p,x)			!\
-	bv	r0(rp)			!\
-	nop				!\
+#define	__RSYSCALL(p,x)				!\
+__ENTRY(p,x)					!\
+	__SYSCALL(p,x)				!\
+	bv	r0(rp)				!\
+	nop					!\
 __EXIT(p,x)
 
-#define	__PSEUDO(p,x,y)			!\
-__ENTRY(p,x)				!\
-	__SYSCALL(p,y)			!\
-	bv	r0(rp)			!\
-	nop				!\
+#define	__PSEUDO(p,x,y)				!\
+__ENTRY(p,x)					!\
+	__SYSCALL(p,y)				!\
+	bv	r0(rp)				!\
+	nop					!\
 __EXIT(p,x)
 
-/* XXX - actually sets errnor */
-#define	__PSEUDO_NOERROR(p,x,y)		!\
-__ENTRY(p,x)				!\
-	__SYSCALL(p,y)			!\
-	bv	r0(rp)			!\
-	nop				!\
+#define	__PSEUDO_NOERROR(p,x,y)			!\
+__ENTRY(p,x)					!\
+	stw	rp, HPPA_FRAME_ERP(sr0,sp)	!\
+	ldil	L%SYSCALLGATE, r1		!\
+	ble	4(sr7, r1)			!\
+	ldi	__CONCAT(SYS_,y), t1		!\
+	ldw	HPPA_FRAME_ERP(sr0,sp), rp	!\
+	bv	r0(rp)				!\
+	nop					!\
 __EXIT(p,x)
 
 /*
@@ -104,6 +107,6 @@ __EXIT(p,x)
 # define SYSCALL(x)		__SYSCALL(,x)
 # define RSYSCALL(x)		__RSYSCALL(,x)
 # define PSEUDO(x,y)		__PSEUDO(,x,y)
-# define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(_thread_sys_,x,y)
+# define PSEUDO_NOERROR(x,y)	__PSEUDO_NOERROR(,x,y)
 /*# define SYSENTRY(x)		__ENTRY(,x)*/
 #endif /* _THREAD_SAFE */
