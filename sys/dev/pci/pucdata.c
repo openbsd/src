@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.7 2001/03/02 09:36:22 deraadt Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.8 2001/03/05 15:02:20 deraadt Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -563,6 +563,15 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* Koutech IOFLEX-2S PCI Dual Port Serial, port 2 */
+	{   /* "Koutech IOFLEX-2S PCI Dual Port Serial, port 2", */
+	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_IOFLEX_2S_1,	0,	0	},
+	    {	0xffff,	0xfffc,				0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
+	    },
+	},
+
 	/* Lava Computers Octopus-550 serial ports */
 	{   /* "Lava Computers Octopus-550 8-port serial", */
 	    {   PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_OCTOPUS950_0, 0,      0       },
@@ -572,15 +581,6 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x14, 0x00 },
 		{ PUC_PORT_TYPE_COM, 0x18, 0x00 },
 		{ PUC_PORT_TYPE_COM, 0x1c, 0x00 },
-	    },
-	},
-
-	/* Koutech IOFLEX-2S PCI Dual Port Serial, port 2 */
-	{   /* "Koutech IOFLEX-2S PCI Dual Port Serial, port 2", */
-	    {	PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_IOFLEX_2S_1,	0,	0	},
-	    {	0xffff,	0xfffc,				0,	0	},
-	    {
-		{ PUC_PORT_TYPE_COM, 0x10, 0x00 },
 	    },
 	},
 
