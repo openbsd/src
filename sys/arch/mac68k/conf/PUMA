@@ -1,4 +1,4 @@
-#	$OpenBSD: PUMA,v 1.9 1996/09/20 06:45:12 deraadt Exp $
+#	$OpenBSD: PUMA,v 1.10 1996/10/14 02:43:51 briggs Exp $
 #	$NetBSD: PUMA,v 1.13 1996/08/05 01:52:15 scottr Exp $
 #
 # PUMA
@@ -36,7 +36,6 @@ options		SCSI
 options		INET
 #options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 options		GATEWAY		# IP packet forwarding
-options		COMPAT_42
 options		COMPAT_43
 options		NS
 options		MAPMEM
@@ -44,11 +43,12 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
 options		M68030
-options		MACHINE_NONCONTIG
-options		COMPAT_NOMID
 options		COMPAT_SUNOS
+options		COMPAT_NOMID
 options		COMPAT_09
 options		COMPAT_10
+options		COMPAT_11
+options		COMPAT_12
 
 config		bsd	root on sd0 swap on sd0 and sd1 and vnd0a dumps on sd1b
 

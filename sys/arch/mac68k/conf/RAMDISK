@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.7 1996/09/20 06:45:13 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.8 1996/10/14 02:43:52 briggs Exp $
 #	$NetBSD: RAMDISK,v 1.6 1996/08/05 01:52:16 scottr Exp $
 
 # RAMDISK
@@ -36,9 +36,6 @@ options		M68030
 options		M68020		# Must have 68851 PMMU
 options		FPSP
 options		FPU_EMULATE
-options		COMPAT_09
-options		COMPAT_10
-options		MACHINE_NONCONTIG
 
 config		bsd	root on rd0a swap on rd0b
 

@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.9 1996/09/20 06:45:11 deraadt Exp $
-#	$NetBSD: GENERIC,v 1.38 1996/08/05 01:52:13 scottr Exp $
+#	$OpenBSD: GENERIC,v 1.10 1996/10/14 02:43:50 briggs Exp $
+#	$NetBSD: GENERIC,v 1.43 1996/09/22 06:49:09 scottr Exp $
 #
 # GENERIC
 
@@ -44,7 +44,6 @@ options		GATEWAY		# IP packet forwarding
 #options	ISO		# OSI networking
 #options	TPIP
 #options	EON
-options		COMPAT_42
 options		COMPAT_43
 options		NS
 options		MAPMEM
@@ -59,9 +58,7 @@ options		FPSP
 options		FPU_EMULATE
 options		COMPAT_NOMID
 options		COMPAT_SUNOS
-options		COMPAT_09
-options		COMPAT_10
-options		MACHINE_NONCONTIG
+options		ZS_CONSOLE_ABORT
 
 config		bsd	swap generic
 options		GENERIC
@@ -84,12 +81,12 @@ ncrscsi0	at obio?		# SCSI NCR 5380
 ncr96scsi0	at obio?		# SCSI NCR 53C96
 
 scsibus*	at scsi?
-sd*	at scsibus? target ? lun ?
-st*	at scsibus? target ? lun ?
-cd*	at scsibus? target ? lun ?
-ch*	at scsibus? target ? lun ?
-ss*	at scsibus? target ? lun ?
-uk*	at scsibus? target ? lun ?
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch*	at scsibus? target ? lun ?	# SCSI autochangers
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 pseudo-device	pty		16
 pseudo-device	bpfilter	12

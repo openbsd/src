@@ -1,4 +1,4 @@
-#	$OpenBSD: SPOT,v 1.6 1996/09/20 06:45:13 deraadt Exp $
+#	$OpenBSD: SPOT,v 1.7 1996/10/14 02:43:52 briggs Exp $
 #	$NetBSD: SPOT,v 1.11 1996/08/05 01:52:17 scottr Exp $
 #
 # SPOT
@@ -51,7 +51,6 @@ options		GATEWAY		# IP packet forwarding
 #options	EON
 options		PPP_BSDCOMP
 options		PPP_DEFLATE
-options		COMPAT_42
 options		COMPAT_43
 #options	NS
 options		MAPMEM
@@ -59,11 +58,7 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
 options		M68030
-options		COMPAT_NOMID
 options		COMPAT_SUNOS
-options		COMPAT_09
-options		COMPAT_10
-options		MACHINE_NONCONTIG
 
 config		bsd	swap generic
 options		GENERIC

@@ -1,4 +1,4 @@
-#	$OpenBSD: OCELOT,v 1.8 1996/09/20 06:45:12 deraadt Exp $
+#	$OpenBSD: OCELOT,v 1.9 1996/10/14 02:43:51 briggs Exp $
 #	$NetBSD: OCELOT,v 1.11 1996/08/05 01:52:14 scottr Exp $
 #
 # OCELOT
@@ -33,7 +33,6 @@ options		SCSI
 options		INET
 #options		TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 options		GATEWAY		# IP packet forwarding
-options		COMPAT_42
 options		COMPAT_43
 options		NS
 options		MAPMEM
@@ -42,11 +41,7 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 # Mac-specific options
 options		M68040
 options		M68030
-options		COMPAT_NOMID
 options		COMPAT_SUNOS
-options		COMPAT_09
-options		COMPAT_10
-options		MACHINE_NONCONTIG
 
 config		bsd	swap generic
 

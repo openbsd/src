@@ -1,4 +1,4 @@
-#	$OpenBSD: std.mac68k,v 1.6 1996/08/10 21:37:42 briggs Exp $
+#	$OpenBSD: std.mac68k,v 1.7 1996/10/14 02:43:53 briggs Exp $
 #	$NetBSD: std.mac68k,v 1.13 1996/08/05 01:00:12 scottr Exp $
 #
 # standard Macintosh information.
@@ -20,3 +20,4 @@ zstty*	at zsc? channel ?
 options	TIMEZONE=0		# minutes west of GMT--read from booter
 options	DST=0			# daylight savings time/summer time
 options	HZ=60			# clock runs at 60hz on this port
+options	MACHINE_NONCONTIG	# Allow 'holes' in physical memory
