@@ -1130,20 +1130,7 @@ static int hook_uri2file(request_rec *r)
                        r->filename);
             return OK;
         }
-        else if (  (strlen(r->filename) > 7 &&
-                    strncasecmp(r->filename, "http://",   7) == 0)
-                || (strlen(r->filename) > 8 &&
-                    strncasecmp(r->filename, "https://",  8) == 0)
-                || (strlen(r->filename) > 9 &&
-                    strncasecmp(r->filename, "gopher://", 9) == 0)
-                || (strlen(r->filename) > 6 &&
-                    strncasecmp(r->filename, "ftp://",    6) == 0)
-                || (strlen(r->filename) > 5 &&
-                    strncasecmp(r->filename, "ldap:",     5) == 0)
-                || (strlen(r->filename) > 5 &&
-                    strncasecmp(r->filename, "news:",     5) == 0)
-                || (strlen(r->filename) > 7 &&
-                    strncasecmp(r->filename, "mailto:",   7) == 0)) {
+        else if (is_absolute_uri(r->filename)) {
             /* it was finally rewritten to a remote URL */
 
             /* skip 'scheme:' */
@@ -1394,20 +1381,7 @@ static int hook_fixup(request_rec *r)
                        "%s [OK]", dconf->directory, r->filename);
             return OK;
         }
-        else if (  (strlen(r->filename) > 7 &&
-                    strncasecmp(r->filename, "http://",   7) == 0)
-                || (strlen(r->filename) > 8 &&
-                    strncasecmp(r->filename, "https://",  8) == 0)
-                || (strlen(r->filename) > 9 &&
-                    strncasecmp(r->filename, "gopher://", 9) == 0)
-                || (strlen(r->filename) > 6 &&
-                    strncasecmp(r->filename, "ftp://",    6) == 0)
-                || (strlen(r->filename) > 5 &&
-                    strncasecmp(r->filename, "ldap:",     5) == 0)
-                || (strlen(r->filename) > 5 &&
-                    strncasecmp(r->filename, "news:",     5) == 0)
-                || (strlen(r->filename) > 7 &&
-                    strncasecmp(r->filename, "mailto:",   7) == 0)) {
+        else if (is_absolute_uri(r->filename)) {
             /* it was finally rewritten to a remote URL */
 
             /* because we are in a per-dir context
@@ -1745,7 +1719,6 @@ static int apply_rewrite_rule(request_rec *r, rewriterule_entry *p,
     char *output;
     const char *vary;
     char newuri[MAX_STRING_LEN];
-    char env[MAX_STRING_LEN];
     regex_t *regexp;
     regmatch_t regmatch[MAX_NMATCH];
     backrefinfo *briRR = NULL;
@@ -1913,20 +1886,7 @@ static int apply_rewrite_rule(request_rec *r, rewriterule_entry *p,
      *  (`RewriteRule <pat> - [E=...]')
      */
     if (strcmp(output, "-") == 0) {
-        for (i = 0; p->env[i] != NULL; i++) {
-            /*  1. take the string  */
-            ap_cpystrn(env, p->env[i], sizeof(env));
-            /*  2. expand $N (i.e. backrefs to RewriteRule pattern)  */
-            expand_backref_inbuffer(r->pool, env, sizeof(env), briRR, '$');
-            /*  3. expand %N (i.e. backrefs to latest RewriteCond pattern)  */
-            expand_backref_inbuffer(r->pool, env, sizeof(env), briRC, '%');
-            /*  4. expand %{...} (i.e. variables) */
-            expand_variables_inbuffer(r, env, sizeof(env));
-            /*  5. expand ${...} (RewriteMap lookups)  */
-            expand_map_lookups(r, env, sizeof(env));
-            /*  and add the variable to Apache's structures  */
-            add_env_variable(r, env);
-        }
+	do_expand_env(r, p->env, briRR, briRC);
         if (p->forced_mimetype != NULL) {
             if (perdir == NULL) {
                 /* In the per-server context we can force the MIME-type
@@ -1961,17 +1921,7 @@ static int apply_rewrite_rule(request_rec *r, rewriterule_entry *p,
      *  that there is something to replace, so we create the
      *  substitution URL string in `newuri'.
      */
-    /*  1. take the output string  */
-    ap_cpystrn(newuri, output, sizeof(newuri));
-    /*  2. expand $N (i.e. backrefs to RewriteRule pattern)  */
-    expand_backref_inbuffer(r->pool, newuri, sizeof(newuri), briRR, '$');
-    /*  3. expand %N (i.e. backrefs to latest RewriteCond pattern)  */
-    expand_backref_inbuffer(r->pool, newuri, sizeof(newuri), briRC, '%');
-    /*  4. expand %{...} (i.e. variables) */
-    expand_variables_inbuffer(r, newuri, sizeof(newuri));
-    /*  5. expand ${...} (RewriteMap lookups)  */
-    expand_map_lookups(r, newuri, sizeof(newuri));
-    /*  and log the result... */
+    do_expand(r, output, newuri, sizeof(newuri), briRR, briRC);
     if (perdir == NULL) {
         rewritelog(r, 2, "rewrite %s -> %s", uri, newuri);
     }
@@ -1983,20 +1933,7 @@ static int apply_rewrite_rule(request_rec *r, rewriterule_entry *p,
      *  Additionally do expansion for the environment variable
      *  strings (`RewriteRule .. .. [E=<string>]').
      */
-    for (i = 0; p->env[i] != NULL; i++) {
-        /*  1. take the string  */
-        ap_cpystrn(env, p->env[i], sizeof(env));
-        /*  2. expand $N (i.e. backrefs to RewriteRule pattern)  */
-        expand_backref_inbuffer(r->pool, env, sizeof(env), briRR, '$');
-        /*  3. expand %N (i.e. backrefs to latest RewriteCond pattern)  */
-        expand_backref_inbuffer(r->pool, env, sizeof(env), briRC, '%');
-        /*  4. expand %{...} (i.e. variables) */
-        expand_variables_inbuffer(r, env, sizeof(env));
-        /*  5. expand ${...} (RewriteMap lookups)  */
-        expand_map_lookups(r, env, sizeof(env));
-        /*  and add the variable to Apache's structures  */
-        add_env_variable(r, env);
-    }
+    do_expand_env(r, p->env, briRR, briRC);
 
     /*
      *  Now replace API's knowledge of the current URI:
@@ -2012,16 +1949,8 @@ static int apply_rewrite_rule(request_rec *r, rewriterule_entry *p,
      *   location, i.e. if it's not starting with either a slash
      *   or a fully qualified URL scheme.
      */
-    i = strlen(r->filename);
-    if (   prefixstrip
-        && !(   r->filename[0] == '/'
-             || (   (i > 7 && strncasecmp(r->filename, "http://",   7) == 0)
-                 || (i > 8 && strncasecmp(r->filename, "https://",  8) == 0)
-                 || (i > 9 && strncasecmp(r->filename, "gopher://", 9) == 0)
-                 || (i > 6 && strncasecmp(r->filename, "ftp://",    6) == 0)
-                 || (i > 5 && strncasecmp(r->filename, "ldap:",     5) == 0)
-                 || (i > 5 && strncasecmp(r->filename, "news:",     5) == 0)
-                 || (i > 7 && strncasecmp(r->filename, "mailto:",   7) == 0)))) {
+    if (prefixstrip && r->filename[0] != '/'
+	&& !is_absolute_uri(r->filename)) {
         rewritelog(r, 3, "[per-dir %s] add per-dir prefix: %s -> %s%s",
                    perdir, r->filename, perdir, r->filename);
         r->filename = ap_pstrcat(r->pool, perdir, r->filename, NULL);
@@ -2085,14 +2014,7 @@ static int apply_rewrite_rule(request_rec *r, rewriterule_entry *p,
      *  redirection (`RewriteRule .. <scheme>://...') then
      *  directly force an external HTTP redirect.
      */
-    i = strlen(r->filename);
-    if (   (i > 7 && strncasecmp(r->filename, "http://",   7) == 0)
-        || (i > 8 && strncasecmp(r->filename, "https://",  8) == 0)
-        || (i > 9 && strncasecmp(r->filename, "gopher://", 9) == 0)
-        || (i > 6 && strncasecmp(r->filename, "ftp://",    6) == 0)
-        || (i > 5 && strncasecmp(r->filename, "ldap:",     5) == 0)
-        || (i > 5 && strncasecmp(r->filename, "news:",     5) == 0)
-        || (i > 7 && strncasecmp(r->filename, "mailto:",   7) == 0) ) {
+    if (is_absolute_uri(r->filename)) {
         if (perdir == NULL) {
             rewritelog(r, 2,
                        "implicitly forcing redirect (rc=%d) with %s",
@@ -2163,16 +2085,7 @@ static int apply_rewrite_cond(request_rec *r, rewritecond_entry *p,
      *   Construct the string we match against
      */
 
-    /*  1. take the string  */
-    ap_cpystrn(input, p->input, sizeof(input));
-    /*  2. expand $N (i.e. backrefs to RewriteRule pattern)  */
-    expand_backref_inbuffer(r->pool, input, sizeof(input), briRR, '$');
-    /*  3. expand %N (i.e. backrefs to latest RewriteCond pattern)  */
-    expand_backref_inbuffer(r->pool, input, sizeof(input), briRC, '%');
-    /*  4. expand %{...} (i.e. variables) */
-    expand_variables_inbuffer(r, input, sizeof(input));
-    /*  5. expand ${...} (RewriteMap lookups)  */
-    expand_map_lookups(r, input, sizeof(input));
+    do_expand(r, p->input, input, sizeof(input), briRR, briRC);
 
     /*
      *   Apply the patterns
@@ -2194,7 +2107,7 @@ static int apply_rewrite_cond(request_rec *r, rewritecond_entry *p,
         }
     }
     else if (strcmp(p->pattern, "-l") == 0) {
-#if !defined(OS2) && !defined(WIN32)
+#if !defined(OS2) && !defined(WIN32)  && !defined(NETWARE)
         if (lstat(input, &sb) == 0) {
             if (S_ISLNK(sb.st_mode)) {
                 rc = 1;
@@ -2211,12 +2124,7 @@ static int apply_rewrite_cond(request_rec *r, rewritecond_entry *p,
     }
     else if (strcmp(p->pattern, "-U") == 0) {
         /* avoid infinite subrequest recursion */
-        if (strlen(input) > 0               /* nonempty path, and            */
-            && (   r->main == NULL          /* - either not in a subrequest  */
-                || (   r->main->uri != NULL /* - or in a subrequest...       */
-                    && r->uri != NULL       /*   ...and URIs aren't NULL...  */
-                                            /*   ...and sub/main URIs differ */
-                    && strcmp(r->main->uri, r->uri) != 0) ) ) {
+        if (strlen(input) > 0 && subreq_ok(r)) {
 
             /* run a URI-based subrequest */
             rsub = ap_sub_req_lookup_uri(input, r);
@@ -2235,12 +2143,7 @@ static int apply_rewrite_cond(request_rec *r, rewritecond_entry *p,
     }
     else if (strcmp(p->pattern, "-F") == 0) {
         /* avoid infinite subrequest recursion */
-        if (strlen(input) > 0               /* nonempty path, and            */
-            && (   r->main == NULL          /* - either not in a subrequest  */
-                || (   r->main->uri != NULL /* - or in a subrequest...       */
-                    && r->uri != NULL       /*   ...and URIs aren't NULL...  */
-                                            /*   ...and sub/main URIs differ */
-                    && strcmp(r->main->uri, r->uri) != 0) ) ) {
+        if (strlen(input) > 0 && subreq_ok(r)) {
 
             /* process a file-based subrequest:
              * this differs from -U in that no path translation is done.
@@ -2313,6 +2216,139 @@ static int apply_rewrite_cond(request_rec *r, rewritecond_entry *p,
 ** |                                                       |
 ** +-------------------------------------------------------+
 */
+
+
+/*
+**
+**  perform all the expansions on the input string
+**  leaving the result in the supplied buffer
+**
+*/
+
+static void do_expand(request_rec *r, char *input, char *buffer, int nbuf,
+		       backrefinfo *briRR, backrefinfo *briRC)
+{
+    char *inp, *outp;
+    size_t span, space;
+
+    /*
+     * for security reasons this expansion must be perfomed in a
+     * single pass, otherwise an attacker can arrange for the result
+     * of an earlier expansion to include expansion specifiers that
+     * are interpreted by a later expansion, producing results that
+     * were not intended by the administrator.
+     */
+
+    inp = input;
+    outp = buffer;
+    space = nbuf - 1; /* room for '\0' */
+
+    for (;;) {
+	span = strcspn(inp, "$%");
+	if (span > space) {
+	    span = space;
+	}
+	memcpy(outp, inp, span);
+	inp += span;
+	outp += span;
+	space -= span;
+	if (space == 0 || *inp == '\0') {
+	    break;
+	}
+	/* now we have a '$' or a '%' */
+	if (inp[1] == '{') {
+	    char *endp;
+	    endp = strchr(inp, '}');
+	    if (endp == NULL) {
+		goto skip;
+	    }
+	    *endp = '\0';
+	    if (inp[0] == '$') {
+		/* ${...} map lookup expansion */
+		char *key, *dflt, *result;
+		key = strchr(inp, ':');
+		if (key == NULL) {
+		    goto skip;
+		}
+		*key++ = '\0';
+		dflt = strchr(key, '|');
+		if (dflt) {
+		    *dflt++ = '\0';
+		}
+		result = lookup_map(r, inp+2, key);
+		if (result == NULL) {
+		    result = dflt ? dflt : "";
+		}
+		span = ap_cpystrn(outp, result, space) - outp;
+		key[-1] = ':';
+		if (dflt) {
+		    dflt[-1] = '|';
+		}
+	    }
+	    else if (inp[0] == '%') {
+		/* %{...} variable lookup expansion */
+		span = ap_cpystrn(outp, lookup_variable(r, inp+2), space) - outp;
+	    }
+	    else {
+		span = 0;
+	    }
+	    *endp = '}';
+	    inp = endp+1;
+	    outp += span;
+	    space -= span;
+	    continue;
+	}
+	else if (ap_isdigit(inp[1])) {
+	    int n = inp[1] - '0';
+	    backrefinfo *bri = NULL;
+	    if (inp[0] == '$') {
+		/* $N RewriteRule regexp backref expansion */
+		bri = briRR;
+	    }
+	    else if (inp[0] == '%') {
+		/* %N RewriteCond regexp backref expansion */
+		bri = briRC;
+	    }
+	    /* see ap_pregsub() in src/main/util.c */
+            if (bri && n <= bri->nsub &&
+		bri->regmatch[n].rm_eo > bri->regmatch[n].rm_so) {
+		span = bri->regmatch[n].rm_eo - bri->regmatch[n].rm_so;
+		if (span > space) {
+		    span = space;
+		}
+		memcpy(outp, bri->source + bri->regmatch[n].rm_so, span);
+		outp += span;
+		space -= span;
+	    }
+	    inp += 2;
+	    continue;
+	}
+    skip:
+	*outp++ = *inp++;
+	space--;
+    }
+    *outp++ = '\0';
+}
+
+
+/*
+**
+**  perform all the expansions on the environment variables
+**
+*/
+
+static void do_expand_env(request_rec *r, char *env[],
+			  backrefinfo *briRR, backrefinfo *briRC)
+{
+    int i;
+    char buf[MAX_STRING_LEN];
+
+    for (i = 0; env[i] != NULL; i++) {
+	do_expand(r, env[i], buf, sizeof(buf), briRR, briRC);
+	add_env_variable(r, buf);
+    }
+}
+
 
 /*
 **
@@ -2442,20 +2478,12 @@ static void reduce_uri(request_rec *r)
 
 static void fully_qualify_uri(request_rec *r)
 {
-    int i;
     char buf[32];
     const char *thisserver;
     char *thisport;
     int port;
 
-    i = strlen(r->filename);
-    if (!(   (i > 7 && strncasecmp(r->filename, "http://",   7) == 0)
-          || (i > 8 && strncasecmp(r->filename, "https://",  8) == 0)
-          || (i > 9 && strncasecmp(r->filename, "gopher://", 9) == 0)
-          || (i > 6 && strncasecmp(r->filename, "ftp://",    6) == 0)
-          || (i > 5 && strncasecmp(r->filename, "ldap:",     5) == 0)
-          || (i > 5 && strncasecmp(r->filename, "news:",     5) == 0)
-          || (i > 7 && strncasecmp(r->filename, "mailto:",   7) == 0))) {
+    if (!is_absolute_uri(r->filename)) {
 
         thisserver = ap_get_server_name(r);
         port = ap_get_server_port(r);
@@ -2484,45 +2512,24 @@ static void fully_qualify_uri(request_rec *r)
 
 /*
 **
-**  Expand the %0-%9 or $0-$9 regex backreferences
+**  return non-zero if the URI is absolute (includes a scheme etc.)
 **
 */
 
-static void expand_backref_inbuffer(pool *p, char *buf, int nbuf,
-                                    backrefinfo *bri, char c)
+static int is_absolute_uri(char *uri)
 {
-    register int i;
-
-    /* protect existing $N and & backrefs and replace <c>N with $N backrefs */
-    for (i = 0; buf[i] != '\0' && i < nbuf; i++) {
-        if (buf[i] == '\\' && (buf[i+1] != '\0' && i < (nbuf-1))) {
-            i++; /* protect next */
-        }
-        else if (buf[i] == '&') {
-            buf[i] = '\001';
-        }
-        else if (c != '$' && buf[i] == '$' && (buf[i+1] >= '0' && buf[i+1] <= '9')) {
-            buf[i] = '\002';
-            i++; /* speedup */
-        }
-        else if (buf[i] == c && (buf[i+1] >= '0' && buf[i+1] <= '9')) {
-            buf[i] = '$';
-            i++; /* speedup */
-        }
+    int i = strlen(uri);
+    if (   (i > 7 && strncasecmp(uri, "http://",   7) == 0)
+        || (i > 8 && strncasecmp(uri, "https://",  8) == 0)
+        || (i > 9 && strncasecmp(uri, "gopher://", 9) == 0)
+        || (i > 6 && strncasecmp(uri, "ftp://",    6) == 0)
+        || (i > 5 && strncasecmp(uri, "ldap:",     5) == 0)
+        || (i > 5 && strncasecmp(uri, "news:",     5) == 0)
+        || (i > 7 && strncasecmp(uri, "mailto:",   7) == 0) ) {
+	return 1;
     }
-
-    /* now apply the standard regex substitution function */
-    ap_cpystrn(buf, ap_pregsub(p, buf, bri->source,
-                               bri->nsub+1, bri->regmatch), nbuf);
-
-    /* restore the original $N and & backrefs */
-    for (i = 0; buf[i] != '\0' && i < nbuf; i++) {
-        if (buf[i] == '\001') {
-            buf[i] = '&';
-        }
-        else if (buf[i] == '\002') {
-            buf[i] = '$';
-        }
+    else {
+	return 0;
     }
 }
 
@@ -2570,119 +2577,6 @@ static char *expand_tildepaths(request_rec *r, char *uri)
     return newuri;
 }
 #endif
-
-/*
-**
-**  mapfile expansion support
-**  i.e. expansion of MAP lookup directives
-**  ${<mapname>:<key>} in RewriteRule rhs
-**
-*/
-
-#define limit_length(n) (n > LONG_STRING_LEN-1 ? LONG_STRING_LEN-1 : n)
-
-static void expand_map_lookups(request_rec *r, char *uri, int uri_len)
-{
-    char newuri[MAX_STRING_LEN];
-    char *cpI;
-    char *cpIE;
-    char *cpO;
-    char *cpT;
-    char *cpT2;
-    char mapname[LONG_STRING_LEN];
-    char mapkey[LONG_STRING_LEN];
-    char defaultvalue[LONG_STRING_LEN];
-    int n;
-
-    cpI = uri;
-    cpIE = cpI+strlen(cpI);
-    cpO = newuri;
-    while (cpI < cpIE) {
-        if (cpI+6 < cpIE && strncmp(cpI, "${", 2) == 0) {
-            /* missing delimiter -> take it as plain text */
-            if (   strchr(cpI+2, ':') == NULL
-                || strchr(cpI+2, '}') == NULL) {
-                memcpy(cpO, cpI, 2);
-                cpO += 2;
-                cpI += 2;
-                continue;
-            }
-            cpI += 2;
-
-            cpT = strchr(cpI, ':');
-            n = cpT-cpI;
-            memcpy(mapname, cpI, limit_length(n));
-            mapname[limit_length(n)] = '\0';
-            cpI += n+1;
-
-            cpT2 = strchr(cpI, '|');
-            cpT = strchr(cpI, '}');
-            if (cpT2 != NULL && cpT2 < cpT) {
-                n = cpT2-cpI;
-                memcpy(mapkey, cpI, limit_length(n));
-                mapkey[limit_length(n)] = '\0';
-                cpI += n+1;
-
-                n = cpT-cpI;
-                memcpy(defaultvalue, cpI, limit_length(n));
-                defaultvalue[limit_length(n)] = '\0';
-                cpI += n+1;
-            }
-            else {
-                n = cpT-cpI;
-                memcpy(mapkey, cpI, limit_length(n));
-                mapkey[limit_length(n)] = '\0';
-                cpI += n+1;
-
-                defaultvalue[0] = '\0';
-            }
-
-            cpT = lookup_map(r, mapname, mapkey);
-            if (cpT != NULL) {
-                n = strlen(cpT);
-                if (cpO + n >= newuri + sizeof(newuri)) {
-                    ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR,
-                                 r, "insufficient space in "
-                                 "expand_map_lookups, aborting");
-                    return;
-                }
-                memcpy(cpO, cpT, n);
-                cpO += n;
-            }
-            else {
-                n = strlen(defaultvalue);
-                if (cpO + n >= newuri + sizeof(newuri)) {
-                    ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, 
-                                 r, "insufficient space in "
-                                 "expand_map_lookups, aborting");
-                    return;
-                }
-                memcpy(cpO, defaultvalue, n);
-                cpO += n;
-            }
-        }
-        else {
-            cpT = strstr(cpI, "${");
-            if (cpT == NULL)
-                cpT = cpI+strlen(cpI);
-            n = cpT-cpI;
-            if (cpO + n >= newuri + sizeof(newuri)) {
-                ap_log_rerror(APLOG_MARK, APLOG_NOERRNO|APLOG_ERR, 
-                             r, "insufficient space in "
-                             "expand_map_lookups, aborting");
-                return;
-            }
-            memcpy(cpO, cpI, n);
-            cpO += n;
-            cpI += n;
-        }
-    }
-    *cpO = '\0';
-    ap_cpystrn(uri, newuri, uri_len);
-    return;
-}
-
-#undef limit_length
 
 
 
@@ -3109,7 +3003,9 @@ static void open_rewritelog(server_rec *s, pool *p)
     char *fname;
     piped_log *pl;
     int    rewritelog_flags = ( O_WRONLY|O_APPEND|O_CREAT );
-#ifdef WIN32
+#if defined(NETWARE)
+    mode_t rewritelog_mode  = ( S_IREAD|S_IWRITE );
+#elif defined(WIN32)
     mode_t rewritelog_mode  = ( _S_IREAD|_S_IWRITE );
 #else
     mode_t rewritelog_mode  = ( S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH );
@@ -3267,7 +3163,9 @@ static char *current_logtime(request_rec *r)
 ** +-------------------------------------------------------+
 */
 
-#ifdef WIN32
+#if defined(NETWARE)
+#define REWRITELOCK_MODE ( S_IREAD|S_IWRITE )
+#elif defined(WIN32)
 #define REWRITELOCK_MODE ( _S_IREAD|_S_IWRITE )
 #else
 #define REWRITELOCK_MODE ( S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH )
@@ -3275,10 +3173,6 @@ static char *current_logtime(request_rec *r)
 
 static void rewritelock_create(server_rec *s, pool *p)
 {
-    rewrite_server_conf *conf;
-
-    conf = ap_get_module_config(s->module_config, &rewrite_module);
-
     /* only operate if a lockfile is used */
     if (lockname == NULL || *(lockname) == '\0') {
         return;
@@ -3307,10 +3201,6 @@ static void rewritelock_create(server_rec *s, pool *p)
 
 static void rewritelock_open(server_rec *s, pool *p)
 {
-    rewrite_server_conf *conf;
-
-    conf = ap_get_module_config(s->module_config, &rewrite_module);
-
     /* only operate if a lockfile is used */
     if (lockname == NULL || *(lockname) == '\0') {
         return;
@@ -3482,53 +3372,6 @@ static int rewritemap_program_child(void *cmd, child_info *pinfo)
 ** +-------------------------------------------------------+
 */
 
-
-static void expand_variables_inbuffer(request_rec *r, char *buf, int buf_len)
-{
-    char *newbuf;
-    newbuf = expand_variables(r, buf);
-    if (strcmp(newbuf, buf) != 0) {
-        ap_cpystrn(buf, newbuf, buf_len);
-    }
-    return;
-}
-
-static char *expand_variables(request_rec *r, char *str)
-{
-    char output[MAX_STRING_LEN];
-    char input[MAX_STRING_LEN];
-    char *cp;
-    char *cp2;
-    char *cp3;
-    int expanded;
-    char *outp;
-    char *endp;
-
-    ap_cpystrn(input, str, sizeof(input));
-    output[0] = '\0';
-    outp = output;
-    endp = output + sizeof(output);
-    expanded = 0;
-    for (cp = input; cp < input+MAX_STRING_LEN; ) {
-        if ((cp2 = strstr(cp, "%{")) != NULL) {
-            if ((cp3 = strstr(cp2, "}")) != NULL) {
-                *cp2 = '\0';
-                outp = ap_cpystrn(outp, cp, endp - outp);
-
-                cp2 += 2;
-                *cp3 = '\0';
-                outp = ap_cpystrn(outp, lookup_variable(r, cp2), endp - outp);
-
-                cp = cp3+1;
-                expanded = 1;
-                continue;
-            }
-        }
-        outp = ap_cpystrn(outp, cp, endp - outp);
-        break;
-    }
-    return expanded ? ap_pstrdup(r->pool, output) : str;
-}
 
 static char *lookup_variable(request_rec *r, char *var)
 {
@@ -3869,11 +3712,11 @@ static int cache_tlb_hash(char *key)
     char *p;
 
     n = 0;
-    for (p=key; *p != '\0'; ++p) {
-        n = n * 53711 + 134561 + (unsigned)(*p & 0xff);
+    for (p = key; *p != '\0'; p++) {
+        n = ((n << 5) + n) ^ (unsigned long)(*p++);
     }
 
-    return n % CACHE_TLB_ROWS;
+    return (int)(n % CACHE_TLB_ROWS);
 }
 
 static cacheentry *cache_tlb_lookup(cachetlbentry *tlb, cacheentry *elt,
@@ -4156,6 +3999,23 @@ static void add_env_variable(request_rec *r, char *s)
 }
 
 
+/*
+**
+**  check that a subrequest won't cause infinite recursion
+**
+*/
+
+static int subreq_ok(request_rec *r)
+{
+    /*
+     * either not in a subrequest, or in a subrequest
+     * and URIs aren't NULL and sub/main URIs differ
+     */
+    return (r->main == NULL ||
+	    (r->main->uri != NULL && r->uri != NULL &&
+	     strcmp(r->main->uri, r->uri) != 0));
+}
+
 
 /*
 **
@@ -4291,12 +4151,5 @@ static int compare_lexicography(char *cpNum1, char *cpNum2)
     }
     return 0;
 }
-
-#ifdef NETWARE
-int main(int argc, char *argv[]) 
-{
-    ExitThread(TSR_THREAD, 0);
-}
-#endif
 
 /*EOF*/
