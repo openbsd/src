@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.45 2002/12/30 06:35:20 fgsch Exp $
+dnl	$OpenBSD: hardware,v 1.46 2003/01/02 16:47:33 miod Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -52,6 +52,7 @@ Supported devices {:-include-:}:
 		Acer Labs M5229
 		Command Technologies PCI0646
 		National Semiconductor PC87415
+		Promise PDC20267
 		Other PCI IDE controllers may work, but have not been tested
 
 	Ethernet Adapters:
