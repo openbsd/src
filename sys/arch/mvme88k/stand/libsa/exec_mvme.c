@@ -54,16 +54,11 @@ struct kernel {
 	u_int   end_loaded;
 } kernel;
 
-#define RB_NOSYM 0x400
-#define RB_MULTI 0x4000
-#define RB_EXTRA 0x8000
-#define RB_ASKKERN 0x0010  /* ask kernel name  */
-
 /*ARGSUSED*/
 void
 exec_mvme(file, flag)
-char    *file;
-int     flag;
+	char    *file;
+	int     flag;
 {
 	char *loadaddr;
 	register int io;
@@ -72,12 +67,11 @@ int     flag;
 	void (*entry)();
 	register char *cp;
 	register int *ip;
-	int n;
 	int bootdev;
 
-	if (flag & RB_EXTRA) {
-		printf("exec_mvme: file=%s flag=0x%x cputyp=%x\n", file, flag, bugargs.cputyp);
-	}
+#ifdef DEBUG
+	printf("exec_mvme: file=%s flag=0x%x cputyp=%x\n", file, flag, bugargs.cputyp);
+#endif
 
 	io = open(file, 0);
 	if (io < 0)
@@ -106,13 +100,6 @@ int     flag;
 	 * so we must mask that off (has no effect on the other formats
 	 */
 	loadaddr = (void *)(x.a_entry & ~sizeof(x));
-	n = x.a_text + x.a_data + x.a_bss + x.a_syms + sizeof(int);
-
-	/* debugging stuff for netboot
-	printf("hex load address range 0x%x to 0x%x\n", loadaddr, loadaddr+n);
-	printf("dec load address range %ld to %ld\n", loadaddr, loadaddr+n);
-	bzero((void *)loadaddr, n);
-	*/
 
 	cp = loadaddr;
 	magic = N_GETMAGIC(x);
@@ -208,14 +195,14 @@ int     flag;
 
 	bootdev = (bugargs.ctrl_lun << 8) | (bugargs.dev_lun & 0xFF);
 
-	(*entry)(flag,  bugargs.ctrl_addr, cp, kernel.smini, kernel.emini, bootdev, bugargs.cputyp);
+	(*entry)(flag, bugargs.ctrl_addr, cp, kernel.smini, kernel.emini, bootdev, bugargs.cputyp);
 	printf("exec: kernel returned!\n");
 	return;
 
-	shread:
+shread:
 	printf("exec: short read\n");
 	errno = EIO;
-	closeout:
+closeout:
 	close(io);
 	return;
 }
