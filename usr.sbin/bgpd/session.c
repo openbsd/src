@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.95 2004/01/27 16:49:53 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.96 2004/01/28 17:29:46 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -381,6 +381,10 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			/* init write buffer */
 			msgbuf_init(&peer->wbuf);
 
+			/* init pfkey */
+			if (pfkey_auth_establish(peer) == -1)
+				return;
+
 			if (peer->conf.passive) {
 				change_state(peer, STATE_ACTIVE, event);
 				peer->ConnectRetryTimer = 0;
@@ -646,6 +650,7 @@ change_state(struct peer *peer, enum session_state state,
 		msgbuf_clear(&peer->wbuf);
 		free(peer->rbuf);
 		peer->rbuf = NULL;
+		pfkey_auth_remove(peer);
 		if (peer->state == STATE_ESTABLISHED)
 			session_down(peer);
 		if (event != EVNT_STOP) {
