@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.26 2003/12/30 22:43:48 mickey Exp $
+ * $OpenBSD: calendar.birthday,v 1.27 2004/08/19 02:11:38 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -190,6 +190,7 @@
 07/15	Clement Clarke Moore born, 1779, author of "A Visit from
 		Saint Nicholas"
 07/18	Brian Auger is born in London, 1939
+07/20	Bruce Lee died in Hong Kong, 1973
 07/25	Steve Goodman is born in Chicago, 1948
 07/28	(Helen) Beatrix Potter born, 1866
 07/29	Mussolini born, 1883
@@ -278,6 +279,7 @@
 11/25	Chaucer's death (according to tradition), 1400
 11/26	Charles Schulz born in Minneapolis, 1922
 11/26	Norbert Weiner born, 1894
+11/27	Bruce Lee born in San Francisco, 1940
 11/29	John Mayall is born in Cheshire, England, 1933
 11/30	Cleopatra died, 30 BC
 11/30	Mark Twain (Samuel Clemens) born in Florida, Missouri, 1835
