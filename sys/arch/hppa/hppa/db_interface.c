@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.1 1998/10/30 18:59:03 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.2 1999/02/25 19:19:20 mickey Exp $	*/
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,11 +82,12 @@ struct db_variable db_regs[] = {
 	{ "pidr2", (long *)&ddb_regs.pidr2, FCN_NULL },
 	{ "pidr3", (long *)&ddb_regs.pidr3, FCN_NULL },
 	{ "pidr4", (long *)&ddb_regs.pidr4, FCN_NULL },
+
+	{ "hptm",  (long *)&ddb_regs.hptm,  FCN_NULL },
+	{ "vtop",  (long *)&ddb_regs.vtop,  FCN_NULL },
 #if 0
-	u_int	ccr;	       /* cr10 */
-	u_int	ptov;         /* cr24 */
-	u_int	tr1;          /* cr25 */
-	u_int	tr2;          /* cr26 */
+	u_int	ccr;	/* cr10 */
+	u_int	tr2;	/* cr26 */
 #endif
 };
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
