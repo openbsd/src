@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_misc.c,v 1.15 1999/11/10 15:55:24 mickey Exp $	*/
+/*	$OpenBSD: ultrix_misc.c,v 1.16 2000/12/28 22:38:18 miod Exp $	*/
 /*	$NetBSD: ultrix_misc.c,v 1.23 1996/04/07 17:23:04 jonathan Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ struct emul emul_ultrix = {
 #ifdef SYSCALL_DEBUG
 	ultrix_syscallnames,
 #else
-	NULL
+	NULL,
 #endif
 	0,
 	copyargs,
