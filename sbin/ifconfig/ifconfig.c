@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.35 2000/04/26 19:03:46 chris Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.36 2000/04/28 04:44:58 chris Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.35 2000/04/26 19:03:46 chris Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.36 2000/04/28 04:44:58 chris Exp $";
 #endif
 #endif /* not lint */
 
@@ -2314,6 +2314,7 @@ usage()
 		"\t[ srcsa address/spi/protocol ]\n"
 		"\t[ clearsa address/spi/protocol ]\n"
 		"\t[ giftunnel srcaddress dstaddress ]\n"
+		"\t[ vlan n vlandev interface ]\n"
 		"\t[ arp | -arp ]\n"
 		"\t[ -802.2 | -802.3 | -802.2tr | -snap | -EtherII ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
