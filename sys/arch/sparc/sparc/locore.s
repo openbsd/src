@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.53 2002/08/11 23:07:34 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.54 2002/08/12 00:55:01 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -6568,7 +6568,10 @@ _C_LABEL(proc0paddr):
 	.globl winuf_invalid
 
 /* interrupt counters	XXX THESE BELONG ELSEWHERE (if anywhere) */
-	.globl	_C_LABEL(intrcnt), _C_LABEL(eintrcnt), _C_LABEL(intrnames), _C_LABEL(eintrnames)
+	.globl _C_LABEL(intrcnt) ; OTYPE(_C_LABEL(intrcnt))
+	.globl _C_LABEL(eintrcnt) ; OTYPE(_C_LABEL(eintrcnt))
+	.globl _C_LABEL(intrnames) ; OTYPE(_C_LABEL(intrnames))
+	.globl _C_LABEL(eintrnames) ; OTYPE(_C_LABEL(eintrnames))
 _C_LABEL(intrnames):
 	.asciz	"spur"
 	.asciz	"lev1"
