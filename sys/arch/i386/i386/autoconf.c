@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.18 1996/11/10 09:49:14 downsj Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.19 1996/11/10 10:18:56 downsj Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.20 1996/05/03 19:41:56 christos Exp $	*/
 
 /*-
@@ -129,12 +129,28 @@ swapconf()
 #define	DOSWAP			/* change swdevt and dumpdev */
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 
-static	char devname[][2] = {
-	{ 'w','d' },	/* 0 = wd */
-	{ 's','w' },	/* 1 = sw */
-	{ 'f','d' },	/* 2 = fd */
-	{ 'w','t' },	/* 3 = wt */
-	{ 's','d' },	/* 4 = sd -- new SCSI system */
+static const char *devname[] = {
+	"wd",		/* 0 = wd */
+	"sw",		/* 1 = sw */
+	"",		/* 2 */
+	"wt",		/* 3 = wt */
+	"sd",		/* 4 = sd */
+	"",		/* 5 */
+	"",		/* 6 */
+	"mcd",		/* 7 */
+	"",		/* 8 */
+	"",		/* 9 */
+	"",		/* 10 */
+	"",		/* 11 */
+	"",		/* 12 */
+	"",		/* 13 */
+	"",		/* 14 */
+	"",		/* 15 */
+	"",		/* 16 */
+	"",		/* 17 */
+	"acd",		/* 18 = acd */
+	"",		/* 19 */
+	"fd"		/* 20 = fd */
 };
 
 dev_t	argdev = NODEV;
@@ -161,7 +177,7 @@ setroot()
 	    (bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
 	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	if (majdev > sizeof(devname) / sizeof(devname[0]))
+	if ((majdev > 20) || (*devname[majdev] == '\0'))
 		return;
 	adaptor = (bootdev >> B_ADAPTORSHIFT) & B_ADAPTORMASK;
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
@@ -175,9 +191,7 @@ setroot()
 	 */
 	if (rootdev == orootdev)
 		return;
-	printf("root on %c%c%d%c\n",
-	    devname[majdev][0], devname[majdev][1],
-	    unit, part + 'a');
+	printf("root on %s%d%c\n", devname[majdev], unit, part + 'a');
 
 #ifdef DOSWAP
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
