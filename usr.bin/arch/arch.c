@@ -24,7 +24,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: arch.c,v 1.10 2004/03/08 19:02:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.11 2004/05/09 03:20:45 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -43,11 +43,9 @@ static int machine;
 int
 main(int argc, char *argv[])
 {
-	char *arch;
-	char *opts;
-	int c;
-	int short_form = 0;
 	extern char *__progname;
+	int short_form = 0, c;
+	char *arch, *opts;
 
 	setlocale(LC_ALL, "");
 
