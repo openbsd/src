@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.22 2000/11/18 12:12:37 aaron Exp $
+.\"	$OpenBSD: boot.8,v 1.23 2000/11/22 20:24:09 mickey Exp $
 .\"
 .\" Copyright (c) 1997-2000 Michael Shalayeff
 .\" All rights reserved.
@@ -175,7 +175,7 @@ amount of memory at the location specified by the
 argument.
 Both size and base address could be specified as octal,
 decimal, or hexadecimal numbers, as accepted by the
-.Xr stroul 3
+.Xr strtoul 3
 routine.
 Memory segments are not required to be adjucent to each other,
 the only requirement is that there is real physical memory under
