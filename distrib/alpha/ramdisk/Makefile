@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 1999/06/17 20:42:40 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.20 2000/02/28 22:26:17 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -75,7 +75,7 @@ bsd.rd: bsd ${IMAGE} ecoffrdsetroot
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/alpha/conf && config RAMDISK
 	cd ${.CURDIR}/../../../sys/arch/alpha/compile/RAMDISK && \
-	    make clean && COPTS=-Os make
+	    make depend && make clean && COPTS=-Os make
 	cp ${.CURDIR}/../../../sys/arch/alpha/compile/RAMDISK/bsd bsd
 
 ${IMAGE}:	do_prep do_mount do_files do_umount
