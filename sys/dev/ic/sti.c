@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti.c,v 1.21 2003/02/17 13:02:14 mickey Exp $	*/
+/*	$OpenBSD: sti.c,v 1.22 2003/02/17 22:41:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -408,21 +408,8 @@ sti_fetchfonts(struct sti_softc *sc, u_int32_t addr)
 		if (sc->sc_romfont == NULL)
 			return (ENOMEM);
 
-		if (sc->sc_devtype == STI_DEVTYPE1) {
-			u_int8_t *p;
-
-			bzero(sc->sc_romfont, size);
-			p = (u_int8_t *)sc->sc_romfont + 3;
-			addr += 3;
-			for (; size != 0; size -= 4) {
-				*p = bus_space_read_1(sc->memt, sc->romh,
-				    addr);
-				p += 4;
-				addr += 4;
-			}
-		} else
-			bus_space_read_region_4(sc->memt, sc->romh, addr,
-			    (u_int32_t *)sc->sc_romfont, size / 4);
+		bus_space_read_region_4(sc->memt, sc->romh, addr,
+		    (u_int32_t *)sc->sc_romfont, size / 4);
 
 		addr = NULL; /* fp->next */
 	} while (addr);
