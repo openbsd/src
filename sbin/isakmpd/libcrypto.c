@@ -1,5 +1,5 @@
-/*	$OpenBSD: libcrypto.c,v 1.1 1999/08/28 11:54:55 niklas Exp $	*/
-/*	$EOM: libcrypto.c,v 1.5 1999/08/26 11:16:48 niklas Exp $	*/
+/*	$OpenBSD: libcrypto.c,v 1.2 1999/10/01 14:09:04 niklas Exp $	*/
+/*	$EOM: libcrypto.c,v 1.7 1999/09/30 13:40:38 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -44,8 +44,8 @@ void *libcrypto = 0;
 #ifdef HAVE_DLOPEN
 
 /*
- * These prototypes matches SSLeay version 0.9.0b, if you try to load
- * a different version than that, you are on your own.
+ * These prototypes matches SSLeay version 0.9.0b or OpenSSL 0.9.4, if
+ * you try to load a different version than that, you are on your own.
  */
 char *(*lc_ASN1_d2i_bio) (char *(*) (), char *(*) (), BIO *bp,
 			  unsigned char **);
@@ -70,8 +70,15 @@ int (*lc_RSA_size) (RSA *);
 void (*lc_SSLeay_add_all_algorithms) (void);
 int (*lc_X509_NAME_cmp) (X509_NAME *, X509_NAME *);
 void (*lc_X509_STORE_CTX_cleanup) (X509_STORE_CTX *);
+
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+void (*lc_X509_STORE_CTX_init) (X509_STORE_CTX *, X509_STORE *, X509 *,
+				STACK_OF (X509) *);
+#else
 void (*lc_X509_STORE_CTX_init) (X509_STORE_CTX *, X509_STORE *, X509 *,
 				STACK *);
+#endif
+
 int (*lc_X509_STORE_add_cert) (X509_STORE *, X509 *);
 X509_STORE *(*lc_X509_STORE_new) (void);
 X509 *(*lc_X509_dup) (X509 *);
@@ -90,7 +97,20 @@ X509 *(*lc_d2i_X509) (X509 **, unsigned char **, long);
 int (*lc_i2d_RSAPublicKey) (RSA *, unsigned char **);
 int (*lc_i2d_RSAPrivateKey) (RSA *, unsigned char **);
 int (*lc_i2d_X509) (X509 *, unsigned char **);
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+void (*lc_sk_X509_free) (STACK_OF (X509) *);
+STACK_OF (X509) *(*lc_sk_X509_new_null) ();
+#else
+void (*lc_sk_free) (STACK *);
+STACK *(*lc_sk_new) (int (*) ());
+#endif
+
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+X509 *(*lc_X509_find_by_subject) (STACK_OF (X509) *, X509_NAME *);
+#else
 X509 *(*lc_X509_find_by_subject) (STACK *, X509_NAME *);
+#endif
+
 #define SYMENTRY(x) { SYM, SYM (x), (void **)&lc_ ## x }
 
 static struct dynload_script libcrypto_script[] = {
@@ -134,6 +154,13 @@ static struct dynload_script libcrypto_script[] = {
   SYMENTRY (i2d_RSAPublicKey),
   SYMENTRY (i2d_RSAPrivateKey),
   SYMENTRY (i2d_X509),
+#if SSLEAY_VERSION_NUMBER >= 0x00904100L
+  SYMENTRY (sk_X509_free),
+  SYMENTRY (sk_X509_new_null),
+#else
+  SYMENTRY (sk_free),
+  SYMENTRY (sk_new),
+#endif
   { EOS }
 };
 #endif
