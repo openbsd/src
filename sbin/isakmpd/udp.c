@@ -1,5 +1,5 @@
-/*	$OpenBSD: udp.c,v 1.10 1999/04/05 21:00:08 niklas Exp $	*/
-/*	$EOM: udp.c,v 1.34 1999/04/05 08:09:56 niklas Exp $	*/
+/*	$OpenBSD: udp.c,v 1.11 1999/04/19 20:55:09 niklas Exp $	*/
+/*	$EOM: udp.c,v 1.38 1999/04/13 20:00:42 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -78,6 +78,8 @@ struct udp_transport {
 static struct transport *udp_clone (struct udp_transport *,
 				    struct sockaddr_in *);
 static struct transport *udp_create (char *);
+static void udp_remove (struct transport *);
+static void udp_report (struct transport *);
 static int udp_fd_set (struct transport *, fd_set *, int);
 static int udp_fd_isset (struct transport *, fd_set *);
 static void udp_handle_message (struct transport *);
@@ -89,6 +91,8 @@ static void udp_get_src (struct transport *, struct sockaddr **, int *);
 static struct transport_vtbl udp_transport_vtbl = {
   { 0 }, "udp",
   udp_create,
+  udp_remove,
+  udp_report,
   udp_fd_set,
   udp_fd_isset,
   udp_handle_message,
@@ -195,7 +199,10 @@ udp_clone (struct udp_transport *u, struct sockaddr_in *raddr)
 
   t = malloc (sizeof *u);
   if (!t)
-    return 0;
+    {
+      log_error ("udp_clone: malloc (%d) failed", sizeof *u);
+      return 0;
+    }
   u2 = (struct udp_transport *)t;
 
   memcpy (u2, u, sizeof *u);
@@ -359,6 +366,22 @@ udp_create (char *name)
   return udp_clone (u, &dst);
 }
 
+void
+udp_remove (struct transport *t)
+{
+  free (t);
+}
+
+/* Report transport-method specifics of the T transport.  */
+void
+udp_report (struct transport *t)
+{
+  struct udp_transport *u = (struct udp_transport *)t;
+ 
+  log_debug (LOG_REPORT, 0, "udp_report: fd %d src %s dst %s", u->s,
+	     inet_ntoa (u->src.sin_addr), inet_ntoa (u->dst.sin_addr));
+}
+
 /*
  * Find out the magic numbers for the UDP protocol as well as the UDP port
  * to use.  Setup an UDP server for each address of this machine, and one
@@ -466,7 +489,7 @@ udp_handle_message (struct transport *t)
 
   msg = message_alloc (t, buf, n);
   if (!msg)
-    /* XXX Log.  */
+    /* XXX Log?  */
     return;
   message_recv (msg);
 }
