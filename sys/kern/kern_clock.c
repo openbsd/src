@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.47 2004/07/28 17:15:12 tholo Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.48 2004/08/04 16:29:32 art Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -181,9 +181,9 @@ hardclock(struct clockframe *frame)
 	int delta;
 	extern int tickdelta;
 	extern long timedelta;
+#endif
 #ifdef __HAVE_CPUINFO
 	struct cpu_info *ci = curcpu();
-#endif
 #endif
 
 	p = curproc;
@@ -203,7 +203,6 @@ hardclock(struct clockframe *frame)
 			psignal(p, SIGPROF);
 	}
 
-#ifndef __HAVE_TIMECOUNTER
 	/*
 	 * If no separate statistics clock is available, run it from here.
 	 */
@@ -222,6 +221,7 @@ hardclock(struct clockframe *frame)
 		return;
 #endif
 
+#ifndef __HAVE_TIMECOUNTER
 	/*
 	 * Increment the time-of-day.  The increment is normally just
 	 * ``tick''.  If the machine is one which has a clock frequency
