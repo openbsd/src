@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.c,v 1.14 2001/09/22 21:25:55 mickey Exp $	*/
+/*	$OpenBSD: kbd.c,v 1.15 2001/09/24 23:06:02 mickey Exp $	*/
 /*	$NetBSD: kbd.c,v 1.28 1997/09/13 19:12:18 pk Exp $ */
 
 /*
@@ -452,6 +452,9 @@ kbdattach(kbd)
 	kbd_repeat_start = hz/5;
 	kbd_repeat_step = hz/20;
 
+	timeout_set(&kbd_softc.k_repeat_tmo, kbd_repeat, k);
+	kbd_initialized = 1;
+
 	if (kbd_softc.k_cons != NULL) {
 		k = &kbd_softc;
 		tp = k->k_kbd;
@@ -474,10 +477,6 @@ kbdattach(kbd)
 		printf("kbd: type = %d, layout = 0x%x\n",
 		    kbd_softc.k_state.kbd_id, kbd_softc.k_state.kbd_layout);
 	}
-
-	timeout_set(&kbd_softc.k_repeat_tmo, kbd_repeat, k);
-
-	kbd_initialized = 1;
 }
 
 void
