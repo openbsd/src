@@ -1,4 +1,0 @@
-#	$OpenBSD: dot.rhosts,v 1.3 2002/06/09 06:15:15 todd Exp $
-
-# Format of this file is <hostname> <username>
-#localhost foobar

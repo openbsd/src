@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.204 2004/05/03 15:18:19 drahn Exp $
+#	$OpenBSD: Makefile,v 1.205 2004/05/04 19:35:25 deraadt Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -105,9 +105,7 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 644 dot.mailrc \
 		    ${DESTDIR}/etc/skel/.mailrc; \
 		${INSTALL} -c -o root -g wheel -m 644 dot.profile \
-		    ${DESTDIR}/etc/skel/.profile; \
-		${INSTALL} -c -o root -g wheel -m 600 dot.rhosts \
-		    ${DESTDIR}/etc/skel/.rhosts
+		    ${DESTDIR}/etc/skel/.profile
 	cd kerberosV; \
 		${INSTALL} -c -o root -g wheel -m 644 README \
 		    ${DESTDIR}/etc/kerberosV; \
@@ -377,7 +375,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.204 2004/05/03 15:18:19 drahn Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.205 2004/05/04 19:35:25 deraadt Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
