@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_hangman.c,v 1.7 1996/08/29 09:26:34 deraadt Exp $	*/
+/*	$OpenBSD: db_hangman.c,v 1.8 1996/10/21 05:11:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Theo de Raadt, Michael Shalayeff
@@ -37,10 +37,7 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #include <dev/cons.h>
-#include "random.h"
-#if NRANDOM > 0
 #include <dev/rndvar.h>
-#endif
 
 #define	TOLOWER(c)	(('A'<=(c)&&(c)<='Z')?(c)-'a'+'A':(c))
 #define	ISALPHA(c)	(('a'<=(c)&&(c)<='z')||('A'<=(c)&&(c)<='Z'))
@@ -54,14 +51,9 @@ static __inline size_t
 db_random( mod )
 	register size_t	mod;
 {
-#if NRANDOM > 0
 	size_t	ret;
 	get_random_bytes(&ret, sizeof(ret) );
 	return ret % mod;
-#else
-	u_int random __P((void));
-	return (size_t)(random() % mod);
-#endif
 }
 
 static int	skill;
