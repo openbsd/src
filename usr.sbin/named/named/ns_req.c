@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_req.c,v 1.2 1997/03/12 10:42:32 downsj Exp $	*/
+/*	$OpenBSD: ns_req.c,v 1.3 1997/05/07 22:43:29 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_req.c,v 8.27 1996/10/08 04:51:03 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_req.c,v 1.2 1997/03/12 10:42:32 downsj Exp $";
+static char rcsid[] = "$OpenBSD: ns_req.c,v 1.3 1997/05/07 22:43:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -481,6 +481,7 @@ req_query(hp, cpp, eom, qsp, buflenp, msglenp, msg, dfd, from)
 
 	qtypeIncr(type);
 
+#if 0
 	/*
 	 * Yow!
 	 */
@@ -507,6 +508,7 @@ req_query(hp, cpp, eom, qsp, buflenp, msglenp, msg, dfd, from)
 		*msglenp = *cpp - msg;		/* Total message length */
 		return (Finish);
 	}
+#endif
 
 	/*
 	 * Process query.
