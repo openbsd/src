@@ -1,4 +1,4 @@
-/*	$OpenBSD: opl.c,v 1.4 2003/04/27 11:22:52 ho Exp $	*/
+/*	$OpenBSD: opl.c,v 1.5 2003/08/11 10:34:06 mickey Exp $	*/
 /*	$NetBSD: opl.c,v 1.7 1998/12/08 14:26:56 augustss Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ struct real_voice {
 	u_int8_t op[4]; /* Operator offsets */
 };
 
-struct opl_voice voicetab[] = {
+const struct opl_voice voicetab[] = {
 /*       No    I/O offs		OP1	OP2	OP3   OP4	*/
 /*	---------------------------------------------------	*/
 	{ 0,   OPL_L,	{0x00,	0x03,	0x08, 0x0b}},
