@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.1 2000/12/12 03:41:22 jason Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.2 2000/12/18 03:38:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -48,6 +48,7 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
