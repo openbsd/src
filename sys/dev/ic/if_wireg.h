@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.22 2002/06/23 10:33:21 deraadt Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.23 2002/06/26 21:34:01 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -82,8 +82,10 @@
  * register space access macros
  */
 
-#if defined(__sparc__)
+#if defined(__sparc64__)
 #define WI_BIG_ENDIAN_POSSIBLE	(sc->wi_flags & WI_FLAGS_BUS_PCMCIA)
+#elif defined(__sparc__)
+#define WI_BIG_ENDIAN_POSSIBLE 	1
 #else
 #define WI_BIG_ENDIAN_POSSIBLE 	0
 #endif
