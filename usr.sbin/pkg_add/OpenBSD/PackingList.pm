@@ -1,4 +1,4 @@
-# $OpenBSD: PackingList.pm,v 1.3 2003/11/06 17:46:35 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.4 2003/12/26 16:44:31 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -79,7 +79,9 @@ sub write
 	if (defined $self->{'no-default-conflict'}) {
 		$self->{'no-default-conflict'}->write($fh);
 	}
-	$self->{extrainfo}->write($fh);
+	for my $unique_item (qw(extrainfo arch)) {
+		$self->{$unique_item}->write($fh) if defined $self->{$unique_item};
+	}
 	for my $listname (qw(pkgcfl pkgdep newdepend libdepend items)) {
 		if (defined $self->{$listname}) {
 			for my $item (@{$self->{$listname}}) {

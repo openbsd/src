@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.5 2003/11/22 11:59:19 espie Exp $
+# $OpenBSD: pkg_create,v 1.6 2003/12/26 16:44:31 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -129,8 +129,8 @@ package main;
 our $errors = 0;
 
 our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k, $opt_r, $opt_D,
-	$opt_S, $opt_m, $opt_h, $opt_s, $opt_O, $opt_P, $opt_C);
-getopts('p:f:c:d:vi:k:r:D:S:m:hs:OP:C:');
+	$opt_S, $opt_m, $opt_h, $opt_s, $opt_O, $opt_P, $opt_C, $opt_A);
+getopts('p:f:c:d:vi:k:r:D:S:m:hs:OP:C:A:');
 
 if (@ARGV != 1) {
 	die "Exactly one single package name is required";
@@ -203,6 +203,10 @@ if (defined $opt_C) {
 	for my $e (split(/\s+/, $opt_C)) {
 		OpenBSD::PackingElement::PkgConflict->add($plist, $e);
     	}
+}
+
+if (defined $opt_A) {
+	OpenBSD::PackingElement::Arch->add($plist, $opt_A);
 }
 
 $plist->fromfile($dir.CONTENTS) or die "Can't open packing list";
