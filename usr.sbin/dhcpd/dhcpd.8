@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.5 2004/04/20 03:58:14 henning Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.6 2004/08/23 19:38:20 pvalchev Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -268,7 +268,7 @@ A simple BOOTP client declaration might look like this:
 host haagen {
   hardware ethernet 08:00:2b:4c:59:23;
   fixed-address 239.252.197.9;
-  filename "/tftpboot/haagen.boot";
+  filename "haagen.boot";
 }
 .Ed
 .It Options
@@ -302,7 +302,7 @@ use a different name server might be declared as follows:
 host haagen {
   hardware ethernet 08:00:2b:4c:59:23;
   fixed-address 239.252.197.9;
-  filename "/tftpboot/haagen.boot";
+  filename "haagen.boot";
   option domain-name-servers 192.5.5.1;
   option domain-name "vix.com";
 }
