@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.17 1998/03/25 19:53:21 art Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.18 2000/01/27 05:27:42 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.17 1998/03/25 19:53:21 art Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.18 2000/01/27 05:27:42 itojun Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -265,10 +265,12 @@ try_connect:
 			    "rsh: the -x flag requires Kerberos authentication.\n");
 			exit(1);
 		}
-		rem = rcmd(&host, sp->s_port, pw->pw_name, user, args, &rfd2);
+		rem = rcmd_af(&host, sp->s_port, pw->pw_name, user, args,
+		    &rfd2, PF_UNSPEC);
 	}
 #else
-	rem = rcmd(&host, sp->s_port, pw->pw_name, user, args, &rfd2);
+	rem = rcmd_af(&host, sp->s_port, pw->pw_name, user, args, &rfd2,
+	    PF_UNSPEC);
 #endif
 
 	if (rem < 0)

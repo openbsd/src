@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlogin.c,v 1.21 1998/07/12 08:07:12 deraadt Exp $	*/
+/*	$OpenBSD: rlogin.c,v 1.22 2000/01/27 05:27:42 itojun Exp $	*/
 /*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: rlogin.c,v 1.21 1998/07/12 08:07:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rlogin.c,v 1.22 2000/01/27 05:27:42 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -166,6 +166,8 @@ main(argc, argv)
 	int omask;
 	int argoff, ch, dflag, one, uid;
 	char *host, *p, *user, term[64];
+	struct sockaddr_storage ss;
+	socklen_t sslen;
 
 	argoff = dflag = 0;
 	one = 1;
@@ -341,10 +343,11 @@ try_connect:
 			    "rlogin: the -x flag requires Kerberos authentication.\n");
 			exit(1);
 		}
-		rem = rcmd(&host, sp->s_port, pw->pw_name, user, term, 0);
+		rem = rcmd_af(&host, sp->s_port, pw->pw_name, user, term, 0,
+		    PF_UNSPEC);
 	}
 #else
-	rem = rcmd(&host, sp->s_port, pw->pw_name, user, term, 0);
+	rem = rcmd_af(&host, sp->s_port, pw->pw_name, user, term, 0, PF_UNSPEC);
 #endif /* KERBEROS */
 
 	if (rem < 0)
@@ -354,9 +357,15 @@ try_connect:
 	    setsockopt(rem, SOL_SOCKET, SO_DEBUG, &one, sizeof(one)) < 0)
 		(void)fprintf(stderr, "rlogin: setsockopt: %s.\n",
 		    strerror(errno));
-	one = IPTOS_LOWDELAY;
-	if (setsockopt(rem, IPPROTO_IP, IP_TOS, (char *)&one, sizeof(int)) < 0)
-		perror("rlogin: setsockopt TOS (ignored)");
+
+	sslen = sizeof(ss);
+	if (getsockname(rem, (struct sockaddr *)&ss, &sslen) == 0 &&
+	    ss.ss_family == AF_INET) {
+		one = IPTOS_LOWDELAY;
+		if (setsockopt(rem, IPPROTO_IP, IP_TOS, (char *)&one,
+		    sizeof(int)) < 0)
+			perror("rlogin: setsockopt TOS (ignored)");
+	}
 
 	(void)seteuid(uid);
 	(void)setuid(uid);
