@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.h,v 1.5 1997/07/19 22:28:57 niklas Exp $	*/
+/*	$OpenBSD: db_run.h,v 1.6 1997/09/06 14:49:00 deraadt Exp $	*/
 /*	$NetBSD: db_run.h,v 1.3 1996/02/05 01:57:14 christos Exp $	*/
 
 /* 
@@ -64,4 +64,4 @@ extern register_t getreg_val __P((db_regs_t *, int));
 #endif
 #endif /* SOFTWARE_SSTEP */
 
-#endif	_DDB_DB_RUN_
+#endif	/* _DDB_DB_RUN_ */

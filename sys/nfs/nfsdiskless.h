@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsdiskless.h,v 1.4 1996/04/17 04:50:37 mickey Exp $	*/
+/*	$OpenBSD: nfsdiskless.h,v 1.5 1997/09/06 14:48:59 deraadt Exp $	*/
 /*	$NetBSD: nfsdiskless.h,v 1.9 1996/02/18 11:54:00 fvdl Exp $	*/
 
 /*
@@ -67,5 +67,5 @@ struct nfs_diskless {
 int nfs_boot_init __P((struct nfs_diskless *nd, struct proc *procp));
 void nfs_boot_getfh __P((struct sockaddr_in *bpsin, char *key,
 		struct nfs_dlmount *ndmntp));
-#endif  _NFS_DISKLESS_H_
+#endif	/* _NFS_DISKLESS_H_ */
 

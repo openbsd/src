@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_watch.h,v 1.4 1996/04/21 22:19:22 deraadt Exp $	*/
+/*	$OpenBSD: db_watch.h,v 1.5 1997/09/06 14:49:01 deraadt Exp $	*/
 /*	$NetBSD: db_watch.h,v 1.9 1996/02/05 01:57:24 christos Exp $	*/
 
 /* 
@@ -55,4 +55,4 @@ void db_set_watchpoints __P((void));
 void db_clear_watchpoints __P((void));
 boolean_t db_find_watchpoint __P((vm_map_t, db_addr_t, db_regs_t *));
 
-#endif	_DDB_DB_WATCH_
+#endif	/* _DDB_DB_WATCH_ */
