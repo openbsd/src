@@ -1,6 +1,7 @@
-# $OpenBSD: Makefile,v 1.5 2002/01/01 23:08:23 art Exp $
+# $OpenBSD: Makefile,v 1.6 2002/01/03 01:24:32 art Exp $
 
 REGRESSTARGETS=t1 t2 t3 t4 t5 t6
+REGRESSSLOWTARGETS=t4
 
 t1: t1.out
 	perl ${.CURDIR}/tsort-check t1.out ${.CURDIR}/pairs1
