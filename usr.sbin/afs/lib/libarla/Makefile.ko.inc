@@ -12,9 +12,8 @@ CFLAGS		+= -I${AFSSRC}/lib/ko
 sysname.c: gensysname
 	./gensysname -c > sysname.c
 
-gensysname: gensysname.o agetarg.o setprogname.o
-	${CC} ${CFLAGS} -o gensysname gensysname.o agetarg.o setprogname.o ${LIBROKEN}
+gensysname: gensysname.o agetarg.o
+	${CC} ${CFLAGS} -o gensysname gensysname.o agetarg.o ${LIBROKEN}
 
-test:
-	echo ${AFSTOPDIR}/../../kerberosV/src/lib/roken
+CLEANFILES+=	gensysname.o agetarg.o
 
