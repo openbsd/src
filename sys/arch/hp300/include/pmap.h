@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.9 2001/11/27 22:05:32 miod Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.10 2001/11/28 16:13:28 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.13 1997/06/10 18:58:19 veego Exp $	*/
 
 /* 
@@ -67,7 +67,7 @@ struct pmap {
 	st_entry_t		*pm_stpa;	/* 040: ST phys addr */
 	short			pm_sref;	/* segment table ref count */
 	short			pm_count;	/* pmap reference count */
-	simple_lock_data_t	pm_lock;	/* lock on pmap */
+	struct simplelock	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	long			pm_ptpages;	/* more stats: PT pages */
 };

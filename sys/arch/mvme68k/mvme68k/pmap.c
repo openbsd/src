@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.33 2001/11/28 15:34:16 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.34 2001/11/28 16:13:28 art Exp $ */
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -235,7 +235,7 @@ st_entry_t	*Segtabzero, *Segtabzeropa;
 vm_size_t	Sysptsize = VM_KERNEL_PT_PAGES;
 
 struct pmap	kernel_pmap_store;
-vm_map_t	st_map, pt_map;
+struct vm_map	*st_map, *pt_map;
 struct vm_map	st_map_store, pt_map_store;
 
 vm_offset_t    	avail_start;	/* PA of first available physical page */
@@ -2366,7 +2366,7 @@ pmap_check_wiring(str, va)
 	char *str;
 	vm_offset_t va;
 {
-	vm_map_entry_t entry;
+	struct vm_map_entry *entry;
 	register int count;
 	register pt_entry_t *pte;
 

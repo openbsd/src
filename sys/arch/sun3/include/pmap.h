@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.10 2001/11/28 15:34:17 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.11 2001/11/28 16:13:29 art Exp $	*/
 /*	$NetBSD: pmap.h,v 1.18 1997/01/27 19:41:06 gwr Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 
 struct pmap {
 	int	                pm_refcount;	/* pmap reference count */
-	simple_lock_data_t      pm_lock;	/* lock on pmap */
+	struct simplelock	pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	int                     pm_version;
 	int                     pm_ctxnum;

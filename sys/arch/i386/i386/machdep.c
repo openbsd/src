@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.185 2001/11/28 15:02:58 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.186 2001/11/28 16:13:28 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -242,9 +242,9 @@ int	i386_fpu_fdivbug;
 bootarg_t *bootargp;
 vm_offset_t avail_end;
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 int kbd_reset;
 

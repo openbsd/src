@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.18 2001/11/28 15:34:16 art Exp $ */
+/*	$OpenBSD: pmap.h,v 1.19 2001/11/28 16:13:28 art Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -31,7 +31,7 @@ struct pmap {
     sdt_ptr_t		sdt_paddr;	/* physical pointer to sdt */
     sdt_ptr_t		sdt_vaddr;	/* virtual pointer to sdt */
     int			ref_count;	/* reference count */
-    simple_lock_data_t	lock;
+    struct simplelock	lock;
     struct pmap_statistics stats;	/* pmap statistics */
     
     /* cpus using of this pmap; NCPU must be <= 32 */

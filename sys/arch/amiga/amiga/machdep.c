@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.60 2001/11/28 13:57:18 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.61 2001/11/28 16:13:27 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
 
 /*
@@ -129,9 +129,9 @@ void fdintr __P((int));
  */
 u_int16_t amiga_ttyspl = PSL_S|PSL_IPL4;
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 /*
  * Declare these as initialized data so we can patch them.

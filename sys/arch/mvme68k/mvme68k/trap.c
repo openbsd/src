@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.39 2001/11/28 13:47:38 art Exp $ */
+/*	$OpenBSD: trap.c,v 1.40 2001/11/28 16:13:28 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -535,12 +535,12 @@ copyfault:
 
 	case T_MMUFLT|T_USER:	/* page fault */
 		{
-			register vm_offset_t va;
-			register struct vmspace *vm = NULL;
-			register vm_map_t map;
+			vm_offset_t va;
+			struct vmspace *vm = NULL;
+			struct vm_map *map;
 			int rv;
 			vm_prot_t ftype, vftype;
-			extern vm_map_t kernel_map;
+			extern struct vm_map *kernel_map;
 
 			/* vmspace only significant if T_USER */
 			if (p)

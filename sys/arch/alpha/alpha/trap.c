@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.28 2001/11/28 13:47:37 art Exp $ */
+/* $OpenBSD: trap.c,v 1.29 2001/11/28 16:13:27 art Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -434,12 +434,12 @@ trap(a0, a1, a2, entry, framep)
 		case ALPHA_MMCSR_INVALTRANS:
 		case ALPHA_MMCSR_ACCESS:
 	    	{
-			register vaddr_t va;
-			register struct vmspace *vm = NULL;
-			register vm_map_t map;
+			vaddr_t va;
+			struct vmspace *vm = NULL;
+			struct vm_map *map;
 			vm_prot_t ftype;
 			int rv;
-			extern vm_map_t kernel_map;
+			extern struct vm_map *kernel_map;
 
 			/*
 			 * If it was caused by fuswintr or suswintr,

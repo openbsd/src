@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.59 2001/11/28 13:47:37 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.60 2001/11/28 16:13:27 art Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -149,9 +149,9 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 int	maxmem;			/* max memory per process */
 

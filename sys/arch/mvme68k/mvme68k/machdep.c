@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.58 2001/11/28 13:57:18 art Exp $ */
+/*	$OpenBSD: machdep.c,v 1.59 2001/11/28 16:13:28 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -124,9 +124,9 @@
 /* the following is used externally (sysctl_hw) */
 char machine[] = "mvme68k";		/* cpu "architecture" */
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 extern vm_offset_t avail_end;
 

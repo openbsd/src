@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.45 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.46 2001/11/28 16:13:29 art Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -199,7 +199,7 @@ struct	ccddevice *ccddevs;
 int	numccd = 0;
 
 /* A separate map so that locking on kernel_map won't happen in interrupts */
-static vm_map_t ccdmap;
+static struct vm_map *ccdmap;
 
 /*
  * Set when a process need some kvm.

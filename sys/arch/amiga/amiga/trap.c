@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.27 2001/11/28 13:47:37 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.28 2001/11/28 16:13:27 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
@@ -180,7 +180,7 @@ extern char fubail[], subail[];
 /* XXX until we get it from m68k/cpu.h */
 extern void    regdump __P((struct trapframe *, int));
 
-int	_write_back __P((u_int, u_int, u_int, u_int, vm_map_t));
+int	_write_back __P((u_int, u_int, u_int, u_int, struct vm_map *));
 void	panictrap __P((int, u_int, u_int, struct frame *));
 void	trapcpfault __P((struct proc *, struct frame *));
 void	trapmmufault __P((int, u_int, u_int, struct frame *, struct proc *,
@@ -282,11 +282,11 @@ trapmmufault(type, code, v, fp, p, sticks)
 	static u_int oldcode=0, oldv=0;
 	static struct proc *oldp=0;
 #endif
-	extern vm_map_t kernel_map;
+	extern struct vm_map *kernel_map;
 	struct vmspace *vm = NULL;
 	vm_prot_t ftype, vftype;
 	vm_offset_t va;
-	vm_map_t map;
+	struct vm_map *map;
 	u_int nss;
 	int rv;
 	union sigval sv;
@@ -444,7 +444,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 
 		/* Check WB3 */
 		if(fp->f_fmt7.f_wb3s & WBS_VALID) {
-			vm_map_t wb3_map;
+			struct vm_map *wb3_map;
 
 			if ((fp->f_fmt7.f_wb3s & WBS_TMMASK) == WBS_TM_SDATA)
 				wb3_map = kernel_map;
@@ -951,7 +951,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	u_int wb_sts;	/* writeback status information */
 	u_int wb_data;	/* data to writeback */
 	u_int wb_addr;	/* address to writeback to */
-	vm_map_t wb_map;
+	struct vm_map *wb_map;
 {
 	u_int wb_extra_page = 0;
 	u_int wb_rc, mmusr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.45 2001/11/28 13:47:39 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.46 2001/11/28 16:13:29 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -102,9 +102,9 @@ int fputype;
 label_t *nofault;
 vm_offset_t vmmap;
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait

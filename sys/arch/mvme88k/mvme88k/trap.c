@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.26 2001/11/28 13:47:39 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.27 2001/11/28 16:13:29 art Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -190,7 +190,7 @@ trap18x(unsigned type, struct m88100_saved_state *frame)
 {
 	struct proc *p;
 	u_quad_t sticks = 0;
-	vm_map_t map;
+	struct vm_map *map;
 	vm_offset_t va;
 	vm_prot_t ftype;
 	int fault_type;
@@ -202,7 +202,7 @@ trap18x(unsigned type, struct m88100_saved_state *frame)
 	int sig = 0;
 	unsigned pc = PC_REGS(frame);  /* get program counter (sxip) */
 
-	extern vm_map_t kernel_map;
+	extern struct vm_map *kernel_map;
 	extern unsigned guarded_access_start;
 	extern unsigned guarded_access_end;
 	extern unsigned guarded_access_bad;
@@ -683,7 +683,7 @@ trap197(unsigned type, struct m88100_saved_state *frame)
 {
 	struct proc *p;
 	u_quad_t sticks = 0;
-	vm_map_t map;
+	struct vm_map *map;
 	vm_offset_t va;
 	vm_prot_t ftype;
 	int fault_type;
@@ -696,7 +696,7 @@ trap197(unsigned type, struct m88100_saved_state *frame)
 	unsigned pc = PC_REGS(frame);  /* get program counter (sxip) */
 	unsigned user = 0, write = 0, data = 0;
 
-	extern vm_map_t kernel_map;
+	extern struct vm_map *kernel_map;
 	extern unsigned guarded_access_start;
 	extern unsigned guarded_access_end;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.50 2001/11/28 15:02:58 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.51 2001/11/28 16:13:28 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -268,11 +268,11 @@
 #endif
 
 struct lock pmap_main_lock;
-simple_lock_data_t pvalloc_lock;
-simple_lock_data_t pmaps_lock;
-simple_lock_data_t pmap_copy_page_lock;
-simple_lock_data_t pmap_zero_page_lock;
-simple_lock_data_t pmap_tmpptp_lock;
+struct simplelock pvalloc_lock;
+struct simplelock pmaps_lock;
+struct simplelock pmap_copy_page_lock;
+struct simplelock pmap_zero_page_lock;
+struct simplelock pmap_tmpptp_lock;
 
 #define PMAP_MAP_TO_HEAD_LOCK() \
      spinlockmgr(&pmap_main_lock, LK_SHARED, (void *) 0)
@@ -1406,7 +1406,7 @@ pmap_free_pvpage()
 {
 	int s;
 	struct vm_map *map;
-	vm_map_entry_t dead_entries;
+	struct vm_map_entry *dead_entries;
 	struct pv_page *pvp;
 
 	s = splimp(); /* protect kmem_map */

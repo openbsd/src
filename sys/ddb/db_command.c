@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.23 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.24 2001/11/28 16:13:29 art Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -290,7 +290,7 @@ db_map_print_cmd(addr, have_addr, count, modif)
         if (modif[0] == 'f')
                 full = TRUE;
 
-        uvm_map_printit((vm_map_t) addr, full, db_printf);
+        uvm_map_printit((struct vm_map *) addr, full, db_printf);
 }
 /*ARGSUSED*/
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.16 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.17 2001/11/28 16:13:28 art Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.28 1996/05/03 19:42:29 christos Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@
 #include <machine/vm86.h>
 #endif
 
-extern vm_map_t kernel_map;
+extern struct vm_map *kernel_map;
 
 #ifdef USER_LDT
 int i386_get_ldt __P((struct proc *, void *, register_t *));

@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.67 2001/11/28 13:57:18 art Exp $	*/
+/* $OpenBSD: machdep.c,v 1.68 2001/11/28 16:13:29 art Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -192,9 +192,9 @@ int longformat = 1;  /* for regdump() */
  */
 int   safepri = PSR_SUPERVISOR;
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 /*
  * iomap stuff is for managing chunks of virtual address space that
@@ -206,7 +206,7 @@ vm_map_t phys_map = NULL;
 vaddr_t iomapbase;
 
 struct extent *iomap_extent;
-vm_map_t   iomap_map;
+struct vm_map *iomap_map;
 
 /*
  * Declare these as initialized data so we can patch them.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.72 2001/11/28 13:47:39 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.73 2001/11/28 16:13:29 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -110,9 +110,9 @@
 #include "led.h"
 #endif
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 /*
  * Declare these as initialized data so we can patch them.

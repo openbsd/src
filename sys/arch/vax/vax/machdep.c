@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.46 2001/11/28 13:47:39 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.47 2001/11/28 16:13:29 art Exp $ */
 /* $NetBSD: machdep.c,v 1.108 2000/09/13 15:00:23 thorpej Exp $	 */
 
 /*
@@ -154,9 +154,9 @@ int		cold = 1; /* coldstart */
 #define	IOMAPSZ	100
 static	struct map iomap[IOMAPSZ];
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 #ifdef DEBUG
 int iospace_inited = 0;

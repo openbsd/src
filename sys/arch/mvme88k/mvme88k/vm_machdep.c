@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.39 2001/11/27 05:37:02 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.40 2001/11/28 16:13:29 art Exp $	*/
 
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -68,7 +68,7 @@
 #include <machine/trap.h>
 
 extern struct extent *iomap_extent;
-extern vm_map_t   iomap_map;
+extern struct vm_map *iomap_map;
 
 vm_offset_t iomap_mapin __P((vm_offset_t, vm_size_t, boolean_t));
 void iomap_mapout __P((vm_offset_t, vm_size_t));

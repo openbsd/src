@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.41 2001/11/28 15:34:16 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.42 2001/11/28 16:13:27 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.68 1999/06/19 19:44:09 is Exp $	*/
 
 /*-
@@ -271,7 +271,7 @@ u_int	*Segtabzero, *Segtabzeropa;
 vsize_t	Sysptsize = VM_KERNEL_PT_PAGES;
 
 struct pmap	kernel_pmap_store;
-vm_map_t	pt_map;
+struct vm_map	*pt_map;
 struct vm_map	pt_map_store;
 
 vsize_t		mem_size;	/* memory size in bytes */

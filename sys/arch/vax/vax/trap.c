@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 2001/11/28 13:47:39 art Exp $     */
+/*	$OpenBSD: trap.c,v 1.20 2001/11/28 16:13:29 art Exp $     */
 /*	$NetBSD: trap.c,v 1.47 1999/08/21 19:26:20 matt Exp $     */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -145,7 +145,7 @@ arithflt(frame)
 	u_int	rv, addr, umode;
 	struct	proc *p = curproc;
 	u_quad_t oticks = 0;
-	vm_map_t map;
+	struct vm_map *map;
 	vm_prot_t ftype;
 	int typ;
 	union sigval sv;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_watch.c,v 1.5 1999/09/11 00:44:59 mickey Exp $ */
+/*	$OpenBSD: db_watch.c,v 1.6 2001/11/28 16:13:29 art Exp $ */
 /*	$NetBSD: db_watch.c,v 1.9 1996/03/30 22:30:12 christos Exp $	*/
 
 /* 
@@ -86,7 +86,7 @@ db_watchpoint_free(watch)
 
 void
 db_set_watchpoint(map, addr, size)
-	vm_map_t	map;
+	struct vm_map	*map;
 	db_addr_t	addr;
 	vsize_t 	size;
 {
@@ -129,7 +129,7 @@ db_set_watchpoint(map, addr, size)
 
 void
 db_delete_watchpoint(map, addr)
-	vm_map_t	map;
+	struct vm_map	*map;
 	db_addr_t	addr;
 {
 	register db_watchpoint_t	watch;
@@ -240,7 +240,7 @@ db_clear_watchpoints()
 
 boolean_t
 db_find_watchpoint(map, addr, regs)
-	vm_map_t	map;
+	struct vm_map	*map;
 	db_addr_t	addr;
 	db_regs_t	*regs;
 {

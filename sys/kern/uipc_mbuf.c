@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.42 2001/11/06 19:53:20 miod Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.43 2001/11/28 16:13:29 art Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 struct	pool mbpool;		/* mbuf pool */
 struct	pool mclpool;		/* mbuf cluster pool */
 
-extern	vm_map_t mb_map;
+extern	struct vm_map *mb_map;
 int	needqueuedrain;
 
 void	*mclpool_alloc __P((unsigned long, int, int));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.45 2001/11/28 13:47:38 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.46 2001/11/28 16:13:28 art Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 Michael Shalayeff
@@ -165,9 +165,9 @@ struct user *proc0paddr;
 long mem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 struct extent *hppa_ex;
 
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 
 void delay_init __P((void));

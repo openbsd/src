@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.30 2001/11/28 13:47:39 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.31 2001/11/28 16:13:29 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.63-1.65ish 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
@@ -451,12 +451,12 @@ trap(type, code, v, frame)
 		/*FALLTHROUGH*/
 
 	case T_MMUFLT|T_USER: { 	/* page fault */
-		register vm_offset_t va;
-		register struct vmspace *vm = NULL;
-		register vm_map_t map;
+		vm_offset_t va;
+		struct vmspace *vm = NULL;
+		struct vm_map *map;
 		int rv;
 		vm_prot_t ftype, vftype;
-		extern vm_map_t kernel_map;
+		extern struct vm_map *kernel_map;
 
 		/* vmspace only significant if T_USER */
 		if (p)

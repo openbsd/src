@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.70 2001/11/28 13:57:18 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.71 2001/11/28 16:13:28 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -110,9 +110,9 @@
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
-vm_map_t exec_map = NULL;  
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;  
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 extern paddr_t avail_start, avail_end;
 

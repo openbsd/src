@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.32 2001/11/28 13:47:38 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.33 2001/11/28 16:13:28 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.68 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
@@ -570,10 +570,10 @@ copyfault:
 	    {
 		vaddr_t va;
 		struct vmspace *vm = p->p_vmspace;
-		vm_map_t map;
+		struct vm_map *map;
 		int rv;
 		vm_prot_t ftype, vftype;
-		extern vm_map_t kernel_map;
+		extern struct vm_map *kernel_map;
 
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
