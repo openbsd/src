@@ -1179,8 +1179,7 @@ struct lease *parse_lease_declaration (cfile)
 			parse_warn ("unexpected end of file");
 			break;
 		}
-		strncpy (val, tbuf, sizeof tbuf);
-		tbuf [(sizeof tbuf) - 1] = 0;
+		strlcpy (tbuf, val, sizeof tbuf);
 
 		/* Parse any of the times associated with the lease. */
 		if (token == STARTS || token == ENDS || token == TIMESTAMP) {
