@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.58 1999/09/03 18:55:29 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.59 1999/09/23 19:00:34 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -105,32 +105,30 @@ if [ "`df /`" = "`df /mnt`" ]; then
 	# Good {morning,afternoon,evening,night}.
 	echo ==================================================
 	md_welcome_banner
-	echo -n "Proceed with installation? [n] "
 else
 	echo "You seem to be trying to restart an interrupted installation!"
 	echo
 	echo "You can try to skip the disk preparation steps and continue,"
 	echo "otherwise you should reboot the miniroot and start over..."
 	echo -n "Skip disk initialization? [n] "
+	getresp "n"
+	case "$resp" in
+		y*|Y*)
+			echo
+			echo "Cool!  Let's get to it..."
+			echo
+			;;
+		*)
+			md_not_going_to_install
+			exit
+			;;
+	esac
 fi
-getresp "n"
-case "$resp" in
-	y*|Y*)
-		echo
-		echo "Cool!  Let's get to it..."
-		echo
-		echo "You can run a shell command at any prompt via '!foo'"
-		echo "or escape to a shell by simply typing '!'."
-		echo
-		;;
-	*)
-		md_not_going_to_install
-		exit
-		;;
-esac
 
-# XXX Work around vnode aliasing bug (thanks for the tip, Chris...)
-ls -l /dev > /dev/null 2>&1
+
+echo "You can run a shell command at any prompt via '!foo'"
+echo "or escape to a shell by simply typing '!'."
+echo
 
 # Deal with terminal issues
 md_set_term
@@ -539,15 +537,17 @@ md_questions
 install_sets $THESETS
 
 # Copy in configuration information and make devices in target root.
+echo
 cd /tmp
+echo -n "Copying "
 for file in fstab hostname.* hosts myname mygate resolv.conf; do
 	if [ -f $file ]; then
-		echo -n "Copying $file..."
+		echo -n "$file, "
 		cp $file /mnt/etc/$file
 		rm -f $file
-		echo "done."
 	fi
 done
+echo " ...done."
 
 if [ -f /etc/dhclient.conf ]; then
 	echo -n "Modifying dhclient.conf..."
