@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccom.c,v 1.4 1996/10/22 01:11:52 downsj Exp $	*/
+/*	$OpenBSD: pccom.c,v 1.5 1996/11/09 21:56:22 tholo Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -1511,20 +1511,23 @@ comsoft()
 			lsr = sc->sc_rxbuf[rxget];
 			rxget = (rxget + 1) & RBUFMASK;
 			if (ISSET(lsr, LSR_RCV_MASK)) {
+				if (ISSET(lsr, LSR_BI)) {
 #ifdef DDB
- 				if (ISSET(lsr, LSR_BI) &&
-				    ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-			 		Debugger();
-					rxget = (rxget + 1) & RBUFMASK;
-					continue;
- 				}
+					if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+				 		Debugger();
+						rxget = (rxget + 1) & RBUFMASK;
+						continue;
+ 					}
 #endif
+					c = 0;
+				}
+				else
+					c = sc->sc_rxbuf[rxget];
 				if (ISSET(lsr, LSR_OE)) {
 					sc->sc_overflows++;
 					if (sc->sc_errors++ == 0)
 						timeout(comdiag, sc, 60 * hz);
 				}
-				c = sc->sc_rxbuf[rxget];
 				rxget = (rxget + 1) & RBUFMASK;
 				c |= lsrmap[(lsr & (LSR_BI|LSR_FE|LSR_PE)) >> 2];
 				line->l_rint(c, tp);
