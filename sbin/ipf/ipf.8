@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipf.8,v 1.12 1999/07/08 03:10:03 aaron Exp $
+.\"	$OpenBSD: ipf.8,v 1.13 1999/07/08 03:19:14 aaron Exp $
 .Dd July 7, 1999
 .Dt IPF 8
 .Os
@@ -8,6 +8,9 @@
 .Sh SYNOPSIS
 .Nm ipf
 .Op Fl AdDEInorsUvyzZ
+.Op Fl l Ar category
+.Op Fl F Ar list
+.Op Fl F Ar table
 .Op Fl f Ar filename
 .Sh DESCRIPTION
 The
@@ -174,6 +177,17 @@ interface described by
 Blank lines and lines beginning with
 .Ql #
 (comments) are ignored.
+.It Fl l Ar category
+Packet logging.
+.Ar category
+is one of
+.Cm pass ,
+.Cm block ,
+or
+.Cm nomatch .
+Any packet which exits filtering and matches the set category is logged. This
+is useful for causing all packets which don't match any of the loaded rules to
+be logged.
 .It Fl n
 No change. Prevent
 .Nm
