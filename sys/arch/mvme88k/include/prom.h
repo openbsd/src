@@ -148,6 +148,9 @@ struct mvmeprom_args {
         u_int	conf_blk;
         char	*arg_start;
         char	*arg_end;
+	char	*nbarg_start;
+	char	*nbarg_end;
+	u_int	cputyp;
 };
 
 #endif
@@ -155,3 +158,19 @@ struct mvmeprom_args {
 #define MVMEPROM_CALL(x)	\
 	asm volatile ( __CONCAT("or r9,r0,",__STRING(x)) ); \
 	asm volatile ("tb0 0,r0,496");
+
+#define MVMEPROM_REG_DEVLUN	"r2"
+#define MVMEPROM_REG_CTRLLUN	"r3"
+#define MVMEPROM_REG_FLAGS	"r4"
+#define MVMEPROM_REG_CTRLADDR	"r5"
+#define MVMEPROM_REG_ENTRY	"r6"
+#define MVMEPROM_REG_CONFBLK	"r7"
+#define MVMEPROM_REG_ARGSTART	"r8"
+#define MVMEPROM_REG_ARGEND	"r9"
+#define MVMEPROM_REG_NBARGSTART	"r10"
+#define MVMEPROM_REG_NBARGEND	"r11"
+
+#ifndef RB_NOSYM
+#define RB_NOSYM 0x400
+#endif
+

@@ -38,24 +38,35 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	@(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.6 1998/08/18 21:18:47 millert Exp $
+ *	$Id: param.h,v 1.7 1998/12/15 04:45:50 smurph Exp $
  */
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
 
-#define	MACHINE		"m88k"
-#define MACHINE_ARCH	"m88k"
-#define MID_MACHINE	MID_M88K
+#define	_MACHINE 	"mvme88k"
+#define	MACHINE 	"mvme88k"
+#define	_MACHINE_ARCH	"m88k"
+#define	MACHINE_ARCH	"m88k"
+#define	MID_MACHINE	MID_M88K
 
 /*
- * Round p (pointer or byte index) up to a correctly-aligned value
+ * Round p (pointer or byte index) down to a correctly-aligned value
  * for all data types (int, long, ...).   The result is u_int and
  * must be cast to any desired pointer type. ALIGN() is used for
  * aligning stack, which needs to be on a double word boundary for
  * 88k.
  */
-#define ALIGNBYTES	(sizeof(int) - 1)
-#define	ALIGN(p)	(((u_int)(p) + (sizeof(double) - 1)) & ~(sizeof(double) - 1))
+/*#define ALIGNBYTES	(sizeof(int) - 1)*/
+#define ALIGNBYTES	15
+
+/* Stack alignment upon a double word boundary proves deadly */
+#define DOUBLE_ALIGN 1
+#ifdef DOUBLE_ALIGN
+/*#define	ALIGN(p)	(((u_int)(p) + (sizeof(double) - 1)) & ~(sizeof(double) - 1))*/
+#define	ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#else /* 16 byte alignment works */
+#define	ALIGN(p) (((u_int)(p) + ((sizeof(double)*2) - 1)) & ~((sizeof(double)*2) - 1))
+#endif
 
 #ifndef NBPG
 #define	NBPG		4096		/* bytes/page */
@@ -171,4 +182,6 @@ extern int cpumod;
  * Values for the cputyp variable.
  */
 #define CPU_187		0x187
+#define CPU_188		0x188
+#define CPU_197		0x197
 #endif /* !_MACHINE_PARAM_H_ */

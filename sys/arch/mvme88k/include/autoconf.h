@@ -31,15 +31,34 @@
 /*
  * Autoconfiguration information.
  */
+
+#ifndef _MVME88K_AUTOCONF_H_
+#define _MVME88K_AUTOCONF_H_
+
+#if 0
 struct confargs {
 	int	ca_bustype;
 	caddr_t	ca_parent;
 	caddr_t	ca_vaddr;
 	caddr_t	ca_paddr;
+#define ca_len ca_size
 	int	ca_size;
 	int	ca_ipl;
 	int	ca_vec;
 };
+#else
+struct confargs {
+	int	ca_bustype;
+	void	*ca_vaddr;
+	void	*ca_paddr;
+	int	ca_offset;
+	int	ca_len;
+	int	ca_ipl;
+	int	ca_vec;
+	char	*ca_name;
+	void	*ca_master;	/* points to bus-dependent data */
+};
+#endif
 
 #define BUS_MAIN	0
 #define BUS_MC		1
@@ -48,7 +67,35 @@ struct confargs {
 #define BUS_VMES	4
 #define BUS_VMEL	5
 
+#if 0
+/* From mvme68k autoconf.h */
+#define BUS_MAIN	1
+#define BUS_PCC		2	/* VME147 PCC chip */
+#define BUS_MC		3	/* VME162 MC chip */
+#define BUS_PCCTWO	4	/* VME166/167/177 PCC2 chip */
+#define BUS_VMES	5	/* 16 bit VME access */
+#define BUS_VMEL	6	/* 32 bit VME access */
+#define BUS_IP		7	/* VME162 IP module bus */
+
+#endif
+
 int always_match __P((struct device *, struct cfdata *, void *));
 
 #define DEVICE_UNIT(device) (device->dv_unit)
 #define CFDATA_LOC(cfdata) (cfdata->cf_loc)
+
+/* the following are from the prom/bootblocks */
+void	*bootaddr;	/* PA of boot device */
+int	bootctrllun;	/* ctrl_lun of boot device */
+int	bootdevlun;	/* dev_lun of boot device */
+int	bootpart;	/* boot partition (disk) */
+
+struct	device *bootdv; /* boot device */
+
+/* PARTITIONSHIFT from disklabel.h */
+#define PARTITIONMASK   ((1 << PARTITIONSHIFT) - 1) 
+
+void	*mapiodev __P((void *pa, int size));
+void	unmapiodev __P((void *kva, int size));
+
+#endif

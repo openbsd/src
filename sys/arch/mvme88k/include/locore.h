@@ -72,6 +72,7 @@
  *	hence to debuggers, and such).
  */
 #define LABEL(name)	name:	global name NEWLINE
+
 #if EH_DEBUG
 #  define _LABEL(name)	name:	global name NEWLINE
 #else

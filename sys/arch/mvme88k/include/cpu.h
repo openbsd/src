@@ -57,6 +57,7 @@
 
 #include <machine/psl.h>
 #include <machine/pcb.h>
+#include <machine/board.h>
 
 /*
  * definitions of cpu-dependent requirements
@@ -86,9 +87,35 @@ extern intstack;
 #define	CLKF_PC(framep)		(((struct trapframe *)(framep))->sxip & ~3)
 #define	CLKF_INTR(framep)	(((struct trapframe *)(framep))->r[31] > intstack)
 
+/*
+ * Internal IO space (iiomapsize).
+ *
+ * Internal IO space is mapped in the kernel from ``OBIO_START'' to
+ * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
+ * conversion between physical and kernel virtual addresses is easy.
+ */
+
+#ifdef VIRTMAP 
+/* This will do non 1:1 phys/virt memory mapping in the future - SPM */
+#define	ISIIOVA(va) \
+	((char *)(va) >= intiobase && (char *)(va) < intiolimit)
+#define	IIOV(pa)	((int)(pa)-(int)iiomapbase+(int)intiobase)
+#define	IIOP(va)	((int)(va)-(int)intiobase+(int)iiomapbase)
+#define	IIOPOFF(pa)	((int)(pa)-(int)iiomapbase)
+
+#else
+
+#define	ISIIOVA(va) 1
+#define ackbarf	((char *)(va) >= OBIO_START && (char *)(va) < (OBIO_START + OBIO_SIZE))
+#define	IIOV(pa)	((pa))
+#define	IIOP(va)	((va))
+#define	IIOPOFF(pa)	((int)(pa)-(int)OBIO_START)
+#endif
+
 #define SIR_NET		1
 #define SIR_CLOCK	2
 
+#define setsoftint(x)	(ssir |= (x))
 #define setsoftnet()	(ssir |= SIR_NET)
 #define setsoftclock()	(ssir |= SIR_CLOCK)
 

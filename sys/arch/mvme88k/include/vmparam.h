@@ -67,6 +67,13 @@
 #endif
 
 /*
+ * External IO space map size.
+ */
+#ifndef EIOMAPSIZE
+#define EIOMAPSIZE	1024		/* in pages */
+#endif
+
+/*
  * Default sizes of swap allocation chunks (see dmap.h).
  * The actual values may be changed in vminit() based on MAXDSIZ.
  * With MAXDSIZ of 16Mb and NDMAP of 38, dmmax will be 1024.

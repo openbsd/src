@@ -24,21 +24,21 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
-
 #ifndef UNDEFINED
-# define UNDEFINED unknown_handler
+# define UNDEFINED _unknown_handler
+/* vector 0x00 (#0)     word   _address_handler */
 #endif
-/* vector 0x00 (#0)   */  word   error_handler
-/* vector 0x01 (#1)   */  word   interrupt_handler
-/* vector 0x02 (#2)   */  word   instruction_access_handler
-/* vector 0x03 (#3)   */  word   data_exception_handler
-/* vector 0x04 (#4)   */  word   misaligned_handler
-/* vector 0x05 (#5)   */  word   unimplemented_handler
-/* vector 0x06 (#6)   */  word   privilege_handler
-/* vector 0x07 (#7)   */  word   bounds_handler
-/* vector 0x08 (#8)   */  word   divide_handler
-/* vector 0x09 (#9)   */  word   overflow_handler
-/* vector 0x0a (#10)  */  word   error_handler
+/* vector 0x00 (#0)   */  word   _reset_handler
+/* vector 0x01 (#1)   */  word   _interrupt_handler
+/* vector 0x02 (#2)   */  word   _instruction_access_handler
+/* vector 0x03 (#3)   */  word   _data_exception_handler
+/* vector 0x04 (#4)   */  word   _misaligned_handler
+/* vector 0x05 (#5)   */  word   _unimplemented_handler
+/* vector 0x06 (#6)   */  word   _privilege_handler
+/* vector 0x07 (#7)   */  word   _bounds_handler
+/* vector 0x08 (#8)   */  word   _divide_handler
+/* vector 0x09 (#9)   */  word   _overflow_handler
+/* vector 0x0a (#10)  */  word   _error_handler
 /* vector 0x0b (#11)  */  word   UNDEFINED
 /* vector 0x0c (#12)  */  word   UNDEFINED
 /* vector 0x0d (#13)  */  word   UNDEFINED
@@ -144,23 +144,23 @@
 /* vector 0x71 (#113) */  word   UNDEFINED
 /* vector 0x72 (#114) */  word   fp_precise_handler
 /* vector 0x73 (#115) */  word   fp_imprecise_handler
-/* vector 0x74 (#116) */  word   unimplemented_handler
+/* vector 0x74 (#116) */  word   _unimplemented_handler
 /* vector 0x75 (#117) */  word   UNDEFINED
-/* vector 0x76 (#118) */  word   unimplemented_handler
+/* vector 0x76 (#118) */  word   _unimplemented_handler
 /* vector 0x77 (#119) */  word   UNDEFINED
-/* vector 0x78 (#120) */  word   unimplemented_handler
+/* vector 0x78 (#120) */  word   _unimplemented_handler
 /* vector 0x79 (#121) */  word   UNDEFINED
-/* vector 0x7a (#122) */  word   unimplemented_handler
+/* vector 0x7a (#122) */  word   _unimplemented_handler
 /* vector 0x7b (#123) */  word   UNDEFINED
-/* vector 0x7c (#124) */  word   unimplemented_handler
+/* vector 0x7c (#124) */  word   _unimplemented_handler
 /* vector 0x7d (#125) */  word   UNDEFINED
-/* vector 0x7e (#126) */  word   unimplemented_handler
+/* vector 0x7e (#126) */  word   _unimplemented_handler
 /* vector 0x7f (#127) */  word   UNDEFINED
 /* vector 0x80 (#128) */  word   _syscall_handler
 /* vector 0x81 (#129) */  word   _syscall_handler
 /* vector 0x82 (#130) */  word   break
 /* vector 0x83 (#131) */  word   trace
-/* vector 0x84 (#132) */  word   entry
+/* vector 0x84 (#132) */  word   _entry
 #if defined(RAW_PRINTF) && RAW_PRINTF
 /* vector 0x85 (#133) */  word   user_raw_putstr /* for USER raw_printf() */
 /* vector 0x85 (#134) */  word   user_raw_xpr 	 /* for USER raw_xpr() */

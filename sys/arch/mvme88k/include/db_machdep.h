@@ -39,7 +39,7 @@
 #include <vm/vm_prot.h>
 #include <vm/vm_param.h>
 #include <vm/vm_inherit.h>
-#include <vm/lock.h>
+/*#include <vm/lock.h>*/
 #include <machine/pcb.h>	/* m88100_saved_state */
 #include <machine/psl.h>
 #include <machine/trap.h>
@@ -96,8 +96,8 @@ extern int db_noisy;
 extern int quiet_db_read_bytes;
 
 /* These versions are not constantly doing SPL */
-#define	cnmaygetc	db_getc
-#define	cngetc		db_getc
+/*#define	cnmaygetc	db_getc*/
+/*#define	cngetc		db_getc*/
 #define	cnputc		db_putc
 
 /* breakpoint/watchpoint foo */

@@ -36,7 +36,7 @@
 
 /* Define EH_DEBUG to be non-zero to compile-in various debugging things */
 #ifndef	EH_DEBUG
-#define EH_DEBUG 0
+#define EH_DEBUG 1
 #endif	EH_DEBUG
 
 #if 0
@@ -48,7 +48,7 @@
     .align 8; .globl FUNC(NAME); FUNC(NAME):
     
 
-#define  LABEL(name)	name:;  .globl name ;
+#define  LABEL(name)	 name:  .globl name ;
 /*
  * _LABEL(name)
  *	Defines one visible only to the file, unless debugging
@@ -102,7 +102,11 @@
  * instruction always synchronizes, and this particular instruction
  * will never actually take the trap).
  */
+#if 0
+#define FLUSH_PIPELINE	tcnd	ne0, r0, 0
+#else
 #define FLUSH_PIPELINE	tb1 0, r0, 0
+#endif
 #define NOP		or r0, r0, r0
 
 /*

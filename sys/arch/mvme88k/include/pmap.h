@@ -32,7 +32,7 @@ struct pmap {
     sdt_ptr_t		sdt_paddr;	/* physical pointer to sdt */
     sdt_ptr_t		sdt_vaddr;	/* virtual pointer to sdt */
     int			ref_count;	/* reference count */
-
+    simple_lock_data_t	lock;
     struct pmap_statistics stats;	/* pmap statistics */
 
 #ifdef DEBUG

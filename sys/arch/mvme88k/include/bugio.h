@@ -61,10 +61,10 @@ struct bugniocall {
 #define	NETCTRL_RX		3
 #define	NETCTRL_FLUSH		4
 #define	NETCTRL_RESET		5
-	unsigned int  cid;
-	unsigned int  memaddr;
-	unsigned int  nbytes;
-	unsigned int  csword;
+	unsigned long cid;
+	unsigned long memaddr;
+	unsigned long nbytes;
+	unsigned long csword;
 };
 
 char buginchr	__P((void));
