@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.73 2003/02/22 06:56:20 kjell Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.74 2003/03/03 16:51:38 ho Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -1023,3 +1023,8 @@ configuration files.
 .Xr keynote 4 ,
 .Xr isakmpd.policy 5 ,
 .Xr isakmpd 8
+.Sh BUGS
+The RFCs do not permit differing DH groups in the same proposal for
+aggressive and quick mode exchanges.
+Mixing both PFS and non-PFS suites in a quick mode proposal is not possible,
+as PFS implies using a DH group.
