@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_lebuffer.c,v 1.4 2003/07/07 15:37:07 jason Exp $	*/
+/*	$OpenBSD: if_le_lebuffer.c,v 1.5 2003/07/25 03:50:56 jason Exp $	*/
 /*	$NetBSD: if_le_lebuffer.c,v 1.10 2002/03/11 16:00:56 pk Exp $	*/
 
 /*-
@@ -155,7 +155,7 @@ leattach_lebuffer(struct device *parent, struct device *self, void *aux)
 	if (sbus_bus_map(sa->sa_bustag,
 	    sa->sa_slot, sa->sa_offset, sa->sa_size,
 	    0, 0, &lesc->sc_reg)) {
-		printf(": cannot map registers\n", self->dv_xname);
+		printf(": cannot map registers\n");
 		return;
 	}
 
