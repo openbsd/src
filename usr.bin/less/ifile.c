@@ -1,29 +1,11 @@
-/*	$OpenBSD: ifile.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
-
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -48,7 +30,8 @@ struct ifile {
 	char *h_filename;		/* Name of the file */
 	void *h_filestate;		/* File state (used in ch.c) */
 	int h_index;			/* Index within command line list */
-	int h_opened;			/* Only need one bit */
+	int h_hold;			/* Hold count */
+	char h_opened;			/* Has this ifile been opened? */
 	struct scrpos h_scrpos;		/* Saved position within the file */
 };
 
@@ -62,18 +45,22 @@ struct ifile {
 /*
  * Anchor for linked list.
  */
-static struct ifile anchor = { &anchor, &anchor, 0 };
+static struct ifile anchor = { &anchor, &anchor, NULL, NULL, 0, 0, '\0',
+				{ NULL_POSITION, 0 } };
 static int ifiles = 0;
 
 	static void
 incr_index(p, incr)
-	struct ifile *p;
+	register struct ifile *p;
 	int incr;
 {
 	for (;  p != &anchor;  p = p->h_next)
 		p->h_index += incr;
 }
 
+/*
+ * Link an ifile into the ifile list.
+ */
 	static void
 link_ifile(p, prev)
 	struct ifile *p;
@@ -97,6 +84,9 @@ link_ifile(p, prev)
 	ifiles++;
 }
 	
+/*
+ * Unlink an ifile from the ifile list.
+ */
 	static void
 unlink_ifile(p)
 	struct ifile *p;
@@ -118,7 +108,7 @@ new_ifile(filename, prev)
 	char *filename;
 	struct ifile *prev;
 {
-	struct ifile *p;
+	register struct ifile *p;
 
 	/*
 	 * Allocate and initialize structure.
@@ -127,6 +117,8 @@ new_ifile(filename, prev)
 	p->h_filename = save(filename);
 	p->h_scrpos.pos = NULL_POSITION;
 	p->h_opened = 0;
+	p->h_hold = 0;
+	p->h_filestate = NULL;
 	link_ifile(p, prev);
 	return (p);
 }
@@ -138,7 +130,7 @@ new_ifile(filename, prev)
 del_ifile(h)
 	IFILE h;
 {
-	struct ifile *p;
+	register struct ifile *p;
 
 	if (h == NULL_IFILE)
 		return;
@@ -146,6 +138,7 @@ del_ifile(h)
 	 * If the ifile we're deleting is the currently open ifile,
 	 * move off it.
 	 */
+	unmark(h);
 	if (h == curr_ifile)
 		curr_ifile = getoff_ifile(curr_ifile);
 	p = int_ifile(h);
@@ -161,7 +154,7 @@ del_ifile(h)
 next_ifile(h)
 	IFILE h;
 {
-	struct ifile *p;
+	register struct ifile *p;
 
 	p = (h == NULL_IFILE) ? &anchor : int_ifile(h);
 	if (p->h_next == &anchor)
@@ -176,7 +169,7 @@ next_ifile(h)
 prev_ifile(h)
 	IFILE h;
 {
-	struct ifile *p;
+	register struct ifile *p;
 
 	p = (h == NULL_IFILE) ? &anchor : int_ifile(h);
 	if (p->h_prev == &anchor)
@@ -216,7 +209,7 @@ nifile()
 find_ifile(filename)
 	char *filename;
 {
-	struct ifile *p;
+	register struct ifile *p;
 
 	for (p = anchor.h_next;  p != &anchor;  p = p->h_next)
 		if (strcmp(filename, p->h_filename) == 0)
@@ -234,7 +227,7 @@ get_ifile(filename, prev)
 	char *filename;
 	IFILE prev;
 {
-	struct ifile *p;
+	register struct ifile *p;
 
 	if ((p = find_ifile(filename)) == NULL)
 		p = new_ifile(filename, int_ifile(prev));
@@ -306,6 +299,21 @@ opened(ifile)
 	return (int_ifile(ifile)->h_opened);
 }
 
+	public void
+hold_ifile(ifile, incr)
+	IFILE ifile;
+	int incr;
+{
+	int_ifile(ifile)->h_hold += incr;
+}
+
+	public int
+held_ifile(ifile)
+	IFILE ifile;
+{
+	return (int_ifile(ifile)->h_hold);
+}
+
 	public void *
 get_filestate(ifile)
 	IFILE ifile;
@@ -325,7 +333,7 @@ set_filestate(ifile, filestate)
 	public void
 if_dump()
 {
-	struct ifile *p;
+	register struct ifile *p;
 
 	for (p = anchor.h_next;  p != &anchor;  p = p->h_next)
 	{

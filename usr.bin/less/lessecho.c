@@ -28,7 +28,7 @@
 
 #include "less.h"
 
-static char *version = "$Revision: 1.1.1.1 $";
+static char *version = "$Revision: 1.2 $";
 
 static int quote_all = 0;
 static char openquote = '"';

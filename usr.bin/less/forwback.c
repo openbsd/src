@@ -1,29 +1,11 @@
-/*	$OpenBSD: forwback.c,v 1.4 2001/11/19 19:02:14 mpech Exp $	*/
-
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -38,18 +20,19 @@
 public int hit_eof;	/* Keeps track of how many times we hit end of file */
 public int screen_trashed;
 public int squished;
+public int no_back_scroll = 0;
 
 extern int sigs;
 extern int top_scroll;
 extern int quiet;
 extern int sc_width, sc_height;
 extern int quit_at_eof;
-extern int less_mode;
 extern int plusoption;
 extern int forw_scroll;
 extern int back_scroll;
-extern int need_clr;
 extern int ignore_eoi;
+extern int clear_bg;
+extern int final_attr;
 #if TAGS
 extern char *tagoption;
 #endif
@@ -114,7 +97,7 @@ squish_check()
  */
 	public void
 forw(n, pos, force, only_last, nblank)
-	int n;
+	register int n;
 	POSITION pos;
 	int force;
 	int only_last;
@@ -141,6 +124,13 @@ forw(n, pos, force, only_last, nblank)
 
 	if (!do_repaint)
 	{
+		/*
+		 * Forget any current line shift we might have
+		 * (from the last line of the previous screenful).
+		 */
+		extern int cshift;
+		cshift = 0;
+
 		if (top_scroll && n >= sc_height - 1 && pos != ch_length())
 		{
 			/*
@@ -149,10 +139,12 @@ forw(n, pos, force, only_last, nblank)
 			 *    to hit eof in the middle of this screen,
 			 *    but we don't yet know if that will happen. }}
 			 */
+			pos_clear();
+			add_forw_pos(pos);
+			force = 1;
 			if (top_scroll == OPT_ONPLUS || first_time)
 				clear();
 			home();
-			force = 1;
 		} else
 		{
 			clear_bot();
@@ -206,9 +198,15 @@ forw(n, pos, force, only_last, nblank)
 				/*
 				 * End of file: stop here unless the top line 
 				 * is still empty, or "force" is true.
+				 * Even if force is true, stop when the last
+				 * line in the file reaches the top of screen.
 				 */
 				eof = 1;
 				if (!force && position(TOP) != NULL_POSITION)
+					break;
+				if (!empty_lines(0, 0) && 
+				    !empty_lines(1, 1) &&
+				     empty_lines(2, sc_height-1))
 					break;
 			}
 		}
@@ -239,9 +237,20 @@ forw(n, pos, force, only_last, nblank)
 			squished = 1;
 			continue;
 		}
-		if (top_scroll == 1)
+		if (top_scroll == OPT_ON)
 			clear_eol();
 		put_line();
+		if (clear_bg && final_attr != AT_NORMAL)
+		{
+			/*
+			 * Writing the last character on the last line
+			 * of the display may have scrolled the screen.
+			 * If we were in standout mode, clear_bg terminals 
+			 * will fill the new line with the standout color.
+			 * Now we're in normal mode again, so clear the line.
+			 */
+			clear_eol();
+		}
 	}
 
 	if (ignore_eoi)
@@ -263,7 +272,7 @@ forw(n, pos, force, only_last, nblank)
  */
 	public void
 back(n, pos, force, only_last)
-	int n;
+	register int n;
 	POSITION pos;
 	int force;
 	int only_last;
@@ -322,7 +331,7 @@ forward(n, force, only_last)
 {
 	POSITION pos;
 
-	if (quit_at_eof && hit_eof)
+	if (quit_at_eof && hit_eof && !(ch_getflags() & CH_HELPFILE))
 	{
 		/*
 		 * If the -e flag is set and we're trying to go
@@ -353,7 +362,8 @@ forward(n, force, only_last)
 					pos = position(BOTTOM_PLUS_ONE);
 				} while (pos == NULL_POSITION);
 			}
-		} else {
+		} else
+		{
 			eof_bell();
 			hit_eof++;
 			return;
@@ -392,6 +402,8 @@ backward(n, force, only_last)
 	public int
 get_back_scroll()
 {
+	if (no_back_scroll)
+		return (0);
 	if (back_scroll >= 0)
 		return (back_scroll);
 	if (top_scroll)

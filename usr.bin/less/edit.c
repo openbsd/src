@@ -1,29 +1,11 @@
-/*	$OpenBSD: edit.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
-
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -33,15 +15,20 @@ public int fd0 = 0;
 
 extern int new_file;
 extern int errmsgs;
-extern int quit_at_eof;
 extern int cbufs;
 extern char *every_first_cmd;
 extern int any_display;
 extern int force_open;
 extern int is_tty;
+extern int sigs;
 extern IFILE curr_ifile;
 extern IFILE old_ifile;
 extern struct scrpos initial_scrpos;
+extern void constant *ml_examine;
+#if SPACES_IN_FILENAMES
+extern char openquote;
+extern char closequote;
+#endif
 
 #if LOGFILE
 extern int logfile;
@@ -66,13 +53,41 @@ init_textlist(tlist, str)
 	char *str;
 {
 	char *s;
+#if SPACES_IN_FILENAMES
+	int meta_quoted = 0;
+	int delim_quoted = 0;
+	char *esc = get_meta_escape();
+	int esclen = strlen(esc);
+#endif
 	
 	tlist->string = skipsp(str);
 	tlist->endstring = tlist->string + strlen(tlist->string);
 	for (s = str;  s < tlist->endstring;  s++)
 	{
+#if SPACES_IN_FILENAMES
+		if (meta_quoted)
+		{
+			meta_quoted = 0;
+		} else if (esclen > 0 && s + esclen < tlist->endstring &&
+		           strncmp(s, esc, esclen) == 0)
+		{
+			meta_quoted = 1;
+			s += esclen - 1;
+		} else if (delim_quoted)
+		{
+			if (*s == closequote)
+				delim_quoted = 0;
+		} else /* (!delim_quoted) */
+		{
+			if (*s == openquote)
+				delim_quoted = 1;
+			else if (*s == ' ')
+				*s = '\0';
+		}
+#else
 		if (*s == ' ')
 			*s = '\0';
+#endif
 	}
 }
 
@@ -136,6 +151,7 @@ close_file()
 	
 	if (curr_ifile == NULL_IFILE)
 		return;
+
 	/*
 	 * Save the current position so that we can return to
 	 * the same position if we edit this file again.
@@ -157,7 +173,7 @@ close_file()
 	if (curr_altfilename != NULL)
 	{
 		close_altfile(curr_altfilename, get_filename(curr_ifile),
-			curr_altpipe);
+				curr_altpipe);
 		free(curr_altfilename);
 		curr_altfilename = NULL;
 	}
@@ -192,6 +208,7 @@ edit_ifile(ifile)
 	int chflags;
 	char *filename;
 	char *open_filename;
+	char *qopen_filename;
 	char *alt_filename;
 	void *alt_pipe;
 	IFILE was_curr_ifile;
@@ -215,10 +232,19 @@ edit_ifile(ifile)
 #if LOGFILE
 	end_logfile();
 #endif
-	was_curr_ifile = curr_ifile;
+	was_curr_ifile = save_curr_ifile();
 	if (curr_ifile != NULL_IFILE)
 	{
+		chflags = ch_getflags();
 		close_file();
+		if ((chflags & CH_HELPFILE) && held_ifile(was_curr_ifile) <= 1)
+		{
+			/*
+			 * Don't keep the help file in the ifile list.
+			 */
+			del_ifile(was_curr_ifile);
+			was_curr_ifile = old_ifile;
+		}
 	}
 
 	if (ifile == NULL_IFILE)
@@ -229,16 +255,18 @@ edit_ifile(ifile)
 		 *  you're supposed to have saved curr_ifile yourself,
 		 *  and you'll restore it if necessary.)
 		 */
+		unsave_ifile(was_curr_ifile);
 		return (0);
 	}
 
-	filename = get_filename(ifile);
+	filename = save(get_filename(ifile));
 	/*
 	 * See if LESSOPEN specifies an "alternate" file to open.
 	 */
 	alt_pipe = NULL;
 	alt_filename = open_altfile(filename, &f, &alt_pipe);
 	open_filename = (alt_filename != NULL) ? alt_filename : filename;
+	qopen_filename = shell_unquote(open_filename);
 
 	chflags = 0;
 	if (alt_pipe != NULL)
@@ -259,6 +287,22 @@ edit_ifile(ifile)
 		 */
 		f = fd0;
 		chflags |= CH_KEEPOPEN;
+		/*
+		 * Must switch stdin to BINARY mode.
+		 */
+		SET_BINARY(f);
+#if MSDOS_COMPILER==DJGPPC
+		/*
+		 * Setting stdin to binary by default causes
+		 * Ctrl-C to not raise SIGINT.  We must undo
+		 * that side-effect.
+		 */
+		__djgpp_set_ctrl_c(1);
+#endif
+	} else if (strcmp(open_filename, FAKE_HELPFILE) == 0)
+	{
+		f = -1;
+		chflags |= CH_HELPFILE;
 	} else if ((parg.p_string = bad_file(open_filename)) != NULL)
 	{
 		/*
@@ -273,12 +317,14 @@ edit_ifile(ifile)
 			free(alt_filename);
 		}
 		del_ifile(ifile);
+		free(qopen_filename);
+		free(filename);
 		/*
 		 * Re-open the current file.
 		 */
-		(void) edit_ifile(was_curr_ifile);
+		reedit_ifile(was_curr_ifile);
 		return (1);
-	} else if ((f = open(open_filename, OPEN_READ)) < 0)
+	} else if ((f = open(qopen_filename, OPEN_READ)) < 0)
 	{
 		/*
 		 * Got an error trying to open it.
@@ -287,27 +333,36 @@ edit_ifile(ifile)
 		error("%s", &parg);
 		free(parg.p_string);
 	    	goto err1;
-	} else if (!force_open && !opened(ifile) && bin_file(f))
+	} else 
 	{
-		/*
-		 * Looks like a binary file.  Ask user if we should proceed.
-		 */
-		parg.p_string = filename;
-		answer = query("\"%s\" may be a binary file.  See it anyway? ",
-			&parg);
-		if (answer != 'y' && answer != 'Y')
+		chflags |= CH_CANSEEK;
+		if (!force_open && !opened(ifile) && bin_file(f))
 		{
-			close(f);
-			goto err1;
+			/*
+			 * Looks like a binary file.  
+			 * Ask user if we should proceed.
+			 */
+			parg.p_string = filename;
+			answer = query("\"%s\" may be a binary file.  See it anyway? ",
+				&parg);
+			if (answer != 'y' && answer != 'Y')
+			{
+				close(f);
+				goto err1;
+			}
 		}
 	}
+	free(qopen_filename);
 
 	/*
 	 * Get the new ifile.
 	 * Get the saved position for the file.
 	 */
 	if (was_curr_ifile != NULL_IFILE)
+	{
 		old_ifile = was_curr_ifile;
+		unsave_ifile(was_curr_ifile);
+	}
 	curr_ifile = ifile;
 	curr_altfilename = alt_filename;
 	curr_altpipe = alt_pipe;
@@ -315,13 +370,16 @@ edit_ifile(ifile)
 	get_pos(curr_ifile, &initial_scrpos);
 	new_file = TRUE;
 	ch_init(f, chflags);
-#if LOGFILE
-	if (namelogfile != NULL && is_tty)
-		use_logfile(namelogfile);
-#endif
 
-	if (every_first_cmd != NULL)
-		ungetsc(every_first_cmd);
+	if (!(chflags & CH_HELPFILE))
+	{
+#if LOGFILE
+		if (namelogfile != NULL && is_tty)
+			use_logfile(namelogfile);
+#endif
+		if (every_first_cmd != NULL)
+			ungetsc(every_first_cmd);
+	}
 
 	no_display = !any_display;
 	flush();
@@ -341,6 +399,7 @@ edit_ifile(ifile)
 #if HILITE_SEARCH
 		clr_hilite();
 #endif
+		cmd_addhist(ml_examine, filename);
 		if (no_display && errmsgs > 0)
 		{
 			/*
@@ -353,6 +412,7 @@ edit_ifile(ifile)
 			error("%s", &parg);
 		}
 	}
+	free(filename);
 	return (0);
 }
 
@@ -365,7 +425,7 @@ edit_ifile(ifile)
 edit_list(filelist)
 	char *filelist;
 {
-	IFILE save_curr_ifile;
+	IFILE save_ifile;
 	char *good_filename;
 	char *filename;
 	char *gfilelist;
@@ -373,7 +433,7 @@ edit_list(filelist)
 	struct textlist tl_files;
 	struct textlist tl_gfiles;
 
-	save_curr_ifile = curr_ifile;
+	save_ifile = save_curr_ifile();
 	good_filename = NULL;
 	
 	/*
@@ -386,7 +446,7 @@ edit_list(filelist)
 	filename = NULL;
 	while ((filename = forw_textlist(&tl_files, filename)) != NULL)
 	{
-		gfilelist = glob(filename);
+		gfilelist = lglob(filename);
 		init_textlist(&tl_gfiles, gfilelist);
 		gfilename = NULL;
 		while ((gfilename = forw_textlist(&tl_gfiles, gfilename)) != NULL)
@@ -400,14 +460,19 @@ edit_list(filelist)
 	 * Edit the first valid filename in the list.
 	 */
 	if (good_filename == NULL)
+	{
+		unsave_ifile(save_ifile);
 		return (1);
+	}
 	if (get_ifile(good_filename, curr_ifile) == curr_ifile)
+	{
 		/*
 		 * Trying to edit the current file; don't reopen it.
 		 */
+		unsave_ifile(save_ifile);
 		return (0);
-	if (edit_ifile(save_curr_ifile))
-		quit(QUIT_ERROR);
+	}
+	reedit_ifile(save_ifile);
 	return (edit(good_filename));
 }
 
@@ -433,22 +498,22 @@ edit_last()
 
 
 /*
- * Edit the next file in the command line (ifile) list.
+ * Edit the next or previous file in the command line (ifile) list.
  */
-	public int
-edit_next(n)
-	int n;
-{
+	static int
+edit_istep(h, n, dir)
 	IFILE h;
+	int n;
+	int dir;
+{
 	IFILE next;
 
-	h = curr_ifile;
 	/*
 	 * Skip n filenames, then try to edit each filename.
 	 */
 	for (;;)
 	{
-		next = next_ifile(h);
+		next = (dir > 0) ? next_ifile(h) : prev_ifile(h);
 		if (--n < 0)
 		{
 			if (edit_ifile(h) == 0)
@@ -461,40 +526,11 @@ edit_next(n)
 			 */
 			return (1);
 		}
-		h = next;
-	} 
-	/*
-	 * Found a file that we can edit.
-	 */
-	return (0);
-}
-
-/*
- * Edit the previous file in the command line list.
- */
-	public int
-edit_prev(n)
-	int n;
-{
-	IFILE h;
-	IFILE next;
-
-	h = curr_ifile;
-	/*
-	 * Skip n filenames, then try to edit each filename.
-	 */
-	for (;;)
-	{
-		next = prev_ifile(h);
-		if (--n < 0)
-		{
-			if (edit_ifile(h) == 0)
-				break;
-		}
-		if (next == NULL_IFILE)
+		if (ABORT_SIGS())
 		{
 			/*
-			 * Reached beginning of the ifile list.
+			 * Interrupt breaks out, if we're in a long
+			 * list of files that can't be opened.
 			 */
 			return (1);
 		}
@@ -504,6 +540,36 @@ edit_prev(n)
 	 * Found a file that we can edit.
 	 */
 	return (0);
+}
+
+	static int
+edit_inext(h, n)
+	IFILE h;
+	int n;
+{
+	return (edit_istep(h, n, 1));
+}
+
+	public int
+edit_next(n)
+	int n;
+{
+	return edit_istep(curr_ifile, n, 1);
+}
+
+	static int
+edit_iprev(h, n)
+	IFILE h;
+	int n;
+{
+	return (edit_istep(h, n, -1));
+}
+
+	public int
+edit_prev(n)
+	int n;
+{
+	return edit_istep(curr_ifile, n, -1);
 }
 
 /*
@@ -530,6 +596,59 @@ edit_index(n)
 	return (edit_ifile(h));
 }
 
+	public IFILE
+save_curr_ifile()
+{
+	if (curr_ifile != NULL_IFILE)
+		hold_ifile(curr_ifile, 1);
+	return (curr_ifile);
+}
+
+	public void
+unsave_ifile(save_ifile)
+	IFILE save_ifile;
+{
+	if (save_ifile != NULL_IFILE)
+		hold_ifile(save_ifile, -1);
+}
+
+/*
+ * Reedit the ifile which was previously open.
+ */
+	public void
+reedit_ifile(save_ifile)
+	IFILE save_ifile;
+{
+	IFILE next;
+	IFILE prev;
+
+	/*
+	 * Try to reopen the ifile.
+	 * Note that opening it may fail (maybe the file was removed),
+	 * in which case the ifile will be deleted from the list.
+	 * So save the next and prev ifiles first.
+	 */
+	unsave_ifile(save_ifile);
+	next = next_ifile(save_ifile);
+	prev = prev_ifile(save_ifile);
+	if (edit_ifile(save_ifile) == 0)
+		return;
+	/*
+	 * If can't reopen it, open the next input file in the list.
+	 */
+	if (next != NULL_IFILE && edit_inext(next, 0) == 0)
+		return;
+	/*
+	 * If can't open THAT one, open the previous input file in the list.
+	 */
+	if (prev != NULL_IFILE && edit_iprev(prev, 0) == 0)
+		return;
+	/*
+	 * If can't even open that, we're stuck.  Just quit.
+	 */
+	quit(QUIT_ERROR);
+}
+
 /*
  * Edit standard input.
  */
@@ -538,11 +657,7 @@ edit_stdin()
 {
 	if (isatty(fd0))
 	{
-#if MSOFTC || OS2
-		error("Missing filename (\"less -?\" for help)", NULL_PARG);
-#else
-		error("Missing filename (\"less -\\?\" for help)", NULL_PARG);
-#endif
+		error("Missing filename (\"less --help\" for help)", NULL_PARG);
 		quit(QUIT_OK);
 	}
 	return (edit("-"));
@@ -555,7 +670,7 @@ edit_stdin()
 	public void
 cat_file()
 {
-	int c;
+	register int c;
 
 	while ((c = ch_forw_get()) != EOI)
 		putchr(c);
@@ -573,8 +688,8 @@ cat_file()
 use_logfile(filename)
 	char *filename;
 {
-	int exists;
-	int answer;
+	register int exists;
+	register int answer;
 	PARG parg;
 
 	if (ch_getflags() & CH_CANSEEK)
@@ -586,6 +701,7 @@ use_logfile(filename)
 	/*
 	 * {{ We could use access() here. }}
 	 */
+	filename = shell_unquote(filename);
 	exists = open(filename, OPEN_READ);
 	close(exists);
 	exists = (exists >= 0);
@@ -633,6 +749,7 @@ loop:
 		/*
 		 * Don't do anything.
 		 */
+		free(filename);
 		return;
 	case 'q':
 		quit(QUIT_OK);
@@ -652,7 +769,11 @@ loop:
 		 */
 		parg.p_string = filename;
 		error("Cannot write to \"%s\"", &parg);
+		free(filename);
+		return;
 	}
+	free(filename);
+	SET_BINARY(logfile);
 }
 
 #endif

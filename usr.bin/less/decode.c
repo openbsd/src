@@ -1,29 +1,11 @@
-/*	$OpenBSD: decode.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
-
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -53,24 +35,30 @@
 #include "lesskey.h"
 
 extern int erase_char, kill_char;
+extern int secure;
 
+#define SK(k) \
+	SK_SPECIAL_KEY, (k), 6, 1, 1, 1
 /*
  * Command table is ordered roughly according to expected
  * frequency of use, so the common commands are near the beginning.
  */
+
 static unsigned char cmdtable[] =
 {
 	'\r',0,				A_F_LINE,
 	'\n',0,				A_F_LINE,
 	'e',0,				A_F_LINE,
 	'j',0,				A_F_LINE,
+	SK(SK_DOWN_ARROW),0,		A_F_LINE,
 	CONTROL('E'),0,			A_F_LINE,
 	CONTROL('N'),0,			A_F_LINE,
 	'k',0,				A_B_LINE,
 	'y',0,				A_B_LINE,
 	CONTROL('Y'),0,			A_B_LINE,
-	CONTROL('K'),0,			A_B_LINE,
+	SK(SK_CONTROL_K),0,		A_B_LINE,
 	CONTROL('P'),0,			A_B_LINE,
+	SK(SK_UP_ARROW),0,		A_B_LINE,
 	'J',0,				A_FF_LINE,
 	'K',0,				A_BF_LINE,
 	'Y',0,				A_BF_LINE,
@@ -82,11 +70,14 @@ static unsigned char cmdtable[] =
 	'f',0,				A_F_SCREEN,
 	CONTROL('F'),0,			A_F_SCREEN,
 	CONTROL('V'),0,			A_F_SCREEN,
+	SK(SK_PAGE_DOWN),0,		A_F_SCREEN,
 	'b',0,				A_B_SCREEN,
 	CONTROL('B'),0,			A_B_SCREEN,
 	ESC,'v',0,			A_B_SCREEN,
+	SK(SK_PAGE_UP),0,		A_B_SCREEN,
 	'z',0,				A_F_WINDOW,
 	'w',0,				A_B_WINDOW,
+	ESC,' ',0,			A_FF_SCREEN,
 	'F',0,				A_F_FOREVER,
 	'R',0,				A_FREPAINT,
 	'r',0,				A_REPAINT,
@@ -94,10 +85,17 @@ static unsigned char cmdtable[] =
 	CONTROL('L'),0,			A_REPAINT,
 	ESC,'u',0,			A_UNDO_SEARCH,
 	'g',0,				A_GOLINE,
+	SK(SK_HOME),0,			A_GOLINE,
 	'<',0,				A_GOLINE,
 	ESC,'<',0,			A_GOLINE,
 	'p',0,				A_PERCENT,
 	'%',0,				A_PERCENT,
+	ESC,'[',0,			A_LSHIFT,
+	ESC,']',0,			A_RSHIFT,
+	ESC,'(',0,			A_LSHIFT,
+	ESC,')',0,			A_RSHIFT,
+	SK(SK_RIGHT_ARROW),0,		A_RSHIFT,
+	SK(SK_LEFT_ARROW),0,		A_LSHIFT,
 	'{',0,				A_F_BRACKET|A_EXTRA,	'{','}',0,
 	'}',0,				A_B_BRACKET|A_EXTRA,	'{','}',0,
 	'(',0,				A_F_BRACKET|A_EXTRA,	'(',')',0,
@@ -109,6 +107,7 @@ static unsigned char cmdtable[] =
 	'G',0,				A_GOEND,
 	ESC,'>',0,			A_GOEND,
 	'>',0,				A_GOEND,
+	SK(SK_END),0,			A_GOEND,
 	'P',0,				A_GOPOS,
 
 	'0',0,				A_DIGIT,
@@ -141,7 +140,10 @@ static unsigned char cmdtable[] =
 	CONTROL('X'),CONTROL('V'),0,	A_EXAMINE,
 	':','n',0,			A_NEXT_FILE,
 	':','p',0,			A_PREV_FILE,
+	't',0,				A_NEXT_TAG,
+	'T',0,				A_PREV_TAG,
 	':','x',0,			A_INDEX_FILE,
+	':','d',0,			A_REMOVE_FILE,
 	'-',0,				A_OPT_TOGGLE,
 	':','t',0,			A_OPT_TOGGLE|A_EXTRA,	't',0,
 	's',0,				A_OPT_TOGGLE|A_EXTRA,	'o',0,
@@ -153,8 +155,10 @@ static unsigned char cmdtable[] =
 
 	'H',0,				A_HELP,
 	'h',0,				A_HELP,
+	SK(SK_F1),0,			A_HELP,
 	'V',0,				A_VERSION,
 	'q',0,				A_QUIT,
+	'Q',0,				A_QUIT,
 	':','q',0,			A_QUIT,
 	':','Q',0,			A_QUIT,
 	'Z','Z',0,			A_QUIT
@@ -162,24 +166,40 @@ static unsigned char cmdtable[] =
 
 static unsigned char edittable[] =
 {
-	'\t',0,	    		EC_F_COMPLETE,	/* TAB */
-	'\17',0,		EC_B_COMPLETE,	/* BACKTAB */
-	'\14',0,		EC_EXPAND,	/* CTRL-L */
-	CONTROL('V'),0,		EC_LITERAL,	/* BACKSLASH */
-	CONTROL('A'),0,		EC_LITERAL,	/* BACKSLASH */
-   	ESC,'l',0,		EC_RIGHT,	/* ESC l */
-	ESC,'h',0,		EC_LEFT,	/* ESC h */
-	ESC,'b',0,		EC_W_LEFT,	/* ESC b */
-	ESC,'w',0,		EC_W_RIGHT,	/* ESC w */
-	ESC,'i',0,		EC_INSERT,	/* ESC i */
-	ESC,'x',0,		EC_DELETE,	/* ESC x */
-	ESC,'X',0,		EC_W_DELETE,	/* ESC X */
-	ESC,'\b',0,		EC_W_BACKSPACE,	/* ESC BACKSPACE */
-	ESC,'0',0,		EC_HOME,	/* ESC 0 */
-	ESC,'$',0,		EC_END,		/* ESC $ */
-	ESC,'k',0,		EC_UP,		/* ESC k */
-	ESC,'j',0,		EC_DOWN,	/* ESC j */
-	ESC,'\t',0,		EC_B_COMPLETE	/* ESC TAB */
+	'\t',0,	    			EC_F_COMPLETE,	/* TAB */
+	'\17',0,			EC_B_COMPLETE,	/* BACKTAB */
+	SK(SK_BACKTAB),0,		EC_B_COMPLETE,	/* BACKTAB */
+	ESC,'\t',0,			EC_B_COMPLETE,	/* ESC TAB */
+	CONTROL('L'),0,			EC_EXPAND,	/* CTRL-L */
+	CONTROL('V'),0,			EC_LITERAL,	/* BACKSLASH */
+	CONTROL('A'),0,			EC_LITERAL,	/* BACKSLASH */
+   	ESC,'l',0,			EC_RIGHT,	/* ESC l */
+	SK(SK_RIGHT_ARROW),0,		EC_RIGHT,	/* RIGHTARROW */
+	ESC,'h',0,			EC_LEFT,	/* ESC h */
+	SK(SK_LEFT_ARROW),0,		EC_LEFT,	/* LEFTARROW */
+	ESC,'b',0,			EC_W_LEFT,	/* ESC b */
+	ESC,SK(SK_LEFT_ARROW),0,	EC_W_LEFT,	/* ESC LEFTARROW */
+	SK(SK_CTL_LEFT_ARROW),0,	EC_W_LEFT,	/* CTRL-LEFTARROW */
+	ESC,'w',0,			EC_W_RIGHT,	/* ESC w */
+	ESC,SK(SK_RIGHT_ARROW),0,	EC_W_RIGHT,	/* ESC RIGHTARROW */
+	SK(SK_CTL_RIGHT_ARROW),0,	EC_W_RIGHT,	/* CTRL-RIGHTARROW */
+	ESC,'i',0,			EC_INSERT,	/* ESC i */
+	SK(SK_INSERT),0,		EC_INSERT,	/* INSERT */
+	ESC,'x',0,			EC_DELETE,	/* ESC x */
+	SK(SK_DELETE),0,		EC_DELETE,	/* DELETE */
+	ESC,'X',0,			EC_W_DELETE,	/* ESC X */
+	ESC,SK(SK_DELETE),0,		EC_W_DELETE,	/* ESC DELETE */
+	SK(SK_CTL_DELETE),0,		EC_W_DELETE,	/* CTRL-DELETE */
+	SK(SK_CTL_BACKSPACE),0,		EC_W_BACKSPACE, /* CTRL-BACKSPACE */
+	ESC,'\b',0,			EC_W_BACKSPACE,	/* ESC BACKSPACE */
+	ESC,'0',0,			EC_HOME,	/* ESC 0 */
+	SK(SK_HOME),0,			EC_HOME,	/* HOME */
+	ESC,'$',0,			EC_END,		/* ESC $ */
+	SK(SK_END),0,			EC_END,		/* END */
+	ESC,'k',0,			EC_UP,		/* ESC k */
+	SK(SK_UP_ARROW),0,		EC_UP,		/* UPARROW */
+	ESC,'j',0,			EC_DOWN,	/* ESC j */
+	SK(SK_DOWN_ARROW),0,		EC_DOWN,	/* DOWNARROW */
 };
 
 /*
@@ -197,7 +217,70 @@ struct tablelist
  */
 static struct tablelist *list_fcmd_tables = NULL;
 static struct tablelist *list_ecmd_tables = NULL;
+static struct tablelist *list_var_tables = NULL;
+static struct tablelist *list_sysvar_tables = NULL;
 
+
+/*
+ * Expand special key abbreviations in a command table.
+ */
+	static void
+expand_special_keys(table, len)
+	char *table;
+	int len;
+{
+	register char *fm;
+	register char *to;
+	register int a;
+	char *repl;
+	int klen;
+
+	for (fm = table;  fm < table + len; )
+	{
+		/*
+		 * Rewrite each command in the table with any
+		 * special key abbreviations expanded.
+		 */
+		for (to = fm;  *fm != '\0'; )
+		{
+			if (*fm != SK_SPECIAL_KEY)
+			{
+				*to++ = *fm++;
+				continue;
+			}
+			/*
+			 * After SK_SPECIAL_KEY, next byte is the type
+			 * of special key (one of the SK_* contants),
+			 * and the byte after that is the number of bytes,
+			 * N, reserved by the abbreviation (including the
+			 * SK_SPECIAL_KEY and key type bytes).
+			 * Replace all N bytes with the actual bytes
+			 * output by the special key on this terminal.
+			 */
+			repl = special_key_str(fm[1]);
+			klen = fm[2] & 0377;
+			fm += klen;
+			if (repl == NULL || (int) strlen(repl) > klen)
+				repl = "\377";
+			while (*repl != '\0')
+				*to++ = *repl++;
+		}
+		*to++ = '\0';
+		/*
+		 * Fill any unused bytes between end of command and 
+		 * the action byte with A_SKIP.
+		 */
+		while (to <= fm)
+			*to++ = A_SKIP;
+		fm++;
+		a = *fm++ & 0377;
+		if (a & A_EXTRA)
+		{
+			while (*fm++ != '\0')
+				continue;
+		}
+	}
+}
 
 /*
  * Initialize the command lists.
@@ -210,17 +293,27 @@ init_cmds()
 	 */
 	add_fcmd_table((char*)cmdtable, sizeof(cmdtable));
 	add_ecmd_table((char*)edittable, sizeof(edittable));
-	get_editkeys();
 #if USERFILE
+	/*
+	 * For backwards compatibility,
+	 * try to add tables in the OLD system lesskey file.
+	 */
+#ifdef BINDIR
+	add_hometable(NULL, BINDIR "/.sysless", 1);
+#endif
+	/*
+	 * Try to add the tables in the system lesskey file.
+	 */
+	add_hometable("LESSKEY_SYSTEM", LESSKEYFILE_SYS, 1);
 	/*
 	 * Try to add the tables in the standard lesskey file "$HOME/.less".
 	 */
-	add_hometable();
+	add_hometable("LESSKEY", LESSKEYFILE, 0);
 #endif
 }
 
 /*
- * 
+ * Add a command table.
  */
 	static int
 add_cmd_table(tlist, buf, len)
@@ -228,7 +321,7 @@ add_cmd_table(tlist, buf, len)
 	char *buf;
 	int len;
 {
-	struct tablelist *t;
+	register struct tablelist *t;
 
 	if (len == 0)
 		return (0);
@@ -241,6 +334,7 @@ add_cmd_table(tlist, buf, len)
 	{
 		return (-1);
 	}
+	expand_special_keys(buf, len);
 	t->t_start = buf;
 	t->t_end = buf + len;
 	t->t_next = *tlist;
@@ -273,19 +367,33 @@ add_ecmd_table(buf, len)
 }
 
 /*
+ * Add an environment variable table.
+ */
+	static void
+add_var_table(tlist, buf, len)
+	struct tablelist **tlist;
+	char *buf;
+	int len;
+{
+	if (add_cmd_table(tlist, buf, len) < 0)
+		error("Warning: environment variables from lesskey file unavailable", NULL_PARG);
+}
+
+/*
  * Search a single command table for the command string in cmd.
  */
-	public int
+	static int
 cmd_search(cmd, table, endtable, sp)
 	char *cmd;
 	char *table;
 	char *endtable;
 	char **sp;
 {
-	char *p;
-	char *q;
-	int a;
+	register char *p;
+	register char *q;
+	register int a;
 
+	*sp = NULL;
 	for (p = table, q = cmd;  p < endtable;  p++, q++)
 	{
 		if (*p == *q)
@@ -300,6 +408,8 @@ cmd_search(cmd, table, endtable, sp)
 			if (*p == '\0')
 			{
 				a = *++p & 0377;
+				while (a == A_SKIP)
+					a = *++p & 0377;
 				if (a == A_END_LIST)
 				{
 					/*
@@ -317,8 +427,7 @@ cmd_search(cmd, table, endtable, sp)
 				{
 					*sp = ++p;
 					a &= ~A_EXTRA;
-				} else
-					*sp = NULL;
+				}
 				return (a);
 			}
 		} else if (*q == '\0')
@@ -345,9 +454,13 @@ cmd_search(cmd, table, endtable, sp)
 				 */
 				return (A_UINVALID);
 			}
-			while (*p++ != '\0') ;
+			while (*p++ != '\0')
+				continue;
+			while (*p == A_SKIP)
+				p++;
 			if (*p & A_EXTRA)
-				while (*++p != '\0') ;
+				while (*++p != '\0')
+					continue;
 			q = cmd-1;
 		}
 	}
@@ -367,8 +480,8 @@ cmd_decode(tlist, cmd, sp)
 	char *cmd;
 	char **sp;
 {
-	struct tablelist *t;
-	int action = A_INVALID;
+	register struct tablelist *t;
+	register int action = A_INVALID;
 
 	/*
 	 * Search thru all the command tables.
@@ -380,6 +493,8 @@ cmd_decode(tlist, cmd, sp)
 		if (action != A_INVALID)
 			break;
 	}
+	if (action == A_UINVALID)
+		action = A_INVALID;
 	return (action);
 }
 
@@ -405,7 +520,35 @@ ecmd_decode(cmd, sp)
 	return (cmd_decode(list_ecmd_tables, cmd, sp));
 }
 
+/*
+ * Get the value of an environment variable.
+ * Looks first in the lesskey file, then in the real environment.
+ */
+	public char *
+lgetenv(var)
+	char *var;
+{
+	int a;
+	char *s;
+
+	a = cmd_decode(list_var_tables, var, &s);
+	if (a == EV_OK)
+		return (s);
+	s = getenv(var);
+	if (s != NULL && *s != '\0')
+		return (s);
+	a = cmd_decode(list_sysvar_tables, var, &s);
+	if (a == EV_OK)
+		return (s);
+	return (NULL);
+}
+
 #if USERFILE
+/*
+ * Get an "integer" from a lesskey file.
+ * Integers are stored in a funny format: 
+ * two bytes, low order first, in radix KRADIX.
+ */
 	static int
 gint(sp)
 	char **sp;
@@ -417,6 +560,9 @@ gint(sp)
 	return (n);
 }
 
+/*
+ * Process an old (pre-v241) lesskey file.
+ */
 	static int
 old_lesskey(buf, len)
 	char *buf;
@@ -435,15 +581,18 @@ old_lesskey(buf, len)
 	return (0);
 }
 
+/* 
+ * Process a new (post-v241) lesskey file.
+ */
 	static int
-new_lesskey(buf, len)
+new_lesskey(buf, len, sysvar)
 	char *buf;
 	int len;
+	int sysvar;
 {
 	char *p;
-	int c;
-	int done;
-	int n;
+	register int c;
+	register int n;
 
 	/*
 	 * New-style lesskey file.
@@ -454,8 +603,7 @@ new_lesskey(buf, len)
 	    buf[len-1] != C2_END_LESSKEY_MAGIC)
 		return (-1);
 	p = buf + 4;
-	done = 0;
-	while (!done)
+	for (;;)
 	{
 		c = *p++;
 		switch (c)
@@ -470,33 +618,44 @@ new_lesskey(buf, len)
 			add_ecmd_table(p, n);
 			p += n;
 			break;
-		case END_SECTION:
-			done = 1;
+		case VAR_SECTION:
+			n = gint(&p);
+			add_var_table((sysvar) ? 
+				&list_sysvar_tables : &list_var_tables, p, n);
+			p += n;
 			break;
+		case END_SECTION:
+			return (0);
 		default:
-			free(buf);
+			/*
+			 * Unrecognized section type.
+			 */
 			return (-1);
 		}
 	}
-	return (0);
 }
 
 /*
  * Set up a user command table, based on a "lesskey" file.
  */
 	public int
-lesskey(filename)
+lesskey(filename, sysvar)
 	char *filename;
+	int sysvar;
 {
-	char *buf;
-	POSITION len;
-	long n;
-	int f;
+	register char *buf;
+	register POSITION len;
+	register long n;
+	register int f;
 
+	if (secure)
+		return (1);
 	/*
 	 * Try to open the lesskey file.
 	 */
+	filename = shell_unquote(filename);
 	f = open(filename, OPEN_READ);
+	free(filename);
 	if (f < 0)
 		return (1);
 
@@ -543,22 +702,30 @@ lesskey(filename)
 	if (buf[0] != C0_LESSKEY_MAGIC || buf[1] != C1_LESSKEY_MAGIC ||
 	    buf[2] != C2_LESSKEY_MAGIC || buf[3] != C3_LESSKEY_MAGIC)
 		return (old_lesskey(buf, (int)len));
-	return (new_lesskey(buf, (int)len));
+	return (new_lesskey(buf, (int)len, sysvar));
 }
 
 /*
  * Add the standard lesskey file "$HOME/.less"
  */
 	public void
-add_hometable()
+add_hometable(envname, def_filename, sysvar)
+	char *envname;
+	char *def_filename;
+	int sysvar;
 {
 	char *filename;
 	PARG parg;
 
-	filename = homefile(LESSKEYFILE);
+	if (envname != NULL && (filename = lgetenv(envname)) != NULL)
+		filename = save(filename);
+	else if (sysvar)
+		filename = save(def_filename);
+	else
+		filename = homefile(def_filename);
 	if (filename == NULL)
 		return;
-	if (lesskey(filename) < 0)
+	if (lesskey(filename, sysvar) < 0)
 	{
 		parg.p_string = filename;
 		error("Cannot use lesskey file \"%s\"", &parg);
@@ -606,6 +773,17 @@ editchar(c, flags)
 		action = ecmd_decode(usercmd, &s);
 	} while (action == A_PREFIX);
 	
+	if (flags & EC_NORIGHTLEFT)
+	{
+		switch (action)
+		{
+		case EC_RIGHT:
+		case EC_LEFT:
+			action = A_INVALID;
+			break;
+		}
+	}
+#if CMD_HISTORY
 	if (flags & EC_NOHISTORY) 
 	{
 		/*
@@ -620,6 +798,8 @@ editchar(c, flags)
 			break;
 		}
 	}
+#endif
+#if TAB_COMPLETE_FILENAME
 	if (flags & EC_NOCOMPLETE) 
 	{
 		/*
@@ -635,6 +815,7 @@ editchar(c, flags)
 			break;
 		}
 	}
+#endif
 	if ((flags & EC_PEEK) || action == A_INVALID)
 	{
 		/*
@@ -643,7 +824,8 @@ editchar(c, flags)
 		 * This does NOT include the original character that was 
 		 * passed in as a parameter.
 		 */
-		while (nch > 1) {
+		while (nch > 1) 
+		{
 			ungetcc(usercmd[--nch]);
 		}
 	} else

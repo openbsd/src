@@ -1,29 +1,11 @@
-/*	$OpenBSD: optfunc.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
-
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -47,16 +29,22 @@
 #include "option.h"
 
 extern int nbufs;
-extern int cbufs;
+extern int bufspace;
 extern int pr_type;
-extern int nohelp;
 extern int plusoption;
 extern int swindow;
 extern int sc_height;
+extern int secure;
+extern int dohelp;
 extern int any_display;
+extern char openquote;
+extern char closequote;
 extern char *prproto[];
 extern char *eqproto;
+extern char *hproto;
+extern char *wproto;
 extern IFILE curr_ifile;
+extern char version[];
 #if LOGFILE
 extern char *namelogfile;
 extern int force_logfile;
@@ -64,11 +52,10 @@ extern int logfile;
 #endif
 #if TAGS
 public char *tagoption = NULL;
-extern char *tagfile;
 extern char *tags;
 extern int jump_sline;
 #endif
-#if MSOFTC
+#if MSDOS_COMPILER
 extern int nm_fg_color, nm_bg_color;
 extern int bo_fg_color, bo_bg_color;
 extern int ul_fg_color, ul_bg_color;
@@ -88,6 +75,11 @@ opt_o(type, s)
 {
 	PARG parg;
 
+	if (secure)
+	{
+		error("log file support is not available", NULL_PARG);
+		return;
+	}
 	switch (type)
 	{
 	case INIT:
@@ -105,7 +97,7 @@ opt_o(type, s)
 			return;
 		}
 		s = skipsp(s);
-		namelogfile = glob(s);
+		namelogfile = lglob(s);
 		use_logfile(namelogfile);
 		sync_logfile();
 		break;
@@ -150,7 +142,7 @@ opt_l(type, s)
 	{
 	case INIT:
 		t = s;
-		n = getnum(&t, 'l', &err);
+		n = getnum(&t, "l", &err);
 		if (err || n <= 0)
 		{
 			error("Line number is required after -l", NULL_PARG);
@@ -173,7 +165,7 @@ opt_k(type, s)
 	switch (type)
 	{
 	case INIT:
-		if (lesskey(s))
+		if (lesskey(s, 0))
 		{
 			parg.p_string = s;
 			error("Cannot use lesskey file \"%s\"", &parg);
@@ -202,18 +194,21 @@ opt_t(type, s)
 		/* Do the rest in main() */
 		break;
 	case TOGGLE:
-		findtag(skipsp(s));
-		if (tagfile == NULL)
+		if (secure)
+		{
+			error("tags support is not available", NULL_PARG);
 			break;
-		save_ifile = curr_ifile;
-		if (edit(tagfile))
+		}
+		findtag(skipsp(s));
+		save_ifile = save_curr_ifile();
+		if (edit_tagfile())
 			break;
 		if ((pos = tagsearch()) == NULL_POSITION)
 		{
-			if (edit_ifile(save_ifile))
-				quit(QUIT_ERROR);
+			reedit_ifile(save_ifile);
 			break;
 		}
+		unsave_ifile(save_ifile);
 		jump_loc(pos, jump_sline);
 		break;
 	}
@@ -236,7 +231,7 @@ opt__T(type, s)
 		break;
 	case TOGGLE:
 		s = skipsp(s);
-		tags = glob(s);
+		tags = lglob(s);
 		break;
 	case QUERY:
 		parg.p_string = tags;
@@ -252,7 +247,7 @@ opt__T(type, s)
 	public void
 opt_p(type, s)
 	int type;
-	char *s;
+	register char *s;
 {
 	switch (type)
 	{
@@ -275,9 +270,9 @@ opt_p(type, s)
 	public void
 opt__P(type, s)
 	int type;
-	char *s;
+	register char *s;
 {
-	char **proto;
+	register char **proto;
 	PARG parg;
 
 	switch (type)
@@ -289,9 +284,12 @@ opt__P(type, s)
 		 */
 		switch (*s)
 		{
+		case 's':  proto = &prproto[PR_SHORT];	s++;	break;
 		case 'm':  proto = &prproto[PR_MEDIUM];	s++;	break;
 		case 'M':  proto = &prproto[PR_LONG];	s++;	break;
 		case '=':  proto = &eqproto;		s++;	break;
+		case 'h':  proto = &hproto;		s++;	break;
+		case 'w':  proto = &wproto;		s++;	break;
 		default:   proto = &prproto[PR_SHORT];		break;
 		}
 		free(*proto);
@@ -315,14 +313,14 @@ opt_b(type, s)
 {
 	switch (type)
 	{
-	case TOGGLE:
-	case QUERY:
-		/*
-		 * Allocate the new number of buffers.
-		 */
-		cbufs = ch_nbuf(cbufs);
-		break;
 	case INIT:
+	case TOGGLE:
+		/*
+		 * Set the new number of buffers.
+		 */
+		ch_setbufspace(bufspace);
+		break;
+	case QUERY:
 		break;
 	}
 }
@@ -360,17 +358,28 @@ opt__V(type, s)
 	{
 	case TOGGLE:
 	case QUERY:
-	case INIT:
 		dispversion();
-		if (type == INIT)
-			quit(QUIT_OK);
+		break;
+	case INIT:
+		/*
+		 * Force output to stdout per GNU standard for --version output.
+		 */
+		any_display = 1;
+		putstr("less ");
+		putstr(version);
+		putstr("\nCopyright (C) 2002 Mark Nudelman\n\n");
+		putstr("less comes with NO WARRANTY, to the extent permitted by law.\n");
+		putstr("For information about the terms of redistribution,\n");
+		putstr("see the file named README in the less distribution.\n");
+		putstr("Homepage: http://www.greenwoodsoftware.com/less\n");
+		quit(QUIT_OK);
 		break;
 	}
 }
 
-#if MSOFTC
+#if MSDOS_COMPILER
 /*
- *
+ * Parse an MSDOS color descriptor.
  */
    	static void
 colordesc(s, fg_color, bg_color)
@@ -381,7 +390,7 @@ colordesc(s, fg_color, bg_color)
 	int fg, bg;
 	int err;
 	
-	fg = getnum(&s, 'D', &err);
+	fg = getnum(&s, "D", &err);
 	if (err)
 	{
 		error("Missing fg color in -D", NULL_PARG);
@@ -392,13 +401,15 @@ colordesc(s, fg_color, bg_color)
 	else
 	{
 		s++;
-		bg = getnum(&s, 'D', &err);
+		bg = getnum(&s, "D", &err);
 		if (err)
 		{
 			error("Missing fg color in -D", NULL_PARG);
 			return;
 		}
 	}
+	if (*s != '\0')
+		error("Extra characters at end of -D option", NULL_PARG);
 	*fg_color = fg;
 	*bg_color = bg;
 }
@@ -450,6 +461,108 @@ opt_D(type, s)
 #endif
 
 /*
+ * Handler for the -x option.
+ */
+	public void
+opt_x(type, s)
+	int type;
+	register char *s;
+{
+	extern int tabstops[];
+	extern int ntabstops;
+	extern int tabdefault;
+	char msg[60+(4*TABSTOP_MAX)];
+	int i;
+	PARG p;
+
+	switch (type)
+	{
+	case INIT:
+	case TOGGLE:
+		/* Start at 1 because tabstops[0] is always zero. */
+		for (i = 1;  i < TABSTOP_MAX;  )
+		{
+			int n = 0;
+			s = skipsp(s);
+			while (*s >= '0' && *s <= '9')
+				n = (10 * n) + (*s++ - '0');
+			if (n > tabstops[i-1])
+				tabstops[i++] = n;
+			s = skipsp(s);
+			if (*s++ != ',')
+				break;
+		}
+		if (i < 2)
+			return;
+		ntabstops = i;
+		tabdefault = tabstops[ntabstops-1] - tabstops[ntabstops-2];
+		break;
+	case QUERY:
+		strlcpy(msg, "Tab stops ", sizeof(msg));
+		if (ntabstops > 2)
+		{
+			for (i = 1;  i < ntabstops;  i++)
+			{
+				if (i > 1)
+					strlcat(msg, ",", sizeof(msg));
+				snprintf(msg+strlen(msg),
+				    sizeof(msg)-strlen(msg), "%d", tabstops[i]);
+			}
+			snprintf(msg+strlen(msg), sizeof(msg)-strlen(msg),
+			    " and then ");
+		}
+		snprintf(msg+strlen(msg), sizeof(msg)-strlen(msg),
+		    "every %d spaces",
+			tabdefault);
+		p.p_string = msg;
+		error("%s", &p);
+		break;
+	}
+}
+
+
+/*
+ * Handler for the -" option.
+ */
+	public void
+opt_quote(type, s)
+	int type;
+	register char *s;
+{
+	char buf[3];
+	PARG parg;
+
+	switch (type)
+	{
+	case INIT:
+	case TOGGLE:
+		if (s[0] == '\0')
+		{
+			openquote = closequote = '\0';
+			break;
+		}
+		if (s[1] != '\0' && s[2] != '\0')
+		{
+			error("-\" must be followed by 1 or 2 chars", NULL_PARG);
+			return;
+		}
+		openquote = s[0];
+		if (s[1] == '\0')
+			closequote = openquote;
+		else
+			closequote = s[1];
+		break;
+	case QUERY:
+		buf[0] = openquote;
+		buf[1] = closequote;
+		buf[2] = '\0';
+		parg.p_string = buf;
+		error("quotes %s", &parg);
+		break;
+	}
+}
+
+/*
  * "-?" means display a help message.
  * If from the command line, exit immediately.
  */
@@ -459,8 +572,6 @@ opt_query(type, s)
 	int type;
 	char *s;
 {
-	if (nohelp)
-		return;
 	switch (type)
 	{
 	case QUERY:
@@ -468,20 +579,7 @@ opt_query(type, s)
 		error("Use \"h\" for help", NULL_PARG);
 		break;
 	case INIT:
-		/*
-		 * This is "less -?".
-		 * It rather ungracefully grabs control, 
-		 * does the initializations normally done in main,
-		 * shows the help file and exits.
-		 */
-		raw_mode(1);
-		get_term();
-		open_getchr();
-		init();
-		any_display = TRUE;
-		help(1);
-		quit(QUIT_OK);
-		/*NOTREACHED*/
+		dohelp = 1;
 	}
 }
 

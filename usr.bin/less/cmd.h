@@ -1,29 +1,11 @@
-/*	$OpenBSD: cmd.h,v 1.2 2001/01/29 01:58:00 niklas Exp $	*/
-
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -68,9 +50,9 @@
 #define	A_PIPE			37
 #define	A_INDEX_FILE		38
 #define	A_UNDO_SEARCH		39
-
-
-
+#define	A_FF_SCREEN		40
+#define	A_LSHIFT		41
+#define	A_RSHIFT		42
 #define	A_AGAIN_SEARCH		43
 #define	A_T_AGAIN_SEARCH	44
 #define	A_REVERSE_SEARCH	45
@@ -80,11 +62,17 @@
 #define	A_OPT_UNSET		49
 #define	A_F_FOREVER		50
 #define	A_GOPOS			51
+#define	A_REMOVE_FILE		52
+#define	A_NEXT_TAG		53
+#define	A_PREV_TAG		54
 
 #define	A_INVALID		100
 #define	A_NOACTION		101
 #define	A_UINVALID		102
 #define	A_END_LIST		103
+#define	A_SPECIAL_KEY		104
+
+#define A_SKIP			127
 
 #define	A_EXTRA			0200
 
@@ -110,10 +98,34 @@
 #define	EC_B_COMPLETE	18
 #define	EC_LITERAL	19
 
+#define	EC_NOACTION	101
 #define	EC_UINVALID	102
 
 /* Flags for editchar() */
 #define	EC_PEEK		01
 #define	EC_NOHISTORY	02
 #define	EC_NOCOMPLETE	04
+#define	EC_NORIGHTLEFT	010
 
+/* Environment variable stuff */
+#define	EV_OK		01
+
+/* Special keys (keys which output different strings on different terminals) */
+#define SK_SPECIAL_KEY		CONTROL('K')
+#define SK_RIGHT_ARROW		1
+#define SK_LEFT_ARROW		2
+#define SK_UP_ARROW		3
+#define SK_DOWN_ARROW		4
+#define SK_PAGE_UP		5
+#define SK_PAGE_DOWN		6
+#define SK_HOME			7
+#define SK_END			8
+#define SK_DELETE		9
+#define SK_INSERT		10
+#define SK_CTL_LEFT_ARROW	11
+#define SK_CTL_RIGHT_ARROW	12
+#define SK_CTL_DELETE		13
+#define SK_F1			14
+#define SK_BACKTAB		15
+#define SK_CTL_BACKSPACE	16
+#define SK_CONTROL_K		40

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.18 1999/02/03 23:36:45 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.19 2003/04/13 18:26:25 millert Exp $
 
 #
 # less config
@@ -6,7 +6,6 @@
 PREFIX=		/usr
 BINDIR=		${PREFIX}/bin
 DATADIR=	${PREFIX}/share/misc
-LESS_HLP=	more.help
 LIBS=		-lcurses
 LINKS=		${BINDIR}/less ${BINDIR}/more ${BINDIR}/less ${BINDIR}/page
 MAN=		less.1 lesskey.1
@@ -16,9 +15,7 @@ CLEANFILES=	config.cache config.log $(MAN)
 #
 # Wrapped flags
 #
-WCC=		CC="${CC}"
-WCFLAGS=	CFLAGS="${CFLAGS} ${COPTS}"
-WLDFLAGS=	LDFLAGS="${LDSTATIC}"
+XCFLAGS= CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDFLAGS} ${LDSTATIC}"
 
 all: config.status gnu_build
 
@@ -38,8 +35,8 @@ OBJS=	main.o screen.o brac.o ch.o charset.o cmdbuf.o \
 	tags.o ttyin.o version.o
 .SUFFIXES: .o .c
 .c.o: config.status
-	@$(MAKE) ${WCC} ${WCFLAGS} ${WLDFLAGS} LIBS=${LIBS} \
-		 datadir=${DATADIR} LESS_HLP=${LESS_HLP} ${.TARGET}
+	@$(MAKE) ${XCFLAGS} LIBS=${LIBS} \
+		 datadir=${DATADIR} ${.TARGET}
 
 .FORCE: .IGNORE
 
@@ -48,25 +45,26 @@ OBJS=	main.o screen.o brac.o ch.o charset.o cmdbuf.o \
 .ifdef GLOBAL_AUTOCONF_CACHE
 CF=     --cache-file=${GLOBAL_AUTOCONF_CACHE}
 .else
-CF=
+CF=	--cache-file=config.cache
 .endif
 
 config: .FORCE
 .ifndef GLOBAL_AUTOCONF_CACHE
 	-rm -f config.cache
 .endif
-	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	${XCFLAGS} PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		/bin/sh ${.CURDIR}/configure --prefix=/usr ${CF}
+		TERMLIBS=-lcurses /bin/sh ${.CURDIR}/configure \
+		--prefix=/usr --mandir=/usr/share/man --sysconfdir=/etc ${CF}
 
 config.status:
-	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	${XCFLAGS} PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
-		/bin/sh ${.CURDIR}/configure --prefix=/usr ${CF}
+		TERMLIBS=-lcurses /bin/sh ${.CURDIR}/configure \
+		--prefix=/usr --mandir=/usr/share/man --sysconfdir=/etc ${CF}
 
 gnu_build:
-	${MAKE} ${WCC} ${WCFLAGS} ${WLDFLAGS} LIBS=${LIBS} datadir=${DATADIR} \
-		LESS_HLP=${LESS_HLP}
+	${MAKE} ${XCFLAGS} LIBS=${LIBS} datadir=${DATADIR}
 
 .ifdef NOMAN
 maninstall:
@@ -88,8 +86,8 @@ install: gnu_install maninstall _SUBDIRUSE
 .endif
 
 gnu_install:
-	${MAKE} ${WCC} ${WCFLAGS} ${WLDFLAGS} LIBS=${LIBS} \
-		LESS_HLP=${LESS_HLP} bindir=${DESTDIR}${BINDIR} \
+	${MAKE} ${XCFLAGS} LIBS=${LIBS} \
+		bindir=${DESTDIR}${BINDIR} \
 		datadir=${DESTDIR}${PREFIX}/share/misc \
 		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE}" \
 		INSTALL_DATA="${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444" \

@@ -1,29 +1,11 @@
-/*	$OpenBSD: signal.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
-
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -61,10 +43,19 @@ u_interrupt(type)
 	int type;
 {
 #if OS2
-	SIGNAL(SIGINT, SIG_ACK);
+	LSIGNAL(SIGINT, SIG_ACK);
 #endif
-	SIGNAL(SIGINT, u_interrupt);
+	LSIGNAL(SIGINT, u_interrupt);
 	sigs |= S_INTERRUPT;
+#if MSDOS_COMPILER==DJGPPC
+	/*
+	 * If a keyboard has been hit, it must be Ctrl-C
+	 * (as opposed to Ctrl-Break), so consume it.
+	 * (Otherwise, Less will beep when it sees Ctrl-C from keyboard.)
+	 */
+	if (kbhit())
+		getkey();
+#endif
 	if (reading)
 		intread();
 }
@@ -78,7 +69,7 @@ u_interrupt(type)
 stop(type)
 	int type;
 {
-	SIGNAL(SIGTSTP, stop);
+	LSIGNAL(SIGTSTP, stop);
 	sigs |= S_STOP;
 	if (reading)
 		intread();
@@ -94,7 +85,7 @@ stop(type)
 winch(type)
 	int type;
 {
-	SIGNAL(SIGWINCH, winch);
+	LSIGNAL(SIGWINCH, winch);
 	sigs |= S_WINCH;
 	if (reading)
 		intread();
@@ -109,12 +100,35 @@ winch(type)
 winch(type)
 	int type;
 {
-	SIGNAL(SIGWIND, winch);
+	LSIGNAL(SIGWIND, winch);
 	sigs |= S_WINCH;
 	if (reading)
 		intread();
 }
 #endif
+#endif
+
+#if MSDOS_COMPILER==WIN32C
+/*
+ * Handle CTRL-C and CTRL-BREAK keys.
+ */
+#include "windows.h"
+
+	static BOOL WINAPI 
+wbreak_handler(dwCtrlType)
+	DWORD dwCtrlType;
+{
+	switch (dwCtrlType)
+	{
+	case CTRL_C_EVENT:
+	case CTRL_BREAK_EVENT:
+		sigs |= S_INTERRUPT;
+		return (TRUE);
+	default:
+		break;
+	}
+	return (FALSE);
+}
 #endif
 
 /*
@@ -129,15 +143,21 @@ init_signals(on)
 		/*
 		 * Set signal handlers.
 		 */
-		(void) SIGNAL(SIGINT, u_interrupt);
+		(void) LSIGNAL(SIGINT, u_interrupt);
+#if MSDOS_COMPILER==WIN32C
+		SetConsoleCtrlHandler(wbreak_handler, TRUE);
+#endif
 #ifdef SIGTSTP
-		(void) SIGNAL(SIGTSTP, stop);
+		(void) LSIGNAL(SIGTSTP, stop);
 #endif
 #ifdef SIGWINCH
-		(void) SIGNAL(SIGWINCH, winch);
+		(void) LSIGNAL(SIGWINCH, winch);
 #else
 #ifdef SIGWIND
-		(void) SIGNAL(SIGWIND, winch);
+		(void) LSIGNAL(SIGWIND, winch);
+#endif
+#ifdef SIGQUIT
+		(void) LSIGNAL(SIGQUIT, SIG_IGN);
 #endif
 #endif
 	} else
@@ -145,15 +165,21 @@ init_signals(on)
 		/*
 		 * Restore signals to defaults.
 		 */
-		(void) SIGNAL(SIGINT, SIG_DFL);
+		(void) LSIGNAL(SIGINT, SIG_DFL);
+#if MSDOS_COMPILER==WIN32C
+		SetConsoleCtrlHandler(wbreak_handler, FALSE);
+#endif
 #ifdef SIGTSTP
-		(void) SIGNAL(SIGTSTP, SIG_DFL);
+		(void) LSIGNAL(SIGTSTP, SIG_DFL);
 #endif
 #ifdef SIGWINCH
-		(void) SIGNAL(SIGWINCH, SIG_IGN);
+		(void) LSIGNAL(SIGWINCH, SIG_IGN);
 #endif
 #ifdef SIGWIND
-		(void) SIGNAL(SIGWIND, SIG_IGN);
+		(void) LSIGNAL(SIGWIND, SIG_IGN);
+#endif
+#ifdef SIGQUIT
+		(void) LSIGNAL(SIGQUIT, SIG_DFL);
 #endif
 	}
 }
@@ -165,7 +191,7 @@ init_signals(on)
 	public void
 psignals()
 {
-	int tsignals;
+	register int tsignals;
 
 	if ((tsignals = sigs) == 0)
 		return;
@@ -178,16 +204,16 @@ psignals()
 		 * Clean up the terminal.
 		 */
 #ifdef SIGTTOU
-		SIGNAL(SIGTTOU, SIG_IGN);
+		LSIGNAL(SIGTTOU, SIG_IGN);
 #endif
 		clear_bot();
 		deinit();
 		flush();
 		raw_mode(0);
 #ifdef SIGTTOU
-		SIGNAL(SIGTTOU, SIG_DFL);
+		LSIGNAL(SIGTTOU, SIG_DFL);
 #endif
-		SIGNAL(SIGTSTP, SIG_DFL);
+		LSIGNAL(SIGTSTP, SIG_DFL);
 		kill(getpid(), SIGTSTP);
 		/*
 		 * ... Bye bye. ...
@@ -195,7 +221,7 @@ psignals()
 		 * Reset the terminal and arrange to repaint the
 		 * screen when we get back to the main command loop.
 		 */
-		SIGNAL(SIGTSTP, stop);
+		LSIGNAL(SIGTSTP, stop);
 		raw_mode(1);
 		init();
 		screen_trashed = 1;

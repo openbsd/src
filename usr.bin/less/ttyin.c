@@ -1,29 +1,11 @@
-/*	$OpenBSD: ttyin.c,v 1.2 2001/01/29 01:58:04 niklas Exp $	*/
-
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -32,8 +14,18 @@
  */
 
 #include "less.h"
+#if OS2
+#include "cmd.h"
+#include "pckeys.h"
+#endif
+#if MSDOS_COMPILER==WIN32C
+#include "windows.h"
+extern char WIN32getch();
+static DWORD console_mode;
+#endif
 
-static int tty;
+public int tty;
+extern int sigs;
 
 /*
  * Open keyboard for input.
@@ -41,7 +33,20 @@ static int tty;
 	public void
 open_getchr()
 {
-#if MSOFTC || OS2
+#if MSDOS_COMPILER==WIN32C
+	/* Need this to let child processes inherit our console handle */
+	SECURITY_ATTRIBUTES sa;
+	memset(&sa, 0, sizeof(SECURITY_ATTRIBUTES));
+	sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+	sa.bInheritHandle = TRUE;
+	tty = (int) CreateFile("CONIN$", GENERIC_READ,
+			FILE_SHARE_READ, &sa, 
+			OPEN_EXISTING, 0L, NULL);
+	GetConsoleMode((HANDLE)tty, &console_mode);
+	/* Make sure we get Ctrl+C events. */
+	SetConsoleMode((HANDLE)tty, ENABLE_PROCESSED_INPUT);
+#else
+#if MSDOS_COMPILER
 	extern int fd0;
 	/*
 	 * Open a new handle to CON: in binary mode 
@@ -49,7 +54,14 @@ open_getchr()
 	 */
 	 fd0 = dup(0);
 	 close(0);
-	 tty = OPEN_TTYIN();
+	 tty = open("CON", OPEN_READ);
+#if MSDOS_COMPILER==DJGPPC
+	/*
+	 * Setting stdin to binary causes Ctrl-C to not
+	 * raise SIGINT.  We must undo that side-effect.
+	 */
+	(void) __djgpp_set_ctrl_c(1);
+#endif
 #else
 	/*
 	 * Try /dev/tty.
@@ -57,9 +69,27 @@ open_getchr()
 	 * which in Unix is usually attached to the screen,
 	 * but also usually lets you read from the keyboard.
 	 */
-	tty = OPEN_TTYIN();
+#if OS2
+	/* The __open() system call translates "/dev/tty" to "con". */
+	tty = __open("/dev/tty", OPEN_READ);
+#else
+	tty = open("/dev/tty", OPEN_READ);
+#endif
 	if (tty < 0)
 		tty = 2;
+#endif
+#endif
+}
+
+/*
+ * Close the keyboard.
+ */
+	public void
+close_getchr()
+{
+#if MSDOS_COMPILER==WIN32C
+	SetConsoleMode((HANDLE)tty, console_mode);
+	CloseHandle((HANDLE)tty);
 #endif
 }
 
@@ -74,23 +104,21 @@ getchr()
 
 	do
 	{
-#if MSOFTC
+#if MSDOS_COMPILER && MSDOS_COMPILER != DJGPPC
 		/*
 		 * In raw read, we don't see ^C so look here for it.
 		 */
 		flush();
+#if MSDOS_COMPILER==WIN32C
+		if (ABORT_SIGS())
+			return (READ_INTR);
+		c = WIN32getch(tty);
+#else
 		c = getch();
+#endif
 		result = 1;
 		if (c == '\003')
 			return (READ_INTR);
-#else
-#if OS2
-		flush();
-		while (_read_kbd(0, 0, 0) != -1)
-			continue;
-		if ((c = _read_kbd(0, 1, 0)) == -1)
-			return (READ_INTR);
-		result = 1;
 #else
 		result = iread(tty, &c, sizeof(char));
 		if (result == READ_INTR)
@@ -103,7 +131,6 @@ getchr()
 			 */
 			quit(QUIT_ERROR);
 		}
-#endif
 #endif
 		/*
 		 * Various parts of the program cannot handle

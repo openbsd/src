@@ -1,6 +1,4 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.2 2001/01/29 01:58:02 niklas Exp $
-
 
 #
 # install - install a program, script, or datafile

@@ -1,29 +1,11 @@
-/*	$OpenBSD: position.c,v 1.4 2001/11/19 19:02:14 mpech Exp $	*/
-
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -58,9 +40,6 @@ extern int sc_width, sc_height;
 position(where)
 	int where;
 {
-	if (where >= table_size)
-		where = BOTTOM;
-
 	switch (where)
 	{
 	case BOTTOM:
@@ -82,7 +61,7 @@ position(where)
 add_forw_pos(pos)
 	POSITION pos;
 {
-	int i;
+	register int i;
 
 	/*
 	 * Scroll the position table up.
@@ -99,7 +78,7 @@ add_forw_pos(pos)
 add_back_pos(pos)
 	POSITION pos;
 {
-	int i;
+	register int i;
 
 	/*
 	 * Scroll the position table down.
@@ -115,7 +94,7 @@ add_back_pos(pos)
 	public void
 pos_clear()
 {
-	int i;
+	register int i;
 
 	for (i = 0;  i < sc_height;  i++)
 		table[i] = NULL_POSITION;
@@ -157,7 +136,7 @@ pos_init()
 onscreen(pos)
 	POSITION pos;
 {
-	int i;
+	register int i;
 
 	if (pos < table[0])
 		return (-1);
@@ -181,7 +160,7 @@ empty_lines(s, e)
 	int s;
 	int e;
 {
-	int i;
+	register int i;
 
 	for (i = s;  i <= e;  i++)
 		if (table[i] != NULL_POSITION)
@@ -201,7 +180,7 @@ empty_lines(s, e)
 get_scrpos(scrpos)
 	struct scrpos *scrpos;
 {
-	int i;
+	register int i;
 
 	/*
 	 * Find the first line on the screen which has something on it,

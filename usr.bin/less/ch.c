@@ -1,29 +1,11 @@
-/*	$OpenBSD: ch.c,v 1.3 2001/11/19 19:02:14 mpech Exp $	*/
-
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -34,6 +16,12 @@
  */
 
 #include "less.h"
+#if MSDOS_COMPILER==WIN32C
+#include <errno.h>
+#include <windows.h>
+#endif
+
+typedef POSITION BLOCKNUM;
 
 public int ignore_eoi;
 
@@ -43,34 +31,38 @@ public int ignore_eoi;
  * in order from most- to least-recently used.
  * The circular list is anchored by the file state "thisfile".
  */
-#define LBUFSIZE	1024
+#define	LBUFSIZE	8192
 struct buf {
-	struct buf *next, *prev;  /* Must be first to match struct filestate */
-	long block;
+	struct buf *next, *prev;
+	struct buf *hnext, *hprev;
+	BLOCKNUM block;
 	unsigned int datasize;
 	unsigned char data[LBUFSIZE];
+};
+
+struct buflist {
+	/* -- Following members must match struct buf */
+	struct buf *buf_next, *buf_prev;
+	struct buf *buf_hnext, *buf_hprev;
 };
 
 /*
  * The file state is maintained in a filestate structure.
  * A pointer to the filestate is kept in the ifile structure.
  */
+#define	BUFHASH_SIZE	64
 struct filestate {
-	/* -- Following members must match struct buf */
 	struct buf *buf_next, *buf_prev;
-	long buf_block;
-	/* -- End of struct buf copy */
+	struct buflist hashtbl[BUFHASH_SIZE];
 	int file;
 	int flags;
 	POSITION fpos;
 	int nbufs;
-	long block;
-	int offset;
+	BLOCKNUM block;
+	unsigned int offset;
 	POSITION fsize;
 };
 
-
-#define	END_OF_CHAIN	((struct buf *)thisfile)
 #define	ch_bufhead	thisfile->buf_next
 #define	ch_buftail	thisfile->buf_prev
 #define	ch_nbufs	thisfile->nbufs
@@ -81,12 +73,33 @@ struct filestate {
 #define	ch_flags	thisfile->flags
 #define	ch_file		thisfile->file
 
+#define	END_OF_CHAIN	((struct buf *)&thisfile->buf_next)
+#define	END_OF_HCHAIN(h) ((struct buf *)&thisfile->hashtbl[h])
+#define BUFHASH(blk)	((blk) & (BUFHASH_SIZE-1))
+
+#define	FOR_BUFS_IN_CHAIN(h,bp) \
+	for (bp = thisfile->hashtbl[h].buf_hnext;  \
+	     bp != END_OF_HCHAIN(h);  bp = bp->hnext)
+
+#define	HASH_RM(bp) \
+	(bp)->hnext->hprev = (bp)->hprev; \
+	(bp)->hprev->hnext = (bp)->hnext;
+
+#define	HASH_INS(bp,h) \
+	(bp)->hnext = thisfile->hashtbl[h].buf_hnext; \
+	(bp)->hprev = END_OF_HCHAIN(h); \
+	thisfile->hashtbl[h].buf_hnext->hprev = (bp); \
+	thisfile->hashtbl[h].buf_hnext = (bp);
+
 static struct filestate *thisfile;
 static int ch_ungotchar = -1;
+static int maxbufs = -1;
 
 extern int autobuf;
 extern int sigs;
-extern int cbufs;
+extern int secure;
+extern constant char helpdata[];
+extern constant int size_helpdata;
 extern IFILE curr_ifile;
 #if LOGFILE
 extern int logfile;
@@ -108,9 +121,10 @@ static int ch_addbuf();
 	int
 fch_get()
 {
-	struct buf *bp;
-	int n;
-	int slept;
+	register struct buf *bp;
+	register int n;
+	register int slept;
+	register int h;
 	POSITION pos;
 	POSITION len;
 
@@ -119,7 +133,9 @@ fch_get()
 	/*
 	 * Look for a buffer holding the desired block.
 	 */
-	for (bp = ch_bufhead;  bp != END_OF_CHAIN;  bp = bp->next)
+	h = BUFHASH(ch_block);
+	FOR_BUFS_IN_CHAIN(h, bp)
+	{
 		if (bp->block == ch_block)
 		{
 			if (ch_offset >= bp->datasize)
@@ -129,6 +145,7 @@ fch_get()
 				goto read_more;
 			goto found;
 		}
+	}
 	/*
 	 * Block is not in a buffer.  
 	 * Take the least recently used buffer 
@@ -136,7 +153,7 @@ fch_get()
 	 * If the LRU buffer has data in it, 
 	 * then maybe allocate a new buffer.
 	 */
-	if (ch_buftail == END_OF_CHAIN || ch_buftail->block != (long)(-1))
+	if (ch_buftail == END_OF_CHAIN || ch_buftail->block != -1)
 	{
 		/*
 		 * There is no empty buffer to use.
@@ -145,7 +162,7 @@ fch_get()
 		 * 2. We haven't allocated the max buffers for this file yet.
 		 */
 		if ((autobuf && !(ch_flags & CH_CANSEEK)) ||
-		    (cbufs == -1 || ch_nbufs < cbufs))
+		    (maxbufs < 0 || ch_nbufs < maxbufs))
 			if (ch_addbuf())
 				/*
 				 * Allocation failed: turn off autobuf.
@@ -153,8 +170,10 @@ fch_get()
 				autobuf = OPT_OFF;
 	}
 	bp = ch_buftail;
+	HASH_RM(bp); /* Remove from old hash chain. */
 	bp->block = ch_block;
 	bp->datasize = 0;
+	HASH_INS(bp, h); /* Insert into new hash chain. */
 
     read_more:
 	pos = (ch_block * LBUFSIZE) + bp->datasize;
@@ -187,23 +206,32 @@ fch_get()
 	 * If we read less than a full block, that's ok.
 	 * We use partial block and pick up the rest next time.
 	 */
-	if (ch_ungotchar == -1)
-	{
-		n = iread(ch_file, &bp->data[bp->datasize], 
-			(unsigned int)(LBUFSIZE - bp->datasize));
-	} else
+	if (ch_ungotchar != -1)
 	{
 		bp->data[bp->datasize] = ch_ungotchar;
 		n = 1;
 		ch_ungotchar = -1;
+	} else if (ch_flags & CH_HELPFILE)
+	{
+		bp->data[bp->datasize] = helpdata[ch_fpos];
+		n = 1;
+	} else
+	{
+		n = iread(ch_file, &bp->data[bp->datasize], 
+			(unsigned int)(LBUFSIZE - bp->datasize));
 	}
 
 	if (n == READ_INTR)
 		return (EOI);
 	if (n < 0)
 	{
-		error("read error", NULL_PARG);
-		clear_eol();
+#if MSDOS_COMPILER==WIN32C
+		if (errno != EPIPE)
+#endif
+		{
+			error("read error", NULL_PARG);
+			clear_eol();
+		}
 		n = 0;
 	}
 
@@ -211,7 +239,7 @@ fch_get()
 	/*
 	 * If we have a log file, write the new data to it.
 	 */
-	if (logfile >= 0 && n > 0)
+	if (!secure && logfile >= 0 && n > 0)
 		write(logfile, (char *) &bp->data[bp->datasize], n);
 #endif
 
@@ -232,13 +260,21 @@ fch_get()
 			 * Wait a while, then try again.
 			 */
 			if (!slept)
-				ierror("Waiting for data", NULL_PARG);
-#if !MSOFTC
+			{
+				PARG parg;
+				parg.p_string = wait_message();
+				ierror("%s", &parg);
+			}
+#if !MSDOS_COMPILER
 	 		sleep(1);
+#else
+#if MSDOS_COMPILER==WIN32C
+			Sleep(1000);
+#endif
 #endif
 			slept = TRUE;
 		}
-		if (ABORT_SIGS())
+		if (sigs)
 			return (EOI);
 	}
 
@@ -251,11 +287,16 @@ fch_get()
 		 */
 		bp->next->prev = bp->prev;
 		bp->prev->next = bp->next;
-
 		bp->next = ch_bufhead;
 		bp->prev = END_OF_CHAIN;
 		ch_bufhead->prev = bp;
 		ch_bufhead = bp;
+
+		/*
+		 * Move to head of hash chain too.
+		 */
+		HASH_RM(bp);
+		HASH_INS(bp, h);
 	}
 
 	if (ch_offset >= bp->datasize)
@@ -314,10 +355,10 @@ end_logfile()
 	public void
 sync_logfile()
 {
-	struct buf *bp;
+	register struct buf *bp;
 	int warned = FALSE;
-	long block;
-	long nblocks;
+	BLOCKNUM block;
+	BLOCKNUM nblocks;
 
 	nblocks = (ch_fpos + LBUFSIZE - 1) / LBUFSIZE;
 	for (block = 0;  block < nblocks;  block++)
@@ -350,13 +391,17 @@ sync_logfile()
  */
 	static int
 buffered(block)
-	long block;
+	BLOCKNUM block;
 {
-	struct buf *bp;
+	register struct buf *bp;
+	register int h;
 
-	for (bp = ch_bufhead;  bp != END_OF_CHAIN;  bp = bp->next)
+	h = BUFHASH(block);
+	FOR_BUFS_IN_CHAIN(h, bp)
+	{
 		if (bp->block == block)
 			return (TRUE);
+	}
 	return (FALSE);
 }
 
@@ -366,9 +411,9 @@ buffered(block)
  */
 	public int
 ch_seek(pos)
-	POSITION pos;
+	register POSITION pos;
 {
-	long new_block;
+	BLOCKNUM new_block;
 	POSITION len;
 
 	len = ch_length();
@@ -429,7 +474,7 @@ ch_end_seek()
 	public int
 ch_beg_seek()
 {
-	struct buf *bp, *firstbp;
+	register struct buf *bp, *firstbp;
 
 	/*
 	 * Try a plain ch_seek first.
@@ -460,18 +505,18 @@ ch_length()
 {
 	if (ignore_eoi)
 		return (NULL_POSITION);
+	if (ch_flags & CH_HELPFILE)
+		return (size_helpdata);
 	return (ch_fsize);
 }
 
 /*
  * Return the current position in the file.
  */
-#define	tellpos(blk,off)   ((POSITION)((((long)(blk)) * LBUFSIZE) + (off)))
-
 	public POSITION
 ch_tell()
 {
-	return (tellpos(ch_block, ch_offset));
+	return (ch_block * LBUFSIZE) + ch_offset;
 }
 
 /*
@@ -480,7 +525,7 @@ ch_tell()
 	public int
 ch_forw_get()
 {
-	int c;
+	register int c;
 
 	c = ch_get();
 	if (c == EOI)
@@ -516,32 +561,21 @@ ch_back_get()
 }
 
 /*
- * Allocate buffers.
- * Caller wants us to have a total of at least want_nbufs buffers.
+ * Set max amount of buffer space.
+ * bufspace is in units of 1024 bytes.  -1 mean no limit.
  */
-	public int
-ch_nbuf(want_nbufs)
-	int want_nbufs;
+	public void
+ch_setbufspace(bufspace)
+	int bufspace;
 {
-	PARG parg;
-
-	while (ch_nbufs < want_nbufs)
+	if (bufspace < 0)
+		maxbufs = -1;
+	else
 	{
-		if (ch_addbuf())
-		{
-			/*
-			 * Cannot allocate enough buffers.
-			 * If we don't have ANY, then quit.
-			 * Otherwise, just report the error and return.
-			 */
-			parg.p_int = want_nbufs - ch_nbufs;
-			error("Cannot allocate %d buffers", &parg);
-			if (ch_nbufs == 0)
-				quit(QUIT_ERROR);
-			break;
-		}
+		maxbufs = ((bufspace * 1024) + LBUFSIZE-1) / LBUFSIZE;
+		if (maxbufs < 1)
+			maxbufs = 1;
 	}
-	return (ch_nbufs);
 }
 
 /*
@@ -550,7 +584,7 @@ ch_nbuf(want_nbufs)
 	public void
 ch_flush()
 {
-	struct buf *bp;
+	register struct buf *bp;
 
 	if (!(ch_flags & CH_CANSEEK))
 	{
@@ -566,7 +600,7 @@ ch_flush()
 	 * Initialize all the buffers.
 	 */
 	for (bp = ch_bufhead;  bp != END_OF_CHAIN;  bp = bp->next)
-		bp->block = (long)(-1);
+		bp->block = -1;
 
 	/*
 	 * Figure out the size of the file, if we can.
@@ -579,6 +613,20 @@ ch_flush()
 	ch_fpos = 0;
 	ch_block = 0; /* ch_fpos / LBUFSIZE; */
 	ch_offset = 0; /* ch_fpos % LBUFSIZE; */
+
+#if 1
+	/*
+	 * This is a kludge to workaround a Linux kernel bug: files in
+	 * /proc have a size of 0 according to fstat() but have readable 
+	 * data.  They are sometimes, but not always, seekable.
+	 * Force them to be non-seekable here.
+	 */
+	if (ch_fsize == 0)
+	{
+		ch_fsize = NULL_POSITION;
+		ch_flags &= ~CH_CANSEEK;
+	}
+#endif
 
 	if (lseek(ch_file, (off_t)0, 0) == BAD_LSEEK)
 	{
@@ -598,7 +646,7 @@ ch_flush()
 	static int
 ch_addbuf()
 {
-	struct buf *bp;
+	register struct buf *bp;
 
 	/*
 	 * Allocate and initialize a new buffer and link it 
@@ -608,12 +656,28 @@ ch_addbuf()
 	if (bp == NULL)
 		return (1);
 	ch_nbufs++;
-	bp->block = (long)(-1);
+	bp->block = -1;
 	bp->next = END_OF_CHAIN;
 	bp->prev = ch_buftail;
 	ch_buftail->next = bp;
 	ch_buftail = bp;
+	HASH_INS(bp, 0);
 	return (0);
+}
+
+/*
+ *
+ */
+	static void
+init_hashtbl()
+{
+	register int h;
+
+	for (h = 0;  h < BUFHASH_SIZE;  h++)
+	{
+		thisfile->hashtbl[h].buf_hnext = END_OF_HCHAIN(h);
+		thisfile->hashtbl[h].buf_hprev = END_OF_HCHAIN(h);
+	}
 }
 
 /*
@@ -622,7 +686,7 @@ ch_addbuf()
 	static void
 ch_delbufs()
 {
-	struct buf *bp;
+	register struct buf *bp;
 
 	while (ch_bufhead != END_OF_CHAIN)
 	{
@@ -632,6 +696,7 @@ ch_delbufs()
 		free(bp);
 	}
 	ch_nbufs = 0;
+	init_hashtbl();
 }
 
 /*
@@ -641,6 +706,17 @@ ch_delbufs()
 seekable(f)
 	int f;
 {
+#if MSDOS_COMPILER
+	extern int fd0;
+	if (f == fd0 && !isatty(fd0))
+	{
+		/*
+		 * In MS-DOS, pipes are seekable.  Check for
+		 * standard input, and pretend it is not seekable.
+		 */
+		return (0);
+	}
+#endif
 	return (lseek(f, (off_t)1, 0) != BAD_LSEEK);
 }
 
@@ -664,7 +740,6 @@ ch_init(f, flags)
 		thisfile = (struct filestate *) 
 				calloc(1, sizeof(struct filestate));
 		thisfile->buf_next = thisfile->buf_prev = END_OF_CHAIN;
-		thisfile->buf_block = (long)(-1);
 		thisfile->nbufs = 0;
 		thisfile->flags = 0;
 		thisfile->fpos = 0;
@@ -673,11 +748,12 @@ ch_init(f, flags)
 		thisfile->file = -1;
 		thisfile->fsize = NULL_POSITION;
 		ch_flags = flags;
+		init_hashtbl();
 		/*
 		 * Try to seek; set CH_CANSEEK if it works.
 		 */
-		if (seekable(f))
-			ch_flags |= CH_CANSEEK;
+		if ((flags & CH_CANSEEK) && !seekable(f))
+			ch_flags &= ~CH_CANSEEK;
 		set_filestate(curr_ifile, (void *) thisfile);
 	}
 	if (thisfile->file == -1)
@@ -693,7 +769,7 @@ ch_close()
 {
 	int keepstate = FALSE;
 
-	if (ch_flags & (CH_CANSEEK|CH_POPENED))
+	if (ch_flags & (CH_CANSEEK|CH_POPENED|CH_HELPFILE))
 	{
 		/*
 		 * We can seek or re-open, so we don't need to keep buffers.
@@ -709,7 +785,7 @@ ch_close()
 		 * But don't really close it if it was opened via popen(),
 		 * because pclose() wants to close it.
 		 */
-		if (!(ch_flags & CH_POPENED))
+		if (!(ch_flags & (CH_POPENED|CH_HELPFILE)))
 			close(ch_file);
 		ch_file = -1;
 	} else

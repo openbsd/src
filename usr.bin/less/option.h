@@ -1,29 +1,11 @@
-/*	$OpenBSD: option.h,v 1.2 2001/01/29 01:58:03 niklas Exp $	*/
-
 /*
- * Copyright (c) 1984,1985,1989,1994,1995  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2002  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -41,6 +23,7 @@
 #define	NO_TOGGLE	0100	/* Option cannot be toggled with "-" cmd */
 #define	HL_REPAINT	0200	/* Repaint hilites after toggling option */
 #define	NO_QUERY	0400	/* Option cannot be queried with "_" cmd */
+#define	INIT_HANDLER	01000	/* Call option handler function at startup */
 
 #define	OTYPE		(BOOL|TRIPLE|NUMBER|STRING|NOVAR)
 
@@ -56,10 +39,21 @@
 #define	OPT_TOGGLE	1
 #define	OPT_UNSET	2
 #define	OPT_SET		3
+#define OPT_NO_PROMPT	0100
 
-struct option
+/* Error code from findopt_name */
+#define OPT_AMBIG       1
+
+struct optname
+{
+	char *oname;            /* Long (GNU-style) option name */
+	struct optname *onext;  /* List of synonymous option names */
+};
+
+struct loption
 {
 	char oletter;		/* The controlling letter (a-z) */
+	struct optname *onames; /* Long (GNU-style) option name */
 	int otype;		/* Type of the option */
 	int odefault;		/* Default value */
 	int *ovar;		/* Pointer to the associated variable */
