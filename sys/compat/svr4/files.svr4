@@ -1,4 +1,4 @@
-#	$OpenBSD: files.svr4,v 1.3 1996/04/21 22:18:17 deraadt Exp $
+#	$OpenBSD: files.svr4,v 1.4 1996/04/25 10:20:16 niklas Exp $
 #	$NetBSD: files.svr4,v 1.6 1996/04/11 12:43:29 christos Exp $
 #
 # Config.new file description for machine-independent SVR4 compat code.
@@ -24,3 +24,4 @@ file	compat/svr4/svr4_filio.c	compat_svr4
 file	compat/svr4/svr4_sockio.c	compat_svr4
 file	compat/svr4/svr4_error.c	compat_svr4
 file	compat/svr4/svr4_ipc.c		compat_svr4
+file	compat/svr4/svr4_ncr.c		compat_svr4

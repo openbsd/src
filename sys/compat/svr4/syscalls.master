@@ -1,9 +1,9 @@
-	$OpenBSD: syscalls.master,v 1.5 1996/04/21 22:18:42 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.6 1996/04/25 10:20:18 niklas Exp $
 ;	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
-; NetBSD COMPAT_SVR4 system call name/number "master" file.
+; OpenBSD COMPAT_SVR4 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
 ;
 ; Fields: number type [type-dependent ...]
@@ -140,7 +140,11 @@
 73	OBSOL		rumount
 74	OBSOL		rfstart
 75	OBSOL		sigret
+#ifdef COMPAT_SVR4_NCR
+76	STD		{ int svr4_ncr_sys_rdebug(); }
+#else
 76	OBSOL		rdebug
+#endif
 77	OBSOL		rfstop
 78	UNIMPL		rfsys
 79	NOARGS		{ int sys_rmdir(char *path); }
