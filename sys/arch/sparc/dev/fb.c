@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.22 2002/11/06 21:06:20 miod Exp $	*/
+/*	$OpenBSD: fb.c,v 1.23 2002/11/24 00:36:16 miod Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -414,15 +414,17 @@ fbwscons_setcolormap(sf, setcolor)
 	struct sunfb *sf;
 	void (*setcolor)(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 {
+	int i;
+	u_char *color;
+
 	if (sf->sf_depth <= 8 && setcolor != NULL) {
+		for (i = 0; i < 16; i++) {
+			color = (u_char *)&rasops_cmap[i * 3];
+			setcolor(sf, i, color[0], color[1], color[2]);
+		}
+		/* compensate for BoW palette */
 		setcolor(sf, WSCOL_BLACK, 0, 0, 0);
-		setcolor(sf, 255, 0, 0, 0);
-		setcolor(sf, WSCOL_RED, 255, 0, 0);
-		setcolor(sf, WSCOL_GREEN, 0, 255, 0);
-		setcolor(sf, WSCOL_BROWN, 154, 85, 46);
-		setcolor(sf, WSCOL_BLUE, 0, 0, 255);
-		setcolor(sf, WSCOL_MAGENTA, 255, 255, 0);
-		setcolor(sf, WSCOL_CYAN, 0, 255, 255);
+		setcolor(sf, 255, 0, 0, 0);	/* cursor */
 		setcolor(sf, WSCOL_WHITE, 255, 255, 255);
 	}
 }
