@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 1997/01/12 15:13:10 downsj Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 1997/01/13 18:03:55 downsj Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.29 1996/12/17 08:41:19 thorpej Exp $	*/
 
 /*
@@ -1892,7 +1892,7 @@ find_devs()
 		/*
 		 * Invalid select codes
 		 */
-		if ((sc >= 32 && sc < 132) || sc > 187)	/* XXX */
+		if (sc >= 32 && sc < 132)
 			continue;
 
 		if (sc == -1) {

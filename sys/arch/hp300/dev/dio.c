@@ -1,4 +1,4 @@
-/*	$OpenBSD: dio.c,v 1.1 1997/01/12 15:12:25 downsj Exp $	*/
+/*	$OpenBSD: dio.c,v 1.2 1997/01/13 18:03:53 downsj Exp $	*/
 /*	$NetBSD: dio.c,v 1.1 1996/12/17 08:41:02 thorpej Exp $	*/
 
 /*-
@@ -207,7 +207,7 @@ dio_scodetopa(scode)
 	else if (DIO_ISDIO(scode))
 		rval = DIO_BASE + (scode * DIO_DEVSIZE);
 	else if (DIO_ISDIOII(scode))
-		rval = DIOII_BASE + (scode * DIOII_DEVSIZE);
+		rval = DIOII_BASE + ((scode - 132) * DIOII_DEVSIZE);
 	else
 		rval = 0;
 
