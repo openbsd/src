@@ -62,8 +62,8 @@ main(argc,argv)
 	  if (pwe=getpwuid(getuid())) /* can we get it from /etc/passwd? */
 		ptr = pwe->pw_name;
 	  else
-	  if ((ptr = getenv("USER")) == 0)
-		if ((ptr = getenv("LOGNAME")) == 0)
+	  if ((ptr = getenv("LOGNAME")) == 0)
+		if ((ptr = getenv("USER")) == 0)
 		  {
 		  noone: write(2, "Can't find your logname.  Who Are You?\n",39);
 		 		 exit();
@@ -145,7 +145,9 @@ main(argc,argv)
 						write(1,cmdhelp,sizeof(cmdhelp));  exit();
 
 			case 'o':	/* specify a .larnopts filename */
-						strncpy(optsfile,argv[i]+2,127);  break;
+						strncpy(optsfile,argv[i]+2,127);
+						optsfile[127] = '\0';
+						break;
 
 			default:	printf("Unknown option <%s>\n",argv[i]);  exit();
 			};
