@@ -1,3 +1,5 @@
+/*	$OpenBSD: bcmp.c,v 1.2 1996/03/09 02:42:54 niklas Exp $	*/
+
 /*
  * Copyright (c) 1987 Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bcmp.c	5.6 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: bcmp.c,v 1.1.1.1 1995/10/18 08:42:20 deraadt Exp $";
+static char *rcsid = "$Id: bcmp.c,v 1.2 1996/03/09 02:42:54 niklas Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -41,6 +43,7 @@ static char *rcsid = "$Id: bcmp.c,v 1.1.1.1 1995/10/18 08:42:20 deraadt Exp $";
 /*
  * bcmp -- vax cmpc3 instruction
  */
+int
 bcmp(b1, b2, length)
 	const void *b1, *b2;
 	register size_t length;

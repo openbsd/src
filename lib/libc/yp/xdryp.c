@@ -1,4 +1,5 @@
-/*	$NetBSD: xdryp.c,v 1.9 1995/07/14 21:04:17 christos Exp $	*/
+/*    $OpenBSD: xdryp.c,v 1.3 1996/03/09 02:43:00 niklas Exp $   */
+/*    $NetBSD: xdryp.c,v 1.10 1996/02/04 23:26:21 jtc Exp $   */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@theos.com>
@@ -31,8 +32,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char *rcsid = "$NetBSD: xdryp.c,v 1.9 1995/07/14 21:04:17 christos Exp $";
+#if defined(LIBC_SCCS) && !defined(lint)
+static char *rcsid = "$NetBSD: xdryp.c,v 1.10 1996/02/04 23:26:21 jtc Exp $";
 #endif
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: strcat.c,v 1.2 1996/03/09 02:42:56 niklas Exp $	*/
+
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strcat.c	5.6 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: strcat.c,v 1.1.1.1 1995/10/18 08:42:22 deraadt Exp $";
+static char *rcsid = "$Id: strcat.c,v 1.2 1996/03/09 02:42:56 niklas Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -46,6 +48,6 @@ strcat(s, append)
 	char *save = s;
 
 	for (; *s; ++s);
-	while (*s++ = *append++);
+	while ((*s++ = *append++) != '\0');
 	return(save);
 }

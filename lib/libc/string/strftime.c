@@ -1,3 +1,5 @@
+/*	$OpenBSD: strftime.c,v 1.3 1996/03/09 02:42:58 niklas Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strftime.c	5.11 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: strftime.c,v 1.2 1995/12/30 08:16:41 deraadt Exp $";
+static char *rcsid = "$Id: strftime.c,v 1.3 1996/03/09 02:42:58 niklas Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/localedef.h>
@@ -272,7 +274,7 @@ _fmt(format, t)
 	return(gsize);
 }
 
-static
+static int
 _secs(t)
 	struct tm *t;
 {
@@ -289,7 +291,7 @@ _secs(t)
 	return(_add(++p));
 }
 
-static
+static int
 _conv(n, digits, pad)
 	int n, digits;
 	char pad;
@@ -304,7 +306,7 @@ _conv(n, digits, pad)
 	return(_add(++p));
 }
 
-static
+static int
 _add(str)
 	register char *str;
 {

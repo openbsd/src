@@ -1,3 +1,5 @@
+/*	$OpenBSD: bm.c,v 1.2 1996/03/09 02:42:55 niklas Exp $	*/
+
 /*-
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -34,10 +36,10 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-/* from: static char sccsid[] = "@(#)bm.c	8.7 (Berkeley) 6/21/94"; */
-static char *rcsid = "$Id: bm.c,v 1.1.1.1 1995/10/18 08:42:20 deraadt Exp $";
-#endif /* not lint */
+#if defined(LIBC_SCCS) && !defined(lint)
+/* from: static char sccsid[] = "@(#)bm.c     8.7 (Berkeley) 6/21/94"; */
+static char *rcsid = "$Id: bm.c,v 1.2 1996/03/09 02:42:55 niklas Exp $";
+#endif /* LIBC_SCCS && not lint */
 
 #include <sys/types.h>
 
