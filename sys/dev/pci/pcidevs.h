@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.40 1998/03/28 09:29:30 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.41 1998/03/28 18:30:25 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -608,6 +608,10 @@
 
 /* Bit3 products */
 #define	PCI_PRODUCT_BIT3_PCIVME617	0x0001		/* PCI-VME Interface Mod. 617 */
+
+/* Brooktree products */
+#define	PCI_PRODUCT_BROOKTREE_BT848	0x0350		/* BT848 */
+#define	PCI_PRODUCT_BROOKTREE_BT849	0x0351		/* BT849 */
 
 /* BusLogic products */
 #define	PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC	0x0140		/* MultiMaster NC */
