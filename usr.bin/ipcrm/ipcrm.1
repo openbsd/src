@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipcrm.1,v 1.10 2003/10/23 09:04:58 jmc Exp $
+.\" $OpenBSD: ipcrm.1,v 1.11 2005/02/22 14:56:21 jmc Exp $
 .\"
 .\" Copyright (c) 1994 Adam Glass
 .\" All rights reserved.
@@ -34,48 +34,48 @@ memory segments
 .Sh SYNOPSIS
 .Nm ipcrm
 .Bk -words
-.Op Fl q Ar msqid
-.Op Fl m Ar shmid
-.Op Fl s Ar semid
-.Op Fl Q Ar msgkey
 .Op Fl M Ar shmkey
+.Op Fl m Ar shmid
+.Op Fl Q Ar msgkey
+.Op Fl q Ar msqid
 .Op Fl S Ar semkey
+.Op Fl s Ar semid
 .Ar ...
 .Ek
 .Sh DESCRIPTION
 .Nm
-removes the specified message queues, semaphores and shared memory
+removes the specified message queues, semaphores, and shared memory
 segments.
 These System V IPC objects can be specified by their
 creation ID or any associated key.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl q Ar msqid
-Remove the message queue associated with the ID
-.Nm msqid
-from the system.
-.It Fl m Ar shmid
-Mark the shared memory segment associated with ID
-.Nm shmid
-for removal.
-This marked segment will be destroyed after the last detach.
-.It Fl s Ar semid
-Removes the semaphore set associated with ID
-.Nm semid
-from the system.
-.It Fl Q Ar msgkey
-Remove the message queue associated with key
-.Nm msgkey
-from the system.
 .It Fl M Ar shmkey
 Mark the shared memory segment associated with key
 .Nm shmkey
 for removal.
 This marked segment will be destroyed after the last detach.
+.It Fl m Ar shmid
+Mark the shared memory segment associated with ID
+.Nm shmid
+for removal.
+This marked segment will be destroyed after the last detach.
+.It Fl Q Ar msgkey
+Remove the message queue associated with key
+.Nm msgkey
+from the system.
+.It Fl q Ar msqid
+Remove the message queue associated with the ID
+.Nm msqid
+from the system.
 .It Fl S Ar semkey
 Remove the semaphore set associated with key
 .Nm semkey
+from the system.
+.It Fl s Ar semid
+Removes the semaphore set associated with ID
+.Nm semid
 from the system.
 .El
 .Pp

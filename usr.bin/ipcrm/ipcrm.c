@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcrm.c,v 1.8 2004/09/14 22:25:16 deraadt Exp $*/
+/*	$OpenBSD: ipcrm.c,v 1.9 2005/02/22 14:56:21 jmc Exp $*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -60,8 +60,8 @@ void
 usage(void)
 {
 	extern char *__progname;
-	fprintf(stderr, "usage: %s [ [-q msqid] [-m shmid] [-s semid]\n"
-			"         [-Q msgkey] [-M shmkey] [-S semkey] ...]\n",
+	fprintf(stderr, "usage: %s [-M shmkey] [-m shmid] [-Q msgkey]\n"
+			"         [-q msqid] [-S semkey] [-s semid] ...\n",
 		__progname);
 	exit(1);
 }
