@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.40 2002/03/27 17:13:47 ian Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.41 2002/06/07 23:30:26 aaron Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -119,10 +119,11 @@ arptimer(arg)
 
 	s = splsoftnet();
 	timeout_add(to, arpt_prune * hz);
-	for (la = llinfo_arp.lh_first; la != 0; la = nla) {
+	for (la = LIST_FIRST(&llinfo_arp); la != LIST_END(&llinfo_arp);
+	    la = nla) {
 		register struct rtentry *rt = la->la_rt;
 
-		nla = la->la_list.le_next;
+		nla = LIST_NEXT(la, la_list);
 		if (rt->rt_expire && rt->rt_expire <= time.tv_sec)
 			arptfree(la); /* timer has expired; clear */
 	}
