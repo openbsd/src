@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.116 2000/05/17 08:20:16 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.117 2000/05/18 13:27:36 djm Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -385,9 +385,12 @@ void
 destroy_sensitive_data(void)
 {
 	/* Destroy the private and public keys.  They will no longer be needed. */
-	RSA_free(public_key);
-	RSA_free(sensitive_data.private_key);
-	RSA_free(sensitive_data.host_key);
+	if (public_key)
+		RSA_free(public_key);
+	if (sensitive_data.private_key)
+		RSA_free(sensitive_data.private_key);
+	if (sensitive_data.host_key)
+		RSA_free(sensitive_data.host_key);
 	if (sensitive_data.dsa_host_key != NULL)
 		key_free(sensitive_data.dsa_host_key);
 }
