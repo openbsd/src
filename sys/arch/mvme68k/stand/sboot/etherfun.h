@@ -1,3 +1,5 @@
+/*	$OpenBSD: etherfun.h,v 1.2 1996/04/28 10:49:37 deraadt Exp $ */
+
 /*
  *
  * Copyright (c) 1995 Charles D. Cranor and Seth Widoff

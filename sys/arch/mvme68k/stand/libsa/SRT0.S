@@ -1,4 +1,4 @@
-|	$Id: SRT0.S,v 1.4 1995/11/17 22:05:43 deraadt Exp $
+|	$OpenBSD: SRT0.S,v 1.5 1996/04/28 10:48:54 deraadt Exp $
 
 | Copyright (c) 1995 Theo de Raadt
 | 

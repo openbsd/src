@@ -1,4 +1,4 @@
-#    $Id: Makefile,v 1.2 1995/12/06 10:55:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/04/28 10:48:26 deraadt Exp $
 
 CFLAGS+=-I${.CURDIR}/../../include -O2
 

@@ -1,4 +1,4 @@
-/*	$Id: i82586.h,v 1.2 1995/11/07 08:51:00 deraadt Exp $ */
+/*	$OpenBSD: i82586.h,v 1.3 1996/04/28 10:49:21 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt

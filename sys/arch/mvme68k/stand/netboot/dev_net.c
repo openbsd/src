@@ -1,4 +1,4 @@
-/*	$Id: dev_net.c,v 1.4 1995/11/17 22:13:11 deraadt Exp $ */
+/*	$OpenBSD: dev_net.c,v 1.5 1996/04/28 10:49:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross

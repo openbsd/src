@@ -1,3 +1,5 @@
+/*	$OpenBSD: srec.c,v 1.3 1996/04/28 10:49:45 deraadt Exp $ */
+
 /*
  * Public domain, believed to be by Mike Price.
  * 

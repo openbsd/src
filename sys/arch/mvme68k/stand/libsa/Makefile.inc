@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile.inc,v 1.2 1996/04/28 10:48:53 deraadt Exp $
+
 LIB_SA_DIR=${S}/arch/${MACHINE}/stand/libsa
 
 LIBSA_DIR!= cd ${LIB_SA_DIR}; \

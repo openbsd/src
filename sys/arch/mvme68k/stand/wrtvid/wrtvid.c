@@ -1,3 +1,5 @@
+/*	$OpenBSD: wrtvid.c,v 1.3 1996/04/28 10:49:49 deraadt Exp $ */
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>

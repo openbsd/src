@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile.inc,v 1.2 1996/04/28 10:48:34 deraadt Exp $
+
 LIB_BUG_DIR=${S}/arch/${MACHINE}/stand/libbug
 
 LIBBUG_DIR!= cd ${LIB_BUG_DIR}; \

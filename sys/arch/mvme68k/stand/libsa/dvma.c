@@ -1,3 +1,4 @@
+/*	$OpenBSD: dvma.c,v 1.2 1996/04/28 10:49:03 deraadt Exp $ */
 
 /*
  * The easiest way to deal with the need for DVMA mappings is

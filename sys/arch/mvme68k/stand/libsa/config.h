@@ -1,4 +1,4 @@
-/*	$Id: config.h,v 1.2 1995/11/07 08:50:45 deraadt Exp $ */
+/*	$OpenBSD: config.h,v 1.3 1996/04/28 10:48:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt

@@ -1,4 +1,4 @@
-/*	$Id: promdev.c,v 1.2 1995/11/07 08:50:52 deraadt Exp $ */
+/*	$OpenBSD: promdev.c,v 1.3 1996/04/28 10:49:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1995/11/07 08:51:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.3 1996/04/28 10:49:31 deraadt Exp $
 
 S=	${.CURDIR}/../../../..
 INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}

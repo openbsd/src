@@ -1,3 +1,5 @@
+/*	$OpenBSD: bug.c,v 1.3 1996/04/28 10:48:56 deraadt Exp $ */
+
 /*
  * Copyright (c) 1995 Theo de Raadt
  * All rights reserved.

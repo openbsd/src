@@ -1,3 +1,5 @@
+#	$OpenBSD: Makefile.inc,v 1.2 1996/04/28 10:48:27 deraadt Exp $
+
 BUG_CRT_DIR=${S}/arch/${MACHINE}/stand/bugcrt
 
 BUGCRT_DIR!= cd ${BUG_CRT_DIR}; \

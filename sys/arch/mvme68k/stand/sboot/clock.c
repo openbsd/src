@@ -1,4 +1,4 @@
-/*	$Id: clock.c,v 1.2 1995/11/07 08:51:08 deraadt Exp $ */
+/*	$OpenBSD: clock.c,v 1.3 1996/04/28 10:49:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

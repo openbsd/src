@@ -1,4 +1,4 @@
-/*	$Id: promcons.c,v 1.2 1995/11/07 08:50:51 deraadt Exp $ */
+/*	$OpenBSD: promcons.c,v 1.3 1996/04/28 10:49:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt

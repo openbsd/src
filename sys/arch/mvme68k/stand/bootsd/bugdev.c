@@ -1,4 +1,4 @@
-/*	$Id: bugdev.c,v 1.4 1995/12/06 10:54:55 deraadt Exp $ */
+/*	$OpenBSD: bugdev.c,v 1.5 1996/04/28 10:48:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg

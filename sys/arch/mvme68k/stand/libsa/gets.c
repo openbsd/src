@@ -1,4 +1,4 @@
-/*	$Id: gets.c,v 1.2 1995/11/07 08:50:48 deraadt Exp $ */
+/*	$OpenBSD: gets.c,v 1.3 1996/04/28 10:49:05 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt

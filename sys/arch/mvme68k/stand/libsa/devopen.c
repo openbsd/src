@@ -1,3 +1,4 @@
+/*	$OpenBSD: devopen.c,v 1.3 1996/04/28 10:49:02 deraadt Exp $ */
 
 #include <sys/param.h>
 #include <stand.h>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: bootst.c,v 1.4 1996/04/28 10:48:24 deraadt Exp $ */
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/reboot.h>

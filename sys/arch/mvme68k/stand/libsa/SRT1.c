@@ -1,4 +1,4 @@
-/*	$Id: SRT1.c,v 1.2 1995/11/07 08:50:41 deraadt Exp $ */
+/*	$OpenBSD: SRT1.c,v 1.3 1996/04/28 10:48:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
