@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: inet_netof.c,v 1.4 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: inet_netof.c,v 1.5 2005/03/25 13:24:12 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -40,10 +40,9 @@ static char rcsid[] = "$OpenBSD: inet_netof.c,v 1.4 2003/06/02 20:18:35 millert 
  * address; handles class a/b/c network #'s.
  */
 in_addr_t
-inet_netof(in)
-	struct in_addr in;
+inet_netof(struct in_addr in)
 {
-	register in_addr_t i = ntohl(in.s_addr);
+	in_addr_t i = ntohl(in.s_addr);
 
 	if (IN_CLASSA(i))
 		return (((i)&IN_CLASSA_NET) >> IN_CLASSA_NSHIFT);

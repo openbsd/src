@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: inet_network.c,v 1.8 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: inet_network.c,v 1.9 2005/03/25 13:24:12 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -42,13 +42,12 @@ static char rcsid[] = "$OpenBSD: inet_network.c,v 1.8 2003/06/02 20:18:35 miller
  * network numbers.
  */
 in_addr_t
-inet_network(cp)
-	register const char *cp;
+inet_network(const char *cp)
 {
-	register in_addr_t val, base, n;
-	register char c;
+	in_addr_t val, base, n;
+	char c;
 	in_addr_t parts[4], *pp = parts;
-	register int i;
+	int i;
 
 again:
 	val = 0; base = 10;

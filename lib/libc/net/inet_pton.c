@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_pton.c,v 1.4 2002/02/16 21:27:23 millert Exp $	*/
+/*	$OpenBSD: inet_pton.c,v 1.5 2005/03/25 13:24:12 otto Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -20,7 +20,7 @@
 #if 0
 static char rcsid[] = "$From: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: inet_pton.c,v 1.4 2002/02/16 21:27:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: inet_pton.c,v 1.5 2005/03/25 13:24:12 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,10 +53,7 @@ static int	inet_pton6(const char *src, u_char *dst);
  *	Paul Vixie, 1996.
  */
 int
-inet_pton(af, src, dst)
-	int af;
-	const char *src;
-	void *dst;
+inet_pton(int af, const char *src, void *dst)
 {
 	switch (af) {
 	case AF_INET:
@@ -81,9 +78,7 @@ inet_pton(af, src, dst)
  *	Paul Vixie, 1996.
  */
 static int
-inet_pton4(src, dst)
-	const char *src;
-	u_char *dst;
+inet_pton4(const char *src, u_char *dst)
 {
 	static const char digits[] = "0123456789";
 	int saw_digit, octets, ch;
@@ -135,9 +130,7 @@ inet_pton4(src, dst)
  *	Paul Vixie, 1996.
  */
 static int
-inet_pton6(src, dst)
-	const char *src;
-	u_char *dst;
+inet_pton6(const char *src, u_char *dst)
 {
 	static const char xdigits_l[] = "0123456789abcdef",
 			  xdigits_u[] = "0123456789ABCDEF";

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getnetbyname.c,v 1.6 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: getnetbyname.c,v 1.7 2005/03/25 13:24:12 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <netdb.h>
@@ -37,11 +37,10 @@ static char rcsid[] = "$OpenBSD: getnetbyname.c,v 1.6 2003/06/02 20:18:35 miller
 extern int _net_stayopen;
 
 struct netent *
-_getnetbyname(name)
-	register const char *name;
+_getnetbyname(const char *name)
 {
-	register struct netent *p;
-	register char **cp;
+	struct netent *p;
+	char **cp;
 
 	setnetent(_net_stayopen);
 	while ((p = getnetent())) {

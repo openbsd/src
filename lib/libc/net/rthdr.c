@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthdr.c,v 1.6 2003/06/11 02:54:02 itojun Exp $	*/
+/*	$OpenBSD: rthdr.c,v 1.7 2005/03/25 13:24:12 otto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,8 +40,7 @@
 #include <stdio.h>
 
 size_t
-inet6_rthdr_space(type, seg)
-	int type, seg;
+inet6_rthdr_space(int type, int seg)
 {
 	switch (type) {
 	case IPV6_RTHDR_TYPE_0:
@@ -55,9 +54,7 @@ inet6_rthdr_space(type, seg)
 }
 
 struct cmsghdr *
-inet6_rthdr_init(bp, type)
-	void *bp;
-	int type;
+inet6_rthdr_init(void *bp, int type)
 {
 	struct cmsghdr *ch = (struct cmsghdr *)bp;
 	struct ip6_rthdr *rthdr;
@@ -79,10 +76,7 @@ inet6_rthdr_init(bp, type)
 }
 
 int
-inet6_rthdr_add(cmsg, addr, flags)
-	struct cmsghdr *cmsg;
-	const struct in6_addr *addr;
-	u_int flags;
+inet6_rthdr_add(struct cmsghdr *cmsg, const struct in6_addr *addr, u_int flags)
 {
 	struct ip6_rthdr *rthdr;
 
@@ -111,9 +105,7 @@ inet6_rthdr_add(cmsg, addr, flags)
 }
 
 int
-inet6_rthdr_lasthop(cmsg, flags)
-	struct cmsghdr *cmsg;
-	unsigned int flags;
+inet6_rthdr_lasthop(struct cmsghdr *cmsg, unsigned int flags)
 {
 	struct ip6_rthdr *rthdr;
 
@@ -148,8 +140,7 @@ inet6_rthdr_reverse(in, out)
 #endif
 
 int
-inet6_rthdr_segments(cmsg)
-	const struct cmsghdr *cmsg;
+inet6_rthdr_segments(const struct cmsghdr *cmsg)
 {
 	struct ip6_rthdr *rthdr;
 
@@ -172,9 +163,7 @@ inet6_rthdr_segments(cmsg)
 }
 
 struct in6_addr *
-inet6_rthdr_getaddr(cmsg, index)
-	struct cmsghdr *cmsg;
-	int index;
+inet6_rthdr_getaddr(struct cmsghdr *cmsg, int index)
 {
 	struct ip6_rthdr *rthdr;
 
@@ -200,9 +189,7 @@ inet6_rthdr_getaddr(cmsg, index)
 }
 
 int
-inet6_rthdr_getflags(cmsg, index)
-	const struct cmsghdr *cmsg;
-	int index;
+inet6_rthdr_getflags(const struct cmsghdr *cmsg, int index)
 {
 	struct ip6_rthdr *rthdr;
 

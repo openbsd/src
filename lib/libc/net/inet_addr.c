@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_addr.c,v 1.7 2003/06/02 20:18:35 millert Exp $	*/
+/*	$OpenBSD: inet_addr.c,v 1.8 2005/03/25 13:24:12 otto Exp $	*/
 
 /*
  * ++Copyright++ 1983, 1990, 1993
@@ -56,7 +56,7 @@
 static char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
 static char rcsid[] = "$From: inet_addr.c,v 8.5 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: inet_addr.c,v 1.7 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: inet_addr.c,v 1.8 2005/03/25 13:24:12 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,8 +71,7 @@ static char rcsid[] = "$OpenBSD: inet_addr.c,v 1.7 2003/06/02 20:18:35 millert E
  * The value returned is in network order.
  */
 in_addr_t
-inet_addr(cp)
-	register const char *cp;
+inet_addr(const char *cp)
 {
 	struct in_addr val;
 
@@ -89,15 +88,13 @@ inet_addr(cp)
  * cannot distinguish between failure and a local broadcast address.
  */
 int
-inet_aton(cp, addr)
-	register const char *cp;
-	struct in_addr *addr;
+inet_aton(const char *cp, struct in_addr *addr)
 {
-	register in_addr_t val;
-	register int base, n;
-	register char c;
+	in_addr_t val;
+	int base, n;
+	char c;
 	u_int parts[4];
-	register u_int *pp = parts;
+	u_int *pp = parts;
 
 	c = *cp;
 	for (;;) {

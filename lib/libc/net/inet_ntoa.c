@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: inet_ntoa.c,v 1.4 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: inet_ntoa.c,v 1.5 2005/03/25 13:24:12 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -41,11 +41,10 @@ static char rcsid[] = "$OpenBSD: inet_ntoa.c,v 1.4 2003/06/02 20:18:35 millert E
 #include <stdio.h>
 
 char *
-inet_ntoa(in)
-	struct in_addr in;
+inet_ntoa(struct in_addr in)
 {
 	static char b[18];
-	register char *p;
+	char *p;
 
 	p = (char *)&in;
 #define	UC(b)	(((int)b)&0xff)

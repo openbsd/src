@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.21 2003/06/02 20:18:36 millert Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.22 2005/03/25 13:24:12 otto Exp $	*/
 
 /*
  * ++Copyright++ 1988, 1993
@@ -56,7 +56,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_query.c,v 8.9 1996/09/22 00:13:28 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_query.c,v 1.21 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_query.c,v 1.22 2005/03/25 13:24:12 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,15 +98,15 @@ extern int res_opt(int, u_char *, int, int);
  * Caller must parse answer and determine whether it answers the question.
  */
 int
-res_query(name, class, type, answer, anslen)
-	const char *name;	/* domain name */
-	int class, type;	/* class and type of query */
-	u_char *answer;		/* buffer to put answer */
-	int anslen;		/* size of answer buffer */
+res_query(const char *name,
+    int class,		/* domain name */
+    int type,		/* class and type of query */
+    u_char *answer,	/* buffer to put answer */
+    int anslen)		/* size of answer buffer */
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	u_char buf[MAXPACKET];
-	register HEADER *hp = (HEADER *) answer;
+	HEADER *hp = (HEADER *) answer;
 	int n;
 
 	hp->rcode = NOERROR;	/* default */
@@ -180,13 +180,13 @@ res_query(name, class, type, answer, anslen)
  * is detected.  Error code, if any, is left in h_errno.
  */
 int
-res_search(name, class, type, answer, anslen)
-	const char *name;	/* domain name */
-	int class, type;	/* class and type of query */
-	u_char *answer;		/* buffer to put answer */
-	int anslen;		/* size of answer */
+res_search(const char *name,
+    int class,		/* domain name */
+    int type,		/* class and type of query */
+    u_char *answer,	/* buffer to put answer */
+    int anslen)		/* size of answer */
 {
-	register const char *cp, * const *domain;
+	const char *cp, * const *domain;
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	HEADER *hp = (HEADER *) answer;
 	u_int dots;
@@ -320,11 +320,12 @@ res_search(name, class, type, answer, anslen)
  * removing a trailing dot from name if domain is NULL.
  */
 int
-res_querydomain(name, domain, class, type, answer, anslen)
-	const char *name, *domain;
-	int class, type;	/* class and type of query */
-	u_char *answer;		/* buffer to put answer */
-	int anslen;		/* size of answer */
+res_querydomain(const char *name,
+    const char *domain,
+    int class,		/* class and type of query */
+    int type,
+    u_char *answer,	/* buffer to put answer */
+    int anslen)		/* size of answer */
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	char nbuf[MAXDNAME*2+1+1];
@@ -359,11 +360,10 @@ res_querydomain(name, domain, class, type, answer, anslen)
 }
 
 const char *
-hostalias(name)
-	register const char *name;
+hostalias(const char *name)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
-	register char *cp1, *cp2;
+	char *cp1, *cp2;
 	FILE *fp;
 	char *file;
 	char buf[BUFSIZ];

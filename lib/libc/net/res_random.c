@@ -1,4 +1,4 @@
-/* $OpenBSD: res_random.c,v 1.15 2003/12/12 06:57:12 itojun Exp $ */
+/* $OpenBSD: res_random.c,v 1.16 2005/03/25 13:24:12 otto Exp $ */
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -122,7 +122,7 @@ pmod(u_int16_t gen, u_int16_t exp, u_int16_t mod)
  * application does not have to worry about it.
  */
 static void 
-res_initid()
+res_initid(void)
 {
 	u_int16_t j, i;
 	int noprime = 1;
@@ -173,7 +173,7 @@ res_initid()
 }
 
 u_int
-res_randomid()
+res_randomid(void)
 {
         int i, n;
 

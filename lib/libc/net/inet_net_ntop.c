@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_net_ntop.c,v 1.4 2004/09/15 19:01:28 deraadt Exp $	*/
+/*	$OpenBSD: inet_net_ntop.c,v 1.5 2005/03/25 13:24:12 otto Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -21,7 +21,7 @@
 #if 0
 static const char rcsid[] = "$From: inet_net_ntop.c,v 8.2 1996/08/08 06:54:44 vixie Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: inet_net_ntop.c,v 1.4 2004/09/15 19:01:28 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: inet_net_ntop.c,v 1.5 2005/03/25 13:24:12 otto Exp $";
 #endif
 #endif
 
@@ -48,12 +48,7 @@ static char *inet_net_ntop_ipv4(const u_char *, int, char *, size_t);
  *	Paul Vixie (ISC), July 1996
  */
 char *
-inet_net_ntop(af, src, bits, dst, size)
-	int af;
-	const void *src;
-	int bits;
-	char *dst;
-	size_t size;
+inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
 {
 	switch (af) {
 	case AF_INET:
@@ -78,11 +73,7 @@ inet_net_ntop(af, src, bits, dst, size)
  *	Paul Vixie (ISC), July 1996
  */
 static char *
-inet_net_ntop_ipv4(src, bits, dst, size)
-	const u_char *src;
-	int bits;
-	char *dst;
-	size_t size;
+inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 {
 	char *odst = dst;
 	u_int m;

@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ns_addr.c,v 1.8 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_addr.c,v 1.9 2005/03/25 13:24:12 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -45,8 +45,7 @@ static void Field(char *, u_int8_t *, int);
 static void cvtbase(long, int, int[], int, u_int8_t[], int);
 
 struct ns_addr 
-ns_addr(name)
-	const char *name;
+ns_addr(const char *name)
 {
 	char separator;
 	char *hostname, *socketname, *cp;
@@ -91,12 +90,9 @@ ns_addr(name)
 }
 
 static void
-Field(buf, out, len)
-	char *buf;
-	u_char *out;
-	int len;
+Field(char *buf, u_char *out, int len)
 {
-	register char *bp = buf;
+	char *bp = buf;
 	int i, ibase, base16 = 0, base10 = 0, clen = 0;
 	int hb[6], *hp;
 	char *fmt;
@@ -195,13 +191,8 @@ Field(buf, out, len)
 }
 
 static void
-cvtbase(oldbase,newbase,input,inlen,result,reslen)
-	long oldbase;
-	int newbase;
-	int input[];
-	int inlen;
-	unsigned char result[];
-	int reslen;
+cvtbase(long int oldbase, int newbase, int *input, int inlen,
+    unsigned char *result, int reslen)
 {
 	int d, e;
 	long sum;

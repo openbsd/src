@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_comp.c,v 1.11 2003/06/02 20:18:36 millert Exp $	*/
+/*	$OpenBSD: res_comp.c,v 1.12 2005/03/25 13:24:12 otto Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -56,7 +56,7 @@
 static char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_comp.c,v 8.11 1996/12/02 09:17:22 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_comp.c,v 1.11 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_comp.c,v 1.12 2005/03/25 13:24:12 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -82,14 +82,12 @@ static int dn_find(u_char *, u_char *, u_char **, u_char **);
  * Return size of compressed name or -1 if there was an error.
  */
 int
-dn_expand(msg, eomorig, comp_dn, exp_dn, length)
-	const u_char *msg, *eomorig, *comp_dn;
-	char *exp_dn;
-	int length;
+dn_expand(const u_char *msg, const u_char *eomorig, const u_char *comp_dn,
+    char *exp_dn, int length)
 {
-	register const u_char *cp;
-	register char *dn;
-	register int n, c;
+	const u_char *cp;
+	char *dn;
+	int n, c;
 	char *eom;
 	int len = -1, checked = 0;
 
@@ -166,13 +164,11 @@ dn_expand(msg, eomorig, comp_dn, exp_dn, length)
  * is NULL, we don't update the list.
  */
 int
-dn_comp(exp_dn, comp_dn, length, dnptrs, lastdnptr)
-	const char *exp_dn;
-	u_char *comp_dn, **dnptrs, **lastdnptr;
-	int length;
+dn_comp(const char *exp_dn, u_char *comp_dn, int length, u_char **dnptrs,
+    u_char **lastdnptr)
 {
-	register u_char *cp, *dn;
-	register int c, l;
+	u_char *cp, *dn;
+	int c, l;
 	u_char **cpp, **lpp, *sp, *eob;
 	u_char *msg;
 
@@ -246,11 +242,10 @@ dn_comp(exp_dn, comp_dn, length, dnptrs, lastdnptr)
  * Skip over a compressed domain name. Return the size or -1.
  */
 int
-__dn_skipname(comp_dn, eom)
-	const u_char *comp_dn, *eom;
+__dn_skipname(const u_char *comp_dn, const u_char *eom)
 {
-	register const u_char *cp;
-	register int n;
+	const u_char *cp;
+	int n;
 
 	cp = comp_dn;
 	while (cp < eom && (n = *cp++)) {
@@ -275,8 +270,7 @@ __dn_skipname(comp_dn, eom)
 }
 
 static int
-mklower(ch)
-	register int ch;
+mklower(int ch)
 {
 	if (isascii(ch) && isupper(ch))
 		return (tolower(ch));
@@ -290,12 +284,10 @@ mklower(ch)
  * not the pointer to the start of the message.
  */
 static int
-dn_find(exp_dn, msg, dnptrs, lastdnptr)
-	u_char *exp_dn, *msg;
-	u_char **dnptrs, **lastdnptr;
+dn_find(u_char *exp_dn, u_char *msg, u_char **dnptrs, u_char **lastdnptr)
 {
-	register u_char *dn, *cp, **cpp;
-	register int n;
+	u_char *dn, *cp, **cpp;
+	int n;
 	u_char *sp;
 
 	for (cpp = dnptrs; cpp < lastdnptr; cpp++) {
@@ -360,8 +352,7 @@ dn_find(exp_dn, msg, dnptrs, lastdnptr)
 #define	domainchar(c) ((c) > 0x20 && (c) < 0x7f)
 
 int
-res_hnok(dn)
-	const char *dn;
+res_hnok(const char *dn)
 {
 	int pch = PERIOD, ch = *dn++;
 
@@ -390,8 +381,7 @@ res_hnok(dn)
  * but must otherwise be as a host name.
  */
 int
-res_ownok(dn)
-	const char *dn;
+res_ownok(const char *dn)
 {
 	if (asterchar(dn[0])) {
 		if (periodchar(dn[1]))
@@ -407,8 +397,7 @@ res_ownok(dn)
  * label, but the rest of the name has to look like a host name.
  */
 int
-res_mailok(dn)
-	const char *dn;
+res_mailok(const char *dn)
 {
 	int ch, escaped = 0;
 
@@ -437,8 +426,7 @@ res_mailok(dn)
  * recommendations.
  */
 int
-res_dnok(dn)
-	const char *dn;
+res_dnok(const char *dn)
 {
 	int ch;
 
@@ -453,10 +441,9 @@ res_dnok(dn)
  */
 
 u_int16_t
-_getshort(msgp)
-	register const u_char *msgp;
+_getshort(const u_char *msgp)
 {
-	register u_int16_t u;
+	u_int16_t u;
 
 	GETSHORT(u, msgp);
 	return (u);
@@ -468,32 +455,29 @@ _getshort(msgp)
  */
 u_int16_t
 res_getshort(msgp)
-	register const u_char *msgp;
+	const u_char *msgp;
 {
 	return (_getshort(msgp));
 }
 #endif
 
 u_int32_t
-_getlong(msgp)
-	register const u_char *msgp;
+_getlong(const u_char *msgp)
 {
-	register u_int32_t u;
+	u_int32_t u;
 
 	GETLONG(u, msgp);
 	return (u);
 }
 
 void
-__putshort(register u_int16_t s, register u_char *msgp)
+__putshort(u_int16_t s, u_char *msgp)
 {
 	PUTSHORT(s, msgp);
 }
 
 void
-__putlong(l, msgp)
-	register u_int32_t l;
-	register u_char *msgp;
+__putlong(u_int32_t l, u_char *msgp)
 {
 	PUTLONG(l, msgp);
 }

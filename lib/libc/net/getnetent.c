@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getnetent.c,v 1.9 2003/06/02 20:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: getnetent.c,v 1.10 2005/03/25 13:24:12 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -48,8 +48,7 @@ static char *net_aliases[MAXALIASES];
 int _net_stayopen;
 
 void
-setnetent(f)
-	int f;
+setnetent(int f)
 {
 	if (netf == NULL)
 		netf = fopen(_PATH_NETWORKS, "r" );
@@ -59,7 +58,7 @@ setnetent(f)
 }
 
 void
-endnetent()
+endnetent(void)
 {
 	if (netf) {
 		fclose(netf);
@@ -69,7 +68,7 @@ endnetent()
 }
 
 struct netent *
-getnetent()
+getnetent(void)
 {
 	char *p, *cp, **q;
 	size_t len;

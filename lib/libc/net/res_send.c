@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send.c,v 1.16 2004/11/17 01:42:26 itojun Exp $	*/
+/*	$OpenBSD: res_send.c,v 1.17 2005/03/25 13:24:12 otto Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_send.c,v 8.12 1996/10/08 04:51:06 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_send.c,v 1.16 2004/11/17 01:42:26 itojun Exp $";
+static char rcsid[] = "$OpenBSD: res_send.c,v 1.17 2005/03/25 13:24:12 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -128,11 +128,7 @@ static void Aerror(FILE *, char *, int, struct sockaddr *);
 static void Perror(FILE *, char *, int);
 
     static void
-    Aerror(file, string, error, address)
-	FILE *file;
-	char *string;
-	int error;
-	struct sockaddr *address;
+    Aerror(FILE *file, char *string, int error, struct sockaddr *address)
     {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	int save = errno;
@@ -149,10 +145,7 @@ static void Perror(FILE *, char *, int);
 	errno = save;
     }
     static void
-    Perror(file, string, error)
-	FILE *file;
-	char *string;
-	int error;
+    Perror(FILE *file, char *string, int error)
     {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	int save = errno;
@@ -169,16 +162,14 @@ static res_send_qhook Qhook = NULL;
 static res_send_rhook Rhook = NULL;
 
 void
-res_send_setqhook(hook)
-	res_send_qhook hook;
+res_send_setqhook(res_send_qhook hook)
 {
 
 	Qhook = hook;
 }
 
 void
-res_send_setrhook(hook)
-	res_send_rhook hook;
+res_send_setrhook(res_send_rhook hook)
 {
 
 	Rhook = hook;
@@ -191,8 +182,7 @@ static struct sockaddr * get_nsaddr(size_t);
  * pick appropriate nsaddr_list for use.  see res_init() for initialization.
  */
 static struct sockaddr *
-get_nsaddr(n)
-	size_t n;
+get_nsaddr(size_t n)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	struct __res_state_ext *_res_extp = _THREAD_PRIVATE(_res_ext, _res_ext,
@@ -228,8 +218,7 @@ get_nsaddr(n)
  *	paul vixie, 29may94
  */
 int
-res_isourserver(inp)
-	const struct sockaddr_in *inp;
+res_isourserver(const struct sockaddr_in *inp)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 #ifdef INET6
@@ -284,17 +273,15 @@ res_isourserver(inp)
  *	paul vixie, 29may94
  */
 int
-res_nameinquery(name, type, class, buf, eom)
-	const char *name;
-	register int type, class;
-	const u_char *buf, *eom;
+res_nameinquery(const char *name, int type, int class, const u_char *buf,
+    const u_char *eom)
 {
-	register const u_char *cp = buf + HFIXEDSZ;
+	const u_char *cp = buf + HFIXEDSZ;
 	int qdcount = ntohs(((HEADER*)buf)->qdcount);
 
 	while (qdcount-- > 0) {
 		char tname[MAXDNAME+1];
-		register int n, ttype, tclass;
+		int n, ttype, tclass;
 
 		n = dn_expand(buf, eom, cp, tname, sizeof tname);
 		if (n < 0)
@@ -322,18 +309,17 @@ res_nameinquery(name, type, class, buf, eom)
  *	paul vixie, 29may94
  */
 int
-res_queriesmatch(buf1, eom1, buf2, eom2)
-	const u_char *buf1, *eom1;
-	const u_char *buf2, *eom2;
+res_queriesmatch(const u_char *buf1, const u_char *eom1, const u_char *buf2,
+    const u_char *eom2)
 {
-	register const u_char *cp = buf1 + HFIXEDSZ;
+	const u_char *cp = buf1 + HFIXEDSZ;
 	int qdcount = ntohs(((HEADER*)buf1)->qdcount);
 
 	if (qdcount != ntohs(((HEADER*)buf2)->qdcount))
 		return (0);
 	while (qdcount-- > 0) {
 		char tname[MAXDNAME+1];
-		register int n, ttype, tclass;
+		int n, ttype, tclass;
 
 		n = dn_expand(buf1, eom1, cp, tname, sizeof tname);
 		if (n < 0)
@@ -348,17 +334,13 @@ res_queriesmatch(buf1, eom1, buf2, eom2)
 }
 
 int
-res_send(buf, buflen, ans, anssiz)
-	const u_char *buf;
-	int buflen;
-	u_char *ans;
-	int anssiz;
+res_send(const u_char *buf, int buflen, u_char *ans, int anssiz)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	HEADER *hp = (HEADER *) buf;
 	HEADER *anhp = (HEADER *) ans;
 	int gotsomewhere, connreset, terrno, try, v_circuit, resplen, ns;
-	register int n;
+	int n;
 	u_int badns;	/* XXX NSMAX can't exceed #/bits in this var */
 
 	if ((_resp->options & RES_INIT) == 0 && res_init() == -1) {
@@ -885,7 +867,7 @@ read_len:
  * This routine is not expected to be user visible.
  */
 void
-res_close()
+res_close(void)
 {
 	if (s >= 0) {
 		(void) close(s);

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: send.c,v 1.3 2003/06/02 20:18:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: send.c,v 1.4 2005/03/25 13:24:12 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -37,10 +37,7 @@ static char rcsid[] = "$OpenBSD: send.c,v 1.3 2003/06/02 20:18:36 millert Exp $"
 #include <stddef.h>
 
 ssize_t
-send(s, msg, len, flags)
-	int s, flags;
-	size_t len;
-	const void *msg;
+send(int s, const void *msg, size_t len, int flags)
 {
 	return (sendto(s, msg, len, flags, NULL, 0));
 }

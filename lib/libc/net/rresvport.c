@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rresvport.c,v 1.6 2003/06/03 02:11:35 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rresvport.c,v 1.7 2005/03/25 13:24:12 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -53,17 +53,14 @@ static char *rcsid = "$OpenBSD: rresvport.c,v 1.6 2003/06/03 02:11:35 deraadt Ex
 #include <netgroup.h>
 
 int
-rresvport(alport)
-	int *alport;
+rresvport(int *alport)
 {
 	return rresvport_af(alport, AF_INET);
 }
 
 
 int
-rresvport_af(alport, af)
-	int *alport;
-	int af;
+rresvport_af(int *alport, int af)
 {
 	struct sockaddr_storage ss;
 	struct sockaddr *sa;

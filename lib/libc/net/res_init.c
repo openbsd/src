@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.30 2004/06/07 21:11:23 marc Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.31 2005/03/25 13:24:12 otto Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.30 2004/06/07 21:11:23 marc Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.31 2005/03/25 13:24:12 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -153,16 +153,16 @@ struct __res_state_ext _res_ext;
  * Return 0 if completes successfully, -1 on error
  */
 int
-res_init()
+res_init(void)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 #ifdef INET6
 	struct __res_state_ext *_res_extp = _THREAD_PRIVATE(_res_ext, _res_ext,
 							    &_res_ext);
 #endif
-	register FILE *fp;
-	register char *cp, **pp;
-	register int n;
+	FILE *fp;
+	char *cp, **pp;
+	int n;
 	char buf[BUFSIZ];
 	int nserv = 0;    /* number of nameserver records read from file */
 	int haveenv = 0;
@@ -571,8 +571,7 @@ res_init()
 
 /* ARGSUSED */
 static void
-res_setoptions(options, source)
-	char *options, *source;
+res_setoptions(char *options, char *source)
 {
 	struct __res_state *_resp = _THREAD_PRIVATE(_res, _res, &_res);
 	char *cp = options;
@@ -632,10 +631,9 @@ res_setoptions(options, source)
 #ifdef RESOLVSORT
 /* XXX - should really support CIDR which means explicit masks always. */
 static u_int32_t
-net_mask(in)		/* XXX - should really use system's version of this */
-	struct in_addr in;
+net_mask(struct in_addr in)	/* XXX - should really use system's version of this */
 {
-	register u_int32_t i = ntohl(in.s_addr);
+	u_int32_t i = ntohl(in.s_addr);
 
 	if (IN_CLASSA(i))
 		return (htonl(IN_CLASSA_NET));
