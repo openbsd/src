@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.40 1999/09/11 00:13:45 mickey Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.41 1999/11/26 16:46:17 art Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1094,7 +1094,7 @@ ccdiodone(vbp)
 #if defined(UVM)
 		uvm_km_free(ccdmap, (vaddr_t)vbp->b_data, count);
 #else
-		kmem_free(ccdmap, (vm_offset_t)vbp->b_data, count);
+		kmem_free(ccdmap, (vaddr_t)vbp->b_data, count);
 #endif
 		if (ccd_need_kvm) {
 			ccd_need_kvm = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ax.c,v 1.6 1999/11/16 09:45:20 art Exp $ */
+/*	$OpenBSD: if_ax.c,v 1.7 1999/11/26 16:45:27 art Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1630,7 +1630,7 @@ int ax_encap(sc, c, m_head)
 			} else
 				f->ax_status = AX_TXSTAT_OWN;
 			f->ax_next = vtophys(&c->ax_ptr->ax_frag[frag + 1]);
-			f->ax_data = vtophys(mtod(m, vm_offset_t));
+			f->ax_data = vtophys(mtod(m, vaddr_t));
 			frag++;
 		}
 	}
