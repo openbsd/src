@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.34 2000/02/29 20:36:25 aaron Exp $
+#	$OpenBSD: security,v 1.35 2000/04/16 20:46:22 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -295,9 +295,9 @@ else
 	printf "\nUucp not listed in /etc/ftpusers file.\n"
 fi
 
-# Uudecode should not be in the /etc/aliases file.
-if egrep 'uudecode|decode' /etc/aliases; then
-	printf "\nThere is an entry for uudecode in the /etc/aliases file.\n"
+# Uudecode should not be in the /etc/mail/aliases file.
+if egrep 'uudecode|decode' /etc/mail/aliases; then
+	printf "\nThere is an entry for uudecode in the /etc/mail/aliases file.\n"
 fi
 
 # Files that should not have + signs.

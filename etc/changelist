@@ -1,10 +1,9 @@
-#	$OpenBSD: changelist,v 1.10 2000/02/29 20:50:28 aaron Exp $
+#	$OpenBSD: changelist,v 1.11 2000/04/16 20:46:22 millert Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
 
 /etc/Distfile
-/etc/aliases
 /etc/bootparams
 /etc/bootptab
 /etc/ccd.conf
@@ -61,8 +60,6 @@
 /etc/resolv.conf
 /etc/rpc
 /etc/security
-/etc/sendmail.cf
-/etc/sendmail.cw
 /etc/services
 /etc/shells
 /etc/shosts.equiv
@@ -76,6 +73,9 @@
 /etc/ttys
 /etc/weekly
 /etc/weekly.local
+/etc/mail/aliases
+/etc/mail/sendmail.cf
+/etc/mail/local-host-names
 /root/.cshrc
 /root/.klogin
 /root/.login
