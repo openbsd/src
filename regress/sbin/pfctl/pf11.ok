@@ -6,13 +6,13 @@ pass in inet6 proto ipv6-icmp all ipv6-icmp-type 0
 pass in inet6 proto ipv6-icmp all ipv6-icmp-type 0 code 0 
 pass in inet6 proto ipv6-icmp all ipv6-icmp-type unreach 
 pass in inet6 proto ipv6-icmp all ipv6-icmp-type unreach code admin-unr 
-block in inet proto icmp all icmp-type echorep 
-block in inet proto icmp all icmp-type echorep code 0 
-block in inet proto icmp all icmp-type 1 
-block in inet proto icmp all icmp-type 1 code 1 
-block in inet6 proto ipv6-icmp all ipv6-icmp-type 0 
-block in inet6 proto ipv6-icmp all ipv6-icmp-type 0 code 0 
-block in inet6 proto ipv6-icmp all ipv6-icmp-type unreach 
-block in inet6 proto ipv6-icmp all ipv6-icmp-type unreach code admin-unr 
+block drop in inet proto icmp all icmp-type echorep 
+block drop in inet proto icmp all icmp-type echorep code 0 
+block drop in inet proto icmp all icmp-type 1 
+block drop in inet proto icmp all icmp-type 1 code 1 
+block drop in inet6 proto ipv6-icmp all ipv6-icmp-type 0 
+block drop in inet6 proto ipv6-icmp all ipv6-icmp-type 0 code 0 
+block drop in inet6 proto ipv6-icmp all ipv6-icmp-type unreach 
+block drop in inet6 proto ipv6-icmp all ipv6-icmp-type unreach code admin-unr 
 pass in inet proto icmp all icmp-type unreach code needfrag 
 pass in inet6 proto ipv6-icmp all ipv6-icmp-type timex code reassemb 

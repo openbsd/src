@@ -1,15 +1,15 @@
-block out log on tun0 all 
-block in log on tun0 all 
+block drop out log on tun0 all 
+block drop in log on tun0 all 
 block return-rst out log on tun0 proto tcp all 
 block return-rst in log on tun0 proto tcp all 
 block return-icmp(port-unr, port-unr) out log on tun0 proto udp all 
 block return-icmp(port-unr, port-unr) in log on tun0 proto udp all 
-block out log quick on tun0 inet from ! 157.161.48.183 to any 
-block in quick on tun0 inet from any to 255.255.255.255 
-block in log quick on tun0 inet from 10.0.0.0/8 to any 
-block in log quick on tun0 inet from 172.16.0.0/12 to any 
-block in log quick on tun0 inet from 192.168.0.0/16 to any 
-block in log quick on tun0 inet from 255.255.255.255 to any 
+block drop out log quick on tun0 inet from ! 157.161.48.183 to any 
+block drop in quick on tun0 inet from any to 255.255.255.255 
+block drop in log quick on tun0 inet from 10.0.0.0/8 to any 
+block drop in log quick on tun0 inet from 172.16.0.0/12 to any 
+block drop in log quick on tun0 inet from 192.168.0.0/16 to any 
+block drop in log quick on tun0 inet from 255.255.255.255 to any 
 pass out on tun0 inet proto icmp all icmp-type echoreq code 0 keep state 
 pass in on tun0 inet proto icmp all icmp-type echoreq code 0 keep state 
 pass out on tun0 proto udp all keep state 

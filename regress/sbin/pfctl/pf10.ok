@@ -1,7 +1,7 @@
 pass in inet proto icmp all 
 pass in inet6 proto ipv6-icmp all 
-block in inet proto icmp all 
-block in inet6 proto ipv6-icmp all 
+block drop in inet proto icmp all 
+block drop in inet6 proto ipv6-icmp all 
 block return-rst in inet proto tcp all 
 block return-rst in inet6 proto tcp all 
 block return-rst(ttl 10) in inet proto tcp all 
