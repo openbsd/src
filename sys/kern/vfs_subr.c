@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.33 1999/03/11 18:28:55 mickey Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.34 1999/03/11 18:30:49 mickey Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1774,11 +1774,11 @@ vfs_syncwait(verbose)
 		for (bp = &buf[nbuf]; --bp >= buf; )
 			if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
 				nbusy++;
-			if (nbusy == 0)
-				break;
-			if (verbose)
-				printf("%d ", nbusy);
-			DELAY(40000 * iter);
+		if (nbusy == 0)
+			break;
+		if (verbose)
+			printf("%d ", nbusy);
+		DELAY(40000 * iter);
 	}   
 
 	return nbusy;
