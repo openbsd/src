@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.97 2001/07/03 04:20:47 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.98 2001/07/04 20:00:38 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -315,9 +315,8 @@ pf_tree_insert(struct pf_tree_node **n, struct pf_tree_node *p,
 
 	if (*n == NULL) {
 		*n = pool_get(&pf_tree_pl, PR_NOWAIT);
-		if (*n == NULL) {
+		if (*n == NULL)
 			return (0);
-		}
 		bcopy(key, &(*n)->key, sizeof(struct pf_tree_key));
 		(*n)->state = state;
 		(*n)->balance = 0;
@@ -1274,7 +1273,7 @@ pf_send_reset(struct ip *h, int off, struct tcphdr *th)
 
 	/* IP header fields included in the TCP checksum */
 	h2->ip_p = IPPROTO_TCP;
-	h2->ip_len = htons(sizeof(struct tcphdr));
+	h2->ip_len = htons(sizeof(*th2));
 	h2->ip_src.s_addr = h->ip_dst.s_addr;
 	h2->ip_dst.s_addr = h->ip_src.s_addr;
 
@@ -1299,14 +1298,12 @@ pf_send_reset(struct ip *h, int off, struct tcphdr *th)
 
 	/* Finish the IP header */
 	h2->ip_v = 4;
-	h2->ip_hl = sizeof(struct ip) >> 2;
-	h2->ip_len = htons(len);
+	h2->ip_hl = sizeof(*h2) >> 2;
 	h2->ip_ttl = 128;
 	h2->ip_sum = 0;
-
-	/* IP header checksum */
-	h2->ip_sum = in_cksum(m, sizeof(struct ip));
-	ip_output(m, NULL, NULL, 0, NULL);
+	h2->ip_len = len;
+	h2->ip_off = 0;
+	ip_output(m, NULL, NULL, 0, NULL, NULL);
 }
 
 void
@@ -1656,7 +1653,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 		u_int16_t len;
 		struct pf_state *s;
 
-		len = h->ip_len - off - 8;
+		len = h->ip_len - off - sizeof(*uh);
 		s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL)
 			return (PF_DROP);
@@ -1764,12 +1761,12 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		u_int16_t id;
 		struct pf_state *s;
 
-		len = h->ip_len - off - 8;
+		len = h->ip_len - off - ICMP_MINLEN;
 		id = ih->icmp_id;
 		s = pool_get(&pf_state_pl, PR_NOWAIT);
-		if (s == NULL) {
+		if (s == NULL)
 			return (PF_DROP);
-		}
+
 		s->rule	 = rm;
 		s->log	 = rm && (rm->log & 2);
 		s->proto = IPPROTO_ICMP;
@@ -1803,10 +1800,6 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		s->bytes = len;
 		pf_insert_state(s);
 	}
-
-	/* copy back packet headers if we performed NAT operations */
-	if (rewrite)
-		m_copyback(m, off, sizeof(*ih), (caddr_t)ih);
 
 	return (PF_PASS);
 }
@@ -2014,7 +2007,7 @@ pf_test_state_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 	s = pf_find_state((direction == PF_IN) ? tree_ext_gwy : tree_lan_ext,
 	    &key);
 	if (s != NULL) {
-		u_int16_t len = h->ip_len - off - 8;
+		u_int16_t len = h->ip_len - off - sizeof(*uh);
 
 		struct pf_state_peer *src, *dst;
 		if (direction == s->direction) {
@@ -2121,7 +2114,7 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		int ipoff2;
 		int off2;
 
-		ipoff2 = off + 8;	/* offset of h2 in mbuf chain */
+		ipoff2 = off + ICMP_MINLEN;	/* offset of h2 in mbuf chain */
 		if (!pf_pull_hdr(ifp, m, 0, ipoff2, &h2, sizeof(h2), h,
 		    NULL, NULL)) {
 			printf("pf: ICMP error message too short (ip)\n");
@@ -2198,7 +2191,6 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			 * operations
 			 */
 			if (rewrite) {
-				m_copyback(m, off, sizeof(*ih), (caddr_t)ih);
 				m_copyback(m, ipoff2, sizeof(h2),
 				    (caddr_t)&h2);
 				m_copyback(m, off2, 8,
@@ -2253,7 +2245,6 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 			 * operations
 			 */
 			if (rewrite) {
-				m_copyback(m, off, sizeof(*ih), (caddr_t)ih);
 				m_copyback(m, ipoff2, sizeof(h2),
 				    (caddr_t)&h2);
 				m_copyback(m, off2, sizeof(uh),
@@ -2789,7 +2780,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	case IPPROTO_ICMP: {
 		struct icmp ih;
 
-		if (!pf_pull_hdr(ifp, m, 0, off, &ih, sizeof(ih), h,
+		if (!pf_pull_hdr(ifp, m, 0, off, &ih, ICMP_MINLEN, h,
 		    &action, &reason)) {
 			log = action != PF_PASS;
 			goto done;
@@ -2808,11 +2799,12 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 		break;
 	}
 
-done:
 	if (ifp == status_ifp) {
 		pf_status.bcounters[dir] += h->ip_len;
 		pf_status.pcounters[dir][action]++;
 	}
+
+done:
 	if (log) {
 		struct pf_rule r0;
 
