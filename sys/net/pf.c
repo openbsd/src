@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.434 2004/04/05 08:19:49 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.435 2004/04/17 00:13:36 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -144,19 +144,19 @@ struct pf_rule		*pf_get_translation(struct pf_pdesc *, struct mbuf *,
 int			 pf_test_tcp(struct pf_rule **, struct pf_state **,
 			    int, struct pfi_kif *, struct mbuf *, int,
 			    void *, struct pf_pdesc *, struct pf_rule **,
-			    struct pf_ruleset **);
+			    struct pf_ruleset **, struct ifqueue *);
 int			 pf_test_udp(struct pf_rule **, struct pf_state **,
 			    int, struct pfi_kif *, struct mbuf *, int,
 			    void *, struct pf_pdesc *, struct pf_rule **,
-			    struct pf_ruleset **);
+			    struct pf_ruleset **, struct ifqueue *);
 int			 pf_test_icmp(struct pf_rule **, struct pf_state **,
 			    int, struct pfi_kif *, struct mbuf *, int,
 			    void *, struct pf_pdesc *, struct pf_rule **,
-			    struct pf_ruleset **);
+			    struct pf_ruleset **, struct ifqueue *);
 int			 pf_test_other(struct pf_rule **, struct pf_state **,
 			    int, struct pfi_kif *, struct mbuf *, int, void *,
 			    struct pf_pdesc *, struct pf_rule **,
-			    struct pf_ruleset **);
+			    struct pf_ruleset **, struct ifqueue *);
 int			 pf_test_fragment(struct pf_rule **, int,
 			    struct pfi_kif *, struct mbuf *, void *,
 			    struct pf_pdesc *, struct pf_rule **,
@@ -205,6 +205,7 @@ int			 pf_addr_wrap_neq(struct pf_addr_wrap *,
 static int		 pf_add_mbuf_tag(struct mbuf *, u_int);
 struct pf_state		*pf_find_state_recurse(struct pfi_kif *,
 			    struct pf_state *, u_int8_t);
+int			 pf_check_congestion(struct ifqueue *);
 
 struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 	{ &pf_state_pl, PFSTATE_HIWAT },
@@ -2411,7 +2412,8 @@ pf_set_rt_ifp(struct pf_state *s, struct pf_addr *saddr)
 int
 pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
     struct pfi_kif *kif, struct mbuf *m, int off, void *h,
-    struct pf_pdesc *pd, struct pf_rule **am, struct pf_ruleset **rsm)
+    struct pf_pdesc *pd, struct pf_rule **am, struct pf_ruleset **rsm,
+    struct ifqueue *ifq)
 {
 	struct pf_rule		*nr = NULL;
 	struct pf_addr		*saddr = pd->src, *daddr = pd->dst;
@@ -2429,6 +2431,9 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	struct pf_tag		*pftag = NULL;
 	int			 tag = -1;
 	u_int16_t		 mss = tcp_mssdflt;
+
+	if (pf_check_congestion(ifq))
+		return (PF_DROP);
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 
@@ -2766,7 +2771,8 @@ cleanup:
 int
 pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
     struct pfi_kif *kif, struct mbuf *m, int off, void *h,
-    struct pf_pdesc *pd, struct pf_rule **am, struct pf_ruleset **rsm)
+    struct pf_pdesc *pd, struct pf_rule **am, struct pf_ruleset **rsm,
+    struct ifqueue *ifq)
 {
 	struct pf_rule		*nr = NULL;
 	struct pf_addr		*saddr = pd->src, *daddr = pd->dst;
@@ -2783,6 +2789,9 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 	int			 rewrite = 0;
 	struct pf_tag		*pftag = NULL;
 	int			 tag = -1;
+
+	if (pf_check_congestion(ifq))
+		return (PF_DROP);
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 
@@ -3029,7 +3038,8 @@ cleanup:
 int
 pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
     struct pfi_kif *kif, struct mbuf *m, int off, void *h,
-    struct pf_pdesc *pd, struct pf_rule **am, struct pf_ruleset **rsm)
+    struct pf_pdesc *pd, struct pf_rule **am, struct pf_ruleset **rsm,
+    struct ifqueue *ifq)
 {
 	struct pf_rule		*nr = NULL;
 	struct pf_addr		*saddr = pd->src, *daddr = pd->dst;
@@ -3046,6 +3056,9 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 #ifdef INET6
 	int			 rewrite = 0;
 #endif /* INET6 */
+
+	if (pf_check_congestion(ifq))
+		return (PF_DROP);
 
 	switch (pd->proto) {
 #ifdef INET
@@ -3307,7 +3320,7 @@ cleanup:
 int
 pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
     struct pfi_kif *kif, struct mbuf *m, int off, void *h, struct pf_pdesc *pd,
-    struct pf_rule **am, struct pf_ruleset **rsm)
+    struct pf_rule **am, struct pf_ruleset **rsm, struct ifqueue *ifq)
 {
 	struct pf_rule		*nr = NULL;
 	struct pf_rule		*r, *a = NULL;
@@ -3318,6 +3331,9 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 	u_short			 reason;
 	struct pf_tag		*pftag = NULL;
 	int			 tag = -1;
+
+	if (pf_check_congestion(ifq))
+		return (PF_DROP);
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 
@@ -5335,7 +5351,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_tcp(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset);
+			    m, off, h, &pd, &a, &ruleset, &ipintrq);
 		break;
 	}
 
@@ -5369,7 +5385,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_udp(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset);
+			    m, off, h, &pd, &a, &ruleset, &ipintrq);
 		break;
 	}
 
@@ -5397,7 +5413,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_icmp(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset);
+			    m, off, h, &pd, &a, &ruleset, &ipintrq);
 		break;
 	}
 
@@ -5412,7 +5428,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_other(&r, &s, dir, kif, m, off, h,
-			    &pd, &a, &ruleset);
+			    &pd, &a, &ruleset, &ipintrq);
 		break;
 	}
 
@@ -5662,7 +5678,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_tcp(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset);
+			    m, off, h, &pd, &a, &ruleset, &ip6intrq);
 		break;
 	}
 
@@ -5696,7 +5712,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_udp(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset);
+			    m, off, h, &pd, &a, &ruleset, &ip6intrq);
 		break;
 	}
 
@@ -5725,7 +5741,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_icmp(&r, &s, dir, kif,
-			    m, off, h, &pd, &a, &ruleset);
+			    m, off, h, &pd, &a, &ruleset, &ip6intrq);
 		break;
 	}
 
@@ -5737,7 +5753,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 			log = s->log;
 		} else if (s == NULL)
 			action = pf_test_other(&r, &s, dir, kif, m, off, h,
-			    &pd, &a, &ruleset);
+			    &pd, &a, &ruleset, &ip6intrq);
 		break;
 	}
 
@@ -5852,3 +5868,12 @@ done:
 	return (action);
 }
 #endif /* INET6 */
+
+int
+pf_check_congestion(struct ifqueue *ifq)
+{
+	if (ifq->ifq_congestion)
+		return (1);
+	else
+		return (0);
+}
