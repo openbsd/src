@@ -1,7 +1,8 @@
-/*	$OpenBSD: amivar.h,v 1.7 2004/12/26 00:11:24 marco Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.8 2005/03/29 22:40:38 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
+ * Copyright (c) 2005 Marco Peereboom
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
