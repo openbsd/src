@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tp.4,v 1.20 2003/06/02 23:30:13 millert Exp $
+.\"	$OpenBSD: tp.4,v 1.21 2003/06/06 10:29:41 jmc Exp $
 .\"	$NetBSD: tp.4,v 1.4 1994/11/30 16:22:38 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -212,7 +212,7 @@ for the
 and
 .Dv TPOPT_CONN_DATA
 for
-.Va cmsg_type.
+.Va cmsg_type .
 .It Dv TPOPT_DISC_DATA \&#
 (char *) [none]
 .br
@@ -405,7 +405,7 @@ implementation places upper bounds of
 .It Ar p_ack_strat
 .Dv TPACK_EACH
 or
-.Dv TPACK_WINDOW.
+.Dv TPACK_WINDOW .
 .Bq Dv TPACK_WINDOW
 .br
 This parameter applies only to class 4.
@@ -621,7 +621,7 @@ system call, the system call may be interrupted,
 in which case the
 .Va errno
 value upon return from the system call is
-.Er EINTR.
+.Er EINTR .
 If the signal
 .Dv SIGURG
 is being handled by reading

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipcomp.4,v 1.8 2001/10/04 10:28:20 wilfried Exp $
+.\" $OpenBSD: ipcomp.4,v 1.9 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jj@wabbitt.org>
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Nd IP Payload Compression Protocol
 .Sh NOTE
 .Tn IPComp
-is enabled with the following 
+is enabled with the following
 .Xr sysctl 3
 variable in
 .Pa /etc/sysctl.conf :
@@ -52,10 +52,10 @@ datagrams, provided the communicating entities have enough computation
 power.
 .Pp
 This protocol is especially useful when encryption or authentication
-is applied to IP datagrams using the 
+is applied to IP datagrams using the
 .Tn IPsec
 protocol (see
-.Xr ipsec 4  
+.Xr ipsec 4
 for more information about IPsec).
 Encrypting information is increasing its entropy to a point where
 compression to a lower layer becomes completely useless (e.g., the
@@ -69,17 +69,17 @@ or
 .Pp
 Just like for the other IPsec protocols, IPComp needs some parameters
 for each connection, specifying how the compression should be done
-between the entities. 
+between the entities.
 The parameters are collected in a structure called an
 IPComp Association or IPCA.
 The parameters stored in an IPCA are the destination address and the
 Compression Parameter Index (CPI).
 An IPCA is the pendant of the SA (Security Association) for IPsec.
 .Pp
-Currently, IPCA can be created using the 
+Currently, IPCA can be created using the
 .Xr ipsecadm 8
 tool.
-Using 
+Using
 .Xr ipsecadm 8
 it is also possible to create IPComp flows and SA/IPCA
 bundles.
@@ -94,7 +94,7 @@ compressed since they are modified by the router along the way to the
 destination.
 These extension headers are hop-by-hop, routing, and fragmentation.
 .Pp
-When doing compression, it is possible that the uncompressed data is 
+When doing compression, it is possible that the uncompressed data is
 smaller in size than the compressed data.
 To avoid this behaviour, a non expansion policy is used in IPComp.
 If the data payload is smaller than a given threshold, it will not be
@@ -103,7 +103,7 @@ No IPComp header will be inserted.
 .Pp
 IPComp uses the same policy framework as IPsec.
 However unlike IPsec, only one policy is available for IPComp:
-.Bl -tag -width IPSEC_LEVEL_USE 
+.Bl -tag -width IPSEC_LEVEL_USE
 .It IPSEC_LEVEL_USE
 Use IPComp for sending packets but still accept packets which are not
 compressed.
@@ -111,7 +111,7 @@ compressed.
 .Sh DIAGNOSTICS
 .Xr netstat 1
 can be used to obtain some statistics about IPComp usage, using the
-.Fl p 
+.Fl p
 flag.
 Just like for IPsec, using the
 .Fl r
@@ -131,7 +131,7 @@ The
 protocol first appeared in
 .Ox 3.0 .
 .Sh AUTHORS
-Support for the 
-.Nm 
-protocol was written by Jean-Jacques
-Bernard-Gundol <jj@wabbitt.org>.
+Support for the
+.Nm
+protocol was written by
+.An Jean-Jacques Bernard-Gundol Aq jj@wabbitt.org .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hifn.4,v 1.35 2003/06/02 18:52:50 deraadt Exp $
+.\"	$OpenBSD: hifn.4,v 1.36 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt
 .\" All rights reserved.
@@ -81,13 +81,6 @@ and
 will also supply data to the kernel
 .Xr random 4
 subsystem.
-.Sh BUGS
-The 7751 chip starts out at initialization by only supporting compression.
-A proprietary algorithm, which has been reverse engineered, is required to
-unlock the cryptographic functionality of the chip.
-It is possible for vendors to make boards which have a lock ID not known
-to the driver, but all vendors currently just use the obvious ID which is
-13 bytes of 0.
 .Sh SEE ALSO
 .Xr crypt 3 ,
 .Xr crypto 4 ,
@@ -100,3 +93,10 @@ The
 .Nm
 device driver appeared in
 .Ox 2.7 .
+.Sh BUGS
+The 7751 chip starts out at initialization by only supporting compression.
+A proprietary algorithm, which has been reverse engineered, is required to
+unlock the cryptographic functionality of the chip.
+It is possible for vendors to make boards which have a lock ID not known
+to the driver, but all vendors currently just use the obvious ID which is
+13 bytes of 0.

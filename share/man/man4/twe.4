@@ -1,4 +1,4 @@
-.\"	$OpenBSD: twe.4,v 1.16 2002/12/08 14:59:26 mickey Exp $
+.\"	$OpenBSD: twe.4,v 1.17 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright (c) 2000,2001 Michael Shalayeff.  All rights reserved.
 .\" Public Domain.
@@ -33,6 +33,11 @@ and/or RAID sets appear as
 .Xr pci 4 ,
 .Xr scsi 4 ,
 .Xr sd 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 2.8 .
 .Sh AUTHORS
 The
 .Nm
@@ -42,11 +47,6 @@ inspired by the
 .Fx
 driver by
 .An Mike Smith Aq msmith@freebsd.org .
-.Sh HISTORY
-The
-.Nm
-driver first appeared in
-.Ox 2.8 .
 .Sh BUGS
 The card's BIOS seems to conflict with some other disk controllers
 which have their own BIOS, if such devices are configured earlier

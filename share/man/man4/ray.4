@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ray.4,v 1.8 2002/10/15 11:59:02 deraadt Exp $
+.\"	$OpenBSD: ray.4,v 1.9 2003/06/06 10:29:41 jmc Exp $
 .\"	$NetBSD: ray.4,v 1.5 2000/02/28 13:54:55 enami Exp $
 .\"
 .\" Copyright (c) 2000 Christian E. Hopps
@@ -131,6 +131,14 @@ Indicates the card has failed its initial startup tests.
 .Xr pcmcia 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Nx 1.5 .
+.Ox
+support was added in
+.Ox 2.7 .
 .Sh AUTHORS
 The
 .Nm
@@ -144,14 +152,6 @@ Support for interoperating with newer
 .Tn Windows
 driver was added by
 .An Steve Weiss Aq srw@alum.mit.edu .
-.Sh HISTORY
-The
-.Nm
-device driver first appeared in
-.Nx 1.5 .
-.Ox
-support was added in
-.Ox 2.7 .
 .Sh BUGS
 Currently the infrastructure mode is untested, and authentication
 using WEP is unimplemented.

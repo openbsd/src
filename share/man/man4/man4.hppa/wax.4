@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wax.4,v 1.3 2003/06/02 21:39:56 mickey Exp $
+.\"	$OpenBSD: wax.4,v 1.4 2003/06/06 10:29:42 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 2003 Michael Shalayeff
@@ -39,13 +39,13 @@ The
 GSC bus controller is a version of
 .Xr lasi 4
 with limited functionality and no additional devices on the crystal.
-It is mainly used as a GSC bus controller for additional onboard devices 
+It is mainly used as a GSC bus controller for additional onboard devices
 (e.g. 2nd RS232 or HIL) and sometimes add-on cards (such as a TR-9000
 card for the
 .Tn HP 9000/712
 models).
 .Sh MACHINES
-An incomplete list of machines that use the 
+An incomplete list of machines that use the
 .Nm
 bus controller:
 .Pp
@@ -79,23 +79,22 @@ RDI PrecisionBook
 .Xr intro 4 ,
 .Xr io 4 ,
 .Xr lasi 4 ,
-.Xr phantomas 4 ,
-.Xr wax 4
+.Xr phantomas 4
 .Rs
-"Precision I/O Architecture Reference Specification"
-.br
-Hewlett-Packard
+.%T Precision I/O Architecture Reference Specification
+.%Q Hewlett-Packard
 .Re
 .Rs
-"712 I/O Subsystem ERS" Revision 1.1, 12 February 1993
-.br
-Hewlett-Packard, Dwg No.
-A-A2263-66510-31
+.%T 712 I/O Subsystem ERS
+.%N Revision 1.1
+.%D 12 February 1993
+.%Q Hewlett-Packard
+.%V Dwg No. A-A2263-66510-31
 .Re
 .Rs
-Hewlett-Packard Journal
-.br
-April 1995 Volume 46 Number 2
+.%Q Hewlett-Packard Journal
+.%D April 1995
+.%V Volume 46 Number 2
 .Re
 .Sh HISTORY
 The

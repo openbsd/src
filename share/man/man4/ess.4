@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ess.4,v 1.7 2003/05/05 13:51:57 jmc Exp $
+.\"	$OpenBSD: ess.4,v 1.8 2003/06/06 10:29:41 jmc Exp $
 .\"	$NetBSD: ess.4,v 1.6 1999/04/13 20:25:29 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,13 +69,6 @@ If both DRQ channels are used they must be different.
 The joystick interface (if enabled) is handled by the
 .Xr joy 4
 driver.
-.Sh BUGS
-The AudioDrive devices have a SoundBlaster compatibility mode, and may
-be detected by the SoundBlaster driver (see
-.Xr sb 4 )
-rather than the AudioDrive driver.
-The workaround is to remove or disable the SoundBlaster driver from the kernel
-configuration.
 .Sh SEE ALSO
 .Xr audio 4 ,
 .Xr intro 4 ,
@@ -88,3 +81,10 @@ The
 .Nm
 device driver appeared in
 .Ox 2.2 .
+.Sh BUGS
+The AudioDrive devices have a SoundBlaster compatibility mode, and may
+be detected by the SoundBlaster driver (see
+.Xr sb 4 )
+rather than the AudioDrive driver.
+The workaround is to remove or disable the SoundBlaster driver from the kernel
+configuration.

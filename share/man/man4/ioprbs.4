@@ -1,9 +1,9 @@
-.\"	$OpenBSD: ioprbs.4,v 1.9 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: ioprbs.4,v 1.10 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
 .\"
 .\"
-.Dd July 4, 20010
+.Dd July 4, 2001
 .Dt IOPRBS 4
 .Os
 .Sh NAME
@@ -39,6 +39,11 @@ All RAID configuration is done through the controllers' BIOSes.
 .Xr iop 4 ,
 .Xr iopsp 4 ,
 .Xr scsi 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 3.0 .
 .Sh AUTHORS
 The
 .Nm
@@ -48,8 +53,3 @@ inspired by the
 .Nx
 ld_iop driver by
 .An Andrew Doran Aq ad@netbsd.org .
-.Sh HISTORY
-The
-.Nm
-driver first appeared in
-.Ox 3.0 .

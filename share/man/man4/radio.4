@@ -1,5 +1,5 @@
 .\"	$RuOBSD: radio.4,v 1.4 2001/10/26 05:38:43 form Exp $
-.\"	$OpenBSD: radio.4,v 1.17 2003/03/30 12:14:31 jmc Exp $
+.\"	$OpenBSD: radio.4,v 1.18 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Vladimir Popov
 .\" All rights reserved.
@@ -208,10 +208,15 @@ cards.
 .Xr intro 4 ,
 .Xr rt 4 ,
 .Xr rtii 4 ,
-.Xr sfr 4 ,
 .Xr sf2r 4 ,
+.Xr sfr 4 ,
 .Xr udsbr 4 ,
 .Xr radio 9
+.Sh HISTORY
+The
+.Nm
+device driver appeared in
+.Ox 3.0 .
 .Sh AUTHORS
 The
 .Nm
@@ -221,8 +226,3 @@ and
 .An Maxim Tsyplakov Aq tm@oganer.net .
 The man page was written by
 .An Vladimir Popov Aq jumbo@narod.ru .
-.Sh HISTORY
-The
-.Nm
-device driver appeared in
-.Ox 3.0 .

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.14 2003/01/28 10:40:20 jmc Exp $
+.\"	$OpenBSD: bpf.4,v 1.15 2003/06/06 10:29:41 jmc Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -813,6 +813,11 @@ interface provides the following macros to facilitate array initializers:
 .Ar true_offset ,
 .Ar false_offset Ns No )
 .Ed
+.Sh FILES
+.Bl -tag -width /dev/bpf[0-9] -compact
+.It Pa /dev/bpf[0-9]
+BPF devices
+.El
 .Sh EXAMPLES
 The following filter is taken from the Reverse ARP daemon.
 It accepts only Reverse ARP requests.
@@ -882,14 +887,6 @@ struct bpf_insn insns[] = {
 .%A McCanne, S., Jacobson V.
 .%J "An efficient, extensible, and portable network monitor"
 .Re
-.Sh FILES
-.Bl -tag -width /dev/bpf[0-9] -compact
-.It Pa /dev/bpf[0-9]
-BPF devices
-.El
-.Sh AUTHORS
-Steve McCanne of Lawrence Berkeley Laboratory implemented BPF in Summer 1990.
-Much of the design is due to Van Jacobson.
 .Sh HISTORY
 The Enet packet filter was created in 1980 by Mike Accetta and Rick Rashid
 at Carnegie-Mellon University.
@@ -897,6 +894,9 @@ Jeffrey Mogul, at Stanford, ported the code to BSD and continued its
 development from 1983 on.
 Since then, it has evolved into the Ultrix Packet Filter at DEC, a STREAMS
 NIT module under SunOS 4.1, and BPF.
+.Sh AUTHORS
+Steve McCanne of Lawrence Berkeley Laboratory implemented BPF in Summer 1990.
+Much of the design is due to Van Jacobson.
 .Sh BUGS
 The read buffer must be of a fixed size (returned by the
 .Dv BIOCGBLEN
@@ -911,4 +911,3 @@ is promiscuous, and if so desired, must utilize a filter to reject foreign
 packets.
 .Pp
 Data link protocols with variable length headers are not currently supported.
-.Pp

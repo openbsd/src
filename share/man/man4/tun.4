@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.25 2003/03/11 07:54:01 david Exp $
+.\"	$OpenBSD: tun.4,v 1.26 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Marcus D. Watts  All rights reserved.
 .\"
@@ -202,13 +202,14 @@ interface address assigned to it, such as via
 .Dv SIOCSIFADDR .
 .El
 .Sh SEE ALSO
-.Xr intro 4 ,
 .Xr inet 4 ,
+.Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr ifconfig 8
 .Sh BUGS
-There is no way to set TUN_STAYUP.
-.br
+There is no way to set
+.Dv TUN_STAYUP .
+.Pp
 .Dv TUNSIFINFO
 does no checking on
 .Va flags .

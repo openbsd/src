@@ -1,4 +1,4 @@
-.\" $OpenBSD: ss.4,v 1.11 2003/04/07 16:03:32 jmc Exp $
+.\" $OpenBSD: ss.4,v 1.12 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright (c) 1998 Kenneth Stailey and Ian Darwin
 .\"
@@ -94,6 +94,12 @@ ioctl(fd, SCIOCSET, &sp) to set the changed parms;
 ioctl(fd, SCIOCGET, &sp) to see if things got rounded or truncated
 read(fd, somebuf, sp.scan_window_size);
 write the data someplace where you want it.
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr scsi 4 ,
+.Xr usscanner 4
+.Pp
+Documentation from the various scanner vendors.
 .Sh BUGS
 Image data should either be normalized to a particular format
 or some indication as to what the format is should be provided.
@@ -117,9 +123,3 @@ Eventually a program similar to
 or
 .Xr mt 1
 will be written.
-.Sh SEE ALSO
-.Xr intro 4 ,
-.Xr scsi 4 ,
-.Xr usscanner 4
-.Pp
-Documentation from the various scanner vendors.

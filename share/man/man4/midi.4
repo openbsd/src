@@ -1,4 +1,4 @@
-.\" $OpenBSD: midi.4,v 1.12 2002/11/28 23:27:40 mickey Exp $
+.\" $OpenBSD: midi.4,v 1.13 2003/06/06 10:29:41 jmc Exp $
 .\" $NetBSD: midi.4,v 1.4 1998/08/22 14:45:35 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ The
 .Pa /dev/rmidiN
 devices provides raw access to a MIDI device.
 Data written is sent to the physical device as fast as possible and
-is uninterpreted. 
+is uninterpreted.
 Reading from the device returns data as soon as it becomes available.
 A moderate amount of buffering is available both for reading and writing.
 The raw MIDI devices are mostly useful for non realtime operations, such as

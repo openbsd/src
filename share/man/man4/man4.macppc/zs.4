@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.4 2003/03/06 04:03:40 david Exp $
+.\"	$OpenBSD: zs.4,v 1.5 2003/06/06 10:29:42 jmc Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -40,14 +40,6 @@ only the DTR and RTS signals can be modified with TIOCMSET, TIOCMBIC,
 and TIOCMBIS
 .Xr ioctl 2
 commands.
-.Sh BUGS
-The
-.Nm
-driver now supports cua minor devices, but with this known deficiency
-in the simultaneous outgoing/incoming aspect of the driver:
-The first outgoing connection succeeds, but second and subsequent
-connections fail, apparently due to a getty hang.
-The hung getty apparently prevents the cua device from being re-opened.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/tty00
@@ -68,3 +60,11 @@ Support for the TIOCM*
 .Xr ioctl 2 Ns s
 appeared in
 .Ox 2.3 .
+.Sh BUGS
+The
+.Nm
+driver now supports cua minor devices, but with this known deficiency
+in the simultaneous outgoing/incoming aspect of the driver:
+The first outgoing connection succeeds, but second and subsequent
+connections fail, apparently due to a getty hang.
+The hung getty apparently prevents the cua device from being re-opened.

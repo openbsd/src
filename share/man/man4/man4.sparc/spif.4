@@ -1,4 +1,4 @@
-.\"     $OpenBSD: spif.4,v 1.10 2003/06/02 18:51:34 jason Exp $
+.\"     $OpenBSD: spif.4,v 1.11 2003/06/06 10:29:42 jmc Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -66,6 +66,13 @@ Up to four cards are supported in the system.
 .Pp
 Each of the serial ports has an 8 byte FIFO for receive and transmit as
 well as automatic hardware (RTS/CTS) flow control.
+.Sh FILES
+.Bl -tag -width /dev/tty[jkl][0-7] -compact
+.It /dev/tty[jkl][0-7]
+Serial ports
+.It /dev/sbpp[0-3]
+Parallel ports
+.El
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "spif%d: ccr timeout"
@@ -74,29 +81,22 @@ A timeout occurred while writing to one of the CD180 registers.
 Incoming characters were discarded because the application
 in control of the device did not read the input fast enough.
 .El
-.Sh FILES
-.Bl -tag -width /dev/tty[jkl][0-7] -compact
-.It /dev/tty[jkl][0-7]
-Serial ports
-.It /dev/sbpp[0-3]
-Parallel ports
-.El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr sbus 4 ,
 .Xr tty 4
+.Sh HISTORY
+The
+.Nm spif
+driver was first supported in
+.Ox 2.5 .
 .Sh AUTHORS
 The driver was written by
 .An Jason Wright Aq jason@thought.net ,
 and is heavily based on the
 .Xr magma 4
 driver written by
-.An Iain Hibbert Ar plunky@skate.demon.co.uk .
-.Sh HISTORY
-The
-.Nm spif
-driver was first supported in
-.Ox 2.5 .
+.An Iain Hibbert Aq plunky@skate.demon.co.uk .
 .Sh TODO
 The parallel port is not supported yet.
 .Pp

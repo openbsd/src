@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gdt.4,v 1.17 2003/03/16 10:18:44 jmc Exp $
+.\"	$OpenBSD: gdt.4,v 1.18 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -107,6 +107,11 @@ If the diagnostic is considered a nuisance, alter jumper J4's setting.
 .Xr pci 4 ,
 .Xr scsi 4 ,
 .Xr sd 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 2.7 .
 .Sh AUTHORS
 The
 .Nm
@@ -114,11 +119,6 @@ driver was written by
 .An Niklas Hallqvist Aq niklas@openbsd.org ,
 inspired by the Linux driver by
 .An Achim Luebner Aq achim@vortex.de .
-.Sh HISTORY
-The
-.Nm
-driver first appeared in
-.Ox 2.7 .
 .Sh BUGS
 An ISA & EISA front-end is needed.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip.4,v 1.20 2003/06/02 23:30:12 millert Exp $
+.\"	$OpenBSD: ip.4,v 1.21 2003/06/06 10:29:41 jmc Exp $
 .\"	$NetBSD: ip.4,v 1.3 1994/11/30 16:22:19 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -150,7 +150,7 @@ multicasting is supported only on
 sockets of type
 .Dv SOCK_DGRAM
 and
-.Dv SOCK_RAW,
+.Dv SOCK_RAW ,
 and only on networks where the interface
 driver supports multicasting.
 .Pp
@@ -344,7 +344,7 @@ Additionally note that starting with
 .Ox 2.1 ,
 the ip_off and ip_len fields are in network byte order.
 If the header source address is set to
-.Dv INADDR_ANY,
+.Dv INADDR_ANY ,
 the kernel will choose an appropriate address.
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:

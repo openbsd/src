@@ -1,5 +1,5 @@
-.\"	$OpenBSD: aac.4,v 1.10 2003/02/17 13:39:37 jmc Exp $
-.\" 
+.\"	$OpenBSD: aac.4,v 1.11 2003/06/06 10:29:41 jmc Exp $
+.\"
 .\" Copyright (c) 2000 Michael Smith
 .\" Copyright (c) 2000 BSDi
 .\" Copyright (c) 2000 Niklas Hallqvist
@@ -59,6 +59,11 @@ This driver makes drives and/or RAID sets appear as
 .Xr intro 4 ,
 .Xr scsi 4 ,
 .Xr sd 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 2.9 .
 .Sh AUTHORS
 The
 .Nm
@@ -68,11 +73,6 @@ inspired by the
 .Fx
 driver by
 .An Mike Smith Aq msmith@freebsd.org .
-.Sh HISTORY
-The
-.Nm
-driver first appeared in
-.Ox 2.9 .
 .Sh BUGS
 The card provides a mechanism to do online RAID set management,
 unfortunately the protocol is not public.

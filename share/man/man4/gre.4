@@ -1,4 +1,4 @@
-.\" $OpenBSD: gre.4,v 1.17 2003/04/01 08:55:39 jmc Exp $
+.\" $OpenBSD: gre.4,v 1.18 2003/06/06 10:29:41 jmc Exp $
 .\" $NetBSD: gre.4,v 1.10 1999/12/22 14:55:49 kleink Exp $
 .\"
 .\" Copyright 1998 (c) The NetBSD Foundation, Inc.
@@ -44,8 +44,8 @@
 .Sh SYNOPSIS
 .Cd pseudo-device gre Op Ar count
 .Sh NOTE
-.Tn GRE,
-.Tn WCCPv1,
+.Tn GRE ,
+.Tn WCCPv1 ,
 and
 .Tn MobileIP
 are enabled with the following
@@ -133,36 +133,40 @@ Host X-- Host A  ----------------tunnel---------- Cisco D------Host E
              +------Host B----------Host C----------+
 
 .Ed
-   On Host A (OpenBSD):
-
-   # route add default B
-   # ifconfig greN A D netmask 0xffffffff linkX up
-   # ifconfig greN tunnel A D
-   # route add E D
-
-   On Host D (Cisco):
-
-   Interface TunnelX 	
-    ip unnumbered D   ! e.g. address from Ethernet interface
-    tunnel source D   ! e.g. address from Ethernet interface
-    tunnel destination A
-   ip route C <some interface and mask>
-   ip route A mask C
-   ip route X mask tunnelX
-
-   OR
-
-   On Host D (OpenBSD):
-
-   # route add default C
-   # ifconfig greN D A
-   # ifconfig greN tunnel D A
+On Host A (OpenBSD):
+.Bd -literal -offset indent
+# route add default B
+# ifconfig greN A D netmask 0xffffffff linkX up
+# ifconfig greN tunnel A D
+# route add E D
+.Ed
+.Pp
+On Host D (Cisco):
+.Bd -literal -offset indent
+Interface TunnelX
+ ip unnumbered D   ! e.g. address from Ethernet interface
+ tunnel source D   ! e.g. address from Ethernet interface
+ tunnel destination A
+ip route C <some interface and mask>
+ip route A mask C
+ip route X mask tunnelX
+.Ed
+.Pp
+OR
+.Pp
+On Host D (OpenBSD):
+.Pp
+.Bd -literal -offset indent
+# route add default C
+# ifconfig greN D A
+# ifconfig greN tunnel D A
+.Ed
 .Pp
 To reach Host A over the tunnel (from host D), there has to be an
 alias on Host A for the Ethernet interface:
-     ifconfig <etherif> alias Y
- and on the Cisco
-     ip route Y mask tunnelX
+.Dl ifconfig <etherif> alias Y
+and on the Cisco
+.Dl ip route Y mask tunnelX
 .Sh NOTE
 For correct operation, the
 .Nm
@@ -204,10 +208,13 @@ A description of WCCPv1 can be found in draft-ietf-wrec-web-pro-00.txt,
 and WCCPv2 in draft-wilson-wrec-wccp-v2-00.txt.
 Both of these documents
 can be found at http://www.wrec.org/ (at the time of this writing).
+.Sh AUTHORS
+.An Heiko W.Rupp Aq hwr@pilhuhn.de
 .Sh BUGS
-The compute_route() code in net/if_gre.c toggles the last bit of the
-IP-address to provoke the search for a less specific route than the
-one directly over the tunnel to prevent loops.
+The compute_route() code in
+.Pa net/if_gre.c
+toggles the last bit of the IP-address to provoke the search for a less
+specific route than the one directly over the tunnel to prevent loops.
 This is possibly not the best solution.
 .Pp
 To avoid the address munging described above, turn on the link1 flag
@@ -223,5 +230,3 @@ GRE RFC not yet fully implemented (no GRE options).
 For the WCCP GRE encapsulated packets we can only reliably accept
 WCCPv1 format; WCCPv2 formatted packets add another header which will
 skew the decode, and results are not defined (i.e. don't do WCCPv2).
-.Sh AUTHORS
-Heiko W.Rupp <hwr@pilhuhn.de>

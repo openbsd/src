@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gtp.4,v 1.4 2003/03/16 10:18:44 jmc Exp $
+.\"	$OpenBSD: gtp.4,v 1.5 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Vladimir Popov <jumbo@narod.ru>
 .\" All rights reserved.
@@ -50,22 +50,22 @@ for details.
 The flags control the driver behavior.
 For example, with flags 0x01 the driver
 will assume that a TEA5759 chip is used.
-.Sh BUGS
-It is impossible to determine which frequency the card is tuned to.
-Thus, the driver will report an internally stored value even if it is not
-correct (changed by some program that uses direct port access).
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4 ,
 .Xr radio 4 ,
 .Xr radio 9
-.Sh AUTHORS
-The
-.Nm
-driver and the man page was written by
-.An Vladimir Popov Aq jumbo@narod.ru .
 .Sh HISTORY
 The
 .Nm
 device driver appeared in
 .Ox 3.2 .
+.Sh AUTHORS
+The
+.Nm
+driver and the man page was written by
+.An Vladimir Popov Aq jumbo@narod.ru .
+.Sh BUGS
+It is impossible to determine which frequency the card is tuned to.
+Thus, the driver will report an internally stored value even if it is not
+correct (changed by some program that uses direct port access).

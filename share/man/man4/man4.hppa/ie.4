@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ie.4,v 1.9 2003/06/02 21:39:56 mickey Exp $
+.\"	$OpenBSD: ie.4,v 1.10 2003/06/06 10:29:42 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .Os
 .Sh NAME
 .Nm ie
-.Nd Intel i82596 DX/CA LAN coprocessor as found in 
+.Nd Intel i82596 DX/CA LAN coprocessor as found in
 .Tn HP 9000/700
 machines
 .Sh SYNOPSIS
@@ -40,7 +40,7 @@ The
 .Nm
 interface provides access to the 10 Mb/s
 .Tn Ethernet
-network via the 
+network via the
 .Tn Intel
 i82596 DX/CA 32-bit
 Local Area Network Coprocessor for Ethernet.
@@ -67,9 +67,9 @@ the back.
 On the models with both you usually have to switch a big
 jumper-block on the mainboard to choose which one to activate.
 .It i82596CA
-Systems with LASI MBA, e.g. 712/*, 715/100 have the i82596CA 
+Systems with LASI MBA, e.g. 712/*, 715/100 have the i82596CA
 integrated on the LASI macrochip.
-They usually have TP and AUI 
+They usually have TP and AUI
 connectors and autodetect to which one the network is connected to.
 .El
 .Pp
@@ -94,9 +94,10 @@ Use the BNC connector
 .Xr intro 4 ,
 .Xr io 4
 .Rs
-"82596DX AND 82596SX High-Performance 32-bit Local Area Network Coprocessor"
-.br
-"82596CA High-Performance 32-bit Local Area Network Coprocessor"
-.br
-Intel
-
+.%T 82596DX AND 82596SX High-Performance 32-bit Local Area Network Coprocessor
+.%Q Intel
+.Re
+.Rs
+.%T 82596CA High-Performance 32-bit Local Area Network Coprocessor
+.%Q Intel
+.Re

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.31 2003/05/24 14:29:29 cedric Exp $
+.\"	$OpenBSD: pf.4,v 1.32 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -416,7 +416,8 @@ If the buffer is too small, the kernel does not store anything but just
 returns the required buffer size, without error.
 .It Dv DIOCRGETTSTATS Fa "struct pfioc_table"
 Like
-.Dv DIOCRGETTABLES, but returns an array of pfr_tstats structures.
+.Dv DIOCRGETTABLES ,
+but returns an array of pfr_tstats structures.
 .Bd -literal
 struct pfr_tstats {
         struct pfr_table pfrts_t;
@@ -477,7 +478,7 @@ On exit, pfrio_ndel, pfrio_nadd and pfrio_nchange contain the number of
 addresses deleted, added and changed by the kernel.
 If pfrio_size2 was set on
 entry, pfrio_size2 will point to the size of the buffer used, exactly like
-.Dv DIOCRGETADDRS.
+.Dv DIOCRGETADDRS .
 .It Dv DIOCRGETADDRS Fa "struct pfioc_table"
 Get all the addresses of a table.
 On entry, pfrio_table contains the table id and pfrio_buffer[pfrio_size]
@@ -487,7 +488,8 @@ If the buffer was too small, the kernel does not store anything but just
 return the required buffer size, without returning an error.
 .It Dv DIOCRGETASTATS Fa "struct pfioc_table"
 Like
-.Dv DIOCRGETADDRS, but returns an array of pfr_astats structures.
+.Dv DIOCRGETADDRS ,
+but returns an array of pfr_astats structures.
 .Bd -literal
 struct pfr_astats {
         struct pfr_addr  pfras_a;

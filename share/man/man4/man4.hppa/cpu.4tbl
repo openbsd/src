@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.14 2003/06/02 21:39:56 mickey Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.15 2003/06/06 10:29:42 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -33,7 +33,6 @@
 .Sh SYNOPSIS
 .Cd "cpu*       at mainbus0 irq 31
 .Sh DESCRIPTION
-.Pp
 The following table lists the
 .Tn PA-RISC
 CPU types and their characteristics, such as TLB, maximum
@@ -74,7 +73,6 @@ CPU:PA:Clock:Caches:TLB:BTLB:Models
        :    :  :8192 L2:  : :C132L,C160L
 .TE
 .in -\n(dIu
-.Pp
 .Sh FLOATING-POINT COPROCESSOR
 The following table summarizes available floating-point coprocessor
 models for the 32-bit
@@ -101,9 +99,8 @@ PA-50 (Hitachi):
 PCXL:712/60/80/100
 .TE
 .in -\n(dIu
-.Pp
 .Sh SUPERSCALAR EXECUTION
-The following table summarizes the superscalar execution capabilities 
+The following table summarizes the superscalar execution capabilities
 of 32-bit
 .Tn PA-RISC
 processors.
@@ -162,8 +159,8 @@ sys:system control instructions
 .TE
 .in -\n(dIu
 .Pp
-For CPUs with two integer ALUs (7100LC, 7200, 7300LC), the following 
-table lists the instructions which are allowed to be executed 
+For CPUs with two integer ALUs (7100LC, 7200, 7300LC), the following
+table lists the instructions which are allowed to be executed
 concurrently:
 .Pp
 .in +\n(dIu
@@ -182,7 +179,7 @@ sys: never bundled
 .TE
 .in -\n(dIu
 .Pp
-ldst + ldst is also possible under certain circumstances, which is then 
+ldst + ldst is also possible under certain circumstances, which is then
 called "double word load/store".
 .Pp
 The following restrictions are placed upon the superscalar execution:
@@ -213,24 +210,20 @@ An instruction which might nullify its successor is never bundled with
 this successor. Only if the successor is a flop instruction is this bundle
 allowed.
 .El
-.Pp
 .Sh PERFORMANCE MONITOR COPROCESSOR
 The performance monitor coprocessor is an optional,
 implementation-dependent coprocessor which provides a minimal common
 software interface to implementation-dependent performance monitor hardware.
-.Pp
 .Sh DEBUG SPECIAL UNIT
 The debug special function unit is an optional,
 architected SFU which provides hardware assistance for software debugging
 using breakpoints.
 The debug SFU is currently defined only for Level 0 processors.
-.Pp
 .Sh SEE ALSO
 .Xr asp 4 ,
 .Xr intro 4 ,
 .Xr lasi 4 ,
 .Xr wax 4
-.Pp
 .Rs
 .%T PA-RISC 1.1 Architecture and Instruction Set Reference Manual
 .%A Hewlett-Packard

@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsdisplay.4,v 1.21 2003/05/14 06:48:13 miod Exp $
+.\" $OpenBSD: wsdisplay.4,v 1.22 2003/06/06 10:29:41 jmc Exp $
 .\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
@@ -96,7 +96,7 @@ A device specification containing a positive value here will only match
 if the device is in use as system console.
 (The console device selection in early system startup is not influenced.)
 This way, the console device can be connected to a known
-.Xr wsdisplay 4
+.Nm wsdisplay
 device instance.
 (Naturally, only
 .Dq emulating
@@ -178,13 +178,13 @@ control device
 .Sh SEE ALSO
 .Xr agten 4 ,
 .Xr bwtwo 4 ,
-.Xr cgthree 4 ,
-.Xr cgtwo 4 ,
-.Xr cgfour 4 ,
-.Xr cgsix 4 ,
 .Xr cgeight 4 ,
-.Xr cgtwelve 4 ,
+.Xr cgfour 4 ,
 .Xr cgfourteen 4 ,
+.Xr cgsix 4 ,
+.Xr cgthree 4 ,
+.Xr cgtwelve 4 ,
+.Xr cgtwo 4 ,
 .Xr creator 4 ,
 .Xr intro 4 ,
 .Xr mgx 4 ,
@@ -193,8 +193,8 @@ control device
 .Xr sti 4 ,
 .Xr tcx 4 ,
 .Xr tga 4 ,
-.Xr tvtwo 4 ,
 .Xr tty 4 ,
+.Xr tvtwo 4 ,
 .Xr vga 4 ,
 .Xr vgafb 4 ,
 .Xr vigra 4 ,

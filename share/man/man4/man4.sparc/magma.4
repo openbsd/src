@@ -1,4 +1,4 @@
-.\"	$OpenBSD: magma.4,v 1.10 2003/05/07 08:13:20 jmc Exp $
+.\"	$OpenBSD: magma.4,v 1.11 2003/06/06 10:29:42 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1998 Iain Hibbert
@@ -65,23 +65,6 @@ Up to four cards are supported in the system.
 .Pp
 All tty ports have full automatic hardware (RTS/CTS) flow control available
 and a 12 byte FIFO on the chip in each direction so errors should be minimal.
-.Sh DIAGNOSTICS
-.Bl -diag
-.It "mtty%d%x: ring buffer overflow"
-Incoming characters have been discarded due to a buffer overflow.
-This is caused by the process in control of the device not reading characters
-fast enough.
-If need be you can make the ring buffer bigger by changing the
-\fIMAGMA_RBUF_SIZE\fR #define to something bigger, but it should be a multiple
-of two.
-.It "mtty%d%x: fifo overflow"
-Incoming characters have been discarded due to a CD1400 channel overrun.
-This is caused by interrupts not being serviced sufficiently quickly to prevent
-the 12 byte receive FIFO on a serial channel from overflowing.
-Reducing the value of either the \fIMTTY_RX_FIFO_THRESHOLD\fR or
-\fIMTTY_RX_DTR_THRESHOLD\fR #define's to something smaller may help slow
-machines avoid this problem.
-.El
 .Sh FILES
 .Bl -tag -width /dev/bpp[0-3][0-1] -compact
 .It /dev/tty[0-3][0-a]
@@ -89,18 +72,37 @@ Serial ports
 .It /dev/bpp[0-3][0-1]
 Parallel ports
 .El
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "mtty%d%x: ring buffer overflow"
+Incoming characters have been discarded due to a buffer overflow.
+This is caused by the process in control of the device not reading characters
+fast enough.
+If need be you can make the ring buffer bigger by changing the
+.Dv MAGMA_RBUF_SIZE
+#define to something bigger, but it should be a multiple of two.
+.It "mtty%d%x: fifo overflow"
+Incoming characters have been discarded due to a CD1400 channel overrun.
+This is caused by interrupts not being serviced sufficiently quickly to prevent
+the 12 byte receive FIFO on a serial channel from overflowing.
+Reducing the value of either the
+.Dv MTTY_RX_FIFO_THRESHOLD
+or
+.Dv MTTY_RX_DTR_THRESHOLD
+#define's to something smaller may help slow machines avoid this problem.
+.El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr sbus 4 ,
 .Xr tty 4
-.Sh AUTHORS
-The driver was written by
-.An Iain Hibbert Aq plunky@skate.demon.co.uk
 .Sh HISTORY
 The driver was loosely based upon the
 .Xr cy 4
 Cyclades Cyclom device driver written
 by Andrew Herbert and Timo Rossi.
+.Sh AUTHORS
+The driver was written by
+.An Iain Hibbert Aq plunky@skate.demon.co.uk
 .Sh TODO
 CD1190 parallel support.
 .Pp

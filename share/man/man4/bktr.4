@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: bktr.4,v 1.4 2003/04/01 19:34:31 jmc Exp $
+.\" $OpenBSD: bktr.4,v 1.5 2003/06/06 10:29:41 jmc Exp $
 .\" $FreeBSD: /c/ncvs/src/share/man/man4/bktr.4,v 1.9.2.5 2001/03/06 19:08:09 ru Exp $
 .\"
 .Dd January 28, 1998
@@ -53,7 +53,7 @@ This should support most video cards based on the
 Brooktree Bt848/849/878/879 Video Capture Chip.
 The driver also supports FM Radio if the Tuner supports it.
 .Pp
-Specifically, the following cards are known to work: 
+Specifically, the following cards are known to work:
 .Bd -unfilled -offset indent
 Hauppage Wincast TV and WinTV/PCI
 STB TV PCI Television Tuner
@@ -93,6 +93,11 @@ This fixed random hangs and lockups with the VideoLogic Captivator PCI card.
 .Xr intro 4 ,
 .Xr pci 4 ,
 .Xr radio 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Fx 2.2 .
 .Sh AUTHORS
 The
 .Nm
@@ -102,11 +107,6 @@ driver is based on the work of
 .An Amancio Hasty Aq hasty@star\-gate.com ,
 .An Roger Hardiman Aq roger@FreeBSD.org
 and a bunch of other people.
-.Sh HISTORY
-The
-.Nm
-driver first appeared in
-.Fx 2.2 .
 .Sh CAVEATS
 On big-endian architectures it is not possible to program the
 card to perform proper byte swapping in 24 bit modes,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: openprom.4,v 1.7 2003/06/02 23:30:14 millert Exp $
+.\"	$OpenBSD: openprom.4,v 1.8 2003/06/06 10:29:42 jmc Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -141,13 +141,13 @@ exceeds the maximum allowed length (8191 bytes).
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr eeprom 8
-.Sh BUGS
-Due to limitations within the OPENPROM itself,
-these functions run at elevated priority
-and may adversely affect system performance.
 .Sh HISTORY
 A
 sparc64
 .Nm openprom
 manual page first appeared in
 .Ox 3.0 .
+.Sh BUGS
+Due to limitations within the OPENPROM itself,
+these functions run at elevated priority
+and may adversely affect system performance.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: strip.4,v 1.15 2003/04/07 16:03:32 jmc Exp $
+.\"	$OpenBSD: strip.4,v 1.16 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright 1996 The Board of Trustees of The Leland Stanford
 .\" Junior University. All Rights Reserved.
@@ -172,6 +172,18 @@ by
 .Xr route 8 ,
 .Xr slattach 8 ,
 .Xr slip 8
+.Sh HISTORY
+.Nm
+was originally developed for the Linux kernel by Stuart
+Cheshire of Stanford's Operating Systems and Networking group,
+as part of Mary Baker's MosquitoNet
+.Sy http://mosquitonet.stanford.edu/mosquitonet.html
+project.
+This
+.Nm
+driver was ported to BSD by Jonathan Stone at Stanford's Distributed
+Systems Group and first distributed with
+.Nx 1.2 .
 .Sh BUGS
 Currently is IP-only.
 Encapsulations for AppleTalk and ARP have been defined,
@@ -187,15 +199,3 @@ One workaround is to kill the
 process, ifconfig the
 .Nm
 interface down, and then start a new slattach and rerun ifconfig.
-.Sh HISTORY
-.Nm
-was originally developed for the Linux kernel by Stuart
-Cheshire of Stanford's Operating Systems and Networking group,
-as part of Mary Baker's MosquitoNet
-.Sy http://mosquitonet.stanford.edu/mosquitonet.html
-project.
-This
-.Nm
-driver was ported to BSD by Jonathan Stone at Stanford's Distributed
-Systems Group and first distributed with
-.Nx 1.2 .

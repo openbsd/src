@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.18 2003/04/11 04:32:28 jmc Exp $
+.\" $OpenBSD: vlan.4,v 1.19 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -148,6 +148,8 @@ The
 interface is to be configured with
 .Xr ifconfig 8 ,
 see its manual page for more information.
+.Sh AUTHORS
+Originally wollman@freebsd.org.
 .Sh BUGS
 The 802.1Q specification allows for operation over FDDI and Token Ring
 as well as Ethernet.
@@ -169,5 +171,3 @@ This driver could be the basis for support of the Cisco ISL VLAN protocol,
 detailed at http://www.cisco.com/warp/public/473/741_4.html .
 Unfortunately, public reimplementation of this protocol is currently prevented
 by patent (at least in the USA).
-.Sh AUTHORS
-Originally wollman@freebsd.org.

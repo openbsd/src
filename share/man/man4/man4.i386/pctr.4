@@ -1,11 +1,11 @@
-.\"	$OpenBSD: pctr.4,v 1.18 2003/05/05 13:51:58 jmc Exp $
+.\"	$OpenBSD: pctr.4,v 1.19 2003/06/06 10:29:42 jmc Exp $
 .\"
 .\" Pentium performance counter driver for OpenBSD.
 .\" Copyright 1996 David Mazieres <dm@lcs.mit.edu>.
 .\"
 .\" Modification and redistribution in source and binary forms is
 .\" permitted provided that due credit is given to the author and the
-.\" OpenBSD project by leaving this copyright notice intact. 
+.\" OpenBSD project by leaving this copyright notice intact.
 .\"
 .Dd August 15, 1996
 .Dt PCTR 4 i386
@@ -472,6 +472,10 @@ invocations of
 .Fn rdpmc
 and/or
 .Fn rdtsc .
+.Sh FILES
+.Bl -tag -width /dev/pctr -compact
+.It Pa /dev/pctr
+.El
 .Sh ERRORS
 .Bl -tag -width "[ENODEV]"
 .It Bq Er ENODEV
@@ -486,10 +490,6 @@ or
 .It Bq Er EPERM
 An attempt was made to set the counter functions, but the device was
 not open for writing.
-.El
-.Sh FILES
-.Bl -tag -width /dev/pctr -compact
-.It Pa /dev/pctr
 .El
 .Sh SEE ALSO
 .Xr pctr 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ncr.4,v 1.10 2003/03/30 12:14:31 jmc Exp $
+.\"	$OpenBSD: ncr.4,v 1.11 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -119,17 +119,6 @@ ASUS SC875, Diamond FirePort 40, and Symbios SYM8751S.
 Specifies that the driver should use the register configuration set by the
 firmware instead of configuring the chip itself.
 .El
-.Sh BUGS
-Some Quantum drives (specifically the Atlas series) return
-.Dq queue full
-responses when a very small number of tags is used which can confuse
-the driver.
-With such drives, you can use
-.Bd -literal
-option  SCSI_NCR_DFLT_TAGS=0
-.Ed
-.Pp
-in your kernel configuration file to disable tagged command queuing.
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr ch 4 ,
@@ -141,3 +130,14 @@ in your kernel configuration file to disable tagged command queuing.
 .Xr ss 4 ,
 .Xr st 4 ,
 .Xr uk 4
+.Sh BUGS
+Some Quantum drives (specifically the Atlas series) return
+.Dq queue full
+responses when a very small number of tags is used which can confuse
+the driver.
+With such drives, you can use
+.Bd -literal
+option  SCSI_NCR_DFLT_TAGS=0
+.Ed
+.Pp
+in your kernel configuration file to disable tagged command queuing.

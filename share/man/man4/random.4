@@ -1,4 +1,4 @@
-.\"	$OpenBSD: random.4,v 1.17 2003/06/02 22:11:25 mickey Exp $
+.\"	$OpenBSD: random.4,v 1.18 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright (c) 1996, 1997 Michael Shalayeff
 .\"
@@ -71,14 +71,6 @@ The
 function in userland libraries seeds itself from this device,
 providing a second level of ARC4 hashed data.
 .El
-.Sh SEE ALSO
-.Xr arc4random 3 ,
-.Xr md5 3 ,
-.Xr random 3 ,
-.Xr amdpm 4 ,
-.Xr pchb 4 ,
-.Xr md5 9 ,
-.Xr random 9
 .Sh FILES
 .Bl -tag -width /dev/srandom -compact
 .It Pa /dev/random
@@ -87,8 +79,14 @@ providing a second level of ARC4 hashed data.
 .It Pa /dev/prandom
 .It Pa /dev/arandom
 .El
-.Sh BUGS
-No randomness testing suite provided.
+.Sh SEE ALSO
+.Xr arc4random 3 ,
+.Xr md5 3 ,
+.Xr random 3 ,
+.Xr amdpm 4 ,
+.Xr pchb 4 ,
+.Xr md5 9 ,
+.Xr random 9
 .Sh HISTORY
 A
 .Nm
@@ -96,3 +94,5 @@ device first appeared in Linux operating system.
 This is a cloned interface.
 .Pp
 ARC4 routines added by David Mazieres.
+.Sh BUGS
+No randomness testing suite provided.

@@ -1,4 +1,4 @@
-.\" $OpenBSD: adb.4,v 1.5 2002/10/01 20:59:48 miod Exp $
+.\" $OpenBSD: adb.4,v 1.6 2003/06/06 10:29:42 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Peter Philipp
 .\" Copyright (c) 1997 Colin Wood
@@ -32,7 +32,7 @@
 .\"
 .Dd July 30, 2001
 .Dt ADB 4 macppc
-.Os 
+.Os
 .Sh NAME
 .Nm adb
 .Nd Apple Desktop Bus driver
@@ -51,10 +51,10 @@ interface used by Macintosh computers to connect input devices
 such as keyboards, mice, trackballs, and graphics tablets
 to the machine.
 .Pp
-Originally developed for the Mac68K port, the 
+Originally developed for the Mac68K port, the
 .Nm
-driver was heavily modified when it was ported to the PowerPC architecture.  
-During this port it seems that the original 
+driver was heavily modified when it was ported to the PowerPC architecture.
+During this port it seems that the original
 .Nm
 event device was split into many smaller subsystems, namely:
 .Pp
@@ -65,7 +65,7 @@ Apple Event Device driver
 .It
 Apple Keyboard driver
 .Pq Xr akbd 4 .
-.It 
+.It
 Apple Mouse Support driver
 .Pq Xr ams 4 .
 .El
@@ -73,7 +73,7 @@ Apple Mouse Support driver
 New
 .Nm
 devices such as the Apple Brightness / Volume Control Button
-.Pq Xr abtn 4 
+.Pq Xr abtn 4
 and some energy control
 .Pq Xr apm 4
 were added to the PowerPC port later to complement the ADB system.
@@ -91,9 +91,9 @@ interface first appeared in
 .Nx 0.9 .
 It has been under development ever since.
 The original
-.Xr adb 4
-manpage was written by Colin Wood for 
-.Nx 
+.Nm adb
+manpage was written by Colin Wood for
+.Nx
 / Mac68K.
 .Sh AUTHORS
 Original ADB support was written by Bradley A. Grantham.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.49 2003/06/02 18:51:33 jason Exp $
+.\"	$OpenBSD: bridge.4,v 1.50 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -593,7 +593,7 @@ Non-IP packets which are too large for the outgoing interface will be
 dropped.
 .Pp
 If the LINK2 flag is set on the
-.Xr bridge 4
+.Nm bridge
 interface, the bridge will also perform transparent
 .Xr ipsec 4
 processing on the packets (encrypt or decrypt them), according to the
@@ -623,19 +623,19 @@ and certificates, to impersonate the protected host(s).
 .Xr brconfig 8 ,
 .Xr ipsecadm 8 ,
 .Xr isakmpd 8
-.Sh AUTHORS
-The
-.Xr brconfig 8
-command and the
-.Xr bridge 4
-kernel interface were written by
-.An Jason L. Wright Aq jason@thought.net
-as part of an undergraduate independent study at the
-University of North Carolina at Greensboro.
 .Sh HISTORY
 The
 .Xr brconfig 8
 command and the
-.Xr bridge 4
+.Nm bridge
 kernel interface first appeared in
 .Ox 2.5 .
+.Sh AUTHORS
+The
+.Xr brconfig 8
+command and the
+.Nm bridge
+kernel interface were written by
+.An Jason L. Wright Aq jason@thought.net
+as part of an undergraduate independent study at the
+University of North Carolina at Greensboro.

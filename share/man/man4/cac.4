@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cac.4,v 1.9 2002/10/04 16:17:01 mickey Exp $
+.\"	$OpenBSD: cac.4,v 1.10 2003/06/06 10:29:41 jmc Exp $
 .\"
 .\" Copyright (c) 2000,2001 Michael Shalayeff.  All rights reserved.
 .\" Public Domain.
@@ -45,6 +45,11 @@ All RAID configuration is done through the controllers' BIOSes.
 .Xr pci 4 ,
 .Xr scsi 4 ,
 .Xr sd 4
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 2.9 .
 .Sh AUTHORS
 The
 .Nm
@@ -54,11 +59,6 @@ inspired by the
 .Nx
 driver by
 .An Andrew Doran Aq ad@netbsd.org .
-.Sh HISTORY
-The
-.Nm
-driver first appeared in
-.Ox 2.9 .
 .Sh BUGS
 The card provides a mechanism to receive asynchronous notifications
 about RAID set status change and so forth, unfortunately this

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ip6.4,v 1.14 2003/06/02 23:30:12 millert Exp $
+.\"	$OpenBSD: ip6.4,v 1.15 2003/06/06 10:29:41 jmc Exp $
 .\"	$KAME: ip6.4,v 1.12 2000/06/08 21:19:39 itojun Exp $
 .\"
 .\" Copyright (C) 1999 WIDE Project.
@@ -102,7 +102,7 @@ To specify some socket options, a certain level of privilege
 may be used to set the hoplimit field in the
 .Tn IPv6
 header.
-As the symbol name suggests, the option controls the hoplimit field 
+As the symbol name suggests, the option controls the hoplimit field
 on unicast packets.
 If -1 is specified, the kernel will use a default value.
 If a value of 0 to 255 is specified, the packet will have the specified
@@ -122,7 +122,7 @@ multicasting is supported only on
 sockets of type
 .Dv SOCK_DGRAM
 and
-.Dv SOCK_RAW,
+.Dv SOCK_RAW ,
 and only on networks where the interface driver supports multicasting.
 .Pp
 The
@@ -566,7 +566,7 @@ setsockopt(fd, IPPROTO_IPV6, IPV6_CHECKSUM, &offset, sizeof(offset));
 .Pp
 By default, this socket option is disabled.
 Setting the offset to -1 also disables the option.
-By disabled we mean (1) the kernel will 
+By disabled we mean (1) the kernel will
 not calculate and store a checksum for outgoing packets, and (2) the
 kernel will not verify a checksum for received packets.
 .Pp
@@ -606,9 +606,9 @@ The ancillary data items were improperly formed, or option name was unknown.
 .\"
 .Sh SEE ALSO
 .Xr getsockopt 2 ,
+.Xr recv 2 ,
 .Xr send 2 ,
 .Xr setsockopt 2 ,
-.Xr recv 2 ,
 .Xr inet6_option_space 3 ,
 .Xr inet6_rthdr_space 3 ,
 .Xr icmp6 4 ,
