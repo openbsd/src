@@ -1,4 +1,4 @@
-.\" $OpenBSD: photurisd.1,v 1.1.1.1 1997/07/18 22:48:51 provos Exp $
+.\" $OpenBSD: photurisd.1,v 1.2 1997/07/18 22:59:07 provos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -138,82 +138,3 @@ Example:
 .Pp
 	tdst=134.100.106.0/255.255.255.255
 .Pp
-If the file
-.Pa /etc/fbtab
-exists,
-.Nm login
-changes the protection and ownership of certain devices specified in this
-file.
-.Pp
-If the file                                                           
-.Pa /var/log/failedlogin
-exists,                                                                   
-.Nm login                                                                  
-will record failed login attempts in this file.
-.Pp
-Immediately after logging a user in,
-.Nm login
-displays the system copyright notice, the date and time the user last
-logged in, the date and time of the last unsucessful login (if the file
-.Pa /var/log/failedlogin
-exists), the message of the day as well as other information.
-If the file
-.Dq Pa .hushlogin
-exists in the user's home directory, all of these messages are suppressed.
-This is to simplify logins for non-human users, such as
-.Xr uucp 1 .
-.Nm Login
-then records an entry in the
-.Xr wtmp 5
-and
-.Xr utmp 5
-files and executes the user's command interpreter.
-.Pp
-Login enters information into the environment (see
-.Xr environ 7 )
-specifying the user's home directory (HOME), command interpreter (SHELL),
-search path (PATH), terminal type (TERM) and user name (both LOGNAME and
-USER).
-.Pp
-The standard shells,
-.Xr csh 1
-and
-.Xr sh 1 ,
-do not fork before executing the
-.Nm login
-utility.
-.Sh FILES
-.Bl -tag -width /var/mail/userXXX -compact
-.It Pa /etc/fbtab
-changes device protections
-.It Pa /etc/motd
-message-of-the-day
-.It Pa /etc/nologin
-disallows logins
-.It Pa /var/run/utmp
-current logins
-.It Pa /var/log/lastlog
-last login account records
-.It Pa /var/log/wtmp
-login account records
-.It Pa /var/log/failedlogin
-failed login account records
-.It Pa /var/mail/user
-system mailboxes
-.It Pa \&.hushlogin
-makes login quieter
-.El
-.Sh SEE ALSO
-.Xr chpass 1 ,
-.Xr passwd 1 ,
-.Xr rlogin 1 ,
-.Xr skey 1 ,
-.Xr getpass 3 ,
-.Xr utmp 5 ,
-.Xr environ 7,
-.Xr fbtab 5
-.Sh HISTORY
-A
-.Nm login
-appeared in
-.At v6 .
