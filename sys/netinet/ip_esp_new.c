@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.8 1997/09/30 03:18:04 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.9 1997/10/02 02:31:04 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -112,7 +112,8 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     em = mtod(m, struct encap_msghdr *);
     if (em->em_msglen - EMT_SETSPI_FLEN <= ESP_NEW_XENCAP_LEN)
     {
-	log(LOG_WARNING, "esp_new_init(): initialization failed\n");
+	if (encdebug)
+	  log(LOG_WARNING, "esp_new_init(): initialization failed\n");
 	return EINVAL;
     }
 
@@ -132,7 +133,8 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
             break;
 
         default:
-            log(LOG_WARNING, "esp_new_init(): unsupported encryption algorithm %d specified\n", txd.edx_enc_algorithm);
+	    if (encdebug)
+              log(LOG_WARNING, "esp_new_init(): unsupported encryption algorithm %d specified\n", txd.edx_enc_algorithm);
             return EINVAL;
     }
 
@@ -150,15 +152,16 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
               break;
 
           default:
-              log(LOG_WARNING, "esp_new_init(): unsupported authentication algorithm %d specified\n", txd.edx_enc_algorithm);
+	      if (encdebug)
+                log(LOG_WARNING, "esp_new_init(): unsupported authentication algorithm %d specified\n", txd.edx_enc_algorithm);
               return EINVAL;
       }
 
     if (txd.edx_ivlen + txd.edx_keylen + EMT_SETSPI_FLEN + ESP_NEW_XENCAP_LEN
 	!= em->em_msglen)
     {
-	log(LOG_WARNING, "esp_new_init(): message length (%d) doesn't match\n",
-	    em->em_msglen);
+	if (encdebug)
+	  log(LOG_WARNING, "esp_new_init(): message length (%d) doesn't match\n", em->em_msglen);
 	return EINVAL;
     }
 
@@ -167,15 +170,17 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	case ALG_ENC_DES:
 	    if ((txd.edx_ivlen != 0) && (txd.edx_ivlen != 8))
 	    {
-	       	log(LOG_WARNING, "esp_new_init(): unsupported IV length %d\n",
-		    txd.edx_ivlen);
+		if (encdebug)
+	       	  log(LOG_WARNING, "esp_new_init(): unsupported IV length %d\n",
+		      txd.edx_ivlen);
 		return EINVAL;
 	    }
 
 	    if (txd.edx_keylen < 8)
 	    {
-		log(LOG_WARNING, "esp_new_init(): bad key length\n",
-		    txd.edx_keylen);
+		if (encdebug)
+		  log(LOG_WARNING, "esp_new_init(): bad key length\n",
+		      txd.edx_keylen);
 		return EINVAL;
 	    }
 
@@ -185,15 +190,17 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	case ALG_ENC_3DES:
             if ((txd.edx_ivlen != 0) && (txd.edx_ivlen != 8))
             {
-                log(LOG_WARNING, "esp_new_init(): unsupported IV length %d\n",
-                    txd.edx_ivlen);
+		if (encdebug)
+                  log(LOG_WARNING, "esp_new_init(): unsupported IV length %d\n",
+                      txd.edx_ivlen);
                 return EINVAL;
             }
 
             if (txd.edx_keylen < 24)
             {
-                log(LOG_WARNING, "esp_new_init(): bad key length\n",
-                    txd.edx_keylen);
+		if (encdebug)
+                  log(LOG_WARNING, "esp_new_init(): bad key length\n",
+                      txd.edx_keylen);
                 return EINVAL;
             }
 
@@ -390,9 +397,10 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 	    break;
 
 	default:
-            log(LOG_ALERT,
-                "esp_new_input(): unsupported algorithm %d in SA %x/%08x\n",
-                xd->edx_enc_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	    if (encdebug)
+              log(LOG_ALERT,
+                  "esp_new_input(): unsupported algorithm %d in SA %x/%08x\n",
+                  xd->edx_enc_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
             m_freem(m);
             return NULL;
     }
@@ -407,8 +415,8 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 		break;
 
 	    default:
-		log(LOG_ALERT, "esp_new_input(): unsupported algorithm %d in SA %x/%08x\n", xd->edx_hash_algorithm, tdb->tdb_dst, 
-		    ntohl(tdb->tdb_spi));
+		if (encdebug)
+		  log(LOG_ALERT, "esp_new_input(): unsupported algorithm %d in SA %x/%08x\n", xd->edx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
 		m_freem(m);
 		return NULL;
 	}
@@ -472,13 +480,15 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 	    switch(errc)
 	    {
 		case 1:
-		    log(LOG_ERR, "esp_new_input(): replay counter wrapped for packets from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(esp->esp_spi));
+		    if (encdebug)
+		      log(LOG_ERR, "esp_new_input(): replay counter wrapped for packets from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(esp->esp_spi));
 		    espstat.esps_wrap++;
 		    break;
 
 		case 2:
 	        case 3:
-		    log(LOG_WARNING, "esp_new_input(): duplicate packet received, %x->%x spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(esp->esp_spi));
+		    if (encdebug) 
+		      log(LOG_WARNING, "esp_new_input(): duplicate packet received, %x->%x spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(esp->esp_spi));
 		    espstat.esps_replay++;
 		    break;
 	    }
@@ -590,8 +600,8 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
 
 	if (bcmp(buf2, buf, AH_HMAC_HASHLEN))
 	{
-	    log(LOG_ALERT,
-		"esp_new_input(): authentication failed for packet from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(esp->esp_spi));
+	    if (encdebug)
+	      log(LOG_ALERT, "esp_new_input(): authentication failed for packet from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(esp->esp_spi));
 	    espstat.esps_badauth++;
 	    m_freem(m);
 	    return NULL;
@@ -711,7 +721,8 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     {
         if ((blk[6] != blk[5]) && (blk[6] != 0))
 	{
-	    log(LOG_ALERT, "esp_new_input(): decryption failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	    if (encdebug)
+	      log(LOG_ALERT, "esp_new_input(): decryption failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
 	    m_freem(m);
 	    return NULL;
 	} 
@@ -722,14 +733,16 @@ esp_new_input(struct mbuf *m, struct tdb *tdb)
     {
 	if (blk[6] == 0)
 	{
-	    log(LOG_ALERT, "esp_new_input(): decryption failed for packet from %x to %x, SA %x/%08x -- peer is probably using old style padding\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	    if (encdebug)
+	      log(LOG_ALERT, "esp_new_input(): decryption failed for packet from %x to %x, SA %x/%08x -- peer is probably using old style padding\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
 	    m_freem(m);
 	    return NULL;
 	}
 	else
 	  if (blk[6] != blk[5] + 1)
           {
-              log(LOG_ALERT, "esp_new_input(): decryption failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	      if (encdebug)
+                log(LOG_ALERT, "esp_new_input(): decryption failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
               m_freem(m);
               return NULL;
           }
@@ -845,9 +858,10 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
             break;
 
         default:
-            log(LOG_ALERT,
-                "esp_new_output(): unsupported algorithm %d in SA %x/%08x\n",
-                xd->edx_enc_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	    if (encdebug)
+              log(LOG_ALERT,
+                  "esp_new_output(): unsupported algorithm %d in SA %x/%08x\n",
+                  xd->edx_enc_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
             m_freem(m);
             return NULL;
     }
@@ -867,7 +881,8 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 		break;
 
 	    default:
-		log(LOG_ALERT, "esp_new_output(): unsupported algorithm %d in SA %x/%08x\n", xd->edx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+		if (encdebug)
+		  log(LOG_ALERT, "esp_new_output(): unsupported algorithm %d in SA %x/%08x\n", xd->edx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
 		m_freem(m);
 		return NULL;
 	}
@@ -890,8 +905,9 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 
     if (xd->edx_rpl == 0)
     {
-        log(LOG_ALERT, "esp_new_output(): SA %x/%0x8 should have expired\n",
-	    tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	if (encdebug)
+          log(LOG_ALERT, "esp_new_output(): SA %x/%0x8 should have expired\n",
+	      tdb->tdb_dst, ntohl(tdb->tdb_spi));
 	m_freem(m);
 	espstat.esps_wrap++;
 	return NULL;

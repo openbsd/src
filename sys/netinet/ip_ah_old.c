@@ -102,7 +102,8 @@ ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     em = mtod(m, struct encap_msghdr *);
     if (em->em_msglen - EMT_SETSPI_FLEN <= AH_OLD_XENCAP_LEN)
     {
-	log(LOG_WARNING, "ah_old_init(): initialization failed\n");
+	if (encdebug)
+	  log(LOG_WARNING, "ah_old_init(): initialization failed\n");
 	return EINVAL;
     }
 
@@ -122,14 +123,16 @@ ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	    break;
 
 	default:
-	    log(LOG_WARNING, "ah_old_init(): unsupported authentication algorithm %d specified\n", xenc.amx_hash_algorithm);
+	    if (encdebug)
+	      log(LOG_WARNING, "ah_old_init(): unsupported authentication algorithm %d specified\n", xenc.amx_hash_algorithm);
 	    m_freem(m);
 	    return EINVAL;
     }
 
     if (xenc.amx_keylen + EMT_SETSPI_FLEN + AH_OLD_XENCAP_LEN != em->em_msglen)
     {
-	log(LOG_WARNING, "ah_old_init(): message length (%d) doesn't match\n",
+	if (encdebug)
+	  log(LOG_WARNING, "ah_old_init(): message length (%d) doesn't match\n",
 	    em->em_msglen);
 	return EINVAL;
     }
@@ -228,9 +231,10 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 	    break;
 
 	default:
-	    log(LOG_ALERT,
-		"ah_old_input(): unsupported algorithm %d in SA %x/%08x\n",
-		xd->amx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	    if (encdebug)
+	      log(LOG_ALERT,
+		  "ah_old_input(): unsupported algorithm %d in SA %x/%08x\n",
+		  xd->amx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
 	    m_freem(m);
 	    return NULL;
     }
@@ -449,7 +453,8 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 
     if (bcmp(aho->ah_data, ah->ah_data, alen))
     {
-	log(LOG_ALERT, "ah_old_input(): authentication failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi));
+	if (encdebug)
+	  log(LOG_ALERT, "ah_old_input(): authentication failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi));
 	ahstat.ahs_badauth++;
 	m_freem(m);
 	return NULL;
@@ -575,9 +580,10 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	    break;
 
 	default:
-	    log(LOG_ALERT,
-                "ah_old_output(): unsupported algorithm %d in SA %x/%08x\n",
-                xd->amx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	    if (encdebug)
+	      log(LOG_ALERT,
+                  "ah_old_output(): unsupported algorithm %d in SA %x/%08x\n",
+                  xd->amx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
             m_freem(m);
             return NULL;
     }

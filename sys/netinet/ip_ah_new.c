@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.9 1997/09/28 22:57:44 deraadt Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.10 1997/10/02 02:31:03 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -107,7 +107,8 @@ ah_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     em = mtod(m, struct encap_msghdr *);
     if (em->em_msglen - EMT_SETSPI_FLEN <= AH_NEW_XENCAP_LEN)
     {
-	log(LOG_WARNING, "ah_new_init() initialization failed\n");
+	if (encdebug)
+	  log(LOG_WARNING, "ah_new_init() initialization failed\n");
 	return EINVAL;
     }
 
@@ -128,14 +129,16 @@ ah_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	    break;
 
 	default:
-	    log(LOG_WARNING, "ah_new_init(): unsupported authentication algorithm %d specified\n", txd.amx_hash_algorithm);
+	    if (encdebug)
+	      log(LOG_WARNING, "ah_new_init(): unsupported authentication algorithm %d specified\n", txd.amx_hash_algorithm);
 	    return EINVAL;
     }
 
     if (txd.amx_keylen + EMT_SETSPI_FLEN + AH_NEW_XENCAP_LEN != em->em_msglen)
     {
-	log(LOG_WARNING, "ah_new_init(): message length (%d) doesn't match\n",
-	    em->em_msglen);
+	if (encdebug)
+	  log(LOG_WARNING, "ah_new_init(): message length (%d) doesn't match\n",
+	      em->em_msglen);
 	return EINVAL;
     }
 
@@ -285,9 +288,10 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
             break;
 
         default:
-            log(LOG_ALERT,
-                "ah_new_input(): unsupported algorithm %d in SA %x/%08x\n",
-                xd->amx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	    if (encdebug)
+              log(LOG_ALERT,
+                  "ah_new_input(): unsupported algorithm %d in SA %x/%08x\n",
+                  xd->amx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
             m_freem(m);
             return NULL;
     }
@@ -361,13 +365,15 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
 	    switch(errc)
 	    {
 		case 1:
-		    log(LOG_ERR, "ah_new_input(): replay counter wrapped for packets from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi));
+		    if (encdebug)
+		      log(LOG_ERR, "ah_new_input(): replay counter wrapped for packets from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi));
 		    ahstat.ahs_wrap++;
 		    break;
 
 		case 2:
 	        case 3:
-		    log(LOG_WARNING, "ah_new_input(): duplicate packet received, %x->%x spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi));
+		    if (encdebug)
+		      log(LOG_WARNING, "ah_new_input(): duplicate packet received, %x->%x spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi));
 		    ahstat.ahs_replay++;
 		    break;
 	    }
@@ -552,8 +558,8 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
 
     if (bcmp(aho->ah_data, ah->ah_data, AH_HMAC_HASHLEN))
     {
-	log(LOG_ALERT,
-	    "ah_new_input(): authentication failed for packet from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi));
+	if (encdebug)
+	  log(LOG_ALERT, "ah_new_input(): authentication failed for packet from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi));
 #ifdef ENCDEBUG
 	if (encdebug)
 	{
@@ -698,9 +704,10 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	    break;
 
 	default:
-            log(LOG_ALERT,
-                "ah_new_output(): unsupported algorithm %d in SA %x/%08x\n",
-                xd->amx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	    if (encdebug)
+              log(LOG_ALERT,
+                  "ah_new_output(): unsupported algorithm %d in SA %x/%08x\n",
+                  xd->amx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
             m_freem(m);
             return NULL;
     }
@@ -730,8 +737,9 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 
     if (xd->amx_rpl == 0)
     {
-        log(LOG_ALERT, "ah_new_output(): SA %x/%0x8 should have expired\n",
-	    tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	if (encdebug)
+          log(LOG_ALERT, "ah_new_output(): SA %x/%0x8 should have expired\n",
+	      tdb->tdb_dst, ntohl(tdb->tdb_spi));
 	m_freem(m);
 	ahstat.ahs_wrap++;
 	return NULL;

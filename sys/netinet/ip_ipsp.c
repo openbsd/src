@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.21 1997/10/01 02:34:06 deraadt Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.22 1997/10/02 02:31:06 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -510,8 +510,9 @@ tdb_init(struct tdb *tdbp, struct mbuf *m)
       if (xsp->xf_type == alg)
 	return (*(xsp->xf_init))(tdbp, xsp, m);
 
-    log(LOG_ERR, "tdb_init(): no alg %d for spi %08x, addr %x, proto %d\n", 
-	alg, ntohl(tdbp->tdb_spi), tdbp->tdb_dst.s_addr, tdbp->tdb_sproto);
+    if (encdebug)
+      log(LOG_ERR, "tdb_init(): no alg %d for spi %08x, addr %x, proto %d\n", 
+	  alg, ntohl(tdbp->tdb_spi), tdbp->tdb_dst.s_addr, tdbp->tdb_sproto);
     
     return EINVAL;
 }
@@ -566,10 +567,10 @@ ipsp_kern(int off, char **bufp, int len)
 			 inet_ntoa(tdb->tdb_odst), tdb->tdb_ttl);
 
 	    if (tdb->tdb_onext)
-	      l += sprintf(buffer + l, "\tNext (on output) SA: SPI = %08x, Destination = %s, Sproto = %u\n", tdb->tdb_onext->tdb_spi, inet_ntoa(tdb->tdb_onext->tdb_dst), tdb->tdb_onext->tdb_sproto);
+	      l += sprintf(buffer + l, "\tNext (on output) SA: SPI = %08x, Destination = %s, Sproto = %u\n", ntohl(tdb->tdb_onext->tdb_spi), inet_ntoa(tdb->tdb_onext->tdb_dst), tdb->tdb_onext->tdb_sproto);
 
 	    if (tdb->tdb_inext)
-	      l += sprintf(buffer + l, "\tNext (on input) SA: SPI = %08x, Destination = %s, Sproto = %u\n", tdb->tdb_inext->tdb_spi, inet_ntoa(tdb->tdb_inext->tdb_dst), tdb->tdb_inext->tdb_sproto);
+	      l += sprintf(buffer + l, "\tNext (on input) SA: SPI = %08x, Destination = %s, Sproto = %u\n", ntohl(tdb->tdb_inext->tdb_spi), inet_ntoa(tdb->tdb_inext->tdb_dst), tdb->tdb_inext->tdb_sproto);
 
 	    /* XXX We can reuse variable i, we're not going to loop again */
 	    for (i = 0, fl = tdb->tdb_flow; fl; fl = fl->flow_next)

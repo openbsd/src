@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.13 1997/09/28 23:09:57 deraadt Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.14 1997/10/02 02:31:05 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -131,9 +131,8 @@ ip4_input(register struct mbuf *m, int iphlen)
 
     if (ipi->ip_v != IPVERSION)
     {
-	log(LOG_WARNING,
-	    "ip4_input(): wrong version %d on IP packet from %x to %x (%x->%x)\n",
-	    ipi->ip_v, ipo->ip_src, ipo->ip_dst, ipi->ip_src, ipi->ip_dst);
+	if (encdebug)
+	  log(LOG_WARNING, "ip4_input(): wrong version %d on IP packet from %x to %x (%x->%x)\n", ipi->ip_v, ipo->ip_src, ipo->ip_dst, ipi->ip_src, ipi->ip_dst);
 	ip4stat.ip4s_notip4++;
 	return;
     }
@@ -281,6 +280,7 @@ ipe4_zeroize(struct tdb *tdbp)
 void
 ipe4_input(struct mbuf *m, ...)
 {
+    /* This is a rather serious mistake, so no conditional printing */
     log(LOG_ALERT, "ipe4_input(): should never be called\n");
     if (m)
       m_freem(m);
