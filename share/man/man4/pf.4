@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.51 2004/06/14 20:55:54 cedric Exp $
+.\"	$OpenBSD: pf.4,v 1.52 2004/08/24 03:13:46 jaredy Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -49,16 +49,30 @@ The most commonly used functions are covered by
 .Xr pfctl 8 .
 .Pp
 Manipulations like loading a ruleset that involve more than a single
-ioctl call require a so-called ticket, which prevents the occurrence of
+.Xr ioctl 2
+call require a so-called
+.Em ticket ,
+which prevents the occurrence of
 multiple concurrent manipulations.
 .Pp
-Fields of ioctl parameter structures that refer to packet data (like
+Fields of
+.Xr ioctl 2
+parameter structures that refer to packet data (like
 addresses and ports) are generally expected in network byte-order.
 .Pp
-Anchor and ruleset manipulations can be supplied with empty strings for
-these parameters, in which case modifications will manipulate the
-.Dq main
-packet filter ruleset.
+Rules and address tables are contained in so-called
+.Em anchors .
+When servicing an
+.Xr ioctl 2
+request, if the anchor field of the argument structure is empty,
+the kernel will use the default anchor (i.e., the main ruleset)
+in operations.
+Anchors are specified by name and may be nested, with components
+separated by
+.Sq /
+characters, similar to how file system hierarchies are laid out.
+The final component of the anchor path is the anchor under which
+operations will be performed.
 .Sh IOCTL INTERFACE
 .Nm
 supports the following
@@ -85,8 +99,7 @@ struct pfioc_pooladdr {
 	u_int8_t		r_action;
 	u_int8_t		r_last;
 	u_int8_t		af;
-	char			anchor[PF_ANCHOR_NAME_SIZE];
-	char			ruleset[PF_RULESET_NAME_SIZE];
+	char			anchor[MAXPATHLEN];
 	struct pf_pooladdr	addr;
 };
 .Ed
@@ -116,8 +129,8 @@ struct pfioc_rule {
 	u_int32_t	ticket;
 	u_int32_t	pool_ticket;
 	u_int32_t	nr;
-	char		anchor[PF_ANCHOR_NAME_SIZE];
-	char		ruleset[PF_RULESET_NAME_SIZE];
+	char		anchor[MAXPATHLEN];
+	char		anchor_call[MAXPATHLEN];
 	struct pf_rule	rule;
 };
 .Ed
@@ -138,9 +151,7 @@ call.
 must also be called if any pool addresses are required.
 The optional
 .Va anchor
-and
-.Va ruleset
-names indicate the anchor and ruleset in which to append the rule.
+name indicates the anchor in which to append the rule.
 .Va nr
 and
 .Va action
@@ -183,9 +194,8 @@ calls and the number
 of pool addresses in the rule specified with
 .Va r_action ,
 .Va r_num ,
-.Va anchor ,
 and
-.Va ruleset .
+.Va anchor .
 .It Dv DIOCGETADDR Fa "struct pfioc_pooladdr *pp"
 Get the pool address
 .Va addr
@@ -194,9 +204,8 @@ by its number
 from the rule specified with
 .Va r_action ,
 .Va r_num ,
-.Va anchor ,
 and
-.Va ruleset
+.Va anchor
 using the
 .Va ticket
 obtained through a preceding
@@ -238,52 +247,34 @@ of length
 .Va nbytes ,
 for the queue specified by
 .Va nr .
-.It Dv DIOCGETANCHORS Fa "struct pfioc_anchor *pa"
+.It Dv DIOCGETRULESETS Fa "struct pfioc_ruleset *pr"
 .Bd -literal
-struct pfioc_anchor {
+struct pfioc_ruleset {
 	u_int32_t	 nr;
+	char		 path[MAXPATHLEN];
 	char		 name[PF_ANCHOR_NAME_SIZE];
 };
 .Ed
 .Pp
 Get the number
 .Va nr
-of anchors in the active list for use in subsequent
-.Dv DIOCGETANCHOR
-calls.
-.It Dv DIOCGETANCHOR Fa "struct pfioc_anchor *pa"
-Get an anchor by its number
-.Va nr ,
-the maximum number of which can be obtained from a preceding
-.Dv DIOCGETANCHORS
-call.
-This ioctl returns
-.Er EBUSY
-if another process is concurrently updating an anchor.
-.It Dv DIOCGETRULESETS Fa "struct pfioc_ruleset *pr"
-.Bd -literal
-struct pfioc_ruleset {
-	u_int32_t	 nr;
-	char		 anchor[PF_ANCHOR_NAME_SIZE];
-	char		 name[PF_RULESET_NAME_SIZE];
-};
-.Ed
-.Pp
-Get the number
-.Va nr
-of rulesets in the given
-.Va anchor
+of rulesets (i.e., anchors) directly attached to the anchor named by
+.Va path
 for use in subsequent
 .Dv DIOCGETRULESET
 calls.
+Nested anchors, since they are not directly attached to the given
+anchor, will not be included.
 This ioctl returns
 .Er EINVAL
 if the given anchor does not exist.
 .It Dv DIOCGETRULESET Fa "struct pfioc_ruleset *pr"
-Get a ruleset by its number
+Get a ruleset (i.e., an anchor)
+.Va name
+by its number
 .Va nr
-from the given
-.Va anchor ,
+from the given anchor
+.Va path ,
 the maximum number of which can be obtained from a preceding
 .Dv DIOCGETRULESETS
 call.
@@ -328,7 +319,7 @@ but ignores the
 and
 .Va psk_dst
 fields of the
-.Va pfioc_state_kill
+.Vt pfioc_state_kill
 structure.
 .It Dv DIOCSETSTATUSIF Fa "struct pfioc_if *pi"
 Specify the interface for which statistics are accumulated.
@@ -387,7 +378,7 @@ Get state table entries.
 struct pfioc_states {
 	int	ps_len;
 	union {
-		caddr_t psu_buf;
+		caddr_t		 psu_buf;
 		struct pf_state *psu_states;
 	} ps_u;
 #define ps_buf		ps_u.psu_buf
@@ -437,11 +428,8 @@ call for all actions except
 .Dv PF_CHANGE_REMOVE
 and
 .Dv PF_CHANGE_GET_TICKET .
-.Pp
 .Va anchor
-and
-.Va ruleset
-indicate to which anchor and ruleset the operation applies.
+indicates to which anchor the operation applies.
 .Va nr
 indicates the rule number against which
 .Dv PF_CHANGE_ADD_BEFORE ,
@@ -456,9 +444,8 @@ Add or remove the pool address
 from the rule specified by
 .Va r_action ,
 .Va r_num ,
-.Va anchor ,
 and
-.Va ruleset .
+.Va anchor .
 .It Dv DIOCSETTIMEOUT Fa "struct pfioc_tm *pt"
 .Bd -literal
 struct pfioc_tm {
@@ -535,15 +522,14 @@ Create one or more tables.
 On entry,
 .Va pfrio_buffer[pfrio_size]
 contains a table of
-.Va pfr_table
+.Vt pfr_table
 structures.
 On exit,
 .Va pfrio_nadd
 contains the number of tables effectively created.
 .Bd -literal
 struct pfr_table {
-	char		pfrt_anchor[PF_ANCHOR_NAME_SIZE];
-	char		pfrt_ruleset[PF_RULESET_NAME_SIZE];
+	char		pfrt_anchor[MAXPATHLEN];
 	char		pfrt_name[PF_TABLE_NAME_SIZE];
 	u_int32_t	pfrt_flags;
 	u_int8_t	pfrt_fback;
@@ -554,7 +540,7 @@ Delete one or more tables.
 On entry,
 .Va pfrio_buffer[pfrio_size]
 contains a table of
-.Va pfr_table
+.Vt pfr_table
 structures.
 On exit,
 .Va pfrio_nadd
@@ -564,7 +550,7 @@ Get the list of all tables.
 On entry,
 .Va pfrio_buffer[pfrio_size]
 contains a valid writeable buffer for
-.Va pfr_table
+.Vt pfr_table
 structures.
 On exit,
 .Va pfrio_size
@@ -575,7 +561,7 @@ returns the required buffer size, without error.
 This call is like
 .Dv DIOCRGETTABLES
 but is used to get an array of
-.Va pfr_tstats
+.Vt pfr_tstats
 structures.
 .Bd -literal
 struct pfr_tstats {
@@ -598,7 +584,7 @@ Clear the statistics of one or more tables.
 On entry,
 .Va pfrio_buffer[pfrio_size]
 contains a table of
-.Va pfr_table
+.Vt pfr_table
 structures.
 On exit,
 .Va pfrio_nzero
@@ -618,7 +604,7 @@ On entry,
 contains the table ID and
 .Va pfrio_buffer[pfrio_size]
 contains the list of
-.Va pfr_addr
+.Vt pfr_addr
 structures to add.
 On exit,
 .Va pfrio_nadd
@@ -644,7 +630,7 @@ On entry,
 contains the table ID and
 .Va pfrio_buffer[pfrio_size]
 contains the list of
-.Va pfr_addr
+.Vt pfr_addr
 structures to delete.
 On exit,
 .Va pfrio_ndel
@@ -658,7 +644,7 @@ On entry,
 contains the table ID and
 .Va pfrio_buffer[pfrio_size]
 contains the new list of
-.Va pfr_addr
+.Vt pfr_addr
 structures.
 Additionally, if
 .Va pfrio_size2
@@ -686,7 +672,7 @@ On entry,
 contains the table ID and
 .Va pfrio_buffer[pfrio_size]
 contains a valid writeable buffer for
-.Va pfr_addr
+.Vt pfr_addr
 structures.
 On exit,
 .Va pfrio_size
@@ -697,7 +683,7 @@ returns the required buffer size, without returning an error.
 This call is like
 .Dv DIOCRGETADDRS
 but is used to get an array of
-.Va pfr_astats
+.Vt pfr_astats
 structures.
 .Bd -literal
 struct pfr_astats {
@@ -716,7 +702,7 @@ On entry,
 contains the table ID and
 .Va pfrio_buffer[pfrio_size]
 contains a table of
-.Va pfr_addr
+.Vt pfr_addr
 structures to clear.
 On exit,
 .Va pfrio_nzero
@@ -728,10 +714,10 @@ On entry,
 contains the table ID and
 .Va pfrio_buffer[pfrio_size]
 contains a table of
-.Va pfr_addr
+.Vt pfr_addr
 structures to test.
 On exit, the kernel updates the
-.Va pfr_addr
+.Vt pfr_addr
 table by setting the
 .Va pfra_fback
 member appropriately.
@@ -744,7 +730,7 @@ flags of a table.
 On entry,
 .Va pfrio_buffer[pfrio_size]
 contains a table of
-.Va pfr_table
+.Vt pfr_table
 structures, and
 .Va pfrio_setflag
 contains the flags to add, while
@@ -765,7 +751,7 @@ On entry,
 contains the table ID and
 .Va pfrio_buffer[pfrio_size]
 contains the list of
-.Va pfr_addr
+.Vt pfr_addr
 structures to put in the table.
 A valid ticket must also be supplied to
 .Va pfrio_ticket .
@@ -782,15 +768,14 @@ struct pfioc_trans {
 	int		 esize;	/* size of each element in bytes */
 	struct pfioc_trans_e {
 		int		rs_num;
-		char		anchor[PF_ANCHOR_NAME_SIZE];
-		char		ruleset[PF_RULESET_NAME_SIZE];
+		char		anchor[MAXPATHLEN];
 		u_int32_t	ticket;
 	}		*array;
 };
 .Ed
 .Pp
 Clear all the inactive rulesets specified in the
-.Va pfioc_trans_e
+.Vt pfioc_trans_e
 array.
 For each ruleset, a ticket is returned for subsequent "add rule" ioctls,
 as well as for the
@@ -995,7 +980,7 @@ should be set to
 or both, to tell the kernel to return a group of interfaces
 (drivers, like "fxp"), real interface instances (like "fxp1") or both.
 The data is returned in the
-.Va pfi_if
+.Vt pfi_if
 structure described below:
 .Bd -literal
 struct pfi_if {
