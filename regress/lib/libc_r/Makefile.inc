@@ -1,19 +1,10 @@
-# $OpenBSD: Makefile.inc,v 1.7 2002/11/16 05:02:48 marc Exp $
+# $OpenBSD: Makefile.inc,v 1.8 2003/01/14 20:04:44 marc Exp $
 # Copyright (c) 1993 Chris Provenzano, proven@athena.mit.edu
 
-LIBC_R?=	/usr/lib/libc_r.a
-LIBPTHREAD?=	/usr/lib/libnpthread.a
-USELIBPTHREAD?=	no
+LIBPTHREAD=	/usr/lib/libpthread.a
 
-.if ${USELIBPTHREAD:L} == yes
-# this tests using libnpthread/libc
-LDADD+=		-lnpthread
-DPADD+=		${LIBPTHREAD}
-.else
-# This tests using libc_r
 LDADD+=		-pthread
-DPADD+=		${LIBC_R}
-.endif
+DPADD+=		${LIBPTHREAD}
 
 CFLAGS+=	-Wall # -Werror
 #DEBUG=		-ggdb

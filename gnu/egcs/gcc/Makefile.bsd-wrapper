@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2002/11/24 00:58:16 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.11 2003/01/14 20:04:44 marc Exp $
 
 MAN=		cccp.1 gcc.1 gcc-local.1
 MLINKS+=	gcc.1 cc.1
@@ -13,10 +13,10 @@ MLINKS+=	g++.1 c++.1
 MLINKS+=	g77.1 f77.1
 .endif
 
-VAXHOST_CFLAGS=	-DIN_GCC -DOPENBSD_NATIVE -DHAVE_CONFIG_H ${PTHREAD_CFLAGS} -O0
+VAXHOST_CFLAGS=	-DIN_GCC -DOPENBSD_NATIVE -DHAVE_CONFIG_H -O0
 
 GXX_INCDIR=	/usr/include/g++
-GNUCFLAGS=	CFLAGS="${CFLAGS} ${COPTS} -DOPENBSD_NATIVE ${PTHREAD_CFLAGS}"
+GNUCFLAGS=	CFLAGS="${CFLAGS} ${COPTS} -DOPENBSD_NATIVE"
 CLEANFILES=	.gdbinit */.gdbinit *.info* \
 		c-parse.c c-parse.h c-parse.y cexp.c cp/parse.c cp/parse.h \
 		f/*.info* objc-parse.c objc-parse.y target_path \
@@ -141,9 +141,4 @@ tags:
 .include <bsd.subdir.mk>
 .ifndef NOMAN
 .include <bsd.man.mk>
-.endif
-.if defined(WANT_LIBPTHREAD)
-PTHREAD_CFLAGS=-DOPENBSD_LIBPTHREAD
-.else
-PTHREAD_CFLAGS=
 .endif
