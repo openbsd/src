@@ -268,6 +268,13 @@ arg_should_not_be_sent_to_server (arg)
 	{
 	    /* Don't send this, since the CVSROOTs don't match. */
 	    free (this_root);
+
+	    /*
+	     * This is so bogus!  Means if you have checked out from
+	     * a replica of a repository, and then when you want to
+	     * check it in to the real (read/write) repository, the
+	     * file will be skipped!
+	     */
 	    return 1;
 	}
 	free (this_root);
