@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.33 2004/07/13 20:43:13 art Exp $	*/
+/*	$OpenBSD: npx.c,v 1.34 2004/07/21 18:39:58 kettenis Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -504,7 +504,7 @@ npxintr(arg)
 		 * in doreti, and the frame for that could easily be set up
 		 * just before it is used).
 		 */
-		p->p_md.md_regs = (struct trapframe *)&frame->if_es;
+		p->p_md.md_regs = (struct trapframe *)&frame->if_fs;
 
 		/*
 		 * Encode the appropriate code for detailed information on
