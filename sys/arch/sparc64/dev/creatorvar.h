@@ -1,4 +1,4 @@
-/*	$OpenBSD: creatorvar.h,v 1.4 2002/07/26 16:57:16 jason Exp $	*/
+/*	$OpenBSD: creatorvar.h,v 1.5 2002/07/29 05:53:12 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net),
@@ -49,7 +49,7 @@ struct creator_softc {
 	int sc_type;
 	u_int sc_mode;
 	struct rasops_info sc_rasops;
-	int32_t sc_fifo_cache;
+	int32_t sc_fifo_cache, sc_fg_cache;
 };
 
 #define	FBC_WRITE(sc,r,v) \
