@@ -1,4 +1,4 @@
-/* $OpenBSD: params.h,v 1.1 2001/08/19 13:05:57 deraadt Exp $ */
+/* $OpenBSD: params.h,v 1.2 2001/08/21 20:04:12 camield Exp $ */
 
 /*
  * Global POP daemon parameters.
@@ -142,8 +142,8 @@
  * Locking method your system uses for user mailboxes. It is important
  * that you set this correctly.
  */
-#define LOCK_FCNTL			1
-#define LOCK_FLOCK			0
+#define LOCK_FCNTL			0
+#define LOCK_FLOCK			1
 
 /*
  * How do we talk to syslogd? These should be fine for most systems.
