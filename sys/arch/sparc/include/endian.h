@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.4 1997/04/04 03:05:35 millert Exp $ */
+/*	$OpenBSD: endian.h,v 1.5 1997/06/24 18:15:02 grr Exp $ */
 /*	$NetBSD: endian.h,v 1.3 1996/02/13 17:04:58 christos Exp $ */
 
 /*
@@ -73,10 +73,10 @@ __END_DECLS
 #define	htonl(x)	(x)
 #define	htons(x)	(x)
 
-#define	NTOHL(x)	(void) (x)
-#define	NTOHS(x)	(void) (x)
-#define	HTONL(x)	(void) (x)
-#define	HTONS(x)	(void) (x)
+#define	NTOHL(x)	(x)
+#define	NTOHS(x)	(x)
+#define	HTONL(x)	(x)
+#define	HTONS(x)	(x)
 
 #else
 
