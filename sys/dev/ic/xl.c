@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.48 2003/01/05 20:07:44 deraadt Exp $	*/
+/*	$OpenBSD: xl.c,v 1.49 2003/03/24 17:40:00 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2577,7 +2577,9 @@ xl_attach(sc)
 	struct ifmedia *ifm;
 
 	sc->xl_unit = sc->sc_dev.dv_unit;
+	i = splimp();
 	xl_reset(sc, 1);
+	splx(i);
 
 	/*
 	 * Get station address from the EEPROM.
@@ -2755,7 +2757,9 @@ xl_attach(sc)
 	 */
 	if (sc->xl_xcvr == XL_XCVR_AUTO) {
 		xl_choose_xcvr(sc, 0);
+		i = splimp();
 		xl_reset(sc, 0);
+		splx(i);
 	}
 
 	if (sc->xl_media & XL_MEDIAOPT_BT) {
