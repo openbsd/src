@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.7 2002/11/29 22:31:41 deraadt Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.8 2002/12/11 23:24:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";*/
-static char *rcsid = "$OpenBSD: malloc.c,v 1.7 2002/11/29 22:31:41 deraadt Exp $";
+static char *rcsid = "$OpenBSD: malloc.c,v 1.8 2002/12/11 23:24:39 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -463,7 +463,7 @@ morepages(int n)
 
 	if ((pagepool_start = mmap(0, n * pagesz,
 			PROT_READ|PROT_WRITE,
-			MAP_ANON|MAP_COPY, fd, 0)) == (caddr_t)-1) {
+			MAP_ANON|MAP_COPY, fd, 0)) == (caddr_t)MAP_FAILED) {
 		xprintf("Cannot map anonymous memory");
 		return 0;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld.c,v 1.31 2002/12/02 23:17:36 deraadt Exp $	*/
+/*	$OpenBSD: rtld.c,v 1.32 2002/12/11 23:24:39 millert Exp $	*/
 /*	$NetBSD: rtld.c,v 1.43 1996/01/14 00:35:17 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -551,7 +551,7 @@ map_object(struct sod *sodp, struct so_map *smp)
 	char		*name;
 	struct _dynamic	*dp;
 	char		*path, *ipath;
-	int		fd;
+	int		fd, sverrno;
 	caddr_t		addr;
 	struct exec	hdr;
 	int		usehints = 0;
@@ -606,8 +606,9 @@ again:
 	}
 
 	if (read(fd, &hdr, sizeof(hdr)) != sizeof(hdr)) {
+		sverrno = errno;
 		(void)close(fd);
-		/*errno = x;*/
+		errno = sverrno;
 		return NULL;
 	}
 
@@ -619,8 +620,10 @@ again:
 
 	if ((addr = mmap(0, hdr.a_text + hdr.a_data + hdr.a_bss,
 	    PROT_READ|PROT_EXEC,
-	    MAP_COPY, fd, 0)) == (caddr_t)-1) {
+	    MAP_COPY, fd, 0)) == (caddr_t)MAP_FAILED) {
+		sverrno = errno;
 		(void)close(fd);
+		errno = sverrno;
 		return NULL;
 	}
 
@@ -630,15 +633,19 @@ again:
 
 	if (mprotect(addr + hdr.a_text, hdr.a_data,
 	    PROT_READ|PROT_WRITE|PROT_EXEC) != 0) {
+		sverrno = errno;
 		(void)close(fd);
+		errno = sverrno;
 		return NULL;
 	}
 
 	if (mmap(addr + hdr.a_text + hdr.a_data, hdr.a_bss,
 	    PROT_READ|PROT_WRITE,
 	    MAP_ANON|MAP_COPY|MAP_FIXED,
-	    anon_fd, 0) == (caddr_t)-1) {
+	    anon_fd, 0) == (caddr_t)MAP_FAILED) {
+		sverrno = errno;
 		(void)close(fd);
+		errno = sverrno;
 		return NULL;
 	}
 
@@ -1157,7 +1164,7 @@ maphints(void)
 	hsize = PAGSIZ;
 	addr = mmap(0, hsize, PROT_READ, MAP_COPY, hfd, 0);
 
-	if (addr == (caddr_t)-1) {
+	if (addr == (caddr_t)MAP_FAILED) {
 		close(hfd);
 		hheader = (struct hints_header *)-1;
 		return;
