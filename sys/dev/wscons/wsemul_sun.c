@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.7 2002/08/29 22:19:33 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.8 2002/09/05 17:12:03 jason Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -280,12 +280,9 @@ wsemul_sun_output_normal(edp, c, kernel)
 			break;	/* ignore the ESC */
 		}
 
-		if (edp->state == SUN_EMUL_STATE_NORMAL) {
+		if (edp->state == SUN_EMUL_STATE_NORMAL)
 			newstate = SUN_EMUL_STATE_HAVEESC;
-			break;
-		}
-		/* special case: fall through, we're printing one out */
-		/* FALLTHRU */
+		break;
 
 	default:		/* normal character */
 		(*edp->emulops->putchar)(edp->emulcookie, edp->crow, edp->ccol,
