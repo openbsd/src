@@ -2630,7 +2630,9 @@ tc_gen_reloc (section, fixp)
 			       fixp->fx_subsy != NULL,
 			       fixp->fx_addsy->bsym);
 
-  for (n_relocs = 0; codes[n_relocs]; n_relocs++)
+  /* assert (codes != 0); */
+
+  for (n_relocs = 0; codes && codes[n_relocs]; n_relocs++)
     ;
 
   relocs = (arelent **)
@@ -2647,6 +2649,7 @@ tc_gen_reloc (section, fixp)
 
   relocs[n_relocs] = NULL;
 
+  if (n_relocs)
 #ifdef OBJ_ELF
   switch (fixp->fx_r_type)
     {
@@ -2700,7 +2703,7 @@ tc_gen_reloc (section, fixp)
     }
 #else /* OBJ_SOM */
 
-  /* Walk over reach relocation returned by the BFD backend.  */
+  /* Walk over each relocation returned by the BFD backend.  */
   for (i = 0; i < n_relocs; i++)
     {
       code = *codes[i];
