@@ -2,6 +2,7 @@
 CERTPATHLEN		= 1
 CERTUSAGE		= digitalSignature,keyCertSign
 CERTIP			= 0.0.0.0
+CERTFQDN		= nohost.nodomain
 
 # This section should be referenced when building an x509v3 CA
 # Certificate.
@@ -17,3 +18,9 @@ keyUsage=$ENV::CERTUSAGE
 # The address must be provided in the CERTIP environment variable
 [x509v3_IPAddr]
 subjectAltName=IP:$ENV::CERTIP
+
+# This section should be referenced to add a FQDN hostname
+# as an alternate subject name, needed by isakmpd
+# The address must be provided in the CERTFQDN environment variable
+[x509v3_FQDN]
+subjectAltName=DNS:$ENV::CERTFQDN
