@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.33 1997/10/06 20:53:03 mickey Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.34 1998/02/15 01:49:58 deraadt Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -373,7 +373,6 @@ ed_pcmcia_detach(self)
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#define PCI_PRODUCT_NE2000	0x8029
 #define PCI_CBIO		0x10	/* Configuration Base IO Address */
 
 int	ed_pci_match __P((struct device *, void *, void *));
@@ -391,10 +390,15 @@ ed_pci_match(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 
 	/* We don't check the vendor here since many make NE2000 clones */
-	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_NE2000)
-		return (0);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_REALTEK &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_REALTEK_RT8029)
+		return (1);
 
-	return (1);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_WINBOND &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_WINBOND_W89C940F)
+		return (1);
+
+	return (0);
 }
 
 /*
