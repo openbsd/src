@@ -44,7 +44,7 @@
  *
  * Note that within the 'vers' resource all these fields end up
  * comprising a four byte unsigned integer with the property that any later
- * version will be be represented by a larger number.
+ * version will be represented by a larger number.
  */
 
 #define	VERSION	"0.7a3"
