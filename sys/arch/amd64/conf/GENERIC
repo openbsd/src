@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.36 2004/11/25 02:28:36 ian Exp $
+#	$OpenBSD: GENERIC,v 1.37 2004/12/02 01:56:44 pvalchev Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -289,6 +289,7 @@ re*	at pci?				# Realtek 8169/8169S/8110S
 stge*	at pci?				# Sundance TC9021 GigE
 #lge*	at pci?				# Level1 LXT1001 GigE
 #hme*	at pci?				# Sun Happy Meal
+vge*	at pci?				# VIA VT612x
 
 # Wireless network cards
 wi*	at pci?				# WaveLAN IEEE 802.11DS
@@ -322,6 +323,7 @@ xmphy*	at mii?				# XaQti XMAC-II PHYs
 nsgphy*	at mii?				# NS gigabit PHYs
 rgephy*	at mii?				# Realtek 8169S/8110S PHY
 urlphy*	at mii?				# Realtek RTL8150L internal PHY
+ciphy*	at mii?				# Cicada CS8201 10/100/1000 copper PHY
 ukphy*	at mii?				# "unknown" PHYs
 
 eap*	at pci?				# Ensoniq AudioPCI S5016
