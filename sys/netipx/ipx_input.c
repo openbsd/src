@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_input.c,v 1.7 2000/01/11 20:30:13 fgsch Exp $	*/
+/*	$OpenBSD: ipx_input.c,v 1.8 2000/01/11 20:56:15 fgsch Exp $	*/
 
 /*-
  *
@@ -74,6 +74,7 @@ int ipxprintfs = IPXPRINTFS;
 int ipxcksum = 0;
 int ipxdonosocks = 0;
 int ipxforwarding = 0;
+int ipxnetbios = 0;
 
 union ipx_net	ipx_zeronet;
 union ipx_host	ipx_zerohost;
@@ -190,6 +191,18 @@ next:
 			ipxstat.ipxs_badsum++;
 			goto bad;
 		}
+	}
+
+	/*
+	 * Propagated (Netbios) packets (type 20) has to be handled  
+	 * different. :-(
+	 */
+	if (ipx->ipx_pt == IPXPROTO_PPROP) {
+		if (ipxnetbios) {
+			ipx_output_type20(m);
+			goto next;
+		} else
+			goto bad;
 	}
 
 	/*
