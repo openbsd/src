@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.6 1997/07/30 22:24:43 mickey Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1997/07/30 23:28:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ char copyright[] =
 #if !defined(lint)
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.6 1997/07/30 22:24:43 mickey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/07/30 23:28:42 deraadt Exp $";
 #endif
 
 #include "defs.h"
@@ -50,14 +50,6 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.6 1997/07/30 22:24:43 mickey Exp $";
 #include <signal.h>
 #include <fcntl.h>
 #include <sys/file.h>
-#if defined(sgi) && !defined(PRE_KUDZU)
-#include <sys/capability.h>
-int tirix_socket(int,int,int);
-int tirix_bind(int, const struct sockaddr *, int);
-#else
-#define tirix_socket socket
-#define tirix_bind bind
-#endif
 
 pid_t	mypid;
 
@@ -106,16 +98,11 @@ main(int argc,
 	struct timeval wtime, t2;
 	time_t dt;
 	fd_set ibits;
-	naddr p_net, p_mask;
+	naddr p_addr, p_mask;
 	struct interface *ifp;
 	struct parm parm;
 	char *tracename = 0;
 
-
-	/* Some shells are badly broken and send SIGHUP to backgrounded
-	 * processes.
-	 */
-	signal(SIGHUP, SIG_IGN);
 
 	openlog("routed", LOG_PID | LOG_ODELAY, LOG_DAEMON);
 	ftrace = stdout;
@@ -183,7 +170,7 @@ main(int argc,
 			break;
 
 		case 'F':		/* minimal routes for SLIP */
-			n = FAKE_METRIC;
+			n = HOPCNT_INFINITY-2;
 			p = strchr(optarg,',');
 			if (p && *p != '\0') {
 				n = (int)strtoul(p+1, &q, 0);
@@ -192,13 +179,13 @@ main(int argc,
 				    && n >= 1)
 					*p = '\0';
 			}
-			if (!getnet(optarg, &p_net, &p_mask)) {
+			if (!getnet(optarg, &p_addr, &p_mask)) {
 				msglog("bad network; \"-F %s\"",
 				       optarg);
 				break;
 			}
 			bzero(&parm, sizeof(parm));
-			parm.parm_net = p_net;
+			parm.parm_addr_h = ntohl(p_addr);
 			parm.parm_mask = p_mask;
 			parm.parm_d_metric = n;
 			p = check_parms(&parm);
@@ -210,13 +197,10 @@ main(int argc,
 			/* handle arbirary, (usually) per-interface
 			 * parameters.
 			 */
-			p = parse_parms(optarg, 0);
-			if (p != 0) {
-				if (strcasecmp(p,optarg))
-					msglog("%s in \"%s\"", p, optarg);
-				else
-					msglog("bad \"-P %s\"", optarg);
-			}
+			p = parse_parms(optarg);
+			if (p != 0)
+				msglog("bad \"%s\" in \"%s\"",
+				       p, optarg);
 			break;
 
 		default:
@@ -230,11 +214,9 @@ main(int argc,
 		tracename = *argv++;
 		argc--;
 	}
-	if (tracename != 0 && tracename[0] == '\0')
-		goto usage;
 	if (argc != 0) {
 usage:
-		logbad(0, "usage: routed [-sqdghmpAt] [-T tracefile]"
+		logbad(0, "usage: routed [-sqdghmpAt] [-T /tracefile]"
 		       " [-F net[,metric]] [-P parms]");
 	}
 	if (geteuid() != 0)
@@ -271,29 +253,33 @@ usage:
 	signal(SIGALRM, sigalrm);
 	if (!background)
 		signal(SIGHUP, sigterm);    /* SIGHUP fatal during debugging */
+	else
+		signal(SIGHUP, SIG_IGN);
 	signal(SIGTERM, sigterm);
 	signal(SIGINT, sigterm);
 	signal(SIGUSR1, sigtrace_on);
 	signal(SIGUSR2, sigtrace_off);
 
 	/* get into the background */
+	if (background) {
 #ifdef sgi
-	if (0 > _daemonize(background ? 0 : (_DF_NOCHDIR|_DF_NOFORK),
-			   new_tracelevel == 0 ? -1 : STDOUT_FILENO,
-			   new_tracelevel == 0 ? -1 : STDERR_FILENO,
-			   -1))
-		BADERR(0, "_daemonize()");
+		if (0 > _daemonize(_DF_NOCHDIR,
+				   new_tracelevel == 0 ? -1 : STDOUT_FILENO,
+				   new_tracelevel == 0 ? -1 : STDERR_FILENO,
+				   -1))
+			BADERR(0, "_daemonize()");
 #else
-	if (background && daemon(0, new_tracelevel) < 0)
-		BADERR(0,"daemon()");
+		if (daemon(1, 1) < 0)
+			BADERR(0,"daemon()");
 #endif
+	}
 
 	mypid = getpid();
 	srandom((int)(clk.tv_sec ^ clk.tv_usec ^ mypid));
 
 	/* prepare socket connected to the kernel.
 	 */
-	rt_sock = tirix_socket(AF_ROUTE, SOCK_RAW, 0);
+	rt_sock = socket(AF_ROUTE, SOCK_RAW, 0);
 	if (rt_sock < 0)
 		BADERR(1,"rt_sock = socket()");
 	if (fcntl(rt_sock, F_SETFL, O_NONBLOCK) == -1)
@@ -309,13 +295,11 @@ usage:
 	if (background && new_tracelevel == 0)
 		ftrace = 0;
 	if (tracename != 0) {
-		strncpy(inittracename, tracename, sizeof(inittracename)-1);
-		set_tracefile(inittracename, "%s", -1);
-	} else {
-		tracelevel_msg("%s", -1);   /* turn on tracing to stdio */
+		trace_on(tracename, 1);
+		if (new_tracelevel == 0)	/* use stdout if file is bad */
+			new_tracelevel = 1;
 	}
-
-	bufinit();
+	set_tracelevel();
 
 	/* initialize radix tree */
 	rtinit();
@@ -342,7 +326,8 @@ usage:
 
 	/* Ask for routes */
 	rip_query();
-	rdisc_sol();
+	if (!supplier)
+		rdisc_sol();
 
 	/* Loop forever, listening and broadcasting.
 	 */
@@ -358,7 +343,7 @@ usage:
 			dt = t2.tv_sec;
 			if (dt > 0)
 				dt -= wtime.tv_sec;
-			trace_act("time changed by %d sec", dt);
+			trace_act("time changed by %d sec\n", dt);
 			epoch.tv_sec += dt;
 		}
 		timevalsub(&now, &clk, &epoch);
@@ -366,13 +351,15 @@ usage:
 		now_expire = now.tv_sec - EXPIRE_TIME;
 		now_garbage = now.tv_sec - GARBAGE_TIME;
 
-		/* deal with signals that should affect tracing */
+		/* deal with interrupts that should affect tracing */
 		set_tracelevel();
 
 		if (stopint != 0) {
-			rip_bcast(0);
-			rdisc_adv();
-			trace_off("exiting with signal %d", stopint);
+			if (supplier) {
+				rip_bcast(0);
+				rdisc_adv();
+			}
+			trace_off("exiting with signal %d\n", stopint);
 			exit(stopint | 128);
 		}
 
@@ -503,13 +490,13 @@ usage:
 
 /* ARGSUSED */
 void
-sigalrm(int s)
+sigalrm(int sig)
 {
 	/* Historically, SIGALRM would cause the daemon to check for
 	 * new and broken interfaces.
 	 */
 	ifinit_timer.tv_sec = now.tv_sec;
-	trace_act("SIGALRM");
+	trace_act("SIGALRM\n");
 }
 
 
@@ -566,16 +553,10 @@ fix_sock(int sock,
 		logbad(1, "fcntl(%s) O_NONBLOCK: %s",
 		       name, strerror(errno));
 	on = 1;
-	if (setsockopt(sock, SOL_SOCKET,SO_BROADCAST, &on,sizeof(on)) < 0)
+	if (setsockopt(sock, SOL_SOCKET,SO_BROADCAST,
+		       &on,sizeof(on)) < 0)
 		msglog("setsockopt(%s,SO_BROADCAST): %s",
 		       name, strerror(errno));
-#ifdef USE_PASSIFNAME
-	on = 1;
-	if (setsockopt(sock, SOL_SOCKET, SO_PASSIFNAME, &on,sizeof(on)) < 0)
-		msglog("setsockopt(%s,SO_PASSIFNAME): %s",
-		       name, strerror(errno));
-#endif
-
 	if (rbuf >= MIN_SOCKBUF) {
 		if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
 			       &rbuf, sizeof(rbuf)) < 0)
@@ -585,7 +566,7 @@ fix_sock(int sock,
 		for (rbuf = 60*1024; ; rbuf -= 4096) {
 			if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
 				       &rbuf, sizeof(rbuf)) == 0) {
-				trace_act("RCVBUF=%d", rbuf);
+				trace_act("RCVBUF=%d\n", rbuf);
 				break;
 			}
 			if (rbuf < MIN_SOCKBUF) {
@@ -619,7 +600,7 @@ get_rip_sock(naddr addr,
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(RIP_PORT);
 	sin.sin_addr.s_addr = addr;
-	if (tirix_bind(s, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+	if (bind(s, (struct sockaddr *)&sin,sizeof(sin)) < 0) {
 		if (serious)
 			BADERR(errno != EADDRINUSE, "bind(rip_sock)");
 		return -1;
@@ -644,7 +625,7 @@ rip_off(void)
 
 
 	if (rip_sock >= 0 && !mhome) {
-		trace_act("turn off RIP");
+		trace_act("turn off RIP\n");
 
 		(void)close(rip_sock);
 		rip_sock = -1;
@@ -652,9 +633,8 @@ rip_off(void)
 		/* get non-broadcast sockets to listen to queries.
 		 */
 		for (ifp = ifnet; ifp != 0; ifp = ifp->int_next) {
-			if (ifp->int_state & IS_REMOTE)
-				continue;
-			if (ifp->int_rip_sock < 0) {
+			if (ifp->int_rip_sock < 0
+			    && !(ifp->int_state & IS_ALIAS)) {
 				addr = ((ifp->int_if_flags & IFF_POINTOPOINT)
 					? ifp->int_dstaddr
 					: ifp->int_addr);
@@ -707,11 +687,11 @@ rip_on(struct interface *ifp)
 		return;
 	}
 
-	/* If the main RIP socket is off and it makes sense to turn it on,
-	 * then turn it on for all of the interfaces.
+	/* If the main RIP socket is off, and it makes sense to turn it on,
+	 * turn it on for all of the interfaces.
 	 */
 	if (rip_interfaces > 0 && !rdisc_ok) {
-		trace_act("turn on RIP");
+		trace_act("turn on RIP\n");
 
 		/* Close all of the query sockets so that we can open
 		 * the main socket.  SO_REUSEPORT is not a solution,
@@ -734,21 +714,25 @@ rip_on(struct interface *ifp)
 			next_bcast.tv_sec = now.tv_sec+MIN_WAITTIME;
 
 		for (ifp = ifnet; ifp != 0; ifp = ifp->int_next) {
-			ifp->int_query_time = NEVER;
+			if (!IS_RIP_IN_OFF(ifp->int_state))
+				ifp->int_state &= ~IS_RIP_QUERIED;
 			rip_mcast_on(ifp);
 		}
+
 		ifinit_timer.tv_sec = now.tv_sec;
 
+		fix_select();
+
 	} else if (ifp != 0
-		   && !(ifp->int_state & IS_REMOTE)
-		   && ifp->int_rip_sock < 0) {
+		   && ifp->int_rip_sock < 0
+		   && !(ifp->int_state & IS_ALIAS)) {
 		/* RIP is off, so ensure there are sockets on which
 		 * to listen for queries.
 		 */
 		ifp->int_rip_sock = get_rip_sock(ifp->int_addr, 0);
-	}
 
-	fix_select();
+		fix_select();
+	}
 }
 
 
@@ -807,8 +791,6 @@ timevalsub(struct timeval *t1,
 }
 
 
-/* put a message into the system log
- */
 void
 msglog(char *p, ...)
 {
@@ -822,68 +804,6 @@ msglog(char *p, ...)
 	if (ftrace != 0) {
 		if (ftrace == stdout)
 			(void)fputs("routed: ", ftrace);
-		(void)vfprintf(ftrace, p, args);
-		(void)fputc('\n', ftrace);
-	}
-}
-
-
-/* Put a message about a bad system into the system log if
- * we have not complained about it recently.
- *
- * It is desirable to complain about all bad systems, but not too often.
- * In the worst case, it is not practical to keep track of all bad systems.
- * For example, there can be many systems with the wrong password.
- */
-void
-msglim(struct msg_limit *lim, naddr addr, char *p, ...)
-{
-	va_list args;
-	int i;
-	struct msg_sub *ms1, *ms;
-	char *p1;
-
-	va_start(args, p);
-
-	/* look for the oldest slot in the table
-	 * or the slot for the bad router.
-	 */
-	ms = ms1 = lim->subs;
-	for (i = MSG_SUBJECT_N; ; i--, ms1++) {
-		if (i == 0) {
-			/* Reuse a slot at most once every 10 minutes.
-			 */
-			if (lim->reuse > now.tv_sec) {
-				ms = 0;
-			} else {
-				ms = ms1;
-				lim->reuse = now.tv_sec + 10*60;
-			}
-			break;
-		}
-		if (ms->addr == addr) {
-			/* Repeat a complaint about a given system at
-			 * most once an hour.
-			 */
-			if (ms->until > now.tv_sec)
-				ms = 0;
-			break;
-		}
-		if (ms->until < ms1->until)
-			ms = ms1;
-	}
-	if (ms != 0) {
-		ms->addr = addr;
-		ms->until = now.tv_sec + 60*60;	/* 60 minutes */
-
-		trace_flush();
-		for (p1 = p; *p1 == ' '; p1++)
-			continue;
-		vsyslog(LOG_ERR, p1, args);
-	}
-
-	/* always display the message if tracing */
-	if (ftrace != 0) {
 		(void)vfprintf(ftrace, p, args);
 		(void)fputc('\n', ftrace);
 	}
@@ -909,33 +829,3 @@ logbad(int dump, char *p, ...)
 		abort();
 	exit(1);
 }
-#if defined(sgi) && !defined(PRE_KUDZU)
-
-
-int
-tirix_socket(int domain ,int type, int protocol)
-{
-	cap_t ocap;
-	cap_value_t cap_priv_port = CAP_PRIV_PORT;
-	int r;
-
-	ocap = cap_acquire(1, &cap_priv_port);
-	r = socket(domain, type, protocol);
-	cap_surrender(ocap);
-	return r;
-}
-
-
-int
-tirix_bind(int s, const struct sockaddr *name, int namelen)
-{
-	int r;
-	cap_t ocap;
-	cap_value_t cap_priv_port = CAP_PRIV_PORT;
-
-	ocap = cap_acquire(1, &cap_priv_port);
-	r = bind(s, name, namelen);
-	cap_surrender(ocap);
-	return r;
-}
-#endif

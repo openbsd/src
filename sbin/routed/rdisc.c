@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdisc.c,v 1.3 1997/07/30 22:24:45 mickey Exp $	*/
+/*	$OpenBSD: rdisc.c,v 1.4 1997/07/30 23:28:44 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -41,12 +41,6 @@ static char sccsid[] = "@(#)rdisc.c	8.1 (Berkeley) x/y/95";
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
-#if defined(sgi) && !defined(PRE_KUDZU)
-#include <sys/capability.h>
-extern int tirix_socket(int,int,int);
-#else
-#define tirix_socket socket
-#endif
 
 /* router advertisement ICMP packet */
 struct icmp_ad {
@@ -132,14 +126,15 @@ trace_rdisc(char	*act,
 		wp = &p->ad.icmp_ad_info[0].icmp_ad_addr;
 		lim = &wp[(len - sizeof(p->ad)) / sizeof(*wp)];
 		for (i = 0; i < p->ad.icmp_ad_num && wp <= lim; i++) {
-			(void)fprintf(ftrace, "\t%s preference=%d",
+			(void)fprintf(ftrace, "\t%s preference=%#x",
 				      naddr_ntoa(wp[0]), (int)ntohl(wp[1]));
 			wp += p->ad.icmp_ad_asize;
 		}
 		(void)fputc('\n',ftrace);
 
 	} else {
-		trace_act("%s Router Solic. from %s to %s via %s value=%#x",
+		trace_act("%s Router Solic. from %s to %s via %s"
+			  " value=%#x\n",
 			  act, naddr_ntoa(from), naddr_ntoa(to),
 			  ifp ? ifp->int_name : "?",
 			  ntohl(p->so.icmp_so_rsvd));
@@ -152,7 +147,7 @@ static void
 get_rdisc_sock(void)
 {
 	if (rdisc_sock < 0) {
-		rdisc_sock = tirix_socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
+		rdisc_sock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
 		if (rdisc_sock < 0)
 			BADERR(1,"rdisc_sock = socket()");
 		fix_sock(rdisc_sock,"rdisc_sock");
@@ -165,8 +160,7 @@ get_rdisc_sock(void)
  */
 void
 set_rdisc_mg(struct interface *ifp,
-	     int on)			/* 0=turn it off */
-{
+	     int on) {			/* 0=turn it off */
 	struct ip_mreq m;
 
 	if (rdisc_sock < 0) {
@@ -179,7 +173,8 @@ set_rdisc_mg(struct interface *ifp,
 		get_rdisc_sock();
 	}
 
-	if (!(ifp->int_if_flags & IFF_MULTICAST)) {
+	if (!(ifp->int_if_flags & IFF_MULTICAST)
+	    || (ifp->int_state & IS_ALIAS)) {
 		ifp->int_state &= ~(IS_ALL_HOSTS | IS_ALL_ROUTERS);
 		return;
 	}
@@ -257,7 +252,7 @@ set_supplier(void)
 	if (supplier_set)
 		return;
 
-	trace_act("start suppying routes");
+	trace_act("start suppying routes\n");
 
 	/* Forget discovered routes.
 	 */
@@ -331,7 +326,8 @@ rdisc_age(naddr bad_gate)
 				sec = (now.tv_sec - drp->dr_life
 				       + SUPPLY_INTERVAL);
 				if (drp->dr_ts > sec) {
-					trace_act("age 0.0.0.0 --> %s via %s",
+					trace_act("age 0.0.0.0 --> %s"
+						  " via %s\n",
 						  naddr_ntoa(drp->dr_gate),
 						  drp->dr_ifp->int_name);
 					drp->dr_ts = sec;
@@ -417,8 +413,8 @@ del_rdisc(struct dr *drp)
 	 */
 	if (i == 0
 	    && ifp->int_rdisc_cnt >= MAX_SOLICITATIONS) {
-		trace_act("discovered route is bad--re-solicit routers via %s",
-			  ifp->int_name);
+		trace_act("discovered route is bad"
+			  "--re-solicit routers via %s\n", ifp->int_name);
 		ifp->int_rdisc_cnt = 0;
 		ifp->int_rdisc_timer.tv_sec = 0;
 		rdisc_sol();
@@ -489,7 +485,7 @@ rdisc_sort(void)
 		/* Stop using discovered routes if they are all bad
 		 */
 		if (new_drp == 0) {
-			trace_act("turn off Router Discovery client");
+			trace_act("turn off Router Discovery client\n");
 			rdisc_ok = 0;
 
 			if (rt != 0
@@ -507,7 +503,7 @@ rdisc_sort(void)
 		} else {
 			if (cur_drp == 0) {
 				trace_act("turn on Router Discovery client"
-					  " using %s via %s",
+					  " using %s via %s\n",
 					  naddr_ntoa(new_drp->dr_gate),
 					  new_drp->dr_ifp->int_name);
 
@@ -515,7 +511,7 @@ rdisc_sort(void)
 
 			} else {
 				trace_act("switch Router Discovery from"
-					  " %s via %s to %s via %s",
+					  " %s via %s to %s via %s\n",
 					  naddr_ntoa(cur_drp->dr_gate),
 					  cur_drp->dr_ifp->int_name,
 					  naddr_ntoa(new_drp->dr_gate),
@@ -530,8 +526,7 @@ rdisc_sort(void)
 			} else {
 				rtadd(RIP_DEFAULT, 0,
 				      new_drp->dr_gate, new_drp->dr_gate,
-				      HOPCNT_INFINITY-1, 0,
-				      RS_RDISC, new_drp->dr_ifp);
+				      0, 0, RS_RDISC, new_drp->dr_ifp);
 			}
 
 			/* Now turn off RIP and delete RIP routes,
@@ -555,27 +550,30 @@ parse_ad(naddr from,
 	 u_short life,
 	 struct interface *ifp)
 {
-	static struct msg_limit bad_gate;
+	static naddr bad_gate;
 	struct dr *drp, *new_drp;
 
 
 	if (gate == RIP_DEFAULT
 	    || !check_dst(gate)) {
-		msglim(&bad_gate, from,"router %s advertising bad gateway %s",
-		       naddr_ntoa(from),
-		       naddr_ntoa(gate));
+		if (bad_gate != from) {
+			msglog("router %s advertising bad gateway %s",
+			       naddr_ntoa(from),
+			       naddr_ntoa(gate));
+			bad_gate = from;
+		}
 		return;
 	}
 
 	/* ignore pointers to ourself and routes via unreachable networks
 	 */
 	if (ifwithaddr(gate, 1, 0) != 0) {
-		trace_pkt("    discard Router Discovery Ad pointing at us");
+		trace_pkt("\tdiscard Router Discovery Ad pointing at us\n");
 		return;
 	}
 	if (!on_net(gate, ifp->int_net, ifp->int_mask)) {
-		trace_pkt("    discard Router Discovery Ad"
-			  " toward unreachable net");
+		trace_pkt("\tdiscard Router Discovery Ad"
+			  " toward unreachable net\n");
 		return;
 	}
 
@@ -694,7 +692,6 @@ send_rdisc(union ad_u *p,
 
 	switch (type) {
 	case 0:				/* unicast */
-	default:
 		msg = "Send";
 		break;
 
@@ -712,7 +709,7 @@ send_rdisc(union ad_u *p,
 		msg = "Send multicast";
 		if (ifp->int_state & IS_DUP) {
 			trace_act("abort multicast output via %s"
-				  " with duplicate address",
+				  " with duplicate address\n",
 				  ifp->int_name);
 			return;
 		}
@@ -802,13 +799,14 @@ rdisc_adv(void)
 {
 	struct interface *ifp;
 
-	if (!supplier)
-		return;
 
 	rdisc_timer.tv_sec = now.tv_sec + NEVER;
 
 	for (ifp = ifnet; ifp; ifp = ifp->int_next) {
-		if (0 != (ifp->int_state & (IS_NO_ADV_OUT | IS_BROKE)))
+		if (0 != (ifp->int_state & (IS_NO_ADV_OUT
+					    | IS_PASSIVE
+					    | IS_ALIAS
+					    | IS_BROKE)))
 			continue;
 
 		if (!timercmp(&ifp->int_rdisc_timer, &now, >)
@@ -844,13 +842,13 @@ rdisc_sol(void)
 	union ad_u u;
 
 
-	if (supplier)
-		return;
-
 	rdisc_timer.tv_sec = now.tv_sec + NEVER;
 
 	for (ifp = ifnet; ifp; ifp = ifp->int_next) {
-		if (0 != (ifp->int_state & (IS_NO_SOL_OUT | IS_BROKE))
+		if (0 != (ifp->int_state & (IS_NO_SOL_OUT
+					    | IS_PASSIVE
+					    | IS_ALIAS
+					    | IS_BROKE))
 		    || ifp->int_rdisc_cnt >= MAX_SOLICITATIONS)
 			continue;
 
@@ -881,13 +879,19 @@ rdisc_sol(void)
 static struct interface *		/* 0 if bad */
 ck_icmp(char	*act,
 	naddr	from,
-	struct interface *ifp,
 	naddr	to,
 	union ad_u *p,
 	u_int	len)
 {
+	struct interface *ifp;
 	char *type;
 
+
+	/* If we could tell the interface on which a packet from address 0
+	 * arrived, we could deal with such solicitations.
+	 */
+
+	ifp = ((from == 0) ? 0 : iflookup(from));
 
 	if (p->icmp.icmp_type == ICMP_ROUTERADVERT) {
 		type = "advertisement";
@@ -898,7 +902,8 @@ ck_icmp(char	*act,
 	}
 
 	if (p->icmp.icmp_code != 0) {
-		trace_pkt("unrecognized ICMP Router %s code=%d from %s to %s",
+		trace_pkt("unrecognized ICMP Router"
+			  " %s code=%d from %s to %s\n",
 			  type, p->icmp.icmp_code,
 			  naddr_ntoa(from), naddr_ntoa(to));
 		return 0;
@@ -920,22 +925,14 @@ ck_icmp(char	*act,
 void
 read_d(void)
 {
-	static struct msg_limit bad_asize, bad_len;
-#ifdef USE_PASSIFNAME
-	static struct msg_limit  bad_name;
-#endif
+	static naddr bad_asize, bad_len;
 	struct sockaddr_in from;
 	int n, fromlen, cc, hlen;
-	struct {
-#ifdef USE_PASSIFNAME
-		char	ifname[IFNAMSIZ];
-#endif
-		union {
-			struct ip ip;
-			u_short s[512/2];
-			u_char	b[512];
-		} pkt;
-	} buf;
+	union {
+		struct ip ip;
+		u_short s[512/2];
+		u_char	b[512];
+	} pkt;
 	union ad_u *p;
 	n_long *wp;
 	struct interface *ifp;
@@ -943,7 +940,7 @@ read_d(void)
 
 	for (;;) {
 		fromlen = sizeof(from);
-		cc = recvfrom(rdisc_sock, &buf, sizeof(buf), 0,
+		cc = recvfrom(rdisc_sock, &pkt, sizeof(pkt), 0,
 			      (struct sockaddr*)&from,
 			      &fromlen);
 		if (cc <= 0) {
@@ -954,38 +951,20 @@ read_d(void)
 		if (fromlen != sizeof(struct sockaddr_in))
 			logbad(1,"impossible recvfrom(rdisc_sock) fromlen=%d",
 			       fromlen);
-#ifdef USE_PASSIFNAME
-		if ((cc -= sizeof(buf.ifname)) < 0)
-			logbad(0,"missing USE_PASSIFNAME; only %d bytes",
-			       cc+sizeof(buf.ifname));
-#endif
 
-		hlen = buf.pkt.ip.ip_hl << 2;
+		hlen = pkt.ip.ip_hl << 2;
 		if (cc < hlen + ICMP_MINLEN)
 			continue;
-		p = (union ad_u *)&buf.pkt.b[hlen];
+		p = (union ad_u *)&pkt.b[hlen];
 		cc -= hlen;
 
-#ifdef USE_PASSIFNAME
-		ifp = ifwithname(buf.ifname, 0);
-		if (ifp == 0)
-			msglim(&bad_name, from.sin_addr.s_addr,
-			       "impossible rdisc if_ name %.*s",
-			       IFNAMSIZ, buf.ifname);
-#else
-		/* If we could tell the interface on which a packet from
-		 * address 0 arrived, we could deal with such solicitations.
-		 */
-		ifp = ((from.sin_addr.s_addr == 0)
-		       ? 0 : iflookup(from.sin_addr.s_addr));
-#endif
-		ifp = ck_icmp("Recv", from.sin_addr.s_addr, ifp,
-			      buf.pkt.ip.ip_dst.s_addr, p, cc);
+		ifp = ck_icmp("Recv",
+			      from.sin_addr.s_addr, pkt.ip.ip_dst.s_addr,
+			      p, cc);
 		if (ifp == 0)
 			continue;
 		if (ifwithaddr(from.sin_addr.s_addr, 0, 0)) {
-			trace_pkt("    "
-				  "discard our own Router Discovery message");
+			trace_pkt("\tdiscard our own Router Discovery msg\n");
 			continue;
 		}
 
@@ -993,21 +972,27 @@ read_d(void)
 		case ICMP_ROUTERADVERT:
 			if (p->ad.icmp_ad_asize*4
 			    < sizeof(p->ad.icmp_ad_info[0])) {
-				msglim(&bad_asize, from.sin_addr.s_addr,
-				       "intolerable rdisc address size=%d",
-				       p->ad.icmp_ad_asize);
+				if (bad_asize != from.sin_addr.s_addr) {
+					msglog("intolerable rdisc address"
+					       " size=%d",
+					       p->ad.icmp_ad_asize);
+					bad_asize = from.sin_addr.s_addr;
+				}
 				continue;
 			}
 			if (p->ad.icmp_ad_num == 0) {
-				trace_pkt("    empty?");
+				trace_pkt("\tempty?\n");
 				continue;
 			}
 			if (cc != (sizeof(p->ad) - sizeof(p->ad.icmp_ad_info)
 				   + (p->ad.icmp_ad_num
 				      * sizeof(p->ad.icmp_ad_info[0])))) {
-				msglim(&bad_len, from.sin_addr.s_addr,
-				       "rdisc length %d does not match ad_num"
-				       " %d", cc, p->ad.icmp_ad_num);
+				if (bad_len != from.sin_addr.s_addr) {
+					msglog("rdisc length %d does not"
+					       " match ad_num %d",
+					       cc, p->ad.icmp_ad_num);
+					bad_len = from.sin_addr.s_addr;
+				}
 				continue;
 			}
 			if (supplier)
