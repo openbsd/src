@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.14 2001/03/04 06:32:41 csapuntz Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.15 2001/09/18 01:46:40 art Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -103,6 +103,13 @@ struct vfsops ext2fs_vfsops = {
 struct pool ext2fs_inode_pool;
 
 extern u_long ext2gennumber;
+
+int
+ext2fs_init(vfsp)
+	struct vfsconf *vfsp;
+{
+	return (ufs_init(vfsp));
+}
 
 /*
  * Called by main() when ext2fs is going to be mounted as root.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.15 2001/09/18 01:21:55 art Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.16 2001/09/18 01:46:40 art Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -61,13 +61,6 @@
 
 static int ext2fs_indirtrunc __P((struct inode *, ufs_daddr_t, ufs_daddr_t,
 				ufs_daddr_t, int, long *));
-
-int
-ext2fs_init(vfsp)
-	struct vfsconf *vfsp;
-{
-	return (ufs_init(vfsp));
-}
 
 /*
  * Last reference to an inode.  If necessary, write or delete it.
