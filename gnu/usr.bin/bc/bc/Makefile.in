@@ -297,10 +297,10 @@ libmath.h: libmath.b
 
 install-data-local:
 	if grep -s "define BC_MATH_FILE" ../config.h; \
-	  then $(mkinstalldirs) $(libdir); \
-	  rm -f $(libdir)/libmath.b; \
-	  $(INSTALL_DATA) $(srcdir)/libmath.b $(libdir); \
-	  chmod 444 $(libdir)/libmath.b; \
+         then $(mkinstalldirs) $(DESTDIR)$(libdir); \
+         rm -f $(DESTDIR)$(libdir)/libmath.b; \
+         $(INSTALL_DATA) $(srcdir)/libmath.b $(DESTDIR)$(libdir); \
+         chmod 444 $(DESTDIR)$(libdir)/libmath.b; \
 	  else true; \
 	fi
 fbc: $(fbcOBJ)
