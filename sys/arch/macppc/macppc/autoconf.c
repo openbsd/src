@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.5 2002/09/14 18:47:30 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 2002/09/15 00:55:56 deraadt Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.5 2002/09/14 18:47:30 deraadt Exp $
+ *      $Id: autoconf.c,v 1.6 2002/09/15 00:55:56 deraadt Exp $
  */
 
 /*
@@ -582,7 +582,7 @@ findtype(s)
 		dp++;
 	}
 	if (dp->att == NULL) {
-		printf("string [%s]not found\n", *s);
+		printf("string [%s] not found\n", *s);
 	}
 	return(dp);
 }
