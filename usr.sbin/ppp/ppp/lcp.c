@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: lcp.c,v 1.12 1999/05/08 11:06:36 brian Exp $
+ * $Id: lcp.c,v 1.13 1999/05/09 20:04:01 brian Exp $
  *
  */
 
@@ -874,9 +874,7 @@ LcpDecodeConfig(struct fsm *fp, u_char *cp, int plen, int mode_type,
 	  dec->ackend += 2;
 	} else {
 #ifdef OLDMST
-	  /*
-	   * MorningStar before v1.3 needs NAK
-	   */
+	  /* MorningStar before v1.3 needs NAK */
 	  memcpy(dec->nakend, cp, 2);
 	  dec->nakend += 2;
 #else
@@ -902,9 +900,7 @@ LcpDecodeConfig(struct fsm *fp, u_char *cp, int plen, int mode_type,
 	  dec->ackend += 2;
 	} else {
 #ifdef OLDMST
-	  /*
-	   * MorningStar before v1.3 needs NAK
-	   */
+	  /* MorningStar before v1.3 needs NAK */
 	  memcpy(dec->nakend, cp, 2);
 	  dec->nakend += 2;
 #else

@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: mbuf.h,v 1.4 1999/05/08 11:06:37 brian Exp $
+ * $Id: mbuf.h,v 1.5 1999/05/09 20:04:03 brian Exp $
  *
  *	TODO:
  */
@@ -36,8 +36,11 @@ struct mqueue {
   int qlen;
 };
 
-#define MBUF_CTOP(bp)		((u_char *)((bp)+1) + (bp)->offset)
-#define CONST_MBUF_CTOP(bp)	((const u_char *)((bp)+1) + (bp)->offset)
+#define MBUF_CTOP(bp) \
+	((bp) ? (u_char *)((bp)+1) + (bp)->offset : NULL)
+
+#define CONST_MBUF_CTOP(bp) \
+	((bp) ? (const u_char *)((bp)+1) + (bp)->offset : NULL)
 
 #define MB_ASYNC	1
 #define MB_FSM		2

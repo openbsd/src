@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ipcp.c,v 1.12 1999/05/08 11:06:35 brian Exp $
+ * $Id: ipcp.c,v 1.13 1999/05/09 20:04:00 brian Exp $
  *
  *	TODO:
  *		o Support IPADDRS properly
@@ -795,7 +795,7 @@ AcceptableAddr(const struct in_range *prange, struct in_addr ipaddr)
 }
 
 static void
-IpcpDecodeConfig(struct fsm *fp, u_char * cp, int plen, int mode_type,
+IpcpDecodeConfig(struct fsm *fp, u_char *cp, int plen, int mode_type,
                  struct fsm_decode *dec)
 {
   /* Deal with incoming PROTO_IPCP */

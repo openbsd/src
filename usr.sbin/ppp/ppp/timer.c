@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: timer.c,v 1.3 1999/02/06 03:22:49 brian Exp $
+ * $Id: timer.c,v 1.4 1999/05/09 20:04:04 brian Exp $
  *
  *  TODO:
  */
@@ -49,7 +49,7 @@ tState2Nam(u_int state)
 }
 
 void
-timer_Stop(struct pppTimer * tp)
+timer_Stop(struct pppTimer *tp)
 {
   int omask;
 
@@ -59,7 +59,7 @@ timer_Stop(struct pppTimer * tp)
 }
 
 void
-timer_Start(struct pppTimer * tp)
+timer_Start(struct pppTimer *tp)
 {
   struct pppTimer *t, *pt;
   u_long ticks = 0;
@@ -107,7 +107,7 @@ timer_Start(struct pppTimer * tp)
 }
 
 static void
-StopTimerNoBlock(struct pppTimer * tp)
+StopTimerNoBlock(struct pppTimer *tp)
 {
   struct pppTimer *t, *pt;
 

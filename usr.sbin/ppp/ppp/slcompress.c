@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: slcompress.c,v 1.6 1999/05/08 11:06:39 brian Exp $
+ * $Id: slcompress.c,v 1.7 1999/05/09 20:04:03 brian Exp $
  *
  *	Van Jacobson (van@helios.ee.lbl.gov), Dec 31, 1989:
  *	- Initial distribution.
@@ -60,7 +60,7 @@
 #include "bundle.h"
 
 void
-sl_compress_init(struct slcompress * comp, int max_state)
+sl_compress_init(struct slcompress *comp, int max_state)
 {
   register u_int i;
   register struct cstate *tstate = comp->tstate;
