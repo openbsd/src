@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.141 2004/04/16 04:47:19 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.142 2004/04/16 04:52:26 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -79,7 +79,7 @@ void	session_dispatch_imsg(struct imsgbuf *, int);
 void	session_up(struct peer *);
 void	session_down(struct peer *);
 
-struct peer		*getpeerbyaddr(struct bgpd_addr *);
+struct peer		*getpeerbyip(struct sockaddr *);
 struct peer		*getpeerbyid(u_int32_t);
 static struct sockaddr	*addr2sa(struct bgpd_addr *, u_int16_t);
 
@@ -753,7 +753,7 @@ session_accept(int listenfd)
 	int			 connfd;
 	int			 opt;
 	socklen_t		 len;
-	struct sockaddr_in	 cliaddr;
+	struct sockaddr_storage	 cliaddr;
 	struct peer		*p = NULL;
 
 	len = sizeof(cliaddr);
@@ -765,7 +765,7 @@ session_accept(int listenfd)
 			log_warn("accept");
 	}
 
-	p = getpeerbyip(cliaddr.sin_addr.s_addr);
+	p = getpeerbyip((struct sockaddr *)&cliaddr);
 
 	if (p != NULL &&
 	    (p->state == STATE_CONNECT || p->state == STATE_ACTIVE)) {
@@ -1851,16 +1851,25 @@ getpeerbyaddr(struct bgpd_addr *addr)
 }
 
 struct peer *
-getpeerbyip(in_addr_t ip)
+getpeerbyip(struct sockaddr *ip)
 {
 	struct peer *p;
 
 	/* we might want a more effective way to find peers by IP */
-	for (p = peers; p != NULL &&
-	    p->conf.remote_addr.v4.s_addr != ip; p = p->next)
-		;	/* nothing */
+	for (p = peers; p != NULL; p = p->next)
+		if (p->conf.remote_addr.af == ip->sa_family) {
+			if (p->conf.remote_addr.af == AF_INET &&
+			    p->conf.remote_addr.v4.s_addr ==
+			    ((struct sockaddr_in *)ip)->sin_addr.s_addr)
+				return (p);
+			if (p->conf.remote_addr.af == AF_INET6 &&
+			    !bcmp(&p->conf.remote_addr.v6,
+			    &((struct sockaddr_in6 *)ip)->sin6_addr,
+			    sizeof(p->conf.remote_addr.v6)))
+				return (p);
+		}
 
-	return (p);
+	return (NULL);
 }
 
 struct peer *
