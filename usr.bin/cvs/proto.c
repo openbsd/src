@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.41 2005/03/04 18:36:57 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.42 2005/03/13 19:52:26 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -735,9 +735,8 @@ cvs_getresp(struct cvsroot *root)
 			fputs(cvs_proto_buf, cvs_server_outlog);
 
 		if ((len = strlen(cvs_proto_buf)) != 0) {
-			if (cvs_proto_buf[len - 1] != '\n') {
-				/* truncated line */
-			} else
+			/* if len - 1 != '\n' the line is truncated */
+			if (cvs_proto_buf[len - 1] == '\n') {
 				cvs_proto_buf[--len] = '\0';
 		}
 
