@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atmsubr.c,v 1.3 1996/06/26 04:21:32 chuck Exp $       */
+/*      $OpenBSD: if_atmsubr.c,v 1.4 1996/06/27 04:33:10 chuck Exp $       */
 
 /*
  *
@@ -60,6 +60,9 @@
 #include <netinet/if_ether.h> /* XXX: for ETHERTYPE_* */
 #ifdef INET
 #include <netinet/in_var.h>
+#endif
+#ifdef NATM
+#include <netnatm/natm.h>
 #endif
 
 #define senderr(e) { error = (e); goto bad;}
@@ -198,10 +201,11 @@ bad:
  * the packet is in the mbuf chain m.
  */
 void
-atm_input(ifp, ah, m)
+atm_input(ifp, ah, m, so)
 	struct ifnet *ifp;
 	register struct atm_pseudohdr *ah;
 	struct mbuf *m;
+	struct socket *so;
 {
 	register struct ifqueue *inq;
 	u_int16_t etype = ETHERTYPE_IP; /* default */
@@ -214,34 +218,46 @@ atm_input(ifp, ah, m)
 	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
 
-	/*
-	 * handle LLC/SNAP header, if present
-	 */
-	if (ATM_PH_FLAGS(ah) & ATM_PH_LLCSNAP) {
-	  struct atmllc *alc;
-	  if (m->m_len < sizeof(*alc) && (m = m_pullup(m, sizeof(*alc))) == 0)
-		return; /* failed */
-	  alc = mtod(m, struct atmllc *);
-	  if (bcmp(alc, ATMLLC_HDR, 6)) {
-	    printf("%s: recv'd invalid LLC/SNAP frame [vp=%d,vc=%d]\n",
-		ifp->if_xname, ATM_PH_VPI(ah), ATM_PH_VCI(ah));
-	    m_freem(m);
-            return;
-	  }
-	  etype = ATM_LLC_TYPE(alc);
-	  m_adj(m, sizeof(*alc));
-	}
-
-	switch (etype) {
-#ifdef INET
-	case ETHERTYPE_IP:
-		schednetisr(NETISR_IP);
-		inq = &ipintrq;
-		break;
+	if (so) {
+#ifdef NATM
+	  schednetisr(NETISR_NATM);
+	  inq = &natmintrq;
+	  m->m_pkthdr.rcvif = (struct ifnet *) so; /* XXX: overload */
+#else
+	  printf("atm_input: NATM detected but not configured in kernel\n");
+	  m_freem(m);
+	  return;
 #endif
-	default:
-	    m_freem(m);
-	    return;
+	} else {
+	  /*
+	   * handle LLC/SNAP header, if present
+	   */
+	  if (ATM_PH_FLAGS(ah) & ATM_PH_LLCSNAP) {
+	    struct atmllc *alc;
+	    if (m->m_len < sizeof(*alc) && (m = m_pullup(m, sizeof(*alc))) == 0)
+		  return; /* failed */
+	    alc = mtod(m, struct atmllc *);
+	    if (bcmp(alc, ATMLLC_HDR, 6)) {
+	      printf("%s: recv'd invalid LLC/SNAP frame [vp=%d,vc=%d]\n",
+		  ifp->if_xname, ATM_PH_VPI(ah), ATM_PH_VCI(ah));
+	      m_freem(m);
+              return;
+	    }
+	    etype = ATM_LLC_TYPE(alc);
+	    m_adj(m, sizeof(*alc));
+	  }
+
+	  switch (etype) {
+#ifdef INET
+	  case ETHERTYPE_IP:
+		  schednetisr(NETISR_IP);
+		  inq = &ipintrq;
+		  break;
+#endif
+	  default:
+	      m_freem(m);
+	      return;
+	  }
 	}
 
 	s = splimp();
