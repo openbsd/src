@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.3 2002/11/18 23:13:32 deraadt Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.4 2002/11/18 23:20:43 deraadt Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -244,7 +244,8 @@ eval_pfqueue(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
 	else if (bw_percent > 0 && parent != NULL)
 		pa->bandwidth = parent->bandwidth / 100 * bw_percent;
 	else
-		errx(1, "bandwidth for %s invalid (%d / %d)", pa->qname, bw_absolute, bw_percent);
+		errx(1, "bandwidth for %s invalid (%d / %d)", pa->qname,
+		    bw_absolute, bw_percent);
 
 	/*
 	 * admission control: bandwidth should be smaller than the
@@ -583,6 +584,9 @@ rate2str(double rate)
 
 	if (rate == 0.0)
 		snprintf(buf, RATESTR_MAX, "0");
+	else if (rate >= 1024 * 1024 * 1024)
+		snprintf(buf, RATESTR_MAX, "%.2fGb",
+		    rate / (1024.0 * 1024.0 * 1024.0));
 	else if (rate >= 1024 * 1024)
 		snprintf(buf, RATESTR_MAX, "%.2fMb", rate / (1024.0 * 1024.0));
 	else if (rate >= 1024)
