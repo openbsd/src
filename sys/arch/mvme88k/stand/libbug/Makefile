@@ -1,13 +1,17 @@
+#	$OpenBSD: Makefile,v 1.4 1998/08/22 07:39:51 smurph Exp $
+
 LIB=bug
 
 NOPIC=
 NOPROFILE=
 
-CFLAGS+=-I${.CURDIR}/../../include
+S=${.CURDIR}/../../../..
+DIR_SA=$S/lib/libsa
 
-SRCS=delay.c diskrd.c diskwr.c getbrdid.c instat.c outln.c outstr.c \
-	return.c rtc_rd.c
-.PATH:    ${.CURDIR}/../../../../lib/libc_sa ${.CURDIR}/${MACHINE_ARCH}
+CFLAGS+=-I${.CURDIR}/../../include -I${DIR_SA}
+
+SRCS=	delay.c diskrd.c diskwr.c getbrdid.c inchr.c instat.c outln.c \
+	outstr.c putchar.c return.c rtc_rd.c
 
 install:
 
