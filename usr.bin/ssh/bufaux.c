@@ -15,7 +15,7 @@ Buffers.
 */
 
 #include "includes.h"
-RCSID("$Id: bufaux.c,v 1.3 1999/11/02 19:42:35 markus Exp $");
+RCSID("$Id: bufaux.c,v 1.4 1999/11/12 17:28:35 markus Exp $");
 
 #include "ssh.h"
 #include <ssl/bn.h>
@@ -64,10 +64,11 @@ buffer_get_bignum(Buffer *buffer, BIGNUM *value)
   bits = GET_16BIT(buf);
   /* Compute the number of binary bytes that follow. */
   bytes = (bits + 7) / 8;
-  bin = xmalloc(bytes);
-  buffer_get(buffer, bin, bytes);
+  if (buffer_len(buffer) < bytes)
+    fatal("buffer_get_bignum: input buffer too small");
+  bin = buffer_ptr(buffer);
   BN_bin2bn(bin, bytes, value);
-  xfree(bin);
+  buffer_consume(buffer, bytes);
 
   return 2 + bytes;
 }
