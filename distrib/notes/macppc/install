@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.9 2002/03/30 22:52:57 miod Exp $
+dnl	$OpenBSD: install,v 1.10 2002/04/02 05:00:57 drahn Exp $
 OpenBSDInstallShortPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -7,7 +7,7 @@ on the whole disk or share the disk with MacOS.
 For stand-alone (No MacOS installed) or dedicated disks, the MBR
 installation method should be chosen and no additional prep is necessary.
 
-If the disk is to be shared with MacOS a partition must be preallocated
+If the disk is to be shared with MacOS, a partition must be preallocated
 by the MacOS partition editor and MacOS installed to the proper partition.
 This expects that the HFS partition will be the first partition on
 the disk, and then the OpenBSD partition will follow.

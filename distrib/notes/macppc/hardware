@@ -2,15 +2,17 @@ OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, G4 Cube as well
 as PowerBook and iBook machines.
 
 Machines with older firmware: 6xxx, 7xxx 8xxx, and 9xxx machines are
-not supported.  PowerMac G3 Beige and B&W G3 are unknown. 
+not supported.  PowerMac G3 Beige status is unknown. 
 
-Has been tested on iMac Revs A-C as well as on iMac DV(+) machines, several
-Power Macintosh G4 systems (single and dual processor), as well as the
-G4 Cube. For portables, PowerBook G3, PowerBook G4 and iBook have been
+Has been tested on iMac Revs A-C as well as on iMac DV(+) machines, 
+Power Macintosh G4 systems (single and dual processor), as well as
+the G4 Cube. B&W G3 support has been added in 3.1.
+
+For portables, PowerBook G3, PowerBook G4 and iBook have been
 tested.  Note that power saving features on portables are very limited,
 no power management features are available, suspend/sleep is not supported.
 However battery level and status charging/AC connected/AC disconnected
-is now supported via an APM emulation layer.
+is supported via an APM emulation layer.
 
 
 Supported devices {:-include-:}:
@@ -29,6 +31,8 @@ Supported devices {:-include-:}:
 		Digital DC21x4x-based PCI Ethernet adapters (de), including:
 			Znyx ZX34X
 		Digital DC21x43 clone-based PCI Ethernet adapters (dc)
+		HME PCI Fast Ethernet (hme)
+		HME PCI Quad Fast Ethernet (hme)
 		Onboard Older iMac 10-100Mbs (bm) Ethernet. 
 		Onboard G4/PowerBook/Newer iMac (gm) ethernet.
 
@@ -37,13 +41,13 @@ Supported devices {:-include-:}:
 		WaveLAN IEEE 802.11DS
 
 	Tape drives:
-		SCSI Tape drives
+		SCSI Tape drives.
 
 	CD-ROM drives:
-		SCSI CD-ROM drives
-		SCSI CD-RW drives
-		Atapi CD-ROM drives
-		Atapi DVD-ROM drives
+		SCSI CD-ROM drives.
+		SCSI CD-RW drives.
+		Atapi CD-ROM drives.
+		Atapi DVD-ROM drives.
 		Atapi DVD-RAM drives (read-only)
 		Atapi DVD-RW drives (read-only?)
 		Atapi CD-RW drives.
@@ -52,10 +56,12 @@ Supported devices {:-include-:}:
 		ADB and USB keyboards.
 
 	Mice:
-		USB Mice.
+		USB Mice. 
+		ADB trackpads.
 
 	Sound Cards:
 		AWACS.
+		USB audio (uaudio)
 
 	Miscellaneous:
 		USB Hubs.
@@ -67,3 +73,4 @@ Supported devices {:-include-:}:
 
 The built-in firewire (IEEE1394) ports available in some machines are
 not supported.
+The built-in Cardbus slot in some machines is not not supported.
