@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2001/06/26 05:52:54 markus Exp $
+#	$OpenBSD: Makefile,v 1.20 2001/06/26 17:40:42 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -16,3 +16,5 @@ SRCS=	ssh-agent.c
 
 LDADD+=	-lcrypto
 DPADD+=	${LIBCRYPTO}
+
+#LDADD+=	-lsectok
