@@ -1,4 +1,4 @@
-/* $OpenBSD: machine.c,v 1.38 2004/05/09 22:14:15 deraadt Exp $	 */
+/* $OpenBSD: machine.c,v 1.39 2004/06/11 01:00:58 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1994 Thorsten Lockert <tholo@sigmasoft.com>
@@ -90,7 +90,7 @@ static char header[] =
  */
 
 char	*state_abbrev[] = {
-	"", "start", "run\0\0\0", "sleep", "stop", "zomb",
+	"", "start", "run", "sleep", "stop", "zomb", "onproc"
 };
 
 static int      stathz;
