@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pchb.4,v 1.3 2000/04/29 20:35:45 deraadt Exp $
+.\"	$OpenBSD: pchb.4,v 1.4 2000/05/15 03:30:22 deraadt Exp $
 .\"
 .\" Copyright (c) 2000 Michael Shalayeff. All rights reserved.
 .\"
@@ -19,8 +19,9 @@ the following devices:
 .Pp
 .Bl -tag -width -offset indent -compact
 .It i450 PCIset (Orion)
+Supports additional PCI busses.
 .It Reliance Computer ROSB4, CNB20HE, CNB20LE
-Supports secondary PCI bus.
+Supports additional PCI busses.
 .It i82424ZX (Saturn)
 Disables CPU-PCI write posting.
 .It i82443BX
@@ -45,7 +46,7 @@ are supported just as PCI attachment point.
 .Pp
 The Power-PC port supports several Apple and Motorola bridges.
 .Pp
-.Sh SEE LASO
+.Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4 ,
 .Xr random 4
