@@ -1,4 +1,4 @@
-/*	$OpenBSD: nofnreg.h,v 1.4 2002/05/16 15:10:30 jason Exp $	*/
+/*	$OpenBSD: nofnreg.h,v 1.5 2002/05/16 22:52:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -29,6 +29,11 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Effort sponsored in part by the Defense Advanced Research Projects
+ * Agency (DARPA) and Air Force Research Laboratory, Air Force
+ * Materiel Command, USAF, under agreement number F30602-01-2-0537.
+ *
  */
 
 #define	NOFN_BAR0_REGS		0x10		/* main register set */
