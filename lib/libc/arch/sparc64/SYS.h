@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.3 2001/09/25 13:04:30 drahn Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.4 2001/09/26 18:39:13 art Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -57,7 +57,11 @@
  */
 #ifdef PIC
 #define	CALL(name) \
-	call name, 0; \
+	PIC_PROLOGUE(%g1,%g2); \
+	sethi %hi(name),%g2; \
+	or %g2,%lo(name),%g2; \
+	ldx [%g1+%g2],%g2; \
+	jmp %g2; \
 	nop
 #else
 #define	CALL(name) \
