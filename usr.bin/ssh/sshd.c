@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.134 2000/11/12 19:50:38 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.135 2000/11/29 21:11:59 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -100,6 +100,9 @@ int debug_flag = 0;
 
 /* Flag indicating that the daemon is being started from inetd. */
 int inetd_flag = 0;
+
+/* Flag indicating that sshd should not detach and become a daemon. */
+int no_daemon_flag = 0;
 
 /* debug goes to stderr unless inetd_flag is set */
 int log_stderr = 0;
@@ -568,7 +571,7 @@ main(int ac, char **av)
 	initialize_server_options(&options);
 
 	/* Parse command-line arguments. */
-	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:u:diqQ46")) != EOF) {
+	while ((opt = getopt(ac, av, "f:p:b:k:h:g:V:u:dDiqQ46")) != EOF) {
 		switch (opt) {
 		case '4':
 			IPv4or6 = AF_INET;
@@ -589,6 +592,9 @@ main(int ac, char **av)
 				fprintf(stderr, "Too high debugging level.\n");
 				exit(1);
 			}
+			break;
+		case 'D':
+			no_daemon_flag = 1;
 			break;
 		case 'i':
 			inetd_flag = 1;
@@ -750,7 +756,7 @@ main(int ac, char **av)
 	 * from the controlling terminal, and fork.  The original process
 	 * exits.
 	 */
-	if (!debug_flag && !inetd_flag) {
+	if (!(debug_flag || inetd_flag || no_daemon_flag)) {
 #ifdef TIOCNOTTY
 		int fd;
 #endif /* TIOCNOTTY */
