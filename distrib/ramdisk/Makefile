@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2001/10/08 00:18:14 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.18 2001/10/09 23:03:51 deraadt Exp $
 
 REV=		${OSrev}
 
@@ -33,6 +33,7 @@ FLOPPYSIZE?=	2880
 FLOPPYTYPE?=	floppy
 INSTALLBOOT?=	installboot
 BOOT?=		${DESTDIR}/usr/mdec/boot
+BOOTIN?=	${MOUNT_POINT}/boot
 BOOTXX?=	${DESTDIR}/usr/mdec/bootxx
 RAWLABEL?=	-r
 
@@ -60,9 +61,9 @@ ${FLOPPY}:	bsd.gz ${BOOT} ${BOOTXX}
 	disklabel -w ${RAWLABEL} ${VND} ${FLOPPYTYPE}
 	newfs ${NEWFSOPTS_FD} ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	cp ${BOOT} ${MOUNT_POINT}/boot
+	cp ${BOOT} ${MOUNT_POINT}$/
 	cp bsd.gz ${MOUNT_POINT}/bsd
-	${INSTALLBOOT} -v ${MOUNT_POINT}/boot ${BOOTXX} \
+	${INSTALLBOOT} -v ${BOOTIN} ${BOOTXX} \
 		`echo ${VND_RDEV} | sed -e 's/a$$/c/'`
 	@echo ""
 	@df -i ${MOUNT_POINT}
@@ -89,7 +90,7 @@ bsd.gz:	bsd.rd
 	${GZIP} ${GZIPFLAGS} < bsd.rd > bsd.gz
 
 ${RDSETROOT}: ${.CURDIR}/../common/${RDSETROOT}.c
-	${HOSTCC} ${HOSTCCFLAGS} -o ${RDSETROOT} ${.CURDIR}/../common/$(RDSETROOT}.c
+	${HOSTCC} ${HOSTCCFLAGS} -o ${RDSETROOT} ${.CURDIR}/../common/${RDSETROOT}.c
 
 ${IMAGE}: ${CBIN}
 	dd if=/dev/zero of=${REALIMAGE} count=${IMAGESIZE}
