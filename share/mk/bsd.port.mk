@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.90 1999/05/10 21:35:25 brad Exp $
+#	$OpenBSD: bsd.port.mk,v 1.91 1999/05/14 04:38:36 brad Exp $
 #	$FreeBSD: bsd.port.mk,v 1.264 1996/12/25 02:27:44 imp Exp $
 #	$NetBSD: bsd.port.mk,v 1.62 1998/04/09 12:47:02 hubertf Exp $
 #
@@ -27,7 +27,7 @@ OpenBSD_MAINTAINER= ports-admin@openbsd.org
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.90 1999/05/10 21:35:25 brad Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.91 1999/05/14 04:38:36 brad Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -180,18 +180,20 @@ _REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 # NOCLEANDEPENDS - Don't nuke dependent dirs on make clean (Default: yes)
 # BROKEN		- Port is broken.  Set this string to the reason why.
 # RESTRICTED	- Port is restricted.  Set this string to the reason why.
-# USE_GMAKE		- Says that the port uses gmake.
-# USE_LIBTOOL	- Says that the port uses libtool.
+# USE_BZIP2		- Port distfiles use bzip2 instead of gzip for compression.
+# USE_ZIP		- Port distfiles use zip instead of tar for packaging.
+# USE_GMAKE		- Port uses gmake.
+# USE_LIBTOOL	- Port uses libtool.
 #
 # XXX: cygnus products do NOT use autoconf for making its main 
 #      configure from configure.in
-# USE_AUTOCONF	- Says that the port uses autoconf (implies GNU_CONFIGURE).
+# USE_AUTOCONF	- Port uses autoconf (implies GNU_CONFIGURE).
 # AUTOCONF_DIR  - Where to apply autoconf (default: ${WRKSRC}).
-# USE_PERL5		- Says that the port uses perl5 for building and running.
-# USE_IMAKE		- Says that the port uses imake.
-# USE_X11		- Says that the port uses X11 (i.e., installs in ${X11BASE}).
-# USE_EGCC		- Says that the port needs the egcs C compiler
-# USE_EGXX		- Says that the port needs the egcs C++ compiler
+# USE_PERL5		- Port uses perl5 for building and running.
+# USE_IMAKE		- Port uses imake.
+# USE_X11		- Port uses X11 and installs in ${X11BASE}
+# USE_EGCC		- Port needs the egcs C compiler
+# USE_EGXX		- Port needs the egcs C++ compiler
 # NO_INSTALL_MANPAGES - For imake ports that don't like the install.man
 #						target.
 # HAS_CONFIGURE	- Says that the port has its own configure script.
@@ -246,14 +248,17 @@ _REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 # DEPENDS		- A list of other ports this package depends on being
 #				  made first.  Use this for things that don't fall into
 #				  the above two categories.
-# EXTRACT_CMD	- Command for extracting archive (default: tar).
-# EXTRACT_SUFX	- Suffix for archive names (default: .tar.gz).
-# EXTRACT_BEFORE_ARGS -
-#				  Arguments to ${EXTRACT_CMD} before filename
-#				  (default: -xzf).
-# EXTRACT_AFTER_ARGS -
-#				  Arguments to ${EXTRACT_CMD} following filename
-#				  (default: none).
+#
+# EXTRACT_CMD	- Command for extracting archives (default: "gzip",
+#				  "bzip2" if USE_BZIP2, "unzip" if USE_ZIP).
+# EXTRACT_SUFX	- Suffix for archive files (default: ".tar.gz",
+#				  ".tar.bz2" if USE_BZIP2, ".zip" if USE_ZIP).
+# EXTRACT_BEFORE_ARGS 
+#				- Arguments to ${EXTRACT_CMD} before filename
+#				  (default: "-dc" for gzip or bzip2, "-q" for unzip)
+# EXTRACT_AFTER_ARGS 
+#				- Arguments to ${EXTRACT_CMD} following filename
+#				  (default: "| ${TAR} -xf -", or "-d ${WKRDIR}" if USE_ZIP).
 #
 # FETCH_CMD		  - Full path to ftp/http fetch command if not in $PORTPATH
 #				  (default: /usr/bin/ftp).
@@ -623,17 +628,40 @@ PATCH_DIST_ARGS+=	-C
 .endif
 
 .if exists(/bin/tar)
-EXTRACT_CMD?=	/bin/tar
+TAR?=	/bin/tar
 .else
-EXTRACT_CMD?=	/usr/bin/tar
+TAR?=	/usr/bin/tar
 .endif
-# Backwards compatability.
+UNZIP?=	unzip
+BZIP2?=	bzip2
+
+.if defined(USE_ZIP)
+BUILD_DEPENDS+=		${UNZIP}:${PORTSDIR}/archivers/unzip
+EXTRACT_CMD?=		${UNZIP}
+EXTRACT_SUFX?=		.zip
+EXTRACT_BEFORE_ARGS?=  -q
+EXTRACT_AFTER_ARGS?=   -d ${WRKDIR}
+.else
+# common tar case
+
+# Backwards compatibility.
 .if defined(EXTRACT_ARGS)
-EXTRACT_BEFORE_ARGS?=   ${EXTRACT_ARGS}
+EXTRACT_AFTER_ARGS?=	| ${TAR} ${EXTRACT_ARGS} -
 .else
-EXTRACT_BEFORE_ARGS?=   -xzf
+EXTRACT_AFTER_ARGS?=	| ${TAR} -xf -
 .endif
-EXTRACT_SUFX?=	.tar.gz
+EXTRACT_BEFORE_ARGS?=	-dc
+
+.if defined(USE_BZIP2)
+BUILD_DEPENDS+=		${BZIP2}:${PORTSDIR}/archivers/bzip2
+EXTRACT_CMD?=		${BZIP2}
+EXTRACT_SUFX?=		.tar.bz2
+.else
+EXTRACT_CMD?=		${GZIP_CMD}
+EXTRACT_SUFX?=		.tar.gz
+.endif
+
+.endif
 
 # Figure out where the local mtree file is
 .if !defined(MTREE_FILE)
@@ -1364,7 +1392,8 @@ do-extract:
 	@${MKDIR} ${WRKDIR}
 .endif
 .endif
-	@for file in ${EXTRACT_ONLY}; do \
+	@PATH=${PORTPATH}; \
+	for file in ${EXTRACT_ONLY}; do \
 		if ! (cd ${WRKDIR} && ${EXTRACT_CMD} ${EXTRACT_BEFORE_ARGS} ${_DISTDIR}/$$file ${EXTRACT_AFTER_ARGS});\
 		then \
 			exit 1; \
