@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.11 1998/04/18 07:39:57 deraadt Exp $	*/
+/*	$OpenBSD: time.c,v 1.12 1998/05/30 01:53:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -142,31 +142,6 @@ getsecs(void)
 		errno = EIO;
 
 	return(1);
-}
-
-/*
- * Return time since epoch
- */
-void
-time_print(void)
-{
-	u_int8_t timebuf[4], datebuf[4];
-
-	/* Query BIOS for time & date */
-	if(!biostime(timebuf) && !biosdate(datebuf)) {
-#ifdef notdef
-		int dst;
-
-		dst = timebuf[3];
-#endif
-		/* Convert to sane values */
-		printf("%d/%d/%d - %d:%d:%d\n",
-		       datebuf[3], datebuf[2], datebuf[0] * 100 + datebuf[1],
-		       timebuf[0], timebuf[1], timebuf[2]);
-	} else
-		printf("no idea (in BIOS)\n");
-
-	return;
 }
 
 u_int
