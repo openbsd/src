@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.19 2000/12/15 07:29:44 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.20 2000/12/16 08:31:56 provos Exp $";
 #endif
 
 #include <time.h>
@@ -1154,7 +1154,7 @@ kernel_handle_queue()
 {
 	struct pfmsg *pfmsg;
 
-	while (pfmsg = TAILQ_FIRST(&pfqueue)) {
+	while ((pfmsg = TAILQ_FIRST(&pfqueue))) {
 		TAILQ_REMOVE(&pfqueue, pfmsg, next);
 
 		kernel_dispatch_notify(pfmsg->smsg);
@@ -1235,6 +1235,8 @@ kernel_handle_expire(struct sadb_msg *sadb)
 	struct sadb_sa *sa;
 	struct sadb_address *dst;
 	char dstbuf[NI_MAXHOST];
+	struct stateob *st;
+	time_t tm;
 	struct sockaddr *dstaddr;
 	struct sadb_lifetime *life;
 	struct sadb_ext *ext = (struct sadb_ext *)(sadb + 1);
@@ -1289,15 +1291,16 @@ kernel_handle_expire(struct sadb_msg *sadb)
 	    : "HARD", dstbuf,
 	    ntohl (sa->sadb_sa_spi), sadb->sadb_msg_satype));
 
+	spi = spi_find(dstbuf, (u_char *)&sa->sadb_sa_spi);
+	if (spi == NULL) {
+		LOG_DBG((LOG_KERNEL, 35, __FUNCTION__
+			 ": can't find %s SPI %x",
+			 dstbuf, ntohl(sa->sadb_sa_spi)));
+		return (-1);
+	}
+
 	switch(life->sadb_lifetime_exttype) {
 	case SADB_EXT_LIFETIME_HARD:
-		spi = spi_find(dstbuf, (u_char *)&sa->sadb_sa_spi);
-		if (spi == NULL) {
-			LOG_DBG((LOG_KERNEL, 35, __FUNCTION__
-				 ": can't find %s SPI %x",
-				 dstbuf, ntohl(sa->sadb_sa_spi)));
-			return (-1);
-		}
 		LOG_DBG((LOG_KERNEL, 35, __FUNCTION__": removing %s SPI %x",
 				 dstbuf, ntohl(sa->sadb_sa_spi)));
 		spi_unlink(spi);
@@ -1318,13 +1321,77 @@ kernel_handle_expire(struct sadb_msg *sadb)
 			return (0);
 		}
 
-		spi_update(global_socket, (u_int8_t *)&sa->sadb_sa_spi);
+		if (spi->flags & SPI_OWNER) {
+			spi_update(global_socket,
+				   (u_int8_t *)&sa->sadb_sa_spi);
+			return (0);
+		}
+
+		/*
+		 * Try to find an already established exchange which is
+		 * still valid.
+		 */
+
+		st = state_find(dstbuf);
+
+		tm = time(NULL);
+		while (st != NULL &&
+		       (st->lifetime <= tm || st->phase < SPI_UPDATE))
+			st = state_find_next(st, dstbuf);
+
+		if (st == NULL) {
+			int type = spi->flags & SPI_ESP ?
+				IPSEC_OPT_ENC : IPSEC_OPT_AUTH;
+
+			LOG_DBG((LOG_KERNEL, 45, __FUNCTION__
+				 ": starting new exchange to %s",
+				 spi->address));
+			kernel_new_exchange(spi->address, type);
+		}
+
 		break;
 	default:
 		log_print(__FUNCTION__": unknown extension type %d",
 			  life->sadb_lifetime_exttype);
 		return (-1);
 	}
+
+	return (0);
+}
+
+int
+kernel_new_exchange(char *address, int type)
+{
+	struct stateob *st;
+
+	/* No established exchange found, start a new one */
+	if ((st = state_new()) == NULL) {
+		log_print(__FUNCTION__
+			  ": state_new() failed for remote ip %s", address);
+		return (-1);
+	}
+
+	/* Set up the state information */
+	strncpy(st->address, address, sizeof(st->address) - 1);
+	st->port = global_port;
+	st->sport = 0;
+	st->dport = 0;
+	st->protocol = 0;
+
+	st->flags = IPSEC_NOTIFY;
+
+	st->flags |= type;
+
+	if (start_exchange(global_socket, st, st->address,
+			   st->port) == -1) {
+		log_print(__FUNCTION__": start_exchange() - informing kernel of failure");
+		/* Inform kernel of our failure */
+		kernel_notify_result(st, NULL, 0);
+		state_value_reset(st);
+		free(st);
+		return (-1);
+	} else
+		state_insert(st);
 
 	return (0);
 }
@@ -1355,26 +1422,27 @@ kernel_request_sa(struct sadb_msg *sadb)
 	src = (struct sadb_address *)
 		pfkey_find_extension(ext, end, SADB_EXT_ADDRESS_SRC);
 
-	if (dst) {
-		dstaddr = (struct sockaddr *)(dst + 1);
-		switch (dstaddr->sa_family) {
-		case AF_INET:
-			if (inet_ntop (AF_INET, &((struct sockaddr_in *)dstaddr)->sin_addr,
-				       dstbuf, sizeof(dstbuf)) == NULL) {
-				log_error (__FUNCTION__": inet_ntop failed");
-				return (-1);
-			}
-			break;
-		default:
-			log_error(__FUNCTION__
-				  ": unsupported address family %d", 
-				  dstaddr->sa_family);
+	if (!dst)
+		return (-1);
+
+	dstaddr = (struct sockaddr *)(dst + 1);
+	switch (dstaddr->sa_family) {
+	case AF_INET:
+		if (inet_ntop(AF_INET,
+			      &((struct sockaddr_in *)dstaddr)->sin_addr,
+			      dstbuf, sizeof(dstbuf)) == NULL) {
+			log_error (__FUNCTION__": inet_ntop failed");
 			return (-1);
 		}
-
-		LOG_DBG((LOG_KERNEL, 20, __FUNCTION__": dst: %s", dstbuf));
-	} else
+		break;
+	default:
+		log_error(__FUNCTION__
+			  ": unsupported address family %d", 
+			  dstaddr->sa_family);
 		return (-1);
+	}
+	
+	LOG_DBG((LOG_KERNEL, 20, __FUNCTION__": dst: %s", dstbuf));
 
 	/* Try to find an already established exchange which is still valid */
 	st = state_find(dstbuf);
@@ -1383,37 +1451,7 @@ kernel_request_sa(struct sadb_msg *sadb)
 	while (st != NULL && (st->lifetime <= tm || st->phase < SPI_UPDATE))
 		st = state_find_next(st, dstbuf);
 
-	if (st == NULL) {
-		/* No established exchange found, start a new one */
-		if ((st = state_new()) == NULL) {
-			log_print(__FUNCTION__
-				  ": state_new() failed for remote ip %s",
-				  dstbuf);
-			return (-1);
-		}
-		/* Set up the state information */
-		strncpy(st->address, dstbuf, sizeof(st->address) - 1);
-		st->port = global_port;
-		st->sport = 0;
-		st->dport = 0;
-		st->protocol = 0;
-
-		st->flags = IPSEC_NOTIFY;
-
-		st->flags |= sadb->sadb_msg_satype == SADB_SATYPE_ESP ?
-			IPSEC_OPT_ENC : IPSEC_OPT_AUTH;
-
-		if (start_exchange(global_socket, st, st->address,
-				   st->port) == -1) {
-			log_print(__FUNCTION__": start_exchange() - informing kernel of failure");
-			/* Inform kernel of our failure */
-			kernel_notify_result(st, NULL, 0);
-			state_value_reset(st);
-			free(st);
-			return (-1);
-		} else
-			state_insert(st);
-	} else {
+	if (st) {
 		struct sockaddr_in sin;
 
 		/* 
@@ -1438,7 +1476,13 @@ kernel_request_sa(struct sadb_msg *sadb)
 			   (struct sockaddr *)&sin, sizeof(sin)) != packet_size) {
 			log_error(__FUNCTION__": sendto()");
 		}
+	} else {
+		int type = sadb->sadb_msg_satype == SADB_SATYPE_ESP ?
+			IPSEC_OPT_ENC : IPSEC_OPT_AUTH;
+
+		return (kernel_new_exchange(dstbuf, type));
 	}
+
 
 	return (0);
 }
