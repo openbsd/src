@@ -108,7 +108,7 @@ main(int argc, char **argv)
 	snprintf(retbuf, sizeof(retbuf),
 		 "Kerberos error: %s\n",
 		 krb_get_err_text(status));
-	syslog(LOG_ERR, retbuf);
+	syslog(LOG_ERR, "%s", retbuf);
     } else {
 	/* Check the version string (KRB_SENDAUTH_VLEN chars) */
 	if (strncmp(version, SAMPLE_VERSION, KRB_SENDAUTH_VLEN)) {
