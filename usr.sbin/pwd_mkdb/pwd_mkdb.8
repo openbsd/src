@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)pwd_mkdb.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: pwd_mkdb.8,v 1.1.1.1 1995/10/18 08:48:01 deraadt Exp $
+.\"	$Id: pwd_mkdb.8,v 1.2 1996/08/02 01:15:02 millert Exp $
 .\"
 .Dd June 6, 1993
 .Dt PWD_MKDB 8
@@ -41,6 +41,7 @@
 .Sh SYNOPSIS
 .Nm pwd_mkdb
 .Op Fl p
+.Op Fl d Ar directory
 .Ar file
 .Sh DESCRIPTION
 .Nm Pwd_mkdb
@@ -64,6 +65,9 @@ The options are as follows:
 .It Fl p
 Create a Version 7 style password file and install it into
 .Dq Pa /etc/passwd .
+.It Fl d
+Operate in a base directory other than the default of
+.Dq Pa /etc .
 .El
 .Pp
 The two databases differ in that the secure version contains the user's 
