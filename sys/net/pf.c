@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.66 2001/06/26 23:26:24 provos Exp $ */
+/*	$OpenBSD: pf.c,v 1.67 2001/06/27 01:55:54 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1287,31 +1287,33 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 		r = TAILQ_NEXT(r, entries);
 	}
 
-	REASON_SET(&reason, PFRES_MATCH);
+	if (rm != NULL) {
+		REASON_SET(&reason, PFRES_MATCH);
 
-	/* XXX will log packet before rewrite */
-	if ((rm != NULL) && rm->log)
-		PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
+		/* XXX will log packet before rewrite */
+		if (rm->log)
+			PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
 
-	if ((rm != NULL) && (rm->action == PF_DROP_RST)) {
-		/* undo NAT/RST changes, if they have taken place */
-		if (nat != NULL) {
-			change_ap(&h->ip_src.s_addr, &th->th_sport,
-			    &h->ip_sum, &th->th_sum, baddr, bport);
-			rewrite++;
+		if (rm->action == PF_DROP_RST) {
+			/* undo NAT/RST changes, if they have taken place */
+			if (nat != NULL) {
+				change_ap(&h->ip_src.s_addr, &th->th_sport,
+				    &h->ip_sum, &th->th_sum, baddr, bport);
+				rewrite++;
+			}
+			else if (rdr != NULL) {
+				change_ap(&h->ip_dst.s_addr, &th->th_dport,
+				    &h->ip_sum, &th->th_sum, baddr, bport);
+				rewrite++;
+			}
+
+			send_reset(direction, ifp, h, off, th);
+			return (PF_DROP);
 		}
-		else if (rdr != NULL) {
-			change_ap(&h->ip_dst.s_addr, &th->th_dport,
-			    &h->ip_sum, &th->th_sum, baddr, bport);
-			rewrite++;
-		}
 
-		send_reset(direction, ifp, h, off, th);
-		return (PF_DROP);
+		if (rm->action == PF_DROP)
+			return (PF_DROP);
 	}
-
-	if ((rm != NULL) && (rm->action == PF_DROP))
-		return (PF_DROP);
 
 	if (((rm != NULL) && rm->keep_state) || (nat != NULL) || (rdr != NULL)) {
 		/* create new state */
@@ -1433,14 +1435,16 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 		r = TAILQ_NEXT(r, entries);
 	}
 
-	REASON_SET(&reason, PFRES_MATCH);
+	if (rm != NULL) {
+		REASON_SET(&reason, PFRES_MATCH);
 
-	/* XXX will log packet before rewrite */
-	if (rm != NULL && rm->log)
-		PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
+		/* XXX will log packet before rewrite */
+		if (rm->log)
+			PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
 
-	if (rm != NULL && rm->action != PF_PASS)
-		return (PF_DROP);
+		if (rm->action != PF_PASS)
+			return (PF_DROP);
+	}
 
 	if ((rm != NULL && rm->keep_state) || nat != NULL || rdr != NULL) {
 		/* create new state */
@@ -1543,14 +1547,16 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		r = TAILQ_NEXT(r, entries);
 	}
 
-	REASON_SET(&reason, PFRES_MATCH);
+	if (rm != NULL) {
+		REASON_SET(&reason, PFRES_MATCH);
 
-	/* XXX will log packet before rewrite */
-	if (rm != NULL && rm->log)
-		PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
-
-	if (rm != NULL && rm->action != PF_PASS)
-		return (PF_DROP);
+		/* XXX will log packet before rewrite */
+		if (rm->log)
+			PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
+		
+		if (rm->action != PF_PASS)
+			return (PF_DROP);
+	}
 
 	if ((rm != NULL && rm->keep_state) || nat != NULL) {
 		/* create new state */
