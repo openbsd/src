@@ -568,7 +568,7 @@ create_file ()
 
   sprintf (fname, "%s/%s", pz_dest_dir, pz_curr_file + find_base_len);
 
-  fd = open (fname, O_WRONLY | O_CREAT | O_TRUNC, S_IRALL);
+  fd = open (fname, O_WRONLY | O_CREAT | O_TRUNC, S_IRALL, 0666);
 
   /*  We may need to create the directories needed... */
   if ((fd < 0) && (errno == ENOENT))
@@ -589,7 +589,7 @@ create_file ()
         }
 
       /*  Now, lets try the open again... */
-      fd = open (fname, O_WRONLY | O_CREAT | O_TRUNC, S_IRALL);
+      fd = open (fname, O_WRONLY | O_CREAT | O_TRUNC, S_IRALL, 0666);
     }
   if (fd < 0)
     {
