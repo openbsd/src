@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.287 2002/01/09 18:37:45 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.288 2002/01/23 18:44:12 mickey Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -440,6 +440,8 @@ audio*	at maestro?
 audio*	at yds?
 audio*	at emu?
 
+bktr0	at pci? dev ? function ?
+
 # FM-Radio devices
 #mr*	at pci? dev ? function ? # Guillemot Maxi Radio FM2000 PCI Radio Card
 #sf4r*	at pci? dev ? function ? # SoundForte RadioLink SF64-PCR FM Radio Card
@@ -451,12 +453,11 @@ audio*	at emu?
 # FM-Radio support
 #radio*	at mr?
 #radio*	at sf4r?
+#radio*	at bktr?
 #radio*	at sf2r0
 #radio*	at az0
 #radio*	at rt0
 #radio*	at rtii0
-
-bktr0	at pci? dev ? function ?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
