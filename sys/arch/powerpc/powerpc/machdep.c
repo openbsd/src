@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.75 2001/08/18 05:58:34 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.76 2001/08/19 20:02:22 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -1210,7 +1210,7 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 		bus_size_t alloc_size;
 
 		/* need to steal vm space before kernel vm is initialized */
-		alloc_size = trunc_page(size + NBPG-1);
+		alloc_size = trunc_page(size + PAGE_SIZE-1);
 		ppc_kvm_size -= alloc_size;
 
 		vaddr = VM_MIN_KERNEL_ADDRESS + ppc_kvm_size;
@@ -1222,15 +1222,15 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 	printf("mapping %x size %x to %x vbase %x\n",
 		bpa, size, *bshp, spa);
 #endif
-	for (; len > 0; len -= NBPG) {
+	for (; len > 0; len -= PAGE_SIZE) {
 #if 0
 		pmap_enter(vm_map_pmap(phys_map), vaddr, spa,
 #else
 		pmap_enter(pmap_kernel(), vaddr, spa,
 #endif
 			VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED /* XXX */);
-		spa += NBPG;
-		vaddr += NBPG;
+		spa += PAGE_SIZE;
+		vaddr += PAGE_SIZE;
 	}
 	return 0;
 }
@@ -1281,15 +1281,15 @@ mapiodev(pa, len)
 	if (va == 0)
 		return NULL;
 
-	for (; size > 0; size -= NBPG) {
+	for (; size > 0; size -= PAGE_SIZE) {
 #if 0
 		pmap_enter(vm_map_pmap(phys_map), vaddr, spa,
 #else
 		pmap_enter(pmap_kernel(), vaddr, spa,
 #endif
 			VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED/* XXX */);
-		spa += NBPG;
-		vaddr += NBPG;
+		spa += PAGE_SIZE;
+		vaddr += PAGE_SIZE;
 	}
 	return (void*) (va+off);
 }
@@ -1307,13 +1307,13 @@ unmapiodev(kva, p_size)
 
 	uvm_km_free_wakeup(phys_map, vaddr, size);
 
-	for (; size > 0; size -= NBPG) {
+	for (; size > 0; size -= PAGE_SIZE) {
 #if 0
-		pmap_remove(vm_map_pmap(phys_map), vaddr, vaddr+NBPG-1);
+		pmap_remove(vm_map_pmap(phys_map), vaddr, vaddr+PAGE_SIZE-1);
 #else
-		pmap_remove(pmap_kernel(), vaddr,  vaddr+NBPG-1);
+		pmap_remove(pmap_kernel(), vaddr,  vaddr+PAGE_SIZE-1);
 #endif
-		vaddr += NBPG;
+		vaddr += PAGE_SIZE;
 	}
 	return;
 }
