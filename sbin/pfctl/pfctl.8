@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.95 2003/05/05 15:43:39 dhartmei Exp $
+.\" $OpenBSD: pfctl.8,v 1.96 2003/05/24 14:43:20 cedric Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -370,11 +370,11 @@ the number of rules which reference the table, and the global
 packet statistics for the whole table:
 .Bd -literal -offset indent
 # pfctl -vvsTables
---a-r   test
+--a-r-  test
 \ \ \ \ Addresses: \ \ 1
-\ \ \ \ References: \ 1
 \ \ \ \ Cleared: \ \ \ \ Thu Feb 13 18:55:18 2003
-\ \ \ \ Evaluations: [\ NoMatch: 3496 \ \ \ \ Match: 1 \ \ \ \ \ \ \ ]
+\ \ \ \ References: \ [ Anchors: 0 \ \ \ \ \ \ \ Rules: 1 \ \ \ \ \ \ \ ]
+\ \ \ \ Evaluations: [ NoMatch: 3496 \ \ \ \ Match: 1 \ \ \ \ \ \ \ ]
 \ \ \ \ In/Block: \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
 \ \ \ \ In/Pass: \ \ \ \ [ Packets: 10 \ \ \ \ \ \ Bytes: 840 \ \ \ \ \ ]
 \ \ \ \ In/XPass: \ \ \ [ Packets: 0 \ \ \ \ \ \ \ Bytes: 0 \ \ \ \ \ \ \ ]
@@ -425,6 +425,9 @@ This flag can only be witnessed briefly during the loading of
 .Xr pf.conf 5 .
 .It r
 For tables which are referenced (used) by rules.
+.It h
+This flag is set when a table in the main ruleset is hidden by one of more tables
+of the same name in sub-rulesets (anchors).
 .El
 .It Fl v
 Produce more verbose output.
