@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.98 2004/03/12 19:33:30 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.99 2004/03/12 20:48:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -664,20 +664,14 @@ rde_dump_rib_as(struct prefix *p, pid_t pid)
 	rib.aspath_len = aspath_length(p->aspath->flags.aspath);
 
 	if ((wbuf = imsg_create_pid(&ibuf_se, IMSG_CTL_SHOW_RIB, pid,
-	    sizeof(rib) + rib.aspath_len)) == NULL) {
-		log_warnx("rde_dump_upcall: imsg_create error");
+	    sizeof(rib) + rib.aspath_len)) == NULL)
 		return;
-	}
 	if (imsg_add(wbuf, &rib, sizeof(rib)) == -1 ||
 	    imsg_add(wbuf, aspath_dump(p->aspath->flags.aspath),
-	    rib.aspath_len) == -1) {
-		log_warnx("rde_dump_upcall: imsg_add error");
+	    rib.aspath_len) == -1)
 		return;
-	}
-	if (imsg_close(&ibuf_se, wbuf) == -1) {
-		log_warnx("rde_dump_upcall: imsg_close error");
+	if (imsg_close(&ibuf_se, wbuf) == -1)
 		return;
-	}
 }
 
 void
