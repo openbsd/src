@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.6 2005/03/13 18:32:21 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.7 2005/03/18 20:46:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -397,6 +397,8 @@ ar5k_ar5212_getRateTable(hal, mode)
 	case HAL_MODE_11G:
 	case HAL_MODE_PUREG:
 		return (&hal->ah_rt_11g);
+	case HAL_MODE_XR:
+		return (&hal->ah_rt_xr);
 	default:
 		return (NULL);
 	}
@@ -424,9 +426,27 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 {
 	struct ar5k_eeprom_info *ee = &hal->ah_capabilities.cap_eeprom;
 	u_int8_t mac[IEEE80211_ADDR_LEN];
-	u_int32_t data;
+	u_int32_t data, s_seq, s_ant, s_led[3];
 	u_int i, phy, mode, freq, ee_mode, ant[2];
-	HAL_BOOL ar5112;
+	const HAL_RATE_TABLE *rt;
+
+	/*
+	 * Save some registers before a reset
+	 */
+	if (change_channel == AH_TRUE) {
+		s_seq = AR5K_REG_READ(AR5K_AR5212_DCU_SEQNUM(0));
+		s_ant = AR5K_REG_READ(AR5K_AR5212_DEFAULT_ANTENNA);
+	} else {
+		s_seq = 0;
+		s_ant = 1;
+	}
+
+	s_led[0] = AR5K_REG_READ(AR5K_AR5212_PCICFG) &
+	    AR5K_AR5212_PCICFG_LEDSTATE;
+	s_led[1] = AR5K_REG_READ(AR5K_AR5212_GPIOCR);
+	s_led[2] = AR5K_REG_READ(AR5K_AR5212_GPIODO);
+
+	ar5k_ar5212_getRfGain(hal);
 
 	if (ar5k_ar5212_nic_wakeup(hal, channel->c_channel_flags) == AH_FALSE)
 		return (AH_FALSE);
@@ -435,8 +455,6 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 	 * Initialize operating mode
 	 */
 	hal->ah_op_mode = op_mode;
-
-	ar5112 = hal->ah_radio >= AR5K_AR5112 ? AH_TRUE : AH_FALSE;
 
 	if (channel->c_channel_flags & IEEE80211_CHAN_A) {
 		mode = AR5K_INI_VAL_11A;
@@ -479,7 +497,7 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 		    ar5212_ini[i].ini_register <= AR5K_AR5212_PCU_MAX)
 			continue;
 
-		if (ar5112 == AH_TRUE) {
+		if (hal->ah_radio == AR5K_AR5112) {
 			if (!(ar5212_mode[i].mode_flags & AR5K_INI_FLAG_5112))
 				continue;
 		} else {
@@ -498,10 +516,10 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 		if (ar5212_mode[i].mode_flags == AR5K_INI_FLAG_511X)
 			phy = AR5K_INI_PHY_511X;
 		else if (ar5212_mode[i].mode_flags & AR5K_INI_FLAG_5111 &&
-		    ar5112 == AH_FALSE)
+		    hal->ah_radio == AR5K_AR5111)
 			phy = AR5K_INI_PHY_5111;
 		else if (ar5212_mode[i].mode_flags & AR5K_INI_FLAG_5112 &&
-		    ar5112 == AH_TRUE)
+		    hal->ah_radio == AR5K_AR5112)
 			phy = AR5K_INI_PHY_5112;
 		else
 			continue;
@@ -511,9 +529,39 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 	}
 
 	/*
+	 * Set rate duration table
+	 */
+	rt = ar5k_ar5212_getRateTable(hal,
+	    channel->c_channel_flags & IEEE80211_CHAN_TURBO ?
+	    HAL_MODE_TURBO : HAL_MODE_XR);
+
+	for (i = 0; i < rt->rt_rate_count; i++) {
+		AR5K_REG_WRITE(AR5K_AR5212_RATE_DUR(rt->rt_info[i].r_rate_code),
+		    ath_hal_computetxtime(hal, rt, 14,
+		    rt->rt_info[i].r_control_rate, AH_FALSE));
+	}
+
+	if (!(channel->c_channel_flags & IEEE80211_CHAN_TURBO)) {
+		rt = ar5k_ar5212_getRateTable(hal, HAL_MODE_11B);
+		for (i = 0; i < rt->rt_rate_count; i++) {
+			data = AR5K_AR5212_RATE_DUR(rt->rt_info[i].r_rate_code);
+			AR5K_REG_WRITE(data,
+			    ath_hal_computetxtime(hal, rt, 14,
+			    rt->rt_info[i].r_control_rate, AH_FALSE));
+			if (rt->rt_info[i].r_short_preamble) {
+				AR5K_REG_WRITE(data +
+				    (rt->rt_info[i].r_short_preamble << 2),
+				    ath_hal_computetxtime(hal, rt, 14,
+				    rt->rt_info[i].r_control_rate, AH_FALSE));
+			}
+		}
+	}
+
+	/*
 	 * Write initial RF gain settings
 	 */
-	phy = ar5112 == AH_TRUE ? AR5K_INI_PHY_5112 : AR5K_INI_PHY_5111;
+	phy = hal->ah_radio == AR5K_AR5112 ?
+	    AR5K_INI_PHY_5112 : AR5K_INI_PHY_5111;
 	if (ar5k_rfgain(hal, phy, freq) == AH_FALSE)
 		return (AH_FALSE);
 
@@ -582,7 +630,7 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 	    hal->ah_antenna[ee_mode][ant[1]]);
 
 	/* Commit values from EEPROM */
-	if (ar5112 == AH_FALSE)
+	if (hal->ah_radio == AR5K_AR5112)
 		AR5K_REG_WRITE_BITS(AR5K_AR5212_PHY_FC,
 		    AR5K_AR5212_PHY_FC_TX_CLIP, ee->ee_tx_clip);
 
@@ -620,7 +668,18 @@ ar5k_ar5212_reset(hal, op_mode, channel, change_channel, status)
 		    ee->ee_margin_tx_rx[ee_mode]);
 	}
 
-	/* Misc */
+	/*
+	 * Restore saved values
+	 */
+	AR5K_REG_WRITE(AR5K_AR5212_DCU_SEQNUM(0), s_seq);
+	AR5K_REG_WRITE(AR5K_AR5212_DEFAULT_ANTENNA, s_ant);
+	AR5K_REG_ENABLE_BITS(AR5K_AR5212_PCICFG, s_led[0]);
+	AR5K_REG_WRITE(AR5K_AR5212_GPIOCR, s_led[1]);
+	AR5K_REG_WRITE(AR5K_AR5212_GPIODO, s_led[2]);
+
+	/*
+	 * Misc
+	 */
 	bcopy(etherbroadcastaddr, mac, IEEE80211_ADDR_LEN);
 	ar5k_ar5212_writeAssocid(hal, mac, 0, 0);
 	ar5k_ar5212_setPCUConfig(hal);
@@ -2021,7 +2080,40 @@ HAL_RFGAIN
 ar5k_ar5212_getRfGain(hal)
 	struct ath_hal *hal;
 {
-	return (HAL_RFGAIN_INACTIVE);
+	u_int32_t data, type;
+
+	if (!hal->ah_gain.g_active)
+		return (HAL_RFGAIN_INACTIVE);
+
+	if (hal->ah_rf_gain != HAL_RFGAIN_READ_REQUESTED)
+		goto done;
+
+	data = AR5K_REG_READ(AR5K_AR5212_PHY_PAPD_PROBE);
+
+	if (!(data & AR5K_AR5212_PHY_PAPD_PROBE_TX_NEXT)) {
+		hal->ah_gain.g_current =
+		    data >> AR5K_AR5212_PHY_PAPD_PROBE_GAINF_S;
+		type = AR5K_REG_MS(data, AR5K_AR5212_PHY_PAPD_PROBE_TYPE);
+
+		if (type == AR5K_AR5212_PHY_PAPD_PROBE_TYPE_CCK)
+			hal->ah_gain.g_current += AR5K_GAIN_CCK_PROBE_CORR;
+
+		if (hal->ah_radio == AR5K_AR5112) {
+			ar5k_rfregs_gainf_corr(hal);
+			hal->ah_gain.g_current =
+			    hal->ah_gain.g_current >= hal->ah_gain.g_f_corr ?
+			    (hal->ah_gain.g_current - hal->ah_gain.g_f_corr) :
+			    0;
+		}
+
+		if (ar5k_rfregs_gain_readback(hal) &&
+		    AR5K_GAIN_CHECK_ADJUST(&hal->ah_gain) &&
+		    ar5k_rfregs_gain_adjust(hal))
+			hal->ah_rf_gain = HAL_RFGAIN_NEED_CHANGE;
+	}
+
+ done:
+	return (hal->ah_rf_gain);
 }
 
 HAL_BOOL
@@ -2685,7 +2777,8 @@ ar5k_ar5212_get_capabilities(hal)
 		hal->ah_capabilities.cap_range.range_5ghz_max = 6100;
 
 		/* Set supported modes */
-		hal->ah_capabilities.cap_mode = HAL_MODE_11A | HAL_MODE_TURBO;
+		hal->ah_capabilities.cap_mode =
+		    HAL_MODE_11A | HAL_MODE_TURBO | HAL_MODE_XR;
 	}
 
 	/* This chip will support 802.11b if the 2GHz radio is connected */

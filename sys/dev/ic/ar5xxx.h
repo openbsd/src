@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.12 2005/02/25 22:25:30 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.13 2005/03/18 20:46:32 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -93,6 +93,7 @@ typedef enum {
 	HAL_MODE_PUREG = 0x008,
 	HAL_MODE_11G = 0x010,
 	HAL_MODE_108G = 0x020,
+	HAL_MODE_XR = 0x040,
 	HAL_MODE_ALL = 0xfff
 } HAL_MODE;
 
@@ -338,7 +339,8 @@ typedef struct {
 #define r_valid			valid
 #define r_phy			phy
 #define r_rate_kbps		rateKbps
-#define r_short_preamble	short_preamble
+#define r_rate_code		rateCode
+#define r_short_preamble	shortPreamble
 #define r_dot11_rate		dot11Rate
 #define r_control_rate		controlRate
 
@@ -355,7 +357,10 @@ typedef struct {
 
 } HAL_RATE_TABLE;
 
-#define AR5K_RATES_11A { 8, { 0 }, {					\
+#define AR5K_RATES_11A { 8, {						\
+	255, 255, 255, 255, 255, 255, 255, 255, 6, 4, 2, 0,		\
+	7, 5, 3, 1, 255, 255, 255, 255, 255, 255, 255, 255,		\
+	255, 255, 255, 255, 255, 255, 255, 255 }, {			\
 	{ 1, IEEE80211_T_OFDM, 6000, 11, 0, 140, 0 },			\
 	{ 1, IEEE80211_T_OFDM, 9000, 15, 0, 18, 0 },			\
 	{ 1, IEEE80211_T_OFDM, 12000, 10, 0, 152, 2 },			\
@@ -366,14 +371,20 @@ typedef struct {
 	{ 1, IEEE80211_T_OFDM, 54000, 12, 0, 108, 4 } }			\
 }
 
-#define AR5K_RATES_11B { 4, { 0 }, {					\
+#define AR5K_RATES_11B { 4, {						\
+	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,	\
+	255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,	\
+	3, 2, 1, 0, 255, 255, 255, 255 }, {				\
 	{ 1, IEEE80211_T_CCK, 1000, 27, 0x00, 130, 0 },			\
 	{ 1, IEEE80211_T_CCK, 2000, 26, 0x00, 132, 1 },			\
 	{ 1, IEEE80211_T_CCK, 5500, 25, 0x00, 139, 1 },			\
 	{ 1, IEEE80211_T_CCK, 11000, 24, 0x00, 150, 1 } }		\
 }
 
-#define AR5K_RATES_11G { 12, { 0 }, {					\
+#define AR5K_RATES_11G { 12, {						\
+	255, 255, 255, 255, 255, 255, 255, 255, 10, 8, 6, 4,		\
+	11, 9, 7, 5, 255, 255, 255, 255, 255, 255, 255, 255,		\
+	3, 2, 1, 0, 255, 255, 255, 255 }, {				\
 	{ 1, IEEE80211_T_CCK, 1000, 27, 0x00, 130, 0 },			\
 	{ 1, IEEE80211_T_CCK, 2000, 26, 0x00, 132, 1 },			\
 	{ 1, IEEE80211_T_CCK, 5500, 25, 0x00, 139, 1 },			\
@@ -388,7 +399,10 @@ typedef struct {
 	{ 1, IEEE80211_T_OFDM, 54000, 12, 0, 108, 8 } }			\
 }
 
-#define AR5K_RATES_TURBO { 8, { 0 }, {					\
+#define AR5K_RATES_TURBO { 8, {						\
+	255, 255, 255, 255, 255, 255, 255, 255, 6, 4, 2, 0,		\
+	7, 5, 3, 1, 255, 255, 255, 255, 255, 255, 255, 255,		\
+	255, 255, 255, 255, 255, 255, 255, 255 }, {			\
 	{ 1, IEEE80211_T_TURBO, 6000, 11, 0, 140, 0 },			\
 	{ 1, IEEE80211_T_TURBO, 9000, 15, 0, 18, 0 },			\
 	{ 1, IEEE80211_T_TURBO, 12000, 10, 0, 152, 2 },			\
@@ -397,6 +411,24 @@ typedef struct {
 	{ 1, IEEE80211_T_TURBO, 36000, 13, 0, 72, 4 },			\
 	{ 1, IEEE80211_T_TURBO, 48000, 8, 0, 96, 4 },			\
 	{ 1, IEEE80211_T_TURBO, 54000, 12, 0, 108, 4 } }		\
+}
+
+#define AR5K_RATES_XR { 12, {						\
+	255, 3, 1, 255, 255, 255, 2, 0, 10, 8, 6, 4,			\
+	11, 9, 7, 5, 255, 255, 255, 255, 255, 255, 255, 255,		\
+	255, 255, 255, 255, 255, 255, 255, 255 }, {			\
+	{ 1, IEEE80211_T_XR, 500, 7, 0, 129, 0 },			\
+	{ 1, IEEE80211_T_XR, 1000, 2, 0, 139, 1 },			\
+	{ 1, IEEE80211_T_XR, 2000, 6, 0, 150, 2 },			\
+	{ 1, IEEE80211_T_XR, 3000, 1, 0, 150, 3 },			\
+	{ 1, IEEE80211_T_OFDM, 6000, 11, 0, 140, 4 },			\
+	{ 1, IEEE80211_T_OFDM, 9000, 15, 0, 18, 4 },			\
+	{ 1, IEEE80211_T_OFDM, 12000, 10, 0, 152, 6 },			\
+	{ 1, IEEE80211_T_OFDM, 18000, 14, 0, 36, 6 },			\
+	{ 1, IEEE80211_T_OFDM, 24000, 9, 0, 176, 8 },			\
+	{ 1, IEEE80211_T_OFDM, 36000, 13, 0, 72, 8 },			\
+	{ 1, IEEE80211_T_OFDM, 48000, 8, 0, 96, 8 },			\
+	{ 1, IEEE80211_T_OFDM, 54000, 12, 0, 108, 8 } }			\
 }
 
 typedef enum {
@@ -489,6 +521,85 @@ typedef enum ieee80211_state HAL_LED_STATE;
 #define HAL_LED_AUTH	IEEE80211_S_AUTH
 #define HAL_LED_ASSOC	IEEE80211_S_ASSOC
 #define HAL_LED_RUN	IEEE80211_S_RUN
+
+/*
+ * Gain settings
+ */
+
+#define	AR5K_GAIN_CRN_FIX_BITS_5111	4
+#define	AR5K_GAIN_CRN_FIX_BITS_5112	7
+#define	AR5K_GAIN_CRN_MAX_FIX_BITS	AR5K_GAIN_CRN_FIX_BITS_5112
+#define	AR5K_GAIN_DYN_ADJUST_HI_MARGIN	15
+#define	AR5K_GAIN_DYN_ADJUST_LO_MARGIN	20
+#define	AR5K_GAIN_CCK_PROBE_CORR	5
+#define	AR5K_GAIN_CCK_OFDM_GAIN_DELTA	15
+#define	AR5K_GAIN_STEP_COUNT		10
+#define AR5K_GAIN_PARAM_TX_CLIP		0
+#define AR5K_GAIN_PARAM_PD_90		1
+#define AR5K_GAIN_PARAM_PD_84		2
+#define AR5K_GAIN_PARAM_GAIN_SEL	3
+#define AR5K_GAIN_PARAM_MIX_ORN		0
+#define AR5K_GAIN_PARAM_PD_138		1
+#define AR5K_GAIN_PARAM_PD_137		2
+#define AR5K_GAIN_PARAM_PD_136		3
+#define AR5K_GAIN_PARAM_PD_132		4
+#define AR5K_GAIN_PARAM_PD_131		5
+#define AR5K_GAIN_PARAM_PD_130		6
+#define AR5K_GAIN_CHECK_ADJUST(_g)					\
+	((_g)->g_current <= (_g)->g_low || (_g)->g_current >= (_g)->g_high)
+
+struct ar5k_gain_opt_step {
+	int16_t				gos_param[AR5K_GAIN_CRN_MAX_FIX_BITS];
+	int32_t				gos_gain;
+};
+
+struct ar5k_gain_opt {
+	u_int32_t			go_default;
+	u_int32_t			go_steps_count;
+	const struct ar5k_gain_opt_step	go_step[AR5K_GAIN_STEP_COUNT];
+};
+
+struct ar5k_gain {
+	u_int32_t			g_step_idx;
+	u_int32_t			g_current;
+	u_int32_t			g_target;
+	u_int32_t			g_low;
+	u_int32_t			g_high;
+	u_int32_t			g_f_corr;
+	u_int32_t			g_active;
+	const struct ar5k_gain_opt_step	*g_step;
+};
+
+#define AR5K_AR5111_GAIN_OPT	{					\
+	4,								\
+	9,								\
+	{								\
+		{ { 4, 1, 1, 1 }, 6 },					\
+		{ { 4, 0, 1, 1 }, 4 },					\
+		{ { 3, 1, 1, 1 }, 3 },					\
+		{ { 4, 0, 0, 1 }, 1 },					\
+		{ { 4, 1, 1, 0 }, 0 },					\
+		{ { 4, 0, 1, 0 }, -2 },					\
+		{ { 3, 1, 1, 0 }, -3 },					\
+		{ { 4, 0, 0, 0 }, -4 },					\
+		{ { 2, 1, 1, 0 }, -6 }					\
+	}								\
+}
+
+#define AR5K_AR5112_GAIN_OPT	{					\
+	1,								\
+	8,								\
+	{								\
+		{ { 3, 0, 0, 0, 0, 0, 0 }, 6 },				\
+		{ { 2, 0, 0, 0, 0, 0, 0 }, 0 },				\
+		{ { 1, 0, 0, 0, 0, 0, 0 }, -3 },			\
+		{ { 0, 0, 0, 0, 0, 0, 0 }, -6 },			\
+		{ { 0, 1, 1, 0, 0, 0, 0 }, -8 },			\
+		{ { 0, 1, 1, 0, 1, 1, 0 }, -10 },			\
+		{ { 0, 1, 0, 1, 1, 1, 0 }, -13 },			\
+		{ { 0, 1, 0, 1, 1, 0, 1 }, -16 },			\
+	}								\
+}
 
 /*
  * Common ar5xxx EEPROM data registers
@@ -959,7 +1070,8 @@ struct ath_desc {
 	_t int (_a _n##_eeprom_write)(struct ath_hal *, u_int32_t offset, \
 	    u_int16_t data);
 
-#define AR5K_MAX_GPIO	10
+#define AR5K_MAX_GPIO		10
+#define AR5K_MAX_RF_BANKS	8
 
 struct ath_hal {
 	u_int32_t		ah_magic;
@@ -980,6 +1092,7 @@ struct ath_hal {
 	HAL_BOOL		ah_turbo;
 	HAL_BOOL		ah_calibration;
 	HAL_BOOL		ah_running;
+	HAL_RFGAIN		ah_rf_gain;
 
 #define ah_countryCode		ah_country_code
 
@@ -987,6 +1100,7 @@ struct ath_hal {
 	HAL_RATE_TABLE		ah_rt_11b;
 	HAL_RATE_TABLE		ah_rt_11g;
 	HAL_RATE_TABLE		ah_rt_turbo;
+	HAL_RATE_TABLE		ah_rt_xr;
 
 	u_int32_t		ah_mac_version;
 	u_int16_t		ah_mac_revision;
@@ -1029,7 +1143,10 @@ struct ath_hal {
 	ar5k_capabilities_t	ah_capabilities;
 
 	HAL_TXQ_INFO		ah_txq[HAL_NUM_TX_QUEUES];
-	u_int32_t	       ah_txq_interrupts;
+	u_int32_t		ah_txq_interrupts;
+
+	struct ar5k_gain	ah_gain;
+	u_int32_t		ah_offset[AR5K_MAX_RF_BANKS];
 
 	struct {
 		u_int16_t	txp_pcdac[AR5K_EEPROM_POWER_TABLE_SIZE];
@@ -1279,8 +1396,8 @@ struct ar5k_ini {
 #define AR5K_INI_PHY_5112	1
 #define AR5K_INI_PHY_511X	1
 
-#define AR5K_AR5111_INI_RF_MAX_BANKS	8
-#define AR5K_AR5112_INI_RF_MAX_BANKS	8
+#define AR5K_AR5111_INI_RF_MAX_BANKS    AR5K_MAX_RF_BANKS
+#define AR5K_AR5112_INI_RF_MAX_BANKS	AR5K_MAX_RF_BANKS
 
 struct ar5k_ini_rf {
 	u_int8_t	rf_bank;
@@ -1675,6 +1792,9 @@ HAL_BOOL		 ar5k_eeprom_regulation_domain(struct ath_hal *,
 
 HAL_BOOL		 ar5k_channel(struct ath_hal *, HAL_CHANNEL *);
 HAL_BOOL		 ar5k_rfregs(struct ath_hal *, HAL_CHANNEL *, u_int);
+u_int32_t		 ar5k_rfregs_gainf_corr(struct ath_hal *);
+HAL_BOOL		 ar5k_rfregs_gain_readback(struct ath_hal *);
+int32_t			 ar5k_rfregs_gain_adjust(struct ath_hal *);
 HAL_BOOL		 ar5k_rfgain(struct ath_hal *, u_int, u_int);
 
 __END_DECLS
