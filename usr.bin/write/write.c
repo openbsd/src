@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.9 1998/07/06 18:35:20 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.10 1999/02/21 08:28:16 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.9 1998/07/06 18:35:20 deraadt Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.10 1999/02/21 08:28:16 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -300,7 +300,7 @@ wr_fputs(s)
 	register char *s;
 {
 	register u_char c;
-	char visout[4], *s2;
+	char visout[5], *s2;
 
 #define	PUTC(c)	if (putchar(c) == EOF) goto err;
 

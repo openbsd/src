@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.9 1998/07/13 02:11:14 millert Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.10 1999/02/21 08:30:00 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -243,7 +243,7 @@ jkfprintf(tp, name, offset)
 	off_t offset;
 {
 	register char *cp, ch;
-	char visout[4], *s2;
+	char visout[5], *s2;
 	register FILE *fi;
 	register int linecnt, charcnt, inheader;
 	register struct passwd *p;
