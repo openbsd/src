@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.62 2003/05/12 01:25:31 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.63 2003/05/12 17:43:29 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -112,6 +112,8 @@ pfattach(int num)
 	pool_sethardlimit(&pf_state_pl, pf_pool_limits[PF_LIMIT_STATES].limit,
 	    NULL, 0);
 
+	RB_INIT(&tree_lan_ext);
+	RB_INIT(&tree_ext_gwy);
 	TAILQ_INIT(&pf_anchors);
 	pf_init_ruleset(&pf_main_ruleset);
 	TAILQ_INIT(&pf_altqs[0]);
