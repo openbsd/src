@@ -1,5 +1,5 @@
-/*	$OpenBSD: midway.c,v 1.13 1996/08/02 02:49:48 chuck Exp $	*/
-/*	(sync'd to midway.c 1.62)	*/
+/*	$OpenBSD: midway.c,v 1.14 1996/11/09 03:43:10 chuck Exp $	*/
+/*	(sync'd to midway.c 1.63)	*/
 
 /*
  *
@@ -123,7 +123,7 @@
 #if defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #undef vtophys
-#define	vtophys(va)	__alpha_bus_XXX_dmamap(sc->en_bc, (void *)(va))
+#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
 #endif
 #elif defined(__FreeBSD__)
 #include <machine/cpufunc.h>            /* for rdtsc proto for clock.h below */
@@ -241,7 +241,7 @@ u_int32_t r;
     printf("en_read out of range, r=0x%x\n", r);
     panic("en_read");
   }
-  return(bus_mem_read_4(sc->en_bc, sc->en_base, r));
+  return(bus_space_read_4(sc->en_memt, sc->en_base, r));
 }
 #define EN_READ(SC,R) ntohl(en_read(SC,R))
 #define EN_READDAT(SC,R) en_read(SC,R)
@@ -256,20 +256,20 @@ u_int32_t r, v;
     printf("en_write out of range, r=0x%x\n", r);
     panic("en_write");
   }
-  bus_mem_write_4(sc->en_bc, sc->en_base, r, v);
+  bus_space_write_4(sc->en_memt, sc->en_base, r, v);
 }
 #define EN_WRITE(SC,R,V) en_write(SC,R, htonl(V))
 #define EN_WRITEDAT(SC,R,V) en_write(SC,R,V)
 
 #else /* EN_DEBUG_RANGE */
 
-#define EN_READ(SC,R) ntohl(bus_mem_read_4((SC)->en_bc, (SC)->en_base, (R)))
+#define EN_READ(SC,R) ntohl(bus_space_read_4((SC)->en_memt, (SC)->en_base, (R)))
 #define EN_WRITE(SC,R,V) \
-	bus_mem_write_4((SC)->en_bc, (SC)->en_base, (R), htonl((V)))
+	bus_space_write_4((SC)->en_memt, (SC)->en_base, (R), htonl((V)))
 
-#define EN_READDAT(SC,R) bus_mem_read_4((SC)->en_bc, (SC)->en_base, (R))
+#define EN_READDAT(SC,R) bus_space_read_4((SC)->en_memt, (SC)->en_base, (R))
 #define EN_WRITEDAT(SC,R,V) \
-	bus_mem_write_4((SC)->en_bc, (SC)->en_base, (R), (V))
+	bus_space_write_4((SC)->en_memt, (SC)->en_base, (R), (V))
 
 #define EN_WRAPADD(START,STOP,CUR,VAL) { \
 	(CUR) = (CUR) + (VAL); \
@@ -581,7 +581,7 @@ done_probe:
 
   reg = EN_READ(sc, MID_RESID);
 
-  printf("%s: ATM midway v%d, board IDs %d.%d, %s%s%s, %dKB on-board RAM\n",
+  printf("%s: ATM midway v%d, board IDs %d.%d, %s%s%s, %ldKB on-board RAM\n",
 	sc->sc_dev.dv_xname, MID_VER(reg), MID_MID(reg), MID_DID(reg), 
 	(MID_IS_SABRE(reg)) ? "sabre controller, " : "",
 	(MID_IS_SUNI(reg)) ? "SUNI" : "Utopia",
@@ -1491,7 +1491,7 @@ struct mbuf **mm, *prev;
 
   EN_COUNT(sc->mfix);			/* count # of calls */
 #ifdef EN_DEBUG
-  printf("%s: mfix mbuf m_data=0x%x, m_len=%d\n", sc->sc_dev.dv_xname,
+  printf("%s: mfix mbuf m_data=%p, m_len=%d\n", sc->sc_dev.dv_xname,
 	m->m_data, m->m_len);
 #endif
 
@@ -1564,7 +1564,7 @@ int chan;
   struct mbuf *tmp;
   struct atm_pseudohdr *ap;
   struct en_launch launch;
-  int datalen, dtqneed, len, ncells;
+  int datalen = 0, dtqneed, len, ncells;
   u_int8_t *cp;
 
 #ifdef EN_DEBUG
@@ -1669,7 +1669,7 @@ again:
   if (launch.need > sc->txslot[chan].bfree) {
     EN_COUNT(sc->txoutspace);
 #ifdef EN_DEBUG
-    printf("%s: tx%d: out of trasmit space\n", sc->sc_dev.dv_xname, chan);
+    printf("%s: tx%d: out of transmit space\n", sc->sc_dev.dv_xname, chan);
 #endif
     return;		/* >>> exit here if out of obmem buffer space <<< */
   }
@@ -1685,7 +1685,7 @@ again:
     sc->need_dtqs = 1;
     EN_COUNT(sc->txdtqout);
 #ifdef EN_DEBUG
-    printf("%s: tx%d: out of trasmit DTQs\n", sc->sc_dev.dv_xname, chan);
+    printf("%s: tx%d: out of transmit DTQs\n", sc->sc_dev.dv_xname, chan);
 #endif
     return;		/* >>> exit here if out of dtqs <<< */
   }
@@ -1794,7 +1794,7 @@ struct en_launch *l;
 		need);
 #endif
 #ifdef EN_DEBUG
-  printf("%s: tx%d: launch mbuf 0x%x!   cur=0x%x[%d], need=%d, addtail=%d\n",
+  printf("%s: tx%d: launch mbuf %p!   cur=0x%x[%d], need=%d, addtail=%d\n",
 	sc->sc_dev.dv_xname, chan, l->t, cur, (cur-start)/4, need, addtail);
   count = EN_READ(sc, MIDX_PLACE(chan));
   printf("     HW: base_address=0x%x, size=%d, read=%d, descstart=%d\n",
@@ -2230,7 +2230,7 @@ void *arg;
 	  ATM_PH_VPI(&ah) = 0;
 	  ATM_PH_SETVCI(&ah, sc->rxslot[slot].atm_vci);
 #ifdef EN_DEBUG
-	  printf("%s: rx%d: rxvci%d: atm_input, mbuf 0x%x, len %d, hand 0x%x\n",
+	  printf("%s: rx%d: rxvci%d: atm_input, mbuf %p, len %d, hand %p\n",
 		sc->sc_dev.dv_xname, slot, sc->rxslot[slot].atm_vci, m,
 		EN_DQ_LEN(drq), sc->rxslot[slot].rxhand);
 #endif
@@ -2347,6 +2347,7 @@ struct en_softc *sc;
   u_int32_t start, stop, cnt, needalign;
   int slot, raw, aal5, llc, vci, fill, mlen, tlen, drqneed, need, needfill, end;
 
+  aal5 = 0;		/* Silence gcc */
 next_vci:
   if (sc->swsl_size == 0) {
 #ifdef EN_DEBUG
@@ -2469,7 +2470,7 @@ defer:					/* defer processing */
     sav = mtod(m, u_int32_t *);
     if (sav[0] != cur) {
 #ifdef EN_DEBUG
-      printf("%s: rx%d: q'ed mbuf 0x%x not ours\n", 
+      printf("%s: rx%d: q'ed mbuf %p not ours\n", 
 		sc->sc_dev.dv_xname, slot, m);
 #endif
       m = NULL;			/* wasn't ours */
@@ -2479,8 +2480,8 @@ defer:					/* defer processing */
       IF_DEQUEUE(&sc->rxslot[slot].q, m);
       drqneed = sav[1];
 #ifdef EN_DEBUG
-      printf("%s: rx%d: recovered q'ed mbuf 0x%x (drqneed=%d)\n", 
-	sc->sc_dev.dv_xname, slot, drqneed);
+      printf("%s: rx%d: recovered q'ed mbuf %p (drqneed=%d)\n", 
+	sc->sc_dev.dv_xname, slot, m, drqneed);
 #endif
     }
   }
@@ -2496,13 +2497,13 @@ defer:					/* defer processing */
 #endif
     }
 #ifdef EN_DEBUG
-    printf("%s: rx%d: allocate mbuf 0x%x, mlen=%d, drqneed=%d\n", 
+    printf("%s: rx%d: allocate mbuf %p, mlen=%d, drqneed=%d\n", 
 	sc->sc_dev.dv_xname, slot, m, mlen, drqneed);
 #endif
   }
 
 #ifdef EN_DEBUG
-  printf("%s: rx%d: VCI %d, mbuf_chain 0x%x, mlen %d, fill %d\n",
+  printf("%s: rx%d: VCI %d, mbuf_chain %p, mlen %d, fill %d\n",
 	sc->sc_dev.dv_xname, slot, vci, m, mlen, fill);
 #endif
 
@@ -2556,7 +2557,7 @@ defer:					/* defer processing */
     data = mtod(tmp, u_int32_t *);
 
 #ifdef EN_DEBUG
-    printf("%s: rx%d: load mbuf 0x%x, m_len=%d, m_data=0x%x, tlen=%d\n",
+    printf("%s: rx%d: load mbuf %p, m_len=%d, m_data=%p, tlen=%d\n",
 	sc->sc_dev.dv_xname, slot, tmp, tmp->m_len, tmp->m_data, tlen);
 #endif
     
