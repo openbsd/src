@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.155 2000/10/09 18:07:59 aaron Exp $
+#	$OpenBSD: rc,v 1.156 2000/10/18 21:28:54 mickey Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -502,7 +502,7 @@ if [ -f /sbin/kbd -a -f /etc/kbdtype ]; then
 fi
 
 # Kerberos runs ONLY on the Kerberos servers
-# Kadmin is runs only on the main server
+# Kadmin runs only on the main server
 if [ X${kerberos_server} = X"YES" ]; then
 	echo 'kerberos server'
 	/usr/libexec/kerberos >> /var/log/kerberos.log &
