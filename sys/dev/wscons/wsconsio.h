@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.20 2002/06/11 15:33:27 matthieu Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.21 2002/06/11 22:56:48 jason Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -428,6 +428,6 @@ struct wsmux_device_list {
 };
 #define WSMUX_LIST_DEVICES	_IOWR('W', 99, struct wsmux_device_list)
 
-#define WSDISPLAYIO_GPCIID	_IOR('W', 91, struct pci_sel)
+#define WSDISPLAYIO_GPCIID	_IOR('W', 91, struct pcisel)
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */
