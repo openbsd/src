@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.33 2001/11/13 00:10:56 art Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.34 2001/11/15 06:08:31 art Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -176,7 +176,8 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	int cg, request, error;
 	daddr_t bprev, bno;
 
-	*bpp = 0;
+	if (bpp != NULL)
+		*bpp = NULL;
 	fs = ip->i_fs;
 #ifdef DIAGNOSTIC
 	if ((u_int)osize > fs->fs_bsize || fragoff(fs, osize) != 0 ||
