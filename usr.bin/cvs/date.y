@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: date.y,v 1.4 2005/03/28 22:40:58 jfb Exp $	*/
+/*	$OpenBSD: date.y,v 1.5 2005/03/30 16:41:07 joris Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -494,7 +494,11 @@ yyerror(const char *fmt, ...)
 	va_list vap;
 
 	va_start(vap, fmt);
+#if defined(TEST)
+	vprintf(fmt, vap);
+#else
 	cvs_vlog(LP_ERR, fmt, vap);
+#endif
 	va_end(vap);
 
 	return (0);
