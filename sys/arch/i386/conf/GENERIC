@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.189 2000/06/10 23:50:34 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.190 2000/06/19 08:37:00 fgsch Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -184,6 +184,8 @@ scsibus* at isp?
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 aic*	at pcmcia? function ?		# PCMCIA based aic SCSI controllers
 scsibus* at aic?
+#esp*	at pcmcia? function ?		# PCMCIA based NCR 53C9X SCSI
+#scsibus* at esp?
 ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 scsibus* at ncr?
 adv*	at pci? dev ? function ?	# AdvanSys 1200A/B and ULTRA SCSI
