@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.30 2001/09/11 15:32:49 fgsch Exp $
+.\"	$OpenBSD: hier.7,v 1.31 2001/09/17 16:59:31 camield Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -350,7 +350,7 @@ Timezone configuration information (see
 .El
 .Pp
 .It Li src/
-BSD and/or local source files
+BSD and/or local source files.
 .Pp
 .Bl -tag -width "kerberosIV/" -compact
 .It Li bin/
@@ -430,10 +430,15 @@ Login/logout log (see
 .Pp
 .It Li mail/
 User mailbox files.
+.It Li named/
+.Xr named 8
+configuration files.
+.Pp
+.Bl -tag -width Fl -compact
 .It Li namedb/
-.Xr named
-configuration files (see
-.Xr named 8 ) .
+Zone files.
+.El
+.Pp
 .It Li preserve/
 Temporary home of files preserved after an accidental death
 of an editor (see
