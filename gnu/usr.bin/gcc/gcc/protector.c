@@ -2307,6 +2307,8 @@ push_frame_of_insns (insn, push_size, boundary)
 		/* Copy the various flags, and other information.  */
 		memcpy (insn, first, sizeof (struct rtx_def) - sizeof (rtunion));
 		PATTERN (insn) = PATTERN (first);
+		INSN_CODE (insn) = INSN_CODE (first);
+		LOG_LINKS (insn) = LOG_LINKS (first);
 		REG_NOTES (insn) = REG_NOTES (first);
 
 		/* then remove the first insn of splitted insns.  */
