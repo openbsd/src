@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.121 2002/07/16 15:46:55 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.122 2002/07/17 08:32:20 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -213,7 +213,7 @@ typedef struct {
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL IPV6ADDR ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
-%token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL
+%token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL SELF
 %token	FRAGNORM FRAGDROP FRAGCROP
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE
 %token	<v.string> STRING
@@ -657,6 +657,13 @@ address		: '(' STRING ')'		{
 			$$->addr.addr_dyn = (struct pf_addr_dyn *)1;
 			strncpy($$->addr.addr.pfa.ifname, $2,
 			    sizeof($$->addr.addr.pfa.ifname));
+		}
+		| SELF				{
+			struct node_host *h = NULL;
+				if ((h = ifa_lookup("all")) == NULL)
+					YYERROR;
+				else
+					$$ = h;
 		}
 		| STRING			{
 			if (ifa_exists($1)) {
@@ -2176,6 +2183,7 @@ lookup(char *s)
 		{ "return-rst",	RETURNRST},
 		{ "route-to",	ROUTETO},
 		{ "scrub",	SCRUB},
+		{ "self",	SELF},
 		{ "set",	SET},
 		{ "state",	STATE},
 		{ "timeout",	TIMEOUT},
@@ -2659,11 +2667,16 @@ ifa_lookup(char *ifa_name)
 {
 	struct node_host *h = NULL, *n = NULL;
 	struct ifaddrs *ifa;
+	int return_all = 0;
+
+	if (strncmp(ifa_name, "all", IFNAMSIZ) == 0)
+		return_all = 1;
 
 	if (!ifatab)
 		ifa_load();
 	for (ifa = *ifatab; ifa; ifa = ifa->ifa_next) {
-		if (strncmp(ifa->ifa_name, ifa_name, IFNAMSIZ) == 0) {
+		if (strncmp(ifa->ifa_name, ifa_name, IFNAMSIZ) == 0 || 
+		    return_all) {
 			if (!(ifa->ifa_addr->sa_family == AF_INET ||
 			    ifa->ifa_addr->sa_family == AF_INET6))
 				continue;
