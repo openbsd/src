@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.30 1999/02/26 04:42:14 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.31 1999/03/21 03:30:01 weingart Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 #undef DEBUG
@@ -324,6 +324,11 @@ trap(frame)
 #endif
 		sv.sival_int = rcr2();
 		trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
+		goto out;
+
+	case T_TSSFLT|T_USER:
+		sv.sival_int = frame.tf_eip;
+		trapsignal(p, SIGBUS, vftype, BUS_OBJERR, sv);
 		goto out;
 
 	case T_SEGNPFLT|T_USER:
