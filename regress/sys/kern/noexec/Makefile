@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.6 2003/07/31 15:57:29 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.7 2004/02/23 08:06:56 deraadt Exp $
 
 .if ${MACHINE} == "sparc64" || ${MACHINE} == "sparc" || \
-    ${MACHINE} == "alpha" || ${MACHINE} == "macppc" || \
-    ${MACHINE} == "mvmeppc" || ${MACHINE} == "i386" || \
+    ${MACHINE} == "alpha" || ${MACHINE_ARCH} == "powerpc" || \
+    ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "i386" || \
     ${MACHINE} == "hppa"
 
 PROG=	noexec
