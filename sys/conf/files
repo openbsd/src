@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.172 2000/06/20 09:46:11 fgsch Exp $
+#	$OpenBSD: files,v 1.173 2000/06/25 08:50:22 espie Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -557,7 +557,7 @@ file netinet/ip_ah.c			inet & ipsec
 file crypto/rijndael.c			(inet & ipsec) | crypto | uvm_swap_encrypt
 file crypto/rmd160.c			(inet & ipsec) | crypto
 file crypto/sha1.c			(inet & ipsec) | crypto
-file crypto/blf.c			(inet & ipsec) | crypto | tcfs
+file crypto/blf.c			(inet & ipsec) | crypto | tcfs | vnd
 file crypto/cast.c			(inet & ipsec) | crypto
 file crypto/skipjack.c			(inet & ipsec) | crypto
 file crypto/ecb_enc.c			(inet & ipsec) | crypto | tcfs
