@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.3 1996/04/22 01:26:49 deraadt Exp $
+.\"	$OpenBSD: tty.4,v 1.4 1996/08/29 12:51:24 deraadt Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -67,11 +67,34 @@ for example.)  Even in these cases the details of how the terminal
 file was opened and set up is already handled by special software
 in the system.
 Thus, users do not normally need to worry about the details of
-how these lines are opened or used.  Also, these lines are often used
-for dialing out of a system (through an out-calling modem), but again
-the system provides programs that hide the details of accessing
-these terminal special files (see
-.Xr tip 2 .)
+how these lines are opened or used.
+.Pp
+For hardware terminal ports, dial-out is supported through matching
+device nodes called calling units.  For instance, the terminal called
+``/dev/tty03'' would have a matching calling unit called ``/dev/cua03''.
+These two devices are normally differentiated by creating the calling
+unit device node with a minor number 128 greater than the dial-in
+device device node.  Whereas the dial-in device (the ``tty'') normally
+requires a hardware signal to indicate to the system that it is active,
+the dial-out device (``cua'') does not, and hence can communicate unimpeded
+with a device such as a modem.  This means that a process like
+.Xr getty 8
+will wait on a dial-in device until a connection is established.
+Meanwhile, a dial-out connection can be established on the dial-out
+device (for the very same hardware terminal port) without disturbing
+anything else on the system.  The
+.Xr getty 8
+process does not even notice that anything is happening on the terminal
+port.  If a connecting call comes in after the dial-out connection has
+finished, the
+.Xr getty 8
+process will deal with it properly, without having noticed the
+intervening dial-out action.
+For more information on dial-out, see
+.Xr tip 1 ,
+.Xr cu 1 ,
+and
+.Xr uucp 1 .
 .Pp
 When an interactive user logs in, the system prepares the line to
 behave in a certain way (called a
@@ -421,3 +444,5 @@ above in the integer pointed to by
 .Xr pty 4 ,
 .Xr stty 1 ,
 .Xr termios 4
+.Sh HISTORY
+The cua support is inspired by similar support in SunOS.
