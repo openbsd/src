@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.75 2001/11/23 11:20:47 jakob Exp $
+	$OpenBSD: pcmciadevs,v 1.76 2001/11/27 17:54:43 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -134,6 +134,10 @@ product BAY STACK_660		0x0807 BayStack 660
 
 /* BreezeCOM */
 product BREEZECOM BREEZENET	0x0102 BreezeCOM BreezeNET
+
+/* BUFFALO Products */
+product BUFFALO WLI_PCM_S11	0x0305 BUFFALO AirStation 11Mbps WLAN
+product BUFFALO WLI_CF_S11G	0x030b BUFFALO AirStation 11Mbps CF WLAN
 
 /* Contec C-NET(PC) */
 product CONTEC CNETPC		0x0000 Contec C-NET(PC)C
