@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.290 2000/07/26 04:13:15 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.291 2000/07/26 22:29:50 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2493,6 +2493,162 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Win Modem V.90",
 	},
 	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0441,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0442,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0443,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0444,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0445,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0446,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0447,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0448,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0449,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044A,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044B,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044C,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044D,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044E,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0450,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0451,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0452,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0453,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0454,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0455,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0456,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0457,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0458,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0459,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_045A,
+	    0,
+	    "AT&T/Lucent",
+	    "LTMODEM",
+	},
+	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_VENUSMODEM,
+	    0,
+	    "AT&T/Lucent",
+	    "Venus Modem",
+	},
+	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC,
 	    0,
 	    "AT&T/Lucent",
@@ -3443,7 +3599,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ROCKWELL, PCI_PRODUCT_ROCKWELL_RS56SP_PCI11P1,
 	    0,
-	    "Rockwell Semiconductor Systems",
+	    "Rockwell",
 	    "RS56/SP-PCI11P1 Modem",
 	},
 	{
@@ -7781,7 +7937,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_ROCKWELL, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Rockwell Semiconductor Systems",
+	    "Rockwell",
 	    NULL,
 	},
 	{
