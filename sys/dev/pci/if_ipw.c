@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.16 2004/10/27 21:24:49 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.17 2004/10/28 17:05:41 jcs Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -215,7 +215,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 		printf("\n");
 		return;
 	}
-	printf(": %s\n", intrstr);
+	printf(": %s", intrstr);
 
 	if (ipw_reset(sc) != 0) {
 		printf(": could not reset adapter\n");
@@ -240,6 +240,8 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	val = ipw_read_prom_word(sc, IPW_EEPROM_MAC + 2);
 	ic->ic_myaddr[4] = val >> 8;
 	ic->ic_myaddr[5] = val & 0xff;
+
+	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
 	/* set supported .11b rates */
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ipw_rateset_11b;
