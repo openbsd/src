@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.21 2002/07/11 21:23:29 deraadt Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.22 2002/09/06 21:16:34 deraadt Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.21 2002/07/11 21:23:29 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.22 2002/09/06 21:16:34 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,7 @@ main(argc, argv)
 	 */
 	for (;;) {
 		struct sockaddr_un un2;
-		int len2 = sizeof(un2);
+		socklen_t salen = sizeof(un2);
 		int so2;
 		pid_t pid;
 		int rc;
@@ -258,7 +258,7 @@ main(argc, argv)
 		}
 		if (rc == 0)
 			break;
-		so2 = accept(so, (struct sockaddr *) &un2, &len2);
+		so2 = accept(so, (struct sockaddr *) &un2, &salen);
 		if (so2 < 0) {
 			/*
 			 * The unmount function does a shutdown on the socket

@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.12 2002/09/06 18:15:55 deraadt Exp $	*/
+/*	$OpenBSD: input.c,v 1.13 2002/09/06 21:12:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: input.c,v 1.12 2002/09/06 18:15:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: input.c,v 1.13 2002/09/06 21:12:52 deraadt Exp $";
 #endif
 
 #include "defs.h"
@@ -53,7 +53,8 @@ read_rip(int sock,
 	 struct interface *ifp)
 {
 	struct sockaddr_in from;
-	int fromlen, cc;
+	socklen_t fromlen;
+	int cc;
 	union pkt_buf inbuf;
 
 
@@ -67,7 +68,7 @@ read_rip(int sock,
 			break;
 		}
 		if (fromlen != sizeof(struct sockaddr_in))
-			logbad(1,"impossible recvfrom(rip) fromlen=%d",
+			logbad(1,"impossible recvfrom(rip) fromlen=%u",
 			       fromlen);
 
 		input(&from, ifp, &inbuf.rip, cc);
