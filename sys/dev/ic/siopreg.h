@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopreg.h,v 1.3 2001/04/15 06:01:29 krw Exp $ */
+/*	$OpenBSD: siopreg.h,v 1.4 2001/06/25 23:14:40 krw Exp $ */
 /*	$NetBSD: siopreg.h,v 1.7 2000/10/06 16:35:13 bouyer Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ static const struct period_factor period_factor[] __attribute__((__unused__)) = 
 #define SXFER_MO_SHIFT  0
 #define SXFER_MO_MASK	0x1f
 
-#define SIOP_SDID	0x06 /* SCSI destiation ID, R/W */
+#define SIOP_SDID	0x06 /* SCSI destination ID, R/W */
 #define SDID_ENCID_SHIFT 0
 #define SDID_ENCID_MASK	0x07
 

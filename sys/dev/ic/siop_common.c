@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.7 2001/06/24 18:28:10 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.8 2001/06/25 23:14:40 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.12 2001/02/11 18:04:50 bouyer Exp $	*/
 
 /*
@@ -155,7 +155,7 @@ siop_setuptables(siop_cmd)
 			siop_sdtr_msg(siop_cmd, 1, sc->min_st_sync, sc->maxoff);
 		} else {
 			sc->targets[target]->status = TARST_OK;
-			siop_print_info(xs->sc_link);
+			siop_print_info(sc, target);
 		}
 	} else if (sc->targets[target]->status == TARST_OK &&
 	    (targ_flags & TARF_TAG) &&
@@ -251,7 +251,7 @@ siop_ppr_neg(siop_cmd)
 	    (siop_target->id & 0xff));
 
 	siop_target->status = TARST_OK;
-	siop_print_info(siop_cmd->xs->sc_link);
+	siop_print_info(sc, target);
 	
 	return (SIOP_NEG_ACK);
 }
@@ -301,7 +301,7 @@ siop_wdtr_neg(siop_cmd)
 			printf("%s: rejecting invalid wide negotiation from "
 			    "target %d (%d)\n", sc->sc_dev.dv_xname, target,
 			    tables->msg_in[3]);
-			siop_print_info(siop_cmd->xs->sc_link);
+			siop_print_info(sc, target);
 			tables->t_msgout.count= htole32(1);
 			tables->msg_out[0] = MSG_MESSAGE_REJECT;
 			return SIOP_NEG_MSGOUT;
@@ -317,7 +317,7 @@ siop_wdtr_neg(siop_cmd)
 			return SIOP_NEG_MSGOUT;
 		} else {
 			siop_target->status = TARST_OK;
-			siop_print_info(siop_cmd->xs->sc_link);
+			siop_print_info(sc, target);
 			return SIOP_NEG_ACK;
 		}
 	} else {
@@ -338,7 +338,7 @@ siop_wdtr_neg(siop_cmd)
 		 */
 		if (siop_target->status != TARST_PROBING) {
 			siop_target->status = TARST_OK;
-			siop_print_info(siop_cmd->xs->sc_link);
+			siop_print_info(sc, target);
 		}
 		siop_wdtr_msg(siop_cmd, 0, (siop_target->flags & TARF_ISWIDE) ?
 		    MSG_EXT_WDTR_BUS_16_BIT : MSG_EXT_WDTR_BUS_8_BIT);
@@ -428,7 +428,7 @@ end:
 
 	if (siop_target->status != TARST_PROBING) {
 		siop_target->status = TARST_OK;
-		siop_print_info(siop_cmd->xs->sc_link);
+		siop_print_info(sc, target);
 	}
 
 	if (send_msgout) {
@@ -682,21 +682,18 @@ siop_resetbus(sc)
  *		    target->status is set to TARST_OK.
  */
 void
-siop_print_info(sc_link)
-	struct scsi_link *sc_link;
+siop_print_info(sc, target)
+        struct siop_softc *sc;
+        int target;
 {
 	struct siop_target *siop_target;
-	struct siop_softc *sc;
 	u_int8_t scf, offset;
-	int scf_index, factors, target, i;
-
-	sc = (struct siop_softc *)sc_link->adapter_softc;
-	target = sc_link->target;
+	int scf_index, factors, i;
 
 	siop_target = sc->targets[target];
 	
-	printf("%s: negotiated %s%s%s%s%d bit ",
-	    ((struct device *)sc_link->device_softc)->dv_xname,
+	printf("%s: target %d now using %s%s%s%s%d bit ",
+            sc->sc_dev.dv_xname, target,
 	    (siop_target->flags & TARF_TAG) ? "tagged " : "",
 	    (siop_target->flags & TARF_ISDT) ? "DT " : "",
 	    (siop_target->flags & TARF_ISQAS) ? "QAS " : "",
