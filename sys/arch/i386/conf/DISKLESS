@@ -1,4 +1,4 @@
-#	$OpenBSD: DISKLESS,v 1.31 2001/04/14 18:45:32 mjacob Exp $
+#	$OpenBSD: DISKLESS,v 1.32 2001/05/01 23:30:52 todd Exp $
 #	$NetBSD: DISKLESS,v 1.26 1996/05/20 18:17:16 mrg Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
@@ -68,10 +68,10 @@ option		COMPAT_BSDOS	# binary compatibility with BSD/OS
 option		LKM		# loadable kernel modules
 
 #option		FFS		# UFS
+option		FFS_SOFTUPDATES	# Soft updates
 #option		QUOTA		# UFS quotas
 option		MFS		# memory file system
 #option		EXT2FS		# Second Extended Filesystem
-#option		LFS		# log-structured file system
 #option		XFS		# xfs filesystem
 
 option		TCP_SACK	# Selective Acknowledgements for TCP
@@ -98,14 +98,18 @@ option		INET6		# IPv6 (needs INET)
 option		PULLDOWN_TEST	# use m_pulldown for IPv6 packet parsing
 option		IPSEC		# IPsec
 #option		KEY		# PF_KEY (implied by IPSEC)
-option		NS		# XNS
-option		ISO,TPIP	# OSI
-option		EON		# OSI tunneling over IP
-option		CCITT,LLC,HDLC	# X.25
+#option		NS		# XNS
+#option		IPX		# IPX+SPX
+#option		IPXIP		# IPX tunneling over IP
+#option		NETATALK	# AppleTalk
+#option		NSIP		# XNS tunneling over IP
+#option		ISO,TPIP	# OSI
+#option		EON		# OSI tunneling over IP
+#option		CCITT,LLC,HDLC	# X.25
 option		IPFILTER	# IP packet filter for security
 option		IPFILTER_LOG	# use /dev/ipl to log IPF
-#option		PPP_BSDCOMP	# PPP BSD compression
-#option		PPP_DEFLATE
+option		PPP_BSDCOMP	# PPP BSD compression
+option		PPP_DEFLATE
 #option		MROUTING	# Multicast router
 
 config		bsd	root on nfs swap on nfs
@@ -140,6 +144,7 @@ pcic2	at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000
 
 # PCI PCMCIA controllers
 pcic*	at pci? dev? function ?
+pcic*	at isapnp?
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
@@ -304,36 +309,38 @@ wsmouse*	at mms? mux 0
 #scsibus* at iha?
 #isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 #scsibus* at isp?
+#ami*	at pci? dev ? function ?	# AMI MegaRAID controllers
+#scsibus* at ami?
 
-#sd*	at scsibus? target ? lun ?	# SCSI disk drives
-#st*	at scsibus? target ? lun ?	# SCSI tape drives
-#cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
-#ch*	at scsibus? target ? lun ?	# SCSI autochangers
-#ss*	at scsibus? target ? lun ?	# SCSI scanners
-#uk*	at scsibus? target ? lun ?	# unknown SCSI
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch*	at scsibus? target ? lun ?	# SCSI autochangers
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# unknown SCSI
 
-#fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
-#fdc1	at isa? port 0x370 irq ? drq ?
-#fd*	at fdc? drive ?
+fdc0	at isa? disable port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+fdc1	at isa? disable port 0x370 irq ? drq ?
+fd*	at fdc? drive ?
 
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
 # IDE controllers
-#pciide* at pci ? dev ? function ? flags 0x0000
+pciide* at pci ? disable dev ? function ? flags 0x0000
 
-#wdc0	at isa? port 0x1f0 irq 14 flags 0x00
-#wdc1	at isa? port 0x170 irq 15 flags 0x00
-#wdc*	at pcmcia? function ?
-#wdc*	at isapnp?
+wdc0	at isa? disable port 0x1f0 irq 14 flags 0x00
+wdc1	at isa? disable port 0x170 irq 15 flags 0x00
+wdc*	at pcmcia? disable function ?
+wdc*	at isapnp? disable
 
 # IDE hard drives
-#wd*	at wdc? channel ? drive ? flags 0x0000
-#wd*	at pciide? channel ? drive ? flags 0x0000
+wd*	at wdc? channel ? drive ? flags 0x0000
+wd*	at pciide? channel ? drive ? flags 0x0000
 
 # ATAPI<->SCSI
-#atapiscsi* at wdc? channel ?
-#atapiscsi* at pciide? channel ?
-#scsibus* at atapiscsi?
+atapiscsi* at wdc? channel ?
+atapiscsi* at pciide? channel ?
+scsibus* at atapiscsi?
 
 #wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
@@ -403,6 +410,7 @@ an*	at pcmcia? function ?			# Aironet IEEE 802.11DS
 ray*	at pcmcia? function ?			# Raylink Aviator2.4/Pro 802.11FH
 
 # Media Independent Interface (mii) drivers
+bmtphy*	at mii? phy ?				# Broadcom 10/100 PHYs
 eephy*	at mii? phy ?				# Marvell PHYs for Intel GigE
 exphy*	at mii? phy ?				# 3Com internal PHYs
 inphy*	at mii? phy ?				# Intel 82555 PHYs
@@ -410,6 +418,7 @@ iophy*	at mii? phy ?				# Intel 82553 PHYs
 icsphy*	at mii? phy ?				# ICS 1890 PHYs
 lxtphy*	at mii? phy ?				# Level1 LXT970 PHYs
 nsphy*	at mii? phy ?				# NS and compatible PHYs
+nsphyter*	at mii? phy ?			# NS and compatible PHYs
 qsphy*	at mii? phy ?				# Quality Semi QS6612 PHYs
 sqphy*	at mii? phy ?				# Seeq 8x220 PHYs
 rlphy* at mii? phy ?				# RealTek 8139 internal PHYs
@@ -434,6 +443,7 @@ clcs*	at pci? dev ? function ?		# CS4280 CrystalClear audio
 clct*	at pci? dev ? function ?		# CS4281 CrystalClear audio
 fms*	at pci? dev ? function ?		# Forte Media FM801
 auvia*	at pci? dev ? function ?		# VIA VT82C686A
+yds*	at pci? dev ? function ?		# Yamaha YMF Audio
 maestro* at pci? dev ? function ?		# ESS Maestro PCI
 sb0	at isa? port 0x220 irq 5 drq 1		# SoundBlaster
 sb*	at isapnp?
@@ -450,6 +460,7 @@ mpu*	at isapnp?
 opl*	at eso?
 opl*	at sb?
 opl*	at ess?
+opl*	at yds?
 
 # MIDI support
 midi*	at pcppi?		# MIDI interface to the PC speaker
@@ -481,6 +492,7 @@ audio*	at fms?
 audio*	at auvia?
 audio*	at uaudio?
 audio*	at maestro?
+audio*	at yds?
 
 bktr0	at pci? dev ? function ?
 
