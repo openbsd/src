@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: md5.c,v 1.5 1997/07/12 21:09:02 millert Exp $
+ * $OpenBSD: md5.c,v 1.6 1997/07/17 05:45:01 millert Exp $
  *
  * Derived from:
  *	MDDRIVER.C - test driver for MD2, MD4 and MD5
@@ -24,9 +24,9 @@
 #include <time.h>
 #include <string.h>
 
-#include <md4.h>
 #include <md5.h>
 #include <sha1.h>
+#include <rmd160.h>
 
 /*
  * Length of test block, number of test blocks.
@@ -73,7 +73,16 @@ main(argc, argv)
 	void   *context;
 
 	/* What were we called as?  Default to md5 */
-	if (strcmp(__progname, "sha1") == 0) {
+	if (strcmp(__progname, "rmd160") == 0) {
+		MDType = "RMD160";
+		MDInit = RMD160Init;
+		MDUpdate = RMD160Update;
+		MDEnd = RMD160End;
+		MDFile = RMD160File;
+		MDData = RMD160Data;
+		if ((context = malloc(sizeof(RMD160_CTX))) == NULL)
+			err(1, "malloc");
+	} else if (strcmp(__progname, "sha1") == 0) {
 		MDType = "SHA1";
 		MDInit = SHA1Init;
 		MDUpdate = SHA1Update;
@@ -81,15 +90,6 @@ main(argc, argv)
 		MDFile = SHA1File;
 		MDData = SHA1Data;
 		if ((context = malloc(sizeof(SHA1_CTX))) == NULL)
-			err(1, "malloc");
-	} else if (strcmp(__progname, "md4") == 0) {
-		MDType = "MD4";
-		MDInit = MD4Init;
-		MDUpdate = MD4Update;
-		MDEnd = MD4End;
-		MDFile = MD4File;
-		MDData = MD4Data;
-		if ((context = malloc(sizeof(MD4_CTX))) == NULL)
 			err(1, "malloc");
 	} else {
 		MDType = "MD5";

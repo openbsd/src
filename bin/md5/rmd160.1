@@ -1,0 +1,60 @@
+.\"	$OpenBSD: rmd160.1,v 1.1 1997/07/17 05:45:02 millert Exp $
+.\"
+.Dd July 16, 1997
+.Dt RMD160 1
+.Os
+.Sh NAME
+.Nm rmd160
+.Nd "calculate a message-digest fingerprint (checksum) for a file"
+.Sh SYNOPSIS
+.Nm
+.Op Fl p
+.Op Fl t
+.Op Fl x
+.Op Fl s Ns Ar string
+.Op Ar filename(s)
+.Sh DESCRIPTION
+.Nm
+takes as input a message of arbitrary length and produces
+as output a 160-bit "fingerprint" or "message digest" of the input.
+It is conjectured that it is computationally infeasible to produce
+two messages having the same message digest, or to produce any
+message having a given prespecified target message digest.
+The
+.Em RMD-160
+algorithm is intended for digital signature applications, where a
+large file must be "compressed" in a secure manner before being
+encrypted with a private (secret) key under a public-key cryptosystem
+such as
+.Em RSA .
+.Sh OPTIONS
+The following four options may be used in any combination, except
+that
+.Ar filename(s)
+must be the last objects on the command line.
+.Bl -tag -width "filename(s)"
+.It Fl s Ns Ar string
+prints a checksum of the given string.
+.It Fl p
+echos stdin to stdout and appends the
+.Em RMD-160
+sum to stdout.
+.It Fl t
+runs a built-in time trial.
+.It Fl x
+runs a built-in test script.
+.It Ar filename(s)
+prints the checksum for each file.  If no files are specified,
+standard input is used.
+.El
+.Sh SEE ALSO
+.Xr cksum 1 ,
+.Xr md5 1
+.Xr rmd160 1
+.Pp
+RMD-160 is part of the ISO draft standard
+.St "ISO/IEC DIS 10118-3"
+on dedicated hash functions.
+.Sh ACKNOWLEDGEMENTS
+This program is placed in the public domain for free general use by
+RSA Data Security.
