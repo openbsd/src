@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.32 1997/03/05 09:13:12 niklas Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.33 1997/03/05 10:33:10 niklas Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -505,12 +505,6 @@ smm
 
 # ./usr/share/doc/smm/01.setup
 01.setup
-
-# ./usr/share/doc/smm/01.setup/vax
-vax
-# ./usr/share/doc/smm/01.setup/vax
-..
-
 # ./usr/share/doc/smm/01.setup
 ..
 
