@@ -1,0 +1,8 @@
+#	$Id: list,v 1.1 1996/10/10 10:06:25 deraadt Exp $
+
+# and the upgrade tools
+COPY	dot.profile			.profile
+COPY	dot.upgrutils			.upgrutils
+COPY	upgrade.sh			upgrade
+COPY	dot.hdprofile			tmp/.hdprofile
+SPECIAL	chmod 755 upgrade

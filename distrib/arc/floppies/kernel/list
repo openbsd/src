@@ -1,0 +1,4 @@
+#	$Id: list,v 1.1 1996/10/10 10:06:15 deraadt Exp $
+
+# copy the kernel
+COPY	${OBJDIR}/bsd	bsd
