@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.41 2002/08/04 00:48:34 deraadt Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.42 2003/05/13 01:41:48 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.41 2002/08/04 00:48:34 deraadt Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.42 2003/05/13 01:41:48 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,8 +59,8 @@ static char *rcsid = "$OpenBSD: fstat.c,v 1.41 2002/08/04 00:48:34 deraadt Exp $
 #include <sys/unpcb.h>
 #include <sys/sysctl.h>
 #include <sys/filedesc.h>
-#include <sys/mount.h>
 #define	_KERNEL
+#include <sys/mount.h>
 #include <crypto/cryptodev.h>
 #include <dev/systrace.h>
 #include <sys/file.h>
