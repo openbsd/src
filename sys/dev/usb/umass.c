@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.4 2000/04/08 20:03:34 aaron Exp $ */
+/*	$OpenBSD: umass.c,v 1.5 2000/04/08 20:28:07 csapuntz Exp $ */
 /*	$NetBSD: umass.c,v 1.31 2000/04/03 12:31:34 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -3347,6 +3347,15 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 	case STATUS_CMD_OK:
 	case STATUS_CMD_UNKNOWN:
 		/* getting sense data succeeded */
+		if ((xs->cmd->opcode == INQUIRY)
+		    && (xs->resid < xs->datalen)) {
+			/* Some drivers return SENSE errors even after INQUIRY
+			 * The upper layer doesn't like that.
+			 */
+			xs->error = XS_NOERROR;
+			break;
+		}
+
 		bytes_received = sizeof(xs->sense) - residue;
 
 		if (bytes_received < 8 || 
