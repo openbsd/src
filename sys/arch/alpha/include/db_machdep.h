@@ -1,86 +1,82 @@
-/*	$OpenBSD: db_machdep.h,v 1.5 1997/07/06 16:20:23 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.2 1996/07/11 05:31:31 cgd Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.6 1997/07/19 20:50:50 niklas Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
- * All rights reserved.
+ * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
  *
- * Author: Chris G. Demetriou
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Niklas Hallqvist.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * Permission to use, copy, modify and distribute this software and
- * its documentation is hereby granted, provided that both the copyright
- * notice and this permission notice appear in all copies of the
- * software, derivative works or modified versions, and any portions
- * thereof, and that both notices appear in supporting documentation.
- *
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
- * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- *
- * Carnegie Mellon requests users of this software to return to
- *
- *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
- *  School of Computer Science
- *  Carnegie Mellon University
- *  Pittsburgh PA 15213-3890
- *
- * any improvements or extensions that they make and grant Carnegie the
- * rights to redistribute these changes.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #ifndef	_ALPHA_DB_MACHDEP_H_
 #define	_ALPHA_DB_MACHDEP_H_
 
-/*
- * Machine-dependent defines for new kernel debugger.
- */
+struct opcode {
+	enum opc_fmt { OPC_PAL, OPC_RES, OPC_MEM, OPC_OP, OPC_BR } opc_fmt;
+	char *opc_name;
+	int opc_print;
+};
+extern struct opcode opcode[];
 
-#include <sys/param.h>
-#include <vm/vm.h>
-#include <machine/frame.h>
-
-typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
-typedef	long		db_expr_t;	/* expression - signed */
-
+/* types the generic ddb module needs */
+typedef	vm_offset_t db_addr_t;
+typedef	long db_expr_t;
 typedef struct trapframe db_regs_t;
-db_regs_t		ddb_regs;	/* register state */
+
+db_regs_t		ddb_regs;
 #define	DDB_REGS	(&ddb_regs)
 
 #define	PC_REGS(regs)	((db_addr_t)(regs)->tf_regs[FRAME_PC])
 
-#define	BKPT_INST	0x00000080	/* breakpoint instruction */
-#define	BKPT_SIZE	(4)		/* size of breakpoint inst */
-#define	BKPT_SET(inst)	(BKPT_INST)
+/* Breakpoint related definitions */
+#define	BKPT_INST	0x00000080	/* call_pal bpt */
+#define	BKPT_SIZE	sizeof(int)
+#define	BKPT_SET(inst)	BKPT_INST
 
-#define	FIXUP_PC_AFTER_BREAK(regs) ((regs)->tf_regs[FRAME_PC] -= BKPT_SIZE)
-
-#define	IS_BREAKPOINT_TRAP(type, code)	0
+#define	IS_BREAKPOINT_TRAP(type, code) \
+    ((type) == ALPHA_KENTRY_IF && (code) == ALPHA_IF_CODE_BPT)
+#ifdef notyet
+#define	IS_WATCHPOINT_TRAP(type, code)	((type) == ALPHA_KENTRY_MM)
+#else
 #define	IS_WATCHPOINT_TRAP(type, code)	0
+#endif
+
+#define	FIXUP_PC_AFTER_BREAK(regs) ((regs)->tf_regs[FRAME_PC] -= sizeof(int))
 
 #define SOFTWARE_SSTEP
 
 /* Hack to skip GCC "unused" warnings. */
-#ifdef __GNUC__
-#define	inst_trap_return(ins)	({(ins); 0;})
-#define	inst_return(ins)	({(ins); 0;})
-#define	inst_call(ins)		({(ins); 0;})
-#define	inst_branch(ins)	({(ins); 0;})
-#define inst_load(ins)		({(ins); 0;})
-#define inst_store(ins)		({(ins); 0;})
-#else
-#define	inst_trap_return(ins)	0
-#define	inst_return(ins)	0
-#define	inst_call(ins)		0
-#define	inst_branch(ins)	0
-#define inst_load(ins)		0
-#define inst_store(ins)		0
-#endif
+#define	inst_trap_return(ins)	((ins) & 0)		/* XXX */
+#define	inst_return(ins)	((ins) == 0x6bfa8001)
 
-#define next_instr_address(pc, bd)	(pc + 4)
-
-/* XXX temporary hack until we implement singlestepping */
-#define branch_taken(a, b, c, d)	0
-
+int inst_call __P((u_int));
+int inst_branch __P((u_int));
+int inst_load __P((u_int));
+int inst_store __P((u_int));
+db_addr_t branch_taken __P((u_int, db_addr_t,
+    register_t (*) __P((db_regs_t *, int)), db_regs_t *));
+db_addr_t next_instr_address __P((db_addr_t, int));
 int kdb_trap __P((int, int, db_regs_t *));
 
 #endif	/* _ALPHA_DB_MACHDEP_H_ */
