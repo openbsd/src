@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapgeneric.c,v 1.11 1998/03/01 16:07:18 niklas Exp $	*/
+/*	$OpenBSD: swapgeneric.c,v 1.12 1999/07/30 19:41:29 deraadt Exp $	*/
 /*	$NetBSD: swapgeneric.c,v 1.27 1997/01/26 22:58:32 rat Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include "sd.h"
 #include "wd.h"
 #include "cd.h"
-#include "acd.h"
 
 int (*mountroot) __P((void)) = dk_mountroot;
 
@@ -82,9 +81,6 @@ extern	struct cfdriver wd_cd;
 #if NCD > 0
 extern	struct cfdriver cd_cd;
 #endif
-#if NACD > 0
-extern	struct cfdriver acd_cd;
-#endif
 
 struct genericconf {
 	struct cfdriver *gc_driver;
@@ -110,9 +106,6 @@ struct genericconf genericconf[] = {
 #endif
 #if NCD > 0
 	{&cd_cd,	makedev(7, 0)},
-#endif
-#if NACD > 0
-	{&acd_cd,	makedev(15, 0)},
 #endif
 	{ 0 },
 };

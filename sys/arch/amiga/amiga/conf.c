@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.25 1998/09/25 09:20:52 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.26 1999/07/30 19:41:29 deraadt Exp $	*/
 /*	$NetBSD: conf.c,v 1.42 1997/01/07 11:35:03 mrg Exp $	*/
 
 /*-
@@ -59,7 +59,6 @@
 #include "ccd.h"
 #include "ss.h"
 #include "wd.h"
-#include "acd.h"
 #include "rd.h"
 #include "ch.h"
 #ifdef XFS
@@ -85,7 +84,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_lkm_dummy(),		/* 14 */
-	bdev_disk_init(NACD,acd),	/* 15: ATAPI CD-ROM */
+	bdev_notdef(),			/* 15 */
 	bdev_disk_init(NRD,rd),		/* 16: ram disk driver */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
@@ -149,7 +148,7 @@ struct cdevsw	cdevsw[] =
 	cdev_random_init(1,random),	/* 35: random data source */
 	cdev_uk_init(NUK,uk),		/* 36: unknown SCSI */
 	cdev_disk_init(NWD,wd),		/* 37: ST506/ESDI/IDE disk */
-	cdev_disk_init(NACD,acd),	/* 38: ATAPI CD-ROM */
+	cdev_notdef(),			/* 38 */
 	cdev_audio_init(NAUDIO,audio),	/* 39: cc audio interface */
 	cdev_ch_init(NCH,ch),		/* 40: SCSI autochanger */
 	cdev_disk_init(NRD,rd),		/* 41: RAM disk */
@@ -268,7 +267,7 @@ static int chrtoblktab[] = {
 	/* 35 */	NODEV,
 	/* 36 */	NODEV,
 	/* 37 */	0,		/* wd */
-	/* 38 */	15,		/* acd */
+	/* 38 */	NODEV,
 	/* 39 */	NODEV,
 	/* 40 */	NODEV,
 	/* 41 */	16,		/* rd */

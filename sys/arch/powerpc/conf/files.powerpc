@@ -5,10 +5,6 @@ maxpartitions 16
 
 maxusers 2 8 64
 
-# need some decl. from here...
-include	"../../../dev/atapi/files.atapi"                          
-major	{ acd = 5 }
-
 file	arch/powerpc/powerpc/Locore.c
 file	arch/powerpc/powerpc/autoconf.c
 file	arch/powerpc/powerpc/bcopy.c
