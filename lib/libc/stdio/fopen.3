@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fopen.3,v 1.6 1999/09/26 14:54:10 espie Exp $
+.\"	$OpenBSD: fopen.3,v 1.7 1999/09/28 22:17:51 espie Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -126,6 +126,11 @@ function associates a stream with the existing file descriptor
 The
 .Fa mode
 of the stream must be compatible with the mode of the file descriptor.
+If 
+.Fn fdopen
+fails, the file descriptor
+.Fa fildes
+is not affected in any way.
 .Pp
 The
 .Fn freopen
@@ -135,7 +140,9 @@ opens the file whose name is the string pointed to by
 and associates the stream pointed to by
 .Fa stream
 with it.
-The original stream (if it exists) is closed.
+The original stream (if it exists) is always closed, even if 
+.Fn freopen 
+fails.
 The
 .Fa mode
 argument is used just as in the
@@ -232,3 +239,25 @@ The
 function
 conforms to
 .St -p1003.1-88 .
+.Sh CAVEATS
+Proper code using
+.Fn fdopen 
+with error checking should
+.Xr close 2
+.Fa fildes
+in case of failure, and 
+.Xr fclose 3
+the resulting FILE * in case of success.
+.Bd -literal
+	FILE *file;
+	int fd;
+
+	if ((file = fdopen(fd)) != NULL) {
+		/* perform operations on the FILE * */
+		fclose(file);
+	} else {
+		/* failure, report the error */
+		close(fd);
+	}
+.Ed
+		
