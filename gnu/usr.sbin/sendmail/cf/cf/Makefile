@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2001/09/25 20:23:41 niklas Exp $
+#	$OpenBSD: Makefile,v 1.14 2001/09/29 15:22:27 millert Exp $
 #
 #  Makefile for configuration files.
 #
@@ -12,7 +12,7 @@
 #  /usr/5bin/m4.
 #
 
-M4=	m4
+M4=	/usr/bin/m4
 CFDIR=	${.CURDIR}/..
 CHMOD=	chmod
 ROMODE=	444
@@ -52,7 +52,7 @@ install:
 		fi; \
 	fi
 
-distribution: openbsd-proto.cf
+distribution: openbsd-proto.cf openbsd-localhost.cf submit.cf
 	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 openbsd-proto.cf \
 	    ${DESTDIR}/etc/mail/sendmail.cf
 	${INSTALL} ${INSTALL_COPY} -o root -g wheel -m 644 openbsd-localhost.cf \
