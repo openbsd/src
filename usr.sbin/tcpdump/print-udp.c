@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.6 1997/07/23 02:59:02 denny Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.7 1997/07/31 09:49:13 tqbf Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -286,6 +286,11 @@ rtcp_print(const u_char *hdr, const u_char *ep)
 #define SNMPTRAP_PORT 162	/*XXX*/
 #define RIP_PORT 520		/*XXX*/
 #define KERBEROS_SEC_PORT 750	/*XXX*/
+#define OLD_RADIUS_AUTH_PORT 1645
+#define OLD_RADIUS_ACCT_PORT 1646
+#define RADIUS_AUTH_PORT     1812
+#define RADIUS_ACCT_PORT     1813
+                                             
 
 void
 udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
@@ -425,6 +430,11 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 			ntp_print((const u_char *)(up + 1), length);
 		else if (ISPORT(KERBEROS_PORT) || ISPORT(KERBEROS_SEC_PORT))
 			krb_print((const void *)(up + 1), length);
+                else if (ISPORT(OLD_RADIUS_AUTH_PORT) ||
+                         ISPORT(OLD_RADIUS_ACCT_PORT) ||
+                         ISPORT(RADIUS_AUTH_PORT)     ||
+                         ISPORT(RADIUS_ACCT_PORT))
+                        radius_print((const u_char *)(up + 1), length);
 		else if (dport == 3456)
 			vat_print((const void *)(up + 1), length, up);
 		/*
