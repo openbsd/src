@@ -1,4 +1,4 @@
-/*	$OpenBSD: fty_int.c,v 1.4 1998/07/24 02:37:44 millert Exp $	*/
+/*	$OpenBSD: fty_int.c,v 1.5 1999/05/17 03:04:18 millert Exp $	*/
 
 
 /*
@@ -9,13 +9,13 @@
  */
 /***************************************************************************
 *                                                                          *
-*  Author : Juergen Pfeifer, Juergen.Pfeifer@T-Online.de                   *
+*  Author : Juergen Pfeifer, juergen.pfeifer@gmx.net                       *
 *                                                                          *
 ***************************************************************************/
 
 #include "form.priv.h"
 
-MODULE_ID("$From: fty_int.c,v 1.8 1997/10/18 19:32:50 tom Exp $")
+MODULE_ID("$From: fty_int.c,v 1.10 1999/05/16 17:23:22 juergen Exp $")
 
 typedef struct {
   int precision;

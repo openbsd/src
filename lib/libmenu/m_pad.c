@@ -1,4 +1,4 @@
-/*	$OpenBSD: m_pad.c,v 1.2 1998/07/24 16:39:11 millert Exp $	*/
+/*	$OpenBSD: m_pad.c,v 1.3 1999/05/17 03:04:25 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <Juergen.Pfeifer@T-Online.de> 1995,1997        *
+ *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
  ****************************************************************************/
 
 /***************************************************************************
@@ -39,7 +39,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_pad.c,v 1.2 1998/02/11 12:13:50 tom Exp $")
+MODULE_ID("$From: m_pad.c,v 1.4 1999/05/16 17:27:17 juergen Exp $")
 
 /* Macro to redraw menu if it is posted and changed */
 #define Refresh_Menu(menu) \

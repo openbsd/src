@@ -1,4 +1,4 @@
-/*	$OpenBSD: fld_opts.c,v 1.3 1999/02/24 06:30:53 millert Exp $	*/
+/*	$OpenBSD: fld_opts.c,v 1.4 1999/05/17 03:04:14 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,11 +29,11 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <Juergen.Pfeifer@T-Online.de> 1995,1997        *
+ *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
  ****************************************************************************/
 #include "form.priv.h"
 
-MODULE_ID("$From: fld_opts.c,v 1.4 1999/02/18 16:12:30 juergen Exp $")
+MODULE_ID("$From: fld_opts.c,v 1.6 1999/05/16 17:19:06 juergen Exp $")
 
 /*----------------------------------------------------------------------------
   Field-Options manipulation routines

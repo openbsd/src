@@ -1,4 +1,4 @@
-/*	$OpenBSD: frm_driver.c,v 1.5 1998/07/24 02:37:29 millert Exp $	*/
+/*	$OpenBSD: frm_driver.c,v 1.6 1999/05/17 03:04:16 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,11 +29,11 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <Juergen.Pfeifer@T-Online.de> 1995,1997        *
+ *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
  ****************************************************************************/
 #include "form.priv.h"
 
-MODULE_ID("$From: frm_driver.c,v 1.33 1998/05/10 00:16:18 tom Exp $")
+MODULE_ID("$From: frm_driver.c,v 1.35 1999/05/16 17:20:52 juergen Exp $")
 
 /*----------------------------------------------------------------------------
   This is the core module of the form library. It contains the majority

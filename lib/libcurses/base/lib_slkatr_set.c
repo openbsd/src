@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_slkatr_set.c,v 1.1 1999/01/18 19:09:59 millert Exp $	*/
+/*	$OpenBSD: lib_slkatr_set.c,v 1.2 1999/05/17 03:03:59 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Juergen Pfeifer <Juergen.Pfeifer@T-Online.de> 1998              *
+ *  Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1998                  *
  ****************************************************************************/
 
 /*
@@ -39,7 +39,7 @@
  */
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_slkatr_set.c,v 1.1 1998/03/11 19:25:31 juergen Exp $")
+MODULE_ID("$From: lib_slkatr_set.c,v 1.3 1999/05/16 17:13:59 juergen Exp $")
 
 int
 slk_attr_set(const attr_t attr, short color_pair_number, void* opts)

@@ -4,9 +4,9 @@
  *   written by Anatoly Ivasyuk (anatoly@nick.csh.rit.edu)
  *
  *   Demo code for NCursesMenu and NCursesForm written by
- *   Juergen Pfeifer <Juergen.Pfeifer@T-Online.de>
+ *   Juergen Pfeifer <juergen.pfeifer@gmx.net>
  *
- * $Id: demo.cc,v 1.1 1999/05/09 00:21:15 millert Exp $
+ * $From: demo.cc,v 1.16 1999/05/16 17:11:49 juergen Exp $
  */
 
 #include "cursesapp.h"

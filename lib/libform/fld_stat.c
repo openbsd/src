@@ -1,4 +1,4 @@
-/*	$OpenBSD: fld_stat.c,v 1.4 1998/07/24 02:36:52 millert Exp $	*/
+/*	$OpenBSD: fld_stat.c,v 1.5 1999/05/17 03:04:15 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,12 +29,12 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <Juergen.Pfeifer@T-Online.de> 1995,1997        *
+ *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
  ****************************************************************************/
 
 #include "form.priv.h"
 
-MODULE_ID("$From: fld_stat.c,v 1.4 1998/02/11 12:13:43 tom Exp $")
+MODULE_ID("$From: fld_stat.c,v 1.6 1999/05/16 17:19:48 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  

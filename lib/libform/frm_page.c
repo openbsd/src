@@ -1,4 +1,4 @@
-/*	$OpenBSD: frm_page.c,v 1.2 1998/07/24 02:37:33 millert Exp $	*/
+/*	$OpenBSD: frm_page.c,v 1.3 1999/05/17 03:04:17 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,12 +29,12 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <Juergen.Pfeifer@T-Online.de> 1995,1997        *
+ *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
  ****************************************************************************/
 
 #include "form.priv.h"
 
-MODULE_ID("$From: frm_page.c,v 1.3 1998/02/11 12:13:44 tom Exp $")
+MODULE_ID("$From: frm_page.c,v 1.5 1999/05/16 17:21:26 juergen Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform  

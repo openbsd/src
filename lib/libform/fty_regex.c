@@ -1,4 +1,4 @@
-/*	$OpenBSD: fty_regex.c,v 1.5 1999/01/24 19:29:38 millert Exp $	*/
+/*	$OpenBSD: fty_regex.c,v 1.6 1999/05/17 03:04:18 millert Exp $	*/
 
 
 /*
@@ -9,13 +9,13 @@
  */
 /***************************************************************************
 *                                                                          *
-*  Author : Juergen Pfeifer, Juergen.Pfeifer@T-Online.de                   *
+*  Author : Juergen Pfeifer, juergen.pfeifer@gmx.net                       *
 *                                                                          *
 ***************************************************************************/
 
 #include "form.priv.h"
 
-MODULE_ID("$From: fty_regex.c,v 1.12 1999/01/24 03:24:42 Kimio.Ishii Exp $")
+MODULE_ID("$From: fty_regex.c,v 1.14 1999/05/16 17:23:38 juergen Exp $")
 
 #if HAVE_REGEX_H_FUNCS	/* We prefer POSIX regex */
 #include <regex.h>

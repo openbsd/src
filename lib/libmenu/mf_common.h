@@ -1,4 +1,4 @@
-/*	$OpenBSD: mf_common.h,v 1.4 1998/07/24 16:39:42 millert Exp $	*/
+/*	$OpenBSD: mf_common.h,v 1.5 1999/05/17 03:04:26 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <Juergen.Pfeifer@T-Online.de> 1995,1997        *
+ *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
  ****************************************************************************/
 
 /* Common internal header for menu and form library */

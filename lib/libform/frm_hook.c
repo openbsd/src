@@ -1,4 +1,4 @@
-/*	$OpenBSD: frm_hook.c,v 1.4 1998/07/24 02:37:31 millert Exp $	*/
+/*	$OpenBSD: frm_hook.c,v 1.5 1999/05/17 03:04:17 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,12 +29,12 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <Juergen.Pfeifer@T-Online.de> 1995,1997        *
+ *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
  ****************************************************************************/
 
 #include "form.priv.h"
 
-MODULE_ID("$From: frm_hook.c,v 1.6 1998/02/11 12:13:43 tom Exp $")
+MODULE_ID("$From: frm_hook.c,v 1.8 1999/05/16 17:21:04 juergen Exp $")
 
 /* "Template" macro to generate function to set application specific hook */
 #define GEN_HOOK_SET_FUNCTION( typ, name ) \

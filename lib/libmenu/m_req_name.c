@@ -1,4 +1,4 @@
-/*	$OpenBSD: m_req_name.c,v 1.3 1998/07/24 16:39:15 millert Exp $	*/
+/*	$OpenBSD: m_req_name.c,v 1.4 1999/05/17 03:04:25 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <Juergen.Pfeifer@T-Online.de> 1995,1997        *
+ *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1995,1997            *
  ****************************************************************************/
 
 /***************************************************************************
@@ -39,7 +39,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_req_name.c,v 1.10 1998/02/11 12:13:50 tom Exp $")
+MODULE_ID("$From: m_req_name.c,v 1.12 1999/05/16 17:27:47 juergen Exp $")
 
 static const char *request_names[ MAX_MENU_COMMAND - MIN_MENU_COMMAND + 1 ] = {
   "LEFT_ITEM"    ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_slkcolor.c,v 1.1 1999/01/18 19:10:02 millert Exp $	*/
+/*	$OpenBSD: lib_slkcolor.c,v 1.2 1999/05/17 03:04:00 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Juergen Pfeifer <Juergen.Pfeifer@T-Online.de> 1998              *
+ *  Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1998                  *
  ****************************************************************************/
 
 /*
@@ -37,7 +37,7 @@
  */
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_slkcolor.c,v 1.3 1998/04/11 23:31:08 tom Exp $")
+MODULE_ID("$From: lib_slkcolor.c,v 1.5 1999/05/16 17:14:13 juergen Exp $")
 
 int
 slk_color(short color_pair_number)

@@ -2,7 +2,7 @@
 #ifndef _CURSESW_H
 #define _CURSESW_H
 
-// $Id: cursesw.h,v 1.1 1999/05/09 00:21:15 millert Exp $
+// $From: cursesw.h,v 1.15 1998/04/11 23:07:44 tom Exp $
 
 #include <etip.h>
 #include <stdio.h>

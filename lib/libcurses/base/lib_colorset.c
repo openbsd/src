@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_colorset.c,v 1.1 1999/01/18 19:09:40 millert Exp $	*/
+/*	$OpenBSD: lib_colorset.c,v 1.2 1999/05/17 03:03:58 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -29,7 +29,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Juergen Pfeifer <Juergen.Pfeifer@T-Online.de> 1998              *
+ *  Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1998                  *
  ****************************************************************************/
 
 /*
@@ -42,7 +42,7 @@
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("$From: lib_colorset.c,v 1.3 1998/04/11 23:30:59 tom Exp $")
+MODULE_ID("$From: lib_colorset.c,v 1.5 1999/05/16 17:13:43 juergen Exp $")
 
 int wcolor_set(WINDOW *win, short color_pair_number, void *opts)
 {

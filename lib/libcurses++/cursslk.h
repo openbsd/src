@@ -28,10 +28,10 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author: Juergen Pfeifer <Juergen.Pfeifer@T-Online.de> 1997             *
+ *   Author: Juergen Pfeifer <juergen.pfeifer@gmx.net> 1997                 *
  ****************************************************************************/
 
-// $Id: cursslk.h,v 1.1 1999/05/09 00:21:15 millert Exp $
+// $From: cursslk.h,v 1.5 1999/05/16 17:30:08 juergen Exp $
 
 #ifndef _CURSSLK_H
 #define _CURSSLK_H
