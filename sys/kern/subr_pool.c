@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.30 2002/06/09 00:15:33 niklas Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.31 2002/07/23 15:26:48 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -1941,12 +1941,12 @@ pool_allocator_alloc(struct pool *org, int flags)
 			 * In other cases the hook will be run in
 			 * pool_reclaim.
 			 */
-			if (org->pr_drain_hook == NULL)
-				break;
-			(*org->pr_drain_hook)(org->pr_drain_hook_arg, flags);
-			if ((res = (*pa->pa_alloc)(org, flags)) != NULL)
-				continue;
-			break;
+			if (org->pr_drain_hook != NULL) {
+				(*org->pr_drain_hook)(org->pr_drain_hook_arg,
+				    flags);
+				if ((res = (*pa->pa_alloc)(org, flags)) != NULL)
+					return (res);
+			}
 		}
 		s = splvm();
 		simple_lock(&pa->pa_slock);
