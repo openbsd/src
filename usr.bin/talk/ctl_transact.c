@@ -114,5 +114,4 @@ ctl_transact(target, msg, type, rp)
 		    rp->type != type));
 	} while (rp->vers != TALK_VERSION || rp->type != type);
 	rp->id_num = ntohl(rp->id_num);
-	rp->addr.sa_family = ntohs(rp->addr.sa_family);
 }
