@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.47 2001/06/07 04:48:21 angelos Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.48 2001/06/11 10:50:09 itojun Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -639,9 +639,9 @@ rsa_sig_decode_hash (struct message *msg)
 			    handler->id));
 		  exchange->recv_cert = cert;
 		  exchange->recv_certtype = handler->id;
-#if defined(USE_X509)
+#if defined(USE_POLICY)
 		  x509_generate_kn (exchange->policy_id, cert);
-#endif /* USE_X509 */
+#endif /* USE_POLICY */
 		}
 	    }
 	}
