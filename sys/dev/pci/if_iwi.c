@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.14 2004/12/04 17:24:06 damien Exp $  */
+/*	$Id: if_iwi.c,v 1.15 2004/12/04 19:01:46 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -1812,7 +1812,7 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	    IWI_MODE_11G;
 	assoc.chan = ieee80211_chan2ieee(ic, ni->ni_chan);
 	if (sc->authmode == IEEE80211_AUTH_SHARED)
-		assoc.auth = IWI_AUTH_SHARED | ic->ic_wep_txkey;
+		assoc.auth = (ic->ic_wep_txkey << 4) | IWI_AUTH_SHARED;
 	bcopy(ni->ni_tstamp, assoc.tstamp, 8);
 	assoc.capinfo = htole16(ni->ni_capinfo);
 	assoc.lintval = htole16(ic->ic_lintval);
