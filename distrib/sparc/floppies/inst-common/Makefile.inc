@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.6 1997/04/19 21:26:12 millert Exp $
+#	$Id: Makefile.inc,v 1.7 1997/04/20 09:26:58 deraadt Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -56,6 +56,9 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 clean cleandir:
 	/bin/rm -f ${IMAGE} ${CBIN} ${CBIN}-krb.mk ${CBIN}-krb.cache \
 	    ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+
+beforeinstall:
+	cp ${IMAGE} ${DESTDIR}/snapshot
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
