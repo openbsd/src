@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.38 2000/05/02 22:33:26 ho Exp $
+.\" $OpenBSD: vpn.8,v 1.39 2000/06/01 19:58:00 angelos Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -153,12 +153,12 @@ is ignored by both algorithms.
 Before the IPSec flows can be defined, two Security Associations (SAs)
 must be defined on each end of the VPN, e.g.:
 .Bd -literal
-ipsecadm new esp -spi SPI_OUT -src A_EXTERNAL_IP
+ipsecadm new esp -spi SPI_AB -src A_EXTERNAL_IP
          -dst B_EXTERNAL_IP -forcetunnel
          -enc 3des -auth sha1
          -keyfile ENCRYPTION_KEY_FILE -authkeyfile AUTHENTICATION_KEY_FILE
 
-ipsecadm new esp -spi SPI_IN -src B_EXTERNAL_IP
+ipsecadm new esp -spi SPI_BA -src B_EXTERNAL_IP
          -dst A_EXTERNAL_IP -forcetunnel
          -enc 3des -auth sha1
          -keyfile ENCRYPTION_KEY_FILE -authkeyfile AUTHENTICATION_KEY_FILE
@@ -183,58 +183,58 @@ tool:
 .Pp
 On the security gateway of subnet A:
 .Bd -literal
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_AB -proto esp
          -addr A_EXTERNAL_IP 255.255.255.255
                B_EXTERNAL_IP 255.255.255.255
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_AB -proto esp
          -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
                B_INTERNAL_NETWORK B_INTERNAL_NETMASK
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_AB -proto esp
          -addr A_EXTERNAL_IP 255.255.255.255
                B_INTERNAL_NETWORK B_INTERNAL_NETMASK
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_AB -proto esp
          -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
                B_EXTERNAL_IP 255.255.255.255
 
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_IN -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
          -addr B_EXTERNAL_IP 255.255.255.255
                A_EXTERNAL_IP 255.255.255.255 -ingress
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_IN -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
          -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
                A_INTERNAL_NETWORK A_INTERNAL_NETMASK -ingress
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_OUT -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
          -addr B_EXTERNAL_IP 255.255.255.255
                A_INTERNAL_NETWORK A_INTERNAL_NETMASK -ingress
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_OUT -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
          -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
                A_EXTERNAL_IP 255.255.255.255 -ingress
 .Ed
 .Pp
 and on the security gateway of subnet B:
 .Bd -literal
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_IN -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
          -addr B_EXTERNAL_IP 255.255.255.255
                A_EXTERNAL_IP 255.255.255.255
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_IN -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
          -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
                A_INTERNAL_NETWORK A_INTERNAL_NETMASK
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_OUT -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
          -addr B_EXTERNAL_IP 255.255.255.255
                A_INTERNAL_NETWORK A_INTERNAL_NETMASK
-ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_OUT -proto esp
+ipsecadm flow -dst A_EXTERNAL_IP -spi SPI_BA -proto esp
          -addr B_INTERNAL_NETWORK B_INTERNAL_NETMASK
                A_EXTERNAL_IP 255.255.255.255
 
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_AB -proto esp
          -addr A_EXTERNAL_IP 255.255.255.255
                B_EXTERNAL_IP 255.255.255.255 -ingress
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_AB -proto esp
          -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
                B_INTERNAL_NETWORK B_INTERNAL_NETMASK -ingress
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_AB -proto esp
          -addr A_EXTERNAL_IP 255.255.255.255
                B_INTERNAL_NETWORK B_INTERNAL_NETMASK -ingress
-ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_OUT -proto esp
+ipsecadm flow -dst B_EXTERNAL_IP -spi SPI_AB -proto esp
          -addr A_INTERNAL_NETWORK A_INTERNAL_NETMASK
                B_EXTERNAL_IP 255.255.255.255 -ingress
 .Ed
