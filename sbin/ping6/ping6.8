@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ping6.8,v 1.11 2000/06/12 17:24:27 itojun Exp $
-.\"     $KAME: ping6.8,v 1.23 2000/06/12 16:16:09 itojun Exp $
+.\"	$OpenBSD: ping6.8,v 1.12 2000/08/13 20:17:00 itojun Exp $
+.\"     $KAME: ping6.8,v 1.27 2000/08/11 04:38:35 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -39,9 +39,9 @@ packets to network hosts
 .Sh SYNOPSIS
 .Nm ping6
 .\" without ipsec, or new ipsec
-.Op Fl dfHnNqRvw
+.Op Fl dfHnNqRtvw
 .\" old ipsec
-.\" .Op Fl AdEfnNqRvw
+.\" .Op Fl AdEfnNqRtvw
 .Bk -words
 .Op Fl a Ar addrtype
 .Ek
@@ -258,6 +258,13 @@ header data.
 You may need to specify
 .Fl b
 as well to extend socket buffer size.
+.It Fl t
+Generate ICMPv6 Node Information supported query types query,
+rather than echo-request.
+.Fl s
+has no effect if
+.Fl t
+is specified.
 .It Fl v
 Verbose output.
 .Tn ICMP
@@ -265,7 +272,7 @@ packets other than
 .Tn ECHO_RESPONSE
 that are received are listed.
 .It Fl w
-Generate ICMPv6 Node Information FQDN query, rather than echo-request.
+Generate ICMPv6 Node Information DNS Name query, rather than echo-request.
 .Fl s
 has no effect if
 .Fl w
@@ -402,8 +409,8 @@ and non-zero if the arguments are incorrect or the host is not responding.
 .Rs
 .%A Matt Crawford
 .%T "IPv6 Node Information Queries"
-.%N draft-ietf-ipngwg-icmp-name-lookups-05.txt
-.%D October 22, 1999
+.%N draft-ietf-ipngwg-icmp-name-lookups-06.txt
+.%D July 2000
 .%O work in progress material
 .Re
 .Sh HISTORY
