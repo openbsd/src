@@ -1,4 +1,4 @@
-.\"	$OpenBSD: login_token.8,v 1.8 2003/02/03 17:46:57 jmc Exp $
+.\"	$OpenBSD: login_token.8,v 1.9 2003/06/02 13:56:43 jmc Exp $
 .\"
 .\" Copyright (c) 1995 Migration Associates Corporation. All rights reserved.
 .\"
@@ -81,8 +81,6 @@ the user will be authenticated.
 The
 .Ar class
 argument is unused.
-.Sh DIAGNOSTICS
-Diagnostic messages are logged via syslog(3) with the LOG_AUTH facility.
 .Sh FILES
 .Bl -tag -width xetcxcrypto.db
 .It Pa /etc/activ.db
@@ -92,10 +90,12 @@ data base of information for the CRYPTOCard tokens.
 .It Pa /etc/snk.db
 data base of information for the SNK-004 tokens.
 .El
+.Sh DIAGNOSTICS
+Diagnostic messages are logged via syslog(3) with the LOG_AUTH facility.
 .Sh SEE ALSO
 .Xr syslog 3 ,
 .Xr login.conf 5 ,
 .Xr tokenadm 8 ,
 .Xr tokeninit 8
 .Sh AUTHORS
-Jack Flory <jpf@mig.com>
+.An Jack Flory Aq jpf@mig.com
