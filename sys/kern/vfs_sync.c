@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.8 1999/12/05 06:29:30 art Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.9 1999/12/05 06:56:35 art Exp $  */
 
 
 /*
@@ -63,7 +63,9 @@
 #define SYNCER_DEFAULT 30		/* default sync delay time */
 int syncer_maxdelay = SYNCER_MAXDELAY;	/* maximum delay time */
 time_t syncdelay = SYNCER_DEFAULT;	/* time to delay syncing vnodes */
-int rushjob;				/* number of slots to run ASAP */
+
+int rushjob = 0;			/* number of slots to run ASAP */
+int stat_rush_requests = 0;		/* number of rush requests */
  
 static int syncer_delayno = 0;
 static long syncer_last;
@@ -71,6 +73,8 @@ LIST_HEAD(synclist, vnode);
 static struct synclist *syncer_workitem_pending;
 
 extern struct simplelock mountlist_slock;
+
+struct proc *syncerproc;
 
 /*
  * The workitem queue.
@@ -148,6 +152,8 @@ sched_sync(p)
 	long starttime;
 	int s;
 
+	syncerproc = curproc;
+
 	for (;;) {
 		starttime = time.tv_sec;
 
@@ -209,6 +215,27 @@ sched_sync(p)
 	}
 }
 
+/*
+ * Request the syncer daemon to speed up its work.
+ * We never push it to speed up more than half of its
+ * normal turn time, otherwise it could take over the cpu.
+ */
+int
+speedup_syncer()
+{
+	int s;
+
+	s = splhigh();
+	if (syncerproc && syncerproc->p_wchan == &lbolt)
+		setrunnable(syncerproc);
+	splx(s);
+	if (rushjob < syncdelay / 2) {
+		rushjob += 1;
+		stat_rush_requests += 1;
+		return 1;
+	}
+	return 0;
+}
 
 /*
  * Routine to create and manage a filesystem syncer vnode.
