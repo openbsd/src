@@ -1,4 +1,4 @@
-/* $Id: cmds.c,v 1.18 2002/03/14 21:11:50 rees Exp $ */
+/* $Id: cmds.c,v 1.19 2002/03/20 22:30:58 rees Exp $ */
 
 /*
  * Smartcard commander.
@@ -81,7 +81,9 @@ struct dispatchtable dispatch_table[] = {
     { "write", "input-filename", dwrite },
     { "challenge", "[ size ]", challenge },
     { "pin", "[ -k keyno ] [ PIN ]", vfypin },
+#ifndef __palmos__
     { "chpin", "[ -k keyno ]", chpin },
+#endif
 
     /* Cyberflex commands */
     { "ls", "[ -l ]", ls },
@@ -535,8 +537,14 @@ int vfypin(int ac, char *av[])
 
     if (ac - optind >= 1)
 	pin = av[optind++];
-    else
+    else {
+#ifndef __palmos__
 	pin = getpass("Enter PIN: ");
+#else
+	printf("usage: pin PIN\n");
+	return -1;
+#endif
+    }
 
     sectok_apdu(fd, cla, 0x20, 0, keyno, strlen(pin), pin, 0, NULL, &sw);
     bzero(pin, strlen(pin));
@@ -548,6 +556,7 @@ int vfypin(int ac, char *av[])
     return 0;
 }
 
+#ifndef __palmos__
 int chpin(int ac, char *av[])
 {
     int keyno = 1, i, sw;
@@ -575,3 +584,4 @@ int chpin(int ac, char *av[])
     }
     return 0;
 }
+#endif
