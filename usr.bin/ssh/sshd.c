@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.70 1999/12/07 23:14:36 provos Exp $");
+RCSID("$Id: sshd.c,v 1.71 1999/12/08 00:08:09 provos Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -557,7 +557,7 @@ main(int ac, char **av)
 			if (poll(&fds, 1, -1) == -1) {
 				if (errno == EINTR)
 					continue;
-				error("poll: %.100s", strerror(errno));
+				fatal("poll: %.100s", strerror(errno));
 				/*NOTREACHED*/
 			}
 			if (fds.revents == 0)
