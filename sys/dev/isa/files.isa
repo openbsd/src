@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.8 1996/04/21 22:23:23 deraadt Exp $
+#	$OpenBSD: files.isa,v 1.9 1996/04/24 16:52:42 mickey Exp $
 #	$NetBSD: files.isa,v 1.17 1996/03/29 20:53:30 mycroft Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
@@ -121,19 +121,28 @@ device	wds: scsi, isadma
 attach	wds at isa
 file	dev/isa/wds.c			wds
 
+# OPTi 82C929 chipset setup code
+define	opti
+file	dev/isa/opti.c			opti
+
 #
 # Other ISA disk controllers
 #
 
 # Mitsumi CD-ROM controllers
-device	mcd: disk
+device	mcd: disk, opti
 attach	mcd at isa
 file	dev/isa/mcd.c			mcd needs-flag
 
-# Sony CDU-3[13]A CD-ROM drives
-device	scd: disk
+# Sony CDU-3[13]A CD-ROM controllers
+device	scd: disk, opti
 attach	scd at isa
 file	dev/isa/scd.c			scd needs-flag
+
+# Panasonic/Creative CD-ROM controllers
+device	pcd: disk, opti
+attach	pcd at isa
+file	dev/isa/pcd.c			pcd needs-flag
 
 # ISA "wd" (ESDI/IDE/etc.) controllers
 device	wdc {drive = -1}
@@ -218,7 +227,7 @@ define	sbdsp
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
-device	sb: audio, isadma, sbdsp, mulaw
+device	sb: audio, isadma, sbdsp, mulaw, opti
 attach	sb at isa
 file	dev/isa/sb.c			sb needs-flag
 
@@ -246,7 +255,7 @@ attach	sp at pss
 file	dev/isa/pss.c			pss needs-flag
 
 # Microsoft Windows Sound System
-device	wss: audio, isadma, ad1848
+device	wss: audio, isadma, ad1848, opti
 attach	wss at isa
 file	dev/isa/wss.c			wss needs-flag
 
