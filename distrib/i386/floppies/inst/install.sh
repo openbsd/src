@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.9 1996/08/06 22:51:05 downsj Exp $
+#	$OpenBSD: install.sh,v 1.10 1996/09/25 17:06:26 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -315,9 +315,7 @@ echo	":ta=4.2BSD:ba#${blocksize}:fa#${fragsize}:\\" >> $DT
 _size=`expr $swap \* $sizemult`
 _offset=`expr $swap_offset \* $sizemult`
 echo	"	:pb#${_size}:ob#${_offset}:tb=swap:\\" >> $DT
-_size=`expr $partition \* $sizemult`
-_offset=`expr $part_offset \* $sizemult`
-echo	"	:pc#${_size}:oc#${_offset}:\\" >> $DT
+echo	"	:pc#${disksize}:oc#0:\\" >> $DT
 
 echo	"You will now have to enter information about any other partitions"
 echo	"to be created in the OpenBSD portion of the disk.  This process will"
@@ -353,8 +351,15 @@ while [ $part_used -lt $partition ]; do
 		esac
 	done
 	if [ "$ename" = "" ]; then
-		ename=$part_name
+		dname=$part_name
 		offset=`expr $part_offset + $root + $swap`
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pd#${_size}:od#${_offset}" >> $DT
+		echo ":td=4.2BSD:bd#${blocksize}:fd#${fragsize}:\\" >> $DT
+		offset=`expr $offset + $part_size`
+	elif [ "$ename" = "" ]; then
+		ename=$part_name
 		_size=`expr $part_size \* $sizemult`
 		_offset=`expr $offset \* $sizemult`
 		echo -n "	:pe#${_size}:oe#${_offset}" >> $DT
@@ -381,9 +386,64 @@ while [ $part_used -lt $partition ]; do
 		echo -n "	:ph#${_size}:oh#${_offset}" >> $DT
 		echo ":th=4.2BSD:bh#${blocksize}:fh#${fragsize}:\\" >> $DT
 		part_used=$partition
+	elif [ "$iname" = "" ]; then
+		iname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pi#${_size}:oi#${_offset}" >> $DT
+		echo ":ti=4.2BSD:bi#${blocksize}:fi#${fragsize}:\\" >> $DT
+		part_used=$partition
+	elif [ "$jname" = "" ]; then
+		jname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pj#${_size}:oj#${_offset}" >> $DT
+		echo ":tj=4.2BSD:bj#${blocksize}:fj#${fragsize}:\\" >> $DT
+		part_used=$partition
+	elif [ "$kname" = "" ]; then
+		kname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pk#${_size}:ok#${_offset}" >> $DT
+		echo ":tk=4.2BSD:bk#${blocksize}:fk#${fragsize}:\\" >> $DT
+		part_used=$partition
+	elif [ "$lname" = "" ]; then
+		lname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pl#${_size}:ol#${_offset}" >> $DT
+		echo ":tl=4.2BSD:bl#${blocksize}:fl#${fragsize}:\\" >> $DT
+		part_used=$partition
+	elif [ "$mname" = "" ]; then
+		mname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pm#${_size}:om#${_offset}" >> $DT
+		echo ":tm=4.2BSD:bm#${blocksize}:fm#${fragsize}:\\" >> $DT
+		part_used=$partition
+	elif [ "$nname" = "" ]; then
+		nname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pn#${_size}:on#${_offset}" >> $DT
+		echo ":tn=4.2BSD:bn#${blocksize}:fn#${fragsize}:\\" >> $DT
+		part_used=$partition
+	elif [ "$oname" = "" ]; then
+		oname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:po#${_size}:oo#${_offset}" >> $DT
+		echo ":to=4.2BSD:bo#${blocksize}:fo#${fragsize}:\\" >> $DT
+		part_used=$partition
+	elif [ "$pname" = "" ]; then
+		pname=$part_name
+		_size=`expr $part_size \* $sizemult`
+		_offset=`expr $offset \* $sizemult`
+		echo -n "	:pp#${_size}:op#${_offset}" >> $DT
+		echo ":tp=4.2BSD:bp#${blocksize}:fp#${fragsize}:\\" >> $DT
+		part_used=$partition
 	fi
 done
-echo	"	:pd#${disksize}:od#0:" >> $DT
 sync
 
 echo	""
@@ -427,6 +487,13 @@ fi
 echo	"Initializing root filesystem, and mounting..."
 $DONTDOIT newfs /dev/r${drivename}a $name
 $DONTDOIT mount -v /dev/${drivename}a /mnt
+if [ "$dname" != "" ]; then
+	echo	""
+	echo	"Initializing $dname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}d $name
+	$DONTDOIT mkdir -p /mnt/$dname
+	$DONTDOIT mount -v /dev/${drivename}d /mnt/$dname
+fi
 if [ "$ename" != "" ]; then
 	echo	""
 	echo	"Initializing $ename filesystem, and mounting..."
@@ -455,6 +522,62 @@ if [ "$hname" != "" ]; then
 	$DONTDOIT mkdir -p /mnt/$hname
 	$DONTDOIT mount -v /dev/${drivename}h /mnt/$hname
 fi
+if [ "$iname" != "" ]; then
+	echo	""
+	echo	"Initializing $iname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}i $name
+	$DONTDOIT mkdir -p /mnt/$iname
+	$DONTDOIT mount -v /dev/${drivename}i /mnt/$iname
+fi
+if [ "$jname" != "" ]; then
+	echo	""
+	echo	"Initializing $jname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}j $name
+	$DONTDOIT mkdir -p /mnt/$jname
+	$DONTDOIT mount -v /dev/${drivename}j /mnt/$jname
+fi
+if [ "$kname" != "" ]; then
+	echo	""
+	echo	"Initializing $kname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}k $name
+	$DONTDOIT mkdir -p /mnt/$kname
+	$DONTDOIT mount -v /dev/${drivename}k /mnt/$kname
+fi
+if [ "$lname" != "" ]; then
+	echo	""
+	echo	"Initializing $lname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}l $name
+	$DONTDOIT mkdir -p /mnt/$lname
+	$DONTDOIT mount -v /dev/${drivename}l /mnt/$lname
+fi
+if [ "$mname" != "" ]; then
+	echo	""
+	echo	"Initializing $mname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}m $name
+	$DONTDOIT mkdir -p /mnt/$mname
+	$DONTDOIT mount -v /dev/${drivename}m /mnt/$mname
+fi
+if [ "$nname" != "" ]; then
+	echo	""
+	echo	"Initializing $nname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}n $name
+	$DONTDOIT mkdir -p /mnt/$nname
+	$DONTDOIT mount -v /dev/${drivename}n /mnt/$nname
+fi
+if [ "$oname" != "" ]; then
+	echo	""
+	echo	"Initializing $oname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}o $name
+	$DONTDOIT mkdir -p /mnt/$oname
+	$DONTDOIT mount -v /dev/${drivename}o /mnt/$oname
+fi
+if [ "$pname" != "" ]; then
+	echo	""
+	echo	"Initializing $pname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}p $name
+	$DONTDOIT mkdir -p /mnt/$pname
+	$DONTDOIT mount -v /dev/${drivename}p /mnt/$pname
+fi
 
 echo	""
 echo    "Populating filesystems with bootstrapping binaries and config files"
@@ -464,6 +587,9 @@ $DONTDOIT cp /tmp/.hdprofile /mnt/.profile
 echo	""
 echo -n	"Creating an fstab..."
 echo /dev/${drivename}a / ffs rw 1 1 | sed -e s,//,/, > $FSTAB
+if [ "$dname" != "" ]; then
+	echo /dev/${drivename}d /$dname ffs rw 1 2 | sed -e s,//,/, >> $FSTAB
+fi
 if [ "$ename" != "" ]; then
 	echo /dev/${drivename}e /$ename ffs rw 1 2 | sed -e s,//,/, >> $FSTAB
 fi
@@ -476,6 +602,31 @@ fi
 if [ "$hname" != "" ]; then
 	echo /dev/${drivename}h /$hname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
 fi
+if [ "$iname" != "" ]; then
+	echo /dev/${drivename}i /$iname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+if [ "$jname" != "" ]; then
+	echo /dev/${drivename}j /$jname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+if [ "$kname" != "" ]; then
+	echo /dev/${drivename}k /$kname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+if [ "$lname" != "" ]; then
+	echo /dev/${drivename}l /$lname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+if [ "$mname" != "" ]; then
+	echo /dev/${drivename}m /$mname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+if [ "$nname" != "" ]; then
+	echo /dev/${drivename}n /$nname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+if [ "$oname" != "" ]; then
+	echo /dev/${drivename}o /$oname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+if [ "$pname" != "" ]; then
+	echo /dev/${drivename}p /$pname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+fi
+
 sync
 echo	" done."
 
