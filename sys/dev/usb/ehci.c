@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.30 2004/10/31 09:35:41 dlg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.31 2004/10/31 10:24:16 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -420,7 +420,8 @@ ehci_init(ehci_softc_t *sc)
 
 	sc->sc_eintrs = EHCI_NORMAL_INTRS;
 
-	/* Allocate the interrupt dummy QHs. These are arranged to give poll
+	/*
+	 * Allocate the interrupt dummy QHs. These are arranged to give poll
 	 * intervals that are powers of 2 times 1ms.
 	 */
 	for (i = 0; i < EHCI_INTRQHS; i++) {
@@ -563,7 +564,6 @@ ehci_intr1(ehci_softc_t *sc)
 	}
 
 	intrs = EHCI_STS_INTRS(EOREAD4(sc, EHCI_USBSTS));
-
 	if (!intrs)
 		return (0);
 
@@ -715,7 +715,7 @@ ehci_check_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 	lsqtd = ex->sqtdend;
 #ifdef DIAGNOSTIC
 	if (lsqtd == NULL) {
-		printf("ehci_check_intr: sqtd==0\n");
+		printf("ehci_check_intr: lsqtd==0\n");
 		return;
 	}
 #endif
@@ -807,7 +807,11 @@ ehci_idone(struct ehci_xfer *ex)
 			actlen += sqtd->len - EHCI_QTD_GET_BYTES(status);
 	}
 
-	/* If there are left over TDs we need to update the toggle. */
+	/*
+	 * If there are left over TDs we need to update the toggle.
+	 * The default pipe doesn't need it since control transfers
+	 * start the toggle at 0 every time.
+	 */
 	if (sqtd != lsqtd->nextqtd &&
 	    xfer->pipe->device->default_pipe != xfer->pipe) {
 		DPRINTF(("ehci_idone: need toggle update status=%08x "
@@ -815,7 +819,8 @@ ehci_idone(struct ehci_xfer *ex)
 		epipe->nexttoggle = EHCI_QTD_GET_TOGGLE(nstatus);
 	}
 
-	/* For a short transfer we need to update teh toggle for the missing
+	/*
+	 * For a short transfer we need to update the toggle for the missing
 	 * packets within the qTD.
 	 */
 	pkts_left = EHCI_QTD_GET_BYTES(status) /
@@ -834,7 +839,7 @@ ehci_idone(struct ehci_xfer *ex)
 				 "\20\7HALTED\6BUFERR\5BABBLE\4XACTERR"
 				 "\3MISSED", sbuf, sizeof(sbuf));
 
-		DPRINTFN((status & EHCI_QTD_HALTED) ? 2 : 0,
+		DPRINTFN((status == EHCI_QTD_HALTED) ? 2 : 0,
 			 ("ehci_idone: error, addr=%d, endpt=0x%02x, "
 			  "status 0x%s\n",
 			  xfer->pipe->device->address,
@@ -1154,7 +1159,7 @@ ehci_device_clear_toggle(usbd_pipe_handle pipe)
 
 	DPRINTF(("ehci_device_clear_toggle: epipe=%p status=0x%x\n",
 		 epipe, epipe->sqh->qh.qh_qtd.qtd_status));
-#if defined(USB_DEBUG) && defined(EHCI_DEBUG)
+#ifdef USB_DEBUG
 	if (ehcidebug)
 		usbd_dump_pipe(pipe);
 #endif
@@ -1460,13 +1465,13 @@ ehci_set_qh_qtd(ehci_soft_qh_t *sqh, ehci_soft_qtd_t *sqtd)
 	status = sqh->qh.qh_qtd.qtd_status &
 	    htole32(EHCI_QTD_TOGGLE_MASK |
 		EHCI_QTD_SET_STATUS(EHCI_QTD_PINGSTATE));
-	/* Set HALTED to make gw leave it alone */
+	/* Set HALTED to make hw leave it alone. */
 	sqh->qh.qh_qtd.qtd_status =
 	    htole32(EHCI_QTD_SET_STATUS(EHCI_QTD_HALTED));
 	sqh->qh.qh_curqtd = 0;
 	sqh->qh.qh_qtd.qtd_next = htole32(sqtd->physaddr);
 	sqh->qh.qh_qtd.qtd_altnext = 0;
-	for (i = 0; i < EHCI_QTD_NBUFFERS; i++ )
+	for (i = 0; i < EHCI_QTD_NBUFFERS; i++)
 		sqh->qh.qh_qtd.qtd_buffer[i] = 0;
 	sqh->sqtd = sqtd;
 	/* Set !HALTED && !ACTIVE to start execution, preserve some fields */
@@ -2481,7 +2486,7 @@ ehci_timeout(void *addr)
 	ehci_softc_t *sc = (ehci_softc_t *)epipe->pipe.device->bus;
 
 	DPRINTF(("ehci_timeout: exfer=%p\n", exfer));
-#if defined(USB_DEBUG) && defined(EHCI_DEBUG)
+#ifdef USB_DEBUG
 	if (ehcidebug > 1)
 		usbd_dump_pipe(exfer->xfer.pipe);
 #endif
