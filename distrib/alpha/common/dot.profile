@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.7 2002/04/13 03:10:48 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.8 2002/04/13 17:36:56 deraadt Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -43,7 +43,7 @@ PAGER=more
 rootdisk=`dmesg|sed -n -e '/OpenBSD /h' -e '//!H' -e '${
 	g
 	p
-}'|sed -n -e '/^root on \([0-9a-z]*\)/{
+}'|sed -n -e '/^root on \([0-9a-z]*\).*/{
 	s//\/dev\/\1/
 	p
 }'`

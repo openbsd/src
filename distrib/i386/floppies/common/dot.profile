@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.10 2002/04/13 03:10:48 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.11 2002/04/13 17:36:56 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -38,7 +38,7 @@ set -o emacs # emacs-style command line editing
 rootdisk=`dmesg|sed -n -e '/OpenBSD /h' -e '//!H' -e '${
 	g
 	p
-}'|sed -n -e '/^root on \([0-9a-z]*\)/{
+}'|sed -n -e '/^root on \([0-9a-z]*\).*/{
 	s//\/dev\/\1/
 	p
 }'`
