@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.27 2002/07/15 19:13:29 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.28 2002/08/08 18:13:35 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static const char rcsid[] = "$OpenBSD: cron.c,v 1.27 2002/07/15 19:13:29 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cron.c,v 1.28 2002/08/08 18:13:35 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -29,6 +29,8 @@ static const char rcsid[] = "$OpenBSD: cron.c,v 1.27 2002/07/15 19:13:29 millert
 #include "cron.h"
 #include <sys/socket.h>
 #include <sys/un.h>
+
+enum timejump { negative, small, medium, large };
 
 static	void	usage(void),
 		run_reboot_jobs(cron_db *),
@@ -157,7 +159,7 @@ main(int argc, char *argv[]) {
 	 */
 	while (TRUE) {
 		int timeDiff;
-		int wakeupKind;
+		enum timejump wakeupKind;
 
 		/* ... wait for the time (in minutes) to change ... */
 		do {
@@ -177,18 +179,18 @@ main(int argc, char *argv[]) {
 			virtualTime = timeRunning;
 			find_jobs(virtualTime, &database, TRUE, TRUE);
 		} else {
-			wakeupKind = -1;
-			if (timeDiff > -(3*MINUTE_COUNT))
-				wakeupKind = 0;
-			if (timeDiff > 0)
-				wakeupKind = 1;
-			if (timeDiff > 5)
-				wakeupKind = 2;
-			if (timeDiff > (3*MINUTE_COUNT))
-				wakeupKind = 3;
+			if (timeDiff > (3*MINUTE_COUNT) ||
+			    timeDiff < -(3*MINUTE_COUNT))
+				wakeupKind = large;
+			else if (timeDiff > 5)
+				wakeupKind = medium;
+			else if (timeDiff > 0)
+				wakeupKind = small;
+			else
+				wakeupKind = negative;
 
 			switch (wakeupKind) {
-			case 1:
+			case small:
 				/*
 				 * case 1: timeDiff is a small positive number
 				 * (wokeup late) run jobs for each virtual
@@ -205,7 +207,7 @@ main(int argc, char *argv[]) {
 				} while (virtualTime < timeRunning);
 				break;
 
-			case 2:
+			case medium:
 				/*
 				 * case 2: timeDiff is a medium-sized positive
 				 * number, for example because we went to DST
@@ -234,7 +236,7 @@ main(int argc, char *argv[]) {
 				    clockTime == timeRunning);
 				break;
 	
-			case 0:
+			case negative:
 				/*
 				 * case 3: timeDiff is a small or medium-sized
 				 * negative num, eg. because of DST ending.
