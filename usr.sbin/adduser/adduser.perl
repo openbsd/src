@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-#	$OpenBSD: adduser.perl,v 1.43 2003/06/08 21:05:29 millert Exp $
+#	$OpenBSD: adduser.perl,v 1.44 2003/06/09 00:33:52 millert Exp $
 #
 # Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 # All rights reserved.
@@ -87,9 +87,9 @@ sub variables {
     $etc_passwd = "/etc/master.passwd";
     $etc_ptmp = "/etc/ptmp";
     $group = "/etc/group";
-    $pwd_mkdb = "pwd_mkdb -p";	# program for building passwd database
+    @pwd_mkdb = ("pwd_mkdb", "-p");	# program for building passwd database
     $encryptionmethod = "blowfish";
-    $rcsid = '$OpenBSD: adduser.perl,v 1.43 2003/06/08 21:05:29 millert Exp $';
+    $rcsid = '$OpenBSD: adduser.perl,v 1.44 2003/06/09 00:33:52 millert Exp $';
 
     # List of directories where shells located
     @path = ('/bin', '/usr/bin', '/usr/local/bin');
@@ -127,7 +127,7 @@ sub variables {
 	$etc_shells = "./shells";
 	$etc_passwd = "./master.passwd";
 	$group = "./group";
-	$pwd_mkdb = "pwd_mkdb -p -d .";
+	@pwd_mkdb = ("pwd_mkdb", "-p", "-d", ".");
 	$config = "adduser.conf";
 	$send_message = "./adduser.message";
 	$logfile = "./log.adduser";
@@ -285,7 +285,7 @@ sub home_partition_valid {
 
 # check for valid passwddb
 sub passwd_check {
-    system($pwd_mkdb, "-c", $etc_passwd);
+    system(@pwd_mkdb, "-c", $etc_passwd);
     die "\nInvalid $etc_passwd - cannot add any users!\n" if $?;
 }
 
@@ -605,10 +605,10 @@ sub new_users_pwdmkdb {
     local($user);
 
     $user = (split(/:/, $last))[0];
-    system($pwd_mkdb, "-u", $user, $etc_passwd);
+    system(@pwd_mkdb, "-u", $user, $etc_passwd);
     if ($?) {
 	warn "$last\n";
-	warn "``$pwd_mkdb'' failed\n";
+	warn "``pwd_mkdb'' failed\n";
 	exit($? >> 8);
     }
 }
