@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.13 1996/11/04 09:00:09 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.14 1996/11/05 04:42:30 tholo Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -896,7 +896,9 @@ ttioctl(tp, cmd, data, flag, p)
 
 		if (!isctty(p, tp))
 			return (ENOTTY);
-		else if (pgrp == NULL || pgrp->pg_session != p->p_session)
+		else if (pgrp == NULL)
+			return (EINVAL);
+		else if (pgrp->pg_session != p->p_session)
 			return (EPERM);
 		tp->t_pgrp = pgrp;
 		break;
