@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.140 2003/01/24 11:11:17 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.141 2003/01/27 15:42:29 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1400,6 +1400,11 @@ main(int argc, char *argv[])
 			    sizeof(rulesetname))
 				errx(1, "ruleset name '%s' too long", p);
 			free(t); /* not p */
+		}
+		if (loadopt & PFCTL_FLAG_ALL) {
+			loadopt &= ~PFCTL_FLAG_ALL;
+			loadopt |= PFCTL_FLAG_FILTER;
+			loadopt |= PFCTL_FLAG_NAT;
 		}
 	}
 
