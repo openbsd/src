@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.39 1999/03/05 02:02:29 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.40 1999/03/17 18:45:08 deraadt Exp $
 # 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
@@ -134,6 +134,9 @@ dma*	at sbus? slot ? offset ?			# SBus SCSI
 esp*	at sbus? slot ? offset ? flags 0xff0f		# two flavours
 esp*	at dma? flags 0xff0f				# depending on model
 
+#sun4c, sun4m
+isp*	at sbus? slot ? offset ?
+
 # sun4m Ethernet - an AMD 7990 LANCE behind
 # specialized DMA glue
 ledma0	at sbus0 slot ? offset ?			# sun4m on-board
@@ -254,6 +257,7 @@ cgfourteen0	at obio0			# sun4m
 scsibus* at esp?
 scsibus* at si?
 scsibus* at sw?
+scsibus* at isp?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
