@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.3 1998/12/24 01:30:08 jason Exp $
+$OpenBSD: miidevs,v 1.4 1999/02/08 13:29:04 jason Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -43,6 +43,7 @@ $OpenBSD: miidevs,v 1.3 1998/12/24 01:30:08 jason Exp $
  */
 
 oui AMD				0x00606e	Advanced Micro Devices
+oui DAVICOM			0x006040	Davicom Semiconductor
 oui ICS				0x00057d	Integrated Circuit Systems
 oui INTEL			0x00aa00	Intel
 oui LEVEL1			0x1e0400	Level 1
@@ -58,6 +59,9 @@ oui TI				0x100014	Texas Instruments
 
 /* Advanced Micro Devices PHYs */
 model AMD 79C873		0x0000 Am79C873 10/100 media interface
+
+/* Davicom Semiconductor PHYs */
+model DAVICOM DM9101		0x0000 DM9101 10/100 media interface
 
 /* Integrated Circuit Systems PHYs */
 model ICS 1890			0x0002 ICS1890 10/100 media interface
