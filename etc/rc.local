@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.local,v 1.16 1998/01/11 02:02:08 angelos Exp $
+#	$OpenBSD: rc.local,v 1.17 1998/01/12 00:32:45 mickey Exp $
 
 # site-specific startup actions, daemons, and other things which
 # can be done AFTER your system goes into securemode.  For actions
@@ -21,6 +21,10 @@ fi
 if [ -f /usr/local/sbin/cfsd ]; then
 	echo -n ' cfsd';	/usr/local/sbin/cfsd
 	mount -o port=3049,nfsv2,intr localhost:/null /crypt
+fi
+
+if [ -f /usr/local/sbin/snmpd ]; then
+	echo -n ' snmpd';	/usr/local/sbin/snmpd
 fi
 
 # set pcvt screen saver time to 5min (see scon(1) for more options)
