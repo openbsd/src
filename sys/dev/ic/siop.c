@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.24 2002/12/23 00:42:32 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.25 2003/01/21 00:48:55 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.65 2002/11/08 22:04:41 bouyer Exp $	*/
 
 /*
@@ -1333,6 +1333,7 @@ siop_scsicmd(xs)
 			splx(s);
 			return(TRY_AGAIN_LATER);
 		}
+		bzero(sc->sc_c.targets[target], sizeof(struct siop_target));
 		siop_target =
 		    (struct siop_target*)sc->sc_c.targets[target];
 		siop_target->target_c.status = TARST_PROBING;
