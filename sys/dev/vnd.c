@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.51 2004/06/30 00:13:53 pedro Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.52 2004/06/30 11:33:39 pedro Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -756,7 +756,6 @@ vndioctl(dev, cmd, addr, flag, p)
 	struct vattr vattr;
 	struct nameidata nd;
 	int error, part, pmask, s;
-	size_t len;
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
@@ -783,7 +782,7 @@ vndioctl(dev, cmd, addr, flag, p)
 			return (error);
 
 		if ((error = copyinstr(vio->vnd_file, vnd->sc_file,
-		    sizeof(vnd->sc_file), &len))) {
+		    sizeof(vnd->sc_file), NULL))) {
 			vndunlock(vnd);
 			return (error);
 		}
@@ -923,7 +922,7 @@ vndioctl(dev, cmd, addr, flag, p)
 				return (error);
 
 			if ((error = copyoutstr(vnd->sc_file, vnu->vnu_file,
-			    sizeof(vnu->vnu_file), &len)))
+			    sizeof(vnu->vnu_file), NULL)))
 				return (error);
 
 			vnu->vnu_dev = vattr.va_fsid;
