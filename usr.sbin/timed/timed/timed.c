@@ -1,3 +1,5 @@
+/*	$OpenBSD: timed.c,v 1.9 2001/04/07 19:58:07 ho Exp $	*/
+
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
  * All rights reserved.
@@ -42,7 +44,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.8 $"
+#ident "$Revision: 1.9 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -103,7 +105,7 @@ static struct goodhost {		/* hosts that we trust */
 static char *goodgroup;			/* net group of trusted hosts */
 static void checkignorednets(void);
 static void pickslavenet(struct netinfo *);
-static void add_good_host(char*,char);
+static void add_good_host(const char*,char);
 
 #ifdef sgi
 char *timetrim_fn;
@@ -887,7 +889,7 @@ addnetname(char *name)
 
 /* note a host as trustworthy */
 static void
-add_good_host(char* name,
+add_good_host(const char* name,
 	      char perm)		/* 1=not part of the netgroup */
 {
 	register struct goodhost *ghp;
@@ -922,7 +924,7 @@ get_goodgroup(int force)
 #ifdef HAVENIS
 	struct hosttbl *htp;
 	struct goodhost *ghp, **ghpp;
-	char *mach, *usr, *dom;
+	const char *mach, *usr, *dom;
 #endif
 	struct tms tm;
 
