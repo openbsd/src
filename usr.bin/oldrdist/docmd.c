@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.5 1996/07/25 05:13:47 millert Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.6 1996/07/30 20:34:54 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: docmd.c,v 1.5 1996/07/25 05:13:47 millert Exp $";
+static char *rcsid = "$OpenBSD: docmd.c,v 1.6 1996/07/30 20:34:54 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -148,7 +148,7 @@ doarrow(filev, files, rhost, cmds)
 		signal(SIGPIPE, lostconn);
 		if (!makeconn(rhost))
 			return;
-		if ((fd = open(tempfile, O_RDWR|O_EXCL|O_CREAT, 0666)) == -1 ||
+		if ((fd = mkstemp(tempfile)) == -1 ||
 		    (lfp = fdopen(fd, "w")) == NULL) {
 			if (fd != -1)
 				close(fd);
@@ -399,7 +399,7 @@ dodcolon(filev, files, stamp, cmds)
 	else {
 		int fd;
 
-		if ((fd = open(tempfile, O_RDWR|O_EXCL|O_CREAT, 0666)) == -1 ||
+		if ((fd = mkstemp(tempfile)) == -1 ||
 		    (tfp = fdopen(fd, "w")) == NULL) {
 			if (fd != -1)
 				close(fd);
