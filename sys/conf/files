@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.97 1998/11/06 06:32:14 fgsch Exp $
+#	$OpenBSD: files,v 1.98 1998/11/08 15:09:01 mickey Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -32,6 +32,7 @@ define	fddi
 # "Chipset" attributes.  These are the machine-independent portions
 # of device drivers.
 define	ncr5380sbc	# NCR 5380 SCSI Bus Controller
+define	ncr53c7xx	# NCR 53c7xx SCSI Bus Controller
 define	ncr53c9x	# NCR 53c9x or Emulex ESP SCSI Controller
 define	pdq		# DEC FDDI chipset
 define	dp8390nic	# 8390-family Ethernet controllers
@@ -90,7 +91,7 @@ file	dev/ic/ne2000.c		ne
 
 # 8250/16[45]50-based "com" ports
 device	com: tty
-file	dev/ic/com.c		com & (com_isa | com_commulti | com_pcmcia | com_pica | com_algor) needs-flag
+file	dev/ic/com.c		com & (com_isa | com_commulti | com_pcmcia | com_pica | com_algor | com_gsc) needs-flag
 
 # Cyclades Cyclom multiport serial cards
 device	cy: tty
@@ -98,7 +99,7 @@ file	dev/ic/cy.c		cy & (cy_isa | cy_pci)	needs-flag
 
 # PC parallel ports (XXX what chip?)
 device	lpt
-file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica | lpt_algor) needs-flag
+file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_pica | lpt_algor | lpt_gsc) needs-flag
 
 # VGA
 device	vga: wsconsdev
@@ -167,6 +168,7 @@ file dev/auconv.c			auconv
 file dev/audio.c			audio			needs-flag
 file dev/ccd.c				ccd			needs-flag
 file dev/ic/ncr5380sbc.c		ncr5380sbc
+file dev/ic/ncr53c7xx.c			ncr53c7xx
 file dev/ic/ncr53c9x.c			ncr53c9x
 file dev/ic/pdq.c			pdq
 file dev/ic/pdq_ifsubr.c		pdq
