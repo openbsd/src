@@ -43,6 +43,7 @@
 ./usr/include/pegasos/pte.h
 ./usr/include/pegasos/ptrace.h
 ./usr/include/pegasos/rbus_machdep.h
+./usr/include/pegasos/rdb.h
 ./usr/include/pegasos/reg.h
 ./usr/include/pegasos/reloc.h
 ./usr/include/pegasos/setjmp.h

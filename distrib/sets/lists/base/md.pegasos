@@ -1785,6 +1785,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/pegasos/pte.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/pegasos/ptrace.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/pegasos/rbus_machdep.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/pegasos/rdb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/pegasos/reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/pegasos/reloc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/pegasos/setjmp.ph
