@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.8 2002/07/16 15:51:22 jason Exp $	*/
+/*	$OpenBSD: noct.c,v 1.9 2002/07/16 19:39:17 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -65,6 +65,7 @@
 
 int noct_probe(struct device *, void *, void *);
 void noct_attach(struct device *, struct device *, void *);
+int noct_intr(void *);
 
 int noct_ram_size(struct noct_softc *);
 void noct_ram_write(struct noct_softc *, u_int32_t, u_int64_t);
@@ -94,6 +95,10 @@ void noct_ea_create_thread(void *);
 void noct_ea_thread(void *);
 u_int32_t noct_ea_nfree(struct noct_softc *);
 void noct_ea_start(struct noct_softc *, struct noct_workq *);
+void noct_ea_start_hash(struct noct_softc *, struct noct_workq *,
+    struct cryptop *, struct cryptodesc *);
+void noct_ea_start_des(struct noct_softc *, struct noct_workq *,
+    struct cryptop *, struct cryptodesc *);
 int noct_newsession(u_int32_t *, struct cryptoini *);
 int noct_freesession(u_int64_t);
 int noct_process(struct cryptop *);
@@ -114,7 +119,7 @@ struct cfdriver noct_cd = {
 	0, "noct", DV_DULL
 };
 
-int noct_intr(void *);
+#define	SWAP32(x) (x) = htole32(ntohl((x)))
 
 int
 noct_probe(parent, match, aux)
@@ -838,6 +843,8 @@ noct_ea_init(sc)
 	crypto_register(sc->sc_cid, CRYPTO_MD5, 0, 0,
 	    noct_newsession, noct_freesession, noct_process);
 	crypto_register(sc->sc_cid, CRYPTO_SHA1, 0, 0, NULL, NULL, NULL);
+	crypto_register(sc->sc_cid, CRYPTO_DES_CBC, 0, 0, NULL, NULL, NULL);
+	crypto_register(sc->sc_cid, CRYPTO_3DES_CBC, 0, 0, NULL, NULL, NULL);
 
 	kthread_create_deferred(noct_ea_create_thread, sc);
 
@@ -885,15 +892,25 @@ noct_ea_thread(vsc)
 		while (!SIMPLEQ_EMPTY(&sc->sc_outq)) {
 			q = SIMPLEQ_FIRST(&sc->sc_outq);
 			SIMPLEQ_REMOVE_HEAD(&sc->sc_outq, q, q_next);
+			splx(s);
+
 			crp = q->q_crp;
 			crd = crp->crp_desc;
-
-			if (crd->crd_alg == CRYPTO_MD5)
+			switch (crd->crd_alg) {
+			case CRYPTO_MD5:
 				len = 16;
-			else if (crd->crd_alg == CRYPTO_SHA1)
+				break;
+			case CRYPTO_SHA1:
 				len = 20;
-			else
+				break;
+			default:
 				len = 0;
+				break;
+			}
+
+			bus_dmamap_sync(sc->sc_dmat, q->q_dmamap,
+			    0, q->q_dmamap->dm_mapsize,
+			    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
 			if (len != 0) {
 				if (crp->crp_flags & CRYPTO_F_IMBUF)
@@ -904,11 +921,18 @@ noct_ea_thread(vsc)
 					bcopy(q->q_macbuf, crp->crp_mac, len);
 			}
 
-			splx(s);
+			if (crd->crd_alg == CRYPTO_DES_CBC ||
+			    crd->crd_alg == CRYPTO_3DES_CBC) {
+				if (crp->crp_flags & CRYPTO_F_IMBUF)
+					m_copyback((struct mbuf *)crp->crp_buf,
+					    crd->crd_skip, crd->crd_len,
+					    q->q_buf);
+				else if (crp->crp_flags & CRYPTO_F_IOV)
+					cuio_copyback((struct uio *)crp->crp_buf,
+					    crd->crd_skip, crd->crd_len,
+					    q->q_buf);
+			}
 
-			bus_dmamap_sync(sc->sc_dmat, q->q_dmamap,
-			    0, q->q_dmamap->dm_mapsize,
-			    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->sc_dmat, q->q_dmamap);
 			bus_dmamap_destroy(sc->sc_dmat, q->q_dmamap);
 			bus_dmamem_unmap(sc->sc_dmat, q->q_buf, crd->crd_len);
@@ -940,9 +964,7 @@ noct_ea_start(sc, q)
 {
 	struct cryptop *crp;
 	struct cryptodesc *crd;
-	u_int64_t adr;
-	int s, err, i, rseg;
-	u_int32_t wp;
+	int s, err;
 
 	crp = q->q_crp;
 	crd = crp->crp_desc;
@@ -953,11 +975,40 @@ noct_ea_start(sc, q)
 		goto errout;
 	}
 
-	if (crd->crd_alg != CRYPTO_MD5 &&
-	    crd->crd_alg != CRYPTO_SHA1) {
+	switch (crd->crd_alg) {
+	case CRYPTO_MD5:
+	case CRYPTO_SHA1:
+		noct_ea_start_hash(sc, q, crp, crd);
+		break;
+	case CRYPTO_DES_CBC:
+	case CRYPTO_3DES_CBC:
+		noct_ea_start_des(sc, q, crp, crd);
+		break;
+	default:
 		err = EOPNOTSUPP;
 		goto errout;
 	}
+
+	return;
+
+errout:
+	crp->crp_etype = err;
+	free(q, M_DEVBUF);
+	s = splnet();
+	crypto_done(crp);
+	splx(s);
+}
+
+void
+noct_ea_start_hash(sc, q, crp, crd)
+	struct noct_softc *sc;
+	struct noct_workq *q;
+	struct cryptop *crp;
+	struct cryptodesc *crd;
+{
+	u_int64_t adr;
+	int s, err, i, rseg;
+	u_int32_t wp;
 
 	if (crd->crd_len > 0x4800) {
 		err = ERANGE;
@@ -1026,6 +1077,167 @@ noct_ea_start(sc, q)
 	    offsetof(struct noct_ea_cmd, buf[6]);
 	sc->sc_eacmd[wp].buf[4] = htole32(adr >> 32);
 	sc->sc_eacmd[wp].buf[5] = htole32(adr & 0xffffffff);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_eamap,
+	    (wp * sizeof(struct noct_ea_cmd)), sizeof(struct noct_ea_cmd),
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+	if (++wp == NOCT_EA_ENTRIES)
+		wp = 0;
+	NOCT_WRITE_4(sc, NOCT_EA_Q_PTR, wp);
+	sc->sc_eawp = wp;
+
+	SIMPLEQ_INSERT_TAIL(&sc->sc_chipq, q, q_next);
+	splx(s);
+
+	return;
+
+errout_dmaunload:
+	bus_dmamap_unload(sc->sc_dmat, q->q_dmamap);
+errout_dmadestroy:
+	bus_dmamap_destroy(sc->sc_dmat, q->q_dmamap);
+errout_dmaunmap:
+	bus_dmamem_unmap(sc->sc_dmat, q->q_buf, crd->crd_len);
+errout_dmafree:
+	bus_dmamem_free(sc->sc_dmat, &q->q_dmaseg, rseg);
+errout:
+	crp->crp_etype = err;
+	free(q, M_DEVBUF);
+	s = splnet();
+	crypto_done(crp);
+	splx(s);
+}
+
+void
+noct_ea_start_des(sc, q, crp, crd)
+	struct noct_softc *sc;
+	struct noct_workq *q;
+	struct cryptop *crp;
+	struct cryptodesc *crd;
+{
+	u_int64_t adr;
+	volatile u_int8_t *pb;
+	int s, err, i, rseg;
+	u_int32_t wp;
+	u_int8_t iv[8], key[24];
+
+	if (crd->crd_len > 0x4800) {
+		err = ERANGE;
+		goto errout;
+	}
+
+	if ((crd->crd_len & 3) != 0) {
+		err = ERANGE;
+		goto errout;
+	}
+
+	if (crd->crd_alg == CRYPTO_DES_CBC) {
+		for (i = 0; i < 8; i++)
+			key[i] = key[i + 8] = key[i + 16] = crd->crd_key[i];
+	} else {
+		for (i = 0; i < 24; i++)
+			key[i] = crd->crd_key[i];
+	}
+
+	if (crd->crd_flags & CRD_F_ENCRYPT) {
+		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
+			bcopy(crd->crd_iv, iv, 8);
+		else
+			get_random_bytes(iv, sizeof(iv));
+
+		if (!(crd->crd_flags & CRD_F_IV_PRESENT)) {
+			if (crp->crp_flags & CRYPTO_F_IMBUF)
+				m_copyback((struct mbuf *)crp->crp_buf,
+				    crd->crd_inject, 8, iv);
+			else if (crp->crp_flags & CRYPTO_F_IOV)
+				cuio_copyback((struct uio *)crp->crp_buf,
+				    crd->crd_inject, 8, iv);
+		}
+	} else {
+		if (crd->crd_flags & CRD_F_IV_EXPLICIT)
+			bcopy(crd->crd_iv, iv, 8);
+		else if (crp->crp_flags & CRYPTO_F_IMBUF)
+			m_copydata((struct mbuf *)crp->crp_buf,
+			    crd->crd_inject, 8, iv);
+		else if (crp->crp_flags & CRYPTO_F_IOV)
+			cuio_copydata((struct uio *)crp->crp_buf,
+			    crd->crd_inject, 8, iv);
+	}
+
+	if ((err = bus_dmamem_alloc(sc->sc_dmat, crd->crd_len, PAGE_SIZE, 0,
+	    &q->q_dmaseg, 1, &rseg, BUS_DMA_WAITOK | BUS_DMA_STREAMING)) != 0)
+		goto errout;
+
+	if ((err = bus_dmamem_map(sc->sc_dmat, &q->q_dmaseg, rseg,
+	    crd->crd_len, (caddr_t *)&q->q_buf, BUS_DMA_WAITOK)) != 0)
+		goto errout_dmafree;
+
+	if ((err = bus_dmamap_create(sc->sc_dmat, crd->crd_len, 1,
+	    crd->crd_len, 0, BUS_DMA_WAITOK, &q->q_dmamap)) != 0)
+		goto errout_dmaunmap;
+
+	if ((err = bus_dmamap_load_raw(sc->sc_dmat, q->q_dmamap, &q->q_dmaseg,
+	    rseg, crd->crd_len, BUS_DMA_WAITOK)) != 0)
+		goto errout_dmadestroy;
+
+	if (crp->crp_flags & CRYPTO_F_IMBUF)
+		m_copydata((struct mbuf *)crp->crp_buf,
+		    crd->crd_skip, crd->crd_len, q->q_buf);
+	else if (crp->crp_flags & CRYPTO_F_IOV)
+		cuio_copydata((struct uio *)crp->crp_buf,
+		    crd->crd_skip, crd->crd_len, q->q_buf);
+	else {
+		err = EINVAL;
+		goto errout_dmaunload;
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, q->q_dmamap, 0, q->q_dmamap->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	s = splnet();
+	if (noct_ea_nfree(sc) < 1) {
+		err = ENOMEM;
+		goto errout_dmaunload;
+	}
+	wp = sc->sc_eawp;
+	if (++sc->sc_eawp == NOCT_EA_ENTRIES)
+		sc->sc_eawp = 0;
+
+	for (i = 0; i < EA_CMD_WORDS; i++)
+		sc->sc_eacmd[wp].buf[i] = 0;
+
+	sc->sc_eacmd[wp].buf[0] = EA_0_SI;
+
+	if (crd->crd_flags & CRD_F_ENCRYPT)
+		sc->sc_eacmd[wp].buf[1] = htole32(EA_OP_3DESCBCE);
+	else
+		sc->sc_eacmd[wp].buf[1] = htole32(EA_OP_3DESCBCD);
+
+	/* Source, new buffer just allocated */
+	sc->sc_eacmd[wp].buf[1] |= htole32(crd->crd_len);
+	adr = q->q_dmamap->dm_segs[0].ds_addr;
+	sc->sc_eacmd[wp].buf[2] = htole32(adr >> 32);
+	sc->sc_eacmd[wp].buf[3] = htole32(adr & 0xffffffff);
+
+	/* Dest, same as source. */
+	sc->sc_eacmd[wp].buf[4] = htole32(adr >> 32);
+	sc->sc_eacmd[wp].buf[5] = htole32(adr & 0xffffffff);
+
+	/* IV and key */
+	pb = (volatile u_int8_t *)&sc->sc_eacmd[wp].buf[20];
+	for (i = 0; i < 8; i++)
+		pb[i] = iv[i];
+	SWAP32(sc->sc_eacmd[wp].buf[20]);
+	SWAP32(sc->sc_eacmd[wp].buf[21]);
+	pb = (volatile u_int8_t *)&sc->sc_eacmd[wp].buf[24];
+	for (i = 0; i < 24; i++)
+		pb[i] = key[i];
+	SWAP32(sc->sc_eacmd[wp].buf[24]);
+	SWAP32(sc->sc_eacmd[wp].buf[25]);
+	SWAP32(sc->sc_eacmd[wp].buf[26]);
+	SWAP32(sc->sc_eacmd[wp].buf[27]);
+	SWAP32(sc->sc_eacmd[wp].buf[28]);
+	SWAP32(sc->sc_eacmd[wp].buf[29]);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_eamap,
 	    (wp * sizeof(struct noct_ea_cmd)), sizeof(struct noct_ea_cmd),
@@ -1427,6 +1639,41 @@ out:
 	crypto_kdone(krp);
 }
 
+static const u_int8_t noct_odd_parity[] = {
+	0x01, 0x01, 0x02, 0x02, 0x04, 0x04, 0x07, 0x07,
+	0x08, 0x08, 0x0b, 0x0b, 0x0d, 0x0d, 0x0e, 0x0e,
+	0x10, 0x10, 0x13, 0x13, 0x15, 0x15, 0x16, 0x16,
+	0x19, 0x19, 0x1a, 0x1a, 0x1c, 0x1c, 0x1f, 0x1f,
+	0x20, 0x20, 0x23, 0x23, 0x25, 0x25, 0x26, 0x26,
+	0x29, 0x29, 0x2a, 0x2a, 0x2c, 0x2c, 0x2f, 0x2f,
+	0x31, 0x31, 0x32, 0x32, 0x34, 0x34, 0x37, 0x37,
+	0x38, 0x38, 0x3b, 0x3b, 0x3d, 0x3d, 0x3e, 0x3e,
+	0x40, 0x40, 0x43, 0x43, 0x45, 0x45, 0x46, 0x46,
+	0x49, 0x49, 0x4a, 0x4a, 0x4c, 0x4c, 0x4f, 0x4f,
+	0x51, 0x51, 0x52, 0x52, 0x54, 0x54, 0x57, 0x57,
+	0x58, 0x58, 0x5b, 0x5b, 0x5d, 0x5d, 0x5e, 0x5e,
+	0x61, 0x61, 0x62, 0x62, 0x64, 0x64, 0x67, 0x67,
+	0x68, 0x68, 0x6b, 0x6b, 0x6d, 0x6d, 0x6e, 0x6e,
+	0x70, 0x70, 0x73, 0x73, 0x75, 0x75, 0x76, 0x76,
+	0x79, 0x79, 0x7a, 0x7a, 0x7c, 0x7c, 0x7f, 0x7f,
+	0x80, 0x80, 0x83, 0x83, 0x85, 0x85, 0x86, 0x86,
+	0x89, 0x89, 0x8a, 0x8a, 0x8c, 0x8c, 0x8f, 0x8f,
+	0x91, 0x91, 0x92, 0x92, 0x94, 0x94, 0x97, 0x97,
+	0x98, 0x98, 0x9b, 0x9b, 0x9d, 0x9d, 0x9e, 0x9e,
+	0xa1, 0xa1, 0xa2, 0xa2, 0xa4, 0xa4, 0xa7, 0xa7,
+	0xa8, 0xa8, 0xab, 0xab, 0xad, 0xad, 0xae, 0xae,
+	0xb0, 0xb0, 0xb3, 0xb3, 0xb5, 0xb5, 0xb6, 0xb6,
+	0xb9, 0xb9, 0xba, 0xba, 0xbc, 0xbc, 0xbf, 0xbf,
+	0xc1, 0xc1, 0xc2, 0xc2, 0xc4, 0xc4, 0xc7, 0xc7,
+	0xc8, 0xc8, 0xcb, 0xcb, 0xcd, 0xcd, 0xce, 0xce,
+	0xd0, 0xd0, 0xd3, 0xd3, 0xd5, 0xd5, 0xd6, 0xd6,
+	0xd9, 0xd9, 0xda, 0xda, 0xdc, 0xdc, 0xdf, 0xdf,
+	0xe0, 0xe0, 0xe3, 0xe3, 0xe5, 0xe5, 0xe6, 0xe6,
+	0xe9, 0xe9, 0xea, 0xea, 0xec, 0xec, 0xef, 0xef,
+	0xf1, 0xf1, 0xf2, 0xf2, 0xf4, 0xf4, 0xf7, 0xf7,
+	0xf8, 0xf8, 0xfb, 0xfb, 0xfd, 0xfd, 0xfe, 0xfe,
+};
+
 int
 noct_newsession(sidp, cri)
 	u_int32_t *sidp;
@@ -1443,9 +1690,31 @@ noct_newsession(sidp, cri)
 	if (sc == NULL)
 		return (EINVAL);
 
-	/* Can only handle single operations */
+	/* XXX Can only handle single operations */
 	if (cri->cri_next != NULL)
 		return (EINVAL);
+
+	if (cri->cri_alg == CRYPTO_DES_CBC || cri->cri_alg == CRYPTO_3DES_CBC) {
+		u_int8_t key[24];
+
+		if (cri->cri_alg == CRYPTO_DES_CBC) {
+			if (cri->cri_klen != 64)
+				return (EINVAL);
+			for (i = 0; i < 8; i++)
+				key[i] = key[i + 8] = key[i + 16] =
+				    cri->cri_key[i];
+		} else {
+			if (cri->cri_klen != 192)
+				return (EINVAL);
+			for (i = 0; i < 24; i++)
+				key[i] = cri->cri_key[i];
+		}
+
+		/* Verify key parity */
+		for (i = 0; i < 24; i++)
+			if (key[i] != noct_odd_parity[key[i]])
+				return (ENOEXEC);
+	}
 
 	*sidp = NOCT_SID(sc->sc_dv.dv_unit, 0);
 	return (0);
