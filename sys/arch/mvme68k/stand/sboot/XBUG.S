@@ -1,7 +1,7 @@
-/*	$OpenBSD: XBUG.S,v 1.4 1998/04/02 10:49:05 deraadt Exp $ */
+/*	$OpenBSD: XBUG.S,v 1.5 2001/04/30 00:13:35 deraadt Exp $ */
 
 /*
- * Copyright (c) 1995 Theo de Raadt
+ * Copyright (c) 1989,1990,1995 Theo de Raadt
  * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
