@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.111 2001/12/09 03:46:54 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.112 2001/12/09 04:14:14 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -162,20 +162,13 @@ int	pmapdebug = 0;
 /*
  * Internal helpers.
  */
-static __inline struct pvlist *pvhead __P((int));
-static __inline struct pvlist *pvalloc __P((void));
-static __inline void pvfree __P((struct pvlist *));
-
-#if defined(SUN4M)
-static u_int	VA2PA __P((caddr_t));
-#endif
+static __inline struct pvlist *pvhead(int);
 
 /*
  * Given a page number, return the head of its pvlist.
  */
 static __inline struct pvlist *
-pvhead(pnum)
-	int pnum;
+pvhead(int pnum)
 {
 	int bank, off;
 
@@ -187,24 +180,6 @@ pvhead(pnum)
 }
 
 struct pool pvpool;
-
-/*
- * Wrappers around some memory allocation.
- * XXX - the plan is to make them non-sleeping.
- */
-
-static __inline struct pvlist *
-pvalloc()
-{
-	return pool_get(&pvpool, PR_WAITOK);
-}
-
-static __inline void
-pvfree(pv)
-	struct pvlist *pv;
-{
-	pool_put(&pvpool, pv);
-}
 
 #if defined(SUN4M)
 /*
@@ -561,6 +536,7 @@ void 		(*pmap_rmu_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
  */
 
 #if defined(SUN4M)
+static u_int	VA2PA(caddr_t);
 
 /*
  * Macros which implement SRMMU TLB flushing/invalidation
@@ -583,8 +559,7 @@ void 		(*pmap_rmu_p) __P((struct pmap *, vaddr_t, vaddr_t, int, int));
  * during bootup to interact with the ROM's initial L1 mapping of the kernel.
  */
 static u_int
-VA2PA(addr)
-	caddr_t addr;
+VA2PA(caddr_t addr)
 {
 	u_int pte;
 
@@ -2068,7 +2043,7 @@ pv_unlink4_4c(pv, pm, va)
 			pv->pv_va = npv->pv_va;
 			pv->pv_flags &= ~PV_NC;
 			pv->pv_flags |= npv->pv_flags & PV_NC;
-			pvfree(npv);
+			pool_put(&pvpool, npv);
 		} else {
 			/*
 			 * No mappings left; we still need to maintain
@@ -2092,7 +2067,7 @@ pv_unlink4_4c(pv, pm, va)
 				break;
 		}
 		prev->pv_next = npv->pv_next;
-		pvfree(npv);
+		pool_put(&pvpool, npv);
 	}
 	if (pv->pv_flags & PV_ANC && (pv->pv_flags & PV_NC) == 0) {
 		/*
@@ -2165,7 +2140,9 @@ pv_link4_4c(pv, pm, va, nc)
 			}
 		}
 	}
-	npv = pvalloc();
+	npv = pool_get(&pvpool, PR_NOWAIT);
+	if (npv == NULL)
+		panic("pvpool exhausted");
 	npv->pv_next = pv->pv_next;
 	npv->pv_pmap = pm;
 	npv->pv_va = va;
@@ -2359,7 +2336,7 @@ pv_unlink4m(pv, pm, va)
 			pv->pv_va = npv->pv_va;
 			pv->pv_flags &= ~PV_C4M;
 			pv->pv_flags |= (npv->pv_flags & PV_C4M);
-			pvfree(npv);
+			pool_put(&pvpool, npv);
 		} else {
 			/*
 			 * No mappings left; we still need to maintain
@@ -2383,7 +2360,7 @@ pv_unlink4m(pv, pm, va)
 				break;
 		}
 		prev->pv_next = npv->pv_next;
-		pvfree(npv);
+		pool_put(&pvpool, npv);
 	}
 	if ((pv->pv_flags & (PV_C4M|PV_ANC)) == (PV_C4M|PV_ANC)) {
 		/*
@@ -2417,12 +2394,11 @@ pv_link4m(pv, pm, va, nc)
 	vaddr_t va;
 	int nc;
 {
-	struct pvlist *npv, *mpv;
+	struct pvlist *npv;
 	int ret;
 
 	ret = nc ? SRMMU_PG_C : 0;
 
-retry:
 	if (pv->pv_pmap == NULL) {
 		/* no pvlist entries yet */
 		pmap_stats.ps_enter_firstpv++;
@@ -2434,21 +2410,6 @@ retry:
 		 */
 		pv->pv_flags |= nc ? 0 : PV_C4M;
 		return (ret);
-	}
-
-	/*
-	 * We do the malloc early so that we catch all changes that happen
-	 * during the (possible) sleep.
-	 */
-	mpv = pvalloc();
-	if (pv->pv_pmap == NULL) {
-		/*
-		 * XXX - remove this printf some day when we know that
-		 * can/can't happen.
-		 */
-		printf("pv_link4m: pv changed during sleep!\n");
-		pvfree(mpv);
-		goto retry;
 	}
 
 	/*
@@ -2489,11 +2450,14 @@ retry:
 		}
 	}
 
-	mpv->pv_next = pv->pv_next;
-	mpv->pv_pmap = pm;
-	mpv->pv_va = va;
-	mpv->pv_flags = nc ? 0 : PV_C4M;
-	pv->pv_next = mpv;
+	npv = pool_get(&pvpool, PR_NOWAIT);
+	if (npv == NULL)
+		panic("pvpool exhausted");
+	npv->pv_next = pv->pv_next;
+	npv->pv_pmap = pm;
+	npv->pv_va = va;
+	npv->pv_flags = nc ? 0 : PV_C4M;
+	pv->pv_next = npv;
 	return (ret);
 }
 #endif
@@ -4265,7 +4229,7 @@ pmap_page_protect4_4c(pg, prot)
 	nextpv:
 		npv = pv->pv_next;
 		if (pv != pv0)
-			pvfree(pv);
+			pool_put(&pvpool, pv);
 		if ((pv = npv) == NULL)
 			break;
 	}
@@ -4598,7 +4562,7 @@ pmap_page_protect4m(pg, prot)
 
 		npv = pv->pv_next;
 		if (pv != pv0)
-			pvfree(pv);
+			pool_put(&pvpool, pv);
 		pv = npv;
 	}
 	pv0->pv_pmap = NULL;
@@ -4866,7 +4830,7 @@ pmap_enk4_4c(pm, va, prot, flags, pv, pteproto)
 		for (i = 0; i < NSEGRG; i++) {
 			setsegmap(tva, rp->rg_segmap[i].sg_pmeg);
 			tva += NBPSG;
-		};
+		}
 	}
 #endif
 	if (sp->sg_pmeg != seginval && (tpte = getpte4(va)) & PG_V) {
