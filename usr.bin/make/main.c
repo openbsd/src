@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: main.c,v 1.62 2003/06/03 02:56:11 millert Exp $ */
+/*	$OpenBSD: main.c,v 1.63 2004/01/30 17:37:37 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ static LIST		varstoprint;	/* list of variables to print */
 int			maxJobs;	/* -j argument */
 static int		maxLocal;	/* -L argument */
 bool 		compatMake;	/* -B argument */
-bool 		debug;		/* -d flag */
+int 		debug;		/* -d flag */
 bool 		noExecute;	/* -n flag */
 bool 		keepgoing;	/* -k flag */
 bool 		queryFlag;	/* -q flag */
