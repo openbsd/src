@@ -1,4 +1,4 @@
-/*	$OpenBSD: tputs.c,v 1.2 1996/08/02 00:18:48 tholo Exp $	*/
+/*	$OpenBSD: tputs.c,v 1.3 1996/08/07 03:23:07 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tputs.c,v 1.2 1996/08/02 00:18:48 tholo Exp $";
+static char rcsid[] = "$OpenBSD: tputs.c,v 1.3 1996/08/07 03:23:07 tholo Exp $";
 #endif
 
 #include <stdlib.h>
@@ -66,14 +66,13 @@ tputs(cp, count, outc)
 	if (*cp != '$')
 	    (*outc)(*cp++);
 	else {
-	    cp++;
-	    if (*cp != '<') {
+	    if (*++cp != '<') {
 		(*outc)('$');
 		(*outc)(*cp);
 	    }
 	    else {
 		cp++;
-		if (*cp != '.' || strchr(cp, '>') == NULL || !isdigit(*cp)) {
+		if ((!isdigit(*cp) && *cp != '.') || strchr(cp, '>') == NULL) {
 		    (*outc)('$');
 		    (*outc)('<');
 		    continue;
@@ -95,6 +94,8 @@ tputs(cp, count, outc)
 		if (*cp == '/')
 		    cp++;
 	    }
+	    if (*cp)
+		cp++;
 	}
     }
 
