@@ -1,4 +1,4 @@
-/*	$OpenBSD: rexecd.c,v 1.20 2002/03/16 18:44:48 millert Exp $	*/
+/*	$OpenBSD: rexecd.c,v 1.21 2002/03/16 19:48:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rexecd.c	5.12 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$OpenBSD: rexecd.c,v 1.20 2002/03/16 18:44:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: rexecd.c,v 1.21 2002/03/16 19:48:57 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -286,6 +286,8 @@ doit(f, fromp)
 		err(1, "unable to set user context");
 	if (auth_approval(as, lc, pwd->pw_name, "rexec") <= 0)
 		err(1, "approval failure");
+	auth_close(as);
+	login_close(lc);
 
 	cp = strrchr(pwd->pw_shell, '/');
 	if (cp)
