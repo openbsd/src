@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.1 2002/10/04 16:30:22 mickey Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.2 2003/01/25 00:04:19 jmc Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -67,31 +67,31 @@ and
 If
 given,
 .Ar all
-creates device files for all devices on sparc.
+creates device files for all devices on the hppa.
 If units are expected for a device,
 .Nm MAKEDEV
 will supply the standard numbers.
 The
 .Ar std
-argument creates only the standard devices for sparc.
+argument creates only the standard devices for the hppa.
 Finally
 .Ar local
 is for devices specific to the local site, and executes the shell file
 .Pa MAKEDEV.local .
 .Pp
-The sparc supports the following devices.
+The hppa supports the following devices.
 Where a device name is followed by a hash sign ("#"), the hash sign
 must be replaced by a unit number.
 .Pp
 .Sy Pseudo\-names
 .Bl -tag -width openprom indent -compact
 .It Ar all
-All known devices for sparc.
+All known devices for the hppa.
 .It Ar std
 The standard devices (console, drum, fd/*, klog, kmem, mem, null, stderr,
-stdin, stdout, tty, zero)
+stdin, stdout, tty, zero).
 .It Ar local
-Configuration specific devices
+Configuration specific devices.
 .It Ar wscons
 All wscons-related devices.
 .El
@@ -99,54 +99,56 @@ All wscons-related devices.
 .Sy Device\-names
 .Bl -tag -width openprom indent -compact
 .It Ar audio
-Audio device
+Audio device.
 .It Ar bpf#
-Berkeley packet filters
+Berkeley packet filters.
 .It Ar ccd#
-Concatenated disk drives
+.Dq Concatenated
+disk drives.
 .It Ar cd#
-SCSI CD-ROM drives
+SCSI CD-ROM drives.
 .It Ar ch#
-SCSI media changer drives
+SCSI media changer drives.
 .It Ar cua#
-Serial ports
+Serial ports.
 .It Ar fd#
-.Dq floppy
-disk drives
+.Dq Floppy
+disk drives.
 .It Ar lkm
 Loadable kernel modules.
 .It Ar pty#
-Set of 16 master and slave pseudo terminals
+Set of 16 master and slave pseudo terminals.
 .It Ar raid#
-RAIDframe disk drives
+RAIDframe disk drives.
 .It Ar random
-in-kernel random number generator
+In-kernel random number generator.
 .It Ar rd#
-"Ramdisk" pseudo-disks
+.Dq Ramdisk
+pseudo-disks.
 .It Ar sd#
-SCSI disk drives
+SCSI disk drives.
 .It Ar ses#
-SCSI SES/SAF-TE devices
+SCSI SES/SAF-TE devices.
 .It Ar st#
-SCSI tape drives
+SCSI tape drives.
 .It Ar tty#
-Serial ports
+Serial ports.
 .It Ar ttyC#
-wscons console screens
+Wscons console screens.
 .It Ar tun#
-Network tunnel devices
+Network tunnel devices.
 .It Ar uk#
-.Dq unknown SCSI
-devices
+.Dq Unknown SCSI
+devices.
 .It Ar vnd#
-.Dq file
-pseudo-disks
+.Dq File
+pseudo-disks.
 .It Ar wskbd
 Keyboard devices for wscons.
 .It Ar wsmouse
 Mouse devices for wscons.
 .It Ar xfs#
-XFS filesystem devices
+XFS filesystem devices.
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact

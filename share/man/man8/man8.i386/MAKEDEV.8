@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.20 2002/10/02 17:40:21 miod Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.21 2003/01/25 00:04:19 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -117,9 +117,9 @@ must be replaced by a unit number.
 All known devices for the i386.
 .It Ar std
 The standard devices (console, drum, fd/*, klog, kmem, mem, null, stderr,
-stdin, stdout, tty, zero)
+stdin, stdout, tty, zero).
 .It Ar local
-Configuration specific devices
+Configuration specific devices.
 .It Ar wscons
 All wscons-related devices.
 .El
@@ -127,62 +127,63 @@ All wscons-related devices.
 .Sy Device\-names
 .Bl -tag -width wsmouse indent -compact
 .It Ar apm
-power management devices
+Power management devices.
 .It Ar audio
-audio device
+Audio device.
 .It Ar bktr#
-Brooktree 848 driver
+Brooktree 848 driver.
 .It Ar bpf#
-packet filter
+Berkeley packet filters.
 .It Ar ccd#
-concatenated disk devices
+.Dq Concatenated
+disk devices.
 .It Ar cd#
-SCSI CD-ROM drives
+SCSI CD-ROM drives.
 .It Ar fd#
-.Dq floppy
-disk drives (3 1/2, 5 1/4)
+.Dq Floppy
+disk drives (3 1/2, 5 1/4).
 .It Ar joy#
-joystick driver
+Joystick driver.
 .It Ar lkm
-loadable kernel modules interface
+Loadable kernel modules interface.
 .It Ar lpa#
-interruptless parallel port driver
+Interruptless parallel port driver.
 .It Ar lpt#
-stock parallel port device driver
+Stock parallel port device driver.
 .It Ar mcd#
-Mitsumi CD-ROM drives
+Mitsumi CD-ROM drives.
 .It Ar pty#
-set of 16 master and slave pseudo terminals
+Set of 16 master and slave pseudo terminals.
 .It Ar random
-in-kernel random number generator
+In-kernel random number generator.
 .It Ar rd#
-.Dq ramdisk
-pseudo-disks
+.Dq Ramdisk
+pseudo-disks.
 .It Ar sd#
-SCSI disk drives
+SCSI disk drives.
 .It Ar speaker
-pc speaker
+Pc speaker.
 .It Ar ss#
-SCSI scanners
+SCSI scanners.
 .It Ar st#
-SCSI tape drives
+SCSI tape drives.
 .It Ar tty#
-standard PC COM ports
+Standard PC COM ports.
 .It Ar ttyC#
-wscons console screens
+Wscons console screens.
 .It Ar tun#
-network tunnel driver
+Network tunnel driver.
 .It Ar uk#
-.Dq unknown SCSI
-devices
+.Dq Unknown SCSI
+devices.
 .It Ar vnd#
-.Dq file
-pseudo-disks
+.Dq File
+pseudo-disks.
 .It Ar wd#
-.Dq winchester
-disk drives (ST506, IDE, ESDI, RLL etc.)
+.Dq Winchester
+disk drives (ST506, IDE, ESDI, RLL etc.).
 .It Ar wdt#
-watchdog timer
+Watchdog timer.
 .It Ar wskbd
 Keyboard devices for wscons.
 .It Ar wsmouse
@@ -190,7 +191,7 @@ Mouse devices for wscons.
 .It Ar wsmux
 Multiplexor devices for wscons.
 .It Ar wt#
-QIC-interfaced (i.e. not SCSI) 3M cartridge tape
+QIC-interfaced (i.e. not SCSI) 3M cartridge tape.
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.11 2002/04/08 21:40:29 miod Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.12 2003/01/25 00:04:19 jmc Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -116,56 +116,56 @@ must be replaced by a unit number.
 All known devices for the hp300.
 .It Ar std
 The standard devices (console, drum, fd/*, klog, kmem, mem, null, stderr,
-stdin, stdout, tty, zero)
+stdin, stdout, tty, zero).
 .It Ar local
-Configuration specific devices
+Configuration specific devices.
 .El
 .Pp
 .Sy Device\-names
 .Bl -tag -width indent -compact
 .It Ar ct#
-HP300 HP-IB cartridge tape
+HP300 HP-IB cartridge tape.
 .It Ar ccd#
-.Dq concatenated
-pseudo-disks
+.Dq Concatenated
+pseudo-disks.
 .It Ar hd#
-HP300 HP-IB disks
+HP300 HP-IB disks.
 .It Ar mt#
-(Magnetic) 9-track reel tape
+(Magnetic) 9-track reel tape.
 .It Ar sd#
-HP300 SCSI disks
+HP300 SCSI disks.
 .It Ar st#
-HP300 SCSI tape
+HP300 SCSI tape.
 .It Ar vnd#
-.Dq file
-pseudo-disks
+.Dq File
+pseudo-disks.
 .It Ar rd#
-.Dq ramdisk
-pseudo-disks
+.Dq Ramdisk
+pseudo-disks.
 .It Ar dca#
-HP200/300 single port serial interface
+HP200/300 single port serial interface.
 .It Ar dcm#
-HP200/300 4 port serial mux interface
+HP200/300 4 port serial mux interface.
 .It Ar apci#
-HP400 3 port/keyboard Apollo mux interface
+HP400 3 port/keyboard Apollo mux interface.
 .It Ar pty#
-set of 16 master and slave pseudo terminals
+Set of 16 master and slave pseudo terminals.
 .It Ar grf#
-raw interface to HP300 graphics devices
+Raw interface to HP300 graphics devices.
 .It Ar ite#
-terminal emulator interface to HP300 graphics devices
+Terminal emulator interface to HP300 graphics devices.
 .It Ar hil
-HP300 HIL input devices
+HP300 HIL input devices.
 .It Ar ppi#
-HP-IB plotters
+HP-IB plotters.
 .It Ar bpf#
-packet filter
+Berkeley packet filters.
 .It Ar tun#
-network tunnel driver
+Network tunnel driver.
 .It Ar lkm
-loadable kernel modules interface
+Loadable kernel modules interface.
 .It Ar random
-in-kernel random number generator
+In-kernel random number generator.
 .El
 .Pp
 .Sh FILES

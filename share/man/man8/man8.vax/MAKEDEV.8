@@ -1,4 +1,4 @@
-.\"	$OpenBSD: MAKEDEV.8,v 1.11 2002/10/02 17:40:22 miod Exp $
+.\"	$OpenBSD: MAKEDEV.8,v 1.12 2003/01/25 00:04:20 jmc Exp $
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -85,96 +85,98 @@ must be replaced by a unit number.
 All known devices for the vax.
 .It Ar std
 The standard devices (console, drum, fd/*, klog, kmem, mem, null, stderr,
-stdin, stdout, tty, zero)
+stdin, stdout, tty, zero).
 .It Ar local
-Configuration specific devices
+Configuration specific devices.
 .El
 .Pp
 .Sy Device\-names
 .Bl -tag -width indent -compact
 .It Ar ad#
-Unibus interface to data translation a/d converter
+Unibus interface to data translation a/d converter.
 .It Ar bpf#
-Berkeley Packet Filters
+Berkeley Packet Filters.
 .It Ar ccd#
-``Concatenated'' pseudo-disks
+.Dq Concatenated
+pseudo-disks.
 .It Ar cd#
-SCSI CD-ROM drives
+SCSI CD-ROM drives.
 .It Ar ch#
-SCSI changer
+SCSI changer.
 .It Ar ct#
-Unibus parallel interface to CAT typesetter
+Unibus parallel interface to CAT typesetter.
 .It Ar dh#
-Unibus dh11 and emulations (e.g. Able dmax, Emulex cs-11)
+Unibus dh11 and emulations (e.g. Able dmax, Emulex cs-11).
 .It Ar dhu#
-Unibus dhu11
+Unibus dhu11.
 .It Ar dmf#
-Unibus dmf32
+Unibus dmf32.
 .It Ar dmz#
-Unibus dmz32
+Unibus dmz32.
 .It Ar dn#
-Unibus dn11 and emulations (e.g. Able Quadracall)
+Unibus dn11 and emulations (e.g. Able Quadracall).
 .It Ar dz#
-Unibus dz11 and dz32
+Unibus dz11 and dz32.
 .It Ar hk#
-Unibus rk06 and rk07
+Unibus rk06 and rk07.
 .It Ar hp#
-Massbus rm??
+Massbus rm??.
 .It Ar ht#
-Massbus tm03 & tu??
+Massbus tm03 & tu??.
 .It Ar ik#
-Unibus interface to ikonas frame buffer
+Unibus interface to ikonas frame buffer.
 .It Ar lp#
-Unibus lp11 parallel interface
+Unibus lp11 parallel interface.
 .It Ar md#
-Memory pseudo-disk devices
+.Dq Memory
+pseudo-disk devices.
 .It Ar mt#
-MSCP tape drives (TU81, TK50, etc.)
+MSCP tape drives (TU81, TK50, etc.).
 .It Ar np#
 Unibus Ethernet co-processor interface, for downloading.
 .It Ar ps#
-Unibus interface to e&s picture system 2
+Unibus interface to e&s picture system 2.
 .It Ar pty#
-Set of master and slave pseudo terminals
+Set of master and slave pseudo terminals.
 .It Ar qv#
-QVSS (MicroVAX) display
+QVSS (MicroVAX) display.
 .It Ar ra#
-Unibus uda50 w/ ra??
+Unibus uda50 w/ ra??.
 .It Ar random
-Random number generator
+Random number generator.
 .It Ar rb#
-730 idc w/ rb80 and/or rb02
+730 idc w/ rb80 and/or rb02.
 .It Ar rl#
-Unibus rl02
+Unibus rl02.
 .It Ar rx#
-Unibus rx211 floppy disk
+Unibus rx211 floppy disk.
 .It Ar sd#
-SCSI disks
+SCSI disks.
 .It Ar ss#
-SCSI scanner
+SCSI scanner.
 .It Ar st#
-SCSI tape drives
+SCSI tape drives.
 .It Ar tm#
-Unibus tm11 & te10 emulations (e.g. Emulex tc-11)
+Unibus tm11 & te10 emulations (e.g. Emulex tc-11).
 .It Ar ts#
-Unibus ts11
+Unibus ts11.
 .It Ar ttyv0
-QVSS (MicroVAX) display reserved pty
+QVSS (MicroVAX) display reserved pty.
 .It Ar uk#
-SCSI unknown
+SCSI unknown.
 .It Ar up#
-Other Unibus devices (e.g. on Emulex sc-21v controller)
+Other Unibus devices (e.g. on Emulex sc-21v controller).
 .It Ar ut#
-Unibus TU45 emulations (e.g. 9700)
+Unibus TU45 emulations (e.g. 9700).
 .It Ar uu#
-TU58 cassettes on dl11 controller
+TU58 cassettes on dl11 controller.
 .It Ar va#
-Unibus Varian parallel interface
+Unibus Varian parallel interface.
 .It Ar vnd#
-.Dq file
-pseudo-disks
+.Dq File
+pseudo-disks.
 .It Ar vp#
-Unibus Versatec parallel interface
+Unibus Versatec parallel interface.
 .El
 .Sh FILES
 .Bl -tag -width /dev -compact
