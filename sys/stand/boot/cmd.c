@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.41 1998/06/23 05:14:49 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.42 1998/07/13 16:19:26 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Michael Shalayeff
@@ -219,6 +219,9 @@ readline(buf, to)
 	register char *buf;
 	int	to;
 {
+#ifdef DEBUG
+	extern int debug;
+#endif
 	register char *p = buf, *pe = buf, ch;
 	register time_t tt;
 
@@ -227,7 +230,7 @@ readline(buf, to)
 		tt = getsecs() + to;
 #ifdef DEBUG
 		if (debug > 2)
-			printf ("readline: timeout(%d) at %lu\n", to, tt);
+			printf ("readline: timeout(%d) at %u\n", to, tt);
 #endif
 		while (getsecs() < tt && !cnischar())
 			;
