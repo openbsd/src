@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.2 2003/12/23 15:50:12 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.3 2003/12/23 16:07:37 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -83,7 +83,8 @@ kroute_msg(int fd, int action, struct kroute *kroute)
 
 retry:
 	if ((n = write(fd, &r, sizeof(r))) == -1) {
-		if (errno == ESRCH) {
+		switch (errno) {
+		case ESRCH:
 			if (r.hdr.rtm_type == RTM_CHANGE) {
 				r.hdr.rtm_type = RTM_ADD;
 				goto retry;
@@ -91,7 +92,10 @@ retry:
 				logit(LOG_INFO, "route vanished before delete");
 				return (0);
 			}
-		} else {
+			break;
+		case EEXIST:	/* connected route. ignore */
+			return (0);
+		default:
 			logit(LOG_INFO, "kroute_msg: %s", strerror(errno));
 			return (-1);
 		}
