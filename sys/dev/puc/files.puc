@@ -1,0 +1,7 @@
+#	$OpenBSD: files.puc,v 1.1 1999/10/26 13:08:44 downsj Exp $
+#
+# Config file and device description for machine-independent PUC drivers.
+# Requires PCI to be defined first.
+
+attach	com at puc with com_puc
+file	dev/puc/com_puc.c		com_puc | pccom_puc
