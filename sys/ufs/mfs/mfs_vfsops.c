@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vfsops.c,v 1.14 2001/04/12 17:16:52 csapuntz Exp $	*/
+/*	$OpenBSD: mfs_vfsops.c,v 1.15 2001/07/05 08:24:33 espie Exp $	*/
 /*	$NetBSD: mfs_vfsops.c,v 1.10 1996/02/09 22:31:28 christos Exp $	*/
 
 /*
@@ -153,7 +153,8 @@ mfs_initminiroot(base)
 	mountroot = mfs_mountroot;
 	mfs_rootbase = base;
 	mfs_rootsize = fs->fs_fsize * fs->fs_size;
-	rootdev = makedev(255, mfs_minor++);
+	rootdev = makedev(255, mfs_minor);
+	mfs_minor++;
 	return (mfs_rootsize);
 }
 
@@ -210,8 +211,9 @@ mfs_mount(mp, path, data, ndp, p)
 	if (error)
 		return (error);
 	devvp->v_type = VBLK;
-	if (checkalias(devvp, makedev(255, mfs_minor++), (struct mount *)0))
+	if (checkalias(devvp, makedev(255, mfs_minor), (struct mount *)0))
 		panic("mfs_mount: dup dev");
+	mfs_minor++;
 	mfsp = (struct mfsnode *)malloc(sizeof *mfsp, M_MFSNODE, M_WAITOK);
 	devvp->v_data = mfsp;
 	mfsp->mfs_baseoff = args.base;
