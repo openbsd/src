@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.8 2004/09/18 20:37:12 henning Exp $
+.\" $OpenBSD: ntpd.8,v 1.9 2004/09/18 23:22:13 henning Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm ntpd
 .Bk -words
-.Op Fl dsS
+.Op Fl dSs
 .Op Fl f Ar file
 .Ek
 .Sh DESCRIPTION
@@ -41,6 +41,7 @@ as described in RFC 1305.
 uses the
 .Xr adjtime 2 ,
 system call to correct the local system time without causing time jumps.
+.Pp
 .Nm
 is usually started at boot time, and can be enabled by
 setting the following in
@@ -75,14 +76,29 @@ Use
 as the configuration file,
 instead of the default
 .Pa /etc/ntpd.conf .
-.It Fl s
-Set the time immediately once at startup if the local clock is off by more
-than 180 seconds. Allows for a large time correction,
-eliminating the need to run rdate before starting
-.Nm .
 .It Fl S
 Do not set the time immediately at startup.
 This is the default.
+.It Fl s
+Set the time immediately at startup if the local clock is off by more
+than 180 seconds.
+Allows for a large time correction,
+eliminating the need to run
+.Xr rdate 8
+before starting
+.Nm .
+Currently, the
+.Fl s
+option is added unconditionally in
+.Xr rc 8 .
+Make sure to specify the
+.Fl S
+option
+(add/edit
+.Va ntpd_flags
+in
+.Xr rc.conf.local 8 )
+if this behaviour is not desired.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/ntpd.confXXX" -compact
@@ -93,7 +109,10 @@ configuration file
 .El
 .Sh SEE ALSO
 .Xr date 1 ,
+.Xr adjtime 2 ,
 .Xr ntpd.conf 5 ,
+.Xr rc 8 ,
+.Xr rc.conf 8 ,
 .Xr rdate 8 ,
 .Xr timed 8
 .Rs
