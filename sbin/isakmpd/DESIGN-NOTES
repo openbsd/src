@@ -1,5 +1,5 @@
-$OpenBSD: DESIGN-NOTES,v 1.7 1999/03/24 14:59:03 niklas Exp $
-$EOM: DESIGN-NOTES,v 1.39 1999/03/08 00:39:27 niklas Exp $
+$OpenBSD: DESIGN-NOTES,v 1.8 1999/04/05 21:03:12 niklas Exp $
+$EOM: DESIGN-NOTES,v 1.40 1999/04/02 01:08:54 niklas Exp $
 
 General coding conventions
 --------------------------
@@ -22,7 +22,7 @@ sysdep.h as the first isakmpd include file.  Primary target systems are OpenBSD
 and Linux, but porting to Microsoft Windows variants should not be made
 overly difficult.
 
-Note places which needs reconsiderations with comments starting with the
+Note places which need reconsiderations with comments starting with the
 string "XXX", e.g.
 
 /* XXX Not implemented yet.  */
@@ -69,10 +69,12 @@ math_ec2n.c	Elliptic curve math.
 math_group.c	Group math.
 message.c	Generic message handling.
 pf_encap.c	Interface with PF_ENCAP sockets (for use with IPSEC).
+pf_key_v2.c	Interface with PF_KEY sockets (for use with IPSEC).
 pkcs.c		PKCS#1: RSA Encryption Standard.
 prf.c		Pseudo random functions.
 sa.c		Handling of Security Associations (SAs).
-sysdep-*.c	System dependent definitions.
+sysdep/*/sysdep.c
+		System dependent stuff.
 timer.c		Timed events.
 transport.c	Generic transport handling.
 udp.c		The UDP transport.
@@ -132,6 +134,13 @@ ID would be the struct sa address.  Another idea would be some kind of sequence
 number, either global or per-destination.  Right now I have introduced a name
 for SAs, non-unique, that binds together SAs and their configuration
 parameters.  This means both manual exchange runs and rekeying are simpler.
+Both struct exchange and struct sa does hold a reference count, but this is
+not entirely like a reference count in the traditional meaning where
+every reference gets counted.  Perhaps it will be in the future, but for now
+we increment the count at allocation time and at times we schedule events
+tha might happen sometime in the future where we will need the structure.
+These events then realeases its reference when done.  This way intermediate
+deallocation of these structures are OK.
 
 The basic idea of control flow
 ------------------------------
@@ -151,10 +160,12 @@ does not just advance the state through a sequential single path).  The
 informational exchange is such a special case, I am not sure it's interesting
 to treat as an exchange in the logic of the implementation.  The only reason
 to do so would be to keep the implementation tightly coupled to the
-specification for ease of understanding.
+specification for ease of understanding.  As the code looks now, exchanges
+*are* an abstraction in the code, and it has proven to be a rather nice
+way of having things.
 
 When the exchange has been found the exchange engine "runs" a script which
-steps forward for each incoming message.
+steps forward for each incoming message, and on each reply to them.
 
 Payload parsing details
 -----------------------
@@ -309,7 +320,7 @@ Otherwise we today support IPV4_ADDR & IPV4_ADDR_SUBNET as ID types.
 License to use
 --------------
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
