@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.2 2003/09/29 16:05:34 henning Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.3 2003/09/30 00:18:40 jose Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -98,6 +98,8 @@ main(int argc, char *argv[])
 
 	if (i == 0)
 		errx(1, "no sensors found");
+
+	openlog("sensorsd", LOG_PID | LOG_NDELAY, LOG_DAEMON);
 
 	if (configfile == NULL)
 		if (asprintf(&configfile, "/etc/sensorsd.conf") == -1)
