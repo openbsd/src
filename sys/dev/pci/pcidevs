@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.571 2002/12/19 20:05:00 henning Exp $
+	$OpenBSD: pcidevs,v 1.572 2003/01/02 20:18:53 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1965,6 +1965,7 @@ product PROMISE PDC20271	0x6269	PDC20271
 product PROMISE PDC20275	0x1275	PDC20275
 product PROMISE PDC20276	0x5275	PDC20276
 product PROMISE PDC20277	0x7275	PDC20277
+product PROMISE PDC20376	0x3376	PDC20376
 
 /* QLogic products */
 product QLOGIC ISP1020		0x1020	ISP1020
