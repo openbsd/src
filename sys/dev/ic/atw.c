@@ -1,5 +1,5 @@
-/*	$OpenBSD: atw.c,v 1.11 2004/07/15 12:22:02 millert Exp $	*/
-/*	$NetBSD: atw.c,v 1.53 2004/07/15 06:53:11 dyoung Exp $	*/
+/*	$OpenBSD: atw.c,v 1.12 2004/07/15 12:29:39 millert Exp $	*/
+/*	$NetBSD: atw.c,v 1.55 2004/07/15 07:01:20 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.53 2004/07/15 06:53:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.55 2004/07/15 07:01:20 dyoung Exp $");
 #endif
 
 #include "bpfilter.h"
@@ -2067,21 +2067,18 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
 	u_int32_t tsftl, tsfth;
 	int do_print = 0;
 
-	if (ic->ic_if.if_flags & IFF_DEBUG)
-		do_print = (ic->ic_if.if_flags & IFF_LINK0)
+	if (ic->ic_if.if_flags & IFF_LINK0) {
+		do_print = (ic->ic_if.if_flags & IFF_DEBUG)
 		    ? 1 : ratecheck(&sc->sc_last_beacon,
 		    &atw_beacon_mininterval);
+	}
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
 	(*sc->sc_recv_mgmt)(ic, m0, ni, subtype, rssi, rstamp);
 
-	if (ic->ic_state != IEEE80211_S_RUN) {
-		if (do_print)
-			printf("%s: atw_recv_beacon: not running\n",
-			    sc->sc_dev.dv_xname);
+	if (ic->ic_state != IEEE80211_S_RUN)
 		return;
-	}
 
 	if ((ni = ieee80211_lookup_node(ic, wh->i_addr2,
 	    ic->ic_bss->ni_chan)) == NULL) {
@@ -2091,12 +2088,8 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
 		return;
 	}
 
-	if (ieee80211_match_bss(ic, ni) != 0) {
-		if (do_print)
-			printf("%s: atw_recv_beacon: ssid mismatch %s\n",
-			    sc->sc_dev.dv_xname, ether_sprintf(wh->i_addr2));
+	if (ieee80211_match_bss(ic, ni) != 0)
 		return;
-	}
 
 	if (memcmp(ni->ni_bssid, ic->ic_bss->ni_bssid, IEEE80211_ADDR_LEN) == 0)
 		return;
@@ -2206,12 +2199,12 @@ void
 atw_start_beacon(struct atw_softc *sc, int start)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	u_int32_t len, capinfo, reg_bcnt, reg_cap1;
+	uint16_t chan;
+	uint32_t bcnt, bpli, cap0, cap1, capinfo;
+	size_t len;
 
 	if (ATW_IS_ENABLED(sc) == 0)
 		return;
-
-	len = capinfo = 0;
 
 	/* start beacons */
 	len = sizeof(struct ieee80211_frame) +
@@ -2222,17 +2215,19 @@ atw_start_beacon(struct atw_softc *sc, int start)
 	    3 /* DS parameters */ +
 	    IEEE80211_CRC_LEN;
 
-	reg_bcnt = ATW_READ(sc, ATW_BCNT) & ~ATW_BCNT_BCNT_MASK;
-	reg_cap1 = ATW_READ(sc, ATW_CAP1) & ~ATW_CAP1_CAPI_MASK;
+	bcnt = ATW_READ(sc, ATW_BCNT) & ~ATW_BCNT_BCNT_MASK;
+	cap0 = ATW_READ(sc, ATW_CAP0) & ~ATW_CAP0_CHN_MASK;
+	cap1 = ATW_READ(sc, ATW_CAP1) & ~ATW_CAP1_CAPI_MASK;
 
-	ATW_WRITE(sc, ATW_BCNT, reg_bcnt);
-	ATW_WRITE(sc, ATW_CAP1, reg_cap1);
+	ATW_WRITE(sc, ATW_BCNT, bcnt);
+	ATW_WRITE(sc, ATW_CAP1, cap1);
 
 	if (!start)
 		return;
 
 	/* TBD use ni_capinfo */
 
+	capinfo = 0;
 	if (sc->sc_flags & ATWF_SHORT_PREAMBLE)
 		capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
 	if (ic->ic_flags & IEEE80211_F_WEPON)
@@ -2252,16 +2247,27 @@ atw_start_beacon(struct atw_softc *sc, int start)
 		return;
 	}
 
-	reg_bcnt |= LSHIFT(len, ATW_BCNT_BCNT_MASK);
-	reg_cap1 |= LSHIFT(capinfo, ATW_CAP1_CAPI_MASK);
+	/* set listen interval
+	 * XXX do software units agree w/ hardware?
+	 */
+	bpli = LSHIFT(ic->ic_bss->ni_intval, ATW_BPLI_BP_MASK) |
+	    LSHIFT(ic->ic_lintval / ic->ic_bss->ni_intval, ATW_BPLI_LI_MASK);
 
-	ATW_WRITE(sc, ATW_BCNT, reg_bcnt);
-	ATW_WRITE(sc, ATW_CAP1, reg_cap1);
+	chan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+
+	bcnt |= LSHIFT(len, ATW_BCNT_BCNT_MASK);
+	cap0 |= LSHIFT(chan, ATW_CAP0_CHN_MASK);
+	cap1 |= LSHIFT(capinfo, ATW_CAP1_CAPI_MASK);
+
+	ATW_WRITE(sc, ATW_BCNT, bcnt);
+	ATW_WRITE(sc, ATW_BPLI, bpli);
+	ATW_WRITE(sc, ATW_CAP0, cap0);
+	ATW_WRITE(sc, ATW_CAP1, cap1);
 
 	DPRINTF(sc, ("%s: atw_start_beacon reg[ATW_BCNT] = %08x\n",
-	    sc->sc_dev.dv_xname, reg_bcnt));
+	    sc->sc_dev.dv_xname, bcnt));
 	DPRINTF(sc, ("%s: atw_start_beacon reg[ATW_CAP1] = %08x\n",
-	    sc->sc_dev.dv_xname, reg_cap1));
+	    sc->sc_dev.dv_xname, cap1));
 }
 
 /* First beacon was sent at time 0 microseconds, current time is
