@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.16 2003/09/26 21:43:31 miod Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.17 2003/10/13 16:18:56 krw Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -129,6 +129,8 @@ struct mii_softc {
 	LIST_ENTRY(mii_softc) mii_list;	/* entry on parent's PHY list */
 
 	int mii_phy;			/* our MII address */
+	int mii_model;			/* MII_MODEL(ma->mii_id2) */
+	int mii_rev;			/* MII_REV(ma->mii_id2) */
 	int mii_offset;			/* first PHY, second PHY, etc. */
 	int mii_inst;			/* instance for ifmedia */
 
