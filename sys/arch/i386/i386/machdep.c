@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.231 2003/05/14 22:53:59 tedu Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.232 2003/05/18 02:43:12 andreas Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -2442,6 +2442,7 @@ init386(paddr_t first_avail)
 #endif
 
 #ifdef DDB
+	db_machine_init();
 	ddb_init();
 	if (boothowto & RB_KDB)
 		Debugger();

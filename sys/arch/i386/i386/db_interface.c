@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.11 2002/03/14 01:26:32 millert Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.12 2003/05/18 02:43:12 andreas Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/05/03 19:42:00 christos Exp $	*/
 
 /* 
@@ -57,6 +57,7 @@ extern int trap_types;
 int	db_active = 0;
 
 void kdbprinttrap(int, int);
+void db_sysregs_cmd(db_expr_t, int, db_expr_t, char *);
 
 /*
  * Print trap reason.
@@ -138,6 +139,56 @@ kdb_trap(type, code, regs)
 	}
 
 	return (1);
+}
+
+void
+db_sysregs_cmd(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	int64_t idtr, gdtr;
+	uint32_t cr;
+	uint16_t ldtr, tr;
+
+	__asm__ __volatile__("sidt %0" : "=m" (idtr));
+	db_printf("idtr:   0x%08x/%04x\n",
+	    (unsigned int)(idtr >> 16), idtr & 0xffff);
+
+	__asm__ __volatile__("sgdt %0" : "=m" (gdtr));
+	db_printf("gdtr:   0x%08x/%04x\n",
+	    (unsigned int)(gdtr >> 16), gdtr & 0xffff);
+
+	__asm__ __volatile__("sldt %0" : "=g" (ldtr));
+	db_printf("ldtr:   0x%04x\n", ldtr);
+
+	__asm__ __volatile__("str %0" : "=g" (tr));
+	db_printf("tr:     0x%04x\n", tr);
+
+	__asm__ __volatile__("movl %%cr0,%0" : "=r" (cr));
+	db_printf("cr0:    0x%08x\n", cr);
+
+	__asm__ __volatile__("movl %%cr2,%0" : "=r" (cr));
+	db_printf("cr2:    0x%08x\n", cr);
+
+	__asm__ __volatile__("movl %%cr3,%0" : "=r" (cr));
+	db_printf("cr3:    0x%08x\n", cr);
+
+	__asm__ __volatile__("movl %%cr4,%0" : "=r" (cr));
+	db_printf("cr4:    0x%08x\n", cr);
+}
+
+struct db_command db_machine_command_table[] = {
+	{ "sysregs",	db_sysregs_cmd,		0,	0 },
+	{ (char *)0, }
+};
+
+void
+db_machine_init()
+{
+
+	db_machine_commands_install(db_machine_command_table);
 }
 
 void
