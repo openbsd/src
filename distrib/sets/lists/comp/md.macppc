@@ -309,6 +309,8 @@
 ./usr/libdata/ldscripts/elf32ppc_obsd.x
 ./usr/libdata/ldscripts/elf32ppc_obsd.xbn
 ./usr/libdata/ldscripts/elf32ppc_obsd.xc
+./usr/libdata/ldscripts/elf32ppc_obsd.xd
+./usr/libdata/ldscripts/elf32ppc_obsd.xdc
 ./usr/libdata/ldscripts/elf32ppc_obsd.xn
 ./usr/libdata/ldscripts/elf32ppc_obsd.xr
 ./usr/libdata/ldscripts/elf32ppc_obsd.xs

@@ -258,6 +258,8 @@
 ./usr/libdata/ldscripts/elf_i386_obsd.x
 ./usr/libdata/ldscripts/elf_i386_obsd.xbn
 ./usr/libdata/ldscripts/elf_i386_obsd.xc
+./usr/libdata/ldscripts/elf_i386_obsd.xd
+./usr/libdata/ldscripts/elf_i386_obsd.xdc
 ./usr/libdata/ldscripts/elf_i386_obsd.xn
 ./usr/libdata/ldscripts/elf_i386_obsd.xr
 ./usr/libdata/ldscripts/elf_i386_obsd.xs

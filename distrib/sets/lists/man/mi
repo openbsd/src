@@ -3,6 +3,9 @@
 ./usr/share/info/amdref.info-1
 ./usr/share/info/amdref.info-2
 ./usr/share/info/amdref.info-3
+./usr/share/info/as.info-1
+./usr/share/info/bfd.info-1
+./usr/share/info/binutils.info-1
 ./usr/share/info/cpp.info
 ./usr/share/info/cpp.info-1
 ./usr/share/info/cpp.info-2
@@ -105,7 +108,9 @@
 ./usr/share/info/gccint.info-8
 ./usr/share/info/gccint.info-9
 ./usr/share/info/gdb.info
+./usr/share/info/gdb.info-1
 ./usr/share/info/gdbint.info
+./usr/share/info/gdbint.info-1
 ./usr/share/info/heimdal.info
 ./usr/share/info/history.info
 ./usr/share/info/info-stnd.info
@@ -113,8 +118,10 @@
 ./usr/share/info/info-stnd.info-2
 ./usr/share/info/info-stnd.info-3
 ./usr/share/info/info.info
+./usr/share/info/ld.info-1
 ./usr/share/info/libiberty.info
 ./usr/share/info/readline.info
+./usr/share/info/stabs.info-1
 ./usr/share/info/texinfo
 ./usr/share/info/texinfo-1
 ./usr/share/info/texinfo-10
