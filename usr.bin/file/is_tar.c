@@ -1,4 +1,4 @@
-/*	$OpenBSD: is_tar.c,v 1.5 2002/02/19 19:39:38 millert Exp $	*/
+/*	$OpenBSD: is_tar.c,v 1.6 2003/08/02 18:42:11 deraadt Exp $	*/
 
 /*
  * is_tar() -- figure out whether file is a tar archive.
@@ -16,6 +16,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include "tar.h"
+#include "file.h"
 
 #define	isodigit(c)	( ((c) >= '0') && ((c) <= '7') )
 
