@@ -1684,3 +1684,6 @@
 ./usr/share/keymaps/amiga/sw.map
 ./usr/share/keymaps/amiga/us.map
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/urio.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcireg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcivar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_vlan_var.ph

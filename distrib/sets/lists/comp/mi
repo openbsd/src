@@ -277,6 +277,8 @@
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/pci
 ./usr/include/dev/pci/brktree_reg.h
+./usr/include/dev/pci/cmpcireg.h
+./usr/include/dev/pci/cmpcivar.h
 ./usr/include/dev/pci/esoreg.h
 ./usr/include/dev/pci/esovar.h
 ./usr/include/dev/pci/hifn7751reg.h
@@ -722,6 +724,7 @@
 ./usr/include/net/if_token.h
 ./usr/include/net/if_tun.h
 ./usr/include/net/if_types.h
+./usr/include/net/if_vlan_var.h
 ./usr/include/net/net_osdep.h
 ./usr/include/net/netisr.h
 ./usr/include/net/pfkeyv2.h
@@ -3503,6 +3506,7 @@
 ./usr/share/man/cat3/sys_signame.0
 ./usr/share/man/cat3/sysconf.0
 ./usr/share/man/cat3/sysctl.0
+./usr/share/man/cat3/sysexits.0
 ./usr/share/man/cat3/syslog.0
 ./usr/share/man/cat3/system.0
 ./usr/share/man/cat3/tan.0

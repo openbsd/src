@@ -1691,3 +1691,6 @@
 ./usr/mdec/sboot
 ./usr/mdec/stboot
 ./usr/share/man/cat1/objdump.0
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcireg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcivar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_vlan_var.ph

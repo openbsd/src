@@ -1696,3 +1696,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/sysctl.ph
 ./usr/share/man/cat8/rc.conf.local.0
 ./usr/share/man/cat3p/File::Temp.0
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcireg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/cmpcivar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/net/if_vlan_var.ph

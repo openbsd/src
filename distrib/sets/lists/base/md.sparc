@@ -1683,3 +1683,6 @@
 ./usr/sbin/fdformat
 ./usr/sbin/screenblank
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/urio.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/cmpcireg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/cmpcivar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_vlan_var.ph
