@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.69 2003/10/17 21:04:59 mcbride Exp $	*/
+/*	$OpenBSD: inet.c,v 1.70 2003/10/25 19:33:05 mcbride Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.69 2003/10/17 21:04:59 mcbride Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.70 2003/10/25 19:33:05 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -867,6 +867,7 @@ carp_stats(u_long off, char *name)
 	p(carps_ostates, "\t\t%s state update%s sent\n");
 #endif
 #undef p
+#undef p2
 }
 
 /*
