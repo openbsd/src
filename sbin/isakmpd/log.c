@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.39 2004/02/19 09:54:52 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.40 2004/02/25 16:01:28 hshoexer Exp $	*/
 /*	$EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 
+#include "conf.h"
 #include "isakmp_num.h"
 #include "log.h"
 #include "monitor.h"
@@ -106,6 +107,50 @@ log_init (int debug)
     log_output = stderr;
   else
     log_to (0); /* syslog */
+}
+
+void
+log_reinit (void)
+{
+  struct conf_list *logging;
+#ifdef USE_DEBUG
+  struct conf_list_node *logclass;
+  int class, level;
+#endif  /* USE_DEBUG */
+
+  logging = conf_get_list ("General", "Logverbose");
+  if (logging)
+    {
+      verbose_logging = 1;
+      conf_free_list (logging);
+    }
+
+
+#ifdef USE_DEBUG
+  logging = conf_get_list ("General", "Loglevel");
+  if (logging)
+    {
+      for (logclass = TAILQ_FIRST (&logging->fields); logclass;
+	   logclass = TAILQ_NEXT (logclass, link))
+	{
+	  if (sscanf (logclass->field, "%d=%d", &class, &level) != 2)
+	    {
+	      if (sscanf (logclass->field, "A=%d", &level) == 1)
+		  for (class = 0; class < LOG_ENDCLASS; class++)
+		    log_debug_cmd (class, level);
+	      else
+		{
+		  log_print ("init: invalid logging class or level: %s",
+			     logclass->field);
+		  continue;
+		}
+	    }
+	  else
+	    log_debug_cmd (class, level);
+	}
+      conf_free_list (logging);
+    }
+#endif /* USE_DEBUG */
 }
 
 void

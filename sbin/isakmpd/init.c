@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.26 2003/11/08 19:17:28 jmc Exp $	*/
+/*	$OpenBSD: init.c,v 1.27 2004/02/25 16:01:28 hshoexer Exp $	*/
 /*	$EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	*/
 
 /*
@@ -77,6 +77,9 @@ init (void)
   conf_init ();
   connection_init ();
 
+   /* This depends on conf_init, thus check as soon as possible. */
+  log_reinit ();
+
 #ifdef USE_POLICY
   /* policy_init depends on conf_init having run.  */
   policy_init ();
@@ -112,6 +115,8 @@ reinit (void)
 
   /* Reread config file.  */
   conf_reinit ();
+
+  log_reinit ();
 
   /* Set timezone */
   tzset ();

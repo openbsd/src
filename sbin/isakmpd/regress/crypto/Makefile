@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.10 2003/08/28 14:43:35 markus Exp $
+#	$OpenBSD: Makefile,v 1.11 2004/02/25 16:01:29 hshoexer Exp $
 #	$EOM: Makefile,v 1.7 2000/03/28 21:22:06 ho Exp $
 
 # Test Crypto:
 
 PROG=		cryptotest
-SRCS=		crypto.c cryptotest.c log.c
+SRCS=		crypto.c cryptotest.c conf.c log.c sysdep.c util.c
 TOPSRC=		${.CURDIR}/../..
 TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
 OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile

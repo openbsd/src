@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.18 2004/02/19 09:54:52 ho Exp $	*/
+/*	$OpenBSD: log.h,v 1.19 2004/02/25 16:01:28 hshoexer Exp $	*/
 /*	$EOM: log.h,v 1.19 2000/03/30 14:27:23 ho Exp $	*/
 
 /*
@@ -97,5 +97,6 @@ extern void log_verbose (const char *, ...)
      __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void log_to (FILE *);
 extern void log_init (int);
+extern void log_reinit (void);
 
 #endif /* _LOG_H_ */

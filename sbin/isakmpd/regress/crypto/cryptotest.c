@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptotest.c,v 1.11 2003/09/24 11:12:31 markus Exp $	*/
+/*	$OpenBSD: cryptotest.c,v 1.12 2004/02/25 16:01:29 hshoexer Exp $	*/
 /*	$EOM: cryptotest.c,v 1.5 1998/10/07 16:40:49 niklas Exp $	*/
 
 /*
@@ -58,7 +58,7 @@ verify_buf (u_int8_t *buf, u_int16_t len)
 #define hexchar2bin(x) ((nibble2bin((x)[0]) << 4) + nibble2bin((x)[1]))
 #define nibble2c(x) ((x) >= 10 ? ('a'-10+(x)) : ('0' + (x)))
 
-void asc2bin (u_int8_t *bin, u_int8_t *asc, u_int16_t len)
+static void asc2bin (u_int8_t *bin, u_int8_t *asc, u_int16_t len)
 {
   int i;
 

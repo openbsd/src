@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2003/06/03 14:39:51 ho Exp $
+#	$OpenBSD: Makefile,v 1.15 2004/02/25 16:01:29 hshoexer Exp $
 #	$EOM: Makefile,v 1.10 2000/03/28 21:23:24 ho Exp $
 
 #
@@ -33,7 +33,7 @@
 # RSA Key Generation
 
 PROG=		rsakeygen
-SRCS=		libcrypto.c log.c rsakeygen.c sysdep.c util.c
+SRCS=		libcrypto.c log.c rsakeygen.c sysdep.c util.c conf.c
 TOPSRC=		${.CURDIR}/../..
 TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
 OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile

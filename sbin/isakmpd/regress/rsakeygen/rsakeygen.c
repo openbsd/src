@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsakeygen.c,v 1.17 2003/06/03 14:39:51 ho Exp $	*/
+/*	$OpenBSD: rsakeygen.c,v 1.18 2004/02/25 16:01:29 hshoexer Exp $	*/
 /*	$EOM: rsakeygen.c,v 1.10 2000/12/21 15:18:53 ho Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #define TEST_STRING "!Dies ist ein Test"
 
-void asc2bin (u_int8_t *bin, u_int8_t *asc, u_int16_t len)
+static void asc2bin (u_int8_t *bin, u_int8_t *asc, u_int16_t len)
 {
   int i;
 
