@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_delspi.c,v 1.2 1997/04/14 10:04:30 provos Exp $ */
+/* $OpenBSD: xf_delspi.c,v 1.3 1997/07/01 22:18:04 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -62,27 +62,24 @@ char **argv;
 
 	struct encap_msghdr *em;
 
-	if (argc != 5) {
-	  fprintf(stderr, "usage: %s dst spi chaindelete alg\n", argv[0]);
+	if (argc != 4) {
+	  fprintf(stderr, "usage: %s dst spi chaindelete\n", argv[0]);
 	  return 0;
 	}
 
 	chain = atoi(argv[3]);
 	em = (struct encap_msghdr *)&buf[0];
+	em->em_version = PFENCAP_VERSION_1;
 	
-	if (chain)
-	  em->em_msglen = EMT_DELSPI_FLEN;
-	else
+	if (chain) {
 	  em->em_msglen = EMT_DELSPICHAIN_FLEN;
-	em->em_version = 0;
-	if (chain)
 	  em->em_type = EMT_DELSPICHAIN;
-	else
+	} else {
+	  em->em_msglen = EMT_DELSPI_FLEN;
 	  em->em_type = EMT_DELSPI;
-	em->em_spi = htonl(strtoul(argv[2], NULL, 16));
-	em->em_if = 1;
-	em->em_dst.s_addr = inet_addr(argv[1]);
-	em->em_alg = atoi(argv[4]);  /* sanity checking in the kernel */
+	}
+	em->em_gen_spi = htonl(strtoul(argv[2], NULL, 16));
+	em->em_gen_dst.s_addr = inet_addr(argv[1]);
 
 	return xf_set(em);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.4 1997/06/20 06:14:38 provos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.5 1997/07/01 22:18:01 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -64,10 +64,8 @@ int xf_ahmd5 __P((int, char **));
 int xf_ahsha1 __P((int, char **));
 int xf_ahhmacmd5 __P((int, char **));
 int xf_ahhmacsha1 __P((int, char **));
-int xf_ip4 __P((int, char **));
 int xf_grp __P((int, char **));
 int xf_delspi __P((int, char **));
-int xf_pfr __P((int, char **));
 
 transform xf[] = {
 	{"des", xf_espdes},
@@ -78,10 +76,8 @@ transform xf[] = {
 	{"sha1", xf_ahsha1},
 	{"hmacmd5", xf_ahhmacmd5},
 	{"hmacsha1", xf_ahhmacsha1},
-	{"ip4", xf_ip4},
 	{"grp", xf_grp},
-	{"delspi", xf_delspi},
-	{"pfr", xf_pfr}
+	{"delspi", xf_delspi}
 };
 
 char    buf[1024];

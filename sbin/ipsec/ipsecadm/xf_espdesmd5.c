@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_espdesmd5.c,v 1.2 1997/04/14 10:04:32 provos Exp $ */
+/* $OpenBSD: xf_espdesmd5.c,v 1.3 1997/07/01 22:18:07 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -65,19 +65,19 @@ char **argv;
 	struct encap_msghdr *em;
 	struct espdesmd5_xencap *xd;
 
-	if (argc != 5) {
-	  fprintf(stderr, "usage: %s dst spi iv key\n", argv[0]);
+	if (argc != 6) {
+	  fprintf(stderr, "usage: %s src dst spi iv key\n", argv[0]);
 	  return 0;
 	}
 
 	em = (struct encap_msghdr *)&buf[0];
 	
 	em->em_msglen = EMT_SETSPI_FLEN + ESPDESMD5_ULENGTH;
-	em->em_version = 0;
+	em->em_version = PFENCAP_VERSION_1;
 	em->em_type = EMT_SETSPI;
-	em->em_spi = htonl(strtoul(argv[2], NULL, 16));
-	em->em_if = 1;
-	em->em_dst.s_addr = inet_addr(argv[1]);
+	em->em_spi = htonl(strtoul(argv[3], NULL, 16));
+	em->em_src.s_addr = inet_addr(argv[1]);
+	em->em_dst.s_addr = inet_addr(argv[2]);
 	em->em_alg = XF_ESPDESMD5;
 	xd = (struct espdesmd5_xencap *)(em->em_dat);
 
@@ -86,15 +86,8 @@ char **argv;
 	xd->edx_wnd = 32;
 	xd->edx_keylen = 8;
 
-#if 0
-#define max(_a,_b) (((_a)>(_b))?(_a):(_b))
-
-	memcpy(&(xd->edx_iv[0]), argv[3], max(strlen(argv[3]), 8));
-	memcpy(&(xd->edx_iv[8]), argv[4], max(strlen(argv[4]), 8));
-#endif
-
 	for (i = 0; i < 8; i++)
-	  xd->edx_key[i] = x2i(&(argv[4][2*i]));
+	  xd->edx_key[i] = x2i(&(argv[5][2*i]));
 
 	return xf_set(em);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_grp.c,v 1.2 1997/04/14 10:04:33 provos Exp $ */
+/* $OpenBSD: xf_grp.c,v 1.3 1997/07/01 22:18:08 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -59,42 +59,32 @@ xf_grp(argc, argv)
 int argc;
 char **argv;
 {
-	int nspis;
+	int i;
 
 	struct encap_msghdr *em;
 
 	if ((argc < 3) || (argc > 9) || ((argc % 2) != 1)) {
-	  fprintf(stderr, "usage: %s dst1 spi1 [ dst2 spi2 [ dst3 spi3 [ dst4 spi4 ] ] ] \n", argv[0]);
-	  return 0;
+	     fprintf(stderr, "usage: %s dst1 spi1 [ dst2 spi2 [ dst3 spi3 [ dst4 spi4 ] ] ] \n", argv[0]);
+	     return 0;
 	}
 
-	nspis = argc / 2;
-	
-	em = (struct encap_msghdr *)&buf[0];
-	
-	em->em_msglen = 4 + nspis * 12;
-	em->em_version = 0;
-	em->em_type = EMT_GRPSPIS;
+	for (i=0; i<argc/2-1; i++) {
+	     bzero(buf, EMT_GRPSPIS_FLEN);
 
-	switch (nspis)
-	{
-	      case 4:
-		em->em_rel[3].emr_spi = htonl(strtoul(argv[8], NULL, 16));
-		em->em_rel[3].emr_dst.s_addr = inet_addr(argv[7]);
-	      case 3:
-		em->em_rel[2].emr_spi = htonl(strtoul(argv[6], NULL, 16));
-		em->em_rel[2].emr_dst.s_addr = inet_addr(argv[5]);
-	      case 2:
-		em->em_rel[1].emr_spi = htonl(strtoul(argv[4], NULL, 16));
-		em->em_rel[1].emr_dst.s_addr = inet_addr(argv[3]);
-	      case 1:
-		em->em_rel[0].emr_spi = htonl(strtoul(argv[2], NULL, 16));
-		em->em_rel[0].emr_dst.s_addr = inet_addr(argv[1]);
-		break;
+	     em = (struct encap_msghdr *)&buf[0];
+
+	     em->em_msglen = EMT_GRPSPIS_FLEN;
+	     em->em_version = PFENCAP_VERSION_1;
+	     em->em_type = EMT_GRPSPIS;
+
+	     em->em_rel_spi = htonl(strtoul(argv[2*i+2], NULL, 16));
+	     em->em_rel_dst.s_addr = inet_addr(argv[2*i+1]);
+	     em->em_rel_spi = htonl(strtoul(argv[2*i+4], NULL, 16));
+	     em->em_rel_dst.s_addr = inet_addr(argv[2*i+3]);
+	
+	     if (!xf_set(em))
+		  break;
 	}
-	
-	
-	return xf_set(em);
 }
 
 

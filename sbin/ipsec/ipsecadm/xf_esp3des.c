@@ -1,4 +1,4 @@
-/* $OpenBSD: xf_esp3des.c,v 1.1 1997/06/20 06:14:39 provos Exp $ */
+/* $OpenBSD: xf_esp3des.c,v 1.2 1997/07/01 22:18:05 provos Exp $ */
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
  * 	(except when noted otherwise).
@@ -65,36 +65,29 @@ char **argv;
 	struct encap_msghdr *em;
 	struct esp3des_xdata *xd;
 
-	if (argc != 5) {
-	  fprintf(stderr, "usage: %s dst spi iv key\n", argv[0]);
+	if (argc != 6) {
+	  fprintf(stderr, "usage: %s src dst spi iv key\n", argv[0]);
 	  return 0;
 	}
 	
 	em = (struct encap_msghdr *)&buf[0];
 	
 	em->em_msglen = EMT_SETSPI_FLEN + ESP_ULENGTH;
-	em->em_version = 0;
+	em->em_version = PFENCAP_VERSION_1;
 	em->em_type = EMT_SETSPI;
-	em->em_spi = htonl(strtoul(argv[2], NULL, 16));
-	em->em_if = 1;
-	em->em_dst.s_addr = inet_addr(argv[1]);
+	em->em_spi = htonl(strtoul(argv[3], NULL, 16));
+	em->em_src.s_addr = inet_addr(argv[1]);
+	em->em_dst.s_addr = inet_addr(argv[2]);
 	em->em_alg = XF_ESP3DES;
 	xd = (struct esp3des_xdata *)(em->em_dat);
 
 	xd->edx_ivlen = 4;
 
-#if 0
-#define max(_a,_b) (((_a)>(_b))?(_a):(_b))
-
-	memcpy(&(xd->edx_iv[0]), argv[3], max(strlen(argv[3]), 8));
-	memcpy(&(xd->edx_iv[8]), argv[4], max(strlen(argv[4]), 8));
-#endif
-
 	for (i = 0; i < 4; i++)
-	  xd->edx_iv[i] = x2i(&(argv[3][2*i]));
+	  xd->edx_iv[i] = x2i(&(argv[4][2*i]));
 
 	for (i = 0; i < 3*8; i++)
-	  xd->edx_iv[i+8] = x2i(&(argv[4][2*i]));
+	  xd->edx_iv[i+8] = x2i(&(argv[5][2*i]));
 
 	return xf_set(em);
 }
