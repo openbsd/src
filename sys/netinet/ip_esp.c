@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.2 1997/02/24 14:06:39 niklas Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.3 1997/02/26 20:53:09 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -74,6 +74,8 @@ esp_input(register struct mbuf *m, int iphlen)
 	u_long spi;
 	struct tdb *tdbp;
 	
+	espstat.esps_input++;
+
 	/*
 	 * Strip IP options, if any.
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.3 1997/02/24 14:06:39 niklas Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.4 1997/02/26 20:53:13 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -81,6 +81,8 @@ struct espstat
 	u_long  esps_wrap;	/* Replay counter wrapped around */
 	u_long	esps_badauth;	/* Only valid for transforms with auth */
 	u_long  esps_replay;	/* Possible packet replay detected */
+	u_long	esps_input;	/* Input ESP packets */
+	u_long 	esps_output;	/* Output ESP packets */
 };
 
 struct espdes_xdata

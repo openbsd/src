@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp3desmd5.c,v 1.2 1997/02/24 14:06:39 niklas Exp $	*/
+/*	$OpenBSD: ip_esp3desmd5.c,v 1.3 1997/02/26 20:53:14 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -524,6 +524,7 @@ esp3desmd5_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, st
 	u_char iv[ESP3DESMD5_IVS], blk[8], auth[ESP3DESMD5_ALEN];
 	MD5_CTX ctx;
 
+	espstat.esps_output++;
 	m = m_pullup(m, sizeof (struct ip));   /* Get IP header in one mbuf */
 	if (m == NULL)
 	  return ENOBUFS;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_espdes.c,v 1.2 1997/02/24 14:06:40 niklas Exp $	*/
+/*	$OpenBSD: ip_espdes.c,v 1.3 1997/02/26 20:53:16 deraadt Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -307,7 +307,7 @@ espdes_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb, struct
 	u_char *pad, *idat, *odat;
 	u_char iv[8], blk[8];
 
-
+	espstat.esps_output++;
 	m = m_pullup(m, sizeof (struct ip));
 	if (m == NULL)
 	  return ENOBUFS;
