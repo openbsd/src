@@ -1,4 +1,4 @@
-/* $OpenBSD: lemac.c,v 1.2 2002/02/25 08:48:30 niklas Exp $ */
+/* $OpenBSD: lemac.c,v 1.3 2002/05/07 19:28:59 nate Exp $ */
 /* $NetBSD: lemac.c,v 1.20 2001/06/13 10:46:02 wiz Exp $ */
 
 /*-
@@ -76,9 +76,6 @@
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
-
-/* XXX Should be in if_ethersubr.c */
-u_int32_t ether_crc32_le(const u_int8_t *, size_t);
 
 int	lemac_ifioctl(struct ifnet *, u_long, caddr_t);
 int	lemac_ifmedia_change(struct ifnet *const);
@@ -447,30 +444,6 @@ lemac_read_macaddr(unsigned char *hwaddr, const bus_space_tag_t iot,
 	if (cksum != rom_cksum)
 		return (-1);
 	return (0);
-}
-
-/* XXX Should be moved to if_ethersubr.c */
-u_int32_t
-ether_crc32_le(const u_int8_t *buf, size_t len)
-{
-	static const u_int32_t crctab[] = {
-		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
-		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
-		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
-		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
-	};
-	u_int32_t crc;
-	int i;
-
-	crc = 0xffffffffU;	/* initial value */
-
-	for (i = 0; i < len; i++) {
-		crc ^= buf[i];
-		crc = (crc >> 4) ^ crctab[crc & 0xf];
-		crc = (crc >> 4) ^ crctab[crc & 0xf];
-	}
-
-	return (crc);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.19 2002/03/14 01:27:11 millert Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.20 2002/05/07 19:28:59 nate Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -89,6 +89,12 @@ struct	ether_header {
 
 #define	ETHERMTU	(ETHER_MAX_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 #define	ETHERMIN	(ETHER_MIN_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
+
+/*
+ * Ethernet CRC32 polynomials (big- and little-endian verions).
+ */
+#define	ETHER_CRC_POLY_LE	0xedb88320
+#define	ETHER_CRC_POLY_BE	0x04c11db6
 
 #ifdef _KERNEL
 /*
@@ -285,6 +291,9 @@ void revarprequest(struct ifnet *);
 int revarpwhoarewe(struct ifnet *, struct in_addr *, struct in_addr *);
 int revarpwhoami(struct in_addr *, struct ifnet *);
 int db_show_arptab(void);
+
+u_int32_t ether_crc32_le(const u_int8_t *, size_t);
+u_int32_t ether_crc32_be(const u_int8_t *, size_t);
 
 #else
 

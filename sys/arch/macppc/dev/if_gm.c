@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gm.c,v 1.6 2002/03/14 01:26:36 millert Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.7 2002/05/07 19:28:59 nate Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.14 2001/07/22 11:29:46 wiz Exp $	*/
 
 /*-
@@ -138,8 +138,6 @@ int gmac_mii_readreg(struct device *, int, int);
 void gmac_mii_writereg(struct device *, int, int, int);
 void gmac_mii_statchg(struct device *);
 void gmac_mii_tick(void *);
-
-u_int32_t ether_crc32_le(const u_int8_t *buf, size_t len);
 
 #ifdef __NetBSD__
 #define	letoh32	 le32toh
@@ -1187,28 +1185,4 @@ gmac_enable_hack()
 #endif
 
 	printf("gmac enabled\n");
-}
-
-/* HACK, THIS SHOULD NOT BE IN THIS FILE */
-u_int32_t
-ether_crc32_le(const u_int8_t *buf, size_t len)
-{
-        static const u_int32_t crctab[] = {
-                0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
-                0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
-                0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
-                0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
-        };
-        u_int32_t crc;
-        int i;
-
-        crc = 0xffffffffU;      /* initial value */
-
-        for (i = 0; i < len; i++) {
-                crc ^= buf[i];
-                crc = (crc >> 4) ^ crctab[crc & 0xf];
-                crc = (crc >> 4) ^ crctab[crc & 0xf];
-        }
-
-        return (crc);
 }
