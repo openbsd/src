@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.512 2002/05/23 19:20:29 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.513 2002/05/29 05:34:40 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2039,6 +2039,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "EES ISA",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312,
+	    "80312 I/O Companion Chip",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
 	    "82375EB PCI-EISA",
 	},
@@ -2461,6 +2465,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI4,
 	    "82860 PCI-PCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
+	    "82830MP CPU to I/O Bridge 1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_AGP,
+	    "82830MP CPU to AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IV,
+	    "82830MP Integrated Video",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_2,
+	    "82830MP CPU to I/O Bridge 2",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA,
