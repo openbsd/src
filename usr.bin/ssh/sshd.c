@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.13 1999/09/30 06:06:31 deraadt Exp $");
+RCSID("$Id: sshd.c,v 1.14 1999/09/30 08:34:25 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -133,7 +133,7 @@ void do_child(const char *command, struct passwd *pw, const char *term,
    the effect is to reread the configuration file (and to regenerate
    the server key). */
 
-RETSIGTYPE sighup_handler(int sig)
+void sighup_handler(int sig)
 {
   received_sighup = 1;
   signal(SIGHUP, sighup_handler);
@@ -155,7 +155,7 @@ void sighup_restart()
    These close the listen socket; not closing it seems to cause "Address
    already in use" problems on some machines, which is inconvenient. */
 
-RETSIGTYPE sigterm_handler(int sig)
+void sigterm_handler(int sig)
 {
   log("Received signal %d; terminating.", sig);
   close(listen_sock);
@@ -165,7 +165,7 @@ RETSIGTYPE sigterm_handler(int sig)
 /* SIGCHLD handler.  This is called whenever a child dies.  This will then 
    reap any zombies left by exited c. */
 
-RETSIGTYPE main_sigchld_handler(int sig)
+void main_sigchld_handler(int sig)
 {
   int status;
   wait(&status);
@@ -174,7 +174,7 @@ RETSIGTYPE main_sigchld_handler(int sig)
 
 /* Signal handler for the alarm after the login grace period has expired. */
 
-RETSIGTYPE grace_alarm_handler(int sig)
+void grace_alarm_handler(int sig)
 {
   /* Close the connection. */
   packet_close();
@@ -188,7 +188,7 @@ RETSIGTYPE grace_alarm_handler(int sig)
    do anything with the private key or random state before forking.  Thus there
    should be no concurrency control/asynchronous execution problems. */
 
-RETSIGTYPE key_regeneration_alarm(int sig)
+void key_regeneration_alarm(int sig)
 {
   /* Check if we should generate a new key. */
   if (key_used)
@@ -1353,11 +1353,7 @@ void do_authenticated(struct passwd *pw)
 	    }
 
 	  /* Determine the group to make the owner of the tty. */
-#ifdef TTY_GROUP
-	  grp = getgrnam(TTY_GROUP);
-#else /* TTY_GROUP */
 	  grp = getgrnam("tty");
-#endif /* TTY_GROUP */
 	  if (grp)
 	    {
 	      tty_gid = grp->gr_gid;
@@ -1938,10 +1934,8 @@ void do_child(const char *command, struct passwd *pw, const char *term,
 	exit(254);
     }
 
-#ifdef HAVE_SETLOGIN
   /* Set login name in the kernel. */
   setlogin(pw->pw_name);
-#endif /* HAVE_SETLOGIN */
 
   /* Set uid, gid, and groups. */
   if (getuid() == 0 || geteuid() == 0)
@@ -1999,7 +1993,7 @@ void do_child(const char *command, struct passwd *pw, const char *term,
     child_set_env(&env, &envsize, "TZ", getenv("TZ"));
 
   snprintf(buf, sizeof buf, "%.200s/%.50s",
-    MAIL_SPOOL_DIRECTORY, pw->pw_name);
+    _PATH_MAILDIR, pw->pw_name);
   child_set_env(&env, &envsize, "MAIL", buf);
 
   /* Normal systems set SHELL by default. */

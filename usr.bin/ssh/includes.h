@@ -13,13 +13,11 @@ This file includes most of the needed system headers.
 
 */
 
-/* RCSID("$Id: includes.h,v 1.7 1999/09/30 05:53:04 deraadt Exp $"); */
-
 #ifndef INCLUDES_H
 #define INCLUDES_H
 
-/* Note: autoconf documentation tells to use the <...> syntax and have -I. */
-#include <config.h>
+#define RCSID(msg) \
+static /**/const char *const rcsid[] = { (char *)rcsid, "\100(#)" msg }
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -33,19 +31,6 @@ This file includes most of the needed system headers.
 #include <sys/un.h>
 #include <sys/resource.h>
 
-#include <netgroup.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <assert.h>
-#include <signal.h>
-
-#include <termios.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/tcp.h>
@@ -53,16 +38,31 @@ This file includes most of the needed system headers.
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include <netgroup.h>
+#include <stdio.h>
+#include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <assert.h>
+#include <signal.h>
+#include <termios.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
 #include <pwd.h>
 #include <grp.h>
 #include <unistd.h>
 #include <time.h>
 #include <paths.h>
-
 #include <dirent.h>
 
-#define AF_UNIX_SIZE(unaddr) sizeof(unaddr)
-
 #include "version.h"
+
+/* Define this to be the path of the xauth program. */
+#define XAUTH_PATH "/usr/X11R6/bin/xauth"
+
+/* Define this to use pipes instead of socketpairs for communicating with the
+   client program.  Socketpairs do not seem to work on all systems. */
+#define USE_PIPES 1
 
 #endif /* INCLUDES_H */

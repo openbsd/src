@@ -47,7 +47,7 @@ static int child_pid;  			/* Pid of the child. */
 static volatile int child_terminated;	/* The child has terminated. */
 static volatile int child_wait_status;	/* Status from wait(). */
 
-RETSIGTYPE sigchld_handler(int sig)
+void sigchld_handler(int sig)
 {
   int wait_pid;
   debug("Received SIGCHLD.");

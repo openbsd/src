@@ -14,7 +14,7 @@ Functions for reading passphrases and passwords.
 */
 
 #include "includes.h"
-RCSID("$Id: readpass.c,v 1.2 1999/09/30 05:03:05 deraadt Exp $");
+RCSID("$Id: readpass.c,v 1.3 1999/09/30 08:34:25 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -23,11 +23,11 @@ RCSID("$Id: readpass.c,v 1.2 1999/09/30 05:03:05 deraadt Exp $");
 static struct termios saved_tio;
 
 /* Old interrupt signal handler for read_passphrase. */
-static RETSIGTYPE (*old_handler)(int sig) = NULL;
+static void (*old_handler)(int sig) = NULL;
 
 /* Interrupt signal handler for read_passphrase. */
 
-RETSIGTYPE intr_handler(int sig)
+void intr_handler(int sig)
 {
   /* Restore terminal modes. */
   tcsetattr(fileno(stdin), TCSANOW, &saved_tio);

@@ -14,7 +14,7 @@ Code for uid-swapping.
 */
 
 #include "includes.h"
-RCSID("$Id: uidswap.c,v 1.1 1999/09/26 20:53:38 deraadt Exp $");
+RCSID("$Id: uidswap.c,v 1.2 1999/09/30 08:34:25 deraadt Exp $");
 
 #include "ssh.h"
 #include "uidswap.h"
@@ -27,8 +27,6 @@ RCSID("$Id: uidswap.c,v 1.1 1999/09/26 20:53:38 deraadt Exp $");
 
    Additionally, they must work regardless of whether the system has
    POSIX saved uids or not. */
-
-#ifdef HAVE_SETEUID
 
 #ifdef _POSIX_SAVED_IDS
 /* Lets assume that posix saved ids also work with seteuid, even though that
@@ -95,32 +93,3 @@ void permanently_set_uid(uid_t uid)
   if (setuid(uid) < 0)
     debug("setuid %d: %.100s", (int)uid, strerror(errno));
 }
-
-#else /* HAVE_SETEUID */
-
-YOUR_SYSTEM_DOES_NOT_PERMIT_UID_SWAPPING_READ_AND_EDIT_UIDSWAP_C;
-/* If we ever come here, if means that your system does not support any of
-   the uid swapping methods we are aware of.  Tough.  This means that
-   ssh will have to read certain files as root, which causes some security
-   problems.  Unless your are very concerned about security, you can
-   comment out the above line.  The effect is that local users on your
-   machine might be able to read each other's files.  Also, you may encounter
-   problems if home directories are on a NFS volume.  You may also
-   encounter other problems; please don't complain unless you have some idea
-   how to fix it. */
-
-void temporarily_use_uid(uid_t uid)
-{
-}
-
-void restore_uid()
-{
-}
-
-void permanently_set_uid(uid_t uid)
-{
-  if (setuid(uid) < 0)
-    debug("setuid %d: %.100s", (int)uid, strerror(errno));
-}
-
-#endif /* HAVE_SETEUID */

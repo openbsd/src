@@ -11,7 +11,7 @@ Created: Wed Apr 19 16:50:42 1995 ylo
 
 */
 
-/* RCSID("$Id: cipher.h,v 1.4 1999/09/28 04:45:36 provos Exp $"); */
+/* RCSID("$Id: cipher.h,v 1.5 1999/09/30 08:34:24 deraadt Exp $"); */
 
 #ifndef CIPHER_H
 #define CIPHER_H
@@ -33,12 +33,6 @@ Created: Wed Apr 19 16:50:42 1995 ylo
 typedef struct {
   unsigned int type;
   union {
-#ifdef WITH_DES
-    struct {
-      des_key_schedule key;
-      des_cblock iv;
-    } des;
-#endif /* WITH_DES */
     struct {
       des_key_schedule key1;
       des_key_schedule key2;

@@ -14,7 +14,7 @@ The authentication agent program.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh-agent.c,v 1.5 1999/09/30 05:11:29 deraadt Exp $");
+RCSID("$Id: ssh-agent.c,v 1.6 1999/09/30 08:34:25 deraadt Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -509,7 +509,7 @@ void after_select(fd_set *readset, fd_set *writeset)
 int parent_pid = -1;
 char socket_name[1024];
 
-RETSIGTYPE
+void
 check_parent_exists(int sig)
 {
   if (kill(parent_pid, 0) < 0)
@@ -580,7 +580,7 @@ main(int ac, char **av)
       memset(&sunaddr, 0, sizeof(sunaddr));
       sunaddr.sun_family = AF_UNIX;
       strlcpy(sunaddr.sun_path, socket_name, sizeof(sunaddr.sun_path));
-      if (bind(sock, (struct sockaddr *)&sunaddr, AF_UNIX_SIZE(sunaddr)) < 0)
+      if (bind(sock, (struct sockaddr *)&sunaddr, sizeof(sunaddr)) < 0)
 	{
 	  perror("bind");
 	  exit(1);

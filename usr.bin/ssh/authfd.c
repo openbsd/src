@@ -14,7 +14,7 @@ Functions for connecting the local authentication agent.
 */
 
 #include "includes.h"
-RCSID("$Id: authfd.c,v 1.3 1999/09/29 21:14:15 deraadt Exp $");
+RCSID("$Id: authfd.c,v 1.4 1999/09/30 08:34:24 deraadt Exp $");
 
 #include "ssh.h"
 #include "rsa.h"
@@ -53,7 +53,7 @@ ssh_get_authentication_fd()
   if (sock < 0)
     return -1;
   
-  if (connect(sock, (struct sockaddr *)&sunaddr, AF_UNIX_SIZE(sunaddr)) < 0)
+  if (connect(sock, (struct sockaddr *)&sunaddr, sizeof(sunaddr)) < 0)
     {
       close(sock);
       return -1;
@@ -75,7 +75,7 @@ void ssh_close_authentication_socket(int sock)
 /* Dummy alarm used to prevent waiting for connection from the
    authentication agent indefinitely. */
 
-static RETSIGTYPE dummy_alarm_handler(int sig)
+static void dummy_alarm_handler(int sig)
 {
   /* Do nothing; a cought signal will just cause accept to return. */
 }
@@ -88,7 +88,7 @@ int ssh_get_authentication_connection_fd()
   int authfd;
   int listen_sock, sock, port, addrlen;
   int old_timeout;
-  RETSIGTYPE (*old_handler)();
+  void (*old_handler)();
   struct sockaddr_in sin;
   char msg[3];
 
