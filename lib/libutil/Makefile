@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 1997/04/27 20:56:18 millert Exp $
+#	$OpenBSD: Makefile,v 1.14 1997/06/17 10:10:41 niklas Exp $
 #	$NetBSD: Makefile,v 1.8 1996/05/16 07:03:28 thorpej Exp $
 
 LIB=	util
@@ -16,6 +16,8 @@ MLINKS+=login.3 logout.3
 MLINKS+=login.3 logwtmp.3
 MLINKS+=openpty.3 login_tty.3
 MLINKS+=openpty.3 forkpty.3
+MLINKS+=pw_init.3 pw_setdir.3
+MLINKS+=pw_init.3 pw_file.3
 MLINKS+=pw_init.3 pw_edit.3
 MLINKS+=pw_init.3 pw_prompt.3
 MLINKS+=pw_init.3 pw_copy.3

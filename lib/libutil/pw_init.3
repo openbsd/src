@@ -38,6 +38,8 @@
 .Os
 .Sh NAME
 .Nm pw_init ,
+.Nm pw_setdir ,
+.Nm pw_file ,
 .Nm pw_edit ,
 .Nm pw_prompt ,
 .Nm pw_copy ,
@@ -49,6 +51,10 @@
 .Fd #include <util.h>
 .Ft void
 .Fn pw_init
+.Ft void
+.Fn pw_setdir "const char *directory"
+.Ft char *
+.Fn pw_file "const char *filename"
 .Ft void
 .Fn pw_edit "int notsetuid" "const char *filename"
 .Ft void
@@ -71,6 +77,20 @@ function prepares for a passwd update by unlimiting all resource
 constraints, disabling core dumps (thus preventing dumping the
 contents of the passwd database into a world-readable file), and
 disabling most signals.
+.Pp
+The
+.Fn pw_setdir
+function sets an alternative directory where the rest of the functions looks
+for password-related files.  Use this if you are writing utilities that should
+be able to handle password files outside of /etc.
+.Pp
+The
+.Fn pw_file
+function transforms filenames so that they end up in the directory specified
+to the latest
+.Fn pw_setdir
+call.  The rule is that all directories are stripped off the given name and
+only the filename is appended to the directory.
 .Pp
 The
 .Fn pw_edit
