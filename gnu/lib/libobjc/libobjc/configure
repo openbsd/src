@@ -1245,7 +1245,7 @@ fi
 # Option set, now we can test it.
 echo "$ac_t""$version_specific_libs" 1>&6
 
-gcc_version_trigger=${srcdir}/../gcc/version.c
+gcc_version_trigger=${GCCDIR}/gcc/version.c
 gcc_version_full=`grep version_string ${gcc_version_trigger} | sed -e 's/.*\"\([^ \"]*\)[ \"].*/\1/'`
 gcc_version=`echo ${gcc_version_full} | sed -e 's/\(^ *\) .*/\1/'`
 
@@ -2937,12 +2937,7 @@ echo "configure:2937: checking for gthread cflags" >&5
 if eval "test \"`echo '$''{'objc_cv_gthread_flags'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
-  if test -f "$r"/gcc/Makefile
-then
-  objc_cv_gthread_flags=`grep \^GTHREAD_FLAGS "$r"/gcc/Makefile | awk -F= '{ print $2 }'`
-else
-  { echo "configure: error: not found" 1>&2; exit 1; }
-fi
+  objc_cv_gthread_flags=""
 fi
 
 echo "$ac_t""$objc_cv_gthread_flags" 1>&6
