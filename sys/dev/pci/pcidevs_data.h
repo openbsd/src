@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	MOpenBSD: pcidevs,v 1.198 1999/11/26 22:46:11 niklas Exp 
+ *	MOpenBSD: pcidevs,v 1.199 1999/12/04 20:28:28 aaron Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1297,6 +1297,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cyrix",
 	    "GXm PCI-ISA",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_550TX,
+	    0,
+	    "D-Link Systems",
+	    "550TX",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21050,
@@ -3229,6 +3235,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "NVidia/SGS-Thomson",
 	    "Velocity128",
+	},
+	{
+	    PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201,
+	    0,
+	    "Sundance",
+	    "ST201",
 	},
 	{
 	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34,
@@ -6978,6 +6990,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NETGEAR, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Netgear",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_SUNDANCE, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Sundance",
 	    NULL,
 	},
 	{

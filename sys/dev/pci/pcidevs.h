@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	MOpenBSD: pcidevs,v 1.198 1999/11/26 22:46:11 niklas Exp 
+ *	MOpenBSD: pcidevs,v 1.199 1999/12/04 20:28:28 aaron Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -514,6 +514,7 @@
 #define	PCI_VENDOR_SIIG	0x131f		/* SIIG */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corp */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
+#define	PCI_VENDOR_SUNDANCE	0x13f0		/* Sundance */
 #define	PCI_VENDOR_CMI	0x13f6		/* C-Media Electronics Inc. */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta */
@@ -841,6 +842,9 @@
 /* Cyrix/National Semiconductor products */
 #define	PCI_PRODUCT_CYRIX_GXMPCI	0x0001		/* GXm Host-PCI */
 #define	PCI_PRODUCT_CYRIX_GXMISA	0x0002		/* GXm PCI-ISA */
+
+/* D-Link products */
+#define	PCI_PRODUCT_DLINK_550TX	0x1002		/* 550TX */
 
 /* DEC products */
 #define	PCI_PRODUCT_DEC_21050	0x0001		/* DECchip 21050 PCI-PCI */
@@ -1303,6 +1307,9 @@
 
 /* STB products */
 #define	PCI_PRODUCT_STB2_RIVA128	0x0018		/* Velocity128 */
+
+/* Sundance products */
+#define	PCI_PRODUCT_SUNDANCE_ST201	0x0201		/* ST201 */
 
 /* Surecom products */
 #define	PCI_PRODUCT_SURECOM_NE34	0x0e34		/* Surecom NE-34 */
