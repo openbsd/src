@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.162 1999/07/18 21:07:52 csapuntz Exp 
+ *	OpenBSD: pcidevs,v 1.163 1999/07/20 04:19:04 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2507,139 +2507,139 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C201,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "86C201 Host-AGP",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C202,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "86C202 VGA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C205,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "86C205",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C503,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "85C503 ISA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5595,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "5595 PCI System I/O Chipset",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C501,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "85C501",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C496,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "85C496",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C596,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "85C596",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C601,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "85C601 EIDE",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "900 10/100BaseTX",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5511,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "5511",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5512,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "5512",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5513,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "5513 EIDE",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5581,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "5581",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5582,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "5582",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5591,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "5591 Host-PCI",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5596,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "5596",
 	},
 	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_IDE,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597,
 	    0,
-	    "Silicon Integrated System",
-	    "5597/5598 IDE controller",
+	    "SIS",
+	    "5597",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5598,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "5598",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6204,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "6204",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6205,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "6205",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6326,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "6326 AGP Video",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_USB,
 	    0,
-	    "Silicon Integrated System",
+	    "SIS",
 	    "5597/5598 USB",
 	},
 	{
@@ -3713,7 +3713,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SIS, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Silicon Integrated System",
+	    "SIS",
 	    NULL,
 	},
 	{

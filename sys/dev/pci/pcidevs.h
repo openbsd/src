@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.162 1999/07/18 21:07:52 csapuntz Exp 
+ *	OpenBSD: pcidevs,v 1.163 1999/07/20 04:19:04 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -102,7 +102,7 @@
 #define	PCI_VENDOR_FUTUREDOMAIN	0x1036		/* Future Domain */
 #define	PCI_VENDOR_HITACHIMICRO	0x1037		/* Hitach Microsystems */
 #define	PCI_VENDOR_AMP	0x1038		/* AMP */
-#define	PCI_VENDOR_SIS	0x1039		/* Silicon Integrated System */
+#define	PCI_VENDOR_SIS	0x1039		/* SIS */
 #define	PCI_VENDOR_SEIKOEPSON	0x103a		/* Seiko Epson */
 #define	PCI_VENDOR_TATUNGAMERICA	0x103b		/* Tatung Co. of America */
 #define	PCI_VENDOR_HP	0x103c		/* Hewlett-Packard */
@@ -1175,7 +1175,7 @@
 #define	PCI_PRODUCT_SIS_5582	0x5582		/* 5582 */
 #define	PCI_PRODUCT_SIS_5591	0x5591		/* 5591 Host-PCI */
 #define	PCI_PRODUCT_SIS_5596	0x5596		/* 5596 */
-#define	PCI_PRODUCT_SIS_5597_IDE	0x5597		/* 5597/5598 IDE controller */
+#define	PCI_PRODUCT_SIS_5597	0x5597		/* 5597 */
 #define	PCI_PRODUCT_SIS_5598	0x5598		/* 5598 */
 #define	PCI_PRODUCT_SIS_6204	0x6204		/* 6204 */
 #define	PCI_PRODUCT_SIS_6205	0x6205		/* 6205 */
