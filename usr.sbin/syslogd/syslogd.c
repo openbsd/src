@@ -96,7 +96,7 @@ static char rcsid[] = "$NetBSD: syslogd.c,v 1.5 1996/01/02 17:48:41 perry Exp $"
 #include <string.h>
 #include <unistd.h>
 #include <utmp.h>
-#include "pathnames.h"
+#include <paths.h>
 
 #define SYSLOG_NAMES
 #include <sys/syslog.h>
