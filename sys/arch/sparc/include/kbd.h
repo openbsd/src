@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.h,v 1.3 1997/08/08 08:26:27 downsj Exp $	*/
+/*	$OpenBSD: kbd.h,v 1.4 1998/06/27 20:01:08 todd Exp $	*/
 /*	$NetBSD: kbd.h,v 1.6 1996/03/31 22:21:35 pk Exp $ */
 
 /*
@@ -88,6 +88,7 @@
 #define	LED_SCROLL_LOCK	0x4
 #define	LED_CAPS_LOCK	0x8
 
+#ifdef _KERNEL
 void 	kbd_serial __P((struct tty *,
 			void (*)(struct tty *), void (*)(struct tty *)));
 void 	ms_serial __P((struct tty *,
@@ -96,3 +97,4 @@ void 	kbd_rint __P((int));
 void 	ms_rint __P((int));
 void 	kbd_ascii __P((struct tty *));
 int	kbd_docmd __P((int, int));
+#endif
