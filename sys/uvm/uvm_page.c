@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.2 1999/02/26 05:32:07 art Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.3 1999/07/23 14:47:06 ho Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.15 1998/10/18 23:50:00 chs Exp $	*/
 
 /*
@@ -928,6 +928,51 @@ uvm_pagealloc_strat(obj, off, anon, strat, free_list)
 	uvm_unlock_fpageq();
 	splx(s);
 	return (NULL);
+}
+
+/* 
+ * uvm_pagealloc_contig: allocate contiguous memory. 
+ *
+ * XXX - fix comment.
+ */
+
+vaddr_t
+uvm_pagealloc_contig(size, low, high, alignment)
+	vaddr_t size;
+	vaddr_t low, high;
+	vaddr_t alignment;
+{
+	struct pglist pglist; 
+	struct vm_page *pg;
+	vaddr_t addr, temp_addr;
+
+	size = round_page(size);
+
+	TAILQ_INIT(&pglist);
+	if (uvm_pglistalloc(size, low, high, alignment, 0,
+			    &pglist, 1, FALSE))
+	        return 0;
+	addr = vm_map_min(kernel_map);
+	if (uvm_map(kernel_map, &addr, size, NULL, 
+		    UVM_UNKNOWN_OFFSET, TRUE) != KERN_SUCCESS)
+	        addr = 0;
+	temp_addr = addr;
+	for (pg = TAILQ_FIRST(&pglist); pg != NULL; 
+	     pg = TAILQ_NEXT(pg, pageq)) {
+	        pg->uobject = uvm.kernel_object;
+		pg->offset = temp_addr - vm_map_min(kernel_map);
+		uvm_pageinsert(pg);
+	        uvm_pagewire(pg);
+#if defined(PMAP_NEW)
+		pmap_kenter_pa(temp_addr, VM_PAGE_TO_PHYS(pg), 
+			       VM_PROT_READ|VM_PROT_WRITE);
+#else
+		pmap_enter(kernel_map->pmap, temp_addr, VM_PAGE_TO_PHYS(pg),
+		    UVM_PROT_READ|UVM_PROT_WRITE, TRUE);
+#endif
+		temp_addr += PAGE_SIZE;
+	}
+	return addr;
 }
 
 /*
