@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.103 1998/11/29 02:29:04 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.104 1998/11/29 05:27:44 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2773,6 +2773,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT82C598 (Apollo MVP3) PCI-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINE,
+	    0,
+	    "VIA Technologies",
+	    "RHINE",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_RHINEII,
+	    0,
+	    "VIA Technologies",
+	    "RHINEII",
 	},
 	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6000B,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.103 1998/11/29 02:29:04 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.104 1998/11/29 05:27:44 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1194,6 +1194,8 @@
 #define	PCI_PRODUCT_VIATECH_VT82C586_PWR	0x3040		/* VT82C586 (Apollo VP) Power Management Controller */
 #define	PCI_PRODUCT_VIATECH_VT82C597AGP	0x8597		/* VT82C597 (Apollo VP3) PCI-AGP Bridge */
 #define	PCI_PRODUCT_VIATECH_VT82C598AGP	0x8598		/* VT82C598 (Apollo MVP3) PCI-AGP Bridge */
+#define	PCI_PRODUCT_VIATECH_RHINE	0x3043		/* RHINE */
+#define	PCI_PRODUCT_VIATECH_RHINEII	0x6100		/* RHINEII */
 
 /* Vortex Computer Systems products */
 #define	PCI_PRODUCT_VORTEX_GDT_6000B	0x0001		/* GDT 6000b */
