@@ -72,7 +72,7 @@ void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 		ctx->md=md;
 		EVP_MD_CTX_init(&ctx->md_ctx);
 		}
-	else 
+	else
 		md=ctx->md;
 
 	if (key != NULL)

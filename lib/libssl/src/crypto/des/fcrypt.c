@@ -91,7 +91,6 @@ char *DES_crypt(const char *buf, const char *salt)
 	}
 
 
-
 char *DES_fcrypt(const char *buf, const char *salt, char *ret)
 	{
 	unsigned int i,j,x,y;
@@ -163,3 +162,4 @@ r=(r+7)/8;
 	ret[13]='\0';
 	return(ret);
 	}
+

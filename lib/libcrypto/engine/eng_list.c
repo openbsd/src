@@ -348,7 +348,7 @@ ENGINE *ENGINE_by_id(const char *id)
 		}
 	CRYPTO_r_lock(CRYPTO_LOCK_ENGINE);
 	iterator = engine_list_head;
-	while(iterator && (strcmp(id, iterator->id) != 0)) 
+	while(iterator && (strcmp(id, iterator->id) != 0))
 		iterator = iterator->next;
 	if(iterator)
 		{
