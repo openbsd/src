@@ -50,20 +50,30 @@ driver supports the standard AT floppy
 disk controllers. These include standard IDE, MFM, RLL,
 EIDE, ESDI and SCSI controllers with floppy attachment.
 .Pp
-When using the
-.Nm fdc
-driver with
-.Nm disklabel
-the last letter is used to indicate the floppy size:
-.Bl -tag -width indent
-.It a: default (probed) geometry of drive, max supported.
-.It b: 1.44MB
-.It c: 1.2MB
-.It d: 360KB/AT (360KB disk in a 1.2 MB drive)
-.It e: 360KB/PC (360KB drive)
-.It f: 720KB
-.It g: 720KB/x (720KB in a 1.2 MB drive)
-.It h: 360KB/x (360KB in a 720KB drive)
+The standard names of a a floppy drive will take the form
+.Nm /dev/fd{0,1,2,3}{,B,C,D,E,F,G,H}[abcdefghijklmnop] .
+.Pp
+The first component of this path is the unit number, permitting
+a total of 4 floppy drives.
+The next component is missing for the default geometry (it
+would be A, but it is ommited for simplicity) and B-H for the
+other 7 geometry types the floppy driver supports.
+The last component of the path is the 16 partitions that a floppy
+disk can support.
+.Pp
+The additional geometry types are as follows:
+.Bl -tag -width xxxxxx -compact
+.It `B' 1.44MB
+.It `C' 1.2MB
+.It `D' 360KB/AT (360KB disk in a 1.2 MB drive)
+.It `E' 360KB/PC (360KB drive)
+.It `F' 720KB
+.It `G' 720KB/x (720KB in a 1.2 MB drive)
+.It `H' 360KB/x (360KB in a 720KB drive)
+.El
+.Pp
+The default geometry is the format specified in the BIOS, and
+is typically the largest supported format.
 .Sh BUGS
 The
 .Nm fdc 
