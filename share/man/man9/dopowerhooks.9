@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dopowerhooks.9,v 1.1 2000/07/01 14:45:45 aaron Exp $
+.\"	$OpenBSD: dopowerhooks.9,v 1.2 2000/11/10 17:57:00 espie Exp $
 .\"
 .\" Copyright (c) 2000 Aaron Campbell
 .\" All rights reserved.
@@ -44,8 +44,16 @@ The
 function invokes all power hooks established using the
 .Xr powerhook_establish 9
 function.
-Power hooks are called in reverse order, i.e., the power hook established
-last will be called first.
+At
+.Dq suspend
+and
+.Dq standby
+time, power hooks are called in reverse order, i.e.,
+the power hook established last will be called first.
+At
+.Dq resume
+time, power hooks are called in order, i.e., the power hook
+established first will be called first.
 .Pp
 This routine is called from the
 .Xr apm 4
