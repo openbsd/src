@@ -698,7 +698,6 @@
 ./usr/include/g++/vector.h
 ./usr/include/g2c.h
 ./usr/include/glob.h
-./usr/include/gmp.h
 ./usr/include/grp.h
 ./usr/include/histedit.h
 ./usr/include/ieeefp.h
@@ -1437,7 +1436,6 @@
 ./usr/lib/libform_p.a
 ./usr/lib/libg2c.a
 ./usr/lib/libg2c_p.a
-./usr/lib/libgmp.a
 ./usr/lib/libiberty.a
 ./usr/lib/libiberty_p.a
 ./usr/lib/libkadm.a
