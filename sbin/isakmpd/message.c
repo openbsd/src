@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.42 2001/04/24 07:27:37 niklas Exp $	*/
+/*	$OpenBSD: message.c,v 1.43 2001/06/29 18:52:17 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -1345,10 +1345,9 @@ message_send_delete (struct sa *sa)
   struct proto *proto;
   struct sa *isakmp_sa;
   struct sockaddr *dst;
-  socklen_t dstlen;
 
-  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
-  isakmp_sa = sa_isakmp_lookup_by_peer (dst, dstlen);
+  sa->transport->vtbl->get_dst (sa->transport, &dst);
+  isakmp_sa = sa_isakmp_lookup_by_peer (dst, dst->sa_len);
   if (!isakmp_sa)
     {
       /*
@@ -1450,9 +1449,8 @@ message_drop (struct message *msg, int notify, struct proto *proto,
 {
   struct transport *t = msg->transport;
   struct sockaddr *dst;
-  int dst_len;
 
-  t->vtbl->get_dst (t, &dst, &dst_len);
+  t->vtbl->get_dst (t, &dst);
 
   /* XXX Assumes IPv4.  */
   log_print ("dropped message from %s port %d due to notification type %s",
@@ -1503,7 +1501,6 @@ message_packet_log (struct message *msg)
 {
 #ifdef USE_DEBUG
   struct sockaddr *src, *dst;
-  int srclen, dstlen;
 
   /* Don't log retransmissions. Redundant for incoming packets... */
   if (msg->xmits > 0)
@@ -1512,13 +1509,13 @@ message_packet_log (struct message *msg)
   /* Figure out direction. */
   if (msg->exchange && msg->exchange->initiator ^ (msg->exchange->step % 2))
     {
-      msg->transport->vtbl->get_src (msg->transport, &src, &srclen);
-      msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
+      msg->transport->vtbl->get_src (msg->transport, &src);
+      msg->transport->vtbl->get_dst (msg->transport, &dst);
     }
   else
     {
-      msg->transport->vtbl->get_src (msg->transport, &dst, &dstlen);
-      msg->transport->vtbl->get_dst (msg->transport, &src, &srclen);
+      msg->transport->vtbl->get_src (msg->transport, &dst);
+      msg->transport->vtbl->get_dst (msg->transport, &src);
     }
 
   log_packet_iov (src, dst, msg->iov, msg->iovlen);

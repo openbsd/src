@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.48 2001/06/29 18:05:24 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.49 2001/06/29 18:52:17 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -201,19 +201,18 @@ ipsec_sa_check (struct sa *sa, void *v_arg)
   struct dst_spi_proto_arg *arg = v_arg;
   struct proto *proto;
   struct sockaddr *dst, *src;
-  int dstlen, srclen;
   int incoming;
 
   if (sa->phase != 2 || !(sa->flags & SA_FLAG_READY))
     return 0;
 
-  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+  sa->transport->vtbl->get_dst (sa->transport, &dst);
   if (memcmp (sockaddr_data (dst), sockaddr_data (arg->dst), 
 	      sockaddr_len (dst)) == 0)
     incoming = 0;
   else
     {
-      sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
+      sa->transport->vtbl->get_src (sa->transport, &src);
       if (memcmp (sockaddr_data (src), sockaddr_data (arg->dst), 
 		  sockaddr_len (src)) == 0)
 	incoming = 1;
@@ -929,7 +928,7 @@ static void
 ipsec_invalid_spi (struct message *msg, struct payload *p)
 {
   struct sockaddr *dst;
-  int invspisz, off, dstlen;
+  int invspisz, off;
   u_int32_t spi;
   u_int16_t totsiz;
   u_int8_t spisz;
@@ -953,7 +952,7 @@ ipsec_invalid_spi (struct message *msg, struct payload *p)
     }
   memcpy (&spi, p->p + off, sizeof spi);
 
-  msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
+  msg->transport->vtbl->get_dst (msg->transport, &dst);
 
   /* delete matching SPI's from this peer */
   ipsec_delete_spi_list (dst, 0, (u_int8_t *)&spi, 1, "INVALID_SPI");
@@ -1474,7 +1473,6 @@ static u_int8_t *
 ipsec_get_spi (size_t *sz, u_int8_t proto, struct message *msg)
 {
   struct sockaddr *dst, *src;
-  int dstlen, srclen;
   struct transport *transport = msg->transport;
 
   if (msg->exchange->phase == 1)
@@ -1485,9 +1483,9 @@ ipsec_get_spi (size_t *sz, u_int8_t proto, struct message *msg)
   else
     {
       /* We are the destination in the SA we want a SPI for.  */
-      transport->vtbl->get_src (transport, &dst, &dstlen);
+      transport->vtbl->get_src (transport, &dst);
       /* The peer is the source.  */
-      transport->vtbl->get_dst (transport, &src, &srclen);
+      transport->vtbl->get_dst (transport, &src);
       return sysdep_ipsec_get_spi (sz, proto, src, src->sa_len, dst, 
 				   dst->sa_len, msg->exchange->seq);
     }
@@ -1505,7 +1503,6 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 {
   u_int32_t spisz, nspis;
   struct sockaddr *dst;
-  socklen_t dstlen;
   int reenter = 0;
   u_int8_t *spis, proto;
   struct sa *sa;
@@ -1544,7 +1541,7 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 
       /* extract SPI and get dst address */
       memcpy (spis, payload->p + ISAKMP_DELETE_SPI_OFF, nspis * spisz);
-      msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
+      msg->transport->vtbl->get_dst (msg->transport, &dst);
 
       ipsec_delete_spi_list (dst, proto, spis, nspis, "DELETE");
 
@@ -1561,8 +1558,8 @@ ipsec_handle_leftover_payload (struct message *msg, u_int8_t type,
 	   * ready.  Exchanges will timeout themselves and then the
 	   * non-ready SAs will disappear too.
 	   */
-	  msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
-	  while ((sa = sa_lookup_by_peer (dst, dstlen)) != 0)
+	  msg->transport->vtbl->get_dst (msg->transport, &dst);
+	  while ((sa = sa_lookup_by_peer (dst, dst->sa_len)) != 0)
 	    {
 	      /*
 	       * Don't delete the current SA -- we received the notification
@@ -2011,7 +2008,6 @@ ipsec_add_contact (struct message *msg)
 {
   struct contact *new_contacts;
   struct sockaddr *dst, *addr;
-  socklen_t dstlen;
   int cnt;
 
   if (contact_cnt == contact_limit)
@@ -2027,16 +2023,16 @@ ipsec_add_contact (struct message *msg)
       contact_limit = cnt;
       contacts = new_contacts;
     }
-  msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
-  addr = malloc (dstlen);
+  msg->transport->vtbl->get_dst (msg->transport, &dst);
+  addr = malloc (dst->sa_len);
   if (!addr)
     {
-      log_error ("ipsec_add_contact: malloc (%d) failed", dstlen);
+      log_error ("ipsec_add_contact: malloc (%d) failed", dst->sa_len);
       return -1;
     }
-  memcpy (addr, dst, dstlen);
+  memcpy (addr, dst, dst->sa_len);
   contacts[contact_cnt].addr = addr;
-  contacts[contact_cnt++].len = dstlen;
+  contacts[contact_cnt++].len = dst->sa_len;
 
   /*
    * XXX There are better algorithms for already mostly-sorted data like
@@ -2052,7 +2048,8 @@ ipsec_contacted (struct message *msg)
 {
   struct contact contact;
 
-  msg->transport->vtbl->get_dst (msg->transport, &contact.addr, &contact.len);
+  msg->transport->vtbl->get_dst (msg->transport, &contact.addr);
+  contact.len = contact.addr->sa_len;
   return contacts
     ? (bsearch (&contact, contacts, contact_cnt, sizeof *contacts, addr_cmp)
        != 0)

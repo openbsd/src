@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.51 2001/06/29 17:59:34 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.52 2001/06/29 18:52:16 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -451,7 +451,6 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
   struct ipsec_sa *isa = msg->isakmp_sa->data;
   struct hash *hash = hash_get (isa->hash);
   struct sockaddr *src;
-  socklen_t srclen;
 
   if (!ipsec_add_hash_payload (msg, hash->hashsize))
     return -1;
@@ -889,7 +888,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 
       /* If we're here, then we are the initiator, so use initiator
 	address for local ID */
-      msg->transport->vtbl->get_src (msg->transport, &src, &srclen);
+      msg->transport->vtbl->get_src (msg->transport, &src);
       sz = ISAKMP_ID_SZ + sockaddr_len (src);
 
       id = calloc (sz, sizeof (char));
@@ -1006,7 +1005,6 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
   u_int8_t *rest;
   size_t rest_len;
   struct sockaddr *src, *dst;
-  socklen_t srclen, dstlen;
 
   /* Allocate the prf and start calculating our HASH(1).  XXX Share?  */
   LOG_DBG_BUF ((LOG_NEGOTIATION, 90, "initiator_recv_HASH_SA_NONCE: SKEYID_a",
@@ -1123,8 +1121,8 @@ initiator_recv_HASH_SA_NONCE (struct message *msg)
       ie->flags = IPSEC_EXCH_FLAG_NO_ID;
 
       /* Get initiator and responder addresses.  */
-      msg->transport->vtbl->get_src (msg->transport, &src, &srclen);
-      msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
+      msg->transport->vtbl->get_src (msg->transport, &src);
+      msg->transport->vtbl->get_dst (msg->transport, &dst);
       ie->id_ci_sz = ISAKMP_ID_DATA_OFF + sockaddr_len (src);
       ie->id_cr_sz = ISAKMP_ID_DATA_OFF + sockaddr_len (dst);
       ie->id_ci = calloc (ie->id_ci_sz, sizeof (char));
@@ -1416,7 +1414,6 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
   int retval = -1;
   struct proto *proto;
   struct sockaddr *src, *dst;
-  socklen_t srclen, dstlen;
   char *name;
 
   hashp = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_HASH]);
@@ -1536,8 +1533,8 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
       ie->flags = IPSEC_EXCH_FLAG_NO_ID;
 
       /* Get initiator and responder addresses.  */
-      msg->transport->vtbl->get_src (msg->transport, &src, &srclen);
-      msg->transport->vtbl->get_dst (msg->transport, &dst, &dstlen);
+      msg->transport->vtbl->get_src (msg->transport, &src);
+      msg->transport->vtbl->get_dst (msg->transport, &dst);
       ie->id_ci_sz = ISAKMP_ID_DATA_OFF + sockaddr_len (src);
       ie->id_cr_sz = ISAKMP_ID_DATA_OFF + sockaddr_len (dst);
       ie->id_ci = calloc (ie->id_ci_sz, sizeof (char));

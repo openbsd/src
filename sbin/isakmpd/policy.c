@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.33 2001/06/29 04:12:01 ho Exp $	*/
+/*	$OpenBSD: policy.c,v 1.34 2001/06/29 18:52:17 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -628,7 +628,7 @@ policy_callback (char *name)
 	    }
 	}
 
-      policy_sa->transport->vtbl->get_src (policy_sa->transport, &sin, &fmt);
+      policy_sa->transport->vtbl->get_src (policy_sa->transport, &sin);
       if (sockaddr2text (sin, &addr, 1))
 	{
 	  log_error ("policy_callback: sockaddr2text failed");
@@ -637,7 +637,7 @@ policy_callback (char *name)
       memcpy (local_ike_address, addr, sizeof local_ike_address);
       free (addr);
 
-      policy_sa->transport->vtbl->get_dst (policy_sa->transport, &sin, &fmt);
+      policy_sa->transport->vtbl->get_dst (policy_sa->transport, &sin);
       if (sockaddr2text (sin, &addr, 1))
 	{
 	  log_error ("policy_callback: sockaddr2text failed");
@@ -1048,8 +1048,7 @@ policy_callback (char *name)
 	}
       else
         {
-	  policy_sa->transport->vtbl->get_dst (policy_sa->transport, &sin,
-					       &fmt);
+	  policy_sa->transport->vtbl->get_dst (policy_sa->transport, &sin);
 	  switch (sin->sa_family)
 	    {
 	    case AF_INET:
@@ -1265,8 +1264,7 @@ policy_callback (char *name)
       else
         {
 	  policy_sa->transport->vtbl->get_src (policy_sa->transport,
-					       (struct sockaddr **)&sin,
-					       &fmt);
+					       (struct sockaddr **)&sin);
 	  switch (sin->sa_family)
 	    {
 	    case AF_INET:

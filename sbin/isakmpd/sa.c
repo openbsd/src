@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.44 2001/06/29 18:12:07 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.45 2001/06/29 18:52:17 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -196,13 +196,12 @@ sa_check_peer (struct sa *sa, void *v_addr)
 {
   struct addr_arg *addr = v_addr;
   struct sockaddr *dst;
-  socklen_t dstlen;
 
   if (!sa->transport || (sa->flags & SA_FLAG_READY) == 0
       || (addr->phase && addr->phase != sa->phase))
     return 0;
 
-  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+  sa->transport->vtbl->get_dst (sa->transport, &dst);
   return dst->sa_len == addr->len
     && memcmp (dst, addr->addr, dst->sa_len) == 0;
 }
@@ -221,14 +220,13 @@ isakmp_sa_check (struct sa *sa, void *v_arg)
 {
   struct dst_isakmpspi_arg *arg = v_arg;
   struct sockaddr *dst, *src;
-  int dstlen, srclen;
 
   if (sa->phase != 1 || !(sa->flags & SA_FLAG_READY))
     return 0;
 
   /* verify address is either src or dst for this sa */
-  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
-  sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
+  sa->transport->vtbl->get_dst (sa->transport, &dst);
+  sa->transport->vtbl->get_src (sa->transport, &src);
   if (memcmp (src, arg->dst, SA_LEN(src)) &&
       memcmp (dst, arg->dst, SA_LEN(dst)))
     return 0;

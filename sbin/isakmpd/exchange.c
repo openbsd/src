@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.51 2001/06/27 00:48:21 angelos Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.52 2001/06/29 18:52:16 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -947,7 +947,6 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
   struct transport *t = msg->transport;
   struct exchange *exchange;
   struct sockaddr *dst;
-  int dst_len;
   char *name = 0, *policy = 0, *str;
   u_int32_t want_doi;
   u_int8_t type;
@@ -966,7 +965,7 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
        * XXX Assumes IPv4.  It might make sense to search through several
        * policies too.
        */
-      t->vtbl->get_dst (t, &dst, &dst_len);
+      t->vtbl->get_dst (t, &dst);
       name = conf_get_str ("Phase 1",
 			   inet_ntoa (((struct sockaddr_in *)dst)->sin_addr));
       if (name)

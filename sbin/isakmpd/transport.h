@@ -1,4 +1,4 @@
-/*	$OpenBSD: transport.h,v 1.7 2000/08/03 07:23:55 niklas Exp $	*/
+/*	$OpenBSD: transport.h,v 1.8 2001/06/29 18:52:17 ho Exp $	*/
 /*	$EOM: transport.h,v 1.16 2000/07/17 18:57:59 provos Exp $	*/
 
 /*
@@ -84,15 +84,15 @@ struct transport_vtbl {
 
   /*
    * Fill out a sockaddr structure with the transport's destination end's
-   * address info.  XXX Why not size_t * instead of int *?
+   * address info.
    */
-  void (*get_dst) (struct transport *, struct sockaddr **, int *);
+  void (*get_dst) (struct transport *, struct sockaddr **);
 
   /*
    * Fill out a sockaddr structure with the transport's source end's
-   * address info.  XXX Why not size_t * instead of int *?
+   * address info.
    */
-  void (*get_src) (struct transport *, struct sockaddr **, int *);
+  void (*get_src) (struct transport *, struct sockaddr **);
 
   /*
    * Return a string with decoded src and dst information

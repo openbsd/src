@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.27 2001/06/29 04:12:00 ho Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.28 2001/06/29 18:52:16 ho Exp $	*/
 /*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
@@ -785,7 +785,6 @@ ike_phase_1_send_ID (struct message *msg)
   char header[80];
   ssize_t sz;
   struct sockaddr *src;
-  int src_len;
   int initiator = exchange->initiator;
   u_int8_t **id;
   size_t *id_len;
@@ -823,7 +822,7 @@ ike_phase_1_send_ID (struct message *msg)
 	{
 	case IPSEC_ID_IPV4_ADDR:
 	case IPSEC_ID_IPV6_ADDR:
-      	  msg->transport->vtbl->get_src (msg->transport, &src, &src_len);
+      	  msg->transport->vtbl->get_src (msg->transport, &src);
 
       	  /* Already in network byteorder.  */
       	  memcpy (buf + ISAKMP_ID_DATA_OFF, sockaddr_data (src), 
@@ -843,7 +842,7 @@ ike_phase_1_send_ID (struct message *msg)
     }
   else
     {
-      msg->transport->vtbl->get_src (msg->transport, &src, &src_len);
+      msg->transport->vtbl->get_src (msg->transport, &src);
       switch (src->sa_family)
 	{
 	case AF_INET:

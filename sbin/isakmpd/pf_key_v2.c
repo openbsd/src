@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.70 2001/06/29 18:05:24 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.71 2001/06/29 18:52:17 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -776,7 +776,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
   struct sockaddr *src, *dst;
   struct sadb_ident *sid = 0;
   char *pp;
-  int srclen, dstlen, keylen, hashlen, err, idtype;
+  int keylen, hashlen, err, idtype;
   struct pf_key_v2_msg *update = 0, *ret = 0;
   struct ipsec_proto *iproto = proto->data;
 #if defined (SADB_X_CREDTYPE_NONE) || defined (SADB_X_AUTHTYPE_NONE)
@@ -923,9 +923,9 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
       goto cleanup;
     }
   if (incoming)
-    sa->transport->vtbl->get_src (sa->transport, &dst, &dstlen);
+    sa->transport->vtbl->get_src (sa->transport, &dst);
   else
-    sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
+    sa->transport->vtbl->get_dst (sa->transport, &dst);
 #ifdef KAME
   msg.sadb_msg_seq
     = (incoming ? pf_key_v2_seq_by_sa (proto->spi[incoming],
@@ -1022,9 +1022,9 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
    * Setup the ADDRESS extensions.
    */
   if (incoming)
-    sa->transport->vtbl->get_dst (sa->transport, &src, &srclen);
+    sa->transport->vtbl->get_dst (sa->transport, &src);
   else
-    sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
+    sa->transport->vtbl->get_src (sa->transport, &src);
   len = sizeof *addr + PF_KEY_V2_ROUND (src->sa_len);
   addr = calloc (1, len);
   if (!addr)
@@ -2060,7 +2060,7 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
 {
   struct ipsec_sa *isa = sa->data;
   struct sockaddr *dst, *src;
-  int dstlen, srclen, error;
+  int error;
   struct proto *proto = TAILQ_FIRST (&sa->protos);
   int sidtype = 0, didtype = 0, sidlen = 0, didlen = 0;
   u_int8_t *sid = 0, *did = 0;
@@ -2069,8 +2069,8 @@ pf_key_v2_enable_sa (struct sa *sa, struct sa *isakmp_sa)
   struct sockaddr *hostmask = (struct sockaddr *)&hostmask_storage;
 #endif /* SADB_X_EXT_FLOW_TYPE */
 
-  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
-  sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
+  sa->transport->vtbl->get_dst (sa->transport, &dst);
+  sa->transport->vtbl->get_src (sa->transport, &src);
 
 #ifdef SADB_X_EXT_FLOW_TYPE
   if (isakmp_sa->id_i)
@@ -2278,7 +2278,6 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
 {
   struct ipsec_sa *isa = sa->data;
   struct sockaddr *dst, *src;
-  int dstlen, srclen;
   struct proto *proto = TAILQ_FIRST (&sa->protos);
 #ifndef SADB_X_EXT_FLOW_TYPE
   struct sockaddr_storage hostmask_storage;
@@ -2286,8 +2285,8 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
   int error;
 #endif /* SADB_X_EXT_FLOW_TYPE */
 
-  sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
-  sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
+  sa->transport->vtbl->get_dst (sa->transport, &dst);
+  sa->transport->vtbl->get_src (sa->transport, &src);
 
   if (!incoming)
     return pf_key_v2_flow (isa->src_net, isa->src_mask, isa->dst_net,
@@ -2345,7 +2344,7 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
   struct sadb_sa ssa;
   struct sadb_address *addr = 0;
   struct sockaddr *saddr;
-  int saddrlen, len, err;
+  int len, err;
   struct pf_key_v2_msg *delete = 0, *ret = 0;
 #ifdef KAME
   struct sadb_x_sa2 ssa2;
@@ -2411,9 +2410,9 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
    * Setup the ADDRESS extensions.
    */
   if (incoming)
-    sa->transport->vtbl->get_dst (sa->transport, &saddr, &saddrlen);
+    sa->transport->vtbl->get_dst (sa->transport, &saddr);
   else
-    sa->transport->vtbl->get_src (sa->transport, &saddr, &saddrlen);
+    sa->transport->vtbl->get_src (sa->transport, &saddr);
   len = sizeof *addr + PF_KEY_V2_ROUND (saddr->sa_len);
   addr = calloc (1, len);
   if (!addr)
@@ -2441,9 +2440,9 @@ pf_key_v2_delete_spi (struct sa *sa, struct proto *proto, int incoming)
   addr = 0;
 
   if (incoming)
-    sa->transport->vtbl->get_src (sa->transport, &saddr, &saddrlen);
+    sa->transport->vtbl->get_src (sa->transport, &saddr);
   else
-    sa->transport->vtbl->get_dst (sa->transport, &saddr, &saddrlen);
+    sa->transport->vtbl->get_dst (sa->transport, &saddr);
   len = sizeof *addr + PF_KEY_V2_ROUND (saddr->sa_len);
   addr = calloc (1, len);
   if (!addr)
@@ -3797,7 +3796,7 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
   struct sadb_protocol protocol;
   struct pf_key_v2_msg *grpspis = 0, *ret = 0;
   struct sockaddr *saddr;
-  int saddrlen, err;
+  int err;
   size_t len;
 #ifdef KAME
   struct sadb_x_sa2 kamesa2;
@@ -3857,9 +3856,9 @@ pf_key_v2_group_spis (struct sa *sa, struct proto *proto1,
    * Setup the ADDRESS extensions.
    */
   if (incoming)
-    sa->transport->vtbl->get_src (sa->transport, &saddr, &saddrlen);
+    sa->transport->vtbl->get_src (sa->transport, &saddr);
   else
-    sa->transport->vtbl->get_dst (sa->transport, &saddr, &saddrlen);
+    sa->transport->vtbl->get_dst (sa->transport, &saddr);
   len = sizeof *addr + PF_KEY_V2_ROUND (saddr->sa_len);
   addr = calloc (1, len);
   if (!addr)
