@@ -163,6 +163,13 @@ struct sadb_policy {
   u_int32_t sadb_policy_seq;
 };
 
+struct sadb_cred {
+  uint16_t sadb_cred_len;
+  uint16_t sadb_cred_exttype;
+  uint16_t sadb_cred_type;
+  uint16_t sadb_cred_reserved;
+};
+
 #define SADB_GETSPROTO(x) ( (x) == SADB_SATYPE_AH ? IPPROTO_AH :\
                                 (x) == SADB_SATYPE_ESP ? IPPROTO_ESP :\
                                                          IPPROTO_IPIP )
@@ -193,7 +200,8 @@ struct sadb_policy {
 #define SADB_X_EXT_SA2                23
 #define SADB_X_EXT_DST2               24
 #define SADB_X_EXT_POLICY             25
-#define SADB_EXT_MAX                  25
+#define SADB_X_EXT_CREDENTIALS        26
+#define SADB_EXT_MAX                  26
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC		 0
@@ -273,6 +281,11 @@ struct sadb_policy {
 #define PFKEYV2_SENDMESSAGE_UNICAST    1
 #define PFKEYV2_SENDMESSAGE_REGISTERED 2
 #define PFKEYV2_SENDMESSAGE_BROADCAST  3
+
+#define SADB_CREDTYPE_NONE           0
+#define SADB_CREDTYPE_X509           1
+#define SADB_CREDTYPE_KEYNOTE        2
+#define SADB_CREDTYPE_MAX            3
 
 #define FLOW_X_TYPE_USE                1
 #define FLOW_X_TYPE_ACQUIRE            2

@@ -60,6 +60,7 @@ you didn't get a copy, you may request one from <license@inner.net>.
 #define BITMAP_X_SA2                   (1 << SADB_X_EXT_SA2)
 #define BITMAP_X_DST2                  (1 << SADB_X_EXT_DST2)
 #define BITMAP_X_POLICY                (1 << SADB_X_EXT_POLICY)
+#define BITMAP_X_CREDENTIALS           (1 << SADB_X_EXT_CREDENTIALS)
 
 uint32_t sadb_exts_allowed_in[SADB_MAX+1] =
 {
@@ -68,9 +69,9 @@ uint32_t sadb_exts_allowed_in[SADB_MAX+1] =
   /* GETSPI */
   BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST | BITMAP_SPIRANGE,
   /* UPDATE */
-  BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY,
+  BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS,
   /* ADD */
-  BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY,
+  BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_KEY | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS,
   /* DELETE */
   BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
   /* GET */
@@ -140,9 +141,9 @@ uint32_t sadb_exts_allowed_out[SADB_MAX+1] =
   /* GETSPI */
   BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
   /* UPDATE */
-  BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY,
+  BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS,
   /* ADD */
-  BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY,
+  BITMAP_SA | BITMAP_LIFETIME | BITMAP_ADDRESS | BITMAP_IDENTITY | BITMAP_X_CREDENTIALS,
   /* DELETE */
   BITMAP_SA | BITMAP_ADDRESS_SRC | BITMAP_ADDRESS_DST,
   /* GET */
@@ -414,6 +415,20 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 	    return EINVAL;
 
 	  if (sadb_key->sadb_key_reserved)
+	    return EINVAL;
+	}
+	break;
+     case SADB_X_EXT_CREDENTIALS:
+	{
+          struct sadb_cred *sadb_cred = (struct sadb_cred *)p;
+
+	  if (i < sizeof(struct sadb_cred))
+	    return EINVAL;
+
+	  if (sadb_cred->sadb_cred_type > SADB_CREDTYPE_MAX)
+	    return EINVAL;
+
+	  if (sadb_cred->sadb_cred_reserved)
 	    return EINVAL;
 	}
 	break;
