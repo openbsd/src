@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.4 2002/06/04 20:13:19 provos Exp $
+.\"	$OpenBSD: systrace.1,v 1.5 2002/06/04 20:19:11 provos Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -69,6 +69,15 @@ The policies specified in
 are added to the policies that
 .Nm
 knows about.
+.El
+.Sh FILES
+.Bl -tag -width xHOME/xsystrace -compact
+.It Pa /dev/systrace
+systrace device
+.It Pa /etc/systrace
+global systrace policies
+.It Pa $HOME/.systrace
+user specified policies
 .El
 .Sh SEE ALSO
 .Xr systrace 4
