@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.4 2002/01/17 21:23:24 jason Exp $	*/
+/*	$OpenBSD: sab.c,v 1.5 2002/01/18 21:15:56 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -103,6 +103,8 @@ struct sabtty_softc {
 #define	SABTTYF_CDCHG		0x08
 #define	SABTTYF_CONS_IN		0x10
 #define	SABTTYF_CONS_OUT	0x20
+#define	SABTTYF_TXDRAIN		0x40
+#define	SABTTYF_DONTDDB		0x80
 	u_int8_t		sc_rbuf[SABTTY_RBUF_SIZE];
 	u_int8_t		*sc_rend, *sc_rput, *sc_rget;
 	u_int8_t		sc_polling, sc_pollrfc;
@@ -140,6 +142,7 @@ int sabtty_speed __P((int));
 void sabtty_console_flags __P((struct sabtty_softc *));
 void sabtty_cnpollc __P((struct sabtty_softc *, int));
 void sabtty_shutdown __P((void *));
+int sabttyparam __P((struct sabtty_softc *, struct tty *, struct termios *));
 
 int sabttyopen __P((dev_t, int, int, struct proc *));
 int sabttyclose __P((dev_t, int, int, struct proc *));
@@ -397,6 +400,7 @@ sabtty_attach(parent, self, aux)
 	sabtty_console_flags(sc);
 
 	if (sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) {
+		struct termios t;
 		char *acc;
 
 		switch (sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) {
@@ -414,6 +418,12 @@ sabtty_attach(parent, self, aux)
 
 		/* Let current output drain */
 		DELAY(100000);
+
+		t.c_ispeed= 0;
+		t.c_ospeed = 9600;
+		t.c_cflag = CREAD | CS8 | HUPCL;
+		sc->sc_tty->t_ospeed = 0;
+		sabttyparam(sc, sc->sc_tty, &t);
 
 		if (sc->sc_flags & SABTTYF_CONS_IN) {
 			sabtty_cons_input = sc;
@@ -496,15 +506,26 @@ sabtty_intr(sc, needsoftp)
 		needsoft = 1;
 	}
 
-	if (isr1 & SAB_ISR1_BRK)
+	if (isr1 & SAB_ISR1_BRKT)
 		sabtty_abort(sc);
+
+	if (isr1 & SAB_ISR1_ALLS) {
+		if (sc->sc_flags & SABTTYF_TXDRAIN)
+			wakeup(sc);
+		sc->sc_flags &= ~SABTTYF_STOP;
+		sc->sc_flags |= SABTTYF_DONE;
+		sc->sc_imr1 |= SAB_IMR1_ALLS;
+		SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
+		needsoft = 1;
+	}
 
 	if (isr1 & SAB_ISR1_XPR) {
 		r = 1;
 		if ((sc->sc_flags & SABTTYF_STOP) == 0) {
-			len = 32;
 			if (sc->sc_txc < 32)
 				len = sc->sc_txc;
+			else
+				len = 32;
 			for (i = 0; i < len; i++) {
 				SAB_WRITE(sc, SAB_XFIFO + i, *sc->sc_txp);
 				sc->sc_txp++;
@@ -518,10 +539,8 @@ sabtty_intr(sc, needsoftp)
 
 		if ((sc->sc_txc == 0) || (sc->sc_flags & SABTTYF_STOP)) {
 			sc->sc_imr1 |= SAB_IMR1_XPR;
+			sc->sc_imr1 &= ~SAB_IMR1_ALLS;
 			SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
-			sc->sc_flags &= ~SABTTYF_STOP;
-			sc->sc_flags |= SABTTYF_DONE;
-			needsoft = 1;
 		}
 	}
 
@@ -593,7 +612,7 @@ sabttyopen(dev, flags, mode, p)
 	struct sab_softc *bc;
 	struct sabtty_softc *sc;
 	struct tty *tp;
-	int card = SAB_CARD(dev), port = SAB_PORT(dev), s;
+	int card = SAB_CARD(dev), port = SAB_PORT(dev), s, s1;
 
 	if (card >= sab_cd.cd_ndevs)
 		return (ENXIO);
@@ -630,17 +649,24 @@ sabttyopen(dev, flags, mode, p)
 
 		s = spltty();
 
-		sabtty_reset(sc);
-		sabtty_param(tp, &tp->t_termios);
 		ttsetwater(tp);
 
+		s1 = splhigh();
+		sabtty_reset(sc);
+		sabtty_param(tp, &tp->t_termios);
 		sc->sc_imr0 = SAB_IMR0_PERR | SAB_IMR0_FERR | SAB_IMR0_PLLA;
 		SAB_WRITE(sc, SAB_IMR0, sc->sc_imr0);
-
-		sc->sc_imr1 = SAB_IMR1_BRKT | SAB_IMR1_ALLS | SAB_IMR1_XDU |
+		sc->sc_imr1 = SAB_IMR1_BRK | SAB_IMR1_ALLS | SAB_IMR1_XDU |
 		    SAB_IMR1_TIN | SAB_IMR1_CSC | SAB_IMR1_XMR | SAB_IMR1_XPR;
 		SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
 		SAB_WRITE(sc, SAB_CCR0, SAB_READ(sc, SAB_CCR0) | SAB_CCR0_PU);
+		sabtty_cec_wait(sc);
+		SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_XRES);
+		sabtty_cec_wait(sc);
+		SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RRES);
+		sabtty_cec_wait(sc);
+		splx(s1);
+
 		sabtty_flush(sc);
 
 		if ((sc->sc_openflags & TIOCFLAG_SOFTCAR) ||
@@ -673,7 +699,23 @@ sabttyopen(dev, flags, mode, p)
 
 	splx(s);
 
-	return ((*linesw[tp->t_line].l_open)(dev, tp));
+	s = (*linesw[tp->t_line].l_open)(dev, tp);
+	if (s != 0) {
+		if (tp->t_state & TS_ISOPEN)
+			return (s);
+
+		if (tp->t_cflag & HUPCL) {
+			sabtty_mdmctrl(sc, 0, DMSET);
+			(void)tsleep(sc, TTIPRI, ttclos, hz);
+		}
+
+		if ((sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) == 0) {
+			/* Flush and power down if we're not the console */
+			sabtty_flush(sc);
+			sabtty_reset(sc);
+		}
+	}
+	return (s);
 }
 
 int
@@ -688,15 +730,34 @@ sabttyclose(dev, flags, mode, p)
 	int s;
 
 	(*linesw[tp->t_line].l_close)(tp, flags);
+
 	s = spltty();
 
-	if ((tp->t_cflag & HUPCL) || ((tp->t_state & TS_ISOPEN) == 0)) {
-		sabtty_mdmctrl(sc, 0, DMSET);
-		sabtty_flush(sc);
-		sabtty_reset(sc);
+	if ((tp->t_state & TS_ISOPEN) == 0) {
+		/* Wait for output drain */
+		sc->sc_imr1 &= ~SAB_IMR1_ALLS;
+		SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
+		sc->sc_flags |= SABTTYF_TXDRAIN;
+		(void)tsleep(sc, TTIPRI, ttclos, 5 * hz);
+		sc->sc_imr1 |= SAB_IMR1_ALLS;
+		SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
+		sc->sc_flags &= ~SABTTYF_TXDRAIN;
+
+		if (tp->t_cflag & HUPCL) {
+			sabtty_mdmctrl(sc, 0, DMSET);
+			(void)tsleep(bc, TTIPRI, ttclos, hz);
+		}
+
+		if ((sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) == 0) {
+			/* Flush and power down if we're not the console */
+			sabtty_flush(sc);
+			sabtty_reset(sc);
+		}
 	}
-	splx(s);
+
 	ttyclose(tp);
+	splx(s);
+
 	return (0);
 }
 
@@ -818,6 +879,8 @@ sabttystop(tp, flags)
 		if ((tp->t_state & TS_TTSTOP) == 0)
 			tp->t_state |= TS_FLUSH;
 		sc->sc_flags |= SABTTYF_STOP;
+		sc->sc_imr1 &= ~SAB_IMR1_ALLS;
+		SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
 	}
 	splx(s);
 	return (0);
@@ -897,12 +960,11 @@ sabtty_mdmctrl(sc, bits, how)
 }
 
 int
-sabtty_param(tp, t)
+sabttyparam(sc, tp, t)
+	struct sabtty_softc *sc;
 	struct tty *tp;
 	struct termios *t;
 {
-	struct sab_softc *bc = sab_cd.cd_devs[SAB_CARD(tp->t_dev)];
-	struct sabtty_softc *sc = bc->sc_child[SAB_PORT(tp->t_dev)];
 	int s, ospeed;
 	tcflag_t cflag;
 	u_int8_t dafo, r;
@@ -920,6 +982,7 @@ sabtty_param(tp, t)
 	dafo = SAB_READ(sc, SAB_DAFO);
 
 	cflag = t->c_cflag;
+
 	if (sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) {
 		cflag |= CLOCAL;
 		cflag &= ~HUPCL;
@@ -983,6 +1046,17 @@ sabtty_param(tp, t)
 	return (0);
 }
 
+int
+sabtty_param(tp, t)
+	struct tty *tp;
+	struct termios *t;
+{
+	struct sab_softc *bc = sab_cd.cd_devs[SAB_CARD(tp->t_dev)];
+	struct sabtty_softc *sc = bc->sc_child[SAB_PORT(tp->t_dev)];
+
+	return (sabttyparam(sc, tp, t));
+}
+
 void
 sabtty_start(tp)
 	struct tty *tp;
@@ -1024,8 +1098,6 @@ sabtty_cec_wait(sc)
 			break;
 		DELAY(1);
 	}
-	if (i == 0)
-		printf("%s: cec timeout\n", sc->sc_dv.dv_xname);
 }
 
 void
@@ -1041,8 +1113,6 @@ sabtty_tec_wait(sc)
 			break;
 		DELAY(1);
 	}
-	if (i == 0)
-		printf("%s: tec timeout\n", sc->sc_dv.dv_xname);
 }
 
 void
@@ -1110,6 +1180,7 @@ sabtty_cnputc(sc, c)
 {
 	sabtty_tec_wait(sc);
 	SAB_WRITE(sc, SAB_TIC, c);
+	sabtty_tec_wait(sc);
 }
 
 int
@@ -1159,20 +1230,20 @@ sabtty_cnpollc(sc, on)
 	if (on) {
 		if (sc->sc_polling)
 			return;
+		SAB_WRITE(sc, SAB_IPC, SAB_READ(sc, SAB_IPC) | SAB_IPC_VIS);
 		r = sc->sc_pollrfc = SAB_READ(sc, SAB_RFC);
 		r &= ~(SAB_RFC_RFDF);
 		SAB_WRITE(sc, SAB_RFC, r);
 		sabtty_cec_wait(sc);
 		SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RRES);
-		SAB_WRITE(sc, SAB_IPC, SAB_READ(sc, SAB_IPC) | SAB_IPC_VIS);
 		sc->sc_polling = 1;
 	} else {
 		if (!sc->sc_polling)
 			return;
+		SAB_WRITE(sc, SAB_IPC, SAB_READ(sc, SAB_IPC) & ~SAB_IPC_VIS);
 		SAB_WRITE(sc, SAB_RFC, sc->sc_pollrfc);
 		sabtty_cec_wait(sc);
 		SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RRES);
-		SAB_WRITE(sc, SAB_IPC, SAB_READ(sc, SAB_IPC) & ~SAB_IPC_VIS);
 		sc->sc_polling = 0;
 	}
 }
@@ -1184,10 +1255,8 @@ sab_cnputc(dev, c)
 {
 	struct sabtty_softc *sc = sabtty_cons_output;
 
-	if (sc == NULL) {
-		printf("sab_cnputc: invalid device\n");
+	if (sc == NULL)
 		return;
-	}
 	sabtty_cnputc(sc, c);
 }
 
@@ -1207,10 +1276,8 @@ sab_cngetc(dev)
 {
 	struct sabtty_softc *sc = sabtty_cons_input;
 
-	if (sc == NULL) {
-		printf("sab_cngetc: invalid device\n");
+	if (sc == NULL)
 		return (-1);
-	}
 	return (sabtty_cngetc(sc));
 }
 
@@ -1283,6 +1350,7 @@ sabtty_shutdown(vsc)
 	struct sabtty_softc *sc = vsc;
 
 	/* Have to put the chip back into single char mode */
+	sc->sc_flags |= SABTTYF_DONTDDB;
 	SAB_WRITE(sc, SAB_RFC, SAB_READ(sc, SAB_RFC) & ~SAB_RFC_RFDF);
 	sabtty_cec_wait(sc);
 	SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RRES);
