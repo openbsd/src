@@ -25,7 +25,6 @@ kernel (sys/arch/hppa/*):				mickey@
 * wscons devices (hil/*, pckbc/*) unfinished
 * 7300lc-based machines, 8k-based machines
 * "original snakes" (700,705,710,...) support
-* harmony audio driver
 * isa/eisa dma
 * TMS380 token-ring driver
 * general cleanup (far-east future)
@@ -41,7 +40,7 @@ userland (*):						mickey@
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.27 2003/01/25 07:53:45 mickey Exp $
+$OpenBSD: TODO,v 1.28 2003/01/28 20:11:28 mickey Exp $
 
 --
 	paranoic mickey
