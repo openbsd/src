@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.h,v 1.6 2004/12/28 23:07:32 jsg Exp $	*/
+/*	$OpenBSD: ieee80211.h,v 1.7 2004/12/30 23:32:55 reyk Exp $	*/
 /*	$NetBSD: ieee80211.h,v 1.6 2004/04/30 23:51:53 dyoung Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@ struct ieee80211_plcp_hdr {
 	u_int8_t	i_service;
 	u_int16_t	i_length;
 	u_int16_t	i_crc;
-} __attribute__((__packed__));
+} __packed;
 
 #define IEEE80211_PLCP_SFD      0xF3A0
 #define IEEE80211_PLCP_SERVICE  0x00
@@ -71,7 +71,7 @@ struct ieee80211_frame {
 	u_int8_t	i_seq[2];
 	/* possibly followed by addr4[IEEE80211_ADDR_LEN]; */
 	/* see below */
-} __attribute__((__packed__));
+} __packed;
 
 struct ieee80211_qosframe {
 	u_int8_t	i_fc[2];
@@ -83,7 +83,7 @@ struct ieee80211_qosframe {
 	u_int8_t	i_qos[2];
 	/* possibly followed by addr4[IEEE80211_ADDR_LEN]; */
 	/* see below */
-} __attribute__((__packed__));
+} __packed;
 
 struct ieee80211_qoscntl {
 	u_int8_t	i_qos[2];
@@ -97,7 +97,7 @@ struct ieee80211_frame_addr4 {
 	u_int8_t	i_addr3[IEEE80211_ADDR_LEN];
 	u_int8_t	i_seq[2];
 	u_int8_t	i_addr4[IEEE80211_ADDR_LEN];
-} __attribute__((__packed__));
+} __packed;
 
 
 struct ieee80211_qosframe_addr4 {
@@ -109,7 +109,7 @@ struct ieee80211_qosframe_addr4 {
 	u_int8_t	i_seq[2];
 	u_int8_t	i_addr4[IEEE80211_ADDR_LEN];
 	u_int8_t	i_qos[2];
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Management Notification Frame
@@ -119,7 +119,7 @@ struct ieee80211_mnf {
 	u_int8_t	mnf_action;
 	u_int8_t	mnf_dialog;
 	u_int8_t	mnf_status;
-} __attribute__((__packed__));
+} __packed;
 #define	MNF_SETUP_REQ	0
 #define	MNF_SETUP_RESP	1
 #define	MNF_TEARDOWN	2
@@ -150,7 +150,7 @@ struct ieee80211_wme_tspec {
 	u_int8_t	ts_delay[4];
 	u_int8_t	ts_surplus[2];
 	u_int8_t	ts_medium_time[2];
-} __attribute__((__packed__));
+} __packed;
 
 #define	IEEE80211_FC0_VERSION_MASK		0x03
 #define	IEEE80211_FC0_VERSION_SHIFT		0
@@ -228,7 +228,7 @@ struct ieee80211_frame_min {
 	u_int8_t	i_addr1[IEEE80211_ADDR_LEN];
 	u_int8_t	i_addr2[IEEE80211_ADDR_LEN];
 	/* FCS */
-} __attribute__((__packed__));
+} __packed;
 
 struct ieee80211_frame_rts {
 	u_int8_t	i_fc[2];
@@ -236,21 +236,21 @@ struct ieee80211_frame_rts {
 	u_int8_t	i_ra[IEEE80211_ADDR_LEN];
 	u_int8_t	i_ta[IEEE80211_ADDR_LEN];
 	/* FCS */
-} __attribute__((__packed__));
+} __packed;
 
 struct ieee80211_frame_cts {
 	u_int8_t	i_fc[2];
 	u_int8_t	i_dur[2];
 	u_int8_t	i_ra[IEEE80211_ADDR_LEN];
 	/* FCS */
-} __attribute__((__packed__));
+} __packed;
 
 struct ieee80211_frame_ack {
 	u_int8_t	i_fc[2];
 	u_int8_t	i_dur[2];
 	u_int8_t	i_ra[IEEE80211_ADDR_LEN];
 	/* FCS */
-} __attribute__((__packed__));
+} __packed;
 
 struct ieee80211_frame_pspoll {
 	u_int8_t	i_fc[2];
@@ -258,7 +258,7 @@ struct ieee80211_frame_pspoll {
 	u_int8_t	i_bssid[IEEE80211_ADDR_LEN];
 	u_int8_t	i_ta[IEEE80211_ADDR_LEN];
 	/* FCS */
-} __attribute__((__packed__));
+} __packed;
 
 struct ieee80211_frame_cfend {		/* NB: also CF-End+CF-Ack */
 	u_int8_t	i_fc[2];
@@ -266,7 +266,7 @@ struct ieee80211_frame_cfend {		/* NB: also CF-End+CF-Ack */
 	u_int8_t	i_ra[IEEE80211_ADDR_LEN];
 	u_int8_t	i_bssid[IEEE80211_ADDR_LEN];
 	/* FCS */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * BEACON management packets
@@ -317,7 +317,7 @@ struct ieee80211_ie_wpa {
 	u_int32_t	wpa_uciphers[8];/* ciphers */
 	u_int16_t	wpa_authselcnt;	/* authentication selector cnt*/
 	u_int32_t	wpa_authsels[8];/* selectors */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Management information elements
