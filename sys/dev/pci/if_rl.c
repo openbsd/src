@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.2 1998/11/13 19:39:49 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.3 1998/11/16 15:44:36 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -2167,26 +2167,8 @@ rl_attach(parent, self, aux)
 	struct rl_type *p;
 
 	sc->rl_unit = sc->sc_dev.dv_unit;
-	command = pci_conf_read(pa->pa_pc, pa->pa_tag, RL_PCI_CAPID) & 0xff;
-	if (command == 0x01) {
-		command = pci_conf_read(pa->pa_pc, pa->pa_tag,
-		    RL_PCI_PWRMGMTCTRL);
-		if (command & RL_PSTATE_MASK) {
-			/* Reset the power state. */
-			printf("%s: chip is in D%d power mode "
-			    "-- setting to D0\n",
-			    sc->sc_dev.dv_xname, command & RL_PSTATE_MASK);
-			command &= 0xfffffffc;
-			pci_conf_write(pa->pa_pc, pa->pa_tag,
-			    RL_PCI_PWRMGMTCTRL, command);
-		}
-	}
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	command |= PCI_COMMAND_IO_ENABLE |
-		   PCI_COMMAND_MEM_ENABLE |
-		   PCI_COMMAND_MASTER_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 
 #ifdef RL_USEIOSPACE
 	if (!(command & PCI_COMMAND_IO_ENABLE)) {
