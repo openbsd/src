@@ -1,5 +1,5 @@
-/*	$OpenBSD: umass_quirks.c,v 1.12 2004/06/13 19:52:57 mickey Exp $	*/
-/*	$NetBSD: umass_quirks.c,v 1.39 2003/05/08 15:19:47 augustss Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.13 2004/07/09 19:14:41 deraadt Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.67 2004/06/28 07:49:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -127,7 +127,6 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
-
 	{ { USB_VENDOR_INSYSTEM, USB_PRODUCT_INSYSTEM_ATAPI },
 	  UMASS_WPROTO_BBB, UMASS_CPROTO_ISD_ATA,
 	  0,
@@ -135,7 +134,6 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMATCH_VENDOR_PRODUCT,
 	  NULL, NULL
 	},
-
 	{ { USB_VENDOR_INSYSTEM, USB_PRODUCT_INSYSTEM_DRIVEV2_5 },
 	  UMASS_WPROTO_BBB, UMASS_CPROTO_ISD_ATA,
 	  0,
@@ -502,9 +500,8 @@ umass_fixup_sony(struct umass_softc *sc)
 	usb_interface_descriptor_t *id;
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
-	if (id->bInterfaceSubClass == 0xff) {
-		sc->sc_cmd = UMASS_CPROTO_RBC;
-	}
+	if (id->bInterfaceSubClass == 0xff)
+		sc->sc_cmd = UMASS_CPROTO_SCSI;
 }
 
 Static void
