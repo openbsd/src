@@ -49,7 +49,6 @@
  */
 #ifndef _CURSES_PRIVATE
 #define	bool	char
-#define	reg	register
 
 #ifndef TRUE
 #define	TRUE	(1)
