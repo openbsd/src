@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.2 2003/10/19 03:58:25 david Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.3 2003/10/20 00:43:58 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -981,20 +981,17 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 			sc->sc_ac.ac_enaddr[5] = sc->sc_vhid;
 			error--;
 		}
-		if (carpr.carpr_advskew > 0) {
-			if (carpr.carpr_advskew >= 255 || sc->sc_advskew == 0) {
+		if (carpr.carpr_advbase > 0 || carpr.carpr_advskew > 0) {
+			if (carpr.carpr_advskew >= 255) {
 				error = EINVAL;
 				break;
 			}
-			sc->sc_advskew = carpr.carpr_advskew;
-			error--;
-		}
-		if (carpr.carpr_advbase > 0) {
 			if (carpr.carpr_advbase > 255) {
 				error = EINVAL;
 				break;
 			}
 			sc->sc_advbase = carpr.carpr_advbase;
+			sc->sc_advskew = carpr.carpr_advskew;
 			error--;
 		}
 		bcopy(carpr.carpr_key, sc->sc_key, sizeof(sc->sc_key));
