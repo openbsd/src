@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.128 2005/01/03 22:53:25 reyk Exp $
+$OpenBSD: usbdevs,v 1.129 2005/01/15 03:48:17 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -357,6 +357,7 @@ vendor ATI2		0x0b6f	ATI
 vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics, Inc.
 vendor ASIX		0x0b95	ASIX Electronics
 vendor USR		0x0baf	U.S. Robotics
+vendor AMBIT		0x0bb2	Ambit Microsystems
 vendor GREENHOUSE2	0x0bda	GREENHOUSE
 vendor ADDONICS2	0x0bf6	Addonics Technology
 vendor AGATE		0x0c08	Agate Technologies
@@ -382,6 +383,7 @@ vendor JRC		0x1145	Japan Radio Company
 vendor SERVERWORKS	0x1166	ServerWorks
 vendor ACERCM		0x1189	Acer Communications & Multimedia
 vendor TSUNAMI		0x1241	Tsunami
+vendor PHEENET		0x124a	Pheenet
 vendor BELKIN2		0x1293	Belkin Components
 vendor AINCOMM		0x12fd	Aincomm
 vendor MOBILITY		0x1342	Mobility
@@ -411,6 +413,7 @@ vendor AVERATEC		0x50c2	Averatec
 vendor ONSPEC2		0x55aa	OnSpec
 vendor SITECOM		0x6189	Sitecom
 vendor INTEL		0x8086	Intel
+vendor SITECOM2		0x9016	Sitecom
 vendor HP2		0xf003	Hewlett Packard
 
 /*
@@ -529,6 +532,9 @@ product ALLIEDTELESYN ATUSB100	0xb100	AT-USB100
 /* Altec Lansing products */
 product ALTEC ADA70		0x0070	ADA70 Speakers
 product ALTEC ASC495		0xff05	ASC495 Speakers
+
+/* Ambit Microsystems products */
+product AMBIT WLAN		0x0302	WLAN
 
 /* American Power Conversion products */
 product APC UPSPRO500		0x0002	Back-UPS Pro 500
@@ -1338,6 +1344,9 @@ product PERACOM ENET		0x0002	Ethernet
 product PERACOM ENET3		0x0003	At-Home Ethernet
 product PERACOM ENET2		0x0005	Ethernet
 
+/* Pheenet products */
+product PHEENET WL503IA		0x4017	WL-503IA
+
 /* Philips products */
 product PHILIPS DSS350		0x0101	DSS 350 Digital Speaker System
 product PHILIPS DSS		0x0104	DSS XXX Digital Speaker System
@@ -1516,6 +1525,7 @@ product SIIG2 US2308		0x0421	Serial
 
 /* Silicom products */
 product SILICOM U2E		0x0001	U2E
+product SILICOM GPE		0x0002	Psion Dacom Gold Port Ethernet
 
 /* Silicon Portals Inc. */
 product SILICONPORTALS YAPPH_NF	0x0200	YAP Phone (no firmware)
@@ -1525,8 +1535,9 @@ product SILICONPORTALS YAPPHONE	0x0201	YAP Phone
 product SIRIUS ROADSTER		0x0001	NetComm Roadster II 56
 
 /* Sitecom products */
-product SITECOM CN104		0x2068	CN104
 product SITECOM LN029		0x182d	LN029
+product SITECOM2 WL022		0x182d	WL-022
+product SITECOM CN104		0x2068	CN104
 
 /* SmartBridges products */
 product SMARTBRIDGES SMARTLINK	0x0001	SmartLink Ethernet
