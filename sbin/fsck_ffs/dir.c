@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.16 2003/08/25 23:28:15 tedu Exp $	*/
+/*	$OpenBSD: dir.c,v 1.17 2004/07/05 02:31:54 pvalchev Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static const char rcsid[] = "$OpenBSD: dir.c,v 1.16 2003/08/25 23:28:15 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: dir.c,v 1.17 2004/07/05 02:31:54 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -253,7 +253,6 @@ dircheck(struct inodesc *idesc, struct direct *dp)
 #	endif
 	if (dp->d_reclen < size ||
 	    idesc->id_filesize < size ||
-	    namlen > MAXNAMLEN ||
 	    type > 15)
 		return (0);
 	for (cp = dp->d_name, size = 0; size < namlen; size++)
