@@ -76,7 +76,9 @@ static const char *talk[] = {
 	"Wait, yes, I am on drugs",
 	"during release it is a constant.  almost noone helps.",
 	"i let you guys do whatever you wanted",
-	"you bring new meaning to the terms slackass. I will have to invent a new term."
+	"you bring new meaning to the terms slackass. I will have to invent a new term.",
+	"if they cut you out, muddy their back yards",
+	"Make them want to start over, and play nice the next time."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
