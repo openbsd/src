@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhc.c,v 1.11 2004/09/28 18:37:43 jason Exp $	*/
+/*	$OpenBSD: fhc.c,v 1.12 2004/10/01 18:18:49 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -49,8 +49,6 @@ struct cfdriver fhc_cd = {
 
 int	fhc_print(void *, const char *);
 
-extern	int sparc_led_blink;
-
 bus_space_tag_t fhc_alloc_bus_tag(struct fhc_softc *);
 int _fhc_bus_map(bus_space_tag_t, bus_space_tag_t, bus_addr_t, bus_size_t,
     int, bus_space_handle_t *);
@@ -59,6 +57,7 @@ void *fhc_intr_establish(bus_space_tag_t, bus_space_tag_t, int, int, int,
 bus_space_handle_t *fhc_find_intr_handle(struct fhc_softc *, int);
 bus_space_handle_t *fhc_try_intr_handle(struct fhc_softc *,
     bus_space_handle_t *, bus_size_t, int);
+void fhc_led_blink(void *, int);
 
 void
 fhc_attach(struct fhc_softc *sc)
@@ -68,8 +67,6 @@ fhc_attach(struct fhc_softc *sc)
 
 	printf(" board %d: %s\n", sc->sc_board,
 	    getpropstring(sc->sc_node, "board-model"));
-
-	timeout_set(&sc->sc_to, fhc_led_blink, sc);
 
 	sc->sc_cbt = fhc_alloc_bus_tag(sc);
 
@@ -129,8 +126,9 @@ fhc_attach(struct fhc_softc *sc)
 			free(fa.fa_promvaddrs, M_DEVBUF);
 	}
 
-	if (sparc_led_blink)
-		fhc_led_blink(sc);
+	sc->sc_blink.bl_func = fhc_led_blink;
+	sc->sc_blink.bl_arg = sc;
+	blink_led_register(&sc->sc_blink);
 }
 
 int
@@ -309,39 +307,20 @@ fhc_intr_establish(bus_space_tag_t t, bus_space_tag_t t0, int ihandle,
 }
 
 void
-fhc_led_blink(void *vsc)
+fhc_led_blink(void *vsc, int on)
 {
 	struct fhc_softc *sc = vsc;
-	int i, s;
+	int s;
 	u_int32_t r;
-
-	if (sc == NULL) {
-		for (i = 0; i < fhc_cd.cd_ndevs; i++) {
-			sc = fhc_cd.cd_devs[i];
-			if (sc != NULL)
-				fhc_led_blink(sc);
-		}
-		return;
-	}
 
 	s = splhigh();
 	r = bus_space_read_4(sc->sc_bt, sc->sc_preg, FHC_P_CTRL);
-	r ^= FHC_P_CTRL_RLED;
+	if (on)
+		r |= FHC_P_CTRL_RLED;
+	else
+		r &= ~FHC_P_CTRL_RLED;
 	r &= ~(FHC_P_CTRL_AOFF | FHC_P_CTRL_BOFF | FHC_P_CTRL_SLINE);
 	bus_space_write_4(sc->sc_bt, sc->sc_preg, FHC_P_CTRL, r);
 	bus_space_read_4(sc->sc_bt, sc->sc_preg, FHC_P_CTRL);
 	splx(s);
-
-	if (!sparc_led_blink)
-		return;
-
-	/*
-	 * Blink rate is:
-	 *      full cycle every second if completely idle (loadav = 0)
-	 *      full cycle every 2 seconds if loadav = 1
-	 *      full cycle every 3 seconds if loadav = 2
-	 * etc.
-	 */
-	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
-	timeout_add(&sc->sc_to, s);
 }

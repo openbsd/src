@@ -1,4 +1,4 @@
-/*	$OpenBSD: clkbrdvar.h,v 1.1 2004/09/28 02:06:36 jason Exp $	*/
+/*	$OpenBSD: clkbrdvar.h,v 1.2 2004/10/01 18:18:49 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -33,7 +33,5 @@ struct clkbrd_softc {
 	bus_space_handle_t sc_vreg;
 	int sc_node;
 	int sc_has_vreg;
-	struct timeout sc_to;
+	struct blink_led sc_blink;
 };
-
-void clkbrd_led_blink(void *);

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.53 2004/09/28 02:06:36 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.54 2004/10/01 18:18:48 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -22,7 +22,7 @@ file	arch/sparc64/dev/central.c		central
 
 define fhc {}
 device fhc
-file	arch/sparc64/dev/fhc.c			fhc needs-flag
+file	arch/sparc64/dev/fhc.c			fhc
 
 attach fhc at central with fhc_central
 file	arch/sparc64/dev/fhc_central.c		fhc_central
@@ -32,7 +32,7 @@ file	arch/sparc64/dev/fhc_mainbus.c		fhc_mainbus
 
 device clkbrd
 attach clkbrd at fhc
-file	arch/sparc64/dev/clkbrd.c		clkbrd needs-flag
+file	arch/sparc64/dev/clkbrd.c		clkbrd
 
 device pcons
 attach pcons at mainbus
@@ -133,7 +133,7 @@ file	arch/sparc64/sparc64/cpu.c
 device auxio
 attach auxio at ebus with auxio_ebus
 attach auxio at sbus with auxio_sbus
-file	arch/sparc64/dev/auxio.c		auxio needs-flag
+file	arch/sparc64/dev/auxio.c		auxio
 
 device beeper
 attach beeper at ebus

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.72 2004/09/28 02:06:36 jason Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.73 2004/10/01 18:18:49 jason Exp $	*/
 /*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
@@ -77,10 +77,6 @@
  *
  *	@(#)machdep.c	8.6 (Berkeley) 1/14/94
  */
-
-#include "auxio.h"
-#include "fhc.h"
-#include "clkbrd.h"
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -196,21 +192,7 @@ int	physmem;
 u_long	_randseed;
 extern	caddr_t msgbufaddr;
 
-#if (NAUXIO > 0) || (NFHC > 0) || (NCLKBRD > 0)
 int sparc_led_blink;
-#endif
-
-#if NAUXIO > 0
-#include <sparc64/dev/auxiovar.h>
-#endif
-
-#if NFHC > 0
-#include <sparc64/dev/fhcvar.h>
-#endif
-
-#if NCLKBRD > 0
-#include <sparc64/dev/clkbrdvar.h>
-#endif
 
 #ifdef APERTURE
 #ifdef INSECURE
@@ -237,6 +219,7 @@ extern int64_t cecclast;
  */
 int   safepri = 0;
 
+void blink_led_timeout(void *);
 caddr_t	allocsys(caddr_t);
 void	dumpsys(void);
 void	stackdump(void);
@@ -519,9 +502,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-#if NAUXIO > 0
 	int oldval, ret;
-#endif
 	u_int chosen;
 	char bootargs[256];
 	char *cp = NULL;
@@ -558,30 +539,15 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return (ENOENT);
 		return (sysctl_rdstring(oldp, oldlenp, newp, cp));
 	case CPU_LED_BLINK:
-#if (NAUXIO > 0) || (NFHC > 0) || (NCLKBRD > 0)
 		oldval = sparc_led_blink;
 		ret = sysctl_int(oldp, oldlenp, newp, newlen,
 		    &sparc_led_blink);
-
 		/*
-		 * If we were false and are now true, call auxio_led_blink().
-		 * auxio_led_blink() will catch the other case itself.
+		 * If we were false and are now true, call start the timer.
 		 */
-		if (!oldval && sparc_led_blink > oldval) {
-#if NAUXIO > 0
-			auxio_led_blink(NULL);
-#endif
-#if NFHC > 0
-			fhc_led_blink(NULL);
-#endif
-#if NCLKBRD > 0
-			clkbrd_led_blink(NULL);
-#endif
-		}
+		if (!oldval && sparc_led_blink > oldval)
+			blink_led_timeout(NULL);
 		return (ret);
-#else
-		return (EOPNOTSUPP);
-#endif
 	case CPU_ALLOWAPERTURE:
 #ifdef APERTURE
 		if (securelevel > 0)
@@ -2254,3 +2220,50 @@ bus_space_assert(bus_space_tag_t t, const bus_space_handle_t *h, bus_size_t o,
 }
 
 #endif /* BUS_SPACE_DEBUG */
+
+struct blink_led_softc {
+	SLIST_HEAD(, blink_led) bls_head;
+	int bls_on;
+	struct timeout bls_to;
+} blink_sc = { SLIST_HEAD_INITIALIZER(bls_head), 0 };
+
+void
+blink_led_register(struct blink_led *l)
+{
+	if (SLIST_EMPTY(&blink_sc.bls_head)) {
+		timeout_set(&blink_sc.bls_to, blink_led_timeout, &blink_sc);
+		blink_sc.bls_on = 0;
+		if (sparc_led_blink)
+			timeout_add(&blink_sc.bls_to, 1);
+	}
+	SLIST_INSERT_HEAD(&blink_sc.bls_head, l, bl_next);
+}
+
+void
+blink_led_timeout(void *vsc)
+{
+	struct blink_led_softc *sc = &blink_sc;
+	struct blink_led *l;
+	int t;
+
+	if (SLIST_EMPTY(&sc->bls_head))
+		return;
+
+	SLIST_FOREACH(l, &sc->bls_head, bl_next) {
+		(*l->bl_func)(l->bl_arg, sc->bls_on);
+	}
+	sc->bls_on = !sc->bls_on;
+
+	if (!sparc_led_blink)
+		return;
+
+	/*
+	 * Blink rate is:
+	 *      full cycle every second if completely idle (loadav = 0)
+	 *      full cycle every 2 seconds if loadav = 1
+	 *      full cycle every 3 seconds if loadav = 2
+	 * etc.
+	 */
+	t = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
+	timeout_add(&sc->bls_to, t);
+}

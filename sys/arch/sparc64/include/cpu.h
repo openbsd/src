@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.29 2004/08/09 10:13:21 miod Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.30 2004/10/01 18:18:49 jason Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -278,6 +278,14 @@ extern struct trapvec *trapbase;	/* the 256 vectors */
 
 extern void wzero(void *, u_int);
 extern void wcopy(const void *, void *, u_int);
+
+struct blink_led {
+	void (*bl_func)(void *, int);
+	void *bl_arg;
+	SLIST_ENTRY(blink_led) bl_next;
+};
+
+extern void blink_led_register(struct blink_led *);
 
 #endif /* _KERNEL */
 #endif /* _CPU_H_ */

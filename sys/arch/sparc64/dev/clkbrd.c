@@ -1,4 +1,4 @@
-/*	$OpenBSD: clkbrd.c,v 1.4 2004/09/29 17:43:33 jason Exp $	*/
+/*	$OpenBSD: clkbrd.c,v 1.5 2004/10/01 18:18:49 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Jason L. Wright (jason@thought.net)
@@ -43,10 +43,9 @@
 #include <sparc64/dev/clkbrdreg.h>
 #include <sparc64/dev/clkbrdvar.h>
 
-extern	int sparc_led_blink;
-
 int clkbrd_match(struct device *, void *, void *);
 void clkbrd_attach(struct device *, struct device *, void *);
+void clkbrd_led_blink(void *, int);
 
 struct cfattach clkbrd_ca = {
 	sizeof(struct clkbrd_softc), clkbrd_match, clkbrd_attach
@@ -79,8 +78,6 @@ clkbrd_attach(parent, self, aux)
 	u_int8_t r;
 
 	sc->sc_bt = fa->fa_bustag;
-
-	timeout_set(&sc->sc_to, clkbrd_led_blink, sc);
 
 	if (fa->fa_nreg < 2) {
 		printf(": no registers\n");
@@ -123,43 +120,25 @@ clkbrd_attach(parent, self, aux)
 
 	printf(": %d slots\n", slots);
 
-	if (sparc_led_blink)
-		clkbrd_led_blink(sc);
+	sc->sc_blink.bl_func = clkbrd_led_blink;
+	sc->sc_blink.bl_arg = sc;
+	blink_led_register(&sc->sc_blink);
 }
 
 void
-clkbrd_led_blink(void *vsc)
+clkbrd_led_blink(void *vsc, int on)
 {
 	struct clkbrd_softc *sc = vsc;
-	int i, s;
+	int s;
 	u_int8_t r;
-
-	if (sc == NULL) {
-		for (i = 0; i < clkbrd_cd.cd_ndevs; i++) {
-			sc = clkbrd_cd.cd_devs[i];
-			if (sc != NULL)
-				clkbrd_led_blink(sc);
-		}
-		return;
-	}
 
 	s = splhigh();
 	r = bus_space_read_1(sc->sc_bt, sc->sc_creg, CLK_CTRL);
-	r ^= CLK_CTRL_RLED;
+	if (on)
+		r |= CLK_CTRL_RLED;
+	else
+		r &= ~CLK_CTRL_RLED;
 	bus_space_write_1(sc->sc_bt, sc->sc_creg, CLK_CTRL, r);
 	bus_space_read_1(sc->sc_bt, sc->sc_creg, CLK_CTRL);
 	splx(s);
-
-	if (!sparc_led_blink)
-		return;
-
-	/*
-	 * Blink rate is:
-	 *      full cycle every second if completely idle (loadav = 0)
-	 *      full cycle every 2 seconds if loadav = 1
-	 *      full cycle every 3 seconds if loadav = 2
-	 * etc.
-	 */
-	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
-	timeout_add(&sc->sc_to, s);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxio.c,v 1.5 2003/02/17 01:29:19 henric Exp $	*/
+/*	$OpenBSD: auxio.c,v 1.6 2004/10/01 18:18:49 jason Exp $	*/
 /*	$NetBSD: auxio.c,v 1.1 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ struct cfdriver auxio_cd = {
 	NULL, "auxio", DV_DULL
 };
 
-extern int sparc_led_blink;
+void auxio_led_blink(void *, int);
 
 int
 auxio_ebus_match(parent, cf, aux)
@@ -92,8 +92,6 @@ auxio_ebus_attach(parent, self, aux)
 {
 	struct auxio_softc *sc = (struct auxio_softc *)self;
 	struct ebus_attach_args *ea = aux;
-
-	timeout_set(&sc->sc_to, auxio_led_blink, sc);
 
 	if (ea->ea_nregs < 1 || ea->ea_nvaddrs < 1) {
 		printf(": no registers??\n");
@@ -156,8 +154,6 @@ auxio_sbus_attach(parent, self, aux)
 	struct auxio_softc *sc = (struct auxio_softc *)self;
 	struct sbus_attach_args *sa = aux;
 
-	timeout_set(&sc->sc_to, auxio_led_blink, sc);
-
 	sc->sc_tag = sa->sa_bustag;
 
 	if (sa->sa_nreg < 1 || sa->sa_npromvaddrs < 1) {
@@ -185,27 +181,18 @@ void
 auxio_attach_common(sc)
 	struct auxio_softc *sc;
 {
-	if (sparc_led_blink)
-		auxio_led_blink(sc);
+	sc->sc_blink.bl_func = auxio_led_blink;
+	sc->sc_blink.bl_arg = sc;
+	blink_led_register(&sc->sc_blink);
 	printf("\n");
 }
 
 void
-auxio_led_blink(vsc)
-	void *vsc;
+auxio_led_blink(void *vsc, int on)
 {
 	struct auxio_softc *sc = vsc;
 	u_int32_t led;
-	int i, s;
-
-	if (sc == NULL) {
-		for (i = 0; i < auxio_cd.cd_ndevs; i++) {
-			sc = auxio_cd.cd_devs[i];
-			if (sc != NULL)
-				auxio_led_blink(sc);
-		}
-		return;
-	}
+	int s;
 
 	s = splhigh();
 
@@ -214,10 +201,10 @@ auxio_led_blink(vsc)
 	else
 		led = bus_space_read_1(sc->sc_tag, sc->sc_led, 0);
 
-	if (!sparc_led_blink)
+	if (on)
 		led |= AUXIO_LED_LED;
 	else
-		led ^= AUXIO_LED_LED;
+		led &= ~AUXIO_LED_LED;
 
 	if (sc->sc_flags & AUXIO_EBUS)
 		bus_space_write_4(sc->sc_tag, sc->sc_led, 0, htole32(led));
@@ -225,17 +212,4 @@ auxio_led_blink(vsc)
 		bus_space_write_1(sc->sc_tag, sc->sc_led, 0, led);
 
 	splx(s);
-
-	if (!sparc_led_blink)
-		return;
-
-	/*
-	 * Blink rate is:
-	 *      full cycle every second if completely idle (loadav = 0)
-	 *      full cycle every 2 seconds if loadav = 1
-	 *      full cycle every 3 seconds if loadav = 2
-	 * etc.
-	 */
-	s = (((averunnable.ldavg[0] + FSCALE) * hz) >> (FSHIFT + 1));
-	timeout_add(&sc->sc_to, s);
 }
