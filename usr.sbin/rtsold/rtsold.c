@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.32 2004/01/02 23:46:04 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.33 2004/01/02 23:52:17 itojun Exp $	*/
 /*	$KAME: rtsold.c,v 1.57 2002/09/20 21:59:55 itojun Exp $	*/
 
 /*
@@ -87,8 +87,10 @@ static int fflag = 0;
 
 /* static variables and functions */
 static int mobile_node = 0;
+#ifndef SMALL
 volatile sig_atomic_t do_dump;
 static char *dumpfilename = "/var/run/rtsold.dump"; /* XXX: should be configurable */
+#endif
 
 #if 0
 static int ifreconfig(char *);
@@ -100,7 +102,9 @@ static struct timeval *rtsol_check_timer(void);
 static void TIMEVAL_ADD(struct timeval *, struct timeval *, struct timeval *);
 static void TIMEVAL_SUB(struct timeval *, struct timeval *, struct timeval *);
 
+#ifndef SMALL
 static void rtsold_set_dump_file(int);
+#endif
 static void usage(char *);
 
 int
@@ -183,8 +187,10 @@ main(int argc, char *argv[])
 	if (getinet6sysctl(IPV6CTL_FORWARDING))
 		warnx("kernel is configured as a router, not a host");
 
+#ifndef SMALL
 	/* initialization to dump internal status to a file */
 	signal(SIGUSR1, rtsold_set_dump_file);
+#endif
 
 	if (!fflag)
 		daemon(0, 0);		/* act as a daemon */
@@ -254,10 +260,12 @@ main(int argc, char *argv[])
 		int e;
 
 
+#ifndef SMALL
 		if (do_dump) {	/* SIGUSR1 */
 			do_dump = 0;
 			rtsold_dump_file(dumpfilename);
 		}
+#endif
 
 		timeout = rtsol_check_timer();
 
@@ -676,11 +684,13 @@ TIMEVAL_SUB(struct timeval *a, struct timeval *b, struct timeval *result)
 	}
 }
 
+#ifndef SMALL
 static void
 rtsold_set_dump_file(int sig)
 {
 	do_dump = 1;
 }
+#endif
 
 static void
 usage(char *progname)

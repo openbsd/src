@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile,v 1.7 2004/01/02 23:46:04 itojun Exp $
+#	$OpenBSD: Makefile,v 1.8 2004/01/02 23:52:17 itojun Exp $
 
 PROG=	rtsol
-SRCS=	rtsold.c rtsol.c if.c probe.c dump.c
+SRCS=	rtsold.c rtsol.c if.c probe.c
+
+CPPFLAGS+=-DSMALL
 
 #MAN=	rtsold.8
 NOMAN=	yes
