@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.8 2001/07/13 22:16:57 mickey Exp $
+#	$OpenBSD: inter.phone,v 1.9 2001/07/13 22:26:24 mickey Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -380,7 +380,35 @@
 370:2:Vilnius:Lithuania
 371:2:Riga:Latvia
 372:2:Tallin:Estonia
-373:::Moldova
+373:2:Kishinev:Moldova
+373:30:Soroka:Moldova
+373:31:Beltsy:Moldova
+373:32:Bandery:Moldova
+373:33:Tiraspol:Moldova
+373:35:Orchejis:Moldova
+373:38:Komratas:Moldova
+373:39:Kachulas:Moldova
+373:40:Grigoriopolis:Moldova
+373:41:Cimislija:Moldova
+373:42:Stefan Vode:Moldova
+373:43:Keusenis:Moldova
+373:44:Kelerasis:Moldova
+373:46:Jedinecas:Moldova
+373:47:Bricenis:Moldova
+373:48:Kriulenis:Moldova
+373:49:Glodenis:Moldova
+373:50:Florestis:Moldova
+373:51:Dondusenis:Moldova
+373:53:Vulkenestis:Moldova
+373:56:Ryskanis:Moldova
+373:58:Telenestis:Moldova
+373:59:Felestis:Moldova
+373:61:Cadyr Lunga:Moldova
+373:62:Synzereja:Moldova
+373:63:Leovo:Moldova
+373:65:Anenji Nojus:Moldova
+373:70:Maksimovka:Moldova
+373:76:Paskanai:Moldova
 374:::Armenia
 375:17:Minsk:Belarus
 376:::Andorra
