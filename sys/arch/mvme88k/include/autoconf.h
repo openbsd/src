@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.11 2003/09/16 20:52:19 miod Exp $ */
+/*	$OpenBSD: autoconf.h,v 1.12 2004/04/14 20:18:17 miod Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -66,7 +66,5 @@ extern	struct device *bootdv; /* boot device */
 
 void	*mapiodev(void *pa, int size);
 void	unmapiodev(void *kva, int size);
-
-struct device *getdevunit(char *name, int unit);
 
 #endif
