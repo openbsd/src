@@ -1,4 +1,4 @@
-/*	$OpenBSD: xinstall.c,v 1.6 1996/08/14 16:23:55 millert Exp $	*/
+/*	$OpenBSD: xinstall.c,v 1.7 1996/08/18 22:08:31 millert Exp $	*/
 /*	$NetBSD: xinstall.c,v 1.9 1995/12/20 10:25:17 jonathan Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #endif
-static char rcsid[] = "$OpenBSD: xinstall.c,v 1.6 1996/08/14 16:23:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: xinstall.c,v 1.7 1996/08/18 22:08:31 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -407,6 +407,12 @@ copy(from_fd, from_name, to_fd, to_name, size)
 	char *p, buf[MAXBSIZE];
 	volatile size_t siz;
 
+	/* Rewind file descriptors. */
+	if (lseek(from_fd, (off_t)0, SEEK_SET) == (off_t)-1)
+		err(EX_OSERR, "lseek: %s", from_name);
+	if (lseek(to_fd, (off_t)0, SEEK_SET) == (off_t)-1)
+		err(EX_OSERR, "lseek: %s", to_name);
+
 	/*
 	 * Mmap and write if less than 8M (the limit is so we don't totally
 	 * trash memory on big files.  This is really a minor hack, but it
@@ -490,10 +496,7 @@ compare(from_fd, from_name, from_len, to_fd, to_name, to_len)
 		(void) munmap(p1, length);
 		(void) munmap(p2, length);
 
-		if (dfound)
-			break;
-
-	} while (remainder > 0);
+	} while (!dfound && remainder > 0);
 
 	return(dfound);
 }
