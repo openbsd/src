@@ -1,4 +1,4 @@
-#	$OpenBSD: NANCY,v 1.4 1997/09/20 13:48:59 maja Exp $
+#	$OpenBSD: NANCY,v 1.5 1997/10/02 19:55:17 niklas Exp $
 #
 # NANCY MV3600 configuration file.
 #
@@ -26,7 +26,6 @@ maxusers	8
 
 # standard system options
 options		SWAPPAGER	# swap and anonymous memory
-options		VNODEPAGER	# mapped files
 options		DEVPAGER	# mapped devices
 
 # Kernel compiled-in symbolic debugger & system call tracer
