@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.10 2002/08/16 19:02:17 jason Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.11 2002/09/10 17:27:27 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -393,10 +393,8 @@ ce4231_set_speed(sc, argp)
 		}
 	}
 
-	if (selected == -1) {
-		printf("%s: can't find speed\n", sc->sc_dev.dv_xname);
+	if (selected == -1)
 		selected = 3;
-	}
 
 	sc->sc_speed_bits = speed_table[selected].bits;
 	sc->sc_need_commit = 1;
@@ -584,60 +582,72 @@ ce4231_set_params(addr, setmode, usemode, p, r)
 	struct audio_params *p, *r;
 {
 	struct ce4231_softc *sc = (struct ce4231_softc *)addr;
-	int err, bits, enc;
-	void (*pswcode)(void *, u_char *, int cnt);
-	void (*rswcode)(void *, u_char *, int cnt);
-
-	enc = p->encoding;
-	pswcode = rswcode = 0;
-	switch (enc) {
-	case AUDIO_ENCODING_SLINEAR_LE:
-		if (p->precision == 8) {
-			enc = AUDIO_ENCODING_ULINEAR_LE;
-			pswcode = rswcode = change_sign8;
-		}
-		break;
-	case AUDIO_ENCODING_ULINEAR_LE:
-		if (p->precision == 16) {
-			enc = AUDIO_ENCODING_SLINEAR_LE;
-			pswcode = rswcode = change_sign16;
-		}
-		break;
-	case AUDIO_ENCODING_ULINEAR_BE:
-		if (p->precision == 16) {
-			enc = AUDIO_ENCODING_SLINEAR_BE;
-			pswcode = rswcode = change_sign16;
-		}
-		break;
-	}
+	int err, bits, enc = p->encoding;
+	void (*pswcode)(void *, u_char *, int cnt) = NULL;
+	void (*rswcode)(void *, u_char *, int cnt) = NULL;
 
 	switch (enc) {
 	case AUDIO_ENCODING_ULAW:
+		if (p->precision != 8)
+			return (EINVAL);
 		bits = FMT_ULAW >> 5;
 		break;
 	case AUDIO_ENCODING_ALAW:
+		if (p->precision != 8)
+			return (EINVAL);
 		bits = FMT_ALAW >> 5;
 		break;
-	case AUDIO_ENCODING_ADPCM:
-		bits = FMT_ADPCM >> 5;
-		break;
 	case AUDIO_ENCODING_SLINEAR_LE:
-		if (p->precision == 16)
+		if (p->precision == 8) {
+			bits = FMT_PCM8 >> 5;
+			pswcode = rswcode = change_sign8;
+		} else if (p->precision == 16)
 			bits = FMT_TWOS_COMP >> 5;
 		else
 			return (EINVAL);
 		break;
+	case AUDIO_ENCODING_ULINEAR:
+		if (p->precision != 8)
+			return (EINVAL);
+		bits = FMT_PCM8 >> 5;
+		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
-		if (p->precision == 16)
+		if (p->precision == 8) {
+			bits = FMT_PCM8 >> 5;
+			pswcode = rswcode = change_sign8;
+		} else if (p->precision == 16)
 			bits = FMT_TWOS_COMP_BE >> 5;
 		else
 			return (EINVAL);
 		break;
+	case AUDIO_ENCODING_SLINEAR:
+		if (p->precision != 8)
+			return (EINVAL);
+		bits = FMT_PCM8 >> 5;
+		pswcode = rswcode = change_sign8;
+		break;
 	case AUDIO_ENCODING_ULINEAR_LE:
 		if (p->precision == 8)
 			bits = FMT_PCM8 >> 5;
-		else
+		else if (p->precision == 16) {
+			bits = FMT_TWOS_COMP >> 5;
+			pswcode = rswcode = change_sign16_le;
+		} else
 			return (EINVAL);
+		break;
+	case AUDIO_ENCODING_ULINEAR_BE:
+		if (p->precision == 8)
+			bits = FMT_PCM8 >> 5;
+		else if (p->precision == 16) {
+			bits = FMT_TWOS_COMP_BE >> 5;
+			pswcode = rswcode = change_sign16_be;
+		} else
+			return (EINVAL);
+		break;
+	case AUDIO_ENCODING_ADPCM:
+		if (p->precision != 8)
+			return (EINVAL);
+		bits = FMT_ADPCM >> 5;
 		break;
 	default:
 		return (EINVAL);
@@ -884,6 +894,8 @@ ce4231_set_port(addr, cp)
 		error = 0;
 		break;
 	case CSAUDIO_OUTPUT:
+		if (cp->type != AUDIO_MIXER_ENUM)
+			break;
 		if (cp->un.ord != CSPORT_LINEOUT &&
 		    cp->un.ord != CSPORT_SPEAKER &&
 		    cp->un.ord != CSPORT_HEADPHONE)
@@ -1095,12 +1107,14 @@ ce4231_get_port(addr, cp)
 		error = 0;
 		break;
 	case CSAUDIO_RECORD_SOURCE:
-		if (cp->type != AUDIO_MIXER_ENUM) break;
+		if (cp->type != AUDIO_MIXER_ENUM)
+			break;
 		cp->un.ord = MIC_IN_PORT;
 		error = 0;
 		break;
 	case CSAUDIO_OUTPUT:
-		if (cp->type != AUDIO_MIXER_ENUM) break;
+		if (cp->type != AUDIO_MIXER_ENUM)
+			break;
 		cp->un.ord = sc->sc_out_port;
 		error = 0;
 		break;
