@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.29 2000/06/08 20:51:11 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.104 2000/05/19 05:47:52 angelos Exp $	*/
+/*	$OpenBSD: sa.c,v 1.30 2000/08/03 07:24:23 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.107 2000/07/17 18:57:59 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -44,6 +44,7 @@
 #include "cookie.h"
 #include "doi.h"
 #include "exchange.h"
+#include "ipsec.h"
 #include "isakmp.h"
 #include "log.h"
 #include "message.h"
@@ -375,6 +376,13 @@ sa_dump (char *header, struct sa *sa)
 		"%s: spi_sz[0] %d spi[0] %p spi_sz[1] %d spi[1] %p", header,
 		proto->spi_sz[0], proto->spi[0], proto->spi_sz[1],
 		proto->spi[1]));
+      LOG_DBG ((LOG_REPORT, 0, "%s: %s, %s", header,
+		sa->doi == NULL ? "<nodoi>"
+		: sa->doi->decode_ids ("initiator id: %s, responder id: %s", 
+				     sa->id_i, sa->id_i_len, 
+				     sa->id_r, sa->id_r_len, 0),
+		sa->transport == NULL ? "<no transport>" :
+		sa->transport->vtbl->decode_ids (sa->transport)));
       for (i = 0; i < 2; i++)
 	if (proto->spi[i])
 	  {
