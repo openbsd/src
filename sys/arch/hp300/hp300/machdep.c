@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.33 1998/04/25 22:19:48 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.34 1998/05/04 06:29:03 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.94 1997/06/12 15:46:29 mrg Exp $	*/
 
 /*
@@ -529,6 +529,21 @@ identifycpu()
 			} else {
 				td = (hp300_models[i].designation)[0];
 			}
+
+			/*
+			 * Adjust speed if the machine appears to be
+			 * running at a different clock rate.  Dividing
+			 * cpuspeed by 2.67 and truncating it works on my
+			 * systems, but I don't want to use floating point.
+			 */
+			if (cputype == CPU_68040) {
+				if (cpuspeed > 100)
+					s = "40";
+				else if (cpuspeed > 80)
+					s = "33";
+				else
+					s = "25";
+			}
 		}
 	}
 	if (t == NULL) {
@@ -621,10 +636,12 @@ identifycpu()
 
 	strcat(cpu_model, ")");
 	printf("%s\n", cpu_model);
+#if 0
 	printf("cpu: delay divisor %d", delay_divisor);
 	if (mmuid)
 		printf(", mmuid %d", mmuid);
 	printf("\n");
+#endif
 
 	/*
 	 * Now that we have told the user what they have,
