@@ -50,6 +50,7 @@ case "${host}" in
   *-*-sunos4.1*)	host_makefile_frag=config/mh-posix ;;
   *-*-ultrix2*)						files=sysdep-obsd.h ;;
   *-*-riscos*)		host_makefile_frag=config/mh-sysv ;;
+  *-*-openbsd*)					files=sysdep-openbsd.h ;;
 esac
 
 # per-target:

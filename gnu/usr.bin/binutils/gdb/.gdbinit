@@ -13,4 +13,5 @@ end
 dir ../mmalloc
 dir ../libiberty
 dir ../bfd
+dir ../readline
 set prompt (top-gdb) 
