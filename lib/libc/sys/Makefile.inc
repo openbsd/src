@@ -1,9 +1,14 @@
-#	$OpenBSD: Makefile.inc,v 1.31 1999/12/14 03:41:16 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.32 2000/01/06 16:53:30 d Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/sys ${LIBCSRCDIR}/sys
+
+# for now, only i386 has usable weak aliases
+.if ${MACHINE_ARCH} != "i386"
+CFLAGS+=	-D_NO_WEAK_ALIASES
+.endif
 
 # modules with non-default implementations on at least one architecture:
 SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S \
