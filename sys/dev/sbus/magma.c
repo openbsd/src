@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.3 2002/01/12 21:41:17 jason Exp $	*/
+/*	$OpenBSD: magma.c,v 1.4 2002/01/25 02:37:43 jason Exp $	*/
 /*
  * magma.c
  *
@@ -80,77 +80,82 @@
  */
 static struct magma_board_info supported_cards[] = {
 	{
-		"MAGMA,4_Sp", "Magma 4 Sp", 4, 0,
+		"MAGMA_Sp", "MAGMA,4_Sp", "Magma 4 Sp", 4, 0,
 		1, 0xa000, 0xc000, 0xe000, { 0x8000, 0, 0, 0 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,8_Sp", "Magma 8 Sp", 8, 0,
+		"MAGMA_Sp", "MAGMA,8_Sp", "Magma 8 Sp", 8, 0,
 		2, 0xa000, 0xc000, 0xe000, { 0x4000, 0x6000, 0, 0 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,_8HS_Sp", "Magma Fast 8 Sp", 8, 0,
+		"MAGMA_Sp", "MAGMA,_8HS_Sp", "Magma Fast 8 Sp", 8, 0,
 		2, 0x2000, 0x4000, 0x6000, { 0x8000, 0xa000, 0, 0 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,_8SP_422", "Magma 8 Sp - 422", 8, 0,
+		"MAGMA_Sp", "MAGMA,_8SP_422", "Magma 8 Sp - 422", 8, 0,
 		2, 0x2000, 0x4000, 0x6000, { 0x8000, 0xa000, 0, 0 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,12_Sp", "Magma 12 Sp", 12, 0,
+		"MAGMA_Sp", "MAGMA,12_Sp", "Magma 12 Sp", 12, 0,
 		3, 0xa000, 0xc000, 0xe000, { 0x2000, 0x4000, 0x6000, 0 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,16_Sp", "Magma 16 Sp", 16, 0,
+		"MAGMA_Sp", "MAGMA,16_Sp", "Magma 16 Sp", 16, 0,
 		4, 0xd000, 0xe000, 0xf000, { 0x8000, 0x9000, 0xa000, 0xb000 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,16_Sp_2", "Magma 16 Sp", 16, 0,
+		"MAGMA_Sp", "MAGMA,16_Sp_2", "Magma 16 Sp", 16, 0,
 		4, 0x2000, 0x4000, 0x6000, { 0x8000, 0xa000, 0xc000, 0xe000 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,16HS_Sp", "Magma Fast 16 Sp", 16, 0,
+		"MAGMA_Sp", "MAGMA,16HS_Sp", "Magma Fast 16 Sp", 16, 0,
 		4, 0x2000, 0x4000, 0x6000, { 0x8000, 0xa000, 0xc000, 0xe000 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,21_Sp", "Magma LC 2+1 Sp", 2, 1,
+		"MAGMA_Sp", "MAGMA,21_Sp", "Magma LC 2+1 Sp", 2, 1,
 		1, 0xa000, 0xc000, 0xe000, { 0x8000, 0, 0, 0 },
 		0, { 0, 0 }
 	},
 	{
-		"MAGMA,21HS_Sp", "Magma 2+1 Sp", 2, 1,
+		"MAGMA_Sp", "MAGMA,21HS_Sp", "Magma 2+1 Sp", 2, 1,
 		1, 0xa000, 0xc000, 0xe000, { 0x4000, 0, 0, 0 },
 		1, { 0x6000, 0 }
 	},
 	{
-		"MAGMA,41_Sp", "Magma 4+1 Sp", 4, 1,
+		"MAGMA_Sp", "MAGMA,41_Sp", "Magma 4+1 Sp", 4, 1,
 		1, 0xa000, 0xc000, 0xe000, { 0x4000, 0, 0, 0 },
 		1, { 0x6000, 0 }
 	},
 	{
-		"MAGMA,82_Sp", "Magma 8+2 Sp", 8, 2,
+		"MAGMA_Sp", "MAGMA,82_Sp", "Magma 8+2 Sp", 8, 2,
 		2, 0xd000, 0xe000, 0xf000, { 0x8000, 0x9000, 0, 0 },
 		2, { 0xa000, 0xb000 }
 	},
 	{
-		"MAGMA,P1_Sp", "Magma P1 Sp", 0, 1,
+		"MAGMA_Sp", "MAGMA,P1_Sp", "Magma P1 Sp", 0, 1,
 		0, 0, 0, 0, { 0, 0, 0, 0 },
 		1, { 0x8000, 0 }
 	},
 	{
-		"MAGMA,P2_Sp", "Magma P2 Sp", 0, 2,
+		"MAGMA_Sp", "MAGMA,P2_Sp", "Magma P2 Sp", 0, 2,
 		0, 0, 0, 0, { 0, 0, 0, 0 },
 		2, { 0x4000, 0x8000 }
 	},
 	{
-		NULL, NULL, 0, 0,
+		"MAGMA 2+1HS Sp", "", "Magma 2+1HS Sp", 2, 0,
+		1, 0xa000, 0xc000, 0xe000, { 0x4000, 0, 0, 0 },
+		1, { 0x8000, 0 }
+	},
+	{
+		NULL, NULL, NULL, 0, 0,
 		0, 0, 0, 0, { 0, 0, 0, 0 },
 		0, { 0, 0 }
 	}
@@ -301,9 +306,17 @@ magma_match(parent, vcf, aux)
 	void *vcf, *aux;
 {
 	struct sbus_attach_args *sa = aux;
+	struct magma_board_info *card;
 
-	/* is it a magma Sp card? */
-	return (strcmp("MAGMA_Sp", sa->sa_name) == 0);
+	/* See if we support this device */
+	for (card = supported_cards; ; card++) {
+		if (card->mb_sbusname == NULL)
+			/* End of table: no match */
+			return (0);
+		if (strcmp(sa->sa_name, card->mb_sbusname) == 0)
+			break;
+	}
+	return (1);
 }
 
 void
@@ -314,19 +327,32 @@ magma_attach(parent, dev, aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct magma_softc *sc = (struct magma_softc *)dev;
-	struct magma_board_info *card = supported_cards;
-	char *magma_prom = getpropstring(sa->sa_node, "magma_prom");
-	int chip;
+	struct magma_board_info *card;
+	char *magma_prom, *clockstr;
+	int chip, cd_clock;
 
-	/* find the card type */
-	while (card->mb_name && strcmp(magma_prom, card->mb_name))
-		card++;
+	magma_prom = getpropstring(sa->sa_node, "magma_prom");
+	for (card = supported_cards; card->mb_name != NULL; card++) {
+		if (strcmp(sa->sa_name, card->mb_sbusname) != 0)
+			continue;
+		if (strcmp(magma_prom, card->mb_name) == 0)
+			break;
+	}
 	if (card->mb_name == NULL) {
-		printf(" %s (unsupported)\n", magma_prom);
+		printf(": %s (unsupported)\n", magma_prom);
 		return;
 	}
 
 	sc->sc_bustag = sa->sa_bustag;
+
+	clockstr = getpropstring(sa->sa_node, "clock");
+	if (strlen(clockstr) == 0)
+		cd_clock = 25;
+	else {
+		cd_clock = 0;
+		while (*clockstr != '\0')
+			cd_clock = cd_clock * 10 + *clockstr++ - '0';
+	}
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
 	    sa->sa_reg[0].sbr_offset, sa->sa_reg[0].sbr_size,
@@ -382,7 +408,8 @@ magma_attach(parent, dev, aux)
 	/* init the cd1400 chips */
 	for (chip = 0 ; chip < card->mb_ncd1400 ; chip++) {
 		struct cd1400 *cd = &sc->ms_cd1400[chip];
-		char *str;
+
+		cd->cd_clock = cd_clock;
 
 		if (bus_space_subregion(sc->sc_bustag, sc->sc_iohandle,
 		    card->mb_cd1400[chip], CD1400_REGMAPSIZE, &cd->cd_regh)) {
@@ -390,17 +417,6 @@ magma_attach(parent, dev, aux)
 			return;
 		}
 		cd->cd_regt = sc->sc_bustag;
-
-		str = getpropstring(sa->sa_node, "clock");
-		if (strlen(str) == 0)
-			cd->cd_clock = 25;
-		else {
-			char *cp = str;
-
-			cd->cd_clock = 0;
-			while (*cp != '\0')
-				cd->cd_clock = cd->cd_clock * 10 + *cp++ - '0';
-		}
 
 		/* getpropstring(sa->sa_node, "chiprev"); */
 		/* seemingly the Magma drivers just ignore the propstring */
