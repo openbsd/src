@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_time.h,v 1.3 1994/10/29 00:43:28 christos Exp $	 */
+/*	$NetBSD: svr4_time.h,v 1.4 1995/12/19 07:13:23 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,5 +32,10 @@
 
 #include <compat/svr4/svr4_types.h>
 #include <sys/time.h>
+
+struct svr4_utimbuf {
+	time_t actime;
+	time_t modtime;
+};
 
 #endif /* !_SVR4_TIME_H_ */

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.14 1995/10/14 20:25:06 christos Exp $
+	$NetBSD: syscalls.master,v 1.15 1995/12/19 07:13:27 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -37,6 +37,7 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_time.h>
 #include <compat/svr4/svr4_signal.h>
 #include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
@@ -73,7 +74,8 @@
 27	STD		{ int svr4_sys_alarm(unsigned sec); }
 28	STD		{ int svr4_sys_fstat(int fd, struct svr4_stat *sb); }
 29	UNIMPL		pause
-30	UNIMPL		utime
+30	STD		{ int svr4_sys_utime(char *path, \
+					     struct svr4_utimbuf *ubuf); }
 31	UNIMPL		was stty
 32	UNIMPL		was gtty
 33	STD		{ int svr4_sys_access(char *path, int flags); }
@@ -240,7 +242,8 @@
 151	UNIMPL
 152	UNIMPL		modctl
 153	STD		{ int svr4_sys_fchroot(int fd); }
-154	UNIMPL		utimes
+154	STD		{ int svr4_sys_utimes(char *path, \
+					      struct timeval *tptr); }
 155	STD		{ int svr4_sys_vhangup(void); }
 156	STD		{ int svr4_sys_gettimeofday(struct timeval *tp); }
 157	NOARGS		{ int sys_getitimer(u_int which, \
