@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.3 2004/02/26 08:18:56 deraadt Exp $	*/
+/*	$OpenBSD: grey.c,v 1.4 2004/02/26 08:50:40 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -412,21 +412,22 @@ int
 greywatcher(void)
 {
 	pid_t pid;
+	int i;
 
 	pfdev = open("/dev/pf", O_RDWR);
 	if (pfdev == -1)
 		err(1, "open of /dev/pf failed");
 
 	/* check to see if /var/db/spamd exists, if not, create it */
-	if (open(PATH_SPAMD_DB, O_RDWR, 0) == -1 && errno == ENOENT) {
-		int i;
+	if ((i = open(PATH_SPAMD_DB, O_RDWR, 0)) == -1 && errno == ENOENT) {
 		i = open(PATH_SPAMD_DB, O_RDWR|O_CREAT, 0644);
 		if (i == -1)
 			err(1, "can't create %s", PATH_SPAMD_DB);
 		/* if we are dropping privs, chown to that user */
 		if (pw && (fchown(i, pw->pw_uid, pw->pw_gid) == -1))
 			err(1, "can't chown %s", PATH_SPAMD_DB);
-	}
+	} else if (i != -1)
+		close(i);
 
 	/*
 	 * lose root, continue as non-root user
