@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.45 2000/07/17 23:29:35 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.46 2000/07/18 20:17:20 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.45 2000/07/17 23:29:35 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.46 2000/07/18 20:17:20 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1186,3 +1186,38 @@ Var_Dump(ctxt)
 		VarPrintVar(v);
 }
 
+
+#ifdef POSIX
+
+static const char *quotable = " \t\n\\'\"";
+
+/* In POSIX mode, variable assignments passed on the command line are
+ * propagated to sub makes through MAKEFLAGS.
+ */
+void
+Var_AddCmdline(name)
+	const char *name;
+{
+    Var *v;
+    unsigned int i;
+    BUFFER buf;
+    char *s;
+
+    Buf_Init(&buf, MAKE_BSIZE);
+
+    for (v = hash_first(VAR_CMD, &i); v != NULL; 
+    	v = hash_next(VAR_CMD, &i)) {
+		/* We assume variable names don't need quoting */
+		Buf_AddString(&buf, v->name);
+		Buf_AddChar(&buf, '=');
+		for (s = VarValue(v); *s != '\0'; s++) {
+			if (strchr(quotable, *s))
+				Buf_AddChar(&buf, '\\');
+			Buf_AddChar(&buf, *s);
+		}
+		Buf_AddSpace(&buf);
+    }
+    Var_Append(name, Buf_Retrieve(&buf), VAR_GLOBAL);
+    Buf_Destroy(&buf);
+}
+#endif

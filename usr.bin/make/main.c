@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.38 2000/07/01 00:21:22 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.39 2000/07/18 20:17:20 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.38 2000/07/01 00:21:22 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.39 2000/07/18 20:17:20 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -140,10 +140,66 @@ static void		MainParseArgs __P((int, char **));
 char *			chdir_verify_path __P((char *, char *));
 static int		ReadMakefile __P((void *, void *));
 static void		usage __P((void));
+static void 		posixParseOptLetter __P((char));
 int 			main __P((int, char **));
 
 static char *curdir;			/* startup directory */
 static char *objdir;			/* where we chdir'ed to */
+
+static void
+posixParseOptLetter(c)
+    char c;
+{
+	switch(c) {
+	case 'B':
+		compatMake = TRUE;
+		break;
+	case 'P':
+		usePipes = FALSE;
+		Var_Append(MAKEFLAGS, "-P", VAR_GLOBAL);
+		break;
+	case 'S':
+		keepgoing = FALSE;
+		Var_Append(MAKEFLAGS, "-S", VAR_GLOBAL);
+		break;
+	case 'e':
+		checkEnvFirst = TRUE;
+		Var_Append(MAKEFLAGS, "-e", VAR_GLOBAL);
+		break;
+	case 'i':
+		ignoreErrors = TRUE;
+		Var_Append(MAKEFLAGS, "-i", VAR_GLOBAL);
+		break;
+	case 'k':
+		keepgoing = TRUE;
+		Var_Append(MAKEFLAGS, "-k", VAR_GLOBAL);
+		break;
+	case 'n':
+		noExecute = TRUE;
+		Var_Append(MAKEFLAGS, "-n", VAR_GLOBAL);
+		break;
+	case 'q':
+		queryFlag = TRUE;
+		/* Kind of nonsensical, wot? */
+		Var_Append(MAKEFLAGS, "-q", VAR_GLOBAL);
+		break;
+	case 'r':
+		noBuiltins = TRUE;
+		Var_Append(MAKEFLAGS, "-r", VAR_GLOBAL);
+		break;
+	case 's':
+		beSilent = TRUE;
+		Var_Append(MAKEFLAGS, "-s", VAR_GLOBAL);
+		break;
+	case 't':
+		touchFlag = TRUE;
+		Var_Append(MAKEFLAGS, "-t", VAR_GLOBAL);
+		break;
+	default:
+	case '?':
+		usage();
+	}
+}
 
 /*-
  * MainParseArgs --
@@ -175,6 +231,7 @@ MainParseArgs(argc, argv)
 #else
 # define OPTFLAGS "BD:I:PSV:d:ef:ij:km:nqrst"
 #endif
+# define OPTLETTERS "BPSiknqrst"
 rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 		switch(c) {
 		case 'D':
@@ -193,9 +250,6 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			Var_Append(MAKEFLAGS, "-V", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
-		case 'B':
-			compatMake = TRUE;
-			break;
 #ifdef REMOTE
 		case 'L': {
 		   char *endptr;
@@ -212,14 +266,6 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			break;
 		}
 #endif
-		case 'P':
-			usePipes = FALSE;
-			Var_Append(MAKEFLAGS, "-P", VAR_GLOBAL);
-			break;
-		case 'S':
-			keepgoing = FALSE;
-			Var_Append(MAKEFLAGS, "-S", VAR_GLOBAL);
-			break;
 		case 'd': {
 			char *modules = optarg;
 
@@ -275,16 +321,8 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
 		}
-		case 'e':
-			checkEnvFirst = TRUE;
-			Var_Append(MAKEFLAGS, "-e", VAR_GLOBAL);
-			break;
 		case 'f':
 			Lst_AtEnd(&makefiles, optarg);
-			break;
-		case 'i':
-			ignoreErrors = TRUE;
-			Var_Append(MAKEFLAGS, "-i", VAR_GLOBAL);
 			break;
 		case 'j': {
 		   char *endptr;
@@ -305,39 +343,13 @@ rearg:	while((c = getopt(argc, argv, OPTFLAGS)) != -1) {
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
 		}
-		case 'k':
-			keepgoing = TRUE;
-			Var_Append(MAKEFLAGS, "-k", VAR_GLOBAL);
-			break;
 		case 'm':
 			Dir_AddDir(&sysIncPath, optarg);
 			Var_Append(MAKEFLAGS, "-m", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, optarg, VAR_GLOBAL);
 			break;
-		case 'n':
-			noExecute = TRUE;
-			Var_Append(MAKEFLAGS, "-n", VAR_GLOBAL);
-			break;
-		case 'q':
-			queryFlag = TRUE;
-			/* Kind of nonsensical, wot? */
-			Var_Append(MAKEFLAGS, "-q", VAR_GLOBAL);
-			break;
-		case 'r':
-			noBuiltins = TRUE;
-			Var_Append(MAKEFLAGS, "-r", VAR_GLOBAL);
-			break;
-		case 's':
-			beSilent = TRUE;
-			Var_Append(MAKEFLAGS, "-s", VAR_GLOBAL);
-			break;
-		case 't':
-			touchFlag = TRUE;
-			Var_Append(MAKEFLAGS, "-t", VAR_GLOBAL);
-			break;
 		default:
-		case '?':
-			usage();
+			posixParseOptLetter(c);
 		}
 	}
 
@@ -398,7 +410,8 @@ Main_ParseArgLine(line)
 	int argc;			/* Number of arguments in argv */
 	char *args;			/* Space used by the args */
 	char *buf;
-	char *argv0 = Var_Value(".MAKE", VAR_GLOBAL);
+	char *argv0;
+	char *s;
 
 	if (line == NULL)
 		return;
@@ -407,6 +420,18 @@ Main_ParseArgLine(line)
 	if (!*line)
 		return;
 
+	/* POSIX rule: MAKEFLAGS can hold a set of option letters without
+	 * any blanks or dashes. */
+	for (s = line;; s++) {
+		if (*s == '\0') {
+			while (line != s) 
+				posixParseOptLetter(*line++);
+			return;
+	    	}
+		if (strchr(OPTLETTERS, *s) == NULL)
+			break;
+	}
+	argv0 = Var_Value(".MAKE", VAR_GLOBAL);
 	buf = emalloc(strlen(line) + strlen(argv0) + 2);
 	(void)sprintf(buf, "%s %s", argv0, line);
 
@@ -654,6 +679,9 @@ main(argc, argv)
 
 	MainParseArgs(argc, argv);
 
+#ifdef NotYet
+	Var_AddCmdline(MAKEFLAGS);
+#endif
 
 	/*
 	 * Initialize archive, target and suffix modules in preparation for

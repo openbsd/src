@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.28 2000/07/17 22:57:37 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.29 2000/07/18 20:17:19 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -161,3 +161,4 @@ void Var_End __P((void));
 void Var_Dump __P((GSymT *));
 void SymTable_Init __P((SymTable *));
 void SymTable_Destroy __P((SymTable *));
+extern void Var_AddCmdline __P((const char *));
