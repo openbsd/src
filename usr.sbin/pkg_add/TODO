@@ -1,11 +1,5 @@
 - smart handling of .libs-*: pkg_add correctly discards potential conflicts.
 It doesn't handle yet actual conflicts with .libs-*.
-- `global' replacement through pkg_add -r: the dependency solver needs
-to look into the command-line to figure out ways to solve dependencies:
-in effect, packages updated through -r must be sorted in dependency order.
-This does break pkg_add -n -r very thoroughly for complicated cases.
-And this is needed for 3.7 updates, if we don't want to have to update
-each package manually, in order.
 - handle n-to-1 updates: mostly need to allow for a list of replaced packages.
 The tricky part is that the replaced packages will often have 
 inter-dependencies, and we must ignore those inter-dependencies.

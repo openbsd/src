@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.151 2004/12/19 14:09:53 espie Exp $
+# $OpenBSD: pkg_add,v 1.152 2004/12/19 14:47:33 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -167,10 +167,15 @@ sub pre_add($$)
 
 sub solve_dependencies
 {
-	my ($verbose, $handle, @extra) = @_;
+	my ($state, $handle, @extra) = @_;
 	my $plist = $handle->{plist};
+	my $verbose = $state->{verbose};
 	my $to_register = $handle->{solved_dependencies} = {};
-	my $to_install;
+	my $to_install = {};
+	for my $fullname (@extra) {
+		$to_install->{OpenBSD::PackageName::url2pkgname($fullname)} = 
+		    $fullname;
+	}
 
 	# do simple old style pkgdep first
 	my @deps = ();
@@ -182,46 +187,53 @@ sub solve_dependencies
 	}
 	for my $dep (@{$plist->{depend}}, @{$plist->{newdepend}}, @{$plist->{libdepend}}) {
 	    next if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
-	    my @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, installed_packages());
-	    if (@candidates >= 1) {
-		    $to_register->{$candidates[0]} = 1;
-	    } else {
-	    	if (!defined $to_install) {
-			$to_install = {};
-			for my $fullname (@extra) {
-			    $to_install->{OpenBSD::PackageName::url2pkgname($fullname)} = $fullname;
-			}
-		}
-	    	# try against list of packages to install
-	    	my @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, keys %{$to_install});
+
+	    my @candidates;
+	    if ($state->{replace}) {
+		# try against list of packages to install
+		@candidates = OpenBSD::PkgSpec::match($dep->{pattern}, keys %{$to_install});
 		if (@candidates >= 1) {
 		    push(@deps, $to_install->{$candidates[0]});
 		    $to_register->{$candidates[0]} = 1;
-		} else {
-		    # try with list of packages
-		    my @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, OpenBSD::PackageLocator::available());
-		    # one single choice
-		    if (@candidates == 1) {
-			push(@deps, $candidates[0]);
-			$to_register->{$candidates[0]} = 1;
-		    } elsif (@candidates > 1) {
-			# grab default if available
-		    	if (grep {$_ eq $dep->{def}} @candidates) {
-			    push(@deps, $dep->{def});
-			    $to_register->{$dep->{def}} = 1;
-			# grab first one otherwise
-			} else {
-			    push(@deps, $candidates[0]);
-			    $to_register->{$candidates[0]} = 1;
-			}
-		    } else {
-			# can't get a list of packages, assume default
-			# will be there.
-			push(@deps, $dep->{def});
-			$to_register->{$dep->{def}} = 1;
-		    }
+		    next;
 		}
 	    }
+	    @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, installed_packages());
+	    if (@candidates >= 1) {
+		    $to_register->{$candidates[0]} = 1;
+		    next;
+	    }
+	    if (!$state->{replace}) {
+		# try against list of packages to install
+		@candidates = OpenBSD::PkgSpec::match($dep->{pattern}, keys %{$to_install});
+		if (@candidates >= 1) {
+		    push(@deps, $to_install->{$candidates[0]});
+		    $to_register->{$candidates[0]} = 1;
+		    next;
+		}
+	    }
+	    # try with list of available packages
+	    @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, OpenBSD::PackageLocator::available());
+	    # one single choice
+	    if (@candidates == 1) {
+		push(@deps, $candidates[0]);
+		$to_register->{$candidates[0]} = 1;
+		next;
+	    }
+	    if (@candidates > 1) {
+		# grab default if available
+		if (grep {$_ eq $dep->{def}} @candidates) {
+		    push(@deps, $dep->{def});
+		    $to_register->{$dep->{def}} = 1;
+		    next;
+		}
+		push(@deps, $candidates[0]);
+		$to_register->{$candidates[0]} = 1;
+	    }
+	    # can't get a list of packages, assume default
+	    # will be there.
+	    push(@deps, $dep->{def});
+	    $to_register->{$dep->{def}} = 1;
 	}
 
 	if ($verbose && %$to_register) {
@@ -558,6 +570,9 @@ sub install_package
 			return ();
 		}
 	}
+	if (defined $handle->{finished}) {
+		return ();
+	}
 	if ($plist->has('arch')) {
 		unless ($plist->{arch}->check($state->{arch})) {
 			print "$pkg is not for the right architecture\n";
@@ -565,7 +580,7 @@ sub install_package
 		}
 	}
 	if (!defined $handle->{solved_dependencies}) {
-		my @deps = solve_dependencies($state->{verbose}, $handle, @todo);
+		my @deps = solve_dependencies($state, $handle, @todo);
 		if (@deps > 0) {
 			build_deptree($state, $pkg, @deps);
 			return (@deps, $pkg);
@@ -606,6 +621,7 @@ sub install_package
 	}
 	really_add($handle, $state);
 	OpenBSD::PkgCfl::register($plist, $state);
+	$handle->{finished} = 1;
 	return ();
 }
 
