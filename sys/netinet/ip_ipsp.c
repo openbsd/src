@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.123 2001/06/01 07:56:46 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.124 2001/06/01 08:18:27 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1469,9 +1469,15 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 		    m_copydata(m, m->m_pkthdr.len - trail - 8, 8, lasteight);
 
 		    /* Verify the self-describing padding values */
-		    for (i = 5; lasteight[i + 1] != 0 && i >= 0; i--)
-		      if (lasteight[i + 1] != lasteight[i] + 1)
-			return tags.lh_first;
+		    if (lasteight[6] != 0)
+		    {
+			if (lasteight[6] != lasteight[5])
+			  return tags.lh_first;
+
+			for (i = 4; lasteight[i + 1] != 1 && i >= 0; i--)
+			  if (lasteight[i + 1] != lasteight[i] + 1)
+			    return tags.lh_first;
+		    }
 		}
 		/* Fall through */
 	    case IPPROTO_AH:
@@ -1483,6 +1489,7 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 		tdbi = (struct tdb_ident *) (mtag + 1);
 		bzero(tdbi, sizeof(struct tdb_ident));
 
+		/* Get SPI off the relevant header */
 		if (proto == IPPROTO_AH)
 		  m_copydata(m, off + sizeof(u_int32_t), sizeof(u_int32_t),
 			     (caddr_t) &tdbi->spi);
@@ -1516,13 +1523,15 @@ ipsp_parse_headers(struct mbuf *m, int off, u_int8_t proto)
 		/* Update next protocol/header and header offset */
 		if (proto == IPPROTO_AH)
 		{
-		    m_copydata(m, off, sizeof(u_int8_t), (caddr_t) &proto);
-		    m_copydata(m, off + sizeof(u_int8_t), sizeof(u_int8_t),
-			       (caddr_t) &s);
-		    off += (s + 2) << 2;
+		    u_int8_t foo[2];
+
+		    m_copydata(m, off, 2 * sizeof(u_int8_t), foo);
+		    proto = foo[0];
+		    off += (foo[1] + 2) << 2;
 		}
 		else /* IPPROTO_ESP */
 		{
+		    /* Initialized in IPPROTO_ESP case */
 		    off += esphlen;
 		    proto = lasteight[7];
 		}
