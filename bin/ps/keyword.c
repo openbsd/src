@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.5 1997/02/12 15:28:24 kstailey Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.6 1997/06/18 18:54:05 kstailey Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: keyword.c,v 1.5 1997/02/12 15:28:24 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: keyword.c,v 1.6 1997/06/18 18:54:05 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -352,12 +352,12 @@ findvar(p)
 			eval = 1;
 		}
 		parsefmt(v->alias);
-		return ((VAR *)NULL);
+		return (NULL);
 	}
 	if (!v) {
 		warnx("%s: keyword not found", p);
 		eval = 1;
-		return ((VAR *)NULL);
+		return (NULL);
 	}
 	if (hp)
 		v->header = hp;
