@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.4,v 1.14 2004/11/08 00:53:10 jmc Exp $
+.\"	$OpenBSD: systrace.4,v 1.15 2004/11/09 23:23:56 jaredy Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" All rights reserved.
@@ -46,16 +46,16 @@ interface.
 .Nm
 can assign the following policies to system calls:
 .Bl -tag -width SYSTR_POLICY_XXXXXX
-.It SYSTR_POLICY_ASK
+.It Dv SYSTR_POLICY_ASK
 Send a message of the type
 .Dv SYSTR_MSG_ASK ,
 and put the process to sleep until a
 .Dv STRIOCANSWER
 .Xr ioctl 2
 is made.
-.It SYSTR_POLICY_PERMIT
+.It Dv SYSTR_POLICY_PERMIT
 Immediately allow the system call.
-.It SYSTR_POLICY_NEVER
+.It Dv SYSTR_POLICY_NEVER
 Immediately return an error code.
 .El
 .Sh SYSTRACE MESSAGES
@@ -68,14 +68,15 @@ return the following structure:
 .Bd -literal
 struct str_message {
 	int msg_type;
-#define SYSTR_MSG_ASK	1
-#define SYSTR_MSG_RES	2
-#define SYSTR_MSG_EMUL	3
-#define SYSTR_MSG_CHILD	4
+#define SYSTR_MSG_ASK		1
+#define SYSTR_MSG_RES		2
+#define SYSTR_MSG_EMUL		3
+#define SYSTR_MSG_CHILD		4
 #define SYSTR_MSG_UGID		5
 #define SYSTR_MSG_POLICYFREE	6
 #define SYSTR_MSG_EXECVE	7
 	pid_t msg_pid;
+	u_int16_t msg_seqnr;	/* answer has to match seqnr */
 	short msg_policy;
 	union {
 		struct str_msg_emul msg_emul;
@@ -111,7 +112,8 @@ struct str_msg_child {
 	pid_t new_pid;
 };
 .Ed
-These messages are all to the userland control process.
+.Pp
+These messages are all sent to the userland control process.
 .Bl -tag -width SYSTR_MSG_XXXXXXXXXX
 .It SYSTR_MSG_ASK
 This message is sent whenever the kernel does not have a cached
@@ -146,17 +148,15 @@ argument.
 supports the following
 .Xr ioctl 2
 commands:
-.Bl -tag -width STRIOCXXXXXXXX
-.It Dv SYSTR_CLONE Fa "int"
+.Bl -tag -width Ds
+.It Dv STRIOCCLONE Fa "int *"
 Return a
 .Nm
 file descriptor for
 further
 .Xr ioctl 2
 operations.
-.El
-.Bl -tag -width STRIOCXXXXXXXX
-.It Dv STRIOCATTACH Fa "pid_t"
+.It Dv STRIOCATTACH Fa "pid_t *"
 Attach to a process, unless:
 .Bl -enum -compact -width 2n
 .It
@@ -174,9 +174,9 @@ and the
 kernel was not compiled with
 .Cd option INSECURE .
 .El
-.It Dv STRIOCDETACH Fa "pid_t"
+.It Dv STRIOCDETACH Fa "pid_t *"
 Wake up a process if it is waiting for an answer, and detach from it.
-.It Dv STRIOCANSWER Fa "struct systrace_answer"
+.It Dv STRIOCANSWER Fa "struct systrace_answer *"
 Tell
 .Nm
 what to do with a system call that was assigned a policy of
@@ -184,37 +184,46 @@ what to do with a system call that was assigned a policy of
 .Bd -literal
 struct systrace_answer {
 	pid_t stra_pid;	    /* PID of process being traced */
+	u_int16_t stra_seqnr;
+	short reserved;
+	uid_t stra_seteuid; /* Elevated privileges for syscall */
+	uid_t stra_setegid;
 	int stra_policy;    /* Policy to assign */
 	int stra_error;	    /* Return value of denied syscall
 			       (will return EPERM if zero) */
 	int stra_flags;
-#define	SYSTR_FLAGS_RESULT 0x0001    /* Report syscall result */
+#define	SYSTR_FLAGS_RESULT  0x001    /* Report syscall result */
+#define SYSTR_FLAGS_SETEUID 0x002
+#define SYSTR_FLAGS_SETEGID 0x004
 };
 .Ed
-.It Dv STRIOCREPORT Fa "pid_t"
+.It Dv STRIOCREPORT Fa "pid_t *"
 Report the current emulation a process is using inside the
-.Va msg_emul
+.Vt msg_emul
 structure.
-.It Dv STRIOCREPLACE Fa "struct systrace_replace"
+.It Dv STRIOCREPLACE Fa "struct systrace_replace *"
 Arrange for system call arguments to be replaced by arguments
 supplied by the monitoring process.
 .Bd -literal
 struct systrace_replace {
 	pid_t strr_pid;
+	u_int16_t strr_seqnr;
+	int16_t reserved;
 	int strr_nrepl;		/* # of arguments to replace */
 	caddr_t	strr_base;		/* Base user memory */
 	size_t strr_len;		/* Length of memory */
 	int strr_argind[SYSTR_MAXARGS];	/* Argument indexes */
 	size_t strr_off[SYSTR_MAXARGS];	/* Argument offsets */
 	size_t strr_offlen[SYSTR_MAXARGS]; /* Argument sizes */
+	int32_t strr_flags[SYSTR_MAXARGS];
 };
 .Ed
-.It Dv STRIOCIO Fa "struct systrace_io"
+.It Dv STRIOCIO Fa "struct systrace_io *"
 Copy data in/out of the process being traced.
 .Bd -literal
 struct systrace_io {
 	pid_t strio_pid;    /* PID of process being traced */
-	int strio_ops;
+	int strio_op;
 #define	SYSTR_READ	1
 #define	SYSTR_WRITE	2
 	void *strio_offs;
@@ -222,14 +231,14 @@ struct systrace_io {
 	size_t strio_len;
 };
 .Ed
-.It Dv STRIOCPOLICY Fa "struct systrace_policy"
+.It Dv STRIOCPOLICY Fa "struct systrace_policy *"
 Manipulate the set of policies.
 .Bd -literal
 struct systrace_policy {
 	int strp_op;
-#define	SYSTR_POLICY_NEW	1    /* Allocate a new policy */
-#define	SYSTR_POLICY_ASSIGN	2    /* Assign policy to process */
-#define	SYSTR_POLICY_MODIFY	3    /* Modify an entry */
+#define	SYSTR_POLICY_NEW	1  /* Allocate a new policy */
+#define	SYSTR_POLICY_ASSIGN	2  /* Assign policy to process */
+#define	SYSTR_POLICY_MODIFY	3  /* Modify an entry */
 	int strp_num;
 	union {
 		struct {
@@ -251,10 +260,13 @@ struct systrace_policy {
 .Pp
 The
 .Dv SYSTR_POLICY_NEW
-operation allocates a new policy with all entries initialized to
+operation allocates a new policy of
+.Va strp_maxents
+entries with each initialized to
 .Dv SYSTR_POLICY_ASK ,
 and returns the new policy number into
 .Va strp_num .
+.Pp
 The
 .Dv SYSTR_POLICY_ASSIGN
 operation attaches the policy identified by
@@ -264,13 +276,14 @@ to
 with a maximum of
 .Va strp_maxents
 entries.
+.Pp
 The
 .Dv SYSTR_POLICY_MODIFY
 operation changes the entry indexed by
 .Va strp_code
 to
 .Va strp_policy .
-.It Dv STRIOCGETCWD Fa "pid_t"
+.It Dv STRIOCGETCWD Fa "pid_t *"
 Set the working directory of the current process to that of the
 named process.
 .It Dv STRIOCRESCWD
@@ -289,13 +302,146 @@ struct systrace_inject {
 	pid_t   stri_pid;
 };
 .Ed
+.It Dv STRIOCSCRIPTNAME Fa "struct systrace_scriptname *"
+Set the path of executed scripts to
+.Va sn_scriptname .
+.Bd -literal
+struct systrace_scriptname {
+	pid_t sn_pid;
+	char  sn_scriptname[MAXPATHLEN];
+};
+.Ed
 .El
 .Sh FILES
 .Bl -tag -width "/dev/systrace" -compact
 .It Pa /dev/systrace
 system call tracing facility
 .El
+.Sh EXAMPLES
+The following is an example program that traces another process,
+printing out the path to any
+.Xr open 2
+system calls it performs.
+.Bd -literal
+#include <sys/param.h>
+#include <sys/ioctl.h>
+#include <dev/systrace.h>
+
+#include <err.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
+
+/*
+ * Number of system calls that will be covered in our policy.
+ */
+#define NSYSCALLS 512
+
+int
+main(int argc, char *argv[])
+{
+	struct systrace_policy strpol;
+	struct systrace_answer strans;
+	struct systrace_io strio;
+	struct str_message strmsg;
+	int fd, cfd, pid, i;
+	ssize_t n;
+	void *p;
+	char c;
+
+	if ((fd = open("/dev/systrace", O_RDONLY)) == -1)
+		err(1, "/dev/systrace");
+
+	/*
+	 * Get a systrace descriptor.
+	 */
+	if (ioctl(fd, STRIOCCLONE, &cfd) == -1)
+		err(1, "STRIOCCLONE");
+	close(fd);
+
+	/* Gather the PID of a process to systrace from somewhere. */
+	/* ... */
+
+	if (ioctl(cfd, STRIOCATTACH, &pid) == -1)
+		err(1, "STRIOCATTACH");
+
+	/* Install one policy. */
+	strpol.strp_op = SYSTR_POLICY_NEW;
+	strpol.strp_maxents = NSYSCALLS;
+
+	if (ioctl(cfd, STRIOCPOLICY, &strpol) == -1)
+		err(1, "STRIOCPOLICY NEW");
+
+	strpol.strp_op = SYSTR_POLICY_ASSIGN;
+	strpol.strp_pid = pid;
+
+	if (ioctl(cfd, STRIOCPOLICY, &strpol) == -1)
+		err(1, "STRIOCPOLICY ASSIGN");
+
+	/* Permit all system calls. */
+	for (i = 0; i < NSYSCALLS; i++) {
+		strpol.strp_op = SYSTR_POLICY_MODIFY;
+		strpol.strp_code = i;
+		strpol.strp_policy = SYSTR_POLICY_PERMIT;
+
+		if (ioctl(cfd, STRIOCPOLICY, &strpol) == -1)
+			err(1, "STRIOCPOLICY MODIFY");
+	}
+
+	/* Ask us about open(2) system calls. */
+	strpol.strp_op = SYSTR_POLICY_MODIFY;
+	strpol.strp_code = 5; /* open(2) */
+	strpol.strp_policy = SYSTR_POLICY_ASK;
+
+	if (ioctl(cfd, STRIOCPOLICY, &strpol) == -1)
+		err(1, "STRIOCPOLICY MODIFY");
+
+	/*
+	 * Now this process just answers requests for the operations the
+	 * traced process performs that we have requested systrace to ask
+	 * us about.
+	 */
+	while ((n = read(cfd, &strmsg, sizeof(strmsg))) ==
+	    sizeof(strmsg)) {
+		switch (strmsg.msg_type) {
+		case SYSTR_MSG_ASK:
+			/* Print out the path argument to open(2). */
+			memcpy(&p, &strmsg.msg_data.msg_ask.args,
+			    sizeof(p));
+			printf("open(");
+			do {
+				memset(&strio, 0, sizeof(strio));
+				strio.strio_pid = strmsg.msg_pid;
+				strio.strio_op = SYSTR_READ;
+				strio.strio_offs = p;
+				strio.strio_addr = &c;
+				strio.strio_len = 1;
+
+				if (ioctl(cfd, STRIOCIO, &strio) == -1)
+					err(1, "STRIOCIO");
+				putchar(c);
+				(unsigned char *)p += sizeof(char);
+			} while (c != '\e0');
+			printf(")\en");
+
+			memset(&strans, 0, sizeof(strans));
+			strans.stra_pid = strmsg.msg_pid;
+			strans.stra_seqnr = strmsg.msg_seqnr;
+			strans.stra_policy = SYSTR_POLICY_PERMIT;
+
+			if (ioctl(cfd, STRIOCANSWER, &strans) == -1)
+				err(1, "STRIOCANSWER");
+			break;
+		}
+	}
+	if (n == -1)
+		err(1, "read");
+	close(cfd);
+	exit(0);
+}
+.Ed
 .Sh SEE ALSO
+.Xr systrace 1 ,
 .Xr ioctl 2 ,
 .Xr read 2 ,
 .Xr options 4 ,
@@ -306,4 +452,8 @@ The
 facility first appeared in
 .Ox 3.2 .
 .\" .Sh BUGS
-.\" .Sh CAVEATS
+.Sh CAVEATS
+When creating new policies, if
+.Va strp_maxents
+is not large enough to accommodate any system calls needed for
+fundamental process operations, the traced process will block forever.
