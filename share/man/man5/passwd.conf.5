@@ -1,4 +1,4 @@
-.\" $OpenBSD: passwd.conf.5,v 1.1 1997/02/25 18:17:10 provos Exp $
+.\" $OpenBSD: passwd.conf.5,v 1.2 1997/03/27 00:10:52 provos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -49,7 +49,7 @@ this file are:
 .Pp
 .Bl -tag -width localcipher -offset indent
 .It localcipher
-The cipher to use for local passwords. Possible values are: 'old', 'newsalt'
+The cipher to use for local passwords. Possible values are: 'old', 'newsalt', 'md5'
 or 'blowfish,<rounds>' where rounds is a value between 4 and 31.
 .It ypcipher
 The cipher to use for YP passwords. The possible values are the same as
