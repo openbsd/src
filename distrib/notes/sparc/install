@@ -9,6 +9,34 @@ for a diskless setup which is a convenient way to install on a machine
 whose disk does not currently hold a usable operating system (see the
 section `Installing using a diskless setup' below).
 
+Installing using the OpenBSD floppies.
+
+The OpenBSD/sparc floppies come in two varieties, a compressed ramdisk
+form, and a two floppy uncompressed form.  The differences between
+the two forms are in their bootblocks, and filesystems.  The "floppy21.fs"
+image, is the compressed ramdisk form, the "kc21.fs" paired with either
+"inst21.fs" or "upgr21.fs" comprise the uncompressed form.  
+To put the floppy image(s) on a floppy, you use a dd command like:
+  
+	# dd if=kc21.fs of=/dev/rfd0a bs=20b conv=sync
+
+After transferring the floppy image(s) to disk, bring the system down by:
+ 
+        # halt
+ 
+Then boot the floppy by typing the appropriate command at the PROM:
+ 
+        ok boot fd()bsd         # for version 1 OpenBOOT ROMs
+        ok boot floppy bsd      # for version 2 OpenBOOT ROMs
+
+This will cause the kernel contained in the floppy to be booted.
+The two-floppy install disks will require you to insert the second
+floppy once the kernel loads.  (The disk will auto-eject)
+
+After the initial probe messages you'll asked to start the install
+or upgrade procedure. Proceed to the section `Running the installation
+scripts' below.
+
 
 Installing using the OpenBSD miniroot.
 
@@ -242,11 +270,13 @@ drivedata: 0
 <END SAMPLE DISKLABEL SCREEN>
 
 
-If you are upgrading a OpenBSD installation, start the upgrade script:
+If you are upgrading a OpenBSD installation, start the upgrade script, or
+select "U" from the floppy or miniroot installation script:
 
 OpenBSD# sh upgrade.sh
 
-else, start the installation script:
+else, start the installation script, or select "I" from the floppy or
+miniroot installation script:
 
 OpenBSD# sh install.sh
 

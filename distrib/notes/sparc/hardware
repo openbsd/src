@@ -57,7 +57,7 @@ Hardware the we do NOT currently support, but get many questions
 about:
 	multiprocessor machines (ignores other CPUs..)
 	audio driver for sun4m machines
-	floppy driver for sun4m machines
+	floppy driver for sun4m (can boot/install from ramdisk floppies though)
 	interrupt driven SCSI driver for Sun 4/100's and 4/200's
         SBus GS framebuffer (aka cgtwelve)
         SBus GT framebuffer ("Graphics Tower")

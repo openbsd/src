@@ -12,7 +12,8 @@ out as follows:
 		inst21.fs	The sparc installation floppy; see below.
 		upgr21.fs	The sparc upgrade floppy; see below.
 		miniroot21.fs	The sparc miniroot filesystem; see below.
-
+                floppy21.fs     The sparc compressed ramdisk boot floppy
+                                  
 		*.gz		sparc binary distribution sets;
 				see below.
 
@@ -27,11 +28,20 @@ out as follows:
 		X11		The X Windows distribution for OpenBSD/sparc
 
 
-In summary, there is one bootable sparc floppy image called "kc21.fs".
-This is a bootable install floppy which can be used in conjunction with
-the "inst21.fs" or "upgr21.fs" floppy images to install or upgrade OpenBSD 
-to the current version.  It is also useful for maintenance and disaster 
-recovery.  The miniroot.fs may be loaded onto the swap partition of an
+In summary, there are two bootable sparc floppy images called "kc21.fs", 
+and "floppy21.fs".  The "kc21.fs" is a bootable install floppy which can 
+be used in conjunction with the "inst21.fs" or "upgr21.fs" floppy images 
+to install or upgrade OpenBSD to the current version.  It is also useful 
+for maintenance and disaster recovery.  The "floppy21.fs" image is a
+compressed ramdisk install floppy, which is a single floppy compressed
+version of what the "kc21.fs" and "inst21.fs" images do.  The "floppy21.fs"
+image has not received as much testing as the non-compressed images, and
+is provided as a convenience in hopes that it will work for most
+people.  The "floppy21.fs" image must be used for installation on 
+sun4m systems via floppy.  The kc21 and inst21 images will not work
+for sun4m due to the lack of sun4m floppy driver support. 
+
+The miniroot.fs may be loaded onto the swap partition of an
 existing installation of OpenBSD, NetBSD, SunOS, or Solaris to allow
 installation or upgrade over the existing system.
 
@@ -48,6 +58,10 @@ Bootable installation/upgrade floppies:
   upgr21.fs
 	This disk contains a file system, and has holds the utilities 
 	needed in order to upgrade a system to OpenBSD 2.1
+
+  floppy21.fs
+	This disk contains a compressed ramdisk filesystem, and holds
+        all utilities needed to install or upgrade to OpenBSD 2.1
   
   miniroot21.fs
 	This is a miniroot filesystem image which can be copied to the
