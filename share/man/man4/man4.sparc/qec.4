@@ -1,4 +1,4 @@
-.\"     $OpenBSD: qec.4,v 1.1 1998/08/26 05:11:56 jason Exp $
+.\"     $OpenBSD: qec.4,v 1.2 1998/08/28 20:08:04 jason Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -42,15 +42,20 @@ The
 .Nm
 driver is an sbus controller that can contain either one
 .Xr be 4
-ethernet controller or four
+Ethernet controller or four
 .Xr me 4
 ethernet controllers.
 This driver, like other buses, is not directly available to users.
 .Sh SEE ALSO
 .Xr be 4 ,
 .Xr intro 4
+.Sh BUGS
+The
+.Xr me 4
+is not currently supported.
 .Sh HISTORY
-Support for the
+.Ox
+support for the
 .Nm
 first appeared in
-.Ox 2.4
+.Ox 2.4 .
