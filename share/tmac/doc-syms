@@ -143,6 +143,18 @@
 .	if "\\$1"1.1"  \&\\*(tNNetBSD\\*(aa 1.1\\*(aa
 .\}
 ..
+.\" Ns Ox macro - OpenBSD
+.de Ox
+.nr cF \\n(.f
+.nr cZ \\n(.s
+.ds aa \&\f\\n(cF\s\\n(cZ
+.if \\n(.$==2 \{\
+.	if "\\$1"1.2"  \&\\*(tNOpenBSD\\*(aa 1.2\\*(aa\\$2
+.\}
+.if \\n(.$==1 \{\
+.	if "\\$1"1.2"  \&\\*(tNOpenBSD\\*(aa 1.2\\*(aa
+.\}
+..
 .\" Ns At macro - AT&T UNIX
 .de At
 .nr cF \\n(.f
