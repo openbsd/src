@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.43 1999/05/16 21:48:35 niklas Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.44 1999/06/18 07:24:03 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -77,139 +77,29 @@
 #define DPRINTF(x)
 #endif
 
-extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);
-extern void des_ecb_encrypt(caddr_t, caddr_t, caddr_t, int);
-extern void des_set_key(caddr_t, caddr_t);
+extern struct auth_hash auth_hash_hmac_md5_96;
+extern struct auth_hash auth_hash_hmac_sha1_96;
+extern struct auth_hash auth_hash_hmac_ripemd_160_96;
 
-static void des1_encrypt(struct tdb *, u_int8_t *);
-static void des3_encrypt(struct tdb *, u_int8_t *);
-static void blf_encrypt(struct tdb *, u_int8_t *);
-static void cast5_encrypt(struct tdb *, u_int8_t *);
-static void skipjack_encrypt(struct tdb *, u_int8_t *);
-static void des1_decrypt(struct tdb *, u_int8_t *);
-static void des3_decrypt(struct tdb *, u_int8_t *);
-static void blf_decrypt(struct tdb *, u_int8_t *);
-static void cast5_decrypt(struct tdb *, u_int8_t *);
-static void skipjack_decrypt(struct tdb *, u_int8_t *);
-
-struct auth_hash esp_new_hash[] = {
-     { SADB_AALG_MD5HMAC96, "HMAC-MD5-96", 
-       MD5HMAC96_KEYSIZE, AH_MD5_ALEN,
-       sizeof(MD5_CTX),
-       (void (*) (void *)) MD5Init, 
-       (void (*) (void *, u_int8_t *, u_int16_t)) MD5Update, 
-       (void (*) (u_int8_t *, void *)) MD5Final 
-     },
-     { SADB_AALG_SHA1HMAC96, "HMAC-SHA1-96",
-       SHA1HMAC96_KEYSIZE, AH_SHA1_ALEN,
-       sizeof(SHA1_CTX),
-       (void (*) (void *)) SHA1Init, 
-       (void (*) (void *, u_int8_t *, u_int16_t)) SHA1Update, 
-       (void (*) (u_int8_t *, void *)) SHA1Final 
-     },
-     { SADB_AALG_X_RIPEMD160HMAC96, "HMAC-RIPEMD-160-96",
-       RIPEMD160HMAC96_KEYSIZE, AH_RMD160_ALEN,
-       sizeof(RMD160_CTX),
-       (void (*)(void *)) RMD160Init, 
-       (void (*)(void *, u_int8_t *, u_int16_t)) RMD160Update, 
-       (void (*)(u_int8_t *, void *)) RMD160Final 
-     }
+struct auth_hash *esp_new_hash[] = {
+    &auth_hash_hmac_md5_96,
+    &auth_hash_hmac_sha1_96,
+    &auth_hash_hmac_ripemd_160_96
 };
 
-struct enc_xform esp_new_xform[] = {
-     { SADB_EALG_DESCBC, "Data Encryption Standard (DES)",
-       ESP_DES_BLKS, ESP_DES_IVS,
-       8, 8, 8,
-       des1_encrypt,
-       des1_decrypt 
-     },
-     { SADB_EALG_3DESCBC, "Triple DES (3DES)",
-       ESP_3DES_BLKS, ESP_3DES_IVS,
-       24, 24, 8,
-       des3_encrypt,
-       des3_decrypt 
-     },
-     { SADB_EALG_X_BLF, "Blowfish",
-       ESP_BLF_BLKS, ESP_BLF_IVS,
-       5, BLF_MAXKEYLEN, 8,
-       blf_encrypt,
-       blf_decrypt 
-     },
-     { SADB_EALG_X_CAST, "CAST",
-       ESP_CAST_BLKS, ESP_CAST_IVS,
-       5, 16, 8,
-       cast5_encrypt,
-       cast5_decrypt 
-     },
-     { SADB_EALG_X_SKIPJACK, "Skipjack",
-       ESP_SKIPJACK_BLKS, ESP_SKIPJACK_IVS,
-       10, 10, 8,
-       skipjack_encrypt,
-       skipjack_decrypt 
-     }
+extern struct enc_xform enc_xform_des;
+extern struct enc_xform enc_xform_3des;
+extern struct enc_xform enc_xform_blf;
+extern struct enc_xform enc_xform_cast5;
+extern struct enc_xform enc_xform_skipjack;
+
+struct enc_xform *esp_new_xform[] = {
+    &enc_xform_des,
+    &enc_xform_3des,
+    &enc_xform_blf,
+    &enc_xform_cast5,
+    &enc_xform_skipjack,
 };
-
-static void
-des1_encrypt(struct tdb *tdb, u_int8_t *blk)
-{
-    des_ecb_encrypt(blk, blk, tdb->tdb_key, 1);
-}
-
-static void
-des1_decrypt(struct tdb *tdb, u_int8_t *blk)
-{
-    des_ecb_encrypt(blk, blk, tdb->tdb_key, 0);
-}
-
-static void
-des3_encrypt(struct tdb *tdb, u_int8_t *blk)
-{
-    des_ecb3_encrypt(blk, blk, tdb->tdb_key, tdb->tdb_key + 128,
-		     tdb->tdb_key + 256, 1);
-}
-
-static void
-des3_decrypt(struct tdb *tdb, u_int8_t *blk)
-{
-    des_ecb3_encrypt(blk, blk, tdb->tdb_key + 256, tdb->tdb_key + 128,
-		     tdb->tdb_key, 0);
-}
-
-static void
-blf_encrypt(struct tdb *tdb, u_int8_t *blk)
-{
-    blf_ecb_encrypt((blf_ctx *) tdb->tdb_key, blk, 8);
-}
-
-static void
-blf_decrypt(struct tdb *tdb, u_int8_t *blk)
-{
-    blf_ecb_decrypt((blf_ctx *) tdb->tdb_key, blk, 8);
-}
-
-static void
-cast5_encrypt(struct tdb *tdb, u_int8_t *blk)
-{
-    cast_encrypt((cast_key *) tdb->tdb_key, blk, blk);
-}
-
-static void
-cast5_decrypt(struct tdb *tdb, u_int8_t *blk)
-{
-    cast_decrypt((cast_key *) tdb->tdb_key, blk, blk);
-}
-
-static void
-skipjack_encrypt(struct tdb *tdb, u_int8_t *blk)
-{
-    skipjack_forwards(blk, blk, (u_int8_t **) tdb->tdb_key);
-}
-
-static void
-skipjack_decrypt(struct tdb *tdb, u_int8_t *blk)
-{
-    skipjack_backwards(blk, blk, (u_int8_t **) tdb->tdb_key);
-}
 
 /*
  * esp_new_attach() is called from the transformation initialization code.
@@ -233,9 +123,9 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
     int i;
 
     /* Check whether the encryption algorithm is supported */
-    for (i = sizeof(esp_new_xform) / sizeof(struct enc_xform) - 1;
+    for (i = sizeof(esp_new_xform) / sizeof(esp_new_xform[0]) - 1;
 	 i >= 0; i--) 
-      if (ii->ii_encalg == esp_new_xform[i].type)
+      if (ii->ii_encalg == esp_new_xform[i]->type)
 	break;
 
     if (i < 0) 
@@ -244,7 +134,7 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
         return EINVAL;
     }
 
-    txform = &esp_new_xform[i];
+    txform = esp_new_xform[i];
 
     if (ii->ii_enckeylen < txform->minkey)
     {
@@ -260,9 +150,9 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 
     if (ii->ii_authalg)
     {
-	for (i = sizeof(esp_new_hash) / sizeof(struct auth_hash) - 1;
+	for (i = sizeof(esp_new_hash) / sizeof(esp_new_hash[0]) - 1;
 	     i >= 0; i--) 
-	  if (ii->ii_authalg == esp_new_hash[i].type)
+	  if (ii->ii_authalg == esp_new_hash[i]->type)
 	    break;
 
 	if (i < 0) 
@@ -271,7 +161,7 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 	    return EINVAL;
 	}
 
-	thash = &esp_new_hash[i];
+	thash = esp_new_hash[i];
 
 	if (ii->ii_authkeylen != thash->keysize)
 	{
@@ -298,45 +188,8 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
     /* Initialize the IV */
     get_random_bytes(tdbp->tdb_iv, tdbp->tdb_ivlen);
 
-    switch (ii->ii_encalg)
-    {
-	case SADB_EALG_DESCBC:
-	    MALLOC(tdbp->tdb_key, u_int8_t *, 128, M_XDATA, M_WAITOK);
-	    bzero(tdbp->tdb_key, 128);
-	    des_set_key(ii->ii_enckey, tdbp->tdb_key);
-	    break;
-
-	case SADB_EALG_3DESCBC:
-	    MALLOC(tdbp->tdb_key, u_int8_t *, 384, M_XDATA, M_WAITOK);
-	    bzero(tdbp->tdb_key, 384);
-	    des_set_key(ii->ii_enckey, tdbp->tdb_key);
-	    des_set_key(ii->ii_enckey + 8, tdbp->tdb_key + 128);
-	    des_set_key(ii->ii_enckey + 16, tdbp->tdb_key + 256);
-	    break;
-
-        case SADB_EALG_X_BLF:
-	    MALLOC(tdbp->tdb_key, u_int8_t *, sizeof(blf_ctx),
-		   M_XDATA, M_WAITOK);
-	    bzero(tdbp->tdb_key, sizeof(blf_ctx));
-	    blf_key((blf_ctx *) tdbp->tdb_key, ii->ii_enckey,
-		    ii->ii_enckeylen);
-	    break;
-
-        case SADB_EALG_X_CAST:
-	    MALLOC(tdbp->tdb_key, u_int8_t *, sizeof(cast_key),
-		   M_XDATA, M_WAITOK);
-	    bzero(tdbp->tdb_key, sizeof(cast_key));
-	    cast_setkey((cast_key *) tdbp->tdb_key, ii->ii_enckey,
-			ii->ii_enckeylen);
-	    break;
-
-        case SADB_EALG_X_SKIPJACK:
-	    MALLOC(tdbp->tdb_key, u_int8_t *, 10 * sizeof(u_int8_t *),
-		   M_XDATA, M_WAITOK);
-	    bzero(tdbp->tdb_key, 10 * sizeof(u_int8_t *));
-	    subkey_table_gen(ii->ii_enckey, (u_int8_t **) tdbp->tdb_key);
-	    break;
-    }
+    if (txform->setkey)
+	txform->setkey(&tdbp->tdb_key, ii->ii_enckey, ii->ii_enckeylen);
 
     if (thash)
     {
@@ -368,49 +221,9 @@ esp_new_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 int
 esp_new_zeroize(struct tdb *tdbp)
 {
-    int k;
-
-    if (tdbp->tdb_encalgxform && tdbp->tdb_key &&
-	tdbp->tdb_encalgxform->type == SADB_EALG_X_SKIPJACK)
-      for (k = 0; k < 10; k++)
-	if (((u_int8_t **)tdbp->tdb_key)[k] != NULL)
-	{
-	    bzero(((u_int8_t **)tdbp->tdb_key)[k], 0x100);
-            FREE(((u_int8_t **)tdbp->tdb_key)[k], M_XDATA);
-	}
-
-    if (tdbp->tdb_key)
-    {
-	if (tdbp->tdb_encalgxform)
-	  switch (tdbp->tdb_encalgxform->type)
-	  {
-	      case SADB_EALG_DESCBC:
-		  k = 128;
-		  break;
-
-	      case SADB_EALG_3DESCBC:
-		  k = 384;
-		  break;
-
-	      case SADB_EALG_X_BLF:
-		  k = sizeof(blf_ctx);
-		  break;
-
-	      case SADB_EALG_X_CAST:
-		  k = sizeof(cast_key);
-		  break;
-
-	      case SADB_EALG_X_SKIPJACK:
-		  /* Not really necessary, we have bzero'ed it */
-
-	      default:
-		  k = 0;
-	  }
-
-	bzero(tdbp->tdb_key, k);
-	FREE(tdbp->tdb_key, M_XDATA);
-	tdbp->tdb_key = NULL;
-    }
+    if (tdbp->tdb_key && tdbp->tdb_encalgxform &&
+        tdbp->tdb_encalgxform->zerokey)
+	    tdbp->tdb_encalgxform->zerokey(&tdbp->tdb_key);
 
     if (tdbp->tdb_ictx)
     {

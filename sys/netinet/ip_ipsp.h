@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.35 1999/06/06 23:53:02 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.36 1999/06/18 07:24:07 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -312,6 +312,8 @@ struct enc_xform {
     u_int32_t ivmask;           /* Or all possible modes, zero iv = 1 */ 
     void (*encrypt)(struct tdb *, u_int8_t *);
     void (*decrypt)(struct tdb *, u_int8_t *);
+    void (*setkey)(u_int8_t **, u_int8_t *, int len);
+    void (*zerokey)(u_int8_t **);
 };
 
 struct ipsecinit

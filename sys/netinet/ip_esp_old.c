@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.34 1999/05/16 21:48:33 niklas Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.35 1999/06/18 07:24:04 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -78,55 +78,13 @@
 #define DPRINTF(x)
 #endif
 
-extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);
-extern void des_ecb_encrypt(caddr_t, caddr_t, caddr_t, int);
-extern void des_set_key(caddr_t, caddr_t);
+extern struct enc_xform enc_xform_des;
+extern struct enc_xform enc_xform_3des;
 
-static void des1_encrypt(struct tdb *, u_int8_t *);
-static void des3_encrypt(struct tdb *, u_int8_t *);
-static void des1_decrypt(struct tdb *, u_int8_t *);
-static void des3_decrypt(struct tdb *, u_int8_t *);
-
-struct enc_xform esp_old_xform[] = {
-     { SADB_EALG_DESCBC, "Data Encryption Standard (DES)",
-       ESP_DES_BLKS, ESP_DES_IVS,
-       8, 8, 8,
-       des1_encrypt,
-       des1_decrypt 
-     },
-     { SADB_EALG_3DESCBC, "Triple DES (3DES)",
-       ESP_3DES_BLKS, ESP_3DES_IVS,
-       24, 24, 8,
-       des3_encrypt,
-       des3_decrypt 
-     }
+struct enc_xform *esp_old_xform[] = {
+    &enc_xform_des,
+    &enc_xform_3des
 };
-
-static void
-des1_encrypt(struct tdb *tdb, u_int8_t *blk)
-{
-    des_ecb_encrypt(blk, blk, tdb->tdb_key, 1);
-}
-
-static void
-des1_decrypt(struct tdb *tdb, u_int8_t *blk)
-{
-    des_ecb_encrypt(blk, blk, tdb->tdb_key, 0);
-}
-
-static void
-des3_encrypt(struct tdb *tdb, u_int8_t *blk)
-{
-    des_ecb3_encrypt(blk, blk, tdb->tdb_key, tdb->tdb_key + 128,
-		     tdb->tdb_key + 256, 1);
-}
-
-static void
-des3_decrypt(struct tdb *tdb, u_int8_t *blk)
-{
-    des_ecb3_encrypt(blk, blk, tdb->tdb_key + 256, tdb->tdb_key + 128,
-	             tdb->tdb_key, 0);
-}
 
 int
 esp_old_attach()
@@ -145,9 +103,9 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
     int i;
 
     /* Check whether the encryption algorithm is supported */
-    for (i = sizeof(esp_old_xform) / sizeof(struct enc_xform) - 1;
+    for (i = sizeof(esp_old_xform) / sizeof(esp_old_xform[0]) - 1;
 	 i >= 0; i--) 
-      if (ii->ii_encalg == esp_old_xform[i].type)
+      if (ii->ii_encalg == esp_old_xform[i]->type)
 	break;
 
     if (i < 0) 
@@ -156,7 +114,7 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
         return EINVAL;
     }
 
-    txform = &esp_old_xform[i];
+    txform = esp_old_xform[i];
 
     if (ii->ii_enckeylen < txform->minkey)
     {
@@ -182,22 +140,8 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 
     get_random_bytes(tdbp->tdb_iv, tdbp->tdb_ivlen);
 
-    switch (ii->ii_encalg)
-    {
-	case SADB_EALG_DESCBC:
-	    MALLOC(tdbp->tdb_key, u_int8_t *, 128, M_XDATA, M_WAITOK);
-	    bzero(tdbp->tdb_key, 128);
-	    des_set_key(ii->ii_enckey, tdbp->tdb_key);
-	    break;
-
-	case SADB_EALG_3DESCBC:
-	    MALLOC(tdbp->tdb_key, u_int8_t *, 384, M_XDATA, M_WAITOK);
-	    bzero(tdbp->tdb_key, 384);
-	    des_set_key(ii->ii_enckey, tdbp->tdb_key);
-	    des_set_key(ii->ii_enckey + 8, tdbp->tdb_key + 128);
-	    des_set_key(ii->ii_enckey + 16, tdbp->tdb_key + 256);
-	    break;
-    }
+    if (txform->setkey)
+	txform->setkey(&tdbp->tdb_key, ii->ii_enckey, ii->ii_enckeylen);
 
     return 0;
 }
@@ -206,24 +150,10 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 int
 esp_old_zeroize(struct tdb *tdbp)
 {
-    if (tdbp->tdb_key)
-    {
-	if (tdbp->tdb_encalgxform)
-	  switch (tdbp->tdb_encalgxform->type)
-	  {
-	      case SADB_EALG_DESCBC:
-		  bzero(tdbp->tdb_key, 128);
-		  break;
+    if (tdbp->tdb_key && tdbp->tdb_encalgxform &&
+        tdbp->tdb_encalgxform->zerokey)
+	    tdbp->tdb_encalgxform->zerokey(&tdbp->tdb_key);
 
-	      case SADB_EALG_3DESCBC:
-		  bzero(tdbp->tdb_key, 384);
-		  break;
-	  }
-
-	FREE(tdbp->tdb_key, M_XDATA);
-	tdbp->tdb_key = NULL;
-    }
-    
     return 0;
 }
 
