@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.28 2000/06/06 20:21:49 art Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.29 2000/08/12 05:59:50 deraadt Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -284,7 +284,7 @@
 	"USB HC",	/* 103 M_USBHC */ \
 	"pipe", 	/* 104 M_PIPE */ \
 	"memdesc",	/* 105 M_MEMDESC */ \
-	"malloc debug",	/* 105 M_DEBUG */ \
+	"malloc debug",	/* 106 M_DEBUG */ \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
