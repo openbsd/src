@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.50 2002/01/23 22:14:28 angelos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.51 2002/05/28 11:23:20 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -1806,7 +1806,7 @@ policy_init (void)
 {
   char *ptr, *policy_file;
   char **asserts;
-  off_t sz;
+  size_t sz;
   int fd, len, i;
 
   LOG_DBG ((LOG_POLICY, 30, "policy_init: initializing"));
@@ -2004,6 +2004,7 @@ keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 {
   char *dirname, *file, *addr_str;
   struct stat sb;
+  size_t size;
   int idtype, fd, len;
 
   if (!id)
@@ -2079,12 +2080,13 @@ keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
       free (file);
       return 0;
     }
+  size = (size_t)sb.st_size;
 
-  *cert = calloc (sb.st_size + 1, sizeof (char));
+  *cert = calloc (size + 1, sizeof (char));
   if (*cert == NULL)
     {
       log_error ("keynote_cert_obtain: failed to allocate %d bytes",
-		 sb.st_size);
+		 size);
       free (file);
       return 0;
     }
@@ -2098,10 +2100,10 @@ keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
       return 0;
     }
 
-  if (read (fd, *cert, sb.st_size) != sb.st_size)
+  if (read (fd, *cert, size) != size)
     {
       LOG_DBG ((LOG_POLICY, 30, "keynote_cert_obtain: failed to read %d "
-		"bytes from \"%s\"", sb.st_size, file));
+		"bytes from \"%s\"", size, file));
       free (file);
       close (fd);
       return 0;
@@ -2109,7 +2111,7 @@ keynote_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
 
   close (fd);
   free (file);
-  *certlen = sb.st_size;
+  *certlen = size;
   return 1;
 }
 

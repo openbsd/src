@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.61 2002/01/23 17:14:28 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.62 2002/05/28 11:23:20 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -205,6 +205,7 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	  struct keynote_deckey dc;
 	  char *privkeyfile, *buf2;
 	  int fd, pkflen;
+	  size_t size;
 
 	  pkflen = strlen (keyfile) + strlen (local_id) +
 	    sizeof PRIVATE_KEY_FILE + sizeof "//" - 1;
@@ -225,6 +226,7 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	      free (keyfile);
 	      goto ignorekeynote;
 	    }
+	  size = (size_t)sb.st_size;
 
 	  fd = open (keyfile, O_RDONLY, 0);
 	  if (fd < 0)
@@ -234,21 +236,20 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	      return 0;
 	    }
 
-	  buf = calloc (sb.st_size + 1, sizeof (char));
+	  buf = calloc (size + 1, sizeof (char));
 	  if (!buf)
 	    {
 	      log_print ("ike_auth_get_key: failed allocating %d bytes",
-			 sb.st_size + 1);
+			 size + 1);
 	      free (keyfile);
 	      return 0;
 	    }
 
-	  if (read (fd, buf, sb.st_size) != sb.st_size)
+	  if (read (fd, buf, size) != size)
 	    {
 	      free (buf);
 	      log_print ("ike_auth_get_key: "
-			 "failed reading %d bytes from \"%s\"",
-			 sb.st_size, keyfile);
+			 "failed reading %d bytes from \"%s\"", size, keyfile);
 	      free (keyfile);
 	      return 0;
 	    }
