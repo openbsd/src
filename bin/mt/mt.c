@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.8 1996/06/17 02:21:53 downsj Exp $	*/
+/*	$OpenBSD: mt.c,v 1.9 1996/06/17 06:36:29 downsj Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $";
+static char rcsid[] = "$OpenBSD: mt.c,v 1.9 1996/06/17 06:36:29 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ static char rcsid[] = "$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $";
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <opendev.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -94,7 +95,6 @@ struct commands {
 };
 #define COM_EJECT	9	/* element in the above array */
 
-int opendev __P((char *, int, mode_t, char **));
 void printreg __P((char *, u_int, char *));
 void status __P((struct mtget *));
 void usage __P((void));
@@ -185,6 +185,7 @@ main(argc, argv)
 
 	flags = comp->c_ronly ? O_RDONLY : O_WRONLY | O_CREAT;
 	if ((mtfd = host ? rmtopen(tape, flags) : opendev(tape, flags,
+	    OPENDEV_PART | OPENDEV_DRCT,
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH,
 	    &realtape)) < 0)
 		err(2, "%s", host ? tape : realtape);
@@ -215,46 +216,6 @@ main(argc, argv)
 
 	exit(X_FINOK);
 	/* NOTREACHED */
-}
-
-int
-opendev(path, flags, mode, realpath)
-	char *path;
-	int flags;
-	mode_t mode;
-	char **realpath;
-{
-	int fd;
-	static char namebuf[256];
-
-	*realpath = path;
-
-	fd = open(path, flags, mode);
-	if (fd < 0) {
-		if (path[0] != '/') {
-			/* first try raw partition (for removable drives) */
-			(void)snprintf(namebuf, sizeof(namebuf), "%sr%s%c",
-			    _PATH_DEV, path, 'a' + RAW_PART);
-			fd = open(namebuf, flags, mode);
-
-			if ((fd < 0) && (errno == ENOENT)) {
-				/* ..and now no partition (for tapes) */
-				namebuf[strlen(namebuf) - 1] = '\0';
-				fd = open(namebuf, flags, mode);
-			}
-
-			*realpath = namebuf;
-		}
-	}
-	if ((fd < 0) && (errno == ENOENT) && (path[0] != '/')) {
-		(void)snprintf(namebuf, sizeof(namebuf), "%sr%s",
-		    _PATH_DEV, path);
-		fd = open(namebuf, flags, mode);
-
-		*realpath = namebuf;
-	}
-
-	return (fd);
 }
 
 #ifdef sun
