@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw_yp.c,v 1.8 1998/03/30 06:59:32 deraadt Exp $	*/
+/*	$OpenBSD: pw_yp.c,v 1.9 1998/08/03 17:09:47 millert Exp $	*/
 /*	$NetBSD: pw_yp.c,v 1.5 1995/03/26 04:55:33 glass Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.8 1998/03/30 06:59:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.9 1998/08/03 17:09:47 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.8 1998/03/30 06:59:32 deraadt Exp $
 #include <rpcsvc/yppasswd.h>
 #undef passwd
 
-extern char *progname;
+extern char *__progname;
 
 static char *domain;
 
@@ -81,7 +81,7 @@ pw_yp(pw, uid)
 	 */
 	if (!domain && (r = yp_get_default_domain(&domain))) {
 		fprintf(stderr, "%s: can't get local YP domain. Reason: %s\n",
-		    progname, yperr_string(r));
+		    __progname, yperr_string(r));
 		return(0);
 	}
 
@@ -92,7 +92,7 @@ pw_yp(pw, uid)
 	if ((r = yp_master(domain, "passwd.byname", &master)) != 0) {
 		fprintf(stderr,
 		    "%s: can't find the master YP server. Reason: %s\n",
-		    progname, yperr_string(r));
+		    __progname, yperr_string(r));
 		return(0);
 	}
 
@@ -103,7 +103,7 @@ pw_yp(pw, uid)
 	    IPPROTO_UDP)) == 0) {
 		fprintf(stderr,
 		    "%s: master YP server not running yppasswd daemon.\n",
-		    progname);
+		    __progname);
 		fprintf(stderr,	"\tCan't change password.\n");
 		return(0);
 	}
@@ -114,7 +114,7 @@ pw_yp(pw, uid)
 	if (rpcport >= IPPORT_RESERVED) {
 		(void)fprintf(stderr,
 		    "%s: yppasswd daemon running on an invalid port.\n",
-		    progname);
+		    __progname);
 		return(0);
 	}
 
@@ -160,7 +160,8 @@ pw_yp(pw, uid)
 	r = clnt_call(client, YPPASSWDPROC_UPDATE,
 	    xdr_yppasswd, &yppasswd, xdr_int, &status, tv);
 	if (r) {
-		fprintf(stderr, "%s: rpc to yppasswdd failed. %d\n", progname, r);
+		fprintf(stderr, "%s: rpc to yppasswdd failed. %d\n",
+		    __progname, r);
 		clnt_destroy(client);
 		return(1);
 	} else if (status) {
@@ -240,7 +241,7 @@ ypgetpwnam(nam)
 	 */
 	if (!domain && (reason = yp_get_default_domain(&domain))) {
 		fprintf(stderr, "%s: can't get local YP domain. Reason: %s\n",
-		    progname, yperr_string(reason));
+		    __progname, yperr_string(reason));
 		exit(1);
 	}
 
@@ -274,7 +275,7 @@ ypgetpwuid(uid)
 	
 	if (!domain && (reason = yp_get_default_domain(&domain))) {
 		fprintf(stderr, "%s: can't get local YP domain. Reason: %s\n",
-		    progname, yperr_string(reason));
+		    __progname, yperr_string(reason));
 		exit(1);
 	}
 
