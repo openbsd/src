@@ -895,6 +895,13 @@ static const template i386_optab[] = {
 /* 2nd. official undefined instr. */
 {"ud2b",    0, 0x0fb9, X, Cpu686, NoSuf,		{ 0, 0, 0} },
 
+/* VIA C3 extensions */
+{"xstore-rng",0, 0x0fa7, 0xc0, Cpu686, ImmExt|NoSuf|IsString,	{ 0, 0, 0} },
+{"xcrypt-ecb",0, 0x0fa7, 0xc8, Cpu686, ImmExt|NoSuf|IsString,	{ 0, 0, 0} },
+{"xcrypt-cbc",0, 0x0fa7, 0xd0, Cpu686, ImmExt|NoSuf|IsString,	{ 0, 0, 0} },
+{"xcrypt-cfb",0, 0x0fa7, 0xe0, Cpu686, ImmExt|NoSuf|IsString,	{ 0, 0, 0} },
+{"xcrypt-ofb",0, 0x0fa7, 0xe8, Cpu686, ImmExt|NoSuf|IsString,	{ 0, 0, 0} },
+
 {"cmovo",   2, 0x0f40, X, Cpu686, wlq_Suf|Modrm,	{ WordReg|WordMem, WordReg, 0} },
 {"cmovno",  2, 0x0f41, X, Cpu686, wlq_Suf|Modrm,	{ WordReg|WordMem, WordReg, 0} },
 {"cmovb",   2, 0x0f42, X, Cpu686, wlq_Suf|Modrm,	{ WordReg|WordMem, WordReg, 0} },
