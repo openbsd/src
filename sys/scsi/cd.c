@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.42 1999/09/21 04:14:30 csapuntz Exp $	*/
+/*	$OpenBSD: cd.c,v 1.43 1999/09/21 04:37:59 csapuntz Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -1153,7 +1153,6 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	int spoofonly;
 {
 	char *errstring;
-
 	u_int8_t hdr[TOC_HEADER_SZ], *toc, *ent;
 	u_int32_t lba, nlba;
 	int i, n, len, is_data, data_track = -1;
@@ -1206,8 +1205,7 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 
 	/* The raw partition is special.  */
 	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size =
-	    lp->d_secperunit * lp->d_secsize / DEV_BSIZE;
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
 	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
 
 	/* Create the partition table.  */
@@ -1219,8 +1217,7 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	    ent[TOC_ENTRY_MSF_LBA + 2] << 16 |
 	    ent[TOC_ENTRY_MSF_LBA + 3] << 24 :
 	    ent[TOC_ENTRY_MSF_LBA] << 24 | ent[TOC_ENTRY_MSF_LBA + 1] << 16 |
-	    ent[TOC_ENTRY_MSF_LBA + 2] << 8 | ent[TOC_ENTRY_MSF_LBA + 3]) *
-	    lp->d_secsize / DEV_BSIZE;
+	    ent[TOC_ENTRY_MSF_LBA + 2] << 8 | ent[TOC_ENTRY_MSF_LBA + 3]);
 
 	for (i = 0; i < (n > RAW_PART + 1 ? n + 1 : n); i++) {
 		/* The raw partition was specially handled above.  */
@@ -1240,8 +1237,7 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 			    ent[TOC_ENTRY_MSF_LBA] << 24 |
 			    ent[TOC_ENTRY_MSF_LBA + 1] << 16 |
 			    ent[TOC_ENTRY_MSF_LBA + 2] << 8 |
-			    ent[TOC_ENTRY_MSF_LBA + 3]) * lp->d_secsize /
-			    DEV_BSIZE;
+			    ent[TOC_ENTRY_MSF_LBA + 3]);
 			lp->d_partitions[i].p_offset = lba;
 			lp->d_partitions[i].p_size = nlba - lba;
 			lba = nlba;
@@ -1250,16 +1246,13 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 
 	/* We have a data track, look in there for a real disklabel.  */
 	if (data_track != -1) {
-#ifdef notyet
-		/*
-		 * Reading a disklabel inside the track we setup above
-		 * does not yet work, for unknown reasons.
-		 */
-		errstring = readdisklabel(MAKECDDEV(0, cd->sc_dev.dv_unit,
-		    data_track), cdstrategy, lp, cd->sc_dk.dk_cpulabel, 0);
+#if 1
+		/* This might not necessarily work */
+		errstring = readdisklabel(MAKECDDEV(major(dev), CDUNIT(dev), 
+		    data_track), cdstrategy, lp, clp, spoofonly);
 #else
 		errstring = readdisklabel(CDLABELDEV(dev),
-		    cdstrategy, lp, cd->sc_dk.dk_cpulabel, 0);
+		    cdstrategy, lp, clp, spoofonly);
 #endif
 		/*if (errstring)
 			printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);*/
