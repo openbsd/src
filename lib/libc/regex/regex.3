@@ -1,4 +1,4 @@
-.\"	$OpenBSD: regex.3,v 1.19 2004/02/10 19:58:21 jmc Exp $
+.\"	$OpenBSD: regex.3,v 1.20 2005/02/25 03:12:44 cloder Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
 .\"
@@ -213,7 +213,7 @@ The compiled form is not altered during execution of
 so a single compiled RE can be used simultaneously by multiple threads.
 .Pp
 By default,
-the null-terminated string pointed to by
+the NUL-terminated string pointed to by
 .Fa string
 is considered to be the text of an entire line, minus any terminating
 newline.
@@ -399,7 +399,7 @@ may be able to supply a more detailed message using information
 from the
 .Li regex_t . )
 .Fn regerror
-places the null-terminated message into the buffer pointed to by
+places the NUL-terminated message into the buffer pointed to by
 .Fa errbuf ,
 limiting the length (including the NUL) to at most
 .Fa errbuf_size

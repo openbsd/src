@@ -1,4 +1,4 @@
-.\"	$OpenBSD: authenticate.3,v 1.7 2003/05/30 14:00:32 jmc Exp $
+.\"	$OpenBSD: authenticate.3,v 1.8 2005/02/25 03:12:43 cloder Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -269,9 +269,9 @@ should be used to determine the outcome of the authentication request.
 .Pp
 The
 .Fn auth_mkvalue
-function takes a null terminated string pointed to by
+function takes a NUL-terminated string pointed to by
 .Ar value
-and returns a null terminated string suitable for passing
+and returns a NUL-terminated string suitable for passing
 back to a calling program on the back channel.
 This function is for use by the login scripts themselves.
 The string returned should be freed by

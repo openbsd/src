@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcpy.3,v 1.12 2003/06/02 20:18:38 millert Exp $
+.\"	$OpenBSD: strcpy.3,v 1.13 2005/02/25 03:12:44 cloder Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRCPY 3
@@ -98,12 +98,12 @@ to
 .Dq abcdef
 and does
 .Em not
-null terminate
+NUL terminate
 .Va chararray
 because the source string is >= the length parameter.
 .Fn strncpy
 .Em only
-null terminates the destination string when the length of the source
+NUL terminates the destination string when the length of the source
 string is less than the length parameter.
 .Bd -literal -offset indent
 (void)strncpy(chararray, "abcdefgh", 6);
@@ -113,12 +113,12 @@ The following copies as many characters from
 .Va input
 to
 .Va buf
-as will fit and null terminates the result.
+as will fit and NUL terminates the result.
 Because
 .Fn strncpy
 does
 .Em not
-guarantee to null terminate the string itself, we must do this by hand.
+guarantee to NUL terminate the string itself, we must do this by hand.
 .Bd -literal -offset indent
 char buf[BUFSIZ];
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.44 2004/09/18 19:28:06 otto Exp $
+.\"	$OpenBSD: printf.3,v 1.45 2005/02/25 03:12:44 cloder Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -583,7 +583,7 @@ a terminating
 character;
 if a precision is specified, no more than the number specified are
 written.
-If a precision is given, no null character
+If a precision is given, no NUL character
 need be present; if the precision is not specified, or is greater than
 the size of the array, the array must contain a terminating
 .Tn NUL

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getdomainname.3,v 1.20 2003/06/02 20:18:34 millert Exp $
+.\"	$OpenBSD: getdomainname.3,v 1.21 2005/02/25 03:12:43 cloder Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,7 +52,7 @@ specifies the size of the
 .Fa name
 array.
 If insufficient space is provided, the returned name is truncated.
-The returned name is always null terminated.
+The returned name is always NUL terminated.
 .Pp
 .Fn setdomainname
 sets the domain name of the host machine to be

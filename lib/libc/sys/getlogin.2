@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getlogin.2,v 1.16 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: getlogin.2,v 1.17 2005/02/25 03:12:44 cloder Exp $
 .\"	$NetBSD: getlogin.2,v 1.4 1995/02/27 12:33:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -133,7 +133,7 @@ precautions to prevent security violations.
 .Sh RETURN VALUES
 If a call to
 .Fn getlogin
-succeeds, it returns a pointer to a null-terminated string in a static buffer.
+succeeds, it returns a pointer to a NUL-terminated string in a static buffer.
 If the name has not been set, it returns
 .Dv NULL .
 If a call to

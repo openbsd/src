@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_interval.3,v 1.8 2004/10/04 13:47:00 espie Exp $
+.\"	$OpenBSD: ohash_interval.3,v 1.9 2005/02/25 03:12:43 cloder Exp $
 .\" Copyright (c) 2001 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -37,7 +37,7 @@
 .Sh DESCRIPTION
 These functions are commonly used to simplify open hashing usage, and use
 similar conventions.
-They operate indifferently on null-terminated strings
+They operate indifferently on NUL-terminated strings
 .Po
 by setting
 .Fa *pend
@@ -51,10 +51,10 @@ delimited by
 and
 .Fa *pend
 .Pc .
-For null-terminated strings, as a side effect, those functions
+For NUL-terminated strings, as a side effect, those functions
 set
 .Fa *pend
-to the terminating null byte.
+to the terminating NUL byte.
 .Pp
 .Fn ohash_interval
 is a simple hashing function that yields good results on common data sets.
@@ -77,7 +77,7 @@ and
 .Fn ohash_qlookup
 is a variation on
 .Fn ohash_qlookupi
-designed for null-terminated strings.
+designed for NUL-terminated strings.
 .Sh SEE ALSO
 .Xr ohash_init 3
 .Sh STANDARDS

@@ -1,4 +1,4 @@
-.\" $OpenBSD: getsubopt.3,v 1.8 2004/01/23 23:08:46 jmc Exp $
+.\" $OpenBSD: getsubopt.3,v 1.9 2005/02/25 03:12:44 cloder Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -78,7 +78,7 @@ On return from
 .Fn getsubopt ,
 .Fa optionp
 will be set to point to the start of the next token in the string,
-or the null at the end of the string if no more tokens are present.
+or the NUL at the end of the string if no more tokens are present.
 The external variable
 .Fa suboptarg
 will be set to point to the start of the current token, or

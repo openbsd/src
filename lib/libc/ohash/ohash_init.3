@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ohash_init.3,v 1.9 2004/06/22 20:00:16 espie Exp $
+.\"	$OpenBSD: ohash_init.3,v 1.10 2005/02/25 03:12:43 cloder Exp $
 .\" Copyright (c) 1999 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -58,7 +58,7 @@ the usual hash table functions.
 They provide storage and retrieval of records indexed by keys,
 where a key is a contiguous sequence of bytes at a fixed position in
 each record.
-Keys can either be null-terminated strings or fixed-size memory areas.
+Keys can either be NUL-terminated strings or fixed-size memory areas.
 All functions take a pointer to an ohash structure as the
 .Fa h
 function argument.
@@ -112,7 +112,7 @@ and
 .Fa end ,
 exclusive,
 though the actual elements stored in the table should only contain
-null-terminated keys.
+NUL-terminated keys.
 .Pp
 .Fn ohash_lookup_memory
 assumes the key is the memory area starting at

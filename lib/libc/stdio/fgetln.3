@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fgetln.3,v 1.11 2004/08/20 18:17:35 millert Exp $
+.\"	$OpenBSD: fgetln.3,v 1.12 2005/02/25 03:12:44 cloder Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -117,7 +117,7 @@ The
 function first appeared in
 .Bx 4.4 .
 .Sh CAVEATS
-Since the returned buffer is not a C string (it is not null terminated), a
+Since the returned buffer is not a C string (it is not NUL terminated), a
 common practice is to replace the newline character with
 .Sq \e0 .
 However, if the last line in a file does not contain a newline,

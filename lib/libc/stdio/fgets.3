@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fgets.3,v 1.19 2003/06/02 20:18:37 millert Exp $
+.\"	$OpenBSD: fgets.3,v 1.20 2005/02/25 03:12:44 cloder Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -172,7 +172,7 @@ and the program will terminate, even if the line was valid.
 .It
 All C string functions, including
 .Fn strchr ,
-correctly assume the end of the string is represented by a null
+correctly assume the end of the string is represented by a NUL
 .Pq Sq \e0
 character.
 If the first character of a line returned by

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exec.3,v 1.16 2003/06/02 20:18:34 millert Exp $
+.\"	$OpenBSD: exec.3,v 1.17 2005/02/25 03:12:43 cloder Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -77,7 +77,7 @@ functions can be thought of as
 \&...,
 .Fa argn .
 Together they describe a list of one or more pointers to
-null-terminated
+NUL-terminated
 strings that represent the argument list available to the executed program.
 The first argument, by convention, should point to the file name associated
 with the file being executed.
@@ -90,7 +90,7 @@ The
 and
 .Fn execvp
 functions provide an array of pointers to
-null-terminated strings that
+NUL-terminated strings that
 represent the argument list available to the new program.
 The first argument, by convention, should point to the file name associated
 with the file being executed.
@@ -106,7 +106,7 @@ pointer that terminates the list of arguments in the parameter list
 or the pointer to the
 .Va argv
 array with an additional parameter.
-This additional parameter is an array of pointers to null-terminated
+This additional parameter is an array of pointers to NUL-terminated
 strings and
 .Em must
 be terminated by a null pointer itself.

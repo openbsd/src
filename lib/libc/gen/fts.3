@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fts.3,v 1.19 2003/06/02 20:18:34 millert Exp $
+.\"	$OpenBSD: fts.3,v 1.20 2005/02/25 03:12:43 cloder Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -319,7 +319,7 @@ Therefore, the
 .Fa fts_path
 and
 .Fa fts_accpath
-fields are guaranteed to be null terminated
+fields are guaranteed to be NUL terminated
 .Em only
 for the file most recently returned by
 .Fn fts_read .
@@ -336,7 +336,7 @@ Any such modifications should be undone before further calls to
 are attempted.
 The
 .Fa fts_name
-field is always null terminated.
+field is always NUL terminated.
 .Ss FTS_OPEN
 The
 .Fn fts_open

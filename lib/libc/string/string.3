@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: string.3,v 1.10 2004/02/09 20:53:12 jmc Exp $
+.\"	$OpenBSD: string.3,v 1.11 2005/02/25 03:12:44 cloder Exp $
 .\"
 .Dd April 19, 1991
 .Dt STRING 3
@@ -84,11 +84,11 @@
 .Sh DESCRIPTION
 The string functions
 manipulate strings terminated by a
-null byte.
+NUL byte.
 .Pp
 See the specific manual pages for more information.
 For manipulating variable length generic objects as byte
-strings (without the null byte check), see
+strings (without the NUL-byte check), see
 .Xr bstring 3 .
 .Pp
 Except as noted in their specific manual pages,

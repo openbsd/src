@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vis.3,v 1.19 2003/06/02 20:18:35 millert Exp $
+.\"	$OpenBSD: vis.3,v 1.20 2005/02/25 03:12:43 cloder Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,7 +57,7 @@ a string which represents the character
 If
 .Fa c
 needs no encoding, it is copied in unaltered.
-The string is null terminated and a pointer to the end of the string is
+The string is NUL terminated and a pointer to the end of the string is
 returned.
 The maximum length of any encoding is four
 characters (not including the trailing NUL);

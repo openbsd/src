@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readpassphrase.3,v 1.14 2004/04/16 10:48:39 jmc Exp $
+.\"	$OpenBSD: readpassphrase.3,v 1.15 2005/02/25 03:12:43 cloder Exp $
 .\"
 .\" Copyright (c) 2000, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -68,7 +68,7 @@ space.
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn readpassphrase
-returns a pointer to the null-terminated passphrase.
+returns a pointer to the NUL-terminated passphrase.
 If an error is encountered, the terminal state is restored and
 a null pointer is returned.
 .Sh FILES

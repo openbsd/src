@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strcat.3,v 1.9 2003/06/02 20:18:38 millert Exp $
+.\"	$OpenBSD: strcat.3,v 1.10 2005/02/25 03:12:44 cloder Exp $
 .\"
 .Dd July 8, 1997
 .Dt STRCAT 3
@@ -49,9 +49,9 @@ The
 .Fn strcat
 and
 .Fn strncat
-functions append a copy of the null-terminated string
+functions append a copy of the NUL-terminated string
 .Fa append
-to the end of the null-terminated string
+to the end of the NUL-terminated string
 .Fa s ,
 then add a terminating
 .Ql \e0 .
