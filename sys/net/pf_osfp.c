@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.2 2003/08/27 16:13:21 frantzen Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.3 2003/08/27 18:23:36 frantzen Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -124,10 +124,11 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct tcphdr *tcp)
 	cnt = (tcp->th_off << 2) - sizeof(*tcp);
 	optp = (caddr_t)tcp + sizeof(*tcp);
 	for (; cnt > 0; cnt -= optlen, optp += optlen) {
-		fp.fp_optcnt++;
 		if (*optp == TCPOPT_EOL)
 			break;
-		else if (*optp == TCPOPT_NOP) {
+
+		fp.fp_optcnt++;
+		if (*optp == TCPOPT_NOP) {
 			fp.fp_tcpopts = (fp.fp_tcpopts << PF_OSFP_TCPOPT_BITS) |
 			    PF_OSFP_TCPOPT_NOP;
 			optlen = 1;
