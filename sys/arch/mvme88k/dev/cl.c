@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.48 2004/07/30 19:02:05 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.49 2005/01/25 12:13:22 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -1304,8 +1304,6 @@ cl_mintr(arg)
 
 	mir = bus_space_read_1(iot, ioh, CL_MIR);
 	if ((mir & 0x40) == 0) {
-		/* only if intr is not shared? */
-		log(LOG_WARNING, "cl_mintr extra intr\n");
 		return 0;
 	}
 
@@ -1366,8 +1364,6 @@ cl_txintr(arg)
 	ioh = sc->sc_ioh;
 	tir = bus_space_read_1(iot, ioh, CL_TIR);
 	if ((tir & 0x40) == 0) {
-		/* only if intr is not shared ??? */
-		log(LOG_WARNING, "cl_txintr extra intr\n");
 		return 0;
 	}
 
@@ -1500,8 +1496,6 @@ cl_rxintr(arg)
 
 	rir = bus_space_read_1(iot, ioh, CL_RIR);
 	if ((rir & 0x40) == 0x0) {
-		/* only if intr is not shared ??? */
-		log(LOG_WARNING, "cl_rxintr extra intr\n");
 		return 0;
 	}
 
