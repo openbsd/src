@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.52 2001/02/26 00:18:33 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.53 2001/02/26 02:36:39 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -768,9 +768,9 @@ vput(vp)
 	simple_lock(&vp->v_interlock);
 
 #ifdef DIAGNOSTIC
-	if (vp->v_usecount == 0 || vp->v_writecount != 0) {
-		vprint("vput: bad ref count", vp);
-		panic("vput: ref cnt");
+	if (vp->v_usecount == 0) { 
+		vprint("vrele: bad ref count", vp);
+		panic("vrele: ref cnt");
 	}
 #endif
 	vp->v_usecount--;
@@ -779,7 +779,13 @@ vput(vp)
 		VOP_UNLOCK(vp, 0, p);
 		return;
 	}
-	
+
+#ifdef DIAGNOSTIC
+	if (vp->v_writecount != 0) {
+		vprint("vrele: bad writecount", vp);
+		panic("vrele: v_writecount != 0");
+	}
+#endif	
 	vputonfreelist(vp);
 
 	simple_unlock(&vp->v_interlock);
@@ -803,7 +809,7 @@ vrele(vp)
 #endif
 	simple_lock(&vp->v_interlock);
 #ifdef DIAGNOSTIC
-	if (vp->v_usecount == 0 || vp->v_writecount != 0) {
+	if (vp->v_usecount == 0) { 
 		vprint("vrele: bad ref count", vp);
 		panic("vrele: ref cnt");
 	}
@@ -814,6 +820,12 @@ vrele(vp)
 		return;
 	}
 
+#ifdef DIAGNOSTIC
+	if (vp->v_writecount != 0) {
+		vprint("vrele: bad writecount", vp);
+		panic("vrele: v_writecount != 0");
+	}
+#endif
 	vputonfreelist(vp);
 
 	if (vn_lock(vp, LK_EXCLUSIVE|LK_INTERLOCK, p) == 0)
