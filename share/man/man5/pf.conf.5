@@ -1,0 +1,164 @@
+.\"	$OpenBSD: pf.conf.5,v 1.1 2001/07/08 14:31:23 dhartmei Exp $
+.\"
+.\" Copyright (c) 2001, Daniel Hartmeier
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\"
+.\"    - Redistributions of source code must retain the above copyright
+.\"      notice, this list of conditions and the following disclaimer.
+.\"    - Redistributions in binary form must reproduce the above
+.\"      copyright notice, this list of conditions and the following
+.\"      disclaimer in the documentation and/or other materials provided
+.\"      with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+.\" "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+.\" LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+.\" FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+.\" COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+.\" CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+.\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd July 8, 2001
+.Dt PF.CONF 5
+.Os
+.Sh NAME
+.Nm pf.conf
+.Nd filter rule configuration file for packet filtering
+.Sh DESCRIPTION
+The packet filter drops, passes and modifies packets according to the
+rules defined in this file. For each packet inspected by the filter,
+the set of rules is evaluated from top to bottom, and the last
+matching rule decides what action is performed.
+.Pp
+.Sh GRAMMAR
+Syntax for filter rules in BNF:
+.Pp
+.Bd -literal
+rule      = action ( "in" | "out" )
+            [ "log" | "log-all" ] [ "quick" ]
+            [ "on" interface-name ]
+            [ "proto" ( proto-name | proto-number ]
+            hosts
+            [ flags ] [ icmp-type ] [ "keep-state" ] .
+
+action    = "pass" | "block" [ return ] | "scrub" .
+return    = "return-rst" |
+            "return-icmp" [ "(" ( icmp-code-name | icmp-code-number ) ")" ] .
+
+hosts     = "all" |
+            "from" ( "any" | host ) [ port ] "to" ( "any" | host ) [ port ].
+host      = [ "!" ] address [ "/" mask-bits ] .
+port      = "port" ( unary-op | binary-op ) .
+unary-op  = ( "=" | "!=" | "<" | "<=" | ">" | ">=" )
+            ( port-name | port-number ) .
+binary-op = port-number ( "<>" | "><" ) port-number .
+
+flags     = "flags" flag-set [ "/" flag-set ] .
+flag-set  = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] .
+
+icmp-type = "icmp-type" ( icmp-type-name | icmp-type-number )
+            [ "code" ( icmp-code-name | icmp-code-number ) ] .
+.Ed
+.Pp
+Emtpy lines and lines beginning with the character `#' are ignored.
+.Pp
+.Sh EXAMPLES
+.Bd -literal
+# My external interface is kue0 (157.161.48.183, my only routable address) and
+# the private network is 10.0.0.0/8, for which i'm doing NAT.
+
+# block and log everything by default
+#
+block             out log on kue0           all
+block             in  log on kue0           all
+block return-rst  out log on kue0 proto tcp all
+block return-rst  in  log on kue0 proto tcp all
+block return-icmp out log on kue0 proto udp all
+block return-icmp in  log on kue0 proto udp all
+
+# block and log outgoing packets that don't have my address as source, they are
+# either spoofed or something is misconfigured (NAT disabled, for instance),
+# we want to be nice and don't send out garbage.
+#
+block out log quick on kue0 from ! 157.161.48.183 to any
+
+# silently drop broadcasts (cable modem noise)
+#
+block in quick on kue0 from any to 255.255.255.255
+
+# block and log incoming packets from reserved address space and invalid
+# addresses, they are either spoofed or misconfigured, we can't reply to
+# them anyway (hence, no return-rst).
+#
+block in log quick on kue0 from 10.0.0.0/8         to any
+block in log quick on kue0 from 172.16.0.0/12      to any
+block in log quick on kue0 from 192.168.0.0/16     to any
+block in log quick on kue0 from 255.255.255.255/32 to any
+
+# -----------------------------------------------------------------------------
+# ICMP
+# -----------------------------------------------------------------------------
+
+# pass out/in certain ICMP queries and keep state (ping)
+#
+# state matching is done on host addresses and ICMP id (not type/code), so
+# replies (like 0/0 for 8/0) will match queries
+#
+# ICMP error messages (which always refer to a TCP/UDP packet) are handled
+# by the TCP/UDP states
+#
+pass out on kue0 proto icmp all icmp-type 8 code 0 keep state
+pass in  on kue0 proto icmp all icmp-type 8 code 0 keep state
+
+# -----------------------------------------------------------------------------
+# UDP
+# -----------------------------------------------------------------------------
+
+# pass out all UDP connections and keep state
+#
+pass out on kue0 proto udp all keep state
+
+# pass in certain UDP connections and keep state (DNS)
+#
+pass in on kue0 proto udp from any to any port = domain keep state
+
+# -----------------------------------------------------------------------------
+# TCP
+# -----------------------------------------------------------------------------
+
+# pass out all TCP connections and keep state
+#
+pass out on kue0 proto tcp all keep state
+
+# pass in certain TCP connections and keep state (SSH, SMTP, DNS, IDENT)
+#
+pass in on kue0 proto tcp from any to any port = ssh    keep state
+pass in on kue0 proto tcp from any to any port = smtp   keep state
+pass in on kue0 proto tcp from any to any port = domain keep state
+pass in on kue0 proto tcp from any to any port = auth   keep state
+.Ed
+.Pp
+.Sh FILES
+.Bl -tag -width "/etc/pf.conf" -compact
+.It Pa /etc/pf.conf
+.It Pa /etc/services
+.El
+.Sh SEE ALSO
+.Xr pf 4 ,
+.Xr nat.conf 5 ,
+.Xr services 5 ,
+.Xr pfctl 8
+.Sh HISTORY
+The
+.Nm
+file format appeared in
+.Ox 3.0 .
