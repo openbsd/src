@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.1 1995/10/29 21:19:10 gwr Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.1.2.1 1995/11/18 07:08:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -40,48 +40,54 @@
 #define SCI_CLR_INTR(sc)	(*(sc)->sci_iack)
 #define	SCI_BUSY(sc)		(*sc->sci_bus_csr & SCI_BUS_BSY)
 
+/* These are NOT artibtrary, but map to bits in sci_tcmd */
 #define PHASE_DATA_OUT	0x0
 #define PHASE_DATA_IN	0x1
-#define PHASE_CMD	0x2
+#define PHASE_COMMAND	0x2
 #define PHASE_STATUS	0x3
 #define PHASE_UNSPEC1	0x4
 #define PHASE_UNSPEC2	0x5
 #define PHASE_MSG_OUT	0x6
 #define PHASE_MSG_IN	0x7
 
-#define PHASE_INVALID	-1
+/*
+ * This illegal phase is used to prevent the 5380 from having
+ * a phase-match condition when we don't want one, such as
+ * when setting up the DMA engine or whatever...
+ */
+#define PHASE_INVALID	PHASE_UNSPEC1
 
-#define SCSI_PHASE(x)	((x)&0x7)
 
 /* Per-request state.  This is required in order to support reselection. */
 struct sci_req {
 	struct		scsi_xfer *sr_xs;	/* Pointer to xfer struct, NULL=unused */
 	int		sr_target, sr_lun;	/* For fast access */
 	void		*sr_dma_hand;		/* Current DMA hnadle */
-	u_char		*sr_data;		/* Saved data pointer */
+	u_char		*sr_dataptr;		/* Saved data pointer */
 	int		sr_datalen;
 	int		sr_flags;		/* Internal error code */
 #define	SR_IMMED			1	/* Immediate command */
 #define	SR_SENSE			2	/* We are getting sense */
-#define	SR_ERROR			4	/* Error occurred */
+#define	SR_OVERDUE			4	/* Timeout while not current */
+#define	SR_ERROR			8	/* Error occurred */
 	int		sr_status;		/* Status code from last cmd */
 };
-#define	SCI_OPENINGS	4		/* Up to 4 commands at once */
+#define	SCI_OPENINGS	16		/* How many commands we can enqueue. */
 
 
 struct ncr5380_softc {
 	struct device	sc_dev;
 	struct		scsi_link sc_link;
 
-	/* Pointers to 5380 registers.  MD code must set these up. */
-	volatile u_char *sci_data;
-	volatile u_char *sci_icmd;
-	volatile u_char *sci_mode;
-	volatile u_char *sci_tcmd;
-	volatile u_char *sci_bus_csr;
-	volatile u_char *sci_csr;
-	volatile u_char *sci_idata;
-	volatile u_char *sci_iack;
+	/* Pointers to 5380 registers.  See ncr5380reg.h */
+	volatile u_char *sci_r0;
+	volatile u_char *sci_r1;
+	volatile u_char *sci_r2;
+	volatile u_char *sci_r3;
+	volatile u_char *sci_r4;
+	volatile u_char *sci_r5;
+	volatile u_char *sci_r6;
+	volatile u_char *sci_r7;
 
 	/* Functions set from MD code */
 	int		(*sc_pio_out) __P((struct ncr5380_softc *,
@@ -90,34 +96,39 @@ struct ncr5380_softc {
 					  int, int, u_char *));
 	void		(*sc_dma_alloc) __P((struct ncr5380_softc *));
 	void		(*sc_dma_free) __P((struct ncr5380_softc *));
+
+	void		(*sc_dma_setup) __P((struct ncr5380_softc *));
 	void		(*sc_dma_start) __P((struct ncr5380_softc *));
 	void		(*sc_dma_poll) __P((struct ncr5380_softc *));
 	void		(*sc_dma_eop) __P((struct ncr5380_softc *));
 	void		(*sc_dma_stop) __P((struct ncr5380_softc *));
 
+	void		(*sc_intr_on) __P((struct ncr5380_softc *));
+	void		(*sc_intr_off) __P((struct ncr5380_softc *));
+
 	int		sc_flags;	/* Misc. flags and capabilities */
 #define	NCR5380_PERMIT_RESELECT		1  /* Allow disconnect/reselect */
+#define	NCR5380_FORCE_POLLING		2  /* Do not use interrupts. */
 
 	int 	sc_min_dma_len;	/* Smaller than this is done with PIO */
 
 	/* Begin MI shared data */
 
-	/* Active data pointer for current SCSI process */
-	u_char		*sc_dataptr;
-	int		sc_datalen;
-
-	void		*sc_dma_hand;	/* DMA handle */
-	u_int		sc_dma_flags;
-#define	DMA5380_INPROGRESS		1	/* MD: DMA is curently in progress */
-#define	DMA5380_WRITE			2	/* MI: DMA is to output to SCSI */
-#define	DMA5380_POLL			4	/* MI: Poll for DMA completion */
-#define	DMA5380_ERROR			8	/* MD: DMA operation failed */
-#define	DMA5380_PHYS			16	/* MI: Buffer has B_PHYS set */
-
-	/* Begin MI private data */
+	int		sc_state;
+#define	NCR_IDLE		   0	/* Ready for new work. */
+#define NCR_WORKING 	0x01	/* Some command is in progress. */
+#define	NCR_ABORTING	0x02	/* Bailing out */
+#define NCR_DOINGDMA	0x04	/* The FIFO data path is active! */
+#define NCR_DROP_MSGIN	0x10	/* Discard all msgs (parity err detected) */
 
 	/* The request that has the bus now. */
 	struct		sci_req *sc_current;
+
+	/* Active data pointer for current SCSI command. */
+	u_char		*sc_dataptr;
+	int		sc_datalen;
+
+	/* Begin MI private data */
 
 	/* The number of operations in progress on the bus */
 	volatile int	sc_ncmds;
@@ -131,10 +142,7 @@ struct ncr5380_softc {
 
 	/* Message stuff */
 	int	sc_prevphase;
-	int	sc_msg_flags;
-#define NCR_DROP_MSGIN	1
-#define NCR_ABORTING	2
-#define NCR_NEED_RESET	4
+
 	u_int	sc_msgpriq;	/* Messages we want to send */
 	u_int	sc_msgoutq;	/* Messages sent during last MESSAGE OUT */
 	u_int	sc_msgout;	/* Message last transmitted */
@@ -156,8 +164,15 @@ struct ncr5380_softc {
 
 void	ncr5380_init __P((struct ncr5380_softc *));
 void	ncr5380_reset_scsibus __P((struct ncr5380_softc *));
-int 	ncr5380_sbc_intr __P((struct ncr5380_softc *));
+int 	ncr5380_intr __P((struct ncr5380_softc *));
 int 	ncr5380_scsi_cmd __P((struct scsi_xfer *));
 int 	ncr5380_pio_in __P((struct ncr5380_softc *, int, int, u_char *));
 int 	ncr5380_pio_out __P((struct ncr5380_softc *, int, int, u_char *));
 
+#ifdef	DEBUG
+struct ncr5380_softc *ncr5380_debug_sc;
+void ncr5380_trace __P((char *msg, long val));
+#define	NCR_TRACE(msg, val) ncr5380_trace(msg, val)
+#else
+#define	NCR_TRACE(msg, val)	/* nada */
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr_sireg.h,v 1.1 1995/10/29 21:19:12 gwr Exp $	*/
+/*	$NetBSD: ncr_sireg.h,v 1.1.2.1 1995/11/18 07:08:55 gwr Exp $	*/
 
 /*
  * Register map for the Sun3 SCSI Interface (si)
@@ -22,8 +22,23 @@
  * vis versa.
  */
 
+/*
+ * Am5380 Register map (no padding)
+ */
+struct ncr5380regs {
+	volatile u_char sci_r0;
+	volatile u_char sci_r1;
+	volatile u_char sci_r2;
+	volatile u_char sci_r3;
+	volatile u_char sci_r4;
+	volatile u_char sci_r5;
+	volatile u_char sci_r6;
+	volatile u_char sci_r7;
+};
+
 struct si_regs {
-	sci_regmap_t sci;	/* See scsi_5380.h */
+	struct ncr5380regs sci;
+
 	/* DMA controller registers */
 	u_short			dma_addrh;	/* dma address (VME only) */
 	u_short			dma_addrl;	/* (high word, low word)  */
@@ -80,7 +95,7 @@ struct si_regs {
 #define SI_CSR_LOB_ONE		0x0040	/* (r,v) one leftover byte */
 #define SI_CSR_BPCON		0x0020	/* (rw,v) byte packing control */
 					/* dma is in 0=longwords, 1=words */
-#define SI_CSR_DMA_EN		0x0010	/* (rw,v) dma enable */
+#define SI_CSR_DMA_EN		0x0010	/* (rw,v) dma/interrupt enable */
 #define SI_CSR_SEND		0x0008	/* (rw,b) dma dir, 1=to device */
 #define SI_CSR_INTR_EN		0x0004	/* (rw,b) interrupts enable */
 #define SI_CSR_FIFO_RES		0x0002	/* (rw,b) inits fifo, 0=reset */
