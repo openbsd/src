@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.248 2000/04/15 19:16:08 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.249 2000/04/16 06:16:54 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1255,7 +1255,7 @@
 #define	PCI_PRODUCT_PCTECH_RZ1000	0x1000		/* RZ1000 */
 
 /* Pequr products */
-#define	PCI_PRODUCT_RCC_SOUTH	0x0200		/* ROSB-4 SouthBridge */
+#define	PCI_PRODUCT_RCC_ROSB4	0x0200		/* ROSB4 SouthBridge */
 #define	PCI_PRODUCT_RCC_XX5	0x0005		/* PCIHB5 */
 #define	PCI_PRODUCT_RCC_CIOB20	0x0006		/* I/O Bridge */
 #define	PCI_PRODUCT_RCC_XX7	0x0007		/* PCIHB7 */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.248 2000/04/15 19:16:08 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.249 2000/04/16 06:16:54 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -3009,10 +3009,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "RZ1000",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_SOUTH,
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_ROSB4,
 	    0,
 	    "Reliance Computer",
-	    "ROSB-4 SouthBridge",
+	    "ROSB4 SouthBridge",
 	},
 	{
 	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_XX5,
