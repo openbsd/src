@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.6 2004/02/12 00:19:42 henning Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.7 2004/02/12 01:43:48 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -73,20 +73,12 @@ void	do_action(struct ifsd_action *);
 void	clear_config(struct ifsd_config *);
 void	remove_action(struct ifsd_action *, struct ifsd_state *);
 void	remove_expression(struct ifsd_expression *, struct ifsd_state *);
-
-#define LOG(l,s,a) do {					\
-	if (l <= conf.loglevel) {			\
-		if (opt_debug)				\
-			printf("ifstated: " s , a );	\
-		else					\
-			syslog(LOG_DAEMON, s , a);	\
-	}						\
-} while(0)
+void	logit(int level, const char *fmt, ...);
 
 void
 usage(void)
 {
-	fprintf(stderr, "usage: ifstated [-dhinv] [-f config]\n");
+	fprintf(stderr, "usage: ifstated [-dhinv] [-f config]");
 	exit(1);
 }
 
@@ -134,7 +126,7 @@ main(int argc, char *argv[])
 	if (conf.opts & IFSD_OPT_NOACTION) {
 		if (parse_config(configfile, &conf) != 0)
 			exit(1);
-		warnx("configuration OK\n");
+		warnx("configuration OK");
 		exit(0);
 	}
 
@@ -169,14 +161,14 @@ main(int argc, char *argv[])
 void
 startup_handler(int fd, short event, void *arg)
 {
-	LOG(IFSD_LOG_NORMAL, "%s\n", "started");
+	logit(IFSD_LOG_NORMAL, "started");
 	load_config();
 }
 
 void
 sighup_handler(int fd, short event, void *arg)
 {
-	LOG(IFSD_LOG_NORMAL, "%s\n", "reloading config");
+	logit(IFSD_LOG_NORMAL, "reloading config");
 	clear_config(&conf);
 	load_config();
 }
@@ -189,8 +181,8 @@ load_config(void)
 	fetch_state();
 	eval_state(&conf.always);
 	if (conf.curstate != NULL) {
-		LOG(IFSD_LOG_NORMAL,
-		    "initial state: %s\n", conf.curstate->name);
+		logit(IFSD_LOG_NORMAL,
+		    "initial state: %s", conf.curstate->name);
 		conf.curstate->entered = time(NULL);
 		eval_state(conf.curstate);
 	}
@@ -258,18 +250,18 @@ external_async_exec(struct ifsd_external *external)
 	char *argp[] = {"sh", "-c", NULL, NULL};
 
 	if (external->pid > 0) {
-		LOG(IFSD_LOG_NORMAL,
-		    "previous command %s still running, killing it\n",
+		logit(IFSD_LOG_NORMAL,
+		    "previous command %s still running, killing it",
 		    external->command);
 		kill(external->pid, SIGKILL);
 		external->pid = 0;
 	}
 
 	argp[2] = external->command;
-	LOG(IFSD_LOG_VERBOSE, "running %s\n", external->command);
+	logit(IFSD_LOG_VERBOSE, "running %s", external->command);
 	pid = fork();
 	if (pid < 0) {
-		LOG(IFSD_LOG_QUIET, "%s", "fork error");
+		logit(IFSD_LOG_QUIET, "fork error");
 	} else if (pid == 0) {
 		execv("/bin/sh", argp);
 		_exit(1);
@@ -307,7 +299,7 @@ check_external_status(struct ifsd_state *state)
 		if (WIFEXITED(s))
 			status = WEXITSTATUS(s);
 		else {
-			LOG(IFSD_LOG_QUIET,
+			logit(IFSD_LOG_QUIET,
 			    "%s exited abnormally", external->command);
 			goto loop;
 		}
@@ -491,7 +483,7 @@ void
 state_change(void)
 {
 	if (conf.nextstate != NULL && conf.curstate != conf.nextstate) {
-		LOG(IFSD_LOG_NORMAL, "changing state to %s\n",
+		logit(IFSD_LOG_NORMAL, "changing state to %s",
 		    conf.nextstate->name);
 		evtimer_del(&conf.curstate->ev);
 		if (conf.curstate != NULL)
@@ -516,7 +508,7 @@ do_action(struct ifsd_action *action)
 
 	switch (action->type) {
 	case IFSD_ACTION_COMMAND:
-		LOG(IFSD_LOG_NORMAL, "running %s\n", action->act.command);
+		logit(IFSD_LOG_NORMAL, "running %s", action->act.command);
 		system(action->act.command);
 		break;
 	case IFSD_ACTION_CHANGESTATE:
@@ -532,7 +524,7 @@ do_action(struct ifsd_action *action)
 		}
 		break;
 	default:
-		LOG(IFSD_LOG_DEBUG, "do_action: unknown action %d",
+		logit(IFSD_LOG_DEBUG, "do_action: unknown action %d",
 		    action->type);
 		break;
 	}
@@ -661,4 +653,29 @@ remove_expression(struct ifsd_expression *expression,
 		break;
 	}
 	free(expression);
+}
+
+void
+logit(int level, const char *fmt, ...)
+{
+	va_list	 ap;
+	char	*nfmt;
+
+	if (level > conf.loglevel)
+		return;
+
+	va_start(ap, fmt);
+	if (opt_debug) {
+		/* best effort in out of mem situations */
+		if (asprintf(&nfmt, "ifstated: %s", fmt) == -1) {
+			vfprintf(stderr, fmt, ap);
+			fprintf(stderr, "\n");
+		} else {
+			vfprintf(stderr, nfmt, ap);
+			free(nfmt);
+		}
+	} else
+		vsyslog(LOG_DAEMON, fmt, ap);
+
+	va_end(ap);
 }
