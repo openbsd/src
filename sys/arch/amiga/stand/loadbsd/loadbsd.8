@@ -1,4 +1,4 @@
-.\"	$OpenBSD: loadbsd.8,v 1.1 1999/09/09 21:25:13 espie Exp $
+.\"	$OpenBSD: loadbsd.8,v 1.2 1999/09/14 14:28:52 espie Exp $
 .\" Copyright (c) 1999 Marc Espie
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,7 @@ is 1. Set to all avail segments if
 is 2.
 .\" Check what 3 means (same as 2 ?)
 .It Fl p
-Use highest priority fastmem segement instead of the largest
+Use highest priority fastmem segment instead of the largest
 segment. The higher priority segment is usually faster
 (i.e. 32 bit memory), but some people have smaller amounts
 of 32 bit memory.
@@ -119,7 +119,7 @@ You asked for symbols with
 .Fl S
 but
 .Nm 
-doesn't find any. Probably a striped kernel.
+doesn't find any. Probably a stripped kernel.
 .It "newer loadbsd required"
 .Nm
 can't load all kernels, because it needs to pass parameters to the
@@ -128,7 +128,7 @@ kernel at startup, and the interface may change.
 The
 .Ar file
 is not a valid a.out executable. The header matches, but the contents
-are wrong.  Might come from a transfert problem, or an attempt to cross-compile
+are wrong.  Might come from a transfer problem, or an attempt to cross-compile
 kernels on a different endian machines. The toolchain doesn't support cross-endianess
 up to 
 .Ox 2.5
