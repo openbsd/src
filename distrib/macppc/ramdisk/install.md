@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.23 2003/10/10 02:41:26 krw Exp $
+#	$OpenBSD: install.md,v 1.24 2003/12/04 20:17:02 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ __EOT
 	done
 }
 
-md_prep_MBR () {
+md_prep_MBR() {
 	local _disk=$1
 
 	if [[ -n $(disklabel -c $_disk 2>/dev/null | grep ' HFS ') ]]; then
@@ -166,7 +166,7 @@ need this information to fill in the OpenBSD disklabel.
 __EOT
 }
 
-md_prep_HFS () {
+md_prep_HFS() {
 	local _disk=$1
 
 	cat << __EOT

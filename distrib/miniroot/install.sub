@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.322 2003/12/04 18:43:38 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.323 2003/12/04 20:17:02 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -193,7 +193,7 @@ askpass() {
 #
 # Allow the user to escape to shells ('!') or execute commands
 # ('!foo') before entering the input.
-ask () {
+ask() {
 	local _question=$1 _default=$2
 
 	set -o noglob
@@ -221,7 +221,7 @@ ask () {
 #    $2    = the default answer
 #
 # Save the user input (or the default) in $resp.
-ask_until () {
+ask_until() {
 	resp=
 	while [[ -z $resp ]] ; do
 		ask "$1" "$2"
@@ -234,7 +234,7 @@ ask_until () {
 #    $2    = the default answer (assumed to be 'n' if empty).
 #
 # Return 'y' or 'n' in $resp.
-ask_yn () {
+ask_yn() {
 	local _q=$1 _a=${2:-no} _resp
 	typeset -l _resp
 
@@ -258,7 +258,7 @@ ask_yn () {
 # $5 = error message if no devices in $3, defaults to 'No $1s found.'
 #
 # $resp holds device selected at exit, or 'done'
-ask_which () {
+ask_which() {
 	local _name=$1 _query=$2 _devs=$3 _defdev=$4 _err=$5
 
 	set -- $_devs
@@ -348,7 +348,7 @@ bsort() {
 # Add interesting/useful comments from mnt/etc/$1 to /tmp/$1.
 #
 # $1 == file in /tmp and /mnt/etc directories
-save_comments () {
+save_comments() {
 	local _file=$1
 
 	if [[ -f /mnt/etc/$_file ]]; then
@@ -362,7 +362,7 @@ save_comments () {
 # accepts the offer.
 #
 # $1 == file in /tmp to edit
-edit_tmp_file () {
+edit_tmp_file() {
 	local _file=$1
 
 	ask_yn "Edit $_file with $EDITOR?"
@@ -371,7 +371,7 @@ edit_tmp_file () {
 
 # Offer to shell out for manual network configuration, and do so if
 # the user accepts the offer.
-manual_net_cfg () {
+manual_net_cfg() {
 	ask_yn "Do you want to do any manual network configuration?"
 
 	[[ $resp == y ]] && { echo "Type 'exit' to return to $MODE." ; sh ; }
@@ -503,7 +503,7 @@ configure_all_interfaces() {
 # interface. Should output '<up/down> <addr> <netmask> <broadcast>'.
 #
 # $1 == interface
-inet_info () {
+inet_info() {
 	ifconfig $1 inet | sed -n '
 		1s/.*<UP,.*$/UP/p
 		1s/.*<.*>*$/DOWN/p
@@ -520,7 +520,7 @@ inet_info () {
 #
 # $1 == interface
 # $2 == hostname (optional).
-dhcp_request () {
+dhcp_request() {
 	local _ifs=$1 _hostname=$2
 
 	echo "initial-interval 1;" > /etc/dhclient.conf
@@ -777,7 +777,7 @@ enable_network() {
 # Install a user-selected subset of the files in $2 from the source
 # named in $1. Display an error message for failed installs so the
 # user will know to try again.
-install_files () {
+install_files() {
 	local _src=$1 _files=$2 _f _sets _get_sets
 
 	# Initialize _sets to the list of sets found in _src, and initialize
@@ -847,7 +847,7 @@ encode_for_url() {
 #
 # $1 = error message to look for
 # $2 = ftp command output
-ftp_error () {
+ftp_error() {
 	if [[ -n $(echo "$2" | grep "$1") ]]; then
 		echo $1
 		return 0
@@ -1499,7 +1499,7 @@ __EOT
 }
 
 # Try to kill a running dhclient.
-kill_dhclient () {
+kill_dhclient() {
 	if [[ -f /var/run/dhclient.pid ]]; then
 		kill -HUP $(sed -ne "1p" /var/run/dhclient.pid) > /dev/null 2>&1
 		rm -f /var/run/dhclient.pid

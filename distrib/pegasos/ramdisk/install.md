@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 2003/10/31 03:59:05 drahn Exp $
+#	$OpenBSD: install.md,v 1.2 2003/12/04 20:17:03 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ __EOT
 #    $2    = the default answer (assumed to be 'n' if empty).
 #
 # Return 'y' or 'n' in $resp.
-ask_yn () {
+ask_yn() {
 	local _q=$1 _a=${2:-no} _resp
 	typeset -l _resp
 
