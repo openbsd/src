@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.24 2003/05/25 18:30:07 mickey Exp $
+$OpenBSD: cpudevs,v 1.25 2003/06/02 22:03:28 mickey Exp $
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -243,13 +243,14 @@ board	HP800_A5005X	0x5d5	800/A500-5X (Crescendo 550)
 #board			0x5d9	(Rhapsody wave 2 W+)
 #board			0x5da	(Marcato W+ DC-)
 board	HP800_L30005X	0x5db	800/L3000-5x (Marcato W+)
+board	HP785_J6700	0x5dd	785/J6700 (Duet W2)
 board	HP785_B2600	0x5de	785/B2600 (Piccolo W+)
 #board	HP		0x5df	(Cantata W2)
 #board	HP		0x5e0	(Cantata DC- W2)
-board	HP80_A400	0x5e1	800/A400 (Crescendo DC- W2)
-#board	HP		0x5e2	(Crescendo 650 W2)
+board	HP800_A400_6X	0x5e1	800/A400-6X/rp2430 (Crescendo DC- W2)
+board	HP800_A500_6X	0x5e2	800/A500-6X/rp2470 (Crescendo 650 W2)
 #board	HP		0x5e3	(Crescendo 750 W2)
-#board	HP		0x5e4	(Keystone/Matterhorn W2 750)
+board	HP800_rp7410	0x5e4	800/rp7410 (Keystone/Matterhorn W2 750)
 #board	HP		0x5e5	(PowerBar W+)
 #board	HP		0x5e6	(Keystone/Matterhorn W2 650)
 #board			0x5e7	(Caribe W2 800)
