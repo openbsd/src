@@ -1,4 +1,4 @@
-/*	$OpenBSD: adlookup.c,v 1.5 1996/06/10 07:25:18 deraadt Exp $	*/
+/*	$OpenBSD: adlookup.c,v 1.6 1996/08/23 19:10:57 niklas Exp $	*/
 /*	$NetBSD: adlookup.c,v 1.13.4.1 1996/05/27 09:53:50 is Exp $	*/
 
 /*
@@ -68,14 +68,14 @@ adosfs_lookup(v)
 		struct vnode **a_vpp;
 		struct componentname *a_cnp;
 	} */ *sp = v;
-	int nameiop, last, lockp, wantp, flags, error, vpid, nocache, i;
+	int nameiop, last, lockp, wantp, flags, error, nocache, i;
 	struct componentname *cnp;
 	struct vnode **vpp;	/* place to store result */
 	struct anode *ap;	/* anode to find */
 	struct vnode *vdp;	/* vnode of search dir */
 	struct anode *adp;	/* anode of search dir */
 	struct ucred *ucp;	/* lookup credentials */
-	u_long bn, plen, hval;
+	u_long bn, plen, hval, vpid;
 	u_char *pelt;
 
 #ifdef ADOSFS_DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.5 1996/05/02 13:05:18 deraadt Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.6 1996/08/23 19:11:02 niklas Exp $	*/
 /*	$NetBSD: advnops.c,v 1.28 1996/04/23 05:18:32 veego Exp $	*/
 
 /*
@@ -586,7 +586,8 @@ adosfs_bmap(v)
 	} */ *sp = v;
 	struct anode *ap;
 	struct buf *flbp;
-	long nb, flblk, flblkoff, fcnt;
+	long nb, fcnt;
+	u_long flblk, flblkoff;
 	daddr_t *bnp;
 	daddr_t bn;
 	int error; 

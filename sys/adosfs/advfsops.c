@@ -1,4 +1,4 @@
-/*	$OpenBSD: advfsops.c,v 1.7 1996/06/10 07:25:19 deraadt Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.8 1996/08/23 19:11:00 niklas Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.19.4.1 1996/05/27 10:21:30 is Exp $	*/
 
 /*
@@ -553,7 +553,7 @@ adosfs_loadbitmap(amp)
 	struct adosfsmount *amp;
 {
 	struct buf *bp, *mapbp;
-	u_long bn;
+	u_long bits, bn, n;
 	int blkix, endix, mapix;
 	int bmsize;
 	int error;
@@ -568,9 +568,6 @@ adosfs_loadbitmap(amp)
 	mapix = 0;
 	bmsize = (amp->numblks + 31) / 32;
 	while (mapix < bmsize) {
-		int n;
-		u_long bits;
-
 		if (adoswordn(bp, blkix) == 0)
 			break;
 		if (mapbp != NULL)
