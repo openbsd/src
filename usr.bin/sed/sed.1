@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sed.1,v 1.7 1999/07/02 20:11:45 aaron Exp $
+.\"	$OpenBSD: sed.1,v 1.8 1999/07/04 12:00:04 aaron Exp $
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -53,7 +53,7 @@
 .Op Ar file ...
 .Sh DESCRIPTION
 The
-.Nm sed
+.Nm
 utility reads the specified files, or the standard input if no files
 are specified, modifying the input as specified by a list of commands.
 The input is then written to the standard output.
@@ -72,15 +72,15 @@ The following options are available:
 .Bl -tag -width indent
 .It Fl a
 The files listed as parameters for the
-.Dq w
+.Ql w
 functions are created (or truncated) before any processing begins,
 by default.
 The
 .Fl a
 option causes
-.Nm sed
+.Nm
 to delay opening each file until a command containing the related
-.Dq w
+.Ql w
 function is applied to a line of input.
 .It Fl e Ar command
 Append the editing commands specified by the
@@ -101,7 +101,7 @@ option suppresses this behavior.
 .El
 .Pp
 The form of a
-.Nm sed
+.Nm
 command is as follows:
 .sp
 .Dl [address[,address]]function[arguments]
@@ -110,12 +110,12 @@ Whitespace may be inserted before the first address and the function
 portions of the command.
 .Pp
 Normally,
-.Nm sed
+.Nm
 cyclically copies a line of input, not including its terminating newline
 character, into a
 .Em "pattern space" ,
 (unless there is something left after a
-.Dq D
+.Sq D
 function),
 applies all of the commands with addresses that select that pattern space,
 copies the pattern space to the standard output, appending a newline, and
@@ -128,9 +128,7 @@ to save all or part of the pattern space for subsequent retrieval.
 An address is not required, but if specified must be a number (that counts
 input lines
 cumulatively across input files), a dollar
-.Po
-.Dq $
-.Pc
+.Pq Ql $
 character that addresses the last line of input, or a context address
 (which consists of a regular expression preceded and followed by a
 delimiter).
@@ -146,39 +144,35 @@ pattern space that matches the second.
 (If the second address is a number less than or equal to the line number
 first selected, only that line is selected.)
 Starting at the first line following the selected range,
-.Nm sed
+.Nm
 starts looking again for the first address.
 .Pp
 Editing commands can be applied to non-selected pattern spaces by use
 of the exclamation character
-.Po
-.Dq !
-.Pc
+.Pq Ql !
 function.
 .Sh "Sed Regular Expressions"
 The
-.Nm sed
+.Nm
 regular expressions are basic regular expressions (BRE's, see
 .Xr regex 3
 for more information).
 In addition,
-.Nm sed
+.Nm
 has the following two additions to BRE's:
 .sp
 .Bl -enum -compact
 .It
 In a context address, any character other than a backslash
-.Po
-.Dq \e
-.Pc
+.Pq Ql \e
 or newline character may be used to delimit the regular expression.
 Also, putting a backslash character before the delimiting character
 causes the character to be treated literally.
 For example, in the context address \exabc\exdefx, the RE delimiter
 is an
-.Dq x
+.Sq x
 and the second
-.Dq x
+.Sq x
 stands for itself, so that the regular expression is
 .Dq abcxdef .
 .sp
@@ -190,7 +184,7 @@ in the substitute command.
 .El
 .Pp
 One special feature of
-.Nm sed
+.Nm
 regular expressions is that they can default to the last regular
 expression used.
 If a regular expression is empty, i.e. just the delimiter characters
@@ -217,32 +211,32 @@ Other backslashes in text are deleted and the following character
 taken literally.
 .Pp
 The
-.Dq r
+.Sq r
 and
-.Dq w
+.Sq w
 functions take an optional file parameter, which should be separated
 from the function letter by white space.
 Each file given as an argument to
-.Nm sed
+.Nm
 is created (or its contents truncated) before any input processing begins.
 .Pp
 The
-.Dq b ,
-.Dq r ,
-.Dq s ,
-.Dq t ,
-.Dq w ,
-.Dq y ,
-.Dq ! ,
+.Sq b ,
+.Sq r ,
+.Sq s ,
+.Sq t ,
+.Sq w ,
+.Sq y ,
+.Ql ! ,
 and
-.Dq \&:
+.Ql \&:
 functions all accept additional arguments.
 The following synopses indicate which arguments have to be separated from
 the function letters by white space characters.
 .Pp
 Two of the functions take a function-list.
 This is a list of
-.Nm sed
+.Nm
 functions separated by newlines, as follows:
 .Bd -literal -offset indent
 { function
@@ -253,11 +247,11 @@ functions separated by newlines, as follows:
 .Ed
 .Pp
 The
-.Dq {
+.Ql {
 can be preceded by white space and can be followed by white space.
 The function can be preceded by white space.
 The terminating
-.Dq }
+.Ql }
 must be preceded by a newline or optional white space.
 .sp
 .Bl -tag -width "XXXXXX" -compact
@@ -271,12 +265,12 @@ Write
 .Em text
 to standard output immediately before each attempt to read a line of input,
 whether by executing the
-.Dq N
+.Sq N
 function or by beginning a new cycle.
 .sp
 .It [2addr]b[label]
 Branch to the
-.Dq \&:
+.Sq \&:
 function with the specified label.
 If the label is not specified, branch to the end of the script.
 .sp
@@ -347,7 +341,7 @@ first).
 Long lines are folded, with the point of folding indicated by displaying
 a backslash followed by a newline.
 The end of each line is marked with a
-.Dq $ .
+.Ql $ .
 .sp
 .It [2addr]n
 Write the pattern space to the standard output if the default output has
@@ -389,17 +383,15 @@ Within the RE and the replacement, the RE delimiter itself can be used as
 a literal character if it is preceded by a backslash.
 .Pp
 An ampersand
-.Po
-.Dq &
-.Pc
+.Pq Ql &
 appearing in the replacement is replaced by the string matching the RE.
 The special meaning of
-.Dq &
+.Ql &
 in this context can be suppressed by preceding it by a backslash.
 The string
-.Dq \e# ,
+.Ql \e# ,
 where
-.Dq #
+.Ql #
 is a digit, is replaced by the text matched
 by the corresponding backreference expression (see
 .Xr re_format 7 ).
@@ -432,10 +424,10 @@ is still considered to have been a replacement.
 .sp
 .It [2addr]t [label]
 Branch to the
-.Dq \&:
+.Ql \&:
 function bearing the label if any substitutions have been made since the
 most recent reading of an input line or execution of a
-.Dq t
+.Sq t
 function.
 If no label is specified, branch to the end of the script.
 .sp
@@ -458,8 +450,9 @@ Within
 and
 .Em string2 ,
 a backslash followed by any character other than a newline is that literal
-character, and a backslash followed by an ``n'' is replaced by a newline
-character.
+character, and a backslash followed by an
+.Sq n
+is replaced by a newline character.
 .sp
 .It [2addr]!function
 .It [2addr]!function-list
@@ -469,9 +462,9 @@ selected by the address(es).
 .sp
 .It [0addr]:label
 This function does nothing; it bears a label to which the
-.Dq b
+.Sq b
 and
-.Dq t
+.Sq t
 commands may branch.
 .sp
 .It [1addr]=
@@ -483,10 +476,10 @@ Empty lines are ignored.
 .sp
 .It [0addr]#
 The
-.Dq #
+.Ql #
 and the remainder of the line are ignored (treated as a comment), with
 the single exception that if the first two characters in the file are
-.Dq #n ,
+.Ql #n ,
 the default output is suppressed.
 This is the same as specifying the
 .Fl n
@@ -494,7 +487,7 @@ option on the command line.
 .El
 .Pp
 The
-.Nm sed
+.Nm
 utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr awk 1 ,
@@ -504,12 +497,12 @@ utility exits 0 on success or >0 if an error occurred.
 .Xr re_format 7
 .Sh HISTORY
 A
-.Nm sed
+.Nm
 command appeared in
 .At v7 .
 .Sh STANDARDS
 The
-.Nm sed
+.Nm
 function is expected to be a superset of the
 .St -p1003.2
 specification.
