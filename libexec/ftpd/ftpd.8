@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.9 1996/12/03 03:07:16 deraadt Exp $
+.\"	$OpenBSD: ftpd.8,v 1.10 1997/03/29 20:02:00 millert Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -140,7 +140,11 @@ If the file
 .Pa /etc/motd
 exists,
 .Nm
-prints it after a successful login.
+prints it after a successful login.  If the file
+.Pa .message
+exists in a directory,
+.Nm
+prints it when that directory is entered.
 .Pp
 The ftp server currently supports the following ftp requests.
 The case of the requests is ignored.
