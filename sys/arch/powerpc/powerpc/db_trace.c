@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.6 1999/07/05 20:24:29 rahnds Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.7 2001/06/23 01:58:01 drahn Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /* 
@@ -97,7 +97,10 @@ db_dumpframe (u_int32_t pframe)
 	u_int32_t nextframe;
 	u_int32_t lr;
 	u_int32_t *access;
+	db_sym_t  sym;
 	int error;
+	char *name;
+	db_expr_t offset;
 
 	access = (u_int32_t *)(pframe);
 	nextframe = *access;
@@ -105,7 +108,12 @@ db_dumpframe (u_int32_t pframe)
 	access = (u_int32_t *)(pframe+4);
 	lr = *access;
 
-	db_printf("lr %x fp %x nfp %x\n", lr, pframe, nextframe);
+	db_find_sym_and_offset(lr-4, &name, &offset);
+	if (!name) {
+		name = "?";
+		offset = 65536;
+	}
+	db_printf("lr %s+%x fp %x nfp %x\n", name, offset, pframe, nextframe);
 
 	return nextframe;
 }
