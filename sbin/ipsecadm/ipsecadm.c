@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.58 2001/06/26 20:44:22 itojun Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.59 2001/06/26 21:10:28 itojun Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -173,6 +173,7 @@ addrparse(const char *str, struct sockaddr *addr, struct sockaddr *mask)
 
     memset(mask, 0, addr->sa_len);
     mask->sa_len = addr->sa_len;
+    mask->sa_family = addr->sa_family;
     memset(ap, 0xff, prefixlen / 8);
     if (prefixlen % 8)
 	ap[prefixlen / 8] = (0xff00 >> (prefixlen % 8)) & 0xff;
