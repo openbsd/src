@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypxfr.c,v 1.26 2001/11/07 19:01:29 deraadt Exp $ */
+/*	$OpenBSD: ypxfr.c,v 1.27 2002/03/26 09:35:22 fgsch Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypxfr.c,v 1.26 2001/11/07 19:01:29 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ypxfr.c,v 1.27 2002/03/26 09:35:22 fgsch Exp $";
 #endif
 
 #include <sys/types.h>
@@ -428,6 +428,7 @@ char *argv[];
 
 	status = YPPUSH_SUCC;
 	client = NULL;
+	db = NULL;
 
 	yp_get_default_domain(&domain);
 
@@ -477,8 +478,8 @@ char *argv[];
 
 	if (usage) {
 		status = YPPUSH_BADARGS;
-		fprintf(stderr, "usage: %s %s %s\n",
-		    "[-cf] [-d domain] [-h host] [-s domain]",
+		fprintf(stderr, "usage: %s "
+		    "[-cf] [-d domain] [-h host] [-s domain] "
 		    "[-C tid prog ipadd port] mapname\n",
 		    __progname);
 	}
