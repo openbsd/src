@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.40 2002/07/27 04:05:09 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.41 2002/08/27 02:18:34 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -55,12 +55,6 @@ MODE=upgrade
 # be the first or last set in THESETS, or this won't
 # work!
 THESETS=`echo $THESETS | sed -e 's/ etc / /'`
-
-# XXX Work around vnode aliasing bug (thanks for the tip, Chris...)
-ls -l /dev > /dev/null 2>&1
-
-# Get ROOTDISK and default ROOTDEV 
-get_rootdisk
 
 # Assume $ROOTDEV is the root filesystem. Confirm
 # this with the user. Check and mount the root filesystem.

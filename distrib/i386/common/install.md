@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.8 2002/05/20 16:53:57 krw Exp $
+#	$OpenBSD: install.md,v 1.9 2002/08/27 02:18:34 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -198,9 +198,7 @@ If this disk is shared with other operating systems, those operating systems
 should have a BIOS partition entry that spans the space they occupy completely.
 For safety, also make sure all OpenBSD file systems are within the offset and
 size specified in the 'A6' BIOS partition table.  (By default, the disklabel
-editor will try to enforce this).  If you are unsure of how to use multiple
-partitions properly (ie. separating /,  /usr, /tmp, /var, /usr/local, and other
-things) just split the space into a root and swap partition for now.
+editor will try to enforce this).
 
 __EOT
 	disklabel -f /tmp/fstab.${_disk} -E ${_disk}

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.112 2002/08/25 02:13:09 krw Exp $
+#	$OpenBSD: install.sh,v 1.113 2002/08/27 02:18:34 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -83,31 +83,41 @@ MODE=install
 # include common subroutines and initialization code
 . install.sub
 
-# If /etc/fstab already exists we skip disk initialization, but we still
-# need to know the root disk.
-if [ -f /etc/fstab ]; then
-	get_rootdisk
-else
+# If /etc/fstab already exists we skip disk initialization
+if [ ! -f /etc/fstab ]; then
 	# Install the shadowed disktab file; lets us write to it for temporary
 	# purposes without mounting the miniroot read-write.
 	[ -f /etc/disktab.shadow ] && cp /etc/disktab.shadow /tmp/disktab.shadow
 
-	while : ; do
-		if [ -z "$ROOTDISK" ]; then
-			# Get ROOTDISK and default ROOTDEV
-			get_rootdisk
-			DISK=$ROOTDISK
-			echo "${ROOTDEV} /" > $FILESYSTEMS
-		else
-			cat << __EOT
+	cat << __EOT
 
-Now you can select another disk to initialize. (Do not re-select a disk
-you have already entered information for).
+
+You must now initialize the disks you want to use for OpenBSD. During this
+initialization process it is strongly recommended that you create disk
+parititions for the following filesystems:
+
+	/, /tmp, /var, /usr, /home
+
+Some of the security features of OpenBSD rely on these filesystems being
+mounted on separate partitions.
 __EOT
-			ask_fordev "Which disk do you wish to initialize?" "$DKDEVS"
-			[ "$resp" = "done" ] && break
-			DISK=$resp
-		fi
+
+	# Prevent the user from choosing anything but the default as the
+	# root device. Any attempt to mount '/' anywhere else will
+	# trigger a duplicate mount error.
+	echo "${ROOTDEV} /" > $FILESYSTEMS
+
+	DISK=
+	_DKDEVS=$DKDEVS
+
+	while : ; do
+		_DKDEVS=`rmel "$DISK" $_DKDEVS`
+		[ "$_DKDEVS" ] || break
+
+		ask_fordev "Which disk do you wish to initialize?" "$_DKDEVS"
+		[ "$resp" = "done" ] && break
+
+		DISK=$resp
 
 		# Deal with disklabels, including editing the root disklabel
 		# and labeling additional disks. This is machine-dependent since
