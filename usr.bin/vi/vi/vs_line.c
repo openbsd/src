@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs_line.c,v 1.4 2001/01/29 01:58:54 niklas Exp $	*/
+/*	$OpenBSD: vs_line.c,v 1.5 2001/05/28 22:44:32 pvalchev Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -52,7 +52,7 @@ vs_line(sp, smp, yp, xp)
 	size_t offset_in_char, offset_in_line, oldx, oldy;
 	size_t scno, skip_cols, skip_screens;
 	int ch, dne, is_cached, is_partial, is_tab;
-	int list_tab, list_dollar;
+	int list_tab, list_dollar, empty_scrline;
 	char *p, *cbp, *ecbp, cbuf[128];
 
 #if defined(DEBUG) && 0
@@ -331,8 +331,13 @@ display:
 	} else
 		cno_cnt = (sp->cno - offset_in_line) + 1;
 
-	/* This is the loop that actually displays characters. */
 	ecbp = (cbp = cbuf) + sizeof(cbuf) - 1;
+
+	/* Remember if we will have been displaying anything on this screen
+	   line */
+	empty_scrline = offset_in_line == len;
+
+	/* This is the loop that actually displays characters. */
 	for (is_partial = 0, scno = 0;
 	    offset_in_line < len; ++offset_in_line, offset_in_char = 0) {
 		if ((ch = *(u_char *)p++) == '\t' && !list_tab) {
@@ -424,10 +429,21 @@ display:
 		}
 	}
 
+	/* If we didn't paint the whole line, update the cache. */
 	if (scno < cols_per_screen) {
-		/* If didn't paint the whole line, update the cache. */
-		smp->c_ecsize = smp->c_eclen = KEY_LEN(sp, ch);
-		smp->c_eboff = len - 1;
+		/*
+		 * We can end up with an empty line at least when the list
+		 * option is used and the file line is exactly the size of a
+		 * screen line. It will result in this line containing
+		 * a single dollar ($).
+		 */
+		if (empty_scrline) {
+			smp->c_sboff = smp->c_eboff = 0;
+			smp->c_scoff = smp->c_eclen = 0;
+		} else {
+			smp->c_ecsize = smp->c_eclen = KEY_LEN(sp, ch);
+			smp->c_eboff = len - 1;
+		}
 
 		/*
 		 * If not the info/mode line, and O_LIST set, and at the
