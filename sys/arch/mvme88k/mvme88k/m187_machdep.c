@@ -1,4 +1,4 @@
-/*	$OpenBSD: m187_machdep.c,v 1.1 2004/10/01 19:00:52 miod Exp $	*/
+/*	$OpenBSD: m187_machdep.c,v 1.2 2004/11/08 16:39:31 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -157,8 +157,8 @@ m187_ext_int(u_int v, struct trapframe *eframe)
 	u_char vec;
 
 	/* get level and mask */
-	mask = *md.intr_mask & 0x07;
-	level = *md.intr_ipl & 0x07;
+	mask = *md_intr_mask & 0x07;
+	level = *(u_int8_t *)M187_ILEVEL & 0x07;
 
 #ifdef DIAGNOSTIC
 	/*
@@ -260,8 +260,6 @@ m187_bootstrap()
 	extern struct cmmu_p cmmu8820x;
 
 	cmmu = &cmmu8820x;
-	md.interrupt_func = &m187_ext_int;
-	md.intr_mask = (u_char *)M187_IMASK;
-	md.intr_ipl = (u_char *)M187_ILEVEL;
-	md.intr_src = NULL;
+	md_interrupt_func_ptr = &m187_ext_int;
+	md_intr_mask = (u_int8_t *)M187_IMASK;
 }

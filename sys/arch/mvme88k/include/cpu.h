@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.30 2004/08/03 21:16:23 deraadt Exp $ */
+/* $OpenBSD: cpu.h,v 1.31 2004/11/08 16:39:31 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * Copyright (c) 1992, 1993
@@ -44,6 +44,12 @@
 #include <m88k/cpu.h>
 
 #ifdef _KERNEL
+
+/* board dependent pointers */
+extern volatile u_int8_t *md_intr_mask;
+extern void (*md_interrupt_func_ptr)(u_int, struct trapframe *);
+#define	md_interrupt_func	(*md_interrupt_func_ptr)
+extern void (*md_init_clocks)(void);
 
 struct intrhand {
 	SLIST_ENTRY(intrhand) ih_link;

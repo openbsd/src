@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.1 2004/10/01 19:00:52 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.2 2004/11/08 16:39:31 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -150,10 +150,7 @@ m188_bootstrap()
 	extern struct cmmu_p cmmu8820x;
 
 	cmmu = &cmmu8820x;
-	md.interrupt_func = &m188_ext_int;
-	md.intr_mask = NULL;
-	md.intr_ipl = NULL;
-	md.intr_src = NULL;
+	md_interrupt_func_ptr = &m188_ext_int;
 
 	/* clear and disable all interrupts */
 	*int_mask_reg[0] = 0;

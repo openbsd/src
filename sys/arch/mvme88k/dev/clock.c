@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.42 2004/08/25 21:47:54 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.43 2004/11/08 16:39:31 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -105,10 +105,8 @@
 int	clockmatch(struct device *, void *, void *);
 void	clockattach(struct device *, struct device *, void *);
 
-void	sbc_initclock(void);
-void	sbc_initstatclock(void);
-void	m188_initclock(void);
-void	m188_initstatclock(void);
+void	sbc_init_clocks(void);
+void	m188_init_clocks(void);
 void	m188_cio_init(unsigned);
 u_int	read_cio(int);
 void	write_cio(int, u_int);
@@ -193,14 +191,13 @@ clockattach(struct device *parent, struct device *self, void *args)
 		sc->sc_profih.ih_ipl = ca->ca_ipl;
 		prof_reset = ca->ca_ipl | PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
 		pcctwointr_establish(PCC2V_TIMER1, &sc->sc_profih, "clock");
-		md.clock_init_func = sbc_initclock;
 		sc->sc_statih.ih_fn = sbc_statintr;
 		sc->sc_statih.ih_arg = 0;
 		sc->sc_statih.ih_wantframe = 1;
 		sc->sc_statih.ih_ipl = ca->ca_ipl;
 		stat_reset = ca->ca_ipl | PCC2_IRQ_IEN | PCC2_IRQ_ICLR;
 		pcctwointr_establish(PCC2V_TIMER2, &sc->sc_statih, "stat");
-		md.statclock_init_func = sbc_initstatclock;
+		md_init_clocks = sbc_init_clocks;
 		break;
 #endif /* NPCCTWO */
 #if NSYSCON > 0
@@ -210,13 +207,12 @@ clockattach(struct device *parent, struct device *self, void *args)
 		sc->sc_profih.ih_wantframe = 1;
 		sc->sc_profih.ih_ipl = ca->ca_ipl;
 		sysconintr_establish(SYSCV_TIMER2, &sc->sc_profih, "clock");
-		md.clock_init_func = m188_initclock;
 		sc->sc_statih.ih_fn = m188_statintr;
 		sc->sc_statih.ih_arg = 0;
 		sc->sc_statih.ih_wantframe = 1;
 		sc->sc_statih.ih_ipl = ca->ca_ipl;
 		sysconintr_establish(SYSCV_TIMER1, &sc->sc_statih, "stat");
-		md.statclock_init_func = m188_initstatclock;
+		md_init_clocks = m188_init_clocks;
 		break;
 #endif /* NSYSCON */
 	}
@@ -227,15 +223,16 @@ clockattach(struct device *parent, struct device *self, void *args)
 #if NPCCTWO > 0
 
 void
-sbc_initclock(void)
+sbc_init_clocks(void)
 {
-#ifdef CLOCK_DEBUG
-	printf("SBC clock init\n");
-#endif
+	int statint, minint;
+
+#ifdef DIAGNOSTIC
 	if (1000000 % hz) {
 		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 	}
+#endif
 	tick = 1000000 / hz;
 
 	/* profclock */
@@ -247,6 +244,33 @@ sbc_initclock(void)
 	    PCC2_TCTL_CEN | PCC2_TCTL_COC | PCC2_TCTL_COVF;
 	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T1ICR) =
 	    prof_reset;
+
+	if (stathz == 0)
+		stathz = hz;
+#ifdef DIAGNOSTIC
+	if (1000000 % stathz) {
+		printf("cannot get %d Hz statclock; using 100 Hz\n", stathz);
+		stathz = 100;
+	}
+#endif
+	profhz = stathz;		/* always */
+
+	statint = 1000000 / stathz;
+	minint = statint / 2 + 100;
+	while (statvar > minint)
+		statvar >>= 1;
+
+	/* statclock */
+	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CTL) = 0;
+	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CMP) =
+	    pcc2_timer_us2lim(statint);
+	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2COUNT) = 0;
+	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CTL) =
+	    PCC2_TCTL_CEN | PCC2_TCTL_COC | PCC2_TCTL_COVF;
+	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2ICR) =
+	    stat_reset;
+
+	statmin = statint - (statvar >> 1);
 }
 
 /*
@@ -266,40 +290,6 @@ sbc_clockintr(void *eframe)
 #endif /* NBUGTTY */
 
 	return (1);
-}
-
-void
-sbc_initstatclock(void)
-{
-	int statint, minint;
-
-#ifdef CLOCK_DEBUG
-	printf("SBC statclock init\n");
-#endif
-	if (stathz == 0)
-		stathz = hz;
-	if (1000000 % stathz) {
-		printf("cannot get %d Hz statclock; using 100 Hz\n", stathz);
-		stathz = 100;
-	}
-	profhz = stathz;		/* always */
-
-	statint = 1000000 / stathz;
-	minint = statint / 2 + 100;
-	while (statvar > minint)
-		statvar >>= 1;
-
-	/* statclock */
-	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CTL) = 0;
-	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CMP) =
-	    pcc2_timer_us2lim(statint);
-	*(volatile u_int32_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2COUNT) = 0;
-	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2CTL) =
-	    PCC2_TCTL_CEN | PCC2_TCTL_COC | PCC2_TCTL_COVF;
-	*(volatile u_int8_t *)(OBIO_START + PCC2_BASE + PCCTWO_T2ICR) =
-	    stat_reset;
-
-	statmin = statint - (statvar >> 1);
 }
 
 int
@@ -372,31 +362,12 @@ sbc_statintr(void *eframe)
  * counters interrupt at the same time...
  */
 
-int
-m188_clockintr(void *eframe)
-{
-	CIO_LOCK;
-	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
-
-	intrcnt[M88K_CLK_IRQ]++;
-	hardclock(eframe);
-#if NBUGTTY > 0
-	bugtty_chkinput();
-#endif /* NBUGTTY */
-
-	/* restart counter */
-	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
-	CIO_UNLOCK;
-
-	return (1);
-}
-
 void
-m188_initclock(void)
+m188_init_clocks(void)
 {
-#ifdef CLOCK_DEBUG
-	printf("VME188 clock init\n");
-#endif
+	volatile u_int32_t imr;
+	int statint, minint;
+
 #ifdef DIAGNOSTIC
 	if (1000000 % hz) {
 		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
@@ -407,49 +378,7 @@ m188_initclock(void)
 
 	simple_lock_init(&cio_lock);
 	m188_cio_init(tick);
-}
 
-int
-m188_statintr(void *eframe)
-{
-	volatile u_int32_t tmp;
-	u_long newint, r, var;
-
-	/* stop counter and acknowledge interrupt */
-	tmp = *(volatile u_int32_t *)DART_STOPC;
-	tmp = *(volatile u_int32_t *)DART_ISR;
-
-	intrcnt[M88K_SCLK_IRQ]++;
-	statclock((struct clockframe *)eframe);
-
-	/*
-	 * Compute new randomized interval.  The intervals are uniformly
-	 * distributed on [statint - statvar / 2, statint + statvar / 2],
-	 * and therefore have mean statint, giving a stathz frequency clock.
-	 */
-	var = statvar;
-	do {
-		r = random() & (var - 1);
-	} while (r == 0);
-	newint = statmin + r;
-
-	/* setup new value and restart counter */
-	*(volatile u_int32_t *)DART_CTUR = (newint >> 8);
-	*(volatile u_int32_t *)DART_CTLR = (newint & 0xff);
-	tmp = *(volatile u_int32_t *)DART_STARTC;
-
-	return (1);
-}
-
-void
-m188_initstatclock(void)
-{
-	volatile u_int32_t imr;
-	int statint, minint;
-
-#ifdef CLOCK_DEBUG
-	printf("VME188 statclock init\n");
-#endif
 	if (stathz == 0)
 		stathz = hz;
 #ifdef DIAGNOSTIC
@@ -483,6 +412,57 @@ m188_initstatclock(void)
 	*(volatile u_int32_t *)DART_OPCR = 0x04;
 	/* give the start counter/timer command */
 	imr = *(volatile u_int32_t *)DART_STARTC;
+}
+
+int
+m188_clockintr(void *eframe)
+{
+	CIO_LOCK;
+	write_cio(CIO_CSR1, CIO_GCB | CIO_CIP);  /* Ack the interrupt */
+
+	intrcnt[M88K_CLK_IRQ]++;
+	hardclock(eframe);
+#if NBUGTTY > 0
+	bugtty_chkinput();
+#endif /* NBUGTTY */
+
+	/* restart counter */
+	write_cio(CIO_CSR1, CIO_GCB | CIO_TCB | CIO_IE);
+	CIO_UNLOCK;
+
+	return (1);
+}
+
+int
+m188_statintr(void *eframe)
+{
+	volatile u_int32_t tmp;
+	u_long newint, r, var;
+
+	/* stop counter and acknowledge interrupt */
+	tmp = *(volatile u_int32_t *)DART_STOPC;
+	tmp = *(volatile u_int32_t *)DART_ISR;
+
+	intrcnt[M88K_SCLK_IRQ]++;
+	statclock((struct clockframe *)eframe);
+
+	/*
+	 * Compute new randomized interval.  The intervals are uniformly
+	 * distributed on [statint - statvar / 2, statint + statvar / 2],
+	 * and therefore have mean statint, giving a stathz frequency clock.
+	 */
+	var = statvar;
+	do {
+		r = random() & (var - 1);
+	} while (r == 0);
+	newint = statmin + r;
+
+	/* setup new value and restart counter */
+	*(volatile u_int32_t *)DART_CTUR = (newint >> 8);
+	*(volatile u_int32_t *)DART_CTLR = (newint & 0xff);
+	tmp = *(volatile u_int32_t *)DART_STARTC;
+
+	return (1);
 }
 
 /* Write CIO register */

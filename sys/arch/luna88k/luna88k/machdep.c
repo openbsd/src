@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.15 2004/10/03 19:47:25 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.16 2004/11/08 16:39:31 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -132,7 +132,6 @@ extern void load_u_area(struct proc *);
 extern void save_u_area(struct proc *, vaddr_t);
 
 vaddr_t size_memory(void);
-void luna88k_ext_int(u_int v, struct trapframe *eframe);
 void powerdown(void);
 void get_fuse_rom_data(void);
 void get_nvram_data(void);
@@ -141,9 +140,6 @@ void get_autoboot_device(void);			/* in disksubr.c */
 int clockintr(void *);				/* in clock.c */
 
 vaddr_t interrupt_stack[MAX_CPUS];
-
-/* machine dependent function pointers. */
-struct md_p md;
 
 /*
  * *int_mask_reg[CPU]
@@ -1161,18 +1157,8 @@ luna88k_bootstrap()
 	curproc = &proc0;
 	curpcb = &proc0paddr->u_pcb;
 
-	/* zero out the machine dependant function pointers */
-	bzero(&md, sizeof(struct md_p));
-
-	/* 
-	 * set up interrupt and fp exception handlers 
-	 * based on the machine.
-	 */
 	cmmu = &cmmu8820x;
-	md.interrupt_func = &luna88k_ext_int;
-	md.intr_mask = NULL;
-	md.intr_ipl = NULL;
-	md.intr_src = NULL;
+
 	/* clear and disable all interrupts */
 	*int_mask_reg[0] = 0;
 	*int_mask_reg[1] = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.1 2004/10/01 19:00:52 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.2 2004/11/08 16:39:31 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -173,8 +173,8 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 	u_char vec;
 
 	/* get src and mask */
-	mask = *md.intr_mask & 0x07;
-	src = *md.intr_src;
+	mask = *md_intr_mask & 0x07;
+	src = *(u_int8_t *)M197_ISRC;
 
 	if (v == T_NON_MASK) {
 		/* This is the abort switch */
@@ -182,7 +182,7 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 		vec = BS_ABORTVEC;
 	} else {
 		/* get level  */
-		level = *md.intr_ipl & 0x07;
+		level = *(u_int8_t *)M197_ILEVEL & 0x07;
 	}
 
 #ifdef DIAGNOSTIC
@@ -275,9 +275,7 @@ m197_bootstrap()
 	extern void set_tcfp(void);
 
 	cmmu = &cmmu88110;
-	md.interrupt_func = &m197_ext_int;
-	md.intr_mask = (u_char *)M197_IMASK;
-	md.intr_ipl = (u_char *)M197_ILEVEL;
-	md.intr_src = (u_char *)M197_ISRC;
+	md_interrupt_func_ptr = &m197_ext_int;
+	md_intr_mask = (u_char *)M197_IMASK;
 	set_tcfp(); /* Set Time Critical Floating Point Mode */
 }

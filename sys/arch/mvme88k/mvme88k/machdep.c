@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.159 2004/10/01 19:00:52 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.160 2004/11/08 16:39:31 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -139,8 +139,10 @@ extern void m197_startup(void);
 intrhand_t intr_handlers[NVMEINTR];
 vaddr_t interrupt_stack[MAX_CPUS];
 
-/* machine dependent function pointers. */
-struct md_p md;
+/* board dependent pointers */
+volatile u_int8_t *md_intr_mask;
+void (*md_interrupt_func_ptr)(u_int, struct trapframe *);
+void (*md_init_clocks)(void);
 
 volatile u_int8_t *ivec[8];
 
@@ -228,7 +230,7 @@ struct consdev bootcons = {
 	bootcnpollc,
 	NULL,
 	makedev(14, 0),
-	1
+	CN_NORMAL,
 };
 
 /*
@@ -346,12 +348,7 @@ identifycpu()
 void
 cpu_initclocks()
 {
-	if (md.clock_init_func != NULL) {
-		(*md.clock_init_func)();
-	}
-	if (md.statclock_init_func != NULL) {
-		(*md.statclock_init_func)();
-	}
+	(*md_init_clocks)();
 }
 
 void
@@ -1075,9 +1072,6 @@ mvme_bootstrap()
 	curproc = &proc0;
 	curpcb = &proc0paddr->u_pcb;
 
-	/* zero out the machine dependent function pointers */
-	bzero(&md, sizeof(struct md_p));
-
 	buginit();
 	bugbrdid(&brdid);
 	brdtyp = brdid.model;
@@ -1345,7 +1339,7 @@ getipl(void)
 	case BRD_187:
 	case BRD_8120:
 	case BRD_197:
-		curspl = *md.intr_mask & 0x07;
+		curspl = *md_intr_mask & 0x07;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
 	}
@@ -1371,8 +1365,8 @@ setipl(unsigned level)
 	case BRD_187:
 	case BRD_8120:
 	case BRD_197:
-		curspl = *md.intr_mask & 0x07;
-		*md.intr_mask = level;
+		curspl = *md_intr_mask & 0x07;
+		*md_intr_mask = level;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
 	}
@@ -1407,9 +1401,9 @@ raiseipl(unsigned level)
 	case BRD_187:
 	case BRD_8120:
 	case BRD_197:
-		curspl = *md.intr_mask & 0x07;
+		curspl = *md_intr_mask & 0x07;
 		if (curspl < level)
-			*md.intr_mask = level;
+			*md_intr_mask = level;
 		break;
 #endif /* defined(MVME187) || defined(MVME197) */
 	}

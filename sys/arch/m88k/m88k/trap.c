@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 2004/10/01 20:20:34 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 2004/11/08 16:39:31 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -263,7 +263,7 @@ m88100_trap(unsigned type, struct trapframe *frame)
 		/* This function pointer is set in machdep.c
 		   It calls m188_ext_int or sbc_ext_int depending
 		   on the value of brdtyp - smurph */
-		(*md.interrupt_func)(T_INT, frame);
+		md_interrupt_func(T_INT, frame);
 		return;
 
 	case T_MISALGNFLT:
@@ -738,11 +738,11 @@ m88110_trap(unsigned type, struct trapframe *frame)
 		break;
 	case T_NON_MASK:
 	case T_NON_MASK+T_USER:
-		(*md.interrupt_func)(T_NON_MASK, frame);
+		md_interrupt_func(T_NON_MASK, frame);
 		return;
 	case T_INT:
 	case T_INT+T_USER:
-		(*md.interrupt_func)(T_INT, frame);
+		md_interrupt_func(T_INT, frame);
 		return;
 	case T_MISALGNFLT:
 		printf("kernel mode misaligned access exception @ 0x%08x\n",
