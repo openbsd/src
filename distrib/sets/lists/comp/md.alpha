@@ -172,6 +172,7 @@
 ./usr/libdata/ldscripts/elf64alpha.xr
 ./usr/libdata/ldscripts/elf64alpha.xs
 ./usr/libdata/ldscripts/elf64alpha.xu
+./usr/libdata/ldscripts/elf64alpha.xz
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/umct.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/umidi_quirks.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/usb/umidireg.ph
