@@ -15,7 +15,7 @@
 .\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 .\" SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.5,v 1.15 2001/08/22 18:29:29 heko Exp $
+.\" $OpenBSD: crontab.5,v 1.16 2001/08/22 23:14:27 hugh Exp $
 .\"
 .Dd June 8, 1999
 .Dt CRONTAB 5
@@ -173,7 +173,7 @@ command is very much the V7 standard, with a number of
 upward-compatible extensions.
 Lines in the system
 .Nm
-have seven fields in the form:
+have six fixed fields plus a command in the form:
 .Bd -ragged -offset indent
 .Ar minute
 .Ar hour
@@ -184,9 +184,9 @@ have seven fields in the form:
 .Ar command
 .Ed
 .Pp
-while lines in a user
+While lines in a user
 .Nm
-have six fields in the form:
+have five fixed fields plus a command in the form:
 .Bd -ragged -offset indent
 .Ar minute
 .Ar hour
@@ -197,6 +197,7 @@ have six fields in the form:
 .Ed
 .Pp
 Fields are separated by blanks or tabs.
+The command may be one or more fields long.
 The allowed values for the fields are:
 .Pp
 .Bl -tag -width "day-of-month" -compact -offset indent
