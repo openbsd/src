@@ -1,4 +1,4 @@
-/*	$OpenBSD: pss.c,v 1.14 1998/05/08 18:37:22 csapuntz Exp $ */
+/*	$OpenBSD: pss.c,v 1.15 1998/05/13 10:25:07 provos Exp $ */
 /*	$NetBSD: pss.c,v 1.38 1998/01/12 09:43:44 thorpej Exp $	*/
 
 /*
@@ -726,7 +726,7 @@ pssprobe(parent, self, aux)
     int iobase = ia->ia_iobase;
     
     if (!PSS_BASE_VALID(iobase)) {
-	printf("pss: configured iobase %x invalid\n", iobase);
+	DPRINTF(("pss: configured iobase %x invalid\n", iobase));
 	return 0;
     }
 
@@ -770,24 +770,24 @@ pss_found:
 		break;
 	}
 	if (i == 16) {
-	    printf("pss: unable to locate free IRQ channel\n");
+	    DPRINTF(("pss: unable to locate free IRQ channel\n"));
 	    return 0;
 	}
 	else {
 	    ia->ia_irq = i;
-	    printf("pss: found IRQ %d free\n", i);
+	    DPRINTF(("pss: found IRQ %d free\n", i));
 	}
     }
     else {
 	if (pss_testirq(sc, ia->ia_irq) == 0) {
-	    printf("pss: configured IRQ unavailable (%d)\n", ia->ia_irq);
+	    DPRINTF(("pss: configured IRQ unavailable (%d)\n", ia->ia_irq));
 	    return 0;
 	}
     }
 
     /* XXX Need to deal with DRQUNK */
     if (pss_testdma(sc, ia->ia_drq) == 0) {
-	printf("pss: configured DMA channel unavailable (%d)\n", ia->ia_drq);
+	DPRINTF(("pss: configured DMA channel unavailable (%d)\n", ia->ia_drq));
 	return 0;
     }
       
@@ -851,7 +851,7 @@ spprobe(parent, match, aux)
 	    }
 	}
 	if (i == 12) {
-	    printf("sp: unable to locate free IRQ for WSS\n");
+	    DPRINTF(("sp: unable to locate free IRQ for WSS\n"));
 	    return 0;
 	}
 	else {
@@ -863,7 +863,7 @@ spprobe(parent, match, aux)
     else {
 	sc->sc_irq = cf->cf_irq;
 	if (pss_testirq(pc, sc->sc_irq) == 0) {
-	    printf("sp: configured IRQ unavailable (%d)\n", sc->sc_irq);
+	    DPRINTF(("sp: configured IRQ unavailable (%d)\n", sc->sc_irq));
 	    return 0;
 	}
     }
@@ -877,7 +877,7 @@ spprobe(parent, match, aux)
 	    }
 	}
 	if (i == 4) {
-	    printf("sp: unable to locate free DMA channel for WSS\n");
+	    DPRINTF(("sp: unable to locate free DMA channel for WSS\n"));
 	    return 0;
 	}
 	else {
@@ -887,7 +887,7 @@ spprobe(parent, match, aux)
     }
     else {
 	if (pss_testdma(pc, sc->sc_drq) == 0) {
-	    printf("sp: configured DMA channel unavailable (%d)\n", sc->sc_drq);
+	    DPRINTF(("sp: configured DMA channel unavailable (%d)\n", sc->sc_drq));
 	    return 0;
 	}
 	sc->sc_drq = cf->cf_drq;
@@ -896,7 +896,7 @@ spprobe(parent, match, aux)
 
     /* Set WSS config registers */
     if ((bits = wss_interrupt_bits[sc->sc_irq]) == 0xff) {
-	printf("sp: invalid interrupt configuration (irq=%d)\n", sc->sc_irq);
+	DPRINTF(("sp: invalid interrupt configuration (irq=%d)\n", sc->sc_irq));
 	return 0;
     }
 

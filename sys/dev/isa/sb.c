@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.14 1998/04/26 21:02:56 provos Exp $	*/
+/*	$OpenBSD: sb.c,v 1.15 1998/05/13 10:25:10 provos Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -101,6 +101,13 @@ struct audio_hw_if sb_hw_if = {
 	sbdsp_get_props,
 };
 
+#ifdef AUDIO_DEBUG
+#define DPRINTF(x)	if (sbdebug) printf x
+int	sbdebug = 0;
+#else
+#define DPRINTF(x)
+#endif
+
 /*
  * Probe / attach routines.
  */
@@ -126,14 +133,14 @@ sbmatch(sc)
 	 */
 	if (ISSBPROCLASS(sc)) {
 		if (!SBP_DRQ_VALID(sc->sc_drq8)) {
-			printf("%s: configured dma chan %d invalid\n",
-			    sc->sc_dev.dv_xname, sc->sc_drq8);
+			DPRINTF(("%s: configured dma chan %d invalid\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq8));
 			return 0;
 		}
 	} else {
 		if (!SB_DRQ_VALID(sc->sc_drq8)) {
-			printf("%s: configured dma chan %d invalid\n",
-			    sc->sc_dev.dv_xname, sc->sc_drq8);
+			DPRINTF(("%s: configured dma chan %d invalid\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq8));
 			return 0;
 		}
 	}
@@ -150,8 +157,8 @@ sbmatch(sc)
 		if (sc->sc_drq16 == -1)
 			sc->sc_drq16 = sc->sc_drq8;
 		if (!SB16_DRQ_VALID(sc->sc_drq16)) {
-			printf("%s: configured dma chan %d invalid\n",
-			    sc->sc_dev.dv_xname, sc->sc_drq16);
+			DPRINTF(("%s: configured dma chan %d invalid\n",
+			    sc->sc_dev.dv_xname, sc->sc_drq16));
 			return 0;
 		}
 	} else
@@ -166,15 +173,13 @@ sbmatch(sc)
 		sbdsp_reset(sc);
 		if (ISSBPROCLASS(sc)) {
 			if (!SBP_IRQ_VALID(sc->sc_irq)) {
-				printf("%s: couldn't auto-detect interrupt\n",
-					sc->sc_dev.dv_xname);
+				DPRINTF(("%s: couldn't auto-detect interrupt\n", sc->sc_dev.dv_xname));
 				return 0;
 			}
 		}
 		else {
 			if (!SB_IRQ_VALID(sc->sc_irq)) {
-				printf("%s: couldn't auto-detect interrupt\n");
-					sc->sc_dev.dv_xname);
+				DPRINTF(("%s: couldn't auto-detect interrupt\n", sc->sc_dev.dv_xname));
 				return 0;
 			}
 		}
@@ -182,14 +187,14 @@ sbmatch(sc)
 #endif
 	if (ISSBPROCLASS(sc)) {
 		if (!SBP_IRQ_VALID(sc->sc_irq)) {
-			printf("%s: configured irq %d invalid\n",
-			    sc->sc_dev.dv_xname, sc->sc_irq);
+			DPRINTF(("%s: configured irq %d invalid\n",
+			    sc->sc_dev.dv_xname, sc->sc_irq));
 			return 0;
 		}
 	} else {
 		if (!SB_IRQ_VALID(sc->sc_irq)) {
-			printf("%s: configured irq %d invalid\n",
-			    sc->sc_dev.dv_xname, sc->sc_irq);
+			DPRINTF(("%s: configured irq %d invalid\n",
+			    sc->sc_dev.dv_xname, sc->sc_irq));
 			return 0;
 		}
 	}
@@ -197,41 +202,40 @@ sbmatch(sc)
 	if (ISSB16CLASS(sc)) {
 		int w, r;
 #if 0
-		printf("%s: old drq conf %02x\n", sc->sc_dev.dv_xname,
-		    sbdsp_mix_read(sc, SBP_SET_DRQ));
-		printf("%s: try drq conf %02x\n", sc->sc_dev.dv_xname,
-		    drq_conf[sc->sc_drq16] | drq_conf[sc->sc_drq8]);
+		DPRINTF(("%s: old drq conf %02x\n", sc->sc_dev.dv_xname,
+		    sbdsp_mix_read(sc, SBP_SET_DRQ)));
+		DPRINTF(("%s: try drq conf %02x\n", sc->sc_dev.dv_xname,
+		    drq_conf[sc->sc_drq16] | drq_conf[sc->sc_drq8]));
 #endif
 		w = drq_conf[sc->sc_drq16] | drq_conf[sc->sc_drq8];
 		sbdsp_mix_write(sc, SBP_SET_DRQ, w);
 		r = sbdsp_mix_read(sc, SBP_SET_DRQ) & 0xeb;
 		if (r != w) {
-			printf("%s: setting drq mask %02x failed, got %02x\n",
-			    sc->sc_dev.dv_xname, w, r);
+			DPRINTF(("%s: setting drq mask %02x failed, got %02x\n", sc->sc_dev.dv_xname, w, r));
 			return 0;
 		}
 #if 0
-		printf("%s: new drq conf %02x\n", sc->sc_dev.dv_xname,
-		    sbdsp_mix_read(sc, SBP_SET_DRQ));
+		DPRINTF(("%s: new drq conf %02x\n", sc->sc_dev.dv_xname,
+		    sbdsp_mix_read(sc, SBP_SET_DRQ)));
 #endif
 
 #if 0
-		printf("%s: old irq conf %02x\n", sc->sc_dev.dv_xname,
-		    sbdsp_mix_read(sc, SBP_SET_IRQ));
-		printf("%s: try irq conf %02x\n", sc->sc_dev.dv_xname,
-		    irq_conf[sc->sc_irq]);
+		DPRINTF(("%s: old irq conf %02x\n", sc->sc_dev.dv_xname,
+		    sbdsp_mix_read(sc, SBP_SET_IRQ)));
+		DPRINTF(("%s: try irq conf %02x\n", sc->sc_dev.dv_xname,
+		    irq_conf[sc->sc_irq]));
 #endif
 		w = irq_conf[sc->sc_irq];
 		sbdsp_mix_write(sc, SBP_SET_IRQ, w);
 		r = sbdsp_mix_read(sc, SBP_SET_IRQ) & 0x0f;
 		if (r != w) {
-			printf("%s: setting irq mask %02x failed, got %02x\n",
-			    sc->sc_dev.dv_xname, w, r);
+			DPRINTF(("%s: setting irq mask %02x failed, got %02x\n",
+			    sc->sc_dev.dv_xname, w, r));
 			return 0;
 		}
 #if 0
-		printf("%s: new irq conf %02x\n", sc->sc_dev.dv_xname,
-		    sbdsp_mix_read(sc, SBP_SET_IRQ));
+		DPRINTF(("%s: new irq conf %02x\n", sc->sc_dev.dv_xname,
+		    sbdsp_mix_read(sc, SBP_SET_IRQ)));
 #endif
 	}
 

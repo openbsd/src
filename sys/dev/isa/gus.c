@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.15 1998/05/08 18:37:21 csapuntz Exp $	*/
+/*	$OpenBSD: gus.c,v 1.16 1998/05/13 10:25:13 provos Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -691,18 +691,18 @@ gusprobe(parent, match, aux)
 
 	/* XXX range check before indexing!! */
 	if (ia->ia_irq == IRQUNK || gus_irq_map[ia->ia_irq] == IRQUNK) {
-		printf("gus: invalid irq %d, card not probed\n", ia->ia_irq);
+		DPRINTF(("gus: invalid irq %d, card not probed\n", ia->ia_irq));
 		return 0;
 	}
 
 	if (ia->ia_drq == DRQUNK || gus_drq_map[ia->ia_drq] == DRQUNK) {
-		printf("gus: invalid drq %d, card not probed\n", ia->ia_drq);
+		DPRINTF(("gus: invalid drq %d, card not probed\n", ia->ia_drq));
 		return 0;
 	}
 
 	if (recdrq != DRQUNK) {
 		if (recdrq > 7 || gus_drq_map[recdrq] == DRQUNK) {
-		   printf("gus: invalid second DMA channel (%d), card not probed\n", recdrq);
+		   DPRINTF(("gus: invalid second DMA channel (%d), card not probed\n", recdrq));
 		   return 0;
 	        }
 	} else

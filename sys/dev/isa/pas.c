@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.15 1998/04/26 21:02:51 provos Exp $	*/
+/*	$OpenBSD: pas.c,v 1.16 1998/05/13 10:25:11 provos Exp $	*/
 /*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ pasprobe(parent, match, aux)
 
         /* ensure we can set this up as a sound blaster */
        	if (!SB_BASE_VALID(ia->ia_iobase)) {
-		printf("pas: configured SB iobase 0x%x invalid\n", ia->ia_iobase);
+		DPRINTF(("pas: configured SB iobase 0x%x invalid\n", ia->ia_iobase));
 		return 0;
 	}
 
@@ -287,7 +287,7 @@ pasprobe(parent, match, aux)
 	/* XXX Need to setup pseudo device */
 	/* XXX What are good io addrs ? */
 	if (iobase != PAS_DEFAULT_BASE) {
-		printf("pas: configured iobase %d invalid\n", iobase);
+		DPRINTF(("pas: configured iobase %d invalid\n", iobase));
 		return 0;
 	}
 #else
@@ -318,7 +318,7 @@ pasprobe(parent, match, aux)
 
 	if (t != id) {
 		/* Not a PAS2 */
-		printf("pas: detected card but PAS2 test failed\n");
+		DPRINTF(("pas: detected card but PAS2 test failed\n"));
 		return 0;
 	}
 	/*XXX*/
@@ -334,7 +334,7 @@ pasprobe(parent, match, aux)
 
         if (sc->model >= 0) {
                 if (ia->ia_irq == IRQUNK) {
-                        printf("pas: sb emulation requires known irq\n");
+                        DPRINTF(("pas: sb emulation requires known irq\n"));
                         return (0);
                 } 
                 pasconf(sc->model, ia->ia_iobase, ia->ia_irq, 1);
@@ -353,8 +353,8 @@ pasprobe(parent, match, aux)
 	/* Map i/o space [we map 24 ports which is the max of the sb and pro */
 	if (bus_space_map(sc->sc_sbdsp.sc_iot, ia->ia_iobase, SBP_NPORT, 0,
 	    &sc->sc_sbdsp.sc_ioh)) {
-		printf("pas: can't map i/o space 0x%x/%d in probe\n",
-		    ia->ia_iobase, SBP_NPORT);
+		DPRINTF(("pas: can't map i/o space 0x%x/%d in probe\n",
+		    ia->ia_iobase, SBP_NPORT));
 		return 0;
 	}
 
@@ -367,7 +367,7 @@ pasprobe(parent, match, aux)
 	 * Cannot auto-discover DMA channel.
 	 */
 	if (!SB_DRQ_VALID(ia->ia_drq)) {
-		printf("pas: configured dma chan %d invalid\n", ia->ia_drq);
+		DPRINTF(("pas: configured dma chan %d invalid\n", ia->ia_drq));
 		goto unmap;
 	}
 #ifdef NEWCONFIG
@@ -378,13 +378,13 @@ pasprobe(parent, match, aux)
 		ia->ia_irq = isa_discoverintr(pasforceintr, aux);
 		sbdsp_reset(&sc->sc_sbdsp);
 		if (!SB_IRQ_VALID(ia->ia_irq)) {
-			printf("pas: couldn't auto-detect interrupt");
+			DPRINTF(("pas: couldn't auto-detect interrupt"));
 			goto unmap;
 		}
 	} else
 #endif
 	if (!SB_IRQ_VALID(ia->ia_irq)) {
-		printf("pas: configured irq chan %d invalid\n", ia->ia_irq);
+		DPRINTF(("pas: configured irq chan %d invalid\n", ia->ia_irq));
 		goto unmap;
 	}
 
