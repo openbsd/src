@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.31 2004/08/06 07:05:16 espie Exp $
+# $OpenBSD: pkg_delete,v 1.32 2004/08/06 07:37:34 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -264,11 +264,12 @@ sub delete
 	    print "problem deleting extra file $realname\n";
 }
 
-package OpenBSD::PackingElement::ExtraDir;
+package OpenBSD::PackingElement::Extradir;
 sub delete
 {
 	my ($self, $state) = @_;
 	return unless $state->{extra};
+	return unless -e $state->{destdir}.$self->fullname();
 	$self->SUPER::delete($state);
 }
 
