@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.60 2004/11/07 01:13:48 dhartmei Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.61 2004/12/08 22:35:13 pascoe Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -873,7 +873,8 @@ fxp_intr(arg)
 
 	while ((statack = CSR_READ_1(sc, FXP_CSR_SCB_STATACK)) != 0) {
 		claimed = 1;
-		rnr = (statack & FXP_SCB_STATACK_RNR) ? 1 : 0;
+		rnr = (statack & (FXP_SCB_STATACK_RNR | 
+		                  FXP_SCB_STATACK_SWI)) ? 1 : 0;
 		/*
 		 * First ACK all the interrupts in this pass.
 		 */
@@ -922,7 +923,8 @@ fxp_intr(arg)
 		 * not ready (RNR) condition exists, get whatever
 		 * packets we can and re-start the receiver.
 		 */
-		if (statack & (FXP_SCB_STATACK_FR | FXP_SCB_STATACK_RNR)) {
+		if (statack & (FXP_SCB_STATACK_FR | FXP_SCB_STATACK_RNR |
+			       FXP_SCB_STATACK_SWI)) {
 			struct mbuf *m;
 			u_int8_t *rfap;
 rcvloop:
@@ -1206,7 +1208,6 @@ fxp_init(xsc)
 	struct fxp_cb_config *cbp;
 	struct fxp_cb_ias *cb_ias;
 	struct fxp_cb_tx *txp;
-	struct mbuf *m;
 	bus_dmamap_t rxmap;
 	int i, prm, allm, s, bufs;
 
@@ -1407,10 +1408,10 @@ fxp_init(xsc)
 		bufs = FXP_NRFABUFS_MIN;
 	if (sc->rx_bufs > bufs) {
 		while (sc->rfa_headm != NULL && sc->rx_bufs-- > bufs) {
-			rxmap = *((bus_dmamap_t *)m->m_ext.ext_buf);
+			rxmap = *((bus_dmamap_t *)sc->rfa_headm->m_ext.ext_buf);
 			bus_dmamap_unload(sc->sc_dmat, rxmap);
 			FXP_RXMAP_PUT(sc, rxmap);
-			sc->rfa_headm = m_free(m);
+			sc->rfa_headm = m_free(sc->rfa_headm);
 		}
 	} else if (sc->rx_bufs < bufs) {
 		int err, tmp_rx_bufs = sc->rx_bufs;
@@ -1428,10 +1429,6 @@ fxp_init(xsc)
 				break;
 	}
 	fxp_scb_wait(sc);
-	rxmap = *((bus_dmamap_t *)sc->rfa_headm->m_ext.ext_buf);
-	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
-	    rxmap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE);
-	fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_START);
 
 	/*
 	 * Set current media.
@@ -1440,6 +1437,16 @@ fxp_init(xsc)
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+	/*
+	 * Request a software generated interrupt that will be used to 
+	 * (re)start the RU processing.  If we direct the chip to start
+	 * receiving from the start of queue now, instead of letting the
+	 * interrupt handler first process all received packets, we run
+	 * the risk of having it overwrite mbuf clusters while they are
+	 * being processed or after they have been returned to the pool.
+	 */
+	CSR_WRITE_1(sc, FXP_CSR_SCB_INTRCNTL, FXP_SCB_INTRCNTL_REQUEST_SWI);
 	splx(s);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpreg.h,v 1.6 2004/08/04 19:42:30 mickey Exp $	*/
+/*	$OpenBSD: fxpreg.h,v 1.7 2004/12/08 22:35:13 pascoe Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -95,6 +95,8 @@
 #define FXP_SCB_COMMAND_RU_LOADHDS	5
 #define FXP_SCB_COMMAND_RU_BASE		6
 #define FXP_SCB_COMMAND_RU_RBDRESUME	7
+
+#define	FXP_SCB_INTRCNTL_REQUEST_SWI	0x02
 
 /*
  * Command block definitions
