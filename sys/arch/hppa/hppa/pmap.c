@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.91 2002/12/19 00:16:20 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.92 2003/01/22 16:59:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -301,15 +301,15 @@ pmap_dump_table(pa_space_t space, vaddr_t sva)
 	pa_space_t sp;
 
 	for (sp = 0; sp <= hppa_sid_max; sp++) {
-		u_int32_t *pd;
 		pt_entry_t *pde, pte;
-		vaddr_t va, pdemask = 1;
+		vaddr_t va, pdemask;
+		u_int32_t *pd;
 
 		if (((int)space >= 0 && sp != space) ||
 		    !(pd = pmap_sdir_get(sp)))
 			continue;
 
-		for (va = sva? sva : 0; va < VM_MAX_KERNEL_ADDRESS;
+		for (pdemask = 1, va = sva? sva: 0; va < VM_MAX_KERNEL_ADDRESS;
 		    va += PAGE_SIZE) {
 			if (pdemask != (va & PDE_MASK)) {
 				pdemask = va & PDE_MASK;
@@ -804,15 +804,15 @@ pmap_remove(pmap, sva, eva)
 {
 	struct pv_entry *pve;
 	pt_entry_t *pde, pte;
+	vaddr_t pdemask;
 	int batch;
-	u_int pdemask;
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE,
 	    ("pmap_remove(%p, 0x%x, 0x%x\n", pmap, sva, eva));
 
 	simple_lock(&pmap->pm_obj.vmobjlock);
 
-	for (batch = 0, pdemask = sva + 1; sva < eva; sva += PAGE_SIZE) {
+	for (batch = 0, pdemask = 1; sva < eva; sva += PAGE_SIZE) {
 		if (pdemask != (sva & PDE_MASK)) {
 			pdemask = sva & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
@@ -874,7 +874,7 @@ pmap_write_protect(pmap, sva, eva, prot)
 
 	simple_lock(&pmap->pm_obj.vmobjlock);
 
-	for(pdemask = sva + 1; sva < eva; sva += PAGE_SIZE) {
+	for(pdemask = 1; sva < eva; sva += PAGE_SIZE) {
 		if (pdemask != (sva & PDE_MASK)) {
 			pdemask = sva & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap->pm_pdir, sva))) {
@@ -1178,7 +1178,7 @@ pmap_kremove(va, size)
 	extern u_int totalphysmem;
 #endif
 	struct pv_entry *pve;
-	vaddr_t eva = va + size, pdemask;
+	vaddr_t eva, pdemask;
 	pt_entry_t *pde, pte;
 
 	DPRINTF(PDB_FOLLOW|PDB_REMOVE,
@@ -1192,7 +1192,7 @@ pmap_kremove(va, size)
 
 	simple_lock(&pmap->pm_obj.vmobjlock);
 
-	for (pdemask = va + 1; va < eva; va += PAGE_SIZE) {
+	for (pdemask = 1, eva = va + size; va < eva; va += PAGE_SIZE) {
 		if (pdemask != (va & PDE_MASK)) {
 			pdemask = va & PDE_MASK;
 			if (!(pde = pmap_pde_get(pmap_kernel()->pm_pdir, va))) {
