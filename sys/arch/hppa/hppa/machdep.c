@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.13 1999/09/03 18:00:46 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.14 1999/09/20 21:40:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -540,7 +540,7 @@ cpu_startup()
 		curbufsize = CLBYTES * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
-			if ((pg = uvm_pagealloc(NULL, 0, NULL)) == NULL)
+			if ((pg = uvm_pagealloc(NULL, 0, NULL, 0)) == NULL)
 				panic("cpu_startup: not enough memory for "
 				      "buffer cache");
 			pmap_enter(kernel_map->pmap, curbuf,
