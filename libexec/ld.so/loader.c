@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.27 2002/03/17 19:02:30 art Exp $ */
+/*	$OpenBSD: loader.c,v 1.28 2002/03/31 21:56:58 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -202,16 +202,18 @@ _dl_boot(const char **argv, const char **envp, const long loff,
 	 * it is responsible for running it's own ctors/dtors
 	 * thus do NOT run the ctors for the executable, all of
 	 * the shared libraries which follow.
+	 * Do not run init code if run from ldd.
 	 */
-	if (_dl_objects->next) {
+	if ((_dl_traceld == NULL) && (_dl_objects->next != NULL)) {
 		_dl_call_init(_dl_objects->next);
 	}
 
 	/*
 	 * Schedule a routine to be run at shutdown, by using atexit.
 	 * cannot call atexit directly from ld.so?
+	 * Do not schedule destructors if run from ldd.
 	 */
-	{
+	if (_dl_traceld == NULL) {
 		const Elf_Sym  *sym;
 		Elf_Addr ooff;
 
