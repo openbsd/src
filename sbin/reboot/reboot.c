@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.c,v 1.14 1998/08/07 20:17:32 deraadt Exp $	*/
+/*	$OpenBSD: reboot.c,v 1.15 1999/07/19 00:10:00 deraadt Exp $	*/
 /*	$NetBSD: reboot.c,v 1.8 1995/10/05 05:36:22 mycroft Exp $	*/
 
 /*
@@ -44,12 +44,13 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: reboot.c,v 1.14 1998/08/07 20:17:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: reboot.c,v 1.15 1999/07/19 00:10:00 deraadt Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/reboot.h>
+#include <sys/fcntl.h>
 #include <signal.h>
 #include <pwd.h>
 #include <errno.h>
@@ -168,13 +169,33 @@ main(argc, argv)
 
 	if (access(_PATH_RCSHUTDOWN, R_OK) != -1) {
 		pid_t pid;
+		struct termios t;
+		int fd;
 
 		switch ((pid = fork())) {
 		case -1:
 			break;
 		case 0:
+			if (revoke(_PATH_CONSOLE) == -1)
+				perror("revoke");
+			if (setsid() == -1)
+				perror("setsid");
+			fd = open(_PATH_CONSOLE, O_RDWR);
+			if (fd == -1)
+				perror("open");
+			dup2(fd, 0);
+			dup2(fd, 1);
+			dup2(fd, 2);
+			if (fd > 2)
+				close(fd);
+
+			/* At a minimum... */
+			tcgetattr(0, &t);
+			t.c_oflag |= (ONLCR | OPOST);
+			tcsetattr(0, TCSANOW, &t);
+
 			execl(_PATH_BSHELL, "sh", _PATH_RCSHUTDOWN, NULL);
-			exit(1);
+			_exit(1);
 		default:
 			waitpid(pid, NULL, 0);
 		}
