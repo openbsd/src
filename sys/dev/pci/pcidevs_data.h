@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.167 1999/07/26 16:41:18 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.168 1999/07/27 06:15:03 matthieu Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2565,6 +2565,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "85C601 EIDE",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_620,
+	    0,
+	    "SIS",
+	    "620 Host-PCI",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
 	    0,
 	    "SIS",
@@ -2635,6 +2641,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "SIS",
 	    "6205",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_530,
+	    0,
+	    "SIS",
+	    "530 VGA",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6326,
