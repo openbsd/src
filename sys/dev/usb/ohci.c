@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.22 2001/06/13 07:43:36 deraadt Exp $ */
+/*	$OpenBSD: ohci.c,v 1.23 2001/09/15 20:57:33 drahn Exp $ */
 /*	$NetBSD: ohci.c,v 1.102 2001/04/01 15:00:29 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -1135,6 +1135,10 @@ ohci_intr1(ohci_softc_t *sc)
 		 * on until the port has been reset.
 		 */
 		ohci_rhsc_able(sc, 0);
+#if defined (__OpenBSD__)
+		/* Do not allow RHSC interrupts > 1 per second */
+		timeout_add(&sc->sc_tmo_rhsc, hz);
+#endif
 	}
 
 	sc->sc_bus.intr_context--;
@@ -1144,6 +1148,13 @@ ohci_intr1(ohci_softc_t *sc)
 	sc->sc_eintrs &= ~intrs;
 
 	return (1);
+}
+
+void
+ohci_rhsc_enable(void *v_sc)
+{
+	ohci_softc_t *sc = v_sc;
+	ohci_rhsc_able(sc, 1);
 }
 
 void

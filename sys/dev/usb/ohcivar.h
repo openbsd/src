@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.12 2001/05/03 02:20:32 aaron Exp $ */
+/*	$OpenBSD: ohcivar.h,v 1.13 2001/09/15 20:57:33 drahn Exp $ */
 /*	$NetBSD: ohcivar.h,v 1.27 2001/02/21 10:19:30 minoura Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -133,6 +133,9 @@ typedef struct ohci_softc {
 
 	device_ptr_t sc_child;
 
+#if defined(__OpenBSD__)
+	struct timeout sc_tmo_rhsc;
+#endif
 	char sc_dying;
 } ohci_softc_t;
 
@@ -142,5 +145,6 @@ int		ohci_intr(void *);
 int		ohci_detach(ohci_softc_t *, int);
 int		ohci_activate(device_ptr_t, enum devact);
 #endif
+Static void		ohci_rhsc_enable(void *sc);
 
 #define MS_TO_TICKS(ms) ((ms) * hz / 1000)
