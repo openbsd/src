@@ -1,5 +1,5 @@
-/*	$OpenBSD: radio.c,v 1.1 2001/10/04 19:18:00 gluk Exp $	*/
-/* $RuOBSD: radio.c,v 1.5 2001/09/30 14:52:49 pva Exp $ */
+/* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
+/* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
 /*
  * Copyright (c) 2001 Maxim Tsyplakov <tm@oganer.net>
@@ -35,6 +35,7 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/radioio.h>
+
 #include <dev/radio_if.h>
 #include <dev/radiovar.h>
 
@@ -86,8 +87,11 @@ radioopen(dev_t dev, int flags, int fmt, struct proc *p)
 	    (sc = radio_cd.cd_devs[unit]) == NULL ||
 	     sc->hw_if == NULL)
 		return (ENXIO); 
+
+	if (sc->hw_if->open != NULL)
+		return (sc->hw_if->open(sc->hw_hdl, flags, fmt, p));
 	else
-		return (sc->hw_if->open(dev, flags, fmt, p));
+		return (0);
 }
 
 int
@@ -96,22 +100,46 @@ radioclose(dev_t dev, int flags, int fmt, struct proc *p)
 	struct radio_softc *sc;
 
 	sc = radio_cd.cd_devs[RADIOUNIT(dev)];
-	return (sc->hw_if->close(dev, flags, fmt, p));
+
+	if (sc->hw_if->close != NULL)
+		return (sc->hw_if->close(sc->hw_hdl, flags, fmt, p));
+	else
+		return (0);
 }
 
 int
 radioioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 {
-	int unit;
 	struct radio_softc *sc;
+	int unit, error;
 
 	unit = RADIOUNIT(dev);
 	if (unit >= radio_cd.cd_ndevs ||
-	    (sc = radio_cd.cd_devs[unit]) == NULL ||
-	     sc->hw_if == NULL)
+	    (sc = radio_cd.cd_devs[unit]) == NULL || sc->hw_if == NULL)
 		return (ENXIO);
-	else
-		return (sc->hw_if->ioctl(dev, cmd, data, flags, p));
+
+	error = EOPNOTSUPP;
+	switch (cmd) {
+	case RIOCGINFO:
+		if (sc->hw_if->get_info)
+			error = (sc->hw_if->get_info)(sc->hw_hdl,
+					(struct radio_info *)data);
+			break;
+	case RIOCSINFO:
+		if (sc->hw_if->set_info)
+			error = (sc->hw_if->set_info)(sc->hw_hdl,
+				(struct radio_info *)data);
+		break;
+	case RIOCSSRCH:
+		if (sc->hw_if->search)
+			error = (sc->hw_if->search)(sc->hw_hdl,
+					*(int *)data);
+		break;
+	default:
+		error = EINVAL;
+	}
+
+	return (error);
 }
 
 /*

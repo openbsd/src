@@ -1,4 +1,5 @@
-/*	$OpenBSD: sf64pcr.c,v 1.1 2001/10/04 20:22:11 gluk Exp $	*/
+/* $OpenBSD: sf64pcr.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
+/* $RuOBSD: sf64pcr.c,v 1.11 2001/12/05 10:19:40 mickey Exp $ */
 
 /*
  * Copyright (c) 2001 Vladimir Popov <jumbo@narod.ru>
@@ -69,6 +70,9 @@
 #define SF64PCR_SIGNAL		0x80
 #define SF64PCR_STEREO		0x80
 
+#define SF64PCR_INFO_STEREO	(1 << 24)
+#define SF64PCR_INFO_SIGNAL	(1 << 25)
+
 #define SF64PCR_CLCK_ON		(1 << 0)
 #define SF64PCR_CLCK_OFF	(0 << 0)
 
@@ -108,25 +112,28 @@
 
 int	sf64pcr_match(struct device *, void *, void *);
 void	sf64pcr_attach(struct device *, struct device * self, void *);
-int	sf64pcr_open(dev_t, int, int, struct proc *);
-int	sf64pcr_close(dev_t, int, int, struct proc *);
-int	sf64pcr_ioctl(dev_t, u_long, caddr_t, int, struct proc *);
+
+int	sf64pcr_get_info(void *, struct radio_info *);
+int	sf64pcr_set_info(void *, struct radio_info *);
+int	sf64pcr_search(void *, int);
 
 /* define our interface to the high-level radio driver */
 struct radio_hw_if sf4r_hw_if = {
-	sf64pcr_open,
-	sf64pcr_close,
-	sf64pcr_ioctl
+	NULL,	/* open */
+	NULL,	/* close */
+	sf64pcr_get_info,
+	sf64pcr_set_info,
+	sf64pcr_search
 };
 
 struct sf64pcr_softc {
 	struct device	dev;
 
-	u_char	mute;
-	u_char	vol;
-	u_long	freq;
-	u_long	stereo;
-	u_long	lock;
+	int	mute;
+	u_int8_t	vol;
+	u_int32_t	freq;
+	u_int32_t	stereo;
+	u_int32_t	lock;
 
 	struct tea5757_t	tea;
 };
@@ -144,11 +151,10 @@ struct cfdriver sf4r_cd = {
  */
 void	sf64pcr_set_mute(struct sf64pcr_softc *);
 
-void	sf64pcr_init(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_long);
-void	sf64pcr_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_long);
-void	sf64pcr_write_bit(bus_space_tag_t, bus_space_handle_t,
-		bus_size_t, u_char);
-u_long	sf64pcr_hw_read(bus_space_tag_t, bus_space_handle_t, bus_size_t);
+void	sf64pcr_init(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
+void	sf64pcr_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
+void	sf64pcr_write_bit(bus_space_tag_t, bus_space_handle_t, bus_size_t, int);
+u_int32_t	sf64pcr_hw_read(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 
 /*
  * PCI initialization stuff
@@ -191,21 +197,9 @@ sf64pcr_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 			csr | PCI_COMMAND_MASTER_ENABLE);
 
-#ifdef RADIO_INIT_VOLU
-	sc->vol = RADIO_INIT_VOLU;
-#else
 	sc->vol = 0;
-#endif /* RADIO_INIT_VOLU */
-#ifdef RADIO_INIT_MUTE
-	sc->mute = RADIO_INIT_MUTE;
-#else
 	sc->mute = 0;
-#endif /* RADIO_INIT_MUTE */
-#ifdef RADIO_INIT_FREQ
-	sc->freq = RADIO_INIT_FREQ;
-#else
 	sc->freq = MIN_FM_FREQ;
-#endif /* RADIO_INIT_FREQ */
 	sc->stereo = TEA5757_STEREO;
 	sc->lock = TEA5757_S030;
 	sc->tea.offset = SF64PCR_PCI_OFFSET;
@@ -220,26 +214,13 @@ sf64pcr_attach(struct device *parent, struct device *self, void *aux)
 	radio_attach_mi(&sf4r_hw_if, sc, &sc->dev);
 }
 
-int
-sf64pcr_open(dev_t dev, int flags, int fmt, struct proc *p)
-{
-	struct sf64pcr_softc *sc;
-	return !(sc = sf4r_cd.cd_devs[0]) ? ENXIO : 0;
-}
-
-int
-sf64pcr_close(dev_t dev, int flags, int fmt, struct proc *p)
-{
-	return 0;
-}
-
 /*
  * Mute/unmute
  */
 void
 sf64pcr_set_mute(struct sf64pcr_softc *sc)
 {
-	u_long mute;
+	u_int16_t mute;
 
 	mute = (sc->mute || !sc->vol) ? SF64PCR_MUTE : SF64PCR_UNMUTE;
 	bus_space_write_2(sc->tea.iot, sc->tea.ioh, sc->tea.offset, mute);
@@ -247,9 +228,9 @@ sf64pcr_set_mute(struct sf64pcr_softc *sc)
 
 void
 sf64pcr_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh,
-		bus_size_t off, u_char bit)
+		bus_size_t off, int bit)
 {
-	u_int data, wren;
+	u_int16_t data, wren;
 
 	wren = SF64PCR_0xF800 | SF64PCR_WREN1_ON | SF64PCR_WREN2_ON;
 	data = bit ? SF64PCR_DATA_ON : SF64PCR_DATA_OFF;
@@ -264,7 +245,7 @@ sf64pcr_write_bit(bus_space_tag_t iot, bus_space_handle_t ioh,
 
 void
 sf64pcr_init(bus_space_tag_t iot, bus_space_handle_t ioh,
-		bus_size_t offset, u_long d)
+		bus_size_t offset, u_int32_t d)
 {
 	d = SF64PCR_WRITE_ONE_CLOCK_LOW;
 
@@ -274,7 +255,7 @@ sf64pcr_init(bus_space_tag_t iot, bus_space_handle_t ioh,
 
 void
 sf64pcr_rset(bus_space_tag_t iot, bus_space_handle_t ioh,
-		bus_size_t offset, u_long d)
+		bus_size_t offset, u_int32_t d)
 {
 	/* Do nothing */
 	return;
@@ -283,10 +264,10 @@ sf64pcr_rset(bus_space_tag_t iot, bus_space_handle_t ioh,
 /*
  * Read TEA5757 shift register
  */
-u_long
+u_int32_t
 sf64pcr_hw_read(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset)
 {
-	u_long res = 0ul;
+	u_int32_t res = 0ul;
 	int rb, ind = 0;
 
 	bus_space_write_2(iot, ioh, offset, SF64PCR_READ_CLOCK_LOW);
@@ -322,75 +303,50 @@ sf64pcr_hw_read(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t offset)
 }
 
 int
-sf64pcr_ioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *pr)
+sf64pcr_get_info(void *v, struct radio_info *ri)
 {
-	struct sf64pcr_softc *sc = sf4r_cd.cd_devs[0];
-	int error = 0;
-	u_long freq;
+	struct sf64pcr_softc *sc = v;
+	u_int32_t buf;
 
-	switch (cmd) {
-	case RIOCGINFO:
-		freq = sf64pcr_hw_read(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
-		*(u_long *)arg = 0;
-		if (freq & (1 << 24))
-			*(u_long *)arg |= !RADIO_INFO_STEREO;
-		if (freq & (1 << 25))
-			*(u_long *)arg |= !RADIO_INFO_SIGNAL;
-		break;
-	case RIOCGMONO:
-		*(u_long *)arg = sc->stereo == TEA5757_STEREO ? 0 : 1;
-		break;
-	case RIOCSMONO:
-		sc->stereo = *(u_long *)arg ? TEA5757_MONO : TEA5757_STEREO;
-		tea5757_set_freq(&sc->tea, sc->lock, sc->stereo, sc->freq);
-		sf64pcr_set_mute(sc);
-		break;
-	case RIOCGCAPS:
-		*(u_long *)arg = CARD_RADIO_CAPS;
-		break;
-	case RIOCGVOLU:
-		*(u_long *)arg = sc->vol ? 255 : 0;
-		break;
-	case RIOCGMUTE:
-		*(u_long *)arg = sc->mute ? 1 : 0;
-		break;
-	case RIOCSVOLU:
-		sc->vol = *(u_long *)arg ? 255 : 0;
-		sf64pcr_set_mute(sc);
-		break;
-	case RIOCSMUTE:
-		sc->mute = *(u_long *)arg ? 1 : 0;
-		sf64pcr_set_mute(sc);
-		break;
-	case RIOCGFREQ:
-		freq = tea5757_decode_freq(sf64pcr_hw_read(sc->tea.iot,
-					sc->tea.ioh, sc->tea.offset));
-		*(u_long *)arg = freq;
-		sc->freq = freq;
-		break;
-	case RIOCSFREQ:
-		sc->freq = tea5757_set_freq(&sc->tea, sc->lock,
-				sc->stereo, *(u_long *)arg);
-		sf64pcr_set_mute(sc);
-		break;
-	case RIOCGLOCK:
-		*(u_long *)arg = tea5757_decode_lock(sc->lock);
-		break;
-	case RIOCSLOCK:
-		sc->lock = tea5757_encode_lock(*(u_char *)arg);
-		tea5757_set_freq(&sc->tea, sc->lock, sc->stereo, sc->freq);
-		sf64pcr_set_mute(sc);
-		break;
-	case RIOCSSRCH:
-		tea5757_search(&sc->tea, sc->lock, sc->stereo, *(u_long *)arg);
-		sf64pcr_set_mute(sc);
-		break;
-	case RIOCSREFF:
-		/* FALLTHROUGH */
-	case RIOCGREFF:
-		/* FALLTHROUGH */
-	default:
-		error = EINVAL; /* not supported */
-	}
-	return (error);
+	ri->mute = sc->mute;
+	ri->volume = sc->vol ? 255 : 0;
+	ri->stereo = sc->stereo == TEA5757_STEREO ? 1 : 0;
+	ri->caps = CARD_RADIO_CAPS;
+	ri->rfreq = 0;
+	ri->lock = tea5757_decode_lock(sc->lock);
+
+	buf = sf64pcr_hw_read(sc->tea.iot, sc->tea.ioh, sc->tea.offset);
+	ri->freq  = sc->freq = tea5757_decode_freq(buf);
+	ri->info  = buf & SF64PCR_INFO_SIGNAL ? 0 : RADIO_INFO_SIGNAL;
+	ri->info |= buf & SF64PCR_INFO_STEREO ? 0 : RADIO_INFO_STEREO;
+
+	return (0);
+}
+
+int
+sf64pcr_set_info(void *v, struct radio_info *ri)
+{
+
+	struct sf64pcr_softc *sc = v;
+
+	sc->mute = ri->mute ? 1 : 0;
+	sc->vol = ri->volume ? 255 : 0;
+	sc->stereo = ri->stereo ? TEA5757_STEREO: TEA5757_MONO;
+	sc->lock = tea5757_encode_lock(ri->lock);
+	ri->freq = sc->freq = tea5757_set_freq(&sc->tea,
+		sc->lock, sc->stereo, ri->freq);
+	sf64pcr_set_mute(sc);
+
+	return (0);
+}
+
+int
+sf64pcr_search(void *v, int f)
+{
+	struct sf64pcr_softc *sc = v;
+
+	tea5757_search(&sc->tea, sc->lock, sc->stereo, f);
+	sf64pcr_set_mute(sc);
+
+	return (0);
 }

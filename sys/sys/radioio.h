@@ -1,5 +1,5 @@
-/*	$OpenBSD: radioio.h,v 1.1 2001/10/04 19:17:59 gluk Exp $	*/
-/* $RuOBSD: radioio.h,v 1.3 2001/09/29 17:10:16 pva Exp $ */
+/* $OpenBSD: radioio.h,v 1.2 2001/12/05 10:27:05 mickey Exp $ */
+/* $RuOBSD: radioio.h,v 1.4 2001/10/18 16:51:36 pva Exp $ */
 
 /*
  * Copyright (c) 2001 Maxim Tsyplakov <tm@oganer.net>,
@@ -30,11 +30,21 @@
 #ifndef _SYS_RADIOIO_H_
 #define _SYS_RADIOIO_H_
 
+#include <sys/param.h>
+
 #define MIN_FM_FREQ	87500
 #define MAX_FM_FREQ	108000
 
 #define IF_FREQ	10700
 
+struct radio_info {
+	int	mute;
+	int	volume;
+	int	stereo;
+	int	rfreq;	/* reference frequency */
+	int	lock;	/* locking field strength during an automatic search */
+	u_int32_t	freq;	/* in kHz */
+	u_int32_t	caps;	/* card capabilities */
 #define RADIO_CAPS_DETECT_STEREO	(1<<0)
 #define RADIO_CAPS_DETECT_SIGNAL	(1<<1)
 #define RADIO_CAPS_SET_MONO		(1<<2)
@@ -45,25 +55,14 @@
 #define RADIO_CAPS_RESERVED1		(1<<7)
 #define RADIO_CAPS_RESERVED2		(0xFF<<8)
 #define RADIO_CARD_TYPE			(0xFF<<16)
-
+	u_int32_t	info;
 #define RADIO_INFO_STEREO		(1<<0)
 #define RADIO_INFO_SIGNAL		(1<<1)
+};
 
 /* Radio device operations */
-#define RIOCSMUTE	_IOW('R', 21, u_long) /* set mute/unmute */
-#define RIOCGMUTE	_IOR('R', 21, u_long) /* get mute state */
-#define RIOCGVOLU	_IOR('R', 22, u_long) /* get volume */
-#define RIOCSVOLU	_IOW('R', 22, u_long) /* set volume */
-#define RIOCGMONO	_IOR('R', 23, u_long) /* get mono/stereo */
-#define RIOCSMONO	_IOW('R', 23, u_long) /* toggle mono/stereo */
-#define RIOCGFREQ	_IOR('R', 24, u_long) /* get frequency (in kHz) */
-#define RIOCSFREQ	_IOW('R', 24, u_long) /* set frequency (in kHz) */
-#define RIOCSSRCH	_IOW('R', 25, u_long) /* search up/down */
-#define RIOCGCAPS	_IOR('R', 26, u_long) /* get card capabilities */
-#define RIOCGINFO	_IOR('R', 27, u_long) /* get generic information */
-#define RIOCSREFF	_IOW('R', 28, u_long) /* set reference frequency */
-#define RIOCGREFF	_IOR('R', 28, u_long) /* get reference frequency */
-#define RIOCSLOCK	_IOW('R', 29, u_long) /* set lock sensetivity */
-#define RIOCGLOCK	_IOR('R', 29, u_long) /* get lock sensetivity */
+#define RIOCGINFO	_IOR('R', 21, struct radio_info) /* get info */
+#define RIOCSINFO	_IOWR('R', 22, struct radio_info) /* set info */
+#define RIOCSSRCH	_IOW('R', 23, int) /* search up/down */
 
 #endif /* _SYS_RADIOIO_H_ */

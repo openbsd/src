@@ -1,5 +1,5 @@
-/*	$OpenBSD: aztech.c,v 1.1 2001/10/04 20:15:42 gluk Exp $	*/
-/* $RuOBSD: aztech.c,v 1.8 2001/10/04 18:51:50 pva Exp $ */
+/* $OpenBSD: aztech.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
+/* $RuOBSD: aztech.c,v 1.11 2001/10/20 13:23:47 pva Exp $ */
 
 /*
  * Copyright (c) 2001 Maxim Tsyplakov <tm@oganer.net>,
@@ -75,24 +75,27 @@
 
 int	az_probe(struct device *, void *, void *);
 void	az_attach(struct device *, struct device * self, void *);
-int	az_open(dev_t, int, int, struct proc *);
-int	az_close(dev_t, int, int, struct proc *);
-int	az_ioctl(dev_t, u_long, caddr_t, int, struct proc *);
+
+int	az_get_info(void *, struct radio_info *);
+int	az_set_info(void *, struct radio_info *);
 
 struct radio_hw_if az_hw_if = {
-	az_open,
-	az_close,
-	az_ioctl
+	NULL,	/* open */
+	NULL,	/* close */
+	az_get_info,
+	az_set_info,
+	NULL
 };
 
 struct az_softc {
 	struct device	sc_dev;
 
-	u_long		sc_freq;
-	u_long		sc_rf;
-	u_char		sc_vol;
-	u_char		sc_muted;
-	u_long		sc_stereo;
+	int		mute;
+	u_int8_t	vol;
+	u_int32_t	freq;
+	u_int32_t	rf;
+	u_int32_t	stereo;
+
 	struct lm700x_t	lm;
 };
 
@@ -106,14 +109,14 @@ struct cfdriver az_cd = {
 
 u_int	az_find(bus_space_tag_t, bus_space_handle_t);
 void	az_set_mute(struct az_softc *);
-void	az_set_freq(struct az_softc *, u_long);
-u_char	az_state(bus_space_tag_t, bus_space_handle_t);
+void	az_set_freq(struct az_softc *, u_int32_t);
+u_int8_t	az_state(bus_space_tag_t, bus_space_handle_t);
 
-void	az_lm700x_init(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_long);
-void	az_lm700x_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_long);
+void	az_lm700x_init(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
+void	az_lm700x_rset(bus_space_tag_t, bus_space_handle_t, bus_size_t, u_int32_t);
 
-u_char	az_conv_vol(u_char);
-u_char	az_unconv_vol(u_char);
+u_int8_t	az_conv_vol(u_int8_t);
+u_int8_t	az_unconv_vol(u_int8_t);
 
 int
 az_probe(struct device *parent, void *self, void *aux)
@@ -148,23 +151,11 @@ az_attach(struct device *parent, struct device *self, void *aux)
 	struct isa_attach_args *ia = aux;
 
 	sc->lm.iot = ia->ia_iot;
-	sc->sc_rf = LM700X_REF_050;
-	sc->sc_stereo = LM700X_STEREO;
-#ifdef RADIO_INIT_MUTE
-	sc->sc_muted = RADIO_INIT_MUTE;
-#else
-	sc->sc_muted = 0;
-#endif /* RADIO_INIT_MUTE */
-#ifdef RADIO_INIT_FREQ
-	sc->sc_freq = RADIO_INIT_FREQ;
-#else
-	sc->sc_freq = MIN_FM_FREQ;
-#endif /* RADIO_INIT_FREQ */
-#ifdef RADIO_INIT_VOL
-	sc->sc_vol = az_conv_vol(RADIO_INIT_VOL);
-#else
-	sc->sc_vol = 0;
-#endif /* RADIO_INIT_VOL */
+	sc->rf = LM700X_REF_050;
+	sc->stereo = LM700X_STEREO;
+	sc->mute = 0;
+	sc->freq = MIN_FM_FREQ;
+	sc->vol = 0;
 
 	/* remap I/O */
 	if (bus_space_map(sc->lm.iot, ia->ia_iobase, ia->ia_iosize,
@@ -184,88 +175,9 @@ az_attach(struct device *parent, struct device *self, void *aux)
 	sc->lm.init = az_lm700x_init;
 	sc->lm.rset = az_lm700x_rset;
 
-	az_set_freq(sc, sc->sc_freq);
+	az_set_freq(sc, sc->freq);
 
 	radio_attach_mi(&az_hw_if, sc, &sc->sc_dev);
-}
-
-int
-az_open(dev_t dev, int flags, int fmt, struct proc *p)
-{
-	struct az_softc *sc;
-	return !(sc = az_cd.cd_devs[0]) ? ENXIO : 0;
-}
-
-int
-az_close(dev_t dev, int flags, int fmt, struct proc *p)
-{
-	return 0;
-}
-
-/*
- * Handle the ioctl for the device
- */
-int
-az_ioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
-{
-	int error;
-	struct az_softc *sc = az_cd.cd_devs[0];
-
-	error = 0;
-	switch (cmd) {
-	case RIOCGMUTE:
-		*(u_long *)data = sc->sc_muted ? 1 : 0;
-		break;
-	case RIOCSMUTE:
-		sc->sc_muted = *(u_long *)data ? 1 : 0;
-		az_set_mute(sc);
-		break;
-	case RIOCGVOLU:
-		*(u_long *)data = az_unconv_vol(sc->sc_vol);
-		break;
-	case RIOCSVOLU:
-		sc->sc_vol = az_conv_vol(*(u_int *)data);
-		az_set_mute(sc);
-		break;
-	case RIOCGMONO:
-		*(u_long *)data = sc->sc_stereo == LM700X_STEREO ? 0 : 1;
-		break;
-	case RIOCSMONO:
-		sc->sc_stereo = *(u_long *)data ? LM700X_MONO : LM700X_STEREO;
-		az_set_freq(sc, sc->sc_freq);
-		break;
-	case RIOCGFREQ:
-		*(u_long *)data = sc->sc_freq;
-		break;
-	case RIOCSFREQ:
-		az_set_freq(sc, *(u_long *)data);
-		break;
-	case RIOCGCAPS:
-		*(u_long *)data = AZTECH_CAPABILITIES;
-		break;
-	case RIOCGINFO: /* Get Info */
-		*(u_long *)data = 0x03 &
-			(3 ^ az_state(sc->lm.iot, sc->lm.ioh));
-		break;
-	case RIOCSREFF:
-		sc->sc_rf = lm700x_encode_ref(*(u_char *)data);
-		az_set_freq(sc, sc->sc_freq);
-		break;
-	case RIOCGREFF:
-		*(u_long *)data = lm700x_decode_ref(sc->sc_rf);
-		break;
-	case RIOCSSRCH:
-		/* FALLTHROUGH */
-	case RIOCSLOCK:
-		/* FALLTHROUGH */
-	case RIOCGLOCK:
-		/* NOT SUPPORTED */
-		error = ENODEV;
-		break;
-	default:
-		error = EINVAL;
-	}
-	return (error);
 }
 
 /*
@@ -275,29 +187,29 @@ void
 az_set_mute(struct az_softc *sc)
 {
 	bus_space_write_1(sc->lm.iot, sc->lm.ioh, 0,
-	    sc->sc_muted ? 0 : sc->sc_vol);
+	    sc->mute ? 0 : sc->vol);
 	DELAY(6);
 	bus_space_write_1(sc->lm.iot, sc->lm.ioh, 0,
-	    sc->sc_muted ? 0 : sc->sc_vol);
+	    sc->mute ? 0 : sc->vol);
 }
 
 void
-az_set_freq(struct az_softc *sc, u_long nfreq)
+az_set_freq(struct az_softc *sc, u_int32_t nfreq)
 {
-	u_char vol;
-	u_long reg;
+	u_int8_t vol;
+	u_int32_t reg;
 
-	vol = sc->sc_muted ? 0 : sc->sc_vol;
+	vol = sc->mute ? 0 : sc->vol;
 
 	if (nfreq > MAX_FM_FREQ)
 		nfreq = MAX_FM_FREQ;
 	if (nfreq < MIN_FM_FREQ)
 		nfreq = MIN_FM_FREQ;
 
-	sc->sc_freq = nfreq;
+	sc->freq = nfreq;
 
-	reg = lm700x_encode_freq(nfreq, sc->sc_rf);
-	reg |= sc->sc_stereo | sc->sc_rf | LM700X_DIVIDER_FM;
+	reg = lm700x_encode_freq(nfreq, sc->rf);
+	reg |= sc->stereo | sc->rf | LM700X_DIVIDER_FM;
 
 	lm700x_hardware_write(&sc->lm, reg, vol);
 
@@ -307,18 +219,18 @@ az_set_freq(struct az_softc *sc, u_long nfreq)
 /*
  * Return state of the card - tuned/not tuned, mono/stereo
  */
-u_char
+u_int8_t
 az_state(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
-	return bus_space_read_1(iot, ioh, 0) & 3;
+	return (3 ^ bus_space_read_1(iot, ioh, 0)) & 3;
 }
 
 /*
  * Convert volume to hardware representation.
  * The card uses bits 00000x0x to set volume.
  */
-u_char
-az_conv_vol(u_char vol)
+u_int8_t
+az_conv_vol(u_int8_t vol)
 {
 	if (vol < VOLUME_RATIO(1))
 		return 0;
@@ -333,8 +245,8 @@ az_conv_vol(u_char vol)
 /*
  * Convert volume from hardware representation
  */
-u_char
-az_unconv_vol(u_char vol)
+u_int8_t
+az_unconv_vol(u_int8_t vol)
 {
 	switch (vol) {
 	case 0:
@@ -364,10 +276,10 @@ az_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 	sc.lm.rsetdata = AZ_DATA_ON | AZ_CLCK_ON | AZ_WREN_OFF;
 	sc.lm.init = az_lm700x_init;
 	sc.lm.rset = az_lm700x_rset;
-	sc.sc_rf = LM700X_REF_050;
-	sc.sc_muted = 0;
-	sc.sc_stereo = LM700X_STEREO;
-	sc.sc_vol = 0;
+	sc.rf = LM700X_REF_050;
+	sc.mute = 0;
+	sc.stereo = LM700X_STEREO;
+	sc.vol = 0;
 
 	/*
 	 * Scan whole FM range. If there is a card it'll
@@ -383,7 +295,7 @@ az_find(bus_space_tag_t iot, bus_space_handle_t ioh)
 
 void
 az_lm700x_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
-		u_long data)
+		u_int32_t data)
 {
 	/* Do nothing */
 	return;
@@ -391,7 +303,42 @@ az_lm700x_init(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
 
 void
 az_lm700x_rset(bus_space_tag_t iot, bus_space_handle_t ioh, bus_size_t off,
-		u_long data)
+		u_int32_t data)
 {
 	bus_space_write_1(iot, ioh, off, data);
+}
+
+int
+az_get_info(void *v, struct radio_info *ri)
+{
+	struct az_softc *sc = v;
+
+	ri->mute = sc->mute;
+	ri->volume = az_unconv_vol(sc->vol);
+	ri->stereo = sc->stereo == LM700X_STEREO ? 1 : 0;
+	ri->caps = AZTECH_CAPABILITIES;
+	ri->rfreq = lm700x_decode_ref(sc->rf);
+	ri->info = az_state(sc->lm.iot, sc->lm.ioh);
+	ri->freq = sc->freq;
+
+	/* UNSUPPORTED */
+	ri->lock = 0;
+
+	return (0);
+}
+
+int
+az_set_info(void *v, struct radio_info *ri)
+{
+	struct az_softc *sc = v;
+
+	sc->mute = ri->mute ? 1 : 0;
+	sc->vol = az_conv_vol(ri->volume);
+	sc->stereo = ri->stereo ? LM700X_STEREO : LM700X_MONO;
+	sc->rf = lm700x_encode_ref(ri->rfreq);
+
+	az_set_freq(sc, ri->freq);
+	az_set_mute(sc);
+
+	return (0);
 }
