@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.28 2003/01/24 00:51:52 miod Exp $ */
+/*	$OpenBSD: pmap.h,v 1.29 2003/01/24 09:57:41 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -17,34 +17,25 @@
 
 #include <machine/mmu.h>		/* batc_template_t, BATC_MAX, etc.*/
 #include <machine/pcb.h>		/* pcb_t, etc.*/
-#include <machine/psl.h>		/* get standard goodies		*/
-
-typedef sdt_entry_t *sdt_ptr_t;
 
 /*
  * PMAP structure
  */
-typedef struct pmap *pmap_t;
 
 /* #define PMAP_USE_BATC */
 struct pmap {
-	sdt_ptr_t		sdt_paddr;	/* physical pointer to sdt */
-	sdt_ptr_t		sdt_vaddr;	/* virtual pointer to sdt */
-	int			ref_count;	/* reference count */
-	struct simplelock	lock;
-	struct pmap_statistics	stats;		/* pmap statistics */
+	sdt_entry_t		*pm_stpa;	/* physical pointer to sdt */
+	sdt_entry_t		*pm_stab;	/* virtual pointer to sdt */
+	int			pm_count;	/* reference count */
+	struct simplelock	pm_lock;
+	struct pmap_statistics	pm_stats;	/* pmap statistics */
 
 	/* cpus using of this pmap; NCPU must be <= 32 */
-	u_int32_t		cpus_using;
+	u_int32_t		pm_cpus;
 
 #ifdef	PMAP_USE_BATC
-	batc_template_t		i_batc[BATC_MAX];	/* instruction BATCs */
-	batc_template_t		d_batc[BATC_MAX];	/* data BATCs */
-#endif
-
-#ifdef	DEBUG
-	pmap_t			next;
-	pmap_t			prev;
+	batc_template_t		pm_ibatc[BATC_MAX];	/* instruction BATCs */
+	batc_template_t		pm_dbatc[BATC_MAX];	/* data BATCs */
 #endif
 }; 
 
@@ -57,11 +48,10 @@ struct pmap {
  * pv_head_table. This is used by things like pmap_remove, when we must
  * find and remove all mappings for a particular physical page.
  */
-typedef  struct pv_entry {
-	struct pv_entry	*next;	/* next pv_entry */
-	pmap_t		pmap;	/* pmap where mapping lies */
-	vaddr_t		va;	/* virtual address for mapping */
-} *pv_entry_t;
+/* XXX - struct pv_entry moved to vmparam.h because of include ordering issues */
+
+typedef struct pmap *pmap_t;
+typedef struct pv_entry *pv_entry_t;
 
 #ifdef	_KERNEL
 
@@ -70,11 +60,12 @@ extern	struct pmap	kernel_pmap_store;
 extern	caddr_t		vmmap;
 
 #define	pmap_kernel()			(&kernel_pmap_store)
-#define pmap_resident_count(pmap)	((pmap)->stats.resident_count)
-#define	pmap_wired_count(pmap)		((pmap)->stats.wired_count)
+#define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define pmap_phys_address(frame)        ((paddr_t)(ptoa(frame)))
 
-#define pmap_update(pmap)	/* nothing (yet) */
+#define pmap_copy(dp,sp,d,l,s)		do { /* nothing */ } while (0)
+#define pmap_update(pmap)	do { /* nothing (yet) */ } while (0)
 
 void pmap_bootstrap(vaddr_t, paddr_t *, paddr_t *, vaddr_t *, vaddr_t *);
 void pmap_cache_ctrl(pmap_t, vaddr_t, vaddr_t, u_int);
