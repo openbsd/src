@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.21 2001/02/20 19:39:38 mickey Exp $	*/
+/*	$OpenBSD: xl.c,v 1.22 2001/03/25 06:27:44 csapuntz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1922,6 +1922,7 @@ void xl_init(xsc)
 		printf("xl%d: initialization failed: no "
 			"memory for rx buffers\n", sc->xl_unit);
 		xl_stop(sc);
+		splx(s);
 		return;
 	}
 
