@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator_mainbus.c,v 1.2 2002/06/15 01:32:01 fgsch Exp $	*/
+/*	$OpenBSD: creator_mainbus.c,v 1.3 2002/07/25 19:40:33 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net),
@@ -91,9 +91,9 @@ creator_mainbus_attach(parent, self, aux)
 		goto fail;
 	}
 
-	if (bus_space_map2(sc->sc_bt, 0, ma->ma_reg[FFB_REG_DFB24].ur_paddr,
-	    ma->ma_reg[FFB_REG_DFB24].ur_len, 0, NULL, &sc->sc_pixel_h)) {
-		printf("%s: failed to map dfb24\n", sc->sc_dv.dv_xname);
+	if (bus_space_map(sc->sc_bt, ma->ma_reg[FFB_REG_DFB24].ur_paddr,
+	    ma->ma_reg[FFB_REG_DFB24].ur_len, 0, &sc->sc_pixel_h)) {
+		printf(": failed to map dfb24\n");
 		goto fail;
 	}
 
