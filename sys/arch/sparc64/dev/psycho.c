@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.6 2001/09/26 22:16:55 jason Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.7 2001/09/27 20:45:34 jason Exp $	*/
 /*	$NetBSD: psycho.c,v 1.34 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -80,6 +80,7 @@ int psycho_ue __P((void *));
 int psycho_ce __P((void *));
 int psycho_bus_a __P((void *));
 int psycho_bus_b __P((void *));
+int psycho_bus_error __P((struct psycho_softc *, int));
 int psycho_powerfail __P((void *));
 int psycho_wakeup __P((void *));
 
@@ -622,16 +623,16 @@ psycho_ce(arg)
 	return (1);
 }
 
-int 
-psycho_bus_a(arg)
-	void *arg;
+int
+psycho_bus_error(sc, bus)
+	struct psycho_softc *sc;
+	int bus;
 {
-	struct psycho_softc *sc = (struct psycho_softc *)arg;
 	struct psychoreg *regs = sc->sc_regs;
 	u_int64_t afsr, afar, bits;
 
-	afar = regs->psy_pcictl[0].pci_afar;
-	afsr = regs->psy_pcictl[0].pci_afsr;
+	afar = regs->psy_pcictl[bus].pci_afar;
+	afsr = regs->psy_pcictl[bus].pci_afsr;
 
 	bits = afsr & (PSY_PCIAFSR_PMA | PSY_PCIAFSR_PTA | PSY_PCIAFSR_PTRY |
 	    PSY_PCIAFSR_PPERR | PSY_PCIAFSR_SMA | PSY_PCIAFSR_STA |
@@ -643,11 +644,22 @@ psycho_bus_a(arg)
 	/*
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
-	printf("%s: PCI bus A error AFAR %llx AFSR %llx\n",
-	    sc->sc_dev.dv_xname, afar, afsr);
+	printf("%s: PCI bus %c error AFAR %llx (pa=%llx) AFSR %llx\n",
+	    sc->sc_dev.dv_xname, 'A' + bus, (long long)afar,
+	    (long long)iommu_extract(sc->sc_is, (vaddr_t)afar),
+	    (long long)afsr);
 
-	regs->psy_pcictl[1].pci_afsr = bits;
+	regs->psy_pcictl[bus].pci_afsr = bits;
 	return (1);
+}
+
+int 
+psycho_bus_a(arg)
+	void *arg;
+{
+	struct psycho_softc *sc = (struct psycho_softc *)arg;
+
+	return (psycho_bus_error(sc, 0));
 }
 
 int 
@@ -655,27 +667,8 @@ psycho_bus_b(arg)
 	void *arg;
 {
 	struct psycho_softc *sc = (struct psycho_softc *)arg;
-	struct psychoreg *regs = sc->sc_regs;
-	u_int64_t afsr, afar, bits;
 
-	afar = regs->psy_pcictl[1].pci_afar;
-	afsr = regs->psy_pcictl[1].pci_afsr;
-
-	bits = afsr & (PSY_PCIAFSR_PMA | PSY_PCIAFSR_PTA | PSY_PCIAFSR_PTRY |
-	    PSY_PCIAFSR_PPERR | PSY_PCIAFSR_SMA | PSY_PCIAFSR_STA |
-	    PSY_PCIAFSR_STRY | PSY_PCIAFSR_SPERR);
-
-	if (bits == 0)
-		return (0);
-
-	/*
-	 * It's uncorrectable.  Dump the regs and panic.
-	 */
-	printf("%s: PCI bus B error AFAR %llx AFSR %llx\n",
-	    sc->sc_dev.dv_xname, afar, afsr);
-
-	regs->psy_pcictl[1].pci_afsr = bits;
-	return (1);
+	return (psycho_bus_error(sc, 1));
 }
 
 int 
