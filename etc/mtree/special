@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.25 2000/04/20 08:14:40 angelos Exp $
+#	$OpenBSD: special,v 1.26 2000/10/21 17:46:10 marc Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -73,7 +73,7 @@ uucp		type=dir mode=0755 uname=root gname=wheel optional ignore
 ..	#uucp
 ..	#etc
 
-root		type=dir mode=0755 uname=root gname=wheel
+root		type=dir mode=0700 uname=root gname=wheel
 .cshrc		type=file mode=0644 uname=root gname=wheel
 .klogin		type=file mode=0600 uname=root gname=wheel
 .login		type=file mode=0644 uname=root gname=wheel
