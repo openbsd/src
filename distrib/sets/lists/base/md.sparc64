@@ -2241,3 +2241,4 @@
 ./usr/sbin/fdformat
 ./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/sparc64-openbsd/scsi/scsi_ses.ph

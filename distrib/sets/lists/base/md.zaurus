@@ -2279,3 +2279,4 @@
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/zzz
+./usr/libdata/perl5/site_perl/arm-openbsd/scsi/scsi_ses.ph
