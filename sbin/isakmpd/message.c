@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.101 2005/04/07 18:52:18 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.102 2005/04/07 19:15:58 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -239,12 +239,11 @@ message_free(struct message *msg)
 	if (msg->retrans)
 		timer_remove_event(msg->retrans);
 	if (msg->payload) {
-		for (i = 0; i < payload_index_max; i++) {
+		for (i = 0; i < payload_index_max; i++)
 			while ((payload = TAILQ_FIRST(&msg->payload[i]))) {
 				TAILQ_REMOVE(&msg->payload[i], payload, link);
 				free(payload);
 			}
-		}
 		free(msg->payload);
 	}
 	while (TAILQ_FIRST(&msg->post_send) != 0)
