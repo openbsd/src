@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.45 2005/04/07 00:21:51 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.46 2005/04/07 00:26:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -105,8 +105,8 @@ extern int cpu_hvers;
 #define	HPPA_PGAMASK	0xfff00000
 #define	HPPA_PGAOFF	0x000fffff
 
-#define HPPA_IOBEGIN    0xf0000000
-#define HPPA_IOLEN      0x10000000
+#define	HPPA_IOBEGIN    0xf0000000
+#define	HPPA_IOLEN      0x10000000
 #define	HPPA_PDC_LOW	0xef000000
 #define	HPPA_PDC_HIGH	0xf1000000
 #define	HPPA_IOBCAST	0xfffc0000
