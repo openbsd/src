@@ -1,4 +1,4 @@
-/*	$OpenBSD: basename.c,v 1.6 2003/06/10 22:20:44 deraadt Exp $	*/
+/*	$OpenBSD: basename.c,v 1.7 2005/04/07 07:22:47 otto Exp $	*/
 /*	$NetBSD: basename.c,v 1.9 1995/09/02 05:29:46 jtc Exp $	*/
 
 /*-
@@ -40,9 +40,11 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)basename.c	8.4 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: basename.c,v 1.6 2003/06/10 22:20:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: basename.c,v 1.7 2005/04/07 07:22:47 otto Exp $";
 #endif /* not lint */
 
+#include <err.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,62 +56,34 @@ void usage(void);
 int
 main(int argc, char *argv[])
 {
+	int ch;
 	char *p;
 
 	setlocale(LC_ALL, "");
 
-	if (argc != 2 && argc != 3)
-		usage();
-	argc--;
-	argv++;
-
-	/*
-	 * (1) If string is // it is implementation defined whether steps (2)
-	 *     through (5) are skipped or processed.
-	 *
-	 * (2) If string consists entirely of slash characters, string shall
-	 *     be set to a single slash character.  In this case, skip steps
-	 *     (3) through (5).
-	 */
-	for (p = *argv;; ++p) {
-		if (!*p) {
-			if (p > *argv)
-				(void)putchar('/');
-			(void)putchar('\n');
-			exit(0);
+	while ((ch = getopt(argc, argv, "")) != -1) {
+		switch (ch) {
+		default:
+			usage();
 		}
-		if (*p != '/')
-			break;
 	}
+	argc -= optind;
+	argv += optind;
 
-	/*
-	 * (3) If there are any trailing slash characters in string, they
-	 *     shall be removed.
-	 */
-	for (; *p; ++p)
-		continue;
-	while (*--p == '/')
-		continue;
-	*++p = '\0';
+	if (argc != 1 && argc != 2)
+		usage();
 
+	p = basename(*argv);
+	if (p == NULL)
+		err(1, "%s", *argv);
 	/*
-	 * (4) If there are any slash characters remaining in string, the
-	 *     prefix of string up to an including the last slash character
-	 *     in string shall be removed.
-	 */
-	while (--p >= *argv)
-		if (*p == '/')
-			break;
-	++p;
-
-	/*
-	 * (5) If the suffix operand is present, is not identical to the
-	 *     characters remaining in string, and is identical to a suffix
-	 *     of the characters remaining in string, the suffix suffix
-	 *     shall be removed from string.
+	 * If the suffix operand is present, is not identical to the
+	 * characters remaining in string, and is identical to a suffix
+	 * of the characters remaining in string, the suffix suffix
+	 * shall be removed from string.
 	 */
 	if (*++argv) {
-		int suffixlen, stringlen, off;
+		size_t suffixlen, stringlen, off;
 
 		suffixlen = strlen(*argv);
 		stringlen = strlen(p);
@@ -124,10 +98,11 @@ main(int argc, char *argv[])
 	exit(0);
 }
 
+extern char *__progname;
 void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: basename string [suffix]\n");
+	(void)fprintf(stderr, "usage: %s string [suffix]\n", __progname);
 	exit(1);
 }
