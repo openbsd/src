@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.mvmeppc,v 1.19 2004/11/19 06:41:14 miod Exp $
+#	$OpenBSD: Makefile.mvmeppc,v 1.20 2005/04/07 19:04:00 ian Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -35,7 +35,7 @@ S!=	cd ../../../..; pwd
 .endif
 MVMEPPC=	$S/arch/mvmeppc
 
-INCLUDES=	-I. -I$S/arch -I$S -nostdinc -L${DESTDIR}/usr/include
+INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
 		-D__mvmeppc__
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
