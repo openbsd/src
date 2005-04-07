@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.148 2005/04/07 00:21:51 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.149 2005/04/07 00:24:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1806,6 +1806,9 @@ $trapnowvirt
 	dep	r0, 24, 25, arg0
 	copy	t3, arg1
 
+	copy	arg0, r4
+	copy	arg1, r5
+
 	.import	trap, code
 	ldil	L%trap,t1
 	ldo	R%trap(t1),t1
@@ -1814,10 +1817,10 @@ $trapnowvirt
 	bv,n	r0(t1)
 	nop
 
+	copy	r5, t3
+
 	/* see if curproc have changed */
-	ldw	-HPPA_FRAME_SIZE-TRAPFRAME_SIZEOF+TF_FLAGS(sp), arg0
-	ldo	-HPPA_FRAME_SIZE-TRAPFRAME_SIZEOF(sp), t3
-	extru,<> arg0, TFF_LAST_POS, 1, r0
+	extru,<> r4, TFF_LAST_POS, 1, r0
 	b	$syscall_return
 
 	/* see if curproc have really changed */
@@ -1826,7 +1829,7 @@ $trapnowvirt
 	sub,<>	r0, t2, r0
 	ldw	P_MD_REGS(t2), t3
 
-	/* means curproc have actually changed */
+	/* means curproc has actually changed */
 	b	$syscall_return
 	nop
 EXIT(TLABEL(all))
