@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.84 2005/01/17 20:47:40 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.85 2005/04/07 00:23:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -373,10 +373,14 @@ trap(type, frame)
 			map = &vm->vm_map;
 		}
 
-		/* dig probe[rw]i? insns */
-		if ((opcode & 0xfc001f80) == 0x04001180) {
+		if ((opcode & 0xfc003fc0) == 0x04001340) {
+			/* lpa failure case */
+			frame_regmap(frame, opcode & 0x1f) = 0;
+			frame->tf_ipsw |= PSL_N;
+		} else if ((opcode & 0xfc001f80) == 0x04001180) {
 			int pl;
 
+			/* dig probe[rw]i? insns */
 			if (opcode & 0x2000)
 				pl = (opcode >> 16) & 3;
 			else
