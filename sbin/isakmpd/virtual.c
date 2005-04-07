@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.16 2005/04/06 16:00:20 deraadt Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.17 2005/04/07 18:43:17 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -257,7 +257,7 @@ virtual_bind(const struct sockaddr *addr)
 		free(v);
 		return 0;
 	}
-	((struct transport *)v->main)->virtual = (struct transport *)v;
+	v->main->virtual = (struct transport *)v;
 
 #if defined (USE_NAT_TRAVERSAL)
 	if (!disable_nat_t) {
@@ -282,7 +282,7 @@ virtual_bind(const struct sockaddr *addr)
 			free(v);
 			return 0;
 		}
-		((struct transport *)v->encap)->virtual = (struct transport *)v;
+		v->encap->virtual = (struct transport *)v;
 	}
 #endif
 	v->encap_is_active = 0;
