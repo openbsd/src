@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.61 2004/11/09 19:17:01 claudio Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.62 2005/04/07 00:21:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1019,8 +1019,8 @@ mbattach(parent, self, aux)
 	/*
 	 * Local-Broadcast the HPA to all modules on this bus
 	 */
-	((struct iomod *)LBCAST_ADDR)->io_flex =
-	    (void *)((pdc_hpa.hpa & HPPA_FLEX_MASK) | DMA_ENABLE);
+	((struct iomod *)HPPA_LBCAST)->io_flex =
+	    (pdc_hpa.hpa & HPPA_FLEX_MASK) | DMA_ENABLE;
 
 	sc->sc_hpa = pdc_hpa.hpa;
 
@@ -1040,7 +1040,7 @@ mbattach(parent, self, aux)
 	    PDC_SOFT_POWER_INFO, &pdc_power_info, 0)) {
 		nca.ca_iot = &hppa_bustag;
 		nca.ca_hpa = pdc_power_info.addr;
-		nca.ca_hpamask = HPPA_IOSPACE;
+		nca.ca_hpamask = HPPA_IOBEGIN;
 	}
 	config_found(self, &nca, mbprint);
 #endif
@@ -1048,7 +1048,7 @@ mbattach(parent, self, aux)
 	bzero (&nca, sizeof(nca));
 	nca.ca_hpa = 0;
 	nca.ca_irq = -1;
-	nca.ca_hpamask = HPPA_IOSPACE;
+	nca.ca_hpamask = HPPA_IOBEGIN;
 	nca.ca_iot = &hppa_bustag;
 	nca.ca_dmatag = &hppa_dmatag;
 	nca.ca_dp.dp_bc[0] = nca.ca_dp.dp_bc[1] = nca.ca_dp.dp_bc[2] =
@@ -1073,7 +1073,7 @@ mbattach(parent, self, aux)
 	case HPPA_BOARD_HP780_C230:
 	case HPPA_BOARD_HP780_C240:
 	case HPPA_BOARD_HP785_C360:
-		pdc_scanbus(self, &nca, MAXMODBUS, FP_ADDR);
+		pdc_scanbus(self, &nca, MAXMODBUS, HPPA_FPA);
 	break;
 	default:
 		pdc_scanbus(self, &nca, MAXMODBUS, 0);

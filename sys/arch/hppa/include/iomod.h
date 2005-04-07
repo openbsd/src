@@ -1,4 +1,4 @@
-/*	$OpenBSD: iomod.h,v 1.16 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: iomod.h,v 1.17 2005/04/07 00:21:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -99,25 +99,14 @@
  * SPA space (see below) ranges from 0xF1000000 thru 0xFFFC0000.
  */
 
-#define	HPPA_IOBEGIN	0xF0000000
-#define	HPPA_IOLEN	0x10000000
-#define	PDC_ADDR	0xEF000000	/* explained above */
-#define	IO_ADDR		0xF1000000
-#define	SGC_SLOT1	0xF4000000	/* (hp700) */
-#define	SGC_SLOT2	0xF8000000	/* (hp700) */
-#define	SGC_SIZE	0x02000000	/* (hp700) */
-#define	FP_ADDR		0xFFF80000
-#define	LBCAST_ADDR	0xFFFC0000
-#define	GBCAST_ADDR	0xFFFE0000
-
-#define	PDC_LOW		PDC_ADDR	/* define some ranges */
-#define	PDC_HIGH	IO_ADDR
-#define	FPA_LOW		FP_ADDR
-#define	FPA_HIGH	LBCAST_ADDR
-#define	SPA_LOW		IO_ADDR
-#define	SPA_HIGH	LBCAST_ADDR
-#define	SGC_LOW		SGC_SLOT1
-#define	SGC_HIGH	(SGC_SLOT2+SGC_SIZE)
+#define	PDC_LOW		0xEF000000	/* define some ranges */
+#define	PDC_HIGH	0xF1000000
+#define	FPA_LOW		0xFFF80000
+#define	FPA_HIGH	0xFFFC0000
+#define	SPA_LOW		0xF1000000
+#define	SPA_HIGH	0xFFFC0000
+#define	SGC_LOW		0xF4000000
+#define	SGC_HIGH	0xFA000000
 
 #define	FPA_IOMOD	((FPA_HIGH-FPA_LOW)/sizeof(struct iomod))
 #define	MAXMODBUS	((int)(FPA_IOMOD))	/* maximum modules/bus */
@@ -147,10 +136,10 @@
 struct pagezero {
 	/* [0x000] Initialize Vectors */
 	int	ivec_special;		/* must be zero */
-	int	(*ivec_mempf)(void);	/* powerfail recovery software */
-	int	(*ivec_toc)(void);	/* exec'd after Transfer Of Control */
+	u_int	ivec_mempf;		/* powerfail recovery software */
+	u_int	ivec_toc;		/* exec'd after Transfer Of Control */
 	u_int	ivec_toclen;		/* bytes of ivec_toc code */
-	int	(*ivec_rendz)(void);	/* exec'd after Rendezvous Signal */
+	u_int	ivec_rendz;		/* exec'd after Rendezvous Signal */
 	u_int	ivec_mempflen;		/* bytes of ivec_mempf code */
 	u_int	ivec_resv[2];		/* (reserved) */
 	u_int	ivec_mbz;		/* must be zero */
@@ -208,11 +197,11 @@ struct pagezero {
 	struct boot_err mem_be[8];	/* boot errors (see above) */
 	u_int	mem_free;		/* first free phys. memory location */
 	u_int	mem_hpa;		/* HPA of CPU */
-	int	(*mem_pdc)(void);	/* PDC entry point */
+	u_int	mem_pdc;		/* PDC entry point */
 	u_int	mem_10msec;		/* # of Interval Timer ticks in 10msec*/
 
 	/* [0x390] Initial Memory Module */
-	struct iomod *imm_hpa;		/* HPA of Initial Memory module */
+	u_int	imm_hpa;		/* HPA of Initial Memory module */
 	u_int	imm_soft_boot;		/* 0 == hard boot, 1 == soft boot */
 	u_int	imm_spa_size;		/* bytes of SPA in IMM */
 	u_int	imm_max_mem;		/* bytes of mem in IMM (<= spa_size) */
@@ -321,12 +310,12 @@ struct iomod {
 	u_int	io_eim;		/* (WO) External Interrupt Message address */
 	u_int	io_dc_rw;	/* write address of IODC to read IODC data */
 	u_int	io_ii_rw;	/* read/clear external intrpt msg (bit-26) */
-	caddr_t	io_dma_link;	/* pointer to "next quad" in DMA chain */
+	u_int	io_dma_link;	/* pointer to "next quad" in DMA chain */
 	u_int	io_dma_command;	/* (RO) chain command to exec on "next quad" */
-	caddr_t	io_dma_address;	/* (RO) start of DMA */
+	u_int	io_dma_address;	/* (RO) start of DMA */
 	u_int	io_dma_count;	/* (RO) number of bytes remaining to xfer */
-	caddr_t	io_flex;	/* (WO) HPA flex addr, LSB: bus master flag */
-	caddr_t	io_spa;		/* (WO) SPA space; 0-20:addr, 24-31:iodc_spa */
+	u_int	io_flex;	/* (WO) HPA flex addr, LSB: bus master flag */
+	u_int	io_spa;		/* (WO) SPA space; 0-20:addr, 24-31:iodc_spa */
 	u_int	resv1[2];	/* (reserved) */
 	u_int	io_command;	/* (WO) module commands (see below) */
 	u_int	io_status;	/* (RO) error returns (see below) */
@@ -334,13 +323,13 @@ struct iomod {
 	u_int	io_test;	/* (RO) self-test information */
 /* ARS (Auxiliary Register Set) */
 	u_int	io_err_sadd;	/* (RO) slave bus error or memory error addr */
-	caddr_t	chain_addr;	/* start address of chain RAM */
+	u_int	chain_addr;	/* start address of chain RAM */
 	u_int	sub_mask_clr;	/* ignore intrpts on sub-channel (bitmask) */
 	u_int	sub_mask_set;	/* service intrpts on sub-channel (bitmask) */
 	u_int	diagnostic;	/* diagnostic use (reserved) */
 	u_int	resv2[2];	/* (reserved) */
-	caddr_t	nmi_address;	/* address to send data to when NMI detected */
-	caddr_t	nmi_data;	/* NMI data to be sent */
+	u_int	nmi_address;	/* address to send data to when NMI detected */
+	u_int	nmi_data;	/* NMI data to be sent */
 	u_int	resv3[3];	/* (reserved) */
 	u_int	io_mem_low;	/* bottom of memory address range */
 	u_int	io_mem_high;	/* top of memory address range */

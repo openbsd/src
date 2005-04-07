@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.30 2004/10/26 21:27:08 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.31 2005/04/07 00:21:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -238,9 +238,32 @@
 #define	PDC_SOFT_POWER_INFO	0	/* get info about soft power switch */
 #define	PDC_SOFT_POWER_ENABLE	1	/* enable/disable soft power switch */
 
+#define	PDC_PAT_CELL	64	/* cell operations */
+#define	PDC_PAT_CELL_GETID	0	/* get cell id number */
+#define	PDC_PAT_CELL_GETINFO	1	/* get cell info */
+#define	PDC_PAT_CELL_MODULE	2	/* get module info */
+#define		PDC_PAT_IOVIEW	0
+#define		PDC_PAT_PAVIEW	1
+
+#define	PDC_PAT_CHASSIS	65	/* chassis log ops */
+#define	PDC_PAT_CHASSIS_WRITE	0
+#define	PDC_PAT_CHASSIS_READ	1
+
+#define	PDC_PAT_CPU	67
+
+#define	PDC_PAT_EVENT	68
+
+#define	PDC_PAT_HPMC	70
+
 #define	PDC_PAT_IO	71	/* online services for IO modules */
 #define	PDC_PAT_IO_GET_PCI_RTSZ	15
 #define	PDC_PAT_IO_GET_PCI_RT	16
+
+#define	PDC_PAT_MEM	72
+
+#define	PDC_PAT_NVRAM	73
+
+#define	PDC_PAT_PROTDOM	74
 
 #define	PDC_MEMMAP	128	/* hp700: return page information */
 #define	PDC_MEMMAP_HPA		0	/* map module # to HPA */
@@ -272,7 +295,7 @@
 struct iomod;
 
 typedef int (*pdcio_t)(int, int, ...);
-typedef int (*iodcio_t)(struct iomod *, int, ...);
+typedef int (*iodcio_t)(u_int, int, ...);
 
 /*
  * Commonly used PDC calls and the structures they return.
@@ -409,7 +432,7 @@ struct pdc_coherence {	/* PDC_CACHE, PDC_CACHE_SETCS */
 };
 
 struct pdc_hpa {	/* PDC_HPA */
-	hppa_hpa_t hpa;	/* HPA of processor */
+	u_int	hpa;	/* HPA of processor */
 	int	filler1;
 	u_int	filler2[30];
 };
@@ -512,6 +535,24 @@ struct pdc_sysmap_hpa {		/* PDC_SYSMAP_HPA */
 	u_int	naddrs;
 	u_int	mod;
 	u_int	filler[28];
+};
+
+struct pdc_pat_cell_id {	/* PDC_PAT_CELL_GETID */
+	u_long	id;		/* cell id */
+	u_long	loc;		/* cell location */
+	u_long	filler[14];
+};
+
+struct pdc_pat_cell_module {	/* PDC_PAT_CELL_MODULE */
+	u_long	chpa;		/* config space HPA */
+	u_long	info;		/* module info */
+#define	PDC_PAT_CELL_MODTYPE(t)	(((t) >> 56) & 0xff)
+#define	PDC_PAT_CELL_MODDVI(t)	(((t) >> 48) & 0xff)
+#define	PDC_PAT_CELL_MODIOC(t)	(((t) >> 40) & 0xff)
+#define	PDC_PAT_CELL_MODSIZE(t)	(((t) & 0xffffff) << PAGE_SHIFT)
+	u_long	loc;		/* module location */
+	struct device_path dp;	/* module path */
+	u_long	pad[508];	/* cell module gedoens */
 };
 
 struct pdc_pat_io_num {	/* PDC_PAT_IO */
@@ -633,9 +674,9 @@ struct pz_device {
 #define	pz_bc		pz_dp.dp_bc
 #define	pz_mod		pz_dp.dp_mod
 #define	pz_layers	pz_dp.dp_layers
-	struct iomod *pz_hpa;	/* HPA base address of device */
-	caddr_t	pz_spa;		/* SPA base address (zero if no SPA exists) */
-	iodcio_t pz_iodc_io;	/* entry point of device's driver routines */
+	u_int	pz_hpa;	/* HPA base address of device */
+	u_int	pz_spa;		/* SPA base address (zero if no SPA exists) */
+	u_int	pz_iodc_io;	/* entry point of device's driver routines */
 	short	pz_resv;	/* (reserved) */
 	u_short	pz_class;	/* (see below) */
 } pz_device_t;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.123 2005/03/15 05:09:23 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.124 2005/04/07 00:21:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1188,7 +1188,7 @@ pmap_kenter_pa(va, pa, prot)
 	opte = pmap_pte_get(pde, va);
 	pte = pa | PTE_PROT(TLB_WIRED | TLB_REFTRAP |
 	    pmap_prot(pmap_kernel(), prot));
-	if (pa >= HPPA_IOSPACE)
+	if (pa >= HPPA_IOBEGIN)
 		pte |= PTE_PROT(TLB_UNCACHABLE);
 	pmap_pte_set(pde, va, pte);
 	pmap_kernel()->pm_stats.wired_count++;

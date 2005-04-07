@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.142 2005/03/26 20:04:37 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.143 2005/04/07 00:21:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -339,7 +339,7 @@ hppa_init(start)
 			cksum += *p;
 
 		*p = cksum;
-		PAGE0->ivec_toc = (int (*)(void))hppa_toc;
+		PAGE0->ivec_toc = (u_int)hppa_toc;
 		PAGE0->ivec_toclen = (hppa_toc_end - hppa_toc + 1) * 4;
 	}
 
@@ -351,7 +351,7 @@ hppa_init(start)
 			cksum += *p;
 
 		*p = cksum;
-		PAGE0->ivec_mempf = (int (*)(void))hppa_pfr;
+		PAGE0->ivec_mempf = (u_int)hppa_pfr;
 		PAGE0->ivec_mempflen = (hppa_pfr_end - hppa_pfr + 1) * 4;
 	}
 
@@ -1008,14 +1008,14 @@ boot(howto)
 		printf("System halted!\n");
 		DELAY(2000000);
 		__asm __volatile("stwas %0, 0(%1)"
-		    :: "r" (CMD_STOP), "r" (LBCAST_ADDR + iomod_command));
+		    :: "r" (CMD_STOP), "r" (HPPA_LBCAST + iomod_command));
 	} else {
 		printf("rebooting...");
 		DELAY(2000000);
 		__asm __volatile(".export hppa_reset, entry\n\t"
 		    ".label hppa_reset");
 		__asm __volatile("stwas %0, 0(%1)"
-		    :: "r" (CMD_RESET), "r" (LBCAST_ADDR + iomod_command));
+		    :: "r" (CMD_RESET), "r" (HPPA_LBCAST + iomod_command));
 	}
 
 	for(;;); /* loop while bus reset is comming up */

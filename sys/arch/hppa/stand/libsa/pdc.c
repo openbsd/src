@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.18 2004/04/07 18:24:20 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.19 2005/04/07 00:21:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -155,7 +155,7 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 			if (debug)
 				printf("iodc: rewind ");
 #endif
-			if ((ret = (pzdev->pz_iodc_io)(pzdev->pz_hpa,
+			if ((ret = ((iodcio_t)pzdev->pz_iodc_io)(pzdev->pz_hpa,
 			    IODC_IO_READ, pzdev->pz_spa, pzdev->pz_layers,
 			    pdcbuf, 0, dp->buf, 0, 0)) < 0) {
 #ifdef DEBUG
@@ -177,7 +177,7 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 		     dp->last_read = ret) {
 			twiddle();
 			dp->last_blk += dp->last_read;
-			if ((ret = (pzdev->pz_iodc_io)(pzdev->pz_hpa,
+			if ((ret = ((iodcio_t)pzdev->pz_iodc_io)(pzdev->pz_hpa,
 			    IODC_IO_READ, pzdev->pz_spa, pzdev->pz_layers,
 			    pdcbuf, dp->last_blk, dp->buf, IODC_IOSIZ,
 			    IODC_IOSIZ)) < 0) {
@@ -222,7 +222,7 @@ iodcstrategy(devdata, rw, blk, size, buf, rsize)
 	 */
 	for (; size; size -= ret, buf += ret, blk += ret, xfer += ret) {
 		offset = blk & IOPGOFSET;
-		if ((ret = (pzdev->pz_iodc_io)(pzdev->pz_hpa,
+		if ((ret = ((iodcio_t)pzdev->pz_iodc_io)(pzdev->pz_hpa,
 		    (rw == F_READ? IODC_IO_READ: IODC_IO_WRITE),
 		    pzdev->pz_spa, pzdev->pz_layers, pdcbuf,
 		    blk - offset, dp->buf, IODC_IOSIZ, IODC_IOSIZ)) < 0) {
@@ -279,7 +279,7 @@ pdc_findev(unit, class)
 		printf("pdc_finddev(%d, %x)\n", unit, class);
 #endif
 	iodc = (iodcio_t)(PAGE0->mem_free + IODC_MAXSIZE);
-	io = PAGE0->mem_boot.pz_hpa;
+	io = (struct iomod *)PAGE0->mem_boot.pz_hpa;
 
 	/* quick hack for boot device */
 	if (PAGE0->mem_boot.pz_class == class &&
@@ -337,8 +337,8 @@ pdc_findev(unit, class)
 
 			stp = IODC_INIT_FIRST;
 			do {
-				if ((err = (iodc)(io, stp, io->io_spa, layers,
-				    pdcbuf, 0, 0, 0, 0)) < 0) {
+				if ((err = (iodc)((u_int)io, stp, io->io_spa,
+				    layers, pdcbuf, 0, 0, 0, 0)) < 0) {
 #ifdef DEBUG
 					if (debug && err != PDC_ERR_EOD)
 						printf("IODC_INIT_%s: %d\n",
@@ -368,7 +368,7 @@ pdc_findev(unit, class)
 
 	if (err >= 0) {
 		/* init device */
-		if (0  && (err = (iodc)(io, IODC_INIT_DEV, io->io_spa,
+		if (0  && (err = (iodc)((u_int)io, IODC_INIT_DEV, io->io_spa,
 		    layers, pdcbuf, 0, 0, 0, 0)) < 0) {
 #ifdef DEBUG
 			if (debug)
@@ -389,9 +389,9 @@ pdc_findev(unit, class)
 
 		pz.pz_flags = 0;
 		bcopy(layers, pz.pz_layers, sizeof(pz.pz_layers));
-		pz.pz_hpa = io;
+		pz.pz_hpa = (u_int)io;
 /* XXX		pz.pz_spa = io->io_spa; */
-		pz.pz_iodc_io = iodc;
+		pz.pz_iodc_io = (u_int)iodc;
 		pz.pz_class = class;
 
 		return &pz;

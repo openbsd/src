@@ -1,4 +1,4 @@
-/*	$OpenBSD: uturn.c,v 1.2 2004/09/26 21:54:00 mickey Exp $	*/
+/*	$OpenBSD: uturn.c,v 1.3 2005/04/07 00:21:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -107,6 +107,6 @@ uturnattach(parent, self, aux)
 	((struct iomod *)ioh)->io_control = 0x80;
 
 	nca = *ca;	/* clone from us */
-	nca.ca_hpamask = HPPA_IOSPACE;
+	nca.ca_hpamask = HPPA_IOBEGIN;
 	pdc_scanbus(self, &nca, MAXMODBUS, 0);
 }

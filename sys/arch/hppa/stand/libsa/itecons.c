@@ -1,4 +1,4 @@
-/*	$OpenBSD: itecons.c,v 1.8 2004/04/07 18:24:20 mickey Exp $	*/
+/*	$OpenBSD: itecons.c,v 1.9 2005/04/07 00:21:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -133,8 +133,8 @@ ite_init(cn)
 		      sizeof(struct pz_device));
 	}
 
-	cons_pzdev->pz_iodc_io = cniodc;
-	kbd_pzdev->pz_iodc_io = kyiodc;
+	cons_pzdev->pz_iodc_io = (u_int)cniodc;
+	kbd_pzdev->pz_iodc_io = (u_int)kyiodc;
 #ifdef DEBUG
 	if (!kyiodc)
 		printf("ite_init: no kbd\n");

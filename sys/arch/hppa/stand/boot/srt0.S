@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.9 2004/04/07 18:24:20 mickey Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.10 2005/04/07 00:21:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -60,8 +60,9 @@
 ;
 
 #define	_LOCORE
-#include <machine/iomod.h>
 #include <machine/asm.h>
+#include <machine/cpu.h>
+#include <machine/iomod.h>
 
 /*
  * This is the ending of the begin
@@ -145,7 +146,7 @@ start
  * rtt - restart the box
  */
 LEAF_ENTRY(_rtt)
-	ldil    L%LBCAST_ADDR, %r25
+	ldil    L%HPPA_LBCAST, %r25
 	ldi     CMD_RESET, %r26
 	stw     %r26,R%iomod_command(%r25)
 forever                                 ; Loop until bus reset takes effect.
