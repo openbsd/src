@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.41 2005/04/07 16:47:11 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.42 2005/04/07 20:50:22 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -84,6 +84,7 @@ struct rcs_pdata {
 	char  *rp_buf;
 	size_t rp_blen;
 	char  *rp_bufend;
+	size_t rp_tlen;
 
 	/* pushback token buffer */
 	char   rp_ptok[128];
@@ -107,7 +108,7 @@ struct rcs_foo {
 };
 
 #define RCS_TOKSTR(rfp)   ((struct rcs_pdata *)rfp->rf_pdata)->rp_buf
-#define RCS_TOKLEN(rfp)   ((struct rcs_pdata *)rfp->rf_pdata)->rp_blen
+#define RCS_TOKLEN(rfp)   ((struct rcs_pdata *)rfp->rf_pdata)->rp_tlen
 
 
 #ifdef notyet
@@ -198,6 +199,7 @@ static int   rcs_gettok          (RCSFILE *);
 static int   rcs_pushtok         (RCSFILE *, const char *, int);
 static int   rcs_growbuf         (RCSFILE *);
 static int   rcs_patch_lines     (struct rcs_foo *, struct rcs_foo *);
+static int   rcs_strprint        (const u_char *, size_t, FILE *);
 
 static struct rcs_delta*  rcs_findrev    (RCSFILE *, RCSNUM *);
 static struct rcs_foo*    rcs_splitlines (const char *);
@@ -340,8 +342,7 @@ static int
 rcs_write(RCSFILE *rfp)
 {
 	FILE *fp;
-	char buf[1024], numbuf[64], *cp;
-	size_t rlen, len;
+	char buf[1024], numbuf[64];
 	struct rcs_access *ap;
 	struct rcs_sym *symp;
 	struct rcs_delta *rdp;
@@ -389,11 +390,17 @@ rcs_write(RCSFILE *rfp)
 		fprintf(fp, " strict;");
 	fputc('\n', fp);
 
-	if (rfp->rf_comment != NULL)
-		fprintf(fp, "comment\t@%s@;\n", rfp->rf_comment);
+	if (rfp->rf_comment != NULL) {
+		fputs("comment\t@", fp);
+		rcs_strprint(rfp->rf_comment, strlen(rfp->rf_comment), fp);
+		fputs("@;\n", fp);
+	}
 
-	if (rfp->rf_expand != NULL)
-		fprintf(fp, "expand @ %s @;\n", rfp->rf_expand);
+	if (rfp->rf_expand != NULL) {
+		fputs("expand @", fp);
+		rcs_strprint(rfp->rf_expand, strlen(rfp->rf_expand), fp);
+		fputs("@;\n", fp);
+	}
 
 	fprintf(fp, "\n\n");
 
@@ -411,23 +418,20 @@ rcs_write(RCSFILE *rfp)
 		    numbuf, sizeof(numbuf)));
 	}
 
-	fprintf(fp, "\ndesc\n@%s@\n\n",
-	    (rfp->rf_desc == NULL) ? "" : rfp->rf_desc);
+	fputs("\ndesc\n@", fp);
+	if (rfp->rf_desc != NULL)
+		rcs_strprint(rfp->rf_desc, strlen(rfp->rf_desc), fp);
+	fputs("@\n\n", fp);
 
 	/* deltatexts */
 	TAILQ_FOREACH(rdp, &(rfp->rf_delta), rd_list) {
 		fprintf(fp, "\n%s\n", rcsnum_tostr(rdp->rd_num, numbuf,
 		    sizeof(numbuf)));
-		fprintf(fp, "log\n@%s@\ntext\n@", rdp->rd_log);
-
-		cp = rdp->rd_text;
-		do {
-			len = sizeof(buf);
-			rlen = rcs_stresc(1, cp, buf, &len);
-			fprintf(fp, "%s", buf);
-			cp += rlen;
-		} while (len != 0);
-		fprintf(fp, "@\n\n");
+		fputs("log\n@", fp);
+		rcs_strprint(rdp->rd_log, strlen(rdp->rd_log), fp);
+		fputs("@\ntext\n@", fp);
+		rcs_strprint(rdp->rd_text, rdp->rd_tlen, fp);
+		fputs("@\n\n", fp);
 	}
 	fclose(fp);
 
@@ -1721,6 +1725,7 @@ rcs_parse_deltatext(RCSFILE *rfp)
 		cvs_log(LP_ERRNO, "failed to copy RCS delta text");
 		return (-1);
 	}
+	rdp->rd_tlen = RCS_TOKLEN(rfp);
 
 	return (1);
 }
@@ -2022,6 +2027,7 @@ rcs_gettok(RCSFILE *rfp)
 
 	type = RCS_TOK_ERR;
 	bp = pdp->rp_buf;
+	pdp->rp_tlen = 0;
 	*bp = '\0';
 
 	if (pdp->rp_pttype != RCS_TOK_ERR) {
@@ -2055,6 +2061,7 @@ rcs_gettok(RCSFILE *rfp)
 				break;
 			}
 			*(bp++) = ch;
+			pdp->rp_tlen++;
 			if (bp == pdp->rp_bufend - 1) {
 				len = bp - pdp->rp_buf;
 				if (rcs_growbuf(rfp) < 0) {
@@ -2090,6 +2097,7 @@ rcs_gettok(RCSFILE *rfp)
 				pdp->rp_lines++;
 
 			*(bp++) = ch;
+			pdp->rp_tlen++;
 			if (bp == pdp->rp_bufend - 1) {
 				len = bp - pdp->rp_buf;
 				if (rcs_growbuf(rfp) < 0) {
@@ -2121,6 +2129,7 @@ rcs_gettok(RCSFILE *rfp)
 			}
 			last = ch;
 			*(bp++) = ch;
+			pdp->rp_tlen++;
 		}
 		*bp = '\0';
 	}
@@ -2146,53 +2155,6 @@ rcs_pushtok(RCSFILE *rfp, const char *tok, int type)
 	return (0);
 }
 
-/*
- * rcs_stresc()
- *
- * Performs either escaping or unescaping of the string stored in <str>.
- * The operation is to escape special RCS characters if the <esc> argument
- * is 1, or unescape otherwise.  The result is stored in the <buf> destination
- * buffer, and <blen> must originally point to the size of <buf>.
- * Returns the number of bytes which have been read from the source <str> and
- * operated on.  The <blen> parameter will contain the number of bytes
- * actually copied in <buf>.
- */
-size_t
-rcs_stresc(int esc, const char *str, char *buf, size_t *blen)
-{
-	size_t rlen;
-	const char *sp;
-	char *bp, *bep;
-
-	rlen = 0;
-	bp = buf;
-	bep = buf + *blen - 1;
-
-	for (sp = str; (*sp != '\0') && (bp <= (bep - 1)); sp++) {
-		if (*sp == '@') {
-			if (esc) {
-				if (bp > (bep - 2))
-					break;
-				*(bp++) = '@';
-			} else {
-				sp++;
-				if (*sp != '@') {
-					cvs_log(LP_WARN,
-					    "unknown escape character `%c' in "
-					    "RCS file", *sp);
-					if (*sp == '\0')
-						break;
-				}
-			}
-		}
-
-		*(bp++) = *sp;
-	}
-
-	*bp = '\0';
-	*blen = (bp - buf);
-	return (sp - str);
-}
 
 /*
  * rcs_splitlines()
@@ -2294,6 +2256,35 @@ rcs_growbuf(RCSFILE *rf)
 	pdp->rp_buf = (char *)tmp;
 	pdp->rp_blen += RCS_BUFEXTSIZE;
 	pdp->rp_bufend = pdp->rp_buf + pdp->rp_blen - 1;
+
+	return (0);
+}
+
+/*
+ * rcs_strprint()
+ *
+ * Output an RCS string <str> of size <slen> to the stream <stream>.  Any
+ * '@' characters are escaped.  Otherwise, the string can contain arbitrary
+ * binary data.
+ */
+static int
+rcs_strprint(const u_char *str, size_t slen, FILE *stream)
+{
+	const u_char *ap, *ep, *sp;
+	size_t ret;
+
+	ep = str + slen - 1;
+
+	for (sp = str; sp <= ep;)  {
+		ap = memchr(sp, '@', ep - sp);
+		if (ap == NULL)
+			ap = ep;
+		ret = fwrite(sp, sizeof(u_char), ap - sp + 1, stream);
+
+		if (*ap == '@')
+			putc('@', stream);
+		sp = ap + 1;
+	}
 
 	return (0);
 }

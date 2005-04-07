@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.17 2005/04/06 19:12:08 jfb Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.18 2005/04/07 20:50:22 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -135,19 +135,19 @@ struct rcs_dlist {
 };
 
 struct rcs_delta {
-	RCSNUM      *rd_num;
-	RCSNUM      *rd_next;
-	u_int        rd_flags;
-	struct tm    rd_date;
-	char        *rd_author;
-	char        *rd_state;
-	char        *rd_log;
-	char        *rd_text;
+	RCSNUM    *rd_num;
+	RCSNUM    *rd_next;
+	u_int      rd_flags;
+	struct tm  rd_date;
+	char      *rd_author;
+	char      *rd_state;
+	char      *rd_log;
+	char      *rd_text;
+	size_t     rd_tlen;
 
-	struct rcs_dlist rd_snodes;
-
+	struct rcs_dlist         rd_snodes;
 	TAILQ_HEAD(, rcs_branch) rd_branches;
-	TAILQ_ENTRY(rcs_delta)  rd_list;
+	TAILQ_ENTRY(rcs_delta)   rd_list;
 };
 
 
@@ -207,7 +207,6 @@ void      rcs_kflag_usage  (void);
 int       rcs_kw_expand    (RCSFILE *, u_char *, size_t, size_t *);
 
 BUF*      rcs_patch     (const char *, const char *);
-size_t    rcs_stresc    (int, const char *, char *, size_t *);
 
 RCSNUM*   rcsnum_alloc  (void);
 RCSNUM*   rcsnum_parse  (const char *);
