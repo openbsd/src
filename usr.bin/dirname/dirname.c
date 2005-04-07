@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirname.c,v 1.10 2003/07/10 00:06:50 david Exp $	*/
+/*	$OpenBSD: dirname.c,v 1.11 2005/04/07 07:16:21 otto Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: dirname.c,v 1.10 2003/07/10 00:06:50 david Exp $";                                         
+static char rcsid[] = "$OpenBSD: dirname.c,v 1.11 2005/04/07 07:16:21 otto Exp $";                                         
 #endif /* not lint */                                                      
 
 #include <err.h>
@@ -25,22 +25,41 @@ static char rcsid[] = "$OpenBSD: dirname.c,v 1.10 2003/07/10 00:06:50 david Exp 
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+
+void usage(void);
 
 int
 main(int argc, char *argv[])
 {
+	int ch;
 	char *dir;
-	extern char *__progname;
 
 	setlocale(LC_ALL, "");
 
-	if (argc != 2) {
-		(void)fprintf(stderr, "Usage: %s pathname\n", __progname);
-		exit(1);
+	while ((ch = getopt(argc, argv, "")) != -1) {
+		switch (ch) {
+		default:
+			usage();
+		}
 	}
+	argc -= optind;
+	argv += optind;
 
-	if ((dir = dirname(argv[1])) == NULL)
-		err(1, NULL);
+	if (argc != 1)
+		usage();
+
+	if ((dir = dirname(argv[0])) == NULL)
+		err(1, "%s", argv[0]);
 	puts(dir);
 	exit(0);
+}
+
+extern char *__progname;
+
+void
+usage(void)
+{
+	(void)fprintf(stderr, "Usage: %s pathname\n", __progname);
+	exit(1);
 }
