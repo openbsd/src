@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.42 2005/04/07 20:50:22 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.43 2005/04/07 22:08:57 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -201,7 +201,7 @@ static int   rcs_growbuf         (RCSFILE *);
 static int   rcs_patch_lines     (struct rcs_foo *, struct rcs_foo *);
 static int   rcs_strprint        (const u_char *, size_t, FILE *);
 
-static struct rcs_delta*  rcs_findrev    (RCSFILE *, RCSNUM *);
+static struct rcs_delta*  rcs_findrev    (RCSFILE *, const RCSNUM *);
 static struct rcs_foo*    rcs_splitlines (const char *);
 static void               rcs_freefoo    (struct rcs_foo *);
 
@@ -439,6 +439,38 @@ rcs_write(RCSFILE *rfp)
 
 	return (0);
 }
+
+/*
+ * rcs_head_get()
+ *
+ * Retrieve the revision number of the head revision for the RCS file <file>.
+ */
+const RCSNUM*
+rcs_head_get(RCSFILE *file)
+{
+	return (file->rf_head);
+}
+
+/*
+ * rcs_head_set()
+ *
+ * Set the revision number of the head revision for the RCS file <file> to
+ * <rev>, which must reference a valid revision within the file.
+ */
+int
+rcs_head_set(RCSFILE *file, const RCSNUM *rev)
+{
+	struct rcs_delta *rd;
+
+	if ((rd = rcs_findrev(file, rev)) == NULL)
+		return (-1);
+
+	if (rcsnum_cpy(rev, file->rf_head, 0) < 0)
+		return (-1);
+
+	return (0);
+}
+
 
 /*
  * rcs_branch_get()
@@ -1096,7 +1128,7 @@ rcs_getrevbydate(RCSFILE *rfp, struct tm *date)
  * Returns a pointer to the delta on success, or NULL on failure.
  */
 static struct rcs_delta*
-rcs_findrev(RCSFILE *rfp, RCSNUM *rev)
+rcs_findrev(RCSFILE *rfp, const RCSNUM *rev)
 {
 	u_int cmplen;
 	struct rcs_delta *rdp;
@@ -1827,7 +1859,7 @@ rcs_parse_symbols(RCSFILE *rfp)
 			return (-1);
 		}
 
-		TAILQ_INSERT_HEAD(&(rfp->rf_symbols), symp, rs_list);
+		TAILQ_INSERT_TAIL(&(rfp->rf_symbols), symp, rs_list);
 	}
 
 	return (0);
