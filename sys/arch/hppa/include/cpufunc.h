@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.26 2004/07/01 21:03:33 mickey Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.27 2005/04/07 00:19:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -98,8 +98,8 @@ mtsm(register_t mask) {
 
 #define	fdce(sp,off) __asm __volatile("fdce 0(%0,%1)":: "i" (sp), "r" (off))
 #define	fice(sp,off) __asm __volatile("fice 0(%0,%1)":: "i" (sp), "r" (off))
-#define sync_caches() \
-    __asm __volatile("sync\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop")
+#define sync_caches() __asm __volatile(\
+    "sync\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop\n\tnop":::"memory")
 
 static __inline void
 iitlba(u_int pg, pa_space_t sp, vaddr_t va)
