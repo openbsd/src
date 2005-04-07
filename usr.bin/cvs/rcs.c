@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.40 2005/04/06 19:12:08 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.41 2005/04/07 16:47:11 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -130,7 +130,7 @@ static struct rcs_key {
 	int   rk_flags;
 } rcs_keys[] = {
 	{ "access",   RCS_TOK_ACCESS,   RCS_TOK_ID,     RCS_VOPT     },
-	{ "author",   RCS_TOK_AUTHOR,   RCS_TOK_STRING, 0            },
+	{ "author",   RCS_TOK_AUTHOR,   RCS_TOK_ID,     0            },
 	{ "branch",   RCS_TOK_BRANCH,   RCS_TOK_NUM,    RCS_VOPT     },
 	{ "branches", RCS_TOK_BRANCHES, RCS_TOK_NUM,    RCS_VOPT     },
 	{ "comment",  RCS_TOK_COMMENT,  RCS_TOK_STRING, RCS_VOPT     },
@@ -141,7 +141,7 @@ static struct rcs_key {
 	{ "locks",    RCS_TOK_LOCKS,    RCS_TOK_ID,     0            },
 	{ "log",      RCS_TOK_LOG,      RCS_TOK_STRING, RCS_NOSCOL   },
 	{ "next",     RCS_TOK_NEXT,     RCS_TOK_NUM,    RCS_VOPT     },
-	{ "state",    RCS_TOK_STATE,    RCS_TOK_STRING, RCS_VOPT     },
+	{ "state",    RCS_TOK_STATE,    RCS_TOK_ID,     RCS_VOPT     },
 	{ "strict",   RCS_TOK_STRICT,   0,              0,           },
 	{ "symbols",  RCS_TOK_SYMBOLS,  0,              0            },
 	{ "text",     RCS_TOK_TEXT,     RCS_TOK_STRING, RCS_NOSCOL   },
@@ -1563,7 +1563,7 @@ rcs_parse_delta(RCSFILE *rfp)
 			}
 
 			if (tokstr != NULL)
-				free(tokstr);
+				cvs_strfree(tokstr);
 			tokstr = cvs_strdup(RCS_TOKSTR(rfp));
 			if (tokstr == NULL) {
 				cvs_log(LP_ERRNO,
@@ -1578,14 +1578,14 @@ rcs_parse_delta(RCSFILE *rfp)
 				cvs_log(LP_ERR,
 				    "missing semi-colon after RCS `%s' key",
 				    rk->rk_str);
-				free(tokstr);
+				cvs_strfree(tokstr);
 				rcs_freedelta(rdp);
 				return (-1);
 			}
 
 			if (tok == RCS_TOK_DATE) {
 				if ((datenum = rcsnum_parse(tokstr)) == NULL) {
-					free(tokstr);
+					cvs_strfree(tokstr);
 					rcs_freedelta(rdp);
 					return (-1);
 				}
@@ -1595,7 +1595,7 @@ rcs_parse_delta(RCSFILE *rfp)
 					    "fields",
 					    (datenum->rn_len > 6) ? "too many" :
 					    "missing");
-					free(tokstr);
+					cvs_strfree(tokstr);
 					rcs_freedelta(rdp);
 					rcsnum_free(datenum);
 					return (-1);
@@ -1767,7 +1767,7 @@ rcs_parse_symbols(RCSFILE *rfp)
 		if (type == RCS_TOK_SCOLON)
 			break;
 
-		if (type != RCS_TOK_STRING) {
+		if (type != RCS_TOK_ID) {
 			cvs_log(LP_ERR, "unexpected token `%s' in symbol list",
 			    RCS_TOKSTR(rfp));
 			return (-1);
