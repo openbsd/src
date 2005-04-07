@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.372 2005/04/05 01:00:46 krw Exp $
+#	$OpenBSD: install.sub,v 1.373 2005/04/07 20:47:15 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1152,21 +1152,23 @@ install_mounted_fs() {
 }
 
 install_cdrom() {
-	local _drive _part=c _fstype="-t cd9660"
+	local _drive _part=c _fstype
 
 	get_drive "CD-ROM" "$CDDEVS" || return
 	_drive=$resp
 
-	# Only ask detail questions for non-ISO9660 CD-ROMs.
-	if [[ -z $(disklabel $_drive 2>&1 | grep '^ *c: .*ISO9660') ]]; then
-		unset _fstype
-		get_partition $_drive "cd9660" || return
-		set -- $resp
-		_part=$1
-		[[ -n $2 ]] && _fstype="-t $2"
-	fi
+	set -- $(disklabel $_drive 2>&1 | grep '^ *c: ')
+	case $4 in
+	ISO9660) _fstype=cd9660 ;;
+	UDF)	 _fstype=udf ;;
+	*)	 get_partition $_drive "cd9660" || return
+		 set -- $resp
+		 _part=$1
+		 [[ -n $2 ]] && _fstype=$2
+		;;
+	esac		
 
-	mount $_fstype -o ro /dev/$_drive$_part /mnt2 || return
+	mount -t $_fstype -o ro /dev/$_drive$_part /mnt2 || return
 	install_mounted_fs /mnt2 "$SETDIR"
 	umount -f /mnt2 >/dev/null 2>&1
 }
