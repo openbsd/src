@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.124 2005/04/07 00:21:51 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.125 2005/04/07 13:16:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -438,7 +438,7 @@ pmap_bootstrap(vstart)
 	extern int resvphysmem, etext, __rodata_end, __data_start;
 	extern u_int *ie_mem;
 	extern paddr_t hppa_vtop;
-	vaddr_t va, addr = hppa_round_page(vstart), t;
+	vaddr_t va, addr = hppa_round_page(vstart), eaddr, t;
 	vsize_t size;
 	struct pmap *kpm;
 	int npdes, nkpdes;
@@ -558,9 +558,10 @@ pmap_bootstrap(vstart)
 	}
 
 	resvphysmem = atop(addr);
-	DPRINTF(PDB_INIT, ("physmem: 0x%x - 0x%x\n", resvphysmem, physmem));
+	eaddr = physmem - atop(round_page(MSGBUFSIZE));
+	DPRINTF(PDB_INIT, ("physmem: 0x%x - 0x%x\n", resvphysmem, eaddr));
 	uvm_page_physload(0, physmem,
-	    resvphysmem, physmem, VM_FREELIST_DEFAULT);
+	    resvphysmem, eaddr, VM_FREELIST_DEFAULT);
 
 	/* TODO optimize/inline the kenter */
 	for (va = 0; va < ptoa(physmem); va += PAGE_SIZE) {
