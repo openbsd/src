@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.6 2005/04/03 18:38:28 deraadt Exp $ */
+/*	$OpenBSD: stat.c,v 1.7 2005/04/07 12:18:35 otto Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -39,7 +39,7 @@
 
 #ifndef lint
 static const char rccs_id[] =
-    "$OpenBSD: stat.c,v 1.6 2005/04/03 18:38:28 deraadt Exp $";
+    "$OpenBSD: stat.c,v 1.7 2005/04/07 12:18:35 otto Exp $";
 #endif
 
 #include <sys/types.h>
@@ -58,16 +58,16 @@ static const char rccs_id[] =
 #include <unistd.h>
 
 #define DEF_FORMAT \
-	"%d %i %Sp %l %Su %Sg %r %z \"%Sa\" \"%Sm\" \"%Sc\" \"%SB\" " \
+	"%d %i %Sp %l %Su %Sg %r %z \"%Sa\" \"%Sm\" \"%Sc\" " \
 	"%k %b %#Xf %N"
-#define RAW_FORMAT	"%d %i %#p %l %u %g %r %z %a %m %c %B " \
+#define RAW_FORMAT	"%d %i %#p %l %u %g %r %z %a %m %c " \
 	"%k %b %f %N"
 #define LS_FORMAT	"%Sp %l %Su %Sg %Z %Sm %N%SY"
 #define LSF_FORMAT	"%Sp %l %Su %Sg %Z %Sm %N%T%SY"
 #define SHELL_FORMAT \
 	"st_dev=%d st_ino=%i st_mode=%#p st_nlink=%l " \
 	"st_uid=%u st_gid=%g st_rdev=%r st_size=%z " \
-	"st_atime=%a st_mtime=%m st_ctime=%c st_birthtime=%B " \
+	"st_atime=%a st_mtime=%m st_ctime=%c " \
 	"st_blksize=%k st_blocks=%b st_flags=%f"
 #define LINUX_FORMAT \
 	"  File: \"%N\"%n" \

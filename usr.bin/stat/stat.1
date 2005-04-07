@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stat.1,v 1.8 2005/04/04 13:53:15 jmc Exp $
+.\"	$OpenBSD: stat.1,v 1.9 2005/04/07 12:18:35 otto Exp $
 .\"	$NetBSD: stat.1,v 1.11 2003/05/08 13:07:10 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -299,6 +299,7 @@ The time
 .Ar file
 was last accessed or modified, or when the inode was last changed, or
 the birth time of the inode.
+If the file system does not support birth time, the value is undefined.
 .It Cm z
 The size of
 .Ar file
