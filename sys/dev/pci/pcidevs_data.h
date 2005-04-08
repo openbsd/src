@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.852 2005/04/05 21:27:23 fgsch Exp 
+ *	OpenBSD: pcidevs,v 1.853 2005/04/08 01:44:45 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -6447,6 +6447,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PDC20621",
 	},
 	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP10160,
+	    "ISP10160",
+	},
+	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,
 	    "ISP1020",
 	},
@@ -6459,20 +6463,16 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ISP1080",
 	},
 	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP12160,
+	    "ISP12160",
+	},
+	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1240,
 	    "ISP1240",
 	},
 	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1280,
 	    "ISP1280",
-	},
-	{
-	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP12160,
-	    "ISP12160",
-	},
-	{
-	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP10160,
-	    "ISP10160",
 	},
 	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2100,
@@ -6485,6 +6485,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2300,
 	    "ISP2300",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2312,
+	    "ISP2312",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP6312,
+	    "ISP6312",
 	},
 	{
 	    PCI_VENDOR_QUANTUMDESIGNS, PCI_PRODUCT_QUANTUMDESIGNS_8500,
