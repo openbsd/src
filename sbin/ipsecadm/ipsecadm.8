@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.67 2004/09/26 07:16:54 jaredy Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.68 2005/04/08 18:46:16 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -336,6 +336,9 @@ After this, an IPCA/SA bundle must be created using the
 .Cm group
 command.
 The IPCA must be applied first.
+See
+.Xr ipcomp 4
+for further information on the IPComp protocol.
 .It Cm tcpmd5
 Set up a key for use by the RFC 2385 TCP MD5 option.
 Allowed modifiers are:
@@ -769,6 +772,7 @@ Delete all ESP SAs and their flows and routing information:
 .Sh SEE ALSO
 .Xr netstat 1 ,
 .Xr enc 4 ,
+.Xr ipcomp 4 ,
 .Xr ipsec 4 ,
 .Xr protocols 5 ,
 .Xr services 5 ,

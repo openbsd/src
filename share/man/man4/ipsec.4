@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.58 2005/04/02 00:14:44 jmc Exp $
+.\" $OpenBSD: ipsec.4,v 1.59 2005/04/08 18:46:16 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -113,6 +113,13 @@ AH and ESP is that AH also authenticates portions of the IP
 header of the packet
 (such as the source/destination addresses).
 ESP authenticates only the packet payload.
+.Pp
+A third protocol is available which is highly relevant to IPsec: IPComp.
+IPComp is a protocol used to reduce the size of IP datagrams
+(i.e. it provides compression).
+See
+.Xr ipcomp 4
+for further information.
 .Ss Security Associations (SAs)
 These protocols require certain parameters for each connection, describing
 exactly how the desired protection will be achieved.
@@ -349,6 +356,7 @@ flag (look for ``tdb'' and ``xform'' allocations).
 .Xr icmp 4 ,
 .Xr inet 4 ,
 .Xr ip 4 ,
+.Xr ipcomp 4 ,
 .Xr netintro 4 ,
 .Xr tcp 4 ,
 .Xr udp 4 ,
