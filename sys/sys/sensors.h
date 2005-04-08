@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensors.h,v 1.4 2004/02/10 19:53:34 grange Exp $	*/
+/*	$OpenBSD: sensors.h,v 1.5 2005/04/08 05:01:47 jolan Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -40,7 +40,7 @@ enum sensor_type {
 	SENSOR_WATTHOUR,		/* power capacity */
 	SENSOR_AMPHOUR,			/* power capacity */
 	SENSOR_INDICATOR,		/* boolean indicator */
-	SENSOR_INTEGER			/* generic interger value */
+	SENSOR_INTEGER			/* generic integer value */
 };
 
 /* Sensor data */
