@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.9 2005/04/08 22:02:49 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.10 2005/04/08 22:12:21 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1118,9 +1118,6 @@ ar5k_ar5211_setupTxDesc(hal, desc, packet_length, header_length, type, tx_power,
 
 	tx_desc = (struct ar5k_ar5211_tx_desc*)&desc->ds_ctl0;
 
-	/* Clear descriptor */
-	bzero(tx_desc, sizeof(struct ar5k_ar5211_tx_desc));
-
 	/*
 	 * Validate input
 	 */
@@ -1402,11 +1399,6 @@ ar5k_ar5211_setupRxDesc(hal, desc, size, flags)
 	u_int flags;
 {
 	struct ar5k_ar5211_rx_desc *rx_desc;
-
-	/* Reset descriptor */
-	desc->ds_ctl0 = 0;
-	desc->ds_ctl1 = 0;
-	bzero(&desc->ds_hw[0], sizeof(struct ar5k_ar5211_rx_status));
 
 	rx_desc = (struct ar5k_ar5211_rx_desc*)&desc->ds_ctl0;
 

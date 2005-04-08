@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.21 2005/04/06 09:14:53 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.22 2005/04/08 22:12:21 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1320,6 +1320,7 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 
 	/* setup descriptors */
 	ds = bf->bf_desc;
+	bzero(ds, sizeof(struct ath_desc));
 
 	if (ic->ic_opmode == IEEE80211_M_IBSS && sc->sc_hasveol) {
 		ds->ds_link = bf->bf_daddr;	/* link to self */
@@ -1840,6 +1841,8 @@ ath_rxbuf_init(struct ath_softc *sc, struct ath_buf *bf)
 	 * someplace to write a new frame.
 	 */
 	ds = bf->bf_desc;
+	bzero(ds, sizeof(struct ath_desc));
+
 	ds->ds_link = bf->bf_daddr;	/* link to self */
 	ds->ds_data = bf->bf_segs[0].ds_addr;
 	ath_hal_setuprxdesc(ah, ds
