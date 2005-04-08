@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipcomp.4,v 1.11 2005/01/04 19:55:14 jmc Exp $
+.\" $OpenBSD: ipcomp.4,v 1.12 2005/04/08 18:44:03 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jj@wabbitt.org>
 .\" All rights reserved.
@@ -29,27 +29,23 @@
 .Sh NAME
 .Nm ipcomp
 .Nd IP Payload Compression Protocol
-.Sh NOTE
-.Tn IPComp
-is enabled with the following
+.Sh DESCRIPTION
+IPComp is enabled with the following
 .Xr sysctl 3
 variable in
 .Pa /etc/sysctl.conf :
-.Bl -tag -width xxxxxxxxxxxxxxxxxxxxx
+.Bl -tag -width xxxxxxxxxxxxxxxxxxxxx -offset indent
 .It net.inet.ipcomp.enable
 .El
-.Sh DESCRIPTION
-.Tn IPComp
-is a protocol used to reduce the size of IP datagrams.
+.Pp
+IPComp is a protocol used to reduce the size of IP datagrams.
 It can be used to enhance the communication performance between a pair
 of hosts/gateways, especially on slow links, by compressing the
-datagrams, provided the communicating entities have enough computation
+datagrams, provided the communicating entities have enough computational
 power.
 .Pp
 This protocol is especially useful when encryption or authentication
-is applied to IP datagrams using the
-.Tn IPsec
-protocol (see
+is applied to IP datagrams using the IPsec protocol (see
 .Xr ipsec 4
 for more information about IPsec).
 Encrypting information is increasing its entropy to a point where
@@ -66,7 +62,7 @@ Just like for the other IPsec protocols, IPComp needs some parameters
 for each connection, specifying how the compression should be done
 between the entities.
 The parameters are collected in a structure called an
-IPComp Association or IPCA.
+IPComp Association (IPCA).
 The parameters stored in an IPCA are the destination address and the
 Compression Parameter Index (CPI).
 An IPCA is the pendant of the SA (Security Association) for IPsec.
@@ -119,7 +115,8 @@ displays information about IPComp flows.
 .Xr ip 4 ,
 .Xr ipsec 4 ,
 .Xr netintro 4 ,
-.Xr ipsecadm 8
+.Xr ipsecadm 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
