@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.75 2005/04/08 20:04:57 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.76 2005/04/08 21:09:36 deraadt Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -30,19 +30,7 @@
 # This code was written under funding by Ericsson Radio Systems.
 #
 
-#
-# This makefile is a "pmake" one, i.e. the make variant commonly found in
-# BSD derived systems, where it is indeed named "make".  Other systems
-# may provide this make variant as "pmake" or maybe "bsdmake".
-#
-
-OS=		openbsd
-
-# Compile-time configuration of otherwise optional features
-#FEATURES+=	dnssec
-FEATURES+=	
-
-.PATH:		${.CURDIR}/sysdep/${OS}
+.PATH:		${.CURDIR}/sysdep/openbsd
 
 PROG=		isakmpd
 SRCS=		app.c attribute.c cert.c connection.c constants.c conf.c \
@@ -52,7 +40,9 @@ SRCS=		app.c attribute.c cert.c connection.c constants.c conf.c \
 		ipsec_num.c isakmpd.c isakmp_doi.c isakmp_fld.c isakmp_num.c \
 		key.c libcrypto.c log.c message.c math_2n.c math_group.c \
 		prf.c sa.c sysdep.c timer.c transport.c virtual.c udp.c \
-		ui.c util.c x509.c
+		ui.c util.c x509.c \
+		pf_key_v2.c policy.c math_ec2n.c ike_aggressive.c isakmp_cfg.c \
+		dpd.c monitor.c monitor_fdpass.c nat_traversal.c udp_encap.c
 
 GENERATED=	exchange_num.h ipsec_fld.h ipsec_num.h isakmp_fld.h \
 		isakmp_num.h
@@ -65,9 +55,6 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 
 # Include symbolic debugging info
 #DEBUG=		-g
-
-# Do execution time profiles
-#CFLAGS+=	-pg
 
 # If you have ElectricFence available, you can spot abuses of the heap.
 # (/usr/ports/devel/ElectricFence)
@@ -83,25 +70,15 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 
 SUBDIR=		apps
 
-.if ${FEATURES} != ""
-FEATURES_UC!=	echo ${FEATURES} | tr '[:lower:]' '[:upper:]'
-CFLAGS+=	${FEATURES_UC:S/^/-DUSE_/g}
-.endif
-
 .if make(install)
 SUBDIR+=	samples
 .endif
 
-.for FEATURE in ${FEATURES}
-.if exists(features/${FEATURE})
-.include "features/${FEATURE}"
-.endif
-.endfor
-
-SRCS+=		${DNSSEC} \
-		pf_key_v2.c policy.c math_ec2n.c ike_aggressive.c isakmp_cfg.c \
-		dpd.c monitor.c monitor_fdpass.c nat_traversal.c udp_encap.c
-CFLAGS+=	${DNSSEC_CFLAGS}
+# Enable for DNSSEC use
+#CFLAGS+=	USE_DNSSEC
+#SRCS+=		dnssec.c
+#LWRESLIB=      /usr/local/lib/liblwres.a
+#DNSSEC_CFLAGS= -I/usr/local/include -DLWRES
 
 LDADD+=		${LWRESLIB} -lkeynote -lcrypto -ldes -lm
 DPADD+=		${LWRESLIB} ${LIBKEYNOTE} ${LIBCRYPTO} ${LIBDES} ${LIBM}
@@ -125,6 +102,3 @@ ${PROG} beforedepend: ${GENERATED}
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
-
-debug:
-	(cd ${.CURDIR}; ${MAKE} DEBUG="-g -Werror")
