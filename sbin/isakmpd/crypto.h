@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.16 2005/04/08 16:06:25 deraadt Exp $	 */
+/* $OpenBSD: crypto.h,v 1.17 2005/04/08 18:39:12 deraadt Exp $	 */
 /* $EOM: crypto.h,v 1.12 2000/10/15 21:56:41 niklas Exp $	 */
 
 /*
@@ -32,19 +32,9 @@
 #ifndef _CRYPTO_H_
 #define _CRYPTO_H_
 
-#if defined (__APPLE__)
-
-#include <openssl/des.h>
-#include <openssl/blowfish.h>
-#include <openssl/cast.h>
-
-#else
-
 #include <des.h>
 #include <blf.h>
 #include <cast.h>
-
-#endif				/* __APPLE__ */
 
 #include <openssl/aes.h>
 
