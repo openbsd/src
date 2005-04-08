@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.77 2005/04/08 15:44:13 deraadt Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.78 2005/04/08 15:47:24 deraadt Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -119,6 +119,8 @@ static char    *pcap_file = 0;
 static void
 usage(void)
 {
+	extern char *__progname;
+
 	fprintf(stderr,
 	    "usage: %s [-4] [-6] [-a] [-c config-file] [-d] [-D class=level]\n"
 	    "          [-f fifo] [-i pid-file] [-K] [-n] [-N udpencap-port]\n"

@@ -1,4 +1,4 @@
-/* $OpenBSD: sysdep.h,v 1.19 2004/08/10 15:59:10 ho Exp $	 */
+/* $OpenBSD: sysdep.h,v 1.20 2005/04/08 15:47:24 deraadt Exp $	 */
 /* $EOM: sysdep.h,v 1.17 2000/12/04 04:46:35 angelos Exp $	 */
 
 /*
@@ -58,7 +58,6 @@ extern int	sysdep_ipsec_group_spis(struct sa *, struct proto *,
     struct proto *, int);
 extern int	sysdep_ipsec_set_spi(struct sa *, struct proto *, int,
     struct sa *);
-extern char    *sysdep_progname(void);
 extern u_int32_t sysdep_random(void);
 extern u_int8_t sysdep_sa_len(struct sockaddr *);
 
