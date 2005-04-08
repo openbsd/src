@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.17 2005/04/07 18:43:17 hshoexer Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.18 2005/04/08 16:07:22 cloder Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -27,9 +27,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#ifndef linux
 #include <sys/sockio.h>
-#endif
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -306,17 +304,13 @@ virtual_bind_ADDR_ANY(sa_family_t af)
 	switch (af) {
 	case AF_INET:
 		d4->sin_family = af;
-#if !defined (LINUX_IPSEC)
 		d4->sin_len = sizeof(struct sockaddr_in);
-#endif
 		d4->sin_addr.s_addr = INADDR_ANY;
 		break;
 
 	case AF_INET6:
 		d6->sin6_family = af;
-#if !defined (LINUX_IPSEC)
 		d6->sin6_len = sizeof(struct sockaddr_in6);
-#endif
 		memcpy(&d6->sin6_addr.s6_addr, &in6addr_any,
 		    sizeof in6addr_any);
 		break;

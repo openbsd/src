@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.13 2005/04/04 19:31:11 deraadt Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.14 2005/04/08 16:07:22 cloder Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -29,9 +29,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#ifndef linux
 #include <sys/sockio.h>
-#endif
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

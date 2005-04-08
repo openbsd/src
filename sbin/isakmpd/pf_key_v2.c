@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.158 2005/04/06 16:00:20 deraadt Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.159 2005/04/08 16:07:21 cloder Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -40,9 +40,7 @@
 
 #include "sysdep.h"
 
-#if !defined (LINUX_IPSEC)
 #include <net/pfkeyv2.h>
-#endif
 #include <netinet/in.h>
 #ifdef SADB_X_EXT_FLOW_TYPE
 #include <sys/mbuf.h>
@@ -1292,14 +1290,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 	bzero(&ssa2, sizeof ssa2);
 	ssa2.sadb_x_sa2_exttype = SADB_X_EXT_SA2;
 	ssa2.sadb_x_sa2_len = sizeof ssa2 / PF_KEY_V2_CHUNK;
-#if defined (LINUX_IPSEC)
-	if (iproto->encap_mode == IPSEC_ENCAP_TUNNEL)
-		ssa2.sadb_x_sa2_mode = IPSEC_MODE_TUNNEL;
-	else
-		ssa2.sadb_x_sa2_mode = IPSEC_MODE_TRANSPORT;
-#else
 	ssa2.sadb_x_sa2_mode = 0;
-#endif
 	if (pf_key_v2_msg_add(update, (struct sadb_ext *)&ssa2, 0) == -1)
 		goto cleanup;
 #endif
@@ -2204,17 +2195,9 @@ cleanup:
 		goto cleanup;
 	addr->sadb_address_exttype = SADB_EXT_ADDRESS_SRC;
 	addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
-#ifdef LINUX_IPSEC
-	addr->sadb_address_proto = tproto;
-#else
 	addr->sadb_address_proto = IPSEC_ULPROTO_ANY;
-#endif
 	addr->sadb_address_reserved = 0;
-#ifdef LINUX_IPSEC
-	pf_key_v2_setup_sockaddr(addr + 1, laddr, 0, sport, 0);
-#else
 	pf_key_v2_setup_sockaddr(addr + 1, laddr, 0, IPSEC_PORT_ANY, 0);
-#endif
 	switch (laddr->sa_family) {
 	case AF_INET:
 		ip4_sa = (struct sockaddr_in *) lmask;
@@ -2238,17 +2221,9 @@ cleanup:
 		goto cleanup;
 	addr->sadb_address_exttype = SADB_EXT_ADDRESS_DST;
 	addr->sadb_address_len = len / PF_KEY_V2_CHUNK;
-#ifdef LINUX_IPSEC
-	addr->sadb_address_proto = tproto;
-#else
 	addr->sadb_address_proto = IPSEC_ULPROTO_ANY;
-#endif
 	addr->sadb_address_reserved = 0;
-#ifdef LINUX_IPSEC
-	pf_key_v2_setup_sockaddr(addr + 1, raddr, 0, dport, 0);
-#else
 	pf_key_v2_setup_sockaddr(addr + 1, raddr, 0, IPSEC_PORT_ANY, 0);
-#endif
 	switch (raddr->sa_family) {
 	case AF_INET:
 		ip4_sa = (struct sockaddr_in *) rmask;
@@ -2299,14 +2274,7 @@ cleanup:
 		log_print("pf_key_v2_flow: invalid proto %d", proto);
 		goto cleanup;
 	}
-#if defined (LINUX_IPSEC)
-	if (iproto->encap_mode == IPSEC_ENCAP_TUNNEL)
-		ipsecrequest->sadb_x_ipsecrequest_mode = IPSEC_MODE_TUNNEL;
-	else
-		ipsecrequest->sadb_x_ipsecrequest_mode = IPSEC_MODE_TRANSPORT;
-#else
 	ipsecrequest->sadb_x_ipsecrequest_mode = IPSEC_MODE_TUNNEL; /* XXX */
-#endif
 	ipsecrequest->sadb_x_ipsecrequest_level
 		= ingress ? IPSEC_LEVEL_USE : IPSEC_LEVEL_REQUIRE;
 	ipsecrequest->sadb_x_ipsecrequest_reqid = 0;	/* XXX */
@@ -4196,7 +4164,6 @@ void
 pf_key_v2_handler(int fd)
 {
 	struct pf_key_v2_msg *msg;
-#if !defined (LINUX_IPSEC)
 	int		n;
 
 	/*
@@ -4211,7 +4178,6 @@ pf_key_v2_handler(int fd)
 	}
 	if (!n)
 		return;
-#endif				/* LINUX_IPSEC */
 
 	msg = pf_key_v2_read(0);
 	if (msg)
