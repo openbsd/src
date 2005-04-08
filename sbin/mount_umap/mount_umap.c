@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_umap.c,v 1.14 2003/07/03 22:41:40 tedu Exp $	*/
+/*	$OpenBSD: mount_umap.c,v 1.15 2005/04/08 20:09:38 jaredy Exp $	*/
 /*	$NetBSD: mount_umap.c,v 1.5 1996/04/13 01:32:05 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.14 2003/07/03 22:41:40 tedu Exp $";
+static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.15 2005/04/08 20:09:38 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ main(int argc, char *argv[])
 
 	source = argv[0];
 	if (realpath(argv[1], target) == NULL)
-		err(1, "realpath %s", target);
+		err(1, "realpath %s", argv[1]);
 
 	/* Read in uid mapping data. */
 	if ((fp = fopen(umapfile, "r")) == NULL)

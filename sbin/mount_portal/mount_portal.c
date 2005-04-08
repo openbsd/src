@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.26 2003/07/29 18:38:36 deraadt Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.27 2005/04/08 20:09:37 jaredy Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.26 2003/07/29 18:38:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.27 2005/04/08 20:09:37 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,7 @@ main(int argc, char *argv[])
 	 */
 	conf = argv[optind];
 	if (realpath(argv[optind+1], mountpt) == NULL)
-		err(1, "realpath %s", mountpt);
+		err(1, "realpath %s", argv[optind+1]);
 
 	/*
 	 * Construct the listening socket

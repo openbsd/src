@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.37 2004/11/13 21:45:50 miod Exp $	*/
+/*	$OpenBSD: mount.c,v 1.38 2005/04/08 20:09:36 jaredy Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: mount.c,v 1.37 2004/11/13 21:45:50 miod Exp $";
+static char rcsid[] = "$OpenBSD: mount.c,v 1.38 2005/04/08 20:09:36 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -216,7 +216,7 @@ main(int argc, char * const argv[])
 			usage();
 
 		if (realpath(*argv, mntpath) == NULL)
-			err(1, "realpath %s", mntpath);
+			err(1, "realpath %s", *argv);
 		if (hasopt(options, "update")) {
 			if ((mntbuf = getmntpt(mntpath)) == NULL)
 				errx(1,
@@ -348,7 +348,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 	char *optbuf, execname[MAXPATHLEN], mntpath[MAXPATHLEN];
 
 	if (realpath(name, mntpath) == NULL) {
-		warn("realpath %s", mntpath);
+		warn("realpath %s", name);
 		return (1);
 	}
 

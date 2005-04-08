@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_fdesc.c,v 1.10 2003/07/03 22:41:40 tedu Exp $	*/
+/*	$OpenBSD: mount_fdesc.c,v 1.11 2005/04/08 20:09:36 jaredy Exp $	*/
 /*	$NetBSD: mount_fdesc.c,v 1.7 1996/04/13 01:31:15 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_fdesc.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_fdesc.c,v 1.10 2003/07/03 22:41:40 tedu Exp $";
+static char rcsid[] = "$OpenBSD: mount_fdesc.c,v 1.11 2005/04/08 20:09:36 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 		usage();
 
 	if (realpath(argv[1], path) == NULL)
-		err(1, "realpath %s", path);
+		err(1, "realpath %s", argv[1]);
 
 	if (mount(MOUNT_FDESC, path, mntflags, NULL)) {
 		if (errno == EOPNOTSUPP)

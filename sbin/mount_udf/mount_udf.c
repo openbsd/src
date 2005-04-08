@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_udf.c,v 1.1 2005/03/29 17:54:52 pedro Exp $	*/
+/*	$OpenBSD: mount_udf.c,v 1.2 2005/04/08 20:09:38 jaredy Exp $	*/
 
 /*
  * Copyright (c) 2005 Pedro Martelletto <pedro@openbsd.org>
@@ -63,7 +63,7 @@ main(int argc, char **argv)
 	args.fspec = argv[0];
 
 	if (realpath(argv[1], node) == NULL)
-		err(1, "realpath %s", node);
+		err(1, "realpath %s", argv[1]);
 
 	if (mount(MOUNT_UDF, node, flags, &args) < 0)
 		err(1, "mount");
