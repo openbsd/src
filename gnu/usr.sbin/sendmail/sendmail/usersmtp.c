@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: usersmtp.c,v 8.460 2005/01/11 00:24:19 ca Exp $")
+SM_RCSID("@(#)$Sendmail: usersmtp.c,v 8.463 2005/03/16 00:36:09 ca Exp $")
 
 #include <sysexits.h>
 
@@ -89,6 +89,7 @@ smtpinit(m, mci, e, onlyhelo)
 	*/
 
 	SmtpError[0] = '\0';
+	SmtpMsgBuffer[0] = '\0';
 	CurHostName = mci->mci_host;		/* XXX UGLY XXX */
 	if (CurHostName == NULL)
 		CurHostName = MyHostName;
@@ -1595,8 +1596,6 @@ attemptauth(m, mci, e, sai)
 	(void) memset(&ssp, '\0', sizeof ssp);
 
 	/* XXX should these be options settable via .cf ? */
-#  if STARTTLS
-#endif /* STARTTLS */
 	{
 		ssp.max_ssf = MaxSLBits;
 		ssp.maxbufsize = MAXOUTLEN;
@@ -2899,7 +2898,10 @@ smtpquit(m, mci, e)
 	char *oldcurhost;
 
 	if (mci->mci_state == MCIS_CLOSED)
+	{
+		mci_close(mci, "smtpquit:1");
 		return;
+	}
 
 	oldcurhost = CurHostName;
 	CurHostName = mci->mci_host;		/* XXX UGLY XXX */
@@ -3133,7 +3135,7 @@ reply(m, mci, e, timeout, pfunc, enhstat, rtype)
 			if (strncmp(SmtpMsgBuffer, "QUIT", 4) == 0)
 			{
 				errno = mci->mci_errno;
-				mci->mci_state = MCIS_CLOSED;
+				mci_close(mci, "reply:1");
 				return -1;
 			}
 			mci->mci_state = MCIS_ERROR;
@@ -3158,7 +3160,7 @@ reply(m, mci, e, timeout, pfunc, enhstat, rtype)
 			/* errors on QUIT should be ignored */
 			if (strncmp(SmtpMsgBuffer, "QUIT", 4) == 0)
 			{
-				mci->mci_state = MCIS_CLOSED;
+				mci_close(mci, "reply:2");
 				return -1;
 			}
 

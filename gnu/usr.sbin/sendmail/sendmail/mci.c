@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2005 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: mci.c,v 8.212 2004/08/04 21:11:31 ca Exp $")
+SM_RCSID("@(#)$Sendmail: mci.c,v 8.214 2005/02/04 22:01:45 ca Exp $")
 
 #if NETINET || NETINET6
 # include <arpa/inet.h>
@@ -398,6 +398,57 @@ mci_get(host, m)
 
 	return mci;
 }
+
+/*
+**  MCI_CLOSE -- (forcefully) close files used for a connection.
+**	Note: this is a last resort, usually smtpquit() or endmailer()
+**		should be used to close a connection.
+**
+**	Parameters:
+**		mci -- the connection to close.
+**		where -- where has this been called?
+**
+**	Returns:
+**		none.
+*/
+
+void
+mci_close(mci, where)
+	MCI *mci;
+	char *where;
+{
+	bool dumped;
+
+	if (mci == NULL)
+		return;
+	dumped = false;
+	if (mci->mci_out != NULL)
+	{
+		if (tTd(56, 1))
+		{
+			sm_dprintf("mci_close: mci_out!=NULL, where=%s\n",
+				where);
+			mci_dump(sm_debug_file(), mci, false);
+			dumped = true;
+		}
+		(void) sm_io_close(mci->mci_out, SM_TIME_DEFAULT);
+		mci->mci_out = NULL;
+	}
+	if (mci->mci_in != NULL)
+	{
+		if (tTd(56, 1))
+		{
+			sm_dprintf("mci_close: mci_in!=NULL, where=%s\n",
+				where);
+			if (!dumped)
+				mci_dump(sm_debug_file(), mci, false);
+		}
+		(void) sm_io_close(mci->mci_in, SM_TIME_DEFAULT);
+		mci->mci_in = NULL;
+	}
+	mci->mci_state = MCIS_CLOSED;
+}
+
 /*
 **  MCI_NEW -- allocate new MCI structure
 **
