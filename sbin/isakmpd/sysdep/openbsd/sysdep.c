@@ -1,4 +1,4 @@
-/* $OpenBSD: sysdep.c,v 1.30 2005/04/08 16:06:25 deraadt Exp $	 */
+/* $OpenBSD: sysdep.c,v 1.31 2005/04/08 19:05:15 deraadt Exp $	 */
 /* $EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	 */
 
 /*
@@ -42,17 +42,13 @@
 #include "monitor.h"
 #include "util.h"
 
-#ifdef NEED_SYSDEP_APP
 #include "app.h"
 #include "conf.h"
 #include "ipsec.h"
 
-#ifdef USE_PF_KEY_V2
 #include "pf_key_v2.h"
 #define KEY_API(x) pf_key_v2_##x
-#endif
 
-#endif /* NEED_SYSDEP_APP */
 #include "log.h"
 
 /*
@@ -74,9 +70,6 @@ sysdep_sa_len(struct sockaddr *sa)
 {
 	return sa->sa_len;
 }
-
-/* As regress/ use this file I protect the sysdep_app_* stuff like this.  */
-#ifdef NEED_SYSDEP_APP
 
 /*
  * When select(2) has noticed our application needs attendance, this is what
@@ -241,4 +234,3 @@ sysdep_ipsec_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		return 0;
 	return KEY_API(set_spi) (sa,proto, incoming, isakmp_sa);
 }
-#endif

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.70 2005/04/08 18:27:09 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.71 2005/04/08 19:05:15 deraadt Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -39,7 +39,7 @@
 OS=		openbsd
 
 # Compile-time configuration of otherwise optional features
-#FEATURES+=	gmp dnssec
+#FEATURES+=	dnssec
 FEATURES+=	debug
 
 .PATH:		${.CURDIR}/sysdep/${OS}
@@ -61,8 +61,7 @@ CLEANFILES=	exchange_num.c exchange_num.h ipsec_num.c ipsec_num.h \
 		isakmp_fld.c isakmp_fld.h
 MAN=		isakmpd.8 isakmpd.conf.5 isakmpd.policy.5
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wmissing-declarations -DNEED_SYSDEP_APP \
-		-I${.CURDIR} -I${.CURDIR}/sysdep/${OS} -I.
+		-Wmissing-declarations -I${.CURDIR} -I${.CURDIR}/sysdep/${OS} -I.
 
 # Include symbolic debugging info
 #DEBUG=		-g
@@ -84,8 +83,6 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 
 SUBDIR=		apps
 
-.include "sysdep/${OS}/Makefile.sysdep"
-
 .if ${FEATURES} != ""
 FEATURES_UC!=	echo ${FEATURES} | tr '[:lower:]' '[:upper:]'
 CFLAGS+=	${FEATURES_UC:S/^/-DUSE_/g}
@@ -101,18 +98,12 @@ SUBDIR+=	samples
 .endif
 .endfor
 
-.if ${FEATURES:Mgmp} == "gmp"
-CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_GMP
-LDADD+=		-lgmp
-DPADD+=		${LIBGMP}
-.else
 CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_OPENSSL
-.endif
 
-SRCS+=		${IPSEC_SRCS} ${DNSSEC} policy.c math_ec2n.c \
-		ike_aggressive.c isakmp_cfg.c dpd.c monitor.c monitor_fdpass.c \
-		nat_traversal.c udp_encap.c
-CFLAGS+=	${IPSEC_CFLAGS} ${DNSSEC_CFLAGS}
+SRCS+=		${DNSSEC} \
+		pf_key_v2.c policy.c math_ec2n.c ike_aggressive.c isakmp_cfg.c \
+		dpd.c monitor.c monitor_fdpass.c nat_traversal.c udp_encap.c
+CFLAGS+=	${DNSSEC_CFLAGS}
 
 LDADD+=		${LWRESLIB} -lkeynote -lcrypto -ldes -lm
 DPADD+=		${LWRESLIB} ${LIBKEYNOTE} ${LIBCRYPTO} ${LIBDES} ${LIBM}

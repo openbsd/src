@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2003/06/03 14:35:00 ho Exp $
+#	$OpenBSD: Makefile,v 1.8 2005/04/08 19:05:15 deraadt Exp $
 #	$EOM: Makefile,v 1.6 2000/03/28 21:22:06 ho Exp $
 
 #
@@ -51,7 +51,6 @@ DPADD+=		${LIBGMP}
 CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_OPENSSL
 .endif
 
-.include "${TOPSRC}/sysdep/${OS}/Makefile.sysdep"
 # Override LIBSYSDEPDIR definition from Makefile.sysdep
 LIBSYSDEPDIR=	${TOPSRC}/sysdep/common/libsysdep
 
