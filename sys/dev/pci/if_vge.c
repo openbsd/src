@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.8 2005/04/02 01:25:48 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.9 2005/04/08 13:36:48 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -799,16 +799,21 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = vge_ioctl;
 	ifp->if_start = vge_start;
-#ifdef VGE_CSUM_OFFLOAD
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
-	ifp->if_hwassist = VGE_CSUM_FEATURES;
-	ifp->if_capabilities |= IFCAP_HWCSUM|IFCAP_VLAN_HWTAGGING;
-#endif
 	ifp->if_watchdog = vge_watchdog;
 	ifp->if_init = vge_init;
 	ifp->if_baudrate = 1000000000;
 	IFQ_SET_MAXLEN(&ifp->if_snd, VGE_IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
+#ifdef VGE_VLAN
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
+#ifdef VGE_CSUM_OFFLOAD
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
+				IFCAP_CSUM_UDPv4;
+#endif
 
 	/* Set interface name */
 	strlcpy(ifp->if_xname, sc->vge_dev.dv_xname, IFNAMSIZ);
@@ -1114,25 +1119,19 @@ vge_rxeof(struct vge_softc *sc)
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
 
-		/* Do RX checksumming if enabled */
-#ifdef VGE_CSUM_OFFLOAD
-		if (ifp->if_capenable & IFCAP_RXCSUM) {
+		/* Do RX checksumming */
 
-			/* Check IP header checksum */
-			if (rxctl & VGE_RDCTL_IPPKT)
-				m->m_pkthdr.csum_flags |= CSUM_IP_CHECKED;
-			if (rxctl & VGE_RDCTL_IPCSUMOK)
-				m->m_pkthdr.csum_flags |= CSUM_IP_VALID;
+		/* Check IP header checksum */
+		if (rxctl & VGE_RDCTL_IPPKT) &&
+		    (rxctl & VGE_RDCTL_IPCSUMOK))
+			m->m_pkthdr.csum |= M_IPV4_CSUM_IN_OK;
 
-			/* Check TCP/UDP checksum */
-			if (rxctl & (VGE_RDCTL_TCPPKT|VGE_RDCTL_UDPPKT) &&
-			    rxctl & VGE_RDCTL_PROTOCSUMOK) {
-				m->m_pkthdr.csum_flags |=
-				    CSUM_DATA_VALID|CSUM_PSEUDO_HDR;
-				m->m_pkthdr.csum_data = 0xffff;
-			}
-		}
+		/* Check TCP/UDP checksum */
+		if (rxctl & (VGE_RDCTL_TCPPKT|VGE_RDCTL_UDPPKT) &&
+		    rxctl & VGE_RDCTL_PROTOCSUMOK) {
+			m->m_pkthdr.csum |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 
+#ifdef VGE_VLAN
 		if (rxstat & VGE_RDSTS_VTAG)
 			VLAN_INPUT_TAG(ifp, m,
 			    ntohs((rxctl & VGE_RDCTL_VLANID)), continue);

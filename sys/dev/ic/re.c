@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.5 2005/03/15 16:11:38 henning Exp $	*/
+/*	$OpenBSD: re.c,v 1.6 2005/04/08 13:36:48 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -876,15 +876,7 @@ re_attach_common(struct rl_softc *sc)
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = re_ioctl;
-#ifdef VLANXXX
-	sc->ethercom.ec_capabilities |=
-	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
-#endif
 	ifp->if_start = re_start;
-#ifdef RE_CSUM_OFFLOAD
-	ifp->if_capabilities |=
-	    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
-#endif
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_init = re_init;
 	if (sc->rl_type == RL_8169)
@@ -893,6 +885,16 @@ re_attach_common(struct rl_softc *sc)
 		ifp->if_baudrate = 100000000;
 	IFQ_SET_MAXLEN(&ifp->if_snd, RL_IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
+#ifdef VLANXXX
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
+#ifdef RE_CSUM_OFFLOAD
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
+				IFCAP_CSUM_UDPv4
+#endif
 
 	timeout_set(&sc->timer_handle, re_tick, sc);
 
@@ -1190,32 +1192,19 @@ re_rxeof(sc)
 		ifp->if_ipackets++;
 		m->m_pkthdr.rcvif = ifp;
 
-		/* Do RX checksumming if enabled */
+		/* Do RX checksumming */
 
-#ifdef RE_CSUM_OFFLOAD
-		if (ifp->if_capenable & IFCAP_CSUM_IPv4) {
-
-			/* Check IP header checksum */
-			if (rxstat & RL_RDESC_STAT_PROTOID)
-				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;;
-			if (rxstat & RL_RDESC_STAT_IPSUMBAD)
-                                m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
-		}
+		/* Check IP header checksum */
+		if ((rxstat & RL_RDESC_STAT_PROTOID) &&
+		    !(rxstat & RL_RDESC_STAT_IPSUMBAD))
+			m->m_pkthdr.csum |= M_IPV4_CSUM_IN_OK;
 
 		/* Check TCP/UDP checksum */
-		if (RL_TCPPKT(rxstat) &&
-		    (ifp->if_capenable & IFCAP_CSUM_TCPv4)) {
-			m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
-			if (rxstat & RL_RDESC_STAT_TCPSUMBAD)
-				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
-		}
-		if (RL_UDPPKT(rxstat) &&
-		    (ifp->if_capenable & IFCAP_CSUM_UDPv4)) {
-			m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
-			if (rxstat & RL_RDESC_STAT_UDPSUMBAD)
-				m->m_pkthdr.csum_flags |= M_CSUM_TCP_UDP_BAD;
-		}
-#endif
+		if ((RL_TCPPKT(rxstat) &&
+		    !(rxstat & RL_RDESC_STAT_TCPSUMBAD)) ||
+		    (RL_UDPPKT(rxstat) &&
+		    !(rxstat & RL_RDESC_STAT_UDPSUMBAD)))
+			m->m_pkthdr.csum |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 
 #ifdef VLANXXX
 		if (rxvlan & RL_RDESC_VLANCTL_TAG) {
@@ -1656,18 +1645,9 @@ re_init(struct ifnet *ifp)
 	 * RX checksum offload. We must configure the C+ register
 	 * before all others.
 	 */
-#ifdef RE_CSUM_OFFLOAD
 	CSR_WRITE_2(sc, RL_CPLUS_CMD, RL_CPLUSCMD_RXENB|
 	    RL_CPLUSCMD_TXENB|RL_CPLUSCMD_PCI_MRW|
-	    RL_CPLUSCMD_VLANSTRIP|
-	    (ifp->if_capenable &
-	    (IFCAP_CSUM_IPv4 |IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4) ?
-	    RL_CPLUSCMD_RXCSUM_ENB : 0));
-#else
-	CSR_WRITE_2(sc, RL_CPLUS_CMD, RL_CPLUSCMD_RXENB|
-	    RL_CPLUSCMD_TXENB|RL_CPLUSCMD_PCI_MRW|
-	    RL_CPLUSCMD_VLANSTRIP);
-#endif
+	    RL_CPLUSCMD_VLANSTRIP|RL_CPLUSCMD_RXCSUM_ENB);
 
 	/*
 	 * Init our MAC address.  Even though the chipset
