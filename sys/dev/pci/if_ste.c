@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.28 2005/01/15 05:24:11 brad Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.29 2005/04/08 20:30:51 beck Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -384,8 +384,6 @@ void ste_miibus_statchg(self)
 		STE_SETBIT2(sc, STE_MACCTL0, STE_MACCTL0_FULLDUPLEX);
 	else
 		STE_CLRBIT2(sc, STE_MACCTL0, STE_MACCTL0_FULLDUPLEX);
-
-	printf("%s: %s-duplex\n", sc->sc_dev.dv_xname, fdx ? "full":"half");
 
 	STE_SETBIT4(sc, STE_DMACTL,
 	    STE_DMACTL_RXDMA_UNSTALL | STE_DMACTL_TXDMA_UNSTALL);
