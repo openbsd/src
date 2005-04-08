@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.c,v 1.31 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: transport.c,v 1.32 2005/04/08 16:32:11 hshoexer Exp $	 */
 /* $EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -32,6 +32,7 @@
 
 #include <sys/param.h>
 #include <sys/queue.h>
+#include <netdb.h>
 #include <string.h>
 
 #include "sysdep.h"
@@ -267,8 +268,10 @@ transport_send_messages(fd_set * fds)
 	struct transport *t, *next;
 	struct message *msg;
 	struct exchange *exchange;
+	struct sockaddr *dst;
 	struct timeval  expiration;
 	int             expiry, ok_to_drop_message;
+	char peer[NI_MAXHOST], peersv[NI_MAXSERV];
 
 	/*
 	 * Reference all transports first so noone will disappear while in
@@ -322,29 +325,19 @@ transport_send_messages(fd_set * fds)
 			if ((msg->flags & MSG_LAST) == 0) {
 				if (msg->xmits > conf_get_num("General",
 				    "retransmits", RETRANSMIT_DEFAULT)) {
-					log_print("transport_send_messages: "
-					    "giving up on message %p, "
-					    "exchange %s", msg,
-					    exchange->name ? exchange->name :
-					    "<unnamed>");
-					/* Be more verbose here.  */
-					if (exchange->phase == 1) {
-						log_print(
-						    "transport_send_messages: "
-						    "either this message did "
-						    "not reach the other "
-						    "peer");
-						if (exchange->initiator)
-							log_print("transport_send_messages: "
-							    "or the response"
-							    "message did not "
-							    "reach us back");
-						else
-							log_print("transport_send_messages: "
-							    "or this is an "
-							    "attempted IKE "
-							    "scan");
+					t->virtual->vtbl->get_dst(t->virtual, &dst);
+					if (getnameinfo(dst, sysdep_sa_len(dst),
+					    peer, sizeof peer, peersv, sizeof peersv,
+					    NI_NUMERICHOST | NI_NUMERICSERV)) {
+						strlcpy(peer, "<unknown>", sizeof peer);
+						strlcpy(peersv, "<?>", sizeof peersv);
 					}
+					log_print("transport_send_messages: "
+					    "giving up on exchange %s, no "
+					    "response from peer %s:%s",
+					    exchange->name ? exchange->name :
+					    "<unnamed>", peer, peersv);
+
 					exchange->last_sent = 0;
 #ifdef notyet
 					exchange_free(exchange);
