@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.121 2005/03/30 11:13:05 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.122 2005/04/08 00:07:18 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -778,10 +778,11 @@ kroute_validate(struct kroute *kr)
 	struct kif_node		*kif;
 
 	if ((kif = kif_find(kr->ifindex)) == NULL) {
-		log_warnx("interface with index %d not found, "
-		    "referenced from route for %s/%u",
-		    kr->ifindex, inet_ntoa(kr->prefix),
-		    kr->prefixlen);
+		if (kr->ifindex)
+			log_warnx("interface with index %d not found, "
+			    "referenced from route for %s/%u",
+			    kr->ifindex, inet_ntoa(kr->prefix),
+			    kr->prefixlen);
 		return (1);
 	}
 
