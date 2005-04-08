@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.98 2005/04/05 20:46:20 cloder Exp $	 */
+/* $OpenBSD: x509.c,v 1.99 2005/04/08 16:24:12 deraadt Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -611,11 +611,7 @@ int
 x509_read_from_dir(X509_STORE *ctx, char *name, int hash)
 {
 	struct dirent  *file;
-#if defined (USE_PRIVSEP)
 	struct monitor_dirents *dir;
-#else
-	DIR		*dir;
-#endif
 	FILE		*certfp;
 	X509		*cert;
 	struct stat	sb;
@@ -716,11 +712,7 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 {
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
 	struct dirent	*file;
-#if defined (USE_PRIVSEP)
 	struct monitor_dirents *dir;
-#else
-	DIR		*dir;
-#endif
 	FILE		*crlfp;
 	X509_CRL	*crl;
 	struct stat	sb;

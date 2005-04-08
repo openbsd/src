@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.53 2005/04/08 16:14:04 deraadt Exp $	 */
+/* $OpenBSD: log.c,v 1.54 2005/04/08 16:24:12 deraadt Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -203,9 +203,7 @@ _log_print(int error, int syslog_level, const char *fmt, va_list ap,
 			    tm->tm_hour, tm->tm_min, tm->tm_sec, now.tv_usec,
 			    class == LOG_PRINT ? "Default" : "Report>");
 		strlcat(nbuf, buffer, sizeof nbuf);
-#if defined (USE_PRIVSEP)
 		strlcat(nbuf, getuid() ? "" : " [priv]", LOG_SIZE + 32);
-#endif
 		strlcat(nbuf, "\n", sizeof nbuf);
 
 		if (fwrite(nbuf, strlen(nbuf), 1, log_output) == 0) {
@@ -378,11 +376,7 @@ log_fatal(const char *fmt, ...)
 	va_start(ap, fmt);
 	_log_print(1, LOG_CRIT, fmt, ap, LOG_PRINT, 0);
 	va_end(ap);
-#ifdef USE_PRIVSEP
 	monitor_exit(1);
-#else
-	exit(1);
-#endif
 }
 
 #ifdef USE_DEBUG
@@ -411,12 +405,8 @@ log_packet_init(char *newname)
 		return;
 	}
 	/* Does the file already exist?  XXX lstat() or stat()?  */
-#if defined (USE_PRIVSEP)
 	/* XXX This is a fstat! */
 	if (monitor_stat(pcaplog_file, &st) == 0) {
-#else
-	if (lstat(pcaplog_file, &st) == 0) {
-#endif
 		/* Sanity checks.  */
 		if ((st.st_mode & S_IFMT) != S_IFREG) {
 			log_print("log_packet_init: existing capture file is "

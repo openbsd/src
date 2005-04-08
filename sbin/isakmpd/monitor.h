@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.h,v 1.12 2004/11/08 12:34:00 hshoexer Exp $	 */
+/* $OpenBSD: monitor.h,v 1.13 2005/04/08 16:24:12 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -27,7 +27,6 @@
 #ifndef _MONITOR_H_
 #define _MONITOR_H_
 
-#if defined (USE_PRIVSEP)
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -81,20 +80,4 @@ void		monitor_ui_init(void);
 int		monitor_pf_key_v2_open(void);
 void		monitor_exit(int);
 
-#else				/* !USE_PRIVSEP */
-
-#define monitor_fopen	fopen
-#define monitor_open	open
-#define monitor_stat	stat
-#define monitor_setsockopt setsockopt
-#define monitor_bind	bind
-#define monitor_opendir	opendir
-#define monitor_readdir	readdir
-#define monitor_closedir closedir
-
-#define monitor_ui_init	ui_init
-#define monitor_pf_key_v2_open pf_key_v2_open
-#define monitor_exit	exit
-
-#endif				/* USE_PRIVSEP */
 #endif				/* _MONITOR_H_ */

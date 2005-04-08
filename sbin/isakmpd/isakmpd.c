@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.79 2005/04/08 16:11:58 deraadt Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.80 2005/04/08 16:24:12 deraadt Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -367,7 +367,7 @@ write_pid_file(void)
 {
 	FILE	*fp;
 
-	/* Ignore errors. This will fail with USE_PRIVSEP.  */
+	/* Ignore errors. This fails with privsep.  */
 	unlink(pid_file);
 
 	fp = monitor_fopen(pid_file, "w");
@@ -427,14 +427,12 @@ main(int argc, char *argv[])
 	/* Set timezone before priv'separation */
 	tzset();
 
-#if defined (USE_PRIVSEP)
 	if (monitor_init(debug)) {
 		/* The parent, with privileges enters infinite monitor loop. */
 		monitor_loop(debug);
 		exit(0);	/* Never reached.  */
 	}
 	/* Child process only from this point on, no privileges left.  */
-#endif
 
 	init();
 
@@ -467,9 +465,7 @@ main(int argc, char *argv[])
 		log_fatal("main: malloc (%lu) failed",
 		    (unsigned long)mask_size);
 
-#if defined (USE_PRIVSEP)
 	monitor_init_done();
-#endif
 
 	while (1) {
 		/* If someone has sent SIGHUP to us, reconfigure.  */
