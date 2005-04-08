@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.97 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: sa.c,v 1.98 2005/04/08 23:15:26 hshoexer Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -198,8 +198,8 @@ sa_check_peer(struct sa *sa, void *v_addr)
 		return 0;
 
 	sa->transport->vtbl->get_dst(sa->transport, &dst);
-	return sysdep_sa_len(dst) == addr->len &&
-	    memcmp(dst, addr->addr, sysdep_sa_len(dst)) == 0;
+	return SA_LEN(dst) == addr->len &&
+	    memcmp(dst, addr->addr, SA_LEN(dst)) == 0;
 }
 
 struct dst_isakmpspi_arg {
@@ -223,8 +223,8 @@ isakmp_sa_check(struct sa *sa, void *v_arg)
 	/* verify address is either src or dst for this sa */
 	sa->transport->vtbl->get_dst(sa->transport, &dst);
 	sa->transport->vtbl->get_src(sa->transport, &src);
-	if (memcmp(src, arg->dst, sysdep_sa_len(src)) &&
-	    memcmp(dst, arg->dst, sysdep_sa_len(dst)))
+	if (memcmp(src, arg->dst, SA_LEN(src)) &&
+	    memcmp(dst, arg->dst, SA_LEN(dst)))
 		return 0;
 
 	/* match icookie+rcookie against spi */

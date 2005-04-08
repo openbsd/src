@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.163 2005/04/08 19:40:03 deraadt Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.164 2005/04/08 23:15:26 hshoexer Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -37,8 +37,6 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/uio.h>
-
-#include "sysdep.h"
 
 #include <net/pfkeyv2.h>
 #include <netinet/in.h>
@@ -157,11 +155,11 @@ pf_key_v2_register_sa_seq(u_int8_t *spi, size_t sz, u_int8_t proto,
 	node->spi = malloc(sz);
 	if (!node->spi)
 		goto cleanup;
-	node->dst = malloc(sysdep_sa_len(dst));
+	node->dst = malloc(SA_LEN(dst));
 	if (!node->dst)
 		goto cleanup;
-	memcpy(node->dst, dst, sysdep_sa_len(dst));
-	node->dstlen = sysdep_sa_len(dst);
+	memcpy(node->dst, dst, SA_LEN(dst));
+	node->dstlen = SA_LEN(dst);
 	memcpy(node->spi, spi, sz);
 	node->sz = sz;
 	node->proto = proto;
@@ -188,8 +186,8 @@ pf_key_v2_seq_by_sa(u_int8_t *spi, size_t sz, u_int8_t proto,
 	    node = TAILQ_NEXT(node, link))
 		if (node->proto == proto &&
 		    node->sz == sz && memcmp(node->spi, spi, sz) == 0 &&
-		    node->dstlen == sysdep_sa_len(dst) &&
-		    memcmp(node->dst, dst, sysdep_sa_len(dst)) == 0)
+		    node->dstlen == SA_LEN(dst) &&
+		    memcmp(node->dst, dst, SA_LEN(dst)) == 0)
 			return node->seq;
 	return 0;
 }
@@ -653,7 +651,7 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 
 	/* Setup the ADDRESS extensions.  */
 	len =
-	    sizeof(struct sadb_address) + PF_KEY_V2_ROUND(sysdep_sa_len(src));
+	    sizeof(struct sadb_address) + PF_KEY_V2_ROUND(SA_LEN(src));
 	addr = calloc(1, len);
 	if (!addr)
 		goto cleanup;
@@ -664,7 +662,7 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 	addr->sadb_address_prefixlen = 0;
 #endif
 	addr->sadb_address_reserved = 0;
-	memcpy(addr + 1, src, sysdep_sa_len(src));
+	memcpy(addr + 1, src, SA_LEN(src));
 	switch (((struct sockaddr *) (addr + 1))->sa_family) {
 	case AF_INET:
 		((struct sockaddr_in *) (addr + 1))->sin_port = 0;
@@ -679,7 +677,7 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 	addr = 0;
 
 	len =
-	    sizeof(struct sadb_address) + PF_KEY_V2_ROUND(sysdep_sa_len(dst));
+	    sizeof(struct sadb_address) + PF_KEY_V2_ROUND(SA_LEN(dst));
 	addr = calloc(1, len);
 	if (!addr)
 		goto cleanup;
@@ -690,7 +688,7 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 	addr->sadb_address_prefixlen = 0;
 #endif
 	addr->sadb_address_reserved = 0;
-	memcpy(addr + 1, dst, sysdep_sa_len(dst));
+	memcpy(addr + 1, dst, SA_LEN(dst));
 	switch (((struct sockaddr *) (addr + 1))->sa_family) {
 	case AF_INET:
 		((struct sockaddr_in *) (addr + 1))->sin_port = 0;
@@ -749,8 +747,7 @@ pf_key_v2_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
 		memcpy(spi, &sa->sadb_sa_spi, *sz);
 
 #ifdef KAME
-	if (!pf_key_v2_register_sa_seq(spi, *sz, proto, dst,
-	    sysdep_sa_len(dst),
+	if (!pf_key_v2_register_sa_seq(spi, *sz, proto, dst, SA_LEN(dst),
 	    ((struct sadb_msg *) (TAILQ_FIRST(ret)->seg))->sadb_msg_seq))
 		goto cleanup;
 #endif
@@ -835,7 +832,7 @@ pf_key_v2_get_kernel_sa(u_int8_t *spi, size_t spi_sz, u_int8_t proto,
 
 	/* Address */
 	len =
-	    sizeof(struct sadb_address) + PF_KEY_V2_ROUND(sysdep_sa_len(dst));
+	    sizeof(struct sadb_address) + PF_KEY_V2_ROUND(SA_LEN(dst));
 	addr = calloc(1, len);
 	if (!addr)
 		goto cleanup;
@@ -846,7 +843,7 @@ pf_key_v2_get_kernel_sa(u_int8_t *spi, size_t spi_sz, u_int8_t proto,
 	addr->sadb_address_prefixlen = 0;
 #endif
 	addr->sadb_address_reserved = 0;
-	memcpy(addr + 1, dst, sysdep_sa_len(dst));
+	memcpy(addr + 1, dst, SA_LEN(dst));
 	switch (((struct sockaddr *) (addr + 1))->sa_family) {
 	case AF_INET:
 		((struct sockaddr_in *) (addr + 1))->sin_port = 0;
@@ -1266,7 +1263,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 #ifdef KAME
 	msg.sadb_msg_seq = (incoming ?
 	    pf_key_v2_seq_by_sa(proto->spi[incoming], sizeof ssa.sadb_sa_spi,
-	    proto->proto, dst, sysdep_sa_len(dst)) : 0);
+	    proto->proto, dst, SA_LEN(dst)) : 0);
 #else
 	msg.sadb_msg_seq = sa->seq;
 #endif
@@ -1376,7 +1373,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		sa->transport->vtbl->get_dst(sa->transport, &src);
 	else
 		sa->transport->vtbl->get_src(sa->transport, &src);
-	len = sizeof *addr + PF_KEY_V2_ROUND(sysdep_sa_len(src));
+	len = sizeof *addr + PF_KEY_V2_ROUND(SA_LEN(src));
 	addr = calloc(1, len);
 	if (!addr)
 		goto cleanup;
@@ -1387,7 +1384,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 	addr->sadb_address_prefixlen = 0;
 #endif
 	addr->sadb_address_reserved = 0;
-	memcpy(addr + 1, src, sysdep_sa_len(src));
+	memcpy(addr + 1, src, SA_LEN(src));
 	switch (((struct sockaddr *) (addr + 1))->sa_family) {
 	case AF_INET:
 		((struct sockaddr_in *) (addr + 1))->sin_port = 0;
@@ -1401,7 +1398,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		goto cleanup;
 	addr = 0;
 
-	len = sizeof *addr + PF_KEY_V2_ROUND(sysdep_sa_len(dst));
+	len = sizeof *addr + PF_KEY_V2_ROUND(SA_LEN(dst));
 	addr = calloc(1, len);
 	if (!addr)
 		goto cleanup;
@@ -1412,7 +1409,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 	addr->sadb_address_prefixlen = 0;
 #endif
 	addr->sadb_address_reserved = 0;
-	memcpy(addr + 1, dst, sysdep_sa_len(dst));
+	memcpy(addr + 1, dst, SA_LEN(dst));
 	switch (((struct sockaddr *) (addr + 1))->sa_family) {
 	case AF_INET:
 		((struct sockaddr_in *) (addr + 1))->sin_port = 0;
@@ -1429,7 +1426,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 #if 0
 	/* XXX I am not sure about what to do here just yet.  */
 	if (iproto->encap_mode == IPSEC_ENCAP_TUNNEL) {
-		len = sizeof *addr + PF_KEY_V2_ROUND(sysdep_sa_len(dst));
+		len = sizeof *addr + PF_KEY_V2_ROUND(SA_LEN(dst));
 		addr = calloc(1, len);
 		if (!addr)
 			goto cleanup;
@@ -1440,7 +1437,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		addr->sadb_address_prefixlen = 0;
 #endif
 		addr->sadb_address_reserved = 0;
-		memcpy(addr + 1, dst, sysdep_sa_len(dst));
+		memcpy(addr + 1, dst, SA_LEN(dst));
 		switch (((struct sockaddr *) (addr + 1))->sa_family) {
 		case AF_INET:
 			((struct sockaddr_in *) (addr + 1))->sin_port = 0;
@@ -1723,7 +1720,7 @@ doneauth:
 	    0) == -1)
 		goto cleanup;
 
-	len = sizeof *addr + PF_KEY_V2_ROUND(sysdep_sa_len(isa->src_net));
+	len = sizeof *addr + PF_KEY_V2_ROUND(SA_LEN(isa->src_net));
 	addr = calloc(1, len);
 	if (!addr)
 		goto cleanup;
@@ -1860,7 +1857,6 @@ pf_key_v2_mask6_to_bits(u_int8_t *mask)
 /*
  * Enable/disable a flow.
  * XXX Assumes OpenBSD {ADD,DEL}FLOW extensions.
- * Should probably be moved to sysdep.c
  */
 static int
 pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
@@ -1995,7 +1991,7 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 	/*
 	 * Setup the ADDRESS extensions.
 	 */
-	len = sizeof *addr + PF_KEY_V2_ROUND(sysdep_sa_len(src));
+	len = sizeof *addr + PF_KEY_V2_ROUND(SA_LEN(src));
 #if !defined (SADB_X_EXT_FLOW_TYPE)
 	if (!delete || ingress)
 #else
@@ -2018,7 +2014,7 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 			goto cleanup;
 		addr = 0;
 	}
-	len = sizeof *addr + PF_KEY_V2_ROUND(sysdep_sa_len(laddr));
+	len = sizeof *addr + PF_KEY_V2_ROUND(SA_LEN(laddr));
 	addr = calloc(1, len);
 	if (!addr)
 		goto cleanup;
@@ -2167,7 +2163,7 @@ cleanup:
 	/*
 	 * Setup the ADDRESS extensions.
 	 */
-	len = sizeof *addr + PF_KEY_V2_ROUND(sysdep_sa_len(src));
+	len = sizeof *addr + PF_KEY_V2_ROUND(SA_LEN(src));
 	addr = calloc(1, len);
 	if (!addr)
 		goto cleanup;
@@ -2193,7 +2189,7 @@ cleanup:
 		goto cleanup;
 	addr = 0;
 
-	len = sizeof *addr + PF_KEY_V2_ROUND(sysdep_sa_len(raddr));
+	len = sizeof *addr + PF_KEY_V2_ROUND(SA_LEN(raddr));
 	addr = calloc(1, len);
 	if (!addr)
 		goto cleanup;
@@ -2221,7 +2217,7 @@ cleanup:
 
 	/* Setup the POLICY extension.  */
 	len = sizeof *policy + sizeof *ipsecrequest +
-		2 * PF_KEY_V2_ROUND(sysdep_sa_len(src));
+		2 * PF_KEY_V2_ROUND(SA_LEN(src));
 	policy_buf = (u_int8_t *) calloc(1, len);
 	if (!policy_buf) {
 		log_error("pf_key_v2_flow: calloc %lu failed",
@@ -2790,7 +2786,7 @@ pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 		sa->transport->vtbl->get_dst(sa->transport, &saddr);
 	else
 		sa->transport->vtbl->get_src(sa->transport, &saddr);
-	len = sizeof *addr + PF_KEY_V2_ROUND(sysdep_sa_len(saddr));
+	len = sizeof *addr + PF_KEY_V2_ROUND(SA_LEN(saddr));
 	addr = calloc(1, len);
 	if (!addr)
 		goto cleanup;
@@ -2801,7 +2797,7 @@ pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 	addr->sadb_address_prefixlen = 0;
 #endif
 	addr->sadb_address_reserved = 0;
-	memcpy(addr + 1, saddr, sysdep_sa_len(saddr));
+	memcpy(addr + 1, saddr, SA_LEN(saddr));
 	switch (saddr->sa_family) {
 	case AF_INET:
 		((struct sockaddr_in *) (addr + 1))->sin_port = 0;
@@ -2819,7 +2815,7 @@ pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 		sa->transport->vtbl->get_src(sa->transport, &saddr);
 	else
 		sa->transport->vtbl->get_dst(sa->transport, &saddr);
-	len = sizeof *addr + PF_KEY_V2_ROUND(sysdep_sa_len(saddr));
+	len = sizeof *addr + PF_KEY_V2_ROUND(SA_LEN(saddr));
 	addr = calloc(1, len);
 	if (!addr)
 		goto cleanup;
@@ -2830,7 +2826,7 @@ pf_key_v2_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 	addr->sadb_address_prefixlen = 0;
 #endif
 	addr->sadb_address_reserved = 0;
-	memcpy(addr + 1, saddr, sysdep_sa_len(saddr));
+	memcpy(addr + 1, saddr, SA_LEN(saddr));
 	switch (saddr->sa_family) {
 	case AF_INET:
 		((struct sockaddr_in *) (addr + 1))->sin_port = 0;
@@ -4149,7 +4145,7 @@ pf_key_v2_handler(int fd)
 /*
  * Group 2 IPsec SAs given by the PROTO1 and PROTO2 protocols of the SA IKE
  * security association in a chain.
- * XXX Assumes OpenBSD GRPSPIS extension.  Should probably be moved to sysdep.c
+ * XXX Assumes OpenBSD GRPSPIS extension.
  */
 int
 pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
@@ -4232,7 +4228,7 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 		sa->transport->vtbl->get_src(sa->transport, &saddr);
 	else
 		sa->transport->vtbl->get_dst(sa->transport, &saddr);
-	len = sizeof *addr + PF_KEY_V2_ROUND(sysdep_sa_len(saddr));
+	len = sizeof *addr + PF_KEY_V2_ROUND(SA_LEN(saddr));
 	addr = calloc(1, len);
 	if (!addr)
 		goto cleanup;
@@ -4243,7 +4239,7 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 	addr->sadb_address_prefixlen = 0;
 #endif
 	addr->sadb_address_reserved = 0;
-	memcpy(addr + 1, saddr, sysdep_sa_len(saddr));
+	memcpy(addr + 1, saddr, SA_LEN(saddr));
 	((struct sockaddr_in *) (addr + 1))->sin_port = 0;
 	if (pf_key_v2_msg_add(grpspis, (struct sadb_ext *) addr,
 	    PF_KEY_V2_NODE_MALLOCED) == -1)
@@ -4260,7 +4256,7 @@ pf_key_v2_group_spis(struct sa *sa, struct proto *proto1,
 	addr->sadb_address_prefixlen = 0;
 #endif
 	addr->sadb_address_reserved = 0;
-	memcpy(addr + 1, saddr, sysdep_sa_len(saddr));
+	memcpy(addr + 1, saddr, SA_LEN(saddr));
 	((struct sockaddr_in *) (addr + 1))->sin_port = 0;
 	if (pf_key_v2_msg_add(grpspis, (struct sadb_ext *) addr,
 	    PF_KEY_V2_NODE_MALLOCED) == -1)

@@ -1,4 +1,4 @@
-/* $OpenBSD: cookie.c,v 1.14 2004/05/14 08:42:56 hshoexer Exp $	 */
+/* $OpenBSD: cookie.c,v 1.15 2005/04/08 23:15:25 hshoexer Exp $	 */
 /* $EOM: cookie.c,v 1.21 1999/08/05 15:00:04 niklas Exp $	 */
 
 /*
@@ -34,8 +34,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sysdep.h"
-
 #include "cookie.h"
 #include "exchange.h"
 #include "hash.h"
@@ -61,9 +59,9 @@ cookie_gen(struct transport *t, struct exchange *exchange, u_int8_t *buf,
 
 	hash->Init(hash->ctx);
 	(*t->vtbl->get_dst)(t, &name);
-	hash->Update(hash->ctx, (u_int8_t *)name, sysdep_sa_len(name));
+	hash->Update(hash->ctx, (u_int8_t *)name, SA_LEN(name));
 	(*t->vtbl->get_src)(t, &name);
-	hash->Update(hash->ctx, (u_int8_t *)name, sysdep_sa_len(name));
+	hash->Update(hash->ctx, (u_int8_t *)name, SA_LEN(name));
 	if (exchange->initiator == 0)
 		hash->Update(hash->ctx, exchange->cookies +
 		    ISAKMP_HDR_ICOOKIE_OFF, ISAKMP_HDR_ICOOKIE_LEN);

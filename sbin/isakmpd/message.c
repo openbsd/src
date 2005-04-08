@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.106 2005/04/08 20:55:21 deraadt Exp $	 */
+/* $OpenBSD: message.c,v 1.107 2005/04/08 23:15:26 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -37,8 +37,6 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "sysdep.h"
 
 #include "attribute.h"
 #include "cert.h"
@@ -1677,7 +1675,7 @@ message_send_delete(struct sa *sa)
 	struct sockaddr *dst;
 
 	sa->transport->vtbl->get_dst(sa->transport, &dst);
-	isakmp_sa = sa_isakmp_lookup_by_peer(dst, sysdep_sa_len(dst));
+	isakmp_sa = sa_isakmp_lookup_by_peer(dst, SA_LEN(dst));
 	if (!isakmp_sa) {
 		/*
 		 * XXX We ought to setup an ISAKMP SA with our peer here and

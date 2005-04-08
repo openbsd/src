@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.56 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: util.c,v 1.57 2005/04/08 23:15:26 hshoexer Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -379,25 +379,25 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 		if (ifa) {
 			if (netmask)
 				memcpy(&tmp_sas, ifa->ifa_netmask,
-				    sysdep_sa_len(ifa->ifa_netmask));
+				    SA_LEN(ifa->ifa_netmask));
 			else
 				memcpy(&tmp_sas, ifa->ifa_addr,
-				    sysdep_sa_len(ifa->ifa_addr));
+				    SA_LEN(ifa->ifa_addr));
 			freeifaddrs(ifap);
 		} else {
 			freeifaddrs(ifap);
 			return -1;
 		}
 	} else {
-		memcpy(&tmp_sas, ai->ai_addr, sysdep_sa_len(ai->ai_addr));
+		memcpy(&tmp_sas, ai->ai_addr, SA_LEN(ai->ai_addr));
 		freeaddrinfo(ai);
 	}
 
-	*sa = malloc(sysdep_sa_len((struct sockaddr *)&tmp_sas));
+	*sa = malloc(SA_LEN((struct sockaddr *)&tmp_sas));
 	if (!*sa)
 		return -1;
 
-	memcpy(*sa, &tmp_sas, sysdep_sa_len((struct sockaddr *)&tmp_sas));
+	memcpy(*sa, &tmp_sas, SA_LEN((struct sockaddr *)&tmp_sas));
 	return 0;
 }
 
@@ -412,7 +412,7 @@ sockaddr2text(struct sockaddr *sa, char **address, int zflag)
 	int	addrlen, i, j;
 	long	val;
 
-	if (getnameinfo(sa, sysdep_sa_len(sa), buf, sizeof buf, 0, 0,
+	if (getnameinfo(sa, SA_LEN(sa), buf, sizeof buf, 0, 0,
 			allow_name_lookups ? 0 : NI_NUMERICHOST))
 		return -1;
 

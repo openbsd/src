@@ -1,4 +1,4 @@
-/* $OpenBSD: sysdep.c,v 1.32 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: sysdep.c,v 1.33 2005/04/08 23:15:26 hshoexer Exp $	 */
 /* $EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	 */
 
 /*
@@ -50,13 +50,6 @@
 #define KEY_API(x) pf_key_v2_##x
 
 #include "log.h"
-
-/* Return the length of the sockaddr struct.  */
-u_int8_t
-sysdep_sa_len(struct sockaddr *sa)
-{
-	return sa->sa_len;
-}
 
 /*
  * When select(2) has noticed our application needs attendance, this is what

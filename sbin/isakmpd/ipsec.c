@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.116 2005/04/08 19:40:03 deraadt Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.117 2005/04/08 23:15:26 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -1601,8 +1601,7 @@ ipsec_handle_leftover_payload(struct message *msg, u_int8_t type,
 			 * disappear too.
 			 */
 			msg->transport->vtbl->get_dst(msg->transport, &dst);
-			while ((sa = sa_lookup_by_peer(dst,
-			    sysdep_sa_len(dst))) != 0) {
+			while ((sa = sa_lookup_by_peer(dst, SA_LEN(dst))) != 0) {
 				/*
 				 * Don't delete the current SA -- we received
 				 * the notification over it, so it's obviously
@@ -2152,15 +2151,15 @@ ipsec_add_contact(struct message *msg)
 		contacts = new_contacts;
 	}
 	msg->transport->vtbl->get_dst(msg->transport, &dst);
-	addr = malloc(sysdep_sa_len(dst));
+	addr = malloc(SA_LEN(dst));
 	if (!addr) {
-		log_error("ipsec_add_contact: malloc (%d) failed",
-		    sysdep_sa_len(dst));
+		log_error("ipsec_add_contact: malloc (%lu) failed",
+		    (unsigned long)SA_LEN(dst));
 		return -1;
 	}
-	memcpy(addr, dst, sysdep_sa_len(dst));
+	memcpy(addr, dst, SA_LEN(dst));
 	contacts[contact_cnt].addr = addr;
-	contacts[contact_cnt++].len = sysdep_sa_len(dst);
+	contacts[contact_cnt++].len = SA_LEN(dst);
 
 	/*
 	 * XXX There are better algorithms for already mostly-sorted data like
@@ -2177,7 +2176,7 @@ ipsec_contacted(struct message *msg)
 	struct contact  contact;
 
 	msg->transport->vtbl->get_dst(msg->transport, &contact.addr);
-	contact.len = sysdep_sa_len(contact.addr);
+	contact.len = SA_LEN(contact.addr);
 	return contacts ? (bsearch(&contact, contacts, contact_cnt,
 	    sizeof *contacts, addr_cmp) != 0) : 0;
 }

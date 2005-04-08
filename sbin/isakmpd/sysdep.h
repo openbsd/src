@@ -1,4 +1,4 @@
-/* $OpenBSD: sysdep.h,v 1.23 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: sysdep.h,v 1.24 2005/04/08 23:15:26 hshoexer Exp $	 */
 /* $EOM: sysdep.h,v 1.17 2000/12/04 04:46:35 angelos Exp $	 */
 
 /*
@@ -55,7 +55,6 @@ extern int	sysdep_ipsec_group_spis(struct sa *, struct proto *,
     struct proto *, int);
 extern int	sysdep_ipsec_set_spi(struct sa *, struct proto *, int,
     struct sa *);
-extern u_int8_t sysdep_sa_len(struct sockaddr *);
 
 #if defined (USE_BOEHM_GC)
 /*

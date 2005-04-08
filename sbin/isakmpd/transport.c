@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.c,v 1.32 2005/04/08 16:32:11 hshoexer Exp $	 */
+/* $OpenBSD: transport.c,v 1.33 2005/04/08 23:15:26 hshoexer Exp $	 */
 /* $EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -34,8 +34,6 @@
 #include <sys/queue.h>
 #include <netdb.h>
 #include <string.h>
-
-#include "sysdep.h"
 
 #include "conf.h"
 #include "exchange.h"
@@ -326,8 +324,8 @@ transport_send_messages(fd_set * fds)
 				if (msg->xmits > conf_get_num("General",
 				    "retransmits", RETRANSMIT_DEFAULT)) {
 					t->virtual->vtbl->get_dst(t->virtual, &dst);
-					if (getnameinfo(dst, sysdep_sa_len(dst),
-					    peer, sizeof peer, peersv, sizeof peersv,
+					if (getnameinfo(dst, SA_LEN(dst), peer,
+					    sizeof peer, peersv, sizeof peersv,
 					    NI_NUMERICHOST | NI_NUMERICSERV)) {
 						strlcpy(peer, "<unknown>", sizeof peer);
 						strlcpy(peersv, "<?>", sizeof peersv);

@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.87 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: udp.c,v 1.88 2005/04/08 23:15:26 hshoexer Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -51,7 +51,6 @@
 #include "log.h"
 #include "message.h"
 #include "monitor.h"
-#include "sysdep.h"
 #include "transport.h"
 #include "udp.h"
 #include "util.h"
@@ -161,7 +160,7 @@ udp_make(struct sockaddr *laddr)
 		goto err;
 	}
 	t->transport.vtbl = &udp_transport_vtbl;
-	if (monitor_bind(s, t->src, sysdep_sa_len(t->src))) {
+	if (monitor_bind(s, t->src, SA_LEN(t->src))) {
 		if (sockaddr2text(t->src, &tstr, 0))
 			log_error("udp_make: bind (%d, %p, %lu)", s, &t->src,
 			    (unsigned long)sizeof t->src);
@@ -216,24 +215,24 @@ udp_clone(struct transport *ut, struct sockaddr *raddr)
 
 	memcpy(u2, u, sizeof *u);
 
-	u2->src = malloc(sysdep_sa_len(u->src));
+	u2->src = malloc(SA_LEN(u->src));
 	if (!u2->src) {
-		log_error("udp_clone: malloc (%d) failed",
-		    sysdep_sa_len(u->src));
+		log_error("udp_clone: malloc (%lu) failed",
+		    (unsigned long)SA_LEN(u->src));
 		free(t);
 		return 0;
 	}
-	memcpy(u2->src, u->src, sysdep_sa_len(u->src));
+	memcpy(u2->src, u->src, SA_LEN(u->src));
 
-	u2->dst = malloc(sysdep_sa_len(raddr));
+	u2->dst = malloc(SA_LEN(raddr));
 	if (!u2->dst) {
-		log_error("udp_clone: malloc (%d) failed",
-		    sysdep_sa_len(raddr));
+		log_error("udp_clone: malloc (%lu) failed",
+		    (unsigned long)SA_LEN(raddr));
 		free(u2->src);
 		free(t);
 		return 0;
 	}
-	memcpy(u2->dst, raddr, sysdep_sa_len(raddr));
+	memcpy(u2->dst, raddr, SA_LEN(raddr));
 
 	t->flags &= ~TRANSPORT_LISTEN;
 	transport_setup(t, 0);
@@ -251,11 +250,11 @@ udp_bind(const struct sockaddr *addr)
 {
 	struct sockaddr *src;
 
-	src = malloc(sysdep_sa_len((struct sockaddr *)addr));
+	src = malloc(SA_LEN(addr));
 	if (!src)
 		return 0;
 
-	memcpy(src, addr, sysdep_sa_len((struct sockaddr *)addr));
+	memcpy(src, addr, SA_LEN(addr));
 	return udp_make(src);
 }
 
@@ -451,7 +450,7 @@ udp_send_message(struct message *msg, struct transport *t)
 	 * given, or else EISCONN will occur.
 	 */
 	m.msg_name = (caddr_t) u->dst;
-	m.msg_namelen = sysdep_sa_len(u->dst);
+	m.msg_namelen = SA_LEN(u->dst);
 	m.msg_iov = msg->iov;
 	m.msg_iovlen = msg->iovlen;
 	m.msg_control = 0;
@@ -517,12 +516,12 @@ udp_decode_ids(struct transport *t)
 	t->vtbl->get_src(t, &src);
 	t->vtbl->get_dst(t, &dst);
 
-	if (getnameinfo(src, sysdep_sa_len(src), idsrc, sizeof idsrc, NULL, 0,
+	if (getnameinfo(src, SA_LEN(src), idsrc, sizeof idsrc, NULL, 0,
 	    NI_NUMERICHOST) != 0) {
 		log_print("udp_decode_ids: getnameinfo () failed for 'src'");
 		strlcpy(idsrc, "<error>", 256);
 	}
-	if (getnameinfo(dst, sysdep_sa_len(dst), iddst, sizeof iddst, NULL, 0,
+	if (getnameinfo(dst, SA_LEN(dst), iddst, sizeof iddst, NULL, 0,
 	    NI_NUMERICHOST) != 0) {
 		log_print("udp_decode_ids: getnameinfo () failed for 'dst'");
 		strlcpy(iddst, "<error>", 256);

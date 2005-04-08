@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.38 2005/04/08 17:15:01 deraadt Exp $	 */
+/* $OpenBSD: monitor.c,v 1.39 2005/04/08 23:15:26 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -43,8 +43,6 @@
 
 #include <regex.h>
 #include <keynote.h>
-
-#include "sysdep.h"
 
 #include "conf.h"
 #include "log.h"
@@ -1059,9 +1057,9 @@ m_priv_check_bind(const struct sockaddr *sa, socklen_t salen)
 		log_print("NULL address");
 		return 1;
 	}
-	if (sysdep_sa_len((struct sockaddr *)sa) != salen) {
-		log_print("Length mismatch: %d %d",
-		  (int)sysdep_sa_len((struct sockaddr *)sa), (int)salen);
+	if (SA_LEN(sa) != salen) {
+		log_print("Length mismatch: %lu %lu", (unsigned long)sa->sa_len,
+		    (unsigned long)salen);
 		return 1;
 	}
 	switch (sa->sa_family) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.20 2005/04/08 19:40:03 deraadt Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.21 2005/04/08 23:15:26 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -236,7 +236,7 @@ virtual_bind(const struct sockaddr *addr)
 
 	v->transport.vtbl = &virtual_transport_vtbl;
 
-	memcpy(&tmp_sa, addr, sysdep_sa_len((struct sockaddr *)addr));
+	memcpy(&tmp_sa, addr, SA_LEN(addr));
 
 	/* Get port. */
 	stport = udp_default_port ? udp_default_port : UDP_DEFAULT_PORT_STR;
@@ -256,7 +256,7 @@ virtual_bind(const struct sockaddr *addr)
 	v->main->virtual = (struct transport *)v;
 
 	if (!disable_nat_t) {
-		memcpy(&tmp_sa, addr, sysdep_sa_len((struct sockaddr *)addr));
+		memcpy(&tmp_sa, addr, SA_LEN(addr));
 
 		/* Get port. */
 		stport = udp_encap_default_port
@@ -348,9 +348,9 @@ virtual_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 	 * Drop non-Internet stuff.
 	 */
 	if ((if_addr->sa_family != AF_INET ||
-	    sysdep_sa_len(if_addr) != sizeof (struct sockaddr_in)) &&
+	    SA_LEN(if_addr) != sizeof (struct sockaddr_in)) &&
 	    (if_addr->sa_family != AF_INET6 ||
-	    sysdep_sa_len(if_addr) != sizeof (struct sockaddr_in6)))
+	    SA_LEN(if_addr) != sizeof (struct sockaddr_in6)))
 		return 0;
 
 	/*
@@ -444,8 +444,7 @@ virtual_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 			}
 
 			/* If found, take the easy way out. */
-			if (memcmp(addr, if_addr,
-			    sysdep_sa_len(addr)) == 0) {
+			if (memcmp(addr, if_addr, SA_LEN(addr)) == 0) {
 				free(addr);
 				break;
 			}
