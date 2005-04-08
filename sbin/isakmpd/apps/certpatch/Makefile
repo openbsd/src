@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2005/04/08 19:19:39 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.10 2005/04/08 21:09:53 deraadt Exp $
 #	$EOM: Makefile,v 1.6 2000/03/28 21:22:06 ho Exp $
 
 #
@@ -35,15 +35,10 @@ SRCS=		certpatch.c
 BINDIR?=	/usr/sbin
 TOPSRC=		${.CURDIR}/../..
 TOPOBJ!=	cd ${TOPSRC}; printf "all:\n\t@pwd\n" |${MAKE} -f-
-OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile
-FEATURES!=	awk '/^FEATURES=/ { print $$0 }' ${.CURDIR}/../../Makefile | sed 's/FEATURES=.//'
-.PATH:		${TOPSRC} ${TOPSRC}/sysdep/${OS} ${TOPOBJ}
-CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall
+.PATH:		${TOPSRC} ${TOPOBJ}
+CFLAGS+=	-I${TOPSRC} -I${TOPOBJ} -Wall
 LDADD+=		-lcrypto
 DPADD+=		${LIBCRYPTO}
 MAN=		certpatch.8
-
-# Override LIBSYSDEPDIR definition from Makefile.sysdep
-LIBSYSDEPDIR=	${TOPSRC}/sysdep/common/libsysdep
 
 .include <bsd.prog.mk>
