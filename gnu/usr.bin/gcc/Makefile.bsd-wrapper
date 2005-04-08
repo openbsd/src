@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.51 2004/12/25 00:06:30 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.52 2005/04/08 21:11:08 kettenis Exp $
 
 MAN=		gcc.1 cpp.1 gcov.1 protoize.1
 MLINKS+=	protoize.1 unprotoize.1
@@ -55,14 +55,7 @@ CLEANFILES=	.gdbinit */.gdbinit *.info* \
 		genrtl.c genrtl.h fixinc.sh fixinc/Makefile \
 		po/Makefile  po/Makefile.in  po/POTFILES
 
-.if ${MACHINE} == "amd64"
-M_ARCH=		x86_64
-.else
-M_ARCH=		${MACHINE_ARCH}
-.endif
-
-
-GCCARCH=	${M_ARCH}-unknown-openbsd${OSREV}
+GCCARCH=	${MACHINE_ARCH}-unknown-openbsd${OSREV}
 GCCINC=	/usr/lib/gcc-lib/${GCCARCH}/$V/include
 
 # cross-compilation
@@ -171,12 +164,12 @@ depend: config.status
 	exec ${MAKE} ${MAKE_FLAGS} generated-manpages
 
 FILES= ${.CURDIR}/gcc/unwind.h
-.if ${M_ARCH} == "i386"
+.if ${MACHINE_ARCH} == "i386"
 FILES+=${.CURDIR}/gcc/config/i386/mmintrin.h \
 	${.CURDIR}/gcc/config/i386/xmmintrin.h \
 	${.CURDIR}/gcc/config/i386/emmintrin.h \
 	${.CURDIR}/gcc/config/i386/pmmintrin.h
-.elif ${M_ARCH} == "powerpc"
+.elif ${MACHINE_ARCH} == "powerpc"
 FILES+=${.CURDIR}/gcc/config/rs6000/altivec.h
 .endif
 
