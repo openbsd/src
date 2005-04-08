@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.66 2005/04/08 16:52:41 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.67 2005/04/08 17:03:04 deraadt Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -36,24 +36,15 @@
 # may provide this make variant as "pmake" or maybe "bsdmake".
 #
 
-# openbsd means OpenBSD 2.5 or newer.
-# freebsd/netbsd means FreeBSD/NetBSD with KAME IPsec.
 OS=		openbsd
-#OS=		netbsd
-#OS=		freebsd
-#OS=		bsdi
 
 # Compile-time configuration of otherwise optional features
-#FEATURES+=	policy debug gmp
-#FEATURES+=	rawkey dnssec
-FEATURES+=	policy debug
-FEATURES+=	rawkey 
+#FEATURES+=	gmp dnssec
+FEATURES+=	policy debug rawkey 
 
 .PATH:		${.CURDIR}/sysdep/${OS}
 
 PROG=		isakmpd
-BINDIR?=	/sbin
-LDSTATIC?=	${STATIC}
 SRCS=		app.c attribute.c cert.c connection.c constants.c conf.c \
 		cookie.c crypto.c dh.c doi.c exchange.c exchange_num.c \
 		field.c gmp_util.c hash.c if.c ike_auth.c ike_main_mode.c \
@@ -72,9 +63,6 @@ MAN=		isakmpd.8 isakmpd.conf.5 isakmpd.policy.5
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wmissing-declarations -DNEED_SYSDEP_APP \
 		-I${.CURDIR} -I${.CURDIR}/sysdep/${OS} -I.
-#CFLAGS+=	-Wsign-compare -Werror
-
-# Different debugging & profiling suggestions
 
 # Include symbolic debugging info
 #DEBUG=		-g
