@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.112 2005/04/06 16:00:20 deraadt Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.113 2005/04/08 16:09:25 deraadt Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -461,18 +461,14 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		if (!isa->src_net)
 			goto memfail;
 		isa->src_net->sa_family = AF_INET;
-#ifndef USE_OLD_SOCKADDR
 		isa->src_net->sa_len = sizeof(struct sockaddr_in);
-#endif
 
 		isa->src_mask = (struct sockaddr *)calloc(1,
 		    sizeof(struct sockaddr_in));
 		if (!isa->src_mask)
 			goto memfail;
 		isa->src_mask->sa_family = AF_INET;
-#ifndef USE_OLD_SOCKADDR
 		isa->src_mask->sa_len = sizeof(struct sockaddr_in);
-#endif
 		break;
 
 	case IPSEC_ID_IPV6_ADDR:
@@ -482,18 +478,14 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		if (!isa->src_net)
 			goto memfail;
 		isa->src_net->sa_family = AF_INET6;
-#ifndef USE_OLD_SOCKADDR
 		isa->src_net->sa_len = sizeof(struct sockaddr_in6);
-#endif
 
 		isa->src_mask = (struct sockaddr *)calloc(1,
 		    sizeof(struct sockaddr_in6));
 		if (!isa->src_mask)
 			goto memfail;
 		isa->src_mask->sa_family = AF_INET6;
-#ifndef USE_OLD_SOCKADDR
 		isa->src_mask->sa_len = sizeof(struct sockaddr_in6);
-#endif
 		break;
 
 	case IPSEC_ID_IPV4_RANGE:
@@ -540,18 +532,14 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		if (!isa->dst_net)
 			goto memfail;
 		isa->dst_net->sa_family = AF_INET;
-#ifndef USE_OLD_SOCKADDR
 		isa->dst_net->sa_len = sizeof(struct sockaddr_in);
-#endif
 
 		isa->dst_mask = (struct sockaddr *)calloc(1,
 		    sizeof(struct sockaddr_in));
 		if (!isa->dst_mask)
 			goto memfail;
 		isa->dst_mask->sa_family = AF_INET;
-#ifndef USE_OLD_SOCKADDR
 		isa->dst_mask->sa_len = sizeof(struct sockaddr_in);
-#endif
 		break;
 
 	case IPSEC_ID_IPV6_ADDR:
@@ -561,18 +549,14 @@ ipsec_set_network(u_int8_t *src_id, u_int8_t *dst_id, struct ipsec_sa *isa)
 		if (!isa->dst_net)
 			goto memfail;
 		isa->dst_net->sa_family = AF_INET6;
-#ifndef USE_OLD_SOCKADDR
 		isa->dst_net->sa_len = sizeof(struct sockaddr_in6);
-#endif
 
 		isa->dst_mask = (struct sockaddr *)calloc(1,
 		    sizeof(struct sockaddr_in6));
 		if (!isa->dst_mask)
 			goto memfail;
 		isa->dst_mask->sa_family = AF_INET6;
-#ifndef USE_OLD_SOCKADDR
 		isa->dst_mask->sa_len = sizeof(struct sockaddr_in6);
-#endif
 		break;
 	}
 

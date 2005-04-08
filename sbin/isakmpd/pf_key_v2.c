@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.159 2005/04/08 16:07:21 cloder Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.160 2005/04/08 16:09:25 deraadt Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -984,9 +984,7 @@ pf_key_v2_setup_sockaddr(void *res, struct sockaddr *src,
 	case AF_INET:
 		ip4_sa = (struct sockaddr_in *) res;
 		ip4_sa->sin_family = AF_INET;
-#ifndef USE_OLD_SOCKADDR
 		ip4_sa->sin_len = sizeof *ip4_sa;
-#endif
 		ip4_sa->sin_port = port;
 		if (dst)
 			p = (u_int8_t *) (ingress ?
@@ -1000,9 +998,7 @@ pf_key_v2_setup_sockaddr(void *res, struct sockaddr *src,
 	case AF_INET6:
 		ip6_sa = (struct sockaddr_in6 *) res;
 		ip6_sa->sin6_family = AF_INET6;
-#ifndef USE_OLD_SOCKADDR
 		ip6_sa->sin6_len = sizeof *ip6_sa;
-#endif
 		ip6_sa->sin6_port = port;
 		if (dst)
 			p = (u_int8_t *) (ingress ?
@@ -2519,19 +2515,15 @@ pf_key_v2_enable_sa(struct sa *sa, struct sa *isakmp_sa)
 	switch (dst->sa_family) {
 	case AF_INET:
 		((struct sockaddr_in *) hostmask)->sin_family = AF_INET;
-#ifndef USE_OLD_SOCKADDR
 		((struct sockaddr_in *) hostmask)->sin_len =
 		    sizeof(struct in_addr);
-#endif
 		memset(&((struct sockaddr_in *) hostmask)->sin_addr.s_addr,
 		    0xff, sizeof(struct in_addr));
 		break;
 	case AF_INET6:
 		((struct sockaddr_in6 *) hostmask)->sin6_family = AF_INET6;
-#ifndef USE_OLD_SOCKADDR
 		((struct sockaddr_in6 *) hostmask)->sin6_len =
 		    sizeof(struct in6_addr);
-#endif
 		memset(&((struct sockaddr_in6 *) hostmask)->sin6_addr.s6_addr,
 		    0xff, sizeof(struct in6_addr));
 		break;
@@ -2699,20 +2691,16 @@ pf_key_v2_disable_sa(struct sa *sa, int incoming)
 		case AF_INET:
 			((struct sockaddr_in *) hostmask)->sin_family =
 			    AF_INET;
-#ifndef USE_OLD_SOCKADDR
 			((struct sockaddr_in *) hostmask)->sin_len =
 			    sizeof(struct in_addr);
-#endif
 			memset(&((struct sockaddr_in *) hostmask)->sin_addr.s_addr,
 			    0xff, sizeof(struct in_addr));
 			break;
 		case AF_INET6:
 			((struct sockaddr_in6 *) hostmask)->sin6_family =
 			    AF_INET6;
-#ifndef USE_OLD_SOCKADDR
 			((struct sockaddr_in6 *) hostmask)->sin6_len =
 			    sizeof(struct in6_addr);
-#endif
 			memset(&((struct sockaddr_in6 *) hostmask)->sin6_addr.s6_addr,
 			    0xff, sizeof(struct in6_addr));
 			break;

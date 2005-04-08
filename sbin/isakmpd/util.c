@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.53 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: util.c,v 1.54 2005/04/08 16:09:25 deraadt Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -544,7 +544,7 @@ util_ntoa(char **buf, int af, u_int8_t *addr)
 
 	bzero(&from, fromlen);
 	sfrom->sa_family = af;
-#ifndef USE_OLD_SOCKADDR
+
 	switch (af) {
 	case AF_INET:
 		sfrom->sa_len = sizeof(struct sockaddr_in);
@@ -553,7 +553,7 @@ util_ntoa(char **buf, int af, u_int8_t *addr)
 		sfrom->sa_len = sizeof(struct sockaddr_in6);
 		break;
 	}
-#endif
+
 	memcpy(sockaddr_addrdata(sfrom), addr, sockaddr_addrlen(sfrom));
 
 	if (sockaddr2text(sfrom, buf, 0)) {
