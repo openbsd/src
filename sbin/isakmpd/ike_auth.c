@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.100 2005/04/08 18:35:37 deraadt Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.101 2005/04/08 20:04:57 hshoexer Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -55,7 +55,6 @@
 #include "dnssec.h"
 #endif
 #include "exchange.h"
-#include "gmp_util.h"
 #include "hash.h"
 #include "ike_auth.h"
 #include "ipsec.h"

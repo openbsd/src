@@ -1,4 +1,4 @@
-/* $OpenBSD: math_group.c,v 1.25 2005/04/08 19:19:39 hshoexer Exp $	 */
+/* $OpenBSD: math_group.c,v 1.26 2005/04/08 20:04:57 hshoexer Exp $	 */
 /* $EOM: math_group.c,v 1.25 2000/04/07 19:53:26 niklas Exp $	 */
 
 /*
@@ -36,7 +36,6 @@
 
 #include "sysdep.h"
 
-#include "gmp_util.h"
 #include "log.h"
 #include "math_2n.h"
 #include "math_ec2n.h"
@@ -678,19 +677,37 @@ modp_getlen(struct group *group)
 {
 	struct modp_group *grp = (struct modp_group *)group->group;
 
-	return mpz_sizeinoctets(grp->p);
+	return BN_num_bytes(grp->p);
 }
 
 void
 modp_getraw(struct group *grp, math_mp_t v, u_int8_t *d)
 {
-	mpz_getraw(d, v, grp->getlen(grp));
+	math_mp_t       a;
+	int		len;
+
+	len = grp->getlen(grp);
+
+	/* XXX bn2bin?  */
+	a = BN_dup(v);
+
+	while (len-- > 0)
+		d[len] = BN_div_word(a, 256);
+
+	BN_clear_free(a);
 }
 
 int
 modp_setraw(struct group *grp, math_mp_t d, u_int8_t *s, int l)
 {
-	mpz_setraw(d, s, l);
+        u_int32_t       i;
+
+	/* XXX bin2bn?  */
+	BN_set_word(d, 0);
+	for (i = 0; i < l; i++) {
+		BN_mul_word(d, 256);
+		BN_add_word(d, s[i]);
+	}
 	return 0;
 }
 

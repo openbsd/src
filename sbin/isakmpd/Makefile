@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.74 2005/04/08 19:40:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.75 2005/04/08 20:04:57 hshoexer Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -47,7 +47,7 @@ FEATURES+=
 PROG=		isakmpd
 SRCS=		app.c attribute.c cert.c connection.c constants.c conf.c \
 		cookie.c crypto.c dh.c doi.c exchange.c exchange_num.c \
-		field.c gmp_util.c hash.c if.c ike_auth.c ike_main_mode.c \
+		field.c hash.c if.c ike_auth.c ike_main_mode.c \
 		ike_phase_1.c ike_quick_mode.c init.c ipsec.c ipsec_fld.c \
 		ipsec_num.c isakmpd.c isakmp_doi.c isakmp_fld.c isakmp_num.c \
 		key.c libcrypto.c log.c message.c math_2n.c math_group.c \
