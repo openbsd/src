@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.115 2005/04/08 16:52:41 deraadt Exp $	 */
+/* $OpenBSD: exchange.c,v 1.116 2005/04/08 18:41:58 hshoexer Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1242,10 +1242,8 @@ exchange_free_aux(void *v_exch)
 	if (exchange->keynote_key)
 		free(exchange->keynote_key);	/* This is just a string */
 
-#if defined (POLICY) || defined (KEYNOTE)
 	if (exchange->policy_id != -1)
 		kn_close(exchange->policy_id);
-#endif
 
 	exchange_free_aca_list(exchange);
 	LIST_REMOVE(exchange, link);
