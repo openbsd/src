@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.105 2005/04/08 19:40:03 deraadt Exp $	 */
+/* $OpenBSD: message.c,v 1.106 2005/04/08 20:55:21 deraadt Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -61,12 +61,6 @@
 #include "transport.h"
 #include "util.h"
 #include "virtual.h"
-
-#ifdef __GNUC__
-#define INLINE __inline
-#else
-#define INLINE
-#endif
 
 /* A local set datatype, coincidentally fd_set suits our purpose fine.  */
 typedef fd_set  set;
@@ -2020,7 +2014,7 @@ message_check_duplicate(struct message *msg)
 }
 
 /* Helper to message_negotiate_sa.  */
-static INLINE struct payload *
+static __inline struct payload *
 step_transform(struct payload *tp, struct payload **propp,
     struct payload **sap)
 {
