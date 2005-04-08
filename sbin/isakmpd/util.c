@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.54 2005/04/08 16:09:25 deraadt Exp $	 */
+/* $OpenBSD: util.c,v 1.55 2005/04/08 18:52:23 hshoexer Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -238,7 +238,6 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 	struct sockaddr_storage tmp_sas;
 	struct ifaddrs *ifap, *ifa = NULL, *llifa = NULL;
 	char *np = address;
-#ifdef USE_DEFAULT_ROUTE
 	char ifname[IFNAMSIZ];
 	u_char buf[BUFSIZ];
 	struct rt_msghdr *rtm;
@@ -247,7 +246,6 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 	struct sockaddr_in6 *sin6;
 	int fd = 0, seq, len, b;
 	pid_t pid;
-#endif /* USE_DEFAULT_ROUTE */
 
 	bzero(&hints, sizeof hints);
 	if (!allow_name_lookups)
@@ -257,7 +255,6 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 	hints.ai_protocol = IPPROTO_UDP;
 
 	if (getaddrinfo(address, port, &hints, &ai)) {
-#ifdef USE_DEFAULT_ROUTE
 		/*
 		 * If the 'default' keyword is used, do a route lookup for
 		 * the default route, and use the interface associated with
@@ -329,7 +326,6 @@ text2sockaddr(char *address, char *port, struct sockaddr **sa, sa_family_t af,
 					return (-1);
 			}
 		}
-#endif /* USE_DEFAULT_ROUTE */
 
 		if (getifaddrs(&ifap) != 0)
 			return (-1);
