@@ -1,4 +1,4 @@
-/*	$OpenBSD: args.c,v 1.14 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: args.c,v 1.15 2005/04/08 01:46:45 jsg Exp $	*/
 /*	$NetBSD: args.c,v 1.7 1996/03/01 01:18:58 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: args.c,v 1.14 2003/06/11 23:42:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: args.c,v 1.15 2005/04/08 01:46:45 jsg Exp $";
 #endif
 #endif /* not lint */
 
@@ -321,7 +321,7 @@ c_conv(const void *a, const void *b)
  * 	1) A positive decimal number.
  *	2) A positive decimal number followed by a b (mult by 512).
  *	3) A positive decimal number followed by a k (mult by 1024).
- *	4) A positive decimal number followed by a m (mult by 512).
+ *	4) A positive decimal number followed by a m (mult by 1048576).
  *	5) A positive decimal number followed by a w (mult by sizeof int)
  *	6) Two or more positive decimal numbers (with/without k,b or w).
  *	   separated by x (also * for backwards compatibility), specifying
@@ -391,7 +391,7 @@ erange:				errx(1, "%s: %s", oper, strerror(ERANGE));
  * 	1) A positive decimal number.
  *	2) A positive decimal number followed by a b (mult by 512).
  *	3) A positive decimal number followed by a k (mult by 1024).
- *	4) A positive decimal number followed by a m (mult by 512).
+ *	4) A positive decimal number followed by a m (mult by 1048576).
  *	5) A positive decimal number followed by a w (mult by sizeof int)
  *	6) Two or more positive decimal numbers (with/without k,b or w).
  *	   separated by x (also * for backwards compatibility), specifying
