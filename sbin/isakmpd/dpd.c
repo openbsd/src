@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.c,v 1.11 2005/04/08 19:40:02 deraadt Exp $	*/
+/*	$OpenBSD: dpd.c,v 1.12 2005/04/08 21:14:49 cloder Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -48,7 +48,7 @@
 #define DPD_MINOR		0x00
 #define DPD_SEQNO_SZ		4
 
-static const char dpd_vendor_id[] = {
+static const u_int8_t dpd_vendor_id[] = {
 	0xAF, 0xCA, 0xD7, 0x13, 0x68, 0xA1, 0xF1,	/* RFC 3706 */
 	0xC9, 0x6B, 0x86, 0x96, 0xFC, 0x77, 0x57,
 	DPD_MAJOR,
