@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.69 2005/04/08 17:20:44 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.70 2005/04/08 18:27:09 hshoexer Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -40,7 +40,7 @@ OS=		openbsd
 
 # Compile-time configuration of otherwise optional features
 #FEATURES+=	gmp dnssec
-FEATURES+=	policy debug rawkey 
+FEATURES+=	debug
 
 .PATH:		${.CURDIR}/sysdep/${OS}
 
@@ -107,10 +107,6 @@ LDADD+=		-lgmp
 DPADD+=		${LIBGMP}
 .else
 CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_OPENSSL
-.endif
-
-.ifdef USE_RAWKEY
-CFLAGS+=	-DUSE_RAWKEY
 .endif
 
 SRCS+=		${IPSEC_SRCS} ${DNSSEC} policy.c math_ec2n.c \
