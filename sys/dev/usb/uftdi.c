@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.20 2005/04/01 08:25:39 deraadt Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.21 2005/04/08 04:29:57 deraadt Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -129,8 +129,12 @@ USB_MATCH(uftdi)
 {
 	USB_MATCH_START(uftdi, uaa);
 
-	if (uaa->iface != NULL)
+	if (uaa->iface != NULL) {
+		if (uaa->vendor == USB_VENDOR_FTDI &&
+		    (uaa->product == USB_PRODUCT_FTDI_SERIAL_2232C))
+			return (UMATCH_VENDOR_IFACESUBCLASS);
 		return (UMATCH_NONE);
+	}
 
 	DPRINTFN(20,("uftdi: vendor=0x%x, product=0x%x\n",
 		     uaa->vendor, uaa->product));
@@ -180,20 +184,23 @@ USB_ATTACH(uftdi)
 
 	DPRINTFN(10,("\nuftdi_attach: sc=%p\n", sc));
 
-	/* Move the device into the configured state. */
-	err = usbd_set_config_index(dev, UFTDI_CONFIG_INDEX, 1);
-	if (err) {
-		printf("\n%s: failed to set configuration, err=%s\n",
-		       devname, usbd_errstr(err));
-		goto bad;
-	}
+	if (uaa->iface == NULL) {
+		/* Move the device into the configured state. */
+		err = usbd_set_config_index(dev, UFTDI_CONFIG_INDEX, 1);
+		if (err) {
+			printf("\n%s: failed to set configuration, err=%s\n",
+			       devname, usbd_errstr(err));
+			goto bad;
+		}
 
-	err = usbd_device2interface_handle(dev, UFTDI_IFACE_INDEX, &iface);
-	if (err) {
-		printf("\n%s: failed to get interface, err=%s\n",
-		       devname, usbd_errstr(err));
-		goto bad;
-	}
+		err = usbd_device2interface_handle(dev, UFTDI_IFACE_INDEX, &iface);
+		if (err) {
+			printf("\n%s: failed to get interface, err=%s\n",
+			       devname, usbd_errstr(err));
+			goto bad;
+		}
+	} else
+		iface = uaa->iface;
 
 	usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
 	USB_ATTACH_SETUP;
@@ -285,8 +292,8 @@ USB_ATTACH(uftdi)
 		int addr, dir, attr;
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
-			printf("%s: could not read endpoint descriptor"
-			       ": %s\n", devname, usbd_errstr(err));
+			printf("%s: could not read endpoint descriptor\n",
+			    devname);
 			goto bad;
 		}
 
@@ -313,7 +320,10 @@ USB_ATTACH(uftdi)
 		goto bad;
 	}
 
-	uca.portno = FTDI_PIT_SIOA;
+	if (uaa->iface == NULL)
+		uca.portno = FTDI_PIT_SIOA;
+	else
+		uca.portno = FTDI_PIT_SIOA + id->bInterfaceNumber;
 	/* bulkin, bulkout set above */
 	uca.ibufsize = UFTDIIBUFSIZE;
 	uca.obufsize = UFTDIOBUFSIZE - sc->sc_hdrlen;
