@@ -101,6 +101,7 @@
 ./sbin/ifconfig
 ./sbin/init
 ./sbin/ipsecadm
+./sbin/ipsecctl
 ./sbin/isakmpd
 ./sbin/lmccontrol
 ./sbin/mkfifo

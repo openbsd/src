@@ -1774,6 +1774,7 @@
 ./usr/share/man/cat5/info.0
 ./usr/share/man/cat5/inode.0
 ./usr/share/man/cat5/intro.0
+./usr/share/man/cat5/ipsec.conf.0
 ./usr/share/man/cat5/isakmpd.conf.0
 ./usr/share/man/cat5/isakmpd.policy.0
 ./usr/share/man/cat5/keynote.0
@@ -2060,6 +2061,7 @@
 ./usr/share/man/cat8/iopctl.0
 ./usr/share/man/cat8/iostat.0
 ./usr/share/man/cat8/ipsecadm.0
+./usr/share/man/cat8/ipsecctl.0
 ./usr/share/man/cat8/isakmpd.0
 ./usr/share/man/cat8/kadmin.0
 ./usr/share/man/cat8/kadmind.0
