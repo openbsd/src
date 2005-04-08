@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.18 2005/04/05 13:12:05 pascoe Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -47,6 +47,7 @@ struct pxaohci_softc {
 };
 
 void	pxaohci_enable(struct pxaohci_softc *);
+void	pxaohci_disable(struct pxaohci_softc *);
 
 struct cfattach pxaohci_ca = {
         sizeof (struct pxaohci_softc), pxaohci_match, pxaohci_attach,
@@ -94,27 +95,37 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
 	    OHCI_MIE);
 
-	strlcpy(sc->sc.sc_vendor, "PXA27x", sizeof(sc->sc.sc_vendor));
+	sc->sc_ih = pxa2x0_intr_establish(PXA2X0_INT_USBH1, IPL_USB,
+	    ohci_intr, &sc->sc, sc->sc.sc_bus.bdev.dv_xname);
+	if (sc->sc_ih == NULL) {
+		printf(": unable to establish interrupt\n");
+		pxaohci_disable(sc);
+		pxa2x0_clkman_config(CKEN_USBHC, 0);
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+		sc->sc.sc_size = 0;
+		return;
+	}
 
+	strlcpy(sc->sc.sc_vendor, "PXA27x", sizeof(sc->sc.sc_vendor));
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n",
 		    sc->sc.sc_bus.bdev.dv_xname, r);
+		pxa2x0_intr_disestablish(sc->sc_ih);
+		sc->sc_ih = NULL;
+		pxaohci_disable(sc);
+		pxa2x0_clkman_config(CKEN_USBHC, 0);
 		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		sc->sc.sc_size = 0;
-		pxa2x0_clkman_config(CKEN_USBHC, 0);
 		return;
 	}
 
 	sc->sc.sc_powerhook = powerhook_establish(pxaohci_power, sc);
 	if (sc->sc.sc_powerhook == NULL)
-		printf("%s: can't establish power hook\n",
+		printf("%s: cannot establish powerhook\n",
 		    sc->sc.sc_bus.bdev.dv_xname);
 
-	sc->sc_ih = pxa2x0_intr_establish(PXA2X0_INT_USBH1, IPL_USB,
-	    ohci_intr, sc, sc->sc.sc_bus.bdev.dv_xname);
-
-	sc->sc.sc_child = config_found((void *) sc, &sc->sc.sc_bus,
+	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
 	    usbctlprint);
 }
 
@@ -122,7 +133,6 @@ int
 pxaohci_detach(struct device *self, int flags)
 {
 	struct pxaohci_softc		*sc = (struct pxaohci_softc *)self;
-	u_int32_t			hr;
 	int				rv;
 
 	rv = ohci_detach(&sc->sc, flags);
@@ -139,16 +149,7 @@ pxaohci_detach(struct device *self, int flags)
 		sc->sc_ih = NULL;
 	}
 
-	/* Full host reset */
-	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
-	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
-	    (hr & USBHC_HR_MASK) | USBHC_HR_FHR);
-
-	DELAY(USBHC_RST_WAIT);
-
-	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
-	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
-	    (hr & USBHC_HR_MASK) & ~(USBHC_HR_FHR));
+	pxaohci_disable(sc);
 
 	/* stop clock */
 	pxa2x0_clkman_config(CKEN_USBHC, 0);
@@ -219,4 +220,21 @@ pxaohci_enable(struct pxaohci_softc *sc)
 	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
 	    (hr & USBHC_HR_MASK) & ~(USBHC_HR_SSEP2));
+}
+
+void
+pxaohci_disable(struct pxaohci_softc *sc)
+{
+	u_int32_t			hr;
+
+	/* Full host reset */
+	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
+	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
+	    (hr & USBHC_HR_MASK) | USBHC_HR_FHR);
+
+	DELAY(USBHC_RST_WAIT);
+
+	hr = bus_space_read_4(sc->sc.iot, sc->sc.ioh, USBHC_HR);
+	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USBHC_HR,
+	    (hr & USBHC_HR_MASK) & ~(USBHC_HR_FHR));
 }
