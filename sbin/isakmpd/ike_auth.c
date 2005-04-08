@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.99 2005/04/08 17:15:01 deraadt Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.100 2005/04/08 18:35:37 deraadt Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -82,9 +82,7 @@ static u_int8_t *sig_gen_skeyid(struct exchange *, size_t *);
 static int      rsa_sig_decode_hash(struct message *);
 static int      rsa_sig_encode_hash(struct message *);
 
-#if defined (USE_RAWKEY)
 static int      get_raw_key_from_file(int, u_int8_t *, size_t, RSA **);
-#endif
 
 static int      ike_auth_hash(struct exchange *, u_int8_t *);
 
@@ -739,13 +737,11 @@ rsa_sig_decode_hash(struct message *msg)
 	}
 #endif				/* USE_DNSSEC */
 
-#if defined (USE_RAWKEY)
 	/* If we still have not found a key, try to read it from a file. */
 	if (!found)
 		if (get_raw_key_from_file(IKE_AUTH_RSA_SIG, id, id_len, &key)
 		    != -1)
 			found++;
-#endif
 
 	if (!found) {
 		log_print("rsa_sig_decode_hash: no public key found");
@@ -1086,7 +1082,6 @@ ike_auth_hash(struct exchange *exchange, u_int8_t *buf)
 	return 0;
 }
 
-#if defined (USE_RAWKEY)
 static int
 get_raw_key_from_file(int type, u_int8_t *id, size_t id_len, RSA **rsa)
 {
@@ -1136,4 +1131,3 @@ get_raw_key_from_file(int type, u_int8_t *id, size_t id_len, RSA **rsa)
 
 	return (*rsa ? 0 : -1);
 }
-#endif				/* USE_RAWKEY */
