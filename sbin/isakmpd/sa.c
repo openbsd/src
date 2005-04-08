@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.94 2005/04/08 16:37:15 deraadt Exp $	 */
+/* $OpenBSD: sa.c,v 1.95 2005/04/08 16:52:41 deraadt Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -723,12 +723,10 @@ sa_free(struct sa *sa)
 		sa->soft_death = 0;
 		sa->refcnt--;
 	}
-#if defined (USE_DPD)
 	if (sa->dpd_event) {
 		timer_remove_event(sa->dpd_event);
 		sa->dpd_event = 0;
 	}
-#endif
 	sa_remove(sa);
 }
 
@@ -801,10 +799,8 @@ sa_release(struct sa *sa)
 		free(sa->keystate);
 	if (sa->nat_t_keepalive)
 		timer_remove_event(sa->nat_t_keepalive);
-#if defined (USE_DPD)
 	if (sa->dpd_event)
 		timer_remove_event(sa->dpd_event);
-#endif
 	if (sa->transport)
 		transport_release(sa->transport);
 	free(sa);
@@ -1185,12 +1181,10 @@ sa_mark_replaced(struct sa *sa)
 {
 	LOG_DBG((LOG_SA, 60, "sa_mark_replaced: SA %p (%s) marked as replaced",
 	    sa, sa->name ? sa->name : "unnamed"));
-#if defined (USE_DPD)
 	if (sa->dpd_event) {
 		timer_remove_event(sa->dpd_event);
 		sa->dpd_event = 0;
 	}
-#endif
 	sa->flags |= SA_FLAG_REPLACED;
 }
 

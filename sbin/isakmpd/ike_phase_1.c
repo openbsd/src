@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.60 2005/04/08 16:37:14 deraadt Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.61 2005/04/08 16:52:41 deraadt Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -45,9 +45,7 @@
 #include "crypto.h"
 #include "dh.h"
 #include "doi.h"
-#ifdef USE_DPD
 #include "dpd.h"
-#endif
 #include "exchange.h"
 #include "hash.h"
 #include "ike_auth.h"
@@ -366,11 +364,9 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 	if (nat_t_add_vendor_payloads(msg))
 		goto bail_out;
 
-#if defined (USE_DPD)
 	/* Advertise DPD capability.  */
 	if (dpd_add_vendor_payload(msg))
 		goto bail_out;
-#endif
 
 	conf_free_list(conf);
 	free(transform);
@@ -528,11 +524,9 @@ ike_phase_1_responder_send_SA(struct message *msg)
 	if (nat_t_add_vendor_payloads(msg))
 		return -1;
 
-#if defined (USE_DPD)
 	/* Advertise DPD capability.  */
 	if (dpd_add_vendor_payload(msg))
 		return -1;
-#endif
 	return 0;
 }
 

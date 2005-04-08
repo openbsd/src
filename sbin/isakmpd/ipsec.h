@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.h,v 1.24 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.h,v 1.25 2005/04/08 16:52:41 deraadt Exp $	 */
 /* $EOM: ipsec.h,v 1.42 2000/12/03 07:58:20 angelos Exp $	 */
 
 /*
@@ -39,9 +39,7 @@
 #include <netinet/in.h>
 
 #include "ipsec_doi.h"
-#ifdef USE_ISAKMP_CFG
 #include "isakmp_cfg.h"
-#endif
 
 struct group;
 struct hash;
@@ -99,12 +97,10 @@ struct ipsec_exch {
 	u_int8_t       *id_cr;
 	size_t          id_cr_sz;
 
-#ifdef USE_ISAKMP_CFG
 	/* ISAKMP configuration mode parameters */
 	u_int16_t       cfg_id;
 	u_int16_t       cfg_type;
 	                LIST_HEAD(isakmp_cfg_attr_head, isakmp_cfg_attr) attrs;
-#endif
 };
 
 #define IPSEC_EXCH_FLAG_NO_ID 1

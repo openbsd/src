@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.114 2005/04/08 16:37:14 deraadt Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.115 2005/04/08 16:52:41 deraadt Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -47,9 +47,7 @@
 #include "crypto.h"
 #include "dh.h"
 #include "doi.h"
-#if defined (USE_DPD)
 #include "dpd.h"
-#endif
 #include "exchange.h"
 #include "hash.h"
 #include "ike_aggressive.h"
@@ -592,9 +590,7 @@ static void
 ipsec_free_exchange_data(void *vie)
 {
 	struct ipsec_exch *ie = vie;
-#ifdef USE_ISAKMP_CFG
 	struct isakmp_cfg_attr *attr;
-#endif
 
 	if (ie->sa_i_b)
 		free(ie->sa_i_b);
@@ -622,7 +618,6 @@ ipsec_free_exchange_data(void *vie)
 		free(ie->hash_r);
 	if (ie->group)
 		group_free(ie->group);
-#ifdef USE_ISAKMP_CFG
 	for (attr = LIST_FIRST(&ie->attrs); attr;
 	    attr = LIST_FIRST(&ie->attrs)) {
 		LIST_REMOVE(attr, link);
@@ -630,7 +625,6 @@ ipsec_free_exchange_data(void *vie)
 			free(attr->value);
 		free(attr);
 	}
-#endif
 }
 
 /* Free the DOI-specific SA data pointed to by VISA.  */
@@ -670,10 +664,8 @@ static int16_t *
 ipsec_exchange_script(u_int8_t type)
 {
 	switch (type) {
-#ifdef USE_ISAKMP_CFG
-		case ISAKMP_EXCH_TRANSACTION:
+	case ISAKMP_EXCH_TRANSACTION:
 		return script_transaction;
-#endif
 	case IKE_EXCH_QUICK_MODE:
 		return script_quick_mode;
 	case IKE_EXCH_NEW_GROUP_MODE:
@@ -923,16 +915,12 @@ ipsec_initiator(struct message *msg)
 	case ISAKMP_EXCH_ID_PROT:
 		script = ike_main_mode_initiator;
 		break;
-#ifdef USE_AGGRESSIVE
 	case ISAKMP_EXCH_AGGRESSIVE:
 		script = ike_aggressive_initiator;
 		break;
-#endif
-#ifdef USE_ISAKMP_CFG
 	case ISAKMP_EXCH_TRANSACTION:
 		script = isakmp_cfg_initiator;
 		break;
-#endif
 	case ISAKMP_EXCH_INFO:
 		return message_send_info(msg);
 	case IKE_EXCH_QUICK_MODE:
@@ -1020,16 +1008,12 @@ ipsec_responder(struct message *msg)
 	case ISAKMP_EXCH_ID_PROT:
 		script = ike_main_mode_responder;
 		break;
-#ifdef USE_AGGRESSIVE
 	case ISAKMP_EXCH_AGGRESSIVE:
 		script = ike_aggressive_responder;
 		break;
-#endif
-#ifdef USE_ISAKMP_CFG
 	case ISAKMP_EXCH_TRANSACTION:
 		script = isakmp_cfg_responder;
 		break;
-#endif
 	case ISAKMP_EXCH_INFO:
 		for (p = payload_first(msg, ISAKMP_PAYLOAD_NOTIFY); p;
 		    p = TAILQ_NEXT(p, link)) {
@@ -1043,12 +1027,10 @@ ipsec_responder(struct message *msg)
 				/* Handled by leftover logic. */
 				break;
 
-#if defined (USE_DPD)
 			case ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE:
 			case ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE_ACK:
 				dpd_handle_notify(msg, p);
 				break;
-#endif
 
 			default:
 				p->flags |= PL_MARK;

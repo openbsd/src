@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.114 2005/04/08 16:37:14 deraadt Exp $	 */
+/* $OpenBSD: exchange.c,v 1.115 2005/04/08 16:52:41 deraadt Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -50,9 +50,7 @@
 #include "exchange.h"
 #include "ipsec_num.h"
 #include "isakmp.h"
-#ifdef USE_ISAKMP_CFG
 #include "isakmp_cfg.h"
-#endif
 #include "libcrypto.h"
 #include "log.h"
 #include "message.h"
@@ -142,7 +140,6 @@ int16_t script_authentication_only[] = {
 	EXCHANGE_SCRIPT_END
 };
 
-#ifdef USE_AGGRESSIVE
 int16_t script_aggressive[] = {
 	ISAKMP_PAYLOAD_SA,	/* Initiator -> responder.  */
 	ISAKMP_PAYLOAD_KEY_EXCH,
@@ -158,7 +155,6 @@ int16_t script_aggressive[] = {
 	EXCHANGE_SCRIPT_AUTH,	/* Initiator -> responder.  */
 	EXCHANGE_SCRIPT_END
 };
-#endif				/* USE_AGGRESSIVE */
 
 int16_t script_informational[] = {
 	EXCHANGE_SCRIPT_INFO,	/* Initiator -> responder.  */
@@ -179,16 +175,12 @@ exchange_script(struct exchange *exchange)
 		return script_identity_protection;
 	case ISAKMP_EXCH_AUTH_ONLY:
 		return script_authentication_only;
-#ifdef USE_AGGRESSIVE
 	case ISAKMP_EXCH_AGGRESSIVE:
 		return script_aggressive;
-#endif
 	case ISAKMP_EXCH_INFO:
 		return script_informational;
-#ifdef USE_ISAKMP_CFG
 	case ISAKMP_EXCH_TRANSACTION:
 		return script_transaction;
-#endif
 	default:
 		if (exchange->type >= ISAKMP_EXCH_DOI_MIN)
 			return exchange->doi->exchange_script(exchange->type);
@@ -710,7 +702,6 @@ exchange_add_finalization(struct exchange *exchange,
 	exchange->finalize_arg = node;
 }
 
-#ifdef USE_ISAKMP_CFG
 static void
 exchange_establish_transaction(struct exchange *exchange, void *arg, int fail)
 {
@@ -725,7 +716,6 @@ exchange_establish_transaction(struct exchange *exchange, void *arg, int fail)
 
 	free(node);
 }
-#endif				/* USE_ISAKMP_CFG */
 
 /* Establish a phase 1 exchange.  */
 void
@@ -735,10 +725,8 @@ exchange_establish_p1(struct transport *t, u_int8_t type, u_int32_t doi,
 {
 	struct exchange		*exchange;
 	struct message		*msg;
-#ifdef USE_ISAKMP_CFG
 	struct conf_list	*flags;
 	struct conf_list_node	*flag;
-#endif
 	char	*tag = 0;
 	char	*str;
 
@@ -802,7 +790,6 @@ exchange_establish_p1(struct transport *t, u_int8_t type, u_int32_t doi,
 	if (!exchange->policy && name)
 		exchange->policy = CONF_DFLT_TAG_PHASE1_CONFIG;
 
-#ifdef USE_ISAKMP_CFG
 	if (name && (flags = conf_get_list(name, "Flags")) != NULL) {
 		for (flag = TAILQ_FIRST(&flags->fields); flag;
 		    flag = TAILQ_NEXT(flag, link))
@@ -831,7 +818,6 @@ exchange_establish_p1(struct transport *t, u_int8_t type, u_int32_t doi,
 			}
 		conf_free_list(flags);
 	}
-#endif				/* USE_ISAKMP_CFG */
 
 	exchange_add_finalization(exchange, finalize, arg);
 	cookie_gen(t, exchange, exchange->cookies, ISAKMP_HDR_ICOOKIE_LEN);
@@ -988,10 +974,8 @@ exchange_setup_p1(struct message *msg, u_int32_t doi)
 	struct transport	*t = msg->transport;
 	struct exchange		*exchange;
 	struct sockaddr		*dst;
-#ifdef USE_ISAKMP_CFG
 	struct conf_list	*flags;
 	struct conf_list_node	*flag;
-#endif
 	char		*name = 0, *policy = 0, *str;
 	u_int32_t        want_doi;
 	u_int8_t         type;
@@ -1083,7 +1067,6 @@ exchange_setup_p1(struct message *msg, u_int32_t doi)
 	}
 	exchange->policy = policy;
 
-#ifdef USE_ISAKMP_CFG
 	if (name && (flags = conf_get_list(name, "Flags")) != NULL) {
 		for (flag = TAILQ_FIRST(&flags->fields); flag;
 		    flag = TAILQ_NEXT(flag, link))
@@ -1111,7 +1094,6 @@ exchange_setup_p1(struct message *msg, u_int32_t doi)
 			}
 		conf_free_list(flags);
 	}
-#endif
 
 	cookie_gen(msg->transport, exchange, exchange->cookies +
 	    ISAKMP_HDR_ICOOKIE_LEN, ISAKMP_HDR_RCOOKIE_LEN);

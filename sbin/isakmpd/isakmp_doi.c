@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_doi.c,v 1.22 2004/06/20 17:17:35 ho Exp $	 */
+/* $OpenBSD: isakmp_doi.c,v 1.23 2005/04/08 16:52:41 deraadt Exp $	 */
 /* $EOM: isakmp_doi.c,v 1.42 2000/09/12 16:29:41 ho Exp $	 */
 
 /*
@@ -247,10 +247,8 @@ isakmp_responder(struct message *msg)
 		}
 		return 0;
 
-#ifdef USE_ISAKMP_CFG
 	case ISAKMP_EXCH_TRANSACTION:
 		/* return 0 isakmp_cfg_responder (msg); */
-#endif /* USE_ISAKMP_CFG */
 
 	default:
 		/* XXX So far we don't accept any proposals.  */

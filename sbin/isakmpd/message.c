@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.103 2005/04/08 16:37:14 deraadt Exp $	 */
+/* $OpenBSD: message.c,v 1.104 2005/04/08 16:52:41 deraadt Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -45,9 +45,7 @@
 #include "constants.h"
 #include "crypto.h"
 #include "doi.h"
-#ifdef USE_DPD
 #include "dpd.h"
-#endif
 #include "exchange.h"
 #include "field.h"
 #include "hash.h"
@@ -476,7 +474,6 @@ message_payload_sz(u_int8_t payload)
 static int
 message_validate_attribute(struct message *msg, struct payload *p)
 {
-#ifdef USE_ISAKMP_CFG
 	/* If we don't have an exchange yet, create one.  */
 	if (!msg->exchange) {
 		if (zero_test((u_int8_t *) msg->iov[0].iov_base +
@@ -493,7 +490,6 @@ message_validate_attribute(struct message *msg, struct payload *p)
 			return -1;
 		}
 	}
-#endif
 	return 0;
 }
 
@@ -1099,9 +1095,7 @@ message_validate_vendor(struct message *msg, struct payload *p)
 		message_drop(msg, ISAKMP_NOTIFY_INVALID_PAYLOAD_TYPE, 0, 1, 1);
 		return -1;
 	}
-#if defined (USE_DPD)
 	dpd_check_vendor_payload(msg, p);
-#endif
 	nat_t_check_vendor_payload(msg, p);
 	if (!(p->flags & PL_MARK))
 		LOG_DBG((LOG_MESSAGE, 40, "message_validate_vendor: "
@@ -1644,13 +1638,11 @@ struct info_args {
 			u_int16_t       nspis;
 			u_int8_t       *spis;
 		} d;
-#if defined (USE_DPD)
 		struct {
 			u_int16_t	msg_type;
 			u_int8_t	*spi;
 			u_int32_t	seq;
 		} dpd;
-#endif
 	} u;
 };
 
@@ -1723,7 +1715,6 @@ message_send_delete(struct sa *sa)
 	}
 }
 
-#if defined (USE_DPD)
 void
 message_send_dpd_notify(struct sa* isakmp_sa, u_int16_t notify, u_int32_t seq)
 {
@@ -1739,7 +1730,6 @@ message_send_dpd_notify(struct sa* isakmp_sa, u_int16_t notify, u_int32_t seq)
 
 	exchange_establish_p2(isakmp_sa, ISAKMP_EXCH_INFO, 0, &args, 0, 0);
 }
-#endif
 
 /* Build the informational message into MSG.  */
 int
@@ -1756,11 +1746,9 @@ message_send_info(struct message *msg)
 			return -1;
 
 	switch (args->discr) {
-#if defined (USE_DPD)
 	case 'P':
 		sz = sizeof args->u.dpd.seq;
 		/* FALLTHROUGH */
-#endif
 	case 'N':
 		sz += ISAKMP_NOTIFY_SPI_OFF + args->spi_sz;
 		break;
@@ -1778,12 +1766,10 @@ message_send_info(struct message *msg)
 		return -1;
 	}
 	switch (args->discr) {
-#if defined (USE_DPD)
 	case 'P':
 		memcpy(buf + ISAKMP_NOTIFY_SPI_OFF + args->spi_sz,
 		    &args->u.dpd.seq, sizeof args->u.dpd.seq);
 		/* FALLTHROUGH */
-#endif
 	case 'N':
 		/* Build the NOTIFY payload.  */
 		payload = ISAKMP_PAYLOAD_NOTIFY;
