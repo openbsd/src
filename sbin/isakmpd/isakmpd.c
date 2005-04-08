@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.76 2005/04/05 18:06:06 cloder Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.77 2005/04/08 15:44:13 deraadt Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -124,7 +124,7 @@ usage(void)
 	    "          [-f fifo] [-i pid-file] [-K] [-n] [-N udpencap-port]\n"
 	    "          [-p listen-port] [-L] [-l packetlog-file] [-r seed]\n"
 	    "          [-R report-file] [-T] [-v]\n",
-	    sysdep_progname());
+	    __progname);
 	exit(1);
 }
 
