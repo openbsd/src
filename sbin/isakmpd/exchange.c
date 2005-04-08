@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.117 2005/04/08 18:47:19 hshoexer Exp $	 */
+/* $OpenBSD: exchange.c,v 1.118 2005/04/08 19:40:02 deraadt Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -73,9 +73,7 @@
  */
 #define MAX_BUCKET_BITS 16
 
-#ifdef USE_DEBUG
 static void     exchange_dump(char *, struct exchange *);
-#endif
 static void     exchange_free_aux(void *);
 #if 0
 static void     exchange_resize(void);
@@ -824,9 +822,7 @@ exchange_establish_p1(struct transport *t, u_int8_t type, u_int32_t doi,
 	exchange_add_finalization(exchange, finalize, arg);
 	cookie_gen(t, exchange, exchange->cookies, ISAKMP_HDR_ICOOKIE_LEN);
 	exchange_enter(exchange);
-#ifdef USE_DEBUG
 	exchange_dump("exchange_establish_p1", exchange);
-#endif
 
 	msg = message_alloc(t, 0, ISAKMP_HDR_SZ);
 	if (!msg) {
@@ -940,9 +936,7 @@ exchange_establish_p2(struct sa *isakmp_sa, u_int8_t type, char *name,
 	if (isakmp_sa->flags & SA_FLAG_NAT_T_KEEPALIVE)
 		exchange->flags |= EXCHANGE_FLAG_NAT_T_KEEPALIVE;
 	exchange_enter(exchange);
-#ifdef USE_DEBUG
 	exchange_dump("exchange_establish_p2", exchange);
-#endif
 
 	/*
          * Do not create SA's for informational exchanges.
@@ -1101,9 +1095,7 @@ exchange_setup_p1(struct message *msg, u_int32_t doi)
 	    ISAKMP_HDR_ICOOKIE_LEN, ISAKMP_HDR_RCOOKIE_LEN);
 	GET_ISAKMP_HDR_ICOOKIE(msg->iov[0].iov_base, exchange->cookies);
 	exchange_enter(exchange);
-#ifdef USE_DEBUG
 	exchange_dump("exchange_setup_p1", exchange);
-#endif
 	return exchange;
 }
 
@@ -1126,9 +1118,7 @@ exchange_setup_p2(struct message *msg, u_int8_t doi)
 	if (msg->isakmp_sa && (msg->isakmp_sa->flags & SA_FLAG_NAT_T_KEEPALIVE))
 		exchange->flags |= EXCHANGE_FLAG_NAT_T_KEEPALIVE;
 	exchange_enter(exchange);
-#ifdef USE_DEBUG
 	exchange_dump("exchange_setup_p2", exchange);
-#endif
 	return exchange;
 }
 
@@ -1169,13 +1159,11 @@ exchange_dump_real(char *header, struct exchange *exchange, int class,
 	    decode_32(exchange->message_id), buf));
 }
 
-#ifdef USE_DEBUG
 static void
 exchange_dump(char *header, struct exchange *exchange)
 {
 	exchange_dump_real(header, exchange, LOG_EXCHANGE, 10);
 }
-#endif
 
 void
 exchange_report(void)
@@ -1335,9 +1323,7 @@ exchange_finalize(struct message *msg)
 	int	 i;
 	char	*id_doi, *id_trp;
 
-#ifdef USE_DEBUG
 	exchange_dump("exchange_finalize", exchange);
-#endif
 
 	/* Copy the ID from phase 1 to exchange or phase 2 SA.  */
 	if (msg->isakmp_sa) {

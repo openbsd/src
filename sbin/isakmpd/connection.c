@@ -1,4 +1,4 @@
-/* $OpenBSD: connection.c,v 1.30 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: connection.c,v 1.31 2005/04/08 19:40:02 deraadt Exp $	 */
 /* $EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	 */
 
 /*
@@ -400,10 +400,8 @@ connection_report(void)
 {
 	struct connection *conn;
 	struct timeval  now;
-#ifdef USE_DEBUG
 	struct connection_passive *pconn;
 	struct doi     *doi = doi_lookup(ISAKMP_DOI_ISAKMP);
-#endif
 
 	gettimeofday(&now, 0);
 	for (conn = TAILQ_FIRST(&connections); conn;
@@ -412,7 +410,6 @@ connection_report(void)
 		    "connection_report: connection %s next check %ld seconds",
 		    (conn->name ? conn->name : "<unnamed>"),
 		    conn->ev->expiration.tv_sec - now.tv_sec));
-#ifdef USE_DEBUG
 	for (pconn = TAILQ_FIRST(&connections_passive); pconn;
 	    pconn = TAILQ_NEXT(pconn, link))
 		LOG_DBG((LOG_REPORT, 0,
@@ -420,7 +417,6 @@ connection_report(void)
 		    doi->decode_ids("local_id: %s, remote_id: %s",
 		    pconn->local_id, pconn->local_sz,
 		    pconn->remote_id, pconn->remote_sz, 1)));
-#endif
 }
 
 /* Reinitialize all connections (SIGHUP handling).  */

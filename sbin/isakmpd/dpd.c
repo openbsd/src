@@ -1,4 +1,4 @@
-/*	$OpenBSD: dpd.c,v 1.10 2005/04/04 19:31:11 deraadt Exp $	*/
+/*	$OpenBSD: dpd.c,v 1.11 2005/04/08 19:40:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -297,10 +297,8 @@ dpd_event(void *v_sa)
 {
 	struct sa	*isakmp_sa = v_sa;
 	struct dpd_args args;
-#if defined (USE_DEBUG)
 	struct sockaddr *dst;
 	char *addr;
-#endif
 
 	isakmp_sa->dpd_event = 0;
 
@@ -326,7 +324,6 @@ dpd_event(void *v_sa)
 	} else
 		isakmp_sa->dpd_seq++;
 
-#if defined (USE_DEBUG)
 	isakmp_sa->transport->vtbl->get_dst(isakmp_sa->transport, &dst);
 	if (sockaddr2text(dst, &addr, 0) == -1)
 		addr = 0;
@@ -334,7 +331,6 @@ dpd_event(void *v_sa)
 	    addr ? addr : "<unknown>", isakmp_sa->dpd_seq));
 	if (addr)
 		free(addr);
-#endif
 	message_send_dpd_notify(isakmp_sa, ISAKMP_NOTIFY_STATUS_DPD_R_U_THERE,
 	    isakmp_sa->dpd_seq);
 

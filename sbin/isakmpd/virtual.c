@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.19 2005/04/08 16:37:15 deraadt Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.20 2005/04/08 19:40:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -332,7 +332,6 @@ virtual_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 	char	*addr_str;
 	int	 s, error;
 
-#if defined (USE_DEBUG)
 	if (sockaddr2text(if_addr, &addr_str, 0))
 		addr_str = 0;
 
@@ -344,7 +343,6 @@ virtual_bind_if(char *ifname, struct sockaddr *if_addr, void *arg)
 	    addr_str ? addr_str : "<invalid>"));
 	if (addr_str)
 		free(addr_str);
-#endif
 
 	/*
 	 * Drop non-Internet stuff.

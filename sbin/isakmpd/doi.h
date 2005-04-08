@@ -1,4 +1,4 @@
-/* $OpenBSD: doi.h,v 1.14 2004/05/14 08:42:56 hshoexer Exp $	 */
+/* $OpenBSD: doi.h,v 1.15 2005/04/08 19:40:02 deraadt Exp $	 */
 /* $EOM: doi.h,v 1.29 2000/07/02 18:47:15 provos Exp $	 */
 
 /*
@@ -56,10 +56,8 @@ struct doi {
 	/* Size of DOI-specific protocol data.  */
 	size_t          proto_size;
 
-#ifdef USE_DEBUG
 	int             (*debug_attribute)(u_int16_t, u_int8_t *, u_int16_t,
 			    void *);
-#endif
 	void            (*delete_spi)(struct sa *, struct proto *, int);
 	int16_t        *(*exchange_script)(u_int8_t);
 	void            (*finalize_exchange)(struct message *);

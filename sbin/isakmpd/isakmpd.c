@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.82 2005/04/08 17:15:01 deraadt Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.83 2005/04/08 19:40:03 deraadt Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -109,10 +109,8 @@ void            daemon_shutdown_now(int);
 /* The default path of the PID file.  */
 static char    *pid_file = "/var/run/isakmpd.pid";
 
-#ifdef USE_DEBUG
 /* The path of the IKE packet capture log file.  */
 static char    *pcap_file = 0;
-#endif
 
 static void
 usage(void)
@@ -133,10 +131,8 @@ parse_args(int argc, char *argv[])
 {
 	int             ch;
 	char           *ep;
-#ifdef USE_DEBUG
 	int             cls, level;
 	int             do_packetlog = 0;
-#endif
 
 	while ((ch = getopt(argc, argv, "46ac:dD:f:i:KnN:p:Ll:r:R:Tv")) != -1) {
 		switch (ch) {
@@ -160,7 +156,6 @@ parse_args(int argc, char *argv[])
 			debug++;
 			break;
 
-#ifdef USE_DEBUG
 		case 'D':
 			if (sscanf(optarg, "%d=%d", &cls, &level) != 2) {
 				if (sscanf(optarg, "A=%d", &level) == 1) {
@@ -173,7 +168,6 @@ parse_args(int argc, char *argv[])
 			} else
 				log_debug_cmd(cls, level);
 			break;
-#endif				/* USE_DEBUG */
 
 		case 'f':
 			ui_fifo = optarg;
@@ -199,7 +193,6 @@ parse_args(int argc, char *argv[])
 			udp_default_port = optarg;
 			break;
 
-#ifdef USE_DEBUG
 		case 'l':
 			pcap_file = optarg;
 			/* Fallthrough intended.  */
@@ -207,7 +200,6 @@ parse_args(int argc, char *argv[])
 		case 'L':
 			do_packetlog++;
 			break;
-#endif				/* USE_DEBUG */
 
 		case 'r':
 			seed = strtoul(optarg, &ep, 0);
@@ -238,10 +230,8 @@ parse_args(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-#ifdef USE_DEBUG
 	if (do_packetlog && !pcap_file)
 		pcap_file = PCAP_FILE_DEFAULT;
-#endif
 }
 
 static void
@@ -335,9 +325,7 @@ daemon_shutdown(void)
 		 * the DELETE notifications have been sent, we can shutdown.
 		 */
 
-#ifdef USE_DEBUG
 		log_packet_stop();
-#endif
 		/* Remove FIFO and pid files.  */
 		unlink(ui_fifo);
 		unlink(pid_file);
@@ -439,11 +427,9 @@ main(int argc, char *argv[])
 	/* Rehash soft expiration timers on USR2 reception.  */
 	signal(SIGUSR2, sigusr2);
 
-#if defined (USE_DEBUG)
 	/* If we wanted IKE packet capture to file, initialize it now.  */
 	if (pcap_file != 0)
 		log_packet_init(pcap_file);
-#endif
 
 	/* Allocate the file descriptor sets just big enough.  */
 	n = getdtablesize();

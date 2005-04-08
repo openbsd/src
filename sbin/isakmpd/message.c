@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.104 2005/04/08 16:52:41 deraadt Exp $	 */
+/* $OpenBSD: message.c,v 1.105 2005/04/08 19:40:03 deraadt Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -413,11 +413,9 @@ message_parse_transform(struct message *msg, struct payload *p,
 
 	LOG_DBG((LOG_MESSAGE, 50, "Transform %d's attributes",
 	    GET_ISAKMP_TRANSFORM_NO(buf)));
-#ifdef USE_DEBUG
 	attribute_map(buf + ISAKMP_TRANSFORM_SA_ATTRS_OFF,
 	    GET_ISAKMP_GEN_LENGTH(buf) - ISAKMP_TRANSFORM_SA_ATTRS_OFF,
 	    msg->exchange->doi->debug_attribute, msg);
-#endif
 
 	return 0;
 }
@@ -1199,10 +1197,8 @@ message_recv(struct message *msg)
 		message_drop(msg, 0, 0, 1, 1);
 		return -1;
 	}
-#ifdef USE_DEBUG
 	/* Possibly dump a raw hex image of the message to the log channel.  */
 	message_dump_raw("message_recv", msg, LOG_MESSAGE);
-#endif
 
 	/*
 	 * If the responder cookie is zero, this is a request to setup an
@@ -1526,9 +1522,7 @@ message_send(struct message *msg)
 		    GET_ISAKMP_HDR_FLAGS(msg->iov[0].iov_base)
 		    | ISAKMP_FLAGS_COMMIT);
 
-#ifdef USE_DEBUG
 	message_dump_raw("message_send", msg, LOG_MESSAGE);
-#endif
 	msg->flags |= MSG_IN_TRANSIT;
 	exchange->in_transit = msg;
 
@@ -1888,7 +1882,6 @@ message_dump_raw(char *header, struct message *msg, int class)
 static void
 message_packet_log(struct message *msg)
 {
-#if defined (USE_DEBUG)
 	struct sockaddr *src, *dst;
 	struct transport *t = msg->transport;
 
@@ -1910,7 +1903,6 @@ message_packet_log(struct message *msg)
 	}
 
 	log_packet_iov(src, dst, msg->iov, msg->iovlen);
-#endif				/* USE_DEBUG */
 }
 
 /*

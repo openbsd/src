@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.43 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: ui.c,v 1.44 2005/04/08 19:40:03 deraadt Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -298,7 +298,6 @@ ui_delete(char *cmd)
 	sa_delete(sa, 1);
 }
 
-#ifdef USE_DEBUG
 /* Parse the debug command found in CMD.  */
 static void
 ui_debug(char *cmd)
@@ -348,7 +347,6 @@ ui_packetlog(char *cmd)
 fail:
 	log_print("ui_packetlog: command \"%s\" malformed", cmd);
 }
-#endif				/* USE_DEBUG */
 
 static void
 ui_shutdown_daemon(char *cmd)
@@ -409,7 +407,6 @@ ui_handle_command(char *line)
 		ui_delete(line);
 		break;
 
-#ifdef USE_DEBUG
 	case 'D':
 		ui_debug(line);
 		break;
@@ -417,7 +414,6 @@ ui_handle_command(char *line)
 	case 'p':
 		ui_packetlog(line);
 		break;
-#endif
 
 	case 'Q':
 		ui_shutdown_daemon(line);

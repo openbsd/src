@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.73 2005/04/08 19:19:39 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.74 2005/04/08 19:40:02 deraadt Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -40,7 +40,7 @@ OS=		openbsd
 
 # Compile-time configuration of otherwise optional features
 #FEATURES+=	dnssec
-FEATURES+=	debug
+FEATURES+=	
 
 .PATH:		${.CURDIR}/sysdep/${OS}
 

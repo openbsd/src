@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.55 2005/04/08 16:37:14 deraadt Exp $	 */
+/* $OpenBSD: log.c,v 1.56 2005/04/08 19:40:03 deraadt Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -33,7 +33,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 
-#ifdef USE_DEBUG
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/uio.h>
@@ -45,8 +44,6 @@
 #include <arpa/inet.h>
 
 #include <pcap.h>
-
-#endif				/* USE_DEBUG */
 
 #include <errno.h>
 #include <stdio.h>
@@ -67,7 +64,6 @@ static void	_log_print(int, int, const char *, va_list, int, int);
 static FILE	*log_output;
 
 int		verbose_logging = 0;
-#if defined (USE_DEBUG)
 static int	log_level[LOG_ENDCLASS];
 
 #define TCPDUMP_MAGIC	0xa1b2c3d4
@@ -95,7 +91,6 @@ static u_int8_t *packet_buf = NULL;
 static int      udp_cksum(struct packhdr *, const struct udphdr *,
     u_int16_t *);
 static u_int16_t in_cksum(const u_int16_t *, int);
-#endif				/* USE_DEBUG */
 
 void
 log_init(int debug)
@@ -110,17 +105,14 @@ void
 log_reinit(void)
 {
 	struct conf_list *logging;
-#ifdef USE_DEBUG
 	struct conf_list_node *logclass;
 	int		class, level;
-#endif				/* USE_DEBUG */
 
 	logging = conf_get_list("General", "Logverbose");
 	if (logging) {
 		verbose_logging = 1;
 		conf_free_list(logging);
 	}
-#ifdef USE_DEBUG
 	logging = conf_get_list("General", "Loglevel");
 	if (!logging)
 		return;
@@ -140,7 +132,6 @@ log_reinit(void)
 			log_debug_cmd(class, level);
 	}
 	conf_free_list(logging);
-#endif				/* USE_DEBUG */
 }
 
 void
@@ -235,7 +226,6 @@ _log_print(int error, int syslog_level, const char *fmt, va_list ap,
 		    buffer);
 }
 
-#ifdef USE_DEBUG
 void
 log_debug(int cls, int level, const char *fmt, ...)
 {
@@ -324,7 +314,6 @@ log_debug_toggle(void)
 	}
 	toggle = !toggle;
 }
-#endif				/* USE_DEBUG */
 
 void
 log_print(const char *fmt, ...)
@@ -340,18 +329,14 @@ void
 log_verbose(const char *fmt, ...)
 {
 	va_list	ap;
-#ifdef USE_DEBUG
 	int	i;
-#endif				/* USE_DEBUG */
 
 	if (verbose_logging == 0)
 		return;
 
-#ifdef USE_DEBUG
 	for (i = 0; i < LOG_ENDCLASS; i++)
 		if (log_level[i] > 0)
 			return;
-#endif
 
 	va_start(ap, fmt);
 	_log_print(0, LOG_NOTICE, fmt, ap, LOG_PRINT, 0);
@@ -379,7 +364,6 @@ log_fatal(const char *fmt, ...)
 	monitor_exit(1);
 }
 
-#ifdef USE_DEBUG
 void
 log_packet_init(char *newname)
 {
@@ -691,5 +675,3 @@ in_cksum(const u_int16_t *w, int len)
 	answer = ~sum;		/* truncate to 16 bits */
 	return answer;
 }
-
-#endif				/* USE_DEBUG */

@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.115 2005/04/08 16:52:41 deraadt Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.116 2005/04/08 19:40:03 deraadt Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -97,10 +97,8 @@ int             contact_cnt = 0, contact_limit = 0;
 static int      addr_cmp(const void *, const void *);
 static int      ipsec_add_contact(struct message *);
 static int      ipsec_contacted(struct message *);
-#ifdef USE_DEBUG
 static int      ipsec_debug_attribute(u_int16_t, u_int8_t *, u_int16_t,
     void *);
-#endif
 static void     ipsec_delete_spi(struct sa *, struct proto *, int);
 static int16_t *ipsec_exchange_script(u_int8_t);
 static void     ipsec_finalize_exchange(struct message *);
@@ -135,9 +133,7 @@ static struct doi ipsec_doi = {
 	{0}, IPSEC_DOI_IPSEC,
 	sizeof(struct ipsec_exch), sizeof(struct ipsec_sa),
 	sizeof(struct ipsec_proto),
-#ifdef USE_DEBUG
 	ipsec_debug_attribute,
-#endif
 	ipsec_delete_spi,
 	ipsec_exchange_script,
 	ipsec_finalize_exchange,
@@ -292,9 +288,7 @@ ipsec_finalize_exchange(struct message *msg)
 	struct ipsec_exch *ie = exchange->data;
 	struct sa      *sa = 0, *old_sa;
 	struct proto   *proto, *last_proto = 0;
-#ifdef USE_DEBUG
 	char           *addr1, *addr2, *mask1, *mask2;
-#endif
 
 	switch (exchange->phase) {
 	case 1:
@@ -383,7 +377,6 @@ ipsec_finalize_exchange(struct message *msg)
 					last_proto = proto;
 				}
 
-#ifdef USE_DEBUG
 				if (sockaddr2text(isa->src_net, &addr1, 0))
 					addr1 = 0;
 				if (sockaddr2text(isa->src_mask, &mask1, 0))
@@ -411,8 +404,6 @@ ipsec_finalize_exchange(struct message *msg)
 					free(addr2);
 				if (mask2)
 					free(mask2);
-
-#endif				/* USE_DEBUG */
 
 				/*
 				 * If this is not an SA acquired by the
@@ -1183,7 +1174,6 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t *value, u_int16_t len,
 	return 1;
 }
 
-#ifdef USE_DEBUG
 /*
  * Log the attribute of TYPE with a LEN length value pointed to by VALUE
  * in human-readable form.  VMSG is a pointer to the current message.
@@ -1208,7 +1198,6 @@ ipsec_debug_attribute(u_int16_t type, u_int8_t *value, u_int16_t len,
 	    ipsec_attr_cst, type), val));
 	return 0;
 }
-#endif
 
 /*
  * Decode the attribute of type TYPE with a LEN length value pointed to by

@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.162 2005/04/08 17:15:01 deraadt Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.163 2005/04/08 19:40:03 deraadt Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -1044,9 +1044,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 	struct sadb_protocol flowtype, tprotocol;
 #endif
 	struct sadb_x_udpencap udpencap;
-#ifdef USE_DEBUG
 	char           *addr_str;
-#endif
 
 	msg.sadb_msg_type = incoming ? SADB_UPDATE : SADB_ADD;
 	switch (proto->proto) {
@@ -1783,7 +1781,6 @@ doneauth:
 
 	/* XXX Here can sensitivity extensions be setup.  */
 
-#ifdef USE_DEBUG
 	if (sockaddr2text(dst, &addr_str, 0))
 		addr_str = 0;
 
@@ -1793,7 +1790,6 @@ doneauth:
 
 	if (addr_str)
 		free(addr_str);
-#endif				/* USE_DEBUG */
 
 	/*
 	 * Although PF_KEY knows about expirations, it is unreliable per the
@@ -1876,9 +1872,7 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
     u_int8_t dstid_type, u_int8_t *dstid, int dstid_len,
     struct ipsec_proto *iproto)
 {
-#ifdef USE_DEBUG
 	char           *laddr_str, *lmask_str, *raddr_str, *rmask_str;
-#endif
 
 #if defined (SADB_X_ADDFLOW) && defined (SADB_X_DELFLOW)
 	struct sadb_msg msg;
@@ -2082,7 +2076,6 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 	if (pf_key_v2_msg_add(flow, (struct sadb_ext *)&tprotocol, 0) == -1)
 		goto cleanup;
 
-#ifdef USE_DEBUG
 	if (sockaddr2text(laddr, &laddr_str, 0))
 		laddr_str = 0;
 	if (sockaddr2text(lmask, &lmask_str, 0))
@@ -2106,7 +2099,6 @@ pf_key_v2_flow(struct sockaddr *laddr, struct sockaddr *lmask,
 		free(raddr_str);
 	if (rmask_str)
 		free(rmask_str);
-#endif				/* USE_DEBUG */
 
 	ret = pf_key_v2_call(flow);
 	pf_key_v2_msg_free(flow);
@@ -2282,7 +2274,6 @@ cleanup:
 		goto cleanup;
 	policy = 0;
 
-#ifdef USE_DEBUG
 	if (sockaddr2text(laddr, &laddr_str, 0))
 		laddr_str = 0;
 	if (sockaddr2text(lmask, &lmask_str, 0))
@@ -2305,7 +2296,6 @@ cleanup:
 		free(raddr_str);
 	if (rmask_str)
 		free(rmask_str);
-#endif
 
 	ret = pf_key_v2_call(flow);
 	pf_key_v2_msg_free(flow);
@@ -2926,9 +2916,7 @@ pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
 	struct sadb_lifetime *life, *lifecurrent;
 	struct sa      *sa;
 	struct pf_key_v2_node *lifenode, *ext;
-#ifdef USE_DEBUG
 	char           *dst_str;
-#endif
 
 	msg = (struct sadb_msg *)TAILQ_FIRST(pmsg)->seg;
 	ext = pf_key_v2_find_ext(pmsg, SADB_EXT_SA);
@@ -2962,8 +2950,6 @@ pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
 	}
 	lifecurrent = lifenode->seg;
 
-#ifdef USE_DEBUG
-
 	if (sockaddr2text(dstaddr, &dst_str, 0))
 		dst_str = 0;
 
@@ -2975,8 +2961,6 @@ pf_key_v2_expire(struct pf_key_v2_msg *pmsg)
 
 	if (dst_str)
 		free(dst_str);
-
-#endif				/* USE_DEBUG */
 
 	/*
 	 * Find the IPsec SA.  The IPsec stack has two SAs for every IKE SA,
