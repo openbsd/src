@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_gpio.c,v 1.16 2005/02/23 00:32:53 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_gpio.c,v 1.17 2005/04/08 21:50:37 uwe Exp $ */
 /*	$NetBSD: pxa2x0_gpio.c,v 1.2 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -62,6 +62,7 @@ struct gpio_irq_handler {
 	void *gh_arg;
 	int gh_spl;
 	u_int gh_gpio;
+	int gh_level;
 	int gh_irq;
 	struct evcount gh_count;
 };
@@ -103,6 +104,7 @@ static vaddr_t pxagpio_regs;
 #define GPIO_BOOTSTRAP_REG(reg)	\
 	(*((volatile u_int32_t *)(pxagpio_regs + (reg))))
 
+void pxa2x0_gpio_set_intr_level(u_int, int);
 int pxagpio_intr0(void *);
 int pxagpio_intr1(void *);
 #ifdef PXAGPIO_HAS_GPION_INTRS
@@ -220,7 +222,7 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 {
 	struct pxagpio_softc *sc = pxagpio_softc;
 	struct gpio_irq_handler *gh;
-	u_int32_t bit, reg;
+	u_int32_t bit;
 
 #ifdef DEBUG
 #ifdef PXAGPIO_HAS_GPION_INTRS
@@ -235,17 +237,6 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 	if (GPIO_FN_IS_OUT(pxa2x0_gpio_get_function(gpio)) != GPIO_IN)
 		panic("pxa2x0_gpio_intr_establish: Pin %d not GPIO_IN", gpio);
 
-	switch (level) {
-	case IST_EDGE_FALLING:
-	case IST_EDGE_RISING:
-	case IST_EDGE_BOTH:
-		break;
-
-	default:
-		panic("pxa2x0_gpio_intr_establish: bad level: %d", level);
-		break;
-	}
-
 	MALLOC(gh, struct gpio_irq_handler *, sizeof(struct gpio_irq_handler),
 	    M_DEVBUF, M_NOWAIT);
 
@@ -254,6 +245,7 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 	gh->gh_spl = spl;
 	gh->gh_gpio = gpio;
 	gh->gh_irq = gpio+32;
+	gh->gh_level = level;
 	evcount_attach(&gh->gh_count, name, (void *)&gh->gh_irq, &evcount_intr);
 
 	gh->gh_next = sc->sc_handlers[gpio];
@@ -275,24 +267,7 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 	bit = GPIO_BIT(gpio);
 	sc->sc_mask[GPIO_BANK(gpio)] |= bit;
 
-	switch (level) {
-	case IST_EDGE_FALLING:
-		reg = pxagpio_reg_read(sc, GPIO_REG(GPIO_GFER0, gpio));
-		pxagpio_reg_write(sc, GPIO_REG(GPIO_GFER0, gpio), reg | bit);
-		break;
-
-	case IST_EDGE_RISING:
-		reg = pxagpio_reg_read(sc, GPIO_REG(GPIO_GRER0, gpio));
-		pxagpio_reg_write(sc, GPIO_REG(GPIO_GRER0, gpio), reg | bit);
-		break;
-
-	case IST_EDGE_BOTH:
-		reg = pxagpio_reg_read(sc, GPIO_REG(GPIO_GFER0, gpio));
-		pxagpio_reg_write(sc, GPIO_REG(GPIO_GFER0, gpio), reg | bit);
-		reg = pxagpio_reg_read(sc, GPIO_REG(GPIO_GRER0, gpio));
-		pxagpio_reg_write(sc, GPIO_REG(GPIO_GRER0, gpio), reg | bit);
-		break;
-	}
+	pxa2x0_gpio_set_intr_level(gpio, gh->gh_level);
 
 	return (gh);
 }
@@ -388,7 +363,7 @@ pxagpio_intr1(void *arg)
 
 	ret =  (sc->sc_handlers[1]->gh_func)(sc->sc_handlers[1]->gh_arg);
 	if (ret != 0)
-		sc->sc_handlers[0]->gh_count.ec_count++;
+		sc->sc_handlers[1]->gh_count.ec_count++;
 	return ret;
 }
 
@@ -640,4 +615,72 @@ pxa2x0_gpio_clear_intr(u_int gpio)
 
 	bit = GPIO_BIT(gpio);
 	pxagpio_reg_write(sc, GPIO_REG(GPIO_GEDR0, gpio), bit);
+}
+
+/*
+ * Quick function to mask (disable) a GPIO interrupt
+ */
+void
+pxa2x0_gpio_intr_mask(void *v)
+{
+	struct gpio_irq_handler *gh = v;
+
+	pxa2x0_gpio_set_intr_level(gh->gh_gpio, IPL_NONE);
+}
+
+/*
+ * Quick function to unmask (enable) a GPIO interrupt
+ */
+void
+pxa2x0_gpio_intr_unmask(void *v)
+{
+	struct gpio_irq_handler *gh = v;
+
+	pxa2x0_gpio_set_intr_level(gh->gh_gpio, gh->gh_level);
+}
+
+/*
+ * Configure the edge sensitivity of interrupt pins
+ */
+void
+pxa2x0_gpio_set_intr_level(u_int gpio, int level)
+{
+	struct pxagpio_softc *sc = pxagpio_softc;
+	u_int32_t bit;
+	u_int32_t gfer;
+	u_int32_t grer;
+	int s;
+
+	s = splhigh();
+
+	bit = GPIO_BIT(gpio);
+	gfer = pxagpio_reg_read(sc, GPIO_REG(GPIO_GFER0, gpio));
+	grer = pxagpio_reg_read(sc, GPIO_REG(GPIO_GRER0, gpio));
+
+	switch (level) {
+	case IST_NONE:
+		gfer &= ~bit;
+		grer &= ~bit;
+		break;
+	case IST_EDGE_FALLING:
+		gfer |= bit;
+		grer &= ~bit;
+		break;
+	case IST_EDGE_RISING:
+		gfer &= ~bit;
+		grer |= bit;
+		break;
+	case IST_EDGE_BOTH:
+		gfer |= bit;
+		grer |= bit;
+		break;
+	default:
+		panic("pxa2x0_gpio_set_intr_level: bad level: %d", level);
+		break;
+	}
+
+	pxagpio_reg_write(sc, GPIO_REG(GPIO_GFER0, gpio), gfer);
+	pxagpio_reg_write(sc, GPIO_REG(GPIO_GRER0, gpio), grer);
+
+	splx(s);
 }
