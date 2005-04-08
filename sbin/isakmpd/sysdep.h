@@ -1,4 +1,4 @@
-/* $OpenBSD: sysdep.h,v 1.21 2005/04/08 16:06:25 deraadt Exp $	 */
+/* $OpenBSD: sysdep.h,v 1.22 2005/04/08 19:08:23 deraadt Exp $	 */
 /* $EOM: sysdep.h,v 1.17 2000/12/04 04:46:35 angelos Exp $	 */
 
 /*
@@ -37,8 +37,6 @@
 #include <stdlib.h>
 #include <string.h>
 #endif
-
-#include "sysdep-os.h"
 
 struct proto;
 struct sa;

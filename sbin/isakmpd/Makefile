@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.71 2005/04/08 19:05:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.72 2005/04/08 19:08:23 deraadt Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -61,7 +61,7 @@ CLEANFILES=	exchange_num.c exchange_num.h ipsec_num.c ipsec_num.h \
 		isakmp_fld.c isakmp_fld.h
 MAN=		isakmpd.8 isakmpd.conf.5 isakmpd.policy.5
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wmissing-declarations -I${.CURDIR} -I${.CURDIR}/sysdep/${OS} -I.
+		-Wmissing-declarations -I${.CURDIR} -I.
 
 # Include symbolic debugging info
 #DEBUG=		-g
