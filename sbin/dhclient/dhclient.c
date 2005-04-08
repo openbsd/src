@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.66 2005/04/02 20:26:10 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.67 2005/04/08 14:21:36 henning Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -170,7 +170,10 @@ routehandler(struct protocol *p)
 	struct iaddr a;
 	ssize_t n;
 
-	n = read(routefd, &msg, sizeof(msg));
+	do {
+		n = read(routefd, &msg, sizeof(msg));
+	} while (n == -1 && errno == EINTR);
+
 	rtm = (struct rt_msghdr *)msg;
 	if (n < sizeof(rtm->rtm_msglen) || n < rtm->rtm_msglen ||
 	    rtm->rtm_version != RTM_VERSION)
