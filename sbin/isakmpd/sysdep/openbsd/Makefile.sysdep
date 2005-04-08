@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.29 2005/04/08 16:14:05 deraadt Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.30 2005/04/08 16:16:43 deraadt Exp $
 #	$EOM: Makefile.sysdep,v 1.18 2001/01/26 10:55:22 niklas Exp $
 
 #
@@ -34,7 +34,7 @@ IPSEC_CFLAGS=	-DUSE_PF_KEY_V2 -DUSE_DEFAULT_ROUTE
 
 .ifdef FEATURES
 .if ${FEATURES:Mpolicy} == "policy"
-.if ${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "vax" && ${MACHINE_ARCH} != "m88k"
+.if ${MACHINE_ARCH} != "vax" && ${MACHINE_ARCH} != "m88k"
 POLICY+=	keynote_compat.c
 .endif
 USE_KEYNOTE=	defined
