@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.23 2005/04/05 18:13:20 cloder Exp $	 */
+/* $OpenBSD: crypto.c,v 1.24 2005/04/08 16:04:17 deraadt Exp $	 */
 /* $EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	 */
 
 /*
@@ -72,14 +72,12 @@ struct crypto_xf transforms[] = {
 		des3_encrypt, des3_decrypt
 	},
 #endif
-#ifdef USE_BLOWFISH
 	{
 		BLOWFISH_CBC, "Blowfish (CBC-Mode)", 12, 56,
 		BLOCKSIZE, 0,
 		blf_init,
 		blf_encrypt, blf_decrypt
 	},
-#endif
 #ifdef USE_CAST
 	{
 		CAST_CBC, "CAST (CBC-Mode)", 12, 16,
@@ -170,7 +168,6 @@ des3_decrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 #undef DC
 #endif				/* USE_TRIPLEDES */
 
-#ifdef USE_BLOWFISH
 enum cryptoerr
 blf_init(struct keystate *ks, u_int8_t *key, u_int16_t len)
 {
@@ -223,7 +220,6 @@ blf_decrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 	SET_32BIT_BIG(data + 4, xr);
 	XOR64(data, ks->riv);
 }
-#endif				/* USE_BLOWFISH */
 
 #ifdef USE_CAST
 enum cryptoerr
