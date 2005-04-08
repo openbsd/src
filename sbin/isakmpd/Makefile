@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.68 2005/04/08 17:15:01 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.69 2005/04/08 17:20:44 hshoexer Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -93,10 +93,6 @@ CFLAGS+=	${FEATURES_UC:S/^/-DUSE_/g}
 
 .if make(install)
 SUBDIR+=	samples
-.endif
-
-.if !make(install) && !defined(NO_REGRESS)
-#SUBDIR+=	regress
 .endif
 
 .for FEATURE in ${FEATURES}
