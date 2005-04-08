@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_ssp.c,v 1.5 2005/02/22 21:53:03 uwe Exp $	*/
+/*	$OpenBSD: zaurus_ssp.c,v 1.6 2005/04/08 21:58:49 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -28,10 +28,11 @@
 
 #include <zaurus/dev/zaurus_sspvar.h>
 
-#define GPIO_TG_CS_C3000	53
-#define GPIO_MAX1111_CS_C3000	20
 #define GPIO_ADS7846_CS_C3000	14	/* SSP SFRM */
+#define GPIO_MAX1111_CS_C3000	20
+#define GPIO_TG_CS_C3000	53
 
+#define SSCR0_ADS7846_C3000	0x06ab
 #define	SSCR0_LZ9JG18		0x01ab
 #define SSCR0_MAX1111		0x0387
 
@@ -45,6 +46,10 @@ int	zssp_match(struct device *, void *, void *);
 void	zssp_attach(struct device *, struct device *, void *);
 void	zssp_init(void);
 void	zssp_powerhook(int, void *);
+
+int	zssp_read_max1111(u_int32_t);
+u_int32_t zssp_read_ads7846(u_int32_t);
+void	zssp_write_lz9jg18(u_int32_t);
 
 struct cfattach zssp_ca = {
 	sizeof (struct zssp_softc), zssp_match, zssp_attach
@@ -68,15 +73,17 @@ zssp_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_iot = &pxa2x0_bs_tag;
 	if (bus_space_map(sc->sc_iot, PXA2X0_SSP1_BASE, PXA2X0_SSP_SIZE,
 	    0, &sc->sc_ioh)) {
-		printf("can't map bus space\n");
+		printf(": can't map bus space\n");
 		return;
 	}
 
 	printf("\n");
 
-	zssp_init();
+	if (powerhook_establish(zssp_powerhook, sc) == NULL)
+		printf("%s: can't establish power hook\n",
+		    sc->sc_dev.dv_xname);
 
-	(void)powerhook_establish(zssp_powerhook, sc);
+	zssp_init();
 }
 
 /*
@@ -86,12 +93,9 @@ zssp_attach(struct device *parent, struct device *self, void *aux)
 void
 zssp_init(void)
 {
-	struct	zssp_softc *sc;
+	struct zssp_softc *sc;
 
-	if (zssp_cd.cd_ndevs < 1 || zssp_cd.cd_devs[0] == NULL) {
-		printf("zssp_read_max1111: not configured\n");
-		return;
-	}
+	KASSERT(zssp_cd.cd_ndevs > 0 && zssp_cd.cd_devs[0] != NULL);
 	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
 
 	pxa2x0_clkman_config(CKEN_SSP, 1);
@@ -99,23 +103,131 @@ zssp_init(void)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0, SSCR0_LZ9JG18);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR1, 0);
 
-	pxa2x0_gpio_set_function(GPIO_TG_CS_C3000, GPIO_OUT|GPIO_SET);
-	pxa2x0_gpio_set_function(GPIO_MAX1111_CS_C3000, GPIO_OUT|GPIO_SET);
 	pxa2x0_gpio_set_function(GPIO_ADS7846_CS_C3000, GPIO_OUT|GPIO_SET);
+	pxa2x0_gpio_set_function(GPIO_MAX1111_CS_C3000, GPIO_OUT|GPIO_SET);
+	pxa2x0_gpio_set_function(GPIO_TG_CS_C3000, GPIO_OUT|GPIO_SET);
+}
+
+void
+zssp_powerhook(int why, void *arg)
+{
+	int s;
+
+	if (why == PWR_RESUME) {
+		s = splhigh();
+		zssp_init();
+		splx(s);
+	}
+}
+
+/*
+ * Transmit a single data word to one of the ICs, keep the chip selected
+ * afterwards, and don't wait for data to be returned in SSDR.  Interrupts
+ * must be held off until zssp_ic_stop() gets called.
+ */
+void
+zssp_ic_start(int ic, u_int32_t data)
+{
+	struct zssp_softc *sc;
+
+	KASSERT(zssp_cd.cd_ndevs > 0 && zssp_cd.cd_devs[0] != NULL);
+	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
+
+	/* disable other ICs */
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0, 0);
+	if (ic != ZSSP_IC_ADS7846)
+		pxa2x0_gpio_set_bit(GPIO_ADS7846_CS_C3000);
+	if (ic != ZSSP_IC_LZ9JG18)
+		pxa2x0_gpio_set_bit(GPIO_TG_CS_C3000);
+	if (ic != ZSSP_IC_MAX1111)
+		pxa2x0_gpio_set_bit(GPIO_MAX1111_CS_C3000);
+
+	/* activate the chosen one */
+	switch (ic) {
+	case ZSSP_IC_ADS7846:
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSCR0,
+		    SSCR0_ADS7846_C3000);
+		pxa2x0_gpio_clear_bit(GPIO_ADS7846_CS_C3000);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR, data);
+		while ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR)
+		    & SSSR_TNF) != SSSR_TNF)
+			/* poll */;
+		break;
+	case ZSSP_IC_LZ9JG18:
+		pxa2x0_gpio_clear_bit(GPIO_TG_CS_C3000);
+		break;
+	case ZSSP_IC_MAX1111:
+		pxa2x0_gpio_clear_bit(GPIO_MAX1111_CS_C3000);
+		break;
+	}
+}
+
+/*
+ * Read the last value from SSDR and deactivate all chip-selects.
+ */
+u_int32_t
+zssp_ic_stop(int ic)
+{
+	struct zssp_softc *sc;
+	u_int32_t rv;
+
+	KASSERT(zssp_cd.cd_ndevs > 0 && zssp_cd.cd_devs[0] != NULL);
+	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
+
+	switch (ic) {
+	case ZSSP_IC_ADS7846:
+		/* read result of last command */
+		while ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSSR)
+		    & SSSR_RNE) != SSSR_RNE)
+			/* poll */;
+		rv = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SSP_SSDR);
+		break;
+	case ZSSP_IC_LZ9JG18:
+	case ZSSP_IC_MAX1111:
+		/* last value received is irrelevant or undefined */
+	default:
+		rv = 0;
+		break;
+	}
+
+	pxa2x0_gpio_set_bit(GPIO_ADS7846_CS_C3000);
+	pxa2x0_gpio_set_bit(GPIO_TG_CS_C3000);
+	pxa2x0_gpio_set_bit(GPIO_MAX1111_CS_C3000);
+
+	return (rv);
+}
+
+/*
+ * Activate one of the chip-select lines, transmit one word value in
+ * each direction, and deactivate the chip-select again.
+ */
+u_int32_t
+zssp_ic_send(int ic, u_int32_t data)
+{
+
+	switch (ic) {
+	case ZSSP_IC_MAX1111:
+		return (zssp_read_max1111(data));
+	case ZSSP_IC_ADS7846:
+		return (zssp_read_ads7846(data));
+	case ZSSP_IC_LZ9JG18:
+		zssp_write_lz9jg18(data);
+		return 0;
+	default:
+		printf("zssp_ic_send: invalid IC %d\n", ic);
+		return 0;
+	}
 }
 
 int
 zssp_read_max1111(u_int32_t cmd)
 {
-	struct	zssp_softc *sc;
+	struct zssp_softc *sc;
 	int	voltage[2];
 	int	i;
 	int	s;
 
-	if (zssp_cd.cd_ndevs < 1 || zssp_cd.cd_devs[0] == NULL) {
-		printf("zssp_read_max1111: not configured\n");
-		return 0;
-	}
+	KASSERT(zssp_cd.cd_ndevs > 0 && zssp_cd.cd_devs[0] != NULL);
 	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
 
 	s = splhigh();
@@ -173,25 +285,25 @@ zssp_read_max1111(u_int32_t cmd)
 }
 
 /* XXX - only does CS_ADS7846 */
-u_int32_t pxa2x0_ssp_read_val(u_int32_t cmd);
 u_int32_t
-pxa2x0_ssp_read_val(u_int32_t cmd)
+zssp_read_ads7846(u_int32_t cmd)
 {
-	struct	zssp_softc *sc;
+	struct zssp_softc *sc;
+
 	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
 	unsigned int cr0;
 	int s;
 	u_int32_t val;
 
 	if (zssp_cd.cd_ndevs < 1 || zssp_cd.cd_devs[0] == NULL) {
-		printf("pxa2x0_ssp_read_val: not configured\n");
+		printf("zssp_read_ads7846: not configured\n");
 		return 0;
 	}
 	sc = (struct zssp_softc *)zssp_cd.cd_devs[0];
 
 	s = splhigh();
-	if (1 /* C3000 */) {
-		cr0 =  0x06ab;
+	if (1) {
+		cr0 =  SSCR0_ADS7846_C3000;
 	} else {
 		cr0 =  0x00ab;
 	}
@@ -289,16 +401,4 @@ zssp_write_lz9jg18(u_int32_t data)
 	pxa2x0_gpio_set_function(rxd_pin, rxd_fn);
 
 	splx(s);
-}
-
-void
-zssp_powerhook(int why, void *arg)
-{
-	int s;
-
-	if (why == PWR_RESUME) {
-		s = splhigh();
-		zssp_init();
-		splx(s);
-	}
 }

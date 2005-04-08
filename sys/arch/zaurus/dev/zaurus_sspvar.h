@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_sspvar.h,v 1.2 2005/01/31 02:22:17 uwe Exp $	*/
+/*	$OpenBSD: zaurus_sspvar.h,v 1.3 2005/04/08 21:58:49 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -16,5 +16,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-int	zssp_read_max1111(u_int32_t);
-void	zssp_write_lz9jg18(u_int32_t);
+#define ZSSP_IC_MAX1111		1	/* temperature/voltage ADC */
+#define ZSSP_IC_LZ9JG18		2	/* LCD backlight controller */
+#define ZSSP_IC_ADS7846		3	/* touch screen controller */
+
+void	  zssp_ic_start(int, u_int32_t);
+u_int32_t zssp_ic_send(int, u_int32_t);
+u_int32_t zssp_ic_stop(int);
+
+int	  zssp_read_max1111(u_int32_t);
+void	  zssp_write_lz9jg18(u_int32_t);
