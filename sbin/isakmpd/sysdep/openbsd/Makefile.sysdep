@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.26 2005/04/08 16:09:25 deraadt Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.27 2005/04/08 16:11:11 deraadt Exp $
 #	$EOM: Makefile.sysdep,v 1.18 2001/01/26 10:55:22 niklas Exp $
 
 #
@@ -32,7 +32,7 @@
 IPSEC_SRCS=	pf_key_v2.c
 IPSEC_CFLAGS=	-DUSE_PF_KEY_V2 -DUSE_DEFAULT_ROUTE
 
-CFLAGS+=	-DHAVE_GETIFADDRS -DHAVE_PCAP
+CFLAGS+=	-DHAVE_PCAP
 CFLAGS+=	-DHAVE_CLOSEFROM
 
 .ifdef FEATURES
