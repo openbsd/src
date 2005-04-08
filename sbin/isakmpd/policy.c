@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.82 2005/04/06 16:00:20 deraadt Exp $	 */
+/* $OpenBSD: policy.c,v 1.83 2005/04/08 16:37:15 deraadt Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -514,8 +514,8 @@ policy_callback(char *name)
 							comp_encapsulation = "tunnel";
 							break;
 						}
-#if defined (USE_NAT_TRAVERSAL)
-					else if (decode_16(value) == IPSEC_ENCAP_UDP_ENCAP_TUNNEL)
+					else if (decode_16(value) ==
+					    IPSEC_ENCAP_UDP_ENCAP_TUNNEL)
 						switch (proto->proto) {
 						case IPSEC_PROTO_IPSEC_AH:
 							ah_encapsulation = "udp-encap-tunnel";
@@ -530,7 +530,6 @@ policy_callback(char *name)
 							break;
 						}
 					/* XXX IPSEC_ENCAP_UDP_ENCAP_TRANSPORT */
-#endif
 					else
 						switch (proto->proto) {
 						case IPSEC_PROTO_IPSEC_AH:

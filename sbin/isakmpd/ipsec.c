@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.113 2005/04/08 16:09:25 deraadt Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.114 2005/04/08 16:37:14 deraadt Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -65,9 +65,7 @@
 #include "log.h"
 #include "math_group.h"
 #include "message.h"
-#if defined (USE_NAT_TRAVERSAL)
 #include "nat_traversal.h"
-#endif
 #include "prf.h"
 #include "sa.h"
 #include "timer.h"
@@ -321,10 +319,8 @@ ipsec_finalize_exchange(struct message *msg)
 			if (isakmp_sa->seconds)
 				sa_setup_expirations(isakmp_sa);
 
-#if defined (USE_NAT_TRAVERSAL)
 			if (isakmp_sa->flags & SA_FLAG_NAT_T_KEEPALIVE)
 				nat_t_setup_keepalive(isakmp_sa);
-#endif
 			break;
 		}
 		break;
@@ -1178,15 +1174,10 @@ ipsec_is_attribute_incompatible(u_int16_t type, u_int8_t *value, u_int16_t len,
 			    (dv < IKE_GROUP_DESC_MODP_2048 ||
 			    IKE_GROUP_DESC_MODP_8192 < dv);
 		case IPSEC_ATTR_ENCAPSULATION_MODE:
-#if defined (USE_NAT_TRAVERSAL)
 			return dv != IPSEC_ENCAP_TUNNEL &&
 			    dv != IPSEC_ENCAP_TRANSPORT &&
 			    dv != IPSEC_ENCAP_UDP_ENCAP_TUNNEL &&
 			    dv != IPSEC_ENCAP_UDP_ENCAP_TRANSPORT;
-#else
-			return dv < IPSEC_ENCAP_TUNNEL ||
-			    dv > IPSEC_ENCAP_TRANSPORT;
-#endif /* USE_NAT_TRAVERSAL */
 		case IPSEC_ATTR_AUTHENTICATION_ALGORITHM:
 			return dv < IPSEC_AUTH_HMAC_MD5 ||
 			    dv > IPSEC_AUTH_HMAC_RIPEMD;

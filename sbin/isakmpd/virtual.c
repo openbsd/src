@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.18 2005/04/08 16:07:22 cloder Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.19 2005/04/08 16:37:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -49,9 +49,7 @@
 #include "udp.h"
 #include "util.h"
 
-#if defined (USE_NAT_TRAVERSAL)
 #include "udp_encap.h"
-#endif
 
 static struct transport	*virtual_bind(const struct sockaddr *);
 static struct transport	*virtual_bind_ADDR_ANY(sa_family_t);
@@ -257,7 +255,6 @@ virtual_bind(const struct sockaddr *addr)
 	}
 	v->main->virtual = (struct transport *)v;
 
-#if defined (USE_NAT_TRAVERSAL)
 	if (!disable_nat_t) {
 		memcpy(&tmp_sa, addr, sysdep_sa_len((struct sockaddr *)addr));
 
@@ -282,7 +279,6 @@ virtual_bind(const struct sockaddr *addr)
 		}
 		v->encap->virtual = (struct transport *)v;
 	}
-#endif
 	v->encap_is_active = 0;
 
 	transport_setup(&v->transport, 1);
@@ -512,7 +508,6 @@ virtual_clone(struct transport *vt, struct sockaddr *raddr)
 		v2->main = v->main->vtbl->clone(v->main, raddr);
 		v2->main->virtual = (struct transport *)v2;
 	}
-#if defined (USE_NAT_TRAVERSAL)
 	if (!disable_nat_t) {
 		stport = udp_encap_default_port ? udp_encap_default_port :
 		    UDP_ENCAP_DEFAULT_PORT_STR;
@@ -527,7 +522,6 @@ virtual_clone(struct transport *vt, struct sockaddr *raddr)
 		v2->encap = v->encap->vtbl->clone(v->encap, raddr);
 		v2->encap->virtual = (struct transport *)v2;
 	}
-#endif
 	LOG_DBG((LOG_TRANSPORT, 50, "virtual_clone: old %p new %p (%s is %p)",
 	    v, t, v->encap_is_active ? "encap" : "main",
 	    v->encap_is_active ? v2->encap : v2->main));
@@ -547,7 +541,6 @@ virtual_create(char *name)
 	if (!t)
 		return 0;
 
-#if defined (USE_NAT_TRAVERSAL)
 	if (!disable_nat_t) {
 		t2 = transport_create("udp_encap", name);
 		if (!t2) {
@@ -555,7 +548,6 @@ virtual_create(char *name)
 			return 0;
 		}
 	}
-#endif
 
 	v = (struct virtual_transport *)calloc(1, sizeof *v);
 	if (!v) {
@@ -639,7 +631,6 @@ virtual_send_message(struct message *msg, struct transport *t)
 {
 	struct virtual_transport *v =
 	    (struct virtual_transport *)msg->transport;
-#if defined (USE_NAT_TRAVERSAL)
 	struct sockaddr *dst;
 	in_port_t port, default_port;
 
@@ -671,7 +662,6 @@ virtual_send_message(struct message *msg, struct transport *t)
 			sockaddr_set_port(dst, port);
 		}
 	}
-#endif /* USE_NAT_TRAVERSAL */
 
 	if (v->encap_is_active)
 		return v->encap->vtbl->send_message(msg, v->encap);

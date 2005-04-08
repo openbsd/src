@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.63 2005/04/08 16:30:03 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.64 2005/04/08 16:37:14 deraadt Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -45,9 +45,9 @@ OS=		openbsd
 
 # Compile-time configuration of otherwise optional features
 #FEATURES+=	policy ec aggressive debug gmp
-#FEATURES+=	rawkey isakmp_cfg dnssec privsep nat_traversal dpd
+#FEATURES+=	rawkey isakmp_cfg dnssec privsep dpd
 FEATURES+=	policy ec aggressive debug
-FEATURES+=	rawkey isakmp_cfg privsep nat_traversal dpd
+FEATURES+=	rawkey isakmp_cfg privsep dpd
 
 .PATH:		${.CURDIR}/sysdep/${OS}
 
@@ -151,7 +151,7 @@ DPADD+=		${LIBDES}
 .endif
 
 SRCS+=		${IPSEC_SRCS} ${POLICY} ${EC} ${AGGRESSIVE} ${DNSSEC} \
-		${ISAKMP_CFG} ${PRIVSEP} ${DPD} ${NAT_TRAVERSAL}
+		${ISAKMP_CFG} ${PRIVSEP} ${DPD} nat_traversal.c udp_encap.c
 CFLAGS+=	${IPSEC_CFLAGS} ${DNSSEC_CFLAGS}
 
 LDADD+=		${DESLIB} ${LWRESLIB}

@@ -1,4 +1,4 @@
-/* $OpenBSD: init.c,v 1.33 2004/09/17 13:46:34 ho Exp $	 */
+/* $OpenBSD: init.c,v 1.34 2005/04/08 16:37:14 deraadt Exp $	 */
 /* $EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	 */
 
 /*
@@ -62,10 +62,8 @@
 #include "policy.h"
 #endif
 
-#if defined (USE_NAT_TRAVERSAL)
 #include "nat_traversal.h"
 #include "udp_encap.h"
-#endif
 
 void
 init(void)
@@ -101,10 +99,8 @@ init(void)
 	transport_init();
 	virtual_init();
 	udp_init();
-#if defined (USE_NAT_TRAVERSAL)
 	nat_t_init();
 	udp_encap_init();
-#endif
 	monitor_ui_init();
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.59 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.60 2005/04/08 16:37:14 deraadt Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -58,9 +58,7 @@
 #include "log.h"
 #include "math_group.h"
 #include "message.h"
-#if defined (USE_NAT_TRAVERSAL)
 #include "nat_traversal.h"
-#endif
 #include "prf.h"
 #include "sa.h"
 #include "transport.h"
@@ -364,11 +362,9 @@ ike_phase_1_initiator_send_SA(struct message *msg)
 		transforms_len += transform_len[i];
 	}
 
-#if defined (USE_NAT_TRAVERSAL)
 	/* Advertise NAT-T capability.  */
 	if (nat_t_add_vendor_payloads(msg))
 		goto bail_out;
-#endif
 
 #if defined (USE_DPD)
 	/* Advertise DPD capability.  */
@@ -528,11 +524,9 @@ ike_phase_1_responder_send_SA(struct message *msg)
 	if (message_add_sa_payload(msg))
 		return -1;
 
-#if defined (USE_NAT_TRAVERSAL)
 	/* Advertise NAT-T capability.  */
 	if (nat_t_add_vendor_payloads(msg))
 		return -1;
-#endif
 
 #if defined (USE_DPD)
 	/* Advertise DPD capability.  */
@@ -561,14 +555,12 @@ ike_phase_1_send_KE_NONCE(struct message *msg, size_t nonce_sz)
 		/* XXX Log? */
 		return -1;
 	}
-#if defined (USE_NAT_TRAVERSAL)
 	/* If this exchange uses NAT-Traversal, add NAT-D payloads now.  */
 	if (msg->exchange->flags & EXCHANGE_FLAG_NAT_T_CAP_PEER)
 		if (nat_t_exchange_add_nat_d(msg)) {
 			/* XXX Log? */
 			return -1;
 		}
-#endif
 	return 0;
 }
 
@@ -591,12 +583,10 @@ ike_phase_1_recv_KE_NONCE(struct message *msg)
 		/* XXX How to log and notify peer?  */
 		return -1;
 	}
-#if defined (USE_NAT_TRAVERSAL)
 	/* MainMode: Check for NAT-D payloads and contents.  */
 	if (msg->exchange->type == ISAKMP_EXCH_ID_PROT &&
 	    msg->exchange->flags & EXCHANGE_FLAG_NAT_T_CAP_PEER)
 		(void)nat_t_exchange_check_nat_d(msg);
-#endif
 	return 0;
 }
 

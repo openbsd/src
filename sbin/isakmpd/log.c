@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.54 2005/04/08 16:24:12 deraadt Exp $	 */
+/* $OpenBSD: log.c,v 1.55 2005/04/08 16:37:14 deraadt Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -515,13 +515,11 @@ log_packet_iov(struct sockaddr *src, struct sockaddr *dst, struct iovec *iov,
 	udp.uh_sport = sockaddr_port(src);
 	udp.uh_dport = sockaddr_port(dst);
 	datalen += sizeof udp;
-#if defined (USE_NAT_TRAVERSAL)
 	if (ntohs(udp.uh_sport) == 4500 ||
 	    ntohs(udp.uh_dport) == 4500) { /* XXX Quick and dirty */
 		add_espmarker = 1;
 		datalen += sizeof espmarker;
 	}
-#endif
 	udp.uh_ulen = htons(datalen);
 
 	/* ip */

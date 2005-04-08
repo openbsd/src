@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.102 2005/04/07 19:15:58 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.103 2005/04/08 16:37:14 deraadt Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -56,9 +56,7 @@
 #include "isakmp.h"
 #include "log.h"
 #include "message.h"
-#if defined (USE_NAT_TRAVERSAL)
 #include "nat_traversal.h"
-#endif
 #include "prf.h"
 #include "sa.h"
 #include "timer.h"
@@ -459,12 +457,10 @@ message_payload_sz(u_int8_t payload)
 		return ISAKMP_VENDOR_SZ;
 	case ISAKMP_PAYLOAD_ATTRIBUTE:
 		return ISAKMP_ATTRIBUTE_SZ;
-#if defined (USE_NAT_TRAVERSAL)
 	case ISAKMP_PAYLOAD_NAT_D:
 		return ISAKMP_NAT_D_SZ;
 	case ISAKMP_PAYLOAD_NAT_OA:
 		return ISAKMP_NAT_OA_SZ;
-#endif
 	/* Not yet supported and any other unknown payloads. */
 	case ISAKMP_PAYLOAD_SAK:
 	case ISAKMP_PAYLOAD_SAT:
@@ -1106,9 +1102,7 @@ message_validate_vendor(struct message *msg, struct payload *p)
 #if defined (USE_DPD)
 	dpd_check_vendor_payload(msg, p);
 #endif
-#if defined (USE_NAT_TRAVERSAL)
 	nat_t_check_vendor_payload(msg, p);
-#endif
 	if (!(p->flags & PL_MARK))
 		LOG_DBG((LOG_MESSAGE, 40, "message_validate_vendor: "
 		    "vendor ID seen"));
@@ -1203,9 +1197,7 @@ message_recv(struct message *msg)
 	struct keystate *ks = 0;
 	struct proto    tmp_proto;
 	struct sa       tmp_sa;
-#if defined (USE_NAT_TRAVERSAL)
 	struct transport *t;
-#endif
 
 	/* Messages shorter than an ISAKMP header are bad.  */
 	if (sz < ISAKMP_HDR_SZ || sz != GET_ISAKMP_HDR_LENGTH(buf)) {
@@ -1431,7 +1423,6 @@ message_recv(struct message *msg)
 			free(ks);
 		return -1;
 	}
-#if defined (USE_NAT_TRAVERSAL)
 	/*
 	 * NAT-T may have switched ports for us. We need to replace the
 	 * old ISAKMP SA transport here with one that contains the proper
@@ -1443,7 +1434,7 @@ message_recv(struct message *msg)
 		transport_reference(msg->transport);
 		transport_release(t);
 	}
-#endif
+
 	/*
 	 * Now we can validate DOI-specific exchange types.  If we have no SA
 	 * DOI-specific exchange types are definitely wrong.
@@ -1919,10 +1910,8 @@ message_packet_log(struct message *msg)
 	if (msg->xmits > 0)
 		return;
 
-#if defined (USE_NAT_TRAVERSAL)
 	if (msg->exchange && msg->exchange->flags & EXCHANGE_FLAG_NAT_T_ENABLE)
 		t = ((struct virtual_transport *)msg->transport)->encap;
-#endif
 
 	/* Figure out direction. */
 	if (msg->exchange &&

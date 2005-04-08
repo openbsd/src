@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_aggressive.c,v 1.8 2004/07/29 08:54:08 ho Exp $	 */
+/* $OpenBSD: ike_aggressive.c,v 1.9 2005/04/08 16:37:14 deraadt Exp $	 */
 /* $EOM: ike_aggressive.c,v 1.4 2000/01/31 22:33:45 niklas Exp $	 */
 
 /*
@@ -54,9 +54,7 @@
 #include "log.h"
 #include "math_group.h"
 #include "message.h"
-#if defined (USE_NAT_TRAVERSAL)
 #include "nat_traversal.h"
-#endif
 #include "prf.h"
 #include "sa.h"
 #include "transport.h"
@@ -175,10 +173,8 @@ responder_recv_AUTH(struct message *msg)
 	if (ike_phase_1_recv_AUTH(msg))
 		return -1;
 
-#if defined (USE_NAT_TRAVERSAL)
 	/* Aggressive: Check for NAT-D payloads and contents.  */
 	if (msg->exchange->flags & EXCHANGE_FLAG_NAT_T_CAP_PEER)
 		(void)nat_t_exchange_check_nat_d(msg);
-#endif
 	return 0;
 }

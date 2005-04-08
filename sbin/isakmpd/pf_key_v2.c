@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.160 2005/04/08 16:09:25 deraadt Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.161 2005/04/08 16:37:14 deraadt Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -71,9 +71,7 @@
 #include "policy.h"
 #endif
 
-#if defined (USE_NAT_TRAVERSAL)
 #include "udp_encap.h"
-#endif
 
 #define IN6_IS_ADDR_FULL(a)						\
 	((*(u_int32_t *)(void *)(&(a)->s6_addr[0]) == 0xffff) &&	\
@@ -1047,9 +1045,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 	struct sadb_x_cred *cred;
 	struct sadb_protocol flowtype, tprotocol;
 #endif
-#if defined (USE_NAT_TRAVERSAL) && defined (SADB_X_EXT_UDPENCAP)
 	struct sadb_x_udpencap udpencap;
-#endif
 #ifdef USE_DEBUG
 	char           *addr_str;
 #endif
@@ -1310,7 +1306,6 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		ssa.sadb_sa_flags = SADB_X_SAFLAGS_TUNNEL;
 #endif
 
-#if defined (USE_NAT_TRAVERSAL) && defined (SADB_X_EXT_UDPENCAP)
 	if (isakmp_sa->flags & SA_FLAG_NAT_T_ENABLE) {
 		bzero(&udpencap, sizeof udpencap);
 		ssa.sadb_sa_flags |= SADB_X_SAFLAGS_UDPENCAP;
@@ -1322,7 +1317,6 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 		    == -1)
 			goto cleanup;
 	}
-#endif
 
 	if (pf_key_v2_msg_add(update, (struct sadb_ext *)&ssa, 0) == -1)
 		goto cleanup;
