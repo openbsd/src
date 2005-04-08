@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.86 2005/04/08 16:07:22 cloder Exp $	 */
+/* $OpenBSD: udp.c,v 1.87 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -44,8 +44,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "sysdep.h"
 
 #include "conf.h"
 #include "if.h"

@@ -1,4 +1,4 @@
-/* $OpenBSD: doi.c,v 1.9 2004/07/09 16:06:48 deraadt Exp $	 */
+/* $OpenBSD: doi.c,v 1.10 2005/04/08 22:32:09 cloder Exp $	 */
 /* $EOM: doi.c,v 1.4 1999/04/02 00:57:36 niklas Exp $	 */
 
 /*
@@ -30,8 +30,6 @@
  */
 
 #include <sys/param.h>
-
-#include "sysdep.h"
 
 #include "doi.h"
 

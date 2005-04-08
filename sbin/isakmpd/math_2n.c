@@ -1,4 +1,4 @@
-/* $OpenBSD: math_2n.c,v 1.19 2005/04/06 16:00:20 deraadt Exp $	 */
+/* $OpenBSD: math_2n.c,v 1.20 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	 */
 
 /*
@@ -42,8 +42,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-
-#include "sysdep.h"
 
 #include "math_2n.h"
 #include "util.h"

@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.27 2005/04/08 18:44:04 deraadt Exp $	 */
+/* $OpenBSD: crypto.c,v 1.28 2005/04/08 22:32:09 cloder Exp $	 */
 /* $EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	 */
 
 /*
@@ -33,8 +33,6 @@
 #include <sys/param.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "sysdep.h"
 
 #include "crypto.h"
 #include "log.h"

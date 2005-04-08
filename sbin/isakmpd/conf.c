@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.81 2005/04/08 17:15:01 deraadt Exp $	 */
+/* $OpenBSD: conf.c,v 1.82 2005/04/08 22:32:09 cloder Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -44,8 +44,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-
-#include "sysdep.h"
 
 #include "app.h"
 #include "conf.h"

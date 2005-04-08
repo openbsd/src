@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_doi.c,v 1.24 2005/04/08 19:40:03 deraadt Exp $	 */
+/* $OpenBSD: isakmp_doi.c,v 1.25 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: isakmp_doi.c,v 1.42 2000/09/12 16:29:41 ho Exp $	 */
 
 /*
@@ -36,8 +36,6 @@
  */
 
 #include <sys/types.h>
-
-#include "sysdep.h"
 
 #include "doi.h"
 #include "exchange.h"

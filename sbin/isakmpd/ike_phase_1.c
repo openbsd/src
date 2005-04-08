@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_phase_1.c,v 1.61 2005/04/08 16:52:41 deraadt Exp $	 */
+/* $OpenBSD: ike_phase_1.c,v 1.62 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	 */
 
 /*
@@ -36,8 +36,6 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "sysdep.h"
 
 #include "attribute.h"
 #include "conf.h"

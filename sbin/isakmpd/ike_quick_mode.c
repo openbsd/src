@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.94 2005/04/08 17:15:01 deraadt Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.95 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -37,8 +37,6 @@
 #include <sys/types.h>
 #include <regex.h>
 #include <keynote.h>
-
-#include "sysdep.h"
 
 #include "attribute.h"
 #include "conf.h"

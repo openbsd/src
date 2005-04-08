@@ -1,4 +1,4 @@
-/* $OpenBSD: math_group.c,v 1.26 2005/04/08 20:04:57 hshoexer Exp $	 */
+/* $OpenBSD: math_group.c,v 1.27 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: math_group.c,v 1.25 2000/04/07 19:53:26 niklas Exp $	 */
 
 /*
@@ -34,13 +34,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "sysdep.h"
-
 #include "log.h"
 #include "math_2n.h"
 #include "math_ec2n.h"
 #include "math_group.h"
 #include "math_mp.h"
+#include "util.h"
 
 /* We do not want to export these definitions.  */
 int	modp_getlen(struct group *);
@@ -721,7 +720,7 @@ modp_setrandom(struct group *grp, math_mp_t d)
 
 	for (i = 0; i < l; i++) {
 		if (i % 4)
-			tmp = sysdep_random();
+			tmp = rand_32();
 
 		BN_lshift(d, d, 8);
 		BN_add_word(d, tmp & 0xFF);

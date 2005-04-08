@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.84 2005/04/08 18:39:04 deraadt Exp $	 */
+/* $OpenBSD: policy.c,v 1.85 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -50,8 +50,6 @@
 #include <errno.h>
 #include <openssl/ssl.h>
 #include <netdb.h>
-
-#include "sysdep.h"
 
 #include "conf.h"
 #include "exchange.h"

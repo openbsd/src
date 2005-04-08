@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_main_mode.c,v 1.15 2004/06/14 09:55:41 ho Exp $	 */
+/* $OpenBSD: ike_main_mode.c,v 1.16 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: ike_main_mode.c,v 1.77 1999/04/25 22:12:34 niklas Exp $	 */
 
 /*
@@ -33,8 +33,6 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "sysdep.h"
 
 #include "attribute.h"
 #include "conf.h"

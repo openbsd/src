@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.101 2005/04/08 20:04:57 hshoexer Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.102 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -45,8 +45,6 @@
 #include <regex.h>
 #include <keynote.h>
 #include <policy.h>
-
-#include "sysdep.h"
 
 #include "cert.h"
 #include "conf.h"

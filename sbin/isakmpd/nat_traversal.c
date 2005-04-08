@@ -1,4 +1,4 @@
-/*	$OpenBSD: nat_traversal.c,v 1.12 2005/04/05 18:06:06 cloder Exp $	*/
+/*	$OpenBSD: nat_traversal.c,v 1.13 2005/04/08 22:32:10 cloder Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -27,8 +27,6 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "sysdep.h"
 
 #include "conf.h"
 #include "exchange.h"

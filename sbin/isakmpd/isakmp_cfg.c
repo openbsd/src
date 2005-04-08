@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmp_cfg.c,v 1.36 2005/04/06 16:00:20 deraadt Exp $	 */
+/* $OpenBSD: isakmp_cfg.c,v 1.37 2005/04/08 22:32:10 cloder Exp $	 */
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -36,8 +36,6 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <bitstring.h>
-
-#include "sysdep.h"
 
 #include "attribute.h"
 #include "conf.h"

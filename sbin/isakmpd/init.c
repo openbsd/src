@@ -1,4 +1,4 @@
-/* $OpenBSD: init.c,v 1.35 2005/04/08 17:15:01 deraadt Exp $	 */
+/* $OpenBSD: init.c,v 1.36 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	 */
 
 /*
@@ -34,8 +34,6 @@
 /* XXX This file could easily be built dynamically instead.  */
 
 #include <stdlib.h>
-
-#include "sysdep.h"
 
 #include "app.h"
 #include "cert.h"
@@ -114,9 +112,11 @@ reinit(void)
 	 * XXX This means we discard exchange->last_msg, is this really ok?
          */
 
+#if defined(INSECURE_RAND)
 	/* Reinitialize PRNG if we are in deterministic mode.  */
 	if (regrand)
 		srandom(seed);
+#endif
 
 	/* Reread config file.  */
 	conf_reinit();

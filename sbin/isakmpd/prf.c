@@ -1,4 +1,4 @@
-/* $OpenBSD: prf.c,v 1.14 2004/05/23 18:17:56 hshoexer Exp $	 */
+/* $OpenBSD: prf.c,v 1.15 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: prf.c,v 1.7 1999/05/02 12:50:29 niklas Exp $	 */
 
 /*
@@ -33,8 +33,6 @@
 #include <sys/param.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "sysdep.h"
 
 #include "hash.h"
 #include "log.h"

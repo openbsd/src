@@ -1,4 +1,4 @@
-/* $OpenBSD: key.c,v 1.21 2005/04/05 20:46:20 cloder Exp $	 */
+/* $OpenBSD: key.c,v 1.22 2005/04/08 22:32:10 cloder Exp $	 */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -22,8 +22,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-
-#include "sysdep.h"
 
 #include "key.h"
 #include "libcrypto.h"

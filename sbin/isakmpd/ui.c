@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.c,v 1.44 2005/04/08 19:40:03 deraadt Exp $	 */
+/* $OpenBSD: ui.c,v 1.45 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: ui.c,v 1.43 2000/10/05 09:25:12 niklas Exp $	 */
 
 /*
@@ -37,8 +37,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-
-#include "sysdep.h"
 
 #include "conf.h"
 #include "connection.h"

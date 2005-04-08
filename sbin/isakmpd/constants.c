@@ -1,4 +1,4 @@
-/* $OpenBSD: constants.c,v 1.9 2004/04/15 18:39:25 deraadt Exp $	 */
+/* $OpenBSD: constants.c,v 1.10 2005/04/08 22:32:09 cloder Exp $	 */
 /* $EOM: constants.c,v 1.7 1999/04/02 00:57:31 niklas Exp $	 */
 
 /*
@@ -31,8 +31,6 @@
 
 #include <stdio.h>
 #include <string.h>
-
-#include "sysdep.h"
 
 #include "constants.h"
 

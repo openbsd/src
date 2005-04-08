@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.83 2005/04/08 19:40:03 deraadt Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.84 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -43,8 +43,6 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
-
-#include "sysdep.h"
 
 #include "app.h"
 #include "conf.h"
@@ -130,7 +128,9 @@ static void
 parse_args(int argc, char *argv[])
 {
 	int             ch;
+#if defined(INSECURE_RAND)
 	char           *ep;
+#endif
 	int             cls, level;
 	int             do_packetlog = 0;
 
@@ -202,14 +202,17 @@ parse_args(int argc, char *argv[])
 			break;
 
 		case 'r':
+#if defined(INSECURE_RAND)
 			seed = strtoul(optarg, &ep, 0);
 			srandom(seed);
 			if (*ep != '\0')
 				log_fatal("parse_args: invalid numeric arg "
 				    "to -r (%s)", optarg);
 			regrand = 1;
+#else
+			usage();
 			break;
-
+#endif
 		case 'R':
 			report_file = optarg;
 			break;

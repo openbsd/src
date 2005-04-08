@@ -1,4 +1,4 @@
-/* $OpenBSD: sysdep.c,v 1.31 2005/04/08 19:05:15 deraadt Exp $	 */
+/* $OpenBSD: sysdep.c,v 1.32 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	 */
 
 /*
@@ -50,19 +50,6 @@
 #define KEY_API(x) pf_key_v2_##x
 
 #include "log.h"
-
-/*
- * An as strong as possible random number generator, reverting to a
- * deterministic pseudo-random one if regrand is set.
- */
-u_int32_t
-sysdep_random()
-{
-	if (!regrand)
-		return arc4random();
-	else
-		return random();
-}
 
 /* Return the length of the sockaddr struct.  */
 u_int8_t

@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.55 2005/04/08 18:52:23 hshoexer Exp $	 */
+/* $OpenBSD: util.c,v 1.56 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -45,8 +45,6 @@
 #include <net/route.h>
 #include <net/if.h>
 
-#include "sysdep.h"
-
 #include "log.h"
 #include "message.h"
 #include "monitor.h"
@@ -60,11 +58,13 @@
  */
 int	allow_name_lookups = 0;
 
+#if defined(INSECURE_RAND)
 /*
  * This is set to true in case of regression-test mode, when it will
  * cause predictable random numbers be generated.
  */
 int	regrand = 0;
+#endif
 
 /*
  * If in regression-test mode, this is the seed used.
@@ -145,6 +145,23 @@ ones_test(const u_int8_t *p, size_t sz)
 }
 
 /*
+ * Generate 32 bits of random data.  If compiled with INSECURE_RAND
+ * and -r option is specified, then return deterministic data.
+ */
+u_int32_t
+rand_32(void)
+{
+#if !defined(INSECURE_RAND)
+	return arc4random();
+#else
+	if (regrand)
+		return random();
+	else
+		return arc4random();
+#endif
+}
+
+/*
  * Generate a random data, len bytes long.
  */
 u_int8_t *
@@ -155,7 +172,7 @@ getrandom(u_int8_t *buf, size_t len)
 
 	for (i = 0; i < len; i++) {
 		if (i % sizeof tmp == 0)
-			tmp = sysdep_random();
+			tmp = rand_32();
 
 		buf[i] = tmp & 0xff;
 		tmp >>= 8;

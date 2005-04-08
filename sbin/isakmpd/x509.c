@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.100 2005/04/08 17:15:01 deraadt Exp $	 */
+/* $OpenBSD: x509.c,v 1.101 2005/04/08 22:32:10 cloder Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -45,8 +45,6 @@
 
 #include <regex.h>
 #include <keynote.h>
-
-#include "sysdep.h"
 
 #include "cert.h"
 #include "conf.h"
