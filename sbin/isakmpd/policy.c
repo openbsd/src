@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.83 2005/04/08 16:37:15 deraadt Exp $	 */
+/* $OpenBSD: policy.c,v 1.84 2005/04/08 18:39:04 deraadt Exp $	 */
 /* $EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -959,11 +959,9 @@ policy_callback(char *name)
 			remote_id_proto = "udp";
 			break;
 
-#ifdef IPPROTO_ETHERIP
 		case IPPROTO_ETHERIP:
 			remote_id_proto = "etherip";
 			break;
-#endif
 
 		default:
 			snprintf(remote_id_proto_num,
@@ -1269,11 +1267,9 @@ policy_callback(char *name)
 				remote_filter_proto = "udp";
 				break;
 
-#ifdef IPPROTO_ETHERIP
 			case IPPROTO_ETHERIP:
 				remote_filter_proto = "etherip";
 				break;
-#endif
 
 			default:
 				snprintf(remote_filter_proto_num,
@@ -1593,11 +1589,9 @@ policy_callback(char *name)
 				local_filter_proto = "udp";
 				break;
 
-#ifdef IPPROTO_ETHERIP
 			case IPPROTO_ETHERIP:
 				local_filter_proto = "etherip";
 				break;
-#endif
 
 			default:
 				snprintf(local_filter_proto_num,
