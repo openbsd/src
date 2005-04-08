@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.60 2005/04/05 21:07:35 hshoexer Exp $
+#	$OpenBSD: Makefile,v 1.61 2005/04/08 15:49:10 deraadt Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -79,10 +79,7 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 # Different debugging & profiling suggestions
 
 # Include symbolic debugging info
-#DEBUG=		-g	# OpenBSD
-#DEBUG_FLAGS=	-g	# FreeBSD
-#CFLAGS+=	-g	# NetBSD and others
-#STRIPFLAG=		# NETBSD
+#DEBUG=		-g
 
 # Do execution time profiles
 #CFLAGS+=	-pg
