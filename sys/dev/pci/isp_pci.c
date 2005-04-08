@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_pci.c,v 1.35 2003/12/06 14:40:33 grange Exp $	*/
+/*	$OpenBSD: isp_pci.c,v 1.36 2005/04/08 02:07:49 brad Exp $	*/
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -249,6 +249,10 @@ static struct ispmdvec mdvec_2300 = {
 #define	PCI_PRODUCT_QLOGIC_ISP2312	0x2312
 #endif
 
+#ifndef	PCI_PRODUCT_QLOGIC_ISP6312
+#define	PCI_PRODUCT_QLOGIC_ISP6312	0x6312
+#endif
+
 #define	PCI_QLOGIC_ISP	((PCI_PRODUCT_QLOGIC_ISP1020 << 16) | PCI_VENDOR_QLOGIC)
 
 #define	PCI_QLOGIC_ISP1080	\
@@ -277,6 +281,10 @@ static struct ispmdvec mdvec_2300 = {
 
 #define	PCI_QLOGIC_ISP2312	\
 	((PCI_PRODUCT_QLOGIC_ISP2312 << 16) | PCI_VENDOR_QLOGIC)
+
+#define	PCI_QLOGIC_ISP6312	\
+	((PCI_PRODUCT_QLOGIC_ISP6312 << 16) | PCI_VENDOR_QLOGIC)
+
 /*
  * Odd case for some AMI raid cards... We need to *not* attach to this.
  */
@@ -347,6 +355,7 @@ const struct pci_matchid ispdev[] = {
 #ifndef	ISP_DISABLE_2300_SUPPORT
 	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2300 },
 	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2312 },
+	{ PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP6312 },
 #endif
 	{ 0, 0 }
 };
@@ -581,7 +590,8 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #ifndef	ISP_DISABLE_2300_SUPPORT
 	if (pa->pa_id == PCI_QLOGIC_ISP2300 ||
-	    pa->pa_id == PCI_QLOGIC_ISP2312) {
+	    pa->pa_id == PCI_QLOGIC_ISP2312 ||
+	    pa->pa_id == PCI_QLOGIC_ISP6312) {
 		isp->isp_mdvec = &mdvec_2300;
 		if (pa->pa_id  == PCI_QLOGIC_ISP2300) {
 			isp->isp_type = ISP_HA_FC_2300;
