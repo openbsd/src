@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.25 2005/04/08 16:06:25 deraadt Exp $	 */
+/* $OpenBSD: crypto.c,v 1.26 2005/04/08 16:20:30 deraadt Exp $	 */
 /* $EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	 */
 
 /*
@@ -56,22 +56,18 @@ void            aes_encrypt(struct keystate *, u_int8_t *, u_int16_t);
 void            aes_decrypt(struct keystate *, u_int8_t *, u_int16_t);
 
 struct crypto_xf transforms[] = {
-#ifdef USE_DES
 	{
 		DES_CBC, "Data Encryption Standard (CBC-Mode)", 8, 8,
 		BLOCKSIZE, 0,
 		des1_init,
 		des1_encrypt, des1_decrypt
 	},
-#endif
-#ifdef USE_TRIPLEDES
 	{
 		TRIPLEDES_CBC, "Triple-DES (CBC-Mode)", 24, 24,
 		BLOCKSIZE, 0,
 		des3_init,
 		des3_encrypt, des3_decrypt
 	},
-#endif
 	{
 		BLOWFISH_CBC, "Blowfish (CBC-Mode)", 12, 56,
 		BLOCKSIZE, 0,
@@ -126,7 +122,6 @@ des1_decrypt(struct keystate *ks, u_int8_t *d, u_int16_t len)
 	    DES_DECRYPT);
 }
 
-#ifdef USE_TRIPLEDES
 enum cryptoerr
 des3_init(struct keystate *ks, u_int8_t *key, u_int16_t len)
 {
@@ -162,7 +157,6 @@ des3_decrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 	    ks->ks_des[1], ks->ks_des[2], DC iv, DES_DECRYPT);
 }
 #undef DC
-#endif				/* USE_TRIPLEDES */
 
 enum cryptoerr
 blf_init(struct keystate *ks, u_int8_t *key, u_int16_t len)
