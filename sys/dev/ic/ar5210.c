@@ -1,4 +1,4 @@
-/*     $OpenBSD: ar5210.c,v 1.17 2005/04/06 09:14:53 reyk Exp $        */
+/*     $OpenBSD: ar5210.c,v 1.18 2005/04/08 22:02:49 reyk Exp $        */
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1004,6 +1004,7 @@ ar5k_ar5210_setupTxDesc(hal, desc, packet_length, header_length, type, tx_power,
 	u_int rtscts_rate;
 	u_int rtscts_duration;
 {
+	u_int32_t frame_type;
 	struct ar5k_ar5210_tx_desc *tx_desc;
 
 	tx_desc = (struct ar5k_ar5210_tx_desc*)&desc->ds_ctl0;
@@ -1017,58 +1018,54 @@ ar5k_ar5210_setupTxDesc(hal, desc, packet_length, header_length, type, tx_power,
 	if (tx_tries0 == 0)
 		return (AH_FALSE);
 
-	switch (type) {
-	case HAL_PKT_TYPE_NORMAL:
-		tx_desc->frame_type = AR5K_AR5210_DESC_TX_FRAME_TYPE_NORMAL;
-		break;
-
-	case HAL_PKT_TYPE_ATIM:
-		tx_desc->frame_type = AR5K_AR5210_DESC_TX_FRAME_TYPE_ATIM;
-		break;
-
-	case HAL_PKT_TYPE_PSPOLL:
-		tx_desc->frame_type = AR5K_AR5210_DESC_TX_FRAME_TYPE_PSPOLL;
-		break;
-
-	case HAL_PKT_TYPE_BEACON:
-	case HAL_PKT_TYPE_PROBE_RESP:
-		tx_desc->frame_type = AR5K_AR5210_DESC_TX_FRAME_TYPE_NO_DELAY;
-		break;
-
-	case HAL_PKT_TYPE_PIFS:
-		tx_desc->frame_type = AR5K_AR5210_DESC_TX_FRAME_TYPE_PIFS;
-		break;
-
-	default:
-		/* Invalid packet type (possibly not supported) */
-		return (AH_FALSE);
-	}
-
-	if ((tx_desc->frame_len = packet_length) != packet_length)
+	if ((tx_desc->tx_control_0 = (packet_length &
+	    AR5K_AR5210_DESC_TX_CTL0_FRAME_LEN)) != packet_length)
 		return (AH_FALSE);
 
-	if ((tx_desc->header_len = header_length) != header_length)
+	if ((tx_desc->tx_control_0 = (header_length &
+	    AR5K_AR5210_DESC_TX_CTL0_HEADER_LEN)) != header_length)
 		return (AH_FALSE);
 
-	tx_desc->xmit_rate = tx_rate0;
-	tx_desc->ant_mode_xmit = antenna_mode ? 1 : 0;
-	tx_desc->clear_dest_mask = flags & HAL_TXDESC_CLRDMASK ? 1 : 0;
-	tx_desc->inter_req = flags & HAL_TXDESC_INTREQ ? 1 : 0;
+	if (type == HAL_PKT_TYPE_BEACON || type == HAL_PKT_TYPE_PROBE_RESP)
+		frame_type = AR5K_AR5210_DESC_TX_FRAME_TYPE_NO_DELAY;
+	else if (type == HAL_PKT_TYPE_PIFS)
+		frame_type = AR5K_AR5210_DESC_TX_FRAME_TYPE_PIFS;
+	else
+		frame_type = type;
+	
+	tx_desc->tx_control_0 =
+	    AR5K_REG_SM(frame_type, AR5K_AR5210_DESC_TX_CTL0_FRAME_TYPE);
+	tx_desc->tx_control_0 |=
+	    AR5K_REG_SM(tx_rate0, AR5K_AR5210_DESC_TX_CTL0_XMIT_RATE);
+
+#define _TX_FLAGS(_c, _flag)	 					\
+	if (flags & HAL_TXDESC_##_flag)					\
+		tx_desc->tx_control_##_c |=    				\
+			AR5K_AR5210_DESC_TX_CTL##_c##_##_flag
+
+	_TX_FLAGS(0, CLRDMASK);
+	_TX_FLAGS(0, INTREQ);
+	_TX_FLAGS(0, RTSENA);
+
+#undef _TX_FLAGS
 
 	/*
 	 * WEP crap
 	 */
 	if (key_index != HAL_TXKEYIX_INVALID) {
-		tx_desc->encrypt_key_valid = 1;
-		tx_desc->encrypt_key_index = key_index;
+		tx_desc->tx_control_0 |=
+		    AR5K_AR5210_DESC_TX_CTL0_ENCRYPT_KEY_VALID;
+		tx_desc->tx_control_1 |=
+		    AR5K_REG_SM(key_index,
+		    AR5K_AR5210_DESC_TX_CTL1_ENCRYPT_KEY_INDEX);
 	}
 
 	/*
 	 * RTS/CTS
 	 */
 	if (flags & (HAL_TXDESC_RTSENA | HAL_TXDESC_CTSENA)) {
-		tx_desc->rts_cts_enable = 1;
-		tx_desc->rts_duration = rtscts_duration;
+		tx_desc->tx_control_1 |=
+		    rtscts_duration & AR5K_AR5210_DESC_TX_CTL1_RTS_DURATION;
 	}
 
 	return (AH_TRUE);
@@ -1090,13 +1087,15 @@ ar5k_ar5210_fillTxDesc(hal, desc, segment_length, first_segment, last_segment)
 	bzero(desc->ds_hw, sizeof(desc->ds_hw));
 
 	/* Validate segment length and initialize the descriptor */
-	if ((tx_desc->buf_len = segment_length) != segment_length)
+	if ((tx_desc->tx_control_1 = (segment_length &
+	    AR5K_AR5210_DESC_TX_CTL1_BUF_LEN)) != segment_length)
 		return (AH_FALSE);
 
 	if (first_segment != AH_TRUE)
-		tx_desc->frame_len = 0;
+		tx_desc->tx_control_0 &= ~AR5K_AR5210_DESC_TX_CTL0_FRAME_LEN;
 
-	tx_desc->more = last_segment == AH_TRUE ? 0 : 1;
+	if (last_segment != AH_TRUE)
+		tx_desc->tx_control_1 |= AR5K_AR5210_DESC_TX_CTL1_MORE;
 
 	return (AH_TRUE);
 }
@@ -1133,38 +1132,47 @@ ar5k_ar5210_procTxDesc(hal, desc)
 	tx_status = (struct ar5k_ar5210_tx_status*)&desc->ds_hw[0];
 
 	/* No frame has been send or error */
-	if (tx_status->done == 0)
+	if ((tx_status->tx_status_1 & AR5K_AR5210_DESC_TX_STATUS1_DONE) == 0)
 		return (HAL_EINPROGRESS);
 
 	/*
 	 * Get descriptor status
 	 */
-	desc->ds_us.tx.ts_seqnum = tx_status->seq_num;
-	desc->ds_us.tx.ts_tstamp = tx_status->send_timestamp;
-	desc->ds_us.tx.ts_shortretry = tx_status->short_retry_count;
-	desc->ds_us.tx.ts_longretry = tx_status->long_retry_count;
-	desc->ds_us.tx.ts_rssi = tx_status->ack_sig_strength;
-	desc->ds_us.tx.ts_rate = tx_desc->xmit_rate;
-	desc->ds_us.tx.ts_antenna = 0;
+	desc->ds_us.tx.ts_tstamp =
+	    AR5K_REG_MS(tx_status->tx_status_0,
+	    AR5K_AR5210_DESC_TX_STATUS0_SEND_TIMESTAMP);
+	desc->ds_us.tx.ts_shortretry =
+	    AR5K_REG_MS(tx_status->tx_status_0,
+	    AR5K_AR5210_DESC_TX_STATUS0_SHORT_RETRY_COUNT);
+	desc->ds_us.tx.ts_longretry =
+	    AR5K_REG_MS(tx_status->tx_status_0,
+	    AR5K_AR5210_DESC_TX_STATUS0_LONG_RETRY_COUNT);
+	desc->ds_us.tx.ts_seqnum =
+	    AR5K_REG_MS(tx_status->tx_status_1,
+	    AR5K_AR5210_DESC_TX_STATUS1_SEQ_NUM);
+	desc->ds_us.tx.ts_rssi =
+	    AR5K_REG_MS(tx_status->tx_status_1,
+	    AR5K_AR5210_DESC_TX_STATUS1_ACK_SIG_STRENGTH);
+	desc->ds_us.tx.ts_antenna = 1;
 	desc->ds_us.tx.ts_status = 0;
+	desc->ds_us.tx.ts_tstamp =
+	    AR5K_REG_MS(tx_desc->tx_control_0,
+	    AR5K_AR5210_DESC_TX_CTL0_XMIT_RATE);
 
-	if (tx_status->frame_xmit_ok == 0) {
-		if (tx_status->excessive_retries)
+	if ((tx_status->tx_status_0 &
+	    AR5K_AR5210_DESC_TX_STATUS0_FRAME_XMIT_OK) == 0) {
+		if (tx_status->tx_status_0 &
+		    AR5K_AR5210_DESC_TX_STATUS0_EXCESSIVE_RETRIES)
 			desc->ds_us.tx.ts_status |= HAL_TXERR_XRETRY;
 
-		if (tx_status->fifo_underrun)
+		if (tx_status->tx_status_0 &
+		    AR5K_AR5210_DESC_TX_STATUS0_FIFO_UNDERRUN)
 			desc->ds_us.tx.ts_status |= HAL_TXERR_FIFO;
 
-		if (tx_status->filtered)
+		if (tx_status->tx_status_0 &
+		    AR5K_AR5210_DESC_TX_STATUS0_FILTERED)
 			desc->ds_us.tx.ts_status |= HAL_TXERR_FILT;
 	}
-#if 0
-	/*
-	 * Reset descriptor
-	 */
-	bzero(tx_desc, sizeof(struct ar5k_ar5210_tx_desc));
-	bzero(tx_status, sizeof(struct ar5k_ar5210_tx_status));
-#endif
 
 	return (HAL_OK);
 }
@@ -1321,11 +1329,12 @@ ar5k_ar5210_setupRxDesc(hal, desc, size, flags)
 
 	rx_desc = (struct ar5k_ar5210_rx_desc*)&desc->ds_ctl0;
 
-	if ((rx_desc->buf_len = size) != size)
+	if ((rx_desc->rx_control_1 = (size &
+	    AR5K_AR5210_DESC_RX_CTL1_BUF_LEN)) != size)
 		return (AH_FALSE);
 
 	if (flags & HAL_RXDESC_INTREQ)
-		rx_desc->inter_req = 1;
+		rx_desc->rx_control_1 |= AR5K_AR5210_DESC_RX_CTL1_INTREQ;
 
 	return (AH_TRUE);
 }
@@ -1337,56 +1346,69 @@ ar5k_ar5210_procRxDesc(hal, desc, phys_addr, next)
 	u_int32_t phys_addr;
 	struct ath_desc *next;
 {
-	u_int32_t now, tstamp;
 	struct ar5k_ar5210_rx_status *rx_status;
 
 	rx_status = (struct ar5k_ar5210_rx_status*)&desc->ds_hw[0];
 
 	/* No frame received / not ready */
-	if (!rx_status->done)
+	if ((rx_status->rx_status_1 & AR5K_AR5210_DESC_RX_STATUS1_DONE) == 0)
 		return (HAL_EINPROGRESS);
 
 	/*
 	 * Frame receive status
 	 */
-	now = (AR5K_REG_READ(AR5K_AR5210_TSF_L32) >> 10) & 0xffff;
-	tstamp = ((now & 0x1fff) < rx_status->receive_timestamp) ?
-	    (((now - 0x2000) & 0xffff) |
-		(u_int32_t)rx_status->receive_timestamp) :
-	    (now | (u_int32_t)rx_status->receive_timestamp);
-	desc->ds_us.rx.rs_tstamp = rx_status->receive_timestamp & 0x7fff;
-	desc->ds_us.rx.rs_datalen = rx_status->data_len;
-	desc->ds_us.rx.rs_rssi = rx_status->receive_sig_strength;
-	desc->ds_us.rx.rs_rate = rx_status->receive_rate;
-	desc->ds_us.rx.rs_antenna = rx_status->receive_antenna ? 1 : 0;
-	desc->ds_us.rx.rs_more = rx_status->more ? 1 : 0;
+	desc->ds_us.rx.rs_datalen = rx_status->rx_status_0 &
+	    AR5K_AR5210_DESC_RX_STATUS0_DATA_LEN;
+	desc->ds_us.rx.rs_rssi =
+	    AR5K_REG_MS(rx_status->rx_status_0,
+	    AR5K_AR5210_DESC_RX_STATUS0_RECEIVE_SIGNAL);
+	desc->ds_us.rx.rs_rate =
+	    AR5K_REG_MS(rx_status->rx_status_0,
+	    AR5K_AR5210_DESC_RX_STATUS0_RECEIVE_RATE);
+	desc->ds_us.rx.rs_antenna = rx_status->rx_status_0 &
+	    AR5K_AR5210_DESC_RX_STATUS0_RECEIVE_ANTENNA;
+	desc->ds_us.rx.rs_more = rx_status->rx_status_0 &
+	    AR5K_AR5210_DESC_RX_STATUS0_MORE;
+	desc->ds_us.rx.rs_tstamp =
+	    AR5K_REG_MS(rx_status->rx_status_1,
+	    AR5K_AR5210_DESC_RX_STATUS1_RECEIVE_TIMESTAMP);
 	desc->ds_us.rx.rs_status = 0;
 
 	/*
 	 * Key table status
 	 */
-	if (!rx_status->key_index_valid) {
-		desc->ds_us.rx.rs_keyix = HAL_RXKEYIX_INVALID;
+	if (rx_status->rx_status_1 &
+	    AR5K_AR5210_DESC_RX_STATUS1_KEY_INDEX_VALID) {
+		desc->ds_us.rx.rs_keyix =
+		    AR5K_REG_MS(rx_status->rx_status_1,
+		    AR5K_AR5210_DESC_RX_STATUS1_KEY_INDEX);
 	} else {
-		desc->ds_us.rx.rs_keyix = rx_status->key_index;
+		desc->ds_us.rx.rs_keyix = HAL_RXKEYIX_INVALID;
 	}
 
 	/*
 	 * Receive/descriptor errors
 	 */
-	if (!rx_status->frame_receive_ok) {
-		if (rx_status->crc_error)
+	if ((rx_status->rx_status_1 &
+	    AR5K_AR5210_DESC_RX_STATUS1_FRAME_RECEIVE_OK) == 0) {
+		if (rx_status->rx_status_1 &
+		    AR5K_AR5210_DESC_RX_STATUS1_CRC_ERROR)
 			desc->ds_us.rx.rs_status |= HAL_RXERR_CRC;
 
-		if (rx_status->phy_error) {
-			desc->ds_us.rx.rs_status |= HAL_RXERR_PHY;
-			desc->ds_us.rx.rs_phyerr = rx_status->phy_error;
-		}
-
-		if (rx_status->fifo_overrun)
+		if (rx_status->rx_status_1 &
+		    AR5K_AR5210_DESC_RX_STATUS1_FIFO_OVERRUN)
 			desc->ds_us.rx.rs_status |= HAL_RXERR_FIFO;
 
-		if (rx_status->decrypt_crc_error)
+		if (rx_status->rx_status_1 &
+		    AR5K_AR5210_DESC_RX_STATUS1_PHY_ERROR) {
+			desc->ds_us.rx.rs_status |= HAL_RXERR_PHY;
+			desc->ds_us.rx.rs_phyerr =
+			    AR5K_REG_MS(rx_status->rx_status_1,
+			    AR5K_AR5210_DESC_RX_STATUS1_PHY_ERROR);
+		}
+
+		if (rx_status->rx_status_1 &
+		    AR5K_AR5210_DESC_RX_STATUS1_DECRYPT_CRC_ERROR)
 			desc->ds_us.rx.rs_status |= HAL_RXERR_DECRYPT;
 	}
 

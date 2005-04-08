@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212var.h,v 1.4 2005/03/20 04:21:55 reyk Exp $	*/
+/*	$OpenBSD: ar5212var.h,v 1.5 2005/04/08 22:02:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -50,59 +50,71 @@
 
 struct ar5k_ar5212_rx_desc {
 	/*
-	 * rx_control_0
+	 * RX control word 0
 	 */
-	u_int32_t	reserved:32;
+	u_int32_t	rx_control_0;
+
+#define AR5K_AR5212_DESC_RX_CTL0			0x00000000
 
 	/*
-	 * rx_control_1
+	 * RX control word 1
 	 */
-	u_int32_t	buf_len:12;
-	u_int32_t	reserved_12:1;
-	u_int32_t	inter_req:1;
-	u_int32_t	reserved_14_31:18;
+	u_int32_t	rx_control_1;
+
+#define AR5K_AR5212_DESC_RX_CTL1_BUF_LEN		0x00000fff
+#define AR5K_AR5212_DESC_RX_CTL1_INTREQ			0x00002000
 } __packed;
 
 struct ar5k_ar5212_rx_status {
 	/*
-	 * rx_status_0
+	 * RX status word 0
 	 */
-	u_int32_t	data_len:12;
-	u_int32_t	more:1;
-	u_int32_t	decomp_crc_error:1;
-	u_int32_t	reserved_14:1;
-	u_int32_t	receive_rate:5;
-	u_int32_t	receive_sig_strength:8;
-	u_int32_t	receive_antenna:4;
+	u_int32_t	rx_status_0;
+	
+#define AR5K_AR5212_DESC_RX_STATUS0_DATA_LEN		0x00000fff
+#define AR5K_AR5212_DESC_RX_STATUS0_MORE		0x00001000
+#define AR5K_AR5212_DESC_RX_STATUS0_DECOMP_CRC_ERROR	0x00002000
+#define AR5K_AR5212_DESC_RX_STATUS0_RECEIVE_RATE	0x000f8000
+#define AR5K_AR5212_DESC_RX_STATUS0_RECEIVE_RATE_S	15
+#define AR5K_AR5212_DESC_RX_STATUS0_RECEIVE_SIGNAL	0x0ff00000
+#define AR5K_AR5212_DESC_RX_STATUS0_RECEIVE_SIGNAL_S	20
+#define AR5K_AR5212_DESC_RX_STATUS0_RECEIVE_ANTENNA	0xf0000000
+#define AR5K_AR5212_DESC_RX_STATUS0_RECEIVE_ANTENNA_S	28
 
 	/*
-	 * rx_status_1
+	 * RX status word 1
 	 */
-	u_int32_t	done:1;
-	u_int32_t	frame_receive_ok:1;
-	u_int32_t	crc_error:1;
-	u_int32_t	decrypt_crc_error:1;
-	u_int32_t	phy_error:1;
-	u_int32_t	mic_error:1;
-	u_int32_t	reserved_6_7:2;
-	u_int32_t	key_index_valid:1;
-	u_int32_t	key_index:7;
-	u_int32_t	receive_timestamp:15;
-	u_int32_t	key_cache_miss:1;
+	u_int32_t	rx_status_1;
+
+#define AR5K_AR5212_DESC_RX_STATUS1_DONE		0x00000001
+#define AR5K_AR5212_DESC_RX_STATUS1_FRAME_RECEIVE_OK	0x00000002
+#define AR5K_AR5212_DESC_RX_STATUS1_CRC_ERROR		0x00000004
+#define AR5K_AR5212_DESC_RX_STATUS1_DECRYPT_CRC_ERROR	0x00000008
+#define AR5K_AR5212_DESC_RX_STATUS1_PHY_ERROR		0x00000010
+#define AR5K_AR5212_DESC_RX_STATUS1_MIC_ERROR		0x00000020
+#define AR5K_AR5212_DESC_RX_STATUS1_KEY_INDEX_VALID	0x00000100
+#define AR5K_AR5212_DESC_RX_STATUS1_KEY_INDEX		0x0000fe00
+#define AR5K_AR5212_DESC_RX_STATUS1_KEY_INDEX_S		9
+#define AR5K_AR5212_DESC_RX_STATUS1_RECEIVE_TIMESTAMP	0x7fff0000
+#define AR5K_AR5212_DESC_RX_STATUS1_RECEIVE_TIMESTAMP_S	16
+#define AR5K_AR5212_DESC_RX_STATUS1_KEY_CACHE_MISS	0x80000000
 } __packed;
 
 struct ar5k_ar5212_rx_error {
 	/*
-	 * rx_error_0
+	 * RX error word 0
 	 */
-	u_int32_t	reserved:32;
+	u_int32_t	rx_error_0;
+
+#define AR5K_AR5212_DESC_RX_ERROR0			0x00000000
 
 	/*
-	 * rx_error_1
+	 * RX error word 1
 	 */
-	u_int32_t	reserved_1_7:8;
-	u_int32_t	phy_error_code:8;
-	u_int32_t	reserved_16_31:16;
+	u_int32_t	rx_error_1;
+
+#define AR5K_AR5212_DESC_RX_ERROR1_PHY_ERROR_CODE	0x0000ff00
+#define AR5K_AR5212_DESC_RX_ERROR1_PHY_ERROR_CODE_S	8
 } __packed;
 
 #define AR5K_AR5212_DESC_RX_PHY_ERROR_NONE		0x00
@@ -116,91 +128,106 @@ struct ar5k_ar5212_rx_error {
 
 struct ar5k_ar5212_tx_desc {
 	/*
-	 * tx_control_0
+	 * TX control word 0
 	 */
-	u_int32_t	frame_len:12;
-	u_int32_t	reserved_12_15:4;
-	u_int32_t	xmit_power:6;
-	u_int32_t	rts_cts_enable:1;
-	u_int32_t	veol:1;
-	u_int32_t	clear_dest_mask:1;
-	u_int32_t	ant_mode_xmit:4;
-	u_int32_t	inter_req:1;
-	u_int32_t	encrypt_key_valid:1;
-	u_int32_t	cts_enable:1;
+	u_int32_t	tx_control_0;
+
+#define AR5K_AR5212_DESC_TX_CTL0_FRAME_LEN		0x00000fff
+#define AR5K_AR5212_DESC_TX_CTL0_XMIT_POWER		0x003f0000
+#define AR5K_AR5212_DESC_TX_CTL0_XMIT_POWER_S		16
+#define AR5K_AR5212_DESC_TX_CTL0_RTSENA			0x00400000
+#define AR5K_AR5212_DESC_TX_CTL0_VEOL			0x00800000
+#define AR5K_AR5212_DESC_TX_CTL0_CLRDMASK		0x01000000
+#define AR5K_AR5212_DESC_TX_CTL0_ANT_MODE_XMIT		0x1e000000
+#define AR5K_AR5212_DESC_TX_CTL0_ANT_MODE_XMIT_S	25
+#define AR5K_AR5212_DESC_TX_CTL0_INTREQ			0x20000000
+#define AR5K_AR5212_DESC_TX_CTL0_ENCRYPT_KEY_VALID	0x40000000
+#define AR5K_AR5212_DESC_TX_CTL0_CTSENA			0x80000000
 
 	/*
-	 * tx_control_1
+	 * TX control word 1
 	 */
-	u_int32_t	buf_len:12;
-	u_int32_t	more:1;
-	u_int32_t	encrypt_key_index:7;
-	u_int32_t	frame_type:4;
-	u_int32_t	no_ack:1;
-	u_int32_t	comp_proc:2;
-	u_int32_t	comp_iv_len:2;
-	u_int32_t	comp_icv_len:2;
-	u_int32_t	reserved_31:1;
+	u_int32_t	tx_control_1;
+
+#define AR5K_AR5212_DESC_TX_CTL1_BUF_LEN		0x00000fff
+#define AR5K_AR5212_DESC_TX_CTL1_MORE			0x00001000
+#define AR5K_AR5212_DESC_TX_CTL1_ENCRYPT_KEY_INDEX	0x000fe000
+#define AR5K_AR5212_DESC_TX_CTL1_ENCRYPT_KEY_INDEX_S	13
+#define AR5K_AR5212_DESC_TX_CTL1_FRAME_TYPE		0x00f00000
+#define AR5K_AR5212_DESC_TX_CTL1_FRAME_TYPE_S		20
+#define AR5K_AR5212_DESC_TX_CTL1_NOACK			0x01000000
+#define AR5K_AR5212_DESC_TX_CTL1_COMP_PROC		0x06000000
+#define AR5K_AR5212_DESC_TX_CTL1_COMP_PROC_S		25
+#define AR5K_AR5212_DESC_TX_CTL1_COMP_IV_LEN		0x18000000
+#define AR5K_AR5212_DESC_TX_CTL1_COMP_IV_LEN_S		27
+#define AR5K_AR5212_DESC_TX_CTL1_COMP_ICV_LEN		0x60000000
+#define AR5K_AR5212_DESC_TX_CTL1_COMP_ICV_LEN_S		29
 
 	/*
-	 * tx_control_2
+	 * TX control word 2
 	 */
-	u_int32_t	rts_duration:15;
-	u_int32_t	duration_update_enable:1;
-	u_int32_t	xmit_tries0:4;
-	u_int32_t	xmit_tries1:4;
-	u_int32_t	xmit_tries2:4;
-	u_int32_t	xmit_tries3:4;
+	u_int32_t	tx_control_2;
+
+#define AR5K_AR5212_DESC_TX_CTL2_RTS_DURATION		0x00007fff
+#define AR5K_AR5212_DESC_TX_CTL2_DURATION_UPDATE_ENABLE	0x00008000
+#define AR5K_AR5212_DESC_TX_CTL2_XMIT_TRIES0		0x000f0000
+#define AR5K_AR5212_DESC_TX_CTL2_XMIT_TRIES0_S		16
+#define AR5K_AR5212_DESC_TX_CTL2_XMIT_TRIES1		0x00f00000
+#define AR5K_AR5212_DESC_TX_CTL2_XMIT_TRIES1_S		20
+#define AR5K_AR5212_DESC_TX_CTL2_XMIT_TRIES2		0x0f000000
+#define AR5K_AR5212_DESC_TX_CTL2_XMIT_TRIES2_S		24
+#define AR5K_AR5212_DESC_TX_CTL2_XMIT_TRIES3		0xf0000000
+#define AR5K_AR5212_DESC_TX_CTL2_XMIT_TRIES3_S		28
 
 	/*
-	 * tx_control_3
+	 * TX control word 3
 	 */
-	u_int32_t	xmit_rate0:5;
-	u_int32_t	xmit_rate1:5;
-	u_int32_t	xmit_rate2:5;
-	u_int32_t	xmit_rate3:5;
-	u_int32_t	rts_cts_rate:5;
-	u_int32_t	reserved_25_31:7;
+	u_int32_t	tx_control_3;
+
+#define AR5K_AR5212_DESC_TX_CTL3_XMIT_RATE0		0x0000001f
+#define AR5K_AR5212_DESC_TX_CTL3_XMIT_RATE1		0x000003e0
+#define AR5K_AR5212_DESC_TX_CTL3_XMIT_RATE1_S		5
+#define AR5K_AR5212_DESC_TX_CTL3_XMIT_RATE2		0x00007c00
+#define AR5K_AR5212_DESC_TX_CTL3_XMIT_RATE2_S		10
+#define AR5K_AR5212_DESC_TX_CTL3_XMIT_RATE3		0x000f8000
+#define AR5K_AR5212_DESC_TX_CTL3_XMIT_RATE3_S		15
+#define AR5K_AR5212_DESC_TX_CTL3_RTS_CTS_RATE		0x01f00000
+#define AR5K_AR5212_DESC_TX_CTL3_RTS_CTS_RATE_S		20
 } __packed;
-
-#define AR5K_AR5212_DESC_TX_XMIT_RATE_6		0xb
-#define AR5K_AR5212_DESC_TX_XMIT_RATE_9		0xf
-#define AR5K_AR5212_DESC_TX_XMIT_RATE_12	0xa
-#define AR5K_AR5212_DESC_TX_XMIT_RATE_18	0xe
-#define AR5K_AR5212_DESC_TX_XMIT_RATE_24	0x9
-#define AR5K_AR5212_DESC_TX_XMIT_RATE_36	0xd
-#define AR5K_AR5212_DESC_TX_XMIT_RATE_48	0x8
-#define AR5K_AR5212_DESC_TX_XMIT_RATE_54	0xc
-
-#define AR5K_AR5212_DESC_TX_FRAME_TYPE_NORMAL	0x00
-#define AR5K_AR5212_DESC_TX_FRAME_TYPE_ATIM	0x04
-#define AR5K_AR5212_DESC_TX_FRAME_TYPE_PSPOLL	0x08
-#define AR5K_AR5212_DESC_TX_FRAME_TYPE_NO_DELAY 0x0c
-#define AR5K_AR5212_DESC_TX_FRAME_TYPE_PIFS	0x10
 
 struct ar5k_ar5212_tx_status {
 	/*
-	 * tx_status_0
+	 * TX status word 0
 	 */
-	u_int32_t	frame_xmit_ok:1;
-	u_int32_t	excessive_retries:1;
-	u_int32_t	fifo_underrun:1;
-	u_int32_t	filtered:1;
-	u_int32_t	rts_fail_count:4;
-	u_int32_t	data_fail_count:4;
-	u_int32_t	virt_coll_count:4;
-	u_int32_t	send_timestamp:16;
+	u_int32_t	tx_status_0;
+
+#define AR5K_AR5212_DESC_TX_STATUS0_FRAME_XMIT_OK	0x00000001
+#define AR5K_AR5212_DESC_TX_STATUS0_EXCESSIVE_RETRIES	0x00000002
+#define AR5K_AR5212_DESC_TX_STATUS0_FIFO_UNDERRUN	0x00000004
+#define AR5K_AR5212_DESC_TX_STATUS0_FILTERED		0x00000008
+#define AR5K_AR5212_DESC_TX_STATUS0_RTS_FAIL_COUNT	0x000000f0
+#define AR5K_AR5212_DESC_TX_STATUS0_RTS_FAIL_COUNT_S	4
+#define AR5K_AR5212_DESC_TX_STATUS0_DATA_FAIL_COUNT	0x00000f00
+#define AR5K_AR5212_DESC_TX_STATUS0_DATA_FAIL_COUNT_S	8
+#define AR5K_AR5212_DESC_TX_STATUS0_VIRT_COLL_COUNT	0x0000f000
+#define AR5K_AR5212_DESC_TX_STATUS0_VIRT_COLL_COUNT_S	12
+#define AR5K_AR5212_DESC_TX_STATUS0_SEND_TIMESTAMP	0xffff0000
+#define AR5K_AR5212_DESC_TX_STATUS0_SEND_TIMESTAMP_S	16
 
 	/*
-	 * tx_status_1
+	 * TX status word 1
 	 */
-	u_int32_t	done:1;
-	u_int32_t	seq_num:12;
-	u_int32_t	ack_sig_strength:8;
-	u_int32_t	final_ts_index:2;
-	u_int32_t	comp_success:1;
-	u_int32_t	xmit_antenna:1;
-	u_int32_t	reserved_25_31:7;
+	u_int32_t	tx_status_1;
+
+#define AR5K_AR5212_DESC_TX_STATUS1_DONE		0x00000001
+#define AR5K_AR5212_DESC_TX_STATUS1_SEQ_NUM		0x00001ffe
+#define AR5K_AR5212_DESC_TX_STATUS1_SEQ_NUM_S		1
+#define AR5K_AR5212_DESC_TX_STATUS1_ACK_SIG_STRENGTH	0x001fe000
+#define AR5K_AR5212_DESC_TX_STATUS1_ACK_SIG_STRENGTH_S	13
+#define AR5K_AR5212_DESC_TX_STATUS1_FINAL_TS_INDEX	0x00600000
+#define AR5K_AR5212_DESC_TX_STATUS1_FINAL_TS_INDEX_S	21
+#define AR5K_AR5212_DESC_TX_STATUS1_COMP_SUCCESS	0x00800000
+#define AR5K_AR5212_DESC_TX_STATUS1_XMIT_ANTENNA	0x01000000
 } __packed;
 
 /*

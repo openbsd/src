@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.16 2005/04/06 09:14:53 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.17 2005/04/08 22:02:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -171,11 +171,11 @@ typedef struct {
 
 typedef enum {
 	HAL_PKT_TYPE_NORMAL = 0,
-	HAL_PKT_TYPE_ATIM,
-	HAL_PKT_TYPE_PSPOLL,
-	HAL_PKT_TYPE_BEACON,
-	HAL_PKT_TYPE_PROBE_RESP,
-	HAL_PKT_TYPE_PIFS,
+	HAL_PKT_TYPE_ATIM = 1,
+	HAL_PKT_TYPE_PSPOLL = 2,
+	HAL_PKT_TYPE_BEACON = 3,
+	HAL_PKT_TYPE_PROBE_RESP = 4,
+	HAL_PKT_TYPE_PIFS = 5,
 } HAL_PKT_TYPE;
 
 /*

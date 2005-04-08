@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211var.h,v 1.1 2005/02/25 22:25:30 reyk Exp $	*/
+/*	$OpenBSD: ar5211var.h,v 1.2 2005/04/08 22:02:49 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -50,45 +50,54 @@
 
 struct ar5k_ar5211_rx_desc {
 	/*
-	 * First word
+	 * RX control word 0
 	 */
-	u_int32_t	r1;
+	u_int32_t	rx_control_0;
+
+#define AR5K_AR5211_DESC_RX_CTL0			0x00000000
 
 	/*
-	 * Second word
+	 * RX control word 1
 	 */
-	u_int32_t	buf_len:12;
-	u_int32_t	r2:1;
-	u_int32_t	inter_req:1;
-	u_int32_t	r3:18;
+	u_int32_t	rx_control_1;
+
+#define AR5K_AR5211_DESC_RX_CTL1_BUF_LEN		0x00000fff
+#define AR5K_AR5211_DESC_RX_CTL1_INTREQ			0x00002000
 } __packed;
 
 struct ar5k_ar5211_rx_status {
 	/*
-	 * First word
+	 * RX status word 0
 	 */
-	u_int32_t	data_len:12;
-	u_int32_t	more:1;
-	u_int32_t	r1:1;
-	u_int32_t	receive_antenna:1;
-	u_int32_t	receive_rate:4;
-	u_int32_t	receive_sig_strength:8;
-	u_int32_t	r2:5;
+	u_int32_t	rx_status_0;
+	
+#define AR5K_AR5211_DESC_RX_STATUS0_DATA_LEN		0x00000fff
+#define AR5K_AR5211_DESC_RX_STATUS0_MORE		0x00001000
+#define AR5K_AR5211_DESC_RX_STATUS0_RECEIVE_RATE	0x00078000
+#define AR5K_AR5211_DESC_RX_STATUS0_RECEIVE_RATE_S	15
+#define AR5K_AR5211_DESC_RX_STATUS0_RECEIVE_SIGNAL	0x07f80000
+#define AR5K_AR5211_DESC_RX_STATUS0_RECEIVE_SIGNAL_S	19
+#define AR5K_AR5211_DESC_RX_STATUS0_RECEIVE_ANTENNA	0x38000000
+#define AR5K_AR5211_DESC_RX_STATUS0_RECEIVE_ANTENNA_S	27
 
 	/*
-	 * Second word
+	 * RX status word 1
 	 */
-	u_int32_t	done:1;
-	u_int32_t	frame_receive_ok:1;
-	u_int32_t	crc_error:1;
-	u_int32_t	fifo_overrun:1;
-	u_int32_t	decrypt_crc_error:1;
-	u_int32_t	phy_error:3;
-	u_int32_t	key_index_valid:1;
-	u_int32_t	key_index:6;
-	u_int32_t	receive_timestamp:13;
-	u_int32_t	key_cache_miss:1;
-	u_int32_t	r3:3;
+	u_int32_t	rx_status_1;
+
+#define AR5K_AR5211_DESC_RX_STATUS1_DONE		0x00000001
+#define AR5K_AR5211_DESC_RX_STATUS1_FRAME_RECEIVE_OK	0x00000002
+#define AR5K_AR5211_DESC_RX_STATUS1_CRC_ERROR		0x00000004
+#define AR5K_AR5211_DESC_RX_STATUS1_FIFO_OVERRUN	0x00000008
+#define AR5K_AR5211_DESC_RX_STATUS1_DECRYPT_CRC_ERROR	0x00000010
+#define AR5K_AR5211_DESC_RX_STATUS1_PHY_ERROR		0x000000e0
+#define AR5K_AR5211_DESC_RX_STATUS1_PHY_ERROR_S		5
+#define AR5K_AR5211_DESC_RX_STATUS1_KEY_INDEX_VALID	0x00000100
+#define AR5K_AR5211_DESC_RX_STATUS1_KEY_INDEX		0x00007e00
+#define AR5K_AR5211_DESC_RX_STATUS1_KEY_INDEX_S		9
+#define AR5K_AR5211_DESC_RX_STATUS1_RECEIVE_TIMESTAMP	0x0fff8000
+#define AR5K_AR5211_DESC_RX_STATUS1_RECEIVE_TIMESTAMP_S	15
+#define AR5K_AR5211_DESC_RX_STATUS1_KEY_CACHE_MISS	0x10000000
 } __packed;
 
 #define AR5K_AR5211_DESC_RX_PHY_ERROR_NONE		0x00
@@ -102,65 +111,64 @@ struct ar5k_ar5211_rx_status {
 
 struct ar5k_ar5211_tx_desc {
 	/*
-	 * First word
+	 * TX control word 0
 	 */
-	u_int32_t	frame_len:12;
-	u_int32_t	reserved_12_17:6;
-	u_int32_t	xmit_rate:4;
-	u_int32_t	rts_cts_enable:1;
-	u_int32_t	veol:1;
-	u_int32_t	clear_dest_mask:1;
-	u_int32_t	ant_mode_xmit:4;
-	u_int32_t	inter_req:1;
-	u_int32_t	encrypt_key_valid:1;
-	u_int32_t	reserved_31:1;
+	u_int32_t	tx_control_0;
+
+#define AR5K_AR5211_DESC_TX_CTL0_FRAME_LEN		0x00000fff
+#define AR5K_AR5211_DESC_TX_CTL0_XMIT_RATE		0x003c0000
+#define AR5K_AR5211_DESC_TX_CTL0_XMIT_RATE_S		18
+#define AR5K_AR5211_DESC_TX_CTL0_RTSENA			0x00400000
+#define AR5K_AR5211_DESC_TX_CTL0_VEOL			0x00800000
+#define AR5K_AR5211_DESC_TX_CTL0_CLRDMASK		0x01000000
+#define AR5K_AR5211_DESC_TX_CTL0_ANT_MODE_XMIT		0x1e000000
+#define AR5K_AR5211_DESC_TX_CTL0_ANT_MODE_XMIT_S	25
+#define AR5K_AR5211_DESC_TX_CTL0_INTREQ			0x20000000
+#define AR5K_AR5211_DESC_TX_CTL0_ENCRYPT_KEY_VALID	0x40000000
 
 	/*
-	 * Second word
+	 * TX control word 1
 	 */
-	u_int32_t	buf_len:12;
-	u_int32_t	more:1;
-	u_int32_t	encrypt_key_index:7;
-	u_int32_t	frame_type:4;
-	u_int32_t	no_ack:1;
-	u_int32_t	reserved_24_31:1;
+	u_int32_t	tx_control_1;
+
+#define AR5K_AR5211_DESC_TX_CTL1_BUF_LEN		0x00000fff
+#define AR5K_AR5211_DESC_TX_CTL1_MORE			0x00001000
+#define AR5K_AR5211_DESC_TX_CTL1_ENCRYPT_KEY_INDEX	0x000fe000
+#define AR5K_AR5211_DESC_TX_CTL1_ENCRYPT_KEY_INDEX_S	13
+#define AR5K_AR5211_DESC_TX_CTL1_FRAME_TYPE		0x00700000
+#define AR5K_AR5211_DESC_TX_CTL1_FRAME_TYPE_S		20
+#define AR5K_AR5211_DESC_TX_CTL1_NOACK			0x00800000
 } __packed;
-
-#define AR5K_AR5211_DESC_TX_XMIT_RATE_6		0xb
-#define AR5K_AR5211_DESC_TX_XMIT_RATE_9		0xf
-#define AR5K_AR5211_DESC_TX_XMIT_RATE_12	0xa
-#define AR5K_AR5211_DESC_TX_XMIT_RATE_18	0xe
-#define AR5K_AR5211_DESC_TX_XMIT_RATE_24	0x9
-#define AR5K_AR5211_DESC_TX_XMIT_RATE_36	0xd
-#define AR5K_AR5211_DESC_TX_XMIT_RATE_48	0x8
-#define AR5K_AR5211_DESC_TX_XMIT_RATE_54	0xc
-
-#define AR5K_AR5211_DESC_TX_FRAME_TYPE_NORMAL	0x00
-#define AR5K_AR5211_DESC_TX_FRAME_TYPE_ATIM	0x04
-#define AR5K_AR5211_DESC_TX_FRAME_TYPE_PSPOLL	0x08
-#define AR5K_AR5211_DESC_TX_FRAME_TYPE_NO_DELAY 0x0c
-#define AR5K_AR5211_DESC_TX_FRAME_TYPE_PIFS	0x10
 
 struct ar5k_ar5211_tx_status {
 	/*
-	 * First word
+	 * TX status word 0
 	 */
-	u_int32_t	frame_xmit_ok:1;
-	u_int32_t	excessive_retries:1;
-	u_int32_t	fifo_underrun:1;
-	u_int32_t	filtered:1;
-	u_int32_t	rts_fail_count:4;
-	u_int32_t	data_fail_count:4;
-	u_int32_t	virt_coll_count:4;
-	u_int32_t	send_timestamp:16;
+	u_int32_t	tx_status_0;
+
+#define AR5K_AR5211_DESC_TX_STATUS0_FRAME_XMIT_OK	0x00000001
+#define AR5K_AR5211_DESC_TX_STATUS0_EXCESSIVE_RETRIES	0x00000002
+#define AR5K_AR5211_DESC_TX_STATUS0_FIFO_UNDERRUN	0x00000004
+#define AR5K_AR5211_DESC_TX_STATUS0_FILTERED		0x00000008
+#define AR5K_AR5211_DESC_TX_STATUS0_RTS_FAIL_COUNT	0x000000f0
+#define AR5K_AR5211_DESC_TX_STATUS0_RTS_FAIL_COUNT_S	4
+#define AR5K_AR5211_DESC_TX_STATUS0_DATA_FAIL_COUNT	0x00000f00
+#define AR5K_AR5211_DESC_TX_STATUS0_DATA_FAIL_COUNT_S	8
+#define AR5K_AR5211_DESC_TX_STATUS0_VIRT_COLL_COUNT	0x0000f000
+#define AR5K_AR5211_DESC_TX_STATUS0_VIRT_COLL_COUNT_S	12
+#define AR5K_AR5211_DESC_TX_STATUS0_SEND_TIMESTAMP	0xffff0000
+#define AR5K_AR5211_DESC_TX_STATUS0_SEND_TIMESTAMP_S	16
 
 	/*
-	 * Second word
+	 * TX status word 1
 	 */
-	u_int32_t	done:1;
-	u_int32_t	seq_num:12;
-	u_int32_t	ack_sig_strength:8;
-	u_int32_t	reserved_21_31:11;
+	u_int32_t	tx_status_1;
+
+#define AR5K_AR5211_DESC_TX_STATUS1_DONE		0x00000001
+#define AR5K_AR5211_DESC_TX_STATUS1_SEQ_NUM		0x00001ffe
+#define AR5K_AR5211_DESC_TX_STATUS1_SEQ_NUM_S		1
+#define AR5K_AR5211_DESC_TX_STATUS1_ACK_SIG_STRENGTH	0x001fe000
+#define AR5K_AR5211_DESC_TX_STATUS1_ACK_SIG_STRENGTH_S	13
 } __packed;
 
 /*
