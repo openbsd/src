@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2005/04/08 19:05:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2005/04/08 19:19:39 hshoexer Exp $
 #	$EOM: Makefile,v 1.6 2000/03/28 21:22:06 ho Exp $
 
 #
@@ -42,14 +42,6 @@ CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall
 LDADD+=		-lcrypto
 DPADD+=		${LIBCRYPTO}
 MAN=		certpatch.8
-
-.if ${FEATURES:Mgmp} == "gmp"
-CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_GMP
-LDADD+=		-lgmp
-DPADD+=		${LIBGMP}
-.else
-CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_OPENSSL
-.endif
 
 # Override LIBSYSDEPDIR definition from Makefile.sysdep
 LIBSYSDEPDIR=	${TOPSRC}/sysdep/common/libsysdep

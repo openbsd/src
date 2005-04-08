@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.72 2005/04/08 19:08:23 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.73 2005/04/08 19:19:39 hshoexer Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -97,8 +97,6 @@ SUBDIR+=	samples
 .include "features/${FEATURE}"
 .endif
 .endfor
-
-CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_OPENSSL
 
 SRCS+=		${DNSSEC} \
 		pf_key_v2.c policy.c math_ec2n.c ike_aggressive.c isakmp_cfg.c \

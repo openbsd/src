@@ -1,4 +1,4 @@
-/* $OpenBSD: math_mp.h,v 1.6 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: math_mp.h,v 1.7 2005/04/08 19:19:39 hshoexer Exp $	 */
 /* $EOM: math_mp.h,v 1.4 2000/09/16 09:41:43 ho Exp $	 */
 
 /*
@@ -32,25 +32,8 @@
 #ifndef _MATH_MP_H_
 #define _MATH_MP_H_
 
-#define MP_FLAVOUR_GMP		1
-#define MP_FLAVOUR_OPENSSL	2
-
-#if MP_FLAVOUR == MP_FLAVOUR_GMP
-
-#include <gmp.h>
-
-#define math_mp_t mpz_t
-
-#elif MP_FLAVOUR == MP_FLAVOUR_OPENSSL
-
 #include <openssl/bn.h>
 
 typedef BIGNUM *math_mp_t;
-
-#else
-
-#error "No multiprecision math library chosen."
-
-#endif
 
 #endif				/* _MATH_MP_H_ */
