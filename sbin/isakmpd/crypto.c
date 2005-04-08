@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.c,v 1.24 2005/04/08 16:04:17 deraadt Exp $	 */
+/* $OpenBSD: crypto.c,v 1.25 2005/04/08 16:06:25 deraadt Exp $	 */
 /* $EOM: crypto.c,v 1.32 2000/03/07 20:08:51 niklas Exp $	 */
 
 /*
@@ -78,22 +78,18 @@ struct crypto_xf transforms[] = {
 		blf_init,
 		blf_encrypt, blf_decrypt
 	},
-#ifdef USE_CAST
 	{
 		CAST_CBC, "CAST (CBC-Mode)", 12, 16,
 		BLOCKSIZE, 0,
 		cast_init,
 		cast1_encrypt, cast1_decrypt
 	},
-#endif
-#ifdef USE_AES
 	{
 		AES_CBC, "AES (CBC-Mode)", 16, 32,
 		AES_BLOCK_SIZE, 0,
 		aes_init,
 		aes_encrypt, aes_decrypt
 	},
-#endif
 };
 
 /* Hmm, the function prototypes for des are really dumb */
@@ -221,7 +217,6 @@ blf_decrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 	XOR64(data, ks->riv);
 }
 
-#ifdef USE_CAST
 enum cryptoerr
 cast_init(struct keystate *ks, u_int8_t *key, u_int16_t len)
 {
@@ -258,9 +253,7 @@ cast1_decrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 	cast_decrypt(&ks->ks_cast, data, data);
 	XOR64(data, ks->riv);
 }
-#endif				/* USE_CAST */
 
-#ifdef USE_AES
 enum cryptoerr
 aes_init(struct keystate *ks, u_int8_t *key, u_int16_t len)
 {
@@ -286,7 +279,6 @@ aes_decrypt(struct keystate *ks, u_int8_t *data, u_int16_t len)
 	memcpy(iv, ks->riv, ks->xf->blocksize);
 	AES_cbc_encrypt(data, data, len, &ks->ks_aes[1], iv, AES_DECRYPT);
 }
-#endif				/* USE_AES */
 
 struct crypto_xf *
 crypto_get(enum transform id)

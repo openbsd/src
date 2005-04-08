@@ -1,4 +1,4 @@
-/* $OpenBSD: sysdep.c,v 1.29 2005/04/08 15:56:48 deraadt Exp $	 */
+/* $OpenBSD: sysdep.c,v 1.30 2005/04/08 16:06:25 deraadt Exp $	 */
 /* $EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	 */
 
 /*
@@ -55,8 +55,6 @@
 #endif /* NEED_SYSDEP_APP */
 #include "log.h"
 
-extern char    *__progname;
-
 /*
  * An as strong as possible random number generator, reverting to a
  * deterministic pseudo-random one if regrand is set.
@@ -79,19 +77,6 @@ sysdep_sa_len(struct sockaddr *sa)
 
 /* As regress/ use this file I protect the sysdep_app_* stuff like this.  */
 #ifdef NEED_SYSDEP_APP
-/*
- * Prepare the application we negotiate SAs for (i.e. the IPsec stack)
- * for communication.  We return a file descriptor useable to select(2) on.
- */
-int
-sysdep_app_open()
-{
-#ifdef USE_PRIVSEP
-	return monitor_pf_key_v2_open();
-#else
-	return KEY_API(open)();
-#endif
-}
 
 /*
  * When select(2) has noticed our application needs attendance, this is what

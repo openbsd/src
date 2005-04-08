@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.61 2005/04/08 15:49:10 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.62 2005/04/08 16:06:25 deraadt Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -110,7 +110,7 @@ SUBDIR+=	samples
 .endif
 
 .if !make(install) && !defined(NO_REGRESS)
-SUBDIR+=	regress
+#SUBDIR+=	regress
 .endif
 
 .for FEATURE in ${FEATURES}
