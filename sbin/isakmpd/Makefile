@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.62 2005/04/08 16:06:25 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.63 2005/04/08 16:30:03 hshoexer Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -44,10 +44,8 @@ OS=		openbsd
 #OS=		bsdi
 
 # Compile-time configuration of otherwise optional features
-#FEATURES=	tripledes des blowfish cast aes
 #FEATURES+=	policy ec aggressive debug gmp
 #FEATURES+=	rawkey isakmp_cfg dnssec privsep nat_traversal dpd
-FEATURES=	tripledes des blowfish cast aes
 FEATURES+=	policy ec aggressive debug
 FEATURES+=	rawkey isakmp_cfg privsep nat_traversal dpd
 
