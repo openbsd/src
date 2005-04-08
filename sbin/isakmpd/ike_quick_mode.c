@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.93 2005/04/06 16:00:20 deraadt Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.94 2005/04/08 17:15:01 deraadt Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -34,11 +34,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined (USE_POLICY) || defined (USE_KEYNOTE)
 #include <sys/types.h>
 #include <regex.h>
 #include <keynote.h>
-#endif
 
 #include "sysdep.h"
 
@@ -71,9 +69,7 @@ static int      responder_recv_HASH_SA_NONCE(struct message *);
 static int      responder_send_HASH_SA_NONCE(struct message *);
 static int      responder_recv_HASH(struct message *);
 
-#ifdef USE_POLICY
 static int      check_policy(struct exchange *, struct sa *, struct sa *);
-#endif
 
 int	(*ike_quick_mode_initiator[])(struct message *) = {
 	initiator_send_HASH_SA_NONCE,
@@ -86,8 +82,6 @@ int	(*ike_quick_mode_responder[])(struct message *) = {
 	responder_send_HASH_SA_NONCE,
 	responder_recv_HASH
 };
-
-#ifdef USE_POLICY
 
 /* How many return values will policy handle -- true/false for now */
 #define RETVALUES_NUM 2
@@ -217,7 +211,6 @@ check_policy(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 		break;
 
 	case ISAKMP_CERTENC_KEYNOTE:
-#ifdef USE_KEYNOTE
 		nprinc = 1;
 
 		principal = calloc(nprinc, sizeof *principal);
@@ -234,7 +227,6 @@ check_policy(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 			    (unsigned long)sizeof(char));
 			goto policydone;
 		}
-#endif
 		break;
 
 	case ISAKMP_CERTENC_X509_SIG:
@@ -395,7 +387,6 @@ policydone:
          */
 	return result;
 }
-#endif				/* USE_POLICY */
 
 /*
  * Offer several sets of transforms to the responder.
@@ -1230,13 +1221,11 @@ initiator_recv_HASH_SA_NONCE(struct message *msg)
 			proto_free(proto);
 	}
 
-#ifdef USE_POLICY
 	if (!check_policy(exchange, sa, msg->isakmp_sa)) {
 		message_drop(msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
 		log_print("initiator_recv_HASH_SA_NONCE: policy check failed");
 		return -1;
 	}
-#endif
 
 	/* Mark the SA as handled.  */
 	sa_p->flags |= PL_MARK;
@@ -1625,18 +1614,8 @@ responder_recv_HASH_SA_NONCE(struct message *msg)
 		    sockaddr_addrlen(dst));
 	}
 
-#ifdef USE_POLICY
-#ifdef USE_KEYNOTE
 	if (message_negotiate_sa(msg, check_policy))
 		goto cleanup;
-#else
-	if (message_negotiate_sa(msg, 0))
-		goto cleanup;
-#endif
-#else
-	if (message_negotiate_sa(msg, 0))
-		goto cleanup;
-#endif				/* USE_POLICY */
 
 	for (sa = TAILQ_FIRST(&exchange->sa_list); sa;
 	    sa = TAILQ_NEXT(sa, next)) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.161 2005/04/08 16:37:14 deraadt Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.162 2005/04/08 17:15:01 deraadt Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -67,9 +67,7 @@
 #include "transport.h"
 #include "util.h"
 
-#if defined (USE_KEYNOTE)
 #include "policy.h"
-#endif
 
 #include "udp_encap.h"
 
@@ -1586,7 +1584,6 @@ nodid:
 			/* Nothing to be done here. */
 			break;
 
-#if defined (USE_KEYNOTE) && defined (SADB_X_EXT_REMOTE_CREDENTIALS)
 		case ISAKMP_CERTENC_KEYNOTE:
 			len = strlen(isakmp_sa->recv_cert);
 			cred = calloc(PF_KEY_V2_ROUND(len) + sizeof *cred,
@@ -1606,7 +1603,6 @@ nodid:
 			    PF_KEY_V2_NODE_MALLOCED) == -1)
 				goto cleanup;
 			break;
-#endif				/* USE_KEYNOTE */
 
 #if defined (SADB_X_EXT_REMOTE_CREDENTIALS)
 		case ISAKMP_CERTENC_X509_SIG:

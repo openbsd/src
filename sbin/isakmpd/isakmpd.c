@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.81 2005/04/08 16:37:14 deraadt Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.82 2005/04/08 17:15:01 deraadt Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -64,9 +64,7 @@
 #include "util.h"
 #include "cert.h"
 
-#ifdef USE_POLICY
 #include "policy.h"
-#endif
 
 static void     usage(void);
 
@@ -185,11 +183,9 @@ parse_args(int argc, char *argv[])
 			pid_file = optarg;
 			break;
 
-#ifdef USE_POLICY
 		case 'K':
 			ignore_policy++;
 			break;
-#endif
 
 		case 'n':
 			app_none++;

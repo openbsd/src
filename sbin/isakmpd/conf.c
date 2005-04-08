@@ -1,4 +1,4 @@
-/* $OpenBSD: conf.c,v 1.80 2005/04/08 16:04:17 deraadt Exp $	 */
+/* $OpenBSD: conf.c,v 1.81 2005/04/08 17:15:01 deraadt Exp $	 */
 /* $EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	 */
 
 /*
@@ -484,10 +484,8 @@ conf_load_defaults(int tr)
 	conf_set(tr, "X509-certificates", "CRL-directory",
 	    CONF_DFLT_X509_CRL_DIR, 0, 1);
 
-#ifdef USE_KEYNOTE
 	conf_set(tr, "KeyNote", "Credential-directory",
 	    CONF_DFLT_KEYNOTE_CRED_DIR, 0, 1);
-#endif
 
 	/* Lifetimes. XXX p1/p2 vs main/quick mode may be unclear.  */
 	dflt = conf_get_trans_str(tr, "General", "Default-phase-1-lifetime");

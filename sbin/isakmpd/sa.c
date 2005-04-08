@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.95 2005/04/08 16:52:41 deraadt Exp $	 */
+/* $OpenBSD: sa.c,v 1.96 2005/04/08 17:15:01 deraadt Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -35,10 +35,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined (USE_KEYNOTE) || defined (USE_POLICY)
 #include <regex.h>
 #include <keynote.h>
-#endif				/* USE_KEYNOTE || USE_POLICY */
 
 #include "sysdep.h"
 
@@ -789,10 +787,8 @@ sa_release(struct sa *sa)
 		    sa->recv_key);
 	if (sa->keynote_key)
 		free(sa->keynote_key);	/* This is just a string */
-#if defined (USE_POLICY) || defined (USE_KEYNOTE)
 	if (sa->policy_id != -1)
 		kn_close(sa->policy_id);
-#endif
 	if (sa->name)
 		free(sa->name);
 	if (sa->keystate)

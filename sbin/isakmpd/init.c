@@ -1,4 +1,4 @@
-/* $OpenBSD: init.c,v 1.34 2005/04/08 16:37:14 deraadt Exp $	 */
+/* $OpenBSD: init.c,v 1.35 2005/04/08 17:15:01 deraadt Exp $	 */
 /* $EOM: init.c,v 1.25 2000/03/30 14:27:24 ho Exp $	 */
 
 /*
@@ -58,9 +58,7 @@
 #include "ui.h"
 #include "util.h"
 
-#if defined (USE_POLICY)
 #include "policy.h"
-#endif
 
 #include "nat_traversal.h"
 #include "udp_encap.h"
@@ -86,10 +84,8 @@ init(void)
 	/* This depends on conf_init, thus check as soon as possible. */
 	log_reinit();
 
-#if defined (USE_POLICY)
 	/* policy_init depends on conf_init having run.  */
 	policy_init();
-#endif
 
 	/* Depends on conf_init and policy_init having run */
 	cert_init();
@@ -127,10 +123,8 @@ reinit(void)
 
 	log_reinit();
 
-#if defined (USE_POLICY)
 	/* Reread the policies.  */
 	policy_init();
-#endif
 
 	/* Reinitialize certificates */
 	cert_init();

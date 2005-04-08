@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.99 2005/04/08 16:24:12 deraadt Exp $	 */
+/* $OpenBSD: x509.c,v 1.100 2005/04/08 17:15:01 deraadt Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -43,10 +43,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef USE_POLICY
 #include <regex.h>
 #include <keynote.h>
-#endif				/* USE_POLICY */
 
 #include "sysdep.h"
 
@@ -96,7 +94,6 @@ static LIST_HEAD(x509_list, x509_hash) *x509_tab = 0;
 /* Works both as a maximum index and a mask.  */
 static int	bucket_mask;
 
-#ifdef USE_POLICY
 /*
  * Given an X509 certificate, create a KeyNote assertion where
  * Issuer/Subject -> Authorizer/Licensees.
@@ -478,7 +475,6 @@ x509_generate_kn(int id, X509 *cert)
 	free(buf);
 	return 1;
 }
-#endif				/* USE_POLICY */
 
 static u_int16_t
 x509_hash(u_int8_t *id, size_t len)
@@ -961,14 +957,12 @@ x509_cert_insert(int id, void *scert)
 		log_print("x509_cert_insert: X509_dup failed");
 		return 0;
 	}
-#ifdef USE_POLICY
 	if (x509_generate_kn(id, cert) == 0) {
 		LOG_DBG((LOG_POLICY, 50,
 		    "x509_cert_insert: x509_generate_kn failed"));
 		X509_free(cert);
 		return 0;
 	}
-#endif				/* USE_POLICY */
 
 	res = x509_hash_enter(cert);
 	if (!res)

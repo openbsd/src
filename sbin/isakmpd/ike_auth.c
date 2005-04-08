@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.98 2005/04/05 20:46:20 cloder Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.99 2005/04/08 17:15:01 deraadt Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -43,9 +43,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <regex.h>
-#if defined (USE_KEYNOTE)
 #include <keynote.h>
-#endif
 #include <policy.h>
 
 #include "sysdep.h"
@@ -188,7 +186,6 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 		break;
 
 	case IKE_AUTH_RSA_SIG:
-#if defined (USE_KEYNOTE)
 		if (local_id && (keyfile = conf_get_str("KeyNote",
 		    "Credential-directory")) != 0) {
 			struct stat     sb;
@@ -269,7 +266,6 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 			return dc.dec_key;
 		}
 ignorekeynote:
-#endif				/* USE_KEYNOTE */
 		/* Otherwise, try X.509 */
 		keyfile = conf_get_str("X509-certificates", "Private-key");
 
@@ -577,7 +573,6 @@ rsa_sig_decode_hash(struct message *msg)
 		    p ? GET_ISAKMP_CERT_ENCODING(p->p) : -1);
 		return -1;
 	}
-#if defined (USE_POLICY) || defined (USE_KEYNOTE)
 	/*
 	 * We need the policy session initialized now, so we can add
 	 * credentials etc.
@@ -588,7 +583,6 @@ rsa_sig_decode_hash(struct message *msg)
 		    "session");
 		return -1;
 	}
-#endif				/* USE_POLICY || USE_KEYNOTE */
 
 	/* Obtain a certificate from our certificate storage.  */
 	if (handler->cert_obtain(id, id_len, 0, &rawcert, &rawcertlen)) {
@@ -609,10 +603,8 @@ rsa_sig_decode_hash(struct message *msg)
 					    "of type %d", handler->id));
 					exchange->recv_cert = cert;
 					exchange->recv_certtype = handler->id;
-#if defined (USE_POLICY)
 					x509_generate_kn(exchange->policy_id,
 					    cert);
-#endif				/* USE_POLICY */
 				}
 			}
 		} else if (handler->id == ISAKMP_CERTENC_KEYNOTE)
@@ -695,7 +687,6 @@ rsa_sig_decode_hash(struct message *msg)
 		exchange->recv_cert = cert;
 		exchange->recv_certtype = GET_ISAKMP_CERT_ENCODING(p->p);
 
-#if defined (USE_POLICY) || defined (USE_KEYNOTE)
 		if (exchange->recv_certtype == ISAKMP_CERTENC_KEYNOTE) {
 			struct keynote_deckey dc;
 			char           *pp;
@@ -725,8 +716,6 @@ rsa_sig_decode_hash(struct message *msg)
 			    pp);
 			free(pp);
 		}
-#endif
-
 		found++;
 	}
 

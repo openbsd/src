@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.67 2005/04/08 17:03:04 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.68 2005/04/08 17:15:01 deraadt Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -113,38 +113,17 @@ DPADD+=		${LIBGMP}
 CFLAGS+=	-DMP_FLAVOUR=MP_FLAVOUR_OPENSSL
 .endif
 
-.ifdef USE_KEYNOTE
-USE_LIBCRYPTO=	yes
-USE_LIBDES=	yes
-LDADD+=		-lkeynote -lm
-DPADD+=		${LIBKEYNOTE} ${LIBM}
-CFLAGS+=	-DUSE_KEYNOTE
-.endif
-
 .ifdef USE_RAWKEY
-USE_LIBCRYPTO=	yes
 CFLAGS+=	-DUSE_RAWKEY
 .endif
 
-.ifdef USE_LIBCRYPTO
-CFLAGS+=	-DUSE_LIBCRYPTO
-LDADD+=		-lcrypto
-DPADD+=		${LIBCRYPTO}
-.endif
-
-.ifdef USE_LIBDES
-CFLAGS+=	-DUSE_LIBDES
-LDADD+=		-ldes
-DPADD+=		${LIBDES}
-.endif
-
-SRCS+=		${IPSEC_SRCS} ${POLICY} math_ec2n.c ${DNSSEC} \
+SRCS+=		${IPSEC_SRCS} ${DNSSEC} policy.c math_ec2n.c \
 		ike_aggressive.c isakmp_cfg.c dpd.c monitor.c monitor_fdpass.c \
 		nat_traversal.c udp_encap.c
 CFLAGS+=	${IPSEC_CFLAGS} ${DNSSEC_CFLAGS}
 
-LDADD+=		${DESLIB} ${LWRESLIB}
-DPADD+=		${DESLIBDEP} ${LWRESLIB}
+LDADD+=		${LWRESLIB} -lkeynote -lcrypto -ldes -lm
+DPADD+=		${LWRESLIB} ${LIBKEYNOTE} ${LIBCRYPTO} ${LIBDES} ${LIBM}
 
 exchange_num.c exchange_num.h: genconstants.sh exchange_num.cst
 	/bin/sh ${.CURDIR}/genconstants.sh ${.CURDIR}/exchange_num

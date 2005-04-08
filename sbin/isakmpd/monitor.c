@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.37 2005/04/04 19:31:11 deraadt Exp $	 */
+/* $OpenBSD: monitor.c,v 1.38 2005/04/08 17:15:01 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -41,10 +41,8 @@
 #include <string.h>
 #include <unistd.h>
 
-#if defined (USE_POLICY)
 #include <regex.h>
 #include <keynote.h>
-#endif
 
 #include "sysdep.h"
 
