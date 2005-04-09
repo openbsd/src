@@ -1,4 +1,4 @@
-/*	$OpenBSD: libscsi.c,v 1.2 2003/07/24 00:20:52 deraadt Exp $	*/
+/*	$OpenBSD: libscsi.c,v 1.3 2005/04/09 02:10:01 cloder Exp $	*/
 
 /* Copyright (c) 1994 HD Associates
  * (contact: dufault@hda.com)
@@ -44,16 +44,16 @@
 
 #include "libscsi.h"
 
-static struct
-{
-	FILE *db_f;
-	int db_level;
-	int db_trunc;
+static struct {
+	FILE	*db_f;
+	int	db_level;
+	int	db_trunc;
 } behave;
 
 /* scsireq_reset: Reset a scsireq structure.
  */
-scsireq_t *scsireq_reset(scsireq_t *scsireq)
+scsireq_t *
+scsireq_reset(scsireq_t *scsireq)
 {
 	if (scsireq == 0)
 		return scsireq;
@@ -77,7 +77,8 @@ scsireq_t *scsireq_reset(scsireq_t *scsireq)
 
 /* scsireq_new: Allocate and initialize a new scsireq.
  */
-scsireq_t *scsireq_new(void)
+scsireq_t *
+scsireq_new(void)
 {
 	scsireq_t *p = (scsireq_t *)malloc(sizeof(scsireq_t));
 
@@ -133,10 +134,10 @@ scsireq_t *scsireq_new(void)
  * i and b types are promoted to ints.
  *
  */
-
-static int do_buff_decode(u_char *databuf, size_t len,
-void (*arg_put)(void *, int , void *, int, char *), void *puthook,
-char *fmt, va_list ap)
+static int
+do_buff_decode(u_char *databuf, size_t len,
+    void (*arg_put)(void *, int , void *, int, char *),
+    void *puthook, char *fmt, va_list ap)
 {
 	int assigned = 0;
 	int width;
@@ -152,11 +153,10 @@ char *fmt, va_list ap)
 #	define ARG_PUT(ARG) \
 	do \
 	{ \
-		if (!suppress) \
-		{ \
+		if (!suppress) { \
 			if (arg_put) \
 				(*arg_put)(puthook, (letter == 't' ? 'b' : letter), \
-				(void *)((long)(ARG)), 1, field_name); \
+				    (void *)((long)(ARG)), 1, field_name); \
 			else \
 				*(va_arg(ap, int *)) = (ARG); \
 			assigned++; \
@@ -170,36 +170,33 @@ char *fmt, va_list ap)
 	suppress = 0;
 	field_name[0] = 0;
 
-	while (!done)
-	{
-		switch(letter = *fmt)
-		{
-			case ' ':	/* White space */
-			case '\t':
-			case '\r':
-			case '\n':
-			case '\f':
+	while (!done) {
+		switch (letter = *fmt) {
+		case ' ':	/* White space */
+		case '\t':
+		case '\r':
+		case '\n':
+		case '\f':
 			fmt++;
 			break;
 
-			case '#':	/* Comment */
+		case '#':	/* Comment */
 			while (*fmt && (*fmt != '\n'))
 				fmt++;
 			if (fmt)
 				fmt++;	/* Skip '\n' */
 			break;
 
-			case '*':	/* Suppress assignment */
+		case '*':	/* Suppress assignment */
 			fmt++;
 			suppress = 1;
 			break;
 
-			case '{':	/* Field Name */
+		case '{':	/* Field Name */
 			{
 				int i = 0;
 				fmt++;	/* Skip '{' */
-				while (*fmt && (*fmt != '}'))
-				{
+				while (*fmt && (*fmt != '}')) {
 					if (i < sizeof(field_name))
 						field_name[i++] = *fmt;
 
@@ -211,16 +208,14 @@ char *fmt, va_list ap)
 			}
 			break;
 
-			case 't':	/* Bit (field) */
-			case 'b':	/* Bits */
+		case 't':	/* Bit (field) */
+		case 'b':	/* Bits */
 			fmt++;
 			width = strtol(fmt, &fmt, 10);
 			if (width > 8)
 				done = 1;
-			else
-			{
-				if (shift <= 0)
-				{
+			else {
+				if (shift <= 0) {
 					bits = *databuf++;
 					shift = 8;
 				}
@@ -228,7 +223,7 @@ char *fmt, va_list ap)
 
 #if 0
 				printf("shift %2d bits %02x value %02x width %2d mask %02x\n",
-				shift, bits, value, width, mask[width]);
+				    shift, bits, value, width, mask[width]);
 #endif
 
 				ARG_PUT(value);
@@ -238,38 +233,35 @@ char *fmt, va_list ap)
 
 			break;
 
-			case 'i':	/* Integral values */
+		case 'i':	/* Integral values */
 			shift = 0;
 			fmt++;
 			width = strtol(fmt, &fmt, 10);
-			switch(width)
-			{
-				case 1:
+			switch (width) {
+			case 1:
 				ARG_PUT(*databuf);
 				databuf++;
 				break;
 
-				case 2:
-				ARG_PUT(
-				(*databuf) << 8 |
-				*(databuf + 1));
+			case 2:
+				ARG_PUT((*databuf) << 8 | *(databuf + 1));
 				databuf += 2;
 				break;
 
-				case 3:
+			case 3:
 				ARG_PUT(
-				(*databuf) << 16 |
-				(*(databuf + 1)) << 8 |
-				*(databuf + 2));
+				    (*databuf) << 16 |
+				    (*(databuf + 1)) << 8 |
+				    *(databuf + 2));
 				databuf += 3;
 				break;
 
-				case 4:
+			case 4:
 				ARG_PUT(
-				(*databuf) << 24 |
-				(*(databuf + 1)) << 16 |
-				(*(databuf + 2)) << 8 |
-				*(databuf + 3));
+				    (*databuf) << 24 |
+				    (*(databuf + 1)) << 16 |
+				    (*(databuf + 2)) << 8 |
+				    *(databuf + 3));
 				databuf += 4;
 				break;
 
@@ -279,23 +271,20 @@ char *fmt, va_list ap)
 
 			break;
 
-			case 'c':	/* Characters (i.e., not swapped) */
-			case 'z':	/* Characters with zeroed trailing spaces  */
+		case 'c':	/* Characters (i.e., not swapped) */
+		case 'z':	/* Characters with zeroed trailing spaces  */
 			shift = 0;
 			fmt++;
 			width = strtol(fmt, &fmt, 10);
-			if (!suppress)
-			{
+			if (!suppress) {
 				if (arg_put)
 					(*arg_put)(puthook, (letter == 't' ? 'b' : letter),
-					databuf, width, field_name);
-				else
-				{
+					    databuf, width, field_name);
+				else {
 					char *dest;
 					dest = va_arg(ap, char *);
 					bcopy(databuf, dest, width);
-					if (letter == 'z')
-					{
+					if (letter == 'z') {
 						char *p;
 						for (p = dest + width - 1;
 						(p >= (char *)dest) && (*p == ' '); p--)
@@ -309,27 +298,23 @@ char *fmt, va_list ap)
 			suppress = 0;
 			break;
 
-			case 's':	/* Seek */
+		case 's':	/* Seek */
 			shift = 0;
 			fmt++;
-			if (*fmt == '+')
-			{
+			if (*fmt == '+') {
 				plus = 1;
 				fmt++;
-			}
-			else
+			} else
 				plus = 0;
 
-			if (tolower(*fmt) == 'v')
-			{
+			if (tolower(*fmt) == 'v') {
 				/* You can't suppress a seek value.  You also
 				 * can't have a variable seek when you are using
 				 * "arg_put".
 				 */
 				width = (arg_put) ? 0 : va_arg(ap, int);
 				fmt++;
-			}
-			else
+			} else
 				width = strtol(fmt, &fmt, 10);
 
 			if (plus)
@@ -339,11 +324,11 @@ char *fmt, va_list ap)
 
 			break;
 
-			case 0:
+		case 0:
 			done = 1;
 			break;
 
-			default:
+		default:
 			fprintf(stderr, "Unknown letter in format: %c\n", letter);
 			fmt++;
 		}
@@ -352,31 +337,34 @@ char *fmt, va_list ap)
 	return assigned;
 }
 
-int scsireq_decode(scsireq_t *scsireq, char *fmt, ...)
+int
+scsireq_decode(scsireq_t *scsireq, char *fmt, ...)
 {
 	va_list ap;
 	int ret;
 
 	va_start (ap, fmt);
 	ret = do_buff_decode(scsireq->databuf, (size_t)scsireq->datalen,
-	 0, 0, fmt, ap);
+	    0, 0, fmt, ap);
 	va_end (ap);
 	return (ret);
 }
 
-int scsireq_decode_visit(scsireq_t *scsireq, char *fmt,
-void (*arg_put)(void *, int , void *, int, char *), void *puthook)
+int
+scsireq_decode_visit(scsireq_t *scsireq, char *fmt,
+    void (*arg_put)(void *, int , void *, int, char *), void *puthook)
 {
 	va_list ap;
 	int ret;
 
 	ret = do_buff_decode(scsireq->databuf, (size_t)scsireq->datalen,
-	 arg_put, puthook, fmt, ap);
+	    arg_put, puthook, fmt, ap);
 	va_end (ap);
 	return (ret);
 }
 
-int scsireq_buff_decode(u_char *buff, size_t len, char *fmt, ...)
+int
+scsireq_buff_decode(u_char *buff, size_t len, char *fmt, ...)
 {
 	va_list ap;
 	int ret;
@@ -387,8 +375,9 @@ int scsireq_buff_decode(u_char *buff, size_t len, char *fmt, ...)
 	return (ret);
 }
 
-int scsireq_buff_decode_visit(u_char *buff, size_t len, char *fmt,
-void (*arg_put)(void *, int, void *, int, char *), void *puthook)
+int
+scsireq_buff_decode_visit(u_char *buff, size_t len, char *fmt,
+    void (*arg_put)(void *, int, void *, int, char *), void *puthook)
 {
 	va_list ap;
 
@@ -427,22 +416,15 @@ void (*arg_put)(void *, int, void *, int, char *), void *puthook)
  *  2: For "v" was entered as the value (implies use varargs)
  *
  */
-
-static int next_field(char **pp,
-char *fmt, int *width_p, int *value_p, char *name, int n_name, int *error_p,
-int *suppress_p)
+static int
+next_field(char **pp, char *fmt, int *width_p, int *value_p, char *name,
+    int n_name, int *error_p, int *suppress_p)
 {
 	char *p = *pp;
 
 	int something = 0;
 
-	enum
-	{
-		BETWEEN_FIELDS,
-		START_FIELD,
-		GET_FIELD,
-		DONE,
-	} state;
+	enum { BETWEEN_FIELDS, START_FIELD, GET_FIELD, DONE } state;
 
 	int value = 0;
 	int field_size;		/* Default to byte field type... */
@@ -459,65 +441,52 @@ int *suppress_p)
 	state = BETWEEN_FIELDS;
 
 	while (state != DONE)
-	{
-		switch(state)
+		switch (state)
 		{
-			case BETWEEN_FIELDS:
-				if (*p == 0)
-					state = DONE;
-				else if (isspace(*p))
+		case BETWEEN_FIELDS:
+			if (*p == 0)
+				state = DONE;
+			else if (isspace(*p))
+				p++;
+			else if (*p == '#') {
+				while (*p && *p != '\n')
 					p++;
-				else if (*p == '#')
-				{
-					while (*p && *p != '\n')
-						p++;
-					if (p)
-						p++;
-				}
-				else if (*p == '{')
-				{
+
+				if (p)
+					p++;
+				} else if (*p == '{') {
 					int i = 0;
 
 					p++;
 
-					while (*p && *p != '}')
-					{
-						if(name && i < n_name)
-						{
+					while (*p && *p != '}') {
+						if (name && i < n_name) {
 							name[i] = *p;
 							i++;
 						}
 						p++;
 					}
 
-					if(name && i < n_name)
+					if (name && i < n_name)
 						name[i] = 0;
 
 					if (*p == '}')
 						p++;
-				}
-				else if (*p == '*')
-				{
+				} else if (*p == '*') {
 					p++;
 					suppress = 1;
-				}
-				else if (isxdigit(*p))
-				{
+				} else if (isxdigit(*p)) {
 					something = 1;
 					value = strtol(p, &p, 16);
 					state = START_FIELD;
-				}
-				else if (tolower(*p) == 'v')
-				{
+				} else if (tolower(*p) == 'v') {
 					p++;
 					something = 2;
 					value = *value_p;
 					state = START_FIELD;
 				}
-/* Try to work without the "v".
- */
-				else if (tolower(*p) == 'i')
-				{
+				/* try to work without the 'v' */
+				else if (tolower(*p) == 'i') {
 					something = 2;
 					value = *value_p;
 					p++;
@@ -526,13 +495,11 @@ int *suppress_p)
 					field_size = 8;
 					field_width = strtol(p, &p, 10);
 					state = DONE;
-				}
-
-/* XXX: B can't work: Sees the 'b' as a hex digit in "isxdigit".
- *      try "t" for bit field.
- */
-				else if (tolower(*p) == 't')
-				{
+				} else if (tolower(*p) == 't') {
+					/* XXX: B can't work: Sees the 'b'
+					 * as a hex digit in "isxdigit".
+					 * try "t" for bit field.
+					 */
 					something = 2;
 					value = *value_p;
 					p++;
@@ -541,85 +508,67 @@ int *suppress_p)
 					field_size = 1;
 					field_width = strtol(p, &p, 10);
 					state = DONE;
-				}
-				else if (tolower(*p) == 's')	/* Seek */
-				{
+				} else if (tolower(*p) == 's') { /* Seek */
 					*fmt = 's';
 					p++;
-					if (tolower(*p) == 'v')
-					{
+					if (tolower(*p) == 'v') {
 						p++;
 						something = 2;
 						value = *value_p;
-					}
-					else
-					{
+					} else {
 						something = 1;
 						value = strtol(p, &p, 0);
 					}
 					state = DONE;
-				}
-				else
-				{
+				} else {
 					fprintf(stderr, "Invalid starting character: %c\n", *p);
 					is_error = 1;
 					state = DONE;
 				}
-				break;
+			break;
 
-			case START_FIELD:
-				if (*p == ':')
-				{
-					p++;
-					field_size = 1;		/* Default to bits when specified */
-					state = GET_FIELD;
-				}
-				else
-					state = DONE;
-				break;
+		case START_FIELD:
+			if (*p == ':') {
+				p++;
+				field_size = 1;		/* Default to bits when specified */
+				state = GET_FIELD;
+			} else
+				state = DONE;
+			break;
 
-			case GET_FIELD:
-				if (isdigit(*p))
-				{
-					*fmt = 'b';
-					field_size = 1;
-					field_width = strtol(p, &p, 10);
-					state = DONE;
-				}
-				else if (*p == 'i')	/* Integral (bytes) */
-				{
-					p++;
+		case GET_FIELD:
+			if (isdigit(*p)) {
+				*fmt = 'b';
+				field_size = 1;
+				field_width = strtol(p, &p, 10);
+				state = DONE;
+			} else if (*p == 'i') {	/* Integral (bytes) */
+				p++;
 
-					*fmt = 'i';
-					field_size = 8;
-					field_width = strtol(p, &p, 10);
-					state = DONE;
-				}
-				else if (*p == 'b')	/* Bits */
-				{
-					p++;
+				*fmt = 'i';
+				field_size = 8;
+				field_width = strtol(p, &p, 10);
+				state = DONE;
+			} else if (*p == 'b') {	/* Bits */
+				p++;
 
-					*fmt = 'b';
-					field_size = 1;
-					field_width = strtol(p, &p, 10);
-					state = DONE;
-				}
-				else
-				{
-					fprintf(stderr, "Invalid startfield %c (%02x)\n",
-					*p, *p);
-					is_error = 1;
-					state = DONE;
-				}
-				break;
+				*fmt = 'b';
+				field_size = 1;
+				field_width = strtol(p, &p, 10);
+				state = DONE;
+			} else {
+				fprintf(stderr, "Invalid startfield %c (%02x)\n",
+				    *p, *p);
+				is_error = 1;
+				state = DONE;
+			}
+			break;
 
-			case DONE:
-				break;
+		case DONE:
+			break;
 		}
-	}
 
-	if (is_error)
-	{
+	if (is_error) {
 		*error_p = 1;
 		return 0;
 	}
@@ -633,9 +582,10 @@ int *suppress_p)
 	return something;
 }
 
-static int do_encode(u_char *buff, size_t vec_max, size_t *used,
-int (*arg_get)(void *, char *), void *gethook,
-char *fmt, va_list ap)
+static int
+do_encode(u_char *buff, size_t vec_max, size_t *used,
+    int (*arg_get)(void *, char *),
+    void *gethook, char *fmt, va_list ap)
 {
 	int ind;
 	int shift;
@@ -650,8 +600,8 @@ char *fmt, va_list ap)
 	shift = 0;
 	val = 0;
 
- 	while ((ret = next_field(&fmt,
-	 &c, &width, &value, field_name, sizeof(field_name), &error, &suppress)))
+ 	while ((ret = next_field(&fmt, &c, &width, &value, field_name,
+	    sizeof(field_name), &error, &suppress)))
 	{
 		encoded++;
 
@@ -664,8 +614,9 @@ char *fmt, va_list ap)
 
 #if 0
 		printf(
-"do_encode: ret %d fmt %c width %d value %d name \"%s\" error %d suppress %d\n",
-		ret, c, width, value, field_name, error, suppress);
+		    "do_encode: ret %d fmt %c width %d value %d name \"%s\""
+		    "error %d suppress %d\n",
+		    ret, c, width, value, field_name, error, suppress);
 #endif
 
 		if (c == 's')	/* Absolute seek */
@@ -685,54 +636,45 @@ char *fmt, va_list ap)
 
 			val |= (value << (8 - shift));
 
-			if (shift == 8)
-			{
-				if (ind < vec_max)
-				{
+			if (shift == 8) {
+				if (ind < vec_max) {
 					buff[ind++] = val;
 					val = 0;
 				}
 				shift = 0;
 			}
-		}
-		else
-		{
-			if (shift)
-			{
-				if (ind < vec_max)
-				{
+		} else {
+			if (shift) {
+				if (ind < vec_max) {
 					buff[ind++] = val;
 					val = 0;
 				}
 				shift = 0;
 			}
-			switch(width)
+			switch (width)
 			{
-				case 8:		/* 1 byte integer */
+			case 8:		/* 1 byte integer */
 				if (ind < vec_max)
 					buff[ind++] = value;
 				break;
 
-				case 16:	/* 2 byte integer */
-				if (ind < vec_max - 2 + 1)
-				{
+			case 16:	/* 2 byte integer */
+				if (ind < vec_max - 2 + 1) {
 					buff[ind++] = value >> 8;
 					buff[ind++] = value;
 				}
 				break;
 
-				case 24:	/* 3 byte integer */
-				if (ind < vec_max - 3 + 1)
-				{
+			case 24:	/* 3 byte integer */
+				if (ind < vec_max - 3 + 1) {
 					buff[ind++] = value >> 16;
 					buff[ind++] = value >> 8;
 					buff[ind++] = value;
 				}
 				break;
 
-				case 32:	/* 4 byte integer */
-				if (ind < vec_max - 4 + 1)
-				{
+			case 32:	/* 4 byte integer */
+				if (ind < vec_max - 4 + 1) {
 					buff[ind++] = value >> 24;
 					buff[ind++] = value >> 16;
 					buff[ind++] = value >> 8;
@@ -740,17 +682,15 @@ char *fmt, va_list ap)
 				}
 				break;
 
-				default:
+			default:
 				fprintf(stderr, "do_encode: Illegal width\n");
 				break;
 			}
 		}
 	}
 
-	/* Flush out any remaining bits
-	 */
-	if (shift && ind < vec_max)
-	{
+	/* Flush out any remaining bits */
+	if (shift && ind < vec_max) {
 		buff[ind++] = val;
 		val = 0;
 	}
@@ -769,9 +709,9 @@ char *fmt, va_list ap)
  */
 #define CMD_BUFLEN 16
 
-scsireq_t *scsireq_build(scsireq_t *scsireq,
-	u_long datalen, caddr_t databuf, u_long flags,
-	char *cmd_spec, ...)
+scsireq_t *
+scsireq_build(scsireq_t *scsireq, u_long datalen, caddr_t databuf,
+    u_long flags, char *cmd_spec, ...)
 {
 	size_t cmdlen;
 	va_list ap;
@@ -781,14 +721,12 @@ scsireq_t *scsireq_build(scsireq_t *scsireq,
 
 	scsireq_reset(scsireq);
 
-	if (databuf)
-	{
+	if (databuf) {
 		scsireq->databuf = databuf;
 		scsireq->datalen = datalen;
 		scsireq->flags = flags;
 	}
-	else if (datalen)
-	{
+	else if (datalen) {
 		/* XXX: Good way to get a memory leak.  Perhaps this should be
 		 * removed.
 		 */
@@ -810,9 +748,9 @@ scsireq_t *scsireq_build(scsireq_t *scsireq,
 }
 
 scsireq_t
-*scsireq_build_visit(scsireq_t *scsireq,
-	u_long datalen, caddr_t databuf, u_long flags, char *cmd_spec,
-	int (*arg_get)(void *hook, char *field_name), void *gethook)
+*scsireq_build_visit(scsireq_t *scsireq, u_long datalen, caddr_t databuf,
+    u_long flags, char *cmd_spec,
+    int (*arg_get)(void *hook, char *field_name), void *gethook)
 {
 	size_t cmdlen;
 	va_list ap;
@@ -822,14 +760,11 @@ scsireq_t
 
 	scsireq_reset(scsireq);
 
-	if (databuf)
-	{
+	if (databuf) {
 		scsireq->databuf = databuf;
 		scsireq->datalen = datalen;
 		scsireq->flags = flags;
-	}
-	else if (datalen)
-	{
+	} else if (datalen) {
 		/* XXX: Good way to get a memory leak.  Perhaps this should be
 		 * removed.
 		 */
@@ -841,7 +776,7 @@ scsireq_t
 	}
 
  	if (do_encode(scsireq->cmd, CMD_BUFLEN, &cmdlen, arg_get, gethook,
-	cmd_spec, ap) == -1)
+	    cmd_spec, ap) == -1)
  		return 0;
 
 	scsireq->cmdlen = cmdlen;
@@ -849,7 +784,8 @@ scsireq_t
 	return scsireq;
 }
 
-int scsireq_encode(scsireq_t *scsireq, char *fmt, ...)
+int
+scsireq_encode(scsireq_t *scsireq, char *fmt, ...)
 {
 	va_list ap;
 	int ret;
@@ -859,34 +795,34 @@ int scsireq_encode(scsireq_t *scsireq, char *fmt, ...)
 
  	va_start(ap, fmt);
 
- 	ret = do_encode(scsireq->databuf,
- 	 scsireq->datalen, 0, 0, 0, fmt, ap);
+ 	ret = do_encode(scsireq->databuf, scsireq->datalen, 0, 0, 0, fmt, ap);
 	va_end (ap);
 	return (ret);
 }
 
-int scsireq_buff_encode_visit(u_char *buff, size_t len, char *fmt,
+int
+scsireq_buff_encode_visit(u_char *buff, size_t len, char *fmt,
 	int (*arg_get)(void *hook, char *field_name), void *gethook)
 {
 	va_list ap;
-	return do_encode(buff, len, 0,
-	    arg_get, gethook, fmt, ap);
+	return do_encode(buff, len, 0, arg_get, gethook, fmt, ap);
 }
 
-int scsireq_encode_visit(scsireq_t *scsireq, char *fmt,
-	int (*arg_get)(void *hook, char *field_name), void *gethook)
+int
+scsireq_encode_visit(scsireq_t *scsireq, char *fmt,
+    int (*arg_get)(void *hook, char *field_name), void *gethook)
 {
 	va_list ap;
 	return do_encode(scsireq->databuf, scsireq->datalen, 0,
 	    arg_get, gethook, fmt, ap);
 }
 
-FILE *scsi_debug_output(char *s)
+FILE *
+scsi_debug_output(char *s)
 {
 	if (s == 0)
 		behave.db_f = 0;
-	else
-	{
+	else {
 		behave.db_f = fopen(s, "w");
 
 		if (behave.db_f == 0)
@@ -898,8 +834,7 @@ FILE *scsi_debug_output(char *s)
 
 #define SCSI_TRUNCATE -1
 
-typedef struct scsi_assoc
-{
+typedef struct scsi_assoc {
 	int code;
 	char *text;
 } scsi_assoc_t;
@@ -915,10 +850,10 @@ static scsi_assoc_t retsts[] =
 	{ 0, 0 }
 };
 
-static char *scsi_assoc_text(int code, scsi_assoc_t *tab)
+static char *
+scsi_assoc_text(int code, scsi_assoc_t *tab)
 {
-	while (tab->text)
-	{
+	while (tab->text) {
 		if (tab->code == code)
 			return tab->text;
 
@@ -928,7 +863,8 @@ static char *scsi_assoc_text(int code, scsi_assoc_t *tab)
 	return "Unknown code";
 }
 
-void scsi_dump(FILE *f, char *text, u_char *p, int req, int got, int dump_print)
+void
+scsi_dump(FILE *f, char *text, u_char *p, int req, int got, int dump_print)
 {
 	int i;
 	int trunc = 0;
@@ -938,30 +874,25 @@ void scsi_dump(FILE *f, char *text, u_char *p, int req, int got, int dump_print)
 
 	fprintf(f, "%s (%d of %d):\n", text, got, req);
 
-	if (behave.db_trunc != -1 && got > behave.db_trunc)
-	{
+	if (behave.db_trunc != -1 && got > behave.db_trunc) {
 		trunc = 1;
 		got = behave.db_trunc;
 	}
 
-	for (i = 0; i < got; i++)
-	{
+	for (i = 0; i < got; i++) {
 		fprintf(f, "%02x", p[i]);
 
 		putc(' ', f);
 
-		if ((i % 16) == 15 || i == got - 1)
-		{
+		if ((i % 16) == 15 || i == got - 1) {
 			int j;
-			if (dump_print)
-			{
+			if (dump_print) {
 				fprintf(f, " # ");
 				for (j = i - 15; j <= i; j++)
 					putc((isprint(p[j]) ? p[j] : '.'), f);
 
 				putc('\n', f);
-			}
-			else
+			} else
 				putc('\n', f);
 		}
 	}
@@ -977,7 +908,8 @@ void scsi_dump(FILE *f, char *text, u_char *p, int req, int got, int dump_print)
 
 /* Get unsigned long.
  */
-static u_long g_u_long(u_char *s)
+static u_long
+g_u_long(u_char *s)
 {
 	return (s[0] << 24) | (s[1] << 16) | (s[2] << 8) | s[3];
 }
@@ -986,7 +918,8 @@ static u_long g_u_long(u_char *s)
  */
 static scsi_assoc_t *error_table = 0;
 
-static void sense_7x_dump(FILE *f, scsireq_t *scsireq)
+static void
+sense_7x_dump(FILE *f, scsireq_t *scsireq)
 {
 	int code;
 	u_char *s = (u_char *)scsireq->sense;
@@ -1027,11 +960,11 @@ static void sense_7x_dump(FILE *f, scsireq_t *scsireq)
 
 	val = g_u_long(s + 3);
 	fprintf(f, "The Information field is%s %08lx (%ld).\n",
-	valid ? "" : " not valid but contains", (long)val, (long)val);
+	    valid ? "" : " not valid but contains", (long)val, (long)val);
 
 	val = g_u_long(s + 8);
 	fprintf(f, "The Command Specific Information field is %08lx (%ld).\n",
-	(long)val, (long)val);
+	    (long)val, (long)val);
 
 	fprintf(f, "Additional sense code: %02x\n", s[12]);
 	fprintf(f, "Additional sense code qualifier: %02x\n", s[13]);
@@ -1041,29 +974,25 @@ static void sense_7x_dump(FILE *f, scsireq_t *scsireq)
 	if (error_table)
 		fprintf(f, "%s\n", scsi_assoc_text(code, error_table));
 
-	if (s[15] & 0x80)
-	{
+	if (s[15] & 0x80) {
 		if ((s[2] & 0x7) == 0x05)	/* Illegal request */
 		{
 			int byte;
 			u_char value, bit;
 			int bad_par = ((s[15] & 0x40) == 0);
 			fprintf(f, "Illegal value in the %s.\n",
-			(bad_par ? "parameter list" : "command descriptor block"));
+			    (bad_par ? "parameter list" : "command descriptor block"));
 			byte = ((s[16] << 8) | s[17]);
 			value = bad_par ? (u_char)scsireq->databuf[byte] : (u_char)scsireq->cmd[byte];
 			bit = s[15] & 0x7;
 			if (s[15] & 0x08)
 				fprintf(f, "Bit %d of byte %d (value %02x) is illegal.\n",
-				bit, byte, value);
+				    bit, byte, value);
 			else
 				fprintf(f, "Byte %d (value %02x) is illegal.\n", byte, value);
-		}
-		else
-		{
+		} else 	{
 			fprintf(f, "Sense Key Specific (valid but not illegal request):\n");
-			fprintf(f,
-			"%02x %02x %02x\n", s[15] & 0x7f, s[16], s[17]);
+			fprintf(f, "%02x %02x %02x\n", s[15] & 0x7f, s[16], s[17]);
 		}
 	}
 }
@@ -1076,8 +1005,7 @@ scsi_sense_dump(FILE *f, scsireq_t *scsireq)
 	u_char *s = (u_char *)scsireq->sense;
 	int code = (*s) & 0x7f;
 
-	if (scsireq->senselen_used == 0)
-	{
+	if (scsireq->senselen_used == 0) {
 		fprintf(f, "No sense sent.\n");
 		return;
 	}
@@ -1087,14 +1015,13 @@ scsi_sense_dump(FILE *f, scsireq_t *scsireq)
 		fprintf(f, "The sense data is not valid.\n");
 #endif
 
-	switch(code)
-	{
-		case 0x70:
-		case 0x71:
+	switch (code) {
+	case 0x70:
+	case 0x71:
 		sense_7x_dump(f, scsireq);
 		break;
 
-		default:
+	default:
 		fprintf(f, "No sense dump for error code %02x.\n", code);
 	}
 	scsi_dump(f, "sense", s, scsireq->senselen, scsireq->senselen_used, 0);
@@ -1107,20 +1034,20 @@ scsi_retsts_dump(FILE *f, scsireq_t *scsireq)
 		return;
 
 	fprintf(f, "return status %d (%s)",
-	scsireq->retsts, scsi_assoc_text(scsireq->retsts, retsts));
+	    scsireq->retsts, scsi_assoc_text(scsireq->retsts, retsts));
 
-	switch(scsireq->retsts)
-	{
-		case SCCMD_TIMEOUT:
+	switch (scsireq->retsts) {
+	case SCCMD_TIMEOUT:
 		fprintf(f, " after %ld ms", scsireq->timeout);
 		break;
 
-		default:
+	default:
 		break;
 	}
 }
 
-int scsi_debug(FILE *f, int ret, scsireq_t *scsireq)
+int
+scsi_debug(FILE *f, int ret, scsireq_t *scsireq)
 {
 	char *d;
 	if (f == 0)
@@ -1130,13 +1057,11 @@ int scsi_debug(FILE *f, int ret, scsireq_t *scsireq)
 
 	if (ret == 0)
 		fprintf(f, ": Command accepted.");
-	else
-	{
+	else {
 		if (ret != -1)
 			fprintf(f, ", return value %d?", ret);
 
-		if (errno)
-		{
+		if (errno) {
 			fprintf(f, ": %s", strerror(errno));
 			errno = 0;
 		}
@@ -1162,9 +1087,9 @@ int scsi_debug(FILE *f, int ret, scsireq_t *scsireq)
 			fprintf(f, "Zero length command????\n");
 
 		scsi_dump(f, "Command out",
-	 	(u_char *)scsireq->cmd, scsireq->cmdlen, scsireq->cmdlen, 0);
+		    (u_char *)scsireq->cmd, scsireq->cmdlen, scsireq->cmdlen, 0);
 		scsi_dump(f, d,
-	 	(u_char *)scsireq->databuf, scsireq->datalen,
+		    (u_char *)scsireq->databuf, scsireq->datalen,
 	 	scsireq->datalen_used, 1);
 		scsi_sense_dump(f, scsireq);
 	}
@@ -1176,12 +1101,12 @@ int scsi_debug(FILE *f, int ret, scsireq_t *scsireq)
 
 static char *debug_output;
 
-int scsi_open(const char *path, int flags)
+int
+scsi_open(const char *path, int flags)
 {
 	int fd = open(path, flags);
 
-	if (fd != -1)
-	{
+	if (fd != -1) {
 		char *p;
 		debug_output = getenv("SU_DEBUG_OUTPUT");
 		(void)scsi_debug_output(debug_output);
@@ -1198,7 +1123,8 @@ int scsi_open(const char *path, int flags)
 	return fd;
 }
 
-int scsireq_enter(int fid, scsireq_t *scsireq)
+int
+scsireq_enter(int fid, scsireq_t *scsireq)
 {
 	int ret;
 
@@ -1207,7 +1133,8 @@ int scsireq_enter(int fid, scsireq_t *scsireq)
 
 	ret = ioctl(fid, SCIOCCOMMAND, (void *)scsireq);
 
-	if (behave.db_f) scsi_debug(behave.db_f, ret, scsireq);
+	if (behave.db_f)
+		scsi_debug(behave.db_f, ret, scsireq);
 
 	return ret;
 }
