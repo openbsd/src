@@ -1,4 +1,4 @@
-/* $OpenBSD: scsi_ses.h,v 1.1 2005/04/06 20:49:48 marco Exp $ */
+/* $OpenBSD: scsi_ses.h,v 1.2 2005/04/09 15:24:16 marco Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom
  * All rights reserved.
@@ -30,6 +30,36 @@
 #define _SCSI_SES_H_
 
 /* FIXME add all other elements as well currently this only contains "device" */
+
+struct ses_config_page {
+	/* diagnostic page header */
+	u_int8_t page_code;
+	u_int8_t nr_sub_enc;
+	u_int8_t length[2]; /* n - 3 */
+	u_int8_t gencode[4];
+	/* enclosure descriptor header */
+	u_int8_t rsvd;
+	u_int8_t sub_enc_id;
+	u_int8_t nr_elem_typ; /* = T */
+	u_int8_t enc_desc_len; /* = m */
+	/* enclosure descriptor */
+	u_int8_t enc_logical_id[8];
+	u_int8_t enc_vendor_id[8];
+	u_int8_t prod_id[16];
+	u_int8_t prod_rev[4];
+	u_int8_t vendor[0]; /* 48 - (11 + m) */
+	/* type descriptor header list */
+	/* ses_type_descr_hdr[T] */
+	/* type descriptor text */
+	/* variable, length n */
+};
+
+struct ses_type_desc_hdr {
+	u_int8_t elem_type;
+	u_int8_t nr_elem;
+	u_int8_t sub_enc_id;
+	u_int8_t type_desc_len;
+};
 
 /* control structures, control structs are uses when SENDING */
 struct ses_dev_elmt_ctrl_diag {
