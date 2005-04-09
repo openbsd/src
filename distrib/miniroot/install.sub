@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.373 2005/04/07 20:47:15 krw Exp $
+#	$OpenBSD: install.sub,v 1.374 2005/04/09 00:47:58 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1132,19 +1132,17 @@ install_url() {
 	install_files "$_url_base" "$_file_list"
 }
 
-# $1 - mount point directory is relative to
-# $2 - default directory
 install_mounted_fs() {
-	local _mp=$1 _dir=$2
+	local _dir
 
 	while :; do
-		ask_until "Pathname to the sets? (or 'done')" "$_dir"
+		ask_until "Pathname to the sets? (or 'done')" "$SETDIR"
 		[[ $resp == done ]] && return
-		# Accept a valid $_mp relative path.
-		[[ -d $_mp/$resp ]] && { _dir=$_mp/$resp ; break ; }
+		# Accept a valid /mnt2 or /mnt relative path.
+		[[ -d /mnt2/$resp ]] && { _dir=/mnt2/$resp ; break ; }
+		[[ -d /mnt/$resp ]] && { _dir=/mnt/$resp ; break ; }
 		# Accept a valid absolute path.
 		[[ -d /$resp ]] && { _dir=/$resp ; break ; }
-		# Otherwise ask again, with original default dir.
 		echo "The directory '$resp' does not exist."
 	done
 
@@ -1157,7 +1155,7 @@ install_cdrom() {
 	get_drive "CD-ROM" "$CDDEVS" || return
 	_drive=$resp
 
-	set -- $(disklabel $_drive 2>&1 | grep '^ *c: ')
+	set -- $(disklabel $_drive 2>&1 | grep '^  c: ')
 	case $4 in
 	ISO9660) _fstype=cd9660 ;;
 	UDF)	 _fstype=udf ;;
@@ -1169,25 +1167,25 @@ install_cdrom() {
 	esac		
 
 	mount -t $_fstype -o ro /dev/$_drive$_part /mnt2 || return
-	install_mounted_fs /mnt2 "$SETDIR"
-	umount -f /mnt2 >/dev/null 2>&1
+	install_mounted_fs
 }
 
 install_disk() {
-	local _drive _part _fstype _fsopts
+	local _drive _dev _fstype _fsopts
 
 	get_drive "disk" "$DKDEVS" || return
 	_drive=$resp
 
 	get_partition $_drive "$MDFSTYPE" || return
 	set -- $resp
-	_part=$1
+	_dev=/dev/$_drive$1
 	[[ -n $2 ]] && _fstype="-t $2"
-	[[ $2 == $MDFSTYPE ]] && _fsopts=$MDFSOPTS
+	[[ $_fstype == $MDFSTYPE ]] && _fsopts=$MDFSOPTS
 
-	mount $_fstype -o ro,$_fsopts /dev/$_drive$_part /mnt2 || return
-	install_mounted_fs /mnt2
-	umount -f /mnt2 >/dev/null 2>&1
+	if [[ -z $(mount | grep "^$_dev") ]]; then
+		mount $_fstype -o ro,$_fsopts $_dev /mnt2 || return
+	fi
+	install_mounted_fs
 }
 
 install_nfs() {
@@ -1216,8 +1214,7 @@ install_nfs() {
 		return
 	fi
 
-	install_mounted_fs /mnt2
-	umount -f /mnt2 >/dev/null 2>&1
+	install_mounted_fs
 }
 
 install_tape() {
@@ -1366,11 +1363,13 @@ __EOT
 		d*|D*)	install_disk ;;
 		f*|F*)	install_url ftp ;;
 		h*|H*)	install_url http ;;
-		m*|M*)	install_mounted_fs /mnt ;;
+		m*|M*)	install_mounted_fs ;;
 		n*|N*)	install_nfs ;;
 		t*|T*)	install_tape ;;
 		*)	;;
 		esac
+
+		umount -f /mnt2 >/dev/null 2>&1
 	done
 }
 
