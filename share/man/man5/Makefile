@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.38 2004/11/22 09:26:23 jsg Exp $
+#	$OpenBSD: Makefile,v 1.39 2005/04/09 21:12:25 jmc Exp $
 #	$NetBSD: Makefile,v 1.14 1995/05/11 23:13:15 cgd Exp $
 
 # missing: dump.5 plot.5
@@ -14,7 +14,7 @@ MAN=	a.out.5 acct.5 bsd.port.mk.5 bsd.regress.mk.5 changelist.5 core.5 \
 	
 MLINKS= dir.5 dirent.5 fs.5 inode.5 utmp.5 wtmp.5 utmp.5 lastlog.5
 MLINKS+= hosts.equiv.5 .rhosts.5
-MLINKS+= resolv.conf.5 resolver.5
+MLINKS+= resolv.conf.5 resolver.5 resolv.conf.5 resolv.conf.tail.5
 MLINKS+= hostname.if.5 bridgename.if.5
 MLINKS+= passwd.5 master.passwd.5
 MLINKS+= myname.5 mygate.5

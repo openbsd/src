@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.23 2004/05/06 16:44:42 deraadt Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.24 2005/04/09 21:12:25 jmc Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -34,8 +34,8 @@
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
-.Nm resolv.conf
-.Nd resolver configuration file
+.Nm resolv.conf , resolv.conf.tail
+.Nd resolver configuration files
 .Sh DESCRIPTION
 The
 .Nm
@@ -48,10 +48,33 @@ by the resolver routines the first time they are invoked by a process.
 The file is designed to be human readable and contains a list of
 keywords with values that provide various types of resolver information.
 .Pp
+If
+.Xr dhcp 8
+is used to configure the network,
+the DHCP server will normally provide information
+such as nameserver addresses.
+In this case, it is not normally necessary to provide a
+.Nm resolv.conf
+file.
+However the DHCP network configuration script,
+.Xr dhclient-script 8 ,
+will overwrite entries in
+.Nm resolv.conf .
+In order to force options to be passed to the
+.Xr resolver 3
+routines, the file
+.Nm resolver.conf.tail
+may be created.
+This file is appended to the generated
+.Nm resolv.conf
+file by
+.Xr dhclient-script 8 ,
+ensuring options remain.
+.Pp
 A hash mark
 .Ql #
 or semicolon
-.Ql \;
+.Ql \&;
 indicates the beginning of a comment;
 subsequent characters up to the end of the line are not interpreted by
 the routines that read the file.
@@ -212,7 +235,9 @@ will override.
 The
 .Sy search
 keyword of a system's
-.Pa resolv.conf
+.Nm resolv.conf
+or
+.Nm resolv.conf.tail
 file can be overridden on a per-process basis by setting the
 environment variable
 .Ev LOCALDOMAIN
@@ -221,7 +246,9 @@ to a space-separated list of search domains.
 The
 .Sy options
 keyword of a system's
-.Pa resolv.conf
+.Nm resolv.conf
+or
+.Nm resolv.conf.tail
 file can be amended on a per-process basis by setting the
 environment variable
 .Ev RES_OPTIONS
@@ -232,14 +259,17 @@ The keyword and value must appear on a single line, and the keyword (e.g.,
 must start the line.
 The value follows the keyword, separated by whitespace.
 .Sh FILES
-.Bl -tag -width /etc/resolv.conf -compact
+.Bl -tag -width "/etc/resolv.conf.tailXX" -compact
 .It Pa /etc/resolv.conf
+.It Pa /etc/resolv.conf.tail
 .El
 .Sh SEE ALSO
 .Xr gethostbyname 3 ,
 .Xr resolver 3 ,
 .Xr hosts 5 ,
 .Xr hostname 7 ,
+.Xr dhclient-script 8 ,
+.Xr dhcp 8 ,
 .Xr named 8
 .Rs
 .%T "Name Server Operations Guide for BIND"
