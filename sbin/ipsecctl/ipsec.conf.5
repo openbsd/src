@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.5 2005/04/06 15:36:13 msf Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.6 2005/04/09 23:32:22 hshoexer Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -22,90 +22,99 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 7, 2004
+.Dd April 9, 2005
 .Dt IPSEC.CONF 5
 .Os
 .Sh NAME
 .Nm ipsec.conf
 .Nd IPsec configuration file
 .Sh DESCRIPTION
-.Nm
+The
 .Xr ipsec 4
+protocol suite provides security services for IP according to rules or
+definitions specified in
+.Nm ipsec.conf .
+.Sh FLOWS
+IPsec uses
+.Ar flows
+to determin wether to apply security services to an IP packet or not.
+The following security services are available:
+.Bl -tag -width xxxx
+.It Ar flow esp
+ESP can provide the properties authentication, integrity, replay protection,
+and confidentiality of the data.
+.It Ar flow ah
+AH provides authentication, integrity, and replay protection, but no
+confidentiality.
+.El
+.Pp
+For details on ESP and AH see
+.Xr ipsec 4 .
+When no service is specified,
+.Xr ipsecctl 8
+will use
+.Ar esp .
+The settings for the security services have to be negotiated by
+.Xr isakmpd 8 .
+As soon as a packet matches a
+.Ar flow
+.Xr isakmpd 8
+automatically starts the negotiation.
+See
+.Xr isakmpd 8
+for details.
+.Pp
+Parameters specify the packets to which a flow applies.
+Some parameters are optional.
+.Bl -tag -width xxxx
+.It Ar in No or Ar out
+This rule applies to incoming or outgoing packets.
+If neiter
+.Ar in
+nor
+.Ar out
+are specified,
+.Xr ipsecctl 8
+will duplicate this rule using
+.Ar in
+and
+.Ar out .
+Thus packets in both directions will be matched.
+.It Ar from <src> to <dst> peer <remote>
+This rule applies for packets with source address
+.Ar <src>
+and destination address
+.Ar <dst> .
+All addresses are specified in CIDR notation.
+The
+.Ar peer
+parameter specifies the address of the remote endpoint of this particular
+flow.
+For host-to-host connections where
+.Ar <dst>
+is identical to
+.Ar <remote>
+the
+.Ar peer
+specification can be left out.
 .Sh EXAMPLES
 .Bd -literal
+# Host-to-host
+flow esp from 192.168.3.14 to 192.168.3.100
+
+# Same as above, but explicitly specifying "in" and "out" rules
+flow esp out from 192.168.3.14  to 192.168.3.100
+flow esp in  from 192.168.3.100 to 192.168.3.14
+
+# Net-to-net
+flow esp from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
+
+# Same as above, but explicitly specifying "in" and "out" rules
+flow esp out from 192.168.7.0/24 to 192.168.8.0/24 peer 192.168.3.12
+flow esp in  from 192.168.8.0/24 to 192.168.7.0/24 peer 192.168.3.12
 .Ed
-.Sh GRAMMAR
-.Nm
-in BNF:
-.Bd -literal
-line		= ( flow-rule | group-rule )
-
-flow-rule	= "flow" [( ah-rule | esp-rule | ipip-rule | ipcomp-rule )]
-
-group-rule	= "group" "{" flow-rule, flow-rule, ... "}"
-
-ah-rule		= "ah" [ "transport" ] [ ( "in" | "out" ) ] [ "log" ]
-		  [ "on" ifspec ] hosts [ peers ] [ spi ] [ xform ] [ key ]
-		  [ tag ]
-
-ipip-rule	= "ipip" [ ( "in" | "out" ) ] [ "log" ]
-		  [ "on" ifspec ] hosts [ peers ] [ spi ] [ tag ]
-
-esp-rule	= "esp" [ "transport" ] [ ( "in" | "out" ) ]  [ "log" ]
-		  [ "on" ifspec ] hosts [ peers ] [ spi ] [ xform ] [ key ]
-		  [ tag ]
-
-ipcomp-rule	= "ipcomp" [ ( "in" | "out" ) ]  [ "log" ] [ "on" ifspec ]
-		   hosts [ peers ] [ cpi ]
-
-hosts		= "from" [
-		   [ port ] "to" ( "any" | "self" | host ) [ port ]
-
-cpi		= "cpi" cpispec
-
-cpispec		= ( number | number:number )
-
-spi		= "spi" spispec
-
-spispec		= ( number | number:number )
-
-peers		= "peer"
-
-xform		= "xform" xformspec
-
-xformspec 	= ( tranform | transform:transform )
-
-transform	= ( enc | enc-auth | auth )
-
-auth 		= ( "md5" | "rmd160" | "sha1" | "sha2-256" | "sha2-384" |
-		    "sha2-512" )
-
-enc 		= ( "aes" | "blowfish" | "cast" | "des" | "3des" | "skipjack" )
-
-key 		= "key" string
-
-ipspec		= "any" | host | "{" host-list "}"
-
-host           = [ "!" ] ( address [ "/" mask-bits ] | "<" string ">" )
-
-address        = ( interface-name | "(" interface-name ")" | hostname |
-                 ipv4-dotted-quad | ipv6-coloned-hex )
-
-.Ed
-.\" The following requests should be uncommented and used where appropriate.
-.\" This next request is for sections 2, 3, and 9 function return values only.
-.\" .Sh RETURN VALUES
-.\" This next request is for sections 1, 6, 7 & 8 only.
-.\" .Sh ENVIRONMENT
-.\" .Sh FILES
-.\" .Sh EXAMPLES
-.\" This next request is for sections 1, 4, 6, and 8 only.
-.\" .Sh DIAGNOSTICS
-.\" The next request is for sections 2, 3, and 9 error and signal handling only.
-.\" .Sh ERRORS
-.\" .Sh SEE ALSO
-.\" .Xr foobar 1
-.\" .Sh STANDARDS
+.\".Sh GRAMMAR
+.\".Ed
 .Sh HISTORY
 The
 .Nm
