@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.12 2005/03/02 21:34:58 grange Exp $	*/
+/*	$OpenBSD: it.c,v 1.13 2005/04/09 14:42:33 grange Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
@@ -78,41 +78,31 @@ it_match(struct device *parent, void *match, void *aux)
 	bus_space_handle_t ioh;
 	struct isa_attach_args *ia = aux;
 	int iobase;
-	int rv;
 	u_int8_t cr;
 
 	iot = ia->ia_iot;
 	iobase = ia->ipa_io[0].base;
 
 	if (bus_space_map(iot, iobase, 8, 0, &ioh)) {
-		DPRINTF(("%s: can't map i/o space\n", __func__));
+		DPRINTF(("it: can't map i/o space\n"));
 		return (0);
 	}
 
-	/* Check for some power-on defaults */
-	bus_space_write_1(iot, ioh, ITC_ADDR, ITD_CONFIG);
+	/* Check Vendor ID */
+	bus_space_write_1(iot, ioh, ITC_ADDR, ITD_CHIPID);
 	cr = bus_space_read_1(iot, ioh, ITC_DATA);
-
-	/* The monitoring may have been enabled by BIOS */
-	if (cr == 0x11 || cr == 0x13 || cr == 0x18 || cr == 0x19)
-		rv = 1;
-	else
-		rv = 0;
-
-	DPRINTF(("it: rv = %d, cr = %x\n", rv, cr));
-
 	bus_space_unmap(iot, ioh, 8);
+	DPRINTF(("it: vendor id 0x%x\n", cr));
+	if (cr != IT_ID_IT87)
+		return (0);
 
-	if (rv) {
-		ia->ipa_nio = 1;
-		ia->ipa_io[0].length = 8;
+	ia->ipa_nio = 1;
+	ia->ipa_io[0].length = 8;
+	ia->ipa_nmem = 0;
+	ia->ipa_nirq = 0;
+	ia->ipa_ndrq = 0;
 
-		ia->ipa_nmem = 0;
-		ia->ipa_nirq = 0;
-		ia->ipa_ndrq = 0;
-	}
-
-	return (rv);
+	return (1);
 }
 
 void
@@ -137,9 +127,6 @@ it_attach(struct device *parent, struct device *self, void *aux)
 	switch (i) {
 		case IT_ID_IT87:
 			printf(": IT87\n");
-			break;
-		default:
-			printf(": unknown chip (ID %d)\n", i);
 			break;
 	}
 
