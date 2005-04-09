@@ -64,7 +64,7 @@ namespace std
       setlocale(LC_ALL, "C");
 
       int __ret;
-#ifdef _GLIBCPP_USE_C99
+#if defined _GLIBCPP_USE_C99 || defined _GLIBCPP_USE_C99_SNPRINTF
       if (__prec >= 0)
         __ret = snprintf(__out, __size, __fmt, __prec, __v);
       else

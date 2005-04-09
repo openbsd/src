@@ -154,6 +154,9 @@ case "${target_os}" in
   netbsd*)
     os_include_dir="os/bsd/netbsd"
     ;;
+  openbsd*)
+    os_include_dir="os/bsd/openbsd"
+    ;;
   solaris2.5 | solaris2.5.[0-9])
     os_include_dir="os/solaris/solaris2.5"
     ;;
