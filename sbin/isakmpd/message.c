@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.107 2005/04/08 23:15:26 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.108 2005/04/09 00:42:27 deraadt Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -364,8 +364,7 @@ next_payload:
 		/* Advance to next payload.  */
 		buf += len;
 		sz += len;
-	}
-	while (next != ISAKMP_PAYLOAD_NONE);
+	} while (next != ISAKMP_PAYLOAD_NONE);
 	return sz;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: math_2n.c,v 1.20 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: math_2n.c,v 1.21 2005/04/09 00:42:27 deraadt Exp $	 */
 /* $EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	 */
 
 /*
@@ -396,8 +396,7 @@ b2n_cmp_null(b2n_ptr a)
 	do {
 		if (a->limp[i])
 			return 1;
-	}
-	while (++i < a->chunks);
+	} while (++i < a->chunks);
 
 	return 0;
 }
@@ -940,8 +939,7 @@ b2n_sqrt(b2n_ptr zo, b2n_ptr b, b2n_ptr ip)
 			if (b2n_add(w, w, p))	/* w**2 + p */
 				goto fail;
 		}
-	}
-	while (!b2n_cmp_null(w));
+	} while (!b2n_cmp_null(w));
 
 	B2N_SWAP(zo, z);
 
