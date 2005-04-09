@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.375 2005/04/09 15:21:28 krw Exp $
+#	$OpenBSD: install.sub,v 1.376 2005/04/09 23:47:34 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -455,7 +455,7 @@ makedev() {
 # $2 - symbolic name
 addhostent() {
 	local _addr=$1 _name=$2
-	
+
 	sed "/^[0-9a-fA-F]*[:.].* $_name\$/d" /tmp/hosts >/tmp/hosts.new
 	mv /tmp/hosts.new /tmp/hosts
 
@@ -686,19 +686,19 @@ v6_config() {
 	ask_until "$_prompt" "$_addr"
 
 	case $resp in
-	none)	return	
+	none)	return
 		;;
-	rtsol) 	if [[ ! -x /sbin/rtsol ]]; then
+	rtsol)	if [[ ! -x /sbin/rtsol ]]; then
 			echo "rtsol not possible - no /sbin/rtsol."
 			return
- 		fi
+		fi
 		ifconfig $_ifs up
 		rtsol -F $_ifs
 		addhostent "::1" "$_name"
 		echo "up\nrtsol $media" >>$_hn
 		return
- 		;;
- 	esac
+		;;
+	esac
 
 	_addr=$resp
 	ask_until "IPv6 prefix length for $_ifs?" "${_prefixlen:=64}"
@@ -756,7 +756,7 @@ v6_defroute() {
 			break
 			;;
 		esac
-	done	
+	done
 	IFS=$_oifs
 }
 
@@ -1162,7 +1162,7 @@ install_cdrom() {
 		 _part=$1
 		 [[ -n $2 ]] && _fstype=$2
 		;;
-	esac		
+	esac
 
 	mount -t $_fstype -o ro /dev/$_drive$_part /mnt2 || return
 	install_mounted_fs
