@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.374 2005/04/09 00:47:58 krw Exp $
+#	$OpenBSD: install.sub,v 1.375 2005/04/09 15:21:28 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -447,8 +447,6 @@ makedev() {
 	fi
 
 	cd /dev ; sh MAKEDEV $_dev || return 1 ; cd - >/dev/null
-
-	DEVSMADE=$(addel $_dev $DEVSMADE)
 }
 
 # Create an entry in the hosts file. If an entry with the
@@ -1608,9 +1606,9 @@ finish_up() {
 	echo -n "Making all device nodes..."
 	cd /mnt/dev
 	sh MAKEDEV all
-	# Make sure any devices we added as a result of makedev() calls
-	# are recreated in installed system.
-	for _dev in $DEVSMADE; do
+	# Make sure any devices we found during probe are created in the
+	# installed system.
+	for _dev in $DKDEVS $CDDEVS $MTDEVS; do
 		sh MAKEDEV $_dev
 	done
 	echo "done."
@@ -1668,9 +1666,6 @@ CDDEVS=$(scan_dmesg "${MDCDDEVS:-/^cd[0-9][0-9]* /s/ .*//p}")
 MTDEVS=$(scan_dmesg "${MDMTDEVS:-/^[cmsw]t[0-9][0-9]* /s/ .*//p}")
 IFDEVS=$(get_ifdevs)
 SERIALDEV=$(get_serialdev)
-
-# Devices created with makedev().
-DEVSMADE=
 
 # Selected sets will be installed in the order they are listed in $THESETS.
 # Ensure that siteXX.tgz is the *last* set listed so its contents overwrite
