@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.7 2005/04/09 23:39:48 hshoexer Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.8 2005/04/10 14:02:45 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -33,17 +33,17 @@ The
 .Xr ipsec 4
 protocol suite provides security services for IP according to rules or
 definitions specified in
-.Nm ipsec.conf .
+.Nm .
 .Sh FLOWS
 IPsec uses
-.Ar flows
-to determin wether to apply security services to an IP packet or not.
+.Em flows
+to determine whether to apply security services to an IP packet or not.
 The following security services are available:
 .Bl -tag -width xxxx
-.It Ar flow esp
-ESP can provide the properties authentication, integrity, replay protection,
-and confidentiality of the data.
-.It Ar flow ah
+.It Ic flow esp
+ESP can provide the following properties:
+authentication, integrity, replay protection, and confidentiality of the data.
+.It Ic flow ah
 AH provides authentication, integrity, and replay protection, but no
 confidentiality.
 .El
@@ -52,12 +52,10 @@ For details on ESP and AH see
 .Xr ipsec 4 .
 When no service is specified,
 .Xr ipsecctl 8
-will use
-.Ar esp .
+will use ESP.
 The settings for the security services have to be negotiated by
 .Xr isakmpd 8 .
-As soon as a packet matches a
-.Ar flow
+As soon as a packet matches a flow,
 .Xr isakmpd 8
 automatically starts the negotiation.
 See
@@ -69,7 +67,7 @@ Some parameters are optional.
 .Bl -tag -width xxxx
 .It Ar in No or Ar out
 This rule applies to incoming or outgoing packets.
-If neiter
+If neither
 .Ar in
 nor
 .Ar out
@@ -81,23 +79,31 @@ for this rule and will construct a proper
 .Ar in
 rule.
 Thus packets in both directions will be matched.
-.It Ar from <src> to <dst> peer <remote>
+.It Xo
+.Ar from
+.Aq Ar src
+.Ar to
+.Aq Ar dst
+.Ar peer
+.Aq Ar remote
+.Xc
 This rule applies for packets with source address
-.Ar <src>
+.Aq Ar src
 and destination address
-.Ar <dst> .
+.Aq Ar dst .
 All addresses are specified in CIDR notation.
 The
 .Ar peer
 parameter specifies the address of the remote endpoint of this particular
 flow.
 For host-to-host connections where
-.Ar <dst>
+.Aq Ar dst
 is identical to
-.Ar <remote>
+.Aq Ar remote ,
 the
 .Ar peer
 specification can be left out.
+.El
 .Sh EXAMPLES
 .Bd -literal
 # Host-to-host
