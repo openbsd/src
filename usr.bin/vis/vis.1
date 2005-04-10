@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vis.1,v 1.9 2003/09/03 21:14:57 avsm Exp $
+.\"	$OpenBSD: vis.1,v 1.10 2005/04/10 13:53:39 jmc Exp $
 .\"	$NetBSD: vis.1,v 1.5 1994/11/17 07:56:00 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm vis
 .Op Fl cbflnostw
-.Op Fl F Op Ar foldwidth
+.Op Fl F Ar foldwidth
 .Op Ar file ...
 .Sh DESCRIPTION
 .Nm
@@ -69,12 +69,12 @@ It is similar to
 .It Fl c
 Request a format which displays a small subset of the
 non-printable characters using C-style backslash sequences.
-.It Fl F
+.It Fl F Ar foldwidth
 Causes
 .Nm
 to fold output lines to
 .Ar foldwidth
-columns (default 80), like
+columns, like
 .Xr fold 1 ,
 except
 that a hidden newline sequence is used, (which is removed
@@ -86,8 +86,9 @@ This makes
 the output usable with various editors and other utilities which
 typically don't work with partial lines.
 .It Fl f
-Same as
-.Fl F .
+Like
+.Fl F ,
+except output is always folded to 80 columns.
 .It Fl l
 Mark newlines with the visible sequence
 .Ql \e$ ,
