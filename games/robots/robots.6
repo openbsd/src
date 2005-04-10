@@ -1,4 +1,4 @@
-.\"	$OpenBSD: robots.6,v 1.10 2003/06/03 03:01:41 millert Exp $
+.\"	$OpenBSD: robots.6,v 1.11 2005/04/10 13:49:13 jmc Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nd fight off villainous robots
 .Sh SYNOPSIS
 .Nm robots
-.Op Fl sjtar
+.Op Fl ajrst
 .Op Ar scorefile
 .Sh DESCRIPTION
 .Nm
@@ -116,25 +116,25 @@ of the game.
 If an alternative score file is specified, that will be used instead of the
 standard file for scores.
 .Pp
-The options are
+The options are as follows:
 .Bl -tag -width indent
-.It Fl s
-Don't play, just show the score file.
+.It Fl a
+Advance into the higher levels directly, skipping the lower, easier levels.
 .It Fl j
 Jump,
 .Em i.e. ,
 when you run, don't show any intermediate positions; only show things at
 the end.
 This is useful on slow terminals.
+.It Fl r
+Real-time mode.
+After your first move, robots will advance at least every three seconds.
+.It Fl s
+Don't play, just show the score file.
 .It Fl t
 Teleport automatically when you have no other option.
 This is a little disconcerting until you get used to it, and then it is
 very nice.
-.It Fl a
-Advance into the higher levels directly, skipping the lower, easier levels.
-.It Fl r
-Real-time mode.
-After your first move, robots will advance at least every three seconds.
 .El
 .Sh FILES
 .Bl -tag -width /var/games/robots_roll -compact
