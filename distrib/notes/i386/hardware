@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.196 2005/03/20 00:15:46 joris Exp $
+dnl	$OpenBSD: hardware,v 1.197 2005/04/10 00:17:53 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -802,6 +802,7 @@ Supported hardware {:-include-:}:
 		Raytheon Raylink PCMCIA IEEE 802.11 FH adapters [A] [B] [C]
 		Realtek RTL8180L based CardBus IEEE 802.11b adapters [A] [B]
 		    Belkin F5D6020 V3
+		    Buffalo WLI-CB-B11
 		    Corega CG-WLCB11V3
 		    D-Link DWL-610
 		    Level-One WPC-0101
