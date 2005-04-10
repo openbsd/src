@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.14 2005/03/26 18:39:10 otto Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.15 2005/04/10 16:10:37 moritz Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -66,7 +66,10 @@ enum priv_state {
 
 #define ALLOW(action)	(1 << (action))
 
-static const int allowed[] = {
+/*
+ * Set of maximum allowed actions.
+ */
+static const int allowed_max[] = {
 	/* INIT */	ALLOW(PRIV_OPEN_BPF) | ALLOW(PRIV_OPEN_DUMP) |
 			ALLOW(PRIV_SETFILTER),
 	/* BPF */	ALLOW(PRIV_SETFILTER),
@@ -76,6 +79,18 @@ static const int allowed[] = {
 	/* RUN */	ALLOW(PRIV_GETHOSTBYADDR) | ALLOW(PRIV_ETHER_NTOHOST) |
 			ALLOW(PRIV_GETRPCBYNUMBER) | ALLOW(PRIV_GETLINES) |
 			ALLOW(PRIV_LOCALTIME),
+	/* QUIT */	0
+};
+
+/*
+ * Default set of allowed actions. More actions get added
+ * later depending on the supplied parameters.
+ */
+static int allowed_ext[] = {
+	/* INIT */	ALLOW(PRIV_SETFILTER),
+	/* BPF */	ALLOW(PRIV_SETFILTER),
+	/* FILTER */	ALLOW(PRIV_GETSERVENTRIES),
+	/* RUN */	ALLOW(PRIV_GETLINES) | ALLOW(PRIV_LOCALTIME),
 	/* QUIT */	0
 };
 
@@ -117,7 +132,7 @@ int
 priv_init(int argc, char **argv)
 {
 	int bpfd = -1;
-	int i, socks[2], cmd;
+	int i, socks[2], cmd, nflag = 0;
 	struct passwd *pw;
 	uid_t uid;
 	gid_t gid;
@@ -197,6 +212,10 @@ priv_init(int argc, char **argv)
 	while ((i = getopt(argc, argv,
 	    "ac:deE:fF:i:lLnNOopqr:s:StT:vw:xXy:Y")) != -1) {
 		switch (i) {
+		case 'n':
+			nflag++;
+			break;
+
 		case 'r':
 			RFileName = optarg;
 			break;
@@ -213,6 +232,26 @@ priv_init(int argc, char **argv)
 			/* nothing */
 			break;
 		}
+	}
+
+	if (RFileName != NULL) {
+		if (strcmp(RFileName, "-") != 0)
+			allowed_ext[STATE_INIT] |= ALLOW(PRIV_OPEN_DUMP);
+	} else
+		allowed_ext[STATE_INIT] |= ALLOW(PRIV_OPEN_BPF);
+	if (WFileName != NULL) {
+		if (strcmp(WFileName, "-") != 0)
+			allowed_ext[STATE_FILTER] |= ALLOW(PRIV_OPEN_OUTPUT);
+		else
+			allowed_ext[STATE_FILTER] |= ALLOW(PRIV_INIT_DONE);
+	} else
+		allowed_ext[STATE_FILTER] |= ALLOW(PRIV_INIT_DONE);
+	if (!nflag) {
+		allowed_ext[STATE_RUN] |= ALLOW(PRIV_GETHOSTBYADDR);
+		allowed_ext[STATE_FILTER] |= ALLOW(PRIV_ETHER_NTOHOST);
+		allowed_ext[STATE_RUN] |= ALLOW(PRIV_ETHER_NTOHOST);
+		allowed_ext[STATE_RUN] |= ALLOW(PRIV_GETRPCBYNUMBER);
+		allowed_ext[STATE_FILTER] |= ALLOW(PRIV_GETPROTOENTRIES);
 	}
 
 	if (infile)
@@ -832,7 +871,8 @@ test_state(int action, int next)
 		logmsg(LOG_ERR, "[priv] Invalid state: %d", cur_state);
 		_exit(1);
 	}
-	if ((allowed[cur_state] & ALLOW(action)) == 0) {
+	if ((allowed_max[cur_state] & allowed_ext[cur_state]
+	    & ALLOW(action)) == 0) {
 		logmsg(LOG_ERR, "[priv] Invalid action %d in state %d",
 		    action, cur_state);
 		_exit(1);
