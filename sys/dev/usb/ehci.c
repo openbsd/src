@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.45 2005/03/13 02:54:04 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.46 2005/04/10 04:22:51 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1010,8 +1010,14 @@ ehci_power(int why, void *v)
 	case PWR_STANDBY:
 		sc->sc_bus.use_polling++;
 
-		sc->sc_cmd = EOREAD4(sc, EHCI_USBCMD);
+		for (i = 1; i <= sc->sc_noport; i++) {
+			cmd = EOREAD4(sc, EHCI_PORTSC(i));
+			if ((cmd & (EHCI_PS_PO|EHCI_PS_PE)) == EHCI_PS_PE)
+				EOWRITE4(sc, EHCI_PORTSC(i),
+				    cmd | EHCI_PS_SUSP);
+		}
 
+		sc->sc_cmd = EOREAD4(sc, EHCI_USBCMD);
 		cmd = sc->sc_cmd & ~(EHCI_CMD_ASE | EHCI_CMD_PSE);
 		EOWRITE4(sc, EHCI_USBCMD, cmd);
 
@@ -1023,10 +1029,9 @@ ehci_power(int why, void *v)
 
 			usb_delay_ms(&sc->sc_bus, 1);
 		}
-		if (hcr != 0) {
+		if (hcr != 0)
 			printf("%s: reset timeout\n",
 			    USBDEVNAME(sc->sc_bus.bdev));
-		}
 
 		cmd &= ~EHCI_CMD_RS;
 		EOWRITE4(sc, EHCI_USBCMD, cmd);
@@ -1038,10 +1043,9 @@ ehci_power(int why, void *v)
 
 			usb_delay_ms(&sc->sc_bus, 1);
 		}
-		if (hcr != EHCI_STS_HCH) {
+		if (hcr != EHCI_STS_HCH)
 			printf("%s: config timeout\n",
 			    USBDEVNAME(sc->sc_bus.bdev));
-		}
 
 		sc->sc_bus.use_polling--;
 		break;
@@ -1056,6 +1060,27 @@ ehci_power(int why, void *v)
 		    sc->sc_async_head->physaddr | EHCI_LINK_QH);
 		EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
 
+		hcr = 0;
+		for (i = 1; i <= sc->sc_noport; i++) {
+			cmd = EOREAD4(sc, EHCI_PORTSC(i));
+			if ((cmd & (EHCI_PS_PO|EHCI_PS_SUSP)) == EHCI_PS_SUSP)
+				EOWRITE4(sc, EHCI_PORTSC(i),
+				    cmd | EHCI_PS_FPR);
+			hcr = 1;
+		}
+
+		if (hcr) {
+			usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
+			for (i = 1; i <= sc->sc_noport; i++) {
+				cmd = EOREAD4(sc, EHCI_PORTSC(i));
+				if ((cmd & (EHCI_PS_PO|EHCI_PS_SUSP)) ==
+				    EHCI_PS_SUSP)
+					EOWRITE4(sc, EHCI_PORTSC(i),
+					    cmd & ~EHCI_PS_FPR);
+			}
+		}
+
+
 		EOWRITE4(sc, EHCI_USBCMD, sc->sc_cmd);
 
 		for (i = 0; i < 100; i++) {
@@ -1065,10 +1090,9 @@ ehci_power(int why, void *v)
 
 			usb_delay_ms(&sc->sc_bus, 1);
 		}
-		if (hcr == EHCI_STS_HCH) {
+		if (hcr == EHCI_STS_HCH)
 			printf("%s: config timeout\n",
 			    USBDEVNAME(sc->sc_bus.bdev));
-		}
 
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 
