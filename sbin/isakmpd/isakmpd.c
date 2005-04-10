@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.84 2005/04/08 22:32:10 cloder Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.85 2005/04/10 14:17:49 jmc Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -116,10 +116,9 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-4] [-6] [-a] [-c config-file] [-d] [-D class=level]\n"
-	    "          [-f fifo] [-i pid-file] [-K] [-n] [-N udpencap-port]\n"
-	    "          [-p listen-port] [-L] [-l packetlog-file] [-r seed]\n"
-	    "          [-R report-file] [-T] [-v]\n",
+	    "usage: %s [-46adKLnTv] [-c config-file] [-D class=level] [-f fifo]\n"
+	    "          [-i pid-file] [-l packetlog-file] [-N udpencap-port]\n"
+	    "          [-p listen-port] [-R report-file]\n",
 	    __progname);
 	exit(1);
 }

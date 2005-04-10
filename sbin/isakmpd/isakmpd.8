@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.70 2005/04/08 22:32:10 cloder Exp $
+.\" $OpenBSD: isakmpd.8,v 1.71 2005/04/10 14:17:49 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -39,23 +39,18 @@
 .Sh SYNOPSIS
 .Nm isakmpd
 .Bk -words
-.Op Fl 4
-.Op Fl 6
+.Op Fl 46adKLnTv
 .Op Fl c Ar config-file
-.Op Fl a
-.Op Fl d
-.Op Fl D Ar class=level
+.Xo
+.Oo Fl D
+.Ar class Ns = Ns Ar level Oc
+.Xc
 .Op Fl f Ar fifo
 .Op Fl i Ar pid-file
-.Op Fl n
+.Op Fl l Ar packetlog-file
 .Op Fl N Ar udpencap-port
 .Op Fl p Ar listen-port
-.Op Fl K
-.Op Fl L
-.Op Fl l Ar packetlog-file
 .Op Fl R Ar report-file
-.Op Fl T
-.Op Fl v
 .Ek
 .Sh DESCRIPTION
 The
@@ -80,8 +75,7 @@ socket, and lastly by scheduled events triggered by timers running out.
 .Pp
 Most uses of
 .Nm
-will be to implement so called "virtual private
-networks" or VPNs for short.
+will be to implement so called "virtual private networks" (VPNs).
 The
 .Xr vpn 8
 manual page describes how to set up
@@ -98,14 +92,14 @@ The unprivileged child jails itself with
 to
 .Pa /var/empty .
 The privileged process communicates with the child, reads configuration files
-and PKI information and binds to privileged ports on its behalf.
-See
+and PKI information, and binds to privileged ports on its behalf.
+See the
 .Sx CAVEATS
 section below.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl 4 | Fl 6
+.It Fl 4 | 6
 These options control what address family
 .Pf ( Dv AF_INET
 and/or
@@ -135,13 +129,7 @@ only by the user running the daemon.
 will reread the configuration file when sent a
 .Dv SIGHUP
 signal.
-.It Fl d
-The
-.Fl d
-option is used to make the daemon run in the foreground, logging to stderr.
-.It Xo Fl D
-.Ar class Ns = Ns Ar level
-.Xc
+.It Fl D Ar class Ns = Ns Ar level
 Debugging class.
 It's possible to specify this argument many times.
 It takes a parameter of the form
@@ -155,7 +143,7 @@ are numbers.
 denotes a debugging class, and
 .Ar level
 the level you want that debugging class to
-limit debug printouts at (i.e., all debug printouts above the level specified
+limit debug printouts at (i.e. all debug printouts above the level specified
 will not output anything).
 If
 .Ar class
@@ -197,6 +185,10 @@ All
 Currently used values for
 .Ar level
 are 0 to 99.
+.It Fl d
+The
+.Fl d
+option is used to make the daemon run in the foreground, logging to stderr.
 .It Fl f Ar fifo
 The
 .Fl f
@@ -214,20 +206,6 @@ By default the PID of the daemon process will be written to
 This path can be overridden by specifying another one as the argument to the
 .Fl i
 option.
-.It Fl n
-When the
-.Fl n
-option is given, the kernel will not take part in the negotiations.
-This is a non-destructive mode, so to speak, in that it won't alter any
-SAs in the IPsec stack.
-.It Fl N Ar udpencap-port
-The
-.Fl N
-option specifies the listen port for encapsulated udp the daemon will bind to.
-.It Fl p Ar listen-port
-The
-.Fl p
-option specifies the listen port the daemon will bind to.
 .It Fl K
 When this option is given,
 .Nm
@@ -253,6 +231,21 @@ and other utilities using
 As option
 .Fl L
 above, but capture to a specified file.
+.It Fl N Ar udpencap-port
+The
+.Fl N
+option specifies the listen port for encapsulated UDP
+that the daemon will bind to.
+.It Fl n
+When the
+.Fl n
+option is given, the kernel will not take part in the negotiations.
+This is a non-destructive mode, so to speak, in that it won't alter any
+SAs in the IPsec stack.
+.It Fl p Ar listen-port
+The
+.Fl p
+option specifies the listen port the daemon will bind to.
 .It Fl R Ar report-file
 When you signal
 .Nm
@@ -295,7 +288,7 @@ The latter case, however, is described here:
 .Bl -enum
 .It
 Create your own CA as root.
-.Bd -literal
+.Bd -literal -offset indent
 # openssl genrsa -out /etc/ssl/private/ca.key 1024
 # openssl req -new -key /etc/ssl/private/ca.key \e
 	-out /etc/ssl/private/ca.csr
@@ -308,7 +301,7 @@ There are quite a few fields but you can leave some blank.
 For some fields there will be a default value; if you enter
 .Sq \&. ,
 the field will be left blank.
-.Bd -literal
+.Bd -literal -offset indent
 # openssl x509 -req -days 365 -in /etc/ssl/private/ca.csr \e
 	-signkey /etc/ssl/private/ca.key \e
 	-extfile /etc/ssl/x509v3.cnf -extensions x509v3_CA \e
@@ -317,14 +310,14 @@ the field will be left blank.
 .Pp
 .It
 Create keys and certificates for your IKE peers.
-This step as well as the next one, needs to be done for every peer.
+This step, as well as the next one, needs to be done for every peer.
 Furthermore the last step will need to be done once for each ID you
 want the peer to have.
 The 10.0.0.1 below symbolizes that ID, in this case an IPv4 ID,
 and should be changed for each invocation.
 You will be asked for a DN for each run.
 Encoding the ID in the common name is recommended, as it should be unique.
-.Bd -literal
+.Bd -literal -offset indent
 # openssl genrsa -out /etc/isakmpd/private/local.key 1024
 # openssl req -new -key /etc/isakmpd/private/local.key \e
 	-out /etc/isakmpd/private/10.0.0.1.csr
@@ -336,36 +329,36 @@ You have to add a subjectAltName extension field
 to the certificate in order to make it usable by
 .Nm isakmpd .
 There are two possible ways to add the extensions to the certificate.
-Either you have to run
+Either run
 .Xr certpatch 8
-or you have to make use of an OpenSSL configuration file, for example
+or make use of an OpenSSL configuration file, for example
 .Pa /etc/ssl/x509v3.cnf .
-Replace 10.0.0.1 with the IP-address which
+Replace 10.0.0.1 with the IP address which
 .Nm
 will use as the certificate identity.
 .Pp
 To use
 .Xr certpatch 8 ,
-do the following
-.Bd -literal
-# openssl x509 -req -days 365 -in 10.0.0.1.csr -CA /etc/ssl/ca.crt \e
-	-CAkey /etc/ssl/private/ca.key -CAcreateserial \e
-	-out 10.0.0.1.crt
+do the following:
+.Bd -literal -offset indent
+# openssl x509 -req -days 365 -in 10.0.0.1.csr \e
+	-CA /etc/ssl/ca.crt -CAkey /etc/ssl/private/ca.key \e
+	-CAcreateserial -out 10.0.0.1.crt
 # certpatch -i 10.0.0.1 -k /etc/ssl/private/ca.key \e
 	10.0.0.1.crt 10.0.0.1.crt
 .Ed
 .Pp
-Otherwise do
-.Bd -literal
+Otherwise do:
+.Bd -literal -offset indent
 # setenv CERTIP 10.0.0.1
-# openssl x509 -req -days 365 -in 10.0.0.1.csr -CA /etc/ssl/ca.crt \e
-	-CAkey /etc/ssl/private/ca.key -CAcreateserial \e
-	-extfile /etc/ssl/x509v3.cnf -extensions x509v3_IPAddr \e
-	-out 10.0.0.1.crt
+# openssl x509 -req -days 365 -in 10.0.0.1.csr \e
+	-CA /etc/ssl/ca.crt -CAkey /etc/ssl/private/ca.key \e
+	-CAcreateserial -extfile /etc/ssl/x509v3.cnf \e
+	-extensions x509v3_IPAddr -out 10.0.0.1.crt
 .Ed
 .Pp
-For a FQDN certificate, do
-.Bd -literal
+For a FQDN certificate, do:
+.Bd -literal -offset indent
 # setenv CERTFQDN somehost.somedomain
 # openssl x509 -req -days 365 -in somehost.somedomain.csr \e
 	-CA /etc/ssl/ca.crt -CAkey /etc/ssl/private/ca.key \e
@@ -374,16 +367,16 @@ For a FQDN certificate, do
 	-out somehost.somedomain.crt
 .Ed
 .Pp
-or with
-.Xr certpatch 8
-.Bd -literal
+Or with
+.Xr certpatch 8 :
+.Bd -literal -offset indent
 # certpatch -t fqdn -i somehost.somedomain \e
 	-k /etc/ssl/private/ca.key \e
 	somehost.somedomain.crt somehost.somedomain.crt
 .Ed
 .Pp
 (This assumes the previous steps were used to create a request for
-somehost.somedomain instead of 10.0.0.1)
+somehost.somedomain instead of 10.0.0.1.)
 .Pp
 Put the certificate (the file ending in .crt) in
 .Pa /etc/isakmpd/certs/
@@ -410,14 +403,15 @@ usable by
 The keys should be saved in PEM format (see
 .Xr openssl 1 )
 and named and stored after this easy formula:
-.Bl -tag -width for_ufqdn_identities
-.It For IPv4 identities
+.Pp
+.Bl -tag -width "for_ufqdn_identitiesXX" -offset 3n -compact
+.It For IPv4 identities:
 /etc/isakmpd/pubkeys/ipv4/A.B.C.D
-.It For IPv6 identities
+.It For IPv6 identities:
 /etc/isakmpd/pubkeys/ipv6/abcd:abcd::ab:bc
-.It For FQDN identities
+.It For FQDN identities:
 /etc/isakmpd/pubkeys/fqdn/foo.bar.org
-.It For UFQDN identities
+.It For UFQDN identities:
 /etc/isakmpd/pubkeys/ufqdn/user@foo.bar.org
 .El
 .Ss The FIFO user interface
@@ -441,7 +435,7 @@ Update the running
 .Nm
 configuration atomically.
 .Sq set
-sets a configuration value consisting of a section, tag and value triplet.
+sets a configuration value consisting of a section, tag, and value triplet.
 .Sq set
 will fail if the configuration already contains a section with the named tag;
 use the
@@ -490,7 +484,7 @@ signal.
 Report
 .Nm
 internal state to a file.
-See
+See the
 .Fl R
 option.
 Same as when sent a
@@ -516,7 +510,7 @@ Tear down the named connection, if active.
 Tear down all active connections.
 .El
 .Sh FILES
-.Bl -tag -width /etc/isakmpd/private/local.
+.Bl -tag -width Ds
 .It Pa /etc/isakmpd/ca/
 The directory where CA certificates can be found.
 .It Pa /etc/isakmpd/certs/
@@ -533,7 +527,7 @@ it must not be readable by anyone but the user running
 .It Pa /etc/isakmpd/isakmpd.policy
 The keynote policy configuration file.
 The same mode requirements as
-.Nm isakmpd.conf .
+.Pa isakmpd.conf .
 .It Pa /etc/isakmpd/private/local.key
 A local private key for certificate based authentication.
 There has to be a certificate for this key in the certificate directory
@@ -577,19 +571,15 @@ and keynote policy configuration files.
 .Xr tcpdump 8 ,
 .Xr vpn 8
 .Sh HISTORY
-The ISAKMP/Oakley key management protocol is described in the RFCs
-.%T RFC 2407 ,
-.%T RFC 2408
-and
-.%T RFC 2409 .
-NAT-Traversal is described in
-.%T RFC 3947 .
+The ISAKMP/Oakley key management protocol is described in
+RFC 2407, RFC 2408, and RFC 2409.
+NAT-Traversal is described in RFC 3947.
 This implementation was done 1998 by Niklas Hallqvist and Niels Provos,
 sponsored by Ericsson Radio Systems.
 .Sh CAVEATS
 When storing a trusted public key for an IPv6 identity, the
 .Em most efficient
-form of address representation, i.e "::" instead of ":0:0:0:",
+form of address representation, i.e. "::" instead of ":0:0:0:",
 must be used or the matching will fail.
 .Nm
 uses the output from
