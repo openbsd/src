@@ -1817,6 +1817,7 @@
 ./usr/share/man/cat5/rcsfile.0
 ./usr/share/man/cat5/remote.0
 ./usr/share/man/cat5/resolv.conf.0
+./usr/share/man/cat5/resolv.conf.tail.0
 ./usr/share/man/cat5/resolver.0
 ./usr/share/man/cat5/rndc.conf.0
 ./usr/share/man/cat5/rpc.0
