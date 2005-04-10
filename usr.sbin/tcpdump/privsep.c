@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.15 2005/04/10 16:10:37 moritz Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.16 2005/04/10 19:59:02 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -157,6 +157,7 @@ priv_init(int argc, char **argv)
 			pw = getpwnam("_tcpdump");
 			if (pw == NULL)
 				errx(1, "unknown user _tcpdump");
+			endpwent();
 
 			/* chroot, drop privs and return */
 			if (chroot(pw->pw_dir) != 0)
