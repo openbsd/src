@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.12 2005/03/26 16:46:19 uwe Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.13 2005/04/11 03:22:59 uwe Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -151,6 +151,11 @@
 #include <machine/zaurus_reg.h>
 #include <machine/zaurus_var.h>
 
+#include "apm.h"
+#if NAPM > 0
+#include <zaurus/dev/zaurus_apm.h>
+#endif
+
 #include "wsdisplay.h"
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
@@ -233,9 +238,6 @@ extern struct user *proc0paddr;
 
 /* Prototypes */
 
-void	zaurus_reset(void);
-void	zaurus_powerdown(void);
-
 #define	BOOT_STRING_MAGIC 0x4f425344
 
 char	bootargs[MAX_BOOT_STRING];
@@ -266,54 +268,6 @@ int comcnmode = CONMODE;
 
 
 /*
- *
- */
-void
-zaurus_reset(void)
-{
-	bus_space_tag_t bust = &pxa2x0_bs_tag;
-	bus_space_handle_t bush_pow;
-	bus_space_handle_t bush_mc;
-	int rv;
-
-	if (bus_space_map(bust, PXA2X0_POWMAN_BASE, PXA2X0_POWMAN_SIZE, 0,
-	    &bush_pow))
-		panic("pxa2x0_gpio_boot: failed to map POWMAN");
-
-	if (bus_space_map(bust, PXA2X0_MEMCTL_BASE, PXA2X0_MEMCTL_SIZE, 0,
-	    &bush_mc))
-		panic("zaurus_reset: failed to map MEMCTL");
-
-	bus_space_write_4(bust, bush_pow, POWMAN_RCSR,
-	    RCSR_GPR | RCSR_SMR | RCSR_WDR | RCSR_HWR);
-
-	rv = bus_space_read_4(bust, bush_mc, MEMCTL_MSC0);
-        if ((rv & 0xffff0000) == 0x7ff00000)
-		bus_space_write_4(bust, bush_mc, MEMCTL_MSC0,
-		    (rv & 0xffff) | 0x7ee00000);
-
-	pxa2x0_gpio_set_function(89, GPIO_OUT | GPIO_SET);
-
-	/* Wait for the external reset circuit to kick the CPU. */
-	delay(1000000);
-}
-
-/*
- *
- */
-void
-zaurus_powerdown(void)
-{
-
-	/*
-	 * XXX most of the time this does the right thing, but
-	 * XXX sometimes the zaurus can't be turned on by pressing
-	 * XXX the power button until the battery is replaced.
-	 */
-	pxa2x0_watchdog_boot();
-}
-
-/*
  * void boot(int howto, char *bootstr)
  *
  * Reboots the system
@@ -342,7 +296,9 @@ boot(int howto)
 		}
 		printf("rebooting...\n");
 		delay(6000000);
-		zaurus_reset();
+#if NAPM > 0
+		zapm_restart();
+#endif
 		printf("reboot failed; spinning\n");
 		while(1);
 		/*NOTREACHED*/
@@ -375,12 +331,14 @@ boot(int howto)
 	IRQdisable;
 
 	if (howto & RB_HALT) {
+#if NAPM > 0
 		if (howto & RB_POWERDOWN) {
 
 			printf("\nAttempting to power down...\n");
 			delay(6000000);
-			zaurus_powerdown();
+			zapm_poweroff();
 		}
+#endif
 
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
@@ -389,7 +347,9 @@ boot(int howto)
 
 	printf("rebooting...\n");
 	delay(6000000);
-	zaurus_reset();
+#if NAPM > 0
+	zapm_restart();
+#endif
 	printf("reboot failed; spinning\n");
 	while(1);
 	/*NOTREACHED*/
