@@ -1,4 +1,3 @@
-./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/scsi_ses.ph
 ./sbin/ldconfig
 ./sbin/pdisk
 ./usr/bin/ldd
@@ -657,7 +656,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/cardbus/cardbusvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/cardbus/cardslotvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/cardbus/rbus.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/cardbus/usb_cardbus.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/ccdvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/clock_subr.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/cons.ph
@@ -1100,7 +1098,6 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/tgavar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/ubsecreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/ubsecvar.ph
-./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/usb_pci.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/vga_pcivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/wdt50x.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/pci/xmaciireg.ph
@@ -1951,6 +1948,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/scsi_disk.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/scsi_message.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/scsi_scanner.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/scsi_ses.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/scsi_tape.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/scsiconf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/scsi/sdvar.ph
