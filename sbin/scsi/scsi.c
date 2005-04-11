@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.16 2005/04/09 02:14:32 cloder Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.17 2005/04/11 14:59:01 cloder Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -739,7 +739,9 @@ edit_edit(void)
 
 	fclose(edit_file);
 
-	asprintf(&system_line, "%s %s", editor, edit_name);
+	if (asprintf(&system_line, "%s %s", editor, edit_name) == -1)
+		err(1, NULL);
+
 	system(system_line);
 	free(system_line);
 
