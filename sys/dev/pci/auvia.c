@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.29 2004/12/07 03:17:42 jsg Exp $ */
+/*	$OpenBSD: auvia.c,v 1.30 2005/04/11 19:31:43 matthieu Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -600,6 +600,9 @@ auvia_set_params(void *addr, int setmode, int usemode,
 			} else
 				p->sw_code = ulinear8_to_alaw;
 			break;
+		case AUDIO_ENCODING_SLINEAR:
+		case AUDIO_ENCODING_ULINEAR:
+			break;
 		default:
 			return (EINVAL);
 		}
@@ -822,10 +825,10 @@ auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 	int segs;
 
 	s = p->map->dm_segs[0].ds_addr;
-	l = ((char *)end - (char *)start);
-	segs = (l + blksize - 1) / blksize;
+	l = (vaddr_t)end - (vaddr_t)start;
+	segs = howmany(l, blksize);
 
-	if (segs > (ch->sc_dma_op_count)) {
+	if (segs > ch->sc_dma_op_count) {
 		/* if old list was too small, free it */
 		if (ch->sc_dma_ops)
 			auvia_free(sc, ch->sc_dma_ops, M_DEVBUF);
@@ -849,9 +852,10 @@ auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 	dp = ch->sc_dma_ops_dma;
 	op = ch->sc_dma_ops;
 
+	printf("auvia: op = %p\n", op);
 	while (l) {
 		op->ptr = htole32(s);
-		l = l - blksize;
+		l = l - min(l, blksize);
 		/* if last block */
 		op->flags = htole32((l? AUVIA_DMAOP_FLAG : AUVIA_DMAOP_EOL) | blksize);
 		s += blksize;
