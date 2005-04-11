@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.17 2005/04/11 14:59:01 cloder Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.18 2005/04/11 22:02:06 cloder Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <ctype.h>
 #include <signal.h>
 #include <err.h>
+#include <paths.h>
 
 #include "libscsi.h"
 
@@ -735,7 +736,7 @@ edit_edit(void)
 	char *system_line;
 	char *editor = getenv("EDITOR");
 	if (!editor)
-		editor = "vi";
+		editor = _PATH_VI;
 
 	fclose(edit_file);
 
