@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.4 2005/04/11 18:02:58 joris Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.5 2005/04/11 19:55:28 jfb Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -119,7 +119,7 @@ rcs_main(int argc, char **argv)
 
 	kflag = lkmode = -1;
 	fmode = 0;
-	flags = RCS_READ;
+	flags = RCS_RDWR;
 	oldfile = alist = comment = elist = NULL;
 
 	cvs_log_init(LD_STD, 0);
@@ -142,7 +142,7 @@ rcs_main(int argc, char **argv)
 			rcs_usage();
 			exit(0);
 		case 'i':
-			flags |= (RCS_WRITE | RCS_CREATE);
+			flags |= RCS_CREATE;
 			break;
 		case 'k':
 			kflag = rcs_kflag_get(optarg);
