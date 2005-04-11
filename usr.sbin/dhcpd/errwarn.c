@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.2 2004/09/16 18:35:43 deraadt Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.3 2005/04/11 18:50:37 fgsch Exp $	*/
 
 /* Errors and warnings... */
 
@@ -65,21 +65,19 @@ error(char *fmt, ...)
 	vsnprintf(mbuf, sizeof(mbuf), fbuf, list);
 	va_end(list);
 
-#ifndef DEBUG
-	syslog(log_priority | LOG_ERR, "%s", mbuf);
-#endif
-
 	/* Also log it to stderr? */
 	if (log_perror) {
 		write(2, mbuf, strlen(mbuf));
 		write(2, "\n", 1);
-	}
+	} else
+		syslog(log_priority | LOG_ERR, "%s", mbuf);
 
-	syslog(LOG_CRIT, "exiting.");
 	if (log_perror) {
 		fprintf(stderr, "exiting.\n");
 		fflush(stderr);
-	}
+	} else
+		syslog(LOG_CRIT, "exiting.");
+
 	exit(1);
 }
 
@@ -97,14 +95,11 @@ warning(char *fmt, ...)
 	vsnprintf(mbuf, sizeof(mbuf), fbuf, list);
 	va_end(list);
 
-#ifndef DEBUG
-	syslog(log_priority | LOG_ERR, "%s", mbuf);
-#endif
-
 	if (log_perror) {
 		write(2, mbuf, strlen(mbuf));
 		write(2, "\n", 1);
-	}
+	} else
+		syslog(log_priority | LOG_ERR, "%s", mbuf);
 
 	return (0);
 }
@@ -123,14 +118,11 @@ note(char *fmt, ...)
 	vsnprintf(mbuf, sizeof(mbuf), fbuf, list);
 	va_end(list);
 
-#ifndef DEBUG
-	syslog(log_priority | LOG_INFO, "%s", mbuf);
-#endif
-
 	if (log_perror) {
 		write(2, mbuf, strlen(mbuf));
 		write(2, "\n", 1);
-	}
+	} else
+		syslog(log_priority | LOG_INFO, "%s", mbuf);
 
 	return (0);
 }
@@ -149,14 +141,11 @@ debug(char *fmt, ...)
 	vsnprintf(mbuf, sizeof(mbuf), fbuf, list);
 	va_end(list);
 
-#ifndef DEBUG
-	syslog(log_priority | LOG_DEBUG, "%s", mbuf);
-#endif
-
 	if (log_perror) {
 		write(2, mbuf, strlen(mbuf));
 		write(2, "\n", 1);
-	}
+	} else
+		syslog(log_priority | LOG_DEBUG, "%s", mbuf);
 
 	return (0);
 }
@@ -211,14 +200,6 @@ parse_warn(char *fmt, ...)
 	vsnprintf(mbuf, sizeof(mbuf), fbuf, list);
 	va_end(list);
 
-#ifndef DEBUG
-	syslog(log_priority | LOG_ERR, "%s", mbuf);
-	syslog(log_priority | LOG_ERR, "%s", token_line);
-	if (lexline < 81)
-		syslog(log_priority | LOG_ERR,
-		    "%s^", &spaces[sizeof(spaces) - lexchar]);
-#endif
-
 	if (log_perror) {
 		write(2, mbuf, strlen(mbuf));
 		write(2, "\n", 1);
@@ -226,6 +207,12 @@ parse_warn(char *fmt, ...)
 		write(2, "\n", 1);
 		write(2, spaces, lexchar - 1);
 		write(2, "^\n", 2);
+	} else {
+		syslog(log_priority | LOG_ERR, "%s", mbuf);
+		syslog(log_priority | LOG_ERR, "%s", token_line);
+		if (lexline < 81)
+			syslog(log_priority | LOG_ERR,
+			    "%s^", &spaces[sizeof(spaces) - lexchar]);
 	}
 
 	warnings_occurred = 1;
