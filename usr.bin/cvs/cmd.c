@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.7 2005/04/03 17:32:50 xsa Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.8 2005/04/11 17:56:27 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -60,7 +60,7 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	}
 
 	if (c->cmd_options != NULL) {
-		if ((ret = c->cmd_options(cmd->cmd_opts, argc, argv, &i)) < 0)
+		if ((ret = c->cmd_options(cmd->cmd_opts, argc, argv, &i)) != 0)
 			return (ret);
 
 		argc -= i;
@@ -84,7 +84,7 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 		    "No CVSROOT specified! Please use the `-d' option");
 		cvs_log(LP_ERR,
 		    "or set the CVSROOT enviroment variable.");
-		return (EX_USAGE);
+		return (1);
 	}
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {

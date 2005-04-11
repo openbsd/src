@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.16 2005/03/30 17:43:04 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.17 2005/04/11 17:56:27 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -89,7 +89,7 @@ cvs_getlog_options(char *opt, int argc, char **argv, int *arg)
 		case 'r':
 			break;
 		default:
-			return (EX_USAGE);
+			return (1);
 		}
 	}
 

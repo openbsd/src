@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.11 2005/04/03 17:32:50 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.12 2005/04/11 17:56:27 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -84,7 +84,7 @@ cvs_status_options(char *opt, int argc, char **argv, int *arg)
 			verbose = 1;
 			break;
 		default:
-			return (EX_USAGE);
+			return (1);
 		}
 	}
 

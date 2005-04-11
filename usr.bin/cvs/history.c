@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.10 2005/04/03 17:32:50 xsa Exp $	*/
+/*	$OpenBSD: history.c,v 1.11 2005/04/11 17:56:27 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -105,7 +105,7 @@ cvs_history_options(char *opt, int argc, char **argv, int *arg)
 			flags |= CVS_HF_M;
 			if (nbmod == CVS_HISTORY_MAXMOD) {
 				cvs_log(LP_ERR, "too many `-m' options");
-				return (EX_USAGE);
+				return (1);
 			}
 			modules[nbmod++] = optarg;
 			break;
@@ -133,14 +133,14 @@ cvs_history_options(char *opt, int argc, char **argv, int *arg)
 			zone = optarg;
 			break;
 		default:
-			return (EX_USAGE);
+			return (1);
 		}
 	}
 
 	if (rep > 1) {
 		cvs_log(LP_ERR,
 		    "Only one report type allowed from: \"-Tcomxe\"");
-		return (EX_USAGE);
+		return (1);
 	} else if (rep == 0)
 		flags |= CVS_HF_O;    /* use -o as default */
 

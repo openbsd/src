@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.48 2005/04/06 16:35:25 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.49 2005/04/11 17:56:27 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -82,7 +82,7 @@ static TAILQ_HEAD(, cvs_var) cvs_variables;
  *
  * Command handlers are expected to return 0 if no error occurred, or one of
  * the values known in sysexits.h in case of an error.  In case the error
- * returned is EX_USAGE, the command's usage string is printed to standard
+ * returned is 1, the command's usage string is printed to standard
  * error before returning.
  */
 struct cvs_cmd cvs_cdt[] = {
@@ -354,7 +354,7 @@ main(int argc, char **argv)
 	argv += ret;
 	if (argc == 0) {
 		usage();
-		exit(EX_USAGE);
+		exit(1);
 	}
 	cvs_command = argv[0];
 
@@ -393,7 +393,7 @@ main(int argc, char **argv)
 		for (i = 0; i < (int)CVS_NBCMD; i++)
 			fprintf(stderr, "\t%-16s%s\n",
 			    cvs_cdt[i].cmd_name, cvs_cdt[i].cmd_descr);
-		exit(EX_USAGE);
+		exit(1);
 	}
 
 	if (cmdp->cmd_info == NULL) {
@@ -422,7 +422,7 @@ main(int argc, char **argv)
 		cmd_argv[cmd_argc++] = argv[ret];
 
 	ret = cvs_startcmd(cmdp, cmd_argc, cmd_argv);
-	if (ret == EX_USAGE) {
+	if (ret == 1) {
 		fprintf(stderr, "Usage: %s %s %s\n", __progname, cvs_command,
 		    cmdp->cmd_synopsis);
 	}
@@ -485,11 +485,11 @@ cvs_getopt(int argc, char **argv)
 			ep = strchr(optarg, '=');
 			if (ep == NULL) {
 				cvs_log(LP_ERR, "no = in variable assignment");
-				exit(EX_USAGE);
+				exit(1);
 			}
 			*(ep++) = '\0';
 			if (cvs_var_set(optarg, ep) < 0)
-				exit(EX_USAGE);
+				exit(1);
 			break;
 		case 't':
 			(void)cvs_log_filter(LP_FILTER_UNSET, LP_TRACE);
@@ -515,7 +515,7 @@ cvs_getopt(int argc, char **argv)
 			break;
 		default:
 			usage();
-			exit(EX_USAGE);
+			exit(1);
 		}
 	}
 

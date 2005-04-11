@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.10 2005/04/03 17:32:50 xsa Exp $	*/
+/*	$OpenBSD: server.c,v 1.11 2005/04/11 17:56:27 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -66,7 +66,7 @@ cvs_server(int argc, char **argv)
 	char reqbuf[512];
 
 	if (argc != 1) {
-		return (EX_USAGE);
+		return (1);
 	}
 
 	/* make sure standard in and standard out are line-buffered */

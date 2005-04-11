@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.8 2005/04/03 17:32:50 xsa Exp $	*/
+/*	$OpenBSD: admin.c,v 1.9 2005/04/11 17:56:27 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -111,7 +111,7 @@ cvs_admin_options(char *opt, int argc, char **argv, int *arg)
 				cvs_log(LP_ERR,
 				    "invalid RCS keyword expansion mode");
 				rcs_kflag_usage();
-				return (EX_USAGE);
+				return (1);
 			}
 			break;
 		case 'l':
@@ -151,7 +151,7 @@ cvs_admin_options(char *opt, int argc, char **argv, int *arg)
 			strictlock |= LOCK_REMOVE;
 			break;
 		default:
-			return (EX_USAGE);
+			return (1);
 		}
 	}
 
@@ -168,7 +168,7 @@ cvs_admin_options(char *opt, int argc, char **argv, int *arg)
 		if ((rcs = rcsnum_parse(lockrev_arg)) == NULL) {
 			cvs_log(LP_ERR, "%s is not a numeric branch",
 			    lockrev_arg);
-			return (EX_USAGE);
+			return (1);
 		}
 		rcsnum_free(rcs);
 	}
@@ -185,7 +185,7 @@ cvs_admin_options(char *opt, int argc, char **argv, int *arg)
 	if (replace_msg != NULL) {
 		if ((q = strchr(replace_msg, ':')) == NULL) {
 			cvs_log(LP_ERR, "invalid option for -m");
-			return (EX_USAGE);
+			return (1);
 		}
 		*q = '\0';
 		if ((rcs = rcsnum_parse(replace_msg)) == NULL) {

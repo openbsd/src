@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.8 2005/04/03 17:32:50 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.9 2005/04/11 17:56:27 joris Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -73,7 +73,7 @@ cvs_import_options(char *opt, int argc, char **argv, int *arg)
 			if ((bnum = rcsnum_parse(branch)) == NULL) {
 				cvs_log(LP_ERR, "%s is not a numeric branch",
 				    branch);
-				return (EX_USAGE);
+				return (1);
 			}
 			rcsnum_free(bnum);
 			break;
@@ -83,7 +83,7 @@ cvs_import_options(char *opt, int argc, char **argv, int *arg)
 			if (cvs_file_ignore(optarg) < 0) {
 				cvs_log(LP_ERR, "failed to add `%s' to list "
 				    "of ignore patterns", optarg);
-				return (EX_USAGE);
+				return (1);
 			}
 			break;
 		case 'k':
@@ -96,7 +96,7 @@ cvs_import_options(char *opt, int argc, char **argv, int *arg)
 			}
 			break;
 		default:
-			return (EX_USAGE);
+			return (1);
 		}
 	}
 
@@ -105,7 +105,7 @@ cvs_import_options(char *opt, int argc, char **argv, int *arg)
 	*arg = optind;
 
 	if (argc > 4)
-		return (EX_USAGE);
+		return (1);
 
 	module = argv[0];
 	vendor = argv[1];

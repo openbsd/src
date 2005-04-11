@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.16 2005/04/03 17:32:50 xsa Exp $	*/
+/*	$OpenBSD: add.c,v 1.17 2005/04/11 17:56:27 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -74,7 +74,7 @@ cvs_add_options(char *opt, int argc, char **argv, int *arg)
 				cvs_log(LP_ERR,
 				    "invalid RCS keyword expansion mode");
 				rcs_kflag_usage();
-				return (EX_USAGE);
+				return (1);
 			}
 			break;
 		case 'm':
@@ -84,7 +84,7 @@ cvs_add_options(char *opt, int argc, char **argv, int *arg)
 			}
 			break;
 		default:
-			return (EX_USAGE);
+			return (1);
 		}
 	}
 

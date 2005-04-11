@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.6 2005/04/03 17:32:50 xsa Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.7 2005/04/11 17:56:27 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -86,14 +86,14 @@ cvs_annotate_options(char *opt, int argc, char **argv, int *arg)
 			rev = optarg;
 			break;
 		default:
-			return (EX_USAGE);
+			return (1);
 		}
 	}
 
 	if ((date != NULL) && (rev != NULL)) {
 		cvs_log(LP_ERR,
 		    "the -D and -d arguments are mutually exclusive");
-		return (EX_USAGE);
+		return (1);
 	}
 
 	*arg = optind;
