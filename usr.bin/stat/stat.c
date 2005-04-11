@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.7 2005/04/07 12:18:35 otto Exp $ */
+/*	$OpenBSD: stat.c,v 1.8 2005/04/11 08:14:26 deraadt Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -39,7 +39,7 @@
 
 #ifndef lint
 static const char rccs_id[] =
-    "$OpenBSD: stat.c,v 1.7 2005/04/07 12:18:35 otto Exp $";
+    "$OpenBSD: stat.c,v 1.8 2005/04/11 08:14:26 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -508,7 +508,7 @@ format1(const struct stat *st,
 	struct tm *tm;
 	time_t secs;
 	long nsecs;
-	int l, small, formats, gottime;
+	int l, small, formats, gottime, n;
 
 	formats = 0;
 	small = 0;
@@ -785,8 +785,9 @@ format1(const struct stat *st,
 			l2 = format1(st, file, fmt, flen,
 			    mindev, sizeof(mindev), flags, size, prec,
 			    ofmt, LOW_PIECE, SHOW_st_rdev);
-			return (snprintf(buf, blen, "%.*s,%.*s",
-			    l1, majdev, l2, mindev));
+			n = snprintf(buf, blen, "%.*s,%.*s",
+			    l1, majdev, l2, mindev);
+			return (n >= blen ? blen : n);
 		} else {
 			return (format1(st, file, fmt, flen, buf, blen,
 			    flags, size, prec, ofmt, 0, SHOW_st_size));
@@ -833,7 +834,8 @@ format1(const struct stat *st,
 				(void)strlcat(lfmt, tmp, sizeof(lfmt));
 			}
 			(void)strlcat(lfmt, "d", sizeof(lfmt));
-			return (snprintf(buf, blen, lfmt, secs));
+			n = snprintf(buf, blen, lfmt, secs);
+			return (n >= blen ? blen : n);
 		}
 
 		/*
@@ -883,6 +885,8 @@ format1(const struct stat *st,
 		 * might be required to make up the requested precision.
 		 */
 		l = snprintf(buf, blen, lfmt, secs, nsecs);
+		if (l >= blen)
+			return (l);
 		for (; prec > 9 && l < blen; prec--, l++)
 			(void)strlcat(buf, "0", sizeof(lfmt));
 		return (l);
@@ -907,7 +911,8 @@ format1(const struct stat *st,
 		if (sdata == NULL)
 			errx(1, "%.*s: bad format", (int)flen, fmt);
 		(void)strlcat(lfmt, "s", sizeof(lfmt));
-		return (snprintf(buf, blen, lfmt, sdata));
+		n = snprintf(buf, blen, lfmt, sdata);
+		return (n >= blen ? blen : n);
 	}
 
 	/*
@@ -928,5 +933,6 @@ format1(const struct stat *st,
 	case FMTF_HEX:		(void)strlcat(lfmt, "x", sizeof(lfmt));	break;
 	}
 
-	return (snprintf(buf, blen, lfmt, data));
+	n = snprintf(buf, blen, lfmt, data);
+	return (n >= blen ? blen : n);
 }
