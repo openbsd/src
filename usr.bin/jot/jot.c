@@ -1,4 +1,4 @@
-/*	$OpenBSD: jot.c,v 1.17 2004/01/08 18:50:02 otto Exp $	*/
+/*	$OpenBSD: jot.c,v 1.18 2005/04/11 16:31:20 deraadt Exp $	*/
 /*	$NetBSD: jot.c,v 1.3 1994/12/02 20:29:43 pk Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: jot.c,v 1.17 2004/01/08 18:50:02 otto Exp $";
+static const char rcsid[] = "$OpenBSD: jot.c,v 1.18 2005/04/11 16:31:20 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -366,7 +366,10 @@ getformat(void)
 			break;
 	sz = sizeof(format) - strlen(format) - 1;
 	if (*p == '\0' && !chardata) {
-		if (snprintf(p, sz, "%%.%df", prec) >= (int)sz)
+		int n;
+
+		n = snprintf(p, sz, "%%.%df", prec);
+		if (n == -1 || n >= (int)sz)
 			errx(1, "-w word too long");
 	} else if (*p == '\0' && chardata) {
 		if (strlcpy(p, "%c", sz) >= sz)
