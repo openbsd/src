@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.44 2005/04/11 19:36:46 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.45 2005/04/11 20:32:56 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1057,7 +1057,7 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 		return (NULL);
 	}
 
-	len = strlen(rdp->rd_text);
+	len = rdp->rd_tlen;
 	if ((rbuf = cvs_buf_alloc(len, BUF_AUTOEXT)) == NULL)
 		return (NULL);
 
@@ -1087,7 +1087,7 @@ rcs_getrev(RCSFILE *rfp, RCSNUM *rev)
 				return (NULL);
 			}
 			bp = cvs_buf_release(rbuf);
-			rbuf = rcs_patch((char *)bp, rdp->rd_text);
+			rbuf = rcs_patch((char *)bp, (char *)rdp->rd_text);
 			if (rbuf == NULL)
 				break;
 		} while (rcsnum_cmp(crev, rev, 0) != 0);
@@ -1752,11 +1752,12 @@ rcs_parse_deltatext(RCSFILE *rfp)
 		return (-1);
 	}
 
-	rdp->rd_text = cvs_strdup(RCS_TOKSTR(rfp));
+	rdp->rd_text = (u_char *)malloc(RCS_TOKLEN(rfp));
 	if (rdp->rd_text == NULL) {
 		cvs_log(LP_ERRNO, "failed to copy RCS delta text");
 		return (-1);
 	}
+	memcpy(rdp->rd_text, RCS_TOKSTR(rfp), RCS_TOKLEN(rfp));
 	rdp->rd_tlen = RCS_TOKLEN(rfp);
 
 	return (1);
@@ -2012,7 +2013,7 @@ rcs_freedelta(struct rcs_delta *rdp)
 	if (rdp->rd_log != NULL)
 		cvs_strfree(rdp->rd_log);
 	if (rdp->rd_text != NULL)
-		cvs_strfree(rdp->rd_text);
+		free(rdp->rd_text);
 
 	while ((rb = TAILQ_FIRST(&(rdp->rd_branches))) != NULL) {
 		TAILQ_REMOVE(&(rdp->rd_branches), rb, rb_list);
