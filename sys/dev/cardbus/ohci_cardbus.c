@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_cardbus.c,v 1.2 2005/03/30 14:02:02 dlg Exp $ */
+/*	$OpenBSD: ohci_cardbus.c,v 1.3 2005/04/11 08:09:32 dlg Exp $ */
 /*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
@@ -50,8 +50,6 @@
 __KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $");
 #endif
 
-#include "ehci_cardbus.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -62,10 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Ex
 
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pci/pcidevs.h>
-
-#if NEHCI_CARDBUS > 0
-#include <dev/cardbus/usb_cardbus.h>
-#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -89,9 +83,6 @@ int	ohci_cardbus_detach(struct device *, int);
 
 struct ohci_cardbus_softc {
 	ohci_softc_t		sc;
-#if NEHCI_CARDBUS > 0
-	struct usb_cardbus	sc_cardbus;
-#endif
 	cardbus_chipset_tag_t	sc_cc;
 	cardbus_function_tag_t	sc_cf;
 	cardbus_devfunc_t	sc_ct;
@@ -210,10 +201,6 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 
 	sc->sc.sc_powerhook = powerhook_establish(ohci_power, &sc->sc);
 
-#if NEHCI_CARDBUS > 0
-	usb_cardbus_add(&sc->sc_cardbus, ca, &sc->sc.sc_bus);
-#endif
-
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
 				       usbctlprint);
@@ -244,8 +231,6 @@ ohci_cardbus_detach(struct device *self, int flags)
 		    sc->sc.ioh, sc->sc.sc_size);
 		sc->sc.sc_size = 0;
 	}
-#if NEHCI_CARDBUS > 0
-	usb_cardbus_rem(&sc->sc_cardbus);
-#endif
+
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.47 2005/04/10 09:57:02 dlg Exp $ */
+/*	$OpenBSD: ehci.c,v 1.48 2005/04/11 08:09:32 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -58,9 +58,6 @@
  *
  * 2) Command failures are not recovered correctly.
 */
-
-#include "ohci.h"
-#include "uhci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,44 +333,26 @@ ehci_reverse_bits(u_int8_t c, int nbits)
 usbd_status
 ehci_init(ehci_softc_t *sc)
 {
-	u_int32_t version, sparams, cparams, hcr;
+	u_int32_t sparams, cparams, hcr;
 	u_int i, j;
 	usbd_status err;
 	ehci_soft_qh_t *sqh;
 
-	DPRINTF(("ehci_init: start\n"));
 #ifdef EHCI_DEBUG
+	u_int32_t version;
 	theehci = sc;
+
+	DPRINTF(("ehci_init: start\n"));
+
+	version = EREAD2(sc, EHCI_HCIVERSION);
+	DPRINTF(("%s: EHCI version %x.%x\n", USBDEVNAME(sc->sc_bus.bdev),
+	    version >> 8, version & 0xff));
 #endif
 
 	sc->sc_offs = EREAD1(sc, EHCI_CAPLENGTH);
 
-	version = EREAD2(sc, EHCI_HCIVERSION);
-	printf("%s: EHCI version %x.%x\n", USBDEVNAME(sc->sc_bus.bdev),
-	    version >> 8, version & 0xff);
-
 	sparams = EREAD4(sc, EHCI_HCSPARAMS);
 	DPRINTF(("ehci_init: sparams=0x%x\n", sparams));
-	sc->sc_npcomp = EHCI_HCS_N_PCC(sparams);
-	if (EHCI_HCS_N_CC(sparams) != sc->sc_ncomp) {
-		printf("%s: wrong number of companions (%d != %d)\n",
-		    USBDEVNAME(sc->sc_bus.bdev),
-		    EHCI_HCS_N_CC(sparams), sc->sc_ncomp);
-#if NOHCI == 0 || NUHCI == 0
-		printf("%s: ohci or uhci probably not configured\n",
-		    USBDEVNAME(sc->sc_bus.bdev));
-#endif
-		return (USBD_IOERROR);
-	}
-	if (sc->sc_ncomp > 0) {
-		printf("%s: companion controller%s, %d port%s each:",
-		    USBDEVNAME(sc->sc_bus.bdev), sc->sc_ncomp!=1 ? "s" : "",
-		    EHCI_HCS_N_PCC(sparams),
-		    EHCI_HCS_N_PCC(sparams)!=1 ? "s" : "");
-		for (i = 0; i < sc->sc_ncomp; i++)
-			printf(" %s", USBDEVNAME(sc->sc_comps[i]->bdev));
-		printf("\n");
-	}
 	sc->sc_noport = EHCI_HCS_N_PORTS(sparams);
 	cparams = EREAD4(sc, EHCI_HCCPARAMS);
 	DPRINTF(("ehci_init: cparams=0x%x\n", cparams));
@@ -2064,24 +2043,8 @@ ehci_disown(ehci_softc_t *sc, int index, int lowspeed)
 	int port;
 	u_int32_t v;
 
-#if 0
 	DPRINTF(("ehci_disown: index=%d lowspeed=%d\n", index, lowspeed));
-#endif
-#ifdef EHCI_DEBUG
-	if (sc->sc_npcomp != 0) {
-		int i = (index-1) / sc->sc_npcomp;
-		if (i >= sc->sc_ncomp)
-			DPRINTF(("%s: strange port\n",
-			    USBDEVNAME(sc->sc_bus.bdev)));
-		else
-			DPRINTF(("%s: handing over %s speed device on "
-			    "port %d to %s\n", USBDEVNAME(sc->sc_bus.bdev),
-			    lowspeed ? "low" : "full", index,
-			    USBDEVNAME(sc->sc_comps[i]->bdev)));
-	} else {
-		DPRINTF(("%s: npcomp == 0\n", USBDEVNAME(sc->sc_bus.bdev)));
-	}
-#endif
+
 	port = EHCI_PORTSC(index);
 	v = EOREAD4(sc, port) &~ EHCI_PS_CLEAR;
 	EOWRITE4(sc, port, v | EHCI_PS_PO);

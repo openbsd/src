@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcivar.h,v 1.8 2005/03/07 11:12:04 pascoe Exp $ */
+/*	$OpenBSD: ehcivar.h,v 1.9 2005/04/11 08:09:32 dlg Exp $ */
 /*	$NetBSD: ehcivar.h,v 1.12 2001/12/31 12:16:57 augustss Exp $	*/
 
 /*
@@ -101,10 +101,6 @@ typedef struct ehci_softc {
 	u_int32_t sc_cmd;		/* shadow of cmd reg during suspend */
 	void *sc_powerhook;		/* cookie from power hook */
 	void *sc_shutdownhook;		/* cookie from shutdown hook */
-
-	u_int sc_ncomp;
-	u_int sc_npcomp;
-	struct usbd_bus *sc_comps[EHCI_COMPANION_MAX];
 
 	usb_dma_t sc_fldma;
 	ehci_link_t *sc_flist;

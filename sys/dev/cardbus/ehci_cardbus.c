@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_cardbus.c,v 1.2 2004/12/29 01:52:26 dlg Exp $ */
+/*	$OpenBSD: ehci_cardbus.c,v 1.3 2005/04/11 08:09:32 dlg Exp $ */
 /*	$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $	*/
 
 /*
@@ -59,8 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll E
 
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/pci/pcidevs.h>
-
-#include <dev/cardbus/usb_cardbus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -145,9 +143,7 @@ ehci_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	usbd_status r;
 	const char *vendor;
-	u_int ncomp;
 	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
-	struct usb_cardbus *up;
 
 	cardbus_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo,
@@ -201,22 +197,6 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
 		    "vendor 0x%04x", CARDBUS_VENDOR(ca->ca_id));
 	
-	/*
-	 * Find companion controllers.  According to the spec they always
-	 * have lower function numbers so they should be enumerated already.
-	 */
-	ncomp = 0;
-	TAILQ_FOREACH(up, &ehci_cardbus_alldevs, next) {
-		if (up->bus == ca->ca_bus && up->device == ca->ca_device) {
-			DPRINTF(("ehci_cardbus_attach: companion %s\n",
-				 USBDEVNAME(up->usb->bdev)));
-			sc->sc.sc_comps[ncomp++] = up->usb;
-			if (ncomp >= EHCI_COMPANION_MAX)
-				break;
-		}
-	}
-	sc->sc.sc_ncomp = ncomp;
-
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", devname, r);
@@ -261,18 +241,3 @@ ehci_cardbus_detach(struct device *self, int flags)
 	return (0);
 }
 
-void
-usb_cardbus_add(struct usb_cardbus *up, struct cardbus_attach_args *ca, struct usbd_bus *bu)
-{
-	TAILQ_INSERT_TAIL(&ehci_cardbus_alldevs, up, next);
-	up->bus = ca->ca_bus;
-	up->device = ca->ca_device;
-	up->function = ca->ca_function;
-	up->usb = bu;
-}
-
-void
-usb_cardbus_rem(struct usb_cardbus *up)
-{
-	TAILQ_REMOVE(&ehci_cardbus_alldevs, up, next);
-}

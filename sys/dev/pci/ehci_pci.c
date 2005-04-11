@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.5 2005/03/07 11:12:04 pascoe Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.6 2005/04/11 08:09:32 dlg Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $")
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
-#include <dev/pci/usb_pci.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -116,8 +115,6 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *vendor;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	usbd_status r;
-	int ncomp;
-	struct usb_pci *up;
 
 #if defined(__NetBSD__)
 	char devinfo[256];
@@ -194,22 +191,6 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Enable workaround for dropped interrupts as required */
 	if (sc->sc.sc_id_vendor == PCI_VENDOR_VIATECH)
 		sc->sc.sc_flags |= EHCIF_DROPPED_INTR_WORKAROUND;
-
-	/*
-	 * Find companion controllers.  According to the spec they always
-	 * have lower function numbers so they should be enumerated already.
-	 */
-	ncomp = 0;
-	TAILQ_FOREACH(up, &ehci_pci_alldevs, next) {
-		if (up->bus == pa->pa_bus && up->device == pa->pa_device) {
-			DPRINTF(("ehci_pci_attach: companion %s\n",
-				 USBDEVNAME(up->usb->bdev)));
-			sc->sc.sc_comps[ncomp++] = up->usb;
-			if (ncomp >= EHCI_COMPANION_MAX)
-				break;
-		}
-	}
-	sc->sc.sc_ncomp = ncomp;
 
 	ehci_pci_takecontroller(sc);
 	r = ehci_init(&sc->sc);

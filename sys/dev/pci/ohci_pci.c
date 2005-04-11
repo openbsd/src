@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.23 2005/03/30 14:02:03 dlg Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.24 2005/04/11 08:09:32 dlg Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
-#include <dev/pci/usb_pci.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -71,7 +70,6 @@ int	ohci_pci_detach(device_ptr_t, int);
 
 struct ohci_pci_softc {
 	ohci_softc_t		sc;
-	struct usb_pci		sc_pci;
 	pci_chipset_tag_t	sc_pc;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
@@ -183,8 +181,6 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	splx(s);
 
-	usb_pci_add(&sc->sc_pci, pa, &sc->sc.sc_bus);
-
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
 				       usbctlprint);
@@ -210,6 +206,5 @@ ohci_pci_detach(device_ptr_t self, int flags)
 		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		sc->sc.sc_size = 0;
 	}
-	usb_pci_rem(&sc->sc_pci);
 	return (0);
 }
