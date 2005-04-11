@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.24 2004/09/14 22:57:21 deraadt Exp $	*/
+/*	$OpenBSD: sort.c,v 1.25 2005/04/11 21:04:48 moritz Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.24 2004/09/14 22:57:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.25 2005/04/11 21:04:48 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -270,10 +270,8 @@ main(int argc, char *argv[])
 			err(2, "%s", outpath);
 		(void)snprintf(toutpath, sizeof(toutpath), "%sXXXXXXXXXX",
 		    outpath);
-		/* use default umask to try and avoid one syscall */
 		um = umask(S_IWGRP|S_IWOTH);
-		if (um != S_IWGRP|S_IWOTH)
-			(void)umask(um);
+		(void)umask(um);
 		if ((outfd = mkstemp(toutpath)) == -1 ||
 		    fchmod(outfd, DEFFILEMODE & ~um) == -1 ||
 		    (outfp = fdopen(outfd, "w")) == 0)
