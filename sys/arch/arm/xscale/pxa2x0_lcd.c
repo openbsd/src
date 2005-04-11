@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.16 2005/02/22 21:53:03 uwe Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.17 2005/04/11 03:32:48 uwe Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -91,7 +91,6 @@ void	pxa2x0_lcd_start_dma(bus_space_tag_t, bus_space_handle_t,
 void	pxa2x0_lcd_stop_dma(bus_space_tag_t, bus_space_handle_t);
 void	pxa2x0_lcd_suspend(struct pxa2x0_lcd_softc *);
 void	pxa2x0_lcd_resume(struct pxa2x0_lcd_softc *);
-void	pxa2x0_lcd_powerhook(int, void *);
 
 /*
  * Setup display geometry parameters.
@@ -264,8 +263,6 @@ pxa2x0_lcd_attach_sub(struct pxa2x0_lcd_softc *sc,
 		bzero(&dummy, sizeof(dummy));
 		pxa2x0_lcd_setup_rasops(&dummy, descr, geom);
 	}
-
-	(void)powerhook_establish(pxa2x0_lcd_powerhook, sc);
 }
 
 /*
@@ -848,7 +845,7 @@ pxa2x0_lcd_resume(struct pxa2x0_lcd_softc *sc)
 }
 
 void
-pxa2x0_lcd_powerhook(int why, void *v)
+pxa2x0_lcd_power(int why, void *v)
 {
 	struct pxa2x0_lcd_softc *sc = v;
 

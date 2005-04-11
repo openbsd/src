@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.13 2005/02/22 22:19:12 uwe Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.14 2005/04/11 03:32:48 uwe Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -31,13 +31,13 @@
  */
 
 /*
- * LCD driver for Intel Lubbock.
+ * LCD driver for Sharp Zaurus (based on the Intel Lubbock driver).
  *
  * Controlling LCD is almost completely done through PXA2X0's
  * integrated LCD controller.  Codes for it is arm/xscale/pxa2x0_lcd.c.
  *
  * Codes in this file provide platform specific things including:
- *   LCD on/off switch in on-board PLD register.
+ *   LCD on/off switch and backlight brightness
  *   LCD panel geometry
  */
 
@@ -161,7 +161,7 @@ void	lcd_set_brightness_internal(int);
 int	lcd_get_backlight(void);
 void	lcd_set_backlight(int);
 void	lcd_blank(int);
-void	lcd_powerhook(int, void *);
+void	lcd_power(int, void *);
 
 int
 lcd_match(struct device *parent, void *cf, void *aux)
@@ -193,7 +193,7 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 	/* Start with approximately 40% of full brightness. */
 	lcd_set_brightness(3);
 
-	(void)powerhook_establish(lcd_powerhook, sc);
+	(void)powerhook_establish(lcd_power, sc);
 }
 
 int
@@ -347,13 +347,15 @@ lcd_set_brightness_internal(int newval)
 	 */
 	if (newval > curval) {
 		for (i = curval + 1; i <= newval; i++) {
-			zssp_write_lz9jg18(CURRENT_BACKLIGHT[i].duty);
+			(void)zssp_ic_send(ZSSP_IC_LZ9JG18,
+			    CURRENT_BACKLIGHT[i].duty);
 			scoop_set_backlight(CURRENT_BACKLIGHT[i].on,
 			    CURRENT_BACKLIGHT[i].cont);
 			delay(5000);
 		}
 	} else {
-		zssp_write_lz9jg18(CURRENT_BACKLIGHT[newval].duty);
+		(void)zssp_ic_send(ZSSP_IC_LZ9JG18,
+		    CURRENT_BACKLIGHT[newval].duty);
 		scoop_set_backlight(CURRENT_BACKLIGHT[newval].on,
 		    CURRENT_BACKLIGHT[newval].cont);
 	}
@@ -395,16 +397,18 @@ lcd_blank(int blank)
 }
 
 void
-lcd_powerhook(int why, void *v)
+lcd_power(int why, void *v)
 {
 
 	switch (why) {
 	case PWR_SUSPEND:
 	case PWR_STANDBY:
 		lcd_set_brightness(0);
+		pxa2x0_lcd_power(why, v);
 		break;
 
 	case PWR_RESUME:
+		pxa2x0_lcd_power(why, v);
 		lcd_set_brightness(lcd_get_brightness());
 		break;
 	}

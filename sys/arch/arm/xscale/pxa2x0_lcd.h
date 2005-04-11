@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.h,v 1.8 2005/04/06 01:31:05 pascoe Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.h,v 1.9 2005/04/11 03:32:48 uwe Exp $ */
 /* $NetBSD: pxa2x0_lcd.h,v 1.2 2003/06/17 09:43:14 bsh Exp $ */
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -140,5 +140,6 @@ int	pxa2x0_lcd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	pxa2x0_lcd_mmap(void *, off_t, int);
 int	pxa2x0_lcd_show_screen(void *, void *, int, void (*)(void *, int, int),
 	    void *);
+void	pxa2x0_lcd_power(int, void *);
 
 #endif /* _ARM_XSCALE_PXA2X0_LCD_H */
