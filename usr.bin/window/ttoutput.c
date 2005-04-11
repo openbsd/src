@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttoutput.c,v 1.7 2004/03/16 01:11:09 tedu Exp $	*/
+/*	$OpenBSD: ttoutput.c,v 1.8 2005/04/11 19:59:07 deraadt Exp $	*/
 /*	$NetBSD: ttoutput.c,v 1.3 1995/09/28 10:34:51 tls Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ttoutput.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: ttoutput.c,v 1.7 2004/03/16 01:11:09 tedu Exp $";
+static char rcsid[] = "$OpenBSD: ttoutput.c,v 1.8 2005/04/11 19:59:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ ttflush()
 	wwnflush++;
 	for (p = tt_ob; p < tt_obp;) {
 		wwnwr++;
-		n = write(1, p, tt_obp - p);
+		n = write(STDOUT_FILENO, p, tt_obp - p);
 		if (n < 0) {
 			wwnwre++;
 			if (errno != EWOULDBLOCK) {

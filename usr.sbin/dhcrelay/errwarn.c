@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.2 2004/05/04 21:23:10 deraadt Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.3 2005/04/11 19:59:07 deraadt Exp $	*/
 
 /* Errors and warnings... */
 
@@ -69,8 +69,8 @@ error(char *fmt, ...)
 
 	/* Also log it to stderr? */
 	if (log_perror) {
-		write(2, mbuf, strlen(mbuf));
-		write(2, "\n", 1);
+		write(STDERR_FILENO, mbuf, strlen(mbuf));
+		write(STDERR_FILENO, "\n", 1);
 	}
 
 	syslog(LOG_CRIT, "exiting.");
@@ -100,8 +100,8 @@ warn(char *fmt, ...)
 #endif
 
 	if (log_perror) {
-		write(2, mbuf, strlen(mbuf));
-		write(2, "\n", 1);
+		write(STDERR_FILENO, mbuf, strlen(mbuf));
+		write(STDERR_FILENO, "\n", 1);
 	}
 
 	return (0);
@@ -126,8 +126,8 @@ note(char *fmt, ...)
 #endif
 
 	if (log_perror) {
-		write(2, mbuf, strlen(mbuf));
-		write(2, "\n", 1);
+		write(STDERR_FILENO, mbuf, strlen(mbuf));
+		write(STDERR_FILENO, "\n", 1);
 	}
 
 	return (0);
@@ -152,8 +152,8 @@ debug(char *fmt, ...)
 #endif
 
 	if (log_perror) {
-		write(2, mbuf, strlen(mbuf));
-		write(2, "\n", 1);
+		write(STDERR_FILENO, mbuf, strlen(mbuf));
+		write(STDERR_FILENO, "\n", 1);
 	}
 
 	return (0);

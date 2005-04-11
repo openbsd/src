@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.22 2004/12/19 14:15:19 millert Exp $	*/
+/*	$OpenBSD: script.c,v 1.23 2005/04/11 19:59:07 deraadt Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: script.c,v 1.22 2004/12/19 14:15:19 millert Exp $";
+static const char rcsid[] = "$OpenBSD: script.c,v 1.23 2005/04/11 19:59:07 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -272,7 +272,7 @@ dooutput(void)
 			break;
 		sigprocmask(SIG_BLOCK, &blkalrm, NULL);
 		for (off = 0; off < cc; ) {
-			ssize_t n = write(1, obuf + off, cc - off);
+			ssize_t n = write(STDOUT_FILENO, obuf + off, cc - off);
 			if (n == 0)
 				break;	/* skip writing */
 			if (n > 0)

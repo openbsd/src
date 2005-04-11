@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.4 2005/04/11 18:59:45 deraadt Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.5 2005/04/11 19:59:07 deraadt Exp $	*/
 
 /* Errors and warnings... */
 
@@ -70,8 +70,8 @@ error(char *fmt, ...)
 
 	/* Also log it to stderr? */
 	if (log_perror) {
-		write(2, mbuf, strlen(mbuf));
-		write(2, "\n", 1);
+		write(STDERR_FILENO, mbuf, strlen(mbuf));
+		write(STDERR_FILENO, "\n", 1);
 	} else
 		syslog(log_priority | LOG_ERR, "%s", mbuf);
 
@@ -99,8 +99,8 @@ warning(char *fmt, ...)
 	va_end(list);
 
 	if (log_perror) {
-		write(2, mbuf, strlen(mbuf));
-		write(2, "\n", 1);
+		write(STDERR_FILENO, mbuf, strlen(mbuf));
+		write(STDERR_FILENO, "\n", 1);
 	} else
 		syslog(log_priority | LOG_ERR, "%s", mbuf);
 
@@ -122,8 +122,8 @@ note(char *fmt, ...)
 	va_end(list);
 
 	if (log_perror) {
-		write(2, mbuf, strlen(mbuf));
-		write(2, "\n", 1);
+		write(STDERR_FILENO, mbuf, strlen(mbuf));
+		write(STDERR_FILENO, "\n", 1);
 	} else
 		syslog(log_priority | LOG_INFO, "%s", mbuf);
 
@@ -145,8 +145,8 @@ debug(char *fmt, ...)
 	va_end(list);
 
 	if (log_perror) {
-		write(2, mbuf, strlen(mbuf));
-		write(2, "\n", 1);
+		write(STDERR_FILENO, mbuf, strlen(mbuf));
+		write(STDERR_FILENO, "\n", 1);
 	} else
 		syslog(log_priority | LOG_DEBUG, "%s", mbuf);
 
@@ -217,7 +217,7 @@ parse_warn(char *fmt, ...)
 		iov[4].iov_len = lexchar - 1;
 		iov[5].iov_base = "^\n";
 		iov[5].iov_len = 2;
-		writev(2, iov, sizeof(iov)/sizeof(iov[0]));
+		writev(STDERR_FILENO, iov, sizeof(iov)/sizeof(iov[0]));
 	} else {
 		syslog(log_priority | LOG_ERR, "%s", mbuf);
 		syslog(log_priority | LOG_ERR, "%s", token_line);

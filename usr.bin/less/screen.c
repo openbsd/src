@@ -1977,7 +1977,7 @@ beep()
 #if MSDOS_COMPILER==WIN32C
 	MessageBeep(0);
 #else
-	write(1, "\7", 1);
+	write(STDOUT_FILENO, "\7", 1);
 #endif
 #endif
 }
