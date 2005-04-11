@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.20 2004/07/10 11:41:26 otto Exp $	*/
+/*	$OpenBSD: compile.c,v 1.21 2005/04/11 07:11:44 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95"; */
-static char *rcsid = "$OpenBSD: compile.c,v 1.20 2004/07/10 11:41:26 otto Exp $";
+static char *rcsid = "$OpenBSD: compile.c,v 1.21 2005/04/11 07:11:44 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -262,7 +262,7 @@ nonsel:		/* Now parse the command */
 			cmd->t = duptoeol(p, "w command", NULL);
 			if (aflag)
 				cmd->u.fd = -1;
-			else if ((cmd->u.fd = open(p, 
+			else if ((cmd->u.fd = open(p,
 			    O_WRONLY|O_APPEND|O_CREAT|O_TRUNC,
 			    DEFFILEMODE)) == -1)
 				err(FATAL, "%s: %s", p, strerror(errno));
@@ -686,7 +686,7 @@ compile_addr(char *p, struct s_addr *a)
 		a->type = AT_LAST;
 		return (p + 1);
 						/* Line number */
-	case '0': case '1': case '2': case '3': case '4': 
+	case '0': case '1': case '2': case '3': case '4':
 	case '5': case '6': case '7': case '8': case '9':
 		a->type = AT_LINE;
 		a->u.l = strtoul(p, &end, 10);
@@ -808,7 +808,7 @@ findlabel(char *name)
 	return (NULL);
 }
 
-/* 
+/*
  * Warn about any unused labels.  As a side effect, release the label hash
  * table space.
  */
