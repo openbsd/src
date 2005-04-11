@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.11 2005/04/06 01:31:05 pascoe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.12 2005/04/11 03:07:09 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -87,12 +87,12 @@ void	apm_power_print(struct pxa2x0_apm_softc *, struct apm_power_info *);
 void	apm_power_info(struct pxa2x0_apm_softc *, struct apm_power_info *);
 void	apm_suspend(struct pxa2x0_apm_softc *);
 void	apm_resume(struct pxa2x0_apm_softc *);
-int	apm_get_event(struct pxa2x0_apm_softc *, u_long *);
-int	apm_handle_event(struct pxa2x0_apm_softc *, u_long);
-void	apm_periodic_check(struct pxa2x0_apm_softc *);
+int	apm_get_event(struct pxa2x0_apm_softc *, u_int *);
+int	apm_handle_event(struct pxa2x0_apm_softc *, u_int);
 void	apm_thread_create(void *);
 void	apm_thread(void *);
 
+int	apm_record_event(struct pxa2x0_apm_softc *, u_int);
 void	filt_apmrdetach(struct knote *kn);
 int	filt_apmread(struct knote *kn, long hint);
 int	apmkqfilter(dev_t dev, struct knote *kn);
@@ -204,8 +204,6 @@ struct pxa2x0_memcfg pxa2x0_memcfg = {
 #define PI2C_VOLTAGE_LOW	0x13	/* 1.00V */
 #define PI2C_VOLTAGE_HIGH	0x1a	/* 1.35V */
 
-void	pxa2x0_apm_sleep(struct pxa2x0_apm_softc *);
-
 void	pxa2x0_pi2c_open(bus_space_tag_t, bus_space_handle_t);
 void	pxa2x0_pi2c_close(bus_space_tag_t, bus_space_handle_t);
 int	pxa2x0_pi2c_read(bus_space_tag_t, bus_space_handle_t, u_char, u_char *);
@@ -310,12 +308,13 @@ apm_suspend(struct pxa2x0_apm_softc *sc)
 	if (cold)
 		vfs_syncwait(0);
 
-	pxa2x0_apm_sleep((struct pxa2x0_apm_softc *)sc);
+	pxa2x0_apm_sleep(sc);
 }
 
 void
 apm_resume(struct pxa2x0_apm_softc *sc)
 {
+
 	dopowerhooks(PWR_RESUME);
 
 	/*
@@ -327,76 +326,63 @@ apm_resume(struct pxa2x0_apm_softc *sc)
 }
 
 int
-apm_get_event(struct pxa2x0_apm_softc *sc, u_long *event_type)
+apm_get_event(struct pxa2x0_apm_softc *sc, u_int *typep)
 {
-	struct	apm_power_info power;
 
-	/* Periodic callbacks could be replaced with a machine-dependent
-	   get_event function. */
-	if (sc->sc_periodic_check != NULL)
-		sc->sc_periodic_check(sc);
+	if (sc->sc_get_event != NULL)
+		return (sc->sc_get_event(sc, typep));
 
-	apm_power_info(sc, &power);
-	if (power.ac_state != sc->sc_ac_state ||
-	    power.battery_life != sc->sc_batt_life ||
-	    power.battery_state != sc->sc_batt_state) {
-		sc->sc_ac_state = power.ac_state;
-		sc->sc_batt_life = power.battery_life;
-		sc->sc_batt_state = power.battery_state;
-		*event_type = APM_POWER_CHANGE;
-		return 0;
-	}
-
-	*event_type = APM_NOEVENT;
-	return 1;
+	*typep = APM_NOEVENT;
+	return (1);
 }
 
 int
-apm_handle_event(struct pxa2x0_apm_softc *sc, u_long event_type)
+apm_handle_event(struct pxa2x0_apm_softc *sc, u_int type)
 {
 	struct	apm_power_info power;
 	int	ret = 0;
 
-	switch (event_type) {
+	switch (type) {
 	case APM_NOEVENT:
 		ret = 1;
 		break;
+	case APM_CRIT_SUSPEND_REQ:
+		DPRINTF(("suspend required immediately\n"));
+		apm_record_event(sc, type);
+		apm_suspend(sc);
+		break;
+	case APM_USER_SUSPEND_REQ:
+	case APM_SUSPEND_REQ:
+		DPRINTF(("suspend requested\n"));
+		if (apm_record_event(sc, type)) {
+			DPRINTF(("suspend ourselves\n"));
+			apm_suspends++;
+		}
+		break;
 	case APM_POWER_CHANGE:
+		DPRINTF(("power status change\n"));
 		apm_power_info(sc, &power);
 		if (power.battery_life != APM_BATT_LIFE_UNKNOWN &&
 		    power.battery_life < cpu_apmwarn &&
 		    (sc->sc_flags & SCFLAG_PRINT) != SCFLAG_NOPRINT &&
 		    ((sc->sc_flags & SCFLAG_PRINT) != SCFLAG_PCTPRINT ||
-		    sc->sc_prev_batt_life != power.battery_life)) {
-			sc->sc_prev_batt_life = power.battery_life;
+		    sc->sc_batt_life != power.battery_life)) {
+			sc->sc_batt_life = power.battery_life;
 			apm_power_print(sc, &power);
 		}
+		apm_record_event(sc, type);
+		break;
+	case APM_BATTERY_LOW:
+		DPRINTF(("Battery low!\n"));
+		apm_battlow++;
+		apm_record_event(sc, type);
 		break;
 	default:
 		DPRINTF(("apm_handle_event: unsupported event, code %d\n",
-		    event_type));
+		    type));
 	}
 
 	return (ret);
-}
-
-void
-apm_periodic_check(struct pxa2x0_apm_softc *sc)
-{
-	u_long	event_type;
-
-	while (1) {
-		if (apm_get_event(sc, &event_type) != 0)
-			break;
-		if (apm_handle_event(sc, event_type) != 0)
-			break;
-	}
-
-	if (apm_battlow || apm_suspends || apm_userstandbys) {
-		apm_suspend(sc);
-		apm_resume(sc);
-	}
-	apm_battlow = apm_suspends = apm_userstandbys = 0;
 }
 
 void
@@ -416,10 +402,23 @@ void
 apm_thread(void *v)
 {
 	struct pxa2x0_apm_softc *sc = v;
+	u_int	type;
 
 	for (;;) {
 		APM_LOCK(sc);
-		apm_periodic_check(sc);
+
+		while (1) {
+			if (apm_get_event(sc, &type) != 0)
+				break;
+			if (apm_handle_event(sc, type) != 0)
+				break;
+		}
+		if (apm_battlow || apm_suspends || apm_userstandbys) {
+			apm_suspend(sc);
+			apm_resume(sc);
+		}
+		apm_battlow = apm_suspends = apm_userstandbys = 0;
+
 		APM_UNLOCK(sc);
 		tsleep(&lbolt, PWAIT, "apmev", 0);
 	}
@@ -434,7 +433,7 @@ apmopen(dev_t dev, int flag, int mode, struct proc *p)
 	/* apm0 only */
 	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 ||
 	    !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
-		return ENXIO;
+		return (ENXIO);
 
 	DPRINTF(("apmopen: dev %d pid %d flag %x mode %x\n",
 	    APMDEV(dev), p->p_pid, flag, mode));
@@ -462,7 +461,7 @@ apmopen(dev_t dev, int flag, int mode, struct proc *p)
 		error = ENXIO;
 		break;
 	}
-	return error;
+	return (error);
 }
 
 int
@@ -473,7 +472,7 @@ apmclose(dev_t dev, int flag, int mode, struct proc *p)
 	/* apm0 only */
 	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 ||
 	    !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
-		return ENXIO;
+		return (ENXIO);
 
 	DPRINTF(("apmclose: pid %d flag %x mode %x\n", p->p_pid, flag, mode));
 
@@ -485,7 +484,7 @@ apmclose(dev_t dev, int flag, int mode, struct proc *p)
 		sc->sc_flags &= ~SCFLAG_OREAD;
 		break;
 	}
-	return 0;
+	return (0);
 }
 
 int
@@ -498,7 +497,7 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	/* apm0 only */
 	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 ||
 	    !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
-		return ENXIO;
+		return (ENXIO);
 
 	switch (cmd) {
 		/* some ioctl names from linux */
@@ -554,6 +553,21 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	return (error);
 }
 
+int
+apm_record_event(struct pxa2x0_apm_softc *sc, u_int type)
+{
+	static int apm_evindex;
+
+	/* skip if no user waiting */
+	if ((sc->sc_flags & SCFLAG_OPEN) == 0)
+		return (1);
+
+	apm_evindex++;
+	KNOTE(&sc->sc_note, APM_EVENT_COMPOSE(type, apm_evindex));
+
+	return (0);
+}
+
 void
 filt_apmrdetach(struct knote *kn)
 {
@@ -581,7 +595,7 @@ apmkqfilter(dev_t dev, struct knote *kn)
 	/* apm0 only */
 	if (!apm_cd.cd_ndevs || APMUNIT(dev) != 0 ||
 	    !(sc = apm_cd.cd_devs[APMUNIT(dev)]))
-		return ENXIO;
+		return (ENXIO);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -626,16 +640,21 @@ pxa2x0_apm_attach_sub(struct pxa2x0_apm_softc *sc)
 		printf("%s: failed to map MEMCTL\n", sc->sc_dev.dv_xname);
 		return;
 	}
+	sc->sc_memctl_ioh = pxa2x0_memctl_ioh;
 
 	if (bus_space_map(sc->sc_iot, PXA2X0_GPIO_BASE, PXA2X0_GPIO_SIZE,
 	    0, &pxa2x0_gpio_ioh)) {
-		printf("pxa2x0_apm_sleep: can't map GPIO\n");
+		printf("%s: can't map GPIO\n", sc->sc_dev.dv_xname);
 		return;
 	}
+
+	/* Clear all reset status flags. */
+	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_RCSR,
+	    RCSR_GPR | RCSR_SMR | RCSR_WDR | RCSR_HWR);
 }
 
 void
-pxa2x0_wakeup_config(u_int32_t wsrc, int enable)
+pxa2x0_wakeup_config(u_int wsrc, int enable)
 {
 	struct pxa2x0_apm_softc *sc;
 	u_int32_t prer;
@@ -651,7 +670,7 @@ pxa2x0_wakeup_config(u_int32_t wsrc, int enable)
 	if ((wsrc & PXA2X0_WAKEUP_POWERON) != 0) {
 		prer |= (1<<0);
 		pfer |= (1<<0);
-		pkwr |= (1<<12);
+		pkwr |= (1<<12); /* XXX */
 	}
 
 	if ((wsrc & PXA2X0_WAKEUP_GPIORST) != 0)
@@ -729,6 +748,66 @@ pxa2x0_wakeup_config(u_int32_t wsrc, int enable)
 	    (wsrc & PXA2X0_WAKEUP_KEYNS_ALL) != 0);
 }
 
+u_int
+pxa2x0_wakeup_status(void)
+{
+	struct pxa2x0_apm_softc *sc;
+	u_int32_t rv;
+	u_int	wsrc;
+
+	if (apm_cd.cd_ndevs < 1 || apm_cd.cd_devs[0] == NULL)
+		return (0);
+
+	sc = apm_cd.cd_devs[0];
+	wsrc = 0;
+
+	rv = bus_space_read_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PEDR);
+	if ((rv & (1<<0)) != 0)
+		wsrc |= PXA2X0_WAKEUP_POWERON;
+	if ((rv & (1<<1)) != 0)
+		wsrc |= PXA2X0_WAKEUP_GPIORST;
+	if ((rv & (1<<9)) != 0)
+		wsrc |= PXA2X0_WAKEUP_SD;
+	if ((rv & (1<<12)) != 0)
+		wsrc |= PXA2X0_WAKEUP_KEYNS0;
+	if ((rv & (1<<13)) != 0)
+		wsrc |= PXA2X0_WAKEUP_RC;
+	if ((rv & (1<<15)) != 0)
+		wsrc |= PXA2X0_WAKEUP_LOCKSW;
+	if ((rv & (1<<23)) != 0)
+		wsrc |= PXA2X0_WAKEUP_JACKIN;
+	if ((rv & (1<<24)) != 0)
+		wsrc |= PXA2X0_WAKEUP_USBD;
+	if ((rv & (1<<31)) != 0)
+		wsrc |= PXA2X0_WAKEUP_RTC;
+
+	rv = bus_space_read_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PKSR);
+	if ((rv & (1<<1)) != 0)
+		wsrc |= PXA2X0_WAKEUP_SYNC;
+	if ((rv & (1<<2)) != 0)
+		wsrc |= PXA2X0_WAKEUP_KEYNS1;
+	if ((rv & (1<<9)) != 0)
+		wsrc |= PXA2X0_WAKEUP_KEYNS2;
+	if ((rv & (1<<3)) != 0)
+		wsrc |= PXA2X0_WAKEUP_KEYNS3;
+	if ((rv & (1<<4)) != 0)
+		wsrc |= PXA2X0_WAKEUP_KEYNS4;
+	if ((rv & (1<<6)) != 0)
+		wsrc |= PXA2X0_WAKEUP_KEYNS5;
+	if ((rv & (1<<7)) != 0)
+		wsrc |= PXA2X0_WAKEUP_KEYNS6;
+	if ((rv & (1<<10)) != 0)
+		wsrc |= PXA2X0_WAKEUP_CF1;
+	if ((rv & (1<<11)) != 0)
+		wsrc |= PXA2X0_WAKEUP_CF0;
+	if ((rv & (1<<12)) != 0)
+		wsrc |= PXA2X0_WAKEUP_POWERON;
+	if ((rv & (1<<18)) != 0)
+		wsrc |= PXA2X0_WAKEUP_CHRGFULL;
+
+	return (wsrc);
+}
+
 struct pxa2x0_sleep_data {
 	/* OS timer registers */
 	u_int32_t sd_osmr0, sd_osmr1, sd_osmr2, sd_osmr3;
@@ -759,22 +838,13 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 {
 	struct pxa2x0_sleep_data sd;
 	bus_space_handle_t ost_ioh;
-	bus_space_handle_t intctl_ioh;
 	int save;
 	u_int32_t rv;
 
 	ost_ioh = (bus_space_handle_t)0;
-	intctl_ioh = (bus_space_handle_t)0;
-
 	if (bus_space_map(sc->sc_iot, PXA2X0_OST_BASE, PXA2X0_OST_SIZE, 0,
 	    &ost_ioh)) {
 		printf("pxa2x0_apm_sleep: can't map OST\n");
-		goto out;
-	}
-
-	if (bus_space_map(sc->sc_iot, PXA2X0_INTCTL_BASE,
-	    PXA2X0_INTCTL_SIZE, 0, &intctl_ioh)) {
-		printf("pxa2x0_apm_sleep: can't map INTCTL\n");
 		goto out;
 	}
 
@@ -860,10 +930,10 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 	sd.sd_gplr2 = bus_space_read_4(sc->sc_iot, pxa2x0_gpio_ioh, GPIO_GPLR2);
 	sd.sd_gplr3 = bus_space_read_4(sc->sc_iot, pxa2x0_gpio_ioh, GPIO_GPLR3);
 
-	sd.sd_iclr = bus_space_read_4(sc->sc_iot, intctl_ioh, INTCTL_ICLR);
-	sd.sd_icmr = bus_space_read_4(sc->sc_iot, intctl_ioh, INTCTL_ICMR);
-	sd.sd_iccr = bus_space_read_4(sc->sc_iot, intctl_ioh, INTCTL_ICCR);
-	bus_space_write_4(sc->sc_iot, intctl_ioh, INTCTL_ICMR, 0);
+	sd.sd_iclr = read_icu(INTCTL_ICLR);
+	sd.sd_icmr = read_icu(INTCTL_ICMR);
+	sd.sd_iccr = read_icu(INTCTL_ICCR);
+	write_icu(INTCTL_ICMR, 0);
 
 	sd.sd_mecr = bus_space_read_4(sc->sc_iot, pxa2x0_memctl_ioh,
 	    MEMCTL_MECR);
@@ -891,11 +961,11 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PSLR,
 	    rv | PSLR_SL_ROD);
 
-	/* Clear reset controller status. */
+	/* Clear all reset status flags. */
 	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_RCSR,
-	    RCSR_HWR | RCSR_WDR | RCSR_SMR | RCSR_GPR);
-	
-	/* Stop 3/13Mhz oscillator, do not float PCMCIA and chip-selects. */
+	    RCSR_GPR | RCSR_SMR | RCSR_WDR | RCSR_HWR);
+
+	/* Stop 3/13Mhz oscillator; do not float PCMCIA and chip-selects. */
 	rv = PCFR_OPDE;
         if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X)
 		/* Enable nRESET_GPIO as a GPIO reset input. */
@@ -1010,11 +1080,11 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 	bus_space_write_4(sc->sc_iot, pxa2x0_clkman_ioh, CLKMAN_CKEN,
 	    sd.sd_cken);
 
-	bus_space_write_4(sc->sc_iot, intctl_ioh, INTCTL_ICLR, sd.sd_iclr);
-	bus_space_write_4(sc->sc_iot, intctl_ioh, INTCTL_ICCR, sd.sd_iccr);
-	bus_space_write_4(sc->sc_iot, intctl_ioh, INTCTL_ICMR, sd.sd_icmr);
+	write_icu(INTCTL_ICLR, sd.sd_iclr);
+	write_icu(INTCTL_ICCR, sd.sd_iccr);
+	write_icu(INTCTL_ICMR, sd.sd_icmr);
 
-	if ((bus_space_read_4(sc->sc_iot, intctl_ioh, INTCTL_ICIP) & 0x1) != 0)
+	if ((read_icu(INTCTL_ICIP) & 0x1) != 0)
 		bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PEDR, 0x1);
 
 	scoop_check_mcr();
@@ -1048,8 +1118,6 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
  out:
 	if (ost_ioh != (bus_space_handle_t)0)
 		bus_space_unmap(sc->sc_iot, ost_ioh, PXA2X0_OST_SIZE);
-	if (intctl_ioh != (bus_space_handle_t)0)
-		bus_space_unmap(sc->sc_iot, intctl_ioh, PXA2X0_INTCTL_SIZE);
 }
 
 void

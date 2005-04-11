@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.h,v 1.5 2005/03/03 22:55:00 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.h,v 1.6 2005/04/11 03:07:09 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -30,17 +30,17 @@ struct pxa2x0_apm_softc {
 	struct	lock sc_lock;
 	struct	klist sc_note;
 	int	sc_flags;
+	int	sc_batt_life;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_pm_ioh;
-	void	(*sc_periodic_check)(struct pxa2x0_apm_softc *);
+	bus_space_handle_t sc_memctl_ioh;
+	int	(*sc_get_event)(struct pxa2x0_apm_softc *, u_int *);
 	void	(*sc_power_info)(struct pxa2x0_apm_softc *,
 	    struct apm_power_info *);
-	u_char	sc_ac_state;
-	u_char	sc_batt_state;
-	u_char	sc_batt_life;
-	u_char	sc_prev_batt_life;
 };
+
 void	pxa2x0_apm_attach_sub(struct pxa2x0_apm_softc *);
+void	pxa2x0_apm_sleep(struct pxa2x0_apm_softc *);
 
 #define PXA2X0_WAKEUP_POWERON	(1<<0)
 #define PXA2X0_WAKEUP_GPIORST	(1<<1)
@@ -74,6 +74,7 @@ void	pxa2x0_apm_attach_sub(struct pxa2x0_apm_softc *);
     PXA2X0_WAKEUP_USBD|PXA2X0_WAKEUP_LOCKSW|PXA2X0_WAKEUP_JACKIN|	\
     PXA2X0_WAKEUP_CHRGFULL|PXA2X0_WAKEUP_RTC)
 
-void	pxa2x0_wakeup_config(u_int32_t, int);
+void	pxa2x0_wakeup_config(u_int, int);
+u_int	pxa2x0_wakeup_status(void);
 
 #endif
