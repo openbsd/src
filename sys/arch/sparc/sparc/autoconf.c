@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.64 2005/03/23 17:10:24 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.65 2005/04/11 01:50:07 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1597,8 +1597,6 @@ nextsibling(node)
 	return (promvec->pv_nodeops->no_nextnode(node));
 }
 
-u_int      hexatoi(const char *);
-
 /* The following recursively searches a PROM tree for a given node */
 int
 search_prom(rootnode, name)
@@ -2159,13 +2157,4 @@ getdevunit(name, unit)
 			return NULL;
 	}
 	return dev;
-}
-
-u_int
-hexatoi(nptr)			/* atoi assuming hex, no 0x */
-	const char *nptr;
-{
-	u_int retval;
-	str2hex((char *)nptr, &retval);
-	return retval;
 }
