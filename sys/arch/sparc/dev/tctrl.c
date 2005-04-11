@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.10 2005/03/29 16:26:44 miod Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.11 2005/04/11 01:49:50 miod Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -147,6 +147,7 @@ struct tctrl_softc {
 	u_int	sc_cmdlen;
 	u_int	sc_rspoff;
 	u_int	sc_rsplen;
+	u_int	sc_rspack;
 	u_int	sc_bellfreq;
 	u_int	sc_bellvol;
 
@@ -168,7 +169,7 @@ void	tctrl_lcd(struct tctrl_softc *, int, int);
 u_int8_t tctrl_read_data(struct tctrl_softc *);
 void	tctrl_read_event_status(void *);
 void	tctrl_read_ext_status(struct tctrl_softc *);
-void	tctrl_request(struct tctrl_softc *, struct tctrl_req *);
+int	tctrl_request(struct tctrl_softc *, struct tctrl_req *);
 void	tctrl_tft(struct tctrl_softc *);
 void	tctrl_write_data(struct tctrl_softc *, u_int8_t);
 
@@ -320,7 +321,7 @@ again:
 		d = tctrl_read_data(sc);
 		switch (sc->sc_state) {
 		case TCTRL_IDLE:
-			if (d == 0xfa) {
+			if (d == TS102_UCTRL_INTR) {
 				/* external event */
 				timeout_add(&sc->sc_tmo, 1);
 			} else {
@@ -329,25 +330,38 @@ again:
 			}
 			goto again;
 		case TCTRL_ACK:
-			if (d != 0xfe) {
-				printf("%s: (op=0x%02x): unexpected ack value (0x%02x)\n",
-					sc->sc_dev.dv_xname, sc->sc_op, d);
-			}
 #ifdef TCTRLDEBUG
 			printf(" ack=0x%02x", d);
 #endif
-			sc->sc_rsplen--;
-			sc->sc_rspoff = 0;
-			sc->sc_state = sc->sc_rsplen ? TCTRL_DATA : TCTRL_IDLE;
-			sc->sc_wantdata = sc->sc_rsplen ? 1 : 0;
+			switch (d) {
+			case TS102_UCTRL_ACK:
+				sc->sc_rspack = 1;
+				sc->sc_rsplen--;
+				sc->sc_rspoff = 0;
+				sc->sc_state =
+				    sc->sc_rsplen ? TCTRL_DATA : TCTRL_IDLE;
+				sc->sc_wantdata = sc->sc_rsplen ? 1 : 0;
 #ifdef TCTRLDEBUG
-			if (sc->sc_rsplen > 0) {
-				printf(" [data(%u)]", sc->sc_rsplen);
-			} else {
-				printf(" [idle]\n");
-			}
+				if (sc->sc_rsplen > 0) {
+					printf(" [data(%u)]", sc->sc_rsplen);
+				} else {
+					printf(" [idle]\n");
+				}
 #endif
-			goto again;
+				goto again;
+			default:
+				printf("%s: (op=0x%02x): unexpected return value (0x%02x)\n",
+					sc->sc_dev.dv_xname, sc->sc_op, d);
+				/* FALLTHROUGH */
+			case TS102_UCTRL_NACK:
+				printf("%s: command %x failed\n",
+				    sc->sc_dev.dv_xname, sc->sc_op);
+				sc->sc_rspack = 0;
+				sc->sc_wantdata = 0;
+				sc->sc_state = TCTRL_IDLE;
+				break;
+			}
+			break;
 		case TCTRL_DATA:
 			sc->sc_rspbuf[sc->sc_rspoff++] = d;
 #ifdef TCTRLDEBUG
@@ -637,10 +651,10 @@ tctrl_lcd(struct tctrl_softc *sc, int mask, int value)
 	tctrl_request(sc, &req);
 }
 
-void
+int
 tctrl_request(struct tctrl_softc *sc, struct tctrl_req *req)
 {
-	int s;
+	int s, rv;
 
 	while (sc->sc_wantdata != 0) {
 		DELAY(1);
@@ -659,8 +673,15 @@ tctrl_request(struct tctrl_softc *sc, struct tctrl_req *req)
 	} while (sc->sc_state != TCTRL_IDLE);
 
 	sc->sc_wantdata = 0;	/* just in case... */
-	bcopy(sc->sc_rspbuf, req->rspbuf, sc->sc_rsplen);
+
+	rv = sc->sc_rspack;
+	if (rv != 0)
+		bcopy(sc->sc_rspbuf, req->rspbuf, sc->sc_rsplen);
+	else
+		bzero(req->rspbuf, req->rsplen);	/* safety */
 	splx(s);
+
+	return (rv);
 }
 
 void

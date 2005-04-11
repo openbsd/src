@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102reg.h,v 1.4 2005/03/29 16:26:44 miod Exp $	*/
+/*	$OpenBSD: ts102reg.h,v 1.5 2005/04/11 01:49:50 miod Exp $	*/
 /*	$NetBSD: ts102reg.h,v 1.7 2002/09/29 23:23:58 wiz Exp $ */
 
 /*-
@@ -174,7 +174,7 @@ struct uctrl_regs {
 #define	TS102_UCTRL_STS_TXNF_STA	0x02	/* transmit FIFO not full */
 #define	TS102_UCTRL_STS_RXNE_STA	0x04	/* receive FIFO not empty */
 #define	TS102_UCTRL_STS_RXO_STA		0x08	/* receive FIFO overflow */
-#define	TS102_UCTRL_STS_MASK		0x0F	/* Only 4 bits significant */
+#define	TS102_UCTRL_STS_MASK		0x0f	/* Only 4 bits significant */
 
 enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_RD_SERIAL_NUM=0x01,	/* none		ack + 4 bytes */
@@ -346,12 +346,16 @@ enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_ADMIN_VRFY_USER_PASS=0x71,	/* len <pass>   ack + status */
     TS102_OP_ADMIN_GET_SYSTEM_PASS=0x72, /* none	ack + <7bytekey> */
     TS102_OP_ADMIN_VRFY_SYSTEM_PASS=0x73, /* len <pass>   ack + status */
-    TS102_OP_RD_INT_CHARGE_LEVEL=0x7a, /* ack + 2 byte */
-    TS102_OP_RD_EXT_CHARGE_LEVEL=0x7b, /* ack + 2 byte */
+    TS102_OP_RD_INT_CHARGE_LEVEL=0x7a,	/* ack + 2 byte */
+    TS102_OP_RD_EXT_CHARGE_LEVEL=0x7b,	/* ack + 2 byte */
 #define	TS102_CHARGE_UNKNOWN	0xfa
-    TS102_OP_SLEEP=0x80, /* supposedly sleeps, not sure */
-    TS102_OP_ADMIN_POWER_OFF=0x82,	 /* len <pass>	none */
-    TS102_OP_ADMIN_POWER_RESTART=0x83,	 /* msb,xx,lsb	none */
+    TS102_OP_SLEEP=0x80, 		/* supposedly sleeps, not sure */
+    TS102_OP_ADMIN_POWER_OFF=0x82,	/* len <pass>	none */
+    TS102_OP_ADMIN_POWER_RESTART=0x83,	/* msb,xx,lsb	none */
 };
+
+#define	TS102_UCTRL_ACK		0xfe
+#define	TS102_UCTRL_NACK	0xfc
+#define	TS102_UCTRL_INTR	0xfa
 
 #endif /* _SPARC_DEV_TS102REG_H */
