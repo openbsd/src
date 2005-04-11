@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.26 2005/04/11 17:56:27 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.27 2005/04/11 18:02:58 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -141,7 +141,6 @@
 #include <stddef.h>
 #include <unistd.h>
 #include <string.h>
-#include <sysexits.h>
 
 #include "cvs.h"
 #include "log.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.17 2005/04/11 17:56:27 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.18 2005/04/11 18:02:58 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -32,7 +32,6 @@
 #include <errno.h>
 #include <string.h>
 #include <paths.h>
-#include <sysexits.h>
 
 #include "cvs.h"
 #include "log.h"

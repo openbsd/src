@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.9 2005/04/11 17:56:27 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.10 2005/04/11 18:02:58 joris Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -34,7 +34,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <sysexits.h>
 
 #include "log.h"
 #include "file.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.11 2005/04/11 17:56:27 joris Exp $	*/
+/*	$OpenBSD: history.c,v 1.12 2005/04/11 18:02:58 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -33,7 +33,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <sysexits.h>
 
 #include "cvs.h"
 #include "rcs.h"
