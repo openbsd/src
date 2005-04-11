@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.9 2005/04/11 15:16:29 deraadt Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.10 2005/04/11 20:04:43 deraadt Exp $	*/
 
 /* Errors and warnings... */
 
@@ -74,8 +74,8 @@ error(char *fmt, ...)
 
 	/* Also log it to stderr? */
 	if (log_perror) {
-		write(2, mbuf, strlen(mbuf));
-		write(2, "\n", 1);
+		write(STDERR_FILENO, mbuf, strlen(mbuf));
+		write(STDERR_FILENO, "\n", 1);
 	}
 
 	syslog(LOG_CRIT, "exiting.");
@@ -105,8 +105,8 @@ warning(char *fmt, ...)
 #endif
 
 	if (log_perror) {
-		write(2, mbuf, strlen(mbuf));
-		write(2, "\n", 1);
+		write(STDERR_FILENO, mbuf, strlen(mbuf));
+		write(STDERR_FILENO, "\n", 1);
 	}
 
 	return (0);
@@ -131,8 +131,8 @@ note(char *fmt, ...)
 #endif
 
 	if (log_perror) {
-		write(2, mbuf, strlen(mbuf));
-		write(2, "\n", 1);
+		write(STDERR_FILENO, mbuf, strlen(mbuf));
+		write(STDERR_FILENO, "\n", 1);
 	}
 
 	return (0);
@@ -157,8 +157,8 @@ debug(char *fmt, ...)
 #endif
 
 	if (log_perror) {
-		write(2, mbuf, strlen(mbuf));
-		write(2, "\n", 1);
+		write(STDERR_FILENO, mbuf, strlen(mbuf));
+		write(STDERR_FILENO, "\n", 1);
 	}
 
 	return (0);
@@ -238,7 +238,7 @@ parse_warn(char *fmt, ...)
 		iov[4].iov_len = lexchar - 1;
 		iov[5].iov_base = "\n";
 		iov[5].iov_len = 1;
-		writev(2, iov, sizeof(iov)/sizeof(iov[0]));
+		writev(STDERR_FILENO, iov, sizeof(iov)/sizeof(iov[0]));
 	}
 	warnings_occurred = 1;
 	return (0);
