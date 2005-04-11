@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.9 2003/06/03 02:56:22 millert Exp $	*/
+/*	$OpenBSD: wc.c,v 1.10 2005/04/11 07:04:47 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-static char rcsid[] = "$OpenBSD: wc.c,v 1.9 2003/06/03 02:56:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: wc.c,v 1.10 2005/04/11 07:04:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ main(int argc, char *argv[])
 		} while(*++argv);
 
 		if (dototal)
-			print_counts(tlinect, twordct, tcharct, "total"); 
+			print_counts(tlinect, twordct, tcharct, "total");
 	}
 
 	exit(rval);
@@ -136,7 +136,7 @@ cnt(char *file)
 	} else  {
 		fd = STDIN_FILENO;
 	}
-	
+
 	if (!doword) {
 		/*
 		 * Line counting is split out because it's a lot
@@ -224,7 +224,7 @@ cnt(char *file)
 
 	/*
 	 * Don't bother checking doline, doword, or dochar -- speeds
-         * up the common case
+	 * up the common case
 	 */
 	tlinect += linect;
 	twordct += wordct;

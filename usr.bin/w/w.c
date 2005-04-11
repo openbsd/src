@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.43 2004/09/14 22:24:24 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.44 2005/04/11 07:04:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #else
-static char *rcsid = "$OpenBSD: w.c,v 1.43 2004/09/14 22:24:24 deraadt Exp $";
+static char *rcsid = "$OpenBSD: w.c,v 1.44 2005/04/11 07:04:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -264,18 +264,18 @@ main(int argc, char *argv[])
 		}
 	}
 	if ((ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 &&
-	     ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1 &&
-	     ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) || ws.ws_col == 0)
-	       ttywidth = 79;
-        else
-	       ttywidth = ws.ws_col - 1;
+	    ioctl(STDERR_FILENO, TIOCGWINSZ, &ws) == -1 &&
+	    ioctl(STDIN_FILENO, TIOCGWINSZ, &ws) == -1) || ws.ws_col == 0)
+		ttywidth = 79;
+	else
+		ttywidth = ws.ws_col - 1;
 	argwidth = ttywidth - WUSED;
 	if (argwidth < 4)
 		argwidth = 8;
 	/* sort by idle time */
 	if (sortidle && ehead != NULL) {
 		struct entry *from = ehead, *save;
-		
+
 		ehead = NULL;
 		while (from != NULL) {
 			for (nextp = &ehead;
@@ -288,7 +288,7 @@ main(int argc, char *argv[])
 			*nextp = save;
 		}
 	}
-			
+
 	if (!nflag) {
 		if (gethostname(domain, sizeof(domain)) < 0 ||
 		    (p = strchr(domain, '.')) == 0)

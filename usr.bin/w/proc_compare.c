@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc_compare.c,v 1.9 2004/11/18 15:10:24 markus Exp $	*/
+/*	$OpenBSD: proc_compare.c,v 1.10 2005/04/11 07:04:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)proc_compare.c	8.2 (Berkeley) 9/23/93";
 #else
-static char *rcsid = "$OpenBSD: proc_compare.c,v 1.9 2004/11/18 15:10:24 markus Exp $";
+static char *rcsid = "$OpenBSD: proc_compare.c,v 1.10 2005/04/11 07:04:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ proc_compare(const struct kinfo_proc2 *p1, const struct kinfo_proc2 *p2)
 		return (p2->p_pid > p1->p_pid);	/* tie - return highest pid */
 	}
 	/*
- 	 * weed out zombies
+	 * weed out zombies
 	 */
 	switch (TESTAB(p1->p_stat == SZOMB, p2->p_stat == SZOMB)) {
 	case ONLYA:

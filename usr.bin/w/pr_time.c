@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr_time.c,v 1.12 2003/11/26 00:31:27 millert Exp $	*/
+/*	$OpenBSD: pr_time.c,v 1.13 2005/04/11 07:04:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_time.c	8.2 (Berkeley) 4/4/94";
 #else
-static char *rcsid = "$OpenBSD: pr_time.c,v 1.12 2003/11/26 00:31:27 millert Exp $";
+static char *rcsid = "$OpenBSD: pr_time.c,v 1.13 2005/04/11 07:04:47 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ static char *rcsid = "$OpenBSD: pr_time.c,v 1.12 2003/11/26 00:31:27 millert Exp
 
 /*
  * pr_attime --
- *	Print the time since the user logged in. 
+ *	Print the time since the user logged in.
  */
 void
 pr_attime(time_t *started, time_t *now)
