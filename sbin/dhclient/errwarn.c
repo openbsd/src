@@ -1,4 +1,4 @@
-/*	$OpenBSD: errwarn.c,v 1.7 2004/05/04 22:23:01 mickey Exp $	*/
+/*	$OpenBSD: errwarn.c,v 1.8 2005/04/11 15:16:14 deraadt Exp $	*/
 
 /* Errors and warnings... */
 
@@ -40,6 +40,9 @@
  * with Vixie Laboratories.
  */
 
+#include <sys/types.h>
+#include <sys/uio.h>
+#include <unistd.h>
 #include <errno.h>
 
 #include "dhcpd.h"
@@ -204,6 +207,7 @@ parse_warn(char *fmt, ...)
 	static char spaces[] =
 	    "                                        "
 	    "                                        "; /* 80 spaces */
+	struct iovec iov[6];
 
 	do_percentm(mbuf, sizeof(mbuf), fmt);
 	snprintf(fbuf, sizeof(fbuf), "%s line %d: %s", tlname, lexline, mbuf);
@@ -220,15 +224,20 @@ parse_warn(char *fmt, ...)
 #endif
 
 	if (log_perror) {
-		write(2, mbuf, strlen(mbuf));
-		write(2, "\n", 1);
-		write(2, token_line, strlen(token_line));
-		write(2, "\n", 1);
-		write(2, spaces, lexchar - 1);
-		write(2, "^\n", 2);
+		iov[0].iov_base = mbuf;
+		iov[0].iov_len = strlen(mbuf);
+		iov[1].iov_base = "\n";
+		iov[1].iov_len = 1;
+		iov[2].iov_base = token_line;
+		iov[2].iov_len = strlen(token_line);
+		iov[3].iov_base = "\n";
+		iov[3].iov_len = 1;
+		iov[4].iov_base = spaces;
+		iov[4].iov_len = lexchar - 1;
+		iov[5].iov_base = "\n";
+		iov[5].iov_len = 1;
+		writev(2, iov, sizeof(iov)/sizeof(iov[0]));
 	}
-
 	warnings_occurred = 1;
-
 	return (0);
 }
