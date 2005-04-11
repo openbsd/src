@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.133 2005/04/04 16:03:02 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.134 2005/04/11 21:05:01 cloder Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.133 2005/04/04 16:03:02 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.134 2005/04/11 21:05:01 cloder Exp $";
 #endif
 #endif /* not lint */
 
@@ -1958,8 +1958,9 @@ phys_status(int force)
 	if (req.addr.ss_family == AF_INET6)
 		in6_fillscopeid((struct sockaddr_in6 *)&req.addr);
 #endif /* INET6 */
-	getnameinfo((struct sockaddr *)&req.addr, req.addr.ss_len,
-	    psrcaddr, sizeof(psrcaddr), 0, 0, niflag);
+	if (getnameinfo((struct sockaddr *)&req.addr, req.addr.ss_len,
+	    psrcaddr, sizeof(psrcaddr), 0, 0, niflag) != 0)
+		strlcpy(psrcaddr, "<error>", sizeof(psrcaddr));
 #ifdef INET6
 	if (req.addr.ss_family == AF_INET6)
 		ver = "6";
@@ -1969,8 +1970,9 @@ phys_status(int force)
 	if (req.dstaddr.ss_family == AF_INET6)
 		in6_fillscopeid((struct sockaddr_in6 *)&req.dstaddr);
 #endif /* INET6 */
-	getnameinfo((struct sockaddr *)&req.dstaddr, req.dstaddr.ss_len,
-	    pdstaddr, sizeof(pdstaddr), 0, 0, niflag);
+	if (getnameinfo((struct sockaddr *)&req.dstaddr, req.dstaddr.ss_len,
+	    pdstaddr, sizeof(pdstaddr), 0, 0, niflag) != 0)
+		strlcpy(pdstaddr, "<error>", sizeof(pdstaddr));
 
 	printf("\tphysical address inet%s %s --> %s\n", ver,
 	    psrcaddr, pdstaddr);
