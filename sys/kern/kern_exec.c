@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.91 2005/03/09 17:41:29 miod Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.92 2005/04/11 20:05:51 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -82,7 +82,7 @@ int exec_sigcode_map(struct proc *, struct emul *);
  * to it. Must be a n^2. If non-zero, the stack gap will be calculated as:
  * (arc4random() * ALIGNBYTES) & (stackgap_random - 1) + STACKGAPLEN.
  */
-int stackgap_random = 64*1024;
+int stackgap_random = STACKGAP_RANDOM;
 
 /*
  * check exec:
