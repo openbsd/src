@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.30 2004/11/28 01:36:38 mickey Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.31 2005/04/11 15:13:01 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.15 1994/10/27 04:16:34 cgd Exp $	*/
 
 /*-
@@ -71,6 +71,8 @@
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
+
+#define STACKGAP_RANDOM	256*1024
 
 /* I386 has a line where all code is executable: 0 - I386_MAX_EXE_ADDR */
 #define I386_MAX_EXE_ADDR 0x20000000		/* exec line */

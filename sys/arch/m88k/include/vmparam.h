@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.2 2004/11/28 01:36:38 mickey Exp $ */
+/*	$OpenBSD: vmparam.h,v 1.3 2005/04/11 15:13:01 deraadt Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -58,6 +58,8 @@
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		MAXDSIZ			/* max stack size */
 #endif
+
+#define STACKGAP_RANDOM	256*1024
 
 /*
  * Size of shared memory map

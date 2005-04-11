@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.2 2004/11/28 01:36:38 mickey Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.3 2005/04/11 15:13:01 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2003/05/21 18:04:44 thorpej Exp $	*/
 
 /*
@@ -70,6 +70,8 @@
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(8*1024*1024)		/* max stack size */
 #endif
+
+#define STACKGAP_RANDOM	256*1024
 
 /*
  * Size of SysV shared memory map

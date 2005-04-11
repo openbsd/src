@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.21 2005/03/31 21:30:25 tdeval Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.22 2005/04/11 15:13:01 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.32 2000/03/07 00:05:59 matt Exp $	*/
 
 /*-
@@ -72,6 +72,8 @@
 #ifndef DFLSSIZ
 #define DFLSSIZ		(512*1024)		/* initial stack size limit */
 #endif
+
+#define STACKGAP_RANDOM	32*1024
 
 /*
  * All mmap()'ed data will be mapped above MAXDSIZ. This means that

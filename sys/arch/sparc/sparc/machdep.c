@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.104 2005/03/23 17:14:46 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.105 2005/04/11 15:13:01 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -73,6 +73,7 @@
 #include <machine/frame.h>
 #include <machine/cpu.h>
 #include <machine/pmap.h>
+#include <machine/vmparam.h>
 #include <machine/oldmon.h>
 #include <machine/bsd_openprom.h>
 
@@ -168,6 +169,12 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = 0;
 #endif
+
+	if (CPU_ISSUN4M) {
+		extern int stackgap_random;
+
+		stackgap_random = STACKGAP_RANDOM_SUN4M;
+	}
 
 	/*
 	 * fix message buffer mapping, note phys addr of msgbuf is 0
