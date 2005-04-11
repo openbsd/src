@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.4 2005/03/30 21:44:08 uwe Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.5 2005/04/11 03:21:03 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -29,18 +29,33 @@
 #include <zaurus/dev/zaurus_scoopvar.h>
 #include <zaurus/dev/zaurus_sspvar.h>
 
+#include <zaurus/dev/zaurus_apm.h>
+
 #if defined(APMDEBUG)
 #define DPRINTF(x)	printf x
 #else
 #define	DPRINTF(x)	/**/
 #endif
 
+struct zapm_softc {
+	struct pxa2x0_apm_softc sc;
+	struct timeout sc_poll;
+	struct timeval sc_lastbattchk;
+	int	sc_ac_on;
+	int	sc_charging;
+	int	sc_discharging;
+	int	sc_batt_full;
+	int	sc_batt_volt;
+	u_int	sc_event;
+};
+
 int	apm_match(struct device *, void *, void *);
 void	apm_attach(struct device *, struct device *, void *);
 
 struct cfattach apm_pxaip_ca = {
-        sizeof (struct pxa2x0_apm_softc), apm_match, apm_attach
+        sizeof (struct zapm_softc), apm_match, apm_attach
 };
+extern struct cfdriver apm_cd;
 
 /* MAX1111 command word */
 #define MAXCTRL_PD0		(1<<0)
@@ -56,9 +71,13 @@ struct cfattach apm_pxaip_ca = {
 #define JK_VAD			6
 
 /* battery-related GPIO pins */
-#define GPIO_AC_IN_C3000	115	/* active low */
-#define GPIO_CHRG_FULL_C3000	101
-#define GPIO_BATT_COVER_C3000	90	/* active low */
+#define GPIO_AC_IN_C3000	115	/* 0=AC connected */
+#define GPIO_CHRG_CO_C3000	101	/* 1=battery full */
+#define GPIO_BATT_COVER_C3000	90	/* ?=open */
+
+/*
+ * Battery-specific information
+ */
 
 struct battery_threshold {
 	int	bt_volt;
@@ -67,13 +86,13 @@ struct battery_threshold {
 };
 
 struct battery_info {
-	int	bi_minutes;	/* minutes left at 100% battery life */
+	int	bi_minutes;		/* 100% life time */
 	const	struct battery_threshold *bi_thres;
 };
 
 const struct battery_threshold zaurus_battery_life_c3000[] = {
 #if 0
-	{224,	125,	APM_BATT_HIGH},	/* XXX untested */
+	{224,	125,	APM_BATT_HIGH}, /* XXX unverified */
 #endif
 	{194,	100,	APM_BATT_HIGH},
 	{188,	75,	APM_BATT_HIGH},
@@ -90,6 +109,17 @@ const struct battery_info zaurus_battery_c3000 = {
 
 const struct battery_info *zaurus_main_battery = &zaurus_battery_c3000;
 
+/* Restart charging this many times before accepting BATT_FULL. */
+#define MIN_BATT_FULL 2
+
+/* Discharge 100 ms before reading the voltage if AC is connected. */
+#define DISCHARGE_TIMEOUT (hz / 10)
+
+/* Check battery voltage and "kick charging" every minute. */
+const	struct timeval zapm_battchkrate = { 60, 0 };
+
+/* Prototypes */
+
 #if 0
 void	zapm_shutdown(void *);
 int	zapm_acintr(void *);
@@ -105,38 +135,26 @@ int	zapm_batt_volt(void);
 int	zapm_batt_state(int);
 int	zapm_batt_life(int);
 int	zapm_batt_minutes(int);
-int	zapm_batt_full(void);
+void	zapm_enable_charging(struct zapm_softc *, int);
+int	zapm_charge_complete(struct zapm_softc *);
+void	zapm_poll(void *);
+int	zapm_get_event(struct pxa2x0_apm_softc *, u_int *);
+void	zapm_power_info(struct pxa2x0_apm_softc *, struct apm_power_info *);
 
-int	zapm_curbattvolt;	/* updated periodically when A/C is on */
-int	zapm_battcharging;
-int	zapm_battfullcount;
-
-struct timeout zapm_charge_off_to;
-struct timeout zapm_charge_on_to;
-
-void	zapm_charge_enable(void);
-void	zapm_charge_disable(void);
-void	zapm_charge_restart(void);
-void	zapm_charge_off(void *);
-void	zapm_charge_on(void *);
-
-void	zapm_power_check(struct pxa2x0_apm_softc *);
-void	zapm_power_info(struct pxa2x0_apm_softc *,
-    struct apm_power_info *);
 
 int
 apm_match(struct device *parent, void *match, void *aux)
 {
-	return 1;
+	return (1);
 }
 
 void
 apm_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pxa2x0_apm_softc *sc = (struct pxa2x0_apm_softc *)self;
+	struct zapm_softc *sc = (struct zapm_softc *)self;
 
 	pxa2x0_gpio_set_function(GPIO_AC_IN_C3000, GPIO_IN);
-	pxa2x0_gpio_set_function(GPIO_CHRG_FULL_C3000, GPIO_IN);
+	pxa2x0_gpio_set_function(GPIO_CHRG_CO_C3000, GPIO_IN);
 	pxa2x0_gpio_set_function(GPIO_BATT_COVER_C3000, GPIO_IN);
 
 #if 0
@@ -144,28 +162,22 @@ apm_attach(struct device *parent, struct device *self, void *aux)
 	    IPL_BIO, zapm_acintr, sc, "apm_ac");
 #endif
 
-	sc->sc_periodic_check = zapm_power_check;
-	sc->sc_power_info = zapm_power_info;
+	sc->sc.sc_get_event = zapm_get_event;
+	sc->sc.sc_power_info = zapm_power_info;
 
-	timeout_set(&zapm_charge_off_to, &zapm_charge_off, NULL);
-	timeout_set(&zapm_charge_on_to, &zapm_charge_on, NULL);
+	timeout_set(&sc->sc_poll, &zapm_poll, sc);
 
-	zapm_charge_disable();
-	zapm_battcharging = 0;
-	zapm_battfullcount = 0;
-
-	/* C3000: discharge 100 ms when AC is on. */
+	/* Get initial battery voltage. */
+	zapm_enable_charging(sc, 0);
 	if (zapm_ac_on()) {
+		/* C3000: discharge 100 ms when AC is on. */
 		scoop_discharge_battery(1);
 		delay(100000);
 	}
-
-	zapm_curbattvolt = zapm_batt_volt();
+	sc->sc_batt_volt = zapm_batt_volt();
 	scoop_discharge_battery(0);
 
-	zapm_power_check(sc);
-
-	pxa2x0_apm_attach_sub(sc);
+	pxa2x0_apm_attach_sub(&sc->sc);
 
 #if 0
 	(void)shutdownhook_establish(zapm_shutdown, NULL);
@@ -176,13 +188,15 @@ apm_attach(struct device *parent, struct device *self, void *aux)
 void
 zapm_shutdown(void *v)
 {
-	zapm_charge_disable();
+	struct zapm_softc *sc = v;
+
+	zapm_enable_charging(sc, 0);
 }
 
 int
 zapm_acintr(void *v)
 {
-	return 1;
+	return (1);
 }
 #endif
 
@@ -196,9 +210,9 @@ int
 max1111_adc_value(int chan)
 {
 
-	return (zssp_read_max1111(MAXCTRL_PD0 | MAXCTRL_PD1 |
-	    MAXCTRL_SGL | MAXCTRL_UNI | (chan << MAXCTRL_SEL_SHIFT) |
-	    MAXCTRL_STR));
+	return ((int)zssp_ic_send(ZSSP_IC_MAX1111, MAXCTRL_PD0 |
+	    MAXCTRL_PD1 | MAXCTRL_SGL | MAXCTRL_UNI |
+	    (chan << MAXCTRL_SEL_SHIFT) | MAXCTRL_STR));
 }
 
 /* XXX simplify */
@@ -318,158 +332,160 @@ zapm_batt_minutes(int life)
 	return (zaurus_main_battery->bi_minutes * life / 100);
 }
 
+void
+zapm_enable_charging(struct zapm_softc *sc, int enable)
+{
+
+	scoop_discharge_battery(0);
+	scoop_charge_battery(enable, 0);
+	scoop_led_set(SCOOP_LED_ORANGE, enable);
+}
+
 /*
- * Return non-zero if the charge complete signal is set.  This signal
- * becomes valid after charging has been stopped and restarted.
+ * Return non-zero if the charge complete signal indicates that the
+ * battery is fully charged.  Restart charging to clear this signal.
  */
 int
-zapm_batt_full(void)
+zapm_charge_complete(struct zapm_softc *sc)
 {
 
-	return (pxa2x0_gpio_get_bit(GPIO_CHRG_FULL_C3000) ? 1 : 0);
-}
-
-void
-zapm_charge_enable(void)
-{
-
-	timeout_del(&zapm_charge_off_to);
-	timeout_del(&zapm_charge_on_to);
-
-	scoop_charge_battery(1, 0);
-	scoop_discharge_battery(0);
-	scoop_led_set(SCOOP_LED_ORANGE, 1);
-
-	/* Restart charging and updating curbattvolt. */
-	timeout_add(&zapm_charge_off_to, hz * 60);
-}
-
-void
-zapm_charge_disable(void)
-{
-
-	timeout_del(&zapm_charge_off_to);
-	timeout_del(&zapm_charge_on_to);
-
-	scoop_discharge_battery(0);
-	scoop_charge_battery(0, 0);
-	scoop_led_set(SCOOP_LED_ORANGE, 0);
-}
-
-void
-zapm_charge_restart(void)
-{
-
-	zapm_charge_disable();
-	delay(15000);
-	zapm_charge_enable();
-}
-
-void
-zapm_charge_off(void *v)
-{
-
-	if (zapm_battcharging)
-		zapm_charge_disable();
-
-	/* Discharge 100 ms before updating curbattvolt. */
-	if (zapm_ac_on()) {
-		scoop_discharge_battery(1);
-		timeout_add(&zapm_charge_on_to, hz / 10);
-	}
-}
-
-void
-zapm_charge_on(void *v)
-{
-
-	/*
-	 * Read battery voltage while the battery is still discharging,
-	 * then restart charging or schedule the next curbattvolt update.
-	 */
-	if (zapm_ac_on()) {
-		zapm_curbattvolt = zapm_batt_volt();
-		if (zapm_battcharging)
-			zapm_charge_enable();
-		else
-			timeout_add(&zapm_charge_off_to, hz * 60);
-	}
-
-	scoop_discharge_battery(0);
-}
-
-/*
- * Check A/C power and control battery charging.  This gets called once
- * from apm_attach(), and once per second from the APM kernel thread.
- */
-void
-zapm_power_check(struct pxa2x0_apm_softc *sc)
-{
-	int s;
-
-	s = splsoftclock();
-
-	if (zapm_ac_on()) {
-		if (zapm_battcharging) {
-			/*
-			 * Read BATT_FULL once per second until it
-			 * stablizes; restart charging between reads.
-			 */
-			if (zapm_batt_full()) {
-				if (++zapm_battfullcount >= 2) {
-					/* battery full; stop charging. */
-					DPRINTF(("zapm_power_check: battery full\n"));
-					zapm_battcharging = 0;
-					zapm_charge_disable();
-					zapm_charge_off(NULL);
-				} else
-					zapm_charge_restart();
-			} else if (zapm_battfullcount > 0) {
-				/* Ignore BATT_FULL glitch. */
-				DPRINTF(("zapm_power_check: battery almost full?\n"));
-				zapm_battfullcount = 0;
-				zapm_charge_restart();
+	if (sc->sc_charging && sc->sc_batt_full < MIN_BATT_FULL) {
+		if (pxa2x0_gpio_get_bit(GPIO_CHRG_CO_C3000) != 0) {
+			if (++sc->sc_batt_full < MIN_BATT_FULL) {
+				DPRINTF(("battery almost full\n"));
+				zapm_enable_charging(sc, 0);
+				delay(15000);
+				zapm_enable_charging(sc, 1);
 			}
-		} else if (zapm_battfullcount == 0) {
-			/* Start charging and updating curbattvolt. */
-			DPRINTF(("zapm_power_check: start charging\n"));
-			zapm_battcharging = 1;
-			zapm_charge_off(NULL);
+		} else if (sc->sc_batt_full > 0) {
+			/* false alarm */
+			sc->sc_batt_full = 0;
+			zapm_enable_charging(sc, 0);
+			delay(15000);
+			zapm_enable_charging(sc, 1);
 		}
-	} else if (zapm_battcharging || zapm_battfullcount != 0) {
-		/* Stop charging and updating curbattvolt. */
-		DPRINTF(("zapm_power_check: stop charging\n"));
-		zapm_battcharging = 0;
-		zapm_battfullcount = 0;
-		zapm_charge_disable();
-	} else {
-		/* Running on battery. */
-		/* XXX detect battery low condition and take measures. */
 	}
 
+	return (sc->sc_batt_full >= MIN_BATT_FULL);
+}
+
+void
+zapm_poll(void *v)
+{
+	struct zapm_softc *sc = v;
+	int	ac_on = sc->sc_ac_on;
+	int	charging = sc->sc_charging;
+	int	volt = sc->sc_batt_volt;
+	int	s;
+
+	s = splhigh();
+
+	if (sc->sc_discharging) {
+		sc->sc_discharging = 0;
+		volt = zapm_batt_volt();
+		ac_on = zapm_ac_on();
+		charging = ac_on && sc->sc_batt_full < MIN_BATT_FULL;
+		zapm_enable_charging(sc, charging);
+		DPRINTF(("zapm_poll: discharge off volt %d\n", volt));
+	} else
+		ac_on = zapm_ac_on();
+
+	if (ac_on) {
+		if (charging) {
+			if (zapm_charge_complete(sc)) {
+				DPRINTF(("zapm_poll: batt full\n"));
+				charging = 0;
+				zapm_enable_charging(sc, 0);
+			}
+		} else if (!zapm_charge_complete(sc)) {
+			charging = 1;
+			volt = zapm_batt_volt();
+			zapm_enable_charging(sc, 1);
+			DPRINTF(("zapm_poll: start charging volt %d\n", volt));
+		} else if (ratecheck(&sc->sc_lastbattchk, &zapm_battchkrate)
+		    && !zapm_charge_complete(sc)) {
+			DPRINTF(("zapm_poll: discharge on\n"));
+			if (charging)
+				zapm_enable_charging(sc, 0);
+			sc->sc_discharging = 1;
+			scoop_discharge_battery(1);
+			timeout_add(&sc->sc_poll, DISCHARGE_TIMEOUT);
+		}
+	} else {
+		if (sc->sc_ac_on) {
+			sc->sc_batt_full = 0;
+			charging = 0;
+			zapm_enable_charging(sc, 0);
+			timerclear(&sc->sc_lastbattchk);
+			DPRINTF(("zapm_poll: stop charging\n"));
+		} else if (ratecheck(&sc->sc_lastbattchk, &zapm_battchkrate)) {
+			volt = zapm_batt_volt();
+			DPRINTF(("zapm_poll: volt %d\n", volt));
+		}
+
+		if (zapm_batt_state(volt) == APM_BATT_CRITICAL)
+			sc->sc_event = APM_CRIT_SUSPEND_REQ;
+	}
+
+	if (ac_on != sc->sc_ac_on || charging != sc->sc_charging ||
+	    volt != sc->sc_batt_volt) {
+		sc->sc_ac_on = ac_on;
+		sc->sc_charging = charging;
+		sc->sc_batt_volt = volt;
+		if (sc->sc_event == APM_NOEVENT)
+			sc->sc_event = APM_POWER_CHANGE;
+	}
+
+#ifdef APMDEBUG
+	if (sc->sc_event != APM_NOEVENT)
+		printf("zapm_poll: power event %d\n", sc->sc_event);
+#endif
 	splx(s);
 }
 
 /*
- * Report A/C and battery state in response to a request from apmd.
+ * apm_thread() calls this routine approximately once per second.
+ */
+int
+zapm_get_event(struct pxa2x0_apm_softc *pxa_sc, u_int *typep)
+{
+	struct zapm_softc *sc = (struct zapm_softc *)pxa_sc;
+	int s;
+
+	s = splsoftclock();
+
+	/* Don't interfere with discharging. */
+	if (sc->sc_discharging)
+		*typep = sc->sc_event;
+	else if (sc->sc_event == APM_NOEVENT) {
+		zapm_poll(sc);
+		*typep = sc->sc_event;
+	}
+	sc->sc_event = APM_NOEVENT;
+
+	splx(s);
+	return (*typep == APM_NOEVENT);
+}
+
+/*
+ * Return power status to the generic APM driver.
  */
 void
-zapm_power_info(struct pxa2x0_apm_softc *sc,
-    struct apm_power_info *power)
+zapm_power_info(struct pxa2x0_apm_softc *pxa_sc, struct apm_power_info *power)
 {
+	struct zapm_softc *sc = (struct zapm_softc *)pxa_sc;
 	int s;
+	int ac_on;
 	int volt;
 	int charging;
 
 	s = splsoftclock();
-	volt = zapm_curbattvolt;
-	charging = zapm_battcharging;
+	ac_on = sc->sc_ac_on;
+	volt = sc->sc_batt_volt;
+	charging = sc->sc_charging;
 	splx(s);
 
-	power->ac_state = zapm_ac_on() ? APM_AC_ON : APM_AC_OFF;
-	if (power->ac_state == APM_AC_OFF)
-		volt = zapm_batt_volt();
-
+	power->ac_state = ac_on ? APM_AC_ON : APM_AC_OFF;
 	if (charging)
 		power->battery_state = APM_BATT_CHARGING;
 	else
@@ -477,4 +493,66 @@ zapm_power_info(struct pxa2x0_apm_softc *sc,
 
 	power->battery_life = zapm_batt_life(volt);
 	power->minutes_left = zapm_batt_minutes(power->battery_life);
+}
+
+void
+zapm_poweroff(void)
+{
+	struct pxa2x0_apm_softc *sc;
+
+	KASSERT(apm_cd.cd_ndevs > 0 && apm_cd.cd_devs[0] != NULL);
+	sc = apm_cd.cd_devs[0];
+
+#if 0
+	/* XXX enable charging during suspend */
+
+	/* XXX keep power LED state during suspend */
+
+	/* XXX do the same thing for GPIO 43 (BTTXD) */
+
+	/* XXX scoop power down */
+
+	pxa2x0_wakeup_config(PXA2X0_WAKEUP_ALL, 1);
+
+	/* XXX set PGSRn and GPDRn */
+#endif
+
+	dopowerhooks(PWR_SUSPEND);
+
+	/* Turn off the status LED to avoid blinking before restart. */
+	scoop_led_set(SCOOP_LED_GREEN, 0);
+
+	pxa2x0_apm_sleep(sc);
+	zapm_restart();
+
+	/* NOTREACHED */
+	dopowerhooks(PWR_RESUME);
+}
+
+/*
+ * Do a GPIO reset, immediately causing the processor to begin the normal
+ * boot sequence.  See 2.7 Reset in the PXA27x Developer's Manual for the
+ * summary of effects of this kind of reset.
+ */
+void
+zapm_restart(void)
+{
+	struct pxa2x0_apm_softc *sc;
+	int rv;
+
+	KASSERT(apm_cd.cd_ndevs > 0 && apm_cd.cd_devs[0] != NULL);
+	sc = apm_cd.cd_devs[0];
+
+	/*
+	 * Reduce the ROM Delay Next Access and ROM Delay First Access times
+	 * for synchronous flash connected to nCS1.
+	 */
+	rv = bus_space_read_4(sc->sc_iot, sc->sc_memctl_ioh, MEMCTL_MSC0);
+        if ((rv & 0xffff0000) == 0x7ff00000)
+		bus_space_write_4(sc->sc_iot, sc->sc_memctl_ioh,
+		    MEMCTL_MSC0, (rv & 0xffff) | 0x7ee00000);
+
+	/* External reset circuit presumably asserts nRESET_GPIO. */
+	pxa2x0_gpio_set_function(89, GPIO_OUT | GPIO_SET);
+	delay(1000000);
 }
