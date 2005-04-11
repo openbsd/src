@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.39 2004/09/16 04:39:16 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.40 2005/04/11 15:16:50 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: util.c,v 1.39 2004/09/16 04:39:16 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.40 2005/04/11 15:16:50 deraadt Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -108,8 +108,7 @@ static void updateprogressmeter(int);
 void
 setpeer(int argc, char *argv[])
 {
-	char *host;
-	char *port;
+	char *host, *port;
 
 	if (connected) {
 		fprintf(ttyout, "Already connected to %s, use close first.\n",
@@ -248,14 +247,11 @@ setpeer(int argc, char *argv[])
 int
 ftp_login(const char *host, char *user, char *pass)
 {
-	char tmp[80];
-	char *acct;
+	char tmp[80], *acct = NULL, hostname[MAXHOSTNAMELEN];
 	char anonpass[MAXLOGNAME + 1 + MAXHOSTNAMELEN];	/* "user@hostname" */
-	char hostname[MAXHOSTNAMELEN];
-	struct passwd *pw;
 	int n, aflag = 0, retry = 0;
+	struct passwd *pw;
 
-	acct = NULL;
 	if (user == NULL) {
 		if (ruserpass(host, &user, &pass, &acct) < 0) {
 			code = -1;
@@ -391,32 +387,30 @@ another(int *pargc, char ***pargv, const char *prompt)
 char *
 remglob(char *argv[], int doswitch, char **errbuf)
 {
-        char temp[MAXPATHLEN];
-        static char buf[MAXPATHLEN];
-        static FILE *ftemp = NULL;
-        static char **args;
-        int oldverbose, oldhash, fd;
-        char *cp, *mode;
+	char temp[MAXPATHLEN], *cp, *mode;
+	static char buf[MAXPATHLEN], **args;
+	static FILE *ftemp = NULL;
+	int oldverbose, oldhash, fd;
 
-        if (!mflag) {
-                if (!doglob)
-                        args = NULL;
-                else {
-                        if (ftemp) {
-                                (void)fclose(ftemp);
-                                ftemp = NULL;
-                        }
-                }
-                return (NULL);
-        }
-        if (!doglob) {
-                if (args == NULL)
-                        args = argv;
-                if ((cp = *++args) == NULL)
-                        args = NULL;
-                return (cp);
-        }
-        if (ftemp == NULL) {
+	if (!mflag) {
+		if (!doglob)
+			args = NULL;
+		else {
+			if (ftemp) {
+				(void)fclose(ftemp);
+				ftemp = NULL;
+			}
+		}
+		return (NULL);
+	}
+	if (!doglob) {
+		if (args == NULL)
+			args = argv;
+		if ((cp = *++args) == NULL)
+			args = NULL;
+		return (cp);
+	}
+	if (ftemp == NULL) {
 		int len;
 
 		if ((cp = getenv("TMPDIR")) == NULL || *cp == '\0')
@@ -432,47 +426,47 @@ remglob(char *argv[], int doswitch, char **errbuf)
 		if (temp[len-1] != '/')
 			temp[len++] = '/';
 		(void)strlcpy(&temp[len], TMPFILE, sizeof temp - len);
-                if ((fd = mkstemp(temp)) < 0) {
-                        warn("unable to create temporary file %s", temp);
-                        return (NULL);
-                }
-                close(fd);
+		if ((fd = mkstemp(temp)) < 0) {
+			warn("unable to create temporary file %s", temp);
+			return (NULL);
+		}
+		close(fd);
 		oldverbose = verbose;
 		verbose = (errbuf != NULL) ? -1 : 0;
 		oldhash = hash;
 		hash = 0;
-                if (doswitch)
-                        pswitch(!proxy);
-                for (mode = "w"; *++argv != NULL; mode = "a")
-                        recvrequest("NLST", temp, *argv, mode, 0, 0);
+		if (doswitch)
+			pswitch(!proxy);
+		for (mode = "w"; *++argv != NULL; mode = "a")
+			recvrequest("NLST", temp, *argv, mode, 0, 0);
 		if ((code / 100) != COMPLETE) {
 			if (errbuf != NULL)
 				*errbuf = reply_string;
 		}
 		if (doswitch)
 			pswitch(!proxy);
-                verbose = oldverbose;
+		verbose = oldverbose;
 		hash = oldhash;
-                ftemp = fopen(temp, "r");
-                (void)unlink(temp);
-                if (ftemp == NULL) {
+		ftemp = fopen(temp, "r");
+		(void)unlink(temp);
+		if (ftemp == NULL) {
 			if (errbuf == NULL)
 				fputs("can't find list of remote files, oops.\n",
 				    ttyout);
 			else
 				*errbuf =
 				    "can't find list of remote files, oops.";
-                        return (NULL);
-                }
-        }
-        if (fgets(buf, sizeof(buf), ftemp) == NULL) {
-                (void)fclose(ftemp);
+			return (NULL);
+		}
+	}
+	if (fgets(buf, sizeof(buf), ftemp) == NULL) {
+		(void)fclose(ftemp);
 		ftemp = NULL;
-                return (NULL);
-        }
-        if ((cp = strchr(buf, '\n')) != NULL)
-                *cp = '\0';
-        return (buf);
+		return (NULL);
+	}
+	if ((cp = strchr(buf, '\n')) != NULL)
+		*cp = '\0';
+	return (buf);
 }
 
 int

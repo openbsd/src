@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.52 2005/04/05 22:37:00 henning Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.53 2005/04/11 15:16:50 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.52 2005/04/05 22:37:00 henning Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.53 2005/04/11 15:16:50 deraadt Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -86,7 +86,7 @@ char		*urldecode(const char *);
 #define EMPTYSTRING(x)	((x) == NULL || (*(x) == '\0'))
 
 static const char *at_encoding_warning =
-   "Extra `@' characters in usernames and passwords should be encoded as %%40";
+    "Extra `@' characters in usernames and passwords should be encoded as %%40";
 
 jmp_buf	httpabort;
 
@@ -98,31 +98,17 @@ jmp_buf	httpabort;
 static int
 url_get(const char *origline, const char *proxyenv, const char *outfile)
 {
+	char pbuf[NI_MAXSERV], hbuf[NI_MAXHOST], *cp, *ep, *portnum, *path;
+	char *hosttail, *cause = "unknown", *line, *host, *port, *buf = NULL;
+	int error, i, isftpurl = 0, isfileurl = 0, isredirect = 0, rval = -1;
 	struct addrinfo hints, *res0, *res;
-	int error;
-	int i, isftpurl, isfileurl, isredirect;
-	volatile int s, out;
-	size_t len;
-	char *cp, *ep, *portnum, *path;
-	char pbuf[NI_MAXSERV], hbuf[NI_MAXHOST];
 	const char * volatile savefile;
-	char *line, *host, *port, *buf;
-	char * volatile proxy;
-	char *hosttail;
+	char * volatile proxy = NULL;
+	volatile int s = -1, out;
 	volatile sig_t oldintr;
+	FILE *fin = NULL;
 	off_t hashbytes;
-	char *cause = "unknown";
-	FILE *fin;
-	int rval;
-
-	s = -1;
-	proxy = NULL;
-	fin = NULL;
-	buf = NULL;
-	isftpurl = 0;
-	isfileurl = 0;
-	isredirect = 0;
-	rval = -1;
+	size_t len;
 
 	line = strdup(origline);
 	if (line == NULL)
@@ -873,54 +859,53 @@ bad_ftp_url:
 char *
 urldecode(const char *str)
 {
-        char *ret;
-        char c;
-        int i, reallen;
+	char *ret, c;
+	int i, reallen;
 
-        if (str == NULL)
-                return NULL;
-        if ((ret = malloc(strlen(str)+1)) == NULL)
-                err(1, "Can't allocate memory for URL decoding");
-        for (i = 0, reallen = 0; str[i] != '\0'; i++, reallen++, ret++) {
-                c = str[i];
-                if (c == '+') {
-                        *ret = ' ';
-                        continue;
-                }
-                /* Can't use strtol here because next char after %xx may be
-                 * a digit. */
-                if (c == '%' && isxdigit(str[i+1]) && isxdigit(str[i+2])) {
-                        *ret = hextochar(&str[i+1]);
-                        i+=2;
-                        continue;
-                }
-                *ret = c;
-        }
-        *ret = '\0';
+	if (str == NULL)
+		return NULL;
+	if ((ret = malloc(strlen(str)+1)) == NULL)
+		err(1, "Can't allocate memory for URL decoding");
+	for (i = 0, reallen = 0; str[i] != '\0'; i++, reallen++, ret++) {
+		c = str[i];
+		if (c == '+') {
+			*ret = ' ';
+			continue;
+		}
+		/* Can't use strtol here because next char after %xx may be
+		 * a digit. */
+		if (c == '%' && isxdigit(str[i+1]) && isxdigit(str[i+2])) {
+			*ret = hextochar(&str[i+1]);
+			i+=2;
+			continue;
+		}
+		*ret = c;
+	}
+	*ret = '\0';
 
-        return ret-reallen;
+	return ret-reallen;
 }
 
 char
 hextochar(const char *str)
 {
-        char c, ret;
+	char c, ret;
 
-        c = str[0];
-        ret = c;
-        if (isalpha(c))
-                ret -= isupper(c) ? 'A' - 10 : 'a' - 10;
-        else
-                ret -= '0';
-        ret *= 16;
+	c = str[0];
+	ret = c;
+	if (isalpha(c))
+		ret -= isupper(c) ? 'A' - 10 : 'a' - 10;
+	else
+		ret -= '0';
+	ret *= 16;
 
-        c = str[1];
-        ret += c;
-        if (isalpha(c))
-                ret -= isupper(c) ? 'A' - 10 : 'a' - 10;
-        else
-                ret -= '0';
-        return ret;
+	c = str[1];
+	ret += c;
+	if (isalpha(c))
+		ret -= isupper(c) ? 'A' - 10 : 'a' - 10;
+	else
+		ret -= '0';
+	return ret;
 }
 
 int
