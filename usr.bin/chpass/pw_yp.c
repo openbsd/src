@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw_yp.c,v 1.19 2003/07/02 21:04:09 deraadt Exp $	*/
+/*	$OpenBSD: pw_yp.c,v 1.20 2005/04/11 07:13:03 deraadt Exp $	*/
 /*	$NetBSD: pw_yp.c,v 1.5 1995/03/26 04:55:33 glass Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.19 2003/07/02 21:04:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.20 2005/04/11 07:13:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ static char *domain;
 int
 pw_yp(struct passwd *pw, uid_t uid)
 {
-	char buf[11], *master, *p;
+	char uidbuf[20], gidbuf[20], *master, *p;
 	int r, rpcport, status, alen;
 	struct yppasswd yppasswd;
 	struct timeval tv;
@@ -123,9 +123,11 @@ pw_yp(struct passwd *pw, uid_t uid)
 	for (alen = 0, p = pw->pw_gecos; *p; p++)
 		if (*p == '&')
 			alen = alen + strlen(pw->pw_name) - 1;
+	(void)snprintf(uidbuf, sizeof uidbuf, "%u", pw->pw_uid);
+	(void)snprintf(gidbuf, sizeof gidbuf, "%u", pw->pw_gid);
+
 	if (strlen(pw->pw_name) + 1 + strlen(pw->pw_passwd) + 1 +
-	    strlen((snprintf(buf, sizeof buf, "%u", pw->pw_uid), buf)) + 1 +
-	    strlen((snprintf(buf, sizeof buf, "%u", pw->pw_gid), buf)) + 1 +
+	    strlen(uidbuf) + 1 + strlen(gidbuf) + 1 +
 	    strlen(pw->pw_gecos) + alen + 1 + strlen(pw->pw_dir) + 1 +
 	    strlen(pw->pw_shell) >= 1023) {
 		warnx("entries too long");
