@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.43 2005/04/07 22:08:57 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.44 2005/04/11 19:36:46 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -408,7 +408,7 @@ rcs_write(RCSFILE *rfp)
 		fprintf(fp, "%s\n", rcsnum_tostr(rdp->rd_num, numbuf,
 		    sizeof(numbuf)));
 		fprintf(fp, "date\t%d.%02d.%02d.%02d.%02d.%02d;",
-		    rdp->rd_date.tm_year, rdp->rd_date.tm_mon + 1,
+		    rdp->rd_date.tm_year + 1900, rdp->rd_date.tm_mon + 1,
 		    rdp->rd_date.tm_mday, rdp->rd_date.tm_hour,
 		    rdp->rd_date.tm_min, rdp->rd_date.tm_sec);
 		fprintf(fp, "\tauthor %s;\tstate %s;\n",
