@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.16 2005/04/01 07:44:03 otto Exp $";
+static char *rcsid = "$OpenBSD: clnt_perror.c,v 1.17 2005/04/11 18:34:09 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -77,6 +77,8 @@ clnt_sperror(CLIENT *rpch, char *s)
 	ret = snprintf(str, len, "%s: %s", s, clnt_sperrno(e.re_status));
 	if (ret == -1)
 		ret = 0;
+	else if (ret >= len)
+		ret = len;
 	str += ret;
 	len -= ret;
 	if (str > strstart + CLNT_PERROR_BUFLEN)
@@ -112,15 +114,17 @@ clnt_sperror(CLIENT *rpch, char *s)
 		ret = snprintf(str, len, "; why = ");
 		if (ret == -1)
 			ret = 0;
+		else if (ret >= len)
+			ret = len;
 		str += ret;
 		len -= ret;
 		if (str > strstart + CLNT_PERROR_BUFLEN)
 			goto truncated;
 		err = auth_errmsg(e.re_why);
 		if (err != NULL) {
-			ret = snprintf(str, len, "%s\n", err);
+			snprintf(str, len, "%s\n", err);
 		} else {
-			ret = snprintf(str, len,
+			snprintf(str, len,
 			    "(unknown authentication error - %d)\n",
 			    (int) e.re_why);
 		}
