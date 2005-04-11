@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.7 2004/07/20 03:50:27 deraadt Exp $	*/
+/*	$OpenBSD: init.c,v 1.8 2005/04/11 07:12:03 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.7 2004/07/20 03:50:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.8 2005/04/11 07:12:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,7 @@ fixit(int *argc, char **argv)
 				n = snprintf(bufp, bufend - bufp, "-k%ld%s",
 				    v+1, p);
 			}
-			if (n >= bufend - bufp)
+			if (n == -1 || n >= bufend - bufp)
 				errx(2, "bad field specification");
 			bufp += n;
 
@@ -265,7 +265,7 @@ fixit(int *argc, char **argv)
 					n = snprintf(bufp, bufend - bufp,
 					    ",%ld.%ld%s", w+1, x, p);
 				}
-				if (n >= bufend - bufp)
+				if (n == -1 || n >= bufend - bufp)
 					errx(2, "bad field specification");
 
 				/* shift over argv */
