@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-snmp.c,v 1.11 2004/03/19 04:55:03 aaron Exp $	*/
+/*	$OpenBSD: print-snmp.c,v 1.12 2005/04/11 07:40:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -57,7 +57,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-snmp.c,v 1.11 2004/03/19 04:55:03 aaron Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-snmp.c,v 1.12 2005/04/11 07:40:10 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -837,11 +837,11 @@ snmppdu_print(u_char pduid, const u_char *np, u_int length)
 	error = 0;
 	if ((pduid == GETREQ || pduid == GETNEXTREQ)
 	    && elem.data.integer != 0) {
-		char errbuf[10];
+		char errbuf[20];
 		printf("[errorStatus(%s)!=0]",
 			DECODE_ErrorStatus(elem.data.integer));
 	} else if (elem.data.integer != 0) {
-		char errbuf[10];
+		char errbuf[20];
 		printf(" %s", DECODE_ErrorStatus(elem.data.integer));
 		error = elem.data.integer;
 	}
@@ -925,7 +925,7 @@ trap_print(const u_char *np, u_int length)
 	}
 	generic = elem.data.integer;
 	{
-		char buf[10];
+		char buf[20];
 		printf(" %s", DECODE_GenericTrap(generic));
 	}
 	length -= count;
