@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.17 2005/04/12 04:06:42 dlg Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.18 2005/04/12 09:11:34 dlg Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -87,12 +87,13 @@
 #define PXA2X0_DMAC_SIZE	0x300
 #define PXA2X0_FFUART_BASE	0x40100000 /* Full Function UART */
 #define PXA2X0_BTUART_BASE	0x40200000 /* Bluetooth UART */
-#define PXA2X0_I2C_BASE		0x40300000
-#define PXA2X0_I2C_SIZE		0x000016a4
-#define PXA2X0_I2S_BASE 	0x40400000
-#define PXA2X0_AC97_BASE	0x40500000
-#define PXA2X0_AC97_SIZE	0x600
-#define PXA2X0_USBDC_BASE 	0x40600000 /* USB Client */
+#define PXA2X0_I2C_BASE		0x40300000 /* I2C Bus Interface Unit */
+#define PXA2X0_I2C_SIZE		0x16a4
+#define PXA2X0_I2S_BASE		0x40400000 /* Inter-IC Sound Controller */
+#define PXA2X0_I2S_SIZE		0x0084
+#define PXA2X0_AC97_BASE	0x40500000 /* AC '97 Controller */
+#define PXA2X0_AC97_SIZE	0x0600
+#define PXA2X0_USBDC_BASE 	0x40600000 /* USB Client Controller */
 #define PXA2X0_USBDC_SIZE 	0x0460
 #define PXA2X0_STUART_BASE	0x40700000 /* Standard UART */
 #define PXA2X0_ICP_BASE 	0x40800000
