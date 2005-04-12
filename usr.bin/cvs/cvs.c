@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.51 2005/04/12 14:58:40 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.52 2005/04/12 15:18:13 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -80,7 +80,7 @@ static TAILQ_HEAD(, cvs_var) cvs_variables;
  * command supports, without the actual command's name.
  *
  * Command handlers are expected to return 0 if no error occurred, or one of
- * the values known in sysexits.h in case of an error.  In case the error
+ * the CVS_EX_* error codes in case of an error.  In case the error
  * returned is 1, the command's usage string is printed to standard
  * error before returning.
  */
