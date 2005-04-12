@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.14 2005/04/12 14:58:40 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.15 2005/04/12 16:13:59 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -39,20 +39,26 @@
 #include "proto.h"
 
 
+#define CVS_STATUS_SEP \
+ "==================================================================="
+
+
 const char *cvs_statstr[] = {
 	"Unknown",
-	"Up to date",
+	"Up-to-date",
 	"Locally Modified",
 	"Added",
 	"Removed",
 	"Conflict",
 	"Patched",
+	"Lost",
 };
 
 
-int cvs_status_file(CVSFILE *, void *);
-int cvs_status_options(char *, int, char **, int *);
-int cvs_status_sendflags(struct cvsroot *);
+int cvs_status_file      (CVSFILE *, void *);
+int cvs_status_local     (CVSFILE *, void *);
+int cvs_status_options   (char *, int, char **, int *);
+int cvs_status_sendflags (struct cvsroot *);
 
 struct cvs_cmd_info cvs_status = {
 	cvs_status_options,
@@ -108,7 +114,7 @@ int
 cvs_status_file(CVSFILE *cfp, void *arg)
 {
 	int ret;
-	char *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	char *repo, fpath[MAXPATHLEN];
 	RCSFILE *rf;
 	struct cvs_ent *entp;
 	struct cvsroot *root;
@@ -119,63 +125,91 @@ cvs_status_file(CVSFILE *cfp, void *arg)
 	repo = CVS_DIR_REPO(cfp);
 
 	if (cfp->cf_type == DT_DIR) {
-		if (root->cr_method != CVS_METHOD_LOCAL) {
-			if (cfp->cf_cvstat == CVS_FST_UNKNOWN)
-				ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-				    CVS_FILE_NAME(cfp));
-			else
-				ret = cvs_senddir(root, cfp);
-		}
-
+		if (cfp->cf_cvstat == CVS_FST_UNKNOWN)
+			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+			    CVS_FILE_NAME(cfp));
+		else
+			ret = cvs_senddir(root, cfp);
 		return (ret);
 	}
 
 	cvs_file_getpath(cfp, fpath, sizeof(fpath));
 	entp = cvs_ent_getent(fpath);
 
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if ((entp != NULL) && (cvs_sendentry(root, entp) < 0)) {
-			cvs_ent_free(entp);
-			return (CVS_EX_PROTO);
-		}
+	if ((entp != NULL) && (cvs_sendentry(root, entp) < 0)) {
+		cvs_ent_free(entp);
+		return (-1);
+	}
 
-		switch (cfp->cf_cvstat) {
-		case CVS_FST_UNKNOWN:
-			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    CVS_FILE_NAME(cfp));
-			break;
-		case CVS_FST_UPTODATE:
-			ret = cvs_sendreq(root, CVS_REQ_UNCHANGED,
-			    CVS_FILE_NAME(cfp));
-			break;
-		case CVS_FST_MODIFIED:
-			ret = cvs_sendreq(root, CVS_REQ_MODIFIED,
-			    CVS_FILE_NAME(cfp));
-			if (ret == 0)
-				ret = cvs_sendfile(root, fpath);
-		default:
-			break;
-		}
-	} else {
-		if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
-			cvs_log(LP_WARN, "I know nothing about %s", fpath);
-			return (0);
-		}
-
-		snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
-		    root->cr_dir, repo, CVS_FILE_NAME(cfp), RCS_FILE_EXT);
-
-		rf = rcs_open(rcspath, RCS_READ);
-		if (rf == NULL) {
-			if (entp != NULL)
-				cvs_ent_free(entp);
-			return (CVS_EX_DATA);
-		}
-
-		rcs_close(rf);
+	switch (cfp->cf_cvstat) {
+	case CVS_FST_UNKNOWN:
+		ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+		    CVS_FILE_NAME(cfp));
+		break;
+	case CVS_FST_UPTODATE:
+		ret = cvs_sendreq(root, CVS_REQ_UNCHANGED,
+		    CVS_FILE_NAME(cfp));
+		break;
+	case CVS_FST_MODIFIED:
+		ret = cvs_sendreq(root, CVS_REQ_MODIFIED,
+		    CVS_FILE_NAME(cfp));
+		if (ret == 0)
+			ret = cvs_sendfile(root, fpath);
+	default:
+		break;
 	}
 
 	if (entp != NULL)
 		cvs_ent_free(entp);
 	return (ret);
+}
+
+int
+cvs_status_local(CVSFILE *cfp, void *arg)
+{
+	char *repo, numbuf[64], fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	RCSFILE *rf;
+	struct cvs_ent *entp;
+	struct cvsroot *root;
+
+	if (cfp->cf_type == DT_DIR)
+		return (0);
+
+	root = CVS_DIR_ROOT(cfp);
+	repo = CVS_DIR_REPO(cfp);
+
+	cvs_file_getpath(cfp, fpath, sizeof(fpath));
+	entp = cvs_ent_getent(fpath);
+
+	if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
+		cvs_log(LP_WARN, "I know nothing about %s", fpath);
+		return (0);
+	}
+
+	snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
+	    root->cr_dir, repo, CVS_FILE_NAME(cfp), RCS_FILE_EXT);
+
+	rf = rcs_open(rcspath, RCS_READ);
+	if (rf == NULL) {
+		if (entp != NULL)
+			cvs_ent_free(entp);
+		return (-1);
+	}
+
+	cvs_printf(CVS_STATUS_SEP "\nFile: %-18sStatus: %s\n\n",
+	    CVS_FILE_NAME(cfp), cvs_statstr[cfp->cf_cvstat]);
+
+	rcsnum_tostr(entp->ce_rev, numbuf, sizeof(numbuf));
+	cvs_printf("   Working revision:    %s %s\n", numbuf, "date here");
+	rcsnum_tostr(rf->rf_head, numbuf, sizeof(numbuf));
+	cvs_printf("   Repository revision: %s %s\n", numbuf, rcspath);
+	cvs_printf("   Sticky Tag:          %s\n", "(none)");
+	cvs_printf("   Sticky Date:         %s\n", "(none)");
+	cvs_printf("   Sticky Options:      %s\n", "(none)");
+
+	rcs_close(rf);
+
+	if (entp != NULL)
+		cvs_ent_free(entp);
+	return (0);
 }
