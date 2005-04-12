@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvsintro.7,v 1.5 2005/01/11 08:26:45 xsa Exp $
+.\"	$OpenBSD: cvsintro.7,v 1.6 2005/04/12 20:11:07 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -158,8 +158,6 @@ itself.
 .Sh USING CVS TO MANAGE A REPOSITORY
 Software developers may wish to use
 .Xr cvs 1
-and
-.Xr cvsd 8
 to manage their own software projects.
 Here we look at an example usage:
 providing remote access to a small group of developers
@@ -210,28 +208,6 @@ This will create a default administrative directory,
 .Pa $CVSROOT/CVSROOT ,
 filled with files concerned with the management of the repository.
 .Pp
-After initialisation, the CVS daemon,
-.Xr cvsd 8 ,
-has to be started to provide a means of access and management
-to the repository.
-The following example shows the arguments required to start
-.Xr cvsd 8
-with our example repository,
-.Dq projects :
-.Pp
-.Dl # cvsd -p -r /cvs/projects
-.Pp
-In the above example, the
-.Fl p
-option was also used to ensure there were no problems with file permissions.
-.Pp
-Configuration variables, such as the root directory of the CVS repository,
-can be specified in the configuration file
-.Xr cvsd.conf 5 .
-See also
-.Xr cvsd 8
-for more information on running and configuring the CVS daemon.
-.Pp
 Thereafter, access will have to be arranged for
 developers participating in the project.
 This typically means providing SSH access via
@@ -241,9 +217,7 @@ unless the development network is local.
 .Sh SEE ALSO
 .Xr cvs 1 ,
 .Xr rcs 1 ,
-.Xr cvsd.conf 5 ,
 .Xr cvsrc 5 ,
-.Xr cvsd 8 ,
 .Xr sshd 8
 .Sh HISTORY
 The OpenCVS project is a BSD-licensed rewrite of the original
