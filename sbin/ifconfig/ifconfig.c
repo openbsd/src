@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.134 2005/04/11 21:05:01 cloder Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.135 2005/04/12 12:15:53 markus Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.134 2005/04/11 21:05:01 cloder Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.135 2005/04/12 12:15:53 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -2004,7 +2004,7 @@ status(int link, struct sockaddr_dl *sdl)
 		printf(" mtu %lu", mtu);
 	putchar('\n');
 	if (sdl != NULL && sdl->sdl_type == IFT_ETHER && sdl->sdl_alen)
-		(void)printf("\tlladdr: %s\n", ether_ntoa(
+		(void)printf("\tlladdr %s\n", ether_ntoa(
 		    (struct ether_addr *)LLADDR(sdl)));
 
 	(void) memset(&ifrdesc, 0, sizeof(ifrdesc));
