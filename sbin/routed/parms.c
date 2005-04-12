@@ -1,4 +1,4 @@
-/*	$OpenBSD: parms.c,v 1.12 2004/03/14 22:21:31 tedu Exp $	*/
+/*	$OpenBSD: parms.c,v 1.13 2005/04/12 15:26:47 cloder Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -203,7 +203,7 @@ gwkludge(void)
 			HTONL(dst);	/* make network # into IP address */
 		} else {
 			msglog("bad \"%s\" in "_PATH_GATEWAYS
-			       " entry \"%s\"", lptr);
+			       " entry \"%s\"", net_host, lptr);
 			continue;
 		}
 

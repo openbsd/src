@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdisc.c,v 1.5 2003/06/02 20:06:17 millert Exp $	*/
+/*	$OpenBSD: rdisc.c,v 1.6 2005/04/12 15:26:47 cloder Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -923,7 +923,8 @@ read_d(void)
 {
 	static naddr bad_asize, bad_len;
 	struct sockaddr_in from;
-	int n, fromlen, cc, hlen;
+	socklen_t fromlen;
+	int n, cc, hlen;
 	union {
 		struct ip ip;
 		u_short s[512/2];
@@ -945,7 +946,7 @@ read_d(void)
 			break;
 		}
 		if (fromlen != sizeof(struct sockaddr_in))
-			logbad(1,"impossible recvfrom(rdisc_sock) fromlen=%d",
+			logbad(1,"impossible recvfrom(rdisc_sock) fromlen=%u",
 			       fromlen);
 
 		hlen = pkt.ip.ip_hl << 2;

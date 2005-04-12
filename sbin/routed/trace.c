@@ -1,4 +1,4 @@
-/*	$OpenBSD: trace.c,v 1.14 2003/07/03 02:47:03 avsm Exp $	*/
+/*	$OpenBSD: trace.c,v 1.15 2005/04/12 15:26:47 cloder Exp $	*/
 /*	$NetBSD: trace.c,v 1.13 1995/06/20 22:28:03 christos Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)trace.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: trace.c,v 1.14 2003/07/03 02:47:03 avsm Exp $";
+static char rcsid[] = "$OpenBSD: trace.c,v 1.15 2005/04/12 15:26:47 cloder Exp $";
 #endif
 
 #define	RIPCMDS
@@ -163,7 +163,7 @@ trace_flush(void)
 	if (ftrace != 0) {
 		fflush(ftrace);
 		if (ferror(ftrace))
-			trace_off("tracing off: ", strerror(ferror(ftrace)));
+			trace_off("tracing off: %s", strerror(ferror(ftrace)));
 	}
 }
 

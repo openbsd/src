@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtquery.c,v 1.16 2005/03/23 18:03:52 jmc Exp $	*/
+/*	$OpenBSD: rtquery.c,v 1.17 2005/04/12 15:26:47 cloder Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -37,6 +37,7 @@ char copyright[] =
 static char sccsid[] = "@(#)query.c	8.1 (Berkeley) 6/5/93";
 #endif
 
+#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
@@ -297,7 +298,7 @@ query_loop(char *argv[], int argc)
 	fd_set bits;
 	struct timeval now, delay;
 	struct sockaddr_in from;
-	int fromlen;
+	socklen_t fromlen;
 
 	OMSG.rip_cmd = (pflag) ? RIPCMD_POLL : RIPCMD_REQUEST;
 	if (ripv2) {
