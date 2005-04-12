@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.10 2005/04/11 18:02:58 joris Exp $	*/
+/*	$OpenBSD: tag.c,v 1.11 2005/04/12 14:58:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -83,7 +83,7 @@ cvs_tag_options(char *opt, int argc, char **argv, int *arg)
 			old_tag = optarg;
 			break;
 		default:
-			return (1);
+			return (CVS_EX_USAGE);
 		}
 	}
 
@@ -92,7 +92,7 @@ cvs_tag_options(char *opt, int argc, char **argv, int *arg)
 	argv += optind;
 
 	if (argc == 0) {
-		return (1);
+		return (CVS_EX_USAGE);
 	} else {
 		tag = argv[0];
 		argc--;
@@ -113,7 +113,7 @@ cvs_tag_options(char *opt, int argc, char **argv, int *arg)
 
 	if (old_tag != NULL && date != NULL) {
 		cvs_log(LP_ERROR, "-r and -D options are mutually exclusive");
-		return (-1);
+		return (CVS_EX_USAGE);
 	}
 
 	return (0);
@@ -123,25 +123,25 @@ int
 cvs_tag_sendflags(struct cvsroot *root)
 {
 	if (branch && (cvs_sendarg(root, "-b", 0) < 0))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if (delete && (cvs_sendarg(root, "-d", 0) < 0))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if (old_tag) {
 		if ((cvs_sendarg(root, "-r", 0) < 0) ||
 		    (cvs_sendarg(root, old_tag, 0) < 0))
-			return (-1);
+			return (CVS_EX_PROTO);
 	}
 
 	if (date) {
 		if ((cvs_sendarg(root, "-D", 0) < 0) ||
 		    (cvs_sendarg(root, date, 0) < 0))
-			return (-1);
+			return (CVS_EX_PROTO);
 	}
 
 	if (cvs_sendarg(root, tag, 0) < 0)
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	return (0);
 }
@@ -167,7 +167,7 @@ cvs_tag_file(CVSFILE *cfp, void *arg)
 
 	if ((root->cr_method != CVS_METHOD_LOCAL) && (cfp->cf_type == DT_DIR)) {
 		if (cvs_senddir(root, cfp) < 0)
-			return (-1);
+			return (CVS_EX_PROTO);
 		return (0);
 	}
 
@@ -177,7 +177,7 @@ cvs_tag_file(CVSFILE *cfp, void *arg)
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		if ((entp != NULL) && (cvs_sendentry(root, entp) < 0)) {
 			cvs_ent_free(entp);
-			return (-1);
+			return (CVS_EX_PROTO);
 		}
 
 		switch (cfp->cf_cvstat) {
@@ -213,7 +213,7 @@ cvs_tag_file(CVSFILE *cfp, void *arg)
 		if (rf == NULL) {
 			if (entp != NULL)
 				cvs_ent_free(entp);
-			return (-1);
+			return (CVS_EX_DATA);
 		}
 
 		rcs_close(rf);

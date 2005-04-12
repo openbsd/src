@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.6 2005/04/11 18:02:58 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.7 2005/04/12 14:58:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Xavier Santolaria <xsa@openbsd.org>
@@ -73,7 +73,7 @@ cvs_remove_options(char *opt, int argc, char **argv, int *arg)
 		case 'R':
 			break;
 		default:
-			return (1);
+			return (CVS_EX_USAGE);
 		}
 	}
 
@@ -81,7 +81,7 @@ cvs_remove_options(char *opt, int argc, char **argv, int *arg)
 	argv += optind;
 
 	if (argc == 0)
-		return (1);
+		return (CVS_EX_USAGE);
 
 	*arg = optind;
 	return (0);
@@ -118,7 +118,7 @@ cvs_remove_file(CVSFILE *cf, void *arg)
 	entfile = cvs_ent_open(dirname(fpath), O_RDWR);
 	if (entfile == NULL) {
 		cvs_log(LP_ERR, "failed to remove `%s'", fpath);
-		return (-1);
+		return (CVS_EX_FILE);
 	}
 
 	ent = cvs_ent_get(entfile, CVS_FILE_NAME(cf));
@@ -132,7 +132,7 @@ cvs_remove_file(CVSFILE *cf, void *arg)
 			if((unlink(fpath) == -1) && (errno != ENOENT)) {
 				cvs_log(LP_ERRNO, "failed to unlink `%s'",
 				    fpath);
-				return (-1);
+				return (CVS_EX_FILE);
 			}
 		}
 

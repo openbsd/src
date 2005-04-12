@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.27 2005/04/11 18:02:58 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.28 2005/04/12 14:58:40 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -358,7 +358,7 @@ cvs_diff_options(char *opt, int argc, char **argv, int *arg)
 
 	dap = (struct diff_arg *)malloc(sizeof(*dap));
 	if (dap == NULL)
-		return (-1);
+		return (CVS_EX_DATA);
 	dap->date1 = dap->date2 = dap->rev1 = dap->rev2 = NULL;
 	strlcpy(diffargs, argv[0], sizeof(diffargs));
 
@@ -406,7 +406,7 @@ cvs_diff_options(char *opt, int argc, char **argv, int *arg)
 				cvs_log(LP_ERR,
 				    "no more than two revisions/dates can "
 				    "be specified");
-				return (1);
+				return (CVS_EX_USAGE);
 			}
 			break;
 		case 'u':
@@ -414,7 +414,7 @@ cvs_diff_options(char *opt, int argc, char **argv, int *arg)
 			format = D_UNIFIED;
 			break;
 		default:
-			return (1);
+			return (CVS_EX_USAGE);
 		}
 	}
 
@@ -439,9 +439,9 @@ cvs_diff_sendflags(struct cvsroot *root)
 {
 	/* send the flags */
 	if (Nflag && (cvs_sendarg(root, "-N", 0) < 0))
-		return (-1);
+		return (CVS_EX_PROTO);
 	if (pflag && (cvs_sendarg(root, "-p", 0) < 0))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if (format == D_CONTEXT)
 		cvs_sendarg(root, "-c", 0);
@@ -534,12 +534,12 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 
 	entp = cvs_ent_getent(diff_file);
 	if (entp == NULL)
-		return (-1);
+		return (CVS_EX_DATA);
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		if (cvs_sendentry(root, entp) < 0) {
 			cvs_ent_free(entp);
-			return (-1);
+			return (CVS_EX_PROTO);
 		}
 	}
 
@@ -562,7 +562,7 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		rf = rcs_open(rcspath, RCS_READ);
 		if (rf == NULL) {
 			cvs_ent_free(entp);
-			return (-1);
+			return (CVS_EX_DATA);
 		}
 
 		cvs_printf("Index: %s\n%s\nRCS file: %s\n", diff_file,
@@ -573,7 +573,7 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		else {
 			if ((r1 = rcsnum_parse(dap->rev1)) == NULL) {
 				cvs_ent_free(entp);
-				return (-1);
+				return (CVS_EX_DATA);
 			}
 		}
 
@@ -588,7 +588,7 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 			cvs_printf("retrieving revision %s\n", dap->rev2);
 			if ((r2 = rcsnum_parse(dap->rev2)) == NULL) {
 				cvs_ent_free(entp);
-				return (-1);
+				return (CVS_EX_DATA);
 			}
 			b2 = rcs_getrev(rf, r2);
 			rcsnum_free(r2);
@@ -607,7 +607,7 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		if (cvs_buf_write_stmp(b1, path_tmp1, 0600) == -1) {
 			cvs_buf_free(b1);
 			cvs_buf_free(b2);
-			return (-1);
+			return (CVS_EX_DATA);
 		}
 		cvs_buf_free(b1);
 
@@ -615,7 +615,7 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		if (cvs_buf_write_stmp(b2, path_tmp2, 0600) == -1) {
 			cvs_buf_free(b2);
 			(void)unlink(path_tmp1);
-			return (-1);
+			return (CVS_EX_DATA);
 		}
 		cvs_buf_free(b2);
 

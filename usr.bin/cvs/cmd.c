@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.9 2005/04/11 18:02:58 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.10 2005/04/12 14:58:40 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -98,7 +98,7 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 		}
 
 		if (c->cmd_sendflags != NULL) {
-			if ((ret = c->cmd_sendflags(root)) < 0)
+			if ((ret = c->cmd_sendflags(root)) != 0)
 				return (ret);
 		}
 

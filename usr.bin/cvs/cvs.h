@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.49 2005/04/06 16:35:25 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.50 2005/04/12 14:58:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -45,6 +45,11 @@
 
 #define CVS_CKSUM_LEN      33     /* length of a CVS checksum string */
 
+/* error codes */
+#define CVS_EX_USAGE	1
+#define CVS_EX_DATA	2
+#define CVS_EX_PROTO	3
+#define CVS_EX_FILE	4
 
 /* operations */
 #define CVS_OP_UNKNOWN      0

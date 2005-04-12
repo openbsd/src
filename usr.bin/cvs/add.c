@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.18 2005/04/11 18:02:58 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.19 2005/04/12 14:58:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -73,17 +73,17 @@ cvs_add_options(char *opt, int argc, char **argv, int *arg)
 				cvs_log(LP_ERR,
 				    "invalid RCS keyword expansion mode");
 				rcs_kflag_usage();
-				return (1);
+				return (CVS_EX_USAGE);
 			}
 			break;
 		case 'm':
 			if ((cvs_msg = strdup(optarg)) == NULL) {
 				cvs_log(LP_ERRNO, "failed to copy message");
-				return (-1);
+				return (CVS_EX_DATA);
 			}
 			break;
 		default:
-			return (1);
+			return (CVS_EX_USAGE);
 		}
 	}
 
@@ -100,7 +100,7 @@ cvs_add_sendflags(struct cvsroot *root)
 		strlcpy(buf, "-k", sizeof(buf));
 		strlcat(buf, koptstr, sizeof(buf));
 		if (cvs_sendarg(root, buf, 0) < 0)
-			return (-1);
+			return (CVS_EX_PROTO);
 	}
 
 	return (0);

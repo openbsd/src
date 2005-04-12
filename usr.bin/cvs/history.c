@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.12 2005/04/11 18:02:58 joris Exp $	*/
+/*	$OpenBSD: history.c,v 1.13 2005/04/12 14:58:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -104,7 +104,7 @@ cvs_history_options(char *opt, int argc, char **argv, int *arg)
 			flags |= CVS_HF_M;
 			if (nbmod == CVS_HISTORY_MAXMOD) {
 				cvs_log(LP_ERR, "too many `-m' options");
-				return (1);
+				return (CVS_EX_USAGE);
 			}
 			modules[nbmod++] = optarg;
 			break;
@@ -132,14 +132,14 @@ cvs_history_options(char *opt, int argc, char **argv, int *arg)
 			zone = optarg;
 			break;
 		default:
-			return (1);
+			return (CVS_EX_USAGE);
 		}
 	}
 
 	if (rep > 1) {
 		cvs_log(LP_ERR,
 		    "Only one report type allowed from: \"-Tcomxe\"");
-		return (1);
+		return (CVS_EX_USAGE);
 	} else if (rep == 0)
 		flags |= CVS_HF_O;    /* use -o as default */
 
@@ -152,26 +152,26 @@ cvs_history_sendflags(struct cvsroot *root)
 {
 
 	if ((flags & CVS_HF_C) && (cvs_sendarg(root, "-c", 0) < 0))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if ((flags & CVS_HF_O) && (cvs_sendarg(root, "-o", 0) < 0))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if (tag != NULL) {
 		if ((cvs_sendarg(root, "-t", 0) < 0) ||
 		    (cvs_sendarg(root, tag, 0) < 0))
-			return (-1);
+			return (CVS_EX_PROTO);
 	}
 
 	if (user != NULL) {
 		if ((cvs_sendarg(root, "-u", 0) < 0) ||
 		    (cvs_sendarg(root, user, 0) < 0))
-			return (-1);
+			return (CVS_EX_PROTO);
 	}
 
 	if ((cvs_sendarg(root, "-z", 0) < 0) ||
 	    (cvs_sendarg(root, zone, 0) < 0))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.22 2005/04/11 18:02:58 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.23 2005/04/12 14:58:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -80,24 +80,24 @@ cvs_commit_options(char *opt, int argc, char **argv, int *arg)
 			cvs_msg = strdup(optarg);
 			if (cvs_msg == NULL) {
 				cvs_log(LP_ERRNO, "failed to copy message");
-				return (-1);
+				return (CVS_EX_USAGE);
 			}
 			break;
 		case 'R':
 			cvs_commit.file_flags |= CF_RECURSE;
 			break;
 		default:
-			return (1);
+			return (CVS_EX_USAGE);
 		}
 	}
 
 	if ((cvs_msg != NULL) && (mfile != NULL)) {
 		cvs_log(LP_ERR, "the -F and -m flags are mutually exclusive");
-		return (1);
+		return (CVS_EX_USAGE);
 	}
 
 	if ((mfile != NULL) && (cvs_msg = cvs_logmsg_open(mfile)) == NULL)
-		return (-1);
+		return (CVS_EX_DATA);
 
 	*arg = optind;
 	return (0);
@@ -125,7 +125,7 @@ cvs_commit_helper(void)
 	}
 
 	if (cvs_msg == NULL)
-		return (-1);
+		return (CVS_EX_DATA);
 
 	return (0);
 }
@@ -145,7 +145,7 @@ cvs_commit_prepare(CVSFILE *cf, void *arg)
 	if ((cf->cf_type == DT_REG) && (cf->cf_cvstat == CVS_FST_MODIFIED)) {
 		copy = cvs_file_copy(cf);
 		if (copy == NULL)
-			return (-1);
+			return (CVS_EX_DATA);
 
 		TAILQ_INSERT_TAIL(clp, copy, cf_list);
 	}
@@ -189,25 +189,25 @@ cvs_commit_file(CVSFILE *cf, void *arg)
 
 	entp = cvs_ent_getent(fpath);
 	if (entp == NULL)
-		return (-1);
+		return (CVS_EX_DATA);
 
 	if ((cf->cf_cvstat == CVS_FST_ADDED) ||
 	    (cf->cf_cvstat == CVS_FST_MODIFIED)) {
 		if (root->cr_method != CVS_METHOD_LOCAL) {
 			if (cvs_sendentry(root, entp) < 0) {
 				cvs_ent_free(entp);
-				return (-1);
+				return (CVS_EX_PROTO);
 			}
 
 			if (cvs_sendreq(root, CVS_REQ_MODIFIED,
 			    CVS_FILE_NAME(cf)) < 0) {
 				cvs_ent_free(entp);
-				return (-1);
+				return (CVS_EX_PROTO);
 			}
 
 			if (cvs_sendfile(root, fpath) < 0) {
 				cvs_ent_free(entp);
-				return (-1);
+				return (CVS_EX_PROTO);
 			}
 		}
 	}

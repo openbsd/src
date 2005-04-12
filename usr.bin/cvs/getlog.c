@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.18 2005/04/11 18:02:58 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.19 2005/04/12 14:58:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -88,7 +88,7 @@ cvs_getlog_options(char *opt, int argc, char **argv, int *arg)
 		case 'r':
 			break;
 		default:
-			return (1);
+			return (CVS_EX_USAGE);
 		}
 	}
 
@@ -134,7 +134,7 @@ cvs_getlog_file(CVSFILE *cf, void *arg)
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		if ((entp != NULL) && (cvs_sendentry(root, entp) < 0)) {
 			cvs_ent_free(entp);
-			return (-1);
+			return (CVS_EX_PROTO);
 		}
 
 		switch (cf->cf_cvstat) {
@@ -167,7 +167,7 @@ cvs_getlog_file(CVSFILE *cf, void *arg)
 		if (rf == NULL) {
 			if (entp != NULL)
 				cvs_ent_free(entp);
-			return (-1);
+			return (CVS_EX_DATA);
 		}
 
 		rcs_close(rf);

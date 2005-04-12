@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.8 2005/04/11 18:02:58 joris Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.9 2005/04/12 14:58:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -85,14 +85,14 @@ cvs_annotate_options(char *opt, int argc, char **argv, int *arg)
 			rev = optarg;
 			break;
 		default:
-			return (1);
+			return (CVS_EX_USAGE);
 		}
 	}
 
 	if ((date != NULL) && (rev != NULL)) {
 		cvs_log(LP_ERR,
 		    "the -D and -d arguments are mutually exclusive");
-		return (1);
+		return (CVS_EX_USAGE);
 	}
 
 	*arg = optind;
@@ -103,18 +103,18 @@ int
 cvs_annotate_sendflags(struct cvsroot *root)
 {
 	if (usehead && (cvs_sendarg(root, "-f", 0) < 0))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if (rev != NULL) {
 		if ((cvs_sendarg(root, "-r", 0) < 0) ||
 		    (cvs_sendarg(root, rev, 0) < 0))
-			return (-1);
+			return (CVS_EX_PROTO);
 	}
 
 	if (date != NULL) {
 		if ((cvs_sendarg(root, "-D", 0) < 0) ||
 		    (cvs_sendarg(root, date, 0) < 0))
-			return (-1);
+			return (CVS_EX_PROTO);
 	}
 
 	return (0);
@@ -154,7 +154,7 @@ cvs_annotate_file(CVSFILE *cf, void *arg)
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		if ((entp != NULL) && (cvs_sendentry(root, entp) < 0)) {
 			cvs_ent_free(entp);
-			return (-1);
+			return (CVS_EX_PROTO);
 		}
 
 		switch (cf->cf_cvstat) {

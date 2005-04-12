@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.13 2005/04/03 17:32:50 xsa Exp $	*/
+/*	$OpenBSD: init.c,v 1.14 2005/04/12 14:58:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -97,7 +97,7 @@ cvs_init_local(struct cvsroot *root)
 			if (mkdir(path, cvsroot_files[i].cf_mode) == -1) {
 				cvs_log(LP_ERRNO, "failed to create `%s'",
 				    path);
-				return (-1);
+				return (CVS_EX_FILE);
 			}
 		} else if (cvsroot_files[i].cf_type == CFT_FILE) {
 			fd = open(path, O_WRONLY|O_CREAT|O_EXCL,
@@ -105,7 +105,7 @@ cvs_init_local(struct cvsroot *root)
 			if (fd == -1) {
 				cvs_log(LP_ERRNO, "failed to create `%s'",
 				    path);
-				return (-1);
+				return (CVS_EX_FILE);
 			}
 
 			(void)close(fd);
@@ -113,7 +113,7 @@ cvs_init_local(struct cvsroot *root)
 			strlcat(path, RCS_FILE_EXT, sizeof(path));
 			rfp = rcs_open(path, RCS_WRITE|RCS_CREATE, 0640);
 			if (rfp == NULL) {
-				return (-1);
+				return (CVS_EX_DATA);
 			}
 
 			rcs_close(rfp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.13 2005/04/11 18:02:58 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.14 2005/04/12 14:58:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -83,7 +83,7 @@ cvs_status_options(char *opt, int argc, char **argv, int *arg)
 			verbose = 1;
 			break;
 		default:
-			return (1);
+			return (CVS_EX_USAGE);
 		}
 	}
 
@@ -95,7 +95,7 @@ int
 cvs_status_sendflags(struct cvsroot *root)
 {
 	if (verbose && (cvs_sendarg(root, "-v", 0) < 0))
-		return (-1);
+		return (CVS_EX_PROTO);
 	return (0);
 }
 
@@ -136,7 +136,7 @@ cvs_status_file(CVSFILE *cfp, void *arg)
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		if ((entp != NULL) && (cvs_sendentry(root, entp) < 0)) {
 			cvs_ent_free(entp);
-			return (-1);
+			return (CVS_EX_PROTO);
 		}
 
 		switch (cfp->cf_cvstat) {
@@ -169,7 +169,7 @@ cvs_status_file(CVSFILE *cfp, void *arg)
 		if (rf == NULL) {
 			if (entp != NULL)
 				cvs_ent_free(entp);
-			return (-1);
+			return (CVS_EX_DATA);
 		}
 
 		rcs_close(rf);

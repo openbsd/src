@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.17 2005/04/11 18:02:58 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.18 2005/04/12 14:58:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -89,7 +89,7 @@ cvs_checkout_options(char *opt, int argc, char **argv, int *arg)
 				cvs_log(LP_ERR,
 				    "invalid RCS keyword expansion mode");
 				rcs_kflag_usage();
-				return (1);
+				return (CVS_EX_USAGE);
 			}
 			break;
 		case 'r':
@@ -102,7 +102,7 @@ cvs_checkout_options(char *opt, int argc, char **argv, int *arg)
 			rcsid = optarg;
 			break;
 		default:
-			return (1);
+			return (CVS_EX_USAGE);
 		}
 	}
 
@@ -112,12 +112,12 @@ cvs_checkout_options(char *opt, int argc, char **argv, int *arg)
 	if (!statmod && (argc == 0)) {
 		cvs_log(LP_ERR,
 		    "must specify at least one module or directory");
-		return (1);
+		return (CVS_EX_USAGE);
 	}
 
 	if (statmod && (argc > 0)) {
 		cvs_log(LP_ERR,  "-c and -s must not get any arguments");
-		return (1);
+		return (CVS_EX_USAGE);
 	}
 
 	*arg = optind;
@@ -128,21 +128,21 @@ int
 cvs_checkout_sendflags(struct cvsroot *root)
 {
 	if (cvs_senddir(root, cvs_files) < 0)
-		return (-1);
+		return (CVS_EX_PROTO);
 	if (cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL) < 0)
 		cvs_log(LP_ERR, "failed to expand module");
 
 	/* XXX not too sure why we have to send this arg */
 	if (cvs_sendarg(root, "-N", 0) < 0)
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if ((statmod == CVS_LISTMOD) &&
 	    (cvs_sendarg(root, "-c", 0) < 0))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if ((statmod == CVS_STATMOD) &&
 	    (cvs_sendarg(root, "-s", 0) < 0))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	return (0);
 }

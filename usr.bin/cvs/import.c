@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.10 2005/04/11 18:02:58 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.11 2005/04/12 14:58:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -72,7 +72,7 @@ cvs_import_options(char *opt, int argc, char **argv, int *arg)
 			if ((bnum = rcsnum_parse(branch)) == NULL) {
 				cvs_log(LP_ERR, "%s is not a numeric branch",
 				    branch);
-				return (1);
+				return (CVS_EX_USAGE);
 			}
 			rcsnum_free(bnum);
 			break;
@@ -82,7 +82,7 @@ cvs_import_options(char *opt, int argc, char **argv, int *arg)
 			if (cvs_file_ignore(optarg) < 0) {
 				cvs_log(LP_ERR, "failed to add `%s' to list "
 				    "of ignore patterns", optarg);
-				return (1);
+				return (CVS_EX_USAGE);
 			}
 			break;
 		case 'k':
@@ -91,11 +91,11 @@ cvs_import_options(char *opt, int argc, char **argv, int *arg)
 			cvs_msg = strdup(optarg);
 			if (cvs_msg == NULL) {
 				cvs_log(LP_ERRNO, "failed to copy message");
-				return (-1);
+				return (CVS_EX_DATA);
 			}
 			break;
 		default:
-			return (1);
+			return (CVS_EX_USAGE);
 		}
 	}
 
@@ -104,7 +104,7 @@ cvs_import_options(char *opt, int argc, char **argv, int *arg)
 	*arg = optind;
 
 	if (argc > 4)
-		return (1);
+		return (CVS_EX_USAGE);
 
 	module = argv[0];
 	vendor = argv[1];
@@ -112,7 +112,7 @@ cvs_import_options(char *opt, int argc, char **argv, int *arg)
 
 	if ((cvs_msg == NULL) &&
 	    (cvs_msg = cvs_logmsg_get(NULL, NULL, NULL, NULL)) == NULL)
-		return (-1);
+		return (CVS_EX_DATA);
 
 	return (0);
 }
@@ -127,7 +127,7 @@ cvs_import_sendflags(struct cvsroot *root)
 	    (cvs_sendarg(root, module, 0) < 0) ||
 	    (cvs_sendarg(root, vendor, 0) < 0) ||
 	    (cvs_sendarg(root, release, 0) < 0))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	return (0);
 }
@@ -169,9 +169,9 @@ cvs_import_file(CVSFILE *cfp, void *arg)
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		if (cvs_sendreq(root, CVS_REQ_MODIFIED, CVS_FILE_NAME(cfp)) < 0)
-			return (-1);
+			return (CVS_EX_PROTO);
 		if (cvs_sendfile(root, fpath) < 0)
-			return (-1);
+			return (CVS_EX_PROTO);
 	} else {
 		/* local import */
 	}

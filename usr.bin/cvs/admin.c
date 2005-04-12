@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.10 2005/04/11 18:02:58 joris Exp $	*/
+/*	$OpenBSD: admin.c,v 1.11 2005/04/12 14:58:40 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -110,7 +110,7 @@ cvs_admin_options(char *opt, int argc, char **argv, int *arg)
 				cvs_log(LP_ERR,
 				    "invalid RCS keyword expansion mode");
 				rcs_kflag_usage();
-				return (1);
+				return (CVS_EX_USAGE);
 			}
 			break;
 		case 'l':
@@ -150,7 +150,7 @@ cvs_admin_options(char *opt, int argc, char **argv, int *arg)
 			strictlock |= LOCK_REMOVE;
 			break;
 		default:
-			return (1);
+			return (CVS_EX_USAGE);
 		}
 	}
 
@@ -160,14 +160,14 @@ cvs_admin_options(char *opt, int argc, char **argv, int *arg)
 	/* do some sanity checking on the arguments */
 	if ((strictlock & LOCK_SET) && (strictlock & LOCK_REMOVE)) {
 		cvs_log(LP_ERR, "-L and -U are incompatible");
-		return (-1);
+		return (CVS_EX_USAGE);
 	}
 
 	if (lockrev_arg != NULL) {
 		if ((rcs = rcsnum_parse(lockrev_arg)) == NULL) {
 			cvs_log(LP_ERR, "%s is not a numeric branch",
 			    lockrev_arg);
-			return (1);
+			return (CVS_EX_USAGE);
 		}
 		rcsnum_free(rcs);
 	}
@@ -176,7 +176,7 @@ cvs_admin_options(char *opt, int argc, char **argv, int *arg)
 		if ((rcs = rcsnum_parse(unlockrev_arg)) == NULL) {
 			cvs_log(LP_ERR, "%s is not a numeric branch",
 			    unlockrev_arg);
-			return (-1);
+			return (CVS_EX_USAGE);
 		}
 		rcsnum_free(rcs);
 	}
@@ -184,13 +184,13 @@ cvs_admin_options(char *opt, int argc, char **argv, int *arg)
 	if (replace_msg != NULL) {
 		if ((q = strchr(replace_msg, ':')) == NULL) {
 			cvs_log(LP_ERR, "invalid option for -m");
-			return (1);
+			return (CVS_EX_USAGE);
 		}
 		*q = '\0';
 		if ((rcs = rcsnum_parse(replace_msg)) == NULL) {
 			cvs_log(LP_ERR, "%s is not a numeric revision",
 			    replace_msg);
-			return (-1);
+			return (CVS_EX_USAGE);
 		}
 		rcsnum_free(rcs);
 		*q = ':';
@@ -205,84 +205,84 @@ cvs_admin_sendflags(struct cvsroot *root)
 {
 	if ((alist != NULL) && ((cvs_sendarg(root, "-a", 0) < 0) || 
 	    (cvs_sendarg(root, alist, 0) < 0)))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if ((userfile != NULL) && ((cvs_sendarg(root, "-A", 0) < 0) ||
 	    (cvs_sendarg(root, userfile, 0) < 0)))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if (runflags & FLAG_BRANCH) {
 		if (cvs_sendarg(root, "-b", 0) < 0)
-			return (-1);
+			return (CVS_EX_PROTO);
 		if ((branch_arg != NULL) &&
 		    (cvs_sendarg(root, branch_arg, 0) < 0))
-			return (-1);
+			return (CVS_EX_PROTO);
 	}
 
 	if ((comment != NULL) && ((cvs_sendarg(root, "-c", 0) < 0) ||
 	    (cvs_sendarg(root, comment, 0) < 0)))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if (runflags & FLAG_DELUSER)  {
 		if (cvs_sendarg(root, "-e", 0) < 0)
-			return (-1);
+			return (CVS_EX_PROTO);
 		if ((elist != NULL) &&
 		    (cvs_sendarg(root, elist, 0) < 0))
-			return (-1);
+			return (CVS_EX_PROTO);
 	}
 
 	if (runflags & FLAG_INTERACTIVE) {
 		if (cvs_sendarg(root, "-I", 0) < 0)
-			return (-1);
+			return (CVS_EX_PROTO);
 	}
 
 	if ((subst != NULL) && ((cvs_sendarg(root, "-k", 0) < 0) ||
 	    (cvs_sendarg(root, subst, 0) < 0)))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if (lockrev & LOCK_SET) {
 		if (cvs_sendarg(root, "-l", 0) < 0)
-			return (-1);
+			return (CVS_EX_PROTO);
 		if ((lockrev_arg != NULL) &&
 		    (cvs_sendarg(root, lockrev_arg, 0) < 0))
-			return (-1);
+			return (CVS_EX_PROTO);
 	}
 
 	if ((strictlock & LOCK_SET) &&
 	    (cvs_sendarg(root, "-L", 0) < 0))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if ((replace_msg != NULL) && ((cvs_sendarg(root, "-m", 0) < 0)
 	    || (cvs_sendarg(root, replace_msg, 0) < 0)))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if ((ntag != NULL) && ((cvs_sendarg(root, "-n", 0) < 0) ||
 	    (cvs_sendarg(root, ntag, 0) < 0)))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if ((Ntag != NULL) && ((cvs_sendarg(root, "-N", 0) < 0) ||
 	    (cvs_sendarg(root, Ntag, 0) < 0)))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if ((range != NULL) && ((cvs_sendarg(root, "-o", 0) < 0) ||
 	    (cvs_sendarg(root, range, 0) < 0)))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if ((state != NULL) && ((cvs_sendarg(root, "-s", 0) < 0) ||
 	    (cvs_sendarg(root, state, 0) < 0)))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	if (lockrev & LOCK_REMOVE) {
 		if (cvs_sendarg(root, "-u", 0) < 0)
-			return (-1);
+			return (CVS_EX_PROTO);
 		if ((unlockrev_arg != NULL) &&
 		    (cvs_sendarg(root, unlockrev_arg, 0) < 0))
-			return (-1);
+			return (CVS_EX_PROTO);
 	}
 
 	if ((strictlock & LOCK_REMOVE) &&
 	    (cvs_sendarg(root, "-U", 0) < 0))
-		return (-1);
+		return (CVS_EX_PROTO);
 
 	return (0);
 }
@@ -324,7 +324,7 @@ cvs_admin_file(CVSFILE *cfp, void *arg)
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		if ((entp != NULL) && (cvs_sendentry(root, entp) < 0)) {
 			cvs_ent_free(entp);
-			return (-1);
+			return (CVS_EX_PROTO);
 		}
 
 		switch (cfp->cf_cvstat) {
@@ -357,7 +357,7 @@ cvs_admin_file(CVSFILE *cfp, void *arg)
 		if (rf == NULL) {
 			if (entp != NULL)
 				cvs_ent_free(entp);
-			return (-1);
+			return (CVS_EX_DATA);
 		}
 
 		rcs_close(rf);
