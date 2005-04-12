@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.23 2004/08/08 19:04:25 deraadt Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.24 2005/04/12 06:39:29 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -26,7 +26,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.23 2004/08/08 19:04:25 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.24 2005/04/12 06:39:29 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -545,14 +545,14 @@ format_entry(const char *path, struct direct *dp)
 			case 'I':
 				len = snprintf(dst, size - (dst - buf), "%u",
 				    dp->d_ino);
-				if (len >= size - (dst - buf))
+				if (len == -1 || len >= size - (dst - buf))
 					goto expand_buf;
 				dst += len;
 				break;
 			case 'P':
 				len = snprintf(dst, size - (dst - buf), "%s/%s",
 				    path, dp->d_name);
-				if (len >= size - (dst - buf))
+				if (len == -1 || len >= size - (dst - buf))
 					goto expand_buf;
 				dst += len;
 				break;

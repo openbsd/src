@@ -1,4 +1,4 @@
-/*	$OpenBSD: swapctl.c,v 1.13 2004/01/12 19:46:08 avsm Exp $	*/
+/*	$OpenBSD: swapctl.c,v 1.14 2005/04/12 06:41:57 deraadt Exp $	*/
 /*	$NetBSD: swapctl.c,v 1.9 1998/07/26 20:23:15 mycroft Exp $	*/
 
 /*
@@ -363,6 +363,7 @@ do_fstab(void)
 
 		if ((s = strstr(fp->fs_mntops, NFSMNTPT)) != NULL) {
 			char *t, cmd[sizeof(PATH_MOUNT)+PATH_MAX+1+PATH_MAX+1];
+			int l;
 
 			/*
 			 * Skip this song and dance if we're only
@@ -386,8 +387,9 @@ do_fstab(void)
 				free((char *)spec);
 				continue;
 			}
-			if (snprintf(cmd, sizeof(cmd), "%s %s %s",
-			    PATH_MOUNT, fp->fs_spec, spec) >= sizeof(cmd))
+			l = snprintf(cmd, sizeof(cmd), "%s %s %s",
+			    PATH_MOUNT, fp->fs_spec, spec);
+			if (l == -1 || l >= sizeof(cmd))
 				errx(1, "path too long");
 			if (system(cmd) != 0) {
 				warnx("%s: mount failed", fp->fs_spec);
