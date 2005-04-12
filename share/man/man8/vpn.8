@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.77 2005/04/02 00:17:58 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.78 2005/04/12 16:03:08 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -208,8 +208,8 @@ rules for a tunnel which uses encryption (the ESP IPsec protocol) and
 .Xr isakmpd 8
 on security gateway A might look like this:
 .Bd -literal -offset indent
-GATEWAY_A = "192.168.1.254/32"
-GATEWAY_B = "192.168.2.1/32"
+GATEWAY_A = "192.168.1.254"
+GATEWAY_B = "192.168.2.1"
 NETWORK_A = "10.0.50.0/24"
 NETWORK_B = "10.0.99.0/24"
 
@@ -301,8 +301,8 @@ Create the matching IPsec flows on machine B:
 Configure the firewall rules on machine A
 using the previously defined ruleset:
 .Bd -literal -offset indent
-GATEWAY_A = "192.168.1.254/32"
-GATEWAY_B = "192.168.2.1/32"
+GATEWAY_A = "192.168.1.254"
+GATEWAY_B = "192.168.2.1"
 NETWORK_A = "10.0.50.0/24"
 NETWORK_B = "10.0.99.0/24"
 
@@ -312,8 +312,8 @@ NETWORK_B = "10.0.99.0/24"
 Configure the firewall rules on machine B, modifying the
 definitions as appropriate:
 .Bd -literal -offset indent
-GATEWAY_B = "192.168.1.254/32"
-GATEWAY_A = "192.168.2.1/32"
+GATEWAY_B = "192.168.1.254"
+GATEWAY_A = "192.168.2.1"
 NETWORK_B = "10.0.50.0/24"
 NETWORK_A = "10.0.99.0/24"
 
@@ -503,18 +503,18 @@ port 500.
 For machineA, add:
 .Bd -literal -offset indent
 # Permit ISAKMPD control traffic between A and B
-pass in proto udp from 192.168.2.1/32 to 192.168.1.254/32 \e
+pass in proto udp from 192.168.2.1 to 192.168.1.254 \e
 	port = 500
-pass out proto udp from 192.168.1.254/32 to 192.168.2.1/32 \e
+pass out proto udp from 192.168.1.254 to 192.168.2.1 \e
 	port = 500
 .Ed
 .Pp
 For machineB, add:
 .Bd -literal -offset indent
 # Permit ISAKMPD control traffic between A and B
-pass in proto udp from 192.168.1.254/32 to 192.168.2.1/32 \e
+pass in proto udp from 192.168.1.254 to 192.168.2.1 \e
 	port = 500
-pass out proto udp from 192.168.2.1/32 to 192.168.1.254/32 \e
+pass out proto udp from 192.168.2.1 to 192.168.1.254 \e
 	port = 500
 .Ed
 .It
