@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.15 2005/04/12 16:13:59 jfb Exp $	*/
+/*	$OpenBSD: status.c,v 1.16 2005/04/12 16:56:07 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -51,7 +51,7 @@ const char *cvs_statstr[] = {
 	"Removed",
 	"Conflict",
 	"Patched",
-	"Lost",
+	"Needs Checkout",
 };
 
 
@@ -167,7 +167,7 @@ cvs_status_file(CVSFILE *cfp, void *arg)
 int
 cvs_status_local(CVSFILE *cfp, void *arg)
 {
-	char *repo, numbuf[64], fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	char *repo, buf[MAXNAMLEN], fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
 	struct cvs_ent *entp;
 	struct cvsroot *root;
@@ -196,13 +196,26 @@ cvs_status_local(CVSFILE *cfp, void *arg)
 		return (-1);
 	}
 
-	cvs_printf(CVS_STATUS_SEP "\nFile: %-18sStatus: %s\n\n",
-	    CVS_FILE_NAME(cfp), cvs_statstr[cfp->cf_cvstat]);
+	buf[0] = '\0';
+	if (cfp->cf_cvstat == CVS_FST_LOST)
+		strlcpy(buf, "No file ", sizeof(buf));
+	strlcat(buf, CVS_FILE_NAME(cfp), sizeof(buf));
 
-	rcsnum_tostr(entp->ce_rev, numbuf, sizeof(numbuf));
-	cvs_printf("   Working revision:    %s %s\n", numbuf, "date here");
-	rcsnum_tostr(rf->rf_head, numbuf, sizeof(numbuf));
-	cvs_printf("   Repository revision: %s %s\n", numbuf, rcspath);
+	cvs_printf(CVS_STATUS_SEP "\nFile: %-18sStatus: %s\n\n",
+	    buf, cvs_statstr[cfp->cf_cvstat]);
+
+	if (entp == NULL) {
+		snprintf(buf, sizeof(buf), "No entry for %s",
+		    CVS_FILE_NAME(cfp));
+	} else {
+		snprintf(buf, sizeof(buf), "%s %s",
+		    rcsnum_tostr(entp->ce_rev, buf, sizeof(buf)),
+		    "date here");
+	}
+
+	cvs_printf("   Working revision:    %s\n", buf);
+	rcsnum_tostr(rf->rf_head, buf, sizeof(buf));
+	cvs_printf("   Repository revision: %s %s\n", buf, rcspath);
 	cvs_printf("   Sticky Tag:          %s\n", "(none)");
 	cvs_printf("   Sticky Date:         %s\n", "(none)");
 	cvs_printf("   Sticky Options:      %s\n", "(none)");
