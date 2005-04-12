@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.40 2005/04/12 12:05:10 jmc Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.41 2005/04/12 13:27:11 jmc Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -49,6 +49,13 @@ or
 .Pa bridgename.bridge0 .
 However, a configuration file is not needed for lo0.
 Note that multiple entries can be used per configuration file.
+.Pp
+Arguments containing either whitespace or single quote
+characters must be double quoted.
+For example:
+.Bd -literal -offset indent
+inet 10.0.0.1 255.255.255.0 10.0.0.255 description "Bob's uplink"
+.Ed
 .Pp
 The following three formats are valid for
 .Nm hostname.*\&
