@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.12 2005/04/06 20:21:08 norby Exp $ */
+/*	$OpenBSD: parse.y,v 1.13 2005/04/12 09:54:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -97,7 +97,7 @@ typedef struct {
 
 %}
 
-%token	AREA INTERFACE ROUTERID FIBUPDATE
+%token	AREA INTERFACE ROUTERID FIBUPDATE REDISTRIBUTE
 %token	SPFDELAY SPFHOLDTIME
 %token	AUTHKEY AUTHTYPE AUTHMD AUTHMDKEYID
 %token	METRIC PASSIVE
@@ -230,6 +230,25 @@ conf_main	: METRIC number {
 				conf->flags |= OSPFD_FLAG_NO_FIB_UPDATE;
 			else
 				conf->flags &= ~OSPFD_FLAG_NO_FIB_UPDATE;
+		}
+		| REDISTRIBUTE STRING {
+			if (!strcmp($2, "static"))
+				conf->redistribute_flags |=
+				    REDISTRIBUTE_STATIC;
+			else if (!strcmp($2, "connected"))
+				conf->redistribute_flags |=
+				    REDISTRIBUTE_CONNECTED;
+			else if (!strcmp($2, "default"))
+				conf->redistribute_flags |=
+				    REDISTRIBUTE_DEFAULT;
+			else if (!strcmp($2, "none"))
+				conf->redistribute_flags = 0;
+			else {
+				yyerror("unknown redistribute type");
+				free($2);
+				YYERROR;
+			}
+			free($2);
 		}
 		| SPFDELAY number {
 			if ($2 < MIN_SPF_DELAY || $2 > MAX_SPF_DELAY) {
@@ -524,6 +543,7 @@ lookup(char *s)
 		{"interface",		INTERFACE},
 		{"metric",		METRIC},
 		{"passive",		PASSIVE},
+		{"redistribute",	REDISTRIBUTE},
 		{"retransmit-interval",	RETRANSMITINTERVAL},
 		{"router-dead-time",	ROUTERDEADTIME},
 		{"router-id",		ROUTERID},

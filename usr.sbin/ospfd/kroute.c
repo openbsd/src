@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.13 2005/03/31 19:32:10 norby Exp $ */
+/*	$OpenBSD: kroute.c,v 1.14 2005/04/12 09:54:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -61,6 +61,7 @@ struct kif_node {
 	struct kif		 k;
 };
 
+void	kr_redistribute(int, struct kroute *);
 int	kroute_compare(struct kroute_node *, struct kroute_node *);
 int	kif_compare(struct kif_node *, struct kif_node *);
 
@@ -324,6 +325,28 @@ kr_ifinfo(char *ifname, pid_t pid)
 	main_imsg_compose_ospfe(IMSG_CTL_END, pid, NULL, 0);
 }
 
+void
+kr_redistribute(int type, struct kroute *kr)
+{
+	u_int32_t	a;
+
+	/*
+	 * We consider the loopback net, multicast and experimental addresses
+	 * as not redistributable.
+	 */
+	a = ntohl(kr->prefix.s_addr);
+	if (IN_MULTICAST(a) || IN_BADCLASS(a) ||
+	    (a >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
+		return;
+	/*
+	 * Consider networks with nexthop loopback as not redistributable.
+	 */
+	if (kr->nexthop.s_addr == htonl(INADDR_LOOPBACK))
+		return;
+
+	main_imsg_compose_rde(type, 0, kr, sizeof(struct kroute));
+}
+
 /* rb-tree compare */
 int
 kroute_compare(struct kroute_node *a, struct kroute_node *b)
@@ -367,6 +390,9 @@ kroute_insert(struct kroute_node *kr)
 		return (-1);
 	}
 
+	if (kr->r.flags & F_KERNEL)
+		kr_redistribute(IMSG_NETWORK_ADD, &kr->r);
+
 	return (0);
 }
 
@@ -378,6 +404,9 @@ kroute_remove(struct kroute_node *kr)
 		    inet_ntoa(kr->r.prefix), kr->r.prefixlen);
 		return (-1);
 	}
+
+	if (kr->r.flags & F_KERNEL)
+		kr_redistribute(IMSG_NETWORK_DEL, &kr->r);
 
 	free(kr);
 	return (0);
@@ -730,6 +759,8 @@ fetchtable(void)
 			else
 				kr->r.prefixlen =
 				    prefixlen_classful(kr->r.prefix.s_addr);
+			if (rtm->rtm_flags & RTF_STATIC)
+				kr->r.flags |= F_STATIC;
 			break;
 		default:
 			free(kr);
@@ -894,6 +925,8 @@ dispatch_rtmsg(void)
 				else
 					prefixlen =
 					    prefixlen_classful(prefix.s_addr);
+				if (rtm->rtm_flags & RTF_STATIC)
+					flags |= F_STATIC;
 				break;
 			default:
 				continue;
@@ -927,6 +960,9 @@ dispatch_rtmsg(void)
 				if (kr->r.flags & F_KERNEL) {
 					kr->r.nexthop.s_addr = nexthop.s_addr;
 					kr->r.flags = flags;
+					/* just readd, the RDE will care */
+					kr_redistribute(IMSG_NETWORK_ADD,
+					    &kr->r);
 				}
 			} else if (rtm->rtm_type == RTM_CHANGE) {
 				log_warnx("change req for %s/%u: not "

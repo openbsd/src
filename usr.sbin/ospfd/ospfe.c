@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.13 2005/03/15 22:03:56 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.14 2005/04/12 09:54:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -429,11 +429,16 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			le = ls_req_list_get(nbr, &lsa_hdr);
 			if (!(nbr->state & NBR_STA_FULL) && le != NULL) {
 				ls_req_list_free(nbr, le);
-				/* XXX no need to ack requested lsa */
+				/*
+				 * XXX no need to ack requested lsa
+				 * the problem is that the RFC is very
+				 * unclear about this.
+				 */
 				noack = 1;
 			}
 
-			if (!noack && nbr->iface->self != nbr) {
+			if (!noack && nbr->iface != NULL &&
+			    nbr->iface->self != nbr) {
 				if (!(nbr->iface->state & IF_STA_BACKUP) ||
 				    nbr->iface->dr == nbr) {
 					/* delayed ack */
@@ -474,7 +479,7 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 			if (ntohs(age) >= MAX_AGE) {
 				/* add to retransmit list */
 				ref = lsa_cache_add(imsg.data, l);
-				ls_retrans_list_add(nbr, imsg.data); /* XXX */
+				ls_retrans_list_add(nbr, imsg.data);
 				lsa_cache_put(ref, nbr);
 			}
 
@@ -699,7 +704,16 @@ orig_rtr_lsa(struct area *area)
 	}
 
 	/* LSA router header */
-	lsa_rtr.flags = oeconf->flags;	/* XXX */
+	lsa_rtr.flags = 0;
+	/*
+	 * Set the E bit as soon as an as-ext lsa may be redistributed, only
+	 * setting it in case we redistribute something is not worth the fuss.
+	 */
+	if (oeconf->redistribute_flags && (oeconf->options & OSPF_OPTION_E))
+		lsa_rtr.flags |= OSPF_RTR_E;
+	/* TODO if activly connected to more than one area set B flag */
+	/* TODO set V flag if a active virtual link ends here and the
+	 * area is the tranist area for this link. */
 	lsa_rtr.dummy = 0;
 	lsa_rtr.nlinks = htons(num_links);
 	memcpy(buf_seek(buf, sizeof(lsa_hdr), sizeof(lsa_rtr)),
@@ -707,7 +721,7 @@ orig_rtr_lsa(struct area *area)
 
 	/* LSA header */
 	lsa_hdr.age = htons(DEFAULT_AGE);
-	lsa_hdr.opts = oeconf->options;	/* XXX */
+	lsa_hdr.opts = oeconf->options;		/* XXX */
 	lsa_hdr.type = LSA_TYPE_ROUTER;
 	lsa_hdr.ls_id = oeconf->rtr_id.s_addr;
 	lsa_hdr.adv_rtr = oeconf->rtr_id.s_addr;
@@ -773,7 +787,7 @@ orig_net_lsa(struct iface *iface)
 	else
 		lsa_hdr.age = htons(MAX_AGE);
 
-	lsa_hdr.opts = oeconf->options;	/* XXX */
+	lsa_hdr.opts = oeconf->options;		/* XXX */
 	lsa_hdr.type = LSA_TYPE_NETWORK;
 	lsa_hdr.ls_id = iface->addr.s_addr;
 	lsa_hdr.adv_rtr = oeconf->rtr_id.s_addr;

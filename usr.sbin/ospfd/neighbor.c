@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.14 2005/03/31 19:32:10 norby Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.15 2005/04/12 09:54:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -50,7 +50,7 @@ struct nbr_table {
 #define NBR_HASH(x)		\
 	&nbrtable.hashtbl[(x) & nbrtable.hashmask]
 
-u_int32_t	peercnt;
+u_int32_t	peercnt = NBR_CNTSTART;
 
 struct {
 	int		state;
@@ -230,6 +230,8 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 void
 nbr_init(u_int32_t hashsize)
 {
+	struct nbr_head	*head;
+	struct nbr	*nbr;
 	u_int32_t        hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
@@ -242,13 +244,27 @@ nbr_init(u_int32_t hashsize)
 		LIST_INIT(&nbrtable.hashtbl[i]);
 
 	nbrtable.hashmask = hs - 1;
+
+	/* allocate a dummy neighbor used for self originated AS ext routes */
+	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)
+		fatal("nbr_init");
+
+	nbr->id.s_addr = ospfe_router_id();
+	nbr->state = NBR_STA_DOWN;
+	nbr->peerid = NBR_IDSELF;
+	head = NBR_HASH(nbr->peerid);
+	LIST_INSERT_HEAD(head, nbr, hash);
+
+	TAILQ_INIT(&nbr->ls_retrans_list);
+	TAILQ_INIT(&nbr->db_sum_list);
+	TAILQ_INIT(&nbr->ls_req_list);
 }
 
 struct nbr *
 nbr_new(u_int32_t nbr_id, struct iface *iface, int self)
 {
 	struct nbr_head	*head;
-	struct nbr	*nbr = NULL;
+	struct nbr	*nbr;
 	struct rde_nbr	 rn;
 
 	if ((nbr = calloc(1, sizeof(*nbr))) == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.11 2005/04/05 13:01:22 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.12 2005/04/12 09:54:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -245,7 +245,6 @@ void		 ls_retrans_list_free(struct nbr *, struct lsa_entry *);
 void		 ls_retrans_list_clr(struct nbr *);
 int		 ls_retrans_list_empty(struct nbr *);
 void		 ls_retrans_timer(int, short, void *);
-
 
 void		 lsa_cache_init(u_int32_t);
 struct lsa_ref	*lsa_cache_add(void *, u_int16_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.25 2005/04/05 13:01:22 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.26 2005/04/12 09:54:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -36,6 +36,9 @@
 #define NBR_HASHSIZE		128
 #define LSA_HASHSIZE		512
 
+#define NBR_IDSELF		1
+#define NBR_CNTSTART		(NBR_IDSELF + 1)
+
 #define	READ_BUF_SIZE		65535
 #define	PKG_DEF_SIZE		512	/* compromise */
 #define	RT_BUF_SIZE		16384
@@ -49,6 +52,10 @@
 #define	F_DOWN			0x0010
 #define	F_STATIC		0x0020
 #define	F_LONGER		0x0040
+
+#define REDISTRIBUTE_STATIC	0x01
+#define REDISTRIBUTE_CONNECTED	0x02
+#define REDISTRIBUTE_DEFAULT	0x04
 
 /* buffer */
 struct buf {
@@ -109,6 +116,8 @@ enum imsg_type {
 	IMSG_NEIGHBOR_UP,
 	IMSG_NEIGHBOR_DOWN,
 	IMSG_NEIGHBOR_CHANGE,
+	IMSG_NETWORK_ADD,
+	IMSG_NETWORK_DEL,
 	IMSG_DD,
 	IMSG_DD_END,
 	IMSG_DB_SNAPSHOT,
@@ -322,19 +331,21 @@ struct ospfd_conf {
 	struct event		ev;
 	struct event		spf_timer;
 	struct in_addr		rtr_id;
+	struct lsa_tree		lsa_tree;
+	LIST_HEAD(, area)	area_list;
+	LIST_HEAD(, vertex)	cand_list;
+
 	u_int32_t		opts;
 #define OSPFD_OPT_VERBOSE	0x00000001
 #define OSPFD_OPT_VERBOSE2	0x00000002
 #define OSPFD_OPT_NOACTION	0x00000004
-	int			maxdepth;
-	LIST_HEAD(, area)	area_list;
-	LIST_HEAD(, vertex)	cand_list;
-	struct lsa_tree		lsa_tree;
 	u_int32_t		spf_delay;
 	u_int32_t		spf_hold_time;
 	int			spf_state;
+	int			maxdepth;
 	int			ospf_socket;
 	int			flags;
+	int			redistribute_flags;
 	int			options; /* OSPF options */
 	u_int8_t		rfc1583compat;
 };
