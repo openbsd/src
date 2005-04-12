@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.10 2005/02/27 08:21:15 norby Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.11 2005/04/12 10:26:09 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -111,7 +111,7 @@ lsa_newer(struct lsa_hdr *a, struct lsa_hdr *b)
 		return (1);
 
 	/*
-	 * The sequnece number is defined as signed 32-bit integer,
+	 * The sequence number is defined as signed 32-bit integer,
 	 * no idea how IETF came up with such a stupid idea.
 	 */
 	a32 = (int32_t)ntohl(a->seq_num);
