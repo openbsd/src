@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.18 2005/04/12 09:11:34 dlg Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.19 2005/04/12 09:13:13 dlg Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -619,6 +619,58 @@ struct pxa2x0_dma_desc {
 #define MMC_RES  	0x3c	/* response FIFO */
 #define MMC_RXFIFO	0x40	/* receive FIFO */
 #define MMC_TXFIFO	0x44 	/* transmit FIFO */
+
+
+/*
+ * Inter-IC Sound (I2S) Controller
+ */
+#define I2S_SACR0	0x0000	/* Serial Audio Global Control */
+#define  SACR0_ENB		(1<<0)	/* Enable I2S Function */
+#define  SACR0_BCKD		(1<<2)	/* I/O Direction of I2S_BITCLK */
+#define  SACR0_RST		(1<<3)	/* FIFO Reset */
+#define  SACR0_EFWR		(1<<4)	/* Special-Purpose FIFO W/R Func */
+#define  SACR0_STRF		(1<<5)	/* Select TX or RX FIFO */
+#define  SACR0_TFTH_MASK	(0xf<<8) /* Trans FIFO Intr/DMA Trig Thresh */
+#define  SACR0_RFTH_MASK	(0xf<<12) /* Recv FIFO Intr/DMA Trig Thresh */
+#define  SACR0_SET_TFTH(x)	(((x) & 0xf)<<8)
+#define  SACR0_SET_RFTH(x)	(((x) & 0xf)<<12)
+#define I2S_SACR1	0x0004	/* Serial Audio I2S/MSB-Justified Control */
+#define  SACR1_AMSL		(1<<0)	/* Specify Alt Mode (I2S or MSB) */
+#define  SACR1_DREC		(1<<3)	/* Disable Recording Func */
+#define  SACR1_DRPL		(1<<4)	/* Disable Replay Func */
+#define  SACR1_ENLBF		(1<<5)	/* Enable Interface Loopback Func */
+#define I2S_SASR0	0x000c	/* Serial Audio I2S/MSB-Justified Status */
+#define  SASR0_TNF		(1<<0)	/* Transmit FIFO Not Full */
+#define  SASR0_RNE		(1<<1)	/* Recv FIFO Not Empty */
+#define  SASR0_BSY		(1<<2)	/* I2S Busy */
+#define  SASR0_TFS		(1<<3)	/* Trans FIFO Service Request */
+#define  SASR0_RFS		(1<<4)	/* Recv FIFO Service Request */
+#define  SASR0_TUR		(1<<5)	/* Trans FIFO Underrun */
+#define  SASR0_ROR		(1<<6)	/* Recv FIFO Overrun */
+#define  SASR0_I2SOFF		(1<<7)	/* I2S Controller Off */
+#define  SASR0_TFL_MASK		(0xf<<8) /* Trans FIFO Level */
+#define  SASR0_RFL_MASK		(0xf<<12) /* Recv FIFO Level */
+#define  SASR0_GET_TFL(x)	(((x) & 0xf) >> 8)
+#define  SASR0_GET_RFL(x)	(((x) & 0xf) >> 12)
+#define I2S_SAIMR	0x0014	/* Serial Audio Interrupt Mask */
+#define  SAIMR_TFS		(1<<3)	/* Enable TX FIFO Service Req Intr */
+#define  SAIMR_RFS		(1<<4)	/* Enable RX FIFO Service Req Intr */
+#define  SAIMR_TUR		(1<<5)	/* Enable TX FIFO Underrun Intr */
+#define  SAIMR_ROR		(1<<6)	/* Enable RX FIFO Overrun Intr */
+#define I2S_SAICR	0x0018	/* Serial Audio Interrupt Clear */
+#define  SAICR_TUR		(1<<5)	/* Clear Intr and SASR0_TUR */
+#define  SAICR_ROR		(1<<6)	/* Clear Intr and SASR0_ROR */
+#define I2S_SADIV	0x0060	/* Audio Clock Divider */
+#define  SADIV_MASK		0x7f
+#define  SADIV_3_058MHz		0x0c	/* 3.058 MHz */
+#define  SADIV_2_836MHz		0x0d	/* 2.836 MHz */
+#define  SADIV_1_405MHz		0x1a	/* 1.405 MHz */
+#define  SADIV_1_026MHz		0x24	/* 1.026 MHz */
+#define  SADIV_702_75KHz	0x34	/* 702.75 kHz */
+#define  SADIV_513_25KHz	0x48	/* 513.25 kHz */
+#define I2S_SADR	0x0080	/* Serial Audio Data Register */
+#define  SADR_DTL		(0xffff<<0) /* Left Data Sample */
+#define  SADR_DTH		(0xffff<<16) /* Right Data Sample */
 
 /*
  * AC '97 Controller
