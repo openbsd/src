@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.16 2005/04/06 01:31:05 pascoe Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.17 2005/04/12 04:06:42 dlg Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -329,6 +329,7 @@ struct pxa2x0_dma_desc {
 #define CKEN_LCD	(1<<16)
 #define CKEN_KEY	(1<<19)	/* PXA270? */
 #define CKEN_MEM	(1<<22)	/* PXA270? */
+#define CKEN_AC97CC	(1<<31) /* PXA27x */
 
 #define OSCC_OOK	(1<<0)	/* 32.768KHz oscillator status */
 #define OSCC_OON	(1<<1)	/* 32.768KHz oscillator */
@@ -619,65 +620,93 @@ struct pxa2x0_dma_desc {
 #define MMC_TXFIFO	0x44 	/* transmit FIFO */
 
 /*
- * AC97
+ * AC '97 Controller
  */
-#define	AC97_N_CODECS	2
-#define AC97_GCR 	0x000c	/* Global control register */
-#define  GCR_GIE       	(1<<0)	/* interrupt enable */
-#define  GCR_COLD_RST	(1<<1)
-#define  GCR_WARM_RST	(1<<2)
-#define  GCR_ACLINK_OFF	(1<<3)
-#define  GCR_PRIRES_IEN	(1<<4)	/* Primary resume interrupt enable */
-#define  GCR_SECRES_IEN	(1<<5)	/* Secondary resume interrupt enable */
-#define  GCR_PRIRDY_IEN	(1<<8)	/* Primary ready interrupt enable */
-#define  GCR_SECRDY_IEN	(1<<9)	/* Primary ready interrupt enable */
-#define  GCR_SDONE_IE 	(1<<18)	/* Status done interrupt enable */
-#define  GCR_CDONE_IE	(1<<19)	/* Command done interrupt enable */
+#define AC97_POCR	0x0000	/* PCM Out Control Register */
+#define  POCR_FSRIE		(1<<1)	/* FIFO Service Request Intr Enable */
+#define  POCR_FEIE		(1<<3)	/* FIFO Error Intr Enable */
+#define AC97_PCMICR	0x0004	/* PCM In Control Register */
+#define  PCMICR_FSRIE		(1<<1)	/* FIFO Service Request Intr Enable */
+#define  PCMICR_FEIE		(1<<3)	/* FIFO Error Intr Enable */
+#define AC97_MCCR	0x0008	/* Microphone In Control Register */
+#define  MCCR_FSRIE		(1<<1)	/* FIFO Service Request Intr Enable */
+#define  MCCR_FEIE		(1<<3)	/* FIFO Error Intr Enable */
+#define AC97_GCR	0x000c	/* Global Control Register */
+#define  GCR_GPI_IE		(1<<0)	/* Codec GPI Interupt Enable */
+#define  GCR_nCRST		(1<<1)	/* AC '97 Cold Reset */
+#define  GCR_WRST		(1<<2)	/* AC '97 Warm Reset */
+#define  GCR_ACOFF		(1<<3)	/* AC-Link Shut Off */
+#define  GCR_PRES_IE		(1<<4)	/* Primary Resume Intr Enable */
+#define  GCR_SRES_IE		(1<<5)	/* Secondary Resume Intr Enable */
+#define  GCR_PRDY_IE		(1<<8)	/* Primary Ready Intr Enable */
+#define  GCR_SRDY_IE		(1<<9)	/* Secondary Ready Intr Enable */
+#define  GCR_SDONE_IE		(1<<18)	/* Status Done Intr Enable */
+#define  GCR_CDONE_IE		(1<<19)	/* Command Done Intr Enable */
+#define  GCR_nDMAEN		(1<<24)	/* DMA Enable (PXA27x) */
+#define AC97_POSR	0x0010	/* PCM Out Status Register */
+#define  POSR_FSR		(1<<2)	/* FIFO Service Request */
+#define  POSR_FIFOE		(1<<4)	/* FIFO Error */
+#define AC97_PCMISR	0x0014	/* PCM In Status Register */
+#define  PCMISR_FSR		(1<<2)	/* FIFO Service Request */
+#define  PCMISR_ECC		(1<<3)	/* DMA End of Chain Intr */
+#define  PCMISR_FIFOE		(1<<4)	/* FIFO Error */
+#define AC97_MCSR	0x0018	/* Microphone In Status Register */
+#define  MCSR_FSR		(1<<2)	/* FIFO Service Request */
+#define  MCSR_ECC		(1<<3)	/* DMA End of Chain Intr */
+#define  MCSR_FIFOE		(1<<4)	/* FIFO Error */
+#define AC97_GSR	0x001c	/* Global Status Register */
+#define  GSR_GSCI		(1<<0)	/* Codec GPI Status Change Intr */
+#define  GSR_MIINT		(1<<1)	/* Modem-In Intr */
+#define  GSR_MOINT		(1<<2)	/* Modem-Out Intr */
+#define  GSR_ACOFFD		(1<<3)	/* AC-link Shut Off Done */
+#define  GSR_PIINT		(1<<5)	/* PCM-In Intr */
+#define  GSR_POINT		(1<<6)	/* PCM-Out Intr */
+#define  GSR_MCINT		(1<<7)	/* Mic-In Intr */
+#define  GSR_PCRDY		(1<<8)	/* Primay Codec Ready */
+#define  GSR_SCRDY		(1<<9)	/* Secondary Codec Ready */
+#define  GSR_PRESINT		(1<<10)	/* Primary Resume Intr */
+#define  GSR_SRESINT		(1<<11)	/* Secondary Resume Intr */
+#define  GSR_B1S12		(1<<12)	/* Bit 1 of Slot 12 */
+#define  GSR_B2S12		(1<<13)	/* Bit 2 of Slot 12 */
+#define  GSR_B3S12		(1<<14)	/* Bit 3 of Slot 12 */
+#define  GSR_RCS		(1<<15)	/* Read Completion Status */
+#define  GSR_SDONE		(1<<18)	/* Status Done */
+#define  GSR_CDONE		(1<<19)	/* Command Done */
+#define AC97_CAR	0x0020	/* Codec Access Register */
+#define  CAR_CAIP		(1<<0)	/* Codec Access In Progress */
+/* 0x0024 to 0x003c is reserved */
+#define AC97_PCDR	0x0040	/* PCM Data Register */
+#define  PCDR_PCML		(0xffff<<0)	/* PCM Left Channel Data */
+#define  PCDR_PCMR		(0xffff<<16)	/* PCM Right Channel Data */
+/* 0x0044 to 0x005c is reserved */
+#define AC97_MCDR	0x0060	/* Microphone In Data Register */
+#define  MCDR_MCDAT		(0xffff<<0)	/* Mic-In Data */
+/* 0x0064 to 0x00fc is reserved */
+#define AC97_MOCR	0x0100	/* Modem Out Control Register */
+#define  MOCR_FSRIE		(1<<1)	/* FIFO Service Request Intr Enable */
+#define  MOCR_FEIE		(1<<3)	/* FIFO Error Intr Enable */
+/* 0x0104 is reserved */
+#define AC97_MICR	0x0108	/* Modem In Control Register */
+#define  MICR_FSRIE		(1<<1)	/* FIFO Service Request Intr Enable */
+#define  MICR_FEIE		(1<<3)	/* FIFO Error Intr Enable */
+/* 0x010c is reserved */
+#define AC97_MOSR	0x0110	/* Modem Out Status Register */
+#define  MOSR_FSR		(1<<2)	/* FIFO Service Request */
+#define  MOSR_FIFOE		(1<<2)	/* FIFO Error */
+/* 0x0114 is reserved */
+#define AC97_MISR	0x0118	/* Modem In Status Register */
+#define  MOSR_FSR		(1<<2)	/* FIFO Service Request */
+#define  MOSR_EOC		(1<<2)	/* DMA End of Chain Intr */
+#define  MOSR_FIFOE		(1<<2)	/* FIFO Error */
+/* 0x011c  to 0x013c is reserved */
+#define AC97_MODR	0x0140	/* Modem Data Register */
+#define  MODR_MODAT		(0xffff<<0)	/* Modem Data */
+/* 0x0144 to 0x01fc is reserved */
 
-#define AC97_GSR 	0x001c	/* Global status register */
-#define  GSR_GSCI	(1<<0)	/* codec GPI status change interrupt */
-#define  GSR_MIINT	(1<<1)	/* modem in interrupt */
-#define  GSR_MOINT	(1<<2)	/* modem out interrupt */
-#define  GSR_PIINT	(1<<5)	/* PCM in interrupt */
-#define  GSR_POINT	(1<<6)	/* PCM out interrupt */
-#define  GSR_MINT	(1<<7)	/* Mic in interrupt */
-#define  GSR_PCR	(1<<8)	/* primary code ready */
-#define  GSR_SCR	(1<<9)	/* secondary code ready */
-#define  GSR_PRIRES	(1<<10)	/* primary resume interrupt */
-#define  GSR_SECRES	(1<<11)	/* secondary resume interrupt */
-#define  GSR_BIT1SLT12	(1<<12)	/* Bit 1 of slot 12 */
-#define  GSR_BIT2SLT12	(1<<13)	/* Bit 2 of slot 12 */
-#define  GSR_BIT3SLT12	(1<<14)	/* Bit 3 of slot 12 */
-#define  GSR_RDCS 	(1<<15)	/* Read completion status */
-#define  GSR_SDONE 	(1<<18)	/* status done */
-#define  GSR_CDONE 	(1<<19)	/* command done */
-
-#define AC97_POCR 	0x0000	/* PCM-out control */
-#define AC97_PICR 	0x0004	/* PCM-in control */
-#define AC97_POSR 	0x0010	/* PCM-out status */
-#define AC97_PISR 	0x0014	/* PCM-out status */
-#define AC97_MCCR	0x0008	/* MIC-in control register */
-#define AC97_MCSR	0x0018	/* MIC-in status register */
-#define AC97_MICR	0x0100	/* Modem-in control register */
-#define AC97_MISR	0x0108	/* Modem-in status register */
-#define AC97_MOCR	0x0110	/* Modem-out control register */
-#define AC97_MOSR	0x0118	/* Modem-out status register */
-#define  AC97_FEFIE	(1<<3)	/* fifo error interrupt enable */
-#define  AC97_FIFOE	(1<<4)	/* fifo error */
-
-#define AC97_CAR  	0x0020	/* Codec access register */
-#define  CAR_CAIP  	(1<<0)	/* Codec access in progress */
-
-#define AC97_PCDR	0x0040	/* PCM data register */
-#define AC97_MCDR 	0x0060	/* MIC-in data register */
-#define AC97_MODR 	0x0140	/* Modem data register */
-
-/* address to access codec registers */
-#define AC97_PRIAUDIO	0x0200	/* Primary audio codec */
-#define AC97_SECAUDIO	0x0300	/* Secondary audio codec */
-#define AC97_PRIMODEM	0x0400	/* Primary modem codec */
-#define AC97_SECMODEM	0x0500	/* Secondary modem codec */
-#define	AC97_CODEC_BASE(c)	(AC97_PRIAUDIO + ((c) * 0x100))
+#define AC97_PRIAUDIO	0x0200	/* Primary Audio Codec Registers */
+#define AC97_SECAUDIO	0x0300	/* Secondary Audio Codec Registers */
+#define AC97_PRIMODEM	0x0400	/* Primary Modem Codec Registers */
+#define AC97_SECMODEM	0x0500	/* Secondary modem Codec Registers */
 
 /*
  * USB device controller differs between pxa255 and pxa27x, defined separately
