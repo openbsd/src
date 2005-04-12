@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.45 2005/04/11 20:32:56 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.46 2005/04/12 14:40:19 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -345,6 +345,7 @@ rcs_write(RCSFILE *rfp)
 	char buf[1024], numbuf[64];
 	struct rcs_access *ap;
 	struct rcs_sym *symp;
+	struct rcs_branch *brp;
 	struct rcs_delta *rdp;
 
 	if (rfp->rf_flags & RCS_SYNCED)
@@ -402,7 +403,7 @@ rcs_write(RCSFILE *rfp)
 		fputs("@;\n", fp);
 	}
 
-	fprintf(fp, "\n\n");
+	fputs("\n\n", fp);
 
 	TAILQ_FOREACH(rdp, &(rfp->rf_delta), rd_list) {
 		fprintf(fp, "%s\n", rcsnum_tostr(rdp->rd_num, numbuf,
@@ -413,7 +414,12 @@ rcs_write(RCSFILE *rfp)
 		    rdp->rd_date.tm_min, rdp->rd_date.tm_sec);
 		fprintf(fp, "\tauthor %s;\tstate %s;\n",
 		    rdp->rd_author, rdp->rd_state);
-		fprintf(fp, "branches;\n");
+		fputs("branches", fp);
+		TAILQ_FOREACH(brp, &(rdp->rd_branches), rb_list) {
+			fprintf(fp, " %s", rcsnum_tostr(brp->rb_num, numbuf,
+			    sizeof(numbuf)));
+		}
+		fputs(";\n", fp);
 		fprintf(fp, "next\t%s;\n\n", rcsnum_tostr(rdp->rd_next,
 		    numbuf, sizeof(numbuf)));
 	}
@@ -1656,7 +1662,10 @@ rcs_parse_delta(RCSFILE *rfp)
 			}
 			break;
 		case RCS_TOK_BRANCHES:
-			rcs_parse_branches(rfp, rdp);
+			if (rcs_parse_branches(rfp, rdp) < 0) {
+				rcs_freedelta(rdp);
+				return (-1);
+			}
 			break;
 		default:
 			cvs_log(LP_ERR,
@@ -1976,13 +1985,11 @@ rcs_parse_branches(RCSFILE *rfp, struct rcs_delta *rdp)
 			cvs_log(LP_ERRNO, "failed to allocate RCS branch");
 			return (-1);
 		}
-		brp->rb_num = rcsnum_alloc();
+		brp->rb_num = rcsnum_parse(RCS_TOKSTR(rfp));
 		if (brp->rb_num == NULL) {
 			free(brp);
 			return (-1);
 		}
-
-		rcsnum_aton(RCS_TOKSTR(rfp), NULL, brp->rb_num);
 
 		TAILQ_INSERT_TAIL(&(rdp->rd_branches), brp, rb_list);
 	}
