@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.3 2005/04/05 07:14:00 jmc Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.4 2005/04/12 06:57:36 deraadt Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -347,7 +347,7 @@ usage(void)
 {
 	extern char	*__progname;
 
-	fprintf(stderr, "usage: %s [-Fhnsv] [-f file]\n", __progname);
+	fprintf(stderr, "usage: %s [-Fnsv] [-f file]\n", __progname);
 	exit(1);
 }
 
@@ -362,7 +362,7 @@ main(int argc, char *argv[])
 	if (argc < 2)
 		usage();
 
-	while ((ch = getopt(argc, argv, "f:Fhnvs")) != -1) {
+	while ((ch = getopt(argc, argv, "f:Fnvs")) != -1) {
 		switch (ch) {
 		case 'f':
 			rulesopt = optarg;
@@ -386,8 +386,6 @@ main(int argc, char *argv[])
 			opts |= IPSECCTL_OPT_SHOW;
 			break;
 
-		case 'h':
-			/* FALLTHROUGH */
 		default:
 			usage();
 			/* NOTREACHED */

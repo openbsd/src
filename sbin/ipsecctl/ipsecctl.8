@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsecctl.8,v 1.5 2005/04/06 14:11:21 hshoexer Exp $
+.\"	$OpenBSD: ipsecctl.8,v 1.6 2005/04/12 06:57:36 deraadt Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
 .\"
@@ -22,7 +22,7 @@
 .Nd control flows for IPsec
 .Sh SYNOPSIS
 .Nm ipsecctl
-.Op Fl Fhnsv
+.Op Fl Fnsv
 .Op Fl f Ar file
 .Sh DESCRIPTION
 The
@@ -44,8 +44,6 @@ option flushes the SPD.
 .It Fl f Ar file
 Load the rules contained in
 .Ar file .
-.It Fl h
-Help.
 .It Fl n
 Do not actually load rules, just parse them.
 .It Fl s
