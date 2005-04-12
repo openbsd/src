@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.55 2005/03/30 17:45:51 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.56 2005/04/12 14:11:49 reyk Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.55 2005/03/30 17:45:51 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.56 2005/04/12 14:11:49 reyk Exp $";
 #endif
 #endif /* not lint */
 
@@ -276,7 +276,7 @@ main(int argc, char *argv[])
 
 	af = AF_UNSPEC;
 
-	while ((ch = getopt(argc, argv, "Aabdf:gI:ilM:mN:np:qrstuvw:")) != -1)
+	while ((ch = getopt(argc, argv, "Aabdf:gI:ilM:mN:np:qrstuvW:w:")) != -1)
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -366,6 +366,10 @@ main(int argc, char *argv[])
 		case 'v':
 			vflag = 1;
 			break;
+		case 'W':
+			Wflag = 1;
+			interface = optarg;
+			break;
 		case 'w':
 			interval = atoi(optarg);
 			iflag = 1;
@@ -376,6 +380,17 @@ main(int argc, char *argv[])
 		}
 	argv += optind;
 	argc -= optind;
+
+	/*
+	 * Show per-interface statistics which don't need access to
+	 * kernel memory (they're using IOCTLs)
+	 */
+	if (Wflag) {
+		if (interface == NULL)
+			usage();
+		net80211_ifstats(interface);
+		exit(0);
+	}
 
 	/*
 	 * Discard setgid privileges if not the running kernel so that bad
@@ -435,6 +450,7 @@ main(int argc, char *argv[])
 	 */
 	sethostent(1);
 	setnetent(1);
+	
 	if (iflag) {
 		intpr(interval, nl[N_IFNET].n_value);
 		exit(0);
@@ -613,5 +629,7 @@ usage(void)
 "       %s [-s] [-M core] [-N system] [-p protocol]\n", __progname);
 	(void)fprintf(stderr,
 "       %s [-a] [-f address_family] [-i | -I interface]\n", __progname);
+	(void)fprintf(stderr,
+"	%s [-W interface]\n", __progname);
 	exit(1);
 }

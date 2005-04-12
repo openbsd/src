@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.h,v 1.33 2005/03/30 08:23:47 jaredy Exp $	*/
+/*	$OpenBSD: netstat.h,v 1.34 2005/04/12 14:11:49 reyk Exp $	*/
 /*	$NetBSD: netstat.h,v 1.6 1996/05/07 02:55:05 thorpej Exp $	*/
 
 /*
@@ -52,6 +52,7 @@ int	rflag;		/* show routing tables (or routing stats) */
 int	sflag;		/* show protocol statistics */
 int	tflag;		/* show i/f watchdog timers */
 int	vflag;		/* be verbose */
+int	Wflag;		/* show net80211 protocol statistics */
 
 int	interval;	/* repeat interval for i/f stats */
 
