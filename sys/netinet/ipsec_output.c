@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.32 2004/09/24 16:09:37 markus Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.33 2005/04/12 09:39:54 markus Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -457,6 +457,10 @@ ipsec_hdrsz(struct tdb *tdbp)
 	ssize_t adjust;
 
 	switch (tdbp->tdb_sproto) {
+	case IPPROTO_IPIP:
+		adjust = 0;
+		break;
+
 	case IPPROTO_ESP:
 		if (tdbp->tdb_encalgxform == NULL)
 			return (-1);
