@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.162 2005/03/28 15:16:46 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.163 2005/04/12 14:32:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -544,6 +544,8 @@ enum action_types {
 	ACTION_SET_RELATIVE_LOCALPREF,
 	ACTION_SET_MED,
 	ACTION_SET_RELATIVE_MED,
+	ACTION_SET_WEIGHT,
+	ACTION_SET_RELATIVE_WEIGHT,
 	ACTION_SET_PREPEND_SELF,
 	ACTION_SET_PREPEND_PEER,
 	ACTION_SET_NEXTHOP,

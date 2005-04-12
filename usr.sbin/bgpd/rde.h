@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.63 2005/03/11 12:54:20 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.64 2005/04/12 14:32:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -161,6 +161,7 @@ struct rde_aspath {
 	char				 pftable[PFTABLE_LEN];
 	u_int32_t			 med;		/* multi exit disc */
 	u_int32_t			 lpref;		/* local pref */
+	u_int32_t			 weight;	/* low prio lpref */
 	u_int16_t			 flags;	/* internally used */
 	u_int16_t			 prefix_cnt; /* # of prefixes */
 	u_int16_t			 active_cnt; /* # of active prefixes */

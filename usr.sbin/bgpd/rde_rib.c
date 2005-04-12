@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.65 2005/03/26 12:46:52 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.66 2005/04/12 14:32:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -127,6 +127,10 @@ path_compare(struct rde_aspath *a, struct rde_aspath *b)
 	if (a->lpref > b->lpref)
 		return (1);
 	if (a->lpref < b->lpref)
+		return (-1);
+	if (a->weight > b->weight)
+		return (1);
+	if (a->weight < b->weight)
 		return (-1);
 
 	r = strcmp(a->pftable, b->pftable);
@@ -266,6 +270,7 @@ path_copy(struct rde_aspath *asp)
 	nasp->nexthop = asp->nexthop;
 	nasp->med = asp->med;
 	nasp->lpref = asp->lpref;
+	nasp->weight = asp->weight;
 	nasp->origin = asp->origin;
 
 	nasp->flags = asp->flags & ~F_ATTR_LINKED;
@@ -290,6 +295,7 @@ path_get(void)
 	asp->origin = ORIGIN_INCOMPLETE;
 	asp->lpref = DEFAULT_LPREF;
 	/* med = 0 */
+	/* weight = 0 */
 
 	return (asp);
 }

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.47 2005/04/12 14:22:46 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.48 2005/04/12 14:32:00 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -892,6 +892,23 @@ Prepend the local AS
 .Ar number
 times to the
 .Em AS path .
+.Pp
+.It Ic weight Ar number
+The
+.Em weight
+is used to tip prefixes with equal long AS pathes in one or
+the other direction.
+It weights a prefix at a very late stage in the decision process.
+If
+.Ar number
+starts with a plus or minus sign, the
+.Em weight
+will be adjusted by adding or subtracting
+.Ar number ;
+otherwise it will be set to
+.Ar number .
+.Em Weight
+is a local non-transitive attribute and a bgpd specific extension.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/bgpd.conf" -compact

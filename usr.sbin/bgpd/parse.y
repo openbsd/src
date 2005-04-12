@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.157 2005/04/12 14:26:58 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.158 2005/04/12 14:32:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -152,7 +152,7 @@ typedef struct {
 %token	FROM TO ANY
 %token	PREFIX PREFIXLEN SOURCEAS TRANSITAS COMMUNITY
 %token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY
-%token	PREPEND_SELF PREPEND_PEER PFTABLE
+%token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT
 %token	ERROR
 %token	IPSEC ESP AH SPI IKE
 %token	<v.string>		STRING
@@ -1206,6 +1206,32 @@ filter_set_opt	: LOCALPREF number		{
 			$$->type = ACTION_SET_RELATIVE_MED;
 			$$->action.relative = -$3;
 		}
+		| WEIGHT number				{
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_WEIGHT;
+			$$->action.metric = $2;
+		}
+		| WEIGHT '+' number			{
+			if ($3 > INT_MAX) {
+				yyerror("weight to big: max %u", INT_MAX);
+				YYERROR;
+			}
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_RELATIVE_WEIGHT;
+			$$->action.metric = $3;
+		}
+		| WEIGHT '-' number			{
+			if ($3 > INT_MAX) {
+				yyerror("weight to small: min -%u", INT_MAX);
+				YYERROR;
+			}
+			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
+				fatal(NULL);
+			$$->type = ACTION_SET_RELATIVE_WEIGHT;
+			$$->action.relative = -$3;
+		}
 		| NEXTHOP address		{
 			if (($$ = calloc(1, sizeof(struct filter_set))) == NULL)
 				fatal(NULL);
@@ -1417,7 +1443,8 @@ lookup(char *s)
 		{ "tcp",		TCP},
 		{ "to",			TO},
 		{ "transit-as",		TRANSITAS},
-		{ "transparent-as",	TRANSPARENT}
+		{ "transparent-as",	TRANSPARENT},
+		{ "weight",		WEIGHT}
 	};
 	const struct keywords	*p;
 
