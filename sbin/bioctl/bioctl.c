@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.8 2005/04/06 20:51:46 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.9 2005/04/12 20:49:19 marco Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -444,12 +444,53 @@ bio_alarm(char *arg)
 }
 
 void
+ses_verbose(u_int8_t *rc, u_int8_t len)
+{
+	struct ses_config_page *scp;
+	struct ses_type_desc_hdr *tdh;
+
+	char *str;
+	u_int8_t i;
+
+	scp = (struct ses_config_page *)rc;
+	printf("element types: %d, id: %s\n", scp->nr_elem_typ,
+	    scp->enc_vendor_id);
+
+	str = (char *)
+	    (&scp->enc_desc_len + scp->enc_desc_len + 1 +
+	    (scp->nr_elem_typ * sizeof(struct ses_type_desc_hdr)));
+
+	for (i = 0; i < scp->nr_elem_typ; i++) {
+		tdh = (struct ses_type_desc_hdr *)
+		    (&scp->enc_desc_len + scp->enc_desc_len + 1 +
+		    (i * sizeof(struct ses_type_desc_hdr)));
+
+		printf("type: %d, count: %d, sub enclosure id: %d, "
+		    "len: %d, text: %s\n",
+		    tdh->elem_type, tdh->nr_elem, tdh->sub_enc_id,
+		    tdh->type_desc_len, str);
+
+		str += tdh->type_desc_len;
+	}
+}
+
+void
 bio_blink_userland(u_int8_t opc, u_int8_t c, u_int8_t t)
 {
 	struct dev *delm;
+
+	/* page 1 stuff */
 	struct ses_enc_ctrl_diag_page *cdp;
+	struct ses_config_page *scp;
+	struct ses_type_desc_hdr *tdh;
+
+	/* page 2 stuff */
+	struct ses_enc_stat_diag_page *esdp;
+	struct ses_dev_elmt_status_diag *desd;
 
 	u_int8_t rc[SESSIZE];
+	u_int8_t rc2[SESSIZE];
+	u_int8_t i, elements, found = 0;
 
 	/* FIXME if the raid controllers are clustered we might have more
 	 * than one proc device. */
@@ -467,27 +508,93 @@ bio_blink_userland(u_int8_t opc, u_int8_t c, u_int8_t t)
 			printf("proc at channel: %d target: %2d\n",
 			    delm->channel, delm->target);
 
-		/* get ses page so that we can modify bits for blink */
+		/* figure out what we have */
 		if (!get_ses_page(delm->channel, delm->target,
-		    &rc[0], sizeof(rc))) {
+		    SES_CFG_DIAG_PAGE, &rc[0], sizeof(rc))) {
 			return;
 		}
 
-		cdp = (struct ses_enc_ctrl_diag_page *)rc;
+		if (debug)
+			ses_verbose(&rc[0], sizeof(rc));
 
-		cdp->elmts[0].common_ctrl = 0x80;
+		/* find first disk element */
+		elements = 0;
+		scp = (struct ses_config_page *)rc;
+		for (i = 0; i < scp->nr_elem_typ; i++) {
+			tdh = (struct ses_type_desc_hdr *)
+			    (&scp->enc_desc_len + scp->enc_desc_len + 1 +
+			    (i * sizeof(struct ses_type_desc_hdr)));
+
+			if (tdh->elem_type == STDH_DEVICE) {
+				found = 1;
+				break;
+			}
+			elements += tdh->nr_elem;
+		}
+
+		if (debug) {
+			printf("tdh->elem_type: %d, tdh->nr_elem: %d, "
+			    "elements: %d\n",
+			    tdh->elem_type, tdh->nr_elem, elements);
+		}
+
+		if (!found) {
+			if (debug)
+				printf("no devices found\n");
+
+			return;
+		}
+
+		/* get ses page so that we can modify bits for blink */
+		if (!get_ses_page(delm->channel, delm->target,
+		    SES_CTRL_DIAG_PAGE, &rc2[0], sizeof(rc2))) {
+			return;
+		}
+
+		esdp = (struct ses_enc_stat_diag_page *)rc2;
+		desd = (struct ses_dev_elmt_status_diag *)
+		    (esdp->elmts + elements); /* FIXME do we need padding? */
+
+		/* loop through all slots to see if target is available */
+		found = 0;
+		for (i = 0; i < tdh->nr_elem; i++) {
+			if (debug)
+				printf("stat: %d, addr: %d, b3: %d, b4: %d\n",
+				    desd->common_status,
+				    desd->slot_addr,
+				    desd->byte3,
+				    desd->byte4);
+
+			if (t == desd->slot_addr) {
+				found = 1;
+				break;
+			}
+
+			desd += 1; /* next element */
+		}
+
+		if (!found) {
+			printf("target: %d not found\n", t);
+
+			return;
+		}
+
+		cdp = (struct ses_enc_ctrl_diag_page *)rc2;
+		cdp->elmts[i].common_ctrl = SDECD_SELECT;
 		switch (opc) {
 		case BIOCSBLINK_ALERT:
-			cdp->elmts[0].byte4 = SDECD_RQST_FAULT;
+			cdp->elmts[i].byte4 = SDECD_RQST_FAULT;
+			cdp->elmts[i].byte3 = 0x00;
 			break;
 
 		case BIOCSBLINK_BLINK:
-			cdp->elmts[0].byte3 = SDECD_RQST_IDENT;
+			cdp->elmts[i].byte3 = SDECD_RQST_IDENT;
+			cdp->elmts[i].byte4 = 0x00;
 			break;
 
 		case BIOCSBLINK_UNBLINK:
-			cdp->elmts[0].byte3 = 0x00;
-			cdp->elmts[0].byte4 = 0x00;
+			cdp->elmts[i].byte3 = 0x00;
+			cdp->elmts[i].byte4 = 0x00;
 			break;
 
 		default:
@@ -495,7 +602,7 @@ bio_blink_userland(u_int8_t opc, u_int8_t c, u_int8_t t)
 		}
 
 		if (!set_ses_page(delm->channel, delm->target,
-		    &rc[0], sizeof(rc))) {
+		    &rc2[0], sizeof(rc2))) {
 			return;
 		}
 
@@ -911,7 +1018,7 @@ void print_cap(u_int64_t cap)
 #endif
 
 int
-get_ses_page(u_int8_t c, u_int8_t t, u_int8_t *buf, u_int8_t buflen)
+get_ses_page(u_int8_t c, u_int8_t t, u_int8_t p, u_int8_t *buf, u_int8_t buflen)
 {
 	bioc_scsicmd bpt;
 	int rv;
@@ -924,7 +1031,7 @@ get_ses_page(u_int8_t c, u_int8_t t, u_int8_t *buf, u_int8_t buflen)
 	bpt.cdb[0] = RECEIVE_DIAGNOSTIC;
 	/* FIXME add this cdb struct + #defines to scsi_all.h */
 	bpt.cdb[1] = 0x01; /* set PCV bit for SES commands */
-	bpt.cdb[2] = 0x02; /* SES page nr */
+	bpt.cdb[2] = p;    /* SES page nr */
 	bpt.cdb[4] = buflen;
 	bpt.data = buf;    /* set up return data pointer */
 	bpt.datalen = buflen;
@@ -969,11 +1076,6 @@ set_ses_page(u_int8_t c, u_int8_t t, u_int8_t *buf, u_int8_t buflen)
 	bpt.cdb[1] = SSD_PF;
 	bpt.cdb[4] = buflen;
 	bpt.data = buf;    /* set up return data pointer */
-	/*
-	buf[12] = 0x80;
-	buf[14] = 0x00;
-	buf[15] = 0x20;
-	*/
 	bpt.datalen = buflen;
 	bpt.direction = BIOC_DIROUT;
 	bpt.senselen = 32; /* silly since the kernel overrides it */

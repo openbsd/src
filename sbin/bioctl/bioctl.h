@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.h,v 1.5 2005/04/06 02:36:34 marco Exp $       */
+/* $OpenBSD: bioctl.h,v 1.6 2005/04/12 20:49:19 marco Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -70,8 +70,9 @@ void		parse_devlist(char *);
 void		print_sense(u_int8_t *, u_int8_t);
 void		print_inquiry(u_int8_t, u_int8_t*, u_int8_t);
 void		print_cap(u_int64_t);
-int		get_ses_page(u_int8_t, u_int8_t, u_int8_t*, u_int8_t);
+int		get_ses_page(u_int8_t, u_int8_t, u_int8_t, u_int8_t*, u_int8_t);
 int		set_ses_page(u_int8_t, u_int8_t, u_int8_t*, u_int8_t);
+void		ses_verbose(u_int8_t *, u_int8_t);
 
 int		bio_get_capabilities(bioc_capabilities *);
 void		bio_alarm(char *);
