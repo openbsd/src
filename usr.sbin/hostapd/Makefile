@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2005/04/13 18:12:23 reyk Exp $
+# $OpenBSD: Makefile,v 1.2 2005/04/13 20:30:17 deraadt Exp $
 
 PROG=		hostapd
 SRCS=		privsep.c apme.c iapp.c llc.c hostapd.c parse.y
@@ -9,6 +9,6 @@ CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare
-CLEANFILES=     y.tab.h
+CLEANFILES=	y.tab.h
 
 .include <bsd.prog.mk>
