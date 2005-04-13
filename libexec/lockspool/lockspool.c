@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockspool.c,v 1.10 2003/07/10 00:04:28 david Exp $	*/
+/*	$OpenBSD: lockspool.c,v 1.11 2005/04/13 02:33:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt <deraadt@theos.com>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: lockspool.c,v 1.10 2003/07/10 00:04:28 david Exp $";
+static const char rcsid[] = "$OpenBSD: lockspool.c,v 1.11 2005/04/13 02:33:09 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/signal.h>
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 	}
 	write(STDOUT_FILENO, "1\n", 2);
 
-	while (read(0, &c, 1) == -1 && errno == EINTR)
+	while (read(STDIN_FILENO, &c, 1) == -1 && errno == EINTR)
 		;
 	rellock();
 	exit (0);

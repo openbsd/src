@@ -1,4 +1,4 @@
-/* $OpenBSD: protocol.c,v 1.3 2003/05/12 19:28:22 camield Exp $ */
+/* $OpenBSD: protocol.c,v 1.4 2005/04/13 02:33:09 deraadt Exp $ */
 
 /*
  * POP protocol handling.
@@ -52,7 +52,7 @@ static void pop_fetch(void)
 	signal(SIGALRM, pop_timeout);
 	alarm(POP_TIMEOUT);
 
-	size = read(0, pop_buffer.data, sizeof(pop_buffer.data));
+	size = read(STDIN_FILENO, pop_buffer.data, sizeof(pop_buffer.data));
 
 	alarm(0);
 	signal(SIGALRM, SIG_DFL);

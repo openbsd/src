@@ -1,4 +1,4 @@
-/*	$OpenBSD: uucpd.c,v 1.29 2004/06/02 02:21:15 brad Exp $	*/
+/*	$OpenBSD: uucpd.c,v 1.30 2005/04/13 02:33:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985 The Regents of the University of California.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)uucpd.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: uucpd.c,v 1.29 2004/06/02 02:21:15 brad Exp $";
+static char rcsid[] = "$OpenBSD: uucpd.c,v 1.30 2005/04/13 02:33:09 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -229,7 +229,7 @@ readline(char *p, int n)
 	char c;
 
 	while (n-- > 0) {
-		if (read(0, &c, 1) <= 0)
+		if (read(STDIN_FILENO, &c, 1) <= 0)
 			return(-1);
 		c &= 0177;
 		if (c == '\r') {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wwrint.c,v 1.7 2003/08/01 22:01:38 david Exp $	*/
+/*	$OpenBSD: wwrint.c,v 1.8 2005/04/13 02:33:09 deraadt Exp $	*/
 /*	$NetBSD: wwrint.c,v 1.4 1995/12/21 10:46:24 mycroft Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)wwrint.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: wwrint.c,v 1.7 2003/08/01 22:01:38 david Exp $";
+static char rcsid[] = "$OpenBSD: wwrint.c,v 1.8 2005/04/13 02:33:09 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ wwrint()
 	int n;
 
 	wwnread++;
-	n = read(0, wwibq, wwibe - wwibq);
+	n = read(STDIN_FILENO, wwibq, wwibe - wwibq);
 	if (n > 0) {
 		if (tt.tt_rint)
 			n = (*tt.tt_rint)(wwibq, n);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.15 2004/03/02 21:04:42 tedu Exp $	*/
+/*	$OpenBSD: io.c,v 1.16 2005/04/13 02:33:08 deraadt Exp $	*/
 /*	$NetBSD: io.c,v 1.4 1994/12/09 02:14:20 jtc Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: io.c,v 1.15 2004/03/02 21:04:42 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: io.c,v 1.16 2005/04/13 02:33:08 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -109,7 +109,7 @@ talk(void)
 			 * curses's output routines would screw up
 			 */
 			ioctl(0, FIONREAD, &nb);
-			nb = read(0, buf, nb);
+			nb = read(STDIN_FILENO, buf, nb);
 			display(&my_win, buf, nb);
 			/* might lose data here because sockt is non-blocking */
 			write(sockt, buf, nb);

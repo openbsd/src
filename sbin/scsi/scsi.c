@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.18 2005/04/11 22:02:06 cloder Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.19 2005/04/13 02:33:08 deraadt Exp $	*/
 /*	$FreeBSD: scsi.c,v 1.11 1996/04/06 11:00:28 joerg Exp $	*/
 
 /*
@@ -343,26 +343,23 @@ do_cmd(int fd, char *fmt, int argc, char **argv)
 		}
 
 		count = scsireq->datalen = iget(&h, 0);
-		if (count)
-		{
+		if (count) {
 			data_fmt = cget(&h, 0);
 
 			scsireq->databuf = malloc(count);
 
-			if (data_phase == out)
-			{
-				if (strcmp(data_fmt, "-") == 0)	/* Read data from stdin */
-				{
+			if (data_phase == out) {
+				if (strcmp(data_fmt, "-") == 0)	{
 					bp = (char *)scsireq->databuf;
-					while (count > 0 && (amount = read(0, bp, count)) > 0)
-					{
+					while (count > 0 &&
+					    (amount = read(STDIN_FILENO,
+					    bp, count)) > 0) {
 						count -= amount;
 						bp += amount;
 					}
 					if (amount == -1)
 						err(errno, "read");
-					else if (amount == 0)
-					{
+					else if (amount == 0) {
 						/* early EOF */
 						fprintf(stderr,
 							"Warning: only read %lu bytes out of %lu.\n",

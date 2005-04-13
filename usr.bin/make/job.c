@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: job.c,v 1.58 2004/11/29 06:20:03 jsg Exp $	*/
+/*	$OpenBSD: job.c,v 1.59 2005/04/13 02:33:08 deraadt Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -1336,7 +1336,7 @@ JobExec(Job *job, char **argv)
 
 	   (void)execv(shellPath, argv);
 
-	(void)write(2, "Could not execute shell\n",
+	(void)write(STDERR_FILENO, "Could not execute shell\n",
 		     sizeof("Could not execute shell"));
 	_exit(1);
     } else {

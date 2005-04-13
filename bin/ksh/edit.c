@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.28 2005/03/30 17:16:37 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.29 2005/04/13 02:33:08 deraadt Exp $	*/
 
 /*
  * Command line editing - common code
@@ -119,7 +119,7 @@ x_getc(void)
 	char c;
 	int n;
 
-	while ((n = blocking_read(0, &c, 1)) < 0 && errno == EINTR)
+	while ((n = blocking_read(STDIN_FILENO, &c, 1)) < 0 && errno == EINTR)
 		if (trap) {
 			x_mode(false);
 			runtraps(0);

@@ -1,4 +1,4 @@
-/* $OpenBSD: display.c,v 1.18 2004/06/13 18:49:02 otto Exp $	 */
+/* $OpenBSD: display.c,v 1.19 2005/04/13 02:33:09 deraadt Exp $	 */
 
 /*
  *  Top users/processes display for Unix
@@ -764,7 +764,7 @@ readline(char *buffer, int size, int numeric)
 	size -= 1;
 
 	/* read loop */
-	while ((fflush(stdout), (len = read(0, ptr, 1)) > 0)) {
+	while ((fflush(stdout), (len = read(STDIN_FILENO, ptr, 1)) > 0)) {
 
 		if (len == 0 || leaveflag) {
 			end_screen();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.35 2004/10/07 06:26:12 otto Exp $	*/
+/*	$OpenBSD: top.c,v 1.36 2005/04/13 02:33:09 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -593,7 +593,7 @@ rundisplay(void)
 		 * command strchr
 		 */
 		while (1) {
-			len = read(0, &ch, 1);
+			len = read(STDIN_FILENO, &ch, 1);
 			if (len == -1 && errno == EINTR)
 				continue;
 			if (len == 0)
@@ -650,7 +650,7 @@ rundisplay(void)
 			standout("Hit any key to continue: ");
 			fflush(stdout);
 			while (1) {
-				len = read(0, &ch, 1);
+				len = read(STDIN_FILENO, &ch, 1);
 				if (len == -1 && errno == EINTR)
 					continue;
 				if (len == 0)
@@ -673,7 +673,7 @@ rundisplay(void)
 				standout("Hit any key to continue: ");
 				fflush(stdout);
 				while (1) {
-					len = read(0, &ch, 1);
+					len = read(STDIN_FILENO, &ch, 1);
 					if (len == -1 && errno == EINTR)
 						continue;
 					if (len == 0)

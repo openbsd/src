@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.27 2004/10/04 05:21:27 jsg Exp $	*/
+/*	$OpenBSD: server.c,v 1.28 2005/04/13 02:33:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.27 2004/10/04 05:21:27 jsg Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.28 2005/04/13 02:33:08 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -632,7 +632,7 @@ again:
 		if (*s != '\n') {
 			if (!iamremote) {
 				fflush(stdout);
-				(void) write(2, s, cp - s);
+				(void) write(STDERR_FILENO, s, cp - s);
 			}
 			if (lfp != NULL)
 				(void) fwrite(s, 1, cp - s, lfp);
@@ -1198,7 +1198,7 @@ rmchk(opts)
 			if (*s != '\n') {
 				if (!iamremote) {
 					fflush(stdout);
-					(void) write(2, s, cp - s);
+					(void) write(STDERR_FILENO, s, cp - s);
 				}
 				if (lfp != NULL)
 					(void) fwrite(s, 1, cp - s, lfp);
@@ -1547,7 +1547,7 @@ response()
 		if (*s != '\n') {
 			if (!iamremote) {
 				fflush(stdout);
-				(void) write(2, s, cp - s);
+				(void) write(STDERR_FILENO, s, cp - s);
 			}
 			if (lfp != NULL)
 				(void) fwrite(s, 1, cp - s, lfp);

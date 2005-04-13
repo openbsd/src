@@ -1,4 +1,4 @@
-/*	$OpenBSD: getguess.c,v 1.6 2004/11/29 08:52:28 jsg Exp $	*/
+/*	$OpenBSD: getguess.c,v 1.7 2005/04/13 02:33:07 deraadt Exp $	*/
 /*	$NetBSD: getguess.c,v 1.5 1995/03/23 08:32:43 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getguess.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: getguess.c,v 1.6 2004/11/29 08:52:28 jsg Exp $";
+static char rcsid[] = "$OpenBSD: getguess.c,v 1.7 2005/04/13 02:33:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ readch(void)
 
 	cnt = 0;
 	for (;;) {
-		if (read(0, &ch, sizeof ch) <= 0) {
+		if (read(STDIN_FILENO, &ch, sizeof ch) <= 0) {
 			if (++cnt > 100)
 				die(0);
 		} else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.11 2004/07/10 07:26:24 deraadt Exp $	*/
+/*	$OpenBSD: input.c,v 1.12 2005/04/13 02:33:08 deraadt Exp $	*/
 /*    $NetBSD: input.c,v 1.3 1996/02/06 22:47:33 jtc Exp $    */
 
 /*-
@@ -131,7 +131,7 @@ tsleep(void)
 	tv.tv_sec = 0;
 	tv.tv_usec = fallrate;
 	while (TV_POS(&tv))
-		if (rwait(&tv) && read(0, &c, 1) != 1)
+		if (rwait(&tv) && read(STDIN_FILENO, &c, 1) != 1)
 			break;
 }
 
@@ -160,7 +160,7 @@ tgetchar(void)
 	}
 	if (!rwait(&timeleft))
 		return (-1);
-	if (read(0, &c, 1) != 1)
+	if (read(STDIN_FILENO, &c, 1) != 1)
 		stop("end of file, help");
 	return ((int)(unsigned char)c);
 }
