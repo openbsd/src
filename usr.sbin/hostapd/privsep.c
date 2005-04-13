@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.7 2005/04/13 20:42:16 reyk Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.8 2005/04/13 21:02:44 moritz Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -139,7 +139,7 @@ hostapd_priv_init(struct hostapd_config *cfg)
 
 	event_init();
 
-	/* Pass ALR/TERM/HUP through to child, and accept CHLD */
+	/* Pass ALRM/TERM/INT/HUP through to child, and accept CHLD */
 	signal(SIGALRM, hostapd_sig_relay);
 	signal(SIGTERM, hostapd_sig_relay);
 	signal(SIGINT, hostapd_sig_relay);
@@ -336,9 +336,8 @@ hostapd_priv_apme_bssid(struct hostapd_config *cfg)
 
 	hostapd_must_read(priv_fd, &ret, sizeof(int));
 	if (ret != 0)
-		hostapd_fatal("%s: failed to get Host AP's BSSID on"
-		    " \"%s\": %s\n",
-		    cfg->c_apme_iface, strerror(errno));
+		hostapd_fatal("failed to get Host AP's BSSID on"
+		    " \"%s\": %s\n", cfg->c_apme_iface, strerror(errno));
 
 	hostapd_must_read(priv_fd, &cfg->c_apme_bssid, IEEE80211_ADDR_LEN);
 	cfg->c_stats.cn_tx_apme++;

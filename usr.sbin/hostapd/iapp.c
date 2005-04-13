@@ -1,4 +1,4 @@
-/*	$OpenBSD: iapp.c,v 1.3 2005/04/13 20:25:31 deraadt Exp $	*/
+/*	$OpenBSD: iapp.c,v 1.4 2005/04/13 21:02:44 moritz Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -177,9 +177,9 @@ hostapd_iapp_input(int fd, short sig, void *arg)
 			ret = 0;
 
 		hostapd_log(HOSTAPD_LOG, "%s/%s: %s ADD notification "
-		    "for %s at %s (%s)\n",
-		    ret == 0 ? "received" : "ignored",
+		    "for %s at %s\n",
 		    cfg->c_apme_iface, cfg->c_iapp_iface,
+		    ret == 0 ? "received" : "ignored",
 		    ether_ntoa((struct ether_addr*)node.ni_macaddr),
 		    inet_ntoa(addr.sin_addr));
 		break;
