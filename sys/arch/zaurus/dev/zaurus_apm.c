@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_apm.c,v 1.5 2005/04/11 03:21:03 uwe Exp $	*/
+/*	$OpenBSD: zaurus_apm.c,v 1.6 2005/04/13 05:49:57 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -28,6 +28,7 @@
 
 #include <zaurus/dev/zaurus_scoopvar.h>
 #include <zaurus/dev/zaurus_sspvar.h>
+void zssp_init(void);	/* XXX */
 
 #include <zaurus/dev/zaurus_apm.h>
 
@@ -41,6 +42,7 @@ struct zapm_softc {
 	struct pxa2x0_apm_softc sc;
 	struct timeout sc_poll;
 	struct timeval sc_lastbattchk;
+	int	sc_suspended;
 	int	sc_ac_on;
 	int	sc_charging;
 	int	sc_discharging;
@@ -140,6 +142,8 @@ int	zapm_charge_complete(struct zapm_softc *);
 void	zapm_poll(void *);
 int	zapm_get_event(struct pxa2x0_apm_softc *, u_int *);
 void	zapm_power_info(struct pxa2x0_apm_softc *, struct apm_power_info *);
+void	zapm_suspend(struct pxa2x0_apm_softc *);
+int	zapm_resume(struct pxa2x0_apm_softc *);
 
 
 int
@@ -162,8 +166,11 @@ apm_attach(struct device *parent, struct device *self, void *aux)
 	    IPL_BIO, zapm_acintr, sc, "apm_ac");
 #endif
 
+	sc->sc_event = APM_NOEVENT;
 	sc->sc.sc_get_event = zapm_get_event;
 	sc->sc.sc_power_info = zapm_power_info;
+	sc->sc.sc_suspend = zapm_suspend;
+	sc->sc.sc_resume = zapm_resume;
 
 	timeout_set(&sc->sc_poll, &zapm_poll, sc);
 
@@ -402,8 +409,10 @@ zapm_poll(void *v)
 			volt = zapm_batt_volt();
 			zapm_enable_charging(sc, 1);
 			DPRINTF(("zapm_poll: start charging volt %d\n", volt));
-		} else if (ratecheck(&sc->sc_lastbattchk, &zapm_battchkrate)
-		    && !zapm_charge_complete(sc)) {
+		}
+		
+		if (!sc->sc_suspended && sc->sc_batt_full == 0 &&
+		    ratecheck(&sc->sc_lastbattchk, &zapm_battchkrate)) {
 			DPRINTF(("zapm_poll: discharge on\n"));
 			if (charging)
 				zapm_enable_charging(sc, 0);
@@ -418,7 +427,8 @@ zapm_poll(void *v)
 			zapm_enable_charging(sc, 0);
 			timerclear(&sc->sc_lastbattchk);
 			DPRINTF(("zapm_poll: stop charging\n"));
-		} else if (ratecheck(&sc->sc_lastbattchk, &zapm_battchkrate)) {
+		} else if (!sc->sc_suspended &&
+		    ratecheck(&sc->sc_lastbattchk, &zapm_battchkrate)) {
 			volt = zapm_batt_volt();
 			DPRINTF(("zapm_poll: volt %d\n", volt));
 		}
@@ -495,6 +505,68 @@ zapm_power_info(struct pxa2x0_apm_softc *pxa_sc, struct apm_power_info *power)
 	power->minutes_left = zapm_batt_minutes(power->battery_life);
 }
 
+/*
+ * Called before suspending when all powerhooks are done.
+ */
+void
+zapm_suspend(struct pxa2x0_apm_softc *pxa_sc)
+{
+	struct zapm_softc *sc = (struct zapm_softc *)pxa_sc;
+
+	sc->sc_suspended = 1;
+	timeout_del(&sc->sc_poll);
+	zapm_poll(sc);
+
+	if (sc->sc_charging) {
+		zapm_enable_charging(sc, 0);
+		delay(15000);
+		zapm_enable_charging(sc, 1);
+	}
+
+	pxa2x0_wakeup_config(PXA2X0_WAKEUP_ALL, 1);
+}
+
+/*
+ * Called after wake-up from suspend with interrupts still disabled,
+ * before any powerhooks are done.
+ */
+int
+zapm_resume(struct pxa2x0_apm_softc *pxa_sc)
+{
+	struct zapm_softc *sc = (struct zapm_softc *)pxa_sc;
+	int	a, b;
+	u_int	wsrc;
+	int	wakeup = 0;
+
+	/* C3000 */
+	a = pxa2x0_gpio_get_bit(97) ? 1 : 0;
+	b = pxa2x0_gpio_get_bit(96) ? 2 : 0;
+
+	wsrc = pxa2x0_wakeup_status();
+
+	/* Resume only if the lid is not closed. */
+	if ((a | b) != 3 && (wsrc & PXA2X0_WAKEUP_POWERON) != 0) {
+		int timeout = 100; /* 10 ms */
+		/* C3000 */
+		while (timeout-- > 0 && pxa2x0_gpio_get_bit(95) != 0) {
+			if (timeout == 0) {
+				wakeup = 1;
+				break;
+			}
+			delay(100);
+		}
+	}
+
+	/* Initialize the SSP unit before using the MAX1111 again. */
+	zssp_init();
+
+	zapm_poll(sc);
+	if (wakeup)
+		sc->sc_suspended = 0;
+
+	return (wakeup);
+}
+
 void
 zapm_poweroff(void)
 {
@@ -503,7 +575,8 @@ zapm_poweroff(void)
 	KASSERT(apm_cd.cd_ndevs > 0 && apm_cd.cd_devs[0] != NULL);
 	sc = apm_cd.cd_devs[0];
 
-#if 0
+	dopowerhooks(PWR_SUSPEND);
+
 	/* XXX enable charging during suspend */
 
 	/* XXX keep power LED state during suspend */
@@ -512,17 +585,15 @@ zapm_poweroff(void)
 
 	/* XXX scoop power down */
 
+	/* XXX set PGSRn and GPDRn */
+
 	pxa2x0_wakeup_config(PXA2X0_WAKEUP_ALL, 1);
 
-	/* XXX set PGSRn and GPDRn */
-#endif
+	do {
+		pxa2x0_apm_sleep(sc);
+	}
+	while (!zapm_resume(sc));
 
-	dopowerhooks(PWR_SUSPEND);
-
-	/* Turn off the status LED to avoid blinking before restart. */
-	scoop_led_set(SCOOP_LED_GREEN, 0);
-
-	pxa2x0_apm_sleep(sc);
 	zapm_restart();
 
 	/* NOTREACHED */
