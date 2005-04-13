@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.conf.5,v 1.2 2005/04/13 19:06:11 deraadt Exp $
+.\" $OpenBSD: hostapd.conf.5,v 1.3 2005/04/13 20:03:06 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
 .\"
@@ -40,7 +40,7 @@ Global settings for
 .Pp
 Comments can be put anywhere in the file using a hash mark
 .Pq Sq # ,
-and extends to the end of the current line.
+and extend to the end of the current line.
 .Sh MACROS
 Much like
 .Xr cpp 1
@@ -56,7 +56,7 @@ or
 .Ic hostap ) .
 Macros are not expanded inside quotes.
 .Pp
-For example,
+For example:
 .Bd -literal -offset indent
 wlan="ath0"
 set iapp interface $wlan
@@ -65,14 +65,10 @@ set iapp interface $wlan
 The following configuration settings are understood:
 .Bl -tag -width Ds
 .It Ic set hostap interface Ar interface
-Specify the wireless interface running in
-.Pa Host AP
-mode.
-This this option could be omitted to use the
+Specify the wireless interface running in Host AP mode.
+This option could be omitted to use
 .Xr hostapd 8
-to log received
-.Pa IAPP
-messages.
+to log received IAPP messages.
 .It Ic set iapp interface Ar interface
 Specify the mandatory Inter-Access-Point (IAPP) interface.
 .It Ic set iapp mode Ar mode
