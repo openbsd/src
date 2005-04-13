@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.221 2005/04/01 15:50:14 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.222 2005/04/13 21:47:07 henning Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -83,6 +83,7 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o root -g wheel -m 600 pf.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 644 pf.os ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 644 sensorsd.conf ${DESTDIR}/etc
+	${INSTALL} -c -o root -g wheel -m 600 hostapd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	cd root; \
@@ -379,7 +380,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.221 2005/04/01 15:50:14 deraadt Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.222 2005/04/13 21:47:07 henning Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
