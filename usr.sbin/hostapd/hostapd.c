@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.5 2005/04/13 19:16:08 henning Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.6 2005/04/13 19:26:05 henning Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -62,8 +62,7 @@ void
 hostapd_usage(void)
 {
 	fprintf(stderr, "usage: %s [-dvb] [-a interface] [-D macro=value] "
-	    "[-f file] [-i interface]\n",
-	    __progname);
+	    "[-f file] [-i interface]\n", __progname);
 	exit(EXIT_FAILURE);
 }
 
@@ -76,11 +75,11 @@ hostapd_log(u_int level, const char *fmt, ...)
 		return;
 
 	va_start(ap, fmt);
-	if (hostapd_cfg.c_debug)
+	if (hostapd_cfg.c_debug) {
 		vfprintf(stderr, fmt, ap);
-	else
+		fflush(stderr);
+	} else
 		vsyslog(LOG_INFO, fmt, ap);
-	fflush(stderr);
 	va_end(ap);
 }
 
@@ -90,11 +89,11 @@ hostapd_fatal(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	if (hostapd_cfg.c_debug)
+	if (hostapd_cfg.c_debug) {
 		vfprintf(stderr, fmt, ap);
-	else
+		fflush(stderr);
+	} else
 		vsyslog(LOG_ERR, fmt, ap);
-	fflush(stderr);
 	va_end(ap);
 
 	hostapd_cleanup(&hostapd_cfg);
