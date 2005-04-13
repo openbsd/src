@@ -32,4 +32,5 @@ _ppp:*:82:82::0:0:PPP utilities:/var/empty:/sbin/nologin
 _ntp:*:83:83::0:0:NTP Daemon:/var/empty:/sbin/nologin
 _ftp:*:84:84::0:0:FTP Daemon:/var/empty:/sbin/nologin
 _ospfd:*:85:85::0:0:OSPF Daemon:/var/empty:/sbin/nologin
+_hostapd:*:86:86::0:0:HostAP Daemon:/var/empty:/sbin/nologin
 nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin
