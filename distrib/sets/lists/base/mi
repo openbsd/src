@@ -1800,6 +1800,7 @@
 ./usr/sbin/groupinfo
 ./usr/sbin/groupmod
 ./usr/sbin/host
+./usr/sbin/hostapd
 ./usr/sbin/httpd
 ./usr/sbin/inetd
 ./usr/sbin/iostat

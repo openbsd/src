@@ -25,6 +25,7 @@
 ./etc/ftpusers
 ./etc/gettytab
 ./etc/group
+./etc/hostapd.conf
 ./etc/hosts
 ./etc/hosts.equiv
 ./etc/hosts.lpd
