@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.c,v 1.12 2005/04/11 03:07:09 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.c,v 1.13 2005/04/13 05:40:07 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -307,6 +307,11 @@ apm_suspend(struct pxa2x0_apm_softc *sc)
 
 	if (cold)
 		vfs_syncwait(0);
+
+	if (sc->sc_suspend == NULL)
+		pxa2x0_wakeup_config(PXA2X0_WAKEUP_ALL, 1);
+	else
+		sc->sc_suspend(sc);
 
 	pxa2x0_apm_sleep(sc);
 }
@@ -718,6 +723,7 @@ pxa2x0_wakeup_config(u_int wsrc, int enable)
 		prer |= (1<<31);
 
 	if (enable) {
+		sc->sc_wakeon |= wsrc;
 		prer |= bus_space_read_4(sc->sc_iot, sc->sc_pm_ioh,
 		    POWMAN_PRER);
 		pfer |= bus_space_read_4(sc->sc_iot, sc->sc_pm_ioh,
@@ -725,6 +731,7 @@ pxa2x0_wakeup_config(u_int wsrc, int enable)
 		pkwr |= bus_space_read_4(sc->sc_iot, sc->sc_pm_ioh,
 		    POWMAN_PKWR);
 	} else {
+		sc->sc_wakeon &= ~wsrc;
 		prer = bus_space_read_4(sc->sc_iot, sc->sc_pm_ioh,
 		    POWMAN_PRER) & ~prer;
 		pfer = bus_space_read_4(sc->sc_iot, sc->sc_pm_ioh,
@@ -733,19 +740,11 @@ pxa2x0_wakeup_config(u_int wsrc, int enable)
 		    POWMAN_PKWR) & ~pkwr;
 	}
 
+	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PKWR, pkwr);
 	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PRER, prer);
 	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PFER, pfer);
 	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PWER,
 	    prer | pfer);
-	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PEDR,
-	    0xffffffff);
-	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PKWR, pkwr);
-	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PKSR,
-	    0xffffffff);
-
-	/* XXX do that just before suspend. */
-	pxa2x0_clkman_config(CKEN_KEY,
-	    (wsrc & PXA2X0_WAKEUP_KEYNS_ALL) != 0);
 }
 
 u_int
@@ -874,6 +873,13 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 		delay(500000); /* XXX */
 	}
 
+suspend_again:
+	/* Clear wake-up status. */
+	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PEDR,
+	    0xffffffff);
+	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PKSR,
+	    0xffffffff);
+
 	scoop_check_mcr();
 
 	/* XXX control battery charging in sleep mode. */
@@ -882,8 +888,6 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 
 	/* XXX schedule RTC alarm to check the battery, or schedule
 	   XXX wake-up shortly before an already programmed alarm? */
-
-	pxa2x0_wakeup_config(PXA2X0_WAKEUP_ALL, 1);
 
 	pxa27x_run_mode();
 #define MDREFR_LOW		(MDREFR_C3000 | 0x00b)
@@ -952,8 +956,15 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 
 	sd.sd_cken = bus_space_read_4(sc->sc_iot, pxa2x0_clkman_ioh,
 	    CLKMAN_CKEN);
-	bus_space_write_4(sc->sc_iot, pxa2x0_clkman_ioh, CLKMAN_CKEN,
-	    CKEN_MEM | CKEN_KEY);
+
+	/*
+	 * Stop clocks to all units except to the memory controller, and
+	 * to the keypad controller if it is enabled as a wake-up source.
+	 */
+	rv = CKEN_MEM;
+	if ((sc->sc_wakeon & PXA2X0_WAKEUP_KEYNS_ALL) != 0)
+		rv |= CKEN_KEY;
+	bus_space_write_4(sc->sc_iot, pxa2x0_clkman_ioh, CLKMAN_CKEN, rv);
 
 	/* Disable nRESET_OUT. */
 	rv = bus_space_read_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PSLR);
@@ -1016,10 +1027,13 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 	pxa2x0_clkman_config(CKEN_SSP|CKEN_PWM0|CKEN_PWM1, 1);
 	pxa2x0_clkman_config(CKEN_KEY, 0);
 
+#if 1
 	/* Clear all GPIO interrupt sources. */
 	bus_space_write_4(sc->sc_iot, pxa2x0_gpio_ioh, GPIO_GEDR0, 0xffffffff);
 	bus_space_write_4(sc->sc_iot, pxa2x0_gpio_ioh, GPIO_GEDR1, 0xffffffff);
 	bus_space_write_4(sc->sc_iot, pxa2x0_gpio_ioh, GPIO_GEDR2, 0xffffffff);
+#endif
+
 	bus_space_write_4(sc->sc_iot, pxa2x0_gpio_ioh, GPIO_GPDR0, sd.sd_gpdr0);
 	bus_space_write_4(sc->sc_iot, pxa2x0_gpio_ioh, GPIO_GPDR1, sd.sd_gpdr1);
 	bus_space_write_4(sc->sc_iot, pxa2x0_gpio_ioh, GPIO_GPDR2, sd.sd_gpdr2);
@@ -1098,11 +1112,28 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 	delay(1); /* XXX is the delay long enough, and necessary at all? */
 	pxa27x_fastbus_run_mode(1, pxa2x0_memcfg.mdrefr_high);
 
-	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PMCR, 0);
-
 	/* Change to 416Mhz turbo mode with fast-bus enabled. */
 	pxa27x_frequency_change(CCCR_A | CCCR_TURBO_X2 | CCCR_RUN_X16,
 	    CLKCFG_B | CLKCFG_F | CLKCFG_T, &pxa2x0_memcfg);
+
+	if (sc->sc_resume != NULL) {
+		/* Restore OS timers only to allow the use of delay(). */
+		bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR1, sd.sd_osmr1);
+		bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR2, sd.sd_osmr2);
+		bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR3, sd.sd_osmr3);
+		bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSCR0, sd.sd_oscr0);
+		bus_space_write_4(sc->sc_iot, ost_ioh, OST_OIER, sd.sd_oier);
+		if (!sc->sc_resume(sc))
+			goto suspend_again;
+	}
+
+	/*
+	 * Allow immediate entry into deep-sleep mode if power fails.
+	 * Resume from immediate deep-sleep is not implemented yet.
+	 */
+	bus_space_write_4(sc->sc_iot, sc->sc_pm_ioh, POWMAN_PMCR, 0);
+
+	inittodr(0);
 
 	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR0, sd.sd_osmr0);
 	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR1, sd.sd_osmr1);
@@ -1110,8 +1141,6 @@ pxa2x0_apm_sleep(struct pxa2x0_apm_softc *sc)
 	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSMR3, sd.sd_osmr3);
 	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OSCR0, sd.sd_oscr0);
 	bus_space_write_4(sc->sc_iot, ost_ioh, OST_OIER, sd.sd_oier);
-
-	inittodr(0);
 
 	restore_interrupts(save);
 

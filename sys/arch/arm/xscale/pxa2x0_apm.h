@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_apm.h,v 1.6 2005/04/11 03:07:09 uwe Exp $	*/
+/*	$OpenBSD: pxa2x0_apm.h,v 1.7 2005/04/13 05:40:07 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -30,6 +30,7 @@ struct pxa2x0_apm_softc {
 	struct	lock sc_lock;
 	struct	klist sc_note;
 	int	sc_flags;
+	int	sc_wakeon;	/* enabled wakeup sources */
 	int	sc_batt_life;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_pm_ioh;
@@ -37,6 +38,8 @@ struct pxa2x0_apm_softc {
 	int	(*sc_get_event)(struct pxa2x0_apm_softc *, u_int *);
 	void	(*sc_power_info)(struct pxa2x0_apm_softc *,
 	    struct apm_power_info *);
+	void	(*sc_suspend)(struct pxa2x0_apm_softc *);
+	int	(*sc_resume)(struct pxa2x0_apm_softc *);
 };
 
 void	pxa2x0_apm_attach_sub(struct pxa2x0_apm_softc *);
