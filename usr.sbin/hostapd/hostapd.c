@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.2 2005/04/13 18:25:28 henning Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.3 2005/04/13 18:55:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -321,8 +321,6 @@ main(int argc, char *argv[])
 	struct hostapd_config *cfg = &hostapd_cfg;
 	char *iapp_iface = NULL, *hostap_iface = NULL, *config = NULL;
 	int ch;
-
-	bzero(cfg, sizeof(struct hostapd_config));
 
 	/*
 	 * Get and parse command line options
