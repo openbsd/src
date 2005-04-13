@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.117 2005/01/28 15:39:14 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.118 2005/04/13 04:02:06 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.117 2005/01/28 15:39:14 millert Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.118 2005/04/13 04:02:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1244,7 +1244,7 @@ sysctl_bios(char *string, char **bufpp, int mib[], int flags, int *typep)
 			/* scan all the bios devices */
 			for (indx = 0; indx < 256; indx++) {
 				snprintf(name, sizeof(name), "%s.%u",
-					 string, indx);
+				    string, indx);
 				parse(name, 1);
 			}
 			return (-1);
@@ -2012,12 +2012,12 @@ sysctl_sensors(char *string, char **bufpp, int mib[], int flags, int *typep)
 	int indx;
 
 	if (*bufpp == NULL) {
-		char name[BUFSIZ];
+		char buf[BUFSIZ];
 
 		/* scan all sensors */
 		for (indx = 0; indx < 256; indx++) {
-			snprintf(name, sizeof(name), "%s.%u", string, indx);
-			parse(name, 0);
+			snprintf(buf, sizeof(buf), "%s.%u", string, indx);
+			parse(buf, 0);
 		}
 		return (-1);
 	}
