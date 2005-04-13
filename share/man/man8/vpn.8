@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.78 2005/04/12 16:03:08 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.79 2005/04/13 16:56:36 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -201,6 +201,12 @@ interface), or key management packets (for
 .Xr isakmpd 8 ,
 .Tn UDP
 packets with source and destination ports of 500) should be allowed to pass.
+.Pp
+.Sy Note :
+The examples in this page use a private (non-routable) IP address
+to denote gateways (GATEWAY_A and GATEWAY_B).
+These addresses are normally public (routable) IP addresses
+and are given as examples only.
 .Pp
 The
 .Xr pf.conf 5
