@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.6 2005/04/13 20:25:31 deraadt Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.7 2005/04/13 20:42:16 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -123,8 +123,8 @@ hostapd_priv_init(struct hostapd_config *cfg)
 		 * Drop privileges and clear the group access list
 		 */
 		if (setgroups(1, &pw->pw_gid) == -1 ||
-		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1 ||
-		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
+		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1 ||
+		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
 			hostapd_fatal("can't drop privileges");
 
 		close(socks[0]);
