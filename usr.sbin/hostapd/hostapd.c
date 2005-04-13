@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.7 2005/04/13 19:59:08 jmc Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.8 2005/04/13 21:15:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -54,9 +54,6 @@ void	 hostapd_sig_handler(int);
 struct hostapd_config hostapd_cfg;
 
 extern char *__progname;
-
-/* defined in event(3) to terminate the event loop */
-extern volatile sig_atomic_t event_gotterm;
 
 void
 hostapd_usage(void)
@@ -262,13 +259,17 @@ hostapd_udp_init(struct hostapd_config *cfg)
 void
 hostapd_sig_handler(int sig)
 {
+	struct timeval tv;
+	
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+
 	switch (sig) {
 	case SIGALRM:
 	case SIGTERM:
 	case SIGQUIT:
 	case SIGINT:
-		/* This will terminate libevent's main loop */
-		event_gotterm = 1;
+		event_loopexit(&tv);
 	}
 }
 

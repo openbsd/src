@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.8 2005/04/13 21:02:44 moritz Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.9 2005/04/13 21:15:36 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -68,9 +68,6 @@ void	 hostapd_must_write(int, void *, size_t);
 
 static int priv_fd = -1;
 static volatile pid_t child_pid = -1;
-
-/* defined in event(3) to terminate the event loop */
-extern volatile sig_atomic_t event_gotterm;
 
 /*
  * Main privsep functions
@@ -377,13 +374,17 @@ hostapd_sig_relay(int sig)
 void
 hostapd_sig_chld(int sig)
 {
+	struct timeval tv;
+	
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+
 	/*
 	 * If parent gets a SIGCHLD, it will exit.
 	 */
 
 	if (sig == SIGCHLD) {
-		/* This will terminate libevent's main loop */
-		event_gotterm = 1;
+		event_loopexit(&tv);
 	}
 }
 
