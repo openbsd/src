@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.1 2005/04/13 18:12:23 reyk Exp $	*/
+/*	$OpenBSD: parse.y,v 1.2 2005/04/13 18:28:45 henning Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -85,11 +85,11 @@ typedef struct {
 
 %}
 
-%token MODE INTERFACE IAPP HOSTAP MULTICAST BROADCAST SET
-%token ERROR
-%token <v.string> STRING
-%token <v.val> VALUE
-%type <v.string> string
+%token	MODE INTERFACE IAPP HOSTAP MULTICAST BROADCAST SET
+%token	ERROR
+%token	<v.string>	STRING
+%token	<v.val>		VALUE
+%type	<v.string>	string
 
 %%
 
@@ -97,12 +97,12 @@ typedef struct {
  * Configuration grammar
  */
 
-grammar         : /* empty */
+grammar		: /* empty */
 		| grammar '\n'
-                | grammar option '\n'
+		| grammar option '\n'
 		| grammar varset '\n'
 		| grammar error '\n'		{ errors++; }
-		;	
+		;
 
 option		: SET HOSTAP INTERFACE STRING
 		{
@@ -110,14 +110,14 @@ option		: SET HOSTAP INTERFACE STRING
 			    sizeof(hostapd_cfg.c_apme_iface));
 
 			hostapd_cfg.c_flags |= HOSTAPD_CFG_F_APME;
-			
+
 			hostapd_log(HOSTAPD_LOG_DEBUG,
 			    "parse %s: Host AP interface %s\n",
 			    hostapd_cfg.c_config, $4);
 
 			free($4);
 		}
-                | SET IAPP INTERFACE STRING
+		| SET IAPP INTERFACE STRING
 		{
 			strlcpy(hostapd_cfg.c_iapp_iface, $4,
 			    sizeof(hostapd_cfg.c_iapp_iface));
@@ -129,11 +129,11 @@ option		: SET HOSTAP INTERFACE STRING
 
 			free($4);
 		}
-                | SET IAPP MODE MULTICAST
+		| SET IAPP MODE MULTICAST
 		{
 			hostapd_cfg.c_flags &= ~HOSTAPD_CFG_F_BRDCAST;
 		}
-                | SET IAPP MODE BROADCAST
+		| SET IAPP MODE BROADCAST
 		{
 			hostapd_cfg.c_flags |= HOSTAPD_CFG_F_BRDCAST;
 		}
