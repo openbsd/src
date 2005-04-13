@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.9 2005/04/12 14:58:40 joris Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.10 2005/04/13 20:05:37 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -67,7 +67,7 @@ cvs_annotate_options(char *opt, int argc, char **argv, int *arg)
 	date = NULL;
 	rev = NULL;
 
-	while ((ch = getopt(argc, argv, "D:flRr:")) != -1) {
+	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
 		case 'D':
 			date = optarg;
