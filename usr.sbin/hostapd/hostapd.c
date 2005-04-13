@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.1 2005/04/13 18:12:23 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.2 2005/04/13 18:25:28 henning Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -255,9 +255,8 @@ hostapd_udp_init(struct hostapd_config *cfg)
 
 		if (setsockopt(cfg->c_iapp_udp, IPPROTO_IP,
 		    IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) == -1)
-			hostapd_fatal("failed to add multicast membership to %s:"
-			    " %s\n",
-			    IAPP_MCASTADDR, strerror(errno));
+			hostapd_fatal("failed to add multicast membership to "
+			    "%s: %s\n", IAPP_MCASTADDR, strerror(errno));
 	}
 }
 
@@ -265,7 +264,7 @@ void
 hostapd_sig_handler(int sig)
 {
 	switch (sig) {
-	case SIGALRM:	
+	case SIGALRM:
 	case SIGTERM:
 	case SIGQUIT:
 	case SIGINT:
@@ -342,8 +341,8 @@ main(int argc, char *argv[])
 			break;
 		case 'D':
 			if (hostapd_parse_symset(optarg) < 0)
-				hostapd_fatal("could not parse macro definition %s",
-				    optarg);
+				hostapd_fatal("could not parse macro "
+				    "definition %s", optarg);
 			break;
 		case 'd':
 			cfg->c_debug++;
@@ -449,5 +448,5 @@ main(int argc, char *argv[])
 	/* Executed after the event loop has been terminated */
 	hostapd_cleanup(cfg);
 
-	return(EXIT_SUCCESS);
+	return (EXIT_SUCCESS);
 }

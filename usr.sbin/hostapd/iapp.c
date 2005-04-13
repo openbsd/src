@@ -1,4 +1,4 @@
-/*	$OpenBSD: iapp.c,v 1.1 2005/04/13 18:12:23 reyk Exp $	*/
+/*	$OpenBSD: iapp.c,v 1.2 2005/04/13 18:25:28 henning Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -45,7 +45,7 @@ hostapd_iapp_init(struct hostapd_config *cfg)
 {
 	if ((cfg->c_flags & HOSTAPD_CFG_F_APME) == 0)
 		return;
-	
+
 	/* Get Host AP's BSSID */
 	hostapd_priv_apme_bssid(cfg);
 

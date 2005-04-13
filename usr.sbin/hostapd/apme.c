@@ -1,4 +1,4 @@
-/*	$OpenBSD: apme.c,v 1.1 2005/04/13 18:12:23 reyk Exp $	*/
+/*	$OpenBSD: apme.c,v 1.2 2005/04/13 18:25:28 henning Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -142,8 +142,8 @@ hostapd_apme_init(struct hostapd_config *cfg)
 
 	i = 1;
 	if (ioctl(cfg->c_apme_raw, BIOCIMMEDIATE, &i) == -1)
-		hostapd_fatal("failed to set BPF immediate mode on \"%s\": %s\n",
-		    cfg->c_apme_iface, strerror(errno));
+		hostapd_fatal("failed to set BPF immediate mode on \"%s\": "
+		    "%s\n", cfg->c_apme_iface, strerror(errno));
 
 	bzero(&ifr, sizeof(struct ifreq));
 	strlcpy(ifr.ifr_name, cfg->c_apme_iface, sizeof(ifr.ifr_name));

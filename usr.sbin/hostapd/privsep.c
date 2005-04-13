@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.1 2005/04/13 18:12:23 reyk Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.2 2005/04/13 18:25:28 henning Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -131,7 +131,6 @@ hostapd_priv_init(struct hostapd_config *cfg)
 		return;
 	}
 
-	
 	/*
 	 * Privileged mother process
 	 */
@@ -237,7 +236,8 @@ hostapd_priv(int fd, short sig, void *arg)
 			node.ni_rssi = sta.sig_info;
 			node.ni_capinfo = sta.capinfo;
 
-			hostapd_must_write(fd, &node, sizeof(struct hostapd_node));
+			hostapd_must_write(fd, &node,
+			    sizeof(struct hostapd_node));
 		}
 		break;
 
