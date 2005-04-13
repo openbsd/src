@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.76 2005/03/14 12:36:27 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.77 2005/04/13 08:35:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -600,7 +600,8 @@ void
 show_fib_head(void)
 {
 	printf("flags: * = valid, B = BGP, C = Connected, S = Static\n");
-	printf("       N = BGP Nexthop reachable via this route\n\n");
+	printf("       N = BGP Nexthop reachable via this route\n");
+	printf("       r = reject route, b = blackhole route\n\n");
 	printf("flags destination          gateway\n");
 }
 
@@ -643,7 +644,16 @@ show_fib_msg(struct imsg *imsg)
 		else
 			printf(" ");
 
-		printf("   ");
+		if (k->flags & F_REJECT && k->flags & F_BLACKHOLE)
+			printf("f");
+		else if (k->flags & F_REJECT)
+			printf("r");
+		else if (k->flags & F_BLACKHOLE)
+			printf("b");
+		else
+			printf(" ");
+
+		printf("  ");
 		if (asprintf(&p, "%s/%u", inet_ntoa(k->prefix), k->prefixlen) ==
 		    -1)
 			err(1, NULL);
