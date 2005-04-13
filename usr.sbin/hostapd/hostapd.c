@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.6 2005/04/13 19:26:05 henning Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.7 2005/04/13 19:59:08 jmc Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -61,7 +61,7 @@ extern volatile sig_atomic_t event_gotterm;
 void
 hostapd_usage(void)
 {
-	fprintf(stderr, "usage: %s [-dvb] [-a interface] [-D macro=value] "
+	fprintf(stderr, "usage: %s [-bdv] [-a interface] [-D macro=value] "
 	    "[-f file] [-i interface]\n", __progname);
 	exit(EXIT_FAILURE);
 }
