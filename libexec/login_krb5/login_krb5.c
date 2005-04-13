@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_krb5.c,v 1.20 2005/03/06 10:47:27 biorn Exp $	*/
+/*	$OpenBSD: login_krb5.c,v 1.21 2005/04/13 18:46:03 biorn Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 Hans Insulander <hin@openbsd.org>.
@@ -34,6 +34,8 @@ krb5_error_code ret;
 krb5_context context;
 krb5_ccache ccache;
 krb5_principal princ;
+
+char *__progname;
 
 static void
 krb5_syslog(krb5_context context, int level, krb5_error_code code, char *fmt, ...)
@@ -150,6 +152,10 @@ krb5_login(char *username, char *invokinguser, char *password, int login,
 	int return_code = AUTH_FAILED;
 
 	if (username == NULL || password == NULL)
+		return (AUTH_FAILED);
+
+	if (strcmp(__progname, "login_krb5-or-pwd") == 0 &&
+	    strcmp(username,"root") == 0 && invokinguser[0] == '\0')
 		return (AUTH_FAILED);
 
 	ret = krb5_init_context(&context);
