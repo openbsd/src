@@ -1,0 +1,95 @@
+.\" $OpenBSD: hostapd.conf.5,v 1.1 2005/04/13 18:12:23 reyk Exp $
+.\"
+.\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd April 13, 2004
+.Dt HOSTAPD.CONF 5
+.Os
+.Sh NAME
+.Nm hostapd.conf
+.Nd configuration file for the Host Access Point daemon
+.Sh DESCRIPTION
+.Nm
+is the configuration file for the
+.Xr hostapd 8
+daemon.
+.Sh SECTIONS
+The
+.Nm
+file is divided into two main sections.
+.Bl -tag -width xxxx
+.It Sy Macros
+User-defined variables may be defined and used later, simplifying the
+configuration file.
+.It Sy Global Configuration
+Global settings for
+.Xr hostapd 8 .
+.El
+.Pp
+Comments can be put anywhere in the file using a hash mark
+.Pq Sq # ,
+and extends to the end of the current line.
+.Sh MACROS
+Much like
+.Xr cpp 1
+or
+.Xr m4 1 ,
+macros can be defined that will later be expanded in context.
+Macro names must start with a letter, and may contain letters, digits
+and underscores.
+Macro names may not be reserved words (for example,
+.Ic set ,
+.Ic interface ,
+or
+.Ic hostap ) .
+Macros are not expanded inside quotes.
+.Pp
+For example,
+.Bd -literal -offset indent
+wlan="ath0"
+set iapp interface $wlan
+.Ed
+.Sh GLOBAL CONFIGURATION
+The following configuration settings are understood:
+.Bl -tag -width Ds
+.It Ic set hostap interface Ar interface
+Specify the wireless interface running in
+.Pa Host AP
+mode.
+This this option could be omitted to use the
+.Xr hostapd 8
+to log received
+.Pa IAPP
+messages.
+.It Ic set iapp interface Ar interface
+Specify the mandatory Inter-Access-Point (IAPP) interface.
+.It Ic set iapp mode Ar mode
+Specify the IAPP mode, if not using the default one. 
+IAPP could be used in multicast (default) or in broadcast mode.
+The used multicast group is 224.0.1.178.
+.Pp
+Possible options:
+.Bd -literal -offset indent
+set iapp mode multicast
+set iapp mode broadcast
+.Ed
+.El
+.Sh SEE ALSO
+.Xr hostapd 8
+.Sh AUTHORS
+The
+.Xr hostapd 8
+program was written by
+.An Reyk Floeter Aq reyk@openbsd.org .
