@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.9 2005/03/05 05:58:39 jfb Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.10 2005/04/13 16:25:02 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -99,6 +99,10 @@ rcsnum_free(RCSNUM *rn)
 
 /*
  * rcsnum_tostr()
+ *
+ * Format the RCS number <nump> into a human-readable dot-separated
+ * representation and store the resulting string in <buf>, which is of size
+ * <blen>.
  * Returns a pointer to the start of <buf> on success, or NULL on failure.
  */
 char*
@@ -107,7 +111,7 @@ rcsnum_tostr(const RCSNUM *nump, char *buf, size_t blen)
 	u_int i;
 	char tmp[8];
 
-	if (nump->rn_len == 0) {
+	if ((nump == NULL) || (nump->rn_len == 0)) {
 		buf[0] = '\0';
 		return (buf);
 	}
