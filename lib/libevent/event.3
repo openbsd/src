@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.13 2005/02/02 09:59:17 jolan Exp $
+.\"	$OpenBSD: event.3,v 1.14 2005/04/13 16:15:09 reyk Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -144,7 +144,7 @@
 .Fn "evbuffer_find" "struct evbuffer *buf" "u_char *data" "size_t size"
 .Ft int
 .Fa (*event_sigcb)(void) ;
-.Ft int
+.Ft volatile sig_atomic_t
 .Fa event_gotsig ;
 .Sh DESCRIPTION
 The

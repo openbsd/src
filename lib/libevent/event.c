@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.5 2004/04/28 06:53:12 brad Exp $	*/
+/*	$OpenBSD: event.c,v 1.6 2005/04/13 16:15:09 reyk Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -50,6 +50,7 @@
 #include <unistd.h>
 #endif
 #include <errno.h>
+#include <signal.h>
 #include <string.h>
 #include <err.h>
 #include <assert.h>
@@ -109,9 +110,9 @@ const struct eventop *evsel;
 void *evbase;
 
 /* Handle signals - This is a deprecated interface */
-int (*event_sigcb)(void);	/* Signal callback when gotsig is set */
-int event_gotsig;		/* Set in signal handler */
-int event_gotterm;		/* Set to terminate loop */
+int (*event_sigcb)(void);		/* Signal callback when gotsig is set */
+volatile sig_atomic_t event_gotsig;	/* Set in signal handler */
+volatile sig_atomic_t event_gotterm;	/* Set to terminate loop */
 
 /* Prototypes */
 void		event_queue_insert(struct event *, int);
