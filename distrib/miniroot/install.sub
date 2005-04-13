@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.378 2005/04/13 02:18:10 krw Exp $
+#	$OpenBSD: install.sub,v 1.379 2005/04/13 02:52:52 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -689,15 +689,12 @@ v6_config() {
 
 	[[ -x /sbin/rtsol ]] && _prompt="or 'rtsol' "
 	_prompt="IPv6 address for $_ifs? (${_prompt}or 'none')"
-	ask_until "$_prompt" "$_addr"
+	ask_until "$_prompt" "${_addr:-none}"
 
 	case $resp in
 	none)	return
 		;;
-	rtsol)	if [[ ! -x /sbin/rtsol ]]; then
-			echo "rtsol not possible - no /sbin/rtsol."
-			return
-		fi
+	rtsol)	[[ ! -x /sbin/rtsol ]] && { echo "No /sbin/rtsol." ; return ; }
 		ifconfig $_ifs up
 		rtsol -F $_ifs
 		addhostent "::1" "$_name"
