@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rtw.4,v 1.15 2005/04/10 00:17:53 jsg Exp $
+.\"	$OpenBSD: rtw.4,v 1.16 2005/04/13 16:46:53 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -225,7 +225,7 @@ Configure rtw0 for WEP, using hex key
 .Pp
 Return rtw0 to its default settings:
 .Bd -literal -offset indent
-# ifconfig rtw0 -bssid -chan media autoselect -mediaopt \e
+# ifconfig rtw0 -bssid -chan media autoselect \e
 	nwid "" -nwkey
 .Ed
 .Pp

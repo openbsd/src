@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.19 2005/04/08 18:39:16 jmc Exp $
+.\"	$OpenBSD: ath.4,v 1.20 2005/04/13 16:46:53 jmc Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -352,7 +352,7 @@ Configure ath0 for WEP, using hex key
 .Pp
 Return ath0 to its default settings:
 .Bd -literal -offset indent
-# ifconfig ath0 -bssid -chan media autoselect -mediaopt \e
+# ifconfig ath0 -bssid -chan media autoselect \e
 	nwid "" -nwkey -powersave
 .Ed
 .Pp

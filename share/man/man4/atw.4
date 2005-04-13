@@ -1,4 +1,4 @@
-.\"     $OpenBSD: atw.4,v 1.14 2005/04/08 18:39:17 jmc Exp $
+.\"     $OpenBSD: atw.4,v 1.15 2005/04/13 16:46:53 jmc Exp $
 .\"	$NetBSD: atw.4,v 1.8 2004/06/06 04:05:49 wiz Exp $
 .\"
 .\" Copyright (c) 2003
@@ -249,7 +249,7 @@ Configure atw0 for WEP, using hex key
 .Pp
 Return atw0 to its default settings:
 .Bd -literal -offset indent
-# ifconfig atw0 -bssid -chan media autoselect -mediaopt \e
+# ifconfig atw0 -bssid -chan media autoselect \e
 	nwid "" -nwkey
 .Ed
 .Pp

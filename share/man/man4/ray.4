@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ray.4,v 1.16 2005/04/08 18:39:17 jmc Exp $
+.\"	$OpenBSD: ray.4,v 1.17 2005/04/13 16:46:53 jmc Exp $
 .\"	$NetBSD: ray.4,v 1.5 2000/02/28 13:54:55 enami Exp $
 .\"
 .\" Copyright (c) 2000 Christian E. Hopps
@@ -172,7 +172,7 @@ dhcp NONE NONE NONE chan 11
 .Pp
 Return ray0 to its default settings:
 .Bd -literal -offset indent
-# ifconfig ray0 -bssid -chan media autoselect -mediaopt nwid ""
+# ifconfig ray0 -bssid -chan media autoselect nwid ""
 .Ed
 .Pp
 Join an existing BSS network,

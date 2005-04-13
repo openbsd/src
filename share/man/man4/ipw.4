@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipw.4,v 1.15 2005/04/08 18:39:17 jmc Exp $
+.\" $OpenBSD: ipw.4,v 1.16 2005/04/13 16:46:53 jmc Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -194,7 +194,7 @@ Configure ipw0 for WEP, using hex key
 .Pp
 Return ipw0 to its default settings:
 .Bd -literal -offset indent
-# ifconfig ipw0 -bssid -chan media autoselect -mediaopt \e
+# ifconfig ipw0 -bssid -chan media autoselect \e
 	nwid "" -nwkey
 .Ed
 .Pp
