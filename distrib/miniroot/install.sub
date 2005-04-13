@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.379 2005/04/13 02:52:52 krw Exp $
+#	$OpenBSD: install.sub,v 1.380 2005/04/13 03:12:42 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -95,7 +95,7 @@ set_term() {
 		none)	return ;;
 		"?")	echo "Major tables: $_tables" ;;
 		*)	kbd $resp && { echo $resp >/tmp/kbdtype ; return ; } ;;
-		esac	
+		esac
 	done
 }
 
@@ -1334,7 +1334,7 @@ install_sets() {
 	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
 	[[ -n $MTDEVS && -x /bin/mt ]] && _locs="$_locs tape"
 
-	echo "\nLet's $MODE the sets!"	
+	echo "\nLet's $MODE the sets!"
 	while :; do
 		umount -f /mnt2 >/dev/null 2>&1
 		[[ -z $DEFAULTSETS ]] && _d=done
