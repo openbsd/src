@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.23 2005/04/02 11:00:11 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.24 2005/04/13 12:24:11 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -90,6 +90,7 @@ static const struct usb_devno ural_devs[] = {
 	{ USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_RT2570 },
 	{ USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_KG54 },
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2570 },
+	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2570_2 },
 	{ USB_VENDOR_SMC,		USB_PRODUCT_SMC_RT2570 }
 };
 

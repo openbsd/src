@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.149 2005/04/01 11:41:49 dlg Exp $
+$OpenBSD: usbdevs,v 1.150 2005/04/13 12:24:11 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1528,6 +1528,7 @@ product	RAINBOW IKEY2000	0x1200	i-Key 2000
 
 /* Ralink Technology products */
 product RALINK RT2570		0x1706	RT2570
+product RALINK RT2570_2		0x2570	RT2570
 
 /* RATOC Systems products */
 product RATOC REXUSB60		0xb000	USB serial REX-USB60
