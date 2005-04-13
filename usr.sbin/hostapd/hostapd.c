@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.3 2005/04/13 18:55:00 deraadt Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.4 2005/04/13 19:08:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -97,7 +97,6 @@ hostapd_fatal(const char *fmt, ...)
 	va_end(ap);
 
 	hostapd_cleanup(&hostapd_cfg);
-
 	exit(EXIT_FAILURE);
 }
 
@@ -307,12 +306,6 @@ hostapd_cleanup(struct hostapd_config *cfg)
 	}
 
 	hostapd_log(HOSTAPD_LOG_VERBOSE, "bye!\n");
-
-	if (!cfg->c_debug)
-		closelog();
-
-	/* Close all open file descriptors and sockets */
-	closefrom(0);
 }
 
 int
@@ -404,7 +397,7 @@ main(int argc, char *argv[])
 
 	/*
 	 * Unprivileged child process
-	 */	
+	 */
 
 	event_init();
 
@@ -445,6 +438,5 @@ main(int argc, char *argv[])
 
 	/* Executed after the event loop has been terminated */
 	hostapd_cleanup(cfg);
-
 	return (EXIT_SUCCESS);
 }
