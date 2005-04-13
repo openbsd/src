@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.377 2005/04/13 02:03:38 krw Exp $
+#	$OpenBSD: install.sub,v 1.378 2005/04/13 02:18:10 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -165,7 +165,7 @@ __EOT
 		exit
 	fi
 
-	echo "Cool!  Let's get to it..."
+	echo "Cool! Let's get to it."
 }
 
 scan_dmesg() {
@@ -477,27 +477,27 @@ addhostent() {
 select_sets() {
 	local _avail=$1 _selected=$2 _next _f _action
 
+	cat <<__EOT
+
+Select sets by entering a set name, a regular expression or 'all'. De-select
+sets by prepending a '-' to the set name, regular expression or 'all'. Selected
+sets are labelled '[x]'.
+__EOT
 	while :; do
 		_action=
-		cat <<__EOT
-
-The following sets are available. Enter a filename, 'all' to select
-all the sets, or 'done'. You may de-select a set by prepending a '-'
-to its name.
-
-__EOT
 		_next=
+		echo
 		for _f in $_avail; do
 			if isin $_f $_selected; then
-				echo "	[X] $_f"
+				echo "[X] $_f"
 			else
-				echo "	[ ] $_f"
+				echo "[ ] $_f"
 				: ${_next:=$_f}
 			fi
 		done
 		: ${_next:=done}
 
-		ask "\nFile name? (or 'done')" "$_next"
+		ask "Set name? (or 'done')" "$_next"
 		case $resp in
 		done)	break ;;
 		-*)	_action=rmel ;;
@@ -1177,58 +1177,47 @@ install_cdrom() {
 install_disk() {
 	local _drive _dev _fstype _fsopts
 
-	get_drive "disk" "$DKDEVS" || return
-	_drive=$resp
+	ask_yn "Is the disk partition already mounted?"
+	if [[ $resp == n ]]; then
+		get_drive "disk" "$DKDEVS" || return
+		_drive=$resp
 
-	get_partition $_drive "$MDFSTYPE" || return
-	set -- $resp
-	_dev=/dev/$_drive$1
-	[[ -n $2 ]] && _fstype="-t $2"
-	[[ $_fstype == $MDFSTYPE ]] && _fsopts=$MDFSOPTS
+		get_partition $_drive "$MDFSTYPE" || return
+		set -- $resp
+		_dev=/dev/$_drive$1
+		[[ -n $2 ]] && _fstype="-t $2"
+		[[ $_fstype == $MDFSTYPE ]] && _fsopts=$MDFSOPTS
 
-	if [[ -z $(mount | grep "^$_dev") ]]; then
-		mount $_fstype -o ro,$_fsopts $_dev /mnt2 || return
+		if [[ -z $(mount | grep "^$_dev") ]]; then
+			mount $_fstype -o ro,$_fsopts $_dev /mnt2 || return
+		fi
 	fi
 	install_mounted_fs
 }
 
 install_nfs() {
-	# Can we actually mount NFS filesystems?
-	if [ ! -f /sbin/mount_nfs ]; then
-		echo "/sbin/mount_nfs not found. Cannot mount NFS filesystems."
-		return
-	fi
+	local _tcp
 
-	# Get the IP address of the server
-	ask_until "Server IP address or hostname?" "$_nfs_server_ip"
-	_nfs_server_ip=$resp
+	# Get the IP address of the server.
+	ask_until "Server IP address or hostname?" "$NFS_ADDR"
+	NFS_ADDR=$resp
 
-	# Get server path to mount
-	ask_until "Filesystem on server to mount?" "$_nfs_server_path"
-	_nfs_server_path=$resp
+	# Get the server path to mount.
+	ask_until "Filesystem on server to mount?" "$NFS_PATH"
+	NFS_PATH=$resp
 
 	# Determine use of TCP
-	_nfs_tcp=
-	ask_yn "Use TCP transport? (only works with capable NFS server)"
-	[[ $resp == y ]] && _nfs_tcp=-T
+	ask_yn "Use TCP transport? (requires TCP-capable NFS server)"
+	[[ $resp == y ]] && _tcp=-T
 
 	# Mount the server
-	if ! mount_nfs $_nfs_tcp -o ro ${_nfs_server_ip}:${_nfs_server_path} /mnt2 ; then
-		echo "Cannot mount NFS server."
-		return
-	fi
+	mount_nfs $_tcp -o ro $NFS_ADDR:$NFS_PATH /mnt2 || return
 
 	install_mounted_fs
 }
 
 install_tape() {
 	local _z _bs
-
-	# Can't use tape without /bin/mt.
-	if [[ ! -x /bin/mt ]]; then
-		echo "/bin/mt not found. Can't $MODE from tape."
-		return
-	fi
 
 	# Get the name of the tape device.
 	get_drive "tape drive" "$MTDEVS" || return
@@ -1341,39 +1330,28 @@ sane_install() {
 # user selects from that location. Repeat as many times as the user
 # needs to get all desired sets.
 install_sets() {
-	local _d
+	local _d=disk _locs=disk
 
-	cat <<__EOT
+	[[ -n $CDDEVS ]] && { _locs="cd $_locs" ; _d=cd ; }
+	[[ -n $(ifconfig | grep 'status: active') ]] && _locs="$_locs ftp http"
+	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
+	[[ -n $MTDEVS && -x /bin/mt ]] && _locs="$_locs tape"
 
-You will now specify the location and names of the $MODE sets you want to
-load. You will be able to repeat this step until all of your sets have been
-successfully loaded. If you are not sure what sets to $MODE, refer to the
-installation notes for details on the contents of each.
-__EOT
-
+	echo "\nLet's $MODE the sets!"	
 	while :; do
-		_d=
-		cat <<__EOT
-
-Sets can be located on a (m)ounted filesystem; a (c)drom, (d)isk or (t)ape
-device; or a (f)tp, (n)fs or (h)ttp server.
-__EOT
+		umount -f /mnt2 >/dev/null 2>&1
 		[[ -z $DEFAULTSETS ]] && _d=done
-		ask "Where are the $MODE sets? (or 'done')" "$_d"
 
+		ask "Location of sets? ($_locs or 'done')" "$_d"
 		case $resp in
 		done)	sane_install && return ;;
-		c*|C*)	install_cdrom ;;
+		c*|C*)	isin "cd" $_locs && install_cdrom ;;
 		d*|D*)	install_disk ;;
-		f*|F*)	install_url ftp ;;
-		h*|H*)	install_url http ;;
-		m*|M*)	install_mounted_fs ;;
-		n*|N*)	install_nfs ;;
-		t*|T*)	install_tape ;;
-		*)	;;
+		f*|F*)	isin "ftp" $_locs && install_url ftp ;;
+		h*|H*)	isin "http" $_locs && install_url http ;;
+		n*|N*)	isin "nfs" $_locs && install_nfs ;;
+		t*|T*)	isin "tape" $_locs && install_tape ;;
 		esac
-
-		umount -f /mnt2 >/dev/null 2>&1
 	done
 }
 
