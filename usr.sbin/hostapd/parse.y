@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2005/04/13 18:44:51 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.4 2005/04/13 19:06:08 henning Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -463,45 +463,6 @@ symget(const char *nam)
 		}
 	return (NULL);
 }
-
-#if 0
-int
-yylex(void)
-{
-	char *p;
-	int v;
-
-	/* Locate next token */
-	if (confptr == NULL) {
-		confptr = confbuf;
-	} else {
-		for (p = confptr; *p && p < confbuf + conflen; p++)
-			;
-		*p++;
-		if (!*p)
-			return 0;
-		confptr = p;
-	}
-
-	/* Numerical token? */
-	if (isdigit(*confptr)) {
-		for (p = confptr; *p; p++)
-			if (*p == '.') /* IP-address, or bad input */
-				goto is_string;
-		v = (int)strtol(confptr, (char **)NULL, 10);
-		yylval.val = v;
-		return VALUE;
-	}
-
- is_string:
-	if ((v = lookup(confptr)) == STRING) {
-		yylval.string = strdup(confptr);
-		if (yylval.string == NULL)
-			hostapd_fatal("yylex: strdup()");
-	}
-	return v;
-}
-#endif
 
 int
 hostapd_parse_file(struct hostapd_config *cfg)
