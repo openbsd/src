@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.380 2005/04/13 03:12:42 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.381 2005/04/13 03:45:51 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1330,8 +1330,10 @@ install_sets() {
 	local _d=disk _locs=disk
 
 	[[ -n $CDDEVS ]] && { _locs="cd $_locs" ; _d=cd ; }
-	[[ -n $(ifconfig | grep 'status: active') ]] && _locs="$_locs ftp http"
-	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
+	if [[ -n $(ifconfig | grep 'status: active') ]]; then
+		_locs="$_locs ftp http"
+		[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
+	fi
 	[[ -n $MTDEVS && -x /bin/mt ]] && _locs="$_locs tape"
 
 	echo "\nLet's $MODE the sets!"
