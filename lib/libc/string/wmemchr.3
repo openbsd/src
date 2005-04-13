@@ -1,3 +1,5 @@
+.\"	$OpenBSD: wmemchr.3,v 1.2 2005/04/13 20:42:48 jmc Exp $
+.\"
 .\"	$NetBSD: wmemchr.3,v 1.9 2003/09/08 17:54:33 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -58,8 +60,6 @@
 .Nm wcsspn ,
 .Nm wcsstr
 .Nd wide character string manipulation operations
-.Sh LIBRARY
-.Lb libc
 .Sh SYNOPSIS
 .In wchar.h
 .Ft wchar_t *
@@ -103,7 +103,7 @@
 .Ft wchar_t *
 .Fn wcsstr "const wchar_t *s1" "const wchar_t *s2"
 .Sh DESCRIPTION
-The functions implement string manipulation operations over wide character
+These functions implement string manipulation operations over wide character
 strings.
 For a detailed description, refer to documents for the respective single-byte
 counterpart, such as
