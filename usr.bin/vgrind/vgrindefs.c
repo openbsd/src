@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgrindefs.c,v 1.8 2003/06/03 02:56:21 millert Exp $	*/
+/*	$OpenBSD: vgrindefs.c,v 1.9 2005/04/13 02:05:18 deraadt Exp $	*/
 /*	$NetBSD: vgrindefs.c,v 1.5 1994/12/20 12:05:29 cgd Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vgrindefs.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: vgrindefs.c,v 1.8 2003/06/03 02:56:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: vgrindefs.c,v 1.9 2005/04/13 02:05:18 deraadt Exp $";
 #endif /* not lint */
 
 #define	BUFSIZ	1024
@@ -102,7 +102,7 @@ tgetent(char *bp, char *name, char *file)
 				break;
 			}
 			if (cp >= bp+BUFSIZ) {
-				write(2,"Vgrind entry too long\n", 23);
+				write(STDERR_FILENO, "Vgrind entry too long\n", 23);
 				break;
 			} else
 				*cp++ = c;
@@ -137,7 +137,7 @@ tnchktc(void)
 	p = tbuf + strlen(tbuf) - 2;	/* before the last colon */
 	while (*--p != ':')
 		if (p<tbuf) {
-			write(2, "Bad vgrind entry\n", 18);
+			write(STDERR_FILENO, "Bad vgrind entry\n", 18);
 			return (0);
 		}
 	p++;
@@ -150,7 +150,7 @@ tnchktc(void)
 		q++;
 	*q = 0;
 	if (++hopcount > MAXHOP) {
-		write(2, "Infinite tc= loop\n", 18);
+		write(STDERR_FILENO, "Infinite tc= loop\n", 18);
 		return (0);
 	}
 	if (tgetent(tcbuf, tcname, filename) != 1)
@@ -159,7 +159,7 @@ tnchktc(void)
 		;
 	l = p - holdtbuf + strlen(q);
 	if (l > BUFSIZ) {
-		write(2, "Vgrind entry too long\n", 23);
+		write(STDERR_FILENO, "Vgrind entry too long\n", 23);
 		q[BUFSIZ - (p-tbuf)] = 0;
 	}
 	strlcpy(p, q+1, l);
