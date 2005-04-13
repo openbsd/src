@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.h,v 1.1 2005/04/13 18:12:23 reyk Exp $	*/
+/*	$OpenBSD: hostapd.h,v 1.2 2005/04/13 18:31:38 henning Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -130,15 +130,15 @@ struct hostapd_config {
 
 #define HOSTAPD_CFG_F_APME	0x01
 #define HOSTAPD_CFG_F_IAPP	0x02
-#define HOSTAPD_CFG_F_RAW		0x04
-#define HOSTAPD_CFG_F_UDP		0x08
+#define HOSTAPD_CFG_F_RAW	0x04
+#define HOSTAPD_CFG_F_UDP	0x08
 #define HOSTAPD_CFG_F_BRDCAST	0x10
 #define HOSTAPD_CFG_F_PRIV	0x20
 
 	struct event		c_priv_ev;
 
 	char			c_config[MAXPATHLEN];
-	
+
 	u_int			c_verbose;
 	u_int			c_debug;
 
@@ -156,7 +156,7 @@ struct hostapd_config {
 
 #define HOSTAPD_LOG		0
 #define HOSTAPD_LOG_VERBOSE	1
-#define HOSTAPD_LOG_DEBUG		2
+#define HOSTAPD_LOG_DEBUG	2
 
 __BEGIN_DECLS
 
@@ -172,15 +172,18 @@ int	 hostapd_parse_symset(char *);
 void	 hostapd_priv_init(struct hostapd_config *);
 int	 hostapd_priv_llc_xid(struct hostapd_config *, struct hostapd_node *);
 void	 hostapd_priv_apme_bssid(struct hostapd_config *);
-int	 hostapd_priv_apme_getnode(struct hostapd_config *, struct hostapd_node *);
-int	 hostapd_priv_apme_delnode(struct hostapd_config *, struct hostapd_node *);
+int	 hostapd_priv_apme_getnode(struct hostapd_config *,
+	    struct hostapd_node *);
+int	 hostapd_priv_apme_delnode(struct hostapd_config *,
+	    struct hostapd_node *);
 
 void	 hostapd_apme_init(struct hostapd_config *);
 void	 hostapd_apme_input(int, short, void *);
 
 void	 hostapd_iapp_init(struct hostapd_config *);
 void	 hostapd_iapp_term(struct hostapd_config *);
-int	 hostapd_iapp_add_notify(struct hostapd_config *, struct hostapd_node *);
+int	 hostapd_iapp_add_notify(struct hostapd_config *,
+	    struct hostapd_node *);
 void	 hostapd_iapp_input(int, short, void *);
 
 void	 hostapd_llc_init(struct hostapd_config *);
