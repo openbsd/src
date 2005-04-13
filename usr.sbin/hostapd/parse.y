@@ -1,7 +1,11 @@
-/*	$OpenBSD: parse.y,v 1.2 2005/04/13 18:28:45 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.3 2005/04/13 18:44:51 henning Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2002 - 2005 Henning Brauer <henning@openbsd.org>
+ * Copyright (c) 2001 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2001 Daniel Hartmeier.  All rights reserved.
+ * Copyright (c) 2001 Theo de Raadt.  All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
