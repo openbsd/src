@@ -1,4 +1,4 @@
-/*	$OpenBSD: llc.c,v 1.1 2005/04/13 18:12:23 reyk Exp $	*/
+/*	$OpenBSD: llc.c,v 1.2 2005/04/13 20:25:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -48,7 +48,6 @@ hostapd_llc_init(struct hostapd_config *cfg)
 	u_int i;
 
 	cfg->c_iapp_raw = hostapd_bpf_open(O_WRONLY);
-
 	cfg->c_flags |= HOSTAPD_CFG_F_RAW;
 
 	bzero(&ifr, sizeof(struct ifreq));
@@ -81,9 +80,7 @@ hostapd_llc_send_xid(struct hostapd_config *cfg, struct hostapd_node *node)
 	 * our switch port on the wired network to learn the station's
 	 * new MAC address.
 	 */
-
 	bzero(&buf, sizeof(buf));
-
 	llc = (struct hostapd_llc *)&buf;
 	memset(&llc->x_hdr.ether_dhost, 0xff,
 	    sizeof(llc->x_hdr.ether_dhost));
@@ -97,6 +94,5 @@ hostapd_llc_send_xid(struct hostapd_config *cfg, struct hostapd_node *node)
 
 	if (write(cfg->c_iapp_raw, &buf, sizeof(buf)) == -1)
 		return (errno);
-
 	return (0);
 }

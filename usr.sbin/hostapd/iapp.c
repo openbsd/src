@@ -1,4 +1,4 @@
-/*	$OpenBSD: iapp.c,v 1.2 2005/04/13 18:25:28 henning Exp $	*/
+/*	$OpenBSD: iapp.c,v 1.3 2005/04/13 20:25:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -79,7 +79,6 @@ hostapd_iapp_add_notify(struct hostapd_config *cfg, struct hostapd_node *node)
 	 * Send an ADD.notify message to other accesspoints to notify
 	 * about a new association on our Host AP.
 	 */
-
 	bzero(&frame, sizeof(frame));
 
 	frame.hdr.i_version = IEEE80211_IAPP_VERSION;
@@ -135,7 +134,6 @@ hostapd_iapp_input(int fd, short sig, void *arg)
 	/*
 	 * Listen to possible messages from other IAPP
 	 */
-
 	bzero(buf, sizeof(buf));
 
 	if (recvfrom(fd, buf, sizeof(buf), 0,

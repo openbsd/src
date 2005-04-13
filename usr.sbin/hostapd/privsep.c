@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.5 2005/04/13 20:09:49 moritz Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.6 2005/04/13 20:25:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -149,9 +149,8 @@ hostapd_priv_init(struct hostapd_config *cfg)
 	close(socks[1]);
 
 	if (cfg->c_flags & HOSTAPD_CFG_F_APME) {
-		if ((cfg->c_apme = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+		if ((cfg->c_apme = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
 			hostapd_fatal("unable to open ioctl socket\n");
-		}
 	}
 
 	setproctitle("[priv]");
@@ -205,10 +204,9 @@ hostapd_priv(int fd, short sig, void *arg)
 			ret = ENXIO;
 
 		hostapd_must_write(fd, &ret, sizeof(int));
-		if (ret == 0) {
+		if (ret == 0)
 			hostapd_must_write(fd, &bssid.i_bssid,
 			    IEEE80211_ADDR_LEN);
-		}
 		break;
 
 	case PRIV_APME_GETNODE:
@@ -255,7 +253,6 @@ hostapd_priv(int fd, short sig, void *arg)
 				ret = errno;
 		} else
 			ret = ENXIO;
-
 		hostapd_must_write(fd, &ret, sizeof(int));
 		break;
 
@@ -267,21 +264,18 @@ hostapd_priv(int fd, short sig, void *arg)
 
 		/* Send a LLC XID frame to reset possible switch ports */
 		ret = hostapd_llc_send_xid(cfg, &node);
-
 		hostapd_must_write(fd, &ret, sizeof(int));
 		break;
 
 	default:
 		hostapd_fatal("[priv]: unknown command %d\n", cmd);
 	}
-
 	event_add(&cfg->c_priv_ev, NULL);
 }
 
 /*
  * Unprivileged callers
  */
-
 int
 hostapd_priv_apme_getnode(struct hostapd_config *cfg, struct hostapd_node *node)
 {
@@ -296,15 +290,12 @@ hostapd_priv_apme_getnode(struct hostapd_config *cfg, struct hostapd_node *node)
 	cmd = PRIV_APME_GETNODE;
 	hostapd_must_write(priv_fd, &cmd, sizeof(int));
 	hostapd_must_write(priv_fd, node, sizeof(struct hostapd_node));
-
 	hostapd_must_read(priv_fd, &ret, sizeof(int));
 	if (ret != 0)
 		return (ret);
 
 	hostapd_must_read(priv_fd, node, sizeof(struct hostapd_node));
-
 	cfg->c_stats.cn_tx_apme++;
-
 	return (ret);
 }
 
@@ -322,9 +313,7 @@ hostapd_priv_apme_delnode(struct hostapd_config *cfg, struct hostapd_node *node)
 	cmd = PRIV_APME_DELNODE;
 	hostapd_must_write(priv_fd, &cmd, sizeof(int));
 	hostapd_must_write(priv_fd, node, sizeof(struct hostapd_node));
-
 	hostapd_must_read(priv_fd, &ret, sizeof(int));
-
 	if (ret == 0)
 		cfg->c_stats.cn_tx_apme++;
 
@@ -352,7 +341,6 @@ hostapd_priv_apme_bssid(struct hostapd_config *cfg)
 		    cfg->c_apme_iface, strerror(errno));
 
 	hostapd_must_read(priv_fd, &cfg->c_apme_bssid, IEEE80211_ADDR_LEN);
-
 	cfg->c_stats.cn_tx_apme++;
 }
 
@@ -371,27 +359,19 @@ hostapd_priv_llc_xid(struct hostapd_config *cfg, struct hostapd_node *node)
 
 	if (ret == 0)
 		cfg->c_stats.cn_tx_llc++;
-
 	return (ret);
 }
 
 /*
- * Signal handlers
+ * If priv parent gets a TERM or HUP, pass it through to child instead.
  */
-
 void
 hostapd_sig_relay(int sig)
 {
 	int oerrno = errno;
 
-	/*
-	 * If priv parent gets a TERM or HUP, pass it through to child
-	 * instead.
-	 */
-
 	if (child_pid != -1)
 		kill(child_pid, sig);
-
 	errno = oerrno;
 }
 
