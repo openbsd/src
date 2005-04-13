@@ -1,7 +1,8 @@
-/*	$OpenBSD: hostapd.c,v 1.4 2005/04/13 19:08:18 deraadt Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.5 2005/04/13 19:16:08 henning Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
+ * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
