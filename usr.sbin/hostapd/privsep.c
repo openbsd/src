@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.2 2005/04/13 18:25:28 henning Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.3 2005/04/13 19:06:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -164,7 +164,6 @@ hostapd_priv_init(struct hostapd_config *cfg)
 
 	/* Executed after the event loop has been terminated */
 	hostapd_cleanup(cfg);
-
 	_exit(EXIT_SUCCESS);
 }
 
@@ -434,9 +433,9 @@ hostapd_may_read(int fd, void *buf, size_t n)
 	return (0);
 }
 
-/* 
+/*
  * Read data with the assertion that it all must come through, or
- * else abort the process.  Based on atomicio() from openssh. 
+ * else abort the process.  Based on atomicio() from openssh.
  */
 void
 hostapd_must_read(int fd, void *buf, size_t n)

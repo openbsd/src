@@ -1,4 +1,4 @@
-/*	$OpenBSD: apme.c,v 1.2 2005/04/13 18:25:28 henning Exp $	*/
+/*	$OpenBSD: apme.c,v 1.3 2005/04/13 19:06:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -102,7 +102,7 @@ hostapd_apme_frame(struct hostapd_config *cfg, u_int8_t *buf, u_int len)
 	    IEEE80211_FC0_SUBTYPE_ASSOC_RESP))
 		return;
 
-	/* 
+	/*
 	 * ...sent by the Host AP (addr2) to our BSSID (addr3)
 	 */
 	if (bcmp(wh->i_addr2, cfg->c_apme_bssid, IEEE80211_ADDR_LEN) != 0 ||
