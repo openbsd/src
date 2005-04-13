@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixdev.c,v 1.3 2005/01/24 22:20:33 uwe Exp $	*/
+/*	$OpenBSD: unixdev.c,v 1.4 2005/04/13 04:33:47 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Michael Shalayeff
@@ -37,6 +37,9 @@
 #undef open
 #include "libsa.h"
 #include <lib/libsa/unixdev.h>
+
+/* unixsys.S */
+int uselect(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 
 int
 unixstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
@@ -170,11 +173,16 @@ unix_getc(dev_t dev)
 		int rc;
 
 		tv.tv_sec = 0;
-		tv.tv_usec = 100000;
+		tv.tv_usec = 0;
 		FD_ZERO(&fdset);
 		FD_SET(0, &fdset);
 
-		if ((rc = syscall(SYS_select, 1, &fdset, NULL, NULL, &tv)) <= 0)
+#if 0
+		rc = syscall(SYS_select, 1, &fdset, NULL, NULL, &tv);
+#else
+		rc = uselect(1, &fdset, NULL, NULL, &tv);
+#endif
+		if (rc <= 0)
 			return 0;
 		else
 			return 1;
@@ -188,7 +196,7 @@ unix_getc(dev_t dev)
 time_t
 getsecs(void)
 {
-	return 1;
+	return (time_t)syscall(__NR_time, NULL);
 }
 
 void

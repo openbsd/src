@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat_linux.h,v 1.4 2005/01/24 22:20:33 uwe Exp $	*/
+/*	$OpenBSD: compat_linux.h,v 1.5 2005/04/13 04:33:47 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -48,6 +48,7 @@
 #define __NR_write		(__NR_SYSCALL_BASE+  4)
 #define __NR_open		(__NR_SYSCALL_BASE+  5)
 #define __NR_close		(__NR_SYSCALL_BASE+  6)
+#define __NR_time		(__NR_SYSCALL_BASE+ 13)
 #define __NR_lseek32		(__NR_SYSCALL_BASE+ 19)
 #define __NR_ioctl		(__NR_SYSCALL_BASE+ 54)
 #define __NR__new_select	(__NR_SYSCALL_BASE+142)
