@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.376 2005/04/09 23:47:34 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.377 2005/04/13 02:03:38 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -89,8 +89,14 @@ set_term() {
 
 	[[ -x /sbin/kbd ]] || return
 	_tables=$(bsort $(kbd -l | egrep -v "^(user|tables|encoding)"))
-	ask_which "kbd(8) table" "best matches your keyboard" "$_tables" us
-	[[ $resp != @(done|us) ]] && kbd $resp && echo $resp >/tmp/kbdtype
+	while :; do
+		ask "kbd(8) mapping? ('?' for list)" "none"
+		case $resp in
+		none)	return ;;
+		"?")	echo "Major tables: $_tables" ;;
+		*)	kbd $resp && { echo $resp >/tmp/kbdtype ; return ; } ;;
+		esac	
+	done
 }
 
 welcome() {
@@ -386,7 +392,7 @@ bsort() {
 	done
 
 	# Output the smallest value found.
-	echo "$_a "
+	echo -n "$_a "
 
 	# Sort remaining values.
 	bsort $_l
