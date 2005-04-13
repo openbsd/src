@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.11 2005/04/12 17:20:01 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.12 2005/04/13 14:49:05 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -74,7 +74,7 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	if (cvs_files == NULL)
 		return (CVS_EX_DATA);
 
-	if ((c->cmd_helper != NULL) && ((ret = c->cmd_helper()) < 0))
+	if ((c->cmd_helper != NULL) && ((ret = c->cmd_helper()) != 0))
 		return (ret);
 
 	root = CVS_DIR_ROOT(cvs_files);
