@@ -1,4 +1,4 @@
-/*	$OpenBSD: cal.c,v 1.10 2003/06/10 22:20:45 deraadt Exp $	*/
+/*	$OpenBSD: cal.c,v 1.11 2005/04/13 18:52:59 deraadt Exp $	*/
 /*	$NetBSD: cal.c,v 1.6 1995/03/26 03:10:24 glass Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cal.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cal.c,v 1.10 2003/06/10 22:20:45 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cal.c,v 1.11 2005/04/13 18:52:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -200,8 +200,9 @@ monthly(int month, int year)
 	char *p, lineout[30];
 
 	day_array(month, year, days);
-	len = snprintf(lineout, sizeof lineout, "%s %d",
+	(void) snprintf(lineout, sizeof lineout, "%s %d",
 	    month_names[month - 1], year);
+	len = strlen(lineout);
 	(void)printf("%*s%s\n%s\n",
 	    ((julian ? J_WEEK_LEN : WEEK_LEN) - len) / 2, "",
 	    lineout, julian ? j_day_headings : day_headings);
