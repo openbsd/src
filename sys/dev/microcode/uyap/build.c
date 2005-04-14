@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.1 2004/12/19 15:20:13 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.2 2005/04/14 19:01:08 damien Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -26,7 +26,8 @@
 int
 main(int argc, char *argv[])
 {
-	int i;
+	const struct ezdata *ptr;
+	u_int16_t address;
 	int fd;
 
 	printf("creating %s length %d\n", FILENAME, sizeof uyap_firmware);
@@ -34,7 +35,15 @@ main(int argc, char *argv[])
 	if (fd == -1)
 		err(1, "%s", FILENAME);
 
-	write(fd, uyap_firmware, sizeof uyap_firmware);
-	close(fd);
+	for (ptr = uyap_firmware; ; ptr++) {
+		write(fd, &ptr->length, 1);
+		address = htole16(ptr->address);
+		write(fd, &address, 2);
+		write(fd, ptr->data, ptr->length);
+
+		if (ptr->length == 0)
+			break;
+	}
+
 	return 0;
 }
