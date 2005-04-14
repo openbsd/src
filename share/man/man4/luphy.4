@@ -1,0 +1,35 @@
+.\"	$OpenBSD: luphy.4,v 1.1 2005/04/14 20:33:24 brad Exp $
+.\"
+.\" Copyright (c) 2005 Brad Smith <brad@comstyle.com>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd April 14, 2005
+.Dt LUPHY 4
+.Os
+.Sh NAME
+.Nm luphy
+.Nd Lucent Technologies LU6612 10/100 Ethernet PHY driver
+.Sh SYNOPSIS
+.Cd "luphy* at mii?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports the Lucent Technologies LU6612 10/100 Ethernet PHY.
+This PHY is found on a variety of high-performance Ethernet interfaces.
+.Sh SEE ALSO
+.Xr hme 4 ,
+.Xr ifmedia 4 ,
+.Xr intro 4 ,
+.Xr mii 4 ,
+.Xr ifconfig 8
