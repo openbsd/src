@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.12 2003/09/09 03:42:19 kevlo Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.13 2005/04/14 12:42:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -725,7 +725,7 @@ cmpci_round_blocksize(handle, block)
 	void *handle;
 	int block;
 {
-	return (block & -4);
+	return ((block + 3) & -4);
 }
 
 int

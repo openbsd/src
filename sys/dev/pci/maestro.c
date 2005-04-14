@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.16 2003/06/06 02:56:39 fgsch Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.17 2005/04/14 12:42:16 mickey Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -567,7 +567,7 @@ maestro_round_blocksize(self, blk)
 	void *self;
 	int blk;
 {
-	return (blk & ~0xf);
+	return ((blk + 0xf) & ~0xf);
 }
 
 size_t
