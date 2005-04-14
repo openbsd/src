@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.6 2005/04/08 13:36:48 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.7 2005/04/14 20:23:31 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -146,8 +146,6 @@
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-
-/*#define RE_CSUM_OFFLOAD */
 
 #include <dev/ic/rtl81x9reg.h>
 
@@ -886,14 +884,11 @@ re_attach_common(struct rl_softc *sc)
 	IFQ_SET_MAXLEN(&ifp->if_snd, RL_IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU|IFCAP_CSUM_IPv4|
+				IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4;
 
 #ifdef VLANXXX
-	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
-#endif
-#ifdef RE_CSUM_OFFLOAD
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
-				IFCAP_CSUM_UDPv4
+        ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
 	timeout_set(&sc->timer_handle, re_tick, sc);
@@ -1457,14 +1452,12 @@ re_encap(sc, m_head, idx)
 
 	rl_flags = 0;
 
-#ifdef RE_CSUM_OFFLOAD
-	if (m_head->m_pkthdr.csum_flags & M_CSUM_IPv4)
+	if (m_head->m_pkthdr.csum & M_IPV4_CSUM_OUT)
 		rl_flags |= RL_TDESC_CMD_IPCSUM;
-	if (m_head->m_pkthdr.csum_flags & M_CSUM_TCPv4)
+	if (m_head->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
 		rl_flags |= RL_TDESC_CMD_TCPCSUM;
-	if (m_head->m_pkthdr.csum_flags & M_CSUM_UDPv4)
+	if (m_head->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
 		rl_flags |= RL_TDESC_CMD_UDPCSUM;
-#endif
 
 	map = sc->rl_ldata.rl_tx_dmamap[*idx];
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map,
