@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecma167-udf.h,v 1.1 2005/03/29 17:24:52 pedro Exp $	*/
+/*	$OpenBSD: ecma167-udf.h,v 1.2 2005/04/14 12:35:29 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -316,7 +316,7 @@ struct fileid_desc {
 	uint8_t		file_char;
 	uint8_t		l_fi;	/* Length of file identifier area */
 	struct long_ad	icb;
-	uint16_t	l_iu;	/* Length of implementaion use area */
+	uint16_t	l_iu;	/* Length of implementation use area */
 	uint8_t		data[1];
 } __packed;
 #define	UDF_FID_SIZE	38
