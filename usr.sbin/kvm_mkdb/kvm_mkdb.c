@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.15 2003/11/21 09:11:25 djm Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.16 2005/04/14 22:21:24 djm Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-static const char rcsid[] = "$OpenBSD: kvm_mkdb.c,v 1.15 2003/11/21 09:11:25 djm Exp $";
+static const char rcsid[] = "$OpenBSD: kvm_mkdb.c,v 1.16 2005/04/14 22:21:24 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,13 +148,13 @@ kvm_mkdb(int fd, const char *dbdir, char *nlistpath, char *nlistname,
 
 	r = snprintf(dbtemp, sizeof(dbtemp), "%skvm_%s.tmp",
 	    dbdir, nlistname);
-	if (r < 0 || r > sizeof(dbtemp)) {
+	if (r < 0 || r >= sizeof(dbtemp)) {
 		warnx("Directory name too long");
 		return (1);
 	}
 	r = snprintf(dbname, sizeof(dbname), "%skvm_%s.db",
 	    dbdir, nlistname);
-	if (r < 0 || r > sizeof(dbtemp)) {
+	if (r < 0 || r >= sizeof(dbtemp)) {
 		warnx("Directory name too long");
 		return (1);
 	}
