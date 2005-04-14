@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.31 2005/03/31 12:35:45 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.32 2005/04/14 23:40:34 pascoe Exp $
 #
 # GENERIC machine description file
 #
@@ -62,6 +62,7 @@ pxaip0		at mainbus?
 
 pxaintc0	at pxaip?	# interrupt controller
 pxagpio0	at pxaip?	# GPIO
+pxadmac0	at pxaip?	# DMA controller
 scoop0		at pxaip?
 scoop1		at pxaip?
 saost0		at pxaip? addr 0x40a00000 size 0x20

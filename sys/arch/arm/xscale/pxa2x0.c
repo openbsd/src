@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0.c,v 1.6 2005/02/28 13:21:17 uwe Exp $ */
+/*	$OpenBSD: pxa2x0.c,v 1.7 2005/04/14 23:40:34 pascoe Exp $ */
 /*	$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $ */
 
 /*
@@ -101,9 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $");
 
 #include "pxaintc.h"
 #include "pxagpio.h"
-#if 0
-#include "pxadmac.h"	/* Not yet */
-#endif
+#include "pxadmac.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

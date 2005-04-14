@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pxa2x0,v 1.10 2005/03/08 20:00:23 tdeval Exp $
+#	$OpenBSD: files.pxa2x0,v 1.11 2005/04/14 23:40:34 pascoe Exp $
 #	$NetBSD: files.pxa2x0,v 1.6 2004/05/01 19:09:14 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
@@ -29,6 +29,11 @@ file	arch/arm/xscale/pxa2x0_intr.c		pxaintc needs-flag
 device	pxagpio
 attach	pxagpio at pxaip
 file	arch/arm/xscale/pxa2x0_gpio.c		pxagpio needs-flag
+
+# DMA controller
+device	pxadmac
+attach	pxadmac at pxaip
+file	arch/arm/xscale/pxa2x0_dmac.c		pxadmac needs-flag
 
 # clock device
 # PXA2x0's built-in timer is compatible to SA-1110.

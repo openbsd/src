@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.19 2005/04/12 09:13:13 dlg Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.20 2005/04/14 23:40:34 pascoe Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -85,6 +85,7 @@
 
 #define PXA2X0_DMAC_BASE	0x40000000
 #define PXA2X0_DMAC_SIZE	0x300
+#define PXA27X_DMAC_SIZE	0x0400
 #define PXA2X0_FFUART_BASE	0x40100000 /* Full Function UART */
 #define PXA2X0_BTUART_BASE	0x40200000 /* Bluetooth UART */
 #define PXA2X0_I2C_BASE		0x40300000 /* I2C Bus Interface Unit */
@@ -164,8 +165,10 @@
 #define  ICCR_DIM	(1<<0)
 
 /* DMAC */
-#define DMAC_N_CHANNELS	16
-#define	DMAC_N_PRIORITIES 3
+#define DMAC_N_CHANNELS 		16
+#define DMAC_N_CHANNELS_PXA27X		32
+#define DMAC_N_PRIORITIES		3
+#define DMAC_N_PRIORITIES_PXA27X	4
 
 #define DMAC_DCSR(n)	((n)*4)
 #define  DCSR_BUSERRINTR    (1<<0)	/* bus error interrupt */
@@ -176,7 +179,7 @@
 #define  DCSR_STOPIRQEN     (1<<29)     /* stop interrupt enable */
 #define  DCSR_NODESCFETCH   (1<<30)	/* no-descriptor fetch mode */
 #define  DCSR_RUN  	    (1<<31)
-#define DMAC_DINT 	0x00f0		/* DAM interrupt */
+#define DMAC_DINT 	0x00f0		/* DMA interrupt */
 #define  DMAC_DINT_MASK	0xffffu
 #define DMAC_DRCMR(n)	(0x100+(n)*4)	/* Channel map register */
 #define  DRCMR_CHLNUM	0x0f		/* channel number */
@@ -196,7 +199,7 @@
 #define  DCMD_SIZE_8	(1<<DCMD_SIZE_SHIFT)
 #define  DCMD_SIZE_16	(2<<DCMD_SIZE_SHIFT)
 #define  DCMD_SIZE_32	(3<<DCMD_SIZE_SHIFT)
-#define  DCMD_LITTLE_ENDIEN	(0<<18)
+#define  DCMD_LITTLE_ENDIAN	(0<<18)
 #define	 DCMD_ENDIRQEN	  (1<<21)
 #define  DCMD_STARTIRQEN  (1<<22)
 #define  DCMD_FLOWTRG     (1<<28)	/* flow control by target */

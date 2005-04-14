@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_dma.c,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_dma.c,v 1.3 2005/04/14 23:40:34 pascoe Exp $ */
 /*	$NetBSD: pxa2x0_dma.c,v 1.3 2003/08/07 16:58:35 bsh Exp $ */
 
 /*
@@ -36,7 +36,6 @@
 
 /*
  * bus dma tag for PXA2[15]0 processor.
- * (Currently used only for LCD frame buffer)
  */
 
 #include <sys/cdefs.h>
