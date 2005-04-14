@@ -1390,7 +1390,7 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 			int n;
 			n = snprintf(rcfile, sizeof(rcfile), "%s/.digrc",
 			             homedir);
-			if (n < sizeof(rcfile) && n != 0)
+			if ((size_t)n < sizeof(rcfile) && n != -1)
 				batchfp = fopen(rcfile, "r");
 		}
 		if (batchfp != NULL) {
