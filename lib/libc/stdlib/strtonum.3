@@ -1,4 +1,4 @@
-.\" $OpenBSD: strtonum.3,v 1.10 2005/04/14 02:13:29 tedu Exp $
+.\" $OpenBSD: strtonum.3,v 1.11 2005/04/14 07:58:46 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Ted Unangst
 .\"
@@ -81,7 +81,10 @@ On error, 0 is returned and
 .Fa errstr
 will point to an error message.
 .Fa *errstr
-will be set to NULL on success; this fact can be used to differentiate
+will be set to
+.Dv NULL
+on success;
+this fact can be used to differentiate
 a successful return of 0 from an error.
 .Sh EXAMPLES
 Using
