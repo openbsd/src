@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.13 2005/03/21 19:24:31 uwe Exp $
+dnl	$OpenBSD: install,v 1.14 2005/04/14 21:58:06 deraadt Exp $
 OpenBSDInstallPrelude
 
 OpenBSD is installed on the Zaurus by effectively converting
@@ -43,8 +43,9 @@ filesystems as ext2 on OpenBSD).
    this time you will want to type 'r'.
 9. Wait while Linux is coming up, then switch to the first tab
    (Applications), scroll down, and press the icon which is
-   labeled "Install OpenBSD".  A few seconds later, OpenBSD will
-   boot on your Zaurus.
+   labeled "Install OpenBSD".  A few seconds later, an OpenBSD
+   bsd.rd will boot on your Zaurus, so that you can perform the
+   standard install process.
 
 Another way to install the package is from a shell.  You will
 need the following file from the distribution on the Zaurus:
