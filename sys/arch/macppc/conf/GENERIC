@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.77 2005/03/19 21:37:09 martin Exp $g
+#	$OpenBSD: GENERIC,v 1.78 2005/04/14 19:59:49 brad Exp $g
 #
 # PPC GENERIC config file
 #
@@ -87,7 +87,8 @@ nsphy*		at mii?		# NS83840 PHYs
 #nsphyter*	at mii?		# NS83843 PHYs
 mtdphy*		at mii?		# Myson MTD972 PHYs
 acphy*		at mii?		# Altima AC101 PHYs
-#qsphy*		at mii?		# Quality Semi QS6612 PHYs
+qsphy*		at mii?		# Quality Semi QS6612 PHYs
+luphy*		at mii?		# Lucent LU6612 PHY
 sqphy*		at mii?		# Seeq 8022[013] PHYs
 rlphy*		at mii?		# RealTek 8139 internal PHYs
 #tlphy*		at mii?		# ThunderLAN PHYs

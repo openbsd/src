@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.44 2005/03/30 07:42:13 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.45 2005/04/14 19:59:49 brad Exp $
 #
 # PPC GENERIC config file
 #
@@ -86,7 +86,8 @@ lxtphy*		at mii?		# Level One LXT-970 PHYs
 nsphy*		at mii?		# NS83840 PHYs
 #nsphyter*	at mii?		# NS83843 PHYs
 mtdphy*		at mii?		# Myson MTD972 PHYs
-#qsphy*		at mii?		# Quality Semiconductor QS6612 PHYs
+qsphy*		at mii?		# Quality Semiconductor QS6612 PHYs
+luphy*		at mii?		# Lucent LU6612 PHY
 sqphy*		at mii?		# Seeq 80220/80221/80223 PHYs
 rlphy*		at mii?		# RealTek 8139 internal PHYs
 #tlphy*		at mii?		# ThunderLAN PHYs

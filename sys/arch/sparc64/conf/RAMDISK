@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.41 2005/03/30 17:08:57 deraadt Exp $
+# 	$OpenBSD: RAMDISK,v 1.42 2005/04/14 19:59:49 brad Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
@@ -121,6 +121,7 @@ bmtphy*	at mii?			# Broadcom 10/100 PHYs
 brgphy*	at mii?			# Broadcom PHYs
 nsphy*	at mii?			# NS and compatible PHYs
 qsphy*	at mii?			# Quality Semi QS6612 PHYs
+luphy*	at mii?			# Lucent LU6612 PHY
 sqphy*	at mii?			# Seeq 8x220 PHYs
 dcphy*	at mii?			# Digital clone PHYs
 amphy*	at mii?			# AMD AM79c873 PHYs
