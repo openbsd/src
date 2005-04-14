@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.10 2004/01/03 14:08:53 espie Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.11 2005/04/14 20:56:24 espie Exp $	*/
 /*	$NetBSD: ansi.h,v 1.7 1998/04/27 17:39:11 kleink Exp $	*/
 
 /*-
@@ -65,6 +65,22 @@
 #define	_BSD_INTPTR_T_		int		/* intptr_t */
 #define	_BSD_UINTPTR_T_		unsigned int	/* uintptr_t */
 
-#define _BSD_OFF_T_			long long	/* off_t */
+#define	_BSD_WCHAR_T_		int		/* wchar_t */
+#define	_BSD_WINT_T_            int		/* wint_t */
+#define	_BSD_RUNE_T_            int		/* rune_t */
+#define	_BSD_WCTRANS_T_		void *		/* wctrans_t */
+#define	_BSD_WCTYPE_T_		void *		/* wctype_t */
+
+#define _BSD_OFF_T_		long long	/* off_t */
+
+/*
+ * mbstate_t is an opaque object to keep conversion state, during multibyte
+ * stream conversions. The content must not be referenced by user programs.
+ */
+typedef union {
+	char __mbstate8[128];
+	long long __mbstateL;			/* for alignment */
+} __mbstate_t;
+#define	_BSD_MBSTATE_T_		__mbstate_t	/* mbstate_t */
 
 #endif  /* _ANSI_H_ */
