@@ -135,7 +135,7 @@ namespace std
     };
   };
 
-# ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template<>
   struct __is_integer<wchar_t>
   {

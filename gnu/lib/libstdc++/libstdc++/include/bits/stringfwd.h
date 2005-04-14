@@ -59,9 +59,8 @@ namespace std
 
   typedef basic_string<char>    string;
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   template<> struct char_traits<wchar_t>;
-
   typedef basic_string<wchar_t> wstring;
 #endif
 } // namespace std

@@ -181,7 +181,7 @@ namespace std
   };
 
 
-#ifdef _GLIBCPP_USE_WCHAR_T
+#if defined(_GLIBCPP_USE_WCHAR_T) || defined(_GLIBCPP_USE_TYPE_WCHAR_T)
   /// 21.1.3.2  char_traits specializations
   template<>
     struct char_traits<wchar_t>
@@ -189,7 +189,9 @@ namespace std
       typedef wchar_t 		char_type;
       typedef wint_t 		int_type;
       typedef streamoff 	off_type;
+#ifdef _GLIBCPP_USE_WCHAR_T
       typedef wstreampos 	pos_type;
+#endif
       typedef mbstate_t 	state_type;
       
       static void 
