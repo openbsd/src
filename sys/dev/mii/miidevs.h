@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.55 2005/02/19 04:03:17 brad Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.56 2005/04/14 04:05:04 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.52 2005/02/19 04:02:55 brad Exp 
+ *	OpenBSD: miidevs,v 1.53 2005/04/14 04:04:46 brad Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -50,7 +50,7 @@
  */
 
 #define	MII_OUI_3COM	0x00105a	/* 3com */
-#define	MII_OUI_AGERE	0x00601d	/* Agere Systems */
+#define	MII_OUI_LUCENT	0x00601d	/* Lucent Technologies */
 #define	MII_OUI_ALTIMA	0x0010a9	/* Altima Communications */
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
 #define	MII_OUI_BROADCOM	0x001018	/* Broadcom Corporation */
@@ -114,10 +114,6 @@
 #define	MII_STR_AMD_79C873phy	"Am79C873 internal PHY"
 #define	MII_MODEL_AMD_79C875phy	0x0014
 #define	MII_STR_AMD_79C875phy	"Am79C875 quad PHY"
-
-/* Agere Systems PHYs */
-#define	MII_MODEL_AGERE_UNKNOWN	0x000c
-#define	MII_STR_AGERE_UNKNOWN	"Unknown 10/100 PHY"
 
 /* Altima Communications PHYs */
 #define	MII_MODEL_xxALTIMA_AC_UNKNOWN	0x0001
@@ -238,6 +234,10 @@
 #define	MII_STR_xxLEVEL1_LXT970	"LXT970 10/100 PHY"
 #define	MII_MODEL_xxLEVEL1a_LXT971	0x000e
 #define	MII_STR_xxLEVEL1a_LXT971	"LXT971 10/100 PHY"
+
+/* Lucent Technologies PHYs */
+#define	MII_MODEL_LUCENT_LU6612	0x000c
+#define	MII_STR_LUCENT_LU6612	"LU6612 10/100 PHY"
 
 /* Myson Technology PHYs */
 #define	MII_MODEL_MYSON_MTD972	0x0000
