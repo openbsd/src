@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.5 2005/03/31 19:32:10 norby Exp $ */
+/*	$OpenBSD: config.c,v 1.6 2005/04/14 20:02:09 cloder Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -41,8 +41,8 @@ show_db_sum(struct lsa_hdr *db_sum)
 	log_debug("        age %d", db_sum->age);
 	log_debug("        opts %d", db_sum->opts);
 	log_debug("        type %d", db_sum->type);
-	log_debug("        ls_id %s", (db_sum->ls_id));
-	log_debug("        adv_rtr %s", (db_sum->adv_rtr));
+	log_debug("        ls_id %u", (db_sum->ls_id));
+	log_debug("        adv_rtr %u", (db_sum->adv_rtr));
 	log_debug("        seq_num 0x%x", db_sum->seq_num);
 	log_debug("        chksum 0x%x", db_sum->ls_chksum);
 	log_debug("        len %d", db_sum->len);

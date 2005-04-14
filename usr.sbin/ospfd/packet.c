@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.7 2005/04/05 13:01:22 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.8 2005/04/14 20:02:10 cloder Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -215,7 +215,7 @@ int
 ip_hdr_sanity_check(const struct ip *ip_hdr, u_int16_t len)
 {
 	if (ntohs(ip_hdr->ip_len) != len) {
-		log_debug("recv_packet: invalid IP packet length %s",
+		log_debug("recv_packet: invalid IP packet length %u",
 		    ntohs(ip_hdr->ip_len));
 		return (-1);
 	}
