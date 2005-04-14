@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.222 2005/04/13 21:47:07 henning Exp $
+#	$OpenBSD: Makefile,v 1.223 2005/04/14 10:22:37 henning Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -18,7 +18,8 @@ BIN1=	changelist ccd.conf csh.cshrc csh.login csh.logout daily dhcpd.conf \
 	mrouted.conf myname netstart networks newsyslog.conf phones printcap \
 	protocols rbootd.conf rc rc.conf rc.local rc.securelevel rc.shutdown \
 	remote rpc security services shells spamd.conf syslog.conf weekly \
-	etc.${MACHINE}/disktab dhclient.conf mailer.conf ntpd.conf
+	etc.${MACHINE}/disktab dhclient.conf mailer.conf ntpd.conf \
+	login.conf moduli pf.os sensorsd.conf
 
 .if ${MACHINE} == "alpha" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "cats" || ${MACHINE} == "hp300" || \
@@ -74,15 +75,11 @@ distribution-etc-root-var: distrib-dirs
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 hosts.equiv ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 crontab ${DESTDIR}/var/cron/tabs/root
-	${INSTALL} -c -o root -g wheel -m 644 login.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
 	pwd_mkdb -p -d ${DESTDIR}/etc /etc/master.passwd
-	${INSTALL} -c -o root -g wheel -m 644 moduli ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 bgpd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 ospfd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 pf.conf ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 644 pf.os ${DESTDIR}/etc
-	${INSTALL} -c -o root -g wheel -m 644 sensorsd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 hostapd.conf ${DESTDIR}/etc
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
@@ -380,7 +377,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.222 2005/04/13 21:47:07 henning Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.223 2005/04/14 10:22:37 henning Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
