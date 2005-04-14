@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.53 2005/01/10 06:42:42 deraadt Exp $
+# 	$OpenBSD: RAMDISK,v 1.54 2005/04/14 20:15:58 brad Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -177,6 +177,7 @@ hme*	at sbus?
 # Media Independent Interface (mii) drivers (required for hme)
 nsphy*	at mii?				# NS and compatible PHYs
 qsphy*	at mii?				# Quality Semi QS6612 PHYs
+luphy*	at mii?				# Lucent LU6612 PHY
 
 # Quad-ethernet glue device, and sub-devices
 qec*	at sbus?

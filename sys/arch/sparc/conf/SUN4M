@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.65 2005/01/10 06:42:42 deraadt Exp $
+#	$OpenBSD: SUN4M,v 1.66 2005/04/14 20:15:58 brad Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -215,6 +215,7 @@ lxtphy*	at mii?			# Level1 LXT970 PHYs
 nsphy*	at mii?			# NS and compatible PHYs
 nsphyter* at mii? 
 qsphy*	at mii?			# Quality Semi QS6612 PHYs
+luphy*	at mii?			# Lucent LU6612 PHY
 tqphy*	at mii?			# TDK 78Q212x PHYs
 ukphy*	at mii? 
 
