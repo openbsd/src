@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.89 2005/04/14 12:32:23 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.90 2005/04/14 20:09:33 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -52,6 +52,8 @@ Briefly, creating a VPN consists of the following steps:
 .Bl -enum -compact
 .It
 Choose a key exchange method: manual or automated.
+.It
+For manual keying, generate the keys.
 .It
 For manual keying, create the Security Associations (SA), one for
 each endpoint.
