@@ -1,4 +1,4 @@
-/*	$OpenBSD: mulaw.c,v 1.11 2004/02/23 23:59:21 deraadt Exp $ */
+/*	$OpenBSD: mulaw.c,v 1.12 2005/04/14 01:24:20 pascoe Exp $ */
 /*	$NetBSD: mulaw.c,v 1.15 2001/01/18 20:28:20 jdolecek Exp $	*/
 
 /*
@@ -314,6 +314,21 @@ mulaw_to_slinear16_le(void *v, u_char *p, int cc)
 }
 
 void
+mulaw_to_slinear16_le_mts(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	p += cc;
+	q += cc * 4;
+	while (--cc >= 0) {
+		--p;
+		q -= 4;
+		q[1] = q[3] = mulawtolin16[*p][0] ^ 0x80;
+		q[0] = q[2] = mulawtolin16[*p][1];
+	}
+}
+
+void
 mulaw_to_slinear16_be(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
@@ -325,6 +340,21 @@ mulaw_to_slinear16_be(void *v, u_char *p, int cc)
 		q -= 2;
 		q[0] = mulawtolin16[*p][0] ^ 0x80;
 		q[1] = mulawtolin16[*p][1];
+	}
+}
+
+void
+mulaw_to_slinear16_be_mts(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	p += cc;
+	q += cc * 4;
+	while (--cc >= 0) {
+		--p;
+		q -= 4;
+		q[0] = q[2] = mulawtolin16[*p][0] ^ 0x80;
+		q[1] = q[3] = mulawtolin16[*p][1];
 	}
 }
 

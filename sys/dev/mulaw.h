@@ -1,4 +1,4 @@
-/*	$OpenBSD: mulaw.h,v 1.11 2004/02/23 23:59:21 deraadt Exp $ */
+/*	$OpenBSD: mulaw.h,v 1.12 2005/04/14 01:24:20 pascoe Exp $ */
 /*	$NetBSD: mulaw.h,v 1.11 1999/11/01 18:12:19 augustss Exp $	*/
 
 /*-
@@ -46,7 +46,9 @@ extern void mulaw_to_ulinear16_be(void *, u_char *, int);
 extern void mulaw_to_ulinear16_be_mts(void *, u_char *, int);
 /* Convert 8-bit mu-law to/from 16 bit signed linear. */
 extern void mulaw_to_slinear16_le(void *, u_char *, int);
+extern void mulaw_to_slinear16_le_mts(void *, u_char *, int);
 extern void mulaw_to_slinear16_be(void *, u_char *, int);
+extern void mulaw_to_slinear16_be_mts(void *, u_char *, int);
 extern void slinear16_to_mulaw_le(void *, u_char *, int);
 /* Convert 8-bit mu-law to/from 8 bit unsigned linear. */
 extern void mulaw_to_ulinear8(void *, u_char *, int);
@@ -76,17 +78,17 @@ void mulaw_to_alaw(void *, u_char *, int);
 
 /* backwards compat for now */
 #if BYTE_ORDER == LITTLE_ENDIAN
-#define mulaw_to_ulinear16 mulaw_to_slinear16_le 
+#define mulaw_to_ulinear16 mulaw_to_ulinear16_le 
 #define alaw_to_ulinear16 alaw_to_ulinear16_le
-#define mulaw_to_slinear16 mulaw_to_ulinear16_le
-#define mulaw_to_slinear16_mts mulaw_to_ulinear16_le_mts
+#define mulaw_to_slinear16 mulaw_to_slinear16_le
+#define mulaw_to_slinear16_mts mulaw_to_slinear16_le_mts
 #define alaw_to_slinear16 alaw_to_slinear16_le
 #define alaw_to_slinear16_mts alaw_to_slinear16_le_mts
 #else
-#define mulaw_to_ulinear16 mulaw_to_slinear16_be 
+#define mulaw_to_ulinear16 mulaw_to_ulinear16_be 
 #define alaw_to_ulinear16 alaw_to_ulinear16_be
-#define mulaw_to_slinear16 mulaw_to_ulinear16_be
-#define mulaw_to_slinear16_mts mulaw_to_ulinear16_be_mts
+#define mulaw_to_slinear16 mulaw_to_slinear16_be
+#define mulaw_to_slinear16_mts mulaw_to_slinear16_be_mts
 #define alaw_to_slinear16 alaw_to_slinear16_be
 #define alaw_to_slinear16_mts alaw_to_slinear16_be_mts
 #endif
