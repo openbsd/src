@@ -34,6 +34,6 @@
 // System-specific #define, typedefs, corrections, etc, go here.  This
 // file will come before all others.
 #define _GLIBCPP_USE_C99_SNPRINTF	1
-
+#define _GLIBCPP_USE_TYPE_WCHAR_T	1
 
 #endif

@@ -104,17 +104,6 @@ namespace std
   __basic_file<char>::~__basic_file()
   { this->close(); }
 
-  // Preserved for binary compatibility only.
-  // Do not use.  Gone in 3.4.
-  void 
-  __basic_file<char>::_M_open_mode(ios_base::openmode __mode, int&, int&,
-				   char* __c_mode)
-  {
-    const char* r = __gnu_internal::fopen_mode(__mode);
-    if (r)
-      strcpy(__c_mode, r);
-  }
-  
   __basic_file<char>*
   __basic_file<char>::sys_open(__c_file* __file, ios_base::openmode) 
   {

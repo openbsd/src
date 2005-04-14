@@ -62,10 +62,6 @@ namespace std
     public:
       __basic_file(__c_lock* __lock = 0);
       
-      void 
-      _M_open_mode(ios_base::openmode __mode, int& __p_mode, int& __rw_mode, 
-		   char* __c_mode);
-      
       __basic_file* 
       open(const char* __name, ios_base::openmode __mode, int __prot = 0664);
 
