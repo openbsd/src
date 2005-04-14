@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.82 2005/04/14 08:46:16 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.83 2005/04/14 09:10:12 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -313,7 +313,7 @@ GATEWAY_B = "192.168.2.1"
 NETWORK_A = "10.0.50.0/24"
 NETWORK_B = "10.0.99.0/24"
 
-(rest of ruleset)
+(rest of ruleset per Configuring Firewall Rules, above)
 .Ed
 .It
 Configure the firewall rules on machine B, modifying the
@@ -324,7 +324,7 @@ GATEWAY_B = "192.168.1.254"
 NETWORK_A = "10.0.99.0/24"
 NETWORK_B = "10.0.50.0/24"
 
-(rest of ruleset)
+(rest of ruleset, modified as appropriate)
 .Ed
 .El
 .Ss Automated keying
@@ -498,31 +498,26 @@ Conditions: app_domain == "IPsec policy" &&
             esp_enc_alg != "null" -> "true";
 .Ed
 .It
-Configure the firewall rules on machines A and B:
-.Pp
-Use the same ruleset as the manual keying example, but add permission
-for the
-.Xr isakmpd 8
-control traffic, on
-.Tn UDP
-port 500.
-.Pp
-For machineA, add:
+Configure the firewall rules on machine A
+using the previously defined ruleset:
 .Bd -literal -offset indent
-# Permit ISAKMPD control traffic between A and B
-pass in proto udp from 192.168.2.1 to 192.168.1.254 \e
-	port = 500
-pass out proto udp from 192.168.1.254 to 192.168.2.1 \e
-	port = 500
+GATEWAY_A = "192.168.1.254"
+GATEWAY_B = "192.168.2.1"
+NETWORK_A = "10.0.50.0/24"
+NETWORK_B = "10.0.99.0/24"
+
+(rest of ruleset per Configuring Firewall Rules, above)
 .Ed
-.Pp
-For machineB, add:
+.It
+Configure the firewall rules on machine B, modifying the
+definitions as appropriate:
 .Bd -literal -offset indent
-# Permit ISAKMPD control traffic between A and B
-pass in proto udp from 192.168.1.254 to 192.168.2.1 \e
-	port = 500
-pass out proto udp from 192.168.2.1 to 192.168.1.254 \e
-	port = 500
+GATEWAY_A = "192.168.2.1"
+GATEWAY_B = "192.168.1.254"
+NETWORK_A = "10.0.99.0/24"
+NETWORK_B = "10.0.50.0/24"
+
+(rest of ruleset, modified as appropriate)
 .Ed
 .It
 Start
