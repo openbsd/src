@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.28 2005/04/12 14:58:40 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.29 2005/04/14 16:49:09 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -345,7 +345,7 @@ struct cvs_cmd_info cvs_diff = {
 	NULL,
 	CF_RECURSE | CF_IGNORE | CF_SORT | CF_KNOWN,
 	CVS_REQ_DIFF,
-	CVS_CMD_SENDDIR
+	CVS_CMD_SENDARGS2 | CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR
 };
 
 static struct diff_arg *dap = NULL;
