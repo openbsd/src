@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.8 2005/04/13 21:15:36 reyk Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.9 2005/04/14 10:59:56 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -138,18 +138,16 @@ hostapd_bpf_open(u_int flags)
 		if (asprintf(&dev, "/dev/bpf%u", i) == -1)
 			hostapd_fatal("failed to allocate buffer\n");
 
-		if ((fd = open(dev, flags)) != -1)
+		if ((fd = open(dev, flags)) != -1) {
+			free(dev);
 			break;
+		}
 
 		free(dev);
 	}
 
-	if (fd == -1) {
-		free(dev);
+	if (fd == -1)
 		hostapd_fatal("unable to open BPF device\n");
-	}
-
-	free(dev);
 
 	/*
 	 * Get and validate the BPF version
