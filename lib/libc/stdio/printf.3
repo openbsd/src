@@ -1,4 +1,4 @@
-.\"	$OpenBSD: printf.3,v 1.45 2005/02/25 03:12:44 cloder Exp $
+.\"	$OpenBSD: printf.3,v 1.46 2005/04/14 18:19:24 otto Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -165,6 +165,14 @@ if the return value is greater than or equal to the
 .Fa size
 argument, the string was too short
 and some of the printed characters were discarded.
+If
+.Fa size
+is zero,
+.Fa str
+may be a null pointer and no characters will be written;
+the number of bytes that would have been written excluding the terminating
+.Ql \e0
+byte, or \-1 on error, will be returned.
 .Pp
 .Fn sprintf
 and
