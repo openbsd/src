@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.87 2005/04/14 11:46:04 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.88 2005/04/14 12:06:51 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -327,6 +327,12 @@ NETWORK_B = "10.0.50.0/24"
 
 (rest of ruleset, modified as appropriate)
 .Ed
+.It
+Enable the packet filter and load the ruleset:
+.Bd -literal -offset indent
+# pfctl -e
+# pfctl -f /etc/pf.conf
+.Ed
 .El
 .Ss Automated keying
 To create a VPN between the same two C class networks as the example
@@ -512,6 +518,12 @@ NETWORK_A = "10.0.99.0/24"
 NETWORK_B = "10.0.50.0/24"
 
 (rest of ruleset, modified as appropriate)
+.Ed
+.It
+Enable the packet filter and load the ruleset:
+.Bd -literal -offset indent
+# pfctl -e
+# pfctl -f /etc/pf.conf
 .Ed
 .It
 Start
