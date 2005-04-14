@@ -566,7 +566,7 @@ setup(void) {
 	 * Initialize system's random device as fallback entropy source
 	 * if running chroot'ed.
 	 */
-	if (ns_g_chrootdir != NULL) {
+	if (1) { /* Always chroot due to privsep */
 		result = isc_entropy_create(ns_g_mctx, &ns_g_fallbackentropy);
 		if (result != ISC_R_SUCCESS)
 			ns_main_earlyfatal("isc_entropy_create() failed: %s",
