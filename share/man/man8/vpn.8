@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.79 2005/04/13 16:56:36 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.80 2005/04/14 08:32:32 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -51,8 +51,7 @@ Briefly, creating a VPN consists of the following steps:
 .Pp
 .Bl -enum -compact
 .It
-Choose a key exchange method: manual keyed or automated via
-.Xr isakmpd 8 .
+Choose a key exchange method: manual or automated.
 .It
 For manual keying, create the Security Associations (SA), one for
 each endpoint.
@@ -69,8 +68,10 @@ There are currently two key exchange methods available:
 .Pp
 .Bl -bullet -compact
 .It
-manual (symmetric shared secret)
+manual (symmetric shared secret):
+.Xr ipsecadm 8
 .It
+automatic:
 .Xr isakmpd 8
 .El
 .Ss Enabling Packet Forwarding
