@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.406 2005/03/18 22:39:59 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.407 2005/04/14 20:21:07 brad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -443,6 +443,7 @@ lxtphy*	at mii?				# Level1 LXT970 PHYs
 nsphy*	at mii?				# NS and compatible PHYs
 nsphyter*	at mii?			# NS and compatible PHYs
 qsphy*	at mii?				# Quality Semi QS6612 PHYs
+luphy*	at mii?				# Lucent LU6612 PHY
 sqphy*	at mii?				# Seeq 8x220 PHYs
 rlphy* at mii?				# RealTek 8139 internal PHYs
 mtdphy* at mii?				# Myson MTD972 PHYs
