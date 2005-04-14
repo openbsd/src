@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.484 2005/04/14 02:19:09 joel Exp $ */
+/*	$OpenBSD: pf.c,v 1.485 2005/04/14 08:21:01 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -139,7 +139,7 @@ void			 pf_send_tcp(const struct pf_rule *, sa_family_t,
 			    const struct pf_addr *, const struct pf_addr *,
 			    u_int16_t, u_int16_t, u_int32_t, u_int32_t,
 			    u_int8_t, u_int16_t, u_int16_t, u_int8_t, int,
-			    int, struct ether_header *, struct ifnet *);
+			    struct ether_header *, struct ifnet *);
 void			 pf_send_icmp(struct mbuf *, u_int8_t, u_int8_t,
 			    sa_family_t, struct pf_rule *);
 struct pf_rule		*pf_match_translation(struct pf_pdesc *, struct mbuf *,
@@ -969,7 +969,7 @@ pf_purge_expired_state(struct pf_state *cur)
 		    &cur->ext.addr, &cur->lan.addr,
 		    cur->ext.port, cur->lan.port,
 		    cur->src.seqhi, cur->src.seqlo + 1,
-		    TH_RST|TH_ACK, 0, 0, 0, 1, cur->tag, NULL, NULL);
+		    TH_RST|TH_ACK, 0, 0, 0, 1, NULL, NULL);
 	RB_REMOVE(pf_state_tree_ext_gwy,
 	    &cur->u.s.kif->pfik_ext_gwy, cur);
 	RB_REMOVE(pf_state_tree_lan_ext,
@@ -1429,7 +1429,7 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
     const struct pf_addr *saddr, const struct pf_addr *daddr,
     u_int16_t sport, u_int16_t dport, u_int32_t seq, u_int32_t ack,
     u_int8_t flags, u_int16_t win, u_int16_t mss, u_int8_t ttl, int tag,
-    int rtag, struct ether_header *eh, struct ifnet *ifp)
+    struct ether_header *eh, struct ifnet *ifp)
 {
 	struct mbuf	*m;
 	int		 len, tlen;
@@ -1474,11 +1474,6 @@ pf_send_tcp(const struct pf_rule *r, sa_family_t af,
 		}
 		m_tag_prepend(m, mtag);
 	}
-	if (rtag)
-		if (pf_tag_packet(m, NULL, rtag)) {
-			m_freem(m);
-			return;
-		}
 #ifdef ALTQ
 	if (r != NULL && r->qid) {
 		struct m_tag	*mtag;
@@ -2837,7 +2832,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			pf_send_tcp(r, af, pd->dst,
 			    pd->src, th->th_dport, th->th_sport,
 			    ntohl(th->th_ack), ack, TH_RST|TH_ACK, 0, 0,
-			    r->return_ttl, 1, 0, pd->eh, kif->pfik_ifp);
+			    r->return_ttl, 1, pd->eh, kif->pfik_ifp);
 		} else if ((af == AF_INET) && r->return_icmp)
 			pf_send_icmp(m, r->return_icmp >> 8,
 			    r->return_icmp & 255, af, r);
@@ -3037,8 +3032,7 @@ cleanup:
 			s->src.mss = mss;
 			pf_send_tcp(r, af, daddr, saddr, th->th_dport,
 			    th->th_sport, s->src.seqhi, ntohl(th->th_seq) + 1,
-			    TH_SYN|TH_ACK, 0, s->src.mss, 0, 1, s->tag, 
-			    NULL, NULL);
+			    TH_SYN|TH_ACK, 0, s->src.mss, 0, 1, NULL, NULL);
 			REASON_SET(&reason, PFRES_SYNPROXY);
 			return (PF_SYNPROXY_DROP);
 		}
@@ -4014,7 +4008,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			    pd->src, th->th_dport, th->th_sport,
 			    (*state)->src.seqhi, ntohl(th->th_seq) + 1,
 			    TH_SYN|TH_ACK, 0, (*state)->src.mss, 0, 1,
-			    0, (*state)->tag, NULL, NULL);
+			    NULL, NULL);
 			REASON_SET(reason, PFRES_SYNPROXY);
 			return (PF_SYNPROXY_DROP);
 		} else if (!(th->th_flags & TH_ACK) ||
@@ -4052,7 +4046,7 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			pf_send_tcp((*state)->rule.ptr, pd->af, &src->addr,
 			    &dst->addr, src->port, dst->port,
 			    (*state)->dst.seqhi, 0, TH_SYN, 0,
-			    (*state)->src.mss, 0, 0, (*state)->tag, NULL, NULL);
+			    (*state)->src.mss, 0, 0, NULL, NULL);
 			REASON_SET(reason, PFRES_SYNPROXY);
 			return (PF_SYNPROXY_DROP);
 		} else if (((th->th_flags & (TH_SYN|TH_ACK)) !=
@@ -4066,13 +4060,13 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 			pf_send_tcp((*state)->rule.ptr, pd->af, pd->dst,
 			    pd->src, th->th_dport, th->th_sport,
 			    ntohl(th->th_ack), ntohl(th->th_seq) + 1,
-			    TH_ACK, (*state)->src.max_win, 0, 0, 0, 0,
+			    TH_ACK, (*state)->src.max_win, 0, 0, 0,
 			    NULL, NULL);
 			pf_send_tcp((*state)->rule.ptr, pd->af, &src->addr,
 			    &dst->addr, src->port, dst->port,
 			    (*state)->src.seqhi + 1, (*state)->src.seqlo + 1,
 			    TH_ACK, (*state)->dst.max_win, 0, 0, 1,
-			    (*state)->tag, NULL, NULL);
+			    NULL, NULL);
 			(*state)->src.seqdiff = (*state)->dst.seqhi -
 			    (*state)->src.seqlo;
 			(*state)->dst.seqdiff = (*state)->src.seqhi -
