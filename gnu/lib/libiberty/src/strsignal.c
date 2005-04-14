@@ -433,7 +433,7 @@ strsignal (signo)
   else if ((sys_siglist == NULL) || (sys_siglist[signo] == NULL))
     {
       /* In range, but no sys_siglist or no entry at this index. */
-      sprintf (buf, "Signal %d", signo);
+      snprintf (buf, sizeof buf, "Signal %d", signo);
       msg = (const char *) buf;
     }
   else
@@ -489,7 +489,7 @@ strsigno (signo)
   else if ((signal_names == NULL) || (signal_names[signo] == NULL))
     {
       /* In range, but no signal_names or no entry at this index. */
-      sprintf (buf, "Signal %d", signo);
+      snprintf (buf, sizeof buf, "Signal %d", signo);
       name = (const char *) buf;
     }
   else
