@@ -1387,10 +1387,10 @@ parse_args(isc_boolean_t is_batchfile, isc_boolean_t config_only,
 		INSIST(batchfp == NULL);
 		homedir = getenv("HOME");
 		if (homedir != NULL) {
-			unsigned int n;
+			int n;
 			n = snprintf(rcfile, sizeof(rcfile), "%s/.digrc",
 			             homedir);
-			if (n < sizeof(rcfile))
+			if (n < sizeof(rcfile) && n != 0)
 				batchfp = fopen(rcfile, "r");
 		}
 		if (batchfp != NULL) {
