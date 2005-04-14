@@ -1,8 +1,8 @@
-/*	$OpenBSD: stddef.h,v 1.7 2005/04/14 20:59:10 espie Exp $	*/
-/*	$NetBSD: stddef.h,v 1.4 1994/10/26 00:56:26 cgd Exp $	*/
+/*	$OpenBSD: wctype.h,v 1.1 2005/04/14 20:59:10 espie Exp $	*/
+/*	$NetBSD: wctype.h,v 1.5 2003/03/02 22:18:11 tshiozak Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
+ * Copyright (c)1999 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,14 +13,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -29,42 +26,32 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)stddef.h	5.5 (Berkeley) 4/3/91
+ *	citrus Id: wctype.h,v 1.4 2000/12/21 01:50:21 itojun Exp
  */
 
-#ifndef _STDDEF_H_
-#define _STDDEF_H_
+#ifndef _WCTYPE_H_
+#define	_WCTYPE_H_
 
+#include <sys/cdefs.h>
 #include <machine/ansi.h>
 
-typedef	_BSD_PTRDIFF_T_	ptrdiff_t;
-
-#ifdef	_BSD_SIZE_T_
-typedef	_BSD_SIZE_T_	size_t;
-#undef	_BSD_SIZE_T_
-#endif
-
-#ifdef	_BSD_WCHAR_T_
-/* in C++, wchar_t is a built-in type */
-#ifndef __cplusplus
-typedef	_BSD_WCHAR_T_	wchar_t;
-#undef	_BSD_WCHAR_T_
-#endif
-#endif
-
 #ifdef	_BSD_WINT_T_
-typedef	_BSD_WINT_T_	wint_t;
+typedef	_BSD_WINT_T_    wint_t;
 #undef	_BSD_WINT_T_
 #endif
 
-#ifndef	NULL
-#ifdef 	__GNUG__
-#define NULL	__null
-#else
-#define	NULL	0L
-#endif
+#ifdef	_BSD_WCTRANS_T_
+typedef	_BSD_WCTRANS_T_	wctrans_t;
+#undef	_BSD_WCTRANS_T_
 #endif
 
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
+#ifdef	_BSD_WCTYPE_T_
+typedef	_BSD_WCTYPE_T_	wctype_t;
+#undef	_BSD_WCTYPE_T_
+#endif
 
-#endif /* _STDDEF_H_ */
+#ifndef WEOF
+#define	WEOF	((wint_t)-1)
+#endif
+
+#endif		/* _WCTYPE_H_ */

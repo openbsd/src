@@ -1,11 +1,15 @@
-#	$OpenBSD: Makefile.inc,v 1.14 2005/03/30 03:04:19 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.15 2005/04/14 20:59:10 espie Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/string ${LIBCSRCDIR}/string
 
 SRCS+=	bm.c memccpy.c strcasecmp.c strcasestr.c strcoll.c strdup.c \
 	strerror.c strerror_r.c strlcat.c strmode.c strsignal.c strtok.c \
-	strxfrm.c __strsignal.c
+	strxfrm.c __strsignal.c \
+	wcscat.c wcschr.c wcscmp.c wcscpy.c wcscspn.c wcslcat.c wcslcpy.c \
+	wcslen.c wcsncat.c wcsncmp.c wcsncpy.c wcspbrk.c wcsrchr.c wcsspn.c \
+	wcsstr.c wcstok.c wcswcs.c wmemchr.c wmemcmp.c wmemcpy.c \
+	wmemmove.c wmemset.c
 
 # machine-dependent net sources
 # m-d Makefile.inc must include sources for:
@@ -138,7 +142,8 @@ MAN+=	bm.3 bcmp.3 bcopy.3 bstring.3 bzero.3 ffs.3 memccpy.3 memchr.3 \
 	memcmp.3 memcpy.3 memmove.3 memset.3 strcasecmp.3 strcat.3 \
 	strchr.3 strcmp.3 strcoll.3 strcpy.3 strcspn.3 strerror.3 \
 	string.3 strlen.3 strmode.3 strdup.3 strpbrk.3 strrchr.3 strsep.3 \
-	strsignal.3 strspn.3 strstr.3 strtok.3 strxfrm.3 swab.3 strlcpy.3
+	strsignal.3 strspn.3 strstr.3 strtok.3 strxfrm.3 swab.3 strlcpy.3 \
+	wcstok.3 wmemchr.3
 
 MLINKS+=bm.3 bm_comp.3 bm.3 bm_exec.3 bm.3 bm_free.3
 MLINKS+=strchr.3 index.3
@@ -151,3 +156,21 @@ MLINKS+=strlcpy.3 strlcat.3
 MLINKS+=strstr.3 strcasestr.3
 MLINKS+=strtok.3 strtok_r.3
 MLINKS+=strerror.3 strerror_r.3
+MLINKS+=wmemchr.3 wmemcmp.3
+MLINKS+=wmemchr.3 wmemcpy.3
+MLINKS+=wmemchr.3 wmemmove.3
+MLINKS+=wmemchr.3 wmemset.3
+MLINKS+=wmemchr.3 wcscat.3
+MLINKS+=wmemchr.3 wcschr.3
+MLINKS+=wmemchr.3 wcscmp.3
+MLINKS+=wmemchr.3 wcscpy.3
+MLINKS+=wmemchr.3 wcscspn.3
+MLINKS+=wmemchr.3 wcslcat.3
+MLINKS+=wmemchr.3 wcslcpy.3
+MLINKS+=wmemchr.3 wcsncat.3
+MLINKS+=wmemchr.3 wcsncmp.3
+MLINKS+=wmemchr.3 wcsncpy.3
+MLINKS+=wmemchr.3 wcspbrk.3
+MLINKS+=wmemchr.3 wcspbrk.3
+MLINKS+=wmemchr.3 wcsspn.3
+MLINKS+=wmemchr.3 wcsstr.3
