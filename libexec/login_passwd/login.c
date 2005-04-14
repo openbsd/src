@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.7 2004/03/10 21:30:27 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.8 2005/04/14 18:33:42 biorn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -147,9 +147,6 @@ main(int argc, char **argv)
 	}
 
 	ret = AUTH_FAILED;
-#ifdef KRB4
-	ret = krb4_login(username, password, invokinguser, !arg_notickets);
-#endif
 #ifdef KRB5
 	ret = krb5_login(username, invokinguser, password, arg_login,
 			 !arg_notickets);

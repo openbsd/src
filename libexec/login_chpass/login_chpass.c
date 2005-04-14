@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_chpass.c,v 1.13 2004/09/28 21:52:40 deraadt Exp $	*/
+/*	$OpenBSD: login_chpass.c,v 1.14 2005/04/14 18:33:42 biorn Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -76,7 +76,6 @@ void	kbintr(int);
 #endif
 
 void	local_chpass(char **);
-void	krb_chpass(char *, char *, char **);
 void	yp_chpass(char *);
 
 int
