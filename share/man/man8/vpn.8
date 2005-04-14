@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.84 2005/04/14 09:50:53 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.85 2005/04/14 10:04:04 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -68,10 +68,10 @@ There are currently two key exchange methods available:
 .Pp
 .Bl -bullet -compact
 .It
-manual (symmetric shared secret):
+manual keying:
 .Xr ipsecadm 8
 .It
-automatic:
+automatic keying:
 .Xr isakmpd 8
 .El
 .Ss Enabling Packet Forwarding
