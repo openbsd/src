@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.86 2005/04/14 10:34:23 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.87 2005/04/14 11:46:04 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -220,10 +220,11 @@ GATEWAY_B = "192.168.2.1"
 NETWORK_A = "10.0.50.0/24"
 NETWORK_B = "10.0.99.0/24"
 
+ext_if="ne0"
+
 # default deny
-# ne0 is the only interface going to the outside.
-block in log on { enc0, ne0 } all
-block out log on { enc0, ne0 } all
+# $ext_if is the only interface going to the outside.
+block log on { enc0, $ext_if } all
 
 # Passing in encrypted traffic from security gateways
 pass in proto esp from $GATEWAY_B to $GATEWAY_A
@@ -237,9 +238,9 @@ pass in on enc0 from $NETWORK_B to $NETWORK_A
 pass out on enc0 from $NETWORK_A to $NETWORK_B
 
 # Passing in isakmpd(8) traffic from the security gateways
-pass in on ne0 proto udp from $GATEWAY_B port = 500 \e
+pass in on $ext_if proto udp from $GATEWAY_B port = 500 \e
 	to $GATEWAY_A port = 500
-pass out on ne0 proto udp from $GATEWAY_A port = 500 \e
+pass out on $ext_if proto udp from $GATEWAY_A port = 500 \e
 	to $GATEWAY_B port = 500
 .Ed
 .Pp
