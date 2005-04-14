@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.13 2004/06/29 12:24:57 mickey Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.14 2005/04/14 12:25:31 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -617,6 +617,15 @@ bktr_store_address(unit, BKTR_MEM_BUF,          buf);
 
 	/* Initialise any MSP34xx or TDA98xx audio chips */
 	init_audio_devices(bktr);
+
+#ifdef BKTR_NO_OPEN_RESET
+	/* enable drivers on the GPIO port that control the MUXes */
+	OUTL(bktr, BKTR_GPIO_OUT_EN, INL(bktr, BKTR_GPIO_OUT_EN) | bktr->card.gpio_mux_bits);
+
+	/* mute the audio stream */
+	set_audio( bktr, AUDIO_MUTE );
+#endif
+
 }
 
 
@@ -1087,6 +1096,8 @@ tuner_open( bktr_ptr_t bktr )
 		return( 0 );
 
 	bktr->tflags |= TUNER_OPEN;
+
+#ifndef BKTR_NO_OPEN_RESET
 	bktr->tuner.frequency = 0;
 	bktr->tuner.channel = 0;
 	bktr->tuner.chnlset = DEFAULT_CHNLSET;
@@ -1101,6 +1112,7 @@ tuner_open( bktr_ptr_t bktr )
 
 	/* Initialise any audio chips, eg MSP34xx or TDA98xx */
 	init_audio_devices( bktr );
+#endif
 
 	return( 0 );
 }
@@ -1143,11 +1155,13 @@ tuner_close( bktr_ptr_t bktr )
 {
 	bktr->tflags &= ~TUNER_OPEN;
 
+#ifndef BKTR_NO_OPEN_RESET
 	/* mute the audio by switching the mux */
 	set_audio( bktr, AUDIO_MUTE );
 
 	/* disable drivers on the GPIO port that control the MUXes */
 	OUTL(bktr, BKTR_GPIO_OUT_EN, INL(bktr, BKTR_GPIO_OUT_EN) & ~bktr->card.gpio_mux_bits);
+#endif
 
 	return( 0 );
 }
