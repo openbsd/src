@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.88 2005/04/14 12:06:51 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.89 2005/04/14 12:32:23 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -560,8 +560,3 @@ Firewall configuration file.
 .Xr isakmpd 8 ,
 .Xr pfctl 8 ,
 .Xr sysctl 8
-.Sh BUGS
-In situations where the gateway IPs are outside the tunnelled network
-range, such as when tunnelling private (RFC 1918) networks over the Internet,
-.Xr isakmpd 8
-or manual keying must be used.
