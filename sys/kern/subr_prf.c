@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.60 2004/07/20 20:19:52 art Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.61 2005/04/14 21:58:50 krw Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -335,7 +335,6 @@ void
 kputchar(int c, int flags, struct tty *tp)
 {
 	extern int msgbufmapped;
-	struct msgbuf *mbp;
 
 	if (panicstr)
 		constty = NULL;
@@ -347,21 +346,8 @@ kputchar(int c, int flags, struct tty *tp)
 	    (flags & TOCONS) && tp == constty)
 		constty = NULL;
 	if ((flags & TOLOG) &&
-	    c != '\0' && c != '\r' && c != 0177 && msgbufmapped) {
-		mbp = msgbufp;
-		if (mbp->msg_magic != MSG_MAGIC) {
-			/* Nothing we can do */
-		}
-		mbp->msg_bufc[mbp->msg_bufx++] = c;
-		mbp->msg_bufl = min(mbp->msg_bufl+1, mbp->msg_bufs);
-		if (mbp->msg_bufx < 0 || mbp->msg_bufx >= mbp->msg_bufs)
-			mbp->msg_bufx = 0;
-		/* If the buffer is full, keep the most recent data. */
-		if (mbp->msg_bufr == mbp->msg_bufx) {
-			if (++mbp->msg_bufr >= mbp->msg_bufs)
-				mbp->msg_bufr = 0;
-		}
-	}
+	    c != '\0' && c != '\r' && c != 0177 && msgbufmapped)
+		msgbuf_putchar(c);
 	if ((flags & TOCONS) && constty == NULL && c != '\0')
 		(*v_putc)(c);
 #ifdef DDB

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.11 2003/09/23 16:51:12 millert Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.12 2005/04/14 21:58:50 krw Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ initmsgbuf(buf, bufsize)
 	caddr_t buf;
 	size_t bufsize;
 {
-	register struct msgbuf *mbp;
+	struct msgbuf *mbp;
 	long new_bufs;
 
 	/* Sanity-check the given size. */
@@ -100,9 +100,32 @@ initmsgbuf(buf, bufsize)
 		mbp->msg_magic = MSG_MAGIC;
 		mbp->msg_bufs = new_bufs;
 	}
+	
+	/* Always start new buffer data on a new line. */
+	if (mbp->msg_bufx > 0 && mbp->msg_bufc[mbp->msg_bufx - 1] != '\n')
+		msgbuf_putchar('\n');
 
 	/* mark it as ready for use. */
 	msgbufmapped = msgbufenabled = 1;
+}
+
+void msgbuf_putchar(const char c) 
+{
+	struct msgbuf *mbp = msgbufp;
+
+	if (mbp->msg_magic != MSG_MAGIC)
+		/* Nothing we can do */
+		return;
+
+	mbp->msg_bufc[mbp->msg_bufx++] = c;
+	mbp->msg_bufl = min(mbp->msg_bufl+1, mbp->msg_bufs);
+	if (mbp->msg_bufx < 0 || mbp->msg_bufx >= mbp->msg_bufs)
+		mbp->msg_bufx = 0;
+	/* If the buffer is full, keep the most recent data. */
+	if (mbp->msg_bufr == mbp->msg_bufx) {
+		if (++mbp->msg_bufr >= mbp->msg_bufs)
+			mbp->msg_bufr = 0;
+	}
 }
 
 /*ARGSUSED*/
@@ -138,9 +161,9 @@ logread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct msgbuf *mbp = msgbufp;
-	register long l;
-	register int s;
+	struct msgbuf *mbp = msgbufp;
+	long l;
+	int s;
 	int error = 0;
 
 	s = splhigh();
