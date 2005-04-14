@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.53 2005/03/11 23:09:53 beck Exp $
+.\"	$OpenBSD: spamd.8,v 1.54 2005/04/14 16:07:52 beck Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -39,6 +39,7 @@
 .Op Fl n Ar name
 .Op Fl p Ar port
 .Op Fl r Ar reply
+.Op Fl S Ar secs
 .Op Fl s Ar secs
 .Op Fl w Ar window
 .Ek
@@ -108,6 +109,10 @@ using
 .It Fl r Ar reply
 The SMTP error to return to the spammer, i.e. 450, 451, 550.
 This defaults to 450.
+.It Fl S Ar secs
+Stutter at greylisted connections for the specified amount
+of seconds, after which the connection is not stuttered at.
+Defaults to 10.
 .It Fl s Ar secs
 Delay each character sent to the client by the specified
 amount of seconds.
