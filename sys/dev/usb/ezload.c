@@ -1,4 +1,4 @@
-/*	$OpenBSD: ezload.c,v 1.7 2004/12/19 15:20:13 deraadt Exp $ */
+/*	$OpenBSD: ezload.c,v 1.8 2005/04/14 19:07:02 damien Exp $ */
 /*	$NetBSD: ezload.c,v 1.5 2002/07/11 21:14:25 augustss Exp $	*/
 
 /*
@@ -111,34 +111,38 @@ ezload_download(usbd_device_handle dev, const char *name, const u_char *buf,
     size_t buflen)
 {
 	usb_device_request_t req;
-	const struct ezdata *ptr;
-	usbd_status err;
+	usbd_status err = 0;
+	u_int8_t length;
+	u_int16_t address;
 	u_int len, offs;
-	const struct ezdata *rec = (struct ezdata *)buf;
 
-	DPRINTF(("ezload_down record=%p\n", rec));
+	for (;;) {
+		length = *buf++;
+		if (length == 0)
+			break;
 
-	for (ptr = rec; ptr->length != 0; ptr++) {
-
+		address = UGETW(buf); buf += 2;
 #if 0
-		if (ptr->address + ptr->length > ANCHOR_MAX_INTERNAL_ADDRESS)
+		if (address + length > ANCHOR_MAX_INTERNAL_ADDRESS)
 			return (USBD_INVAL);
 #endif
 
 		req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
 		req.bRequest = ANCHOR_LOAD_INTERNAL;
 		USETW(req.wIndex, 0);
-		for (offs = 0; offs < ptr->length; offs += ANCHOR_CHUNK) {
-			len = ptr->length - offs;
+		for (offs = 0; offs < length; offs += ANCHOR_CHUNK) {
+			len = length - offs;
 			if (len > ANCHOR_CHUNK)
 				len = ANCHOR_CHUNK;
-			USETW(req.wValue, ptr->address + offs);
+			USETW(req.wValue, address + offs);
 			USETW(req.wLength, len);
 			DPRINTFN(2,("ezload_download: addr=0x%x len=%d\n",
-				    ptr->address + offs, len));
-			err = usbd_do_request(dev, &req, ptr->data + offs);
+				    address + offs, len));
+			err = usbd_do_request(dev, &req, (u_char *)buf);
 			if (err)
 				break;
+
+			buf += len;
 		}
 		if (err)
 			break;
