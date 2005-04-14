@@ -1,5 +1,5 @@
-/*	$OpenBSD: audio.c,v 1.44 2004/07/10 11:48:30 vincent Exp $	*/
-/*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
+/*	$OpenBSD: audio.c,v 1.45 2005/04/14 05:39:17 brad Exp $	*/
+/*	$NetBSD: audio.c,v 1.119 1999/11/09 16:50:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -328,7 +328,7 @@ audioattach(parent, self, aux)
 		au_check_ports(sc, &sc->sc_outports, &mi, oclass,
 		    AudioNoutput, AudioNmaster, otable);
 		if (mi.mixer_class == oclass &&
-		    strcmp(mi.label.name, AudioNmonitor) == 0)
+		    (strcmp(mi.label.name, AudioNmonitor) == 0))
 			sc->sc_monitor_port = mi.index;
 	}
 	DPRINTF(("audio_attach: inputs ports=0x%x, output ports=0x%x\n",
@@ -1282,16 +1282,16 @@ audio_read(dev, uio, ioflag)
 	while (uio->uio_resid > 0 && !error) {
 		s = splaudio();
 		while (cb->used <= 0) {
-			if (ioflag & IO_NDELAY) {
-				splx(s);
-				return EWOULDBLOCK;
-			}
 			if (!sc->sc_rbus) {
 				error = audiostartr(sc);
 				if (error) {
 					splx(s);
 					return error;
 				}
+			}
+			if (ioflag & IO_NDELAY) {
+				splx(s);
+				return (EWOULDBLOCK);
 			}
 			DPRINTFN(2, ("audio_read: sleep used=%d\n", cb->used));
 			error = audio_sleep(&sc->sc_rchan, "aud_rd");
