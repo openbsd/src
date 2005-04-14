@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.35 2005/04/10 18:08:53 otto Exp $	*/
+/*	$OpenBSD: tar.c,v 1.36 2005/04/14 08:24:09 markus Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: tar.c,v 1.35 2005/04/10 18:08:53 otto Exp $";
+static const char rcsid[] = "$OpenBSD: tar.c,v 1.36 2005/04/14 08:24:09 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -772,7 +772,7 @@ ustar_rd(ARCHD *arcn, char *buf)
 	}
 
 	if (hd->typeflag != LONGLINKTYPE && hd->typeflag != LONGNAMETYPE) {
-		arcn->nlen = expandname(dest, sizeof(arcn->name) - cnt,
+		arcn->nlen = cnt + expandname(dest, sizeof(arcn->name) - cnt,
 		    &gnu_name_string, hd->name, sizeof(hd->name));
 		arcn->ln_nlen = expandname(arcn->ln_name, sizeof(arcn->ln_name),
 		    &gnu_link_string, hd->linkname, sizeof(hd->linkname));
