@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.135 2005/04/12 12:15:53 markus Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.136 2005/04/14 10:23:37 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -66,20 +66,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef lint
-static const char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
-#else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.135 2005/04/12 12:15:53 markus Exp $";
-#endif
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/socket.h>
