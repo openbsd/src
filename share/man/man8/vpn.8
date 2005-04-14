@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.83 2005/04/14 09:10:12 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.84 2005/04/14 09:50:53 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -403,16 +403,16 @@ Create
 for machine B:
 .Bd -literal -offset indent
 # Incoming phase 1 negotiations are multiplexed on the
-# source IP address.  Phase 1 is used to set up a
-# protected channel just between the two gateway machines.
+# source IP address.  Phase 1 is used to set up a protected
+# channel just between the two gateway machines.
 # This channel is then used for the phase 2 negotiation
 # traffic (i.e. encrypted & authenticated).
 
 [Phase 1]
 192.168.1.254=		peer-machineA
 
-# 'Phase 2' defines which connections the daemon should
-# establish.  These connections contain the actual
+# 'Phase 2' defines which connections the daemon
+# should establish.  These connections contain the actual
 # "IPsec VPN" information.
 
 [Phase 2]
