@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.59 2005/04/08 18:46:16 jmc Exp $
+.\" $OpenBSD: ipsec.4,v 1.60 2005/04/15 23:21:20 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -326,6 +326,23 @@ obtained via the kernfs file
 .Aq Pa ipsec ,
 typically in
 .Aq Pa /kern/ipsec .
+.Ss Additional Sysctl Variables
+A number of
+.Xr sysctl 8
+variables are relevant to
+.Nm .
+These are generally
+.Va net.inet.ah.* ,
+.Va net.inet.esp.* ,
+.Va net.inet.ip.forwarding ,
+.Va net.inet6.ip6.forwarding ,
+and
+.Va net.inet.ip.ipsec-* .
+Full explanations can be found in
+.Xr sysctl 3 ,
+and variables can be set using the
+.Xr sysctl 8
+interface.
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
 .Bl -tag -width [EINVAL]
@@ -352,6 +369,7 @@ displays information about memory use by IPsec with the
 .Fl m
 flag (look for ``tdb'' and ``xform'' allocations).
 .Sh SEE ALSO
+.Xr sysctl 3 ,
 .Xr enc 4 ,
 .Xr icmp 4 ,
 .Xr inet 4 ,
@@ -362,6 +380,7 @@ flag (look for ``tdb'' and ``xform'' allocations).
 .Xr udp 4 ,
 .Xr ipsecadm 8 ,
 .Xr isakmpd 8 ,
+.Xr sysctl 8 ,
 .Xr vpn 8
 .Sh HISTORY
 The IPsec protocol design process was started in 1992 by
