@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.854 2005/04/10 00:33:37 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.855 2005/04/15 19:31:36 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2315,6 +2315,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Smart Array 6400 EM",
 	},
 	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA6422,
+	    "Smart Array 6422",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_USB,
 	    "USB",
 	},
@@ -3045,6 +3049,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_HP, PCI_PRODUCT_HP_QUICKSILVER,
 	    "QuickSilver Ropes-PCI",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAV100,
+	    "Smart Array V100",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP800,
+	    "Smart Array P800",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP600,
+	    "Smart Array P600",
+	},
+	{
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE400,
+	    "Smart Array E400",
 	},
 	{
 	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7751,

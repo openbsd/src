@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.854 2005/04/10 00:33:37 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.855 2005/04/15 19:31:36 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -966,10 +966,11 @@
 #define	PCI_PRODUCT_COMPAQ_CSA5i	0x4080		/* Smart Array 5i */
 #define	PCI_PRODUCT_COMPAQ_CSA532	0x4082		/* Smart Array 532 */
 #define	PCI_PRODUCT_COMPAQ_CSA5312	0x4083		/* Smart Array 5312 */
-#define	PCI_PRODUCT_COMPAQ_CSA641	0x409A		/* Smart Array 641 */
-#define	PCI_PRODUCT_COMPAQ_CSA642	0x409B		/* Smart Array 642 */
-#define	PCI_PRODUCT_COMPAQ_CSA6400	0x409C		/* Smart Array 6400 */
-#define	PCI_PRODUCT_COMPAQ_CSA6400EM	0x409D		/* Smart Array 6400 EM */
+#define	PCI_PRODUCT_COMPAQ_CSA641	0x409a		/* Smart Array 641 */
+#define	PCI_PRODUCT_COMPAQ_CSA642	0x409b		/* Smart Array 642 */
+#define	PCI_PRODUCT_COMPAQ_CSA6400	0x409c		/* Smart Array 6400 */
+#define	PCI_PRODUCT_COMPAQ_CSA6400EM	0x409d		/* Smart Array 6400 EM */
+#define	PCI_PRODUCT_COMPAQ_CSA6422	0x409e		/* Smart Array 6422 */
 #define	PCI_PRODUCT_COMPAQ_USB	0x7020		/* USB */
 #define	PCI_PRODUCT_COMPAQ_FXP	0xa0f0		/* Netelligent ASMC */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE1	0xa0f3		/* ISA */
@@ -1228,6 +1229,10 @@
 #define	PCI_PRODUCT_HP_ZX1_IOC	0x122a		/* zx1 IOC */
 #define	PCI_PRODUCT_HP_MERCURY	0x122e		/* Mercury Ropes-PCI */
 #define	PCI_PRODUCT_HP_QUICKSILVER	0x12b4		/* QuickSilver Ropes-PCI */
+#define	PCI_PRODUCT_HP_HPSAV100	0x3210		/* Smart Array V100 */
+#define	PCI_PRODUCT_HP_HPSAP800	0x3223		/* Smart Array P800 */
+#define	PCI_PRODUCT_HP_HPSAP600	0x3225		/* Smart Array P600 */
+#define	PCI_PRODUCT_HP_HPSAE400	0x3231		/* Smart Array E400 */
 
 /* Hifn products */
 #define	PCI_PRODUCT_HIFN_7751	0x0005		/* 7751 */
