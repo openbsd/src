@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.1 2005/04/15 15:46:21 deraadt Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.2 2005/04/15 15:59:11 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -46,20 +46,20 @@ extern char *__progname;
 
 const char rcs_version[] = "OpenCVS RCS version 3.6";
 
-void  rcs_usage (void);
-int   rcs_main  (int, char **);
-
-
+void  rcs_usage(void);
+int   rcs_main(int, char **);
+void (*usage)(void);
 
 struct rcs_prog {
 	char  *prog_name;
 	int  (*prog_hdlr)(int, char **);
+	void (*prog_usage)(void);
 } programs[] = {
-	{ "rcs",	rcs_main	},
-	{ "ci",		NULL		},
-	{ "co",		NULL		},
-	{ "rcsclean",	NULL		},
-	{ "rcsdiff",	NULL		},
+	{ "rcs",	rcs_main,	rcs_usage	},
+	{ "ci",		NULL,		NULL		},
+	{ "co",		NULL,		NULL		},
+	{ "rcsclean",	NULL,		NULL		},
+	{ "rcsdiff",	NULL,		NULL		},
 };
 
 
@@ -73,8 +73,11 @@ main(int argc, char **argv)
 	cvs_strtab_init();
 
 	for (i = 0; i < (sizeof(programs)/sizeof(programs[0])); i++)
-		if (strcmp(__progname, programs[i].prog_name) == 0)
+		if (strcmp(__progname, programs[i].prog_name) == 0) {
+			usage = programs[i].prog_usage;
 			ret = programs[i].prog_hdlr(argc, argv);
+			break;
+		}
 
 	cvs_strtab_cleanup();
 
@@ -86,20 +89,8 @@ void
 rcs_usage(void)
 {
 	fprintf(stderr,
-	    "Usage: %s [-hiLMUV] [-a users] [-b [rev]] [-c string] "
-	    "[-e users] [-k opt] file ...\n"
-	    "\t-a users\tAdd the login names in the comma-separated <users>\n"
-	    "\t-b rev\t\tSet the head revision to <rev>\n"
-	    "\t-c string\tSet the comment leader to <string>\n"
-	    "\t-e users\tRemove the login names in the comma-separated <users>\n"
-	    "\t-h\t\tPrint the program's usage and exit\n"
-	    "\t-i\t\tCreate a new empty RCS file\n"
-	    "\t-k opt\t\tSet the keyword expansion mode to <opt>\n"
-	    "\t-L\t\tEnable strict locking on the specified files\n"
-	    "\t-M\t\tDisable mail warning about lock breaks\n"
-	    "\t-U\t\tDisable strict locking on the specified files\n"
-	    "\t-V\t\tPrint the program's version string and exit\n",
-	    __progname);
+	    "usage: %s [-hiLMUV] [-a users] [-b [rev]] [-c string] "
+	    "[-e users] [-k opt] file ...\n", __progname);
 }
 
 
@@ -139,7 +130,7 @@ rcs_main(int argc, char **argv)
 			elist = optarg;
 			break;
 		case 'h':
-			rcs_usage();
+			(usage)();
 			exit(0);
 		case 'i':
 			flags |= RCS_CREATE;
@@ -170,7 +161,7 @@ rcs_main(int argc, char **argv)
 			printf("%s\n", rcs_version);
 			exit(0);
 		default:
-			rcs_usage();
+			(usage)();
 			exit(1);
 		}
 	}
