@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.44 2004/11/10 15:18:11 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.45 2005/04/15 16:19:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -534,7 +534,7 @@ aspath_snprint(char *buf, size_t size, void *data, u_int16_t len)
 			UPDATE();
 		}
 	}
-	/* ensure that we have a valid C-string */
+	/* ensure that we have a valid C-string especially for emtpy as path */
 	if (size > 0)
 		*buf = '\0';
 
@@ -545,13 +545,17 @@ aspath_snprint(char *buf, size_t size, void *data, u_int16_t len)
 int
 aspath_asprint(char **ret, void *data, u_int16_t len)
 {
-	size_t	slen, plen;
+	size_t	slen;
+	int	plen;
 
 	slen = aspath_strlen(data, len) + 1;
 	*ret = malloc(slen);
 	if (*ret == NULL)
 		return (-1);
+
 	plen = aspath_snprint(*ret, slen, data, len);
+	if (plen == -1)
+		free(*ret);
 
 	return (plen);
 }
