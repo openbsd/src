@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.61 2005/04/15 23:27:33 jmc Exp $
+.\" $OpenBSD: ipsec.4,v 1.62 2005/04/15 23:31:06 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -120,24 +120,6 @@ IPComp is a protocol used to reduce the size of IP datagrams
 See
 .Xr ipcomp 4
 for further information.
-.Ss Security Associations (SAs)
-These protocols require certain parameters for each connection, describing
-exactly how the desired protection will be achieved.
-These parameters are collected in an entity called a security association,
-or SA for short.
-Typical SA parameters include encryption algorithm, hash algorithm,
-encryption key, and authentication key, to name a few.
-When two peers have established matching SAs
-(one at each end),
-packets protected with one end's SA may be verified and/or decrypted
-using the information in the other end's SA.
-The only issue remaining is to ensure that both ends have matching SAs.
-This may be done manually, or automatically using a key management daemon.
-.Pp
-Further information on manual SA establishment is described in
-.Xr ipsecadm 8 .
-Information on automated key management may be found in
-.Xr isakmpd 8 .
 .Ss Authentication Header (AH)
 AH works by computing a value that depends on all of the payload
 data, some of the IP header data, and a certain secret value
@@ -159,6 +141,24 @@ algorithm using a secret encryption key.
 Only the ones knowing this key can decrypt the data, thus providing
 confidentiality.
 Both the algorithm and the encryption key are parameters of the SA.
+.Ss Security Associations (SAs)
+These protocols require certain parameters for each connection, describing
+exactly how the desired protection will be achieved.
+These parameters are collected in an entity called a security association,
+or SA for short.
+Typical SA parameters include encryption algorithm, hash algorithm,
+encryption key, and authentication key, to name a few.
+When two peers have established matching SAs
+(one at each end),
+packets protected with one end's SA may be verified and/or decrypted
+using the information in the other end's SA.
+The only issue remaining is to ensure that both ends have matching SAs.
+This may be done manually, or automatically using a key management daemon.
+.Pp
+Further information on manual SA establishment is described in
+.Xr ipsecadm 8 .
+Information on automated key management may be found in
+.Xr isakmpd 8 .
 .Ss Security Parameter Indexes (SPIs)
 In order to identify an SA we need to have a unique name for it.
 This name is a triplet, consisting of the destination address, security
@@ -261,6 +261,23 @@ Security Associations can be set up manually with the
 utility or automatically with the
 .Xr isakmpd 8
 key management daemon.
+.Ss Additional Sysctl Variables
+A number of
+.Xr sysctl 8
+variables are relevant to
+.Nm .
+These are generally
+.Va net.inet.ah.* ,
+.Va net.inet.esp.* ,
+.Va net.inet.ip.forwarding ,
+.Va net.inet6.ip6.forwarding ,
+and
+.Va net.inet.ip.ipsec-* .
+Full explanations can be found in
+.Xr sysctl 3 ,
+and variables can be set using the
+.Xr sysctl 8
+interface.
 .Ss API Details
 The following IP-level
 .Xr setsockopt 2
@@ -329,23 +346,6 @@ obtained via the kernfs file
 .Aq Pa ipsec ,
 typically in
 .Aq Pa /kern/ipsec .
-.Ss Additional Sysctl Variables
-A number of
-.Xr sysctl 8
-variables are relevant to
-.Nm .
-These are generally
-.Va net.inet.ah.* ,
-.Va net.inet.esp.* ,
-.Va net.inet.ip.forwarding ,
-.Va net.inet6.ip6.forwarding ,
-and
-.Va net.inet.ip.ipsec-* .
-Full explanations can be found in
-.Xr sysctl 3 ,
-and variables can be set using the
-.Xr sysctl 8
-interface.
 .Sh DIAGNOSTICS
 A socket operation may fail with one of the following errors returned:
 .Bl -tag -width [EINVAL]
