@@ -1703,6 +1703,7 @@
 ./usr/share/man/cat4/zaurus/kmem.0
 ./usr/share/man/cat4/zaurus/lcd.0
 ./usr/share/man/cat4/zaurus/mem.0
+./usr/share/man/cat4/zaurus/pxadmac.0
 ./usr/share/man/cat4/zaurus/pxagpio.0
 ./usr/share/man/cat4/zaurus/pxaintc.0
 ./usr/share/man/cat4/zaurus/pxaip.0
@@ -1710,6 +1711,7 @@
 ./usr/share/man/cat4/zaurus/pxaudc.0
 ./usr/share/man/cat4/zaurus/saost.0
 ./usr/share/man/cat4/zaurus/scoop.0
+./usr/share/man/cat4/zaurus/zaudio.0
 ./usr/share/man/cat4/zaurus/zkbd.0
 ./usr/share/man/cat4/zaurus/zssp.0
 ./usr/share/man/cat4/zero.0
