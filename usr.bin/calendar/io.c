@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.28 2004/12/10 15:31:01 mickey Exp $	*/
+/*	$OpenBSD: io.c,v 1.29 2005/04/15 14:28:56 otto Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static const char rcsid[] = "$OpenBSD: io.c,v 1.28 2004/12/10 15:31:01 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: io.c,v 1.29 2005/04/15 14:28:56 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -377,8 +377,8 @@ opencal(void)
 			(void)dup2(fderr, STDERR_FILENO);
 			(void)close(fderr);
 		}
-		execl(_PATH_CPP, "cpp", "-traditional", "-P", "-I.",
-		    _PATH_INCLUDE, (char *)NULL);
+		execl(_PATH_CPP, "cpp", "-traditional", "-undef", "-U__GNUC__",
+		    "-P", "-I.", _PATH_INCLUDE, (char *)NULL);
 		warn(_PATH_CPP);
 		_exit(1);
 	}
