@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsinfo.c	8.1 (Berkeley) 6/6/93
- *	$Id: fsinfo.c,v 1.7 2003/06/02 23:36:52 millert Exp $
+ *	$Id: fsinfo.c,v 1.8 2005/04/15 18:18:07 millert Exp $
  */
 
 #ifndef lint
@@ -82,11 +82,9 @@ char *v[];
 {
 	extern char *optarg;
 	extern int optind;
-	int ch;
-	int usage = 0;
+	int ch, n, usage = 0;
 	char *iptr = idvbuf;
 	int iptr_size = sizeof(idvbuf);
-	size_t l;
 
 	while ((ch = getopt(c, v, "a:b:d:e:f:h:m:D:U:I:qv")) != -1)
 	switch (ch) {
@@ -128,13 +126,12 @@ char *v[];
 		verbose = 1;
 		break;
 	case 'I': case 'D': case 'U':
-		l = snprintf(iptr, iptr_size, "-%c%s ", ch, optarg);
-		if (l >= iptr_size || l < 0)
+		n = snprintf(iptr, iptr_size, "-%c%s ", ch, optarg);
+		if (n >= iptr_size || n < 0)
 			usage++;
 		else {
-			l = strlen(iptr);
-			iptr_size -= l;
-			iptr += strlen(iptr);
+			iptr_size -= n;
+			iptr += n;
 		}
 		break;
 	default:
