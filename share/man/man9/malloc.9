@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.31 2005/03/30 23:25:59 pedro Exp $
+.\"	$OpenBSD: malloc.9,v 1.32 2005/04/15 13:30:51 tom Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ will never return
 .Dv NULL .
 Note that
 .Dv M_WAITOK
-is conveniently defined to be 0, and hence maybe or'ed into the
+is conveniently defined to be 0, and hence may be or'ed into the
 .Fa flags
 argument to indicate that it's OK to wait for resources.
 .El
