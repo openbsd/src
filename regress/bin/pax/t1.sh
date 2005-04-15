@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: t1.sh,v 1.1 2005/04/14 15:17:07 cloder Exp $
+# $OpenBSD: t1.sh,v 1.2 2005/04/15 07:06:35 markus Exp $
 
 # pax was assuming ustar entries were always NUL terminated
 CUR=$1
@@ -33,4 +33,4 @@ B````````````````````````````````````````````````
 end
 _EOF
 
-tar tvf $OBJ/t1.tar 2> /dev/null | cmp -s $CUR/t1.out /dev/stdin
+tar tf $OBJ/t1.tar 2> /dev/null | cmp -s $CUR/t1.out /dev/stdin
