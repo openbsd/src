@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.92 2005/04/15 08:09:38 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.93 2005/04/15 08:12:53 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -299,8 +299,8 @@ should be used to configure machines appropriately.
 To create a manual keyed VPN between two class C networks using
 3DES encryption and the following IP addresses:
 .Bd -literal -offset indent
-GATEWAY_A  = 192.168.1.13
-GATEWAY_B  = 192.168.1.15
+GATEWAY_A = 192.168.1.13
+GATEWAY_B = 192.168.1.15
 NETWORK_A = 10.0.50.0/24
 NETWORK_B = 10.0.99.0/24
 .Ed
@@ -308,7 +308,7 @@ NETWORK_B = 10.0.99.0/24
 .It
 Choose the shared secrets using a suitably random method.
 The 3DES encryption key needs 192 bits (3x64), or 24 bytes.
-The SHA-1 authentication key for needs 160 bits, or 20 bytes.
+The SHA-1 authentication key needs 160 bits, or 20 bytes.
 .Bd -literal -offset indent
 # openssl rand 24 | hexdump -e '24/1 "%02x"' > enc_key
 # openssl rand 20 | hexdump -e '20/1 "%02x"' > auth_key
