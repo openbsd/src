@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.854 2005/04/10 00:33:37 jsg Exp $
+$OpenBSD: pcidevs,v 1.855 2005/04/15 19:31:36 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -961,10 +961,11 @@ product COMPAQ CSA5300		0x4070	Smart Array 5300
 product COMPAQ CSA5i		0x4080	Smart Array 5i
 product COMPAQ CSA532		0x4082	Smart Array 532
 product COMPAQ CSA5312		0x4083	Smart Array 5312
-product COMPAQ CSA641		0x409A	Smart Array 641
-product COMPAQ CSA642		0x409B	Smart Array 642
-product COMPAQ CSA6400		0x409C	Smart Array 6400
-product COMPAQ CSA6400EM	0x409D	Smart Array 6400 EM
+product COMPAQ CSA641		0x409a	Smart Array 641
+product COMPAQ CSA642		0x409b	Smart Array 642
+product COMPAQ CSA6400		0x409c	Smart Array 6400
+product COMPAQ CSA6400EM	0x409d	Smart Array 6400 EM
+product COMPAQ CSA6422		0x409e	Smart Array 6422
 product COMPAQ USB		0x7020	USB
 product COMPAQ FXP		0xa0f0	Netelligent ASMC
 product COMPAQ PCI_ISA_BRIDGE1	0xa0f3	ISA
@@ -1223,6 +1224,10 @@ product HP PLUTO		0x1229	Pluto MIO
 product HP ZX1_IOC		0x122a	zx1 IOC
 product HP MERCURY		0x122e	Mercury Ropes-PCI
 product HP QUICKSILVER		0x12b4	QuickSilver Ropes-PCI
+product HP HPSAV100		0x3210	Smart Array V100
+product HP HPSAP800		0x3223	Smart Array P800
+product HP HPSAP600		0x3225	Smart Array P600
+product HP HPSAE400		0x3231	Smart Array E400
 
 /* Hifn products */
 product HIFN 7751		0x0005	7751
