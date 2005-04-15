@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.10 2005/03/26 15:14:04 miod Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.11 2005/04/15 02:19:24 pascoe Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -263,7 +263,7 @@ wsfont_revbyte(font)
 }
 
 /*
- * Enumarate the list of fonts
+ * Enumerate the list of fonts
  */
 void
 wsfont_enum(cb)
