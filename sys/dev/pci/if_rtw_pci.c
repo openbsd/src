@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_pci.c,v 1.3 2005/02/09 10:51:25 mcbride Exp $	*/
+/*	$OpenBSD: if_rtw_pci.c,v 1.4 2005/04/15 03:42:57 jsg Exp $	*/
 /*	$NetBSD: if_rtw_pci.c,v 1.1 2004/09/26 02:33:36 dyoung Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 /*
- * PCI bus front-end for the Realtek RTL8180 802.11 MAC/BBP chip.
+ * PCI bus front-end for the Realtek RTL8180L 802.11 MAC/BBP chip.
  *
  * Derived from the ADMtek ADM8211 PCI bus front-end.
  *
@@ -82,18 +82,17 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-const struct rtw_pci_product * rtw_pci_lookup(const struct pci_attach_args *);
 int rtw_pci_enable(struct rtw_softc *);
 void rtw_pci_disable(struct rtw_softc *);
 
 /*
- * PCI configuration space registers used by the ADM8211.
+ * PCI configuration space registers used by the RTL8180L.
  */
 #define	RTW_PCI_IOBA		0x10	/* i/o mapped base */
 #define	RTW_PCI_MMBA		0x14	/* memory mapped base */
 
 struct rtw_pci_softc {
-	struct rtw_softc	psc_rtw;	/* real ADM8211 softc */
+	struct rtw_softc	psc_rtw;	/* real RTL8180L softc */
 
 	pci_intr_handle_t	psc_ih;		/* interrupt handle */
 	void			*psc_intrcookie;
@@ -109,41 +108,17 @@ struct cfattach rtw_pci_ca = {
 	sizeof (struct rtw_pci_softc), rtw_pci_match, rtw_pci_attach
 };
 
-const struct rtw_pci_product {
-	u_int32_t	app_vendor;	/* PCI vendor ID */
-	u_int32_t	app_product;	/* PCI product ID */
-} rtw_pci_products[] = {
+const struct pci_matchid rtw_pci_products[] = {
 	{ PCI_VENDOR_REALTEK,		PCI_PRODUCT_REALTEK_RT8180 },
 	{ PCI_VENDOR_BELKIN2,		PCI_PRODUCT_BELKIN2_F5D6001 },
 	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DWL610 },
-
-	{ 0,				0 },
 };
-
-const struct rtw_pci_product *
-rtw_pci_lookup(const struct pci_attach_args *pa)
-{
-	const struct rtw_pci_product *app;
-
-	for (app = rtw_pci_products;
-	     app->app_vendor != 0 && app->app_product != 0;
-	     app++) {
-		if (PCI_VENDOR(pa->pa_id) == app->app_vendor &&
-		    PCI_PRODUCT(pa->pa_id) == app->app_product)
-			return (app);
-	}
-	return (NULL);
-}
 
 int
 rtw_pci_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-
-	if (rtw_pci_lookup(pa) != NULL)
-		return (1);
-
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, rtw_pci_products,
+	    sizeof(rtw_pci_products)/sizeof(rtw_pci_products[0])));
 }
 
 int
@@ -185,18 +160,11 @@ rtw_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	int ioh_valid, memh_valid;
-	const struct rtw_pci_product *app;
 	pcireg_t reg;
 	int pmreg;
 
 	psc->psc_pc = pa->pa_pc;
 	psc->psc_pcitag = pa->pa_tag;
-
-	app = rtw_pci_lookup(pa);
-	if (app == NULL) {
-		printf("\n");
-		panic("rtw_pci_attach: impossible");
-	}
 
 	/*
 	 * No power management hooks.
