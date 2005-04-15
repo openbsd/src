@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.102 2005/03/30 07:44:56 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.103 2005/04/15 03:31:49 pascoe Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -268,8 +268,8 @@ considers itself master of the virtual host.
 The formula is
 .Cm advbase
 +
-.Cm ( advskew
-/ 255 ).
+.Pf ( Cm advskew
+/ 256).
 If the master does not advertise within three times this interval, this host
 will begin advertising as master.
 .It Cm alias
