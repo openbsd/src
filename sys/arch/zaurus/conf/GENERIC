@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.32 2005/04/14 23:40:34 pascoe Exp $
+#	$OpenBSD: GENERIC,v 1.33 2005/04/15 01:05:50 pascoe Exp $
 #
 # GENERIC machine description file
 #
@@ -148,7 +148,8 @@ com1	at pxaip?  addr 0x40200000 intr 21	# BlueTooth UART
 options FFUARTCONSOLE
 #options BTUARTCONSOLE
 
-#aupxa0	at pxaip?		# AC97 interface
+zaudio0	at pxaip?		# Zaurus I2S/I2C sound
+audio*	at zaudio?
 
 # CF (pcmcia) support
 pxapcic0	at pxaip?

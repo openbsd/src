@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.7 2005/03/08 23:29:06 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.8 2005/04/15 01:05:51 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -162,6 +162,29 @@ scoop_led_set(int led, int on)
 		if (scoop_cd.cd_ndevs > 1 && (led & SCOOP_LED_ORANGE) != 0)
 			scoop_gpio_pin_write(scoop_cd.cd_devs[0],
 			    SCOOP0_LED_ORANGE_C3000, on);
+	}
+}
+
+void
+scoop_audio_set(int on)
+{
+	if (scoop_cd.cd_ndevs < 1 || scoop_cd.cd_devs[0] == NULL)
+		return;
+
+	if (on) {
+		scoop_gpio_pin_ctl(scoop_cd.cd_devs[0], SCOOP0_MUTE_L,
+		    GPIO_PIN_OUTPUT);
+		scoop_gpio_pin_ctl(scoop_cd.cd_devs[0], SCOOP0_MUTE_R,
+		    GPIO_PIN_OUTPUT);
+		scoop_gpio_pin_write(scoop_cd.cd_devs[0], SCOOP0_MUTE_L,
+		    GPIO_PIN_LOW);
+		scoop_gpio_pin_write(scoop_cd.cd_devs[0], SCOOP0_MUTE_R,
+		    GPIO_PIN_LOW);
+	} else {
+		scoop_gpio_pin_write(scoop_cd.cd_devs[0], SCOOP0_MUTE_L,
+		    GPIO_PIN_HIGH);
+		scoop_gpio_pin_write(scoop_cd.cd_devs[0], SCOOP0_MUTE_R,
+		    GPIO_PIN_HIGH);
 	}
 }
 
