@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.90 2005/04/14 20:09:33 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.91 2005/04/15 07:45:14 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -53,6 +53,8 @@ Briefly, creating a VPN consists of the following steps:
 .It
 Choose a key exchange method: manual or automated.
 .It
+Enable packet forwarding.
+.It
 For manual keying, generate the keys.
 .It
 For manual keying, create the Security Associations (SA), one for
@@ -73,7 +75,7 @@ There are currently two key exchange methods available:
 manual keying:
 .Xr ipsecadm 8
 .It
-automatic keying:
+automated keying:
 .Xr isakmpd 8
 .El
 .Ss Enabling Packet Forwarding
