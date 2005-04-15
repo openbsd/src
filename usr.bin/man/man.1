@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.21 2004/02/23 14:14:14 jmc Exp $
+.\"	$OpenBSD: man.1,v 1.22 2005/04/15 23:35:01 jmc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -232,6 +232,13 @@ If only a single argument is specified, or if the first argument is
 not a valid section,
 .Nm
 assumes that the argument is the name of a manual page to be displayed.
+.Pp
+Guidelines for
+.Ox
+man pages can be found in
+.Xr mdoc 7 .
+A full tutorial for writing man pages is provided in
+.Xr mdoc.samples 7 .
 .Sh ENVIRONMENT
 .Bl -tag -width MANPATHX
 .It Ev MACHINE
@@ -288,6 +295,8 @@ default man configuration file
 .Xr man.conf 5 ,
 .Xr intro 6 ,
 .Xr intro 7 ,
+.Xr mdoc 7 ,
+.Xr mdoc.samples 7 ,
 .Xr intro 8 ,
 .Xr intro 9
 .Sh HISTORY
