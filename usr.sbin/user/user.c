@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.62 2005/04/13 03:46:28 deraadt Exp $ */
+/* $OpenBSD: user.c,v 1.63 2005/04/15 16:27:31 moritz Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -1114,7 +1114,7 @@ adduser(char *login_name, user_t *up)
 	}
 	if (yp) {
 		cc = snprintf(buf, sizeof(buf), "+:*::::::::\n");
-		if (cc == -1 || cc > sizeof(buf)) {
+		if (cc == -1 || cc >= sizeof(buf)) {
 			(void) close(ptmpfd);
 			pw_abort();
 			errx(EXIT_FAILURE, "can't add `%s', line too long", buf);
