@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.1 2005/02/16 15:41:15 jfb Exp $	*/
+/*	$OpenBSD: repo.c,v 1.2 2005/04/15 08:23:17 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -366,7 +366,8 @@ cvs_repo_find(CVSREPO *repo, const char *path)
 	CVSRPENT *sf, *cf;
 
 	if ((len = strlcpy(pbuf, path, sizeof(pbuf))) >= sizeof(pbuf)) {
-		cvs_log(LP_ERR, "path %s too long", path);
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", path);
 		return (NULL);
 	}
 
@@ -378,8 +379,8 @@ cvs_repo_find(CVSREPO *repo, const char *path)
 	pp = pbuf;
 	do {
 		if (cf->cr_type != CVS_RPENT_DIR) {
-			cvs_log(LP_ERR,
-			    "part of the path %s is not a directory", path);
+			errno = ENOTDIR;
+			cvs_log(LP_ERRNO, "%s", path);
 			return (NULL);
 		}
 		sp = strchr(pp, '/');
