@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.23 2005/04/12 14:58:40 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.24 2005/04/15 14:34:15 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -162,7 +162,7 @@ cvs_commit_prepare(CVSFILE *cf, void *arg)
 int
 cvs_commit_file(CVSFILE *cf, void *arg)
 {
-	int ret;
+	int ret, l;
 	char *repo, rcspath[MAXPATHLEN], fpath[MAXPATHLEN];
 	RCSFILE *rf;
 	struct cvsroot *root;
@@ -212,8 +212,13 @@ cvs_commit_file(CVSFILE *cf, void *arg)
 		}
 	}
 
-	snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
+	l = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
 	    root->cr_dir, repo, fpath, RCS_FILE_EXT);
+	if (l == -1 || l >= (int)sizeof(rcspath)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", rcspath);
+		return (-1);
+	}
 
 	cvs_ent_free(entp);
 

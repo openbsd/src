@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.25 2005/02/22 16:09:28 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.26 2005/04/15 14:34:15 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -27,11 +27,12 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 
-#include <stdio.h>
+#include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "log.h"
 #include "cvs.h"
@@ -52,7 +53,7 @@ CVSENTRIES*
 cvs_ent_open(const char *dir, int flags)
 {
 	size_t len;
-	int exists;
+	int exists, l;
 	char entpath[MAXPATHLEN], ebuf[128], mode[4];
 	FILE *fp;
 	struct stat st;
@@ -62,7 +63,12 @@ cvs_ent_open(const char *dir, int flags)
 	exists = 0;
 	memset(mode, 0, sizeof(mode));
 
-	snprintf(entpath, sizeof(entpath), "%s/" CVS_PATH_ENTRIES, dir);
+	l = snprintf(entpath, sizeof(entpath), "%s/" CVS_PATH_ENTRIES, dir);
+	if (l == -1 || l >= (int)sizeof(entpath)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", entpath);
+		return (NULL);
+	}
 
 	switch (flags & O_ACCMODE) {
 	case O_WRONLY:
