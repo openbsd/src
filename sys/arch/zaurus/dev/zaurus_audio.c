@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_audio.c,v 1.1 2005/04/15 01:05:51 pascoe Exp $	*/
+/*	$OpenBSD: zaurus_audio.c,v 1.2 2005/04/15 01:17:26 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -14,6 +14,15 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * TODO:
+ *	- zaudio(4)
+ *	- powerhooks (currently only works until first suspend)
+ *	- headphone jack support
+ *	- record support
+ *	- mixer support (codec has independent o/p volume, l/r mix, equalizer)
  */
 
 #include <sys/param.h>
