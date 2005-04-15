@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.36 2003/08/29 00:04:41 jolan Exp $
+#	$OpenBSD: bsd.README,v 1.37 2005/04/15 17:18:57 espie Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -382,10 +382,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 			LIBY		/usr/lib/liby.a
 			LIBZ		/usr/lib/libz.a
 			LIBARCH		arch-dependent stuff
-
-SHAREDSTRINGS	If defined, a new .c.o rule is used that results in shared
-		strings, using xstr(1). Note that this will not work with
-		parallel makes.
 
 STRIP		The flag passed to the install program to cause the binary
 		to be stripped.

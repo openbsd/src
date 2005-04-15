@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.prog.mk,v 1.43 2004/12/23 23:58:36 espie Exp $
+#	$OpenBSD: bsd.prog.mk,v 1.44 2005/04/15 17:18:57 espie Exp $
 #	$NetBSD: bsd.prog.mk,v 1.55 1996/04/08 21:19:26 jtc Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
@@ -76,33 +76,6 @@ LIBMP?=		${DESTDIR}/usr/lib/libmp.a
 LIBPC?=		${DESTDIR}/usr/lib/libpc.a
 LIBPLOT?=	${DESTDIR}/usr/lib/libplot.a
 LIBRESOLV?=	${DESTDIR}/usr/lib/libresolv.a
-
-.if defined(SHAREDSTRINGS)
-CLEANFILES+=strings
-.c.o:
-	${CC} -E ${CFLAGS} ${.IMPSRC} | xstr -c -
-	@${CC} ${CFLAGS} -c x.c -o ${.TARGET}
-	@rm -f x.c
-
-.cc.o:
-	${CXX} -E ${CXXFLAGS} ${.IMPSRC} | xstr -c -
-	@mv -f x.c x.cc
-	@${CXX} ${CXXFLAGS} -c x.cc -o ${.TARGET}
-	@rm -f x.cc
-
-.C.o:
-	${CXX} -E ${CXXFLAGS} ${.IMPSRC} | xstr -c -
-	@mv -f x.c x.C
-	@${CXX} ${CXXFLAGS} -c x.C -o ${.TARGET}
-	@rm -f x.C
-
-.cxx.o:
-	${CXX} -E ${CXXFLAGS} ${.IMPSRC} | xstr -c -
-	@mv -f x.c x.cxx
-	@${CXX} ${CXXFLAGS} -c x.cxx -o ${.TARGET}
-	@rm -f x.cxx
-.endif
-
 
 .if defined(PROG)
 SRCS?=	${PROG}.c
