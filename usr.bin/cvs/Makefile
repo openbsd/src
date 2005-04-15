@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2005/04/15 15:47:06 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2005/04/15 16:15:34 deraadt Exp $
 
 PROG=	cvs
 MAN=	cvs.1 cvsrc.5 cvsintro.7
@@ -8,7 +8,6 @@ SRCS=	cvs.c add.c admin.c annotate.c buf.c checkout.c cmd.c commit.c date.y \
 	log.c logmsg.c proto.c rcs.c rcsnum.c remove.c req.c resp.c root.c \
 	server.c status.c strtab.c tag.c update.c util.c version.c
 
-BINDIR=	/usr/bin
 BINOWN=	root
 
 #BINGRP=_cvsd

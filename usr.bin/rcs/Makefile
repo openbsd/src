@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2005/04/15 15:46:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2005/04/15 16:15:34 deraadt Exp $
 
 .PATH:	${.CURDIR}/../cvs
 
@@ -7,8 +7,6 @@ MAN=	rcs.1
 
 SRCS=	rcsprog.c buf.c log.c rcs.c rcsnum.c strtab.c
 CFLAGS+=-I${.CURDIR}/../cvs
-
-BINDIR=	/usr/bin
 
 # Don't build the links until we actually support those commands
 #LINKS=	${BINDIR}/ci ${BINDIR}/co ${BINDIR}/rcsclean ${BINDIR}/rcsdiff
