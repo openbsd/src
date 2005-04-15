@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.17 2004/10/13 22:49:24 miod Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.18 2005/04/15 03:03:21 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -148,6 +148,7 @@
 
 #define RL_HWREV_8169		0x00000000
 #define RL_HWREV_8169S		0x04000000
+#define RL_HWREV_8169SB		0x10000000
 #define RL_HWREV_8110S		0x00800000
 #define RL_HWREV_8139		0x60000000
 #define RL_HWREV_8139A		0x70000000
@@ -774,11 +775,6 @@ struct rl_softc {
 #define RL_PSTATE_D3		0x0003
 #define RL_PME_EN		0x0010
 #define RL_PME_STATUS		0x8000
-
-#ifdef __alpha__
-#undef vtophys
-#define vtophys(va)	alpha_XXX_dmamap((vm_offset_t)va)
-#endif
 
 extern int rl_attach(struct rl_softc *);
 extern int rl_detach(struct rl_softc *);
