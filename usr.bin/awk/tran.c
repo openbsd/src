@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.12 2004/12/30 02:06:00 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.13 2005/04/15 15:54:26 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -362,7 +362,7 @@ Awkfloat getfval(Cell *vp)	/* get float val of a Cell */
 
 static char *get_str_val(Cell *vp, char **fmt)        /* get string val of a Cell */
 {
-	char s[100];	/* BUG: unchecked */
+	int n;
 	double dtemp;
 
 	if ((vp->tval & (NUM | STR)) == 0)
@@ -375,10 +375,11 @@ static char *get_str_val(Cell *vp, char **fmt)        /* get string val of a Cel
 		if (freeable(vp))
 			xfree(vp->sval);
 		if (modf(vp->fval, &dtemp) == 0)	/* it's integral */
-			snprintf(s, sizeof(s), "%.30g", vp->fval);
+			n = asprintf(&vp->sval, "%.30g", vp->fval);
 		else
-			snprintf(s, sizeof(s), *fmt, vp->fval);
-		vp->sval = tostring(s);
+			n = asprintf(&vp->sval, *fmt, vp->fval);
+		if (n == -1)
+			FATAL("out of space in get_str_val");
 		vp->tval &= ~DONTFREE;
 		vp->tval |= STR;
 	}
