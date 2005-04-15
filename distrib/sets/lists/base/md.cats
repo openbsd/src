@@ -66,7 +66,7 @@
 ./usr/lib/gcc-lib/arm-unknown-openbsd3.7/3.3.5/f771
 ./usr/lib/gcc-lib/arm-unknown-openbsd3.7/3.3.5/specs
 ./usr/lib/libasn1.so.15.0
-./usr/lib/libc.so.35.0
+./usr/lib/libc.so.35.1
 ./usr/lib/libcom_err.so.15.0
 ./usr/lib/libcrypto.so.11.0
 ./usr/lib/libcurses++.so.3.0
@@ -95,7 +95,7 @@
 ./usr/lib/libsectok.so.6.0
 ./usr/lib/libskey.so.5.1
 ./usr/lib/libssl.so.9.0
-./usr/lib/libstdc++.so.36.0
+./usr/lib/libstdc++.so.37.0
 ./usr/lib/libtermcap.so.10.0
 ./usr/lib/libtermlib.so.10.0
 ./usr/lib/libusbhid.so.3.0
@@ -2253,6 +2253,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/uvm/uvm_vnode.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/vis.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/wchar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/wctype.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/xfs
 ./usr/libdata/perl5/site_perl/arm-openbsd/xfs/afssysdefs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/xfs/nxfs.ph

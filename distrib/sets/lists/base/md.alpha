@@ -63,7 +63,7 @@
 ./usr/lib/gcc-lib/alpha-unknown-openbsd3.7/2.95.3/include
 ./usr/lib/gcc-lib/alpha-unknown-openbsd3.7/2.95.3/specs
 ./usr/lib/libasn1.so.15.0
-./usr/lib/libc.so.35.0
+./usr/lib/libc.so.35.1
 ./usr/lib/libcom_err.so.15.0
 ./usr/lib/libcrypto.so.11.0
 ./usr/lib/libcurses++.so.3.0
@@ -2191,6 +2191,8 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/uvm/uvm_vnode.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/vis.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/wchar.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/wctype.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/xfs
 ./usr/libdata/perl5/site_perl/alpha-openbsd/xfs/afssysdefs.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/xfs/nxfs.ph

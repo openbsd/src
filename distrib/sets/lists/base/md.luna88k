@@ -2116,6 +2116,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_vnode.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/vis.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/wchar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/wctype.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/xfs
 ./usr/libdata/perl5/site_perl/m88k-openbsd/xfs/afssysdefs.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/xfs/nxfs.ph

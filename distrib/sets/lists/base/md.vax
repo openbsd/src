@@ -1589,6 +1589,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/vmparam.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vax/vsbus.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/vis.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/wchar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/wctype.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/xfs
 ./usr/libdata/perl5/site_perl/vax-openbsd/xfs/afssysdefs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/xfs/nxfs.ph
