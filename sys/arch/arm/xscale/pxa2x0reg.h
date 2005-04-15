@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.20 2005/04/14 23:40:34 pascoe Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.21 2005/04/15 00:06:21 pascoe Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -230,7 +230,14 @@ struct pxa2x0_dma_desc {
 #define  ICR_ACKNAK	(1<<2)
 #define  ICR_TB  	(1<<3)
 #define  ICR_MA  	(1<<4)
+#define  ICR_SCLE	(1<<5)		/* PXA270? */
+#define  ICR_IUE	(1<<6)		/* PXA270? */
+#define  ICR_UR		(1<<14)		/* PXA270? */
+#define  ICR_FM		(1<<15)		/* PXA270? */
 #define I2C_ISR  	0x1698		/* Status register */
+#define  ISR_ACKNAK	(1<<1)
+#define  ISR_ITE	(1<<6)
+#define  ISR_IRF	(1<<7)
 #define I2C_ISAR	0x16a0		/* Slave address */
 
 /* Power Manager */
