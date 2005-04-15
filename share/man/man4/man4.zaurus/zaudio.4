@@ -1,0 +1,64 @@
+.\" $OpenBSD: zaudio.4,v 1.1 2005/04/15 06:54:06 dlg Exp $
+.\"
+.\" Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd April 15, 2005
+.Dt ZAUDIO 4 zaurus
+.Os
+.Sh NAME
+.Nm zaudio
+.Nd Zaurus sound driver
+.Sh SYNOPSIS
+.Cd "zaudio0 at pxaip?"
+.Cd "audio* at zaudio?"
+.Sh DESCRIPTION
+The
+.Nm
+driver interfaces the sound hardware found on the Zaurus with the
+.Xr audio 4
+framework.
+Sound support on the Zaurus is provided by the Inter-IC Sound (I2S)
+Controller which is used to transfer samples to a Wolfson Microelectronics
+WM8750 audio codec.
+The WM8750 is controlled via the PXA2x0 I2C Controller.
+.Pp
+The hardware is capable of playback of 8- and 16-bit audio samples at rates
+ranging from 8kHz to 48kHz.
+.Sh SEE ALSO
+.Xr audio 4 ,
+.Xr intro 4 ,
+.Xr pxaip 4
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Ox 3.8 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Christopher Pascoe Aq pascoe@openbsd.org .
+.Sh CAVEATS
+Recording and volume control is unimplemented in the
+.Nm
+driver.
+.Pp
+Only the internal speaker is used during playback;
+the headphone socket is currently unsupported.
+.Pp
+The
+.Nm
+driver only supports the hardware found on the Zaurus C3000, though support
+for the C860 is planned for the future.
