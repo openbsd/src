@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.21 2005/04/15 00:06:21 pascoe Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.22 2005/04/15 00:09:06 pascoe Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -676,8 +676,8 @@ struct pxa2x0_dma_desc {
 #define  SADIV_2_836MHz		0x0d	/* 2.836 MHz */
 #define  SADIV_1_405MHz		0x1a	/* 1.405 MHz */
 #define  SADIV_1_026MHz		0x24	/* 1.026 MHz */
-#define  SADIV_702_75KHz	0x34	/* 702.75 kHz */
-#define  SADIV_513_25KHz	0x48	/* 513.25 kHz */
+#define  SADIV_702_75kHz	0x34	/* 702.75 kHz */
+#define  SADIV_513_25kHz	0x48	/* 513.25 kHz */
 #define I2S_SADR	0x0080	/* Serial Audio Data Register */
 #define  SADR_DTL		(0xffff<<0) /* Left Data Sample */
 #define  SADR_DTH		(0xffff<<16) /* Right Data Sample */
