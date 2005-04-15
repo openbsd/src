@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.26 2005/04/15 07:41:20 xsa Exp $	*/
+/*	$OpenBSD: resp.c,v 1.27 2005/04/15 13:14:00 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -538,7 +538,7 @@ cvs_resp_copyfile(struct cvsroot *root, int type, char *line)
 	}
 
 	if (rename(path, newpath) == -1) {
-		cvs_log(LP_ERRNO, "failed to rename %s to %s", line, newname);
+		cvs_log(LP_ERRNO, "failed to rename %s to %s", path, newpath);
 		return (-1);
 	}
 
