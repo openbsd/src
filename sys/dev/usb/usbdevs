@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.150 2005/04/13 12:24:11 damien Exp $
+$OpenBSD: usbdevs,v 1.151 2005/04/15 13:44:40 jakob Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -392,6 +392,7 @@ vendor ACERCM		0x1189	Acer Communications & Multimedia
 vendor TSUNAMI		0x1241	Tsunami
 vendor PHEENET		0x124a	Pheenet
 vendor BELKIN2		0x1293	Belkin Components
+vendor ARANEUS		0x12d8	Araneus Information Systems
 vendor AINCOMM		0x12fd	Aincomm
 vendor MOBILITY		0x1342	Mobility
 vendor DICKSMITH	0x1371	Dick Smith Electronics
@@ -574,6 +575,9 @@ product AOX USB101		0x0008	Ethernet
 /* Apple Computer products */
 product APPLE OPTMOUSE		0x0302	Optical mouse
 product APPLE SPEAKERS		0x1101	Speakers
+
+/* Araneus Information Systems products */
+product ARANEUS ALEA		0x0001	True Random Number Generator
 
 /* Asahi Optical products */
 product ASAHIOPTICAL OPTIO230	0x0004	PENTAX Optio230
