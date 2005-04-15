@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.855 2005/04/15 19:31:36 mickey Exp $
+$OpenBSD: pcidevs,v 1.856 2005/04/15 22:49:06 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -232,14 +232,14 @@ vendor	DELTA		0x1500	Delta
 vendor	MYSON		0x1516	Myson Century
 vendor	TOPIC		0x151f	Topic/SmartLink
 vendor	ENE		0x1524	ENE
-vendor	ARALION		0x1538	Aralion Inc.
-vendor	TERRATEC	0x153b	TerraTec Electronic Gmbh
+vendor	ARALION		0x1538	Aralion
+vendor	TERRATEC	0x153b	TerraTec
 vendor	SYMBOL		0x1562	Symbol
 vendor	SYBA		0x1592	Syba
 vendor	BLUESTEEL	0x15ab	Bluesteel Networks
 vendor	VMWARE		0x15ad	VMware
 vendor	NDC		0x15e8	National Datacomm Corp
-vendor	ZOLTRIX		0x15b0	Zoltrix Intl Ltd.
+vendor	ZOLTRIX		0x15b0	Zoltrix
 vendor	EUMITCOM	0x1638	Eumitcom
 vendor	NETSEC		0x1660	NetSec
 vendor	SAMSUNG		0x167d	Samsung
@@ -292,7 +292,7 @@ product O2MICRO OZ6872		0x6872	OZ68[17]2 CardBus
 product O2MICRO OZ6922		0x6925	OZ6922 CardBus
 product O2MICRO OZ6933		0x6933	OZ6933 CardBus
 product O2MICRO OZ6972		0x6972	OZ69[17]2 CardBus
-product O2MICRO OZ7110		0x7110	OZ711Mx CardBus Accelerator
+product O2MICRO OZ7110		0x7110	OZ711Mx CardBus
 product O2MICRO OZ7114		0x7114	OZ711M1 CardBus
 product O2MICRO OZ7223		0x7223	OZ711E0 CardBus
 
@@ -433,7 +433,7 @@ product ALI M1543		0x1543	M1543 ISA
 product ALI M1541		0x1541	M1541 PCI
 product ALI M1621		0x1621	M1621 PCI
 product ALI M1647		0x1647	M1647 PCI
-product ALI M3309		0x3309	M3309 MPEG Accelerator
+product ALI M3309		0x3309	M3309 MPEG
 product ALI M4803		0x5215	M4803
 product ALI M5219		0x5219	M5219 UDMA IDE
 product ALI M5229		0x5229	M5229 UDMA IDE
@@ -637,7 +637,7 @@ product APPLE INTREPID_ATA	0x003b	Intrepid ATA
 product APPLE INTREPID		0x003e	Intrepid
 product APPLE INTREPID_OHCI	0x003f	Intrepid USB
 
-/* Aralion Inc. products */
+/* Aralion products */
 product ARALION ARS106S		0x0301	ARS106S
 product ARALION ARS0303D	0x0303	ARS0303D
 
@@ -1165,7 +1165,7 @@ product ESSTECH ES1989		0x1988	ES1989
 product ESSTECH ES1989M		0x1989	ES1989 Modem
 product ESSTECH MAESTRO3	0x1998	Maestro 3
 product ESSTECH ES1983		0x1999	ES1983 Modem
-product ESSTECH MAESTRO3_2	0x199a	Maestro 3 Audio Accelerator
+product ESSTECH MAESTRO3_2	0x199a	Maestro 3 Audio
 product ESSTECH	ES336H_N	0x2808	ES366H Fax/Modem
 product ESSTECH SUPERLINK	0x2838	ES2838/2839 SuperLink Modem
 product ESSTECH 2898		0x2898	ES2898 Modem
@@ -2488,8 +2488,8 @@ product SYMPHONY2 82C101	0x0001	82C101
 product SYMPHONY 82C565		0x0565	82C565 ISA
 
 /* Tamarack Microelectronics */
-product TAMARACK TC9021		0x1021	Tamarack TC9021 GigE
-product TAMARACK TC9021_ALT	0x9021	Tamarack TC9021 GigE (alt ID)
+product TAMARACK TC9021		0x1021	TC9021 GigE
+product TAMARACK TC9021_ALT	0x9021	TC9021 GigE (alt ID)
 
 /* Tekram Technology products (1st ID)*/
 product TEKRAM 	DC290		0xdc29	DC-290(M)
@@ -2881,7 +2881,7 @@ product ZEINET 1221		0x0001	1221
 /* Ziatech products */
 product ZIATECH ZT8905		0x8905 PCI-ST32
 
-/* Zoltrix Intl Ltd. products */
+/* Zoltrix products */
 product ZOLTRIX GENIE_TV_FM	0x400d Genie TV/FM
 
 /* Zoran products */
