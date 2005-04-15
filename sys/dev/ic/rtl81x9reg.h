@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.18 2005/04/15 03:03:21 brad Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.19 2005/04/15 03:13:03 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -576,6 +576,10 @@ struct rl_stats {
 
 #define RL_ADDR_LO(y)	((u_int64_t) (y) & 0xFFFFFFFF)
 #define RL_ADDR_HI(y)	((u_int64_t) (y) >> 32)
+
+/* see comment in dev/ic/re.c */
+#define RL_JUMBO_FRAMELEN	7440
+#define RL_JUMBO_MTU		(RL_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
 
 #define	MAX_NUM_MULTICAST_ADDRESSES	128
 
