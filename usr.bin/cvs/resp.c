@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.25 2005/04/14 03:02:35 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.26 2005/04/15 07:41:20 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -463,9 +463,7 @@ cvs_resp_newentry(struct cvsroot *root, int type, char *line)
 		ent->ce_mtime = time(&(ent->ce_mtime));
 
 		/* replace the current entry with the one we just received */
-		if (cvs_ent_remove(entfile, ent->ce_name) < 0)
-			cvs_log(LP_WARN, "failed to remove `%s' entry",
-			    ent->ce_name);
+		(void)cvs_ent_remove(entfile, ent->ce_name);
 
 		cvs_ent_add(entfile, ent);
 	}
