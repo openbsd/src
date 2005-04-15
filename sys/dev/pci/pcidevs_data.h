@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.855 2005/04/15 19:31:36 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.856 2005/04/15 22:49:06 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -64,7 +64,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ7110,
-	    "OZ711Mx CardBus Accelerator",
+	    "OZ711Mx CardBus",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ7114,
@@ -532,7 +532,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M3309,
-	    "M3309 MPEG Accelerator",
+	    "M3309 MPEG",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M4803,
@@ -2904,7 +2904,7 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3_2,
-	    "Maestro 3 Audio Accelerator",
+	    "Maestro 3 Audio",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_ES336H_N,
@@ -7292,11 +7292,11 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021,
-	    "Tamarack TC9021 GigE",
+	    "TC9021 GigE",
 	},
 	{
 	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021_ALT,
-	    "Tamarack TC9021 GigE (alt ID)",
+	    "TC9021 GigE (alt ID)",
 	},
 	{
 	    PCI_VENDOR_TEKRAM, PCI_PRODUCT_TEKRAM_DC290,
@@ -9388,11 +9388,11 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ARALION,
-	    "Aralion Inc.",
+	    "Aralion",
 	},
 	{
 	    PCI_VENDOR_TERRATEC,
-	    "TerraTec Electronic Gmbh",
+	    "TerraTec",
 	},
 	{
 	    PCI_VENDOR_SYMBOL,
@@ -9416,7 +9416,7 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	},
 	{
 	    PCI_VENDOR_ZOLTRIX,
-	    "Zoltrix Intl Ltd.",
+	    "Zoltrix",
 	},
 	{
 	    PCI_VENDOR_EUMITCOM,

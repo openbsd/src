@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.855 2005/04/15 19:31:36 mickey Exp 
+ *	OpenBSD: pcidevs,v 1.856 2005/04/15 22:49:06 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -237,14 +237,14 @@
 #define	PCI_VENDOR_MYSON	0x1516		/* Myson Century */
 #define	PCI_VENDOR_TOPIC	0x151f		/* Topic/SmartLink */
 #define	PCI_VENDOR_ENE	0x1524		/* ENE */
-#define	PCI_VENDOR_ARALION	0x1538		/* Aralion Inc. */
-#define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic Gmbh */
+#define	PCI_VENDOR_ARALION	0x1538		/* Aralion */
+#define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec */
 #define	PCI_VENDOR_SYMBOL	0x1562		/* Symbol */
 #define	PCI_VENDOR_SYBA	0x1592		/* Syba */
 #define	PCI_VENDOR_BLUESTEEL	0x15ab		/* Bluesteel Networks */
 #define	PCI_VENDOR_VMWARE	0x15ad		/* VMware */
 #define	PCI_VENDOR_NDC	0x15e8		/* National Datacomm Corp */
-#define	PCI_VENDOR_ZOLTRIX	0x15b0		/* Zoltrix Intl Ltd. */
+#define	PCI_VENDOR_ZOLTRIX	0x15b0		/* Zoltrix */
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_SAMSUNG	0x167d		/* Samsung */
@@ -297,7 +297,7 @@
 #define	PCI_PRODUCT_O2MICRO_OZ6922	0x6925		/* OZ6922 CardBus */
 #define	PCI_PRODUCT_O2MICRO_OZ6933	0x6933		/* OZ6933 CardBus */
 #define	PCI_PRODUCT_O2MICRO_OZ6972	0x6972		/* OZ69[17]2 CardBus */
-#define	PCI_PRODUCT_O2MICRO_OZ7110	0x7110		/* OZ711Mx CardBus Accelerator */
+#define	PCI_PRODUCT_O2MICRO_OZ7110	0x7110		/* OZ711Mx CardBus */
 #define	PCI_PRODUCT_O2MICRO_OZ7114	0x7114		/* OZ711M1 CardBus */
 #define	PCI_PRODUCT_O2MICRO_OZ7223	0x7223		/* OZ711E0 CardBus */
 
@@ -438,7 +438,7 @@
 #define	PCI_PRODUCT_ALI_M1541	0x1541		/* M1541 PCI */
 #define	PCI_PRODUCT_ALI_M1621	0x1621		/* M1621 PCI */
 #define	PCI_PRODUCT_ALI_M1647	0x1647		/* M1647 PCI */
-#define	PCI_PRODUCT_ALI_M3309	0x3309		/* M3309 MPEG Accelerator */
+#define	PCI_PRODUCT_ALI_M3309	0x3309		/* M3309 MPEG */
 #define	PCI_PRODUCT_ALI_M4803	0x5215		/* M4803 */
 #define	PCI_PRODUCT_ALI_M5219	0x5219		/* M5219 UDMA IDE */
 #define	PCI_PRODUCT_ALI_M5229	0x5229		/* M5229 UDMA IDE */
@@ -642,7 +642,7 @@
 #define	PCI_PRODUCT_APPLE_INTREPID	0x003e		/* Intrepid */
 #define	PCI_PRODUCT_APPLE_INTREPID_OHCI	0x003f		/* Intrepid USB */
 
-/* Aralion Inc. products */
+/* Aralion products */
 #define	PCI_PRODUCT_ARALION_ARS106S	0x0301		/* ARS106S */
 #define	PCI_PRODUCT_ARALION_ARS0303D	0x0303		/* ARS0303D */
 
@@ -1170,7 +1170,7 @@
 #define	PCI_PRODUCT_ESSTECH_ES1989M	0x1989		/* ES1989 Modem */
 #define	PCI_PRODUCT_ESSTECH_MAESTRO3	0x1998		/* Maestro 3 */
 #define	PCI_PRODUCT_ESSTECH_ES1983	0x1999		/* ES1983 Modem */
-#define	PCI_PRODUCT_ESSTECH_MAESTRO3_2	0x199a		/* Maestro 3 Audio Accelerator */
+#define	PCI_PRODUCT_ESSTECH_MAESTRO3_2	0x199a		/* Maestro 3 Audio */
 #define	PCI_PRODUCT_ESSTECH_ES336H_N	0x2808		/* ES366H Fax/Modem */
 #define	PCI_PRODUCT_ESSTECH_SUPERLINK	0x2838		/* ES2838/2839 SuperLink Modem */
 #define	PCI_PRODUCT_ESSTECH_2898	0x2898		/* ES2898 Modem */
@@ -2493,8 +2493,8 @@
 #define	PCI_PRODUCT_SYMPHONY_82C565	0x0565		/* 82C565 ISA */
 
 /* Tamarack Microelectronics */
-#define	PCI_PRODUCT_TAMARACK_TC9021	0x1021		/* Tamarack TC9021 GigE */
-#define	PCI_PRODUCT_TAMARACK_TC9021_ALT	0x9021		/* Tamarack TC9021 GigE (alt ID) */
+#define	PCI_PRODUCT_TAMARACK_TC9021	0x1021		/* TC9021 GigE */
+#define	PCI_PRODUCT_TAMARACK_TC9021_ALT	0x9021		/* TC9021 GigE (alt ID) */
 
 /* Tekram Technology products (1st ID)*/
 #define	PCI_PRODUCT_TEKRAM_DC290	0xdc29		/* DC-290(M) */
@@ -2886,7 +2886,7 @@
 /* Ziatech products */
 #define	PCI_PRODUCT_ZIATECH_ZT8905	0x8905		/* PCI-ST32 */
 
-/* Zoltrix Intl Ltd. products */
+/* Zoltrix products */
 #define	PCI_PRODUCT_ZOLTRIX_GENIE_TV_FM	0x400d		/* Genie TV/FM */
 
 /* Zoran products */
