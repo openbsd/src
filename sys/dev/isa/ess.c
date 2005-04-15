@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.9 2003/04/27 11:22:53 ho Exp $	*/
+/*	$OpenBSD: ess.c,v 1.10 2005/04/15 13:05:14 mickey Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -1661,7 +1661,7 @@ ess_round_blocksize(addr, blk)
 	void *addr;
 	int blk;
 {
-	return (blk & -8);	/* round for max DMA size */
+	return ((blk + 7) & -8);	/* round for max DMA size */
 }
 
 int

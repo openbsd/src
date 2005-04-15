@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.21 2004/09/29 07:35:11 miod Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.22 2005/04/15 13:05:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -753,7 +753,7 @@ cs4231_round_blocksize(addr, blk)
 	void *addr;
 	int blk;
 {
-	return (blk & (-4));
+	return ((blk + 3) & (-4));
 }
 
 int

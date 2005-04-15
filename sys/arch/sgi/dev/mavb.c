@@ -1,4 +1,4 @@
-/*	$OpenBSD: mavb.c,v 1.5 2005/01/24 20:44:37 kettenis Exp $	*/
+/*	$OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -495,7 +495,7 @@ int
 mavb_round_blocksize(void *hdl, int bs)
 {
 	/* Block size should be a multiple of 32.  */
-	return bs & ~0x1f;
+	return (bs + 0x1f) & ~0x1f;
 }
 
 int

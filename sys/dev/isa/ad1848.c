@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.30 2004/01/09 21:32:23 brad Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.31 2005/04/15 13:05:14 mickey Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -1156,7 +1156,7 @@ ad1848_round_blocksize(addr, blk)
     sc->sc_lastcc = -1;
 
     /* Round to a multiple of the biggest sample size. */
-    blk &= -4;
+    blk = (blk + 3) & -4;
 
     return (blk);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.24 2005/03/08 21:35:03 miod Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.25 2005/04/15 13:05:14 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -651,7 +651,7 @@ cs4231_set_params(void *vsc, int setmode, int usemode,
 int
 cs4231_round_blocksize(void *vsc, int blk)
 {
-	return (blk & (-4));
+	return ((blk + 3) & (-4));
 }
 
 int
