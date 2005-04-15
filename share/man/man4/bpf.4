@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.24 2005/01/08 00:23:05 jmc Exp $
+.\"	$OpenBSD: bpf.4,v 1.25 2005/04/15 18:15:30 jaredy Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@ etc.
 After opening the device, the file descriptor must be bound to a specific
 network interface with the
 .Dv BIOCSETIF
-ioctl.
+.Xr ioctl 2 .
 A given interface can be shared between multiple listeners, and the filter
 underlying each descriptor will see an identical packet stream.
 .Pp
@@ -73,7 +73,8 @@ the buffers used internally by
 .Nm bpf .
 This size is returned by the
 .Dv BIOCGBLEN
-ioctl (see below), and under BSD, can be set with
+.Xr ioctl 2
+and can be set with
 .Dv BIOCSBLEN .
 Note that an individual packet larger than this size is necessarily truncated.
 .Pp
@@ -98,9 +99,11 @@ The writes are unbuffered, meaning only one packet can be processed per write.
 Once a descriptor is configured, further changes to the configuration
 can be prevented using the
 .Dv BIOCLOCK
-ioctl.
-.Ss Ioctls
-The ioctl command codes below are defined in
+.Xr ioctl 2 .
+.Sh IOCTL INTERFACE
+The
+.Xr ioctl 2
+command codes below are defined in
 .Aq Pa net/bpf.h .
 All commands require these includes:
 .Bd -unfilled -offset indent
@@ -122,12 +125,14 @@ and
 The (third) argument to the
 .Xr ioctl 2
 call should be a pointer to the type indicated.
-.Bl -tag -width Ds
-.It Dv BIOCGBLEN ( Li int )
+.Pp
+.Bl -tag -width Ds -compact
+.It Dv BIOCGBLEN Fa "u_int *"
 Returns the required buffer length for reads on
 .Nm
 files.
-.It Dv BIOCSBLEN ( Li u_int )
+.Pp
+.It Dv BIOCSBLEN Fa "u_int *"
 Sets the buffer length for reads on
 .Nm
 files.
@@ -138,7 +143,8 @@ size will be set and returned in the argument.
 A read call will result in
 .Er EIO
 if it is passed a buffer that is not this size.
-.It Dv BIOCGDLT ( Li u_int )
+.Pp
+.It Dv BIOCGDLT Fa "u_int *"
 Returns the type of the data link layer underlying the attached interface.
 .Er EINVAL
 is returned if no interface has been specified.
@@ -146,7 +152,8 @@ The device types, prefixed with
 .Dq DLT_ ,
 are defined in
 .Aq Pa net/bpf.h .
-.It Dv BIOCGDLTLIST (struct bpf_dltlist)
+.Pp
+.It Dv BIOCGDLTLIST Fa "struct bpf_dltlist *"
 Returns an array of the available types of the data link layer
 underlying the attached interface:
 .Bd -literal -offset indent
@@ -180,11 +187,13 @@ the
 .Va bfl_len
 field is set to indicate the required length of the array in
 .Vt u_int .
-.It Dv BIOCSDLT (u_int)
+.Pp
+.It Dv BIOCSDLT Fa "u_int *"
 Changes the type of the data link layer underlying the attached interface.
 .Er EINVAL
 is returned if no interface has been specified or the specified
 type is not available for the interface.
+.Pp
 .It Dv BIOCPROMISC
 Forces the interface into promiscuous mode.
 All packets, not just those destined for the local host, are processed.
@@ -194,10 +203,12 @@ This problem can be remedied with an appropriate filter.
 .Pp
 The interface remains in promiscuous mode until all files listening
 promiscuously are closed.
+.Pp
 .It Dv BIOCFLUSH
 Flushes the buffer of incoming packets and resets the statistics that are
 returned by
 .Dv BIOCGSTATS .
+.Pp
 .It Dv BIOCLOCK
 This ioctl is designed to prevent the security issues associated
 with an open
@@ -247,14 +258,16 @@ If the application does not need to send packets through
 it can open the device read-only to prevent writing.
 If sending packets is necessary, a write-filter can be set before locking the
 descriptor to prevent arbitrary packets from being sent out.
-.It Dv BIOCGETIF ( Li "struct ifreq" )
+.Pp
+.It Dv BIOCGETIF Fa "struct ifreq *"
 Returns the name of the hardware interface that the file is listening on.
 The name is returned in the
 .Fa ifr_name
 field of the
 .Li struct ifreq .
 All other fields are undefined.
-.It Dv BIOCSETIF ( Li "struct ifreq" )
+.Pp
+.It Dv BIOCSETIF Fa "struct ifreq *"
 Sets the hardware interface associated with the file.
 This command must be performed before any packets can be read.
 The device is indicated by name using the
@@ -263,7 +276,9 @@ field of the
 .Li struct ifreq .
 Additionally, performs the actions of
 .Dv BIOCFLUSH .
-.It Dv BIOCSRTIMEOUT , BIOCGRTIMEOUT ( Li "struct timeval" )
+.Pp
+.It Dv BIOCSRTIMEOUT Fa "struct timeval *"
+.It Dv BIOCGRTIMEOUT Fa "struct timeval *"
 Set or get the read timeout parameter.
 The
 .Ar timeval
@@ -271,7 +286,8 @@ specifies the length of time to wait before timing out on a read request.
 This parameter is initialized to zero by
 .Xr open 2 ,
 indicating no timeout.
-.It Dv BIOCGSTATS ( Li "struct bpf_stat" )
+.Pp
+.It Dv BIOCGSTATS Fa "struct bpf_stat *"
 Returns the following structure of packet statistics:
 .Bd -literal -offset indent
 struct bpf_stat {
@@ -290,7 +306,8 @@ Number of packets which were accepted by the filter but dropped by the kernel
 because of buffer overflows (i.e., the application's reads aren't keeping up
 with the packet traffic).
 .El
-.It Dv BIOCIMMEDIATE ( Li u_int )
+.Pp
+.It Dv BIOCIMMEDIATE Fa "u_int *"
 Enable or disable
 .Dq immediate mode ,
 based on the truth value of the argument.
@@ -301,7 +318,8 @@ This is useful for programs like
 .Xr rarpd 8 ,
 which must respond to messages in real time.
 The default for a new file is off.
-.It Dv BIOCSETF ( Li "struct bpf_program" )
+.Pp
+.It Dv BIOCSETF Fa "struct bpf_program *"
 Sets the filter program used by the kernel to discard uninteresting packets.
 An array of instructions and its length are passed in using the following
 structure:
@@ -326,7 +344,8 @@ are performed.
 See section
 .Sx FILTER MACHINE
 for an explanation of the filter language.
-.It Dv BIOCSETWF ( Li "struct bpf_program" )
+.Pp
+.It Dv BIOCSETWF Fa "struct bpf_program *"
 Sets the filter program used by the kernel to filter the packets
 written to the descriptor before the packets are sent out on the
 network.
@@ -341,7 +360,8 @@ If the
 .Dq header complete
 flag is not set, the kernel sets the link-layer source address
 of the packet after filtering.
-.It Dv BIOCVERSION ( Li "struct bpf_version" )
+.Pp
+.It Dv BIOCVERSION Fa "struct bpf_version *"
 Returns the major and minor version numbers of the filter language currently
 recognized by the kernel.
 Before installing a filter, applications must check that the current version
@@ -366,19 +386,33 @@ An incompatible filter may result in undefined behavior (most likely, an
 error returned by
 .Xr ioctl 2
 or haphazard packet matching).
-.It Dv BIOCSRSIG , BIOCGRSIG ( Li u_int )
+.Pp
+.It Dv BIOCSRSIG Fa "u_int *"
+.It Dv BIOCGRSIG Fa "u_int *"
 Set or get the receive signal.
 This signal will be sent to the process or process group specified by
 .Dv FIOSETOWN .
 It defaults to
 .Dv SIGIO .
-.It Dv BIOCSHDRCMPLT , BIOCGHDRCMPLT ( Li u_int )
-Set or get the status of the ``header complete'' flag.
+.Pp
+.It Dv BIOCSHDRCMPLT Fa "u_int *"
+.It Dv BIOCGHDRCMPLT Fa "u_int *"
+Set or get the status of the
+.Dq header complete
+flag.
 Set to zero if the link level source address should be filled in
 automatically by the interface output routine.
 Set to one if the link level source address will be written,
 as provided, to the wire.
 This flag is initialized to zero by default.
+.Pp
+.It Dv BIOCGFILDROP Fa "u_int *"
+.It Dv BIOCSFILDROP Fa "u_int *"
+Get or set the status of the
+.Dq filter drop
+flag.
+If non-zero, packets matching any filters will be reported to the
+associated interface so that they can be dropped.
 .El
 .Ss Standard ioctls
 .Nm
@@ -386,12 +420,15 @@ now supports several standard ioctls which allow the user to do asynchronous
 and/or non-blocking I/O to an open
 .Nm
 file descriptor.
-.Bl -tag -width Ds
-.It Dv FIONREAD ( Li int )
+.Pp
+.Bl -tag -width Ds -compact
+.It Dv FIONREAD Fa "int *"
 Returns the number of bytes that are immediately available for reading.
-.It Dv SIOCGIFADDR ( Li "struct ifreq" )
+.Pp
+.It Dv SIOCGIFADDR Fa "struct ifreq *"
 Returns the address associated with the interface.
-.It Dv FIONBIO ( Li int )
+.Pp
+.It Dv FIONBIO Fa "int *"
 Set or clear non-blocking I/O.
 If the argument is non-zero, enable non-blocking I/O.
 If the argument is zero, disable non-blocking I/O.
@@ -405,7 +442,8 @@ to
 if no data is available.
 Note: setting this overrides the timeout set by
 .Dv BIOCSRTIMEOUT .
-.It Dv FIOASYNC ( Li int )
+.Pp
+.It Dv FIOASYNC Fa "int *"
 Enable or disable asynchronous I/O.
 When enabled (argument is non-zero), the process or process group specified
 by
@@ -419,7 +457,9 @@ command in order for this to take effect, as the system will not do it by
 default.
 The signal may be changed via
 .Dv BIOCSRSIG .
-.It Dv FIOSETOWN , FIOGETOWN ( Li int )
+.Pp
+.It Dv FIOSETOWN Fa "int *"
+.It Dv FIOGETOWN Fa "int *"
 Set or get the process or process group (if negative) that should receive
 .Dv SIGIO
 when packets are available.
@@ -918,7 +958,8 @@ interface provides the following macros to facilitate array initializers:
 .Sh FILES
 .Bl -tag -width /dev/bpf[0-9] -compact
 .It Pa /dev/bpf[0-9]
-BPF devices
+.Nm
+devices
 .El
 .Sh EXAMPLES
 The following filter is taken from the Reverse ARP daemon.
@@ -985,7 +1026,7 @@ struct bpf_insn insns[] = {
 .Xr tcpdump 8
 .Rs
 .%A McCanne, S.
-.%A Jacobson V.
+.%A Jacobson, V.
 .%J "An efficient, extensible, and portable network monitor"
 .Re
 .Sh HISTORY
