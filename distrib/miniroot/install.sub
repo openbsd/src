@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.381 2005/04/13 03:45:51 krw Exp $
+#	$OpenBSD: install.sub,v 1.382 2005/04/15 23:45:29 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -598,28 +598,22 @@ v6_info() {
 # $1 == interface
 # $2 == hostname (optional).
 dhcp_request() {
-	local _ifs=$1 _hostname=$2
+	local _ifs=$1 _hn=$2
 
-	echo "initial-interval 1;" >/etc/dhclient.conf
+	echo "lookup file bind" >/etc/resolv.conf.tail
 
-	if [[ -n $_hostname ]]; then
-		echo "send host-name \"$_hostname\";" >>/etc/dhclient.conf
+	if [[ -n $_hn ]]; then
+		_hn="send host-name \"$_hn\";"
 		echo "Issuing hostname-associated DHCP request for $_ifs."
 	else
 		echo "Issuing free-roaming DHCP request for $_ifs."
 	fi
 
-	cat >>/etc/dhclient.conf <<__EOT
-request subnet-mask,
-	broadcast-address,
-	routers,
-	domain-name,
-	domain-name-servers,
-	host-name;
-__EOT
-
-	cat >>/etc/resolv.conf.tail <<__EOT
-lookup file bind
+	cat >/etc/dhclient.conf <<__EOT
+initial-interval 1;
+$_hn
+request subnet-mask, broadcast-address, routers, domain-name,
+	domain-name-servers, host-name;
 __EOT
 
 	ifconfig $_ifs group dhcp >/dev/null 2>&1
@@ -627,19 +621,18 @@ __EOT
 
 	set -- $(v4_info $_ifs)
 
-	if [[ $1 == UP && $2 == "0.0.0.0" ]]; then
-		ifconfig $_ifs delete down
-		rm /etc/dhclient.conf /etc/resolv.conf.tail
-		return 1
+	if [[ $1 == UP && $2 != "0.0.0.0" ]]; then
+		# Move configuration files to where they will be copied to the
+		# installed system. Overwrites configuration information from
+		# last successful dhcp attempt.
+		mv /etc/dhclient.conf /tmp/dhclient.conf
+		mv /etc/resolv.conf.tail /tmp/resolv.conf.tail
+		return 0
 	fi
-
-	# Move configuration files to where they will be copied to the
-	# installed system. Overwrites configuration information from last
-	# successful dhcp attempt.
-	mv /etc/dhclient.conf /tmp/dhclient.conf
-	mv /etc/resolv.conf.tail /tmp/resolv.conf.tail
-
-	return 0
+	
+	ifconfig $_ifs delete down
+	rm /etc/dhclient.conf /etc/resolv.conf.tail
+	return 1
 }
 
 v4_config() {
