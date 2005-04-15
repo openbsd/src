@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.5 2005/04/05 14:06:52 pedro Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.6 2005/04/15 11:49:37 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -750,8 +750,6 @@ udf_readdir(void *v)
 		ncookies = uio->uio_resid / 8;
 		MALLOC(cookies, u_long *, sizeof(u_long) * ncookies,
 		    M_TEMP, M_WAITOK);
-		if (cookies == NULL)
-			return (ENOMEM);
 		uiodir.ncookies = ncookies;
 		uiodir.cookies = cookies;
 		uiodir.acookies = 0;
