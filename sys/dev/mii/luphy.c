@@ -1,4 +1,4 @@
-/*	$OpenBSD: luphy.c,v 1.1 2005/04/14 19:54:01 brad Exp $	*/
+/*	$OpenBSD: luphy.c,v 1.2 2005/04/15 00:05:52 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marius Strobl
@@ -81,7 +81,7 @@ static const struct mii_phydesc luphys[] = {
 };
 
 int
-qsphymatch(struct device *parent, void *match, void *aux)
+luphymatch(struct device *parent, void *match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -157,7 +157,7 @@ luphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 
-		if (mii_phy_tick(sc, 0) == EJUSTRETURN)
+		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return (0);
 		break;
 
