@@ -1,4 +1,4 @@
-/*	$OpenBSD: luphy.c,v 1.2 2005/04/15 00:05:52 deraadt Exp $	*/
+/*	$OpenBSD: luphy.c,v 1.3 2005/04/15 00:44:39 brad Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marius Strobl
@@ -74,7 +74,7 @@ const struct mii_phy_funcs luphy_funcs = {
 
 static const struct mii_phydesc luphys[] = {
 	{ MII_OUI_LUCENT,		MII_MODEL_LUCENT_LU6612,
-          MII_STR_QUALSEMI_QS6612 },
+	  MII_STR_LUCENT_LU6612 },
 
 	{ 0,			0,
 	  NULL },
