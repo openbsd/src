@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.156 2005/03/28 15:16:46 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.157 2005/04/16 19:10:59 cloder Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1422,7 +1422,7 @@ rde_update_log(const char *message,
 
 	if (asprintf(&p, "%s/%u", log_addr(prefix), prefixlen) == -1)
 		p = NULL;
-	log_info("neighbor %s (AS%u) %s %s/%u %s",
+	log_info("neighbor %s (AS%u) %s %s %s",
 	    log_addr(&peer->conf.remote_addr), peer->conf.remote_as, message,
 	    p ? p : "out of memory", nexthop ? nexthop : "");
 
