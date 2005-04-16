@@ -1,4 +1,4 @@
-.\" $OpenBSD: ueagle.4,v 1.2 2005/04/16 15:43:38 deraadt Exp $
+.\" $OpenBSD: ueagle.4,v 1.3 2005/04/16 15:48:37 jmc Exp $
 .\"
 .\" Copyright (c) 2003-2005
 .\"     Damien Bergamini <damien.bergamini@free.fr>
@@ -31,7 +31,8 @@ chipset (revision I, II and III).
 .Pp
 The
 .Nm
-driver can only manage a single ATM AAL5 virtual circuit. The segmentation and
+driver can only manage a single ATM AAL5 virtual circuit.
+The segmentation and
 reassembly (SAR) of ATM cells is done by software.
 .Pp
 To achieve high rate downstream transfer with fast ADSL connections, the
@@ -96,13 +97,14 @@ The
 driver first appeared in
 .Ox 3.8 .
 .Sh AUTHORS
-The 
+The
 .Nm
 driver was written by
 .An Damien Bergamini Aq damien@openbsd.org .
 .Sh CAVEATS
 The
 .Nm
-driver only supports ADSL over POTS. ADSL over ISDN is not supported.
+driver only supports ADSL over POTS.
+ADSL over ISDN is not supported.
 G.Lite modulation (aka splitterless) has never been tested and probably won't
 work.
