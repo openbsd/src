@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.856 2005/04/15 22:49:06 deraadt Exp $
+$OpenBSD: pcidevs,v 1.857 2005/04/16 17:15:03 marco Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1950,6 +1950,7 @@ product SYMBIOS FC929_1		0x0623  FC929
 product SYMBIOS FC919		0x0624  FC919
 product SYMBIOS FC919_1		0x0625  FC919
 product SYMBIOS MEGARAID	0x1960	MegaRAID
+product SYMBIOS SATA8		0x0409	MegaRAID SATA 8x
 
 /* Packet Engines products */
 product SYMBIOS PE_GNIC		0x0702	Packet Engines G-NIC
