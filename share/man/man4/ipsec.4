@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.62 2005/04/15 23:31:06 jmc Exp $
+.\" $OpenBSD: ipsec.4,v 1.63 2005/04/16 00:10:47 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -261,7 +261,7 @@ Security Associations can be set up manually with the
 utility or automatically with the
 .Xr isakmpd 8
 key management daemon.
-.Ss Additional Sysctl Variables
+.Ss Additional Variables
 A number of
 .Xr sysctl 8
 variables are relevant to
@@ -278,6 +278,12 @@ Full explanations can be found in
 and variables can be set using the
 .Xr sysctl 8
 interface.
+.Pp
+A number of kernel options are also relevant to
+.Nm .
+See
+.Xr options 4
+for further information.
 .Ss API Details
 The following IP-level
 .Xr setsockopt 2
@@ -379,6 +385,7 @@ flag (look for ``tdb'' and ``xform'' allocations).
 .Xr ip 4 ,
 .Xr ipcomp 4 ,
 .Xr netintro 4 ,
+.Xr options 4 ,
 .Xr tcp 4 ,
 .Xr udp 4 ,
 .Xr ipsecadm 8 ,
