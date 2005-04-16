@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syscall.2,v 1.7 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: syscall.2,v 1.8 2005/04/16 18:19:59 otto Exp $
 .\"	$NetBSD: syscall.2,v 1.4 1995/02/27 12:38:53 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -42,7 +42,6 @@
 .Fd #include <unistd.h>
 .Ft int
 .Fn syscall "int number" "..."
-.Ft int
 .Fn __syscall "quad_t number" "..."
 .Sh DESCRIPTION
 .Fn syscall
@@ -52,6 +51,14 @@ interface has the specified
 with the specified arguments.
 Symbolic constants for system calls can be found in the header file
 .Ao Pa sys/syscall.h Ac .
+.Pp
+Since different system calls have different return types, a
+prototype of
+.Nm __syscall
+specifying the correct return type should be declared locally.
+This is especially important for system calls returning
+larger-than-int results.
+.Pp
 The
 .Nm __syscall
 form should be used when one or more of the parameters is a
@@ -60,7 +67,9 @@ This system call is useful for testing new system calls that
 do not have entries in the C library.
 .Sh RETURN VALUES
 The return values are defined by the system call being invoked.
-In general, a 0 return value indicates success.
+In general, for system calls returning
+.Va int ,
+a 0 return value indicates success.
 A \-1 return value indicates an error,
 and an error code is stored in
 .Va errno .
