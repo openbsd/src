@@ -6,9 +6,7 @@ PROG=	zboot
 LDFLAGS+=-nostdlib -Bstatic
 INSTALL_STRIP=
 
-#LDFLAGS+=-Ttext $(LINKADDR) -N -x -noinhibit-exec
-#CLEANFILES+=	crt0.o
-#SRCS=	srt0.S
+SRCS=	crt0.c
 
 S=	${.CURDIR}/../../../..
 
