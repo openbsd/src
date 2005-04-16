@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.22 2004/12/26 00:35:42 marco Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.23 2005/04/16 17:21:12 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -86,6 +86,7 @@ struct	ami_pci_device {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80960RP_ATU,
 	    AMI_CHECK_SIGN | AMI_BROKEN },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID,	0 },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SATA8,	0 },
 	{ 0 }
 };
 
