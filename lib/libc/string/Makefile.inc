@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.15 2005/04/14 20:59:10 espie Exp $
+#	$OpenBSD: Makefile.inc,v 1.16 2005/04/16 12:26:12 jmc Exp $
 
 # string sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/string ${LIBCSRCDIR}/string
@@ -167,10 +167,11 @@ MLINKS+=wmemchr.3 wcscpy.3
 MLINKS+=wmemchr.3 wcscspn.3
 MLINKS+=wmemchr.3 wcslcat.3
 MLINKS+=wmemchr.3 wcslcpy.3
+MLINKS+=wmemchr.3 wcslen.3
 MLINKS+=wmemchr.3 wcsncat.3
 MLINKS+=wmemchr.3 wcsncmp.3
 MLINKS+=wmemchr.3 wcsncpy.3
 MLINKS+=wmemchr.3 wcspbrk.3
-MLINKS+=wmemchr.3 wcspbrk.3
+MLINKS+=wmemchr.3 wcsrchr.3
 MLINKS+=wmemchr.3 wcsspn.3
 MLINKS+=wmemchr.3 wcsstr.3
