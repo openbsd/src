@@ -581,7 +581,8 @@ static const format_length_info printf_length_specs[] =
 static const format_length_info kprintf_length_specs[] =
 {
   { "h", FMT_LEN_h, STD_C89, NULL, 0, 0 },
-  { "l", FMT_LEN_l, STD_C89, NULL, 0, 0 },
+  { "l", FMT_LEN_l, STD_C89, "ll", FMT_LEN_ll, STD_C9L },
+  { "q", FMT_LEN_ll, STD_EXT, NULL, 0, 0 },
   { "L", FMT_LEN_L, STD_C89, NULL, 0, 0 },
   { NULL, 0, 0, NULL, 0, 0 }
 };
