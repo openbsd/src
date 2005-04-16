@@ -2290,3 +2290,5 @@
 ./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ueaglereg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ueaglevar.ph

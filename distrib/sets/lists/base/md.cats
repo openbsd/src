@@ -2308,3 +2308,5 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ueaglereg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ueaglevar.ph

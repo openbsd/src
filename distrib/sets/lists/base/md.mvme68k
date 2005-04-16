@@ -2215,3 +2215,5 @@
 ./usr/mdec/rboot
 ./usr/mdec/sboot
 ./usr/mdec/stboot
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ueaglereg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ueaglevar.ph

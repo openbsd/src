@@ -2281,3 +2281,5 @@
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
 ./usr/sbin/zzz
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ueaglereg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ueaglevar.ph

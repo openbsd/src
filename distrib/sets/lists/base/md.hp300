@@ -2218,3 +2218,5 @@
 ./usr/mdec/sdboot
 ./usr/mdec/uboot.lif
 ./usr/sbin/wsconscfg
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ueaglereg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/usb/ueaglevar.ph
