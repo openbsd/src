@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.24 2005/04/16 21:54:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -1012,7 +1012,7 @@ harmony_freem(void *vsc, void *ptr, int pool)
 size_t
 harmony_round_buffersize(void *vsc, int direction, size_t size)
 {
-	return (size & (size_t)(-HARMONY_BUFSIZE));
+	return ((size + HARMONY_BUFSIZE - 1) & (size_t)(-HARMONY_BUFSIZE));
 }
 
 int
