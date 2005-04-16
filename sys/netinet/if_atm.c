@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_atm.c,v 1.11 2003/12/10 07:22:43 itojun Exp $       */
+/*      $OpenBSD: if_atm.c,v 1.12 2005/04/16 14:28:57 deraadt Exp $       */
 
 /*
  *
@@ -222,12 +222,10 @@ failed:
 
 int
 atmresolve(rt, m, dst, desten)
-
-register struct rtentry *rt;
-struct mbuf *m;
-register struct sockaddr *dst;
-register struct atm_pseudohdr *desten;	/* OUT */
-
+	struct rtentry *rt;
+	struct mbuf *m;
+	struct sockaddr *dst;
+	struct atm_pseudohdr *desten;	/* OUT */
 {
 	struct sockaddr_dl *sdl;
 
