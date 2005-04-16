@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.1 2005/01/10 00:25:03 deraadt Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.2 2005/04/16 17:27:58 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -28,6 +28,7 @@
 
 #include "libsa.h"
 #include <sys/param.h>
+#include <sys/disklabel.h>
 #include <dev/cons.h>
 
 extern int debug;
@@ -45,6 +46,8 @@ const char cdevs[][4] = {
 	"com", "", "", "", "pc"
 };
 const int ncdevs = NENTS(cdevs);
+
+int getbootdev(dev_t, char *);
 
 /* pass dev_t to the open routines */
 int
@@ -86,11 +89,92 @@ devopen(struct open_file *f, const char *fname, char **file)
 	return rc;
 }
 
+int
+getbootdev(dev_t bootdev, char *p)
+{
+	char buf[DEV_BSIZE];
+	struct dos_partition *dp;
+	struct disklabel label;
+	static int timeout = 10;
+	char *s;
+	int fd;
+	int n;
+	char *msg = "";
+
+	s = p;
+	*p++ = '/';
+	*p++ = 'd';
+	*p++ = 'e';
+	*p++ = 'v';
+	*p++ = '/';
+	*p++ = 'h';
+	*p++ = 'd';
+	*p++ = 'a' + (bootdev & 0xf); /* a - h */
+	*p = '\0';
+
+	/*
+	 * Give disk devices some time to become ready when the first open
+	 * fails.  Even when open succeeds the disk is sometimes not ready.
+	 */
+	if ((fd = uopen(s, O_RDONLY)) == -1 && errno == ENXIO) {
+		int t;
+		while (fd == -1 && timeout > 0) {
+			timeout--;
+			t = getsecs() + 1;
+			while (getsecs() < t);
+			fd = uopen(s, O_RDONLY);
+		}
+		if (fd != -1) {
+			t = getsecs() + 2;
+			while (getsecs() < t);
+		}
+	}
+	if (fd == -1)
+		return 0;
+
+	/* Read the disk's MBR. */
+	if (unixstrategy((void *)fd, F_READ, DOSBBSECTOR, DEV_BSIZE, buf,
+	    &n) != 0 || n != DEV_BSIZE) {
+		uclose(fd);
+		return 0;
+	}
+
+	/* Find OpenBSD primary partition in the disk's MBR. */
+	dp = (struct dos_partition *)&buf[DOSPARTOFF];
+	for (n = 0; n < NDOSPART; n++)
+		if (dp[n].dp_typ == DOSPTYP_OPENBSD)
+			break;
+	if (n == NDOSPART) {
+		uclose(fd);
+		return 0;
+	}
+	*p++ = '1' + n;
+	*p = '\0';
+	uclose(fd);
+
+	/* Test if the OpenBSD partition has a valid disklabel. */
+	if ((fd = uopen(s, O_RDONLY)) != -1) {
+		if (unixstrategy((void *)fd, F_READ, LABELSECTOR,
+		    DEV_BSIZE, buf, &n) == 0 && n == DEV_BSIZE)
+			msg = getdisklabel(buf, &label);
+		uclose(fd);
+	}
+	return msg == NULL;
+}
+
 void
 devboot(dev_t bootdev, char *p)
 {
-	/* XXX */
-	strlcpy(p, "/dev/hda4", 10);
+
+	if (bootdev != 0 && getbootdev(bootdev, p))
+		return;
+
+	for (bootdev = 0; bootdev < 8; bootdev++)
+		if (getbootdev(bootdev, p))
+			return;
+
+	/* fall-back to the previous default device */
+	strlcpy(p, "/dev/hda4", 16);
 }
 
 int pch_pos = 0;
