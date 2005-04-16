@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.21 2005/04/16 18:07:35 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.22 2005/04/16 20:05:05 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -559,7 +559,7 @@ cvs_mkadmin(CVSFILE *cdir, mode_t mode)
 		(void)fclose(fp);
 	}
 
-	snprintf(path, sizeof(path), "%s/" CVS_PATH_REPOSITORY, dpath);
+	l = snprintf(path, sizeof(path), "%s/" CVS_PATH_REPOSITORY, dpath);
 	if (l == -1 || l >= (int)sizeof(path)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", path);

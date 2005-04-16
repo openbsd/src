@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.60 2005/04/13 20:11:21 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.61 2005/04/16 20:05:05 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -124,7 +124,7 @@ static CVSFILE*  cvs_file_lget     (const char *, int, CVSFILE *);
 int
 cvs_file_init(void)
 {
-	int i;
+	int i, l;
 	size_t len;
 	char path[MAXPATHLEN], buf[MAXNAMLEN];
 	FILE *ifp;
@@ -142,7 +142,13 @@ cvs_file_init(void)
 	/* read the cvsignore file in the user's home directory, if any */
 	pwd = getpwuid(getuid());
 	if (pwd != NULL) {
-		snprintf(path, sizeof(path), "%s/.cvsignore", pwd->pw_dir);
+		l = snprintf(path, sizeof(path), "%s/.cvsignore", pwd->pw_dir);
+		if (l == -1 || l >= (int)sizeof(path)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", path);
+			return (-1);
+		}
+
 		ifp = fopen(path, "r");
 		if (ifp == NULL) {
 			if (errno != ENOENT)
@@ -531,7 +537,7 @@ cvs_file_attach(CVSFILE *parent, CVSFILE *file)
 static int
 cvs_file_getdir(CVSFILE *cf, int flags)
 {
-	int ret, fd;
+	int ret, fd, l;
 	u_int ndirs;
 	long base;
 	u_char *dp, *ep;
@@ -558,7 +564,13 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 			cvs_mkadmin(cf, 0755);
 
 		/* if the CVS administrative directory exists, load the info */
-		snprintf(pbuf, sizeof(pbuf), "%s/" CVS_PATH_CVSDIR, fpath);
+		l = snprintf(pbuf, sizeof(pbuf), "%s/" CVS_PATH_CVSDIR, fpath);
+		if (l == -1 || l >= (int)sizeof(pbuf)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", pbuf);
+			return (-1);
+		}
+
 		if ((stat(pbuf, &st) == 0) && S_ISDIR(st.st_mode)) {
 			if (cvs_readrepo(fpath, pbuf, sizeof(pbuf)) == 0) {
 				cdp->cd_repo = strdup(pbuf);
@@ -621,8 +633,16 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 				continue;
 			}
 
-			snprintf(pbuf, sizeof(pbuf), "%s/%s", fpath,
+			l = snprintf(pbuf, sizeof(pbuf), "%s/%s", fpath,
 			    ent->d_name);
+			if (l == -1 || l >= (int)sizeof(pbuf)) {
+				errno = ENAMETOOLONG;
+				cvs_log(LP_ERRNO, "%s", pbuf);
+				
+				(void)close(fd);
+				return (-1);
+			}
+
 			cfp = cvs_file_lget(pbuf, flags, cf);
 			if (cfp == NULL) {
 				(void)close(fd);
@@ -645,8 +665,16 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 		 * entry in the Entries file but no file on disk
 		 */
 		while ((cvsent = cvs_ent_next(cdp->cd_ent)) != NULL) {
-			snprintf(pbuf, sizeof(pbuf), "%s/%s", fpath,
+			l = snprintf(pbuf, sizeof(pbuf), "%s/%s", fpath,
 			    cvsent->ce_name);
+			if (l == -1 || l >= (int)sizeof(pbuf)) {
+				errno = ENAMETOOLONG;
+				cvs_log(LP_ERRNO, "%s", pbuf);
+
+				(void)close(fd);
+				return (-1);
+			}
+
 			cfp = cvs_file_lget(pbuf, flags, cf);
 			if (cfp != NULL) {
 				if (cfp->cf_type == DT_DIR) {

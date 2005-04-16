@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.11 2005/04/12 14:58:40 joris Exp $	*/
+/*	$OpenBSD: import.c,v 1.12 2005/04/16 20:05:05 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -140,13 +140,18 @@ cvs_import_sendflags(struct cvsroot *root)
 int
 cvs_import_file(CVSFILE *cfp, void *arg)
 {
-	int ret;
+	int ret, l;
 	struct cvsroot *root;
 	char fpath[MAXPATHLEN], repodir[MAXPATHLEN];
 	char repo[MAXPATHLEN];
 
 	root = CVS_DIR_ROOT(cfp);
-	snprintf(repo, sizeof(repo), "%s/%s", root->cr_dir, module);
+	l = snprintf(repo, sizeof(repo), "%s/%s", root->cr_dir, module);
+	if (l == -1 || l >= (int)sizeof(repo)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", repo);
+		return (-1);
+	}
 
 	cvs_file_getpath(cfp, fpath, sizeof(fpath));
 	printf("Importing %s\n", fpath);
@@ -154,8 +159,15 @@ cvs_import_file(CVSFILE *cfp, void *arg)
 	if (cfp->cf_type == DT_DIR) {
 		if (!strcmp(CVS_FILE_NAME(cfp), "."))
 			strlcpy(repodir, repo, sizeof(repodir));
-		else
-			snprintf(repodir, sizeof(repodir), "%s/%s", repo, fpath);
+		else {
+			l = snprintf(repodir, sizeof(repodir), "%s/%s",
+			    repo, fpath);
+			if (l == -1 || l >= (int)sizeof(repodir)) {
+				errno = ENAMETOOLONG;
+				cvs_log(LP_ERRNO, "%s", repodir);
+				return (-1);
+			}
+		}
 		if (root->cr_method != CVS_METHOD_LOCAL) {
 			ret = cvs_sendreq(root, CVS_REQ_DIRECTORY, fpath);
 			if (ret == 0)

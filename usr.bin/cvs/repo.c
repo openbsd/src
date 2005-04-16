@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.2 2005/04/15 08:23:17 xsa Exp $	*/
+/*	$OpenBSD: repo.c,v 1.3 2005/04/16 20:05:05 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -473,7 +473,7 @@ cvs_repo_getpath(CVSRPENT *file, char *buf, size_t len)
 static CVSRPENT*
 cvs_repo_loadrec(CVSREPO *repo, const char *path)
 {
-	int ret, fd;
+	int ret, fd, l;
 	long base;
 	u_char *dp, *ep;
 	mode_t fmode;
@@ -569,8 +569,16 @@ cvs_repo_loadrec(CVSREPO *repo, const char *path)
 				    (ent->d_name[1] == '.')))
 					continue;
 
-				snprintf(pbuf, sizeof(pbuf), "%s/%s", path,
+				l = snprintf(pbuf, sizeof(pbuf), "%s/%s", path,
 				    ent->d_name);
+				if (l == -1 || l >= (int)sizeof(pbuf)) {
+					errno = ENAMETOOLONG;
+					cvs_log(LP_ERRNO, "%s", pbuf);
+
+					cvs_repo_entree(cfp);
+					(void)close(fd);
+					return (NULL);
+				}
 
 				if ((ent->d_type != DT_DIR) &&
 				    (ent->d_type != DT_REG)) {

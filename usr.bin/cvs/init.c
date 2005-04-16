@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.14 2005/04/12 14:58:40 joris Exp $	*/
+/*	$OpenBSD: init.c,v 1.15 2005/04/16 20:05:05 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -84,14 +84,19 @@ struct cvs_cmd_info cvs_init = {
 int
 cvs_init_local(struct cvsroot *root)
 {
-	int fd;
+	int fd, l;
 	u_int i;
 	char path[MAXPATHLEN];
 	RCSFILE *rfp;
 
 	for (i = 0; i < sizeof(cvsroot_files)/sizeof(cvsroot_files[i]); i++) {
-		snprintf(path, sizeof(path), "%s/%s", root->cr_dir,
+		l = snprintf(path, sizeof(path), "%s/%s", root->cr_dir,
 		    cvsroot_files[i].cf_path);
+		if (l == -1 || l >= (int)sizeof(path)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", path);
+			return (-1);
+		}
 
 		if (cvsroot_files[i].cf_type == CFT_DIR) {
 			if (mkdir(path, cvsroot_files[i].cf_mode) == -1) {
