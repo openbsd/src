@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.25 2005/04/15 13:42:54 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.26 2005/04/16 08:26:01 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1236,7 +1236,7 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
 		m0 = ieee80211_wep_crypt(ifp, m0, 1);
 		if (m0 == NULL)
-		return ENOBUFS;
+			return ENOBUFS;
 	}
 
 #if NBPFILTER > 0
