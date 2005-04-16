@@ -1295,6 +1295,8 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uaudioreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ucomvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ueaglereg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ueaglevar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uftdireg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/uhcireg.ph
@@ -2211,5 +2213,3 @@
 ./usr/mdec/installboot
 ./usr/mdec/mbr
 ./usr/sbin/wsconscfg
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ueaglereg.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/usb/ueaglevar.ph

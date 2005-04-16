@@ -716,12 +716,12 @@
 ./usr/include/dev/usb/if_udavreg.h
 ./usr/include/dev/usb/if_urlreg.h
 ./usr/include/dev/usb/if_wi_usb.h
-./usr/include/dev/usb/ueaglereg.h
-./usr/include/dev/usb/ueaglevar.h
 ./usr/include/dev/usb/ohcireg.h
 ./usr/include/dev/usb/ohcivar.h
 ./usr/include/dev/usb/uaudioreg.h
 ./usr/include/dev/usb/ucomvar.h
+./usr/include/dev/usb/ueaglereg.h
+./usr/include/dev/usb/ueaglevar.h
 ./usr/include/dev/usb/uftdireg.h
 ./usr/include/dev/usb/ugraphire_rdesc.h
 ./usr/include/dev/usb/uhcireg.h
@@ -4790,10 +4790,12 @@
 ./usr/share/man/cat3/wcscspn.0
 ./usr/share/man/cat3/wcslcat.0
 ./usr/share/man/cat3/wcslcpy.0
+./usr/share/man/cat3/wcslen.0
 ./usr/share/man/cat3/wcsncat.0
 ./usr/share/man/cat3/wcsncmp.0
 ./usr/share/man/cat3/wcsncpy.0
 ./usr/share/man/cat3/wcspbrk.0
+./usr/share/man/cat3/wcsrchr.0
 ./usr/share/man/cat3/wcsspn.0
 ./usr/share/man/cat3/wcsstr.0
 ./usr/share/man/cat3/wcstok.0

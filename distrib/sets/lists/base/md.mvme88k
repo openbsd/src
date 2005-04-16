@@ -1196,6 +1196,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/uaudioreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/ucomvar.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/ueaglereg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/ueaglevar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/uftdireg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/uhcireg.ph
@@ -2161,5 +2163,3 @@
 ./usr/mdec/netboot
 ./usr/mdec/stboot
 ./usr/mdec/tftpboot
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/ueaglereg.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/dev/usb/ueaglevar.ph

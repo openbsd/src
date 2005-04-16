@@ -701,6 +701,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/uaudioreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ucomvar.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ueaglereg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ueaglevar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/uftdireg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/uhcireg.ph
@@ -2121,5 +2123,3 @@
 ./usr/mdec/raboot
 ./usr/mdec/sdboot
 ./usr/mdec/xxboot
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ueaglereg.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ueaglevar.ph

@@ -1370,6 +1370,8 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/uaudioreg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/ucomvar.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/ueaglereg.ph
+./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/ueaglevar.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/uftdireg.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/uhcireg.ph
@@ -2284,5 +2286,3 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
-./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/ueaglereg.ph
-./usr/libdata/perl5/site_perl/amd64-openbsd/dev/usb/ueaglevar.ph

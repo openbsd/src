@@ -764,6 +764,8 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uaudioreg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ucomvar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ueaglereg.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ueaglevar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uftdireg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/uhcireg.ph
@@ -2202,5 +2204,3 @@
 ./usr/sbin/fdformat
 ./usr/sbin/wsconscfg
 ./usr/sbin/zzz
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ueaglereg.ph
-./usr/libdata/perl5/site_perl/sparc-openbsd/dev/usb/ueaglevar.ph
