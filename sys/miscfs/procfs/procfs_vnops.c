@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.34 2005/04/01 20:16:01 pedro Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.35 2005/04/16 22:19:28 kettenis Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -86,10 +86,6 @@ struct proc_target {
 	{ DT_DIR, N(".."),	Proot,		NULL },
 	{ DT_REG, N("file"),	Pfile,		procfs_validfile },
 	{ DT_REG, N("mem"),	Pmem,		NULL },
-#ifdef PTRACE
-	{ DT_REG, N("regs"),	Pregs,		procfs_validregs },
-	{ DT_REG, N("fpregs"),	Pfpregs,	procfs_validfpregs },
-#endif
 	{ DT_REG, N("ctl"),	Pctl,		NULL },
 	{ DT_REG, N("status"),	Pstatus,	NULL },
 	{ DT_REG, N("note"),	Pnote,		NULL },

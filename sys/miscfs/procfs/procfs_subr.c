@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_subr.c,v 1.21 2004/05/05 23:52:10 tedu Exp $	*/
+/*	$OpenBSD: procfs_subr.c,v 1.22 2005/04/16 22:19:28 kettenis Exp $	*/
 /*	$NetBSD: procfs_subr.c,v 1.15 1996/02/12 15:01:42 christos Exp $	*/
 
 /*
@@ -221,14 +221,6 @@ procfs_rw(v)
 	case Pnote:
 	case Pnotepg:
 		return (procfs_donote(curp, p, pfs, uio));
-
-#ifdef PTRACE
-	case Pregs:
-		return (procfs_doregs(curp, p, pfs, uio));
-
-	case Pfpregs:
-		return (procfs_dofpregs(curp, p, pfs, uio));
-#endif
 
 	case Pctl:
 		return (procfs_doctl(curp, p, pfs, uio));
