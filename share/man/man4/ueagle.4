@@ -1,0 +1,108 @@
+.\" $OpenBSD: ueagle.4,v 1.1 2005/04/16 14:55:04 damien Exp $
+.\"
+.\" Copyright (c) 2003-2005
+.\"     Damien Bergamini <damien.bergamini@free.fr>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd April 16, 2005
+.Os
+.Dt UEAGLE 4
+.Sh NAME
+.Nm ueagle
+.Nd Analog Devices Eagle chipset driver
+.Sh SYNOPSIS
+.Cd "ueagle* at uhub? port ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for USB ADSL modems based on the Analog Devices Eagle
+chipset (revision I, II and III).
+.Pp
+The
+.Nm
+driver can only manage a single ATM AAL5 virtual circuit. The segmentation and
+reassembly (SAR) of ATM cells is done by software.
+.Pp
+To achieve high rate downstream transfer with fast ADSL connections, the
+.Nm
+driver uses USB isochronous pipes instead of standard bulk pipes.
+.Sh HARDWARE
+The following modems should work:
+.Pp
+.\" .Bl -tag -width Ds -offset indent -compact
+.Bl -column "Modem                            " "Chip" -compact -offset 6n
+.It Em "Modem                                Chip"
+.It Li "Aethra Starmodem" Ta Eagle II
+.It Li "Allied Telesyn AT-AR215" Ta Eagle I
+.It Li "Arescom NDS1060" Ta Eagle II
+.It Li "Aztech 206U" Ta Eagle II
+.It Li "Comtrend CT-350" Ta Eagle I
+.It Li "Comtrend CT-361" Ta Eagle I
+.It Li "D-Link DSL-200I" Ta Eagle I
+.It Li "ECI B-FOCuS USB 150" Ta Eagle II
+.It Li "Elcon 111U" Ta Eagle II
+.It Li "Elcon 131U" Ta Eagle II
+.It Li "ELSA MicroLink ADSL FUN USB" Ta Eagle I
+.It Li "Huawei SmartAX MT810" Ta Eagle II
+.It Li "Sagem F@st 800" Ta Eagle I
+.It Li "Sagem F@st 800 PE/E2" Ta Eagle II
+.It Li "Sagem F@st 800 E3" Ta Eagle III
+.It Li "Sagem F@st 908" Ta Eagle I
+.It Li "Teledat 300 USB" Ta Eagle I
+.It Li "Telindus ND 220" Ta Eagle II
+.It Li "Telindus ND 220b" Ta Eagle II
+.It Li "US Robotics USR9000" Ta Eagle I
+.El
+.Sh FILES
+The adapter needs some firmware files, which are loaded on demand:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It /etc/firmware/ueagleI
+.It /etc/firmware/ueagleII
+.It /etc/firmware/ueagleIII
+.It /etc/firmware/ueagle-dsp
+.El
+.Sh EXAMPLES
+To establish a PVC (vpi=8, vci=35, vcmux) with host 192.168.1.2:
+.Bd -literal -offset indent
+# route add -iface 192.168.1.2 -link ueagle0:1.8.0.23
+.Ed
+.Pp
+To establish a PVC (vpi=0, vci=6, llc/snap) with host 192.168.1.3:
+.Bd -literal -offset indent
+# route add -iface 192.168.1.3 -link ueagle0:3.0.0.6
+.Ed
+.Sh SEE ALSO
+.Xr uhub 4 ,
+.Xr usb 4
+.Rs
+.%T The uEagle Web Page
+.%O http://damien.bergamini.free.fr/ueagle/
+.Re
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 3.8 .
+.Sh AUTHORS
+The 
+.Nm
+driver was written by
+.An Damien Bergamini Aq damien@openbsd.org .
+.Sh CAVEATS
+The
+.Nm
+driver only supports ADSL over POTS. ADSL over ISDN is not supported.
+G.Lite modulation (aka splitterless) has never been tested and probably won't
+work.

@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.151 2005/04/15 13:44:40 jakob Exp $
+$OpenBSD: usbdevs,v 1.152 2005/04/16 14:55:10 damien Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -386,6 +386,7 @@ vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor PLX		0x10b5	PLX
 vendor ASANTE		0x10bd	Asante
+vendor ANALOG		0x1110	Analog Devices, Inc.
 vendor JRC		0x1145	Japan Radio Company
 vendor SERVERWORKS	0x1166	ServerWorks
 vendor ACERCM		0x1189	Acer Communications & Multimedia
@@ -564,6 +565,16 @@ product AMBIT WLAN		0x0302	WLAN
 
 /* American Power Conversion products */
 product APC UPSPRO500		0x0002	Back-UPS Pro 500
+
+/* Analog Devices, Inc. products */
+product ANALOG EAGLEI		0x900f	Eagle I
+product ANALOG EAGLEI_NF	0x9010	Eagle I
+product ANALOG EAGLEII		0x9021	Eagle II
+product ANALOG EAGLEII_NF	0x9022	Eagle II
+product ANALOG EAGLEIIC		0x9023	Eagle IIC
+product ANALOG EAGLEIIC_NF	0x9024	Eagle IIC
+product ANALOG EAGLEIII		0x9031	Eagle III
+product ANALOG EAGLEIII_NF	0x9032	Eagle III
 
 /* Anchor products */
 product ANCHOR EZUSB		0x2131	EZUSB
@@ -1787,6 +1798,14 @@ product UNIACCESS PANACHE	0x0101	Panache Surf ISDN
 
 /* U.S. Robotics products */
 product USR USR1120		0x00eb	USR1120 WLAN
+product USR MILLER_A		0x00f1	USR9000 SureConnect ADSL
+product USR MILLER_A_NF		0x00f2	USR9000 SureConnect ADSL
+product USR HEINEKEN_A		0x00f5	USR9000 SureConnect ADSL
+product USR HEINEKEN_A_NF	0x00f6	USR9000 SureConnect ADSL
+product USR HEINEKEN_B		0x00f7	USR9000	SureConnect ADSL
+product USR HEINEKEN_B_NF	0x00f8	USR9000	SureConnect ADSL
+product USR MILLER_B		0x00f9	USR9000	SureConnect ADSL
+product USR MILLER_B_NF		0x00fa	USR9000	SureConnect ADSL
 
 /* ViewSonic products */
 product VIEWSONIC G773HUB	0x00fe	G773 Monitor Hub
