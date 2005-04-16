@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.11 2005/04/16 17:37:25 deraadt Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.12 2005/04/16 18:15:41 millert Exp $	*/
 /*	$NetBSD: pass4.c,v 1.11 1996/09/27 22:45:17 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.1 (Berkeley) 6/5/93";
 #else
-static const char rcsid[] = "$OpenBSD: pass4.c,v 1.11 2005/04/16 17:37:25 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pass4.c,v 1.12 2005/04/16 18:15:41 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,10 +55,8 @@ static ino_t info_inumber;
 static int
 pass4_info(char *buf, int buflen)
 {
-	if (snprintf(buf, buflen, "phase 4, inode %d/%d",
-	    info_inumber, lastino) > 0)
-		return (strlen(buf));
-	return (0);
+	return (snprintf(buf, buflen, "phase 4, inode %d/%d",
+	    info_inumber, lastino) > 0);
 }
 
 void
