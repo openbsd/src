@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.53 2005/04/12 19:35:32 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.54 2005/04/16 19:05:02 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -587,7 +587,7 @@ static void
 cvs_read_rcfile(void)
 {
 	char rcpath[MAXPATHLEN], linebuf[128], *lp;
-	int linenum = 0;
+	int l, linenum = 0;
 	size_t len;
 	struct cvs_cmd *cmdp;
 	struct passwd *pw;
@@ -599,7 +599,12 @@ cvs_read_rcfile(void)
 		return;
 	}
 
-	snprintf(rcpath, sizeof(rcpath), "%s/%s", pw->pw_dir, CVS_PATH_RC);
+	l = snprintf(rcpath, sizeof(rcpath), "%s/%s", pw->pw_dir, CVS_PATH_RC);
+	if (l == -1 || l >= (int)sizeof(rcpath)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", rcpath);
+		return;
+	}
 
 	fp = fopen(rcpath, "r");
 	if (fp == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.11 2005/04/12 14:58:40 joris Exp $	*/
+/*	$OpenBSD: admin.c,v 1.12 2005/04/16 19:05:02 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -295,7 +295,7 @@ cvs_admin_sendflags(struct cvsroot *root)
 int
 cvs_admin_file(CVSFILE *cfp, void *arg)
 {
-	int ret;
+	int ret, l;
 	char *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
 	struct cvs_ent *entp;
@@ -350,8 +350,15 @@ cvs_admin_file(CVSFILE *cfp, void *arg)
 			return (0);
 		}
 
-		snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
+		l = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
 		    root->cr_dir, repo, CVS_FILE_NAME(cfp), RCS_FILE_EXT);
+		if (l == -1 || l >= (int)sizeof(rcspath)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", rcspath);
+
+			cvs_ent_free(entp);
+			return (-1);
+		}
 
 		rf = rcs_open(rcspath, RCS_READ);
 		if (rf == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.15 2005/02/17 16:09:03 jfb Exp $	*/
+/*	$OpenBSD: root.c,v 1.16 2005/04/16 19:05:02 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -260,6 +260,7 @@ cvsroot_free(struct cvsroot *root)
 struct cvsroot*
 cvsroot_get(const char *dir)
 {
+	int l;
 	size_t len;
 	char rootpath[MAXPATHLEN], *rootstr, line[128];
 	FILE *fp;
@@ -267,7 +268,13 @@ cvsroot_get(const char *dir)
 	if (cvs_rootstr != NULL)
 		return cvsroot_parse(cvs_rootstr);
 
-	snprintf(rootpath, sizeof(rootpath), "%s/" CVS_PATH_ROOTSPEC, dir);
+	l = snprintf(rootpath, sizeof(rootpath), "%s/" CVS_PATH_ROOTSPEC, dir);
+	if (l == -1 || l >= (int)sizeof(rootpath)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", rootpath);
+		return (NULL);
+	}
+
 	fp = fopen(rootpath, "r");
 	if (fp == NULL) {
 		if (errno == ENOENT) {

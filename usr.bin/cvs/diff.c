@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.29 2005/04/14 16:49:09 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.30 2005/04/16 19:05:02 xsa Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -475,6 +475,7 @@ cvs_diff_sendflags(struct cvsroot *root)
 int
 cvs_diff_file(struct cvs_file *cfp, void *arg)
 {
+	int l;
 	char *dir, *repo, buf[64];
 	char fpath[MAXPATHLEN], dfpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	char path_tmp1[MAXPATHLEN], path_tmp2[MAXPATHLEN];
@@ -556,8 +557,15 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		cvs_sendreq(root, CVS_REQ_MODIFIED, CVS_FILE_NAME(cfp));
 		cvs_sendfile(root, diff_file);
 	} else {
-		snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
+		l = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
 		    root->cr_dir, repo, diff_file, RCS_FILE_EXT);
+		if (l == -1 || l >= (int)sizeof(rcspath)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", rcspath);
+
+			cvs_ent_free(entp);
+			return (-1);
+		}
 
 		rf = rcs_open(rcspath, RCS_READ);
 		if (rf == NULL) {
