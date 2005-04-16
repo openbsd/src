@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.c,v 1.3 2004/12/07 17:10:56 tedu Exp $	*/
+/*	$OpenBSD: hist.c,v 1.4 2005/04/16 17:50:08 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -277,11 +277,15 @@ static int
 cvs_hist_fmt(const struct cvs_hent *ent, char *buf, size_t blen)
 {
 	char numbuf[64];
+	int len;
 
 	if (rcsnum_tostr(ent->ch_rev, numbuf, sizeof(numbuf)) == NULL)
 		return (-1);
 
-	return (snprintf(buf, blen, "%c%8x|%s|%s|%s|%s|%s",
+	len = snprintf(buf, blen, "%c%8x|%s|%s|%s|%s|%s",
 	    ent->ch_event, ent->ch_date, ent->ch_user, ent->ch_curdir,
-	    ent->ch_repo, numbuf, ent->ch_arg));
+	    ent->ch_repo, numbuf, ent->ch_arg);
+	if (len >= (int)blen || len == -1)
+		return (-1);
+	return (len);
 }
