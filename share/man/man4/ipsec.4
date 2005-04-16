@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.63 2005/04/16 00:10:47 jmc Exp $
+.\" $OpenBSD: ipsec.4,v 1.64 2005/04/16 00:19:36 jmc Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -225,7 +225,7 @@ where two firewalls use IPsec
 to secure the traffic of all the hosts behind them.
 For example:
 .Bd -literal -offset indent
-Net A <----> Firewall 1 <--- Internet ---> Firewall 2 <----> Net B
+Net A \*(Lt----\*(Gt Firewall 1 \*(Lt--- Internet ---\*(Gt Firewall 2 \*(Lt----\*(Gt Net B
 .Ed
 .Pp
 Firewall 1 and Firewall 2 can protect all communications between Net A
@@ -242,8 +242,8 @@ interfaces, but special care should be taken because of the interactions
 between NAT and the IPsec flow matching, especially on the packet output path.
 Inside the TCP/IP stack, packets go through the following stages:
 .Bd -literal -offset indent
-UL/R -> [X] -> PF/NAT(enc0) -> IPsec -> PF/NAT(IF) -> IF
-UL/R <-------- PF/NAT(enc0) <- IPsec -> PF/NAT(IF) <- IF
+UL/R -\*(Gt [X] -\*(Gt PF/NAT(enc0) -\*(Gt IPsec -\*(Gt PF/NAT(IF) -\*(Gt IF
+UL/R \*(Lt-------- PF/NAT(enc0) \*(Lt- IPsec -\*(Gt PF/NAT(IF) \*(Lt- IF
 .Ed
 .Pp
 With IF being the real interface and UL/R the Upper Layer or Routing code.
