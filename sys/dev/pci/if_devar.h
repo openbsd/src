@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.16 2005/03/29 00:37:50 martin Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.17 2005/04/16 16:08:07 deraadt Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -720,6 +720,8 @@ struct _tulip_softc_t {
 
 
 #if defined(TULIP_HDR_DATA)
+
+#ifdef TULIP_DEBUG
 static const char * const tulip_chipdescs[] = { 
     "21040 [10Mb/s]",
 #if defined(TULIP_EISA)
@@ -734,6 +736,7 @@ static const char * const tulip_chipdescs[] = {
     "21143 [10-100Mb/s]",
     "82C168 [10-100Mb/s]",
 };
+#endif
 
 #ifdef TULIP_DEBUG
 static const char * const tulip_mediums[] = {
@@ -769,6 +772,7 @@ static const int tulip_media_to_ifmedia[] = {
 };
 #endif /* defined(IFM_ETHER) */
 
+#ifdef TULIP_DEBUG
 static const char * const tulip_system_errors[] = {
     "parity error",
     "master abort",
@@ -800,6 +804,7 @@ static const char * const tulip_status_bits[] = {
     NULL,
     NULL,
 };
+#endif
 
 static const struct {
     tulip_srom_connection_t sc_type;
