@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.3 2004/08/30 16:31:51 pefo Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.4 2005/04/16 15:44:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -83,11 +83,23 @@
 #define	_BSD_WCHAR_T_	int			/* wchar_t */
 #define	_BSD_WINT_T_	int			/* wint_t */
 #define	_BSD_RUNE_T_	int			/* rune_t */
+#define	_BSD_WCTRANS_T_	void *			/* wctrans_t */
+#define	_BSD_WCTYPE_T_	void *			/* wctype_t */
 
 /*
  * We describe off_t here so its declaration can be visible to
  * stdio without pulling in all of <sys/type.h>, thus appeasing ANSI.
  */
 #define _BSD_OFF_T_	long long		/* file offset */
+
+/*
+ * mbstate_t is an opaque object to keep conversion state, during multibyte
+ * stream conversions. The content must not be referenced by user programs.
+ */
+typedef union {
+	char __mbstate8[128];
+	long long __mbstateL;			/* for alignment */
+} __mbstate_t;
+#define	_BSD_MBSTATE_T_	__mbstate_t		/* mbstate_t */
 
 #endif	/* !_MIPS_ANSI_H_ */
