@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.h,v 1.1 1999/07/20 06:21:59 csapuntz Exp $	*/
+/*	$OpenBSD: cd.h,v 1.2 2005/04/16 16:54:34 krw Exp $	*/
 /*	$NetBSD: scsi_cd.h,v 1.6 1996/03/19 03:06:39 mycroft Exp $	*/
 
 /*
@@ -29,14 +29,6 @@
 /*
  * SCSI command format
  */
-
-struct scsi_read_capacity_cd {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t addr[4];
-	u_int8_t unused[3];
-	u_int8_t control;
-};
 
 struct scsi_pause {
 	u_int8_t opcode;
