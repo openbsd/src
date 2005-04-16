@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.20 2004/12/22 00:38:26 david Exp $	*/
+/*	$OpenBSD: util.c,v 1.21 2005/04/16 18:07:35 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -94,15 +94,21 @@ pid_t cvs_exec_pid;
 int
 cvs_readrepo(const char *dir, char *dst, size_t len)
 {
+	int l;
 	size_t dlen;
 	FILE *fp;
 	char repo_path[MAXPATHLEN];
 
-	snprintf(repo_path, sizeof(repo_path), "%s/CVS/Repository", dir);
+	l = snprintf(repo_path, sizeof(repo_path), "%s/CVS/Repository", dir);
+	if (l == -1 || l >= (int)sizeof(repo_path)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", repo_path);
+		return (NULL);
+        }
+
 	fp = fopen(repo_path, "r");
-	if (fp == NULL) {
+	if (fp == NULL)
 		return (-1);
-	}
 
 	if (fgets(dst, (int)len, fp) == NULL) {
 		if (ferror(fp)) {
@@ -495,6 +501,7 @@ cvs_freeargv(char **argv, int argc)
 int
 cvs_mkadmin(CVSFILE *cdir, mode_t mode)
 {
+	int l;
 	char dpath[MAXPATHLEN], path[MAXPATHLEN];
 	FILE *fp;
 	CVSENTRIES *ef;
@@ -503,7 +510,13 @@ cvs_mkadmin(CVSFILE *cdir, mode_t mode)
 
 	cvs_file_getpath(cdir, dpath, sizeof(dpath));
 
-	snprintf(path, sizeof(path), "%s/" CVS_PATH_CVSDIR, dpath);
+	l = snprintf(path, sizeof(path), "%s/" CVS_PATH_CVSDIR, dpath);
+	if (l == -1 || l >= (int)sizeof(path)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", path);
+		return (-1);
+	}
+
 	if ((mkdir(path, mode) == -1) && (errno != EEXIST)) {
 		cvs_log(LP_ERRNO, "failed to create directory %s", path);
 		return (-1);
@@ -514,7 +527,13 @@ cvs_mkadmin(CVSFILE *cdir, mode_t mode)
 	(void)cvs_ent_close(ef);
 
 	root = cdir->cf_ddat->cd_root;
-	snprintf(path, sizeof(path), "%s/" CVS_PATH_ROOTSPEC, dpath);
+	l = snprintf(path, sizeof(path), "%s/" CVS_PATH_ROOTSPEC, dpath);
+	if (l == -1 || l >= (int)sizeof(path)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", path);
+		return (-1);
+	}
+
 	if ((root != NULL) && (stat(path, &st) != 0) && (errno == ENOENT)) {
 		fp = fopen(path, "w");
 		if (fp == NULL) {
@@ -541,6 +560,12 @@ cvs_mkadmin(CVSFILE *cdir, mode_t mode)
 	}
 
 	snprintf(path, sizeof(path), "%s/" CVS_PATH_REPOSITORY, dpath);
+	if (l == -1 || l >= (int)sizeof(path)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", path);
+		return (-1);
+	}
+
 	if ((stat(path, &st) != 0) && (errno == ENOENT) &&
 	    (cdir->cf_ddat->cd_repo != NULL)) {
 		fp = fopen(path, "w");
