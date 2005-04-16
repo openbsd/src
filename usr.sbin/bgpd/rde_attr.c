@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.45 2005/04/15 16:19:34 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.46 2005/04/16 19:56:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -554,10 +554,13 @@ aspath_asprint(char **ret, void *data, u_int16_t len)
 		return (-1);
 
 	plen = aspath_snprint(*ret, slen, data, len);
-	if (plen == -1)
+	if (plen == -1) {
 		free(*ret);
+		*ret = NULL;
+		return (-1);
+	}
 
-	return (plen);
+	return (0);
 }
 
 size_t
