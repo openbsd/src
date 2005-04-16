@@ -1173,8 +1173,11 @@ addsuffix(char *filename, unsigned int len, const char *ofilename,
 		olen -= 4;
 
 	n = snprintf(filename, len, "%.*s%s", olen, ofilename, suffix);
-	if (n < 0)
+	if (n == -1)
+		return (ISC_R_FAILURE);
+	if ((unsigned int)n >= len)
 		return (ISC_R_NOSPACE);
+
 	return (ISC_R_SUCCESS);
 }
 

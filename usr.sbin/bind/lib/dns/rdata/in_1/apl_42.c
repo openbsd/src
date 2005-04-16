@@ -141,7 +141,7 @@ totext_in_apl(ARGS_TOTEXT) {
 		INSIST(len <= sr.length);
 		n = snprintf(txt, sizeof(txt), "%s%s%u:", sep,
 			     neg ? "!": "", afi);
-		INSIST(n < (int)sizeof(txt));
+		INSIST(n != -1 && (size_t)n < sizeof(txt));
 		RETERR(str_totext(txt, target));
 		switch (afi) {
 		case 1:
@@ -164,7 +164,7 @@ totext_in_apl(ARGS_TOTEXT) {
 			return (ISC_R_NOTIMPLEMENTED);
 		}
 		n = snprintf(txt, sizeof(txt), "/%u", prefix);
-		INSIST(n < (int)sizeof(txt));
+		INSIST(n != -1 && (size_t)n < sizeof(txt));
 		RETERR(str_totext(txt, target));
 		isc_region_consume(&sr, len);
 		sep = " ";

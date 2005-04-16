@@ -381,18 +381,18 @@ rdataset_totext(dns_rdataset_t *rdataset,
 		{
 			char ttlbuf[64];
 			isc_region_t r;
-			unsigned int length;
+			int length;
 
 			INDENT_TO(ttl_column);
 			length = snprintf(ttlbuf, sizeof(ttlbuf), "%u",
 					  rdataset->ttl);
-			INSIST(length <= sizeof(ttlbuf));
+			INSIST(length != -1 && (size_t)length < sizeof(ttlbuf));
 			isc_buffer_availableregion(target, &r);
-			if (r.length < length)
+			if (r.length < (unsigned int)length)
 				return (ISC_R_NOSPACE);
-			memcpy(r.base, ttlbuf, length);
-			isc_buffer_add(target, length);
-			column += length;
+			memcpy(r.base, ttlbuf, (size_t)length);
+			isc_buffer_add(target, (unsigned int)length);
+			column += (unsigned int)length;
 
 			/*
 			 * If the $TTL directive is not in use, the TTL we

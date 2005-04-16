@@ -564,7 +564,7 @@ genname(char *name, int it, char *buffer, size_t length) {
 	char mode[2];
 	int delta = 0;
 	isc_textregion_t r;
-	unsigned int n;
+	int n;
 	unsigned int width;
 
 	r.base = buffer;
@@ -599,14 +599,18 @@ genname(char *name, int it, char *buffer, size_t length) {
 				default:
 					return (DNS_R_SYNTAX);
 				}
-				if (n >= sizeof(fmt))
+				if (n == -1)
+					return (ISC_R_FAILURE);
+				else if ((size_t)n >= sizeof(fmt))
 					return (ISC_R_NOSPACE);
 				/* Skip past closing brace. */
 				while (*name != '\0' && *name++ != '}')
 					continue;
 			}
 			n = snprintf(numbuf, sizeof(numbuf), fmt, it + delta);
-			if (n >= sizeof(numbuf))
+			if (n == -1)
+				return (ISC_R_FAILURE);
+			else if ((size_t)n >= sizeof(numbuf))
 				return (ISC_R_NOSPACE);
 			cp = numbuf;
 			while (*cp != '\0') {

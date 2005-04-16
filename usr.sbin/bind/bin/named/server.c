@@ -4003,7 +4003,7 @@ ns_server_flushname(ns_server_t *server, char *args) {
 isc_result_t
 ns_server_status(ns_server_t *server, isc_buffer_t *text) {
 	int zonecount, xferrunning, xferdeferred, soaqueries;
-	unsigned int n;
+	int n;
 
 	zonecount = dns_zonemgr_getcount(server->zonemgr, DNS_ZONESTATE_ANY);
 	xferrunning = dns_zonemgr_getcount(server->zonemgr,
@@ -4027,9 +4027,12 @@ ns_server_status(ns_server_t *server, isc_buffer_t *text) {
 		     soaqueries, server->log_queries ? "ON" : "OFF",
 		     server->recursionquota.used, server->recursionquota.max,
 		     server->tcpquota.used, server->tcpquota.max);
-	if (n >= isc_buffer_availablelength(text))
+	if (n == -1)
+		return (ISC_R_FAILURE);
+	else if ((unsigned int)n >= isc_buffer_availablelength(text))
 		return (ISC_R_NOSPACE);
-	isc_buffer_add(text, n);
+
+	isc_buffer_add(text, (unsigned int)n);
 	return (ISC_R_SUCCESS);
 }
 

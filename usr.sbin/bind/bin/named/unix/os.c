@@ -661,7 +661,7 @@ next_token(char **stringp, const char *delim) {
 void
 ns_os_shutdownmsg(char *command, isc_buffer_t *text) {
 	char *input, *ptr;
-	unsigned int n;
+	int n;
 	pid_t pid;
 
 	input = command;
@@ -688,8 +688,8 @@ ns_os_shutdownmsg(char *command, isc_buffer_t *text) {
 		     isc_buffer_availablelength(text),
 		     "pid: %ld", (long)pid);
 	/* Only send a message if it is complete. */
-	if (n < isc_buffer_availablelength(text))
-		isc_buffer_add(text, n);
+	if (n != -1 && n < isc_buffer_availablelength(text))
+		isc_buffer_add(text, (unsigned int)n);
 }
 
 void
