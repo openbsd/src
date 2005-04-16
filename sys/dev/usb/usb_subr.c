@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.34 2005/04/16 18:40:55 deraadt Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.35 2005/04/16 19:45:27 deraadt Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -326,7 +326,7 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *base, size_t len)
 	cp += strlen(cp);
 	if (showclass) {
 		snprintf(cp, base + len - cp, ", class %d/%d",
-		      udd->bDeviceClass, udd->bDeviceSubClass);
+		    udd->bDeviceClass, udd->bDeviceSubClass);
 		cp += strlen(cp);
 	}
 	bcdUSB = UGETW(udd->bcdUSB);
@@ -335,7 +335,8 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *base, size_t len)
 	cp += strlen(cp);
 	usbd_printBCD(cp, base + len - cp, bcdUSB);
 	cp += strlen(cp);
-	*cp++ = '/';
+	snprintf(cp, base + len - cp, "/");
+	cp += strlen(cp);
 	usbd_printBCD(cp, base + len - cp, bcdDevice);
 	cp += strlen(cp);
 	snprintf(cp, base + len - cp, ", addr %d", dev->address);
