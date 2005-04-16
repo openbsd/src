@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.22 2005/04/15 13:05:14 mickey Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.23 2005/04/16 21:57:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -137,7 +137,6 @@ int	cs4231_get_port(void *, mixer_ctrl_t *);
 int	cs4231_query_devinfo(void *addr, mixer_devinfo_t *);
 void *	cs4231_alloc(void *, int, size_t, int, int);
 void	cs4231_free(void *, void *, int);
-size_t	cs4231_round_buffersize(void *, int, size_t);
 int	cs4231_get_props(void *);
 int	cs4231_trigger_output(void *, void *, void *, int,
     void (*intr)(void *), void *arg, struct audio_params *);
@@ -168,7 +167,7 @@ struct audio_hw_if cs4231_sa_hw_if = {
 	cs4231_query_devinfo,
 	cs4231_alloc,
 	cs4231_free,
-	cs4231_round_buffersize,
+	0,
 	0,
 	cs4231_get_props,
 	cs4231_trigger_output,
@@ -1489,15 +1488,6 @@ cs4231_free(addr, ptr, pool)
 		return;
 	}
 	printf("%s: attempt to free rogue pointer\n", sc->sc_dev.dv_xname);
-}
-
-size_t
-cs4231_round_buffersize(addr, direction, size)
-	void *addr;
-	int direction;
-	size_t size;
-{
-	return (size);
 }
 
 int

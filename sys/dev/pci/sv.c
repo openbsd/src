@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.17 2005/04/14 12:42:16 mickey Exp $ */
+/*      $OpenBSD: sv.c,v 1.18 2005/04/16 21:57:23 mickey Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -159,7 +159,6 @@ int	sv_mixer_get_port(void *, mixer_ctrl_t *);
 int	sv_query_devinfo(void *, mixer_devinfo_t *);
 void   *sv_malloc(void *, int, size_t, int, int);
 void	sv_free(void *, void *, int);
-size_t	sv_round(void *, int, size_t);
 paddr_t	sv_mappage(void *, void *, off_t, int);
 int	sv_get_props(void *);
 
@@ -187,7 +186,7 @@ struct audio_hw_if sv_hw_if = {
 	sv_query_devinfo,
 	sv_malloc,
 	sv_free,
-	sv_round,
+	NULL,
 	sv_mappage,
 	sv_get_props,
 	NULL,
@@ -1485,15 +1484,6 @@ sv_free(addr, ptr, pool)
                         return;
                 }
         }
-}
-
-size_t
-sv_round(addr, direction, size)
-	void *addr;
-	int direction;
-	size_t size;
-{
-	return (size);
 }
 
 paddr_t

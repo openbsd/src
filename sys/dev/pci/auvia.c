@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.31 2005/04/14 12:42:16 mickey Exp $ */
+/*	$OpenBSD: auvia.c,v 1.32 2005/04/16 21:57:23 mickey Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -98,7 +98,6 @@ int	auvia_get_port(void *, mixer_ctrl_t *);
 int	auvia_query_devinfo(void *, mixer_devinfo_t *);
 void *	auvia_malloc(void *, int, size_t, int, int);
 void	auvia_free(void *, void *, int);
-size_t	auvia_round_buffersize(void *, int, size_t);
 paddr_t	auvia_mappage(void *, void *, off_t, int);
 int	auvia_get_props(void *);
 int	auvia_build_dma_ops(struct auvia_softc *, struct auvia_softc_chan *,
@@ -189,7 +188,7 @@ struct audio_hw_if auvia_hw_if = {
 	auvia_query_devinfo,
 	auvia_malloc,
 	auvia_free,
-	auvia_round_buffersize,
+	NULL, /* auvia_round_buffersize */
 	auvia_mappage,
 	auvia_get_props,
 	auvia_trigger_output,
@@ -777,14 +776,6 @@ auvia_free(void *addr, void *ptr, int pool)
 
 	panic("auvia_free: trying to free unallocated memory");
 }
-
-
-size_t
-auvia_round_buffersize(void *addr, int direction, size_t size)
-{
-	return size;
-}
-
 
 paddr_t
 auvia_mappage(void *addr, void *mem, off_t off, int prot)

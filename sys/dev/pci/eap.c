@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.24 2005/04/14 12:42:16 mickey Exp $ */
+/*      $OpenBSD: eap.c,v 1.25 2005/04/16 21:57:23 mickey Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -185,7 +185,6 @@ int	eap1371_mixer_get_port(void *, mixer_ctrl_t *);
 int	eap1370_query_devinfo(void *, mixer_devinfo_t *);
 void   *eap_malloc(void *, int, size_t, int, int);
 void	eap_free(void *, void *, int);
-size_t	eap_round_buffersize(void *, int, size_t);
 paddr_t	eap_mappage(void *, void *, off_t, int);
 int	eap_get_props(void *);
 void	eap1370_set_mixer(struct eap_softc *sc, int a, int d);
@@ -232,7 +231,7 @@ struct audio_hw_if eap1370_hw_if = {
 	eap1370_query_devinfo,
 	eap_malloc,
 	eap_free,
-	eap_round_buffersize,
+	NULL,
 	eap_mappage,
 	eap_get_props,
 	eap_trigger_output,
@@ -261,7 +260,7 @@ struct audio_hw_if eap1371_hw_if = {
 	eap1371_query_devinfo,
 	eap_malloc,
 	eap_free,
-	eap_round_buffersize,
+	NULL,
 	eap_mappage,
 	eap_get_props,
 	eap_trigger_output,
@@ -1647,12 +1646,6 @@ eap_free(void *addr, void *ptr, int pool)
 			return;
 		}
 	}
-}
-
-size_t
-eap_round_buffersize(void *addr, int direction, size_t size)
-{
-	return (size);
 }
 
 paddr_t

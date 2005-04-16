@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.16 2005/04/14 12:42:16 mickey Exp $ */
+/*	$OpenBSD: fms.c,v 1.17 2005/04/16 21:57:23 mickey Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -97,7 +97,6 @@ int	fms_get_port(void *, mixer_ctrl_t *);
 int	fms_query_devinfo(void *, mixer_devinfo_t *);
 void	*fms_malloc(void *, int, size_t, int, int);
 void	fms_free(void *, void *, int);
-size_t	fms_round_buffersize(void *, int, size_t);
 paddr_t	fms_mappage(void *, void *, off_t, int);
 int	fms_get_props(void *);
 int	fms_trigger_output(void *, void *, void *, int, void (*)(void *),
@@ -142,7 +141,7 @@ struct audio_hw_if fms_hw_if = {
 	fms_query_devinfo,
 	fms_malloc,
 	fms_free,
-	fms_round_buffersize,
+	NULL,
 	fms_mappage,
 	fms_get_props,
 	fms_trigger_output,
@@ -787,15 +786,6 @@ fms_free(addr, ptr, pool)
 		}
 
 	panic("fms_free: trying to free unallocated memory");
-}
-
-size_t
-fms_round_buffersize(addr, direction, size)
-	void *addr;
-	int direction;
-	size_t size;
-{
-	return size;
 }
 
 paddr_t

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.18 2005/04/15 13:05:14 mickey Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.19 2005/04/16 21:57:23 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -155,7 +155,6 @@ int	ce4231_get_port(void *, mixer_ctrl_t *);
 int	ce4231_query_devinfo(void *addr, mixer_devinfo_t *);
 void *	ce4231_alloc(void *, int, size_t, int, int);
 void	ce4231_free(void *, void *, int);
-size_t	ce4231_round_buffersize(void *, int, size_t);
 int	ce4231_get_props(void *);
 int	ce4231_trigger_output(void *, void *, void *, int,
     void (*intr)(void *), void *arg, struct audio_params *);
@@ -184,7 +183,7 @@ struct audio_hw_if ce4231_sa_hw_if = {
 	ce4231_query_devinfo,
 	ce4231_alloc,
 	ce4231_free,
-	ce4231_round_buffersize,
+	0,
 	0,
 	ce4231_get_props,
 	ce4231_trigger_output,
@@ -1309,15 +1308,6 @@ ce4231_query_devinfo(addr, dip)
 	}
 
 	return (err);
-}
-
-size_t
-ce4231_round_buffersize(addr, direction, size)
-	void *addr;
-	int direction;
-	size_t size;
-{
-	return (size);
 }
 
 int
