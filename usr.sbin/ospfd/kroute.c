@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.14 2005/04/12 09:54:59 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.15 2005/04/16 21:48:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -749,6 +749,8 @@ fetchtable(void)
 			kr->r.prefix.s_addr =
 			    ((struct sockaddr_in *)sa)->sin_addr.s_addr;
 			sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
+			if (rtm->rtm_flags & RTF_STATIC)
+				kr->r.flags |= F_STATIC;
 			if (sa_in != NULL) {
 				if (sa_in->sin_len == 0)
 					break;
@@ -759,8 +761,6 @@ fetchtable(void)
 			else
 				kr->r.prefixlen =
 				    prefixlen_classful(kr->r.prefix.s_addr);
-			if (rtm->rtm_flags & RTF_STATIC)
-				kr->r.flags |= F_STATIC;
 			break;
 		default:
 			free(kr);
