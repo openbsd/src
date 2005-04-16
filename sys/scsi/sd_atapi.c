@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_atapi.c,v 1.4 2003/06/25 02:18:35 krw Exp $	*/
+/*	$OpenBSD: sd_atapi.c,v 1.5 2005/04/16 16:41:46 krw Exp $	*/
 /*	$NetBSD: sd_atapi.c,v 1.3 1998/08/31 22:28:07 cgd Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ sd_atapibus_get_parms(sd, dp, flags)
 		return (SDGP_RESULT_OFFLINE);
 
 	error = atapi_mode_sense(sd->sc_link, ATAPI_FLEX_GEOMETRY_PAGE,
-	    (struct atapi_mode_header *)&sense_data, FLEXGEOMETRYPAGESIZE,
+	    (struct scsi_mode_header_big *)&sense_data, FLEXGEOMETRYPAGESIZE,
 	    flags, SDRETRIES, 20000);
 	SC_DEBUG(sd->sc_link, SDEV_DB2,
 	    ("sd_atapibus_get_parms: mode sense (flex) error=%d\n", error));

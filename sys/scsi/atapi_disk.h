@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapi_disk.h,v 1.1 1999/07/25 07:09:19 csapuntz Exp $	*/
+/*	$OpenBSD: atapi_disk.h,v 1.2 2005/04/16 16:41:46 krw Exp $	*/
 /*	$NetBSD: atapi_disk.h,v 1.3 1998/02/13 08:28:21 enami Exp $	*/
 
 /*
@@ -93,9 +93,9 @@ union atapi_sd_pages {
 };
 
 struct atapi_sd_mode_data {
-	struct atapi_mode_header header;
+	struct scsi_mode_header_big header;
 	union atapi_sd_pages pages;
 };
 
 #define FLEXGEOMETRYPAGESIZE \
-	(sizeof(struct atapi_mode_header) + sizeof(struct atapi_flex_geometry_page))
+	(sizeof(struct scsi_mode_header_big) + sizeof(struct atapi_flex_geometry_page))

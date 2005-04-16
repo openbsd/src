@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd_atapi.c,v 1.3 2004/05/09 14:08:11 krw Exp $	*/
+/*	$OpenBSD: cd_atapi.c,v 1.4 2005/04/16 16:41:46 krw Exp $	*/
 /*	$NetBSD: cd_atapi.c,v 1.10 1998/08/31 22:28:06 cgd Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ cd_atapibus_setchan(cd, p0, p1, p2, p3, flags)
 	int error;
 
 	if ((error = atapi_mode_sense(cd->sc_link, ATAPI_AUDIO_PAGE,
-	    (struct atapi_mode_header *)&data, AUDIOPAGESIZE, flags,
+	    (struct scsi_mode_header_big *)&data, AUDIOPAGESIZE, flags,
 	    CDRETRIES, 20000)) != 0)
 		return (error);
 	data.pages.audio.port[LEFT_PORT].channels = p0;
@@ -102,7 +102,7 @@ cd_atapibus_setchan(cd, p0, p1, p2, p3, flags)
 	data.pages.audio.port[2].channels = p2;
 	data.pages.audio.port[3].channels = p3;
 	return (atapi_mode_select(cd->sc_link,
-	    (struct atapi_mode_header *)&data, AUDIOPAGESIZE, flags,
+	    (struct scsi_mode_header_big *)&data, AUDIOPAGESIZE, flags,
 	    CDRETRIES, 20000));
 }
 
@@ -116,7 +116,7 @@ cd_atapibus_getvol(cd, arg, flags)
 	int error;
 
 	if ((error = atapi_mode_sense(cd->sc_link, ATAPI_AUDIO_PAGE,
-	    (struct atapi_mode_header *)&data, AUDIOPAGESIZE, flags,
+	    (struct scsi_mode_header_big *)&data, AUDIOPAGESIZE, flags,
 	    CDRETRIES, 20000)) != 0)
 		return (error);
 	arg->vol[0] = data.pages.audio.port[0].volume;
@@ -136,11 +136,11 @@ cd_atapibus_setvol(cd, arg, flags)
 	int error;
 
 	if ((error = atapi_mode_sense(cd->sc_link, ATAPI_AUDIO_PAGE,
-	    (struct atapi_mode_header *)&data, AUDIOPAGESIZE, flags,
+	    (struct scsi_mode_header_big *)&data, AUDIOPAGESIZE, flags,
 	    CDRETRIES, 20000)) != 0)
 		return (error);
 	if ((error = atapi_mode_sense(cd->sc_link, ATAPI_AUDIO_PAGE_MASK,
-	    (struct atapi_mode_header *)&mask, AUDIOPAGESIZE, flags,
+	    (struct scsi_mode_header_big *)&mask, AUDIOPAGESIZE, flags,
 	    CDRETRIES, 20000)) != 0)
 		return (error);
 
@@ -154,7 +154,7 @@ cd_atapibus_setvol(cd, arg, flags)
 	    mask.pages.audio.port[3].volume;
 
 	return (atapi_mode_select(cd->sc_link,
-	    (struct atapi_mode_header *)&data, AUDIOPAGESIZE,
+	    (struct scsi_mode_header_big *)&data, AUDIOPAGESIZE,
 	    flags, CDRETRIES, 20000));
 }
 

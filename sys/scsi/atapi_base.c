@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapi_base.c,v 1.2 2004/05/09 14:08:11 krw Exp $	*/
+/*	$OpenBSD: atapi_base.c,v 1.3 2005/04/16 16:41:46 krw Exp $	*/
 /*	$NetBSD: atapi_base.c,v 1.12 1999/06/25 18:58:54 thorpej Exp $	*/
 
 /*-
@@ -55,19 +55,19 @@
 int
 atapi_mode_select(l, data, len, flags, retries, timeout)
 	struct scsi_link *l;
-	struct atapi_mode_header *data;
+	struct scsi_mode_header_big *data;
 	int len, flags, retries, timeout;
 {
-	struct atapi_mode_select scsi_cmd;
+	struct scsi_mode_select_big scsi_cmd;
 	int error;
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = ATAPI_MODE_SELECT;
-	scsi_cmd.byte2 = AMS_PF;
+	scsi_cmd.opcode = MODE_SELECT_BIG;
+	scsi_cmd.byte2 = SMS_PF;
 	_lto2b(len, scsi_cmd.length);
 
 	/* length is reserved when doing mode select; zero it */
-	_lto2l(0, data->length);
+	_lto2l(0, data->data_length);
 
 	error = scsi_scsi_cmd(l, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), (void *)data, len, retries, timeout, NULL,
@@ -80,13 +80,13 @@ int
 atapi_mode_sense(l, page, data, len, flags, retries, timeout)
 	struct scsi_link *l;
 	int page, len, flags, retries, timeout;
-	struct atapi_mode_header *data;
+	struct scsi_mode_header_big *data;
 {
-	struct atapi_mode_sense scsi_cmd;
+	struct scsi_mode_sense_big scsi_cmd;
 	int error;
 
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = ATAPI_MODE_SENSE;
+	scsi_cmd.opcode = MODE_SENSE_BIG;
 	scsi_cmd.page = page;
 	_lto2b(len, scsi_cmd.length);
 

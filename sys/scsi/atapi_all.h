@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapi_all.h,v 1.2 2002/03/14 01:27:13 millert Exp $	*/
+/*	$OpenBSD: atapi_all.h,v 1.3 2005/04/16 16:41:46 krw Exp $	*/
 /*	$NetBSD: atapi_all.h,v 1.3 1998/02/13 08:28:16 enami Exp $	*/
 
 /*
@@ -32,46 +32,7 @@
 
 struct scsi_link;
 
-#define ATAPI_MODE_SELECT	0x55
-struct atapi_mode_select {
-	u_int8_t opcode;
-	u_int8_t byte2;
-#define AMS_SP  0x01			/* save pages */
-#define AMS_PF  0x10			/* must be set in byte2 */
-	u_int8_t reserved1[5];
-	u_int8_t length[2];
-	u_int8_t reserved2[3];
-};
-
-#define ATAPI_MODE_SENSE	0x5a
-struct atapi_mode_sense {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t page;
-	u_int8_t reserved1[4];
-	u_int8_t length[2];
-	u_int8_t reserved2[3];
-};
-
-struct atapi_mode_header {
-	u_int8_t length[2];
-	u_int8_t medium;
-#define MDT_UNKNOWN	0x00
-#define MDT_DATA_120	0x01
-#define MDT_AUDIO_120	0x02
-#define MDT_COMB_120	0x03
-#define MDT_PHOTO_120	0x04
-#define MDT_DATA_80	0x05
-#define MDT_AUDIO_80	0x06
-#define MDT_COMB_80	0x07
-#define MDT_PHOTO_80	0x08
-#define MDT_NO_DISC	0x70
-#define MDT_DOOR_OPEN	0x71
-#define MDT_FMT_ERROR	0x72
-	u_int8_t reserved[5];
-};
-
 int	atapi_mode_select(struct scsi_link *,
-	    struct atapi_mode_header *, int, int, int, int);
+	    struct scsi_mode_header_big *, int, int, int, int);
 int	atapi_mode_sense(struct scsi_link *, int,
-	    struct atapi_mode_header *, int, int, int, int);
+	    struct scsi_mode_header_big *, int, int, int, int);

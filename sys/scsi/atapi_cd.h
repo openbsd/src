@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapi_cd.h,v 1.1 1999/07/20 06:21:59 csapuntz Exp $	*/
+/*	$OpenBSD: atapi_cd.h,v 1.2 2005/04/16 16:41:46 krw Exp $	*/
 /*	$NetBSD: atapi_cd.h,v 1.9 1998/07/13 16:50:56 thorpej Exp $	*/
 
 /*
@@ -110,13 +110,13 @@ union atapi_cd_pages {
 };
 
 struct atapi_cd_mode_data {
-	struct atapi_mode_header header;
+	struct scsi_mode_header_big header;
 	union atapi_cd_pages pages;
 };
 
 #define AUDIOPAGESIZE \
-	(sizeof(struct atapi_mode_header) + sizeof(struct cd_audio_page))
+	(sizeof(struct scsi_mode_header_big) + sizeof(struct cd_audio_page))
 #define CDROMPAGESIZE \
-	(sizeof(struct atapi_mode_header) + sizeof(struct atapi_cdrom_page))
+	(sizeof(struct scsi_mode_header_big) + sizeof(struct atapi_cdrom_page))
 #define CAPPAGESIZE \
-	(sizeof(struct atapi_mode_header) + sizeof(struct atapi_cap_page))
+	(sizeof(struct scsi_mode_header_big) + sizeof(struct atapi_cap_page))
