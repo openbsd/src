@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.19 2003/10/11 01:43:45 tedu Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.20 2005/04/16 17:37:25 deraadt Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass2.c,v 1.19 2003/10/11 01:43:45 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: pass2.c,v 1.20 2005/04/16 17:37:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,15 +63,19 @@ static int info_pos;
 static int
 pass2_info1(char *buf, int buflen)
 {
-	return snprintf(buf, buflen, "phase 2, directory %d/%d",
-		info_pos, info_max);
+	if (snprintf(buf, buflen, "phase 2, directory %d/%d",
+	    info_pos, info_max) > 0)
+		return (strlen(buf));
+	return (0);
 }
 
 static int
 pass2_info2(char *buf, int buflen)
 {
-	return snprintf(buf, buflen, "phase 2, parent directory %d/%d",
-		info_pos, info_max);
+	if (snprintf(buf, buflen, "phase 2, parent directory %d/%d",
+	    info_pos, info_max) > 0)
+		return (strlen(buf));
+	return (0);
 }
 
 void
