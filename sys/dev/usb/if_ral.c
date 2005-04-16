@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.26 2005/04/16 08:26:01 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.27 2005/04/16 08:27:41 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1202,8 +1202,10 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RAL_TX_TIMEOUT, ural_txeof);
 
 	error = usbd_transfer(data->xfer);
-	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS)
+	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS) {
+		m_freem(m0);
 		return error;
+	}
 
 	sc->tx_queued++;
 
@@ -1289,8 +1291,10 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	    USBD_FORCE_SHORT_XFER | USBD_NO_COPY, RAL_TX_TIMEOUT, ural_txeof);
 
 	error = usbd_transfer(data->xfer);
-	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS)
+	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS) {
+		m_freem(m0);
 		return error;
+	}
 
 	sc->tx_queued++;
 
