@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.33 2005/03/13 02:54:04 pascoe Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.34 2005/04/16 18:40:55 deraadt Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -302,7 +302,14 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 int
 usbd_printBCD(char *cp, size_t len, int bcd)
 {
-	return (snprintf(cp, len, "%x.%02x", bcd >> 8, bcd & 0xff));
+	int l;
+
+	l = snprintf(cp, len, "%x.%02x", bcd >> 8, bcd & 0xff);
+	if (l == -1 || len == 0)
+		return (0);
+	if (l >= len)
+		return len - 1;
+	return (l);
 }
 
 void
