@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.93 2005/04/15 08:12:53 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.94 2005/04/16 00:01:17 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -579,14 +579,17 @@ To run with verbose debugging enabled, instead start with:
 .Dl # /sbin/isakmpd -d -DA=99
 .El
 .Sh FILES
-.Bl -tag -width "/etc/isakmpd/isakmpd.confXX" -compact
-.It Pa /usr/share/ipsec/rc.vpn
-Sample VPN configuration file.
+.Bl -tag -width "/etc/isakmpd/isakmpd.policyXX" -compact
 .It Pa /etc/isakmpd/isakmpd.conf
 .Xr isakmpd 8
 configuration file.
+.It Pa /etc/isakmpd/isakmpd.policy
+.Xr isakmpd 8
+policy file.
 .It Pa /etc/pf.conf
 Firewall configuration file.
+.It Pa /usr/share/ipsec/rc.vpn
+Sample VPN configuration file.
 .El
 .Sh SEE ALSO
 .Xr openssl 1 ,
