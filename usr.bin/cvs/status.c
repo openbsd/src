@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.17 2005/04/16 20:26:05 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.18 2005/04/16 20:31:18 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -168,6 +168,7 @@ cvs_status_file(CVSFILE *cfp, void *arg)
 int
 cvs_status_local(CVSFILE *cfp, void *arg)
 {
+	int l;
 	char *repo, buf[MAXNAMLEN], fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
 	struct cvs_ent *entp;
@@ -187,8 +188,15 @@ cvs_status_local(CVSFILE *cfp, void *arg)
 		return (0);
 	}
 
-	snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
+	l = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
 	    root->cr_dir, repo, CVS_FILE_NAME(cfp), RCS_FILE_EXT);
+	if (l == -1 || l >= (int)sizeof(rcspath)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", rcspath);
+
+		cvs_ent_free(entp);
+		return (-1);
+	}
 
 	rf = rcs_open(rcspath, RCS_READ);
 	if (rf == NULL) {
