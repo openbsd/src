@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxreg.c,v 1.11 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: auxreg.c,v 1.12 2005/04/17 18:47:50 miod Exp $	*/
 /*	$NetBSD: auxreg.c,v 1.21 1997/05/24 20:15:59 pk Exp $ */
 
 /*
@@ -46,6 +46,8 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/timeout.h>
+
+#include <uvm/uvm_param.h>
 
 #include <machine/autoconf.h>
 

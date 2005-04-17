@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.63 2005/04/17 18:44:19 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.64 2005/04/17 18:47:50 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4156,8 +4156,8 @@ ENTRY(copyinstr)
 	beq,a	Lcstoolong0		! yes, return ENAMETOOLONG
 	 sethi	%hi(_C_LABEL(cpcb)), %o4
 
-	set	KERNBASE, %o4
-	cmp	%o0, %o4		! fromaddr < KERNBASE?
+	set	VM_MIN_KERNEL_ADDRESS, %o4
+	cmp	%o0, %o4		! fromaddr < VM_MIN_KERNEL_ADDRESS?
 	blu	Lcsdocopyi		! yes, go do it
 	 sethi	%hi(_C_LABEL(cpcb)), %o4		! (first instr of copy)
 
@@ -4177,8 +4177,8 @@ ENTRY(copyoutstr)
 	beq,a	Lcstoolong0		! yes, return ENAMETOOLONG
 	 sethi	%hi(_C_LABEL(cpcb)), %o4
 
-	set	KERNBASE, %o4
-	cmp	%o1, %o4		! toaddr < KERNBASE?
+	set	VM_MIN_KERNEL_ADDRESS, %o4
+	cmp	%o1, %o4		! toaddr < VM_MIN_KERNEL_ADDRESS?
 	blu	Lcsdocopyo		! yes, go do it
 	 sethi	%hi(_C_LABEL(cpcb)), %o4		! (first instr of copy)
 
@@ -4287,8 +4287,8 @@ ENTRY(copystr)
  * Copy specified amount of data from user space into the kernel.
  */
 ENTRY(copyin)
-	set	KERNBASE, %o3
-	cmp	%o0, %o3		! src < KERNBASE?
+	set	VM_MIN_KERNEL_ADDRESS, %o3
+	cmp	%o0, %o3		! src < VM_MIN_KERNEL_ADDRESS?
 	blu,a	Ldocopy			! yes, can try it
 	 sethi	%hi(_C_LABEL(cpcb)), %o3
 
@@ -4304,8 +4304,8 @@ ENTRY(copyin)
  * rather than the `src' addresses.
  */
 ENTRY(copyout)
-	set	KERNBASE, %o3
-	cmp	%o1, %o3		! dst < KERNBASE?
+	set	VM_MIN_KERNEL_ADDRESS, %o3
+	cmp	%o1, %o3		! dst < VM_MIN_KERNEL_ADDRESS?
 	blu,a	Ldocopy
 	 sethi	%hi(_C_LABEL(cpcb)), %o3
 

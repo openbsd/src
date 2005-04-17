@@ -1,4 +1,4 @@
-/*	$OpenBSD: vaddrs.h,v 1.6 2003/04/23 19:34:07 miod Exp $	*/
+/*	$OpenBSD: vaddrs.h,v 1.7 2005/04/17 18:47:51 miod Exp $	*/
 /*	$NetBSD: vaddrs.h,v 1.8 1997/03/10 23:54:41 pk Exp $ */
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #ifndef IODEV_0
-#define	IODEV_0	0xfe000000	/* must match VM_MAX_KERNEL_ADDRESS */
+#define	IODEV_0		IOSPACE_BASE
 
 #define _MAXNBPG	8192	/* fixed VAs, independent of actual NBPG */
 #define _MAXNCPU	4	/* fixed VA allocation allows 4 CPUs */
@@ -88,7 +88,7 @@
 #define PI_INTR_VA	(    MSGBUF_VA + _MAXNBPG)		/* [4m] */
 #define SI_INTR_VA	(   PI_INTR_VA + _MAXNBPG*_MAXNCPU)	/* [4m] */
 #define	IODEV_BASE	(   SI_INTR_VA + _MAXNBPG)
-#define	IODEV_END	0xff000000		/* 16 MB of iospace */
+#define	IODEV_END	(IOSPACE_BASE + IOSPACE_LEN)
 
 #define	DVMA_BASE	0xfff00000
 #define	DVMA_END	0xfffc0000

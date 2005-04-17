@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.142 2005/04/03 10:36:12 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.143 2005/04/17 18:47:50 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -1018,17 +1018,17 @@ mmu_setup4m_L1(regtblptd, kpmap)
 	/*
 	 * Here we scan the region table to copy any entries which appear.
 	 * We are only concerned with regions in kernel space and above
-	 * (i.e. regions VA_VREG(KERNBASE)+1 to 0xff). We ignore the first
-	 * region (at VA_VREG(KERNBASE)), since that is the 16MB L1 mapping
-	 * that the ROM used to map the kernel in initially. Later, we will
-	 * rebuild a new L3 mapping for the kernel and install it before
-	 * switching to the new pagetables.
+	 * (i.e. regions VA_VREG(VM_MIN_KERNEL_ADDRESS)+1 to 0xff). We ignore
+	 * the first region (at VA_VREG(VM_MIN_KERNEL_ADDRESS)), since that
+	 * is the 16MB L1 mapping that the ROM used to map the kernel in
+	 * initially. Later, we will rebuild a new L3 mapping for the kernel
+	 * and install it before switching to the new pagetables.
 	 */
 	regtblrover =
 		((regtblptd & ~SRMMU_TETYPE) << SRMMU_PPNPASHIFT) +
-		(VA_VREG(KERNBASE)+1) * sizeof(long);	/* kernel only */
+		(VA_VREG(VM_MIN_KERNEL_ADDRESS)+1) * sizeof(long);	/* kernel only */
 
-	for (i = VA_VREG(KERNBASE) + 1; i < SRMMU_L1SIZE;
+	for (i = VA_VREG(VM_MIN_KERNEL_ADDRESS) + 1; i < SRMMU_L1SIZE;
 	     i++, regtblrover += sizeof(long)) {
 
 		/* The region we're dealing with */
@@ -2816,9 +2816,9 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 		 */
 		lastpage = NPTESG;
 
-	p = (caddr_t)KERNBASE;		/* first va */
-	vs = VA_VSEG(KERNBASE);		/* first virtual segment */
-	vr = VA_VREG(KERNBASE);		/* first virtual region */
+	p = (caddr_t)VM_MIN_KERNEL_ADDRESS;	/* first va */
+	vs = VA_VSEG(VM_MIN_KERNEL_ADDRESS);	/* first virtual segment */
+	vr = VA_VREG(VM_MIN_KERNEL_ADDRESS);	/* first virtual region */
 	rp = &pmap_kernel()->pm_regmap[vr];
 
 	for (rcookie = 0, scookie = 0;;) {
@@ -3121,12 +3121,12 @@ pmap_bootstrap4m(void)
 		 * Entering new region; install & build segtbl
 		 */
 
-		rp = &pmap_kernel()->pm_regmap[reg + VA_VREG(KERNBASE)];
+		rp = &pmap_kernel()->pm_regmap[reg + VA_VREG(VM_MIN_KERNEL_ADDRESS)];
 
 		kphyssegtbl = (caddr_t)
 		    &kernel_segtable_store[reg * SRMMU_L2SIZE];
 
-		setpgt4m(&pmap_kernel()->pm_reg_ptps[reg + VA_VREG(KERNBASE)],
+		setpgt4m(&pmap_kernel()->pm_reg_ptps[reg + VA_VREG(VM_MIN_KERNEL_ADDRESS)],
 		    (VA2PA(kphyssegtbl) >> SRMMU_PPNPASHIFT) | SRMMU_TEPTD);
 
 		rp->rg_seg_ptps = (int *)kphyssegtbl;
@@ -3191,17 +3191,17 @@ pmap_bootstrap4m(void)
 	/*
 	 * Now map the kernel into our new set of page tables, then
 	 * (finally) switch over to our running page tables.
-	 * We map from KERNBASE to p into context 0's page tables (and
-	 * the kernel pmap).
+	 * We map from VM_MIN_KERNEL_ADDRESS to p into context 0's
+	 * page tables (and the kernel pmap).
 	 */
 #ifdef DEBUG			/* Sanity checks */
 	if ((u_int)p % NBPG != 0)
 		panic("pmap_bootstrap4m: p misaligned?!?");
-	if (KERNBASE % NBPRG != 0)
-		panic("pmap_bootstrap4m: KERNBASE not region-aligned");
+	if (VM_MIN_KERNEL_ADDRESS % NBPRG != 0)
+		panic("pmap_bootstrap4m: VM_MIN_KERNEL_ADDRESS not region-aligned");
 #endif
 
-	for (q = (caddr_t) KERNBASE; q < p; q += NBPG) {
+	for (q = (caddr_t) VM_MIN_KERNEL_ADDRESS; q < p; q += NBPG) {
 		struct regmap *rp;
 		struct segmap *sp;
 		int pte;
@@ -3213,7 +3213,7 @@ pmap_bootstrap4m(void)
 		sp = &rp->rg_segmap[VA_VSEG(q)];
 		sp->sg_npte++;
 
-		pte = ((int)q - KERNBASE) >> SRMMU_PPNPASHIFT;
+		pte = ((int)q - VM_MIN_KERNEL_ADDRESS) >> SRMMU_PPNPASHIFT;
 		pte |= PPROT_N_RX | SRMMU_TEPTE;
 
 		if ((cpuinfo.flags & CPUFLG_CACHEPAGETABLES) != 0 ||
@@ -3482,8 +3482,8 @@ pmap_create()
 
 		/* Copy kernel regions */
 		for (i = 0; i < NKREG; i++) {
-			setpgt4m(&pm->pm_reg_ptps[VA_VREG(KERNBASE) + i],
-				 cpuinfo.L1_ptps[VA_VREG(KERNBASE) + i]);
+			setpgt4m(&pm->pm_reg_ptps[VA_VREG(VM_MIN_KERNEL_ADDRESS) + i],
+				 cpuinfo.L1_ptps[VA_VREG(VM_MIN_KERNEL_ADDRESS) + i]);
 		}
 	}
 #endif
@@ -5337,8 +5337,8 @@ pmap_enk4m(pm, va, prot, flags, pv, pteproto)
 	int wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DIAGNOSTIC
-	if (va < KERNBASE)
-		panic("pmap_enk4m: can't enter va 0x%lx below KERNBASE", va);
+	if (va < VM_MIN_KERNEL_ADDRESS)
+		panic("pmap_enk4m: can't enter va 0x%lx below VM_MIN_KERNEL_ADDRESS", va);
 #endif
 	rp = &pm->pm_regmap[VA_VREG(va)];
 	sp = &rp->rg_segmap[VA_VSEG(va)];
@@ -5416,8 +5416,8 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 	int wired = (flags & PMAP_WIRED) != 0;
 
 #ifdef DEBUG
-	if (KERNBASE < va)
-		panic("pmap_enu4m: can't enter va 0x%lx above KERNBASE", va);
+	if (VM_MIN_KERNEL_ADDRESS < va)
+		panic("pmap_enu4m: can't enter va 0x%lx above VM_MIN_KERNEL_ADDRESS", va);
 #endif
 
 	write_user_windows();		/* XXX conservative */
@@ -6258,12 +6258,12 @@ pm_check_u(s, pm)
 					    SRMMU_PPNPASHIFT) | SRMMU_TEPTD))
 		    panic("%s: CHK(vr %d): SRMMU segtbl not installed",s,vr);
 #endif
-		if ((unsigned int)rp < KERNBASE)
+		if ((unsigned int)rp < VM_MIN_KERNEL_ADDRESS)
 			panic("%s: rp=%p", s, rp);
 		n = 0;
 		for (vs = 0; vs < NSEGRG; vs++) {
 			sp = &rp->rg_segmap[vs];
-			if ((unsigned int)sp < KERNBASE)
+			if ((unsigned int)sp < VM_MIN_KERNEL_ADDRESS)
 				panic("%s: sp=%p", s, sp);
 			if (sp->sg_npte != 0) {
 				n++;
@@ -6572,8 +6572,8 @@ debug_pagetables()
 	printf("Testing region 0xff: ");
 	test_region(0xff,0,16*1024*1024);
 #if 0	/* XXX avail_start */
-	printf("Testing kernel region 0x%x: ", VA_VREG(KERNBASE));
-	test_region(VA_VREG(KERNBASE), 4096, avail_start);
+	printf("Testing kernel region 0x%x: ", VA_VREG(VM_MIN_KERNEL_ADDRESS));
+	test_region(VA_VREG(VM_MIN_KERNEL_ADDRESS), 4096, avail_start);
 #endif
 	cngetc();
 
@@ -6621,7 +6621,7 @@ VA2PAsw(ctx, addr, pte)
 		return 0;
 	}
 	/* L1 */
-	curtbl = ((curpte & ~0x3) << 4) | KERNBASE; /* correct for krn*/
+	curtbl = ((curpte & ~0x3) << 4) | VM_MIN_KERNEL_ADDRESS; /* correct for krn*/
 	*pte = curpte = curtbl[VA_VREG(addr)];
 #ifdef EXTREME_EXTREME_DEBUG
 	printf("L1 table at 0x%x.\nGot L1 pte 0x%x\n",curtbl,curpte);
@@ -6635,7 +6635,7 @@ VA2PAsw(ctx, addr, pte)
 		return 0;
 	}
 	/* L2 */
-	curtbl = ((curpte & ~0x3) << 4) | KERNBASE; /* correct for krn*/
+	curtbl = ((curpte & ~0x3) << 4) | VM_MIN_KERNEL_ADDRESS; /* correct for krn*/
 	*pte = curpte = curtbl[VA_VSEG(addr)];
 #ifdef EXTREME_EXTREME_DEBUG
 	printf("L2 table at 0x%x.\nGot L2 pte 0x%x\n",curtbl,curpte);
@@ -6649,7 +6649,7 @@ VA2PAsw(ctx, addr, pte)
 		return 0;
 	}
 	/* L3 */
-	curtbl = ((curpte & ~0x3) << 4) | KERNBASE; /* correct for krn*/
+	curtbl = ((curpte & ~0x3) << 4) | VM_MIN_KERNEL_ADDRESS; /* correct for krn*/
 	*pte = curpte = curtbl[VA_VPG(addr)];
 #ifdef EXTREME_EXTREME_DEBUG
 	printf("L3 table at 0x%x.\nGot L3 pte 0x%x\n",curtbl,curpte);
@@ -6690,7 +6690,7 @@ void test_region(reg, start, stop)
 				printf("Mismatch at address 0x%x.\n",addr);
 				if (cngetc()=='q') break;
 			}
-			if (reg == VA_VREG(KERNBASE))
+			if (reg == VA_VREG(VM_MIN_KERNEL_ADDRESS))
 				/* kernel permissions are different */
 				continue;
 			if ((pte&SRMMU_PROT_MASK)!=(ptesw&SRMMU_PROT_MASK)) {

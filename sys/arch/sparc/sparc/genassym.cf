@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.18 2005/04/16 15:07:29 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.19 2005/04/17 18:47:50 miod Exp $
 #	$NetBSD: genassym.cf,v 1.2 1997/06/28 19:59:04 pk Exp $
 
 #
@@ -70,10 +70,11 @@ include <sparc/dev/fdreg.h>
 include <sparc/dev/fdvar.h>
 
 # general constants
-export	BSD
 export	SUN4_PGSHIFT
 export	SUN4CM_PGSHIFT
 export	USRSTACK
+export	IOSPACE_BASE
+export	VM_MIN_KERNEL_ADDRESS
 
 # proc fields and values
 struct	proc

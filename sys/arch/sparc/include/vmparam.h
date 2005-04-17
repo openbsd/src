@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.30 2005/04/11 15:13:01 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.31 2005/04/17 18:47:48 miod Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
  * is the top (end) of the user stack.
  */
 #define	USRTEXT		0x2000			/* Start of user text */
-#define	USRSTACK	KERNBASE		/* Start of user stack */
+#define	USRSTACK	VM_MIN_KERNEL_ADDRESS	/* Start of user stack */
 
 /*
  * Virtual memory related constants, all in bytes
@@ -90,10 +90,13 @@
  * tread with care.
  */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAX_ADDRESS		((vaddr_t)KERNBASE)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)KERNBASE)
+#define VM_MAX_ADDRESS		((vaddr_t)VM_MIN_KERNEL_ADDRESS)
+#define VM_MAXUSER_ADDRESS	((vaddr_t)VM_MIN_KERNEL_ADDRESS)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xfe000000)
+
+#define	IOSPACE_BASE		VM_MAX_KERNEL_ADDRESS
+#define	IOSPACE_LEN		0x01000000		/* 16 MB of iospace */
 
 #define VM_PHYSSEG_MAX		32	/* we only have one "hole" */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
