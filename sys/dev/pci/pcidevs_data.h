@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.857 2005/04/16 17:15:03 marco Exp 
+ *	OpenBSD: pcidevs,v 1.858 2005/04/17 06:44:03 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1519,12 +1519,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon 9800 XT",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R350,
+	    "Radeon 9800 Pro",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RV350,
 	    "Radeon Mobility M10 NP",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R300_S,
 	    "Radeon 9500/9700 Sec",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_R350_2,
+	    "Radeon 9800 Pro Sec",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE128_PD,
@@ -1676,6 +1684,10 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280,
+	    "Radeon 9200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_B,
 	    "Radeon 9200",
 	},
 	{
@@ -6097,6 +6109,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEFX5700LE,
 	    "GeForce FX 5700LE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEFXGO5700,
+	    "GeForce FX Go 5700",
 	},
 	{
 	    PCI_VENDOR_OAKTECH, PCI_PRODUCT_OAKTECH_OTI1007,

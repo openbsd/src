@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.857 2005/04/16 17:15:03 marco Exp 
+ *	OpenBSD: pcidevs,v 1.858 2005/04/17 06:44:03 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -724,8 +724,10 @@
 #define	PCI_PRODUCT_ATI_RAGE128_ML	0x4d4c		/* Rage 128 Mobility ML */
 #define	PCI_PRODUCT_ATI_R300	0x4e44		/* Radeon 9500/9700 */
 #define	PCI_PRODUCT_ATI_RADEON_9800XT	0x4e4a		/* Radeon 9800 XT */
+#define	PCI_PRODUCT_ATI_R350	0x4e48		/* Radeon 9800 Pro */
 #define	PCI_PRODUCT_ATI_RV350	0x4e50		/* Radeon Mobility M10 NP */
 #define	PCI_PRODUCT_ATI_R300_S	0x4e64		/* Radeon 9500/9700 Sec */
+#define	PCI_PRODUCT_ATI_R350_2	0x4e68		/* Radeon 9800 Pro Sec */
 #define	PCI_PRODUCT_ATI_RAGE128_PD	0x5044		/* Rage 128 Pro PD */
 #define	PCI_PRODUCT_ATI_RAGE_FURY	0x5046		/* Rage Fury */
 #define	PCI_PRODUCT_ATI_RAGE128_PK	0x5052		/* Rage 128 PK */
@@ -764,6 +766,7 @@
 #define	PCI_PRODUCT_ATI_RADEON_RV280_2	0x5941		/* Radeon 9200 2nd */
 #define	PCI_PRODUCT_ATI_RADEON_RV280_PRO	0x5960		/* Radeon 9200 PRO */
 #define	PCI_PRODUCT_ATI_RADEON_RV280	0x5961		/* Radeon 9200 */
+#define	PCI_PRODUCT_ATI_RADEON_RV280_B	0x5962		/* Radeon 9200 */
 #define	PCI_PRODUCT_ATI_RADEON_RV280_SE_2	0x5964		/* Radeon 9200 SE 2nd */
 #define	PCI_PRODUCT_ATI_RADEON_X300	0x5b60		/* Radeon X300 */
 #define	PCI_PRODUCT_ATI_RADEON_X300_2	0x5b70		/* Radeon X300 Sec */
@@ -2111,6 +2114,7 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCEFXGO5200	0x0324		/* GeForce FX Go 5200 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCEFXGO5200_2	0x0329		/* GeForce FX Go 5200 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCEFX5700LE	0x0343		/* GeForce FX 5700LE */
+#define	PCI_PRODUCT_NVIDIA_GEFORCEFXGO5700	0x0348		/* GeForce FX Go 5700 */
 
 /* Oak Technologies products */
 #define	PCI_PRODUCT_OAKTECH_OTI1007	0x0107		/* OTI107 */
