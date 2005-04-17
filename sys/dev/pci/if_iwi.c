@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.35 2005/04/17 13:41:46 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.36 2005/04/17 13:49:09 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -254,6 +254,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(", address %s\n", ether_sprintf(ic->ic_myaddr));
 
+#if 0
 	if (PCI_PRODUCT(pa->pa_id) >= PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1) {
 		/* set supported .11a rates */
 		ic->ic_sup_rates[IEEE80211_MODE_11A] = iwi_rateset_11a;
@@ -270,6 +271,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 			ic->ic_channels[i].ic_flags = IEEE80211_CHAN_A;
 		}
 	}
+#endif
 
 	/* set supported .11b and .11g rates */
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = iwi_rateset_11b;
