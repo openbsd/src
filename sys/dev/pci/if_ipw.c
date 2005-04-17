@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.46 2005/04/04 16:32:42 damien Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.47 2005/04/17 13:41:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -1383,20 +1383,13 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifa = (struct ifaddr *) data;
+		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
-		case AF_INET:
+		if (ifa->ifa_addr->sa_family == AF_INET)
 			arp_ifinit(&ic->ic_ac, ifa);
-			ipw_init(ifp);
-			break;
 #endif
-		default:
-			ipw_init(ifp);
-		}
-		break;
-
+		/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING))
