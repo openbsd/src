@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.37 2004/11/07 20:39:31 marius Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.38 2005/04/17 22:11:34 millert Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -1206,7 +1206,7 @@ systrace_io(struct str_process *strp, struct systrace_io *io)
 	iov.iov_len = io->strio_len;
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
-	uio.uio_offset = (off_t)(long)io->strio_offs;
+	uio.uio_offset = (off_t)(u_long)io->strio_offs;
 	uio.uio_resid = io->strio_len;
 	uio.uio_segflg = UIO_USERSPACE;
 	uio.uio_procp = p;
