@@ -1,4 +1,4 @@
-.\"	$OpenBSD: du.1,v 1.18 2003/06/03 02:56:07 millert Exp $
+.\"	$OpenBSD: du.1,v 1.19 2005/04/17 12:27:23 jmc Exp $
 .\"	$NetBSD: du.1,v 1.6 1996/10/18 07:20:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -38,9 +38,9 @@
 .Nd display disk usage statistics
 .Sh SYNOPSIS
 .Nm du
-.Op Fl H | Fl L | Fl P
-.Op Fl a | Fl s
+.Op Fl a | s
 .Op Fl chkrx
+.Op Fl H | L | P
 .Op Ar file ...
 .Sh DESCRIPTION
 The
@@ -57,15 +57,20 @@ the current directory is displayed.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl a
+Display an entry for each file in the file hierarchy.
+.It Fl c
+Display the grand total after all the arguments have been processed.
 .It Fl H
 Symbolic links on the command line are followed.
 (Symbolic links encountered in the tree traversal are not followed.)
-.It Fl L
-All symbolic links are followed.
-.It Fl P
-No symbolic links are followed.
-.It Fl a
-Display an entry for each file in the file hierarchy.
+.It Fl h
+Display numbers in a human readable form.
+Use unit suffixes: Byte, Kilobyte, Megabyte, Gigabyte, Terabyte in order to
+reduce the number of digits to four or less.
+This overrides the
+.Fl k
+option.
 .It Fl k
 By default,
 .Nm
@@ -77,23 +82,18 @@ If the
 flag is specified, the number displayed is the number of 1024-byte
 blocks.
 Partial numbers of blocks are rounded up.
-.It Fl c
-Display the grand total after all the arguments have been processed.
-.It Fl h
-Display numbers in a human readable form.
-Use unit suffixes: Byte, Kilobyte, Megabyte, Gigabyte, Terabyte in order to
-reduce the number of digits to four or less.
-This overrides the
-.Fl k
-option.
-.It Fl s
-Display only the grand total for the specified files.
+.It Fl L
+All symbolic links are followed.
+.It Fl P
+No symbolic links are followed.
 .It Fl r
 Generate messages about directories that cannot be read, files
 that cannot be opened, and so on.
 This is the default case.
 This option exists solely for conformance with
 .St -xpg4 .
+.It Fl s
+Display only the grand total for the specified files.
 .It Fl x
 File system mount points are not traversed.
 .El

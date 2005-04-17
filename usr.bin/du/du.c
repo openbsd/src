@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.17 2004/06/21 09:44:31 otto Exp $	*/
+/*	$OpenBSD: du.c,v 1.18 2005/04/17 12:27:23 jmc Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: du.c,v 1.17 2004/06/21 09:44:31 otto Exp $";
+static char rcsid[] = "$OpenBSD: du.c,v 1.18 2005/04/17 12:27:23 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -325,6 +325,6 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-		"usage: du [-H | -L | -P] [-a | -s] [-chkrx] [file ...]\n");
+		"usage: du [-a | -s] [-chkrx] [-H | -L | -P] [file ...]\n");
 	exit(1);
 }
