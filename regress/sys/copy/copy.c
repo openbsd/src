@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.c,v 1.1 2005/02/24 06:58:36 otto Exp $	*/
+/*	$OpenBSD: copy.c,v 1.2 2005/04/17 07:37:10 tedu Exp $	*/
 
 /* Written by Ted Unangst 2004 Public Domain */
 
@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <strings.h>
+#include <errno.h>
 
 #include <stdio.h>
 #include <err.h>
@@ -66,9 +67,9 @@ main(int argc, char **argv)
  	/* copyout */
  	if (statfs("/", goodbuf))
  		fail("copyout failed on a good buf\n");
- 	if (!statfs("/", 0))
+ 	if (!statfs("/", 0) || errno != EFAULT)
  		fail("copyout didn't fail on 0 buf\n");
- 	if (!statfs("/", badbuf))
+ 	if (!statfs("/", badbuf) || errno != EFAULT)
  		fail("copyout didn't fail on bad buf\n");
 
  	/* copyoutstr */
@@ -91,9 +92,9 @@ main(int argc, char **argv)
  	/* copyinstr */
  	if (statfs("/", goodbuf))
  		fail("copyinstr failed on a good buf\n");
- 	if (!statfs(0, goodbuf))
+ 	if (!statfs(0, goodbuf) || errno != EFAULT)
  		fail("copyinstr didn't fail on 0 buf\n");
- 	if (!statfs(badbuf, goodbuf))
+ 	if (!statfs(badbuf, goodbuf) || errno != EFAULT)
  		fail("copyinstr didn't fail on bad buf\n");
 
 	if (failure)
