@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_debug.c,v 1.2 2004/06/22 18:57:18 marco Exp $	*/
+/*	$OpenBSD: mpt_debug.c,v 1.3 2005/04/17 18:56:35 tom Exp $	*/
 /*	$NetBSD: mpt_debug.c,v 1.2 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -167,9 +167,9 @@ static const struct Error_Map IOC_SCSIStatus[] = {
 { SCSI_STATUS_COND_MET,			"Check Condition Met" },
 #endif
 { SCSI_BUSY,				"Busy" },
-{ SCSI_INTERM,				"Intermidiate Condition" },
+{ SCSI_INTERM,				"Intermediate Condition" },
 #if 0
-{ SCSI_STATUS_INTERMED_COND_MET,	"Intermidiate Condition Met" },
+{ SCSI_STATUS_INTERMED_COND_MET,	"Intermediate Condition Met" },
 #endif
 { SCSI_RESV_CONFLICT,			"Reservation Conflict" },
 #if 0
