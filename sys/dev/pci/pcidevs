@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.858 2005/04/17 06:44:03 jsg Exp $
+$OpenBSD: pcidevs,v 1.859 2005/04/17 07:46:01 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -254,6 +254,7 @@ vendor	ANTARES		0x1754	Antares Microsystems
 vendor	CAVIUM		0x177d	Cavium
 vendor	BELKIN2		0x1799	Belkin
 vendor	HAWKING		0x17b3	Hawking Technology
+vendor	INPROCOMM	0x17fe	INPROCOMM
 vendor	LANERGY		0x1812	Lanergy
 vendor	RALINK		0x1814	Ralink
 vendor	SYMPHONY2	0x1c1c	Symphony Labs
@@ -1280,6 +1281,10 @@ product INITIO INIC940		0x9400	INIC-940
 product INITIO INIC941		0x9401	INIC-941
 product INITIO INIC950		0x9500	INIC-950
 
+/* INPROCOMM products */
+product INPROCOMM IPN2120	0x2120	IPN2120
+product INPROCOMM IPN2220	0x2220	IPN2220
+
 /* Integrated Micro Solutions products */
 product IMS 8849		0x8849	8849
 
@@ -1610,6 +1615,9 @@ product INTERPHASE 5526		0x0004	5526 FibreChannel
 /* Intersil products */
 product INTERSIL ISL3872	0x3872	PRISM3
 product INTERSIL MINI_PCI_WLAN	0x3873	PRISM2.5
+product INTERSIL ISL3877	0x3877	Prism Indigo
+product INTERSIL ISL3886	0x3886	Prism Javelin/Xbow
+product INTERSIL ISL3890	0x3890	Prism GT/Duette
 
 /* Invertex */
 product INVERTEX AEON		0x0005	AEON
@@ -1735,6 +1743,8 @@ product MADGE COLLAGE155	0x1001	Collage 155 ATM
 product MARTINMARIETTA I740	0x00d1	i740 PCI
 
 /* Marvell products */
+product MARVELL 88W8310_1	0x1fa6	Libertas 88W8310
+product MARVELL 88W8310_2	0x1fa7	Libertas 88W8310
 product MARVELL SK_V2		0x4320	SKv2
 product MARVELL YUKON_1		0x4340	Yukon
 product MARVELL YUKON_2		0x4341	Yukon
