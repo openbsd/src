@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.857 2005/04/16 17:15:03 marco Exp $
+$OpenBSD: pcidevs,v 1.858 2005/04/17 06:44:03 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -719,8 +719,10 @@ product ATI RAGE128_MF		0x4d46	Rage 128 Mobility MF
 product ATI RAGE128_ML		0x4d4c	Rage 128 Mobility ML
 product ATI R300		0x4e44	Radeon 9500/9700
 product ATI RADEON_9800XT	0x4e4a	Radeon 9800 XT
+product ATI R350		0x4e48  Radeon 9800 Pro
 product ATI RV350		0x4e50	Radeon Mobility M10 NP
 product ATI R300_S		0x4e64	Radeon 9500/9700 Sec
+product ATI R350_2		0x4e68  Radeon 9800 Pro Sec
 product ATI RAGE128_PD		0x5044	Rage 128 Pro PD
 product ATI RAGE_FURY		0x5046	Rage Fury
 product ATI RAGE128_PK		0x5052	Rage 128 PK
@@ -759,6 +761,7 @@ product ATI RADEON_RV280_PRO_2	0x5940	Radeon 9200 PRO 2nd
 product ATI RADEON_RV280_2	0x5941	Radeon 9200 2nd
 product ATI RADEON_RV280_PRO	0x5960	Radeon 9200 PRO
 product ATI RADEON_RV280	0x5961	Radeon 9200
+product ATI RADEON_RV280_B	0x5962	Radeon 9200
 product ATI RADEON_RV280_SE_2	0x5964	Radeon 9200 SE 2nd
 product ATI RADEON_X300		0x5b60	Radeon X300
 product ATI RADEON_X300_2	0x5b70	Radeon X300 Sec
@@ -2106,6 +2109,7 @@ product NVIDIA GEFORCEFX5200	0x0322	GeForce FX 5200
 product NVIDIA GEFORCEFXGO5200	0x0324	GeForce FX Go 5200
 product NVIDIA GEFORCEFXGO5200_2	0x0329	GeForce FX Go 5200
 product NVIDIA GEFORCEFX5700LE	0x0343	GeForce FX 5700LE
+product NVIDIA GEFORCEFXGO5700	0x0348	GeForce FX Go 5700
 
 /* Oak Technologies products */
 product OAKTECH OTI1007		0x0107	OTI107
