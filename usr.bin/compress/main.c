@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.61 2005/04/17 16:07:16 hshoexer Exp $	*/
+/*	$OpenBSD: main.c,v 1.62 2005/04/17 16:17:39 deraadt Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.61 2005/04/17 16:07:16 hshoexer Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.62 2005/04/17 16:17:39 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -186,9 +186,8 @@ main(int argc, char *argv[])
 		    (p = strtok_r(NULL, " ", &last)), i++)
 			if (i < sizeof(nargv)/sizeof(nargv[1]) - argc - 1)
 				nargv[i] = p;
-			else {
+			else
 				errx(1, "GZIP is too long");
-			}
 		argc += i - 1;
 		while ((nargv[i++] = *argv++))
 			;
@@ -819,7 +818,7 @@ list_stats(const char *name, const struct compressor *method,
 			if (timestr[4] == ' ')
 				timestr[4] = '0';
 			printf("%-7.7s %08x %s ", method->name, info->crc,
-				timestr);
+			    timestr);
 		}
 		printf("%10lld    %10lld  %4.1f%%  %s\n",
 		    (long long)(info->total_in + info->hlen),
