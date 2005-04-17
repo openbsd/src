@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.48 2005/03/25 03:23:51 brad Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.49 2005/04/17 23:02:02 brad Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -88,7 +88,6 @@ LIST_HEAD(, ifvlan)	*vlan_tagh;
 
 void	vlan_start (struct ifnet *ifp);
 int	vlan_ioctl (struct ifnet *ifp, u_long cmd, caddr_t addr);
-int	vlan_setmulti (struct ifnet *ifp);
 int	vlan_unconfig (struct ifnet *ifp);
 int	vlan_config (struct ifvlan *, struct ifnet *, u_int16_t);
 void	vlanattach (int count);
@@ -139,8 +138,8 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 	ether_ifattach(ifp);
-
 	/* Now undo some of the damage... */
+	ifp->if_baudrate = 0;
 	ifp->if_type = IFT_8021_VLAN;
 	ifp->if_hdrlen = EVL_ENCAPLEN;
 
@@ -403,6 +402,7 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 		return EPROTONOSUPPORT;
 	if (ifv->ifv_p)
 		return EBUSY;
+
 	ifv->ifv_p = p;
 
 	if (p->if_capabilities & IFCAP_VLAN_MTU)
@@ -428,12 +428,6 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	 * participate in bridges of that type.
 	 */
 	ifv->ifv_if.if_type = p->if_type;
-
-	/*
-	 * Inherit baudrate from the parent.  An SNMP agent would use this
-	 * information.
-	 */
-	ifv->ifv_if.if_baudrate = p->if_baudrate;
 
 	/*
 	 * If the parent interface can do hardware-assisted
@@ -609,18 +603,23 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (vlr.vlr_parent[0] == '\0') {
 			s = splimp();
 			vlan_unconfig(ifp);
-			if_down(ifp);
-			ifp->if_flags &= ~(IFF_UP|IFF_RUNNING);
+			if (ifp->if_flags & IFF_UP)
+				if_down(ifp);
+			ifp->if_flags &= ~IFF_RUNNING;
 			splx(s);
-			break;
-		}
-		if (vlr.vlr_tag != EVL_VLANOFTAG(vlr.vlr_tag)) {
-			error = EINVAL;		 /* check for valid tag */
 			break;
 		}
 		pr = ifunit(vlr.vlr_parent);
 		if (pr == NULL) {
 			error = ENOENT;
+			break;
+		}
+		/*
+		 * Don't let the caller set up a VLAN tag with
+		 * anything except VLID bits.
+		 */
+		if (vlr.vlr_tag & ~EVL_VLID_MASK) {
+			error = EINVAL;
 			break;
 		}
 		error = vlan_config(ifv, pr, vlr.vlr_tag);
