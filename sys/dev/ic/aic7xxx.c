@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.63 2005/02/20 15:35:35 miod Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.64 2005/04/17 18:54:41 tom Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.63 2005/02/20 15:35:35 miod Exp $
+ * $Id: aic7xxx.c,v 1.64 2005/04/17 18:54:41 tom Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -973,7 +973,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		       scbptr, ahc_inb(ahc, ARG_1),
 		       ahc->scb_data->hscbs[scbptr].tag);
 		ahc_dump_card_state(ahc);
-		panic("for saftey");
+		panic("for safety");
 		break;
 	}
 	case OUT_OF_RANGE:
