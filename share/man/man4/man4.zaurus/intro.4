@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.5 2005/03/18 08:10:20 jsg Exp $
+.\"	$OpenBSD: intro.4,v 1.6 2005/04/17 13:34:48 dlg Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -95,17 +95,21 @@ Pseudo-devices are not listed.
 .\" Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
-.Bl -tag -width tenletters -compact -offset indent
+.Bl -tag -width lotsofletters -compact -offset indent
+.It Xr apm 4
+On-board power management.
 .It Xr atu 4
 Atmel AT76C50x IEEE 802.11b wireless network interfaces.
 .It Xr aue 4
 ADMtek AN986-based USB Ethernet adapters.
 .It Xr axe 4
 ASIX Electronics AX88172 USB Ethernet adapters.
-.It Xr com 4
-NS16550-compatible asynchronous serial ports.
+.It Xr cd 4
+ATAPI or SCSI CD drives.
 .It Xr cdce 4
 USB Communication Device Class Ethernet adapters.
+.It Xr com 4
+NS16550-compatible asynchronous serial ports.
 .\" cpu
 .It Xr cue 4
 CATC USB-EL1201A based USB Ethernet adapters.
@@ -113,22 +117,88 @@ CATC USB-EL1201A based USB Ethernet adapters.
 Kawasaki LSI KL5KUSB101B-based USB Ethernet.
 .It Xr lcd 4
 On-board LCD display.
+.It Xr ne 4
+NE2000 and compatible Ethernet devices.
+.It Xr ohci 4
+USB host controller.
+.It Xr pxadmac 4
+On-board DMA controller.
+.It Xr pxagpio 4
+On-board GPIO controller.
+.It Xr pxaintc 4
+On-board interrupt controller.
+.It Xr pxaip 4
+Integrated peripheral bus.
+.It Xr pxapcic 4
+On-board CF/PCMCIA controller.
+.It Xr pxaudc 4
+USB client controller.
+.It Xr saost 4
+On-board timer.
+.It Xr scoop 4
+On-board CF/PCMCIA and GPIO controller.
+.It Xr sd 4
+SCSI disks.
+.It Xr uaudio 4
+USB audio devices.
+.It Xr ubsa 4
+USB Belkin serial adapter.
 .It Xr udav 4
 Davicom DM9601 USB Ethernet adapters.
+.It Xr udsbr 4
+D-Link DSB-R100 radio.
+.It Xr uftdi 4
+USB FTDI FT8U100AX serial adapters.
+.It Xr uhid 4
+USB human interface devices.
+.It Xr uhub 4
+USB hubs.
 .It Xr ukbd 4
-USB keyboard.
+USB keyboards.
+.It Xr ulpt 4
+USB printers..
 .It Xr umass 4
 USB mass storage.
+.It Xr umct 4
+USB MCT RS232 serial adapters.
+.It Xr umidi 4
+USB MIDI devices.
+.It Xr umodem 4
+USB modems.
+.It Xr ums 4
+USB mouses.
 .It Xr upl 4
 Prolific PL2301/PL2302-based host-to-host USB connectors.
+.It Xr uplcom 4
+USB Prolific PL2303 serial adapters.
 .It Xr ural 4
 Ralink Technology RT2500 USB 2.0 IEEE 802.11a/b/g wireless network adapters.
+.It Xr urio 4
+Diamond Multimedia Rio 500.
 .It Xr url 4
 Realtek RTL8150L USB Ethernet adapters.
+.It Xr uscanner 4
+USB scanners.
+.It Xr usscanner 4
+USB SCSI scanners.
+.It Xr uvisor 4
+Handspring Visor.
+.It Xr uvscom 4
+USB SUNTAC Slipper U VS-10U serial adapter.
+.It Xr wd 4
+IDE disks.
+.It Xr wdc 4
+IDE disk controller.
 .It Xr wi 4
 WaveLAN/IEEE, PRISM 2-3 and Spectrum24 IEEE 802.11b wireless network adapters.
+.It Xr zaudio 4
+On-board audio.
 .It Xr zkbd 4
 System keyboard.
+.It Xr zssp 4
+SSP for inter-chip communication.
+.It Xr zts 4
+System touch-screen.
 .El
 .Sh SEE ALSO
 .Xr autoconf 4 ,
