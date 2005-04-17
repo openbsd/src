@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_i2s.c,v 1.1 2005/04/15 00:09:06 pascoe Exp $	*/
+/*	$OpenBSD: pxa2x0_i2s.c,v 1.2 2005/04/17 03:21:36 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -282,7 +282,7 @@ pxa2x0_i2s_mappage(void *hdl, void *mem, off_t off, int prot)
 int
 pxa2x0_i2s_round_blocksize(void *hdl, int bs)
 {
-	return (bs & ~0x03);	/* 32-bit multiples */
+	return (bs + 0x03) & ~0x03;	/* 32-bit multiples */
 }
 
 size_t
@@ -294,9 +294,9 @@ pxa2x0_i2s_round_buffersize(void *hdl, int direction, size_t bufsize)
 	 * use 2 * the maximum DMA controller length.
 	 */
 	if (bufsize > (2 * DCMD_LENGTH_MASK))
-		bufsize = (2 * DCMD_LENGTH_MASK);
+		bufsize = (2 * DCMD_LENGTH_MASK) & ~0x03;
 
-	return pxa2x0_i2s_round_blocksize(hdl, bufsize);
+	return bufsize;
 }
 
 int
