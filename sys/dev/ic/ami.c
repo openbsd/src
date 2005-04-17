@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.32 2005/04/04 22:40:31 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.33 2005/04/17 16:32:43 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -769,7 +769,7 @@ ami_cmd(ccb, flags, wait)
 {
 	struct ami_softc *sc = ccb->ccb_sc;
 	bus_dmamap_t dmap = ccb->ccb_dmamap;
-	int error = 0, i, s;
+	int error = 0, i;
 
 	if (ccb->ccb_data) {
 		struct ami_iocmd *cmd = ccb->ccb_cmd;
@@ -818,7 +818,6 @@ ami_cmd(ccb, flags, wait)
 	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, sc->sc_cmdmap->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
-	s = splimp();
 	if ((error = ami_start(ccb, wait))) {
 		AMI_DPRINTF(AMI_D_DMA, ("error=%d ", error));
 		__asm __volatile(".globl _bpamierr\n_bpamierr:");
@@ -830,7 +829,6 @@ ami_cmd(ccb, flags, wait)
 		if ((error = ami_complete(ccb)))
 			ami_put_ccb(ccb);
 	}
-	splx(s);
 
 	return (error);
 }
@@ -904,7 +902,7 @@ ami_stimeout(v)
 	struct scsi_xfer *xs = ccb->ccb_xs;
 	struct ami_iocmd *cmd = ccb->ccb_cmd;
 	volatile struct ami_iocmd *mbox = sc->sc_mbox;
-	ami_lock_t lock, s;
+	ami_lock_t lock;
 
 	lock = AMI_LOCK_AMI(sc);
 	switch (ccb->ccb_state) {
@@ -938,10 +936,8 @@ ami_stimeout(v)
 			    BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->dmat, ccb->ccb_dmamap);
 		}
-		s = splimp();
 		TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
 		ami_put_ccb(ccb);
-		splx(s);
 		xs->error = XS_TIMEOUT;
 		xs->flags |= ITSDONE;
 		scsi_done(xs);
@@ -998,7 +994,7 @@ ami_done(sc, idx)
 {
 	struct ami_ccb *ccb = &sc->sc_ccbs[idx - 1];
 	struct scsi_xfer *xs = ccb->ccb_xs;
-	ami_lock_t lock, s;
+	ami_lock_t lock;
 
 	AMI_DPRINTF(AMI_D_CMD, ("done(%d) ", ccb->ccb_cmd->acc_id));
 
@@ -1009,7 +1005,6 @@ ami_done(sc, idx)
 	}
 
 	lock = AMI_LOCK_AMI(sc);
-	s = splimp();
 	ccb->ccb_state = AMI_CCB_READY;
 	TAILQ_REMOVE(&sc->sc_ccbq, ccb, ccb_link);
 
@@ -1043,7 +1038,6 @@ ami_done(sc, idx)
 	}
 
 	ami_put_ccb(ccb);
-	splx(s);
 
 	if (xs) {
 		xs->resid = 0;
@@ -1051,7 +1045,6 @@ ami_done(sc, idx)
 		AMI_DPRINTF(AMI_D_CMD, ("scsi_done(%d) ", idx));
 		scsi_done(xs);
 	}
-
 	AMI_UNLOCK_AMI(sc, lock);
 
 	return (0);
@@ -1421,7 +1414,7 @@ ami_intr(v)
 {
 	struct ami_softc *sc = v;
 	struct ami_iocmd mbox;
-	int i, s, rv = 0;
+	int i, rv = 0;
 	ami_lock_t lock;
 
 	if (TAILQ_EMPTY(&sc->sc_ccbq))
@@ -1430,7 +1423,6 @@ ami_intr(v)
 	AMI_DPRINTF(AMI_D_INTR, ("intr "));
 
 	lock = AMI_LOCK_AMI(sc);
-	s = splimp();	/* XXX need to do this to mask timeouts */
 	while ((sc->sc_done)(sc, &mbox)) {
 		AMI_DPRINTF(AMI_D_CMD, ("got#%d ", mbox.acc_nstat));
 		for (i = 0; i < mbox.acc_nstat; i++ ) {
@@ -1450,7 +1442,6 @@ ami_intr(v)
 	}
 #endif
 
-	splx(s);
 	AMI_UNLOCK_AMI(sc, lock);
 	AMI_DPRINTF(AMI_D_INTR, ("exit "));
 	return (rv);
