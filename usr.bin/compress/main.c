@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.60 2005/04/14 18:28:27 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.61 2005/04/17 16:07:16 hshoexer Exp $	*/
 
 #ifndef SMALL
 static const char copyright[] =
@@ -36,7 +36,7 @@ static const char license[] =
 #endif /* SMALL */
 
 #ifndef SMALL
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.60 2005/04/14 18:28:27 deraadt Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.61 2005/04/17 16:07:16 hshoexer Exp $";
 #endif
 
 #include <sys/param.h>
@@ -692,7 +692,7 @@ setfile(const char *name, int fd, struct stat *fs)
 		TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
 		TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
 		if (futimes(fd, tv))
-			warn("utimes: %s", name);
+			warn("futimes: %s", name);
 	}
 
 	/*
@@ -715,14 +715,14 @@ setfile(const char *name, int fd, struct stat *fs)
 	fs->st_mode &= S_ISUID|S_ISGID|S_IRWXU|S_IRWXG|S_IRWXO;
 	if (fchown(fd, fs->st_uid, fs->st_gid)) {
 		if (errno != EPERM)
-			warn("chown: %s", name);
+			warn("fchown: %s", name);
 		fs->st_mode &= ~(S_ISUID|S_ISGID);
 	}
 	if (fchmod(fd, fs->st_mode))
-		warn("chown: %s", name);
+		warn("fchmod: %s", name);
 
 	if (fs->st_flags && fchflags(fd, fs->st_flags))
-		warn("chflags: %s", name);
+		warn("fchflags: %s", name);
 }
 
 int
