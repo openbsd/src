@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.62 2004/12/26 22:39:58 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.63 2005/04/17 18:44:19 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -1268,7 +1268,7 @@ Lpanic_red:
  */
 /* note: pmap currently does not use the PPROT_R_R and PPROT_RW_RW cases */
 #define CMP_PTE_USER_READ4M(pte, tmp) \
-	or	pte, ASI_SRMMUFP_L3, pte; \
+	/* or	pte, ASI_SRMMUFP_L3, pte; -- ASI_SRMMUFP_L3 == 0 */ \
 	lda	[pte] ASI_SRMMUFP, pte; \
 	set	SRMMU_SFSR, tmp; \
 	and	pte, (SRMMU_TETYPE | SRMMU_PROT_MASK), pte; \
@@ -1281,7 +1281,7 @@ Lpanic_red:
 
 /* note: PTE bit 4 set implies no user writes */
 #define CMP_PTE_USER_WRITE4M(pte, tmp) \
-	or	pte, ASI_SRMMUFP_L3, pte; \
+	/* or	pte, ASI_SRMMUFP_L3, pte; -- ASI_SRMMUFP_L3 == 0 */ \
 	lda	[pte] ASI_SRMMUFP, pte; \
 	set	SRMMU_SFSR, tmp; \
 	lda	[tmp] ASI_SRMMU, %g0; \
@@ -3771,9 +3771,9 @@ startmap_done:
 	call	init_tables
 	 st	%o0, [%o1 + %lo(_C_LABEL(nwindows))]
 
-#if defined(SUN4)
+#if defined(SUN4) || defined(SUN4C)
 	/*
-	 * Some sun4 models have fewer than 8 windows. For extra
+	 * Some sun4/sun4c models have fewer than 8 windows. For extra
 	 * speed, we do not need to save/restore those windows
 	 * The save/restore code has 7 "save"'s followed by 7
 	 * "restore"'s -- we "nop" out the last "save" and first
@@ -3782,8 +3782,8 @@ startmap_done:
 	cmp	%o0, 8
 	be	1f
 noplab:	 nop
-	set	noplab, %l0
-	ld	[%l0], %l1
+	sethi	%hi(noplab), %l0
+	ld	[%l0 + %lo(noplab)], %l1
 	set	wb1, %l0
 	st	%l1, [%l0 + 6*4]
 	st	%l1, [%l0 + 7*4]
