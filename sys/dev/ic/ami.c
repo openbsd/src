@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.33 2005/04/17 16:32:43 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.34 2005/04/17 17:37:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -528,15 +528,15 @@ ami_attach(sc)
 
 #ifdef AMI_DEBUG
 	printf(": FW %s, BIOS v%s, %dMB RAM\n"
-	     "%s: %d channels, %d %ss, %d logical drives, "
-	     "openings %d, max commands %d, quirks: %04x\n",
+	    "%s: %d channels, %d %ss, %d logical drives, "
+	    "openings %d, max commands %d, quirks: %04x\n",
 	    sc->sc_fwver, sc->sc_biosver, sc->sc_memory,
 	    sc->sc_dev.dv_xname,
 	    sc->sc_channels, sc->sc_targets, p, sc->sc_nunits,
 	    sc->sc_link.openings, sc->sc_maxcmds, sc->sc_quirks);
 #else
 	printf(": FW %s, BIOS v%s, %dMB RAM\n"
-	     "%s: %d channels, %d %ss, %d logical drives\n",
+	    "%s: %d channels, %d %ss, %d logical drives\n",
 	    sc->sc_fwver, sc->sc_biosver, sc->sc_memory,
 	    sc->sc_dev.dv_xname,
 	    sc->sc_channels, sc->sc_targets, p, sc->sc_nunits);
@@ -547,10 +547,10 @@ ami_attach(sc)
 		    "disk\n", sc->sc_dev.dv_xname);
 
 #if NBIO > 0
-        if (bio_register(&sc->sc_dev, ami_ioctl) != 0)
-                printf("%s: controller registration failed",
-                    sc->sc_dev.dv_xname);
-#endif  
+	if (bio_register(&sc->sc_dev, ami_ioctl) != 0)
+		printf("%s: controller registration failed",
+		    sc->sc_dev.dv_xname);
+#endif
 
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 
@@ -1450,9 +1450,9 @@ ami_intr(v)
 #if NBIO > 0
 int
 ami_ioctl(dev, cmd, addr)
-        struct device *dev;
-        u_long cmd;
-        caddr_t addr;
+	struct device *dev;
+	u_long cmd;
+	caddr_t addr;
 {
 	int error = 0;
 	struct ami_softc *sc = (struct ami_softc *)dev;
@@ -1519,7 +1519,7 @@ ami_ioctl(dev, cmd, addr)
 
 int
 ami_ioctl_alarm(sc, ra)
-        struct ami_softc *sc;
+	struct ami_softc *sc;
 	bioc_alarm *ra;
 {
 	int error = 0;
@@ -1608,7 +1608,7 @@ ami_ioctl_alarm(sc, ra)
 
 int
 ami_ioctl_startstop(sc, bs)
-        struct ami_softc *sc;
+	struct ami_softc *sc;
 	bioc_startstop *bs;
 {
 	int error = 0;
@@ -1654,7 +1654,7 @@ ami_ioctl_startstop(sc, bs)
 
 int
 ami_ioctl_status(sc, bs)
-        struct ami_softc *sc;
+	struct ami_softc *sc;
 	bioc_status *bs;
 {
 	int error = 0;
@@ -1735,7 +1735,7 @@ ami_ioctl_passthru(sc, bp)
 	if (bp->direction == BIOC_DIRIN &&
 	    (bp->datalen == 0 || bp->data == NULL))
 		/* if userland expects data give us a len and a pointer */
-		return (EINVAL); 
+		return (EINVAL);
 
 	if (bp->datalen > 1024)
 		return (EINVAL); /* cap at 1k for now */
@@ -1801,15 +1801,16 @@ ami_ioctl_passthru(sc, bp)
 		/* copy sense data back to user space */
 		memcpy(&bp->sensebuf[0], &ps->apt_sense[0], ps->apt_nsense);
 		bp->senselen = ps->apt_nsense;
-		bp->status = 1;                /* this needs to be checked in
-						* userland since error can't
-						* be set. Setting it prevents
-						* it from being coppied back to
-						* userland */
+		/*
+		 * this needs to be checked in userland since error can't
+		 * be set. Setting it prevents it from being coppied back to
+		 * userland
+		 */
+		bp->status = 1;
 
 #ifdef AMI_DEBUG
 		AMI_DPRINTF(AMI_D_IOCTL, ("%s: passthrough failed %x %x\n%s: ",
-		    sc->sc_dev.dv_xname, bp->status, bp->senselen, 
+		    sc->sc_dev.dv_xname, bp->status, bp->senselen,
 		    sc->sc_dev.dv_xname));
 
 		for (i = 0; i < bp->senselen; i++) {
