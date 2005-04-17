@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.65 2005/04/05 12:13:16 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.66 2005/04/17 18:55:45 tom Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1165,7 +1165,7 @@ static const struct {
 	{ 0x3B, 0x07, "Failed To Sense Bottom-Of-Form" },
 	{ 0x3B, 0x08, "Reposition Error" },
 	{ 0x3B, 0x09, "Read Past End Of Medium" },
-	{ 0x3B, 0x0A, "Read Past Begining Of Medium" },
+	{ 0x3B, 0x0A, "Read Past Beginning Of Medium" },
 	{ 0x3B, 0x0B, "Position Past End Of Medium" },
 	{ 0x3B, 0x0C, "Position Past Beginning Of Medium" },
 	{ 0x3B, 0x0D, "Medium Destination Element Full" },
