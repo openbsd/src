@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.858 2005/04/17 06:44:03 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.859 2005/04/17 07:46:01 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3223,6 +3223,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "INIC-950",
 	},
 	{
+	    PCI_VENDOR_INPROCOMM, PCI_PRODUCT_INPROCOMM_IPN2120,
+	    "IPN2120",
+	},
+	{
+	    PCI_VENDOR_INPROCOMM, PCI_PRODUCT_INPROCOMM_IPN2220,
+	    "IPN2220",
+	},
+	{
 	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8849,
 	    "8849",
 	},
@@ -4507,6 +4515,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PRISM2.5",
 	},
 	{
+	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_ISL3877,
+	    "Prism Indigo",
+	},
+	{
+	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_ISL3886,
+	    "Prism Javelin/Xbow",
+	},
+	{
+	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_ISL3890,
+	    "Prism GT/Duette",
+	},
+	{
 	    PCI_VENDOR_INVERTEX, PCI_PRODUCT_INVERTEX_AEON,
 	    "AEON",
 	},
@@ -4853,6 +4873,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_MARTINMARIETTA, PCI_PRODUCT_MARTINMARIETTA_I740,
 	    "i740 PCI",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8310_1,
+	    "Libertas 88W8310",
+	},
+	{
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8310_2,
+	    "Libertas 88W8310",
 	},
 	{
 	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SK_V2,
@@ -9493,6 +9521,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_HAWKING,
 	    "Hawking Technology",
+	},
+	{
+	    PCI_VENDOR_INPROCOMM,
+	    "INPROCOMM",
 	},
 	{
 	    PCI_VENDOR_LANERGY,

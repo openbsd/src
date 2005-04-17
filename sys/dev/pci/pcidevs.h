@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.858 2005/04/17 06:44:03 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.859 2005/04/17 07:46:01 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -259,6 +259,7 @@
 #define	PCI_VENDOR_CAVIUM	0x177d		/* Cavium */
 #define	PCI_VENDOR_BELKIN2	0x1799		/* Belkin */
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
+#define	PCI_VENDOR_INPROCOMM	0x17fe		/* INPROCOMM */
 #define	PCI_VENDOR_LANERGY	0x1812		/* Lanergy */
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
@@ -1285,6 +1286,10 @@
 #define	PCI_PRODUCT_INITIO_INIC941	0x9401		/* INIC-941 */
 #define	PCI_PRODUCT_INITIO_INIC950	0x9500		/* INIC-950 */
 
+/* INPROCOMM products */
+#define	PCI_PRODUCT_INPROCOMM_IPN2120	0x2120		/* IPN2120 */
+#define	PCI_PRODUCT_INPROCOMM_IPN2220	0x2220		/* IPN2220 */
+
 /* Integrated Micro Solutions products */
 #define	PCI_PRODUCT_IMS_8849	0x8849		/* 8849 */
 
@@ -1615,6 +1620,9 @@
 /* Intersil products */
 #define	PCI_PRODUCT_INTERSIL_ISL3872	0x3872		/* PRISM3 */
 #define	PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN	0x3873		/* PRISM2.5 */
+#define	PCI_PRODUCT_INTERSIL_ISL3877	0x3877		/* Prism Indigo */
+#define	PCI_PRODUCT_INTERSIL_ISL3886	0x3886		/* Prism Javelin/Xbow */
+#define	PCI_PRODUCT_INTERSIL_ISL3890	0x3890		/* Prism GT/Duette */
 
 /* Invertex */
 #define	PCI_PRODUCT_INVERTEX_AEON	0x0005		/* AEON */
@@ -1740,6 +1748,8 @@
 #define	PCI_PRODUCT_MARTINMARIETTA_I740	0x00d1		/* i740 PCI */
 
 /* Marvell products */
+#define	PCI_PRODUCT_MARVELL_88W8310_1	0x1fa6		/* Libertas 88W8310 */
+#define	PCI_PRODUCT_MARVELL_88W8310_2	0x1fa7		/* Libertas 88W8310 */
 #define	PCI_PRODUCT_MARVELL_SK_V2	0x4320		/* SKv2 */
 #define	PCI_PRODUCT_MARVELL_YUKON_1	0x4340		/* Yukon */
 #define	PCI_PRODUCT_MARVELL_YUKON_2	0x4341		/* Yukon */
