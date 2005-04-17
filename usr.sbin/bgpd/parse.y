@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.159 2005/04/13 21:16:22 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.160 2005/04/17 16:36:40 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2105,7 +2105,7 @@ expand_rule(struct filter_rule *rule, struct filter_peers_l *peer,
 		free(a);
 	}
 
-	while ((s = SIMPLEQ_FIRST(set)) != NULL) {
+	while (set != NULL && (s = SIMPLEQ_FIRST(set)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(set, entry);
 		free(s);
 	}
