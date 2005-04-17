@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.65 2004/12/06 20:12:25 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.66 2005/04/17 21:34:26 kettenis Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -567,6 +567,7 @@ mpc_print_pci_stat();
 
 	case EXC_PGM|EXC_USER:
 	{
+#if 0
 		char *errstr[8];
 		int errnum = 0;
 
@@ -585,24 +586,22 @@ mpc_print_pci_stat();
 			errstr[errnum] = "privileged instr";
 			errnum++;
 		}
+#endif
 		if (frame->srr1 & (1<<(31-14))) {
+#if 0
 			errstr[errnum] = "trap instr";
 			errnum++;
-			/* trap instruction exception */
-			/*
-				instr = copyin (srr0)
-				if (instr == BKPT_INST && uid == 0) {
-					cnpollc(TRUE);
-					db_trap(T_BREAKPOINT?)
-					cnpollc(FALSE);
-					break;
-				}
-			*/
+#endif
+			sv.sival_int = frame->srr0;
+			trapsignal(p, SIGTRAP, type, TRAP_BRKPT, sv);
+			break;
 		}
+#if 0
 		if (frame->srr1 & (1<<(31-15))) {
 			errstr[errnum] = "previous address";
 			errnum++;
 		}
+#endif
 #if 0
 printf("pgm iar %x srr1 %x\n", frame->srr0, frame->srr1);
 { 
