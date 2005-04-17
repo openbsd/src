@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: pxaip.4,v 1.6 2005/04/17 12:12:55 dlg Exp $
+.\" 	$OpenBSD: pxaip.4,v 1.7 2005/04/17 13:04:05 dlg Exp $
 .\" 
 .\" Copyright (c) 2005, Miodrag Vallat.
 .\" All rights reserved.
@@ -39,6 +39,7 @@
 .Cd "scoop0   at pxaip?"
 .Cd "scoop1   at pxaip?"
 .Cd "saost0   at pxaip? addr 0x40a00000 size 0x20"
+.Cd "zts0     at pxaip?"
 .Cd "zkbd0    at pxaip?"
 .Cd "pxaudc0  at pxaip?"
 .Cd "ohci0    at pxaip?"
@@ -86,6 +87,8 @@ Audio controller.
 System keyboard.
 .It Xr zssp 4
 SSP for inter-chip communication.
+.It Xr zts 4
+Touch screen.
 .El
 .Sh SEE ALSO
 .Xr apm 4 ,
@@ -104,6 +107,7 @@ SSP for inter-chip communication.
 .Xr zaudio 4 ,
 .Xr zkbd 4 ,
 .Xr zssp 4 ,
+.Xr zts 4 ,
 .Xr config 8
 .Sh HISTORY
 Support for the PXA2x0 family appeared in
