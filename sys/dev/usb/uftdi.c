@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.21 2005/04/08 04:29:57 deraadt Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.22 2005/04/17 07:39:44 dlg Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -65,8 +65,8 @@
 #include <dev/usb/uftdireg.h>
 
 #ifdef UFTDI_DEBUG
-#define DPRINTF(x)	if (uftdidebug) printf x
-#define DPRINTFN(n,x)	if (uftdidebug>(n)) printf x
+#define DPRINTF(x)	do { if (uftdidebug) printf x; } while (0)
+#define DPRINTFN(n,x)	do { if (uftdidebug>(n)) printf x; } while (0)
 int uftdidebug = 0;
 #else
 #define DPRINTF(x)
