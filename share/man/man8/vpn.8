@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.95 2005/04/17 12:34:23 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.96 2005/04/17 12:52:42 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -112,8 +112,15 @@ forwarding to be enabled using
 Packet forwarding defaults to
 .Sq off .
 .Pp
+Additionally, if
+.Va net.inet.ip.forwarding
+is set to 2,
+IP forwarding is restricted to IPsec traffic only.
+These and other IPsec related options are documented in
+.Xr sysctl 3 .
+.Pp
 For more permanent operation,
-the appropriate option(s) should be enabled in your
+the appropriate option(s) can be enabled in
 .Xr sysctl.conf 5 .
 .Ss Choosing a Key Exchange Method
 There are currently two key exchange methods available:
@@ -536,6 +543,7 @@ Sample VPN configuration file.
 .El
 .Sh SEE ALSO
 .Xr openssl 1 ,
+.Xr sysctl 3 ,
 .Xr enc 4 ,
 .Xr ipsec 4 ,
 .Xr keynote 4 ,
