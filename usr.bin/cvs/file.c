@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.62 2005/04/18 21:02:50 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.63 2005/04/18 21:10:39 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -875,8 +875,6 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 
 	type = DT_UNKNOWN;
 	cwd = (strcmp(path, ".") == 0) ? 1 : 0;
-
-	printf("lget(%s)\n", path);
 
 	ret = stat(path, &st);
 	if (ret == 0)
