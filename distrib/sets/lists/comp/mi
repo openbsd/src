@@ -817,16 +817,9 @@
 ./usr/include/g++/cstdlib
 ./usr/include/g++/cstring
 ./usr/include/g++/ctime
-./usr/include/g++/cursesapp.h
-./usr/include/g++/cursesf.h
-./usr/include/g++/cursesm.h
-./usr/include/g++/cursesp.h
-./usr/include/g++/cursesw.h
-./usr/include/g++/cursslk.h
 ./usr/include/g++/cwchar
 ./usr/include/g++/cwctype
 ./usr/include/g++/deque
-./usr/include/g++/etip.h
 ./usr/include/g++/exception
 ./usr/include/g++/fstream
 ./usr/include/g++/functional
@@ -1606,8 +1599,6 @@
 ./usr/lib/libcompat_p.a
 ./usr/lib/libcrypto.a
 ./usr/lib/libcrypto_p.a
-./usr/lib/libcurses++.a
-./usr/lib/libcurses++_p.a
 ./usr/lib/libcurses.a
 ./usr/lib/libcurses_p.a
 ./usr/lib/libdes.a

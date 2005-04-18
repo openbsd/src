@@ -1283,16 +1283,9 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g++/builtinbuf.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g++/bvector.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g++/complex.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/g++/cursesapp.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/g++/cursesf.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/g++/cursesm.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/g++/cursesp.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/g++/cursesw.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/g++/cursslk.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g++/defalloc.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g++/deque.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g++/editbuf.ph
-./usr/libdata/perl5/site_perl/m88k-openbsd/g++/etip.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g++/floatio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g++/fstream.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/g++/function.ph

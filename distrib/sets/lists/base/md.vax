@@ -788,16 +788,9 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++/builtinbuf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++/bvector.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++/complex.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/g++/cursesapp.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/g++/cursesf.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/g++/cursesm.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/g++/cursesp.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/g++/cursesw.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/g++/cursslk.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++/defalloc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++/deque.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++/editbuf.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/g++/etip.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++/floatio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++/fstream.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/g++/function.ph

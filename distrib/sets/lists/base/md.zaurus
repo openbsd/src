@@ -55,7 +55,6 @@
 ./usr/lib/libc.so.35.1
 ./usr/lib/libcom_err.so.15.0
 ./usr/lib/libcrypto.so.11.0
-./usr/lib/libcurses++.so.3.0
 ./usr/lib/libcurses.so.10.0
 ./usr/lib/libdes.so.9.0
 ./usr/lib/libedit.so.3.0
@@ -1530,14 +1529,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++/bits/type_traits.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++/bits/valarray_array.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++/bits/valarray_meta.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/g++/cursesapp.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/g++/cursesf.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/g++/cursesm.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/g++/cursesp.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/g++/cursesw.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/g++/cursslk.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++/cxxabi.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/g++/etip.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++/exception_defines.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++/ext
 ./usr/libdata/perl5/site_perl/arm-openbsd/g++/ext/enc_filebuf.ph
