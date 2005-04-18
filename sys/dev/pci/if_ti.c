@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.58 2004/12/08 07:04:12 jsg Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.59 2005/04/18 00:04:11 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1822,7 +1822,7 @@ void ti_rxeof(sc)
 #if NVLAN > 0
 		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG) {
 			have_tag = 1;
-			vlan_tag = cur_rx->ti_vlan_tag & 0xfff;
+			vlan_tag = cur_rx->ti_vlan_tag;
 		}
 #endif
 
@@ -2139,7 +2139,7 @@ int ti_encap_tigon1(sc, m_head, txidx)
 #if NVLAN > 0
 		if (ifv != NULL) {
 			txdesc.ti_flags |= TI_BDFLAG_VLAN_TAG;
-			txdesc.ti_vlan_tag = ifv->ifv_tag & 0xfff;
+			txdesc.ti_vlan_tag = ifv->ifv_tag;
 		}
 #endif
 
@@ -2227,7 +2227,7 @@ int ti_encap_tigon2(sc, m_head, txidx)
 #if NVLAN > 0
 		if (ifv != NULL) {
 			f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-			f->ti_vlan_tag = ifv->ifv_tag & 0xfff;
+			f->ti_vlan_tag = ifv->ifv_tag;
 		} else {
 			f->ti_vlan_tag = 0;
 		}
@@ -2584,7 +2584,7 @@ int ti_ioctl(ifp, command, data)
 		}
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU_JUMBO) {
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO) {
 			error = EINVAL;
 		} else {
 			ifp->if_mtu = ifr->ifr_mtu;
