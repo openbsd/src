@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.20 2005/03/20 04:21:55 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.21 2005/04/18 18:42:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -210,7 +210,7 @@ ath_hal_attach(device, sc, st, sh, status)
 		goto failed;
 
 #ifdef AR5K_DEBUG
-	hal->ah_dumpState(hal);
+	hal->ah_dump_state(hal);
 #endif
 
 	/*
@@ -251,7 +251,7 @@ ath_hal_attach(device, sc, st, sh, status)
 		goto failed;
 	}
 
-	hal->ah_setMacAddress(hal, mac);
+	hal->ah_set_lladdr(hal, mac);
 
 	/* Get rate tables */
 	if (hal->ah_capabilities.cap_mode & HAL_MODE_11A)
@@ -411,7 +411,7 @@ ath_hal_init_channels(hal, channels, max_channels, channels_size, country, mode,
 	HAL_CHANNEL all_channels[max_channels];
 
 	i = c = 0;
-	domain_current = hal->ah_getRegDomain(hal);
+	domain_current = hal->ah_get_regdomain(hal);
 
 	/*
 	 * In debugging mode, enable all channels supported by the chipset
@@ -1495,7 +1495,7 @@ ar5k_rfregs(hal, channel, mode)
 	if (hal->ah_radio == AR5K_AR5111) {
 		hal->ah_rf_banks_size = sizeof(ar5111_rf);
 		func = ar5k_ar5111_rfregs;
-	} else if (hal->ah_radio == AR5K_AR5112) {		
+	} else if (hal->ah_radio == AR5K_AR5112) {
 		hal->ah_rf_banks_size = sizeof(ar5112_rf);
 		func = ar5k_ar5112_rfregs;
 	} else
@@ -1503,8 +1503,8 @@ ar5k_rfregs(hal, channel, mode)
 
 	if (hal->ah_rf_banks == NULL) {
 		/* XXX do extra checks? */
-		if ((hal->ah_rf_banks =
-		    malloc(hal->ah_rf_banks_size, M_DEVBUF, M_NOWAIT)) == NULL) {
+		if ((hal->ah_rf_banks = malloc(hal->ah_rf_banks_size,
+		    M_DEVBUF, M_NOWAIT)) == NULL) {
 			AR5K_PRINT("out of memory\n");
 			return (AH_FALSE);
 		}
@@ -1746,7 +1746,7 @@ ar5k_txpower_table(hal, channel, max_power)
 {
 	u_int16_t txpower, *rates;
 	int i;
-	
+
 	rates = hal->ah_txpower.txp_rates;
 
 	txpower = AR5K_TUNE_DEFAULT_TXPOWER * 2;

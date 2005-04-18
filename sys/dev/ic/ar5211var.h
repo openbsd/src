@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211var.h,v 1.3 2005/04/09 00:20:42 reyk Exp $	*/
+/*	$OpenBSD: ar5211var.h,v 1.4 2005/04/18 18:42:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -68,7 +68,7 @@ struct ar5k_ar5211_rx_status {
 	 * RX status word 0
 	 */
 	u_int32_t	rx_status_0;
-	
+
 #define AR5K_AR5211_DESC_RX_STATUS0_DATA_LEN		0x00000fff
 #define AR5K_AR5211_DESC_RX_STATUS0_MORE		0x00001000
 #define AR5K_AR5211_DESC_RX_STATUS0_RECEIVE_RATE	0x00078000
@@ -353,7 +353,7 @@ extern ar5k_attach_t ar5k_ar5211_attach;
 	{ 0x9bfc, 0x00000016 },						\
         /* PHY activation */						\
 	{ 0x98d4, 0x00000020 },						\
-        { 0x98d8, 0x00601068 },						\
+	{ 0x98d8, 0x00601068 },						\
 }
 
 struct ar5k_ar5211_ini_mode {

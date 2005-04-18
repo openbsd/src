@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210var.h,v 1.9 2005/04/09 00:20:42 reyk Exp $	*/
+/*	$OpenBSD: ar5210var.h,v 1.10 2005/04/18 18:42:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -68,7 +68,7 @@ struct ar5k_ar5210_rx_status {
 	 * RX status word 0
 	 */
 	u_int32_t	rx_status_0;
-	
+
 #define AR5K_AR5210_DESC_RX_STATUS0_DATA_LEN		0x00000fff
 #define AR5K_AR5210_DESC_RX_STATUS0_MORE		0x00001000
 #define AR5K_AR5210_DESC_RX_STATUS0_RECEIVE_ANTENNA	0x00004000

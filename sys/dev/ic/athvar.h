@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.6 2005/03/11 17:45:28 reyk Exp $  */
+/*      $OpenBSD: athvar.h,v 1.7 2005/04/18 18:42:56 reyk Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -225,7 +225,7 @@ struct ath_softc {
 	struct ath_hal		*sc_ah;		/* Atheros HAL */
 	unsigned int		sc_invalid  : 1,/* disable hardware accesses */
 				sc_doani    : 1,/* dynamic noise immunity */
-				sc_hasveol  : 1,/* tx VEOL support */
+				sc_has_veol  : 1,/* tx VEOL support */
 				sc_probing  : 1;/* probing AP on beacon miss */
 						/* rate tables */
 	u_int			sc_nchan;	/* number of valid channels */
@@ -417,135 +417,135 @@ int	ath_intr(void *);
  */
 #define	ath_hal_reset(_ah, _opmode, _chan, _outdoor, _pstatus) \
 	((*(_ah)->ah_reset)((_ah), (_opmode), (_chan), (_outdoor), (_pstatus)))
-#define	ath_hal_getratetable(_ah, _mode) \
-	((*(_ah)->ah_getRateTable)((_ah), (_mode)))
-#define	ath_hal_getmac(_ah, _mac) \
-	((*(_ah)->ah_getMacAddress)((_ah), (_mac)))
-#define	ath_hal_setmac(_ah, _mac) \
-	((*(_ah)->ah_setMacAddress)((_ah), (_mac)))
-#define	ath_hal_intrset(_ah, _mask) \
-	((*(_ah)->ah_setInterrupts)((_ah), (_mask)))
-#define	ath_hal_intrget(_ah) \
-	((*(_ah)->ah_getInterrupts)((_ah)))
-#define	ath_hal_intrpend(_ah) \
-	((*(_ah)->ah_isInterruptPending)((_ah)))
-#define	ath_hal_getisr(_ah, _pmask) \
-	((*(_ah)->ah_getPendingInterrupts)((_ah), (_pmask)))
-#define	ath_hal_updatetxtriglevel(_ah, _inc) \
-	((*(_ah)->ah_updateTxTrigLevel)((_ah), (_inc)))
-#define	ath_hal_setpower(_ah, _mode, _sleepduration) \
-	((*(_ah)->ah_setPowerMode)((_ah), (_mode), AH_TRUE, (_sleepduration)))
-#define	ath_hal_keyreset(_ah, _ix) \
-	((*(_ah)->ah_resetKeyCacheEntry)((_ah), (_ix)))
-#define	ath_hal_keyset(_ah, _ix, _pk) \
-	((*(_ah)->ah_setKeyCacheEntry)((_ah), (_ix), (_pk), NULL, AH_FALSE))
-#define	ath_hal_keyisvalid(_ah, _ix) \
-	(((*(_ah)->ah_isKeyCacheEntryValid)((_ah), (_ix))))
-#define	ath_hal_keysetmac(_ah, _ix, _mac) \
-	((*(_ah)->ah_setKeyCacheEntryMac)((_ah), (_ix), (_mac)))
-#define	ath_hal_getrxfilter(_ah) \
-	((*(_ah)->ah_getRxFilter)((_ah)))
-#define	ath_hal_setrxfilter(_ah, _filter) \
-	((*(_ah)->ah_setRxFilter)((_ah), (_filter)))
-#define	ath_hal_setmcastfilter(_ah, _mfilt0, _mfilt1) \
-	((*(_ah)->ah_setMulticastFilter)((_ah), (_mfilt0), (_mfilt1)))
-#define	ath_hal_waitforbeacon(_ah, _bf) \
-	((*(_ah)->ah_waitForBeaconDone)((_ah), (_bf)->bf_daddr))
-#define	ath_hal_putrxbuf(_ah, _bufaddr) \
-	((*(_ah)->ah_setRxDP)((_ah), (_bufaddr)))
-#define	ath_hal_gettsf32(_ah) \
-	((*(_ah)->ah_getTsf32)((_ah)))
-#define	ath_hal_gettsf64(_ah) \
-	((*(_ah)->ah_getTsf64)((_ah)))
-#define	ath_hal_resettsf(_ah) \
-	((*(_ah)->ah_resetTsf)((_ah)))
-#define	ath_hal_rxena(_ah) \
-	((*(_ah)->ah_enableReceive)((_ah)))
-#define	ath_hal_puttxbuf(_ah, _q, _bufaddr) \
-	((*(_ah)->ah_setTxDP)((_ah), (_q), (_bufaddr)))
-#define	ath_hal_gettxbuf(_ah, _q) \
-	((*(_ah)->ah_getTxDP)((_ah), (_q)))
-#define	ath_hal_getrxbuf(_ah) \
-	((*(_ah)->ah_getRxDP)((_ah)))
-#define	ath_hal_txstart(_ah, _q) \
-	((*(_ah)->ah_startTxDma)((_ah), (_q)))
+#define	ath_hal_get_rate_table(_ah, _mode) \
+	((*(_ah)->ah_get_rate_table)((_ah), (_mode)))
+#define	ath_hal_get_lladdr(_ah, _mac) \
+	((*(_ah)->ah_get_lladdr)((_ah), (_mac)))
+#define	ath_hal_set_lladdr(_ah, _mac) \
+	((*(_ah)->ah_set_lladdr)((_ah), (_mac)))
+#define	ath_hal_set_intr(_ah, _mask) \
+	((*(_ah)->ah_set_intr)((_ah), (_mask)))
+#define	ath_hal_get_intr(_ah) \
+	((*(_ah)->ah_get_intr)((_ah)))
+#define	ath_hal_is_intr_pending(_ah) \
+	((*(_ah)->ah_is_intr_pending)((_ah)))
+#define	ath_hal_get_isr(_ah, _pmask) \
+	((*(_ah)->ah_get_isr)((_ah), (_pmask)))
+#define	ath_hal_update_tx_triglevel(_ah, _inc) \
+	((*(_ah)->ah_update_tx_triglevel)((_ah), (_inc)))
+#define	ath_hal_set_power(_ah, _mode, _sleepduration) \
+	((*(_ah)->ah_set_power)((_ah), (_mode), AH_TRUE, (_sleepduration)))
+#define	ath_hal_reset_key(_ah, _ix) \
+	((*(_ah)->ah_reset_key)((_ah), (_ix)))
+#define	ath_hal_set_key(_ah, _ix, _pk) \
+	((*(_ah)->ah_set_key)((_ah), (_ix), (_pk), NULL, AH_FALSE))
+#define	ath_hal_is_key_valid(_ah, _ix) \
+	(((*(_ah)->ah_is_key_valid)((_ah), (_ix))))
+#define	ath_hal_set_key_lladdr(_ah, _ix, _mac) \
+	((*(_ah)->ah_set_key_lladdr)((_ah), (_ix), (_mac)))
+#define	ath_hal_get_rx_filter(_ah) \
+	((*(_ah)->ah_get_rx_filter)((_ah)))
+#define	ath_hal_set_rx_filter(_ah, _filter) \
+	((*(_ah)->ah_set_rx_filter)((_ah), (_filter)))
+#define	ath_hal_set_mcast_filter(_ah, _mfilt0, _mfilt1) \
+	((*(_ah)->ah_set_mcast_filter)((_ah), (_mfilt0), (_mfilt1)))
+#define	ath_hal_wait_for_beacon(_ah, _bf) \
+	((*(_ah)->ah_wait_for_beacon)((_ah), (_bf)->bf_daddr))
+#define	ath_hal_put_rx_buf(_ah, _bufaddr) \
+	((*(_ah)->ah_put_rx_buf)((_ah), (_bufaddr)))
+#define	ath_hal_get_tsf32(_ah) \
+	((*(_ah)->ah_get_tsf32)((_ah)))
+#define	ath_hal_get_tsf64(_ah) \
+	((*(_ah)->ah_get_tsf64)((_ah)))
+#define	ath_hal_reset_tsf(_ah) \
+	((*(_ah)->ah_reset_tsf)((_ah)))
+#define	ath_hal_start_rx(_ah) \
+	((*(_ah)->ah_start_rx)((_ah)))
+#define	ath_hal_put_tx_buf(_ah, _q, _bufaddr) \
+	((*(_ah)->ah_put_tx_buf)((_ah), (_q), (_bufaddr)))
+#define	ath_hal_get_tx_buf(_ah, _q) \
+	((*(_ah)->ah_get_tx_buf)((_ah), (_q)))
+#define	ath_hal_get_rx_buf(_ah) \
+	((*(_ah)->ah_get_rx_buf)((_ah)))
+#define	ath_hal_tx_start(_ah, _q) \
+	((*(_ah)->ah_tx_start)((_ah), (_q)))
 #define	ath_hal_setchannel(_ah, _chan) \
-	((*(_ah)->ah_setChannel)((_ah), (_chan)))
+	((*(_ah)->ah_setchannel)((_ah), (_chan)))
 #define	ath_hal_calibrate(_ah, _chan) \
-	((*(_ah)->ah_perCalibration)((_ah), (_chan)))
-#define	ath_hal_setledstate(_ah, _state) \
-	((*(_ah)->ah_setLedState)((_ah), (_state)))
-#define	ath_hal_beaconinit(_ah, _nextb, _bperiod) \
-	((*(_ah)->ah_beaconInit)((_ah), (_nextb), (_bperiod)))
-#define	ath_hal_beaconreset(_ah) \
-	((*(_ah)->ah_resetStationBeaconTimers)((_ah)))
-#define	ath_hal_beacontimers(_ah, _bs, _tsf, _dc, _cc) \
-	((*(_ah)->ah_setStationBeaconTimers)((_ah), (_bs), (_tsf), \
+	((*(_ah)->ah_calibrate)((_ah), (_chan)))
+#define	ath_hal_set_ledstate(_ah, _state) \
+	((*(_ah)->ah_set_ledstate)((_ah), (_state)))
+#define	ath_hal_init_beacon(_ah, _nextb, _bperiod) \
+	((*(_ah)->ah_init_beacon)((_ah), (_nextb), (_bperiod)))
+#define	ath_hal_reset_beacon(_ah) \
+	((*(_ah)->ah_reset_beacon)((_ah)))
+#define	ath_hal_set_beacon_timers(_ah, _bs, _tsf, _dc, _cc) \
+	((*(_ah)->ah_set_beacon_timers)((_ah), (_bs), (_tsf), \
 	 (_dc), (_cc)))
-#define	ath_hal_setassocid(_ah, _bss, _associd) \
-	((*(_ah)->ah_writeAssocid)((_ah), (_bss), (_associd), 0))
-#define	ath_hal_getregdomain(_ah, _prd) \
-	(*(_prd) = (_ah)->ah_getRegDomain(_ah))
+#define	ath_hal_set_associd(_ah, _bss, _associd) \
+	((*(_ah)->ah_set_associd)((_ah), (_bss), (_associd), 0))
+#define	ath_hal_get_regdomain(_ah, _prd) \
+	(*(_prd) = (_ah)->ah_get_regdomain(_ah))
 #define	ath_hal_getcountrycode(_ah, _pcc) \
-	(*(_pcc) = (_ah)->ah_countryCode)
+	(*(_pcc) = (_ah)->ah_getcountrycode)
 #define	ath_hal_detach(_ah) \
 	((*(_ah)->ah_detach)(_ah))
 
-#define ath_hal_gpiocfgoutput(_ah, _gpio) \
-	((*(_ah)->ah_gpioCfgOutput)((_ah), (_gpio)))
-#define ath_hal_gpiocfginput(_ah, _gpio) \
-	((*(_ah)->ah_gpioCfgInput)((_ah), (_gpio)))
-#define ath_hal_gpioget(_ah, _gpio) \
-	((*(_ah)->ah_gpioGet)((_ah), (_gpio)))
-#define ath_hal_gpioset(_ah, _gpio, _b) \
-	((*(_ah)->ah_gpioSet)((_ah), (_gpio), (_b)))
-#define ath_hal_gpiosetintr(_ah, _gpio, _b) \
-	((*(_ah)->ah_gpioSetIntr)((_ah), (_gpio), (_b)))
+#define ath_hal_set_gpio_output(_ah, _gpio) \
+	((*(_ah)->ah_set_gpio_output)((_ah), (_gpio)))
+#define ath_hal_set_gpio_input(_ah, _gpio) \
+	((*(_ah)->ah_set_gpio_input)((_ah), (_gpio)))
+#define ath_hal_get_gpio(_ah, _gpio) \
+	((*(_ah)->ah_get_gpio)((_ah), (_gpio)))
+#define ath_hal_set_gpio(_ah, _gpio, _b) \
+	((*(_ah)->ah_set_gpio)((_ah), (_gpio), (_b)))
+#define ath_hal_set_gpio_intr(_ah, _gpio, _b) \
+	((*(_ah)->ah_set_gpio_intr)((_ah), (_gpio), (_b)))
 
-#define	ath_hal_setopmode(_ah) \
-	((*(_ah)->ah_setPCUConfig)((_ah)))
-#define	ath_hal_stoptxdma(_ah, _qnum) \
-	((*(_ah)->ah_stopTxDma)((_ah), (_qnum)))
-#define	ath_hal_stoppcurecv(_ah) \
-	((*(_ah)->ah_stopPcuReceive)((_ah)))
-#define	ath_hal_startpcurecv(_ah) \
-	((*(_ah)->ah_startPcuReceive)((_ah)))
-#define	ath_hal_stopdmarecv(_ah) \
-	((*(_ah)->ah_stopDmaReceive)((_ah)))
-#define	ath_hal_getdiagstate(_ah, _id, _indata, _insize, _outdata, _outsize) \
-	((*(_ah)->ah_getDiagState)((_ah), (_id), \
+#define	ath_hal_set_opmode(_ah) \
+	((*(_ah)->ah_set_opmode)((_ah)))
+#define	ath_hal_stop_tx_dma(_ah, _qnum) \
+	((*(_ah)->ah_stop_tx_dma)((_ah), (_qnum)))
+#define	ath_hal_stop_pcu_recv(_ah) \
+	((*(_ah)->ah_stop_pcu_recv)((_ah)))
+#define	ath_hal_start_rx_pcu(_ah) \
+	((*(_ah)->ah_start_rx_pcu)((_ah)))
+#define	ath_hal_stop_rx_dma(_ah) \
+	((*(_ah)->ah_stop_rx_dma)((_ah)))
+#define	ath_hal_get_diag_state(_ah, _id, _indata, _insize, _outdata, _outsize) \
+	((*(_ah)->ah_get_diag_state)((_ah), (_id), \
 	 (_indata), (_insize), (_outdata), (_outsize)))
 
-#define	ath_hal_setuptxqueue(_ah, _type, _qinfo) \
-	((*(_ah)->ah_setupTxQueue)((_ah), (_type), (_qinfo)))
-#define	ath_hal_resettxqueue(_ah, _q) \
-	((*(_ah)->ah_resetTxQueue)((_ah), (_q)))
-#define	ath_hal_releasetxqueue(_ah, _q) \
-	((*(_ah)->ah_releaseTxQueue)((_ah), (_q)))
-#define	ath_hal_hasveol(_ah) \
-	((*(_ah)->ah_hasVEOL)((_ah)))
-#define	ath_hal_getrfgain(_ah) \
-	((*(_ah)->ah_getRfGain)((_ah)))
-#define	ath_hal_rxmonitor(_ah) \
-	((*(_ah)->ah_rxMonitor)((_ah)))
+#define	ath_hal_setup_tx_queue(_ah, _type, _qinfo) \
+	((*(_ah)->ah_setup_tx_queue)((_ah), (_type), (_qinfo)))
+#define	ath_hal_reset_tx_queue(_ah, _q) \
+	((*(_ah)->ah_reset_tx_queue)((_ah), (_q)))
+#define	ath_hal_release_tx_queue(_ah, _q) \
+	((*(_ah)->ah_release_tx_queue)((_ah), (_q)))
+#define	ath_hal_has_veol(_ah) \
+	((*(_ah)->ah_has_veol)((_ah)))
+#define	ath_hal_get_rf_gain(_ah) \
+	((*(_ah)->ah_get_rf_gain)((_ah)))
+#define	ath_hal_set_rx_monitor(_ah) \
+	((*(_ah)->ah_set_rx_monitor)((_ah)))
 
-#define	ath_hal_setuprxdesc(_ah, _ds, _size, _intreq) \
-	((*(_ah)->ah_setupRxDesc)((_ah), (_ds), (_size), (_intreq)))
-#define	ath_hal_rxprocdesc(_ah, _ds, _dspa, _dsnext) \
-	((*(_ah)->ah_procRxDesc)((_ah), (_ds), (_dspa), (_dsnext)))
-#define	ath_hal_setuptxdesc(_ah, _ds, _plen, _hlen, _atype, _txpow, \
+#define	ath_hal_setup_rx_desc(_ah, _ds, _size, _intreq) \
+	((*(_ah)->ah_setup_rx_desc)((_ah), (_ds), (_size), (_intreq)))
+#define	ath_hal_proc_rx_desc(_ah, _ds, _dspa, _dsnext) \
+	((*(_ah)->ah_proc_rx_desc)((_ah), (_ds), (_dspa), (_dsnext)))
+#define	ath_hal_setup_tx_desc(_ah, _ds, _plen, _hlen, _atype, _txpow, \
 	    _txr0, _txtr0, _keyix, _ant, _flags, \
 	    _rtsrate, _rtsdura) \
-	((*(_ah)->ah_setupTxDesc)((_ah), (_ds), (_plen), (_hlen), (_atype), \
+	((*(_ah)->ah_setup_tx_desc)((_ah), (_ds), (_plen), (_hlen), (_atype), \
 	    (_txpow), (_txr0), (_txtr0), (_keyix), (_ant), \
 	    (_flags), (_rtsrate), (_rtsdura)))
-#define	ath_hal_setupxtxdesc(_ah, _ds, \
+#define	ath_hal_setup_xtx_desc(_ah, _ds, \
 	    _txr1, _txtr1, _txr2, _txtr2, _txr3, _txtr3) \
-	((*(_ah)->ah_setupXTxDesc)((_ah), (_ds), \
+	((*(_ah)->ah_setup_xtx_desc)((_ah), (_ds), \
 	    (_txr1), (_txtr1), (_txr2), (_txtr2), (_txr3), (_txtr3)))
-#define	ath_hal_filltxdesc(_ah, _ds, _l, _first, _last) \
-	((*(_ah)->ah_fillTxDesc)((_ah), (_ds), (_l), (_first), (_last)))
-#define	ath_hal_txprocdesc(_ah, _ds) \
-	((*(_ah)->ah_procTxDesc)((_ah), (_ds)))
+#define	ath_hal_fill_tx_desc(_ah, _ds, _l, _first, _last) \
+	((*(_ah)->ah_fill_tx_desc)((_ah), (_ds), (_l), (_first), (_last)))
+#define	ath_hal_proc_tx_desc(_ah, _ds) \
+	((*(_ah)->ah_proc_tx_desc)((_ah), (_ds)))
 
 #endif /* _DEV_ATH_ATHVAR_H */
