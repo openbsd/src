@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.39 2005/04/12 14:32:00 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.40 2005/04/18 11:00:42 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -497,10 +497,10 @@ print_config(struct bgpd_config *conf, struct network_head *net_l,
 	printf("\n");
 	print_mainconf(conf);
 	printf("\n");
-	print_mrt(0, 0, "", "");
-	printf("\n");
 	TAILQ_FOREACH(n, net_l, entry)
 		print_network(&n->net);
+	printf("\n");
+	print_mrt(0, 0, "", "");
 	printf("\n");
 	print_groups(conf, peer_l);
 	printf("\n");
