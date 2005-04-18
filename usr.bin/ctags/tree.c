@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.7 2004/06/02 14:58:46 tom Exp $	*/
+/*	$OpenBSD: tree.c,v 1.8 2005/04/18 13:21:03 pat Exp $	*/
 /*	$NetBSD: tree.c,v 1.4 1995/03/26 20:14:11 glass Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tree.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: tree.c,v 1.7 2004/06/02 14:58:46 tom Exp $";
+static char rcsid[] = "$OpenBSD: tree.c,v 1.8 2005/04/18 13:21:03 pat Exp $";
 #endif
 #endif /* not lint */
 
@@ -103,12 +103,16 @@ add_node(NODE *node, NODE *cur_node)
 	if (!dif) {
 		if (node->file == cur_node->file) {
 			if (!wflag)
-				fprintf(stderr, "Duplicate entry in file %s, line %d: %s\nSecond entry ignored\n", node->file, lineno, node->entry);
+				fprintf(stderr, "Duplicate entry in file %s, "
+				    "line %d: %s\nSecond entry ignored\n",
+				    node->file, lineno, node->entry);
 			return;
 		}
 		if (!cur_node->been_warned)
 			if (!wflag)
-				fprintf(stderr, "Duplicate entry in files %s and %s: %s (Warning only)\n", node->file, cur_node->file, node->entry);
+				fprintf(stderr, "Duplicate entry in files %s "
+				    "and %s: %s (Warning only)\n",
+				    node->file, cur_node->file, node->entry);
 		cur_node->been_warned = YES;
 	}
 	else if (dif < 0)
@@ -125,10 +129,12 @@ add_node(NODE *node, NODE *cur_node)
 static void
 free_tree(NODE *node)
 {
-	while (node) {
-		if (node->right)
-			free_tree(node->right);
+	if (node) {
+		free_tree(node->left);
+		free_tree(node->right);
+
+		free(node->entry);
+		free(node->pat);
 		free(node);
-		node = node->left;
 	}
 }
