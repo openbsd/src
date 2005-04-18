@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.47 2005/04/18 21:02:50 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.48 2005/04/18 23:56:19 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1013,6 +1013,10 @@ cvs_sendentry(struct cvsroot *root, const CVSFILE *file)
 		cvs_log(LP_ERR, "attempt to send Entry for non-regular file");
 		return (-1);
 	}
+
+	/* don't send Entry for unknown files */
+	if (file->cf_cvstat == CVS_FST_UNKNOWN)
+		return (0);
 
 	snprintf(ebuf, sizeof(ebuf), "/%s/%s///", file->cf_name,
 	    rcsnum_tostr(file->cf_lrev, numbuf, sizeof(numbuf)));
