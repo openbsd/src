@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.77 2005/04/13 08:35:22 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.78 2005/04/18 11:09:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -634,7 +634,7 @@ show_fib_msg(struct imsg *imsg)
 			printf("B");
 		else if (k->flags & F_CONNECTED)
 			printf("C");
-		else if (k->flags & F_KERNEL)
+		else if (k->flags & F_STATIC)
 			printf("S");
 		else
 			printf(" ");
