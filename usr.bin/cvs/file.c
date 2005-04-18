@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.63 2005/04/18 21:10:39 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.64 2005/04/18 21:24:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -728,7 +728,11 @@ cvs_file_free(CVSFILE *cf)
 			SIMPLEQ_REMOVE_HEAD(&(cf->cf_files), cf_list);
 			cvs_file_free(child);
 		}
+	} else {
+		if (cf->cf_tag != NULL)
+			cvs_strfree(cf->cf_tag);
 	}
+
 	free(cf);
 }
 
