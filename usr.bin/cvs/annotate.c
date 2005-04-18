@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.10 2005/04/13 20:05:37 jfb Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.11 2005/04/18 21:02:49 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -131,7 +131,6 @@ cvs_annotate_file(CVSFILE *cf, void *arg)
 	int ret;
 	char fpath[MAXPATHLEN];
 	struct cvsroot *root;
-	struct cvs_ent *entp;
 
 	ret = 0;
 	root = CVS_DIR_ROOT(cf);
@@ -149,11 +148,9 @@ cvs_annotate_file(CVSFILE *cf, void *arg)
 	}
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
-	entp = cvs_ent_getent(fpath);
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if ((entp != NULL) && (cvs_sendentry(root, entp) < 0)) {
-			cvs_ent_free(entp);
+		if (cvs_sendentry(root, cf) < 0) {
 			return (CVS_EX_PROTO);
 		}
 
@@ -181,7 +178,5 @@ cvs_annotate_file(CVSFILE *cf, void *arg)
 		}
 	}
 
-	if (entp != NULL)
-		cvs_ent_free(entp);
 	return (ret);
 }

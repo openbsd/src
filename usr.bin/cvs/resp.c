@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.27 2005/04/15 13:14:00 xsa Exp $	*/
+/*	$OpenBSD: resp.c,v 1.28 2005/04/18 21:02:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -389,13 +389,13 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 		cf = cvs_file_create(sdir, line, DT_DIR, 0755);
 		if (cf == NULL)
 			return (-1);
-		cf->cf_ddat->cd_repo = strdup(line);
-		if (cf->cf_ddat->cd_repo == NULL) {
+		cf->cf_repo = strdup(line);
+		if (cf->cf_repo == NULL) {
 			cvs_log(LP_ERRNO, "failed to duplicate `%s'", line);
 			cvs_file_free(cf);
 			return (-1);
 		}
-		cf->cf_ddat->cd_root = root;
+		cf->cf_root = root;
 		root->cr_ref++;
 
 		if (cvs_file_attach(sdir, cf) < 0) {
@@ -418,9 +418,9 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 	}
 
 	if (type == CVS_RESP_CLRSTICKY)
-		cf->cf_ddat->cd_flags &= ~CVS_DIRF_STICKY;
+		cf->cf_flags &= ~CVS_DIRF_STICKY;
 	else if (type == CVS_RESP_SETSTICKY)
-		cf->cf_ddat->cd_flags |= CVS_DIRF_STICKY;
+		cf->cf_flags |= CVS_DIRF_STICKY;
 
 	return (0);
 }

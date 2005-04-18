@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.25 2005/04/16 18:01:26 xsa Exp $	*/
+/*	$OpenBSD: commit.c,v 1.26 2005/04/18 21:02:49 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -109,18 +109,18 @@ cvs_commit_helper(void)
 	struct cvs_flist cl;
 	CVSFILE *cfp;
 
-	TAILQ_INIT(&cl);
+	SIMPLEQ_INIT(&cl);
 	cvs_file_examine(cvs_files, cvs_commit_prepare, &cl);
-	if (TAILQ_EMPTY(&cl))
+	if (SIMPLEQ_EMPTY(&cl))
 		return (0);
 
 	if (cvs_msg == NULL)
 		cvs_msg = cvs_logmsg_get(CVS_FILE_NAME(cvs_files),
 		    NULL, &cl, NULL);
 
-	while (!TAILQ_EMPTY(&cl)) {
-		cfp = TAILQ_FIRST(&cl);
-		TAILQ_REMOVE(&cl, cfp, cf_list);
+	while (!SIMPLEQ_EMPTY(&cl)) {
+		cfp = SIMPLEQ_FIRST(&cl);
+		SIMPLEQ_REMOVE_HEAD(&cl, cf_list);
 		cvs_file_free(cfp);
 	}
 
@@ -147,7 +147,7 @@ cvs_commit_prepare(CVSFILE *cf, void *arg)
 		if (copy == NULL)
 			return (CVS_EX_DATA);
 
-		TAILQ_INSERT_TAIL(clp, copy, cf_list);
+		SIMPLEQ_INSERT_TAIL(clp, copy, cf_list);
 	}
 
 	return (0);
@@ -166,7 +166,6 @@ cvs_commit_file(CVSFILE *cf, void *arg)
 	char *repo, rcspath[MAXPATHLEN], fpath[MAXPATHLEN];
 	RCSFILE *rf;
 	struct cvsroot *root;
-	struct cvs_ent *entp;
 
 	ret = 0;
 	rf = NULL;
@@ -185,28 +184,21 @@ cvs_commit_file(CVSFILE *cf, void *arg)
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
 	if (cf->cf_parent != NULL)
-		repo = cf->cf_parent->cf_ddat->cd_repo;
-
-	entp = cvs_ent_getent(fpath);
-	if (entp == NULL)
-		return (CVS_EX_DATA);
+		repo = cf->cf_parent->cf_repo;
 
 	if ((cf->cf_cvstat == CVS_FST_ADDED) ||
 	    (cf->cf_cvstat == CVS_FST_MODIFIED)) {
 		if (root->cr_method != CVS_METHOD_LOCAL) {
-			if (cvs_sendentry(root, entp) < 0) {
-				cvs_ent_free(entp);
+			if (cvs_sendentry(root, cf) < 0) {
 				return (CVS_EX_PROTO);
 			}
 
 			if (cvs_sendreq(root, CVS_REQ_MODIFIED,
 			    CVS_FILE_NAME(cf)) < 0) {
-				cvs_ent_free(entp);
 				return (CVS_EX_PROTO);
 			}
 
 			if (cvs_sendfile(root, fpath) < 0) {
-				cvs_ent_free(entp);
 				return (CVS_EX_PROTO);
 			}
 		}
@@ -217,12 +209,8 @@ cvs_commit_file(CVSFILE *cf, void *arg)
 	if (l == -1 || l >= (int)sizeof(rcspath)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", rcspath);
-
-		cvs_ent_free(entp);
 		return (-1);
 	}
-
-	cvs_ent_free(entp);
 
 	return (0);
 }

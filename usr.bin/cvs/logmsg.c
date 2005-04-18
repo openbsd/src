@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.12 2005/02/26 21:51:33 david Exp $	*/
+/*	$OpenBSD: logmsg.c,v 1.13 2005/04/18 21:02:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -219,7 +219,7 @@ cvs_logmsg_get(const char *dir, struct cvs_flist *added,
 		fprintf(fp, "%s %s Files:", CVS_LOGMSG_PREFIX,
 		    cvs_logmsg_ops[i]);
 		nl = 1;
-		TAILQ_FOREACH(cvsfp, files[i], cf_list) {
+		SIMPLEQ_FOREACH(cvsfp, files[i], cf_list) {
 			/* take the space into account */
 			cvs_file_getpath(cvsfp, fpath, sizeof(fpath));
 			len = strlen(fpath) + 1;

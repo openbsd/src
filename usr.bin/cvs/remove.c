@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.7 2005/04/12 14:58:40 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.8 2005/04/18 21:02:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Xavier Santolaria <xsa@openbsd.org>
@@ -94,11 +94,8 @@ cvs_remove_file(CVSFILE *cf, void *arg)
 	int ret;
 	char fpath[MAXPATHLEN];
 	struct cvsroot *root;
-	CVSENTRIES *entfile;
-	struct cvs_ent *ent;
 
 	ret = 0;
-	ent = NULL;
 	root = CVS_DIR_ROOT(cf);
 
 	if (cf->cf_type == DT_DIR) {
@@ -115,17 +112,8 @@ cvs_remove_file(CVSFILE *cf, void *arg)
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	entfile = cvs_ent_open(dirname(fpath), O_RDWR);
-	if (entfile == NULL) {
-		cvs_log(LP_ERR, "failed to remove `%s'", fpath);
-		return (CVS_EX_FILE);
-	}
-
-	ent = cvs_ent_get(entfile, CVS_FILE_NAME(cf));
-
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (ent != NULL)
-			ret = cvs_sendentry(root, ent);
+		ret = cvs_sendentry(root, cf);
 	} else {
 		/* if -f option is used, physically remove the file */
 		if (force_remove == 1) {
@@ -142,8 +130,6 @@ cvs_remove_file(CVSFILE *cf, void *arg)
 		    "use `%s commit' to remove this file permanently",
 		    __progname);
 	}
-
-	cvs_ent_close(entfile);
 
 	return (ret);
 }

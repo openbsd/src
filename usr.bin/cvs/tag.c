@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.12 2005/04/16 20:31:18 xsa Exp $	*/
+/*	$OpenBSD: tag.c,v 1.13 2005/04/18 21:02:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -158,7 +158,6 @@ cvs_tag_file(CVSFILE *cfp, void *arg)
 	int ret, l;
 	char *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
-	struct cvs_ent *entp;
 	struct cvsroot *root;
 
 	ret = 0;
@@ -172,11 +171,9 @@ cvs_tag_file(CVSFILE *cfp, void *arg)
 	}
 
 	cvs_file_getpath(cfp, fpath, sizeof(fpath));
-	entp = cvs_ent_getent(fpath);
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if ((entp != NULL) && (cvs_sendentry(root, entp) < 0)) {
-			cvs_ent_free(entp);
+		if (cvs_sendentry(root, cfp) < 0) {
 			return (CVS_EX_PROTO);
 		}
 
@@ -201,33 +198,22 @@ cvs_tag_file(CVSFILE *cfp, void *arg)
 			return (0);
 		}
 
-		if (cfp->cf_parent != NULL)
-			repo = cfp->cf_parent->cf_ddat->cd_repo;
-		else
-			repo = NULL;
-
+		repo = CVS_DIR_REPO(cfp);
 		l = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
 		    root->cr_dir, repo, CVS_FILE_NAME(cfp), RCS_FILE_EXT);
 		if (l == -1 || l >= (int)sizeof(rcspath)) {
 			errno = ENAMETOOLONG;
 			cvs_log(LP_ERRNO, "%s", rcspath);
-
-			cvs_ent_free(entp);
 			return (-1);
 		}
 
 		rf = rcs_open(rcspath, RCS_READ);
 		if (rf == NULL) {
-			if (entp != NULL)
-				cvs_ent_free(entp);
 			return (CVS_EX_DATA);
 		}
 
 		rcs_close(rf);
 	}
-
-	if (entp != NULL)
-		cvs_ent_free(entp);
 
 	return (ret);
 }

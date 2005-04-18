@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.30 2005/04/16 19:05:02 xsa Exp $	*/
+/*	$OpenBSD: diff.c,v 1.31 2005/04/18 21:02:49 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -482,19 +482,18 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 	BUF *b1, *b2;
 	RCSNUM *r1, *r2;
 	RCSFILE *rf;
-	struct cvs_ent *entp;
 	struct cvsroot *root;
 
 	if (cfp->cf_type == DT_DIR) {
 		if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
-			root = cfp->cf_parent->cf_ddat->cd_root;
+			root = cfp->cf_parent->cf_root;
 			cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
 			    CVS_FILE_NAME(cfp));
 		} else {
-			root = cfp->cf_ddat->cd_root;
+			root = cfp->cf_root;
 #if 0
 			if ((cfp->cf_parent == NULL) ||
-			    (root != cfp->cf_parent->cf_ddat->cd_root)) {
+			    (root != cfp->cf_parent->cf_root)) {
 				cvs_connect(root);
 				cvs_diff_sendflags(root);
 			}
@@ -516,8 +515,8 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 
 	if (cfp->cf_parent != NULL) {
 		dir = cvs_file_getpath(cfp->cf_parent, dfpath, sizeof(dfpath));
-		root = cfp->cf_parent->cf_ddat->cd_root;
-		repo = cfp->cf_parent->cf_ddat->cd_repo;
+		root = cfp->cf_parent->cf_root;
+		repo = cfp->cf_parent->cf_repo;
 	} else {
 		dir = ".";
 		root = NULL;
@@ -533,13 +532,8 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		return (0);
 	}
 
-	entp = cvs_ent_getent(diff_file);
-	if (entp == NULL)
-		return (CVS_EX_DATA);
-
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_sendentry(root, entp) < 0) {
-			cvs_ent_free(entp);
+		if (cvs_sendentry(root, cfp) < 0) {
 			return (CVS_EX_PROTO);
 		}
 	}
@@ -548,7 +542,6 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		if (root->cr_method != CVS_METHOD_LOCAL)
 			cvs_sendreq(root, CVS_REQ_UNCHANGED,
 			    CVS_FILE_NAME(cfp));
-		cvs_ent_free(entp);
 		return (0);
 	}
 
@@ -562,14 +555,11 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		if (l == -1 || l >= (int)sizeof(rcspath)) {
 			errno = ENAMETOOLONG;
 			cvs_log(LP_ERRNO, "%s", rcspath);
-
-			cvs_ent_free(entp);
 			return (-1);
 		}
 
 		rf = rcs_open(rcspath, RCS_READ);
 		if (rf == NULL) {
-			cvs_ent_free(entp);
 			return (CVS_EX_DATA);
 		}
 
@@ -577,10 +567,9 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		    RCS_DIFF_DIV, rcspath);
 
 		if (dap->rev1 == NULL)
-			r1 = entp->ce_rev;
+			r1 = cfp->cf_lrev;
 		else {
 			if ((r1 = rcsnum_parse(dap->rev1)) == NULL) {
-				cvs_ent_free(entp);
 				return (CVS_EX_DATA);
 			}
 		}
@@ -589,13 +578,12 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		    rcsnum_tostr(r1, buf, sizeof(buf)));
 		b1 = rcs_getrev(rf, r1);
 
-		if (r1 != entp->ce_rev)
+		if (r1 != cfp->cf_lrev)
 			rcsnum_free(r1);
 
 		if (dap->rev2 != NULL) {
 			cvs_printf("retrieving revision %s\n", dap->rev2);
 			if ((r2 = rcsnum_parse(dap->rev2)) == NULL) {
-				cvs_ent_free(entp);
 				return (CVS_EX_DATA);
 			}
 			b2 = rcs_getrev(rf, r2);
@@ -632,7 +620,6 @@ cvs_diff_file(struct cvs_file *cfp, void *arg)
 		(void)unlink(path_tmp2);
 	}
 
-	cvs_ent_free(entp);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.22 2005/04/16 20:05:05 xsa Exp $	*/
+/*	$OpenBSD: util.c,v 1.23 2005/04/18 21:02:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -526,7 +526,7 @@ cvs_mkadmin(CVSFILE *cdir, mode_t mode)
 	ef = cvs_ent_open(dpath, O_WRONLY);
 	(void)cvs_ent_close(ef);
 
-	root = cdir->cf_ddat->cd_root;
+	root = cdir->cf_root;
 	l = snprintf(path, sizeof(path), "%s/" CVS_PATH_ROOTSPEC, dpath);
 	if (l == -1 || l >= (int)sizeof(path)) {
 		errno = ENAMETOOLONG;
@@ -567,13 +567,13 @@ cvs_mkadmin(CVSFILE *cdir, mode_t mode)
 	}
 
 	if ((stat(path, &st) != 0) && (errno == ENOENT) &&
-	    (cdir->cf_ddat->cd_repo != NULL)) {
+	    (cdir->cf_repo != NULL)) {
 		fp = fopen(path, "w");
 		if (fp == NULL) {
 			cvs_log(LP_ERRNO, "failed to open %s", path);
 			return (-1);
 		}
-		fprintf(fp, "%s\n", cdir->cf_ddat->cd_repo);
+		fprintf(fp, "%s\n", cdir->cf_repo);
 		(void)fclose(fp);
 	}
 

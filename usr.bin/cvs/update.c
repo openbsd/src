@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.22 2005/04/16 20:31:18 xsa Exp $	*/
+/*	$OpenBSD: update.c,v 1.23 2005/04/18 21:02:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -103,7 +103,6 @@ cvs_update_file(CVSFILE *cf, void *arg)
 	char *fname, *repo, fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
 	struct cvsroot *root;
-	struct cvs_ent *entp;
 
 	ret = 0;
 	rf = NULL;
@@ -124,11 +123,9 @@ cvs_update_file(CVSFILE *cf, void *arg)
 	}
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
-	entp = cvs_ent_getent(fpath);
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if ((entp != NULL) && (cvs_sendentry(root, entp) < 0)) {
-			cvs_ent_free(entp);
+		if (cvs_sendentry(root, cf) < 0) {
 			return (CVS_EX_PROTO);
 		}
 
@@ -159,22 +156,17 @@ cvs_update_file(CVSFILE *cf, void *arg)
 		if (l == -1 || l >= (int)sizeof(rcspath)) {
 			errno = ENAMETOOLONG;
 			cvs_log(LP_ERRNO, "%s", rcspath);
-
-			cvs_ent_free(entp);
 			return (-1);
 		}
 
 		rf = rcs_open(rcspath, RCS_READ);
 		if (rf == NULL) {
-			cvs_ent_free(entp);
 			return (CVS_EX_DATA);
 		}
 
 		rcs_close(rf);
 	}
 
-	if (entp != NULL)
-		cvs_ent_free(entp);
 	return (ret);
 }
 

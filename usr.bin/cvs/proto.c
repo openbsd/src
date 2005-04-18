@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.46 2005/04/03 17:32:50 xsa Exp $	*/
+/*	$OpenBSD: proto.c,v 1.47 2005/04/18 21:02:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -959,15 +959,18 @@ cvs_senddir(struct cvsroot *root, CVSFILE *dir)
 {
 	char lbuf[MAXPATHLEN], rbuf[MAXPATHLEN];
 
+	if (dir->cf_type != DT_DIR)
+		return (-1);
+
 	cvs_file_getpath(dir, lbuf, sizeof(lbuf));
 	if (strcmp(lbuf, cvs_lastdir) == 0 && cvs_cmdop != CVS_OP_CHECKOUT)
 		return (0);
 
-	if (dir->cf_ddat->cd_repo == NULL)
+	if (dir->cf_repo == NULL)
 		strlcpy(rbuf, root->cr_dir, sizeof(rbuf));
 	else
 		snprintf(rbuf, sizeof(rbuf), "%s/%s", root->cr_dir,
-		    dir->cf_ddat->cd_repo);
+		    dir->cf_repo);
 
 
 	if ((cvs_sendreq(root, CVS_REQ_DIRECTORY, lbuf) < 0) ||
@@ -1002,12 +1005,17 @@ cvs_sendarg(struct cvsroot *root, const char *arg, int append)
  * the CVS entry <ent> (which are the name and revision).
  */
 int
-cvs_sendentry(struct cvsroot *root, const struct cvs_ent *ent)
+cvs_sendentry(struct cvsroot *root, const CVSFILE *file)
 {
 	char ebuf[128], numbuf[64];
 
-	snprintf(ebuf, sizeof(ebuf), "/%s/%s///", ent->ce_name,
-	    rcsnum_tostr(ent->ce_rev, numbuf, sizeof(numbuf)));
+	if (file->cf_type != DT_REG) {
+		cvs_log(LP_ERR, "attempt to send Entry for non-regular file");
+		return (-1);
+	}
+
+	snprintf(ebuf, sizeof(ebuf), "/%s/%s///", file->cf_name,
+	    rcsnum_tostr(file->cf_lrev, numbuf, sizeof(numbuf)));
 
 	return cvs_sendreq(root, CVS_REQ_ENTRY, ebuf);
 }

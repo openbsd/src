@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.18 2005/04/16 20:31:18 xsa Exp $	*/
+/*	$OpenBSD: status.c,v 1.19 2005/04/18 21:02:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -116,7 +116,6 @@ cvs_status_file(CVSFILE *cfp, void *arg)
 	int ret;
 	char *repo, fpath[MAXPATHLEN];
 	RCSFILE *rf;
-	struct cvs_ent *entp;
 	struct cvsroot *root;
 
 	ret = 0;
@@ -134,10 +133,8 @@ cvs_status_file(CVSFILE *cfp, void *arg)
 	}
 
 	cvs_file_getpath(cfp, fpath, sizeof(fpath));
-	entp = cvs_ent_getent(fpath);
 
-	if ((entp != NULL) && (cvs_sendentry(root, entp) < 0)) {
-		cvs_ent_free(entp);
+	if (cvs_sendentry(root, cfp) < 0) {
 		return (-1);
 	}
 
@@ -160,8 +157,6 @@ cvs_status_file(CVSFILE *cfp, void *arg)
 		break;
 	}
 
-	if (entp != NULL)
-		cvs_ent_free(entp);
 	return (ret);
 }
 

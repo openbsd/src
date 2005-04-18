@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.22 2005/04/16 20:05:05 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.23 2005/04/18 21:02:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -109,7 +109,6 @@ cvs_getlog_remote(CVSFILE *cf, void *arg)
 	int ret;
 	char *repo, fpath[MAXPATHLEN];
 	struct cvsroot *root;
-	struct cvs_ent *entp;
 
 	ret = 0;
 	root = CVS_DIR_ROOT(cf);
@@ -125,10 +124,8 @@ cvs_getlog_remote(CVSFILE *cf, void *arg)
 	}
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
-	entp = cvs_ent_getent(fpath);
 
-	if ((entp != NULL) && (cvs_sendentry(root, entp) < 0)) {
-		cvs_ent_free(entp);
+	if (cvs_sendentry(root, cf) < 0) {
 		return (-1);
 	}
 
@@ -147,8 +144,6 @@ cvs_getlog_remote(CVSFILE *cf, void *arg)
 		break;
 	}
 
-	if (entp != NULL)
-		cvs_ent_free(entp);
 	return (ret);
 }
 

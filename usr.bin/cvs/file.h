@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.15 2005/03/24 14:35:18 jfb Exp $	*/
+/*	$OpenBSD: file.h,v 1.16 2005/04/18 21:02:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -32,13 +32,13 @@
 #include <dirent.h>
 #include <search.h>
 
+#include "rcs.h"
+
 struct cvs_file;
-struct cvs_dir;
 struct cvs_entries;
 
 
 #define CVS_FILE_MAXDEPTH     32
-#define CVS_FILE_NBUCKETS     256
 
 
 #define CF_STAT     0x01  /* obsolete */
@@ -60,9 +60,6 @@ struct cvs_entries;
  *
  * The <cf_cvstat> field gives the file's status with regards to the CVS
  * repository.  The file can be in any one of the CVS_FST_* states.
- * If the file's type is DT_DIR, then the <cf_ddat> pointer will point to
- * a cvs_dir structure containing data specific to the directory (such as
- * the contents of the directory's CVS/Entries, CVS/Root, etc.).
  */
 #define CVS_FST_UNKNOWN   0
 #define CVS_FST_UPTODATE  1
@@ -74,20 +71,42 @@ struct cvs_entries;
 #define CVS_FST_LOST      7
 
 
-TAILQ_HEAD(cvs_flist, cvs_file);
-
+SIMPLEQ_HEAD(cvs_flist, cvs_file);
 
 typedef struct cvs_file {
 	struct cvs_file  *cf_parent;  /* parent directory (NULL if none) */
 	char             *cf_name;
 	mode_t            cf_mode;
-	time_t            cf_mtime;
-	u_int16_t         cf_cvstat;  /* cvs status of the file */
-	u_int16_t         cf_type;    /* uses values from dirent.h */
-	struct cvs_dir   *cf_ddat;    /* only for directories */
+	u_int8_t          cf_cvstat;  /* cvs status of the file */
+	u_int8_t          cf_type;    /* uses values from dirent.h */
+	u_int16_t         cf_flags;
 
-	TAILQ_ENTRY(cvs_file)  cf_list;
+	union {
+		struct {
+			RCSNUM  *cd_lrev;	/* local revision */
+			time_t   cd_mtime;
+			char    *cd_tag;
+			char    *cd_opts;
+		} cf_reg;
+		struct {
+			char             *cd_repo;
+			struct cvsroot   *cd_root;
+			struct cvs_flist  cd_files;
+		} cf_dir;
+	} cf_td;
+
+	SIMPLEQ_ENTRY(cvs_file)  cf_list;
 } CVSFILE;
+
+/* only valid for regular files */
+#define cf_mtime  cf_td.cf_reg.cd_mtime
+#define cf_lrev   cf_td.cf_reg.cd_lrev
+#define cf_tag    cf_td.cf_reg.cd_tag
+
+/* only valid for directories */
+#define cf_files  cf_td.cf_dir.cd_files
+#define cf_repo   cf_td.cf_dir.cd_repo
+#define cf_root   cf_td.cf_dir.cd_root
 
 #define CVS_FILE_NAME(cf)   (cf->cf_name)
 
@@ -97,27 +116,13 @@ typedef struct cvs_file {
 #define CVS_DIRF_STICKY    0x02
 #define CVS_DIRF_BASE      0x04
 
-struct cvs_dir {
-	struct cvsroot     *cd_root;
-	char               *cd_repo;
-	struct cvs_entries *cd_ent;
-	struct cvs_flist    cd_files;
-	u_int16_t           cd_nfiles;
-	u_int16_t           cd_flags;
-};
-
-
 #define CVS_DIR_ROOT(f)  ((((f)->cf_type == DT_DIR) && \
-	((f)->cf_ddat->cd_root != NULL)) ? (f)->cf_ddat->cd_root : \
-	(((f)->cf_parent == NULL) ? NULL : (f)->cf_parent->cf_ddat->cd_root))
-
-#define CVS_DIR_ENTRIES(f)  (((f)->cf_type == DT_DIR) ? \
-	(f)->cf_ddat->cd_ent : (((f)->cf_parent == NULL) ? \
-	NULL : (f)->cf_parent->cf_ddat->cd_ent))
+	((f)->cf_root != NULL)) ? (f)->cf_root : \
+	(((f)->cf_parent == NULL) ? NULL : (f)->cf_parent->cf_root))
 
 #define CVS_DIR_REPO(f)  (((f)->cf_type == DT_DIR) ? \
-	(f)->cf_ddat->cd_repo : (((f)->cf_parent == NULL) ? \
-	NULL : (f)->cf_parent->cf_ddat->cd_repo))
+	(f)->cf_repo : (((f)->cf_parent == NULL) ? \
+	NULL : (f)->cf_parent->cf_repo))
 
 int      cvs_file_init    (void);
 int      cvs_file_ignore  (const char *);
