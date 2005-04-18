@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.51 2005/04/18 00:16:16 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.52 2005/04/18 11:19:39 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -86,22 +86,22 @@ Set the local
 .Em autonomous system
 number to
 .Ar as-number .
-The AS numbers are assigned by local RIRs, such as
+The AS numbers are assigned by local RIRs, such as:
 .Pp
 .Bl -tag -width xxxxxxxx -compact
 .It AfriNIC
-for Africa,
+for Africa
 .It APNIC
-for the Asia Pacific region,
+for Asia Pacific
 .It ARIN
-for North America and parts of the Caribbean region,
+for North America and parts of the Caribbean
 .It LACNIC
-for Latin America and Caribbean, and
+for Latin America and the Caribbean
 .It RIPE NCC
-for Europe, the Middle East and parts of Asia.
+for Europe, the Middle East, and parts of Asia
 .El
 .Pp
-For example,
+For example:
 .Bd -literal -offset indent
 AS 65001
 .Ed
