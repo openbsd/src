@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.144 2005/04/07 13:16:12 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.145 2005/04/18 12:16:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -415,9 +415,8 @@ hppa_init(start)
 	pmap_bootstrap(v);
 
 	/* space has been reserved in pmap_bootstrap() */
-	msgbufp = (struct msgbuf *)(ptoa(physmem) - round_page(MSGBUFSIZE));
-	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
-	msgbufmapped = 1;
+	initmsgbuf((caddr_t)(ptoa(physmem) - round_page(MSGBUFSIZE)),
+	    round_page(MSGBUFSIZE));
 
 	/* they say PDC_COPROC might turn fault light on */
 	pdc_call((iodcio_t)pdc, 0, PDC_CHASSIS, PDC_CHASSIS_DISP,
