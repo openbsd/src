@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.56 2005/04/18 11:07:55 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.57 2005/04/18 14:12:50 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -460,8 +460,10 @@ priv_settime(double offset)
 	conf->settime = 0;
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
-		p->next -= (time_t)offset;
-		p->deadline -= (time_t) offset;
+		if (p->next)
+			p->next -= offset;
+		if (p->deadline)
+			p->deadline -= offset;
 	}
 }
 
