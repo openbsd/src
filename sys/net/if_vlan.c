@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.49 2005/04/17 23:02:02 brad Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.50 2005/04/18 03:29:18 brad Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -139,7 +139,6 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 	/* Now undo some of the damage... */
-	ifp->if_baudrate = 0;
 	ifp->if_type = IFT_8021_VLAN;
 	ifp->if_hdrlen = EVL_ENCAPLEN;
 
@@ -428,6 +427,12 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	 * participate in bridges of that type.
 	 */
 	ifv->ifv_if.if_type = p->if_type;
+
+	/*
+	 * Inherit baudrate from the parent.  An SNMP agent would use this
+	 * information.
+	 */
+	ifv->ifv_if.if_baudrate = p->if_baudrate;
 
 	/*
 	 * If the parent interface can do hardware-assisted
