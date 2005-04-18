@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.12 2005/02/22 16:33:44 jfb Exp $	*/
+/*	$OpenBSD: req.c,v 1.13 2005/04/18 21:33:34 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -62,6 +62,8 @@ static int  cvs_req_case         (int, char *);
 static int  cvs_req_argument     (int, char *);
 static int  cvs_req_globalopt    (int, char *);
 static int  cvs_req_gzipstream   (int, char *);
+static int  cvs_req_entry        (int, char *);
+static int  cvs_req_filestate    (int, char *);
 
 static int  cvs_req_command      (int, char *);
 
@@ -77,16 +79,16 @@ struct cvs_reqhdlr {
 	{ NULL                  },
 	{ NULL                  },
 	{ NULL                  },
-	{ NULL                  },
+	{ cvs_req_entry         },
 	{ NULL                  },
 	{ NULL                  },	/* 10 */
-	{ NULL                  },
-	{ NULL                  },
-	{ NULL                  },
+	{ cvs_req_filestate     },
+	{ cvs_req_filestate     },
+	{ cvs_req_filestate     },
 	{ cvs_req_useunchanged  },
 	{ NULL                  },
 	{ NULL                  },
-	{ NULL                  },
+	{ cvs_req_filestate     },
 	{ cvs_req_case          },
 	{ NULL                  },
 	{ cvs_req_argument      },	/* 20 */
@@ -203,6 +205,7 @@ cvs_req_root(int reqid, char *line)
 {
 	if (cvs_req_rootpath != NULL) {
 		cvs_log(LP_ERR, "duplicate Root request received");
+		cvs_printf("Protocol error: Duplicate Root request");
 		return (-1);
 	}
 
@@ -266,6 +269,38 @@ cvs_req_directory(int reqid, char *line)
 	return (0);
 }
 
+static int
+cvs_req_entry(int reqid, char *line)
+{
+	struct cvs_ent *ent;
+
+	if ((ent = cvs_ent_parse(line)) == NULL)
+		return (-1);
+
+	return (0);
+}
+
+/*
+ * cvs_req_filestate()
+ *
+ * Handler for the `Modified', `Is-Modified', `Unchanged' and `Questionable'
+ * requests, which are all used to report the assumed state of a file from the
+ * client.
+ */
+static int
+cvs_req_filestate(int reqid, char *line)
+{
+	mode_t fmode;
+	BUF *fdata;
+
+	if (reqid == CVS_REQ_MODIFIED) {
+		fdata = cvs_recvfile(NULL, &fmode);
+		if (fdata == NULL)
+			return (-1);
+	}
+
+	return (0);
+}
 
 /*
  * cvs_req_expandmod()
