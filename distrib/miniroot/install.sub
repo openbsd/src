@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.382 2005/04/15 23:45:29 krw Exp $
+#	$OpenBSD: install.sub,v 1.383 2005/04/18 23:56:21 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -489,9 +489,9 @@ __EOT
 		echo
 		for _f in $_avail; do
 			if isin $_f $_selected; then
-				echo "[X] $_f"
+				echo "	[X] $_f"
 			else
-				echo "[ ] $_f"
+				echo "	[ ] $_f"
 				: ${_next:=$_f}
 			fi
 		done
