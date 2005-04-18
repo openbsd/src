@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.9 2005/04/12 20:49:19 marco Exp $       */
+/* $OpenBSD: bioctl.c,v 1.10 2005/04/18 11:51:46 jmc Exp $       */
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
@@ -235,14 +235,9 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-Dehpt] "
-	    "[-a alarm function] "
-	    "[-b blink function] "
-	    "[-s get status] "
-	    "[-t passthrough] "
-	    "[-l device list] "
-	    "[-u go/stop function ] "
-	    "-d raid device\n", __progname);
+	fprintf(stderr, "usage: %s [-Dehpt] [-a function] [-b function] "
+	    "[-l device list]\n"
+	    "\t[-u function] -d device\n", __progname);
 
 	exit(1);
 }
