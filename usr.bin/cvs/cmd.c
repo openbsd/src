@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.13 2005/04/18 21:02:49 jfb Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.14 2005/04/18 21:06:46 jfb Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -116,10 +116,6 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 
 	if (c->cmd_examine != NULL)
 		cvs_file_examine(cvs_files, c->cmd_examine, NULL);
-
-	printf("YO BITCH, I'M DONE\n");
-	getchar();
-	exit(0);
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		if (c->cmd_flags & CVS_CMD_SENDDIR) {
