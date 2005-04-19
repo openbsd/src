@@ -130,14 +130,15 @@ totext_soa(ARGS_TOTEXT) {
 	for (i = 0; i < 5; i++) {
 		char buf[sizeof("2147483647")];
 		unsigned long num;
-		unsigned int numlen;
+		int numlen;
 		num = uint32_fromregion(&dregion);
 		isc_region_consume(&dregion, 4);
 		numlen = snprintf(buf, sizeof(buf), "%lu", num);
-		INSIST(numlen > 0 && numlen < sizeof("2147483647"));
+		INSIST(numlen != -1 && (size_t)numlen < sizeof(buf));
 		RETERR(str_totext(buf, target));
 		if (multiline && comment) {
-			RETERR(str_totext("           ; " + numlen, target));
+			RETERR(str_totext("           ; " +
+			    (unsigned int)numlen, target));
 			RETERR(str_totext(soa_fieldnames[i], target));
 			/* Print times in week/day/hour/minute/second form */
 			if (i >= 1) {

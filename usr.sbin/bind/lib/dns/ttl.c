@@ -51,7 +51,7 @@ ttlfmt(unsigned int t, const char *s, isc_boolean_t verbose,
        isc_boolean_t space, isc_buffer_t *target)
 {
 	char tmp[60];
-	size_t len;
+	int len;
 	isc_region_t region;
 
 	if (verbose)
@@ -62,12 +62,12 @@ ttlfmt(unsigned int t, const char *s, isc_boolean_t verbose,
 	else
 		len = snprintf(tmp, sizeof(tmp), "%u%c", t, s[0]);
 
-	INSIST(len + 1 <= sizeof(tmp));
+	INSIST(len != -1 && (size_t)len + 1 <= sizeof(tmp));
 	isc_buffer_availableregion(target, &region);
-	if (len > region.length)
+	if ((size_t)len > region.length)
 		return (ISC_R_NOSPACE);
-	memcpy(region.base, tmp, len);
-	isc_buffer_add(target, len);
+	memcpy(region.base, tmp, (size_t)len);
+	isc_buffer_add(target, (size_t)len);
 
 	return (ISC_R_SUCCESS);
 }
