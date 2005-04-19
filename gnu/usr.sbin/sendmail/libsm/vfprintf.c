@@ -535,9 +535,11 @@ reswitch:	switch (ch)
 				if (prec > 120)
 					prec = 120;
 				if (prec >= 0)
-					sprintf(out, fmt, width, prec, val);
+					snprintf(out, sizeof(out), fmt, width,
+					    prec, val);
 				else
-					sprintf(out, fmt, width, val);
+					snprintf(out, sizeof(out), fmt, width,
+					    val);
 				len = strlen(out);
 				PRINT(out, len);
 				FLUSH();
