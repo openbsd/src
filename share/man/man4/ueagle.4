@@ -1,4 +1,4 @@
-.\" $OpenBSD: ueagle.4,v 1.3 2005/04/16 15:48:37 jmc Exp $
+.\" $OpenBSD: ueagle.4,v 1.4 2005/04/19 16:54:40 damien Exp $
 .\"
 .\" Copyright (c) 2003-2005
 .\"     Damien Bergamini <damien.bergamini@free.fr>
@@ -38,6 +38,54 @@ reassembly (SAR) of ATM cells is done by software.
 To achieve high rate downstream transfer with fast ADSL connections, the
 .Nm
 driver uses USB isochronous pipes instead of standard bulk pipes.
+.Pp
+To establish a permanent virtual circuit (PVC) with a peer,
+.Nm
+must be configured using the
+.Xr route 8
+command.
+A typical invocation is:
+.Bd -literal -offset 3n
+# route add -iface <Peer IP> -link if:encap.vpi.vci_hi.vci_lo
+.Ed
+.Pp
+The arguments to
+.Dq -link
+are as follows:
+.Pp
+.Bl -tag -width Ds -offset 3n -compact
+.It if
+Interface name.
+For example,
+.Dq ueagle0 .
+.Pp
+.It encap
+Type of encapsulation to use.
+Possible types are:
+.Pp
+.Bl -tag -width "AAL5 LLC/SNAPXX" -offset 3n -compact
+.It AAL5 VCMUX
+Use hex value 0x1.
+.It AAL5 LLC/SNAP
+Use hex value 0x3.
+.El
+.Pp
+.It vpi
+See ISP's recommended setting for this.
+All values specified in hex.
+.Pp
+.It vci_hi
+.It vci_lo
+See ISP's recommended setting for this.
+All values specified in hex.
+The VCI is specified as high_order_byte.low_order_byte.
+For example, a VCI of 35 would be specified as
+.Dq 0.23 .
+.El
+.Pp
+See also
+.Sx EXAMPLES
+below.
 .Sh HARDWARE
 The following modems should work:
 .Pp
@@ -86,7 +134,8 @@ To establish a PVC (vpi=0, vci=6, llc/snap) with host 192.168.1.3:
 .Ed
 .Sh SEE ALSO
 .Xr uhub 4 ,
-.Xr usb 4
+.Xr usb 4 ,
+.Xr route 8
 .Rs
 .%T The uEagle Web Page
 .%O http://damien.bergamini.free.fr/ueagle/
