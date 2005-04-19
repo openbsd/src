@@ -1402,6 +1402,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ohcivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/uaudioreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ucomvar.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ueaglereg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ueaglevar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/uftdireg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/ugraphire_rdesc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/usb/uhcireg.ph
@@ -2273,8 +2275,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/xfs/xfs_vopdefs.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zconf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/zlib.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ueaglereg.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/dev/usb/ueaglevar.ph
 ./usr/libexec/ld.so
 ./usr/libexec/sudo_noexec.so
 ./usr/local/libdata/perl5/site_perl/arm-openbsd
