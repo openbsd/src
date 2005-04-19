@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.47 2005/04/19 19:22:31 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.48 2005/04/19 19:30:18 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -179,6 +179,8 @@ static const char *rcs_errstrs[] = {
 	"No such entry",
 	"Duplicate entry found",
 	"Bad RCS number",
+	"Invalid RCS symbol",
+	"Parse error",
 };
 
 #define RCS_NERR   (sizeof(rcs_errstrs)/sizeof(rcs_errstrs[0]))
