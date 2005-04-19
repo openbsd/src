@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.26 2005/04/18 21:02:49 jfb Exp $	*/
+/*	$OpenBSD: commit.c,v 1.27 2005/04/19 00:34:39 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -142,7 +142,9 @@ cvs_commit_prepare(CVSFILE *cf, void *arg)
 	CVSFILE *copy;
 	struct cvs_flist *clp = (struct cvs_flist *)arg;
 
-	if ((cf->cf_type == DT_REG) && (cf->cf_cvstat == CVS_FST_MODIFIED)) {
+	if ((cf->cf_type == DT_REG) && ((cf->cf_cvstat == CVS_FST_MODIFIED) ||
+	    (cf->cf_cvstat == CVS_FST_ADDED))) {
+		printf("copying %s\n", CVS_FILE_NAME(cf));
 		copy = cvs_file_copy(cf);
 		if (copy == NULL)
 			return (CVS_EX_DATA);
