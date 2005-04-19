@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.h,v 1.8 2002/03/15 01:20:04 millert Exp $	*/
+/*	$OpenBSD: cache.h,v 1.9 2005/04/19 21:30:20 miod Exp $	*/
 /*	$NetBSD: cache.h,v 1.16 1997/07/06 21:15:14 pk Exp $ */
 
 /*
@@ -157,6 +157,7 @@ void	hypersparc_cache_enable(void);		/* turn it on */
 void	swift_cache_enable(void);		/* turn it on */
 void	cypress_cache_enable(void);		/* turn it on */
 void	turbosparc_cache_enable(void);		/* turn it on */
+void	kap_cache_enable(void);			/* turn it on */
 
 void	sun4_vcache_flush_context(void);	/* flush current context */
 void	sun4_vcache_flush_region(int);		/* flush region in cur ctx */
@@ -180,6 +181,10 @@ void	ms1_cache_flush(caddr_t, u_int);
 void	viking_cache_flush(caddr_t, u_int);
 void	viking_pcache_flush_line(int, int);
 void	srmmu_pcache_flush_line(int, int);
+
+void	kap_vcache_flush_context(void);		/* flush current context */
+void	kap_vcache_flush_page(int va);		/* flush page in cur ctx */
+void	kap_cache_flush(caddr_t, u_int);	/* flush region */
 
 extern void sparc_noop(void);
 

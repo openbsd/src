@@ -1,0 +1,35 @@
+#	$OpenBSD: files.solbourne,v 1.1 2005/04/19 21:30:17 miod Exp $
+
+# Kernel configuration rules for OpenBSD/solbourne.
+# Most device definitions and files rules are imported from
+# sys/arch/sparc/conf/files.sparc and are not repeated here.
+# Hence, this file only lists solbourne-specific changes from
+# the sparc port.
+
+maxpartitions 16
+
+maxusers 2 8 64
+
+# obio on solbourne is just an administrative wrapper on which
+# all on-board devices attach.
+file	arch/solbourne/dev/obio.c		obio
+
+# OKI TODclock chip
+device	tod
+attach	tod at obio
+file	arch/solbourne/dev/tod.c		tod
+
+# Z8530 clock hijack
+device	zsclock
+attach	zsclock at zs
+file	arch/solbourne/dev/zsclock.c		zsclock
+
+file	dev/clock_subr.c
+
+file	arch/solbourne/solbourne/autoconf.c
+file	arch/solbourne/solbourne/clock.c
+file	arch/solbourne/solbourne/machdep.c
+file	arch/solbourne/solbourne/mem.c
+file	arch/solbourne/solbourne/pmap.c
+file	arch/solbourne/solbourne/prom_machdep.c
+file	arch/solbourne/solbourne/trap.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.40 2004/09/29 07:35:12 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.41 2005/04/19 21:30:19 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.50 1997/10/18 00:00:40 gwr Exp $	*/
 
 /*-
@@ -75,6 +75,10 @@
 #include <sparc/sparc/auxioreg.h>
 #include <sparc/dev/cons.h>
 
+#ifdef solbourne
+#include <machine/prom.h>
+#endif
+
 #include <uvm/uvm_extern.h>
 
 #include "zskbd.h"
@@ -116,10 +120,18 @@ int zs_major = 12;
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zschan {
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4M)
 	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
 	u_char		zc_xxx0;
 	volatile u_char	zc_data;	/* data */
 	u_char		zc_xxx1;
+#endif
+#if defined(solbourne)
+	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
+	u_char		zc_xxx0[7];
+	volatile u_char	zc_data;	/* data */
+	u_char		zc_xxx1[7];
+#endif
 };
 struct zsdevice {
 	/* Yes, they are backwards. */
@@ -225,6 +237,12 @@ zs_match(parent, vcf, aux)
 
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
+
+#ifdef solbourne
+	if (CPU_ISKAP)
+		return (ca->ca_bustype == BUS_OBIO);
+#endif
+
 	if ((ca->ca_bustype == BUS_MAIN && !CPU_ISSUN4) ||
 	    (ca->ca_bustype == BUS_OBIO && CPU_ISSUN4M))
 		return (getpropint(ra->ra_node, "slave", -2) == cf->cf_unit);
@@ -808,6 +826,8 @@ zscnpollc(dev, on)
 
 /*****************************************************************/
 
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4M)
+
 cons_decl(prom);
 
 /*
@@ -912,6 +932,8 @@ promcnputc(dev, c)
 	splx(s);
 }
 
+#endif	/* SUN4 || SUN4C || SUN4M */
+
 /*****************************************************************/
 
 #if 0
@@ -936,6 +958,7 @@ consinit()
 	int channel, zs_unit;
 	int inSource, outSink;
 
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4M)
 	if (promvec->pv_romvec_vers > 2) {
 		/* We need to probe the PROM device tree */
 		int node,fd;
@@ -1043,8 +1066,34 @@ setup_output:
 		inSource = *promvec->pv_stdin;
 		outSink  = *promvec->pv_stdout;
 	}
+#endif	/* SUN4 || SUN4C || SUN4M */
+#ifdef solbourne
+	if (CPU_ISKAP) {
+		const char *dev;
 
+		inSource = PROMDEV_TTYA;	/* default */
+		dev = prom_getenv(ENV_INPUTDEVICE);
+		if (dev != NULL) {
+			if (strcmp(dev, "ttyb") == 0)
+				inSource = PROMDEV_TTYB;
+			if (strcmp(dev, "keyboard") == 0)
+				inSource = PROMDEV_KBD;
+		}
+
+		outSink = PROMDEV_TTYA;	/* default */
+		dev = prom_getenv(ENV_OUTPUTDEVICE);
+		if (dev != NULL) {
+			if (strcmp(dev, "ttyb") == 0)
+				outSink = PROMDEV_TTYB;
+			if (strcmp(dev, "screen") == 0)
+				outSink = PROMDEV_SCREEN;
+		}
+	}
+#endif
+
+#if defined(SUN4) || defined(SUN4C) || defined(SUN4M)
 setup_console:
+#endif
 
 	if (inSource != outSink) {
 		printf("cninit: mismatched PROM output selector\n");

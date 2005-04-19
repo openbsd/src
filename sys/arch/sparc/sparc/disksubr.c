@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.31 2005/03/30 07:52:32 deraadt Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.32 2005/04/19 21:30:20 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.16 1996/04/28 20:25:59 thorpej Exp $ */
 
 /*
@@ -92,6 +92,7 @@ dk_establish(dk, dev)
 		target = bp->val[0];
 		lun = bp->val[1];
 
+#if defined(SUN4)
 		if (CPU_ISSUN4 && dev->dv_xname[0] == 's' &&
 		    target == 0 && sbsc->sc_link[0][0] == NULL) {
 			/*
@@ -103,9 +104,12 @@ dk_establish(dk, dev)
 			target = 3;	/* remap to 3 */
 			lun = 0;
 		}
+#endif
 
+#if defined(SUN4C)
 		if (CPU_ISSUN4C && dev->dv_xname[0] == 's')
 			target = sd_crazymap(target);
+#endif
 
 		if (sbsc->sc_link[target][lun] != NULL &&
 		    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {

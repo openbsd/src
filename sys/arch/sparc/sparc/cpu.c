@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.39 2003/05/10 21:11:14 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.40 2005/04/19 21:30:20 miod Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -72,6 +72,12 @@
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/memreg.h>
+
+#ifdef solbourne
+#include <machine/idt.h>
+#include <machine/kap.h>
+#include <machine/prom.h>
+#endif
 
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -365,10 +371,12 @@ void cpumatch_ms(struct cpu_softc *, struct module_info *, int);
 void cpumatch_viking(struct cpu_softc *, struct module_info *, int);
 void cpumatch_hypersparc(struct cpu_softc *, struct module_info *, int);
 void cpumatch_turbosparc(struct cpu_softc *, struct module_info *, int);
+void cpumatch_kap(struct cpu_softc *, struct module_info *, int);
 
 void getcacheinfo_sun4(struct cpu_softc *, int node);
 void getcacheinfo_sun4c(struct cpu_softc *, int node);
 void getcacheinfo_obp(struct cpu_softc *, int node);
+void getcacheinfo_kap(struct cpu_softc *, int node);
 
 void sun4_hotfix(struct cpu_softc *);
 void viking_hotfix(struct cpu_softc *);
@@ -621,6 +629,112 @@ getcacheinfo_sun4c(sc, node)
 		sc->flags |= CPUFLG_SUN4CACHEBUG;
 }
 #endif /* SUN4C */
+
+#if defined(solbourne)
+struct module_info module_kap = {
+	CPUTYP_UNKNOWN,
+	VAC_WRITEBACK,
+	cpumatch_kap,
+	getcacheinfo_kap,
+	NULL,
+	0,				/* mmu_enable */
+	kap_cache_enable,
+	0,				/* ncontext is irrelevant here */
+	0,
+	0,
+	kap_cache_flush,
+	kap_vcache_flush_page,
+	noop_vcache_flush_segment,	/* unused */
+	noop_vcache_flush_region,	/* unused */
+	kap_vcache_flush_context,
+	noop_pcache_flush_line,
+	noop_pure_vcache_flush,
+	noop_cache_flush_all,
+	0
+};
+
+void
+cpumatch_kap(sc, mp, node)
+	struct cpu_softc *sc;
+	struct module_info *mp;
+	int	node;
+{
+	extern int timerblurb;
+
+	sc->mmu_npmeg = sc->mmu_ncontext = 0;	/* do not matter for idt */
+
+	/*
+	 * Check for the clock speed in the board diagnostic register.
+	 * While there, knowing that there are only two possible values,
+	 * fill the delay constant.
+	 */
+	if ((lda(GLU_DIAG, ASI_PHYS_IO) >> 24) & GD_36MHZ) {
+		sc->hz = 36000000;
+		timerblurb = 14;	/* about 14.40 */
+	} else {
+		sc->hz = 33000000;
+		timerblurb = 13;	/* about 13.20 */
+	}
+
+	if (node != 0) {
+		sysmodel = getpropint(node, "cpu", 0);
+		switch (sysmodel) {
+		case SYS_S4000:
+			break;
+		case SYS_S4100:
+			/* XXX do something about the L2 cache */
+			break;
+		default:
+			panic("cpumatch_kap: unrecognized sysmodel %x",
+			    sysmodel);
+		}
+	}
+}
+
+void
+getcacheinfo_kap(sc, node)
+	struct cpu_softc *sc;
+	int node;
+{
+	struct cacheinfo *ci = &sc->cacheinfo;
+
+	/*
+	 * The KAP processor has 3KB icache and 2KB dcache.
+	 * It is divided in 3 (icache) or 2 (dcache) banks
+	 * of 256 lines, each line being 4 bytes.
+	 * Both caches are virtually addressed.
+	 */
+
+	ci->ic_linesize = 12;
+	ci->ic_l2linesize = 3;	/* XXX */
+	ci->ic_nlines = DCACHE_LINES;
+	ci->ic_associativity = 1;
+	ci->ic_totalsize =
+	    ci->ic_nlines * ci->ic_linesize * ci->ic_associativity;
+	
+	ci->dc_enabled = 1;
+	ci->dc_linesize = 8;
+	ci->dc_l2linesize = 3;
+	ci->dc_nlines = DCACHE_LINES;
+	ci->dc_associativity = 1;
+	ci->dc_totalsize =
+	    ci->dc_nlines * ci->dc_linesize * ci->dc_associativity;
+
+	ci->c_totalsize = ci->ic_totalsize + ci->dc_totalsize;
+	/* ci->c_enabled */
+	ci->c_hwflush = 0;
+	ci->c_linesize = 8;	/* min */
+	ci->c_l2linesize = 3;	/* min */
+	ci->c_nlines = DCACHE_LINES;
+	ci->c_physical = 0;
+	ci->c_associativity = 1;
+	ci->c_split = 1;
+
+	/* no L2 cache (except on 4100 but we don't handle it yet) */
+	
+	ci->c_vactype = VAC_WRITEBACK;
+}
+#endif
 
 void
 sun4_hotfix(sc)
@@ -1109,6 +1223,10 @@ struct cpu_conf {
 	{ CPU_SUN4M, 4, 2, 0, ANY, "TI_MS2", &module_ms2 },
 	{ CPU_SUN4M, 4, 3, ANY, ANY, "TI_4_3", &module_viking },
 	{ CPU_SUN4M, 4, 4, ANY, ANY, "TI_4_4", &module_viking },
+#endif
+
+#if defined(solbourne)
+	{ CPU_KAP, 5, 0, ANY, ANY, "KAP", &module_kap },
 #endif
 
 	{ ANY, ANY, ANY, ANY, ANY, "Unknown", &module_unknown }

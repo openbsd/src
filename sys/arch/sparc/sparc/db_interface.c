@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.11 2003/05/13 22:25:33 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.12 2005/04/19 21:30:20 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.18 1997/09/01 00:16:31 pk Exp $ */
 
 /*
@@ -41,6 +41,7 @@
 
 #include <dev/cons.h>
 
+#include <machine/autoconf.h>
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
@@ -226,7 +227,7 @@ db_prom_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	promvec->pv_abort();
+	callrom();
 }
 
 struct db_command sparc_db_command_table[] = {

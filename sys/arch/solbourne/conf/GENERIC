@@ -1,0 +1,31 @@
+#	$OpenBSD: GENERIC,v 1.1 2005/04/19 21:30:17 miod Exp $
+
+# Machine architecture; required by config(8)
+machine		solbourne sparc
+
+include "../../../conf/GENERIC"
+
+maxusers	32		# estimated number of users
+option		SOLBOURNE	# necessary for proper config(8) operation
+
+# Generic swap; second partition of root disk or network.
+config		bsd	swap generic
+
+# Main bus and CPU .. all systems.
+mainbus0 at root
+cpu0	at mainbus0
+obio0	at mainbus0
+
+# Oki MSM62X42BRS TODclock
+tod0	at obio0
+
+# Zilog 8530 serial chips.  Each has two-channels.
+# zs0 is ttya and ttyb.  zs1 is the keyboard and mouse.
+zs0	at obio0
+zs1	at obio0
+
+zstty*	at zs?
+zsclock0 at zs1
+
+# On-board Ethernet
+le0	at obio0

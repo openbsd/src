@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lereg.h,v 1.5 2003/06/02 23:27:54 millert Exp $	*/
+/*	$OpenBSD: if_lereg.h,v 1.6 2005/04/19 21:30:19 miod Exp $	*/
 /*	$NetBSD: if_lereg.h,v 1.5 1995/12/10 10:15:07 mycroft Exp $ */
 
 /*-
@@ -43,5 +43,8 @@
  */
 struct lereg1 {
 	volatile u_int16_t	ler1_rdp;	/* data port */
+#ifdef solbourne
+	volatile u_char		ler1_pad[6];
+#endif
 	volatile u_int16_t	ler1_rap;	/* register select port */
 };
