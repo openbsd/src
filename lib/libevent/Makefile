@@ -1,13 +1,15 @@
-#	$OpenBSD: Makefile,v 1.9 2004/05/02 18:12:36 miod Exp $
+#	$OpenBSD: Makefile,v 1.10 2005/04/19 02:03:12 brad Exp $
 
 LIB=	event
-SRCS=	buffer.c evbuffer.c event.c kqueue.c poll.c select.c signal.c
+SRCS=	buffer.c evbuffer.c event.c kqueue.c log.c poll.c select.c signal.c
 HDRS=	event.h
 MAN=	event.3
 MLINKS=	event.3 event_init.3 event.3 event_dispatch.3 event.3 event_loop.3 \
-	event.3 event_loopexit.3 event.3 event_set.3 event.3 event_add.3 event.3 \
+	event.3 event_loopexit.3 event.3 event_base_loop.3 event.3 \
+	event_base_loopexit.3 event.3 event_set.3 event.3 event_add.3 event.3 \
 	event_del.3 event.3 event_once.3 event.3 event_pending.3 event.3 \
-	event_initialized.3 event.3 evtimer_set.3 event.3 evtimer_add.3 event.3 \
+	event_initialized.3 event.3 event_priority_init.3 event.3 \
+	ievent_priority_set.3 event.3 evtimer_set.3 event.3 evtimer_add.3 event.3 \
 	evtimer_del.3 event.3 evtimer_pending.3 event.3 evtimer_initialized.3 \
 	event.3 signal_set.3 event.3 signal_add.3 event.3 signal_del.3 \
 	event.3 signal_pending.3 event.3 signal_initialized.3 event.3 \
@@ -20,12 +22,16 @@ MLINKS=	event.3 event_init.3 event.3 event_dispatch.3 event.3 event_loop.3 \
 	event.3 evbuffer_read.3 event.3 evbuffer_find.3 
 
 CFLAGS+= -I${.CURDIR} \
-	-DHAVE_WORKING_KQUEUE \
-	-DHAVE_SELECT \
+	-DHAVE_FCNTL_H \
 	-DHAVE_POLL \
-	-DHAVE_SYS_TIME_H \
+	-DHAVE_SELECT \
+	-DHAVE_SETFD \
 	-DHAVE_STDARG_H \
-	-DHAVE_UNISTD_H
+	-DHAVE_SYS_IOCTL_H \
+	-DHAVE_SYS_TIME_H \
+	-DHAVE_UNISTD_H \
+	-DHAVE_VASPRINTF \
+	-DHAVE_WORKING_KQUEUE
 
 NOPIC=
 

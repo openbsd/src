@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer.c,v 1.1 2004/04/28 06:53:12 brad Exp $	*/
+/*	$OpenBSD: evbuffer.c,v 1.2 2005/04/19 02:03:12 brad Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -37,7 +37,6 @@
 #include <sys/time.h>
 #endif
 
-#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -152,7 +151,9 @@ bufferevent_writecb(int fd, short event, void *arg)
 	if (EVBUFFER_LENGTH(bufev->output)) {
 	    res = evbuffer_write(bufev->output, fd);
 	    if (res == -1) {
-		    if (errno == EAGAIN || errno == EINTR)
+		    if (errno == EAGAIN ||
+			errno == EINTR ||
+			errno == EINPROGRESS)
 			    goto reschedule;
 		    /* error case */
 		    what |= EVBUFFER_ERROR;
@@ -225,6 +226,17 @@ bufferevent_new(int fd, evbuffercb readcb, evbuffercb writecb,
 	bufev->enabled = EV_READ | EV_WRITE;
 
 	return (bufev);
+}
+
+int
+bufferevent_priority_set(struct bufferevent *bufev, int priority)
+{
+	if (event_priority_set(&bufev->ev_read, priority) == -1)
+		return (-1);
+	if (event_priority_set(&bufev->ev_write, priority) == -1)
+		return (-1);
+
+	return (0);
 }
 
 void

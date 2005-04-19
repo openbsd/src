@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.c,v 1.3 2004/04/28 06:53:12 brad Exp $	*/
+/*	$OpenBSD: poll.c,v 1.4 2005/04/19 02:03:12 brad Exp $	*/
 
 /*
  * Copyright 2000-2003 Niels Provos <provos@citi.umich.edu>
@@ -37,6 +37,7 @@
 #include <sys/_time.h>
 #endif
 #include <sys/queue.h>
+#include <sys/tree.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdio.h>
@@ -44,19 +45,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <err.h>
-
-#ifdef USE_LOG
-#include "log.h"
-#else
-#define LOG_DBG(x)
-#define log_error(x)	perror(x)
-#endif
 
 #include "event.h"
+#include "event-internal.h"
 #include "evsignal.h"
-
-extern struct event_list eventqueue;
+#include "log.h"
 
 extern volatile sig_atomic_t evsignal_caught;
 
@@ -65,13 +58,13 @@ struct pollop {
 	struct pollfd *event_set;
 	struct event **event_back;
 	sigset_t evsigmask;
-} pollop;
+};
 
 void *poll_init	(void);
 int poll_add		(void *, struct event *);
 int poll_del		(void *, struct event *);
-int poll_recalc	(void *, int);
-int poll_dispatch	(void *, struct timeval *);
+int poll_recalc		(struct event_base *, void *, int);
+int poll_dispatch	(struct event_base *, void *, struct timeval *);
 
 struct eventop pollops = {
 	"poll",
@@ -85,15 +78,18 @@ struct eventop pollops = {
 void *
 poll_init(void)
 {
+	struct pollop *pollop;
+
 	/* Disable kqueue when this environment variable is set */
 	if (!issetugid() && getenv("EVENT_NOPOLL"))
 		return (NULL);
 
-	memset(&pollop, 0, sizeof(pollop));
+	if (!(pollop = calloc(1, sizeof(struct pollop))))
+		return (NULL);
 
-	evsignal_init(&pollop.evsigmask);
+	evsignal_init(&pollop->evsigmask);
 
-	return (&pollop);
+	return (pollop);
 }
 
 /*
@@ -102,7 +98,7 @@ poll_init(void)
  */
 
 int
-poll_recalc(void *arg, int max)
+poll_recalc(struct event_base *base, void *arg, int max)
 {
 	struct pollop *pop = arg;
 
@@ -110,7 +106,7 @@ poll_recalc(void *arg, int max)
 }
 
 int
-poll_dispatch(void *arg, struct timeval *tv)
+poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 {
 	int res, i, count, sec, nfds;
 	struct event *ev;
@@ -118,7 +114,7 @@ poll_dispatch(void *arg, struct timeval *tv)
 
 	count = pop->event_count;
 	nfds = 0;
-	TAILQ_FOREACH(ev, &eventqueue, ev_next) {
+	TAILQ_FOREACH(ev, &base->eventqueue, ev_next) {
 		if (nfds + 1 >= count) {
 			if (count < 32)
 				count = 32;
@@ -129,13 +125,13 @@ poll_dispatch(void *arg, struct timeval *tv)
 			pop->event_set = realloc(pop->event_set,
 			    count * sizeof(struct pollfd));
 			if (pop->event_set == NULL) {
-				log_error("realloc");
+                                event_warn("realloc");
 				return (-1);
 			}
 			pop->event_back = realloc(pop->event_back,
 			    count * sizeof(struct event *));
 			if (pop->event_back == NULL) {
-				log_error("realloc");
+				event_warn("realloc");
 				return (-1);
 			}
 			pop->event_count = count;
@@ -166,7 +162,7 @@ poll_dispatch(void *arg, struct timeval *tv)
 	if (evsignal_deliver(&pop->evsigmask) == -1)
 		return (-1);
 
-	sec = tv->tv_sec * 1000 + tv->tv_usec / 1000;
+	sec = tv->tv_sec * 1000 + (tv->tv_usec + 999) / 1000;
 	res = poll(pop->event_set, nfds, sec);
 
 	if (evsignal_recalc(&pop->evsigmask) == -1)
@@ -174,7 +170,7 @@ poll_dispatch(void *arg, struct timeval *tv)
 
 	if (res == -1) {
 		if (errno != EINTR) {
-			log_error("poll");
+                        event_warn("poll");
 			return (-1);
 		}
 
@@ -183,7 +179,7 @@ poll_dispatch(void *arg, struct timeval *tv)
 	} else if (evsignal_caught)
 		evsignal_process();
 
-	LOG_DBG((LOG_MISC, 80, "%s: poll reports %d", __func__, res));
+	event_debug(("%s: poll reports %d", __func__, res));
 
 	if (res == 0)
 		return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.c,v 1.6 2004/04/28 06:53:12 brad Exp $	*/
+/*	$OpenBSD: select.c,v 1.7 2005/04/19 02:03:12 brad Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -37,25 +37,18 @@
 #include <sys/_time.h>
 #endif
 #include <sys/queue.h>
+#include <sys/tree.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include <err.h>
-
-#ifdef USE_LOG
-#include "log.h"
-#else
-#define LOG_DBG(x)
-#define log_error(x)	perror(x)
-#endif
 
 #include "event.h"
+#include "event-internal.h"
 #include "evsignal.h"
-
-extern struct event_list eventqueue;
+#include "log.h"
 
 #ifndef howmany
 #define        howmany(x, y)   (((x)+((y)-1))/(y))
@@ -69,13 +62,13 @@ struct selectop {
 	fd_set *event_readset;
 	fd_set *event_writeset;
 	sigset_t evsigmask;
-} sop;
+};
 
 void *select_init	(void);
 int select_add		(void *, struct event *);
 int select_del		(void *, struct event *);
-int select_recalc	(void *, int);
-int select_dispatch	(void *, struct timeval *);
+int select_recalc	(struct event_base *, void *, int);
+int select_dispatch	(struct event_base *, void *, struct timeval *);
 
 const struct eventop selectops = {
 	"select",
@@ -89,15 +82,18 @@ const struct eventop selectops = {
 void *
 select_init(void)
 {
+	struct selectop *sop;
+
 	/* Disable kqueue when this environment variable is set */
 	if (!issetugid() && getenv("EVENT_NOSELECT"))
 		return (NULL);
 
-	memset(&sop, 0, sizeof(sop));
+	if (!(sop = calloc(1, sizeof(struct selectop))))
+		return (NULL);
 
-	evsignal_init(&sop.evsigmask);
+	evsignal_init(&sop->evsigmask);
 
-	return (&sop);
+	return (sop);
 }
 
 /*
@@ -106,7 +102,7 @@ select_init(void)
  */
 
 int
-select_recalc(void *arg, int max)
+select_recalc(struct event_base *base, void *arg, int max)
 {
 	struct selectop *sop = arg;
 	fd_set *readset, *writeset;
@@ -117,7 +113,7 @@ select_recalc(void *arg, int max)
 		sop->event_fds = max;
 
 	if (!sop->event_fds) {
-		TAILQ_FOREACH(ev, &eventqueue, ev_next)
+		TAILQ_FOREACH(ev, &base->eventqueue, ev_next)
 			if (ev->ev_fd > sop->event_fds)
 				sop->event_fds = ev->ev_fd;
 	}
@@ -125,12 +121,12 @@ select_recalc(void *arg, int max)
 	fdsz = howmany(sop->event_fds + 1, NFDBITS) * sizeof(fd_mask);
 	if (fdsz > sop->event_fdsz) {
 		if ((readset = realloc(sop->event_readset, fdsz)) == NULL) {
-			log_error("malloc");
+			event_warn("malloc");
 			return (-1);
 		}
 
 		if ((writeset = realloc(sop->event_writeset, fdsz)) == NULL) {
-			log_error("malloc");
+			event_warn("malloc");
 			free(readset);
 			return (-1);
 		}
@@ -149,7 +145,7 @@ select_recalc(void *arg, int max)
 }
 
 int
-select_dispatch(void *arg, struct timeval *tv)
+select_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 {
 	int maxfd, res;
 	struct event *ev, *next;
@@ -158,7 +154,7 @@ select_dispatch(void *arg, struct timeval *tv)
 	memset(sop->event_readset, 0, sop->event_fdsz);
 	memset(sop->event_writeset, 0, sop->event_fdsz);
 
-	TAILQ_FOREACH(ev, &eventqueue, ev_next) {
+	TAILQ_FOREACH(ev, &base->eventqueue, ev_next) {
 		if (ev->ev_events & EV_WRITE)
 			FD_SET(ev->ev_fd, sop->event_writeset);
 		if (ev->ev_events & EV_READ)
@@ -176,7 +172,7 @@ select_dispatch(void *arg, struct timeval *tv)
 
 	if (res == -1) {
 		if (errno != EINTR) {
-			log_error("select");
+			event_warn("select");
 			return (-1);
 		}
 
@@ -185,10 +181,10 @@ select_dispatch(void *arg, struct timeval *tv)
 	} else if (evsignal_caught)
 		evsignal_process();
 
-	LOG_DBG((LOG_MISC, 80, "%s: select reports %d", __func__, res));
+	event_debug(("%s: select reports %d", __func__, res));
 
 	maxfd = 0;
-	for (ev = TAILQ_FIRST(&eventqueue); ev != NULL; ev = next) {
+	for (ev = TAILQ_FIRST(&base->eventqueue); ev != NULL; ev = next) {
 		next = TAILQ_NEXT(ev, ev_next);
 
 		res = 0;
@@ -201,6 +197,8 @@ select_dispatch(void *arg, struct timeval *tv)
 		if (res) {
 			if (!(ev->ev_events & EV_PERSIST))
 				event_del(ev);
+			else if (ev->ev_fd > maxfd)
+				maxfd = ev->ev_fd;
 			event_active(ev, res, 1);
 		} else if (ev->ev_fd > maxfd)
 			maxfd = ev->ev_fd;
