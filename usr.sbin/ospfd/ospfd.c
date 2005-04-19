@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.16 2005/04/17 21:50:18 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.17 2005/04/19 07:34:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -179,8 +179,6 @@ main(int argc, char *argv[])
 	session_socket_blockmode(pipe_ospfe2rde[0], BM_NONBLOCK);
 	session_socket_blockmode(pipe_ospfe2rde[1], BM_NONBLOCK);
 
-	event_init();
-
 	if (if_init(conf))
 		log_info("error initializing interfaces");
 	else
@@ -193,6 +191,8 @@ main(int argc, char *argv[])
 
 	/* show who we are */
 	setproctitle("parent");
+
+	event_init();
 
 	/* setup signal handler */
 	signal_set(&ev_sigint, SIGINT, main_sig_handler, NULL);

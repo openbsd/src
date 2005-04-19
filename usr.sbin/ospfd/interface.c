@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.15 2005/03/31 20:13:22 norby Exp $ */
+/*	$OpenBSD: interface.c,v 1.16 2005/04/19 07:34:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -169,8 +169,6 @@ if_new(struct kif *kif)
 
 	iface->crypt_seq_num = arc4random() & 0x0fffffff;
 
-	evtimer_set(&iface->lsack_tx_timer, ls_ack_tx_timer, iface);
-
 	strlcpy(iface->name, kif->ifname, sizeof(iface->name));
 
 	if ((ifr = calloc(1, sizeof(*ifr))) == NULL)
@@ -213,10 +211,6 @@ if_new(struct kif *kif)
 		sain = (struct sockaddr_in *) &ifr->ifr_addr;
 		iface->dst = sain->sin_addr;
 	}
-
-	/* set event handlers for interface */
-	evtimer_set(&iface->hello_timer, if_hello_timer, iface);
-	evtimer_set(&iface->wait_timer, if_wait_timer, iface);
 
 	free(ifr);
 	close(s);
@@ -384,8 +378,10 @@ if_act_start(struct iface *iface)
 	if (iface->self == NULL)
 		iface->self = nbr_new(ospfe_router_id(), iface, 1);
 
-	/* up interface */
-		/* ... */
+	/* set event handlers for interface */
+	evtimer_set(&iface->lsack_tx_timer, ls_ack_tx_timer, iface);
+	evtimer_set(&iface->hello_timer, if_hello_timer, iface);
+	evtimer_set(&iface->wait_timer, if_wait_timer, iface);
 
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
