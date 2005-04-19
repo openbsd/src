@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.65 2005/04/18 22:28:41 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.66 2005/04/19 00:32:55 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -919,8 +919,16 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 			    CVS_FILE_NAME(cfp));
 			cvs_file_free(cfp);
 			return (NULL);
-		} else
+		} else {
+			if (ent->ce_type == CVS_ENT_FILE)
+				cfp->cf_type = DT_REG;
+			else if (ent->ce_type == CVS_ENT_DIR)
+				cfp->cf_type = DT_DIR;
+			else
+				cvs_log(LP_WARN, "unknown ce_type %d", 
+				    ent->ce_type);
 			cfp->cf_cvstat = CVS_FST_LOST;
+		}
 	}
 
 	if (ent != NULL) {
