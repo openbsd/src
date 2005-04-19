@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.24 2005/04/19 00:38:39 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.25 2005/04/19 00:55:07 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -105,7 +105,7 @@ cvs_update_sendflags(struct cvsroot *root)
 {
 	if (Pflag && cvs_sendarg(root, "-P", 0) < 0)
 		return (CVS_EX_PROTO);
-	if (Aflag && cvs_sendarg(root, "-a", 0) < 0)
+	if (Aflag && cvs_sendarg(root, "-A", 0) < 0)
 		return (CVS_EX_PROTO);
 	if (dflag && cvs_sendarg(root, "-d", 0) < 0)
 		return (CVS_EX_PROTO);
