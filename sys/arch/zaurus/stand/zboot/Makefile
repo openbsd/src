@@ -1,5 +1,7 @@
-#MAN=	zboot.8
-NOMAN=
+#	$OpenBSD: Makefile,v 1.3 2005/04/19 23:09:40 uwe Exp $
+
+MAN=	boot.8
+MLINKS=	boot.8 boot.conf.8
 
 .if ${MACHINE} == "zaurus"
 PROG=	zboot
