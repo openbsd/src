@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.64 2005/04/19 21:30:18 miod Exp $
+#	$OpenBSD: files.sparc,v 1.65 2005/04/19 22:52:35 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -298,7 +298,7 @@ file	arch/sparc/sparc/openprom.c		!solbourne
 file	arch/sparc/sparc/pmap.c			!solbourne
 file	arch/sparc/sparc/sys_machdep.c
 file	arch/sparc/sparc/trap.c			!solbourne
-file	arch/sparc/sparc/vm_machdep.c		!solbourne
+file	arch/sparc/sparc/vm_machdep.c
 file	arch/sparc/sparc/disksubr.c
 
 file	arch/sparc/sparc/db_interface.c	ddb | kgdb
