@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueaglereg.h,v 1.1 2005/04/16 14:55:10 damien Exp $	*/
+/*	$OpenBSD: ueaglereg.h,v 1.2 2005/04/19 08:21:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2003-2005
@@ -82,6 +82,7 @@ struct ueagle_cmv {
 #define UEAGLE_CR		0x10
 #define UEAGLE_CW		0x11		
 #define UEAGLE_CR_ACK		0x12
+#define UEAGLE_CW_ACK		0x13
 #define UEAGLE_MODEMREADY	0x71
 
 	uWord	wIndex;

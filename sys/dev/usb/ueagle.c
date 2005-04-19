@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.1 2005/04/16 14:55:10 damien Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.2 2005/04/19 08:21:46 damien Exp $	*/
 
 /*-
  * Copyright (c) 2003-2005
@@ -665,17 +665,18 @@ ueagle_cmv_intr(struct ueagle_softc *sc, struct ueagle_cmv *cmv)
 	/* synchronize our current CMV index with the modem */
 	sc->index = UGETW(cmv->wIndex) + 1;
 
-	/* handle spontaneous CMVs */
-	if (cmv->bFunction == UEAGLE_MODEMREADY) {
+	switch (cmv->bFunction) {
+	case UEAGLE_MODEMREADY:
 		wakeup(UEAGLE_COND_READY(sc));
-		return;
-	}
+		break;
 
-	/* if it is the ack of a previous CR, save the data field */
-	if (cmv->bFunction == UEAGLE_CR_ACK)
+	case UEAGLE_CR_ACK:
 		sc->data = UGETDATA(cmv->dwData);
-
-	wakeup(UEAGLE_COND_CMV(sc));
+		/* FALLTHROUGH */
+	case UEAGLE_CW_ACK:
+		wakeup(UEAGLE_COND_CMV(sc));
+		break;
+	}
 }
 
 Static void
