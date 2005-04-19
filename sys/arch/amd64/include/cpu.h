@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.10 2004/06/25 17:27:01 andreas Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.11 2005/04/19 15:14:11 mickey Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -213,7 +213,6 @@ extern u_int32_t cpus_attached;
 #define clockframe intrframe
 
 #define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_rflags)
-#define CLKF_BASEPRI(frame)	(0)
 #define CLKF_PC(frame)		((frame)->if_rip)
 #define CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
 

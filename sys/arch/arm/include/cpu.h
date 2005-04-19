@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.7 2005/03/29 20:00:16 uwe Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.8 2005/04/19 15:14:11 mickey Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -135,15 +135,6 @@ extern int cpu_do_powersave;
 #else
 #define CLKF_USERMODE(frame)	((frame->if_r15 & R15_MODE) == R15_MODE_USR)
 #endif
-
-/*
- * CLKF_BASEPRI: True if we were at spl0 before the interrupt.
- *
- * This is hard-wired to 0 on the ARM, since spllowersoftclock() might
- * not actually be able to unblock the interrupt, which would cause us
- * to run the softclock interrupts with hardclock blocked.
- */
-#define CLKF_BASEPRI(frame)	0
 
 /*
  * CLKF_INTR: True if we took the interrupt from inside another
