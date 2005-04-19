@@ -1,4 +1,4 @@
-.\"     $OpenBSD: securelevel.7,v 1.15 2004/01/08 10:56:07 jmc Exp $
+.\"     $OpenBSD: securelevel.7,v 1.16 2005/04/19 07:28:34 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Hugh Graham
 .\"
@@ -76,12 +76,17 @@ kernel modules may not be loaded or unloaded
 the
 .Va fs.posix.setuid
 .Xr sysctl 8
-variable may not be raised
+variable may not be changed
 .It
 the
 .Va net.inet.ip.sourceroute
 .Xr sysctl 8
-variable may not be raised
+variable may not be changed
+.It
+the
+.Va machdep.kbdreset
+.Xr sysctl 8
+variable may not be changed
 .El
 .It \ 2 Em Highly secure mode
 .Bl -hyphen -compact
