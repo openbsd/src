@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.11 2005/01/04 21:14:35 espie Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.12 2005/04/19 15:23:08 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.10 1997/08/31 21:23:40 pk Exp $ */
 
 /*
@@ -86,10 +86,6 @@ extern db_regs_t	ddb_regs;	/* register state */
 void db_machine_init(void);
 int kdb_trap(int, struct trapframe *);
 
-/*
- * We use a.out symbols in DDB.
- */
-#define	DB_AOUT_SYMBOLS
 #define DB_ELF_SYMBOLS
 #define DB_ELFSIZE	32
 
