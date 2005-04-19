@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.383 2005/04/18 23:56:21 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.384 2005/04/19 00:49:20 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -1320,13 +1320,10 @@ sane_install() {
 # user selects from that location. Repeat as many times as the user
 # needs to get all desired sets.
 install_sets() {
-	local _d=disk _locs=disk
+	local _d=disk _locs="disk ftp http"
 
 	[[ -n $CDDEVS ]] && { _locs="cd $_locs" ; _d=cd ; }
-	if [[ -n $(ifconfig | grep 'status: active') ]]; then
-		_locs="$_locs ftp http"
-		[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
-	fi
+	[[ -x /sbin/mount_nfs ]] && _locs="$_locs nfs"
 	[[ -n $MTDEVS && -x /bin/mt ]] && _locs="$_locs tape"
 
 	echo "\nLet's $MODE the sets!"
