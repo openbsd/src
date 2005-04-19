@@ -1,4 +1,4 @@
-/* $OpenBSD: zts.c,v 1.7 2005/04/08 22:12:14 uwe Exp $ */
+/* $OpenBSD: zts.c,v 1.8 2005/04/19 21:54:48 djm Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -114,6 +114,7 @@ zts_attach(struct device *parent, struct device *self, void *aux)
 
 	a.accessops = &zts_accessops;
 	a.accesscookie = sc;
+	printf("\n");
 		
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 }
