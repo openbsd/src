@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.23 2005/04/18 21:02:50 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.24 2005/04/19 00:38:39 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -43,10 +43,11 @@
 int cvs_update_file(CVSFILE *, void *);
 int cvs_update_prune(CVSFILE *, void *);
 int cvs_update_options(char *, int, char **, int *);
+int cvs_update_sendflags(struct cvsroot *);
 
 struct cvs_cmd_info cvs_update = {
 	cvs_update_options,
-	NULL,
+	cvs_update_sendflags,
 	cvs_update_file,
 	NULL, NULL,
 	CF_SORT | CF_RECURSE | CF_IGNORE | CF_KNOWN | CF_NOSYMS,
@@ -54,23 +55,33 @@ struct cvs_cmd_info cvs_update = {
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2 | CVS_CMD_SENDDIR
 };
 
+static int Pflag, dflag, Aflag;
+
 int
 cvs_update_options(char *opt, int argc, char **argv, int *arg)
 {
 	int ch;
 
+	Pflag = dflag = Aflag = 0;
+
 	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
 		case 'A':
+			Aflag = 1;
+			break;
 		case 'C':
 		case 'D':
 		case 'd':
+			dflag = 1;
+			break;
 		case 'f':
 			break;
 		case 'l':
 			cvs_update.file_flags &= ~CF_RECURSE;
 			break;
 		case 'P':
+			Pflag = 1;
+			break;
 		case 'p':
 		case 'Q':
 		case 'q':
@@ -89,6 +100,17 @@ cvs_update_options(char *opt, int argc, char **argv, int *arg)
 	return (0);
 }
 
+int
+cvs_update_sendflags(struct cvsroot *root)
+{
+	if (Pflag && cvs_sendarg(root, "-P", 0) < 0)
+		return (CVS_EX_PROTO);
+	if (Aflag && cvs_sendarg(root, "-a", 0) < 0)
+		return (CVS_EX_PROTO);
+	if (dflag && cvs_sendarg(root, "-d", 0) < 0)
+		return (CVS_EX_PROTO);
+	return (0);
+}
 
 /*
  * cvs_update_file()
