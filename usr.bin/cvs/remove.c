@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.8 2005/04/18 21:02:50 jfb Exp $	*/
+/*	$OpenBSD: remove.c,v 1.9 2005/04/19 15:36:39 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Xavier Santolaria <xsa@openbsd.org>
@@ -32,7 +32,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libgen.h>
 #include <unistd.h>
 
 #include "cvs.h"
@@ -69,8 +68,10 @@ cvs_remove_options(char *opt, int argc, char **argv, int *arg)
 			force_remove = 1;
 			break;
 		case 'l':
+			cvs_remove.file_flags &= ~CF_RECURSE;
 			break;
 		case 'R':
+			cvs_remove.file_flags |= CF_RECURSE;
 			break;
 		default:
 			return (CVS_EX_USAGE);
@@ -113,7 +114,10 @@ cvs_remove_file(CVSFILE *cf, void *arg)
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		ret = cvs_sendentry(root, cf);
+		if (cvs_sendentry(root, cf) < 0) {
+			return (CVS_EX_PROTO);
+		}
+
 	} else {
 		/* if -f option is used, physically remove the file */
 		if (force_remove == 1) {
