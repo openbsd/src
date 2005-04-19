@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.28 2005/04/18 21:02:50 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.29 2005/04/19 16:57:07 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -670,11 +670,22 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_removed(struct cvsroot *root, int type, char *line)
 {
-	char base[MAXPATHLEN], *file;
+	int l;
+	char buf[MAXPATHLEN], base[MAXPATHLEN], fpath[MAXPATHLEN], *file;
 	CVSENTRIES *ef;
 
-	cvs_splitpath(line, base, sizeof(base), &file);
-	ef = cvs_ent_open(base, O_RDWR);
+	if (cvs_getln(root, buf, sizeof(buf)) < 0)
+		return (-1);
+
+	cvs_splitpath(buf, base, sizeof(base), &file);
+	l = snprintf(fpath, sizeof(fpath), "%s/%s", line, file);
+	if (l == -1 || l >= (int)sizeof(fpath)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", fpath);
+		return (-1);
+	}
+
+	ef = cvs_ent_open(line, O_RDWR);
 	if (ef == NULL) {
 		cvs_log(LP_ERR, "error handling `Removed' response");
 		if (type == CVS_RESP_RMENTRY)
@@ -684,8 +695,8 @@ cvs_resp_removed(struct cvsroot *root, int type, char *line)
 		cvs_ent_close(ef);
 	}
 
-	if ((type == CVS_RESP_REMOVED) && (unlink(line) == -1)) {
-		cvs_log(LP_ERRNO, "failed to unlink `%s'", line);
+	if ((type == CVS_RESP_REMOVED) && (unlink(fpath) == -1)) {
+		cvs_log(LP_ERRNO, "failed to unlink `%s'", file);
 		return (-1);
 	}
 
