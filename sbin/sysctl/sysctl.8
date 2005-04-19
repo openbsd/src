@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.124 2005/03/29 20:18:40 uwe Exp $
+.\"	$OpenBSD: sysctl.8,v 1.125 2005/04/19 07:35:24 jmc Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -109,6 +109,9 @@ For a detailed description of these variables, see
 .Xr sysctl 3 .
 The changeable column indicates whether a process with appropriate
 privilege can change the value.
+.Pp
+Note:
+not all of the variables are relevant to all architectures.
 .Bl -column net.inet.ip.ipsec-expire-acquirexxxx integerxxx
 .It Sy Name	Type	Changeable
 .It kern.ostype	string	no
@@ -330,21 +333,21 @@ privilege can change the value.
 .It hw.cpuspeed	integer	no
 .It hw.setperf	integer	yes
 .It machdep.console_device	dev_t	no
-.It machdep.unaligned_print	integer	yes (alpha only)
-.It machdep.unaligned_fix	integer	yes (alpha only)
-.It machdep.unaligned_sigbus	integer	yes (alpha only)
-.It machdep.apmwarn	integer	yes (i386/zaurus)
-.It machdep.apmhalt	integer	yes (i386 only)
-.It machdep.kbdreset	integer	yes (i386/zaurus)
-.It machdep.userldt	integer	yes (i386 only)
-.It machdep.osxsfr	integer	no (i386 only)
-.It machdep.sse	integer	no (i386 only)
-.It machdep.sse2	integer	no (i386 only)
-.It machdep.xcrypt	integer	no (i386 only)
+.It machdep.unaligned_print	integer	yes
+.It machdep.unaligned_fix	integer	yes
+.It machdep.unaligned_sigbus	integer	yes
+.It machdep.apmwarn	integer	yes
+.It machdep.apmhalt	integer	yes
+.It machdep.kbdreset	integer	yes
+.It machdep.userldt	integer	yes
+.It machdep.osxsfr	integer	no
+.It machdep.sse	integer	no
+.It machdep.sse2	integer	no
+.It machdep.xcrypt	integer	no
 .It machdep.allowaperture	integer	yes (XFree86)
-.It machdep.led_blink	integer	yes (sparc/sparc64)
-.It machdep.ceccerrs	integer	no (sparc64)
-.It machdep.cecclast	quad	no (sparc64)
+.It machdep.led_blink	integer	yes
+.It machdep.ceccerrs	integer	no
+.It machdep.cecclast	quad	no
 .It user.cs_path	string	no
 .It user.bc_base_max	integer	no
 .It user.bc_dim_max	integer	no
