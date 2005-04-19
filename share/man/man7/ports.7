@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.51 2005/03/31 21:15:58 pvalchev Exp $
+.\" $OpenBSD: ports.7,v 1.52 2005/04/19 08:56:03 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
 .Dd January 25, 1998
@@ -141,6 +141,17 @@ line, e.g., to avoid stopping after each problem.
 .Bd -literal -offset indent
 $ make REPORT_PROBLEM=true
 .Ed
+If
+.Ev REPORT_PROBLEM_LOGFILE
+is non empty, then
+.Ev REPORT_PROBLEM
+will default to:
+.Bd -literal -offset indent
+echo $$d >$${REPORT_PROBLEM_LOGFILE}
+.Ed
+That is, any failure will append the faulty directory name to
+.Pa ${REPORT_PROBLEM_LOGFILE}
+and proceed.
 .Pp
 The targets that do this are
 .Ar all , build , checksum , clean ,
