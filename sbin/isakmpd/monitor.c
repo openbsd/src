@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.39 2005/04/08 23:15:26 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.40 2005/04/19 15:46:49 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -102,6 +102,7 @@ monitor_init(int debug)
 	if (pw == NULL)
 		log_fatal("monitor_init: getpwnam(\"%s\") failed",
 		    ISAKMPD_PRIVSEP_USER);
+	endpwent();
 
 	m_state.pid = fork();
 	m_state.s = p[m_state.pid ? 1 : 0];
@@ -115,11 +116,19 @@ monitor_init(int debug)
 		if (chroot(pw->pw_dir) != 0 || chdir("/") != 0)
 			log_fatal("monitor_init: chroot failed");
 
-		if (setgid(pw->pw_gid) != 0)
+		if (setgroups(1, &pw->pw_gid) == -1)
+			log_fatal("monitor_init: setgroups(%d) failed",
+			    pw->pw_gid);
+		if (setegid(pw->pw_gid) == -1)
+			log_fatal("monitor_init: setegid(%d) failed",
+			    pw->pw_gid);
+		if (setgid(pw->pw_gid) == -1)
 			log_fatal("monitor_init: setgid(%d) failed",
 			    pw->pw_gid);
-
-		if (setuid(pw->pw_uid) != 0)
+		if (seteuid(pw->pw_uid) == -1)
+			log_fatal("monitor_init: seteuid(%d) failed",
+			    pw->pw_uid);
+		if (setuid(pw->pw_uid) == -1)
 			log_fatal("monitor_init: setuid(%d) failed",
 			    pw->pw_uid);
 
