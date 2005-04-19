@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.c,v 1.4 2005/04/19 02:03:12 brad Exp $	*/
+/*	$OpenBSD: signal.c,v 1.5 2005/04/19 08:07:45 deraadt Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -37,20 +37,23 @@
 #include <sys/_time.h>
 #endif
 #include <sys/queue.h>
-#include <sys/socket.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#ifdef HAVE_FCNTL_H
-#include <fcntl.h>
+#include <err.h>
+
+#ifdef USE_LOG
+#include "log.h"
+#else
+#define LOG_DBG(x)
+#define log_error(x)	perror(x)
 #endif
 
 #include "event.h"
 #include "evsignal.h"
-#include "log.h"
 
 extern struct event_list signalqueue;
 
@@ -58,63 +61,26 @@ static short evsigcaught[NSIG];
 static int needrecalc;
 volatile sig_atomic_t evsignal_caught = 0;
 
-static struct event ev_signal;
-static int ev_signal_pair[2];
-static int ev_signal_added;
-
-/* Callback for when the signal handler write a byte to our signaling socket */
-static void evsignal_cb(int fd, short what, void *arg)
-{
-	static char signals[100];
-	struct event *ev = arg;
-	int n;
-
-	n = read(fd, signals, sizeof(signals));
-	if (n == -1)
-		event_err(1, "%s: read", __func__);
-	event_add(ev, NULL);
-}
-
-#ifdef HAVE_SETFD
-#define FD_CLOSEONEXEC(x) do { \
-        if (fcntl(x, F_SETFD, 1) == -1) \
-                event_warn("fcntl(%d, F_SETFD)", x); \
-} while (0)
-#else
-#define FD_CLOSEONEXEC(x)
-#endif
+void evsignal_process(void);
+int evsignal_recalc(sigset_t *);
+int evsignal_deliver(sigset_t *);
 
 void
 evsignal_init(sigset_t *evsigmask)
 {
 	sigemptyset(evsigmask);
-
-	/* 
-	 * Our signal handler is going to write to one end of the socket
-	 * pair to wake up our event loop.  The event loop then scans for
-	 * signals that got delivered.
-	 */
-	if (socketpair(AF_UNIX, SOCK_STREAM, 0, ev_signal_pair) == -1)
-		event_err(1, "%s: socketpair", __func__);
-
-	FD_CLOSEONEXEC(ev_signal_pair[0]);
-	FD_CLOSEONEXEC(ev_signal_pair[1]);
-
-	event_set(&ev_signal, ev_signal_pair[1], EV_READ,
-	    evsignal_cb, &ev_signal);
-	ev_signal.ev_flags |= EVLIST_INTERNAL;
 }
 
 int
 evsignal_add(sigset_t *evsigmask, struct event *ev)
 {
 	int evsignal;
-
+	
 	if (ev->ev_events & (EV_READ|EV_WRITE))
-		event_errx(1, "%s: EV_SIGNAL incompatible use", __func__);
+		errx(1, "%s: EV_SIGNAL incompatible use", __func__);
 	evsignal = EVENT_SIGNAL(ev);
 	sigaddset(evsigmask, evsignal);
-
+	
 	return (0);
 }
 
@@ -139,9 +105,6 @@ evsignal_handler(int sig)
 {
 	evsigcaught[sig]++;
 	evsignal_caught = 1;
-
-	/* Wake up our notification mechanism */
-	write(ev_signal_pair[0], "a", 1);
 }
 
 int
@@ -150,24 +113,19 @@ evsignal_recalc(sigset_t *evsigmask)
 	struct sigaction sa;
 	struct event *ev;
 
-	if (!ev_signal_added) {
-		ev_signal_added = 1;
-		event_add(&ev_signal, NULL);
-	}
-
 	if (TAILQ_FIRST(&signalqueue) == NULL && !needrecalc)
 		return (0);
 	needrecalc = 0;
 
 	if (sigprocmask(SIG_BLOCK, evsigmask, NULL) == -1)
 		return (-1);
-
+	
 	/* Reinstall our signal handler. */
 	memset(&sa, 0, sizeof(sa));
 	sa.sa_handler = evsignal_handler;
 	sa.sa_mask = *evsigmask;
 	sa.sa_flags |= SA_RESTART;
-
+	
 	TAILQ_FOREACH(ev, &signalqueue, ev_signal_next) {
 		if (sigaction(EVENT_SIGNAL(ev), &sa, NULL) == -1)
 			return (-1);
