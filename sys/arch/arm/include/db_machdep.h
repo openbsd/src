@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.4 2005/01/05 15:49:30 miod Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.5 2005/04/19 15:23:34 miod Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.5 2001/11/22 18:00:00 thorpej Exp $	*/
 
 /*
@@ -110,7 +110,6 @@ void db_machine_init (void);
 
 #define DB_ELF_SYMBOLS
 #define DB_ELFSIZE 32
-#define DB_NO_AOUT
 
 void db_show_frame_cmd	(db_expr_t, int, db_expr_t, char *);
 

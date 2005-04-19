@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.3 2005/01/04 21:32:40 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.4 2005/04/19 15:23:37 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -130,6 +130,8 @@ void db_clear_single_step(db_regs_t *);
 #define DB_MACHINE_COMMANDS
 
 int m88k_print_instruction(unsigned iadr, long inst);
+
+#define	DB_AOUT_SYMBOLS
 
 #endif	/* DDB */
 #endif	/* _LOCORE */

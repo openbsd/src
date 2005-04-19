@@ -147,13 +147,6 @@ boolean_t db_line_at_pc(db_sym_t, char **, int *, db_expr_t);
 int db_sym_numargs(db_sym_t, int *, char **);
 char *db_qualify(db_sym_t, const char *);
 
-/*
- * XXX - should explicitly ask for aout symbols in machine/db_machdep.h
- */
-#ifndef DB_NO_AOUT
-#define DB_AOUT_SYMBOLS
-#endif
-
 #ifdef DB_AOUT_SYMBOLS
 extern	db_symformat_t db_symformat_aout;
 #endif
