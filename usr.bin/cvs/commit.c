@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.28 2005/04/19 00:35:02 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.29 2005/04/19 02:04:56 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -143,7 +143,8 @@ cvs_commit_prepare(CVSFILE *cf, void *arg)
 	struct cvs_flist *clp = (struct cvs_flist *)arg;
 
 	if ((cf->cf_type == DT_REG) && ((cf->cf_cvstat == CVS_FST_MODIFIED) ||
-	    (cf->cf_cvstat == CVS_FST_ADDED))) {
+	    (cf->cf_cvstat == CVS_FST_ADDED) ||
+	    (cf->cf_cvstat == CVS_FST_REMOVED))) {
 		copy = cvs_file_copy(cf);
 		if (copy == NULL)
 			return (CVS_EX_DATA);
@@ -188,7 +189,8 @@ cvs_commit_file(CVSFILE *cf, void *arg)
 		repo = cf->cf_parent->cf_repo;
 
 	if ((cf->cf_cvstat == CVS_FST_ADDED) ||
-	    (cf->cf_cvstat == CVS_FST_MODIFIED)) {
+	    (cf->cf_cvstat == CVS_FST_MODIFIED) ||
+	    (cf->cf_cvstat == CVS_FST_REMOVED)) {
 		if (root->cr_method != CVS_METHOD_LOCAL) {
 			if (cvs_sendentry(root, cf) < 0) {
 				return (CVS_EX_PROTO);
