@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.21 2005/04/13 15:50:49 jfb Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.22 2005/04/19 19:22:31 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -96,6 +96,8 @@
 #define RCS_ERR_NOENT    1
 #define RCS_ERR_DUPENT   2
 #define RCS_ERR_BADNUM   3
+#define RCS_ERR_BADSYM   4
+#define RCS_ERR_PARSE    5
 
 
 typedef struct rcs_num {
@@ -188,6 +190,7 @@ int           rcs_access_check  (RCSFILE *, const char *);
 int           rcs_sym_add       (RCSFILE *, const char *, RCSNUM *);
 int           rcs_sym_remove    (RCSFILE *, const char *);
 RCSNUM*       rcs_sym_getrev    (RCSFILE *, const char *);
+int           rcs_sym_check     (const char *);
 int           rcs_lock_getmode  (RCSFILE *);
 int           rcs_lock_setmode  (RCSFILE *, int);
 int           rcs_lock_add      (RCSFILE *, const char *, RCSNUM *);

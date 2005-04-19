@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.46 2005/04/12 14:40:19 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.47 2005/04/19 19:22:31 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -110,6 +110,10 @@ struct rcs_foo {
 #define RCS_TOKSTR(rfp)   ((struct rcs_pdata *)rfp->rf_pdata)->rp_buf
 #define RCS_TOKLEN(rfp)   ((struct rcs_pdata *)rfp->rf_pdata)->rp_tlen
 
+
+
+/* invalid characters in RCS symbol names */
+static const char rcs_sym_invch[] = "$,.:;@";
 
 #ifdef notyet
 static struct rcs_kfl {
@@ -594,6 +598,11 @@ rcs_sym_add(RCSFILE *rfp, const char *sym, RCSNUM *snum)
 {
 	struct rcs_sym *symp;
 
+	if (!rcs_sym_check(sym)) {
+		rcs_errno = RCS_ERR_BADSYM;
+		return (NULL);
+	}
+
 	/* first look for duplication */
 	TAILQ_FOREACH(symp, &(rfp->rf_symbols), rs_list) {
 		if (strcmp(symp->rs_name, sym) == 0) {
@@ -643,6 +652,11 @@ rcs_sym_remove(RCSFILE *file, const char *sym)
 {
 	struct rcs_sym *symp;
 
+	if (!rcs_sym_check(sym)) {
+		rcs_errno = RCS_ERR_BADSYM;
+		return (NULL);
+	}
+
 	TAILQ_FOREACH(symp, &(file->rf_symbols), rs_list)
 		if (strcmp(symp->rs_name, sym) == 0)
 			break;
@@ -676,6 +690,11 @@ rcs_sym_getrev(RCSFILE *file, const char *sym)
 	RCSNUM *num;
 	struct rcs_sym *symp;
 
+	if (!rcs_sym_check(sym)) {
+		rcs_errno = RCS_ERR_BADSYM;
+		return (NULL);
+	}
+
 	num = NULL;
 	TAILQ_FOREACH(symp, &(file->rf_symbols), rs_list)
 		if (strcmp(symp->rs_name, sym) == 0)
@@ -690,6 +709,32 @@ rcs_sym_getrev(RCSFILE *file, const char *sym)
 	}
 
 	return (num);
+}
+
+/*
+ * rcs_sym_check()
+ *
+ * Check the RCS symbol name <sym> for any unsupported characters.
+ * Returns 1 if the tag is correct, 0 if it isn't valid.
+ */
+int
+rcs_sym_check(const char *sym)
+{
+	int ret;
+	const char *cp;
+
+	ret = 1;
+	cp = sym;
+	if (!isalpha(*cp++))
+		return (0);
+
+	for (; *cp != '\0'; cp++)
+		if (!isgraph(*cp) || (strchr(rcs_sym_invch, *cp) != NULL)) {
+			ret = 0;
+			break;
+		}
+
+	return (ret);
 }
 
 /*
