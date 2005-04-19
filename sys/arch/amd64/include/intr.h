@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.5 2004/06/28 01:52:26 deraadt Exp $	*/
+/*	$OpenBSD: intr.h,v 1.6 2005/04/19 15:29:47 mickey Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 2003/05/04 22:01:56 fvdl Exp $	*/
 
 /*-
@@ -150,12 +150,7 @@ void softintr(int);
 
 /*
  * Software interrupt masks
- *
- * NOTE: spllowersoftclock() is used by hardclock() to lower the priority from
- * clock to softclock before it calls softclock().
  */
-#define	spllowersoftclock() spllower(IPL_SOFTCLOCK)
-
 #define	splsoftclock()	splraise(IPL_SOFTCLOCK)
 #define	splsoftnet()	splraise(IPL_SOFTNET)
 #define	splsoftserial()	splraise(IPL_SOFTSERIAL)

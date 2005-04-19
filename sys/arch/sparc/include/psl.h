@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.19 2004/06/13 21:49:20 niklas Exp $	*/
+/*	$OpenBSD: psl.h,v 1.20 2005/04/19 15:29:48 mickey Exp $	*/
 /*	$NetBSD: psl.h,v 1.12 1997/03/10 21:49:11 pk Exp $ */
 
 /*
@@ -216,7 +216,6 @@ static __inline int name() \
 SPLHOLD(splsoftint, IPL_SOFTINT)
 #define	splsoftclock		splsoftint
 #define	splsoftnet		splsoftint
-SPL(spllowersoftclock, IPL_SOFTCLOCK)
 SPLHOLD(splausoft, IPL_AUSOFT)
 SPLHOLD(splfdsoft, IPL_FDSOFT)
 SPLHOLD(splbio, IPL_BIO)

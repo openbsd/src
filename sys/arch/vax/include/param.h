@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.27 2004/08/06 22:31:31 mickey Exp $ */
+/*	$OpenBSD: param.h,v 1.28 2005/04/19 15:29:48 mickey Exp $ */
 /*      $NetBSD: param.h,v 1.39 1999/10/22 21:14:34 ragge Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -183,7 +183,6 @@
 #endif
 
 #define	spl0()		splx(0)		/* IPL0  */
-#define spllowersoftclock() splx(8)	/* IPL08 */
 #define splsoftclock()	_splraise(8)	/* IPL08 */
 #define splsoftnet()	_splraise(0xc)	/* IPL0C */
 #define	splddb()	_splraise(0xf)	/* IPL0F */

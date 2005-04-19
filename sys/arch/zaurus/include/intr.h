@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.2 2005/01/02 19:43:07 drahn Exp $	*/
+/*	$OpenBSD: intr.h,v 1.3 2005/04/19 15:29:48 mickey Exp $	*/
 /*	$NetBSD: intr.h,v 1.12 2003/06/16 20:00:59 thorpej Exp $	*/
 
 /*
@@ -141,7 +141,6 @@ void	_setsoftintr(int);
 #define	splserial()	_splraise(IPL_SERIAL)
 
 #define	spl0()		_spllower(IPL_NONE)
-#define	spllowersoftclock() _spllower(IPL_SOFTCLOCK)
 
 #define	splsched()	splhigh()
 #define	spllock()	splhigh()

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.2 2005/04/19 15:29:48 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -94,7 +94,6 @@
 #define	IST_EDGE        2
 #define	IST_LEVEL       3
 
-#define	spllowersoftclock() spllower(IPL_SOFTCLOCK)
 #define	splsoftclock()	splraise(IPL_SOFTCLOCK)
 #define	splsoftnet()	splraise(IPL_SOFTNET)
 #define	splbio()	splraise(IPL_BIO)

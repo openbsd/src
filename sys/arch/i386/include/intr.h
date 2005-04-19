@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.24 2005/01/07 02:03:17 pascoe Exp $	*/
+/*	$OpenBSD: intr.h,v 1.25 2005/04/19 15:29:47 mickey Exp $	*/
 /*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
 
 /*
@@ -115,11 +115,7 @@ void splassert_check(int, const char *);
 
 /*
  * Software interrupt masks
- *
- * NOTE: spllowersoftclock() is used by hardclock() to lower the priority from
- * clock to softclock before it calls softclock().
  */
-#define	spllowersoftclock()	spllower(IPL_SOFTCLOCK)
 #define	splsoftclock()		splraise(IPL_SOFTCLOCK)
 #define	splsoftnet()		splraise(IPL_SOFTNET)
 #define	splsofttty()		splraise(IPL_SOFTTTY)

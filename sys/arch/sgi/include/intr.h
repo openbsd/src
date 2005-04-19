@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.12 2005/01/31 21:35:50 grange Exp $ */
+/*	$OpenBSD: intr.h,v 1.13 2005/04/19 15:29:48 mickey Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -106,7 +106,6 @@
 #define splstatclock()		splhigh()
 #define splhigh()		splraise(-1)
 #define spl0()			spllower(0)
-#define spllowersoftclock()	spllower(SINT_CLOCKMASK)
 
 
 #define setsoftclock()  set_ipending(SINT_CLOCKMASK);

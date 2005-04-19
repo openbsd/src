@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.12 2005/01/05 18:42:28 fgsch Exp $	*/
+/*	$OpenBSD: psl.h,v 1.13 2005/04/19 15:29:48 mickey Exp $	*/
 /*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
 
 /*
@@ -405,8 +405,6 @@ extern __inline int name()						\
 
 SPL(spl0, 0)
 
-SPL(spllowersoftclock, 1)
-
 SPLHOLD(splsoftint, 1)
 #define	splsoftclock	splsoftint
 #define	splsoftnet	splsoftint
@@ -459,7 +457,6 @@ SPLHOLD(splhigh, PIL_HIGH)
 #ifdef SPLDEBUG
 
 #define	spl0()		spl0X(__FILE__, __LINE__)
-#define	spllowersoftclock() spllowersoftclockX(__FILE__, __LINE__)
 #define	splsoftint()	splsoftintX(__FILE__, __LINE__)
 #define	splausoft()	splausoftX(__FILE__, __LINE__)
 #define	splfdsoft()	splfdsoftX(__FILE__, __LINE__)

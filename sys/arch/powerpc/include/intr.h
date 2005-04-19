@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.28 2004/12/24 22:50:30 miod Exp $ */
+/*	$OpenBSD: intr.h,v 1.29 2005/04/19 15:29:48 mickey Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -142,7 +142,6 @@ set_sint(int pending)
 #define splclock()	splraise(imask[IPL_CLOCK])
 #define splvm()		splraise(imask[IPL_IMP])
 #define splstatclock()	splhigh()
-#define	spllowersoftclock()	spllower(SINT_CLOCK)
 #define	splsoftclock()	splraise(SINT_CLOCK)
 #define	splsoftnet()	splraise(SINT_NET|SINT_CLOCK)
 #define	splsofttty()	splraise(SINT_TTY|SINT_NET|SINT_CLOCK)

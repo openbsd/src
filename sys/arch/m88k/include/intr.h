@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.1 2004/04/26 12:34:05 miod Exp $	*/
+/*	$OpenBSD: intr.h,v 1.2 2005/04/19 15:29:47 mickey Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -66,7 +66,6 @@ void splassert_check(int, const char *);
 #define spl7()		setipl(7)
 
 #define splnone			spl0
-#define spllowersoftclock()	setipl(IPL_SOFTCLOCK)
 #define splsoftclock()		setipl(IPL_SOFTCLOCK)
 #define splsoftnet()		setipl(IPL_SOFTNET)
 #define splbio()		raiseipl(IPL_BIO)

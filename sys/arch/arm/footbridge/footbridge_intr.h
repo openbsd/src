@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_intr.h,v 1.3 2004/08/17 19:40:45 drahn Exp $	*/
+/*	$OpenBSD: footbridge_intr.h,v 1.4 2005/04/19 15:29:47 mickey Exp $	*/
 /* 	$NetBSD: footbridge_intr.h,v 1.4 2003/01/03 00:56:00 thorpej Exp $	*/
 
 /*
@@ -181,7 +181,6 @@ void	_setsoftintr(int);
 #define	splserial()	_splraise(IPL_SERIAL)
 
 #define	spl0()		(void)_spllower(IPL_NONE)
-#define	spllowersoftclock() (void)_spllower(IPL_SOFTCLOCK)
 
 #define	splsched()	splhigh()
 #define	spllock()	splhigh()
