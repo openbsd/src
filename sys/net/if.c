@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.106 2005/04/05 12:19:37 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.107 2005/04/20 23:00:41 mpf Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -400,6 +400,11 @@ if_attachhead(ifp)
 	if (ifp->if_addrhooks == NULL)
 		panic("if_attachhead: malloc");
 	TAILQ_INIT(ifp->if_addrhooks);
+	ifp->if_linkstatehooks = malloc(sizeof(*ifp->if_linkstatehooks),
+	    M_TEMP, M_NOWAIT);
+	if (ifp->if_linkstatehooks == NULL)
+		panic("if_attachhead: malloc");
+	TAILQ_INIT(ifp->if_linkstatehooks);
 	TAILQ_INSERT_HEAD(&ifnet, ifp, if_list);
 	if_attachsetup(ifp);
 }
@@ -422,6 +427,11 @@ if_attach(ifp)
 	if (ifp->if_addrhooks == NULL)
 		panic("if_attach: malloc");
 	TAILQ_INIT(ifp->if_addrhooks);
+	ifp->if_linkstatehooks = malloc(sizeof(*ifp->if_linkstatehooks),
+	    M_TEMP, M_NOWAIT);
+	if (ifp->if_linkstatehooks == NULL)
+		panic("if_attach: malloc");
+	TAILQ_INIT(ifp->if_linkstatehooks);
 
 #if NCARP > 0
 	if (ifp->if_type != IFT_CARP)
@@ -625,6 +635,7 @@ do { \
 	ifnet_addrs[ifp->if_index] = NULL;
 
 	free(ifp->if_addrhooks, M_TEMP);
+	free(ifp->if_linkstatehooks, M_TEMP);
 
 	for (dp = domains; dp; dp = dp->dom_next) {
 		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
@@ -1107,16 +1118,12 @@ if_up(struct ifnet *ifp)
 /*
  * Process a link state change.
  * NOTE: must be called at splsoftnet or equivalent.
- * XXX Should be converted to dohooks().
  */
 void
 if_link_state_change(struct ifnet *ifp)
 {
 	rt_ifmsg(ifp);
-#if NCARP > 0           
-	if (ifp->if_carp)
-		carp_carpdev_state(ifp);
-#endif          
+	dohooks(ifp->if_linkstatehooks, 0);
 }
 
 /*

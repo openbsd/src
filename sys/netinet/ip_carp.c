@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.104 2005/03/15 15:51:27 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.105 2005/04/20 23:00:41 mpf Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -106,6 +106,7 @@ struct carp_softc {
 #define	sc_if		sc_ac.ac_if
 #define	sc_carpdev	sc_ac.ac_if.if_carpdev
 	void *ah_cookie;
+	void *lh_cookie;
 	struct ip_moptions sc_imo;
 #ifdef INET6
 	struct ip6_moptions sc_im6o;
@@ -774,6 +775,8 @@ carpdetach(struct carp_softc *sc)
 	carp_multicast_cleanup(sc);
 
 	if (sc->sc_carpdev != NULL) {
+		hook_disestablish(sc->sc_carpdev->if_linkstatehooks,
+		    sc->lh_cookie);
 		cif = (struct carp_if *)sc->sc_carpdev->if_carp;
 		TAILQ_REMOVE(&cif->vhif_vrs, sc, sc_list);
 		if (!--cif->vhif_nvrs) {
@@ -1482,13 +1485,14 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 		if (sc->sc_naddrs || sc->sc_naddrs6)
 			sc->sc_if.if_flags |= IFF_UP;
 		carp_set_enaddr(sc);
+		sc->lh_cookie = hook_establish(ifp->if_linkstatehooks, 1,
+		    carp_carpdev_state, ifp);
 		carp_carpdev_state(ifp);
 	} else {
 		carpdetach(sc);
 		sc->sc_if.if_flags &= ~(IFF_UP|IFF_RUNNING);
 	}
 	return (0);
-
 }
 
 void
@@ -1986,10 +1990,11 @@ carp_set_state(struct carp_softc *sc, int state)
 }
 
 void
-carp_carpdev_state(struct ifnet *ifp)
+carp_carpdev_state(void *v)
 {
 	struct carp_if *cif;
 	struct carp_softc *sc;
+	struct ifnet *ifp = v;
 
 	if (ifp->if_type == IFT_CARP)
 		return;
