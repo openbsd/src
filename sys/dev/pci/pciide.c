@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.188 2005/04/20 00:35:55 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.189 2005/04/20 00:46:20 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -4146,6 +4146,7 @@ static struct sis_hostbr_type {
 	{PCI_PRODUCT_SIS_751, 0x00, 6, "751", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_752, 0x00, 6, "752", SIS_TYPE_SOUTH},
 	{PCI_PRODUCT_SIS_755, 0x00, 6, "755", SIS_TYPE_SOUTH},
+	{PCI_PRODUCT_SIS_760, 0x00, 6, "760", SIS_TYPE_SOUTH},
 	/*
 	 * From sos@freebsd.org: the 0x961 ID will never be found in real world
 	 * {PCI_PRODUCT_SIS_961, 0x00, 6, "961", SIS_TYPE_133NEW},
