@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.142 2005/02/25 12:57:49 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.143 2005/04/20 14:46:03 jsg Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 
 machine	alpha
@@ -108,6 +108,7 @@ udsbr*	at uhub?			# D-Link DSB-R100 radio
 radio*	at udsbr?			# USB radio
 #ubt*	at uhub?			# USB Bluetooth
 ugen*	at uhub?			# USB Generic driver
+ural*	at uhub?			# Ralink RT2500
 
 # EV6 Tsunami Core Logic
 tsc*	at	mainbus0
