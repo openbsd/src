@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.12 2005/04/14 21:58:50 krw Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.13 2005/04/20 00:08:50 deraadt Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -109,7 +109,8 @@ initmsgbuf(buf, bufsize)
 	msgbufmapped = msgbufenabled = 1;
 }
 
-void msgbuf_putchar(const char c) 
+void
+msgbuf_putchar(const char c) 
 {
 	struct msgbuf *mbp = msgbufp;
 
