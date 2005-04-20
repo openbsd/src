@@ -98,7 +98,7 @@ dns_find_realm(krb5_context context,
     char dom[MAXHOSTNAMELEN];
     struct dns_reply *r;
     char **labels;
-    int i, ret;
+    int i, j, ret;
     
     labels = krb5_config_get_strings(context, NULL, "libdefaults",
 	"dns_lookup_realm_labels", NULL);
@@ -107,8 +107,8 @@ dns_find_realm(krb5_context context,
     if(*domain == '.')
 	domain++;
     for (i = 0; labels[i] != NULL; i++) {
-	if(snprintf(dom, sizeof(dom), "%s.%s.", labels[i], domain) >=
-	    sizeof(dom))
+	j = snprintf(dom, sizeof(dom), "%s.%s.", labels[i], domain);
+	if (j >= sizeof(dom) || j < 0) /* fucking solaris assholes */
 	    return -1;
     	r = dns_lookup(dom, "TXT");
     	if(r != NULL) {

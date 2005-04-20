@@ -154,9 +154,13 @@ ipv4_print_addr (const krb5_address *addr, char *str, size_t len)
 {
     struct in_addr ia;
 
+    if (len == 0)
+	return(0);
+
     memcpy (&ia, addr->address.data, 4);
 
-    return snprintf (str, len, "IPv4:%s", inet_ntoa(ia));
+    (void) snprintf (str, len, "IPv4:%s", inet_ntoa(ia));
+    return(strlen(str));
 }
 
 static int
@@ -303,23 +307,13 @@ ipv6_anyaddr (struct sockaddr *sa, krb5_socklen_t *sa_size, int port)
 static int
 ipv6_print_addr (const krb5_address *addr, char *str, size_t len)
 {
-    char buf[128], buf2[3];
-#ifdef HAVE_INET_NTOP
+    char buf[128];
     if(inet_ntop(AF_INET6, addr->address.data, buf, sizeof(buf)) == NULL)
-#endif
-	{
-	    /* XXX this is pretty ugly, but better than abort() */
-	    int i;
-	    unsigned char *p = addr->address.data;
-	    buf[0] = '\0';
-	    for(i = 0; i < addr->address.length; i++) {
-		snprintf(buf2, sizeof(buf2), "%02x", p[i]);
-		if(i > 0 && (i & 1) == 0)
-		    strlcat(buf, ":", sizeof(buf));
-		strlcat(buf, buf2, sizeof(buf));
-	    }
-	}
-    return snprintf(str, len, "IPv6:%s", buf);
+	return (0);
+    if (len == 0)
+	return(0);
+    (void) snprintf(str, len, "IPv6:%s", buf);
+    return(strlen(str));
 }
 
 static int
@@ -459,16 +453,19 @@ arange_print_addr (const krb5_address *addr, char *str, size_t len)
     krb5_error_code ret;
     size_t l, ret_len = 0;
 
+    if (len == 0)
+	return(0);
+
     a = addr->address.data;
 
-    l = strlcpy(str, "RANGE:", len);
-    ret_len += l;
+    (void) strlcpy(str, "RANGE:", len);
+    ret_len += strlen(str); /* truncate if too long */
 
     ret = krb5_print_address (&a->low, str + ret_len, len - ret_len, &l);
     ret_len += l;
 
-    l = strlcat(str, "-", len);
-    ret_len += l;
+    (void) strlcat(str, "-", len);
+    ret_len += strlen(str); /* truncate if too long */
 
     ret = krb5_print_address (&a->high, str + ret_len, len - ret_len, &l);
     ret_len += l;
@@ -537,12 +534,14 @@ addrport_print_addr (const krb5_address *addr, char *str, size_t len)
 	port = value;
     }
     l = strlcpy(str, "ADDRPORT:", len);
-    ret_len += l;
+    ret_len += strlen(str); /* truncate if too long */
     krb5_print_address(&addr1, str + ret_len, len - ret_len, &l);
     ret_len += l;
-    l = snprintf(str + ret_len, len - ret_len, ",PORT=%u", port);
-    ret_len += l;
-    return ret_len;
+    /* XXX oh the horror */
+    if ((len - ret_len) == 0)
+	return(ret_len);		
+    (void) snprintf(str + ret_len, len - ret_len, ",PORT=%u", port);
+    return(strlen(str));
 }
 
 static struct addr_operations at[] = {
@@ -724,7 +723,14 @@ krb5_print_address (const krb5_address *addr,
 		    char *str, size_t len, size_t *ret_len)
 {
     size_t ret;
+    int r = 0;	
     struct addr_operations *a = find_atype(addr->addr_type);
+
+    if (len == 0) {
+	ret = 0;
+	r = EINVAL;
+	goto out;
+    }
 
     if (a == NULL || a->print_addr == NULL) {
 	char *s;
@@ -733,25 +739,35 @@ krb5_print_address (const krb5_address *addr,
 
 	s = str;
 	l = snprintf(s, len, "TYPE_%d:", addr->addr_type);
-	if (l < 0)
-	    return EINVAL;
+	if (l < 0 || l > (len - 1)) {
+	    ret = 0;	
+	    r = EINVAL;
+	    goto out;
+	}	
 	s += l;
 	len -= l;
 	for(i = 0; i < addr->address.length; i++) {
 	    l = snprintf(s, len, "%02x", ((char*)addr->address.data)[i]);
-	    if (l < 0)
-		return EINVAL;
+	    if (l < 0 || l > (len - 1)) {
+		ret = 0;
+		r = EINVAL;
+		goto out;
+	    }
 	    len -= l;
 	    s += l;
 	}
-	if(ret_len != NULL)
-	    *ret_len = s - str;
-	return 0;
+	ret = s - str;
+	goto out;
     }
     ret = (*a->print_addr)(addr, str, len);
+    if (ret <= 0 || ret > (len - 1)) {
+	ret = 0;
+	r = EINVAL;	
+    }
+out:
     if(ret_len != NULL)
 	*ret_len = ret;
-    return 0;
+    return r;
 }
 
 krb5_error_code
