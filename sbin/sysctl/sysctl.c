@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.118 2005/04/13 04:02:06 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.119 2005/04/20 23:40:12 beck Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.118 2005/04/13 04:02:06 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.119 2005/04/20 23:40:12 beck Exp $";
 #endif
 #endif /* not lint */
 
@@ -279,7 +279,7 @@ listall(char *prefix, struct list *lp)
 	if (lp->list == NULL)
 		return;
 	if ((len = strlcpy(name, prefix, sizeof(name))) >= sizeof(name))
-		warn("%s: name too long", prefix);
+		errx(1, "%s: name too long", prefix);
 	cp = name + len++;
 	*cp++ = '.';
 	for (lvl2 = 0; lvl2 < lp->size; lvl2++) {
