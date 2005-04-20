@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.859 2005/04/17 07:46:01 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.860 2005/04/20 00:27:40 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -6895,6 +6895,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "85C503 ISA",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_180,
+	    "180 SATA",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_181,
+	    "181 SATA",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_182,
+	    "182 SATA",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_VGA,
 	    "5597/5598 VGA",
 	},
@@ -6991,6 +7003,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "658 PCI",
 	},
 	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_661,
+	    "661 PCI",
+	},
+	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_730,
 	    "730 PCI",
 	},
@@ -7061,6 +7077,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_964,
 	    "964 PCI",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_965,
+	    "965 PCI",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5511,
