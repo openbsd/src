@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.11 2005/04/20 19:13:53 otto Exp $	*/
+/*	$OpenBSD: touch.c,v 1.12 2005/04/20 19:16:34 deraadt Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: touch.c,v 1.11 2005/04/20 19:13:53 otto Exp $";
+static char rcsid[] = "$OpenBSD: touch.c,v 1.12 2005/04/20 19:16:34 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 		err(1, "gettimeofday");
 
 	while ((ch = getopt(argc, argv, "acfmr:t:")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'a':
 			aflag = 1;
 			break;
@@ -200,9 +200,9 @@ stime_arg1(char *arg, struct timeval *tvp)
 		*p++ = '\0';
 		t->tm_sec = ATOI2(p);
 	}
-		
+
 	yearset = 0;
-	switch(strlen(arg)) {
+	switch (strlen(arg)) {
 	case 12:			/* CCYYMMDDhhmm */
 		t->tm_year = ATOI2(arg) * 100 - TM_YEAR_BASE;
 		yearset = 1;
