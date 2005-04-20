@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.51 2005/04/18 04:07:17 brad Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.52 2005/04/20 23:02:22 mpf Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -90,6 +90,7 @@ void	vlan_start (struct ifnet *ifp);
 int	vlan_ioctl (struct ifnet *ifp, u_long cmd, caddr_t addr);
 int	vlan_unconfig (struct ifnet *ifp);
 int	vlan_config (struct ifvlan *, struct ifnet *, u_int16_t);
+void	vlan_vlandev_state(void *);
 void	vlanattach (int count);
 int	vlan_set_promisc (struct ifnet *ifp);
 int	vlan_ether_addmulti(struct ifvlan *, struct ifreq *);
@@ -467,6 +468,11 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 	ifv->ifv_tag = tag;
 	s = splnet();
 	LIST_INSERT_HEAD(&vlan_tagh[TAG_HASH(tag)], ifv, ifv_list);
+
+	/* Register callback for physical link state changes */
+	ifv->lh_cookie = hook_establish(p->if_linkstatehooks, 1,
+	    vlan_vlandev_state, ifv);
+	vlan_vlandev_state(ifv);
 	splx(s);
 
 	return 0;
@@ -505,6 +511,7 @@ vlan_unconfig(struct ifnet *ifp)
 	/* Disconnect from parent. */
 	ifv->ifv_p = NULL;
 	ifv->ifv_if.if_mtu = ETHERMTU;
+	hook_disestablish(p->if_linkstatehooks, ifv->lh_cookie);
 
 	/* Clear our MAC address. */
 	ifa = ifnet_addrs[ifv->ifv_if.if_index];
@@ -515,6 +522,18 @@ vlan_unconfig(struct ifnet *ifp)
 	bzero(ifv->ifv_ac.ac_enaddr, ETHER_ADDR_LEN);
 
 	return 0;
+}
+
+void
+vlan_vlandev_state(void *v)
+{
+	struct ifvlan *ifv = v;
+
+	if (ifv->ifv_if.if_link_state == ifv->ifv_p->if_link_state)
+		return;
+
+	ifv->ifv_if.if_link_state = ifv->ifv_p->if_link_state;
+	if_link_state_change(&ifv->ifv_if);
 }
 
 int
