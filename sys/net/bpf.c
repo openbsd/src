@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.56 2005/01/07 16:28:38 reyk Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.57 2005/04/20 17:03:22 reyk Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ int	bpf_allocbufs(struct bpf_d *);
 void	bpf_freed(struct bpf_d *);
 void	bpf_ifname(struct ifnet *, struct ifreq *);
 void	bpf_mcopy(const void *, void *, size_t);
-int	bpf_movein(struct uio *, int, struct mbuf **,
+int	bpf_movein(struct uio *, u_int, struct mbuf **,
 	    struct sockaddr *, struct bpf_insn *);
 void	bpf_attachd(struct bpf_d *, struct bpf_if *);
 void	bpf_detachd(struct bpf_d *);
@@ -103,7 +103,7 @@ struct bpf_d *bpfilter_create(int);
 void bpfilter_destroy(struct bpf_d *);
 
 int
-bpf_movein(struct uio *uio, int linktype, struct mbuf **mp,
+bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
     struct sockaddr *sockp, struct bpf_insn *filter)
 {
 	struct mbuf *m;
@@ -528,7 +528,7 @@ bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 	if (uio->uio_resid == 0)
 		return (0);
 
-	error = bpf_movein(uio, (int)d->bd_bif->bif_dlt, &m,
+	error = bpf_movein(uio, d->bd_bif->bif_dlt, &m,
 	    (struct sockaddr *)&dst, d->bd_wfilter);
 	if (error)
 		return (error);
