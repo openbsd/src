@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.13 2005/04/01 22:15:40 deraadt Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.14 2005/04/20 21:08:45 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -255,37 +255,36 @@ report(time_t last_report)
 
 				switch (cmd[i]) {
 				case '1':
-					r = snprintf(&buf[n], len, "%d",
+					r = snprintf(&buf[n], len - n, "%d",
 					    limit->num);
 					break;
 				case '2':
-					r = snprintf(&buf[n], len, "%s",
+					r = snprintf(&buf[n], len - n, "%s",
 					    print_sensor(limit->type,
 					    limit->last_val));
 					break;
 				case '3':
-					r = snprintf(&buf[n], len, "%s",
+					r = snprintf(&buf[n], len - n, "%s",
 					    print_sensor(limit->type,
 					    limit->lower));
 					break;
 				case '4':
-					r = snprintf(&buf[n], len, "%s",
+					r = snprintf(&buf[n], len - n, "%s",
 					    print_sensor(limit->type,
 					    limit->upper));
 					break;
 				default:
-					r = snprintf(&buf[n], len, "%%%c",
+					r = snprintf(&buf[n], len - n, "%%%c",
 					    cmd[i]);
 					break;
 				}
-				if (r > len) {
-					buf[n] = '\0';
-					break;
+				if (r < 0 || (r >= len - n)) {
+					syslog(LOG_CRIT, "could not parse "
+					    "command");
+					return;
 				}
-				if (r > 0) {
-					len -= r;
+				if (r > 0)
 					n += r;
-				}
 			}
 			if (buf[0])
 				execute(buf);
