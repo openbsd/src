@@ -1,4 +1,4 @@
-/*	$OpenBSD: zsclock.c,v 1.1 2005/04/20 01:00:16 miod Exp $	*/
+/*	$OpenBSD: zsclock.c,v 1.2 2005/04/20 01:43:51 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.11 1995/05/16 07:30:46 phil Exp $	*/
 
 /*-
@@ -144,7 +144,7 @@ zsclock_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	hz = 100;
-	tconst = ((PCLK / 2) / hz) - 2
+	tconst = ((PCLK / 2) / hz) - 2;
 
 	s = splclock();
 
