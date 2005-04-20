@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.16 2005/04/10 19:59:02 otto Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.17 2005/04/20 20:57:07 moritz Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -61,7 +61,6 @@ enum priv_state {
 	STATE_BPF,		/* input file/device opened */
 	STATE_FILTER,		/* filter applied */
 	STATE_RUN,		/* running and accepting network traffic */
-	STATE_QUIT		/* shutting down */
 };
 
 #define ALLOW(action)	(1 << (action))
@@ -269,7 +268,7 @@ priv_init(int argc, char **argv)
 	setproctitle("[priv]");
 	close(socks[1]);
 
-	while (cur_state < STATE_QUIT) {
+	for (;;) {
 		if (may_read(socks[0], &cmd, sizeof(int)))
 			break;
 		switch (cmd) {
@@ -328,6 +327,7 @@ priv_init(int argc, char **argv)
 		}
 	}
 
+	/* NOTREACHED */
 	_exit(0);
 }
 
@@ -789,11 +789,12 @@ sig_got_chld(int sig)
 
 	do {
 		pid = waitpid(child_pid, &status, WNOHANG);
+		if (pid > 0 && (WIFEXITED(status) || WIFSIGNALED(status)))
+			_exit(0);
 	} while (pid == -1 && errno == EINTR);
 
-	if (pid == child_pid && (WIFEXITED(status) || WIFSIGNALED(status)) &&
-	    cur_state < STATE_QUIT)
-		cur_state = STATE_QUIT;
+	if (pid == -1)
+		_exit(1);
 
 	errno = save_err;
 }
@@ -868,7 +869,7 @@ must_write(int fd, const void *buf, size_t n)
 static void
 test_state(int action, int next)
 {
-	if (cur_state < 0 || cur_state > STATE_QUIT) {
+	if (cur_state < 0 || cur_state > STATE_RUN) {
 		logmsg(LOG_ERR, "[priv] Invalid state: %d", cur_state);
 		_exit(1);
 	}
