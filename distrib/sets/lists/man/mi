@@ -1681,6 +1681,7 @@
 ./usr/share/man/cat4/vlan.0
 ./usr/share/man/cat4/vnd.0
 ./usr/share/man/cat4/vr.0
+./usr/share/man/cat4/watchdog.0
 ./usr/share/man/cat4/wb.0
 ./usr/share/man/cat4/wd.0
 ./usr/share/man/cat4/wdc.0
@@ -2380,6 +2381,7 @@
 ./usr/share/man/cat8/zaurus/MAKEDEV.0
 ./usr/share/man/cat8/zaurus/apm.0
 ./usr/share/man/cat8/zaurus/apmd.0
+./usr/share/man/cat8/zaurus/boot_zaurus.0
 ./usr/share/man/cat8/zaurus/fdisk.0
 ./usr/share/man/cat8/zaurus/hotplugd.0
 ./usr/share/man/cat8/zaurus/kbd.0
