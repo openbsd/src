@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ath.4,v 1.21 2005/04/17 12:29:07 jmc Exp $
+.\"	$OpenBSD: ath.4,v 1.22 2005/04/20 12:29:22 deraadt Exp $
 .\"     $NetBSD: ath.4,v 1.5 2004/07/03 16:58:18 mycroft Exp $
 .\"
 .\" Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -66,16 +66,22 @@ it can receive either 802.11 or 802.3 frames.
 Transmit speed and operating mode is selectable and
 depends on the specific chipset.
 .Pp
-AR5210-based devices support 802.11a operation with transmit speeds
+Support for the various devices is as follows:
+.Bl -tag -width "ARxxxx"
+.It AR5210
+These devices support 802.11a operation with transmit speeds
 of 6 Mbps, 9 Mbps, 12 Mbps, 18 Mbps, 24 Mbps, 36 Mbps, 48 Mbps, and 54 Mbps.
 .Pp
-AR5211-based devices support 802.11a and 802.11b operation with
+.It AR5211
+These devices support 802.11a and 802.11b operation with
 transmit speeds as above for 802.11a and
 1Mbps, 2Mbps, 5.5 Mbps, and 11Mbps for 802.11b operation.
 .Pp
-AR5212-based devices support 802.11a, 802.11b, and 802.11g operation with
+.It AR5212
+These devices support 802.11a, 802.11b, and 802.11g operation with
 transmit speeds as above for 802.11a, 802.11b, and 802.11g operation
 (802.11g speeds are the same as for 802.11a speeds).
+.El
 .Pp
 All chips also support an Atheros Turbo Mode (TM) that operates in the
 802.11a frequency range with 2x the transmit speeds.
