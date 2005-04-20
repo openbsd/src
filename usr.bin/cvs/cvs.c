@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.54 2005/04/16 19:05:02 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.55 2005/04/20 23:11:30 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -421,28 +421,22 @@ main(int argc, char **argv)
 		cmd_argv[cmd_argc++] = argv[ret];
 
 	ret = cvs_startcmd(cmdp, cmd_argc, cmd_argv);
-	if (ret > 0)
-		fprintf(stderr, "%s [%s aborted]: ", __progname, cvs_command);
-
 	switch (ret) {
 	case CVS_EX_USAGE:
-		fprintf(stderr, "Usage: %s", cmdp->cmd_synopsis);
+		fprintf(stderr, "Usage: %s\n", cmdp->cmd_synopsis);
 		break;
 	case CVS_EX_DATA:
-		fprintf(stderr, "internal data error");
+		cvs_log(LP_ABORT, "internal data error");
 		break;
 	case CVS_EX_PROTO:
-		fprintf(stderr, "protocol error");
+		cvs_log(LP_ABORT, "protocol error");
 		break;
 	case CVS_EX_FILE:
-		fprintf(stderr, "an operation on a file or directory failed");
+		cvs_log(LP_ABORT, "an operation on a file or directory failed");
 		break;
 	default:
 		break;
 	}
-
-	if (ret > 0)
-		fprintf(stderr, "\n");
 
 	if (cmdp->cmd_info->cmd_cleanup != NULL)
 		cmdp->cmd_info->cmd_cleanup();

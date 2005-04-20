@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.48 2005/04/19 19:30:18 jfb Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.49 2005/04/20 23:11:30 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -113,7 +113,7 @@ struct rcs_foo {
 
 
 /* invalid characters in RCS symbol names */
-static const char rcs_sym_invch[] = "$,.:;@";
+static const char rcs_sym_invch[] = RCS_SYM_INVALCHAR;
 
 #ifdef notyet
 static struct rcs_kfl {

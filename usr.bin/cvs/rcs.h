@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.h,v 1.22 2005/04/19 19:22:31 jfb Exp $	*/
+/*	$OpenBSD: rcs.h,v 1.23 2005/04/20 23:11:30 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -44,6 +44,9 @@
 #define RCS_HEAD_BRANCH  "HEAD"
 #define RCS_HEAD_INIT    "1.1"
 #define RCS_HEAD_REV     ((RCSNUM *)(-1))
+
+
+#define RCS_SYM_INVALCHAR  "$,.:;@"
 
 
 #define RCS_STATE_EXP    "Exp"

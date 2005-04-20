@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.14 2005/04/19 18:51:30 jfb Exp $	*/
+/*	$OpenBSD: tag.c,v 1.15 2005/04/20 23:11:30 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -102,6 +102,13 @@ cvs_tag_options(char *opt, int argc, char **argv, int *arg)
 		argc--;
 		argv++;
 		*arg += 1;
+	}
+
+	if (!rcs_sym_check(tag_name)) {
+		cvs_log(LP_ABORT,
+		    "tag `%s' must not contain the characters `%s'",
+		    tag_name, RCS_SYM_INVALCHAR);
+		return (CVS_EX_BADTAG);
 	}
 
 	if (tag_branch && tag_delete) {
