@@ -187,7 +187,8 @@ parse_flags (const char *s, const struct units *units,
 
 /*
  * Return a string representation according to `units' of `num' in `s'
- * with maximum length `len'.  The actual length is the function value.
+ * with maximum length `len'.  The actual length of the returned string
+ * is the returned value.
  */
 
 static int
@@ -200,8 +201,14 @@ unparse_something (int num, const struct units *units, char *s, size_t len,
     const struct units *u;
     int ret = 0, tmp;
 
-    if (num == 0)
-	return snprintf (s, len, "%s", zero_string);
+    /* snprintf doesn't nul terminate on 0 length */	
+    if (len == 0)
+	return(0);
+
+    if (num == 0) {
+	(void) snprintf (s, len, "%s", zero_string);
+	return(strlen(s));
+    }
 
     for (u = units; num > 0 && u->name; ++u) {
 	int div;
@@ -224,10 +231,11 @@ unparse_something (int num, const struct units *units, char *s, size_t len,
 static int
 print_unit (char *s, size_t len, int div, const char *name, int rem)
 {
-    return snprintf (s, len, "%u %s%s%s",
-		     div, name,
-		     div == 1 ? "" : "s",
-		     rem > 0 ? " " : "");
+    if (len == 0)
+	return(0);	
+    (void) snprintf (s, len, "%u %s%s%s",
+	div, name, div == 1 ? "" : "s", rem > 0 ? " " : "");
+    return(strlen(s));
 }
 
 static int
@@ -299,7 +307,10 @@ print_units_table (const struct units *units, FILE *f)
 static int
 print_flag (char *s, size_t len, int div, const char *name, int rem)
 {
-    return snprintf (s, len, "%s%s", name, rem > 0 ? ", " : "");
+    if (len == 0)
+	return(0);	
+    (void) snprintf (s, len, "%s%s", name, rem > 0 ? ", " : "");
+    return(strlen(s));
 }
 
 static int
