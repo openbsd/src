@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_conv.c,v 1.2 2003/05/20 03:23:11 mickey Exp $	*/
+/*	$OpenBSD: ntfs_conv.c,v 1.3 2005/04/20 21:02:41 brad Exp $	*/
 /*	$NetBSD: ntfs_conv.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 /*
  * File name recode stuff.
  *
- * The utf-8 routines were derived from basesrc/lib/libc/locale/utf2.c.
+ * The utf-8 routines were derived from src/lib/libc/locale/utf2.c.
  */
 
 #include <sys/cdefs.h>
