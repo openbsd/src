@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyflags.c,v 1.10 2002/07/03 22:32:34 deraadt Exp $	*/
+/*	$OpenBSD: ttyflags.c,v 1.11 2005/04/20 13:05:51 jmc Exp $	*/
 /*	$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $	*/
 
 /*
@@ -39,7 +39,7 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ttyflags.c,v 1.10 2002/07/03 22:32:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ttyflags.c,v 1.11 2005/04/20 13:05:51 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -259,6 +259,6 @@ ttyflags(struct ttyent *tep, int print)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: ttyflags [-v] [-p] [-a | tty ... ]\n");
+	(void)fprintf(stderr, "usage: ttyflags [-pv] [-a | tty ...]\n");
 	exit(1);
 }
