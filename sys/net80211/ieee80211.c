@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.4 2005/02/17 18:28:05 reyk Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.5 2005/04/20 19:52:43 reyk Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -155,6 +155,9 @@ ieee80211_ifattach(struct ifnet *ifp)
 #else
 	ether_ifattach(ifp, ic->ic_myaddr);
 #endif
+
+	ifp->if_output = ieee80211_output;
+
 #if NBPFILTER > 0
 	BPF_ATTACH(ifp, DLT_IEEE802_11,
 	    sizeof(struct ieee80211_frame_addr4), &ic->ic_rawbpf);

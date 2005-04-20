@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.57 2005/04/20 17:03:22 reyk Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.58 2005/04/20 19:52:42 reyk Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -107,6 +107,7 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
     struct sockaddr *sockp, struct bpf_insn *filter)
 {
 	struct mbuf *m;
+	struct m_tag *mtag;
 	int error;
 	u_int hlen;
 	u_int len;
@@ -148,6 +149,12 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 		sockp->sa_family = AF_UNSPEC;
 		/* XXX 4(FORMAC)+6(dst)+6(src)+3(LLC)+5(SNAP) */
 		hlen = 24;
+		break;
+
+	case DLT_IEEE802_11:
+	case DLT_IEEE802_11_RADIO:
+		sockp->sa_family = AF_UNSPEC;
+		hlen = 0;
 		break;
 
 	case DLT_RAW:
@@ -210,6 +217,15 @@ bpf_movein(struct uio *uio, u_int linktype, struct mbuf **mp,
 		m->m_len -= hlen;
 		m->m_data += hlen; /* XXX */
 	}
+
+	/*
+	 * Prepend the data link type as a mbuf tag
+	 */
+	mtag = m_tag_get(PACKET_TAG_DLT, sizeof(u_int), M_NOWAIT);
+	if (mtag == NULL)
+		return (ENOMEM);
+	*(u_int *)(mtag + 1) = linktype;
+	m_tag_prepend(m, mtag);
 
 	return (0);
  bad:

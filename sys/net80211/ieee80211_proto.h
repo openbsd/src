@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.h,v 1.6 2005/03/03 14:36:41 damien Exp $	*/
+/*	$OpenBSD: ieee80211_proto.h,v 1.7 2005/04/20 19:52:43 reyk Exp $	*/
 /*	$NetBSD: ieee80211_proto.h,v 1.3 2003/10/13 04:23:56 dyoung Exp $	*/
 
 /*-
@@ -61,6 +61,8 @@ extern	void ieee80211_proto_detach(struct ifnet *);
 struct ieee80211_node;
 extern	void ieee80211_input(struct ifnet *, struct mbuf *,
 		struct ieee80211_node *, int, u_int32_t);
+extern	int ieee80211_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+		struct rtentry *);
 extern	void ieee80211_recv_mgmt(struct ieee80211com *, struct mbuf *,
 		struct ieee80211_node *, int, int, u_int32_t);
 extern	int ieee80211_send_mgmt(struct ieee80211com *, struct ieee80211_node *,

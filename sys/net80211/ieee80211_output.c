@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.8 2005/03/11 23:20:26 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.9 2005/04/20 19:52:43 reyk Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -90,6 +90,67 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_compat.h>
+
+/*
+ * IEEE 802.11 output routine. Normally this will directly call the
+ * Ethernet output routine because 802.11 encapsulation is called
+ * later by the driver. This function could be used to send raw frames
+ * if the mbuf has been tagged with a 802.11 data link type.
+ */
+int
+ieee80211_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
+{
+	u_int dlt = 0;
+	int s, error = 0;
+	struct m_tag *mtag;
+	
+	/* Interface has to be up and running */
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
+	    (IFF_UP | IFF_RUNNING)) {
+		error = ENETDOWN;
+		goto bad;
+	}
+
+	/* Try to get the DLT from a mbuf tag */
+	if ((mtag = m_tag_find(m, PACKET_TAG_DLT, NULL)) != NULL) {
+		dlt = *(u_int *)(mtag + 1);
+
+		/* Fallback to ethernet for non-802.11 linktypes */
+		if (!(dlt == DLT_IEEE802_11 || dlt == DLT_IEEE802_11_RADIO))
+			goto fallback;
+
+		/*
+		 * Queue message on interface without adding any
+		 * further headers, and start output if interface not
+		 * yet active.
+		 */
+		s = splimp();
+		IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
+		if (error) {
+			/* mbuf is already freed */
+			splx(s);
+			if_printf(ifp, "failed to queue raw tx frame\n");
+			return (error);
+		}
+		ifp->if_obytes += m->m_pkthdr.len;
+		if (m->m_flags & M_MCAST)
+			ifp->if_omcasts++;
+		if ((ifp->if_flags & IFF_OACTIVE) == 0)
+			(*ifp->if_start)(ifp);
+		splx(s);
+
+		return (error);
+	}
+
+ fallback:
+	return (ether_output(ifp, m, dst, rt));
+
+ bad:
+	if (m)
+		m_freem(m);
+	return (error);
+}
 
 /*
  * Send a management frame to the specified node.  The node pointer
@@ -185,7 +246,55 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni = NULL;
 	struct llc *llc;
+	struct m_tag *mtag;
+	u_int8_t *addr;
+	u_int dlt;
 
+	/* Handle raw frames if mbuf is tagged as 802.11 */
+	if ((mtag = m_tag_find(m, PACKET_TAG_DLT, NULL)) != NULL) {
+		dlt = *(u_int *)(mtag + 1);
+		
+		if (!(dlt == DLT_IEEE802_11 || dlt == DLT_IEEE802_11_RADIO))
+			goto fallback;
+		
+		wh = mtod(m, struct ieee80211_frame *);
+
+		if (m->m_pkthdr.len < sizeof(struct ieee80211_frame_min))
+			goto bad;
+
+		if ((wh->i_fc[0] & IEEE80211_FC0_VERSION_MASK) !=
+		    IEEE80211_FC0_VERSION_0)
+			goto bad;
+
+		switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
+		case IEEE80211_FC1_DIR_NODS:
+		case IEEE80211_FC1_DIR_FROMDS:
+			addr = wh->i_addr1;
+			break;
+		case IEEE80211_FC1_DIR_DSTODS:
+		case IEEE80211_FC1_DIR_TODS:
+			addr = wh->i_addr3;
+			break;
+		default:
+			goto bad;
+		}
+
+		ni = ieee80211_find_txnode(ic, addr);
+		if (ni == NULL)
+			ni = ieee80211_ref_node(ic->ic_bss);
+		if (ni == NULL) {
+			if_printf(ifp, "no node for dst %s, "
+			    "discard raw tx frame\n", ether_sprintf(addr));
+			ic->ic_stats.is_tx_nonode++;
+			goto bad;
+		}
+		ni->ni_inact = 0;
+
+		*pni = ni;
+		return (m);
+	}
+
+ fallback:
 	if (m->m_len < sizeof(struct ether_header)) {
 		m = m_pullup(m, sizeof(struct ether_header));
 		if (m == NULL) {
