@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: mppe.c,v 1.16 2002/07/02 00:48:30 brian Exp $
+ * $OpenBSD: mppe.c,v 1.17 2005/04/20 21:07:55 moritz Exp $
  */
 
 #include <sys/param.h>
@@ -386,36 +386,71 @@ MPPEDispOpts(struct fsm_opt *o)
 
   ua_ntohl(o->data, &val);
   len = 0;
-  if ((n = snprintf(buf, sizeof buf, "value 0x%08x ", (unsigned)val)) > 0)
+  n = snprintf(buf, sizeof buf, "value 0x%08x ", (unsigned)val);
+  if (n == 0)
+    return buf;
+  if (n >= sizeof buf)
+    n = sizeof buf - 1;
+  if (n > 0)
     len += n;
   if (!(val & MPPE_OPT_BITMASK)) {
-    if ((n = snprintf(buf + len, sizeof buf - len, "(0")) > 0)
+    n = snprintf(buf + len, sizeof buf - len, "(0");
+    if (n == 0)
+      return buf;
+    if (n >= sizeof buf - len)
+      n = sizeof buf - len - 1;
+    if (n > 0)
       len += n;
   } else {
     ch = '(';
     if (val & MPPE_OPT_128BIT) {
-      if ((n = snprintf(buf + len, sizeof buf - len, "%c128", ch)) > 0)
+      n = snprintf(buf + len, sizeof buf - len, "%c128", ch);
+      if (n == 0)
+        return buf;
+      if (n >= sizeof buf - len)
+        n = sizeof buf - len - 1;
+      if (n > 0)
         len += n;
       ch = '/';
     }
     if (val & MPPE_OPT_56BIT) {
-      if ((n = snprintf(buf + len, sizeof buf - len, "%c56", ch)) > 0)
+      n = snprintf(buf + len, sizeof buf - len, "%c56", ch);
+      if (n == 0)
+        return buf;
+      if (n >= sizeof buf - len)
+        n = sizeof buf - len - 1;
+      if (n > 0)
         len += n;
       ch = '/';
     }
     if (val & MPPE_OPT_40BIT) {
-      if ((n = snprintf(buf + len, sizeof buf - len, "%c40", ch)) > 0)
+      n = snprintf(buf + len, sizeof buf - len, "%c40", ch);
+      if (n == 0)
+        return buf;
+      if (n >= sizeof buf - len)
+        n = sizeof buf - len - 1;
+      if (n > 0)
         len += n;
       ch = '/';
     }
   }
 
-  if ((n = snprintf(buf + len, sizeof buf - len, " bits, state%s",
-                    (val & MPPE_OPT_STATELESS) ? "less" : "ful")) > 0)
+  n = snprintf(buf + len, sizeof buf - len, " bits, state%s",
+                    (val & MPPE_OPT_STATELESS) ? "less" : "ful");
+  if (n == 0)
+    return buf;
+  if (n >= sizeof buf - len)
+    n = sizeof buf - len - 1;
+  if (n > 0)
     len += n;
 
   if (val & MPPE_OPT_COMPRESSED) {
-    if ((n = snprintf(buf + len, sizeof buf - len, ", compressed")) > 0)
+    n = snprintf(buf + len, sizeof buf - len, ", compressed");
+    if (n == 0)
+      return buf;
+    if (n >= sizeof buf - len)
+      n = sizeof buf - len - 1;
+    if (n > 0)
       len += n;
   }
 
