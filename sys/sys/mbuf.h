@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.79 2005/01/18 23:26:51 mpf Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.80 2005/04/20 19:59:29 reyk Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -595,6 +595,7 @@ struct m_tag *m_tag_next(struct mbuf *, struct m_tag *);
 #define	PACKET_TAG_PF_QID			14 /* PF queue id */
 #define PACKET_TAG_PF_TAG			15 /* PF tags */
 #define PACKET_TAG_PF_TRANSLATE_LOCALHOST	16 /* translated to localhost */
+#define PACKET_TAG_DLT				17 /* data link layer type */
 
 #ifdef MBTYPES
 int mbtypes[] = {				/* XXX */
