@@ -1,8 +1,8 @@
-/* $OpenBSD: strerror_r.c,v 1.2 2004/05/03 05:07:34 espie Exp $ */
+/* $OpenBSD: strerror_r.c,v 1.3 2005/04/20 23:38:15 beck Exp $ */
 /* Public Domain <marc@snafu.org> */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strerror_r.c,v 1.2 2004/05/03 05:07:34 espie Exp $";
+static char *rcsid = "$OpenBSD: strerror_r.c,v 1.3 2005/04/20 23:38:15 beck Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -107,8 +107,12 @@ strerror_r(int errnum, char *strerrbuf, size_t buflen)
 #else
 		len = strlcpy(strerrbuf, UPREFIX, buflen);
 #endif
-		__itoa(errnum, strerrbuf, len, buflen);
-		ret_errno = EINVAL;
+		if (len >= buflen)
+			ret_errno = ERANGE;
+		else {
+			__itoa(errnum, strerrbuf, len, buflen);
+			ret_errno = EINVAL;
+		}
 	}
 
 #ifdef NLS
