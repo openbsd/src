@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.10 2003/06/10 22:20:53 deraadt Exp $	*/
+/*	$OpenBSD: touch.c,v 1.11 2005/04/20 19:13:53 otto Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)touch.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char rcsid[] = "$OpenBSD: touch.c,v 1.10 2003/06/10 22:20:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: touch.c,v 1.11 2005/04/20 19:13:53 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,7 +58,6 @@ static char rcsid[] = "$OpenBSD: touch.c,v 1.10 2003/06/10 22:20:53 deraadt Exp 
 #include <tzfile.h>
 #include <unistd.h>
 
-int	rw(char *, struct stat *, int);
 void	stime_arg1(char *, struct timeval *);
 void	stime_arg2(char *, int, struct timeval *);
 void	stime_file(char *, struct timeval *);
@@ -69,12 +68,12 @@ main(int argc, char *argv[])
 {
 	struct stat sb;
 	struct timeval tv[2];
-	int aflag, cflag, fflag, mflag, ch, fd, len, rval, timeset;
+	int aflag, cflag, mflag, ch, fd, len, rval, timeset;
 	char *p;
 
 	setlocale(LC_ALL, "");
 
-	aflag = cflag = fflag = mflag = timeset = 0;
+	aflag = cflag = mflag = timeset = 0;
 	if (gettimeofday(&tv[0], NULL))
 		err(1, "gettimeofday");
 
@@ -87,7 +86,6 @@ main(int argc, char *argv[])
 			cflag = 1;
 			break;
 		case 'f':
-			fflag = 1;
 			break;
 		case 'm':
 			mflag = 1;
@@ -100,7 +98,6 @@ main(int argc, char *argv[])
 			timeset = 1;
 			stime_arg1(optarg, tv);
 			break;
-		case '?':
 		default:
 			usage();
 		}
@@ -175,9 +172,8 @@ main(int argc, char *argv[])
 		 if (!utimes(*argv, NULL))
 			continue;
 
-		/* Try reading/writing. */
-		if (rw(*argv, &sb, fflag))
-			rval = 1;
+		rval = 1;
+		warn("%s", *argv);
 	}
 	exit(rval);
 }
@@ -287,59 +283,10 @@ stime_file(char *fname, struct timeval *tvp)
 	TIMESPEC_TO_TIMEVAL(tvp + 1, &sb.st_mtimespec);
 }
 
-int
-rw(char *fname, struct stat *sbp, int force)
-{
-	int fd, needed_chmod, rval;
-	u_char byte;
-
-	/* Try regular files and directories. */
-	if (!S_ISREG(sbp->st_mode) && !S_ISDIR(sbp->st_mode)) {
-		warnx("%s: %s", fname, strerror(EFTYPE));
-		return (1);
-	}
-
-	needed_chmod = rval = 0;
-	if ((fd = open(fname, O_RDWR, 0)) == -1) {
-		if (!force || chmod(fname, DEFFILEMODE))
-			goto err;
-		if ((fd = open(fname, O_RDWR, 0)) == -1)
-			goto err;
-		needed_chmod = 1;
-	}
-
-	if (sbp->st_size != 0) {
-		if (read(fd, &byte, sizeof(byte)) != sizeof(byte))
-			goto err;
-		if (lseek(fd, (off_t)0, SEEK_SET) == -1)
-			goto err;
-		if (write(fd, &byte, sizeof(byte)) != sizeof(byte))
-			goto err;
-	} else {
-		if (write(fd, &byte, sizeof(byte)) != sizeof(byte)) {
-err:			rval = 1;
-			warn("%s", fname);
-		} else if (ftruncate(fd, (off_t)0)) {
-			rval = 1;
-			warn("%s: file modified", fname);
-		}
-	}
-
-	if (close(fd) && rval != 1) {
-		rval = 1;
-		warn("%s", fname);
-	}
-	if (needed_chmod && chmod(fname, sbp->st_mode) && rval != 1) {
-		rval = 1;
-		warn("%s: permissions modified", fname);
-	}
-	return (rval);
-}
-
 __dead void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: touch [-acfm] [-r file] [-t time] file ...\n");
+	    "usage: touch [-acm] [-r file] [-t time] file ...\n");
 	exit(1);
 }
