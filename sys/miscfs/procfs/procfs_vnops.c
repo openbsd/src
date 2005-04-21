@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.35 2005/04/16 22:19:28 kettenis Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.36 2005/04/21 23:28:55 deraadt Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -602,11 +602,17 @@ procfs_getattr(v)
 
 	case Pcurproc: {
 		char buf[16];		/* should be enough */
+		int len;
+
+		len = snprintf(buf, sizeof buf, "%ld", (long)curproc->p_pid);
+		if (len == -1 || len >= sizeof buf) {
+			error = EINVAL;
+			break;
+		}
 		vap->va_nlink = 1;
 		vap->va_uid = 0;
 		vap->va_gid = 0;
-		vap->va_size = vap->va_bytes =
-		    snprintf(buf, sizeof buf, "%ld", (long)curproc->p_pid);
+		vap->va_size = vap->va_bytes = len;
 		break;
 	}
 
@@ -1091,6 +1097,8 @@ procfs_readlink(v)
 	else if (VTOPFS(ap->a_vp)->pfs_fileno == PROCFS_FILENO(0, Pself))
 		len = strlcpy(buf, "curproc", sizeof buf);
 	else
+		return (EINVAL);
+	if (len == -1 || len >= sizeof buf)
 		return (EINVAL);
 
 	return (uiomove(buf, len, ap->a_uio));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_linux.c,v 1.5 2004/05/05 23:52:10 tedu Exp $	*/
+/*	$OpenBSD: procfs_linux.c,v 1.6 2005/04/21 23:28:55 deraadt Exp $	*/
 /*      $NetBSD: procfs_linux.c,v 1.2.4.1 2001/03/30 21:48:11 he Exp $      */
 
 /*
@@ -89,8 +89,9 @@ procfs_domeminfo(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 		PGTOKB(uvmexp.swpages),
 		PGTOKB(uvmexp.swpages - uvmexp.swpginuse));
 
-	if (len == 0 || len <= uio->uio_offset || uio->uio_resid == 0)
-		return 0;
+	if (len <= 0 || len >= sizeof buf ||
+	    len <= uio->uio_offset || uio->uio_resid == 0)
+		return EINVAL;
 
 	len -= uio->uio_offset;
 	cp = buf + uio->uio_offset;
