@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.krb5.inc,v 1.11 2004/11/26 12:02:10 biorn Exp $
+# $OpenBSD: Makefile.krb5.inc,v 1.12 2005/04/21 21:07:54 biorn Exp $
 
 DIR_KRB5INC=	${.CURDIR}/../../kerberosV/include
 DIR_KRB5LIB=	${KRB5SRC}/lib/krb5
@@ -166,6 +166,73 @@ MLINKS+=krb5_ccache.3 krb5_cc_set_default_name.3
 MLINKS+=krb5_ccache.3 krb5_cc_store_cred.3
 MLINKS+=krb5_ccache.3 krb5_cc_set_flags.3
 MLINKS+=krb5_ccache.3 krb5_cc_next_cred.3
+
+MAN+=	krb5_address.3
+MLINKS+=krb5_address.3 krb5_addresses.3
+MLINKS+=krb5_address.3 krb5_sockaddr2address.3
+MLINKS+=krb5_address.3 krb5_sockaddr2port.3
+MLINKS+=krb5_address.3 krb5_addr2sockaddr.3
+MLINKS+=krb5_address.3 krb5_max_sockaddr_size.3
+MLINKS+=krb5_address.3 krb5_sockaddr_uninteresting.3
+MLINKS+=krb5_address.3 krb5_h_addr2sockaddr.3
+MLINKS+=krb5_address.3 krb5_h_addr2addr.3
+MLINKS+=krb5_address.3 krb5_anyaddr.3
+MLINKS+=krb5_address.3 krb5_print_address.3
+MLINKS+=krb5_address.3 krb5_parse_address.3
+MLINKS+=krb5_address.3 krb5_address_order.3
+MLINKS+=krb5_address.3 krb5_address_compare.3
+MLINKS+=krb5_address.3 krb5_address_search.3
+MLINKS+=krb5_address.3 krb5_free_address.3
+MLINKS+=krb5_address.3 krb5_free_addresses.3
+MLINKS+=krb5_address.3 krb5_copy_address.3
+MLINKS+=krb5_address.3 krb5_copy_addresses.3
+MLINKS+=krb5_address.3 krb5_append_addresses.3
+MLINKS+=krb5_address.3 krb5_make_addrport.3
+
+MAN+=	krb5_aname_to_localname.3
+
+MAN+=	krb5_data.3
+MLINKS+=krb5_data.3 krb5_data_zero.3
+MLINKS+=krb5_data.3 krb5_data_free.3
+MLINKS+=krb5_data.3 krb5_free_data_contents.3
+MLINKS+=krb5_data.3 krb5_free_data.3
+MLINKS+=krb5_data.3 krb5_data_alloc.3
+MLINKS+=krb5_data.3 krb5_data_realloc.3
+MLINKS+=krb5_data.3 krb5_data_copy.3
+MLINKS+=krb5_data.3 krb5_copy_data.3
+
+MAN+=	krb5_free_addresses.3
+
+MAN+=	krb5_get_all_client_addrs.3
+MLINKS+=krb5_get_all_client_addrs.3 krb5_get_all_server_addrs.3
+
+MAN+=	krb5_get_krbhst.3
+MLINKS+=krb5_get_krbhst.3 krb5_get_krb_admin_hst.3
+MLINKS+=krb5_get_krbhst.3 krb5_get_krb_changepw_hst.3
+MLINKS+=krb5_get_krbhst.3 krb5_get_krb524hst.3
+MLINKS+=krb5_get_krbhst.3 krb5_free_krbhst.3
+
+MAN+=	krb5_krbhst_init.3
+MLINKS+=krb5_krbhst_init.3 krb5_krbhst_next.3
+MLINKS+=krb5_krbhst_init.3 krb5_krbhst_next_as_string.3
+MLINKS+=krb5_krbhst_init.3 krb5_krbhst_reset.3
+MLINKS+=krb5_krbhst_init.3 krb5_krbhst_free.3
+MLINKS+=krb5_krbhst_init.3 krb5_krbhst_format_string.3
+MLINKS+=krb5_krbhst_init.3 krb5_krbhst_get_addrinfo.3
+
+MAN+=	krb5_kuserok.3
+
+MAN+=	krb5_principal_get_realm.3
+MLINKS+=krb5_principal_get_realm.3 krb5_principal_get_comp_string.3
+
+MAN+=	krb5_set_default_realm.3
+MLINKS+=krb5_set_default_realm.3 krb5_free_host_realm.3
+MLINKS+=krb5_set_default_realm.3 krb5_get_default_realm.3
+MLINKS+=krb5_set_default_realm.3 krb5_get_default_realms.3
+MLINKS+=krb5_set_default_realm.3 krb5_get_host_realm.3
+
+MAN+=	krb5_timeofday.3
+MLINKS+=krb5_timeofday.3 krb5_us_timeofday.3
 
 .PATH:	${DIR_KRB5LIB}
 
