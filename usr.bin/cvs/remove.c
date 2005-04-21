@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.11 2005/04/21 19:06:06 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.12 2005/04/21 20:56:12 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Xavier Santolaria <xsa@openbsd.org>
@@ -80,9 +80,6 @@ cvs_remove_options(char *opt, int argc, char **argv, int *arg)
 
 	argc -= optind;
 	argv += optind;
-
-	if (argc == 0)
-		return (CVS_EX_USAGE);
 
 	*arg = optind;
 	return (0);
