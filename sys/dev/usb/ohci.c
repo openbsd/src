@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.59 2005/04/21 07:51:46 pascoe Exp $ */
+/*	$OpenBSD: ohci.c,v 1.60 2005/04/21 10:00:30 pascoe Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -648,7 +648,7 @@ ohci_init(ohci_softc_t *sc)
 	ohci_soft_ed_t *sed, *psed;
 	usbd_status err;
 	int i;
-	u_int32_t s, ctl, ival, hcr, fm, per, rev, desca;
+	u_int32_t s, ctl, rwc, ival, hcr, fm, per, rev, desca, descb;
 
 	DPRINTF(("ohci_init: start\n"));
 #if defined(__OpenBSD__)
@@ -747,9 +747,14 @@ ohci_init(ohci_softc_t *sc)
 		ohci_dump_ed(sc->sc_isoc_head);
 	}
 #endif
+	/* Preserve values programmed by SMM/BIOS but lost over reset. */
+	ctl = OREAD4(sc, OHCI_CONTROL);
+	rwc = ctl & OHCI_RWC;
+	fm = OREAD4(sc, OHCI_FM_INTERVAL);
+	desca = OREAD4(sc, OHCI_RH_DESCRIPTOR_A);
+	descb = OREAD4(sc, OHCI_RH_DESCRIPTOR_B);
 
 	/* Determine in what context we are running. */
-	ctl = OREAD4(sc, OHCI_CONTROL);
 	if (ctl & OHCI_IR) {
 		/* SMM active, request change */
 		DPRINTF(("ohci_init: SMM active, request owner change\n"));
@@ -762,7 +767,7 @@ ohci_init(ohci_softc_t *sc)
 		if (ctl & OHCI_IR) {
 			printf("%s: SMM does not respond, resetting\n",
 			       USBDEVNAME(sc->sc_bus.bdev));
-			OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
+			OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET | rwc);
 			goto reset;
 		}
 #if 0
@@ -771,7 +776,7 @@ ohci_init(ohci_softc_t *sc)
 		/* BIOS started controller. */
 		DPRINTF(("ohci_init: BIOS active\n"));
 		if ((ctl & OHCI_HCFS_MASK) != OHCI_HCFS_OPERATIONAL) {
-			OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_OPERATIONAL);
+			OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_OPERATIONAL | rwc);
 			usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
 		}
 #endif
@@ -787,11 +792,10 @@ ohci_init(ohci_softc_t *sc)
 	 * without it some controllers do not start.
 	 */
 	DPRINTF(("%s: resetting\n", USBDEVNAME(sc->sc_bus.bdev)));
-	OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
+	OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET | rwc);
 	usb_delay_ms(&sc->sc_bus, USB_BUS_RESET_DELAY);
 
 	/* We now own the host controller and the bus has been reset. */
-	ival = OHCI_GET_IVAL(OREAD4(sc, OHCI_FM_INTERVAL));
 
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_HCR); /* Reset HC */
 	/* Nominal time for a reset is 10 us. */
@@ -824,7 +828,7 @@ ohci_init(ohci_softc_t *sc)
 	ctl = OREAD4(sc, OHCI_CONTROL);
 	ctl &= ~(OHCI_CBSR_MASK | OHCI_LES | OHCI_HCFS_MASK | OHCI_IR);
 	ctl |= OHCI_PLE | OHCI_IE | OHCI_CLE | OHCI_BLE |
-		OHCI_RATIO_1_4 | OHCI_HCFS_OPERATIONAL;
+		OHCI_RATIO_1_4 | OHCI_HCFS_OPERATIONAL | rwc;
 	/* And finally start it! */
 	OWRITE4(sc, OHCI_CONTROL, ctl);
 
@@ -833,6 +837,7 @@ ohci_init(ohci_softc_t *sc)
 	 * registers that should be set earlier, but that the
 	 * controller ignores when in the SUSPEND state.
 	 */
+	ival = OHCI_GET_IVAL(fm);
 	fm = (OREAD4(sc, OHCI_FM_REMAINING) & OHCI_FIT) ^ OHCI_FIT;
 	fm |= OHCI_FSMPS(ival) | ival;
 	OWRITE4(sc, OHCI_FM_INTERVAL, fm);
@@ -840,11 +845,12 @@ ohci_init(ohci_softc_t *sc)
 	OWRITE4(sc, OHCI_PERIODIC_START, per);
 
 	/* Fiddle the No OverCurrent Protection bit to avoid chip bug. */
-	desca = OREAD4(sc, OHCI_RH_DESCRIPTOR_A);
 	OWRITE4(sc, OHCI_RH_DESCRIPTOR_A, desca | OHCI_NOCP);
 	OWRITE4(sc, OHCI_RH_STATUS, OHCI_LPSC); /* Enable port power */
 	usb_delay_ms(&sc->sc_bus, OHCI_ENABLE_POWER_DELAY);
 	OWRITE4(sc, OHCI_RH_DESCRIPTOR_A, desca);
+	OWRITE4(sc, OHCI_RH_DESCRIPTOR_B, descb);
+	usb_delay_ms(&sc->sc_bus, OHCI_GET_POTPGT(desca) * UHD_PWRON_FACTOR);
 
 	/*
 	 * The AMD756 requires a delay before re-reading the register,
