@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.89 2005/03/12 08:05:58 markus Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.90 2005/04/21 16:15:50 djm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.89 2005/03/12 08:05:58 markus Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.90 2005/04/21 16:15:50 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -791,7 +791,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 {
 	struct iovec iov[6];
 	struct iovec *v;
-	int l;
+	int l, retryonce;
 	char line[MAXLINE + 1], repbuf[80], greetings[500];
 
 	v = iov;
@@ -887,6 +887,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 			v->iov_base = "\n";
 			v->iov_len = 1;
 		}
+		retryonce = 0;
 	again:
 		if (writev(f->f_file, iov, 6) < 0) {
 			int e = errno;
@@ -901,8 +902,9 @@ fprintlog(struct filed *f, int flags, char *msg)
 				 */
 				break;
 			} else if ((e == EIO || e == EBADF) &&
-			    f->f_type != F_FILE) {
+			    f->f_type != F_FILE && !retryonce) {
 				f->f_file = priv_open_tty(f->f_un.f_fname);
+				retryonce = 1;
 				if (f->f_file < 0) {
 					f->f_type = F_UNUSED;
 					logerror(f->f_un.f_fname);
