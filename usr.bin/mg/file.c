@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.32 2005/04/03 02:09:28 db Exp $	*/
+/*	$OpenBSD: file.c,v 1.33 2005/04/21 19:16:21 beck Exp $	*/
 
 /*
  *	File commands.
@@ -128,6 +128,8 @@ findbuffer(char *fname)
 			return (bp);
 	}
 	i = strlcpy(bname, basename(fname), sizeof(bname));
+	if (i >= sizeof(bname))
+		return NULL;  
 	remain = sizeof(bname) - i;
 	for (count = 2; bfind(bname, FALSE) != NULL; count++)
 		snprintf(&bname[i], remain, "<%d>", count);
