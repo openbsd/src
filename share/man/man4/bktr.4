@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: bktr.4,v 1.19 2005/02/24 20:24:41 mickey Exp $
+.\" $OpenBSD: bktr.4,v 1.20 2005/04/21 14:38:15 jmc Exp $
 .\" $FreeBSD: /c/ncvs/src/share/man/man4/bktr.4,v 1.9.2.5 2001/03/06 19:08:09 ru Exp $
 .\"
 .Dd January 28, 1998
@@ -41,6 +41,8 @@
 .Sh SYNOPSIS
 .Cd "bktr* at pci?"
 .Cd "radio* at bktr?"
+.Pp
+.Fd #include <dev/ic/bt8xx.h>
 .Pp
 .Cd "option BKTR_ALLOC_PAGES=nnn"
 .Cd "option BKTR_SYSTEM_DEFAULT=XXX"
@@ -92,7 +94,268 @@ rgb32
 .Pp
 On these cards, tuners and other components are interconnected with an I2C bus.
 The Brooktree848 chips act as a master device on the bus to control them.
+.Sh VIDEO CAPTURE INTERFACE
+The video capture interface to
+.Nm
+is accessed through
+.Pa /dev/bktrN
+devices.
+The following
+.Xr ioctl 2
+commands are supported on the Brooktree848 video capture interface:
+.Bl -tag -width Ds
+.It Dv METEORSFMT Fa "unsigned long *"
+This command sets the video format, also sometimes referred to as the
+video norm.
+The supported formats are:
 .Pp
+.Bl -tag -compact -width 28n
+.It Dv METEOR_FMT_NTSC
+NTSC
+.It Dv METEOR_FMT_PAL
+PAL
+.It Dv METEOR_FMT_SECAM
+SECAM
+.It Dv METEOR_FMT_AUTOMODE
+hardware default
+.El
+.It Dv METEORGFMT Fa "unsigned long *"
+This command retrieves the current video format to the
+.Vt unsigned long *
+argument.
+.It Dv METEORSETGEO Fa "struct meteor_geomet *"
+This command sets the video properties that affect the bit size of
+a frame throught the
+.Vt meteor_geomet *
+argument.
+.Bd -literal
+struct meteor_geomet {
+	u_short		rows;	 /* height in pixels*/
+	u_short		columns; /* width in pixels */
+	u_short		frames;
+	u_long		oformat;
+}
+.Ed
+.Pp
+The
+.Va frames
+field is the number of frames to buffer.
+Currently only 1 frame is supported for most operations.
+.Pp
+The
+.Va oformat
+field is a bit-field describing the output pixel format
+type and which video fields to capture.
+The following are supported pixel format types:
+.Pp
+.Bl -tag -compact -width 28n
+.It Dv METEOR_GEO_RGB16
+16-bit RGB
+.It Dv METEOR_GEO_RGB24
+24-bit RGB in 32 bits
+.It Dv METEOR_GEO_YUV_PACKED
+16-bit 4:2:2 YUV
+.It Dv METEOR_GEO_YUV_PLANAR
+16-bit 4:2:2 YUV
+.It Dv METEOR_GEO_YUV_UNSIGNED
+unsigned UV
+.It Dv METEOR_GEO_YUV_422
+.It Dv METEOR_GEO_YUV_12
+.It Dv METEOR_GEO_YUV_9
+.El
+.Pp
+The following are supported field capture modes:
+.Pp
+.Bl -tag -compact -width 28n
+.It Dv METEOR_GEO_ODD_ONLY
+only odd fields
+.It Dv METEOR_GEO_EVEN_ONLY
+only even fields
+.El
+.Pp
+By default, frames will consist of both the odd and even fields.
+.It Dv METEORGSUPPIXFMT Fa "struct meteor_pixfmt *"
+This command is used interatively to fetch descriptions of supported
+output pixel formats into the
+.Vt meteor_pixfmt *
+argument.
+.Bd -literal
+struct meteor_pixfmt {
+	u_int          index;
+	METEOR_PIXTYPE type;
+	u_int          Bpp;		/* bytes per pixel */
+	u_long         masks[3];	/* YUV bit masks */
+	unsigned       swap_bytes :1;
+	unsigned       swap_shorts:1;
+};
+.Ed
+.Pp
+To query all the supported formats, start with an index field of 0 and
+continue with successive encodings (1, 2, ...) until the command returns
+an error.
+.It Dv METEORSACTPIXFMT Fa "int *"
+This command sets the active pixel format.
+The
+.Vt int *
+argument is the index of the pixel format as returned by
+.Dv METEORGSUPPIXFMT .
+.It Dv METEORGACTPIXFMT Fa "int *"
+This command fetches the active pixel format index into the
+.Vt int *
+argument.
+.It Dv METEORSINPUT Fa "unsigned long *"
+This command sets the input port of the Brooktree848 device.
+The following are supported input ports:
+.Pp
+.Bl -tag -compact -width 28n
+.It Dv METEOR_INPUT_DEV0
+composite (RCA)
+.It Dv METEOR_INPUT_DEV1
+tuner
+.It Dv METEOR_INPUT_DEV2
+composite S-video
+.It Dv METEOR_INPUT_DEV3
+mystery device
+.It Dv METEOR_INPUT_DEV_RGB
+rgb meteor
+.It Dv METEOR_INPUT_DEV_SVIDEO
+S-Video
+.El
+.Pp
+Not all devices built with Brooktree848 chips support the
+full list of input ports.
+.It Dv METEORGINPUT Fa "unsigned long *"
+This command retrieves the current input port to the
+.Vt unsigned long *
+argument.
+.It Dv METEORSFPS Fa "unsigned short *"
+This command sets the number of frames to grab each second.
+Valid frame rates are integers from 0 to 30.
+.It Dv METEORGFPS Fa "unsigned short *"
+This command fetches the number of frames to grab each second into the
+.Vt unsigned short *
+argument.
+.It Dv METEORCAPTUR Fa "int *"
+This command controls capturing of video data.
+The following are valid arguments:
+.Pp
+.Bl -tag -compact -width 28n
+.It Dv METEOR_CAP_SINGLE
+capture one frame
+.It Dv METEOR_CAP_CONTINOUS
+continuously capture
+.It Dv METEOR_CAP_STOP_CONT
+stop continuous capture
+.El
+.It Dv METEORSSIGNAL Fa "unsigned int *"
+This command controls the signal emission properties of
+.Nm .
+If the
+.Vt unsigned int *
+argument is a valid signal, then that signal will be emitted
+when either a frame or field capture has completed.
+To select between frame or field signalling, the following arguments
+are used:
+.Pp
+.Bl -tag -compact -width 28n
+.It Dv METEOR_SIG_FRAME
+signal every frame
+.It Dv METEOR_SIG_FIELD
+signal every field
+.El
+.Pp
+By default, signals will be generated for every frame.
+Generation of signals is terminated with the
+.Dv METEOR_SIG_MODE_MASK
+argument.
+.El
+.Sh TUNER INTERFACE
+Most cards supported by this driver feature a hardware television tuner
+on the I2C bus.
+The tuner interface to
+.Nm
+is accessed through
+.Pa /dev/tunerN
+devices.
+The following
+.Xr ioctl 2
+commands are supported on the tuner interface:
+.Bl -tag -width Ds
+.It Dv TVTUNER_SETTYPE Fa "unsigned int *"
+This command sets the tuner's TV channel set, also sometimes called the TV
+channel band.
+This setting is used to calculate the proper tuning frequencies.
+The desired channel set must be selected before attempting to set the tuner
+channel or frequency.
+The following is a list of valid channel sets:
+.Pp
+.Bl -tag -compact -width 28n
+.It Dv CHNLSET_NABCST
+North America broadcast
+.It Dv CHNLSET_CABLEIRC
+North America IRC cable
+.It Dv CHNLSET_CABLEHRC
+North America HRC cable
+.It Dv CHNLSET_WEUROPE
+Western Europe
+.It Dv CHNLSET_JPNBCST
+Japan broadcast
+.It Dv CHNLSET_JPNCABLE
+Japan cable
+.It Dv CHNLSET_XUSSR
+Russia
+.It Dv CHNLSET_AUSTRALIA
+Australia
+.It Dv CHNLSET_FRANCE
+France
+.El
+.It Dv TVTUNER_GETTYPE Fa "unsigned int *"
+This command fetches the tuner's current channel set to the
+.Vt unsigned int *
+argument.
+.It Dv TVTUNER_SETCHNL Fa "unsigned int *"
+This command sets the tuner's frequency to a specified channel in the
+current channel set.
+.It Dv TVTUNER_GETCHNL Fa "unsigned int *"
+This command fetches the last selected channel.
+Note that it is not necessarily the current channel.
+In particular, changing the tuner's frequency by a command other than
+.Dv TVTUNER_SETCHNL
+will not update this setting, and it defaults to 0 on driver
+initialization.
+.It Dv TVTUNER_SETFREQ Fa "unsigned int *"
+This command sets the tuner's frequency to 1/16th the value of the
+.Vt unsigned int *
+argument, in MHz.
+Note that the current channelset is used to determine frequency
+offsets when this command is executed.
+.It Dv TVTUNER_GETFREQ Fa "unsigned int *"
+This command fetches the tuner's current frequency to the
+.Vt unsigned int *
+argument.
+Note that this value is 16 times the actual tuner frequency, in MHz.
+.It Dv BT848_SAUDIO Fa "int *"
+This command controls the audio input port and mute state.
+The following is a list of valid arguments:
+.Pp
+.Bl -tag -compact -width 18n
+.It Dv AUDIO_TUNER
+tuner audio port
+.It Dv AUDIO_EXTERN
+external audio port
+.It Dv AUDIO_INTERN
+internal audio port
+.It Dv AUDIO_MUTE
+mute audio
+.It Dv AUDIO_UNMUTE
+unmute audio
+.El
+.It Dv BT848_GAUDIO Fa "int *"
+This command fetches the audio input and mute state bits to the
+.Vt int *
+argument.
+.El
+.Sh KERNEL OPTIONS
 The following kernel configuration options are available:
 .Bl -tag -width xxxxxxxx
 .It Cd option BKTR_ALLOC_PAGES=nnn
