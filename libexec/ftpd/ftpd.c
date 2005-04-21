@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.163 2005/03/15 12:22:58 niallo Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.164 2005/04/21 00:12:20 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.163 2005/03/15 12:22:58 niallo Exp $";
+    "$OpenBSD: ftpd.c,v 1.164 2005/04/21 00:12:20 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -2799,15 +2799,16 @@ logxfer(char *name, off_t size, time_t start)
 		strvis(vremotehost, remotehost, VIS_SAFE|VIS_NOSLASH);
 		strvis(vpw, guest? guestpw : pw->pw_name, VIS_SAFE|VIS_NOSLASH);
 
-		if ((len = snprintf(buf, sizeof(buf),
+		len = snprintf(buf, sizeof(buf),
 		    "%.24s %d %s %qd %s %c %s %c %c %s ftp %d %s %s\n",
 		    ctime(&now), now - start + (now == start),
 		    vremotehost, (long long)size, vpath,
 		    ((type == TYPE_A) ? 'a' : 'b'), "*" /* none yet */,
 		    'o', ((guest) ? 'a' : 'r'),
 		    vpw, 0 /* none yet */,
-		    ((guest) ? "*" : pw->pw_name), dhostname)) >= sizeof(buf)
-		    || len < 0) {
+		    ((guest) ? "*" : pw->pw_name), dhostname);
+
+		if (len >= sizeof(buf) || len == -1) {
 			if ((len = strlen(buf)) == 0)
 				return;		/* should not happen */
 			buf[len - 1] = '\n';
