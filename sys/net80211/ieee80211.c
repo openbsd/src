@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.5 2005/04/20 19:52:43 reyk Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.6 2005/04/21 22:47:15 reyk Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -800,6 +800,33 @@ ieee80211_setmode(struct ieee80211com *ic, enum ieee80211_phymode mode)
 	ic->ic_curmode = mode;
 	return 0;
 #undef N
+}
+
+void
+ieee80211_next_mode(struct ifnet *ifp)
+{
+	struct ieee80211com *ic = (void *)ifp;
+
+	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) != IFM_AUTO)
+		return;
+
+	/*
+	 * Get the next supported mode
+	 */
+	for (++ic->ic_curmode;
+	    ic->ic_curmode <= IEEE80211_MODE_TURBO;
+	    ic->ic_curmode++) {
+		/* Wrap around and ignore turbo mode */
+		if (ic->ic_curmode >= IEEE80211_MODE_TURBO) {
+			ic->ic_curmode = IEEE80211_MODE_AUTO;
+			break;
+		}
+
+		if (ic->ic_modecaps & (1 << ic->ic_curmode))
+			break;
+	}
+
+	ieee80211_setmode(ic, ic->ic_curmode);
 }
 
 /*

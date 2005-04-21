@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.3 2005/02/17 18:28:05 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.4 2005/04/21 22:47:15 reyk Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -239,6 +239,12 @@ ieee80211_begin_scan(struct ifnet *ifp)
 	ieee80211_reset_scan(ifp);
 	ieee80211_free_allnodes(ic);
 
+	/* Reset the current mode. */
+	if (IFM_MODE(ic->ic_media.ifm_cur->ifm_media) == IFM_AUTO) {
+		ic->ic_curmode = IEEE80211_MODE_AUTO;
+		ieee80211_setmode(ic, ic->ic_curmode);
+	}
+
 	/* Scan the next channel. */
 	ieee80211_next_scan(ifp);
 }
@@ -431,6 +437,15 @@ ieee80211_end_scan(struct ifnet *ifp)
 			ieee80211_create_ibss(ic, ic->ic_ibss_chan);
 			return;
 		}
+
+		/*
+		 * Scan the next mode if nothing has been found. This
+		 * is necessary if the device supports different
+		 * incompatible modes in the same channel range, like
+		 * like 11b and "pure" 11G mode.
+		 */
+		ieee80211_next_mode(ifp);
+
 		/*
 		 * Reset the list of channels to scan and start again.
 		 */
