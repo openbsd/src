@@ -1,7 +1,7 @@
 /*
  * OpenBSD-related dates to celebrate
  *
- * $OpenBSD: calendar.openbsd,v 1.23 2005/04/01 10:44:06 mickey Exp $
+ * $OpenBSD: calendar.openbsd,v 1.24 2005/04/21 12:32:48 mickey Exp $
  */
 
 #ifndef _calendar_openbsd_
@@ -23,6 +23,7 @@ Feb 28	Cryptographic services framework in OpenBSD, 2000
 Mar 10	OpenBSD/WWW translation started -- German, Spanish, Dutch, 2000
 Apr 01	OpenBSD/hppa64 port is added, 2005
 Apr 16	OpenBSD/i386 is ELF, 2003
+Apr 19	OpenBSD/solbourne port is added, 2005
 Apr 21	OpenBSD/luna88k port is added, 2004
 May 01	OpenBSD 3.3 released, exploiting W^X, 2003
 May 10	c2k3 hackathon, Calgary, Canada, 51 developers, 2003
