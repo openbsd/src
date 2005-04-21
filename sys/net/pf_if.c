@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.23 2004/12/22 17:17:55 dhartmei Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.24 2005/04/21 13:34:45 pascoe Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -179,6 +179,9 @@ pfi_attach_ifnet(struct ifnet *ifp)
 	p->pfik_flags |= PFI_IFLAG_ATTACHED;
 	p->pfik_ah_cookie =
 	    hook_establish(ifp->if_addrhooks, 1, pfi_kifaddr_update, p);
+	if (p->pfik_ah_cookie == NULL)
+		panic("pfi_attach_ifnet: cannot allocate '%s' address hook",
+		    ifp->if_xname);
 	pfi_index2kif[ifp->if_index] = p;
 	pfi_dohooks(p);
 	splx(s);
