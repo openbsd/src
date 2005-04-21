@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.9 2005/04/19 15:36:39 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.10 2005/04/21 18:54:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Xavier Santolaria <xsa@openbsd.org>
@@ -52,7 +52,7 @@ struct cvs_cmd_info cvs_remove = {
 	NULL,
 	cvs_remove_file,
 	NULL, NULL,
-	0,
+	CF_IGNORE | CF_RECURSE,
 	CVS_REQ_REMOVE,
 	CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2 | CVS_CMD_ALLOWSPEC
 };
@@ -114,20 +114,28 @@ cvs_remove_file(CVSFILE *cf, void *arg)
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_sendentry(root, cf) < 0) {
-			return (CVS_EX_PROTO);
-		}
-
-	} else {
 		/* if -f option is used, physically remove the file */
 		if (force_remove == 1) {
 			if((unlink(fpath) == -1) && (errno != ENOENT)) {
-				cvs_log(LP_ERRNO, "failed to unlink `%s'",
-				    fpath);
+				cvs_log(LP_ERRNO,
+				    "failed to unlink `%s'", fpath);
 				return (CVS_EX_FILE);
 			}
 		}
 
+		if (cvs_sendentry(root, cf) < 0)
+			return (CVS_EX_PROTO);
+		
+		if (cf->cf_cvstat != CVS_FST_LOST && force_remove != 1) {
+			if (cvs_sendreq(root, CVS_REQ_MODIFIED,
+			    CVS_FILE_NAME(cf)) < 0) {
+				return (CVS_EX_PROTO);
+			}
+		}
+
+		if (cvs_sendfile(root, fpath) < 0)
+			return (CVS_EX_PROTO);
+	} else {
 		cvs_log(LP_INFO, "scheduling file `%s' for removal",
 		    CVS_FILE_NAME(cf));
 		cvs_log(LP_INFO,
