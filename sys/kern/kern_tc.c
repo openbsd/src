@@ -6,7 +6,7 @@
  * this stuff is worth it, you can buy me a beer in return.   Poul-Henning Kamp
  * ----------------------------------------------------------------------------
  *
- * $OpenBSD: kern_tc.c,v 1.3 2004/09/17 10:18:01 grange Exp $
+ * $OpenBSD: kern_tc.c,v 1.4 2005/04/21 00:20:13 deraadt Exp $
  * $FreeBSD: src/sys/kern/kern_tc.c,v 1.148 2003/03/18 08:45:23 phk Exp $
  */
 
@@ -491,7 +491,7 @@ sysctl_tc_choice(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 {
 	char buf[32], *spc, *choices;
 	struct timecounter *tc;
-	int error, maxlen, n;
+	int error, maxlen;
 
 	spc = "";
 	error = 0;
@@ -501,7 +501,7 @@ sysctl_tc_choice(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	choices = malloc(maxlen, M_TEMP, M_WAITOK);
 	*choices = '\0';
 	for (tc = timecounters; error == 0 && tc != NULL; tc = tc->tc_next) {
-		n = snprintf(buf, sizeof(buf), "%s%s(%d)",
+		snprintf(buf, sizeof(buf), "%s%s(%d)",
 		    spc, tc->tc_name, tc->tc_quality);
 		spc = " ";
 		strlcat(choices, buf, maxlen);
