@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.55 2005/04/20 23:11:30 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.56 2005/04/21 04:37:11 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -252,7 +252,7 @@ struct cvs_cmd cvs_cdt[] = {
 	},
 	{
 		CVS_OP_TAG, "tag",      { "ta", "freeze" }, &cvs_tag,
-		"[-bcdFflR] [-D date | -r rev] tagname",
+		"[-bcdFflR] [-D date | -r rev] tagname ...",
 		"bcD:dFflRr:",
 		"Add a symbolic tag to checked out version of files",
 		NULL
@@ -423,7 +423,8 @@ main(int argc, char **argv)
 	ret = cvs_startcmd(cmdp, cmd_argc, cmd_argv);
 	switch (ret) {
 	case CVS_EX_USAGE:
-		fprintf(stderr, "Usage: %s\n", cmdp->cmd_synopsis);
+		fprintf(stderr, "Usage: %s %s %s\n", __progname, cvs_command,
+		    cmdp->cmd_synopsis);
 		break;
 	case CVS_EX_DATA:
 		cvs_log(LP_ABORT, "internal data error");
