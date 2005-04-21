@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.99 2005/04/21 10:13:59 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.100 2005/04/21 10:50:50 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -416,14 +416,18 @@ it must be installed without any permissions for "group" or "other".
 .Xr pf 4
 needs to be configured such that all packets from the outside are blocked
 by default.
-Only successfully IPsec-processed packets (from the
+Only successfully IPsec-processed packets (those on the
 .Xr enc 4
-interface), or key management packets (for
-.Xr isakmpd 8 ,
-.Tn UDP
-packets with source and destination ports of 500) should be allowed to pass.
+interface) or key management packets
+(for automated keying,
+UDP packets with source and destination ports of 500)
+should be allowed to pass.
+.Pp
 Additional filter rules may be present for other traffic,
 though care should be taken that other rules do not leak IPsec traffic.
+NAT rules can also be used on the
+.Xr enc 4
+interface.
 .Pp
 .Sy Note :
 The examples in this page describe a test setup on an internal LAN,
@@ -501,13 +505,6 @@ pass in on $ext_if proto udp from $GATEWAY_A port = 500 \e
 pass out on $ext_if proto udp from $GATEWAY_B port = 500 \e
 	to $GATEWAY_A port = 500
 .Ed
-.Pp
-If there are no other
-.Xr pf.conf 5
-rules, the "quick" clause can be added to the last four rules.
-NAT rules can also be used on the
-.Xr enc 4
-interface.
 .Ss Enabling the Packet Filter
 Enable the packet filter and load the ruleset:
 .Bd -literal -offset indent
@@ -614,7 +611,7 @@ and no traffic should be seen whilst the ping is running.
 One exception to this is if the automated keying setup has been followed,
 in which case
 .Xr isakmpd 8
-messages on UDP port 500 may be seen.
+key management packets on UDP port 500 may be seen.
 This is perfectly normal.
 If any traffic is being leaked
 i.e. the last ping detailed above is showing traffic,
