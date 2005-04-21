@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_audio.c,v 1.2 2005/04/15 01:17:26 pascoe Exp $	*/
+/*	$OpenBSD: zaurus_audio.c,v 1.3 2005/04/21 13:43:48 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -272,9 +272,13 @@ zaudio_init(struct zaudio_softc *sc)
 void
 zaudio_standby(struct zaudio_softc *sc)
 {
+	pxa2x0_i2c_open(&sc->sc_i2c);
+
 	/* Switch codec to standby power only */
 	wm8750_write(sc, PWRMGMT1_REG, PWRMGMT1_SET_VMIDSEL(2));
 	wm8750_write(sc, PWRMGMT2_REG, 0);
+
+	pxa2x0_i2c_close(&sc->sc_i2c);
 }
 
 void
@@ -599,12 +603,8 @@ zaudio_halt_output(void *hdl)
 
 	/* XXX forcibly stop output DMA? */
 
-	pxa2x0_i2c_open(&sc->sc_i2c);
-
 	zaudio_standby(sc);
 	sc->sc_playing = 0;
-
-	pxa2x0_i2c_close(&sc->sc_i2c);
 
 	return 0;
 }
