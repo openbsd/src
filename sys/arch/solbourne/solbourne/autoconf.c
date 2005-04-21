@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.1 2005/04/19 21:30:18 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.2 2005/04/21 00:15:43 deraadt Exp $	*/
 /*	OpenBSD: autoconf.c,v 1.64 2005/03/23 17:10:24 miod Exp 	*/
 
 /*
@@ -742,7 +742,7 @@ setroot()
 
 		len = snprintf(buf, sizeof buf, "%s%d", findblkname(majdev),
 			unit);
-		if (len >= sizeof(buf))
+		if (len == -1 || len >= sizeof(buf))
 			panic("setroot: device name too long");
 
 		bootdv = getdisk(buf, len, part, &rootdev);
