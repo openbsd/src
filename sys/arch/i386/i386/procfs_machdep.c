@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_machdep.c,v 1.2 2001/04/22 17:41:50 deraadt Exp $	*/
+/*	$OpenBSD: procfs_machdep.c,v 1.3 2005/04/21 00:31:23 deraadt Exp $	*/
 /*	$NetBSD: procfs_machdep.c,v 1.6 2001/02/21 21:39:59 jdolecek Exp $	*/
 
 /*
@@ -77,6 +77,10 @@ procfs_getcpuinfstr(char *buf, int *len)
 	for (i = 0; i < 32; i++) {
 		if (cpu_feature & (1 << i)) {
 			l = snprintf(p, left, "%s ", i386_features[i]);
+			if (l == -1)
+				l = 0;
+			else if (l >= left)
+				l = left - 1;
 			left -= l;
 			p += l;
 			if (left <= 0)
@@ -99,6 +103,10 @@ procfs_getcpuinfstr(char *buf, int *len)
 		cpuid_level >= 0 ? ((cpu_id >> 4) & 15) : 0,
 		cpu_model
 	    );
+	if (l == -1)
+		l = 0;
+	else if (l >= left)
+		l = left - 1;
 
 	left -= l;
 	p += l;
@@ -110,6 +118,10 @@ procfs_getcpuinfstr(char *buf, int *len)
 	else
 		l = snprintf(p, left, "unknown\n");
 
+	if (l == -1)
+		l = 0;
+	else if (l >= left)
+		l = left - 1;
 	left -= l;
 	p += l;
 	if (left <= 0)
@@ -123,6 +135,10 @@ procfs_getcpuinfstr(char *buf, int *len)
 #endif
 		l = snprintf(p, left, "cpu MHz\t\t: unknown\n");
 
+	if (l == -1)
+		l = 0;
+	else if (l >= left)
+		l = left - 1;
 	left -= l;
 	p += l;
 	if (left <= 0)
@@ -141,6 +157,10 @@ procfs_getcpuinfstr(char *buf, int *len)
 		cpuid_level,
 		(rcr0() & CR0_WP) ? "yes" : "no",
 		featurebuf);
+	if (l == -1)
+		l = 0;
+	else if (l >= left)
+		l = left - 1;
 
 	*len = (p + l) - buf;
 
