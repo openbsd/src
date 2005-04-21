@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.26 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.27 2005/04/21 17:45:25 miod Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
  * user-land definitions, so it can fit into a testing harness.
  */
 #include <sys/param.h>
+#include <sys/pool.h>
 #include <sys/extent.h>
 #include <sys/queue.h>
 #include <errno.h>
@@ -66,7 +67,12 @@
 #define	free(p, t)			free(p)
 #define	tsleep(chan, pri, str, timo)	(EWOULDBLOCK)
 #define	wakeup(chan)			((void)0)
-#define db_printf printf
+#define	pool_get(pool, flags)		malloc((pool)->pr_size, 0, 0)
+#define	pool_init(a, b, c, d, e, f, g)	(a)->pr_size = (b)
+#define	pool_put(pool, rp)		free((rp), 0)
+#define	panic				printf
+#define	splvm()				(1)
+#define	splx(s)				((void)(s))
 #endif
 
 static	void extent_insert_and_optimize(struct extent *, u_long, u_long,
@@ -1127,7 +1133,7 @@ extent_free_region_descriptor(ex, rp)
 #define db_printf printf
 #endif
 
-#if defined(DIAGNOSTIC) || defined(DDB)
+#if defined(DIAGNOSTIC) || defined(DDB) || !defined(_KERNEL)
 void
 extent_print(ex)
 	struct extent *ex;
@@ -1137,8 +1143,13 @@ extent_print(ex)
 	if (ex == NULL)
 		panic("extent_print: NULL extent");
 
+#ifdef _KERNEL
 	db_printf("extent `%s' (0x%lx - 0x%lx), flags=%b\n", ex->ex_name,
 	    ex->ex_start, ex->ex_end, ex->ex_flags, EXF_BITS);
+#else
+	db_printf("extent `%s' (0x%lx - 0x%lx), flags = 0x%x\n", ex->ex_name,
+	    ex->ex_start, ex->ex_end, ex->ex_flags);
+#endif
 
 	LIST_FOREACH(rp, &ex->ex_regions, er_link)
 		db_printf("     0x%lx - 0x%lx\n", rp->er_start, rp->er_end);
