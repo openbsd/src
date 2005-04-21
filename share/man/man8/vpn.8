@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.96 2005/04/17 12:52:42 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.97 2005/04/21 09:35:06 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -67,6 +67,8 @@ Configure firewall rules appropriately.
 Enable the packet filter.
 .It
 For automated keying, start the keying daemon.
+.It
+Test the setup.
 .El
 .Ss About this page
 It is recommended that a test setup be created before attempting to
@@ -528,6 +530,101 @@ On both machines, run:
 To run with verbose debugging enabled, instead start with:
 .Pp
 .Dl # /sbin/isakmpd -d -DA=99
+.Ss Testing the Setup
+It is important to check the setup is working correctly.
+Remember that the following examples illustrate a test setup only,
+and therefore tests carried out on GATEWAY_A and NETWORK_A will be
+carried out on the same machine (Machine A).
+If this were a real setup, GATEWAY_A and a machine on NETWORK_A would be
+different machines.
+.Pp
+Using the test setup,
+first check the routing table shows the routes between the two gateways.
+.Pp
+On GATEWAY_A:
+.Bd -literal -offset 1n
+$ netstat -rn -f encap
+Routing tables
+
+Encap:
+Source      Port Destination  Port  Proto SA(Address/Proto/Type/Direction)
+10.0.99/24  0    10.0.50/24   0     0     192.168.1.15/50/use/in
+10.0.50/24  0    10.0.99/24   0     0     192.168.1.15/50/require/out
+.Ed
+.Pp
+This shows that anything with source address 10.0.99.0/24 (NETWORK_B)
+is routed to destination 10.0.50.0/24 (NETWORK_A),
+and vice versa.
+The opposite would be true if
+.Xr netstat 1
+were run on GATEWAY_B.
+.Pp
+Next check that you can
+.Xr ping 8
+the networks:
+.Pp
+On NETWORK_A:
+.Pp
+.Dl $ ping -I 10.0.50.1 10.0.99.1
+.Pp
+Note the
+.Fl I
+option passed to
+.Xr ping 8 :
+this is necessary to specify a source address
+from the network.
+Check that the
+.Xr ping 8
+works from both NETWORK_A and NETWORK_B, changing the arguments as necessary.
+.Pp
+Check that the traffic between the two networks really is
+ESP encapsulated.
+On GATEWAY_A:
+.Pp
+.Dl # tcpdump -n -i ne0 esp
+.Pp
+On NETWORK_A:
+.Pp
+.Dl $ ping -I 10.0.50.1 10.0.99.1
+.Pp
+Check that
+.Xr tcpdump 8
+shows ESP packets whilst the ping is in progress.
+That shows that the traffic is IPsec encapsulated.
+.Pp
+If both networks are pingable,
+the routing tables look as described above,
+and
+.Xr tcpdump 8
+is working as described,
+it means the VPN is working correctly.
+However, it is also important to check that no IPsec traffic
+is being leaked,
+either by badly designed firewall rules
+or by a misconfigured VPN setup.
+.Pp
+On GATEWAY_A:
+.Pp
+.Dl "# tcpdump -n -i ne0 not esp and host 192.168.1.15"
+.Pp
+On NETWORK_A:
+.Pp
+.Dl $ ping -I 10.0.50.1 10.0.99.1
+.Pp
+This time
+.Xr tcpdump 8
+has been instructed to ignore ESP packets going to
+host 192.168.1.15 (GATEWAY_B),
+and no traffic should be seen whilst the ping is running.
+One exception to this is if the automated keying setup has been followed,
+in which case
+.Xr isakmpd 8
+messages on UDP port 500 may be seen.
+This is perfectly normal.
+If any traffic is being leaked
+i.e. the last ping detailed above is showing traffic,
+it is suggested that the administrator review the steps above,
+paying particular notice to the firewall configuration procedures.
 .Sh FILES
 .Bl -tag -width "/etc/isakmpd/isakmpd.policyXX" -compact
 .It Pa /etc/isakmpd/isakmpd.conf
@@ -542,6 +639,7 @@ Firewall configuration file.
 Sample VPN configuration file.
 .El
 .Sh SEE ALSO
+.Xr netstat 1 ,
 .Xr openssl 1 ,
 .Xr sysctl 3 ,
 .Xr enc 4 ,
@@ -555,4 +653,6 @@ Sample VPN configuration file.
 .Xr ipsecadm 8 ,
 .Xr isakmpd 8 ,
 .Xr pfctl 8 ,
-.Xr sysctl 8
+.Xr ping 8 ,
+.Xr sysctl 8 ,
+.Xr tcpdump 8
