@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0.c,v 1.7 2005/04/14 23:40:34 pascoe Exp $ */
+/*	$OpenBSD: pxa2x0.c,v 1.8 2005/04/21 06:27:29 deraadt Exp $ */
 /*	$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $ */
 
 /*
@@ -167,8 +167,6 @@ pxaip_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bust = &pxa2x0_bs_tag;
 	sc->sc_dmat = &pxa2x0_bus_dma_tag;
 
-	printf(": PXA2x0 Onchip Peripheral Bus ");
-
 	if (bus_space_map(sc->sc_bust, PXA2X0_CLKMAN_BASE, PXA2X0_CLKMAN_SIZE,
 	    0, &sc->sc_bush_clk))
 		panic("pxaip_attach: failed to map CLKMAN");
@@ -183,7 +181,7 @@ pxaip_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	cpuclock = pxaip_measure_cpuclock(sc) / 1000;
 
-	printf(" CPU clock = %d.%03d MHz\n", cpuclock/1000, cpuclock%1000 );
+	printf(": CPU clock = %d.%03d MHz\n", cpuclock/1000, cpuclock%1000);
 
 	/*
 	 * Attach critical devices
@@ -277,7 +275,7 @@ static inline uint32_t
 read_clock_counter(void)
 {
   uint32_t x;
-  __asm __volatile("mrc	p14, 0, %0, c1, c1, 0" : "=r" (x) );
+  __asm __volatile("mrc	p14, 0, %0, c1, c1, 0" : "=r" (x));
 
   return x;
 }
@@ -296,9 +294,9 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 
 	irq = disable_interrupts(I32_bit|F32_bit);
 
-	__asm __volatile( "mrc p14, 0, %0, c0, c1, 0" : "=r" (pmcr_save) );
+	__asm __volatile( "mrc p14, 0, %0, c0, c1, 0" : "=r" (pmcr_save));
 	/* Enable clock counter */
-	__asm __volatile( "mcr p14, 0, %0, c0, c1, 0" : : "r" (0x0001) );
+	__asm __volatile( "mcr p14, 0, %0, c0, c1, 0" : : "r" (0x0001));
 
 	rtc0 = bus_space_read_4(sc->sc_bust, ioh, RTC_RCNR);
 	/* Wait for next second starts */
@@ -309,7 +307,7 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 		;		/* Wait for 1sec */
 	end = read_clock_counter();
 
-	__asm __volatile( "mcr p14, 0, %0, c0, c1, 0" : : "r" (pmcr_save) );
+	__asm __volatile( "mcr p14, 0, %0, c0, c1, 0" : : "r" (pmcr_save));
 	restore_interrupts(irq);
 
 	bus_space_unmap(sc->sc_bust, ioh, PXA2X0_RTC_SIZE);
@@ -318,9 +316,9 @@ pxaip_measure_cpuclock(struct pxaip_softc *sc)
 }
 
 void
-pxa2x0_turbo_mode( int f )
+pxa2x0_turbo_mode(int f)
 {
-  __asm __volatile("mcr p14, 0, %0, c6, c0, 0" : : "r" (f));
+	__asm __volatile("mcr p14, 0, %0, c6, c0, 0" : : "r" (f));
 }
 
 void
