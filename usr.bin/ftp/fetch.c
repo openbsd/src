@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.53 2005/04/11 15:16:50 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.54 2005/04/21 05:17:21 fgsch Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #if !defined(lint) && !defined(SMALL)
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.53 2005/04/11 15:16:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.54 2005/04/21 05:17:21 fgsch Exp $";
 #endif /* not lint and not SMALL */
 
 /*
@@ -89,6 +89,8 @@ static const char *at_encoding_warning =
     "Extra `@' characters in usernames and passwords should be encoded as %%40";
 
 jmp_buf	httpabort;
+
+static int	redirect_loop;
 
 /*
  * Retrieve URL, via the proxy in $proxyvar if necessary.
@@ -402,6 +404,10 @@ again:
 		cp++;
 	if (strncmp(cp, "301", 3) == 0 || strncmp(cp, "302", 3) == 0) {
 		isredirect++;
+		if (redirect_loop++ > 10) {
+			warnx("Too many redirections requested");
+			goto cleanup_url_get;
+		}
 	} else if (strncmp(cp, "200", 3)) {
 		warnx("Error retrieving file: %s", cp);
 		goto cleanup_url_get;
@@ -634,6 +640,7 @@ auto_fetch(int argc, char *argv[], char *outfile)
 		 */
 		if (strncasecmp(line, HTTP_URL, sizeof(HTTP_URL) - 1) == 0 ||
 		    strncasecmp(line, FILE_URL, sizeof(FILE_URL) - 1) == 0) {
+			redirect_loop = 0;
 			if (url_get(line, httpproxy, outfile) == -1)
 				rval = argpos + 1;
 			continue;
