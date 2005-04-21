@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.36 2005/04/14 08:24:09 markus Exp $	*/
+/*	$OpenBSD: tar.c,v 1.37 2005/04/21 21:47:18 beck Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: tar.c,v 1.36 2005/04/14 08:24:09 markus Exp $";
+static const char rcsid[] = "$OpenBSD: tar.c,v 1.37 2005/04/21 21:47:18 beck Exp $";
 #endif
 #endif /* not lint */
 
@@ -764,6 +764,8 @@ ustar_rd(ARCHD *arcn, char *buf)
 	dest = arcn->name;
 	if (*(hd->prefix) != '\0') {
 		cnt = strlcpy(dest, hd->prefix, sizeof(arcn->name) - 1);
+		if (cnt >= sizeof(arcn->name) - 1)
+			cnt = sizeof(arcn->name) - 2; /* XXX truncate? */
 		dest += cnt;
 		*dest++ = '/';
 		cnt++;

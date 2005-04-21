@@ -1,4 +1,4 @@
-/*	$OpenBSD: tables.c,v 1.22 2004/11/29 16:23:22 otto Exp $	*/
+/*	$OpenBSD: tables.c,v 1.23 2005/04/21 21:47:18 beck Exp $	*/
 /*	$NetBSD: tables.c,v 1.4 1995/03/21 09:07:45 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: tables.c,v 1.22 2004/11/29 16:23:22 otto Exp $";
+static const char rcsid[] = "$OpenBSD: tables.c,v 1.23 2005/04/21 21:47:18 beck Exp $";
 #endif
 #endif /* not lint */
 
@@ -171,6 +171,9 @@ chk_lnk(ARCHD *arcn)
 			 */
 			arcn->ln_nlen = strlcpy(arcn->ln_name, pt->name,
 				sizeof(arcn->ln_name));
+			/* XXX truncate? */
+			if (arcn->nlen >= sizeof(arcn->name))
+				arcn->nlen = sizeof(arcn->name) - 1;
 			if (arcn->type == PAX_REG)
 				arcn->type = PAX_HRG;
 			else
@@ -601,6 +604,8 @@ sub_name(char *oname, int *onamelen, size_t onamesize)
 			 * and return (we know that oname has enough space)
 			 */
 			*onamelen = strlcpy(oname, pt->nname, onamesize);
+			if (*onamelen >= onamesize)
+				*onamelen = onamesize - 1; /* XXX truncate? */
 			return;
 		}
 		pt = pt->fow;

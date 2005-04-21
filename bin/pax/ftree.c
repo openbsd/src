@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.25 2004/04/16 22:50:23 deraadt Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.26 2005/04/21 21:47:18 beck Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: ftree.c,v 1.25 2004/04/16 22:50:23 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ftree.c,v 1.26 2005/04/21 21:47:18 beck Exp $";
 #endif
 #endif /* not lint */
 
@@ -494,6 +494,8 @@ next_file(ARCHD *arcn)
 	 * copy file name, set file name length
 	 */
 	arcn->nlen = strlcpy(arcn->name, ftent->fts_path, sizeof(arcn->name));
+	if (arcn->nlen >= sizeof(arcn->name))
+		arcn->nlen = sizeof(arcn->name) - 1; /* XXX truncate? */
 	arcn->org_name = ftent->fts_path;
 	return(0);
 }
