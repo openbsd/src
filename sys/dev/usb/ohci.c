@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.58 2005/03/30 14:12:35 dlg Exp $ */
+/*	$OpenBSD: ohci.c,v 1.59 2005/04/21 07:51:46 pascoe Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -759,7 +759,7 @@ ohci_init(ohci_softc_t *sc)
 			usb_delay_ms(&sc->sc_bus, 1);
 			ctl = OREAD4(sc, OHCI_CONTROL);
 		}
-		if ((ctl & OHCI_IR) == 0) {
+		if (ctl & OHCI_IR) {
 			printf("%s: SMM does not respond, resetting\n",
 			       USBDEVNAME(sc->sc_bus.bdev));
 			OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
