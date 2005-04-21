@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbdmap.h,v 1.17 2005/01/31 02:22:17 uwe Exp $ */
+/* $OpenBSD: zaurus_kbdmap.h,v 1.18 2005/04/21 02:34:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -66,17 +66,17 @@ static const keysym_t zkbd_keydesc_us[] = {
     KC(50),	KS_j,		KS_J,		KS_asterisk,
     KC(51),	KS_m,
     KC(52),	KS_period,	KS_question,	KS_greater,
-    KC(54),	KS_KP_Left, /* left, */
+    KC(54),	KS_KP_Left,	KS_KP_Left,	KS_Home, /* left, */
     KC(56),	KS_0,		KS_asciitilde,
     KC(57),	KS_o,
     KC(58),	KS_k,
     KC(59),	KS_l,		KS_L,		KS_bar,
-    KC(61),	KS_KP_Up, /* up, */
-    KC(62),	KS_KP_Down, /* down, */
+    KC(61),	KS_KP_Up,	KS_KP_Up,	KS_Prior, /* up, */
+    KC(62),	KS_KP_Down,	KS_KP_Down,	KS_Next, /* down, */
     KC(64),	KS_Delete,	KS_BackSpace,
     KC(65),	KS_p,
     KC(68),	KS_Return,
-    KC(70),	KS_KP_Right, /* right, */
+    KC(70),	KS_KP_Right,	KS_KP_Right,	KS_End, /* right, */
     KC(80),	KS_KP_Right, /* OK, (ext) */
     KC(81),	KS_KP_Down, /* tog left, */
     KC(83),	KS_Shift_R,
