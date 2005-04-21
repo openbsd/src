@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.2 2005/04/21 04:39:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -61,8 +61,6 @@ cpl
 	BSS(emrg_stack, 8)	/* stack for HPMC/TOC/PWRF */
 	BSS(fpemu_stack, 8)	/* stack for FPU emulation */
 
-	.export fpu_csw, data
-	BSS(fpu_csw, 4)         /* count fpu context switches */
 	.export fpu_enable, data
 	BSS(fpu_enable, 4)      /* bits to set in the %cr10 to enable fpu */
 	.export fpu_curpcb, data
@@ -1008,11 +1006,12 @@ $fpusw_set
 
 $fpusw_nosave
 	/* count switches */
-	ldil	L%fpu_csw, %r1
-	ldw	R%fpu_csw(%r1), %r16
+	.import	umvexp, data
+	ldil	L%(uvmexp+FPSWTCH), %r1
+	ldw	R%(uvmexp+FPSWTCH)(%r1), %r16
 	ldo	31*8+PCB_FPREGS+U_PCB(%r9), %r17
 	ldo	1(%r16), %r16
-	stw	%r16, R%fpu_csw(%r1)
+	stw	%r16, R%(uvmexp+FPSWTCH)(%r1)
 
 	fldds,ma -8(%r17), %fr31
 	fldds,ma -8(%r17), %fr30

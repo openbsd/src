@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.43 2005/04/17 18:47:51 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.44 2005/04/21 04:39:35 mickey Exp $	*/
 /*	$NetBSD: trap.c,v 1.58 1997/09/12 08:55:01 pk Exp $ */
 
 /*
@@ -417,6 +417,7 @@ badtrap:
 				savefpstate(cpuinfo.fpproc->p_md.md_fpstate);
 			loadfpstate(fs);
 			cpuinfo.fpproc = p;	/* now we do have it */
+			uvmexp.fpswtch++;
 		}
 		tf->tf_psr |= PSR_EF;
 		break;

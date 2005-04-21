@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.44 2004/12/06 20:12:21 miod Exp $ */
+/* $OpenBSD: trap.c,v 1.45 2005/04/21 04:39:34 mickey Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -757,6 +757,7 @@ alpha_enable_fp(struct proc *p, int check)
 
 	p->p_addr->u_pcb.pcb_fpcpu = ci;
 	ci->ci_fpcurproc = p;
+	uvmexp.fpswtch++;
 
 	p->p_md.md_flags |= MDP_FPUSED;
 	alpha_pal_wrfen(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.149 2005/04/07 00:24:57 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.150 2005/04/21 04:39:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -132,8 +132,6 @@ cpu_itmr			/* itmr value at the most recent clk int */
 
 	.export	kernelmapped, data
 	BSS(kernelmapped, 4)	/* set when kernel is mapped */
-	.export fpu_csw, data
-	BSS(fpu_csw, 4)		/* count fpu context switches */
 	.export	fpu_curpcb, data
 	BSS(fpu_curpcb, 4)	/* pcb of the fpu owner */
 	.export fpu_enable, data
@@ -1120,11 +1118,12 @@ $fpusw_set
 
 $fpusw_nosave
 	/* count switches */
-	ldil	L%fpu_csw, r1
-	ldw	R%fpu_csw(r1), r16
+	.import	uvmexp, data
+	ldil	L%(uvmexp+FPSWTCH), r1
+	ldw	R%(uvmexp+FPSWTCH)(r1), r16
 	ldo	31*8+PCB_FPREGS+U_PCB(r9), r17
 	ldo	1(r16), r16
-	stw	r16, R%fpu_csw(r1)
+	stw	r16, R%(uvmexp+FPSWTCH)(r1)
 
 	fldds,ma -8(r17), fr31
 	fldds,ma -8(r17), fr30
