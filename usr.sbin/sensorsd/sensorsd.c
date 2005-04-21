@@ -1,4 +1,4 @@
-/*	$OpenBSD: sensorsd.c,v 1.14 2005/04/20 21:08:45 hshoexer Exp $ */
+/*	$OpenBSD: sensorsd.c,v 1.15 2005/04/21 00:22:28 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -205,7 +205,7 @@ execute(char *command)
 {
 	char *argp[] = {"sh", "-c", command, NULL};
 
-	switch (fork ()) {
+	switch (fork()) {
 	case -1:
 		syslog(LOG_CRIT, "execute: fork() failed");
 		break;
@@ -384,7 +384,7 @@ get_val(char *buf, int upper, enum sensor_type type)
 	case SENSOR_TEMP:
 		switch(*p) {
 		case 'C':
-			printf ("C");
+			printf("C");
 			rval = (val + 273.16) * 1000 * 1000;
 			break;
 		case 'F':
