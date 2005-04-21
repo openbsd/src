@@ -1,4 +1,4 @@
-/* $OpenBSD: math_2n.c,v 1.21 2005/04/09 00:42:27 deraadt Exp $	 */
+/* $OpenBSD: math_2n.c,v 1.22 2005/04/21 01:23:06 cloder Exp $	 */
 /* $EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	 */
 
 /*
@@ -227,72 +227,6 @@ b2n_set_str(b2n_ptr n, char *str)
 
 	n->dirty = 1;
 	return 0;
-}
-
-/* Output function, mainly for debugging purposes.  */
-void
-b2n_print(b2n_ptr n)
-{
-	int             i, j, w, flag = 0;
-	int             left;
-	char            buffer[2 * CHUNK_BYTES];
-	CHUNK_TYPE      tmp;
-
-	left = ((((7 + b2n_sigbit(n)) >> 3) - 1) % CHUNK_BYTES) + 1;
-	printf("0x");
-	for (i = 0; i < n->chunks; i++) {
-		tmp = n->limp[n->chunks - 1 - i];
-		memset(buffer, '0', sizeof(buffer));
-		for (w = 0, j = (i == 0 ? left : CHUNK_BYTES); j > 0; j--) {
-			buffer[w++] = int2hex[(tmp >> 4) & 0xf];
-			buffer[w++] = int2hex[tmp & 0xf];
-			tmp >>= 8;
-		}
-
-		for (j = (i == 0 ? left - 1 : CHUNK_BYTES - 1); j >= 0; j--)
-			if (flag || (i == n->chunks - 1 && j == 0) ||
-			 buffer[2 * j] != '0' || buffer[2 * j + 1] != '0') {
-				putchar(buffer[2 * j]);
-				putchar(buffer[2 * j + 1]);
-				flag = 1;
-			}
-	}
-	printf("\n");
-}
-
-int
-b2n_snprint(char *buf, size_t sz, b2n_ptr n)
-{
-	int             i, j, w, flag = 0;
-	size_t          k;
-	int             left;
-	char            buffer[2 * CHUNK_BYTES];
-	CHUNK_TYPE      tmp;
-
-	left = ((((7 + b2n_sigbit(n)) >> 3) - 1) % CHUNK_BYTES) + 1;
-
-	k = strlcpy(buf, "0x", sz);
-	for (i = 0; i < n->chunks && k < sz - 1; i++) {
-		tmp = n->limp[n->chunks - 1 - i];
-		memset(buffer, '0', sizeof(buffer));
-		for (w = 0, j = (i == 0 ? left : CHUNK_BYTES); j > 0; j--) {
-			buffer[w++] = int2hex[(tmp >> 4) & 0xf];
-			buffer[w++] = int2hex[tmp & 0xf];
-			tmp >>= 8;
-		}
-
-		for (j = (i == 0 ? left - 1 : CHUNK_BYTES - 1); j >= 0 &&
-		    k < sz - 3; j--)
-			if (flag || (i == n->chunks - 1 && j == 0) ||
-			    buffer[2 * j] != '0' || buffer[2 * j + 1] != '0') {
-				buf[k++] = buffer[2 * j];
-				buf[k++] = buffer[2 * j + 1];
-				flag = 1;
-			}
-	}
-
-	buf[k++] = 0;
-	return k;
 }
 
 /* Arithmetic functions.  */

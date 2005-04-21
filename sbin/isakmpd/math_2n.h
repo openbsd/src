@@ -1,4 +1,4 @@
-/* $OpenBSD: math_2n.h,v 1.7 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: math_2n.h,v 1.8 2005/04/21 01:23:07 cloder Exp $	 */
 /* $EOM: math_2n.h,v 1.9 1999/04/17 23:20:32 niklas Exp $	 */
 
 /*
@@ -114,7 +114,6 @@ int             b2n_mul(b2n_ptr, b2n_ptr, b2n_ptr);
 int             b2n_mul_inv(b2n_ptr, b2n_ptr, b2n_ptr);
 int             b2n_nadd(b2n_ptr, b2n_ptr, b2n_ptr);
 int             b2n_nsub(b2n_ptr, b2n_ptr, b2n_ptr);
-void            b2n_print(b2n_ptr);
 int             b2n_random(b2n_ptr, u_int32_t);
 int             b2n_resize(b2n_ptr, unsigned int);
 int             b2n_rshift(b2n_ptr, b2n_ptr, unsigned int);
@@ -123,7 +122,6 @@ int             b2n_set_null(b2n_ptr);
 int             b2n_set_str(b2n_ptr, char *);
 int             b2n_set_ui(b2n_ptr, unsigned int);
 u_int32_t       b2n_sigbit(b2n_ptr);
-int             b2n_snprint(char *, size_t, b2n_ptr);
 int             b2n_sqrt(b2n_ptr, b2n_ptr, b2n_ptr);
 int             b2n_square(b2n_ptr, b2n_ptr);
 #define b2n_sub b2n_add
