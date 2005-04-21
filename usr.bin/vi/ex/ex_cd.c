@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_cd.c,v 1.6 2002/02/16 21:27:57 millert Exp $	*/
+/*	$OpenBSD: ex_cd.c,v 1.7 2005/04/21 15:39:31 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -107,7 +107,7 @@ ex_cd(sp, cmdp)
 			 * or a trailing colon.  Or, to put it the other way,
 			 * if the length is 1 or less, then we're dealing with
 			 * ":XXX", "XXX::XXXX" , "XXX:", or "".  Since we've
-			 * already tried dot, we ignore tham all.
+			 * already tried dot, we ignore them all.
 			 */
 			if (t < p - 1) {
 				savech = *p;
