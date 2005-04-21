@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.98 2005/04/21 09:37:25 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.99 2005/04/21 10:13:59 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -508,11 +508,6 @@ rules, the "quick" clause can be added to the last four rules.
 NAT rules can also be used on the
 .Xr enc 4
 interface.
-.Pp
-.Sy Note :
-it is strongly encouraged that instead of detailed PF rules,
-the SPD (IPsec flow database) be utilized to specify security policy,
-if only to avoid filtering conflicts.
 .Ss Enabling the Packet Filter
 Enable the packet filter and load the ruleset:
 .Bd -literal -offset indent
