@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_debug.c,v 1.3 2005/04/17 18:56:35 tom Exp $	*/
+/*	$OpenBSD: mpt_debug.c,v 1.4 2005/04/21 16:02:27 deraadt Exp $	*/
 /*	$NetBSD: mpt_debug.c,v 1.2 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -213,12 +213,21 @@ mpt_ioc_diag(u_int32_t code)
 	static char buf[128];
 	char *ptr = buf;
 	char *end = &buf[128];
+	int len;
+
 	buf[0] = '\0';
-	ptr += snprintf(buf, sizeof buf, "(0x%08x)", code);
+	len = snprintf(buf, sizeof buf, "(0x%08x)", code);
+	if (len == -1 || len > sizeof buf)
+		return buf;
+	ptr += len;
 	while (status->Error_Code >= 0) {
-		if ((status->Error_Code & code) != 0)
-			ptr += snprintf(ptr, (size_t)(end-ptr), "%s ",
-				status->Error_String);
+		if ((status->Error_Code & code) != 0) {
+			len = snprintf(ptr, (size_t)(end-ptr), "%s ",
+			    status->Error_String);
+			if (len == -1 || len > end - ptr)
+				return buf;
+			ptr += len;
+		}
 		status++;
 	}
 	return buf;
@@ -257,12 +266,21 @@ mpt_scsi_state(int code)
 	static char buf[128];
 	char *ptr = buf;
 	char *end = &buf[128];
+	int len;
+
 	buf[0] = '\0';
-	ptr += snprintf(buf, sizeof buf, "(0x%08x)", code);
+	len = snprintf(buf, sizeof buf, "(0x%08x)", code);
+	if (len == -1 || len > sizeof buf)
+		return buf;
+	ptr += len;
 	while (status->Error_Code >= 0) {
-		if ((status->Error_Code & code) != 0)
-			ptr += snprintf(ptr, (size_t)(end-ptr), "%s ",
-				status->Error_String);
+		if ((status->Error_Code & code) != 0) {
+			len = snprintf(ptr, (size_t)(end-ptr), "%s ",
+			    status->Error_String);
+			if (len == -1 || len > end - ptr)
+				return buf;
+			ptr += len;
+		}
 		status++;
 	}
 	return buf;
