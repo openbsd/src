@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.24 2005/04/11 08:09:32 dlg Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.25 2005/04/21 12:30:02 pascoe Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
 /*
@@ -119,6 +119,10 @@ ohci_pci_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map mem space\n");
 		return;
 	}
+
+	/* Record what interrupts were enabled by SMM/BIOS. */
+	sc->sc.sc_intre = bus_space_read_4(sc->sc.iot, sc->sc.ioh,
+	    OHCI_INTERRUPT_ENABLE);
 
 	/* Disable interrupts, so we don't get any spurious ones. */
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.60 2005/04/21 10:00:30 pascoe Exp $ */
+/*	$OpenBSD: ohci.c,v 1.61 2005/04/21 12:30:02 pascoe Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -758,12 +758,16 @@ ohci_init(ohci_softc_t *sc)
 	if (ctl & OHCI_IR) {
 		/* SMM active, request change */
 		DPRINTF(("ohci_init: SMM active, request owner change\n"));
+		if ((sc->sc_intre & (OHCI_OC | OHCI_MIE)) == 
+		    (OHCI_OC | OHCI_MIE))
+			OWRITE4(sc, OHCI_INTERRUPT_ENABLE, OHCI_MIE);
 		s = OREAD4(sc, OHCI_COMMAND_STATUS);
 		OWRITE4(sc, OHCI_COMMAND_STATUS, s | OHCI_OCR);
 		for (i = 0; i < 100 && (ctl & OHCI_IR); i++) {
 			usb_delay_ms(&sc->sc_bus, 1);
 			ctl = OREAD4(sc, OHCI_CONTROL);
 		}
+		OWRITE4(sc, OHCI_INTERRUPT_DISABLE, OHCI_MIE);
 		if (ctl & OHCI_IR) {
 			printf("%s: SMM does not respond, resetting\n",
 			       USBDEVNAME(sc->sc_bus.bdev));
