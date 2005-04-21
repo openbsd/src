@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.29 2005/04/08 20:30:51 beck Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.30 2005/04/21 06:48:05 fgsch Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -334,6 +334,9 @@ int ste_miibus_readreg(self, phy, reg)
 	struct ste_softc	*sc = (struct ste_softc *)self;
 	struct ste_mii_frame	frame;
 
+	if (sc->ste_one_phy && phy != 0)
+		return (0);
+
 	bzero((char *)&frame, sizeof(frame));
 
 	frame.mii_phyaddr = phy;
@@ -462,7 +465,8 @@ int ste_eeprom_wait(sc)
 	}
 
 	if (i == 100) {
-		printf("%s: eeprom failed to come ready\n", sc->sc_dev.dv_xname);
+		printf("%s: eeprom failed to come ready\n",
+		    sc->sc_dev.dv_xname);
 		return(1);
 	}
 
@@ -829,7 +833,6 @@ void ste_attach(parent, self, aux)
 	struct device		*parent, *self;
 	void			*aux;
 {
-	int			s;
 	const char		*intrstr = NULL;
 	u_int32_t		command;
 	struct ste_softc	*sc = (struct ste_softc *)self;
@@ -839,8 +842,6 @@ void ste_attach(parent, self, aux)
 	struct ifnet		*ifp;
 	bus_addr_t		iobase;
 	bus_size_t		iosize;
-
-	s = splimp();
 
 	/*
 	 * Handle power management nonsense.
@@ -869,6 +870,16 @@ void ste_attach(parent, self, aux)
 			pci_conf_write(pc, pa->pa_tag, STE_PCI_INTLINE, irq);
 		}
 	}
+
+	/*
+	 * Only use one PHY since this chip reports multiple
+	 * Note on the DFE-550 the PHY is at 1 on the DFE-580
+	 * it is at 0 & 1.  It is rev 0x12.
+	 */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DLINK &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DLINK_550TX &&
+	    PCI_REVISION(pa->pa_class) == 0x12)
+		sc->ste_one_phy = 1;
 
 	/*
 	 * Map control/status registers.
@@ -932,15 +943,21 @@ void ste_attach(parent, self, aux)
 	/*
 	 * Get station address from the EEPROM.
 	 */
-	ste_read_eeprom(sc,(caddr_t)&sc->arpcom.ac_enaddr,STE_EEADDR_NODE0,3,0);
+	if (ste_read_eeprom(sc, (caddr_t)&sc->arpcom.ac_enaddr,
+	    STE_EEADDR_NODE0, 3, 0)) {
+		printf("%s: failed to read station address\n",
+		    sc->sc_dev.dv_xname);
+		goto fail_1;
+	}
 
 	printf(" address %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	sc->ste_ldata_ptr = malloc(sizeof(struct ste_list_data) + 8,
-				M_DEVBUF, M_DONTWAIT);
+	    M_DEVBUF, M_DONTWAIT);
 	if (sc->ste_ldata_ptr == NULL) {
-		printf("%s: no memory for list buffers!\n", sc->sc_dev.dv_xname);
-		goto fail;
+		printf("%s: no memory for list buffers!\n",
+		    sc->sc_dev.dv_xname);
+		goto fail_1;
 	}
 
 	sc->ste_ldata = (struct ste_list_data *)sc->ste_ldata_ptr;
@@ -982,8 +999,10 @@ void ste_attach(parent, self, aux)
 	shutdownhook_establish(ste_shutdown, sc);
 
 fail:
-	splx(s);
 	return;
+
+fail_1:
+	pci_intr_disestablish(pc, sc->sc_ih);
 }
 
 int ste_newbuf(sc, c, m)
@@ -1242,7 +1261,7 @@ void ste_stop(sc)
 void ste_reset(sc)
 	struct ste_softc	*sc;
 {
-	int			i;
+	int		i;
 
 	STE_SETBIT4(sc, STE_ASICCTL,
 	    STE_ASICCTL_GLOBAL_RESET|STE_ASICCTL_RX_RESET|
@@ -1259,9 +1278,8 @@ void ste_reset(sc)
 	}
 
 	if (i == STE_TIMEOUT)
-		printf("%s: global reset never completed\n", sc->sc_dev.dv_xname);
-
-	return;
+		printf("%s: global reset never completed\n",
+		    sc->sc_dev.dv_xname);
 }
 
 int ste_ioctl(ifp, command, data)
