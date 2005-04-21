@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.8 2004/01/16 00:13:19 espie Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.9 2005/04/21 00:10:23 deraadt Exp $	*/
 /*	$NetBSD: terminal.c,v 1.2 1997/10/10 16:34:05 lukem Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -138,6 +138,8 @@ outyx(pp, y, x, fmt)
 	va_start(ap, fmt);
 	len = vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
+	if (len == -1)
+		len = 0;
 	if (len >= (int)sizeof(buf))
 		len = sizeof(buf) - 1;
 	if (y >= 0 && x >= 0)
