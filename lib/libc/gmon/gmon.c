@@ -28,7 +28,7 @@
  */
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static char rcsid[] = "$OpenBSD: gmon.c,v 1.17 2005/03/23 19:32:09 otto Exp $";
+static char rcsid[] = "$OpenBSD: gmon.c,v 1.18 2005/04/21 00:09:01 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -219,9 +219,9 @@ _mcleanup(void)
 		perror("mcount: gmon.log");
 		return;
 	}
-	len = snprintf(dbuf, sizeof dbuf, "[mcleanup1] kcount 0x%x ssiz %d\n",
+	snprintf(dbuf, sizeof dbuf, "[mcleanup1] kcount 0x%x ssiz %d\n",
 	    p->kcount, p->kcountsize);
-	write(log, dbuf, len);
+	write(log, dbuf, strlen(dbuf));
 #endif
 	hdr = (struct gmonhdr *)&gmonhdr;
 	bzero(hdr, sizeof(*hdr));
@@ -242,11 +242,11 @@ _mcleanup(void)
 		for (toindex = p->froms[fromindex]; toindex != 0;
 		     toindex = p->tos[toindex].link) {
 #ifdef DEBUG
-			len = snprintf(dbuf, sizeof dbuf,
+			(void) snprintf(dbuf, sizeof dbuf,
 			"[mcleanup2] frompc 0x%x selfpc 0x%x count %d\n" ,
 				frompc, p->tos[toindex].selfpc,
 				p->tos[toindex].count);
-			write(log, dbuf, len);
+			write(log, dbuf, strlen(dbuf));
 #endif
 			rawarc.raw_frompc = frompc;
 			rawarc.raw_selfpc = p->tos[toindex].selfpc;
