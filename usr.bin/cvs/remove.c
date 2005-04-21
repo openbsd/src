@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.10 2005/04/21 18:54:50 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.11 2005/04/21 19:06:06 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Xavier Santolaria <xsa@openbsd.org>
@@ -131,10 +131,10 @@ cvs_remove_file(CVSFILE *cf, void *arg)
 			    CVS_FILE_NAME(cf)) < 0) {
 				return (CVS_EX_PROTO);
 			}
-		}
 
-		if (cvs_sendfile(root, fpath) < 0)
-			return (CVS_EX_PROTO);
+			if (cvs_sendfile(root, fpath) < 0)
+				return (CVS_EX_PROTO);
+		}
 	} else {
 		cvs_log(LP_INFO, "scheduling file `%s' for removal",
 		    CVS_FILE_NAME(cf));
