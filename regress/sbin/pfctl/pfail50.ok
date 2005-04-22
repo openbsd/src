@@ -1,0 +1,17 @@
+stdin:18: syntax error
+stdin:19: syntax error
+stdin:20: flags always false
+stdin:21: flags always false
+stdin:22: flags always false
+pass proto tcp all flags F/F
+pass proto tcp all flags S/S
+pass proto tcp all flags R/R
+pass proto tcp all flags P/P
+pass proto tcp all flags A/A
+pass proto tcp all flags U/U
+pass proto tcp all flags E/E
+pass proto tcp all flags W/W
+pass proto tcp all flags FSRPAUEW/FSRPAUEW
+pass proto tcp all flags /FSRPAUEW
+pass proto tcp all flags S/FSRA
+pass proto tcp all flags /SA
