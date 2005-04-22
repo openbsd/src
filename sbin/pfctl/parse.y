@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.482 2005/03/07 13:20:03 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.483 2005/04/22 11:05:36 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1543,11 +1543,15 @@ pfrule		: action dir logquick interface route af proto fromto
 					YYERROR;
 				}
 			r.match_tag_not = $9.match_tag_not;
-			r.flags = $9.flags.b1;
-			r.flagset = $9.flags.b2;
 			if (rule_label(&r, $9.label))
 				YYERROR;
 			free($9.label);
+			r.flags = $9.flags.b1;
+			r.flagset = $9.flags.b2;
+			if (($9.flags.b1 & $9.flags.b2) != $9.flags.b1) {
+				yyerror("flags always false");
+				YYERROR;
+			}
 			if ($9.flags.b1 || $9.flags.b2 || $8.src_os) {
 				for (proto = $7; proto != NULL &&
 				    proto->proto != IPPROTO_TCP;
