@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.14 2004/06/20 20:50:41 pvalchev Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.15 2005/04/22 03:00:39 brad Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -120,7 +120,7 @@ gem_attach_pci(parent, self, aux)
 	struct gem_pci_softc *gsc = (void *)self;
 	struct gem_softc *sc = &gsc->gsc_gem;
 	pci_intr_handle_t intrhandle;
-#ifdef __sparc__
+#ifdef __sparc64__
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr(u_char *);
 #endif
@@ -150,7 +150,7 @@ gem_attach_pci(parent, self, aux)
 	sc->sc_bustag = gsc->gsc_memt;
 	sc->sc_h = gsc->gsc_memh;
 
-#ifdef __sparc__
+#ifdef __sparc64__
 	if (OF_getprop(PCITAG_NODE(pa->pa_tag), "local-mac-address",
 	    sc->sc_enaddr, ETHER_ADDR_LEN) <= 0)
 		myetheraddr(sc->sc_enaddr);
