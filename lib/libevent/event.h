@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.8 2005/04/19 08:07:45 deraadt Exp $	*/
+/*	$OpenBSD: event.h,v 1.9 2005/04/22 00:56:25 brad Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -34,17 +34,23 @@ extern "C" {
 #endif
 
 #ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#undef WIN32_LEAN_AND_MEAN
+typedef unsigned char u_char;
 #endif
+
+#define LIBEVENT_VERSION	"1.0c"
 
 #define EVLIST_TIMEOUT	0x01
 #define EVLIST_INSERTED	0x02
 #define EVLIST_SIGNAL	0x04
 #define EVLIST_ACTIVE	0x08
+#define EVLIST_INTERNAL	0x10
 #define EVLIST_INIT	0x80
 
 /* EVLIST_X_ Private space: 0x1000-0xf000 */
-#define EVLIST_ALL	(0xf000 | 0x8f)
+#define EVLIST_ALL	(0xf000 | 0x9f)
 
 #define EV_TIMEOUT	0x01
 #define EV_READ		0x02
@@ -72,23 +78,22 @@ struct {								\
 }
 #endif /* !RB_ENTRY */
 
+struct event_base;
 struct event {
 	TAILQ_ENTRY (event) ev_next;
 	TAILQ_ENTRY (event) ev_active_next;
 	TAILQ_ENTRY (event) ev_signal_next;
 	RB_ENTRY (event) ev_timeout_node;
 
-#ifdef WIN32
-	HANDLE ev_fd;
-	OVERLAPPED overlap;
-#else
+	struct event_base *ev_base;
 	int ev_fd;
-#endif
 	short ev_events;
 	short ev_ncalls;
 	short *ev_pncalls;	/* Allows deletes in callback */
 
 	struct timeval ev_timeout;
+
+	int ev_pri;		/* smaller numbers are higher priority */
 
 	void (*ev_callback)(int, short, void *arg);
 	void *ev_arg;
@@ -116,23 +121,32 @@ struct eventop {
 	void *(*init)(void);
 	int (*add)(void *, struct event *);
 	int (*del)(void *, struct event *);
-	int (*recalc)(void *, int);
-	int (*dispatch)(void *, struct timeval *);
+	int (*recalc)(struct event_base *, void *, int);
+	int (*dispatch)(struct event_base *, void *, struct timeval *);
 };
 
 #define TIMEOUT_DEFAULT	{5, 0}
 
-void event_init(void);
+void *event_init(void);
 int event_dispatch(void);
+int event_base_dispatch(struct event_base *);
+
+#define _EVENT_LOG_DEBUG 0
+#define _EVENT_LOG_MSG   1
+#define _EVENT_LOG_WARN  2
+#define _EVENT_LOG_ERR   3
+typedef void (*event_log_cb)(int severity, const char *msg);
+void event_set_log_callback(event_log_cb cb);
+
+/* Associate a different event base with an event */
+int event_base_set(struct event_base *, struct event *);
 
 #define EVLOOP_ONCE	0x01
 #define EVLOOP_NONBLOCK	0x02
 int event_loop(int);
+int event_base_loop(struct event_base *, int);
 int event_loopexit(struct timeval *);	/* Causes the loop to exit */
-
-int timeout_next(struct timeval *);
-void timeout_correct(struct timeval *);
-void timeout_process(void);
+int event_base_loopexit(struct event_base *, struct timeval *);
 
 #define evtimer_add(ev, tv)		event_add(ev, tv)
 #define evtimer_set(ev, cb, arg)	event_set(ev, -1, 0, cb, arg)
@@ -162,11 +176,23 @@ int event_pending(struct event *, short, struct timeval *);
 #define event_initialized(ev)		((ev)->ev_flags & EVLIST_INIT)
 #endif
 
+/* Some simple debugging functions */
+const char *event_get_version(void);
+const char *event_get_method(void);
+
+/* These functions deal with event priorities */
+
+int	event_priority_init(int);
+int	event_base_priority_init(struct event_base *, int);
+int	event_priority_set(struct event *, int);
+
 /* These functions deal with buffering input and output */
 
 struct evbuffer {
 	u_char *buffer;
+	u_char *orig_buffer;
 
+	size_t misalign;
 	size_t totallen;
 	size_t off;
 
@@ -213,6 +239,7 @@ struct bufferevent {
 
 struct bufferevent *bufferevent_new(int fd,
     evbuffercb readcb, evbuffercb writecb, everrorcb errorcb, void *cbarg);
+int bufferevent_priority_set(struct bufferevent *bufev, int pri);
 void bufferevent_free(struct bufferevent *bufev);
 int bufferevent_write(struct bufferevent *bufev, void *data, size_t size);
 int bufferevent_write_buffer(struct bufferevent *bufev, struct evbuffer *buf);
@@ -229,7 +256,9 @@ void bufferevent_settimeout(struct bufferevent *bufev,
 
 struct evbuffer *evbuffer_new(void);
 void evbuffer_free(struct evbuffer *);
-int evbuffer_add(struct evbuffer *, u_char *, size_t);
+int evbuffer_expand(struct evbuffer *, size_t);
+int evbuffer_add(struct evbuffer *, void *, size_t);
+int evbuffer_remove(struct evbuffer *, void *, size_t);
 int evbuffer_add_buffer(struct evbuffer *, struct evbuffer *);
 int evbuffer_add_printf(struct evbuffer *, char *fmt, ...);
 void evbuffer_drain(struct evbuffer *, size_t);
