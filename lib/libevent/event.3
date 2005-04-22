@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.18 2005/04/22 01:10:34 brad Exp $
+.\"	$OpenBSD: event.3,v 1.19 2005/04/22 08:32:17 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -393,12 +393,11 @@ By setting the environment variable
 .Va EVENT_SHOW_METHOD ,
 .Nm libevent
 displays the kernel notification method that it uses.
-.Pp
 .Sh EVENT PRIORITIES
 By default
 .Nm libevent
 schedules all active events with the same priority.
-However, sometime it is desirable to process some events with a higher
+However, sometimes it is desirable to process some events with a higher
 priority than others.
 For that reason,
 .Nm libevent
@@ -418,7 +417,6 @@ By default,
 .Nm libevent
 assigns the middle priority to all events unless their priority
 is explicitly set.
-.Pp
 .Sh THREAD SAFE EVENTS
 .Nm Libevent
 has experimental support for thread-safe events.
@@ -437,7 +435,6 @@ should be called after preparing an event with
 as
 .Fn event_set
 assigns the provided event to the most recently created event base.
-.Pp
 .Sh BUFFERED EVENTS
 .Nm libevent
 provides an abstraction on top of the regular event callbacks.
