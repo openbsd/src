@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.9 2005/04/11 08:19:07 otto Exp $ */
+/*	$OpenBSD: stat.c,v 1.10 2005/04/22 09:58:43 otto Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -39,7 +39,7 @@
 
 #ifndef lint
 static const char rccs_id[] =
-    "$OpenBSD: stat.c,v 1.9 2005/04/11 08:19:07 otto Exp $";
+    "$OpenBSD: stat.c,v 1.10 2005/04/22 09:58:43 otto Exp $";
 #endif
 
 #include <sys/types.h>
@@ -308,7 +308,7 @@ output(const struct stat *st, const char *file,
     const char *statfmt, int fn, int nonl)
 {
 	int flags, size, prec, ofmt, hilo, what;
-	char buf[PATH_MAX];
+	char buf[PATH_MAX + 4 + 1];
 	const char *subfmt;
 	int nl, t, i;
 
@@ -474,7 +474,7 @@ output(const struct stat *st, const char *file,
 		t = format1(st, file, subfmt, statfmt - subfmt, buf,
 		    sizeof(buf), flags, size, prec, ofmt, hilo, what);
 
-		for (i = 0; i < t && i < sizeof(buf); i++)
+		for (i = 0; i < t && i < sizeof(buf) - 1; i++)
 			addchar(stdout, buf[i], &nl);
 
 		continue;
