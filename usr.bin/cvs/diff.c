@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.31 2005/04/18 21:02:49 jfb Exp $	*/
+/*	$OpenBSD: diff.c,v 1.32 2005/04/22 03:38:56 joris Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -408,6 +408,9 @@ cvs_diff_options(char *opt, int argc, char **argv, int *arg)
 				    "be specified");
 				return (CVS_EX_USAGE);
 			}
+			break;
+		case 'R':
+			cvs_diff.file_flags |= CF_RECURSE;
 			break;
 		case 'u':
 			strlcat(diffargs, " -u", sizeof(diffargs));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.57 2005/04/21 20:56:12 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.58 2005/04/22 03:38:56 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -124,7 +124,7 @@ struct cvs_cmd cvs_cdt[] = {
 	{
 		CVS_OP_DIFF, "diff",     { "di",  "dif" }, &cvs_diff,
 		"[-cilNpu] [-D date] [-r rev] ...",
-		"cD:ilNpr:u",
+		"cD:ilNpr:Ru",
 		"Show differences between revisions",
 		NULL
 	},
