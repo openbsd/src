@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventtest.c,v 1.5 2004/12/22 00:54:39 david Exp $	*/
+/*	$OpenBSD: eventtest.c,v 1.6 2005/04/22 01:28:04 brad Exp $	*/
 /*	$NetBSD: eventtest.c,v 1.3 2004/08/07 21:09:47 provos Exp $	*/
 
 /*
@@ -13,10 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Niels Provos.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -36,6 +33,7 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/signal.h>
+#include <sys/timeout.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -56,6 +54,7 @@ static int roff;
 static int usepersist;
 static struct timeval tset;
 static struct timeval tcalled;
+static struct event_base *event_base;
 
 #define TEST1	"this is a test"
 #define SECONDS	1
@@ -514,13 +513,89 @@ test9(void)
 	cleanup_test();
 }
 
+struct test_pri_event {
+	struct event ev;
+	int count;
+};
+
+void
+test_priorities_cb(int fd, short what, void *arg)
+{
+	struct test_pri_event *pri = arg;
+	struct timeval tv;
+
+	if (pri->count == 3) {
+		event_loopexit(NULL);
+		return;
+	}
+
+	pri->count++;
+
+	timerclear(&tv);
+	event_add(&pri->ev, &tv);
+}
+
+void
+test_priorities(int npriorities)
+{
+	char buf[32];
+	struct test_pri_event one, two;
+	struct timeval tv;
+
+	snprintf(buf, sizeof(buf), "Priorities %d: ", npriorities);
+	setup_test(buf);
+
+	event_base_priority_init(event_base, npriorities);
+
+	memset(&one, 0, sizeof(one));
+	memset(&two, 0, sizeof(two));
+
+	event_set(&one.ev, -1, 0, test_priorities_cb, &one);
+	if (event_priority_set(&one.ev, 0) == -1) {
+		fprintf(stderr, "%s: failed to set priority", __func__);
+		exit(1);
+	}
+
+	event_set(&two.ev, -1, 0, test_priorities_cb, &two);
+	if (event_priority_set(&two.ev, npriorities - 1) == -1) {
+		fprintf(stderr, "%s: failed to set priority", __func__);
+		exit(1);
+	}
+
+	timerclear(&tv);
+
+	if (event_add(&one.ev, &tv) == -1)
+		exit(1);
+	if (event_add(&two.ev, &tv) == -1)
+		exit(1);
+
+	event_dispatch();
+
+	event_del(&one.ev);
+	event_del(&two.ev);
+
+	if (npriorities == 1) {
+		if (one.count == 3 && two.count == 3)
+			test_ok = 1;
+	} else if (npriorities == 2) {
+		/* Two is called once because event_loopexit is priority 1 */
+		if (one.count == 3 && two.count == 1)
+			test_ok = 1;
+	} else {
+		if (one.count == 3 && two.count == 0)
+			test_ok = 1;
+	}
+
+	cleanup_test();
+}
+
 int
 main (int argc, char **argv)
 {
 	setvbuf(stdout, NULL, _IONBF, 0);
 
 	/* Initalize the event library */
-	event_init();
+	event_base = event_init();
 
 	test1();
 
@@ -539,6 +614,10 @@ main (int argc, char **argv)
 	test8();
 
 	test9();
+
+	test_priorities(1);
+	test_priorities(2);
+	test_priorities(3);
 
 	return (0);
 }
