@@ -1,4 +1,4 @@
-# $OpenBSD: tests,v 1.1 2005/04/21 17:45:54 miod Exp $
+# $OpenBSD: tests,v 1.2 2005/04/22 00:38:24 miod Exp $
 # $NetBSD: tests,v 1.9 2005/03/15 18:27:23 bouyer Exp $
 
 #fill up an extent, should coalesce into one allocation
@@ -13,7 +13,7 @@ print
 #check whether subregion is obeyed (PR kern/7539)
 extent test2 0 0x2f EX_NOCOALESCE
 alloc_region 0x00 0x10
-alloc_subregion 0x20 0x30 0x10
+alloc_subregion 0x20 0x2f 0x10
 print
 
 #check overlap into subregion (fixed in 1.25)
