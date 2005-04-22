@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct.c,v 1.2 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: ct.c,v 1.3 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: ct.c,v 1.9 1996/10/14 07:29:57 thorpej Exp $	*/
 
 /*
@@ -67,20 +67,20 @@ struct	ctinfo {
 	short	hwid;
 	short	punit;
 } ctinfo[] = {
-	CT7946ID,	1,
-	CT7912PID,	1,
-	CT7914PID,	1,
-	CT9144ID,	0,
-	CT9145ID,	0,
+	{ CT7946ID,	1 },
+	{ CT7912PID,	1 },
+	{ CT7914PID,	1 },
+	{ CT9144ID,	0 },
+	{ CT9145ID,	0 }
 };
 int	nctinfo = sizeof(ctinfo) / sizeof(ctinfo[0]);
 
+int
 ctinit(ctlr, unit)
 	register int ctlr, unit;
 {
 	register struct ct_softc *rs = &ct_softc[ctlr][unit];
 	u_char stat;
-	register int type;
 
 	if (hpibrecv(ctlr, unit, C_QSTAT, &stat, 1) != 1 || stat)
 		return (0);
@@ -100,6 +100,7 @@ ctinit(ctlr, unit)
 	return (1);
 }
 
+int
 ctident(ctlr, unit)
 	int ctlr, unit;
 {
@@ -168,6 +169,7 @@ ctpunit(ctlr, slave, punit)
 	return (0);
 }
 
+int
 ctopen(f, ctlr, unit, part)
 	struct open_file *f;
 	int ctlr, unit, part;
@@ -195,14 +197,17 @@ ctopen(f, ctlr, unit, part)
 	return(0);
 }
 
+int
 ctclose(f)
 	struct open_file *f;
 {
 	size_t resid;
 
 	ctstrategy(f->f_devdata, MTREW, 0, 0, ctio_buf, &resid);
+	return (0);
 }
 
+int
 ctstrategy(devdata, func, dblk, size, v_buf, rsize)
 	void *devdata;
 	int func;
@@ -280,6 +285,7 @@ retry:
 	return(0);
 }
 
+int
 cterror(ctlr, unit)
 	register int ctlr, unit;
 {
@@ -305,7 +311,7 @@ cterror(ctlr, unit)
 			rs->sc_blkno = ct_stat.c_blk;
 		return (2);
 	}
-	printf("ct%d err: vu 0x%x, pend 0x%x, bn%d", unit,
+	printf("ct%d err: vu 0x%x, pend 0x%x, bn%ld", unit,
 		ct_stat.c_vu, ct_stat.c_pend, ct_stat.c_blk);
 	printf(", R 0x%x F 0x%x A 0x%x I 0x%x\n", ct_stat.c_ref,
 		ct_stat.c_fef, ct_stat.c_aef, ct_stat.c_ief);

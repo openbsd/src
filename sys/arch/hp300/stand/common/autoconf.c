@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.4 2005/01/19 17:09:30 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.5 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.12 1997/01/30 10:32:51 thorpej Exp $	*/
 
 /*
@@ -67,6 +67,8 @@ int cpuspeed;
 
 extern int internalhpib;
 
+void	find_devs(void);
+
 #ifdef PRINTROMINFO
 printrominfo()
 {
@@ -79,6 +81,7 @@ printrominfo()
 }
 #endif
 
+void
 configure()
 {
 	u_long msustobdev();
@@ -156,6 +159,7 @@ msustobdev()
 	return (bdev);
 }
 
+u_long
 sctoaddr(sc)
 	int sc;
 {
@@ -176,6 +180,7 @@ sctoaddr(sc)
  *
  * Note that we only care about displays, LANCEs, SCSIs and HP-IBs.
  */
+void
 find_devs()
 {
 	short sc, sctop;

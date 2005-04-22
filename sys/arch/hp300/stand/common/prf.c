@@ -1,4 +1,4 @@
-/*	$OpenBSD: prf.c,v 1.2 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: prf.c,v 1.3 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: prf.c,v 1.5 1994/10/26 07:27:50 cgd Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
  *	@(#)prf.c	8.1 (Berkeley) 6/10/93
  */
 
+int
 getchar()
 {
 	register int c;
@@ -47,6 +48,7 @@ getchar()
 	return(c);
 }
 
+int
 tgetchar()
 {
 	register int c;
@@ -63,6 +65,7 @@ tgetchar()
 	return(c);
 }
 
+void
 putchar(c)
 	register int c;
 {

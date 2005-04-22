@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.3 2003/12/12 08:56:11 deraadt Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.4 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: if_le.c,v 1.9 1997/01/30 10:32:54 thorpej Exp $	*/
 
 /*
@@ -144,6 +144,7 @@ lerdcsr(sc, port)
 	return (val);
 }
 
+void
 leinit()
 {
 	extern struct hp_hw sc_table[];
@@ -226,12 +227,11 @@ le_match(nif, machdep_hint)
 	return rv;
 }
 
+int
 le_probe(nif, machdep_hint)
 	struct netif *nif;
 	void *machdep_hint;
 {
-	char *cp;
-	int i;
 
 	/* the set unit is the current unit */
 #ifdef LE_DEBUG
@@ -391,7 +391,7 @@ le_reset(unit, myea)
 {
 	struct le_softc *sc = &le_softc[unit];
 	u_long a;
-	int timo = 100000, stat, i;
+	int timo = 100000;
 
 #ifdef LE_DEBUG
 	if (le_debug) {
@@ -454,11 +454,13 @@ le_poll(desc, pkt, len)
 	void *pkt;
 	int len;
 {
+#if 0
 	struct netif *nif = desc->io_netif;
-	int unit = /*nif->nif_unit*/0;
+	int unit = nif->nif_unit;
+#else
+	int unit = 0;
+#endif
 	struct le_softc *sc = &le_softc[unit];
-	volatile struct lereg0 *ler0 = sc->sc_r0;
-	volatile struct lereg1 *ler1 = sc->sc_r1;
 	int length;
 	volatile struct mds *cdm;
 	register int stat;
@@ -535,11 +537,13 @@ le_put(desc, pkt, len)
 	void *pkt;
 	int len;
 {
+#if 0
 	struct netif *nif = desc->io_netif;
-	int unit = /*nif->nif_unit*/0;
+	int unit = nif->nif_unit;
+#else
+	int unit = 0;
+#endif
 	struct le_softc *sc = &le_softc[unit];
-	volatile struct lereg0 *ler0 = sc->sc_r0;
-	volatile struct lereg1 *ler1 = sc->sc_r1;
 	volatile struct mds *cdm;
 	int timo, i, stat;
 

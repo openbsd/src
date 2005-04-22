@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.4 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: apci.c,v 1.5 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.2 1997/10/04 17:20:15 thorpej Exp $	*/
 
 /*-
@@ -90,8 +90,6 @@ void
 apciprobe(cp)
 	struct consdev *cp;
 {
-	struct apciregs *apci = apcicnaddr =
-	    (struct apciregs *)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(1));
 
 	cp->cn_pri = CN_DEAD;
 

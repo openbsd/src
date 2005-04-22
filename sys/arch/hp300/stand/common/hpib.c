@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpib.c,v 1.2 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: hpib.c,v 1.3 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: hpib.c,v 1.2 1997/05/12 07:48:23 thorpej Exp $	*/
 
 /*
@@ -52,12 +52,13 @@ int	fhpibppoll(), nhpibppoll();
 
 struct	hpib_softc hpib_softc[NHPIB];
 
+void
 hpibinit()
 {
 	extern struct hp_hw sc_table[];
 	register struct hp_hw *hw;
 	register struct hpib_softc *hs;
-	register int i, addr;
+	register int i;
 
 	i = 0;
 	for (hw = sc_table; i < NHPIB && hw < &sc_table[MAXCTLRS]; hw++) {
@@ -76,6 +77,7 @@ hpibinit()
 	}
 }
 
+int
 hpibalive(unit)
 	register int unit;
 {
@@ -84,6 +86,7 @@ hpibalive(unit)
 	return (1);
 }
 
+int
 hpibid(unit, slave)
 	int unit, slave;
 {
@@ -99,6 +102,7 @@ hpibid(unit, slave)
 	return (id);
 }
 
+int
 hpibsend(unit, slave, sec, buf, cnt)
 	int unit, slave;
 	char *buf;
@@ -109,6 +113,7 @@ hpibsend(unit, slave, sec, buf, cnt)
 	return (nhpibsend(unit, slave, sec, buf, cnt));
 }
 
+int
 hpibrecv(unit, slave, sec, buf, cnt)
 	int unit, slave;
 	char *buf;
@@ -119,6 +124,7 @@ hpibrecv(unit, slave, sec, buf, cnt)
 	return (nhpibrecv(unit, slave, sec, buf, cnt));
 }
 
+int
 hpibswait(unit, slave)
 	register int unit, slave;
 {
@@ -138,6 +144,7 @@ hpibswait(unit, slave)
 	return (0);
 }
 
+void
 hpibgo(unit, slave, sec, addr, count, flag)
 	int unit, slave;
 	char *addr;

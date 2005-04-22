@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.3 2005/01/19 17:09:30 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.4 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: hil.c,v 1.2 1997/04/14 19:00:10 thorpej Exp $	*/
 
 /*
@@ -182,16 +182,16 @@ char	hil_uk_ctrlmap[] = {
  * Lookup is by hardware returned language code.
  */
 struct kbdmap hilkbd_map[] = {
-	KBD_US,		NULL,
-	hil_us_keymap,	hil_us_shiftmap,	hil_us_ctrlmap,	NULL,	NULL,
+	{ KBD_US,		NULL,
+	hil_us_keymap,	hil_us_shiftmap,	hil_us_ctrlmap,	NULL,	NULL },
 
 #ifdef UK_KEYBOARD
-	KBD_UK,		NULL,
-	hil_uk_keymap,	hil_uk_shiftmap,	hil_uk_ctrlmap,	NULL,	NULL,
+	{ KBD_UK,		NULL,
+	hil_uk_keymap,	hil_uk_shiftmap,	hil_uk_ctrlmap,	NULL,	NULL },
 #endif
 
-	0,		NULL,
-	NULL,		NULL,		NULL,		NULL,	NULL,
+	{ 0,		NULL,
+	NULL,		NULL,		NULL,		NULL,	NULL }
 };
 
 char	*hilkbd_keymap = hil_us_keymap;
@@ -273,5 +273,7 @@ hilkbd_init()
 	}
 	HILWAIT(hiladdr);
 	hiladdr->hil_cmd = HIL_INTON;
+
+	return (0);
 }
 #endif /* ITECONSOLE && HIL_KEYBOARD */

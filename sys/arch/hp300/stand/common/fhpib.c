@@ -1,4 +1,4 @@
-/*	$OpenBSD: fhpib.c,v 1.2 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: fhpib.c,v 1.3 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: fhpib.c,v 1.5 1995/08/05 16:47:42 thorpej Exp $	*/
 
 /*
@@ -43,6 +43,9 @@
 #include "hpibvar.h"
 #include "samachdep.h"
 
+void	fhpibreset(int);
+
+int
 fhpibinit(unit)
 	register int unit;
 {
@@ -57,6 +60,7 @@ fhpibinit(unit)
 	return(1);
 }
 
+void
 fhpibreset(unit)
 {
 	register struct hpib_softc *hs = &hpib_softc[unit];
@@ -77,6 +81,7 @@ fhpibreset(unit)
 	DELAY(100000);
 }
 
+int
 fhpibsend(unit, slave, sec, buf, cnt)
 	register char *buf;
 	register int cnt;
@@ -118,6 +123,7 @@ fhpibsend(unit, slave, sec, buf, cnt)
 	return(origcnt - cnt);
 }
 
+int
 fhpibrecv(unit, slave, sec, buf, cnt)
 	register char *buf;
 	register int cnt;
@@ -155,6 +161,7 @@ fhpibrecv(unit, slave, sec, buf, cnt)
 	return(origcnt - cnt);
 }
 
+int
 fhpibppoll(unit)
 	register int unit;
 {
@@ -178,6 +185,7 @@ fhpibppoll(unit)
 	return(ppoll);
 }
 
+int
 fhpibwait(hd, x)
 	register struct fhpibdevice *hd;
 {

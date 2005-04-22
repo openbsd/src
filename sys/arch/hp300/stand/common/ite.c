@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.4 2005/01/19 17:09:30 miod Exp $	*/
+/*	$OpenBSD: ite.c,v 1.5 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: ite.c,v 1.12 1997/01/30 10:32:55 thorpej Exp $	*/
 
 /*
@@ -54,6 +54,8 @@
 #include "consdefs.h"
 #include "samachdep.h"
 
+void	itecheckwrap(struct ite_data *, struct itesw *);
+void	ite_clrtoeol(struct ite_data *, struct itesw *, int, int);
 void	ite_deinit_noop(struct ite_data *);
 
 struct itesw itesw[] = {
@@ -93,12 +95,13 @@ int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
 
 /* these guys need to be in initialized data */
 int itecons = -1;
-struct  ite_data ite_data[NITE] = { 0 };
+struct  ite_data ite_data[NITE] = { { 0 } };
 int	ite_scode[NITE] = { 0 };
 
 /*
  * Locate all bitmapped displays
  */
+void
 iteconfig()
 {
 	extern struct hp_hw sc_table[];
@@ -267,9 +270,8 @@ iteputchar(dev, c)
 	}
 }
 
-itecheckwrap(ip, sp)
-     register struct ite_data *ip;
-     register struct itesw *sp;
+void
+itecheckwrap(struct ite_data *ip, struct itesw *sp)
 {
 	if (++ip->curx == ip->cols) {
 		ip->curx = 0;
@@ -283,10 +285,8 @@ itecheckwrap(ip, sp)
 	(*sp->ite_cursor)(ip, MOVE_CURSOR);
 }
 
-ite_clrtoeol(ip, sp, y, x)
-     register struct ite_data *ip;
-     register struct itesw *sp;
-     register int y, x;
+void
+ite_clrtoeol(struct ite_data *ip, struct itesw *sp, int y, int x)
 {
 	(*sp->ite_clear)(ip, y, x, 1, ip->cols - x);
 	(*sp->ite_cursor)(ip, DRAW_CURSOR);

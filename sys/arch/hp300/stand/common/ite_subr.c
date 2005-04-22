@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_subr.c,v 1.3 2005/01/19 17:09:30 miod Exp $	*/
+/*	$OpenBSD: ite_subr.c,v 1.4 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: ite_subr.c,v 1.8 1996/03/03 04:23:40 thorpej Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include "itevar.h"
 #include "itereg.h"
 
+void
 ite_fontinfo(ip)
 	struct ite_data *ip;
 {
@@ -80,6 +81,7 @@ ite_fontinfo(ip)
 	}
 }
 
+void
 ite_fontinit(ip)
 	register struct ite_data *ip;
 {
@@ -121,7 +123,7 @@ ite_writeglyph(ip, fbmem, glyphp)
 	register u_char *fbmem, *glyphp;
 {
 	register int bn;
-	int c, l, b;
+	int l, b;
 
 	for (l = 0; l < ip->ftheight; l++) {
 		bn = 7;

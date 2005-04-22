@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_hy.c,v 1.4 2005/01/19 17:09:30 miod Exp $	*/
+/*	$OpenBSD: ite_hy.c,v 1.5 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: ite_hy.c,v 1.3 1996/03/03 04:23:37 thorpej Exp $	*/
 
 /*
@@ -259,8 +259,6 @@ hyper_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	struct ite_data *ip;
 	int sy, sx, dy, dx, h, w, func;
 {
-	unsigned int *psrcBase, *pdstBase;
-				/* start of src and dst bitmaps */
 	int width;		/* add to get to same position in next line */
 
 	unsigned int *psrcLine, *pdstLine;

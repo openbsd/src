@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_dv.c,v 1.4 2005/01/19 17:09:30 miod Exp $	*/
+/*	$OpenBSD: ite_dv.c,v 1.5 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: ite_dv.c,v 1.8 1996/03/03 04:23:35 thorpej Exp $	*/
 
 /*
@@ -52,8 +52,8 @@
 #define REGBASE		((struct dvboxfb *)(ip->regbase))
 #define WINDOWMOVER	dvbox_windowmove
 
-void	dvbox_windowmove(struct ite_data *, int, int, int, int,
-	    int, int, int);
+void	dvbox_windowmove(struct ite_data *, int, int, int, int, int, int, int);
+void	dv_reset(struct dvboxfb *);
 
 void
 dvbox_init(ip)
@@ -205,8 +205,8 @@ dvbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	dp->wmove    = 1;
 }
 
-dv_reset(dbp)
-	register struct dvboxfb *dbp;
+void
+dv_reset(struct dvboxfb *dbp)
 {
   	dbp->reset = 0x80;
 	DELAY(400);

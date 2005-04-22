@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi.c,v 1.4 2004/08/03 21:44:35 miod Exp $	*/
+/*	$OpenBSD: scsi.c,v 1.5 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: scsi.c,v 1.7 1997/01/30 10:32:57 thorpej Exp $	*/
 
 /*
@@ -67,12 +67,13 @@ void scsireset();
 int scsi_cmd_wait = 50000;	/* use the "real" driver init_wait value */
 int scsi_data_wait = 50000;	/* use the "real" driver init_wait value */
 
+void
 scsiinit()
 {
 	extern struct hp_hw sc_table[];
 	register struct hp_hw *hw;
 	register struct scsi_softc *hs;
-	register int i, addr;
+	register int i;
 	static int waitset = 0;
 	
 	i = 0;
@@ -98,6 +99,7 @@ scsiinit()
 	}
 }
 
+int
 scsialive(unit)
 	register int unit;
 {
@@ -151,7 +153,7 @@ scsireset(unit)
 }
 
 
-int
+void
 scsiabort(hs, hd)
 	register struct scsi_softc *hs;
 	volatile register struct scsidevice *hd;

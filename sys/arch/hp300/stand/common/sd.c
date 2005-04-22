@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.4 2004/08/03 21:44:35 miod Exp $	*/
+/*	$OpenBSD: sd.c,v 1.5 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: sd.c,v 1.9 1996/12/21 21:34:41 thorpej Exp $	*/
 
 /*
@@ -72,6 +72,7 @@ struct	sd_softc {
 
 #define	SDRETRY		2
 
+int
 sdinit(ctlr, unit)
 	int ctlr, unit;
 {
@@ -108,6 +109,7 @@ sdinit(ctlr, unit)
 	return (1);
 }
 
+void
 sdreset(ctlr, unit)
 	int ctlr, unit;
 {
@@ -115,6 +117,7 @@ sdreset(ctlr, unit)
 
 char io_buf[MAXBSIZE];
 
+int
 sdgetinfo(ss)
 	register struct sd_softc *ss;
 {
@@ -162,6 +165,7 @@ sdgetinfo(ss)
 	return(1);
 }
 
+int
 sdopen(f, ctlr, unit, part)
 	struct open_file *f;
 	int ctlr, unit, part;
@@ -195,6 +199,7 @@ sdopen(f, ctlr, unit, part)
 	return (0);
 }
 
+int
 sdclose(f)
 	struct open_file *f;
 {
@@ -210,6 +215,7 @@ sdclose(f)
 	return (0);
 }
 
+int
 sdstrategy(ss, func, dblk, size, v_buf, rsize)
 	register struct sd_softc *ss;
 	int func;

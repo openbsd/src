@@ -1,4 +1,4 @@
-/*	$OpenBSD: netio.c,v 1.1 1997/07/14 08:14:57 downsj Exp $	*/
+/*	$OpenBSD: netio.c,v 1.2 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: netio.c,v 1.5 1997/01/30 10:32:56 thorpej Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ netclose(f)
 		if (--open_count == 0)
 			netif_close(netdev_sock);
 	f->f_devdata = NULL;
+	return (0);
 }
 
 int

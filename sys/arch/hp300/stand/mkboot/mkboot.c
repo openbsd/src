@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkboot.c,v 1.3 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: mkboot.c,v 1.4 2005/04/22 00:42:16 miod Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 static char rcsid[] = "$NetBSD: mkboot.c,v 1.5 1994/10/26 07:27:45 cgd Exp $";
 #endif
-static char rcsid[] = "$OpenBSD: mkboot.c,v 1.3 2003/06/02 23:27:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: mkboot.c,v 1.4 2005/04/22 00:42:16 miod Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -73,6 +73,10 @@ struct lifdir lifd[LIF_NUMDIR];
 struct exec ex;
 char buf[10240];
 
+void	bcddate(int, char *);
+void	putfile(int, int);
+void	usage(void);
+
 /*
  * Old Format:
  *	sector 0:	LIF volume header (40 bytes)
@@ -89,6 +93,7 @@ char buf[10240];
  *	sector 4-31:	disklabel (~300 bytes right now)
  *	sector 32-:	LIF file 0, LIF file 1, etc.
  */
+int
 main(argc, argv)
 	char **argv;
 {
@@ -211,12 +216,13 @@ main(argc, argv)
 	write(to, &lifv, LIF_VOLSIZE);
 	lseek(to, LIF_DIRSTART, 0);
 	write(to, lifd, LIF_DIRSIZE);
-	exit(0);
+	return (0);
 }
 
-putfile(from, to)
+void
+putfile(int from, int to)
 {
-	register int n, tcnt, dcnt;
+	int n, tcnt, dcnt;
 
 	n = read(from, &ex, sizeof(ex));
 	if (n != sizeof(ex)) {
@@ -278,6 +284,7 @@ putfile(from, to)
 	}
 }
 
+void
 usage()
 {
 	fprintf(stderr,
@@ -309,6 +316,7 @@ lifname(str)
 #include <sys/stat.h>
 #include <time.h>	/* XXX */
 
+void
 bcddate(fd, toc)
 	int fd;
 	char *toc;

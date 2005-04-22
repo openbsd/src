@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.2 1997/09/14 07:02:05 downsj Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.3 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: devopen.c,v 1.7 1996/10/14 07:31:47 thorpej Exp $	*/
 
 /*-
@@ -41,29 +41,29 @@ u_int opendev;
 
 #define ispart(c)	((c) >= 'a' && (c) <= 'h')
 
+int
 atoi(char *cp)
 {
-    int val = 0;
-    while(isdigit(*cp))
-	val = val * 10 + (*cp++ - '0');
-    return(val);
+	int val = 0;
+
+	while(isdigit(*cp))
+		val = val * 10 + (*cp++ - '0');
+	return(val);
 }
 
+void
 usage()
 {
-    printf("\
-Usage: device(adaptor, controller, drive, partition)file\n\
-       <device><unit><partitionletter>:file\n\
-");
+	printf("Usage: device(adaptor, controller, drive, partition)file\n"
+	       "       <device><unit><partitionletter>:file\n");
 }
 
-devlookup(d, len)
-	const char *d;
-	int len;
+int
+devlookup(const char *d, int len)
 {
-    struct devsw *dp = devsw;
-    int i;
-    
+	struct devsw *dp = devsw;
+	int i;
+
     for (i = 0; i < ndevs; i++, dp++) {
 	if (dp->dv_name && strncmp(dp->dv_name, d, len) == 0) {
 	    /*
@@ -115,12 +115,13 @@ devlookup(d, len)
  * [A-Za-z]*[0-9]*[A-Za-z]:file
  *    dev   unit  part
  */
+int
 devparse(fname, dev, adapt, ctlr, unit, part, file)
 	const char *fname;
 	int *dev, *adapt, *ctlr, *unit, *part;
 	char **file;
 {
-    int *argp, i;
+    int i;
     char *s, *args[4];
 
     /* get device name and make lower case */
@@ -195,24 +196,21 @@ devparse(fname, dev, adapt, ctlr, unit, part, file)
     /* no device present */
     else
 	*file = (char *)fname;
-    
+
     /* return the remaining unparsed part as the file to boot */
     return(0);
-    
+
  bad:
     usage();
 
  baddev:
     return(-1);
-}    
+}
 
-
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;
-	char **file;
+int
+devopen(struct open_file *f, const char *fname, char **file)
 {
-	int n, error;
+	int error;
 	int dev, adapt, ctlr, unit, part;
 	struct devsw *dp = &devsw[0];
 
@@ -222,7 +220,7 @@ devopen(f, fname, file)
 	unit  = B_UNIT(bootdev);
 	part  = B_PARTITION(bootdev);
 
-	if (error = devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file))
+	if ((error = devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file)))
 	    return(error);
 
 	/*

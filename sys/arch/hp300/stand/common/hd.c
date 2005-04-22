@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.2 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: hd.c,v 1.3 2005/04/22 00:42:16 miod Exp $	*/
 /*	$NetBSD: rd.c,v 1.11 1996/12/21 21:34:40 thorpej Exp $	*/
 
 /*
@@ -102,11 +102,11 @@ struct	hdidentinfo {
 };
 int numhdidentinfo = sizeof(hdidentinfo) / sizeof(hdidentinfo[0]);
 
+int
 hdinit(ctlr, unit)
 	int ctlr, unit;
 {
 	register struct hd_softc *rs = &hd_softc[ctlr][unit];
-	u_char stat;
 
 	rs->sc_type = hdident(ctlr, unit);
 	if (rs->sc_type < 0)
@@ -115,6 +115,7 @@ hdinit(ctlr, unit)
 	return (1);
 }
 
+void
 hdreset(ctlr, unit)
 	register int ctlr, unit;
 {
@@ -131,6 +132,7 @@ hdreset(ctlr, unit)
 	hpibrecv(ctlr, unit, C_QSTAT, &stat, 1);
 }
 
+int
 hdident(ctlr, unit)
 	register int ctlr, unit;
 {
@@ -196,6 +198,7 @@ hdident(ctlr, unit)
 
 char io_buf[MAXBSIZE];
 
+int
 hdgetinfo(rs)
 	register struct hd_softc *rs;
 {
@@ -237,12 +240,12 @@ hdgetinfo(rs)
 	return(1);
 }
 
+int
 hdopen(f, ctlr, unit, part)
 	struct open_file *f;
 	int ctlr, unit, part;
 {
 	register struct hd_softc *rs;
-	struct hdinfo *ri;
 
 	if (ctlr >= NHPIB || hpibalive(ctlr) == 0)
 		return (EADAPT);
@@ -265,6 +268,7 @@ hdopen(f, ctlr, unit, part)
 	return (0);
 }
 
+int
 hdclose(f)
 	struct open_file *f;
 {
@@ -276,10 +280,10 @@ hdclose(f)
 	 */
 	bzero(rs, sizeof(struct hd_softc));
 	f->f_devdata = NULL;
-
 	return (0);
 }
 
+int
 hdstrategy(devdata, func, dblk, size, v_buf, rsize)
 	void *devdata;
 	int func;
@@ -332,11 +336,11 @@ retry:
 	return(0);
 }
 
+int
 hderror(ctlr, unit, part)
 	register int ctlr, unit;
 	int part;
 {
-	register struct hd_softc *hd = &hd_softc[ctlr][unit];
 	char stat;
 
 	hd_rsc.c_unit = C_SUNIT(0);
@@ -354,7 +358,7 @@ hderror(ctlr, unit, part)
 	printf("hd(%d,%d,0,%d) err: vu 0x%x",
 	       ctlr, unit, part, hd_stat.c_vu);
 	if ((hd_stat.c_aef & AEF_UD) || (hd_stat.c_ief & (IEF_MD|IEF_RD)))
-		printf(", block %d", hd_stat.c_blk);
+		printf(", block %ld", hd_stat.c_blk);
 	printf(", R0x%x F0x%x A0x%x I0x%x\n",
 	       hd_stat.c_ref, hd_stat.c_fef, hd_stat.c_aef, hd_stat.c_ief);
 	return(1);

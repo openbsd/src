@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.1 1999/08/16 09:43:08 downsj Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.2 2005/04/22 00:42:14 miod Exp $	*/
 /*	$NetBSD: devopen.c,v 1.7 1996/10/14 07:31:47 thorpej Exp $	*/
 
 /*-
@@ -41,6 +41,7 @@ u_int opendev;
 
 #define ispart(c)	((c) >= 'a' && (c) <= 'h')
 
+int
 atoi(char *cp)
 {
     int val = 0;
@@ -49,14 +50,14 @@ atoi(char *cp)
     return(val);
 }
 
+void
 usage()
 {
-    printf("\
-Usage: device(adaptor, controller, drive, partition)file\n\
-       <device><unit><partitionletter>:file\n\
-");
+    printf("Usage: device(adaptor, controller, drive, partition)file\n"
+           "       <device><unit><partitionletter>:file\n");
 }
 
+int
 devlookup(d, len)
 	const char *d;
 	int len;
@@ -103,12 +104,13 @@ devlookup(d, len)
  * [A-Za-z]*[0-9]*[A-Za-z]:file
  *    dev   unit  part
  */
+int
 devparse(fname, dev, adapt, ctlr, unit, part, file)
 	const char *fname;
 	int *dev, *adapt, *ctlr, *unit, *part;
 	char **file;
 {
-    int *argp, i;
+    int i;
     char *s, *args[4];
 
     /* get device name and make lower case */
@@ -195,12 +197,13 @@ devparse(fname, dev, adapt, ctlr, unit, part, file)
 }    
 
 
+int
 devopen(f, fname, file)
 	struct open_file *f;
 	const char *fname;
 	char **file;
 {
-	int n, error;
+	int error;
 	int dev, adapt, ctlr, unit, part;
 	struct devsw *dp = &devsw[0];
 
@@ -210,7 +213,7 @@ devopen(f, fname, file)
 	unit  = B_UNIT(bootdev);
 	part  = B_PARTITION(bootdev);
 
-	if (error = devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file))
+	if ((error = devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file)))
 	    return(error);
 
 	/*

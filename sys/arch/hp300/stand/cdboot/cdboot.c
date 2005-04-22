@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdboot.c,v 1.5 2003/06/02 23:27:45 millert Exp $	*/
+/*	$OpenBSD: cdboot.c,v 1.6 2005/04/22 00:42:14 miod Exp $	*/
 /*	$NetBSD: uboot.c,v 1.3 1997/04/27 21:17:13 thorpej Exp $	*/
 
 /*-
@@ -69,6 +69,7 @@ char *names[] = {
 
 static int bdev, badapt, bctlr, bunit, bpart;
 
+int
 main()
 {
 	int currname = 0;
@@ -94,4 +95,5 @@ main()
 		exec(name, lowram, howto);
 		printf("boot: %s\n", strerror(errno));
 	}
+	return (0);
 }
