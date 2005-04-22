@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dnkbd.4,v 1.1 2005/04/22 11:59:10 miod Exp $
+.\"	$OpenBSD: dnkbd.4,v 1.2 2005/04/22 13:14:34 miod Exp $
 .\"
 .\" Copyright (c) 2005, Miodrag Vallat
 .\"
@@ -61,3 +61,25 @@ interfaces.
 .Xr intro 4 ,
 .Xr wskbd 4 ,
 .Xr wsconsctl 8
+.Sh CAVEATS
+The Domain keyboard provides ten function keys, numbered
+.Em F0
+to
+.Em F9 ,
+while the common
+.Ux
+usage is to number them from
+.Em F1
+onwards.
+To attempt minimizing confusion between the actual key labels and their
+associated actions,
+.Ox
+assigns the
+.Em F10
+functionnality to the
+.Em F0
+key, and the
+.Em F1
+to
+.Em F9
+functionnality to the corresponding keys.
