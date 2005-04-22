@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.48 2005/04/18 23:56:19 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.49 2005/04/22 15:16:15 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -1018,7 +1018,8 @@ cvs_sendentry(struct cvsroot *root, const CVSFILE *file)
 	if (file->cf_cvstat == CVS_FST_UNKNOWN)
 		return (0);
 
-	snprintf(ebuf, sizeof(ebuf), "/%s/%s///", file->cf_name,
+	snprintf(ebuf, sizeof(ebuf), "/%s/%s%s///", file->cf_name,
+	    (file->cf_cvstat == CVS_FST_REMOVED) ? "-" : "",
 	    rcsnum_tostr(file->cf_lrev, numbuf, sizeof(numbuf)));
 
 	return cvs_sendreq(root, CVS_REQ_ENTRY, ebuf);
