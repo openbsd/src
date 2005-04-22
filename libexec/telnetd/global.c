@@ -93,8 +93,10 @@ output_data (const char *format, ...)
 
   va_start(args, format);
   remaining = BUFSIZ - (nfrontp - netobuf);
-  if (remaining == 0)
+  if (remaining == 0) {
+    va_end(args);
     return remaining;
+  }
   if ((n = vsnprintf(nfrontp, remaining, format, args)) >= remaining || n < 0)
     n = strlen(nfrontp);
   nfrontp += n;
