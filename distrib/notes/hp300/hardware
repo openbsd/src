@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.19 2005/02/27 22:13:44 miod Exp $
+dnl	$OpenBSD: hardware,v 1.20 2005/04/22 11:59:08 miod Exp $
 OpenBSD/MACHINE OSREV will run on most HP 9000/300- and 400-series
 machines.
 6MB of RAM should be sufficient to boot and a minimal system can probably
@@ -52,7 +52,7 @@ The following HP hardware is supported:
 	Input devices:
 		General interface supporting all HIL devices: keyboard,
 		2 and 3 button mice(***), and ID module.
-		400-series Apollo keyboards (bootblocks, kernel soon).
+		Apollo domain keyboards and mice (on models 4xx).
 
 	Miscellaneous:
 		Battery-backed real-time clock.
@@ -62,8 +62,8 @@ The following HP hardware is supported:
 		Printers and plotters on RS232 and HP-IB.
 		SCSI autochanger.
 
-(*) 400-series machines configured for Domain/OS are not fully supported,
-    notably, the keyboard doesn't work and the ROMs must be in `HP-UX mode'.
+(*) 400-series machines configured for Domain/OS need their ROMs to be
+    configured in `HP-UX mode'.
 
 (**) SCSI-II drives are known to work, though this may require changing a
      jumper on some drives.  See your hardware documentation for details.

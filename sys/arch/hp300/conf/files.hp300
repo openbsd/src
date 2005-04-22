@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.27 2005/03/08 20:00:23 tdeval Exp $
+#	$OpenBSD: files.hp300,v 1.28 2005/04/22 11:59:11 miod Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -49,14 +49,16 @@ attach	frodo at intio
 file	arch/hp300/dev/frodo.c			frodo
 
 # Apollo Keyboard and mouse
-device	dnkbd
+device	dnkbd: wskbddev, wsmousedev
 attach	dnkbd at frodo
 file	arch/hp300/dev/dnkbd.c			dnkbd	needs-flag
+file	arch/hp300/dev/dnkbdmap.c		dnkbd
 
 # Apollo APCI 8250-like UARTs
 device	apci
 attach	apci at frodo
 file	arch/hp300/dev/apci.c			apci	needs-flag
+file	arch/hp300/dev/apci_subr.c		apci | dnkbd
 
 # "workstation console" routines
 include	"dev/rasops/files.rasops"

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.23 2005/02/27 22:21:47 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.24 2005/04/22 11:59:11 miod Exp $
 #
 # Ram disk kernel.
 #
@@ -74,8 +74,10 @@ wskbd*		at hilkbd? mux 1
 frodo0		at intio?
 
 # 8250-like serial ports found on Frodo ASIC
-#dnkbd0		at frodo? offset 0x0	# Domain keyboard flavor
-apci*		at frodo?		# tty flavor
+dnkbd0		at frodo? 	# Domain keyboard flavor
+wskbd*		at dnkbd? mux 1
+#wsmouse*	at dnkbd? mux 0
+apci*		at frodo?	# tty flavor
 
 # Davinci framebuffer
 dvbox*		at intio?

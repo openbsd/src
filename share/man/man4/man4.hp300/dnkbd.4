@@ -1,7 +1,6 @@
-.\"	$OpenBSD: frodo.4,v 1.3 2005/04/22 11:59:10 miod Exp $
+.\"	$OpenBSD: dnkbd.4,v 1.1 2005/04/22 11:59:10 miod Exp $
 .\"
-.\" Copyright (c) 2003, Miodrag Vallat.
-.\" All rights reserved.
+.\" Copyright (c) 2005, Miodrag Vallat
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -25,26 +24,40 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd April 22, 2005
-.Dt FRODO 4 hp300
+.Dt DNKBD 4 HP300
 .Os
 .Sh NAME
-.Nm frodo
-.Nd HP 9000/4xx Frodo ASIC
+.Nm dnkbd
+.Nd Apollo Domain keyboard and mouse
 .Sh SYNOPSIS
-.Cd "frodo0 at intio?"
-.Cd "apci* at frodo?"
-.Cd "dnkbd0 at frodo?"
+.Cd "dnkbd0   at frodo?"
+.Cd "wskbd*   at dnkbd? mux 1"
+.Cd "wsmouse* at dnkbd? mux 0"
 .Sh DESCRIPTION
 The
-.Tn FRODO
-ASIC (or
-.Dq Apollo Utility chip )
-is found on HP 9000/4xx series workstations.
-It provides three
-.Xr apci 4
-serial ports, the first one being used to connect the
-Domain keyboard.
+.Nm
+driver supports the first 8250-like UART connected to the
+.Xr frodo 4
+Apollo utility chip;
+this UART is physically connected to the
+.Sq Domain keyboard
+connector.
+The Apollo mouse plugs itself in a dedicated connector on the top left of
+the keyboard.
+.Pp
+The
+.Nm
+driver doesn't provide any direct entry point, but makes its functionnality
+available through the internal
+.Xr wskbd 4
+and
+.Xr wsmouse 4
+interfaces.
 .Sh SEE ALSO
 .Xr apci 4 ,
-.Xr dnkbd 4 ,
-.Xr intro 4
+.Xr frodo 4 ,
+.Xr hilkbd 4 ,
+.Xr hilms 4 ,
+.Xr intro 4 ,
+.Xr wskbd 4 ,
+.Xr wsconsctl 8

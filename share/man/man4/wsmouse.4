@@ -1,4 +1,4 @@
-.\" $OpenBSD: wsmouse.4,v 1.9 2003/05/05 13:51:58 jmc Exp $
+.\" $OpenBSD: wsmouse.4,v 1.10 2005/04/22 11:59:10 miod Exp $
 .\" $NetBSD: wsmouse.4,v 1.3 1999/12/06 14:52:08 augustss Exp $
 .\"
 .\" Copyright (c) 1999
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 20, 1999
+.Dd April 22, 2005
 .Dt WSMOUSE 4
 .Os
 .Sh NAME
@@ -48,6 +48,10 @@
 (Apple ADB mouse)
 .Cd "wsmouse*	at hilms? mux 0"
 (HIL mouse)
+.Cd "wsmouse*   at zts? mux 0"
+(Zaurus touchscreen)
+.Cd "wsmouse*   at dnkbd? mux 0"
+(Apollo Domain mouse)
 .Sh DESCRIPTION
 The
 .Nm
@@ -74,6 +78,7 @@ utility gives access to these variables.
 .El
 .Sh SEE ALSO
 .Xr ams 4 ,
+.Xr dnkbd 4 ,
 .Xr hilms 4 ,
 .Xr intro 4 ,
 .Xr lms 4 ,
@@ -82,5 +87,6 @@ utility gives access to these variables.
 .Xr ums 4 ,
 .Xr wscons 4 ,
 .Xr wsmux 4 ,
+.Xr zts 4 ,
 .Xr wsconsctl 8 ,
 .Xr wsmoused 8

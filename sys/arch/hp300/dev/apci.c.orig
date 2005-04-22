@@ -1,4 +1,4 @@
-/*	$OpenBSD: apci.c,v 1.23 2005/04/22 11:59:11 miod Exp $	*/
+/*	$OpenBSD: apci.c.orig,v 1.1 2005/04/22 11:59:11 miod Exp $	*/
 /*	$NetBSD: apci.c,v 1.9 2000/11/02 00:35:05 eeh Exp $	*/
 
 /*-
@@ -115,7 +115,6 @@
 #include <hp300/dev/frodoreg.h>
 #include <hp300/dev/frodovar.h>
 #include <hp300/dev/apcireg.h>
-#include <hp300/dev/apcivar.h>
 #include <hp300/dev/dcareg.h>		/* register bit definitions */
 
 #ifdef DDB
@@ -158,6 +157,7 @@ void	apcimint(struct apci_softc *, u_char);
 int	apciparam(struct tty *, struct termios *);
 void	apcistart(struct tty *);
 int	apcimctl(struct apci_softc *, int, int);
+void	apciinit(struct apciregs *, int);
 void	apcitimeout(void *);
 
 cdev_decl(apci);
@@ -166,6 +166,26 @@ cdev_decl(apci);
 #define APCICUA(x)	(minor(x) & 0x80)
 
 int	apcidefaultrate = TTYDEF_SPEED;
+
+const struct speedtab apcispeedtab[] = {
+	{ 0,		0		},
+	{ 50,		APCIBRD(50)	},
+	{ 75,		APCIBRD(75)	},
+	{ 110,		APCIBRD(110)	},
+	{ 134,		APCIBRD(134)	},
+	{ 150,		APCIBRD(150)	},
+	{ 200,		APCIBRD(200)	},
+	{ 300,		APCIBRD(300)	},
+	{ 600,		APCIBRD(600)	},
+	{ 1200,		APCIBRD(1200)	},
+	{ 1800,		APCIBRD(1800)	},
+	{ 2400,		APCIBRD(2400)	},
+	{ 4800,		APCIBRD(4800)	},
+	{ 9600,		APCIBRD(9600)	},
+	{ 19200,	APCIBRD(19200)	},
+	{ 38400,	APCIBRD(38400)	},
+	{ -1,		-1		},
+};
 
 /*
  * Console support.
@@ -298,7 +318,7 @@ apciopen(dev, flag, mode, p)
 		 * The chip might be left in an inconsistent state
 		 * if it is read inadventently.
 		 */
-		apciinit(apci, apcidefaultrate, CFCR_8BITS);
+		apciinit(apci, apcidefaultrate);
 
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
@@ -843,6 +863,31 @@ apcimctl(sc, bits, how)
 }
 
 void
+apciinit(apci, rate)
+	struct apciregs *apci;
+	int rate;
+{
+	int s;
+	short stat;
+
+	s = splhigh();
+
+	rate = ttspeedtab(rate, apcispeedtab);
+
+	apci->ap_cfcr = CFCR_DLAB;
+	apci->ap_data = rate & 0xff;
+	apci->ap_ier = (rate >> 8) & 0xff;
+	apci->ap_cfcr = CFCR_8BITS;
+	apci->ap_ier = IER_ERXRDY | IER_ETXRDY;
+	apci->ap_fifo =
+	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1;
+	apci->ap_mcr = MCR_DTR | MCR_RTS;
+	delay(100);
+	stat = apci->ap_iir;
+	splx(s);
+}
+
+void
 apcitimeout(arg)
 	void *arg;
 {
@@ -939,7 +984,7 @@ apcicninit(cp)
 		return;
 
 	apci_cn = (struct apciregs *)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(1));
-	apciinit(apci_cn, apcidefaultrate, CFCR_8BITS);
+	apciinit(apci_cn, apcidefaultrate);
 	apciconsinit = 1;
 }
 
@@ -975,7 +1020,7 @@ apcicnputc(dev, c)
 	s = splhigh();
 
 	if (apciconsinit == 0) {
-		apciinit(apci_cn, apcidefaultrate, CFCR_8BITS);
+		apciinit(apci_cn, apcidefaultrate);
 		apciconsinit = 1;
 	}
 

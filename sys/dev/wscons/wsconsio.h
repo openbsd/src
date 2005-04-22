@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.34 2005/01/17 04:19:40 drahn Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.35 2005/04/22 11:59:11 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -115,6 +115,7 @@ struct wscons_event {
 #define		WSKBD_TYPE_GSC		14	/* HP PS/2 */
 #define		WSKBD_TYPE_LUNA		15	/* OMRON Luna */
 #define		WSKBD_TYPE_ZAURUS	16	/* Sharp Zaurus */
+#define		WSKBD_TYPE_DOMAIN	17	/* Apollo Domain */
 
 /* Manipulate the keyboard bell. */
 struct wskbd_bell_data {
@@ -195,6 +196,7 @@ struct wskbd_map_data {
 #define		WSMOUSE_TYPE_ADB	9	/* ADB */
 #define		WSMOUSE_TYPE_HIL	10	/* HP HIL */
 #define		WSMOUSE_TYPE_LUNA	11	/* OMRON Luna */
+#define		WSMOUSE_TYPE_DOMAIN	12	/* Apollo Domain */
 
 /* Set resolution.  Not applicable to all mouse types. */
 #define	WSMOUSEIO_SRES		_IOW('W', 33, u_int)
