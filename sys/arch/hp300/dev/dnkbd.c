@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbd.c,v 1.2 2005/04/22 12:42:34 miod Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.3 2005/04/22 13:13:19 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -315,23 +315,25 @@ dnsubmatch_mouse(struct device *parent, void *match, void *aux)
 int
 dnkbd_probe(struct dnkbd_softc *sc)
 {
-	int dat, rc;
+	int dat, rc, flags;
 	u_int8_t cmdbuf[2];
 	char rspbuf[MAX_IDENTLEN], *word, *end;
 	u_int i;
 	int s;
 
-	s = splhigh();
+	s = spltty();
+	flags = sc->sc_flags;
+	SET(sc->sc_flags, SF_POLLING);
+	sc->sc_state = STATE_CHANNEL;
+	splx(s);
 
 	/*
 	 * Switch keyboard to raw mode.
 	 */
 	cmdbuf[0] = DNCMD_RAW;
 	rc = dnkbd_send(sc->sc_regs, cmdbuf, 1);
-	if (rc != 0) {
-		splx(s);
-		return (rc);
-	}
+	if (rc != 0)
+		goto out;
 
 	/*
 	 * Send the identify command.
@@ -339,10 +341,8 @@ dnkbd_probe(struct dnkbd_softc *sc)
 	cmdbuf[0] = DNCMD_IDENT_1;
 	cmdbuf[1] = DNCMD_IDENT_2;
 	rc = dnkbd_send(sc->sc_regs, cmdbuf, 2);
-	if (rc != 0) {
-		splx(s);
-		return (rc);
-	}
+	if (rc != 0)
+		goto out;
 
 	for (i = 0; ; i++) {
 		dat = dnkbd_pollin(sc->sc_regs, 10000);
@@ -356,8 +356,8 @@ dnkbd_probe(struct dnkbd_softc *sc)
 	if (i >= sizeof(rspbuf)) {
 		printf("%s: unexpected identify string length %d\n",
 		    sc->sc_dev.dv_xname, i);
-		splx(s);
-		return (ENXIO);
+		rc = ENXIO;
+		goto out;
 	}
 
 	/*
@@ -388,8 +388,12 @@ dnkbd_probe(struct dnkbd_softc *sc)
 		printf("\n");
 	}
 
+out:
+	s = spltty();
+	sc->sc_flags = flags;
 	splx(s);
-	return (0);
+
+	return (rc);
 }
 
 /*
@@ -698,8 +702,13 @@ dnkbd_intr(void *v)
 		case IIR_RXRDY:
 		case IIR_RXTOUT:
 			/*
-			 * Data available. We process it byte by byte.
+			 * Data available. We process it byte by byte,
+			 * unless we are doing polling work...
 			 */
+			if (ISSET(sc->sc_flags, SF_POLLING)) {
+				return (1);
+			}
+
 			for (;;) {
 				c = apci->ap_data;
 				switch (dnkbd_input(sc, c)) {
