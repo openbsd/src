@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_irc.c,v 1.11 2002/06/15 08:01:59 brian Exp $
+ * $OpenBSD: alias_irc.c,v 1.12 2005/04/22 03:27:28 cloder Exp $
  */
 
 /* Alias_irc.c intercepts packages contain IRC CTCP commands, and
@@ -279,7 +279,12 @@ lFOUND_CTCP:
 					 DBprintf(("DCC packet construct failure.\n"));
 					 goto lBAD_CTCP;
 				 }
-				 iCopy += n;
+
+				 if ((iCopy += n) >= sizeof(newpacket)) {
+					 DBprintf(("DCC construct packet too long.\n"));
+					 goto lBAD_CTCP;
+				 }
+
 				 /* Done - truncated cases will be taken care of by lBAD_CTCP */
 				 DBprintf(("Aliased IP %lu and port %u\n", alias_address.s_addr, (unsigned)alias_port));
 			 }

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: mp.c,v 1.32 2003/04/07 23:58:53 deraadt Exp $
+ *	$OpenBSD: mp.c,v 1.33 2005/04/22 03:27:28 cloder Exp $
  */
 
 #include <sys/param.h>
@@ -1117,7 +1117,7 @@ mpserver_Init(struct mpserver *s)
 int
 mpserver_Open(struct mpserver *s, struct peerid *peer)
 {
-  int f, l;
+  int f, l, n;
   mode_t mask;
 
   if (s->fd != -1) {
@@ -1132,10 +1132,19 @@ mpserver_Open(struct mpserver *s, struct peerid *peer)
     return MPSERVER_FAILED;
   }
 
+  if (l >= sizeof s->socket.sun_path) {
+    log_Printf(LogERROR, "mpserver: snprintf() not enough room in buffer");
+    return MPSERVER_FAILED;
+  }
+
   for (f = 0; f < peer->enddisc.len && l < sizeof s->socket.sun_path - 2; f++) {
-    snprintf(s->socket.sun_path + l, sizeof s->socket.sun_path - l,
+    n = snprintf(s->socket.sun_path + l, sizeof s->socket.sun_path - l,
              "%02x", *(u_char *)(peer->enddisc.address+f));
-    l += 2;
+    if (n < 0 || n >= (sizeof s->socket.sun_path - l)) {
+      log_Printf(LogERROR, "mpserver: snprintf() not enough room in buffer");
+      return MPSERVER_FAILED;
+    }
+    l += n;
   }
 
   s->socket.sun_family = AF_LOCAL;
