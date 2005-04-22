@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.17 2005/04/22 01:01:17 brad Exp $
+.\"	$OpenBSD: event.3,v 1.18 2005/04/22 01:10:34 brad Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -274,18 +274,18 @@ and
 .Fn event_del
 and does not need to be reinitialized unless the function called and/or
 the argument to it are to be changed.
-However, when an 
+However, when an
 .Fa ev
-structure has been added to libevent using 
+structure has been added to libevent using
 .Fn event_add
-the structure must persist until the event occurs (assuming 
-.Fa EV_PERSIST 
-is not set) or is removed 
-using 
-.Fn event_del .  
+the structure must persist until the event occurs (assuming
+.Fa EV_PERSIST
+is not set) or is removed
+using
+.Fn event_del .
 You may not reuse the same
-.Fa ev 
-structure for multiple monitored descriptors; each descriptor 
+.Fa ev
+structure for multiple monitored descriptors; each descriptor
 needs its own
 .Fa ev .
 .Pp
@@ -431,11 +431,11 @@ This event base can be used in conjunction with calls to
 .Fn event_base_loop ,
 and
 .Fn event_base_loopexit .
-.Fn event_base_set 
+.Fn event_base_set
 should be called after preparing an event with
-.Fn event_set , 
+.Fn event_set ,
 as
-.Fn event_set 
+.Fn event_set
 assigns the provided event to the most recently created event base.
 .Pp
 .Sh BUFFERED EVENTS
