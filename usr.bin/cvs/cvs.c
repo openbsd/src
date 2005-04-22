@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.58 2005/04/22 03:38:56 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.59 2005/04/22 15:06:28 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -87,7 +87,7 @@ static TAILQ_HEAD(, cvs_var) cvs_variables;
 struct cvs_cmd cvs_cdt[] = {
 	{
 		CVS_OP_ADD, "add",      { "ad",  "new" }, &cvs_add, 
-		"[-k opt] [-m msg] file ...",
+		"[-k mode] [-m msg] file ...",
 		"k:m:",
 		"Add a new file/directory to the repository",
 		NULL
