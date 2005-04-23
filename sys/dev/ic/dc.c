@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.82 2005/04/23 04:55:44 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.83 2005/04/23 22:36:42 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -90,7 +90,6 @@
  */
 
 #include "bpfilter.h"
-#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1769,9 +1768,7 @@ hasmac:
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
-#if NVLAN > 0
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
-#endif
 
 	/* Do MII setup. If this is a 21143, check for a PHY on the
 	 * MII bus after applying any necessary fixups to twiddle the
@@ -2230,29 +2227,25 @@ dc_rxeof(sc)
 		 * If an error occurs, update stats, clear the
 		 * status word and leave the mbuf cluster in place:
 		 * it should simply get re-used next time this descriptor
-	 	 * comes up in the ring.
+		 * comes up in the ring.  However, don't report long
+		 * frames as errors since they could be VLANs.
 		 */
-		if (rxstat & DC_RXSTAT_RXERR
-#if NVLAN > 0
-		/*
-		 * If VLANs are enabled, allow frames up to 4 bytes
-		 * longer than the MTU. This should really check if
-		 * the giant packet has a vlan tag
-		 */
-		 && ((rxstat & (DC_RXSTAT_GIANT|DC_RXSTAT_LASTFRAG)) == 0
-		 && total_len <= ifp->if_mtu + 4) 
-#endif
-		    ) {
-			ifp->if_ierrors++;
-			if (rxstat & DC_RXSTAT_COLLSEEN)
-				ifp->if_collisions++;
-			dc_newbuf(sc, i, m);
-			if (rxstat & DC_RXSTAT_CRCERR) {
-				DC_INC(i, DC_RX_LIST_CNT);
-				continue;
-			} else {
-				dc_init(sc);
-				return;
+		if ((rxstat & DC_RXSTAT_RXERR)) {
+			if (!(rxstat & DC_RXSTAT_GIANT) ||
+			    (rxstat & (DC_RXSTAT_CRCERR | DC_RXSTAT_DRIBBLE |
+				       DC_RXSTAT_MIIERE | DC_RXSTAT_COLLSEEN |
+				       DC_RXSTAT_RUNT   | DC_RXSTAT_DE))) {
+				ifp->if_ierrors++;
+				if (rxstat & DC_RXSTAT_COLLSEEN)
+					ifp->if_collisions++;
+				dc_newbuf(sc, i, m);
+				if (rxstat & DC_RXSTAT_CRCERR) {
+					DC_INC(i, DC_RX_LIST_CNT);
+					continue;
+				} else {
+					dc_init(sc);
+					return;
+				}
 			}
 		}
 
@@ -3106,6 +3099,13 @@ dc_ioctl(ifp, command, data)
 		}
 		sc->dc_if_flags = ifp->if_flags;
 		error = 0;
+		break;
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
+			error = EINVAL;
+		} else if (ifp->if_mtu != ifr->ifr_mtu) {
+			ifp->if_mtu = ifr->ifr_mtu;
+		}
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
