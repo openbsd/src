@@ -3179,6 +3179,8 @@
 ./usr/share/man/cat3/evbuffer_write.0
 ./usr/share/man/cat3/event.0
 ./usr/share/man/cat3/event_add.0
+./usr/share/man/cat3/event_base_loop.0
+./usr/share/man/cat3/event_base_loopexit.0
 ./usr/share/man/cat3/event_del.0
 ./usr/share/man/cat3/event_dispatch.0
 ./usr/share/man/cat3/event_init.0
@@ -3187,6 +3189,7 @@
 ./usr/share/man/cat3/event_loopexit.0
 ./usr/share/man/cat3/event_once.0
 ./usr/share/man/cat3/event_pending.0
+./usr/share/man/cat3/event_priority_init.0
 ./usr/share/man/cat3/event_set.0
 ./usr/share/man/cat3/evtimer_add.0
 ./usr/share/man/cat3/evtimer_del.0
@@ -3543,6 +3546,7 @@
 ./usr/share/man/cat3/idlok.0
 ./usr/share/man/cat3/ieee.0
 ./usr/share/man/cat3/ieeef.0
+./usr/share/man/cat3/ievent_priority_set.0
 ./usr/share/man/cat3/if_freenameindex.0
 ./usr/share/man/cat3/if_indextoname.0
 ./usr/share/man/cat3/if_nameindex.0
