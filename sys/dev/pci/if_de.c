@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.65 2005/04/16 16:08:07 deraadt Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.66 2005/04/23 01:45:55 martin Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -5112,6 +5112,12 @@ tulip_pci_attach(TULIP_PCI_ATTACH_ARGS)
 	   printf(": unable to map device registers\n");
            return;
 	}
+
+	/* Make sure bus mastering is enabled. */
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+		       pci_conf_read(pa->pa_pc, pa->pa_tag,
+			             PCI_COMMAND_STATUS_REG) |
+				     PCI_COMMAND_MASTER_ENABLE);
     }
 
     tulip_initcsrs(sc, csr_base + csroffset, csrsize);
