@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.62 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.63 2005/04/23 22:51:28 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2730,20 +2730,22 @@ xl_attach(sc)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = xl_ioctl;
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
-	if (sc->xl_type == XL_TYPE_905B) {
+	if (sc->xl_type == XL_TYPE_905B)
 		ifp->if_start = xl_start_90xB;
-#ifndef XL905B_TXCSUM_BROKEN
-		ifp->if_capabilities |= IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
-		    IFCAP_CSUM_UDPv4;
-#endif
-	} else
+	else
 		ifp->if_start = xl_start;
 	ifp->if_watchdog = xl_watchdog;
 	ifp->if_baudrate = 10000000;
 	IFQ_SET_MAXLEN(&ifp->if_snd, XL_TX_LIST_CNT - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
+#ifndef XL905B_TXCSUM_BROKEN
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
+				IFCAP_CSUM_UDPv4;
+#endif
 
 	XL_SEL_WIN(3);
 	sc->xl_media = CSR_READ_2(sc, XL_W3_MEDIA_OPT);
