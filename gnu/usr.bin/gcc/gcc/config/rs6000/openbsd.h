@@ -93,3 +93,11 @@ Boston, MA 02111-1307, USA.  */
 
 /* Some code gets optimized incorrectly by move_movables() in loop.c */
 #define	BROKEN_MOVE_MOVABLES_P
+
+/* some stuff that must agree with ansi.h */
+#undef WCHAR_TYPE
+#define WCHAR_TYPE	"int"
+
+#undef WCHAR_TYPE_SIZE
+#define WCHAR_TYPE_SIZE	32
+
