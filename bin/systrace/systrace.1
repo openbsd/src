@@ -1,4 +1,4 @@
-.\"	$OpenBSD: systrace.1,v 1.40 2004/02/01 17:34:10 jmc Exp $
+.\"	$OpenBSD: systrace.1,v 1.41 2005/04/23 09:36:47 jmc Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .Nm systrace
 .Bk -words
 .Op Fl AaCeitUu
-.Op Fl c Ar uid:gid
+.Op Fl c Ar user:group
 .Op Fl d Ar policydir
 .Op Fl f Ar file
 .Op Fl g Ar gui
@@ -108,13 +108,13 @@ This may be useful, for example, in scenarios where
 .Nm
 is being heavily used.
 If a cradle server is not running, one is launched.
-.It Fl c Ar uid:gid
+.It Fl c Ar user:group
 Specifies the
-.Va uid
+.Va user
 and
-.Va gid
+.Va group
 that the monitored application should be executed with,
-which must be specified as nonnegative integers (not as names).
+which may be either non-negative integers or names.
 This is useful in conjunction with privilege elevation and requires
 root privilege.
 .It Fl d Ar policydir
