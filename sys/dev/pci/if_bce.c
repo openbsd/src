@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.5 2005/01/04 02:32:18 brad Exp $ */
+/* $OpenBSD: if_bce.c,v 1.6 2005/04/23 22:59:01 brad Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -36,7 +36,6 @@
  */
 
 #include "bpfilter.h"
-#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,6 +407,8 @@ bce_attach(parent, self, aux)
 	ifp->if_watchdog = bce_watchdog;
 	ifp->if_init = bce_init;
 	IFQ_SET_READY(&ifp->if_snd);
+
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
 	/* MAC address */
 	sc->bce_ac.ac_enaddr[0] =
@@ -971,11 +972,11 @@ bce_init(ifp)
 	/* setup packet filter */
 	bce_set_filter(ifp);
 
-	/* set max frame length, account for possible vlan tag */
+	/* set max frame length, account for possible VLAN tag */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_RX_MAX,
-	    ETHER_MAX_LEN + 32);
+	    ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_TX_MAX,
-	    ETHER_MAX_LEN + 32);
+	    ETHER_MAX_LEN + ETHER_VLAN_ENCAP_LEN);
 
 	/* set tx watermark */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_TX_WATER, 56);
