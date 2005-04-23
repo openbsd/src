@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.100 2005/04/21 10:50:50 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.101 2005/04/23 08:40:52 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -258,6 +258,12 @@ Create
 .Pa /etc/isakmpd/isakmpd.conf
 for machine A:
 .Bd -literal -offset indent
+# Filter incoming phase 1 negotiations so they are only
+# valid if negotiating with this local address.
+
+[General]
+Listen-On=		192.168.1.13
+
 # Incoming phase 1 negotiations are multiplexed on the
 # source IP address.  Phase 1 is used to set up a protected
 # channel just between the two gateway machines.
@@ -323,6 +329,12 @@ Create
 .Pa /etc/isakmpd/isakmpd.conf
 for machine B:
 .Bd -literal -offset indent
+# Filter incoming phase 1 negotiations so they are only
+# valid if negotiating with this local address.
+
+[General]
+Listen-On=		192.168.1.15
+
 # Incoming phase 1 negotiations are multiplexed on the
 # source IP address.  Phase 1 is used to set up a protected
 # channel just between the two gateway machines.
@@ -392,9 +404,11 @@ Note that the shared secret (the
 tag) must match between machineA and machineB.
 .Pp
 Due to the sensitive information contained in the configuration file,
-it must be installed without any permissions for "group" or "other".
+it must be owned by root and installed without any permissions for
+"group" or "other".
 .Pp
-.Dl # chmod og-rwx /etc/isakmpd/isakmpd.conf
+.Dl # chown root:wheel /etc/isakmpd/isakmpd.conf
+.Dl # chmod 0600 /etc/isakmpd/isakmpd.conf
 .It
 Create a simple
 .Pa /etc/isakmpd/isakmpd.policy
@@ -408,9 +422,11 @@ Conditions: app_domain == "IPsec policy" &&
 .Ed
 .Pp
 Due to the sensitive information contained in the policy file,
-it must be installed without any permissions for "group" or "other".
+it must be owned by root and installed without any permissions for
+"group" or "other".
 .Pp
-.Dl # chmod og-rwx /etc/isakmpd/isakmpd.policy
+.Dl # chown root:wheel /etc/isakmpd/isakmpd.policy
+.Dl # chmod 0600 /etc/isakmpd/isakmpd.policy
 .El
 .Ss Configuring Firewall Rules
 .Xr pf 4
