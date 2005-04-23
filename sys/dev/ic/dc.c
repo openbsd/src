@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.81 2005/03/31 15:38:15 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.82 2005/04/23 04:55:44 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1785,6 +1785,20 @@ hasmac:
 		sc->dc_pmode = DC_PMODE_MII;
 	}
 
+	/*
+	 * Setup General Purpose port mode and data so the tulip can talk
+	 * to the MII.  This needs to be done before mii_attach so that
+	 * we can actually see them.
+	 */
+	if (DC_IS_XIRCOM(sc)) {
+		CSR_WRITE_4(sc, DC_SIAGP, DC_SIAGP_WRITE_EN | DC_SIAGP_INT1_EN |
+		    DC_SIAGP_MD_GP2_OUTPUT | DC_SIAGP_MD_GP0_OUTPUT);
+		DELAY(10);
+		CSR_WRITE_4(sc, DC_SIAGP, DC_SIAGP_INT1_EN |
+		    DC_SIAGP_MD_GP2_OUTPUT | DC_SIAGP_MD_GP0_OUTPUT);
+		DELAY(10);
+	}
+
 	sc->sc_mii.mii_ifp = ifp;
 	sc->sc_mii.mii_readreg = dc_miibus_readreg;
 	sc->sc_mii.mii_writereg = dc_miibus_writereg;
@@ -1820,19 +1834,6 @@ hasmac:
 
 	if (DC_IS_DAVICOM(sc) && sc->dc_revision >= DC_REVISION_DM9102A)
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_HPNA_1,0,NULL);
-
-	if (DC_IS_XIRCOM(sc)) {
-		/*
-		 * setup General Purpose Port mode and data so the tulip
-		 * can talk to the MII.
-		 */
-		CSR_WRITE_4(sc, DC_SIAGP, DC_SIAGP_WRITE_EN | DC_SIAGP_INT1_EN |
-		    DC_SIAGP_MD_GP2_OUTPUT | DC_SIAGP_MD_GP0_OUTPUT);
-		DELAY(10);
-		CSR_WRITE_4(sc, DC_SIAGP, DC_SIAGP_INT1_EN |
-		    DC_SIAGP_MD_GP2_OUTPUT | DC_SIAGP_MD_GP0_OUTPUT);
-		DELAY(10);
-	}
 
 	if (DC_IS_ADMTEK(sc)) {
 		/*
