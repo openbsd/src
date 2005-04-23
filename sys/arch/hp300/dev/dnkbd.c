@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbd.c,v 1.3 2005/04/22 13:13:19 miod Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.4 2005/04/23 06:54:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -353,7 +353,7 @@ dnkbd_probe(struct dnkbd_softc *sc)
 			rspbuf[i] = dat;
 	}
 
-	if (i >= sizeof(rspbuf)) {
+	if (i > sizeof(rspbuf) || i == 0) {
 		printf("%s: unexpected identify string length %d\n",
 		    sc->sc_dev.dv_xname, i);
 		rc = ENXIO;
@@ -364,8 +364,9 @@ dnkbd_probe(struct dnkbd_softc *sc)
 	 * Make sure the identification string is NULL terminated
 	 * (overwriting the keyboard mode byte if necessary).
 	 */
-	if (i == sizeof(rspbuf) && dat != 0)
-		rspbuf[--i] = 0;
+	i--;
+	if (rspbuf[i] != 0)
+		rspbuf[i] = 0;
 
 	/*
 	 * Now display the identification strings, if it changed.
@@ -376,6 +377,7 @@ dnkbd_probe(struct dnkbd_softc *sc)
 
 		if (cold == 0)
 			printf("%s: ", sc->sc_dev.dv_xname);
+		printf("model ");
 		word = rspbuf;
 		for (i = 0; i < 3; i++) {
 			end = strchr(word, '\r');
@@ -399,12 +401,18 @@ out:
 /*
  * State machine.
  *
- * The keyboard may feed us the following sequences:
- * - a raw key code, in the range 0x01-0x7e, or'ed with 0x80 if key release.
- * - the key repeat sequence 0x7f.
- * - a 3 byte mouse sequence.
- * - a 2 byte channel sequence (0xff followed by the channel number) telling
- *   us which device the following input will come from.
+ * In raw mode, the keyboard may feed us the following sequences:
+ * - on the keyboard channel:
+ *   + a raw key code, in the range 0x01-0x7e, or'ed with 0x80 if key release.
+ *   + the key repeat sequence 0x7f.
+ * - on the mouse channel:
+ *   + a 3 byte mouse sequence (buttons state, dx move, dy move).
+ * - at any time:
+ *   + a 2 byte channel sequence (0xff followed by the channel number) telling
+ *     us which device the following input will come from.
+ *
+ * Older keyboards reset the channel to the keyboard (by sending ff 01) after
+ * every mouse packet.
  */
 
 dnevent
@@ -538,12 +546,12 @@ dnevent_kbd(struct dnkbd_softc *sc, int dat)
 			}
 		}
 
-		s = spltty();
-		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
-		splx(s);
-		timeout_del(&sc->sc_rawrepeat_ch);
-		sc->sc_nrep = j;
 		if (j != 0) {
+			s = spltty();
+			wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
+			splx(s);
+			timeout_del(&sc->sc_rawrepeat_ch);
+			sc->sc_nrep = j;
 			timeout_add(&sc->sc_rawrepeat_ch,
 			    (hz * REP_DELAY1) / 1000);
 		}
