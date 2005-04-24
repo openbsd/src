@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.40 2005/02/04 01:07:39 kurt Exp $	*/
+/*	$OpenBSD: an.c,v 1.41 2005/04/24 00:25:05 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -43,7 +43,7 @@
  */
 
 /*
- * The Aironet 4500/4800 series cards some in PCMCIA, ISA and PCI form.
+ * The Aironet 4500/4800 series cards come in PCMCIA, ISA and PCI form.
  * This driver supports all three device types (PCI devices are supported
  * through an extra PCI shim: /sys/pci/if_an_p.c). ISA devices can be
  * supported either using hard-coded IO port/IRQ settings or via Plug
@@ -55,7 +55,6 @@
  * device and a PCMCIA to ISA or PCMCIA to PCI adapter card. There are
  * a couple of important differences though:
  *
- * - Lucent doesn't currently offer a PCI card, however Aironet does
  * - Lucent ISA card looks to the host like a PCMCIA controller with
  *   a PCMCIA WaveLAN card inserted. This means that even desktop
  *   machines need to be configured with PCMCIA support in order to
@@ -71,9 +70,7 @@
  * programmed for PCMCIA operation), both Vpp1 and Vpp2 have to be
  * set to 5 volts. FreeBSD by default doesn't set the Vpp voltages,
  * which leaves the card in ISA/PCI mode, which prevents it from
- * being activated as an PCMCIA device. Consequently, /sys/pccard/pccard.c
- * has to be patched slightly in order to enable the Vpp voltages in
- * order to make the Aironet PCMCIA cards work.
+ * being activated as an PCMCIA device.
  *
  * Note that some PCMCIA controller software packages for Windows NT
  * fail to set the voltages as well.
@@ -1366,7 +1363,7 @@ an_shutdown(self)
  * a small fixed cache.  The cache wraps if > MAX slots
  * used.  The cache may be zeroed out to start over.
  * Two simple filters exist to reduce computation:
- * 1. ip only (literally 0x800) which may be used
+ * 1. ip only (literally 0x800, ETHERTYPE_IP) which may be used
  * to ignore some packets.  It defaults to ip only.
  * it could be used to focus on broadcast, non-IP 802.11 beacons.
  * 2. multicast/broadcast only.  This may be used to
@@ -1431,7 +1428,7 @@ an_cache_store(sc, eh, m, rx_quality)
 {
 	static int cache_slot = 0;	/* use this cache entry */
 	static int wrapindex = 0;       /* next "free" cache entry */
-	int i, saanp = 0;
+	int i, type_ipv4 = 0;
 
 	/* filters:
 	 * 1. ip only
@@ -1439,11 +1436,11 @@ an_cache_store(sc, eh, m, rx_quality)
 	 * keep multicast only.
 	 */
 
-	if ((ntohs(eh->ether_type) == 0x800))
-		saanp = 1;
+	if ((ntohs(eh->ether_type) == ETHERTYPE_IP))
+		type_ipv4 = 1;
 
 	/* filter for ip packets only */
-	if (sc->an_cache_iponly && !saanp)
+	if (sc->an_cache_iponly && !type_ipv4)
 		return;
 
 	/* filter for broadcast/multicast only */
@@ -1512,7 +1509,7 @@ an_cache_store(sc, eh, m, rx_quality)
 	 *  .mac src
 	 *  .signal, etc.
 	 */
-	if (saanp) {
+	if (type_ipv4) {
 		struct ip *ip = (struct ip *)(mtod(m, char *) + ETHER_HDR_LEN);
 		sc->an_sigcache[cache_slot].ipsrc = ntohl(ip->ip_src.s_addr);
 	}
