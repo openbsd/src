@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.30 2005/04/24 01:56:36 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.31 2005/04/24 02:06:27 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -195,6 +195,13 @@ cvs_commit_file(CVSFILE *cf, void *arg)
 			if (cvs_sendentry(root, cf) < 0) {
 				return (CVS_EX_PROTO);
 			}
+
+			/* if it's removed, don't bother sending a
+			 * Modified request together with the file its
+			 * contents.
+			 */
+			if (cf->cf_cvstat == CVS_FST_REMOVED)
+				return (0);
 
 			if (cvs_sendreq(root, CVS_REQ_MODIFIED,
 			    CVS_FILE_NAME(cf)) < 0) {
