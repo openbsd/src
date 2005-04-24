@@ -1,4 +1,4 @@
-/*	$OpenBSD: ztsscale.c,v 1.2 2005/04/24 18:50:10 deraadt Exp $	*/
+/*	$OpenBSD: ztsscale.c,v 1.3 2005/04/24 23:02:40 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Matthieu Herrb
@@ -32,29 +32,37 @@
 #include <string.h>
 #include <unistd.h>
 
-#define WIDTH 640
-#define HEIGHT 480
-#define BLACK 0x0
-#define WHITE 0xffff
+#define WIDTH	640
+#define HEIGHT	480
+#define BLACK	0x0
+#define WHITE	0xffff
 
 #define ADDR(x,y) (HEIGHT*(x)+(y))
 
 unsigned short *mapaddr, *save;
-int fd;
-int xc[] = { 25, 25, 320, 615, 615 };
-int yc[] = { 24, 455, 240, 25, 455 };
+int		fd;
+int		xc[] = { 25, 25, 320, 615, 615 };
+int		yc[] = { 25, 455, 240, 25, 455 };
 
-struct ctlname topname[] = CTL_NAMES;
-struct ctlname machdepname[] = CTL_MACHDEP_NAMES;
+struct ctlname	topname[] = CTL_NAMES;
+struct ctlname	machdepname[] = CTL_MACHDEP_NAMES;
+
+void		cross(unsigned short *, int, int);
+void		wait_event(int, int *, int *);
+void		save_screen(void);
+void		restore_screen(void);
+void		sighandler(int);
+int		main(int, char *[]);
+__dead void	usage(void);
 
 void
 cross(unsigned short *fb, int x, int y)
 {
 	int i;
 
-	y = 480 - y;
+	y = HEIGHT - y;
 	for (i = x - 20; i <= x + 20; i++)
-		fb[ADDR(i,y)] = BLACK;
+		fb[ADDR(i, y)] = BLACK;
 	for (i = y - 20; i <= y + 20; i++)
 		fb[ADDR(x, i)] = BLACK;
 }
@@ -149,6 +157,10 @@ main(int argc, char *argv[])
 		int ts_maxy;
 	} ts;
 
+	if (argc != 1)
+		usage();
+
+again:
 	fd = open("/dev/ttyC0", O_RDWR);
 	if (fd < 0) {
 		err(2, "open /dev/ttyC0");
@@ -174,6 +186,7 @@ main(int argc, char *argv[])
 		wait_event(mfd, &x[i], &y[i]);
 	}
 	restore_screen();
+	close(mfd);
 	close(fd);
 
 	mib[0] = CTL_MACHDEP;
@@ -185,33 +198,41 @@ main(int argc, char *argv[])
 
 	bzero(&ts, sizeof(ts));
 
-	a1 = (x[4] - x[0])/(xc[4] - xc[0]);
+	/* get touch pad resolution to screen resolution ratio */
+	a1 = (double)(x[4] - x[0])/(double)(xc[4] - xc[0]);
+	a2 = (double)(x[3] - x[1])/(double)(xc[3] - xc[1]);
+	/* get the minimum pad position on the X-axis */
 	b1 = x[0] - a1*xc[0];
-	a2 = (x[3] - x[1])/(xc[3] - xc[1]);
 	b2 = x[1] - a2*xc[1];
+	/* use the average ratio and average minimum position */
 	a = (a1+a2)/2.0;
 	b = (b1+b2)/2.0;
-	errx =  a*WIDTH/2+b - x[2];
-	if (fabs(errx) > (a*WIDTH+b)*.05) {
+	errx = a*WIDTH/2+b - x[2];
+	if (fabs(errx) > (a*WIDTH+b)*.01) {
 		fprintf(stderr, "X error (%.2f) too high, try again\n",
 		    fabs(errx));
-		exit(2);
+		sleep(2);
+		goto again;
 	}
 
 	ts.ts_minx = (int)(b+0.5);
 	ts.ts_maxx = (int)(a*WIDTH+b+0.5);
 
-	a1 = (y[4] - y[0])/(yc[4] - yc[0]);
+	/* get touch pad resolution to screen resolution ratio */
+	a1 = (double)(y[4] - y[0])/(double)(yc[4] - yc[0]);
+	a2 = (double)(y[3] - y[1])/(double)(yc[3] - yc[1]);
+	/* get the minimum pad position on the Y-axis */
 	b1 = y[0] - a1*yc[0];
-	a2 = (y[3] - y[1])/(yc[3] - yc[1]);
 	b2 = y[1] - a2*yc[1];
+	/* use the average ratio and average minimum position */
 	a = (a1+a2)/2.0;
 	b = (b1+b2)/2.0;
 	erry = a*HEIGHT/2+b - y[2];
-	if (fabs(erry) > (a*HEIGHT+b)*.05) {
+	if (fabs(erry) > (a*HEIGHT+b)*.01) {
 		fprintf(stderr, "Y error (%.2f) too high, try again\n",
 		    fabs(erry));
-		exit(2);
+		sleep(2);
+		goto again;
 	}
 
 	ts.ts_miny = (int)(b+0.5);
@@ -222,4 +243,13 @@ main(int argc, char *argv[])
 	    ts.ts_miny, ts.ts_maxy);
 
 	return 0;
+}
+
+__dead void
+usage(void)
+{
+	extern char *__progname;
+
+	(void)fprintf(stderr, "usage: %s\n", __progname);
+	exit(2);
 }
