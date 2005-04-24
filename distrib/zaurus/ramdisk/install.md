@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.4 2005/04/02 14:34:46 krw Exp $
+#	$OpenBSD: install.md,v 1.5 2005/04/24 18:51:00 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -123,4 +123,12 @@ __EOT
 }
 
 md_congrats() {
+	echo 'Time to calibrare the touch screen... press on the cross hairs please'
+	sleep 3
+	val=`ztsscale`
+	case $? in
+	0)
+		echo $val >> /mnt/etc/sysctl.conf
+		;;
+	esac
 }
