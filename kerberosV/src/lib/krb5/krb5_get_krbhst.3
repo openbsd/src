@@ -35,10 +35,10 @@
 .Dt KRB5_GET_KRBHST 3
 .Os HEIMDAL
 .Sh NAME
-.Nm krb5_get_krbhst
-.Nm krb5_get_krb_admin_hst
-.Nm krb5_get_krb_changepw_hst
-.Nm krb5_get_krb524hst
+.Nm krb5_get_krbhst ,
+.Nm krb5_get_krb_admin_hst ,
+.Nm krb5_get_krb_changepw_hst ,
+.Nm krb5_get_krb524hst ,
 .Nm krb5_free_krbhst
 .Nd lookup Kerberos KDC hosts
 .Sh LIBRARY
@@ -71,7 +71,7 @@ is a
 terminated list of strings, pointing to the requested Kerberos hosts. These should be freed with
 .Fn krb5_free_krbhst
 when done with.
-.Sh EXAMPLE
+.Sh EXAMPLES
 The following code will print the KDCs of the realm
 .Dq MY.REALM .
 .Bd -literal -offset indent

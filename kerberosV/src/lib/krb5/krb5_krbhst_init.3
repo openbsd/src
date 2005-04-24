@@ -89,7 +89,7 @@ functions.
 .Pp
 For each call to
 .Fn krb5_krbhst_next
-information a new host is returned. The former function returns in
+information on a new host is returned. The former function returns in
 .Fa host
 a pointer to a structure containing information about the host, such
 as protocol, hostname, and port:
@@ -134,7 +134,7 @@ that will return a
 that can then be used for communicating with the server mentioned.
 .Sh EXAMPLE
 The following code will print the KDCs of the realm
-.Dq MY.REALM .
+.Dq MY.REALM :
 .Bd -literal -offset indent
 krb5_krbhst_handle handle;
 char host[MAXHOSTNAMELEN];

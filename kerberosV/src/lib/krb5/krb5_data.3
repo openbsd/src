@@ -35,14 +35,14 @@
 .Dt KRB5_DATA 3
 .Os HEIMDAL
 .Sh NAME
-.Nm krb5_data
-.Nm krb5_data_zero
-.Nm krb5_data_free
-.Nm krb5_free_data_contents
-.Nm krb5_free_data
-.Nm krb5_data_alloc
-.Nm krb5_data_realloc
-.Nm krb5_data_copy
+.Nm krb5_data ,
+.Nm krb5_data_zero ,
+.Nm krb5_data_free ,
+.Nm krb5_free_data_contents ,
+.Nm krb5_free_data ,
+.Nm krb5_data_alloc ,
+.Nm krb5_data_realloc ,
+.Nm krb5_data_copy ,
 .Nm krb5_copy_data
 .Nd operates on the Kerberos datatype krb5_data.
 .Sh LIBRARY
@@ -99,13 +99,13 @@ frees the data in
 .Fa p
 and
 .Fa p
-itself .
+itself.
 .Pp
 .Fn krb5_data_alloc
 allocates
 .Fa len
 bytes in
-.Fa p
+.Fa p . 
 Returns 0 or an error.
 .Pp
 .Fn  krb5_data_realloc

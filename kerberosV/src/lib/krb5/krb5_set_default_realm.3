@@ -78,7 +78,7 @@ frees all memory allocated by
 .Pp
 .Fn krb5_get_default_realm
 returns the first default realm for this host.
-The realm returned should be free with
+The realm returned should be freed with
 .Fn free .
 .Pp
 .Fn krb5_get_default_realms
@@ -87,7 +87,7 @@ returns a
 terminated list of default realms for this context.
 Realms returned by
 .Fn krb5_get_default_realms
-should be free with
+should be freed with
 .Fn krb5_free_host_realm .
 .Pp
 .Fn krb5_get_host_realm

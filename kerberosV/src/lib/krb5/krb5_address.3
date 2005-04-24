@@ -213,7 +213,7 @@ from
 .Fa addr
 and
 .Fa port .
-.Fa Sa_size
+.Fa sa_size
 should be initially contain the size of the
 .Fa sa ,
 and after the call, it will contain the actual length of the address.
@@ -228,7 +228,7 @@ returns
 .Dv TRUE
 for all
 .Fa sa
-that for that the kerberos library thinks are uninteresting.
+that the kerberos library thinks are uninteresting.
 One example are link local addresses.
 .Pp
 .Fn krb5_h_addr2sockaddr
@@ -243,12 +243,10 @@ and the
 .Xr gethostbyname 3 )
 .Fa h_addr_list 
 component.
-.Fa Sa_size
-should be initially contain the size of the
+.Fa sa_size
+should initially contain the size of the
 .Fa sa ,
 and after the call, it will contain the actual length of the address.
-.Fa sa
-argument.
 .Pp
 .Fn krb5_h_addr2addr
 works like
@@ -256,16 +254,16 @@ works like
 with the exception that it operates on a
 .Li krb5_address
 instead of a
-.Li struct sockaddr
+.Li struct sockaddr .
 .Pp
 .Fn krb5_anyaddr
 fills in a
 .Li "struct sockaddr"
 .Fa sa
 that can be used to
-.Xf bind 3
+.Xr bind 2
 to.
-.Fa Sa_size
+.Fa sa_size
 should be initially contain the size of the
 .Fa sa ,
 and after the call, it will contain the actual length of the address.
@@ -273,38 +271,39 @@ and after the call, it will contain the actual length of the address.
 .Fn krb5_print_address
 prints the address in
 .Fa addr
-to the a string
+to the string
 .Fa string
 that have the length
 .Fa len .
 If
 .Fa ret_len
-if not
+is not
 .Dv NULL ,
-it will be filled in length of the string.
+it will be filled with the length of the string.
 .Pp
 .Fn krb5_parse_address
-Returns the resolving a hostname in
+Returns the resolved hostname in
 .Fa string
 to the
 .Li krb5_addresses
 .Fa addresses .
 .Pp
 .Fn krb5_address_order
-compares to addresses
+compares the addresses
 .Fa addr1
 and
 .Fa addr2
 so that it can be used for sorting addresses. If the addresses are the
 same address
-.Fa krb5_address_order will be return 0.
+.Fa krb5_address_order
+will return 0.
 .Pp
 .Fn krb5_address_compare
 compares the addresses
 .Fa addr1
 and
 .Fa addr2 .
-returns
+Returns
 .Dv TRUE
 if the two addresses are the same.
 .Pp
