@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.31 2005/04/11 17:24:10 canacar Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.32 2005/04/24 20:56:48 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -1917,7 +1917,7 @@ sppp_lcp_up(struct sppp *sp)
 	STDDCL;
 	struct timeval tv;
 
-	if (ifp->if_flags & PP_CISCO)
+	if (sp->pp_flags & PP_CISCO)
 		return;
 
  	sp->pp_alivecnt = 0;
@@ -1960,7 +1960,7 @@ sppp_lcp_down(struct sppp *sp)
 {
 	STDDCL;
 
-	if (ifp->if_flags & PP_CISCO)
+	if (sp->pp_flags & PP_CISCO)
 		return;
 
 	sppp_down_event(&lcp, sp);
