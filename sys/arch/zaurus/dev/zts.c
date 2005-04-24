@@ -1,4 +1,4 @@
-/* $OpenBSD: zts.c,v 1.8 2005/04/19 21:54:48 djm Exp $ */
+/* $OpenBSD: zts.c,v 1.9 2005/04/24 18:55:49 uwe Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -31,6 +31,10 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsmousevar.h>
 
+#include <dev/wscons/wsdisplayvar.h>
+#include <arm/xscale/pxa2x0var.h>
+#include <arm/xscale/pxa2x0_lcd.h>
+
 /*
  * ADS784x touch screen controller
  */
@@ -48,6 +52,22 @@
 #define POLL_TIMEOUT_RATE1	(hz / 100) /* XXX every tick */
 
 #define CCNT_HS_400_VGA_C3K 6250	/* 15.024us */
+
+/* XXX need to ask zaurus_lcd.c for the screen dimension */
+#define CURRENT_DISPLAY (&sharp_zaurus_C3000)
+extern const struct lcd_panel_geometry sharp_zaurus_C3000;
+
+/* Settable via sysctl. */
+int	zts_rawmode;
+struct ztsscale {
+	int ts_minx;
+	int ts_maxx;
+	int ts_miny;
+	int ts_maxy;
+} zts_scale = {
+	/* C3000 */
+	209, 3620, 312, 3780
+};
 
 int	zts_match(struct device *, void *, void *);
 void	zts_attach(struct device *, struct device *, void *);
@@ -68,6 +88,8 @@ struct zts_softc {
 	struct device *sc_wsmousedev;
 	int sc_oldx;
 	int sc_oldy;
+	int sc_resx;
+	int sc_resy;
 };
 
 struct cfattach zts_ca = {
@@ -116,6 +138,9 @@ zts_attach(struct device *parent, struct device *self, void *aux)
 	a.accesscookie = sc;
 	printf("\n");
 		
+	sc->sc_resx = CURRENT_DISPLAY->panel_height;
+	sc->sc_resy = CURRENT_DISPLAY->panel_width;
+
 	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 }
 
@@ -487,8 +512,18 @@ zts_irq(void *v)
 	pxa2x0_gpio_clear_intr(GPIO_TP_INT_C3K);
 	splx(s);
 	
-	if (down)
+	if (down) {
 		zts_avgpos(&tp);
+		if (!zts_rawmode) {
+			struct ztsscale *tsp = &zts_scale;
+
+			/* Scale down to the screen resolution. */
+			tp.x = ((tp.x - tsp->ts_minx) * sc->sc_resx) /
+			    (tsp->ts_maxx - tsp->ts_minx);
+			tp.y = ((tp.y - tsp->ts_miny) * sc->sc_resy) /
+			    (tsp->ts_maxy - tsp->ts_miny);
+		}
+	}
 
 	if (zkbd_modstate != 0 && down) {
 		if(zkbd_modstate & (1 << 1)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.8 2005/04/19 15:14:11 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.9 2005/04/24 18:55:49 uwe Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -62,7 +62,9 @@
 #define	CPU_ALLOWAPERTURE	6	/* int: allow mmap of /dev/xf86 */
 #define CPU_APMWARN		7	/* APM battery warning percentage */
 #define CPU_KBDRESET		8	/* int: console keyboard reset */
-#define	CPU_MAXID		9	/* number of valid machdep ids */
+#define CPU_ZTSRAWMODE		9	/* int: zts returns unscaled x/y */
+#define CPU_ZTSSCALE		10	/* struct: zts scaling parameters */
+#define	CPU_MAXID		11	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -74,6 +76,8 @@
 	{ "allowaperture", CTLTYPE_INT }, \
 	{ "apmwarn", CTLTYPE_INT }, \
 	{ "kbdreset", CTLTYPE_INT }, \
+	{ "ztsrawmode", CTLTYPE_INT }, \
+	{ "ztsscale", CTLTYPE_STRUCT }, \
 }    
 
 #ifdef _KERNEL
