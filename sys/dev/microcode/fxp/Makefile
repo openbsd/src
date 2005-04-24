@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2004/12/22 12:08:23 deraadt Exp $
+# $OpenBSD: Makefile,v 1.3 2005/04/24 20:41:34 brad Exp $
 
 NOPROG=
 NOMAN=
@@ -10,7 +10,7 @@ NOMAN=
     (${MACHINE} == "hppa") || (${MACHINE} == "hppa64") || \
     (${MACHINE} == "sgi")
 
-FIRM=  fxp-d101a fxp-d101b0 fxp-d101ma fxp-d101s fxp-d102 fxp-d102c
+FIRM=  fxp-d101a fxp-d101b0 fxp-d101ma fxp-d101s fxp-d102 fxp-d102c fxp-d102e
 
 CLEANFILES+= ${FIRM} build
 

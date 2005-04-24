@@ -1,8 +1,8 @@
-/*	$OpenBSD: build.c,v 1.1 2004/12/22 12:02:47 grange Exp $	*/
+/*	$OpenBSD: build.c,v 1.2 2005/04/24 20:41:34 brad Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
- * Copyright (c) 2004 Dmitry Bogdan
+ * Copyright (c) 2004 Dmitry Bogdan <dsb@imcs.dvgu.ru>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,6 +30,7 @@ const u_int32_t fxp_ucode_d101ma[] = D101M_B_RCVBUNDLE_UCODE;
 const u_int32_t fxp_ucode_d101s[] = D101S_RCVBUNDLE_UCODE;
 const u_int32_t fxp_ucode_d102[] = D102_B_RCVBUNDLE_UCODE;
 const u_int32_t fxp_ucode_d102c[] = D102_C_RCVBUNDLE_UCODE;
+const u_int32_t fxp_ucode_d102e[] = D102_E_RCVBUNDLE_UCODE;
 
 #define UCODE(x)	x, sizeof(x)
 
@@ -60,6 +61,7 @@ main(int argc, char *argv[])
 	output("fxp-d101s", UCODE(fxp_ucode_d101s));
 	output("fxp-d102", UCODE(fxp_ucode_d102));
 	output("fxp-d102c", UCODE(fxp_ucode_d102c));
+	output("fxp-d102e", UCODE(fxp_ucode_d102e));
 
 	return (0);
 }
