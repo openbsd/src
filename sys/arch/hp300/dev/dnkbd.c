@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbd.c,v 1.4 2005/04/23 06:54:47 miod Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.5 2005/04/24 23:59:37 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -389,6 +389,11 @@ dnkbd_probe(struct dnkbd_softc *sc)
 		}
 		printf("\n");
 	}
+
+	/*
+	 * Ready to work, the default channel is the keyboard.
+	 */
+	sc->sc_state = STATE_KEYBOARD;
 
 out:
 	s = spltty();
