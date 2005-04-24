@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.120 2005/04/24 18:55:49 uwe Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.121 2005/04/24 21:48:15 deraadt Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.120 2005/04/24 18:55:49 uwe Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.121 2005/04/24 21:48:15 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -971,6 +971,7 @@ parse(char *string, int flags)
 		}
 		return;
 	}
+#ifdef CPU_ZTSSCALE
 	if (special & ZTSSCALE) {
 		struct ztsscale *tsp;
 
@@ -995,7 +996,7 @@ parse(char *string, int flags)
 		}
 		return;
 	}
-
+#endif
 	switch (type) {
 	case CTLTYPE_INT:
 		if (newsize == 0) {
