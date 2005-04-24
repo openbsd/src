@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.17 2004/01/14 20:50:46 miod Exp $	*/
+/*	$OpenBSD: asc.c,v 1.18 2005/04/24 22:25:12 martin Exp $	*/
 /*	$NetBSD: asc.c,v 1.20 1997/02/24 05:47:33 scottr Exp $	*/
 
 /*
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Scott Reynolds for
- *      the NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -86,11 +82,12 @@
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
-#include "ascvar.h"
-#include "obiovar.h"
+#include <mac68k/dev/ascvar.h>
+#include <mac68k/dev/obiovar.h>
 
-#define	MAC68K_ASC_BASE	0x50f14000
-#define	MAC68K_ASC_LEN	0x01000
+#define	MAC68K_ASC_BASE		0x50f14000
+#define	MAC68K_IIFX_ASC_BASE	0x50f10000
+#define	MAC68K_ASC_LEN		0x01000
 
 static u_int8_t		asc_wave_tab[0x800];
 
@@ -119,8 +116,14 @@ ascmatch(parent, vcf, aux)
 	bus_space_handle_t bsh;
 	int rval = 0;
 
-	addr = (bus_addr_t)(oa->oa_addr != (-1) ?
-	    oa->oa_addr : MAC68K_ASC_BASE);
+	if (oa->oa_addr != (-1))
+		addr = (bus_addr_t)oa->oa_addr;
+	else if (current_mac_model->machineid == MACH_MACTV)
+		return 0;
+	else if (current_mac_model->machineid == MACH_MACIIFX)
+		addr = (bus_addr_t)MAC68K_IIFX_ASC_BASE;
+	else
+		addr = (bus_addr_t)MAC68K_ASC_BASE;
 
 	if (bus_space_map(oa->oa_tag, addr, MAC68K_ASC_LEN, 0, &bsh))
 		return (0);
@@ -146,8 +149,12 @@ ascattach(parent, self, aux)
 	int i;
 
 	sc->sc_tag = oa->oa_tag;
-	addr = (bus_addr_t)(oa->oa_addr != (-1) ?
-	    oa->oa_addr : MAC68K_ASC_BASE);
+	if (oa->oa_addr != (-1))
+		addr = (bus_addr_t)oa->oa_addr;
+	else if (current_mac_model->machineid == MACH_MACIIFX)
+		addr = (bus_addr_t)MAC68K_IIFX_ASC_BASE;
+	else
+		addr = (bus_addr_t)MAC68K_ASC_BASE;
 	if (bus_space_map(sc->sc_tag, addr, MAC68K_ASC_LEN, 0,
 	    &sc->sc_handle)) {
 		printf(": can't map memory space\n");
@@ -155,6 +162,7 @@ ascattach(parent, self, aux)
 	}
 	sc->sc_open = 0;
 	sc->sc_ringing = 0;
+	timeout_set(&sc->sc_bell_tmo, asc_stop_bell, sc);
 
 	for (i = 0; i < 256; i++) {	/* up part of wave, four voices? */
 		asc_wave_tab[i] = i / 4;
@@ -174,7 +182,6 @@ ascattach(parent, self, aux)
 		printf(" at %x", oa->oa_addr);
 	printf("\n");
 
-	timeout_set(&sc->sc_bell_tmo, asc_stop_bell, sc);
 	mac68k_set_bell_callback(asc_ring_bell, sc);
 }
 
@@ -328,9 +335,9 @@ asc_ring_bell(arg, freq, length, volume)
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x80f, 0);
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x802, 2); /* sampled */
 		bus_space_write_1(sc->sc_tag, sc->sc_handle, 0x801, 2); /* enable sampled */
+		sc->sc_ringing = 1;
+		timeout_add(&sc->sc_bell_tmo, length);
 	}
-	sc->sc_ringing++;
-	timeout_add(&sc->sc_bell_tmo, length);
 
 	return (0);
 }
@@ -358,6 +365,5 @@ asckqfilter(dev, kn)
 	dev_t dev;
 	struct knote *kn;
 {
-
 	return (1);
 }

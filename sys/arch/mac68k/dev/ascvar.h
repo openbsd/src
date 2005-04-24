@@ -1,4 +1,4 @@
-/*	$OpenBSD: ascvar.h,v 1.6 2003/09/23 16:51:11 millert Exp $	*/
+/*	$OpenBSD: ascvar.h,v 1.7 2005/04/24 22:25:13 martin Exp $	*/
 /*	$NetBSD: ascvar.h,v 1.3 1997/02/24 05:47:34 scottr Exp $	*/
 
 /*
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Scott Reynolds for
- *      the NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
