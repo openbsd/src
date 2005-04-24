@@ -35,5 +35,6 @@ fxp-d101ma
 fxp-d101s
 fxp-d102
 fxp-d102c
+fxp-d102e
 
 These files are needed by various models of fxp(4) devices.
