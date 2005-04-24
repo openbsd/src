@@ -2274,4 +2274,5 @@
 ./usr/sbin/hotplugd
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
+./usr/sbin/ztsscale
 ./usr/sbin/zzz
