@@ -1,3 +1,4 @@
+./etc/firmware/fxp-d102e
 ./etc/firmware/3c990
 ./etc/firmware/3c990-license
 ./etc/firmware/atu-at76c503-i3863-ext

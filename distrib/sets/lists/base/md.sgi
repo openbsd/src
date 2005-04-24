@@ -2271,3 +2271,4 @@
 ./usr/mdec/boot
 ./usr/mdec/sgivol
 ./usr/sbin/wsconscfg
+./etc/firmware/fxp-d102e
