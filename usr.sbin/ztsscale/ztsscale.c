@@ -1,4 +1,4 @@
-/*	$OpenBSD: ztsscale.c,v 1.3 2005/04/24 23:02:40 uwe Exp $	*/
+/*	$OpenBSD: ztsscale.c,v 1.4 2005/04/24 23:43:15 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Matthieu Herrb
@@ -75,8 +75,7 @@ wait_event(int mfd, int *x, int *y)
 	struct wscons_event evbuf;
 
 	down = 0;
-	*x = *y = -1;
-	while (!down || *x == -1 || *y == -1 ) {
+	while (!down) {
 		len = read(mfd, &evbuf, sizeof(evbuf));
 		if (len != 16)
 			break;
@@ -84,21 +83,25 @@ wait_event(int mfd, int *x, int *y)
 		case WSCONS_EVENT_MOUSE_DOWN:
 			down = 1;
 			break;
-		case WSCONS_EVENT_MOUSE_ABSOLUTE_X:
-			*x = evbuf.value;
-			break;
-		case WSCONS_EVENT_MOUSE_ABSOLUTE_Y:
-			*y = evbuf.value;
-			break;
 		}
 	}
-	while (down) {
+
+	*x = *y = -1;
+	while (down || *x == -1 || *y == -1) {
 		len = read(mfd, &evbuf, sizeof(evbuf));
 		if (len != 16)
 			break;
 		switch (evbuf.type) {
 		case WSCONS_EVENT_MOUSE_UP:
 			down = 0;
+			break;
+		case WSCONS_EVENT_MOUSE_ABSOLUTE_X:
+			if (down)
+				*x = evbuf.value;
+			break;
+		case WSCONS_EVENT_MOUSE_ABSOLUTE_Y:
+			if (down)
+				*y = evbuf.value;
 			break;
 		}
 	}
@@ -136,8 +139,7 @@ void
 sighandler(int sig)
 {
 	restore_screen();
-	close(fd);
-	_exit(2);
+	_exit(128 + sig);
 }
 
 int
