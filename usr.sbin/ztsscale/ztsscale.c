@@ -1,4 +1,4 @@
-/*	$OpenBSD: ztsscale.c,v 1.1 2005/04/24 18:46:47 uwe Exp $	*/
+/*	$OpenBSD: ztsscale.c,v 1.2 2005/04/24 18:50:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Matthieu Herrb
@@ -53,9 +53,9 @@ cross(unsigned short *fb, int x, int y)
 	int i;
 
 	y = 480 - y;
-	for (i = x - 20; i <= x + 20; i++) 
+	for (i = x - 20; i <= x + 20; i++)
 		fb[ADDR(i,y)] = BLACK;
-	for (i = y - 20; i <= y + 20; i++) 
+	for (i = y - 20; i <= y + 20; i++)
 		fb[ADDR(x, i)] = BLACK;
 }
 
@@ -94,7 +94,7 @@ wait_event(int mfd, int *x, int *y)
 			break;
 		}
 	}
-}	
+}
 
 void
 save_screen(void)
@@ -104,13 +104,12 @@ save_screen(void)
 	if (ioctl(fd, WSDISPLAYIO_SMODE, &mode) == -1) {
 		warn("ioctl SMODE\n");
 	}
-	mapaddr = (void *)mmap(0, WIDTH*HEIGHT*sizeof(short), 
-		PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-	if (mapaddr == (void *)-1) {
+	mapaddr = (void *)mmap(0, WIDTH*HEIGHT*sizeof(short),
+	    PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+	if (mapaddr == (void *)-1)
 		err(2, "mmap");
-	}
 	save = (unsigned short *)malloc(WIDTH*HEIGHT*sizeof(unsigned short));
-	if (save == NULL) 
+	if (save == NULL)
 		err(2, "malloc");
 	memcpy(save, mapaddr, WIDTH*HEIGHT*sizeof(unsigned short));
 }
@@ -121,9 +120,8 @@ restore_screen(void)
 	int mode = WSDISPLAYIO_MODE_EMUL;
 
 	memcpy(mapaddr, save, WIDTH*HEIGHT*sizeof(unsigned short));
-	if (ioctl(fd, WSDISPLAYIO_SMODE, &mode) == -1) {
+	if (ioctl(fd, WSDISPLAYIO_SMODE, &mode) == -1)
 		warn("ioctl SMODE");
-	}
 }
 
 void
@@ -150,13 +148,13 @@ main(int argc, char *argv[])
 		int ts_miny;
 		int ts_maxy;
 	} ts;
-	
+
 	fd = open("/dev/ttyC0", O_RDWR);
 	if (fd < 0) {
 		err(2, "open /dev/ttyC0");
 	}
 	mfd = open("/dev/wsmouse", O_RDONLY);
-	if (mfd < 0) 
+	if (mfd < 0)
 		err(2, "open /dev/wsmouse");
 
 	mib[0] = CTL_MACHDEP;
@@ -166,7 +164,7 @@ main(int argc, char *argv[])
 	if (sysctl(mib, 2, &oldval, &oldsize, &rawmode,
 	    sizeof(rawmode)) == -1)
 		err(1, "sysctl");
-	
+
 	save_screen();
 	signal(SIGINT, sighandler);
 	for (i = 0; i < 5; i++) {
@@ -196,7 +194,7 @@ main(int argc, char *argv[])
 	errx =  a*WIDTH/2+b - x[2];
 	if (fabs(errx) > (a*WIDTH+b)*.05) {
 		fprintf(stderr, "X error (%.2f) too high, try again\n",
-			fabs(errx)); 
+		    fabs(errx));
 		exit(2);
 	}
 
@@ -212,7 +210,7 @@ main(int argc, char *argv[])
 	erry = a*HEIGHT/2+b - y[2];
 	if (fabs(erry) > (a*HEIGHT+b)*.05) {
 		fprintf(stderr, "Y error (%.2f) too high, try again\n",
-			fabs(erry));
+		    fabs(erry));
 		exit(2);
 	}
 
