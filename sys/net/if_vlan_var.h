@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan_var.h,v 1.13 2005/04/20 23:02:22 mpf Exp $	*/
+/*	$OpenBSD: if_vlan_var.h,v 1.14 2005/04/24 10:16:10 brad Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -76,9 +76,6 @@ struct	ether_vlan_header {
 #define	EVL_VLANOFTAG(tag) ((tag) & EVL_VLID_MASK)
 #define	EVL_PRIOFTAG(tag) (((tag) >> 13) & 7)
 #define	EVL_ENCAPLEN	4	/* length in octets of encapsulation */
-
-/* When these sorts of interfaces get their own identifier... */
-#define	IFT_8021_VLAN	IFT_PROPVIRTUAL
 
 /* sysctl(3) tags, for compatibility purposes */
 #define	VLANCTL_PROTO	1

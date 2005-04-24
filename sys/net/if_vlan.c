@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_vlan.c,v 1.52 2005/04/20 23:02:22 mpf Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.53 2005/04/24 10:16:10 brad Exp $	*/
+
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -140,7 +141,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 	/* Now undo some of the damage... */
-	ifp->if_type = IFT_8021_VLAN;
+	ifp->if_type = IFT_L2VLAN;
 	ifp->if_hdrlen = EVL_ENCAPLEN;
 
 	return (0);
