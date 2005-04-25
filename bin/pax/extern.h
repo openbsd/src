@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.29 2004/11/29 16:23:22 otto Exp $	*/
+/*	$OpenBSD: extern.h,v 1.30 2005/04/25 19:39:52 otto Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -145,9 +145,12 @@ int node_creat(ARCHD *);
 int unlnk_exist(char *, int);
 int chk_path(char *, uid_t, gid_t);
 void set_ftime(char *fnm, time_t mtime, time_t atime, int frc);
+void fset_ftime(char *fnm, int, time_t mtime, time_t atime, int frc);
 int set_ids(char *, uid_t, gid_t);
+int fset_ids(char *, int, uid_t, gid_t);
 int set_lids(char *, uid_t, gid_t);
 void set_pmode(char *, mode_t);
+void fset_pmode(char *, int, mode_t);
 int file_write(int, char *, int, int *, int *, int, char *);
 void file_flush(int, char *, int);
 void rdfile_close(ARCHD *, int *);
