@@ -1,4 +1,4 @@
-/*	$OpenBSD: ztsscale.c,v 1.4 2005/04/24 23:43:15 uwe Exp $	*/
+/*	$OpenBSD: ztsscale.c,v 1.5 2005/04/25 00:28:12 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Matthieu Herrb
@@ -32,6 +32,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "message.xbm"
+
 #define WIDTH	640
 #define HEIGHT	480
 #define BLACK	0x0
@@ -39,15 +41,16 @@
 
 #define ADDR(x,y) (HEIGHT*(x)+(y))
 
-unsigned short *mapaddr, *save;
-int		fd;
-int		xc[] = { 25, 25, 320, 615, 615 };
-int		yc[] = { 25, 455, 240, 25, 455 };
+u_short		*mapaddr, *save;
+int		 fd;
+int		 xc[] = { 25, 25, 320, 615, 615 };
+int		 yc[] = { 25, 455, 240, 25, 455 };
 
 struct ctlname	topname[] = CTL_NAMES;
 struct ctlname	machdepname[] = CTL_MACHDEP_NAMES;
 
-void		cross(unsigned short *, int, int);
+void		bitmap(u_short *, u_short, u_char[], int, int);
+void		cross(u_short *, int, int);
 void		wait_event(int, int *, int *);
 void		save_screen(void);
 void		restore_screen(void);
@@ -56,7 +59,22 @@ int		main(int, char *[]);
 __dead void	usage(void);
 
 void
-cross(unsigned short *fb, int x, int y)
+bitmap(u_short *fb, u_short color, u_char bits[], int width, int height)
+{
+	int i, j;
+	int x, y;
+
+	for (i = 0; i < height; i++) {
+		x = (WIDTH - width) / 2;
+		y = HEIGHT + (HEIGHT - height)/2 + 60;
+		for (j = 0; j < width; j++)
+			if (bits[((i * width) + j) / 8] & (1 << (j % 8)))
+				fb[ADDR(x + j, y - i - 1)] = BLACK;
+	}
+}
+
+void
+cross(u_short *fb, int x, int y)
 {
 	int i;
 
@@ -119,10 +137,10 @@ save_screen(void)
 	    PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
 	if (mapaddr == (void *)-1)
 		err(2, "mmap");
-	save = (unsigned short *)malloc(WIDTH*HEIGHT*sizeof(unsigned short));
+	save = (u_short *)malloc(WIDTH*HEIGHT*sizeof(u_short));
 	if (save == NULL)
 		err(2, "malloc");
-	memcpy(save, mapaddr, WIDTH*HEIGHT*sizeof(unsigned short));
+	memcpy(save, mapaddr, WIDTH*HEIGHT*sizeof(u_short));
 }
 
 void
@@ -130,7 +148,7 @@ restore_screen(void)
 {
 	int mode = WSDISPLAYIO_MODE_EMUL;
 
-	memcpy(mapaddr, save, WIDTH*HEIGHT*sizeof(unsigned short));
+	memcpy(mapaddr, save, WIDTH*HEIGHT*sizeof(u_short));
 	if (ioctl(fd, WSDISPLAYIO_SMODE, &mode) == -1)
 		warn("ioctl SMODE");
 }
@@ -139,7 +157,8 @@ void
 sighandler(int sig)
 {
 	restore_screen();
-	_exit(128 + sig);
+	close(fd);
+	_exit(2);
 }
 
 int
@@ -182,7 +201,9 @@ again:
 	save_screen();
 	signal(SIGINT, sighandler);
 	for (i = 0; i < 5; i++) {
-		memset(mapaddr, WHITE, WIDTH*HEIGHT*sizeof(unsigned short));
+		memset(mapaddr, WHITE, WIDTH*HEIGHT*sizeof(u_short));
+		bitmap(mapaddr, BLACK, message_bits, message_width,
+		    message_height);
 		cross(mapaddr, xc[i], yc[i]);
 		/* printf("waiting for event\n"); */
 		wait_event(mfd, &x[i], &y[i]);
