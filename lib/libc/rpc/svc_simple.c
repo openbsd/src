@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_simple.c,v 1.8 2005/04/01 07:44:04 otto Exp $";
+static char *rcsid = "$OpenBSD: svc_simple.c,v 1.9 2005/04/25 08:18:41 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* 
@@ -53,14 +53,14 @@ static struct proglst {
 	xdrproc_t p_inproc, p_outproc;
 	struct proglst *p_nxt;
 } *proglst;
-static void universal(struct svc_req *rqstp, SVCXPRT *transp);
+static void universal(struct svc_req *, SVCXPRT *);
 static SVCXPRT *transp;
-struct proglst *pl;
 
 int
 registerrpc(int prognum, int versnum, int procnum, char *(*progname)(),
     xdrproc_t inproc, xdrproc_t outproc)
 {
+	struct proglst *pl;
 	
 	if (procnum == NULLPROC) {
 		(void) fprintf(stderr,
