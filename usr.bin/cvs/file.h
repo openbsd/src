@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.16 2005/04/18 21:02:50 jfb Exp $	*/
+/*	$OpenBSD: file.h,v 1.17 2005/04/25 21:58:32 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -115,6 +115,8 @@ typedef struct cvs_file {
 #define CVS_DIRF_STATIC    0x01
 #define CVS_DIRF_STICKY    0x02
 #define CVS_DIRF_BASE      0x04
+
+#define CVS_GDIR_IGNORE    0x08
 
 #define CVS_DIR_ROOT(f)  ((((f)->cf_type == DT_DIR) && \
 	((f)->cf_root != NULL)) ? (f)->cf_root : \

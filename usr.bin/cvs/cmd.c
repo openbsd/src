@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.15 2005/04/25 17:59:16 jfb Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.16 2005/04/25 21:58:32 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -67,7 +67,7 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	}
 
 	if ((c->cmd_flags & CVS_CMD_ALLOWSPEC) && argc != 0)
-		cvs_files = cvs_file_getspec(argv, argc, 0);
+		cvs_files = cvs_file_getspec(argv, argc, c->file_flags);
 	else
 		cvs_files = cvs_file_get(".", c->file_flags);
 

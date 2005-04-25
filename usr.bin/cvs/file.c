@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.67 2005/04/22 15:16:15 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.68 2005/04/25 21:58:32 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -107,7 +107,8 @@ static RCSNUM *cvs_addedrev;
 TAILQ_HEAD(, cvs_ignpat)  cvs_ign_pats;
 
 
-static int      cvs_file_getdir  (CVSFILE *, int);
+static int	cvs_load_dirinfo  (CVSFILE *);
+static int      cvs_file_getdir   (CVSFILE *, int, char *);
 static int      cvs_file_sort    (struct cvs_flist *, u_int);
 static int      cvs_file_cmp     (const void *, const void *);
 static int      cvs_file_cmpname (const char *, const char *);
@@ -346,7 +347,10 @@ cvs_file_copy(CVSFILE *orig)
 CVSFILE*
 cvs_file_get(const char *path, int flags)
 {
-	return cvs_file_lget(path, flags, NULL, NULL);
+	char *files[1];
+
+	files[0] = path;
+	return cvs_file_getspec(files, 1, flags);
 }
 
 
@@ -362,43 +366,57 @@ CVSFILE*
 cvs_file_getspec(char **fspec, int fsn, int flags)
 {
 	int i;
+	int pwd;
 	char *sp, *np, pcopy[MAXPATHLEN];
-	CVSFILE *base, *cf, *nf;
+	CVSFILE *base, *nf;
+	CVSENTRIES *entfile;
+	struct cvs_ent *ent;
 
-	base = cvs_file_get(".", 0);
+	entfile = cvs_ent_open(".", O_RDONLY);
+	base = cvs_file_lget(".", 0, NULL, NULL);
 	if (base == NULL)
 		return (NULL);
 
 	for (i = 0; i < fsn; i++) {
 		strlcpy(pcopy, fspec[i], sizeof(pcopy));
-		cf = base;
 		sp = pcopy;
+		pwd = (!strcmp(pcopy, "."));
 
-		do {
-			np = strchr(sp, '/');
-			if (np != NULL)
-				*np = '\0';
-			nf = cvs_file_find(cf, sp);
+		np = strchr(sp, '/');
+		if (np != NULL)
+			*np = '\0';
+
+		if (pwd) {
+			nf = base;
+		} else {
+			nf = cvs_file_find(base, pcopy);
 			if (nf == NULL) {
-				nf = cvs_file_lget(pcopy, 0, cf, NULL);
+				if (entfile != NULL)
+					ent = cvs_ent_get(entfile, pcopy);
+				else
+					ent = NULL;
+				nf = cvs_file_lget(pcopy, 0, base, ent);
 				if (nf == NULL) {
 					cvs_file_free(base);
 					return (NULL);
 				}
 
-				if (cvs_file_attach(cf, nf) < 0) {
+				if (cvs_file_attach(base, nf) < 0) {
 					cvs_file_free(base);
 					return (NULL);
 				}
 			}
+		}
 
-			if (np != NULL) {
-				*np = '/';
-				sp = np + 1;
+		if (nf->cf_type == DT_DIR) {
+			if (np != NULL)
+				*np++;
+
+			if (cvs_file_getdir(nf, flags, np) < 0) {
+				cvs_file_free(base);
+				return (NULL);
 			}
-
-			cf = nf;
-		} while (np != NULL);
+		}
 	}
 
 	return (base);
@@ -523,41 +541,22 @@ cvs_file_attach(CVSFILE *parent, CVSFILE *file)
 
 
 /*
- * cvs_file_getdir()
- *
- * Get a cvs directory structure for the directory whose path is <dir>.
- * This function should not free the directory information on error, as this
- * is performed by cvs_file_free().
+ * Load directory information
  */
 static int
-cvs_file_getdir(CVSFILE *cf, int flags)
+cvs_load_dirinfo(CVSFILE *cf)
 {
-	int ret, fd, l;
-	u_int ndirs, nfiles;
-	long base;
-	u_char *dp, *ep;
-	char fbuf[2048], pbuf[MAXPATHLEN], fpath[MAXPATHLEN];
-	struct dirent *ent;
-	CVSFILE *cfp;
-	CVSENTRIES *entfile;
+	char fpath[MAXPATHLEN];
+	char pbuf[MAXPATHLEN];
 	struct stat st;
-	struct cvs_ent *cvsent;
-	struct cvs_flist dirs;
-
-	ndirs = 0;
-	nfiles = 0;
-	SIMPLEQ_INIT(&dirs);
+	int l;
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
-
 	cf->cf_root = cvsroot_get(fpath);
 	if (cf->cf_root == NULL)
 		return (-1);
 
 	if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
-		if (flags & CF_MKADMIN)
-			cvs_mkadmin(cf, 0755);
-
 		/* if the CVS administrative directory exists, load the info */
 		l = snprintf(pbuf, sizeof(pbuf), "%s/" CVS_PATH_CVSDIR, fpath);
 		if (l == -1 || l >= (int)sizeof(pbuf)) {
@@ -575,132 +574,197 @@ cvs_file_getdir(CVSFILE *cf, int flags)
 					return (-1);
 				}
 			}
+		}
+	}
 
-			entfile = cvs_ent_open(fpath, O_RDONLY);
+	return (0);
+}
+
+/*
+ * cvs_file_getdir()
+ *
+ * Get a cvs directory structure for the directory whose path is <dir>.
+ * This function should not free the directory information on error, as this
+ * is performed by cvs_file_free().
+ */
+static int
+cvs_file_getdir(CVSFILE *cf, int flags, char *path)
+{
+	int l;
+	int check_entry;
+	u_int ndirs, nfiles;
+	char *cur, *np;
+	char pbuf[MAXPATHLEN], fpath[MAXPATHLEN];
+	struct dirent *ent;
+	CVSFILE *cfp, *moo;
+	struct cvs_ent *cvsent;
+	struct cvs_flist dirs;
+	DIR *dirp;
+	CVSENTRIES *entfile;
+
+	moo = NULL;
+	check_entry = ndirs = nfiles = 0;
+	SIMPLEQ_INIT(&dirs);
+
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
+	entfile = cvs_ent_open(fpath, O_RDONLY);
+
+	cf->cf_root = cvsroot_get(fpath);
+	if (cf->cf_root == NULL)
+		return (-1);
+
+	cur = np = NULL;
+	if (path != NULL) {
+		cur = strchr(path, '/');
+		if (cur != NULL) {
+			*cur = '\0';
+			np = cur + 1;
+			if (np != NULL && *np == '\0')
+				np = NULL;
 		}
 	}
 
 	if ((flags & CF_KNOWN) && (cf->cf_cvstat == CVS_FST_UNKNOWN))
 		return (0);
 
-	fd = open(fpath, O_RDONLY);
-	if (fd == -1) {
-		cvs_log(LP_ERRNO, "failed to open `%s'", fpath);
+	dirp = opendir(fpath);
+	if (dirp == NULL) {
+		cvs_log(LP_ERRNO, "failed to open directory %s", fpath);
 		return (-1);
 	}
 
-	/* To load all files, we first get the entries for the directory and
-	 * load the information for each of those entries.  The handle to
-	 * the Entries file kept in the directory data is only temporary and
-	 * the files should remove their entry when they use it.  After all
-	 * files in the directory have been processed, the Entries handle
-	 * should only be left with those entries for which no real file
-	 * exists.  We then build file structures for those files too, as
-	 * we will likely receive fresh copies from the server as part of the
-	 * response.
-	 */
-	do {
-		ret = getdirentries(fd, fbuf, sizeof(fbuf), &base);
-		if (ret == -1) {
-			cvs_log(LP_ERRNO, "failed to get directory entries");
-			(void)close(fd);
+	while ((ent = readdir(dirp)) != NULL) {
+		if (!strcmp(ent->d_name, ".") ||
+		    !strcmp(ent->d_name, ".."))
+			continue;
+
+		if ((flags & CF_IGNORE) && cvs_file_chkign(ent->d_name))
+			continue;
+
+		if ((flags & CF_NOSYMS) && (ent->d_type == DT_LNK))
+			continue;
+
+		if (!(flags & CF_RECURSE) && (ent->d_type == DT_DIR)) {
+			if (entfile != NULL)
+				(void)cvs_ent_remove(entfile,
+				    ent->d_name);
+			continue;
+		}
+
+		if (path != NULL) {
+			if (strcmp(path, ent->d_name))
+				continue;
+		}
+
+		l = snprintf(pbuf, sizeof(pbuf), "%s/%s", fpath,
+		    ent->d_name);
+		if (l == -1 || l >= (int)sizeof(pbuf)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", pbuf);
+			closedir(dirp);
 			return (-1);
 		}
 
-		dp = fbuf;
-		ep = fbuf + (size_t)ret;
-		while (dp < ep) {
-			ent = (struct dirent *)dp;
-			dp += ent->d_reclen;
-			if (ent->d_fileno == 0)
-				continue;
-
-			if ((flags & CF_IGNORE) && cvs_file_chkign(ent->d_name))
-				continue;
-
-			if ((flags & CF_NOSYMS) && (ent->d_type == DT_LNK))
-				continue;
-
-			if (!(flags & CF_RECURSE) && (ent->d_type == DT_DIR)) {
-				if (entfile != NULL)
-					(void)cvs_ent_remove(entfile,
-					    ent->d_name);
-				continue;
-			}
-
-			l = snprintf(pbuf, sizeof(pbuf), "%s/%s", fpath,
-			    ent->d_name);
-			if (l == -1 || l >= (int)sizeof(pbuf)) {
-				errno = ENAMETOOLONG;
-				cvs_log(LP_ERRNO, "%s", pbuf);
-				
-				(void)close(fd);
-				return (-1);
-			}
-
+		cfp = cvs_file_find(cf, ent->d_name);
+		if (cfp == NULL) {
 			if (entfile != NULL)
 				cvsent = cvs_ent_get(entfile, ent->d_name);
 			cfp = cvs_file_lget(pbuf, flags, cf, cvsent);
+
 			if (cfp == NULL) {
-				(void)close(fd);
+				closedir(dirp);
 				return (-1);
 			}
 			if (entfile != NULL)
 				cvs_ent_remove(entfile, cfp->cf_name);
 
-			if (cfp->cf_type == DT_DIR) {
-				SIMPLEQ_INSERT_TAIL(&dirs, cfp, cf_list);
-				ndirs++;
-			} else {
+			if (cfp->cf_type != DT_DIR) {
 				SIMPLEQ_INSERT_TAIL(&(cf->cf_files), cfp,
-				    cf_list);
+			    	    cf_list);
 				nfiles++;
 			}
+		} else {
+			cfp->cf_flags |= CVS_GDIR_IGNORE;
 		}
-	} while (ret > 0);
 
-	if (entfile != NULL) {
-		/* now create file structure for files which have an
-		 * entry in the Entries file but no file on disk
-		 */
+		if (cfp->cf_type == DT_DIR) {
+			ndirs++;
+			SIMPLEQ_INSERT_TAIL(&dirs, cfp, cf_list);
+		}
+
+		if (path != NULL) {
+			check_entry = 0;
+			break;
+		}
+	}
+
+	closedir(dirp);
+
+	if (entfile != NULL && check_entry) {
 		while ((cvsent = cvs_ent_next(entfile)) != NULL) {
+			if (path != NULL) {
+				if (strcmp(cvsent->ce_name, path))
+					continue;
+			}
+
 			l = snprintf(pbuf, sizeof(pbuf), "%s/%s", fpath,
 			    cvsent->ce_name);
 			if (l == -1 || l >= (int)sizeof(pbuf)) {
 				errno = ENAMETOOLONG;
 				cvs_log(LP_ERRNO, "%s", pbuf);
-
-				(void)close(fd);
 				return (-1);
 			}
 
-			cfp = cvs_file_lget(pbuf, flags, cf, cvsent);
-			if (cfp != NULL) {
-				if (cfp->cf_type == DT_DIR) {
-					SIMPLEQ_INSERT_TAIL(&dirs, cfp, cf_list);
-					ndirs++;
-				} else {
-					SIMPLEQ_INSERT_TAIL(&(cf->cf_files), cfp,
-					    cf_list);
+			cfp = cvs_file_find(cf, cvsent->ce_name);
+			if (cfp == NULL) {
+				cfp = cvs_file_lget(pbuf, flags, cf, cvsent);
+				if (cfp == NULL)
+					continue;
+
+				if (cfp->cf_type != DT_DIR) {
+					SIMPLEQ_INSERT_TAIL(&(cf->cf_files),
+					    cfp, cf_list);
 					nfiles++;
 				}
+			} else {
+				cfp->cf_flags |= CVS_GDIR_IGNORE;
 			}
+
+			if (cfp->cf_type == DT_DIR) {
+				ndirs++;
+				SIMPLEQ_INSERT_TAIL(&dirs, cfp, 
+				    cf_list);
+			}
+
+			if (path != NULL)
+				break;
 		}
 		cvs_ent_close(entfile);
 	}
 
 	if (flags & CF_SORT) {
-		cvs_file_sort(&(cf->cf_files), nfiles);
-		cvs_file_sort(&dirs, ndirs);
+		if (nfiles > 0)
+			cvs_file_sort(&(cf->cf_files), nfiles);
+		if (ndirs > 0)
+			cvs_file_sort(&dirs, ndirs);
 	}
 
 	while (!SIMPLEQ_EMPTY(&dirs)) {
 		cfp = SIMPLEQ_FIRST(&dirs);
 		SIMPLEQ_REMOVE_HEAD(&dirs, cf_list);
-		SIMPLEQ_INSERT_TAIL(&(cf->cf_files), cfp, cf_list);
+
+		if (!(cfp->cf_flags & CVS_GDIR_IGNORE))
+			SIMPLEQ_INSERT_TAIL(&(cf->cf_files), cfp, cf_list);
+		else
+			cfp->cf_flags &= ~CVS_GDIR_IGNORE;
+
+		if (cvs_file_getdir(cfp, flags, np) < 0) {
+			cvs_log(LP_ERROR, "failed to get %s",
+			    CVS_FILE_NAME(cfp));
+			continue;
+		}
 	}
 
-	(void)close(fd);
 	return (0);
 }
 
@@ -947,7 +1011,7 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 		ent->ce_rev = NULL;
 	}
 
-	if ((cfp->cf_type == DT_DIR) && (cvs_file_getdir(cfp, flags) < 0)) {
+	if ((cfp->cf_type == DT_DIR) && (cvs_load_dirinfo(cfp) < 0)) {
 		cvs_file_free(cfp);
 		return (NULL);
 	}
