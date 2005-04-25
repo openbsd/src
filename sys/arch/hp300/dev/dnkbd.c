@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbd.c,v 1.5 2005/04/24 23:59:37 miod Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.6 2005/04/25 13:22:14 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -549,6 +549,7 @@ dnevent_kbd(struct dnkbd_softc *sc, int dat)
 				/* remember pressed key for autorepeat */
 				bcopy(cbuf, sc->sc_rep, sizeof(sc->sc_rep));
 			}
+			j++;
 		}
 
 		if (j != 0) {
