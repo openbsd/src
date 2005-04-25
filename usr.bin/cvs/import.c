@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.12 2005/04/16 20:05:05 xsa Exp $	*/
+/*	$OpenBSD: import.c,v 1.13 2005/04/25 16:29:41 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -65,6 +65,8 @@ cvs_import_options(char *opt, int argc, char **argv, int *arg)
 {
 	int ch;
 
+	branch = CVS_IMPORT_DEFBRANCH;
+
 	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
 		case 'b':
@@ -120,8 +122,7 @@ cvs_import_options(char *opt, int argc, char **argv, int *arg)
 int
 cvs_import_sendflags(struct cvsroot *root)
 {
-	if ((cvs_connect(root) < 0) ||
-	    (cvs_sendarg(root, "-b", 0) < 0) ||
+	if ((cvs_sendarg(root, "-b", 0) < 0) ||
 	    (cvs_sendarg(root, branch, 0) < 0) ||
 	    (cvs_logmsg_send(root, cvs_msg) < 0) ||
 	    (cvs_sendarg(root, module, 0) < 0) ||
