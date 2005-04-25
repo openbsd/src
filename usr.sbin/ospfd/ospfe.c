@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.15 2005/04/25 09:28:45 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.16 2005/04/25 09:55:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -87,6 +87,22 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	/* create ospfd control socket outside chroot */
 	if (control_init() == -1)
 		fatalx("control socket setup failed");
+
+	/* create the raw ip socket */
+	if ((xconf->ospf_socket = socket(AF_INET, SOCK_RAW,
+	    IPPROTO_OSPF)) == -1)
+		fatal("error creating raw socket");
+
+	/* set some defaults */
+	if (if_set_mcast_ttl(xconf->ospf_socket,
+	    IP_DEFAULT_MULTICAST_TTL) == -1)
+		fatal("if_set_mcast_ttl");
+
+	if (if_set_mcast_loop(xconf->ospf_socket) == -1)
+		fatal("if_set_mcast_loop");
+
+	if (if_set_tos(xconf->ospf_socket, IPTOS_PREC_INTERNETCONTROL) == -1)
+		fatal("if_set_tos");
 
 	if (if_init(xconf))
 		fatalx("error initializing interfaces");

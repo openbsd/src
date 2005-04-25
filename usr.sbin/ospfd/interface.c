@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.18 2005/04/25 09:28:45 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.19 2005/04/25 09:55:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -45,9 +45,6 @@ void		 if_wait_timer(int, short, void *);
 int		 if_start_wait_timer(struct iface *);
 int		 if_stop_wait_timer(struct iface *);
 struct nbr	*if_elect(struct nbr *, struct nbr *);
-int		 if_set_mcast_ttl(int, u_int8_t);
-int		 if_set_tos(int, int);
-int		 if_set_mcast_loop(int);
 
 struct {
 	int			state;
@@ -244,24 +241,6 @@ if_init(struct ospfd_conf *xconf)
 {
 	struct area	*area = NULL;
 	struct iface	*iface = NULL;
-
-	if ((xconf->ospf_socket = socket(AF_INET, SOCK_RAW,
-	    IPPROTO_OSPF)) == -1) {
-		log_warn("if_init: error creating socket");
-		return (-1);
-	}
-
-	/* set some defaults */
-	if (if_set_mcast_ttl(xconf->ospf_socket,
-	    IP_DEFAULT_MULTICAST_TTL) == -1)
-		return (-1);
-
-	if (if_set_mcast_loop(xconf->ospf_socket) == -1)
-		return (-1);
-
-	if (if_set_tos(xconf->ospf_socket, IPTOS_PREC_INTERNETCONTROL) == -1)
-		return (-1);
-
 
 	LIST_FOREACH(area, &xconf->area_list, entry) {
 		LIST_FOREACH(iface, &area->iface_list, entry) {

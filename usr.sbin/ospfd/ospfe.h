@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.12 2005/04/12 09:54:59 claudio Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.13 2005/04/25 09:55:18 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -205,6 +205,9 @@ const char	*if_auth_name(int);
 int	 if_join_group(struct iface *, struct in_addr *);
 int	 if_leave_group(struct iface *, struct in_addr *);
 int	 if_set_mcast(struct iface *);
+int	 if_set_mcast_ttl(int, u_int8_t);
+int	 if_set_tos(int, int);
+int	 if_set_mcast_loop(int);
 
 /* lsack.c */
 int	 delay_lsa_ack(struct iface *, struct lsa_hdr *);
