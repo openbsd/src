@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.62 2005/04/12 20:18:55 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.63 2005/04/25 19:09:15 jfb Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" Copyright (c) 2004, 2005 Xavier Santolaria <xsa@openbsd.org>
@@ -549,7 +549,7 @@ Aliases:
 .Ic ci ,
 .Ic com .
 .It Xo Ic diff
-.Op Fl cilNpRu
+.Op Fl cilNnpRu
 .Oo Oo Fl D
 .Ar date1 \*(Ba
 .Fl r Ar rev1 Oc
@@ -598,6 +598,10 @@ Limit the scope of the search to the local directory
 only and disable recursive behaviour.
 .It Fl N
 Include added or removed files.
+.It Fl n
+Produces a diff in the same format as that used by
+.Xr rcsdiff 1 ,
+with a count of changed lines on each insert or delete command.
 .It Fl p
 With unified and context diffs, show with each change the first
 40 characters of the last line before the context beginning with

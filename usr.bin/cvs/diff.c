@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.32 2005/04/22 03:38:56 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.33 2005/04/25 19:09:15 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -130,6 +130,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 
+#include <err.h>
 #include <errno.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -159,6 +160,7 @@
 #define	D_UNIFIED	2	/* Unified context diff */
 #define	D_IFDEF		3	/* Diff with merged #ifdef's */
 #define	D_BRIEF		4	/* Say if the files differ */
+#define	D_RCSDIFF	5       /* Reverse editor output: RCS format */
 
 /*
  * Status values for print_status() and diffreg() return values
@@ -391,6 +393,10 @@ cvs_diff_options(char *opt, int argc, char **argv, int *arg)
 		case 'N':
 			strlcat(diffargs, " -N", sizeof(diffargs));
 			Nflag = 1;
+			break;
+		case 'n':
+			strlcat(diffargs, " -n", sizeof(diffargs));
+			format = D_RCSDIFF;
 			break;
 		case 'p':
 			strlcat(diffargs, " -p", sizeof(diffargs));
@@ -1332,6 +1338,16 @@ proceed:
 			range(c, d, ",");
 		putchar('\n');
 		break;
+	case D_RCSDIFF:
+		if (a > b)
+			printf("a%d %d\n", b, d - c + 1);
+		else {
+			printf("d%d %d\n", a, b - a + 1);
+
+			if (!(c > d))	/* add changed lines */
+				printf("a%d %d\n", b, d - c + 1);
+		}
+		break;
 	}
 	if (format == D_NORMAL || format == D_IFDEF) {
 		fetch(ixold, a, b, f1, '<', 1);
@@ -1389,7 +1405,10 @@ fetch(long *f, int a, int b, FILE *lb, int ch, int oldfile)
 		col = 0;
 		for (j = 0, lastc = '\0'; j < nc; j++, lastc = c) {
 			if ((c = getc(lb)) == EOF) {
-				puts("\n\\ No newline at end of file");
+				if (format == D_RCSDIFF)
+					warnx("No newline at end of file");
+				else
+					puts("\n\\ No newline at end of file");
 				return (0);
 			}
 			if (c == '\t' && tflag) {
