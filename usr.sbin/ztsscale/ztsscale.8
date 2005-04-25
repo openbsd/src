@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ztsscale.8,v 1.1 2005/04/24 22:23:55 deraadt Exp $
+.\"	$OpenBSD: ztsscale.8,v 1.2 2005/04/25 08:08:56 jmc Exp $
 .\"
 .\" Copyright (c) CCYY YOUR NAME HERE <user@your.dom.ain>
 .\"
@@ -40,7 +40,7 @@ temporarily takes over the Zaurus
 .Xr wsdisplay 4
 attached to the
 .Xr lcd 4 ,
-and prompts for five crosshairs to be touched.  
+and prompts for five crosshairs to be touched.
 .Pp
 When good deviations are calculated from the selections made at these
 points,
@@ -52,15 +52,14 @@ a result like the following:
 .Pp
 This result should be placed into
 .Pa /etc/sysctl.conf
-for future use, or can be immediately applied using
+for future use, or can be immediately applied using:
 .Pp
 .Dl # sysctl machdep.ztsscale=200,3400,312,3672
-.Pp
 .Sh SEE ALSO
 .Xr lcd 4 ,
-.Xr sysctl 8 ,
+.Xr zts 4 ,
 .Xr sysctl.conf 5 ,
-.Xr zts 4
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
