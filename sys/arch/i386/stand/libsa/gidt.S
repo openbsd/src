@@ -1,4 +1,4 @@
-/*	$OpenBSD: gidt.S,v 1.28 2004/03/19 13:48:18 tom Exp $	*/
+/*	$OpenBSD: gidt.S,v 1.29 2005/04/25 23:09:04 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -69,8 +69,8 @@
 1:								\
 	.code16;						\
 	movw	$S16DATA, %ax;					\
-	mov	%ax, %ds;					\
-	mov	%ax, %es;					\
+	movw	%ax, %ds;					\
+	movw	%ax, %es;					\
 	gidt_debug1;						\
 								\
 	movl	%cr0, %eax;	/* disable pmmm */		\
@@ -80,19 +80,22 @@
 	/* reload real cs:ip */					\
 	data32 ljmp	$(LINKADDR >> 4), $1f - LINKADDR;	\
 1:								\
-	xor	%ax, %ax;	/* setup: %ds, %es, %ss */	\
-	mov	%ax, %ds;					\
-	mov	%ax, %es;					\
-	mov	%ax, %ss;					\
+	movw	%cs, %ax;	/* setup: %ds, %es, %ss = %cs */ \
+	movw	%ax, %ds;					\
+	movw	%ax, %es;					\
+	xorw	%ax, %ax;					\
+	movw	%ax, %ss;					\
 								\
 	gidt_debug2;						\
 								\
-	data32 addr32 lidt Idtr_real;	/* load idtr for real mode */
+	data32 addr32 lidt (Idtr_real - LINKADDR); /* load idtr for real mode */
 
 #define real2prot						\
 	gidt_debug3;						\
 								\
-	data32 addr32 lgdt Gdtr;	/* load the gdtr */	\
+	movw	$LINKADDR >> 4, %ax;				\
+	movw	%ax, %ds;					\
+	data32 addr32 lgdt (Gdtr - LINKADDR); 	/* load the gdtr */	\
 								\
 	movl	%cr0, %eax;	/* enable pmmm */		\
 	orl	$CR0_PE, %eax;					\
@@ -237,14 +240,14 @@ gdt:
 	.word	(LINKADDR & 0xffff)	# lobase
 	.byte	(LINKADDR >> 16) & 0xff	# midbase
 	.byte	SDT_MEMERAC | 0 | 0x80	# RXAC, dpl = 0, present
-	.byte	0xf | 0 | 0 | 0		# hilimit, xx, 16bit, byte granularity
+	.byte	0x0 | 0 | 0 | 0		# hilimit, xx, 16bit, byte granularity
 	.byte	(LINKADDR >> 20) & 0xff	# hibase
 		/* 0x20 : 16 bit data */
 	.word	0xFFFF			# lolimit
 	.word	(LINKADDR & 0xffff)	# lobase
 	.byte	(LINKADDR >> 16) & 0xff	# midbase
 	.byte	SDT_MEMRWA | 0 | 0x80	# RWA, dpl = 0, present
-	.byte	0xf | 0 | 0 | 0		# hilimit, xx, 16bit, byte granularity
+	.byte	0x0 | 0 | 0 | 0		# hilimit, xx, 16bit, byte granularity
 	.byte	(LINKADDR >> 20) & 0xff	# hibase
 
 .globl Gdtr
@@ -335,10 +338,10 @@ EMUh:
 
 	push	%ds
 
-	addr32  mov _C_LABEL(BIOS_regs)+(BIOSR_ES), %eax
-	mov	%ax, %es
-	addr32  mov _C_LABEL(BIOS_regs)+(BIOSR_DS), %eax
-	mov	%ax, %ds
+	addr32  movw (_C_LABEL(BIOS_regs)+(BIOSR_ES) - LINKADDR), %ax
+	movw	%ax, %es
+	addr32  movw (_C_LABEL(BIOS_regs)+(BIOSR_DS) - LINKADDR), %ax
+	movw	%ax, %ds
 
 	# data32 movl $Leax, %eax
 	.byte	0x66, 0xb8
@@ -351,14 +354,14 @@ intno	= . - 1
 
 	pop	%ds
 
-	addr32 mov %ebx, _C_LABEL(BIOS_regs)+(BIOSR_BX)
-	mov	%es, %bx
-	addr32 mov %ebx, _C_LABEL(BIOS_regs)+(BIOSR_ES)
+	addr32 movw %bx, (_C_LABEL(BIOS_regs)+(BIOSR_BX) - LINKADDR)
+	movw	%es, %bx
+	addr32 movw %bx, (_C_LABEL(BIOS_regs)+(BIOSR_ES) - LINKADDR)
 	movb	%ah, %bh
 	lahf
 	xchgb	%ah, %bh
 
-	addr32 mov %eax, 2f
+	addr32 movl %eax, (2f - LINKADDR)
 
 	real2prot
 
@@ -367,9 +370,9 @@ intno	= . - 1
 2:	.long 0x90909090
 
 	/* pass BIOS return values back to caller */
-	mov	%eax, 0xb*4(%esp)
-	mov	%ecx, 0xa*4(%esp)
-	mov	%edx, 0x9*4(%esp)
+	movl	%eax, 0xb*4(%esp)
+	movl	%ecx, 0xa*4(%esp)
+	movl	%edx, 0x9*4(%esp)
 	movb	%bh , 0xe*4(%esp)
 
 	/* clear NT flag in eflags */
@@ -381,12 +384,12 @@ intno	= . - 1
 	popf
 
 	/* save registers into save area */
-	mov	%eax, _C_LABEL(BIOS_regs)+BIOSR_AX
-	mov	%ecx, _C_LABEL(BIOS_regs)+BIOSR_CX
-	mov	%edx, _C_LABEL(BIOS_regs)+BIOSR_DX
-	mov	%ebp, _C_LABEL(BIOS_regs)+BIOSR_BP
-	mov	%esi, _C_LABEL(BIOS_regs)+BIOSR_SI
-	mov	%edi, _C_LABEL(BIOS_regs)+BIOSR_DI
+	movl	%eax, _C_LABEL(BIOS_regs)+BIOSR_AX
+	movl	%ecx, _C_LABEL(BIOS_regs)+BIOSR_CX
+	movl	%edx, _C_LABEL(BIOS_regs)+BIOSR_DX
+	movl	%ebp, _C_LABEL(BIOS_regs)+BIOSR_BP
+	movl	%esi, _C_LABEL(BIOS_regs)+BIOSR_SI
+	movl	%edi, _C_LABEL(BIOS_regs)+BIOSR_DI
 
 	pop	%gs
 	pop	%fs

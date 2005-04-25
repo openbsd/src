@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxe_call.S,v 1.2 2005/03/12 21:52:02 tom Exp $ */
+/*	$OpenBSD: pxe_call.S,v 1.3 2005/04/25 23:09:04 tom Exp $ */
 /*	$NetBSD: pxe_call.S,v 1.2 2002/03/27 17:24:22 kanaoka Exp $	*/
 
 /*
@@ -142,11 +142,13 @@ p2r16:
 	data32 ljmp	$(LINKADDR >> 4), $p2r16real - LINKADDR
 p2r16real:
 	xorw	%ax, %ax		/* Reset segment registers: */
-	movw	%ax, %ds		/* %ds: so we can get at Idtr_real */
 	movw	%ax, %ss		/* %ss: for our stack */
 
+	movw	$LINKADDR >> 4, %ax	/* We're linked to LINKADDR/16:0000 */
+	movw	%ax, %ds		/* %ds: so we can get at Idtr_real */
+
 	.extern	Idtr_real
-	data32 addr32 lidt Idtr_real;	/* Set up IDT for real mode */
+	data32 addr32 lidt (Idtr_real - LINKADDR);	/* Set up IDT for real mode */
 
 	movw	%cs, %ax
 	movw	%ax, %ds
@@ -174,7 +176,7 @@ real_to_prot:
 
 	movw	$LINKADDR >> 4, %ax	/* We're linked to LINKADDR/16:0000 */
 	movw	%ax, %ds
-	addr32 lgdt (Gdtr - LINKADDR)	/* Reload the GDT */
+	data32 addr32 lgdt (Gdtr - LINKADDR)	/* Reload the GDT */
 
 	movl	%cr0, %eax		/* Enable protected mode */
 	orl	$CR0_PE, %eax
