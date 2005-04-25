@@ -1,4 +1,4 @@
-/*	$OpenBSD: ztsscale.c,v 1.5 2005/04/25 00:28:12 uwe Exp $	*/
+/*	$OpenBSD: ztsscale.c,v 1.6 2005/04/25 02:52:00 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Matthieu Herrb
@@ -37,6 +37,7 @@
 #define WIDTH	640
 #define HEIGHT	480
 #define BLACK	0x0
+#define RED	0xf000
 #define WHITE	0xffff
 
 #define ADDR(x,y) (HEIGHT*(x)+(y))
@@ -59,17 +60,20 @@ int		main(int, char *[]);
 __dead void	usage(void);
 
 void
-bitmap(u_short *fb, u_short color, u_char bits[], int width, int height)
+bitmap(u_short *fb, u_short pixel, u_char bits[], int width, int height)
 {
 	int i, j;
 	int x, y;
 
+#define BITADDR(x, y)	((width + 7)/8*(y) + (x)/8)
+#define BITMASK(x)	(1 << ((x) % 8))
+
 	for (i = 0; i < height; i++) {
-		x = (WIDTH - width) / 2;
-		y = HEIGHT + (HEIGHT - height)/2 + 60;
+		x = (WIDTH - width)/2;
+		y = (HEIGHT/2 - height)/2;
 		for (j = 0; j < width; j++)
-			if (bits[((i * width) + j) / 8] & (1 << (j % 8)))
-				fb[ADDR(x + j, y - i - 1)] = BLACK;
+			if (bits[BITADDR(j, i)] & BITMASK(j))
+				fb[ADDR(x + j, HEIGHT - y - i)] = pixel;
 	}
 }
 
@@ -93,7 +97,8 @@ wait_event(int mfd, int *x, int *y)
 	struct wscons_event evbuf;
 
 	down = 0;
-	while (!down) {
+	*x = *y = -1;
+	while (down || *x == -1 || *y == -1) {
 		len = read(mfd, &evbuf, sizeof(evbuf));
 		if (len != 16)
 			break;
@@ -101,15 +106,6 @@ wait_event(int mfd, int *x, int *y)
 		case WSCONS_EVENT_MOUSE_DOWN:
 			down = 1;
 			break;
-		}
-	}
-
-	*x = *y = -1;
-	while (down || *x == -1 || *y == -1) {
-		len = read(mfd, &evbuf, sizeof(evbuf));
-		if (len != 16)
-			break;
-		switch (evbuf.type) {
 		case WSCONS_EVENT_MOUSE_UP:
 			down = 0;
 			break;
@@ -157,7 +153,6 @@ void
 sighandler(int sig)
 {
 	restore_screen();
-	close(fd);
 	_exit(2);
 }
 
@@ -181,24 +176,29 @@ main(int argc, char *argv[])
 	if (argc != 1)
 		usage();
 
-again:
 	fd = open("/dev/ttyC0", O_RDWR);
 	if (fd < 0) {
 		err(2, "open /dev/ttyC0");
 	}
+	save_screen();
+
+again:
 	mfd = open("/dev/wsmouse", O_RDONLY);
-	if (mfd < 0)
+	if (mfd < 0) {
+		restore_screen();
 		err(2, "open /dev/wsmouse");
+	}
 
 	mib[0] = CTL_MACHDEP;
 	mib[1] = CPU_ZTSRAWMODE;
 	rawmode = 1;
 	oldsize = sizeof(oldval);
 	if (sysctl(mib, 2, &oldval, &oldsize, &rawmode,
-	    sizeof(rawmode)) == -1)
+	    sizeof(rawmode)) == -1) {
+		restore_screen();
 		err(1, "sysctl");
+	}
 
-	save_screen();
 	signal(SIGINT, sighandler);
 	for (i = 0; i < 5; i++) {
 		memset(mapaddr, WHITE, WIDTH*HEIGHT*sizeof(u_short));
@@ -208,16 +208,16 @@ again:
 		/* printf("waiting for event\n"); */
 		wait_event(mfd, &x[i], &y[i]);
 	}
-	restore_screen();
 	close(mfd);
-	close(fd);
 
 	mib[0] = CTL_MACHDEP;
 	mib[1] = CPU_ZTSRAWMODE;
 	rawmode = oldval;
 	oldsize = sizeof(oldval);
-	if (sysctl(mib, 2, NULL, NULL, &rawmode, sizeof(rawmode)) == -1)
+	if (sysctl(mib, 2, NULL, NULL, &rawmode, sizeof(rawmode)) == -1) {
+		restore_screen();
 		err(1, "sysctl");
+	}
 
 	bzero(&ts, sizeof(ts));
 
@@ -232,10 +232,11 @@ again:
 	b = (b1+b2)/2.0;
 	errx = a*WIDTH/2+b - x[2];
 	if (fabs(errx) > (a*WIDTH+b)*.01) {
+#ifdef DEBUG
 		fprintf(stderr, "X error (%.2f) too high, try again\n",
 		    fabs(errx));
-		sleep(2);
-		goto again;
+#endif
+		goto err;
 	}
 
 	ts.ts_minx = (int)(b+0.5);
@@ -252,20 +253,29 @@ again:
 	b = (b1+b2)/2.0;
 	erry = a*HEIGHT/2+b - y[2];
 	if (fabs(erry) > (a*HEIGHT+b)*.01) {
+#ifdef DEBUG
 		fprintf(stderr, "Y error (%.2f) too high, try again\n",
 		    fabs(erry));
-		sleep(2);
-		goto again;
+#endif
+		goto err;
 	}
 
 	ts.ts_miny = (int)(b+0.5);
 	ts.ts_maxy = (int)(a*HEIGHT+b+0.5);
+
+	restore_screen();
 
 	(void)printf("%s.%s=%d,%d,%d,%d\n", topname[CTL_MACHDEP].ctl_name,
 	    machdepname[CPU_ZTSSCALE].ctl_name, ts.ts_minx, ts.ts_maxx,
 	    ts.ts_miny, ts.ts_maxy);
 
 	return 0;
+
+err:
+	memset(mapaddr, WHITE, WIDTH*HEIGHT*sizeof(u_short));
+	bitmap(mapaddr, RED, error_bits, error_width, error_height);
+	sleep(2);
+	goto again;
 }
 
 __dead void
