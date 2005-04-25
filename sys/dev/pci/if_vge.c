@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.10 2005/04/08 15:15:52 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.11 2005/04/25 17:55:51 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1124,12 +1124,12 @@ vge_rxeof(struct vge_softc *sc)
 		/* Check IP header checksum */
 		if ((rxctl & VGE_RDCTL_IPPKT) &&
 		    (rxctl & VGE_RDCTL_IPCSUMOK))
-			m->m_pkthdr.csum |= M_IPV4_CSUM_IN_OK;
+			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 
 		/* Check TCP/UDP checksum */
-		if (rxctl & (VGE_RDCTL_TCPPKT|VGE_RDCTL_UDPPKT) &&
+		if ((rxctl & (VGE_RDCTL_TCPPKT|VGE_RDCTL_UDPPKT)) &&
 		    (rxctl & VGE_RDCTL_PROTOCSUMOK))
-			m->m_pkthdr.csum |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
+			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 
 #ifdef VGE_VLAN
 		if (rxstat & VGE_RDSTS_VTAG)

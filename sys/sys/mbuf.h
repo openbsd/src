@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.80 2005/04/20 19:59:29 reyk Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.81 2005/04/25 17:55:52 brad Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ struct	pkthdr {
 	struct	ifnet *rcvif;		/* rcv interface */
 	SLIST_HEAD(packet_tags, m_tag) tags; /* list of packet tags */
 	int	len;			/* total packet length */
-	int	csum;			/* Hardware checksum info */
+	int	csum_flags;		/* checksum flags */
 };
 
 /* description of external storage mapped into mbuf, valid if M_EXT set */
@@ -231,7 +231,7 @@ struct mbuf *_sk_mget(int, int);
 		(m)->m_data = (m)->m_pktdat; \
 		(m)->m_flags = M_PKTHDR; \
 		SLIST_INIT(&(m)->m_pkthdr.tags); \
-		(m)->m_pkthdr.csum = 0; \
+		(m)->m_pkthdr.csum_flags = 0; \
 	} \
 } while (/* CONSTCOND */ 0)
 

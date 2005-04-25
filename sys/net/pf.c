@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.488 2005/04/25 17:55:51 brad Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5369,33 +5369,33 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 #endif /* IPSEC */
 
 	/* Catch routing changes wrt. hardware checksumming for TCP or UDP. */
-	if (m0->m_pkthdr.csum & M_TCPV4_CSUM_OUT) {
+	if (m0->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT) {
 		if (!(ifp->if_capabilities & IFCAP_CSUM_TCPv4) ||
 		    ifp->if_bridge != NULL) {
 			in_delayed_cksum(m0);
-			m0->m_pkthdr.csum &= ~M_TCPV4_CSUM_OUT; /* Clear */
+			m0->m_pkthdr.csum_flags &= ~M_TCPV4_CSUM_OUT; /* Clear */
 		}
-	} else if (m0->m_pkthdr.csum & M_UDPV4_CSUM_OUT) {
+	} else if (m0->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT) {
 		if (!(ifp->if_capabilities & IFCAP_CSUM_UDPv4) ||
 		    ifp->if_bridge != NULL) {
 			in_delayed_cksum(m0);
-			m0->m_pkthdr.csum &= ~M_UDPV4_CSUM_OUT; /* Clear */
+			m0->m_pkthdr.csum_flags &= ~M_UDPV4_CSUM_OUT; /* Clear */
 		}
 	}
 
 	if (ntohs(ip->ip_len) <= ifp->if_mtu) {
 		if ((ifp->if_capabilities & IFCAP_CSUM_IPv4) &&
 		    ifp->if_bridge == NULL) {
-			m0->m_pkthdr.csum |= M_IPV4_CSUM_OUT;
+			m0->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 			ipstat.ips_outhwcsum++;
 		} else {
 			ip->ip_sum = 0;
 			ip->ip_sum = in_cksum(m0, ip->ip_hl << 2);
 		}
 		/* Update relevant hardware checksum stats for TCP/UDP */
-		if (m0->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
+		if (m0->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
 			tcpstat.tcps_outhwcsum++;
-		else if (m0->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
+		else if (m0->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
 			udpstat.udps_outhwcsum++;
 		error = (*ifp->if_output)(ifp, m0, sintosa(dst), NULL);
 		goto done;
@@ -5612,9 +5612,9 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 	default:
 		return (1);
 	}
-	if (m->m_pkthdr.csum & flag_ok)
+	if (m->m_pkthdr.csum_flags & flag_ok)
 		return (0);
-	if (m->m_pkthdr.csum & flag_bad)
+	if (m->m_pkthdr.csum_flags & flag_bad)
 		return (1);
 	if (off < sizeof(struct ip) || len < sizeof(struct udphdr))
 		return (1);
@@ -5649,7 +5649,7 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 		return (1);
 	}
 	if (sum) {
-		m->m_pkthdr.csum |= flag_bad;
+		m->m_pkthdr.csum_flags |= flag_bad;
 		switch (p) {
 		case IPPROTO_TCP:
 			tcpstat.tcps_rcvbadsum++;
@@ -5668,7 +5668,7 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 		}
 		return (1);
 	}
-	m->m_pkthdr.csum |= flag_ok;
+	m->m_pkthdr.csum_flags |= flag_ok;
 	return (0);
 }
 

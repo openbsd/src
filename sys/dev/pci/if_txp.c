@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.76 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.77 2005/04/25 17:55:51 brad Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -723,7 +723,7 @@ txp_rx_reclaim(sc, r, dma)
 		else if (rxd->rx_stat & htole32(RX_STAT_UDPCKSUMGOOD))
 			sumflags |= M_UDP_CSUM_IN_OK;
 
-		m->m_pkthdr.csum = sumflags;
+		m->m_pkthdr.csum_flags = sumflags;
 
 #if NVLAN > 0
 		if (rxd->rx_stat & htole32(RX_STAT_VLAN)) {
@@ -1441,14 +1441,14 @@ txp_start(ifp)
 		}
 #endif
 
-		if (m->m_pkthdr.csum & M_IPV4_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 			txd->tx_pflags |= TX_PFLAGS_IPCKSUM;
 #ifdef TRY_TX_TCP_CSUM
-		if (m->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
 			txd->tx_pflags |= TX_PFLAGS_TCPCKSUM;
 #endif
 #ifdef TRY_TX_UDP_CSUM
-		if (m->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
+		if (m->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
 			txd->tx_pflags |= TX_PFLAGS_UDPCKSUM;
 #endif
 

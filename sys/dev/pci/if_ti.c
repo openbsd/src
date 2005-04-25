@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.59 2005/04/18 00:04:11 brad Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.60 2005/04/25 17:55:51 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1903,7 +1903,7 @@ void ti_rxeof(sc)
 			sumflags |= M_IPV4_CSUM_IN_OK;
 		else
 			sumflags |= M_IPV4_CSUM_IN_BAD;
-		m->m_pkthdr.csum = sumflags;
+		m->m_pkthdr.csum_flags = sumflags;
 		sumflags = 0;
 
 #if NVLAN > 0

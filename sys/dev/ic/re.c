@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.8 2005/04/15 03:16:07 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.9 2005/04/25 17:55:51 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1192,14 +1192,14 @@ re_rxeof(sc)
 		/* Check IP header checksum */
 		if ((rxstat & RL_RDESC_STAT_PROTOID) &&
 		    !(rxstat & RL_RDESC_STAT_IPSUMBAD))
-			m->m_pkthdr.csum |= M_IPV4_CSUM_IN_OK;
+			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 
 		/* Check TCP/UDP checksum */
 		if ((RL_TCPPKT(rxstat) &&
 		    !(rxstat & RL_RDESC_STAT_TCPSUMBAD)) ||
 		    (RL_UDPPKT(rxstat) &&
 		    !(rxstat & RL_RDESC_STAT_UDPSUMBAD)))
-			m->m_pkthdr.csum |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
+			m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 
 #ifdef VLANXXX
 		if (rxvlan & RL_RDESC_VLANCTL_TAG) {
@@ -1452,11 +1452,11 @@ re_encap(sc, m_head, idx)
 
 	rl_flags = 0;
 
-	if (m_head->m_pkthdr.csum & M_IPV4_CSUM_OUT)
+	if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 		rl_flags |= RL_TDESC_CMD_IPCSUM;
-	if (m_head->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
+	if (m_head->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
 		rl_flags |= RL_TDESC_CMD_TCPCSUM;
-	if (m_head->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
+	if (m_head->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
 		rl_flags |= RL_TDESC_CMD_UDPCSUM;
 
 	map = sc->rl_ldata.rl_tx_dmamap[*idx];

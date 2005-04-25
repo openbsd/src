@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.57 2005/04/04 22:22:07 beck Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.58 2005/04/25 17:55:51 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2303,7 +2303,7 @@ bge_rxeof(sc)
 			m->m_pkthdr.csum_flags |= CSUM_DATA_VALID;
 		}
 #endif
-		m->m_pkthdr.csum = sumflags;
+		m->m_pkthdr.csum_flags = sumflags;
 		sumflags = 0;
 #endif
 
@@ -2614,10 +2614,10 @@ bge_encap(sc, m_head, txidx)
 	cur = frag = *txidx;
 
 #ifdef BGE_CHECKSUM
-	if (m_head->m_pkthdr.csum) {
-		if (m_head->m_pkthdr.csum & M_IPV4_CSUM_OUT)
+	if (m_head->m_pkthdr.csum_flags) {
+		if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 			csum_flags |= BGE_TXBDFLAG_IP_CSUM;
-		if (m_head->m_pkthdr.csum & (M_TCPV4_CSUM_OUT |
+		if (m_head->m_pkthdr.csum_flags & (M_TCPV4_CSUM_OUT |
 					     M_UDPV4_CSUM_OUT))
 			csum_flags |= BGE_TXBDFLAG_TCP_UDP_CSUM;
 #ifdef fake

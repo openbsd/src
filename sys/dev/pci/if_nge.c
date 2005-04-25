@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.31 2005/02/17 18:07:36 jfb Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.32 2005/04/25 17:55:51 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1346,21 +1346,21 @@ nge_rxeof(sc)
 		/* Do IP checksum checking. */
 		if (extsts & NGE_RXEXTSTS_IPPKT) {
 			if (extsts & NGE_RXEXTSTS_IPCSUMERR)
-				m->m_pkthdr.csum |= M_IPV4_CSUM_IN_BAD;
+				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_BAD;
 			else
-				m->m_pkthdr.csum |= M_IPV4_CSUM_IN_OK;
+				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 		}
 		if (extsts & NGE_RXEXTSTS_TCPPKT) {
 			if (extsts & NGE_RXEXTSTS_TCPCSUMERR)
-				m->m_pkthdr.csum |= M_TCP_CSUM_IN_BAD;
+				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_BAD;
 			else
-				m->m_pkthdr.csum |= M_TCP_CSUM_IN_OK;
+				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
 		}
 		if (extsts & NGE_RXEXTSTS_UDPPKT) {
 			if (extsts & NGE_RXEXTSTS_UDPCSUMERR)
-				m->m_pkthdr.csum |= M_UDP_CSUM_IN_BAD;
+				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_BAD;
 			else
-				m->m_pkthdr.csum |= M_UDP_CSUM_IN_OK;
+				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
 		}
 
 #if NVLAN > 0
@@ -1664,14 +1664,14 @@ nge_encap(sc, m_head, txidx)
 	 * basis.
 	 */
 	sc->nge_ldata->nge_tx_list[*txidx].nge_extsts = 0;
-	if (m_head->m_pkthdr.csum) {
-		if (m_head->m_pkthdr.csum & M_IPV4_CSUM_OUT)
+	if (m_head->m_pkthdr.csum_flags) {
+		if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 			sc->nge_ldata->nge_tx_list[*txidx].nge_extsts |=
 			    NGE_TXEXTSTS_IPCSUM;
-		if (m_head->m_pkthdr.csum & M_TCPV4_CSUM_OUT)
+		if (m_head->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
 			sc->nge_ldata->nge_tx_list[*txidx].nge_extsts |=
 			    NGE_TXEXTSTS_TCPCSUM;
-		if (m_head->m_pkthdr.csum & M_UDPV4_CSUM_OUT)
+		if (m_head->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
 			sc->nge_ldata->nge_tx_list[*txidx].nge_extsts |=
 			    NGE_TXEXTSTS_UDPCSUM;
 	}

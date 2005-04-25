@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.186 2005/04/05 20:27:35 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.187 2005/04/25 17:55:52 brad Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -484,8 +484,8 @@ tcp_input(struct mbuf *m, ...)
 		/*
 		 * Checksum extended TCP header and data.
 		 */
-		if ((m->m_pkthdr.csum & M_TCP_CSUM_IN_OK) == 0) {
-			if (m->m_pkthdr.csum & M_TCP_CSUM_IN_BAD) {
+		if ((m->m_pkthdr.csum_flags & M_TCP_CSUM_IN_OK) == 0) {
+			if (m->m_pkthdr.csum_flags & M_TCP_CSUM_IN_BAD) {
 				tcpstat.tcps_inhwcsum++;
 				tcpstat.tcps_rcvbadsum++;
 				goto drop;
@@ -495,7 +495,7 @@ tcp_input(struct mbuf *m, ...)
 				goto drop;
 			}
 		} else {
-			m->m_pkthdr.csum &= ~M_TCP_CSUM_IN_OK;
+			m->m_pkthdr.csum_flags &= ~M_TCP_CSUM_IN_OK;
 			tcpstat.tcps_inhwcsum++;
 		}
 		break;

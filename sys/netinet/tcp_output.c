@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.76 2005/04/05 20:27:35 markus Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.77 2005/04/25 17:55:52 brad Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -947,7 +947,7 @@ send:
 #ifdef INET
 	case AF_INET:
 		/* Defer checksumming until later (ip_output() or hardware) */
-		m->m_pkthdr.csum |= M_TCPV4_CSUM_OUT;
+		m->m_pkthdr.csum_flags |= M_TCPV4_CSUM_OUT;
 		if (len + optlen)
 			th->th_sum = in_cksum_addword(th->th_sum,
 			    htons((u_int16_t)(len + optlen)));

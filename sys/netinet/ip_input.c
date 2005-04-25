@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.125 2005/01/20 15:00:13 markus Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.126 2005/04/25 17:55:51 brad Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -320,8 +320,8 @@ ipv4_input(m)
 		}
 	}
 
-	if ((m->m_pkthdr.csum & M_IPV4_CSUM_IN_OK) == 0) {
-		if (m->m_pkthdr.csum & M_IPV4_CSUM_IN_BAD) {
+	if ((m->m_pkthdr.csum_flags & M_IPV4_CSUM_IN_OK) == 0) {
+		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_IN_BAD) {
 			ipstat.ips_inhwcsum++;
 			ipstat.ips_badsum++;
 			goto bad;
@@ -332,7 +332,7 @@ ipv4_input(m)
 			goto bad;
 		}
 	} else {
-		m->m_pkthdr.csum &= ~M_IPV4_CSUM_IN_OK;
+		m->m_pkthdr.csum_flags &= ~M_IPV4_CSUM_IN_OK;
 		ipstat.ips_inhwcsum++;
 	}
 

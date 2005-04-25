@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.17 2004/09/23 17:45:16 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.18 2005/04/25 17:55:51 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1007,21 +1007,21 @@ void lge_rxeof(sc, cnt)
 
 		if (rxsts & LGE_RXSTS_ISIP) {
 			if (rxsts & LGE_RXSTS_IPCSUMERR)
-				m->m_pkthdr.csum |= M_IPV4_CSUM_IN_BAD;
+				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_BAD;
 			else
-				m->m_pkthdr.csum |= M_IPV4_CSUM_IN_OK;
+				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 		}
 		if (rxsts & LGE_RXSTS_ISTCP) {
 			if (rxsts & LGE_RXSTS_TCPCSUMERR)
-				m->m_pkthdr.csum |= M_TCP_CSUM_IN_BAD;
+				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_BAD;
 			else
-				m->m_pkthdr.csum |= M_TCP_CSUM_IN_OK;
+				m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
 		}
 		if (rxsts & LGE_RXSTS_ISUDP) {
 			if (rxsts & LGE_RXSTS_UDPCSUMERR)
-				m->m_pkthdr.csum |= M_UDP_CSUM_IN_BAD;
+				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_BAD;
 			else
-				m->m_pkthdr.csum |= M_UDP_CSUM_IN_OK;
+				m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
 		}
 
 		ether_input_mbuf(ifp, m);

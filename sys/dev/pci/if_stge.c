@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.10 2005/01/15 05:24:11 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.11 2005/04/25 17:55:51 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.4 2001/07/25 15:44:48 thorpej Exp $	*/
 
 /*-
@@ -849,16 +849,16 @@ stge_start(struct ifnet *ifp)
 		 * Initialize checksumming flags in the descriptor.
 		 * Byte-swap constants so the compiler can optimize.
 		 */
-		if (m0->m_pkthdr.csum & M_IPV4_CSUM_OUT) {
+		if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT) {
 			STGE_EVCNT_INCR(&sc->sc_ev_txipsum);
 			csum_flags |= htole64(TFD_IPChecksumEnable);
 		}
 
-		if (m0->m_pkthdr.csum & M_TCPV4_CSUM_OUT) {
+		if (m0->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT) {
 			STGE_EVCNT_INCR(&sc->sc_ev_txtcpsum);
 			csum_flags |= htole64(TFD_TCPChecksumEnable);
 		}
-		else if (m0->m_pkthdr.csum & M_UDPV4_CSUM_OUT) {
+		else if (m0->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT) {
 			STGE_EVCNT_INCR(&sc->sc_ev_txudpsum);
 			csum_flags |= htole64(TFD_UDPChecksumEnable);
 		}
@@ -1327,15 +1327,15 @@ stge_rxintr(struct stge_softc *sc)
 		 */
 		if (status & RFD_IPDetected) {
 			STGE_EVCNT_INCR(&sc->sc_ev_rxipsum);
-			m->m_pkthdr.csum |= (status & RFD_IPError) ?
+			m->m_pkthdr.csum_flags |= (status & RFD_IPError) ?
 			  M_IPV4_CSUM_IN_BAD : M_IPV4_CSUM_IN_OK;
 			if (status & RFD_TCPDetected) {
 				STGE_EVCNT_INCR(&sc->sc_ev_rxtcpsum);
-				m->m_pkthdr.csum |= (status & RFD_TCPError) ?
+				m->m_pkthdr.csum_flags |= (status & RFD_TCPError) ?
 				  M_TCP_CSUM_IN_BAD : M_TCP_CSUM_IN_OK;
 			} else if (status & RFD_UDPDetected) {
 				STGE_EVCNT_INCR(&sc->sc_ev_rxudpsum);
-				m->m_pkthdr.csum |= (status & RFD_UDPError) ?
+				m->m_pkthdr.csum_flags |= (status & RFD_UDPError) ?
 				  M_UDP_CSUM_IN_BAD : M_UDP_CSUM_IN_OK;
 			}
 		}

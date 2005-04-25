@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.41 2005/01/15 04:43:40 brad Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.42 2005/04/25 17:55:51 brad Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -1872,9 +1872,9 @@ encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 	int i, len = ntohs(ip->ip_len) + sizeof(multicast_encap_iphdr);
 
 	/* Take care of delayed checksums */
-	if (m->m_pkthdr.csum & (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT)) {
+	if (m->m_pkthdr.csum_flags & (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT)) {
 		in_delayed_cksum(m);
-		m->m_pkthdr.csum &= ~(M_UDPV4_CSUM_OUT | M_TCPV4_CSUM_OUT);
+		m->m_pkthdr.csum_flags &= ~(M_UDPV4_CSUM_OUT | M_TCPV4_CSUM_OUT);
 	}
 
 	/*
@@ -3105,9 +3105,9 @@ pim_register_prepare(struct ip *ip, struct mbuf *m)
     int mtu;
 
     /* Take care of delayed checksums */
-    if (m->m_pkthdr.csum & (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT)) {
+    if (m->m_pkthdr.csum_flags & (M_TCPV4_CSUM_OUT | M_UDPV4_CSUM_OUT)) {
 	in_delayed_cksum(m);
-	m->m_pkthdr.csum &= ~(M_UDPV4_CSUM_OUT | M_TCPV4_CSUM_OUT);
+	m->m_pkthdr.csum_flags &= ~(M_UDPV4_CSUM_OUT | M_TCPV4_CSUM_OUT);
     }
 
     /*
