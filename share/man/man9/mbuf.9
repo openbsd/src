@@ -1,4 +1,4 @@
-.\"     $OpenBSD: mbuf.9,v 1.18 2005/01/29 00:47:36 jmc Exp $
+.\"     $OpenBSD: mbuf.9,v 1.19 2005/04/25 23:33:40 brad Exp $
 .\"
 .\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jjbg@openbsd.org>
 .\" All rights reserved.
@@ -116,7 +116,7 @@ struct  pkthdr {
         struct  ifnet *rcvif;
         SLIST_HEAD(packet_tags, m_tag) tags;
         int     len;
-        int     csum;
+        int     csum_flags;
 };
 
 struct m_ext {
