@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.37 2005/04/25 07:35:21 jmc Exp $
+.\"	$OpenBSD: adduser.8,v 1.38 2005/04/25 07:42:10 jmc Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -350,13 +350,11 @@ log file for
 .Nm
 .El
 .Sh EXAMPLES
-# adduser
-.Pp
 Start
 .Nm
-in interactive mode.
+in interactive mode:
 .Pp
-# adduser -batch falken guest,staff,beer 'Prof. Falken' joshua
+.Dl # adduser
 .Pp
 Create user
 .Dq falken
@@ -377,9 +375,9 @@ Password is
 .Dq joshua
 (don't use such a password!).
 Send user falken
-a welcome message.
+a welcome message:
 .Pp
-# adduser -uid_start 5000 -group guest -message no -batch vehlefanz
+.Dl "# adduser -batch falken guest,staff,beer 'Prof. Falken' joshua"
 .Pp
 Create user
 .Dq vehlefanz
@@ -387,7 +385,9 @@ in login group
 .Dq guest .
 Start the free UID search at 5000.
 No other groups, no realname, no password.
-Do not send a welcome message.
+Do not send a welcome message:
+.Pp
+.Dl "# adduser -uid_start 5000 -group guest -message no -batch vehlefanz"
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr finger 1 ,
