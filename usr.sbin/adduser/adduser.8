@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.36 2004/03/09 17:39:33 tom Exp $
+.\"	$OpenBSD: adduser.8,v 1.37 2005/04/25 07:35:21 jmc Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -230,9 +230,9 @@ politely refuses to remove users whose UID is 0 (typically root).
 It is recommended that login names contain only lowercase characters
 and digits.
 They may also contain uppercase characters, non-leading hyphens,
-periods, and a trailing '$'.
-Login names may not be longer than 31 characters (see BUGS section of
-.Xr setlogin 2 ) .
+periods, underscores, and a trailing
+.Ql $ .
+Login names may not be longer than 31 characters.
 .\" The reasons for this limit are "Historical".
 .\" Given that people have traditionally wanted to break this
 .\" limit for aesthetic reasons, it's never been of great importance to break
