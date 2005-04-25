@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.53 2005/04/24 10:16:10 brad Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.54 2005/04/25 01:34:26 brad Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -220,7 +220,7 @@ vlan_start(struct ifnet *ifp)
 
 			m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&evh);
 			evh.evl_proto = evh.evl_encap_proto;
-			evh.evl_encap_proto = htons(ETHERTYPE_8021Q);
+			evh.evl_encap_proto = htons(ETHERTYPE_VLAN);
 			evh.evl_tag = htons(ifv->ifv_tag);
 			m_adj(m, ETHER_HDR_LEN);
 
@@ -285,7 +285,7 @@ vlan_input_tag(struct mbuf *m, u_int16_t t)
 		m_copydata(m, 0, ETHER_HDR_LEN, (caddr_t)&vh);
 		vh.evl_proto = vh.evl_encap_proto;
 		vh.evl_tag = htons(t);
-		vh.evl_encap_proto = htons(ETHERTYPE_8021Q);
+		vh.evl_encap_proto = htons(ETHERTYPE_VLAN);
 		m_adj(m, ETHER_HDR_LEN);
 		m = m_prepend(m, sizeof(struct ether_vlan_header), M_DONTWAIT);
 		if (m == NULL)

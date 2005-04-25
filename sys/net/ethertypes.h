@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethertypes.h,v 1.4 2003/06/02 23:28:11 millert Exp $	*/
+/*	$OpenBSD: ethertypes.h,v 1.5 2005/04/25 01:34:27 brad Exp $	*/
 /*	$NetBSD: ethertypes.h,v 1.13 2002/02/10 01:28:32 thorpej Exp $	*/
 
 /*
@@ -219,7 +219,6 @@
 #define	ETHERTYPE_AARP		0x80F3	/* AppleTalk AARP */
 		    /* 0x80F4 - 0x80F5	   Kinetics */
 #define	ETHERTYPE_APOLLO	0x80F7	/* Apollo Computer */
-#define ETHERTYPE_8021Q		0x8100	/* IEEE 802.1Q VLAN tagging (XXX conflicts) */
 #define ETHERTYPE_VLAN		0x8100	/* IEEE 802.1Q VLAN tagging (XXX conflicts) */
 		    /* 0x80FF - 0x8101	   Wellfleet Communications (XXX conflicts) */
 #define	ETHERTYPE_BOFL		0x8102	/* Wellfleet; BOFL (Breath OF Life) pkts [every 5-10 secs.] */
