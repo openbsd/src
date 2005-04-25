@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.25 2005/04/16 21:57:23 mickey Exp $ */
+/*      $OpenBSD: eap.c,v 1.26 2005/04/25 14:17:55 niallo Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -645,7 +645,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 		if (ct5880) {
 			EWRITE4(sc, EAP_ICSS, EAP_CT5880_AC97_RESET);
 			/* Let codec wake up */
-			tsleep(sc, PRIBIO, "eapcdc", hz / 20);
+			delay(20000);
 		}
 
                 /* Reset from es1371's perspective */
