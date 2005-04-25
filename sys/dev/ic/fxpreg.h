@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpreg.h,v 1.9 2005/04/24 20:41:34 brad Exp $	*/
+/*	$OpenBSD: fxpreg.h,v 1.10 2005/04/25 01:23:30 brad Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -336,6 +336,6 @@ struct fxp_cb_ucode {
 #define FXP_REV_82559S_A	9	/* 82559S A stepping */
 #define FXP_REV_82550		12
 #define FXP_REV_82550_C		13	/* 82550 C stepping */
-#define FXP_REV_82551_E		14	/* 82551 E stepping */
-#define FXP_REV_82551_F		15	/* 82551 F stepping */
+#define FXP_REV_82551_E		14	/* 82551 */
+#define FXP_REV_82551_F		15	/* 82551 */
 #define FXP_REV_82551_10	16	/* 82551 */
