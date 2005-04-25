@@ -1,4 +1,4 @@
-/*	$OpenBSD: binary.c,v 1.14 2005/02/07 08:47:18 otto Exp $	*/
+/*	$OpenBSD: binary.c,v 1.15 2005/04/25 08:21:20 otto Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -39,13 +39,13 @@ int
 bin_file(FILE *f)
 {
 	char		buf[BUFSIZ];
-	int		i, m;
+	size_t		i, m;
 	int		ret = 0;
 
 	if (fseek(f, 0L, SEEK_SET) == -1)
 		return 0;
 
-	if ((m = (int)fread(buf, 1, BUFSIZ, f)) == 0)
+	if ((m = fread(buf, 1, BUFSIZ, f)) == 0)
 		return 0;
 
 	for (i = 0; i < m; i++)
@@ -69,7 +69,7 @@ gzbin_file(gzFile *f)
 	if (gzseek(f, (z_off_t)0, SEEK_SET) == -1)
 		return 0;
 
-	if ((m = gzread(f, buf, BUFSIZ)) == 0)
+	if ((m = gzread(f, buf, BUFSIZ)) <= 0)
 		return 0;
 
 	for (i = 0; i < m; i++)
