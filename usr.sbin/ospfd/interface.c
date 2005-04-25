@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.16 2005/04/19 07:34:52 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.17 2005/04/25 09:09:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -559,24 +559,6 @@ if_act_reset(struct iface *iface)
 	struct nbr		*nbr = NULL;
 	struct in_addr		 addr;
 
-	if (if_stop_hello_timer(iface)) {
-		log_warnx("if_act_reset: error removing hello_timer, "
-		    "interface %s", iface->name);
-		return (-1);
-	}
-
-	if (if_stop_wait_timer(iface)) {
-		log_warnx("if_act_reset: error removing wait_timer, "
-		    "interface %s", iface->name);
-		return (-1);
-	}
-
-	if (stop_ls_ack_tx_timer(iface)) {
-		log_warnx("if_act_reset: error removing ls_ack_tx_timer, "
-		    "interface %s", iface->name);
-		return (-1);
-	}
-
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
 	case IF_TYPE_BROADCAST:
@@ -605,6 +587,25 @@ if_act_reset(struct iface *iface)
 
 	iface->dr = NULL;
 	iface->bdr = NULL;
+
+	ls_ack_list_clr(iface);
+	if (stop_ls_ack_tx_timer(iface)) {
+		log_warnx("if_act_reset: error removing ls_ack_tx_timer, "
+		    "interface %s", iface->name);
+		return (-1);
+	}
+
+	if (if_stop_hello_timer(iface)) {
+		log_warnx("if_act_reset: error removing hello_timer, "
+		    "interface %s", iface->name);
+		return (-1);
+	}
+
+	if (if_stop_wait_timer(iface)) {
+		log_warnx("if_act_reset: error removing wait_timer, "
+		    "interface %s", iface->name);
+		return (-1);
+	}
 
 	return (0);
 }
