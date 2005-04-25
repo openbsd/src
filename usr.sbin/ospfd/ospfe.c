@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.16 2005/04/25 09:55:18 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.17 2005/04/25 11:31:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -104,9 +104,6 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	if (if_set_tos(xconf->ospf_socket, IPTOS_PREC_INTERNETCONTROL) == -1)
 		fatal("if_set_tos");
 
-	if (if_init(xconf))
-		fatalx("error initializing interfaces");
-
 	oeconf = xconf;
 
 	if ((pw = getpwnam(OSPFD_USER)) == NULL)
@@ -173,6 +170,7 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	/* start interfaces */
 	LIST_FOREACH(area, &oeconf->area_list, entry) {
 		LIST_FOREACH(iface, &area->iface_list, entry) {
+			if_init(xconf, iface);
 			if (if_fsm(iface, IF_EVT_UP)) {
 				log_debug("error starting interface %s",
 				    iface->name);

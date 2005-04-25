@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.19 2005/04/25 09:55:18 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.20 2005/04/25 11:31:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -236,35 +236,34 @@ if_del(struct iface *iface)
 	return (-1);
 }
 
-int
-if_init(struct ospfd_conf *xconf)
+void
+if_init(struct ospfd_conf *xconf, struct iface *iface)
 {
-	struct area	*area = NULL;
-	struct iface	*iface = NULL;
+	/* init the dummy local neighbor */
+	iface->self = nbr_new(ospfe_router_id(), iface, 1);
 
-	LIST_FOREACH(area, &xconf->area_list, entry) {
-		LIST_FOREACH(iface, &area->iface_list, entry) {
-			switch (iface->type) {
-			case IF_TYPE_POINTOPOINT:
-				iface->fd = xconf->ospf_socket;
-				break;
-			case IF_TYPE_BROADCAST:
-				/* all bcast interfaces use the same socket */
-				iface->fd = xconf->ospf_socket;
-				break;
-			case IF_TYPE_NBMA:
-				break;
-			case IF_TYPE_POINTOMULTIPOINT:
-				break;
-			case IF_TYPE_VIRTUALLINK:
-				break;
-			default:
-				fatalx("if_init: unknown interface type");
-			}
-		}
+	/* set event handlers for interface */
+	evtimer_set(&iface->lsack_tx_timer, ls_ack_tx_timer, iface);
+	evtimer_set(&iface->hello_timer, if_hello_timer, iface);
+	evtimer_set(&iface->wait_timer, if_wait_timer, iface);
+
+	switch (iface->type) {
+	case IF_TYPE_POINTOPOINT:
+		iface->fd = xconf->ospf_socket;
+		break;
+	case IF_TYPE_BROADCAST:
+		/* all bcast interfaces use the same socket */
+		iface->fd = xconf->ospf_socket;
+		break;
+	case IF_TYPE_NBMA:
+		break;
+	case IF_TYPE_POINTOMULTIPOINT:
+		break;
+	case IF_TYPE_VIRTUALLINK:
+		break;
+	default:
+		fatalx("if_init: unknown interface type");
 	}
-
-	return (0);
 }
 
 int
@@ -351,15 +350,6 @@ if_act_start(struct iface *iface)
 		    iface->name);
 		return (0);
 	}
-
-	/* init the dummy local neighbor */
-	if (iface->self == NULL)
-		iface->self = nbr_new(ospfe_router_id(), iface, 1);
-
-	/* set event handlers for interface */
-	evtimer_set(&iface->lsack_tx_timer, ls_ack_tx_timer, iface);
-	evtimer_set(&iface->hello_timer, if_hello_timer, iface);
-	evtimer_set(&iface->wait_timer, if_wait_timer, iface);
 
 	switch (iface->type) {
 	case IF_TYPE_POINTOPOINT:
