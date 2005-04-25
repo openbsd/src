@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.45 2005/04/10 04:08:40 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.46 2005/04/25 02:08:08 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2651,7 +2651,7 @@ em_enable_vlans(struct em_softc *sc)
 {
 	uint32_t ctrl;
 
-	E1000_WRITE_REG(&sc->hw, VET, ETHERTYPE_8021Q);
+	E1000_WRITE_REG(&sc->hw, VET, ETHERTYPE_VLAN);
 
 	ctrl = E1000_READ_REG(&sc->hw, CTRL);
 	ctrl |= E1000_CTRL_VME; 
