@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.17 2005/04/25 09:09:56 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.18 2005/04/25 09:28:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -245,7 +245,6 @@ if_init(struct ospfd_conf *xconf)
 	struct area	*area = NULL;
 	struct iface	*iface = NULL;
 
-	/* XXX wrong as hell */
 	if ((xconf->ospf_socket = socket(AF_INET, SOCK_RAW,
 	    IPPROTO_OSPF)) == -1) {
 		log_warn("if_init: error creating socket");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.14 2005/04/12 09:54:59 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.15 2005/04/25 09:28:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -87,6 +87,9 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	/* create ospfd control socket outside chroot */
 	if (control_init() == -1)
 		fatalx("control socket setup failed");
+
+	if (if_init(xconf))
+		fatalx("error initializing interfaces");
 
 	oeconf = xconf;
 

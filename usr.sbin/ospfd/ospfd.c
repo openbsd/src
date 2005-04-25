@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.17 2005/04/19 07:34:52 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.18 2005/04/25 09:28:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -178,11 +178,6 @@ main(int argc, char *argv[])
 	session_socket_blockmode(pipe_parent2rde[1], BM_NONBLOCK);
 	session_socket_blockmode(pipe_ospfe2rde[0], BM_NONBLOCK);
 	session_socket_blockmode(pipe_ospfe2rde[1], BM_NONBLOCK);
-
-	if (if_init(conf))
-		log_info("error initializing interfaces");
-	else
-		log_debug("interfaces initialized");
 
 	/* start children */
 	rde_pid = rde(conf, pipe_parent2rde, pipe_ospfe2rde, pipe_parent2ospfe);
