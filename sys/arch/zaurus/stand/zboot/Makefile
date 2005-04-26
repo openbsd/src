@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 2005/04/19 23:09:40 uwe Exp $
+#	$OpenBSD: Makefile,v 1.4 2005/04/26 19:20:21 deraadt Exp $
 
 MAN=	boot.8
+MANSUBDIR=zaurus
 MLINKS=	boot.8 boot.conf.8
 
 .if ${MACHINE} == "zaurus"
