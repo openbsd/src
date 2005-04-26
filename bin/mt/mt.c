@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.23 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: mt.c,v 1.24 2005/04/26 16:23:48 jmc Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mt.c,v 1.23 2003/06/02 23:32:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: mt.c,v 1.24 2005/04/26 16:23:48 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -298,9 +298,9 @@ void
 usage(void)
 {
 	if (eject)
-		(void)fprintf(stderr, "usage: %s [-f] device\n", progname);
+		(void)fprintf(stderr, "usage: %s device\n", progname);
 	else
 		(void)fprintf(stderr,
-		    "usage: %s [-f device] command [ count ]\n", progname);
+		    "usage: %s [-f device] command [count]\n", progname);
 	exit(X_USAGE);
 }

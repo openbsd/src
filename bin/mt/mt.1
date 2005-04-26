@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mt.1,v 1.21 2003/07/31 14:12:21 jmc Exp $
+.\"	$OpenBSD: mt.1,v 1.22 2005/04/26 16:23:48 jmc Exp $
 .\"	$NetBSD: mt.1,v 1.8 1996/05/21 10:23:55 mrg Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
@@ -43,7 +43,6 @@
 .Ar command
 .Op Ar count
 .Nm eject
-.Op Fl f
 .Ar device
 .Sh DESCRIPTION
 The
@@ -76,20 +75,20 @@ command specified.
 .Nm eject
 may also be used to eject other types of removable media.
 .Pp
-The options are as follows:
-.Pp
-.Bl -tag -width Ds
+The options for
+.Nm
+are as follows:
+.Bl -tag -width "-f deviceXX"
 .It Fl f Ar device
 Operate on the
 .Ar device
 specified.
-.El
-.Pp
 If the
 .Fl f
 flag is passed to
 .Nm eject ,
 it is silently ignored.
+.El
 .Pp
 The available commands are listed below.
 Only as many characters as are required to uniquely identify a command
