@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.12 2005/04/26 01:09:00 deraadt Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.13 2005/04/26 01:12:27 deraadt Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -483,11 +483,11 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #endif /* NZTS > 0 */
 	case CPU_ZTSSCALE:
 	{
+		int err = EINVAL;
+#if NZTS > 0
 		struct ztsscale *p = newp;
 		struct ztsscale ts;
 		int s;
-#if NZTS > 0
-		int err = EINVAL;
 
 		if (!newp && newlen == 0)
 			return (sysctl_struct(oldp, oldlenp, 0, 0,
