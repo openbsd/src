@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.163 2005/04/12 14:32:00 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.164 2005/04/26 15:18:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -93,7 +93,7 @@ struct buf {
 };
 
 struct msgbuf {
-	TAILQ_HEAD(bufs, buf)	 bufs;
+	TAILQ_HEAD(, buf)	 bufs;
 	u_int32_t		 queued;
 	int			 fd;
 };

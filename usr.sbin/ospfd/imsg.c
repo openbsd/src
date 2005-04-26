@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.3 2005/03/23 10:46:26 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.4 2005/04/26 15:18:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,8 +17,8 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/uio.h>
+
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,7 +30,6 @@
 void
 imsg_init(struct imsgbuf *ibuf, int fd, void (*handler)(int, short, void *))
 {
-
 	msgbuf_init(&ibuf->w);
 	bzero(&ibuf->r, sizeof(ibuf->r));
 	ibuf->fd = fd;
@@ -75,7 +74,7 @@ imsg_read(struct imsgbuf *ibuf)
 		    cmsg->cmsg_type == SCM_RIGHTS) {
 			fd = (*(int *)CMSG_DATA(cmsg));
 			if ((ifd = calloc(1, sizeof(struct imsg_fd))) == NULL)
-				fatal("imsg_read");
+				fatal("imsg_read calloc");
 			ifd->fd = fd;
 			TAILQ_INSERT_TAIL(&ibuf->fds, ifd, entry);
 		} else
@@ -139,7 +138,7 @@ imsg_compose(struct imsgbuf *ibuf, enum imsg_type type, u_int32_t peerid,
 	wbuf->fd = fd;
 
 	if ((n = imsg_close(ibuf, wbuf)) < 0)
-			return (-1);
+		return (-1);
 
 	return (n);
 }
@@ -152,7 +151,7 @@ imsg_create(struct imsgbuf *ibuf, enum imsg_type type, u_int32_t peerid,
 	struct imsg_hdr	 hdr;
 
 	if (datalen > MAX_IMSGSIZE - IMSG_HEADER_SIZE) {
-		log_warnx("imsg_create_core: len %u > MAX_IMSGSIZE; "
+		log_warnx("imsg_create: len %u > MAX_IMSGSIZE; "
 		    "type %u peerid %lu", datalen + IMSG_HEADER_SIZE,
 		    type, peerid);
 		return (NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.10 2005/03/23 10:42:04 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.11 2005/04/26 15:18:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -67,7 +67,8 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 	memcpy(&imsg->hdr, ibuf->r.buf, sizeof(imsg->hdr));
 	if (imsg->hdr.len < IMSG_HEADER_SIZE ||
 	    imsg->hdr.len > MAX_IMSGSIZE) {
-		log_warnx("imsg_get: imsg hdr len out of bounds");
+		log_warnx("imsg_get: imsg hdr len %u out of bounds, type=%u",
+		    imsg->hdr.len, imsg->hdr.type);
 		return (-1);
 	}
 	if (imsg->hdr.len > av)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.54 2005/03/23 10:42:04 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.55 2005/04/26 15:18:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -127,7 +127,7 @@ struct ntpd_conf {
 };
 
 struct buf {
-	TAILQ_ENTRY(buf)	 entries;
+	TAILQ_ENTRY(buf)	 entry;
 	u_char			*buf;
 	size_t			 size;
 	size_t			 wpos;
@@ -135,7 +135,7 @@ struct buf {
 };
 
 struct msgbuf {
-	TAILQ_HEAD(bufs, buf)	 bufs;
+	TAILQ_HEAD(, buf)	 bufs;
 	u_int32_t		 queued;
 	int			 fd;
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.5 2005/04/05 12:59:18 claudio Exp $ */
+/*	$OpenBSD: buffer.c,v 1.6 2005/04/26 15:18:22 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,13 +17,12 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/uio.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <err.h>
+
 #include <errno.h>
 #include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
