@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcons.c,v 1.8 2004/09/13 20:31:25 deraadt Exp $	*/
+/*	$OpenBSD: pcons.c,v 1.9 2005/04/26 18:54:36 miod Exp $	*/
 /*	$NetBSD: pcons.c,v 1.7 2001/05/02 10:32:20 scw Exp $	*/
 
 /*-
@@ -130,11 +130,11 @@ pconsmatch(parent, match, aux)
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
-	extern int  prom_cngetc(dev_t);
+	extern int prom_cngetc(dev_t);
 
 	/* Only attach if no other console has attached. */
-	return ((strcmp("pcons", ma->ma_name) == 0) &&
-		(cn_tab->cn_getc == prom_cngetc));
+	return (strcmp("pcons", ma->ma_name) == 0 &&
+	    cn_tab->cn_getc == prom_cngetc);
 
 }
 
@@ -190,7 +190,7 @@ pconsopen(dev, flag, mode, p)
 		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
 		pconsparam(tp, &tp->t_termios);
 		ttsetwater(tp);
-	} else if ((tp->t_state&TS_XCLUDE) && suser(p, 0))
+	} else if ((tp->t_state & TS_XCLUDE) && suser(p, 0))
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 	
@@ -361,24 +361,20 @@ pcons_cnpollc(dev, on)
 	if (pcons_cd.cd_devs) 
 		sc = pcons_cd.cd_devs[minor(dev)];
 
+	if (sc == NULL)
+		return;
+
 	if (on) {
-		if (!sc) return;
 		if (sc->of_flags & OFPOLL)
 			timeout_del(&sc->sc_poll_to);
 		sc->of_flags &= ~OFPOLL;
 	} else {
                 /* Resuming kernel. */
-		if (sc && !(sc->of_flags & OFPOLL)) {
+		if (!(sc->of_flags & OFPOLL)) {
 			sc->of_flags |= OFPOLL;
 			timeout_add(&sc->sc_poll_to, 1);
 		}
 	}
-}
-
-void pcons_dopoll(void);
-void
-pcons_dopoll() {
-		pcons_poll((void *)pcons_cd.cd_devs[0]);
 }
 
 /* XXXXXXXX --- more cnmagic stuff. */

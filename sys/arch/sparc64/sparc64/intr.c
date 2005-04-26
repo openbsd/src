@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.22 2004/06/28 01:47:41 aaron Exp $	*/
+/*	$OpenBSD: intr.c,v 1.23 2005/04/26 18:54:39 miod Exp $	*/
 /*	$NetBSD: intr.c,v 1.39 2001/07/19 23:38:11 eeh Exp $ */
 
 /*
@@ -40,8 +40,6 @@
  *
  *	@(#)intr.c	8.3 (Berkeley) 11/11/93
  */
-
-#include "pcons.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,17 +124,6 @@ strayintr(fp, vectored)
  *	Network software interrupt
  *	Soft clock interrupt
  */
-int
-softintr(fp)
-	void *fp;
-{
-#if NPCONS >0
-	extern void pcons_dopoll(void);
-
-	pcons_dopoll();
-#endif
-	return (1);
-}
 
 int netisr;
 
@@ -160,13 +147,7 @@ softnet(fp)
 	return (1);
 }
 
-struct intrhand soft01intr = { softintr, NULL, 1 };
 struct intrhand soft01net = { softnet, NULL, 1 };
-
-void 
-setsoftint() {
-	send_softint(-1, IPL_SOFTINT, &soft01intr);
-}
 
 void 
 setsoftnet() {

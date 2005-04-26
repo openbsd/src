@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.30 2004/10/01 18:18:49 jason Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.31 2005/04/26 18:54:38 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -154,20 +154,6 @@ struct clockframe {
 				(((framep)->t.tf_kstack < (vaddr_t)EINTSTACK)&&\
 				((framep)->t.tf_kstack > (vaddr_t)INTSTACK)))
 
-/*
- * Software interrupt request `register'.
- */
-#ifdef DEPRECATED
-union sir {
-	int	sir_any;
-	char	sir_which[4];
-} sir;
-
-#define SIR_NET		0
-#define SIR_CLOCK	1
-#endif
-
-void setsoftint(void);
 void setsoftnet(void);
 
 extern	int want_ast;

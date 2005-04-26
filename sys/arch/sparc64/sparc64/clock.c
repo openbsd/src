@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.22 2004/09/28 19:21:58 jason Exp $	*/
+/*	$OpenBSD: clock.c,v 1.23 2005/04/26 18:54:39 miod Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -849,8 +849,6 @@ clockintr(cap)
 	return (1);
 }
 
-int poll_console = 0;
-
 /*
  * Level 10 (clock) interrupts.  If we are using the FORTH PROM for
  * console input, we need to check for that here as well, and generate
@@ -866,8 +864,6 @@ tickintr(cap)
 	int s;
 
 	hardclock((struct clockframe *)cap);
-	if (poll_console)
-		setsoftint();
 
 	s = splhigh();
 	__asm __volatile("rd %%tick, %0" : "=r" (lasttick) :);
