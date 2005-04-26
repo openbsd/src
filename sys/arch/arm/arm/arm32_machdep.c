@@ -1,4 +1,4 @@
-/*	$OpenBSD: arm32_machdep.c,v 1.11 2005/04/24 18:55:49 uwe Exp $	*/
+/*	$OpenBSD: arm32_machdep.c,v 1.12 2005/04/26 01:09:00 deraadt Exp $	*/
 /*	$NetBSD: arm32_machdep.c,v 1.42 2003/12/30 12:33:15 pk Exp $	*/
 
 /*
@@ -466,23 +466,28 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &cpu_apmwarn));
 #endif
 #if defined(__zaurus__)
+#include "zts.h"
 	case CPU_KBDRESET:
 		if (securelevel > 0)
 			return (sysctl_rdint(oldp, oldlenp, newp,
 			    kbd_reset));
-		else
-			return (sysctl_int(oldp, oldlenp, newp, newlen,
-			    &kbd_reset));
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &kbd_reset));
 
 	case CPU_ZTSRAWMODE:
+#if NZTS > 0
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &zts_rawmode));
+#else
+		return (EINVAL);
+#endif /* NZTS > 0 */
 	case CPU_ZTSSCALE:
 	{
 		struct ztsscale *p = newp;
 		struct ztsscale ts;
-		int err;
 		int s;
+#if NZTS > 0
+		int err = EINVAL;
 
 		if (!newp && newlen == 0)
 			return (sysctl_struct(oldp, oldlenp, 0, 0,
@@ -504,6 +509,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			zts_scale = ts;
 			splx(s);
 		}
+#endif /* NZTS > 0 */
 		return (err);
 	}
 #endif

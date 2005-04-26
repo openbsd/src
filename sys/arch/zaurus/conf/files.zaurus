@@ -1,4 +1,4 @@
-#	$OpenBSD: files.zaurus,v 1.16 2005/04/15 01:05:50 pascoe Exp $
+#	$OpenBSD: files.zaurus,v 1.17 2005/04/26 01:09:00 deraadt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -50,7 +50,7 @@ file arch/zaurus/dev/zaurus_apm.c		apm_pxaip
 # Zaurus touchpad
 device zts: wsmousedev
 attach zts at pxaip
-file arch/zaurus/dev/zts.c			zts
+file arch/zaurus/dev/zts.c			zts needs-flag
 
 # Zaurus sound
 device	zaudio: audio
