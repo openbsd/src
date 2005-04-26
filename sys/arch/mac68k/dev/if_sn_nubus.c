@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_sn_nubus.c,v 1.16 2004/11/26 21:21:24 miod Exp $  */
+/*    $OpenBSD: if_sn_nubus.c,v 1.17 2005/04/26 21:09:35 martin Exp $  */
 /*    $NetBSD: if_sn_nubus.c,v 1.13 1997/05/11 19:11:34 scottr Exp $  */
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -126,7 +126,7 @@ sn_nubus_attach(parent, self, aux)
 
 	sc->sc_regt = bst;
 
-	strncpy(cardtype, nubus_get_card_name(na->fmt),
+	strncpy(cardtype, nubus_get_card_name(bst, bsh, na->fmt),
 	    INTERFACE_NAME_LEN);
 
 	success = 0;
@@ -291,7 +291,7 @@ sn_nb_card_vendor(bst, bsh, na)
 		break;
 	case NUBUS_DRSW_GATOR:
 		if (na->drhw == NUBUS_DRHW_KINETICS &&
-		    strncmp(nubus_get_card_name(na->fmt),
+		    strncmp(nubus_get_card_name(bst, bsh, na->fmt),
 		    "EtherPort", 9) != 0)
 			vendor = SN_VENDOR_DAYNA;
 		break;

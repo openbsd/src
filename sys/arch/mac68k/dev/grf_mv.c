@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.20 2004/11/26 21:21:24 miod Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.21 2005/04/26 21:09:35 martin Exp $	*/
 /*	$NetBSD: grf_mv.c,v 1.24 1997/05/03 02:29:54 briggs Exp $	*/
 
 /*
@@ -137,44 +137,54 @@ grfmv_attach(parent, self, aux)
 	nubus_dir dir, mode_dir;
 	int mode;
 
+	sc->sc_tag = na->na_tag;
 	sc->card_id = na->drhw;
 
 	bcopy(na->fmt, &sc->sc_slot, sizeof(nubus_slot));
 
+	if (bus_space_map(sc->sc_tag,
+	    NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &sc->sc_regh)) {
+		printf(": grfmv_attach: failed to map slot %d\n", na->slot);
+		return;
+	}
+
 	nubus_get_main_dir(&sc->sc_slot, &dir);
 
-	if (nubus_find_rsrc(&sc->sc_slot, &dir, na->rsrcid, &dirent) <= 0)
+	if (nubus_find_rsrc(sc->sc_tag, sc->sc_regh,
+	    &sc->sc_slot, &dir, na->rsrcid, &dirent) <= 0) {
+bad:
+		bus_space_unmap(sc->sc_tag, sc->sc_regh, NBMEMSIZE);
 		return;
+	}
 
 	nubus_get_dir_from_rsrc(&sc->sc_slot, &dirent, &sc->board_dir);
 
-	if (nubus_find_rsrc(&sc->sc_slot, &sc->board_dir,
-	    NUBUS_RSRC_TYPE, &dirent) <= 0)
+	if (nubus_find_rsrc(sc->sc_tag, sc->sc_regh,
+	    &sc->sc_slot, &sc->board_dir, NUBUS_RSRC_TYPE, &dirent) <= 0)
 		if ((na->rsrcid != 128) ||
-		    (nubus_find_rsrc(&sc->sc_slot, &dir, 129, &dirent) <= 0))
-			return;
+		    (nubus_find_rsrc(sc->sc_tag, sc->sc_regh,
+		    &sc->sc_slot, &dir, 129, &dirent) <= 0))
+			goto bad;
 
 	mode = NUBUS_RSRC_FIRSTMODE;
-	if (nubus_find_rsrc(&sc->sc_slot, &sc->board_dir, mode, &dirent) <= 0) {
-		printf("\n%s: probe failed to get board rsrc.\n",
-		    sc->sc_dev.dv_xname);
-		return;
+	if (nubus_find_rsrc(sc->sc_tag, sc->sc_regh,
+	    &sc->sc_slot, &sc->board_dir, mode, &dirent) <= 0) {
+		printf(": probe failed to get board rsrc.\n");
+		goto bad;
 	}
 
 	nubus_get_dir_from_rsrc(&sc->sc_slot, &dirent, &mode_dir);
 
-	if (nubus_find_rsrc(&sc->sc_slot, &mode_dir, VID_PARAMS, &dirent)
-	    <= 0) {
-		printf("\n%s: probe failed to get mode dir.\n",
-		    sc->sc_dev.dv_xname);
-		return;
+	if (nubus_find_rsrc(sc->sc_tag, sc->sc_regh,
+	    &sc->sc_slot, &mode_dir, VID_PARAMS, &dirent) <= 0) {
+		printf(": probe failed to get mode dir.\n");
+		goto bad;
 	}
 
-	if (nubus_get_ind_data(&sc->sc_slot, &dirent, (caddr_t)&image_store,
-				sizeof(struct image_data)) <= 0) {
-		printf("\n%s: probe failed to get indirect mode data.\n",
-		    sc->sc_dev.dv_xname);
-		return;
+	if (nubus_get_ind_data(sc->sc_tag, sc->sc_regh, &sc->sc_slot,
+	    &dirent, (caddr_t)&image_store, sizeof(struct image_data)) <= 0) {
+		printf(": probe failed to get indirect mode data.\n");
+		goto bad;
 	}
 
 	/* Need to load display info (and driver?), etc... (?) */
@@ -183,8 +193,8 @@ grfmv_attach(parent, self, aux)
 
 	gm = &sc->curr_mode;
 	gm->mode_id = mode;
-	gm->fbbase = (caddr_t)(sc->sc_slot.virtual_base +
-				m68k_trunc_page(image.offset));
+	gm->fbbase = (caddr_t)(sc->sc_regh +
+				m68k_trunc_page(image.offset)); /* XXX evil! */
 	gm->fboff = image.offset & PGOFSET;
 	gm->rowbytes = image.rowbytes;
 	gm->width = image.right - image.left;
@@ -195,8 +205,8 @@ grfmv_attach(parent, self, aux)
 	gm->ptype = image.pixelType;
 	gm->psize = image.pixelSize;
 
-	strncpy(cardname, nubus_get_card_name(&sc->sc_slot),
-		CARD_NAME_LEN);
+	strncpy(cardname, nubus_get_card_name(sc->sc_tag, sc->sc_regh,
+	    &sc->sc_slot), CARD_NAME_LEN);
 	cardname[CARD_NAME_LEN-1] = '\0';
 	printf(": %s\n", cardname);
 
@@ -210,7 +220,7 @@ grfmv_attach(parent, self, aux)
 		if (strncmp(cardname, "Samsung 768", 11) == 0)
 			sc->card_id = NUBUS_DRHW_SAM768;
 		else if (strncmp(cardname, "Toby frame", 10) != 0)
-			printf("%s: card masquerades as Toby Framebuffer",
+			printf("%s: This display card pretends to be a TFB!\n",
 			    sc->sc_dev.dv_xname);
 	}
 
@@ -219,36 +229,36 @@ grfmv_attach(parent, self, aux)
 	case NUBUS_DRHW_TFB:
 		sc->cli_offset = 0xa0000;
 		sc->cli_value = 0;
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc,
+		add_nubus_intr(na->slot, grfmv_intr_generic, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_WVC:
 		sc->cli_offset = 0xa00000;
 		sc->cli_value = 0;
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc,
+		add_nubus_intr(na->slot, grfmv_intr_generic, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_RPC8XJ:
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_radius, sc,
+		add_nubus_intr(na->slot, grfmv_intr_radius, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_FIILX:
 	case NUBUS_DRHW_FIISXDSP:
-		sc->cli_offset = 0xF05000;
+		sc->cli_offset = 0xf05000;
 		sc->cli_value = 0x80;
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_generic, sc,
+		add_nubus_intr(na->slot, grfmv_intr_generic, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_SAM768:
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cti, sc,
+		add_nubus_intr(na->slot, grfmv_intr_cti, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_CB264:
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cb264, sc,
+		add_nubus_intr(na->slot, grfmv_intr_cb264, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_CB364:
-		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cb364, sc,
+		add_nubus_intr(na->slot, grfmv_intr_cb364, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_SE30:
@@ -293,7 +303,7 @@ grfmv_phys(gp, addr)
 	vm_offset_t addr;
 {
 	return (caddr_t)(NUBUS_SLOT2PA(gp->sc_slot->slot) +
-				(addr - gp->sc_slot->virtual_base));
+	    (addr - gp->sc_regh));	/* XXX evil hack */
 }
 
 /* Interrupt handlers... */
@@ -304,32 +314,26 @@ grfmv_phys(gp, addr)
  */
 /*ARGSUSED*/
 static int
-grfmv_intr_generic(void *vsc)
+grfmv_intr_generic(vsc)
+	void	*vsc;
 {
-	struct grfbus_softc *sc;
-	volatile char *slotbase;
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 
-	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_slot.virtual_base;
-	slotbase[sc->cli_offset] = sc->cli_value;
+	bus_space_write_1(sc->sc_tag, sc->sc_regh,
+	    sc->cli_offset, sc->cli_value);
 	return (1);
 }
 
 /*
- * Generic routine to clear interrupts for cards where it simply takes
- * a CLR.B to clear the interrupt.  The offset of this byte varies between
- * cards.
+ * Routine to clear interrupts for the Radius PrecisionColor 8xj card.
  */
 /*ARGSUSED*/
 static int
-grfmv_intr_radius(void *vsc)
+grfmv_intr_radius(vsc)
+	void	*vsc;
 {
-	unsigned char	c;
-	struct grfbus_softc *sc;
-	volatile char *slotbase;
-
-	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_slot.virtual_base;
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int8_t c;
 
 	/*
 	 * The value 0x66 was the observed value on one	card.  It is read
@@ -339,9 +343,9 @@ grfmv_intr_radius(void *vsc)
 	c = 0x66;
 
 	c |= 0x80;
-	slotbase[0xD00403] = c;
-	c &= 0x7F;
-	slotbase[0xD00403] = c;
+	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0xd00403, c);
+	c &= 0x7f;
+	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0xd00403, c);
 	return (1);
 }
 
@@ -356,15 +360,17 @@ grfmv_intr_radius(void *vsc)
  */
 /*ARGSUSED*/
 static int
-grfmv_intr_cti(void *vsc)
+grfmv_intr_cti(vsc)
+	void	*vsc;
 {
-	struct grfbus_softc *sc;
-	volatile char *slotbase;
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int8_t c;
 
-	sc = (struct grfbus_softc *)vsc;
-	slotbase = ((volatile char *)sc->sc_slot.virtual_base) + 0x00080000;
-	*slotbase = (*slotbase | 0x02);
-	*slotbase = (*slotbase & 0xFD);
+	c = bus_space_read_1(sc->sc_tag, sc->sc_regh, 0x80000);
+	c |= 0x02;
+	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0x80000, c);
+	c &= 0xfd;
+	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0x80000, c);
 	return (1);
 }
 
@@ -376,7 +382,7 @@ grfmv_intr_cb264(void *vsc)
 	volatile char *slotbase;
 
 	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_slot.virtual_base;
+	slotbase = (volatile char *)sc->sc_regh;	/* XXX evil hack */
 	asm volatile("	movl	%0,a0
 			movl	a0@(0xff6028),d0
 			andl	#0x2,d0
@@ -430,7 +436,7 @@ grfmv_intr_cb364(void *vsc)
 	volatile char *slotbase;
 
 	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_slot.virtual_base;
+	slotbase = (volatile char *)sc->sc_regh;	/* XXX evil hack */
 	asm volatile("	movl	%0,a0
 			movl	a0@(0xfe6028),d0
 			andl	#0x2,d0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfvar.h,v 1.13 2003/09/23 16:51:11 millert Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.14 2005/04/26 21:09:35 martin Exp $	*/
 /*	$NetBSD: grfvar.h,v 1.11 1996/08/04 06:03:58 scottr Exp $	*/
 
 /*
@@ -65,6 +65,9 @@ struct grfbus_softc {
  */
 struct grf_softc {
 	struct	device sc_dev;		/* device glue */
+
+	bus_space_tag_t		sc_tag;
+	bus_space_handle_t	sc_regh;
 
 	int	sc_flags;		/* software flags */
 	struct	grfmode *sc_grfmode;	/* forwarded ... */

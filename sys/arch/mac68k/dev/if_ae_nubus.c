@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae_nubus.c,v 1.13 2005/03/04 00:38:37 martin Exp $	*/
+/*	$OpenBSD: if_ae_nubus.c,v 1.14 2005/04/26 21:09:35 martin Exp $	*/
 /*	$NetBSD: if_ae_nubus.c,v 1.17 1997/05/01 18:17:16 briggs Exp $	*/
 
 /*
@@ -71,8 +71,10 @@
 
 static int	ae_nubus_match(struct device *, void *, void *);
 static void	ae_nubus_attach(struct device *, struct device *, void *);
-static int	ae_nb_card_vendor(struct nubus_attach_args *);
-static int	ae_nb_get_enaddr(struct nubus_attach_args *, u_int8_t *);
+static int	ae_nb_card_vendor(bus_space_tag_t, bus_space_handle_t,
+		    struct nubus_attach_args *);
+static int	ae_nb_get_enaddr(bus_space_tag_t, bus_space_handle_t,
+		    struct nubus_attach_args *, u_int8_t *);
 #ifdef DEBUG
 static void	ae_nb_watchdog(struct ifnet *);
 #endif
@@ -99,7 +101,7 @@ ae_nubus_match(parent, vcf, aux)
 
 	if (na->category == NUBUS_CATEGORY_NETWORK &&
 	    na->type == NUBUS_TYPE_ETHERNET) {
-		switch (ae_nb_card_vendor(na)) {
+		switch (ae_nb_card_vendor(na->na_tag, bsh, na)) {
 		case AE_VENDOR_APPLE:
 		case AE_VENDOR_ASANTE:
 		case AE_VENDOR_FARALLON:
@@ -149,8 +151,8 @@ ae_nubus_attach(parent, self, aux)
 	sc->sc_regt = sc->sc_buft = bst;
 	sc->sc_flags = self->dv_cfdata->cf_flags;
 	sc->use16bit = 1;
-	sc->vendor = ae_nb_card_vendor(na);
-	strncpy(sc->type_str, nubus_get_card_name(na->fmt),
+	sc->vendor = ae_nb_card_vendor(bst, bsh, na);
+	strncpy(sc->type_str, nubus_get_card_name(bst, bsh, na->fmt),
 	    INTERFACE_NAME_LEN);
 	sc->type_str[INTERFACE_NAME_LEN-1] = '\0';
 	sc->mem_size = 0;
@@ -185,7 +187,7 @@ ae_nubus_attach(parent, self, aux)
 			sc->sc_arpcom.ac_enaddr[i] =
 			    bus_space_read_1(bst, bsh, (AE_ROM_OFFSET + i * 2));
 #else
-		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+		if (ae_nb_get_enaddr(bst, bsh, na, sc->sc_arpcom.ac_enaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -216,7 +218,7 @@ ae_nubus_attach(parent, self, aux)
 			sc->sc_arpcom.ac_enaddr[i] =
 			    bus_space_read_1(bst, bsh, (DP_ROM_OFFSET + i * 2));
 #else
-		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+		if (ae_nb_get_enaddr(bst, bsh, na, sc->sc_arpcom.ac_enaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -283,7 +285,7 @@ ae_nubus_attach(parent, self, aux)
 		/* reset the NIC chip */
 		bus_space_write_1(bst, bsh, GC_RESET_OFFSET, 0);
 
-		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+		if (ae_nb_get_enaddr(bst, bsh, na, sc->sc_arpcom.ac_enaddr)) {
 			/* Fall back to snarf directly from ROM.  Ick.  */
 			for (i = 0; i < ETHER_ADDR_LEN; ++i)
 				sc->sc_arpcom.ac_enaddr[i] =
@@ -315,7 +317,7 @@ ae_nubus_attach(parent, self, aux)
 			printf(": failed to map register space\n");
 			break;
 		}
-		if (ae_nb_get_enaddr(na, sc->sc_arpcom.ac_enaddr)) {
+		if (ae_nb_get_enaddr(bst, bsh, na, sc->sc_arpcom.ac_enaddr)) {
 			printf(": can't find MAC address\n");
 			break;
 		}
@@ -345,7 +347,9 @@ ae_nubus_attach(parent, self, aux)
 }
 
 static int
-ae_nb_card_vendor(na)
+ae_nb_card_vendor(bst, bsh, na)
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
 	struct nubus_attach_args *na;
 {
 	int vendor;
@@ -393,8 +397,8 @@ ae_nb_card_vendor(na)
 			vendor = AE_VENDOR_INTERLAN;
 			break;
 		case NUBUS_DRHW_KINETICS:
-			if (strncmp(
-			    nubus_get_card_name(na->fmt), "EtherPort", 9) == 0)
+			if (strncmp(nubus_get_card_name(bst, bsh, na->fmt),
+			    "EtherPort", 9) == 0)
 				vendor = AE_VENDOR_KINETICS;
 			else
 				vendor = AE_VENDOR_DAYNA;
@@ -408,7 +412,9 @@ ae_nb_card_vendor(na)
 }
 
 static int
-ae_nb_get_enaddr(na, ep)
+ae_nb_get_enaddr(bst, bsh, na, ep)
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
 	struct nubus_attach_args *na;
 	u_int8_t *ep;
 {
@@ -422,23 +428,25 @@ ae_nb_get_enaddr(na, ep)
 	 * we find out more about Ethernet card resources.
 	 */
 	nubus_get_main_dir(na->fmt, &dir);
-	switch (ae_nb_card_vendor(na)) {
+	switch (ae_nb_card_vendor(bst, bsh, na)) {
 	case AE_VENDOR_APPLE:
 		if (na->drsw == NUBUS_DRSW_TFLLAN) {	/* TFL LAN E410/E420 */
-			rv = nubus_find_rsrc(na->fmt, &dir, 0x80, &dirent);
+			rv = nubus_find_rsrc(bst, bsh, na->fmt,
+			    &dir, 0x80, &dirent);
 			break;
 		}
 		/* FALLTHROUGH */
 	default:
-		rv = nubus_find_rsrc(na->fmt, &dir, 0x80, &dirent);
+		rv = nubus_find_rsrc(bst, bsh, na->fmt, &dir, 0x80, &dirent);
 		break;
 	}
 	if (rv <= 0)
 		return 1;
 	nubus_get_dir_from_rsrc(na->fmt, &dirent, &dir);
-	if (nubus_find_rsrc(na->fmt, &dir, 0x80, &dirent) <= 0)
+	if (nubus_find_rsrc(bst, bsh, na->fmt, &dir, 0x80, &dirent) <= 0)
 		return 1;
-	if (nubus_get_ind_data(na->fmt, &dirent, ep, ETHER_ADDR_LEN) <= 0)
+	if (nubus_get_ind_data(bst, bsh,
+	    na->fmt, &dirent, ep, ETHER_ADDR_LEN) <= 0)
 		return 1;
 
 	return 0;
