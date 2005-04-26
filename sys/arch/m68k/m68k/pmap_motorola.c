@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.36 2004/12/25 23:02:24 miod Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.37 2005/04/26 21:12:27 martin Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2794,20 +2794,5 @@ pmap_map(va, spa, epa, prot)
 	}
 	pmap_update(pmap_kernel());
 	return (va);
-}
-
-void
-mac68k_set_pte(va, pge)
-	vaddr_t va;
-	paddr_t pge;
-{
-extern	vaddr_t tmp_vpages[];
-	register pt_entry_t *pte;
-
-	if (va != tmp_vpages[0])
-		return;
-
-	pte = pmap_pte(pmap_kernel(), va);
-	*pte = (pt_entry_t) pge;
 }
 #endif

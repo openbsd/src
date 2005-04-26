@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.28 2004/12/30 21:22:20 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.29 2005/04/26 21:12:27 martin Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -73,8 +73,6 @@ extern u_int32_t	videoaddr;
 extern u_int32_t	videorowbytes;
 extern u_int32_t	videosize;
 static u_int32_t	newvideoaddr;
-
-extern vm_offset_t	tmp_vpages[1];	/* nubus.c */
 
 extern caddr_t	ROMBase;
 
@@ -198,11 +196,7 @@ do { \
 	avail_end = high[numranges - 1]; \
 } while (0)
 
-#define	PMAP_MD_RELOC3() \
-do { \
-	tmp_vpages[0] = va; \
-	va += NBPG; \
-} while (0)
+#define PMAP_MD_RELOC3()	/* nothing */
 
 #include <m68k/m68k/pmap_bootstrap.c>
 
