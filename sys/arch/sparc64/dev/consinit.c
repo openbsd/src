@@ -1,4 +1,4 @@
-/*	$OpenBSD: consinit.c,v 1.9 2004/09/13 20:31:25 deraadt Exp $	*/
+/*	$OpenBSD: consinit.c,v 1.10 2005/04/26 15:16:20 miod Exp $	*/
 /*	$NetBSD: consinit.c,v 1.9 2000/10/20 05:32:35 mrg Exp $	*/
 
 /*-
@@ -60,12 +60,7 @@
 
 #include <dev/usb/ukbdvar.h>
 
-static void prom_cnprobe(struct consdev *);
-static void prom_cninit(struct consdev *);
-int  prom_cngetc(dev_t);
-static void prom_cnputc(dev_t, int);
-static void prom_cnpollc(dev_t, int);
-static void prom_cnputc(dev_t, int);
+cons_decl(prom_);
 
 int stdin = NULL, stdout = NULL;
 
@@ -80,7 +75,7 @@ struct consdev consdev_prom = {
 	prom_cngetc,
 	prom_cnputc,
 	prom_cnpollc,
-	NULL,
+	NULL
 };
 
 /*
@@ -91,8 +86,7 @@ struct consdev consdev_prom = {
 struct consdev *cn_tab = &consdev_prom;
 
 void
-prom_cnprobe(cd)
-	struct consdev *cd;
+prom_cnprobe(struct consdev *cd)
 {
 #if NPCONS > 0
 	int maj;
@@ -106,8 +100,7 @@ prom_cnprobe(cd)
 }
 
 int
-prom_cngetc(dev)
-	dev_t dev;
+prom_cngetc(dev_t dev)
 {
 	unsigned char ch = '\0';
 	int l;
@@ -119,8 +112,10 @@ prom_cngetc(dev)
 		/* void */;
 #ifdef DDB
 	if (ch == '+') {
-		if (nplus++ > 3) Debugger();
-	} else nplus = 0;
+		if (nplus++ > 3)
+			Debugger();
+	} else
+		nplus = 0;
 #endif
 	if (ch == '\r')
 		ch = '\n';
@@ -129,9 +124,8 @@ prom_cngetc(dev)
 	return ch;
 }
 
-static void
-prom_cninit(cn)
-	struct consdev *cn;
+void
+prom_cninit(struct consdev *cn)
 {
 	if (!stdin) stdin = OF_stdin();
 	if (!stdout) stdout = OF_stdout();
@@ -140,10 +134,8 @@ prom_cninit(cn)
 /*
  * PROM console output putchar.
  */
-static void
-prom_cnputc(dev, c)
-	dev_t dev;
-	int c;
+void
+prom_cnputc(dev_t dev, int c)
 {
 	int s;
 	char c0 = (c & 0x7f);
@@ -157,9 +149,7 @@ prom_cnputc(dev, c)
 }
 
 void
-prom_cnpollc(dev, on)
-	dev_t dev;
-	int on;
+prom_cnpollc(dev_t dev, int on)
 {
 	if (on) {
                 /* Entering debugger. */
@@ -234,4 +224,3 @@ consinit()
 	(*cn_tab->cn_probe)(cn_tab);
 	(*cn_tab->cn_init)(cn_tab);
 }
-
