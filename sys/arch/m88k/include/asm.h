@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.3 2004/07/28 12:28:48 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.4 2005/04/27 21:12:44 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -170,21 +170,17 @@
  * Useful in some situations.
  */
 #define CALL(NAME, ARG1, ARG2) \
-	subu	r31, r31, 32; \
 	or	r2, r0, ARG1; \
 	bsr.n	NAME; \
-	 or	r3, r0, ARG2; \
-	addu	r31, r31, 32
+	 or	r3, r0, ARG2
 
 /* This define is similar to CALL, but accepts a function pointer XXX smurph */
 #define CALLP(NAME, ARG1, ARG2) \
-	subu	r31, r31, 32; \
 	or.u	r5, r0, hi16(NAME); \
 	ld	r4, r5, lo16(NAME); \
 	or	r2, r0, ARG1; \
 	jsr.n	r4; \
-	 or	r3, r0, ARG2; \
-	addu	r31, r31, 32
+	 or	r3, r0, ARG2
 
 /*
  * Fields in cr18. More bits are used privately in the exception handling

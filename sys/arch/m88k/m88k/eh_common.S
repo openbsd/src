@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.8 2005/04/27 14:09:45 miod Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.9 2005/04/27 21:12:46 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -519,10 +519,8 @@ GLOBAL(syscall_handler)
 /* trap 451: cache flush (necessary for trampolines) */
 GLOBAL(cache_flush_handler)
 	PREP88100("cache_flush", 451,,)
-	sub	r31, r31, 32
 	bsr.n	_C_LABEL(cache_flush)
 	 or	r2, r0, r30
-	add	r31, r31, 32
 	DONE88100
 
 /* trap 496: BUG system calls */
@@ -890,12 +888,10 @@ ASLOCAL(badaddr__unknown_size)
 	data
 1: 	string "bad length (%d) to badaddr() from 0x%x\000"
 	text
-	subu	r31, r31, 32
 	or.u	r2, r0, hi16(1b)
 	or	r2, r2, lo16(1b)
 	bsr.n	_C_LABEL(panic)
 	 or	r4, r0, r1
-	addu	r31, r31, 32
 	/*NOTREACHED*/
 #endif
 
@@ -1483,12 +1479,10 @@ ASLOCAL(m88100_fpu_enable)
 	st	r26,  r31,  GENREG_OFF(26)
 	st	r27,  r31,  GENREG_OFF(27)
 	st	r28,  r31,  GENREG_OFF(28)
-	st	r29,  r31,  GENREG_OFF(29)
 
 	/* get and save IPL */
 	bsr.n	_C_LABEL(getipl)
-	 subu	r31, r31, 32
-	addu	r31, r31, 32
+	 st	r29,  r31,  GENREG_OFF(29)
 	st	r2, r31, REG_OFF(EF_MASK)
 
 	/*
@@ -1594,8 +1588,7 @@ ENTRY(proc_trampoline)
 	ld	r1, r31, 0		/* load func */
 	ld	r2, r31, 4 		/* load proc pointer */
 	jsr.n	r1
-	 subu	r31, r31, 32		/* create stack space for function */
-	addu	r31, r31, 32 + 8	/* stack space above + ksigframe */
+	 addu	r31, r31, 8		/* release ksigframe */
 	ld	r1,  r31, 0		/* load pc */
 	ld	r2,  r31, 4		/* & proc pointer from switch frame */
 	jsr.n	r1
@@ -1693,7 +1686,6 @@ ASLOCAL(check_ast)
 	ld	r2, FPTR, REG_OFF(EF_MASK)	/* get pre-exception ipl */
 	bcnd	ne0, r2, 1f		/* can't do softint's */
 
-	subu	r31, r31, 32
 	bsr.n	_C_LABEL(setipl)
 	 or	r2, r0, IPL_SOFTCLOCK
 	/* at ipl 1 now */
@@ -1701,7 +1693,6 @@ ASLOCAL(check_ast)
 	/* is this needed? we are going to restore the ipl below XXX nivas */
 	bsr.n	_C_LABEL(setipl)
 	 or	r2, r0, IPL_NONE		/* ints are enabled */
-	addu	r31, r31, 32
 	/* at ipl 0 now */
 1:
 	ld	r2, FPTR, REG_OFF(EF_EPSR)	/* get pre-exception PSR */
@@ -1741,10 +1732,8 @@ ASLOCAL(no_ast)
 	FLUSH_PIPELINE
 
 	/* now ready to return....*/
-	subu	r31, r31, 32
 	bsr.n	_C_LABEL(setipl)
 	 ld	r2, FPTR, REG_OFF(EF_MASK)	/* get pre-exception ipl */
-	addu	r31, r31, 32
 
 	/*
 	 * Transfer the frame pointer to r31, since we no longer need a stack.
@@ -1938,10 +1927,8 @@ GLOBAL(m88110_syscall_handler)
 /* trap 451: cache flush (necessary for trampolines) */
 GLOBAL(m88110_cache_flush_handler)
 	PREP88110("cache_flush", 451,)
-	sub	r31, r31, 32
 	bsr.n	_C_LABEL(cache_flush)
 	 or	r2, r0, r30
-	add	r31, r31, 32
 	DONE88110
 
 /* trap 496: BUG system calls */
@@ -2491,12 +2478,10 @@ ASLOCAL(m88110_fpu_enable)
 	st	r26,  r31,  GENREG_OFF(26)
 	st	r27,  r31,  GENREG_OFF(27)
 	st	r28,  r31,  GENREG_OFF(28)
-	st	r29,  r31,  GENREG_OFF(29)
 
 	/* get and save IPL */
 	bsr.n	_C_LABEL(getipl)
-	 subu	r31, r31, 32
-	addu	r31, r31, 32
+	 st	r29,  r31,  GENREG_OFF(29)
 	st	r2, r31, REG_OFF(EF_MASK)
 
 	/*
