@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.3 2004/09/16 18:54:48 pefo Exp $ */
+/*	$OpenBSD: boot.c,v 1.4 2005/04/27 03:03:38 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -53,10 +53,10 @@ char *OSLoadFilename = NULL;
 unsigned long tablebase;
 
 static void *
-readtable (int fd, int offs, void *base, int size, char *name, int flags)
+readtable(int fd, int offs, void *base, int size, char *name, int flags)
 {
-	if (olseek(fd, offs, SEEK_SET) != offs ||
-	    oread(fd, base, size) != size) {
+	if (lseek(fd, offs, SEEK_SET) != offs ||
+	    read(fd, base, size) != size) {
 		printf("\ncannot read %s table", name);
 		return 0;
 	}
@@ -156,13 +156,13 @@ loadfile(fname)
 	int fd;
 	Elf32_Addr entry;
 
-	if ((fd = oopen(fname, 0)) < 0) {
+	if ((fd = open(fname, 0)) < 0) {
 		printf("can't open file %s\n", fname);
 		return NULL;
 	}
 
 	/* read the ELF header and check that it IS an ELF header */
-	if (oread(fd, (char *)&eh, sizeof(eh)) != sizeof(eh)) {
+	if (read(fd, (char *)&eh, sizeof(eh)) != sizeof(eh)) {
 		printf("error: ELF header read error\n");
 		return NULL;
 	}
@@ -191,8 +191,8 @@ loadfile32(int fd, Elf32_Ehdr *eh)
 	int i;
 
 	ph = (Elf32_Phdr *) buf;
-	olseek(fd, eh->e_phoff, 0);
-	if (oread(fd, (char *)ph, 4096) != 4096) {
+	lseek(fd, eh->e_phoff, 0);
+	if (read(fd, (char *)ph, 4096) != 4096) {
 		printf("unexpected EOF\n");
 		return NULL;
 	}
@@ -202,9 +202,9 @@ loadfile32(int fd, Elf32_Ehdr *eh)
 
 	for (i = 0; i < eh->e_phnum; i++, ph++) {
 		if (ph->p_type == PT_LOAD) {
-			olseek(fd, ph->p_offset, 0);
+			lseek(fd, ph->p_offset, 0);
 			printf("0x%x:0x%x, ",(long)ph->p_paddr, (long)ph->p_filesz);
-			if (oread(fd, (char *)ph->p_paddr, ph->p_filesz) !=  ph->p_filesz) {
+			if (read(fd, (char *)ph->p_paddr, ph->p_filesz) !=  ph->p_filesz) {
 				printf("unexpected EOF\n");
 				return NULL;
 			}
@@ -234,8 +234,8 @@ loadfile64(int fd, Elf64_Ehdr *eh)
 	int i;
 
 	ph = (Elf64_Phdr *) buf;
-	olseek(fd, eh->e_phoff, 0);
-	if (oread(fd, (char *)ph, 4096) != 4096) {
+	lseek(fd, eh->e_phoff, 0);
+	if (read(fd, (char *)ph, 4096) != 4096) {
 		printf("unexpected EOF\n");
 		return NULL;
 	}
@@ -245,9 +245,9 @@ loadfile64(int fd, Elf64_Ehdr *eh)
 
 	for (i = 0; i < eh->e_phnum; i++, ph++) {
 		if (ph->p_type == PT_LOAD) {
-			olseek(fd, ph->p_offset, 0);
+			lseek(fd, ph->p_offset, 0);
 			printf("0x%llx:0x%llx, ",ph->p_paddr, ph->p_filesz);
-			if (oread(fd, (char *)(long)ph->p_paddr, ph->p_filesz) !=  ph->p_filesz) {
+			if (read(fd, (char *)(long)ph->p_paddr, ph->p_filesz) !=  ph->p_filesz) {
 				printf("unexpected EOF\n");
 				return NULL;
 			}
@@ -283,8 +283,8 @@ loadsymtab32(int fd, Elf32_Ehdr *eh, int flags)
 	printf("Loading symbol table\n");
 	size =  eh->e_shnum * sizeof(Elf32_Shdr);
 	shtab = (Elf32_Shdr *) alloc(size);
-	if (olseek (fd, eh->e_shoff, SEEK_SET) != eh->e_shoff ||
-	    oread (fd, shtab, size) != size) {
+	if (lseek (fd, eh->e_shoff, SEEK_SET) != eh->e_shoff ||
+	    read (fd, shtab, size) != size) {
 		printf("Seek to section headers failed.\n");
 		return -1;
         }
@@ -404,8 +404,8 @@ loadsymtab64(int fd, Elf64_Ehdr *eh, int flags)
 	printf("Loading symbol table\n");
 	size =  eh->e_shnum * sizeof(Elf64_Shdr);
 	shtab = (Elf64_Shdr *) alloc(size);
-	if (olseek (fd, (int)eh->e_shoff, SEEK_SET) != (int)eh->e_shoff ||
-	    oread (fd, shtab, size) != size) {
+	if (lseek (fd, (int)eh->e_shoff, SEEK_SET) != (int)eh->e_shoff ||
+	    read (fd, shtab, size) != size) {
 		printf("Seek to section headers failed.\n");
 		return -1;
         }
