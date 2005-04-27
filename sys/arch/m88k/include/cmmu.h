@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.6 2005/03/28 12:42:44 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.7 2005/04/27 14:07:09 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -38,7 +38,7 @@ extern int max_cpus;
 
 /*
  * This lock protects the cmmu SAR and SCR's; other ports
- * can be accessed without locking it
+ * can be accessed without locking it.
  *
  * May be used from "db_interface.c".
  */
@@ -91,6 +91,13 @@ extern struct cmmu_p *cmmu;
 #define	cmmu_dump_config	(cmmu->cmmu_dump_config_func)
 #define	cmmu_show_translation(a, b, c, d)	(cmmu->cmmu_show_translation_func)(a, b, c, d)
 #define show_apr(ap)		(cmmu->show_apr_func)(ap)
+
+/*
+ * dma_cachectl modes
+ */
+#define DMA_CACHE_SYNC		0
+#define DMA_CACHE_SYNC_INVAL	1
+#define DMA_CACHE_INV		2
 
 #endif	/* _KERNEL && !_LOCORE */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.2 2004/05/23 20:52:15 miod Exp $ */
+/*	$OpenBSD: mmu.h,v 1.3 2005/04/27 14:07:09 miod Exp $ */
 
 /*
  * This file bears almost no resemblance to the original m68k file,
@@ -220,13 +220,6 @@ typedef	u_int32_t	pt_ind_entry_t;
 #define BATC_BLK_ALIGNED(x)	((x & BATC_BLKMASK) == 0)
 
 #define M88K_BTOBLK(x)	(x >> BATC_BLKSHIFT)
-
-/*
- * DMA and caching control
- */
-#define DMA_CACHE_SYNC		0x1
-#define DMA_CACHE_SYNC_INVAL	0x2
-#define DMA_CACHE_INV		0x3
 
 static pt_entry_t invalidate_pte(pt_entry_t *);
 static __inline__ pt_entry_t
