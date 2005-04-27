@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.125 2005/03/06 23:30:24 jsg Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.126 2005/04/27 15:40:18 jakob Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.122 2005/03/06 23:29:25 jsg Exp 
+ *		OpenBSD: pcmciadevs,v 1.123 2005/04/27 15:39:39 jakob Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -94,6 +94,7 @@
 #define	PCMCIA_VENDOR_SYMBOL	0x026c	/* Symbol */
 #define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
 #define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
+#define	PCMCIA_VENDOR_AUDIOVOX	0x0279	/* Audiovox Communications */
 #define	PCMCIA_VENDOR_IODATA2	0x028a	/* I-O DATA */
 #define	PCMCIA_VENDOR_ASUS	0x02aa	/* ASUS */
 #define	PCMCIA_VENDOR_MICROSOFT	0x02d2	/* Microsoft */
@@ -185,6 +186,10 @@
 /* ASUS */
 #define	PCMCIA_CIS_ASUS_WL_100	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ASUS_WL_100	0x0002
+
+/* Audiovox Communications */
+#define	PCMCIA_CIS_AUDIOVOX_RTM8000	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_AUDIOVOX_RTM8000	0x950b
 
 /* Bay Networks */
 #define	PCMCIA_CIS_BAY_STACK_650	{ NULL, NULL, NULL, NULL }
