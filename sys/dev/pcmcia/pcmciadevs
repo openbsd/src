@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.122 2005/03/06 23:29:25 jsg Exp $
+	$OpenBSD: pcmciadevs,v 1.123 2005/04/27 15:39:39 jakob Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -87,6 +87,7 @@ vendor ARTEM			0x0268	ARtem
 vendor SYMBOL			0x026c	Symbol
 vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
 vendor LINKSYS2			0x0274	The Linksys Group
+vendor AUDIOVOX			0x0279	Audiovox Communications
 vendor IODATA2			0x028a	I-O DATA
 vendor ASUS			0x02aa	ASUS
 vendor MICROSOFT		0x02d2	Microsoft
@@ -155,6 +156,9 @@ product	ARTEM ONAIR		0x0001 ARtem Onair WLAN
 
 /* ASUS */
 product	ASUS WL_100		0x0002 SpaceLink WL-100
+
+/* Audiovox Communications */
+product AUDIOVOX RTM8000	0x950b RTM-8000 GSM/GPRS CF
 
 /* Bay Networks */
 product BAY STACK_650		0x0804 BayStack 650
