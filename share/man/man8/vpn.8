@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.101 2005/04/23 08:40:52 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.102 2005/04/27 14:22:27 jmc Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -102,6 +102,11 @@ On machine B:
 For all other (non-test) cases,
 .Xr ifconfig 8
 should be used to configure machines as normal.
+.Pp
+Additionally, the GATEWAY_* and NETWORK_* variables used in the
+following sections are defined below in
+.Sx Configuring Firewall Rules .
+Please see that section for the correct values for these variables.
 .Ss Enabling Packet Forwarding
 For security gateways, proper operation often requires packet
 forwarding to be enabled using
@@ -240,8 +245,7 @@ On the security gateway of subnet B:
     -addr $NETWORK_A $NETWORK_B
 .Ed
 .Ss Configuring the Keying Daemon [automated keying]
-Unless manual keying is used, both security gateways need to start
-the
+Unless manual keying is used, both security gateways need to use the
 .Xr isakmpd 8
 key management daemon.
 .Xr isakmpd 8
@@ -476,7 +480,7 @@ pass in proto esp from $GATEWAY_B to $GATEWAY_A
 pass out proto esp from $GATEWAY_A to $GATEWAY_B
 
 # Need to allow ipencap traffic on enc0.
-pass in on enc0 proto ipencap all
+pass in on enc0 proto ipencap from $GATEWAY_B to $GATEWAY_A
 
 # Passing in traffic from the designated subnets.
 pass in on enc0 from $NETWORK_B to $NETWORK_A
@@ -509,7 +513,7 @@ pass in proto esp from $GATEWAY_A to $GATEWAY_B
 pass out proto esp from $GATEWAY_B to $GATEWAY_A
 
 # Need to allow ipencap traffic on enc0.
-pass in on enc0 proto ipencap all
+pass in on enc0 proto ipencap from $GATEWAY_A to $GATEWAY_B
 
 # Passing in traffic from the designated subnets.
 pass in on enc0 from $NETWORK_A to $NETWORK_B
