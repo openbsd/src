@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.26 2005/04/12 09:54:59 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.27 2005/04/27 11:27:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -69,9 +69,9 @@ struct buf {
 };
 
 struct msgbuf {
+	TAILQ_HEAD(, buf)	 bufs;
 	u_int32_t		 queued;
 	int			 fd;
-	TAILQ_HEAD(, buf)	 bufs;
 };
 
 #define	IMSG_HEADER_SIZE	sizeof(struct imsg_hdr)
