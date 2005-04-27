@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.17 2004/11/09 15:02:19 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.18 2005/04/27 14:09:45 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1445,6 +1445,7 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 		SET_VECTOR(num, sigtrap);
 
 	SET_VECTOR(450, syscall_handler);
+	SET_VECTOR(451, cache_flush_handler);
 	SET_VECTOR(504, stepbpt);
 	SET_VECTOR(511, userbpt);
 

@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$OpenBSD: testsuite.sh,v 1.1 2004/04/24 13:19:15 miod Exp $
+#	$OpenBSD: testsuite.sh,v 1.2 2005/04/27 14:09:43 miod Exp $
 
 # Simple test program to check what happens when userland tries to trap.
 # Written by Miodrag Vallat 2003 AD -- public domain
@@ -460,6 +460,8 @@ ${PROG} 448
 ${PROG} 449
 ${PROG} 450
 ${PROG} 451
+# since there won't be any output...
+echo
 ${PROG} 452
 ${PROG} 453
 ${PROG} 454

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.54 2005/04/27 14:07:38 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.55 2005/04/27 14:09:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -408,7 +408,7 @@ vs_scsicmd(struct scsi_xfer *xs)
 	 * to flush the cache for a write and flush with inval for
 	 * a read, prior to starting the IO.
 	 */
-	dma_cachectl((vaddr_t)xs->data, xs->datalen,
+	dma_cachectl(pmap_kernel(), (vaddr_t)xs->data, xs->datalen,
 	    flags & SCSI_DATA_IN ? DMA_CACHE_SYNC_INVAL : DMA_CACHE_SYNC);
 	
 	option = 0;

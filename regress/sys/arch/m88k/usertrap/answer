@@ -449,7 +449,7 @@ Bad system call
 Bad system call 
 Bad system call 
 Bad system call 
-Bad system call 
+
 Bad system call 
 Bad system call 
 Bad system call 
@@ -500,13 +500,13 @@ Bad system call
 Bad system call 
 Bad system call 
 Bad system call 
-Trace trap 
+Trace/BPT trap 
 Floating point exception 
-Trace trap 
-Trace trap 
-Trace trap 
-Trace trap 
-Trace trap 
-Trace trap 
-Trace trap 
-Trace trap 
+Trace/BPT trap 
+Trace/BPT trap 
+Trace/BPT trap 
+Trace/BPT trap 
+Trace/BPT trap 
+Trace/BPT trap 
+Trace/BPT trap 
+Trace/BPT trap 

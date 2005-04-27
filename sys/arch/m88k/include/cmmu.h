@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.h,v 1.7 2005/04/27 14:07:09 miod Exp $ */
+/*	$OpenBSD: cmmu.h,v 1.8 2005/04/27 14:09:45 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -61,7 +61,7 @@ struct cmmu_p {
 	void (*cmmu_flush_cache_func)(int, paddr_t, psize_t);
 	void (*cmmu_flush_inst_cache_func)(int, paddr_t, psize_t);
 	void (*cmmu_flush_data_cache_func)(int, paddr_t, psize_t);
-	void (*dma_cachectl_func)(vaddr_t, vsize_t, int);
+	void (*dma_cachectl_func)(pmap_t, vaddr_t, vsize_t, int);
 	void (*dma_cachectl_pa_func)(paddr_t, psize_t, int);
 	/* DDB only */
 	void (*cmmu_dump_config_func)(void);
@@ -86,7 +86,7 @@ extern struct cmmu_p *cmmu;
 #define	cmmu_flush_cache(a, b, c)	(cmmu->cmmu_flush_cache_func)(a, b, c)
 #define	cmmu_flush_inst_cache(a, b, c)	(cmmu->cmmu_flush_inst_cache_func)(a, b, c)
 #define	cmmu_flush_data_cache(a, b, c)	(cmmu->cmmu_flush_data_cache_func)(a, b, c)
-#define	dma_cachectl(a, b, c)	(cmmu->dma_cachectl_func)(a, b, c)
+#define	dma_cachectl(a, b, c, d)	(cmmu->dma_cachectl_func)(a, b, c, d)
 #define	dma_cachectl_pa(a, b, c)	(cmmu->dma_cachectl_pa_func)(a, b, c)
 #define	cmmu_dump_config	(cmmu->cmmu_dump_config_func)
 #define	cmmu_show_translation(a, b, c, d)	(cmmu->cmmu_show_translation_func)(a, b, c, d)

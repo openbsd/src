@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 2004/12/06 20:12:24 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 2005/04/27 14:09:45 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -60,6 +60,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/asm_macro.h>   /* enable/disable interrupts */
+#include <machine/cmmu.h>
 #include <machine/cpu.h>
 #include <machine/locore.h>
 #ifdef M88100
@@ -1812,4 +1813,27 @@ double_reg_fixup(struct trapframe *frame)
 	}
 
 	return 0;
+}
+
+void
+cache_flush(struct trapframe *tf)
+{
+	struct proc *p;
+	struct pmap *pmap;
+	u_quad_t sticks;
+
+	if ((p = curproc) == NULL)
+		p = &proc0;
+	p = curproc;
+
+	sticks = p->p_sticks;
+	p->p_md.md_tf = tf;
+
+	pmap = vm_map_pmap(&p->p_vmspace->vm_map);
+	dma_cachectl(pmap, tf->tf_r[2], tf->tf_r[3], DMA_CACHE_SYNC);
+
+	tf->tf_snip = tf->tf_snip & ~NIP_E;
+	tf->tf_sfip = tf->tf_sfip & ~FIP_E;
+
+	userret(p, tf, sticks);
 }

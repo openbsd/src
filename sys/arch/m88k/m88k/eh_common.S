@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.7 2005/04/19 18:37:52 mickey Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.8 2005/04/27 14:09:45 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -68,8 +68,8 @@
  * is complete.
  *
  * Traps are also exceptions.  Traps are ways for user programs to request
- * kernel operations.  For example, "tcnd eq0, r0, 128" will raise
- * exception 128, the system call exception.
+ * kernel operations.  For example, "tcnd eq0, r0, 450" will raise
+ * exception 450, the system call exception.
  *
  *
  * SERVICING AN EXCEPTION
@@ -509,14 +509,23 @@ GLOBAL(fp_imprecise_handler)
 	CALL(_ASM_LABEL(Xfp_imprecise), r0, r30)
 	DONE88100
 
-/* All standard system calls.  */
+/* trap 450: system calls */
 GLOBAL(syscall_handler)
-	PREP88100("syscall", 128,,)
+	PREP88100("syscall", 450,,)
 	ld	r13, r30, GENREG_OFF(13)
 	CALL(_C_LABEL(m88100_syscall), r13, r30)
 	DONE88100
 
-/* trap 496 comes here */
+/* trap 451: cache flush (necessary for trampolines) */
+GLOBAL(cache_flush_handler)
+	PREP88100("cache_flush", 451,,)
+	sub	r31, r31, 32
+	bsr.n	_C_LABEL(cache_flush)
+	 or	r2, r0, r30
+	add	r31, r31, 32
+	DONE88100
+
+/* trap 496: BUG system calls */
 GLOBAL(bugtrap)
 	PREP88100("bugsyscall", 496,,)
 	ld	r9, r30, GENREG_OFF(9)
@@ -1614,7 +1623,7 @@ ENTRY(proc_do_uret)
 #endif
 
 	/*
-	 * Regs r1-r30 are free. R31 is pointing at the word
+	 * Regs r1-r30 are free. r31 is pointing at the word
 	 * on the kernel stack where our pointer to the exception frame
 	 * it stored. Reload it now.
 	 *
@@ -1919,14 +1928,23 @@ GLOBAL(m88110_inst_atc_miss)
 	CALL(_C_LABEL(m88110_trap), T_197_INST, r30)
 	DONE88110
 
-/* All standard system calls.  */
+/* trap 450: system calls */
 GLOBAL(m88110_syscall_handler)
-	PREP88110("syscall", 128,)
+	PREP88110("syscall", 450,)
 	ld	r13, r30, GENREG_OFF(13)
 	CALL(_C_LABEL(m88110_syscall), r13, r30)
 	DONE88110
 
-/* trap 496 comes here */
+/* trap 451: cache flush (necessary for trampolines) */
+GLOBAL(m88110_cache_flush_handler)
+	PREP88110("cache_flush", 451,)
+	sub	r31, r31, 32
+	bsr.n	_C_LABEL(cache_flush)
+	 or	r2, r0, r30
+	add	r31, r31, 32
+	DONE88110
+
+/* trap 496: BUG system calls */
 GLOBAL(m88110_bugtrap)
 	PREP88110("bugsyscall", 496,)
 	ld	r9,  r30, GENREG_OFF(9)
@@ -2079,7 +2097,7 @@ GLOBAL(m88110_reset_handler)
 	 st	r10, r31, REG_OFF(EF_MODE)
 
 1:
-	/* retrieve saved shadow registers for error_handler, though) */
+	/* retrieve saved shadow registers for error_handler */
 	or.u	r30, r0,  hi16(_ASM_LABEL(save_frame))
 	or	r30, r30, lo16(_ASM_LABEL(save_frame))
 	ld	r10, r30, REG_OFF(EF_EPSR)

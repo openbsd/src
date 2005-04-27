@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.19 2005/04/27 14:07:38 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.20 2005/04/27 14:09:45 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -100,7 +100,7 @@ void m88110_cmmu_flush_tlb(unsigned, unsigned, vaddr_t, vsize_t);
 void m88110_cmmu_flush_cache(int, paddr_t, psize_t);
 void m88110_cmmu_flush_inst_cache(int, paddr_t, psize_t);
 void m88110_cmmu_flush_data_cache(int, paddr_t, psize_t);
-void m88110_dma_cachectl(vaddr_t, vsize_t, int);
+void m88110_dma_cachectl(pmap_t, vaddr_t, vsize_t, int);
 void m88110_dma_cachectl_pa(paddr_t, psize_t, int);
 void m88110_cmmu_dump_config(void);
 void m88110_cmmu_show_translation(unsigned, unsigned, unsigned, int);
@@ -483,11 +483,11 @@ m88110_cmmu_inval_cache(paddr_t physaddr, psize_t size)
 }
 
 void
-m88110_dma_cachectl(vaddr_t va, vsize_t size, int op)
+m88110_dma_cachectl(pmap_t pmap, vaddr_t va, vsize_t size, int op)
 {
 	paddr_t pa;
 
-	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+	if (pmap_extract(pmap, va, &pa) == FALSE)
 		return;	/* XXX */
 
 	switch (op) {
