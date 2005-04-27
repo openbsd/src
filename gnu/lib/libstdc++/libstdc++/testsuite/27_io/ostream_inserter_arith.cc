@@ -267,7 +267,7 @@ test02()
   os << val;
 
   char largebuf[512];
-  sprintf(largebuf, "%.*Le", prec, val);
+  snprintf(largebuf, 512, "%.*Le", prec, val);
 #ifdef TEST_NUMPUT_VERBOSE
   cout << "expect: " << largebuf << endl;
   cout << "result: " << os.str() << endl;
@@ -283,7 +283,7 @@ test02()
   os2.setf(ios::fixed);
   os2 << val2;
 
-  sprintf(largebuf, "%.*f", 3, val2);
+  snprintf(largebuf, 512, "%.*f", 3, val2);
 #ifdef TEST_NUMPUT_VERBOSE
   cout << "expect: " << largebuf << endl;
   cout << "result: " << os2.str() << endl;

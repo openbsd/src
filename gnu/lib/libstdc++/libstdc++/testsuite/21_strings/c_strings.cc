@@ -34,7 +34,7 @@ void test01()
   const char* ccarray1 = "san francisco roof garden inspectors";
   const char* ccarray2 = "san francisco sunny-day park inspectors";
   char carray[50];
-  std::strcpy(carray, ccarray1);
+  ::strlcpy(carray, ccarray1, 50);
   void* v = carray;
   const void* cv = ccarray1;
   
@@ -71,7 +71,7 @@ void test02()
   const char* ccarray1 = "san francisco roof garden inspectors";
   const char* ccarray2 = "san francisco sunny-day park inspectors";
   char carray[50];
-  strcpy(carray, ccarray1);
+  ::strlcpy(carray, ccarray1, 50);
   void* v = carray;
   const void* cv = ccarray1;
  

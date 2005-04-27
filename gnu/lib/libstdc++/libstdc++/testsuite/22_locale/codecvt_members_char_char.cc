@@ -67,7 +67,7 @@ void test01()
   VERIFY( to_next == c_arr );
 
   // unshift
-  strcpy(c_arr, c_lit);
+  ::strlcpy(c_arr, c_lit, size);
   result r3 = cvt->unshift(state, c_arr, c_arr + size, to_next);
   VERIFY( r3 == codecvt_base::noconv );
   VERIFY( !strcmp(c_arr, c_lit) ); 
