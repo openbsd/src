@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.5 2004/08/06 13:23:47 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.6 2005/04/27 14:07:36 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -84,13 +84,14 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/asm_macro.h>
+#include <machine/board.h>
+#include <machine/cmmu.h>
 #include <machine/cpu_number.h>
 #include <machine/locore.h>
-
-#include <machine/cmmu.h>
 #include <machine/m8820x.h>
-#include <machine/board.h>
 
 /*
  * This routine sets up the CPU/CMMU configuration.

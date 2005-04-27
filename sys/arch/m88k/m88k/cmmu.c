@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.c,v 1.2 2004/08/06 13:23:49 miod Exp $	*/
+/*	$OpenBSD: cmmu.c,v 1.3 2005/04/27 14:07:38 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -60,6 +60,9 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/simplelock.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <machine/cmmu.h>
 #include <machine/cpu_number.h>
 

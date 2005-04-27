@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.18 2004/08/04 15:54:38 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.19 2005/04/27 14:07:38 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -62,14 +62,14 @@
 #include <sys/systm.h>
 #include <sys/simplelock.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/cpu_number.h>
 #include <machine/cmmu.h>
 #include <machine/m88110.h>
 #include <machine/m88410.h>
 #include <machine/locore.h>
 #include <machine/trap.h>
-
-#include <uvm/uvm_extern.h>
 
 #ifdef DEBUG
 #define DB_CMMU		0x4000	/* MMU debug */

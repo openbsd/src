@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x_machdep.c,v 1.3 2004/08/08 21:19:18 miod Exp $	*/
+/*	$OpenBSD: m8820x_machdep.c,v 1.4 2005/04/27 14:07:38 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -85,14 +85,13 @@
 #include <sys/systm.h>
 #include <sys/simplelock.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/asm_macro.h>
+#include <machine/cmmu.h>
 #include <machine/cpu_number.h>
 #include <machine/locore.h>
-
-#include <machine/cmmu.h>
 #include <machine/m8820x.h>
-
-#include <uvm/uvm_extern.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>		/* db_printf()		*/

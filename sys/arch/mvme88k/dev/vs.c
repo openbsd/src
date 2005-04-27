@@ -1,4 +1,4 @@
-/*	$OpenBSD: vs.c,v 1.53 2004/09/06 06:25:28 miod Exp $	*/
+/*	$OpenBSD: vs.c,v 1.54 2005/04/27 14:07:38 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -49,18 +49,18 @@
 #include <sys/buf.h>
 #include <sys/malloc.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
 #include <machine/autoconf.h>
+#include <machine/cmmu.h>
 #include <machine/param.h>
 
 #include <mvme88k/dev/vsreg.h>
 #include <mvme88k/dev/vsvar.h>
 #include <mvme88k/dev/vme.h>
-#include <machine/cmmu.h>
 
 int	vsmatch(struct device *, void *, void *);
 void	vsattach(struct device *, struct device *, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m187_machdep.c,v 1.5 2004/12/24 22:50:30 miod Exp $	*/
+/*	$OpenBSD: m187_machdep.c,v 1.6 2005/04/27 14:07:38 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -49,6 +49,8 @@
 #include <sys/kernel.h>
 #include <sys/errno.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <machine/asm_macro.h>
 #include <machine/cmmu.h>
 #include <machine/cpu.h>
@@ -57,8 +59,6 @@
 #include <machine/trap.h>
 #include <machine/m88100.h>
 #include <machine/mvme187.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <mvme88k/dev/memcreg.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.10 2004/07/30 19:02:05 miod Exp $ */
+/*	$OpenBSD: if_le.c,v 1.11 2005/04/27 14:07:38 miod Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -52,7 +52,6 @@
 #include <net/if_media.h>
 
 #include <machine/autoconf.h>
-#include <machine/cmmu.h>
 #include <machine/cpu.h>
 
 #include <dev/ic/am7990reg.h>
