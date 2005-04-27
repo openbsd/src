@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmeat.c,v 1.20 2005/03/26 21:37:56 mickey Exp $	*/
+/*	$OpenBSD: supcmeat.c,v 1.21 2005/04/27 18:13:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -923,7 +923,10 @@ recvdir(t, new, statp)		/* receive directory from network */
 	tbuf[1].tv_usec = 0;
 	if (!noutime)
 		(void) utimes(t->Tname, tbuf);
-	vnotify("SUP %s directory %s\n", new ? "Created" : "Updated", t->Tname);
+	if (new)
+		vnotify("SUP Created directory %s\n", t->Tname);
+	else
+		v2notify("SUP Updated directory %s\n", t->Tname);
 	return (FALSE);
 }
 

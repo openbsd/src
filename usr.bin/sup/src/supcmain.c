@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmain.c,v 1.19 2004/05/31 15:48:26 pedro Exp $	*/
+/*	$OpenBSD: supcmain.c,v 1.20 2005/04/27 18:13:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -572,6 +572,9 @@ doswitch(argp, collTp, oflagsp, aflagsp)
 			break;
 		case 'v':
 			oflags |= CFVERBOSE;
+			break;
+		case 'V':
+			oflags |= CFVERBOSE|CFVERBOSE2;
 			break;
 		case 'z':
 			oflags |= CFCOMPRESS;

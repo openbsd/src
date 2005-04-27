@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcdefs.h,v 1.7 2001/05/05 15:32:11 millert Exp $	*/
+/*	$OpenBSD: supcdefs.h,v 1.8 2005/04/27 18:13:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -116,9 +116,11 @@ typedef struct collstruct COLLECTION;
 #define CFURELSUF	02000
 #define CFCOMPRESS	04000
 #define CFSILENT	10000
+#define CFVERBOSE2	20000
 
 /*************************
  ***	M A C R O S    ***
  *************************/
 
-#define vnotify	if (thisC->Cflags&CFVERBOSE)  notify
+#define vnotify if (thisC->Cflags & CFVERBOSE)  notify
+#define v2notify if (thisC->Cflags & (CFVERBOSE|CFVERBOSE2) == (CFVERBOSE|CFVERBOSE2))  notify
