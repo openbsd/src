@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.1 2005/04/01 10:40:48 mickey Exp $
+.\"	$OpenBSD: boot.8,v 1.2 2005/04/27 19:45:28 deraadt Exp $
 .\"
 .\" Copyright (c) 2002 Miodrag Vallat
 .\" Copyright (c) 1997-2005 Michael Shalayeff
@@ -27,19 +27,19 @@
 .\"
 .\"
 .Dd March 16, 2005
-.Dt BOOT 8 hppa
+.Dt BOOT 8 hppa64
 .Os
 .Sh NAME
 .Nm boot ,
 .Nm boot.conf
 .Nd
-hppa-specific bootstrap
+hppa64-specific bootstrap
 .Sh DESCRIPTION
 The main purpose of this program is to load the system kernel while dealing
 with the various features of the PA-RISC hardware.
 .Pp
 As described in
-.Xr boot_hppa 8 ,
+.Xr boot_hppa64 8 ,
 this program is loaded by the PDC firmware
 and provides a convenient way to load the kernel.
 .Pp
@@ -82,7 +82,7 @@ Though default settings usually suffice, they can be changed here.
 .It
 The header line
 .Pp
-.Dl >> OpenBSD/hppa BOOT [x.xx]
+.Dl >> OpenBSD/hppa64 BOOT [x.xx]
 .Pp
 is displayed to the active console, where
 .Ar x.xx
@@ -152,7 +152,7 @@ Prints a list of available commands and machine dependent
 commands, if any.
 .It machine Op Ar command
 Issues machine-dependent commands.
-These are defined for hppa architecture:
+These are defined for hppa64 architecture:
 .Bl -tag -width keyboard
 .It Nm console
 Displays or sets the console path.
@@ -321,7 +321,7 @@ option.
 .Xr autoconf 4 ,
 .Xr ddb 4 ,
 .Xr boot_config 8 ,
-.Xr boot_hppa 8 ,
+.Xr boot_hppa64 8 ,
 .\" .Xr installboot 8 ,
 .Xr reboot 8
 .Pp
@@ -332,7 +332,7 @@ operating system see http://quest.jpl.nasa.gov/zlib/.
 .Sh HISTORY
 This program was written by Michael Shalayeff for
 .Ox 2.1 .
-The hppa specific parts were written by Michael Shalayeff and Miodrag Vallat
+The hppa64 specific parts were written by Michael Shalayeff and Miodrag Vallat
 for
 .Ox 3.1 .
 .Sh CAVEATS
