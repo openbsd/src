@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_motorola.c,v 1.37 2005/04/26 21:12:27 martin Exp $ */
+/*	$OpenBSD: pmap_motorola.c,v 1.38 2005/04/27 00:12:41 miod Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -2763,36 +2763,3 @@ pmap_check_wiring(str, va)
 		       str, va, pg->wire_count, count);
 }
 #endif /* DEBUG */
-
-/* XXX this should go out soon */
-#ifdef mac68k
-/*
- * pmap_map:
- *
- *	Used to map a range of physical addresses into kernel
- *	virtual address space.
- *
- *	For now, VM is already on, we only need to map the
- *	specified memory.
- *
- *	Note: THIS FUNCTION IS DEPRECATED, AND SHOULD BE REMOVED!
- */
-vaddr_t
-pmap_map(va, spa, epa, prot)
-	vaddr_t va;
-	paddr_t spa, epa;
-	int prot;
-{
-
-	PMAP_DPRINTF(PDB_FOLLOW,
-	    ("pmap_map(%lx, %lx, %lx, %x)\n", va, spa, epa, prot));
-
-	while (spa < epa) {
-		pmap_kenter_pa(va, spa, prot);
-		va += PAGE_SIZE;
-		spa += PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
-	return (va);
-}
-#endif
