@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.34 2005/04/17 17:37:38 mickey Exp $	*/
+/*	$OpenBSD: ami.c,v 1.35 2005/04/27 21:54:47 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -673,16 +673,6 @@ ami_quartz_done(sc, mbox)
 
 	sc->sc_mbox->acc_status = 0xff;
 
-	/* ack interrupt */
-	ami_write_inbound_db(sc, AMI_QIDB_ACK);
-
-	i = 0;
-	while(ami_read_inbound_db(sc) & AMI_QIDB_ACK) {
-		delay(1);
-		if (i++ > 1000000)
-			return (0); /* nothing to do */
-	}
-
 	/* copy mailbox to temporary one and fixup other changed values */
 	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 16,
 	    BUS_DMASYNC_POSTWRITE);
@@ -692,6 +682,9 @@ ami_quartz_done(sc, mbox)
 	for (n = 0; n < nstat; n++) {
 		mbox->acc_cmplidl[n] = completed[n];
 	}
+
+	/* ack interrupt */
+	ami_write_inbound_db(sc, AMI_QIDB_ACK);
 
 	return (1); /* ready to complete all IOs in acc_cmplidl */
 }
