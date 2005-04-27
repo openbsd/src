@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.63 2005/03/21 22:32:07 miod Exp $
+dnl	$OpenBSD: install,v 1.64 2005/04/27 03:07:16 jsg Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -7,7 +7,7 @@ be booted off your local disk's swap partition. The normal way is to
 use the OpenBSD CD-ROM, or the bootable CD-ROM mini image, or an
 installation floppy, or an installation tape, depending on your hardware.
 
-If your Sparc is hooked up to a network, try and find a server to
+If your SPARC is hooked up to a network, try and find a server to
 arrange for a diskless setup. This is a convenient way to install on a
 machine whose disk does not currently hold a usable operating system.
 This is difficult to get set up correctly the first time, but easy to
@@ -438,7 +438,7 @@ configured correctly.  If you have problems, extract the diskless(8)
 manpage, find someone who's been through it before and use the host
 syslog and tcpdump(8) to get visibility of what's happening (or not).
 
-Your Sparcstation expects to be able to download a second stage bootstrap
+Your SPARCstation expects to be able to download a second stage bootstrap
 program via TFTP after having acquired its IP address through RevARP when
 instructed to boot "over the net". It will look for a filename composed of
 the machine's IP address followed by the machine's architecture, separated

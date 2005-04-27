@@ -1,6 +1,6 @@
 Before you start you might need to consider your disk configuration
 to sort out a quirk in SCSI-ID to SD-UNIT mapping that exists on
-Sun Sparcstations.
+Sun SPARCstations.
 
 Upon leaving the factory, SunOS and the OpenBOOT ROM map according to
 this table:
@@ -61,7 +61,7 @@ are not running in "new" command mode.  The sun4 systems such as the 4/110,
 fine as-is.
 
 
-Also, you cannot use the security modes of the sparc OpenBOOT ROM.
+Also, you cannot use the security modes of the SPARC OpenBOOT ROM.
 Make sure that the ROM security modes are disabled:
 
     ok setenv security-mode none

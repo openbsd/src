@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.41 2005/03/18 13:30:53 miod Exp $
+dnl	$OpenBSD: xfer,v 1.42 2005/04/27 03:07:16 jsg Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
@@ -7,12 +7,12 @@ Installation is supported from several media types, including:
 	FTP
 	HTTP
 
-Not all methods are supported on all Sparc Systems and some of them
+Not all methods are supported on all SPARC Systems and some of them
 work only with the floppy or the miniroot installation.
 
 If you have the OpenBSD CD-ROM distribution (and a CD-ROM drive), you may be
 able to boot from it, or from the supplied bootable CD-ROM mini image. However,
-not all sparc systems support booting from CD-ROM, and the current boot
+not all SPARC systems support booting from CD-ROM, and the current boot
 image is only known to work on sun4c and sun4m architecture workstations.
 If you can boot from the CD-ROM, you are home free and can proceed to the
 installation steps.  If not, you will need to do some setup work to prepare
@@ -68,7 +68,7 @@ Creating a bootable hard disk using SunOS, Solaris or other Un*x-like system:
 	don't care about the hard disk contents, you can also install the
 	bootable image starting at the beginning of the disk. This lets
 	you prepare a bootable hard-drive even if don't have a working
-	operating system on your Sparc, but it is important to understand
+	operating system on your SPARC, but it is important to understand
 	that the bootable image installed this way includes a "disk label"
 	which can wipe out any pre-existing disk labels or partitioning for
 	the drive.
