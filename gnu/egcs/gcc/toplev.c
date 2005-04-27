@@ -785,6 +785,9 @@ int flag_propolice_protection = 0;
 int flag_stack_protection = 0;
 #endif
 
+int flag_trampolines = 0;
+int warn_trampolines = 0;
+
 /* Table of supported debugging formats.  */
 static struct
 {
@@ -997,6 +1000,8 @@ lang_independent_options f_options[] =
    "Enables stack protection" },
   {"stack-protector-all", &flag_stack_protection, 1,
    "Enables stack protection of every function" },
+  {"trampolines", &flag_trampolines, 1,
+   "Allows trampolines" }
 };
 
 #define NUM_ELEM(a)  (sizeof (a) / sizeof ((a)[0]))
@@ -1279,7 +1284,9 @@ lang_independent_options W_options[] =
   {"inline", &warn_inline, 1,
    "Warn when an inlined function cannot be inlined"},
   {"stack-protector", &warn_stack_protector, 1,
-   "Warn when disabling stack protector for some reason"}
+   "Warn when disabling stack protector for some reason"},
+  {"trampolines", &warn_trampolines, 1,
+   "Warn when trampolines are emitted"}
 };
 
 /* Output files for assembler code (real compiler output)

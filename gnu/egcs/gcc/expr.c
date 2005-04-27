@@ -5562,6 +5562,8 @@ check_max_integer_computation_mode (exp)
     }
 }
 #endif
+extern int flag_trampolines;
+extern int warn_trampolines;
 
 
 /* expand_expr: generate code for computing expression EXP.
@@ -8059,6 +8061,15 @@ expand_expr (exp, target, tmode, modifier)
 	  && ! DECL_NO_STATIC_CHAIN (TREE_OPERAND (exp, 0))
 	  && ! TREE_STATIC (exp))
 	{
+	  if (!flag_trampolines)
+	    {
+	      error_with_decl(exp, "trampoline code generation is not allowed without -ftrampolines");
+	      return const0_rtx;
+	    }
+	  if (warn_trampolines)
+	    {
+	      warning_with_decl(exp, "local function address taken, needing trampoline generation");
+	    }
 	  op0 = trampoline_address (TREE_OPERAND (exp, 0));
 	  op0 = force_operand (op0, target);
 	}
