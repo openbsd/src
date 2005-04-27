@@ -1,9 +1,10 @@
-dnl	$OpenBSD: install,v 1.5 2004/09/23 17:23:19 pefo Exp $
+dnl	$OpenBSD: install,v 1.6 2005/04/27 03:22:00 deraadt Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD ramdisk kernel that
-can be booted via BOOTP. Booting from CD is not yet supported.
+can be booted via BOOTP.  The normal way is to the bootable CD-ROM
+mini image.
 
 Booting over the network:
 dnl XXX provide more details!!!
@@ -24,6 +25,15 @@ Maintenance Console:
 
 > bootp()/bsd.rd
 
+Booting from CD-ROM installation media:
+
+	> boot pci(0)scsi(0)cdrom(4)rdisk(0)partition(8)/boot
+
+If the boot is successful, you will get a loader version message,
+executable sizes, and then the kernel copyright and device probe
+messages.  Boot failure modes are typically a lot of CD-ROM drive
+activity, but no messages or complaints about magic numbers,
+checksums or formats.
 
 Installing the system:
 
