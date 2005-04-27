@@ -311,7 +311,7 @@ namespace std
 		       + _S_extra_categories_size; ++__i)
 	    {
 	      _M_tmp_names[__i] = new char[2];
-	      strcpy(_M_tmp_names[__i], "*");
+	      strlcpy(_M_tmp_names[__i], "*", 2);
 	    }
 	  _M_impl->_M_install_facet(&_Facet::id, __f);
 	}

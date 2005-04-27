@@ -47,8 +47,9 @@
 				     size_t __refs) 
     : locale::facet(__refs)
     { 
-      _M_name_timepunct = new char[strlen(__s) + 1];
-      strcpy(_M_name_timepunct, __s);
+      size_t __len = strlen(__s) + 1;
+      _M_name_timepunct = new char[__len];
+      strlcpy(_M_name_timepunct, __s, __len);
       _M_initialize_timepunct(__cloc); 
     }
 

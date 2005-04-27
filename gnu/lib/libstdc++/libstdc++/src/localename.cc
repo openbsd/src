@@ -125,8 +125,9 @@ namespace std
 	for (size_t __i = 0; 
 	     __i < _S_categories_size + _S_extra_categories_size; ++__i)
 	  {
-	    char* __new = new char[strlen(__imp._M_names[__i]) + 1];
-	    strcpy(__new, __imp._M_names[__i]);
+	    size_t __len = strlen(__imp._M_names[__i]) + 1;
+	    char* __new = new char[__len];
+	    strlcpy(__new, __imp._M_names[__i], __len);
 	    _M_names[__i] = __new;
 	  }
       }
@@ -166,7 +167,7 @@ namespace std
 		 __i < _S_categories_size + _S_extra_categories_size; ++__i)
 	      {
 		_M_names[__i] = new char[__len + 1];
-		strcpy(_M_names[__i], __s);
+		strlcpy(_M_names[__i], __s, __len + 1);
 	      }
 	  }
 	else
@@ -249,7 +250,7 @@ namespace std
 	 __i < _S_categories_size + _S_extra_categories_size; ++__i)
       {
 	_M_names[__i]  = new (&facet_name[__i]) char[2];
-	strcpy(_M_names[__i], locale::facet::_S_c_name);
+	strlcpy(_M_names[__i], locale::facet::_S_c_name, 2);
       }
 
     // This is needed as presently the C++ version of "C" locales
@@ -326,8 +327,9 @@ namespace std
 	    if (strcmp(_M_names[__ix], "*") != 0 
 		&& strcmp(__imp->_M_names[__ix], "*") != 0)
 	      {
-		char* __new = new char[strlen(__imp->_M_names[__ix]) + 1];
-		strcpy(__new, __imp->_M_names[__ix]);
+	        size_t __len = strlen(__imp->_M_names[__ix]) + 1;
+		char* __new = new char[__len];
+		strlcpy(__new, __imp->_M_names[__ix], __len);
 		delete [] _M_names[__ix];
 		_M_names[__ix] = __new;
 	      }

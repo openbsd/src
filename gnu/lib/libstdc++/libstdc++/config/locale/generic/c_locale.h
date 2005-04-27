@@ -39,6 +39,8 @@
 #pragma GCC system_header
 
 #include <clocale>
+#include <cstring>
+#include <cstdio>
 
 #define _GLIBCPP_NUM_CATEGORIES 0
 
@@ -57,26 +59,26 @@ namespace std
 		     const char* __fmt,
 		     _Tv __v, const __c_locale&, int __prec = -1)
     {
-      char* __old = setlocale(LC_ALL, NULL);
-      char* __sav = static_cast<char*>(malloc(strlen(__old) + 1));
-      if (__sav)
-        strcpy(__sav, __old);
-      setlocale(LC_ALL, "C");
+      char* __old = std::setlocale(LC_NUMERIC, NULL);
+      size_t __len = std::strlen(__old) + 1;
+      char* __sav = new char[__len];
+      strlcpy(__sav, __old, __len);
+      std::setlocale(LC_NUMERIC, "C");
 
       int __ret;
 #if defined _GLIBCPP_USE_C99 || defined _GLIBCPP_USE_C99_SNPRINTF
       if (__prec >= 0)
-        __ret = snprintf(__out, __size, __fmt, __prec, __v);
+        __ret = std::snprintf(__out, __size, __fmt, __prec, __v);
       else
-        __ret = snprintf(__out, __size, __fmt, __v);
+        __ret = std::snprintf(__out, __size, __fmt, __v);
 #else
       if (__prec >= 0)
-        __ret = sprintf(__out, __fmt, __prec, __v);
+        __ret = std::sprintf(__out, __fmt, __prec, __v);
       else
-        __ret = sprintf(__out, __fmt, __v);
+        __ret = std::sprintf(__out, __fmt, __v);
 #endif
-      setlocale(LC_ALL, __sav);
-      free(__sav);
+      std::setlocale(LC_NUMERIC, __sav);
+      delete [] __sav;
       return __ret;
     }
 }
