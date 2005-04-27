@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.19 2005/04/18 21:02:50 jfb Exp $	*/
+/*	$OpenBSD: status.c,v 1.20 2005/04/27 04:54:46 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -55,7 +55,7 @@ const char *cvs_statstr[] = {
 };
 
 
-int cvs_status_file      (CVSFILE *, void *);
+int cvs_status_remote    (CVSFILE *, void *);
 int cvs_status_local     (CVSFILE *, void *);
 int cvs_status_options   (char *, int, char **, int *);
 int cvs_status_sendflags (struct cvsroot *);
@@ -63,7 +63,7 @@ int cvs_status_sendflags (struct cvsroot *);
 struct cvs_cmd_info cvs_status = {
 	cvs_status_options,
 	cvs_status_sendflags,
-	cvs_status_file,
+	cvs_status_remote,
 	NULL, NULL,
 	CF_SORT | CF_IGNORE | CF_RECURSE,
 	CVS_REQ_STATUS,
@@ -106,12 +106,12 @@ cvs_status_sendflags(struct cvsroot *root)
 }
 
 /*
- * cvs_status_file()
+ * cvs_status_remote()
  *
  * Get the status of a single file.
  */
 int
-cvs_status_file(CVSFILE *cfp, void *arg)
+cvs_status_remote(CVSFILE *cfp, void *arg)
 {
 	int ret;
 	char *repo, fpath[MAXPATHLEN];
@@ -140,17 +140,14 @@ cvs_status_file(CVSFILE *cfp, void *arg)
 
 	switch (cfp->cf_cvstat) {
 	case CVS_FST_UNKNOWN:
-		ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-		    CVS_FILE_NAME(cfp));
+		ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cfp->cf_name);
 		break;
 	case CVS_FST_UPTODATE:
-		ret = cvs_sendreq(root, CVS_REQ_UNCHANGED,
-		    CVS_FILE_NAME(cfp));
+		ret = cvs_sendreq(root, CVS_REQ_UNCHANGED, cfp->cf_name);
 		break;
 	case CVS_FST_ADDED:
 	case CVS_FST_MODIFIED:
-		ret = cvs_sendreq(root, CVS_REQ_MODIFIED,
-		    CVS_FILE_NAME(cfp));
+		ret = cvs_sendreq(root, CVS_REQ_MODIFIED, cfp->cf_name);
 		if (ret == 0)
 			ret = cvs_sendfile(root, fpath);
 	default:
@@ -166,7 +163,6 @@ cvs_status_local(CVSFILE *cfp, void *arg)
 	int l;
 	char *repo, buf[MAXNAMLEN], fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
 	RCSFILE *rf;
-	struct cvs_ent *entp;
 	struct cvsroot *root;
 
 	if (cfp->cf_type == DT_DIR)
@@ -176,7 +172,6 @@ cvs_status_local(CVSFILE *cfp, void *arg)
 	repo = CVS_DIR_REPO(cfp);
 
 	cvs_file_getpath(cfp, fpath, sizeof(fpath));
-	entp = cvs_ent_getent(fpath);
 
 	if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
 		cvs_log(LP_WARN, "I know nothing about %s", fpath);
@@ -188,15 +183,11 @@ cvs_status_local(CVSFILE *cfp, void *arg)
 	if (l == -1 || l >= (int)sizeof(rcspath)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", rcspath);
-
-		cvs_ent_free(entp);
 		return (-1);
 	}
 
 	rf = rcs_open(rcspath, RCS_READ);
 	if (rf == NULL) {
-		if (entp != NULL)
-			cvs_ent_free(entp);
 		return (-1);
 	}
 
@@ -208,12 +199,12 @@ cvs_status_local(CVSFILE *cfp, void *arg)
 	cvs_printf(CVS_STATUS_SEP "\nFile: %-18sStatus: %s\n\n",
 	    buf, cvs_statstr[cfp->cf_cvstat]);
 
-	if (entp == NULL) {
+	if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
 		snprintf(buf, sizeof(buf), "No entry for %s",
 		    CVS_FILE_NAME(cfp));
 	} else {
 		snprintf(buf, sizeof(buf), "%s %s",
-		    rcsnum_tostr(entp->ce_rev, buf, sizeof(buf)),
+		    rcsnum_tostr(cfp->cf_lrev, buf, sizeof(buf)),
 		    "date here");
 	}
 
@@ -226,7 +217,5 @@ cvs_status_local(CVSFILE *cfp, void *arg)
 
 	rcs_close(rf);
 
-	if (entp != NULL)
-		cvs_ent_free(entp);
 	return (0);
 }
