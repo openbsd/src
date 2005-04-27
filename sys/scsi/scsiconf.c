@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.92 2004/07/31 11:31:30 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.93 2005/04/27 23:54:44 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -688,7 +688,9 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 		bcopy(&inqbuf, inqbuflun0, sizeof *inqbuflun0);
 	else if (((1 << sc_link->scsibus) & scsiforcelun_buses) &&
 	    ((1 << target) & scsiforcelun_targets))
-		    ;
+		;
+	else if (sc_link->flags & SDEV_UMASS)
+		;
 	else if (memcmp(&inqbuf, inqbuflun0, sizeof inqbuf) == 0) {
 		/* The device doesn't distinguish between LUNs. */
 		SC_DEBUG(sc_link, SDEV_DB1, ("IDENTIFY not supported.\n"));
