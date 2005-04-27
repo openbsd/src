@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgivol.c,v 1.3 2004/11/08 21:24:46 miod Exp $	*/
+/*	$OpenBSD: sgivol.c,v 1.4 2005/04/27 07:13:41 deraadt Exp $	*/
 /*	$NetBSD: sgivol.c,v 1.8 2003/11/08 04:59:00 sekiya Exp $	*/
 
 /*-
@@ -63,65 +63,65 @@
 #define SGI_SIZE_VOLHDR	3135	/* Can be overridden via -h parameter */
 
 struct local_devparms {
-	u_int8_t        dp_skew;
-	u_int8_t        dp_gap1;
-	u_int8_t        dp_gap2;
-	u_int8_t        dp_spares_cyl;
-	u_int16_t       dp_cyls;
-	u_int16_t       dp_shd0;
-	u_int16_t       dp_trks0;
-	u_int8_t        dp_ctq_depth;
-	u_int8_t        dp_cylshi;
-	u_int16_t       dp_unused;
-	u_int16_t       dp_secs;
-	u_int16_t       dp_secbytes;
-	u_int16_t       dp_interleave;
-	u_int32_t       dp_flags;
-	u_int32_t       dp_datarate;
-	u_int32_t       dp_nretries;
-	u_int32_t       dp_mspw;
-	u_int16_t       dp_xgap1;
-	u_int16_t       dp_xsync;
-	u_int16_t       dp_xrdly;
-	u_int16_t       dp_xgap2;
-	u_int16_t       dp_xrgate;
-	u_int16_t       dp_xwcont;
+	u_int8_t	dp_skew;
+	u_int8_t	dp_gap1;
+	u_int8_t	dp_gap2;
+	u_int8_t	dp_spares_cyl;
+	u_int16_t	dp_cyls;
+	u_int16_t	dp_shd0;
+	u_int16_t	dp_trks0;
+	u_int8_t	dp_ctq_depth;
+	u_int8_t	dp_cylshi;
+	u_int16_t	dp_unused;
+	u_int16_t	dp_secs;
+	u_int16_t	dp_secbytes;
+	u_int16_t	dp_interleave;
+	u_int32_t	dp_flags;
+	u_int32_t	dp_datarate;
+	u_int32_t	dp_nretries;
+	u_int32_t	dp_mspw;
+	u_int16_t	dp_xgap1;
+	u_int16_t	dp_xsync;
+	u_int16_t	dp_xrdly;
+	u_int16_t	dp_xgap2;
+	u_int16_t	dp_xrgate;
+	u_int16_t	dp_xwcont;
 } __packed;
 
 #define	SGI_SIZE_VOLDIR	15
 
 struct local_sgilabel {
 #define SGILABEL_MAGIC  0xbe5a941
-	u_int32_t       magic;
-	int16_t         root;
-	int16_t         swap;
-	char            bootfile[16];
+	u_int32_t	magic;
+	int16_t		root;
+	int16_t		swap;
+	char		bootfile[16];
 	struct local_devparms dp;
 	struct {
-		char            name[8];
-		int32_t         block;
-		int32_t         bytes;
-	}               voldir[SGI_SIZE_VOLDIR];
+		char		name[8];
+		int32_t		block;
+		int32_t		bytes;
+	} voldir[SGI_SIZE_VOLDIR];
 	struct {
-		int32_t         blocks;
-		int32_t         first;
-		int32_t         type;
-	}               partitions[MAXPARTITIONS];
-	int32_t         checksum;
-	int32_t         _pad;
+		int32_t		blocks;
+		int32_t		first;
+		int32_t		type;
+	} partitions[MAXPARTITIONS];
+	int32_t		checksum;
+	int32_t		_pad;
 } __packed;
 
-#define SGI_PTYPE_VOLHDR        0
-#define SGI_PTYPE_RAW           3
-#define SGI_PTYPE_BSD           4
-#define SGI_PTYPE_VOLUME        6
-#define SGI_PTYPE_EFS           7
-#define SGI_PTYPE_LVOL          8
-#define SGI_PTYPE_RLVOL         9
-#define SGI_PTYPE_XFS           10
-#define SGI_PTYPE_XFSLOG        11
-#define SGI_PTYPE_XLV           12
-#define SGI_PTYPE_XVM           13
+#define SGI_PTYPE_VOLHDR	0
+#define SGI_PTYPE_RAW		3
+#define SGI_PTYPE_BSD		4
+#define SGI_PTYPE_VOLUME	6
+#define SGI_PTYPE_EFS		7
+#define SGI_PTYPE_LVOL		8
+#define SGI_PTYPE_RLVOL		9
+#define SGI_PTYPE_XFS		10
+#define SGI_PTYPE_XFSLOG	11
+#define SGI_PTYPE_XLV		12
+#define SGI_PTYPE_XVM		13
 
 int	fd;
 int	opt_i;			/* Initialize volume header */
@@ -258,7 +258,7 @@ main(int argc, char *argv[])
 	}
 	if (argc != 1)
 		usage();
-	
+
 	fd = open(argv[0], (opt_i | opt_w | opt_d | opt_p) ? O_RDWR : O_RDONLY);
 	if (fd < 0) {
 		snprintf(buf, sizeof(buf), "/dev/r%s%c",
@@ -277,7 +277,7 @@ main(int argc, char *argv[])
 		exit(0);
 	}
 	if (betoh32(volhdr->magic) != SGILABEL_MAGIC)
-		errx(2, "no Volume Header found, magic=%x.  Use -i first.", 
+		errx(2, "no Volume Header found, magic=%x.  Use -i first.",
 		    betoh32(volhdr->magic));
 	if (opt_r) {
 		read_file();
@@ -326,7 +326,7 @@ display_vol(void)
 			    betoh32(volhdr->voldir[i].block),
 			    betoh32(volhdr->voldir[i].bytes),
 			    howmany(betoh32(volhdr->voldir[i].bytes),
-			      DEV_BSIZE));
+			    DEV_BSIZE));
 		}
 	}
 	printf("\nSGI partitions:\n");
@@ -337,9 +337,9 @@ display_vol(void)
 			    betoh32(volhdr->partitions[i].first),
 			    betoh32(volhdr->partitions[i].type),
 			    betoh32(volhdr->partitions[i].type) >
-			      (sizeof(sgi_types) / sizeof(sgi_types[0])) ?
-			      "???" :
-			      sgi_types[betoh32(volhdr->partitions[i].type)]);
+			    (sizeof(sgi_types) / sizeof(sgi_types[0])) ?
+			    "???" :
+			    sgi_types[betoh32(volhdr->partitions[i].type)]);
 		}
 	}
 }
@@ -384,7 +384,7 @@ read_file(void)
 		printf("Reading file %s\n", vfilename);
 	for (i = 0; i < SGI_SIZE_VOLDIR; ++i) {
 		if (strncmp(vfilename, volhdr->voldir[i].name,
-			    strlen(volhdr->voldir[i].name)) == 0)
+		    strlen(volhdr->voldir[i].name)) == 0)
 			break;
 	}
 	if (i >= SGI_SIZE_VOLDIR)
@@ -434,8 +434,8 @@ write_file(void)
 	/* -w can overwrite, -a won't overwrite */
 	if (betoh32(volhdr->voldir[slot].block) > 0) {
 		if (!opt_q)
-			printf("File %s exists, removing old file\n", 
-				vfilename);
+			printf("File %s exists, removing old file\n",
+			    vfilename);
 		volhdr->voldir[slot].name[0] = 0;
 		volhdr->voldir[slot].block = volhdr->voldir[slot].bytes = 0;
 	}
@@ -450,7 +450,7 @@ write_file(void)
 	 */
 	if (strlen(vfilename) > sizeof(volhdr->voldir[slot].name))
 		warnx("%s: filename is too long and will be truncated",
-		       vfilename);
+		    vfilename);
 	strncpy(volhdr->voldir[slot].name, vfilename,
 	    sizeof(volhdr->voldir[slot].name));
 
@@ -495,7 +495,7 @@ void
 modify_partition(void)
 {
 	if (!opt_q)
-		printf("Modify partition %d start %d length %d\n", 
+		printf("Modify partition %d start %d length %d\n",
 		    partno, partfirst, partblocks);
 	volhdr->partitions[partno].blocks = htobe32(partblocks);
 	volhdr->partitions[partno].first = htobe32(partfirst);
@@ -536,16 +536,22 @@ allocate_space(int size)
 		if (volhdr->voldir[n].name[0]) {
 			if (first < (betoh32(volhdr->voldir[n].block) +
 			    howmany(betoh32(volhdr->voldir[n].bytes),
-			      DEV_BSIZE)) &&
+			    DEV_BSIZE)) &&
 			    (first + blocks) > betoh32(volhdr->voldir[n].block)) {
 				first = betoh32(volhdr->voldir[n].block) +
 				    howmany(betoh32(volhdr->voldir[n].bytes),
-				      DEV_BSIZE);
+				    DEV_BSIZE);
 #if 0
-				printf("allocate: n=%d first=%d blocks=%d size=%d\n", n, first, blocks, size);
-				printf("%s %d %d\n", volhdr->voldir[n].name, volhdr->voldir[n].block, volhdr->voldir[n].bytes);
-				printf("first=%d block=%d last=%d end=%d\n", first, volhdr->voldir[n].block,
-				       first + blocks - 1, volhdr->voldir[n].block + howmany(volhdr->voldir[n].bytes, DEV_BSIZE));
+				printf("allocate: n=%d first=%d blocks=%d size=%d\n",
+				    n, first, blocks, size);
+				printf("%s %d %d\n", volhdr->voldir[n].name,
+				    volhdr->voldir[n].block,
+				    volhdr->voldir[n].bytes);
+				printf("first=%d block=%d last=%d end=%d\n",
+				    first, volhdr->voldir[n].block,
+				    first + blocks - 1,
+				    volhdr->voldir[n].block +
+				    howmany(volhdr->voldir[n].bytes, DEV_BSIZE));
 #endif
 				n = 0;
 				continue;
