@@ -1178,6 +1178,10 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 
 /*** Trampolines for Nested Functions ***/
 
+#ifndef FINALIZE_TRAMPOLINE
+#define FINALIZE_TRAMPOLINE(TRAMP)
+#endif
+
 /* Output assembler code for a block containing the constant parts
    of a trampoline, leaving space for the variable parts.
 
@@ -1236,6 +1240,7 @@ enum reg_class { NO_REGS, AP_REG, XRF_REGS, GENERAL_REGS, AGRF_REGS,
 {									\
   emit_move_insn (gen_rtx_MEM (SImode, plus_constant (TRAMP, 40)), FNADDR); \
   emit_move_insn (gen_rtx_MEM (SImode, plus_constant (TRAMP, 36)), CXT); \
+  FINALIZE_TRAMPOLINE (TRAMP);						\
 }
 
 /*** Library Subroutine Names ***/

@@ -73,5 +73,26 @@ Boston, MA 02111-1307, USA.  */
 #undef STRUCTURE_SIZE_BOUNDARY
 #define STRUCTURE_SIZE_BOUNDARY 16 
 
+/* Due to the split instruction and data caches, trampolines must cause the
+   data cache to be synced before attempting to execute the trampoline code.
+   Under OpenBSD, this is done by invoking trap #451 with r2 and r3 set to
+   the address of the trampoline area and its size, respectively.  */
+#undef FINALIZE_TRAMPOLINE
+#define FINALIZE_TRAMPOLINE(TRAMP)					\
+  emit_library_call(gen_rtx_SYMBOL_REF (Pmode, "__dcache_sync"),	\
+		    0, VOIDmode, 2, (TRAMP), Pmode,			\
+		    GEN_INT (TRAMPOLINE_SIZE), Pmode)
+
+#undef TRANSFER_FROM_TRAMPOLINE
+#define TRANSFER_FROM_TRAMPOLINE					\
+extern void __dcache_sync(int, int);					\
+void									\
+__dcache_sync (addr, len)						\
+     int addr, len;							\
+{									\
+  /* r2 and r3 are set by the caller and need not be modified */	\
+  __asm __volatile ("tb0 0, r0, 451");					\
+}
+
 /* problems occur if we're too liberal in preserve_subexpressions_p */
 #define	BROKEN_PRESERVE_SUBEXPRESSIONS_P
