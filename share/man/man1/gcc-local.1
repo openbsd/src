@@ -1,4 +1,4 @@
-.\" $OpenBSD: gcc-local.1,v 1.10 2005/02/06 10:39:31 espie Exp $
+.\" $OpenBSD: gcc-local.1,v 1.11 2005/04/27 14:12:27 miod Exp $
 .\"
 .\" Copyright (c) 2002 Marc Espie
 .\" Copyright (c) 2003 Anil Madhavapeddy
@@ -66,8 +66,7 @@ since the stack area is by default non-executable.
 .It
 On
 .Ox ,
-by default, trampoline code generation is disabled in
-.Nm gcc 3.3.5 .
+by default, trampoline code generation is disabled.
 Code requiring trampolines will not compile without
 .Fl ftrampolines .
 The warning flag
