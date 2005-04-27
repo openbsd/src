@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.4 2002/09/03 12:21:12 ho Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.5 2005/04/27 23:03:01 cloder Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -275,6 +275,7 @@ decode_prefix4(const u_char *pd, char *buf, u_int buflen)
 {
 	struct in_addr addr;
 	u_int plen;
+	int n;
 
 	plen = pd[0];
 	if (plen < 0 || 32 < plen)
@@ -286,7 +287,10 @@ decode_prefix4(const u_char *pd, char *buf, u_int buflen)
 		((u_char *)&addr)[(plen + 7) / 8 - 1] &=
 			((0xff00 >> (plen % 8)) & 0xff);
 	}
-	snprintf(buf, buflen, "%s/%d", getname((u_char *)&addr), plen);
+	n = snprintf(buf, buflen, "%s/%d", getname((u_char *)&addr), plen);
+	if (n == -1 || n >= buflen)
+		return -1;
+
 	return 1 + (plen + 7) / 8;
 }
 
@@ -296,6 +300,7 @@ decode_prefix6(const u_char *pd, char *buf, u_int buflen)
 {
 	struct in6_addr addr;
 	u_int plen;
+	int n;
 
 	plen = pd[0];
 	if (plen < 0 || 128 < plen)
@@ -307,7 +312,11 @@ decode_prefix6(const u_char *pd, char *buf, u_int buflen)
 		addr.s6_addr[(plen + 7) / 8 - 1] &=
 			((0xff00 >> (plen % 8)) & 0xff);
 	}
-	snprintf(buf, buflen, "%s/%d", getname6((u_char *)&addr), plen);
+
+	n = snprintf(buf, buflen, "%s/%d", getname6((u_char *)&addr), plen);
+	if (n == -1 || n >= buflen)
+		return -1;
+
 	return 1 + (plen + 7) / 8;
 }
 #endif
@@ -467,12 +476,10 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 			switch (af) {
 			case AFNUM_INET:
 				advance = decode_prefix4(p, buf, sizeof(buf));
-				printf(" %s", buf);
 				break;
 #ifdef INET6
 			case AFNUM_INET6:
 				advance = decode_prefix6(p, buf, sizeof(buf));
-				printf(" %s", buf);
 				break;
 #endif
 			default:
@@ -482,6 +489,10 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 				break;
 			}
 
+			if (advance <= 0)
+				break;
+
+			printf(" %s", buf);
 			p += advance;
 		}
 
@@ -503,12 +514,10 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 			switch (af) {
 			case AFNUM_INET:
 				advance = decode_prefix4(p, buf, sizeof(buf));
-				printf(" %s", buf);
 				break;
 #ifdef INET6
 			case AFNUM_INET6:
 				advance = decode_prefix6(p, buf, sizeof(buf));
-				printf(" %s", buf);
 				break;
 #endif
 			default:
@@ -518,6 +527,10 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 				break;
 			}
 
+			if (advance <= 0)
+				break;
+
+			printf(" %s", buf);
 			p += advance;
 		}
 		break;
@@ -747,7 +760,7 @@ bgp_print(const u_char *dat, int length)
 	p = dat;
 	newline = 0;
 	start = p;
-	while (p < snapend) {
+	while (p < ep) {
 		if (!TTEST2(p[0], 1))
 			break;
 		if (p[0] != 0xff) {
