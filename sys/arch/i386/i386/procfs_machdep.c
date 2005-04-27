@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_machdep.c,v 1.3 2005/04/21 00:31:23 deraadt Exp $	*/
+/*	$OpenBSD: procfs_machdep.c,v 1.4 2005/04/27 13:18:21 fgsch Exp $	*/
 /*	$NetBSD: procfs_machdep.c,v 1.6 2001/02/21 21:39:59 jdolecek Exp $	*/
 
 /*
@@ -54,9 +54,9 @@ extern int cpu_id, cpu_class;
 
 static const char * const i386_features[] = {
 	"fpu", "vme", "de", "pse", "tsc", "msr", "pae", "mce",
-	"cx8", "apic", "10", "sep", "mtrr", "pge", "mca", "cmov",
-	"fgpat", "pse36", "psn", "19", "20", "21", "22", "mmx",
-	"fxsr", "xmm", "26", "27", "28", "29", "30", "31"
+	"cx8", "apic", NULL, "sep", "mtrr", "pge", "mca", "cmov",
+	"pat", "pse36", "pn", "clflush", NULL, "dts", "acpi", "mmx",
+	"fxsr", "sse", "sse2", "ss", "ht", "tm", "ia64", "pbe"
 };
 
 
@@ -75,7 +75,7 @@ procfs_getcpuinfstr(char *buf, int *len)
 	p = featurebuf;
 	left = sizeof featurebuf;
 	for (i = 0; i < 32; i++) {
-		if (cpu_feature & (1 << i)) {
+		if ((cpu_feature & (1 << i)) && i386_features[i]) {
 			l = snprintf(p, left, "%s ", i386_features[i]);
 			if (l == -1)
 				l = 0;
