@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.4 2005/04/27 03:03:38 deraadt Exp $ */
+/*	$OpenBSD: boot.c,v 1.5 2005/04/27 03:06:23 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Opsycon AB, www.opsycon.se.
@@ -94,10 +94,9 @@ main(argc, argv)
 	} else
 		strlcpy("invalid argument setup", line, sizeof(line));
 
-	printf("\nOpenBSD/sgi Arcbios boot\n");
-
 	for (entry = 0; entry < argc; entry++)
 		printf("arg %d: %s\n", entry, argv[entry]);
+	printf("\nOpenBSD/sgi Arcbios boot\n");
 
 	printf("Boot: %s\n", line);
 
@@ -115,31 +114,49 @@ main(argc, argv)
 void
 dobootopts(int argc, char **argv)
 {
+	char *SystemPartition = NULL;
 	char *cp;
 	int i;
 
-	/* XXX Should this be done differently, eg env vs. args? */
 	for (i = 1; i < argc; i++) {
 		cp = argv[i];
 		if (cp == NULL)
 			continue;
-
 		if (strncmp(cp, "OSLoadOptions=", 14) == 0) {
 			if (strcmp(&cp[14], "auto") == 0)
-					bootauto = AUTO_YES;
+				bootauto = AUTO_YES;
 			else if (strcmp(&cp[14], "single") == 0)
-					bootauto = AUTO_NO;
+				bootauto = AUTO_NO;
 			else if (strcmp(&cp[14], "debug") == 0)
-					bootauto = AUTO_DEBUG;
-		}
-		else if (strncmp(cp, "OSLoadPartition=", 16) == 0)
+				bootauto = AUTO_DEBUG;
+		} else if (strncmp(cp, "OSLoadPartition=", 16) == 0)
 			OSLoadPartition = &cp[16];
 		else if (strncmp(cp, "OSLoadFilename=", 15) == 0)
 			OSLoadFilename = &cp[15];
+		else if (strncmp(cp, "SystemPartition=", 16) == 0)
+			SystemPartition = &cp[16];
 	}
 	/* If "OSLoadOptions=" is missing, see if any arg was given */
 	if (bootauto == AUTO_NONE && *argv[1] == '/')
 		OSLoadFilename = argv[1];
+
+	if (SystemPartition) {
+		printf("SystemPartition %s\n", SystemPartition);
+		if (strstr(SystemPartition, ")cdrom(")) {
+			static char syspart[64];
+			char *p;
+	
+			strlcpy(syspart, SystemPartition, sizeof syspart);
+			p = strstr(syspart, "partition(");
+			if (p) {
+				p += strlen("partition(");
+				if (*p == '8')
+					*p = '0';
+			}
+			OSLoadPartition = syspart;
+			printf("new OSLoadPartition=%s\n", OSLoadPartition);
+		}
+	}
 }
 
 /*
