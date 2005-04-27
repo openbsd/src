@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.36 2005/04/08 02:24:26 henning Exp $
+.\"	$OpenBSD: release.8,v 1.37 2005/04/27 11:52:45 jmc Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -174,10 +174,10 @@ This moves all your existing object files out of the way and then removes
 them in the background.
 .It Li "% cd /usr/src && nice make obj"
 This re-builds your obj directories.
-.It Li "% cd /usr/src/etc && env DESTDIR=/ make distrib-dirs"
+.It Li "% cd /usr/src/etc && env DESTDIR=/ sudo make distrib-dirs"
 This creates directories that might be missing.
 .It Li "% su"
-.It Li "# nice make build"
+.It Li "# cd /usr/src && nice make build"
 If you have set
 .Xr sudo 8
 up, you can combine this with the previous step using the command
