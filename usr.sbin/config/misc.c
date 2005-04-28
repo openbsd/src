@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.4 2003/06/28 04:55:07 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.5 2005/04/28 22:28:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -26,7 +26,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: misc.c,v 1.4 2003/06/28 04:55:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.5 2005/04/28 22:28:00 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -38,6 +38,8 @@ static char rcsid[] = "$OpenBSD: misc.c,v 1.4 2003/06/28 04:55:07 deraadt Exp $"
 
 #include "misc.h"
 
+extern int verbose;
+
 int
 ask_cmd(cmd_t *cmd)
 {
@@ -47,6 +49,8 @@ ask_cmd(cmd_t *cmd)
 	if (fgets(lbuf, sizeof lbuf, stdin) == NULL)
 		errx(1, "eof");
 	lbuf[strlen(lbuf)-1] = '\0';
+	if (verbose)
+		printf("%s\n", lbuf);
 
 	/* Parse input */
 	buf = lbuf;
@@ -69,9 +73,17 @@ ask_yn(const char *str)
 	fflush(stdout);
 
 	first = ch = getchar();
-	while (ch != '\n' && ch != EOF)
+	if (verbose) {
+		printf("%c", ch);
+		fflush(stdout);
+	}
+	while (ch != '\n' && ch != EOF) {
 		ch = getchar();
-
+		if (verbose) {
+			printf("%c\n", ch);
+			fflush(stdout);
+		}
+	}
 	if (ch == EOF || first == EOF)
 		errx(1, "eof");
 
