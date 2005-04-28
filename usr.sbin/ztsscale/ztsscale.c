@@ -1,4 +1,4 @@
-/*	$OpenBSD: ztsscale.c,v 1.6 2005/04/25 02:52:00 uwe Exp $	*/
+/*	$OpenBSD: ztsscale.c,v 1.7 2005/04/28 06:58:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Matthieu Herrb
@@ -130,7 +130,7 @@ save_screen(void)
 		warn("ioctl SMODE\n");
 	}
 	mapaddr = (void *)mmap(0, WIDTH*HEIGHT*sizeof(short),
-	    PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+	    PROT_READ|PROT_WRITE, MAP_SHARED, fd, (off_t)0);
 	if (mapaddr == (void *)-1)
 		err(2, "mmap");
 	save = (u_short *)malloc(WIDTH*HEIGHT*sizeof(u_short));
@@ -177,9 +177,8 @@ main(int argc, char *argv[])
 		usage();
 
 	fd = open("/dev/ttyC0", O_RDWR);
-	if (fd < 0) {
+	if (fd < 0)
 		err(2, "open /dev/ttyC0");
-	}
 	save_screen();
 
 again:
