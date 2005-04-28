@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.93 2005/04/27 23:54:44 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.94 2005/04/28 00:12:55 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -740,6 +740,20 @@ scsi_probedev(scsi, inqbuflun0, target, lun)
 		scsibusprint(&sa, scsi->sc_dev.dv_xname);
 		printf(" not configured\n");
 		goto bad;
+	}
+
+	/*
+	 * Braindead USB devices, especially some x-in-1 media readers, try to
+	 * 'help' by pretending any LUN is actually LUN 0 until they see a
+	 * different LUN used in a command. So do an INQUIRY on LUN 1 at this
+	 * point (since we are done with the data in inqbuf) to prevent such
+	 * helpfulness before it causes confusion.
+	 */
+	if (lun == 0 && (sc_link->flags & SDEV_UMASS) &&
+	    scsi->sc_link[target][1] == NULL && sc_link->luns > 1) {
+		sc_link->lun = 1;
+		scsi_inquire(sc_link, &inqbuf, scsi_autoconf | SCSI_SILENT);
+	    	sc_link->lun = 0;
 	}
 
 	scsi->sc_link[target][lun] = sc_link;
