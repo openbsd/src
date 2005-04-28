@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.4 2001/06/22 22:06:22 mickey Exp $
+#	$OpenBSD: Makefile,v 1.5 2005/04/28 11:11:13 henning Exp $
 
 PROG=	dmesg
 MAN=	dmesg.8
 LDADD=	-lkvm
 DPADD=	${LIBKVM}
+CFLAGS+=-Wall
 
 .include <bsd.prog.mk>
