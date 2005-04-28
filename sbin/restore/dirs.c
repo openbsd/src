@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.29 2004/12/30 01:51:32 millert Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.30 2005/04/28 16:15:45 millert Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static const char rcsid[] = "$OpenBSD: dirs.c,v 1.29 2004/12/30 01:51:32 millert Exp $";
+static const char rcsid[] = "$OpenBSD: dirs.c,v 1.30 2005/04/28 16:15:45 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -225,7 +225,7 @@ treescan(char *pname, ino_t ino, long (*todo)(char *, ino_t, int))
 {
 	struct inotab *itp;
 	struct direct *dp;
-	int namelen;
+	size_t namelen;
 	long bpt;
 	char locname[MAXPATHLEN + 1];
 
@@ -246,9 +246,11 @@ treescan(char *pname, ino_t ino, long (*todo)(char *, ino_t, int))
 	 * begin search through the directory
 	 * skipping over "." and ".."
 	 */
-	namelen = snprintf(locname, sizeof(locname), "%s/", pname);
-	if (namelen >= sizeof(locname))
-		namelen = sizeof(locname) - 1;
+	namelen = strlcpy(locname, pname, sizeof(locname));
+	if (namelen >= sizeof(locname) - 1)
+		namelen = sizeof(locname) - 2;
+	locname[namelen++] = '/';
+	locname[namelen] = '\0';
 	rst_seekdir(dirp, itp->t_seekpt, itp->t_seekpt);
 	dp = rst_readdir(dirp); /* "." */
 	if (dp != NULL && strcmp(dp->d_name, ".") == 0)

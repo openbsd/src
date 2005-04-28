@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.20 2004/07/17 02:14:33 deraadt Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.21 2005/04/28 16:15:46 millert Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static const char rcsid[] = "$OpenBSD: interactive.c,v 1.20 2004/07/17 02:14:33 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: interactive.c,v 1.21 2005/04/28 16:15:46 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -513,7 +513,8 @@ printlist(char *name, char *basename)
 	struct direct *dp;
 	struct afile single;
 	RST_DIR *dirp;
-	int entries, len, namelen;
+	size_t namelen;
+	int entries, len;
 	char locname[MAXPATHLEN];
 
 	dp = pathsearch(name);
@@ -545,9 +546,11 @@ printlist(char *name, char *basename)
 		fprintf(stderr, "%s:\n", name);
 		entries = 0;
 		listp = list;
-		namelen = snprintf(locname, sizeof(locname), "%s/", name);
-		if (namelen >= sizeof(locname))
-			namelen = sizeof(locname) - 1;
+		namelen = strlcpy(locname, name, sizeof(locname));
+		if (namelen >= sizeof(locname) - 1)
+			namelen = sizeof(locname) - 2;
+		locname[namelen++] = '/';
+		locname[namelen] = '\0';
 		while ((dp = rst_readdir(dirp))) {
 			if (dp == NULL)
 				break;
