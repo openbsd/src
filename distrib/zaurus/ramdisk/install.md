@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.6 2005/04/28 06:48:34 deraadt Exp $
+#	$OpenBSD: install.md,v 1.7 2005/04/28 16:26:15 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ md_congrats() {
 	0)
 		grep -v '^machdep\.ztsscale.*$' /mnt/etc/sysctl.conf \
 		     >/tmp/sysctl.conf
-		echo $val >> /tmp/sysctl.conf
+		echo $val "	# see ztsscale(8)" >> /tmp/sysctl.conf
 		cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
 		;;
 	esac
