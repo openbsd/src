@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.38 2005/03/12 12:21:08 jmc Exp $
+.\" $OpenBSD: login.conf.5,v 1.39 2005/04/28 06:36:02 biorn Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd June 18, 2001
@@ -448,7 +448,7 @@ For example, to indicate 1 and 1/2 hours, the following string could be used:
 \*(oSuses BSD Authentication, which is made up of a variety of
 authentication styles.
 The authentication styles currently provided are:
-.Bl -tag -width kerberosxx
+.Bl -tag -width krb5-or-pwdxx
 .\"
 .It Li activ
 Authenticate using an ActivCard token.
@@ -467,6 +467,8 @@ See
 .\"
 .It Li krb5
 Request a password and use it to request a ticket from the kerberos 5 server.
+See
+.Xr login_krb5 8 .
 .\"
 .It Li krb5-or-pwd
 Request a password and first try the
@@ -475,15 +477,17 @@ authentication style and if that fails use the same password with the
 .Li passwd
 authentication style.
 See
-.Ql info heimdal .
+.Xr login_krb5-or-pwd 8 .
 .\"
 .It Li lchpass
 Change user's local password.
 See
-.Xr login_chpass 8 .
+.Xr login_lchpass 8 .
 .\"
 .It Li passwd
 Request a password and check it against the password in the master.passwd file.
+See
+.Xr login_passwd 8 .
 .\"
 .It Li radius
 Normally linked to another authentication type, contact the radius server
@@ -503,7 +507,7 @@ Request a password and check it against the password in the rpasswd.db file.
 Send a challenge and request a response, checking it
 with S/Key (tm) authentication.
 See
-.Xr skey 1 .
+.Xr login_skey 8 .
 .\"
 .It Li snk
 Authenticate using a SecureNet Key token.
@@ -567,7 +571,7 @@ used to determine the available authentication styles.
 .It Ar username
 The name of the user to authenticate.
 The name may contain an instance, e.g.\&
-.Dq user.root ,
+.Dq user/root ,
 as used by Kerberos authentication.
 If the authentication style being used does not support such instances,
 the request will fail.
