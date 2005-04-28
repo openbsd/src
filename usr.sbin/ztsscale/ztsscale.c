@@ -1,4 +1,4 @@
-/*	$OpenBSD: ztsscale.c,v 1.7 2005/04/28 06:58:27 deraadt Exp $	*/
+/*	$OpenBSD: ztsscale.c,v 1.8 2005/04/28 07:02:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Matthieu Herrb
@@ -93,7 +93,7 @@ void
 wait_event(int mfd, int *x, int *y)
 {
 	int down;
-	size_t len;
+	ssize_t len;
 	struct wscons_event evbuf;
 
 	down = 0;
@@ -126,9 +126,8 @@ save_screen(void)
 {
 	int mode = WSDISPLAYIO_MODE_DUMBFB;
 
-	if (ioctl(fd, WSDISPLAYIO_SMODE, &mode) == -1) {
+	if (ioctl(fd, WSDISPLAYIO_SMODE, &mode) == -1)
 		warn("ioctl SMODE\n");
-	}
 	mapaddr = (void *)mmap(0, WIDTH*HEIGHT*sizeof(short),
 	    PROT_READ|PROT_WRITE, MAP_SHARED, fd, (off_t)0);
 	if (mapaddr == (void *)-1)
@@ -267,7 +266,6 @@ again:
 	(void)printf("%s.%s=%d,%d,%d,%d\n", topname[CTL_MACHDEP].ctl_name,
 	    machdepname[CPU_ZTSSCALE].ctl_name, ts.ts_minx, ts.ts_maxx,
 	    ts.ts_miny, ts.ts_maxy);
-
 	return 0;
 
 err:
