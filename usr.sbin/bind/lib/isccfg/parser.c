@@ -2117,7 +2117,7 @@ parser_complain(cfg_parser_t *pctx, isc_boolean_t is_warning,
 		 current_file(pctx), pctx->line);
 
 	len = vsnprintf(message, sizeof(message), format, args);
-	if (len >= sizeof(message))
+	if (len == -1 || len >= sizeof(message))
 		FATAL_ERROR(__FILE__, __LINE__,
 			    "error message would overflow");
 
