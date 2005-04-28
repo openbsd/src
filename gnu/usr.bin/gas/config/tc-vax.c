@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-vax.c,v 1.3 2002/08/09 19:07:53 miod Exp $	*/
+/*	$OpenBSD: tc-vax.c,v 1.4 2005/04/28 23:57:49 miod Exp $	*/
 
 /* tc-vax.c - vax-specific -
    Copyright (C) 1987, 1991, 1992 Free Software Foundation, Inc.
@@ -453,6 +453,7 @@ char *instruction_string;	/* A string: assemble 1 instruction. */
 			case SEG_BIG:
 				/* Preserve the bits. */
 				if (expP->X_add_number > 0) {
+					bzero(floatP->low, SIZE_OF_LARGE_NUMBER);
 					bignum_copy(generic_bignum, expP->X_add_number,
 						     floatP->low, SIZE_OF_LARGE_NUMBER);
 				} else {
