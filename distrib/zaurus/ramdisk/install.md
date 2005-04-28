@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.5 2005/04/24 18:51:00 deraadt Exp $
+#	$OpenBSD: install.md,v 1.6 2005/04/28 06:48:34 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -123,12 +123,13 @@ __EOT
 }
 
 md_congrats() {
-	echo 'Time to calibrare the touch screen... press on the cross hairs please'
-	sleep 3
 	val=`ztsscale`
 	case $? in
 	0)
-		echo $val >> /mnt/etc/sysctl.conf
+		grep -v '^machdep\.ztsscale.*$' /mnt/etc/sysctl.conf \
+		     >/tmp/sysctl.conf
+		echo $val >> /tmp/sysctl.conf
+		cp /tmp/sysctl.conf /mnt/etc/sysctl.conf
 		;;
 	esac
 }
