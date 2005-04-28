@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.5 2005/03/29 16:40:10 miod Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.6 2005/04/28 06:32:59 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -28,7 +28,7 @@ dnl
 __devitem(apm, apm, Power management device)dnl
 _TITLE(make)
 _DEV(all)
-_DEV(ramd)
+_DEV(ramdisk)
 _DEV(std)
 _DEV(local)
 _TITLE(dis)
@@ -88,6 +88,11 @@ _DEV(xfs, 51)
 dnl
 divert(__mddivert)dnl
 dnl
+ramdisk)
+	_recurse std bpf0 wd0 wd1 sd0 tty00 rd0 wsmouse
+	_recurse st0 ttyC0 random wskbd0 apm
+	;;
+
 _std(1, 2, 8, 3, 6)
 	M xf86		c 2 4 600
 	M reload	c 2 20 640 kmem
@@ -111,11 +116,3 @@ target(all, sd, 0, 1, 2, 3, 4)dnl
 target(all, vnd, 0, 1, 2, 3)dnl
 target(all, ccd, 0, 1, 2, 3)dnl
 target(all, ttyC, 0, 1)dnl
-target(ramd, sd, 0, 1, 2, 3, 4)dnl
-target(ramd, wd, 0, 1, 2, 3, 4)dnl
-target(ramd, st, 0, 1)dnl
-target(ramd, cd, 0, 1)dnl)dnl
-target(ramd, rd, 0)dnl
-target(ramd, tty0, 0, 1)dnl
-target(ramd, pty, 0)dnl
-target(ramd, ttyC, 0, 1)dnl
