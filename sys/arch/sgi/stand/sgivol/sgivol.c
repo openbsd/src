@@ -1,4 +1,4 @@
-/*	$OpenBSD: sgivol.c,v 1.4 2005/04/27 07:13:41 deraadt Exp $	*/
+/*	$OpenBSD: sgivol.c,v 1.5 2005/04/28 10:03:35 jmc Exp $	*/
 /*	$NetBSD: sgivol.c,v 1.8 2003/11/08 04:59:00 sekiya Exp $	*/
 
 /*-
@@ -587,10 +587,10 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-qf] [-i] [-h vhsize] device\n"
-	    "       %s [-qf] [-r vhfilename diskfilename] device\n"
-	    "       %s [-qf] [-w vhfilename diskfilename] device\n"
-	    "       %s [-qf] [-d vhfilename] device\n",
+	    "usage: %s [-fq] [-d vhfilename] disk\n"
+	    "       %s [-fiq] [-h vhsize] disk\n"
+	    "       %s [-fq] [-r vhfilename diskfilename] disk\n"
+	    "       %s [-fq] [-w vhfilename diskfilename] disk\n",
 	    __progname, __progname, __progname, __progname);
 	exit(1);
 }

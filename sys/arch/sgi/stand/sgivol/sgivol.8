@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sgivol.8,v 1.1 2005/04/27 18:02:16 deraadt Exp $
+.\"	$OpenBSD: sgivol.8,v 1.2 2005/04/28 10:03:34 jmc Exp $
 .\"
 .\" Copyright (c) 2005 Theo de Raadt
 .\" All rights reserved.
@@ -26,28 +26,27 @@
 .\"
 .\"
 .Dd April 27, 2005
-.Dt sgivol 8 sgi
+.Dt SGIVOL 8 sgi
 .Os
 .Sh NAME
 .Nm sgivol
 .Nd installs a volume header on disk
 .Sh SYNOPSIS
 .Nm sgivol
-.Op Fl qf
-.Op Fl i
+.Op Fl fq
+.Op Fl d Ar vhfilename
+.Ar disk
+.Nm sgivol
+.Op Fl fiq
 .Op Fl h Ar vhsize
 .Ar disk
 .Nm sgivol
-.Op Fl qf
+.Op Fl fq
 .Op Fl r Ar vhfilename Ar diskfilename
 .Ar disk
 .Nm sgivol
-.Op Fl qf
+.Op Fl fq
 .Op Fl w Ar vhfilename Ar diskfilename
-.Ar disk
-.Nm sgivol
-.Op Fl qf
-.Op Fl d Ar vhfilename
 .Ar disk
 .Sh DESCRIPTION
 .Nm
@@ -61,39 +60,39 @@ variety of files inside it, typically boot programs.
 .Pp
 The options are as follows:
 .Bl -tag -width flag_opt
-.It Fl q
-Be quiet about various diagnostic issues.
+.It Fl d Ar vhfilename
+Delete the file
+.Ar vhfilename
+from the filesystem storage space in the volume header.
 .It Fl f
 Force.
 Do not ask yes/no questions.
-.It Fl i
-Initialize a volume header on the supplied device.
 .It Fl h Ar vhsize
 Choose an alternate volume header size, in (512-byte) disk blocks.
 The default is 3135 blocks.
+.It Fl i
+Initialize a volume header on the supplied device.
+.It Fl q
+Be quiet about various diagnostic issues.
 .It Fl r Ar vhfilename Ar diskfilename
 Locate the file
 .Ar diskfilename
 in the storage space of the volume header, and copy it to the
 standard file
-.Ar vhfilename Ns .
+.Ar vhfilename .
 .It Fl w Ar vhfilename Ar diskfilename
 Copy the standard file
 .Ar vhfilename
 to the filesystem storage space in the volume header, placing
 it there with the name
-.Ar diskfilename Ns .
-.It Fl d Ar vhfilename
-Delete the file
-.Ar vhfilename
-from the filesystem storage space in the volume header.
+.Ar diskfilename .
 .It Ar disk
 The name of the disk containing the partition in which the second-stage
 boot program resides and the first-stage boot program is to be installed.
 This can either be specified in short form (e.g.,
 .Sq sd0
 or as the explicit device node, such as
-.Pa /dev/rsd0c .
+.Pa /dev/rsd0c ) .
 .Pp
 Note that you must be in single-user mode or have your kernel in
 insecure mode (see the
@@ -113,7 +112,6 @@ The typical use is
 # /usr/mdec/sgivol -f -i sd0
 # /usr/mdec/sgivol -f -w boot /usr/mdec/boot sd0
 .Ed
-.Pp
 .Sh SEE ALSO
 .Xr disklabel 8 ,
 .Xr init 8
