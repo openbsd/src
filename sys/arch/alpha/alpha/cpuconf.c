@@ -1,4 +1,4 @@
-/* $OpenBSD: cpuconf.c,v 1.9 2002/06/30 16:24:37 miod Exp $ */
+/* $OpenBSD: cpuconf.c,v 1.10 2005/04/28 17:19:14 deraadt Exp $ */
 /* $NetBSD: cpuconf.c,v 1.27 2000/06/26 02:42:04 enami Exp $ */
 
 /*-
@@ -205,12 +205,10 @@ platform_not_configured()
 {
 	const struct cpuinit *c = platform_lookup(cputype);
 
-	printf("\n");
-	printf("Support for system type %d is not present in this kernel.\n",
+	printf("\nSupport for system type %d is not present in this kernel.\n",
 	    cputype);
 	printf("Please build a kernel with \"options %s\" and reboot.\n",
 	    c->option);
-	printf("\n");   
 	panic("platform not configured");
 }
 
@@ -219,9 +217,7 @@ platform_not_supported()
 {
 	const struct cpuinit *c = platform_lookup(cputype);
 
-	printf("\n");
-	printf("OpenBSD does not yet support system type %d (%s).\n", cputype,
+	printf("\nOpenBSD does not yet support system type %d (%s).\n", cputype,
 	    (c != NULL) ? c->option : "???");
-	printf("\n");
 	panic("platform not supported");
 }
