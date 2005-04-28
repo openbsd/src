@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.37 2005/04/21 21:47:18 beck Exp $	*/
+/*	$OpenBSD: tar.c,v 1.38 2005/04/28 06:58:07 otto Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: tar.c,v 1.37 2005/04/21 21:47:18 beck Exp $";
+static const char rcsid[] = "$OpenBSD: tar.c,v 1.38 2005/04/28 06:58:07 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -721,7 +721,7 @@ ustar_id(char *blk, int size)
 	 * programs are fouled up and create archives missing the \0. Last we
 	 * check the checksum. If ok we have to assume it is a valid header.
 	 */
-	if (hd->name[0] == '\0')
+	if (hd->prefix[0] == '\0' && hd->name[0] == '\0')
 		return(-1);
 	if (strncmp(hd->magic, TMAGIC, TMAGLEN - 1) != 0)
 		return(-1);
@@ -763,9 +763,8 @@ ustar_rd(ARCHD *arcn, char *buf)
 	 */
 	dest = arcn->name;
 	if (*(hd->prefix) != '\0') {
-		cnt = strlcpy(dest, hd->prefix, sizeof(arcn->name) - 1);
-		if (cnt >= sizeof(arcn->name) - 1)
-			cnt = sizeof(arcn->name) - 2; /* XXX truncate? */
+		cnt = fieldcpy(dest, sizeof(arcn->name) - 1, hd->prefix,
+		    sizeof(hd->prefix));
 		dest += cnt;
 		*dest++ = '/';
 		cnt++;
@@ -1157,16 +1156,12 @@ expandname(char *buf, size_t len, char **gnu_name, const char *name,
 	size_t nlen;
 
 	if (*gnu_name) {
+		/* *gnu_name is NUL terminated */
 		if ((nlen = strlcpy(buf, *gnu_name, len)) >= len)
 			nlen = len - 1;
 		free(*gnu_name);
 		*gnu_name = NULL;
-	} else {
-		/* name is not necessarily NUL terminated */
-		if (len > limit)
-			len = limit + 1;
-		if ((nlen = strlcpy(buf, name, len)) >= len)
-			nlen = len - 1;
-	}
+	} else
+		nlen = fieldcpy(buf, len, name, limit);
 	return(nlen);
 }
