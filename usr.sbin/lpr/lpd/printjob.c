@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.39 2004/04/14 20:52:20 millert Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.40 2005/04/28 10:14:26 moritz Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -1637,6 +1637,8 @@ pstatus(const char *msg, ...)
 	ftruncate(fd, 0);
 	len = vsnprintf(buf, sizeof(buf), msg, ap);
 	va_end(ap);
+	if (len == -1)
+		return;
 	if (len >= sizeof(buf))
 		len = sizeof(buf) - 1;
 	buf[len++] = '\n';		/* replace NUL with newline */
