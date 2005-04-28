@@ -1,4 +1,4 @@
-/*	$OpenBSD: ztsscale.c,v 1.9 2005/04/28 16:44:28 uwe Exp $	*/
+/*	$OpenBSD: ztsscale.c,v 1.10 2005/04/28 17:01:40 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Matthieu Herrb
@@ -46,10 +46,12 @@
 #define ADDR(x,y) (HEIGHT*(x)+(y))
 
 u_short		*mapaddr, *save;
+int		 orawmode = -1;
 int		 fd;
 int		 xc[] = { 25, 25, 320, 615, 615 };
 int		 yc[] = { 25, 455, 240, 25, 455 };
 
+int		mib[2] = { CTL_MACHDEP, CPU_ZTSRAWMODE };
 struct ctlname	topname[] = CTL_NAMES;
 struct ctlname	machdepname[] = CTL_MACHDEP_NAMES;
 
@@ -58,6 +60,7 @@ void		cross(u_short *, int, int);
 void		wait_event(int, int *, int *);
 void		save_screen(void);
 void		restore_screen(void);
+void		cleanup(void);
 void		sighandler(int);
 int		main(int, char *[]);
 __dead void	usage(void);
@@ -152,9 +155,21 @@ restore_screen(void)
 }
 
 void
+cleanup(void)
+{
+
+	restore_screen();
+
+	if (orawmode != -1 && sysctl(mib, sizeof(mib) / sizeof(mib[0]),
+	    NULL, NULL, &orawmode, sizeof(orawmode)) == -1)
+		err(1, "sysctl");
+}
+
+void
 sighandler(int sig)
 {
-	restore_screen();
+
+	cleanup();
 	_exit(2);
 }
 
@@ -164,9 +179,7 @@ main(int argc, char *argv[])
 	int mfd;
 	int i, x[5], y[5];
 	double a, a1, a2, b, b1, b2, errx, erry;
-	int mib[2];
 	int rawmode;
-	int oldval;
 	size_t oldsize;
 	struct ztsscale {
 		int ts_minx;
@@ -190,12 +203,10 @@ again:
 		err(2, "open /dev/wsmouse");
 	}
 
-	mib[0] = CTL_MACHDEP;
-	mib[1] = CPU_ZTSRAWMODE;
 	rawmode = 1;
-	oldsize = sizeof(oldval);
-	if (sysctl(mib, 2, &oldval, &oldsize, &rawmode,
-	    sizeof(rawmode)) == -1) {
+	oldsize = sizeof(orawmode);
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), &orawmode, &oldsize,
+	    &rawmode, sizeof(rawmode)) == -1) {
 		restore_screen();
 		err(1, "sysctl");
 	}
@@ -213,11 +224,8 @@ again:
 	}
 	close(mfd);
 
-	mib[0] = CTL_MACHDEP;
-	mib[1] = CPU_ZTSRAWMODE;
-	rawmode = oldval;
-	oldsize = sizeof(oldval);
-	if (sysctl(mib, 2, NULL, NULL, &rawmode, sizeof(rawmode)) == -1) {
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), NULL, NULL,
+	    &orawmode, sizeof(orawmode)) == -1) {
 		restore_screen();
 		err(1, "sysctl");
 	}
@@ -266,7 +274,7 @@ again:
 	ts.ts_miny = (int)(b+0.5);
 	ts.ts_maxy = (int)(a*HEIGHT+b+0.5);
 
-	restore_screen();
+	cleanup();
 
 	(void)printf("%s.%s=%d,%d,%d,%d\n", topname[CTL_MACHDEP].ctl_name,
 	    machdepname[CPU_ZTSSCALE].ctl_name, ts.ts_minx, ts.ts_maxx,

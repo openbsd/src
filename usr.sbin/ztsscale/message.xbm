@@ -1,5 +1,8 @@
+/*	$OpenBSD: message.xbm,v 1.5 2005/04/28 17:01:40 uwe Exp $	*/
+
 /* This file is placed in the public domain.  */
 
+/* "TOUCH SCREEN CALIBRATION" */
 #define title_width 342
 #define title_height 14
 static unsigned char title_bits[] = {
@@ -55,6 +58,7 @@ static unsigned char title_bits[] = {
    0xff, 0xf8, 0x7f, 0xfc, 0xe0, 0x9f, 0x3f, 0xff, 0xc1, 0xff, 0xc0, 0x1f,
    0x3e, 0x1c };
 
+/* "Press on the cross hairs please..." */
 #define message_width 280
 #define message_height 12
 static unsigned char message_bits[] = {
@@ -94,6 +98,7 @@ static unsigned char message_bits[] = {
    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
    0x00, 0x00, 0x00, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
+/* "Not accurate enough. Try again..." */
 #define error_width 272
 #define error_height 11
 static unsigned char error_bits[] = {
