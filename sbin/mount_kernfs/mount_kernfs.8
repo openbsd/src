@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_kernfs.8,v 1.22 2004/11/24 16:56:38 ian Exp $
+.\"	$OpenBSD: mount_kernfs.8,v 1.23 2005/04/28 17:32:35 biorn Exp $
 .\"	$NetBSD: mount_kernfs.8,v 1.6 1995/03/18 14:57:24 cgd Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994
@@ -95,20 +95,20 @@ used/allocated instead of
 .Sq inodes .
 The filesystem's block size is the system's page size.
 .Sh FILES
-.Bl -tag -width copyright -compact
+.Bl -tag -width domainname -compact
 .It Pa boottime
 Time at which the system was last booted (decimal ASCII).
 .It Pa byteorder
 _BYTE_ORDER for this kernel.
 .It Pa copyright
 Kernel copyright message.
+.It Pa domainname
+The domainname, with a trailing newline.
+Behaves like a hostname.
 .It Pa hostname
 The hostname, with a trailing newline.
 The hostname can be changed by writing to this file.
 A trailing newline will be stripped from the hostname being written.
-.It Pa domainname
-The domainname, with a trailing newline.
-Behaves like a hostname.
 .It Pa hz
 Frequency of the system clock (decimal ASCII).
 .It Pa ipsec
@@ -130,17 +130,15 @@ device, and by
 .Xr dmesg 8 .
 .It Pa ncpu
 Number of CPUs in this machine.
-.It Pa ostype
-OS type for this kernel ("OpenBSD").
 .It Pa osrelease
 OS release number.
 .It Pa osrev
 OS revision number (BSD from
 .Aq Pa sys/param.h ) .
+.It Pa ostype
+OS type for this kernel ("OpenBSD").
 .It Pa pagesize
 Machine pagesize (decimal ASCII).
-.It Pa posix
-_POSIX_VERSION for this kernel.
 .It Pa physmem
 Number of pages of physical memory in the machine (decimal ASCII).
 .\" .It Pa root
@@ -152,6 +150,8 @@ Number of pages of physical memory in the machine (decimal ASCII).
 .\" mount point.
 .\" .Pa /kern/root
 .\" will then refer to the system global root, not the current process root.
+.It Pa posix
+_POSIX_VERSION for this kernel.
 .It Pa rootdev
 Root device.
 .It Pa rrootdev
