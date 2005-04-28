@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmesg.c,v 1.18 2005/04/14 10:23:37 henning Exp $	*/
+/*	$OpenBSD: dmesg.c,v 1.19 2005/04/28 11:10:03 henning Exp $	*/
 /*	$NetBSD: dmesg.c,v 1.8 1995/03/18 14:54:49 cgd Exp $	*/
 
 /*-
@@ -166,20 +166,22 @@ main(int argc, char *argv[])
 		if (ch == '\0')
 			continue;
 		newl = ch == '\n';
-		(void)vis(buf, ch, 0, 0);
+		vis(buf, ch, 0, 0);
 		if (buf[1] == 0)
-			(void)putchar(buf[0]);
+			putchar(buf[0]);
 		else
-			(void)printf("%s", buf);
+			printf("%s", buf);
 	}
 	if (!newl)
-		(void)putchar('\n');
+		putchar('\n');
 	return (0);
 }
 
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: dmesg [-M core] [-N system]\n");
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s [-M core] [-N system]\n", __progname);
 	exit(1);
 }
