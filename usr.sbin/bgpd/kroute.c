@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.123 2005/04/18 11:07:55 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.124 2005/04/28 13:49:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1308,9 +1308,12 @@ fetchifs(int ifindex)
 		if ((sa = rti_info[RTAX_IFP]) != NULL)
 			if (sa->sa_family == AF_LINK) {
 				sdl = (struct sockaddr_dl *)sa;
-				if (sdl->sdl_nlen > 0)
+				if (sdl->sdl_nlen >= sizeof(kif->k.ifname))
 					strlcpy(kif->k.ifname, sdl->sdl_data,
 					    sizeof(kif->k.ifname));
+				else if (sdl->sdl_nlen > 0)
+					strlcpy(kif->k.ifname, sdl->sdl_data,
+					    sdl->sdl_nlen + 1);
 			}
 
 		kif_insert(kif);
