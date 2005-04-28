@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2004/03/01 02:52:11 drahn Exp $
+#	$OpenBSD: Makefile,v 1.12 2005/04/28 21:30:13 espie Exp $
 
 .include <bsd.own.mk>
 USE_GCC3?=No
@@ -9,7 +9,7 @@ SUBDIR+=libiberty libobjc libstdc++ ../egcs libreadline libf2c
 .  if ${USE_GCC3:L} == "yes"
 SUBDIR+=libiberty libobjc libstdc++ libreadline libf2c
 .  else
-SUBDIR+=libiberty ../egcs libreadline 
+SUBDIR+=libiberty libobjc ../egcs libreadline 
 .  endif
 .endif
 
