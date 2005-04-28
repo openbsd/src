@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.90 2004/11/02 21:20:56 miod Exp $ */
+/* $OpenBSD: machdep.c,v 1.91 2005/04/28 17:19:27 deraadt Exp $ */
 /* $NetBSD: machdep.c,v 1.210 2000/06/01 17:12:38 thorpej Exp $ */
 
 /*-
@@ -561,6 +561,7 @@ nobootinfo:
 #endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 	}
 
+#ifdef DEBUG
 	/*
 	 * Dump out the MDDT if it looks odd...
 	 */
@@ -586,6 +587,7 @@ nobootinfo:
 		}
 		printf("\n");
 	}
+#endif
 
 	if (totalphysmem == 0)
 		panic("can't happen: system seems to have no memory!");
@@ -1342,7 +1344,7 @@ dumpsys()
 
 err:
 	switch (error) {
-
+#ifdef DEBUG
 	case ENXIO:
 		printf("device bad\n");
 		break;
@@ -1362,7 +1364,7 @@ err:
 	case EINTR:
 		printf("aborted from console\n");
 		break;
-
+#endif /* DEBUG */
 	case 0:
 		printf("succeeded\n");
 		break;
@@ -1725,7 +1727,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_ROOT_DEVICE:
 		return (sysctl_rdstring(oldp, oldlenp, newp,
 		    root_device));
-
+#ifndef SMALL_KERNEL
 	case CPU_UNALIGNED_PRINT:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &alpha_unaligned_print));
@@ -1745,6 +1747,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_CHIPSET:
 		return (alpha_sysctl_chipset(name + 1, namelen - 1, oldp,
 		    oldlenp));
+#endif /* SMALL_KERNEL */
 
 #ifndef NO_IEEE
 	case CPU_FP_SYNC_COMPLETE:
