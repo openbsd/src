@@ -1,3 +1,5 @@
+/* This file is placed in the public domain.  */
+
 #define message_width 280
 #define message_height 12
 static unsigned char message_bits[] = {
