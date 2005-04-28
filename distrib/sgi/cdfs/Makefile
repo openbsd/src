@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2005/04/27 03:15:54 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2005/04/28 14:56:08 deraadt Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -29,10 +29,10 @@ ${CDROM}:
 	umount ${.OBJDIR}/cd-dir
 	@df /dev/svnd0a
 	vnconfig -u svnd0
-
 	dd if=/dev/zero of=${.OBJDIR}/${CDROM} bs=1m count=10
 	vnconfig -v -c svnd0 ${.OBJDIR}/${CDROM}
-	/usr/mdec/sgivol -f -i svnd0 | tee ${.OBJDIR}/volhdr
+	# would love to use 64
+	/usr/mdec/sgivol -f -i -h 128 svnd0 | tee ${.OBJDIR}/volhdr
 	/usr/mdec/sgivol -f -w boot ${DESTDIR}/usr/mdec/boot svnd0
 	vnconfig -u svnd0
 	dd if=${.OBJDIR}/${FFS} of=${.OBJDIR}/${CDROM} bs=512 \
