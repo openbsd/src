@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.66 2005/04/17 18:55:45 tom Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.67 2005/04/28 10:16:04 moritz Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -1567,7 +1567,7 @@ scsi_decode_sense(sense, flag)
 			    "Error in %s, Offset %d",
 			    (spec_1 & SSD_SCS_CDB_ERROR) ? "CDB" : "Parameters",
 			    count);
-			if ((len < sizeof rqsbuf) &&
+			if ((len != -1 && len < sizeof rqsbuf) &&
 			    (spec_1 & SSD_SCS_VALID_BIT_INDEX))
 				snprintf(rqsbuf+len, sizeof rqsbuf - len,
 				    ", bit %d", spec_1 & SSD_SCS_BIT_INDEX);
