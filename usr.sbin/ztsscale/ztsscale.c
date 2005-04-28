@@ -1,4 +1,4 @@
-/*	$OpenBSD: ztsscale.c,v 1.8 2005/04/28 07:02:40 deraadt Exp $	*/
+/*	$OpenBSD: ztsscale.c,v 1.9 2005/04/28 16:44:28 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Matthieu Herrb
@@ -34,6 +34,9 @@
 
 #include "message.xbm"
 
+#define TITLE_Y		64
+#define MESSAGE_Y	128
+
 #define WIDTH	640
 #define HEIGHT	480
 #define BLACK	0x0
@@ -50,7 +53,7 @@ int		 yc[] = { 25, 455, 240, 25, 455 };
 struct ctlname	topname[] = CTL_NAMES;
 struct ctlname	machdepname[] = CTL_MACHDEP_NAMES;
 
-void		bitmap(u_short *, u_short, u_char[], int, int);
+void		bitmap(u_short *, u_short, u_char[], int, int, int);
 void		cross(u_short *, int, int);
 void		wait_event(int, int *, int *);
 void		save_screen(void);
@@ -60,17 +63,17 @@ int		main(int, char *[]);
 __dead void	usage(void);
 
 void
-bitmap(u_short *fb, u_short pixel, u_char bits[], int width, int height)
+bitmap(u_short *fb, u_short pixel, u_char bits[], int width, int height,
+    int y)
 {
 	int i, j;
-	int x, y;
+	int x;
 
 #define BITADDR(x, y)	((width + 7)/8*(y) + (x)/8)
 #define BITMASK(x)	(1 << ((x) % 8))
 
 	for (i = 0; i < height; i++) {
 		x = (WIDTH - width)/2;
-		y = (HEIGHT/2 - height)/2;
 		for (j = 0; j < width; j++)
 			if (bits[BITADDR(j, i)] & BITMASK(j))
 				fb[ADDR(x + j, HEIGHT - y - i)] = pixel;
@@ -200,8 +203,10 @@ again:
 	signal(SIGINT, sighandler);
 	for (i = 0; i < 5; i++) {
 		memset(mapaddr, WHITE, WIDTH*HEIGHT*sizeof(u_short));
+		bitmap(mapaddr, BLACK, title_bits, title_width,
+		    title_height, TITLE_Y);
 		bitmap(mapaddr, BLACK, message_bits, message_width,
-		    message_height);
+		    message_height, MESSAGE_Y);
 		cross(mapaddr, xc[i], yc[i]);
 		/* printf("waiting for event\n"); */
 		wait_event(mfd, &x[i], &y[i]);
@@ -270,7 +275,10 @@ again:
 
 err:
 	memset(mapaddr, WHITE, WIDTH*HEIGHT*sizeof(u_short));
-	bitmap(mapaddr, RED, error_bits, error_width, error_height);
+	bitmap(mapaddr, BLACK, title_bits, title_width, title_height,
+	    TITLE_Y);
+	bitmap(mapaddr, RED, error_bits, error_width, error_height,
+	    MESSAGE_Y);
 	sleep(2);
 	goto again;
 }
