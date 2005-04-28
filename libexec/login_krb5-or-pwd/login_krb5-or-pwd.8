@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_krb5-or-pwd.8,v 1.13 2003/07/25 09:33:44 jmc Exp $
+.\" $OpenBSD: login_krb5-or-pwd.8,v 1.14 2005/04/28 06:41:01 biorn Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd December 11, 2000
-.Dt LOGIN_KERBEROS 8
+.Dt LOGIN_KRB5-OR-PWD 8
 .Os
 .Sh NAME
 .Nm login_krb5-or-pwd
@@ -23,7 +23,7 @@
 .Sh SYNOPSIS
 .Nm login_krb5-or-pwd
 .Op Fl s Ar service
-.Op Fl v Ar ignored
+.Op Fl v Ar arguments
 .Ar user
 .Op Ar class
 .Sh DESCRIPTION
@@ -59,9 +59,13 @@ and
 protocol is silently ignored but will report success as KerberosV
 authentication is not challenge-response based).
 .Pp
-The
-.Ar ignored
-argument is ignored for compatibility with other login scripts.
+The arguments following
+.Fl v
+are the same as for
+.Xr login_krb5 8
+and
+.Xr login_passwd 8 .
+Unknown arguments are ignored.
 .Pp
 .Nm
 will prompt the user for a password and report back to the
@@ -73,4 +77,6 @@ successful.
 .Xr su 1 ,
 .Xr login.conf 5 ,
 .Xr ftpd 8 ,
-.Xr login_krb5 8
+.Xr kerberos 8 ,
+.Xr login_krb5 8 ,
+.Xr login_passwd 8
