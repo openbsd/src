@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.161 2005/04/17 16:41:21 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.162 2005/04/28 13:54:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -150,6 +150,7 @@ typedef struct {
 %token	ALLOW DENY MATCH
 %token	QUICK
 %token	FROM TO ANY
+%token	CONNECTED STATIC
 %token	PREFIX PREFIXLEN SOURCEAS TRANSITAS COMMUNITY
 %token	SET LOCALPREF MED METRIC NEXTHOP REJECT BLACKHOLE NOMODIFY
 %token	PREPEND_SELF PREPEND_PEER PFTABLE WEIGHT
@@ -342,6 +343,24 @@ conf_main	: AS asnumber		{
 			free($3);
 
 			TAILQ_INSERT_TAIL(netconf, n, entry);
+		}
+		| NETWORK STATIC filter_set	{
+			conf->flags |= BGPD_FLAG_REDIST_STATIC;
+			if ($3 == NULL || SIMPLEQ_EMPTY($3))
+				SIMPLEQ_INIT(&conf->staticset);
+			else
+				memcpy(&conf->staticset, $3,
+				    sizeof(conf->staticset));
+			free($3);
+		}
+		| NETWORK CONNECTED filter_set	{
+			conf->flags |= BGPD_FLAG_REDIST_CONNECTED;
+			if ($3 == NULL || SIMPLEQ_EMPTY($3))
+				SIMPLEQ_INIT(&conf->connectset);
+			else
+				memcpy(&conf->connectset, $3,
+				    sizeof(conf->connectset));
+			free($3);
 		}
 		| DUMP STRING STRING optnumber		{
 			int action;
@@ -1393,6 +1412,7 @@ lookup(char *s)
 		{ "blackhole",		BLACKHOLE},
 		{ "capabilities",	CAPABILITIES},
 		{ "community",		COMMUNITY},
+		{ "connected",		CONNECTED},
 		{ "deny",		DENY},
 		{ "depend",		DEPEND},
 		{ "descr",		DESCR},
@@ -1444,6 +1464,7 @@ lookup(char *s)
 		{ "set",		SET},
 		{ "source-as",		SOURCEAS},
 		{ "spi",		SPI},
+		{ "static",		STATIC},
 		{ "tcp",		TCP},
 		{ "to",			TO},
 		{ "transit-as",		TRANSITAS},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.40 2005/04/18 11:00:42 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.41 2005/04/28 13:54:45 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -165,6 +165,21 @@ print_mainconf(struct bgpd_config *conf)
 	TAILQ_FOREACH(la, conf->listen_addrs, entry)
 		printf("listen on %s\n",
 		    log_sockaddr((struct sockaddr *)&la->sa));
+
+	if (conf->flags & BGPD_FLAG_REDIST_CONNECTED) {
+		printf("network connected");
+		if (!SIMPLEQ_EMPTY(&conf->connectset))
+			printf(" ");
+		print_set(&conf->connectset);
+		printf("\n");
+	}
+	if (conf->flags & BGPD_FLAG_REDIST_STATIC) {
+		printf("network static");
+		if (!SIMPLEQ_EMPTY(&conf->staticset))
+			printf(" ");
+		print_set(&conf->staticset);
+		printf("\n");
+	}
 }
 
 void

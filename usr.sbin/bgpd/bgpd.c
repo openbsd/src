@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.116 2005/03/30 11:23:15 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.117 2005/04/28 13:54:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -47,6 +47,9 @@ int		reconfigure(char *, struct bgpd_config *, struct mrt_head *,
 int		dispatch_imsg(struct imsgbuf *, int);
 
 int			 rfd = -1;
+int			 cflags = 0;
+struct filter_set_head	*connectset;
+struct filter_set_head	*staticset;
 volatile sig_atomic_t	 mrtdump = 0;
 volatile sig_atomic_t	 quit = 0;
 volatile sig_atomic_t	 reconfig = 0;
@@ -165,6 +168,9 @@ main(int argc, char *argv[])
 			fprintf(stderr, "configuration OK\n");
 		exit(0);
 	}
+	cflags = conf.flags;
+	connectset = &conf.connectset;
+	staticset = &conf.staticset;
 
 	if (geteuid())
 		errx(1, "need root privileges");
@@ -416,6 +422,10 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		return (-1);
 	}
 
+	cflags = conf->flags;
+	connectset = &conf->connectset;
+	staticset = &conf->staticset;
+
 	prepare_listeners(conf);
 
 	if (imsg_compose(ibuf_se, IMSG_RECONF_CONF, 0, 0, -1,
@@ -444,6 +454,10 @@ reconfigure(char *conffile, struct bgpd_config *conf, struct mrt_head *mrt_l,
 		TAILQ_REMOVE(&net_l, n, entry);
 		free(n);
 	}
+	/* redistribute list needs to be reloaded too */
+	if (kr_redist_reload() == -1)
+		return (-1);
+
 	while ((r = TAILQ_FIRST(rules_l)) != NULL) {
 		if (imsg_compose(ibuf_rde, IMSG_RECONF_FILTER, 0, 0, -1,
 		    r, sizeof(struct filter_rule)) == -1)
@@ -628,3 +642,38 @@ send_imsg_session(int type, pid_t pid, void *data, u_int16_t datalen)
 {
 	imsg_compose(ibuf_se, type, 0, pid, -1, data, datalen);
 }
+
+int
+bgpd_redistribute(int type, struct kroute *kr)
+{
+	struct network_config	 net;
+	struct filter_set_head	*h;
+
+	if ((cflags & BGPD_FLAG_REDIST_CONNECTED) && (kr->flags & F_CONNECTED))
+		h = connectset;
+	else if ((cflags & BGPD_FLAG_REDIST_STATIC) && (kr->flags & F_STATIC))
+		h = staticset;
+	else
+		return (0);
+
+	bzero(&net, sizeof(net));
+	net.prefix.af = AF_INET;
+	net.prefix.v4.s_addr = kr->prefix.s_addr;
+	net.prefixlen = kr->prefixlen;
+
+	if (imsg_compose(ibuf_rde, type, 0, 0, -1, &net,
+	    sizeof(struct network_config)) == -1)
+		return (-1);
+
+	/* networks that get deleted don't need to send the filter set */
+	if (type == IMSG_NETWORK_REMOVE)
+		return (1);
+	
+	if (send_filterset(ibuf_rde, h, 0, 0) == -1)
+		return (-1);
+	if (imsg_compose(ibuf_rde, IMSG_NETWORK_DONE, 0, 0, -1, NULL, 0) == -1)
+		return (-1);
+
+	return (1);
+}
+

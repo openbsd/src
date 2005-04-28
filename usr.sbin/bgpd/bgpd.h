@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.164 2005/04/26 15:18:22 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.165 2005/04/28 13:54:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -52,6 +52,8 @@
 #define	BGPD_FLAG_NO_FIB_UPDATE		0x0001
 #define	BGPD_FLAG_NO_EVALUATE		0x0002
 #define	BGPD_FLAG_REFLECTOR		0x0004
+#define	BGPD_FLAG_REDIST_STATIC		0x0008
+#define	BGPD_FLAG_REDIST_CONNECTED	0x0010
 #define	BGPD_FLAG_DECISION_MASK		0x0f00
 #define	BGPD_FLAG_DECISION_ROUTEAGE	0x0100
 #define	BGPD_FLAG_DECISION_TRANS_AS	0x0200
@@ -127,8 +129,11 @@ struct listen_addr {
 };
 
 TAILQ_HEAD(listen_addrs, listen_addr);
+SIMPLEQ_HEAD(filter_set_head, filter_set);
 
 struct bgpd_config {
+	struct filter_set_head			 connectset;
+	struct filter_set_head			 staticset;
 	struct listen_addrs			*listen_addrs;
 	int					 opts;
 	int					 flags;
@@ -194,8 +199,6 @@ struct capabilities {
 	u_int8_t	mp_v6;
 	u_int8_t	refresh;	/* route refresh, RFC 2918 */
 };
-
-SIMPLEQ_HEAD(filter_set_head, filter_set);
 
 struct peer_config {
 	struct bgpd_addr	 remote_addr;
@@ -591,6 +594,7 @@ struct rrefresh {
 /* bgpd.c */
 void		 send_nexthop_update(struct kroute_nexthop *);
 void		 send_imsg_session(int, pid_t, void *, u_int16_t);
+int		 bgpd_redistribute(int, struct kroute *);
 
 /* buffer.c */
 struct buf	*buf_open(size_t);
@@ -651,6 +655,7 @@ int		 kr_nexthop_add(struct bgpd_addr *);
 void		 kr_nexthop_delete(struct bgpd_addr *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *);
+int		 kr_redist_reload(void);
 in_addr_t	 prefixlen2mask(u_int8_t);
 struct in6_addr	*prefixlen2mask6(u_int8_t prefixlen);
 void		 inet6applymask(struct in6_addr *, const struct in6_addr *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.124 2005/04/28 13:49:12 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.125 2005/04/28 13:54:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -72,6 +72,7 @@ struct kif_node {
 	struct kif_kr_head	 kroute_l;
 };
 
+int	kr_redistribute(int, struct kroute *);
 int	kroute_compare(struct kroute_node *, struct kroute_node *);
 int	kroute6_compare(struct kroute6_node *, struct kroute6_node *);
 int	knexthop_compare(struct knexthop_node *, struct knexthop_node *);
@@ -433,6 +434,92 @@ kr_ifinfo(char *ifname)
 		}
 }
 
+struct redist_node {
+	LIST_ENTRY(redist_node)	 entry;
+	struct kroute		*kr;
+};
+
+LIST_HEAD(, redist_node) redistlist;
+
+int
+kr_redistribute(int type, struct kroute *kr)
+{
+	struct redist_node	*rn;
+	u_int32_t		 a;
+
+	if (!(kr->flags & F_KERNEL))
+		return (0);
+
+	/*
+	 * We consider the loopback net, multicast and experimental addresses
+	 * as not redistributable.
+	 */
+	a = ntohl(kr->prefix.s_addr);
+	if (IN_MULTICAST(a) || IN_BADCLASS(a) ||
+	    (a >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET)
+		return (0);
+	/*
+	 * Consider networks with nexthop loopback as not redistributable.
+	 */
+	if (kr->nexthop.s_addr == htonl(INADDR_LOOPBACK))
+		return (0);
+	
+	/*
+	 * never allow 0.0.0.0/0 the default route can only be redistributed
+	 * with announce default.
+	 */
+	if (kr->prefix.s_addr == INADDR_ANY && kr->prefixlen == 0)
+		return (0);
+
+	/* Add or delete kr from list ...
+	 * using a linear list to store the redistributed networks will hurt
+	 * as soon as redistribute ospf comes but until the keep it simple.
+	 */
+	LIST_FOREACH(rn, &redistlist, entry)
+	    if (rn->kr == kr)
+		    break;
+
+	switch (type) {
+	case IMSG_NETWORK_ADD:
+		log_debug("kr_redistribute: ADD %s/%d fl %x",
+		    inet_ntoa(kr->prefix), kr->prefixlen, kr->flags);
+		if (rn == NULL) {
+			if ((rn = calloc(1, sizeof(struct redist_node))) ==
+			    NULL) {
+				log_warn("kr_redistribute");
+				return (-1);
+			}
+			rn->kr = kr;
+			LIST_INSERT_HEAD(&redistlist, rn, entry);
+		}
+		break;
+	case IMSG_NETWORK_REMOVE:
+		log_debug("kr_redistribute: DEL %s/%d fl %x",
+		    inet_ntoa(kr->prefix), kr->prefixlen, kr->flags);
+		if (rn != NULL) {
+			LIST_REMOVE(rn, entry);
+			free(rn);
+		}
+		break;
+	default:
+		errno = EINVAL;
+		return (-1);
+	}
+	
+	return (bgpd_redistribute(type, kr));
+}
+
+int
+kr_redist_reload(void)
+{
+	struct redist_node	*rn;
+
+	LIST_FOREACH(rn, &redistlist, entry)
+		if (bgpd_redistribute(IMSG_NETWORK_ADD, rn->kr) == -1)
+			return (-1);
+	return (0);
+}
+
 /*
  * RB-tree compare functions
  */
@@ -544,6 +631,8 @@ kroute_insert(struct kroute_node *kr)
 		if (kr->r.flags & F_CONNECTED)
 			if (kif_kr_insert(kr) == -1)
 				return (-1);
+
+		kr_redistribute(IMSG_NETWORK_ADD, &kr->r);
 	}
 	return (0);
 }
@@ -564,6 +653,9 @@ kroute_remove(struct kroute_node *kr)
 		RB_FOREACH(s, knexthop_tree, &knt)
 			if (s->kroute == kr)
 				knexthop_validate(s);
+
+	if (kr->r.flags & F_KERNEL)
+		kr_redistribute(IMSG_NETWORK_REMOVE, &kr->r);
 
 	if (kr->r.flags & F_CONNECTED)
 		if (kif_kr_remove(kr) == -1) {
@@ -1335,7 +1427,7 @@ dispatch_rtmsg(void)
 	struct kroute_node	*kr;
 	struct in_addr		 prefix, nexthop;
 	u_int8_t		 prefixlen;
-	int			 flags;
+	int			 flags, oflags;
 	u_short			 ifindex;
 
 	if ((n = read(kr_state.fd, &buf, sizeof(buf))) == -1) {
@@ -1420,13 +1512,22 @@ dispatch_rtmsg(void)
 					kr->r.nexthop.s_addr = nexthop.s_addr;
 					if (kr->r.flags & F_NEXTHOP)
 						flags |= F_NEXTHOP;
-					if ((kr->r.flags & F_CONNECTED) &&
-					    !(flags & F_CONNECTED))
-						kif_kr_remove(kr);
-					if ((flags & F_CONNECTED) &&
-					    !(kr->r.flags & F_CONNECTED))
-						kif_kr_insert(kr);
+					oflags = kr->r.flags;
 					kr->r.flags = flags;
+					if ((oflags & F_CONNECTED) &&
+					    !(flags & F_CONNECTED)) {
+						kif_kr_remove(kr);
+						kr_redistribute(
+						    IMSG_NETWORK_REMOVE,
+						    &kr->r);
+					}
+					if ((flags & F_CONNECTED) &&
+					    !(oflags & F_CONNECTED)) {
+						kif_kr_insert(kr);
+						kr_redistribute(
+						    IMSG_NETWORK_ADD,
+						    &kr->r);
+					}
 				}
 			} else if (rtm->rtm_type == RTM_CHANGE) {
 				log_warnx("change req for %s/%u: not "

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.52 2005/04/18 11:19:39 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.53 2005/04/28 13:54:45 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -206,7 +206,15 @@ Log received and sent updates.
 .Ar address Ns Li / Ns Ar prefix
 .Op Ic set ...\&
 .Xc
+.It Ic network static Op Ic set ...\&
+.It Ic network connected Op Ic set ...\&
 Announce the specified network as belonging to our AS.
+If set to
+.Ic connected ,
+routes to directly attached networks will be announced.
+If set to
+.Ic static ,
+all static routes will be announced.
 .Bd -literal -offset indent
 network 192.168.7.0/24
 .Ed
