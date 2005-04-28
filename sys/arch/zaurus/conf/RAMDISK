@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.23 2005/04/17 18:10:28 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.24 2005/04/28 05:39:41 deraadt Exp $
 #
 # GENERIC machine description file
 #
@@ -69,6 +69,10 @@ pxagpio0	at pxaip?	# GPIO
 scoop0		at pxaip?
 scoop1		at pxaip?
 saost0		at pxaip? addr 0x40a00000 size 0x20
+
+# touch screen
+zts0		at pxaip?
+wsmouse*	at zts? mux 0
 
 # keyboard
 zkbd0		at pxaip?
