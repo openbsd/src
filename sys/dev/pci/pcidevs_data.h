@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.860 2005/04/20 00:27:40 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.861 2005/04/29 01:02:31 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1343,6 +1343,38 @@ static const struct pci_known_product pci_known_products[] = {
 	    "IXP400 AC'97",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_PCI_400,
+	    "IXP400 PCI",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_SMBUS_400,
+	    "IXP400 SMBus",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_EHCI_400,
+	    "IXP400 USB2",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_OHCI_400_1,
+	    "IXP400 USB",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_OHCI_400_2,
+	    "IXP400 USB",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_ISA_400,
+	    "IXP400 ISA",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_SATA_400_1,
+	    "IXP400 SATA",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_SATA_400_2,
+	    "IXP400 SATA",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_200,
 	    "IXP200 IDE",
 	},
@@ -1679,6 +1711,18 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Radeon 9200 2nd",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480_HB,
+	    "RS480 Host",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480,
+	    "Radeon XPRESS 200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480_B,
+	    "Radeon XPRESS 200M",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_PRO,
 	    "Radeon 9200 PRO",
 	},
@@ -1693,6 +1737,34 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_SE_2,
 	    "Radeon 9200 SE 2nd",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS482,
+	    "Radeon XPRESS 200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS482_B,
+	    "Radeon XPRESS 200M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS480_PCIE,
+	    "RS480 PCIE",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS400,
+	    "Radeon XPRESS 200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS400_B,
+	    "Radeon XPRESS 200M",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RC410,
+	    "Radeon XPRESS 200",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RC410_B,
+	    "Radeon XPRESS 200M",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300,
