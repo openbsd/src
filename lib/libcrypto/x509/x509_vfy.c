@@ -73,7 +73,7 @@
 static int null_callback(int ok,X509_STORE_CTX *e);
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x);
-static int check_chain_purpose(X509_STORE_CTX *ctx);
+static int check_chain_extensions(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx);
 static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx);
@@ -281,7 +281,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 		}
 
 	/* We have the chain complete: now we need to check its purpose */
-	if (ctx->purpose > 0) ok = check_chain_purpose(ctx);
+	ok = check_chain_extensions(ctx);
 
 	if (!ok) goto end;
 
@@ -365,21 +365,39 @@ static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 	else
 		return 0;
 }
-	
+
 
 /* Check a certificate chains extensions for consistency
  * with the supplied purpose
  */
 
-static int check_chain_purpose(X509_STORE_CTX *ctx)
+static int check_chain_extensions(X509_STORE_CTX *ctx)
 {
 #ifdef OPENSSL_NO_CHAIN_VERIFY
 	return 1;
 #else
-	int i, ok=0;
+	int i, ok=0, must_be_ca;
 	X509 *x;
 	int (*cb)();
+	int proxy_path_length = 0;
+	int allow_proxy_certs = !!(ctx->flags & X509_V_FLAG_ALLOW_PROXY_CERTS);
 	cb=ctx->verify_cb;
+
+	/* must_be_ca can have 1 of 3 values:
+	   -1: we accept both CA and non-CA certificates, to allow direct
+	       use of self-signed certificates (which are marked as CA).
+	   0:  we only accept non-CA certificates.  This is currently not
+	       used, but the possibility is present for future extensions.
+	   1:  we only accept CA certificates.  This is currently used for
+	       all certificates in the chain except the leaf certificate.
+	*/
+	must_be_ca = -1;
+
+	/* A hack to keep people who don't want to modify their software
+	   happy */
+	if (getenv("OPENSSL_ALLOW_PROXY_CERTS"))
+		allow_proxy_certs = 1;
+
 	/* Check all untrusted certificates */
 	for (i = 0; i < ctx->last_untrusted; i++)
 		{
@@ -394,23 +412,73 @@ static int check_chain_purpose(X509_STORE_CTX *ctx)
 			ok=cb(0,ctx);
 			if (!ok) goto end;
 			}
-		ret = X509_check_purpose(x, ctx->purpose, i);
-		if ((ret == 0)
-			 || ((ctx->flags & X509_V_FLAG_X509_STRICT)
-				&& (ret != 1)))
+		if (!allow_proxy_certs && (x->ex_flags & EXFLAG_PROXY))
 			{
-			if (i)
-				ctx->error = X509_V_ERR_INVALID_CA;
-			else
-				ctx->error = X509_V_ERR_INVALID_PURPOSE;
+			ctx->error = X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED;
 			ctx->error_depth = i;
 			ctx->current_cert = x;
 			ok=cb(0,ctx);
 			if (!ok) goto end;
 			}
+		ret = X509_check_ca(x);
+		switch(must_be_ca)
+			{
+		case -1:
+			if ((ctx->flags & X509_V_FLAG_X509_STRICT)
+				&& (ret != 1) && (ret != 0))
+				{
+				ret = 0;
+				ctx->error = X509_V_ERR_INVALID_CA;
+				}
+			else
+				ret = 1;
+			break;
+		case 0:
+			if (ret != 0)
+				{
+				ret = 0;
+				ctx->error = X509_V_ERR_INVALID_NON_CA;
+				}
+			else
+				ret = 1;
+			break;
+		default:
+			if ((ret == 0)
+				|| ((ctx->flags & X509_V_FLAG_X509_STRICT)
+					&& (ret != 1)))
+				{
+				ret = 0;
+				ctx->error = X509_V_ERR_INVALID_CA;
+				}
+			else
+				ret = 1;
+			break;
+			}
+		if (ret == 0)
+			{
+			ctx->error_depth = i;
+			ctx->current_cert = x;
+			ok=cb(0,ctx);
+			if (!ok) goto end;
+			}
+		if (ctx->purpose > 0)
+			{
+			ret = X509_check_purpose(x, ctx->purpose,
+				must_be_ca > 0);
+			if ((ret == 0)
+				|| ((ctx->flags & X509_V_FLAG_X509_STRICT)
+					&& (ret != 1)))
+				{
+				ctx->error = X509_V_ERR_INVALID_PURPOSE;
+				ctx->error_depth = i;
+				ctx->current_cert = x;
+				ok=cb(0,ctx);
+				if (!ok) goto end;
+				}
+			}
 		/* Check pathlen */
 		if ((i > 1) && (x->ex_pathlen != -1)
-			   && (i > (x->ex_pathlen + 1)))
+			   && (i > (x->ex_pathlen + proxy_path_length + 1)))
 			{
 			ctx->error = X509_V_ERR_PATH_LENGTH_EXCEEDED;
 			ctx->error_depth = i;
@@ -418,6 +486,32 @@ static int check_chain_purpose(X509_STORE_CTX *ctx)
 			ok=cb(0,ctx);
 			if (!ok) goto end;
 			}
+		/* If this certificate is a proxy certificate, the next
+		   certificate must be another proxy certificate or a EE
+		   certificate.  If not, the next certificate must be a
+		   CA certificate.  */
+		if (x->ex_flags & EXFLAG_PROXY)
+			{
+			PROXY_CERT_INFO_EXTENSION *pci =
+				X509_get_ext_d2i(x, NID_proxyCertInfo,
+					NULL, NULL);
+			if (pci->pcPathLengthConstraint &&
+				ASN1_INTEGER_get(pci->pcPathLengthConstraint)
+				< i)
+				{
+				PROXY_CERT_INFO_EXTENSION_free(pci);
+				ctx->error = X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED;
+				ctx->error_depth = i;
+				ctx->current_cert = x;
+				ok=cb(0,ctx);
+				if (!ok) goto end;
+				}
+			PROXY_CERT_INFO_EXTENSION_free(pci);
+			proxy_path_length++;
+			must_be_ca = 0;
+			}
+		else
+			must_be_ca = 1;
 		}
 	ok = 1;
  end:
@@ -627,6 +721,15 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 	X509_EXTENSION *ext;
 	/* Look for serial number of certificate in CRL */
 	rtmp.serialNumber = X509_get_serialNumber(x);
+	/* Sort revoked into serial number order if not already sorted.
+	 * Do this under a lock to avoid race condition.
+ 	 */
+	if (!sk_X509_REVOKED_is_sorted(crl->crl->revoked))
+		{
+		CRYPTO_w_lock(CRYPTO_LOCK_X509_CRL);
+		sk_X509_REVOKED_sort(crl->crl->revoked);
+		CRYPTO_w_unlock(CRYPTO_LOCK_X509_CRL);
+		}
 	idx = sk_X509_REVOKED_find(crl->crl->revoked, &rtmp);
 	/* If found assume revoked: want something cleverer than
 	 * this to handle entry extensions in V2 CRLs.
@@ -772,6 +875,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
 			}
 
 		/* The last error (if any) is still in the error value */
+		ctx->current_issuer=xi;
 		ctx->current_cert=xs;
 		ok=(*cb)(1,ctx);
 		if (!ok) goto end;
@@ -851,7 +955,8 @@ int X509_cmp_time(ASN1_TIME *ctm, time_t *cmp_time)
 	atm.length=sizeof(buff2);
 	atm.data=(unsigned char *)buff2;
 
-	X509_time_adj(&atm,-offset*60, cmp_time);
+	if (X509_time_adj(&atm,-offset*60, cmp_time) == NULL)
+		return 0;
 
 	if (ctm->type == V_ASN1_UTCTIME)
 		{

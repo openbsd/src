@@ -109,7 +109,7 @@ int MAIN(int argc, char **argv)
     int maciter = PKCS12_DEFAULT_ITER;
     int twopass = 0;
     int keytype = 0;
-    int cert_pbe = NID_pbe_WithSHA1And40BitRC2_CBC;
+    int cert_pbe;
     int key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
     int ret = 1;
     int macver = 1;
@@ -125,6 +125,13 @@ int MAIN(int argc, char **argv)
 #endif
 
     apps_startup();
+
+#ifdef OPENSSL_FIPS
+    if (FIPS_mode())
+	cert_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
+    else
+#endif
+    cert_pbe = NID_pbe_WithSHA1And40BitRC2_CBC;
 
     enc = EVP_des_ede3_cbc();
     if (bio_err == NULL ) bio_err = BIO_new_fp (stderr, BIO_NOCLOSE);
@@ -666,7 +673,7 @@ int MAIN(int argc, char **argv)
     CRYPTO_push_info("verify MAC");
 #endif
 	/* If we enter empty password try no password first */
-	if(!macpass[0] && PKCS12_verify_mac(p12, NULL, 0)) {
+	if(!mpass[0] && PKCS12_verify_mac(p12, NULL, 0)) {
 		/* If mac and crypto pass the same set it to NULL too */
 		if(!twopass) cpass = NULL;
 	} else if (!PKCS12_verify_mac(p12, mpass, -1)) {
@@ -710,9 +717,10 @@ int MAIN(int argc, char **argv)
 int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,
 	     int passlen, int options, char *pempass)
 {
-	STACK_OF(PKCS7) *asafes;
+	STACK_OF(PKCS7) *asafes = NULL;
 	STACK_OF(PKCS12_SAFEBAG) *bags;
 	int i, bagnid;
+	int ret = 0;
 	PKCS7 *p7;
 
 	if (!( asafes = PKCS12_unpack_authsafes(p12))) return 0;
@@ -730,16 +738,22 @@ int dump_certs_keys_p12 (BIO *out, PKCS12 *p12, char *pass,
 			}
 			bags = PKCS12_unpack_p7encdata(p7, pass, passlen);
 		} else continue;
-		if (!bags) return 0;
+		if (!bags) goto err;
 	    	if (!dump_certs_pkeys_bags (out, bags, pass, passlen, 
 						 options, pempass)) {
 			sk_PKCS12_SAFEBAG_pop_free (bags, PKCS12_SAFEBAG_free);
-			return 0;
+			goto err;
 		}
 		sk_PKCS12_SAFEBAG_pop_free (bags, PKCS12_SAFEBAG_free);
+		bags = NULL;
 	}
-	sk_PKCS7_pop_free (asafes, PKCS7_free);
-	return 1;
+	ret = 1;
+
+	err:
+
+	if (asafes)
+		sk_PKCS7_pop_free (asafes, PKCS7_free);
+	return ret;
 }
 
 int dump_certs_pkeys_bags (BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags,

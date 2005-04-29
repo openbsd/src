@@ -178,7 +178,7 @@ $ WRITE H_FILE "# define OPENSSL_SYS_VMS"
 $ WRITE H_FILE "#endif"
 $ CONFIG_LOGICALS := NO_ASM,NO_RSA,NO_DSA,NO_DH,NO_MD2,NO_MD5,NO_RIPEMD,-
 	NO_SHA,NO_SHA0,NO_SHA1,NO_DES/NO_MDC2;NO_MDC2,NO_RC2,NO_RC4,NO_RC5,-
-	NO_IDEA,NO_BF,NO_CAST,NO_HMAC,NO_SSL2
+	NO_IDEA,NO_BF,NO_CAST,NO_HMAC,NO_SSL2,FIPS
 $ CONFIG_LOG_I = 0
 $ CONFIG_LOG_LOOP:
 $   CONFIG_LOG_E1 = F$ELEMENT(CONFIG_LOG_I,",",CONFIG_LOGICALS)
@@ -357,7 +357,7 @@ $! Copy a lot of files around.
 $!
 $ SOFTLINKS: 
 $!
-$! Tell The User We Are Partly Rebuilding The [.TEST] Directory.
+$! Tell The User We Are Partly Rebuilding The [.APPS] Directory.
 $!
 $ WRITE SYS$OUTPUT "Rebuilding The '[.APPS]MD4.C', '[.APPS]MD5.C' And '[.APPS]RMD160.C' Files."
 $!
@@ -480,6 +480,33 @@ $!
 $ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,kssl.h
 $ COPY SYS$DISK:[.SSL]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
+$! Copy All The ".H" Files From The [.FIPS] Directories.
+$!
+$ FDIRS := ,SHA1,RAND,DES,AES,DSA,RSA
+$ EXHEADER_ := fips.h
+$ EXHEADER_SHA1 :=
+$ EXHEADER_RAND := fips_rand.h
+$ EXHEADER_DES :=
+$ EXHEADER_AES :=
+$ EXHEADER_DSA :=
+$ EXHEADER_RSA :=
+$
+$ I = 0
+$ LOOP_FDIRS: 
+$ D = F$EDIT(F$ELEMENT(I, ",", FDIRS),"TRIM")
+$ I = I + 1
+$ IF D .EQS. "," THEN GOTO LOOP_FDIRS_END
+$ tmp = EXHEADER_'D'
+$ IF tmp .EQS. "" THEN GOTO LOOP_FDIRS
+$ IF D .EQS. ""
+$ THEN
+$   COPY [.FIPS]'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
+$ ELSE
+$   COPY [.FIPS.'D']'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
+$ ENDIF
+$ GOTO LOOP_FDIRS
+$ LOOP_FDIRS_END:
+$!
 $! Purge all doubles
 $!
 $ PURGE SYS$DISK:[.INCLUDE.OPENSSL]*.H
@@ -505,9 +532,21 @@ $! Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
 $!  
 $ @CRYPTO-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'"
 $!
+$! Go Back To The Main Directory.
+$!
+$ SET DEFAULT [-]
+$!
+$! Go To The [.FIPS] Directory.
+$!
+$ SET DEFAULT SYS$DISK:[.FIPS]
+$!
+$! Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
+$!  
+$ @FIPS-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'"
+$!
 $! Build The [.xxx.EXE.CRYPTO]*.EXE Test Applications.
 $!  
-$ @CRYPTO-LIB APPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @FIPS-LIB APPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
 $!
 $! Go Back To The Main Directory.
 $!

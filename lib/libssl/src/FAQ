@@ -52,6 +52,7 @@ OpenSSL  -  Frequently Asked Questions
 * Is OpenSSL thread-safe?
 * I've compiled a program under Windows and it crashes: why?
 * How do I read or write a DER encoded buffer using the ASN1 functions?
+* OpenSSL uses DER but I need BER format: does OpenSSL support BER?
 * I've tried using <M_some_evil_pkcs12_macro> and I get errors why?
 * I've called <some function> and it fails, why?
 * I just get a load of numbers for the error output, what do they mean?
@@ -60,6 +61,7 @@ OpenSSL  -  Frequently Asked Questions
 * Can I use OpenSSL's SSL library with non-blocking I/O?
 * Why doesn't my server application receive a client certificate?
 * Why does compilation fail due to an undefined symbol NID_uniqueIdentifier?
+* I think I've detected a memory leak, is this a bug?
 
 ===============================================================================
 
@@ -68,7 +70,7 @@ OpenSSL  -  Frequently Asked Questions
 * Which is the current version of OpenSSL?
 
 The current version is available from <URL: http://www.openssl.org>.
-OpenSSL 0.9.7d was released on March 17, 2004.
+OpenSSL 0.9.7g was released on April 11, 2005.
 
 In addition to the current stable release, you can also access daily
 snapshots of the OpenSSL development version at <URL:
@@ -460,7 +462,7 @@ get the best result from OpenSSL.  A bit more complicated solution is the
 following:
 
 ----- snip:start -----
-  make DIRS=crypto SDIRS=sha "`grep '^CFLAG=' Makefile.ssl | \
+  make DIRS=crypto SDIRS=sha "`grep '^CFLAG=' Makefile | \
        sed -e 's/ -O[0-9] / -O0 /'`"
   rm `ls crypto/*.o crypto/sha/*.o | grep -v 'sha_dgst\.o'`
   make
@@ -469,6 +471,10 @@ following:
 This will only compile sha_dgst.c with -O0, the rest with the optimization
 level chosen by the configuration process.  When the above is done, do the
 test and installation and you're set.
+
+3. Reconfigure the toolkit with no-sha0 option to leave out SHA0. It
+should not be used and is not used in SSL/TLS nor any other recognized
+protocol in either case.
 
 
 * Why does the OpenSSL compilation fail with "ar: command not found"?
@@ -683,6 +689,20 @@ and attempts to free the buffer will have unpredictable results
 because it no longer points to the same address.
 
 
+* OpenSSL uses DER but I need BER format: does OpenSSL support BER?
+
+The short answer is yes, because DER is a special case of BER and OpenSSL
+ASN1 decoders can process BER.
+
+The longer answer is that ASN1 structures can be encoded in a number of
+different ways. One set of ways is the Basic Encoding Rules (BER) with various
+permissible encodings. A restriction of BER is the Distinguished Encoding
+Rules (DER): these uniquely specify how a given structure is encoded.
+
+Therefore, because DER is a special case of BER, DER is an acceptable encoding
+for BER.
+
+
 * I've tried using <M_some_evil_pkcs12_macro> and I get errors why?
 
 This usually happens when you try compiling something using the PKCS#12
@@ -763,6 +783,29 @@ For OpenSSL 0.9.7 the OID table was extended and corrected. In earlier
 versions, uniqueIdentifier was incorrectly used for X.509 certificates.
 The correct name according to RFC2256 (LDAP) is x500UniqueIdentifier.
 Change your code to use the new name when compiling against OpenSSL 0.9.7.
+
+
+* I think I've detected a memory leak, is this a bug?
+
+In most cases the cause of an apparent memory leak is an OpenSSL internal table
+that is allocated when an application starts up. Since such tables do not grow
+in size over time they are harmless.
+
+These internal tables can be freed up when an application closes using various
+functions.  Currently these include following:
+
+Thread-local cleanup functions:
+
+  ERR_remove_state()
+
+Application-global cleanup functions that are aware of usage (and therefore
+thread-safe):
+
+  ENGINE_cleanup() and CONF_modules_unload()
+
+"Brutal" (thread-unsafe) Application-global cleanup functions:
+
+  ERR_free_strings(), EVP_cleanup() and CRYPTO_cleanup_all_ex_data().
 
 
 ===============================================================================

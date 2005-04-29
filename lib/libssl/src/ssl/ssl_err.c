@@ -1,6 +1,6 @@
 /* ssl/ssl_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -193,6 +193,7 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_PACK(0,SSL_F_SSL_SET_TRUST,0),	"SSL_set_trust"},
 {ERR_PACK(0,SSL_F_SSL_SET_WFD,0),	"SSL_set_wfd"},
 {ERR_PACK(0,SSL_F_SSL_SHUTDOWN,0),	"SSL_shutdown"},
+{ERR_PACK(0,SSL_F_SSL_UNDEFINED_CONST_FUNCTION,0),	"SSL_UNDEFINED_CONST_FUNCTION"},
 {ERR_PACK(0,SSL_F_SSL_UNDEFINED_FUNCTION,0),	"SSL_UNDEFINED_FUNCTION"},
 {ERR_PACK(0,SSL_F_SSL_USE_CERTIFICATE,0),	"SSL_use_certificate"},
 {ERR_PACK(0,SSL_F_SSL_USE_CERTIFICATE_ASN1,0),	"SSL_use_certificate_ASN1"},
@@ -334,6 +335,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {SSL_R_NULL_SSL_CTX                      ,"null ssl ctx"},
 {SSL_R_NULL_SSL_METHOD_PASSED            ,"null ssl method passed"},
 {SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED   ,"old session cipher not returned"},
+{SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE     ,"only tls allowed in fips mode"},
 {SSL_R_PACKET_LENGTH_TOO_LONG            ,"packet length too long"},
 {SSL_R_PATH_TOO_LONG                     ,"path too long"},
 {SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE ,"peer did not return a certificate"},

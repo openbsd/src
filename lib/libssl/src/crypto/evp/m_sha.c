@@ -56,10 +56,11 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef OPENSSL_NO_SHA
+#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA0)
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
+#include "evp_locl.h"
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 

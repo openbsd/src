@@ -312,6 +312,7 @@ id-pkix 9		: id-pda
 id-pkix 10		: id-aca
 id-pkix 11		: id-qcs
 id-pkix 12		: id-cct
+id-pkix 21		: id-ppl
 id-pkix 48		: id-ad
 
 # PKIX Modules
@@ -346,6 +347,7 @@ id-pe 9			: sbqp-routerIdentifier
 id-pe 10		: ac-proxying
 !Cname sinfo-access
 id-pe 11		: subjectInfoAccess	: Subject Information Access
+id-pe 14		: proxyCertInfo		: Proxy Certificate Information
 
 # PKIX policyQualifiers for Internet policy qualifiers
 id-qt 1			: id-qt-cps		: Policy Qualifier CPS
@@ -461,6 +463,11 @@ id-cct 1		: id-cct-crs
 id-cct 2		: id-cct-PKIData
 id-cct 3		: id-cct-PKIResponse
 
+# Predefined Proxy Certificate policy languages
+id-ppl 0		: id-ppl-anyLanguage	: Any language
+id-ppl 1		: id-ppl-inheritAll	: Inherit all
+id-ppl 2		: id-ppl-independent	: Independent
+
 # access descriptors for authority info access extension
 !Cname ad-OCSP
 id-ad 1			: OCSP			: OCSP
@@ -536,10 +543,12 @@ X509 5			: 			: serialNumber
 X509 6			: C			: countryName
 X509 7			: L			: localityName
 X509 8			: ST			: stateOrProvinceName
+X509 9			:			: streetAddress
 X509 10			: O			: organizationName
 X509 11			: OU			: organizationalUnitName
 X509 12			: 			: title
 X509 13			: 			: description
+X509 17			:			: postalCode
 X509 41			: name			: name
 X509 42			: GN			: givenName
 X509 43			: 			: initials
@@ -680,6 +689,19 @@ aes 42			: AES-256-CBC		: aes-256-cbc
 aes 43			: AES-256-OFB		: aes-256-ofb
 !Cname aes-256-cfb128
 aes 44			: AES-256-CFB		: aes-256-cfb
+
+# There are no OIDs for these modes...
+
+			: AES-128-CFB1		: aes-128-cfb1
+			: AES-192-CFB1		: aes-192-cfb1
+			: AES-256-CFB1		: aes-256-cfb1
+			: AES-128-CFB8		: aes-128-cfb8
+			: AES-192-CFB8		: aes-192-cfb8
+			: AES-256-CFB8		: aes-256-cfb8
+			: DES-CFB1		: des-cfb1
+			: DES-CFB8		: des-cfb8
+			: DES-EDE3-CFB1		: des-ede3-cfb1
+			: DES-EDE3-CFB8		: des-ede3-cfb8
 
 # Hold instruction CRL entry extension
 !Cname hold-instruction-code

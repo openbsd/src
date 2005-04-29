@@ -21,11 +21,11 @@ function cleanup()
 
 function get_openssl_version()
 {
-  eval `grep '^VERSION=' Makefile.ssl`
+  eval `grep '^VERSION=' Makefile`
   if [ -z "${VERSION}" ]
   then
-    echo "Error: Couldn't retrieve OpenSSL version from Makefile.ssl."
-    echo "       Check value of variable VERSION in Makefile.ssl."
+    echo "Error: Couldn't retrieve OpenSSL version from Makefile."
+    echo "       Check value of variable VERSION in Makefile."
     exit 1
   fi
 }
@@ -39,7 +39,7 @@ function base_install()
 
 function doc_install()
 {
-  DOC_DIR=${INSTALL_PREFIX}/usr/doc/openssl
+  DOC_DIR=${INSTALL_PREFIX}/usr/share/doc/openssl
 
   mkdir -p ${DOC_DIR}
   cp CHANGES CHANGES.SSLeay INSTALL LICENSE NEWS README ${DOC_DIR}
@@ -49,7 +49,7 @@ function doc_install()
 
 function create_cygwin_readme()
 {
-  README_DIR=${INSTALL_PREFIX}/usr/doc/Cygwin
+  README_DIR=${INSTALL_PREFIX}/usr/share/doc/Cygwin
   README_FILE=${README_DIR}/openssl-${VERSION}.README
 
   mkdir -p ${README_DIR}
@@ -112,8 +112,8 @@ cd ${INSTALL_PREFIX}
 strip usr/bin/*.exe usr/bin/*.dll
 
 # Runtime package
-find etc usr/bin usr/doc usr/ssl/certs usr/ssl/man/man[157] usr/ssl/misc \
-     usr/ssl/openssl.cnf usr/ssl/private -empty -o \! -type d |
+find etc usr/bin usr/share/doc usr/ssl/certs usr/ssl/man/man[157] \
+     usr/ssl/misc usr/ssl/openssl.cnf usr/ssl/private -empty -o \! -type d |
 tar cjfT openssl-${VERSION}-${SUBVERSION}.tar.bz2 -
 # Development package
 find usr/include usr/lib usr/ssl/man/man3 -empty -o \! -type d |

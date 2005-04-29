@@ -175,7 +175,7 @@ int MAIN(int argc, char **argv)
 	char *passin = NULL, *passout = NULL;
 	char *p;
 	char *subj = NULL;
-	const EVP_MD *md_alg=NULL,*digest=EVP_md5();
+	const EVP_MD *md_alg=NULL,*digest;
 	unsigned long chtype = MBSTRING_ASC;
 #ifndef MONOLITH
 	char *to_free;
@@ -196,6 +196,13 @@ int MAIN(int argc, char **argv)
 	outfile=NULL;
 	informat=FORMAT_PEM;
 	outformat=FORMAT_PEM;
+
+#ifdef  OPENSSL_FIPS
+	if (FIPS_mode())
+		digest = EVP_sha1();
+	else
+#endif
+		digest = EVP_md5();
 
 	prog=argv[0];
 	argc--;
@@ -499,13 +506,16 @@ bad:
 	else
 		{
 		req_conf=config;
-		if( verbose )
-			BIO_printf(bio_err,"Using configuration from %s\n",
-			default_config_file);
+
 		if (req_conf == NULL)
 			{
-			BIO_printf(bio_err,"Unable to load config info\n");
+			BIO_printf(bio_err,"Unable to load config info from %s\n", default_config_file);
+			if (newreq)
+				goto end;
 			}
+		else if( verbose )
+			BIO_printf(bio_err,"Using configuration from %s\n",
+			default_config_file);
 		}
 
 	if (req_conf != NULL)
@@ -831,7 +841,9 @@ loop:
 				}
 			else
 				{
-				if (!ASN1_INTEGER_set(X509_get_serialNumber(x509ss),0L)) goto end;
+				if (!rand_serial(NULL,
+					X509_get_serialNumber(x509ss)))
+						goto end;
 				}
 
 			if (!X509_set_issuer_name(x509ss, X509_REQ_get_subject_name(req))) goto end;

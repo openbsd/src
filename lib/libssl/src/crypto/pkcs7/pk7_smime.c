@@ -155,7 +155,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 	char buf[4096];
 	int i, j=0, k, ret = 0;
 	BIO *p7bio;
-	BIO *tmpout;
+	BIO *tmpin, *tmpout;
 
 	if(!p7) {
 		PKCS7err(PKCS7_F_PKCS7_VERIFY,PKCS7_R_INVALID_NULL_POINTER);
@@ -228,7 +228,30 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 		/* Check for revocation status here */
 	}
 
-	p7bio=PKCS7_dataInit(p7,indata);
+	/* Performance optimization: if the content is a memory BIO then
+	 * store its contents in a temporary read only memory BIO. This
+	 * avoids potentially large numbers of slow copies of data which will
+	 * occur when reading from a read write memory BIO when signatures
+	 * are calculated.
+	 */
+
+	if (indata && (BIO_method_type(indata) == BIO_TYPE_MEM))
+		{
+		char *ptr;
+		long len;
+		len = BIO_get_mem_data(indata, &ptr);
+		tmpin = BIO_new_mem_buf(ptr, len);
+		if (tmpin == NULL)
+			{
+			PKCS7err(PKCS7_F_PKCS7_VERIFY,ERR_R_MALLOC_FAILURE);
+			return 0;
+			}
+		}
+	else
+		tmpin = indata;
+		
+
+	p7bio=PKCS7_dataInit(p7,tmpin);
 
 	if(flags & PKCS7_TEXT) {
 		if(!(tmpout = BIO_new(BIO_s_mem()))) {
@@ -270,9 +293,15 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 	ret = 1;
 
 	err:
+	
+	if (tmpin == indata)
+		{
+		if(indata) BIO_pop(p7bio);
+		BIO_free_all(p7bio);
+		}
+	else
+		BIO_free_all(tmpin);
 
-	if(indata) BIO_pop(p7bio);
-	BIO_free_all(p7bio);
 	sk_X509_free(signers);
 
 	return ret;
@@ -296,10 +325,6 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
 		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,PKCS7_R_WRONG_CONTENT_TYPE);
 		return NULL;
 	}
-	if(!(signers = sk_X509_new_null())) {
-		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
 
 	/* Collect all the signers together */
 
@@ -308,6 +333,11 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags)
 	if(sk_PKCS7_SIGNER_INFO_num(sinfos) <= 0) {
 		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,PKCS7_R_NO_SIGNERS);
 		return 0;
+	}
+
+	if(!(signers = sk_X509_new_null())) {
+		PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS,ERR_R_MALLOC_FAILURE);
+		return NULL;
 	}
 
 	for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(sinfos); i++)

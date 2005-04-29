@@ -115,6 +115,7 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
+#include <openssl/fips.h>
 
 static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 			int sec_len, unsigned char *seed, int seed_len,
@@ -131,6 +132,8 @@ static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 
 	HMAC_CTX_init(&ctx);
 	HMAC_CTX_init(&ctx_tmp);
+	HMAC_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+	HMAC_CTX_set_flags(&ctx_tmp, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 	HMAC_Init_ex(&ctx,sec,sec_len,md, NULL);
 	HMAC_Init_ex(&ctx_tmp,sec,sec_len,md, NULL);
 	HMAC_Update(&ctx,seed,seed_len);
@@ -177,7 +180,6 @@ static void tls1_PRF(const EVP_MD *md5, const EVP_MD *sha1,
 	S2= &(sec[len]);
 	len+=(slen&1); /* add for odd, make longer */
 
-	
 	tls1_P_hash(md5 ,S1,len,label,label_len,out1,olen);
 	tls1_P_hash(sha1,S2,len,label,label_len,out2,olen);
 

@@ -158,7 +158,7 @@ $!
 $ APPS_DES = "DES/DES,CBC3_ENC"
 $ APPS_PKCS7 = "ENC/ENC;DEC/DEC;SIGN/SIGN;VERIFY/VERIFY,EXAMPLE"
 $
-$ LIB_ = "cryptlib,mem,mem_clr,mem_dbg,cversion,ex_data,tmdiff,cpt_err,ebcdic,uid,o_time"
+$ LIB_ = "cryptlib,mem,mem_clr,mem_dbg,cversion,ex_data,tmdiff,cpt_err,ebcdic,uid,o_time,o_str"
 $ LIB_MD2 = "md2_dgst,md2_one"
 $ LIB_MD4 = "md4_dgst,md4_one"
 $ LIB_MD5 = "md5_dgst,md5_one"
@@ -247,7 +247,7 @@ $ LIB_X509 = "x509_def,x509_d2,x509_r2x,x509_cmp,"+ -
 $ LIB_X509V3 = "v3_bcons,v3_bitst,v3_conf,v3_extku,v3_ia5,v3_lib,"+ -
 	"v3_prn,v3_utl,v3err,v3_genn,v3_alt,v3_skey,v3_akey,v3_pku,"+ -
 	"v3_int,v3_enum,v3_sxnet,v3_cpols,v3_crld,v3_purp,v3_info,"+ -
-	"v3_ocsp,v3_akeya"
+	"v3_ocsp,v3_akeya,v3_pcia,v3_pci"
 $ LIB_CONF = "conf_err,conf_lib,conf_api,conf_def,conf_mod,conf_mall,conf_sap"
 $ LIB_TXT_DB = "txt_db"
 $ LIB_PKCS7 = "pk7_asn1,pk7_lib,pkcs7err,pk7_doit,pk7_smime,pk7_attr,"+ -
@@ -752,8 +752,8 @@ $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "The Option ",P1," Is Invalid.  The Valid Options Are:"
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "    ALL      :  Just Build Everything."
-$     WRITE SYS$OUTPUT "    LIBRARY  :  To Compile Just The [.xxx.EXE.SSL]LIBCRYPTO.OLB Library."
-$     WRITE SYS$OUTPUT "    APPS     :  To Compile Just The [.xxx.EXE.SSL]*.EXE Programs."
+$     WRITE SYS$OUTPUT "    LIBRARY  :  To Compile Just The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."
+$     WRITE SYS$OUTPUT "    APPS     :  To Compile Just The [.xxx.EXE.CRYPTO]*.EXE Programs."
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT " Where 'xxx' Stands For:"
 $     WRITE SYS$OUTPUT ""

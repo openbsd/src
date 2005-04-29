@@ -121,6 +121,11 @@
 #   define sha1_block_data_order		sha1_block_asm_data_order
 #   define DONT_IMPLEMENT_BLOCK_DATA_ORDER
 #   define HASH_BLOCK_DATA_ORDER_ALIGNED	sha1_block_asm_data_order
+#  elif defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
+#   define sha1_block_host_order		sha1_block_asm_host_order
+#   define DONT_IMPLEMENT_BLOCK_HOST_ORDER
+#   define sha1_block_data_order		sha1_block_asm_data_order
+#   define DONT_IMPLEMENT_BLOCK_DATA_ORDER
 #  endif
 # endif
   void sha1_block_host_order (SHA_CTX *c, const void *p,int num);
@@ -138,7 +143,11 @@
 #define INIT_DATA_h3 0x10325476UL
 #define INIT_DATA_h4 0xc3d2e1f0UL
 
+#if defined(SHA_0) && defined(OPENSSL_FIPS)
+FIPS_NON_FIPS_MD_Init(SHA)
+#else
 int HASH_INIT (SHA_CTX *c)
+#endif
 	{
 	c->h0=INIT_DATA_h0;
 	c->h1=INIT_DATA_h1;

@@ -126,16 +126,6 @@
 #include <openssl/engine.h>
 #endif
 
-#ifdef OPENSSL_SYS_WINDOWS
-#define strcasecmp _stricmp
-#else
-#  ifdef NO_STRINGS_H
-    int	strcasecmp();
-#  else
-#    include <strings.h>
-#  endif /* NO_STRINGS_H */
-#endif
-
 #define NON_MAIN
 #include "apps.h"
 #undef NON_MAIN
@@ -340,60 +330,6 @@ void program_name(char *in, char *out, int size)
 #endif
 #endif
 
-#ifdef OPENSSL_SYS_WIN32
-int WIN32_rename(char *from, char *to)
-	{
-#ifndef OPENSSL_SYS_WINCE
-	/* Windows rename gives an error if 'to' exists, so delete it
-	 * first and ignore file not found errror
-	 */
-	if((remove(to) != 0) && (errno != ENOENT))
-		return -1;
-#undef rename
-	return rename(from, to);
-#else
-	/* convert strings to UNICODE */
-	{
-	BOOL result = FALSE;
-	WCHAR* wfrom;
-	WCHAR* wto;
-	int i;
-	wfrom = malloc((strlen(from)+1)*2);
-	wto = malloc((strlen(to)+1)*2);
-	if (wfrom != NULL && wto != NULL)
-		{
-		for (i=0; i<(int)strlen(from)+1; i++)
-			wfrom[i] = (short)from[i];
-		for (i=0; i<(int)strlen(to)+1; i++)
-			wto[i] = (short)to[i];
-		result = MoveFile(wfrom, wto);
-		}
-	if (wfrom != NULL)
-		free(wfrom);
-	if (wto != NULL)
-		free(wto);
-	return result;
-	}
-#endif
-	}
-#endif
-
-#ifdef OPENSSL_SYS_VMS
-int VMS_strcasecmp(const char *str1, const char *str2)
-	{
-	while (*str1 && *str2)
-		{
-		int res = toupper(*str1) - toupper(*str2);
-		if (res) return res < 0 ? -1 : 1;
-		}
-	if (*str1)
-		return 1;
-	if (*str2)
-		return -1;
-	return 0;
-	}
-#endif
-
 int chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
 	{
 	int num,len,i;
@@ -590,7 +526,7 @@ int password_callback(char *buf, int bufsiz, int verify,
 		char *prompt = NULL;
 
 		prompt = UI_construct_prompt(ui, "pass phrase",
-			cb_data->prompt_info);
+			prompt_info);
 
 		ui_flags |= UI_INPUT_FLAG_DEFAULT_PWD;
 		UI_ctrl(ui, UI_CTRL_PRINT_ERRORS, 1, 0, 0);
@@ -739,6 +675,51 @@ int add_oid_section(BIO *err, CONF *conf)
 	return 1;
 }
 
+static int load_pkcs12(BIO *err, BIO *in, const char *desc,
+		pem_password_cb *pem_cb,  void *cb_data,
+		EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca)
+	{
+ 	const char *pass;
+	char tpass[PEM_BUFSIZE];
+	int len, ret = 0;
+	PKCS12 *p12;
+	p12 = d2i_PKCS12_bio(in, NULL);
+	if (p12 == NULL)
+		{
+		BIO_printf(err, "Error loading PKCS12 file for %s\n", desc);	
+		goto die;
+		}
+	/* See if an empty password will do */
+	if (PKCS12_verify_mac(p12, "", 0) || PKCS12_verify_mac(p12, NULL, 0))
+		pass = "";
+	else
+		{
+		if (!pem_cb)
+			pem_cb = (pem_password_cb *)password_callback;
+		len = pem_cb(tpass, PEM_BUFSIZE, 0, cb_data);
+		if (len < 0) 
+			{
+			BIO_printf(err, "Passpharse callback error for %s\n",
+					desc);
+			goto die;
+			}
+		if (len < PEM_BUFSIZE)
+			tpass[len] = 0;
+		if (!PKCS12_verify_mac(p12, tpass, len))
+			{
+			BIO_printf(err,
+	"Mac verify error (wrong password?) in PKCS12 file for %s\n", desc);	
+			goto die;
+			}
+		pass = tpass;
+		}
+	ret = PKCS12_parse(p12, pass, pkey, cert, ca);
+	die:
+	if (p12)
+		PKCS12_free(p12);
+	return ret;
+	}
+
 X509 *load_cert(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip)
 	{
@@ -819,11 +800,9 @@ X509 *load_cert(BIO *err, const char *file, int format,
 			(pem_password_cb *)password_callback, NULL);
 	else if (format == FORMAT_PKCS12)
 		{
-		PKCS12 *p12 = d2i_PKCS12_bio(cert, NULL);
-
-		PKCS12_parse(p12, NULL, NULL, &x, NULL);
-		PKCS12_free(p12);
-		p12 = NULL;
+		if (!load_pkcs12(err, cert,cert_descrip, NULL, NULL,
+					NULL, &x, NULL))
+			goto end;
 		}
 	else	{
 		BIO_printf(err,"bad input format specified for %s\n",
@@ -902,11 +881,10 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 #endif
 	else if (format == FORMAT_PKCS12)
 		{
-		PKCS12 *p12 = d2i_PKCS12_bio(key, NULL);
-
-		PKCS12_parse(p12, pass, &pkey, NULL, NULL);
-		PKCS12_free(p12);
-		p12 = NULL;
+		if (!load_pkcs12(err, key, key_descrip,
+				(pem_password_cb *)password_callback, &cb_data,
+				&pkey, NULL, NULL))
+			goto end;
 		}
 	else
 		{
@@ -1486,12 +1464,9 @@ BIGNUM *load_serial(char *serialfile, int create, ASN1_INTEGER **retai)
 			}
 		else
 			{
-			ASN1_INTEGER_set(ai,1);
 			ret=BN_new();
-			if (ret == NULL)
+			if (ret == NULL || !rand_serial(ret, ai))
 				BIO_printf(bio_err, "Out of memory\n");
-			else
-				BN_one(ret);
 			}
 		}
 	else
@@ -1651,6 +1626,33 @@ int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 	return 1;
  err:
 	return 0;
+	}
+
+int rand_serial(BIGNUM *b, ASN1_INTEGER *ai)
+	{
+	BIGNUM *btmp;
+	int ret = 0;
+	if (b)
+		btmp = b;
+	else
+		btmp = BN_new();
+
+	if (!btmp)
+		return 0;
+
+	if (!BN_pseudo_rand(btmp, SERIAL_RAND_BITS, 0, 0))
+		goto error;
+	if (ai && !BN_to_ASN1_INTEGER(btmp, ai))
+		goto error;
+
+	ret = 1;
+	
+	error:
+
+	if (!b)
+		BN_free(btmp);
+	
+	return ret;
 	}
 
 CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
@@ -1970,9 +1972,48 @@ int rotate_index(char *dbfile, char *new_suffix, char *old_suffix)
 
 void free_index(CA_DB *db)
 	{
-	if (db != NULL)
+	if (db)
 		{
-		TXT_DB_free(db->db);
+		if (db->db) TXT_DB_free(db->db);
 		OPENSSL_free(db);
 		}
 	}
+
+/* This code MUST COME AFTER anything that uses rename() */
+#ifdef OPENSSL_SYS_WIN32
+int WIN32_rename(char *from, char *to)
+	{
+#ifndef OPENSSL_SYS_WINCE
+	/* Windows rename gives an error if 'to' exists, so delete it
+	 * first and ignore file not found errror
+	 */
+	if((remove(to) != 0) && (errno != ENOENT))
+		return -1;
+#undef rename
+	return rename(from, to);
+#else
+	/* convert strings to UNICODE */
+	{
+	BOOL result = FALSE;
+	WCHAR* wfrom;
+	WCHAR* wto;
+	int i;
+	wfrom = malloc((strlen(from)+1)*2);
+	wto = malloc((strlen(to)+1)*2);
+	if (wfrom != NULL && wto != NULL)
+		{
+		for (i=0; i<(int)strlen(from)+1; i++)
+			wfrom[i] = (short)from[i];
+		for (i=0; i<(int)strlen(to)+1; i++)
+			wto[i] = (short)to[i];
+		result = MoveFile(wfrom, wto);
+		}
+	if (wfrom != NULL)
+		free(wfrom);
+	if (wto != NULL)
+		free(wto);
+	return result;
+	}
+#endif
+	}
+#endif

@@ -10,7 +10,7 @@ use strict;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-engine] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-engine] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [[no-]fips] [debug] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -135,15 +135,16 @@ my %table=(
 # Our development configs
 "purify",	"purify gcc:-g -DPURIFY -Wall::(unknown)::-lsocket -lnsl::::",
 "debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -ggdb -g2 -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror::(unknown)::-lefence::::",
-"debug-ben",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::asm/bn86-elf.o asm/co86-elf.o",
+"debug-ben",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -O2 -Wall -Wshadow -Werror -pipe::(unknown)::::asm/bn86-elf.o asm/co86-elf.o",
 "debug-ben-openbsd","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DOPENSSL_OPENBSD_DEV_CRYPTO -DOPENSSL_NO_ASM -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::",
 "debug-ben-openbsd-debug","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DOPENSSL_OPENBSD_DEV_CRYPTO -DOPENSSL_NO_ASM -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::",
-"debug-ben-debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::::",
+"debug-ben-debug",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -g3 -O2 -Wall -Wshadow -Werror -pipe::(unknown)::::::",
 "debug-ben-strict",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe::(unknown)::::::",
+"debug-ben-fips-debug","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DOPENSSL_FIPS -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe::(unknown)::::asm/bn86-elf.o asm/co86-elf.o",
 "debug-rse","cc:-DTERMIOS -DL_ENDIAN -pipe -O -g -ggdb3 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
 "debug-bodo",	"gcc:-DL_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DBIO_PAIR_DEBUG -DPEDANTIC -g -m486 -pedantic -Wshadow -Wall::-D_REENTRANT:::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
 "debug-ulf",	"gcc:-DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -g -O2 -m486 -Wall -Werror -Wshadow -pipe::-D_REENTRANT:::${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
-"debug-steve",	"gcc:-DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -mcpu=i486 -pedantic -Wall -Werror -Wshadow -pipe::-D_REENTRANT::-rdynamic -ldl:${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
+"debug-steve",	"gcc:-DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -mcpu=i486 -pedantic -Wno-long-long -Wall -Werror -Wshadow -pipe::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
 "debug-steve-linux-pseudo64",	"gcc:-DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DOPENSSL_NO_ASM -g -mcpu=i486 -Wall -Werror -Wshadow -pipe::-D_REENTRANT::-rdynamic -ldl:SIXTY_FOUR_BIT::dlfcn",
 "debug-levitte-linux-elf","gcc:-DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -Wshadow -Wcast-align -Wmissing-prototypes -Wno-long-long -pipe::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "debug-levitte-linux-noasm","gcc:-DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -Wshadow -Wcast-align -Wmissing-prototypes -Wno-long-long -pipe::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -155,6 +156,12 @@ my %table=(
 "gcc",		"gcc:-O3::(unknown):::BN_LLONG:::",
 "cc",		"cc:-O::(unknown)::::::",
 
+####VOS Configurations
+"vos-gcc","gcc:-b hppa1.1-stratus-vos -O3 -Wall -Wuninitialized -D_POSIX_C_SOURCE=200112L -D_BSD::(unknown):VOS:-Wl,-map:BN_LLONG:::::::::::::.so:",
+"debug-vos-gcc","gcc:-b hppa1.1-stratus-vos -O0 -g -Wall -D_POSIX_C_SOURCE=200112L -D_BSD -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG::(unknown):VOS:-Wl,-map:BN_LLONG:::::::::::::.so:",
+"vos-vcc","vcc:-b i386-stratus-vos -O3 -D_POSIX_C_SOURCE=200112L -D_BSD::(unknown):VOS:-Wl,-map::::::::::::::.so:",
+"debug-vos-vcc","vcc:-b i386-stratus-vos -O0 -g -D_POSIX_C_SOURCE=200112L -D_BSD -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG::(unknown):VOS:-Wl,-map::::::::::::::.so:",
+
 #### Solaris x86 with GNU C setups
 # -DOPENSSL_NO_INLINE_ASM switches off inline assembler. We have to do it
 # here because whenever GNU C instantiates an assembler template it
@@ -162,9 +169,19 @@ my %table=(
 # 7_x86) /usr/ccs/bin/as fails to assemble with "Illegal mnemonic"
 # error message.
 "solaris-x86-gcc","gcc:-O3 -fomit-frame-pointer -m486 -Wall -DL_ENDIAN -DOPENSSL_NO_INLINE_ASM::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:solaris-shared:-fPIC:-shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+# -shared -static-libgcc might appear controversial, but modules taken
+# from static libgcc do not have relocations and linking them into our
+# shared objects doesn't have any negative side-effects. On the contrary,
+# doing so makes it possible to use gcc shared build with Sun C. Given
+# that gcc generates faster code [thanks to inline assembler], I would
+# actually recommend to consider using gcc shared build even with vendor
+# compiler:-)
+#						<appro@fy.chalmers.se>
+"solaris64-x86_64-gcc","gcc:-m64 -O3 -Wall -DL_ENDIAN -DMD32_REG_T=int::-D_REENTRANT::-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL:asm/x86_64-gcc.o::::::asm/rc4-amd64.o:::dlfcn:solaris-shared:-fPIC:-m64 -shared -static-libgcc:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 #### Solaris x86 with Sun C setups
 "solaris-x86-cc","cc:-fast -O -Xa::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL BF_PTR::::::::::dlfcn:solaris-shared:-KPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"solaris64-x86_64-cc","cc:-fast -xarch=amd64 -xstrconst -Xa -DL_ENDIAN::-D_REENTRANT::-lsocket -lnsl -ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL::::::::::dlfcn:solaris-shared:-KPIC:-xarch=amd64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 #### SPARC Solaris with GNU C setups
 "solaris-sparcv7-gcc","gcc:-O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-lsocket -lnsl -ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::::::::::dlfcn:solaris-shared:-fPIC:-shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -263,10 +280,10 @@ my %table=(
 "hpux64-parisc2-gcc","gcc:-O3 -DB_ENDIAN -DMD32_XARRAY::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:asm/pa-risc2W.o:::::::::dlfcn:hpux64-shared:-fpic::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # IA-64 targets
-"hpux-ia64-cc","cc:-Ae +DD32 +O3 +Olit=all -z -DB_ENDIAN::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:asm/ia64-cpp.o:::::::::dlfcn:hpux-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux-ia64-cc","cc:-Ae +DD32 +O3 +Olit=all -z -DB_ENDIAN::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:asm/ia64-cpp.o::::asm/sha1-ia64.o::asm/rc4-ia64.o:::dlfcn:hpux-shared:+Z::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # Frank Geurts <frank.geurts@nl.abnamro.com> has patiently assisted with
 # with debugging of the following config.
-"hpux64-ia64-cc","cc:-Ae +DD64 +O3 +Olit=all -z -DB_ENDIAN::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT:asm/ia64-cpp.o:::::::::dlfcn:hpux64-shared:+Z::.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux64-ia64-cc","cc:-Ae +DD64 +O3 +Olit=all -z -DB_ENDIAN::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX DES_UNROLL DES_RISC1 DES_INT:asm/ia64-cpp.o::::asm/sha1-ia64.o::asm/rc4-ia64.o:::dlfcn:hpux64-shared:+Z::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # More attempts at unified 10.X and 11.X targets for HP C compiler.
 #
@@ -382,17 +399,20 @@ my %table=(
 "debug-linux-pentium","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -mcpu=pentium -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
 "debug-linux-ppro","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -mcpu=pentiumpro -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
 "debug-linux-elf","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT::-lefence -ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"debug-linux-elf-noefence","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn",
+"debug-linux-elf-noefence","gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -m486 -Wall::-D_REENTRANT::-ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -m486 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}",
 "linux-mipsel",   "gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL DES_RISC2::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-mips",   "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC2_CHAR RC4_INDEX DES_INT DES_UNROLL DES_RISC2::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-ppc",    "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"linux-ppc",    "gcc:-DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:asm/linux_ppc32.o:::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+# -bpowerpc64-linux is transient option, -m64 should be the one to use...
+"linux-ppc64",  "gcc:-bpowerpc64-linux -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:asm/linux_ppc64.o:::::::::dlfcn:linux-shared:-fPIC:-bpowerpc64-linux:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-m68k",   "gcc:-DB_ENDIAN -DTERMIO -O2 -fomit-frame-pointer -Wall::-D_REENTRANT:::BN_LLONG::",
 "linux-s390",	"gcc:-DB_ENDIAN -DTERMIO -DNO_ASM -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-s390x",	"gcc:-DB_ENDIAN -DTERMIO -DNO_ASM -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-ia64",   "gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK RC4_CHAR:asm/ia64.o:::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-ia64-ecc",   "ecc:-DL_ENDIAN -DTERMIO -O2 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK RC4_CHAR:asm/ia64.o:::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-x86_64", "gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall -DMD32_REG_T=int::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK RC4_CHAR BF_PTR2 DES_INT DES_UNROLL:asm/x86_64-gcc.o:::::::::dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"linux-ia64",   "gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK:asm/ia64.o::::asm/sha1-ia64.o::asm/rc4-ia64.o:::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"linux-ia64-ecc",   "ecc:-DL_ENDIAN -DTERMIO -O2 -Wall -no_cpprt::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK:asm/ia64.o::::asm/sha1-ia64.o::asm/rc4-ia64.o:::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"linux-x86_64", "gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall -DMD32_REG_T=int::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL:asm/x86_64-gcc.o::::::asm/rc4-amd64.o:::dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"linux-em64t", "gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall -DMD32_REG_T=int::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK RC4_CHAR BF_PTR2 DES_INT DES_UNROLL:asm/x86_64-gcc.o:::::::::dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "NetBSD-sparc",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -mv8 -Wall -DB_ENDIAN::(unknown):::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL::::::::::dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "NetBSD-m68",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -Wall -DB_ENDIAN::(unknown):::BN_LLONG MD2_CHAR RC4_INDEX DES_UNROLL::::::::::dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "NetBSD-x86",	"gcc:-DTERMIOS -O3 -fomit-frame-pointer -m486 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::dlfcn:bsd-gcc-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -415,7 +435,9 @@ my %table=(
 "qnx6",	"cc:-DL_ENDIAN -DTERMIOS::(unknown)::-lsocket:${x86_gcc_des} ${x86_gcc_opts}:",
 
 # Linux on ARM
-"linux-elf-arm","gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT:::BN_LLONG::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+# ARM comes in both little- and big-endian flavors. The following line is
+# endian neutral, but ./config is free to throw in -D[BL]_ENDIAN...
+"linux-elf-arm","gcc:-DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG::::::::::dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # SCO/Caldera targets.
 #
@@ -442,11 +464,10 @@ my %table=(
 
 
 # IBM's AIX.
-"aix-cc",   "cc:-O -DB_ENDIAN -qmaxmem=16384::(unknown):AIX::BN_LLONG RC4_CHAR:::",
-"aix-gcc",  "gcc:-O3 -DB_ENDIAN::(unknown):AIX::BN_LLONG RC4_CHAR:::",
-"aix43-cc",   "cc:-O -DAIX -DB_ENDIAN -qmaxmem=16384::(unknown):::BN_LLONG RC4_CHAR::::::::::dlfcn:aix-shared:::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::",
-"aix43-gcc",  "gcc:-O1 -DAIX -DB_ENDIAN::(unknown):::BN_LLONG RC4_CHAR::::::::::dlfcn:",
-"aix64-cc",   "cc:-O -DAIX -DB_ENDIAN -qmaxmem=16384 -q64::(unknown):::SIXTY_FOUR_BIT_LONG RC4_CHAR::::::::::dlfcn:aix-shared::-q64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 64",
+"aix3-cc",    "cc:-O -DB_ENDIAN -qmaxmem=16384::(unknown):AIX::BN_LLONG RC4_CHAR:::",
+"aix-gcc",    "gcc:-O3 -DB_ENDIAN::-D_THREAD_SAFE:AIX::BN_LLONG RC4_CHAR:asm/aix_ppc32.o:::::::::dlfcn:",
+"aix-cc",     "cc:-q32 -O -DB_ENDIAN -qmaxmem=16384::-qthreaded:AIX::BN_LLONG RC4_CHAR:asm/aix_ppc32.o:::::::::dlfcn:aix-shared::-q32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
+"aix64-cc",   "cc:-q64 -O -DB_ENDIAN -qmaxmem=16384::-qthreaded:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR:asm/aix_ppc64.o:::::::::dlfcn:aix-shared::-q64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 64",
 
 #
 # Cray T90 and similar (SDSC)
@@ -509,17 +530,17 @@ my %table=(
 "BC-16","bcc:::(unknown):WIN16::BN_LLONG DES_PTR RC4_INDEX SIXTEEN_BIT:::",
 
 # MinGW
-"mingw", "gcc:-DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -mno-cygwin -Wall:::MINGW32:-mno-cygwin -lwsock32 -lgdi32:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}:win32::::.dll",
+"mingw", "gcc:-DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -mno-cygwin -Wall:::MINGW32:-lwsock32 -lgdi32:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}:win32:cygwin-shared:-D_WINDLL:-mno-cygwin:.dll",
 
 # UWIN 
 "UWIN", "cc:-DTERMIOS -DL_ENDIAN -O -Wall:::UWIN::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
 
 # Cygwin
 "Cygwin-pre1.3", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -m486 -Wall::(unknown):CYGWIN32::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::win32",
-"Cygwin", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -Wall:::CYGWIN32::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}:win32:cygwin-shared:::.dll",
+"Cygwin", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -Wall:::CYGWIN32::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}:dlfcn:cygwin-shared:-D_WINDLL::.dll",
 
 # DJGPP
-"DJGPP", "gcc:-I/dev/env/WATT_ROOT/inc -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -Wall:::MSDOS:-L/dev/env/WATT_ROOT/lib -lwatt:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::",
+"DJGPP", "gcc:-I/dev/env/WATT_ROOT/inc -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -Wall -DDEVRANDOM=\"/dev/urandom\\x24\":::MSDOS:-L/dev/env/WATT_ROOT/lib -lwatt:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}::::::::::",
 
 # Ultrix from Bernhard Simon <simon@zid.tuwien.ac.at>
 "ultrix-cc","cc:-std1 -O -Olimit 2500 -DL_ENDIAN::(unknown):::::::",
@@ -542,7 +563,7 @@ my %table=(
 
 ##### MacOS X (a.k.a. Rhapsody or Darwin) setup
 "rhapsody-ppc-cc","cc:-O3 -DB_ENDIAN::(unknown):MACOSX_RHAPSODY::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::",
-"darwin-ppc-cc","cc:-O3 -fomit-frame-pointer -fno-common -DB_ENDIAN::-D_REENTRANT:MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::::::::::darwin-shared:-fPIC::.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
+"darwin-ppc-cc","cc:-O3 -fomit-frame-pointer -fno-common -DB_ENDIAN::-D_REENTRANT:MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:asm/osx_ppc32.o::::::::::darwin-shared:-fPIC::.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 "darwin-i386-cc","cc:-O3 -fomit-frame-pointer -fno-common -DB_ENDIAN::-D_REENTRANT:MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::::::::::darwin-shared:-fPIC::.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 
 ##### A/UX
@@ -609,7 +630,7 @@ my $threads=0;
 my $no_asm=0;
 my $no_dso=0;
 my @skip=();
-my $Makefile="Makefile.ssl";
+my $Makefile="Makefile";
 my $des_locl="crypto/des/des_locl.h";
 my $des	="crypto/des/des.h";
 my $bn	="crypto/bn/bn.h";
@@ -621,6 +642,7 @@ my $rc2	="crypto/rc2/rc2.h";
 my $bf	="crypto/bf/bf_locl.h";
 my $bn_asm	="bn_asm.o";
 my $des_enc="des_enc.o fcrypt_b.o";
+my $fips_des_enc="fips_des_enc.o";
 my $bf_enc	="bf_enc.o";
 my $cast_enc="c_enc.o";
 my $rc4_enc="rc4_enc.o";
@@ -631,6 +653,8 @@ my $rmd160_obj="";
 my $processor="";
 my $default_ranlib;
 my $perl;
+my $fips=0;
+my $debug=0;
 
 my $no_ssl2=0;
 my $no_ssl3=0;
@@ -639,10 +663,6 @@ my $no_md5=0;
 my $no_sha=0;
 my $no_rsa=0;
 my $no_dh=0;
-
-$default_ranlib= &which("ranlib") or $default_ranlib="true";
-$perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
-  or $perl="perl";
 
 &usage if ($#ARGV < 0);
 
@@ -739,6 +759,8 @@ PROCESS_ARGS:
 			{ $no_ssl3 = 1; }
 		elsif (/^no-tls1?$/)
 			{ $no_tls1 = 1; }
+		elsif (/^no-fips$/)
+			{ $fips = 0; }
 		elsif (/^no-(.+)$/)
 			{
 			my $algo=$1;
@@ -804,6 +826,14 @@ PROCESS_ARGS:
 			}
 		elsif (/^386$/)
 			{ $processor=386; }
+		elsif (/^fips$/)
+			{
+			$fips=1;
+		        }
+		elsif (/^debug$/)
+			{
+			$debug=1;
+			}
 		elsif (/^rsaref$/)
 			{
 			# No RSAref support any more since it's not needed.
@@ -920,10 +950,14 @@ print "Configuring for $target\n";
 
 my $IsWindows=scalar grep /^$target$/,@WinTargets;
 
-$exe_ext=".exe" if ($target eq "Cygwin");
-$exe_ext=".exe" if ($target eq "DJGPP");
+$exe_ext=".exe" if ($target eq "Cygwin" || $target eq "DJGPP" || $target eq "mingw");
+$exe_ext=".pm" if ($target eq "vos-gcc" or $target eq "debug-vos-gcc" or $target eq "vos-vcc" or $target eq "debug-vos-vcc");
 $openssldir="/usr/local/ssl" if ($openssldir eq "" and $prefix eq "");
 $prefix=$openssldir if $prefix eq "";
+
+$default_ranlib= &which("ranlib") or $default_ranlib="true";
+$perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
+  or $perl="perl";
 
 chop $openssldir if $openssldir =~ /\/$/;
 chop $prefix if $prefix =~ /\/$/;
@@ -1139,12 +1173,26 @@ if ($ranlib eq "")
 
 $bn_obj = $bn_asm unless $bn_obj ne "";
 
+my $fips_des_obj;
+my $fips_sha1_obj;
+if ($fips)
+	{
+	if ($des_obj =~ /\-elf\.o$/ && $no_shared) # FIPS DES module is not PIC
+		{
+		$fips_des_obj='asm/fips-dx86-elf.o';
+		$openssl_other_defines.="#define OPENSSL_FIPS_DES_ASM\n";
+		}
+	else {	$fips_des_obj=$fips_des_enc;  }
+	$fips_sha1_obj='asm/sx86-elf.o' if ($sha1_obj =~ /\-elf\.o$/);
+	$des_obj=$sha1_obj="";
+	$openssl_other_defines.="#define OPENSSL_FIPS\n";
+	}
 $des_obj=$des_enc	unless ($des_obj =~ /\.o$/);
 $bf_obj=$bf_enc		unless ($bf_obj =~ /\.o$/);
 $cast_obj=$cast_enc	unless ($cast_obj =~ /\.o$/);
 $rc4_obj=$rc4_enc	unless ($rc4_obj =~ /\.o$/);
 $rc5_obj=$rc5_enc	unless ($rc5_obj =~ /\.o$/);
-if ($sha1_obj =~ /\.o$/)
+if ($sha1_obj =~ /\.o$/ || $fips_sha1_obj =~ /\.o$/)
 	{
 #	$sha1_obj=$sha1_enc;
 	$cflags.=" -DSHA1_ASM";
@@ -1158,6 +1206,12 @@ if ($rmd160_obj =~ /\.o$/)
 	{
 #	$rmd160_obj=$rmd160_enc;
 	$cflags.=" -DRMD160_ASM";
+	}
+
+if ($debug)
+	{
+	$cflags.=" -g";
+	$cflags=~s/-fomit-frame-pointer//;
 	}
 
 # "Stringify" the C flags string.  This permits it to be made part of a string
@@ -1232,12 +1286,14 @@ while (<IN>)
 	s/^EXE_EXT=.*$/EXE_EXT= $exe_ext/;
 	s/^BN_ASM=.*$/BN_ASM= $bn_obj/;
 	s/^DES_ENC=.*$/DES_ENC= $des_obj/;
+	s/^FIPS_DES_ENC=.*$/FIPS_DES_ENC= $fips_des_obj/;
 	s/^BF_ENC=.*$/BF_ENC= $bf_obj/;
 	s/^CAST_ENC=.*$/CAST_ENC= $cast_obj/;
 	s/^RC4_ENC=.*$/RC4_ENC= $rc4_obj/;
 	s/^RC5_ENC=.*$/RC5_ENC= $rc5_obj/;
 	s/^MD5_ASM_OBJ=.*$/MD5_ASM_OBJ= $md5_obj/;
 	s/^SHA1_ASM_OBJ=.*$/SHA1_ASM_OBJ= $sha1_obj/;
+	s/^FIPS_SHA1_ASM_OBJ=.*$/FIPS_SHA1_ASM_OBJ= $fips_sha1_obj/;
 	s/^RMD160_ASM_OBJ=.*$/RMD160_ASM_OBJ= $rmd160_obj/;
 	s/^PROCESSOR=.*/PROCESSOR= $processor/;
 	s/^RANLIB=.*/RANLIB= $ranlib/;
@@ -1470,7 +1526,7 @@ if($IsWindows) {
 	printf OUT <<EOF;
 #ifndef MK1MF_BUILD
   /* auto-generated by Configure for crypto/cversion.c:
-   * for Unix builds, crypto/Makefile.ssl generates functional definitions;
+   * for Unix builds, crypto/Makefile generates functional definitions;
    * Windows builds (and other mk1mf builds) compile cversion.c with
    * -DMK1MF_BUILD and use definitions added to this file by util/mk1mf.pl. */
   #error "Windows builds (PLATFORM=$target) use mk1mf.pl-created Makefiles"
@@ -1478,7 +1534,7 @@ if($IsWindows) {
 EOF
 	close(OUT);
 } else {
-	my $make_command = "make -f Makefile.ssl PERL=\'$perl\'";
+	my $make_command = "make PERL=\'$perl\'";
 	my $make_targets = "";
 	$make_targets .= " links" if $symlink;
 	$make_targets .= " depend" if $depflags ne "" && $make_depend;
@@ -1487,12 +1543,10 @@ EOF
 		if $make_targets ne "";
 	if ( $perl =~ m@^/@) {
 	    &dofile("tools/c_rehash",$perl,'^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";');
-	    &dofile("apps/der_chop",$perl,'^#!/', '#!%s');
 	    &dofile("apps/CA.pl",$perl,'^#!/', '#!%s');
 	} else {
 	    # No path for Perl known ...
 	    &dofile("tools/c_rehash",'/usr/local/bin/perl','^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";');
-	    &dofile("apps/der_chop",'/usr/local/bin/perl','^#!/', '#!%s');
 	    &dofile("apps/CA.pl",'/usr/local/bin/perl','^#!/', '#!%s');
 	}
 	if ($depflags ne "" && !$make_depend) {
@@ -1569,10 +1623,10 @@ sub which
 	my $path;
 	foreach $path (split /:/, $ENV{PATH})
 		{
-		if (-f "$path/$name" and -x _)
+		if (-f "$path/$name$exe_ext" and -x _)
 			{
-			return "$path/$name" unless ($name eq "perl" and
-			 system("$path/$name -e " . '\'exit($]<5.0);\''));
+			return "$path/$name$exe_ext" unless ($name eq "perl" and
+			 system("$path/$name$exe_ext -e " . '\'exit($]<5.0);\''));
 			}
 		}
 	}

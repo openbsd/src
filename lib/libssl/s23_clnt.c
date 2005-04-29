@@ -235,7 +235,8 @@ static int ssl23_client_hello(SSL *s)
 #endif
 
 		p=s->s3->client_random;
-		RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE);
+		if(RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE) <= 0)
+		    return -1;
 
 		/* Do the message type and length last */
 		d= &(buf[2]);
@@ -248,6 +249,14 @@ static int ssl23_client_hello(SSL *s)
 			*(d++)=TLS1_VERSION_MINOR;
 			s->client_version=TLS1_VERSION;
 			}
+#ifdef OPENSSL_FIPS
+		else if(FIPS_mode())
+			{
+			SSLerr(SSL_F_SSL23_CLIENT_HELLO,
+					SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
+			return -1;
+			}
+#endif
 		else if (!(s->options & SSL_OP_NO_SSLv3))
 			{
 			*(d++)=SSL3_VERSION_MAJOR;
@@ -296,7 +305,9 @@ static int ssl23_client_hello(SSL *s)
 			i=ch_len;
 		s2n(i,d);
 		memset(&(s->s3->client_random[0]),0,SSL3_RANDOM_SIZE);
-		RAND_pseudo_bytes(&(s->s3->client_random[SSL3_RANDOM_SIZE-i]),i);
+		if(RAND_pseudo_bytes(&(s->s3->client_random[SSL3_RANDOM_SIZE-i]),i) <= 0)
+			return -1;
+
 		memcpy(p,&(s->s3->client_random[SSL3_RANDOM_SIZE-i]),i);
 		p+=i;
 
@@ -426,6 +437,14 @@ static int ssl23_get_server_hello(SSL *s)
 		if ((p[2] == SSL3_VERSION_MINOR) &&
 			!(s->options & SSL_OP_NO_SSLv3))
 			{
+#ifdef OPENSSL_FIPS
+			if(FIPS_mode())
+				{
+				SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,
+					SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
+				goto err;
+				}
+#endif
 			s->version=SSL3_VERSION;
 			s->method=SSLv3_client_method();
 			}

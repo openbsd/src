@@ -75,6 +75,10 @@
 #include <openssl/bio.h>
 #endif
 
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 /*
 #define EVP_RC2_KEY_SIZE		16
 #define EVP_RC4_KEY_SIZE		16
@@ -236,6 +240,7 @@ struct env_md_st
 
 #define EVP_MD_FLAG_ONESHOT	0x0001 /* digest can only handle a single
 					* block */
+#define EVP_MD_FLAG_FIPS	0x0400 /* Note if suitable for use in FIPS mode */
 
 #define EVP_PKEY_NULL_method	NULL,NULL,{0,0,0,0}
 
@@ -278,6 +283,9 @@ struct env_md_ctx_st
 #define EVP_MD_CTX_FLAG_REUSE		0x0004 /* Don't free up ctx->md_data
 						* in EVP_MD_CTX_cleanup */
 
+#define EVP_MD_CTX_FLAG_NON_FIPS_ALLOW	0x0008	/* Allow use of non FIPS digest
+						 * in FIPS mode */
+
 struct evp_cipher_st
 	{
 	int nid;
@@ -319,6 +327,10 @@ struct evp_cipher_st
 #define 	EVP_CIPH_CUSTOM_KEY_LENGTH	0x80
 /* Don't use standard block padding */
 #define 	EVP_CIPH_NO_PADDING		0x100
+/* Note if suitable for use in FIPS mode */
+#define		EVP_CIPH_FLAG_FIPS		0x400
+/* Allow non FIPS cipher in FIPS mode */
+#define		EVP_CIPH_FLAG_NON_FIPS_ALLOW	0x800
 
 /* ctrl() values */
 
@@ -425,6 +437,9 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define EVP_CIPHER_CTX_set_app_data(e,d) ((e)->app_data=(char *)(d))
 #define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
 #define EVP_CIPHER_CTX_flags(e)		((e)->cipher->flags)
+#define EVP_CIPHER_CTX_set_flags(ctx,flgs) ((ctx)->flags|=(flgs))
+#define EVP_CIPHER_CTX_clear_flags(ctx,flgs) ((ctx)->flags&=~(flgs))
+#define EVP_CIPHER_CTX_test_flags(ctx,flgs) ((ctx)->flags&(flgs))
 #define EVP_CIPHER_CTX_mode(e)		((e)->cipher->flags & EVP_CIPH_MODE)
 
 #define EVP_ENCODE_LENGTH(l)	(((l+2)/3*4)+(l/48+1)*2+80)
@@ -446,6 +461,7 @@ void BIO_set_md(BIO *,const EVP_MD *md);
 #endif
 #define BIO_get_md(b,mdp)		BIO_ctrl(b,BIO_C_GET_MD,0,(char *)mdp)
 #define BIO_get_md_ctx(b,mdcp)     BIO_ctrl(b,BIO_C_GET_MD_CTX,0,(char *)mdcp)
+#define BIO_set_md_ctx(b,mdcp)     BIO_ctrl(b,BIO_C_SET_MD_CTX,0,(char *)mdcp)
 #define BIO_get_cipher_status(b)	BIO_ctrl(b,BIO_C_GET_CIPHER_STATUS,0,NULL)
 #define BIO_get_cipher_ctx(b,c_pp)	BIO_ctrl(b,BIO_C_GET_CIPHER_CTX,0,(char *)c_pp)
 
@@ -587,9 +603,20 @@ const EVP_CIPHER *EVP_des_ede(void);
 const EVP_CIPHER *EVP_des_ede3(void);
 const EVP_CIPHER *EVP_des_ede_ecb(void);
 const EVP_CIPHER *EVP_des_ede3_ecb(void);
-const EVP_CIPHER *EVP_des_cfb(void);
-const EVP_CIPHER *EVP_des_ede_cfb(void);
-const EVP_CIPHER *EVP_des_ede3_cfb(void);
+const EVP_CIPHER *EVP_des_cfb64(void);
+# define EVP_des_cfb EVP_des_cfb64
+const EVP_CIPHER *EVP_des_cfb1(void);
+const EVP_CIPHER *EVP_des_cfb8(void);
+const EVP_CIPHER *EVP_des_ede_cfb64(void);
+# define EVP_des_ede_cfb EVP_des_ede_cfb64
+#if 0
+const EVP_CIPHER *EVP_des_ede_cfb1(void);
+const EVP_CIPHER *EVP_des_ede_cfb8(void);
+#endif
+const EVP_CIPHER *EVP_des_ede3_cfb64(void);
+# define EVP_des_ede3_cfb EVP_des_ede3_cfb64
+const EVP_CIPHER *EVP_des_ede3_cfb1(void);
+const EVP_CIPHER *EVP_des_ede3_cfb8(void);
 const EVP_CIPHER *EVP_des_ofb(void);
 const EVP_CIPHER *EVP_des_ede_ofb(void);
 const EVP_CIPHER *EVP_des_ede3_ofb(void);
@@ -613,7 +640,8 @@ const EVP_CIPHER *EVP_rc4_40(void);
 #endif
 #ifndef OPENSSL_NO_IDEA
 const EVP_CIPHER *EVP_idea_ecb(void);
-const EVP_CIPHER *EVP_idea_cfb(void);
+const EVP_CIPHER *EVP_idea_cfb64(void);
+# define EVP_idea_cfb EVP_idea_cfb64
 const EVP_CIPHER *EVP_idea_ofb(void);
 const EVP_CIPHER *EVP_idea_cbc(void);
 #endif
@@ -622,45 +650,58 @@ const EVP_CIPHER *EVP_rc2_ecb(void);
 const EVP_CIPHER *EVP_rc2_cbc(void);
 const EVP_CIPHER *EVP_rc2_40_cbc(void);
 const EVP_CIPHER *EVP_rc2_64_cbc(void);
-const EVP_CIPHER *EVP_rc2_cfb(void);
+const EVP_CIPHER *EVP_rc2_cfb64(void);
+# define EVP_rc2_cfb EVP_rc2_cfb64
 const EVP_CIPHER *EVP_rc2_ofb(void);
 #endif
 #ifndef OPENSSL_NO_BF
 const EVP_CIPHER *EVP_bf_ecb(void);
 const EVP_CIPHER *EVP_bf_cbc(void);
-const EVP_CIPHER *EVP_bf_cfb(void);
+const EVP_CIPHER *EVP_bf_cfb64(void);
+# define EVP_bf_cfb EVP_bf_cfb64
 const EVP_CIPHER *EVP_bf_ofb(void);
 #endif
 #ifndef OPENSSL_NO_CAST
 const EVP_CIPHER *EVP_cast5_ecb(void);
 const EVP_CIPHER *EVP_cast5_cbc(void);
-const EVP_CIPHER *EVP_cast5_cfb(void);
+const EVP_CIPHER *EVP_cast5_cfb64(void);
+# define EVP_cast5_cfb EVP_cast5_cfb64
 const EVP_CIPHER *EVP_cast5_ofb(void);
 #endif
 #ifndef OPENSSL_NO_RC5
 const EVP_CIPHER *EVP_rc5_32_12_16_cbc(void);
 const EVP_CIPHER *EVP_rc5_32_12_16_ecb(void);
-const EVP_CIPHER *EVP_rc5_32_12_16_cfb(void);
+const EVP_CIPHER *EVP_rc5_32_12_16_cfb64(void);
+# define EVP_rc5_32_12_16_cfb EVP_rc5_32_12_16_cfb64
 const EVP_CIPHER *EVP_rc5_32_12_16_ofb(void);
 #endif
 #ifndef OPENSSL_NO_AES
 const EVP_CIPHER *EVP_aes_128_ecb(void);
 const EVP_CIPHER *EVP_aes_128_cbc(void);
-const EVP_CIPHER *EVP_aes_128_cfb(void);
+const EVP_CIPHER *EVP_aes_128_cfb1(void);
+const EVP_CIPHER *EVP_aes_128_cfb8(void);
+const EVP_CIPHER *EVP_aes_128_cfb128(void);
+# define EVP_aes_128_cfb EVP_aes_128_cfb128
 const EVP_CIPHER *EVP_aes_128_ofb(void);
 #if 0
 const EVP_CIPHER *EVP_aes_128_ctr(void);
 #endif
 const EVP_CIPHER *EVP_aes_192_ecb(void);
 const EVP_CIPHER *EVP_aes_192_cbc(void);
-const EVP_CIPHER *EVP_aes_192_cfb(void);
+const EVP_CIPHER *EVP_aes_192_cfb1(void);
+const EVP_CIPHER *EVP_aes_192_cfb8(void);
+const EVP_CIPHER *EVP_aes_192_cfb128(void);
+# define EVP_aes_192_cfb EVP_aes_192_cfb128
 const EVP_CIPHER *EVP_aes_192_ofb(void);
 #if 0
 const EVP_CIPHER *EVP_aes_192_ctr(void);
 #endif
 const EVP_CIPHER *EVP_aes_256_ecb(void);
 const EVP_CIPHER *EVP_aes_256_cbc(void);
-const EVP_CIPHER *EVP_aes_256_cfb(void);
+const EVP_CIPHER *EVP_aes_256_cfb1(void);
+const EVP_CIPHER *EVP_aes_256_cfb8(void);
+const EVP_CIPHER *EVP_aes_256_cfb128(void);
+# define EVP_aes_256_cfb EVP_aes_256_cfb128
 const EVP_CIPHER *EVP_aes_256_ofb(void);
 #if 0
 const EVP_CIPHER *EVP_aes_256_ctr(void);
@@ -775,13 +816,18 @@ void ERR_load_EVP_strings(void);
 /* Error codes for the EVP functions. */
 
 /* Function codes. */
+#define EVP_F_AES_INIT_KEY				 129
 #define EVP_F_D2I_PKEY					 100
+#define EVP_F_EVP_ADD_CIPHER				 130
+#define EVP_F_EVP_ADD_DIGEST				 131
 #define EVP_F_EVP_CIPHERINIT				 123
 #define EVP_F_EVP_CIPHER_CTX_CTRL			 124
 #define EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH		 122
 #define EVP_F_EVP_DECRYPTFINAL				 101
 #define EVP_F_EVP_DIGESTINIT				 128
 #define EVP_F_EVP_ENCRYPTFINAL				 127
+#define EVP_F_EVP_GET_CIPHERBYNAME			 132
+#define EVP_F_EVP_GET_DIGESTBYNAME			 133
 #define EVP_F_EVP_MD_CTX_COPY				 110
 #define EVP_F_EVP_OPENINIT				 102
 #define EVP_F_EVP_PBE_ALG_ADD				 115
@@ -805,6 +851,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_RC5_CTRL					 125
 
 /* Reason codes. */
+#define EVP_R_AES_KEY_SETUP_FAILED			 140
 #define EVP_R_BAD_BLOCK_LENGTH				 136
 #define EVP_R_BAD_DECRYPT				 100
 #define EVP_R_BAD_KEY_LENGTH				 137
@@ -816,6 +863,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH		 138
 #define EVP_R_DECODE_ERROR				 114
 #define EVP_R_DIFFERENT_KEY_TYPES			 101
+#define EVP_R_DISABLED_FOR_FIPS				 141
 #define EVP_R_ENCODE_ERROR				 115
 #define EVP_R_EVP_PBE_CIPHERINIT_ERROR			 119
 #define EVP_R_EXPECTING_AN_RSA_KEY			 127
