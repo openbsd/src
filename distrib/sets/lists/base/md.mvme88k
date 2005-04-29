@@ -1772,6 +1772,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/engine.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/err.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/evp.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/fips.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/fips_rand.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/hmac.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/idea.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/openssl/kssl.ph

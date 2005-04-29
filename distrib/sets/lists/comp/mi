@@ -1142,6 +1142,8 @@
 ./usr/include/openssl/engine.h
 ./usr/include/openssl/err.h
 ./usr/include/openssl/evp.h
+./usr/include/openssl/fips.h
+./usr/include/openssl/fips_rand.h
 ./usr/include/openssl/hmac.h
 ./usr/include/openssl/idea.h
 ./usr/include/openssl/kssl.h
