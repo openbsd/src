@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.25 2005/04/03 02:09:28 db Exp $ */
+/* $OpenBSD: undo.c,v 1.26 2005/04/29 07:22:38 otto Exp $ */
 /*
  * Copyright (c) 2002 Vincent Labrecque <vincent@openbsd.org>
  * All rights reserved.
@@ -26,8 +26,6 @@
 
 #include "def.h"
 #include "kbd.h"
-
-#include <sys/queue.h>
 
 #define MAX_FREE_RECORDS	32
 
