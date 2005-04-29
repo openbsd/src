@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.50 2004/12/03 01:41:17 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.51 2005/04/29 09:31:05 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -581,7 +581,7 @@ Example:
 .Pp
 .Dl \&"1.2.3.4	shortname	A long name\&"
 .Sh ASN1PARSE BUGS
-There should be options to change the format of input lines.
+There should be options to change the format of output lines.
 The output of some ASN.1 types is not well handled
 .Pq if at all .
 .\"
@@ -1859,6 +1859,7 @@ install user certificates and CAs in MSIE using the Xenroll control.
 .Op Fl engine Ar id
 .Op Fl keyform Ar ENGINE | PEM
 .Op Fl out Ar file
+.Op Fl passin Ar arg
 .Op Fl prverify Ar file
 .Op Fl rand Ar file ...
 .Op Fl sign Ar file
@@ -1910,6 +1911,13 @@ digest as opposed to a digital signature.
 Key file format.
 .It Fl out Ar file
 file to output to, or standard output by default.
+.It Fl passin Ar arg
+The key password source.
+For more information about the format of
+.Ar arg ,
+see the
+.Sx PASS PHRASE ARGUMENTS
+section above.
 .It Fl prverify Ar file
 Verify the signature using the private key in
 .Ar file .
@@ -2741,6 +2749,18 @@ The options are as follows:
 .It Fl stats
 Print debugging statistics about various aspects of the hash table.
 .El
+.Sh ERRSTR EXAMPLES
+The following error code:
+.Pp
+.Dl 27594:error:2006D080:lib(32):func(109):reason(128):bss_file.c:107:
+.Pp
+\&...can be displayed with:
+.Pp
+.Dl $ openssl errstr 2006D080
+.Pp
+\&...to produce the error message:
+.Pp
+.Dl error:2006D080:BIO routines:BIO_new_file:no such file
 .\"
 .\" GENDH
 .\"
