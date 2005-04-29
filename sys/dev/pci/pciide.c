@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.191 2005/04/20 00:57:25 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.192 2005/04/29 01:11:46 jsg Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -666,6 +666,16 @@ const struct pciide_product_desc pciide_ite_products[] = {
 	}
 };
 
+const struct pciide_product_desc pciide_ati_products[] = {
+	{ PCI_PRODUCT_ATI_IXP_SATA_400_1,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  sii3112_chip_map
+	},
+	{ PCI_PRODUCT_ATI_IXP_SATA_400_2,
+	  IDE_PCI_CLASS_OVERRIDE,
+	  sii3112_chip_map
+	}
+};
 
 struct pciide_vendor_desc {
 	u_int32_t ide_vendor;
@@ -705,7 +715,9 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	{ PCI_VENDOR_NVIDIA, pciide_nvidia_products,
 	  sizeof(pciide_nvidia_products)/sizeof(pciide_nvidia_products[0]) },
 	{ PCI_VENDOR_ITEXPRESS, pciide_ite_products,
-	  sizeof(pciide_ite_products)/sizeof(pciide_ite_products[0]) }
+	  sizeof(pciide_ite_products)/sizeof(pciide_ite_products[0]) },
+	{ PCI_VENDOR_ATI, pciide_ati_products,
+	  sizeof(pciide_ati_products)/sizeof(pciide_ati_products[0]) }
 };
 
 /* options passed via the 'flags' config keyword */

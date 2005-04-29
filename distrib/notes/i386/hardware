@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.199 2005/04/20 01:01:49 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.200 2005/04/29 01:11:47 jsg Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -87,7 +87,7 @@ Supported hardware {:-include-:}:
 		    PDC20277, PDC20376 (RAID mode is not supported)
 		ServerWorks OSB4, CSB5, CSB6 (including support for the third
 		    channel)
-		Silicon Image SiI3112, SiI3512, SiI3114
+		Silicon Image SiI3112 (including ATI IXP SATA), SiI3512, SiI3114
 		Silicon Integrated System 180, 181, 182, 5513 (5597/5598), 540,
 		    550, 620, 630, 630S, 633, 635, 640, 645, 645DX, 648, 650,
 		    651, 652, 661, 655, 658, 730, 733, 735, 740, 745, 746, 748,
