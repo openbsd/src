@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.13 2005/04/09 14:42:33 grange Exp $	*/
+/*	$OpenBSD: it.c,v 1.14 2005/04/29 17:13:54 grange Exp $	*/
 
 /*
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
@@ -285,17 +285,18 @@ it_generic_fanrpm(struct it_softc *sc, struct sensor *sensors)
 {
 	int i, sdata, divisor;
 
+	divisor = it_readreg(sc, ITD_FAN);
 	for (i = 0; i < 3; i++) {
 		sdata = it_readreg(sc, ITD_SENSORFANBASE + i);
 		switch (i) {
 			case 2:
-				divisor = 2;
+				divisor = (divisor & 0x40) ? 3 : 1;
 				break;
 			case 1:
-				divisor = (it_readreg(sc, ITD_FAN) >> 3) & 0x7;
+				divisor = (divisor >> 3) & 0x7;
 				break;
-			default:
-				divisor = it_readreg(sc, ITD_FAN) & 0x7;
+			case 0:
+				divisor = divisor & 0x7;
 				break;
 		}
 
