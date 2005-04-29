@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.63 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: apm.c,v 1.64 2005/04/29 01:12:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -649,7 +649,7 @@ apm_cpu_idle()
 	bzero(&regs, sizeof(regs));
 	if (apmcall(APM_CPU_IDLE, 0, &regs) != 0) {
 
-#ifdef DIAGNOSTIC
+#ifdef APMDEBUG
 		apm_perror("set CPU idle", &regs);
 #endif
 	}
