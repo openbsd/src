@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.19 2004/06/13 21:49:15 niklas Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.20 2005/04/29 01:12:15 deraadt Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -46,7 +46,7 @@ int p6ctrsel(int fflag, u_int cmd, u_int fn);
 static __inline void p6ctrrd(struct pctrst *st);
 
 void
-pctrattach (num)
+pctrattach(num)
 	int num;
 {
 	if (num > 1)
@@ -69,29 +69,29 @@ pctrattach (num)
 				  :: "i" (~CR4_TSD) : "eax");
 
 	if (usep6ctr)
-		printf ("pctr: 686-class user-level performance counters enabled\n");
+		printf("pctr: 686-class user-level performance counters enabled\n");
 	else if (usep5ctr)
-		printf ("pctr: 586-class performance counters and user-level cycle counter enabled\n");
+		printf("pctr: 586-class performance counters and user-level cycle counter enabled\n");
 	else if (usetsc)
-		printf ("pctr: user-level cycle counter enabled\n");
+		printf("pctr: user-level cycle counter enabled\n");
 	else
-		printf ("pctr: no performance counters in CPU\n");
+		printf("pctr: no performance counters in CPU\n");
 }
 
 int
-pctropen (dev, oflags, devtype, p)
+pctropen(dev, oflags, devtype, p)
 	dev_t dev;
 	int oflags;
 	int devtype;
 	struct proc *p;
 {
-	if (minor (dev))
+	if (minor(dev))
 		return ENXIO;
 	return 0;
 }
 
 int
-pctrclose (dev, oflags, devtype, p)
+pctrclose(dev, oflags, devtype, p)
 	dev_t dev;
 	int oflags;
 	int devtype;
@@ -101,7 +101,7 @@ pctrclose (dev, oflags, devtype, p)
 }
 
 int
-p5ctrsel (fflag, cmd, fn)
+p5ctrsel(fflag, cmd, fn)
 	int fflag;
 	u_int cmd;
 	u_int fn;
@@ -116,38 +116,38 @@ p5ctrsel (fflag, cmd, fn)
 	msr = P5MSR_CTR0 + cmd;
 	shift = cmd ? 0x10 : 0;
 
-	if (! (fflag & FWRITE))
+	if (!(fflag & FWRITE))
 		return EPERM;
 	if (fn >= 0x200)
 		return EINVAL;
 
-	msr11 = rdmsr (P5MSR_CTRSEL);
+	msr11 = rdmsr(P5MSR_CTRSEL);
 	msr11 &= ~(0x1ffLL << shift);
 	msr11 |= fn << shift;
-	wrmsr (P5MSR_CTRSEL, msr11);
-	wrmsr (msr, 0);
+	wrmsr(P5MSR_CTRSEL, msr11);
+	wrmsr(msr, 0);
 
 	return 0;
 }
 
 static __inline void
-p5ctrrd (st)
+p5ctrrd(st)
 	struct pctrst *st;
 {
 	u_int msr11;
 
-	msr11 = rdmsr (P5MSR_CTRSEL);
+	msr11 = rdmsr(P5MSR_CTRSEL);
 	st->pctr_fn[0] = msr11 & 0xffff;
 	st->pctr_fn[1] = msr11 >> 16;
-	__asm __volatile ("cli");
-	st->pctr_tsc = rdtsc ();
-	st->pctr_hwc[0] = rdmsr (P5MSR_CTR0);
-	st->pctr_hwc[1] = rdmsr (P5MSR_CTR1);
-	__asm __volatile ("sti");
+	__asm __volatile("cli");
+	st->pctr_tsc = rdtsc();
+	st->pctr_hwc[0] = rdmsr(P5MSR_CTR0);
+	st->pctr_hwc[1] = rdmsr(P5MSR_CTR1);
+	__asm __volatile("sti");
 }
 
 int
-p6ctrsel (fflag, cmd, fn)
+p6ctrsel(fflag, cmd, fn)
 	int fflag;
 	u_int cmd;
 	u_int fn;
@@ -160,34 +160,34 @@ p6ctrsel (fflag, cmd, fn)
 	msrsel = P6MSR_CTRSEL0 + cmd;
 	msrval = P6MSR_CTR0 + cmd;
 
-	if (! (fflag & FWRITE))
+	if (!(fflag & FWRITE))
 		return EPERM;
 	if (fn & 0x380000)
 		return EINVAL;
 
-	wrmsr (msrval, 0);
-	wrmsr (msrsel, fn);
-	wrmsr (msrval, 0);
+	wrmsr(msrval, 0);
+	wrmsr(msrsel, fn);
+	wrmsr(msrval, 0);
 
 	return 0;
 }
 
 static __inline void
-p6ctrrd (st)
+p6ctrrd(st)
 	struct pctrst *st;
 {
-	st->pctr_fn[0] = rdmsr (P6MSR_CTRSEL0);
-	st->pctr_fn[1] = rdmsr (P6MSR_CTRSEL1);
-	__asm __volatile ("cli");
-	st->pctr_tsc = rdtsc ();
-	st->pctr_hwc[0] = rdpmc (0);
-	st->pctr_hwc[1] = rdpmc (1);
-	__asm __volatile ("sti");
+	st->pctr_fn[0] = rdmsr(P6MSR_CTRSEL0);
+	st->pctr_fn[1] = rdmsr(P6MSR_CTRSEL1);
+	__asm __volatile("cli");
+	st->pctr_tsc = rdtsc();
+	st->pctr_hwc[0] = rdpmc(0);
+	st->pctr_hwc[1] = rdpmc(1);
+	__asm __volatile("sti");
 }
 
 
 int
-pctrioctl (dev, cmd, data, fflag, p)
+pctrioctl(dev, cmd, data, fflag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
@@ -197,16 +197,16 @@ pctrioctl (dev, cmd, data, fflag, p)
 	switch (cmd) {
 	case PCIOCRD:
 	{
-		struct pctrst *st = (void *) data;
+		struct pctrst *st = (void *)data;
 		
 		if (usep6ctr)
-			p6ctrrd (st);
+			p6ctrrd(st);
 		else if (usep5ctr)
-			p5ctrrd (st);
+			p5ctrrd(st);
 		else {
-			bzero (st, sizeof (*st));
+			bzero(st, sizeof(*st));
 			if (usetsc)
-				st->pctr_tsc = rdtsc ();
+				st->pctr_tsc = rdtsc();
 		}
 		st->pctr_idl = pctr_idlcnt;
 		return 0;
@@ -214,9 +214,9 @@ pctrioctl (dev, cmd, data, fflag, p)
 	case PCIOCS0:
 	case PCIOCS1:
 		if (usep6ctr)
-			return p6ctrsel (fflag, cmd, *(u_int *) data);
+			return p6ctrsel(fflag, cmd, *(u_int *) data);
 		if (usep5ctr)
-			return p5ctrsel (fflag, cmd, *(u_int *) data);
+			return p5ctrsel(fflag, cmd, *(u_int *) data);
 		return ENODEV;
 	default:
 		return EINVAL;
