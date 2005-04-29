@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.13 2005/02/13 22:04:34 grange Exp $ */
+/*	$OpenBSD: clock.c,v 1.14 2005/04/29 18:41:12 grange Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -31,6 +31,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/evcount.h>
+#include <sys/timetc.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -60,6 +61,17 @@ u_int32_t cpu_counter_last;
 u_int32_t cpu_counter_interval;
 u_int32_t pendingticks;
 u_int32_t ticktime;
+
+u_int cp0_get_timecount(struct timecounter *);
+
+struct timecounter cp0_timecounter = {
+	cp0_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0xffffffff,		/* counter_mask */
+	0,			/* frequency */
+	"CP0",			/* name */
+	1000			/* quality */
+};
 
 #define	SECDAY	(24*SECHOUR)	/* seconds per day */
 #define	SECYR	(365*SECDAY)	/* seconds per common year */
@@ -231,38 +243,6 @@ nanodelay(int n)
 }
 
 /*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  We guarantee that the time will be greater
- * than the value obtained by a previous call.
- */
-void
-microtime(struct timeval *tvp)
-{
-	static struct timeval lasttime;
-	u_int32_t clkdiff;
-	int s = splclock();
-
-	*tvp = time;
-	clkdiff = (cp0_get_count() - cpu_counter_last) * 1000;
-	tvp->tv_usec += clkdiff / ticktime;
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec) {
-		tvp->tv_usec++;
-		if (tvp->tv_usec >= 1000000) {
-			tvp->tv_sec++;
-			tvp->tv_usec -= 1000000;
-		}
-	}
-	lasttime = *tvp;
-	splx(s);
-}
-
-/*
  *	Mips machine independent clock routines.
  */
 
@@ -287,6 +267,9 @@ cpu_initclocks()
 
 	tick = 1000000 / hz;	/* number of micro-seconds between interrupts */
 	tickadj = 240000 / (60 * hz);           /* can adjust 240ms in 60s */
+
+	cp0_timecounter.tc_frequency = sys_config.cpu[0].clock / 2;
+	tc_init(&cp0_timecounter);
 
 	clock_started++;
 }
@@ -316,9 +299,12 @@ static short dayyr[12] = {
 void
 inittodr(time_t base)
 {
+	struct timespec ts;
 	struct tod_time c;
 	struct clock_softc *sc = (struct clock_softc *)clock_cd.cd_devs[0];
 	int days, yr;
+
+	ts.tv_nsec = 0;
 
 	if (base < 15*SECYR) {
 		printf("WARNING: preposterous time in file system");
@@ -349,15 +335,16 @@ inittodr(time_t base)
 	}
 
 	/* now have days since Jan 1, 1970; the rest is easy... */
-	time.tv_sec = days * SECDAY + c.hour * 3600 + c.min * 60 + c.sec;
+	ts.tv_sec = days * SECDAY + c.hour * 3600 + c.min * 60 + c.sec;
+	tc_setclock(&ts);
 	sc->sc_initted = 1;
 
 	/*
 	 * See if we gained/lost time.
 	 */
-	if (base < time.tv_sec - 5*SECYR) {
+	if (base < ts.tv_sec - 5*SECYR) {
 		printf("WARNING: file system time much less than clock time\n");
-	} else if (base > time.tv_sec + 5*SECYR) {
+	} else if (base > ts.tv_sec + 5*SECYR) {
 		printf("WARNING: clock time much less than file system time\n");
 		printf("WARNING: using file system time\n");
 	} else {
@@ -365,7 +352,8 @@ inittodr(time_t base)
 	}
 
 bad:
-	time.tv_sec = base;
+	ts.tv_sec = base;
+	tc_setclock(&ts);
 	sc->sc_initted = 1;
 	printf("WARNING: CHECK AND RESET THE DATE!\n");
 }
@@ -389,11 +377,11 @@ resettodr()
 	}
 
 	/* compute the day of week. 1 is Sunday*/
-	t2 = time.tv_sec / SECDAY;
+	t2 = time_second / SECDAY;
 	c.dow = (t2 + 5) % 7 + 1;	/* 1/1/1970 was thursday */
 
 	/* compute the year */
-	t2 = time.tv_sec / SECDAY;
+	t2 = time_second / SECDAY;
 	c.year = 69;
 	while (t2 >= 0) {	/* whittle off years */
 		t = t2;
@@ -413,7 +401,7 @@ resettodr()
 		c.day--;
 	}
 
-	t = time.tv_sec % SECDAY;
+	t = time_second % SECDAY;
 	c.hour = t / 3600;
 	t %= 3600;
 	c.min = t / 60;
@@ -422,4 +410,10 @@ resettodr()
 	if (sc->sc_clock.clk_set) {
 		(*sc->sc_clock.clk_set)(sc, &c);
 	}
+}
+
+u_int
+cp0_get_timecount(struct timecounter *tc)
+{
+	return (cp0_get_count());
 }
