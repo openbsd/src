@@ -1,10 +1,11 @@
-# $OpenBSD: Makefile,v 1.40 2005/04/01 08:15:52 markus Exp $
+# $OpenBSD: Makefile,v 1.41 2005/04/29 05:42:05 djm Exp $
 
 LIB=	crypto
 
 SSLEAYDIST=	src
 SSL_SRC=	${.CURDIR}/../${SSLEAYDIST}
 LCRYPTO_SRC=	${SSL_SRC}/crypto
+FIPS_SRC=	${SSL_SRC}/fips
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "arm" || \
     ${MACHINE_ARCH} == "vax" || ${MACHINE_ARCH} == "amd64" || \
@@ -83,7 +84,7 @@ SRCS+= bio_b64.c e_bf.c m_sha.c p_open.c
 SRCS+= bio_enc.c e_cast.c e_xcbc_d.c m_dss.c m_sha1.c p_seal.c
 SRCS+= bio_md.c e_des.c encode.c m_dss1.c names.c p_sign.c
 SRCS+= bio_ok.c e_des3.c evp_enc.c m_md2.c p_verify.c
-SRCS+= c_all.c evp_err.c evp_acnf.c m_md4.c p5_crpt.c
+SRCS+= c_all.c evp_err.c evp_acnf.c m_md4.c p5_crpt.c e_old.c
 SRCS+= c_allc.c evp_key.c m_md5.c p5_crpt2.c
 SRCS+= c_alld.c e_null.c evp_lib.c p_dec.c
 SRCS+= digest.c e_rc2.c evp_pbe.c m_null.c p_enc.c
@@ -110,7 +111,7 @@ SRCS+= x509_cmp.c x509_ext.c x509_req.c x509_v3.c x509rset.c
 SRCS+=	v3_akey.c v3_alt.c v3_bcons.c v3_bitst.c v3_conf.c v3_cpols.c
 SRCS+=	v3_crld.c v3_enum.c v3_extku.c v3_genn.c v3_ia5.c v3_int.c
 SRCS+=	v3_lib.c v3_pku.c v3_prn.c v3_skey.c v3_sxnet.c v3_utl.c
-SRCS+=	v3err.c v3_info.c v3_purp.c v3_ocsp.c v3_akeya.c
+SRCS+=	v3err.c v3_info.c v3_purp.c v3_ocsp.c v3_akeya.c v3_pci.c v3_pcia.c
 SRCS+=	conf_err.c conf_lib.c conf_def.c conf_api.c conf_mod.c conf_mall.c
 SRCS+=	conf_sap.c
 SRCS+=	txt_db.c							
@@ -134,6 +135,16 @@ SRCS+= ocsp_cl.c ocsp_ext.c ocsp_lib.c ocsp_srv.c
 SRCS+= ec_cvt.c ec_lib.c ecp_mont.c ecp_recp.c
 SRCS+= ec_err.c ec_mult.c ecp_nist.c ecp_smpl.c
 
+# Only used when -DOPENSSL_FIPS is set
+#SRCS+= fips.c fips_err_wrapper.c
+#SRCS+= fips_aes_core.c fips_aes_selftest.c
+#SRCS+= fips_des_enc.c fips_des_selftest.c fips_set_key.c
+#SRCS+= fips_dh_check.c fips_dh_gen.c fips_dh_key.c
+#SRCS+= fips_dsa_ossl.c fips_dsa_gen.c fips_dsa_selftest.c
+#SRCS+= fips_rand.c
+#SRCS+= fips_rsa_eay.c fips_rsa_gen.c fips_rsa_selftest.c
+#SRCS+= fips_sha1dgst.c fips_sha1_selftest.c
+
 .PATH:	${LCRYPTO_SRC}/md2 ${LCRYPTO_SRC}/md5 ${LCRYPTO_SRC}/sha \
 	${LCRYPTO_SRC}/mdc2 ${LCRYPTO_SRC}/hmac ${LCRYPTO_SRC}/ripemd \
 	${LCRYPTO_SRC}/des ${LCRYPTO_SRC}/rc2 ${LCRYPTO_SRC}/rc4 \
@@ -147,9 +158,12 @@ SRCS+= ec_err.c ec_mult.c ecp_nist.c ecp_smpl.c
 	${LCRYPTO_SRC}/pkcs7 ${LCRYPTO_SRC}/x509v3 ${LCRYPTO_SRC}/pkcs12 \
 	${LCRYPTO_SRC}/comp ${LCRYPTO_SRC}/txt_db ${LCRYPTO_SRC}/md4 \
 	${LCRYPTO_SRC}/engine ${LCRYPTO_SRC}/dso ${LCRYPTO_SRC}/ui \
-	${LCRYPTO_SRC}/ocsp ${LCRYPTO_SRC}/ec ${LCRYPTO_SRC}/aes ${LCRYPTO_SRC} \
+	${LCRYPTO_SRC}/ocsp ${LCRYPTO_SRC}/ec ${LCRYPTO_SRC}/aes \
+	${LCRYPTO_SRC} \
 	${LCRYPTO_SRC}/acss ${.CURDIR}/arch/${MACHINE_ARCH} \
-	${LCRYPTO_SRC}/bn/asm
+	${LCRYPTO_SRC}/bn/asm \
+	${FIPS_SRC}/ ${FIPS_SRC}/aes ${FIPS_SRC}/des ${FIPS_SRC}/dh \
+	${FIPS_SRC}/dsa ${FIPS_SRC}/rand ${FIPS_SRC}/rsa ${FIPS_SRC}/sha1
 
 HDRS=\
 	crypto/acss/acss.h \
@@ -208,7 +222,9 @@ HDRS=\
 	crypto/x509/x509.h \
 	crypto/x509/x509_vfy.h \
 	crypto/x509v3/x509v3.h \
-	e_os2.h
+	e_os2.h \
+	fips/fips.h \
+	fips/rand/fips_rand.h 
 
 HDRS_GEN=\
 	${.CURDIR}/arch/${MACHINE_ARCH}/opensslconf.h \
