@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.43 2004/09/30 21:48:56 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.44 2005/04/30 16:44:11 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -241,7 +241,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 	db_printf("R30-31: 0x%08x  0x%08x\n", R(30), R(31));
 
 	db_printf("%cxip: 0x%08x ",
-	    CPU_IS88110 ? 'e' : 's', s->tf_sxip & ~3);
+	    CPU_IS88110 ? 'e' : 's', s->tf_sxip & XIP_ADDR);
 	db_find_xtrn_sym_and_offset((db_addr_t)IPMASK(s->tf_sxip),
 	    &name, &offset);
 	if (name != NULL && (unsigned)offset <= db_maxoff)

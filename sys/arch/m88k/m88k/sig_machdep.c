@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.2 2004/09/30 21:48:56 miod Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.3 2005/04/30 16:44:08 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -166,14 +166,13 @@ sendsig(sig_t catcher, int sig, int mask, unsigned long code, int type,
 	addr = p->p_sigcode;
 #ifdef M88100
 	if (CPU_IS88100) {
-		tf->tf_snip = (addr & ~3) | NIP_V;
+		tf->tf_snip = (addr & NIP_ADDR) | NIP_V;
 		tf->tf_sfip = (tf->tf_snip + 4) | FIP_V;
 	}
 #endif
 #ifdef M88110
 	if (CPU_IS88110) {
-		tf->tf_exip = (addr & ~3);
-		tf->tf_enip = (tf->tf_exip + 4);
+		tf->tf_exip = (addr & XIP_ADDR);
 	}
 #endif
 	tf->tf_r[31] = (unsigned)fp;

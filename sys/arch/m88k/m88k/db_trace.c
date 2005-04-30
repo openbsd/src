@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.3 2004/09/30 21:48:56 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.4 2005/04/30 16:44:08 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -813,13 +813,13 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 	/* use sxip if valid, otherwise try snip or sfip */
 #ifdef M88110
 	if (CPU_IS88110) {
-		where = regs->exip & ~3;
+		where = regs->exip & XIP_ADDR;
 	}
 #endif
 #ifdef M88100
 	if (CPU_IS88100) {
 		where = ((regs->sxip & 2) ? regs->sxip :
-			 ((regs->snip & 2) ? regs->snip : regs->sfip)) & ~3;
+			 ((regs->snip & 2) ? regs->snip : regs->sfip)) & XIP_ADDR;
 	}
 #endif
 	stack = regs->r[31];
