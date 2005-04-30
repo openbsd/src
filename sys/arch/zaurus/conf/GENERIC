@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.35 2005/04/30 00:49:37 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.36 2005/04/30 01:02:37 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -47,9 +47,9 @@ mainbus0	at root
 cpu0		at mainbus?
 pxaip0		at mainbus?
 
-pxaintc0	at pxaip?	# interrupt controller
-pxagpio0	at pxaip?	# GPIO
-pxadmac0	at pxaip?	# DMA controller
+pxaintc0	at pxaip?		# interrupt controller
+pxagpio0	at pxaip?		# GPIO
+pxadmac0	at pxaip?		# DMA controller
 scoop0		at pxaip?
 scoop1		at pxaip?
 saost0		at pxaip? addr 0x40a00000 size 0x20
@@ -129,63 +129,55 @@ cd*		at scsibus?
 
 # integrated 16550 UARTs
 options COM_PXA2X0
-com0	at pxaip?  addr 0x40100000 intr 22	# Full Function UART
-com1	at pxaip?  addr 0x40200000 intr 21	# BlueTooth UART
-#com2	at pxaip?  addr 0x40700000 intr 20	# Standard UART (for IrDA)
+com0	at pxaip? addr 0x40100000 intr 22	# Full Function UART
+com1	at pxaip? addr 0x40200000 intr 21	# BlueTooth UART
+#com2	at pxaip? addr 0x40700000 intr 20	# Standard UART (for IrDA)
 options FFUARTCONSOLE
 #options BTUARTCONSOLE
 
-zaudio0	at pxaip?		# Zaurus I2S/I2C sound
-audio*	at zaudio?
-
-# CF (pcmcia) support
-pxapcic0	at pxaip?
+pxapcic0	at pxaip?		# CF (pcmcia) support
 pcmcia*		at pxapcic?
 wi*		at pcmcia?
 ne* 		at pcmcia?
 wdc*		at pcmcia?
 
-# IDE hard drives
-wd0		at wdc? flags 0x0000
+wd0		at wdc? flags 0x0000	# IDE hard drives
 wd*		at wdc? flags 0x0000
 
 # PHY
-exphy*	at mii?			# 3Com internal PHYs
-inphy*	at mii?			# Intel 82555 PHYs
-iophy*	at mii?			# Intel 82553 PHYs
-icsphy*	at mii?			# ICS 1890 PHYs
-lxtphy*	at mii?			# Level1 LXT970 PHYs
-nsphy*	at mii?			# NS and compatible PHYs
-nsphyter* at mii?		# NS and compatible PHYs
-qsphy*	at mii?			# Quality Semi QS6612 PHYs
-sqphy*	at mii?			# Seeq 8x220 PHYs
-rlphy* at mii?			# RealTek 8139 internal PHYs
-mtdphy* at mii?			# Myson MTD972 PHYs
-#dcphy*	at mii?			# Digital Clone PHYs
-acphy*	at mii?			# Altima AC101 PHYs
-amphy*	at mii?			# AMD 79C873 PHYs
-tqphy*	at mii?			# TDK 78Q212x PHYs
-bmtphy*	at mii?			# Broadcom 10/100 PHYs
-#brgphy* at mii?		# Broadcom Gigabit PHYs
-#eephy* at mii?			# Marvell 88E1000 series PHY
-#xmphy*	at mii?			# XaQti XMAC-II PHYs
-nsgphy*	at mii?			# NS gigabit PHYs
-urlphy*	at mii?			# Realtek RTL8150L internal PHY
-#rgephy* at mii?		# Realtek 8169S/8110S PHY
-#ciphy* at mii?			# Cicada CS8201 10/100/1000 copper PHY
-ukphy*	at mii?			# "unknown" PHYs
+exphy*	at mii?				# 3Com internal PHYs
+inphy*	at mii?				# Intel 82555 PHYs
+iophy*	at mii?				# Intel 82553 PHYs
+icsphy*	at mii?				# ICS 1890 PHYs
+lxtphy*	at mii?				# Level1 LXT970 PHYs
+nsphy*	at mii?				# NS and compatible PHYs
+nsphyter* at mii?			# NS and compatible PHYs
+qsphy*	at mii?				# Quality Semi QS6612 PHYs
+sqphy*	at mii?				# Seeq 8x220 PHYs
+rlphy* at mii?				# RealTek 8139 internal PHYs
+mtdphy* at mii?				# Myson MTD972 PHYs
+#dcphy*	at mii?				# Digital Clone PHYs
+acphy*	at mii?				# Altima AC101 PHYs
+amphy*	at mii?				# AMD 79C873 PHYs
+tqphy*	at mii?				# TDK 78Q212x PHYs
+bmtphy*	at mii?				# Broadcom 10/100 PHYs
+#brgphy* at mii?			# Broadcom Gigabit PHYs
+#eephy* at mii?				# Marvell 88E1000 series PHY
+#xmphy*	at mii?				# XaQti XMAC-II PHYs
+nsgphy*	at mii?				# NS gigabit PHYs
+urlphy*	at mii?				# Realtek RTL8150L internal PHY
+#rgephy* at mii?			# Realtek 8169S/8110S PHY
+#ciphy* at mii?				# Cicada CS8201 10/100/1000 copper PHY
+ukphy*	at mii?				# "unknown" PHYs
 
-# LCD
-lcd0		at pxaip?
+lcd0		at pxaip?		# LCD
 wsdisplay*	at lcd? console ?
+zssp0		at pxaip?		# ADC, touch screen, backlight
+apm0		at pxaip?		# APM emulation
 
-# Dedicated SSP unit for ADC, touch screen, and backlight
-zssp0		at pxaip?
-
-# APM emulation
-apm0		at pxaip?
+zaudio0	at pxaip?			# Zaurus I2S/I2C sound
+audio*	at zaudio?
 
 # Pseudo-Devices
 pseudo-device	wsmux		2	# mouse & keyboard multiplexor
-pseudo-device	crypto		1
 pseudo-device	hotplug		1	# devices hot plugging
