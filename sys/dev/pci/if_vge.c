@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.12 2005/04/30 19:24:00 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.13 2005/04/30 19:41:24 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1780,14 +1780,13 @@ vge_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 			vge_init(ifp);
 			break;
 		}
-#if 0 /* XXX mtu gets reset to 0 at ifconfig up for some reason with this */
+		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU_JUMBO)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
-		else
+		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
-#endif
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
