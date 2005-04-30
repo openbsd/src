@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.25 2004/06/24 19:35:26 tholo Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.26 2005/04/30 13:58:55 niallo Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -60,6 +60,48 @@ static int ext2fs_indirtrunc(struct inode *, ufs1_daddr_t, ufs1_daddr_t,
 				ufs1_daddr_t, int, long *);
 
 /*
+ * Get the size of an inode.
+ */
+u_int64_t
+ext2fs_size(struct inode *ip)
+{
+        u_int64_t size = ip->i_e2fs_size;
+
+        if ((ip->i_e2fs_mode & IFMT) == IFREG)
+                size |= (u_int64_t)ip->i_e2fs_dacl << 32;
+        return size;
+}
+
+int
+ext2fs_setsize(struct inode *ip, u_int64_t size)
+{
+        if ((ip->i_e2fs_mode & IFMT) == IFREG ||
+            ip->i_e2fs_mode == 0) {
+                ip->i_e2fs_dacl = size >> 32;
+                if (size >= 0x80000000U) {
+                        struct m_ext2fs *fs = ip->i_e2fs;
+
+                        if (fs->e2fs.e2fs_rev <= E2FS_REV0) {
+                                /* Linux automagically upgrades to REV1 here! */
+                                return EFBIG;
+                        }
+                        if (!(fs->e2fs.e2fs_features_rocompat
+                            & EXT2F_ROCOMPAT_LARGEFILE)) {
+                                fs->e2fs.e2fs_features_rocompat |=
+                                    EXT2F_ROCOMPAT_LARGEFILE;
+                                fs->e2fs_fmod = 1;
+                        }
+                }
+        } else if (size >= 0x80000000U)
+                return EFBIG;
+
+        ip->i_e2fs_size = size;
+
+        return 0;
+}
+
+
+/*
  * Last reference to an inode.  If necessary, write or delete it.
  */
 int
@@ -85,7 +127,7 @@ ext2fs_inactive(v)
 
 	error = 0;
 	if (ip->i_e2fs_nlink == 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
-		if (ip->i_e2fs_size != 0) {
+		if (ext2fs_size(ip) != 0) {
 			error = ext2fs_truncate(ip, (off_t)0, 0, NOCRED);
 		}
 		getnanotime(&ts);
@@ -187,7 +229,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		return (0);
 
 	if (ovp->v_type == VLNK &&
-		(oip->i_e2fs_size < ovp->v_mount->mnt_maxsymlinklen ||
+		(ext2fs_size(oip) < ovp->v_mount->mnt_maxsymlinklen ||
 		 (ovp->v_mount->mnt_maxsymlinklen == 0 &&
 		  oip->i_e2fs_nblock == 0))) {
 #ifdef DIAGNOSTIC
@@ -195,17 +237,18 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 			panic("ext2fs_truncate: partial truncate of symlink");
 #endif
 		bzero((char *)&oip->i_e2din.e2di_shortlink,
-			(u_int)oip->i_e2fs_size);
-		oip->i_e2fs_size = 0;
+			(u_int)ext2fs_size(oip));
+		(void)ext2fs_setsize(oip, 0);
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (ext2fs_update(oip, NULL, NULL, 1));
 	}
-	if (oip->i_e2fs_size == length) {
+	
+	if (ext2fs_size(oip) == length) {
 		oip->i_flag |= IN_CHANGE | IN_UPDATE;
 		return (ext2fs_update(oip, NULL, NULL, 0));
 	}
 	fs = oip->i_e2fs;
-	osize = oip->i_e2fs_size;
+	osize = ext2fs_size(oip);
 	/*
 	 * Lengthen the size of the file. We must ensure that the
 	 * last byte of the file is allocated. Since the smallest
@@ -225,7 +268,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		    aflags);
 		if (error)
 			return (error);
-		oip->i_e2fs_size = length;
+		(void)ext2fs_setsize(oip, length);
 		uvm_vnp_setsize(ovp, length);
 		uvm_vnp_uncache(ovp);
 		if (aflags & B_SYNC)
@@ -244,7 +287,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	 */
 	offset = blkoff(fs, length);
 	if (offset == 0) {
-		oip->i_e2fs_size = length;
+		(void)ext2fs_setsize(oip, length);
 	} else {
 		lbn = lblkno(fs, length);
 		aflags = B_CLRBUF;
@@ -254,7 +297,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 		    aflags);
 		if (error)
 			return (error);
-		oip->i_e2fs_size = length;
+		(void)ext2fs_setsize(oip, length);
 		size = fs->e2fs_bsize;
 		uvm_vnp_setsize(ovp, length);
 		uvm_vnp_uncache(ovp);
@@ -301,7 +344,7 @@ ext2fs_truncate(struct inode *oip, off_t length, int flags, struct ucred *cred)
 	 */
 	bcopy((caddr_t)&oip->i_e2fs_blocks[0], (caddr_t)newblks, sizeof newblks);
 	bcopy((caddr_t)oldblks, (caddr_t)&oip->i_e2fs_blocks[0], sizeof oldblks);
-	oip->i_e2fs_size = osize;
+	(void)ext2fs_setsize(oip, osize);
 	vflags = ((length > 0) ? V_SAVE : 0) | V_SAVEMETA;
 	allerror = vinvalbuf(ovp, vflags, cred, curproc, 0, 0);
 
@@ -358,7 +401,7 @@ done:
 	/*
 	 * Put back the real size.
 	 */
-	oip->i_e2fs_size = length;
+	(void)ext2fs_setsize(oip, length);
 	oip->i_e2fs_nblock -= blocksreleased;
 	if (oip->i_e2fs_nblock < 0)			/* sanity */
 		oip->i_e2fs_nblock = 0;

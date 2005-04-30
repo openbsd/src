@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs.h,v 1.9 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: ext2fs.h,v 1.10 2005/04/30 13:58:55 niallo Exp $	*/
 /*	$NetBSD: ext2fs.h,v 1.10 2000/01/28 16:00:23 bouyer Exp $	*/
 
 /*
@@ -182,7 +182,8 @@ struct m_ext2fs {
 
 /* features supported in this implementation */
 #define EXT2F_COMPAT_SUPP		0x0000
-#define EXT2F_ROCOMPAT_SUPP		EXT2F_ROCOMPAT_SPARSESUPER
+#define EXT2F_ROCOMPAT_SUPP		(EXT2F_ROCOMPAT_SPARSESUPER \
+					| EXT2F_ROCOMPAT_LARGEFILE)
 #define EXT2F_INCOMPAT_SUPP		EXT2F_INCOMPAT_FTYPE
 
 /*

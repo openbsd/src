@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.16 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.17 2005/04/30 13:58:55 niallo Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -90,7 +90,7 @@ ext2fs_read(v)
 		panic("%s: mode", "ext2fs_read");
 
 	if (vp->v_type == VLNK) {
-		if ((int)ip->i_e2fs_size < vp->v_mount->mnt_maxsymlinklen ||
+		if ((int)ext2fs_size(ip) < vp->v_mount->mnt_maxsymlinklen ||
 			(vp->v_mount->mnt_maxsymlinklen == 0 &&
 			 ip->i_e2fs_nblock == 0))
 			panic("%s: short symlink", "ext2fs_read");
@@ -105,7 +105,7 @@ ext2fs_read(v)
 		return (0);
 
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
-		if ((bytesinfile = ip->i_e2fs_size - uio->uio_offset) <= 0)
+		if ((bytesinfile = ext2fs_size(ip) - uio->uio_offset) <= 0)
 			break;
 		lbn = lblkno(fs, uio->uio_offset);
 		nextlbn = lbn + 1;
@@ -117,11 +117,11 @@ ext2fs_read(v)
 		if (bytesinfile < xfersize)
 			xfersize = bytesinfile;
 
-		if (lblktosize(fs, nextlbn) >= ip->i_e2fs_size)
+		if (lblktosize(fs, nextlbn) >= ext2fs_size(ip))
 			error = bread(vp, lbn, size, NOCRED, &bp);
 		else if (doclusterread)
 			error = cluster_read(vp, &ip->i_ci,
-				ip->i_e2fs_size, lbn, size, NOCRED, &bp);
+				ext2fs_size(ip), lbn, size, NOCRED, &bp);
 		else if (lbn - 1 == ip->i_ci.ci_lastr) {
 			int nextsize = fs->e2fs_bsize;
 			error = breadn(vp, lbn,
@@ -202,9 +202,9 @@ ext2fs_write(v)
 	switch (vp->v_type) {
 	case VREG:
 		if (ioflag & IO_APPEND)
-			uio->uio_offset = ip->i_e2fs_size;
+			uio->uio_offset = ext2fs_size(ip);
 		if ((ip->i_e2fs_flags & EXT2_APPEND) &&
-			uio->uio_offset != ip->i_e2fs_size)
+			uio->uio_offset != ext2fs_size(ip))
 			return (EPERM);
 		/* FALLTHROUGH */
 	case VLNK:
@@ -235,7 +235,7 @@ ext2fs_write(v)
 	}
 
 	resid = uio->uio_resid;
-	osize = ip->i_e2fs_size;
+	osize = ext2fs_size(ip);
 	flags = ioflag & IO_SYNC ? B_SYNC : 0;
 
 	for (error = 0; uio->uio_resid > 0;) {
@@ -253,8 +253,10 @@ ext2fs_write(v)
 			lbn, blkoffset + xfersize, ap->a_cred, &bp, flags);
 		if (error)
 			break;
-		if (uio->uio_offset + xfersize > ip->i_e2fs_size) {
-			ip->i_e2fs_size = uio->uio_offset + xfersize;
+		if (uio->uio_offset + xfersize > ext2fs_size(ip)) {
+			error = ext2fs_setsize(ip, uio->uio_offset + xfersize);
+			if (error)
+				break;
 			uvm_vnp_setsize(vp, ip->i_e2fs_size);
 		}
 		uvm_vnp_uncache(vp);
@@ -269,7 +271,7 @@ ext2fs_write(v)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->e2fs_bsize) {
 			if (doclusterwrite)
-				cluster_write(bp, &ip->i_ci, ip->i_e2fs_size);
+				cluster_write(bp, &ip->i_ci, ext2fs_size(ip));
 			else
 				bawrite(bp);
 		} else

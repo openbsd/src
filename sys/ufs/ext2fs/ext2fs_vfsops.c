@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.35 2004/12/26 21:22:14 miod Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.36 2005/04/30 13:58:55 niallo Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -902,7 +902,8 @@ ext2fs_vget(mp, ino, vpp)
 
 	/* If the inode was deleted, reset all fields */
 	if (ip->i_e2fs_dtime != 0) {
-		ip->i_e2fs_mode = ip->i_e2fs_size = ip->i_e2fs_nblock = 0;
+		ip->i_e2fs_mode = ip->i_e2fs_nblock = 0;
+		(void)ext2fs_setsize(ip, 0);
 	}
 
 	/*

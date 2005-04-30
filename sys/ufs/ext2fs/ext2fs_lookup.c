@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.17 2003/12/06 09:23:25 grange Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.18 2005/04/30 13:58:55 niallo Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /* 
@@ -209,7 +209,7 @@ ext2fs_readdir(v)
 		uio->uio_offset = off;
 	}
 	FREE(dirbuf, M_TEMP);
-	*ap->a_eofflag = VTOI(ap->a_vp)->i_e2fs_size <= uio->uio_offset;
+	*ap->a_eofflag = ext2fs_size(VTOI(ap->a_vp)) <= uio->uio_offset;
 	if (ap->a_ncookies) {
 		if (error) {
 			free(*ap->a_cookies, M_TEMP);
@@ -345,7 +345,7 @@ ext2fs_lookup(v)
 	 */
 	bmask = VFSTOUFS(vdp->v_mount)->um_mountp->mnt_stat.f_iosize - 1;
 	if (nameiop != LOOKUP || dp->i_diroff == 0 ||
-		dp->i_diroff > dp->i_e2fs_size) {
+		dp->i_diroff >ext2fs_size(dp)) {
 		entryoffsetinblock = 0;
 		dp->i_offset = 0;
 		numdirpasses = 1;
@@ -358,7 +358,7 @@ ext2fs_lookup(v)
 		numdirpasses = 2;
 	}
 	prevoff = dp->i_offset;
-	endsearch = roundup(dp->i_e2fs_size, dirblksize);
+	endsearch = roundup(ext2fs_size(dp), dirblksize);
 	enduseful = 0;
 
 searchloop:
@@ -501,7 +501,7 @@ searchloop:
 		 * dp->i_offset + dp->i_count.
 		 */
 		if (slotstatus == NONE) {
-			dp->i_offset = roundup(dp->i_e2fs_size, dirblksize);
+			dp->i_offset = roundup(ext2fs_size(dp), dirblksize);
 			dp->i_count = 0;
 			enduseful = dp->i_offset;
 		} else {
@@ -545,10 +545,14 @@ found:
 	 * of this entry.
 	 */
 	if (entryoffsetinblock + EXT2FS_DIRSIZ(ep->e2d_namlen)
-	    > dp->i_e2fs_size) {
+	    > ext2fs_size(dp)) {
 		ufs_dirbad(dp, dp->i_offset, "i_size too small");
-		dp->i_e2fs_size = entryoffsetinblock +
-			EXT2FS_DIRSIZ(ep->e2d_namlen);
+		error = ext2fs_setsize(dp,
+			entryoffsetinblock + EXT2FS_DIRSIZ(ep->e2d_namlen));
+		if (error) {
+			brelse(bp);
+			return(error);
+		}
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 
@@ -807,7 +811,10 @@ ext2fs_direnter(ip, dvp, cnp)
 			/* XXX should grow with balloc() */
 			panic("ext2fs_direnter: frag size");
 		else if (!error) {
-			dp->i_e2fs_size = roundup(dp->i_e2fs_size, dirblksize);
+			error = ext2fs_setsize(dp,
+				roundup(ext2fs_size(dp), dirblksize));
+			if (error)
+				return (error);
 			dp->i_flag |= IN_CHANGE;
 		}
 		return (error);
@@ -878,7 +885,7 @@ ext2fs_direnter(ip, dvp, cnp)
 	memcpy((caddr_t)ep, (caddr_t)&newdir, (u_int)newentrysize);
 	error = VOP_BWRITE(bp);
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (!error && dp->i_endoff && dp->i_endoff < dp->i_e2fs_size)
+	if (!error && dp->i_endoff && dp->i_endoff < ext2fs_size(dp))
 		error = ext2fs_truncate(dp, (off_t)dp->i_endoff, IO_SYNC,
 		    cnp->cn_cred);
 	return (error);
@@ -985,7 +992,7 @@ ext2fs_dirempty(ip, parentino, cred)
 		 
 #define	MINDIRSIZ (sizeof (struct ext2fs_dirtemplate) / 2)
 
-	for (off = 0; off < ip->i_e2fs_size; off += fs2h16(dp->e2d_reclen)) {
+	for (off = 0; off < ext2fs_size(ip); off += fs2h16(dp->e2d_reclen)) {
 		error = vn_rdwr(UIO_READ, ITOV(ip), (caddr_t)dp, MINDIRSIZ, off,
 		   UIO_SYSSPACE, IO_NODELOCKED, cred, &count, (struct proc *)0);
 		/*

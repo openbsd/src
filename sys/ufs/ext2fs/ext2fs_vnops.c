@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.37 2004/09/18 22:01:18 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.38 2005/04/30 13:58:55 niallo Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ ext2fs_getattr(v)
 	vap->va_uid = ip->i_e2fs_uid;
 	vap->va_gid = ip->i_e2fs_gid;
 	vap->va_rdev = (dev_t)fs2h32(ip->i_e2din.e2di_rdev);
-	vap->va_size = ip->i_e2fs_size;
+	vap->va_size = ext2fs_size(ip);
 	vap->va_atime.tv_sec = ip->i_e2fs_atime;
 	vap->va_atime.tv_nsec = 0;
 	vap->va_mtime.tv_sec = ip->i_e2fs_mtime;
@@ -1047,7 +1047,12 @@ ext2fs_mkdir(v)
 							VFSTOUFS(dvp->v_mount)->um_mountp->mnt_stat.f_bsize)
 		panic("ext2fs_mkdir: blksize"); /* XXX should grow with balloc() */
 	else {
-		ip->i_e2fs_size = VTOI(dvp)->i_e2fs->e2fs_bsize;
+		error = ext2fs_setsize(ip, VTOI(dvp)->i_e2fs->e2fs_bsize);
+  	        if (error) {
+  	        	dp->i_e2fs_nlink--;
+  	        	dp->i_flag |= IN_CHANGE;
+  	        	goto bad;
+  	        }
 		ip->i_flag |= IN_CHANGE;
 	}
 
@@ -1181,13 +1186,17 @@ ext2fs_symlink(v)
 	if (len < vp->v_mount->mnt_maxsymlinklen) {
 		ip = VTOI(vp);
 		bcopy(ap->a_target, (char *)ip->i_e2din.e2di_shortlink, len);
-		ip->i_e2fs_size = len;
+		error = ext2fs_setsize(ip, len);
+		if (error)
+			goto bad;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred, NULL,
 		    (struct proc *)0);
-	vput(vp);
+bad:	
+	if (error)
+		vput(vp);
 	return (error);
 }
 
@@ -1207,7 +1216,7 @@ ext2fs_readlink(v)
 	register struct inode *ip = VTOI(vp);
 	int isize;
 
-	isize = ip->i_e2fs_size;
+	isize = ext2fs_size(ip);
 	if (isize < vp->v_mount->mnt_maxsymlinklen ||
 	    (vp->v_mount->mnt_maxsymlinklen == 0 && ip->i_e2fs_nblock == 0)) {
 		uiomove((char *)ip->i_e2din.e2di_shortlink, isize, ap->a_uio);
@@ -1232,7 +1241,7 @@ ext2fs_advlock(v)
 	} */ *ap = v;
 	register struct inode *ip = VTOI(ap->a_vp);
 
-	return (lf_advlock(&ip->i_lockf, ip->i_e2fs_size, ap->a_id, ap->a_op,
+	return (lf_advlock(&ip->i_lockf, ext2fs_size(ip), ap->a_id, ap->a_op,
 	    ap->a_fl, ap->a_flags));
 }
 
