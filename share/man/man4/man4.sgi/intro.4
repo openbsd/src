@@ -1,4 +1,4 @@
-.\"	$OpenBSD: intro.4,v 1.4 2004/08/28 22:46:41 jmc Exp $
+.\"	$OpenBSD: intro.4,v 1.5 2005/04/30 01:11:19 deraadt Exp $
 .\"     $NetBSD: intro.4,v 1.8 2004/02/10 16:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ system.
 Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Pp
-.Bl -tag -width 8n -offset indent -compact
+.Bl -tag -width 10n -offset indent -compact
 .\" .It crime
 .\" found on the O2
 .\" .It dsclock
@@ -127,9 +127,9 @@ Not all supported devices are listed.
 .\" High performance Peripheral Controller
 .\" .It imc
 .\" Indigo R4k/Indy/Indigo2 bus arbitrator
-.It macebus
+.It Xr macebus 4
 O2 main bus controller
-.It mec
+.It Xr mec 4
 O2 on-board MAC110 Ethernet
 .\" .It newport
 .\" entry framebuffer on Indy and Indigo2
@@ -141,20 +141,30 @@ O2 on-board MAC110 Ethernet
 .\" SEEQ 8003/80C03 Ethernet
 .\" .It wdsc
 .\" WD33C93 SCSI interface
+.It Xr ahc 4
+Adaptec PCI SCSI host adapter driver
+.It Xr mavb 4
+Moosehead A/V Board audio driver
+.It Xr com 4
+Serial communications interface
 .El
 .Pp
 PCI devices are supported through the
 .Xr pci 4
 bus and associated device drivers.
 .Sh SEE ALSO
+.Xr ahc 4 ,
 .Xr autoconf 4 ,
+.Xr com ,
+.Xr config 8
+.Xr macebus 4 ,
+.Xr mavb 4 ,
+.Xr mec 4
 .\" .Xr crime 4 ,
 .\" .Xr gio 4 ,
 .\" .Xr hpc 4 ,
 .\" .Xr imc 4 ,
-.Xr macebus 4 ,
 .\" .Xr pic 4 ,
-.Xr config 8
 .Sh HISTORY
 This
 .Tn sgi
