@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.11 2005/04/30 08:24:25 pvalchev Exp $	*/
+/*	$OpenBSD: re.c,v 1.12 2005/04/30 19:43:41 brad Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1856,7 +1856,7 @@ re_ioctl(ifp, command, data)
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > RL_JUMBO_MTU)
 			error = EINVAL;
-		else
+		else if (ifp->if_mtu != ifr->ifr_mtu)
 			ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	case SIOCSIFFLAGS:
