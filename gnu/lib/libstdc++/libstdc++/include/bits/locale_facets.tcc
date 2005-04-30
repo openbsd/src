@@ -901,7 +901,7 @@ namespace std
 	// Long enough for the max format spec.
 	char __fbuf[16];
 
-#ifdef _GLIBCPP_USE_C99
+#if defined _GLIBCPP_USE_C99 || defined _GLIBCPP_USE_C99_SNPRINTF
 	// First try a buffer perhaps big enough (most probably sufficient
 	// for non-ios_base::fixed outputs)
 	int __cs_size = __max_digits * 3;
@@ -1312,7 +1312,7 @@ namespace std
     { 
       const locale __loc = __io.getloc();
       const ctype<_CharT>& __ctype = use_facet<ctype<_CharT> >(__loc);
-#ifdef _GLIBCPP_USE_C99
+#if defined _GLIBCPP_USE_C99 || defined _GLIBCPP_USE_C99_SNPRINTF
       // First try a buffer perhaps big enough.
       int __cs_size = 64;
       char* __cs = static_cast<char*>(__builtin_alloca(__cs_size));
@@ -2275,7 +2275,7 @@ namespace std
 	// Long enough for the max format spec.
 	char __fbuf[16];
 	_S_format_int(__io, __fbuf, __mod, __modl);
-#ifdef _GLIBCPP_USE_C99
+#if defined _GLIBCPP_USE_C99 || defined _GLIBCPP_USE_C99_SNPRINTF
 	// First try a buffer perhaps big enough.
 	int __cs_size = 64;
 	char* __cs = static_cast<char*>(__builtin_alloca(__cs_size));
