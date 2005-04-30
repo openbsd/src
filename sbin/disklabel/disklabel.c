@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.94 2005/01/07 21:58:14 otto Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.95 2005/04/30 07:09:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.94 2005/01/07 21:58:14 otto Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.95 2005/04/30 07:09:37 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -616,31 +616,28 @@ readmbr(int f)
 	/* Find OpenBSD partition. */
 	for (part = 0; part < NDOSPART; part++) {
 		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_OPENBSD) {
-			fprintf(stderr, "# using MBR partition %d: "
-			    "type %02X off %u (0x%x) size %u (0x%x)\n", part,
-			    dp[part].dp_typ,
-			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_start),
-			    get_le(&dp[part].dp_size), get_le(&dp[part].dp_size));
+			fprintf(stderr, "# Inside MBR partition %d: "
+			    "type %02X start %u size %u\n",
+			    part, dp[part].dp_typ,
+			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_size));
 			return (&dp[part]);
 		}
 	}
 	for (part = 0; part < NDOSPART; part++) {
 		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_FREEBSD) {
-			fprintf(stderr, "# using MBR partition %d: "
-			    "type %02X off %u (0x%x) size %u (0x%x)\n", part,
-			    dp[part].dp_typ,
-			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_start),
-			    get_le(&dp[part].dp_size), get_le(&dp[part].dp_size));
+			fprintf(stderr, "# Inside MBR partition %d: "
+			    "type %02X start %u size %u\n",
+			    part, dp[part].dp_typ,
+			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_size));
 			return (&dp[part]);
 		}
 	}
 	for (part = 0; part < NDOSPART; part++) {
 		if (get_le(&dp[part].dp_size) && dp[part].dp_typ == DOSPTYP_NETBSD) {
-			fprintf(stderr, "# using MBR partition %d: "
-			    "type %02X off %u (0x%x) size %u (0x%x)\n", part,
-			    dp[part].dp_typ,
-			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_start),
-			    get_le(&dp[part].dp_size), get_le(&dp[part].dp_size));
+			fprintf(stderr, "# Inside MBR partition %d: "
+			    "type %02X start %u size %u\n",
+			    part, dp[part].dp_typ,
+			    get_le(&dp[part].dp_start), get_le(&dp[part].dp_size));
 			return (&dp[part]);
 		}
 	}
