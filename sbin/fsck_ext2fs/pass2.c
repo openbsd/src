@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.10 2003/06/11 06:22:13 deraadt Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.11 2005/04/30 13:56:16 niallo Exp $	*/
 /*	$NetBSD: pass2.c,v 1.6 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
@@ -127,7 +127,7 @@ pass2(void)
 			inp->i_isize = roundup(MINDIRSIZE, sblock.e2fs_bsize);
 			if (reply("FIX") == 1) {
 				dp = ginode(inp->i_number);
-				dp->e2di_size = h2fs32(inp->i_isize);
+				inossize(dp, inp->i_isize);
 				inodirty();
 			}
 		} else if ((inp->i_isize & (sblock.e2fs_bsize - 1)) != 0) {
@@ -140,13 +140,13 @@ pass2(void)
 			inp->i_isize = roundup(inp->i_isize, sblock.e2fs_bsize);
 			if (preen || reply("ADJUST") == 1) {
 				dp = ginode(inp->i_number);
-				dp->e2di_size = h2fs32(inp->i_isize);
+				inossize(dp, inp->i_isize);
 				inodirty();
 			}
 		}
 		memset(&dino, 0, sizeof(struct ext2fs_dinode));
 		dino.e2di_mode = h2fs16(IFDIR);
-		dino.e2di_size = h2fs32(inp->i_isize);
+		inossize(&dino, inp->i_isize);
 		memcpy(&dino.e2di_blocks[0], &inp->i_blks[0], (size_t)inp->i_numblks);
 		curino.id_number = inp->i_number;
 		curino.id_parent = inp->i_parent;

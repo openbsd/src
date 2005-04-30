@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass4.c,v 1.6 2003/06/11 06:22:13 deraadt Exp $	*/
+/*	$OpenBSD: pass4.c,v 1.7 2005/04/30 13:56:16 niallo Exp $	*/
 /*	$NetBSD: pass4.c,v 1.2 1997/09/14 14:27:29 lukem Exp $	*/
 
 /*
@@ -84,7 +84,7 @@ pass4(void)
 
 		case DCLEAR:
 			dp = ginode(inumber);
-			if (dp->e2di_size == 0) {
+			if (inosize(dp) == 0) {
 				clri(&idesc, "ZERO LENGTH", 1);
 				break;
 			}

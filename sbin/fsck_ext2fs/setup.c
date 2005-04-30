@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.12 2003/07/29 18:38:35 deraadt Exp $	*/
+/*	$OpenBSD: setup.c,v 1.13 2005/04/30 13:56:16 niallo Exp $	*/
 /*	$NetBSD: setup.c,v 1.1 1997/06/11 11:22:01 bouyer Exp $	*/
 
 /*
@@ -326,6 +326,9 @@ readsb(int listerr)
 	asblk.b_un.b_fs->e2fs_rgid = sblk.b_un.b_fs->e2fs_rgid;
 	asblk.b_un.b_fs->e2fs_block_group_nr =
 	    sblk.b_un.b_fs->e2fs_block_group_nr;
+	asblk.b_un.b_fs->e2fs_features_rocompat &= ~EXT2F_ROCOMPAT_LARGEFILE;
+	asblk.b_un.b_fs->e2fs_features_rocompat |=
+	    sblk.b_un.b_fs->e2fs_features_rocompat & EXT2F_ROCOMPAT_LARGEFILE;
 	if (sblock.e2fs.e2fs_rev > E2FS_REV0 &&
 	    ((sblock.e2fs.e2fs_features_incompat & ~EXT2F_INCOMPAT_SUPP) ||
 	    (sblock.e2fs.e2fs_features_rocompat & ~EXT2F_ROCOMPAT_SUPP))) {

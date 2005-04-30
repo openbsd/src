@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.5 2003/04/17 06:48:47 tedu Exp $	*/
+/*	$OpenBSD: extern.h,v 1.6 2005/04/30 13:56:16 niallo Exp $	*/
 /*	$NetBSD: extern.h,v 1.1 1997/06/11 11:21:46 bouyer Exp $	*/
 
 /*
@@ -35,7 +35,6 @@ void	bufinit(void);
 void	bwrite(int, char *, daddr_t, long);
 void	cacheino(struct ext2fs_dinode *, ino_t);
 int	changeino(ino_t, char *, ino_t);
-struct	fstab;
 int	chkrange(daddr_t, int);
 void	ckfini(int);
 int	ckinode(struct ext2fs_dinode *, struct inodesc *);
@@ -55,6 +54,8 @@ int	ftypeok(struct ext2fs_dinode *);
 void	getpathname(char *, size_t, ino_t, ino_t);
 void	inocleanup(void);
 void	inodirty(void);
+u_int64_t inosize(struct ext2fs_dinode *);
+void    inossize(struct ext2fs_dinode *, u_int64_t);
 int	linkup(ino_t, ino_t);
 int	makeentry(ino_t, ino_t, char *);
 void	pass1(void);
