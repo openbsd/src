@@ -31,11 +31,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vsscanf.c,v 1.6 2004/09/28 18:12:44 otto Exp $";
+static char rcsid[] = "$OpenBSD: vsscanf.c,v 1.7 2005/04/30 09:25:17 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <string.h>
+#include "local.h"
 
 /* ARGSUSED */
 static int
@@ -49,12 +50,14 @@ int
 vsscanf(const char *str, const char *fmt, _BSD_VA_LIST_ ap)
 {
 	FILE f;
+	struct __sfileext fext;
 
+	_FILEEXT_SETUP(&f, &fext);
 	f._flags = __SRD;
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._r = strlen(str);
 	f._read = eofread;
-	f._ub._base = NULL;
+	_UB(&f)._base = NULL;
 	f._lb._base = NULL;
 	return (__svfscanf(&f, fmt, ap));
 }

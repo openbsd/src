@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.30 2004/06/07 21:11:23 marc Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.31 2005/04/30 09:25:17 espie Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -119,8 +119,9 @@ typedef	struct __sFILE {
 	fpos_t	(*_seek)(void *, fpos_t, int);
 	int	(*_write)(void *, const char *, int);
 
-	/* separate buffer for long sequences of ungetc() */
-	struct	__sbuf _ub;	/* ungetc buffer */
+	/* extension data, to avoid further ABI breakage */
+	struct	__sbuf _ext;
+	/* data for long sequences of ungetc() */
 	unsigned char *_up;	/* saved _p when _p is doing ungetc data */
 	int	_ur;		/* saved _r when _r is counting ungetc data */
 

@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sprintf.c,v 1.10 2005/03/31 18:36:29 pat Exp $";
+static char rcsid[] = "$OpenBSD: sprintf.c,v 1.11 2005/04/30 09:25:17 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -50,7 +50,9 @@ sprintf(char *str, const char *fmt, ...)
 	int ret;
 	va_list ap;
 	FILE f;
+	struct __sfileext fext;
 
+	_FILEEXT_SETUP(&f, &fext);
 	f._file = -1;
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;

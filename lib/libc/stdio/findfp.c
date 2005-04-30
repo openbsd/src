@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: findfp.c,v 1.5 2004/09/28 18:12:44 otto Exp $";
+static char rcsid[] = "$OpenBSD: findfp.c,v 1.6 2005/04/30 09:25:17 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -48,13 +48,17 @@ int	__sdidinit;
 #define	NDYNAMIC 10		/* add ten more whenever necessary */
 
 #define	std(flags, file) \
-	{0,0,0,flags,file,{0},0,__sF+file,__sclose,__sread,__sseek,__swrite}
-/*	 p r w flags file _bf z  cookie      close    read    seek    write */
+	{0,0,0,flags,file,{0},0,__sF+file,__sclose,__sread,__sseek,__swrite, \
+	 {(unsigned char *)(__sFext+file), 0}}
+/*	 p r w flags file _bf z  cookie      close    read    seek    write 
+	 ext */
 
 				/* the usual - (stdin + stdout + stderr) */
 static FILE usual[FOPEN_MAX - 3];
+static struct __sfileext usualext[FOPEN_MAX - 3];
 static struct glue uglue = { 0, FOPEN_MAX - 3, usual };
 
+struct __sfileext __sFext[3];
 FILE __sF[3] = {
 	std(__SRD, STDIN_FILENO),		/* stdin */
 	std(__SWR, STDOUT_FILENO),		/* stdout */
@@ -67,17 +71,27 @@ moreglue(int n)
 {
 	struct glue *g;
 	FILE *p;
+	struct __sfileext *pext;
 	static FILE empty;
+	char *data;
 
-	g = (struct glue *)malloc(sizeof(*g) + ALIGNBYTES + n * sizeof(FILE));
-	if (g == NULL)
+	data = malloc(sizeof(*g) + ALIGNBYTES + n * sizeof(FILE)
+	    + n * sizeof(struct __sfileext));
+	if (data == NULL)
 		return (NULL);
-	p = (FILE *)ALIGN(g + 1);
+	g = (struct glue *)data;
+	p = (FILE *)ALIGN(data + sizeof(*g));
+	pext = (struct __sfileext *)
+	    (ALIGN(data + sizeof(*g)) + n * sizeof(FILE));
 	g->next = NULL;
 	g->niobs = n;
 	g->iobs = p;
-	while (--n >= 0)
-		*p++ = empty;
+	while (--n >= 0) {
+		*p = empty;
+		_FILEEXT_SETUP(p, pext);
+		p++;
+		pext++;
+	}
 	return (g);
 }
 
@@ -111,8 +125,8 @@ found:
 	fp->_lbfsize = 0;	/* not line buffered */
 	fp->_file = -1;		/* no file */
 /*	fp->_cookie = <any>; */	/* caller sets cookie, _read/_write etc */
-	fp->_ub._base = NULL;	/* no ungetc buffer */
-	fp->_ub._size = 0;
+	_UB(fp)._base = NULL;	/* no ungetc buffer */
+	_UB(fp)._size = 0;
 	fp->_lb._base = NULL;	/* no line buffer */
 	fp->_lb._size = 0;
 	return (fp);
@@ -156,6 +170,10 @@ _cleanup(void)
 void
 __sinit(void)
 {
+	int i;
+
+	for (i = 0; i < FOPEN_MAX - 3; i++)
+		_FILEEXT_SETUP(usual+i, usualext+i);
 	/* make sure we clean up on exit */
 	__atexit_register_cleanup(_cleanup); /* conservative */
 	__sdidinit = 1;

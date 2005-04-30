@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: ungetc.c,v 1.6 2004/09/28 18:12:44 otto Exp $";
+static char rcsid[] = "$OpenBSD: ungetc.c,v 1.7 2005/04/30 09:25:17 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -52,29 +52,29 @@ __submore(FILE *fp)
 	int i;
 	unsigned char *p;
 
-	if (fp->_ub._base == fp->_ubuf) {
+	if (_UB(fp)._base == fp->_ubuf) {
 		/*
 		 * Get a new buffer (rather than expanding the old one).
 		 */
 		if ((p = malloc((size_t)BUFSIZ)) == NULL)
 			return (EOF);
-		fp->_ub._base = p;
-		fp->_ub._size = BUFSIZ;
+		_UB(fp)._base = p;
+		_UB(fp)._size = BUFSIZ;
 		p += BUFSIZ - sizeof(fp->_ubuf);
 		for (i = sizeof(fp->_ubuf); --i >= 0;)
 			p[i] = fp->_ubuf[i];
 		fp->_p = p;
 		return (0);
 	}
-	i = fp->_ub._size;
-	p = realloc(fp->_ub._base, i << 1);
+	i = _UB(fp)._size;
+	p = realloc(_UB(fp)._base, i << 1);
 	if (p == NULL)
 		return (EOF);
 	/* no overlap (hence can use memcpy) because we doubled the size */
 	(void)memcpy((void *)(p + i), (void *)p, (size_t)i);
 	fp->_p = p + i;
-	fp->_ub._base = p;
-	fp->_ub._size = i << 1;
+	_UB(fp)._base = p;
+	_UB(fp)._size = i << 1;
 	return (0);
 }
 
@@ -108,7 +108,7 @@ ungetc(int c, FILE *fp)
 	 * This may require expanding the current ungetc buffer.
 	 */
 	if (HASUB(fp)) {
-		if (fp->_r >= fp->_ub._size && __submore(fp))
+		if (fp->_r >= _UB(fp)._size && __submore(fp))
 			return (EOF);
 		*--fp->_p = c;
 		fp->_r++;
@@ -134,8 +134,8 @@ ungetc(int c, FILE *fp)
 	 */
 	fp->_ur = fp->_r;
 	fp->_up = fp->_p;
-	fp->_ub._base = fp->_ubuf;
-	fp->_ub._size = sizeof(fp->_ubuf);
+	_UB(fp)._base = fp->_ubuf;
+	_UB(fp)._size = sizeof(fp->_ubuf);
 	fp->_ubuf[sizeof(fp->_ubuf) - 1] = c;
 	fp->_p = &fp->_ubuf[sizeof(fp->_ubuf) - 1];
 	fp->_r = 1;

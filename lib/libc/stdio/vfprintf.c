@@ -31,7 +31,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: vfprintf.c,v 1.28 2004/09/28 18:12:44 otto Exp $";
+static char *rcsid = "$OpenBSD: vfprintf.c,v 1.29 2005/04/30 09:25:17 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -86,8 +86,10 @@ __sbprintf(FILE *fp, const char *fmt, va_list ap)
 {
 	int ret;
 	FILE fake;
+	struct __sfileext fakeext;
 	unsigned char buf[BUFSIZ];
 
+	_FILEEXT_SETUP(&fake, &fakeext);
 	/* copy the important variables */
 	fake._flags = fp->_flags & ~__SNBF;
 	fake._file = fp->_file;

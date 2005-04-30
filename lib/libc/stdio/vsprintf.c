@@ -31,11 +31,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vsprintf.c,v 1.9 2004/09/28 18:12:44 otto Exp $";
+static char rcsid[] = "$OpenBSD: vsprintf.c,v 1.10 2005/04/30 09:25:17 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
 #include <limits.h>
+#include "local.h"
 
 #if defined(APIWARN)
 __warn_references(vsprintf,
@@ -47,7 +48,9 @@ vsprintf(char *str, const char *fmt, _BSD_VA_LIST_ ap)
 {
 	int ret;
 	FILE f;
+	struct __sfileext fext;
 
+	_FILEEXT_SETUP(&f, &fext);
 	f._file = -1;
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;
