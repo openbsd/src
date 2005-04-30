@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.9 2005/04/25 17:55:51 brad Exp $	*/
+/*	$OpenBSD: re.c,v 1.10 2005/04/30 08:22:23 pvalchev Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1450,14 +1450,22 @@ re_encap(sc, m_head, idx)
 	 * chip. I'm not sure if this is a requirement or a bug.)
 	 */
 
+	/*
+	 * Set RL_TDESC_CMD_IPCSUM if any checksum offloading
+	 * is requested.  Otherwise, RL_TDESC_CMD_TCPCSUM/
+	 * RL_TDESC_CMD_UDPCSUM does not take affect.
+	 */
+
 	rl_flags = 0;
 
-	if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+	if ((m_head->m_pkthdr.csum_flags &
+	    (M_IPV4_CSUM_OUT|M_TCPV4_CSUM_OUT|M_UDPV4_CSUM_OUT)) != 0) {
 		rl_flags |= RL_TDESC_CMD_IPCSUM;
-	if (m_head->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
-		rl_flags |= RL_TDESC_CMD_TCPCSUM;
-	if (m_head->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
-		rl_flags |= RL_TDESC_CMD_UDPCSUM;
+		if (m_head->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
+			rl_flags |= RL_TDESC_CMD_TCPCSUM;
+		if (m_head->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
+			rl_flags |= RL_TDESC_CMD_UDPCSUM;
+	}
 
 	map = sc->rl_ldata.rl_tx_dmamap[*idx];
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, map,
