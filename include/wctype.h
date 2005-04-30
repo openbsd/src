@@ -1,4 +1,4 @@
-/*	$OpenBSD: wctype.h,v 1.1 2005/04/14 20:59:10 espie Exp $	*/
+/*	$OpenBSD: wctype.h,v 1.2 2005/04/30 09:14:23 espie Exp $	*/
 /*	$NetBSD: wctype.h,v 1.5 2003/03/02 22:18:11 tshiozak Exp $	*/
 
 /*-
@@ -53,5 +53,22 @@ typedef	_BSD_WCTYPE_T_	wctype_t;
 #ifndef WEOF
 #define	WEOF	((wint_t)-1)
 #endif
+
+__BEGIN_DECLS
+int	iswalnum(wint_t);
+int	iswalpha(wint_t);
+int	iswblank(wint_t);
+int	iswcntrl(wint_t);
+int	iswdigit(wint_t);
+int	iswgraph(wint_t);
+int	iswlower(wint_t);
+int	iswprint(wint_t);
+int	iswpunct(wint_t);
+int	iswspace(wint_t);
+int	iswupper(wint_t);
+int	iswxdigit(wint_t);
+wint_t	towlower(wint_t);
+wint_t	towupper(wint_t);
+__END_DECLS
 
 #endif		/* _WCTYPE_H_ */
