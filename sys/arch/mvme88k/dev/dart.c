@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.42 2004/11/13 14:47:35 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.43 2005/04/30 16:40:42 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -1184,9 +1184,6 @@ dartcnputc(dev, c)
 {
 	union dartreg *addr;
 	union dart_pt_io *ptaddr;
-#if 0
-	m88k_psr_type psr;
-#endif
 	int s;
 	int port;
 
@@ -1200,11 +1197,7 @@ dartcnputc(dev, c)
 	ptaddr = (union dart_pt_io *) addr + ((dev & 1) ? 1 : 0);
 #endif
 
-#if 1
 	s = spltty();
-#else
-	psr = disable_interrupts_return_psr();
-#endif
 
 	/* Assume first port initialized if we get here. */
 	/* Assume the bug initializes the port */
@@ -1228,11 +1221,7 @@ dartcnputc(dev, c)
 	DELAY_CR;
 	ptaddr->write.wr_cr = dart_sv_reg.sv_cr[0];
 
-#if 1
 	splx(s);
-#else
-	set_psr(psr);
-#endif
 }
 
 int
@@ -1245,17 +1234,9 @@ dartcngetc(dev)
 	u_char c;		/* received character */
 	int s;
 	int port;
-#if 1
-#else
-	m88k_psr_type psr;
-#endif
 
 	port = DART_PORT(dev);
-#if 1
 	s = spltty();
-#else
-	psr = disable_interrupts_return_psr();
-#endif
 	addr = (union dartreg *) DART_BASE;
 #if 1
 	ptaddr = (union dart_pt_io *) addr + (port * 0x20);
@@ -1293,10 +1274,6 @@ dartcngetc(dev)
 			}
 		}
 	}
-#if 1
 	splx(s);
-#else
-	set_psr(psr);
-#endif
 	return (int)c;
 }
