@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.34 2005/04/30 00:36:05 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.35 2005/04/30 00:49:37 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -9,9 +9,9 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-machine	zaurus	arm
-
-include "../../../conf/GENERIC"
+machine		zaurus arm
+include		"../../../conf/GENERIC"
+maxusers	32			# estimated number of users
 
 options		ARM32
 #options 	ARM_INTR_IMPL="<arch/arm/xscale/pxa2x0_intr.h>"
@@ -25,10 +25,6 @@ makeoptions	KERNEL_BASE_VIRT="0xc0200000"
 makeoptions	BOARDTYPE="zaurus"
 
 options		APERTURE
-
-# estimated number of users
-
-maxusers	32
 
 # CPU options
 options 	CPU_XSCALE_PXA2X0	# Support the XScale core

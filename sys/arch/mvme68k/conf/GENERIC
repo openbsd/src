@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.23 2005/04/30 00:36:04 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.24 2005/04/30 00:49:36 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -10,8 +10,8 @@
 # device.
 
 machine		mvme68k m68k
-
 include "../../../conf/GENERIC"
+maxusers	32			# estimated number of users
 
 option		M68030		# support for 030
 option		M68040		# support for 040
@@ -29,8 +29,6 @@ option		MVME177		# (requires M68060, 060SP, FPSP)
 option		COMPAT_SUNOS
 option		COMPAT_HPUX
 option		COMPAT_M68K4K
-
-maxusers	32
 
 config		bsd		swap generic
 

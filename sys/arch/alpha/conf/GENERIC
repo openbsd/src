@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.144 2005/04/30 00:36:03 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.145 2005/04/30 00:49:35 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -9,10 +9,9 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-machine	alpha
-
-include "../../../conf/GENERIC"
-maxusers	32
+machine		alpha
+include		"../../../conf/GENERIC"
+maxusers	32			# estimated number of users
 
 # CPU Support
 option		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*

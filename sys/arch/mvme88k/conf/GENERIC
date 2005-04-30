@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.45 2005/04/30 00:36:05 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.46 2005/04/30 00:49:36 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -10,23 +10,21 @@
 # device.
 
 machine		mvme88k m88k
-
-include "../../../conf/GENERIC"
+include		"../../../conf/GENERIC"
+maxusers	32			# estimated number of users
 
 # Processor type
 option		M88100
 option		M88110
 
-option		MVME187		# support for 187 (requires M88100)
-option		MVME188		# support for 188 (requires M88100)
-option		MVME197		# support for 197 (requires M88110)
-
-option		"NCPUS=1"	# number of CPUs supported (max 4)
+option		MVME187			# support for 187 (requires M88100)
+option		MVME188			# support for 188 (requires M88100)
+option		MVME197			# support for 197 (requires M88110)
+option		"NCPUS=1"		# number of CPUs supported (max 4)
 
 # Define this if your processor has the xxx.usr bug (mask C82N)
 option		ERRATA__XXX_USR
 
-maxusers	64
 
 config		bsd		swap generic
 

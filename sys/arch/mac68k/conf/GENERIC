@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.38 2005/04/30 00:36:04 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.39 2005/04/30 00:49:36 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -9,8 +9,9 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-machine	mac68k m68k
-include "conf/GENERIC"
+machine		mac68k m68k
+include		"../../../conf/GENERIC"
+maxusers	32			# estimated number of users
 
 # Mac-specific options
 option		HZ=60		# Macs like 60Hz
@@ -24,7 +25,6 @@ option		DISABLE_ADB_WITH_SERIAL_CONSOLE
 #option		MRG_ADB		  # Use ROM-based ADB driver
 
 config		bsd	swap generic
-maxusers	32
 
 mainbus0 at root
 

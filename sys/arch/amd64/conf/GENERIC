@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.61 2005/04/30 00:36:03 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.62 2005/04/30 00:49:35 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -9,9 +9,9 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-machine		amd64		# architecture, used by config; REQUIRED
-
-include "../../../conf/GENERIC"
+machine		amd64
+include		"../../../conf/GENERIC"
+maxusers	32			# estimated number of users
 
 #option		USER_PCICONF	# user-space PCI configuration
 
@@ -31,8 +31,6 @@ option		APERTURE	# in-kernel aperture driver for XFree86
 #option		COMPAT_AOUT	# a.out binaries are emulated
 
 #option		NTFS		# Experimental NTFS support
-
-maxusers	32		# estimated number of users
 
 config		bsd	swap generic
 

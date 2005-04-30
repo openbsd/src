@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.21 2005/04/30 00:36:04 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.22 2005/04/30 00:49:35 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -9,18 +9,12 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-machine	cats	arm
-
-include "../../../conf/GENERIC"
+machine		cats arm
+include		"../../../conf/GENERIC"
+maxusers	32			# estimated number of users
 
 options		ARM32
 options		FOOTBRIDGE_INTR
-
-# estimated number of users
-
-maxusers	32
-
-# Standard system options
 
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
 #options 	INSECURE	# disable kernel securelevel

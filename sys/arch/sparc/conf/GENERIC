@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.81 2005/04/30 00:36:05 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.82 2005/04/30 00:49:36 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -9,11 +9,9 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-# Machine architecture; required by config(8)
 machine		sparc
-
-include "../../../conf/GENERIC"
-
+include		"../../../conf/GENERIC"
+maxusers	20		# estimated number of users
 
 # Options for variants of the Sun SPARC architecture.
 # At least one is required.
@@ -30,8 +28,6 @@ option		SUN4M		# sun4m - SS10, SS20, Classic, etc.
 # Options for SPARCstation hardware
 option		COMPAT_SUNOS	# compatibility with SunOS binaries
 option		COMPAT_SVR4	# compatibility with SVR4 binaries
-
-maxusers	20		# estimated number of users
 
 # Generic swap; second partition of root disk or network.
 config		bsd	swap generic

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.80 2005/04/30 00:36:04 deraadt Exp $g
+#	$OpenBSD: GENERIC,v 1.81 2005/04/30 00:49:36 deraadt Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -10,8 +10,8 @@
 # device.
 
 machine		macppc powerpc
-
-maxusers	32
+include		"../../../conf/GENERIC"
+maxusers	32			# estimated number of users
 
 # default type, instructs system to try to determin what proper type is
 # actual machine type probed via name of openfirmware root node.
@@ -27,8 +27,6 @@ option		APERTURE	# in-kernel aperture driver for XFree86
 option		WSDISPLAY_COMPAT_RAWKBD
 
 option		USER_PCICONF	# user-space PCI configuration
-
-include "../../../conf/GENERIC"
 
 config		bsd	swap generic
 

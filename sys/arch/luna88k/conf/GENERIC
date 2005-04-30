@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 2005/04/30 00:36:04 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.8 2005/04/30 00:49:36 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -10,8 +10,8 @@
 # device.
 
 machine		luna88k m88k
-
-include "../../../conf/GENERIC"
+include		"../../../conf/GENERIC"
+maxusers	64			# estimated number of users
 
 option		"NCPUS=1"	# number of CPUs supported (max 4)
 
@@ -21,7 +21,6 @@ option		M88100		# 88100 support; mandatory
 # Define this if your processor has the xxx.usr bug (mask C82N)
 option		ERRATA__XXX_USR
 
-maxusers	64
 
 config		bsd		swap generic
 

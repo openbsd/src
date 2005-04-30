@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.7 2005/04/30 00:36:05 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.8 2005/04/30 00:49:36 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -10,8 +10,8 @@
 # device.
 
 machine		mvmeppc powerpc
-
-maxusers	32
+include		"../../../conf/GENERIC"
+maxusers	32			# estimated number of users
 
 # default type, instructs system to try to determine what proper type is
 # actual machine type probed via name of openfirmware root node.
@@ -19,7 +19,6 @@ option		SYS_TYPE=APPL
 
 option		PCIVERBOSE
 
-include "../../../conf/GENERIC"
 
 config		bsd	swap generic
 
