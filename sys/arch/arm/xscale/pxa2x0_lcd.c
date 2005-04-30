@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.17 2005/04/11 03:32:48 uwe Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.18 2005/04/30 23:13:47 pascoe Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -591,7 +591,12 @@ pxa2x0_lcd_setup_rasops(struct rasops_info *rinfo,
 		descr->c.capabilities = rinfo->ri_caps;
 		descr->c.textops = &rinfo->ri_ops;
 	} else
+#ifndef __zaurus__
 		rasops_init(rinfo, descr->c.nrows, descr->c.ncols);
+#else
+		/* XXX swap rows/cols for second call because of rotation */
+		rasops_init(rinfo, descr->c.ncols, descr->c.nrows);
+#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.11 2005/04/15 02:19:24 pascoe Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.12 2005/04/30 23:13:47 pascoe Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -126,6 +126,9 @@
 #include <dev/wsfont/gallant12x22.h>
 #endif
 
+#ifdef __zaurus__
+void wsfont_rotate(struct wsdisplay_font *, int);
+#endif
 
 /* Placeholder struct used for linked list */
 struct font {
@@ -283,6 +286,64 @@ wsfont_enum(cb)
 	splx(s);
 }
 
+#ifdef __zaurus__
+void wsfont_rotate(struct wsdisplay_font *font, int static_orig)
+{
+	int b, n, r, newstride;
+	char *newfont;
+
+	/* Allocate a buffer big enough for the rotated font. */
+	newstride = (font->fontheight + 7) / 8;
+	newfont = malloc(newstride * font->fontwidth * font->numchars,
+	    M_DEVBUF, M_WAITOK);
+	if (newfont == NULL)
+		return;
+	bzero(newfont, newstride * font->fontwidth * font->numchars);
+
+	/* Rotate the font a bit at a time. */
+	for (n = 0; n < font->numchars; n++) {
+		char *ch = font->data + (n * font->stride * font->fontheight);
+
+		for (r = 0; r < font->fontheight; r++) {
+			for (b = 0; b < font->fontwidth; b++) {
+				unsigned char *rb;
+
+				rb = ch + (font->stride * r) + (b / 8);
+				if (*rb & (0x80 >> (b % 8))) {
+					unsigned char *rrb;
+
+					rrb = newfont + newstride - 1 - (r / 8)
+					    + (n * newstride * font->fontwidth)
+					    + (newstride * b);
+					*rrb |= (1 << (r % 8));
+				}
+			}
+		}
+	}
+
+	/*
+	 * If the rotated font will fit into the memory the font originally
+	 * used, copy it into there, otherwise use our new buffer.
+	 */
+	if ((newstride * font->fontwidth * font->numchars) <=
+	    (font->stride * font->fontheight * font->numchars)) {
+		memcpy(font->data, newfont, newstride *
+		    font->fontwidth * font->numchars);
+		free(newfont, M_DEVBUF);
+	} else {
+		if (!static_orig)
+			free(font->data, M_DEVBUF);
+		font->data = newfont;
+	}
+
+	/* Update font sizes. */
+	font->stride = newstride;
+	newstride = font->fontwidth;	 /* temp */
+	font->fontwidth = font->fontheight;
+	font->fontheight = newstride;
+}
+#endif
+
 /*
  * Initialize list with WSFONT_BUILTIN fonts
  */
@@ -296,6 +357,11 @@ wsfont_init(void)
 		return;
 	again = 1;
 		
+#ifdef __zaurus__
+	for (i = 0; builtin_fonts[i].font != NULL; i++)
+		wsfont_rotate(builtin_fonts[i].font, 1);
+#endif
+
 	for (i = 0; builtin_fonts[i].font != NULL; i++) {
 		builtin_fonts[i].next = list;
 		list = &builtin_fonts[i];
@@ -396,6 +462,10 @@ wsfont_add(font, copy)
 		memcpy(ent->font->data, font->data, size);
 		ent->flg = 0;
 	}
+
+#ifdef __zaurus__
+	wsfont_rotate(ent->font, 0);
+#endif
 	
 	/* Now link into the list and return */
 	list = ent;

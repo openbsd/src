@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.h,v 1.5 2002/08/12 02:31:01 jason Exp $ */
+/*	$OpenBSD: rasops.h,v 1.6 2005/04/30 23:13:47 pascoe Exp $ */
 /* 	$NetBSD: rasops.h,v 1.13 2000/06/13 13:36:54 ad Exp $ */
 
 /*-
@@ -110,6 +110,11 @@ struct rasops_info {
 	/* Callbacks so we can share some code */
 	void	(*ri_do_cursor)(struct rasops_info *);
 	void	(*ri_updatecursor)(struct rasops_info *);
+
+#ifdef __zaurus__
+	/* Used to intercept putchar to permit display rotation */
+	struct	wsdisplay_emulops ri_real_ops;
+#endif
 };
 
 #define DELTA(p, d, cast) ((p) = (cast)((caddr_t)(p) + (d)))

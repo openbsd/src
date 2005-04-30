@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.9 2003/12/17 11:21:08 miod Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.10 2005/04/30 23:13:47 pascoe Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -147,6 +147,55 @@ int	rasops_alloc_cattr(void *, int, int, int, long *);
 int	rasops_alloc_mattr(void *, int, int, int, long *);
 void	rasops_do_cursor(struct rasops_info *);
 void	rasops_init_devcmap(struct rasops_info *);
+#ifdef __zaurus__
+void	rasops_copychar(void *, int, int, int, int);
+void	rasops_putchar_rotated(void *, int, int, u_int, long);
+
+void
+rasops_copychar(cookie, srcrow, dstrow, srccol, dstcol)
+	void *cookie;
+	int srcrow, dstrow, srccol, dstcol;
+{
+	struct rasops_info *ri;
+	u_char *sp, *dp;
+	int height;
+	int r_srcrow, r_dstrow, r_srccol, r_dstcol;
+
+	ri = (struct rasops_info *)cookie;
+
+	r_srcrow = srccol;
+	r_dstrow = dstcol;
+	r_srccol = ri->ri_rows - srcrow - 1;
+	r_dstcol = ri->ri_rows - dstrow - 1;
+
+	r_srcrow *= ri->ri_yscale;
+	r_dstrow *= ri->ri_yscale;
+	height = ri->ri_font->fontheight;
+
+	sp = ri->ri_bits + r_srcrow + r_srccol * ri->ri_xscale;
+	dp = ri->ri_bits + r_dstrow + r_dstcol * ri->ri_xscale;
+
+	while (height--) {
+		ovbcopy(sp, dp, ri->ri_xscale);
+		dp += ri->ri_stride;
+		sp += ri->ri_stride;
+	}
+}
+
+void
+rasops_putchar_rotated(cookie, row, col, uc, attr)
+	void *cookie;
+	int row, col;
+	u_int uc;
+	long attr;
+{
+	struct rasops_info *ri;
+
+	ri = (struct rasops_info *)cookie;
+
+	ri->ri_real_ops.putchar(cookie, col, ri->ri_rows - row - 1, uc, attr);
+}
+#endif
 
 /*
  * Initialize a 'rasops_info' descriptor.
@@ -166,10 +215,18 @@ rasops_init(ri, wantrows, wantcols)
 
 		if (ri->ri_width > 80*12)
 			/* High res screen, choose a big font */
+#ifndef __zaurus__
 			cookie = wsfont_find(NULL, 12, 0, 0);
+#else
+			cookie = wsfont_find(NULL, 0, 12, 0);
+#endif
 		else
 			/*  lower res, choose a 8 pixel wide font */
+#ifndef __zaurus__
 			cookie = wsfont_find(NULL, 8, 0, 0);
+#else
+			cookie = wsfont_find(NULL, 0, 8, 0);
+#endif
 
 		if (cookie <= 0)
 			cookie = wsfont_find(NULL, 0, 0, 0);
@@ -251,8 +308,13 @@ rasops_reconfig(ri, wantrows, wantcols)
 	while ((ri->ri_emuwidth * bpp & 31) != 0)
 		ri->ri_emuwidth--;
 
+#ifndef __zaurus__
 	ri->ri_cols = ri->ri_emuwidth / ri->ri_font->fontwidth;
 	ri->ri_rows = ri->ri_emuheight / ri->ri_font->fontheight;
+#else
+	ri->ri_rows = ri->ri_emuwidth / ri->ri_font->fontwidth;
+	ri->ri_cols = ri->ri_emuheight / ri->ri_font->fontheight;
+#endif
 	ri->ri_emustride = ri->ri_emuwidth * bpp >> 3;
 	ri->ri_delta = ri->ri_stride - ri->ri_emustride;
 	ri->ri_ccol = 0;
@@ -351,6 +413,11 @@ rasops_reconfig(ri, wantrows, wantcols)
 		splx(s);
 		return (-1);
 	}
+
+#ifdef __zaurus__
+	ri->ri_real_ops = ri->ri_ops;
+	ri->ri_ops.putchar = rasops_putchar_rotated;
+#endif
 
 	ri->ri_flg |= RI_CFGDONE;
 	splx(s);
@@ -470,6 +537,7 @@ rasops_alloc_mattr(cookie, fg, bg, flg, attr)
 	return (0);
 }
 
+#ifndef __zaurus__
 /*
  * Copy rows.
  */
@@ -606,6 +674,41 @@ rasops_copycols(cookie, row, src, dst, num)
 		sp += ri->ri_stride;
 	}
 }
+#else
+/* XXX: these could likely be optimised somewhat. */
+void
+rasops_copyrows(cookie, src, dst, num)
+	void *cookie;
+	int src, dst, num;
+{
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	int col, roff;
+
+	if (src > dst)
+		for (roff = 0; roff < num; roff++)
+			for (col = 0; col < ri->ri_cols; col++)
+				rasops_copychar(cookie, src + roff, dst + roff, col, col);
+	else
+		for (roff = num - 1; roff >= 0; roff--)
+			for (col = 0; col < ri->ri_cols; col++)
+				rasops_copychar(cookie, src + roff, dst + roff, col, col);
+}
+
+void
+rasops_copycols(cookie, row, src, dst, num)
+	void *cookie;
+	int row, src, dst, num;
+{
+	int coff;
+
+	if (src > dst)
+		for (coff = 0; coff < num; coff++)
+			rasops_copychar(cookie, row, row, src + coff, dst + coff);
+	else
+		for (coff = num - 1; coff >= 0; coff--)
+			rasops_copychar(cookie, row, row, src + coff, dst + coff);
+}
+#endif
 
 /*
  * Turn cursor off/on.
@@ -740,6 +843,7 @@ rasops_unpack_attr(attr, fg, bg, underline)
 /*
  * Erase rows
  */
+#ifndef __zaurus__
 void
 rasops_eraserows(cookie, row, num, attr)
 	void *cookie;
@@ -808,6 +912,23 @@ rasops_eraserows(cookie, row, num, attr)
 		DELTA(dp, delta, int32_t *);
 	}
 }
+#else
+void
+rasops_eraserows(cookie, row, num, attr)
+	void *cookie;
+	int row, num;
+	long attr;
+{
+	struct rasops_info *ri;
+	int col, rn;
+
+	ri = (struct rasops_info *)cookie;
+
+	for (rn = row; rn < row + num; rn++)
+		for (col = 0; col < ri->ri_cols; col++)
+			ri->ri_ops.putchar(cookie, rn, col, ' ', attr);
+}
+#endif
 
 /*
  * Actually turn the cursor on or off. This does the dirty work for
@@ -820,8 +941,14 @@ rasops_do_cursor(ri)
 	int full1, height, cnt, slop1, slop2, row, col;
 	u_char *dp, *rp;
 
+#ifndef __zaurus__
 	row = ri->ri_crow;
 	col = ri->ri_ccol;
+#else
+	/* Rotate rows/columns */
+	row = ri->ri_ccol;
+	col = ri->ri_rows - ri->ri_crow - 1;
+#endif
 
 	rp = ri->ri_bits + row * ri->ri_yscale + col * ri->ri_xscale;
 	height = ri->ri_font->fontheight;
@@ -875,6 +1002,7 @@ rasops_do_cursor(ri)
 /*
  * Erase columns.
  */
+#ifndef __zaurus__
 void
 rasops_erasecols(cookie, row, col, num, attr)
 	void *cookie;
@@ -1000,3 +1128,19 @@ rasops_erasecols(cookie, row, col, num, attr)
 			*(int16_t *)dp = clr;
 	}
 }
+#else
+void
+rasops_erasecols(cookie, row, col, num, attr)
+	void *cookie;
+	int row, col, num;
+	long attr;
+{
+	struct rasops_info *ri;
+	int i;
+
+	ri = (struct rasops_info *)cookie;
+
+	for (i = col; i < col + num; i++)
+		ri->ri_ops.putchar(cookie, row, i, ' ', attr);
+}
+#endif
