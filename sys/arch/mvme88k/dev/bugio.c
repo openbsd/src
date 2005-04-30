@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.13 2004/04/12 13:14:54 miod Exp $ */
+/*	$OpenBSD: bugio.c,v 1.14 2005/04/30 16:42:37 miod Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
 
 #include <sys/param.h>
@@ -25,7 +25,7 @@ bug_vector()
 {
 	unsigned long *vbr, psr;
 
-	psr = disable_interrupts_return_psr();	/* paranoia */
+	disable_interrupt(psr);			/* paranoia */
 
 	__asm__ __volatile__ ("ldcr %0, cr7" : "=r" (vbr));
 	vbr[2 * MVMEPROM_VECTOR + 0] = bugvec[0];
@@ -39,7 +39,7 @@ sysbug_vector()
 {
 	unsigned long *vbr, psr;
 
-	psr = disable_interrupts_return_psr();	/* paranoia */
+	disable_interrupt(psr);			/* paranoia */
 
 	__asm__ __volatile__ ("ldcr %0, cr7" : "=r" (vbr));
 	vbr[2 * MVMEPROM_VECTOR + 0] = sysbugvec[0];

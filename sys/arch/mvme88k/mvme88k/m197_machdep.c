@@ -1,4 +1,4 @@
-/*	$OpenBSD: m197_machdep.c,v 1.6 2005/04/27 14:07:38 miod Exp $	*/
+/*	$OpenBSD: m197_machdep.c,v 1.7 2005/04/30 16:42:37 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -192,7 +192,7 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 		/* block interrupts at level or lower */
 		m197_setipl(level);
 		flush_pipeline();
-		enable_interrupt();
+		set_psr(get_psr() & ~PSR_IND);
 	}
 
 	list = &intr_handlers[vec];
@@ -234,7 +234,7 @@ m197_ext_int(u_int v, struct trapframe *eframe)
 	}
 
 	if (v != T_NON_MASK || cold == 0) {
-		disable_interrupt();
+		set_psr(get_psr() | PSR_IND);
 
 		/*
 		 * Restore the mask level to what it was when the interrupt

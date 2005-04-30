@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.20 2005/04/27 14:09:45 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.21 2005/04/30 16:42:37 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -74,7 +74,16 @@
 #ifdef DEBUG
 #define DB_CMMU		0x4000	/* MMU debug */
 unsigned int debuglevel = 0;
-#define dprintf(_L_,_X_) { if (debuglevel & (_L_)) { unsigned int psr = disable_interrupts_return_psr(); printf("%d: ", cpu_number()); printf _X_;  set_psr(psr); } }
+#define dprintf(_L_,_X_) \
+do { \
+	if (debuglevel & (_L_)) { \
+		unsigned int psr; \
+		disable_interrupt(psr); \
+		printf("%d: ", cpu_number()); \
+		printf _X_; \
+		set_psr(psr); \
+	} \
+} while (0)
 #else
 #define dprintf(_L_,_X_)
 #endif
@@ -362,7 +371,9 @@ void
 m88110_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
     vsize_t size)
 {
-	u_int32_t psr = disable_interrupts_return_psr();
+	u_int32_t psr;
+
+	disable_interrupt(psr);
 
 	CMMU_LOCK;
 	if (kernel) {
@@ -409,7 +420,9 @@ m88110_cmmu_flush_tlb(unsigned cpu, unsigned kernel, vaddr_t vaddr,
 void
 m88110_cmmu_flush_cache(int cpu, paddr_t physaddr, psize_t size)
 {
-	u_int32_t psr = disable_interrupts_return_psr();
+	u_int32_t psr;
+
+	disable_interrupt(psr);
 
 	mc88110_inval_inst();
 	mc88110_flush_data();
@@ -424,7 +437,9 @@ m88110_cmmu_flush_cache(int cpu, paddr_t physaddr, psize_t size)
 void
 m88110_cmmu_flush_inst_cache(int cpu, paddr_t physaddr, psize_t size)
 {
-	u_int32_t psr = disable_interrupts_return_psr();
+	u_int32_t psr;
+
+	disable_interrupt(psr);
 
 	mc88110_inval_inst();
 	set_psr(psr);
@@ -436,7 +451,9 @@ m88110_cmmu_flush_inst_cache(int cpu, paddr_t physaddr, psize_t size)
 void
 m88110_cmmu_flush_data_cache(int cpu, paddr_t physaddr, psize_t size)
 {
-	u_int32_t psr = disable_interrupts_return_psr();
+	u_int32_t psr;
+
+	disable_interrupt(psr);
 
 	mc88110_flush_data();
 	if (mc88410_present())
@@ -450,7 +467,9 @@ m88110_cmmu_flush_data_cache(int cpu, paddr_t physaddr, psize_t size)
 void
 m88110_cmmu_sync_cache(paddr_t physaddr, psize_t size)
 {
-	u_int32_t psr = disable_interrupts_return_psr();
+	u_int32_t psr;
+
+	disable_interrupt(psr);
 
 	mc88110_inval_inst();
 	mc88110_flush_data();
@@ -462,7 +481,9 @@ m88110_cmmu_sync_cache(paddr_t physaddr, psize_t size)
 void
 m88110_cmmu_sync_inval_cache(paddr_t physaddr, psize_t size)
 {
-	u_int32_t psr = disable_interrupts_return_psr();
+	u_int32_t psr;
+
+	disable_interrupt(psr);
 
 	mc88110_sync_data();
 	if (mc88410_present())
@@ -473,7 +494,9 @@ m88110_cmmu_sync_inval_cache(paddr_t physaddr, psize_t size)
 void
 m88110_cmmu_inval_cache(paddr_t physaddr, psize_t size)
 {
-	u_int32_t psr = disable_interrupts_return_psr();
+	u_int32_t psr;
+
+	disable_interrupt(psr);
 
 	mc88110_inval_inst();
 	mc88110_inval_data();

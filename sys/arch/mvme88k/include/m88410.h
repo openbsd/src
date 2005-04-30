@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88410.h,v 1.10 2004/04/24 19:51:48 miod Exp $ */
+/*	$OpenBSD: m88410.h,v 1.11 2005/04/30 16:42:37 miod Exp $ */
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * All rights reserved.
@@ -54,14 +54,13 @@ static __inline__ void
 mc88410_flush_page(paddr_t physaddr)
 {
 	paddr_t xccaddr = XCC_ADDR | (physaddr >> PGSHIFT);
-        m88k_psr_type psr;
+	u_int psr;
 	u_int16_t bs_gcsr, bs_romcr;
 
 	bs_gcsr = *(volatile u_int16_t *)(BS_BASE + BS_GCSR);
 	bs_romcr = *(volatile u_int16_t *)(BS_BASE + BS_ROMCR);
-	psr = get_psr();
 	/* mask misaligned exceptions */
-	set_psr(psr | PSR_MXM);
+	set_psr((psr = get_psr()) | PSR_MXM);
 	/* clear WEN0 and WEN1 in ROMCR (disables writes to FLASH) */
 	*(volatile u_int16_t *)(BS_BASE + BS_ROMCR) =
 	    bs_romcr & ~(BS_ROMCR_WEN0 | BS_ROMCR_WEN1);
@@ -92,14 +91,13 @@ mc88410_flush_page(paddr_t physaddr)
 static __inline__ void
 mc88410_flush(void)
 {
-        m88k_psr_type psr;
+	u_int psr;
 	u_int16_t bs_gcsr, bs_romcr;
 
 	bs_gcsr = *(volatile u_int16_t *)(BS_BASE + BS_GCSR);
 	bs_romcr = *(volatile u_int16_t *)(BS_BASE + BS_ROMCR);
-	psr = get_psr();
 	/* mask misaligned exceptions */
-	set_psr(psr | PSR_MXM);
+	set_psr((psr = get_psr()) | PSR_MXM);
 	/* clear WEN0 and WEN1 in ROMCR (disables writes to FLASH) */
 	*(volatile u_int16_t *)(BS_BASE + BS_ROMCR) =
 	    bs_romcr & ~(BS_ROMCR_WEN0 | BS_ROMCR_WEN1);
@@ -130,15 +128,14 @@ mc88410_flush(void)
 static __inline__ void
 mc88410_inval(void)
 {
-        m88k_psr_type psr;
+	u_int psr;
 	u_int16_t bs_gcsr, bs_romcr;
 
 	bs_gcsr = *(volatile u_int16_t *)(BS_BASE + BS_GCSR);
 	bs_romcr = *(volatile u_int16_t *)(BS_BASE + BS_ROMCR);
 
-	psr = get_psr();
 	/* mask misaligned exceptions */
-	set_psr(psr | PSR_MXM);
+	set_psr((psr = get_psr()) | PSR_MXM);
 	/* clear WEN0 and WEN1 in ROMCR (disables writes to FLASH) */
 	*(volatile u_int16_t *)(BS_BASE + BS_ROMCR) =
 	    bs_romcr & ~(BS_ROMCR_WEN0 | BS_ROMCR_WEN1);

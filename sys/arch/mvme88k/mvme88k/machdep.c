@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.164 2005/04/27 14:09:45 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.165 2005/04/30 16:42:37 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -852,7 +852,7 @@ slave_pre_main()
 {
 	set_cpu_number(cmmu_cpu_number()); /* Determine cpu number by CMMU */
 	splhigh();
-	enable_interrupt();
+	set_psr(get_psr() & ~PSR_IND);
 }
 
 /* dummy main routine for slave processors */
@@ -1319,10 +1319,9 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 unsigned
 getipl(void)
 {
-	u_int curspl;
-	m88k_psr_type psr;
+	u_int curspl, psr;
 
-	psr = disable_interrupts_return_psr();
+	disable_interrupt(psr);
 	curspl = (*md_getipl)();
 	set_psr(psr);
 	return curspl;
@@ -1331,10 +1330,9 @@ getipl(void)
 unsigned
 setipl(unsigned level)
 {
-	u_int curspl;
-	m88k_psr_type psr;
+	u_int curspl, psr;
 
-	psr = disable_interrupts_return_psr();
+	disable_interrupt(psr);
 	curspl = (*md_setipl)(level);
 
 	/*
@@ -1351,10 +1349,9 @@ setipl(unsigned level)
 unsigned
 raiseipl(unsigned level)
 {
-	u_int curspl;
-	m88k_psr_type psr;
+	u_int curspl, psr;
 
-	psr = disable_interrupts_return_psr();
+	disable_interrupt(psr);
 	curspl = (*md_raiseipl)(level);
 
 	/*

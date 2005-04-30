@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.4 2005/04/19 15:23:37 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.5 2005/04/30 16:42:36 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -124,14 +124,17 @@ void db_clear_single_step(db_regs_t *);
 
 /* instruction type checking - others are implemented in db_sstep.c */
 
-#define inst_trap_return(ins)  ((ins) == 0xf400fc00U)
+#define inst_trap_return(ins)  ((ins) == 0xf400fc00)
 
 /* machine specific commands have been added to ddb */
 #define DB_MACHINE_COMMANDS
 
-int m88k_print_instruction(unsigned iadr, long inst);
+int m88k_print_instruction(unsigned, long);
 
 #define	DB_AOUT_SYMBOLS
+
+#define	db_enable_interrupt(psr)	set_psr(((psr) = get_psr()) & ~PSR_IND)
+#define	db_disable_interrupt(psr)	set_psr(psr)
 
 #endif	/* DDB */
 #endif	/* _LOCORE */

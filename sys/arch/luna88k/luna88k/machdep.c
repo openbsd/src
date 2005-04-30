@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.18 2005/04/27 14:09:45 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.19 2005/04/30 16:42:33 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -910,7 +910,7 @@ slave_pre_main()
 {
 	set_cpu_number(cmmu_cpu_number()); /* Determine cpu number by CMMU */
 	splhigh();
-	enable_interrupt();
+	set_psr(get_psr() & ~PSR_IND);
 }
 
 /* dummy main routine for slave processors */
@@ -987,7 +987,7 @@ luna88k_ext_int(u_int v, struct trapframe *eframe)
 
 		setipl(level);
 	  
-		enable_interrupt();
+		set_psr(get_psr() & ~PSR_IND);
 
 		switch(cur_int) {
 		case CLOCK_INT_LEVEL:
@@ -1008,7 +1008,7 @@ luna88k_ext_int(u_int v, struct trapframe *eframe)
 	 * process any remaining data access exceptions before
 	 * returning to assembler
 	 */
-	disable_interrupt();
+	set_psr(get_psr() | PSR_IND);
 out:
 	if (eframe->tf_dmt0 & DMT_VALID)
 		m88100_trap(T_DATAFLT, eframe);
@@ -1488,10 +1488,9 @@ setlevel(unsigned int level)
 unsigned
 getipl(void)
 {
-	unsigned curspl;
-	m88k_psr_type psr;
+	unsigned int curspl, psr;
 
-	psr = disable_interrupts_return_psr();
+	disable_interrupt(psr);
 	curspl = luna88k_curspl[cpu_number()];
 	set_psr(psr);
 	return curspl;
@@ -1500,10 +1499,9 @@ getipl(void)
 unsigned
 setipl(unsigned level)
 {
-	unsigned curspl;
-	m88k_psr_type psr;
+	unsigned int curspl, psr;
 
-	psr = disable_interrupts_return_psr();
+	disable_interrupt(psr);
 	curspl = luna88k_curspl[cpu_number()];
 	setlevel(level);
 
@@ -1521,10 +1519,9 @@ setipl(unsigned level)
 unsigned
 raiseipl(unsigned level)
 {
-	unsigned curspl;
-	m88k_psr_type psr;
+	unsigned int curspl, psr;
 
-	psr = disable_interrupts_return_psr();
+	disable_interrupt(psr);
 	curspl = luna88k_curspl[cpu_number()];
 	if (curspl < level)
 		setlevel(level);

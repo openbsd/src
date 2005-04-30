@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.6 2005/04/27 14:07:38 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.7 2005/04/30 16:42:37 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -352,7 +352,7 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 		 * to be cleared before interrupts are enabled.
 		 */
 		if ((cur_mask & DTI_BIT) == 0) {
-			enable_interrupt();
+			set_psr(get_psr() & ~PSR_IND);
 		}
 
 		/* generate IACK and get the vector */
@@ -430,7 +430,7 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 	 * process any remaining data access exceptions before
 	 * returning to assembler
 	 */
-	disable_interrupt();
+	set_psr(get_psr() | PSR_IND);
 out:
 	if (eframe->tf_dmt0 & DMT_VALID)
 		m88100_trap(T_DATAFLT, eframe);
