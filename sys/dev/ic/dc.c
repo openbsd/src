@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.83 2005/04/23 22:36:42 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.84 2005/04/30 21:38:05 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2741,7 +2741,7 @@ dc_start(ifp)
 
 	sc = ifp->if_softc;
 
-	if (!sc->dc_link)
+	if (!sc->dc_link && ifp->if_snd.ifq_len < 10)
 		return;
 
 	if (ifp->if_flags & IFF_OACTIVE)
