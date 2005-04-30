@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.47 2005/04/30 07:10:13 deraadt Exp $
+.\"	$OpenBSD: fdisk.8,v 1.48 2005/04/30 09:27:44 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -57,36 +57,36 @@ place of the original (MBR) boot block.
 .Pp
 Some other architectures (like the zaurus), consider sector 0 of the disk
 to contain the MBR partition table, but do not use the MBR bootcode at all.
-.Pp
 .Sh TYPICAL LAYOUT
 When called with no special flags,
 .Nm
 prints the MBR partition table of the specified device, i.e.,
-.Bd -literal
-  # fdisk wd0
-  Disk: wd0       geometry: 5168/240/63 [78140160 Sectors]
-  Offset: 0       Signature: 0xAA55
-           Starting       Ending       LBA Info:
-   #: id    C   H  S -    C   H  S [       start:      size   ]
-  ------------------------------------------------------------------------
-   0: 04    0   1  1 -  169 239 63 [          63:     2570337 ] DOS FAT-16  
-   1: 00    0   0  0 -    0   0  0 [           0:           0 ] unused      
-   2: 00    0   0  0 -    0   0  0 [           0:           0 ] unused      
-  *3: A6  170   1  1 - 5167 239 63 [     2570463:    75569697 ] OpenBSD     
+.Bd -literal -offset 1n
+# fdisk wd0
+Disk: wd0       geometry: 5168/240/63 [78140160 Sectors]
+Offset: 0       Signature: 0xAA55
+         Starting       Ending       LBA Info:
+ #: id    C   H  S -    C   H  S [       start:      size   ]
+------------------------------------------------------------------------
+ 0: 04    0   1  1 -  169 239 63 [          63:     2570337 ] DOS FAT-16
+ 1: 00    0   0  0 -    0   0  0 [           0:           0 ] unused
+ 2: 00    0   0  0 -    0   0  0 [           0:           0 ] unused
+*3: A6  170   1  1 - 5167 239 63 [     2570463:    75569697 ] OpenBSD
 .Ed
 .Pp
 This 78140160 sector (38154MB) disk drive is divided into two MBR
 partitions that span the whole disk.
 The first MBR partition is a 1225MB FAT-16 DOS partition
 (in this case containing a Phoenix BIOS Laptop Suspend-to-Disk file),
-the second is a 36GB OpenBSD MBR partition using the remainder of the disk.
+the second is a 36GB
+.Ox
+MBR partition using the remainder of the disk.
 The fields of the output are thus:
-.Pp
 .Bl -tag -width "start/size"
 .It Em "#"
 Number identifying each MBR partition table entry.
 There are a total of four slots.
-.Dq \&*
+.Sq *
 denotes the MBR partition which is declared bootable.
 .It Em "id"
 MBR partition type identifier.
@@ -113,68 +113,69 @@ but the start field is
 .Dq 0 based .
 The CHS values will need to be in the BIOS's geometry
 for the system to be able to boot and use the drive correctly.
-These values must be kept correctly syncronized or a variety of
+These values must be kept correctly synchronized or a variety of
 problems develop which are very difficult to diagnose.
 .Pp
-The OpenBSD MBR partition shown above is subdivided further using the
+The
+.Ox
+MBR partition shown above is subdivided further using the
 functionality provided by
-.Xr disklabel 8 Ns ,
+.Xr disklabel 8 ,
 which provides
 .Ox
 partitions.
-.Bd -literal
-  # Inside MBR partition 3: type A6 start 2570463 size 75569697 
-  # /dev/rwd0c:
-  type: ESDI
-  disk: ESDI/IDE disk
-  label: HITACHI_DK13FA-4
-  flags:
-  bytes/sector: 512
-  sectors/track: 63
-  tracks/cylinder: 16
-  sectors/cylinder: 1008
-  cylinders: 16383
-  total sectors: 78140160
-  rpm: 3600
-  interleave: 1
-  trackskew: 0
-  cylinderskew: 0
-  headswitch: 0           # microseconds
-  track-to-track seek: 0  # microseconds
-  drivedata: 0 
-  
-  16 partitions:
-  #             size        offset  fstype [fsize bsize  cpg]
-    a:       1740753       2570463  4.2BSD   2048 16384  328 # Cyl  2550*-  4276 
-    b:        819504       4311216    swap                   # Cyl  4277 -  5089 
-    c:      78140160             0  unused      0     0      # Cyl     0 - 77519 
-    d:       2097648       5130720  4.2BSD   2048 16384  328 # Cyl  5090 -  7170 
-    e:        614880       7228368  4.2BSD   2048 16384  328 # Cyl  7171 -  7780 
-    g:       2097648       7843248  4.2BSD   2048 16384  328 # Cyl  7781 -  9861 
-    h:        921312       9940896  4.2BSD   2048 16384  328 # Cyl  9862 - 10775 
-    i:       2570337            63   MSDOS                   # Cyl     0*-  2549 
-    j:       3355632      10862208  4.2BSD   2048 16384  328 # Cyl 10776 - 14104 
-    k:       2097648      14217840  4.2BSD   2048 16384  328 # Cyl 14105 - 16185 
-    l:       2097648      16315488  4.2BSD   2048 16384  328 # Cyl 16186 - 18266 
-    m:      59727024      18413136  4.2BSD   2048 16384  328 # Cyl 18267 - 77519 
+.Bd -literal -offset 1n
+# Inside MBR partition 3: type A6 start 2570463 size 75569697
+# /dev/rwd0c:
+type: ESDI
+disk: ESDI/IDE disk
+label: HITACHI_DK13FA-4
+flags:
+bytes/sector: 512
+sectors/track: 63
+tracks/cylinder: 16
+sectors/cylinder: 1008
+cylinders: 16383
+total sectors: 78140160
+rpm: 3600
+interleave: 1
+trackskew: 0
+cylinderskew: 0
+headswitch: 0           # microseconds
+track-to-track seek: 0  # microseconds
+drivedata: 0
+
+16 partitions:
+#           size     offset  fstype [fsize bsize  cpg]
+  a:     1740753    2570463  4.2BSD   2048 16384  328 # Cyl  2550*-  4276
+  b:      819504    4311216    swap                   # Cyl  4277 -  5089
+  c:    78140160          0  unused      0     0      # Cyl     0 - 77519
+  d:     2097648    5130720  4.2BSD   2048 16384  328 # Cyl  5090 -  7170
+  e:      614880    7228368  4.2BSD   2048 16384  328 # Cyl  7171 -  7780
+  g:     2097648    7843248  4.2BSD   2048 16384  328 # Cyl  7781 -  9861
+  h:      921312    9940896  4.2BSD   2048 16384  328 # Cyl  9862 - 10775
+  i:     2570337         63   MSDOS                   # Cyl     0*-  2549
+  j:     3355632   10862208  4.2BSD   2048 16384  328 # Cyl 10776 - 14104
+  k:     2097648   14217840  4.2BSD   2048 16384  328 # Cyl 14105 - 16185
+  l:     2097648   16315488  4.2BSD   2048 16384  328 # Cyl 16186 - 18266
+  m:    59727024   18413136  4.2BSD   2048 16384  328 # Cyl 18267 - 77519
 .Ed
 .Pp
 These
 .Ox
 partitions are then mounted as follows using
-.Pa /etc/fstab Ns :
-.Bd -literal
-  /dev/wd0a / ffs rw,softdep 1 1
-  /dev/wd0m /home ffs rw,softdep,nodev,nosuid 1 2
-  /dev/wd0d /tmp ffs rw,softdep,nodev,nosuid 1 2
-  /dev/wd0g /usr ffs rw,softdep,nodev 1 2
-  /dev/wd0h /usr/X11R6 ffs rw,softdep,nodev 1 2
-  /dev/wd0j /usr/local ffs rw,softdep,nodev 1 2
-  /dev/wd0k /usr/obj ffs rw,softdep,nodev,nosuid 1 2
-  /dev/wd0l /usr/src ffs rw,softdep,nodev,nosuid 1 2
-  /dev/wd0e /var ffs rw,softdep,nodev,nosuid 1 2
+.Pa /etc/fstab :
+.Bd -literal -offset indent
+/dev/wd0a / ffs rw,softdep 1 1
+/dev/wd0m /home ffs rw,softdep,nodev,nosuid 1 2
+/dev/wd0d /tmp ffs rw,softdep,nodev,nosuid 1 2
+/dev/wd0g /usr ffs rw,softdep,nodev 1 2
+/dev/wd0h /usr/X11R6 ffs rw,softdep,nodev 1 2
+/dev/wd0j /usr/local ffs rw,softdep,nodev 1 2
+/dev/wd0k /usr/obj ffs rw,softdep,nodev,nosuid 1 2
+/dev/wd0l /usr/src ffs rw,softdep,nodev,nosuid 1 2
+/dev/wd0e /var ffs rw,softdep,nodev,nosuid 1 2
 .Ed
-.Pp
 .Sh OPTIONS
 The options are as follows:
 .Bl -tag -width Ds
@@ -189,7 +190,7 @@ By default, an automatic calculation of disk size will be built
 using heuristics.
 These figures are taken from the in-core disklabel
 (see
-.Xr disklabel 8 Ns ),
+.Xr disklabel 8 ) ,
 or values that
 .Em /boot
 has passed to the kernel.
@@ -230,7 +231,6 @@ equivalent to the DOS command
 .Dq FDISK /MBR .
 Note that this option will overwrite the NT disk signature, if present.
 .El
-.Pp
 .Sh COMMAND MODE
 The
 .Fl e
@@ -239,11 +239,11 @@ flag causes
 to enter an interactive command mode.
 The prompt contains information about the state of the edit
 process.
-.Bd -literal
-    fdisk:*0>
-.Ed
 .Pp
-* means that the in-memory copy of the boot block has been modified, but
+.Dl fdisk:*0>
+.Pp
+.Sq *
+means that the in-memory copy of the boot block has been modified, but
 not yet written to disk.
 .Pp
 0 is the disk offset of the currently selected boot block being edited.
@@ -284,7 +284,7 @@ Only one entry can be marked bootable.
 .It update
 Update the machine MBR bootcode and 0xAA55 signature in the memory copy
 of the currently selected boot block.
-Note that this option will overwrite the NT disk
+Note that this option will overwrite an NT disk
 signature, if present.
 .It select Ar #
 Select and load into memory the boot block pointed
@@ -321,9 +321,8 @@ it does write the modified block out.
 Quit program without saving current changes.
 .El
 .Sh NOTES
-.Pp
 Hand crafted disk layouts can be highly error prone;
-ensure that
+ensure that the
 .Ox
 MBR partition starts on a cylinder boundary.
 (This restriction may be changed in the future.)
