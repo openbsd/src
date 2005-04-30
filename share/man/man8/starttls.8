@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.12 2004/10/21 15:15:36 millert Exp $
+.\" $OpenBSD: starttls.8,v 1.13 2005/04/30 23:45:42 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jose Nazario <jose@monkey.org>
 .\" All rights reserved.
@@ -86,7 +86,7 @@ parameter set with a command like the following:
 .Pp
 This would generate
 .Ar DSA
-parameters for 1024 bit
+parameters for 1024-bit
 .Ar DSA
 keys, and save them to the
 file
@@ -321,7 +321,7 @@ VERIFY can also accept the argument for {cipher_bits}.
 Here are a few example entries that illustrate these features, and
 the role based granularity as well:
 .Pp
-Force strong (112 bit) encryption for communications for this server:
+Force strong (112-bit) encryption for communications for this server:
 .Pp
 .Dl server1.example.net	ENCR:112
 .Pp
