@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.5 2005/04/30 16:42:36 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.6 2005/04/30 16:43:11 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -49,14 +49,8 @@
 
 #define	SET_PC_REGS(regs, value)					\
 do {									\
-	if (CPU_IS88110)						\
-		(regs)->exip = ((regs)->exip & ~XIP_ADDR) | old_pc;	\
-	else if ((regs)->sxip & XIP_V)					\
-		(regs)->sxip = ((regs)->sxip & ~XIP_ADDR) | old_pc;	\
-	else if ((regs)->snip & NIP_V)					\
-		(regs)->snip = ((regs)->snip & ~NIP_ADDR) | old_pc;	\
-	else								\
-		(regs)->sfip = ((regs)->sfip & ~FIP_ADDR) | old_pc;	\
+	(regs)->sxip = (value);						\
+	(regs)->snip = (value) + 4;					\
 } while (0)
 
 /* inst_return(ins) - is the instruction a function call return.
