@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.2 2004/06/19 18:24:15 miod Exp $ */
+/*	$OpenBSD: psl.h,v 1.3 2005/04/30 16:45:12 miod Exp $ */
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -53,37 +53,36 @@
 /*
  * processor identification register (PID)
  */
-#define PID_ARN		0x0000FF00U	/* architectural revision number */
-#define PID_VN		0x000000FEU	/* version number */
-#define PID_MC		0x00000001U	/* 88100 master/checker mode */
+#define PID_ARN		0x0000ff00	/* architectural revision number */
+#define PID_VN		0x000000fe	/* version number */
+#define PID_MC		0x00000001	/* 88100 master/checker mode */
 
 /*
  * processor status register
  */
 
-#define PSR_MODE	0x80000000U	/* supervisor/user mode */
-#define PSR_BO		0x40000000U	/* byte-ordering 0:big 1:little */
-#define PSR_SER		0x20000000U	/* 88110 serial mode */
-#define PSR_C		0x10000000U	/* carry */
-#define PSR_SGN		0x04000000U	/* 88110 Signed Immediate mode */
-#define PSR_SRM		0x02000000U	/* 88110 Serialize Memory */
-#define PSR_TRACE	0x00800000U	/* 88110 hardware trace */
-#define PSR_SFD		0x000003E0U	/* SFU disable */
-#define PSR_SFD2	0x00000010U	/* 88110 SFU2 (Graphics) disable */
-#define PSR_SFD1	0x00000008U	/* SFU1 (FPU) disable */
-#define PSR_MXM		0x00000004U	/* misaligned access enable */
-#define PSR_IND		0x00000002U	/* interrupt disable */
-#define PSR_SFRZ	0x00000001U	/* shadow freeze */
+#define PSR_MODE	0x80000000	/* supervisor/user mode */
+#define PSR_BO		0x40000000	/* byte-ordering 0:big 1:little */
+#define PSR_SER		0x20000000	/* 88110 serial mode */
+#define PSR_C		0x10000000	/* carry */
+#define PSR_SGN		0x04000000	/* 88110 Signed Immediate mode */
+#define PSR_SRM		0x02000000	/* 88110 Serialize Memory */
+#define PSR_TRACE	0x00800000	/* 88110 hardware trace */
+#define PSR_SFD		0x000003e0	/* SFU disable */
+#define PSR_SFD2	0x00000010	/* 88110 SFU2 (Graphics) disable */
+#define PSR_SFD1	0x00000008	/* SFU1 (FPU) disable */
+#define PSR_MXM		0x00000004	/* misaligned access enable */
+#define PSR_IND		0x00000002	/* interrupt disable */
+#define PSR_SFRZ	0x00000001	/* shadow freeze */
 
-#define FIP_V		0x00000002U	/* valid */
-#define FIP_E		0x00000001U	/* exception */
-#define FIP_ADDR	0xFFFFFFFCU	/* address mask */
-#define NIP_V		0x00000002U	/* valid */
-#define NIP_E		0x00000001U	/* exception */
-#define NIP_ADDR	0xFFFFFFFCU	/* address mask */
-#define XIP_V		0x00000002U	/* valid */
-#define XIP_E		0x00000001U	/* exception */
-#define XIP_ADDR	0xFFFFFFFCU	/* address mask */
+#define FIP_V		0x00000002	/* valid */
+#define FIP_E		0x00000001	/* exception */
+#define FIP_ADDR	0xfffffffc	/* address mask */
+#define NIP_V		0x00000002	/* valid */
+#define NIP_E		0x00000001	/* exception */
+#define NIP_ADDR	0xfffffffc	/* address mask */
+#define XIP_V		0x00000002	/* valid */
+#define XIP_E		0x00000001	/* exception */
+#define XIP_ADDR	0xfffffffc	/* address mask */
 
 #endif /* __M88K_PSL_H__ */
-
