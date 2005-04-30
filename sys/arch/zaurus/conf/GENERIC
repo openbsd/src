@@ -1,13 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.33 2005/04/15 01:05:50 pascoe Exp $
-#
-# GENERIC machine description file
-#
-# This machine description file is used to generate the default OpenBSD
-# kernel.  The generic kernel does not include all options, subsystems
-# and device drivers, but should be useful for most applications.
-#
-# The machine description file can be customised for your specific
-# machine to reduce the kernel size and improve its performance.
+#	$OpenBSD: GENERIC,v 1.34 2005/04/30 00:36:05 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.

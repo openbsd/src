@@ -1,7 +1,13 @@
-#	$OpenBSD: GENERIC,v 1.37 2004/12/03 06:37:51 miod Exp $
-#	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
+#	$OpenBSD: GENERIC,v 1.38 2005/04/30 00:36:04 deraadt Exp $
 #
-# GENERIC - an all-in-one kernel for the mac68k
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
 machine	mac68k m68k
 include "conf/GENERIC"

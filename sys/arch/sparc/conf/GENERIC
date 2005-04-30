@@ -1,5 +1,13 @@
-#	$OpenBSD: GENERIC,v 1.80 2005/04/14 20:15:58 brad Exp $
-# 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
+#	$OpenBSD: GENERIC,v 1.81 2005/04/30 00:36:05 deraadt Exp $
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
 # Machine architecture; required by config(8)
 machine		sparc

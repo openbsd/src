@@ -1,7 +1,13 @@
-#	$OpenBSD: GENERIC,v 1.407 2005/04/14 20:21:07 brad Exp $
+#	$OpenBSD: GENERIC,v 1.408 2005/04/30 00:36:04 deraadt Exp $
 #
-#	GENERIC -- everything that's currently supported
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
 #
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -176,7 +182,8 @@ radio*	at udsbr?		# USB radio
 #ubt*	at uhub?		# USB Bluetooth
 ugen*	at uhub?		# USB Generic driver
 ural*	at uhub?		# Ralink RT2500
-
+option	NATM
+ueagle*	at uhub?		# Analog Devices Eagle ADSL
 puc*	at pci?			# PCI "universal" communication device
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor

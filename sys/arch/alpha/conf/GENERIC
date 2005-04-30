@@ -1,5 +1,13 @@
-#	$OpenBSD: GENERIC,v 1.143 2005/04/20 14:46:03 jsg Exp $
-#	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
+#	$OpenBSD: GENERIC,v 1.144 2005/04/30 00:36:03 deraadt Exp $
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
 machine	alpha
 

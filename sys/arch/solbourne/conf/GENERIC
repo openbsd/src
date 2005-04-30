@@ -1,4 +1,13 @@
-#	$OpenBSD: GENERIC,v 1.1 2005/04/19 21:30:17 miod Exp $
+#	$OpenBSD: GENERIC,v 1.2 2005/04/30 00:36:05 deraadt Exp $
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
 
 # Machine architecture; required by config(8)
 machine		solbourne sparc
