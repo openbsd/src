@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.11 2005/04/25 17:55:51 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.12 2005/04/30 19:24:00 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -146,7 +146,9 @@ void vge_watchdog	(struct ifnet *);
 int vge_ifmedia_upd	(struct ifnet *);
 void vge_ifmedia_sts	(struct ifnet *, struct ifmediareq *);
 
+#ifdef VGE_EEPROM
 void vge_eeprom_getword	(struct vge_softc *, int, u_int16_t *);
+#endif
 void vge_read_eeprom	(struct vge_softc *, caddr_t, int, int, int);
 
 void vge_miipoll_start	(struct vge_softc *);
@@ -179,6 +181,7 @@ const struct pci_matchid vge_devices[] = {
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT612x },
 };
 
+#ifdef VGE_EEPROM
 /*
  * Read a word of data stored in the EEPROM at address 'addr.'
  */
@@ -223,6 +226,7 @@ vge_eeprom_getword(struct vge_softc *sc, int addr, u_int16_t *dest)
 
 	*dest = word;
 }
+#endif
 
 /*
  * Read a sequence of words from the EEPROM.
@@ -232,6 +236,7 @@ vge_read_eeprom(struct vge_softc *sc, caddr_t dest, int off, int cnt,
     int swap)
 {
 	int			i;
+#ifdef VGE_EEPROM
 	u_int16_t		word = 0, *ptr;
 
 	for (i = 0; i < cnt; i++) {
@@ -242,6 +247,10 @@ vge_read_eeprom(struct vge_softc *sc, caddr_t dest, int off, int cnt,
 		else
 			*ptr = word;
 	}
+#else
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		dest[i] = CSR_READ_1(sc, VGE_PAR0 + i);
+#endif
 }
 
 void
@@ -1229,13 +1238,13 @@ vge_tick(void *xsc)
 	if (sc->vge_link) {
 		if (!(mii->mii_media_status & IFM_ACTIVE))
 			sc->vge_link = 0;
-			ifp->if_link_state = LINK_STATE_UP;
+			ifp->if_link_state = LINK_STATE_DOWN;
 			if_link_state_change(ifp);
 	} else {
 		if (mii->mii_media_status & IFM_ACTIVE &&
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 			sc->vge_link = 1;
-			ifp->if_link_state = LINK_STATE_DOWN;
+			ifp->if_link_state = LINK_STATE_UP;
 			if_link_state_change(ifp);
 			if (!IFQ_IS_EMPTY(&ifp->if_snd))
 				vge_start(ifp);
