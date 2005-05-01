@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.78 2005/04/06 02:51:13 krw Exp $	*/
+/*	$OpenBSD: cd.c,v 1.79 2005/05/01 19:29:17 krw Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -359,6 +359,7 @@ cdopen(dev, flag, fmt, p)
 		 * and don't ignore NOT_READY.
 		 */
 		error = scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_CD,
+		    (part == RAW_PART && fmt == S_IFCHR) ? SCSI_SILENT : 0 |
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
 			
 		/* Start the cd spinning if necessary. */
@@ -368,9 +369,10 @@ cdopen(dev, flag, fmt, p)
 			    SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
 
 		if (error) {
-			if (part == RAW_PART && fmt == S_IFCHR)
+			if (part == RAW_PART && fmt == S_IFCHR) {
+				error = 0;
 				goto out;
-			else
+			} else
 				goto bad;
 		}
 
@@ -1100,12 +1102,15 @@ cdioctl(dev, cmd, addr, flag, p)
 		error = scsi_start(cd->sc_link, SSS_STOP, 0);
 		break;
 
+	close_tray:
 	case CDIOCCLOSE:
 		error = scsi_start(cd->sc_link, SSS_START|SSS_LOEJ, 
 		    SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
 		break;
 
 	case MTIOCTOP:
+		if (((struct mtop *)addr)->mt_op == MTRETEN)
+			goto close_tray;
 		if (((struct mtop *)addr)->mt_op != MTOFFL) {
 			error = EIO;
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.75 2005/04/06 02:51:13 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.76 2005/05/01 19:29:17 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -383,9 +383,11 @@ sdopen(dev, flag, fmt, p)
 	if (sd->sc_dk.dk_openmask != 0) {
 		/*
 		 * If any partition is open, but the disk has been invalidated,
-		 * disallow further opens.
+		 * disallow further opens of non-raw partition.
 		 */
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
+			if (part == RAW_PART && fmt == S_IFCHR)
+				goto out;
 			error = EIO;
 			goto bad;
 		}
@@ -405,8 +407,13 @@ sdopen(dev, flag, fmt, p)
 			    SCSI_IGNORE_ILLEGAL_REQUEST |
 			    SCSI_IGNORE_MEDIA_CHANGE);
 
-		if (error)
-			goto bad;
+		if (error) {
+			if (part == RAW_PART && fmt == S_IFCHR) {
+				error = 0;
+				goto out;
+			} else
+				goto bad;
+		}
 
 		/* Lock the pack in. */
 		if ((sc_link->flags & SDEV_REMOVABLE) != 0) {
@@ -440,7 +447,7 @@ sdopen(dev, flag, fmt, p)
 		goto bad;
 	}
 
-	/* Insure only one open at a time. */
+out:	/* Insure only one open at a time. */
 	switch (fmt) {
 	case S_IFCHR:
 		sd->sc_dk.dk_copenmask |= (1 << part);
