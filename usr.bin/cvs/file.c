@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.68 2005/04/25 21:58:32 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.69 2005/05/01 23:21:39 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -107,7 +107,7 @@ static RCSNUM *cvs_addedrev;
 TAILQ_HEAD(, cvs_ignpat)  cvs_ign_pats;
 
 
-static int	cvs_load_dirinfo  (CVSFILE *);
+static int	cvs_load_dirinfo  (CVSFILE *, int);
 static int      cvs_file_getdir   (CVSFILE *, int, char *);
 static int      cvs_file_sort    (struct cvs_flist *, u_int);
 static int      cvs_file_cmp     (const void *, const void *);
@@ -544,7 +544,7 @@ cvs_file_attach(CVSFILE *parent, CVSFILE *file)
  * Load directory information
  */
 static int
-cvs_load_dirinfo(CVSFILE *cf)
+cvs_load_dirinfo(CVSFILE *cf, int flags)
 {
 	char fpath[MAXPATHLEN];
 	char pbuf[MAXPATHLEN];
@@ -557,6 +557,9 @@ cvs_load_dirinfo(CVSFILE *cf)
 		return (-1);
 
 	if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
+		if (flags & CF_MKADMIN)
+			cvs_mkadmin(cf, 0755);
+
 		/* if the CVS administrative directory exists, load the info */
 		l = snprintf(pbuf, sizeof(pbuf), "%s/" CVS_PATH_CVSDIR, fpath);
 		if (l == -1 || l >= (int)sizeof(pbuf)) {
@@ -1011,7 +1014,7 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 		ent->ce_rev = NULL;
 	}
 
-	if ((cfp->cf_type == DT_DIR) && (cvs_load_dirinfo(cfp) < 0)) {
+	if ((cfp->cf_type == DT_DIR) && (cvs_load_dirinfo(cfp, flags) < 0)) {
 		cvs_file_free(cfp);
 		return (NULL);
 	}
