@@ -1,4 +1,4 @@
-.\" $OpenBSD: setresuid.2,v 1.3 2003/03/06 20:04:06 jmc Exp $
+.\" $OpenBSD: setresuid.2,v 1.4 2005/05/01 03:23:38 djm Exp $
 .\"
 .\" Copyright (c) 2000
 .\"      Sheldon Hearn.  All rights reserved.
@@ -91,6 +91,8 @@ was invalid.
 .Sh STANDARDS
 These functions are not part of the
 .St -p1003.1
-specification and should not be used where portability is desired.
+specification.
+While they are not completely portable, they are the least ambiguous way to
+manage user and group IDs.
 .Sh HISTORY
 These functions first appeared in HP-UX.
