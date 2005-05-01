@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.49 2005/04/30 16:48:56 deraadt Exp $
+.\"	$OpenBSD: fdisk.8,v 1.50 2005/05/01 20:53:38 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -32,10 +32,12 @@
 .Sh SYNOPSIS
 .Nm fdisk
 .Op Fl ieu
-.Op Fl f Ar mbrname
-.Op Fl c Ar cylinders
-.Op Fl h Ar heads
-.Op Fl s Ar sectors
+.Oo
+.Fl c Ar cylinders
+.Fl h Ar heads
+.Fl s Ar sectors
+.Oc
+.Op Fl f Ar mbrfile
 .Ar device
 .Sh DESCRIPTION
 On the i386 and other architectures, sector 0 of a bootable hard disk
@@ -98,7 +100,7 @@ If no A6 MBR partition is found,
 can use an older
 .Fx
 MBR partition (with a magic number of hexadecimal A5).
-.It Em "cyl/hd/sec"
+.It Em "C/H/S"
 These fields provide the starting and ending address of the MBR partition
 in BIOS geometry.
 .It Em "start/size"
@@ -200,7 +202,7 @@ Use the interactive edit of
 to modify a MBR partition table.
 The editor permits configuration of the MBR partition, as well as
 extended MBR partitions.
-.It Fl f Ar mbrname
+.It Fl f Ar mbrfile
 Specifies an alternate MBR template file.
 The default file is
 .Pa /usr/mdec/mbr .
@@ -320,18 +322,13 @@ it does write the modified block out.
 .It abort
 Quit program without saving current changes.
 .El
-.Sh NOTES
-Hand crafted disk layouts can be highly error prone;
-ensure that the
-.Ox
-MBR partition starts on a cylinder boundary.
-(This restriction may be changed in the future.)
 .Sh FILES
 .Bl -tag -width /usr/mdec/mbr -compact
 .It Pa /usr/mdec/mbr
 default MBR template
 .El
 .Sh SEE ALSO
+.Xr fstab 5 ,
 .Xr boot_alpha 8 ,
 .Xr boot_amd64 8 ,
 .Xr boot_cats 8 ,
@@ -339,3 +336,10 @@ default MBR template
 .Xr boot_macppc 8 ,
 .Xr boot_zaurus 8 ,
 .Xr disklabel 8
+.Sh CAVEATS
+Hand crafted disk layouts are highly error prone.
+MBR partitions should start on a cylinder boundary
+(head 0, sector 1),
+except when starting on track 0,
+(these should begin at head 1, sector 1).
+MBR partitions should also end at cylinder boundaries.
