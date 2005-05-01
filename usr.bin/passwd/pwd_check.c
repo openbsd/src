@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_check.c,v 1.10 2005/03/04 15:36:03 moritz Exp $	*/
+/*	$OpenBSD: pwd_check.c,v 1.11 2005/05/01 00:05:10 djm Exp $	*/
 
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
@@ -44,6 +44,7 @@
 #include <grp.h>
 #include <paths.h>
 #include <login_cap.h>
+#include <signal.h>
 
 struct pattern {
 	char *match;
@@ -85,8 +86,11 @@ pwd_check(login_cap_t *lc, char *password)
 	regex_t rgx;
 	int i, res, min_len;
 	char *checker;
+	char *argp[] = { "sh", "-c", NULL, NULL};
 	int pipefds[2];
 	pid_t child;
+	uid_t uid;
+	gid_t gid;
 
 	min_len = (int)login_getcapnum(lc, "minpasswordlen", 6, 6);
 	if (min_len > 0 && strlen(password) < min_len) {
@@ -94,67 +98,93 @@ pwd_check(login_cap_t *lc, char *password)
 		return (0);
 	}
 
-	for (i = 0; i < sizeof(patterns) / sizeof(struct pattern); i++) {
-		if (regcomp(&rgx, patterns[i].match, patterns[i].flags) != 0)
-			continue;
-		res = regexec(&rgx, password, 0, NULL, 0);
-		regfree(&rgx);
-		if (!res) {
-			printf("%s\nUnusual capitalization, control characters or digits are suggested.\n", patterns[i].response);
-			return (0);
-		}
-	}
-
-	/* If no external checker is specified, just accept the password */
+	/* External password check program */
 	checker = login_getcapstr(lc, "passwordcheck", NULL, NULL);
-	if (checker == NULL)
-		return (1);
 
-	/* Okay, now pass control to an external program */
-	if (pipe(pipefds) == -1) {
+	/* Pipes are only used for external checker */
+	if (checker != NULL && pipe(pipefds) == -1) {
 		warn("pipe");
 		goto out;
 	}
 
-	child = fork();
-	if (child == 0) {
-		char *argp[] = { "sh", "-c", NULL, NULL};
-
-		/* Drop privileges */
-		seteuid(getuid());
-		setuid(getuid());
-
-		if (dup2(pipefds[0], STDIN_FILENO) == -1)
+	/* Check password in low-privileged child */
+	switch (child = fork()) {
+	case -1:
+		warn("fork");
+		goto out;
+	case 0:
+		(void)signal(SIGINT, SIG_DFL);
+		(void)signal(SIGQUIT, SIG_DFL);
+		uid = getuid();
+		gid = getgid();
+		if (setresgid(gid, gid, gid) == -1) {
+			warn("setresgid");
 			exit(1);
+		}
+		if (setgroups(1, &gid) == -1) {
+			warn("setgroups");
+			exit(1);
+		}
+		if (setresuid(uid, uid, uid) == -1) {
+			warn("setresuid");
+			exit(1);
+		}
 
+		for (i = 0; i < sizeof(patterns) / sizeof(*patterns); i++) {
+			if (regcomp(&rgx, patterns[i].match,
+			    patterns[i].flags) != 0)
+				continue;
+			res = regexec(&rgx, password, 0, NULL, 0);
+			regfree(&rgx);
+			if (res == 0) {
+				printf("%s\n", patterns[i].response);
+				exit(1);
+			}
+		}
+
+		/* If no external checker in use, accept the password */
+		if (checker == NULL)
+			exit(0);
+
+		/* Otherwise, pass control to checker program */
+		argp[2] = checker;
+		if (dup2(pipefds[0], STDIN_FILENO) == -1) {
+			warn("dup2");
+			exit(1);
+		}
 		close(pipefds[0]);
 		close(pipefds[1]);
 
-		argp[2] = checker;
-		if (execv(_PATH_BSHELL, argp) == -1)
+		if (execv(_PATH_BSHELL, argp) == -1) {
+			warn("exec");
 			exit(1);
-		/* NOT REACHED */
-	} else if (child == -1) {
-		warn("fork");
-		goto out;
+		}
+		/* NOTREACHED */
+	default:
+		break; /* parent continues below */
 	}
-	close(pipefds[0]);
 
-	/* Send the password to STDIN of child */
-	write(pipefds[1], password, strlen(password) + 1);
-	close(pipefds[1]);
+	if (checker != NULL) {
+		/* Send the password to STDIN of child */
+		close(pipefds[0]);
+		write(pipefds[1], password, strlen(password) + 1);
+		close(pipefds[1]);
+	}
 
 	/* get the return value from the child */
 	wait(&child);
 	if (WIFEXITED(child) && WEXITSTATUS(child) == 0) {
-		free(checker);
+		if (checker != NULL)
+			free(checker);
 		return (1);
 	}
 
  out:
-	free(checker);
+	if (checker != NULL)
+		free(checker);
 	printf("Please use a different password. Unusual capitalization,\n");
 	printf("control characters, or digits are suggested.\n");
+
 	return (0);
 }
 
