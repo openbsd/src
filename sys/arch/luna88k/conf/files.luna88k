@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.9 2005/03/08 20:00:23 tdeval Exp $
+#	$OpenBSD: files.luna88k,v 1.10 2005/05/01 21:36:56 brad Exp $
 #	
 maxpartitions 16
 
@@ -66,9 +66,6 @@ file arch/luna88k/dev/mb89352.c				spc
 
 # list of standard files
 file	dev/clock_subr.c
-
-file	netinet/in_cksum.c
-file	netns/ns_cksum.c				ns
 
 file	arch/luna88k/luna88k/clock.c
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.9 2005/03/08 20:00:23 tdeval Exp $
+#	$OpenBSD: files.amd64,v 1.10 2005/05/01 21:36:55 brad Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -48,6 +48,7 @@ file	arch/amd64/amd64/db_memrw.c		ddb
 file	arch/amd64/amd64/db_trace.c		ddb
 
 file	netinet/in_cksum.c			inet
+file	netinet/in4_cksum.c			inet
 
 # Basic clock - required
 file	arch/amd64/isa/clock.c
