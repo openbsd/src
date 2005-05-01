@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2005/04/10 13:49:13 jmc Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2005/05/01 02:43:12 djm Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1995/04/22 10:08:54 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.15 2005/04/10 13:49:13 jmc Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.16 2005/05/01 02:43:12 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ main(int ac, char *av[])
 	int		score_err = 0; /* hold errno from score file open */
 	int		ch;
 	extern int	optind;
+	gid_t		gid;
 #ifdef FANCY
 	char		*sp;
 #endif
@@ -69,9 +70,9 @@ main(int ac, char *av[])
 	if ((score_wfd = open(Scorefile, O_RDWR)) < 0)
 		score_err = errno;
 
-	/* revoke */
-	setegid(getgid());
-	setgid(getgid());
+	/* revoke privs */
+	gid = getgid();
+	setresgid(gid, gid, gid);
 
 	show_only = FALSE;
 	while ((ch = getopt(ac, av, "srajt")) != -1)

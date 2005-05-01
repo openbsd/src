@@ -1,4 +1,4 @@
-/*	$OpenBSD: battlestar.c,v 1.14 2004/07/10 07:26:22 deraadt Exp $	*/
+/*	$OpenBSD: battlestar.c,v 1.15 2005/05/01 02:43:12 djm Exp $	*/
 /*	$NetBSD: battlestar.c,v 1.3 1995/03/21 15:06:47 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)battlestar.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: battlestar.c,v 1.14 2004/07/10 07:26:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: battlestar.c,v 1.15 2005/05/01 02:43:12 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,12 +61,13 @@ main(int argc, char *argv[])
 {
 	char    mainbuf[LINELENGTH];
 	char   *next;
+	gid_t	gid;
 
 	open_score_file();
 
-	/* revoke privs. */
-	setegid(getgid());
-	setgid(getgid());
+	/* revoke privs */
+	gid = getgid();
+	setresgid(gid, gid, gid);
 
 	if (argc < 2)
 		initialize(NULL);

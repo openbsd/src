@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfscores.c,v 1.12 2004/07/09 15:59:26 deraadt Exp $	*/
+/*	$OpenBSD: cfscores.c,v 1.13 2005/05/01 02:43:12 djm Exp $	*/
 /*	$NetBSD: cfscores.c,v 1.3 1995/03/21 15:08:37 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cfscores.c,v 1.12 2004/07/09 15:59:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cfscores.c,v 1.13 2005/05/01 02:43:12 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,8 @@ int
 main(int argc, char *argv[])
 {
 	struct passwd *pw;
-	int uid;
+	uid_t uid;
+	gid_t gid;
 
 	if (argc > 2) {
 		fprintf(stderr, "Usage: cfscores [user]\n");
@@ -84,8 +85,8 @@ main(int argc, char *argv[])
 		err(2, "%s", _PATH_SCORE);
 
 	/* revoke privs */
-	setegid(getgid());
-	setgid(getgid());
+	gid = getgid();
+	setresgid(gid, gid, gid);
 
 	setpwent();
 	if (argc == 1) {

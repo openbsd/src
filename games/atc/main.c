@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2004/11/29 08:52:28 jsg Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2005/05/01 02:43:11 djm Exp $	*/
 /*	$NetBSD: main.c,v 1.4 1995/04/27 21:22:25 mycroft Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.12 2004/11/29 08:52:28 jsg Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.13 2005/05/01 02:43:11 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ main(int ac, char *av[])
 	const char		*file = NULL;
 	char			*name, *ptr, *seed;
 	struct sigaction	sa;
+	gid_t			gid;
 #ifdef BSD
 	struct itimerval	itv;
 #endif
@@ -74,8 +75,8 @@ main(int ac, char *av[])
 	open_score_file();
 
 	/* revoke privs */
-	setegid(getgid());
-	setgid(getgid());
+	gid = getgid();
+	setresgid(gid, gid, gid);
 
 	start_time = time(0);
 	makenoise = 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: canfield.c,v 1.10 2004/07/09 15:59:26 deraadt Exp $	*/
+/*	$OpenBSD: canfield.c,v 1.11 2005/05/01 02:43:12 djm Exp $	*/
 /*	$NetBSD: canfield.c,v 1.7 1995/05/13 07:28:35 jtc Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: canfield.c,v 1.10 2004/07/09 15:59:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: canfield.c,v 1.11 2005/05/01 02:43:12 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -1752,6 +1752,7 @@ askquit(int dummy)
 int
 main(int argc, char *argv[])
 {
+	gid_t gid;
 #ifdef MAXLOAD
 	double vec[3];
 
@@ -1770,8 +1771,8 @@ main(int argc, char *argv[])
 	initall();
 
 	/* revoke privs */
-	setegid(getgid());
-	setgid(getgid());
+	gid = getgid();
+	setresgid(gid, gid, gid);
 
 	instruct();
 	makeboard();

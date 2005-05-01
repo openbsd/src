@@ -1,4 +1,4 @@
-/*	$OpenBSD: snake.c,v 1.9 2004/07/10 07:26:24 deraadt Exp $	*/
+/*	$OpenBSD: snake.c,v 1.10 2005/05/01 02:43:12 djm Exp $	*/
 /*	$NetBSD: snake.c,v 1.8 1995/04/29 00:06:41 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: snake.c,v 1.9 2004/07/10 07:26:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: snake.c,v 1.10 2005/05/01 02:43:12 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -150,6 +150,7 @@ main(int argc, char *argv[])
 	int	ch, i;
 	char	*p, **av;
 	struct sigaction sa;
+	gid_t	gid;
 
 	/* don't create the score file if it doesn't exist. */
 	rawscores = open(_PATH_RAWSCORES, O_RDWR, 0664);
@@ -158,8 +159,8 @@ main(int argc, char *argv[])
 #endif
 
 	/* revoke privs */
-	setegid(getgid());
-	setgid(getgid());
+	gid = getgid();
+	setresgid(gid, gid, gid);
 
 	/* check to see if we were called as snscore */
 	av = argv;
