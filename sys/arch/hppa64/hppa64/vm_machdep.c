@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.2 2005/05/01 19:29:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -145,7 +145,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	void *arg;
 {
 	extern paddr_t fpu_curpcb;	/* from locore.S */
+	extern register_t switch_tramp_p;
 	extern u_int fpu_enable;
+
 	struct pcb *pcbp;
 	struct trapframe *tf;
 	register_t sp, osp;
@@ -208,7 +210,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 */
 	osp = sp + HPPA_FRAME_SIZE;
 	*(register_t*)(osp - HPPA_FRAME_SIZE) = 0;
-	*(register_t*)(osp + HPPA_FRAME_RP) = (register_t)&switch_trampoline;
+	*(register_t*)(osp + HPPA_FRAME_RP) = switch_tramp_p;
 	*(register_t*)(osp) = (osp - HPPA_FRAME_SIZE);
 
 	sp = osp + HPPA_FRAME_SIZE + 20*8; /* frame + calee-save registers */

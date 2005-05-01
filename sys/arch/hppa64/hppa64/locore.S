@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.2 2005/04/21 04:39:35 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.3 2005/05/01 19:29:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -1751,11 +1751,18 @@ switch_return
 	ldd,mb	-(HPPA_FRAME_SIZE+20*8)(%sp), %r3
 EXIT(cpu_switch)
 
+	.align	8
+	.export	switch_tramp_p, code
+switch_tramp_p
+	.dword	switch_trampoline
+
 ENTRY(switch_trampoline,0)
+	/* ldd	0x18(%arg3), %r19	but we know we are in kernel! */
+	ldd	0x10(%arg3), %arg3
 	.call
-	blr	%r0, %rp
-	bv,n	%r0(%arg3)
-	nop
+	ble	0(%sr0, %arg3)
+	copy	%r31, %rp
+
 	mfctl	%cr24, %arg1
 	ldd	CI_CURPROC(%arg1), %r1
 	b	$syscall_return
@@ -1766,11 +1773,8 @@ EXIT(switch_trampoline)
  * Signal "trampoline" code. Invoked from RTE setup by sendsig().
  */
 ENTRY(sigcode,0)
-	bb,>=,n	%arg3, 30, sigcode_call
-	dep	%r0, 31, 2, %arg3
-	ldd	4(%arg3), %r19
-	ldd	0(%arg3), %arg3
-sigcode_call
+	ldd	0x18(%arg3), %r19
+	ldd	0x10(%arg3), %arg3
 	.call
 	ble	0(%sr0, %arg3)
 	copy	%r31, %rp
@@ -1786,10 +1790,6 @@ sigcode_call
 	.call
 	ble	4(%sr7, %r1)
 	ldi	SYS_exit, %r1
-
-	.align	256
-/* TODO syscall entry */
-
 ALTENTRY(esigcode)
 EXIT(sigcode)
 
