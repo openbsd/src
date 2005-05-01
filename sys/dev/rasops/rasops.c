@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.10 2005/04/30 23:13:47 pascoe Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.11 2005/05/01 11:49:31 pascoe Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -190,10 +190,29 @@ rasops_putchar_rotated(cookie, row, col, uc, attr)
 	long attr;
 {
 	struct rasops_info *ri;
+	u_char *rp;
+	int height;
 
 	ri = (struct rasops_info *)cookie;
 
-	ri->ri_real_ops.putchar(cookie, col, ri->ri_rows - row - 1, uc, attr);
+	/* Do rotated char sans (side)underline */
+	ri->ri_real_ops.putchar(cookie, col, ri->ri_rows - row - 1, uc,
+	    attr & ~1);
+
+	/* Do rotated underline */
+	rp = ri->ri_bits + col * ri->ri_yscale + (ri->ri_rows - row - 1) * 
+	    ri->ri_xscale;
+	height = ri->ri_font->fontheight;
+
+	/* XXX this assumes 16-bit color depth */
+	if ((attr & 1) != 0) {
+		int16_t c = (int16_t)ri->ri_devcmap[((u_int)attr >> 24) & 0xf];
+
+		while (height--) {
+			*(int16_t *)rp = c;
+			rp += ri->ri_stride;
+		}
+	}
 }
 #endif
 
