@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.36 2004/12/20 15:05:59 moritz Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.37 2005/05/01 18:47:06 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.36 2004/12/20 15:05:59 moritz Exp $";
+static const char rcsid[] = "$OpenBSD: local_passwd.c,v 1.37 2005/05/01 18:47:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -188,8 +188,8 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 			continue;
 		}
 
-		if ((tries++ < pwd_tries || pwd_tries == 0) 
-		    && pwd_check(lc, p) == 0)
+		if ((tries++ < pwd_tries || pwd_tries == 0) &&
+		    pwd_check(lc, p) == 0)
 			continue;
 		strlcpy(buf, p, sizeof(buf));
 		p = getpass("Retype new password:");
