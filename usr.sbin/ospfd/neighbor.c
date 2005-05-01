@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.15 2005/04/12 09:54:59 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.16 2005/05/01 17:35:27 david Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -489,7 +489,7 @@ nbr_adj_ok(struct nbr *nbr)
 	case IF_TYPE_NBMA:
 		/*
 		 * if neighbor is dr, bdr or router self is dr or bdr
-		 * start forming adjacancy
+		 * start forming adjacency
 		 */
 		if (iface->dr == nbr || iface->bdr == nbr ||
 		    iface->state & IF_STA_DRORBDR)
