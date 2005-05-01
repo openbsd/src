@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.22 2005/04/30 00:49:35 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.23 2005/05/01 07:54:42 david Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -16,11 +16,11 @@ maxusers	32			# estimated number of users
 options		ARM32
 options		FOOTBRIDGE_INTR
 
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
-#options 	INSECURE	# disable kernel securelevel
+#options	UCONSOLE	# users can use TIOCCONS (for xconsole)
+#options	INSECURE	# disable kernel securelevel
 
-#options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options 	NTP		# NTP phase/frequency locked loop
+#options	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options	NTP		# NTP phase/frequency locked loop
 
 option		APERTURE	# in-kernel aperture driver for XFree86
 option		USER_PCICONF	# user-space PCI configuration
@@ -28,11 +28,11 @@ option		USER_PCICONF	# user-space PCI configuration
 # CPU options
 
 # For StrongARM systems
-options 	CPU_SA110	# Support the SA110 core
+options		CPU_SA110	# Support the SA110 core
 
 # FPA options
 
-#options 	ARMFPE		# ARM Ltd FPE
+#options	ARMFPE		# ARM Ltd FPE
 
 option WSDISPLAY_COMPAT_USL		# VT handling
 option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
@@ -53,8 +53,8 @@ todclock0	at todservice?	# time-of-day device
 pci0		at footbridge?	# PCI bus
 pci*		at ppb?
 
-option          PCIVERBOSE
-option          USBVERBOSE
+option		PCIVERBOSE
+option		USBVERBOSE
 
 # PCI bridges
 ppb*	at pci?			# PCI-PCI bridges

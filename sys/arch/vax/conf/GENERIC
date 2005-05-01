@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.38 2005/04/30 00:49:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.39 2005/05/01 07:54:43 david Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -9,7 +9,7 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
-machine 	vax
+machine		vax
 include		"../../../conf/GENERIC"
 maxusers	8		# estimated number of users
 
@@ -75,10 +75,10 @@ smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 #ry*		at hdc0 drive?		# RX floppies
 
 # Ibus, the internal bus on most Microvaxen
-uba0		at ibus0 		# Qbus adapter
-ze0		at ibus0 		# SGEC on-board ethernet
+uba0		at ibus0		# Qbus adapter
+ze0		at ibus0		# SGEC on-board ethernet
 le0		at ibus0		# LANCE ethernet (MV3400)
-#shac0		at ibus0 		# DSSI controller
+#shac0		at ibus0		# DSSI controller
 
 # Devices connected at VAXBI
 #cpu*		at bi? node?		# KA820/KA825 cpu

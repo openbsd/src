@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.36 2005/04/30 01:02:37 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.37 2005/05/01 07:54:43 david Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -14,7 +14,7 @@ include		"../../../conf/GENERIC"
 maxusers	32			# estimated number of users
 
 options		ARM32
-#options 	ARM_INTR_IMPL="<arch/arm/xscale/pxa2x0_intr.h>"
+#options	ARM_INTR_IMPL="<arch/arm/xscale/pxa2x0_intr.h>"
 options		PXA2x0_INTR
 options		PXAGPIO_HAS_GPION_INTRS
 
@@ -27,9 +27,9 @@ makeoptions	BOARDTYPE="zaurus"
 options		APERTURE
 
 # CPU options
-options 	CPU_XSCALE_PXA2X0	# Support the XScale core
-#options 	XSCALE_CACHE_WRITE_THROUGH
-options 	XSCALE_CACHE_WRITE_BACK
+options		CPU_XSCALE_PXA2X0	# Support the XScale core
+#options	XSCALE_CACHE_WRITE_THROUGH
+options		XSCALE_CACHE_WRITE_BACK
 makeoptions	CPUFLAGS="-mcpu=xscale"
 
 option WSDISPLAY_COMPAT_USL		# VT handling
@@ -82,11 +82,11 @@ ubsa*		at uhub?		# Belkin serial adapter
 ucom*		at ubsa?
 uftdi*		at uhub?		# FTDI FT8U100AX serial adapter
 ucom*		at uftdi?
-uplcom* 	at uhub?		# I/O DATA USB-RSAQ2 serial adapter
+uplcom*		at uhub?		# I/O DATA USB-RSAQ2 serial adapter
 ucom*		at uplcom?
 umct*		at uhub?		# MCT USB-RS232 serial adapter
 ucom*		at umct?
-uaudio* 	at uhub?		# USB Audio
+uaudio*		at uhub?		# USB Audio
 audio*		at uaudio?
 umidi*		at uhub?		# USB MIDI
 midi*		at umidi?
@@ -138,7 +138,7 @@ options FFUARTCONSOLE
 pxapcic0	at pxaip?		# CF (pcmcia) support
 pcmcia*		at pxapcic?
 wi*		at pcmcia?
-ne* 		at pcmcia?
+ne*		at pcmcia?
 wdc*		at pcmcia?
 
 wd0		at wdc? flags 0x0000	# IDE hard drives

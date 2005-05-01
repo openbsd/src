@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.8 2005/04/30 00:49:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.9 2005/05/01 07:54:42 david Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -28,28 +28,28 @@ config		bsd		swap generic
 # devices
 #
 
-mainbus0 at root
-clock0   at mainbus0
-le0      at mainbus0
-sio0     at mainbus0
-siotty0  at sio0
-ws0      at sio0
-fb0      at mainbus0
-spc0     at mainbus0
-spc1     at mainbus0
+mainbus0	at root
+clock0		at mainbus0
+le0		at mainbus0
+sio0		at mainbus0
+siotty0		at sio0
+ws0		at sio0
+fb0		at mainbus0
+spc0		at mainbus0
+spc1		at mainbus0
 
 # Workstation Console attachments
-wsdisplay* at fb?
-wskbd*     at ws?
-wsmouse*   at ws?
+wsdisplay*	at fb?
+wskbd*		at ws?
+wsmouse*	at ws?
 
 # SCSI bus support
-scsibus*   at spc?
+scsibus*	at spc?
 
 # SCSI devices
-sd* at scsibus?
-st* at scsibus?
-cd* at scsibus?
-ch* at scsibus?
-ss* at scsibus?
-uk* at scsibus?
+sd*		at scsibus?
+st*		at scsibus?
+cd*		at scsibus?
+ch*		at scsibus?
+ss*		at scsibus?
+uk*		at scsibus?

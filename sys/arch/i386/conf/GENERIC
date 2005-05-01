@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.409 2005/04/30 00:49:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.410 2005/05/01 07:54:42 david Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -289,7 +289,7 @@ isp*	at pci?			# Qlogic ISP [12]0x0 SCSI/FibreChannel
 scsibus* at isp?
 aic0	at isa? port 0x340 irq 11 # Adaptec 152[02] SCSI controllers
 aic*	at pcmcia?		# PCMCIA based aic SCSI controllers
-aic*	at isapnp? 		# isapnp configured aic SCSI controllers
+aic*	at isapnp?		# isapnp configured aic SCSI controllers
 scsibus* at aic?
 #esp*	at pcmcia?		# PCMCIA based NCR 53C9X SCSI
 #scsibus* at esp?
@@ -358,7 +358,7 @@ ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet
 ne2	at isa? port 0x280 irq 9		# NE[12]000 ethernet
 ne*	at isapnp?				# NE[12]000 PnP ethernet
 eg0	at isa? disable port 0x310 irq 5	# 3C505/Etherlink+ ethernet
-el0	at isa? disable port 0x300 irq 9 	# 3C501 ethernet
+el0	at isa? disable port 0x300 irq 9	# 3C501 ethernet
 ep0	at isa?					# 3C509 ethernet
 ep*	at isapnp?				# 3C509 PnP ethernet
 ep*	at isa?					# 3C509 ethernet
@@ -376,7 +376,7 @@ ep0	at eisa?
 ep*	at eisa?			# 3C579 ethernet
 fea*	at eisa?			# DEC DEFEA FDDI
 lmc*	at pci?				# Lan Media Corp SSI/T3/HSSI
-san* 	at pci?				# Sangoma PCI AFT card
+san*	at pci?				# Sangoma PCI AFT card
 le*	at pci?				# PCnet-PCI based ethernet
 le*	at isapnp?
 de*	at pci?				# DC21X4X-based ethernet
@@ -417,7 +417,7 @@ stge*	at pci?				# Sundance TC9021 GigE
 #lge*	at pci?				# Level1 LXT1001 GigE
 hme*	at pci?				# Sun Happy Meal
 bce*	at pci?				# Broadcom BCM4401
-vge*	at pci? 			# VIA VT612x
+vge*	at pci?				# VIA VT612x
 
 # Wireless network cards
 ath*	at pci?				# Atheros AR5k (802.11a/b/g)
@@ -463,7 +463,7 @@ xmphy*	at mii?				# XaQti XMAC-II PHYs
 nsgphy*	at mii?				# NS gigabit PHYs
 urlphy*	at mii?				# Realtek RTL8150L internal PHY
 rgephy*	at mii?				# Realtek 8169S/8110S PHY
-ciphy*  at mii?				# Cicada CS8201 10/100/1000 copper PHY
+ciphy*	at mii?				# Cicada CS8201 10/100/1000 copper PHY
 ukphy*	at mii?				# "unknown" PHYs
 
 pss0	at isa? port 0x220 irq 7 drq 6	# Personal Sound System
@@ -493,7 +493,7 @@ pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis (drq2 is record drq)
 ym*	at isapnp?
 mpu*	at isapnp?
-mpu*	at isa? port 0x300 		# generic MPU, Yamaha SW60XG
+mpu*	at isa? port 0x300		# generic MPU, Yamaha SW60XG
 #aria0	at isa? port 0x280 irq 10 drq 0 flags 0x1 # Prometheus Aria 16
 
 # OPL[23] FM synthesizers

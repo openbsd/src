@@ -1,5 +1,5 @@
-#	$OpenBSD: SUN4M,v 1.66 2005/04/14 20:15:58 brad Exp $
-# 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
+#	$OpenBSD: SUN4M,v 1.67 2005/05/01 07:54:42 david Exp $
+#	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc
@@ -121,8 +121,8 @@ le0	at lebuffer0					#
 le*	at lebuffer?					#
 
 # Additional SBus LANCE devices - unbuffered
-le0     at sbus0
-le*     at sbus?
+le0	at sbus0
+le*	at sbus?
 
 # HappyMeal ethernet
 hme*	at sbus?
@@ -150,8 +150,8 @@ tcx*	at sbus?
 wsdisplay* at tcx?
 
 # Sun "cgfourteen" accelerated 24-bit framebuffer.
-cgfourteen0 at obio0 addr 0x9c000000 		# sun4m
-cgfourteen1 at obio0 addr 0x90000000 		# sun4m
+cgfourteen0 at obio0 addr 0x9c000000		# sun4m
+cgfourteen1 at obio0 addr 0x90000000		# sun4m
 wsdisplay* at cgfourteen?
 
 # Sun "cgtwelve" (GS) accelerated 24-bit framebuffer.
@@ -213,11 +213,11 @@ ep*	at pcmcia?		# PCMCIA based 3C5xx ethernet
 bmtphy*	at mii?			# Broadcom 10/100 PHYs
 lxtphy*	at mii?			# Level1 LXT970 PHYs
 nsphy*	at mii?			# NS and compatible PHYs
-nsphyter* at mii? 
+nsphyter* at mii?
 qsphy*	at mii?			# Quality Semi QS6612 PHYs
 luphy*	at mii?			# Lucent LU6612 PHY
 tqphy*	at mii?			# TDK 78Q212x PHYs
-ukphy*	at mii? 
+ukphy*	at mii?
 
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.40 2005/04/30 00:49:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.41 2005/05/01 07:54:42 david Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -64,7 +64,7 @@ hilid*		at hil?		# ID module
 frodo0		at intio?
 
 # 8250-like serial ports found on Frodo ASIC
-dnkbd0		at frodo? 	# Domain keyboard flavor
+dnkbd0		at frodo?	# Domain keyboard flavor
 wskbd*		at dnkbd? mux 1
 wsmouse*	at dnkbd? mux 0
 apci*		at frodo?	# tty flavor

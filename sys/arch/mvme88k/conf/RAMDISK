@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.25 2004/09/16 09:14:03 mickey Exp $
+#	$OpenBSD: RAMDISK,v 1.26 2005/05/01 07:54:42 david Exp $
 
 machine		mvme88k m88k
 
@@ -39,7 +39,7 @@ config		bsd		root rd0 swap on rd0b
 mainbus0 at root
 
 bugtty0 at mainbus0
-bussw0  at mainbus0 addr 0xfff00000
+bussw0	at mainbus0 addr 0xfff00000
 pcctwo0 at mainbus0 addr 0xfff00000
 syscon0 at mainbus0 addr 0xfff00000
 

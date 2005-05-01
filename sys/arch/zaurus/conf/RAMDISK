@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.25 2005/04/30 00:36:26 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.26 2005/05/01 07:54:43 david Exp $
 
 machine	zaurus	arm
 
@@ -14,7 +14,7 @@ options	EXT2FS		# Second Extended Filesystem
 options	FIFO		# FIFOs; RECOMMENDED
 
 options		ARM32
-#options 	ARM_INTR_IMPL="<arch/arm/xscale/pxa2x0_intr.h>"
+#options	ARM_INTR_IMPL="<arch/arm/xscale/pxa2x0_intr.h>"
 options		PXA2x0_INTR
 options		PXAGPIO_HAS_GPION_INTRS
 
@@ -29,9 +29,9 @@ makeoptions	BOARDTYPE="zaurus"
 maxusers	32
 
 # CPU options
-options 	CPU_XSCALE_PXA2X0	# Support the XScale core
-#options 	XSCALE_CACHE_WRITE_THROUGH
-options 	XSCALE_CACHE_WRITE_BACK
+options		CPU_XSCALE_PXA2X0	# Support the XScale core
+#options	XSCALE_CACHE_WRITE_THROUGH
+options		XSCALE_CACHE_WRITE_BACK
 makeoptions	CPUFLAGS="-mcpu=xscale"
 
 #option WSDISPLAY_COMPAT_USL		# VT handling
@@ -105,9 +105,9 @@ cd*		at scsibus?
 
 # integrated 16550 UARTs
 options COM_PXA2X0
-com0	at pxaip?  addr 0x40100000 intr 22	# Full Function UART
-com1	at pxaip?  addr 0x40200000 intr 21	# BlueTooth UART
-#com2	at pxaip?  addr 0x40700000 intr 20	# Standard UART (for IrDA)
+com0	at pxaip? addr 0x40100000 intr 22	# Full Function UART
+com1	at pxaip? addr 0x40200000 intr 21	# BlueTooth UART
+#com2	at pxaip? addr 0x40700000 intr 20	# Standard UART (for IrDA)
 options FFUARTCONSOLE
 #options BTUARTCONSOLE
 
@@ -117,7 +117,7 @@ options FFUARTCONSOLE
 pxapcic0	at pxaip?
 pcmcia*		at pxapcic?
 wi*		at pcmcia?
-ne* 		at pcmcia?
+ne*		at pcmcia?
 wdc*		at pcmcia?
 
 # IDE hard drives

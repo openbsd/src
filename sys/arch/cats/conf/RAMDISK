@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.12 2005/01/13 16:16:45 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.13 2005/05/01 07:54:42 david Exp $
 
 machine	cats	arm
 
@@ -13,7 +13,7 @@ option		INET		# IP + ICMP + TCP + UDP
 option		INET6		# IPv6 (needs INET)
 option		DDB		# kernel debugger
 option		EXT2FS		# Second Extended Filesystem
-option          FIFO            # FIFOs; RECOMMENDED
+option		FIFO		# FIFOs; RECOMMENDED
 
 options	ARM32
 options FOOTBRIDGE_INTR
@@ -25,13 +25,13 @@ maxusers	32
 # CPU options
 
 # For StrongARM systems
-options 	CPU_SA110	# Support the SA110 core
+options		CPU_SA110	# Support the SA110 core
 
 # FPA options
 
-#options 	ARMFPE		# ARM Ltd FPE
+#options	ARMFPE		# ARM Ltd FPE
 
-config                bsd     root on rd0a swap on rd0b
+config		bsd	root on rd0a swap on rd0b
 
 # The main bus device
 mainbus0 at root
@@ -54,8 +54,8 @@ pci0	at footbridge?		# PCI bus
 
 pci*	at ppb?
 
-option          PCIVERBOSE
-option          USBVERBOSE
+option		PCIVERBOSE
+option		USBVERBOSE
 
 # PCI bridges
 ppb*	at pci?			# PCI-PCI bridges

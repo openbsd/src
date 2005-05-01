@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.46 2005/04/26 22:10:35 dlg Exp $
+#	$OpenBSD: RAMDISK,v 1.47 2005/05/01 07:54:42 david Exp $
 #
 # PPC GENERIC config file
 #
@@ -63,7 +63,7 @@ wdc*		at kauaiata?
 macobio0	at pci?
 gem*		at pci?		# GMAC ethernet
 hme*		at pci?		# HME ethernet
-vge*		at pci? 	# VIA VT612x
+vge*		at pci?		# VIA VT612x
 dc*		at pci?		# DEC Tulip 21143 clones
 xl*		at pci?		# 3C9xx ethernet
 em*		at pci?		# Intel Pro/1000 ethernet

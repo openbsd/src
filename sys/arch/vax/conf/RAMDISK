@@ -1,6 +1,6 @@
-#	$OpenBSD: RAMDISK,v 1.23 2004/09/16 09:35:37 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.24 2005/05/01 07:54:43 david Exp $
 
-machine 	vax			# machine type
+machine		vax			# machine type
 
 #makeoptions	COPTS="-Os"		# untested
 makeoptions	COPTS="-O2"
@@ -14,16 +14,16 @@ option		MINIROOTSIZE=3072
 #option		VAX8200
 #option		VAX780		# 11/780
 #option		VAX750		# 11/750
-option 		VAX630		# MV II
-option 		VAX650		# MV III, 3300, 3600, 3800, 3900
+option		VAX630		# MV II
+option		VAX650		# MV III, 3300, 3600, 3800, 3900
 option		VAX660		# VAX 4000 200
-option	 	VAX670		# VAX 4000 300
+option		VAX670		# VAX 4000 300
 option		VAX680		# VAX 4000 {4,5,6,7}0{0,5}{,A}
-option	 	VAX410		# VS 2000, 3100/{30,}
-option 		VAX43		# VS 3100/76
-option 		VAX46		# VS 4000/60
+option		VAX410		# VS 2000, 3100/{30,}
+option		VAX43		# VS 3100/76
+option		VAX46		# VS 4000/60
 option		VAX48		# VS 4000 VLC
-option 		VAX49		# VS 4000/90
+option		VAX49		# VS 4000/90
 option		VAX53		# VAX 4000/10{0,5,6}
 
 maxusers	8		# estimated number of users
@@ -82,10 +82,10 @@ asc0		at vsbus0 csr 0x26000080 # VS4000/90 4000/10X MV3100/9X SCSI
 #ry*		at hdc0 drive?		# RX floppies
 
 # Ibus, the internal bus on most Microvaxen
-uba0		at ibus0 		# Qbus adapter
-ze0		at ibus0 		# SGEC on-board ethernet
+uba0		at ibus0		# Qbus adapter
+ze0		at ibus0		# SGEC on-board ethernet
 le0		at ibus0		# LANCE ethernet
-#shac0		at ibus0 		# DSSI controller
+#shac0		at ibus0		# DSSI controller
 
 # Devices connected at VAXBI
 #cpu*		at bi? node?		# KA820/KA825 cpu

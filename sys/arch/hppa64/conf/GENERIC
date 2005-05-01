@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.3 2005/04/30 00:49:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.4 2005/05/01 07:54:42 david Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -49,7 +49,7 @@ pci*	at ppb?
 #option		CARDBUS_DEBUG,CARDSLOT_DEBUG,CARDBUS_MAP_DEBUG
 #cardbus*	at cardslot?
 #option		PCMCIADEBUG,PCMCIAVERBOSE
-#pcmcia* 	at cardslot?
+#pcmcia*	at cardslot?
 
 # PCI USB Controllers
 #ehci*	at pci?			# Enhanced Host Controller
@@ -128,7 +128,7 @@ pci*	at ppb?
 dc*	at pci?			# 21143, "tulip" clone ethernet
 #dc*	at cardbus?
 #rl*	at pci?			# RealTek 81[23]9 ethernet
-#rl* 	at cardbus?
+#rl*	at cardbus?
 #ep*	at pci?			# 3c59x
 #ep*	at cardbus?
 #xl*	at pci?			# 3C9xx ethernet
@@ -147,17 +147,17 @@ dcphy*		at mii?		# Digital Clone PHYs
 #exphy*		at mii?		# 3Com internal PHYs
 #inphy*		at mii?		# Intel 82555 PHYs
 #iophy*		at mii?		# Intel 82553 PHYs
-#icsphy* 	at mii?		# ICS1890 PHYs
+#icsphy*	at mii?		# ICS1890 PHYs
 lxtphy*		at mii?		# Level One LXT-970 PHYs
 nsphy*		at mii?		# NS83840 PHYs
 #nsphyter*	at mii?		# NS83843 PHYs
-#mtdphy* 	at mii?		# Myson MTD972 PHYs
+#mtdphy*	at mii?		# Myson MTD972 PHYs
 #qsphy*		at mii?		# Quality Semi QS6612 PHYs
 #sqphy*		at mii?		# Seeq 8022[013] PHYs
 #tlphy*		at mii?		# ThunderLAN PHYs
 #tqphy*		at mii?		# TDK Semiconductor PHYs
-#brgphy* 	at mii?		# Broadcom 10/100/1000 PHYs
-#bmtphy* 	at mii?		# Broadcom 10/100 PHYs
+#brgphy*	at mii?		# Broadcom 10/100/1000 PHYs
+#bmtphy*	at mii?		# Broadcom 10/100 PHYs
 #eephy*		at mii?		# Marvell 88E1000 Gigabit PHYs
 ukphy*		at mii?		# generic unknown PHYs
 

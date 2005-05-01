@@ -1,5 +1,5 @@
-#	$OpenBSD: SUN4C,v 1.51 2004/09/27 19:32:38 miod Exp $
-# 	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
+#	$OpenBSD: SUN4C,v 1.52 2005/05/01 07:54:42 david Exp $
+#	$NetBSD: GENERIC,v 1.48 1997/08/23 19:19:01 mjacob Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc
@@ -63,7 +63,7 @@ spif*	at sbus?					# spif serial cards
 stty*	at spif?
 sbpp*	at spif?
 
-bpp*	at sbus?					# parallel port 
+bpp*	at sbus?					# parallel port
 
 # SUNW,xbox SBus Expansion Subsystem
 xbox*	at sbus?					# SBus Expansion box

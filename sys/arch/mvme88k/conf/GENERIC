@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.46 2005/04/30 00:49:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.47 2005/05/01 07:54:42 david Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -38,7 +38,7 @@ bugtty0 at mainbus0
 
 # MVME1x7 devices
 pcctwo0 at mainbus0 addr 0xfff00000		# MVME187
-bussw0  at mainbus0 addr 0xfff00000		# MVME197
+bussw0	at mainbus0 addr 0xfff00000		# MVME197
 sram0	at mainbus0 addr 0xffe00000		# MVME187
 pcctwo0 at bussw0 offset 0x00000		# MVME197
 clock0	at pcctwo0 ipl 5

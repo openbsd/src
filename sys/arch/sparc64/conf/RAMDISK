@@ -1,4 +1,4 @@
-# 	$OpenBSD: RAMDISK,v 1.42 2005/04/14 19:59:49 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.43 2005/05/01 07:54:43 david Exp $
 
 # Machine architecture; required by config(8)
 machine		sparc64
