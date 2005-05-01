@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mt.1,v 1.22 2005/04/26 16:23:48 jmc Exp $
+.\"	$OpenBSD: mt.1,v 1.23 2005/05/01 18:56:36 deraadt Exp $
 .\"	$NetBSD: mt.1,v 1.8 1996/05/21 10:23:55 mrg Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
@@ -36,6 +36,7 @@
 .Sh NAME
 .Nm mt ,
 .Nm eject
+.Op Fl t
 .Nd magnetic tape and removable media manipulating program
 .Sh SYNOPSIS
 .Nm mt
@@ -43,6 +44,7 @@
 .Ar command
 .Op Ar count
 .Nm eject
+.Op Fl t
 .Ar device
 .Sh DESCRIPTION
 The
@@ -78,16 +80,23 @@ may also be used to eject other types of removable media.
 The options for
 .Nm
 are as follows:
-.Bl -tag -width "-f deviceXX"
+.Bl -tag -width Ds
 .It Fl f Ar device
 Operate on the
 .Ar device
 specified.
-If the
-.Fl f
-flag is passed to
-.Nm eject ,
-it is silently ignored.
+.El
+.Pp
+.Pp
+The options for
+.Nm eject
+are as follows:
+.Bl -tag -width Ds
+.It Fl t
+Insert the device instead of ejecting.
+For the
+.Xr cd 4
+driver, this request that the tray be closed.
 .El
 .Pp
 The available commands are listed below.

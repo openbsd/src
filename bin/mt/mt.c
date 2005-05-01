@@ -1,4 +1,4 @@
-/*	$OpenBSD: mt.c,v 1.24 2005/04/26 16:23:48 jmc Exp $	*/
+/*	$OpenBSD: mt.c,v 1.25 2005/05/01 18:56:36 deraadt Exp $	*/
 /*	$NetBSD: mt.c,v 1.14.2.1 1996/05/27 15:12:11 mrg Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: mt.c,v 1.24 2005/04/26 16:23:48 jmc Exp $";
+static char rcsid[] = "$OpenBSD: mt.c,v 1.25 2005/05/01 18:56:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,14 +83,15 @@ struct commands {
 	{ "fsf",	MTFSF,      1, 1 },
 	{ "fsr",	MTFSR,      1, 1 },
 	{ "offline",	MTOFFL,     1, 1 },
+#define COM_EJECT	9	/* element in the above array */
 	{ "rewind",	MTREW,      1, 1 },
 	{ "rewoffl",	MTOFFL,     1, 1 },
 	{ "status",	MTNOP,      1, 1 },
 	{ "retension",	MTRETEN,    1, 1 },
+#define COM_RETEN	13	/* element in the above array */
 	{ "weof",	MTWEOF,     0, 1 },
 	{ NULL }
 };
-#define COM_EJECT	9	/* element in the above array */
 
 void printreg(char *, u_int, char *);
 void status(struct mtget *);
@@ -107,8 +108,8 @@ main(int argc, char *argv[])
 	struct commands *comp;
 	struct mtget mt_status;
 	struct mtop mt_com;
-	int ch, len, mtfd, flags;
-	char *p, *tape, *realtape;
+	int ch, len, mtfd, flags, insert = 0;
+	char *p, *tape, *realtape, *opts;
 
 	if ((progname = strrchr(argv[0], '/')))
 		progname++;
@@ -116,15 +117,20 @@ main(int argc, char *argv[])
 		progname = argv[0];
 
 	if (strcmp(progname, "eject") == 0) {
+		opts = "t";
 		eject = 1;
 		tape = NULL;
 	} else {
+		opts = "f:";
 		if ((tape = getenv("TAPE")) == NULL)
 			tape = _PATH_DEFTAPE;
 	}
 
-	while ((ch = getopt(argc, argv, "f:")) != -1) {
+	while ((ch = getopt(argc, argv, opts)) != -1) {
 		switch (ch) {
+		case 't':
+			insert = 1;
+			break;
 		case 'f':
 			tape = optarg;
 			break;
@@ -140,7 +146,6 @@ main(int argc, char *argv[])
 			tape = *argv++;
 			argc--;
 		}
-
 		if (argc != 0)
 			usage();
 	} else if (argc < 1 || argc > 2)
@@ -157,9 +162,12 @@ main(int argc, char *argv[])
 			exit(X_ABORT);
 	}
 
-	if (eject)
-		comp = &com[COM_EJECT];
-	else {
+	if (eject) {
+		if (insert)
+			comp = &com[COM_RETEN];
+		else
+			comp = &com[COM_EJECT];
+	} else {
 		len = strlen(p = *argv++);
 		for (comp = com;; comp++) {
 			if (comp->c_name == NULL)
@@ -298,7 +306,7 @@ void
 usage(void)
 {
 	if (eject)
-		(void)fprintf(stderr, "usage: %s device\n", progname);
+		(void)fprintf(stderr, "usage: %s [-t] device\n", progname);
 	else
 		(void)fprintf(stderr,
 		    "usage: %s [-f device] command [count]\n", progname);
