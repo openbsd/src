@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_mv.c,v 1.21 2005/04/26 21:09:35 martin Exp $	*/
-/*	$NetBSD: grf_mv.c,v 1.24 1997/05/03 02:29:54 briggs Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.22 2005/05/01 17:04:52 martin Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.62 2001/01/22 20:27:02 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Allen Briggs.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -48,16 +45,28 @@
 #include <machine/grfioctl.h>
 #include <machine/viareg.h>
 
-#include "nubus.h"
-#include "grfvar.h"
+#include <mac68k/dev/nubus.h>
+#include <mac68k/dev/grfvar.h>
 
 static void	load_image_data(caddr_t data, struct image_data *image);
 
-static int	grfmv_intr_generic(void *vsc);
-static int	grfmv_intr_radius(void *vsc);
-static int	grfmv_intr_cti(void *vsc);
+static int	grfmv_intr_generic_write1(void *vsc);
+static int	grfmv_intr_generic_write4(void *vsc);
+static int	grfmv_intr_generic_or4(void *vsc);
+
 static int	grfmv_intr_cb264(void *vsc);
 static int	grfmv_intr_cb364(void *vsc);
+static int	grfmv_intr_cmax(void *vsc);
+static int	grfmv_intr_cti(void *vsc);
+static int	grfmv_intr_radius(void *vsc);
+static int	grfmv_intr_radius24(void *vsc);
+static int	grfmv_intr_supermacgfx(void *vsc);
+static int	grfmv_intr_lapis(void *vsc);
+static int	grfmv_intr_formac(void *vsc);
+static int	grfmv_intr_vimage(void *vsc);
+static int	grfmv_intr_gvimage(void *vsc);
+static int	grfmv_intr_radius_gsc(void *vsc);
+static int	grfmv_intr_radius_gx(void *vsc);
 
 static int	grfmv_mode(struct grf_softc *gp, int cmd, void *arg);
 static caddr_t	grfmv_phys(struct grf_softc *gp, vm_offset_t addr);
@@ -137,10 +146,10 @@ grfmv_attach(parent, self, aux)
 	nubus_dir dir, mode_dir;
 	int mode;
 
+	bcopy(na->fmt, &sc->sc_slot, sizeof(nubus_slot));
+
 	sc->sc_tag = na->na_tag;
 	sc->card_id = na->drhw;
-
-	bcopy(na->fmt, &sc->sc_slot, sizeof(nubus_slot));
 
 	if (bus_space_map(sc->sc_tag,
 	    NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &sc->sc_regh)) {
@@ -193,17 +202,16 @@ bad:
 
 	gm = &sc->curr_mode;
 	gm->mode_id = mode;
-	gm->fbbase = (caddr_t)(sc->sc_regh +
-				m68k_trunc_page(image.offset)); /* XXX evil! */
-	gm->fboff = image.offset & PGOFSET;
-	gm->rowbytes = image.rowbytes;
-	gm->width = image.right - image.left;
-	gm->height = image.bottom - image.top;
-	gm->fbsize = sc->curr_mode.height * sc->curr_mode.rowbytes;
-	gm->hres = image.hRes;
-	gm->vres = image.vRes;
 	gm->ptype = image.pixelType;
 	gm->psize = image.pixelSize;
+	gm->width = image.right - image.left;
+	gm->height = image.bottom - image.top;
+	gm->rowbytes = image.rowbytes;
+	gm->hres = image.hRes;
+	gm->vres = image.vRes;
+	gm->fbsize = gm->height * gm->rowbytes;
+	gm->fbbase = (caddr_t)sc->sc_regh;	/* XXX evil hack */
+	gm->fboff = image.offset;
 
 	strncpy(cardname, nubus_get_card_name(sc->sc_tag, sc->sc_regh,
 	    &sc->sc_slot), CARD_NAME_LEN);
@@ -225,33 +233,35 @@ bad:
 	}
 
 	switch (sc->card_id) {
-	case NUBUS_DRHW_M2HRVC:
 	case NUBUS_DRHW_TFB:
+	case NUBUS_DRHW_M2HRVC:
+	case NUBUS_DRHW_PVC:
 		sc->cli_offset = 0xa0000;
 		sc->cli_value = 0;
-		add_nubus_intr(na->slot, grfmv_intr_generic, sc,
+		add_nubus_intr(na->slot, grfmv_intr_generic_write1, sc,
 		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_WVC:
 		sc->cli_offset = 0xa00000;
 		sc->cli_value = 0;
-		add_nubus_intr(na->slot, grfmv_intr_generic, sc,
+		add_nubus_intr(na->slot, grfmv_intr_generic_write1, sc,
 		    sc->sc_dev.dv_xname);
 		break;
-	case NUBUS_DRHW_RPC8XJ:
-		add_nubus_intr(na->slot, grfmv_intr_radius, sc,
+	case NUBUS_DRHW_COLORMAX:
+		add_nubus_intr(na->slot, grfmv_intr_cmax, sc,
 		    sc->sc_dev.dv_xname);
 		break;
-	case NUBUS_DRHW_FIILX:
-	case NUBUS_DRHW_FIISXDSP:
-		sc->cli_offset = 0xf05000;
-		sc->cli_value = 0x80;
-		add_nubus_intr(na->slot, grfmv_intr_generic, sc,
-		    sc->sc_dev.dv_xname);
+	case NUBUS_DRHW_SE30:
+		/* Do nothing--SE/30 interrupts are disabled */
 		break;
-	case NUBUS_DRHW_SAM768:
-		add_nubus_intr(na->slot, grfmv_intr_cti, sc,
+	case NUBUS_DRHW_MDC:
+		sc->cli_offset = 0x200148;
+		sc->cli_value = 1;
+		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc,
 		    sc->sc_dev.dv_xname);
+
+		/* Enable interrupts; to disable, write 0x7 to this location */
+		bus_space_write_4(sc->sc_tag, sc->sc_regh, 0x20013C, 5);
 		break;
 	case NUBUS_DRHW_CB264:
 		add_nubus_intr(na->slot, grfmv_intr_cb264, sc,
@@ -261,15 +271,104 @@ bad:
 		add_nubus_intr(na->slot, grfmv_intr_cb364, sc,
 		    sc->sc_dev.dv_xname);
 		break;
-	case NUBUS_DRHW_SE30:
-		/* Do nothing--SE/30 interrupts are disabled */
+	case NUBUS_DRHW_RPC8:
+		sc->cli_offset = 0xfdff8f;
+		sc->cli_value = 0xff;
+		add_nubus_intr(na->slot, grfmv_intr_generic_write1, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_RPC8XJ:
+		sc->cli_value = 0x66;
+		add_nubus_intr(na->slot, grfmv_intr_radius, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_RPC24X:
+	case NUBUS_DRHW_BOOGIE:
+		sc->cli_value = 0x64;
+		add_nubus_intr(na->slot, grfmv_intr_radius, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_RPC24XP:
+		add_nubus_intr(na->slot, grfmv_intr_radius24, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_RADGSC:
+		add_nubus_intr(na->slot, grfmv_intr_radius_gsc, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_RDCGX:
+	case NUBUS_DRHW_MPGX:
+		add_nubus_intr(na->slot, grfmv_intr_radius_gx, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_FIILX:
+	case NUBUS_DRHW_FIISXDSP:
+	case NUBUS_DRHW_FUTURASX:
+		sc->cli_offset = 0xf05000;
+		sc->cli_value = 0x80;
+		add_nubus_intr(na->slot, grfmv_intr_generic_write1, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_SAM768:
+		add_nubus_intr(na->slot, grfmv_intr_cti, sc,
+		sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_SUPRGFX:
+		add_nubus_intr(na->slot, grfmv_intr_supermacgfx, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_SPECTRM8:
+		sc->cli_offset = 0x0de178;
+		sc->cli_value = 0x80;
+		add_nubus_intr(na->slot, grfmv_intr_generic_or4, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_LAPIS:
+		add_nubus_intr(na->slot, grfmv_intr_lapis, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_FORMAC:
+		add_nubus_intr(na->slot, grfmv_intr_formac, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_ROPS24LXI:
+	case NUBUS_DRHW_ROPS24XLTV:
+	case NUBUS_DRHW_ROPS24MXTV:
+		sc->cli_offset = 0xfb0010;
+		sc->cli_value = 0x00;
+		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_ROPSPPGT:
+		sc->cli_offset = 0xf50010;
+		sc->cli_value = 0x02;
+		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_VIMAGE:
+		add_nubus_intr(na->slot, grfmv_intr_vimage, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_GVIMAGE:
+		add_nubus_intr(na->slot, grfmv_intr_gvimage, sc,
+		    sc->sc_dev.dv_xname);
+		break;
+	case NUBUS_DRHW_MC2124NB:
+		sc->cli_offset = 0xfd1000;
+		sc->cli_value = 0x00;
+		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc,
+		    sc->sc_dev.dv_xname);
 		break;
 	case NUBUS_DRHW_MICRON:
-		/* What do we know about this one? */
+		sc->cli_offset = 0xa00014;
+		sc->cli_value = 0;
+		add_nubus_intr(na->slot, grfmv_intr_generic_write4, sc,
+		    sc->sc_dev.dv_xname);
+		break;
 	default:
-		printf("%s: Unknown video card 0x%x--",
+		printf("%s: Unknown video card ID 0x%x --",
 		    sc->sc_dev.dv_xname, sc->card_id);
-		printf("Not installing interrupt routine.\n");
+		printf(" Not installing interrupt routine.\n");
 		break;
 	}
 
@@ -309,18 +408,54 @@ grfmv_phys(gp, addr)
 /* Interrupt handlers... */
 /*
  * Generic routine to clear interrupts for cards where it simply takes
- * a CLR.B to clear the interrupt.  The offset of this byte varies between
- * cards.
+ * a MOV.B to clear the interrupt.  The offset and value of this byte
+ * varies between cards.
  */
 /*ARGSUSED*/
 static int
-grfmv_intr_generic(vsc)
+grfmv_intr_generic_write1(vsc)
 	void	*vsc;
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 
 	bus_space_write_1(sc->sc_tag, sc->sc_regh,
+	    sc->cli_offset, (u_int8_t)sc->cli_value);
+	return (1);
+}
+
+/*
+ * Generic routine to clear interrupts for cards where it simply takes
+ * a MOV.L to clear the interrupt.  The offset and value of this byte
+ * varies between cards.
+ */
+/*ARGSUSED*/
+static int
+grfmv_intr_generic_write4(vsc)
+	void	*vsc;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+
+	bus_space_write_4(sc->sc_tag, sc->sc_regh,
 	    sc->cli_offset, sc->cli_value);
+	return (1);
+}
+
+/*
+ * Generic routine to clear interrupts for cards where it simply takes
+ * an OR.L to clear the interrupt.  The offset and value of this byte
+ * varies between cards.
+ */
+/*ARGSUSED*/
+static int
+grfmv_intr_generic_or4(vsc)
+	void	*vsc;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	unsigned long	scratch;
+
+	scratch = bus_space_read_4(sc->sc_tag, sc->sc_regh, sc->cli_offset);
+	scratch |= 0x80;
+	bus_space_write_4(sc->sc_tag, sc->sc_regh, sc->cli_offset, scratch);
 	return (1);
 }
 
@@ -335,14 +470,28 @@ grfmv_intr_radius(vsc)
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int8_t c;
 
-	/*
-	 * The value 0x66 was the observed value on one	card.  It is read
-	 * from the driver's information block, so this may not be sufficient.
-	 * Then again, we're not setting up any other interrupts...
-	 */
-	c = 0x66;
+	c = sc->cli_value;
 
 	c |= 0x80;
+	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0xd00403, c);
+	c &= 0x7f;
+	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0xd00403, c);
+	return (1);
+}
+
+/*
+ * Routine to clear interrupts for the Radius PrecisionColor 24Xp card.
+ * Is this what the 8xj routine is doing, too?
+ */
+/*ARGSUSED*/
+static int
+grfmv_intr_radius24(vsc)
+	void	*vsc;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int8_t c;
+
+	c = 0x80 | bus_space_read_1(sc->sc_tag, sc->sc_regh, 0xfffd8);
 	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0xd00403, c);
 	c &= 0x7f;
 	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0xd00403, c);
@@ -376,13 +525,14 @@ grfmv_intr_cti(vsc)
 
 /*ARGSUSED*/
 static int
-grfmv_intr_cb264(void *vsc)
+grfmv_intr_cb264(vsc)
+	void	*vsc;
 {
 	struct grfbus_softc *sc;
 	volatile char *slotbase;
 
 	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_regh;	/* XXX evil hack */
+	slotbase = (volatile char *)sc->sc_regh; /* XXX evil hack */
 	asm volatile("	movl	%0,a0
 			movl	a0@(0xff6028),d0
 			andl	#0x2,d0
@@ -430,13 +580,14 @@ grfmv_intr_cb264(void *vsc)
  */
 /*ARGSUSED*/
 static int
-grfmv_intr_cb364(void *vsc)
+grfmv_intr_cb364(vsc)
+	void	*vsc;
 {
 	struct grfbus_softc *sc;
 	volatile char *slotbase;
 
 	sc = (struct grfbus_softc *)vsc;
-	slotbase = (volatile char *)sc->sc_regh;	/* XXX evil hack */
+	slotbase = (volatile char *)sc->sc_regh; /* XXX evil hack */
 	asm volatile("	movl	%0,a0
 			movl	a0@(0xfe6028),d0
 			andl	#0x2,d0
@@ -510,5 +661,129 @@ grfmv_intr_cb364(void *vsc)
 			movl	#0x1,a0@(0xfe6014)
 		_cb364_intr_quit:
 		" : : "g" (slotbase) : "a0","d0","d1","d2");
+	return (1);
+}
+
+/*
+ * Interrupt clearing routine for SuperMac GFX card.
+ */
+/*ARGSUSED*/
+static int
+grfmv_intr_supermacgfx(vsc)
+	void	*vsc;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int8_t dummy;
+
+	dummy = bus_space_read_1(sc->sc_tag, sc->sc_regh, 0xE70D3);
+	return (1);
+}
+
+/*
+ * Routine to clear interrupts for the Sigma Designs ColorMax card.
+ */
+/*ARGSUSED*/
+static int
+grfmv_intr_cmax(vsc)
+	void	*vsc;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int32_t dummy;
+
+	dummy = bus_space_read_4(sc->sc_tag, sc->sc_regh, 0xf501c);
+	dummy = bus_space_read_4(sc->sc_tag, sc->sc_regh, 0xf5018);
+	return (1);
+}
+
+/*
+ * Routine to clear interrupts for the Lapis ProColorServer 8 PDS card
+ * (for the SE/30).
+ */
+/*ARGSUSED*/
+static int
+grfmv_intr_lapis(vsc)
+	void	*vsc;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+
+	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0xff7000, 0x08);
+	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0xff7000, 0x0C);
+	return (1);
+}
+
+/*
+ * Routine to clear interrupts for the Formac Color Card II
+ */
+/*ARGSUSED*/
+static int
+grfmv_intr_formac(vsc)
+	void	*vsc;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int8_t dummy;
+
+	dummy = bus_space_read_1(sc->sc_tag, sc->sc_regh, 0xde80db);
+	dummy = bus_space_read_1(sc->sc_tag, sc->sc_regh, 0xde80d3);
+	return (1);
+}
+
+/*
+ * Routine to clear interrupts for the Vimage by Interware Co., Ltd.
+ */
+/*ARGSUSED*/
+static int
+grfmv_intr_vimage(vsc)
+	void	*vsc;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+
+	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0x800000, 0x67);
+	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0x800000, 0xE7);
+	return (1);
+}
+
+/*
+ * Routine to clear interrupts for the Grand Vimage by Interware Co., Ltd.
+ */
+/*ARGSUSED*/
+static int
+grfmv_intr_gvimage(vsc)
+	void	*vsc;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int8_t dummy;
+
+	dummy = bus_space_read_1(sc->sc_tag, sc->sc_regh, 0xf00000);
+	return (1);
+}
+
+/*
+ * Routine to clear interrupts for the Radius GS/C
+ */
+/*ARGSUSED*/
+static int
+grfmv_intr_radius_gsc(vsc)
+	void	*vsc;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+	u_int8_t dummy;
+
+	dummy = bus_space_read_1(sc->sc_tag, sc->sc_regh, 0xfb802);
+	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0xfb802, 0xff);
+	return (1);
+}
+
+/*
+ * Routine to clear interrupts for the Radius GS/C
+ */
+/*ARGSUSED*/
+static int
+grfmv_intr_radius_gx(vsc)
+	void	*vsc;
+{
+	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
+
+	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0x600000, 0x00);
+	bus_space_write_1(sc->sc_tag, sc->sc_regh, 0x600000, 0x20);
 	return (1);
 }
