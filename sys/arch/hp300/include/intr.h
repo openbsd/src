@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.15 2005/04/19 15:29:47 mickey Exp $	*/
+/*	$OpenBSD: intr.h,v 1.16 2005/05/01 09:55:49 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.2 1997/07/24 05:43:08 scottr Exp $	*/
 
 /*-
@@ -88,15 +88,6 @@ struct isr {
 	_spl_r;								\
 })
 
-/* spl0 requires checking for software interrupts */
-#define	spl1()	_spl(PSL_S|PSL_IPL1)
-#define	spl2()	_spl(PSL_S|PSL_IPL2)
-#define	spl3()	_spl(PSL_S|PSL_IPL3)
-#define	spl4()	_spl(PSL_S|PSL_IPL4)
-#define	spl5()	_spl(PSL_S|PSL_IPL5)
-#define	spl6()	_spl(PSL_S|PSL_IPL6)
-#define	spl7()	_spl(PSL_S|PSL_IPL7)
-
 /*
  * These four globals contain the appropriate PSL_S|PSL_IPL? values
  * to raise interupt priority to the requested level.
@@ -126,19 +117,20 @@ extern	unsigned short hp300_impipl;
 #define	IPL_HIGH	7
 
 /* These spl calls are used by machine-independent code. */
-#define	splsoftclock()		spl1()
-#define	splsoftnet()		spl1()
+#define	splsoft()		_splraise(PSL_S | PSL_IPL1)
+#define	splsoftclock()		splsoft()
+#define	splsoftnet()		splsoft()
 #define	splbio()		_splraise(hp300_bioipl)
 #define	splnet()		_splraise(hp300_netipl)
 #define	spltty()		_splraise(hp300_ttyipl)
 #define	splimp()		_splraise(hp300_impipl)
-#define	splclock()		spl6()
-#define	splstatclock()		spl6()
-#define	splvm()			splimp()
-#define	splhigh()		spl7()
+#define	splclock()		_splraise(PSL_S | PSL_IPL6)
+#define	splstatclock()		_splraise(PSL_S | PSL_IPL6)
+#define	splvm()			_splraise(hp300_impipl)
+#define	splhigh()		_spl(PSL_S | PSL_IPL7)
 
 /* watch out for side effects */
-#define	splx(s)		((s) & PSL_IPL ? _spl((s)) : spl0())
+#define	splx(s)			((s) & PSL_IPL ? _spl((s)) : spl0())
 
 /*
  * Simulated software interrupt register.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.19 2005/04/30 16:42:33 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.20 2005/05/01 09:55:49 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -975,7 +975,7 @@ luna88k_ext_int(u_int v, struct trapframe *eframe)
 			for (i = 0; i < 8; i++)
 				printf("int_mask[%d] = 0x%08x\n", i, int_mask_val[i]);
 			printf("--CPU %d halted--\n", cpu_number());
-			spl7();
+			setipl(IPL_ABORT);
 			for(;;) ;
 		}
 

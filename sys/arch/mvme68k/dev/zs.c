@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.20 2004/09/15 05:57:39 miod Exp $ */
+/*	$OpenBSD: zs.c,v 1.21 2005/05/01 09:55:49 miod Exp $ */
 
 /*
  * Copyright (c) 2000 Steve Murphree, Jr.
@@ -72,7 +72,7 @@
 
 #define TS_DRAIN	TS_FLUSH /* waiting for output to drain */
 
-#define splzs()		spl4()
+#define splzs()		_splraise(PSL_S | PSL_IPL4)
 
 struct zs {
 	short    flags;		/* see below */

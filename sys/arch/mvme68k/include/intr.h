@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.11 2005/04/19 15:29:47 mickey Exp $	*/
+/*	$OpenBSD: intr.h,v 1.12 2005/05/01 09:55:49 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -74,15 +74,6 @@ u_long	allocate_sir(void (*proc)(void *), void *arg);
 	_spl_r;								\
 })
 
-/* spl0 requires checking for software interrupts */
-#define	spl1()	_spl(PSL_S|PSL_IPL1)
-#define	spl2()	_spl(PSL_S|PSL_IPL2)
-#define	spl3()	_spl(PSL_S|PSL_IPL3)
-#define	spl4()	_spl(PSL_S|PSL_IPL4)
-#define	spl5()	_spl(PSL_S|PSL_IPL5)
-#define	spl6()	_spl(PSL_S|PSL_IPL6)
-#define	spl7()	_spl(PSL_S|PSL_IPL7)
-
 /*
  * Interrupt "levels".  These are a more abstract representation
  * of interrupt levels, and do not have the same meaning as m68k
@@ -101,19 +92,20 @@ u_long	allocate_sir(void (*proc)(void *), void *arg);
 #define IPL_STATCLOCK	5
 #define IPL_HIGH	7
 
-#define	splsoftclock()		spl1()
-#define	splsoftnet()		spl1()
-#define	splbio()		_splraise(PSL_S|PSL_IPL2)
-#define	splnet()		_splraise(PSL_S|PSL_IPL3)
-#define	splimp()		_splraise(PSL_S|PSL_IPL3)
-#define	spltty()		_splraise(PSL_S|PSL_IPL3)
-#define	splvm()			splimp()
-#define	splclock()		_splraise(PSL_S|PSL_IPL5)
-#define	splstatclock()		_splraise(PSL_S|PSL_IPL5)
-#define	splhigh()		spl7()
+#define	splsoft()		_splraise(PSL_S | PSL_IPL1)
+#define	splsoftclock()		splsoft()
+#define	splsoftnet()		splsoft()
+#define	splbio()		_splraise(PSL_S | PSL_IPL2)
+#define	splnet()		_splraise(PSL_S | PSL_IPL3)
+#define	splimp()		_splraise(PSL_S | PSL_IPL3)
+#define	spltty()		_splraise(PSL_S | PSL_IPL3)
+#define	splvm()			_splraise(PSL_S | PSL_IPL3)
+#define	splclock()		_splraise(PSL_S | PSL_IPL5)
+#define	splstatclock()		_splraise(PSL_S | PSL_IPL5)
+#define	splhigh()		_spl(PSL_S | PSL_IPL7)
 
 /* watch out for side effects */
-#define	splx(s)		(s & PSL_IPL ? _spl(s) : spl0())
+#define	splx(s)			((s) & PSL_IPL ? _spl(s) : spl0())
 
 /* locore.s */
 int	spl0(void);

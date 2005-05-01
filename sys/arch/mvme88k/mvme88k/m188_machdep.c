@@ -1,4 +1,4 @@
-/*	$OpenBSD: m188_machdep.c,v 1.7 2005/04/30 16:42:37 miod Exp $	*/
+/*	$OpenBSD: m188_machdep.c,v 1.8 2005/05/01 09:55:49 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -333,7 +333,7 @@ m188_ext_int(u_int v, struct trapframe *eframe)
 			for (i = 0; i < 8; i++)
 				printf("int_mask[%d] = 0x%08x\n", i, int_mask_val[i]);
 			printf("--CPU %d halted--\n", cpu_number());
-			spl7();
+			setipl(IPL_ABORT);
 			for(;;) ;
 		}
 

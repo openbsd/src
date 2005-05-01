@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.46 2005/01/15 21:13:08 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.47 2005/05/01 09:55:47 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.57 1998/02/16 20:58:31 thorpej Exp $	*/
 
 /*
@@ -549,7 +549,7 @@ dopanic:
 		 * check.  Note that we ensure that we are at least at SIR
 		 * IPL while processing the SIR.
 		 */
-		spl1();
+		splsoft();
 		/* FALLTHROUGH */
 
 	case T_SSIR:		/* software interrupt */

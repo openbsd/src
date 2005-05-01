@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.12 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.13 2005/05/01 09:55:49 miod Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.24 1997/02/18 22:27:32 gwr Exp $	*/
 
 /* 
@@ -125,7 +125,7 @@ kdb_trap(type, regs)
 	 * But lock out interrupts to prevent TRACE_KDB from setting the
 	 * trace bit in the current SR (and trapping while exiting KDB).
 	 */
-	(void) spl7();
+	(void) splhigh();
 
 	/*
 	 * Tell caller "We HAVE handled the trap."

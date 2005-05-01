@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.11 2004/12/02 22:00:31 martin Exp $	*/
+/*	$OpenBSD: intr.h,v 1.12 2005/05/01 09:55:49 miod Exp $	*/
 /*	$NetBSD: intr.h,v 1.9 1998/08/12 06:58:42 scottr Exp $	*/
 
 /*
@@ -66,20 +66,6 @@
 	_spl_r;								\
 })
 
-/* spl0 requires checking for software interrupts */
-#define spl1()  _spl(PSL_S|PSL_IPL1)
-#define spl2()  _spl(PSL_S|PSL_IPL2)
-#define spl3()  _spl(PSL_S|PSL_IPL3)
-#define spl4()  _spl(PSL_S|PSL_IPL4)
-#define spl5()  _spl(PSL_S|PSL_IPL5)
-#define spl6()  _spl(PSL_S|PSL_IPL6)
-#define spl7()  _spl(PSL_S|PSL_IPL7)
-
-/* These spl calls are _not_ to be used by machine-independent code. */
-#define	spladb()	splhigh()
-#define	splzs()		splserial()
-#define	splsoft()	spl1()
-
 /*
  * splnet must block hardware network interrupts
  * splimp must be > spltty
@@ -119,6 +105,7 @@ extern u_short	mac68k_statclockipl;
  * everything at spl2, and everything but the panic switch and
  * power at spl4.
  */
+#define	splsoft()		_splraise(PSL_S | PSL_IPL1)
 #define	splsoftclock()		splsoft()
 #define	splsoftnet()		splsoft()
 #define	spltty()		_splraise(mac68k_ttyipl)
@@ -129,11 +116,15 @@ extern u_short	mac68k_statclockipl;
 #define	splaudio()		_splraise(mac68k_audioipl)
 #define	splclock()		_splraise(mac68k_clockipl)
 #define	splstatclock()		_splraise(mac68k_statclockipl)
-#define	splserial()		spl4()
-#define	splhigh()		spl7()
+#define	splserial()		_splraise(PSL_S | PSL_IPL4)
+#define	splhigh()		_spl(PSL_S | PSL_IPL7)
+
+/* These spl calls are _not_ to be used by machine-independent code. */
+#define	spladb()		splhigh()
+#define	splzs()			splserial()
 
 /* watch out for side effects */
-#define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
+#define splx(s)         	((s) & PSL_IPL ? _spl(s) : spl0())
 
 /*
  * simulated software interrupt register

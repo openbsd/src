@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.2 2005/04/19 15:29:47 mickey Exp $	*/
+/*	$OpenBSD: intr.h,v 1.3 2005/05/01 09:55:49 miod Exp $	*/
 /*
  * Copyright (C) 2000 Steve Murphree, Jr.
  * All rights reserved.
@@ -35,8 +35,6 @@ unsigned setipl(unsigned level);
 unsigned raiseipl(unsigned level);
 int spl0(void);
 
-/* needs major cleanup - XXX nivas */
-
 /* SPL asserts */
 #ifdef DIAGNOSTIC
 /*
@@ -57,17 +55,9 @@ void splassert_check(int, const char *);
 
 #endif /* _LOCORE */
 
-#define spl1()		setipl(1)
-#define spl2()		setipl(2)
-#define spl3()		setipl(3)
-#define spl4()		setipl(4)
-#define spl5()		setipl(5)
-#define spl6()		setipl(6)
-#define spl7()		setipl(7)
-
 #define splnone			spl0
-#define splsoftclock()		setipl(IPL_SOFTCLOCK)
-#define splsoftnet()		setipl(IPL_SOFTNET)
+#define splsoftclock()		raiseipl(IPL_SOFTCLOCK)
+#define splsoftnet()		raiseipl(IPL_SOFTNET)
 #define splbio()		raiseipl(IPL_BIO)
 #define splnet()		raiseipl(IPL_NET)
 #define spltty()		raiseipl(IPL_TTY)
@@ -77,7 +67,7 @@ void splassert_check(int, const char *);
 #define splvm()			raiseipl(IPL_VM)
 #define splhigh()		setipl(IPL_HIGH)
 
-#define splx(x)		((x) ? setipl((x)) : spl0())
+#define splx(x)			((x) ? setipl((x)) : spl0())
 
 #endif /* _KERNEL */
 #endif /* _MVME88K_INTR_H_ */
