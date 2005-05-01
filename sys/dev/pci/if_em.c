@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.47 2005/04/25 17:55:51 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.48 2005/05/01 12:19:48 markus Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -668,6 +668,7 @@ em_init_locked(struct em_softc *sc)
 		sc->num_tx_desc = EM_MIN_TXD;
 		sc->num_rx_desc = EM_MIN_RXD;
 	}
+	IFQ_SET_MAXLEN(&ifp->if_snd, sc->num_tx_desc - 1);
 
 	/* Packet Buffer Allocation (PBA)
 	 * Writing PBA sets the receive portion of the buffer
