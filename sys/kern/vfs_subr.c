@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.110 2005/03/24 02:40:26 tedu Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.111 2005/05/01 12:28:18 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1344,7 +1344,11 @@ vprint(label, vp)
 	if (vp->v_flag & VXWANT)
 		strlcat(buf, "|VXWANT", sizeof buf);
 	if (vp->v_bioflag & VBIOWAIT)
-		strlcat(buf, "| VBIOWAIT", sizeof buf);
+		strlcat(buf, "|VBIOWAIT", sizeof buf);
+	if (vp->v_bioflag & VBIOONFREELIST)
+		strlcat(buf, "|VBIOONFREELIST", sizeof buf);
+	if (vp->v_bioflag & VBIOONSYNCLIST)
+		strlcat(buf, "|VBIOONSYNCLIST", sizeof buf);
 	if (vp->v_flag & VALIASED)
 		strlcat(buf, "|VALIASED", sizeof buf);
 	if (buf[0] != '\0')
