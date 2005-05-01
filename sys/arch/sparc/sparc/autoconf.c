@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.66 2005/04/21 00:15:43 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.67 2005/05/01 18:15:46 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -393,9 +393,20 @@ bootpath_build()
 				cp = str2hex(++cp, &bp->val[0]);
 				if (*cp == ',')
 					cp = str2hex(++cp, &bp->val[1]);
-				if (*cp == ':')
-					/* XXX - we handle just one char */
-					bp->val[2] = *++cp - 'a', ++cp;
+				if (*cp == ':') {
+					/*
+					 * We only store one character here,
+					 * as we will only use this field
+					 * to compute a partition index
+					 * for block devices.  However, it
+					 * might be an ethernet media
+					 * specification, so be sure to
+					 * skip all letters.
+					 */
+					bp->val[2] = *++cp - 'a';
+					while (*cp != '\0' && *cp != '/')
+						cp++;
+				}
 			} else {
 				bp->val[0] = -1; /* no #'s: assume unit 0, no
 							sbus offset/adddress */
