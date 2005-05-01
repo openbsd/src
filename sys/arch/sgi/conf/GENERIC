@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.15 2005/04/30 00:49:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.16 2005/05/01 17:19:34 david Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -17,7 +17,7 @@ maxusers	32			# estimated number of users
 makeoption	LINK_ADDRESS="0xffffffff80100000"
 
 # MD options
-option		ARCBIOS		# We use arcbios for FW comminication.
+option		ARCBIOS		# We use arcbios for FW communication.
 
 #option		APERTURE
 

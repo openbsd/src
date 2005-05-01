@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.70 2005/04/30 00:49:36 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.71 2005/05/01 17:19:34 david Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -43,7 +43,7 @@ pdc0	at mainbus0		# PDC/IODC wrapper for boot console
 power0	at mainbus0		# power/fail manager (iv 30)
 cpu*	at mainbus0 irq 31	# HP PA-RISC cpu
 #fpu*	at mainbus0		# HP PA-RISC fpu (iv N/A)
-#pmu*	at mainbus0 irq 29	# HP PA-RISC perfomance monitor unit
+#pmu*	at mainbus0 irq 29	# HP PA-RISC performance monitor unit
 phantomas0 at mainbus0		# Phantom PseudoBC GSC+ Port
 uturn0	at mainbus0		# U2/UTurn Runway IOA
 uturn1	at mainbus0

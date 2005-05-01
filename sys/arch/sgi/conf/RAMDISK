@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.12 2005/05/01 07:54:42 david Exp $
+#	$OpenBSD: RAMDISK,v 1.13 2005/05/01 17:19:34 david Exp $
 #
 
 machine		sgi mips64
@@ -21,7 +21,7 @@ option		DDB
 option		CD9660		# ISO 9660 + Rock Ridge file system
 option		FIFO		# POSIX fifo support (in all filesystems)
 option		FFS		# fast filesystem
-#option		MSDOSFS		# Ability to read write MS-Dos filsystem
+#option		MSDOSFS		# Ability to read write MS-Dos filesystem
 option		NFSCLIENT	# Sun NFS-compatible filesystem (client)
 
 # Networking options
