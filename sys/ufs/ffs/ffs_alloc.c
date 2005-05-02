@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_alloc.c,v 1.53 2004/11/29 06:20:02 jsg Exp $	*/
+/*	$OpenBSD: ffs_alloc.c,v 1.54 2005/05/02 13:13:21 pedro Exp $	*/
 /*	$NetBSD: ffs_alloc.c,v 1.11 1996/05/11 18:27:09 mycroft Exp $	*/
 
 /*
@@ -81,13 +81,13 @@ static int      ffs_checkblk(struct inode *, daddr_t, long);
  *   1) allocate the requested block.
  *   2) allocate a rotationally optimal block in the same cylinder.
  *   3) allocate a block in the same cylinder group.
- *   4) quadradically rehash into other cylinder groups, until an
+ *   4) quadratically rehash into other cylinder groups, until an
  *      available block is located.
  * If no block preference is given the following hierarchy is used
  * to allocate a block:
  *   1) allocate a block in the cylinder group that contains the
  *      inode for the file.
- *   2) quadradically rehash into other cylinder groups, until an
+ *   2) quadratically rehash into other cylinder groups, until an
  *      available block is located.
  */
 int
@@ -556,12 +556,12 @@ fail:
  * If allocating in a directory, the following hierarchy is followed:
  *   1) allocate the preferred inode.
  *   2) allocate an inode in the same cylinder group.
- *   3) quadradically rehash into other cylinder groups, until an
+ *   3) quadratically rehash into other cylinder groups, until an
  *      available inode is located.
  * If no inode preference is given the following hierarchy is used
  * to allocate an inode:
  *   1) allocate an inode in cylinder group 0.
- *   2) quadradically rehash into other cylinder groups, until an
+ *   2) quadratically rehash into other cylinder groups, until an
  *      available inode is located.
  */
 int
@@ -849,7 +849,7 @@ ffs_blkpref(ip, lbn, indx, bap)
  *
  * The policy implemented by this algorithm is:
  *   1) allocate the block in its requested cylinder group.
- *   2) quadradically rehash on the cylinder group number.
+ *   2) quadratically rehash on the cylinder group number.
  *   3) brute force search for a free block.
  */
 /*VARARGS5*/
