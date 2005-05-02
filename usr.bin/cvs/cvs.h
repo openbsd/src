@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.53 2005/04/25 17:59:16 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.54 2005/05/02 15:00:18 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -331,16 +331,26 @@ extern struct cvs_cmd_info cvs_annotate;
 extern struct cvs_cmd_info cvs_checkout;
 extern struct cvs_cmd_info cvs_commit;
 extern struct cvs_cmd_info cvs_diff;
+extern struct cvs_cmd_info cvs_edit;
+extern struct cvs_cmd_info cvs_editors;
+extern struct cvs_cmd_info cvs_export;
 extern struct cvs_cmd_info cvs_getlog;
 extern struct cvs_cmd_info cvs_history;
 extern struct cvs_cmd_info cvs_import;
 extern struct cvs_cmd_info cvs_init;
+extern struct cvs_cmd_info cvs_rdiff;
+extern struct cvs_cmd_info cvs_release;
 extern struct cvs_cmd_info cvs_remove;
+extern struct cvs_cmd_info cvs_rlog;
+extern struct cvs_cmd_info cvs_rtag;
+extern struct cvs_cmd_info cmd_server;
 extern struct cvs_cmd_info cvs_status;
 extern struct cvs_cmd_info cvs_tag;
+extern struct cvs_cmd_info cvs_unedit;
 extern struct cvs_cmd_info cvs_update;
 extern struct cvs_cmd_info cvs_version;
-extern struct cvs_cmd_info cmd_server;
+extern struct cvs_cmd_info cvs_watch;
+extern struct cvs_cmd_info cvs_watchers;
 
 struct cvs_cmd* cvs_findcmd  (const char *);
 int             cvs_startcmd (struct cvs_cmd *, int, char **);
