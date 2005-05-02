@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.223 2005/04/14 10:22:37 henning Exp $
+#	$OpenBSD: Makefile,v 1.224 2005/05/02 06:47:32 david Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	Canada/Mountain
@@ -266,11 +266,11 @@ release: distribution snap_pre snap_md
 	-cp ${DESTDIR}/snapshot/INSTALL.* ${RELEASEDIR}
 	-cp ${DESTDIR}/snapshot/*.fs ${DESTDIR}/snapshot/*.fs.gz ${RELEASEDIR}
 	-cd ${RELEASEDIR}; \
-		md5 bsd!(*.gz) *boot* cdbr *BOOT* INSTALL.* *.fs *.iso *.gz *.tgz \
-		    > MD5
+		md5 *bsd!(*.gz) *boot* cdbr *BOOT* INSTALL.* Packages *.fs \
+		*.ipk *.iso *.gz *.tgz > MD5
 	-cd ${RELEASEDIR}; \
-		cksum bsd!(*.gz) *boot* cdbr *BOOT* INSTALL.* *.fs *.iso *.gz *.tgz \
-		    > CKSUM
+		cksum *bsd!(*.gz) *boot* cdbr *BOOT* INSTALL.* Packages *.fs \
+		*.ipk *.iso *.gz *.tgz > CKSUM
 .if defined(MACHINE_HAS_TOOLS)
 	mkdir -p ${RELEASEDIR}/tools
 	cp ${DESTDIR}/snapshot/tools/* ${RELEASEDIR}/tools
@@ -377,7 +377,7 @@ distrib:
 DHSIZE=1024 1536 2048 3072 4096
 update-moduli:
 	( \
-		echo '#    $$OpenBSD: Makefile,v 1.223 2005/04/14 10:22:37 henning Exp $$'; \
+		echo '#    $$OpenBSD: Makefile,v 1.224 2005/05/02 06:47:32 david Exp $$'; \
 		echo '# Time Type Tests Tries Size Generator Modulus'; \
 		( for i in ${DHSIZE}; do \
 			ssh-keygen -b $$i -G /dev/stdout; \
