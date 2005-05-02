@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.13 2005/04/11 03:22:59 uwe Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.14 2005/05/02 02:45:29 uwe Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -547,6 +547,7 @@ initarm(void *arg)
 	pv_addr_t kernel_l1pt;
 	paddr_t memstart;
 	psize_t memsize;
+	extern u_int32_t esym;	/* &_end if no symbols are loaded */
 
 #if 0
 	int led_data = 0;
@@ -917,11 +918,12 @@ initarm(void *arg)
 	printf("Mapping kernel\n");
 #endif
 
-	/* Now we fill in the L2 pagetable for the kernel static code/data */
+	/* Now we fill in the L2 pagetable for the kernel static code/data
+	 * and the symbol table. */
 	{
-		extern char etext[], _end[];
+		extern char etext[];
 		size_t textsize = (u_int32_t) etext - KERNEL_TEXT_BASE;
-		size_t totalsize = (u_int32_t) _end - KERNEL_TEXT_BASE;
+		size_t totalsize = esym - KERNEL_TEXT_BASE;
 		u_int logical;
 
 		textsize = (textsize + PGOFSET) & ~PGOFSET;
@@ -932,7 +934,7 @@ initarm(void *arg)
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, textsize,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
+		pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, totalsize - textsize,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	}
@@ -999,11 +1001,8 @@ initarm(void *arg)
 	 * variables.
 	 */
 	{
-		extern char _end[];
-
 		physical_freestart = physical_start +
-		    (((((u_int32_t) _end) + PGOFSET) & ~PGOFSET) -
-		     KERNEL_BASE);
+		    (((esym + PGOFSET) & ~PGOFSET) - KERNEL_BASE);
 		physical_freeend = physical_end;
 		free_pages =
 		    (physical_freeend - physical_freestart) / PAGE_SIZE;
