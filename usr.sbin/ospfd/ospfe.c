@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.17 2005/04/25 11:31:50 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.18 2005/05/02 02:26:35 djm Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -118,10 +118,9 @@ ospfe(struct ospfd_conf *xconf, int pipe_parent2ospfe[2], int pipe_ospfe2rde[2],
 	ospfd_process = PROC_OSPF_ENGINE;
 
 	if (setgroups(1, &pw->pw_gid) ||
-	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
-	    seteuid(pw->pw_uid) || setuid(pw->pw_uid)) {
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
-	}
 
 	endpwent();
 
