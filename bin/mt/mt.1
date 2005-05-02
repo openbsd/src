@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mt.1,v 1.23 2005/05/01 18:56:36 deraadt Exp $
+.\"	$OpenBSD: mt.1,v 1.24 2005/05/02 07:45:37 jmc Exp $
 .\"	$NetBSD: mt.1,v 1.8 1996/05/21 10:23:55 mrg Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
@@ -36,7 +36,6 @@
 .Sh NAME
 .Nm mt ,
 .Nm eject
-.Op Fl t
 .Nd magnetic tape and removable media manipulating program
 .Sh SYNOPSIS
 .Nm mt
@@ -87,7 +86,6 @@ Operate on the
 specified.
 .El
 .Pp
-.Pp
 The options for
 .Nm eject
 are as follows:
@@ -96,7 +94,7 @@ are as follows:
 Insert the device instead of ejecting.
 For the
 .Xr cd 4
-driver, this request that the tray be closed.
+driver, this requests that the tray be closed.
 .El
 .Pp
 The available commands are listed below.
