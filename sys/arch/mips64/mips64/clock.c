@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.15 2005/05/01 15:15:08 grange Exp $ */
+/*	$OpenBSD: clock.c,v 1.16 2005/05/02 18:17:52 grange Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -115,7 +115,7 @@ clockattach(struct device *parent, struct device *self, void *aux)
 	case SGI_INDY:
 	case SGI_O2:
 	case SGI_O200:
-		printf(" ticker on int5 using count register.");
+		printf(" ticker on int5 using count register");
 		set_intr(INTPRI_CLOCK, CR_INT_5, clock_int5);
 		ticktime = sys_config.cpu[0].clock / 2000;
 		break;
