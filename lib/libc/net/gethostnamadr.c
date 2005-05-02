@@ -48,7 +48,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.61 2005/03/30 02:58:28 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.62 2005/05/02 17:38:41 moritz Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -702,7 +702,7 @@ gethostbyaddr(const char *addr, int len, int af)
 		for (n = IN6ADDRSZ - 1; n >= 0; n--) {
 			i = snprintf(qp, ep - qp, "%x.%x.",
 			    uaddr[n] & 0xf, (uaddr[n] >> 4) & 0xf);
-			if (i <= 0) {
+			if (i <= 0 || i >= ep - qp) {
 				errno = EINVAL;
 				h_errno = NETDB_INTERNAL;
 				return (NULL);
