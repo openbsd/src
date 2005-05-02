@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.36 2004/12/08 15:38:41 markus Exp $	*/
+/*	$OpenBSD: pci.c,v 1.37 2005/05/02 11:30:25 grange Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -58,7 +58,8 @@ struct pci_softc {
 #endif
 };
 
-#define NMAPREG			((PCI_MAPREG_END - PCI_MAPREG_START) / 4)
+#define NMAPREG			((PCI_MAPREG_END - PCI_MAPREG_START) / \
+				    sizeof(pcireg_t))
 struct pci_dev {
 	LIST_ENTRY(pci_dev) pd_next;
 	struct device *pd_dev;
