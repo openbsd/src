@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichreg.h,v 1.3 2004/10/05 18:58:40 grange Exp $	*/
+/*	$OpenBSD: ichreg.h,v 1.4 2005/05/02 13:48:44 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -47,5 +47,30 @@
 #define ICH_PM_ARB_DIS		0x01		/* disable arbiter */
 #define ICH_PM_SS_CNTL	0x50		/* SpeedStep control */
 #define ICH_PM_SS_STATE_LOW	0x01		/* low power state */
+
+/*
+ * 6300ESB watchdog timer registers
+ */
+#define ICH_WDT_BASE	0x10		/* memory space base address */
+#define ICH_WDT_CONF	0x60		/* configuration register */
+#define ICH_WDT_CONF_MASK	0xffff		/* 16-bit register */
+#define ICH_WDT_CONF_INT_MASK	0x3		/* interrupt type */
+#define ICH_WDT_CONF_INT_IRQ	0x0		/* IRQ (APIC 1, INT 10) */
+#define ICH_WDT_CONF_INT_SMI	0x2		/* SMI */
+#define ICH_WDT_CONF_INT_DIS	0x3		/* disabled */
+#define ICH_WDT_CONF_PRE	(1 << 2)	/* 2^5 clock divisor */
+#define ICH_WDT_CONF_OUTDIS	(1 << 5)	/* WDT_TOUT# output disabled */
+#define ICH_WDT_LOCK	0x68		/* lock register */
+#define ICH_WDT_LOCK_LOCKED	(1 << 0)	/* register locked */
+#define ICH_WDT_LOCK_ENABLED	(1 << 1)	/* WDT enabled */
+#define ICH_WDT_LOCK_FREERUN	(1 << 2)	/* free running mode */
+
+#define ICH_WDT_PRE1	0x00		/* preload value 1 */
+#define ICH_WDT_PRE2	0x04		/* preload value 2 */
+#define ICH_WDT_GIS	0x08		/* general interrupt status */
+#define ICH_WDT_GIS_ACTIVE	(1 << 0)	/* interrupt active */
+#define ICH_WDT_RELOAD	0x0c		/* reload register */
+#define ICH_WDT_RELOAD_RLD	(1 << 8)	/* safe reload */
+#define ICH_WDT_RELOAD_TIMEOUT	(1 << 9)	/* timeout occured */
 
 #endif	/* !_DEV_PCI_ICHREG_H_ */
