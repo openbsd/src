@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.174 2005/04/11 08:09:32 dlg Exp $
+#	$OpenBSD: files.pci,v 1.175 2005/05/02 17:26:00 grange Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -530,3 +530,8 @@ file	dev/pci/if_san_xilinx.c 	san
 device	piixpm {}
 attach	piixpm at pci
 file	dev/pci/piixpm.c		piixpm
+
+# Intel 6300ESB ICH watchdog timer
+device	ichwdt {}
+attach	ichwdt at pci
+file	dev/pci/ichwdt.c		ichwdt
