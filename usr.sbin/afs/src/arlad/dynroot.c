@@ -188,7 +188,7 @@ dynroot_create_symlink (fbuf *fbuf, int32_t vnode)
 
     len = snprintf (name, sizeof(name), "%c%s:root.cell.", 
 		    rw ? '%' : '#', cell->name);
-    assert (len > 0 && len <= sizeof (name));
+    assert (len > 0 && len < sizeof (name));
 
     ret = fbuf_truncate (fbuf, len);
     if (ret)

@@ -735,7 +735,9 @@ _print_unit (Log_unit *unit, char *buf, size_t sz)
     if (sz <= 0)
     	return(0);
     ret = snprintf (buf, sz, "%s:", unit->name);
-    if (ret == -1 || ret >= sz)
+    if (ret == -1)
+      ret = 0;
+    if (ret >= sz)
       ret = sz - 1;
     UPDATESZ(buf,sz,ret);
     ret = unparse_flags (log_get_mask (unit), unit->unit, buf, sz);
@@ -758,7 +760,9 @@ log_mask2str (Log_method *method, Log_unit *unit, char *buf, size_t sz)
 	if (log_get_mask (method->units[i])) {
 	    if (printed && sz > 0) {
 		ret = snprintf (buf, sz, ";");
-		if (ret == -1 || ret >= sz)
+		if (ret == -1)
+	 	    ret = 0;
+		if (ret >= sz)
 		    ret = sz - 1;
 		UPDATESZ(buf,sz,ret);
 	    }

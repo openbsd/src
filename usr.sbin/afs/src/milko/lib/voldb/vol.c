@@ -50,7 +50,7 @@ vol_getname (uint32_t num, char *str, size_t sz)
 {
     int i;
     i = snprintf (str, sz, "vol%08u", num);
-    assert (i > 0);
+    assert (i > 0 && i < sz);
     return 0;
 }
 
@@ -83,7 +83,7 @@ vol_getfullname (uint32_t part, uint32_t num, char *str, size_t sz)
     else
 	return EINVAL; /* XXX */
 	
-    assert (ret > 0);
+    assert (ret > 0 && ret < siz);
     return 0;
 }
 

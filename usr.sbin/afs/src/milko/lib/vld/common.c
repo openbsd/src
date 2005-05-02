@@ -156,7 +156,7 @@ local_create_name (struct dp_part *dp, int32_t num, char *name, size_t sz)
 		  (unsigned int) (num >> 8) & 0xff,
 		  (unsigned int) num & 0xff);
     
-    if (i >= sz)
+    if (i == -1 || i >= sz)
 	return(-1);
     return 0;
 }
@@ -172,7 +172,7 @@ local_create_file (struct dp_part *dp, onode_opaque *o,
     
     i = snprintf(nodename, sizeof(nodename), "%s/inodeXXXXXXXXXX",
 		 DP_NAME(dp));
-    if (i > sizeof(nodename))
+    if (i == -1 || i >= sizeof(nodename))
 	return(ENOMEM);
     
     fd = mkstemp(nodename);
@@ -198,7 +198,7 @@ local_create_file (struct dp_part *dp, onode_opaque *o,
 
     i = snprintf(name, sizeof(name), "%s/%02x", DP_NAME(dp), 
 		 (unsigned int) (sb.st_ino >> 24) & 0xff);
-    if (i > sizeof(name)) {
+    if (i == -1 || i >= sizeof(name)) {
 	    ret = ENOMEM
 	    goto bad;
     }
@@ -206,7 +206,7 @@ local_create_file (struct dp_part *dp, onode_opaque *o,
     i = snprintf(name, sizeof(name), "%s/%02x/%02x", DP_NAME(dp), 
 	     (unsigned int) (sb.st_ino >> 24) & 0xff, 
 	     (unsigned int) (sb.st_ino >> 16) & 0xff);
-    if (i > sizeof(name)) {
+    if (i == -1 || i >= sizeof(name)) {
 	    ret = ENOMEM
 	    goto bad;
     }
@@ -216,7 +216,7 @@ local_create_file (struct dp_part *dp, onode_opaque *o,
 	     (unsigned int) (sb.st_ino >> 24) & 0xff, 
 	     (unsigned int) (sb.st_ino >> 16) & 0xff,
 	     (unsigned int) (sb.st_ino >> 8) & 0xff);
-    if (i > sizeof(name)) {
+    if (i == -1 || i >= sizeof(name)) {
 	    ret = ENOMEM
 	    goto bad;
     }

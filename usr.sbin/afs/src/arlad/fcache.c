@@ -508,10 +508,10 @@ fcache_fhget (char *filename, fcache_cache_handle *handle)
 
 	GetCurrentDirectory(1024, buf);
 	
-	/* XXX CACHEHANDLESIZE */
-	ret = snprintf ((char *)handle, 80, "%s\\%02X\\%02X", buf, a, b);
+	ret = snprintf ((char *)handle, CACHEHANDLESIZE,
+	    "%s\\%02X\\%02X", buf, a, b);
 
-	if (ret > 0)
+	if (ret > 0 && ret < CACHEHANDLESIZE)
 	    handle->valid = 1;
 
 	return ret;

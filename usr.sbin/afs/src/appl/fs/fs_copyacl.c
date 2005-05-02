@@ -51,7 +51,7 @@ afs_copyacl(char *fromdir, char *todir)
 		 acl->NumPositiveEntries,
 		 acl->NumNegativeEntries);
     len = l;
-    if (len >= sizeof(acltext)) {
+    if (len == -1 || len >= sizeof(acltext)) {
 	fserr(PROGNAME, ERANGE, todir);
 	return;
     }
@@ -60,7 +60,7 @@ afs_copyacl(char *fromdir, char *todir)
 	l = snprintf(acltext + len, sizeof(acltext) - len, 
 		     "%s %d\n", position->name, position->RightsMask);
 	len += l;
-	if (len >= sizeof(acltext)) {
+	if (l == -1 || len >= sizeof(acltext)) {
 	    fserr(PROGNAME, ERANGE, todir);
 	    return;
 	}
@@ -71,7 +71,7 @@ afs_copyacl(char *fromdir, char *todir)
 	l = snprintf(acltext + len, sizeof(acltext) - len, 
 		     "%s %d\n", position->name, position->RightsMask);
 	len += l;
-	if (len >= sizeof(acltext)) {
+	if (l == -1 || len >= sizeof(acltext)) {
 	    fserr(PROGNAME, ERANGE, todir);
 	    return;
 	}
