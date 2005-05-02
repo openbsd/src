@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopd.c,v 1.12 2004/05/12 10:43:44 henning Exp $ */
+/*	$OpenBSD: mopd.c,v 1.13 2005/05/02 02:29:27 djm Exp $ */
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #ifndef LINT
 static const char rcsid[] =
-    "$OpenBSD: mopd.c,v 1.12 2004/05/12 10:43:44 henning Exp $";
+    "$OpenBSD: mopd.c,v 1.13 2005/05/02 02:29:27 djm Exp $";
 #endif
 
 /*
@@ -147,8 +147,8 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 	if (setgroups(1, &pw->pw_gid) ||
-	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
-	    seteuid(pw->pw_uid) || setuid(pw->pw_uid)) {
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid)) {
 		syslog(LOG_CRIT, "can't drop privileges: %m");
 		exit(1);
 	}

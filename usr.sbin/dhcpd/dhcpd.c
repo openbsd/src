@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.22 2004/10/31 10:43:38 canacar Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.23 2005/05/02 02:29:27 djm Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -135,8 +135,8 @@ main(int argc, char *argv[])
 	if (chdir("/") == -1)
 		error("chdir(\"/\"): %m");
 	if (setgroups(1, &pw->pw_gid) ||
-	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
-	    seteuid(pw->pw_uid) || setuid(pw->pw_uid))
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		error("can't drop privileges: %m");
 	endpwent();
 

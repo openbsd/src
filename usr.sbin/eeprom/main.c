@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2004/07/09 16:22:02 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2005/05/02 02:29:27 djm Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -120,6 +120,7 @@ main(int argc, char *argv[])
 	int ch, do_stdin = 0;
 	char *cp, line[BUFSIZE];
 #ifdef __sparc__
+	gid_t gid;
 	char *optstring = "cf:ivN:-";
 #else
 	char *optstring = "cf:i-";
@@ -162,8 +163,9 @@ main(int argc, char *argv[])
 
 #ifdef __sparc__
 	if (system != NULL) {
-		setegid(getgid());
-		setgid(getgid());
+		gid = getgid();
+		if (setresgid(gid, gid, gid) == -1)
+			err(1, "setresgid");
 	}
 	if (getcputype() != CPU_SUN4)
 		use_openprom = 1;
