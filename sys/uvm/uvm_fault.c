@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.33 2004/08/03 12:10:48 todd Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.34 2005/05/03 11:52:35 mickey Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -568,7 +568,8 @@ uvm_fault(orig_map, vaddr, fault_type, access_type)
 	vm_prot_t enter_prot;
 	boolean_t wired, narrow, promote, locked, shadowed;
 	int npages, nback, nforw, centeridx, result, lcv, gotpages;
-	vaddr_t startva, objaddr, currva, offset, uoff;
+	vaddr_t startva, currva;
+	voff_t uoff;
 	paddr_t pa; 
 	struct vm_amap *amap;
 	struct uvm_object *uobj;
@@ -780,10 +781,9 @@ ReFault:
 
 		/* flush object? */
 		if (uobj) {
-			objaddr =
-			    (startva - ufi.entry->start) + ufi.entry->offset;
+			uoff = (startva - ufi.entry->start) + ufi.entry->offset;
 			simple_lock(&uobj->vmobjlock);
-			(void) uobj->pgops->pgo_flush(uobj, objaddr, objaddr + 
+			(void) uobj->pgops->pgo_flush(uobj, uoff, uoff + 
 				    (nback << PAGE_SHIFT), PGO_DEACTIVATE);
 			simple_unlock(&uobj->vmobjlock);
 		}
@@ -1546,7 +1546,7 @@ Case2:
 				UVM_PAGE_OWN(uobjpage, NULL);
 
 				uvm_lock_pageq();
-				offset = uobjpage->offset;
+				uoff = uobjpage->offset;
 				/* remove old page */
 				uvm_pagerealloc(uobjpage, NULL, 0);
 
@@ -1555,7 +1555,7 @@ Case2:
 				 * control over uobjpage
 				 */
 				/* install new page */
-				uvm_pagerealloc(pg, uobj, offset);
+				uvm_pagerealloc(pg, uobj, uoff);
 				uvm_unlock_pageq();
 
 				/*
