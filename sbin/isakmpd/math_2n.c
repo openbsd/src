@@ -1,4 +1,4 @@
-/* $OpenBSD: math_2n.c,v 1.22 2005/04/21 01:23:06 cloder Exp $	 */
+/* $OpenBSD: math_2n.c,v 1.23 2005/05/03 13:50:44 moritz Exp $	 */
 /* $EOM: math_2n.c,v 1.15 1999/04/20 09:23:30 niklas Exp $	 */
 
 /*
@@ -48,7 +48,6 @@
 
 static u_int8_t hex2int(char);
 
-static char     int2hex[] = "0123456789abcdef";
 CHUNK_TYPE      b2n_mask[CHUNK_BITS] = {
 	0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
 #if CHUNK_BITS > 8
