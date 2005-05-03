@@ -1,4 +1,4 @@
-/* $OpenBSD: pop_root.c,v 1.4 2005/01/18 19:13:27 otto Exp $ */
+/* $OpenBSD: pop_root.c,v 1.5 2005/05/03 05:44:35 djm Exp $ */
 
 /*
  * Main daemon code: invokes the actual POP handling routines. Most calls
@@ -57,11 +57,12 @@ static int set_user(struct passwd *pw)
 	if (!pw->pw_uid) return 1;
 
 	groups[0] = groups[1] = pw->pw_gid;
-	if (setgroups(1, groups)) return log_error("setgroups");
-	if (setegid(pw->pw_gid)) return log_error("setegid");
-	if (setgid(pw->pw_gid)) return log_error("setgid");
-	if (seteuid(pw->pw_uid)) return log_error("seteuid");
-	if (setuid(pw->pw_uid)) return log_error("setuid");
+	if (setgroups(1, groups))
+		return log_error("setgroups");
+	if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid))
+		return log_error("setresgid");
+	if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		return log_error("setresuid");
 
 	return 0;
 }

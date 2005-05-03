@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.57 2005/04/18 14:12:50 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.58 2005/05/03 05:44:35 djm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -118,8 +118,8 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	setup_listeners(se, conf, &listener_cnt);
 
 	if (setgroups(1, &pw->pw_gid) ||
-	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
-	    seteuid(pw->pw_uid) || setuid(pw->pw_uid))
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
 	endpwent();

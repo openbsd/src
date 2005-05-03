@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.c,v 1.15 2004/09/20 17:51:07 miod Exp $	*/
+/*	$OpenBSD: pppoe.c,v 1.16 2005/05/03 05:44:35 djm Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -521,18 +521,10 @@ drop_privs(struct passwd *pw, int server_mode)
 
 	if (setgroups(ng, groups))
 		err(EX_OSERR, "setgroups");
-
-	if (setegid(pw->pw_gid))
-		err(EX_OSERR, "setegid");
-
-	if (setgid(pw->pw_gid))
-		err(EX_OSERR, "setgid");
-
-	if (seteuid(pw->pw_uid))
-		err(EX_OSERR, "seteuid");
-
-	if (setuid(pw->pw_uid))
-		err(EX_OSERR, "setuid");
+	if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid))
+		err(EX_OSERR, "setresgid");
+	if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+		err(EX_OSERR, "setresuid");
 
 	endpwent();
 }
