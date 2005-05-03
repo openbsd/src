@@ -1,63 +1,42 @@
-/*	$OpenBSD: hertz.c,v 1.4 2003/06/03 02:56:08 millert Exp $	*/
-/*	$NetBSD: hertz.c,v 1.5 1995/04/19 07:16:03 cgd Exp $	*/
+/*	$OpenBSD: hertz.c,v 1.5 2005/05/03 08:08:53 art Exp $	*/
 
 /*
- * Copyright (c) 1983, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 2005 Artur Grabowski <art@openbsd.org>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)hertz.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$OpenBSD: hertz.c,v 1.4 2003/06/03 02:56:08 millert Exp $";
-#endif
-#endif /* not lint */
 
+#include <sys/param.h>
 #include <sys/time.h>
+#include <sys/sysctl.h>
 
-    /*
-     *	discover the tick frequency of the machine
-     *	if something goes wrong, we return 0, an impossible hertz.
-     */
-#define	HZ_WRONG	0
+/*
+ * Return the tick frequency on the machine or 0 if we can't find out.
+ */
 
 int
-hertz()
+hertz(void)
 {
-	struct itimerval tim;
+	struct clockinfo cinfo;
+	int mib[2];
+	size_t len;
 
-	tim.it_interval.tv_sec = 0;
-	tim.it_interval.tv_usec = 1;
-	tim.it_value.tv_sec = 0;
-	tim.it_value.tv_usec = 0;
-	setitimer(ITIMER_REAL, &tim, 0);
-	setitimer(ITIMER_REAL, 0, &tim);
-	if (tim.it_interval.tv_usec < 2)
-		return(HZ_WRONG);
-	return (1000000 / tim.it_interval.tv_usec);
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_CLOCKRATE;
+	len = sizeof(cinfo);
+	if (sysctl(mib, 2, &cinfo, &len, NULL, 0) == -1)
+		return (0);
+
+	return (cinfo.hz);
 }
