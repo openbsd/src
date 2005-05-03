@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.44 2004/02/09 19:59:15 canacar Exp $	*/
+/*	$OpenBSD: main.c,v 1.45 2005/05/03 03:42:16 djm Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -46,7 +46,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.44 2004/02/09 19:59:15 canacar Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.45 2005/05/03 03:42:16 djm Exp $";
 #endif
 #endif
 
@@ -1107,6 +1107,8 @@ device_script(program, in, out)
     pid_t pid;
     int status;
     int errfd;
+    gid_t gid;
+    uid_t uid;
 
     conn_running = 1;
     pid = fork();
@@ -1146,11 +1148,15 @@ device_script(program, in, out)
 		close(errfd);
 	    }
 	}
+
 	/* revoke privs */
-	seteuid(getuid());
-	setuid(getuid());
-	setegid(getgid());
-	setgid(getgid());
+	gid = getgid();
+	uid = getuid();
+	if (setresgid(gid, gid, gid) == -1 || setresuid(uid, uid, uid) == -1) {
+		syslog(LOG_ERR, "revoke privileges: %s", strerror(errno));
+		_exit(1);
+	}
+
 	execl("/bin/sh", "sh", "-c", program, (char *)0);
 	syslog(LOG_ERR, "could not exec /bin/sh: %m");
 	_exit(99);
@@ -1182,6 +1188,8 @@ run_program(prog, args, must_exist)
     int must_exist;
 {
     pid_t pid;
+    uid_t uid;
+    gid_t gid;
 
     pid = fork();
     if (pid == -1) {
@@ -1195,8 +1203,14 @@ run_program(prog, args, must_exist)
 	(void) setsid();    /* No controlling tty. */
 	(void) umask (S_IRWXG|S_IRWXO);
 	(void) chdir ("/"); /* no current directory. */
-	setuid(geteuid());
-	setgid(getegid());
+
+	/* revoke privs */
+	uid = getuid();
+	gid = getgid();
+	if (setresgid(gid, gid, gid) == -1 || setresuid(uid, uid, uid) == -1) {
+		syslog(LOG_ERR, "revoke privileges: %s", strerror(errno));
+		_exit(1);
+	}
 
 	/* Ensure that nothing of our device environment is inherited. */
 	sys_close();
