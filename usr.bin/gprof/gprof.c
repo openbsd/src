@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.c,v 1.14 2004/07/20 08:46:23 art Exp $	*/
+/*	$OpenBSD: gprof.c,v 1.15 2005/05/03 08:09:52 art Exp $	*/
 /*	$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)gprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: gprof.c,v 1.14 2004/07/20 08:46:23 art Exp $";
+static char rcsid[] = "$OpenBSD: gprof.c,v 1.15 2005/05/03 08:09:52 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -435,7 +435,7 @@ asgnsamples(void)
     UNIT		ccnt;
     double		time;
     unsigned long	pcl, pch;
-    int	i;
+    unsigned long	i;
     unsigned long	overlap;
     unsigned long	svalue0, svalue1;
 
@@ -447,8 +447,8 @@ asgnsamples(void)
 	ccnt = samples[i];
 	if (ccnt == 0)
 		continue;
-	pcl = lowpc + scale * i;
-	pch = lowpc + scale * (i + 1);
+	pcl = lowpc + (unsigned long)(scale * i);
+	pch = lowpc + (unsigned long)(scale * (i + 1));
 	time = ccnt;
 #	ifdef DEBUG
 	    if ( debug & SAMPLEDEBUG ) {
