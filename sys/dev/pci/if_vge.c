@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.13 2005/04/30 19:41:24 brad Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.14 2005/05/03 03:13:05 brad Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -814,14 +814,11 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, VGE_IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU|IFCAP_CSUM_IPv4|
+				IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4;
 
 #ifdef VGE_VLAN
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
-#endif
-#ifdef VGE_CSUM_OFFLOAD
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4|IFCAP_CSUM_TCPv4|
-				IFCAP_CSUM_UDPv4;
 #endif
 
 	/* Set interface name */
@@ -1331,6 +1328,16 @@ vge_encap(struct vge_softc *sc, struct mbuf *m_head, int idx)
 	struct vge_tx_desc	*d = NULL;
 	struct vge_tx_frag	*f;
 	int			error, frag;
+	u_int32_t		vge_flags;
+
+	vge_flags = 0;
+
+	if (m_head->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+		vge_flags |= VGE_TDCTL_IPCSUM;
+	if (m_head->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
+		vge_flags |= VGE_TDCTL_TCPCSUM;
+	if (m_head->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
+		vge_flags |= VGE_TDCTL_UDPCSUM;
 
 	txmap = sc->vge_ldata.vge_tx_dmamap[idx];
 repack:
@@ -1403,7 +1410,7 @@ repack:
 	    BUS_DMASYNC_PREWRITE);
 
 	d->vge_sts = htole32(m_head->m_pkthdr.len << 16);
-	d->vge_ctl = htole32((frag << 28) | VGE_TD_LS_NORM);
+	d->vge_ctl = htole32(vge_flags|(frag << 28) | VGE_TD_LS_NORM);
 
 	if (m_head->m_pkthdr.len > ETHERMTU + ETHER_HDR_LEN)
 		d->vge_ctl |= htole32(VGE_TDCTL_JUMBO);
