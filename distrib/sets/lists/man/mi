@@ -1269,6 +1269,7 @@
 ./usr/share/man/cat4/i386/wdt.0
 ./usr/share/man/cat4/i386/wss.0
 ./usr/share/man/cat4/i386/wt.0
+./usr/share/man/cat4/ichwdt.0
 ./usr/share/man/cat4/icmp.0
 ./usr/share/man/cat4/icmp6.0
 ./usr/share/man/cat4/icsphy.0
@@ -2020,6 +2021,7 @@
 ./usr/share/man/cat8/hp300
 ./usr/share/man/cat8/hp300/MAKEDEV.0
 ./usr/share/man/cat8/hp300/boot_hp300.0
+./usr/share/man/cat8/hp300/kbd.0
 ./usr/share/man/cat8/hp300/wsconscfg.0
 ./usr/share/man/cat8/hp300/wsconsctl.0
 ./usr/share/man/cat8/hppa
