@@ -1,4 +1,4 @@
-/*	$OpenBSD: procmap.c,v 1.18 2005/03/25 16:54:17 jaredy Exp $ */
+/*	$OpenBSD: procmap.c,v 1.19 2005/05/03 03:41:11 djm Exp $ */
 /*	$NetBSD: pmap.c,v 1.1 2002/09/01 20:32:44 atatat Exp $ */
 
 /*
@@ -206,6 +206,7 @@ main(int argc, char *argv[])
 	struct kinfo_proc *kproc;
 	/* struct proc proc; */
 	char *kmem, *kernel;
+	gid_t gid;
 
 	pid = -1;
 	verbose = debug = 0;
@@ -261,10 +262,10 @@ main(int argc, char *argv[])
 	 * Discard setgid privileges if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
 	 */
-	if (kernel != NULL || kmem != NULL) {
-		setegid(getgid());
-		setgid(getgid());
-	}
+	gid = getgid();
+	if (kernel != NULL || kmem != NULL)
+		if (setresgid(gid, gid, gid) == -1)
+			err(1, "setresgid");
 
 	argc -= optind;
 	argv += optind;
@@ -280,8 +281,9 @@ main(int argc, char *argv[])
 	/* start by opening libkvm */
 	kd = kvm_openfiles(kernel, kmem, NULL, O_RDONLY, errbuf);
 
-	setegid(getgid());
-	setgid(getgid());
+	if (kernel == NULL && kmem == NULL)
+		if (setresgid(gid, gid, gid) == -1)
+			err(1, "setresgid");
 
 	if (kd == NULL)
 		errx(1, "%s", errbuf);

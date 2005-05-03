@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.20 2004/09/24 15:02:43 markus Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.21 2005/05/03 03:41:11 djm Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -146,6 +146,7 @@ main(int argc, char *argv[])
 	char *system = NULL, *core = NULL, *cp, errbuf[_POSIX2_LINE_MAX];
 	int ch, i, jflag = 0, npcbs = 0;
 	unsigned long l;
+	gid_t gid;
 
 	while ((ch = getopt(argc, argv, "afjM:N:p:st")) != -1) {
 		switch (ch) {
@@ -197,17 +198,18 @@ main(int argc, char *argv[])
 	 * Discard setgid privileged if not the running kernel so that bad
 	 * guys can't print interesting stuff from kernel memory.
 	 */
-	if (core != NULL || system != NULL) {
-		setegid(getgid());
-		setgid(getgid());
-	}
+	gid = getgid();
+	if (core != NULL || system != NULL)
+		if (setresgid(gid, gid, gid) == -1)
+			err(1, "setresgid");
 
 	kd = kvm_openfiles(system, core, NULL, O_RDONLY, errbuf);
 	if (kd == NULL)
 		errx(1, "can't open kmem: %s", errbuf);
 
-	setegid(getgid());
-	setgid(getgid());
+	if (core == NULL && system == NULL)
+		if (setresgid(gid, gid, gid) == -1)
+			err(1, "setresgid");
 
 	if (kvm_nlist(kd, nl))
 		errx(2, "%s: no namelist", system ? system : _PATH_UNIX);
