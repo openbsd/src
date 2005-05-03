@@ -3092,6 +3092,7 @@ elf32_arm_find_nearest_line
   asymbol *func;
   bfd_vma low_func;
   asymbol **p;
+  int binding;
 
   if (_bfd_dwarf2_find_nearest_line (abfd, section, symbols, offset,
 				     filename_ptr, functionname_ptr,
@@ -3114,6 +3115,7 @@ elf32_arm_find_nearest_line
   filename = NULL;
   func = NULL;
   low_func = 0;
+  binding = -1;
 
   for (p = symbols; *p != NULL; p++)
     {
@@ -3138,8 +3140,14 @@ elf32_arm_find_nearest_line
 	      && q->symbol.value >= low_func
 	      && q->symbol.value <= offset)
 	    {
-	      func = (asymbol *) q;
-	      low_func = q->symbol.value;
+	      /* Prefer a global symbol rather than $a/$d/$t local symbols */
+	      if (ELF_ST_BIND (q->internal_elf_sym.st_info) != STB_LOCAL
+		  || binding == -1)
+		{
+		  func = (asymbol *) q;
+		  low_func = q->symbol.value;
+		  binding = ELF_ST_BIND (q->internal_elf_sym.st_info);
+		}
 	    }
 	  break;
 	}
