@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.17 2005/04/20 20:57:07 moritz Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.18 2005/05/03 01:01:14 djm Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -167,26 +167,18 @@ priv_init(int argc, char **argv)
 			/* drop to _tcpdump */
 			if (setgroups(1, &pw->pw_gid) == -1)
 				err(1, "setgroups() failed");
-			if (setegid(pw->pw_gid) == -1)
-				err(1, "setegid() failed");
-			if (setgid(pw->pw_gid) == -1)
-				err(1, "setgid() failed");
-			if (seteuid(pw->pw_uid) == -1)
-				err(1, "seteuid() failed");
-			if (setuid(pw->pw_uid) == -1)
-				err(1, "setuid() failed");
+			if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1)
+				err(1, "setresgid() failed");
+			if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
+				err(1, "setresuid() failed");
 		} else {
 			/* Child - drop suid privileges */
 			gid = getgid();
 			uid = getuid();
-			if (setegid(gid) == -1)
-				err(1, "setegid() failed");
-			if (setgid(gid) == -1)
-				err(1, "setgid() failed");
-			if (seteuid(uid) == -1)
-				err(1, "seteuid() failed");
-			if (setuid(uid) == -1)
-				err(1, "setuid() failed");
+			if (setresgid(gid, gid, gid) == -1)
+				err(1, "setresgid() failed");
+			if (setresuid(uid, uid, uid) == -1)
+				err(1, "setresuid() failed");
 		}
 		close(socks[0]);
 		priv_fd = socks[1];
@@ -197,14 +189,10 @@ priv_init(int argc, char **argv)
 	gid = getgid();
 	uid = getuid();
 
-	if (setegid(gid) == -1)
-		err(1, "setegid() failed");
-	if (setgid(gid) == -1)
-		err(1, "setgid() failed");
-	if (seteuid(uid) == -1)
-		err(1, "seteuid() failed");
-	if (setuid(uid) == -1)
-		err(1, "setuid() failed");
+	if (setresgid(gid, gid, gid) == -1)
+		err(1, "setresgid() failed");
+	if (setresuid(uid, uid, uid) == -1)
+		err(1, "setresuid() failed");
 
 	/* parse the arguments for required options so that the child
 	 * need not send them back */

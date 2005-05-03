@@ -1,4 +1,4 @@
-/*	$OpenBSD: traceroute.c,v 1.62 2005/03/01 16:13:29 markus Exp $	*/
+/*	$OpenBSD: traceroute.c,v 1.63 2005/05/03 01:01:13 djm Exp $	*/
 /*	$NetBSD: traceroute.c,v 1.10 1995/05/21 15:50:45 mycroft Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";*/
 #else
-static char rcsid[] = "$OpenBSD: traceroute.c,v 1.62 2005/03/01 16:13:29 markus Exp $";
+static char rcsid[] = "$OpenBSD: traceroute.c,v 1.63 2005/05/03 01:01:13 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -307,6 +307,7 @@ main(int argc, char *argv[])
 	u_int8_t ttl;
 	char *ep;
 	long l;
+	uid_t uid;
 
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0)
 		err(5, "icmp socket");
@@ -314,8 +315,9 @@ main(int argc, char *argv[])
 		err(5, "raw socket");
 
 	/* revoke privs */
-	seteuid(getuid());
-	setuid(getuid());
+	uid = getuid();
+	if (setresuid(uid, uid, uid) == -1)
+		err(1, "setresuid");
 
 	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &max_ttl, &size,
 	    NULL, 0);

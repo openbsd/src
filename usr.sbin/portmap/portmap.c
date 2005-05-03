@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.32 2004/09/14 22:28:50 deraadt Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.33 2005/05/03 01:01:15 djm Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.32 2004/09/14 22:28:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.33 2005/05/03 01:01:15 djm Exp $";
 #endif
 #endif /* not lint */
 
@@ -248,11 +248,12 @@ main(int argc, char *argv[])
 	}
 	chdir("/");
 	if (pw) {
-		setgroups(1, &pw->pw_gid);
-		setegid(pw->pw_gid);
-		setgid(pw->pw_gid);
-		seteuid(pw->pw_uid);
-		setuid(pw->pw_uid);
+		if (setgroups(1, &pw->pw_gid) == -1 ||
+		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1 ||
+		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1) {
+			syslog(LOG_ERR, "revoke privs: %s", strerror(errno));
+			exit(1);
+		}
 	}
 
 	if (svc_register(xprt, PMAPPROG, PMAPVERS, reg_service, FALSE) == 0) {
