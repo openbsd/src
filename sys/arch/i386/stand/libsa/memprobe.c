@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.43 2005/05/03 13:02:44 tom Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.44 2005/05/03 13:18:04 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -67,9 +67,7 @@ checkA20(void)
 static __inline bios_memmap_t *
 bios_E820(bios_memmap_t *mp)
 {
-	void *info;
 	int rc, off = 0, sig, gotcha = 0;
-	info = getEBDAaddr();
 
 	do {
 		BIOS_regs.biosr_es = ((u_int)(mp) >> 4);

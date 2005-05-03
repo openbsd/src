@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2004/05/17 22:49:46 drahn Exp $
+#	$OpenBSD: Makefile,v 1.3 2005/05/03 13:18:05 tom Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -20,7 +20,7 @@ LDFLAGS+=-L/usr/libdata
 # i386 stuff (so, it will possibly load in the same 64k)
 SRCS+=	machdep.c dev_i386.c exec_i386.c cmd_i386.c
 SRCS+=	gidt.S alloca.S biosdev.c bioscons.c gateA20.c \
-	memprobe.c diskprobe.c time.c biosprobe.c
+	memprobe.c diskprobe.c time.c ## biosprobe.c
 
 .PATH:	${S}/stand/boot
 SRCS+=	boot.c cmd.c vars.c bootarg.c
