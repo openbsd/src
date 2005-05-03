@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.10 2003/06/04 22:08:17 deraadt Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.11 2005/05/03 00:39:39 brad Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.7 1996/10/05 23:44:34 mrg Exp $ */
 
 /*
@@ -36,8 +36,13 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
+#include <sys/socketvar.h>
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/ip_var.h>
 
 /*
  * Checksum routine for Internet Protocol family headers.
@@ -71,52 +76,53 @@
  */
 
 #define Asm	__asm __volatile
-#define ADD64		Asm("	ld [%2],%3; ld [%2+4],%4;		\
-				addcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+8],%3; ld [%2+12],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+16],%3; ld [%2+20],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+24],%3; ld [%2+28],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+32],%3; ld [%2+36],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+40],%3; ld [%2+44],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+48],%3; ld [%2+52],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+56],%3; ld [%2+60],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
+#define ADD64		Asm("	ld [%4+ 0],%1;   ld [%4+ 4],%2;		\
+				addcc  %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+ 8],%1;   ld [%4+12],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+16],%1;   ld [%4+20],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+24],%1;   ld [%4+28],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+32],%1;   ld [%4+36],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+40],%1;   ld [%4+44],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+48],%1;   ld [%4+52],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+56],%1;   ld [%4+60],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
 				addxcc %0,0,%0"				\
-				: "=r" (sum)				\
-				: "0" (sum), "r" (w), "r" (tmp1), "r" (tmp2))
-#define ADD32		Asm("	ld [%2],%3; ld [%2+4],%4;		\
-				addcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+8],%3; ld [%2+12],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+16],%3; ld [%2+20],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+24],%3; ld [%2+28],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
+				: "=r" (sum), "=&r" (tmp1), "=&r" (tmp2)\
+				: "0" (sum), "r" (w))
+#define ADD32		Asm("	ld [%4+ 0],%1;   ld [%4+ 4],%2;		\
+				addcc  %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+ 8],%1;   ld [%4+12],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+16],%1;   ld [%4+20],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+24],%1;   ld [%4+28],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
 				addxcc %0,0,%0"				\
-				: "=r" (sum)				\
-				: "0" (sum), "r" (w), "r" (tmp1), "r" (tmp2))
-#define ADD16		Asm("	ld [%2],%3; ld [%2+4],%4;		\
-				addcc %0,%3,%0; addxcc %0,%4,%0;	\
-				ld [%2+8],%3; ld [%2+12],%4;		\
-				addxcc %0,%3,%0; addxcc %0,%4,%0;	\
+				: "=r" (sum), "=&r" (tmp1), "=&r" (tmp2)\
+				: "0" (sum), "r" (w))
+#define ADD16		Asm("	ld [%4+ 0],%1;   ld [%4+ 4],%2;		\
+				addcc  %0,%1,%0; addxcc %0,%2,%0;	\
+				ld [%4+ 8],%1;   ld [%4+12],%2;		\
+				addxcc %0,%1,%0; addxcc %0,%2,%0;	\
 				addxcc %0,0,%0"				\
-				: "=r" (sum)				\
-				: "0" (sum), "r" (w), "r" (tmp1), "r" (tmp2))
-#define ADD8		Asm("	ld [%2],%3; ld [%2+4],%4;		\
-				addcc %0,%3,%0; addxcc %0,%4,%0;	\
+				: "=r" (sum), "=&r" (tmp1), "=&r" (tmp2)\
+				: "0" (sum), "r" (w))
+#define ADD8		Asm("	ld [%4+ 0],%1;   ld [%4+ 4],%2;		\
+				addcc  %0,%1,%0; addxcc %0,%2,%0;	\
 				addxcc %0,0,%0"				\
-				: "=r" (sum)				\
-				: "0" (sum), "r" (w), "r" (tmp1), "r" (tmp2))
-#define ADD4		Asm("	ld [%2],%3; addcc  %0,%3,%0;		\
+				: "=r" (sum), "=&r" (tmp1), "=&r" (tmp2)\
+				: "0" (sum), "r" (w))
+#define ADD4		Asm("	ld [%3+ 0],%1; 				\
+				addcc  %0,%1,%0;			\
 				addxcc %0,0,%0"				\
-				: "=r" (sum)				\
-				: "0" (sum), "r" (w), "r" (tmp1))
+				: "=r" (sum), "=&r" (tmp1)		\
+				: "0" (sum), "r" (w))
 
 #define REDUCE		{sum = (sum & 0xffff) + (sum >> 16);}
 #define ADDCARRY	{if (sum > 0xffff) sum -= 0xffff;}
@@ -125,14 +131,11 @@
 #define ADDSHORT	{sum += *(u_short *)w;}
 #define ADVANCE(n)	{w += n; mlen -= n;}
 
-int
-in_cksum(m, len)
-	register struct mbuf *m;
-	register int len;
+static __inline__ int
+in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 {
-	register u_char *w;
-	register u_int sum = 0;
-	register int mlen = 0;
+	u_char *w;
+	int mlen = 0;
 	int byte_swapped = 0;
 
 	/*
@@ -140,14 +143,14 @@ in_cksum(m, len)
 	 * allow the compiler to pick which specific machine registers to
 	 * use, instead of hard-coding this in the asm code above.
 	 */
-	/* XXX - initialized because of gcc's `-Wuninitialized' ! */
-	register u_int tmp1 = 0, tmp2 = 0;
+	u_int tmp1, tmp2;
 
 	for (; m && len; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		w = mtod(m, u_char *);
-		mlen = m->m_len;
+		w = mtod(m, u_char *) + off;
+		mlen = m->m_len - off;
+		off = 0;
 		if (len < mlen)
 			mlen = len;
 		len -= mlen;
@@ -169,7 +172,7 @@ in_cksum(m, len)
 		}
 
 		/*
-		 * Do as many 32 bit operattions as possible using the
+		 * Do as many 32 bit operations as possible using the
 		 * 64/32/16/8/4 macro's above, using as many as possible of
 		 * these.
 		 */
@@ -213,4 +216,50 @@ in_cksum(m, len)
 	ADDCARRY;
 
 	return (0xffff ^ sum);
+}
+
+int
+in_cksum(struct mbuf *m, int len)
+{
+
+	return (in_cksum_internal(m, 0, len, 0));
+}
+
+int
+in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
+{
+	u_char *w;
+	u_int sum = 0;
+	struct ipovly ipov;
+
+	/*
+	 * Declare two temporary registers for use by the asm code.  We
+	 * allow the compiler to pick which specific machine registers to
+	 * use, instead of hard-coding this in the asm code above.
+	 */
+	u_int tmp1, tmp2;
+
+	if (nxt != 0) {
+		/* pseudo header */
+		memset(&ipov, 0, sizeof(ipov));
+		ipov.ih_len = htons(len);
+		ipov.ih_pr = nxt;
+		ipov.ih_src = mtod(m, struct ip *)->ip_src;
+		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
+		w = (u_char *)&ipov;
+		/* assumes sizeof(ipov) == 20 */
+		ADD16;
+		w += 16;
+		ADD4;
+	}
+
+	/* skip unnecessary part */
+	while (m && off > 0) {
+		if (m->m_len > off)
+			break;
+		off -= m->m_len;
+		m = m->m_next;
+	}
+
+	return (in_cksum_internal(m, off, len, sum));
 }
