@@ -76,7 +76,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $OpenBSD: mrinfo.c,v 1.19 2004/02/26 20:48:29 tedu Exp $";
+    "@(#) $OpenBSD: mrinfo.c,v 1.20 2005/05/03 05:42:05 djm Exp $";
 /*  original rcsid:
     "@(#) Header: mrinfo.c,v 1.6 93/04/08 15:14:16 van Exp (LBL)";
 */
@@ -316,6 +316,7 @@ main(int argc, char *argv[])
 	socklen_t addrlen;
 	struct timeval et;
 	char *host;
+	uid_t uid;
 
 	if (geteuid() != 0) {
 		fprintf(stderr, "mrinfo: must be root\n");
@@ -323,8 +324,10 @@ main(int argc, char *argv[])
 	}
 
 	init_igmp();
-	seteuid(getuid());
-	setuid(getuid());
+
+	uid = getuid();
+	if (setresuid(uid, uid, uid) == -1)
+		err(1, "setresuid");
 
 	setlinebuf(stderr);
 

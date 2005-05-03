@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrace.c,v 1.24 2004/08/01 18:32:20 deraadt Exp $	*/
+/*	$OpenBSD: mtrace.c,v 1.25 2005/05/03 05:42:05 djm Exp $	*/
 /*	$NetBSD: mtrace.c,v 1.5 1995/12/10 10:57:15 mycroft Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Id: mtrace.c,v 1.24 2004/08/01 18:32:20 deraadt Exp $";
+    "@(#) $Id: mtrace.c,v 1.25 2005/05/03 05:42:05 djm Exp $";
 #endif
 
 #include <netdb.h>
@@ -1124,10 +1124,13 @@ main(int argc, char *argv[])
     int numstats = 1;
     int waittime;
     int seed;
+    uid_t uid;
 
     init_igmp();
-    seteuid(getuid());
-    setuid(getuid());
+
+    uid = getuid();
+    if (setresuid(uid, uid, uid) == -1)
+	err(1, "setresuid");
 
     argv++, argc--;
     if (argc == 0) goto usage;
