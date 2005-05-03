@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.41 2005/05/03 13:09:45 moritz Exp $	 */
+/* $OpenBSD: monitor.c,v 1.42 2005/05/03 14:03:11 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -524,7 +524,6 @@ set_monitor_signals(void)
 	signal(SIGTERM, sig_pass_to_chld);
 	signal(SIGHUP, sig_pass_to_chld);
 	signal(SIGUSR1, sig_pass_to_chld);
-	signal(SIGUSR2, sig_pass_to_chld);
 }
 
 /* Help functions for monitor_loop().  */

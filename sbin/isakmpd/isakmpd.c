@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.86 2005/05/03 13:09:45 moritz Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.87 2005/05/03 14:03:11 moritz Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -88,13 +88,6 @@ volatile sig_atomic_t sighupped = 0;
  */
 volatile sig_atomic_t sigusr1ed = 0;
 static char    *report_file = "/var/run/isakmpd.report";
-
-/*
- * If we receive a USR2 signal, this flag gets set to show we need to
- * rehash our SA soft expiration timers to a uniform distribution.
- * XXX Perhaps this is a really bad idea?
- */
-volatile sig_atomic_t sigusr2ed = 0;
 
 /*
  * If we receive a TERM signal, perform a "clean shutdown" of the daemon.
@@ -272,24 +265,6 @@ sigusr1(int sig)
 	sigusr1ed = 1;
 }
 
-/* Rehash soft expiration timers on SIGUSR2.  */
-static void
-rehash_timers(void)
-{
-#if 0
-	/* XXX - not yet */
-	log_print("SIGUSR2 received, rehashing soft expiration timers.");
-
-	timer_rehash_timers();
-#endif
-}
-
-static void
-sigusr2(int sig)
-{
-	sigusr2ed = 1;
-}
-
 static int
 phase2_sa_check(struct sa *sa, void *arg)
 {
@@ -323,9 +298,6 @@ set_slave_signals(void)
 
 	/* Report state on USR1 reception.  */
 	signal(SIGUSR1, sigusr1);
-
-	/* Rehash soft expiration timers on USR2 reception.  */
-	signal(SIGUSR2, sigusr2);
 }
 
 static void
@@ -467,12 +439,6 @@ main(int argc, char *argv[])
 			sigusr1ed = 0;
 			log_print("SIGUSR1 received");
 			report();
-		}
-		/* and if someone sent SIGUSR2, do a timer rehash.  */
-		if (sigusr2ed) {
-			sigusr2ed = 0;
-			log_print("SIGUSR2 received");
-			rehash_timers();
 		}
 		/*
 		 * and if someone set 'sigtermed' (SIGTERM, SIGINT or via the
