@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.158 2005/04/28 13:54:45 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.159 2005/05/03 07:01:23 djm Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -148,10 +148,9 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	bgpd_process = PROC_RDE;
 
 	if (setgroups(1, &pw->pw_gid) ||
-	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
-	    seteuid(pw->pw_uid) || setuid(pw->pw_uid)) {
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
-	}
 
 	endpwent();
 
