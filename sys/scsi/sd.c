@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.76 2005/05/01 19:29:17 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.77 2005/05/03 00:29:16 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -549,13 +549,6 @@ sdstrategy(bp)
 	SC_DEBUG(sd->sc_link, SDEV_DB2, ("sdstrategy: %ld bytes @ blk %d\n",
 	    bp->b_bcount, bp->b_blkno));
 	/*
-	 * The transfer must be a whole number of blocks.
-	 */
-	if ((bp->b_bcount % sd->sc_dk.dk_label->d_secsize) != 0) {
-		bp->b_error = EINVAL;
-		goto bad;
-	}
-	/*
 	 * If the device has been made invalid, error out
 	 */
 	if ((sd->sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
@@ -571,6 +564,13 @@ sdstrategy(bp)
 	if (bp->b_bcount == 0)
 		goto done;
 
+	/*
+	 * The transfer must be a whole number of blocks.
+	 */
+	if ((bp->b_bcount % sd->sc_dk.dk_label->d_secsize) != 0) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
 	/*
 	 * Do bounds checking, adjust transfer. if error, process.
 	 * If end of partition, just return.
