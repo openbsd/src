@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.30 2005/04/20 15:50:54 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.31 2005/05/03 08:55:16 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -302,10 +302,18 @@ cvs_resp_ok(struct cvsroot *root, int type, char *line)
  * cvs_resp_error()
  *
  * Handler for the `error' response.  This handler's job is to
+ * show the error message given by the server.
  */
 static int
 cvs_resp_error(struct cvsroot *root, int type, char *line)
 {
+
+	/* XXX - GNU cvs sends an empty error message
+	 * at the end of the diff command, even for successfull
+	 * diff.
+	 */
+	if ((strlen(line) == 1) && (*line == ' '))
+		return (1);
 
 	fprintf(stderr, "%s\n", line);
 	return (1);
