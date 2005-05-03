@@ -1,4 +1,4 @@
-/* $OpenBSD: isakmpd.c,v 1.85 2005/04/10 14:17:49 jmc Exp $	 */
+/* $OpenBSD: isakmpd.c,v 1.86 2005/05/03 13:09:45 moritz Exp $	 */
 /* $EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	 */
 
 /*
@@ -103,6 +103,7 @@ volatile sig_atomic_t sigusr2ed = 0;
  */
 volatile sig_atomic_t sigtermed = 0;
 void            daemon_shutdown_now(int);
+void		set_slave_signals(void);
 
 /* The default path of the PID file.  */
 static char    *pid_file = "/var/run/isakmpd.pid";
@@ -301,6 +302,32 @@ phase1_sa_check(struct sa *sa, void *arg)
 	return sa->phase == 1;
 }
 
+void
+set_slave_signals(void)
+{
+	int n;
+
+	for (n = 1; n < _NSIG; n++)
+		signal(n, SIG_DFL);
+
+	/*
+	 * Do a clean daemon shutdown on TERM/INT. These signals must be
+	 * initialized before monitor_init(). INT is only used with '-d'.
+         */
+	signal(SIGTERM, daemon_shutdown_now);
+	if (debug == 1)		/* i.e '-dd' will skip this.  */
+		signal(SIGINT, daemon_shutdown_now);
+
+	/* Reinitialize on HUP reception.  */
+	signal(SIGHUP, sighup);
+
+	/* Report state on USR1 reception.  */
+	signal(SIGUSR1, sigusr1);
+
+	/* Rehash soft expiration timers on USR2 reception.  */
+	signal(SIGUSR2, sigusr2);
+}
+
 static void
 daemon_shutdown(void)
 {
@@ -381,9 +408,6 @@ main(int argc, char *argv[])
 		if (fcntl(n, F_GETFL, 0) == -1 && errno == EBADF)
 			(void) open("/dev/null", n ? O_WRONLY : O_RDONLY, 0);
 
-	for (n = 1; n < _NSIG; n++)
-		signal(n, SIG_DFL);
-
 	/* Log cmd line parsing and initialization errors to stderr.  */
 	log_to(stderr);
 	parse_args(argc, argv);
@@ -393,14 +417,7 @@ main(int argc, char *argv[])
 	setprotoent(1);
 	setservent(1);
 
-	/*
-	 * Do a clean daemon shutdown on TERM/INT. These signals must be
-	 * initialized before monitor_init(). INT is only used with '-d'.
-         */
-	signal(SIGTERM, daemon_shutdown_now);
-	if (debug == 1)		/* i.e '-dd' will skip this.  */
-		signal(SIGINT, daemon_shutdown_now);
-
+	set_slave_signals();
 	/* Daemonize before forking unpriv'ed child */
 	if (!debug)
 		if (daemon(0, 0))
@@ -419,15 +436,6 @@ main(int argc, char *argv[])
 	init();
 
 	write_pid_file();
-
-	/* Reinitialize on HUP reception.  */
-	signal(SIGHUP, sighup);
-
-	/* Report state on USR1 reception.  */
-	signal(SIGUSR1, sigusr1);
-
-	/* Rehash soft expiration timers on USR2 reception.  */
-	signal(SIGUSR2, sigusr2);
 
 	/* If we wanted IKE packet capture to file, initialize it now.  */
 	if (pcap_file != 0)

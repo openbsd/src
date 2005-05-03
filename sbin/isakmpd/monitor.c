@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.40 2005/04/19 15:46:49 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.41 2005/05/03 13:09:45 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -62,6 +62,8 @@ volatile sig_atomic_t sigchlded = 0;
 extern volatile sig_atomic_t sigtermed;
 static volatile sig_atomic_t cur_state = STATE_INIT;
 
+extern void	set_slave_signals(void);
+
 /* Private functions.  */
 int             m_write_int32(int, int32_t);
 int             m_write_raw(int, const char *, size_t);
@@ -81,6 +83,10 @@ static void     m_priv_test_state(int);
 
 static void	m_priv_ui_init(int);
 static void	m_priv_pfkey_open(int);
+
+static void	set_monitor_signals(void);
+static void	monitor_got_sigchld(int);
+static void	sig_pass_to_chld(int);
 
 /*
  * Public functions, unprivileged.
@@ -104,6 +110,7 @@ monitor_init(int debug)
 		    ISAKMPD_PRIVSEP_USER);
 	endpwent();
 
+	set_monitor_signals();
 	m_state.pid = fork();
 	m_state.s = p[m_state.pid ? 1 : 0];
 	strlcpy(m_state.root, pw->pw_dir, sizeof m_state.root);
@@ -113,6 +120,7 @@ monitor_init(int debug)
 
 	/* The child process should drop privileges now.  */
 	if (!m_state.pid) {
+		set_slave_signals();
 		if (chroot(pw->pw_dir) != 0 || chdir("/") != 0)
 			log_fatal("monitor_init: chroot failed");
 
@@ -501,6 +509,24 @@ monitor_init_done(void)
  * Start of code running with privileges (the monitor process).
  */
 
+static void
+set_monitor_signals(void)
+{
+	int n;
+
+	for (n = 0; n < _NSIG; n++)
+		signal(n, SIG_DFL);
+
+	/* If the child dies, we should shutdown also.  */
+	signal(SIGCHLD, monitor_got_sigchld);
+
+	/* Forward some signals to the child. */
+	signal(SIGTERM, sig_pass_to_chld);
+	signal(SIGHUP, sig_pass_to_chld);
+	signal(SIGUSR1, sig_pass_to_chld);
+	signal(SIGUSR2, sig_pass_to_chld);
+}
+
 /* Help functions for monitor_loop().  */
 /* ARGSUSED */
 static void
@@ -542,13 +568,6 @@ monitor_loop(int debug)
 		    (unsigned long)fdsn);
 		return;
 	}
-	/* If the child dies, we should shutdown also.  */
-	signal(SIGCHLD, monitor_got_sigchld);
-
-	/* SIGHUP, SIGUSR1 and SIGUSR2 will be forwarded to child. */
-	signal(SIGHUP, sig_pass_to_chld);
-	signal(SIGUSR1, sig_pass_to_chld);
-	signal(SIGUSR2, sig_pass_to_chld);
 
 	while (cur_state < STATE_QUIT) {
 		/*
