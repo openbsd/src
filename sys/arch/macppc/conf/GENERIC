@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.82 2005/05/01 07:54:42 david Exp $g
+#	$OpenBSD: GENERIC,v 1.83 2005/05/04 02:24:17 drahn Exp $g
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -122,8 +122,8 @@ bm*		at macobio?	# BMAC ethernet
 adb*		at macobio?	# Apple Desktop Bus
 apm0		at adb?		# APM emulation
 wi*		at macobio?	# airport
-gpio*		at macobio?	# GPIO, PMU interrupt router.
-gpio*		at gpio?	# GPIO, PMU interrupt router.
+macgpio*	at macobio?	# GPIO, PMU interrupt router.
+macgpio*	at macgpio?	# GPIO, PMU interrupt router.
 aed*		at adb?		# ADB Event Device
 akbd*		at adb?		# ADB keyboard
 

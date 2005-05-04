@@ -1,4 +1,4 @@
-#	$OpenBSD: files.macppc,v 1.24 2005/03/08 20:00:23 tdeval Exp $
+#	$OpenBSD: files.macppc,v 1.25 2005/05/04 02:24:17 drahn Exp $
 
 #
 # macppc-specific configuration info
@@ -193,10 +193,10 @@ file	arch/macppc/dev/snapper.c			snapper
 #attach	nvram at macobio
 #file	arch/macppc/dev/nvram.c				nvram needs-flag
 
-device	gpio {}
-attach	gpio at macobio with gpio_obio
-attach	gpio at gpio with gpio_gpio
-file	arch/macppc/dev/gpio.c				gpio
+device	macgpio {}
+attach	macgpio at macobio with macgpio
+attach	macgpio at macgpio with macgpio_gpio
+file	arch/macppc/dev/macgpio.c			macgpio
 
 attach	wdc at mediabay, macobio, kauaiata with wdc_obio
 file	arch/macppc/dev/wdc_obio.c			wdc_obio

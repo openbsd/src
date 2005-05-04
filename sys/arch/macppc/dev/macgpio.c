@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.c,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: macgpio.c,v 1.1 2005/05/04 02:24:17 drahn Exp $	*/
 /*	$NetBSD: gpio.c,v 1.2 2001/02/27 05:16:33 matt Exp $	*/
 
 /*-
@@ -46,12 +46,12 @@
 
 #include "adb.h"
 
-static void gpio_obio_attach (struct device *, struct device *, void *);
-static int gpio_obio_match (struct device *, void *, void *);
-static int gpio_obio_print (void *aux, const char *gpio);
+static void macgpio_attach (struct device *, struct device *, void *);
+static int macgpio_match (struct device *, void *, void *);
+static int macgpio_print (void *aux, const char *gpio);
 
-static void gpio_gpio_attach (struct device *, struct device *, void *);
-static int gpio_gpio_match (struct device *, void *, void *);
+static void macgpio_gpio_attach (struct device *, struct device *, void *);
+static int macgpio_gpio_match (struct device *, void *, void *);
 static int gpio_intr (void *);
 
 struct gpio_softc {
@@ -59,20 +59,20 @@ struct gpio_softc {
 	u_int8_t *sc_port;
 };
 
-struct cfattach gpio_obio_ca = {
-	sizeof(struct gpio_softc), gpio_obio_match, gpio_obio_attach
+struct cfattach macgpio_ca = {
+	sizeof(struct gpio_softc), macgpio_match, macgpio_attach
 };
 
-struct cfattach gpio_gpio_ca = {
-	sizeof(struct gpio_softc), gpio_gpio_match, gpio_gpio_attach
+struct cfattach macgpio_gpio_ca = {
+	sizeof(struct gpio_softc), macgpio_gpio_match, macgpio_gpio_attach
 };
 
-struct cfdriver gpio_cd = {
-	NULL, "gpio_obio", DV_DULL
+struct cfdriver macgpio_cd = {
+	NULL, "macgpio", DV_DULL
 };
 
 int
-gpio_obio_match(struct device *parent, void *cf, void *aux)
+macgpio_match(struct device *parent, void *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -86,7 +86,7 @@ gpio_obio_match(struct device *parent, void *cf, void *aux)
 }
 
 void
-gpio_obio_attach(struct device *parent, struct device *self, void *aux)
+macgpio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct gpio_softc *sc = (struct gpio_softc *)self;
 	struct confargs *ca = aux, ca2;
@@ -122,12 +122,12 @@ gpio_obio_attach(struct device *parent, struct device *self, void *aux)
 		ca2.ca_reg = reg;
 		ca2.ca_intr = intr;
 
-		config_found(self, &ca2, gpio_obio_print);
+		config_found(self, &ca2, macgpio_print);
 	}
 }
 
 int
-gpio_obio_print(void *aux, const char *gpio)
+macgpio_print(void *aux, const char *gpio)
 {
 	struct confargs *ca = aux;
 
@@ -141,7 +141,7 @@ gpio_obio_print(void *aux, const char *gpio)
 }
 
 int
-gpio_gpio_match(struct device *parent, void *cf, void *aux)
+macgpio_gpio_match(struct device *parent, void *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -155,7 +155,7 @@ gpio_gpio_match(struct device *parent, void *cf, void *aux)
 }
 
 void
-gpio_gpio_attach(struct device *parent, struct device *self, void *aux)
+macgpio_gpio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct gpio_softc *sc = (struct gpio_softc *)self;
 	struct confargs *ca = aux;
