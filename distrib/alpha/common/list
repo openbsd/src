@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.16 2005/01/12 18:25:26 deraadt Exp $
+#	$OpenBSD: list,v 1.17 2005/05/04 17:08:04 miod Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -18,6 +18,7 @@ LINK	instbin					bin/ln
 LINK	instbin					bin/ls
 LINK	instbin					bin/mkdir
 LINK	instbin					bin/mv
+LINK	instbin					bin/pax bin/tar bin/cpio
 LINK	instbin					bin/rm
 LINK	instbin					bin/stty
 LINK	instbin					sbin/disklabel
@@ -38,7 +39,6 @@ LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
 LINK	instbin					usr/bin/gzip
 LINK	instbin					usr/bin/more usr/bin/less
-LINK	instbin					usr/bin/pax bin/cpio bin/tar
 LINK	instbin					usr/bin/sed
 #LINK	instbin					usr/mdec/installboot
 
