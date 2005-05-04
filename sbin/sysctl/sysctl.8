@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.125 2005/04/19 07:35:24 jmc Exp $
+.\"	$OpenBSD: sysctl.8,v 1.126 2005/05/04 05:12:53 jaredy Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -100,10 +100,10 @@ The information available from
 consists of integers, strings, and tables.
 The tabular information can only be retrieved by special
 purpose programs such as
-.Nm ps ,
-.Nm systat ,
+.Xr ps 1 ,
+.Xr systat 1 ,
 and
-.Nm netstat .
+.Xr netstat 1 .
 The string and integer information is summarized below.
 For a detailed description of these variables, see
 .Xr sysctl 3 .
@@ -344,7 +344,7 @@ not all of the variables are relevant to all architectures.
 .It machdep.sse	integer	no
 .It machdep.sse2	integer	no
 .It machdep.xcrypt	integer	no
-.It machdep.allowaperture	integer	yes (XFree86)
+.It machdep.allowaperture	integer	yes
 .It machdep.led_blink	integer	yes
 .It machdep.ceccerrs	integer	no
 .It machdep.cecclast	quad	no
@@ -505,7 +505,7 @@ I/O requests on an NFS client machine:
 .Pp
 .Dl # sysctl vfs.nfs.iothreads=4
 .Pp
-The number of 4 is the default, 20 is the maximum.
+The default is 4; 20 is the maximum.
 See
 .Xr nfssvc 2
 and
