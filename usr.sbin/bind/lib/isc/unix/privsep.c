@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.5 2004/11/19 15:37:37 markus Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.6 2005/05/04 08:29:07 djm Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -138,8 +138,8 @@ isc_drop_privs(const char *username, const char *dir)
 		fatal("chdir failed");
 
 	if (setgroups(1, &pw->pw_gid) ||
-	    setegid(pw->pw_gid) || setgid(pw->pw_gid) ||
-	    seteuid(pw->pw_uid) || setuid(pw->pw_uid))
+	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
 	endpwent();
