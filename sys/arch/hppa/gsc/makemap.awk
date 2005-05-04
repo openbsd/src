@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.2 2003/05/27 15:31:52 mickey Exp $
+#	$OpenBSD: makemap.awk,v 1.3 2005/05/04 20:07:07 miod Exp $
 #
 # Copyright (c) 2003, Miodrag Vallat.
 # All rights reserved.
@@ -34,6 +34,7 @@
 
 BEGIN {
 	mapnum = 0
+	declk = 0
 
 	# PS/2 id -> GSCKBD conversion table, or "sanity lossage 101"
 	for (i = 0; i < 256; i++)
@@ -176,12 +177,23 @@ $1 == "#define" || $1 == "#undef" {
 	print $0
 	next
 }
+# Don't bother converting the DEC LK layout.
+/declk\[/ {
+	declk = 1
+	next
+}
+/declk/ {
+	next
+}
 /pckbd/ {
 	gsub("pckbd", "gsckbd", $0)
 	print $0
 	next
 }
 /KC/ {
+	if (declk)
+		next
+
 	sidx = substr($1, 4, length($1) - 5)
 	orig = int(sidx)
 	id = conv[orig]
@@ -208,6 +220,10 @@ $1 == "#define" || $1 == "#undef" {
 	next
 }
 /};/ {
+	if (declk) {
+		declk = 0
+		next
+	}
 	if (mapnum == 0) {
 		# Add 241 to the US map...
 		print "    KC(241),\tKS_Delete"
@@ -255,5 +271,7 @@ $1 == "#define" || $1 == "#undef" {
 	printf("\tKBD_MAP(KB_US | KB_MACHDEP,\tKB_US,\tpckbd_keydesc_precisionbook),\n");
 }
 {
+	if (declk)
+		next
 	print $0
 }
