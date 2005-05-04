@@ -1,11 +1,11 @@
-/*	$OpenBSD: gsckbdmap.c,v 1.8 2005/02/22 19:42:44 mickey Exp $	*/
+/*	$OpenBSD: gsckbdmap.c,v 1.9 2005/05/04 18:01:01 miod Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
  */
-/*	OpenBSD: wskbdmap_mfii.c,v 1.26 2005/02/22 19:41:44 mickey Exp  */
+/*	OpenBSD: wskbdmap_mfii.c,v 1.27 2005/05/04 18:00:30 miod Exp  */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -338,7 +338,6 @@ static const keysym_t gsckbd_keydesc_it[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(30),	KS_2,	KS_quotedbl,	KS_twosuperior,
     KC(38),	KS_3,	KS_sterling,	KS_threesuperior,
-    KC(37),	KS_4,	KS_dollar,
     KC(46),	KS_5,	KS_percent,
     KC(54),	KS_6,	KS_ampersand,
     KC(61),	KS_7,	KS_slash,
@@ -721,7 +720,6 @@ static const keysym_t gsckbd_keydesc_pt[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(30),	KS_2,	KS_quotedbl,	KS_at,
     KC(38),	KS_3,	KS_numbersign,	KS_sterling,
-    KC(37),	KS_4,	KS_dollar,
     KC(54),	KS_6,	KS_ampersand,
     KC(61),	KS_7,	KS_slash,	KS_braceleft,
     KC(62),	KS_8,	KS_parenleft,	KS_bracketleft,
@@ -747,7 +745,6 @@ static const keysym_t gsckbd_keydesc_la[] = {
     KC(22),	KS_1,	KS_exclam,
     KC(30),	KS_2,	KS_quotedbl,
     KC(38),	KS_3,	KS_numbersign,
-    KC(37),	KS_4,	KS_dollar,
     KC(54),	KS_6,	KS_ampersand,
     KC(61),	KS_7,	KS_slash,
     KC(62),	KS_8,	KS_parenleft,
