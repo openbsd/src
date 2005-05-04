@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbdmap.h,v 1.10 2004/02/27 22:08:59 deraadt Exp $	*/
+/*	$OpenBSD: akbdmap.h,v 1.11 2005/05/04 21:23:12 miod Exp $	*/
 /*	$NetBSD: akbdmap.h,v 1.3 2000/09/01 16:00:39 tsubai Exp $	*/
 
 /*-
@@ -404,6 +404,31 @@ static const keysym_t akbd_keydesc_sg_nodead[] = {
     KC(30),	KS_diaeresis,	KS_exclam,	KS_bracketright,KS_braceright,
     KC(45),	KS_n,		KS_N,		KS_asciitilde,
 };
+ 
+static const keysym_t akbd_keydesc_pt[] = {
+/*  pos		normal		shifted		altgr		shift-altgr */
+    KC(7),	KS_x,		KS_X,		KS_guillemotleft, KS_guillemotright,
+    KC(10),	KS_section,	KS_plusminus,
+    KC(19),	KS_2,		KS_quotedbl,	KS_at,
+    KC(20),	KS_3,		KS_numbersign,	KS_sterling,
+    KC(22),	KS_6,		KS_ampersand,
+    KC(24),	KS_plus,	KS_asterisk,
+    KC(25),	KS_9,		KS_parenright,	KS_bracketright, KS_braceright,
+    KC(26),	KS_7,		KS_slash,
+    KC(27),	KS_apostrophe,	KS_question,
+    KC(28),	KS_8,		KS_parenleft,	KS_bracketleft, KS_braceleft,
+    KC(29),	KS_0,		KS_equal,
+    KC(30),	KS_dead_acute,	KS_dead_grave,
+    KC(33),	KS_masculine,	KS_ordfeminine,
+    KC(39),	KS_dead_tilde,	KS_dead_circumflex,
+    KC(41),	KS_ccedilla,	KS_Ccedilla,
+    KC(43),	KS_comma,	KS_semicolon,
+    KC(44),	KS_minus,	KS_underscore,
+    KC(47),	KS_period,	KS_colon,
+    KC(50),	KS_less,	KS_greater,
+    KC(52),	KS_Multi_key,
+    KC(58),	KS_Mode_switch,
+};
 
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
@@ -420,6 +445,7 @@ static const struct wscons_keydesc akbd_keydesctab[] = {
 	KBD_MAP(KB_SG,			KB_US,	akbd_keydesc_sg),
 	KBD_MAP(KB_SG | KB_NODEAD,	KB_SG,	akbd_keydesc_sg_nodead),
 	KBD_MAP(KB_UK,			KB_US,	akbd_keydesc_uk),
+	KBD_MAP(KB_PT,			KB_US,	akbd_keydesc_pt),
 	{0, 0, 0, 0}
 };
 
