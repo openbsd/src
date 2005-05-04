@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbdmap.c,v 1.9 2005/05/04 18:01:01 miod Exp $	*/
+/*	$OpenBSD: gsckbdmap.c,v 1.10 2005/05/04 20:07:26 miod Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -492,43 +492,6 @@ static const keysym_t gsckbd_keydesc_be[] = {
     KC(145),	KS_Mode_switch,	KS_Multi_key,
 };
 
-static const keysym_t gsckbd_keydesc_us_declk[] = {
-/*  pos      normal		shifted		altgr		shift-altgr */
-    KC(118),	KS_grave,	KS_asciitilde,	/*	replace	escape	*/
-    KC(14),	KS_less,	KS_greater,	/*	replace	grave/tilde	*/
-/* initially KC(143),	KS_Multi_key,	left	compose	*/
-    KC(148),	KS_Multi_key,	/*	right	compose,	replace	right	control	*/
-    KC(120),	KS_Cmd_Debugger,	KS_Escape,	/*	replace	F11	*/
-/* initially KC(189),	KS_f13,	*/
-/* initially KC(190),	KS_f14,	*/
-/* initially KC(191),	KS_Help,	*/
-/* initially KC(192),	KS_Execute,	*/
-/* initially KC(193),	KS_f17,	*/
-    KC(126),	KS_f19,	/*	replace	scroll	lock	*/
-    KC(127),	KS_f20,	/*	replace	break	*/
-    KC(119),	KS_KP_F1,	/*	replace	num	lock	*/
-    KC(202),	KS_KP_F2,	/*	replace	divide	*/
-    KC(124),	KS_KP_F3,	/*	replace	multiply	*/
-    KC(123),	KS_KP_F4,	/*	replace	subtract	*/
-
-    /* keypad is numbers only - no num lock */
-    KC(108),	KS_KP_7,
-    KC(117),	KS_KP_8,
-    KC(125),	KS_KP_9,
-    KC(107),	KS_KP_4,
-    KC(115),	KS_KP_5,
-    KC(116),	KS_KP_6,
-    KC(105),	KS_KP_1,
-    KC(114),	KS_KP_2,
-    KC(122),	KS_KP_3,
-    KC(112),	KS_KP_0,
-    KC(113),	KS_KP_Decimal,
-
-/* initially KC(206),	KS_KP_Subtract,	*/
-    KC(121),	KS_KP_Separator,	/*	replace	add	*/
-    KC(236),	KS_Find,	/*	replace	home	*/
-    KC(233),	KS_Select,	/*	replace	end	*/
-};
 
 static const keysym_t gsckbd_keydesc_us_dvorak[] = {
 /*  pos      command		normal		shifted */
@@ -936,7 +899,6 @@ const struct wscons_keydesc gsckbd_keydesctab[] = {
 	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	gsckbd_keydesc_sv_nodead),
 	KBD_MAP(KB_NO,			KB_DK,	gsckbd_keydesc_no),
 	KBD_MAP(KB_NO | KB_NODEAD,	KB_NO,	gsckbd_keydesc_no_nodead),
-	KBD_MAP(KB_US | KB_DECLK,	KB_US,	gsckbd_keydesc_us_declk),
 	KBD_MAP(KB_US | KB_DVORAK,	KB_US,	gsckbd_keydesc_us_dvorak),
 	KBD_MAP(KB_US | KB_SWAPCTRLCAPS, KB_US,	gsckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_US | KB_IOPENER,	KB_US,	gsckbd_keydesc_iopener),
