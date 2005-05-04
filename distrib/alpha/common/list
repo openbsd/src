@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.17 2005/05/04 17:08:04 miod Exp $
+#	$OpenBSD: list,v 1.18 2005/05/04 17:15:36 miod Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -37,7 +37,7 @@ LINK	instbin					sbin/route
 LINK	instbin					sbin/umount
 LINK	instbin					usr/bin/ftp
 LINK	instbin					usr/bin/grep usr/bin/egrep usr/bin/fgrep
-LINK	instbin					usr/bin/gzip
+LINK	instbin					usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 LINK	instbin					usr/bin/more usr/bin/less
 LINK	instbin					usr/bin/sed
 #LINK	instbin					usr/mdec/installboot
