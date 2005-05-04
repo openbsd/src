@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.4 2004/05/25 15:56:18 deraadt Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.5 2005/05/04 03:59:24 drahn Exp $	*/
 
 /*
  * Copyright (c) 2002,2004 Dale Rahn
@@ -47,8 +47,8 @@ _dl_start:
 	movq	%r12, %rdi		# load saved SP for dl_boot_bind
 	call	_dl_boot_bind@PLT	# _dl_boot_bind(sp,dl_data,dynamicp)
 
-	movq	%rsi, %rcx		# dl_data
-	movq	DL_LOFF_OFFSET(%rsi), %rdx		# loff from dl_data
+	movq	%rsp, %rcx		# dl_data
+	movq	DL_LOFF_OFFSET(%rsp), %rdx		# loff from dl_data
 
 	movq	(%r12), %rdi
 	leaq	16(%r12,%rdi,8), %rsi	# envp

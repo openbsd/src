@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2004/02/10 14:18:14 drahn Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2005/05/04 03:59:24 drahn Exp $
 
-CFLAGS += -fPIC -fno-stack-protector
+CFLAGS += -fPIC 
 AFLAGS += -fpic
