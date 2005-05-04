@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.4 2005/04/22 00:56:25 brad Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.5 2005/05/04 03:17:48 brad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Niels Provos <provos@citi.umich.edu>
@@ -168,7 +168,7 @@ end:
 int
 evbuffer_remove(struct evbuffer *buf, void *data, size_t datlen)
 {
-	int nread = datlen;
+	size_t nread = datlen;
 	if (nread >= buf->off)
 		nread = buf->off;
 
@@ -176,6 +176,53 @@ evbuffer_remove(struct evbuffer *buf, void *data, size_t datlen)
 	evbuffer_drain(buf, nread);
 	
 	return (nread);
+}
+
+/*
+ * Reads a line terminated by either '\r\n', '\n\r' or '\r' or '\n'.
+ * The returned buffer needs to be freed by the called.
+ */
+
+char *
+evbuffer_readline(struct evbuffer *buffer)
+{
+	char *data = EVBUFFER_DATA(buffer);
+	size_t len = EVBUFFER_LENGTH(buffer);
+	char *line;
+	int i;
+
+	for (i = 0; i < len; i++) {
+		if (data[i] == '\r' || data[i] == '\n')
+			break;
+	}
+
+	if (i == len)
+		return (NULL);
+
+	if ((line = malloc(i + 1)) == NULL) {
+		fprintf(stderr, "%s: out of memory\n", __func__);
+		evbuffer_drain(buffer, i);
+		return (NULL);
+	}
+
+	memcpy(line, data, i);
+	line[i] = '\0';
+
+	/*
+	 * Some protocols terminate a line with '\r\n', so check for
+	 * that, too.
+	 */
+	if ( i < len - 1 ) {
+		char fch = data[i], sch = data[i+1];
+
+		/* Drain one more character if needed */
+		if ( (sch == '\r' || sch == '\n') && sch != fch )
+			i += 1;
+	}
+
+	evbuffer_drain(buffer, i + 1);
+
+	return (line);
 }
 
 /* Adds data to an event buffer */

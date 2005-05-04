@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.3 2005/04/22 00:56:25 brad Exp $	*/
+/*	$OpenBSD: log.c,v 1.4 2005/05/04 03:17:48 brad Exp $	*/
 
 /*
  * log.c
@@ -87,6 +87,17 @@ event_vsnprintf(char *str, size_t size, const char *format, va_list args)
 	return r;
 }
 
+static int
+event_snprintf(char *str, size_t size, const char *format, ...)
+{
+    va_list ap;
+    int r;
+    va_start(ap, format);
+    r = event_vsnprintf(str, size, format, ap);
+    va_end(ap);
+    return r;
+}
+
 void
 event_err(int eval, const char *fmt, ...)
 {
@@ -163,7 +174,7 @@ _warn_helper(int severity, int log_errno, const char *fmt, va_list ap)
 	if (log_errno >= 0) {
 		len = strlen(buf);
 		if (len < sizeof(buf) - 3) {
-			snprintf(buf + len, sizeof(buf) - len, ": %s",
+			event_snprintf(buf + len, sizeof(buf) - len, ": %s",
 			    strerror(log_errno));
 		}
 	}

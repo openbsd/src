@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.9 2005/04/22 00:56:25 brad Exp $	*/
+/*	$OpenBSD: event.c,v 1.10 2005/05/04 03:17:48 brad Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Niels Provos <provos@citi.umich.edu>
@@ -438,6 +438,7 @@ event_once(int fd, short events,
 		event_set(&eonce->ev, fd, events, event_once_cb, eonce);
 	} else {
 		/* Bad event combination */
+		free(eonce);
 		return (-1);
 	}
 
@@ -473,7 +474,7 @@ event_base_set(struct event_base *base, struct event *ev)
 		return (-1);
 
 	ev->ev_base = base;
-	ev->ev_pri = current_base->nactivequeues/2;
+	ev->ev_pri = base->nactivequeues/2;
 
 	return (0);
 }

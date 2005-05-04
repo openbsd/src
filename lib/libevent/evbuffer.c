@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer.c,v 1.4 2005/04/22 00:56:25 brad Exp $	*/
+/*	$OpenBSD: evbuffer.c,v 1.5 2005/05/04 03:17:48 brad Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -46,6 +46,11 @@
 #endif
 
 #include "event.h"
+
+/* prototypes */
+
+void bufferevent_setwatermark(struct bufferevent *, short, size_t, size_t);
+void bufferevent_read_pressure_cb(struct evbuffer *, size_t, size_t, void *);
 
 static int
 bufferevent_add(struct event *ev, int timeout)
@@ -238,6 +243,8 @@ bufferevent_priority_set(struct bufferevent *bufev, int priority)
 
 	return (0);
 }
+
+/* Closing the file descriptor is the responsibility of the caller */
 
 void
 bufferevent_free(struct bufferevent *bufev)

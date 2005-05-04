@@ -1,4 +1,4 @@
-.\"	$OpenBSD: event.3,v 1.19 2005/04/22 08:32:17 jmc Exp $
+.\"	$OpenBSD: event.3,v 1.20 2005/05/04 03:17:48 brad Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -67,7 +67,8 @@
 .Nm evbuffer_drain ,
 .Nm evbuffer_write ,
 .Nm evbuffer_read ,
-.Nm evbuffer_find
+.Nm evbuffer_find ,
+.Nm evbuffer_readline
 .Nd execute a function when a specific event occurs
 .Sh SYNOPSIS
 .Fd #include <sys/time.h>
@@ -154,6 +155,8 @@
 .Fn "evbuffer_read" "struct evbuffer *buf" "int fd" "int size"
 .Ft "u_char *"
 .Fn "evbuffer_find" "struct evbuffer *buf" "u_char *data" "size_t size"
+.Ft "char *"
+.Fn "evbuffer_readline" "struct evbuffer *buf"
 .Ft int
 .Fa (*event_sigcb)(void) ;
 .Ft volatile sig_atomic_t
@@ -325,7 +328,7 @@ the call will have no effect.
 .Pp
 The function
 .Fn event_once
-is similiar to
+is similar to
 .Fn event_set .
 However, it schedules a callback to be called exactly once and does not
 require the caller to prepare an
@@ -385,10 +388,11 @@ It is possible to disable support for
 .Va kqueue , poll ,
 or
 .Va select
-by setting the environment variable
+by setting the environment variables
 .Va EVENT_NOKQUEUE , EVENT_NOPOLL ,
 or
-.Va EVENT_NOSELECT .
+.Va EVENT_NOSELECT ,
+respectively.
 By setting the environment variable
 .Va EVENT_SHOW_METHOD ,
 .Nm libevent
