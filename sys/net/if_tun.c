@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.65 2005/05/03 14:33:50 brad Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.66 2005/05/04 12:10:27 markus Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -333,6 +333,7 @@ tunopen(dev_t dev, int flag, int mode, struct proc *p)
 	/* automatically UP the interface on open */
 	s = splimp();
 	if_up(ifp);
+	ifp->if_flags |= IFF_RUNNING;
 	splx(s);
 
 	TUNDEBUG(("%s: open\n", ifp->if_xname));
