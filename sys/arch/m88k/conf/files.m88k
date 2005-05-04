@@ -1,9 +1,10 @@
-#	$OpenBSD: files.m88k,v 1.10 2005/05/01 21:36:56 brad Exp $
+#	$OpenBSD: files.m88k,v 1.11 2005/05/04 22:31:46 miod Exp $
 
 file	arch/m88k/m88k/cmmu.c
 file	arch/m88k/m88k/db_disasm.c			ddb
 file	arch/m88k/m88k/db_sstep.c			ddb
 file	arch/m88k/m88k/db_trace.c			ddb
+file	arch/m88k/m88k/in_cksum.c			inet
 file	arch/m88k/m88k/m88100_fp.S			m88100
 file	arch/m88k/m88k/m88100_machdep.c			m88100
 file	arch/m88k/m88k/m88110_fp.S			m88110
@@ -20,6 +21,5 @@ file	arch/m88k/m88k/vectors_88100.S			m88100
 file	arch/m88k/m88k/vectors_88110.S			m88110
 file	arch/m88k/m88k/vm_machdep.c
 
-file	netinet/in_cksum.c	inet
 file	netinet/in4_cksum.c	inet
 file	netns/ns_cksum.c	ns
