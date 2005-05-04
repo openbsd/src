@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.32 2004/12/02 21:48:30 jmc Exp $
+#	$OpenBSD: inter.phone,v 1.33 2005/05/04 21:00:18 mickey Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -10572,7 +10572,7 @@
 380:5678:Pokrovske:Ukraine
 380:5679:Vasylkivka:Ukraine
 380:5692:Dniprodzerzhynsk:Ukraine
-380:572:Kharkiv:Ukraine
+380:57:Kharkiv:Ukraine
 380:5740:Nova Vodolaha:Ukraine
 380:5741:Volchansk:Ukraine
 380:5742:Kupyansk:Ukraine
