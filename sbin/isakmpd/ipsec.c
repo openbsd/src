@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.117 2005/04/08 23:15:26 hshoexer Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.118 2005/05/04 10:05:01 hshoexer Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -64,6 +64,7 @@
 #include "math_group.h"
 #include "message.h"
 #include "nat_traversal.h"
+#include "pf_key_v2.h"
 #include "prf.h"
 #include "sa.h"
 #include "timer.h"
@@ -359,15 +360,15 @@ ipsec_finalize_exchange(struct message *msg)
 				for (proto = TAILQ_FIRST(&sa->protos),
 				    last_proto = 0; proto;
 				    proto = TAILQ_NEXT(proto, link)) {
-					if (sysdep_ipsec_set_spi(sa, proto,
+					if (pf_key_v2_set_spi(sa, proto,
 					    0, isakmp_sa) ||
 					    (last_proto &&
-					    sysdep_ipsec_group_spis(sa,
+					    pf_key_v2_group_spis(sa,
 						last_proto, proto, 0)) ||
-					    sysdep_ipsec_set_spi(sa, proto,
+					    pf_key_v2_set_spi(sa, proto,
 						1, isakmp_sa) ||
 					    (last_proto &&
-						sysdep_ipsec_group_spis(sa,
+						pf_key_v2_group_spis(sa,
 						last_proto, proto, 1)))
 						/*
 						 * XXX Tear down this
@@ -413,7 +414,7 @@ ipsec_finalize_exchange(struct message *msg)
 				if (!(sa->flags & SA_FLAG_ONDEMAND ||
 				    conf_get_str("General", "Acquire-Only") ||
 				    acquire_only) &&
-				    sysdep_ipsec_enable_sa(sa, isakmp_sa))
+				    pf_key_v2_enable_sa(sa, isakmp_sa))
 					/* XXX Tear down this exchange.  */
 					return;
 
@@ -1409,7 +1410,7 @@ ipsec_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 	if (sa->phase == 1)
 		return;
 	/* XXX Error handling?  Is it interesting?  */
-	sysdep_ipsec_delete_spi(sa, proto, incoming);
+	pf_key_v2_delete_spi(sa, proto, incoming);
 }
 
 /*
@@ -1505,7 +1506,7 @@ ipsec_get_spi(size_t *sz, u_int8_t proto, struct message *msg)
 		transport->vtbl->get_src(transport, &dst);
 		/* The peer is the source.  */
 		transport->vtbl->get_dst(transport, &src);
-		return sysdep_ipsec_get_spi(sz, proto, src, dst,
+		return pf_key_v2_get_spi(sz, proto, src, dst,
 		    msg->exchange->seq);
 	}
 }

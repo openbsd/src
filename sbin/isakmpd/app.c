@@ -1,4 +1,4 @@
-/* $OpenBSD: app.c,v 1.11 2005/04/08 16:15:38 deraadt Exp $	 */
+/* $OpenBSD: app.c,v 1.12 2005/05/04 10:05:01 hshoexer Exp $	 */
 /* $EOM: app.c,v 1.6 1999/05/01 20:21:06 niklas Exp $	 */
 
 /*
@@ -40,6 +40,7 @@
 #include "app.h"
 #include "log.h"
 #include "monitor.h"
+#include "pf_key_v2.h"
 
 int app_socket;
 
@@ -60,5 +61,5 @@ app_init(void)
 void
 app_handler(void)
 {
-	sysdep_app_handler(app_socket);
+	pf_key_v2_handler(app_socket);
 }

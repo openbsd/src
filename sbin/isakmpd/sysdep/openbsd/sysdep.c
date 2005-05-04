@@ -1,4 +1,4 @@
-/* $OpenBSD: sysdep.c,v 1.33 2005/04/08 23:15:26 hshoexer Exp $	 */
+/* $OpenBSD: sysdep.c,v 1.34 2005/05/04 10:05:02 hshoexer Exp $	 */
 /* $EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	 */
 
 /*
@@ -39,59 +39,11 @@
 
 #include "sysdep.h"
 
+#include "app.h"
+#include "log.h"
 #include "monitor.h"
 #include "util.h"
 
-#include "app.h"
-#include "conf.h"
-#include "ipsec.h"
-
-#include "pf_key_v2.h"
-#define KEY_API(x) pf_key_v2_##x
-
-#include "log.h"
-
-/*
- * When select(2) has noticed our application needs attendance, this is what
- * gets called.  FD is the file descriptor causing the alarm.
- */
-void
-sysdep_app_handler(int fd)
-{
-	KEY_API(handler)(fd);
-}
-
-/* Check that the connection named NAME is active, or else make it active.  */
-void
-sysdep_connection_check(char *name)
-{
-	KEY_API(connection_check)(name);
-}
-
-/*
- * Generate a SPI for protocol PROTO and the source/destination pair given by
- * SRC, SRCLEN, DST & DSTLEN.  Stash the SPI size in SZ.
- */
-u_int8_t *
-sysdep_ipsec_get_spi(size_t *sz, u_int8_t proto, struct sockaddr *src,
-    struct sockaddr *dst, u_int32_t seq)
-{
-	if (app_none) {
-		*sz = IPSEC_SPI_SIZE;
-		/* XXX should be random instead I think.  */
-		return (u_int8_t *)strdup("\x12\x34\x56\x78");
-	}
-	return KEY_API(get_spi)(sz, proto, src, dst, seq);
-}
-
-struct sa_kinfo *
-sysdep_ipsec_get_kernel_sa(u_int8_t *spi, size_t spi_sz, u_int8_t proto,
-    struct sockaddr *dst)
-{
-	if (app_none)
-		return 0;
-	return KEY_API(get_kernel_sa)(spi, spi_sz, proto, dst);
-}
 
 /* Force communication on socket FD to go in the clear.  */
 int
@@ -179,38 +131,4 @@ sysdep_cleartext(int fd, int af)
 		return -1;
 	}
 	return 0;
-}
-
-int
-sysdep_ipsec_delete_spi(struct sa *sa, struct proto *proto, int incoming)
-{
-	if (app_none)
-		return 0;
-	return KEY_API(delete_spi)(sa, proto, incoming);
-}
-
-int
-sysdep_ipsec_enable_sa(struct sa *sa, struct sa *isakmp_sa)
-{
-	if (app_none)
-		return 0;
-	return KEY_API(enable_sa)(sa, isakmp_sa);
-}
-
-int
-sysdep_ipsec_group_spis(struct sa *sa, struct proto *proto1,
-    struct proto *proto2, int incoming)
-{
-	if (app_none)
-		return 0;
-	return KEY_API(group_spis)(sa, proto1, proto2, incoming);
-}
-
-int
-sysdep_ipsec_set_spi(struct sa *sa, struct proto *proto, int incoming,
-    struct sa *isakmp_sa)
-{
-	if (app_none)
-		return 0;
-	return KEY_API(set_spi) (sa,proto, incoming, isakmp_sa);
 }

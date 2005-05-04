@@ -1,4 +1,4 @@
-/* $OpenBSD: connection.c,v 1.31 2005/04/08 19:40:02 deraadt Exp $	 */
+/* $OpenBSD: connection.c,v 1.32 2005/05/04 10:05:01 hshoexer Exp $	 */
 /* $EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	 */
 
 /*
@@ -42,6 +42,7 @@
 #include "connection.h"
 #include "doi.h"
 #include "ipsec.h"
+#include "pf_key_v2.h"
 
 /* XXX isakmp.h only required for compare_ids().  */
 #include "isakmp.h"
@@ -154,7 +155,7 @@ connection_checker(void *vconn)
 	    connection_checker, conn, &now);
 	if (!conn->ev)
 		log_print("connection_checker: could not add timer event");
-	sysdep_connection_check(conn->name);
+	pf_key_v2_connection_check(conn->name);
 }
 
 /* Find the connection named NAME.  */
