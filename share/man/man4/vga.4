@@ -1,4 +1,4 @@
-.\" $OpenBSD: vga.4,v 1.9 2004/09/30 19:59:26 mickey Exp $
+.\" $OpenBSD: vga.4,v 1.10 2005/05/04 05:05:32 jaredy Exp $
 .\" $NetBSD: vga.4,v 1.2.4.1 2000/08/09 07:48:40 drochner Exp $
 .\"
 .\" Copyright (c) 1999, 2000
@@ -110,19 +110,21 @@ The
 driver can display fonts of the original IBM type and ISO-8859-1 encoded fonts.
 As an experimental feature, the
 .Dq higher half
-fonts of the former OpenBSD/i386 pcvt driver distribution can be used too if
-.Em option WSCONS_SUPPORT_PCVTFONTS
+fonts of the former
+.Ox Ns /i386
+pcvt driver distribution can be used too if
+.Ic option WSCONS_SUPPORT_PCVTFONTS
 was set at kernel compile time.
 This is only useful with the
 .Dq *bf
 screen types; a font containing the ASCII
 range of characters must be available too on this screen.
 .Pp
-.Em option PCIAGP
-enables support for the AGP GART programming through the
+.Ic option PCIAGP
+enables support for the AGP GART programming through
 .Xr ioctl 2 ,
-for use by the
-.Xr XFree86 1
+for use by
+.Xr Xorg 1
 on some architectures.
 .Sh SEE ALSO
 .Xr intro 4 ,
