@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.42 2005/05/03 14:03:11 moritz Exp $	 */
+/* $OpenBSD: monitor.c,v 1.43 2005/05/05 09:48:02 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -106,44 +106,42 @@ monitor_init(int debug)
 
 	pw = getpwnam(ISAKMPD_PRIVSEP_USER);
 	if (pw == NULL)
-		log_fatal("monitor_init: getpwnam(\"%s\") failed",
+		log_fatalx("monitor_init: getpwnam(\"%s\") failed",
 		    ISAKMPD_PRIVSEP_USER);
 	endpwent();
+	strlcpy(m_state.root, pw->pw_dir, sizeof m_state.root);
 
 	set_monitor_signals();
 	m_state.pid = fork();
-	m_state.s = p[m_state.pid ? 1 : 0];
-	strlcpy(m_state.root, pw->pw_dir, sizeof m_state.root);
 
 	LOG_DBG((LOG_SYSDEP, 30, "monitor_init: pid %d my fd %d", m_state.pid,
 	    m_state.s));
 
-	/* The child process should drop privileges now.  */
-	if (!m_state.pid) {
+	if (m_state.pid == -1)
+		log_fatal("monitor_init: for of unprivileged child failed");
+	if (m_state.pid == 0) {
+		/* The child process drops privileges. */
 		set_slave_signals();
+
 		if (chroot(pw->pw_dir) != 0 || chdir("/") != 0)
 			log_fatal("monitor_init: chroot failed");
 
-		if (setgroups(1, &pw->pw_gid) == -1)
-			log_fatal("monitor_init: setgroups(%d) failed",
-			    pw->pw_gid);
-		if (setegid(pw->pw_gid) == -1)
-			log_fatal("monitor_init: setegid(%d) failed",
-			    pw->pw_gid);
-		if (setgid(pw->pw_gid) == -1)
-			log_fatal("monitor_init: setgid(%d) failed",
-			    pw->pw_gid);
-		if (seteuid(pw->pw_uid) == -1)
-			log_fatal("monitor_init: seteuid(%d) failed",
-			    pw->pw_uid);
-		if (setuid(pw->pw_uid) == -1)
-			log_fatal("monitor_init: setuid(%d) failed",
-			    pw->pw_uid);
+		if (setgroups(1, &pw->pw_gid) == -1 ||
+		    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
+		    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
+			log_fatal("monitor_init: can't drop privileges");
+
+		m_state.s = p[0];
+		close(p[1]);
 
 		LOG_DBG((LOG_MISC, 10,
 		    "monitor_init: privileges dropped for child process"));
 	} else {
+		/* Privileged monitor. */
 		setproctitle("monitor [priv]");
+
+		m_state.s = p[1];
+		close(p[0]);
 	}
 
 	/* With "-dd", stop and wait here. For gdb "attach" etc.  */
