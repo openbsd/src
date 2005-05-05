@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.72 2005/05/05 11:32:05 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.73 2005/05/05 12:09:35 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -287,20 +287,27 @@ CA understands.
 The latter case, however, is described here:
 .Bl -enum
 .It
-Create your own CA as root.
+Create your own Certificate Authority (CA).
+.Pp
+First, create a private key for the CA, and a Certificate Signing Request
+(CSR) to enable the CA to sign its own key:
 .Bd -literal -offset indent
 # openssl genrsa -out /etc/ssl/private/ca.key 1024
 # openssl req -new -key /etc/ssl/private/ca.key \e
 	-out /etc/ssl/private/ca.csr
 .Ed
 .Pp
-You are then asked to enter information that will be incorporated
-into your certificate request.
-What you are about to enter is what is called a Distinguished Name (DN).
-There are quite a few fields but you can leave some blank.
-For some fields there will be a default value; if you enter
-.Sq \&. ,
-the field will be left blank.
+.Ic openssl req
+will prompt for information that will be incorporated
+into the certificate request.
+The information entered comprises a Distinguished Name (DN).
+There are quite a few fields, but some can be left blank.
+For some fields there will be a default value; if
+.Sq \&.
+is entered, the field will be left blank.
+.Pp
+After the CSR has been generated, it is used to create and sign
+a certificate for the CA:
 .Bd -literal -offset indent
 # openssl x509 -req -days 365 -in /etc/ssl/private/ca.csr \e
 	-signkey /etc/ssl/private/ca.key \e
@@ -309,7 +316,7 @@ the field will be left blank.
 .Ed
 .Pp
 .It
-Create keys and certificates for your IKE peers.
+Create keys and CSRs for IKE peers.
 This step, as well as the next one, needs to be done for every peer.
 Furthermore the last step will need to be done once for each ID you
 want the peer to have.
@@ -324,14 +331,16 @@ Encoding the ID in the common name is recommended, as it should be unique.
 .Ed
 .Pp
 Now take these certificate signing requests to your CA and process
-them like below.
-You have to add a subjectAltName extension field
+them as below.
+A
+.Em subjectAltName
+extension field has to be added
 to the certificate in order to make it usable by
-.Nm isakmpd .
-There are two possible ways to add the extensions to the certificate.
-Either run
+.Nm .
+There are two possible ways to add the extensions to the certificate:
+either run
 .Xr certpatch 8
-or make use of an OpenSSL configuration file, for example
+or make use of an OpenSSL configuration file, such as
 .Pa /etc/ssl/x509v3.cnf .
 Replace 10.0.0.1 with the IP address which
 .Nm
