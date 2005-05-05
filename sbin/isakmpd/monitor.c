@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.43 2005/05/05 09:48:02 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.44 2005/05/05 09:54:37 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -113,9 +113,6 @@ monitor_init(int debug)
 
 	set_monitor_signals();
 	m_state.pid = fork();
-
-	LOG_DBG((LOG_SYSDEP, 30, "monitor_init: pid %d my fd %d", m_state.pid,
-	    m_state.s));
 
 	if (m_state.pid == -1)
 		log_fatal("monitor_init: for of unprivileged child failed");
