@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.74 2005/05/05 14:05:51 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.75 2005/05/05 14:14:38 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -155,7 +155,7 @@ Valid values for
 .Ar class
 are as follows:
 .Pp
-.Bl -tag -width 2n -compact -offset indent
+.Bl -tag -width 2n -offset indent -compact
 .It 0
 Misc
 .It 1
@@ -408,7 +408,8 @@ subcommand for more info.
 .Pp
 It is also possible to store trusted public keys to make them directly
 usable by
-.Nm isakmpd .
+.Nm ,
+bypassing the need to use X509 certificates.
 The keys should be saved in PEM format (see
 .Xr openssl 1 )
 and named and stored after this easy formula:
