@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.37 2005/05/05 10:16:56 jmc Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.38 2005/05/05 10:28:41 jmc Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -273,36 +273,38 @@ would be encoded as 1080:0000:0012:0000:0008:0800:200C:417A.
 .Pp
 The following attributes are currently defined:
 .Bl -tag -width -indent
-.It app_domain
-Always set to
-.Va IPsec policy .
-.It doi
-Always set to
-.Va ipsec .
-.It initiator
+.It ah_auth_alg
+One of
+.Va hmac-md5 ,
+.Va hmac-sha ,
+.Va des-mac ,
+.Va kpdk ,
+.Va hmac-sha2-256 ,
+.Va hmac-sha2-384 ,
+.Va hmac-sha2-512 ,
+or
+.Va hmac-ripemd .
+based on the authentication method specified in the AH proposal.
+.It ah_ecn, esp_ecn, comp_ecn
 Set to
 .Va yes
-if the local daemon is initiating the Phase 2 SA,
-.Va no
-otherwise.
-.It phase_1
+or
+.Va no ,
+based on whether ECN was requested for the IPsec tunnel.
+.It ah_encapsulation, esp_encapsulation, comp_encapsulation
 Set to
-.Va aggressive
-if aggressive mode was used to establish the Phase 1 SA, or
-.Va main
-if main mode was used instead.
-.It pfs
-Set to
-.Va yes
-if a Diffie-Hellman exchange will be performed during this Quick Mode,
-.Va no
-otherwise.
-.It ah_present, esp_present, comp_present
-Set to
-.Va yes
-if an AH, ESP, or compression proposal was received respectively,
-.Va no
-otherwise.
+.Va tunnel
+or
+.Va transport ,
+based on the AH, ESP, and compression proposal.
+.It ah_group_desc, esp_group_desc, comp_group_desc
+The Diffie-Hellman group identifier from the AH, ESP, and compression
+proposal, used for PFS during Quick Mode (see the pfs attribute
+above).
+If more than one of these attributes are set to a value other
+than zero, they should have the same value (in valid IKE proposals).
+Valid values are 1 (768-bit MODP), 2 (1024-bit MODP), 3 (155-bit EC),
+4 (185-bit EC), and 5 (1536-bit MODP).
 .It ah_hash_alg
 One of
 .Va md5 ,
@@ -316,6 +318,63 @@ or
 based on the hash algorithm specified in the AH proposal.
 This attribute describes the generic transform to be used in the AH
 authentication.
+.It ah_key_length, esp_key_length
+The number of key bits to be used by the authentication and encryption
+algorithms respectively (for variable key-size algorithms).
+.It ah_key_rounds, esp_key length
+The number of rounds of the authentication and encryption algorithms
+respectively (for variable round algorithms).
+.It ah_life_kbytes, esp_life_kbytes, comp_life_kbytes
+Set to the lifetime of the AH, ESP, and compression proposal, in
+kbytes of traffic.
+If no lifetime was proposed for the corresponding
+protocol (e.g., there was no proposal for AH), the corresponding
+attribute will be set to zero.
+.It ah_life_seconds, esp_life_seconds, comp_life_seconds
+Set to the lifetime of the AH, ESP, and compression proposal, in
+seconds.
+If no lifetime was proposed for the corresponding protocol
+(e.g., there was no proposal for AH), the corresponding attribute will
+be set to zero.
+.It ah_present, esp_present, comp_present
+Set to
+.Va yes
+if an AH, ESP, or compression proposal was received respectively,
+.Va no
+otherwise.
+.It app_domain
+Always set to
+.Va IPsec policy .
+.It comp_alg
+One of
+.Va oui ,
+.Va deflate ,
+.Va lzs ,
+or
+.Va v42bis ,
+based on the compression algorithm specified in the compression
+proposal.
+.It comp_dict_size
+Specifies the log2 maximum size of the dictionary, according to the
+compression proposal.
+.It comp_private_alg
+Set to an integer specifying the private algorithm in use, according
+to the compression proposal.
+.It doi
+Always set to
+.Va ipsec .
+.It esp_auth_alg
+One of
+.Va hmac-md5 ,
+.Va hmac-sha ,
+.Va des-mac ,
+.Va kpdk ,
+.Va hmac-sha2-256 ,
+.Va hmac-sha2-384 ,
+.Va hmac-sha2-512 ,
+or
+.Va hmac-ripemd
+based on the authentication method specified in the ESP proposal.
 .It esp_enc_alg
 One of
 .Va des ,
@@ -332,119 +391,50 @@ One of
 or
 .Va aes ,
 based on the encryption algorithm specified in the ESP proposal.
-.It comp_alg
-One of
-.Va oui ,
-.Va deflate ,
-.Va lzs ,
-or
-.Va v42bis ,
-based on the compression algorithm specified in the compression
-proposal.
-.It ah_auth_alg
-One of
-.Va hmac-md5 ,
-.Va hmac-sha ,
-.Va des-mac ,
-.Va kpdk ,
-.Va hmac-sha2-256 ,
-.Va hmac-sha2-384 ,
-.Va hmac-sha2-512 ,
-or
-.Va hmac-ripemd .
-based on the authentication method specified in the AH proposal.
-.It esp_auth_alg
-One of
-.Va hmac-md5 ,
-.Va hmac-sha ,
-.Va des-mac ,
-.Va kpdk ,
-.Va hmac-sha2-256 ,
-.Va hmac-sha2-384 ,
-.Va hmac-sha2-512 ,
-or
-.Va hmac-ripemd
-based on the authentication method specified in the ESP proposal.
-.It ah_life_seconds, esp_life_seconds, comp_life_seconds
-Set to the lifetime of the AH, ESP, and compression proposal, in
-seconds.
-If no lifetime was proposed for the corresponding protocol
-(e.g., there was no proposal for AH), the corresponding attribute will
-be set to zero.
-.It ah_life_kbytes, esp_life_kbytes, comp_life_kbytes
-Set to the lifetime of the AH, ESP, and compression proposal, in
-kbytes of traffic.
-If no lifetime was proposed for the corresponding
-protocol (e.g., there was no proposal for AH), the corresponding
-attribute will be set to zero.
-.It ah_encapsulation, esp_encapsulation, comp_encapsulation
-Set to
-.Va tunnel
-or
-.Va transport ,
-based on the AH, ESP, and compression proposal.
-.It ah_ecn, esp_ecn, comp_ecn
+.It GMTTimeOfDay
+Set to the UTC date/time, in YYYYMMDDHHmmSS format.
+.It initiator
 Set to
 .Va yes
-or
-.Va no ,
-based on whether ECN was requested for the IPsec tunnel.
-.It comp_dict_size
-Specifies the log2 maximum size of the dictionary, according to the
-compression proposal.
-.It comp_private_alg
-Set to an integer specifying the private algorithm in use, according
-to the compression proposal.
-.It ah_key_length, esp_key_length
-The number of key bits to be used by the authentication and encryption
-algorithms respectively (for variable key-size algorithms).
-.It ah_key_rounds, esp_key length
-The number of rounds of the authentication and encryption algorithms
-respectively (for variable round algorithms).
-.It ah_group_desc, esp_group_desc, comp_group_desc
-The Diffie-Hellman group identifier from the AH, ESP, and compression
-proposal, used for PFS during Quick Mode (see the pfs attribute
-above).
-If more than one of these attributes are set to a value other
-than zero, they should have the same value (in valid IKE proposals).
-Valid values are 1 (768-bit MODP), 2 (1024-bit MODP), 3 (155-bit EC),
-4 (185-bit EC), and 5 (1536-bit MODP).
+if the local daemon is initiating the Phase 2 SA,
+.Va no
+otherwise.
+.It local_negotiation_address
+Set to the IPv4 or IPv6 address of the local interface used by the local IKE
+daemon for this exchange.
+.It LocalTimeOfDay
+Set to the local date/time, in YYYYMMDDHHmmSS format.
+.It pfs
+Set to
+.Va yes
+if a Diffie-Hellman exchange will be performed during this Quick Mode,
+.Va no
+otherwise.
+.It phase_1
+Set to
+.Va aggressive
+if aggressive mode was used to establish the Phase 1 SA, or
+.Va main
+if main mode was used instead.
 .It phase1_group_desc
 The Diffie-Hellman group identifier used in IKE Phase 1.
 Takes the same values as
 .Va ah_group_desc .
-.It remote_filter_type, local_filter_type, remote_id_type
-Set to
-.Va IPv4 address ,
-.Va IPv4 range ,
-.Va IPv4 subnet ,
-.Va IPv6 address ,
-.Va IPv6 range ,
-.Va IPv6 subnet ,
-.Va FQDN ,
-.Va User FQDN ,
-.Va ASN1 DN ,
-.Va ASN1 GN ,
-or
-.Va Key ID ,
-based on the Quick Mode Initiator ID, Quick Mode Responder ID, and
-Main Mode peer ID respectively.
-.It remote_filter_addr_upper, local_filter_addr_upper, remote_id_addr_upper
-When the corresponding filter_type is
-.Va IPv4 address
-or
-.Va IPv6 address ,
-these contain the respective address.
-For
-.Va IPv4 range
-or
-.Va IPv6 range ,
-they contain the upper end of the address range.
-For
-.Va IPv4 subnet
-or
-.Va IPv6 subnet ,
-they contain the highest address in the specified subnet.
+.It remote_filter, local_filter, remote_id
+When the corresponding filter_type specifies an address range or
+subnet, these are set to the upper and lower part of the address
+space separated by a dash ('-') character (if the type specifies a
+single address, they are set to that address).
+.Pp
+For FQDN and User FQDN types, these are set to the respective string.
+For Key ID, these are set to the hexadecimal representation of the
+associated byte string (lower-case letters used) if the Key ID payload
+contains non-printable characters.
+Otherwise, they are set to the respective string.
+.Pp
+For ASN1 DN, these are set to the text encoding of the Distinguished
+Name in the payload sent or received.
+The format is the same as that used in the Licensees field.
 .It remote_filter_addr_lower, local_filter_addr_lower, remote_id_addr_lower
 When the corresponding filter_type is
 .Va IPv4 address
@@ -461,21 +451,22 @@ For
 or
 .Va IPv6 subnet ,
 these contain the lowest address in the specified subnet.
-.It remote_filter, local_filter, remote_id
-When the corresponding filter_type specifies an address range or
-subnet, these are set to the upper and lower part of the address
-space separated by a dash ('-') character (if the type specifies a
-single address, they are set to that address).
-.Pp
-For FQDN and User FQDN types, these are set to the respective string.
-For Key ID, these are set to the hexadecimal representation of the
-associated byte string (lower-case letters used) if the Key ID payload
-contains non-printable characters.
-Otherwise, they are set to the respective string.
-.Pp
-For ASN1 DN, these are set to the text encoding of the Distinguished
-Name in the payload sent or received.
-The format is the same as that used in the Licensees field.
+.It remote_filter_addr_upper, local_filter_addr_upper, remote_id_addr_upper
+When the corresponding filter_type is
+.Va IPv4 address
+or
+.Va IPv6 address ,
+these contain the respective address.
+For
+.Va IPv4 range
+or
+.Va IPv6 range ,
+they contain the upper end of the address range.
+For
+.Va IPv4 subnet
+or
+.Va IPv6 subnet ,
+they contain the highest address in the specified subnet.
 .It remote_filter_port, local_filter_port, remote_id_port
 Set to the transport protocol port.
 .It remote_filter_proto, local_filter_proto, remote_id_proto
@@ -485,15 +476,24 @@ Set to
 .Va udp ,
 or the transport protocol number, depending on the transport protocol set
 in the IDci, IDcr, and Main Mode peer ID respectively.
+.It remote_filter_type, local_filter_type, remote_id_type
+Set to
+.Va IPv4 address ,
+.Va IPv4 range ,
+.Va IPv4 subnet ,
+.Va IPv6 address ,
+.Va IPv6 range ,
+.Va IPv6 subnet ,
+.Va FQDN ,
+.Va User FQDN ,
+.Va ASN1 DN ,
+.Va ASN1 GN ,
+or
+.Va Key ID ,
+based on the Quick Mode Initiator ID, Quick Mode Responder ID, and
+Main Mode peer ID respectively.
 .It remote_negotiation_address
 Set to the IPv4 or IPv6 address of the remote IKE daemon.
-.It local_negotiation_address
-Set to the IPv4 or IPv6 address of the local interface used by the local IKE
-daemon for this exchange.
-.It GMTTimeOfDay
-Set to the UTC date/time, in YYYYMMDDHHmmSS format.
-.It LocalTimeOfDay
-Set to the local date/time, in YYYYMMDDHHmmSS format.
 .El
 .Sh FILES
 .Bl -tag -width /etc/isakmpd/isakmpd.policy
