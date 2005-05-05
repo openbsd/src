@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.12 2005/04/30 23:13:47 pascoe Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.13 2005/05/05 23:32:48 miod Exp $ */
 /* 	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -100,22 +100,25 @@
 #define HAVE_FONT 1
 #endif
 
-/* Make sure we always have at least one font. */
+/*
+ * Make sure we always have at least one font.
+ * Sparc and sparc64 always provide a specific set of fonts.
+ * Other platforms provide a 8x16 font and a larger 12x22 fonts, which is
+ * omitted if option SMALL_KERNEL.
+ */
 #ifndef HAVE_FONT
 #define HAVE_FONT 1
-#if defined(SMALL_KERNEL) && !defined(__sparc__)
-#if defined(__sparc64__)
-#define FONT_GALLANT12x22
+
+#if defined(__sparc__) || defined(__sparc64__)
+#define	FONT_BOLD8x16_ISO1
+#define	FONT_GALLANT12x22
 #else
-#define FONT_BOLD8x16_ISO1 1
+#define	FONT_BOLD8x16_ISO1
+#if !defined(SMALL_KERNEL)
+#define	FONT_GALLANT12x22
 #endif
-#else	/* SMALL_KERNEL */
-#define FONT_BOLD8x16_ISO1 1
-/* Add the gallant 12x22 font for high screen resolutions */
-#if !defined(FONT_GALLANT12x22)
-#define FONT_GALLANT12x22
 #endif
-#endif	/* SMALL_KERNEL */
+
 #endif	/* HAVE_FONT */
 
 #ifdef FONT_BOLD8x16_ISO1
