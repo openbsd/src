@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.71 2005/04/10 14:17:49 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.72 2005/05/05 11:32:05 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -511,53 +511,67 @@ Tear down all active connections.
 .El
 .Sh FILES
 .Bl -tag -width Ds
-.It Pa /etc/isakmpd/ca/
-The directory where CA certificates can be found.
-.It Pa /etc/isakmpd/certs/
-The directory where IKE certificates can be found, both the local
+.It /etc/isakmpd/ca/
+The directory where CA certificates are kept.
+.It /etc/isakmpd/certs/
+The directory where IKE certificates are kept, both the local
 certificate(s) and those of the peers, if a choice to have them kept
 permanently has been made.
-.It Pa /etc/isakmpd/crls/
-The directory where CRLs can be found.
-.It Pa /etc/isakmpd/isakmpd.conf
+.It /etc/isakmpd/crls/
+The directory where CRLs are kept.
+.It /etc/isakmpd/isakmpd.conf
 The configuration file.
 As this file can contain sensitive information
 it must not be readable by anyone but the user running
-.Nm isakmpd .
-.It Pa /etc/isakmpd/isakmpd.policy
+.Nm .
+.It /etc/isakmpd/isakmpd.policy
 The keynote policy configuration file.
 The same mode requirements as
 .Pa isakmpd.conf .
-.It Pa /etc/isakmpd/private/local.key
-A local private key for certificate based authentication.
-There has to be a certificate for this key in the certificate directory
-mentioned above.
-The same mode requirements as
-.Nm isakmpd.conf .
-.It Pa /etc/isakmpd/pubkeys/
-Directory in which trusted public keys can be kept.
+.It /etc/isakmpd/keynote/
+The directory where KeyNote credentials are kept.
+.It /etc/isakmpd/private/
+The directory where local private keys for certificate-based authentication,
+and their public key counterparts, are kept.
+By default, the system startup script
+.Xr rc 8
+generates a key-pair when starting, if one does not already exist.
+The private and public keys are named
+.Pa local.key
+and
+.Pa local.pub ,
+respectively.
+There has to be a certificate for
+.Pa local.key
+in the certificate directory,
+.Pa /etc/isakmpd/certs/ .
+.Pa local.key
+has the same mode requirements as
+.Pa isakmpd.conf .
+.It /etc/isakmpd/pubkeys/
+The directory in which trusted public keys are kept.
 The keys must be named in the fashion described above.
-.It Pa /var/run/isakmpd.pid
-The PID of the current daemon.
-.It Pa /var/run/isakmpd.fifo
+.It /usr/share/ipsec/isakmpd/
+A directory containing some sample
+.Nm
+and keynote policy configuration files.
+.It /var/run/isakmpd.fifo
 The FIFO used to manually control
 .Nm isakmpd .
-.It Pa /var/run/isakmpd.pcap
+.It /var/run/isakmpd.pcap
 The default IKE packet capture file.
-.It Pa /var/run/isakmpd.report
+.It /var/run/isakmpd.pid
+The PID of the current daemon.
+.It /var/run/isakmpd.report
 The report file written when
 .Dv SIGUSR1
 is received.
-.It Pa /var/run/isakmpd.result
+.It /var/run/isakmpd.result
 The report file written when the
 .Sq S
 or
 .Sq "C get"
 command is issued in the command FIFO.
-.It Pa /usr/share/ipsec/isakmpd/
-A directory containing some sample
-.Nm
-and keynote policy configuration files.
 .El
 .Sh SEE ALSO
 .Xr openssl 1 ,
