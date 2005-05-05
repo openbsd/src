@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.234 2005/03/07 13:52:50 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.235 2005/05/05 04:00:26 joel Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1343,7 +1343,7 @@ pfctl_load_logif(struct pfctl *pf, char *ifname)
 	memset(&pi, 0, sizeof(pi));
 	if (ifname && strlcpy(pi.ifname, ifname,
 	    sizeof(pi.ifname)) >= sizeof(pi.ifname)) {
-		warnx("pfctl_set_logif: strlcpy");
+		warnx("pfctl_load_logif: strlcpy");
 		return (1);
 	}
 	if (ioctl(pf->dev, DIOCSETSTATUSIF, &pi)) {
