@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.policy.5,v 1.36 2005/03/13 21:14:15 miod Exp $
+.\" $OpenBSD: isakmpd.policy.5,v 1.37 2005/05/05 10:16:56 jmc Exp $
 .\" $EOM: isakmpd.policy.5,v 1.24 2000/11/23 12:55:25 niklas Exp $
 .\"
 .\" Copyright (c) 1999-2001, Angelos D. Keromytis.  All rights reserved.
@@ -35,8 +35,8 @@
 .Sh DESCRIPTION
 .Nm
 is the policy configuration file for the
-.Nm isakmpd
-daemon managing security association and key management for the
+.Xr isakmpd 8
+daemon, managing security association and key management for the
 .Xr ipsec 4
 layer of the kernel's networking stack.
 .Pp
@@ -44,7 +44,7 @@ The
 .Xr isakmpd 8
 daemon (also known as IKE, for Internet Key Exchange) is used when two
 systems need to automatically set up a pair of Security Associations
-(SAs) for securely communicating using IPsec.
+(SAs) for secure communication using IPsec.
 IKE operates in two stages:
 .Pp
 In the first stage (Main or Identity Protection Mode), the two IKE
@@ -67,10 +67,11 @@ The reason for the existence of Quick Mode is to allow for fast
 SA setup, once the more heavy-weight Main Mode has been completed.
 Generally, Quick Mode uses the key material derived from Main Mode to
 provide keys to the IPsec transforms to be used.
+.Pp
 Alternatively, a new
-Diffie-Hellman computation may be performed (significantly slowing
-down the exchange, but at the same time providing Perfect Forward
-Secrecy (PFS)).
+Diffie-Hellman computation may be performed, which significantly slows
+down the exchange, but at the same time provides Perfect Forward
+Secrecy (PFS).
 Briefly, this means that even should an attacker
 manage to break long-term keys used in other sessions (or,
 specifically, if an attacker breaks the Diffie-Hellman exchange
@@ -105,7 +106,7 @@ added.
 .Pp
 The goal of security policy for IKE is thus to determine, based on
 local policy (provided in the
-.Nm isakmpd.policy
+.Nm
 file), credentials provided during the IKE exchanges (or obtained
 through other means), the SA attributes proposed during the exchange,
 and perhaps other (side-channel) information, whether a pair of SAs
@@ -114,17 +115,17 @@ and the flows should be installed).
 For each proposal suggested by or
 to the remote IKE daemon, the KeyNote system is consulted as to
 whether the proposal is acceptable based on local policy (contained in
-.Nm isakmpd.policy ,
+.Nm ,
 in the form of policy assertions) and remote credentials (e.g.,
 KeyNote credentials or X509 certificates provided by the remote IKE
 daemon).
 .Pp
-.Nm isakmpd.policy
+.Nm
 is simply a flat
 .Xr ascii 7
 file containing KeyNote policy assertions, separated by blank lines
 (note that KeyNote assertions may not contain blank lines).
-.Nm isakmpd.policy
+.Nm
 is read when
 .Xr isakmpd 8
 is first started, and every time it receives a
@@ -228,7 +229,7 @@ Conditions field simply asserts that the credential is only valid for
 Similarly, any X509 CA certificates present in the directory pointed
 to by the appropriate
 .Xr isakmpd.conf 5
-entry, are converted to such pseudo-credentials.
+entry are converted to such pseudo-credentials.
 This allows one to
 write KeyNote policies that delegate specific authority to CAs (and
 the keys those CAs certify, recursively).
@@ -242,7 +243,7 @@ is called an action set.
 The action set is composed of name-value
 attributes, similar in some ways to shell environment variables.
 These values are initialized by
-.Nm isakmpd
+.Xr isakmpd 8
 before each query to the KeyNote system, and can be tested against in
 the Conditions field of assertions.
 See
@@ -262,18 +263,13 @@ implementation or network only.
 In the following attribute set, IPv4 addresses are encoded as ASCII
 strings in the usual dotted-quad format.
 However, all quads are three digits long.
-For example, the IPv4 address
-.Va 10.128.1.12
-would be encoded as
-.Va 010.128.001.012 .
+For example, the IPv4 address 10.128.1.12 would be encoded as 010.128.001.012.
 Similarly, IPv6 addresses are encoded in the standard x:x:x:x:x:x:x:x
 format, where the 'x's are the hexadecimal values of the eight 16-bit
 pieces of the address.
 All 'x's are four digits long.
-For example, the address
-.Va 1080:0:12:0:8:800:200C:417A
-would be encoded as
-.Va 1080:0000:0012:0000:0008:0800:200C:417A .
+For example, the address 1080:0:12:0:8:800:200C:417A
+would be encoded as 1080:0000:0012:0000:0008:0800:200C:417A.
 .Pp
 The following attributes are currently defined:
 .Bl -tag -width -indent
@@ -503,11 +499,11 @@ Set to the local date/time, in YYYYMMDDHHmmSS format.
 .Bl -tag -width /etc/isakmpd/isakmpd.policy
 .It Pa /etc/isakmpd/isakmpd.policy
 The default
-.Nm isakmpd
+.Xr isakmpd 8
 policy configuration file.
 .It Pa /usr/share/ipsec/isakmpd/policy
 A sample
-.Nm isakmpd
+.Xr isakmpd 8
 policy configuration file.
 .El
 .Sh EXAMPLES
