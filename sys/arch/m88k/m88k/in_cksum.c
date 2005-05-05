@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.1 2005/05/04 22:31:48 miod Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.2 2005/05/05 14:28:34 miod Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
+#include <sys/socketvar.h>
 #include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/ip_var.h>
 
 #define	REDUCE		(sum = (sum & 0xffff) + (sum >> 16))
 #define	ROL		(sum <<= 8)
@@ -43,24 +47,23 @@
 #define	SHIFT(n)	(w += (n), mlen -= (n))
 #define	ADDCARRY	do { while (sum > 0xffff) REDUCE; } while (0)
 
-int
-in_cksum(struct mbuf *m, int len)
+static __inline__ int
+in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 {
 	u_char *w;
-	u_int sum = 0;
 	int mlen;
 	int byte_swapped = 0;
 
-	register_t tmp;
-	
 	for (; m && len; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		w = mtod(m, u_char *);
-		mlen = m->m_len;
+		w = mtod(m, u_char *) + off;
+		mlen = m->m_len - off;
+		off = 0;
 		if (len < mlen)
 			mlen = len;
 		len -= mlen;
+
 		if ((long)w & 1) {
 			REDUCE;
 			ADDB;
@@ -80,4 +83,41 @@ in_cksum(struct mbuf *m, int len)
 	}
 	ADDCARRY;
 	return (0xffff ^ sum);
+}
+
+int
+in_cksum(struct mbuf *m, int len)
+{
+	return (in_cksum_internal(m, 0, len, 0));
+}
+
+int
+in4_cksum(struct mbuf *m, uint8_t nxt, int off, int len)
+{
+	u_int16_t *w;
+	u_int sum = 0;
+	struct ipovly ipov;
+
+	if (nxt != 0) {
+		/* pseudo header */
+		bzero(&ipov, sizeof(ipov));
+		ipov.ih_len = htons(len);
+		ipov.ih_pr = nxt; 
+		ipov.ih_src = mtod(m, struct ip *)->ip_src; 
+		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
+		w = (u_int16_t *)&ipov;
+		/* assumes sizeof(ipov) == 20 */
+		sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3]; sum += w[4];
+		sum += w[5]; sum += w[6]; sum += w[7]; sum += w[8]; sum += w[9];
+	}
+
+	/* skip unnecessary part */
+	while (m && off > 0) {
+		if (m->m_len > off)
+			break;
+		off -= m->m_len;
+		m = m->m_next;
+	}
+
+	return (in_cksum_internal(m, off, len, sum));
 }
