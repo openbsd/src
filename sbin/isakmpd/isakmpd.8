@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.73 2005/05/05 12:09:35 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.74 2005/05/05 14:05:51 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -432,14 +432,42 @@ All commands start with a single letter, followed by command-specific options.
 Available commands are:
 .Bl -tag -width Ds -compact
 .Pp
-.It Ic "c <name>"
-Start the named connection, if stopped or inactive.
-.Pp
-.It Ic "C set [section]:tag=value"
-.It Ic "C set [section]:tag=value force"
-.It Ic "C add [section]:tag=value"
-.It Ic "C rm  [section]:tag"
-.It Ic "C rms [section]"
+.It Xo
+.Ic C add
+.Sm off
+.Op Ic section
+.No :
+.Ic tag No = Ic value
+.Sm on
+.Xc
+.It Xo
+.Ic C rm
+.Sm off
+.Op Ic section
+.No :
+.Ic tag
+.Sm on
+.Xc
+.It Xo
+.Ic C rms
+.Op Ic section
+.Xc
+.It Xo
+.Ic C set
+.Sm off
+.Op Ic section
+.No :
+.Ic tag No = Ic value
+.Sm on
+.Xc
+.It Xo
+.Ic C set
+.Sm off
+.Op Ic section
+.No :
+.Ic tag No = Ic value\ \&force
+.Sm on
+.Xc
 Update the running
 .Nm
 configuration atomically.
@@ -457,39 +485,90 @@ removes a tag in a section.
 .Sq rms
 removes an entire section.
 .Pp
-NOTE: Sending isakmpd a SIGHUP or an "R" through the FIFO will
-void any updates done to the configuration.
+NOTE: Sending
+.Nm
+a
+.Dv SIGHUP
+or an "R" through the FIFO will void any updates done to the configuration.
 .Pp
-.It Ic "C get [section]:tag"
+.It Xo
+.Ic C get
+.Sm off
+.Op Ic section
+.No :
+.Ic tag
+.Sm on
+.Xc
 Get the configuration value of the specified section and tag.
 The result is stored in
 .Pa /var/run/isakmpd.result .
 .Pp
-.It Ic "d <cookies> <msgid>"
+.It Ic c Aq Ic name
+Start the named connection, if stopped or inactive.
+.Pp
+.It Xo
+.Ic D
+.Aq Ic class
+.Aq Ic level
+.Xc
+.It Xo
+.Ic D A
+.Aq Ic level
+.Xc
+.It Ic D T
+Set debug class
+.Aq Ic class
+to level
+.Aq Ic level .
+If
+.Aq Ic class
+is specified as
+.Sq A ,
+the level applies to all debug classes.
+.Ic D T
+toggles all debug classes to level zero.
+Another
+.Ic D T
+command will toggle them back to the earlier levels.
+.Pp
+.It Xo
+.Ic d
+.Aq Ic cookies
+.Aq Ic msgid
+.Xc
 Delete the specified SA from the system.
-Specify <msgid> as "-" to match a Phase 1 SA.
+Specify
+.Aq Ic msgid
+as
+.Sq -
+to match a Phase 1 SA.
 .Pp
-.It Ic "D <class> <level>"
-.It Ic "D A <level>"
-.It Ic "D T"
-Set debug class <class> to level <level>.
-If <class> is specified as "A", the level applies to all debug classes.
-"D T" toggles all debug classes to level zero.
-Another "D T" command will toggle them back to the earlier levels.
-.Pp
-.It Ic "p on[=<path>]"
-.It Ic "p off"
+.It Xo
+.Ic p
+.Sm off
+.Ic on
+.Op No = Aq Ic path
+.Sm on
+.Xc
+.It Ic p off
 Enable or disable cleartext IKE packet capture.
 When enabling, optionally specify which file
 .Nm
 should capture the packets to.
 .Pp
-.It Ic "Q"
+.It Ic Q
 Cleanly shutdown the daemon, as when sent a
 .Dv SIGTERM
 signal.
 .Pp
-.It Ic "r"
+.It Ic R
+Reinitialize
+.Nm isakmpd ,
+as when sent a
+.Dv SIGHUP
+signal.
+.Pp
+.It Ic r
 Report
 .Nm
 internal state to a file.
@@ -500,23 +579,16 @@ Same as when sent a
 .Dv SIGUSR1
 signal.
 .Pp
-.It Ic "R"
-Reinitialize
-.Nm isakmpd ,
-as when sent a
-.Dv SIGHUP
-signal.
-.Pp
-.It Ic "S"
+.It Ic S
 Report information on all known SAs to the
 .Pa /var/run/isakmpd.result
 file.
 .Pp
-.It Ic "t <name>"
-Tear down the named connection, if active.
-.Pp
-.It Ic "T"
+.It Ic T
 Tear down all active connections.
+.Pp
+.It Ic t Aq Ic name
+Tear down the named connection, if active.
 .El
 .Sh FILES
 .Bl -tag -width Ds
