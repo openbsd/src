@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2005/05/06 03:08:01 marco Exp $
+#	$OpenBSD: Makefile,v 1.15 2005/05/06 11:16:47 pedro Exp $
 #	$NetBSD: Makefile,v 1.6 1996/02/01 22:31:28 mycroft Exp $
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
@@ -26,7 +26,7 @@ DI386=	conf eisa i386 include isa pci
 tags:
 	-ctags -wdtf ${TI386} ${COMM} ${SI386} ${GI386}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AI386} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
 		>> ${TI386}
 	sort -o ${TI386} ${TI386}
 

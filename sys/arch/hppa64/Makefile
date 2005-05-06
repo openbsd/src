@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2005/05/06 03:18:20 marco Exp $
+#	$OpenBSD: Makefile,v 1.3 2005/05/06 11:16:47 pedro Exp $
 
 # Makefile for hppa64 tags file and boot blocks
 
@@ -21,7 +21,7 @@ DHPPA=	conf dev hppa64 include
 tags:
 	-ctags -wdtf ${THPPA} ${COMM} ${SHPPA}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AHPPA} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
 		>> ${THPPA}
 	sort -o ${THPPA} ${THPPA}
 

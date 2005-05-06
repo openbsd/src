@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2002/07/15 21:29:16 mickey Exp $
+#	$OpenBSD: Makefile,v 1.10 2005/05/06 11:16:48 pedro Exp $
 
 # from: @(#)Makefile	8.1 (Berkeley) 6/11/93
 #
@@ -28,7 +28,7 @@ AMVME68K=$S/arch/mvme68k/mvme68k/*.s $S/lib/libkern/arch/m68k/*.[sS]
 tags:
 	-ctags -wdtf ${TMVEM68K} ${COMM} ${SMVME68K}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AMVME68K} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
 		>> tags
 	sort -o ${TMVEM68K} ${TMVEM68K}
 

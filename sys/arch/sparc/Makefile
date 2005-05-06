@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2002/07/15 21:29:16 mickey Exp $
+#	$OpenBSD: Makefile,v 1.9 2005/05/06 11:16:48 pedro Exp $
 #	$NetBSD: Makefile,v 1.4 1996/03/25 22:48:09 mrg Exp $
 
 #
@@ -26,7 +26,7 @@ ASPARC=	$S/arch/sparc/sparc/*.[sS] $S/lib/libkern/arch/sparc/*.[sS]
 tags:
 	-ctags -wdtf ${TSPARC} ${COMM} ${SPARC}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ASPARC} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
 		>> ${TSPARC}
 	sort -o ${TSPARC} ${TSPARC}
 

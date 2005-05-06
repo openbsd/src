@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2005/05/06 03:25:08 marco Exp $
+#	$OpenBSD: Makefile,v 1.4 2005/05/06 11:16:47 pedro Exp $
 
 S=${.CURDIR}/../..
 .include "$S/kern/Make.tags.inc"
@@ -22,7 +22,7 @@ DLUNA88K=	conf ddb dev include luna88k
 tags:
 	-ctags -wdtf ${TLUNA88K} ${COMM} ${SLUNA88K}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ALUNA88K} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
 		>> ${TLUNA88K}
 	sort -o ${TLUNA88K} ${TLUNA88K}
 

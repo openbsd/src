@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2005/05/06 02:59:51 marco Exp $
+#	$OpenBSD: Makefile,v 1.4 2005/05/06 11:16:47 pedro Exp $
 
 S=${.CURDIR}/../..
 .include "$S/kern/Make.tags.inc"
@@ -21,7 +21,7 @@ DAMD64=	conf amd64 include isa pci
 tags:
 	-ctags -wdtf ${TAMD64} ${COMM} ${SAMD64}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AAMD64} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
 		>> ${TAMD64}
 	sort -o ${TAMD64} ${TAMD64}
 

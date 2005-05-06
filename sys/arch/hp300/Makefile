@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2005/05/06 03:13:53 marco Exp $
+#	$OpenBSD: Makefile,v 1.8 2005/05/06 11:16:47 pedro Exp $
 #	$NetBSD: Makefile,v 1.5 1995/08/04 07:40:31 thorpej Exp $
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
@@ -25,7 +25,7 @@ DHP300=	conf dev hp300 include
 tags:
 	-ctags -wdtf ${THP300} ${COMM} ${SHP300}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AHP300} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
 		>> ${THP300}
 	sort -o ${THP300} ${THP300}
 
