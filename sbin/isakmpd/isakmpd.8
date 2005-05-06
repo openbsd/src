@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.75 2005/05/05 14:14:38 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.76 2005/05/06 19:06:50 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -371,9 +371,8 @@ For a FQDN certificate, do:
 # setenv CERTFQDN somehost.somedomain
 # openssl x509 -req -days 365 -in somehost.somedomain.csr \e
 	-CA /etc/ssl/ca.crt -CAkey /etc/ssl/private/ca.key \e
-	-CAcreateserial \e
-	-extfile /etc/ssl/x509v3.cnf -extensions x509v3_FQDN \e
-	-out somehost.somedomain.crt
+	-CAcreateserial -extfile /etc/ssl/x509v3.cnf \e
+	-extensions x509v3_FQDN -out somehost.somedomain.crt
 .Ed
 .Pp
 Or with
