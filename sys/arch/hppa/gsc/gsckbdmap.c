@@ -1,11 +1,11 @@
-/*	$OpenBSD: gsckbdmap.c,v 1.11 2005/05/06 17:43:17 mickey Exp $	*/
+/*	$OpenBSD: gsckbdmap.c,v 1.12 2005/05/06 17:52:31 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
  */
-/*	OpenBSD: wskbdmap_mfii.c,v 1.28 2005/05/06 17:40:32 mickey Exp  */
+/*	OpenBSD: wskbdmap_mfii.c,v 1.29 2005/05/06 17:51:41 mickey Exp  */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -895,8 +895,8 @@ static const keysym_t gsckbd_keydesc_cf[] = {
     KC(85),	KS_equal,	KS_plus,	KS_threequarters,
     KC(68),	KS_o,	KS_O,	KS_section,
     KC(77),	KS_p,	KS_P,	KS_paragraph,
-    KC(84),	KS_dead_circumflex,	KS_dead_circumflex,	KS_bracketleft,
-    KC(91),	KS_dead_cedilla,	KS_dead_diaeresis,	KS_bracketright,
+    KC(84),	KS_dead_circumflex,KS_dead_circumflex,	KS_bracketleft,
+    KC(91),	KS_dead_cedilla,KS_dead_diaeresis,	KS_bracketright,
     KC(76),	KS_semicolon,	KS_colon,	KS_asciitilde,
     KC(82),	KS_dead_grave,	KS_dead_grave,	KS_braceleft,
     KC(14),	KS_numbersign,	KS_bar,	KS_backslash,
@@ -905,13 +905,13 @@ static const keysym_t gsckbd_keydesc_cf[] = {
     KC(65),	KS_comma,	KS_apostrophe,	KS_hyphen,
     KC(73),	KS_period,	KS_period,
     KC(74),	KS_eacute,	KS_Eacute,	KS_dead_acute,
-    KC(97),	KS_guillemotleft,	KS_guillemotright,	KS_degree,
-    KC(145),	KS_Mode_switch,	KS_Multi_key,
+    KC(97),	KS_guillemotleft,KS_guillemotright,	KS_degree,
+    KC(145),	KS_Mode_switch,KS_Multi_key,
 };
 
-const struct keysym_t gsckbd_keydesc_cf_nodead[] = {
+static const keysym_t gsckbd_keydesc_cf_nodead[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
-    KC(84),	KS_circumflex,	KS_circumflex,	KS_bracketleft,
+    KC(84),	KS_asciicircum,KS_asciicircum,	KS_bracketleft,
     KC(91),	KS_cedilla,	KS_diaeresis,	KS_bracketright,
     KC(82),	KS_grave,	KS_grave,	KS_braceleft,
     KC(74),	KS_eacute,	KS_Eacute,	KS_acute,
