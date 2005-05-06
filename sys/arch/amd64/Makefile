@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2005/05/06 00:56:40 marco Exp $
+#	$OpenBSD: Makefile,v 1.3 2005/05/06 02:59:51 marco Exp $
 
 S=${.CURDIR}/../..
 .include "$S/kern/Make.tags.inc"
@@ -27,8 +27,7 @@ tags:
 
 links:
 	-for i in ${DAMD64}; do \
-	    cd $$i && rm -f tags; ln -s ${TAMD64} tags; done
-
+	    (cd $$i && rm -f tags; ln -s ${TAMD64} tags); done
 
 obj:	_SUBDIRUSE
 
