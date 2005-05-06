@@ -1,4 +1,4 @@
-/*	$OpenBSD: urem.s,v 1.3 2003/06/02 23:27:59 millert Exp $	*/
+/*	$OpenBSD: urem.s,v 1.4 2005/05/06 18:55:02 miod Exp $	*/
 /*	$NetBSD: urem.s,v 1.2 1994/10/26 08:03:37 cgd Exp $	*/
 
 /*-
@@ -35,6 +35,8 @@
  *	@(#)urem.s      5.6 (Berkeley) 4/15/91
  */
 
+#include <machine/asm.h>
+
 /*
  * Unsigned modulus, PCC flavor.
  * urem() takes an ordinary dividend/divisor pair;
@@ -42,10 +44,8 @@
 
 #define	DIVIDEND	4(ap)
 #define	DIVISOR		8(ap)
-	.globl	urem
-	.align	2
-urem:	.word	0x0
 
+ASENTRY(urem, 0)
 	movl	8(ap),r2
 	jlss	Leasy		# big divisor: settle by comparison
 	movl	4(ap),r0

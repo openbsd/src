@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.s,v 1.21 2004/07/07 23:10:46 deraadt Exp $     */
+/*	$OpenBSD: subr.s,v 1.22 2005/05/06 18:55:02 miod Exp $     */
 /*	$NetBSD: subr.s,v 1.32 1999/03/25 00:41:48 mrg Exp $	   */
 
 /*
@@ -222,8 +222,7 @@ ENTRY(bcmp, R2);
 /*
  * DDB is the only routine that uses setjmp/longjmp.
  */
-	.globl	_setjmp, _longjmp
-_setjmp:.word	0
+ENTRY(setjmp, 0)
 	movl	4(ap), r0
 	movl	8(fp), (r0)
 	movl	12(fp), 4(r0)
@@ -232,7 +231,7 @@ _setjmp:.word	0
 	clrl	r0
 	ret
 
-_longjmp:.word	0
+ENTRY(longjmp, 0)
 	movl	4(ap), r1
 	movl	8(ap), r0
 	movl	(r1), ap
