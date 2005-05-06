@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbdmap.c,v 1.1 2005/04/22 11:59:11 miod Exp $	*/
+/*	$OpenBSD: dnkbdmap.c,v 1.2 2005/05/06 22:22:53 miod Exp $	*/
 /*
  * Copyright (c) 2005, Miodrag Vallat
  *
@@ -61,7 +61,7 @@ const u_int8_t dnkbd_raw[0x80] = {
 	RAWKEY_Null,		/* 13 Cut Copy */
 	RAWKEY_Null,		/* 14 Undo Paste */
 	RAWKEY_Null,		/* 15 Move Grow */
-	RAWKEY_Null,
+	RAWKEY_Escape,
 	RAWKEY_Escape,
 	RAWKEY_1,
 	RAWKEY_2,
@@ -172,7 +172,11 @@ const u_int8_t dnkbd_raw[0x80] = {
 
 #define	KC(n)	KS_KEYCODE(n)
 
-const keysym_t dnkbd_keydesc_us[] = {
+/*
+ * US English
+ */
+
+static const keysym_t dnkbd_keydesc_us[] = {
 /*	pos		command		normal		shifted */
 	/* 01 Ins Mark */
 	/* 02 Line Del */
@@ -277,11 +281,211 @@ const keysym_t dnkbd_keydesc_us[] = {
 	/* 74 Bottom Box */
 	KC(0x75),  KS_Cmd2,		KS_Alt_L,
 	KC(0x76),			KS_space,
-	KC(0x77),  KS_Cmd2,		KS_Alt_R,
+	KC(0x77),  KS_Cmd2,		KS_Alt_R,	KS_Multi_key,
 	KC(0x79),			KS_KP_0,
 	KC(0x7b),			KS_KP_Separator,
 	KC(0x7c),			KS_KP_Enter,
 	KC(0x7e),			KS_Caps_Lock
+};
+
+/*
+ * German
+ */
+
+static const keysym_t dnkbd_keydesc_de[] = {
+/*	pos		normal		shifted		altgr */
+	KC(0x17),	KS_dead_circumflex, KS_dead_abovering,
+	KC(0x19),	KS_2,		KS_quotedbl,
+	KC(0x1a),	KS_3,		KS_at,		KS_section,
+	KC(0x1d),	KS_6,		KS_ampersand,
+	KC(0x1e),	KS_7,		KS_slash,
+	KC(0x1f),	KS_8,		KS_parenleft,
+	KC(0x20),	KS_9,		KS_parenright,
+	KC(0x21),	KS_0,		KS_equal,
+	KC(0x22),	KS_dead_tilde,	KS_question,	KS_ssharp,
+	KC(0x23),	KS_dead_acute,	KS_dead_grave,
+	KC(0x32),	KS_z,
+	KC(0x37),	KS_braceright,	KS_bracketright,KS_udiaeresis,
+	KC(0x38),	KS_plus,	KS_asterisk,
+	KC(0x4f),	KS_bar,		KS_backslash,	KS_odiaeresis,
+	KC(0x50),	KS_braceleft,	KS_bracketleft,	KS_adiaeresis,
+	KC(0x51),	KS_numbersign,	KS_apostrophe,
+	KC(0x5f),	KS_less,	KS_greater,
+	KC(0x60),	KS_y,
+	KC(0x67),	KS_comma,	KS_semicolon,
+	KC(0x68),	KS_period,	KS_colon,
+	KC(0x69),	KS_minus,	KS_underscore,
+	KC(0x77),	KS_Mode_switch,	KS_Multi_key
+};
+
+static const keysym_t dnkbd_keydesc_de_nodead[] = {
+	KC(0x17),	KS_asciicircum, KS_degree,
+	KC(0x22),	KS_asciitilde,	KS_question,	KS_ssharp,
+	KC(0x23),	KS_apostrophe,	KS_grave
+};
+
+/*
+ * Norwegian / Danish
+ */
+
+static const keysym_t dnkbd_keydesc_dk[] = {
+/*	pos		normal		shifted		altgr */
+	KC(0x17),	KS_underscore,
+	KC(0x19),	KS_2,		KS_quotedbl,
+	KC(0x1d),	KS_6,		KS_ampersand,
+	KC(0x1e),	KS_7,		KS_slash,
+	KC(0x1f),	KS_8,		KS_parenleft,
+	KC(0x20),	KS_9,		KS_parenright,
+	KC(0x21),	KS_0,		KS_equal,
+	KC(0x22),	KS_plus,	KS_question,
+	KC(0x23),	KS_dead_grave,	KS_at,
+	KC(0x37),	KS_braceright,	KS_bracketright,KS_aring,
+	KC(0x38),	KS_dead_tilde,	KS_dead_circumflex,KS_dead_diaeresis,
+	KC(0x4f),	KS_bar,		KS_backslash,	KS_oslash,
+	KC(0x50),	KS_braceleft,	KS_bracketleft,	KS_ae,
+	KC(0x51),	KS_dead_acute,	KS_asterisk,
+	KC(0x5f),	KS_less,	KS_greater,
+	KC(0x67),	KS_comma,	KS_semicolon,
+	KC(0x68),	KS_period,	KS_colon,
+	KC(0x69),	KS_minus,	KS_underscore,
+	KC(0x77),	KS_Mode_switch,	KS_Multi_key
+};
+
+static const keysym_t dnkbd_keydesc_dk_nodead[] = {
+/*	pos		normal		shifted		altgr */
+	KC(0x23),	KS_grave,	KS_at,
+	KC(0x38),	KS_asciitilde,	KS_asciicircum,	KS_diaeresis,
+	KC(0x51),	KS_apostrophe,	KS_asterisk,
+};
+
+/*
+ * French
+ */
+
+static const keysym_t dnkbd_keydesc_fr[] = {
+/*	pos		normal		shifted		altgr */
+	KC(0x17),	KS_bracketleft,	KS_degree,
+	KC(0x18),	KS_ampersand,	KS_1,
+	KC(0x19),	KS_braceleft,	KS_2,		KS_eacute,
+	KC(0x1a),	KS_quotedbl,	KS_3,
+	KC(0x1b),	KS_apostrophe,	KS_4,
+	KC(0x1c),	KS_parenleft,	KS_5,
+	KC(0x1d),	KS_bracketright,KS_6,		KS_section,
+	KC(0x1e),	KS_braceright,	KS_7,		KS_egrave,
+	KC(0x1f),	KS_exclam,	KS_8,
+	KC(0x20),	KS_backslash,	KS_9,		KS_ccedilla,
+	KC(0x21),	KS_at,		KS_0,		KS_agrave,
+	KC(0x22),	KS_parenright,	KS_degree,
+	KC(0x23),	KS_minus,	KS_underscore,
+	KC(0x2d),	KS_a,
+	KC(0x2e),	KS_z,
+	KC(0x37),	KS_dead_circumflex, KS_asciitilde, KS_dead_diaeresis,
+	KC(0x38),	KS_dollar,	KS_asterisk,
+	KC(0x46),	KS_q,
+	KC(0x4f),	KS_m,
+	KC(0x50),	KS_bar,		KS_percent,	KS_ugrave,
+	KC(0x51),	KS_grave,	KS_numbersign,
+	KC(0x5f),	KS_less,	KS_greater,
+	KC(0x60),	KS_w,
+	KC(0x66),	KS_comma,	KS_question,
+	KC(0x67),	KS_semicolon,	KS_period,
+	KC(0x68),	KS_colon,	KS_slash,
+	KC(0x69),	KS_equal,	KS_plus,
+	KC(0x77),	KS_Mode_switch,	KS_Multi_key
+};
+
+/*
+ * Japanese (and basis for international layouts)
+ *
+ * Apparently this layout lacks all japanese keys (Zenkaku/Hankaku,
+ * Hiragana/Katakana, Henkan and Muhenkan). Makes one wonder about
+ * its usefulness.
+ */
+
+static const keysym_t dnkbd_keydesc_jp[] = {
+/*	pos		cmd		normal		shifted */
+	KC(0x16),  KS_Cmd_Debugger,	KS_Escape,
+	KC(0x17),	KS_grave,	KS_asciitilde,
+	KC(0x24),  KS_Cmd_ResetEmul,	KS_Delete,	/* backspace */
+	KC(0x25),			KS_Delete,
+	/* 2b Rept */
+	KC(0x3b),			KS_KP_Add,
+	KC(0x3f),			KS_parenleft,	/* KS_KP_parenleft */
+	KC(0x51),			KS_backslash,	KS_bar,
+	KC(0x54),			KS_KP_Subtract,
+	KC(0x58),			KS_parenright,	/* KS_KP_parenright */
+	KC(0x5f),			KS_less,	KS_greater,
+	KC(0x6d),			KS_KP_Multiply,
+	KC(0x78),			KS_KP_Divide,
+};
+
+/*
+ * Swiss (relative to the German layout)
+ */
+
+static const keysym_t dnkbd_keydesc_sg[] = {
+/*	pos		normal		shifted		altgr */
+	KC(0x17),	KS_at,		KS_exclam,	KS_section,
+	KC(0x18),	KS_1,		KS_plus,
+	KC(0x1a),	KS_3,		KS_asterisk,
+	KC(0x1b),	KS_4,		KS_backslash,	KS_ccedilla,
+	KC(0x22),	KS_apostrophe,	KS_question,
+	KC(0x23),	KS_dead_circumflex,KS_dead_grave,
+	KC(0x37),	KS_braceright,	KS_dead_tilde,	KS_udiaeresis,	KS_egrave,
+	KC(0x38),	KS_dead_diaeresis,KS_dead_acute,
+	KC(0x4f),	KS_bar,		KS_bracketleft,	KS_odiaeresis,	KS_eacute,
+	KC(0x50),	KS_braceleft,	KS_bracketright,KS_adiaeresis,	KS_agrave,
+	KC(0x51),	KS_dollar,	KS_numbersign,	KS_sterling
+};
+
+static const keysym_t dnkbd_keydesc_sg_nodead[] = {
+/*	pos		normal		shifted		altgr */
+	KC(0x23),	KS_asciicircum,	KS_grave,
+	KC(0x37),	KS_braceright,	KS_asciitilde,	KS_udiaeresis,	KS_egrave,
+	KC(0x38),	KS_diaeresis,	KS_apostrophe
+};
+
+/*
+ * Swedish / Finnish (relative to the Norwegian / Danish layout)
+ */
+
+static const keysym_t dnkbd_keydesc_sv[] = {
+/*	pos		normal		shifted		altgr */
+	KC(0x1b),	KS_4,		KS_dollar,	KS_currency,
+	KC(0x23),	KS_dead_grave,	KS_at,		KS_eacute,
+	KC(0x38),	KS_dead_tilde,	KS_dead_circumflex,KS_udiaeresis,
+	KC(0x4f),	KS_bar,		KS_backslash,	KS_odiaeresis,
+	KC(0x50),	KS_braceleft,	KS_bracketleft,	KS_adiaeresis
+};
+
+static const keysym_t dnkbd_keydesc_sv_nodead[] = {
+/*	pos		normal		shifted		altgr */
+	KC(0x23),	KS_grave,	KS_at,		KS_eacute,
+	KC(0x38),	KS_asciitilde,	KS_asciicircum,	KS_udiaeresis,
+	KC(0x51),	KS_apostrophe,	KS_asterisk,
+};
+
+/*
+ * UK English
+ */
+
+static const keysym_t dnkbd_keydesc_uk[] = {
+/*	pos		normal		shifted */
+	KC(0x17),	KS_underscore,
+	KC(0x19),	KS_2,		KS_quotedbl,
+	KC(0x1d),	KS_6,		KS_ampersand,
+	KC(0x1e),	KS_7,		KS_apostrophe,
+	KC(0x1f),	KS_8,		KS_parenleft,
+	KC(0x20),	KS_9,		KS_parenright,
+	KC(0x21),	KS_0,		KS_underscore,
+	KC(0x22),	KS_minus,	KS_equal,
+	KC(0x23),	KS_asciicircum,	KS_asciitilde,
+	KC(0x37),	KS_at,		KS_grave,
+	KC(0x38),	KS_bracketleft,	KS_braceleft,
+	KC(0x4f),	KS_semicolon,	KS_plus,
+	KC(0x50),	KS_colon,	KS_asterisk,
+	KC(0x51),	KS_bracketright,KS_braceright,
+	KC(0x5f),	KS_backslash,	KS_bar
 };
 
 #define	KBD_MAP(name, base, map) \
@@ -289,5 +493,16 @@ const keysym_t dnkbd_keydesc_us[] = {
 
 const struct wscons_keydesc dnkbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	dnkbd_keydesc_us),
+	KBD_MAP(KB_DE,			KB_JP,	dnkbd_keydesc_de),
+	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	dnkbd_keydesc_de_nodead),
+	KBD_MAP(KB_DK,			KB_JP,	dnkbd_keydesc_dk),
+	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	dnkbd_keydesc_dk_nodead),
+	KBD_MAP(KB_FR,			KB_JP,	dnkbd_keydesc_fr),
+	KBD_MAP(KB_JP,			KB_US,	dnkbd_keydesc_jp),
+	KBD_MAP(KB_SG,			KB_DE,	dnkbd_keydesc_sg),
+	KBD_MAP(KB_SG | KB_NODEAD,	KB_SG,	dnkbd_keydesc_sg_nodead),
+	KBD_MAP(KB_SV,			KB_DK,	dnkbd_keydesc_sv),
+	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	dnkbd_keydesc_sv_nodead),
+	KBD_MAP(KB_UK,			KB_JP,	dnkbd_keydesc_uk),
 	{ 0, 0, 0, 0 }
 };
