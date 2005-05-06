@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.3 2005/05/04 20:07:07 miod Exp $
+#	$OpenBSD: makemap.awk,v 1.4 2005/05/06 18:04:37 mickey Exp $
 #
 # Copyright (c) 2003, Miodrag Vallat.
 # All rights reserved.
@@ -228,7 +228,7 @@ $1 == "#define" || $1 == "#undef" {
 		# Add 241 to the US map...
 		print "    KC(241),\tKS_Delete"
 		print $0
-		print "\nstatic const keysym_t pckbd_keydesc_precisionbook[] = {"
+		print "\nstatic const keysym_t gsckbd_keydesc_precisionbook[] = {"
 		print "/*  pos      command\t\tnormal		shifted */"
 		print "    KC(7),   KS_Cmd_Screen0,\tKS_f1,"
 		print "    KC(15),  KS_Cmd_Screen1,\tKS_f2,"
@@ -268,7 +268,7 @@ $1 == "#define" || $1 == "#undef" {
 	mapnum++
 }
 /{0, 0, 0, 0}/ {
-	printf("\tKBD_MAP(KB_US | KB_MACHDEP,\tKB_US,\tpckbd_keydesc_precisionbook),\n");
+	printf("\tKBD_MAP(KB_US | KB_MACHDEP,\tKB_US,\tgsckbd_keydesc_precisionbook),\n");
 }
 {
 	if (declk)
