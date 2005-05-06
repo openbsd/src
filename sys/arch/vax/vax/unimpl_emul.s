@@ -1,4 +1,4 @@
-/*	$OpenBSD: unimpl_emul.s,v 1.6 2001/07/16 22:03:52 hugh Exp $	*/
+/*	$OpenBSD: unimpl_emul.s,v 1.7 2005/05/06 00:57:39 miod Exp $	*/
 /*	$NetBSD: unimpl_emul.s,v 1.2 2000/08/14 11:16:52 ragge Exp $	*/
 
 /*
@@ -32,9 +32,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "assym.h"
 
 #include <machine/asm.h>
-#include "assym.h"
+#include <machine/psl.h>
 
 # Only intended for debugging emulation code (security hole)
 #undef	EMULATE_INKERNEL
@@ -58,13 +59,7 @@
 #define	S_PC	60(fp)
 #define	S_PSL	64(fp)
 
-# The condition codes.
-
-#define PSL_C	1
-#define PSL_V	2
-#define PSL_Z	4
-#define PSL_N	8
-#define PSL_Q  15		# all four
+#define PSL_Q  	(PSL_N | PSL_Z | PSL_V | PSL_C)
 				
 #
 # Emulation of instruction trapped via SCB vector 0x18. (reserved op)
@@ -469,7 +464,7 @@ die:	pushl	r1
 emodd:	bsbw	touser
 
 	/* Clear the condition codes; we will set them as needed later. */
-	bicl2 $(PSL_C|PSL_V|PSL_Z|PSL_N), S_PSL
+	bicl2 $PSL_Q, S_PSL
 
 	/* 
 	 * We temporarily appropriate ap for the use of TMPFRAC*.
