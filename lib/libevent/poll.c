@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.c,v 1.7 2005/05/04 03:17:48 brad Exp $	*/
+/*	$OpenBSD: poll.c,v 1.8 2005/05/06 18:22:53 brad Exp $	*/
 
 /*
  * Copyright 2000-2003 Niels Provos <provos@citi.umich.edu>
@@ -85,7 +85,7 @@ poll_init(void)
 {
 	struct pollop *pollop;
 
-	/* Disable kqueue when this environment variable is set */
+	/* Disable poll when this environment variable is set */
 	if (!issetugid() && getenv("EVENT_NOPOLL"))
 		return (NULL);
 
