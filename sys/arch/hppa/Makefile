@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2004/10/05 17:56:43 mickey Exp $
+#	$OpenBSD: Makefile,v 1.5 2005/05/06 03:17:29 marco Exp $
 
 # Makefile for hppa tags file and boot blocks
 
@@ -29,7 +29,7 @@ tags:
 
 links:
 	-for i in ${DHPPA}; do \
-	    cd $$i && rm -f tags; ln -s ${THPPA} tags; done
+	    (cd $$i && rm -f tags; ln -s ${THPPA} tags); done
 
 obj: _SUBDIRUSE
 
