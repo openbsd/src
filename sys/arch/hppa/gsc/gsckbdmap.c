@@ -1,4 +1,4 @@
-/*	$OpenBSD: gsckbdmap.c,v 1.12 2005/05/06 17:52:31 mickey Exp $	*/
+/*	$OpenBSD: gsckbdmap.c,v 1.13 2005/05/06 18:05:06 mickey Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -163,7 +163,7 @@ static const keysym_t gsckbd_keydesc_us[] = {
     KC(241),	KS_Delete
 };
 
-static const keysym_t pckbd_keydesc_precisionbook[] = {
+static const keysym_t gsckbd_keydesc_precisionbook[] = {
 /*  pos      command		normal		shifted */
     KC(7),   KS_Cmd_Screen0,	KS_f1,
     KC(15),  KS_Cmd_Screen1,	KS_f2,
@@ -967,7 +967,7 @@ const struct wscons_keydesc gsckbd_keydesctab[] = {
 	KBD_MAP(KB_CF,			KB_US, 	gsckbd_keydesc_cf),
 	KBD_MAP(KB_CF | KB_NODEAD,	KB_CF,	gsckbd_keydesc_cf_nodead),
 #endif	/* SMALL_KERNEL */
-	KBD_MAP(KB_US | KB_MACHDEP,	KB_US,	pckbd_keydesc_precisionbook),
+	KBD_MAP(KB_US | KB_MACHDEP,	KB_US,	gsckbd_keydesc_precisionbook),
 	{0, 0, 0, 0}
 };
 
