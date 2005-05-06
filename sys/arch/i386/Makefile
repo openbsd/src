@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2002/07/15 21:29:16 mickey Exp $
+#	$OpenBSD: Makefile,v 1.14 2005/05/06 03:08:01 marco Exp $
 #	$NetBSD: Makefile,v 1.6 1996/02/01 22:31:28 mycroft Exp $
 #	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
@@ -32,7 +32,7 @@ tags:
 
 links:
 	-for i in ${DI386}; do \
-	    cd $$i && rm -f tags; ln -s ${TI386} tags; done
+	    (cd $$i && rm -f tags; ln -s ${TI386} tags); done
 
 obj:	_SUBDIRUSE
 
