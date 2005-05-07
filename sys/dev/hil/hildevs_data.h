@@ -1,4 +1,4 @@
-/*	$OpenBSD: hildevs_data.h,v 1.1 2003/02/11 19:39:59 miod Exp $	*/
+/*	$OpenBSD: hildevs_data.h,v 1.2 2005/05/07 22:39:53 miod Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -55,4 +55,5 @@ const struct hildevice hildevs[] = {
 	{ 0xa0, 0xbf, HIL_DEVICE_KEYBOARD, "93-key keyboard" },
 	{ 0xc0, 0xdf, HIL_DEVICE_KEYBOARD, "109-key keyboard" },
 	{ 0xe0, 0xff, HIL_DEVICE_KEYBOARD, "87-key keyboard" },
-	{ -1, -1, -1, NULL }};
+	{ -1, -1, -1, NULL }
+};
