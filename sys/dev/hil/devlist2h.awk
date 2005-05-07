@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.1 2003/02/11 19:39:30 miod Exp $
+#	$OpenBSD: devlist2h.awk,v 1.2 2005/05/07 22:39:43 miod Exp $
 #
 # Copyright (c) 2003, Miodrag Vallat.
 # All rights reserved.
@@ -74,6 +74,6 @@ $1 == "keyboard" || $1 == "mouse" || $1 == "idmodule" {
 		print $0
 }
 END {
-	printf("\t{ -1, -1, -1, NULL }")
+	printf("\t{ -1, -1, -1, NULL }\n")
 	printf("};\n")
 }
