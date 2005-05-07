@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.22 2005/05/07 15:14:00 miod Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.23 2005/05/07 15:31:23 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -51,15 +51,20 @@ char *kbtype_tab[] = {
 	"sun5",
 	"hil",
 	"gsc",
+	"domain"
 };
-#define SA_PCKBD 0
-#define SA_UKBD  1
-#define SA_AKBD	 2
-#define SA_ZSKBD 3
-#define SA_SUNKBD 4
-#define SA_SUN5KBD 5
-#define SA_HILKBD 6
-#define	SA_GSCKBD 7
+enum {	SA_PCKBD,
+	SA_UKBD,
+	SA_AKBD,
+	SA_ZSKBD,
+	SA_SUNKBD,
+	SA_SUN5KBD,
+	SA_HILKBD,
+	SA_GSCKBD,
+	SA_DOMAINKBD,
+
+	SA_MAX
+};
 
 #ifndef NOKVM
 struct nlist nl[] = {
@@ -71,6 +76,7 @@ struct nlist nl[] = {
 	{ "_sunkbd5_keydesctab" },
 	{ "_hilkbd_keydesctab" },
 	{ "_gsckbd_keydesctab" },
+	{ "_dnkbd_keydesctab" },
 	{ NULL },
 };
 #endif /* NOKVM */
@@ -169,14 +175,15 @@ kbd_show_enc(kvm_t *kd, int idx)
 void
 kbd_list(void)
 {
-	int	pc_kbd = 0, usb_kbd = 0, adb_kbd = 0;
-	int	zs_kbd = 0, sun_kbd = 0, sun5_kbd = 0;
-	int	hil_kbd = 0, gsc_kbd = 0, fd, i, kbtype;
+	int	kbds[SA_MAX];
+	int	fd, i, kbtype;
 	char	device[MAXPATHLEN];
 	kvm_t	*kd = NULL;
 #ifndef NOKVM
 	char	errbuf[LINE_MAX];
 #endif
+
+	bzero(kbds, sizeof(kbds));
 
 	/* Go through all keyboards. */
 	for (i = 0; i < NUM_KBD; i++) {
@@ -187,23 +194,36 @@ kbd_list(void)
 		if (fd >= 0) {
 			if (ioctl(fd, WSKBDIO_GTYPE, &kbtype) < 0)
 				err(1, "WSKBDIO_GTYPE");
-			if (kbtype == WSKBD_TYPE_PC_XT ||
-			    kbtype == WSKBD_TYPE_PC_AT)
-				pc_kbd++;
-			if (kbtype == WSKBD_TYPE_USB)
-				usb_kbd++;
-			if (kbtype == WSKBD_TYPE_ADB)
-				adb_kbd++;
-			if (kbtype == WSKBD_TYPE_LK201)
-				zs_kbd++;
-			if (kbtype == WSKBD_TYPE_SUN)
-				sun_kbd++;
-			if (kbtype == WSKBD_TYPE_SUN5)
-				sun5_kbd++;
-			if (kbtype == WSKBD_TYPE_HIL)
-				hil_kbd++;
-			if (kbtype == WSKBD_TYPE_GSC)
-				gsc_kbd++;
+			switch (kbtype) {
+			case WSKBD_TYPE_PC_XT:
+			case WSKBD_TYPE_PC_AT:
+				kbds[SA_PCKBD]++;
+				break;
+			case WSKBD_TYPE_USB:
+				kbds[SA_UKBD]++;
+				break;
+			case WSKBD_TYPE_ADB:
+				kbds[SA_AKBD]++;
+				break;
+			case WSKBD_TYPE_LK201:
+				kbds[SA_ZSKBD]++;
+				break;
+			case WSKBD_TYPE_SUN:
+				kbds[SA_SUNKBD]++;
+				break;
+			case WSKBD_TYPE_SUN5:
+				kbds[SA_SUN5KBD]++;
+				break;
+			case WSKBD_TYPE_HIL:
+				kbds[SA_HILKBD]++;
+				break;
+			case WSKBD_TYPE_GSC:
+				kbds[SA_GSCKBD]++;
+				break;
+			case WSKBD_TYPE_DOMAIN:
+				kbds[SA_DOMAINKBD]++;
+				break;
+			};
 			close(fd);
 		}
 	}
@@ -216,22 +236,10 @@ kbd_list(void)
 		errx(1, "kvm_nlist: %s", kvm_geterr(kd));
 #endif
 
-	if (pc_kbd > 0)
-		kbd_show_enc(kd, SA_PCKBD);
-	if (usb_kbd > 0)
-		kbd_show_enc(kd, SA_UKBD);
-	if (adb_kbd > 0)
-		kbd_show_enc(kd, SA_AKBD);
-	if (zs_kbd > 0)
-		kbd_show_enc(kd, SA_ZSKBD);
-	if (sun_kbd > 0)
-		kbd_show_enc(kd, SA_SUNKBD);
-	if (sun5_kbd > 0)
-		kbd_show_enc(kd, SA_SUN5KBD);
-	if (hil_kbd > 0)
-		kbd_show_enc(kd, SA_HILKBD);
-	if (gsc_kbd > 0)
-		kbd_show_enc(kd, SA_GSCKBD);
+	for (i = 0; i < SA_MAX; i++)
+		if (kbds[i] != 0)
+			kbd_show_enc(kd, i);
+
 #ifndef NOKVM
 	kvm_close(kd);
 #endif
