@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.49 2005/05/07 15:48:34 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.50 2005/05/07 22:16:36 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -997,7 +997,10 @@ em_encap(struct em_softc *sc, struct mbuf **m_headp)
 		return (ENOBUFS);
 	}
 
-	em_transmit_checksum_setup(sc, m_head, &txd_upper, &txd_lower);
+	if (sc->hw.mac_type >= em_82543)
+		em_transmit_checksum_setup(sc, m_head, &txd_upper, &txd_lower);
+	else
+		txd_upper = txd_lower = 0;
 
 	/* Find out if we are in vlan mode */
 #if NVLAN > 0
@@ -1653,7 +1656,10 @@ em_setup_interface(struct em_softc *sc)
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->num_tx_desc - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU|IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
+	if (sc->hw.mac_type >= em_82543)
+		ifp->if_capabilities |= IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4;
 
 	/* 
 	 * Specify the media types supported by this adapter and register
