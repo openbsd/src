@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.94 2005/04/28 00:12:55 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.95 2005/05/07 16:24:46 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -384,16 +384,6 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "PLEXTOR", "CD-ROM PX-40TS", "1.01"}, SDEV_NOSYNC},
 
-	{{T_OPTICAL, T_REMOV,
-	 "FUJITSU", "M2513A",            "0800"}, SDEV_NOMODESENSE},
-	{{T_OPTICAL, T_REMOV,
-	 "DELTIS  ", "MOS321          ", "3.30"}, SDEV_NOMODESENSE},
- 
-	{{T_OPTICAL, T_REMOV,
-	 "FUJITSU", "M2513A",            "0800"}, SDEV_NOMODESENSE},
-	{{T_OPTICAL, T_REMOV,
-	 "DELTIS  ", "MOS321          ", "3.30"}, SDEV_NOMODESENSE},
-
 	{{T_DIRECT, T_FIXED,
 	 "MICROP  ", "1588-15MBSUN0669", ""},     SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
@@ -415,18 +405,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 ""	   , "DFRSS2F",		 ""},	  SDEV_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
 	 "QUANTUM ", "ELS85S          ", ""},	  SDEV_AUTOSAVE},
-	{{T_DIRECT, T_FIXED,
-	 "SEAGATE ", "ST19171FC",	 ""},	  SDEV_NOMODESENSE},
-	{{T_DIRECT, T_FIXED,
-	 "SEAGATE ", "ST34501FC       ", ""},     SDEV_NOMODESENSE},
 	{{T_DIRECT, T_REMOV,
-	 "iomega", "jaz 1GB",		 ""},	  SDEV_NOMODESENSE|SDEV_NOTAGS},
-	{{T_DIRECT, T_REMOV,
-	 "IOMEGA", "ZIP 100",		 ""},	  SDEV_NOMODESENSE},
-	{{T_DIRECT, T_REMOV,
-	 "IOMEGA", "ZIP 250",		 ""},	  SDEV_NOMODESENSE},
-	{{T_DIRECT, T_FIXED,
-	 "IBM", "0661467",               "G"},    SDEV_NOMODESENSE},
+	 "iomega", "jaz 1GB",		 ""},	  SDEV_NOTAGS},
         {{T_DIRECT, T_FIXED,
          "MICROP", "4421-07",		 ""},     SDEV_NOTAGS},
         {{T_DIRECT, T_FIXED,

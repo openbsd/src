@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.7 2005/04/05 12:13:16 krw Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.8 2005/05/07 16:24:46 krw Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -260,28 +260,19 @@ sd_scsibus_get_parms(sd, dp, flags)
 	}
 
 fake_it:
-	if ((sd->sc_link->quirks & SDEV_NOMODESENSE) == 0) {
-		if (error == 0)
-			printf("%s: mode sense (%d) returned nonsense",
-			    sd->sc_dev.dv_xname, page);
-		else
-			printf("%s: could not mode sense (4/5)",
-			    sd->sc_dev.dv_xname);
-		printf("; using fictitious geometry\n");
-	}
-	/*
-	 * use adaptec standard fictitious geometry
-	 * this depends on which controller (e.g. 1542C is
-	 * different. but we have to put SOMETHING here..)
-	 */
+	/* If we can get the disk size, fake a geometry. */
 	dp->disksize = scsi_size(sd->sc_link, flags);
+	if (dp->disksize == 0)
+		return (SDGP_RESULT_OFFLINE);
+	SC_DEBUG(sd->sc_link, SDEV_DB1, ("error %d on pg %d, fake geometry.\n",
+	    error, page));
+
+	/* Use adaptec standard fictitious geometry. */
+
 	dp->heads = 64;
 	dp->sectors = 32;
 	dp->cyls = dp->disksize / (64 * 32);
 	dp->blksize = 512;
-
-	if (dp->disksize == 0)
-		return (SDGP_RESULT_OFFLINE);
 
 	return (SDGP_RESULT_OK);
 }
