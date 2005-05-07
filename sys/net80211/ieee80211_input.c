@@ -1,5 +1,5 @@
 /*	$NetBSD: ieee80211_input.c,v 1.24 2004/05/31 11:12:24 dyoung Exp $	*/
-/*	$OpenBSD: ieee80211_input.c,v 1.5 2005/03/08 18:09:20 mickey Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.6 2005/05/07 02:50:47 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -679,7 +679,7 @@ ieee80211_ssid_mismatch(struct ieee80211com *ic, const char *tag,
 	if ((_ssid)[1] != 0 &&						\
 	    ((_ssid)[1] != (_ni)->ni_esslen ||				\
 	    memcmp((_ssid) + 2, (_ni)->ni_essid, (_ssid)[1]) != 0)) {   \
-		if (ieee80211_msg_input(ic))				\
+		if (ieee80211_debug)					\
 			ieee80211_ssid_mismatch(ic, _packet_type,       \
 				wh->i_addr2, _ssid);			\
 		ic->ic_stats.is_rx_ssidmismatch++;			\
@@ -1080,7 +1080,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		    isclr(ic->ic_chan_active, chan)) {
 			IEEE80211_DPRINTF(("%s: ignore %s with invalid channel "
 			    "%u\n", __func__,
-			    isprobe ? "probe response" : "beacon", chan));
+			    ISPROBE(subtype) ? "probe response" : "beacon", chan));
 			ic->ic_stats.is_rx_badchan++;
 			return;
 		}
@@ -1098,7 +1098,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			 */
 			IEEE80211_DPRINTF(("%s: ignore %s on channel %u marked "
 			    "for channel %u\n", __func__,
-			    isprobe ? "probe response" : "beacon", bchan, chan));
+			    ISPROBE(subtype) ? "probe response" : "beacon", bchan, chan));
 			ic->ic_stats.is_rx_chanmismatch++;
 			return;
 		}
