@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbdmap.h,v 1.11 2005/05/04 21:23:12 miod Exp $	*/
+/*	$OpenBSD: akbdmap.h,v 1.12 2005/05/07 15:04:59 miod Exp $	*/
 /*	$NetBSD: akbdmap.h,v 1.3 2000/09/01 16:00:39 tsubai Exp $	*/
 
 /*-
@@ -433,7 +433,7 @@ static const keysym_t akbd_keydesc_pt[] = {
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
 
-static const struct wscons_keydesc akbd_keydesctab[] = {
+const struct wscons_keydesc akbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	akbd_keydesc_us),
 	KBD_MAP(KB_US | KB_DVORAK,	KB_US,	akbd_keydesc_us_dvorak),
 	KBD_MAP(KB_FR,			KB_US,	akbd_keydesc_fr),
