@@ -1,4 +1,4 @@
-.\" $OpenBSD: ukbd.4,v 1.5 2004/09/30 19:59:25 mickey Exp $
+.\" $OpenBSD: ukbd.4,v 1.6 2005/05/07 00:20:29 miod Exp $
 .\" $NetBSD: ukbd.4,v 1.10 2001/12/29 15:12:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,31 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 12, 1998
+.\" Copyright (c) 1999
+.\" 	Matthias Drochner.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd May 6, 2005
 .Dt UKBD 4
 .Os
 .Sh NAME
@@ -44,6 +68,7 @@
 .Sh SYNOPSIS
 .Cd "ukbd*  at uhidev?"
 .Cd "wskbd* at ukbd?"
+.Cd "option UKBD_LAYOUT=XXX"
 .Sh DESCRIPTION
 The
 .Nm
@@ -52,11 +77,180 @@ with reports in usage page 7).
 Access to the keyboard is through the
 .Xr wskbd 4
 driver.
+.Pp
+The
+.Nm
+driver supports a number of different key mappings which
+can be chosen from with the kernel option
+.Dq UKBD_LAYOUT
+at compile time or with the utility
+.Xr wsconsctl 8
+(variable:
+.Dq keyboard.encoding
+) at runtime.
+Other mappings can be used if the whole keymap is replaced by means of
+.Xr wsconsctl 8 .
+The built-in mappings are at this time:
+.Bl -hang
+.It KB_BE
+(
+.Dq be
+) Belgium French.
+.\" .It KB_BR
+.\" (
+.\" .Dq br
+.\" ) Brazilian.
+.\" .It KB_CF
+.\" (
+.\" .Dq cf
+.\" ) Canadian French.
+.It KB_DE
+(
+.Dq de
+) German with
+.Dq dead accents .
+.It KB_DK
+(
+.Dq dk
+) Danish with
+.Dq dead accents .
+.It KB_ES
+(
+.Dq es
+) Spanish.
+.It KB_FR
+(
+.Dq fr
+) French.
+.\" .It KB_HU
+.\" (
+.\" .Dq hu
+.\" ) Hungarian.
+.It KB_IT
+(
+.Dq it
+) Italian.
+.It KB_JP
+(
+.Dq jp
+) Japanese.
+.\" .It KB_LA
+.\" (
+.\" .Dq la
+.\" ) Latinamerican.
+.\" .It KB_LT
+.\" (
+.\" .Dq \&lt
+.\" ) Lithuanian in
+.\" .Dq ISO 8859-13 .
+.It KB_NO
+(
+.Dq no
+) Norwegian with
+.Dq dead accents .
+.\" .It KB_PL
+.\" (
+.\" .Dq pl
+.\" ) Polish in
+.\" .Dq ISO 8859-2 .
+.It KB_PT
+(
+.Dq pt
+) Portuguese.
+.\" .It KB_RU
+.\" (
+.\" .Dq ru
+.\" ) Russian in
+.\" .Dq KOI8 .
+.It KB_SF
+(
+.Dq sf
+) Swiss French with
+.Dq dead accents .
+.It KB_SG
+(
+.Dq sg
+) Swiss German with
+.Dq dead accents .
+.\" .It KB_SI
+.\" (
+.\" .Dq si
+.\" ) Slovenian.
+.It KB_SV
+(
+.Dq sv
+) Swedish with
+.Dq dead accents .
+.\" .It KB_TR
+.\" (
+.\" .Dq tr
+.\" ) Turkish in
+.\" .Dq ISO 8859-9
+.\" with
+.\" .Dq dead accents .
+.\" .It KB_UA
+.\" (
+.\" .Dq ua
+.\" ) Ukrainian in
+.\" .Dq KOI8 .
+.It KB_UK
+(
+.Dq uk
+) British.
+.It KB_US
+(
+.Dq us
+) English / US keyboard mapping (default).
+.\" .It KB_US | KB_DVORAK
+.\" (
+.\" .Dq us.dvorak
+.\" ) English / US keyboard with
+.\" .Dq Dvorak
+.\" layout.
+.El
+.Pp
+.\" The KB_DE, KB_DK, KB_NO, KB_SF, KB_SG, KB_SV and KB_TR
+The KB_DE, KB_DK, KB_NO, KB_SF, KB_SG and KB_SV
+mappings can be used in
+the KB_NODEAD (
+.Dq .nodead
+) variant.
+This switches off the
+.Dq dead accents .
+.Pp
+.\" The KB_BE, KB_FR, KB_JP, KB_US and KB_US | KB_DVORAK
+The KB_FR, KB_JP and KB_US
+mappings can be modified
+to swap the left Control and the Caps Lock keys by the
+KB_SWAPCTRLCAPS variant bit or the
+.Dq .swapctrlcaps
+suffix.
+.\" .Pp
+.\" The KB_METAESC (
+.\" .Dq .metaesc
+.\" ) option can be applied to any layout.
+.\" If set, keys pressed together
+.\" with the ALT modifier are prefixed by an ESC character.
+.\" (Standard behaviour is to add 128 to the ASCII value.)
+.Sh EXAMPLES
+To set a German keyboard layout without
+.\" .Dq dead accents
+.\" and sending an ESC character before the key symbol if the ALT
+.\" key is pressed simultaneously,
+.Dq dead accents ,
+use
+.\" .Ic wsconsctl -w keyboard.encoding=de.nodead.metaesc .
+.Ic wsconsctl -w keyboard.encoding=de.nodead .
+To set it at kernel build time, add
+.\" .Em option UKBD_LAYOUT="(KB_DE|KB_NODEAD|KB_METAESC)"
+.Em option UKBD_LAYOUT="(KB_DE|KB_NODEAD)"
+to the kernel configuration file.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr uhidev 4 ,
 .Xr usb 4 ,
-.Xr wskbd 4
+.Xr wskbd 4 ,
+.Xr wsconsctl 8
 .Sh HISTORY
 The
 .Nm
@@ -73,3 +267,6 @@ driver is brought into action rather late in the boot process, so if
 it is used as the console driver then
 .Xr ddb 4
 is not usable until late in the boot.
+.Pp
+The list of built-in mappings doesn't follow any logic.
+It grew as people submitted what they needed.
