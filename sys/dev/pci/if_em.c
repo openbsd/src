@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.48 2005/05/01 12:19:48 markus Exp $ */
+/* $OpenBSD: if_em.c,v 1.49 2005/05/07 15:48:34 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -56,6 +56,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 #endif
 
 #if NVLAN > 0
@@ -180,7 +182,7 @@ void em_disable_promisc(struct em_softc *);
 void em_set_multi(struct em_softc *);
 void em_print_hw_stats(struct em_softc *);
 void em_update_link_status(struct em_softc *);
-int  em_get_buf(int i, struct em_softc *,
+int  em_get_buf(int, struct em_softc *,
 			    struct mbuf *);
 void em_enable_vlans(struct em_softc *);
 void em_disable_vlans(struct em_softc *);
@@ -995,11 +997,7 @@ em_encap(struct em_softc *sc, struct mbuf **m_headp)
 		return (ENOBUFS);
 	}
 
-
-#if 0
-	em_transmit_checksum_setup(sc,	m_head, &txd_upper, &txd_lower);
-#endif
-	txd_upper = txd_lower = 0;
+	em_transmit_checksum_setup(sc, m_head, &txd_upper, &txd_lower);
 
 	/* Find out if we are in vlan mode */
 #if NVLAN > 0
@@ -1655,7 +1653,7 @@ em_setup_interface(struct em_softc *sc)
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->num_tx_desc - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU|IFCAP_CSUM_TCPv4|IFCAP_CSUM_UDPv4;
 
 	/* 
 	 * Specify the media types supported by this adapter and register
@@ -1991,7 +1989,6 @@ em_free_transmit_structures(struct em_softc *sc)
  *  context only if the protocol type changes.
  *
  **********************************************************************/
-#if 0
 void
 em_transmit_checksum_setup(struct em_softc *sc,
 			   struct mbuf *mp,
@@ -2003,16 +2000,14 @@ em_transmit_checksum_setup(struct em_softc *sc,
 	int curr_txd;
 
 	if (mp->m_pkthdr.csum_flags) {
-
-		if (mp->m_pkthdr.csum_flags & CSUM_TCP) {
+		if (mp->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT) {
 			*txd_upper = E1000_TXD_POPTS_TXSM << 8;
 			*txd_lower = E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
 			if (sc->active_checksum_context == OFFLOAD_TCP_IP)
 				return;
 			else
 				sc->active_checksum_context = OFFLOAD_TCP_IP;
-
-		} else if (mp->m_pkthdr.csum_flags & CSUM_UDP) {
+		} else if (mp->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT) {
 			*txd_upper = E1000_TXD_POPTS_TXSM << 8;
 			*txd_lower = E1000_TXD_CMD_DEXT | E1000_TXD_DTYP_D;
 			if (sc->active_checksum_context == OFFLOAD_UDP_IP)
@@ -2070,7 +2065,6 @@ em_transmit_checksum_setup(struct em_softc *sc,
 
 	return;
 }
-#endif
 
 /**********************************************************************
  *
@@ -2637,14 +2631,24 @@ em_receive_checksum(struct em_softc *sc,
 	    (rx_desc->status & E1000_RXD_STAT_IXSM))
 		return;
 
-	if ((rx_desc->status & (E1000_RXD_STAT_IPCS|E1000_RXD_ERR_IPE)) ==
-	    E1000_RXD_STAT_IPCS)
-		mp->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+	if (rx_desc->status & E1000_RXD_STAT_IPCS) {
+		/* Did it pass? */
+		if (!(rx_desc->errors & E1000_RXD_ERR_IPE)) {
+			/* IP Checksum Good */
+			mp->m_pkthdr.csum_flags = M_IPV4_CSUM_IN_OK;
 
-	if ((rx_desc->status & (E1000_RXD_STAT_IPCS|E1000_RXD_ERR_IPE|
-	    E1000_RXD_STAT_TCPCS|E1000_RXD_ERR_TCPE)) ==
-	    (E1000_RXD_STAT_TCPCS | E1000_RXD_STAT_IPCS))
-		mp->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
+		} else {
+			mp->m_pkthdr.csum_flags = 0;
+		}
+	}
+
+	if (rx_desc->status & E1000_RXD_STAT_TCPCS) {
+		/* Did it pass? */        
+		if (!(rx_desc->errors & E1000_RXD_ERR_TCPE)) {
+			mp->m_pkthdr.csum_flags |=
+				M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
+		}
+	}
 }
 
 void
