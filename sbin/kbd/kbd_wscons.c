@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.21 2005/03/27 05:21:19 deraadt Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.22 2005/05/07 15:14:00 miod Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -113,6 +113,15 @@ kbd_show_enc(kvm_t *kd, int idx)
 	int i;
 #endif /* NOKVM */
 
+#ifndef NOKVM
+	p = nl[idx].n_value;
+	if (p == 0) {
+		printf("no tables available for %s keyboard\n\n",
+		    kbtype_tab[idx]);
+		return;
+	}
+#endif
+
 	printf("tables available for %s keyboard:\nencoding\n\n",
 	    kbtype_tab[idx]);
 
@@ -120,7 +129,6 @@ kbd_show_enc(kvm_t *kd, int idx)
 	for (i = 0; kbdenc_tab[i].value; i++)
 		printf("%s\n", kbdenc_tab[i].name);
 #else
-	p = nl[idx].n_value;
 	kvm_read(kd, p, &r, sizeof(r));
 	while (r.name != 0) {
 		n = &kbdenc_tab[0];
