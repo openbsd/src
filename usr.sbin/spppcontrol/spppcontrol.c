@@ -83,7 +83,7 @@ main(int argc, char **argv)
 
 	/* use a random AF to create the socket */
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-		err(EX_UNAVAILABLE, "ifconfig: socket");
+		err(EX_UNAVAILABLE, "socket");
 
 	argc--;
 	argv++;
