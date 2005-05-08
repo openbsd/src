@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.18 2005/05/08 04:39:40 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.19 2005/05/08 11:38:09 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * All rights reserved.
@@ -92,7 +92,7 @@ struct cfdriver hil_cd = {
 	NULL, "hil", DV_DULL
 };
 
-void	hilconfig(struct hil_softc *);
+void	hilconfig(struct hil_softc *, u_int);
 void	hilempty(struct hil_softc *);
 int	hilsubmatch(struct device *, void *, void *);
 void	hil_process_int(struct hil_softc *, u_int8_t, u_int8_t);
@@ -254,7 +254,7 @@ hil_attach_deferred(void *v)
 	sc->sc_status = HIL_STATUS_READY;
 	if (sc->sc_pending == HIL_PENDING_RECONFIG) {
 		sc->sc_pending = 0;
-		hilconfig(sc);
+		hilconfig(sc, 0);
 	} else
 		sc->sc_pending = 0;
 }
@@ -426,7 +426,7 @@ hil_process_pending(struct hil_softc *sc)
 	switch (sc->sc_pending) {
 	case HIL_PENDING_RECONFIG:
 		sc->sc_pending = 0;
-		hilconfig(sc);
+		hilconfig(sc, sc->sc_maxdev);
 		break;
 	case HIL_PENDING_UNPLUGGED:
 		sc->sc_pending = 0;
@@ -452,7 +452,7 @@ hil_process_pending(struct hil_softc *sc)
  * NMI interrupt...
  */
 void
-hilconfig(struct hil_softc *sc)
+hilconfig(struct hil_softc *sc, u_int knowndevs)
 {
 	struct hil_attach_args ha;
 	u_int8_t db;
@@ -481,7 +481,7 @@ hilconfig(struct hil_softc *sc)
 	/*
 	 * If the loop grew, attach new devices.
 	 */
-	for (id = oldmax + 1; id <= sc->sc_maxdev; id++) {
+	for (id = knowndevs + 1; id <= sc->sc_maxdev; id++) {
 		int len;
 		const struct hildevice *hd;
 		
@@ -542,21 +542,39 @@ hilempty(struct hil_softc *sc)
 {
 	u_int8_t db;
 	int id, s;
+	u_int oldmaxdev;
 
 	s = splhil();
 
 	/*
-	 * Check that the loop is really empty.
+	 * Wait for the loop to be stable.
 	 */
-	db = 0;
-	send_hil_cmd(sc, HIL_READLPSTAT, NULL, 0, &db);
-	sc->sc_maxdev = db & LPS_DEVMASK;
+	for (;;) {
+		if (send_hil_cmd(sc, HIL_READLPSTAT, NULL, 0, &db) == 0) {
+			if (db & (LPS_CONFFAIL | LPS_CONFGOOD))
+				break;
+		} else {
+			db = LPS_CONFFAIL;
+			break;
+		}
+	}
 
-	if (sc->sc_maxdev != 0) {
-		printf("%s: unplugged loop finds %d devices???\n",
-		    sc->sc_dev.dv_xname, sc->sc_maxdev);
-		hilconfig(sc);
-		return;
+	if (db & LPS_CONFFAIL) {
+		sc->sc_maxdev = 0;
+	} else {
+		db = 0;
+		send_hil_cmd(sc, HIL_READLPSTAT, NULL, 0, &db);
+		oldmaxdev = sc->sc_maxdev;
+		sc->sc_maxdev = db & LPS_DEVMASK;
+
+		if (sc->sc_maxdev != 0) {
+			/*
+			 * The loop was not unplugged after all, but its
+			 * configuration has changed.
+			 */
+			hilconfig(sc, oldmaxdev);
+			return;
+		}
 	}
 
 	/*
