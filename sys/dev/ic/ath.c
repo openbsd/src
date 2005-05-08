@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.23 2005/04/18 18:42:55 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.24 2005/05/08 18:13:17 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -218,7 +218,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	struct ath_hal *ah;
 	HAL_STATUS status;
 	HAL_TXQ_INFO qinfo;
-	int error = 0, i = 0;
+	int error = 0;
 
 	DPRINTF(ATH_DEBUG_ANY, ("%s: devid 0x%x\n", __func__, devid));
 
@@ -237,29 +237,21 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		error = ENXIO;
 		goto bad;
 	}
-	if_printf(ifp, "mac %d.%d phy %d.%d",
-		ah->ah_macVersion, ah->ah_macRev,
-		ah->ah_phyRev >> 4, ah->ah_phyRev & 0xf);
-	printf(" radio %d.%d", ah->ah_analog5GhzRev >> 4,
+
+	if_printf(ifp, "AR%s %u.%u phy %u.%u",
+	    ar5k_printver(AR5K_VERSION_VER, ah->ah_macVersion),
+	    ah->ah_macVersion, ah->ah_macRev,
+	    ah->ah_phyRev >> 4, ah->ah_phyRev & 0xf);
+	printf(" rf%s %u.%u",
+	    ar5k_printver(AR5K_VERSION_RAD, ah->ah_analog5GhzRev),
+	    ah->ah_analog5GhzRev >> 4,
 	    ah->ah_analog5GhzRev & 0xf);
 	if (ah->ah_analog2GhzRev != 0) {
-		printf(" %d.%d", ah->ah_analog2GhzRev >> 4,
+		printf(" rf%s %u.%u",
+		    ar5k_printver(AR5K_VERSION_RAD, ah->ah_analog2GhzRev),
+		    ah->ah_analog2GhzRev >> 4,
 		    ah->ah_analog2GhzRev & 0xf);
 	}
-#define ah_mode(_m)	{						\
-	if (i++) {							\
-		printf("/%s", #_m);					\
-	} else {							\
-		printf(", 802.11%s", #_m);				\
-	}								\
-}									\
-	if (ah->ah_modes & HAL_MODE_11A)
-		ah_mode(a);
-	if (ah->ah_modes & HAL_MODE_11B)
-		ah_mode(b);
-	if (ah->ah_modes & HAL_MODE_11G)
-		ah_mode(g);
-#undef ah_mode
 
 	sc->sc_ah = ah;
 	sc->sc_invalid = 0;	/* ready to go, enable interrupt handling */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.19 2005/04/18 18:42:55 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.20 2005/05/08 18:13:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1174,6 +1174,36 @@ struct ath_hal {
 /*
  * Common silicon revision/version values
  */
+enum ar5k_srev_type {
+	AR5K_VERSION_VER,
+	AR5K_VERSION_REV,
+	AR5K_VERSION_RAD
+};
+
+struct ar5k_srev_name {
+	const char		*sr_name;
+	enum ar5k_srev_type	sr_type;
+	u_int			sr_val;
+};
+
+#define AR5K_SREV_NAME	{						\
+	{ "5210",	AR5K_VERSION_VER,	AR5K_SREV_VER_AR5210 },	\
+	{ "5311",	AR5K_VERSION_VER,	AR5K_SREV_VER_AR5311 },	\
+	{ "5311a",	AR5K_VERSION_VER,	AR5K_SREV_VER_AR5311A },\
+	{ "5311b",	AR5K_VERSION_VER,	AR5K_SREV_VER_AR5311B },\
+	{ "5211",	AR5K_VERSION_VER,	AR5K_SREV_VER_AR5211 },	\
+	{ "5212",	AR5K_VERSION_VER,	AR5K_SREV_VER_AR5212 },	\
+	{ "xxxx",	AR5K_VERSION_VER,	AR5K_SREV_UNKNOWN },	\
+	{ "5110",	AR5K_VERSION_RAD,	AR5K_SREV_RAD_5110 },	\
+	{ "5111",	AR5K_VERSION_RAD,	AR5K_SREV_RAD_5111 },	\
+	{ "2111",	AR5K_VERSION_RAD,	AR5K_SREV_RAD_2111 },	\
+	{ "5112",	AR5K_VERSION_RAD,	AR5K_SREV_RAD_5112 },	\
+	{ "2112",	AR5K_VERSION_RAD,	AR5K_SREV_RAD_2112 },	\
+	{ "xxxx",	AR5K_VERSION_RAD,	AR5K_SREV_UNKNOWN }	\
+}
+
+#define AR5K_SREV_UNKNOWN	0xffff
+
 #define AR5K_SREV_REV_FPGA	1
 #define AR5K_SREV_REV_PROTO	2
 #define AR5K_SREV_REV_PROTOA	3
@@ -1189,11 +1219,13 @@ struct ath_hal {
 #define AR5K_SREV_VER_AR5211	4
 #define AR5K_SREV_VER_AR5212	5
 
+#define AR5K_SREV_RAD_5110	0x00
 #define AR5K_SREV_RAD_5111	0x10
 #define AR5K_SREV_RAD_5111A	0x15
 #define AR5K_SREV_RAD_2111	0x20
 #define AR5K_SREV_RAD_5112	0x30
 #define AR5K_SREV_RAD_5112A	0x35
+#define AR5K_SREV_RAD_2112	0x40
 #define AR5K_SREV_RAD_2112A	0x45
 
 /*
@@ -1783,6 +1815,7 @@ u_int			 ath_hal_ieee2mhz(u_int, u_int);
 HAL_BOOL		 ath_hal_init_channels(struct ath_hal *, HAL_CHANNEL *,
     u_int, u_int *, HAL_CTRY_CODE, u_int16_t, HAL_BOOL, HAL_BOOL);
 
+const char		*ar5k_printver(enum ar5k_srev_type, u_int);
 void			 ar5k_radar_alert(struct ath_hal *);
 ieee80211_regdomain_t	 ar5k_regdomain_to_ieee(u_int16_t);
 u_int16_t		 ar5k_regdomain_from_ieee(ieee80211_regdomain_t);

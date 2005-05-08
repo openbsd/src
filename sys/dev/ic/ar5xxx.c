@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.21 2005/04/18 18:42:55 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.22 2005/05/08 18:13:17 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -529,6 +529,28 @@ ath_hal_init_channels(hal, channels, max_channels, channels_size, country, mode,
 /*
  * Common internal functions
  */
+
+const char *
+ar5k_printver(type, val)
+	enum ar5k_srev_type type;
+	u_int32_t val;
+{
+	struct ar5k_srev_name names[] = AR5K_SREV_NAME;
+	const char *name = "xxxx";
+	int i;
+
+	for (i = 0; i < AR5K_ELEMENTS(names); i++) {
+		if (names[i].sr_type != type ||
+		    names[i].sr_val == AR5K_SREV_UNKNOWN)
+			continue;
+		if (val < names[i + 1].sr_val) {
+			name = names[i].sr_name;
+			break;
+		}
+	}
+
+	return (name);
+}
 
 void
 ar5k_radar_alert(hal)
