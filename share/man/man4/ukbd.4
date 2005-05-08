@@ -1,4 +1,4 @@
-.\" $OpenBSD: ukbd.4,v 1.6 2005/05/07 00:20:29 miod Exp $
+.\" $OpenBSD: ukbd.4,v 1.7 2005/05/08 17:04:31 jmc Exp $
 .\" $NetBSD: ukbd.4,v 1.10 2001/12/29 15:12:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -72,8 +72,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for USB keyboards (i.e., HID devices
-with reports in usage page 7).
+driver provides support for USB keyboards i.e. HID devices in the
+.Dq keyboard
+class.
 Access to the keyboard is through the
 .Xr wskbd 4
 driver.
@@ -246,6 +247,7 @@ To set it at kernel build time, add
 .Em option UKBD_LAYOUT="(KB_DE|KB_NODEAD)"
 to the kernel configuration file.
 .Sh SEE ALSO
+.Xr usbhidctl 1 ,
 .Xr intro 4 ,
 .Xr uhidev 4 ,
 .Xr usb 4 ,
