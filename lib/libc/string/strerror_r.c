@@ -1,8 +1,8 @@
-/* $OpenBSD: strerror_r.c,v 1.3 2005/04/20 23:38:15 beck Exp $ */
+/* $OpenBSD: strerror_r.c,v 1.4 2005/05/08 06:25:44 otto Exp $ */
 /* Public Domain <marc@snafu.org> */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strerror_r.c,v 1.3 2005/04/20 23:38:15 beck Exp $";
+static char *rcsid = "$OpenBSD: strerror_r.c,v 1.4 2005/05/08 06:25:44 otto Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef NLS
@@ -32,7 +32,7 @@ __digits10(unsigned int num)
 	return i;
 }
 
-static void
+static int
 __itoa(int num, char *buffer, size_t start, size_t end)
 {
 	size_t pos;
@@ -54,21 +54,17 @@ __itoa(int num, char *buffer, size_t start, size_t end)
 
 	if (pos < end)
 		buffer[pos] = '\0';
-	else {
-		if (end)
-			buffer[--end] = '\0'; /* XXX */
-	}
+	else
+		return ERANGE;
 	pos--;
 	do {
-		
-		if (pos < end)
-			buffer[pos] = (a % 10) + '0';
+		buffer[pos] = (a % 10) + '0';
 		pos--;
 		a /= 10;
 	} while (a != 0);
 	if (neg)
-		if (pos < end)
-			buffer[pos] = '-';
+		buffer[pos] = '-';
+	return 0;
 }
 
 
@@ -110,8 +106,9 @@ strerror_r(int errnum, char *strerrbuf, size_t buflen)
 		if (len >= buflen)
 			ret_errno = ERANGE;
 		else {
-			__itoa(errnum, strerrbuf, len, buflen);
-			ret_errno = EINVAL;
+			ret_errno = __itoa(errnum, strerrbuf, len, buflen);
+			if (ret_errno == 0)
+				ret_errno = EINVAL;
 		}
 	}
 
