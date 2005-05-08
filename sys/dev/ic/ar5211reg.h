@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211reg.h,v 1.4 2005/03/20 04:21:55 reyk Exp $	*/
+/*	$OpenBSD: ar5211reg.h,v 1.5 2005/05/08 14:46:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -631,9 +631,10 @@ typedef enum {
  * Silicon revision register
  */
 #define AR5K_AR5211_SREV		0x4020
-#define AR5K_AR5211_SREV_M		0x000000ff
-#define AR5K_AR5211_SREV_REVISION	0x0000000f
-#define AR5K_AR5211_SREV_VERSION	0x000000f0
+#define AR5K_AR5211_SREV_REV		0x0000000f
+#define AR5K_AR5211_SREV_REV_S		0
+#define AR5K_AR5211_SREV_VER		0x000000ff
+#define AR5K_AR5211_SREV_VER_S		4
 
 /*
  * EEPROM access registers

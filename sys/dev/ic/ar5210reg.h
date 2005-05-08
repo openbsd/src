@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210reg.h,v 1.8 2005/03/20 04:21:55 reyk Exp $	*/
+/*	$OpenBSD: ar5210reg.h,v 1.9 2005/05/08 14:46:50 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -311,14 +311,10 @@ typedef enum {
  * Silicon revision register
  */
 #define AR5K_AR5210_SREV		0x4020
-#define AR5K_AR5210_SREV_ID_M		0x000000ff
-#define AR5K_AR5210_SREV_FPGA		1
-#define AR5K_AR5210_SREV_PHYPLUS	2
-#define AR5K_AR5210_SREV_PHYPLUS_MS	3
-#define AR5K_AR5210_SREV_CRETE		4
-#define AR5K_AR5210_SREV_CRETE_MS	5
-#define AR5K_AR5210_SREV_CRETE_MS23	7
-#define AR5K_AR5210_SREV_CRETE_23	8
+#define AR5K_AR5210_SREV_REV		0x0000000f
+#define AR5K_AR5210_SREV_REV_S		0
+#define AR5K_AR5210_SREV_VER		0x000000ff
+#define AR5K_AR5210_SREV_VER_S		4
 
 /*
  * EEPROM access registers
