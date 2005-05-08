@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.9 2005/04/12 09:54:59 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.10 2005/05/08 19:58:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -43,16 +43,23 @@ struct vertex {
 	u_int8_t		 flooded;
 };
 
+struct rde_req_entry {
+	TAILQ_ENTRY(rde_req_entry)	entry;
+	u_int32_t			ls_id;
+	u_int32_t			adv_rtr;
+	u_int8_t			type;
+};
+
 /* just the info RDE needs */
 struct rde_nbr {
-	LIST_ENTRY(rde_nbr)	 entry, hash;
-	struct in_addr		 id;
-	struct in_addr		 area_id;
-	struct lsa_head		 ls_req_list;
-	struct area		*area;
-	u_int32_t		 peerid;	/* unique ID in DB */
-	int			 state;
-	int			 self;
+	LIST_ENTRY(rde_nbr)		 entry, hash;
+	struct in_addr			 id;
+	struct in_addr			 area_id;
+	TAILQ_HEAD(, rde_req_entry)	 req_list;
+	struct area			*area;
+	u_int32_t			 peerid;	/* unique ID in DB */
+	int				 state;
+	int				 self;
 };
 
 struct rde_asext {

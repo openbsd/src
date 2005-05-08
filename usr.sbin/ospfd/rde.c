@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.13 2005/05/02 02:26:35 djm Exp $ */
+/*	$OpenBSD: rde.c,v 1.14 2005/05/08 19:58:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -49,6 +49,11 @@ void		 rde_nbr_init(u_int32_t);
 struct rde_nbr	*rde_nbr_find(u_int32_t);
 struct rde_nbr	*rde_nbr_new(u_int32_t, struct rde_nbr *);
 void		 rde_nbr_del(struct rde_nbr *);
+
+void		 rde_req_list_add(struct rde_nbr *, struct lsa_hdr *);
+int		 rde_req_list_exists(struct rde_nbr *, struct lsa_hdr *);
+void		 rde_req_list_del(struct rde_nbr *, struct lsa_hdr *);
+void		 rde_req_list_free(struct rde_nbr *);
 
 int		 rde_redistribute(struct kroute *);
 struct lsa	*rde_asext_get(struct kroute *);
@@ -257,6 +262,9 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				fatalx("rde_dispatch_imsg: "
 				    "neighbor does not exist");
 			nbr->state = state;
+
+			if (nbr->state & NBR_STA_FULL)
+				rde_req_list_free(nbr);
 			break;
 		case IMSG_DB_SNAPSHOT:
 			nbr = rde_nbr_find(imsg.hdr.peerid);
@@ -292,15 +300,16 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				else
 					db_hdr = &v->lsa->hdr;
 
-				if (lsa_newer(&lsa_hdr, db_hdr) > 0)
+				if (lsa_newer(&lsa_hdr, db_hdr) > 0) {
 					/*
 					 * only request LSA's that are
 					 * newer or missing
 					 */
-					/* XXX add to local REQ list */
+					rde_req_list_add(nbr, &lsa_hdr);
 					imsg_compose(ibuf_ospfe, IMSG_DD,
 					    imsg.hdr.peerid, 0, -1,
 					    &lsa_hdr, sizeof(lsa_hdr));
+				}
 			}
 			if (l != 0)
 				log_warnx("rde_dispatch_imsg: peerid %lu, "
@@ -381,6 +390,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				if (!(self = lsa_self(nbr, lsa, v)))
 					lsa_add(nbr, lsa);
 
+				rde_req_list_del(nbr, &lsa->hdr);
 				/* flood and perhaps ack LSA */
 				imsg_compose(ibuf_ospfe, IMSG_LS_FLOOD,
 				    imsg.hdr.peerid, 0, -1,
@@ -395,7 +405,9 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				/* start spf_timer */
 				log_debug("rde_dispatch_imsg: start spf_timer");
 				start_spf_timer(rdeconf);
-			/* TODO LSA on req list -> BadLSReq */
+			} else if (rde_req_list_exists(nbr, &lsa->hdr)) {
+				imsg_compose(ibuf_ospfe, IMSG_LS_BADREQ,
+				    imsg.hdr.peerid, 0, -1, NULL, 0);
 			} else if (r < 0) {
 				/* new LSA older than DB */
 				if (ntohl(db_hdr->seq_num) == MAX_SEQ_NUM &&
@@ -740,6 +752,7 @@ rde_nbr_new(u_int32_t peerid, struct rde_nbr *new)
 	memcpy(nbr, new, sizeof(*nbr));
 	nbr->peerid = peerid;
 	nbr->area = area;
+	TAILQ_INIT(&nbr->req_list);
 
 	head = RDE_NBR_HASH(peerid);
 	LIST_INSERT_HEAD(head, nbr, hash);
@@ -753,6 +766,8 @@ rde_nbr_del(struct rde_nbr *nbr)
 {
 	if (nbr == NULL)
 		return;
+
+	rde_req_list_free(nbr);
 
 	LIST_REMOVE(nbr, entry);
 	LIST_REMOVE(nbr, hash);
@@ -787,6 +802,64 @@ rde_nbr_self(struct area *area)
 	/* this may not happen */
 	fatalx("rde_nbr_self: area without self");
 	return (NULL);
+}
+
+/*
+ * LSA req list
+ */
+void
+rde_req_list_add(struct rde_nbr *nbr, struct lsa_hdr *lsa)
+{
+	struct rde_req_entry	*le;
+
+	if ((le = calloc(1, sizeof(*le))) == NULL)
+		fatal("rde_req_list_add");
+
+	TAILQ_INSERT_TAIL(&nbr->req_list, le, entry);
+	le->type = lsa->type;
+	le->ls_id = lsa->ls_id;
+	le->adv_rtr = lsa->adv_rtr;
+}
+
+int
+rde_req_list_exists(struct rde_nbr *nbr, struct lsa_hdr *lsa_hdr)
+{
+	struct rde_req_entry	*le;
+
+	TAILQ_FOREACH(le, &nbr->req_list, entry) {
+		if ((lsa_hdr->type == le->type) &&
+		    (lsa_hdr->ls_id == le->ls_id) &&
+		    (lsa_hdr->adv_rtr == le->adv_rtr))
+			return (1);
+	}
+	return (0);
+}
+
+void
+rde_req_list_del(struct rde_nbr *nbr, struct lsa_hdr *lsa_hdr)
+{
+	struct rde_req_entry	*le;
+
+	TAILQ_FOREACH(le, &nbr->req_list, entry) {
+		if ((lsa_hdr->type == le->type) &&
+		    (lsa_hdr->ls_id == le->ls_id) &&
+		    (lsa_hdr->adv_rtr == le->adv_rtr)) {
+			TAILQ_REMOVE(&nbr->req_list, le, entry);
+			free(le);
+			return;
+		}
+	}
+}
+
+void
+rde_req_list_free(struct rde_nbr *nbr)
+{
+	struct rde_req_entry	*le;
+
+	while ((le = TAILQ_FIRST(&nbr->req_list)) != NULL) {
+		TAILQ_REMOVE(&nbr->req_list, le, entry);
+		free(le);
+	}		
 }
 
 /*
