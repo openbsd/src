@@ -1,4 +1,4 @@
-/*	$OpenBSD: diofb.c,v 1.6 2005/01/24 21:36:39 miod Exp $	*/
+/*	$OpenBSD: diofb.c,v 1.7 2005/05/08 01:51:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -79,6 +79,9 @@
 #include <hp300/dev/diofbreg.h>
 #include <hp300/dev/diofbvar.h>
 
+extern int rasops_alloc_cattr(void *, int, int, int, long *);
+
+int	diofb_alloc_attr(void *, int, int, int, long *);
 void	diofb_copycols(void *, int, int, int, int);
 void	diofb_erasecols(void *, int, int, int, long);
 void	diofb_copyrows(void *, int, int, int);
@@ -183,10 +186,19 @@ diofb_fbsetup(struct diofb *fb)
 
 	diofb_resetcmap(fb);
 
-	if (fb->planes <= 4)
-		ri->ri_caps &= ~WSSCREEN_HILIT;
-	if (fb->planes < 4)
-		ri->ri_caps &= ~WSSCREEN_WSCOLORS;
+	/*
+	 * Rasops is too conservative here, and will constrain
+	 * less-than-8bpp frame buffers to mono mode.
+	 * We know better and override here.
+	 */
+	if (fb->planes >= 4) {
+		ri->ri_ops.alloc_attr = diofb_alloc_attr;
+		ri->ri_caps |= WSSCREEN_WSCOLORS;
+	}
+	if (fb->planes > 4) {
+		ri->ri_ops.alloc_attr = rasops_alloc_cattr;
+		ri->ri_caps |= WSSCREEN_HILIT;
+	}
 		
 	ri->ri_ops.copycols = diofb_copycols;
 	ri->ri_ops.copyrows = diofb_copyrows;
@@ -319,6 +331,15 @@ diofb_end_attach(void *sc, struct wsdisplay_accessops *accessops,
 /*
  * Common wsdisplay emulops for DIO frame buffers
  */
+
+int
+diofb_alloc_attr(void *cookie, int fg, int bg, int flg, long *attr)
+{
+	if ((flg & (WSATTR_BLINK | WSATTR_HILIT)) != 0)
+		return (EINVAL);
+
+	return (rasops_alloc_cattr(cookie, fg, bg, flg, attr));
+}
 
 void
 diofb_copycols(void *cookie, int row, int src, int dst, int n)
