@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.20 2005/02/07 14:29:10 millert Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.21 2005/05/09 13:23:35 millert Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ struct field *findfield(char *);
 void adjlevel(char **, u_char *, int);
 void catstr(char *, char *, char *);
 void prfield(struct field *, char *, int);
-void rdfield(int, struct field *, char *);
+void rdfield(int, struct field *, char *, int);
 __dead void usage(void);
 
 #define FIELD_NAME_MAX	64
@@ -170,7 +170,7 @@ adjlevel(char **p, u_char *olevel, int more)
 }
 
 void
-rdfield(int fd, struct field *p, char *q)
+rdfield(int fd, struct field *p, char *q, int quiet)
 {
 	mixer_ctrl_t *m, oldval;
 	int i, mask;
@@ -221,7 +221,7 @@ rdfield(int fd, struct field *p, char *q)
 
 	if (ioctl(fd, AUDIO_MIXER_WRITE, p->valp) < 0) {
 		warn("AUDIO_MIXER_WRITE");
-	} else {
+	} else if (!quiet) {
 		*p->valp = oldval;
 		prfield(p, ": ", 0);
 		if (ioctl(fd, AUDIO_MIXER_READ, p->valp) < 0) {
@@ -364,7 +364,7 @@ main(int argc, char **argv)
 			if ((p = findfield(*argv)) == NULL) {
 				warnx("field %s does not exist", *argv);
 			} else if (ch) {
-				rdfield(fd, p, q);
+				rdfield(fd, p, q, qflag);
 			} else {
 				prfield(p, sep, vflag);
 				printf("\n");
