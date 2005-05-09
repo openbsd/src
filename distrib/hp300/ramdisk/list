@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.44 2005/05/04 17:15:37 miod Exp $
+#	$OpenBSD: list,v 1.45 2005/05/09 20:24:00 miod Exp $
 
 SRCDIRS distrib/special
 SRCDIRS bin sbin usr.bin usr.sbin
@@ -17,6 +17,7 @@ ARGVLINK ksh					-sh
 LINK	instbin					bin/ln
 LINK	instbin					bin/ls
 LINK	instbin					bin/mkdir
+LINK	instbin					bin/mt
 LINK	instbin					bin/mv
 LINK	instbin					bin/pax bin/tar bin/cpio
 LINK	instbin					bin/rm
@@ -29,12 +30,15 @@ LINK	instbin					sbin/fsck
 LINK	instbin					sbin/fsck_ffs
 LINK	instbin					sbin/ifconfig
 LINK	instbin					sbin/init
+LINK	instbin					sbin/kbd
 LINK	instbin					sbin/mknod
 LINK	instbin					sbin/mount
 LINK	instbin					sbin/mount_cd9660
 LINK	instbin					sbin/mount_ffs
 LINK	instbin					sbin/mount_nfs
 LINK	instbin					sbin/newfs
+LINK	instbin					sbin/ping
+LINK	instbin					sbin/ping6
 LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/route
 LINK	instbin					sbin/umount
@@ -59,10 +63,14 @@ LINK	usr/mdec/uboot.lif			usr/mdec/sdboot
 
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group			etc/group
-COPY	${DESTDIR}/etc/spwd.db			etc/spwd.db
 COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
 COPY	${CURDIR}/../../miniroot/services	etc/services
+COPY	${DESTDIR}/etc/spwd.db			etc/spwd.db
 SCRIPT	${DESTDIR}/etc/disktab			etc/disktab
+SYMLINK	/tmp/disktab.shadow			etc/disktab
+SYMLINK	/tmp/fstab.shadow			etc/fstab
+SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
+SYMLINK	/tmp/hosts				etc/hosts
 TERMCAP	vt100,vt220,dumb,hp2392,hpansi,hpsub,hpex,hp300h,hp700-wy,hp70092	usr/share/misc/termcap
 
 # dhcp things
@@ -75,6 +83,3 @@ SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
 SPECIAL	chmod 755 install upgrade sbin/dhclient-script
-
-# so DNS can work
-SYMLINK /tmp/resolv.conf.shadow			etc/resolv.conf
