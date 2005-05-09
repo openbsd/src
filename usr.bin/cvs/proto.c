@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.49 2005/04/22 15:16:15 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.50 2005/05/09 19:24:07 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -618,7 +618,10 @@ cvs_recvfile(struct cvsroot *root, mode_t *mode)
 		return (NULL);
 	}
 
-	cvs_getln(root, buf, sizeof(buf));
+	if (cvs_getln(root, buf, sizeof(buf)) < 0) {
+		cvs_buf_free(fbuf);
+		return (NULL);
+	}
 
 	fsz = (off_t)strtol(buf, &ep, 10);
 	if (*ep != '\0') {
