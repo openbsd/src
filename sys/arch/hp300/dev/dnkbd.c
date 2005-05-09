@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbd.c,v 1.6 2005/04/25 13:22:14 miod Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.7 2005/05/09 16:35:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -804,7 +804,9 @@ dnkbd_set_leds(void *v, int leds)
 int
 dnkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
+#ifdef WSDISPLAY_COMPAT_RAWKBD
 	struct dnkbd_softc *sc = v;
+#endif
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
