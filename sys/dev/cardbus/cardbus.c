@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.15 2004/10/07 21:16:59 brad Exp $ */
+/*	$OpenBSD: cardbus.c,v 1.16 2005/05/09 00:38:57 brad Exp $ */
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -846,6 +846,19 @@ cardbus_get_capability(cc, cf, tag, capid, offset, value)
 	return (0);
 }
 
+int
+cardbus_matchbyid(struct cardbus_attach_args *ca, const struct cardbus_matchid *ids,
+    int nent)
+{
+	const struct cardbus_matchid *cm;
+	int i;
+
+	for (i = 0, cm = ids; i < nent; i++, cm++)
+		if (PCI_VENDOR(ca->ca_id) == cm->cm_vid &&
+		    PCI_PRODUCT(ca->ca_id) == cm->cm_pid)
+			return (1);
+	return (0);
+}
 
 /*
  * below this line, there are some functions for decoding tuples.
