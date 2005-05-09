@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.14 2005/05/02 02:45:29 uwe Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.15 2005/05/09 15:32:19 uwe Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -252,8 +252,13 @@ bs_protos(bs_notimpl);
 
 #include "com.h"
 #if NCOM > 0
-#include <dev/ic/comreg.h>
+#if defined(COM_PXA2X0)
+#include <arm/xscale/pxacomreg.h>
+#include <arm/xscale/pxacomvar.h>
+#else
 #include <dev/ic/comvar.h>
+#include <dev/ic/comreg.h>
+#endif
 #endif
 
 #ifndef CONSPEED
@@ -645,12 +650,19 @@ initarm(void *arg)
 	pxa2x0_gpio_set_function(35, GPIO_ALT_FN_1_IN);
 	pxa2x0_gpio_set_function(40, GPIO_ALT_FN_2_OUT);
 	pxa2x0_gpio_set_function(41, GPIO_ALT_FN_2_OUT);
+
+	/* STUART */
+	pxa2x0_gpio_set_function(46, GPIO_ALT_FN_2_IN);
+	pxa2x0_gpio_set_function(47, GPIO_ALT_FN_1_OUT);
 #endif
+
+	/* tell com to drive STUART in slow infrared mode */
+	comsiraddr = (bus_addr_t)PXA2X0_STUART_BASE;
 
 #if 1
 	/* turn on clock to UART block.
 	   XXX this should not be necessary, consinit() will do it */
-	early_clkman(CKEN_FFUART | CKEN_BTUART, 1);
+	early_clkman(CKEN_FFUART | CKEN_BTUART | CKEN_STUART, 1);
 #endif
 
 	green_on(0);
@@ -1133,6 +1145,14 @@ initarm(void *arg)
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
+#if defined(FFUARTCONSOLE)
+const char *console = "ffuart";
+#elif defined(BTUARTCONSOLE)
+const char *console = "btuart";
+#elif defined(STUARTCONSOLE)
+const char *console = "stuart";
+#endif
+
 void
 process_kernel_args(char *args)
 {
@@ -1218,44 +1238,38 @@ int comkgdbmode = KGDB_DEVMODE;
 void
 consinit(void)
 {
+#if NCOM > 0
 	static int consinit_called = 0;
-#if 0
-	char *console = CONSDEVNAME;
-#endif
+	paddr_t paddr;
+	u_int cken = 0;
 
 	if (consinit_called != 0)
 		return;
 
 	consinit_called = 1;
 
-#if NCOM > 0
-
-#ifdef FFUARTCONSOLE
 #ifdef KGDB
-	if (strcmp(kgdb_devname, "ffuart") == 0) {
+	if (strcmp(kgdb_devname, console) == 0) {
 		/* port is reserved for kgdb */
 	} else
 #endif
-	if (comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE, comcnspeed,
-	    PXA2X0_COM_FREQ, comcnmode) == 0) {
-		early_clkman(CKEN_FFUART, 1);
-		return;
-	}
-#endif /* FFUARTCONSOLE */
-
-#ifdef BTUARTCONSOLE
-#ifdef KGDB
-	if (strcmp(kgdb_devname, "btuart") == 0) {
-		/* port is reserved for kgdb */
-	} else
+	if (strcmp(console, "ffuart") == 0) {
+		paddr = PXA2X0_FFUART_BASE;
+		cken = CKEN_FFUART;
+	} else if (strcmp(console, "btuart") == 0) {
+		paddr = PXA2X0_BTUART_BASE;
+		cken = CKEN_BTUART;
+	} else if (strcmp(console, "stuart") == 0) {
+#if 0
+		/* XXX enable the infrared transmitter LED. */
 #endif
-	if (comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_BTUART_BASE, comcnspeed,
-	    PXA2X0_COM_FREQ, comcnmode) == 0) {
-		early_clkman(CKEN_BTUART, 1);
-		return;
+		paddr = PXA2X0_STUART_BASE;
+		cken = CKEN_STUART;
 	}
-#endif /* BTUARTCONSOLE */
-
+	if (cken != 0 && comcnattach(&pxa2x0_a4x_bs_tag, paddr, comcnspeed,
+	    PXA2X0_COM_FREQ, comcnmode) == 0) {
+		early_clkman(cken, 1);
+	}
 #endif /* NCOM */
 }
 
@@ -1273,6 +1287,9 @@ kgdb_port_init(void)
 	} else if (strcmp(kgdb_devname, "btuart") == 0) {
 		paddr = PXA2X0_BTUART_BASE;
 		cken = CKEN_BTUART;
+	} else if (strcmp(kgdb_devname, "stuart") == 0) {
+		paddr = PXA2X0_STUART_BASE;
+		cken = CKEN_STUART;
 	} else
 		return;
 

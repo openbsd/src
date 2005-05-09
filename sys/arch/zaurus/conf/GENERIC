@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.37 2005/05/01 07:54:43 david Exp $
+#	$OpenBSD: GENERIC,v 1.38 2005/05/09 15:32:19 uwe Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -131,9 +131,10 @@ cd*		at scsibus?
 options COM_PXA2X0
 com0	at pxaip? addr 0x40100000 intr 22	# Full Function UART
 com1	at pxaip? addr 0x40200000 intr 21	# BlueTooth UART
-#com2	at pxaip? addr 0x40700000 intr 20	# Standard UART (for IrDA)
+com2	at pxaip? addr 0x40700000 intr 20	# Standard UART (for IrDA)
 options FFUARTCONSOLE
 #options BTUARTCONSOLE
+#options STUARTCONSOLE
 
 pxapcic0	at pxaip?		# CF (pcmcia) support
 pcmcia*		at pxapcic?
