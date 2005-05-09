@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardbus.c,v 1.16 2005/05/09 00:38:57 brad Exp $ */
+/*	$OpenBSD: cardbus.c,v 1.17 2005/05/09 02:01:36 brad Exp $ */
 /*	$NetBSD: cardbus.c,v 1.24 2000/04/02 19:11:37 mycroft Exp $	*/
 
 /*
@@ -854,8 +854,8 @@ cardbus_matchbyid(struct cardbus_attach_args *ca, const struct cardbus_matchid *
 	int i;
 
 	for (i = 0, cm = ids; i < nent; i++, cm++)
-		if (PCI_VENDOR(ca->ca_id) == cm->cm_vid &&
-		    PCI_PRODUCT(ca->ca_id) == cm->cm_pid)
+		if (CARDBUS_VENDOR(ca->ca_id) == cm->cm_vid &&
+		    CARDBUS_PRODUCT(ca->ca_id) == cm->cm_pid)
 			return (1);
 	return (0);
 }
