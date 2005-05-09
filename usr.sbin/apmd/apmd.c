@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.32 2005/03/10 22:42:46 deraadt Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.33 2005/05/09 04:53:51 miod Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -142,7 +142,7 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 			if (bstate.minutes_left != 0 &&
 			    bstate.battery_state != APM_BATT_CHARGING)
 #else
-			if (bstate.minutes_left)
+			if ((int)bstate.minutes_left > 0)
 #endif
 				syslog(LOG_NOTICE, "battery status: %s. "
 				    "external power status: %s. "
