@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoopvar.h,v 1.7 2005/04/15 01:05:51 pascoe Exp $	*/
+/*	$OpenBSD: zaurus_scoopvar.h,v 1.8 2005/05/09 15:16:36 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -20,6 +20,7 @@
 #define	SCOOP_LED_ORANGE	(1<<1)
 
 void	scoop_set_backlight(int, int);
+void	scoop_set_irled(int);
 void	scoop_led_set(int, int);
 void	scoop_battery_temp_adc(int);
 void	scoop_charge_battery(int, int);

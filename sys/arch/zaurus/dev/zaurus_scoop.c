@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.8 2005/04/15 01:05:51 pascoe Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.9 2005/05/09 15:16:36 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -132,6 +132,9 @@ scoop_gpio_pin_ctl(struct scoop_softc *sc, int pin, int flags)
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, SCOOP_GPCR, rv);
 }
 
+/*
+ * Turn the LCD background light and contrast signal on or off.
+ */
 void
 scoop_set_backlight(int on, int cont)
 {
@@ -151,6 +154,23 @@ scoop_set_backlight(int on, int cont)
 #endif
 }
 
+/*
+ * Turn the infrared LED on or off (must be on while transmitting).
+ */
+void
+scoop_set_irled(int on)
+{
+	if (scoop_cd.cd_ndevs > 1 && scoop_cd.cd_devs[1] != NULL)
+		/* IR_ON is inverted */
+		scoop_gpio_pin_write(scoop_cd.cd_devs[1],
+		    SCOOP1_IR_ON, !on);
+}
+
+/*
+ * Turn the green and orange LEDs on or off.  If the orange LED is on,
+ * then it is wired to indicate if A/C is connected.  The green LED has
+ * no such predefined function.
+ */
 void
 scoop_led_set(int led, int on)
 {
@@ -165,6 +185,10 @@ scoop_led_set(int led, int on)
 	}
 }
 
+/*
+ * Mute or unmute audio signals going to the internal speaker (and
+ * the headphone jack as well?)
+ */
 void
 scoop_audio_set(int on)
 {
