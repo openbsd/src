@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.862 2005/05/07 03:30:00 brad Exp 
+ *	OpenBSD: pcidevs,v 1.863 2005/05/09 16:36:33 brad Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -7257,6 +7257,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C170,
 	    "83C170 (EPIC/100)",
+	},
+	{
+	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C175,
+	    "83C175 (EPIC/100)",
 	},
 	{
 	    PCI_VENDOR_SMI, PCI_PRODUCT_SMI_SM710,
