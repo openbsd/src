@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxacom.c,v 1.1 2004/12/30 23:46:14 drahn Exp $	*/
+/*	$OpenBSD: pxacom.c,v 1.2 2005/05/09 15:25:29 uwe Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -74,7 +74,6 @@
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <sys/types.h>
 #include <sys/device.h>
 #include <sys/vnode.h>
 #ifdef DDB
@@ -90,6 +89,16 @@
 #include <arm/xscale/pxacomvar.h>
 #include <dev/ic/ns16550reg.h>
 #define	com_lcr	com_cfcr
+
+#ifdef COM_PXA2X0
+#define com_isr 8
+#define ISR_SEND	(ISR_RXPL | ISR_XMODE | ISR_XMITIR)
+#define ISR_RECV	(ISR_RXPL | ISR_XMODE | ISR_RCVEIR)
+#endif
+
+#ifdef __zaurus__
+void	scoop_set_irled(int);	/* XXX */
+#endif
 
 #include "com.h"
 
@@ -108,6 +117,7 @@ struct cfdriver com_cd = {
 int	comdefaultrate = TTYDEF_SPEED;
 int	comconsinit;
 bus_addr_t comconsaddr;
+bus_addr_t comsiraddr;
 int	comconsattached;
 int	comconsfreq;
 bus_space_tag_t comconsiot;
@@ -291,9 +301,14 @@ com_attach_subr(sc)
 		printf(": ns16550, no working fifo\n");
 		break;
 	case COM_UART_16550A:
-		printf(": ns16550a, 16 byte fifo\n");
+		printf(": ns16550a, 16 byte fifo");
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		sc->sc_fifolen = 16;
+		if (sc->sc_iobase == comsiraddr) {
+			SET(sc->sc_hwflags, COM_HW_SIR);
+			printf(" (SIR)");
+		}
+		printf("\n");
 		break;
 	case COM_UART_ST16650:
 		printf(": st16650, no working fifo\n");
@@ -620,6 +635,14 @@ comopen(dev, flag, mode, p)
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
+#ifdef COM_PXA2X0
+		if (ISSET(sc->sc_hwflags, COM_HW_SIR)) {
+			bus_space_write_1(iot, ioh, com_isr, ISR_RECV);
+#ifdef __zaurus__
+			scoop_set_irled(1);
+#endif
+		}
+#endif
 	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0)
 		return EBUSY;
 	else
@@ -751,6 +774,11 @@ compwroff(sc)
 		bus_space_write_1(iot, ioh, com_ier, IER_SLEEP);
 		break;
 	}
+
+#if defined(COM_PXA2X0) && defined(__zaurus__)
+	if (ISSET(sc->sc_hwflags, COM_HW_SIR))
+		scoop_set_irled(0);
+#endif
 }
 
 void
@@ -1114,6 +1142,12 @@ comstart(tp)
 	}
 	SET(tp->t_state, TS_BUSY);
 
+#ifdef COM_PXA2X0
+	/* Enable transmitter slow infrared mode. */
+	if (ISSET(sc->sc_hwflags, COM_HW_SIR))
+		bus_space_write_1(iot, ioh, com_isr, ISR_SEND);
+#endif
+
 	/* Enable transmit completion interrupts. */
 	if (!ISSET(sc->sc_ier, IER_ETXRDY)) {
 		SET(sc->sc_ier, IER_ETXRDY);
@@ -1138,6 +1172,20 @@ stopped:
 	if (ISSET(sc->sc_ier, IER_ETXRDY)) {
 		CLR(sc->sc_ier, IER_ETXRDY);
 		bus_space_write_1(iot, ioh, com_ier, sc->sc_ier);
+#ifdef COM_PXA2X0
+		if (ISSET(sc->sc_hwflags, COM_HW_SIR)) {
+			int timo;
+
+			/* Wait for empty transmit shift register. */
+			timo = 20000;
+			while (!ISSET(bus_space_read_1(iot, ioh, com_lsr),
+			    LSR_TSRE) && --timo)
+				delay(1);
+
+			/* Enable receiver slow infrared mode. */
+			bus_space_write_1(iot, ioh, com_isr, ISR_RECV);
+		}
+#endif
 	}
 	splx(s);
 }
@@ -1401,6 +1449,11 @@ comintr(arg)
 			(*linesw[tp->t_line].l_start)(tp);
 		}
 
+#ifdef COM_PXA2X0
+		if (ISSET(lsr, LSR_TXRDY) && ISSET(lsr, LSR_TSRE))
+			bus_space_write_1(iot, ioh, com_isr, ISR_RECV);
+#endif
+
 		if (ISSET(bus_space_read_1(iot, ioh, com_iir), IIR_NOPEND))
 			return (1);
 	}
@@ -1430,6 +1483,15 @@ com_common_getc(iot, ioh)
 	int s = splhigh();
 	u_char stat, c;
 
+#ifdef COM_PXA2X0
+	if ((comconsioh == ioh && comconsaddr == comsiraddr)
+#ifdef KGDB
+	    || (com_kgdb_ioh == ioh && com_kgdb_addr == comsiraddr)
+#endif
+	    )
+		bus_space_write_1(iot, ioh, com_isr, ISR_RECV);
+#endif
+
 	/* block until a character becomes available */
 	while (!ISSET(stat = bus_space_read_1(iot, ioh, com_lsr), LSR_RXRDY))
 		continue;
@@ -1455,6 +1517,15 @@ com_common_putc(iot, ioh, c)
 	while (!ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
 		delay(1);
 
+#ifdef COM_PXA2X0
+	if ((comconsioh == ioh && comconsaddr == comsiraddr)
+#ifdef KGDB
+	    || (com_kgdb_ioh == ioh && com_kgdb_addr == comsiraddr)
+#endif
+	    )
+		bus_space_write_1(iot, ioh, com_isr, ISR_SEND);
+#endif
+
 	bus_space_write_1(iot, ioh, com_data, c &0xff);
 	bus_space_barrier(iot, ioh, 0, COM_NPORTS,
 	    (BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE));
@@ -1463,6 +1534,22 @@ com_common_putc(iot, ioh, c)
 	timo = 2000;
 	while (!ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_TXRDY) && --timo)
 		delay(1);
+
+#ifdef COM_PXA2X0
+	if ((comconsioh == ioh && comconsaddr == comsiraddr)
+#ifdef KGDB
+	    || (com_kgdb_ioh == ioh && com_kgdb_addr == comsiraddr)
+#endif
+	    ) {
+		/* wait for transmit shift register to become empty */
+		timo = 20000;
+		while (!ISSET(bus_space_read_1(iot, ioh, com_lsr), LSR_TSRE)
+		    && --timo)
+			delay(1);
+
+		bus_space_write_1(iot, ioh, com_isr, ISR_RECV);
+	}
+#endif
 
 	splx(s);
 }

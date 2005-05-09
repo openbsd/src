@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxacomreg.h,v 1.1 2004/12/30 23:46:14 drahn Exp $	*/
+/*	$OpenBSD: pxacomreg.h,v 1.2 2005/05/09 15:25:29 uwe Exp $	*/
 /*	$NetBSD: comreg.h,v 1.8 1996/02/05 23:01:50 scottr Exp $	*/
 
 /*
@@ -172,7 +172,18 @@
 #define FCTL_TRIGGER2	0x10
 #define FCTL_TRIGGER3	0x20
 
+/* infrared selection register */
+#define ISR_XMITIR	0x01	/* transmitter SIR enable */
+#define ISR_RCVEIR	0x02	/* receiver SIR enable */
+#define ISR_XMODE	0x04	/* 1.6us transmit pulse width */
+#define ISR_TXPL	0x08	/* negative transmit data polarity */
+#define ISR_RXPL	0x10	/* negative receive data polarity */
+
+#ifdef COM_PXA2X0
+#define	COM_NPORTS	9
+#else
 #define	COM_NPORTS	8
+#endif
 
 /*
  * WARNING: Serial console is assumed to be at COM1 address

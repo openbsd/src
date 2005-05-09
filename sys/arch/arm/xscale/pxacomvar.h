@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxacomvar.h,v 1.1 2004/12/30 23:46:14 drahn Exp $	*/
+/*	$OpenBSD: pxacomvar.h,v 1.2 2005/05/09 15:25:29 uwe Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -107,6 +107,7 @@ struct com_softc {
 	u_char sc_hwflags;
 #define	COM_HW_NOIEN	0x01
 #define	COM_HW_FIFO	0x02
+#define	COM_HW_SIR	0x20
 #define	COM_HW_CONSOLE	0x40
 #define	COM_HW_KGDB	0x80
 	u_char sc_swflags;
@@ -166,6 +167,7 @@ void com_attach_subr(struct com_softc *);
 
 extern int comdefaultrate;
 extern bus_addr_t comconsaddr;
+extern bus_addr_t comsiraddr;
 extern int comconsinit;
 extern int comconsattached;
 extern bus_space_tag_t comconsiot;
