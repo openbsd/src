@@ -1,5 +1,12 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.29 2005/05/06 17:51:41 mickey Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.30 2005/05/09 05:08:57 miod Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
+
+/*
+ * PLEASE DO NOT FORGET TO REGEN
+ *	sys/arch/hppa/gsc/gsckbdmap.c
+ *	sys/dev/usb/ukbdmap.c
+ * AFTER ANY CHANGES TO THIS FILE!
+ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
