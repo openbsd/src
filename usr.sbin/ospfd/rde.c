@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.14 2005/05/08 19:58:51 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.15 2005/05/09 13:53:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -998,11 +998,11 @@ orig_asext_lsa(struct kroute *kr, u_int16_t age)
 	/*
 	 * nexthop -- on connected routes we are the nexthop,
 	 * on all other cases we announce the true nexthop.
+	 * XXX this is wrong as the true nexthop may be outside
+	 * of the ospf cloud and so unreachable. For now we force
+	 * all traffic to be directed to us.
 	 */
-	if (kr->flags & F_CONNECTED)
-		lsa->data.asext.fw_addr = 0;
-	else
-		lsa->data.asext.fw_addr = kr->nexthop.s_addr;
+	lsa->data.asext.fw_addr = 0;
 
 	lsa->data.asext.metric = htonl(/* LSA_ASEXT_E_FLAG | */ 100);
 	/* XXX until now there is no metric */
