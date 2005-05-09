@@ -1,4 +1,4 @@
-/*	$OpenBSD: dnkbd.c,v 1.7 2005/05/09 16:35:20 miod Exp $	*/
+/*	$OpenBSD: dnkbd.c,v 1.8 2005/05/09 17:18:01 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -47,7 +47,10 @@
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 #include <dev/wscons/wskbdraw.h>
 #endif
+#include "wsmouse.h"
+#if NWSMOUSE > 0
 #include <dev/wscons/wsmousevar.h>
+#endif
 
 #include <hp300/dev/apcireg.h>
 #include <hp300/dev/apcivar.h>
@@ -122,7 +125,9 @@ struct dnkbd_softc {
 	u_int		sc_mousepos;	/* index in above */
 
 	struct device	*sc_wskbddev;
+#if NWSMOUSE > 0
 	struct device	*sc_wsmousedev;
+#endif
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int		sc_rawkbd;
@@ -155,6 +160,7 @@ const struct wskbd_accessops dnkbd_accessops = {
 	dnkbd_ioctl
 };
 
+#if NWSMOUSE > 0
 int	dnmouse_enable(void *);
 int	dnmouse_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void	dnmouse_disable(void *);
@@ -164,6 +170,7 @@ const struct wsmouse_accessops dnmouse_accessops = {
 	dnmouse_ioctl,
 	dnmouse_disable
 };
+#endif
 
 void	dnkbd_cngetc(void *, u_int *, int *);
 void	dnkbd_cnpollc(void *, int);
@@ -243,7 +250,9 @@ void
 dnkbd_attach_subdevices(struct dnkbd_softc *sc)
 {
 	struct wskbddev_attach_args ka;
+#if NWSMOUSE > 0
 	struct wsmousedev_attach_args ma;
+#endif
 #if NHILKBD > 0
 	extern int hil_is_console;
 #endif
@@ -279,11 +288,13 @@ dnkbd_attach_subdevices(struct dnkbd_softc *sc)
 	sc->sc_wskbddev = config_found_sm(&sc->sc_dev, &ka, wskbddevprint,
 	    dnsubmatch_kbd);
 
+#if NWSMOUSE > 0
 	ma.accessops = &dnmouse_accessops;
 	ma.accesscookie = sc;
 
 	sc->sc_wsmousedev = config_found_sm(&sc->sc_dev, &ma, wsmousedevprint,
 	    dnsubmatch_mouse);
+#endif
 
 	SET(sc->sc_flags, SF_ATTACHED);
 }
@@ -300,6 +311,7 @@ dnsubmatch_kbd(struct device *parent, void *match, void *aux)
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
+#if NWSMOUSE > 0
 int
 dnsubmatch_mouse(struct device *parent, void *match, void *aux)
 {
@@ -311,6 +323,7 @@ dnsubmatch_mouse(struct device *parent, void *match, void *aux)
 
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
+#endif
 
 int
 dnkbd_probe(struct dnkbd_softc *sc)
@@ -585,6 +598,7 @@ dnkbd_rawrepeat(void *v)
 }
 #endif
 
+#if NWSMOUSE > 0
 void
 dnevent_mouse(struct dnkbd_softc *sc, u_int8_t *dat)
 {
@@ -613,6 +627,7 @@ dnevent_mouse(struct dnkbd_softc *sc, u_int8_t *dat)
 	    (~dat[0] & (DNBUTTON_L | DNBUTTON_M | DNBUTTON_R)) >> 4,
 	    (int8_t)dat[1], (int8_t)dat[2], 0, WSMOUSE_INPUT_DELTA);
 }
+#endif
 
 /*
  * Low-level communication routines.
@@ -729,9 +744,11 @@ dnkbd_intr(void *v)
 				case EVENT_KEYBOARD:
 					dnevent_kbd(sc, c);
 					break;
+#if NWSMOUSE > 0
 				case EVENT_MOUSE:
 					dnevent_mouse(sc, sc->sc_mousepkt);
 					break;
+#endif
 				default:	/* appease gcc */
 					break;
 				}
@@ -828,6 +845,7 @@ dnkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	return (-1);
 }
 
+#if NWSMOUSE > 0
 /*
  * Wsmouse callbacks
  */
@@ -867,6 +885,7 @@ dnmouse_disable(void *v)
 
 	CLR(sc->sc_flags, SF_MOUSE);
 }
+#endif
 
 /*
  * Console support
