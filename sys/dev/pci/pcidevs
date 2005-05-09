@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.862 2005/05/07 03:30:00 brad Exp $
+$OpenBSD: pcidevs,v 1.863 2005/05/09 16:36:33 brad Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2459,6 +2459,7 @@ product SIS 7018		0x7018	7018 Audio
 product SMC 37C665		0x1000	FDC 37C665
 product SMC 37C922		0x1001	FDC 37C922
 product SMC 83C170		0x0005	83C170 (EPIC/100)
+product SMC 83C175		0x0006	83C175 (EPIC/100)
 
 /* Silicon Motion products */
 product SMI SM710		0x0710	LynxEM
