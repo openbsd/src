@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.108 2005/04/28 10:38:55 pascoe Exp $	*/
+/*	$OpenBSD: if.c,v 1.109 2005/05/09 08:08:47 mpf Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -166,8 +166,7 @@ struct ifnet *lo0ifp;
  * list of "active" interfaces.
  */
 void
-if_attachsetup(ifp)
-	struct ifnet *ifp;
+if_attachsetup(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	int n;
@@ -279,8 +278,7 @@ if_attachsetup(ifp)
  * called.
  */
 void
-if_alloc_sadl(ifp)
-	struct ifnet *ifp;
+if_alloc_sadl(struct ifnet *ifp)
 {
 	unsigned socksize, ifasize;
 	int namelen, masklen;
@@ -333,8 +331,7 @@ if_alloc_sadl(ifp)
  * link layer type specific detach functions.
  */
 void
-if_free_sadl(ifp)
-	struct ifnet *ifp;
+if_free_sadl(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	int s;
@@ -367,8 +364,7 @@ if_attachdomain()
 }
 
 void
-if_attachdomain1(ifp)
-	struct ifnet *ifp;
+if_attachdomain1(struct ifnet *ifp)
 {
 	struct domain *dp;
 	int s;
@@ -387,8 +383,7 @@ if_attachdomain1(ifp)
 }
 
 void
-if_attachhead(ifp)
-	struct ifnet *ifp;
+if_attachhead(struct ifnet *ifp)
 {
 	if (if_index == 0) {
 		TAILQ_INIT(&ifnet);
@@ -410,8 +405,7 @@ if_attachhead(ifp)
 }
 
 void
-if_attach(ifp)
-	struct ifnet *ifp;
+if_attach(struct ifnet *ifp)
 {
 #if NCARP > 0
 	struct ifnet *before = NULL;
@@ -459,9 +453,7 @@ if_attach(ifp)
  * as long as EAGAIN is returned.
  */
 int
-if_detach_rtdelete(rn, vifp)
-	struct radix_node *rn;
-	void *vifp;
+if_detach_rtdelete(struct radix_node *rn, void *vifp)
 {
 	struct ifnet *ifp = vifp;
 	struct rtentry *rt = (struct rtentry *)rn;
@@ -489,8 +481,7 @@ if_detach_rtdelete(rn, vifp)
  * wrt resource usage that needs to be decoupled.
  */
 void
-if_detach(ifp)
-	struct ifnet *ifp;
+if_detach(struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct ifg_list *ifg;
@@ -650,9 +641,7 @@ do { \
 }
 
 void
-if_detach_queues(ifp, q)
-	struct ifnet *ifp;
-	struct ifqueue *q;
+if_detach_queues(struct ifnet *ifp, struct ifqueue *q)
 {
 	struct mbuf *m, *prev, *next;
 
@@ -688,8 +677,7 @@ if_detach_queues(ifp, q)
  * Create a clone network interface.
  */
 int
-if_clone_create(name)
-	const char *name;
+if_clone_create(const char *name)
 {
 	struct if_clone *ifc;
 	int unit;
@@ -708,8 +696,7 @@ if_clone_create(name)
  * Destroy a clone network interface.
  */
 int
-if_clone_destroy(name)
-	const char *name;
+if_clone_destroy(const char *name)
 {
 	struct if_clone *ifc;
 	struct ifnet *ifp;
@@ -739,9 +726,7 @@ if_clone_destroy(name)
  * Look up a network interface cloner.
  */
 struct if_clone *
-if_clone_lookup(name, unitp)
-	const char *name;
-	int *unitp;
+if_clone_lookup(const char *name, int *unitp)
 {
 	struct if_clone *ifc;
 	const char *cp;
@@ -787,8 +772,7 @@ if_clone_lookup(name, unitp)
  * Register a network interface cloner.
  */
 void
-if_clone_attach(ifc)
-	struct if_clone *ifc;
+if_clone_attach(struct if_clone *ifc)
 {
 	LIST_INSERT_HEAD(&if_cloners, ifc, ifc_list);
 	if_cloners_count++;
@@ -801,8 +785,7 @@ if_clone_attach(ifc)
  * Unregister a network interface cloner.
  */
 void
-if_clone_detach(ifc)
-	struct if_clone *ifc;
+if_clone_detach(struct if_clone *ifc)
 {
 
 	LIST_REMOVE(ifc, ifc_list);
@@ -813,8 +796,7 @@ if_clone_detach(ifc)
  * Provide list of interface cloners to userspace.
  */
 int
-if_clone_list(ifcr)
-	struct if_clonereq *ifcr;
+if_clone_list(struct if_clonereq *ifcr)
 {
 	char outbuf[IFNAMSIZ], *dst;
 	struct if_clone *ifc;
@@ -878,8 +860,7 @@ if_congestion_clear(void *arg)
  */
 /*ARGSUSED*/
 struct ifaddr *
-ifa_ifwithaddr(addr)
-	struct sockaddr *addr;
+ifa_ifwithaddr(struct sockaddr *addr)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
@@ -907,8 +888,7 @@ ifa_ifwithaddr(addr)
  */
 /*ARGSUSED*/
 struct ifaddr *
-ifa_ifwithdstaddr(addr)
-	struct sockaddr *addr;
+ifa_ifwithdstaddr(struct sockaddr *addr)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
@@ -931,8 +911,7 @@ ifa_ifwithdstaddr(addr)
  * is most specific found.
  */
 struct ifaddr *
-ifa_ifwithnet(addr)
-	struct sockaddr *addr;
+ifa_ifwithnet(struct sockaddr *addr)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
@@ -975,8 +954,7 @@ ifa_ifwithnet(addr)
  * Find an interface using a specific address family
  */
 struct ifaddr *
-ifa_ifwithaf(af)
-	int af;
+ifa_ifwithaf(int af)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
@@ -995,9 +973,7 @@ ifa_ifwithaf(af)
  * a given address.
  */
 struct ifaddr *
-ifaof_ifpforaddr(addr, ifp)
-	struct sockaddr *addr;
-	struct ifnet *ifp;
+ifaof_ifpforaddr(struct sockaddr *addr, struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	char *cp, *cp2, *cp3;
@@ -1037,10 +1013,7 @@ ifaof_ifpforaddr(addr, ifp)
  * This should be moved to /sys/net/link.c eventually.
  */
 void
-link_rtrequest(cmd, rt, info)
-	int cmd;
-	struct rtentry *rt;
-	struct rt_addrinfo *info;
+link_rtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 {
 	struct ifaddr *ifa;
 	struct sockaddr *dst;
@@ -1130,8 +1103,7 @@ if_link_state_change(struct ifnet *ifp)
  * Flush an interface queue.
  */
 void
-if_qflush(ifq)
-	struct ifqueue *ifq;
+if_qflush(struct ifqueue *ifq)
 {
 	struct mbuf *m, *n;
 
@@ -1151,8 +1123,7 @@ if_qflush(ifq)
  * call the appropriate interface routine on expiration.
  */
 void
-if_slowtimo(arg)
-	void *arg;
+if_slowtimo(void *arg)
 {
 	struct timeout *to = (struct timeout *)arg;
 	struct ifnet *ifp;
@@ -1173,8 +1144,7 @@ if_slowtimo(arg)
  * interface structure pointer.
  */
 struct ifnet *
-ifunit(name)
-	const char *name;
+ifunit(const char *name)
 {
 	struct ifnet *ifp;
 
@@ -1189,11 +1159,7 @@ ifunit(name)
  * Interface ioctls.
  */
 int
-ifioctl(so, cmd, data, p)
-	struct socket *so;
-	u_long cmd;
-	caddr_t data;
-	struct proc *p;
+ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 {
 	struct ifnet *ifp;
 	struct ifreq *ifr;
@@ -1480,9 +1446,7 @@ ifioctl(so, cmd, data, p)
  */
 /*ARGSUSED*/
 int
-ifconf(cmd, data)
-	u_long cmd;
-	caddr_t data;
+ifconf(u_long cmd, caddr_t data)
 {
 	struct ifconf *ifc = (struct ifconf *)data;
 	struct ifnet *ifp;
@@ -1715,9 +1679,7 @@ if_getgroup(caddr_t data, struct ifnet *ifp)
  * Results are undefined if the "off" and "on" requests are not matched.
  */
 int
-ifpromisc(ifp, pswitch)
-	struct ifnet *ifp;
-	int pswitch;
+ifpromisc(struct ifnet *ifp, int pswitch)
 {
 	struct ifreq ifr;
 
