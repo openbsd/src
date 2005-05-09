@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.8 2005/03/29 22:40:38 marco Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.9 2005/05/09 19:50:48 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -59,6 +59,8 @@ struct ami_softc {
 	void		*sc_ih;
 	struct scsi_link sc_link;
 
+/* don't use 0x0001 */
+#define AMI_BROKEN 0x0002
 	u_int	sc_flags;
 
 	/* low-level interface */
@@ -86,10 +88,6 @@ struct ami_softc {
 	int		sc_timeout;
 	struct timeout	sc_requeue_tmo;
 	struct timeout	sc_poll_tmo;
-
-/* don't use 0x0001 */
-#define AMI_BROKEN 0x0002
-	u_int16_t sc_quirks;
 
 	char	sc_fwver[16];
 	char	sc_biosver[16];

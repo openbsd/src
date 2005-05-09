@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.35 2005/04/27 21:54:47 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.36 2005/05/09 19:50:48 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -486,7 +486,7 @@ ami_attach(sc)
 
 		AMI_UNLOCK_AMI(sc, lock);
 
-		if (sc->sc_quirks & AMI_BROKEN) {
+		if (sc->sc_flags & AMI_BROKEN) {
 			sc->sc_link.openings = 1;
 			sc->sc_maxcmds = 1;
 			sc->sc_maxunits = 1;
@@ -533,7 +533,7 @@ ami_attach(sc)
 	    sc->sc_fwver, sc->sc_biosver, sc->sc_memory,
 	    sc->sc_dev.dv_xname,
 	    sc->sc_channels, sc->sc_targets, p, sc->sc_nunits,
-	    sc->sc_link.openings, sc->sc_maxcmds, sc->sc_quirks);
+	    sc->sc_link.openings, sc->sc_maxcmds, sc->sc_flags);
 #else
 	printf(": FW %s, BIOS v%s, %dMB RAM\n"
 	    "%s: %d channels, %d %ss, %d logical drives\n",
@@ -542,7 +542,7 @@ ami_attach(sc)
 	    sc->sc_channels, sc->sc_targets, p, sc->sc_nunits);
 #endif /* AMI_DEBUG */
 
-	if (sc->sc_quirks & AMI_BROKEN && sc->sc_nunits > 1)
+	if (sc->sc_flags & AMI_BROKEN && sc->sc_nunits > 1)
 		printf("%s: firmware buggy, limiting access to first logical "
 		    "disk\n", sc->sc_dev.dv_xname);
 
@@ -1450,7 +1450,7 @@ ami_ioctl(dev, cmd, addr)
 	int error = 0;
 	struct ami_softc *sc = (struct ami_softc *)dev;
 
-	if (sc->sc_quirks & AMI_BROKEN)
+	if (sc->sc_flags & AMI_BROKEN)
 		return ENODEV; /* can't do this to broken device for now */
 
 	switch (cmd) {
