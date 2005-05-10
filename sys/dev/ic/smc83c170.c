@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.1 2005/05/10 01:16:32 brad Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.2 2005/05/10 01:41:40 brad Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -60,8 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $")
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-
-/* #include <uvm/uvm_extern.h> */
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -588,77 +586,77 @@ epic_ioctl(ifp, cmd, data)
 
 	s = splnet();
 
-        if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
-                splx(s);
-                return (error);
-        }
+	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		splx(s);
+		return (error);
+	}
 
-        switch (cmd) {
-        case SIOCSIFADDR:
-                ifp->if_flags |= IFF_UP;
+	switch (cmd) {
+	case SIOCSIFADDR:
+		ifp->if_flags |= IFF_UP;
 
-                switch (ifa->ifa_addr->sa_family) {
+		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
-                case AF_INET:
-                        epic_init(ifp);
-                        arp_ifinit(&sc->sc_arpcom, ifa);
-                        break;
+		case AF_INET:
+			epic_init(ifp);
+			arp_ifinit(&sc->sc_arpcom, ifa);
+			break;
 #endif
-                default:
-                        epic_init(ifp);
-                        break;
-                }
-                break;
+		default:
+			epic_init(ifp);
+			break;
+		}
+		break;
 
         case SIOCSIFMTU:
-                if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
-                        error = EINVAL;
-                } else if (ifp->if_mtu != ifr->ifr_mtu) {
-                        ifp->if_mtu = ifr->ifr_mtu;
-                }
-                break;
+		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN)
+			error = EINVAL;
+		else if (ifp->if_mtu != ifr->ifr_mtu)
+			ifp->if_mtu = ifr->ifr_mtu;
+		break;
 
-        case SIOCSIFFLAGS:
-                /*
-                 * If interface is marked up and not running, then start it.
-                 * If it is marked down and running, stop it.
-                 * XXX If it's up then re-initialize it. This is so flags
-                 * such as IFF_PROMISC are handled.
-                 */
-                if (ifp->if_flags & IFF_UP)
-                        epic_init(ifp);
-                else if (ifp->if_flags & IFF_RUNNING)
-                        epic_stop(ifp, 1);
-                break;
+	case SIOCSIFFLAGS:
+		/*
+		 * If interface is marked up and not running, then start it.
+		 * If it is marked down and running, stop it.
+		 * XXX If it's up then re-initialize it. This is so flags
+		 * such as IFF_PROMISC are handled.
+		 */
+		if (ifp->if_flags & IFF_UP)
+			epic_init(ifp);
+		else if (ifp->if_flags & IFF_RUNNING)
+			epic_stop(ifp, 1);
+		break;
 
-        case SIOCADDMULTI:
-        case SIOCDELMULTI:
-                error = (cmd == SIOCADDMULTI) ?
-                    ether_addmulti(ifr, &sc->sc_arpcom) :
-                    ether_delmulti(ifr, &sc->sc_arpcom);
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_arpcom) :
+		    ether_delmulti(ifr, &sc->sc_arpcom);
 
-                if (error == ENETRESET) {
-                        /*
-                         * Multicast list has changed; set the hardware
-                         * filter accordingly.
-                         */
-                        if (ifp->if_flags & IFF_RUNNING)
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware
+			 * filter accordingly.
+			 */
+			if (ifp->if_flags & IFF_RUNNING) {
 				mii_pollstat(&sc->sc_mii);
-                                epic_set_mchash(sc);
-                        error = 0;
-                }
-                break;
+				epic_set_mchash(sc);
+			}
+			error = 0;
+		}
+		break;
 
-        case SIOCSIFMEDIA:
-        case SIOCGIFMEDIA:
-                error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-                break;
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
+		break;
 
-        default:
-                error = EINVAL;
-        }
-        splx(s);
-        return (error);
+	default:
+		error = EINVAL;
+	}
+	splx(s);
+	return (error);
 }
 
 /*
