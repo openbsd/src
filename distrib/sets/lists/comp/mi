@@ -5334,6 +5334,7 @@
 ./usr/share/man/cat9/mono_time.0
 ./usr/share/man/cat9/mountroothook_disestablish.0
 ./usr/share/man/cat9/mountroothook_establish.0
+./usr/share/man/cat9/mtod.0
 ./usr/share/man/cat9/mtx_enter.0
 ./usr/share/man/cat9/mtx_init.0
 ./usr/share/man/cat9/mtx_leave.0
