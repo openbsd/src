@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.3 2004/06/13 21:49:13 niklas Exp $
+#	$OpenBSD: genassym.cf,v 1.4 2005/05/10 21:32:20 brad Exp $
 #	$NetBSD: genassym.cf,v 1.27 2003/11/04 10:33:16 dsl Exp$
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -176,10 +176,8 @@ member	ci_ctrl
 endif
 
 # Constants required for in_cksum() and friends.
-struct	mbuf
-member	m_len
-member	m_data
-member	m_next
-struct	ip
-member	ip_src
-member	ip_dst
+define	M_LEN			offsetof(struct mbuf, m_len)
+define	M_DATA			offsetof(struct mbuf, m_data)
+define	M_NEXT			offsetof(struct mbuf, m_next)
+define	IP_SRC			offsetof(struct ip, ip_src)
+define	IP_DST			offsetof(struct ip, ip_dst)

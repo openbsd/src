@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum_arm.S,v 1.1 2004/02/01 05:09:48 drahn Exp $	*/
+/*	$OpenBSD: in_cksum_arm.S,v 1.2 2005/05/10 21:32:20 brad Exp $	*/
 /*	$NetBSD: in_cksum_arm.S,v 1.3 2003/11/26 10:31:53 rearnsha Exp $ */
 
 /*
@@ -42,7 +42,6 @@
 
 #include <machine/asm.h>
 #include "assym.h"
-
 
 /*
  * int in_cksum(struct mbuf *m, int len)
@@ -89,9 +88,6 @@ ENTRY(in_cksum)
 	eor	r0, r0, r1
 	ldmfd	sp!, {r4-r11,pc}
 
-
-#if 0
-	/* ALSO IN in4_cksum.c */
 #ifdef INET
 /*
  * int in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
@@ -226,8 +222,6 @@ ENTRY(in4_cksum)
 	.asciz	"in4_cksum: out of mbufs\n"
 	.align	5
 #endif	/* INET */
-#endif
-
 
 /*
  * The main in*_cksum() workhorse...

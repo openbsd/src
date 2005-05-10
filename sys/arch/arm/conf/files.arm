@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.6 2005/05/01 21:36:55 brad Exp $
+#	$OpenBSD: files.arm,v 1.7 2005/05/10 21:32:20 brad Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # CPU types.  Make sure to update <arm/cpuconf.h> if you change this list.
@@ -33,7 +33,6 @@
 
 # generic networking files
 file	arch/arm/arm/in_cksum_arm.S		inet
-file	netinet/in4_cksum.c			inet
 file	netns/ns_cksum.c			ns
 
 # DDB
