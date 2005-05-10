@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile_machdep.h,v 1.2 2004/06/14 00:32:31 deraadt Exp $	*/
+/*	$OpenBSD: loadfile_machdep.h,v 1.3 2005/05/10 11:29:55 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #ifdef _STANDALONE
 
-#define	LOADADDR(a)		((a) + offset)
+#define	LOADADDR(a)		((u_int)(a) + offset)
 #define	ALIGNENTRY(a)		0
 #define	READ(f, b, c)		pread((f), (void *)LOADADDR(b), (c))
 #define	BCOPY(s, d, c)		vpbcopy((s), (void *)LOADADDR(d), (c))
@@ -64,8 +64,8 @@
 
 #else
 
-#define	LOADADDR(a)		(((u_long)(a)) + offset)
-#define	ALIGNENTRY(a)		((u_long)(a))
+#define	LOADADDR(a)		(((u_int)(a)) + offset)
+#define	ALIGNENTRY(a)		((u_int)(a))
 #define	READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
 #define	BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
 #define	BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
