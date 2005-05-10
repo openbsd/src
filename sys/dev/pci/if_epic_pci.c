@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_epic_pci.c,v 1.1 2005/05/10 01:16:32 brad Exp $	*/
+/*	$OpenBSD: if_epic_pci.c,v 1.2 2005/05/10 02:37:46 brad Exp $	*/
 /*	$NetBSD: if_epic_pci.c,v 1.28 2005/02/27 00:27:32 perry Exp $	*/
 
 /*-
@@ -104,29 +104,10 @@ struct cfattach epic_pci_ca = {
 	sizeof(struct epic_pci_softc), epic_pci_match, epic_pci_attach
 };
 
-static const struct epic_pci_product {
-	u_int32_t	epp_prodid;	/* PCI product ID */
-	const char	*epp_name;	/* device name */
-} epic_pci_products[] = {
-	{ PCI_PRODUCT_SMC_83C170,	"SMC 83c170 Fast Ethernet" },
-	{ PCI_PRODUCT_SMC_83C175,	"SMC 83c175 Fast Ethernet" },
-	{ 0,				NULL },
+const struct pci_matchid epic_pci_devices[] = {
+	{ PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C170 },
+	{ PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C175 },
 };
-
-static const struct epic_pci_product *
-epic_pci_lookup(const struct pci_attach_args *pa)
-{
-	const struct epic_pci_product *epp;
-
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_SMC)
-		return (NULL);
-
-	for (epp = epic_pci_products; epp->epp_name != NULL; epp++)
-		if (PCI_PRODUCT(pa->pa_id) == epp->epp_prodid)
-			return (epp);
-
-	return (NULL);
-}
 
 static const struct epic_pci_subsys_info {
 	pcireg_t subsysid;
@@ -161,12 +142,8 @@ epic_pci_subsys_lookup(const struct pci_attach_args *pa)
 static int
 epic_pci_match(struct device *parent, void *match, void *aux)
 {
-	struct pci_attach_args *pa = aux;
-
-	if (epic_pci_lookup(pa) != NULL)
-		return (1);
-
-	return (0);
+	return (pci_matchbyid((struct pci_attach_args *)aux, epic_pci_devices,
+	    sizeof(epic_pci_devices)/sizeof(epic_pci_devices[0])));
 }
 
 static void
@@ -178,18 +155,11 @@ epic_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
-	const struct epic_pci_product *epp;
 	const struct epic_pci_subsys_info *esp;
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	pcireg_t reg;
 	int pmreg, ioh_valid, memh_valid;
-
-	epp = epic_pci_lookup(pa);
-	if (epp == NULL) {
-		printf("\n");
-		panic(": epic_pci_attach: impossible");
-	}
 
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
 		reg = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
