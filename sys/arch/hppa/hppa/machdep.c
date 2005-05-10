@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.145 2005/04/18 12:16:03 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.146 2005/05/10 11:23:39 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -1267,6 +1267,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	extern u_int fpu_enable;
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct sigacts *psp = p->p_sigacts;
 	struct sigcontext ksc;
 	siginfo_t ksi;
@@ -1361,6 +1362,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	tf->tf_ipsw &= ~(PSL_N|PSL_B);
 	tf->tf_iioq_head = HPPA_PC_PRIV_USER | p->p_sigcode;
 	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
+	tf->tf_iisq_tail = tf->tf_iisq_head = pcb->pcb_space;
 	/* disable tracing in the trapframe */
 
 #ifdef DEBUG
