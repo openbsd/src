@@ -1006,6 +1006,8 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/siopreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/siopvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/siopvar_common.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/smc83c170reg.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/smc83c170var.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/smc90cx6reg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/smc91cxxreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/ic/smc91cxxvar.ph
@@ -1186,7 +1188,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_tivar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_tlreg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_txpreg.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_txvar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vgereg.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vgevar.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/pci/if_vrreg.ph

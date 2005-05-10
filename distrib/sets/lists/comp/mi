@@ -323,6 +323,8 @@
 ./usr/include/dev/ic/siopreg.h
 ./usr/include/dev/ic/siopvar.h
 ./usr/include/dev/ic/siopvar_common.h
+./usr/include/dev/ic/smc83c170reg.h
+./usr/include/dev/ic/smc83c170var.h
 ./usr/include/dev/ic/smc90cx6reg.h
 ./usr/include/dev/ic/smc91cxxreg.h
 ./usr/include/dev/ic/smc91cxxvar.h
@@ -503,7 +505,6 @@
 ./usr/include/dev/pci/if_tivar.h
 ./usr/include/dev/pci/if_tlreg.h
 ./usr/include/dev/pci/if_txpreg.h
-./usr/include/dev/pci/if_txvar.h
 ./usr/include/dev/pci/if_vgereg.h
 ./usr/include/dev/pci/if_vgevar.h
 ./usr/include/dev/pci/if_vrreg.h
