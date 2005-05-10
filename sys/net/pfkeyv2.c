@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.101 2005/04/04 22:18:47 hshoexer Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.102 2005/05/10 13:42:11 markus Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -94,6 +94,7 @@ static int nregistered = 0;
 static int npromisc = 0;
 
 static const struct sadb_alg ealgs[] = {
+	{ SADB_EALG_NULL, 0, 0, 0 },
 	{ SADB_EALG_DESCBC, 64, 64, 64 },
 	{ SADB_EALG_3DESCBC, 64, 192, 192 },
 	{ SADB_X_EALG_BLF, 64, 40, BLF_MAXKEYLEN * 8},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptosoft.c,v 1.43 2005/05/02 22:19:10 markus Exp $	*/
+/*	$OpenBSD: cryptosoft.c,v 1.44 2005/05/10 13:42:11 markus Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -93,6 +93,9 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, caddr_t buf,
 	/* Check for non-padded data */
 	if (crd->crd_len % blks)
 		return EINVAL;
+
+	if (exf == &enc_xform_null)
+		return (0);
 
 	if (outtype == CRYPTO_BUF_MBUF)
 		m = (struct mbuf *) buf;

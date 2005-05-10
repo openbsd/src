@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.88 2003/12/10 07:22:43 itojun Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.89 2005/05/10 13:42:11 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -97,6 +97,10 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 
 	if (ii->ii_encalg) {
 		switch (ii->ii_encalg) {
+		case SADB_EALG_NULL:
+			txform = &enc_xform_null;
+			break;
+
 		case SADB_EALG_DESCBC:
 			txform = &enc_xform_des;
 			break;
@@ -141,7 +145,10 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
 		DPRINTF(("esp_init(): initialized TDB with enc algorithm %s\n",
 		    txform->name));
 
-		tdbp->tdb_ivlen = txform->blocksize;
+		if (ii->ii_encalg == SADB_EALG_NULL)
+			tdbp->tdb_ivlen = 0;
+		else
+			tdbp->tdb_ivlen = txform->blocksize;
 		if (tdbp->tdb_flags & TDBF_HALFIV)
 			tdbp->tdb_ivlen /= 2;
 	}
