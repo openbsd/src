@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf.h,v 1.11 2005/04/06 20:21:08 norby Exp $ */
+/*	$OpenBSD: ospf.h,v 1.12 2005/05/10 20:20:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -35,7 +35,7 @@
 #define MIN_METRIC		1
 #define MAX_METRIC		65535	/* sum & as-ext lsa use 24bit metrics */
 
-#define DEFAULT_PRIORITY	0 /* XXX force to 0 for now */
+#define DEFAULT_PRIORITY	1
 #define MIN_PRIORITY		0
 #define MAX_PRIORITY		255
 
