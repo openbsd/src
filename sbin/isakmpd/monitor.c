@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.44 2005/05/05 09:54:37 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.45 2005/05/10 11:12:50 hshoexer Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -160,6 +160,7 @@ monitor_exit(int code)
 	if (m_state.pid != 0)
 		kill(m_state.pid, SIGKILL);
 
+	close(m_state.s);
 	exit(code);
 }
 
@@ -521,7 +522,6 @@ set_monitor_signals(void)
 	signal(SIGUSR1, sig_pass_to_chld);
 }
 
-/* Help functions for monitor_loop().  */
 /* ARGSUSED */
 static void
 monitor_got_sigchld(int sig)
@@ -544,24 +544,11 @@ void
 monitor_loop(int debug)
 {
 	pid_t	 pid;
-	fd_set	*fds;
-	size_t	 fdsn;
 	int32_t	 msgcode;
-	int	 status, n, maxfd;
+	int	 status;
 
 	if (!debug)
 		log_to(0);
-
-	maxfd = m_state.s + 1;
-
-	fdsn = howmany(maxfd, NFDBITS) * sizeof(fd_mask);
-	fds = (fd_set *)malloc(fdsn);
-	if (!fds) {
-		kill(m_state.pid, SIGTERM);
-		log_fatal("monitor_loop: malloc (%lu) failed",
-		    (unsigned long)fdsn);
-		return;
-	}
 
 	while (cur_state < STATE_QUIT) {
 		/*
@@ -586,83 +573,68 @@ monitor_loop(int debug)
 			}
 		}
 
-		bzero(fds, fdsn);
-		FD_SET(m_state.s, fds);
+		if (m_read_int32(m_state.s, &msgcode))
+			break;
 
-		n = select(maxfd, fds, NULL, NULL, NULL);
-		if (n <= 0) {
-			if (n && errno != EINTR) {
-				log_error("select");
-				sleep(1);
-			}
-			continue;
-		}
-		if (FD_ISSET(m_state.s, fds)) {
-			if (m_read_int32(m_state.s, &msgcode)) {
-				m_flush(m_state.s);
-				continue;
-			}
-			switch (msgcode) {
-			case MONITOR_GET_FD:
-				m_priv_getfd(m_state.s);
-				break;
+		switch (msgcode) {
+		case MONITOR_GET_FD:
+			m_priv_getfd(m_state.s);
+			break;
 
-			case MONITOR_UI_INIT:
-				LOG_DBG((LOG_MISC, 80,
-				    "monitor_loop: MONITOR_UI_INIT"));
-				m_priv_test_state(STATE_INIT);
-				m_priv_ui_init(m_state.s);
-				break;
+		case MONITOR_UI_INIT:
+			LOG_DBG((LOG_MISC, 80,
+			    "monitor_loop: MONITOR_UI_INIT"));
+			m_priv_test_state(STATE_INIT);
+			m_priv_ui_init(m_state.s);
+			break;
 
-			case MONITOR_PFKEY_OPEN:
-				LOG_DBG((LOG_MISC, 80,
-				    "monitor_loop: MONITOR_PFKEY_OPEN"));
-				m_priv_test_state(STATE_INIT);
-				m_priv_pfkey_open(m_state.s);
-				break;
+		case MONITOR_PFKEY_OPEN:
+			LOG_DBG((LOG_MISC, 80,
+			    "monitor_loop: MONITOR_PFKEY_OPEN"));
+			m_priv_test_state(STATE_INIT);
+			m_priv_pfkey_open(m_state.s);
+			break;
 
-			case MONITOR_GET_SOCKET:
-				LOG_DBG((LOG_MISC, 80,
-				    "monitor_loop: MONITOR_GET_SOCKET"));
-				m_priv_test_state(STATE_INIT);
-				m_priv_getsocket(m_state.s);
-				break;
+		case MONITOR_GET_SOCKET:
+			LOG_DBG((LOG_MISC, 80,
+			    "monitor_loop: MONITOR_GET_SOCKET"));
+			m_priv_test_state(STATE_INIT);
+			m_priv_getsocket(m_state.s);
+			break;
 
-			case MONITOR_SETSOCKOPT:
-				LOG_DBG((LOG_MISC, 80,
-				    "monitor_loop: MONITOR_SETSOCKOPT"));
-				m_priv_test_state(STATE_INIT);
-				m_priv_setsockopt(m_state.s);
-				break;
+		case MONITOR_SETSOCKOPT:
+			LOG_DBG((LOG_MISC, 80,
+			    "monitor_loop: MONITOR_SETSOCKOPT"));
+			m_priv_test_state(STATE_INIT);
+			m_priv_setsockopt(m_state.s);
+			break;
 
-			case MONITOR_BIND:
-				LOG_DBG((LOG_MISC, 80,
-				    "monitor_loop: MONITOR_BIND"));
-				m_priv_test_state(STATE_INIT);
-				m_priv_bind(m_state.s);
-				break;
+		case MONITOR_BIND:
+			LOG_DBG((LOG_MISC, 80,
+			    "monitor_loop: MONITOR_BIND"));
+			m_priv_test_state(STATE_INIT);
+			m_priv_bind(m_state.s);
+			break;
 
-			case MONITOR_INIT_DONE:
-				LOG_DBG((LOG_MISC, 80,
-				    "monitor_loop: MONITOR_INIT_DONE"));
-				m_priv_test_state(STATE_INIT);
-				m_priv_increase_state(STATE_RUNNING);
-				break;
+		case MONITOR_INIT_DONE:
+			LOG_DBG((LOG_MISC, 80,
+			    "monitor_loop: MONITOR_INIT_DONE"));
+			m_priv_test_state(STATE_INIT);
+			m_priv_increase_state(STATE_RUNNING);
+			break;
 
-			case MONITOR_SHUTDOWN:
-				LOG_DBG((LOG_MISC, 80,
-				    "monitor_loop: MONITOR_SHUTDOWN"));
-				m_priv_increase_state(STATE_QUIT);
-				break;
+		case MONITOR_SHUTDOWN:
+			LOG_DBG((LOG_MISC, 80,
+			    "monitor_loop: MONITOR_SHUTDOWN"));
+			m_priv_increase_state(STATE_QUIT);
+			break;
 
-			default:
-				log_print("monitor_loop: got unknown code %d",
-				    msgcode);
-			}
+		default:
+			log_print("monitor_loop: got unknown code %d",
+			    msgcode);
 		}
 	}
 
-	free(fds);
 	exit(0);
 }
 
