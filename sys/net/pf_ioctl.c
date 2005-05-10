@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.139 2005/03/03 07:13:39 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.140 2005/05/10 13:15:15 joel Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1559,29 +1559,37 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCKILLSTATES: {
 		struct pf_state		*state;
+		struct pf_state_host	*src, *dst;
 		struct pfioc_state_kill	*psk = (struct pfioc_state_kill *)addr;
 		int			 killed = 0;
 
 		RB_FOREACH(state, pf_state_tree_id, &tree_id) {
+			if (state->direction == PF_OUT) {
+				src = &state->lan;
+				dst = &state->ext;
+			} else {
+				src = &state->ext;
+				dst = &state->lan;
+			}
 			if ((!psk->psk_af || state->af == psk->psk_af)
 			    && (!psk->psk_proto || psk->psk_proto ==
 			    state->proto) &&
 			    PF_MATCHA(psk->psk_src.neg,
 			    &psk->psk_src.addr.v.a.addr,
 			    &psk->psk_src.addr.v.a.mask,
-			    &state->lan.addr, state->af) &&
+			    &src->addr, state->af) &&
 			    PF_MATCHA(psk->psk_dst.neg,
 			    &psk->psk_dst.addr.v.a.addr,
 			    &psk->psk_dst.addr.v.a.mask,
-			    &state->ext.addr, state->af) &&
+			    &dst->addr, state->af) &&
 			    (psk->psk_src.port_op == 0 ||
 			    pf_match_port(psk->psk_src.port_op,
 			    psk->psk_src.port[0], psk->psk_src.port[1],
-			    state->lan.port)) &&
+			    src->port)) &&
 			    (psk->psk_dst.port_op == 0 ||
 			    pf_match_port(psk->psk_dst.port_op,
 			    psk->psk_dst.port[0], psk->psk_dst.port[1],
-			    state->ext.port)) &&
+			    dst->port)) &&
 			    (!psk->psk_ifname[0] || !strcmp(psk->psk_ifname,
 			    state->u.s.kif->pfik_name))) {
 				state->timeout = PFTM_PURGE;
