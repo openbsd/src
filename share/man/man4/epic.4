@@ -1,4 +1,4 @@
-.\"     $OpenBSD: tx.4,v 1.15 2005/02/05 23:58:17 jsg Exp $
+.\"     $OpenBSD: epic.4,v 1.1 2005/05/10 02:56:01 brad Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,14 +24,14 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 21, 1998
-.Dt TX 4
+.Dd May 09, 2005
+.Dt EPIC 4
 .Os
 .Sh NAME
-.Nm tx
-.Nd SMC 9432 10/100 Mbps Ethernet driver
+.Nm epic
+.Nd SMC83C170 (EPIC/100) Ethernet driver
 .Sh SYNOPSIS
-.Cd "tx* at pci?"
+.Cd "epic* at pci?"
 .Cd "qsphy* at mii?"
 .Sh DESCRIPTION
 The
@@ -89,24 +89,6 @@ Use 10baseT, half duplex
 .It media 10baseT mediaopt loopback
 Put the interface into loopback mode
 .El
-.Sh DIAGNOSTICS
-.Bl -diag
-.It "tx%d: device timeout %d packets"
-The device stopped responding.
-Device and driver reset follows this error.
-.It "tx%d: PCI fatal error occurred (%s)"
-One of following errors occurred: PCI Target Abort, PCI Master Abort, Data
-Parity Error or Address Parity Error.
-Device and driver reset follows this error.
-.It "tx%d: WARNING! no link established"
-No media connected.
-Displayed at startup only.
-.It "tx%d: cannot allocate mbuf header/cluster"
-Failed to allocate memory for a received packet.
-Packet was dropped.
-.It "tx%d: can't stop %s DMA"
-While resetting, the driver failed to stop the device correctly.
-.El
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
@@ -118,10 +100,12 @@ While resetting, the driver failed to stop the device correctly.
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
 .Sh HISTORY
-.Ox
-support for the
+The
 .Nm
-first appeared in
-.Ox 2.4 .
-.Sh BUGS
-Multicast packet filtering is not supported.
+device driver first appeared in
+.Nx 1.4 .
+.Ox
+support was added in
+.Ox 3.8 .
+.Sh AUTHORS
+Jason R. Thorpe

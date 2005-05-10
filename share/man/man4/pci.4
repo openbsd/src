@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.113 2005/03/18 02:23:38 jsg Exp $
+.\"	$OpenBSD: pci.4,v 1.114 2005/05/10 02:56:01 brad Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -222,6 +222,8 @@ Midway-based Efficient Networks Inc.
 and Adaptec ATM interfaces.
 .It Xr ep 4
 3Com 3c590 and 3c595 Ethernet interfaces.
+.It Xr epic 4
+SMC83C170 (EPIC/100) Ethernet interfaces.
 .It Xr fpa 4
 .Tn DEC
 DEFPA
@@ -277,8 +279,6 @@ Sundance/Tamarack TC9021 Gigabit Ethernet driver.
 Alteon Networks Tigon I and Tigon II Gigabit Ethernet interfaces.
 .It Xr tl 4
 Texas Instruments ThunderLAN-based Ethernet interfaces.
-.It Xr tx 4
-SMC 9432 10/100 Mbps Ethernet interfaces.
 .It Xr txp 4
 3Com 3XP Typhoon/Sidewinder (3C990) 10/100 Mbps Ethernet interfaces.
 .It Xr vge 4
@@ -506,6 +506,7 @@ driver.
 .Xr emu 4 ,
 .\" no manpage .Xr en 4 ,
 .Xr ep 4 ,
+.Xr epic 4 ,
 .Xr esa 4 ,
 .Xr eso 4 ,
 .Xr fms 4 ,
@@ -568,7 +569,6 @@ driver.
 .Xr trm 4 ,
 .Xr tsp 4 ,
 .Xr twe 4 ,
-.Xr tx 4 ,
 .Xr txp 4 ,
 .Xr ubsec 4 ,
 .Xr uhci 4 ,
