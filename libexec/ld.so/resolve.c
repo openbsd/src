@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.26 2005/04/06 00:16:53 deraadt Exp $ */
+/*	$OpenBSD: resolve.c,v 1.27 2005/05/10 03:36:07 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -187,8 +187,9 @@ _dl_lookup_object(const char *name)
 	return(0);
 }
 
-int find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
-    int flags, const Elf_Sym **ref, const Elf_Sym **weak_sym,
+int _dl_find_symbol_obj(elf_object_t *object, const char *name,
+    unsigned long hash, int flags, const Elf_Sym **ref,
+    const Elf_Sym **weak_sym,
     elf_object_t **weak_object);
 
 sym_cache *_dl_symcache;
@@ -261,7 +262,7 @@ _dl_find_symbol(const char *name, elf_object_t *startlook,
 	}
 
 	if (req_obj->dyn.symbolic)
-		if (find_symbol_obj(req_obj, name, h, flags, ref, &weak_sym,
+		if (_dl_find_symbol_obj(req_obj, name, h, flags, ref, &weak_sym,
 		    &weak_object)) {
 			object = req_obj;
 			found = 1;
@@ -278,7 +279,7 @@ retry_nonglobal_dlo:
 		    (object != req_obj))
 			continue;
 
-		if (find_symbol_obj(object, name, h, flags, ref, &weak_sym,
+		if (_dl_find_symbol_obj(object, name, h, flags, ref, &weak_sym,
 		    &weak_object)) {
 			found = 1;
 			break;
@@ -318,7 +319,7 @@ found:
 }
 
 int
-find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
+_dl_find_symbol_obj(elf_object_t *object, const char *name, unsigned long hash,
     int flags, const Elf_Sym **ref, const Elf_Sym **weak_sym,
     elf_object_t **weak_object)
 {

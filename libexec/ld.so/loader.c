@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.85 2005/04/06 00:16:53 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.86 2005/05/10 03:36:07 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -71,6 +71,8 @@ struct r_debug *_dl_debug_map;
 
 void _dl_dopreload(char *paths);
 
+int _dl_exiting;
+
 void
 _dl_debug_state(void)
 {
@@ -78,27 +80,102 @@ _dl_debug_state(void)
 }
 
 /*
- * Routine to walk through all of the objects except the first
- * (main executable).
+ * Run dtors for the current object, then notify all of the DT_NEEDED
+ * libraries that it can be unloaded (or ref count lowered).
  */
+
 void
-_dl_run_dtors(elf_object_t *object)
+_dl_run_all_dtors()
 {
-	if (object->dyn.fini) {
-		DL_DEB(("doing dtors @%p: [%s]\n",
-		    object->dyn.fini, object->load_name));
-		(*object->dyn.fini)();
+	elf_object_t *node;
+	int fini_complete;
+	struct dep_node *dnode;
+
+	fini_complete = 0;
+
+	while (fini_complete == 0) {
+		fini_complete = 1;
+		for (node = _dl_objects->next;
+		    node != NULL;
+		    node = node->next) {
+			if ((node->dyn.fini) &&
+			    (node->refcount == 0) &&
+			    (node->status & STAT_INIT_DONE) &&
+			    ((node->status & STAT_FINI_DONE) == 0)) {
+				node->status |= STAT_FINI_READY;
+			    }
+		}
+		for (node = _dl_objects->next;
+		    node != NULL;
+		    node = node->next ) {
+			if ((node->dyn.fini) &&
+			    (node->refcount == 0) &&
+			    (node->status & STAT_INIT_DONE) &&
+			    ((node->status & STAT_FINI_DONE) == 0))
+				for (dnode = node->first_child;
+				    dnode != NULL;
+				    dnode = dnode->next_sibling)
+					dnode->data->status &= ~STAT_FINI_READY;
+		}
+
+
+		for (node = _dl_objects->next;
+		    node != NULL;
+		    node = node->next ) {
+			if (node->status & STAT_FINI_READY) {
+				DL_DEB(("doing dtors obj %p @%p: [%s]\n",
+				    node, node->dyn.fini,
+				    node->load_name));
+
+				fini_complete = 0;
+				node->status |= STAT_FINI_DONE;
+				node->status &= ~STAT_FINI_READY;
+				(*node->dyn.fini)();
+			}
+		}
 	}
-	if (object->next)
-		_dl_run_dtors(object->next);
 }
 
 void
+_dl_run_dtors(elf_object_t *object)
+{
+	struct dep_node *n;
+
+	for (n = object->first_child; n; n = n->next_sibling) {
+		_dl_notify_unload_shlib(n->data);
+	}
+
+	_dl_run_all_dtors();
+
+
+	if (_dl_exiting == 0)
+		for (n = object->first_child; n; n = n->next_sibling)
+			_dl_unload_shlib(n->data);
+}
+
+/*
+ * Routine to walk through all of the objects except the first
+ * (main executable).
+ *
+ * Big question, should dlopen()ed objects be unloaded before or after
+ * the destructor for the main application runs?
+ */
+void
 _dl_dtors(void)
 {
+	_dl_thread_kern_stop();
+	_dl_exiting = 1;
+
+	/* ORDER? */
+	_dl_unload_dlopen();
+
 	DL_DEB(("doing dtors\n"));
-	if (_dl_objects->next)
-		_dl_run_dtors(_dl_objects->next);
+
+	/* main program runs its dtors itself
+	 * but we want to run dtors on all it's children);
+	 */
+	_dl_objects->status |= STAT_FINI_DONE;
+	_dl_run_dtors(_dl_objects);
 }
 
 void
@@ -676,8 +753,8 @@ _dl_call_init(elf_object_t *object)
 		return;
 
 	if (object->dyn.init) {
-		DL_DEB(("doing ctors @%p: [%s]\n",
-		    object->dyn.init, object->load_name));
+		DL_DEB(("doing ctors obj %p @%p: [%s]\n",
+		    object, object->dyn.init, object->load_name));
 		(*object->dyn.init)();
 	}
 
