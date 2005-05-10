@@ -1258,7 +1258,7 @@ bad:
 				goto err;
 				}
 
-			strcpy(buf[2],outdir);
+			strlcpy(buf[2],outdir,sizeof(buf[2]));
 
 #ifndef OPENSSL_SYS_VMS
 			BUF_strlcat(buf[2],"/",sizeof(buf[2]));
