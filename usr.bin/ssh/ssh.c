@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.237 2005/04/26 13:08:37 jakob Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.238 2005/05/10 10:28:11 djm Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -1083,7 +1083,7 @@ ssh_control_listener(void)
 	old_umask = umask(0177);
 	if (bind(control_fd, (struct sockaddr*)&addr, addr.sun_len) == -1) {
 		control_fd = -1;
-		if (errno == EINVAL)
+		if (errno == EINVAL || errno == EADDRINUSE)
 			fatal("ControlSocket %s already exists",
 			    options.control_path);
 		else
