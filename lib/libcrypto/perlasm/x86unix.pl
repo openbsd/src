@@ -179,7 +179,9 @@ sub main'not	{ &out1("notl",@_); }
 sub main'call	{ &out1("call",($_[0]=~/^\.L/?'':$under).$_[0]); }
 sub main'ret	{ &out0("ret"); }
 sub main'nop	{ &out0("nop"); }
+sub main'test   { &out2("testl",@_); }
 sub main'movz	{ &out2("movzbl",@_); }
+sub main'neg    { &out1("negl",@_); }
 
 # The bswapl instruction is new for the 486. Emulate if i386.
 sub main'bswap
@@ -462,6 +464,12 @@ sub main'comment
 		}
 	}
 
+sub main'public_label
+        {
+        $label{$_[0]}="${under}${_[0]}" if (!defined($label{$_[0]}));
+        push(@out,".globl\t$label{$_[0]}\n");
+        }
+
 sub main'label
 	{
 	if (!defined($label{$_[0]}))
@@ -498,7 +506,7 @@ sub main'file_end
 
 sub main'data_word
 	{
-	push(@out,"\t.long $_[0]\n");
+	push(@out,"\t.long\t".join(',',@_)."\n");
 	}
 
 # debug output functions: puts, putx, printf

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.42 2005/04/29 07:54:15 djm Exp $
+# $OpenBSD: Makefile,v 1.43 2005/05/10 14:03:22 markus Exp $
 
 LIB=	crypto
 
@@ -39,7 +39,7 @@ SRCS+=	sha_dgst.c sha1dgst.c sha_one.c sha1_one.c
 SRCS+=	hmac.c							
 SRCS+=	rmd_dgst.c rmd_one.c				
 SRCS+=	acss_skey.c acss_enc.c
-SRCS+= aes_cbc.c aes_cfb.c aes_ctr.c aes_ecb.c aes_ofb.c aes_misc.c aes_core.c
+SRCS+= aes_cbc.c aes_cfb.c aes_ctr.c aes_ecb.c aes_ofb.c aes_misc.c
 SRCS+=	cbc_cksm.c cbc_enc.c cfb64enc.c cfb_enc.c \
 	ecb3_enc.c ecb_enc.c enc_read.c enc_writ.c \
 	ofb64enc.c ofb_enc.c pcbc_enc.c \
@@ -275,12 +275,14 @@ des_enc.po:
 .endif  
 
 .if (${MACHINE_ARCH} == "i386")
+CFLAGS+= -DAES_ASM
 CFLAGS+= -DMD5_ASM
 CFLAGS+= -DSHA1_ASM
 CFLAGS+= -DRMD160_ASM
 CFLAGS+= -DOPENBSD_CAST_ASM
 CFLAGS+= -DOPENBSD_DES_ASM
 SSLASM=\
+	aes aes-586 \
 	bf bf-586 \
 	bn bn-586 \
 	bn co-586 \
@@ -300,15 +302,18 @@ ${f}.S: ${LCRYPTO_SRC}/${dir}/asm/${f}.pl ${LCRYPTO_SRC}/perlasm/x86unix.pl
 SRCS+= bf_cbc.c	
 .else
 .if (${MACHINE_ARCH} == "vax")
+SRCS+= aes_core.c
 SRCS+= bf_enc.c
 SRCS+= bn_asm_vax.S
 SRCS+= rc4_enc.c	
 .else
 .if (${MACHINE_ARCH} == "amd64")
+SRCS+= aes_core.c
 SRCS+= bf_enc.c
 SRCS+= x86_64-gcc.c
 SRCS+= rc4_enc.c	
 .else
+SRCS+= aes_core.c
 SRCS+= bf_enc.c	
 SRCS+= bn_asm.c
 SRCS+= rc4_enc.c	
