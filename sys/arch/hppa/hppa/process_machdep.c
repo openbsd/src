@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.11 2004/09/14 23:39:32 mickey Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.12 2005/05/10 11:32:51 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -93,7 +93,8 @@ process_read_fpregs(p, fpregs)
 		fpu_save((vaddr_t)p->p_addr->u_pcb.pcb_fpregs);
 		mtctl(0, CR_CCR);
 	}
-	bcopy(p->p_addr->u_pcb.pcb_fpregs, fpregs, 32*8);
+	bcopy(p->p_addr->u_pcb.pcb_fpregs, fpregs, 32 * 8);
+	pdcache(HPPA_SID_KERNEL, (vaddr_t)p->p_addr->u_pcb.pcb_fpregs, 32 * 8);
 
 	return (0);
 }
@@ -158,6 +159,7 @@ process_write_fpregs(p, fpregs)
 	}
 
 	bcopy(fpregs, p->p_addr->u_pcb.pcb_fpregs, 32 * 8);
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)p->p_addr->u_pcb.pcb_fpregs, 32 * 8);
 
 	return (0);
 }
