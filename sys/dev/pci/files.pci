@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.175 2005/05/02 17:26:00 grange Exp $
+#	$OpenBSD: files.pci,v 1.176 2005/05/10 01:16:32 brad Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -303,10 +303,9 @@ file	dev/pci/if_em_hw.c		em
 attach	dc at pci with dc_pci
 file	dev/pci/if_dc_pci.c		dc_pci
 
-# SMC EPIC, 83c170
-device	tx: ether, ifnet, mii, ifmedia
-attach	tx at pci
-file	dev/pci/if_tx.c			tx
+# SMC EPIC/100 Fast Ethernet on PCI
+attach	epic at pci with epic_pci
+file	dev/pci/if_epic_pci.c		epic_pci
 
 # Alteon Tigon I & II
 device	ti: ether, ifnet, ifmedia, firmload

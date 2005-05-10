@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.52 2005/05/01 07:54:41 david Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.53 2005/05/10 01:16:31 brad Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -201,8 +201,7 @@ skc*	at pci?				# SysKonnect GEnesis 984x
 sk*	at skc?				#  each port of above
 an*	at pci?				# Cisco/Aironet 802.11DS
 
-#BROKEN: The following driver has 64-bit issues
-#tx*	at pci?				# SMC 83C170 EPIC ethernet
+#epic*	at pci?				# SMC EPIC/100 ethernet
 
 vga*	at pci?				# PCI VGA graphics
 tga*	at pci?				# DEC ZLXp-E[123] graphics

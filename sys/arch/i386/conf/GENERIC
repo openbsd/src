@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.411 2005/05/02 17:26:00 grange Exp $
+#	$OpenBSD: GENERIC,v 1.412 2005/05/10 01:16:31 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -396,7 +396,7 @@ xl*	at cardbus?			# 3C575/3C656 ethernet
 rl*	at pci?				# RealTek 81[23]9 ethernet
 rl*	at cardbus?			# RealTek 81[23]9 ethernet
 mtd*	at pci?				# Myson MTD800/803/891
-tx*	at pci?				# SMC 83C170 EPIC ethernet
+epic*	at pci?				# SMC EPIC/100 ethernet
 tl*	at pci?				# Compaq Thunderlan ethernet
 vr*	at pci?				# VIA Rhine ethernet
 wb*	at pci?				# Winbond W89C840F ethernet

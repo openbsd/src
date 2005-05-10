@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.146 2005/05/01 17:19:33 david Exp $
+#	$OpenBSD: GENERIC,v 1.147 2005/05/10 01:16:31 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -220,8 +220,7 @@ skc*	at pci?				# SysKonnect GEnesis 984x
 sk*	at skc?				#  each port of above
 an*	at pci?				# Cisco/Aironet 802.11DS
 
-#BROKEN: The following driver has 64-bit issues
-#tx*	at pci?				# SMC 83C170 EPIC ethernet
+#epic*	at pci?				# SMC EPIC/100 ethernet
 
 vga*	at pci?				# PCI VGA graphics
 tga*	at pci?				# DEC ZLXp-E[123] graphics

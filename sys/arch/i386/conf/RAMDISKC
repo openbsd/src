@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKC,v 1.56 2005/05/01 07:54:42 david Exp $
+#	$OpenBSD: RAMDISKC,v 1.57 2005/05/10 01:16:31 brad Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -263,7 +263,7 @@ xl*	at pci?				# 3C9xx ethernet
 xl*	at cardbus?			# 3C575 ethernet
 rl*	at pci?				# RealTek 81[23]9 ethernet
 rl*	at cardbus?			# RealTek 81[23]9 ethernet
-#tx*	at pci?				# SMC 83C170 EPIC ethernet
+#epic*	at pci?				# SMC EPIC/100 ethernet
 #tl*	at pci?				# Compaq Thunderlan ethernet
 #vr*	at pci?				# VIA Rhine ethernet
 #wb*	at pci?				# Winbond W89C840F ethernet

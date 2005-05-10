@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.335 2005/05/01 21:36:57 brad Exp $
+#	$OpenBSD: files,v 1.336 2005/05/10 01:16:31 brad Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -257,6 +257,10 @@ file	dev/ic/dc.c			dc
 # SMC 91Cxx Ethernet Controller
 device	sm: ether, ifnet, ifmedia
 file	dev/ic/smc91cxx.c		sm
+
+# SMC 83C170 EPIC/100 Fast Ethernet Controller
+device	epic: ether, ifnet, ifmedia, mii
+file	dev/ic/smc83c170.c		epic
 
 # Novell NE2000-compatible Ethernet cards, based on the
 # National Semiconductor DS8390.
