@@ -1,4 +1,4 @@
-/* 	$OpenBSD: ld.script,v 1.13 2004/04/07 18:24:19 mickey Exp $	*/
+/* 	$OpenBSD: ld.script,v 1.14 2005/05/10 11:31:21 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -49,6 +49,7 @@ SECTIONS
 	{
 		__rodata_start = .;
 		*(.rodata) *(.rodata1)
+		. = ALIGN(8);
 		__unwind_start = .;
 		*(.PARISC.unwind)
 		__unwind_end = .;
