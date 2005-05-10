@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.4 2005/05/01 07:54:42 david Exp $
+#	$OpenBSD: GENERIC,v 1.5 2005/05/10 12:03:32 mickey Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -124,6 +124,7 @@ pci*	at ppb?
 #em*	at pci?			# Intel Pro/1000 ethernet
 #ti*	at pci?			# Alteon Tigon 1Gb ethernet
 #txp*	at pci?			# 3com 3CR990
+#epic*	at pci?			# SMC EPIC/100 ethernet
 #fpa*	at pci?			# DEC DEFPA FDDI
 dc*	at pci?			# 21143, "tulip" clone ethernet
 #dc*	at cardbus?
