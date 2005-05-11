@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.63 2005/04/25 17:55:51 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.64 2005/05/11 00:33:10 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1582,23 +1582,32 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 	/* Marvell Yukon VPD's can freqently be bogus */
 	switch (sc->sk_type) {
 	case SK_GENESIS:
-		sc->sk_name = sc->sk_vpd_prodname;
+		sc->sk_name = "SysKonnect GEnesis";
 		break;
 	case SK_YUKON:
-		sc->sk_name = "Marvell Yukon Gigabit Ethernet";
+		sc->sk_name = "Marvell Yukon";
 		break;
 	case SK_YUKON_LITE:
-		sc->sk_name = "Marvell Yukon Lite Gigabit Ethernet";
+		sc->sk_name = "Marvell Yukon Lite";
 		break;
 	case SK_YUKON_LP:
-		sc->sk_name = "Marvell Yukon LP Gigabit Ethernet";
+		sc->sk_name = "Marvell Yukon LP";
+		break;
+	case SK_YUKON_XL:
+		sc->sk_name = "Marvell Yukon-2 XL";
+		break;
+	case SK_YUKON_EC:
+		sc->sk_name = "Marvell Yukon-2 EC";
+		break;
+	case SK_YUKON_FE:
+		sc->sk_name = "Marvell Yukon-2 FE";
 		break;
 	default:
-		sc->sk_name = "Marvell Yukon (Unknown) Gigabit Ethernet";
+		sc->sk_name = "Marvell Yukon (Unknown)";
 	}
 
 	/* Yukon Lite Rev A0 needs special test, from sk98lin driver */
-	if (sc->sk_type == SK_YUKON) {
+	if (sc->sk_type == SK_YUKON || sc->sk_type == SK_YUKON_LP) {
 		uint32_t flashaddr;
 		uint8_t testbyte;
 
@@ -2078,7 +2087,6 @@ sk_tick(void *xsc_if)
 	SK_XM_CLRBIT_2(sc_if, XM_IMR, XM_IMR_GP0_SET);
 	SK_XM_READ_2(sc_if, XM_ISR);
 	mii_tick(mii);
-	mii_pollstat(mii);
 	timeout_del(&sc_if->sk_tick_ch);
 }
 
@@ -2125,7 +2133,6 @@ sk_intr_bcom(struct sk_if_softc *sc_if)
 			SK_IF_WRITE_1(sc_if, 0, SK_LINKLED1_CTL,
 			    SK_LINKLED_ON|SK_LINKLED_LINKSYNC_OFF|
 			    SK_LINKLED_BLINK_OFF);
-			mii_pollstat(mii);
 		} else {
 			mii_tick(mii);
 			timeout_add(&sc_if->sk_tick_ch, hz);
@@ -2423,10 +2430,20 @@ void sk_init_yukon(sc_if)
 {
 	u_int32_t		phy;
 	u_int16_t		reg;
+	struct sk_softc		*sc;
 	int			i;
+
+	sc = sc_if->sk_softc;
 
 	DPRINTFN(2, ("sk_init_yukon: start: sk_csr=%#x\n",
 		     CSR_READ_4(sc_if->sk_softc, SK_CSR)));
+
+	if (sc->sk_type == SK_YUKON_LITE &&
+	    sc->sk_rev >= SK_YUKON_LITE_REV_A3) {
+		/* Take PHY out of reset. */
+		sk_win_write_4(sc, SK_GPIO,
+			(sk_win_read_4(sc, SK_GPIO) | SK_GPIO_DIR9) & ~SK_GPIO_DAT9);
+	}
 
 	/* GMAC and GPHY Reset */
 	SK_IF_WRITE_4(sc_if, 0, SK_GPHY_CTRL, SK_GPHY_RESET_SET);
@@ -2438,7 +2455,6 @@ void sk_init_yukon(sc_if)
 	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_RESET_CLEAR);
 	SK_IF_WRITE_4(sc_if, 0, SK_GMAC_CTRL, SK_GMAC_RESET_SET);
 	DELAY(1000);
-
 
 	DPRINTFN(6, ("sk_init_yukon: 2\n"));
 
