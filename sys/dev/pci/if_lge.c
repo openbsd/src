@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.18 2005/04/25 17:55:51 brad Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.19 2005/05/11 03:54:59 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1107,7 +1107,6 @@ void lge_tick(xsc)
 
 	if (!sc->lge_link) {
 		mii_tick(mii);
-		mii_pollstat(mii);
 		if (mii->mii_media_status & IFM_ACTIVE &&
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 			sc->lge_link++;
