@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.24 2005/05/08 18:13:17 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.25 2005/05/11 05:15:01 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2830,7 +2830,8 @@ ath_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	if (error != 0)
 		goto bad;
 	rfilt = ath_calcrxfilter(sc);
-	if (nstate == IEEE80211_S_SCAN) {
+	if (nstate == IEEE80211_S_SCAN ||
+	    ic->ic_opmode == IEEE80211_M_MONITOR) {
 		bssid = sc->sc_broadcast_addr;
 	} else {
 		bssid = ni->ni_bssid;
@@ -2937,6 +2938,9 @@ ath_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 void
 ath_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 {
+	if (ic->ic_opmode == IEEE80211_M_MONITOR)
+		return;
+
 	if (isnew) {
 		struct ath_node *an = (struct ath_node *) ni;
 
@@ -3113,7 +3117,8 @@ ath_rate_ctl_reset(struct ath_softc *sc, enum ieee80211_state state)
 	ni = ic->ic_bss;
 	an = (struct ath_node *) ni;
 	an->an_tx_ok = an->an_tx_err = an->an_tx_retr = an->an_tx_upper = 0;
-	if (state == IEEE80211_S_RUN) {
+	if (state == IEEE80211_S_RUN &&
+	    ic->ic_opmode != IEEE80211_M_MONITOR) {
 		/* start with highest negotiated rate */
 		KASSERT(ni->ni_rates.rs_nrates > 0,
 			("transition to RUN state w/ no rates!"));
