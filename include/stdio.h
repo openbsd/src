@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.31 2005/04/30 09:25:17 espie Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.32 2005/05/11 18:39:19 espie Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -327,14 +327,10 @@ int	 vscanf(const char *, _BSD_VA_LIST_)
 int	 vsscanf(const char *, const char *, _BSD_VA_LIST_)
 		__attribute__((__format__ (scanf, 2, 0)))
 		__attribute__((__nonnull__ (2)));
+int	 vfscanf(FILE *, const char *, _BSD_VA_LIST_)
+		__attribute__((__format__ (scanf, 2, 0)))
+		__attribute__((__nonnull__ (2)));
 __END_DECLS
-
-/*
- * This is a #define because the function is used internally and
- * (unlike vfscanf) the name __svfscanf is guaranteed not to collide
- * with a user function when _ANSI_SOURCE or _POSIX_SOURCE is defined.
- */
-#define	 vfscanf	__svfscanf
 
 /*
  * Stdio function-access interface.
@@ -355,7 +351,6 @@ __END_DECLS
  */
 __BEGIN_DECLS
 int	__srget(FILE *);
-int	__svfscanf(FILE *, const char *, _BSD_VA_LIST_);
 int	__swbuf(int, FILE *);
 __END_DECLS
 
