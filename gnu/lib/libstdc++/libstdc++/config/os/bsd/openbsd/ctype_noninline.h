@@ -31,7 +31,7 @@
 //
 // ISO C++ 14882: 22.1  Locales
 //
-  
+
 // Information as gleaned from /usr/include/ctype.h
 
   const ctype_base::mask*
@@ -41,14 +41,12 @@
   ctype<char>::ctype(__c_locale, const mask* __table, bool __del, 
 		     size_t __refs) 
   : __ctype_abstract_base<char>(__refs), _M_del(__table != 0 && __del), 
-  _M_toupper(NULL), _M_tolower(NULL), 
-  _M_table(__table ? __table : classic_table()) 
+  _M_toupper(NULL), _M_tolower(NULL), _M_table(__table ? __table : _ctype_ + 1)
   { }
 
   ctype<char>::ctype(const mask* __table, bool __del, size_t __refs) 
   : __ctype_abstract_base<char>(__refs), _M_del(__table != 0 && __del), 
-  _M_toupper(NULL), _M_tolower(NULL), 
-  _M_table(__table ? __table : classic_table())
+  _M_toupper(NULL), _M_tolower(NULL), _M_table(__table ? __table : _ctype_ + 1)
   { }
 
   char
@@ -60,7 +58,7 @@
   {
     while (__low < __high)
       {
-	*__low = ::toupper((int) *__low);
+	*__low = ::toupper(static_cast<int>(*__low));
 	++__low;
       }
     return __high;
@@ -68,14 +66,14 @@
 
   char
   ctype<char>::do_tolower(char __c) const
-  { return ::tolower((int) __c); }
+  { return ::tolower(static_cast<int>(__c)); }
 
   const char* 
   ctype<char>::do_tolower(char* __low, const char* __high) const
   {
     while (__low < __high)
       {
-	*__low = ::tolower((int) *__low);
+	*__low = ::tolower(static_cast<int>(*__low));
 	++__low;
       }
     return __high;
