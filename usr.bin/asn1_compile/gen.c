@@ -430,7 +430,8 @@ generate_type (const Symbol *s)
     struct import *i;
     char *filename;
 
-    asprintf (&filename, "%s_%s.x", STEM, s->gen_name);
+    if (asprintf (&filename, "%s_%s.x", STEM, s->gen_name) == -1)
+	err (1, NULL);
     codefile = fopen (filename, "w");
     if (codefile == NULL)
 	err (1, "fopen %s", filename);

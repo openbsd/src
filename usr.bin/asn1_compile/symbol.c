@@ -82,8 +82,11 @@ addsym (char *name)
   s = (Symbol *)hashtabsearch (htab, (void *)&key);
   if (s == NULL) {
     s = (Symbol *)malloc (sizeof (*s));
+    if (s == NULL)
+	err(1, NULL);
     s->name = name;
-    s->gen_name = strdup(name);
+    if ((s->gen_name = strdup(name)) == NULL)
+	err(1, NULL);
     output_name (s->gen_name);
     s->stype = SUndefined;
     hashtabadd (htab, s);

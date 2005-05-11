@@ -55,12 +55,12 @@ hashtabnew(int sz,
     assert(sz > 0);
 
     htab = (Hashtab *) malloc(sizeof(Hashtab) + (sz - 1) * sizeof(Hashentry *));
-    for (i = 0; i < sz; ++i)
-	htab->tab[i] = NULL;
 
     if (htab == NULL) {
 	return NULL;
     } else {
+	for (i = 0; i < sz; ++i)
+		htab->tab[i] = NULL;
 	htab->cmp = cmp;
 	htab->hash = hash;
 	htab->sz = sz;
