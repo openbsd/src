@@ -1,4 +1,4 @@
-/*	$OpenBSD: amireg.h,v 1.7 2005/03/29 22:40:38 marco Exp $	*/
+/*	$OpenBSD: amireg.h,v 1.8 2005/05/11 15:42:58 marco Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -208,6 +208,8 @@
 #define			AMI_FC_EINQ3_SOLICITED_FULL	0x02
 #define			AMI_FC_EINQ3_UNSOLICITED	0x03
 #define	AMI_MISC	0xa4
+#define		AMI_GET_IO_CMPL	0x5b
+#define		AMI_SET_IO_CMPL	0x5c
 #define	AMI_CHFUNC	0xa9
 #define	AMI_MANAGE	0xb0	/* manage functions */
 #define		AMI_MGR_LUN	0x00
