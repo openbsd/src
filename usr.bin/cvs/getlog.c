@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.23 2005/04/18 21:02:50 jfb Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.24 2005/05/11 22:50:09 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -57,7 +57,7 @@ struct cvs_cmd_info cvs_getlog = {
 	NULL,
 	cvs_getlog_remote,
 	NULL, NULL,
-	CF_RECURSE,
+	CF_IGNORE | CF_RECURSE,
 	CVS_REQ_LOG,
 	CVS_CMD_SENDDIR | CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2
 };
