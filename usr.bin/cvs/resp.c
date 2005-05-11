@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.31 2005/05/03 08:55:16 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.32 2005/05/11 00:07:57 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -705,7 +705,8 @@ cvs_resp_removed(struct cvsroot *root, int type, char *line)
 		cvs_ent_close(ef);
 	}
 
-	if ((type == CVS_RESP_REMOVED) && (unlink(fpath) == -1)) {
+	if ((type == CVS_RESP_REMOVED) && ((unlink(fpath) == -1) &&
+	    errno != ENOENT)) {
 		cvs_log(LP_ERRNO, "failed to unlink `%s'", file);
 		return (-1);
 	}
