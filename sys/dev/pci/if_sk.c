@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.64 2005/05/11 00:33:10 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.65 2005/05/11 02:27:23 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1578,8 +1578,6 @@ skc_attach(struct device *parent, struct device *self, void *aux)
 		goto fail;
 	}
 
-	/* determine whether to name it with VPD or just make it up */
-	/* Marvell Yukon VPD's can freqently be bogus */
 	switch (sc->sk_type) {
 	case SK_GENESIS:
 		sc->sk_name = "SysKonnect GEnesis";
