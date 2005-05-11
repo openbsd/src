@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.6 2005/04/15 11:49:37 pedro Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.7 2005/05/11 18:06:31 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -152,7 +152,7 @@ udf_hashrem(struct udf_node *node)
 	mtx_enter(&udfmp->hash_mtx);
 	lh = &udfmp->hashtbl[node->hash_id & udfmp->hashsz];
 	if (lh == NULL)
-		panic("hash entry is NULL, node->hash_id= %d\n", node->hash_id);
+		panic("hash entry is NULL, node->hash_id= %d", node->hash_id);
 	LIST_REMOVE(node, le);
 	mtx_leave(&udfmp->hash_mtx);
 
@@ -277,7 +277,7 @@ udf_timetotimespec(struct timestamp *time, struct timespec *t)
 	t->tv_sec += time->hour * 3600;
 	t->tv_sec += time->day * 3600 * 24;
 
-	/* Calclulate the month */
+	/* Calculate the month */
 	lpyear = udf_isaleapyear(year);
 	for (i = 1; i < time->month; i++)
 		t->tv_sec += mon_lens[lpyear][i] * 3600 * 24;
@@ -510,8 +510,8 @@ udf_transname(char *cs0string, char *destname, int len, struct udf_mnt *udfmp)
 
 /*
  * Compare a CS0 dstring with a name passed in from the VFS layer.  Return
- * 0 on a successful match, nonzero therwise.  Unicode work may need to be done
- * here also.
+ * 0 on a successful match, nonzero otherwise.  Unicode work may need to be
+ * done here also.
  */
 static int
 udf_cmpname(char *cs0string, char *cmpname, int cs0len, int cmplen, struct udf_mnt *udfmp)
