@@ -1,4 +1,4 @@
-/*	$OpenBSD: iswctype_sb.c,v 1.1 2005/04/30 09:14:23 espie Exp $	*/
+/*	$OpenBSD: iswctype_sb.c,v 1.2 2005/05/11 18:44:12 espie Exp $	*/
 /*	$NetBSD: iswctype_sb.c,v 1.3 2003/08/07 16:43:04 agc Exp $	*/
 
 /*
@@ -36,12 +36,13 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: iswctype_sb.c,v 1.1 2005/04/30 09:14:23 espie Exp $";
+static char rcsid[] = "$OpenBSD: iswctype_sb.c,v 1.2 2005/05/11 18:44:12 espie Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <wchar.h>
 #include <wctype.h>
 #include <ctype.h>
+#include "runetype.h"
 
 int
 iswalnum(wint_t c)
@@ -133,3 +134,65 @@ wcwidth(wint_t c)
 	return 1;
 }
 
+static _WCTypeEntry names[] = {
+	"alnum", _WCTYPE_INDEX_ALNUM,
+	"alpha", _WCTYPE_INDEX_ALPHA,
+	"blank", _WCTYPE_INDEX_BLANK,
+	"cntrl", _WCTYPE_INDEX_CNTRL,
+	"digit", _WCTYPE_INDEX_DIGIT,
+	"graph", _WCTYPE_INDEX_GRAPH,
+	"lower", _WCTYPE_INDEX_LOWER,
+	"print", _WCTYPE_INDEX_PRINT,
+	"punct", _WCTYPE_INDEX_PUNCT,
+	"space", _WCTYPE_INDEX_SPACE,
+	"upper", _WCTYPE_INDEX_UPPER,
+	"xdigit", _WCTYPE_INDEX_XDIGIT
+};
+
+wctype_t
+wctype(const char *charclass)
+{
+	int i;
+
+	for (i = 0; i < sizeof names / sizeof names[0]; i++)
+		if (strcmp(names[i].te_name, charclass) == 0)
+			return (wctype_t)(&names[i]);
+	return (wctype_t)NULL;
+}
+
+int
+iswctype(wint_t c, wctype_t charclass)
+{
+	_WCTypeEntry *e = (_WCTypeEntry *)charclass;
+	if (e == NULL) {
+		return 0;
+	}
+	switch (e->te_mask) {
+	case _WCTYPE_INDEX_ALNUM:
+		return iswalnum(c);
+	case _WCTYPE_INDEX_ALPHA:
+		return iswalpha(c);
+	case _WCTYPE_INDEX_BLANK:
+		return iswblank(c);
+	case _WCTYPE_INDEX_CNTRL:
+		return iswcntrl(c);
+	case _WCTYPE_INDEX_DIGIT:
+		return iswdigit(c);
+	case _WCTYPE_INDEX_GRAPH:
+		return iswgraph(c);
+	case _WCTYPE_INDEX_LOWER:
+		return iswlower(c);
+	case _WCTYPE_INDEX_PRINT:
+		return iswprint(c);
+	case _WCTYPE_INDEX_PUNCT:
+		return iswpunct(c);
+	case _WCTYPE_INDEX_SPACE:
+		return iswspace(c);
+	case _WCTYPE_INDEX_UPPER:
+		return iswupper(c);
+	case _WCTYPE_INDEX_XDIGIT:
+		return iswxdigit(c);
+	default:
+		return 0;
+	}
+}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.1 2005/04/14 20:59:10 espie Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.2 2005/05/11 18:44:12 espie Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -84,6 +84,11 @@ typedef	_BSD_WCHAR_T_	wchar_t;
 #undef	_BSD_WCHAR_T_
 #endif
 
+#ifdef	_BSD_MBSTATE_T_
+typedef	_BSD_MBSTATE_T_	mbstate_t;
+#undef	_BSD_MBSTATE_T_
+#endif
+
 #ifdef	_BSD_WINT_T_
 typedef	_BSD_WINT_T_	wint_t;
 #undef	_BSD_WINT_T_
@@ -99,6 +104,14 @@ typedef	_BSD_SIZE_T_	size_t;
 #endif
 
 __BEGIN_DECLS
+wint_t	btowc(int);
+size_t	mbrlen(const char * __restrict, size_t, mbstate_t * __restrict);
+size_t	mbrtowc(wchar_t * __restrict, const char * __restrict, size_t,
+	    mbstate_t * __restrict);
+int	mbsinit(const mbstate_t *);
+size_t	mbsrtowcs(wchar_t * __restrict, const char ** __restrict, size_t,
+	    mbstate_t * __restrict);
+size_t	wcrtomb(char * __restrict, wchar_t, mbstate_t * __restrict);
 wchar_t	*wcscat(wchar_t * __restrict, const wchar_t * __restrict);
 wchar_t	*wcschr(const wchar_t *, wchar_t);
 int	wcscmp(const wchar_t *, const wchar_t *);
@@ -113,6 +126,8 @@ wchar_t	*wcsncpy(wchar_t * __restrict , const wchar_t * __restrict,
 	    size_t);
 wchar_t	*wcspbrk(const wchar_t *, const wchar_t *);
 wchar_t	*wcsrchr(const wchar_t *, wchar_t);
+size_t	wcsrtombs(char * __restrict, const wchar_t ** __restrict, size_t,
+	    mbstate_t * __restrict);
 size_t	wcsspn(const wchar_t *, const wchar_t *);
 wchar_t	*wcsstr(const wchar_t *, const wchar_t *);
 wchar_t *wcstok(wchar_t * __restrict, const wchar_t * __restrict,
@@ -128,6 +143,7 @@ wchar_t	*wmemset(wchar_t *, wchar_t, size_t);
 
 size_t	wcslcat(wchar_t *, const wchar_t *, size_t);
 size_t	wcslcpy(wchar_t *, const wchar_t *, size_t);
+int	wctob(wint_t);
 __END_DECLS
 
 #endif /* !_WCHAR_H_ */

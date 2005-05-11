@@ -1,5 +1,5 @@
-/*	$OpenBSD: wctype.h,v 1.3 2005/05/11 18:44:12 espie Exp $	*/
-/*	$NetBSD: wctype.h,v 1.5 2003/03/02 22:18:11 tshiozak Exp $	*/
+/*	$OpenBSD: __mb_cur_max.c,v 1.1 2005/05/11 18:44:12 espie Exp $	*/
+/*	$NetBSD: __mb_cur_max.c,v 1.2 2001/01/25 01:25:06 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -25,52 +25,15 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	citrus Id: wctype.h,v 1.4 2000/12/21 01:50:21 itojun Exp
  */
 
-#ifndef _WCTYPE_H_
-#define	_WCTYPE_H_
+#if defined(LIBC_SCCS) && !defined(lint)
+static char rcsid[] = "$OpenBSD: __mb_cur_max.c,v 1.1 2005/05/11 18:44:12 espie Exp $";
+#endif /* LIBC_SCCS and not lint */
 
-#include <sys/cdefs.h>
-#include <machine/ansi.h>
+#include <sys/types.h>
+#include <limits.h>
 
-#ifdef	_BSD_WINT_T_
-typedef	_BSD_WINT_T_    wint_t;
-#undef	_BSD_WINT_T_
-#endif
+size_t __mb_cur_max = 1;
+size_t __mb_len_max_runtime = MB_LEN_MAX;
 
-#ifdef	_BSD_WCTRANS_T_
-typedef	_BSD_WCTRANS_T_	wctrans_t;
-#undef	_BSD_WCTRANS_T_
-#endif
-
-#ifdef	_BSD_WCTYPE_T_
-typedef	_BSD_WCTYPE_T_	wctype_t;
-#undef	_BSD_WCTYPE_T_
-#endif
-
-#ifndef WEOF
-#define	WEOF	((wint_t)-1)
-#endif
-
-__BEGIN_DECLS
-int	iswalnum(wint_t);
-int	iswalpha(wint_t);
-int	iswblank(wint_t);
-int	iswcntrl(wint_t);
-int	iswdigit(wint_t);
-int	iswgraph(wint_t);
-int	iswlower(wint_t);
-int	iswprint(wint_t);
-int	iswpunct(wint_t);
-int	iswspace(wint_t);
-int	iswupper(wint_t);
-int	iswxdigit(wint_t);
-wint_t	towlower(wint_t);
-wint_t	towupper(wint_t);
-int	iswctype(wint_t, wctype_t);
-wctype_t	wctype(const char *);
-__END_DECLS
-
-#endif		/* _WCTYPE_H_ */

@@ -1,0 +1,198 @@
+.\" $OpenBSD: mbrtowc.3,v 1.1 2005/05/11 18:44:12 espie Exp $
+.\" $NetBSD: mbrtowc.3,v 1.5 2003/09/08 17:54:31 wiz Exp $
+.\"
+.\" Copyright (c)2002 Citrus Project,
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd February 4, 2002
+.Dt MBRTOWC 3
+.Os
+.\" ----------------------------------------------------------------------
+.Sh NAME
+.Nm mbrtowc
+.Nd converts a multibyte character to a wide character (restartable)
+.\" ----------------------------------------------------------------------
+.Sh SYNOPSIS
+.Fd #include <wchar.h>
+.Ft size_t
+.Fn mbrtowc "wchar_t * restrict pwc" "const char * restrict s" "size_t n" \
+"mbstate_t * restrict ps"
+.\" ----------------------------------------------------------------------
+.Sh DESCRIPTION
+The
+.Fn mbrtowc
+usually converts the multibyte character pointed to by
+.Fa s
+to a wide character, and stores the wide character
+in the wchar_t object pointed to by
+.Fa pwc
+if
+.Fa pwc
+is non-null and
+.Fa s
+points to a valid character.
+The conversion happens in accordance with the conversion state
+described in the mbstate_t object pointed to by
+.Fa ps .
+This function may examine at most
+.Fa n
+bytes of the array beginning from
+.Fa s .
+.Pp
+If
+.Fa s
+points to a valid character and the character corresponds to a null wide
+character, then the
+.Fn mbrtowc
+places the mbstate_t object pointed to by
+.Fa ps
+to an initial conversion state.
+.Pp
+Unlike
+.Xr mbtowc 3 ,
+the
+.Fn mbrtowc
+may accept the byte sequence pointed to by
+.Fa s
+not forming a complete multibyte character
+but which may be part of a valid character.
+In this case, this function will accept all such bytes
+and save them into the conversion state object pointed to by
+.Fa ps .
+They will be used at subsequent calls of this function to restart
+the conversion suspended.
+.Pp
+The behaviour of the
+.Fn mbrtowc
+is affected by the
+.Dv LC_CTYPE
+category of the current locale.
+.Pp
+These are the special cases:
+.Bl -tag -width 012345678901
+.It "s == NULL"
+.Fn mbrtowc
+sets the conversion state object pointed to by
+.Fa ps
+to an initial state and always returns 0.
+Unlike
+.Xr mbtowc 3 ,
+the value returned does not indicate whether the current encoding of
+the locale is state-dependent.
+.Pp
+In this case,
+.Fn mbrtowc
+ignores
+.Fa pwc
+and
+.Fa n ,
+and is equivalent to the following call:
+.Bd -literal -offset indent
+mbrtowc(NULL, "", 1, ps);
+.Ed
+.It "pwc == NULL"
+The conversion from a multibyte character to a wide character has
+taken place and the conversion state may be affected, but the resultant
+wide character is discarded.
+.It "ps == NULL"
+.Fn mbrtowc
+uses its own internal state object to keep the conversion state,
+instead of
+.Fa ps
+mentioned in this manual page.
+.Pp
+Calling any other functions in
+.Em libc
+never change the internal
+state of
+.Fn mbrtowc ,
+which is initialized at startup time of the program.
+.El
+.\" ----------------------------------------------------------------------
+.Sh RETURN VALUES
+In the usual cases,
+.Fn mbrtowc
+returns:
+.Bl -tag -width 012345678901
+.It 0
+The next bytes pointed to by
+.Fa s
+form a null character.
+.It positive
+If
+.Fa s
+points to a valid character,
+.Fn mbrtowc
+returns the number of bytes in the character.
+.It (size_t)-2
+.Fa s
+points to the byte sequence which possibly contains part of a valid
+multibyte character, but which is incomplete.
+When
+.Fa n
+is at least
+.Dv MB_CUR_MAX
+only occurs if the array pointed to by
+.Fa s
+contains a redundant shift sequence.
+.It (size_t)-1
+.Fa s
+points to an illegal byte sequence which does not form a valid multibyte
+character.
+In this case,
+.Fn mbrtowc
+sets
+.Va errno
+to indicate the error.
+.El
+.\" ----------------------------------------------------------------------
+.Sh ERRORS
+The
+.Fn mbrtowc
+may causes an error in the following case:
+.Bl -tag -width Er
+.It Bq Er EILSEQ
+.Fa s
+points to an invalid or incomplete multibyte character.
+.It Bq Er EINVAL
+.Fa ps
+points to an invalid or uninitialized mbstate_t object.
+.El
+.\" ----------------------------------------------------------------------
+.Sh SEE ALSO
+.Xr mbrlen 3 ,
+.Xr mbtowc 3 ,
+.Xr setlocale 3
+.\" ----------------------------------------------------------------------
+.Sh STANDARDS
+The
+.Fn mbrtowc
+function conforms to
+.\" .St -isoC-amd1 .
+ISO/IEC 9899/AMD1:1995
+.Pq Dq ISO C90, Amendment 1 .
+The restrict qualifier is added at
+.\" .St -isoC99 .
+ISO/IEC 9899:1999
+.Pq Dq ISO C99 .
