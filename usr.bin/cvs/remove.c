@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.12 2005/04/21 20:56:12 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.13 2005/05/12 14:04:13 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Xavier Santolaria <xsa@openbsd.org>
@@ -42,8 +42,8 @@
 extern char *__progname;
 
 
-int cvs_remove_file(CVSFILE *, void *);
-int cvs_remove_options(char *, int, char **, int *);
+static int cvs_remove_file(CVSFILE *, void *);
+static int cvs_remove_options(char *, int, char **, int *);
 
 static int	force_remove = 0;	/* -f option */
 
@@ -57,7 +57,7 @@ struct cvs_cmd_info cvs_remove = {
 	CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2 | CVS_CMD_ALLOWSPEC
 };
 
-int
+static int
 cvs_remove_options(char *opt, int argc, char **argv, int *arg)
 {
 	int ch;
@@ -86,7 +86,7 @@ cvs_remove_options(char *opt, int argc, char **argv, int *arg)
 }
 
 
-int
+static int
 cvs_remove_file(CVSFILE *cf, void *arg)
 {
 	int ret;
