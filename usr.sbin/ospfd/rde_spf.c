@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.11 2005/05/12 19:32:46 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.12 2005/05/12 20:53:02 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -218,14 +218,15 @@ spf_calc(struct area *area)
 
 	/* calculate route table */
 	RB_FOREACH(v, lsa_tree, tree) {
-		if (ntohs(v->lsa->hdr.age) == MAX_AGE)
+		lsa_age(v);
+		if (ntohs(v->lsa->hdr.age) == MAX_AGE ||
+		    v->cost == LS_INFINITY)
 			continue;
 
 		switch (v->type) {
 		case LSA_TYPE_ROUTER:
 			/* stub networks */
-			if ((v->cost == LS_INFINITY) ||
-			    (v->nexthop.s_addr == 0))
+			if (v->nexthop.s_addr == 0)
 				continue;
 
 			for (i = 0; i < lsa_num_links(v); i++) {
@@ -250,8 +251,7 @@ spf_calc(struct area *area)
 			    adv_rtr, PT_INTRA_AREA, DT_RTR);
 			break;
 		case LSA_TYPE_NETWORK:
-			if ((v->cost == LS_INFINITY) ||
-			    (v->nexthop.s_addr == 0))
+			if (v->nexthop.s_addr == 0)
 				continue;
 
 			addr.s_addr = htonl(v->ls_id) & v->lsa->data.net.mask;
