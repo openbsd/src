@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat_linux.h,v 1.5 2005/04/13 04:33:47 uwe Exp $	*/
+/*	$OpenBSD: compat_linux.h,v 1.6 2005/05/12 05:10:30 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -16,14 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _TEST
-
 /* This file must be included late, for redefinitions to take effect. */
 
 #ifndef _LOCORE
+
 #include <compat/linux/linux_types.h>
 #include <compat/linux/linux_fcntl.h>
-#endif
+#include <compat/linux/linux_termios.h>
+struct proc;
+#include <compat/linux/linux_ioctl.h>
 
 #define	INT_LIMIT(x)		(~((x)1 << (sizeof(x)*8 - 1)))
 #define	OFFSET_MAX		INT_LIMIT(long long)
@@ -41,6 +42,42 @@
 
 #define	EOVERFLOW		75
 
+#define termios			linux_termios
+
+#define IMAXBEL			LINUX_IMAXBEL
+#define IGNBRK			LINUX_IGNBRK
+#define BRKINT			LINUX_BRKINT
+#define PARMRK			LINUX_PARMRK
+#define ISTRIP			LINUX_ISTRIP
+#define INLCR			LINUX_INLCR
+#define IGNCR			LINUX_IGNCR
+#define ICRNL			LINUX_ICRNL
+#define IXON			LINUX_IXON
+#define OPOST			LINUX_OPOST
+#define ECHO			LINUX_ECHO
+#define ECHONL			LINUX_ECHONL
+#define ICANON			LINUX_ICANON
+#define ISIG			LINUX_ISIG
+#define IEXTEN			LINUX_IEXTEN
+#define CSIZE			LINUX_CSIZE
+#define PARENB			LINUX_PARENB
+#define CS8			LINUX_CS8
+
+#define TIOCGETA		LINUX_TCGETS
+#define TIOCSETA		LINUX_TCGETS
+#define TIOCSETAW		LINUX_TCSETSW
+#define TIOCSETAF		LINUX_TCSETSF
+
+#define TCSANOW			LINUX_TCSANOW
+#define TCSADRAIN		LINUX_TCSADRAIN
+#define TCSAFLUSH		LINUX_TCSAFLUSH
+
+void	cfmakeraw(struct termios *);
+int	tcgetattr(int, struct termios *);
+int	tcsetattr(int, int, struct termios *);
+
+#endif /* !_LOCORE */
+
 /* linux/asm/unistd.h */
 #define __NR_SYSCALL_BASE	0x900000
 #define __NR_exit		(__NR_SYSCALL_BASE+  1)
@@ -54,24 +91,6 @@
 #define __NR__new_select	(__NR_SYSCALL_BASE+142)
 #define __NR_select		__NR__new_select /* XXX */
 #define __NR_syscall		(__NR_SYSCALL_BASE+113)
-#define linux__sys2(x)		#x
-#define linux__sys1(x)		linux__sys2(x)
-#define linux__syscall(name)	"swi\t" linux__sys1(__NR_##name) "\n\t"
-#define linux__syscall_return(type, res)				\
-	do {								\
-		if ((unsigned long)(res) >= (unsigned long)(-125)) {	\
-			errno = -(res);					\
-			res = -1;					\
-		}							\
-		return (type) (res);					\
-	} while (0)
 
 #undef	SYS_select
 #define SYS_select		__NR__new_select
-
-#else
-
-#include <fcntl.h>
-#include <unistd.h>
-
-#endif /* _TEST */

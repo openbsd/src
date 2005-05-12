@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.3 2005/05/11 16:42:15 deraadt Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.4 2005/05/12 05:10:30 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -30,6 +30,8 @@
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <dev/cons.h>
+
+#include <stand/boot/cmd.h>
 
 extern int debug;
 
@@ -177,7 +179,7 @@ devboot(dev_t bootdev, char *p)
 			return;
 
 	/* fall-back to the previous default device */
-	strlcpy(p, "/dev/hda4", 16);
+	strlcpy(p, "/dev/hda4", sizeof cmd.bootdev);
 }
 
 int pch_pos = 0;
@@ -222,7 +224,7 @@ getchar(void)
 	if ((c < ' ' && c != '\n') || c == '\177')
 		return c;
 
-#if 0
+#ifndef _TEST
 	putchar(c);
 #endif
 

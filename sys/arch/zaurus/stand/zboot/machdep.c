@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.2 2005/05/11 16:42:15 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.3 2005/05/12 05:10:30 uwe Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -29,6 +29,8 @@
 
 #include "libsa.h"
 
+struct termios otc;
+
 char _alloc_heap[4 * 1024 * 1024];
 
 int debug;
@@ -38,6 +40,13 @@ machdep(void)
 {
 	int i, j;
 	struct zaurus_boot_probes *pr;
+	struct termios t;
+
+	if (tcgetattr(0, &t) == 0) {
+		otc = t;
+		cfmakeraw(&t);
+		(void)tcsetattr(0, TCSAFLUSH, &t);
+	}
 
 	/*
 	 * The list of probe routines is now in conf.c.

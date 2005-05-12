@@ -1,4 +1,4 @@
-/*	$OpenBSD: exit.c,v 1.2 2005/04/16 17:21:24 uwe Exp $	*/
+/*	$OpenBSD: exit.c,v 1.3 2005/05/12 05:10:30 uwe Exp $	*/
 /*	$NetBSD: exit.c,v 1.11 1996/12/01 20:22:19 pk Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 
 #include <sys/stdarg.h>
 
-#include <lib/libsa/stand.h>
+#include "libsa.h"
 
 __dead void
 panic(const char *fmt, ...)
@@ -61,5 +61,8 @@ panic(const char *fmt, ...)
 void
 exit(void)
 {
+	extern struct termios otc;
+
+	(void)tcsetattr(0, TCSADRAIN, &otc);
 	uexit(0);
 }

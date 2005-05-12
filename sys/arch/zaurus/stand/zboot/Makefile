@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2005/04/26 19:20:21 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.5 2005/05/12 05:10:30 uwe Exp $
 
 MAN=	boot.8
 MANSUBDIR=zaurus
@@ -21,7 +21,7 @@ CLEANFILES+= arm machine
 .endif
 
 # stand/boot
-SRCS+=	boot.c cmd.c vars.c bootarg.c conf.c
+SRCS+=	boot.c vars.c bootarg.c conf.c
 
 # libsa
 SRCS+=	close.c closeall.c cons.c ctime.c disklabel.c dkcksum.c fstat.c \
@@ -32,9 +32,9 @@ SRCS+=	close.c closeall.c cons.c ctime.c disklabel.c dkcksum.c fstat.c \
 SRCS+=	strcmp.c strlcpy.c strlen.c strncmp.c strncpy.c write.c \
 	ashrdi3.c divsi3.S
 
-# local overrides for Linux/zaurus
-SRCS+=	alloc.c devopen.c exec.c exit.c loadfile.c machdep.c \
-	unixdev.c unixsys.S
+# local overrides and additions
+SRCS+=	alloc.c cmd.c devopen.c exec.c exit.c loadfile.c machdep.c \
+	termios.c unixdev.c unixsys.S
 
 .PATH:	${S}/stand/boot
 .PATH:	${S}/lib/libsa
