@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.20 2005/04/25 11:31:50 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.21 2005/05/12 10:14:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -427,6 +427,11 @@ start:
 		    nbr->dr.s_addr == nbr->addr.s_addr)	/* don't elect DR */
 			continue;
 		if (bdr != NULL) {
+			/*
+			 * routers announcing themselfs as BDR have higher
+			 * precedence over those routers announcing a
+			 * different BDR.
+			 */
 			if (nbr->bdr.s_addr == nbr->addr.s_addr) {
 				if (bdr->bdr.s_addr == bdr->addr.s_addr)
 					bdr = if_elect(bdr, nbr);
@@ -445,7 +450,7 @@ start:
 		    (nbr != dr && nbr->dr.s_addr != nbr->addr.s_addr))
 			/* only DR may be elected check priority too */
 			continue;
-		if (dr == NULL || bdr == NULL)
+		if (dr == NULL)
 			dr = nbr;
 		else
 			dr = if_elect(dr, nbr);
@@ -467,6 +472,14 @@ start:
 	    (iface->self != dr && iface->self == iface->dr) ||
 	    (iface->self == bdr && iface->self != iface->bdr) ||
 	    (iface->self != bdr && iface->self == iface->bdr))) {
+		/*
+		 * Reset announced DR/DBR to calculated one, so
+		 * that we may get elected in the second round.
+		 * This is needed to drop from a DR to a BDR.
+		 */
+		iface->self->dr.s_addr = dr->addr.s_addr;
+		if (bdr)
+			iface->self->bdr.s_addr = dr->addr.s_addr;
 		log_debug("if_act_elect: round two");
 		round = 1;
 		goto start;
