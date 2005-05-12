@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.17 2005/04/25 21:58:32 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.18 2005/05/12 23:35:42 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -49,7 +49,7 @@ struct cvs_entries;
 #define CF_CREATE   0x20  /* create if file does not exist */
 #define CF_MKADMIN  0x40  /* create administrative files if they're missing */
 #define CF_NOSYMS   0x80  /* ignore symbolic links */
-
+#define CF_NOFILES  0x100 /* don't load any files inside a directory */
 
 /*
  * The cvs_file structure is used to represent any file or directory within
