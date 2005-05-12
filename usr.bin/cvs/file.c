@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.70 2005/05/12 23:35:42 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.71 2005/05/12 23:43:49 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -675,6 +675,9 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path)
 		if (cfp == NULL) {
 			if (entfile != NULL)
 				cvsent = cvs_ent_get(entfile, ent->d_name);
+			else
+				cvsent = NULL;
+
 			cfp = cvs_file_lget(pbuf, flags, cf, cvsent);
 
 			if (cfp == NULL) {
