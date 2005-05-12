@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.60 2005/05/12 14:16:38 niallo Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.61 2005/05/12 17:16:06 niallo Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -228,8 +228,7 @@ getccdbuf(void)
 }
 
 INLINE void
-putccdbuf(cbp)
-	struct ccdbuf *cbp;
+putccdbuf(struct ccdbuf *cbp)
 {
 	pool_put(&ccdbufpl, cbp);
 }
@@ -239,8 +238,7 @@ putccdbuf(cbp)
  * to do is allocate enough space for devices to be configured later.
  */
 void
-ccdattach(num)
-	int num;
+ccdattach(int num)
 {
 	if (num <= 0) {
 #ifdef DIAGNOSTIC
@@ -273,10 +271,7 @@ ccdattach(num)
 }
 
 int
-ccdinit(ccd, cpaths, p)
-	struct ccddevice *ccd;
-	char **cpaths;
-	struct proc *p;
+ccdinit(struct ccddevice *ccd, char **cpaths, struct proc *p)
 {
 	struct ccd_softc *cs = &ccd_softc[ccd->ccd_unit];
 	struct ccdcinfo *ci = NULL;
@@ -365,8 +360,8 @@ ccdinit(ccd, cpaths, p)
 		if (error) {
 #ifdef DEBUG
 			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
-				 printf("%s: %s: ioctl failed, error = %d\n",
-				     cs->sc_xname, ci->ci_path, error);
+				printf("%s: %s: ioctl failed, error = %d\n",
+				    cs->sc_xname, ci->ci_path, error);
 #endif
 			free(ci->ci_path, M_DEVBUF);
 			free(cs->sc_cinfo, M_DEVBUF);
@@ -447,11 +442,11 @@ ccdinit(ccd, cpaths, p)
 			free(cs->sc_cinfo, M_DEVBUF);
 			return (EINVAL);
 		}
-		if (cs->sc_nccdisks % 2) { 
+		if (cs->sc_nccdisks % 2) {
 #ifdef DEBUG
 			if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
 			printf("%s: mirroring requires even # of components\n",
-			    cs->sc_xname); 
+			    cs->sc_xname);
 #endif
 			free(ci->ci_path, M_DEVBUF);
 			free(cs->sc_cinfo, M_DEVBUF);
@@ -497,8 +492,7 @@ ccdinit(ccd, cpaths, p)
 }
 
 void
-ccdinterleave(cs)
-	struct ccd_softc *cs;
+ccdinterleave(struct ccd_softc *cs)
 {
 	struct ccdcinfo *ci, *smallci;
 	struct ccdiinfo *ii;
@@ -601,10 +595,7 @@ ccdinterleave(cs)
 
 /* ARGSUSED */
 int
-ccdopen(dev, flags, fmt, p)
-	dev_t dev;
-	int flags, fmt;
-	struct proc *p;
+ccdopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs;
@@ -665,10 +656,7 @@ ccdopen(dev, flags, fmt, p)
 
 /* ARGSUSED */
 int
-ccdclose(dev, flags, fmt, p)
-	dev_t dev;
-	int flags, fmt;
-	struct proc *p;
+ccdclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs;
@@ -706,8 +694,7 @@ ccdclose(dev, flags, fmt, p)
 }
 
 void
-ccdstrategy(bp)
-	struct buf *bp;
+ccdstrategy(struct buf *bp)
 {
 	int unit = ccdunit(bp->b_dev);
 	struct ccd_softc *cs = &ccd_softc[unit];
@@ -758,9 +745,7 @@ done:
 }
 
 void
-ccdstart(cs, bp)
-	struct ccd_softc *cs;
-	struct buf *bp;
+ccdstart(struct ccd_softc *cs, struct buf *bp)
 {
 	long bcount, rcount;
 	struct ccdbuf **cbpp, *cbp;
@@ -839,14 +824,8 @@ ccdstart(cs, bp)
  * Build a component buffer header.
  */
 long
-ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
-	struct ccd_softc *cs;
-	struct buf *bp;
-	daddr_t bn;
-	caddr_t addr;
-	long bcount;
-	struct ccdbuf **cbpp;
-	int old_io;
+ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, caddr_t addr,
+    long bcount, struct ccdbuf **cbpp, int old_io)
 {
 	struct ccdcinfo *ci, *ci2 = NULL;
 	struct ccdbuf *cbp;
@@ -953,7 +932,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 		else {
 			do {
 				nbp->b_data = (caddr_t) uvm_km_valloc(ccdmap,
-							    bp->b_bcount);
+				    bp->b_bcount);
 
 				/*
 				 * XXX Instead of sleeping, we might revert
@@ -1024,9 +1003,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 }
 
 void
-ccdintr(cs, bp)
-	struct ccd_softc *cs;
-	struct buf *bp;
+ccdintr(struct ccd_softc *cs, struct buf *bp)
 {
 
 	splassert(IPL_BIO);
@@ -1051,8 +1028,7 @@ ccdintr(cs, bp)
  * take a ccd interrupt.
  */
 void
-ccdiodone(vbp)
-	struct buf *vbp;
+ccdiodone(struct buf *vbp)
 {
 	struct ccdbuf *cbp = (struct ccdbuf *)vbp;
 	struct buf *bp = cbp->cb_obp;
@@ -1148,10 +1124,7 @@ ccdiodone(vbp)
 
 /* ARGSUSED */
 int
-ccdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+ccdread(dev_t dev, struct uio *uio, int flags)
 {
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs;
@@ -1177,10 +1150,7 @@ ccdread(dev, uio, flags)
 
 /* ARGSUSED */
 int
-ccdwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+ccdwrite(dev_t dev, struct uio *uio, int flags)
 {
 	int unit = ccdunit(dev);
 	struct ccd_softc *cs;
@@ -1205,12 +1175,7 @@ ccdwrite(dev, uio, flags)
 }
 
 int
-ccdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int unit = ccdunit(dev);
 	int i, j, lookedup = 0, error = 0;
@@ -1488,8 +1453,7 @@ ccdioctl(dev, cmd, data, flag, p)
 }
 
 int
-ccdsize(dev)
-	dev_t dev;
+ccdsize(dev_t dev)
 {
 	struct ccd_softc *cs;
 	int part, size, unit;
@@ -1518,11 +1482,7 @@ ccdsize(dev)
 }
 
 int
-ccddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
+ccddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 {
 
 	/* Not implemented. */
@@ -1535,10 +1495,7 @@ ccddump(dev, blkno, va, size)
  * set *vpp to the file's vnode.
  */
 int
-ccdlookup(path, p, vpp)
-	char *path;
-	struct proc *p;
-	struct vnode **vpp;	/* result */
+ccdlookup(char *path, struct proc *p, struct vnode **vpp)
 {
 	struct nameidata nd;
 	struct vnode *vp;
@@ -1646,8 +1603,7 @@ ccdgetdisklabel(dev_t dev, struct ccd_softc *cs, struct disklabel *lp,
  * that a disklabel isn't present.
  */
 void
-ccdmakedisklabel(cs)
-	struct ccd_softc *cs;
+ccdmakedisklabel(struct ccd_softc *cs)
 {
 	struct disklabel *lp = cs->sc_dkdev.dk_label;
 
@@ -1667,8 +1623,7 @@ ccdmakedisklabel(cs)
  * Several drivers do this; it should be abstracted and made MP-safe.
  */
 int
-ccdlock(cs)
-	struct ccd_softc *cs;
+ccdlock(struct ccd_softc *cs)
 {
 	int error;
 
@@ -1685,8 +1640,7 @@ ccdlock(cs)
  * Unlock and wake up any waiters.
  */
 void
-ccdunlock(cs)
-	struct ccd_softc *cs;
+ccdunlock(struct ccd_softc *cs)
 {
 
 	cs->sc_flags &= ~CCDF_LOCKED;
@@ -1698,8 +1652,7 @@ ccdunlock(cs)
 
 #ifdef DEBUG
 void
-printiinfo(ii)
-	struct ccdiinfo *ii;
+printiinfo(struct ccdiinfo *ii)
 {
 	int ix, i;
 
