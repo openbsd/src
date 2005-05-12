@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.50 2005/05/09 19:24:07 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.51 2005/05/12 23:01:35 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -543,7 +543,7 @@ cvs_resp_getvalid(void)
 int
 cvs_sendfile(struct cvsroot *root, const char *path)
 {
-	int fd;
+	int fd, l;
 	ssize_t ret;
 	char buf[4096];
 	struct stat st;
@@ -568,7 +568,10 @@ cvs_sendfile(struct cvsroot *root, const char *path)
 		(void)close(fd);
 		return (-1);
 	}
-	snprintf(buf, sizeof(buf), "%lld\n", st.st_size);
+	l = snprintf(buf, sizeof(buf), "%lld\n", st.st_size);
+	if (l == -1 || l >= (int)sizeof(buf))
+		return (-1);
+
 	if (cvs_sendln(root, buf) < 0) {
 		(void)close(fd);
 		return (-1);
@@ -665,7 +668,7 @@ cvs_recvfile(struct cvsroot *root, mode_t *mode)
 int
 cvs_sendreq(struct cvsroot *root, u_int rid, const char *arg)
 {
-	int ret;
+	int ret, l;
 	struct cvs_req *req;
 
 	if (root->cr_srvin == NULL) {
@@ -686,8 +689,10 @@ cvs_sendreq(struct cvsroot *root, u_int rid, const char *arg)
 		return (-1);
 	}
 
-	snprintf(cvs_proto_buf, sizeof(cvs_proto_buf), "%s%s%s\n",
+	l = snprintf(cvs_proto_buf, sizeof(cvs_proto_buf), "%s%s%s\n",
 	    req->req_str, (arg == NULL) ? "" : " ", (arg == NULL) ? "" : arg);
+	if (l == -1 || l >= (int)sizeof(cvs_proto_buf))
+		return (-1);
 
 	if (cvs_server_inlog != NULL)
 		fputs(cvs_proto_buf, cvs_server_inlog);
@@ -960,6 +965,7 @@ cvs_recvraw(struct cvsroot *root, void *dst, size_t len)
 int
 cvs_senddir(struct cvsroot *root, CVSFILE *dir)
 {
+	int l;
 	char lbuf[MAXPATHLEN], rbuf[MAXPATHLEN];
 
 	if (dir->cf_type != DT_DIR)
@@ -971,9 +977,15 @@ cvs_senddir(struct cvsroot *root, CVSFILE *dir)
 
 	if (dir->cf_repo == NULL)
 		strlcpy(rbuf, root->cr_dir, sizeof(rbuf));
-	else
-		snprintf(rbuf, sizeof(rbuf), "%s/%s", root->cr_dir,
+	else {
+		l = snprintf(rbuf, sizeof(rbuf), "%s/%s", root->cr_dir,
 		    dir->cf_repo);
+		if (l == -1 || l >= (int)sizeof(rbuf)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", rbuf);
+			return (-1);
+		}
+	}
 
 
 	if ((cvs_sendreq(root, CVS_REQ_DIRECTORY, lbuf) < 0) ||
@@ -1010,6 +1022,7 @@ cvs_sendarg(struct cvsroot *root, const char *arg, int append)
 int
 cvs_sendentry(struct cvsroot *root, const CVSFILE *file)
 {
+	int l;
 	char ebuf[128], numbuf[64];
 
 	if (file->cf_type != DT_REG) {
@@ -1021,9 +1034,14 @@ cvs_sendentry(struct cvsroot *root, const CVSFILE *file)
 	if (file->cf_cvstat == CVS_FST_UNKNOWN)
 		return (0);
 
-	snprintf(ebuf, sizeof(ebuf), "/%s/%s%s///", file->cf_name,
+	l = snprintf(ebuf, sizeof(ebuf), "/%s/%s%s///", file->cf_name,
 	    (file->cf_cvstat == CVS_FST_REMOVED) ? "-" : "",
 	    rcsnum_tostr(file->cf_lrev, numbuf, sizeof(numbuf)));
+	if (l == -1 || l >= (int)sizeof(ebuf)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", ebuf);
+		return (-1);
+	}
 
 	return cvs_sendreq(root, CVS_REQ_ENTRY, ebuf);
 }
