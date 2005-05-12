@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.10 2005/05/05 15:27:34 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.11 2005/05/12 19:32:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -116,7 +116,9 @@ spf_calc(struct area *area)
 	/* initialize SPF tree */
 	if ((v = spf_root = lsa_find(area, LSA_TYPE_ROUTER, rde_router_id(),
 	    rde_router_id())) == NULL)
-		fatalx("spf_calc: cannot find self originated router LSA");
+		/* empty area because no interface is active */
+		return;
+
 	area->transit = 0;
 	spf_root->cost = 0;
 	w = NULL;
