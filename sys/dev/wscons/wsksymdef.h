@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.26 2005/05/06 17:40:32 mickey Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.27 2005/05/12 09:26:48 miod Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -700,14 +700,15 @@
 #define KB_SI			0x1900
 #define KB_CF			0x1a00
 
-#define KB_NODEAD		0x0001
-#define KB_DECLK		0x0002	/* DEC LKnnn layout */
-#define KB_LK401		0x0004	/* DEC LK401 instead LK201 */
-#define KB_SWAPCTRLCAPS		0x0008	/* Swap Left-Control and Caps-Lock */
-#define KB_DVORAK		0x0010	/* Dvorak layout */
-#define KB_METAESC		0x0020	/* generate ESC prefix on ALT-key */
-#define KB_IOPENER		0x0040	/* f1-f12 -> ESC,f1-f11 */
-#define KB_MACHDEP		0x0080	/* machine dependent */
+#define KB_NODEAD		0x000001 /* disable dead accents */
+#define KB_DECLK		0x000002 /* DEC LKnnn layout */
+#define KB_LK401		0x000004 /* DEC LK401 instead LK201 */
+#define KB_SWAPCTRLCAPS		0x000008 /* swap Left-Control and Caps-Lock */
+#define KB_DVORAK		0x000010 /* Dvorak layout */
+#define KB_METAESC		0x000020 /* generate ESC prefix on ALT-key */
+#define KB_IOPENER		0x000040 /* f1-f12 -> ESC,f1-f11 */
+#define KB_MACHDEP		0x000080 /* machine dependent */
+#define	KB_APPLE		0x010000 /* Apple specific layout */
 
 #define KB_ENCTAB \
 	{ KB_USER,	"user" }, \
@@ -745,6 +746,7 @@
 	{ KB_DVORAK,	"dvorak" }, \
 	{ KB_METAESC,	"metaesc" }, \
 	{ KB_IOPENER,	"iopener" }, \
-	{ KB_MACHDEP,	"machdep" }
+	{ KB_MACHDEP,	"machdep" }, \
+	{ KB_APPLE,	"apple" }
 
 #endif /* !_DEV_WSCONS_WSKSYMDEF_H_ */
