@@ -2865,6 +2865,7 @@
 ./usr/share/man/cat3/bstring.0
 ./usr/share/man/cat3/btoa8.0
 ./usr/share/man/cat3/btoe.0
+./usr/share/man/cat3/btowc.0
 ./usr/share/man/cat3/btree.0
 ./usr/share/man/cat3/bufferevent_disable.0
 ./usr/share/man/cat3/bufferevent_enable.0
@@ -3646,6 +3647,7 @@
 ./usr/share/man/cat3/iswalpha.0
 ./usr/share/man/cat3/iswblank.0
 ./usr/share/man/cat3/iswcntrl.0
+./usr/share/man/cat3/iswctype.0
 ./usr/share/man/cat3/iswdigit.0
 ./usr/share/man/cat3/iswgraph.0
 ./usr/share/man/cat3/iswlower.0
@@ -3994,6 +3996,13 @@
 ./usr/share/man/cat3/malloc.0
 ./usr/share/man/cat3/math.0
 ./usr/share/man/cat3/mathf.0
+./usr/share/man/cat3/mblen.0
+./usr/share/man/cat3/mbrlen.0
+./usr/share/man/cat3/mbrtowc.0
+./usr/share/man/cat3/mbsinit.0
+./usr/share/man/cat3/mbsrtowcs.0
+./usr/share/man/cat3/mbstowcs.0
+./usr/share/man/cat3/mbtowc.0
 ./usr/share/man/cat3/mcprint.0
 ./usr/share/man/cat3/md4.0
 ./usr/share/man/cat3/md5.0
@@ -4850,6 +4859,7 @@
 ./usr/share/man/cat3/wclrtobot.0
 ./usr/share/man/cat3/wclrtoeol.0
 ./usr/share/man/cat3/wcolor_set.0
+./usr/share/man/cat3/wcrtomb.0
 ./usr/share/man/cat3/wcscat.0
 ./usr/share/man/cat3/wcschr.0
 ./usr/share/man/cat3/wcscmp.0
@@ -4863,9 +4873,14 @@
 ./usr/share/man/cat3/wcsncpy.0
 ./usr/share/man/cat3/wcspbrk.0
 ./usr/share/man/cat3/wcsrchr.0
+./usr/share/man/cat3/wcsrtombs.0
 ./usr/share/man/cat3/wcsspn.0
 ./usr/share/man/cat3/wcsstr.0
 ./usr/share/man/cat3/wcstok.0
+./usr/share/man/cat3/wcstombs.0
+./usr/share/man/cat3/wctob.0
+./usr/share/man/cat3/wctomb.0
+./usr/share/man/cat3/wctype.0
 ./usr/share/man/cat3/wcursyncup.0
 ./usr/share/man/cat3/wdelch.0
 ./usr/share/man/cat3/wdeleteln.0
