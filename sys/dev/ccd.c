@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.59 2005/03/30 22:28:00 mickey Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.60 2005/05/12 14:16:38 niallo Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -309,6 +309,7 @@ ccdinit(ccd, cpaths, p)
 	/* Allocate space for the component info. */
 	cs->sc_cinfo = malloc(cs->sc_nccdisks * sizeof(struct ccdcinfo),
 	    M_DEVBUF, M_WAITOK);
+	bzero(cs->sc_cinfo, cs->sc_nccdisks * sizeof(struct ccdcinfo));
 
 	/*
 	 * Verify that each component piece exists and record
