@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.5 2005/03/15 22:09:43 claudio Exp $ */
+/*	$OpenBSD: parser.h,v 1.6 2005/05/12 19:10:12 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -33,6 +33,12 @@ enum actions {
 	SHOW_NBR_DTAIL,
 	SHOW_DB,
 	SHOW_DBBYAREA,
+	SHOW_DBEXT,
+	SHOW_DBNET,
+	SHOW_DBRTR,
+	SHOW_DBSELF,
+	SHOW_DBSUM,
+	SHOW_DBASBR,
 	SHOW_RIB,
 	SHOW_RIB_DTAIL,
 	SHOW_FIB,

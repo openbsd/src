@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfctl.8,v 1.5 2005/04/19 18:36:10 norby Exp $
+.\"	$OpenBSD: ospfctl.8,v 1.6 2005/05/12 19:10:12 norby Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -33,8 +33,27 @@ daemon.
 .Pp
 The following commands are available:
 .Bl -tag -width Ds
-.It Cm show database
-Show the entire link state database.
+.It Cm show database Ar filter
+Show the link state database.
+.Ar filter
+can any one of the following:
+.Pp
+.Bl -tag -width AS-External -compact
+.It Cm area Cm ID
+Show only LSAs from the specified area.
+.It Cm asbr
+Show only ASBR LSAs.
+.It Cm external
+Show only AS-External LSAs.
+.It Cm network
+Show only Network LSAs.
+.It Cm router
+Show only Router LSAs.
+.It Cm self-orig
+Show only self originated LSAs
+.It Cm summary
+Show only Summary LSAs.
+.El
 .It Cm show interfaces
 Show interface summary.
 .It Cm show neighbor

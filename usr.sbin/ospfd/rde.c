@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.16 2005/05/11 20:07:04 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.17 2005/05/12 19:10:12 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -463,6 +463,12 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 				lsa_del(nbr, &lsa_hdr);
 			break;
 		case IMSG_CTL_SHOW_DATABASE:
+		case IMSG_CTL_SHOW_DB_EXT:
+		case IMSG_CTL_SHOW_DB_NET:
+		case IMSG_CTL_SHOW_DB_RTR:
+		case IMSG_CTL_SHOW_DB_SELF:
+		case IMSG_CTL_SHOW_DB_SUM:
+		case IMSG_CTL_SHOW_DB_ASBR:
 			if (imsg.hdr.len != IMSG_HEADER_SIZE &&
 			    imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(aid)) {
 				log_warnx("rde_dispatch: wrong imsg len");
@@ -473,18 +479,22 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 					imsg_compose(ibuf_ospfe, IMSG_CTL_AREA,
 					    0, imsg.hdr.pid, -1, area,
 					    sizeof(*area));
-					lsa_dump(&area->lsa_tree, imsg.hdr.pid);
+					lsa_dump(&area->lsa_tree, imsg.hdr.type,
+					    imsg.hdr.pid);
 				}
-				lsa_dump(&rdeconf->lsa_tree, imsg.hdr.pid);
+				lsa_dump(&rdeconf->lsa_tree, imsg.hdr.type,
+				    imsg.hdr.pid);
 			} else {
 				memcpy(&aid, imsg.data, sizeof(aid));
 				if ((area = area_find(rdeconf, aid)) != NULL) {
 					imsg_compose(ibuf_ospfe, IMSG_CTL_AREA,
 					    0, imsg.hdr.pid, -1, area,
 					    sizeof(*area));
-					lsa_dump(&area->lsa_tree, imsg.hdr.pid);
+					lsa_dump(&area->lsa_tree, imsg.hdr.type,
+					    imsg.hdr.pid);
 					if (!area->stub)
 						lsa_dump(&rdeconf->lsa_tree,
+						    imsg.hdr.type,
 						    imsg.hdr.pid);
 				}
 			}
@@ -862,7 +872,7 @@ rde_req_list_free(struct rde_nbr *nbr)
 	while ((le = TAILQ_FIRST(&nbr->req_list)) != NULL) {
 		TAILQ_REMOVE(&nbr->req_list, le, entry);
 		free(le);
-	}		
+	}
 }
 
 /*
@@ -994,7 +1004,7 @@ orig_asext_lsa(struct kroute *kr, u_int16_t age)
 	 * TODO ls_id must be unique, for overlapping routes this may
 	 * not be true. In this case it a hack needs to be done to
 	 * make the ls_id unique.
-	 */ 
+	 */
 	lsa->hdr.ls_id = kr->prefix.s_addr;
 	lsa->data.asext.mask = prefixlen2mask(kr->prefixlen);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.13 2005/05/06 06:59:58 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.14 2005/05/12 19:10:12 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -52,6 +52,11 @@ const char	*log_id(u_int32_t );
 const char	*log_adv_rtr(u_int32_t);
 void		 show_database_head(struct in_addr, u_int8_t);
 int		 show_database_msg(struct imsg *);
+char		*print_ls_type(u_int8_t);
+void		 show_db_hdr_msg_detail(struct lsa_hdr *);
+char		*print_rtr_link_type(u_int8_t);
+const char	*print_ospf_flags(u_int8_t);
+int		 show_db_msg_detail(struct imsg *imsg);
 int		 show_nbr_msg(struct imsg *);
 const char	*print_ospf_options(u_int8_t);
 int		 show_nbr_detail_msg(struct imsg *);
@@ -143,6 +148,24 @@ main(int argc, char *argv[])
 		imsg_compose(ibuf, IMSG_CTL_SHOW_DATABASE, 0, 0, -1,
 		    &res->addr, sizeof(res->addr));
 		break;
+	case SHOW_DBEXT:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_EXT, 0, 0, -1, NULL, 0);
+		break;
+	case SHOW_DBNET:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_NET, 0, 0, -1, NULL, 0);
+		break;
+	case SHOW_DBRTR:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_RTR, 0, 0, -1, NULL, 0);
+		break;
+	case SHOW_DBSELF:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_SELF, 0, 0, -1, NULL, 0);
+		break;
+	case SHOW_DBSUM:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_SUM, 0, 0, -1, NULL, 0);
+		break;
+	case SHOW_DBASBR:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_DB_ASBR, 0, 0, -1, NULL, 0);
+		break;
 	case SHOW_RIB:
 		printf("%-20s %-17s %-12s %-9s %-7s\n", "Destination",
 		    "Nexthop", "Path Type", "Type", "Cost");
@@ -204,7 +227,15 @@ main(int argc, char *argv[])
 				break;
 			case SHOW_DB:
 			case SHOW_DBBYAREA:
+			case SHOW_DBSELF:
 				done = show_database_msg(&imsg);
+				break;
+			case SHOW_DBEXT:
+			case SHOW_DBNET:
+			case SHOW_DBRTR:
+			case SHOW_DBSUM:
+			case SHOW_DBASBR:
+				done = show_db_msg_detail(&imsg);
 				break;
 			case SHOW_RIB:
 				done = show_rib_msg(&imsg);
@@ -518,11 +549,8 @@ show_database_head(struct in_addr aid, u_int8_t type)
 		    inet_ntoa(aid)) == -1)
 			err(1, NULL);
 
-	printf("\n%-15s %s\n", "", header);
+	printf("\n%-15s %s\n\n", "", header);
 	free(header);
-
-	printf("\n%-15s %-15s %-4s %-10s %-8s\n", "Link ID", "Adv Router",
-	    "Age", "Seq#", "Checksum");
 }
 
 int
@@ -535,9 +563,13 @@ show_database_msg(struct imsg *imsg)
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_DATABASE:
+	case IMSG_CTL_SHOW_DB_SELF:
 		lsa = imsg->data;
-		if (lsa->type != lasttype)
+		if (lsa->type != lasttype) {
 			show_database_head(area_id, lsa->type);
+			printf("%-15s %-15s %-4s %-10s %-8s\n", "Link ID",
+			    "Adv Router", "Age", "Seq#", "Checksum");
+		}
 		printf("%-15s %-15s %-4d 0x%08x 0x%04x\n",
 		    log_id(lsa->ls_id), log_adv_rtr(lsa->adv_rtr),
 		    ntohs(lsa->age), ntohl(lsa->seq_num),
@@ -548,6 +580,228 @@ show_database_msg(struct imsg *imsg)
 		area = imsg->data;
 		area_id = area->id;
 		lasttype = 0;
+		break;
+	case IMSG_CTL_END:
+		printf("\n");
+		return (1);
+	default:
+		break;
+	}
+
+	return (0);
+}
+
+char *
+print_ls_type(u_int8_t type)
+{
+	switch (type) {
+	case LSA_TYPE_ROUTER:
+		return ("Router");
+	case LSA_TYPE_NETWORK:
+		return ("Network");
+	case LSA_TYPE_SUM_NETWORK:
+		return ("Summary (Network)");
+	case LSA_TYPE_SUM_ROUTER:
+		return ("Summary (Router)");
+	case LSA_TYPE_EXTERNAL:
+		return ("AS External");
+	default:
+		return ("Unknown");
+	}
+}
+
+void
+show_db_hdr_msg_detail(struct lsa_hdr *lsa)
+{
+	printf("LS age: %d\n", ntohs(lsa->age));
+	printf("Options: %s\n", print_ospf_options(lsa->opts));
+	printf("LS Type: %s\n", print_ls_type(lsa->type));
+
+	switch (lsa->type) {
+	case LSA_TYPE_ROUTER:
+		printf("Link State ID: %s\n", log_id(lsa->ls_id));
+		break;
+	case LSA_TYPE_NETWORK:
+		printf("Link State ID: %s (address of Designated Router)\n",
+		    log_id(lsa->ls_id));
+		break;
+	case LSA_TYPE_SUM_NETWORK:
+		printf("Link State ID: %s (Network ID)\n", log_id(lsa->ls_id));
+		break;
+	case LSA_TYPE_SUM_ROUTER:
+		printf("Link State ID: %s (ASBR Router ID)\n",
+		    log_id(lsa->ls_id));
+		break;
+	case LSA_TYPE_EXTERNAL:
+		printf("Link State ID: %s (External Network Number)\n",
+		     log_id(lsa->ls_id));
+		break;
+	}
+
+	printf("Advertising Router: %s\n", log_adv_rtr(lsa->adv_rtr));
+	printf("LS Seq Number: 0x%08x\n", ntohl(lsa->seq_num));
+	printf("Checksum: 0x%04x\n", ntohs(lsa->ls_chksum));
+	printf("Length: %d\n", ntohs(lsa->len));
+}
+
+char *
+print_rtr_link_type(u_int8_t type)
+{
+	switch (type) {
+	case LINK_TYPE_POINTTOPOINT:
+		return ("Point-to-Point");
+	case LINK_TYPE_TRANSIT_NET:
+		return ("Transit Network");
+	case LINK_TYPE_STUB_NET:
+		return ("Stub Network");
+	case LINK_TYPE_VIRTUAL:
+		return ("Virtual Link");
+	default:
+		return ("Unknown");
+	}
+}
+
+const char *
+print_ospf_flags(u_int8_t opts)
+{
+	static char	optbuf[32];
+
+	snprintf(optbuf, sizeof(optbuf), "*|*|*|*|*|%s|%s|%s",
+	    opts & OSPF_RTR_V ? "V" : "-",
+	    opts & OSPF_RTR_E ? "E" : "-",
+	    opts & OSPF_RTR_B ? "B" : "-");
+	return (optbuf);
+}
+
+int
+show_db_msg_detail(struct imsg *imsg)
+{
+	static struct in_addr	 area_id;
+	static u_int8_t		 lasttype;
+	struct in_addr		 addr, data;
+	struct area		*area;
+	struct lsa		*lsa;
+	struct lsa_rtr_link	*rtr_link;
+	struct lsa_asext	*asext;
+	u_int16_t		 i, nlinks, off;
+
+	/* XXX sanity checks! */
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_DB_EXT:
+		lsa = imsg->data;
+		if (lsa->hdr.type != lasttype)
+			show_database_head(area_id, lsa->hdr.type);
+		show_db_hdr_msg_detail(&lsa->hdr);
+		addr.s_addr = lsa->data.asext.mask;
+		printf("Network Mask: %s\n", inet_ntoa(addr));
+
+		asext = (struct lsa_asext *)((char *)lsa + sizeof(lsa->hdr));
+
+		printf("    Metric type: ");
+		if (ntohl(lsa->data.asext.metric) & LSA_ASEXT_E_FLAG)
+			printf("2\n");
+		else
+			printf("1\n");
+		printf("    Metric: %d\n", ntohl(asext->metric)
+		    & LSA_METRIC_MASK);
+		addr.s_addr = asext->fw_addr;
+		printf("    Forwarding Address: %s\n", inet_ntoa(addr));
+		printf("    External Route Tag: %d\n\n", ntohl(asext->ext_tag));
+
+		lasttype = lsa->hdr.type;
+		break;
+	case IMSG_CTL_SHOW_DB_NET:
+		lsa = imsg->data;
+		if (lsa->hdr.type != lasttype)
+			show_database_head(area_id, lsa->hdr.type);
+		show_db_hdr_msg_detail(&lsa->hdr);
+		addr.s_addr = lsa->data.net.mask;
+		printf("Network Mask: %s\n", inet_ntoa(addr));
+
+		nlinks = (ntohs(lsa->hdr.len) - sizeof(struct lsa_hdr)
+		    - sizeof(u_int32_t)) / sizeof(struct lsa_net_link);
+		off = sizeof(lsa->hdr) + sizeof(u_int32_t);
+
+		for (i = 0; i < nlinks; i++) {
+			addr.s_addr = lsa->data.net.att_rtr[i];
+			printf("    Attached Router: %s\n", inet_ntoa(addr));
+		}
+
+		printf("\n");
+		lasttype = lsa->hdr.type;
+		break;
+	case IMSG_CTL_SHOW_DB_RTR:
+		lsa = imsg->data;
+		if (lsa->hdr.type != lasttype)
+			show_database_head(area_id, lsa->hdr.type);
+		show_db_hdr_msg_detail(&lsa->hdr);
+		printf("Flags: %s\n", print_ospf_flags(lsa->data.rtr.flags));
+		nlinks = ntohs(lsa->data.rtr.nlinks);
+		printf("Number of Links: %d\n\n", nlinks);
+
+		off = sizeof(lsa->hdr) + sizeof(struct lsa_rtr);
+
+		for (i = 0; i < nlinks; i++) {
+			rtr_link = (struct lsa_rtr_link *)((char *)lsa + off);
+
+			printf("    Link connected to: %s\n",
+			    print_rtr_link_type(rtr_link->type));
+
+			addr.s_addr = rtr_link->id;
+			data.s_addr = rtr_link->data;
+
+			switch (rtr_link->type) {
+			case LINK_TYPE_POINTTOPOINT:
+			case LINK_TYPE_VIRTUAL:
+				printf("    Link ID (Neighbors Router ID):"
+				    " %s\n", inet_ntoa(addr));
+				printf("    Link Data (Router Interface "
+				    "address): %s\n", inet_ntoa(data));
+				break;
+			case LINK_TYPE_TRANSIT_NET:
+				printf("    Link ID (Designated Router "
+				    "address): %s\n", inet_ntoa(addr));
+				printf("    Link Data (Router Interface "
+				    "address): %s\n", inet_ntoa(data));
+				break;
+			case LINK_TYPE_STUB_NET:
+				printf("    Link ID (Network ID): %s\n",
+				    inet_ntoa(addr));
+				printf("    Link Data (Network Mask): %s\n",
+				    inet_ntoa(data));
+				break;
+			default:
+				printf("    Link ID (Unknown): %s\n",
+				    inet_ntoa(addr));
+				printf("    Link Data (Unknown): %s\n",
+				    inet_ntoa(data));
+				break;
+			}
+
+			printf("    Metric: %d\n\n", ntohs(rtr_link->metric));
+
+			off += sizeof(struct lsa_rtr_link) +
+			    rtr_link->num_tos * sizeof(u_int32_t);
+		}
+
+		lasttype = lsa->hdr.type;
+		break;
+	case IMSG_CTL_SHOW_DB_SUM:
+	case IMSG_CTL_SHOW_DB_ASBR:
+		lsa = imsg->data;
+		if (lsa->hdr.type != lasttype)
+			show_database_head(area_id, lsa->hdr.type);
+		show_db_hdr_msg_detail(&lsa->hdr);
+		addr.s_addr = lsa->data.sum.mask;
+		printf("Network Mask: %s\n", inet_ntoa(addr));
+		printf("Metric: %d\n\n", ntohl(lsa->data.sum.metric) &
+		    LSA_METRIC_MASK);
+		lasttype = lsa->hdr.type;
+		break;
+	case IMSG_CTL_AREA:
+		area = imsg->data;
+		area_id = area->id;
 		break;
 	case IMSG_CTL_END:
 		return (1);
@@ -950,4 +1204,3 @@ show_fib_interface_msg(struct imsg *imsg)
 
 	return (0);
 }
-

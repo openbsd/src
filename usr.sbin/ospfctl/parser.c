@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.7 2005/03/26 13:37:16 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.8 2005/05/12 19:10:12 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -82,11 +82,15 @@ static const struct token t_show_iface[] = {
 };
 
 static const struct token t_show_db[] = {
-	{NOTOKEN,	"",		NONE,		NULL},
-	{KEYWORD,	"area",		SHOW_DBBYAREA,	t_show_area},
-/*	{KEYWORD,	"router",	NONE,		NULL},
-	{KEYWORD,	"network",	NONE,		NULL}, */
-	{ENDTOKEN,	"",		NONE,		NULL}
+	{NOTOKEN,	"",			NONE,		NULL},
+	{KEYWORD,	"area",			SHOW_DBBYAREA,	t_show_area},
+	{KEYWORD,	"asbr",			SHOW_DBASBR,	NULL},
+	{KEYWORD,	"external",		SHOW_DBEXT,	NULL},
+	{KEYWORD,	"network",		SHOW_DBNET,	NULL},
+	{KEYWORD,	"router",		SHOW_DBRTR,	NULL},
+	{KEYWORD,	"self-originated",	SHOW_DBSELF,	NULL},
+	{KEYWORD,	"summary",		SHOW_DBSUM,	NULL},
+	{ENDTOKEN,	"",			NONE,		NULL}
 };
 
 static const struct token t_show_area[] = {

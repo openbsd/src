@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.11 2005/04/12 10:26:09 deraadt Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.12 2005/05/12 19:10:12 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -479,14 +479,48 @@ lsa_snap(struct area *area, u_int32_t peerid)
 }
 
 void
-lsa_dump(struct lsa_tree *tree, pid_t pid)
+lsa_dump(struct lsa_tree *tree, int imsg_type, pid_t pid)
 {
 	struct vertex	*v;
 
 	RB_FOREACH(v, lsa_tree, tree) {
 		lsa_age(v);
-		rde_imsg_compose_ospfe(IMSG_CTL_SHOW_DATABASE, 0, pid,
-		    &v->lsa->hdr, ntohs(v->lsa->hdr.len));
+		switch (imsg_type) {
+		case IMSG_CTL_SHOW_DATABASE:
+			rde_imsg_compose_ospfe(IMSG_CTL_SHOW_DATABASE, 0, pid,
+			    &v->lsa->hdr, ntohs(v->lsa->hdr.len));
+			continue;
+		case IMSG_CTL_SHOW_DB_SELF:
+			if (v->lsa->hdr.adv_rtr == rde_router_id())
+				break;
+			continue;
+		case IMSG_CTL_SHOW_DB_EXT:
+			if (v->type == LSA_TYPE_EXTERNAL)
+				break;
+			continue;
+		case IMSG_CTL_SHOW_DB_NET:
+			if (v->type == LSA_TYPE_NETWORK)
+				break;
+			continue;
+		case IMSG_CTL_SHOW_DB_RTR:
+			if (v->type == LSA_TYPE_ROUTER)
+				break;
+			continue;
+		case IMSG_CTL_SHOW_DB_SUM:
+			if (v->type == LSA_TYPE_SUM_NETWORK)
+				break;
+			continue;
+		case IMSG_CTL_SHOW_DB_ASBR:
+			if (v->type == LSA_TYPE_SUM_ROUTER)
+				break;
+			continue;
+		default:
+			log_debug("%d", imsg_type);
+			log_warnx("lsa_dump: unknown imsg type");
+			return;
+		}
+		rde_imsg_compose_ospfe(imsg_type, 0, pid, &v->lsa->hdr,
+		    ntohs(v->lsa->hdr.len));
 	}
 }
 

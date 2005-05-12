@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.28 2005/05/12 08:55:39 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.29 2005/05/12 19:10:12 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -99,6 +99,12 @@ enum imsg_type {
 	IMSG_CTL_RELOAD,
 	IMSG_CTL_SHOW_INTERFACE,
 	IMSG_CTL_SHOW_DATABASE,
+	IMSG_CTL_SHOW_DB_EXT,
+	IMSG_CTL_SHOW_DB_NET,
+	IMSG_CTL_SHOW_DB_RTR,
+	IMSG_CTL_SHOW_DB_SELF,
+	IMSG_CTL_SHOW_DB_SUM,
+	IMSG_CTL_SHOW_DB_ASBR,
 	IMSG_CTL_SHOW_NBR,
 	IMSG_CTL_SHOW_RIB,
 	IMSG_CTL_SHOW_SUM,
