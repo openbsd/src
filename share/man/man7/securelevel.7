@@ -1,4 +1,4 @@
-.\"     $OpenBSD: securelevel.7,v 1.16 2005/04/19 07:28:34 jmc Exp $
+.\"     $OpenBSD: securelevel.7,v 1.17 2005/05/12 08:16:06 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Hugh Graham
 .\"
@@ -100,8 +100,8 @@ and
 .Xr clock_settime 2
 may not set the time backwards or close to overflow
 .It
-.Xr pfctl 8
-may no longer alter filter or nat rules
+.Xr pf 4
+filter and NAT rules may not be altered
 .It
 the
 .Va ddb.console
