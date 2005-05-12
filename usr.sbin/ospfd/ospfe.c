@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.18 2005/05/02 02:26:35 djm Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.19 2005/05/12 08:55:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -43,6 +43,7 @@
 
 void	 ospfe_sig_handler(int, short, void *);
 void	 ospfe_shutdown(void);
+void	 orig_rtr_lsa_all(struct area *);
 
 volatile sig_atomic_t	 ospfe_quit = 0;
 struct ospfd_conf	*oeconf = NULL;
@@ -564,6 +565,20 @@ ospfe_dispatch_rde(int fd, short event, void *bula)
 }
 
 void
+orig_rtr_lsa_all(struct area *area)
+{
+	struct area	*a;
+
+	/*
+	 * update all router LSA in all areas except area itself,
+	 * as this update is already running.
+	 */
+	LIST_FOREACH(a, &oeconf->area_list, entry)
+		if (a != area)
+			orig_rtr_lsa(a);
+}
+
+void
 orig_rtr_lsa(struct area *area)
 {
 	struct lsa_hdr		 lsa_hdr;
@@ -574,6 +589,7 @@ orig_rtr_lsa(struct area *area)
 	struct nbr		*nbr, *self = NULL;
 	u_int16_t		 num_links = 0;
 	u_int16_t		 chksum;
+	u_int8_t		 border;
 
 	log_debug("orig_rtr_lsa: area %s", inet_ntoa(area->id));
 
@@ -727,7 +743,17 @@ orig_rtr_lsa(struct area *area)
 	 */
 	if (oeconf->redistribute_flags && (oeconf->options & OSPF_OPTION_E))
 		lsa_rtr.flags |= OSPF_RTR_E;
-	/* TODO if activly connected to more than one area set B flag */
+	
+	border = area_border_router(oeconf);
+
+	if (border != oeconf->border) {
+		oeconf->border = border;
+		orig_rtr_lsa_all(area);
+	}
+
+	if (oeconf->border)
+		lsa_rtr.flags |= OSPF_RTR_B;
+
 	/* TODO set V flag if a active virtual link ends here and the
 	 * area is the tranist area for this link. */
 	lsa_rtr.dummy = 0;

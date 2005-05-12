@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.27 2005/04/27 11:27:28 claudio Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.28 2005/05/12 08:55:39 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -163,6 +163,7 @@ struct area {
 	u_int32_t		 stub_default_cost;
 	u_int32_t		 num_spf_calc;
 	u_int32_t		 dead_interval;
+	int			 active;
 	u_int16_t		 transmit_delay;
 	u_int16_t		 hello_interval;
 	u_int16_t		 rxmt_interval;
@@ -348,6 +349,7 @@ struct ospfd_conf {
 	int			redistribute_flags;
 	int			options; /* OSPF options */
 	u_int8_t		rfc1583compat;
+	u_int8_t		border;
 };
 
 /* kroute */
@@ -452,6 +454,8 @@ void		 show_config(struct ospfd_conf *xconf);
 struct area	*area_new(void);
 int		 area_del(struct area *);
 struct area	*area_find(struct ospfd_conf *, struct in_addr);
+void		 area_track(struct area *, int);
+int		 area_border_router(struct ospfd_conf *);
 
 /* buffer.c */
 struct buf	*buf_open(size_t);
