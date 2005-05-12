@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.12 2005/05/12 19:10:12 norby Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.13 2005/05/12 20:43:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -30,7 +30,6 @@
 struct vertex	*vertex_get(struct lsa *, struct rde_nbr *);
 
 int		 lsa_router_check(struct lsa *, u_int16_t);
-void		 lsa_age(struct vertex *);
 void		 lsa_timeout(int, short, void *);
 void		 lsa_refresh(struct vertex *);
 
@@ -433,6 +432,7 @@ lsa_find_net(struct area *area, u_int32_t ls_id)
 	RB_FOREACH(v, lsa_tree, tree) {
 		if ((v->lsa->hdr.type == LSA_TYPE_NETWORK) &&
 		    (v->lsa->hdr.ls_id == (ls_id))) {
+			lsa_age(v);
 			return (v);
 		}
 	}
