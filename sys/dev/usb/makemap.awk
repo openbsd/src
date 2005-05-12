@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.1 2005/05/09 05:08:32 miod Exp $
+#	$OpenBSD: makemap.awk,v 1.2 2005/05/12 09:28:21 miod Exp $
 #
 # Copyright (c) 2005, Miodrag Vallat
 #
@@ -31,10 +31,11 @@
 #
 
 BEGIN {
-	rcsid = "$OpenBSD: makemap.awk,v 1.1 2005/05/09 05:08:32 miod Exp $"
+	rcsid = "$OpenBSD: makemap.awk,v 1.2 2005/05/12 09:28:21 miod Exp $"
 	ifdepth = 0
 	ignore = 0
 	declk = 0
+	haskeys = 0
 
 	# PS/2 id -> UKBD conversion table, or "sanity lossage 102"
 	# (101 is for GSC keyboards!)
@@ -227,8 +228,7 @@ $1 == "#define" || $1 == "#undef" {
 
 /pckbd/ {
 	gsub("pckbd", "ukbd", $0)
-	print $0
-	next
+	mapname = $4
 }
 
 /KC/ {
@@ -237,6 +237,8 @@ $1 == "#define" || $1 == "#undef" {
 
 	if (declk)
 		next
+
+	haskeys = 1
 
 	sidx = substr($1, 4, length($1) - 5)
 	orig = int(sidx)
@@ -288,16 +290,40 @@ $1 == "#define" || $1 == "#undef" {
 		next
 	}
 
-	# Duplicate 42 (backspace) as 76
-	# XXX maybe not correct anymore?
-	lines[76] = lines[42]
-	sub("42", "76", lines[76])
+	if (haskeys) {
+		# Duplicate 42 (backspace) as 76
+		# XXX maybe not correct anymore?
+		lines[76] = lines[42]
+		sub("42", "76", lines[76])
 
-	for (i = 0; i < 256; i++)
-		if (lines[i]) {
-			print lines[i]
-			lines[i] = ""
+		for (i = 0; i < 256; i++)
+			if (lines[i]) {
+				print lines[i]
+				lines[i] = ""
+			}
+
+		haskeys = 0
+
+		#
+		# Apple portuguese USB keyboards use a slightly different
+		# layout. We define it here.
+		#
+		if (mapname == "ukbd_keydesc_pt[]") {
+			print $0
+			print "\nstatic const keysym_t ukbd_keydesc_pt_apple[] = {"
+			print "/*  pos\t\tnormal\t\tshifted */"
+			print "    KC(46),\tKS_plus,\tKS_asterisk,"
+			print "    KC(47),\tKS_masculine,\tKS_ordfeminine,"
+			print "    KC(50),\tKS_backslash,\tKS_bar,"
+			print "    KC(52),\tKS_dead_tilde,\tKS_dead_circumflex"
 		}
+
+	}
+}
+/KB_PT/ {
+	print $0
+	print "\tKBD_MAP(KB_PT | KB_APPLE,\tKB_PT,\tukbd_keydesc_pt_apple),"
+	next
 }
 {
 	if (ignore)
