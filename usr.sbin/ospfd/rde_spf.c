@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.12 2005/05/12 20:53:02 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.13 2005/05/12 20:57:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -41,6 +41,7 @@ void		 cand_list_dump(void);		/* XXX */
 void		 calc_next_hop(struct vertex *, struct vertex *);
 void		 rt_update(struct in_addr, u_int8_t, struct in_addr, u_int32_t,
 		     struct in_addr, struct in_addr, u_int8_t, u_int8_t);
+struct rt_node	*rt_lookup(u_int8_t, in_addr_t);
 void		 rt_invalidate(void);
 int		 linked(struct vertex *, struct vertex *);
 
@@ -98,13 +99,15 @@ rt_dump_debug(void)
 void
 spf_calc(struct area *area)
 {
-	struct lsa_tree	*tree = &area->lsa_tree;
+	struct lsa_tree		*tree = &area->lsa_tree;
 	struct vertex		*v, *w;
 	struct lsa_rtr_link	*rtr_link = NULL;
-	struct lsa_net_link	*net_link = NULL;
+	struct lsa_net_link	*net_link;
+	struct rt_node		*r;
 	u_int32_t		 d;
 	int			 i;
-	struct in_addr		 addr, adv_rtr;
+	struct in_addr		 addr, adv_rtr, a;
+	u_int8_t		 type;
 
 	log_debug("spf_calc: calculation started, area ID %s",
 	    inet_ntoa(area->id));
@@ -243,11 +246,15 @@ spf_calc(struct area *area)
 				    PT_INTRA_AREA, DT_NET);
 			}
 
-			/* router */
+			/* router, only add border and as-external routers */
+			if ((v->lsa->data.rtr.flags & (OSPF_RTR_B |
+			    OSPF_RTR_E)) == 0)
+				continue;
+
 			addr.s_addr = htonl(v->ls_id);
 			adv_rtr.s_addr = htonl(v->adv_rtr);
 
-			rt_update(addr, 0, v->nexthop, v->cost, area->id,
+			rt_update(addr, 32, v->nexthop, v->cost, area->id,
 			    adv_rtr, PT_INTRA_AREA, DT_RTR);
 			break;
 		case LSA_TYPE_NETWORK:
@@ -261,8 +268,14 @@ spf_calc(struct area *area)
 			    PT_INTRA_AREA, DT_NET);
 			break;
 		case LSA_TYPE_SUM_NETWORK:
-			if (rdeconf->flags & OSPF_RTR_B)
+		case LSA_TYPE_SUM_ROUTER:
+			/* if BDR only look at area 0.0.0.0 LSA */
+
+			/* ignore self-originated stuff */
+			if (v->nbr->self)
 				continue;
+
+			/* TODO type 3 area address range check */
 
 			if ((w = lsa_find(area, LSA_TYPE_ROUTER,
 			    htonl(v->adv_rtr),
@@ -276,17 +289,68 @@ spf_calc(struct area *area)
 			if (v->nexthop.s_addr == 0)
 				continue;
 
-			addr.s_addr = htonl(v->ls_id) & v->lsa->data.sum.mask;
 			adv_rtr.s_addr = htonl(v->adv_rtr);
-			rt_update(addr, mask2prefixlen(v->lsa->data.sum.mask),
-			    v->nexthop, v->cost, area->id, adv_rtr,
-			    PT_INTER_AREA, DT_NET);
+			if (v->type == LSA_TYPE_SUM_NETWORK) {
+				addr.s_addr = htonl(v->ls_id) &
+				    v->lsa->data.sum.mask;
+				rt_update(addr,
+				    mask2prefixlen(v->lsa->data.sum.mask),
+				    v->nexthop, v->cost, area->id, adv_rtr,
+				    PT_INTER_AREA, DT_NET);
+			} else {
+				addr.s_addr = htonl(v->ls_id);
+				rt_update(addr, 32,
+				    v->nexthop, v->cost, area->id, adv_rtr,
+				    PT_INTER_AREA, DT_RTR);
+			}
+
 			break;
-		case LSA_TYPE_SUM_ROUTER:
-			/* XXX */
-			break;
+		default:
+			/* as-external LSA are stored in a different tree */
+			fatalx("spf_calc: invalid LSA type");
+		}
+	}
+
+	/* calculate as-external routes */
+	RB_FOREACH(v, lsa_tree, &rdeconf->lsa_tree) {
+		lsa_age(v);
+		if (ntohs(v->lsa->hdr.age) == MAX_AGE)
+			continue;
+
+		switch (v->type) {
 		case LSA_TYPE_EXTERNAL:
-			/* XXX */
+			/* ignore self-originated stuff */
+			if (v->nbr->self)
+				continue;
+
+			if ((r = rt_lookup(DT_RTR, htonl(v->adv_rtr))) == NULL)
+				continue;
+
+			if (v->lsa->data.asext.fw_addr != 0 &&
+			    (r = rt_lookup(DT_NET,
+			    v->lsa->data.asext.fw_addr)) == NULL)
+				continue;
+
+			/* XXX the nexthop is choosen in a more extreme way */
+			v->nexthop = r->nexthop;
+
+			if (ntohl(v->lsa->data.asext.metric) &
+			    LSA_ASEXT_E_FLAG) {
+				v->cost = r->cost;
+				/* XXX where to put type2 cost? */
+				type = PT_TYPE2_EXT;
+			} else {
+				v->cost = r->cost +
+				    (ntohl(v->lsa->data.asext.metric) &
+				     LSA_METRIC_MASK);
+				type = PT_TYPE1_EXT;
+			}
+
+			a.s_addr = 0;
+			adv_rtr.s_addr = htonl(v->adv_rtr);
+			addr.s_addr = htonl(v->ls_id) & v->lsa->data.asext.mask;
+			rt_update(addr, mask2prefixlen(v->lsa->data.asext.mask),
+			    v->nexthop, v->cost, a, adv_rtr, type, DT_NET);
 			break;
 		default:
 			fatalx("spf_calc: invalid LSA type");
@@ -742,6 +806,29 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 			}
 		}
 	}
+}
+
+struct rt_node *
+rt_lookup(u_int8_t type, in_addr_t addr)
+{
+	struct rt_node	*rn;
+	u_int8_t	 i = 32;
+
+	if (type == DT_RTR) {
+		rn = rt_find(addr, 32);
+		if (rn == NULL || rn->d_type != DT_RTR)
+			/* /32 networks need to be ignored */
+			return (NULL);
+		return (rn);
+	}
+	
+	do {
+		/* a DT_NET /32 is equivalent to a DT_RTR */
+		if ((rn = rt_find(htonl(addr & prefixlen2mask(i)), i)))
+			return (rn);
+	} while (i-- != 0);
+
+	return (NULL);
 }
 
 /* router LSA links */
