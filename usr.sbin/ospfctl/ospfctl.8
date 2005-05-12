@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfctl.8,v 1.7 2005/05/12 19:17:13 norby Exp $
+.\"	$OpenBSD: ospfctl.8,v 1.8 2005/05/12 22:18:44 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
 .\"
@@ -36,10 +36,10 @@ The following commands are available:
 .It Cm show database Ar filter
 Show the link state database.
 .Ar filter
-can any one of the following:
+can be any one of the following:
 .Pp
-.Bl -tag -width AS-External -compact
-.It Cm area Cm ID
+.Bl -tag -width "self-originatedXX" -compact
+.It Cm area Ar ID
 Show only LSAs from the specified area.
 .It Cm asbr
 Show only ASBR LSAs.
@@ -50,7 +50,7 @@ Show only Network LSAs.
 .It Cm router
 Show only Router LSAs.
 .It Cm self-originated
-Show only self originated LSAs
+Show only self-originated LSAs.
 .It Cm summary
 Show only Summary LSAs.
 .El
