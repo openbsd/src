@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.102 2005/05/05 09:20:27 jmc Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.103 2005/05/12 08:03:11 jmc Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -184,7 +184,7 @@ Name=				foo@bar.com
 .Ed
 .Sh ROOTS
 .Bl -hang -width 8n
-.It Sy General
+.It Bq Sy General
 Generic global configuration parameters
 .Bl -tag -width Ds
 .It Em Acquire-Only
@@ -296,7 +296,7 @@ other programs like
 or
 .Xr bgpd 8 .
 .El
-.It Sy Phase 1
+.It Bq Sy Phase 1
 ISAKMP SA negotiation parameter root
 .Bl -tag -width Ds
 .It Em Default
@@ -309,7 +309,7 @@ below.
 .It Aq Em IP-address
 A name of the ISAKMP peer at the given IP address.
 .El
-.It Sy Phase 2
+.It Bq Sy Phase 2
 IPsec SA negotiation parameter root
 .Bl -tag -width Ds
 .It Em Connections
@@ -337,7 +337,8 @@ Currently only the Local-ID and Remote-ID tags
 are looked at in those sections, as they are matched against the IDs given
 by the initiator.
 .El
-.It Sy KeyNote
+.It Bq Sy KeyNote
+KeyNote configuration section
 .Bl -tag -width Ds
 .It Em Credential-directory
 A directory containing directories named after IDs (IP
@@ -371,7 +372,8 @@ authentication.
 If the directory (and the files) exist, they take precedence over X509-based
 authentication.
 .El
-.It Sy X509-Certificates
+.It Bq Sy X509-Certificates
+X509-certificate configuration section
 .Bl -tag -width Ds
 .It Em Accept-self-signed
 If this tag is defined, whatever the value is, certificates that
@@ -452,6 +454,7 @@ below.
 The name of the transport protocol; defaults to UDP.
 .El
 .It Aq Sy Phase1-ID
+Parameters for Phase 1 negotiation
 .Bl -tag -width Ds
 .It Em Address
 If the ID-type is
@@ -511,6 +514,7 @@ this tag should exist and
 be a network address.
 .El
 .It Aq Sy ISAKMP-configuration
+Parameters for ISAKMP configuration
 .Bl -tag -width Ds
 .It Em DOI
 The domain of interpretation as given by the RFCs.
@@ -534,6 +538,7 @@ Look at
 below.
 .El
 .It Aq Sy ISAKMP-transform
+Parameters for ISAKMP authentication
 .Bl -tag -width Ds
 .It Em AUTHENTICATION_METHOD
 The authentication method as the RFCs name it, or ANY.
@@ -566,6 +571,7 @@ The algorithm to use for the keyed pseudo-random function (used for key
 derivation and authentication in phase 1), or ANY.
 .El
 .It Aq Sy Lifetime
+Parameters for connection duration
 .Bl -tag -width Ds
 .It Em LIFE_DURATION
 An offer/accept kind of value; see above.
@@ -578,6 +584,7 @@ depending on the type of the duration.
 Notice that this field may NOT be set to ANY.
 .El
 .It Aq Sy IPsec-connection
+Parameters for IPsec connection configuration
 .Bl -tag -width Ds
 .It Em Configuration
 The name of the IPsec-configuration section to use.
@@ -629,6 +636,7 @@ Look at
 below.
 .El
 .It Aq Sy IPsec-configuration
+Parameters for IPsec configuration
 .Bl -tag -width Ds
 .It Em DOI
 The domain of interpretation as given by the RFCs.
@@ -649,6 +657,7 @@ section.
 See below.
 .El
 .It Aq Sy IPsec-suite
+Parameters for IPsec protection suite configuration
 .Bl -tag -width Ds
 .It Em Protocols
 A list of the protocols included in this protection suite.
@@ -658,6 +667,7 @@ section.
 See below.
 .El
 .It Aq Sy IPsec-protocol
+Parameters for IPsec protocol configuration
 .Bl -tag -width Ds
 .It Em PROTOCOL_ID
 The protocol as given by the RFCs.
@@ -677,6 +687,7 @@ section.
 See below.
 .El
 .It Aq Sy IPsec-transform
+Parameters for IPsec transform configuration
 .Bl -tag -width Ds
 .It Em AUTHENTICATION_ALGORITHM
 The optional authentication algorithm in the case of this
@@ -698,6 +709,7 @@ section name.
 The transform ID as given by the RFCs.
 .El
 .It Aq Sy IPsec-ID
+Parameters for IPsec ID configuration
 .Bl -tag -width Ds
 .It Em Address
 If the ID-type is
@@ -816,6 +828,7 @@ The IP address of a DNS nameserver.
 The IP address of a WINS server.
 .El
 .It Aq Sy Initiator-ID
+Parameters for peer initiator configuration
 .Pp
 During phase 1 negotiation
 .Xr isakmpd 8
