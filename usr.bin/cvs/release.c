@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.1 2005/05/11 15:31:54 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.2 2005/05/12 23:41:14 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -48,7 +48,8 @@ struct cvs_cmd_info cvs_release = {
 	cvs_release_options,
 	cvs_release_sendflags,
 	cvs_release_dir,
-	NULL, NULL, NULL,
+	NULL, NULL,
+	CF_KNOWN | CF_NOFILES,
 	CVS_REQ_RELEASE,
 	CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2 | CVS_CMD_ALLOWSPEC
 };
