@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.2 2005/05/12 09:28:21 miod Exp $
+#	$OpenBSD: makemap.awk,v 1.3 2005/05/12 16:21:24 miod Exp $
 #
 # Copyright (c) 2005, Miodrag Vallat
 #
@@ -31,7 +31,7 @@
 #
 
 BEGIN {
-	rcsid = "$OpenBSD: makemap.awk,v 1.2 2005/05/12 09:28:21 miod Exp $"
+	rcsid = "$OpenBSD: makemap.awk,v 1.3 2005/05/12 16:21:24 miod Exp $"
 	ifdepth = 0
 	ignore = 0
 	declk = 0
@@ -256,7 +256,7 @@ $1 == "#define" || $1 == "#undef" {
 		}
 		printf("\t*/\n")
 	} else {
-		lines[id] = sprintf("    KC(%d),", id)
+		lines[id] = sprintf("    KC(%d),\t", id)
 		#
 		# This makes sure that the non-comment part of the output
 		# ends up with a trailing comma. This is necessary since
@@ -266,13 +266,20 @@ $1 == "#define" || $1 == "#undef" {
 		#
 		comma = 0
 		for (f = 2; f <= NF; f++) {
+			l = length($f)
 			if ($f == "/*")
 				comma++
-			if (comma == 0 &&
-			    substr($f, length($f)) != ",") {
-				lines[id] = sprintf("%s\t%s,", lines[id], $f)
+			if (comma == 0 && substr($f, l) != ",") {
+				lines[id] = sprintf("%s%s,", lines[id], $f)
+				l++
 			} else {
-				lines[id] = sprintf("%s\t%s", lines[id], $f)
+				lines[id] = sprintf("%s%s", lines[id], $f)
+			}
+			if (comma == 0 && f != NF) {
+				if (l < 2 * 8)
+					lines[id] = lines[id] "\t"
+				if (l < 8)
+					lines[id] = lines[id] "\t"
 			}
 			if ($f == "*/")
 				comma--
