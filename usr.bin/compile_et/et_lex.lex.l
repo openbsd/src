@@ -53,7 +53,6 @@
 static unsigned lineno = 1;
 void error_message(char *, ...);
 int getstring(void);
-int yylex(void);
 
 %}
 
@@ -91,7 +90,7 @@ getstring(void)
     int i = 0;
     int c;
     int quote = 0;
-    while((c = input()) != EOF){
+    while(i < sizeof(x) - 1 && (c = input()) != EOF){
 	if(quote) {
 	    x[i++] = c;
 	    quote = 0;
@@ -111,7 +110,8 @@ getstring(void)
 	x[i++] = c;
     }
     x[i] = '\0';
-    yylval.string = strdup(x);
+    if ((yylval.string = strdup(x)) == NULL)
+    	err(1, NULL);
     return STRING;
 }
 

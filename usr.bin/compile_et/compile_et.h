@@ -1,4 +1,4 @@
-/* $OpenBSD: compile_et.h,v 1.2 2001/01/29 01:57:56 niklas Exp $ */
+/* $OpenBSD: compile_et.h,v 1.3 2005/05/13 05:05:22 jaredy Exp $ */
 /*
  * Copyright (c) 1998 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
@@ -46,6 +46,8 @@
 #include <config.h>
 #endif
 
+#include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -80,5 +82,7 @@ do {						\
 	(L)->tail = &(V)->next;			\
     }						\
 }while(0)
+
+int yylex(void);
 
 #endif /* __COMPILE_ET_H__ */
