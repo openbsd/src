@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ralvar.h,v 1.1 2005/03/16 20:17:10 damien Exp $  */
+/*	$OpenBSD: if_ralvar.h,v 1.2 2005/05/13 18:42:50 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -76,8 +76,8 @@ struct ural_softc {
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;
 
-	uint8_t			sc_rx_no;
-	uint8_t			sc_tx_no;
+	int			sc_rx_no;
+	int			sc_tx_no;
 
 	uint32_t		asic_rev;
 	uint8_t			rf_rev;

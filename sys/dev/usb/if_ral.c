@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.29 2005/05/13 18:17:08 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.30 2005/05/13 18:42:50 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -373,10 +373,11 @@ USB_ATTACH(ural)
 	 */
 	id = usbd_get_interface_descriptor(sc->sc_iface);
 
+	sc->sc_rx_no = sc->sc_tx_no = -1;
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
-			printf("%s: no endpoint descriptor for %d\n",
+			printf("%s: no endpoint descriptor for iface %d\n",
 			    USBDEVNAME(sc->sc_dev), i);
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -387,6 +388,10 @@ USB_ATTACH(ural)
 		else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK)
 			sc->sc_tx_no = ed->bEndpointAddress;
+	}
+	if (sc->sc_rx_no == -1 || sc->sc_tx_no == -1) {
+		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
+		USB_ATTACH_ERROR_RETURN;
 	}
 
 	usb_init_task(&sc->sc_task, ural_task, sc);
