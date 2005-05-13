@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.69 2005/04/24 20:41:34 brad Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.70 2005/05/13 00:09:59 brad Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -454,6 +454,7 @@ fxp_attach_common(sc, intrstr)
 	ifp->if_ioctl = fxp_ioctl;
 	ifp->if_start = fxp_start;
 	ifp->if_watchdog = fxp_watchdog;
+	IFQ_SET_MAXLEN(&ifp->if_snd, FXP_NTXCB - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
@@ -526,11 +527,6 @@ fxp_attach_common(sc, intrstr)
 	 * Attach the interface.
 	 */
 	if_attach(ifp);
-	/*
-	 * Let the system queue as many packets as we have available
-	 * TX descriptors.
-	 */
-	IFQ_SET_MAXLEN(&ifp->if_snd, FXP_NTXCB - 1);
 	ether_ifattach(ifp);
 
 	/*
