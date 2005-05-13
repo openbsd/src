@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.412 2005/05/10 01:16:31 brad Exp $
+#	$OpenBSD: GENERIC,v 1.413 2005/05/13 03:41:18 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -513,8 +513,7 @@ midi*	at mpu?
 midi*	at autri?
 midi*	at eap?
 
-# The spkr driver provides a simple tone interface to the built in speaker.
-#spkr0	at pcppi?		# PC speaker
+spkr0	at pcppi?		# PC speaker
 
 # Audio Support
 audio*	at sb?

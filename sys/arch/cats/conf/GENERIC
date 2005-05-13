@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.23 2005/05/01 07:54:42 david Exp $
+#	$OpenBSD: GENERIC,v 1.24 2005/05/13 03:41:18 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -268,7 +268,6 @@ ep*	at isa?
 lc0 at isa? port 0x200 irq ?
 lc1 at isa? port 0x280 irq ?
 
-# The spkr driver provides a simple tone interface to the built in speaker.
 spkr0	at pcppi?			# PC speaker
 
 ds1687rtc0 at isa? port 0x72		# Dallas RTC
