@@ -1,4 +1,4 @@
-$OpenBSD: hildevs,v 1.1 2003/02/11 19:39:30 miod Exp $
+$OpenBSD: hildevs,v 1.2 2005/05/13 14:54:44 miod Exp $
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -26,12 +26,12 @@ $OpenBSD: hildevs,v 1.1 2003/02/11 19:39:30 miod Exp $
  *
  */
 
-keyboard	00	1f	Keypad
-keyboard	2f	2f	LPFK Button box
-keyboard	30	33	Button box	# 31-33 rumored not to exist
+buttonbox	00	1f	Keypad
+buttonbox	2f	2f	LPFK Button box
+buttonbox	30	33	Button box	# 31-33 rumored not to exist
 idmodule	34	34	ID module
-keyboard	35	3f	Button box
-keyboard	5c	5f	Barcode reader
+buttonbox	35	3f	Button box
+buttonbox	5c	5f	Barcode reader
 mouse		60	60	Single knob
 mouse		61	61	Nine knob
 mouse		62	67	Quadrature

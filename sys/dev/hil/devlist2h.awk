@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.2 2005/05/07 22:39:43 miod Exp $
+#	$OpenBSD: devlist2h.awk,v 1.3 2005/05/13 14:54:44 miod Exp $
 #
 # Copyright (c) 2003, Miodrag Vallat.
 # All rights reserved.
@@ -41,7 +41,7 @@ NR == 1 {
 
 	next
 }
-$1 == "keyboard" || $1 == "mouse" || $1 == "idmodule" {
+$1 == "keyboard" || $1 == "mouse" || $1 == "idmodule" || $1 == "buttonbox" {
 
 	if (header == 0) {
 		printf("const struct hildevice hildevs[] = {\n")

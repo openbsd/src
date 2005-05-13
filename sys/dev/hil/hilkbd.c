@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbd.c,v 1.11 2005/05/07 22:42:30 miod Exp $	*/
+/*	$OpenBSD: hilkbd.c,v 1.12 2005/05/13 14:54:44 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -134,7 +134,8 @@ hilkbdprobe(struct device *parent, void *match, void *aux)
 {
 	struct hil_attach_args *ha = aux;
 
-	if (ha->ha_type != HIL_DEVICE_KEYBOARD)
+	if (ha->ha_type != HIL_DEVICE_KEYBOARD &&
+	    ha->ha_type != HIL_DEVICE_BUTTONBOX)
 		return (0);
 
 	return (1);
@@ -155,19 +156,22 @@ hilkbdattach(struct device *parent, struct device *self, void *aux)
 	bcopy(ha->ha_info, sc->hd_info, ha->ha_infolen);
 	sc->hd_fn = hilkbd_callback;
 
-	/*
-	 * Determine the keyboard language configuration, but don't
-	 * override a user-specified setting.
-	 */
-	layoutcode = ha->ha_id & (MAXHILKBDLAYOUT - 1);
+	if (ha->ha_type == HIL_DEVICE_KEYBOARD) {
+		/*
+		 * Determine the keyboard language configuration, but don't
+		 * override a user-specified setting.
+		 */
+		layoutcode = ha->ha_id & (MAXHILKBDLAYOUT - 1);
 #ifndef HILKBD_LAYOUT
-	if (layoutcode < MAXHILKBDLAYOUT &&
-	    hilkbd_layouts[layoutcode] != -1)
-		hilkbd_keymapdata.layout =
-		    hilkbd_keymapdata_ps2.layout = hilkbd_layouts[layoutcode];
+		if (layoutcode < MAXHILKBDLAYOUT &&
+		    hilkbd_layouts[layoutcode] != -1)
+			hilkbd_keymapdata.layout =
+			hilkbd_keymapdata_ps2.layout =
+			    hilkbd_layouts[layoutcode];
 #endif
 
-	printf(", layout %x", layoutcode);
+		printf(", layout %x", layoutcode);
+	}
 
 	/*
 	 * Interpret the identification bytes, if any
@@ -195,7 +199,11 @@ hilkbdattach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_rawrepeat_ch, hilkbd_rawrepeat, sc);
 #endif
 
-	a.console = hilkbd_is_console(ha->ha_console);
+	/* Do not consider button boxes as console devices. */
+	if (ha->ha_type == HIL_DEVICE_BUTTONBOX)
+		a.console = 0;
+	else
+		a.console = hilkbd_is_console(ha->ha_console);
 	a.keymap = ps2 ? &hilkbd_keymapdata_ps2 : &hilkbd_keymapdata;
 	a.accessops = &hilkbd_accessops;
 	a.accesscookie = sc;
