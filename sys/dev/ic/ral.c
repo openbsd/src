@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.50 2005/05/13 19:00:07 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.51 2005/05/13 19:13:09 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1782,8 +1782,13 @@ ral_tx_data(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	wh = mtod(m0, struct ieee80211_frame *);
 
+	/* XXX this should be reworked! */
 	if (ic->ic_fixed_rate != -1) {
-		rs = &ic->ic_sup_rates[ic->ic_curmode];
+		if (ic->ic_curmode != IEEE80211_MODE_AUTO)
+			rs = &ic->ic_sup_rates[ic->ic_curmode];
+		else
+			rs = &ic->ic_sup_rates[IEEE80211_MODE_11G];
+
 		rate = rs->rs_rates[ic->ic_fixed_rate];
 	} else {
 		rs = &ni->ni_rates;

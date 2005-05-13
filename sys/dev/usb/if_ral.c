@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.31 2005/05/13 19:00:10 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.32 2005/05/13 19:13:11 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1229,8 +1229,13 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	usbd_status error;
 	int xferlen, rate;
 
+	/* XXX this should be reworked! */
 	if (ic->ic_fixed_rate != -1) {
-		rs = &ic->ic_sup_rates[ic->ic_curmode];
+		if (ic->ic_curmode != IEEE80211_MODE_AUTO)
+			rs = &ic->ic_sup_rates[ic->ic_curmode];
+		else
+			rs = &ic->ic_sup_rates[IEEE80211_MODE_11G];
+
 		rate = rs->rs_rates[ic->ic_fixed_rate];
 	} else {
 		rs = &ni->ni_rates;
