@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.51 2005/05/13 19:13:09 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.52 2005/05/13 19:35:44 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -2593,14 +2593,12 @@ ral_bbp_init(struct ral_softc *sc)
 	for (i = 0; i < N(ral_def_bbp); i++)
 		ral_bbp_write(sc, ral_def_bbp[i].reg, ral_def_bbp[i].val);
 
-#if 0
 	/* initialize BBP registers to values stored in EEPROM */
 	for (i = 0; i < 16; i++) {
 		if (sc->bbp_prom[i].reg == 0xff)
 			continue;
 		ral_bbp_write(sc, sc->bbp_prom[i].reg, sc->bbp_prom[i].val);
 	}
-#endif
 
 	return 0;
 #undef N
@@ -2649,6 +2647,9 @@ ral_init(struct ifnet *ifp)
 
 	/* set supported basic rates (1, 2, 6, 12, 24) */
 	RAL_WRITE(sc, RAL_ARSP_PLCP_1, 0x153);
+
+	/* set default sensitivity */
+	ral_bbp_write(sc, 17, 0x48);
 
 	ral_set_txantenna(sc, 1);
 	ral_set_rxantenna(sc, 1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.32 2005/05/13 19:13:11 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.33 2005/05/13 19:35:47 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1897,14 +1897,12 @@ ural_bbp_init(struct ural_softc *sc)
 	for (i = 0; i < N(ural_def_bbp); i++)
 		ural_bbp_write(sc, ural_def_bbp[i].reg, ural_def_bbp[i].val);
 
-#if 0
 	/* initialize BBP registers to values stored in EEPROM */
 	for (i = 0; i < 16; i++) {
 		if (sc->bbp_prom[i].reg == 0xff)
 			continue;
 		ural_bbp_write(sc, sc->bbp_prom[i].reg, sc->bbp_prom[i].val);
 	}
-#endif
 
 	return 0;
 #undef N
@@ -2008,6 +2006,9 @@ ural_init(struct ifnet *ifp)
 
 	/* clear statistic registers (STA_CSR0 to STA_CSR10) */
 	ural_read_multi(sc, RAL_STA_CSR0, sta, sizeof sta);
+
+	/* set default sensitivity */
+	ural_bbp_write(sc, 17, 0x48);
 
 	ural_set_txantenna(sc, 1);
 	ural_set_rxantenna(sc, 1);
