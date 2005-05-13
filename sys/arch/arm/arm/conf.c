@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.10 2005/01/19 02:02:33 uwe Exp $	*/
+/*	$OpenBSD: conf.c,v 1.11 2005/05/13 22:54:00 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -278,6 +278,12 @@ cdev_decl(xfs_dev);
 
 #include "hotplug.h"
 
+#ifdef CONF_HAVE_SPKR
+#include "spkr.h"
+#else
+#define	NSPKR 0
+#endif
+
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),			/*  0: virtual console */
 	cdev_ctty_init(1,ctty),			/*  1: controlling terminal */
@@ -382,6 +388,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),                          /* 96: removed device */
 	cdev_radio_init(NRADIO,radio),		/* 97: generic radio I/O */
 	cdev_ptm_init(NPTY,ptm),		/* 98: pseudo-tty ptm device */
+	cdev_spkr_init(NSPKR,spkr),		/* 99: PC speaker */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);

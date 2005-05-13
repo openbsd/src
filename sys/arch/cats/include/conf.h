@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.2 2005/01/04 14:13:06 drahn Exp $	*/
+/*	$OpenBSD: conf.h,v 1.3 2005/05/13 22:54:00 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.8 2002/02/10 12:26:03 chris Exp $	*/
 
 #ifndef _CATS_CONF_H
@@ -12,6 +12,7 @@
 #define	CONF_HAVE_SCSIPI
 #define	CONF_HAVE_WSCONS
 #define	CONF_HAVE_FCOM
+#define	CONF_HAVE_SPKR
 
 #include <arm/conf.h>
 

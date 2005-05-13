@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.3 2005/01/22 04:04:32 uwe Exp $	*/
+/*	$OpenBSD: conf.h,v 1.4 2005/05/13 22:54:00 miod Exp $	*/
 /*	$NetBSD: conf.h,v 1.7 2002/04/19 01:04:39 wiz Exp $	*/
 
 /*
@@ -121,5 +121,6 @@ cdev_decl(mlx);
 cdev_decl(mly);
 cdev_decl(plcom);
 cdev_decl(apm);
+cdev_decl(spkr);
 
 #endif	/* _ARM_CONF_H_ */
