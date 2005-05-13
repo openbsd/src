@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.7 2005/04/21 22:47:15 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.8 2005/05/13 01:06:41 jsg Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -327,8 +327,8 @@ enum ieee80211_phymode ieee80211_chan2mode(struct ieee80211com *,
 
 #ifdef IEEE80211_DEBUG
 extern	int ieee80211_debug;
-#define	IEEE80211_DPRINTF(X)	if (ieee80211_debug) printf X
-#define	IEEE80211_DPRINTF2(X)	if (ieee80211_debug>1) printf X
+#define	IEEE80211_DPRINTF(X)	do { if (ieee80211_debug) printf X; } while(0)
+#define	IEEE80211_DPRINTF2(X)	do { if (ieee80211_debug>1) printf X; } while(0)
 #else
 #define	IEEE80211_DPRINTF(X)
 #define	IEEE80211_DPRINTF2(X)
