@@ -1,10 +1,10 @@
-/*	$OpenBSD: hildevs_data.h,v 1.2 2005/05/07 22:39:53 miod Exp $	*/
+/*	$OpenBSD: hildevs_data.h,v 1.3 2005/05/13 14:54:55 miod Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: hildevs,v 1.1 2003/02/11 19:39:30 miod Exp 
+ *	OpenBSD: hildevs,v 1.2 2005/05/13 14:54:44 miod Exp 
  */
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -34,12 +34,12 @@
  */
 
 const struct hildevice hildevs[] = {
-	{ 0x00, 0x1f, HIL_DEVICE_KEYBOARD, "Keypad" },
-	{ 0x2f, 0x2f, HIL_DEVICE_KEYBOARD, "LPFK Button box" },
-	{ 0x30, 0x33, HIL_DEVICE_KEYBOARD, "Button box" },
+	{ 0x00, 0x1f, HIL_DEVICE_BUTTONBOX, "Keypad" },
+	{ 0x2f, 0x2f, HIL_DEVICE_BUTTONBOX, "LPFK Button box" },
+	{ 0x30, 0x33, HIL_DEVICE_BUTTONBOX, "Button box" },
 	{ 0x34, 0x34, HIL_DEVICE_IDMODULE, "ID module" },
-	{ 0x35, 0x3f, HIL_DEVICE_KEYBOARD, "Button box" },
-	{ 0x5c, 0x5f, HIL_DEVICE_KEYBOARD, "Barcode reader" },
+	{ 0x35, 0x3f, HIL_DEVICE_BUTTONBOX, "Button box" },
+	{ 0x5c, 0x5f, HIL_DEVICE_BUTTONBOX, "Barcode reader" },
 	{ 0x60, 0x60, HIL_DEVICE_MOUSE, "Single knob" },
 	{ 0x61, 0x61, HIL_DEVICE_MOUSE, "Nine knob" },
 	{ 0x62, 0x67, HIL_DEVICE_MOUSE, "Quadrature" },
