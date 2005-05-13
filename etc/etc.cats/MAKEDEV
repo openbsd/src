@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.cats/MAKEDEV.md,v 1.9 2004/09/28 15:19:49 drahn Exp 
-#	OpenBSD: MAKEDEV.common,v 1.16 2005/03/01 13:35:59 otto Exp 
+#	OpenBSD: etc.cats/MAKEDEV.md,v 1.10 2005/05/13 22:53:58 miod Exp 
+#	OpenBSD: MAKEDEV.common,v 1.17 2005/03/29 16:40:08 miod Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.73 2005/02/07 06:14:18 david Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -74,10 +74,11 @@
 #	radio*	FM tuner devices
 #	*random	In-kernel random data source
 #	tun*	Network tunnel driver
-#	uk*	Unknown SCSI devices
+#	speaker	PC speaker
 #	ss*	SCSI scanners
 #	systrace*	System call tracing device
 #	tuner*	Tuner devices
+#	uk*	Unknown SCSI devices
 #	xfs*	XFS filesystem node
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
@@ -231,6 +232,10 @@ xfs*)
 	M xfs$U c 51 $U 600
 	;;
 
+uk*)
+	M uk$U c 28 $U 640 operator
+	;;
+
 tuner*)
 	M tuner$U c 75 $(($(($U*2))+16)) 644
 	;;
@@ -247,8 +252,8 @@ ss*)
 	MKlist="$MKlist;umask 77;ln -s ss$U scan$U"
 	;;
 
-uk*)
-	M uk$U c 28 $U 640 operator
+speaker)
+	M speaker c 99 0 600
 	;;
 
 tun*)
@@ -462,9 +467,9 @@ all)
 	R ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R cd0 cd1 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 xfs0 ss0 ss1 ch0 ptm local
-	R wscons pci iop0 iop1 uall tuner0 radio0 audio0 uk0 random
-	R lkm tty00 tty01 tty02 tty03 crypto pf systrace wd0 wd1 wd2
-	R wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
+	R wscons pci iop0 iop1 uall tuner0 radio0 speaker audio0 uk0
+	R random lkm tty00 tty01 tty02 tty03 crypto pf systrace wd0
+	R wd1 wd2 wd3 raid0 raid1 raid2 raid3 std st0 st1 fd
 	;;
 
 wd*|sd*|raid*|ccd*)
