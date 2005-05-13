@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.32 2005/04/24 20:56:48 canacar Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.33 2005/05/13 20:17:02 brad Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -318,7 +318,7 @@ HIDE void sppp_cp_timeout(void *arg);
 HIDE void sppp_cp_change_state(const struct cp *cp, struct sppp *sp,
 				 int newstate);
 HIDE void sppp_auth_send(const struct cp *cp,
-			   struct sppp *sp, u_char type, u_char id,
+			   struct sppp *sp, unsigned int type, u_char id,
 			   ...);
 
 HIDE void sppp_up_event(const struct cp *cp, struct sppp *sp);
@@ -3783,8 +3783,8 @@ sppp_pap_scr(struct sppp *sp)
  */
 
 HIDE void
-sppp_auth_send(const struct cp *cp, struct sppp *sp, u_char type, u_char id,
-	       ...)
+sppp_auth_send(const struct cp *cp, struct sppp *sp,
+		unsigned int type, u_char id, ...)
 {
 	STDDCL;
 	struct ppp_header *h;
@@ -3792,7 +3792,8 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp, u_char type, u_char id,
 	struct mbuf *m;
 	u_char *p;
 	int len;
-	size_t mlen, pkthdrlen;
+	size_t pkthdrlen;
+	unsigned int mlen;
 	const char *msg;
 	va_list ap;
 
@@ -3821,7 +3822,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp, u_char type, u_char id,
 	va_start(ap, id);
 	len = 0;
 
-	while ((mlen = va_arg(ap, size_t)) != 0) {
+	while ((mlen = (unsigned int)va_arg(ap, size_t)) != 0) {
 		msg = va_arg(ap, const char *);
 		len += mlen;
 		if (len > MHLEN - pkthdrlen - LCP_HEADER_LEN) {
