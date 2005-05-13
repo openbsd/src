@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.25 2004/10/07 06:26:12 otto Exp $
+.\"	$OpenBSD: top.1,v 1.26 2005/05/13 20:43:30 jaredy Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -107,7 +107,9 @@ not understood.
 This mode is the default when standard output is an intelligent terminal.
 .It Fl I
 Do not display idle processes.
-By default, top displays both active and idle processes.
+By default,
+.Nm
+displays both active and idle processes.
 .It Fl n
 Use
 .Em non-interactive
@@ -121,7 +123,9 @@ The field name is the name of the column as seen in the output,
 but in lower case.
 The
 .Ox
-version of top supports
+version of
+.Nm
+supports
 .Ar cpu ,
 .Ar size ,
 .Ar res ,
@@ -134,7 +138,7 @@ Show only the process
 .It Fl q
 Renice
 .Nm
-to -20 so that it will run faster.
+to \-20 so that it will run faster.
 This can be used when the system is
 being very sluggish to improve the possibility of discovering the problem.
 This option can only be used by root.
@@ -276,14 +280,15 @@ Values are the same as for the
 .Fl o
 flag, as detailed above.
 .It p
-Display a specific process (prompt for pid).
-If the pid specified is simply
+Display a specific process (prompt for PID).
+If the PID specified is simply
 .Dq + ,
 then processes belonging to all users will be displayed.
 .It r
 Change the priority (the
 .Em nice )
-of a list of processes.
+of a list of processes (prompt for the new nice value and the list of
+PIDs, all separated by space).
 This acts similarly to the command
 .Xr renice 8 .
 .It s
@@ -311,63 +316,77 @@ the three load average numbers,
 the current time,
 the number of existing processes,
 the number of processes in each state
-(sleeping, running, starting, zombies, and stopped),
+(starting, running, idle, stopped, zombie, dead, and on processor),
 and a percentage of time spent in each of the processor states
-(user, nice, system, and idle).
+(user, nice, system, interrupt, and idle).
 It also includes information about physical and virtual memory allocation.
 The load average numbers give the number of jobs in the run queue averaged
-over 1, 5 and 15 minutes.
+over 1, 5, and 15 minutes.
 .Pp
 The remainder of the screen displays information about individual
 processes.
 This display is similar in spirit to
 .Xr ps 1
 but it is not exactly the same.
-PID is the process ID, USERNAME is the name
-of the process's owner (if
+The following fields are displayed:
+.Bl -tag -width USERNAME -offset indent
+.It PID
+The process ID.
+.It USERNAME
+The name of the process's owner.
+.It UID
+Used instead of USERNAME if
 .Fl u
-is specified, a UID column will be substituted for USERNAME),
-PRI is the current priority of the process,
-NICE is the nice amount (in the range -20 to 20),
-SIZE is the total size of the process (text, data, and stack),
-RES is the current amount of resident memory (both SIZE and RES are
-given in kilobytes),
-STATE is the current state (one of
-.Li sleep ,
-.Li WAIT ,
+is specified.
+.It PRI
+The current priority of the process.
+.It NICE
+The nice amount (in the range \-20 to 20).
+.It SIZE
+The total size of the process (the text, data, and stack segments).
+Given in kilobytes.
+.It RES
+The current amount of resident memory.
+Given in kilobytes.
+.It STATE
+The current state (one of
+.Li start ,
 .Li run ,
-.Li idl ,
+.Li sleep ,
+.Li stop ,
+.Li idle ,
 .Li zomb ,
+.Li dead ,
 or
-.Li stop ) ,
-TIME is the number of system and user CPU seconds that the process has used,
-WCPU, when displayed, is the weighted CPU percentage (this is the same
-value that
-.Xr ps 1
-displays as CPU),
-CPU is the raw percentage and is the field that is sorted to determine
-the order of the processes, and
-COMMAND is the name of the command that the process is currently running
-(if the process is swapped out, this column is marked
-.Li <swapped> ) .
-.Sh NOTES
-The
-.Em ABANDONED
-state (known in the kernel as
-.Em SWAIT )
-was abandoned, thus the name.
-A process should never end up in this state.
+.Li onproc ) .
+On multi-processor systems, this is followed by a slash and the CPU
+number on which the process is bound.
+.It WAIT
+A description of the wait channel the process is sleeping on if it's
+asleep.
+.It TIME
+The number of system and user CPU seconds that the process has used.
+.It CPU
+The raw percentage of CPU usage and the default field on which the
+display is sorted.
+.It COMMAND
+The name of the command that the process is currently running.
+(If the process is swapped out, this column is enclosed by angle
+brackets.)
+.El
 .Sh ENVIRONMENT
-.Bl -tag -width XxXXXX
+.Bl -tag -width Ev
 .It Ev TOP
 User-configurable defaults for options.
 .El
 .Sh FILES
-.Bl -tag -width XxXXXXXXX -compact
+.Bl -tag -width Pa -compact
 .It Pa /dev/kmem
 kernel memory
 .It Pa /dev/mem
 physical memory
+.It Pa /etc/passwd
+used to map user ID to name
 .It Pa /bsd
 kernel image
 .El
@@ -381,9 +400,6 @@ kernel image
 .Sh AUTHORS
 William LeFebvre, EECS Department, Northwestern University
 .Sh BUGS
-The command name for swapped processes should be tracked down, but this
-would make the program run slower.
-.Pp
 As with
 .Xr ps 1 ,
 things can change while

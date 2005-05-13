@@ -1,4 +1,4 @@
-/*	$OpenBSD: top.c,v 1.36 2005/04/13 02:33:09 deraadt Exp $	*/
+/*	$OpenBSD: top.c,v 1.37 2005/05/13 20:43:30 jaredy Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -817,7 +817,7 @@ rundisplay(void)
 			break;
 
 		case CMD_pid:
-			new_message(MT_standout, "Process id to show: ");
+			new_message(MT_standout, "Process ID to show: ");
 			if (readline(tempbuf2, sizeof(tempbuf2), No) > 0) {
 				if (tempbuf2[0] == '+' &&
 				    tempbuf2[1] == '\0') {
