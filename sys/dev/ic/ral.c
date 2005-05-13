@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.49 2005/04/17 13:41:48 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.50 2005/05/13 19:00:07 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1021,8 +1021,7 @@ ral_encryption_intr(struct ral_softc *sc)
 		    sc->txq.next_encrypt * RAL_TX_DESC_SIZE, RAL_TX_DESC_SIZE,
 		    BUS_DMASYNC_POSTREAD);
 
-		if ((letoh32(desc->flags) & RAL_TX_BUSY) ||
-		    (letoh32(desc->flags) & RAL_TX_CIPHER_BUSY))
+		if (letoh32(desc->flags) & (RAL_TX_BUSY | RAL_TX_CIPHER_BUSY))
 			break;
 
 		/* for TKIP, swap eiv field to fix a bug in ASIC */
@@ -1228,8 +1227,7 @@ ral_decryption_intr(struct ral_softc *sc)
 		    sc->rxq.cur_decrypt * RAL_TX_DESC_SIZE, RAL_TX_DESC_SIZE,
 		    BUS_DMASYNC_POSTREAD);
 
-		if ((letoh32(desc->flags) & RAL_RX_BUSY) ||
-		    (letoh32(desc->flags) & RAL_RX_CIPHER_BUSY))
+		if (letoh32(desc->flags) & (RAL_RX_BUSY | RAL_RX_CIPHER_BUSY))
 			break;
 
 		if (data->drop) {
@@ -1352,14 +1350,13 @@ ral_rx_intr(struct ral_softc *sc)
 		    sc->rxq.cur * RAL_RX_DESC_SIZE, RAL_RX_DESC_SIZE,
 		    BUS_DMASYNC_POSTREAD);
 
-		if ((letoh32(desc->flags) & RAL_RX_BUSY) ||
-		    (letoh32(desc->flags) & RAL_RX_CIPHER_BUSY))
+		if (letoh32(desc->flags) & (RAL_RX_BUSY | RAL_RX_CIPHER_BUSY))
 			break;
 
 		data->drop = 0;
 
-		if ((letoh32(desc->flags) & RAL_RX_PHY_ERROR) ||
-		    (letoh32(desc->flags) & RAL_RX_CRC_ERROR)) {
+		if (letoh32(desc->flags) &
+		    (RAL_RX_PHY_ERROR | RAL_RX_CRC_ERROR)) {
 			/*
 			 * This should not happen since we did not request
 			 * to receive those frames when we filled RXCSR0.
@@ -1711,10 +1708,9 @@ ral_tx_mgt(struct ral_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		*(uint16_t *)wh->i_dur = htole16(dur);
 
 		/* tell hardware to add timestamp for probe responses */
-		if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
-		    IEEE80211_FC0_TYPE_MGT &&
-		    (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
-		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
+		if ((wh->i_fc[0] &
+		    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
+		    (IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_RESP))
 			flags |= RAL_TX_TIMESTAMP;
 	}
 

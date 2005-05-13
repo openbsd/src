@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.30 2005/05/13 18:42:50 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.31 2005/05/13 19:00:10 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -854,8 +854,7 @@ ural_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	/* rx descriptor is located at the end */
 	desc = (struct ural_rx_desc *)(data->buf + len - RAL_RX_DESC_SIZE);
 
-	if ((letoh32(desc->flags) & RAL_RX_PHY_ERROR) ||
-	    (letoh32(desc->flags) & RAL_RX_CRC_ERROR)) {
+	if (letoh32(desc->flags) & (RAL_RX_PHY_ERROR | RAL_RX_CRC_ERROR)) {
 		/*
 		 * This should not happen since we did not request to receive
 		 * those frames when we filled RAL_TXRX_CSR2.
@@ -1187,10 +1186,9 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		*(uint16_t *)wh->i_dur = htole16(dur);
 
 		/* tell hardware to add timestamp for probe responses */
-		if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
-		    IEEE80211_FC0_TYPE_MGT &&
-		    (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) ==
-		    IEEE80211_FC0_SUBTYPE_PROBE_RESP)
+		if ((wh->i_fc[0] &
+		    (IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_MASK)) ==
+		    (IEEE80211_FC0_TYPE_MGT | IEEE80211_FC0_SUBTYPE_PROBE_RESP))
 			flags |= RAL_TX_TIMESTAMP;
 	}
 
