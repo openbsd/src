@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.28 2005/04/17 13:41:51 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.29 2005/05/13 18:17:08 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -2095,14 +2095,14 @@ ural_stop(struct ifnet *ifp, int disable)
 	struct ural_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 
+	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+
 	/* disable Rx */
 	ural_write(sc, RAL_TXRX_CSR2, RAL_DISABLE_RX);
 
 	/* reset ASIC and BBP (but won't reset MAC registers!) */
 	ural_write(sc, RAL_MAC_CSR1, RAL_RESET_ASIC | RAL_RESET_BBP);
 	ural_write(sc, RAL_MAC_CSR1, 0);
-
-	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
