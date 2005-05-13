@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.36 2005/04/17 13:49:09 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.37 2005/05/13 20:24:59 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -797,7 +797,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 	ni = ieee80211_find_rxnode(ic, wh);
 
 	/* Send the frame to the upper layer */
-	ieee80211_input(ifp, m, ni, IWI_RSSIDBM2RAW(frame->rssi_dbm), 0);
+	ieee80211_input(ifp, m, ni, frame->rssi_dbm, 0);
 
 	ieee80211_release_node(ic, ni);
 
