@@ -1,4 +1,4 @@
-/*	$OpenBSD: ueagle.c,v 1.2 2005/04/19 08:21:46 damien Exp $	*/
+/*	$OpenBSD: ueagle.c,v 1.3 2005/05/13 20:20:21 damien Exp $	*/
 
 /*-
  * Copyright (c) 2003-2005
@@ -161,6 +161,7 @@ USB_ATTACH(ueagle)
 	uint8_t addr[6];
 
 	sc->sc_udev = uaa->device;
+	USB_ATTACH_SETUP;
 
 	/*
 	 * Pre-firmware modems must be flashed and reset first.  They will
@@ -179,7 +180,6 @@ USB_ATTACH(ueagle)
 	}
 
 	usbd_devinfo(sc->sc_udev, 0, devinfo, sizeof devinfo);
-	USB_ATTACH_SETUP;
 	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
 
 	if (usbd_set_config_no(sc->sc_udev, UEAGLE_CONFIG_NO, 0) != 0) {
