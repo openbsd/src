@@ -1,4 +1,4 @@
-/* $OpenBSD: strerror_test.c,v 1.3 2005/05/08 06:34:25 otto Exp $ */
+/* $OpenBSD: strerror_test.c,v 1.4 2005/05/13 07:06:20 otto Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
  *
@@ -14,6 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <signal.h>
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
@@ -34,6 +35,18 @@ check_strerror_r(int val)
 	}
 }
 
+void
+check_strsignal(int val)
+{
+	char buffer[NL_TEXTMAX + 1];
+	int i, r;
+
+	memset(buffer, 'X', sizeof(buffer) - 1);
+	buffer[sizeof(buffer) - 1] = '\0';
+	(void)__strsignal(val, buffer);
+	printf("%s\n", buffer);
+}
+
 int 
 main()
 {
@@ -45,5 +58,14 @@ main()
 	printf("%s\n", strerror(EPERM));
 	check_strerror_r(EPERM);
 	check_strerror_r(21345);
+	check_strsignal(-1);
+	check_strsignal(0);
+	check_strsignal(10);
+	check_strsignal(NSIG-1);
+	check_strsignal(NSIG);
+	check_strsignal(100);
+	check_strsignal(INT_MAX);
+	check_strsignal(INT_MIN);
+	check_strsignal(UINT_MAX);
 	return 0;
 }

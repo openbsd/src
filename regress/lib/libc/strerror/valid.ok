@@ -54,3 +54,12 @@ Operation not permitted
 22 22 20: Unknown error: 21345
 23 22 20: Unknown error: 21345
 24 22 20: Unknown error: 21345
+Unknown signal: 4294967295
+Signal 0
+Bus error
+User defined signal 2
+Unknown signal: 32
+Unknown signal: 100
+Unknown signal: 2147483647
+Unknown signal: 2147483648
+Unknown signal: 4294967295
