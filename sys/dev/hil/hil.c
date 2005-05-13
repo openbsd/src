@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil.c,v 1.19 2005/05/08 11:38:09 miod Exp $	*/
+/*	$OpenBSD: hil.c,v 1.20 2005/05/13 15:22:37 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * All rights reserved.
@@ -252,11 +252,7 @@ hil_attach_deferred(void *v)
 	 * Reconfigure if necessary
 	 */
 	sc->sc_status = HIL_STATUS_READY;
-	if (sc->sc_pending == HIL_PENDING_RECONFIG) {
-		sc->sc_pending = 0;
-		hilconfig(sc, 0);
-	} else
-		sc->sc_pending = 0;
+	hil_process_pending(sc);
 }
 
 /*
@@ -278,7 +274,8 @@ hil_intr(void *v)
 	DELAY(1);
 	hil_process_int(sc, stat, c);
 
-	hil_process_pending(sc);
+	if (sc->sc_status != HIL_STATUS_BUSY)
+		hil_process_pending(sc);
 
 	return (1);
 }
@@ -456,7 +453,6 @@ hilconfig(struct hil_softc *sc, u_int knowndevs)
 {
 	struct hil_attach_args ha;
 	u_int8_t db;
-	u_int oldmax;
 	int id, s;
 
 	s = splhil();
@@ -466,7 +462,6 @@ hilconfig(struct hil_softc *sc, u_int knowndevs)
 	 */
 	db = 0;
 	send_hil_cmd(sc, HIL_READLPSTAT, NULL, 0, &db);
-	oldmax = sc->sc_maxdev;
 	sc->sc_maxdev = db & LPS_DEVMASK;
 #ifdef HILDEBUG
 	printf("%s: %d device(s)\n", sc->sc_dev.dv_xname, sc->sc_maxdev);
