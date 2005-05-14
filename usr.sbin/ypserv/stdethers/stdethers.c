@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdethers.c,v 1.12 2005/03/28 06:19:58 tedu Exp $ */
+/*	$OpenBSD: stdethers.c,v 1.13 2005/05/14 02:32:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: stdethers.c,v 1.12 2005/03/28 06:19:58 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: stdethers.c,v 1.13 2005/05/14 02:32:33 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -138,21 +138,20 @@ main(int argc, char *argv[])
 		 * Check if we have the whole line
 		 */
 		if (data_line[len-1] != '\n') {
-			if (argc == 2) {
+			if (argc == 2)
 				fprintf(stderr,
 				    "line %d in \"%s\" is too long",
 				    line_no, argv[1]);
-			} else {
+			else
 				fprintf(stderr,
 				    "line %d in \"stdin\" is too long",
 				    line_no);
-			}
 		} else
 			data_line[len-1] = '\0';
 
 		p = (char *) &data_line;
 
-		k  = p;				/* save start of key */
+		k = p;				/* save start of key */
 		while (!isspace(*p))		/* find first "space" */
 			p++;
 		while (isspace(*p))		/* move over "space" */
@@ -162,13 +161,12 @@ main(int argc, char *argv[])
 		while (*p != '\0')		/* find end of string */
 			p++;
 
-		if (ether_line(data_line, &eth_addr, hostname) == 0) {
+		if (ether_line(data_line, &eth_addr, hostname) == 0)
 			fprintf(stdout, "%s\t%s\n", NTOA(&eth_addr),
 			    hostname);
-		} else {
+		else
 			fprintf(stderr, "stdethers: ignoring line %d: \"%s\"\n",
 			    line_no, data_line);
-		}
 	}
 	return(0);
 }

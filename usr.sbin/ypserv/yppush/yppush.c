@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.21 2003/07/15 06:10:46 deraadt Exp $ */
+/*	$OpenBSD: yppush.c,v 1.22 2005/05/14 02:32:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: yppush.c,v 1.21 2003/07/15 06:10:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: yppush.c,v 1.22 2005/05/14 02:32:33 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -150,11 +150,10 @@ push(int inlen, char *indata)
 	char host[MAXHOSTNAMELEN];
 	CLIENT *client;
 	SVCXPRT *transp;
-	int sock = RPC_ANYSOCK;
+	int sock = RPC_ANYSOCK, status;
 	u_int prog;
 	bool_t sts = 0;
 	pid_t pid;
-	int status;
 	struct rusage res;
 
 	snprintf(host, sizeof host, "%*.*s" ,inlen ,inlen, indata);

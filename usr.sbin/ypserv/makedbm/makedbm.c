@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.23 2003/07/18 22:58:56 david Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.24 2005/05/14 02:32:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: makedbm.c,v 1.23 2003/07/18 22:58:56 david Exp $";
+static const char rcsid[] = "$OpenBSD: makedbm.c,v 1.24 2005/05/14 02:32:32 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -52,17 +52,17 @@ extern char *__progname;		/* from crt0.o */
 static int
 read_line(FILE *fp, char *buf, int size)
 {
-	int	done;
-
-	done = 0;
+	int	done = 0;
 
 	do {
 		while (fgets(buf, size, fp)) {
 			int len = strlen(buf);
+
 			done += len;
 			if (len > 1 && buf[len-2] == '\\' &&
 			    buf[len-1] == '\n') {
 				int ch;
+
 				buf += len - 2;
 				size -= len - 2;
 				*buf = '\n'; buf[1] = '\0';
@@ -77,7 +77,6 @@ read_line(FILE *fp, char *buf, int size)
 			}
 		}
 	} while (size > 0 && !feof(fp));
-
 	return done;
 }
 
@@ -97,7 +96,7 @@ add_record(DBM *db, char *str1, char *str2, int check)
 			return;		/* already there */
 	}
 
-	val.dptr  = str2;
+	val.dptr = str2;
 	val.dsize = strlen(str2);
 	status = ypdb_store(db, key, val, YPDB_INSERT);
 
@@ -165,15 +164,12 @@ create_database(char *infile, char *database, char *yp_input_file,
 	FILE	*data_file;
 	char	data_line[4096]; /* XXX: DB bsize = 4096 in ypdb.c */
 	char	myname[MAXHOSTNAMELEN];
-	int	line_no = 0;
-	int	len;
-	char	*p, *k, *v;
-	char	*slash;
+	int	line_no = 0, len;
+	char	*p, *k, *v, *slash;
 	DBM	*new_db;
 	static	char mapname[] = "ypdbXXXXXXXXXX";
-	char	db_mapname[MAXPATHLEN], db_outfile[MAXPATHLEN],
-		db_tempname[MAXPATHLEN];
-	char	empty_str[] = "";
+	char	db_mapname[MAXPATHLEN], db_outfile[MAXPATHLEN];
+	char	db_tempname[MAXPATHLEN], empty_str[] = "";
 
 	if (strcmp(infile,"-") == 0) {
 		data_file = stdin;
@@ -236,7 +232,7 @@ create_database(char *infile, char *database, char *yp_input_file,
 
 		p = (char *) &data_line;
 
-		k  = p;				    /* save start of key */
+		k = p;				    /* save start of key */
 		while (!isspace(*p)) {		    /* find first "space" */
 			if (lflag && isupper(*p))   /* if force lower case */
 				*p = tolower(*p);   /* fix it */
@@ -305,8 +301,8 @@ main(int argc, char *argv[])
 {
 	int	aflag, uflag, bflag, lflag, sflag, Uflag;
 	char	*yp_input_file, *yp_output_file;
-	char	*yp_master_name,*yp_domain_name;
-	char	*infile,*outfile;
+	char	*yp_master_name, *yp_domain_name;
+	char	*infile, *outfile;
 	int	ch;
 
 	extern int optind;

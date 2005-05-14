@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknetid.c,v 1.12 2003/07/15 06:10:46 deraadt Exp $ */
+/*	$OpenBSD: mknetid.c,v 1.13 2005/05/14 02:32:32 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: mknetid.c,v 1.12 2003/07/15 06:10:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: mknetid.c,v 1.13 2005/05/14 02:32:32 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -90,10 +90,12 @@ read_line(FILE *fp, char *buf, int size)
 	do {
 		while (fgets(buf, size, fp)) {
 			int len = strlen(buf);
+
 			done += len;
 			if (len > 1 && buf[len-2] == '\\' &&
 			    buf[len-1] == '\n') {
 				int ch;
+
 				buf += len - 2;
 				size -= len - 2;
 				*buf = '\n'; buf[1] = '\0';
@@ -175,9 +177,8 @@ add_group(char *username, char *gid)
 		if (strcmp(username, u->usr_name) == 0) {
 			if (g != u->usr_gid) {
 				u->gid_count++;
-				if (u->gid_count < NGROUPS) {
-					u->gid[u->gid_count]=atoi(gid);
-				}
+				if (u->gid_count < NGROUPS)
+					u->gid[u->gid_count] = atoi(gid);
 			}
 			u = htail[idx];
 		}
@@ -188,10 +189,8 @@ add_group(char *username, char *gid)
 static void
 read_passwd(FILE *pfile, char *fname)
 {
-	char  line[1024];
-	int   line_no = 0;
-	int   len, colon;
-	char  *p, *k, *u, *g;
+	char  line[1024], *p, *k, *u, *g;
+	int   line_no = 0, len, colon;
 
 	while (read_line(pfile, line, sizeof(line))) {
 		line_no++;
@@ -277,10 +276,8 @@ isgsep(char ch)
 static void
 read_group(FILE *gfile, char *fname)
 {
-	char  line[2048];
-	int   line_no = 0;
-	int   len, colon;
-	char  *p, *k, *u, *g;
+	char  line[2048], *p, *k, *u, *g;
+	int   line_no = 0, len, colon;
 
 	while (read_line(gfile, line, sizeof(line))) {
 		line_no++;
@@ -395,10 +392,8 @@ print_passwd_group(int qflag, char *domain)
 static void
 print_hosts(FILE *pfile, char *fname, char *domain)
 {
-	char  line[1024];
-	int   line_no = 0;
-	int   len;
-	char  *p, *k, *u;
+	char  line[1024], *p, *k, *u;
+	int   line_no = 0, len;
 
 	while (read_line(pfile, line, sizeof(line))) {
 		line_no++;
@@ -448,10 +443,8 @@ print_hosts(FILE *pfile, char *fname, char *domain)
 static void
 print_netid(FILE *mfile, char *fname)
 {
-	char  line[1024];
-	int   line_no = 0;
-	int   len;
-	char  *p, *k, *u;
+	char  line[1024], *p, *k, *u;
+	int   line_no = 0, len;
 
 	while (read_line(mfile, line, sizeof(line))) {
 		line_no++;

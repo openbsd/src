@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.23 2003/07/15 06:10:46 deraadt Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.24 2005/05/14 02:32:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.23 2003/07/15 06:10:46 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.24 2005/05/14 02:32:33 deraadt Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -660,7 +660,7 @@ ypoldproc_first_1_svc(yprequest *argp, struct svc_req *rqstp)
 	    strchr(argp->ypfirst_req_map, '/'))
 		goto bail;
 	res.yp_resptype = YPFIRST_RESPTYPE;
-	res.ypfirst_resp_valptr  = res.ypfirst_resp_keyptr  = "";
+	res.ypfirst_resp_valptr = res.ypfirst_resp_keyptr = "";
 	res.ypfirst_resp_valsize = res.ypfirst_resp_keysize = 0;
 
 	if (argp->yp_reqtype != YPREQ_NOKEY) {
@@ -708,7 +708,7 @@ ypoldproc_next_1_svc(yprequest *argp, struct svc_req *rqstp)
 	    strchr(argp->ypnext_req_map, '/'))
 		goto bail;
 	res.yp_resptype = YPNEXT_RESPTYPE;
-	res.ypnext_resp_valptr  = res.ypnext_resp_keyptr  = "";
+	res.ypnext_resp_valptr = res.ypnext_resp_keyptr = "";
 	res.ypnext_resp_valsize = res.ypnext_resp_keysize = 0;
 
 	if (argp->yp_reqtype != YPNEXT_REQTYPE) {

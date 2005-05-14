@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdhosts.c,v 1.13 2005/05/14 02:30:40 deraadt Exp $ */
+/*	$OpenBSD: stdhosts.c,v 1.14 2005/05/14 02:32:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: stdhosts.c,v 1.13 2005/05/14 02:30:40 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: stdhosts.c,v 1.14 2005/05/14 02:32:33 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -40,21 +40,25 @@ static const char rcsid[] = "$OpenBSD: stdhosts.c,v 1.13 2005/05/14 02:30:40 der
 #include <ctype.h>
 #include <err.h>
 
-static int read_line(FILE *fp, char *buf, int size)
+static int
+read_line(FILE *fp, char *buf, int size)
 {
 	int done = 0;
 
 	do {
 		while (fgets(buf, size, fp)) {
 			int len = strlen(buf);
+
 			done += len;
 			if (len > 1 && buf[len-2] == '\\' &&
 			    buf[len-1] == '\n') {
 				int ch;
+
 				buf += len - 2;
 				size -= len - 2;
 				*buf = '\n';
 				buf[1] = '\0';
+
 				/*
 				 * Skip leading white space on next line
 				 */
@@ -72,12 +76,10 @@ static int read_line(FILE *fp, char *buf, int size)
 int
 main(int argc, char *argv[])
 {
-	FILE	*data_file;
-	char	 data_line[1024];
-	int	 line_no = 0;
-	int	 len;
-	char	*p, *k, *v;
+	char	 data_line[1024], *p, *k, *v;
+	int	 line_no = 0, len;
 	struct in_addr host_addr;
+	FILE	*data_file;
 
 	if (argc > 2) {
 		fprintf(stderr, "usage: stdhosts [file]\n");
@@ -113,7 +115,7 @@ main(int argc, char *argv[])
 			data_line[len-1] = '\0';
 
 		p = (char *) &data_line;
-		k = p;				/* save start of key */
+		k = p;			/* save start of key */
 		while (!isspace(*p))	/* find first "space" */
 			p++;
 		while (isspace(*p))	/* replace space with <NUL> */
