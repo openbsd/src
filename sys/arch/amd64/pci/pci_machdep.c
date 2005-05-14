@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.3 2004/06/28 01:52:26 deraadt Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.4 2005/05/14 00:13:15 brad Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.3 2003/05/07 21:33:58 fvdl Exp $	*/
 
 /*-
@@ -135,10 +135,6 @@ do {									\
 
 #define	PCI_MODE2_ENABLE_REG	0x0cf8
 #define	PCI_MODE2_FORWARD_REG	0x0cfa
-
-#define PCI_ID_CODE(vid,pid)					\
-	((((vid) & PCI_VENDOR_MASK) << PCI_VENDOR_SHIFT) |	\
-	 (((pid) & PCI_PRODUCT_MASK) << PCI_PRODUCT_SHIFT))	\
 
 #define _m1tag(b, d, f) \
 	(PCI_MODE1_ENABLE | ((b) << 16) | ((d) << 11) | ((f) << 8))
