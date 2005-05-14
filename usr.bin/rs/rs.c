@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.13 2005/05/14 17:12:51 millert Exp $	*/
+/*	$OpenBSD: rs.c,v 1.14 2005/05/14 23:08:47 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: rs.c,v 1.13 2005/05/14 17:12:51 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rs.c,v 1.14 2005/05/14 23:08:47 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,8 @@ static const char rcsid[] = "$OpenBSD: rs.c,v 1.13 2005/05/14 17:12:51 millert E
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -97,7 +99,6 @@ void	  getargs(int, char *[]);
 void	  getfile(void);
 int	  getline(void);
 char	 *getlist(short **, char *);
-char	 *getnum(int *, char *, int);
 char	**getptrs(char **);
 void	  prepfile(void);
 void	  prints(char *, int);
@@ -374,6 +375,7 @@ void
 getargs(int ac, char *av[])
 {
 	int ch;
+	const char *errstr;
 
 	if (ac == 1)
 		flags |= NOARGS | TRANSPOSE;
@@ -408,9 +410,9 @@ getargs(int ac, char *av[])
 				osep = *optarg;
 			break;
 		case 'w':		/* window width, default 80 */
-			getnum(&owidth, optarg, 0);
-			if (owidth <= 0) {
-				warnx("width must be a positive integer");
+			owidth = strtonum(optarg, 1, INT_MAX, &errstr);
+			if (errstr) {
+				warnx("width %s", errstr);
 				usage();
 			}
 			break;
@@ -418,18 +420,30 @@ getargs(int ac, char *av[])
 			flags |= SKIPPRINT;
 			/* FALLTHROUGH */
 		case 'k':			/* skip, do not print */
-			getnum(&skip, optarg, 0);
-			if (!skip)
+			skip = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr) {
+				warnx("skip value %s", errstr);
+				usage();
+			}
+			if (skip == 0)
 				skip = 1;
 			break;
 		case 'm':
 			flags |= NOTRIMENDCOL;
 			break;
-		case 'g':		/* gutter space */
-			getnum(&gutter, optarg, 0);
+		case 'g':		/* gutter width */
+			gutter = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr) {
+				warnx("gutter width %s", errstr);
+				usage();
+			}
 			break;
 		case 'G':
-			getnum(&propgutter, optarg, 0);
+			propgutter = strtonum(optarg, 0, INT_MAX, &errstr);
+			if (errstr) {
+				warnx("gutter proportion %s", errstr);
+				usage();
+			}
 			break;
 		case 'e':		/* each line is an entry */
 			flags |= ONEPERLINE;
@@ -475,9 +489,17 @@ getargs(int ac, char *av[])
 
 	switch (ac) {
 	case 2:
-		ocols = atoi(av[1]);
+		ocols = strtonum(av[1], 0, INT_MAX, &errstr);
+		if (errstr) {
+			warnx("columns value %s", errstr);
+			usage();
+		}
 	case 1:
-		orows = atoi(av[0]);
+		orows = strtonum(av[0], 0, INT_MAX, &errstr);
+		if (errstr) {
+			warnx("columns value %s", errstr);
+			usage();
+		}
 	case 0:
 		break;
 	default:
@@ -489,7 +511,8 @@ char *
 getlist(short **list, char *p)
 {
 	int count = 1;
-	char *t;
+	char *t, *ep;
+	long l;
 
 	for (t = p + 1; *t; t++) {
 		if (!isdigit(*t)) {
@@ -506,36 +529,21 @@ getlist(short **list, char *p)
 		errx(1, "No list space");
 	count = 0;
 	for (t = p + 1; *t; t++) {
-		(*list)[count++] = atoi(t);
+		errno = 0;
+		l = strtol(t, &ep, 10);
+		if (t == ep)
+			break;		/* can't happen */
+		if ((errno == ERANGE && (l == LONG_MAX || l == LONG_MIN)) ||
+		    (l > SHRT_MAX || l < SHRT_MIN)) {
+			warnx("list value out of range");
+			usage();
+		}
+		(*list)[count++] = (short)l;
 		printf("++ %d ", (*list)[count-1]);
 		fflush(stdout);
-		while (*t && isdigit(*t))
-			t++;
-		if (*t != ',')
+		if (*(t = ep) != ',')
 			break;
 	}
 	(*list)[count] = 0;
 	return(t - 1);
-}
-
-/* num = number p points to; if (strict) complain */
-/* returns pointer to end of num */
-char *
-getnum(int *num, char *p, int strict)
-{
-	char *t = p;
-
-	if (!isdigit(*++t)) {
-		if (strict || *t == '-' || *t == '+') {
-			warnx("option -%c requires an unsigned integer", *p);
-			usage();
-		}
-		*num = 0;
-		return(p);
-	}
-	*num = atoi(t);
-	while (*++t)
-		if (!isdigit(*t))
-			break;
-	return(--t);
 }
