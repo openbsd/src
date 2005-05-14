@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.8 2005/05/07 16:24:46 krw Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.9 2005/05/14 00:20:43 krw Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -76,8 +76,6 @@ struct sd_scsibus_mode_sense_data {
 	union scsi_disk_pages pages;
 };
 
-int	sd_scsibus_mode_sense(struct sd_softc *,
-	    struct sd_scsibus_mode_sense_data *, int, int);
 int	sd_scsibus_get_parms(struct sd_softc *,
 	    struct disk_parms *, int);
 int	sd_scsibus_get_optparms(struct sd_softc *,
@@ -88,16 +86,6 @@ const struct sd_ops sd_scsibus_ops = {
 	sd_scsibus_get_parms,
 	sd_scsibus_flush,
 };
-
-int
-sd_scsibus_mode_sense(sd, scsi_sense, page, flags)
-	struct sd_softc *sd;
-	struct sd_scsibus_mode_sense_data *scsi_sense;
-	int page, flags;
-{
-	return scsi_mode_sense(sd->sc_link, 0, page, (u_char *)scsi_sense,
-	    sizeof(*scsi_sense), flags | SCSI_SILENT, 6000);
-}
 
 int
 sd_scsibus_get_optparms(sd, dp, flags)
@@ -119,8 +107,10 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	 * However, there are stupid optical devices which does NOT
 	 * support the page 6. Ask for all (0x3f) pages. Ghaa....
 	 */
-	error = scsi_mode_sense(sd->sc_link, 0, 0x3f, (u_char *)&scsi_sense,
-	    sizeof(scsi_sense), flags, 6000);
+	bzero(&scsi_sense, sizeof(scsi_sense));
+	error = scsi_mode_sense(sd->sc_link, 0, 0x3f,
+	    (struct scsi_mode_header *)&scsi_sense, sizeof(scsi_sense), flags,
+	    6000);
 	if (error != 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
@@ -162,8 +152,11 @@ sd_scsibus_get_parms(sd, dp, flags)
 	if (sd->type == T_OPTICAL)
 		return (sd_scsibus_get_optparms(sd, dp, flags));
 
-	if ((error = sd_scsibus_mode_sense(sd, &scsi_sense, page = 4,
-	    flags)) == 0) {
+	bzero(&scsi_sense, sizeof(scsi_sense));
+	error = scsi_mode_sense(sd->sc_link, 0, page = 4,
+	    (struct scsi_mode_header *)&scsi_sense, sizeof(scsi_sense),
+	    flags | SCSI_SILENT, 6000);
+	if (error == 0) {
 		sense_pages = (union scsi_disk_pages *)
 		    ((char *)&scsi_sense.blk_desc +
 		     (size_t)scsi_sense.header.blk_desc_len);
@@ -208,8 +201,11 @@ sd_scsibus_get_parms(sd, dp, flags)
 		return (SDGP_RESULT_OK);
 	}
 
-	if ((error = sd_scsibus_mode_sense(sd, &scsi_sense, page = 5,
-	    flags)) == 0) {
+	bzero(&scsi_sense, sizeof(scsi_sense));
+	error = scsi_mode_sense(sd->sc_link, 0, page = 5,
+	    (struct scsi_mode_header *)&scsi_sense, sizeof(scsi_sense),
+	    flags | SCSI_SILENT, 6000);
+	if (error == 0) {
 		sense_pages = (union scsi_disk_pages *)
 		    ((char *)&scsi_sense.blk_desc +
 		     (size_t)scsi_sense.header.blk_desc_len);
@@ -233,8 +229,11 @@ sd_scsibus_get_parms(sd, dp, flags)
 	}
 
 	/* T_RDIRECT define page 6. */
-	if ((error = sd_scsibus_mode_sense(sd, &scsi_sense, page = 6,
-	    flags)) == 0) {
+	bzero(&scsi_sense, sizeof(scsi_sense));
+	error = scsi_mode_sense(sd->sc_link, 0, page = 6,
+	    (struct scsi_mode_header *)&scsi_sense, sizeof(scsi_sense),
+	    flags | SCSI_SILENT, 6000);
+	if (error == 0) {
 		sense_pages = (union scsi_disk_pages *)
 		    ((char *)&scsi_sense.blk_desc +
 		     (size_t)scsi_sense.header.blk_desc_len);

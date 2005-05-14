@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.51 2005/04/27 23:54:44 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.52 2005/05/14 00:20:43 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -331,10 +331,14 @@ int	scsi_test_unit_ready(struct scsi_link *, int, int);
 int	scsi_inquire(struct scsi_link *, struct scsi_inquiry_data *, int);
 int	scsi_prevent(struct scsi_link *, int, int);
 int	scsi_start(struct scsi_link *, int, int);
-int	scsi_mode_sense(struct scsi_link *, int, int, u_char *, size_t,
-	    int, int);
-int	scsi_mode_select(struct scsi_link *, int, u_char *, size_t, int,
-	    int);
+int	scsi_mode_sense(struct scsi_link *, int, int, struct scsi_mode_header *,
+	    size_t, int, int);
+int	scsi_mode_sense_big(struct scsi_link *, int, int,
+	    struct scsi_mode_header_big *, size_t, int, int);
+int	scsi_mode_select(struct scsi_link *, int, struct scsi_mode_header *,
+	    size_t, int, int);
+int	scsi_mode_select_big(struct scsi_link *, int,
+	    struct scsi_mode_header_big *, size_t, int, int);
 void	scsi_done(struct scsi_xfer *);
 void	scsi_user_done(struct scsi_xfer *);
 int	scsi_scsi_cmd(struct scsi_link *, struct scsi_generic *,

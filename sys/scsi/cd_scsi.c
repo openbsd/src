@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd_scsi.c,v 1.6 2005/04/05 12:13:16 krw Exp $	*/
+/*	$OpenBSD: cd_scsi.c,v 1.7 2005/05/14 00:20:43 krw Exp $	*/
 /*	$NetBSD: cd_scsi.c,v 1.14 1998/08/31 22:28:06 cgd Exp $	*/
 
 /*-
@@ -75,11 +75,6 @@
 #include <scsi/scsiconf.h>
 #include <scsi/cdvar.h>
 
-int	cd_scsibus_get_mode(struct cd_softc *,
-	    struct scsi_cd_mode_data *, int, int, int);
-int	cd_scsibus_set_mode(struct cd_softc *,
-	    struct scsi_cd_mode_data *, int, int);
-
 int	cd_scsibus_setchan(struct cd_softc *, int, int, int, int, int);
 int	cd_scsibus_getvol(struct cd_softc *, struct ioc_vol *, int);
 int	cd_scsibus_setvol(struct cd_softc *, const struct ioc_vol *,
@@ -95,37 +90,6 @@ const struct cd_ops cd_scsibus_ops = {
 	cd_scsibus_load_unload,
 };
 
-/*
- * Get the requested page into the buffer given
- */
-int
-cd_scsibus_get_mode(cd, data, page, len, flags)
-	struct cd_softc *cd;
-	struct scsi_cd_mode_data *data;
-	int page, len, flags;
-{
-	return scsi_mode_sense(cd->sc_link, 0, page, (u_char *)data,
-	    len, flags, 20000);
-}
-
-/*
- * Get the requested page into the buffer given
- */
-int
-cd_scsibus_set_mode(cd, data, len, flags)
-	struct cd_softc *cd;
-	struct scsi_cd_mode_data *data;
-	int len, flags;
-{
-	/* SPC-2 revision 16, section 8.3: Mode parameters
-	   When used with the [MODE SELECT command], the data
-	   length field is reserved. */
-	data->header.data_length = 0;
-
-	return scsi_mode_select(cd->sc_link, SMS_PF, (u_char *)data, len, flags,
-	    20000); 
-}
-
 int
 cd_scsibus_set_pa_immed(cd, flags)
 	struct cd_softc *cd;
@@ -134,12 +98,17 @@ cd_scsibus_set_pa_immed(cd, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = cd_scsibus_get_mode(cd, &data, AUDIO_PAGE,
-	    AUDIOPAGESIZE, flags)) != 0)
+	bzero(&data, sizeof(data));
+	error = scsi_mode_sense(cd->sc_link, 0, AUDIO_PAGE,
+	    (struct scsi_mode_header *)&data, AUDIOPAGESIZE, flags, 20000);
+	if (error != 0)
 		return (error);
+
 	data.page.audio.flags &= ~CD_PA_SOTC;
 	data.page.audio.flags |= CD_PA_IMMED;
-	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE, flags));
+
+	return (scsi_mode_select(cd->sc_link, SMS_PF,
+	    (struct scsi_mode_header *)&data, AUDIOPAGESIZE, flags, 20000)); 
 }
 
 int
@@ -151,14 +120,19 @@ cd_scsibus_setchan(cd, p0, p1, p2, p3, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = cd_scsibus_get_mode(cd, &data, AUDIO_PAGE,
-	    AUDIOPAGESIZE, flags)) != 0)
+	bzero(&data, sizeof(data));
+	error = scsi_mode_sense(cd->sc_link, 0, AUDIO_PAGE,
+	    (struct scsi_mode_header *)&data, AUDIOPAGESIZE, flags, 20000);
+	if (error != 0)
 		return (error);
+
 	data.page.audio.port[LEFT_PORT].channels = p0;
 	data.page.audio.port[RIGHT_PORT].channels = p1;
 	data.page.audio.port[2].channels = p2;
 	data.page.audio.port[3].channels = p3;
-	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE, flags));
+
+	return (scsi_mode_select(cd->sc_link, SMS_PF,
+	    (struct scsi_mode_header *)&data, AUDIOPAGESIZE, flags, 20000)); 
 }
 
 int
@@ -171,13 +145,17 @@ cd_scsibus_getvol(cd, arg, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = cd_scsibus_get_mode(cd, &data, AUDIO_PAGE,
-	    AUDIOPAGESIZE, flags)) != 0)
+	bzero(&data, sizeof(data));
+	error = scsi_mode_sense(cd->sc_link, 0, AUDIO_PAGE,
+	    (struct scsi_mode_header *)&data, AUDIOPAGESIZE, flags, 20000);
+	if (error != 0)
 		return (error);
+
 	arg->vol[LEFT_PORT] = data.page.audio.port[LEFT_PORT].volume;
 	arg->vol[RIGHT_PORT] = data.page.audio.port[RIGHT_PORT].volume;
 	arg->vol[2] = data.page.audio.port[2].volume;
 	arg->vol[3] = data.page.audio.port[3].volume;
+
 	return (0);
 }
 
@@ -190,16 +168,21 @@ cd_scsibus_setvol(cd, arg, flags)
 	struct scsi_cd_mode_data data;
 	int error;
 
-	if ((error = cd_scsibus_get_mode(cd, &data, AUDIO_PAGE,
-	    AUDIOPAGESIZE, flags)) != 0)
+	bzero(&data, sizeof(data));
+	error = scsi_mode_sense(cd->sc_link, 0, AUDIO_PAGE,
+	    (struct scsi_mode_header *)&data, AUDIOPAGESIZE, flags, 20000);
+	if (error != 0)
 		return (error);
+
 	data.page.audio.port[LEFT_PORT].channels = CHANNEL_0;
 	data.page.audio.port[LEFT_PORT].volume = arg->vol[LEFT_PORT];
 	data.page.audio.port[RIGHT_PORT].channels = CHANNEL_1;
 	data.page.audio.port[RIGHT_PORT].volume = arg->vol[RIGHT_PORT];
 	data.page.audio.port[2].volume = arg->vol[2];
 	data.page.audio.port[3].volume = arg->vol[3];
-	return (cd_scsibus_set_mode(cd, &data, AUDIOPAGESIZE, flags));
+
+	return (scsi_mode_select(cd->sc_link, SMS_PF,
+	    (struct scsi_mode_header *)&data, AUDIOPAGESIZE, flags, 20000)); 
 }
 
 int

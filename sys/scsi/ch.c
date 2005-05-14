@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.18 2005/04/05 12:13:16 krw Exp $	*/
+/*	$OpenBSD: ch.c,v 1.19 2005/05/14 00:20:43 krw Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -627,8 +627,10 @@ ch_get_params(sc, flags)
 	/*
 	 * Grab info from the element address assignment page (0x1d).
 	 */
+	bzero(&sense_data, sizeof(sense_data));
 	error = scsi_mode_sense(sc->sc_link, SMS_DBD, 0x1d,
-	    (u_char *)&sense_data, sizeof(sense_data), flags, 6000);
+	    (struct scsi_mode_header *)&sense_data, sizeof(sense_data), flags,
+	    6000);
 	if (error) {
 		printf("%s: could not sense element address page\n",
 		    sc->sc_dev.dv_xname);
@@ -649,8 +651,10 @@ ch_get_params(sc, flags)
 	/*
 	 * Grab info from the capabilities page (0x1f).
 	 */
+	bzero(&sense_data, sizeof(sense_data));
 	error = scsi_mode_sense(sc->sc_link, SMS_DBD, 0x1f,
-	    (u_char *)&sense_data, sizeof(sense_data), flags, 6000);
+	    (struct scsi_mode_header *)&sense_data, sizeof(sense_data), flags,
+	    6000);
 	if (error) {
 		printf("%s: could not sense capabilities page\n",
 		    sc->sc_dev.dv_xname);

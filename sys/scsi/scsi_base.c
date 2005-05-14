@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.67 2005/04/28 10:16:04 moritz Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.68 2005/05/14 00:20:43 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -361,7 +361,7 @@ scsi_mode_sense(sc_link, byte2, page, data, len, flags, timeout)
 	struct scsi_link *sc_link;
 	int byte2, page, flags, timeout;
 	size_t len;
-	u_char *data;
+	struct scsi_mode_header *data;
 {
 	struct scsi_mode_sense scsi_cmd;
 	int error;
@@ -380,7 +380,7 @@ scsi_mode_sense(sc_link, byte2, page, data, len, flags, timeout)
 	scsi_cmd.length = len & 0xff;
 
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), data, len, 4, timeout, NULL,
+	    sizeof(scsi_cmd), (u_char *)data, len, 4, timeout, NULL,
 	    flags | SCSI_DATA_IN);
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_mode_sense: page %#x, error = %d\n",
@@ -390,11 +390,44 @@ scsi_mode_sense(sc_link, byte2, page, data, len, flags, timeout)
 }
 
 int
+scsi_mode_sense_big(sc_link, byte2, page, data, len, flags, timeout)
+	struct scsi_link *sc_link;
+	int byte2, page, flags, timeout;
+	size_t len;
+	struct scsi_mode_header_big *data;
+{
+	struct scsi_mode_sense_big scsi_cmd;
+	int error;
+
+	/*
+	 * Make sure the sense buffer is clean before we do the mode sense, so
+	 * that checks for bogus values of 0 will work in case the mode sense
+	 * fails.
+	 */
+	bzero(data, len);
+
+	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	scsi_cmd.opcode = MODE_SENSE_BIG;
+	scsi_cmd.byte2 = byte2;
+	scsi_cmd.page = page;
+	_lto2b(len, scsi_cmd.length);
+
+	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
+	    sizeof(scsi_cmd), (u_char *)data, len, 4, timeout, NULL,
+	    flags | SCSI_DATA_IN);
+
+	SC_DEBUG(sc_link, SDEV_DB2,
+	    ("scsi_mode_sense_big: page %#x, error = %d\n", page, error));
+
+	return (error);
+}
+
+int
 scsi_mode_select(sc_link, byte2, data, len, flags, timeout)
 	struct scsi_link *sc_link;
 	int byte2, flags, timeout;
 	size_t len;
-	u_char *data;
+	struct scsi_mode_header *data;
 {
 	struct scsi_mode_select scsi_cmd;
 	int error;
@@ -404,11 +437,42 @@ scsi_mode_select(sc_link, byte2, data, len, flags, timeout)
 	scsi_cmd.byte2 = byte2;
 	scsi_cmd.length = len & 0xff;
 
+	/* Length is reserved when doing mode select so zero it. */
+	data->data_length = 0;
+
 	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), data, len, 4, timeout, NULL,
+	    sizeof(scsi_cmd), (u_char *)data, len, 4, timeout, NULL,
 	    flags | SCSI_DATA_OUT);
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_mode_select: error = %d\n", error));
+
+	return (error);
+}
+
+int
+scsi_mode_select_big(sc_link, byte2, data, len, flags, timeout)
+	struct scsi_link *sc_link;
+	int byte2, flags, timeout;
+	size_t len;
+	struct scsi_mode_header_big *data;
+{
+	struct scsi_mode_select_big scsi_cmd;
+	int error;
+
+	bzero(&scsi_cmd, sizeof(scsi_cmd));
+	scsi_cmd.opcode = MODE_SELECT_BIG;
+	scsi_cmd.byte2 = byte2;
+	_lto2b(len, scsi_cmd.length);
+
+	/* Length is reserved when doing mode select so zero it. */
+	_lto2b(0, data->data_length);
+
+	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
+	    sizeof(scsi_cmd), (u_char *)data, len, 4, timeout, NULL,
+	    flags | SCSI_DATA_OUT);
+
+	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_mode_select_big: error = %d\n",
+	    error));
 
 	return (error);
 }

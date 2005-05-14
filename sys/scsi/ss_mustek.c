@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss_mustek.c,v 1.10 2005/04/05 12:13:16 krw Exp $	*/
+/*	$OpenBSD: ss_mustek.c,v 1.11 2005/05/14 00:20:43 krw Exp $	*/
 /*	$NetBSD: ss_mustek.c,v 1.4 1996/05/05 19:52:57 christos Exp $	*/
 
 /*
@@ -336,8 +336,8 @@ mustek_trigger_scanner(ss)
 
 	SC_DEBUG(sc_link, SDEV_DB1, ("mustek_trigger_scanner: mode_select\n"));
 	/* send the command to the scanner */
-	error = scsi_mode_select(sc_link, 0, (u_char *)&mode_data,
-	    sizeof(mode_data), 0, 5000);
+	error = scsi_mode_select(sc_link, 0,
+	    (struct scsi_mode_header *)&mode_data, sizeof(mode_data), 0, 5000);
 	if (error)
 		return (error);
 

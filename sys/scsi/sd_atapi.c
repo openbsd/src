@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_atapi.c,v 1.5 2005/04/16 16:41:46 krw Exp $	*/
+/*	$OpenBSD: sd_atapi.c,v 1.6 2005/05/14 00:20:43 krw Exp $	*/
 /*	$NetBSD: sd_atapi.c,v 1.3 1998/08/31 22:28:07 cgd Exp $	*/
 
 /*
@@ -54,7 +54,6 @@
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
-#include <scsi/atapi_all.h>
 #include <scsi/atapi_disk.h>
 #include <scsi/sdvar.h>
 
@@ -127,9 +126,10 @@ sd_atapibus_get_parms(sd, dp, flags)
 	if (dp->disksize == 0)
 		return (SDGP_RESULT_OFFLINE);
 
-	error = atapi_mode_sense(sd->sc_link, ATAPI_FLEX_GEOMETRY_PAGE,
+	bzero(&sense_data, sizeof(sense_data));
+	error = scsi_mode_sense_big(sd->sc_link, 0, ATAPI_FLEX_GEOMETRY_PAGE,
 	    (struct scsi_mode_header_big *)&sense_data, FLEXGEOMETRYPAGESIZE,
-	    flags, SDRETRIES, 20000);
+	    flags, 20000);
 	SC_DEBUG(sd->sc_link, SDEV_DB2,
 	    ("sd_atapibus_get_parms: mode sense (flex) error=%d\n", error));
 	if (error == 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.45 2005/04/06 02:51:13 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.46 2005/05/14 00:20:43 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1443,8 +1443,10 @@ st_mode_sense(st, flags)
 	/*
 	 * Ask for page 0 mode sense data.
 	 */
-	error = scsi_mode_sense(sc_link, 0, 0, (u_char *)&scsi_sense,
-	    scsi_sense_len, flags, ST_CTL_TIME);
+	bzero(&scsi_sense, sizeof(scsi_sense));
+	error = scsi_mode_sense(sc_link, 0, 0,
+	    (struct scsi_mode_header *)&scsi_sense, scsi_sense_len, flags,
+	    ST_CTL_TIME);
 	if (error)
 		return error;
 
@@ -1521,8 +1523,9 @@ st_mode_select(st, flags)
 	/*
 	 * do the command
 	 */
-	return scsi_mode_select(st->sc_link, 0, (u_char *)&scsi_select,
-	    scsi_select_len, flags, ST_CTL_TIME); 
+	return (scsi_mode_select(st->sc_link, 0,
+	    (struct scsi_mode_header *)&scsi_select, scsi_select_len, flags,
+	    ST_CTL_TIME)); 
 }
 
 /*
