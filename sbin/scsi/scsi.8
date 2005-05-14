@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scsi.8,v 1.27 2005/04/03 08:40:50 jaredy Exp $
+.\"	$OpenBSD: scsi.8,v 1.28 2005/05/14 04:20:11 millert Exp $
 .\"	$FreeBSD: scsi.8,v 1.5 1995/05/05 20:41:58 dufault Exp $
 .\"
 .\" Written By Julian ELischer
@@ -329,6 +329,12 @@ To do an inquiry to
 .Bd -literal -offset indent
 # scsi -f /dev/rsd2c -c "12 0 0 0 64 0" -i 64 "s8 z8 z16 z4"
 FUJITSU M2654S-512 010P
+.Ed
+.Pp
+To spin down
+.Pa /dev/rsd2c :
+.Bd -literal -offset indent
+# scsi -f /dev/rsd2c -c "1b 0 0 0 0 0"
 .Ed
 .Pp
 To edit mode page 1 on
