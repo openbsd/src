@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.11 2004/03/13 20:08:21 tedu Exp $	*/
+/*	$OpenBSD: rs.c,v 1.12 2005/05/14 17:01:41 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -30,13 +30,17 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
+#if 0
+static const char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
+#else
+static const char rcsid[] = "$OpenBSD: rs.c,v 1.12 2005/05/14 17:01:41 millert Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -88,7 +92,7 @@ int	propgutter;
 char	isep = ' ', osep = ' ';
 int	owidth = 80, gutter = 2;
 
-void	  usage(char *, char *);
+void	  usage(void);
 void	  getargs(int, char *[]);
 void	  getfile(void);
 int	  getline(void);
@@ -228,11 +232,13 @@ prints(char *s, int col)
 }
 
 void
-usage(char *msg, char *s)
+usage(void)
 {
-	warnx(msg, s);
+	extern char *__progname;
+
 	fprintf(stderr,
-"Usage:  rs [ -[csCS][x][kKgGw][N]tTeEnyjhHm ] [ rows [ cols ] ]\n");
+	    "usage: %s [-[csCS][x][kKgGw][N]tTeEnyjhHm] [rows [cols]]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -384,96 +390,109 @@ getptrs(char **sp)
 void
 getargs(int ac, char *av[])
 {
-	char *p;
+	int ch;
 
-	if (ac == 1) {
+	if (ac == 1)
 		flags |= NOARGS | TRANSPOSE;
-	}
-	while (--ac && **++av == '-')
-		for (p = *av+1; *p; p++)
-			switch (*p) {
-			case 'T':
-				flags |= MTRANSPOSE;
-			case 't':
-				flags |= TRANSPOSE;
-				break;
-			case 'c':		/* input col. separator */
-				flags |= ONEISEPONLY;
-			case 's':		/* one or more allowed */
-				if (p[1])
-					isep = *++p;
-				else
-					isep = '\t';	/* default is ^I */
-				break;
-			case 'C':
-				flags |= ONEOSEPONLY;
-			case 'S':
-				if (p[1])
-					osep = *++p;
-				else
-					osep = '\t';	/* default is ^I */
-				break;
-			case 'w':		/* window width, default 80 */
-				p = getnum(&owidth, p, 0);
-				if (owidth <= 0)
-				usage("Width must be a positive integer", "");
-				break;
-			case 'K':			/* skip N lines */
-				flags |= SKIPPRINT;
-			case 'k':			/* skip, do not print */
-				p = getnum(&skip, p, 0);
-				if (!skip)
-					skip = 1;
-				break;
-			case 'm':
-				flags |= NOTRIMENDCOL;
-				break;
-			case 'g':		/* gutter space */
-				p = getnum(&gutter, p, 0);
-				break;
-			case 'G':
-				p = getnum(&propgutter, p, 0);
-				break;
-			case 'e':		/* each line is an entry */
-				flags |= ONEPERLINE;
-				break;
-			case 'E':
-				flags |= ONEPERCHAR;
-				break;
-			case 'j':			/* right adjust */
-				flags |= RIGHTADJUST;
-				break;
-			case 'n':	/* null padding for missing values */
-				flags |= NULLPAD;
-				break;
-			case 'y':
-				flags |= RECYCLE;
-				break;
-			case 'H':			/* print shape only */
-				flags |= DETAILSHAPE;
-			case 'h':
-				flags |= SHAPEONLY;
-				break;
-			case 'z':			/* squeeze col width */
-				flags |= SQUEEZE;
-				break;
-			/*case 'p':
-				ipagespace = atoi(++p);	(default is 1)
-				break;*/
-			case 'o':			/* col order */
-				p = getlist(&cord, p);
-				break;
-			case 'b':
-				flags |= ICOLBOUNDS;
-				p = getlist(&icbd, p);
-				break;
-			case 'B':
-				flags |= OCOLBOUNDS;
-				p = getlist(&ocbd, p);
-				break;
-			default:
-				usage("Bad flag:  %.1s", p);
+	while ((ch = getopt(ac, av, "c::C::s::S::k:K:g:G:w:tTeEnyjhHmz")) != -1) {
+		switch (ch) {
+		case 'T':
+			flags |= MTRANSPOSE;
+			/* FALLTHROUGH */
+		case 't':
+			flags |= TRANSPOSE;
+			break;
+		case 'c':		/* input col. separator */
+			flags |= ONEISEPONLY;
+			/* FALLTHROUGH */
+		case 's':		/* one or more allowed */
+			if (optarg == NULL)
+				isep = '\t';	/* default is ^I */
+			else if (optarg[1] != '\0')
+				usage();	/* single char only */
+			else
+				isep = *optarg;
+			break;
+		case 'C':
+			flags |= ONEOSEPONLY;
+			/* FALLTHROUGH */
+		case 'S':
+			if (optarg == NULL)
+				osep = '\t';	/* default is ^I */
+			else if (optarg[1] != '\0')
+				usage();	/* single char only */
+			else
+				osep = *optarg;
+			break;
+		case 'w':		/* window width, default 80 */
+			getnum(&owidth, optarg, 0);
+			if (owidth <= 0) {
+				warnx("width must be a positive integer");
+				usage();
 			}
+			break;
+		case 'K':			/* skip N lines */
+			flags |= SKIPPRINT;
+			/* FALLTHROUGH */
+		case 'k':			/* skip, do not print */
+			getnum(&skip, optarg, 0);
+			if (!skip)
+				skip = 1;
+			break;
+		case 'm':
+			flags |= NOTRIMENDCOL;
+			break;
+		case 'g':		/* gutter space */
+			getnum(&gutter, optarg, 0);
+			break;
+		case 'G':
+			getnum(&propgutter, optarg, 0);
+			break;
+		case 'e':		/* each line is an entry */
+			flags |= ONEPERLINE;
+			break;
+		case 'E':
+			flags |= ONEPERCHAR;
+			break;
+		case 'j':			/* right adjust */
+			flags |= RIGHTADJUST;
+			break;
+		case 'n':	/* null padding for missing values */
+			flags |= NULLPAD;
+			break;
+		case 'y':
+			flags |= RECYCLE;
+			break;
+		case 'H':			/* print shape only */
+			flags |= DETAILSHAPE;
+			/* FALLTHROUGH */
+		case 'h':
+			flags |= SHAPEONLY;
+			break;
+		case 'z':			/* squeeze col width */
+			flags |= SQUEEZE;
+			break;
+		/*case 'p':
+			ipagespace = atoi(++p);	(default is 1)
+			break;*/
+		case 'o':			/* col order */
+			getlist(&cord, optarg);
+			break;
+		case 'b':
+			flags |= ICOLBOUNDS;
+			getlist(&icbd, optarg);
+			break;
+		case 'B':
+			flags |= OCOLBOUNDS;
+			getlist(&ocbd, optarg);
+			break;
+		default:
+			usage();
+		}
+	}
+	ac -= optind;
+	av += optind;
+
 	/*if (!osep)
 		osep = isep;*/
 	switch (ac) {
@@ -486,7 +505,7 @@ getargs(int ac, char *av[])
 	case 0:
 		break;
 	default:
-		usage("Too many arguments.", "");
+		usage();
 	}
 }
 
@@ -497,8 +516,10 @@ getlist(short **list, char *p)
 	char *t;
 
 	for (t = p + 1; *t; t++) {
-		if (!isdigit(*t))
-			usage("Option %.1s requires a list of unsigned numbers separated by commas", t);
+		if (!isdigit(*t)) {
+			warnx("option -%c requires a list of unsigned numbers separated by commas", *t);
+			usage();
+		}
 		count++;
 		while (*t && isdigit(*t))
 			t++;
@@ -529,8 +550,10 @@ getnum(int *num, char *p, int strict)
 	char *t = p;
 
 	if (!isdigit(*++t)) {
-		if (strict || *t == '-' || *t == '+')
-			usage("Option %.1s requires an unsigned integer", p);
+		if (strict || *t == '-' || *t == '+') {
+			warnx("option -%c requires an unsigned integer", *p);
+			usage();
+		}
 		*num = 0;
 		return(p);
 	}
