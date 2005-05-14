@@ -1,7 +1,8 @@
-.\" $OpenBSD: wsdisplay.4,v 1.31 2005/01/04 19:22:17 jmc Exp $
+.\" $OpenBSD: wsdisplay.4,v 1.32 2005/05/14 16:36:07 miod Exp $
 .\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
 .\"
 .\" Copyright (c) 1999 Matthias Drochner.
+.\" Copyright (c) 2002 Ben Harris.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -106,6 +107,13 @@ device instance.
 .Dq emulating
 display devices are usable as console.)
 .Pp
+The
+.Em mux
+locator in the configuration line refers to the
+.Xr wsmux 4
+that will be used to get keyboard events.
+If this locator is -1 no mux will be used.
+.Pp
 The logical unit of an independent contents displayed on a display
 (sometimes referred to as
 .Dq virtual terminal )
@@ -117,8 +125,7 @@ be used on one display.
 (As of this writing, only the
 .Xr vga 4
 and the
-.Tn VAX
-.Dq smg
+.Xr smg 4
 display drivers provide this ability.)
 Screens have different minor device numbers and separate tty instances.
 One screen possesses the
@@ -171,6 +178,297 @@ for controlling variables.
 .Pp
 Consult the back-end drivers' documentation for which features are supported
 for each particular hardware type.
+.Ss IOCTL INTERFACE
+The following
+.Xr ioctl 2
+calls are provided by the
+.Nm
+driver or by devices which use it.
+Their definition are found in
+.Aq Pa dev/wscons/wsconsio.h .
+.Bl -tag -width 4n
+.It Dv WSDISPLAYIO_GTYPE Pq Li u_int
+Retrieve the type of the display.
+The list of types is in
+.Aq Pa dev/wscons/wsconsio.h .
+.It Dv WSDISPLAYIO_GINFO Pq Li "struct wsdisplay_fbinfo"
+Retrieve basic information about a framebuffer display.
+The returned structure is as follows:
+.Bd -literal -offset indent
+struct wsdisplay_fbinfo {
+        u_int   height;
+        u_int   width;
+        u_int   depth;
+        u_int   cmsize;
+};
+.Ed
+.Pp
+The
+.Va height
+and
+.Va width
+members are counted in pixels.
+The
+.Va depth
+member indicates the number of bits per pixel, and
+.Va cmsize
+indicates the number of color map entries accessible through
+.Dv WSDISPLAYIO_GETCMAP
+and
+.Dv WSDISPLAYIO_PUTCMAP .
+This call is likely to be unavailable on text-only displays.
+.It Dv WSDISPLAYIO_GETCMAP Pq Li "struct wsdisplay_cmap"
+Retrieve the current color map from the display.
+This call needs the
+following structure set up beforehand:
+.Bd -literal -offset indent
+struct wsdisplay_cmap {
+        u_int   index;
+        u_int   count;
+        u_char  *red;
+        u_char  *green;
+        u_char  *blue;
+};
+.Ed
+.Pp
+The
+.Va index
+and
+.Va count
+members specify the range of color map entries to retrieve.
+The
+.Va red ,
+.Va green ,
+and
+.Va blue
+members should each point to an array of
+.Va count
+.Li u_char Ns s .
+On return, these will be filled in with the appropriate entries from the
+color map.
+On all displays that support this call, values range from 0 for minimum
+intensity to 255 for maximum intensity, even if the display does not use
+eight bits internally to represent intensity.
+.It Dv WSDISPLAYIO_PUTCMAP Pq Li "struct wsdisplay_cmap"
+Change the display's color map.
+The argument structure is the same as for
+.Dv WSDISPLAYIO_GETCMAP ,
+but
+.Va red ,
+.Va green ,
+and
+.Va blue
+are taken as pointers to the values to use to set the color map.
+This call is not available on displays with fixed color maps.
+.It Dv WSDISPLAYIO_GVIDEO Pq Li u_int
+Get the current state of the display's video output.
+Possible values are:
+.Bl -tag -width 21n
+.It Dv WSDISPLAYIO_VIDEO_OFF
+The display is blanked.
+.It Dv WSDISPLAYIO_VIDEO_ON
+The display is enabled.
+.El
+.It Dv WSDISPLAYIO_SVIDEO Pq Li u_int
+Set the state of the display's video output.
+See
+.Dv WSDISPLAYIO_GVIDEO
+above for possible values.
+.It Dv WSDISPLAYIO_GCURPOS Pq Li "struct wsdisplay_curpos"
+Retrieve the current position of the hardware cursor.
+The returned structure
+is as follows:
+.Bd -literal -offset indent
+struct wsdisplay_curpos {
+        u_int x, y;
+};
+.Ed
+.Pp
+The
+.Va x
+and
+.Va y
+members count the number of pixels right and down, respectively, from
+the top-left corner of the display to the hot spot of the cursor.
+This call is not available on displays without a hardware cursor.
+.It Dv WSDISPLAYOP_SCURPOS Pq Li "struct wsdisplay_curpos"
+Set the current cursor position.
+The argument structure, and its semantics,
+are the same as for
+.Dv WSDISPLAYIO_GCURPOS .
+This call is not available on displays without a hardware cursor.
+.It Dv WSDISPLAYIO_GCURMAX Pq Li "struct wsdisplay_curpos"
+Retrieve the maximum size of cursor supported by the display.
+The
+.Va x
+and
+.Va y
+members of the returned structure indicate the maximum number of pixel rows
+and columns, respectively, in a hardware cursor on this display.
+This call is not available on displays without a hardware cursor.
+.It Dv WSDISPLAYIO_GCURSOR Pq Li "struct wsdisplay_cursor"
+Retrieve some or all of the hardware cursor's attributes.
+The argument structure is as follows:
+.Bd -literal -offset indent
+struct wsdisplay_cursor {
+        u_int   which;
+        u_int   enable;
+        struct wsdisplay_curpos pos;
+        struct wsdisplay_curpos hot;
+        struct wsdisplay_cmap cmap;
+        struct wsdisplay_curpos size;
+        u_char *image;
+        u_char *mask;
+};
+.Pp
+.Ed
+The
+.Va which
+member indicates which of the values the application requires to be returned.
+It should contain the logical OR of the following flags:
+.Bl -tag -width 4n
+.It Dv WSDISPLAYIO_CURSOR_DOCUR
+Get
+.Va enable ,
+which indicates whether the cursor is currently displayed (non-zero) or
+not (zero).
+.It Dv WSDISPLAYIO_CURSOR_DOPOS
+Get
+.Va pos ,
+which indicates the current position of the cursor on the display, as
+would be returned by
+.Dv WSDISPLAYIO_GCURPOS .
+.It Dv WSDISPLAYIO_CURSOR_DOHOT
+Get
+.Va hot ,
+which indicates the location of the
+.Dq hot spot
+within the cursor.
+This is the point on the cursor whose position on the display is treated
+as being the position of the cursor by other calls.
+Its location is counted in pixels from the top-left corner of the cursor.
+.It Dv WSDISPLAYIO_CURSOR_DOCMAP
+Get
+.Va cmap ,
+which indicates the current cursor color map.
+Unlike in a call to
+.Dv WSDISPLAYIO_GETCMAP ,
+.Va cmap
+here need not have its
+.Va index
+and
+.Va count
+members initialized.
+They will be set to 0 and 2 respectively by the call.
+This means that
+.Va cmap . Ns Va red ,
+.Va cmap . Ns Va green ,
+and
+.Va cmap . Ns Va blue
+must each point to at least enough space to hold two
+.Li u_char Ns s .
+.It Dv WSDISPLAYIO_CURSOR_DOSHAPE
+Get
+.Va size , image ,
+and
+.Va mask .
+These are, respectively, the dimensions of the cursor in pixels, the
+bitmap of set pixels in the cursor and the bitmap of opaque pixels in
+the cursor.
+The format in which these bitmaps are returned, and hence the amount of
+space that must be provided by the application, are device-dependent.
+.It Dv WSDISPLAYIO_CURSOR_DOALL
+Get all of the above.
+.El
+.Pp
+The device may elect to return information that was not requested by the user,
+so those elements of
+.Li "struct wsdisplay_cursor"
+which are pointers should be initialized to
+.Dv NULL
+if not otherwise used.
+This call is not available on displays without a hardware cursor.
+.It Dv WSDISPLAYIO_SCURSOR Pq Li "struct wsdisplay_cursor"
+Set some or all of the hardware cursor's attributes.
+The argument structure is the same as for
+.Dv WSDISPLAYIO_GCURSOR .
+The
+.Va which
+member specifies which attributes of the cursor are to be changed.
+It should contain the logical OR of the following flags:
+.Bl -tag -width 4n
+.It Dv WSDISPLAYIO_CURSOR_DOCUR
+If
+.Va enable
+is zero, hide the cursor.
+Otherwise, display it.
+.It Dv WSDISPLAYIO_CURSOR_DOPOS
+Set the cursor's position on the display to
+.Va pos ,
+the same as
+.Dv WSDISPLAYIO_SCURPOS .
+.It Dv WSDISPLAYIO_CURSOR_DOHOT
+Set the
+.Dq hot spot
+of the cursor, as defined above, to
+.Va hot .
+.It Dv WSDISPLAYIO_CURSOR_DOCMAP
+Set some or all of the cursor color map based on
+.Va cmap .
+The
+.Va index
+and
+.Va count
+elements of
+.Va cmap
+indicate which color map entries to set, and the entries themselves come from
+.Va cmap . Ns Va red ,
+.Va cmap . Ns Va green ,
+and
+.Va cmap . Ns Va blue .
+.It Dv WSDISPLAYIO_CURSOR_DOSHAPE
+Set the cursor shape from
+.Va size , image ,
+.Va mask .
+See above for their meanings.
+.It Dv WSDISPLAYIO_CURSOR_DOALL
+Do all of the above.
+.El
+.Pp
+This call is not available on displays without a hardware cursor.
+.It Dv WSDISPLAYIO_GMODE Pq Li u_int
+Get the current mode of the display.
+Possible results include:
+.Bl -tag -width 4n
+.It Dv WSDISPLAYIO_MODE_EMUL
+The display is in emulating (text) mode.
+.It Dv WSDISPLAYIO_MODE_MAPPED
+The display is in mapped (graphics) mode.
+.It Dv WSDISPLAYIO_MODE_DUMBFB
+The display is in mapped (frame buffer) mode.
+.El
+.It Dv WSDISPLAYIO_SMODE Pq Li u_int
+Set the current mode of the display.
+For possible arguments, see
+.Dv WSDISPLAYIO_GMODE .
+.\" WSDISPLAYIO_LDFONT
+.\" WSDISPLAYIO_LSFONT
+.\" WSDISPLAYIO_DELFONT
+.\" WSDISPLAYIO_USEFONT
+.\" WSDISPLAYIO_SBURNER
+.\" WSDISPLAYIO_GBURNER
+.\" WSDISPLAYIO_ADDSCREEN
+.\" WSDISPLAYIO_DELSCREEN
+.\" WSDISPLAYIO_GETSCREEN
+.\" WSDISPLAYIO_SETSCREEN
+.\" WSDISPLAYIO_WSMOUSED
+.\" WSDISPLAYIO_GETPARAM
+.\" WSDISPLAYIO_SETPARAM
+.It Dv WSDISPLAYIO_LINEBYTES Pq Li u_int
+Get the number of bytes per row when the device is in
+.Dv WSDISPLAYIO_MODE_DUMBFB
+mode.
+.El
 .Sh FILES
 .Bl -tag -width /usr/include/dev/wscons/wsconsio.h -compact
 .It Pa /dev/tty[C-F]*
@@ -180,6 +478,7 @@ control device (per screen)
 .It Pa /usr/include/dev/wscons/wsconsio.h
 .El
 .Sh SEE ALSO
+.Xr ioctl 2 ,
 .Xr agten 4 ,
 .Xr bwtwo 4 ,
 .Xr cgeight 4 ,
