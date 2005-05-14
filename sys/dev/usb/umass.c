@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.39 2005/04/01 06:41:13 pascoe Exp $ */
+/*	$OpenBSD: umass.c,v 1.40 2005/05/14 23:36:26 krw Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -131,15 +131,6 @@
  * umass_cam_cb again to complete the CAM command.
  */
 
-#if defined(__NetBSD__)
-#include "atapibus.h"
-#include "scsibus.h"
-#elif defined(__OpenBSD__)
-#include "atapiscsi.h"
-#endif
-
-#include "wd.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -156,6 +147,8 @@
 #include <machine/clock.h>
 #endif
 #include <machine/bus.h>
+
+#include <scsi/scsi_all.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -212,6 +205,7 @@ Static usbd_status umass_setup_ctrl_transfer(struct umass_softc *sc,
 				usbd_xfer_handle xfer);
 Static void umass_clear_endpoint_stall(struct umass_softc *sc, int endpt,
 				usbd_xfer_handle xfer);
+Static void umass_adjust_transfer(struct umass_softc *);
 #if 0
 Static void umass_reset(struct umass_softc *sc,	transfer_cb_f cb, void *priv);
 #endif
@@ -879,6 +873,41 @@ umass_setup_ctrl_transfer(struct umass_softc *sc, usb_device_request_t *req,
 }
 
 Static void
+umass_adjust_transfer(struct umass_softc *sc)
+{
+	switch (sc->sc_cmd) {
+	case UMASS_CPROTO_UFI:
+		sc->cbw.bCDBLength = UFI_COMMAND_LENGTH; 
+		/* Adjust the length field in certain scsi commands. */
+		switch (sc->cbw.CBWCDB[0]) {
+		case INQUIRY:
+			if (sc->transfer_datalen > 36) {
+				sc->transfer_datalen = 36;
+				sc->cbw.CBWCDB[4] = 36;
+			}
+			break;
+		case MODE_SENSE_BIG:
+			if (sc->transfer_datalen > 8) {
+				sc->transfer_datalen = 8;
+				sc->cbw.CBWCDB[7] = 0;
+				sc->cbw.CBWCDB[8] = 8;
+			}
+			break;
+		case REQUEST_SENSE:
+			if (sc->transfer_datalen > 18) {
+				sc->transfer_datalen = 18;
+				sc->cbw.CBWCDB[4] = 18;
+			}
+			break;
+		}
+		break;
+	case UMASS_CPROTO_ATAPI:
+		sc->cbw.bCDBLength = UFI_COMMAND_LENGTH; 
+		break;
+	}
+}
+
+Static void
 umass_clear_endpoint_stall(struct umass_softc *sc, int endpt,
 	usbd_xfer_handle xfer)
 {
@@ -1049,6 +1078,7 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	sc->cbw.bCBWFlags = (dir == DIR_IN? CBWFLAGS_IN:CBWFLAGS_OUT);
 	sc->cbw.bCBWLUN = lun;
 	sc->cbw.bCDBLength = cmdlen;
+	bzero(sc->cbw.CBWCDB, sizeof(sc->cbw.CBWCDB));
 	memcpy(sc->cbw.CBWCDB, cmd, cmdlen);
 
 	DIF(UDMASS_BBB, umass_bbb_dump_cbw(sc, &sc->cbw));
@@ -1066,6 +1096,7 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	sc->transfer_state = TSTATE_BBB_COMMAND;
 
 	/* Send the CBW from host to device via bulk-out endpoint. */
+	umass_adjust_transfer(sc);
 	if ((err = umass_setup_transfer(sc, sc->sc_pipe[UMASS_BULKOUT],
 			&sc->cbw, UMASS_BBB_CBW_SIZE, 0,
 			sc->transfer_xfer[XFER_BBB_CBW])))
@@ -1516,7 +1547,10 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 	sc->transfer_state = TSTATE_CBI_COMMAND;
 
 	/* Send the Command Block from host to device via control endpoint. */
-	if ((err = umass_cbi_adsc(sc, cmd, cmdlen,
+	bzero(sc->cbw.CBWCDB, sizeof(sc->cbw.CBWCDB));
+	memcpy(sc->cbw.CBWCDB, cmd, cmdlen);
+	umass_adjust_transfer(sc);
+	if ((err = umass_cbi_adsc(sc, (void *)sc->cbw.CBWCDB, sc->cbw.bCDBLength,
 	    sc->transfer_xfer[XFER_CBI_CB])))
 		umass_cbi_reset(sc, STATUS_WIRE_FAILED);
 
