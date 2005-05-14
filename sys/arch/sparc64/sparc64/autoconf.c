@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.40 2005/05/01 18:15:49 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.41 2005/05/14 19:27:38 brad Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -136,6 +136,7 @@ struct intrmap intrmap[] = {
 	{ "block",	PIL_FD },	/* Floppy disk */
 	{ "serial",	PIL_SER },	/* zs */
 	{ "scsi",	PIL_SCSI },
+	{ "scsi-2",	PIL_SCSI },
 	{ "network",	PIL_NET },
 	{ "display",	PIL_VIDEO },
 	{ "audio",	PIL_AUD },
