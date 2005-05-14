@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.h,v 1.9 2003/12/03 14:52:23 markus Exp $ */
+/*      $OpenBSD: if_gre.h,v 1.10 2005/05/14 19:24:23 brad Exp $ */
 /*	$NetBSD: if_gre.h,v 1.5 1999/11/19 20:41:19 thorpej Exp $ */
 
 /*
@@ -147,7 +147,7 @@ extern  int ip_mobile_allow;
 void	greattach(int);
 int     gre_ioctl(struct ifnet *, u_long, caddr_t);
 int     gre_output(struct ifnet *, struct mbuf *, struct sockaddr *,
-	    struct rtentry *rt);
-u_short	gre_in_cksum(u_short *p, u_int len);
+	    struct rtentry *);
+u_int16_t gre_in_cksum(u_int16_t *, u_int);
 #endif /* _KERNEL */
 #endif /* _NET_IF_GRE_H_ */
