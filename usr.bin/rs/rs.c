@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.12 2005/05/14 17:01:41 millert Exp $	*/
+/*	$OpenBSD: rs.c,v 1.13 2005/05/14 17:12:51 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: rs.c,v 1.12 2005/05/14 17:01:41 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rs.c,v 1.13 2005/05/14 17:12:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -303,21 +303,10 @@ prepfile(void)
 						max = n;
 				colwidths[i] = max + gutter;
 			}
-	}
-	/*	for (i = 0; i < orows; i++) {
-			for (j = i; j < nelem; j += orows)
-				prints(ep[j], (j - i) / orows);
-			putchar('\n');
-		}
-	else
-		for (i = 0; i < orows; i++) {
-			for (j = 0; j < ocols; j++)
-				prints(*ep++, j);
-			putchar('\n');
-		}*/
-	else
+	} else {
 		for (i = 0; i < ocols; i++)
 			colwidths[i] = colw;
+	}
 	if (!(flags & NOTRIMENDCOL)) {
 		if (flags & RIGHTADJUST)
 			colwidths[0] -= gutter;
@@ -327,9 +316,6 @@ prepfile(void)
 	n = orows * ocols;
 	if (n > nelem && (flags & RECYCLE))
 		nelem = n;
-	/*for (i = 0; i < ocols; i++)
-		fprintf(stderr, "%d ",colwidths[i]);
-	fprintf(stderr, "is colwidths, nelem %d\n", nelem);*/
 }
 
 #define	BSIZE	2048
@@ -353,12 +339,9 @@ getline(void)	/* get line; maintain curline, curlen; manage storage */
 			printf(" %d line %d\n", curlen, irows);
 	}
 	if (!putlength && endblock - curline < BUFSIZ) {   /* need storage */
-		/*ww = endblock-curline; tt += ww;*/
-		/*printf("#wasted %d total %d\n",ww,tt);*/
 		if (!(curline = (char *) malloc(BSIZE)))
 			errx(1, "File too large");
 		endblock = curline + BSIZE;
-		/*printf("#endb %d curline %d\n",endblock,curline);*/
 	}
 	for (p = curline, i = 1; i < BUFSIZ; *p++ = c, i++)
 		if ((c = getchar()) == EOF || c == '\n')
@@ -472,9 +455,6 @@ getargs(int ac, char *av[])
 		case 'z':			/* squeeze col width */
 			flags |= SQUEEZE;
 			break;
-		/*case 'p':
-			ipagespace = atoi(++p);	(default is 1)
-			break;*/
 		case 'o':			/* col order */
 			getlist(&cord, optarg);
 			break;
@@ -493,11 +473,7 @@ getargs(int ac, char *av[])
 	ac -= optind;
 	av += optind;
 
-	/*if (!osep)
-		osep = isep;*/
 	switch (ac) {
-	/*case 3:
-		opages = atoi(av[2]);*/
 	case 2:
 		ocols = atoi(av[1]);
 	case 1:
