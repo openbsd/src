@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdhosts.c,v 1.12 2003/07/18 22:58:56 david Exp $ */
+/*	$OpenBSD: stdhosts.c,v 1.13 2005/05/14 02:30:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static const char rcsid[] = "$OpenBSD: stdhosts.c,v 1.12 2003/07/18 22:58:56 david Exp $";
+static const char rcsid[] = "$OpenBSD: stdhosts.c,v 1.13 2005/05/14 02:30:40 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -117,7 +117,7 @@ main(int argc, char *argv[])
 		while (!isspace(*p))	/* find first "space" */
 			p++;
 		while (isspace(*p))	/* replace space with <NUL> */
-			*p = '\0'; p++;
+			*p++ = '\0';
 
 		v = p;			/* save start of value */
 		while (*p != '\0')	/* find end of string */
