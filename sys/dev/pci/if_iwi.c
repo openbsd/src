@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.38 2005/05/13 20:52:51 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.39 2005/05/14 13:32:38 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -1792,6 +1792,7 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	struct iwi_configuration config;
 	struct iwi_associate assoc;
 	struct iwi_rateset rs;
+	u_int16_t capinfo;
 	u_int32_t data;
 	int error;
 
@@ -1843,7 +1844,18 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	if (sc->authmode == IEEE80211_AUTH_SHARED)
 		assoc.auth = (ic->ic_wep_txkey << 4) | IWI_AUTH_SHARED;
 	bcopy(ni->ni_tstamp, assoc.tstamp, 8);
-	assoc.capinfo = htole16(ni->ni_capinfo);
+
+	if (ic->ic_opmode == IEEE80211_M_IBSS)
+		capinfo = IEEE80211_CAPINFO_IBSS;
+	else
+		capinfo = IEEE80211_CAPINFO_ESS;
+	if (ic->ic_flags & IEEE80211_F_WEPON)
+		capinfo |= IEEE80211_CAPINFO_PRIVACY;
+	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) &&
+	    IEEE80211_IS_CHAN_2GHZ(ni->ni_chan))
+	capinfo |= IEEE80211_CAPINFO_SHORT_PREAMBLE;
+	assoc.capinfo = htole16(capinfo);
+
 	assoc.lintval = htole16(ic->ic_lintval);
 	assoc.intval = htole16(ni->ni_intval);
 	IEEE80211_ADDR_COPY(assoc.bssid, ni->ni_bssid);
