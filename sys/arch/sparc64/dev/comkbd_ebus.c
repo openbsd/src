@@ -1,4 +1,4 @@
-/*	$OpenBSD: comkbd_ebus.c,v 1.16 2005/04/05 14:11:16 miod Exp $	*/
+/*	$OpenBSD: comkbd_ebus.c,v 1.17 2005/05/14 15:25:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -53,8 +53,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
-#include <dev/wscons/wsksymdef.h>
-#include <dev/wscons/wsksymvar.h>
 
 #include <dev/sun/sunkbdreg.h>
 #include <dev/sun/sunkbdvar.h>
@@ -69,7 +67,8 @@
 #define	COMK_TX_RING	64
 
 struct comkbd_softc {
-	struct device sc_dv;		/* us, as a device */
+	struct sunkbd_softc	sc_base;
+
 	bus_space_tag_t sc_iot;		/* bus tag */
 	bus_space_handle_t sc_ioh;	/* bus handle */
 	void *sc_ih, *sc_si;		/* interrupt vectors */
@@ -83,13 +82,6 @@ struct comkbd_softc {
 	u_int8_t *sc_txbeg, *sc_txend, *sc_txget, *sc_txput;
 
 	u_int8_t sc_ier;
-
-	struct device *sc_wskbddev;	/* child wskbd */
-	int sc_leds;
-	u_int8_t sc_kbdstate;
-	int sc_layout;
-	int sc_bellactive, sc_belltimeout;
-	struct timeout sc_bellto;
 };
 
 #define	COM_WRITE(sc,r,v) \
@@ -104,20 +96,13 @@ int comkbd_iskbd(int);
 /* wskbd glue */
 void comkbd_cnpollc(void *, int);
 void comkbd_cngetc(void *, u_int *, int *);
-int comkbd_enable(void *, int);
-void comkbd_setleds(void *, int);
-int comkbd_getleds(struct comkbd_softc *);
-int comkbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
 /* internals */
-void comkbd_enqueue(struct comkbd_softc *, u_int8_t *, u_int);
-void comkbd_raw(struct comkbd_softc *, u_int8_t);
+int comkbd_enqueue(void *, u_int8_t *, u_int);
 int comkbd_init(struct comkbd_softc *);
 void comkbd_putc(struct comkbd_softc *, u_int8_t);
 int comkbd_intr(void *);
 void comkbd_soft(void *);
-void comkbd_bellstop(void *);
-void comkbd_bell(struct comkbd_softc *, u_int, u_int, u_int);
 
 struct cfattach comkbd_ca = {
 	sizeof(struct comkbd_softc), comkbd_match, comkbd_attach
@@ -127,16 +112,10 @@ struct cfdriver comkbd_cd = {
 	NULL, "comkbd", DV_DULL
 };
 
-char *comkbd_names[] = {
+const char *comkbd_names[] = {
 	"su",
 	"su_pnp",
 	NULL
-};
-
-struct wskbd_accessops comkbd_accessops = {
-	comkbd_enable,
-	comkbd_setleds,
-	comkbd_ioctl
 };
 
 struct wskbd_consops comkbd_consops = {
@@ -186,11 +165,13 @@ comkbd_attach(parent, self, aux)
 	void *aux;
 {
 	struct comkbd_softc *sc = (void *)self;
+	struct sunkbd_softc *ss = (void *)sc;
 	struct ebus_attach_args *ea = aux;
 	struct wskbddev_attach_args a;
 	int console;
 
-	timeout_set(&sc->sc_bellto, comkbd_bellstop, sc);
+	ss->sc_sendcmd = comkbd_enqueue;
+	timeout_set(&ss->sc_bellto, sunkbd_bellstop, sc);
 
 	sc->sc_iot = ea->ea_memtag;
 
@@ -239,44 +220,38 @@ comkbd_attach(parent, self, aux)
 	}
 
 	a.console = console;
-	if (ISTYPE5(sc->sc_layout)) {
+	if (ISTYPE5(ss->sc_layout)) {
 		a.keymap = &sunkbd5_keymapdata;
 #ifndef SUNKBD5_LAYOUT
-		if (sc->sc_layout < MAXSUNLAYOUT &&
-		    sunkbd_layouts[sc->sc_layout] != -1)
+		if (ss->sc_layout < MAXSUNLAYOUT &&
+		    sunkbd_layouts[ss->sc_layout] != -1)
 			sunkbd5_keymapdata.layout =
-			    sunkbd_layouts[sc->sc_layout];
+			    sunkbd_layouts[ss->sc_layout];
 #endif
 	} else {
 		a.keymap = &sunkbd_keymapdata;
 #ifndef SUNKBD_LAYOUT
-		if (sc->sc_layout < MAXSUNLAYOUT &&
-		    sunkbd_layouts[sc->sc_layout] != -1)
+		if (ss->sc_layout < MAXSUNLAYOUT &&
+		    sunkbd_layouts[ss->sc_layout] != -1)
 			sunkbd_keymapdata.layout =
-			    sunkbd_layouts[sc->sc_layout];
+			    sunkbd_layouts[ss->sc_layout];
 #endif
 	}
-	a.accessops = &comkbd_accessops;
+	a.accessops = &sunkbd_accessops;
 	a.accesscookie = sc;
 
 	if (console) {
-		cn_tab->cn_dev = makedev(77, sc->sc_dv.dv_unit); /* XXX */
+		cn_tab->cn_dev = makedev(77, ss->sc_dev.dv_unit); /* XXX */
 		cn_tab->cn_pollc = wskbd_cnpollc;
 		cn_tab->cn_getc = wskbd_cngetc;
-		if (ISTYPE5(sc->sc_layout)) {
-			wskbd_cnattach(&comkbd_consops, sc,
-			    &sunkbd5_keymapdata);
-		} else {
-			wskbd_cnattach(&comkbd_consops, sc,
-			    &sunkbd_keymapdata);
-		}
+		wskbd_cnattach(&comkbd_consops, sc, a.keymap);
 		sc->sc_ier = IER_ETXRDY | IER_ERXRDY;
 		COM_WRITE(sc, com_ier, sc->sc_ier);
 		COM_READ(sc, com_iir);
 		COM_WRITE(sc, com_mcr, MCR_IENABLE | MCR_DTR | MCR_RTS);
 	}
 
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+	ss->sc_wskbddev = config_found(self, &a, wskbddevprint);
 }
 
 void
@@ -305,91 +280,7 @@ comkbd_cngetc(v, type, data)
 	COM_READ(sc, com_iir);
 	splx(s);
 
-	switch (c) {
-	case SKBD_RSP_IDLE:
-		*type = WSCONS_EVENT_ALL_KEYS_UP;
-		*data = 0;
-		break;
-	default:
-		*type = (c & 0x80) ?
-		    WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
-		*data = c & 0x7f;
-		break;
-	}
-}
-
-int
-comkbd_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-	struct comkbd_softc *sc = v;
-	int *d_int = (int *)data;
-	struct wskbd_bell_data *d_bell = (struct wskbd_bell_data *)data;
-
-	switch (cmd) {
-	case WSKBDIO_GTYPE:
-		if (ISTYPE5(sc->sc_layout)) {
-			*d_int = WSKBD_TYPE_SUN5;
-		} else {
-			*d_int = WSKBD_TYPE_SUN;
-		}
-		return (0);
-	case WSKBDIO_SETLEDS:
-		comkbd_setleds(v, *d_int);
-		return (0);
-	case WSKBDIO_GETLEDS:
-		*d_int = comkbd_getleds(sc);
-		return (0);
-	case WSKBDIO_COMPLEXBELL:
-		comkbd_bell(sc, d_bell->period,
-		    d_bell->pitch, d_bell->volume);
-		return (0);
-	}
-	return (-1);
-}
-
-int
-comkbd_enable(vsc, on)
-	void *vsc;
-	int on;
-{
-	return (0);
-}
-
-int
-comkbd_getleds(sc)
-	struct comkbd_softc *sc;
-{
-	return (sc->sc_leds);
-}
-
-void
-comkbd_setleds(v, wled)
-	void *v;
-	int wled;
-{
-	struct comkbd_softc *sc = v;
-	u_int8_t sled = 0;
-	u_int8_t cmd[2];
-
-	sc->sc_leds = wled;
-
-	if (wled & WSKBD_LED_CAPS)
-		sled |= SKBD_LED_CAPSLOCK;
-	if (wled & WSKBD_LED_NUM)
-		sled |= SKBD_LED_NUMLOCK;
-	if (wled & WSKBD_LED_SCROLL)
-		sled |= SKBD_LED_SCROLLLOCK;
-	if (wled & WSKBD_LED_COMPOSE)
-		sled |= SKBD_LED_COMPOSE;
-
-	cmd[0] = SKBD_CMD_SETLED;
-	cmd[1] = sled;
-	comkbd_enqueue(sc, cmd, sizeof(cmd));
+	sunkbd_decode(c, type, data);
 }
 
 void
@@ -420,20 +311,23 @@ comkbd_putc(sc, c)
 	splx(s);
 }
 
-void
-comkbd_enqueue(sc, buf, buflen)
-	struct comkbd_softc *sc;
+int
+comkbd_enqueue(v, buf, buflen)
+	void *v;
 	u_int8_t *buf;
 	u_int buflen;
 {
+	struct comkbd_softc *sc = v;
 	int s;
 	u_int i;
 
 	s = spltty();
 
 	/* See if there is room... */
-	if ((sc->sc_txcnt + buflen) > COMK_TX_RING)
-		return;
+	if ((sc->sc_txcnt + buflen) > COMK_TX_RING) {
+		splx(s);
+		return (-1);
+	}
 
 	for (i = 0; i < buflen; i++) {
 		*sc->sc_txget = *buf;
@@ -447,6 +341,7 @@ comkbd_enqueue(sc, buf, buflen)
 	comkbd_soft(sc);
 
 	splx(s);
+	return (0);
 }
 
 void
@@ -454,6 +349,7 @@ comkbd_soft(vsc)
 	void *vsc;
 {
 	struct comkbd_softc *sc = vsc;
+	struct sunkbd_softc *ss = (void *)sc;
 	u_int type;
 	int value;
 	u_int8_t c;
@@ -463,18 +359,8 @@ comkbd_soft(vsc)
 		if (++sc->sc_rxget == sc->sc_rxend)
 			sc->sc_rxget = sc->sc_rxbeg;
 		sc->sc_rxcnt--;
-		switch (c) {
-		case SKBD_RSP_IDLE:
-			type = WSCONS_EVENT_ALL_KEYS_UP;
-			value = 0;
-			break;
-		default:
-			type = (c & 0x80) ?
-			    WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
-			value = c & 0x7f;
-			break;
-		}
-		wskbd_input(sc->sc_wskbddev, type, value);
+		sunkbd_decode(c, &type, &value);
+		wskbd_input(ss->sc_wskbddev, type, value);
 	}
 
 	if (sc->sc_txcnt) {
@@ -546,14 +432,15 @@ int
 comkbd_init(sc)
 	struct comkbd_softc *sc;
 {
+	struct sunkbd_softc *ss = (void *)sc;
 	u_int8_t stat, c;
 	int tries;
 
 	for (tries = 5; tries != 0; tries--) {
 		int ltries;
 
-		sc->sc_leds = 0;
-		sc->sc_layout = -1;
+		ss->sc_leds = 0;
+		ss->sc_layout = -1;
 
 		/* Send reset request */
 		comkbd_putc(sc, SKBD_CMD_RESET);
@@ -564,8 +451,8 @@ comkbd_init(sc)
 			if (stat & LSR_RXRDY) {
 				c = COM_READ(sc, com_data);
 				
-				comkbd_raw(sc, c);
-				if (sc->sc_kbdstate == SKBD_STATE_RESET)
+				sunkbd_raw(ss, c);
+				if (ss->sc_kbdstate == SKBD_STATE_RESET)
 					break;
 			}
 			DELAY(1000);
@@ -579,8 +466,8 @@ comkbd_init(sc)
 			stat = COM_READ(sc, com_lsr);
 			if (stat & LSR_RXRDY) {
 				c = COM_READ(sc, com_data);
-				comkbd_raw(sc, c);
-				if (sc->sc_kbdstate == SKBD_STATE_GETKEY)
+				sunkbd_raw(ss, c);
+				if (ss->sc_kbdstate == SKBD_STATE_GETKEY)
 					break;
 			}
 			DELAY(1000);
@@ -597,8 +484,8 @@ comkbd_init(sc)
 			stat = COM_READ(sc, com_lsr);
 			if (stat & LSR_RXRDY) {
 				c = COM_READ(sc, com_data);
-				comkbd_raw(sc, c);
-				if (sc->sc_layout != -1)
+				sunkbd_raw(ss, c);
+				if (ss->sc_layout != -1)
 					break;
 			}
 			DELAY(1000);
@@ -609,96 +496,7 @@ comkbd_init(sc)
 	if (tries == 0)
 		printf(": no keyboard\n");
 	else
-		printf(": layout %d\n", sc->sc_layout);
+		printf(": layout %d\n", ss->sc_layout);
 
 	return tries;
-}
-
-void
-comkbd_raw(sc, c)
-	struct comkbd_softc *sc;
-	u_int8_t c;
-{
-	int claimed = 0;
-
-	if (sc->sc_kbdstate == SKBD_STATE_LAYOUT) {
-		sc->sc_kbdstate = SKBD_STATE_GETKEY;
-		sc->sc_layout = c;
-		return;
-	}
-
-	switch (c) {
-	case SKBD_RSP_RESET:
-		sc->sc_kbdstate = SKBD_STATE_RESET;
-		claimed = 1;
-		break;
-	case SKBD_RSP_LAYOUT:
-		sc->sc_kbdstate = SKBD_STATE_LAYOUT;
-		claimed = 1;
-		break;
-	case SKBD_RSP_IDLE:
-		sc->sc_kbdstate = SKBD_STATE_GETKEY;
-		claimed = 1;
-	}
-
-	if (claimed)
-		return;
-
-	switch (sc->sc_kbdstate) {
-	case SKBD_STATE_RESET:
-		sc->sc_kbdstate = SKBD_STATE_GETKEY;
-		if (c != SKBD_RSP_RESET_OK)
-			printf("%s: reset1 invalid code 0x%02x\n",
-			    sc->sc_dv.dv_xname, c);
-		break;
-	case SKBD_STATE_GETKEY:
-		break;
-	}
-}
-
-void
-comkbd_bell(sc, period, pitch, volume)
-	struct comkbd_softc *sc;
-	u_int period, pitch, volume;
-{
-	int ticks, s;
-	u_int8_t c = SKBD_CMD_BELLON;
-
-	ticks = (period * hz)/1000;
-	if (ticks <= 0)
-		ticks = 1;
-
-	s = spltty();
-	if (sc->sc_bellactive) {
-		if (sc->sc_belltimeout == 0)
-			timeout_del(&sc->sc_bellto);
-	}
-	if (pitch == 0 || period == 0) {
-		comkbd_bellstop(sc);
-		splx(s);
-		return;
-	}
-	if (!sc->sc_bellactive) {
-		sc->sc_bellactive = 1;
-		sc->sc_belltimeout = 1;
-		comkbd_enqueue(sc, &c, 1);
-		timeout_add(&sc->sc_bellto, ticks);
-	}
-	splx(s);
-}
-
-void
-comkbd_bellstop(v)
-	void *v;
-{
-	struct comkbd_softc *sc = v;
-	int s;
-	u_int8_t c;
-
-	s = spltty();
-	sc->sc_belltimeout = 0;
-	c = SKBD_CMD_BELLOFF;
-	comkbd_enqueue(sc, &c, 1);
-	sc->sc_bellactive = 0;
-	splx(s);
 }

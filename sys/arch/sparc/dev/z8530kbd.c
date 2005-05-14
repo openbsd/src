@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.6 2005/03/29 12:55:55 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.7 2005/05/14 15:25:17 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -113,8 +113,6 @@
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wskbdvar.h>
-#include <dev/wscons/wsksymdef.h>
-#include <dev/wscons/wsksymvar.h>
 
 #include <dev/sun/sunkbdreg.h>
 #include <dev/sun/sunkbdvar.h>
@@ -123,11 +121,6 @@
 #include <machine/z8530var.h>
 
 #include <dev/cons.h>
-
-#include "tctrl.h"
-#if NTCTRL > 0
-#include <sparc/dev/tctrlvar.h>
-#endif
 
 /*
  * How many input characters we can buffer.
@@ -153,10 +146,11 @@ u_int zskbd_rbuf_hiwat = (ZSKBD_RING_SIZE * 1) / 4;
 u_int zskbd_rbuf_lowat = (ZSKBD_RING_SIZE * 3) / 4;
 
 struct zskbd_softc {
-	struct	device zst_dev;		/* required first: base device */
+	struct sunkbd_softc	zst_base;
+
 	struct	zs_chanstate *zst_cs;
 
-	struct timeout zst_diag_ch, zst_bellto;
+	struct timeout zst_diag_ch;
 
 	u_int zst_overflows,
 	      zst_floods,
@@ -203,14 +197,6 @@ struct zskbd_softc {
 	u_char  zst_ppsmask;			/* pps signal mask */
 	u_char  zst_ppsassert;			/* pps leading edge */
 	u_char  zst_ppsclear;			/* pps trailing edge */
-
-	struct device *zst_wskbddev;
-	int zst_leds;				/* LED status */
-	u_int8_t zst_kbdstate;			/* keyboard state */
-	int zst_click;				/* keyclick state */
-	int zst_id;				/* keyboard type */
-	int zst_layout;				/* current layout */
-	int zst_bellactive, zst_belltimeout;
 };
 
 /* Definition of the driver for autoconfig. */
@@ -224,7 +210,7 @@ struct cfattach zskbd_ca = {
 struct zsops zsops_kbd;
 
 static void zs_modem(struct zskbd_softc *, int);
-static void  zs_hwiflow(struct zskbd_softc *);
+static void zs_hwiflow(struct zskbd_softc *);
 static void zs_maskintr(struct zskbd_softc *);
 
 struct zskbd_softc *zskbd_device_lookup(struct cfdriver *, int);
@@ -239,26 +225,13 @@ static void zskbd_diag(void *);
 int zskbd_init(struct zskbd_softc *);
 void zskbd_putc(struct zskbd_softc *, u_int8_t);
 void zskbd_raw(struct zskbd_softc *, u_int8_t);
-void zskbd_reset(struct zskbd_softc *);
 
 /* wskbd glue */
-int zskbd_enable(void *, int);
-void zskbd_set_leds(void *, int);
-int zskbd_get_leds(struct zskbd_softc *);
-int zskbd_ioctl(void *, u_long, caddr_t, int, struct proc *);
 void zskbd_cngetc(void *, u_int *, int *);
 void zskbd_cnpollc(void *, int);
 
 void zsstart_tx(struct zskbd_softc *);
-int zsenqueue_tx(struct zskbd_softc *, u_char *, int);
-void zskbd_bell(struct zskbd_softc *, u_int, u_int, u_int);
-void zskbd_bellstop(void *);
-
-struct wskbd_accessops zskbd_accessops = {
-	zskbd_enable,
-	zskbd_set_leds,
-	zskbd_ioctl
-};
+int zsenqueue_tx(void *, u_int8_t *, u_int);
 
 struct wskbd_consops zskbd_consops = {
 	zskbd_cngetc,
@@ -311,8 +284,9 @@ zskbd_attach(parent, self, aux)
 	void   *aux;
 
 {
-	struct zsc_softc *zsc = (void *) parent;
-	struct zskbd_softc *zst = (void *) self;
+	struct zsc_softc *zsc = (void *)parent;
+	struct zskbd_softc *zst = (void *)self;
+	struct sunkbd_softc *ss = (void *)self;
 	struct cfdata *cf = self->dv_cfdata;
 	struct zsc_attach_args *args = aux;
 	struct wskbddev_attach_args a;
@@ -320,13 +294,15 @@ zskbd_attach(parent, self, aux)
 	int channel, s, tty_unit, console = 0;
 	dev_t dev;
 
+	ss->sc_sendcmd = zsenqueue_tx;
+	timeout_set(&ss->sc_bellto, sunkbd_bellstop, zst);
+
 	timeout_set(&zst->zst_diag_ch, zskbd_diag, zst);
-	timeout_set(&zst->zst_bellto, zskbd_bellstop, zst);
 
 	zst->zst_tbp = zst->zst_tba = zst->zst_tbeg = zst->zst_tbuf;
 	zst->zst_tend = zst->zst_tbeg + ZSKBD_RING_SIZE;
 
-	tty_unit = zst->zst_dev.dv_unit;
+	tty_unit = ss->sc_dev.dv_unit;
 	channel = args->channel;
 	cs = &zsc->zsc_cs[channel];
 	cs->cs_private = zst;
@@ -413,39 +389,39 @@ zskbd_attach(parent, self, aux)
 	/*
 	 * XXX should provide a method to change keyclick setting
 	 */
-	zst->zst_click = 0;
+	ss->sc_click = 0;
 #if defined(SUN4C) || defined(SUN4M)
 	if (!CPU_ISSUN4) {
 		char *cp = getpropstring(optionsnode, "keyboard-click?");
 
 		if (cp != NULL && strcmp(cp, "true") == 0)
-			zst->zst_click = 1;
+			ss->sc_click = 1;
 	}
 #endif
 
 	a.console = console;
-	if (ISTYPE5(zst->zst_layout)) {
-		printf(": keyboard, type 5, layout 0x%x", zst->zst_layout);
+	if (ISTYPE5(ss->sc_layout)) {
+		printf(": keyboard, type 5, layout 0x%x", ss->sc_layout);
 		a.keymap = &sunkbd5_keymapdata;
 #ifndef	SUNKBD5_LAYOUT
-		if (zst->zst_layout < MAXSUNLAYOUT &&
-		    sunkbd_layouts[zst->zst_layout] != -1)
+		if (ss->sc_layout < MAXSUNLAYOUT &&
+		    sunkbd_layouts[ss->sc_layout] != -1)
 			sunkbd5_keymapdata.layout =
-			    sunkbd_layouts[zst->zst_layout];
+			    sunkbd_layouts[ss->sc_layout];
 #endif
 	} else {
-		printf(": keyboard, type %d", zst->zst_id);
-		if (zst->zst_id >= KB_SUN4)
-			printf(", layout 0x%x", zst->zst_layout);
+		printf(": keyboard, type %d", ss->sc_id);
+		if (ss->sc_id >= KB_SUN4)
+			printf(", layout 0x%x", ss->sc_layout);
 		a.keymap = &sunkbd_keymapdata;
 #ifndef	SUNKBD_LAYOUT
-		if (zst->zst_layout < MAXSUNLAYOUT &&
-		    sunkbd_layouts[zst->zst_layout] != -1)
+		if (ss->sc_layout < MAXSUNLAYOUT &&
+		    sunkbd_layouts[ss->sc_layout] != -1)
 			sunkbd_keymapdata.layout =
-			    sunkbd_layouts[zst->zst_layout];
+			    sunkbd_layouts[ss->sc_layout];
 #endif
 	}
-	a.accessops = &zskbd_accessops;
+	a.accessops = &sunkbd_accessops;
 	a.accesscookie = zst;
 
 	printf("\n");
@@ -453,13 +429,14 @@ zskbd_attach(parent, self, aux)
 	if (console)
 		wskbd_cnattach(&zskbd_consops, zst, a.keymap);
 
-	zst->zst_wskbddev = config_found(self, &a, wskbddevprint);
+	ss->sc_wskbddev = config_found(self, &a, wskbddevprint);
 }
 
 int
 zskbd_init(zst)
 	struct zskbd_softc *zst;
 {
+	struct sunkbd_softc *ss = (void *)zst;
 	struct zs_chanstate *cs = zst->zst_cs;
 	int s, tries;
 	u_int8_t v3, v4, v5, rr0;
@@ -544,8 +521,8 @@ zskbd_init(zst)
 	for (tries = 5; tries != 0; tries--) {
 		int ltries;
 
-		zst->zst_leds = 0;
-		zst->zst_layout = -1;
+		ss->sc_leds = 0;
+		ss->sc_layout = -1;
 
 		/* Send reset request */
 		zskbd_putc(zst, SKBD_CMD_RESET);
@@ -554,8 +531,8 @@ zskbd_init(zst)
 		while (--ltries > 0) {
 			rr0 = *cs->cs_reg_csr;
 			if (rr0 & ZSRR0_RX_READY) {
-				zskbd_raw(zst, *cs->cs_reg_data);
-				if (zst->zst_kbdstate == SKBD_STATE_RESET)
+				sunkbd_raw(ss, *cs->cs_reg_data);
+				if (ss->sc_kbdstate == SKBD_STATE_RESET)
 					break;
 			}
 			DELAY(1000);
@@ -568,8 +545,8 @@ zskbd_init(zst)
 		while (--ltries > 0) {
 			rr0 = *cs->cs_reg_csr;
 			if (rr0 & ZSRR0_RX_READY) {
-				zskbd_raw(zst, *cs->cs_reg_data);
-				if (zst->zst_kbdstate == SKBD_STATE_GETKEY)
+				sunkbd_raw(ss, *cs->cs_reg_data);
+				if (ss->sc_kbdstate == SKBD_STATE_GETKEY)
 					break;
 			}
 			DELAY(1000);
@@ -579,15 +556,15 @@ zskbd_init(zst)
 
 
 		/* Send layout request */
-		if (zst->zst_id == KB_SUN4) {
+		if (ss->sc_id == KB_SUN4) {
 			zskbd_putc(zst, SKBD_CMD_LAYOUT);
 
 			ltries = 1000;
 			while (--ltries > 0) {
 				rr0 = *cs->cs_reg_csr;
 				if (rr0 & ZSRR0_RX_READY) {
-					zskbd_raw(zst, *cs->cs_reg_data);
-					if (zst->zst_layout != -1)
+					sunkbd_raw(ss, *cs->cs_reg_data);
+					if (ss->sc_layout != -1)
 						break;
 				}
 				DELAY(1000);
@@ -596,7 +573,7 @@ zskbd_init(zst)
 				continue;
 			break;
 		} else {
-			zst->zst_layout = 0;
+			ss->sc_layout = 0;
 			break;
 		}
 	}
@@ -605,51 +582,6 @@ zskbd_init(zst)
 	splx(s);
 
 	return tries;
-}
-
-void
-zskbd_raw(zst, c)
-	struct zskbd_softc *zst;
-	u_int8_t c;
-{
-	int claimed = 0;
-
-	if (zst->zst_kbdstate == SKBD_STATE_LAYOUT) {
-		zst->zst_kbdstate = SKBD_STATE_GETKEY;
-		zst->zst_layout = c;
-		return;
-	}
-
-	switch (c) {
-	case SKBD_RSP_RESET:
-		zst->zst_kbdstate = SKBD_STATE_RESET;
-		claimed = 1;
-		break;
-	case SKBD_RSP_LAYOUT:
-		zst->zst_kbdstate = SKBD_STATE_LAYOUT;
-		claimed = 1;
-		break;
-	case SKBD_RSP_IDLE:
-		zst->zst_kbdstate = SKBD_STATE_GETKEY;
-		claimed = 1;
-		break;
-	}
-
-	if (claimed != 0)
-		return;
-
-	switch (zst->zst_kbdstate) {
-	case SKBD_STATE_RESET:
-		zst->zst_kbdstate = SKBD_STATE_GETKEY;
-		if (c < KB_SUN2 || c > KB_SUN4)
-			printf("%s: reset: invalid keyboard type %x\n",
-			    zst->zst_dev.dv_xname, c);
-		else
-			zst->zst_id = c;
-		break;
-	case SKBD_STATE_GETKEY:
-		break;
-	}
 }
 
 void
@@ -670,12 +602,14 @@ zskbd_putc(zst, c)
 }
 
 int
-zsenqueue_tx(zst, str, len)
-	struct zskbd_softc *zst;
-	u_char *str;
-	int len;
+zsenqueue_tx(v, str, len)
+	void *v;
+	u_int8_t *str;
+	u_int len;
 {
-	int s, i;
+	struct zskbd_softc *zst = v;
+	int s;
+	u_int i;
 
 	s = splzs();
 	if (zst->zst_tbc + len > ZSKBD_RING_SIZE)
@@ -980,6 +914,7 @@ zskbd_diag(arg)
 	void *arg;
 {
 	struct zskbd_softc *zst = arg;
+	struct sunkbd_softc *ss = arg;
 	int overflows, floods;
 	int s;
 
@@ -992,7 +927,7 @@ zskbd_diag(arg)
 	splx(s);
 
 	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf flood%s\n",
-	    zst->zst_dev.dv_xname,
+	    ss->sc_dev.dv_xname,
 	    overflows, overflows == 1 ? "" : "s",
 	    floods, floods == 1 ? "" : "s");
 }
@@ -1001,6 +936,7 @@ integrate void
 zskbd_rxsoft(zst)
 	struct zskbd_softc *zst;
 {
+	struct sunkbd_softc *ss = (void *)zst;
 	struct zs_chanstate *cs = zst->zst_cs;
 	u_char *get, *end;
 	u_int cc, scc, type;
@@ -1033,18 +969,8 @@ zskbd_rxsoft(zst)
 				SET(code, TTY_PE);
 		}
 
-		switch (code) {
-		case SKBD_RSP_IDLE:
-			type = WSCONS_EVENT_ALL_KEYS_UP;
-			value = 0;
-			break;
-		default:
-			type = (code & 0x80) ?
-			    WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
-			value = code & 0x7f;
-			break;
-		}
-		wskbd_input(zst->zst_wskbddev, type, value);
+		sunkbd_decode(code, &type, &value);
+		wskbd_input(ss->sc_wskbddev, type, value);
 
 		get += 2;
 		if (get >= end)
@@ -1148,132 +1074,6 @@ struct zsops zsops_kbd = {
 	zskbd_softint,	/* process software interrupt */
 };
 
-int
-zskbd_enable(v, on)
-	void *v;
-	int on;
-{
-	return (0);
-}
-
-void
-zskbd_set_leds(v, wled)
-	void *v;
-	int wled;
-{
-	struct zskbd_softc *zst = v;
-	u_int8_t sled = 0;
-	u_int8_t cmd[2];
-
-	zst->zst_leds = wled;
-
-	if (wled & WSKBD_LED_CAPS)
-		sled |= SKBD_LED_CAPSLOCK;
-	if (wled & WSKBD_LED_NUM)
-		sled |= SKBD_LED_NUMLOCK;
-	if (wled & WSKBD_LED_SCROLL)
-		sled |= SKBD_LED_SCROLLLOCK;
-	if (wled & WSKBD_LED_COMPOSE)
-		sled |= SKBD_LED_COMPOSE;
-
-	cmd[0] = SKBD_CMD_SETLED;
-	cmd[1] = sled;
-	zsenqueue_tx(zst, cmd, sizeof(cmd));
-}
-
-int
-zskbd_get_leds(zst)
-	struct zskbd_softc *zst;
-{
-	return (zst->zst_leds);
-}
-
-int
-zskbd_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-	struct zskbd_softc *zst = v;
-	int *d_int = (int *)data;
-	struct wskbd_bell_data *d_bell = (struct wskbd_bell_data *)data;
-
-	switch (cmd) {
-	case WSKBDIO_GTYPE:
-		if (ISTYPE5(zst->zst_layout)) {
-			*d_int = WSKBD_TYPE_SUN5;
-		} else {
-			*d_int = WSKBD_TYPE_SUN;
-		}
-		return (0);
-	case WSKBDIO_SETLEDS:
-		zskbd_set_leds(zst, *d_int);
-		return (0);
-	case WSKBDIO_GETLEDS:
-		*d_int = zskbd_get_leds(zst);
-		return (0);
-	case WSKBDIO_COMPLEXBELL:
-		zskbd_bell(zst, d_bell->period,
-		    d_bell->pitch, d_bell->volume);
-		return (0);
-	}
-	return (-1);
-}
-
-void
-zskbd_bell(zst, period, pitch, volume)
-	struct zskbd_softc *zst;
-	u_int period, pitch, volume;
-{
-	int ticks, s;
-	u_int8_t c = SKBD_CMD_BELLON;
-
-	ticks = (period * hz)/1000;
-	if (ticks <= 0)
-		ticks = 1;
-
-#if NTCTRL > 0
-	if (tadpole_bell(period / 10, pitch, volume) != 0)
-		return;
-#endif
-
-	s = splzs();
-	if (zst->zst_bellactive) {
-		if (zst->zst_belltimeout == 0)
-			timeout_del(&zst->zst_bellto);
-	}
-	if (pitch == 0 || period == 0) {
-		zskbd_bellstop(zst);
-		splx(s);
-		return;
-	}
-	if (!zst->zst_bellactive) {
-		zst->zst_bellactive = 1;
-		zst->zst_belltimeout = 1;
-		zsenqueue_tx(zst, &c, 1);
-		timeout_add(&zst->zst_bellto, ticks);
-	}
-	splx(s);
-}
-
-void
-zskbd_bellstop(v)
-	void *v;
-{
-	struct zskbd_softc *zst = v;
-	int s;
-	u_int8_t c;
-
-	s = splzs();
-	zst->zst_belltimeout = 0;
-	c = SKBD_CMD_BELLOFF;
-	zsenqueue_tx(zst, &c, 1);
-	zst->zst_bellactive = 0;
-	splx(s);
-}
-
 void
 zskbd_cnpollc(v, on)
 	void *v;
@@ -1315,42 +1115,5 @@ zskbd_cngetc(v, type, data)
 		    WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
 		*data = c & 0x7f;
 		break;
-	}
-}
-
-void
-zskbd_reset(zst)
-	struct zskbd_softc *zst;
-{
-	int s;
-	u_int8_t c;
-
-	c = 0;
-
-	/*
-	 * Restore keyclick, if necessary
-	 */
-
-	switch (zst->zst_id) {
-	case KB_SUN2:
-		/* Type 2 keyboards do not support keyclick */
-		break;
-	case KB_SUN3:
-		/* Type 3 keyboards come up with keyclick on */
-		if (zst->zst_click == 0)
-			c = SKBD_CMD_CLICKOFF;
-		break;
-	case KB_SUN4:
-		/* Type 4 keyboards come up with keyclick off */
-		if (zst->zst_click != 0)
-			c = SKBD_CMD_CLICKON;
-		break;
-	}
-
-	/* send click command whenever necessary */
-	if (c != 0) {
-		s = splzs();
-		zsenqueue_tx(zst, &c, 1);
-		splx(s);
 	}
 }

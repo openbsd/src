@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbdvar.h,v 1.8 2003/06/02 19:08:58 jason Exp $	*/
+/*	$OpenBSD: sunkbdvar.h,v 1.9 2005/05/14 15:25:20 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -30,6 +30,29 @@
  * Materiel Command, USAF, under agreement number F30602-01-2-0537.
  *
  */
+
+struct sunkbd_softc {
+	struct device	sc_dev;
+
+	int		(*sc_sendcmd)(void *, u_int8_t *, u_int);
+
+	int		sc_leds;		/* LED status */
+	int		sc_id;			/* keyboard type */
+	u_int8_t	sc_kbdstate;		/* keyboard state */
+	int		sc_click;		/* click state */
+	int		sc_layout;		/* current layout */
+
+	int		sc_bellactive, sc_belltimeout;
+	struct timeout	sc_bellto;
+
+	struct device	*sc_wskbddev;
+};
+
+extern struct wskbd_accessops sunkbd_accessops;
+
+void	sunkbd_bellstop(void *);
+void	sunkbd_decode(u_int8_t, u_int *, int *);
+void	sunkbd_raw(struct sunkbd_softc *, u_int8_t);
 
 extern const struct wscons_keydesc sunkbd_keydesctab[];
 extern struct wskbd_mapdata sunkbd_keymapdata;
