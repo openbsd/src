@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.46 2005/05/15 17:04:00 martin Exp $
+dnl	$OpenBSD: hardware,v 1.47 2005/05/15 17:18:10 martin Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -207,8 +207,7 @@ dnl		YENTA-compatible PCI-CardBus bridges
 		    SUNIX 408x (2 port serial and 2 port parallel)
 		    SUNIX 409x (4 port serial and 2 port parallel)
 	Ethernet Adapters
-		3Com 3c509, 3c579, and 3c59x (disabling PnP on 3c509B is
-		    recommended)
+		3Com 3c590 and 3c595
 		3Com 3c9xx Etherlink XL adapters, including:
 		    3Com 3c900/3c900B PCI adapters
 		    3Com 3c905/3c905B/3c905C PCI adapters
