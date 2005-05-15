@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.863 2005/05/09 16:36:33 brad Exp 
+ *	OpenBSD: pcidevs,v 1.864 2005/05/15 16:57:55 martin Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2362,6 +2362,7 @@
 #define	PCI_PRODUCT_SAMSUNG_SWL2210P	0xa000		/* MagicLAN SWL-2210P */
 
 /* Schneider & Koch (SysKonnect) */
+#define	PCI_PRODUCT_SCHNEIDERKOCH_FDDI	0x4000		/* FDDI */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_GE	0x4300		/* 984x GE */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2	0x4320		/* SK-9821 v2.0 */
 #define	PCI_PRODUCT_SCHNEIDERKOCH_SK9D21	0x4400		/* SK-9D21 */
