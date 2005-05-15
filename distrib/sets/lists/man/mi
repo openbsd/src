@@ -1264,8 +1264,6 @@
 ./usr/share/man/cat4/i386/pss.0
 ./usr/share/man/cat4/i386/sb.0
 ./usr/share/man/cat4/i386/sea.0
-./usr/share/man/cat4/i386/speaker.0
-./usr/share/man/cat4/i386/spkr.0
 ./usr/share/man/cat4/i386/uha.0
 ./usr/share/man/cat4/i386/wdt.0
 ./usr/share/man/cat4/i386/wss.0
@@ -1581,6 +1579,8 @@
 ./usr/share/man/cat4/sparc64/zskbd.0
 ./usr/share/man/cat4/sparc64/zstty.0
 ./usr/share/man/cat4/sparc64/zx.0
+./usr/share/man/cat4/speaker.0
+./usr/share/man/cat4/spkr.0
 ./usr/share/man/cat4/spp.0
 ./usr/share/man/cat4/sppp.0
 ./usr/share/man/cat4/sqphy.0

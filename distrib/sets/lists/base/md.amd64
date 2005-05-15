@@ -1974,7 +1974,6 @@
 ./usr/libdata/perl5/site_perl/amd64-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/sched.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/scsi
-./usr/libdata/perl5/site_perl/amd64-openbsd/scsi/atapi_all.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/scsi/atapi_cd.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/scsi/atapi_disk.ph
 ./usr/libdata/perl5/site_perl/amd64-openbsd/scsi/cd.ph

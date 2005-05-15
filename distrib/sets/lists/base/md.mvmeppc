@@ -1930,7 +1930,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sched.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi
-./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/atapi_all.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/atapi_cd.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/atapi_disk.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/scsi/cd.ph

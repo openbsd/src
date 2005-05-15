@@ -2007,7 +2007,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/rpcsvc/yppasswd.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sched.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi
-./usr/libdata/perl5/site_perl/arm-openbsd/scsi/atapi_all.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/atapi_cd.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/atapi_disk.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/scsi/cd.ph

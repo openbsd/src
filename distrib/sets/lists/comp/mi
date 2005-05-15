@@ -1265,7 +1265,6 @@
 ./usr/include/rpcsvc/yppasswd.x
 ./usr/include/sched.h
 ./usr/include/scsi
-./usr/include/scsi/atapi_all.h
 ./usr/include/scsi/atapi_cd.h
 ./usr/include/scsi/atapi_disk.h
 ./usr/include/scsi/cd.h
