@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getfsstat.2,v 1.14 2003/11/21 10:45:48 jmc Exp $
+.\"	$OpenBSD: getfsstat.2,v 1.15 2005/05/15 18:10:50 pedro Exp $
 .\"	$NetBSD: getfsstat.2,v 1.6 1995/06/29 11:40:44 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -104,6 +104,9 @@ Thus, some of the information will be out of date, but
 .Fn getfsstat
 will not block waiting for information from a file system that is
 unable to respond.
+If no flags are provided,
+.Dv MNT_WAIT
+is assumed.
 .Sh RETURN VALUES
 Upon successful completion, the number of
 .Fa statfs
