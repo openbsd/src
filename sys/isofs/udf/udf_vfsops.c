@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.2 2005/03/30 00:56:19 pedro Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.3 2005/05/15 21:26:19 pedro Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -624,6 +624,7 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	int error, sector, size;
 
 	p = curproc;
+	bp = NULL;
 	*vpp = NULL;
 	udfmp = VFSTOUDFFS(mp);
 
@@ -648,6 +649,8 @@ udf_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	if ((error = RDSECTOR(devvp, sector, udfmp->bsize, &bp)) != 0) {
 		printf("Cannot read sector %d\n", sector);
 		pool_put(&udf_node_pool, unode);
+		if (bp != NULL)
+			brelse(bp);
 		return (error);
 	}
 
