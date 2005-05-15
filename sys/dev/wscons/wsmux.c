@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.13 2005/05/15 11:29:15 miod Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.14 2005/05/15 19:03:47 deraadt Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -237,7 +237,9 @@ void
 wsmux_do_open(struct wsmux_softc *sc, struct wseventvar *evar)
 {
 	struct wsevsrc *me;
+#ifdef DIAGNOSTIC
 	int error;
+#endif
 
 	sc->sc_base.me_evp = evar; /* remember event variable, mark as open */
 
