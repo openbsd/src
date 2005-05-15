@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs.c,v 1.15 2005/05/15 01:36:13 millert Exp $	*/
+/*	$OpenBSD: rs.c,v 1.16 2005/05/15 13:19:14 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: rs.c,v 1.15 2005/05/15 01:36:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rs.c,v 1.16 2005/05/15 13:19:14 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,7 @@ usage(void)
 	extern char *__progname;
 
 	fprintf(stderr,
-	    "usage: %s [-csCS[x]] [-kKgGw N] [-tTeEnyjhHmz] [rows [cols]]\n",
+	    "usage: %s [-CcSs[x]] [-KkGgw N] [-EeHhjmnTtyz] [rows [cols]]\n",
 	    __progname);
 	exit(1);
 }
