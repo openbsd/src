@@ -1,4 +1,4 @@
-/*	$OpenBSD: net80211.c,v 1.1 2005/04/12 14:11:49 reyk Exp $	*/
+/*	$OpenBSD: net80211.c,v 1.2 2005/05/15 18:26:13 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -49,19 +49,16 @@ net80211_ifstats(char *ifname)
 
 #define	p(f, m)	printf(m, (unsigned long)stats.f, plural(stats.f))
 
-	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-		perror("Warning: socket(AF_INET)");
-		return;
-	}
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+		err(1, "socket(AF_INET)");
 
 	ifr.ifr_data = (caddr_t)&stats;
 	strlcpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
-	printf("ieee80211 on %s:\n", ifr.ifr_name);
 
-	if (ioctl(s, SIOCG80211STATS, &ifr) < 0) {
-		perror("Warning: ioctl(SIOCG80211STATS)");
-		goto end;
-	}
+	if (ioctl(s, SIOCG80211STATS, &ifr) < 0)
+		err(1, "ioctl(SIOCG80211STATS)");
+
+	printf("ieee80211 on %s:\n", ifr.ifr_name);
 
 	p(is_rx_badversion, "\t%lu input packet%s with bad version\n");
 	p(is_rx_tooshort, "\t%lu input packet%s too short\n");
