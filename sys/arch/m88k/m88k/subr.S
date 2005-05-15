@@ -1,4 +1,4 @@
-/* $OpenBSD: subr.S,v 1.5 2004/10/01 20:20:34 miod Exp $	*/
+/* $OpenBSD: subr.S,v 1.6 2005/05/15 16:23:45 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -58,12 +58,13 @@ ENTRY(do_load_word)	/* do_load_word(address, supervisor) */
 	NOP
 	NOP
 	NOP
+	jmp	r1
 #else
-	ld.usr	r2,r2,r0
+	jmp.n	r1
+	 ld.usr	r2,r2,r0
 #endif
-	br	2f
-1:	ld	r2,r2,r0
-2:	jmp	r1
+1:	jmp.n	r1
+	 ld	r2,r2,r0
 
 ENTRY(do_load_half)	/* do_load_half(address, supervisor) */
 	bcnd	ne0,r3,1f
@@ -73,12 +74,13 @@ ENTRY(do_load_half)	/* do_load_half(address, supervisor) */
 	NOP
 	NOP
 	NOP
+	jmp	r1
 #else
-	ld.h.usr	r2,r2,r0
+	jmp.n	r1
+	 ld.h.usr	r2,r2,r0
 #endif
-	br	2f
-1:	ld.h	r2,r2,r0
-2:	jmp	r1
+1:	jmp.n	r1
+	 ld.h	r2,r2,r0
 
 ENTRY(do_load_byte)	/* do_load_byte(address, supervisor) */
 	bcnd	ne0,r3,1f
@@ -88,12 +90,13 @@ ENTRY(do_load_byte)	/* do_load_byte(address, supervisor) */
 	NOP
 	NOP
 	NOP
+	jmp	r1
 #else
-	ld.b.usr	r2,r2,r0
+	jmp.n	r1
+	 ld.b.usr	r2,r2,r0
 #endif
-	br	2f
-1:	ld.b	r2,r2,r0
-2:	jmp	r1
+1:	jmp.n	r1
+	 ld.b	r2,r2,r0
 
 ENTRY(do_store_word)	/* do_store_word(address, data, supervisor) */
 	bcnd	ne0,r4,1f
@@ -103,12 +106,13 @@ ENTRY(do_store_word)	/* do_store_word(address, data, supervisor) */
 	NOP
 	NOP
 	NOP
+	jmp	r1
 #else
-	st.usr	r3,r2,r0
+	jmp.n	r1
+	 st.usr	r3,r2,r0
 #endif
-	br	2f
-1:	st	r3,r2,r0
-2:	jmp	r1
+1:	jmp.n	r1
+	 st	r3,r2,r0
 
 ENTRY(do_store_half)	/* do_store_half(address, data, supervisor) */
 	bcnd	ne0,r4,1f
@@ -118,12 +122,13 @@ ENTRY(do_store_half)	/* do_store_half(address, data, supervisor) */
 	NOP
 	NOP
 	NOP
+	jmp	r1
 #else
-	st.h.usr	r3,r2,r0
+	jmp.n	r1
+	 st.h.usr	r3,r2,r0
 #endif
-	br	2f
-1:	st.h	r3,r2,r0
-2:	jmp	r1
+1:	jmp.n	r1
+	 st.h	r3,r2,r0
 
 ENTRY(do_store_byte)	/* do_store_byte(address, data, supervisor) */
 	bcnd	ne0,r4,1f
@@ -133,12 +138,13 @@ ENTRY(do_store_byte)	/* do_store_byte(address, data, supervisor) */
 	NOP
 	NOP
 	NOP
+	jmp	r1
 #else
-	st.b.usr	r3,r2,r0
+	jmp.n	r1
+	 st.b.usr	r3,r2,r0
 #endif
-	br	2f
-1:	st.b	r3,r2,r0
-2:	jmp	r1
+1:	jmp.n	r1
+	 st.b	r3,r2,r0
 
 ENTRY(do_xmem_word)	/* do_xmem_word(address, data, supervisor) */
 	bcnd	ne0,r4,1f
@@ -148,12 +154,13 @@ ENTRY(do_xmem_word)	/* do_xmem_word(address, data, supervisor) */
 	NOP
 	NOP
 	NOP
+	jmp	r1
 #else
-	xmem.usr	r3,r2,r0
+	jmp.n	r1
+	 xmem.usr	r3,r2,r0
 #endif
-	br	2f
-1:	xmem	r3,r2,r0
-2:	jmp	r1
+1:	jmp.n	r1
+	 xmem	r3,r2,r0
 
 ENTRY(do_xmem_byte)	/* do_xmem_byte(address, data, supervisor) */
 	bcnd	ne0,r4,1f
@@ -163,12 +170,13 @@ ENTRY(do_xmem_byte)	/* do_xmem_byte(address, data, supervisor) */
 	NOP
 	NOP
 	NOP
+	jmp	r1
 #else
-	xmem.bu.usr	r3,r2,r0
+	jmp.n	r1
+	 xmem.bu.usr	r3,r2,r0
 #endif
-	br	2f
-1:	xmem.bu	r3,r2,r0
-2:	jmp	r1
+1:	jmp.n	r1
+	 xmem.bu	r3,r2,r0
 
 #endif	/* M88100 */
 
@@ -373,7 +381,7 @@ ASLOCAL(Lciflt)
  * r2 == from
  * r3 == to
  * r4 == maxlen
- * r5 == len actually transferred (includes the terminating NULL!!!)
+ * r5 == len actually transferred (includes the terminating NUL!!!)
  * r6 & r7 - used as temporaries
  */
 #define	SRC	r2
@@ -645,7 +653,7 @@ ASLOCAL(Lcoflt)
  * r2 == from
  * r3 == to
  * r4 == maxlen that can be copied
- * r5 == len actually copied (including the terminating NULL!!!)
+ * r5 == len actually copied (including the terminating NUL!!!)
  */
 
 #define	SRC	r2
@@ -1033,7 +1041,7 @@ ENTRY(memcpy)
 
 ENTRY(bcopy)
 ENTRY(ovbcopy)
-	bcnd	le0,r4,_ASM_LABEL(bcopy_out)	/* nothing to do if <= 0 */
+	bcnd	eq0,r4,_ASM_LABEL(bcopy_out)	/* nothing to do if == 0 */
 /*
  *	check position of source and destination data
  */
