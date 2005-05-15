@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.3 2005/05/15 16:40:09 henning Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.4 2005/05/15 19:03:04 henning Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ rtalloc_mpath(struct route *ro, int hash)
 
 	/*
 	 * XXX we don't attempt to lookup cached route again; what should
-	 * be done for sendto(3) case?
+	 * be done for sendto(2) case?
 	 */
 	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
 		return;				 /* XXX */
