@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apply.1,v 1.20 2003/06/10 09:12:09 jmc Exp $
+.\"	$OpenBSD: apply.1,v 1.21 2005/05/15 16:22:12 jaredy Exp $
 .\"	$NetBSD: apply.1,v 1.4 1996/03/18 23:16:57 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -39,10 +39,9 @@
 .Sh SYNOPSIS
 .Nm apply
 .Op Fl Ar #
-.Op Fl a Ar magic
 .Op Fl d
-.Ar command argument
-.Op Ar ...
+.Op Fl a Ar magic
+.Ar command argument ...
 .Sh DESCRIPTION
 .Nm
 runs the named
@@ -58,7 +57,7 @@ in
 where
 .Sq d
 is a digit from 1 to 9, are replaced by the
-.Li d Ns \'th
+.Li d Ns 'th
 following unused
 .Ar argument .
 In this case, the largest digit number of arguments are discarded for
@@ -105,30 +104,31 @@ If this variable is not defined, the Bourne shell is used.
 default shell
 .El
 .Sh EXAMPLES
-.Li "$ apply echo a*"
+Operate similar to
+.Xr ls 1 :
 .Pp
-Similar to
-.Xr ls 1 .
+.Dl "$ apply echo a*"
 .Pp
-.Li "$ apply \-2 cmp a1 b1 a2 b2 a3 b3"
-.Pp
-Compares the
-.Dq a
+Compare the
+.Pa a*
 files to the
-.Dq b
-files.
+.Pa b*
+files:
 .Pp
-.Li "$ apply \-0 who 1 2 3 4 5"
+.Dl "$ apply -2 cmp a1 b1 a2 b2 a3 b3"
 .Pp
-Runs
+Run
 .Xr who 1
-5 times.
+five times:
 .Pp
-.Li "$ apply \'ln %1 /usr/joe\'" *
+.Dl "$ apply -0 who 1 2 3 4 5"
 .Pp
-Links all files in the current directory to the directory
-.Pa /usr/joe .
+Link all files in the current directory to the directory
+.Pa /home/joe :
+.Pp
+.Dl "$ apply 'ln %1 /home/joe'" *
 .Sh SEE ALSO
+.Xr sh 1 ,
 .Xr xargs 1
 .Sh HISTORY
 The

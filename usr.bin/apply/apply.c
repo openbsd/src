@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.20 2005/03/25 16:54:17 jaredy Exp $	*/
+/*	$OpenBSD: apply.c,v 1.21 2005/05/15 16:22:12 jaredy Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static const char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: apply.c,v 1.20 2005/03/25 16:54:17 jaredy Exp $";
+static const char rcsid[] = "$OpenBSD: apply.c,v 1.21 2005/05/15 16:22:12 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -248,6 +248,6 @@ void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: apply [-#] [-a magic] [-d] command argument [...]\n");
+	    "usage: apply [-#] [-d] [-a magic] command argument ...\n");
 	exit(1);
 }
