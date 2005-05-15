@@ -1,5 +1,5 @@
-/* $OpenBSD: wsevent.c,v 1.3 2003/06/02 23:28:04 millert Exp $ */
-/* $NetBSD: wsevent.c,v 1.5 2000/03/30 12:45:44 augustss Exp $ */
+/* $OpenBSD: wsevent.c,v 1.4 2005/05/15 11:29:15 miod Exp $ */
+/* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -93,25 +93,35 @@
  * Initialize a wscons_event queue.
  */
 void
-wsevent_init(ev)
-	struct wseventvar *ev;
+wsevent_init(struct wseventvar *ev)
 {
 
+	if (ev->q != NULL) {
+#ifdef DIAGNOSTIC
+		printf("wsevent_init: already initialized\n");
+#endif
+		return;
+	}
 	ev->get = ev->put = 0;
 	ev->q = malloc((u_long)WSEVENT_QSIZE * sizeof(struct wscons_event),
 	    M_DEVBUF, M_WAITOK);
-	memset((caddr_t)ev->q, 0, WSEVENT_QSIZE * sizeof(struct wscons_event));
+	bzero((caddr_t)ev->q, WSEVENT_QSIZE * sizeof(struct wscons_event));
 }
 
 /*
  * Tear down a wscons_event queue.
  */
 void
-wsevent_fini(ev)
-	struct wseventvar *ev;
+wsevent_fini(struct wseventvar *ev)
 {
-
+	if (ev->q == NULL) {
+#ifdef DIAGNOSTIC
+		printf("wsevent_fini: already invoked\n");
+#endif
+		return;
+	}
 	free(ev->q, M_DEVBUF);
+	ev->q = NULL;
 }
 
 /*
@@ -119,10 +129,7 @@ wsevent_fini(ev)
  * (User cannot write an event queue.)
  */
 int
-wsevent_read(ev, uio, flags)
-	struct wseventvar *ev;
-	struct uio *uio;
-	int flags;
+wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 {
 	int s, n, cnt, error;
 
@@ -138,7 +145,7 @@ wsevent_read(ev, uio, flags)
 			return (EWOULDBLOCK);
 		}
 		ev->wanted = 1;
-		error = tsleep((caddr_t)ev, PWSEVENT | PCATCH,
+		error = tsleep(ev, PWSEVENT | PCATCH,
 		    "wsevent_read", 0);
 		if (error) {
 			splx(s);
@@ -177,15 +184,12 @@ wsevent_read(ev, uio, flags)
 }
 
 int
-wsevent_poll(ev, events, p)
-	struct wseventvar *ev;
-	int events;
-	struct proc *p;
+wsevent_poll(struct wseventvar *ev, int events, struct proc *p)
 {
 	int revents = 0;
 	int s = splwsevent();
 
-        if (events & (POLLIN | POLLRDNORM)) {
+	if (events & (POLLIN | POLLRDNORM)) {
 		if (ev->get != ev->put)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else

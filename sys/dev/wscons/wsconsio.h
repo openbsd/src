@@ -1,5 +1,5 @@
-/* $OpenBSD: wsconsio.h,v 1.35 2005/04/22 11:59:11 miod Exp $ */
-/* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.36 2005/05/15 11:29:15 miod Exp $ */
+/* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -41,12 +41,14 @@
  *	0-31	keyboard ioctls (WSKBDIO)
  *	32-63	mouse ioctls (WSMOUSEIO)
  *	64-95	display ioctls (WSDISPLAYIO)
- *	96-255	reserved for future use
+ *	96-127	mux ioctls (WSMUXIO)
+ *	128-255	reserved for future use
  */
 
 #include <sys/types.h>
 #include <sys/ioccom.h>
 #include <dev/wscons/wsksymvar.h>
+
 #include <sys/pciio.h>
 
 #define	WSSCREEN_NAME_SIZE	16
@@ -412,15 +414,6 @@ struct wsdisplay_delscreendata {
 /* Display information: number of bytes per row, may be same as pixels */
 #define	WSDISPLAYIO_LINEBYTES	_IOR('W', 95, u_int)
 
-/* Replaced by WSMUX_{ADD,REMOVE}_DEVICE */
-struct wsdisplay_kbddata {
-	int op;
-#define _O_WSDISPLAY_KBD_ADD 0
-#define _O_WSDISPLAY_KBD_DEL 1
-	int idx;
-};
-#define _O_WSDISPLAYIO_SETKEYBOARD _IOWR('W', 87, struct wsdisplay_kbddata)
-
 /* Mouse console support */
 #define WSDISPLAYIO_WSMOUSED	_IOW('W', 88, struct wscons_event)
 
@@ -436,11 +429,17 @@ struct wsdisplay_param {
 #define	WSDISPLAYIO_GETPARAM	_IOWR('W', 89, struct wsdisplay_param)
 #define	WSDISPLAYIO_SETPARAM	_IOWR('W', 90, struct wsdisplay_param)
 
+#define WSDISPLAYIO_GPCIID	_IOR('W', 91, struct pcisel)
+
 /* XXX NOT YET DEFINED */
 /* Mapping information retrieval. */
 
-/* Mux ioctls (96 - 127) */
-#define WSMUX_INJECTEVENT	_IOW('W', 96, struct wscons_event)
+/*
+ * Mux ioctls (96 - 127)
+ */
+
+#define WSMUXIO_INJECTEVENT	_IOW('W', 96, struct wscons_event)
+#define	WSMUX_INJECTEVENT	WSMUXIO_INJECTEVENT	/* XXX compat */
 
 struct wsmux_device {
 	int type;
@@ -449,16 +448,17 @@ struct wsmux_device {
 #define WSMUX_MUX	3
 	int idx;
 };
-#define WSMUX_ADD_DEVICE	_IOW('W', 97, struct wsmux_device)
-#define WSMUX_REMOVE_DEVICE	_IOW('W', 98, struct wsmux_device)
+#define WSMUXIO_ADD_DEVICE	_IOW('W', 97, struct wsmux_device)
+#define	WSMUX_ADD_DEVICE	WSMUXIO_ADD_DEVICE	/* XXX compat */
+#define WSMUXIO_REMOVE_DEVICE	_IOW('W', 98, struct wsmux_device)
+#define	WSMUX_REMOVE_DEVICE	WSMUXIO_REMOVE_DEVICE	/* XXX compat */
 
 #define WSMUX_MAXDEV 32
 struct wsmux_device_list {
 	int ndevices;
 	struct wsmux_device devices[WSMUX_MAXDEV];
 };
-#define WSMUX_LIST_DEVICES	_IOWR('W', 99, struct wsmux_device_list)
-
-#define WSDISPLAYIO_GPCIID	_IOR('W', 91, struct pcisel)
+#define WSMUXIO_LIST_DEVICES	_IOWR('W', 99, struct wsmux_device_list)
+#define	WSMUX_LIST_DEVICES	WSMUXIO_LIST_DEVICES	/* XXX compat */
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */

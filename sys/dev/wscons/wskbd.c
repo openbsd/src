@@ -1,5 +1,5 @@
-/* $OpenBSD: wskbd.c,v 1.41 2004/06/24 19:35:24 tholo Exp $ */
-/* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
+/* $OpenBSD: wskbd.c,v 1.42 2005/05/15 11:29:15 miod Exp $ */
+/* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,8 +33,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,9 +101,9 @@
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
+#include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wseventvar.h>
 #include <dev/wscons/wscons_callbacks.h>
-#include <dev/wscons/wsdisplayvar.h>
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -131,7 +129,7 @@ struct wskbd_internal {
 	int	t_composelen;		/* remaining entries in t_composebuf */
 	keysym_t t_composebuf[2];
 
-	int t_flags;
+	int	t_flags;
 #define WSKFL_METAESC 1
 
 #define MAXKEYSYMSPERKEY 2 /* ESC <key> at max */
@@ -141,7 +139,7 @@ struct wskbd_internal {
 };
 
 struct wskbd_softc {
-	struct device	sc_dv;
+	struct wsevsrc	sc_base;
 
 	struct wskbd_internal *id;
 
@@ -150,12 +148,7 @@ struct wskbd_softc {
 
 	int	sc_ledstate;
 
-	struct wseventvar sc_events;	/* event queue state */
-
 	int	sc_isconsole;
-#if NWSDISPLAY > 0
-	struct device	*sc_displaydv;
-#endif
 
 	struct wskbd_bell_data sc_bell_data;
 	struct wskbd_keyrepeat_data sc_keyrepeat_data;
@@ -163,19 +156,17 @@ struct wskbd_softc {
 	int	sc_repeating;		/* we've called timeout() */
 	int	sc_repkey;
 	struct timeout sc_repeat_ch;
+	u_int	sc_repeat_type;
+	int	sc_repeat_value;
 
 	int	sc_translating;		/* xlate to chars for emulation */
 
 	int	sc_maplen;		/* number of entries in sc_map */
 	struct wscons_keymap *sc_map;	/* current translation map */
-	kbd_t sc_layout; /* current layout */
+	kbd_t	sc_layout; /* current layout */
 
-	int		sc_refcnt;
-	u_char		sc_dying;	/* device is being detached */
-
-#if NWSMUX > 0 || NWSDISPLAY > 0
-	struct wsmux_softc *sc_mux;
-#endif
+	int	sc_refcnt;
+	u_char	sc_dying;		/* device is being detached */
 };
 
 #define MOD_SHIFT_L		(1 << 0)
@@ -199,7 +190,6 @@ struct wskbd_softc {
 #define MOD_ANYCONTROL		(MOD_CONTROL_L | MOD_CONTROL_R)
 #define MOD_ANYMETA		(MOD_META_L | MOD_META_R)
 
-	/* these should result in precise 0 or 1, see wskbd_translate() XXX */
 #define MOD_ONESET(id, mask)	(((id)->t_modifiers & (mask)) != 0)
 #define MOD_ALLSET(id, mask)	(((id)->t_modifiers & (mask)) == (mask))
 
@@ -210,26 +200,37 @@ void	wskbd_attach(struct device *, struct device *, void *);
 int	wskbd_detach(struct device *, int);
 int	wskbd_activate(struct device *, enum devact);
 
-int wskbd_displayioctl(struct device *, u_long, caddr_t, int, struct proc *p);
-int	wskbd_set_display(struct device *, struct wsmux_softc *);
-int	wskbd_isset_display(struct device *);
-
-inline void update_leds(struct wskbd_internal *);
-inline void update_modifier(struct wskbd_internal *, u_int, int, int);
-int internal_command(struct wskbd_softc *, u_int *, keysym_t, keysym_t);
-int wskbd_translate(struct wskbd_internal *, u_int, int);
-int wskbd_enable(struct wskbd_softc *, int);
+int	wskbd_displayioctl(struct device *, u_long, caddr_t, int, struct proc *);
 #if NWSDISPLAY > 0
-void change_displayparam(struct wskbd_softc *, int, int, int);
-void wskbd_holdscreen(struct wskbd_softc *, int);
+int	wskbd_set_display(struct device *, struct wsevsrc *);
+#else
+#define	wskbd_set_display NULL
 #endif
 
-int	wskbd_do_ioctl(struct wskbd_softc *, u_long, caddr_t, 
-			    int, struct proc *);
+void	update_leds(struct wskbd_internal *);
+void	update_modifier(struct wskbd_internal *, u_int, int, int);
+int	internal_command(struct wskbd_softc *, u_int *, keysym_t, keysym_t);
+int	wskbd_translate(struct wskbd_internal *, u_int, int);
+int	wskbd_enable(struct wskbd_softc *, int);
+#if NWSDISPLAY > 0
+void	change_displayparam(struct wskbd_softc *, int, int, int);
+void	wskbd_holdscreen(struct wskbd_softc *, int);
+#endif
 
-int	wskbddoclose(struct device *, int, int, struct proc *);
-int	wskbddoioctl(struct device *, u_long, caddr_t, int, 
-			  struct proc *);
+int	wskbd_do_ioctl_sc(struct wskbd_softc *, u_long, caddr_t, int,
+	    struct proc *);
+void	wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value);
+
+#if NWSMUX > 0
+int	wskbd_mux_open(struct wsevsrc *, struct wseventvar *);
+int	wskbd_mux_close(struct wsevsrc *);
+#else
+#define	wskbd_mux_open NULL
+#define	wskbd_mux_close NULL
+#endif
+
+int	wskbd_do_open(struct wskbd_softc *, struct wseventvar *);
+int	wskbd_do_ioctl(struct device *, u_long, caddr_t, int, struct proc *);
 
 struct cfdriver wskbd_cd = {
 	NULL, "wskbd", DV_TTY
@@ -239,8 +240,6 @@ struct cfattach wskbd_ca = {
 	sizeof (struct wskbd_softc), wskbd_match, wskbd_attach,
 	wskbd_detach, wskbd_activate
 };
-
-extern struct cfdriver wskbd_cd;
 
 extern int kbd_reset;
 
@@ -275,9 +274,10 @@ struct wskbd_keyrepeat_data wskbd_default_keyrepeat_data = {
 };
 
 #if NWSMUX > 0 || NWSDISPLAY > 0
-struct wsmuxops wskbd_muxops = {
-	wskbdopen, wskbddoclose, wskbddoioctl, wskbd_displayioctl,
-	wskbd_set_display, wskbd_isset_display
+struct wssrcops wskbd_srcops = {
+	WSMUX_KBD,
+	wskbd_mux_open, wskbd_mux_close, wskbd_do_ioctl,
+	wskbd_displayioctl, wskbd_set_display
 };
 #endif
 
@@ -289,14 +289,11 @@ static int wskbd_console_initted;
 static struct wskbd_softc *wskbd_console_device;
 static struct wskbd_internal wskbd_console_data;
 
-void wskbd_update_layout(struct wskbd_internal *, kbd_t);
+void	wskbd_update_layout(struct wskbd_internal *, kbd_t);
 
 void
-wskbd_update_layout(id, enc)
-	struct wskbd_internal *id;
-	kbd_t enc;
+wskbd_update_layout(struct wskbd_internal *id, kbd_t enc)
 {
-
 	if (enc & KB_METAESC)
 		id->t_flags |= WSKFL_METAESC;
 	else
@@ -307,9 +304,7 @@ wskbd_update_layout(id, enc)
  * Print function (for parent devices).
  */
 int
-wskbddevprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+wskbddevprint(void *aux, const char *pnp)
 {
 #if 0
 	struct wskbddev_attach_args *ap = aux;
@@ -325,10 +320,7 @@ wskbddevprint(aux, pnp)
 }
 
 int
-wskbd_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+wskbd_match(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct wskbddev_attach_args *ap = aux;
@@ -349,36 +341,40 @@ wskbd_match(parent, match, aux)
 }
 
 void
-wskbd_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wskbd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)self;
 	struct wskbddev_attach_args *ap = aux;
-#if NWSMUX > 0 || NWSDISPLAY > 0
-	int mux;
+#if NWSMUX > 0
+	int mux, error;
 #endif
 
-#if NWSDISPLAY > 0
-	sc->sc_displaydv = NULL;
-#endif
 	sc->sc_isconsole = ap->console;
 
 #if NWSMUX > 0 || NWSDISPLAY > 0
-	mux = sc->sc_dv.dv_cfdata->wskbddevcf_mux;
-	if (sc->sc_isconsole && mux != WSKBDDEVCF_MUX_DEFAULT) {
-		printf(" (mux %d ignored for console)", mux);
-		mux = WSKBDDEVCF_MUX_DEFAULT;
-	}
-	if (mux != WSKBDDEVCF_MUX_DEFAULT)
-		printf(" mux %d", mux);
+	sc->sc_base.me_ops = &wskbd_srcops;
 #endif
+#if NWSMUX > 0
+	mux = sc->sc_base.me_dv.dv_cfdata->wskbddevcf_mux;
+	if (ap->console) {
+		/* Ignore mux for console; it always goes to the console mux. */
+		/* printf(" (mux %d ignored for console)", mux); */
+		mux = -1;
+	}
+	if (mux >= 0)
+		printf(" mux %d", mux);
+#else
+#if 0	/* not worth keeping, especially since the default value is not -1... */
+	if (sc->sc_base.me_dv.dv_cfdata->wskbddevcf_mux >= 0)
+		printf(" (mux ignored)");
+#endif
+#endif	/* NWSMUX > 0 */
 
 	if (ap->console) {
 		sc->id = &wskbd_console_data;
 	} else {
 		sc->id = malloc(sizeof(struct wskbd_internal),
-				M_DEVBUF, M_WAITOK);
+		    M_DEVBUF, M_WAITOK);
 		bzero(sc->id, sizeof(struct wskbd_internal));
 		sc->id->t_keymap = ap->keymap;
 		wskbd_update_layout(sc->id, ap->keymap->layout);
@@ -392,13 +388,12 @@ wskbd_attach(parent, self, aux)
 
 	sc->sc_accessops = ap->accessops;
 	sc->sc_accesscookie = ap->accesscookie;
-	sc->sc_events.io = NULL;			/* sanity */
 	sc->sc_repeating = 0;
 	sc->sc_translating = 1;
 	sc->sc_ledstate = -1; /* force update */
 
 	if (wskbd_load_keymap(sc->id->t_keymap,
-			      &sc->sc_map, &sc->sc_maplen) != 0)
+	    &sc->sc_map, &sc->sc_maplen) != 0)
 		panic("cannot load keymap");
 
 	sc->sc_layout = sc->id->t_keymap->layout;
@@ -416,27 +411,26 @@ wskbd_attach(parent, self, aux)
 		printf(": console keyboard");
 
 #if NWSDISPLAY > 0
-		if ((sc->sc_displaydv = wsdisplay_set_console_kbd(self)))
+		wsdisplay_set_console_kbd(&sc->sc_base); /* sets me_dispdv */
+		if (sc->sc_displaydv != NULL)
 			printf(", using %s", sc->sc_displaydv->dv_xname);
 #endif
 	}
 	printf("\n");
 
 #if NWSMUX > 0
-	if (mux != WSKBDDEVCF_MUX_DEFAULT) {
-		wsmux_attach(mux, WSMUX_KBD, &sc->sc_dv, &sc->sc_events, 
-			     &sc->sc_mux, &wskbd_muxops);
-		wsdisplay_set_console_kbd(self);
+	if (mux >= 0) {
+		error = wsmux_attach_sc(wsmux_getmux(mux), &sc->sc_base);
+		if (error)
+			printf("%s: attach error=%d\n",
+			    sc->sc_base.me_dv.dv_xname, error);
 	}
 #endif
-
 }
 
 void    
-wskbd_cnattach(consops, conscookie, mapdata)
-	const struct wskbd_consops *consops;
-	void *conscookie;
-	const struct wskbd_mapdata *mapdata;
+wskbd_cnattach(const struct wskbd_consops *consops, void *conscookie,
+    const struct wskbd_mapdata *mapdata)
 {
 
 	KASSERT(!wskbd_console_initted);
@@ -473,8 +467,7 @@ wskbd_cndetach()
 
 #if NWSDISPLAY > 0
 void
-wskbd_repeat(v)
-	void *v;
+wskbd_repeat(void *v)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)v;
 	int s = spltty();
@@ -487,24 +480,33 @@ wskbd_repeat(v)
 		splx(s);
 		return;
 	}
-	if (sc->sc_displaydv != NULL) {
-		int i;
-		for (i = 0; i < sc->sc_repeating; i++)
-			wsdisplay_kbdinput(sc->sc_displaydv,
-					   sc->id->t_symbols[i]);
+	if (sc->sc_translating) {
+		/* deliver keys */
+		if (sc->sc_base.me_dispdv != NULL) {
+			int i;
+			for (i = 0; i < sc->sc_repeating; i++)
+				wsdisplay_kbdinput(sc->sc_base.me_dispdv,
+				    sc->id->t_symbols[i]);
+		}
+	} else {
+		/* queue event */
+		wskbd_deliver_event(sc, sc->sc_repeat_type,
+		    sc->sc_repeat_value);
 	}
-	timeout_add(&sc->sc_repeat_ch,
-	    (hz * sc->sc_keyrepeat_data.delN) / 1000);
+	if (sc->sc_keyrepeat_data.delN != 0)
+		timeout_add(&sc->sc_repeat_ch,
+		    (hz * sc->sc_keyrepeat_data.delN) / 1000);
 	splx(s);
 }
 #endif
 
 int
-wskbd_activate(self, act)
-	struct device *self;
-	enum devact act;
+wskbd_activate(struct device *self, enum devact act)
 {
-	/* XXX should we do something more? */
+	struct wskbd_softc *sc = (struct wskbd_softc *)self;
+
+	if (act == DVACT_DEACTIVATE)
+		sc->sc_dying = 1;
 	return (0);
 }
 
@@ -517,24 +519,17 @@ wskbd_activate(self, act)
  * vnode and return (which will deallocate the softc).
  */
 int
-wskbd_detach(self, flags)
-	struct device  *self;
-	int flags;
+wskbd_detach(struct device  *self, int flags)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)self;
 	struct wseventvar *evar;
 	int maj, mn;
 	int s;
-#if NWSMUX > 0
-	int mux;
-#endif
-
-	sc->sc_dying = 1;
 
 #if NWSMUX > 0
-	mux = sc->sc_dv.dv_cfdata->wskbddevcf_mux;
-	if (mux != WSKBDDEVCF_MUX_DEFAULT)
-		wsmux_detach(mux, &sc->sc_dv);
+	/* Tell parent mux we're leaving. */
+	if (sc->sc_base.me_parent != NULL)
+		wsmux_detach_sc(&sc->sc_base);
 #endif
 
 #if NWSDISPLAY > 0
@@ -549,8 +544,8 @@ wskbd_detach(self, flags)
 		wskbd_console_device = NULL;
 	}
 
-	evar = &sc->sc_events;
-	if (evar->io) {
+	evar = sc->sc_base.me_evp;
+	if (evar != NULL && evar->io != NULL) {
 		s = spltty();
 		if (--sc->sc_refcnt >= 0) {
 			/* Wake everyone by generating a dummy event. */
@@ -560,7 +555,7 @@ wskbd_detach(self, flags)
 			/* Wait for processes to go away. */
 			if (tsleep(sc, PZERO, "wskdet", hz * 60))
 				printf("wskbd_detach: %s didn't detach\n",
-				       sc->sc_dv.dv_xname);
+				       sc->sc_base.me_dv.dv_xname);
 		}
 		splx(s);
 	}
@@ -578,22 +573,21 @@ wskbd_detach(self, flags)
 }
 
 void
-wskbd_input(dev, type, value)
-	struct device *dev;
-	u_int type;
-	int value;
+wskbd_input(struct device *dev, u_int type, int value)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev; 
-	struct wscons_event *ev;
-	struct wseventvar *evar;
 #if NWSDISPLAY > 0
 	int num, i;
 #endif
-	int put;
 
 #if NWSDISPLAY > 0
+	if (sc->sc_repeating) {
+		sc->sc_repeating = 0;
+		timeout_del(&sc->sc_repeat_ch);
+	}
+
 	/*
-	 * If /dev/wskbd is not connected in event mode translate and
+	 * If /dev/wskbdN is not connected in event mode translate and
 	 * send upstream.
 	 */
 	if (sc->sc_translating) {
@@ -601,49 +595,74 @@ wskbd_input(dev, type, value)
 			wsdisplay_burn(sc->sc_displaydv, WSDISPLAY_BURN_KBD);
 		num = wskbd_translate(sc->id, type, value);
 		if (num > 0) {
-			if (sc->sc_displaydv != NULL) {
+			if (sc->sc_base.me_dispdv != NULL) {
 				/* XXX - Shift_R+PGUP(release) emits PrtSc */
 				if (sc->id->t_symbols[0] != KS_Print_Screen) {
-					wsscrollback(sc->sc_displaydv,
+					wsscrollback(sc->sc_base.me_dispdv,
 					    WSDISPLAY_SCROLL_RESET);
 				}
 				for (i = 0; i < num; i++) {
-					wsdisplay_kbdinput(sc->sc_displaydv,
+					wsdisplay_kbdinput(sc->sc_base.me_dispdv,
 					    sc->id->t_symbols[i]);
 				}
 			}
 
-			sc->sc_repeating = num;
-			timeout_add(&sc->sc_repeat_ch,
-			    (hz * sc->sc_keyrepeat_data.del1) / 1000);
+			if (sc->sc_keyrepeat_data.del1 != 0) {
+				sc->sc_repeating = num;
+				timeout_add(&sc->sc_repeat_ch,
+				    (hz * sc->sc_keyrepeat_data.del1) / 1000);
+			}
 		}
 		return;
 	}
 #endif
 
-	/*
-	 * Keyboard is generating events.  Turn this keystroke into an
-	 * event and put it in the queue.  If the queue is full, the
-	 * keystroke is lost (sorry!).
-	 */
+	wskbd_deliver_event(sc, type, value);
 
-	/* no one to receive; punt!*/
-	if (sc->sc_events.io == NULL)
-		return;
-
-#if NWSMUX > 0
-	if (sc->sc_mux)
-		evar = &sc->sc_mux->sc_events;
-	else
+#if NWSDISPLAY > 0
+	/* Repeat key presses if enabled. */
+	if (type == WSCONS_EVENT_KEY_DOWN && sc->sc_keyrepeat_data.del1 != 0) {
+		sc->sc_repeat_type = type;
+		sc->sc_repeat_value = value;
+		sc->sc_repeating = 1;
+		timeout_add(&sc->sc_repeat_ch,
+		    (hz * sc->sc_keyrepeat_data.del1) / 1000);
+	}
 #endif
-		evar = &sc->sc_events;
+}
+
+/*
+ * Keyboard is generating events.  Turn this keystroke into an
+ * event and put it in the queue.  If the queue is full, the
+ * keystroke is lost (sorry!).
+ */
+void
+wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
+{
+	struct wseventvar *evar;
+	struct wscons_event *ev;
+	int put;
+
+	evar = sc->sc_base.me_evp;
+
+	if (evar == NULL) {
+		DPRINTF(("wskbd_input: not open\n"));
+		return;
+	}
+
+#ifdef DIAGNOSTIC
+	if (evar->q == NULL) {
+		printf("wskbd_input: evar->q=NULL\n");
+		return;
+	}
+#endif
 
 	put = evar->put;
 	ev = &evar->q[put];
 	put = (put + 1) % WSEVENT_QSIZE;
 	if (put == evar->get) {
 		log(LOG_WARNING, "%s: event queue overflow\n",
-		    sc->sc_dv.dv_xname);
+		    sc->sc_base.me_dv.dv_xname);
 		return;
 	}
 	ev->type = type;
@@ -655,17 +674,15 @@ wskbd_input(dev, type, value)
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 void
-wskbd_rawinput(dev, buf, len)
-	struct device *dev;
-	u_char *buf;
-	int len;
+wskbd_rawinput(struct device *dev, u_char *buf, int len)
 {
 #if NWSDISPLAY > 0
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
 	int i;
 
-	for (i = 0; i < len; i++)
-		wsdisplay_kbdinput(sc->sc_displaydv, buf[i]);
+	if (sc->sc_base.me_dispdv != NULL)
+		for (i = 0; i < len; i++)
+			wsdisplay_kbdinput(sc->sc_base.me_dispdv, buf[i]);
 	/* this is KS_GROUP_Ascii */
 #endif
 }
@@ -673,14 +690,12 @@ wskbd_rawinput(dev, buf, len)
 
 #if NWSDISPLAY > 0
 void
-wskbd_holdscreen(sc, hold)
-	struct wskbd_softc *sc;
-	int hold;
+wskbd_holdscreen(struct wskbd_softc *sc, int hold)
 {
 	int new_state;
 
-	if (sc->sc_displaydv != NULL) {
-		wsdisplay_kbdholdscreen(sc->sc_displaydv, hold);
+	if (sc->sc_base.me_dispdv != NULL) {
+		wsdisplay_kbdholdscreen(sc->sc_base.me_dispdv, hold);
 		new_state = sc->sc_ledstate;
 		if (hold)
 			new_state |= WSKBD_LED_SCROLL;
@@ -696,99 +711,136 @@ wskbd_holdscreen(sc, hold)
 #endif
 
 int
-wskbd_enable(sc, on)
-	struct wskbd_softc *sc;
-	int on;
+wskbd_enable(struct wskbd_softc *sc, int on)
 {
-	int res;
+	int error;
 
-	/* XXX reference count? */
-	if (!on && (!sc->sc_translating
 #if NWSDISPLAY > 0
-		    || sc->sc_displaydv
-#endif
-		))
-		return (EBUSY);
+	if (sc->sc_base.me_dispdv != NULL)
+		return (0);
 
-	res = (*sc->sc_accessops->enable)(sc->sc_accesscookie, on);
-	return (res);
+	/* Always cancel auto repeat when fiddling with the kbd. */
+	if (sc->sc_repeating) {
+		sc->sc_repeating = 0;
+		timeout_del(&sc->sc_repeat_ch);
+	}
+#endif
+
+	error = (*sc->sc_accessops->enable)(sc->sc_accesscookie, on);
+	DPRINTF(("wskbd_enable: sc=%p on=%d res=%d\n", sc, on, error));
+	return (error);
 }
 
+#if NWSMUX > 0
 int
-wskbdopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+wskbd_mux_open(struct wsevsrc *me, struct wseventvar *evp)
+{
+	struct wskbd_softc *sc = (struct wskbd_softc *)me;
+
+	if (sc->sc_dying)
+		return (EIO);
+
+	if (sc->sc_base.me_evp != NULL)
+		return (EBUSY);
+
+	return (wskbd_do_open(sc, evp));
+}
+#endif
+
+int
+wskbdopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct wskbd_softc *sc;
-	int unit;
+	struct wseventvar *evar;
+	int unit, error;
 
 	unit = minor(dev);
 	if (unit >= wskbd_cd.cd_ndevs ||	/* make sure it was attached */
 	    (sc = wskbd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
+#if NWSMUX > 0
+	DPRINTF(("wskbdopen: %s mux=%p p=%p\n", sc->sc_base.me_dv.dv_xname,
+		 sc->sc_base.me_parent, p));
+#endif
+
 	if (sc->sc_dying)
 		return (EIO);
 
-	if (!(flags & FREAD)) {
+	if ((flags & (FREAD | FWRITE)) == FWRITE) {
 		/* Not opening for read, only ioctl is available. */
 		return (0);
 	}
 
 #if NWSMUX > 0
-	if (sc->sc_mux)
-		return (EBUSY);
+	if (sc->sc_base.me_parent != NULL) {
+		/* Grab the keyboard out of the greedy hands of the mux. */
+		DPRINTF(("wskbdopen: detach\n"));
+		wsmux_detach_sc(&sc->sc_base);
+	}
 #endif
 
-	if (sc->sc_events.io)			/* and that it's not in use */
+	if (sc->sc_base.me_evp != NULL)
 		return (EBUSY);
 
-	sc->sc_events.io = p;
-	wsevent_init(&sc->sc_events);		/* may cause sleep */
+	evar = &sc->sc_base.me_evar;
+	wsevent_init(evar);
+	evar->io = p;
 
+	error = wskbd_do_open(sc, evar);
+	if (error) {
+		DPRINTF(("wskbdopen: %s open failed\n",
+			 sc->sc_base.me_dv.dv_xname));
+		sc->sc_base.me_evp = NULL;
+		wsevent_fini(evar);
+	}
+	return (error);
+}
+
+int
+wskbd_do_open(struct wskbd_softc *sc, struct wseventvar *evp)
+{
+	sc->sc_base.me_evp = evp;
 	sc->sc_translating = 0;
 
-	wskbd_enable(sc, 1);
-	return (0);
+	return (wskbd_enable(sc, 1));
 }
 
 int
-wskbdclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+wskbdclose(dev_t dev, int flags, int mode, struct proc *p)
 {
-	return (wskbddoclose(wskbd_cd.cd_devs[minor(dev)], flags, mode, p));
-}
+	struct wskbd_softc *sc =
+	    (struct wskbd_softc *)wskbd_cd.cd_devs[minor(dev)];
+	struct wseventvar *evar = sc->sc_base.me_evp;
 
-int
-wskbddoclose(dv, flags, mode, p)
-	struct device *dv;
-	int flags, mode;
-	struct proc *p;
-{
-	struct wskbd_softc *sc = (struct wskbd_softc *)dv;
-
-	if (!(flags & FREAD)) {
-		/* Nothing to do, because open didn't do anything. */
+	if (evar == NULL)
+		/* not open for read */
 		return (0);
-	}
 
+	sc->sc_base.me_evp = NULL;
 	sc->sc_translating = 1;
+	(void)wskbd_enable(sc, 0);
+	wsevent_fini(evar);
 
-	wsevent_fini(&sc->sc_events);
-	sc->sc_events.io = NULL;
-
-	wskbd_enable(sc, 0);
 	return (0);
 }
 
+#if NWSMUX > 0
 int
-wskbdread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+wskbd_mux_close(struct wsevsrc *me)
+{
+	struct wskbd_softc *sc = (struct wskbd_softc *)me;
+
+	sc->sc_base.me_evp = NULL;
+	sc->sc_translating = 1;
+	(void)wskbd_enable(sc, 0);
+
+	return (0);
+}
+#endif
+
+int
+wskbdread(dev_t dev, struct uio *uio, int flags)
 {
 	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
 	int error;
@@ -796,8 +848,15 @@ wskbdread(dev, uio, flags)
 	if (sc->sc_dying)
 		return (EIO);
 
+#ifdef DIAGNOSTIC
+	if (sc->sc_base.me_evp == NULL) {
+		printf("wskbdread: evp == NULL\n");
+		return (EINVAL);
+	}
+#endif
+
 	sc->sc_refcnt++;
-	error = wsevent_read(&sc->sc_events, uio, flags);
+	error = wsevent_read(&sc->sc_base.me_evar, uio, flags);
 	if (--sc->sc_refcnt < 0) {
 		wakeup(sc);
 		error = EIO;
@@ -806,42 +865,29 @@ wskbdread(dev, uio, flags)
 }
 
 int
-wskbdioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+wskbdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	return (wskbddoioctl(wskbd_cd.cd_devs[minor(dev)], cmd, data, flag,p));
+	return (wskbd_do_ioctl(wskbd_cd.cd_devs[minor(dev)], cmd, data, flag,p));
 }
 
 /* A wrapper around the ioctl() workhorse to make reference counting easy. */
 int
-wskbddoioctl(dv, cmd, data, flag, p)
-	struct device *dv;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+wskbd_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)dv;
 	int error;
 
 	sc->sc_refcnt++;
-	error = wskbd_do_ioctl(sc, cmd, data, flag, p);
+	error = wskbd_do_ioctl_sc(sc, cmd, data, flag, p);
 	if (--sc->sc_refcnt < 0)
 		wakeup(sc);
 	return (error);
 }
 
 int
-wskbd_do_ioctl(sc, cmd, data, flag, p)
-	struct wskbd_softc *sc;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+wskbd_do_ioctl_sc(struct wskbd_softc *sc, u_long cmd, caddr_t data, int flag,
+     struct proc *p)
 {
 	int error;
 
@@ -853,11 +899,23 @@ wskbd_do_ioctl(sc, cmd, data, flag, p)
 		return (0);
 
 	case FIOASYNC:
-		sc->sc_events.async = *(int *)data != 0;
+		if (sc->sc_base.me_evp == NULL)
+			return (EINVAL);
+		sc->sc_base.me_evp->async = *(int *)data != 0;
 		return (0);
 
+	case FIOSETOWN:
+		if (sc->sc_base.me_evp == NULL)
+			return (EINVAL);
+		if (-*(int *)data != sc->sc_base.me_evp->io->p_pgid &&
+		    *(int *)data != sc->sc_base.me_evp->io->p_pid)
+			return (EPERM);
+		return (0);
+		   
 	case TIOCSPGRP:
-		if (*(int *)data != sc->sc_events.io->p_pgid)
+		if (sc->sc_base.me_evp == NULL)
+			return (EINVAL);
+		if (*(int *)data != sc->sc_base.me_evp->io->p_pgid)
 			return (EPERM);
 		return (0);
 	}
@@ -866,7 +924,7 @@ wskbd_do_ioctl(sc, cmd, data, flag, p)
 	 * Try the keyboard driver for WSKBDIO ioctls.  It returns -1
 	 * if it didn't recognize the request.
 	 */
-	error = wskbd_displayioctl((struct device *)sc, cmd, data, flag, p);
+	error = wskbd_displayioctl(&sc->sc_base.me_dv, cmd, data, flag, p);
 	return (error != -1 ? error : ENOTTY);
 }
 
@@ -875,12 +933,8 @@ wskbd_do_ioctl(sc, cmd, data, flag, p)
  * Some of these have no real effect in raw mode, however.
  */
 int
-wskbd_displayioctl(dev, cmd, data, flag, p)
-	struct device *dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+wskbd_displayioctl(struct device *dev, u_long cmd, caddr_t data, int flag,
+    struct proc *p)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
 	struct wskbd_bell_data *ubdp, *kbdp;
@@ -961,11 +1015,6 @@ getbell:
 		kkdp = &sc->sc_keyrepeat_data;
 setkeyrepeat:
 		ukdp = (struct wskbd_keyrepeat_data *)data;
-		if ((ukdp->which & WSKBD_KEYREPEAT_DODEL1 &&
-		     (hz * ukdp->del1) / 1000 <= 0) ||
-		    (ukdp->which & WSKBD_KEYREPEAT_DODELN &&
-		     (hz * ukdp->delN) / 1000 <= 0))
-			return (EINVAL);
 		SETKEYREPEAT(kkdp, ukdp, kkdp);
 		return (0);
 
@@ -995,7 +1044,8 @@ getkeyrepeat:
 		umdp = (struct wskbd_map_data *)data;
 		if (umdp->maplen > WSKBDIO_MAXMAPLEN)
 			return (EINVAL);
-		len = umdp->maplen*sizeof(struct wscons_keymap);
+
+		len = umdp->maplen * sizeof(struct wscons_keymap);
 		buf = malloc(len, M_TEMP, M_WAITOK);
 		error = copyin(umdp->map, buf, len);
 		if (error == 0) {
@@ -1035,11 +1085,11 @@ getkeyrepeat:
 				return (EINVAL);
 		} else {
 			md = *(sc->id->t_keymap); /* structure assignment */
-				md.layout = enc;
-				error = wskbd_load_keymap(&md, &sc->sc_map,
-							  &sc->sc_maplen);
-				if (error)
-			return(error);
+			md.layout = enc;
+			error = wskbd_load_keymap(&md, &sc->sc_map,
+						  &sc->sc_maplen);
+			if (error)
+				return(error);
 		}
 		sc->sc_layout = enc;
 		wskbd_update_layout(sc->id, enc);
@@ -1075,14 +1125,13 @@ getkeyrepeat:
 }
 
 int
-wskbdpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+wskbdpoll(dev_t dev, int events, struct proc *p)
 {
 	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
 
-	return (wsevent_poll(&sc->sc_events, events, p));
+	if (sc->sc_base.me_evp == NULL)
+		return (EINVAL);
+	return (wsevent_poll(sc->sc_base.me_evp, events, p));
 }
 
 #if NWSDISPLAY > 0
@@ -1102,120 +1151,86 @@ wskbd_pickfree()
 	return (-1);
 }
 
-struct device *
-wskbd_set_console_display(displaydv, muxsc)
-	struct device *displaydv;
-	struct wsmux_softc *muxsc;
+struct wsevsrc *
+wskbd_set_console_display(struct device *displaydv, struct wsevsrc *me)
 {
 	struct wskbd_softc *sc = wskbd_console_device;
 
-	if (!sc)
-		return (0);
-	sc->sc_displaydv = displaydv;
-	(void)wsmux_attach_sc(muxsc, WSMUX_KBD, &sc->sc_dv, &sc->sc_events, 
-			      &sc->sc_mux, &wskbd_muxops);
-	return (&sc->sc_dv);
+	if (sc == NULL)
+		return (NULL);
+	sc->sc_base.me_dispdv = displaydv;
+#if NWSMUX > 0
+	(void)wsmux_attach_sc((struct wsmux_softc *)me, &sc->sc_base);
+#endif
+	return (&sc->sc_base);
 }
 
 int
-wskbd_set_display(dv, muxsc)
-	struct device *dv;
-	struct wsmux_softc *muxsc;
+wskbd_set_display(struct device *dv, struct wsevsrc *me)
 {
 	struct wskbd_softc *sc = (struct wskbd_softc *)dv;
-	struct device *displaydv = muxsc ? muxsc->sc_displaydv : 0;
+	struct device *displaydv = me != NULL ? me->me_dispdv : NULL;
 	struct device *odisplaydv;
 	int error;
 
-	DPRINTF(("wskbd_set_display: %s mux=%p disp=%p odisp=%p cons=%d\n",
-		 dv->dv_xname, muxsc, sc->sc_displaydv, displaydv, 
+	DPRINTF(("wskbd_set_display: %s me=%p odisp=%p disp=%p cons=%d\n",
+		 dv->dv_xname, me, sc->sc_base.me_dispdv, displaydv, 
 		 sc->sc_isconsole));
 
 	if (sc->sc_isconsole)
 		return (EBUSY);
 
-	if (displaydv) {
-		if (sc->sc_displaydv)
+	if (displaydv != NULL) {
+		if (sc->sc_base.me_dispdv != NULL)
 			return (EBUSY);
 	} else {
-		if (sc->sc_displaydv == NULL)
+		if (sc->sc_base.me_dispdv == NULL)
 			return (ENXIO);
 	}
 
-	odisplaydv = sc->sc_displaydv;
-	sc->sc_displaydv = displaydv;
-
+	odisplaydv = sc->sc_base.me_dispdv;
+	sc->sc_base.me_dispdv = NULL;
 	error = wskbd_enable(sc, displaydv != NULL);
+	sc->sc_base.me_dispdv = displaydv;
 	if (error) {
-		sc->sc_displaydv = odisplaydv;
+		sc->sc_base.me_dispdv = odisplaydv;
 		return (error);
 	}
 
 	if (displaydv)
 		printf("%s: connecting to %s\n",
-		       sc->sc_dv.dv_xname, displaydv->dv_xname);
+		       sc->sc_base.me_dv.dv_xname, displaydv->dv_xname);
 	else
 		printf("%s: disconnecting from %s\n",
-		       sc->sc_dv.dv_xname, odisplaydv->dv_xname);
+		       sc->sc_base.me_dv.dv_xname, odisplaydv->dv_xname);
 
 	return (0);
 }
 
+#endif	/* NWSDISPLAY > 0 */
+
+#if NWSMUX > 0
 int
-wskbd_isset_display(dv)
-	struct device *dv;
-{
-	struct wskbd_softc *sc = (struct wskbd_softc *)dv;
-
-	if (sc->sc_displaydv != NULL)
-		return (1);
-
-	return (0);
-}
-
-int
-wskbd_add_mux(unit, muxsc)
-	int unit;
-	struct wsmux_softc *muxsc;
+wskbd_add_mux(int unit, struct wsmux_softc *muxsc)
 {
 	struct wskbd_softc *sc;
 
-	DPRINTF(("wskbd_add_mux: %d %s %p\n", unit, muxsc->sc_dv.dv_xname,
-		 muxsc->sc_displaydv));
 	if (unit < 0 || unit >= wskbd_cd.cd_ndevs ||
 	    (sc = wskbd_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
-	if (sc->sc_mux || sc->sc_events.io)
+	if (sc->sc_base.me_parent != NULL || sc->sc_base.me_evp != NULL)
 		return (EBUSY);
 
-	return (wsmux_attach_sc(muxsc, WSMUX_KBD, &sc->sc_dv, &sc->sc_events, 
-				&sc->sc_mux, &wskbd_muxops));
+	return (wsmux_attach_sc(muxsc, &sc->sc_base));
 }
-
-int
-wskbd_rem_mux(unit, muxsc)
-	int unit;
-	struct wsmux_softc *muxsc;
-{
-	struct wskbd_softc *sc;
-
-	DPRINTF(("wskbd_rem_mux: %d %s\n", unit, muxsc->sc_dv.dv_xname));
-	if (unit < 0 || unit >= wskbd_cd.cd_ndevs ||
-	    (sc = wskbd_cd.cd_devs[unit]) == NULL)
-		return (ENXIO);
-
-	return (wsmux_detach_sc(muxsc, &sc->sc_dv));
-}
-
-#endif /* NWSDISPLAY > 0 */
+#endif
 
 /*
  * Console interface.
  */
 int
-wskbd_cngetc(dev)
-	dev_t dev;
+wskbd_cngetc(dev_t dev)
 {
 	static int num = 0;
 	static int pos;
@@ -1233,7 +1248,8 @@ wskbd_cngetc(dev)
 	for(;;) {
 		if (num-- > 0) {
 			ks = wskbd_console_data.t_symbols[pos++];
-			return (KS_VALUE(ks));	
+			if (KS_GROUP(ks) == KS_GROUP_Ascii)
+				return (KS_VALUE(ks));	
 		} else {
 			(*wskbd_console_data.t_consops->getc)
 				(wskbd_console_data.t_consaccesscookie,
@@ -1245,9 +1261,7 @@ wskbd_cngetc(dev)
 }
 
 void
-wskbd_cnpollc(dev, poll)
-	dev_t dev;
-	int poll;
+wskbd_cnpollc(dev_t dev, int poll)
 {
 
 	if (!wskbd_console_initted)
@@ -1262,9 +1276,7 @@ wskbd_cnpollc(dev, poll)
 }
 
 void
-wskbd_cnbell(dev, pitch, period, volume)
-	dev_t dev;
-	u_int pitch, period, volume;
+wskbd_cnbell(dev_t dev, u_int pitch, u_int period, u_int volume)
 {
 	if (!wskbd_console_initted)
 		return;
@@ -1275,9 +1287,8 @@ wskbd_cnbell(dev, pitch, period, volume)
 			volume);
 }
 
-inline void
-update_leds(id)
-	struct wskbd_internal *id;
+void
+update_leds(struct wskbd_internal *id)
 {
 	int new_state;
 
@@ -1298,12 +1309,8 @@ update_leds(id)
 	}
 }
 
-inline void
-update_modifier(id, type, toggle, mask)
-	struct wskbd_internal *id;
-	u_int type;
-	int toggle;
-	int mask;
+void
+update_modifier(struct wskbd_internal *id, u_int type, int toggle, int mask)
 {
 	if (toggle) {
 		if (type == WSCONS_EVENT_KEY_DOWN)
@@ -1318,18 +1325,14 @@ update_modifier(id, type, toggle, mask)
 
 #if NWSDISPLAY > 0
 void
-change_displayparam(sc, param, updown, wraparound)
-	struct wskbd_softc *sc;
-	int param, updown, wraparound;
+change_displayparam(struct wskbd_softc *sc, int param, int updown,
+    int wraparound)
 {
 	int res;
 	struct wsdisplay_param dp;
 
-	if (sc->sc_displaydv == NULL)
-		return;
-
 	dp.param = param;
-	res = wsdisplay_param(sc->sc_displaydv, WSDISPLAYIO_GETPARAM, &dp);
+	res = wsdisplay_param(sc->sc_base.me_dispdv, WSDISPLAYIO_GETPARAM, &dp);
 
 	if (res == EINVAL)
 		return; /* no such parameter */
@@ -1340,15 +1343,13 @@ change_displayparam(sc, param, updown, wraparound)
 	else
 	if (dp.curval < dp.min)
 		dp.curval = wraparound ? dp.max : dp.min;
-	wsdisplay_param(sc->sc_displaydv, WSDISPLAYIO_SETPARAM, &dp);
+	wsdisplay_param(sc->sc_base.me_dispdv, WSDISPLAYIO_SETPARAM, &dp);
 }
 #endif
 
 int
-internal_command(sc, type, ksym, ksym2)
-	struct wskbd_softc *sc;
-	u_int *type;
-	keysym_t ksym, ksym2;
+internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
+    keysym_t ksym2)
 {
 	switch (ksym) {
 	case KS_Cmd:
@@ -1394,17 +1395,21 @@ internal_command(sc, type, ksym, ksym2)
 	    !MOD_ALLSET(sc->id, MOD_COMMAND1 | MOD_COMMAND2))
 		return (0);
 
-	switch (ksym) {
 #ifdef DDB
-	case KS_Cmd_Debugger:
+	if (ksym == KS_Cmd_Debugger) {
 		if (sc->sc_isconsole && db_console)
 			Debugger();
 		/* discard this key (ddb discarded command modifiers) */
 		*type = WSCONS_EVENT_KEY_UP;
 		return (1);
+	}
 #endif
 
 #if NWSDISPLAY > 0
+	if (sc->sc_base.me_dispdv == NULL)
+		return (0);
+
+	switch (ksym) {
 	case KS_Cmd_Screen0:
 	case KS_Cmd_Screen1:
 	case KS_Cmd_Screen2:
@@ -1417,17 +1422,13 @@ internal_command(sc, type, ksym, ksym2)
 	case KS_Cmd_Screen9:
 	case KS_Cmd_Screen10:
 	case KS_Cmd_Screen11:
-		if (sc->sc_displaydv != NULL)
-			wsdisplay_switch(sc->sc_displaydv,
-			    ksym - KS_Cmd_Screen0, 0);
+		wsdisplay_switch(sc->sc_displaydv, ksym - KS_Cmd_Screen0, 0);
 		return (1);
 	case KS_Cmd_ResetEmul:
-		if (sc->sc_displaydv != NULL)
-			wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETEMUL);
+		wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETEMUL);
 		return (1);
 	case KS_Cmd_ResetClose:
-		if (sc->sc_displaydv != NULL)
-			wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETCLOSE);
+		wsdisplay_reset(sc->sc_displaydv, WSDISPLAY_RESETCLOSE);
 		return (1);
 #if defined(__i386__) || defined(__amd64__)
 	case KS_Cmd_KbdReset:
@@ -1441,22 +1442,22 @@ internal_command(sc, type, ksym, ksym2)
 	case KS_Cmd_BacklightOff:
 	case KS_Cmd_BacklightToggle:
 		change_displayparam(sc, WSDISPLAYIO_PARAM_BACKLIGHT,
-				    ksym == KS_Cmd_BacklightOff ? -1 : 1,
-				    ksym == KS_Cmd_BacklightToggle ? 1 : 0);
+		    ksym == KS_Cmd_BacklightOff ? -1 : 1,
+		    ksym == KS_Cmd_BacklightToggle ? 1 : 0);
 		return (1);
 	case KS_Cmd_BrightnessUp:
 	case KS_Cmd_BrightnessDown:
 	case KS_Cmd_BrightnessRotate:
 		change_displayparam(sc, WSDISPLAYIO_PARAM_BRIGHTNESS,
-				    ksym == KS_Cmd_BrightnessDown ? -1 : 1,
-				    ksym == KS_Cmd_BrightnessRotate ? 1 : 0);
+		    ksym == KS_Cmd_BrightnessDown ? -1 : 1,
+		    ksym == KS_Cmd_BrightnessRotate ? 1 : 0);
 		return (1);
 	case KS_Cmd_ContrastUp:
 	case KS_Cmd_ContrastDown:
 	case KS_Cmd_ContrastRotate:
 		change_displayparam(sc, WSDISPLAYIO_PARAM_CONTRAST,
-				    ksym == KS_Cmd_ContrastDown ? -1 : 1,
-				    ksym == KS_Cmd_ContrastRotate ? 1 : 0);
+		    ksym == KS_Cmd_ContrastDown ? -1 : 1,
+		    ksym == KS_Cmd_ContrastRotate ? 1 : 0);
 		return (1);
 #endif
 	}
@@ -1464,10 +1465,7 @@ internal_command(sc, type, ksym, ksym2)
 }
 
 int
-wskbd_translate(id, type, value)
-	struct wskbd_internal *id;
-	u_int type;
-	int value;
+wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 {
 	struct wskbd_softc *sc = id->t_sc;
 	keysym_t ksym, res, *group;
@@ -1475,11 +1473,11 @@ wskbd_translate(id, type, value)
 	int gindex, iscommand = 0;
 
 	if (type == WSCONS_EVENT_ALL_KEYS_UP) {
-		id->t_modifiers &= ~(MOD_SHIFT_L | MOD_SHIFT_R
-				| MOD_CONTROL_L | MOD_CONTROL_R
-				| MOD_META_L | MOD_META_R
-				| MOD_MODESHIFT | MOD_MODELOCK
-				| MOD_COMMAND | MOD_COMMAND1 | MOD_COMMAND2);
+		id->t_modifiers &= ~(MOD_SHIFT_L | MOD_SHIFT_R |
+		    MOD_CONTROL_L | MOD_CONTROL_R |
+		    MOD_META_L | MOD_META_R |
+		    MOD_MODESHIFT | MOD_MODELOCK |
+		    MOD_COMMAND | MOD_COMMAND1 | MOD_COMMAND2);
 		update_leds(id);
 		return (0);
 	}
@@ -1501,7 +1499,7 @@ wskbd_translate(id, type, value)
 	/* if this key has a command, process it first */
 	if (sc != NULL && kp->command != KS_voidSymbol)
 		iscommand = internal_command(sc, &type, kp->command,
-					     kp->group1[0]);
+		    kp->group1[0]);
 
 	/* Now update modifiers */
 	switch (kp->group1[0]) {
@@ -1561,7 +1559,8 @@ wskbd_translate(id, type, value)
 		if (sc != NULL && sc->sc_repeating &&
 		    ((type == WSCONS_EVENT_KEY_UP && value != sc->sc_repkey) ||
 		     (type == WSCONS_EVENT_KEY_DOWN && value == sc->sc_repkey)))
-				return (0);
+			return (0);
+		break;
 #endif
 	}
 
@@ -1678,7 +1677,7 @@ wskbd_translate(id, type, value)
 				id->t_symbols[1] = res;
 				return (2);
 			} else
-			res |= 0x80;
+				res |= 0x80;
 		}
 	}
 

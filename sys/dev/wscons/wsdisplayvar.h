@@ -1,5 +1,5 @@
-/* $OpenBSD: wsdisplayvar.h,v 1.14 2002/07/25 19:03:25 miod Exp $ */
-/* $NetBSD: wsdisplayvar.h,v 1.14.4.1 2000/06/30 16:27:53 simonb Exp $ */
+/* $OpenBSD: wsdisplayvar.h,v 1.15 2005/05/15 11:29:15 miod Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.30 2005/02/04 02:10:49 perry Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -163,6 +163,10 @@ struct wsemuldisplaydev_attach_args {
 #define	WSEMULDISPLAYDEVCF_CONSOLE	0
 #define	wsemuldisplaydevcf_console	cf_loc[WSEMULDISPLAYDEVCF_CONSOLE]	/* spec'd as console? */
 #define	WSEMULDISPLAYDEVCF_CONSOLE_UNK	-1
+#define	WSDISPLAYDEVCF_MUX		0
+#define	wsdisplaydevcf_mux		cf_loc[WSDISPLAYDEVCF_MUX]
+#define	WSEMULDISPLAYDEVCF_MUX		1
+#define	wsemuldisplaydevcf_mux		cf_loc[WSEMULDISPLAYDEVCF_MUX]
 
 struct wscons_syncops {
 	int (*detach)(void *, int, void (*)(void *, int, int), void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.27 2005/05/12 09:26:48 miod Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.28 2005/05/15 11:29:15 miod Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -673,6 +673,7 @@
 #define KB_ENCODING(e)		((e) & 0x0000ff00)
 #define KB_VARIANT(e)		((e) & 0xffff00ff)
 
+#define	KB_NONE			0x0000
 #define KB_USER			0x0100
 #define KB_US			0x0200
 #define KB_DE			0x0300

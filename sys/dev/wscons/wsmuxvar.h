@@ -1,5 +1,5 @@
-/*	$OpenBSD: wsmuxvar.h,v 1.5 2002/03/14 01:27:03 millert Exp $	*/
-/*	$NetBSD: wsmuxvar.h,v 1.1 1999/07/29 18:20:43 augustss Exp $	*/
+/*	$OpenBSD: wsmuxvar.h,v 1.6 2005/05/15 11:29:15 miod Exp $	*/
+/*      $NetBSD: wsmuxvar.h,v 1.10 2005/04/30 03:47:12 augustss Exp $   */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,62 +37,71 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct wsdisplay_softc;
-struct wsplink;
-
-struct wsmux_softc {
-	struct device sc_dv;
-	struct wseventvar sc_events;	/* event queue state */
-	int sc_flags, sc_mode;		/* open flags */
-	struct proc *sc_p;		/* open proc */
-	LIST_HEAD(, wsplink) sc_reals;  /* list of real devices */
-	struct wsmux_softc *sc_mux;     /* if part of another mux */
-	struct device *sc_displaydv;    /* our display if part of one */
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	int sc_rawkbd;		        /* A hack to remember the kbd mode */
+/*
+ * A ws event source, i.e., wskbd, wsmouse, or wsmux.
+ */
+struct wsevsrc {
+	struct device me_dv;
+	const struct wssrcops *me_ops;	/* method pointers */
+	struct wseventvar me_evar;	/* wseventvar opened directly */
+	struct wseventvar *me_evp;	/* our wseventvar when open */
+#if NWSDISPLAY > 0
+	struct device *me_dispdv;	/* our display if part of one */
+#define	sc_displaydv	sc_base.me_dispdv
+#endif
+#if NWSMUX > 0
+	struct wsmux_softc *me_parent;	/* parent mux device */
+	CIRCLEQ_ENTRY(wsevsrc) me_next;	/* sibling pointers */
 #endif
 };
 
-struct wsmuxops {
-	int (*dopen)(dev_t, int, int, struct proc *);
-	int (*dclose)(struct device *, int, int, struct proc *);
-	int (*dioctl)(struct device *, u_long, caddr_t, int, 
-			   struct proc *);
-	int (*ddispioctl)(struct device *, u_long, caddr_t, int, 
-			       struct proc *);
-	int (*dsetdisplay)(struct device *, struct wsmux_softc *);
-	int (*dissetdisplay)(struct device *);
+/*
+ * Methods that can be performed on an events source.  Usually called
+ * from a wsmux.
+ */
+struct wssrcops {
+	int type;			/* device type: WSMUX_{MOUSE,KBD,MUX} */
+	int (*dopen)(struct wsevsrc *, struct wseventvar *);
+	int (*dclose)(struct wsevsrc *);
+	int (*dioctl)(struct device *, u_long, caddr_t, int, struct proc *);
+	int (*ddispioctl)(struct device *, u_long, caddr_t, int, struct proc *);
+	int (*dsetdisplay)(struct device *, struct wsevsrc *);
 };
 
+#define wsevsrc_open(me, evp) \
+	((me)->me_ops->dopen((me), evp))
+#define wsevsrc_close(me) \
+	((me)->me_ops->dclose((me)))
+#define wsevsrc_ioctl(me, cmd, data, flag, p) \
+	((me)->me_ops->dioctl(&(me)->me_dv, cmd, (caddr_t)data, flag, p))
+#define wsevsrc_display_ioctl(me, cmd, data, flag, p) \
+	((me)->me_ops->ddispioctl(&(me)->me_dv, cmd, (caddr_t)data, flag, p))
+#define wsevsrc_set_display(me, arg) \
+	((me)->me_ops->dsetdisplay(&(me)->me_dv, arg))
+
+#if NWSMUX > 0
+struct wsmux_softc {
+	struct wsevsrc sc_base;
+	struct proc *sc_p;		/* open proc */
+	CIRCLEQ_HEAD(, wsevsrc) sc_cld;	/* list of children */
+	u_int32_t sc_kbd_layout;	/* current layout of keyboard */
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int sc_rawkbd;			/* A hack to remember the kbd mode */
+#endif
+};
 
 /*
  * configure defines
  */
-#define	WSKBDDEVCF_MUX_DEFAULT		-1
 #define WSMOUSEDEVCF_MUX		0
-#define WSMOUSEDEVCF_MUX_DEFAULT	-1
 
-struct wsmux_softc *wsmux_create(const char *name, int no);
-int	wsmux_attach_sc(
-	  struct wsmux_softc *,
-	  int, struct device *, struct wseventvar *,
-	  struct wsmux_softc **,
-	  struct wsmuxops *);
-int	wsmux_detach_sc(struct wsmux_softc *, struct device *);
-void	wsmux_attach(
-	  int, int, struct device *, struct wseventvar *,
-	  struct wsmux_softc **,
-	  struct wsmuxops *);
-void	wsmux_detach(int, struct device *);
+struct	wsmux_softc *wsmux_getmux(int);
+struct	wsmux_softc *wsmux_create(const char *, int);
+int	wsmux_attach_sc(struct wsmux_softc *, struct wsevsrc *);
+void	wsmux_detach_sc(struct wsevsrc *);
+int	wsmux_set_display(struct wsmux_softc *, struct device *);
 
-int	wsmux_displayioctl(struct device *dev, u_long cmd,
-	    caddr_t data, int flag, struct proc *p);
-
-int	wsmuxdoioctl(struct device *, u_long, caddr_t,int,struct proc *);
-
-int	wsmux_add_mux(int, struct wsmux_softc *);
-int	wsmux_rem_mux(int, struct wsmux_softc *);
 int	wskbd_add_mux(int, struct wsmux_softc *);
-int	wskbd_rem_mux(int, struct wsmux_softc *);
 int	wsmouse_add_mux(int, struct wsmux_softc *);
-int	wsmouse_rem_mux(int, struct wsmux_softc *);
+
+#endif	/* NWSMUX > 0 */

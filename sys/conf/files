@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.336 2005/05/10 01:16:31 brad Exp $
+#	$OpenBSD: files,v 1.337 2005/05/15 11:29:12 miod Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -73,10 +73,10 @@ define	ax88190		# AX88190-family Ethernet controllers
 
 # a wscons output device; used later, but needs to be near the top for
 # common file (e.g. vga) definitions.
-define	wsdisplaydev {}
-define	wsemuldisplaydev {[console = -1]}
-define	wskbddev {[console = -1], [mux = -1]}
-define	wsmousedev {[mux = -1]}
+define	wsdisplaydev		{[mux = 1]}
+define	wsemuldisplaydev	{[console = -1], [mux = 1]}
+define	wskbddev		{[console = -1], [mux = 1]}
+define	wsmousedev		{[mux = 0]}
 define	wsrasteremulops
 
 # i2c device attributes
