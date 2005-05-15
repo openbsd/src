@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rs.1,v 1.11 2005/05/15 13:19:14 jmc Exp $
+.\"	$OpenBSD: rs.1,v 1.12 2005/05/15 13:21:11 jmc Exp $
 .\"	$FreeBSD: src/usr.bin/rs/rs.1,v 1.4 1999/08/28 01:05:21 peter Exp $
 .\"
 .\" Copyright (c) 1993
@@ -136,6 +136,12 @@ Like
 but maximal strings of
 .Ar x
 are delimiters.
+.It Fl T
+Print the pure transpose of the input, ignoring any
+.Ar rows
+or
+.Ar cols
+specification.
 .It Fl t
 Fill in the rows of the output array using the columns of the
 input array, that is, transpose the input while honoring any
@@ -143,12 +149,6 @@ input array, that is, transpose the input while honoring any
 and
 .Ar cols
 specifications.
-.It Fl T
-Print the pure transpose of the input, ignoring any
-.Ar rows
-or
-.Ar cols
-specification.
 .It Fl w Ns Ar N
 The width of the display, normally 80, is taken to be the positive
 integer
