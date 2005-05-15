@@ -1,4 +1,5 @@
-.\"	$OpenBSD: rs.1,v 1.9 2003/07/14 12:51:48 jmc Exp $
+.\"	$OpenBSD: rs.1,v 1.10 2005/05/15 01:36:13 millert Exp $
+.\"	$FreeBSD: src/usr.bin/rs/rs.1,v 1.4 1999/08/28 01:05:21 peter Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -28,7 +29,6 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)rs.1	8.2 (Berkeley) 12/30/93
-.\" $FreeBSD: src/usr.bin/rs/rs.1,v 1.4 1999/08/28 01:05:21 peter Exp $
 .\"
 .Dd December 30, 1993
 .Dt RS 1
@@ -38,16 +38,9 @@
 .Nd reshape a data array
 .Sh SYNOPSIS
 .Nm rs
-.Oo
-.Sm off
-.Xo Fl Oo Op Cm csCS
-.Op Ar x
-.Op Cm kKgGw
-.Op Ar N
-.Cm tTeEnyjhHmz Oc
-.Xc
-.Oc
-.Sm on
+.Op Fl CcSs Ns Op Ar x
+.Op Fl KkGgw Ar N
+.Op Fl EejHhnnTtyz
 .Op Ar rows Op Ar cols
 .Sh DESCRIPTION
 .Nm
@@ -82,19 +75,6 @@ including transposition of the rows and columns.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl c Ns Ar x
-Input columns are delimited by the single character
-.Ar x .
-A missing
-.Ar x
-is taken to be
-.Ql ^I .
-.It Fl s Ns Ar x
-Like
-.Fl c ,
-but maximal strings of
-.Ar x
-are delimiters.
 .It Fl C Ns Ar x
 Output columns are delimited by the single character
 .Ar x .
@@ -102,10 +82,58 @@ A missing
 .Ar x
 is taken to be
 .Ql ^I .
+.It Fl c Ns Ar x
+Input columns are delimited by the single character
+.Ar x .
+A missing
+.Ar x
+is taken to be
+.Ql ^I .
+.It Fl E
+Consider each character of input as an array entry.
+.It Fl e
+Consider each line of input as an array entry.
+.It Fl G Ns Ar N
+The gutter width has
+.Ar N
+percent of the maximum column width added to it.
+.It Fl g Ns Ar N
+The gutter width (inter-column space), normally 2, is taken to be
+.Ar N .
+.It Fl H
+Like
+.Fl h ,
+but also print the length of each line.
+.It Fl h
+Print the shape of the input array and do nothing else.
+The shape is just the number of lines and the number of
+entries on the first line.
+.It Fl j
+Right adjust entries within columns.
+.It Fl K Ns Ar N
+Like
+.Fl k ,
+but print the ignored lines.
+.It Fl k Ns Ar N
+Ignore the first
+.Ar N
+lines of input.
+.It Fl m
+Do not trim excess delimiters from the ends of the output array.
+.It Fl n
+On lines having fewer entries than the first line,
+use null entries to pad out the line.
+Normally, missing entries are taken from the next line of input.
 .It Fl S Ns Ar x
 Like
 .Fl C ,
 but padded strings of
+.Ar x
+are delimiters.
+.It Fl s Ns Ar x
+Like
+.Fl c ,
+but maximal strings of
 .Ar x
 are delimiters.
 .It Fl t
@@ -121,49 +149,14 @@ Print the pure transpose of the input, ignoring any
 or
 .Ar cols
 specification.
-.It Fl k Ns Ar N
-Ignore the first
-.Ar N
-lines of input.
-.It Fl K Ns Ar N
-Like
-.Fl k ,
-but print the ignored lines.
-.It Fl g Ns Ar N
-The gutter width (inter-column space), normally 2, is taken to be
-.Ar N .
-.It Fl G Ns Ar N
-The gutter width has
-.Ar N
-percent of the maximum column width added to it.
-.It Fl e
-Consider each line of input as an array entry.
-.It Fl E
-Consider each character of input as an array entry.
-.It Fl n
-On lines having fewer entries than the first line,
-use null entries to pad out the line.
-Normally, missing entries are taken from the next line of input.
-.It Fl y
-If there are too few entries to make up the output dimensions,
-pad the output by recycling the input from the beginning.
-Normally, the output is padded with blanks.
-.It Fl h
-Print the shape of the input array and do nothing else.
-The shape is just the number of lines and the number of
-entries on the first line.
-.It Fl H
-Like
-.Fl h ,
-but also print the length of each line.
-.It Fl j
-Right adjust entries within columns.
 .It Fl w Ns Ar N
 The width of the display, normally 80, is taken to be the positive
 integer
 .Ar N .
-.It Fl m
-Do not trim excess delimiters from the ends of the output array.
+.It Fl y
+If there are too few entries to make up the output dimensions,
+pad the output by recycling the input from the beginning.
+Normally, the output is padded with blanks.
 .It Fl z
 Adapt column widths to fit the largest entries appearing in them.
 .El
