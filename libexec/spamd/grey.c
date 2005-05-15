@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.21 2005/03/12 00:02:07 beck Exp $	*/
+/*	$OpenBSD: grey.c,v 1.22 2005/05/15 17:11:14 beck Exp $	*/
 
 /*
  * Copyright (c) 2004,2005 Bob Beck.  All rights reserved.
@@ -362,12 +362,12 @@ greyscan(char *dbname)
 				fprintf(stderr, "whitelisted %s\n", a);
 		}
 	}
+	db->close(db);
+	db = NULL;
 	configure_pf(whitelist, whitecount);
 	if (configure_spamd(traplist, trapcount, trapcfg) == -1)
 		syslog_r(LOG_DEBUG, &sdata, "configure_spamd failed");
 
-	db->close(db);
-	db = NULL;
 	freeaddrlists();
 	free(a);
 	a = NULL;
