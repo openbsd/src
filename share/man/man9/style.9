@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.38 2004/04/10 09:10:16 jmc Exp $
+.\"	$OpenBSD: style.9,v 1.39 2005/05/15 22:38:26 krw Exp $
 .\"
 .Dd June 18, 2001
 .Dt STYLE 9
@@ -516,11 +516,8 @@ is the preferred null pointer constant.
 Use
 .Dv NULL
 instead of
-(type\ *)0 or (type\ *)NULL in contexts where the compiler knows the
-type, e.g., in assignments.
-Use (type\ *)NULL in other contexts, in particular for all function args.
-(Casting is essential for variadic args and is necessary for other args
-if the function prototype might not be in scope.)
+(type\ *)0 or (type\ *)NULL in all cases except for arguments to variadic
+functions where the compiler does not know the type.
 Test pointers
 against
 .Dv NULL ,
