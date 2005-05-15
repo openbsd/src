@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix_mpath.c,v 1.2 2004/06/19 19:55:53 cedric Exp $	*/
+/*	$OpenBSD: radix_mpath.c,v 1.3 2005/05/15 16:40:09 henning Exp $	*/
 /*	$KAME: radix_mpath.c,v 1.13 2002/10/28 21:05:59 itojun Exp $	*/
 
 /*
@@ -52,16 +52,14 @@
 static u_int32_t hashjitter;
 
 int
-rn_mpath_capable(rnh)
-	struct radix_node_head *rnh;
+rn_mpath_capable(struct radix_node_head *rnh)
 {
 
 	return rnh->rnh_multipath;
 }
 
 struct radix_node *
-rn_mpath_next(rn)
-	struct radix_node *rn;
+rn_mpath_next(struct radix_node *rn)
 {
 	struct radix_node *next;
 
@@ -75,8 +73,7 @@ rn_mpath_next(rn)
 }
 
 int
-rn_mpath_count(rn)
-	struct radix_node *rn;
+rn_mpath_count(struct radix_node *rn)
 {
 	int i;
 
@@ -87,9 +84,7 @@ rn_mpath_count(rn)
 }
 
 struct rtentry *
-rt_mpath_matchgate(rt, gate)
-	struct rtentry *rt;
-	struct sockaddr *gate;
+rt_mpath_matchgate(struct rtentry *rt, struct sockaddr *gate)
 {
 	struct radix_node *rn;
 
@@ -116,11 +111,8 @@ rt_mpath_matchgate(rt, gate)
  * check if we have the same key/mask/gateway on the table already.
  */
 int
-rt_mpath_conflict(rnh, rt, netmask, mpathok)
-	struct radix_node_head *rnh;
-	struct rtentry *rt;
-	struct sockaddr *netmask;
-	int mpathok;
+rt_mpath_conflict(struct radix_node_head *rnh, struct rtentry *rt,
+		   struct sockaddr *netmask, int mpathok)
 {
 	struct radix_node *rn, *rn1;
 	struct rtentry *rt1;
@@ -217,9 +209,7 @@ rt_mpath_conflict(rnh, rt, netmask, mpathok)
 }
 
 void
-rtalloc_mpath(ro, hash)
-	struct route *ro;
-	int hash;
+rtalloc_mpath(struct route *ro, int hash)
 {
 	struct radix_node *rn0, *rn;
 	int n;
@@ -261,9 +251,7 @@ rtalloc_mpath(ro, hash)
 }
 
 int
-rn_mpath_inithead(head, off)
-	void **head;
-	int off;
+rn_mpath_inithead(void **head, int off)
 {
 	struct radix_node_head *rnh;
 

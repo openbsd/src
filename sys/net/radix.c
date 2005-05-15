@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.18 2004/04/25 20:02:39 itojun Exp $	*/
+/*	$OpenBSD: radix.c,v 1.19 2005/05/15 16:40:09 henning Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -105,9 +105,7 @@ static struct radix_mask *rn_new_radix_mask(struct radix_node *,
  */
 
 struct radix_node *
-rn_search(v_arg, head)
-	void *v_arg;
-	struct radix_node *head;
+rn_search(void *v_arg, struct radix_node *head)
 {
 	struct radix_node *x;
 	caddr_t v;
@@ -122,9 +120,7 @@ rn_search(v_arg, head)
 }
 
 struct radix_node *
-rn_search_m(v_arg, head, m_arg)
-	struct radix_node *head;
-	void *v_arg, *m_arg;
+rn_search_m(void *v_arg, struct radix_node *head, void *m_arg)
 {
 	struct radix_node *x;
 	caddr_t v = v_arg, m = m_arg;
@@ -140,8 +136,7 @@ rn_search_m(v_arg, head, m_arg)
 }
 
 int
-rn_refines(m_arg, n_arg)
-	void *m_arg, *n_arg;
+rn_refines(void *m_arg, void *n_arg)
 {
 	caddr_t m = m_arg, n = n_arg;
 	caddr_t lim, lim2 = lim = n + *(u_char *)n;
@@ -167,9 +162,7 @@ rn_refines(m_arg, n_arg)
 }
 
 struct radix_node *
-rn_lookup(v_arg, m_arg, head)
-	void *v_arg, *m_arg;
-	struct radix_node_head *head;
+rn_lookup(void *v_arg, void *m_arg, struct radix_node_head *head)
 {
 	struct radix_node *x;
 	caddr_t netmask = 0;
@@ -188,10 +181,7 @@ rn_lookup(v_arg, m_arg, head)
 }
 
 static int
-rn_satisfies_leaf(trial, leaf, skip)
-	char *trial;
-	struct radix_node *leaf;
-	int skip;
+rn_satisfies_leaf(char *trial, struct radix_node *leaf, int skip)
 {
 	char *cp = trial, *cp2 = leaf->rn_key, *cp3 = leaf->rn_mask;
 	char *cplim;
@@ -209,9 +199,7 @@ rn_satisfies_leaf(trial, leaf, skip)
 }
 
 struct radix_node *
-rn_match(v_arg, head)
-	void *v_arg;
-	struct radix_node_head *head;
+rn_match(void *v_arg, struct radix_node_head *head)
 {
 	caddr_t v = v_arg;
 	struct radix_node *t = head->rnh_treetop, *x;
@@ -318,10 +306,7 @@ int	rn_debug =  1;
 #endif
 
 struct radix_node *
-rn_newpair(v, b, nodes)
-	void *v;
-	int b;
-	struct radix_node nodes[2];
+rn_newpair(void *v, int b, struct radix_node nodes[2])
 {
 	struct radix_node *tt = nodes, *t = tt + 1;
 	t->rn_b = b;
@@ -343,11 +328,8 @@ rn_newpair(v, b, nodes)
 }
 
 struct radix_node *
-rn_insert(v_arg, head, dupentry, nodes)
-	void *v_arg;
-	struct radix_node_head *head;
-	int *dupentry;
-	struct radix_node nodes[2];
+rn_insert(void *v_arg, struct radix_node_head *head,
+	  int *dupentry, struct radix_node nodes[2])
 {
 	caddr_t v = v_arg;
 	struct radix_node *top = head->rnh_treetop;
@@ -412,9 +394,7 @@ on1:
 }
 
 struct radix_node *
-rn_addmask(n_arg, search, skip)
-	int search, skip;
-	void *n_arg;
+rn_addmask(void *n_arg, int search, int skip)
 {
 	caddr_t netmask = (caddr_t)n_arg;
 	struct radix_node *x;
@@ -486,8 +466,7 @@ rn_addmask(n_arg, search, skip)
 }
 
 static int	/* XXX: arbitrary ordering for non-contiguous masks */
-rn_lexobetter(m_arg, n_arg)
-	void *m_arg, *n_arg;
+rn_lexobetter(void *m_arg, void *n_arg)
 {
 	u_char *mp = m_arg, *np = n_arg, *lim;
 
@@ -501,9 +480,7 @@ rn_lexobetter(m_arg, n_arg)
 }
 
 static struct radix_mask *
-rn_new_radix_mask(tt, next)
-	struct radix_node *tt;
-	struct radix_mask *next;
+rn_new_radix_mask(struct radix_node *tt, struct radix_mask *next)
 {
 	struct radix_mask *m;
 
@@ -525,10 +502,8 @@ rn_new_radix_mask(tt, next)
 }
 
 struct radix_node *
-rn_addroute(v_arg, n_arg, head, treenodes)
-	void *v_arg, *n_arg;
-	struct radix_node_head *head;
-	struct radix_node treenodes[2];
+rn_addroute(void *v_arg, void *n_arg, struct radix_node_head *head,
+    struct radix_node treenodes[2])
 {
 	caddr_t v = (caddr_t)v_arg, netmask = (caddr_t)n_arg;
 	struct radix_node *t, *x = NULL, *tt;
@@ -703,10 +678,8 @@ on2:
 }
 
 struct radix_node *
-rn_delete(v_arg, netmask_arg, head, rn)
-	void *v_arg, *netmask_arg;
-	struct radix_node_head *head;
-	struct radix_node *rn;
+rn_delete(void *v_arg, void *netmask_arg, struct radix_node_head *head,
+    struct radix_node *rn)
 {
 	struct radix_node *t, *p, *x, *tt;
 	struct radix_mask *m, *saved_m, **mp;
@@ -915,10 +888,8 @@ out:
 }
 
 int
-rn_walktree(h, f, w)
-	struct radix_node_head *h;
-	int (*f)(struct radix_node *, void *);
-	void *w;
+rn_walktree(struct radix_node_head *h, int (*f)(struct radix_node *, void *),
+    void *w)
 {
 	int error;
 	struct radix_node *base, *next;
@@ -954,9 +925,7 @@ rn_walktree(h, f, w)
 }
 
 int
-rn_inithead(head, off)
-	void **head;
-	int off;
+rn_inithead(void **head, int off)
 {
 	struct radix_node_head *rnh;
 
@@ -970,9 +939,7 @@ rn_inithead(head, off)
 }
 
 int
-rn_inithead0(rnh, off)
-	struct radix_node_head *rnh;
-	int off;
+rn_inithead0(struct radix_node_head *rnh, int off)
 {
 	struct radix_node *t, *tt, *ttt;
 

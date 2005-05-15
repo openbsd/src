@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.50 2004/09/16 22:31:30 henning Exp $	*/
+/*	$OpenBSD: route.c,v 1.51 2005/05/15 16:40:09 henning Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -171,8 +171,7 @@ encap_findgwifa(struct sockaddr *gw)
 #endif
 
 void
-rtable_init(table)
-	void **table;
+rtable_init(void **table)
 {
 	struct domain *dom;
 	for (dom = domains; dom != NULL; dom = dom->dom_next)
@@ -191,9 +190,7 @@ route_init()
 }
 
 void
-rtalloc_noclone(ro, howstrict)
-	struct route *ro;
-	int howstrict;
+rtalloc_noclone(struct route *ro, int howstrict)
 {
 	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
 		return;		/* XXX */
@@ -201,9 +198,7 @@ rtalloc_noclone(ro, howstrict)
 }
 
 int
-okaytoclone(flags, howstrict)
-	u_int flags;
-	int howstrict;
+okaytoclone(u_int flags, int howstrict)
 {
 	if (howstrict == ALL_CLONING)
 		return (1);
@@ -213,9 +208,7 @@ okaytoclone(flags, howstrict)
 }
 
 struct rtentry *
-rtalloc2(dst, report,howstrict)
-	struct sockaddr *dst;
-	int report,howstrict;
+rtalloc2(struct sockaddr *dst, int report, int howstrict)
 {
 	struct radix_node_head *rnh = rt_tables[dst->sa_family];
 	struct rtentry *rt;
@@ -258,8 +251,7 @@ miss:		if (report) {
  * Packet routing routines.
  */
 void
-rtalloc(ro)
-	struct route *ro;
+rtalloc(struct route *ro)
 {
 	if (ro->ro_rt && ro->ro_rt->rt_ifp && (ro->ro_rt->rt_flags & RTF_UP))
 		return;				 /* XXX */
@@ -267,9 +259,7 @@ rtalloc(ro)
 }
 
 struct rtentry *
-rtalloc1(dst, report)
-	struct sockaddr *dst;
-	int report;
+rtalloc1(struct sockaddr *dst, int report)
 {
 	struct radix_node_head *rnh = rt_tables[dst->sa_family];
 	struct rtentry *rt;
@@ -325,8 +315,7 @@ rtalloc1(dst, report)
 }
 
 void
-rtfree(rt)
-	struct rtentry *rt;
+rtfree(struct rtentry *rt)
 {
 	struct ifaddr *ifa;
 
@@ -352,8 +341,7 @@ rtfree(rt)
 }
 
 void
-ifafree(ifa)
-	struct ifaddr *ifa;
+ifafree(struct ifaddr *ifa)
 {
 	if (ifa == NULL)
 		panic("ifafree");
@@ -372,10 +360,9 @@ ifafree(ifa)
  * N.B.: must be called at splsoftnet
  */
 void
-rtredirect(dst, gateway, netmask, flags, src, rtp)
-	struct sockaddr *dst, *gateway, *netmask, *src;
-	int flags;
-	struct rtentry **rtp;
+rtredirect(struct sockaddr *dst, struct sockaddr *gateway,
+    struct sockaddr *netmask, int flags, struct sockaddr *src,
+    struct rtentry **rtp)
 {
 	struct rtentry *rt;
 	int error = 0;
@@ -476,8 +463,7 @@ out:
  * Delete a route and generate a message
  */
 int
-rtdeletemsg(rt)
-	struct rtentry *rt;
+rtdeletemsg(struct rtentry *rt)
 {
 	int error;
 	struct rt_addrinfo info;
@@ -505,9 +491,7 @@ rtdeletemsg(rt)
 }
 
 int
-rtflushclone1(rn, arg)
-	struct radix_node *rn;
-	void *arg;
+rtflushclone1(struct radix_node *rn, void *arg)
 {
 	struct rtentry *rt, *parent;
 
@@ -519,9 +503,7 @@ rtflushclone1(rn, arg)
 }
 
 void
-rtflushclone(rnh, parent)
-	struct radix_node_head *rnh;
-	struct rtentry *parent;
+rtflushclone(struct radix_node_head *rnh, struct rtentry *parent)
 {
 
 #ifdef DIAGNOSTIC
@@ -537,18 +519,13 @@ rtflushclone(rnh, parent)
 * Routing table ioctl interface.
 */
 int
-rtioctl(req, data, p)
-	u_long req;
-	caddr_t data;
-	struct proc *p;
+rtioctl(u_long req, caddr_t data, struct proc *p)
 {
 	return (EOPNOTSUPP);
 }
 
 struct ifaddr *
-ifa_ifwithroute(flags, dst, gateway)
-	int flags;
-	struct sockaddr	*dst, *gateway;
+ifa_ifwithroute(int flags, struct sockaddr *dst, struct sockaddr *gateway)
 {
 	struct ifaddr *ifa;
 
@@ -610,10 +587,8 @@ ifa_ifwithroute(flags, dst, gateway)
 #define ROUNDUP(a) (a>0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 
 int
-rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
-	int req, flags;
-	struct sockaddr *dst, *gateway, *netmask;
-	struct rtentry **ret_nrt;
+rtrequest(int req, struct sockaddr *dst, struct sockaddr *gateway,
+    struct sockaddr *netmask, int flags, struct rtentry **ret_nrt)
 {
 	struct rt_addrinfo info;
 
@@ -637,8 +612,7 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 #define flags	info->rti_flags
 
 int
-rt_getifa(info)
-	struct rt_addrinfo *info;
+rt_getifa(struct rt_addrinfo *info)
 {
 	struct ifaddr *ifa;
 	int error = 0;
@@ -674,10 +648,7 @@ rt_getifa(info)
 }
 
 int
-rtrequest1(req, info, ret_nrt)
-	int req;
-	struct rt_addrinfo *info;
-	struct rtentry **ret_nrt;
+rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 {
 	int s = splsoftnet(); int error = 0;
 	struct rtentry *rt, *crt;
@@ -848,9 +819,7 @@ bad:
 #undef flags
 
 int
-rt_setgate(rt0, dst, gate)
-	struct rtentry *rt0;
-	struct sockaddr *dst, *gate;
+rt_setgate(struct rtentry *rt0, struct sockaddr *dst, struct sockaddr *gate)
 {
 	caddr_t new, old;
 	int dlen = ROUNDUP(dst->sa_len), glen = ROUNDUP(gate->sa_len);
@@ -896,8 +865,8 @@ rt_setgate(rt0, dst, gate)
 }
 
 void
-rt_maskedcopy(src, dst, netmask)
-	struct sockaddr *src, *dst, *netmask;
+rt_maskedcopy(struct sockaddr *src, struct sockaddr *dst,
+	       struct sockaddr *netmask)
 {
 	u_char *cp1 = (u_char *)src;
 	u_char *cp2 = (u_char *)dst;
@@ -920,9 +889,7 @@ rt_maskedcopy(src, dst, netmask)
  * for an interface.
  */
 int
-rtinit(ifa, cmd, flags)
-	struct ifaddr *ifa;
-	int cmd, flags;
+rtinit(struct ifaddr *ifa, int cmd, int flags)
 {
 	struct rtentry *rt;
 	struct sockaddr *dst;
@@ -1020,7 +987,7 @@ static int rt_init_done = 0;
  * that this is run when the first queue is added...
  */
 
-void	 
+void
 rt_timer_init()
 {
 	static struct timeout rt_timer_timeout;
@@ -1037,8 +1004,7 @@ rt_timer_init()
 }
 
 struct rttimer_queue *
-rt_timer_queue_create(timeout)
-	u_int	timeout;
+rt_timer_queue_create(u_int timeout)
 {
 	struct rttimer_queue *rtq;
 
@@ -1059,18 +1025,14 @@ rt_timer_queue_create(timeout)
 }
 
 void
-rt_timer_queue_change(rtq, timeout)
-	struct rttimer_queue *rtq;
-	long timeout;
+rt_timer_queue_change(struct rttimer_queue *rtq, long timeout)
 {
 
 	rtq->rtq_timeout = timeout;
 }
 
 void
-rt_timer_queue_destroy(rtq, destroy)
-	struct rttimer_queue *rtq;
-	int destroy;
+rt_timer_queue_destroy(struct rttimer_queue *rtq, int destroy)
 {
 	struct rttimer *r;
 
@@ -1094,16 +1056,14 @@ rt_timer_queue_destroy(rtq, destroy)
 }
 
 unsigned long
-rt_timer_count(rtq)
-	struct rttimer_queue *rtq;
+rt_timer_count(struct rttimer_queue *rtq)
 {
 
 	return (rtq->rtq_count);
 }
 
 void     
-rt_timer_remove_all(rt)
-	struct rtentry *rt;
+rt_timer_remove_all(struct rtentry *rt)
 {
 	struct rttimer *r;
 
@@ -1119,10 +1079,8 @@ rt_timer_remove_all(rt)
 }
 
 int      
-rt_timer_add(rt, func, queue)
-	struct rtentry *rt;
-	void(*func)(struct rtentry *, struct rttimer *);
-	struct rttimer_queue *queue;
+rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *,
+	     struct rttimer *), struct rttimer_queue *queue)
 {
 	struct rttimer *r;
 	long current_time;
@@ -1165,8 +1123,7 @@ rt_timer_add(rt, func, queue)
 
 /* ARGSUSED */
 void
-rt_timer_timer(arg)
-	void *arg;
+rt_timer_timer(void *arg)
 {
 	struct timeout *to = (struct timeout *)arg;
 	struct rttimer_queue *rtq;
