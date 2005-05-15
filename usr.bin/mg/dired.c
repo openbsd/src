@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.17 2005/04/28 07:14:09 otto Exp $	*/
+/*	$OpenBSD: dired.c,v 1.18 2005/05/15 21:19:08 cloder Exp $	*/
 
 /* dired module for mg 2a	 */
 /* by Robert A. Larson		 */
@@ -295,7 +295,7 @@ d_copy(int f, int n)
 {
 	char	frname[NFILEN], toname[NFILEN], *bufp;
 	int	stat;
-	int	off;
+	size_t	off;
 	BUFFER *bp;
 
 	if (d_makename(curwp->w_dotp, frname, sizeof(frname)) != FALSE) {
@@ -304,7 +304,7 @@ d_copy(int f, int n)
 	}
 	off = strlcpy(toname, curbp->b_fname, sizeof(toname));
 	if (off >= sizeof(toname) - 1) {	/* can't happen, really */
-		ewprintf("too long directory name");
+		ewprintf("Directory name too long");
 		return (FALSE);
 	}
 	if ((bufp = eread("Copy %s to: ", toname + off, sizeof(toname) - off,
@@ -324,7 +324,8 @@ int
 d_rename(int f, int n)
 {
 	char	frname[NFILEN], toname[NFILEN], *bufp;
-	int	stat, off;
+	int	stat;
+	size_t	off;
 	BUFFER *bp;
 
 	if (d_makename(curwp->w_dotp, frname, sizeof(frname)) != FALSE) {
@@ -333,7 +334,7 @@ d_rename(int f, int n)
 	}
 	off = strlcpy(toname, curbp->b_fname, sizeof(toname));
 	if (off >= sizeof(toname) - 1) {	/* can't happen, really */
-		ewprintf("too long directory name");
+		ewprintf("Directory name too long");
 		return (FALSE);
 	}
 	if ((bufp = eread("Rename %s to: ", toname + off,
@@ -453,7 +454,7 @@ int
 d_create_directory(int f, int n)
 {
 	char	 tocreate[MAXPATHLEN], *bufp;
-	ssize_t  off;
+	size_t  off;
 	BUFFER	*bp;
 
 	off = strlcpy(tocreate, curbp->b_fname, sizeof(tocreate));

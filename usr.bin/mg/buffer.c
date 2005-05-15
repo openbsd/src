@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.37 2005/04/03 02:09:28 db Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.38 2005/05/15 21:19:08 cloder Exp $	*/
 
 /*
  *		Buffer handling.
@@ -581,9 +581,9 @@ bufferinsert(int f, int n)
 	/* Get buffer to use from user */
 	if (curbp->b_altb != NULL)
 		bufp = eread("Insert buffer: (default %s) ", bufn, NBUFN,
-		    EFNEW | EFBUF, &(curbp->b_altb->b_bname), NULL);
+		    EFNEW | EFBUF, curbp->b_altb->b_bname);
 	else
-		bufp = eread("Insert buffer: ", bufn, NBUFN, EFNEW | EFBUF, NULL);
+		bufp = eread("Insert buffer: ", bufn, NBUFN, EFNEW | EFBUF);
 	if (bufp == NULL)
 		return (ABORT);
 	if (bufp[0] == '\0' && curbp->b_altb != NULL)
