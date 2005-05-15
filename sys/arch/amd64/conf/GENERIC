@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.65 2005/05/13 03:41:18 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.66 2005/05/15 17:04:00 martin Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -249,8 +249,7 @@ scsibus* at atapiscsi?
 fxp*	at pci?				# EtherExpress 10/100B ethernet
 #fxp*	at cardbus?			# Intel PRO/100 ethernet
 #ne*	at pci?				# NE2000-compat ethernet
-#ep0	at pci?				# 3C59x ethernet
-#ep*	at pci?				# 3C59x ethernet
+ep*	at pci?				# 3C59x ethernet
 #ne*	at pcmcia?			# PCMCIA based NE2000 ethernet
 #ep*	at pcmcia?			# PCMCIA based 3C5xx ethernet
 #sm*	at pcmcia?			# PCMCIA based sm ethernet

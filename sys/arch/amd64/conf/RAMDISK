@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.20 2005/05/10 01:16:31 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.21 2005/05/15 17:04:00 martin Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -188,8 +188,7 @@ scsibus* at atapiscsi?
 #de*	at pci?			# DC21X4X-based ethernet
 fxp*	at pci?			# EtherExpress 10/100B ethernet
 #fxp*	at cardbus?		# Intel PRO/100 ethernet
-#ep0	at pci?			# 3C59x ethernet
-#ep*	at pci?			# 3C59x ethernet
+ep*	at pci?			# 3C59x ethernet
 #ne*	at pci?			# NE2000-compat ethernet
 #ne*	at pcmcia?		# PCMCIA based NE2000 ethernet
 #ep*	at pcmcia?		# PCMCIA based 3C5xx ethernet
