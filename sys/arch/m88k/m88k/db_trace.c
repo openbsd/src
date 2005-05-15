@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.4 2005/04/30 16:44:08 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.5 2005/05/15 14:16:41 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -95,7 +95,7 @@ static inline unsigned br_dest(unsigned addr, union instruction inst)
 }
 
 
-#define TRACE_DEBUG	/* undefine to disable debugging */
+/* #define TRACE_DEBUG */
 
 int frame_is_sane(db_regs_t *regs, int);
 char *m88k_exception_name(unsigned vector);
@@ -1026,8 +1026,6 @@ db_stack_trace_print(db_expr_t addr,
 		case 'd':
 #ifdef TRACE_DEBUG
 			trace_flags |= TRACE_DEBUG_FLAG;
-#else
-			db_printtf("<debug trace not compiled in, ignoring>\n");
 #endif
 			break;
 
