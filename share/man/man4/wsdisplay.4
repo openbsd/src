@@ -1,6 +1,7 @@
-.\" $OpenBSD: wsdisplay.4,v 1.32 2005/05/14 16:36:07 miod Exp $
+.\" $OpenBSD: wsdisplay.4,v 1.33 2005/05/15 19:36:21 miod Exp $
 .\" $NetBSD: wsdisplay.4,v 1.5 2000/05/13 15:22:19 mycroft Exp $
 .\"
+.\" Copyright (c) 2005, Miodrag Vallat.
 .\" Copyright (c) 1999 Matthias Drochner.
 .\" Copyright (c) 2002 Ben Harris.
 .\" All rights reserved.
@@ -455,15 +456,98 @@ For possible arguments, see
 .\" WSDISPLAYIO_LSFONT
 .\" WSDISPLAYIO_DELFONT
 .\" WSDISPLAYIO_USEFONT
-.\" WSDISPLAYIO_SBURNER
-.\" WSDISPLAYIO_GBURNER
+.It Dv WSDISPLAYIO_GBURNER Pq Li struct wsdisplay_burner
+Retrieves the state of the screen burner.
+The returned structure is as follows:
+.Bd -literal -offset indent
+struct wsdisplay_burner {
+        u_int   off;
+        u_int   on;
+        u_int   flags;
+};
+.Ed
+.Pp
+The
+.Va off
+member contains the inactivity time before the screen is turned off,
+in milliseconds.
+The
+.Va on
+member contains the activity time before the screen is turned on,
+in milliseconds.
+The
+.Va flags
+member contains a logical OR of the following flags:
+.Bl -tag -width 4n
+.It Dv WSDISPLAY_BURN_VBLANK
+When turning the display off, disable the vertical synchronization signal.
+.It Dv WSDISPLAY_BURN_KBD
+Monitor keyboard activiy.
+.It Dv WSDISPLAY_BURN_MOUSE
+Monitor mouse activity
+(this only works for mice using the
+.Xr wsmouse 4
+driver).
+.It Dv WSDISPLAY_BURN_OUTPUT
+Monitor display output activity.
+.El
+.Pp
+If none of the activity source flags are set, the screen burner is disabled.
+.It Dv WSDISPLAYIO_SBURNER Pq Li struct wsdisplay_burner
+Sets the state of the screen burner.
+The argument structure, and its semantics, are the same as for
+.Dv WSDISPLAYIO_GBURNER .
 .\" WSDISPLAYIO_ADDSCREEN
 .\" WSDISPLAYIO_DELSCREEN
 .\" WSDISPLAYIO_GETSCREEN
 .\" WSDISPLAYIO_SETSCREEN
-.\" WSDISPLAYIO_WSMOUSED
-.\" WSDISPLAYIO_GETPARAM
-.\" WSDISPLAYIO_SETPARAM
+.It Dv WSDISPLAYIO_WSMOUSED Pq Li struct wscons_event
+This call is used by the
+.Xr wsmoused 8
+daemon to inject mouse events gathered from serial mice, as well as
+various control events.
+.It Dv WSDISPLAYIO_GETPARAM Pq Li struct wsdisplay_param
+Retrieves the state of a display parameter.
+This call needs the following structure set up beforehand:
+.Bd -literal -offset indent
+struct wsdisplay_param {
+        int param;
+        int min, max, curval;
+        int reserved[4];
+};
+.Ed
+.Pp
+The
+.Va param
+member should be set with the parameter to be returned.
+The following parameters are supported:
+.Bl -tag -width 4n
+.It Dv WSDISPLAYIO_PARAM_BACKLIGHT
+The intensity of the display backlight (usually on laptop computers).
+.It Dv WSDISPLAYIO_PARAM_BRIGHTNESS
+The brightness level.
+.It Dv WSDISPLAYIO_PARAM_CONTRAST
+The contrast level.
+.El
+.Pp
+On return,
+.Va min
+and
+.Va max
+specify the allowed range for the value, while
+.Va curval
+specifies the current setting.
+Not all parameters are supported by all display drivers.
+.It Dv WSDISPLAYIO_SETPARAM Pq Li struct wsdisplay_param
+Sets a display parameter.
+The argument structure is the same as for
+.Dv WSDISPLAYIO_GETPARAM ,
+with the
+.Va param
+and
+.Va curval
+members filled in.
+Not all parameters are supported by all display drivers.
 .It Dv WSDISPLAYIO_LINEBYTES Pq Li u_int
 Get the number of bytes per row when the device is in
 .Dv WSDISPLAYIO_MODE_DUMBFB
