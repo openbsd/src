@@ -214,7 +214,6 @@
 ./usr/include/i386/signal.h
 ./usr/include/i386/specialreg.h
 ./usr/include/i386/spinlock.h
-./usr/include/i386/spkr.h
 ./usr/include/i386/stdarg.h
 ./usr/include/i386/svr4_machdep.h
 ./usr/include/i386/sysarch.h
