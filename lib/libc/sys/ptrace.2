@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ptrace.2,v 1.17 2005/05/16 14:02:47 miod Exp $
+.\"	$OpenBSD: ptrace.2,v 1.18 2005/05/16 17:47:56 miod Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
@@ -394,7 +394,7 @@ pointed to by
 .Fa addr .
 .El
 .Pp
-Finally, the following request is available on sparc:
+Finally, the following request is available on sparc and sparc64:
 .Bl -tag -width 12n
 .It Dv PT_WCOOKIE
 This request reads the traced process'
