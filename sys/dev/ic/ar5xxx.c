@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.c,v 1.22 2005/05/08 18:13:17 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.c,v 1.23 2005/05/16 04:54:31 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -1717,10 +1717,8 @@ ar5k_ar5112_rfregs(hal, channel, mode)
 		return (AH_FALSE);
 
 	/* Write RF values */
-	for (i = 0; i < rf_size; i++) {
+	for (i = 0; i < rf_size; i++)
 		AR5K_REG_WRITE(ar5112_rf[i].rf_register, rf[i]);
-		AR5K_DELAY(1);
-	}
 
 	return (AH_TRUE);
 }
