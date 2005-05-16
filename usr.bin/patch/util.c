@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.29 2004/11/19 20:00:57 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.30 2005/05/16 15:22:46 espie Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: util.c,v 1.29 2004/11/19 20:00:57 otto Exp $";
+static const char rcsid[] = "$OpenBSD: util.c,v 1.30 2005/05/16 15:22:46 espie Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -48,7 +48,6 @@ static const char rcsid[] = "$OpenBSD: util.c,v 1.29 2004/11/19 20:00:57 otto Ex
 #include "util.h"
 #include "backupfile.h"
 #include "pathnames.h"
-
 
 /* Rename a file, copying it if necessary. */
 
@@ -308,6 +307,7 @@ void
 makedirs(const char *filename, bool striplast)
 {
 	char	*tmpbuf;
+	mode_t mode, dir_mode;
 
 	if ((tmpbuf = strdup(filename)) == NULL)
 		fatal("out of memory\n");
@@ -318,12 +318,11 @@ makedirs(const char *filename, bool striplast)
 			return;	/* nothing to be done */
 		*s = '\0';
 	}
-	if (snprintf(buf, sizeof(buf), "%s -p %s", _PATH_MKDIR, tmpbuf)
-	    >= sizeof(buf))
-		fatal("buffer too small to hold %.20s...\n", tmpbuf);
-
-	if (system(buf))
-		pfatal("%.40s failed", buf);
+	mode = 0777 & ~umask(0);
+	dir_mode = mode | S_IWUSR | S_IXUSR;
+	if (mkpath(tmpbuf, mode, dir_mode) != 0)
+		pfatal("creation of %s failed", tmpbuf);
+	free(tmpbuf);
 }
 
 /*
