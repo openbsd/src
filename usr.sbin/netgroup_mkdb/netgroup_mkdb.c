@@ -1,4 +1,4 @@
-/*	$OpenBSD: netgroup_mkdb.c,v 1.11 2003/06/26 21:36:39 deraadt Exp $	*/
+/*	$OpenBSD: netgroup_mkdb.c,v 1.12 2005/05/16 03:12:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 #ifndef lint
-static char *rcsid = "$OpenBSD: netgroup_mkdb.c,v 1.11 2003/06/26 21:36:39 deraadt Exp $";
+static char *rcsid = "$OpenBSD: netgroup_mkdb.c,v 1.12 2005/05/16 03:12:59 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -98,10 +98,9 @@ static char    *dbname = _PATH_NETGROUP_DB;
 int
 main(int argc, char *argv[])
 {
+	char		  buf[MAXPATHLEN], *fname = _PATH_NETGROUP;
 	DB		 *db, *ndb, *hdb, *udb;
 	int               ch;
-	char		  buf[MAXPATHLEN];
-	char		 *fname = _PATH_NETGROUP;
 
 
 	while ((ch = getopt(argc, argv, "do:")) != -1)
@@ -161,7 +160,7 @@ main(int argc, char *argv[])
 	(void) snprintf(buf, sizeof(buf), "%s.tmp", dbname);
 
 	db = dbopen(buf, O_RDWR | O_CREAT | O_EXCL,
-		    (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH), DB_HASH, NULL);
+	    (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH), DB_HASH, NULL);
 	if (!db)
 		err(1, "%s", buf);
 
@@ -201,10 +200,9 @@ ng_load(const char *fname)
 {
 	FILE           *fp;
 	DB             *db;
-	char           *buf;
+	char           *buf, *p, *name;
 	size_t          size;
 	struct nentry  *tail, *head, *e;
-	char           *p, *name;
 	struct netgroup *ng;
 	DBT             data, key;
 
@@ -241,7 +239,7 @@ ng_load(const char *fname)
 
 				case 1:
 					warnx("Duplicate entry netgroup `%s'",
-					      head->n_name);
+					    head->n_name);
 					break;
 
 				case -1:
@@ -273,8 +271,7 @@ ng_load(const char *fname)
 					char fmt[BUFSIZ];
 					_ng_print(fmt, sizeof(fmt), ng);
 					errx(1, "no netgroup key for %s", fmt);
-				}
-				else {
+				} else {
 					e = NEW(struct nentry);
 					e->n_type = _NG_GROUP;
 					e->n_group = ng;
@@ -373,7 +370,7 @@ ng_reventry(DB *db, DB *udb, struct nentry *fe, char *name, size_t s,
 		case _NG_GROUP:
 			ng = e->n_group;
 			p = _ng_makekey(*((char **)(((char *) ng) + s)),
-					ng->ng_domain, e->n_size);
+			    ng->ng_domain, e->n_size);
 			xdb = ng_insert(udb, p);
 			key.data = (u_char *) name;
 			key.size = strlen(name) + 1;
@@ -434,8 +431,9 @@ ng_reverse(DB *db, size_t s)
 	struct stringlist *sl;
 	DBT             key, data;
 	struct nentry  *fe;
-	DB             *udb = dbopen(NULL, O_RDWR | O_CREAT | O_EXCL, 0,
-				     DB_HASH, NULL);
+	DB             *udb;
+
+	udb = dbopen(NULL, O_RDWR | O_CREAT | O_EXCL, 0, DB_HASH, NULL);
 
 	if (udb == NULL)
 		err(1, "dbopen");
@@ -482,9 +480,9 @@ ng_print(struct nentry *e, struct string *str)
 
 		case _NG_GROUP:
 			(void) snprintf(ptr, e->n_size, "(%s,%s,%s)",
-					NG_EMPTY(e->n_group->ng_host),
-					NG_EMPTY(e->n_group->ng_user),
-					NG_EMPTY(e->n_group->ng_domain));
+			    NG_EMPTY(e->n_group->ng_host),
+			    NG_EMPTY(e->n_group->ng_user),
+			    NG_EMPTY(e->n_group->ng_domain));
 			break;
 
 		default:
@@ -543,7 +541,7 @@ ng_dump(DB *db)
 
 			ng_print(e, &buf);
 			(void) fprintf(stderr, "%s\t%s\n", e->n_name,
-				       buf.s_str ? buf.s_str : "");
+			    buf.s_str ? buf.s_str : "");
 			str_free(&buf);
 			break;
 
@@ -575,8 +573,7 @@ ng_rdump(DB *db)
 			str_init(&buf);
 			ng_rprint(xdb, &buf);
 			(void) fprintf(stderr, "%s\t%s\n",
-				       (char *) key.data,
-				       buf.s_str ? buf.s_str : "");
+			    (char *) key.data, buf.s_str ? buf.s_str : "");
 			str_free(&buf);
 			break;
 
@@ -705,6 +702,7 @@ static void
 usage(void)
 {
 	extern const char *__progname;
+
 	fprintf(stderr, "usage: %s [-o db] file\n", __progname);
 	exit(1);
 }

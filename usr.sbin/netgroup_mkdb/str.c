@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: str.c,v 1.2 2004/08/01 18:32:20 deraadt Exp $";
+static char *rcsid = "$Id: str.c,v 1.3 2005/05/16 03:12:59 deraadt Exp $";
 #endif
 
 /*
@@ -64,8 +64,8 @@ str_append(struct string *buf, const char *str, int del)
 	if (buf->s_str == NULL)
 		buf->s_str = emalloc(len);
 	else {
-		buf->s_str = erealloc(buf->s_str, buf->s_len + len +
-						  (del ? 2 : 1));
+		buf->s_str = erealloc(buf->s_str, buf->s_len +
+		    len + (del ? 2 : 1));
 		if (del)
 			buf->s_str[buf->s_len++] = del;
 	}

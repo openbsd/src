@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: util.c,v 1.3 2004/08/01 18:32:20 deraadt Exp $";
+static char *rcsid = "$Id: util.c,v 1.4 2005/05/16 03:12:59 deraadt Exp $";
 #endif
 
 #include <err.h>
@@ -45,11 +45,10 @@ static char *rcsid = "$Id: util.c,v 1.3 2004/08/01 18:32:20 deraadt Exp $";
 void *
 emalloc(size_t s)
 {
-    void *ptr = malloc(s);
-    if (ptr == NULL)
-	/* Crappy gcc warning! */
-	err(1, "%s", "");
-    return ptr;
+	void *ptr = malloc(s);
+	if (ptr == NULL)
+		err(1, "%s", "");
+	return ptr;
 }
 
 
@@ -59,11 +58,10 @@ emalloc(size_t s)
 void *
 erealloc(void *p, size_t s)
 {
-    void *ptr = realloc(p, s);
-    if (ptr == NULL)
-	/* Crappy gcc warning! */
-	err(1, "%s", "");
-    return ptr;
+	void *ptr = realloc(p, s);
+	if (ptr == NULL)
+		err(1, "%s", "");
+	return ptr;
 }
 
 
@@ -74,26 +72,25 @@ erealloc(void *p, size_t s)
 char *
 getline(FILE *fp, size_t *size)
 {
-    size_t s, len = 0;
-    char *buf = NULL;
-    char *ptr;
-    int cnt = 1;
+	size_t s, len = 0;
+	char *buf = NULL, *ptr;
+	int cnt = 1;
 
-    while (cnt) {
-	if ((ptr = fgetln(fp, &s)) == NULL) {
-	    *size = len;
-	    return buf;
+	while (cnt) {
+		if ((ptr = fgetln(fp, &s)) == NULL) {
+			*size = len;
+			return buf;
+		}
+		if (ptr[s - 1] == '\n')		/* the newline may be missing at EOF */
+			s--;				/* forget newline */
+		if (s && (cnt = (ptr[s - 1] == '\\')))	/* check for \\ */
+			s--;				/* forget \\ */
+
+		buf = erealloc(buf, len + s + 1);
+		memcpy(buf + len, ptr, s);
+		len += s;
+		buf[len] = '\0';
 	}
-	if (ptr[s - 1] == '\n')		/* the newline may be missing at EOF */
-	    s--;			/* forget newline */
-	if (s && (cnt = (ptr[s - 1] == '\\')))	/* check for \\ */
-	    s--;			/* forget \\ */
-
-	buf = erealloc(buf, len + s + 1);
-	memcpy(buf + len, ptr, s);
-	len += s;
-	buf[len] = '\0';
-    }
-    *size = len;
-    return buf;
+	*size = len;
+	return buf;
 }
