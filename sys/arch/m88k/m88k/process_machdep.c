@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.1 2004/04/29 14:33:27 miod Exp $ */
+/*	$OpenBSD: process_machdep.c,v 1.2 2005/05/16 11:47:16 miod Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -81,23 +81,6 @@ process_read_regs(p, regs)
 	return (0);
 }
 
-int
-process_read_fpregs(p, regs)
-	struct proc     *p;
-	struct fpreg    *regs;
-{
-#if 0
-	extern struct fpstate   initfpstate;
-	struct fpstate          *statep = &initfpstate;
-
-	/* NOTE: struct fpreg == struct fpstate */
-	if (p->p_md.md_fpstate)
-		statep = p->p_md.md_fpstate;
-	bcopy(statep, regs, sizeof(struct fpreg));
-#endif
-	return 0;
-}
-
 #ifdef PTRACE
 
 int
@@ -130,20 +113,6 @@ process_set_pc(p, addr)
 	regs->sxip = (u_int)addr;
 	regs->snip = (u_int)addr + 4;
 	return (0);
-}
-
-int
-process_write_fpregs(p, regs)
-	struct proc     *p;
-	struct fpreg    *regs;
-{
-#if 0
-	if (p->p_md.md_fpstate == NULL)
-		return EINVAL;
-
-	bcopy(regs, p->p_md.md_fpstate, sizeof(struct fpreg));
-#endif
-	return 0;
 }
 
 #endif	/* PTRACE */

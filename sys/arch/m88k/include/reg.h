@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg.h,v 1.1 2004/04/26 12:34:05 miod Exp $ */
+/*	$OpenBSD: reg.h,v 1.2 2005/05/16 11:47:14 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -35,8 +35,8 @@
 #define _M88K_REG_H_
 
 struct reg {
-	unsigned int	r[32];  /* 0 - 31 */
-	unsigned int	epsr;   /* 32 */
+	unsigned int	r[32];
+	unsigned int	epsr;
 	unsigned int	fpsr;
 	unsigned int	fpcr;
 	unsigned int	sxip;
@@ -73,18 +73,6 @@ struct reg {
 	unsigned int	fprh;
 	unsigned int	fprl;
 	unsigned int	fpit;
-};
-
-struct fpreg {
-	unsigned int	fp_fpecr;
-	unsigned int	fp_fphs1;
-	unsigned int	fp_fpls1;
-	unsigned int	fp_fphs2;
-	unsigned int	fp_fpls2;
-	unsigned int	fp_fppt;
-	unsigned int	fp_fprh;
-	unsigned int	fp_fprl;
-	unsigned int	fp_fpit;
 };
 
 #endif /* _M88K_REG_H_ */
