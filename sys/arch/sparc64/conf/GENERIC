@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.125 2005/05/01 07:54:43 david Exp $
+#	$OpenBSD: GENERIC,v 1.126 2005/05/16 16:56:44 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -51,6 +51,7 @@ gem*	at pci?
 fxp*	at pci?				# EtherExpress 10/100B ethernet
 xl*	at pci?				# 3C9xx ethernet
 dc*	at pci?				# 21143, "tulip" clone ethernet
+epic*	at pci?				# SMC EPIC/100 ethernet
 em*	at pci?				# Intel Pro/1000 ethernet
 rl*	at pci?				# RealTek 81[23]9 ethernet
 vr*	at pci?				# VIA Rhine ethernet
