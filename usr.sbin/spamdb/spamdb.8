@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamdb.8,v 1.6 2005/03/12 23:31:04 jmc Exp $
+.\"	$OpenBSD: spamdb.8,v 1.7 2005/05/16 17:31:17 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -36,15 +36,52 @@ greylisting.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl a Ar key
-Add or update an entry for "key".
-Updates time last seen to now.
+Add or update an entry for
+.Ar key .
+This can be used to whitelist an IP address
+(i.e. circumvent the greylisting process altogether)
+by adding it to the spamd database as a WHITE entry.
+If the
+.Ar key
+specified matches an entry already in the spamd database,
+.Nm
+updates the entry's time last seen to now.
 .It Fl d Ar key
-Delete an entry for "key".
+Delete an entry for
+.Ar key .
 .It Fl T
 Add or delete the key as a SPAMTRAP entry.
+See the
+.Sx GREYTRAPPING
+section of
+.Xr spamd 8
+for more information.
+Must be used in conjunction with the
+.Fl a
+or
+.Fl d
+option.
 .It Fl t
 Add or delete the key as a TRAPPED entry.
+See the
+.Sx GREYTRAPPING
+section of
+.Xr spamd 8
+for more information.
+Must be used in conjunction with the
+.Fl a
+or
+.Fl d
+option.
 .El
+.Pp
+If adding/deleting a SPAMTRAP address
+.Pq Fl T ,
+.Ar key
+should be specified as an email address.
+Otherwise
+.Ar key
+should be a numerical IP address.
 .Ss DATABASE OUTPUT FORMAT
 If invoked without any arguments,
 .Nm
@@ -60,6 +97,7 @@ will be SPAMTRAP and
 will be the email address for which any connections received by
 .Xr spamd 8
 will be blacklisted if mail is sent to this address.
+.Pp
 For TRAPPED entries the format is:
 .Pp
 .Dl type|ip|expire
@@ -71,6 +109,7 @@ will be TRAPPED,
 will be the IP address blacklisted due to hitting a spamtrap, and
 .Em expire
 will be when the IP is due to be removed from the blacklist.
+.Pp
 For GREY or WHITE entries, the format is:
 .Pp
 .Dl type|source ip|from|to|first|pass|expire|block|pass
@@ -118,6 +157,9 @@ to the real MTA by
 .Pp
 Note that times are in seconds since the Epoch, in the manner returned by
 .Xr time 3 .
+Times may be converted to human readable format using:
+.Pp
+.Dl $ date -r <value>
 .Sh FILES
 /var/db/spamd
 .Sh SEE ALSO
