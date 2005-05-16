@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.18 2005/01/16 20:47:44 brad Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.19 2005/05/16 01:36:25 brad Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ struct cfattach dc_cardbus_ca = {
 	    dc_cardbus_detach
 };
 
-struct dc_type dc_cardbus_devs[] = {
+const struct cardbus_matchid dc_cardbus_devices[] = {
 	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142 },
 	{ PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3_21143 },
 	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985 },
@@ -71,7 +71,6 @@ struct dc_type dc_cardbus_devs[] = {
 	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCM200 },
 	{ PCI_VENDOR_HAWKING, PCI_PRODUCT_HAWKING_PN672TX },
 	{ PCI_VENDOR_MICROSOFT, PCI_PRODUCT_MICROSOFT_MN120 },
-	{ 0 }
 };
 
 int
@@ -79,16 +78,9 @@ dc_cardbus_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cardbus_attach_args *ca = aux;
-	struct dc_type *t;
-
-	for (t = dc_cardbus_devs; t->dc_vid != 0; t++) {
-		if ((PCI_VENDOR(ca->ca_id) == t->dc_vid) &&
-		    (PCI_PRODUCT(ca->ca_id) == t->dc_did))
-			return (1);
-	}
-
-	return (0);
+	return (cardbus_matchbyid((struct cardbus_attach_args *)aux,
+	    dc_cardbus_devices,
+	    sizeof(dc_cardbus_devices)/sizeof(dc_cardbus_devices[0])));
 }
 
 void

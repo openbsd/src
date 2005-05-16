@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atw_cardbus.c,v 1.7 2004/10/07 21:16:59 brad Exp $	*/
+/*	$OpenBSD: if_atw_cardbus.c,v 1.8 2005/05/16 01:36:25 brad Exp $	*/
 /*	$NetBSD: if_atw_cardbus.c,v 1.9 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -132,47 +132,17 @@ int	atw_cardbus_enable(struct atw_softc *);
 void	atw_cardbus_disable(struct atw_softc *);
 void	atw_cardbus_power(struct atw_softc *, int);
 
-const struct atw_cardbus_product *atw_cardbus_lookup
-   (const struct cardbus_attach_args *);
-
-const struct atw_cardbus_product {
-	u_int32_t	 acp_vendor;	/* PCI vendor ID */
-	u_int32_t	 acp_product;	/* PCI product ID */
-	const char	*acp_product_name;
-} atw_cardbus_products[] = {
-	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_ADM8211,
-	  "ADMtek ADM8211 802.11 MAC/BBP" },
-
-	{ PCI_VENDOR_3COM,		PCI_PRODUCT_3COM_3CRSHPW796,
-	  "3Com 3CRSHPW796 802.11b" },
-
-	{ 0,				0,	NULL },
+const struct cardbus_matchid atw_cardbus_devices[] = {
+	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM8211 },
+	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRSHPW796 },
 };
-
-const struct atw_cardbus_product *
-atw_cardbus_lookup(const struct cardbus_attach_args *ca)
-{
-	const struct atw_cardbus_product *acp;
-
-	for (acp = atw_cardbus_products;
-	     acp->acp_product_name != NULL;
-	     acp++) {
-		if (PCI_VENDOR(ca->ca_id) == acp->acp_vendor &&
-		    PCI_PRODUCT(ca->ca_id) == acp->acp_product)
-			return (acp);
-	}
-	return (NULL);
-}
 
 int
 atw_cardbus_match(struct device *parent, void *match, void *aux)
 {
-	struct cardbus_attach_args *ca = aux;
-
-	if (atw_cardbus_lookup(ca) != NULL)
-		return (1);
-
-	return (0);
+	return (cardbus_matchbyid((struct cardbus_attach_args *)aux,
+	    atw_cardbus_devices,
+	    sizeof(atw_cardbus_devices)/sizeof(atw_cardbus_devices[0])));
 }
 
 void
@@ -182,18 +152,11 @@ atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	struct atw_softc *sc = &csc->sc_atw;
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
-	const struct atw_cardbus_product *acp;
 	bus_addr_t adr;
 
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
-
-	acp = atw_cardbus_lookup(ca);
-	if (acp == NULL) {
-		printf("\n");
-		panic("atw_cardbus_attach: impossible");
-	}
 
 	/*
 	 * Power management hooks.
@@ -259,7 +222,7 @@ atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	/* Remember which interrupt line. */
 	csc->sc_intrline = ca->ca_intrline;
 
-	printf(": %s, revision %d.%d: irq %d\n", acp->acp_product_name,
+	printf(": revision %d.%d: irq %d\n",
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf, csc->sc_intrline);
 #if 0
 	/*

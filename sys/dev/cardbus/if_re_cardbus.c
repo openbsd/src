@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_cardbus.c,v 1.1 2005/01/14 02:52:06 pvalchev Exp $	*/
+/*	$OpenBSD: if_re_cardbus.c,v 1.2 2005/05/16 01:36:25 brad Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -87,6 +87,10 @@ struct cfattach re_cardbus_ca = {
 	re_cardbus_detach
 };
 
+const struct cardbus_matchid re_cardbus_devices[] = {
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169 },
+};
+
 /*
  * Probe for a RealTek 8169/8110 chip. Check the PCI vendor and device
  * IDs against our list and return a device name if we find a match.
@@ -94,13 +98,9 @@ struct cfattach re_cardbus_ca = {
 int
 re_cardbus_probe(struct device *parent, void *match, void *aux)
 {
-	struct cardbus_attach_args *ca = aux;
-
-	if (CARDBUS_VENDOR(ca->ca_id) == PCI_VENDOR_REALTEK &&
-	    CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_REALTEK_RT8169)
-		return 1;
-
-	return 0;
+	return (cardbus_matchbyid((struct cardbus_attach_args *)aux,
+	    re_cardbus_devices,
+	    sizeof(re_cardbus_devices)/sizeof(re_cardbus_devices[0])));
 }
 
 /*

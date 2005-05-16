@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_cardbus.c,v 1.4 2005/02/22 10:40:46 damien Exp $  */
+/*	$OpenBSD: if_ral_cardbus.c,v 1.5 2005/05/16 01:36:25 brad Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -76,6 +76,10 @@ struct cfattach ral_cardbus_ca = {
 	ral_cardbus_attach, ral_cardbus_detach
 };
 
+const struct cardbus_matchid ral_cardbus_devices[] = {
+	{ PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2560 },
+};
+
 int	ral_cardbus_enable(struct ral_softc *);
 void	ral_cardbus_disable(struct ral_softc *);
 void	ral_cardbus_power(struct ral_softc *, int);
@@ -84,13 +88,9 @@ void	ral_cardbus_setup(struct ral_cardbus_softc *);
 int
 ral_cardbus_match(struct device *parent, void *match, void *aux)
 {
-	struct cardbus_attach_args *ca = aux;
-
-	if (CARDBUS_VENDOR(ca->ca_id) == PCI_VENDOR_RALINK &&
-	    CARDBUS_PRODUCT(ca->ca_id) == PCI_PRODUCT_RALINK_RT2560)
-		return 1;
-
-	return 0;
+	return (cardbus_matchbyid((struct cardbus_attach_args *)aux,
+	    ral_cardbus_devices,
+	    sizeof(ral_cardbus_devices)/sizeof(ral_cardbus_devices[0])));
 }
 
 void

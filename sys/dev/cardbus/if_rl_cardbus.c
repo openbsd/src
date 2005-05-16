@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.8 2004/10/07 21:16:59 brad Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.9 2005/05/16 01:36:25 brad Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -93,7 +93,7 @@
 /*
  * Various supported device vendors/types and their names.
  */
-static const struct rl_type rl_cardbus_devs[] = {
+const struct cardbus_matchid rl_cardbus_devices[] = {
 	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_5030	},
 	{ PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_TE100	},
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8138 },
@@ -103,7 +103,6 @@ static const struct rl_type rl_cardbus_devs[] = {
 	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE690TXD },
 	{ PCI_VENDOR_PLANEX, PCI_PRODUCT_PLANEX_FNW_3603_TX },
 	{ PCI_VENDOR_PLANEX, PCI_PRODUCT_PLANEX_FNW_3800_TX },
-	{ 0, 0 }
 };
 
 struct rl_cardbus_softc {
@@ -131,35 +130,15 @@ struct cfattach rl_cardbus_ca = {
 	    rl_cardbus_detach
 };
 
-const struct rl_type *rl_cardbus_lookup (const struct cardbus_attach_args *);
-
-const struct rl_type *
-rl_cardbus_lookup(ca)
-	const struct cardbus_attach_args *ca;
-{
-	const struct rl_type *t;
-
-	for (t = rl_cardbus_devs; t->rl_vid != 0; t++){ 	
-		if (CARDBUS_VENDOR(ca->ca_id) == t->rl_vid &&
-		    CARDBUS_PRODUCT(ca->ca_id) == t->rl_did) {
-			return (t);
-		}
-	}
-	return (NULL);
-}
-
 int
 rl_cardbus_match(parent, match, aux)
 	struct device *parent;
 	void *match;
 	void *aux;
 {
-	struct cardbus_attach_args *ca = aux;
-
-	if (rl_cardbus_lookup(ca) != NULL)
-		return (1);
-
-	return (0);
+	return (cardbus_matchbyid((struct cardbus_attach_args *)aux,
+	    rl_cardbus_devices,
+	    sizeof(rl_cardbus_devices)/sizeof(rl_cardbus_devices[0])));
 }
 
 
@@ -176,7 +155,6 @@ rl_cardbus_attach(parent, self, aux)
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;                            
 	cardbus_devfunc_t ct = ca->ca_ct;
-	const struct rl_type *t;
 	bus_addr_t adr;
 
 	sc->sc_dmat = ca->ca_dmat;
@@ -184,12 +162,6 @@ rl_cardbus_attach(parent, self, aux)
 	csc->sc_tag = ca->ca_tag;
 	csc->sc_intrline = ca->ca_intrline;
 
-	t = rl_cardbus_lookup(ca); 
-	if (t == NULL) { 
-		printf("\n"); 
-		panic("rl_cardbus_attach: impossible");
-	 } 
-	
 	/*
 	 * Map control/status registers.
 	 */
