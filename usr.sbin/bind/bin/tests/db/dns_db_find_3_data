@@ -1,9 +1,0 @@
-#
-# test data for dns_db_find DNS_R_DELAGATION
-#
-# format:
-#	dbfile dbtype dborigin dbclass dbcache findname findtype findopts findtime expected_results
-#
-dns_db_find_3.data	rbt	vix.com.	in	zone	a.b.c.vix.com.	NS	DNS_DB_GLUEOK	0	DNS_R_DELEGATION
-dns_db_find_3.data	rbt	vix.com.	in	zone	a.a.b.c.vix.com.	NS	DNS_DB_GLUEOK	0	DNS_R_DELEGATION
-dns_db_find_3.data	rbt	vix.com.	in	zone	a.a.b.c.vix.com.	A	DNS_DB_GLUEOK	0	DNS_R_DELEGATION

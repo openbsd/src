@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.9 2004/09/28 17:14:01 jakob Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.10 2005/05/16 06:32:31 jakob Exp $
 
 .include <bsd.own.mk>
 
@@ -99,9 +99,6 @@ lint:
 
 tags:
 	# Nothing here so far...
-
-test:
-	${MAKE} test
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

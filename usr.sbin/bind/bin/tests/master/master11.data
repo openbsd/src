@@ -1,6 +1,0 @@
-;
-;	The following serial number contains a leading 0 and a 9 so the
-;	we can catch cases where it is incorrectly treated as a octal
-;	number.
-;
-@	300	IN	SOA ns hostmaster 00090000 1200 3600 604800 300

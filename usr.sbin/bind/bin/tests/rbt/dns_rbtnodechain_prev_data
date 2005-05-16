@@ -1,6 +1,0 @@
-#
-# test data for dns_rbtnodechain_prev
-#
-# format is: <dbfile> <startname> <expected_name> <expected_origin>
-#
-dns_rbtnodechain_prev.data	a.b.vix.com.	b	vix.com.

@@ -1,7 +1,0 @@
-#
-# test data for dns_db_iszone test 1
-#
-# format:
-# filename db_type origin class
-#
-dns_db_iszone_1.data	rbt	.	in

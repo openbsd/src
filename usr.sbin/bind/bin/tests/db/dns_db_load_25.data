@@ -1,6 +1,0 @@
-$TTL 5
-@ 	IN	SOA	ns1 hostmaster 1 3600 1200 3600000 3600
-@	IN	NS	ns1
-ns1	IN	A	10.0.0.1
-sub 	IN	SOA	ns2 hostmaster 1 3600 1200 3600000 3600
-ns2	IN	A	10.0.0.2

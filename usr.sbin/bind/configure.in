@@ -18,7 +18,7 @@ AC_DIVERT_PUSH(1)dnl
 esyscmd([sed "s/^/# /" COPYRIGHT])dnl
 AC_DIVERT_POP()dnl
 
-AC_REVISION($Revision: 1.10 $)
+AC_REVISION($Revision: 1.11 $)
 
 AC_INIT(lib/dns/name.c)
 AC_PREREQ(2.13)
@@ -2183,9 +2183,6 @@ AC_OUTPUT(
 	lib/lwres/unix/Makefile
 	lib/lwres/unix/include/Makefile
 	lib/lwres/unix/include/lwres/Makefile
-	lib/tests/Makefile
-	lib/tests/include/Makefile
-	lib/tests/include/tests/Makefile
 	bin/Makefile
 	bin/check/Makefile
 	bin/named/Makefile
@@ -2194,22 +2191,6 @@ AC_OUTPUT(
 	bin/rndc/unix/Makefile
 	bin/dig/Makefile
 	bin/nsupdate/Makefile
-	bin/tests/Makefile
-	bin/tests/names/Makefile
-	bin/tests/master/Makefile
-	bin/tests/rbt/Makefile
-	bin/tests/db/Makefile
-	bin/tests/tasks/Makefile
-	bin/tests/timers/Makefile
-	bin/tests/dst/Makefile
-	bin/tests/mem/Makefile
-	bin/tests/net/Makefile
-	bin/tests/sockaddr/Makefile
-	bin/tests/system/Makefile
-	bin/tests/system/conf.sh
-	bin/tests/system/lwresd/Makefile
-	bin/tests/system/tkey/Makefile
-	bin/tests/headerdep_test.sh
 	bin/dnssec/Makefile
 	doc/Makefile
 	doc/arm/Makefile

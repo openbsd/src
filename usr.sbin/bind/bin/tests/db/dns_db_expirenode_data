@@ -1,7 +1,0 @@
-#
-# test data for dns_db_expirenode
-#
-# format:
-# filename type origin class existing_name existing_type
-#
-dns_db_expirenode.data	rbt	vix.com.	in	a.vix.com.	10000	0	ISC_R_NOTFOUND

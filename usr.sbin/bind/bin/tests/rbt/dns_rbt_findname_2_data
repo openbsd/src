@@ -1,6 +1,0 @@
-#
-# test data for dns_rbt_findname assertion 2
-#
-# format is: <dbfile> <command> <testname> <exp_result>
-#
-dns_rbt.data	search	not.used.here	ISC_R_NOTFOUND

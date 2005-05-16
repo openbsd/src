@@ -1,7 +1,0 @@
-Private-key-format: v1.2
-Algorithm: 3 (DSA)
-Prime(p): vGT/gqZmLH7tGboofcPSfyhh1hpwdxZgJ26d/gynWMGVSYzaXfzsxpPoNeYn+qeevQoJOaxXXlfcy8Ik52RmeQ==
-Subprime(q): t6JgYVduKXo+AeeSblkTrvKARUM=
-Base(g): bQn2ZaV/2GwPtKEiGHX7SRFgYI4JpTbnAh7dItWQ3ceCqIIENicFjS6cySpFp2JSegRrdNy9z2QnH2v2AOy1HQ==
-Private_value(x): J1Ctez8+w1PTR56Hze3pGoe0Wag=
-Public_value(y): gPQObAYRSyP10NIFYhxy1aUOMYc/q0y2/8awaAG+bECU98VI4YXTaPR7i+pMHS3Urv/zwpdUJ2PTaWD1VUilKA==

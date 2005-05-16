@@ -1,7 +1,0 @@
-#
-# test data for dns_db_load_soa_not_top
-#
-# format:
-# filename type origin cache class findname expected_result
-#
-dns_db_load_25.data	rbt	.	zone	in	DNS_R_NOTZONETOP	a.	A	DNS_R_DELEGATION

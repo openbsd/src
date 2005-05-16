@@ -1,6 +1,0 @@
-#
-# test data for dns_rbt_delete assertion 1
-#
-# format is: <dbfile> <command> <testname> <exp_result>
-#
-dns_rbt.data	delete	a.vix.com	ISC_R_SUCCESS

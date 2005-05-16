@@ -1,6 +1,0 @@
-#
-# test data for dns_rbt_addname assertion 2
-#
-# format is: <dbfile> <command> <testname> <exp_result>
-#
-dns_rbt.data	add	a.vix.com	ISC_R_EXISTS

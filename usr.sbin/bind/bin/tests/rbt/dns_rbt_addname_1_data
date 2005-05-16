@@ -1,6 +1,0 @@
-#
-# test data for dns_rbt_addname assertion 1
-#
-# format is: <dbfile> <command> <testname> <exp_result>
-#
-dns_rbt.data	add	new.name	ISC_R_SUCCESS

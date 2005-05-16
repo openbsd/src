@@ -1,6 +1,0 @@
-#
-# test data for dns_rbt_delete assertion 2
-#
-# format is: <dbfile> <command> <testname> <exp_result>
-#
-dns_rbt.data	delete	new.name	ISC_R_NOTFOUND

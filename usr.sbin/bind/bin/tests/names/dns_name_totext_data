@@ -1,9 +1,0 @@
-#
-# test data for dns_name_totext
-# format:
-#	<name1> <tab> <omit_final_dot>
-#
-a.b.c.d	1
-a.\\[\[.c.d	1
-a.b.C.d	0
-a.b.	0

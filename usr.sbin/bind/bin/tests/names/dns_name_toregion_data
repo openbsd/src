@@ -1,8 +1,0 @@
-#
-# test data for dns_name_toregion
-# format:
-#	<test_name>
-#
-a.b.c.d.
-a.b.c.d.[A].[aaa.
-Ba\x\aa.b.c\[\[o\\.Z

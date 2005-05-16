@@ -1,8 +1,0 @@
-#
-# test data for dns_db_find DNS_R_CNAME
-#
-# format:
-#	dbfile dbtype dborigin dbclass dbcache findname findtype findopts findtime expected_results
-#
-dns_db_find_6.data	rbt	vix.com.	in	zone	exploder.vix.com.	A	0	0	DNS_R_CNAME
-dns_db_find_6.data	rbt	vix.com.	in	zone	exploder.vix.com.	ANY	0	0	ISC_R_SUCCESS

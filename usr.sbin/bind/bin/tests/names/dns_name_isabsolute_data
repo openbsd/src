@@ -1,8 +1,0 @@
-#
-# test data for dns_name_isabsolute
-# format is:
-#	<testname> <tab> <expected value>
-#
-x.	1
-a.b.c.d	0
-x.z.	1

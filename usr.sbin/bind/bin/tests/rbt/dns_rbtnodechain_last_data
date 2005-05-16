@@ -1,7 +1,0 @@
-#
-# test data for dns_rbtnodechain_last
-#
-# format is: <dbfile> <last> <lastorigin> <prev> <prevorigin>
-#
-dns_rbtnodechain_last_1.data	isc.org	.	iengines.net	.
-dns_rbtnodechain_last_2.data	isc.org	.	b	c.vix.com.

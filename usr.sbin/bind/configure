@@ -27602,7 +27602,7 @@ LIBBIND9_API=$srcdir/lib/bind9/api
 
 LIBLWRES_API=$srcdir/lib/lwres/api
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              ac_config_files="$ac_config_files make/rules make/includes Makefile make/Makefile make/mkdep lib/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/nls/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile lib/tests/Makefile lib/tests/include/Makefile lib/tests/include/tests/Makefile bin/Makefile bin/check/Makefile bin/named/Makefile bin/named/unix/Makefile bin/rndc/Makefile bin/rndc/unix/Makefile bin/dig/Makefile bin/nsupdate/Makefile bin/tests/Makefile bin/tests/names/Makefile bin/tests/master/Makefile bin/tests/rbt/Makefile bin/tests/db/Makefile bin/tests/tasks/Makefile bin/tests/timers/Makefile bin/tests/dst/Makefile bin/tests/mem/Makefile bin/tests/net/Makefile bin/tests/sockaddr/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/lwresd/Makefile bin/tests/system/tkey/Makefile bin/tests/headerdep_test.sh bin/dnssec/Makefile doc/Makefile doc/arm/Makefile doc/arm/nominum-docbook-html.dsl doc/arm/nominum-docbook-print.dsl doc/arm/validate.sh doc/misc/Makefile docutil/docbook2man-wrapper.sh isc-config.sh"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              ac_config_files="$ac_config_files make/rules make/includes Makefile make/Makefile make/mkdep lib/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isc/nls/Makefile lib/isc/$thread_dir/Makefile lib/isc/$thread_dir/include/Makefile lib/isc/$thread_dir/include/isc/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/lwres/Makefile lib/lwres/include/Makefile lib/lwres/include/lwres/Makefile lib/lwres/include/lwres/netdb.h lib/lwres/include/lwres/platform.h lib/lwres/man/Makefile lib/lwres/unix/Makefile lib/lwres/unix/include/Makefile lib/lwres/unix/include/lwres/Makefile bin/Makefile bin/check/Makefile bin/named/Makefile bin/named/unix/Makefile bin/rndc/Makefile bin/rndc/unix/Makefile bin/dig/Makefile bin/nsupdate/Makefile bin/dnssec/Makefile doc/Makefile doc/arm/Makefile doc/arm/nominum-docbook-html.dsl doc/arm/nominum-docbook-print.dsl doc/arm/validate.sh doc/misc/Makefile docutil/docbook2man-wrapper.sh isc-config.sh"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -28167,9 +28167,6 @@ do
   "lib/lwres/unix/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/lwres/unix/Makefile" ;;
   "lib/lwres/unix/include/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/lwres/unix/include/Makefile" ;;
   "lib/lwres/unix/include/lwres/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/lwres/unix/include/lwres/Makefile" ;;
-  "lib/tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/tests/Makefile" ;;
-  "lib/tests/include/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/tests/include/Makefile" ;;
-  "lib/tests/include/tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/tests/include/tests/Makefile" ;;
   "bin/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/Makefile" ;;
   "bin/check/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/check/Makefile" ;;
   "bin/named/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/named/Makefile" ;;
@@ -28178,22 +28175,6 @@ do
   "bin/rndc/unix/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/rndc/unix/Makefile" ;;
   "bin/dig/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/dig/Makefile" ;;
   "bin/nsupdate/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/nsupdate/Makefile" ;;
-  "bin/tests/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/tests/Makefile" ;;
-  "bin/tests/names/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/tests/names/Makefile" ;;
-  "bin/tests/master/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/tests/master/Makefile" ;;
-  "bin/tests/rbt/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/tests/rbt/Makefile" ;;
-  "bin/tests/db/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/tests/db/Makefile" ;;
-  "bin/tests/tasks/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/tests/tasks/Makefile" ;;
-  "bin/tests/timers/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/tests/timers/Makefile" ;;
-  "bin/tests/dst/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/tests/dst/Makefile" ;;
-  "bin/tests/mem/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/tests/mem/Makefile" ;;
-  "bin/tests/net/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/tests/net/Makefile" ;;
-  "bin/tests/sockaddr/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/tests/sockaddr/Makefile" ;;
-  "bin/tests/system/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/tests/system/Makefile" ;;
-  "bin/tests/system/conf.sh" ) CONFIG_FILES="$CONFIG_FILES bin/tests/system/conf.sh" ;;
-  "bin/tests/system/lwresd/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/tests/system/lwresd/Makefile" ;;
-  "bin/tests/system/tkey/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/tests/system/tkey/Makefile" ;;
-  "bin/tests/headerdep_test.sh" ) CONFIG_FILES="$CONFIG_FILES bin/tests/headerdep_test.sh" ;;
   "bin/dnssec/Makefile" ) CONFIG_FILES="$CONFIG_FILES bin/dnssec/Makefile" ;;
   "doc/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
   "doc/arm/Makefile" ) CONFIG_FILES="$CONFIG_FILES doc/arm/Makefile" ;;

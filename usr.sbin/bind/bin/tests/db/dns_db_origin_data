@@ -1,8 +1,0 @@
-#
-# test data for dns_db_origin
-#
-# format:
-#	filename origin
-#
-dns_db_origin_1.data	.
-dns_db_origin_1.data	vix.com.

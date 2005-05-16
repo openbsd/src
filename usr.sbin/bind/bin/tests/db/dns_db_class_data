@@ -1,9 +1,0 @@
-#
-# test data for dns_db_class
-#
-# format:
-# filename class
-#
-#
-dns_db_class_1.data	in
-#	dns_db_class_1.data	any

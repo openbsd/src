@@ -1,7 +1,0 @@
-#
-# test data for dns_db_iscache test 1
-#
-# format:
-# filename db_type origin class
-#
-dns_db_iscache_1.data	rbt	.	in

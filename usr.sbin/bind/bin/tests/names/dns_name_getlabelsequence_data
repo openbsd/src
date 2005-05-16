@@ -1,9 +1,0 @@
-#
-# test data for dns_name_getlabelsequence
-# format:
-#	<name1> <tab> <label1_start> <tab> <name2> <tab> <label2_start> <tab> <extent>
-#
-#
-c.d	1	a.b.c.d	3	1
-a.b.c.d.e	2	c.d	0	2
-a.b.c	0	a.b.c	0	3

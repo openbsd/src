@@ -1,9 +1,0 @@
-#
-# test data for dns_name_fromtext
-# format:
-#	<name1> <tab> <name2> <tab> <origin> <tab> <downcase>
-#
-a.b	a.b.c.d	C.d	1
-a.b	a.b.c.d	C.d	1
-a.b	a.b.C.d	C.d	0
-a.b.	a.b.	C.d	0
