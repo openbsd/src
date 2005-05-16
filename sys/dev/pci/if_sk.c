@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.65 2005/05/11 02:27:23 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.66 2005/05/16 13:47:02 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1324,7 +1324,7 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		sk_init_yukon(sc_if);
 		break;
 	default:
-		printf("%s: unknown device type %d", sc->sk_dev.dv_xname,
+		printf("%s: unknown device type %d\n", sc->sk_dev.dv_xname,
 		      sc->sk_type);
 		goto fail;
 	}
