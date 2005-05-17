@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.2 2005/05/12 23:41:14 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.3 2005/05/17 08:16:03 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -38,6 +38,9 @@
 #include "log.h"
 #include "proto.h"
 
+#define UPDCMD_FLAGS	"-n -q -d"
+
+extern char *__progname;
 
 static int cvs_release_options(char *, int, char **, int *);
 static int cvs_release_sendflags(struct cvsroot *);
@@ -49,7 +52,7 @@ struct cvs_cmd_info cvs_release = {
 	cvs_release_sendflags,
 	cvs_release_dir,
 	NULL, NULL,
-	CF_KNOWN | CF_NOFILES,
+	CF_IGNORE | CF_KNOWN | CF_NOFILES | CF_RECURSE,
 	CVS_REQ_RELEASE,
 	CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2 | CVS_CMD_ALLOWSPEC
 };
@@ -124,8 +127,10 @@ cvs_release_yesno(void)
 static int
 cvs_release_dir(CVSFILE *cdir, void *arg)
 {
+	FILE *fp;
 	int j, l;
-	char cdpath[MAXPATHLEN], dpath[MAXPATHLEN];
+	char buf[256], cdpath[MAXPATHLEN], dpath[MAXPATHLEN];
+	char updcmd[MAXPATHLEN];	/* XXX find a better size; malloc()?? */
 	struct stat st;
 	struct cvsroot *root;
 
@@ -155,11 +160,37 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 		}
 
 		if (root->cr_method != CVS_METHOD_LOCAL) {
+			/* change dir before running the `cvs update' command */
+			if (chdir(dpath) == -1)
+				return (-1);
 
-			/* XXX run cvs_update() w/out updating files */
+			/* construct `cvs update' command */
+			l = snprintf(updcmd, sizeof(updcmd), "%s %s %s update",
+			    __progname, UPDCMD_FLAGS, root->cr_str);
+			if (l == -1 || l >= (int)sizeof(updcmd))
+				return (-1);
 
-			printf("You have [%d] altered files in "
-			    "this repository.\n", j);
+			/* XXX we should try to avoid a new connection ... */
+			if ((fp = popen(updcmd, "r")) == NULL) {
+				cvs_log(LP_ERROR, "cannot run command `%s'",
+				    updcmd);
+				return (-1);
+			}
+
+			while (fgets(buf, sizeof(buf), fp) != NULL) {
+				if (strchr("ACMPRU", buf[0]))
+					j++;
+				(void)fputs(buf, stdout);
+			}
+
+			if (pclose(fp) != 0) {
+				cvs_log(LP_ERROR, "unable to release `%s'",
+				    dpath);
+				return (-1);
+			}
+
+			printf("You have [%d] altered file%s in this "
+			    "repository.\n", j, j > 1 ? "s" : "");
 			printf("Are you sure you want to release "
 			    "%sdirectory `%s': ",
 			    dflag ? "(and delete) " : "", dpath);
