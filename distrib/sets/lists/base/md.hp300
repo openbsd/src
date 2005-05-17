@@ -1,3 +1,4 @@
+./sbin/kbd
 ./sbin/ldconfig
 ./sbin/wsconsctl
 ./usr/bin/ldd
