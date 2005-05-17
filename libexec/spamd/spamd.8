@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.54 2005/04/14 16:07:52 beck Exp $
+.\"	$OpenBSD: spamd.8,v 1.55 2005/05/17 08:16:51 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -149,17 +149,22 @@ takes neither of these actions: it rejects the mail back to the senders'
 queue.
 .Pp
 .Nm
-is best started from
-.Xr rc 8
-in conjunction with the
-.Xr spamd-setup 8
-which processes a list of spammers' addresses, and applies appropriate
-.Xr pfctl 8
+can be enabled in
+.Xr rc.conf.local 8 .
+It should be used in conjunction with
+.Xr spamd-setup 8 ,
+which reads
+.Xr spamd.conf 5 ,
+processes a list of spammers' addresses, and applies appropriate
+.Xr pf 4
 .Em rdr
 rules.
 .Xr spamd-setup 8
-is run from
+should be run periodically via
 .Xr cron 8 .
+Use
+.Xr crontab 1
+to uncomment the entry in root's crontab.
 .Sh REDIRECTING SMTP CONNECTIONS
 With
 .Xr pf 4 ,
@@ -203,7 +208,9 @@ over a localhost socket, giving
 information about each source of blacklist addresses, as well as custom
 rejection messages for each blacklist source
 that can be used to let any real person whose mail
-is deferred by spamd know why their address has been listed
+is deferred by
+.Nm
+know why their address has been listed
 from sending mail.
 This is important as it allows legitimate mail
 senders to pressure spam sources into behaving properly so that they
@@ -244,7 +251,11 @@ will run in the normal mode for any addresses blacklisted by
 Connections from addresses not blacklisted by
 .Xr spamd-setup 8
 will be considered for greylisting.
-Such connections will not be stuttered at or delayed,
+Such connections will not be stuttered at
+(though see the
+.Fl S
+option above)
+or delayed,
 and will receive the pleasantly innocuous temporary failure of:
 .Bd -literal -offset 4n
 451 Temporary failure, please try again later.
@@ -290,8 +301,8 @@ table <spamd> persist
 table <spamd-white> persist
 rdr pass inet proto tcp from <spamd> to any \e
     port smtp -> 127.0.0.1 port 8025
-rdr pass inet proto tcp from !<spamd-white> to any port smtp \e
-    -> 127.0.0.1 port 8025
+rdr pass inet proto tcp from !<spamd-white> to any \e
+    port smtp -> 127.0.0.1 port 8025
 .Ed
 .Pp
 With this configuration,
@@ -322,7 +333,7 @@ database if delivery has not been retried within
 .Em greyexp
 hours from the initial time a connection is seen.
 The default is 4 hours as this is the most common setting after which
-MTA's will give up attempting to retry delivery of a message.
+MTAs will give up attempting to retry delivery of a message.
 .Pp
 .Nm
 removes whitelist entries from the
@@ -336,12 +347,20 @@ hours from the initial time an address
 is whitelisted.
 The default is 36 days to allow for the delivery of
 monthly mailing list digests without greylist delays every time.
+.Pp
 .Xr spamlogd 8
 should be used to update the whitelist entries in
 .Pa /var/db/spamd
 when connections are seen to pass to the real MTA on the
 .Em smtp
 port.
+.Pp
+.Xr spamdb 8
+can be used to examine and alter the contents of
+.Pa /var/db/spamdb .
+See
+.Xr spamdb 8
+for further information.
 .Sh GREYTRAPPING
 When greylisting with
 .Nm
@@ -368,9 +387,9 @@ database with the following
 .Xr spamdb 8
 command:
 .Pp
-.Dl spamdb -T -a \&"<spamtrap@mydomain.org>\&"
+.Dl # spamdb -T -a \&"<spamtrap@mydomain.org>\&"
 .Pp
-It should be entered exactly as the address will be used in the SMTP dialogue.
+It should be entered exactly, as the address will be used in the SMTP dialogue.
 See
 .Xr spamdb 8
 for further details.
