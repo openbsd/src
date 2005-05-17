@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.66 2005/05/16 13:47:02 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.67 2005/05/17 19:18:18 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1964,11 +1964,8 @@ sk_rxcsum(struct ifnet *ifp, struct mbuf *m, const u_int16_t csum1, const u_int1
 	} else
 		ipd_csum = csum2;
 
-	if (iph_csum != 0xffff) {
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
+	if (iph_csum != 0xffff)
 		return;
-	}
 	m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 
 	if (ip->ip_off & htons(IP_MF | IP_OFFMASK))
