@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.37 2005/05/11 18:48:53 marco Exp $	*/
+/*	$OpenBSD: ami.c,v 1.38 2005/05/17 18:38:52 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -77,9 +77,9 @@
 int ami_debug = 0
 /*	| AMI_D_CMD */
 /*	| AMI_D_INTR */
-/*	| AMI_D_MISC */
+	| AMI_D_MISC
 /*	| AMI_D_DMA */
-	| AMI_D_IOCTL
+/*	| AMI_D_IOCTL */
 	;
 #else
 #define	AMI_DPRINTF(m,a)	/* m, a */
@@ -326,7 +326,7 @@ ami_attach(sc)
 	const char *p;
 	void	*idata;
 	int	error;
-	u_int32_t *pp;
+	/* u_int32_t *pp; */
 
 	if (!(idata = ami_allocmem(sc->dmat, &idatamap, idataseg,
 	    NBPG, 1, "init data"))) {
@@ -484,6 +484,11 @@ ami_attach(sc)
 			sc->sc_maxcmds = inq->ain_maxcmd;
 			p = "target";
 		}
+#if 0
+		/* FIXME need to find a way to detect if fw supports this
+		 * calling it this way crashes fw when io is ran to
+		 * multiple logical disks
+		 */
 
 		/* reset the IO completion values to 0
 		 * the firmware either has at least pp[0] IOs outstanding
@@ -493,29 +498,47 @@ ami_attach(sc)
 		 * to a maximum of 4 outstanding IOs and it hits the 5us timer
 		 * continuously (these are the default values)
 		 * this trick only works with firmwares newer than 5/13/05
+		 * Setting the values outright will hang old firmwares so
+		 * we need to read them first before setting them.
 		 */
 		ccb = ami_get_ccb(sc);
 		ccb->ccb_data = NULL;
 		cmd = ccb->ccb_cmd;
 
 		cmd->acc_cmd = AMI_MISC;
-		cmd->acc_io.aio_channel = AMI_SET_IO_CMPL; /* sub opcode */
+		cmd->acc_io.aio_channel = AMI_GET_IO_CMPL; /* sub opcode */
 		cmd->acc_io.aio_param = 0;
 		cmd->acc_io.aio_data = htole32(pa);
 
-		/* set parameters */
-		pp = idata;
-		pp[0] = 0; /* minimal outstanding commands, 0 disable */
-		pp[1] = 0; /* maximal timeout in us, 0 disable */
 		if (ami_cmd(ccb, 0, 1) != 0) {
-			AMI_DPRINTF(AMI_D_MISC, ("setting io completion values"
+			AMI_DPRINTF(AMI_D_MISC, ("getting io completion values"
 			    " failed\n"));
 		}
 		else {
-			AMI_DPRINTF(AMI_D_MISC, ("setting io completion values"
-			    " succeeded\n"));
-		}
+			ccb = ami_get_ccb(sc);
+			ccb->ccb_data = NULL;
+			cmd = ccb->ccb_cmd;
 
+			cmd->acc_cmd = AMI_MISC;
+			cmd->acc_io.aio_channel = AMI_SET_IO_CMPL;
+			cmd->acc_io.aio_param = 0;
+			cmd->acc_io.aio_data = htole32(pa);
+
+			/* set parameters */
+			pp = idata;
+			pp[0] = 0; /* minimal outstanding commands, 0 disable */
+			pp[1] = 0; /* maximal timeout in us, 0 disable */
+
+			if (ami_cmd(ccb, 0, 1) != 0) {
+				AMI_DPRINTF(AMI_D_MISC, ("setting io completion"
+				    " values failed\n"));
+			}
+			else {
+				AMI_DPRINTF(AMI_D_MISC, ("setting io completion"
+				    " values succeeded\n"));
+			}
+		}
+#endif
 		if (sc->sc_flags & AMI_BROKEN) {
 			sc->sc_link.openings = 1;
 			sc->sc_maxcmds = 1;
