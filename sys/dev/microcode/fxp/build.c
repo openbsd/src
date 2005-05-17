@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.2 2005/04/24 20:41:34 brad Exp $	*/
+/*	$OpenBSD: build.c,v 1.3 2005/05/17 18:48:52 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -21,6 +21,9 @@
 
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <err.h>
+#include <unistd.h>
 
 #include "rcvbundl.h"
 
@@ -37,6 +40,7 @@ const u_int32_t fxp_ucode_d102e[] = D102_E_RCVBUNDLE_UCODE;
 static void
 output(const char *name, const u_int32_t *ucode, const int ucode_len)
 {
+	ssize_t rlen;
 	int fd, i;
 	u_int32_t dword;
 
@@ -47,7 +51,11 @@ output(const char *name, const u_int32_t *ucode, const int ucode_len)
 		err(1, "%s", name);
 	for (i = 0; i < ucode_len / sizeof(u_int32_t); i++) {
 		dword = htole32(ucode[i]);
-		write(fd, &dword, sizeof(dword));
+		rlen = write(fd, &dword, sizeof(dword));
+		if (rlen == -1)
+			err(1, "%s", name);
+		if (rlen != sizeof(dword))
+			errx(1, "%s: short write", name);
 	}
 	close(fd);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.2 2004/11/22 20:47:48 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.3 2005/05/17 18:48:52 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -19,7 +19,10 @@
 #include <dev/usb/if_kuevar.h>
 #include <fcntl.h>
 #include <stdlib.h>
-
+#include <err.h>
+#include <unistd.h>
+#include <string.h>
+#include <stdio.h>
 #include "kue_fw.h"
 
 #define FILENAME "kue"
@@ -28,7 +31,8 @@ int
 main(int argc, char *argv[])
 {
 	struct	kue_firmware kfproto, *kf;
-	int len, fd, i;
+	int len, fd;
+	ssize_t rlen;
 
 	len = sizeof(*kf) - sizeof(kfproto.data) +
 	    sizeof(kue_code_seg) + sizeof(kue_fix_seg) +
@@ -52,7 +56,11 @@ main(int argc, char *argv[])
 	if (fd == -1)
 		err(1, FILENAME);
 
-	write(fd, kf, len);
+	rlen = write(fd, kf, len);
+	if (rlen == -1)
+		err(1, "%s", FILENAME);
+	if (rlen != len)
+		errx(1, "%s: short write", FILENAME);
 	free(kf);
 	close(fd);
 	return 0;

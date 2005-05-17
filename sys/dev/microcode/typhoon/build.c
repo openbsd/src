@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.1 2004/12/14 01:50:42 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.2 2005/05/17 18:48:52 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -17,22 +17,41 @@
  */
 #include <sys/types.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <err.h>
+#include <stdio.h>
 
 #include "3c990img.h"
 #define FILENAME "3c990"
 
+void
+fullwrite(int fd, const void *buf, size_t nbytes)
+{
+	ssize_t r;
+
+	r = write(fd, buf, nbytes);
+	if (r == -1)
+		err(1, "write");
+	if (r != nbytes)
+		errx(1, "write: short write");
+}
+
 int
 main(int argc, char *argv[])
 {
-	int i;
 	int fd;
+	ssize_t rlen;
 
 	printf("creating %s length %d\n", FILENAME, sizeof tc990image);
 	fd = open(FILENAME, O_WRONLY|O_CREAT|O_TRUNC, 0644);
 	if (fd == -1)
 		err(1, "%s", FILENAME);
 
-	write(fd, tc990image, sizeof tc990image);
+	rlen = write(fd, tc990image, sizeof tc990image);
+	if (rlen == -1)
+		err(1, "%s", FILENAME);
+	if (rlen != sizeof tc990image)
+		errx(1, "%s: short write", FILENAME);
 	close(fd);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.8 2005/03/08 11:50:39 dlg Exp $	*/
+/*	$OpenBSD: build.c,v 1.9 2005/05/17 18:48:51 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -17,6 +17,9 @@
  */
 #include <sys/types.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <err.h>
+#include <unistd.h>
 
 #include "atmel_intersil_fw.h"
 #include "atmel_rfmd2958-smc_fw.h"
@@ -30,7 +33,7 @@
 void
 output(const char *name, char *buf, int buflen)
 {
-	int i;
+	ssize_t rlen;
 	int fd;
 
 	printf("creating %s length %d\n", name, buflen);
@@ -38,7 +41,11 @@ output(const char *name, char *buf, int buflen)
 	if (fd == -1)
 		err(1, "%s", name);
 
-	write(fd, buf, buflen);
+	rlen = write(fd, buf, buflen);
+	if (rlen == -1)
+		err(1, "%s", name);
+	if (rlen != buflen)
+		errx(1, "%s: short write", name);
 	close(fd);
 }
 

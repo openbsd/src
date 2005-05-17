@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.1 2004/12/19 16:06:23 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.2 2005/05/17 18:48:52 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -17,7 +17,9 @@
  */
 #include <sys/types.h>
 #include <fcntl.h>
-
+#include <stdio.h>
+#include <err.h>
+#include <unistd.h>
 #include <dev/pci/cs4280reg.h>
 #include "cs4280_image.h"
 #define FILENAME "cs4280"
@@ -25,7 +27,7 @@
 int
 main(int argc, char *argv[])
 {
-	int i;
+	ssize_t rlen;
 	int fd;
 
 	printf("creating %s length %d\n", FILENAME, sizeof BA1Struct);
@@ -33,7 +35,11 @@ main(int argc, char *argv[])
 	if (fd == -1)
 		err(1, "%s", FILENAME);
 
-	write(fd, &BA1Struct, sizeof BA1Struct);
+	rlen = write(fd, &BA1Struct, sizeof BA1Struct);
+	if (rlen == -1)
+		err(1, "%s", FILENAME);
+	if (rlen != sizeof BA1Struct)
+		errx(1, "%s: short write", FILENAME);
 	close(fd);
 	return 0;
 }

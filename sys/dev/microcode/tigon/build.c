@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.2 2004/11/22 20:47:48 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.3 2005/05/17 18:48:52 jason Exp $	*/
 
 /*
  * Copyright (c) 2004 Theo de Raadt <deraadt@openbsd.org>
@@ -38,6 +38,7 @@ output(const char *name,
 {
 	struct	tigon_firmware tfproto, *tf;
 	int len, fd, i;
+	ssize_t rlen;
 
 	len = sizeof tf - sizeof(tfproto.data) + sizetext + sizerodata +
 	    sizedata;
@@ -79,7 +80,11 @@ output(const char *name,
 	if (fd == -1)
 		err(1, "%s", name);
 
-	write(fd, tf, len);
+	rlen = write(fd, tf, len);
+	if (rlen == -1)
+		err(1, "%s", name);
+	if (rlen != len)
+		errx(1, "%s: short write", name);
 	free(tf);
 	close(fd);
 }
