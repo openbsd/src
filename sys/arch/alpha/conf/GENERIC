@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.147 2005/05/10 01:16:31 brad Exp $
+#	$OpenBSD: GENERIC,v 1.148 2005/05/17 03:06:05 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -219,14 +219,12 @@ ti*	at pci?				# Alteon Tigon 1Gb ethernet
 skc*	at pci?				# SysKonnect GEnesis 984x
 sk*	at skc?				#  each port of above
 an*	at pci?				# Cisco/Aironet 802.11DS
-
-#epic*	at pci?				# SMC EPIC/100 ethernet
+epic*	at pci?				# SMC EPIC/100 ethernet
 
 vga*	at pci?				# PCI VGA graphics
 tga*	at pci?				# DEC ZLXp-E[123] graphics
 
 # Media Independent Interface (mii) drivers
-# UNTESTED: some of the following PHY's are untested.
 eephy*	at mii?				# Marvell PHYs for Intel GigE
 exphy*	at mii?				# 3Com internal PHYs
 inphy*	at mii?				# Intel 82555 PHYs

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.53 2005/05/10 01:16:31 brad Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.54 2005/05/17 03:06:05 brad Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -200,14 +200,12 @@ ti*	at pci?				# Alteon Tigon 1Gb ethernet
 skc*	at pci?				# SysKonnect GEnesis 984x
 sk*	at skc?				#  each port of above
 an*	at pci?				# Cisco/Aironet 802.11DS
-
-#epic*	at pci?				# SMC EPIC/100 ethernet
+epic*	at pci?				# SMC EPIC/100 ethernet
 
 vga*	at pci?				# PCI VGA graphics
 tga*	at pci?				# DEC ZLXp-E[123] graphics
 
 # Media Independent Interface (mii) drivers
-# UNTESTED: some of the following PHY's are untested.
 eephy*	at mii?				# Marvell PHYs for Intel GigE
 exphy*	at mii?				# 3Com internal PHYs
 inphy*	at mii?				# Intel 82555 PHYs
@@ -215,7 +213,7 @@ iophy*	at mii?				# Intel 82553 PHYs
 icsphy*	at mii?				# ICS 1890 PHYs
 lxtphy*	at mii?				# Level1 LXT970 PHYs
 nsphy*	at mii?				# NS and compatible PHYs
-nsphyter*	at mii?			# NS and compatible PHYs
+nsphyter* at mii?			# NS and compatible PHYs
 qsphy*	at mii?				# Quality Semi QS6612 PHYs
 sqphy*	at mii?				# Seeq 8x220 PHYs
 rlphy*	at mii?				# RealTek 8139 internal PHYs
