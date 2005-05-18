@@ -1,7 +1,7 @@
 /*
  * Fictional events
  *
- * $OpenBSD: calendar.fictional,v 1.1 1999/06/15 07:03:42 pjanzen Exp $
+ * $OpenBSD: calendar.fictional,v 1.2 2005/05/18 21:23:42 jmc Exp $
  */
 
 #ifndef _calendar_fictional_
@@ -23,7 +23,7 @@
 04/04	Gandalf visits Bilbo (LOTR)
 04/17	An unexpected party (LOTR)
 04/23	Crowning of King Ellesar (LOTR)
-05/19	Arwen leaves Lorian to wed King Ellesar (LOTR)
+05/19	Arwen leaves Lorien to wed King Ellesar (LOTR)
 06/11	Sauron attacks Osgilliath (LOTR)
 06/13	Bilbo returns to Bag End (LOTR)
 06/23	Wedding of Ellesar & Arwen (LOTR)
