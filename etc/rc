@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.265 2005/05/18 13:44:35 millert Exp $
+#	$OpenBSD: rc,v 1.266 2005/05/18 16:43:51 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -92,7 +92,7 @@ HOME=/; export HOME
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 export PATH
 
-if [ $1x = shutdownx ]; then
+if [ X"$1" = X"shutdown" ]; then
 	dd if=/dev/urandom of=/var/db/host.random bs=1024 count=64 >/dev/null 2>&1
 	chmod 600 /var/db/host.random >/dev/null 2>&1
 	if [ $? -eq 0 -a -f /etc/rc.shutdown ]; then
@@ -107,12 +107,12 @@ if [ $1x = shutdownx ]; then
 			test "$if" = "carp[0-9]*" && continue
 
 			ifconfig $if > /dev/null 2>&1
-			if [ "$?" != "0" ]; then
+			if [ $? -ne 0 ]; then
 				ifconfig $if down
 			fi
 		done
 
-		if [ "X${powerdown}" = X"YES" ]; then
+		if [ X"${powerdown}" = X"YES" ]; then
 			exit 2
 		fi
 
@@ -141,7 +141,7 @@ swapctl -A -t blk
 
 if [ -e /fastboot ]; then
 	echo "Fast boot: skipping disk checks."
-elif [ $1x = autobootx ]; then
+elif [ X"$1" = X"autoboot" ]; then
 	echo "Automatic boot in progress: starting file system checks."
 	fsck -p
 	case $? in
@@ -193,7 +193,7 @@ if [ -f /sbin/kbd -a -f /etc/kbdtype ]; then
 	kbd `cat /etc/kbdtype`
 fi
 
-if [ "X${pf}" != X"NO" ]; then
+if [ X"${pf}" != X"NO" ]; then
 	RULES="block all"
 	RULES="$RULES\npass on lo0"
 	RULES="$RULES\npass in proto tcp from any to any port 22 keep state"
@@ -233,7 +233,7 @@ if [ -f /etc/resolv.conf.save ]; then
 fi
 . /etc/netstart
 
-if [ "X${pf}" != X"NO" ]; then
+if [ X"${pf}" != X"NO" ]; then
 	if [ -f ${pf_rules} ]; then
 		pfctl -f ${pf_rules}
 	fi
@@ -271,7 +271,7 @@ dmesg >/var/run/dmesg.boot
 
 echo 'starting system logger'
 rm -f /dev/log
-if [ "X${named_flags}" != X"NO" ]; then
+if [ X"${named_flags}" != X"NO" ]; then
 	rm -f /var/named/dev/log
 	syslogd_flags="${syslogd_flags} -a /var/named/dev/log"
 fi
@@ -291,7 +291,7 @@ fi
 
 # $named_flags is imported from /etc/rc.conf;
 # if $named_flags != NO, named is run.
-if [ "X${named_flags}" != X"NO" ]; then
+if [ X"${named_flags}" != X"NO" ]; then
 	if ! cmp -s /etc/rndc.key /var/named/etc/rndc.key ; then
 		echo -n "rndc-confgen: generating new shared secret... "
 		if /usr/sbin/rndc-confgen -a -t /var/named >/dev/null 2>&1; then
@@ -307,7 +307,7 @@ fi
 
 # $isakmpd_flags is imported from /etc/rc.conf;
 # If $isakmpd_flags == NO, isakmpd isn't run.
-if [ "X${isakmpd_flags}" != X"NO" ]; then
+if [ X"${isakmpd_flags}" != X"NO" ]; then
 	echo 'starting isakmpd';	isakmpd ${isakmpd_flags}
 fi
 
@@ -350,18 +350,18 @@ fi
 
 # $nfs_server is imported from /etc/rc.conf;
 # if $nfs_server == YES, the machine is setup for being an nfs server
-if [ X${nfs_server} = X"YES" -a -s /etc/exports -a \
+if [ X"${nfs_server}" = X"YES" -a -s /etc/exports -a \
     `sed -e '/^#/d' < /etc/exports | wc -l` -ne 0 ]; then
 	rm -f /var/db/mountdtab
 	echo -n > /var/db/mountdtab
 	echo -n ' mountd';		mountd
 	echo -n ' nfsd';		nfsd ${nfsd_flags}
-	if [ X${lockd} = X"YES" ]; then
+	if [ X"${lockd}" = X"YES" ]; then
 		echo -n ' rpc.lockd';	rpc.lockd
 	fi
 fi
 
-if [ X${amd} = X"YES" -a -e ${amd_master} ]; then
+if [ X"${amd}" = X"YES" -a -e ${amd_master} ]; then
 	echo -n ' amd'
 	(cd /etc/amd; amd -l syslog -x error,noinfo,nostats -p \
 	    -a ${amd_dir} `cat ${amd_master}` > /var/run/amd.pid )
@@ -374,11 +374,11 @@ fi
 
 # $timed_flags is imported from /etc/rc.conf;
 # if $timed_flags == NO, timed isn't run.
-if [ "X${timed_flags}" != X"NO" ]; then
+if [ X"${timed_flags}" != X"NO" ]; then
 	echo -n ' timed'; timed $timed_flags
 fi
 
-if [ "X${ntpd_flags}" != X"NO" ]; then
+if [ X"${ntpd_flags}" != X"NO" ]; then
 	# since this is system startup, use -s
 	echo -n ' ntpd'; ntpd -s $ntpd_flags
 fi
@@ -394,7 +394,7 @@ if [ -d /var/crash ]; then
 	savecore ${savecore_flags} /var/crash
 fi
 
-if [ "X${afs}" = X"YES" -a -c /dev/xfs0 ]; then
+if [ X"${afs}" = X"YES" -a -c /dev/xfs0 ]; then
 	echo -n 'mounting afs:'
 	mkdir -p -m 0755 /afs
 	mount -t xfs /dev/xfs0 /afs
@@ -402,7 +402,7 @@ if [ "X${afs}" = X"YES" -a -c /dev/xfs0 ]; then
 	echo ' done.'
 fi
 
-if [ "X${check_quotas}" = X"YES" ]; then
+if [ X"${check_quotas}" = X"YES" ]; then
 	echo -n 'checking quotas:'
 	quotacheck -a
 	echo ' done.'
@@ -454,7 +454,7 @@ if [ -d /usr/X11R6/lib ]; then
 fi
 
 [ -f /etc/rc.securelevel ] && . /etc/rc.securelevel
-if [ X${securelevel} != X"" ]; then
+if [ X"${securelevel}" != X"" ]; then
 	echo -n 'setting kernel security level: '
 	sysctl kern.securelevel=${securelevel}
 fi
@@ -533,27 +533,27 @@ echo -n starting network daemons:
 
 # $routed_flags are imported from /etc/rc.conf.
 # If $routed_flags == NO, routed isn't run.
-if [ "X${routed_flags}" != X"NO" ]; then
+if [ X"${routed_flags}" != X"NO" ]; then
 	echo -n ' routed';		routed $routed_flags
 fi
 
 # $mrouted_flags is imported from /etc/rc.conf;
 # If $mrouted_flags == NO, then mrouted isn't run.
-if [ "X${mrouted_flags}" != X"NO" ]; then
+if [ X"${mrouted_flags}" != X"NO" ]; then
 	echo -n ' mrouted';		mrouted $mrouted_flags
 fi
 
-if [ "X${ospfd_flags}" != X"NO" ]; then
+if [ X"${ospfd_flags}" != X"NO" ]; then
 	echo -n ' ospfd';		/usr/sbin/ospfd $ospfd_flags
 fi
 
-if [ "X${bgpd_flags}" != X"NO" ]; then
+if [ X"${bgpd_flags}" != X"NO" ]; then
 	echo -n ' bgpd';		/usr/sbin/bgpd $bgpd_flags
 fi
 
 # $dhcpd_flags is imported from /etc/rc.conf
 # If $dhcpd_flags == NO or /etc/dhcpd.conf doesn't exist, then dhcpd isn't run.
-if [ "X${dhcpd_flags}" != X"NO" -a -f /etc/dhcpd.conf ]; then
+if [ X"${dhcpd_flags}" != X"NO" -a -f /etc/dhcpd.conf ]; then
 	touch /var/db/dhcpd.leases
 	if [ -f /etc/dhcpd.interfaces ]; then
 		dhcpd_ifs=`stripcom /etc/dhcpd.interfaces`
@@ -563,23 +563,23 @@ fi
 
 if ifconfig lo0 inet6 >/dev/null 2>&1; then
 	fw=`sysctl -n net.inet6.ip6.forwarding`
-	if [ "X${fw}" == X"0" ]; then
+	if [ X"${fw}" = X"0" ]; then
 		# $rtsold_flags is imported from /etc/rc.conf;
 		# If $rtsold_flags == NO, then rtsold isn't run.
-		if [ "X${rtsold_flags}" != X"NO" ]; then
+		if [ X"${rtsold_flags}" != X"NO" ]; then
 			echo -n ' rtsold'
 			/usr/sbin/rtsold ${rtsold_flags}
 		fi
 	else
 		# $route6d_flags is imported from /etc/rc.conf;
 		# If $route6d_flags == NO, then route6d isn't run.
-		if [ "X${route6d_flags}" != X"NO" ]; then
+		if [ X"${route6d_flags}" != X"NO" ]; then
 			echo -n ' route6d'
 			/usr/sbin/route6d ${route6d_flags}
 		fi
 		# $rtadvd_flags is imported from /etc/rc.conf;
 		# If $rtadvd_flags == NO, then rtadvd isn't run.
-		if [ "X${rtadvd_flags}" != X"NO" ]; then
+		if [ X"${rtadvd_flags}" != X"NO" ]; then
 			echo -n ' rtadvd'
 			/usr/sbin/rtadvd ${rtadvd_flags}
 		fi
@@ -588,12 +588,12 @@ fi
 
 # $rwhod is imported from /etc/rc.conf;
 # if $rwhod == YES, rwhod is run.
-if [ X${rwhod} = X"YES" ]; then
+if [ X"${rwhod}" = X"YES" ]; then
 	echo -n ' rwhod';		rwhod
 fi
 
 
-if [ "X${lpd_flags}" != X"NO" ]; then
+if [ X"${lpd_flags}" != X"NO" ]; then
 	echo -n ' printer';		lpd ${lpd_flags}
 fi
 
@@ -602,25 +602,25 @@ fi
 # sendmail isn't run.  We call sendmail with a full path so that
 # SIGHUP works.  Note that /usr/sbin/sendmail may actually call a
 # mailer other than sendmail, depending on /etc/mailer.conf.
-if [ "X${sendmail_flags}" != X"NO" -a -s /etc/mailer.conf ]; then
+if [ X"${sendmail_flags}" != X"NO" -a -s /etc/mailer.conf ]; then
 	echo -n ' sendmail';		( /usr/sbin/sendmail ${sendmail_flags} >/dev/null 2>&1 & )
 fi
 
-if [ "X${httpd_flags}" != X"NO" ]; then
+if [ X"${httpd_flags}" != X"NO" ]; then
 	# Clean up left-over httpd locks
 	rm -f /var/www/logs/{ssl_mutex,httpd.lock,accept.lock}.*
 	echo -n ' httpd';		/usr/sbin/httpd ${httpd_flags}
 fi
 
-if [ "X${ftpd_flags}" != X"NO" ]; then
+if [ X"${ftpd_flags}" != X"NO" ]; then
 	echo -n ' ftpd';		/usr/libexec/ftpd ${ftpd_flags}
 fi
 
-if [ "X${identd_flags}" != X"NO" ]; then
+if [ X"${identd_flags}" != X"NO" ]; then
 	echo -n ' identd';		/usr/libexec/identd ${identd_flags}
 fi
 
-if [ X${inetd} = X"YES" -a -e /etc/inetd.conf ]; then
+if [ X"${inetd}" = X"YES" -a -e /etc/inetd.conf ]; then
 	echo -n ' inetd';		inetd
 fi
 
@@ -628,13 +628,13 @@ if [ X"${sshd_flags}" != X"NO" ]; then
 	echo -n ' sshd';		/usr/sbin/sshd ${sshd_flags};
 fi
 
-if [ "X${spamd_flags}" != X"NO" ]; then
-	if [ "X${spamd_grey}" != X"NO" ]; then
+if [ X"${spamd_flags}" != X"NO" ]; then
+	if [ X"${spamd_grey}" != X"NO" ]; then
 		spamd_flags="${spamd_flags} -g"
 	fi
 	echo -n ' spamd';		eval /usr/libexec/spamd ${spamd_flags}
 	/usr/libexec/spamd-setup
-	if [ "X${spamd_grey}" != X"NO" ]; then
+	if [ X"${spamd_grey}" != X"NO" ]; then
 		echo -n ' spamlogd'
 		/usr/libexec/spamlogd ${spamlogd_flags}
 	fi
@@ -643,28 +643,28 @@ fi
 # $rarpd_flags is imported from /etc/rc.conf;
 # If $rarpd_flags == NO or /etc/ethers doesn't exist, then
 # rarpd isn't run.
-if [ "X${rarpd_flags}" != X"NO" -a -s /etc/ethers ]; then
+if [ X"${rarpd_flags}" != X"NO" -a -s /etc/ethers ]; then
 	echo -n ' rarpd';		rarpd ${rarpd_flags}
 fi
 
 # $bootparamd_flags is imported from /etc/rc.conf;
 # If $bootparamd_flags == NO or /etc/bootparams doesn't exist, then
 # bootparamd isn't run.
-if [ "X${bootparamd_flags}" != X"NO" -a -s /etc/bootparams ]; then
+if [ X"${bootparamd_flags}" != X"NO" -a -s /etc/bootparams ]; then
 	echo -n ' rpc.bootparamd';	rpc.bootparamd ${bootparamd_flags}
 fi
 
 # $rbootd_flags is imported from /etc/rc.conf;
 # If $rbootd_flags == NO or /etc/rbootd.conf doesn't exist, then
 # rbootd isn't run.
-if [ "X${rbootd_flags}" != X"NO" -a -s /etc/rbootd.conf ]; then
+if [ X"${rbootd_flags}" != X"NO" -a -s /etc/rbootd.conf ]; then
 	echo -n ' rbootd';		rbootd ${rbootd_flags}
 fi
 
 # $mopd_flags is imported from /etc/rc.conf;
 # If $mopd_flags == NO or /tftpboot/mop doesn't exist, then
 # mopd isn't run.
-if [ "X${mopd_flags}" != X"NO" -a -d /tftpboot/mop ]; then
+if [ X"${mopd_flags}" != X"NO" -a -d /tftpboot/mop ]; then
 	echo -n ' mopd';		mopd ${mopd_flags}
 fi
 
@@ -686,7 +686,7 @@ if [ -x /sbin/wsconsctl -a -f /etc/wsconsctl.conf ]; then
 fi
 
 # KerberosV master KDC
-if [ X${krb5_master_kdc} = X"YES" ]; then
+if [ X"${krb5_master_kdc}" = X"YES" ]; then
 	echo 'KerberosV master KDC'
 	/usr/libexec/kdc &
 	/usr/libexec/kadmind &
@@ -694,7 +694,7 @@ if [ X${krb5_master_kdc} = X"YES" ]; then
 fi
 
 # KerberosV slave KDC
-if [ X${krb5_slave_kdc} = X"YES" ]; then
+if [ X"${krb5_slave_kdc}" = X"YES" ]; then
 	echo 'KerberosV slave KDC'
 	/usr/libexec/kdc &
 	# Remember to enable hpropd in inetd.conf
@@ -706,7 +706,7 @@ echo -n standard daemons:
 
 # $apmd_flags is imported from /etc/rc.conf;
 # don't run daemon if $apmd_flags == NO or /usr/sbin/apmd doesn't exist
-if [ "X${apmd_flags}" != X"NO" -a -x /usr/sbin/apmd ]; then
+if [ X"${apmd_flags}" != X"NO" -a -x /usr/sbin/apmd ]; then
 	echo -n ' apmd';	/usr/sbin/apmd ${apmd_flags}
 fi
 
@@ -724,12 +724,12 @@ echo '.'
 
 date
 
-if [ "X${wsmoused_flags}" != X"NO" -a -x /usr/sbin/wsmoused ]; then
+if [ X"${wsmoused_flags}" != X"NO" -a -x /usr/sbin/wsmoused ]; then
 	echo 'starting wsmoused...';	/usr/sbin/wsmoused ${wsmoused_flags}
 fi
 
 # Alternatively, on some architectures, xdm may be started in /etc/ttys.
-if [ "X${xdm_flags}" != X"NO" ]; then
+if [ X"${xdm_flags}" != X"NO" ]; then
 	echo 'starting xdm...';		/usr/X11R6/bin/xdm ${xdm_flags}
 fi
 
