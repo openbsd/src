@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.108 2005/04/09 00:42:27 deraadt Exp $	 */
+/* $OpenBSD: message.c,v 1.109 2005/05/18 20:04:51 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -126,7 +126,8 @@ static u_int8_t payload_revmap[] = {
 	ISAKMP_PAYLOAD_SAK, ISAKMP_PAYLOAD_SAT, ISAKMP_PAYLOAD_KD,
 	ISAKMP_PAYLOAD_SEQ, ISAKMP_PAYLOAD_POP
 #endif
-	ISAKMP_PAYLOAD_NAT_D, ISAKMP_PAYLOAD_NAT_OA
+	ISAKMP_PAYLOAD_NAT_D, ISAKMP_PAYLOAD_NAT_OA,
+	ISAKMP_PAYLOAD_NAT_D_DRAFT, ISAKMP_PAYLOAD_NAT_OA_DRAFT
 };
 
 static u_int8_t payload_map[256];
@@ -336,8 +337,8 @@ message_parse_payloads(struct message *msg, struct payload *p, u_int8_t next,
 		}
 		/* Ignore most private payloads.  */
 		if (next >= ISAKMP_PAYLOAD_PRIVATE_MIN &&
-		    next != ISAKMP_PAYLOAD_NAT_D &&
-		    next != ISAKMP_PAYLOAD_NAT_OA) {
+		    next != ISAKMP_PAYLOAD_NAT_D_DRAFT &&
+		    next != ISAKMP_PAYLOAD_NAT_OA_DRAFT) {
 			LOG_DBG((LOG_MESSAGE, 30, "message_parse_payloads: "
 			    "private next payload type %s in payload of "
 			    "type %d ignored",
@@ -445,8 +446,10 @@ message_payload_sz(u_int8_t payload)
 	case ISAKMP_PAYLOAD_ATTRIBUTE:
 		return ISAKMP_ATTRIBUTE_SZ;
 	case ISAKMP_PAYLOAD_NAT_D:
+	case ISAKMP_PAYLOAD_NAT_D_DRAFT:
 		return ISAKMP_NAT_D_SZ;
 	case ISAKMP_PAYLOAD_NAT_OA:
+	case ISAKMP_PAYLOAD_NAT_OA_DRAFT:
 		return ISAKMP_NAT_OA_SZ;
 	/* Not yet supported and any other unknown payloads. */
 	case ISAKMP_PAYLOAD_SAK:

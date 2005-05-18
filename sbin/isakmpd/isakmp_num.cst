@@ -1,4 +1,4 @@
-#	$OpenBSD: isakmp_num.cst,v 1.10 2004/08/10 15:59:10 ho Exp $
+#	$OpenBSD: isakmp_num.cst,v 1.11 2005/05/18 20:04:50 hshoexer Exp $
 #	$EOM: isakmp_num.cst,v 1.3 2000/05/17 03:09:50 angelos Exp $
 
 #
@@ -35,6 +35,7 @@
 # these constants for validity checks?
 
 # ISAKMP payload type.
+# see http://www.iana.org/assignments/isakmp-registry
 ISAKMP_PAYLOAD
   NONE				0
   SA				1
@@ -50,21 +51,20 @@ ISAKMP_PAYLOAD
   NOTIFY			11
   DELETE			12
   VENDOR			13
-# XXX the following are not quite legitimate according to the IETF process
   ATTRIBUTE			14	# IKE Mode-Config attribute
   SAK				15	# RFC 3547, SA KEK Payload
   SAT				16	# RFC 3547, SA TEK Payload
   KD				17	# RFC 3547, Key Download
   SEQ				18	# RFC 3547, Sequence Number
   POP				19	# RFC 3547, Proof of possession
-  RESERVED_MIN			20
+  NAT_D				20	# RFC 3947, NAT Discovery payload
+  NAT_OA			21	# RFC 394y, NAT Original Address payload
+  RESERVED_MIN			22
   RESERVED_MAX			127
   PRIVATE_MIN			128
-# XXX values from draft-ietf-ipsec-nat-t-ike-01,02,03. Later drafts specify
-# XXX NAT_D as payload 15 and NAT_OA as 16, but these are allocated by RFC
-# XXX 3547 as seen above.
-  NAT_D				130	# NAT Discovery payload
-  NAT_OA			131	# NAT Original Address payload
+# values from draft-ietf-ipsec-nat-t-ike-01,02,03.
+  NAT_D_DRAFT			130	# NAT Discovery payload
+  NAT_OA_DRAFT			131	# NAT Original Address payload
   PRIVATE_MAX			255
 .
 
