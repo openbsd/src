@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.14 2005/05/18 20:24:19 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.15 2005/05/18 21:39:25 alek Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -92,8 +92,8 @@ cvs_server(int argc, char **argv)
 	}
 
 	if (chdir(cvs_server_tmpdir) == -1) {
-		cvs_log(LP_ERRNO, "failed to change to temporary directory '%s'"
-		    , cvs_server_tmpdir);
+		cvs_log(LP_ERRNO, "failed to change to temporary directory '%s'",
+		    cvs_server_tmpdir);
 		return (CVS_EX_DATA);
 	}
 
