@@ -1,4 +1,4 @@
-/* $OpenBSD: ike.h,v 1.11 2005/03/03 15:08:41 hshoexer Exp $ */
+/* $OpenBSD: ike.h,v 1.12 2005/05/18 19:50:58 hshoexer Exp $ */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -116,6 +116,7 @@
 #define PAYLOAD_NAT_OA		131
 #define PAYLOAD_PRIVATE_MAX	132
 
+/* see http://www.iana.org/assignments/isakmp-registry */
 #define IKE_PAYLOAD_TYPES_INITIALIZER			\
 	{ "NONE",		/*  0 */		\
 	  "SA",			/*  1 */		\
@@ -132,23 +133,20 @@
 	  "DELETE",		/* 12 */		\
 	  "VENDOR",		/* 13 */		\
 	  "ATTRIBUTE",		/* 14 (ikecfg) */	\
+	  "SAK",		/* 15 */		\
+	  "SAT",		/* 16 */		\
+	  "KD",			/* 17 */		\
+	  "SEQ",		/* 18 */		\
+	  "POP",		/* 19 */		\
+	  "NAT-D",		/* 20 */		\
+	  "NAT-OA",		/* 21 */		\
 	}
-
-#if 0
-	  "SAK",		/* 15 (RFC 3547) */	\
-	  "SAT",		/* 16 (RFC 3547) */	\
-	  "KD",			/* 17 (RFC 3547) */	\
-	  "SEQ",		/* 18 (RFC 3547) */	\
-	  "POP",		/* 19 (RFC 3547) */	\
-	  "SAT",		/* 16 (RFC 3547) */	\
-
-#endif
 
 #define IKE_PRIVATE_PAYLOAD_TYPES_INITIALIZER		\
 	{ "NONE",		/*  128 */		\
 	  "<unknown 129>",	/*  129 */		\
-	  "NAT-D",		/*  130 (draft-ietf-ipsec-nat-t-ike-03) */  \
-	  "NAT-OA",		/*  131 (draft-ietf-ipsec-nat-t-ike-03) */  \
+	  "NAT-D-DRAFT",	/*  130 (draft-ietf-ipsec-nat-t-ike-03) */  \
+	  "NAT-OA-DRAFT",	/*  131 (draft-ietf-ipsec-nat-t-ike-03) */  \
 	}
 
 /* Exchange types */
