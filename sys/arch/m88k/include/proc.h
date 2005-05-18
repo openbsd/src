@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.1 2004/04/26 12:34:05 miod Exp $ */
+/*	$OpenBSD: proc.h,v 1.2 2005/05/18 16:44:37 miod Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,21 +44,27 @@
 #ifndef __MACHINE_PROC_H__
 #define __MACHINE_PROC_H__
 
-#include <machine/pcb.h>
+struct trapframe;
 
 /*
  * Machine-dependent part of the proc structure for mvme88k.
  */
 struct mdproc {
-	struct   trapframe *md_tf;    /* trap/syscall registers */
-	struct   fpstate *md_fpstate; /* fpu state, if any; always resident */
-	int      md_upte[UPAGES];     /* ptes for mapping u page */
+	struct trapframe *md_tf;	/* trap/syscall registers */
+	int	md_upte[UPAGES];	/* ptes for mapping u page */
 
-	unsigned md_ss_addr;          /* single step address for ptrace */
-	unsigned md_ss_instr;         /* single step instruction for ptrace */
-	unsigned md_ss_taken_addr;    /* single step address for ptrace */
-	unsigned md_ss_taken_instr;   /* single step instruction for ptrace */
+        /*
+         * Single stepping is done by moving two breakpoints in the
+         * process' code:
+         * - one breakpoint for regular flow (i.e. the immediately following
+         *   instruction)
+         * - one breakpoint for potential branches.
+         * Using two breakpoints allows us to not worry about the delay slots.
+         */
+	vaddr_t	md_bp0va;
+	u_int	md_bp0save;
+	vaddr_t	md_bp1va;
+	u_int	md_bp1save;
 };
 
 #endif /* __MACHINE_PROC_H__ */
-

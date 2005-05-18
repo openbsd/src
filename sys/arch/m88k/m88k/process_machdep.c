@@ -1,4 +1,4 @@
-/*	$OpenBSD: process_machdep.c,v 1.2 2005/05/16 11:47:16 miod Exp $ */
+/*	$OpenBSD: process_machdep.c,v 1.3 2005/05/18 16:44:41 miod Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -67,9 +67,6 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
-#if 0
-#include <machine/frame.h>
-#endif
 #include <sys/ptrace.h>
 
 int
@@ -92,15 +89,7 @@ process_write_regs(p, regs)
 	return (0);
 }
 
-int
-process_sstep(p, sstep)
-	struct proc *p;
-	int sstep;
-{
-	if (sstep)
-		cpu_singlestep(p);
-	return (0);
-}
+/* process_sstep() is in trap.c */
 
 int
 process_set_pc(p, addr)
