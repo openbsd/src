@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.264 2005/04/09 14:15:18 deraadt Exp $
+#	$OpenBSD: rc,v 1.265 2005/05/18 13:44:35 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -20,6 +20,63 @@ stripcom() {
 			echo $_line
 		done
 	} < $_file
+}
+
+# Update resource limits when sysctl changes
+# Usage: update_limit -X loginconf_name
+update_limit() {
+	local _fl="$1"	# ulimit flag
+	local _lc="$2"	# login.conf name
+	local _new _suf
+
+	for _suf in "" -cur -max; do
+		_new=`getcap -f /etc/login.conf -s ${_lc}${_suf} daemon 2>/dev/null`
+		if [ X"$_new" != X"" ]; then
+			if [ X"$_new" = X"infinity" ]; then
+				_new=unlimited
+			fi
+			case "$_suf" in
+			-cur)
+				ulimit -S $_fl $_new
+				;;
+			-max)
+				ulimit -H $_fl $_new
+				;;
+			*)
+				ulimit $_fl $_new
+				return
+				;;
+			esac
+		fi
+	done
+}
+
+sysctl_conf() {
+	# delete comments and blank lines
+	set -- `stripcom /etc/sysctl.conf`
+	while [ $# -ge 1 ] ; do
+		sysctl $1
+		# update limits if needed
+		case $1 in
+		kern.maxproc=*)
+			update_limit -p maxproc
+			;;
+		kern.maxfiles=*)
+			update_limit -n openfiles
+			;;
+		esac
+		shift
+	done
+}
+
+mixerctl_conf()
+{
+	# delete comments and blank lines
+	set -- `stripcom /etc/mixerctl.conf`
+	while [ $# -ge 1 ] ; do
+		mixerctl -q $1 > /dev/null 2>&1
+		shift
+	done
 }
 
 # End subroutines
@@ -161,25 +218,11 @@ if [ "X${pf}" != X"NO" ]; then
 fi
 
 if [ -f /etc/sysctl.conf ]; then
-(
-	# delete comments and blank lines
-	set -- `stripcom /etc/sysctl.conf`
-	while [ $# -ge 1 ] ; do
-		sysctl $1
-		shift
-	done
-)
+	sysctl_conf
 fi
 
 if [ -f /etc/mixerctl.conf ]; then
-(
-	# delete comments and blank lines
-	set -- `stripcom /etc/mixerctl.conf`
-	while [ $# -ge 1 ] ; do
-		mixerctl -q $1 > /dev/null 2>&1
-		shift
-	done
-)
+	mixerctl_conf
 fi
 
 # set hostname, turn on network
