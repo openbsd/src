@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsmagic.c,v 1.10 2004/05/19 02:32:35 tedu Exp $ */
+/*	$OpenBSD: fsmagic.c,v 1.11 2005/05/18 03:11:18 jaredy Exp $ */
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
  * Software written by Ian F. Darwin and others;
@@ -58,7 +58,7 @@
 #undef HAVE_MAJOR
 
 #ifndef	lint
-FILE_RCSID("@(#)$Id: fsmagic.c,v 1.10 2004/05/19 02:32:35 tedu Exp $")
+FILE_RCSID("@(#)$Id: fsmagic.c,v 1.11 2005/05/18 03:11:18 jaredy Exp $")
 #endif	/* lint */
 
 protected int
@@ -91,7 +91,7 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 			return -1;
 		}
 		if (file_printf(ms, "cannot open (%s)",
-		    fn, strerror(errno)) == -1)
+		    strerror(errno)) == -1)
 			return -1;
 		return 1;
 	}
