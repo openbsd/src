@@ -1772,7 +1772,6 @@
 ./usr/sbin/bgpctl
 ./usr/sbin/bgpd
 ./usr/sbin/bos
-./usr/sbin/certpatch
 ./usr/sbin/chat
 ./usr/sbin/chgrp
 ./usr/sbin/chown
