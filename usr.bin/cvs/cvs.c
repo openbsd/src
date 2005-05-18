@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.62 2005/05/17 16:45:07 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.63 2005/05/18 11:53:38 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -210,7 +210,7 @@ struct cvs_cmd cvs_cdt[] = {
 	},
 	{
 		CVS_OP_RELEASE, "release",  { "re", "rel" }, &cvs_release,
-		"[-d]",
+		"[-d] dir ...",
 		"d",
 		"Indicate that a Module is no longer in use",
 		NULL
