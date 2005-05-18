@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.42 2005/05/15 11:29:15 miod Exp $ */
+/* $OpenBSD: wskbd.c,v 1.43 2005/05/18 21:31:27 miod Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -78,6 +78,10 @@
  * Keyboard driver (/dev/wskbd*).  Translates incoming bytes to ASCII or
  * to `wscons_events' and passes them up to the appropriate reader.
  */
+
+#ifndef	SMALL_KERNEL
+#define	BURNER_SUPPORT
+#endif
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -591,8 +595,10 @@ wskbd_input(struct device *dev, u_int type, int value)
 	 * send upstream.
 	 */
 	if (sc->sc_translating) {
+#ifdef BURNER_SUPPORT
 		if (type == WSCONS_EVENT_KEY_DOWN && sc->sc_displaydv != NULL)
 			wsdisplay_burn(sc->sc_displaydv, WSDISPLAY_BURN_KBD);
+#endif
 		num = wskbd_translate(sc->id, type, value);
 		if (num > 0) {
 			if (sc->sc_base.me_dispdv != NULL) {

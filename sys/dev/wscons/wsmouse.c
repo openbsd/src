@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.14 2005/05/15 11:29:15 miod Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.15 2005/05/18 21:31:27 miod Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -30,8 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,6 +74,10 @@
 /*
  * Mouse driver.
  */
+
+#ifndef	SMALL_KERNEL
+#define	BURNER_SUPPORT
+#endif
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -446,7 +448,9 @@ out:
 		sc->sc_ub = ub;
 		evar->put = put;
 		WSEVENT_WAKEUP(evar);
+#ifdef BURNER_SUPPORT
 		/* wsdisplay_burn(sc->sc_displaydv, WSDISPLAY_BURN_MOUSE); */
+#endif
 #if NWSMUX > 0
 		DPRINTFN(5,("wsmouse_input: %s wakeup evar=%p\n",
 			    sc->sc_base.me_dv.dv_xname, evar));

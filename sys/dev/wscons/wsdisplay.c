@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.57 2005/05/15 11:29:15 miod Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.58 2005/05/18 21:31:27 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -33,6 +33,7 @@
 
 #ifndef	SMALL_KERNEL
 #define WSMOUSED_SUPPORT
+#define	BURNER_SUPPORT
 #endif
 
 #include <sys/param.h>
@@ -169,12 +170,14 @@ struct wsdisplay_softc {
 
 	struct wseventvar sc_evar;
 
+#ifdef BURNER_SUPPORT
 	struct timeout sc_burner;
 	int	sc_burnoutintvl;
 	int	sc_burninintvl;
 	int	sc_burnout;
 	int	sc_burnman;
 	int	sc_burnflags;
+#endif
 
 	struct wsdisplay_font sc_fonts[WSDISPLAY_MAXFONT];
 
@@ -724,12 +727,14 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 	if (i > start)
 		wsdisplay_addscreen_print(sc, start, i-start);
 
+#ifdef BURNER_SUPPORT
 	sc->sc_burnoutintvl = (hz * WSDISPLAY_DEFBURNOUT) / 1000;
 	sc->sc_burninintvl = (hz * WSDISPLAY_DEFBURNIN ) / 1000;
 	sc->sc_burnflags = 0;	/* off by default */
 	timeout_set(&sc->sc_burner, wsdisplay_burner, sc);
 	sc->sc_burnout = sc->sc_burnoutintvl;
 	wsdisplay_burn(sc, sc->sc_burnflags);
+#endif
 
 	if (hookset == 0)
 		shutdownhook_establish(wsdisplay_shutdownhook, NULL);
@@ -1075,14 +1080,18 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			    wsmoused_release(sc);
 #endif
 
+#ifdef BURNER_SUPPORT
 			    /* disable the burner while X is running */
 			    if (sc->sc_burnout)
 				    timeout_del(&sc->sc_burner);
+#endif
 		    }
 		    else {
+#ifdef BURNER_SUPPORT
 			    /* reenable the burner after exiting from X */
 			    if (!sc->sc_burnman)
 				    wsdisplay_burn(sc, sc->sc_burnflags);
+#endif
 
 #ifdef WSMOUSED_SUPPORT
 			    /*
@@ -1114,6 +1123,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			    (scr->scr_dconf->wsemulcookie, WSEMUL_SYNCFONT);
 		return (error);
 #undef d
+#ifdef BURNER_SUPPORT
 	case WSDISPLAYIO_GVIDEO:
 		*(u_int *)data = !sc->sc_burnman;
 		break;
@@ -1167,6 +1177,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		}
 		return (error);
 #undef d
+#endif
 	case WSDISPLAYIO_GETSCREEN:
 		return (wsdisplay_getscreen(sc,
 		    (struct wsdisplay_addscreendata *)data));
@@ -1370,7 +1381,9 @@ wsdisplaystart(struct tty *tp)
 
 	if (!(scr->scr_flags & SCR_GRAPHICS)) {
 		KASSERT(WSSCREEN_HAS_EMULATOR(scr));
+#ifdef BURNER_SUPPORT
 		wsdisplay_burn(sc, WSDISPLAY_BURN_OUTPUT);
+#endif
 #ifdef WSMOUSED_SUPPORT
 		if (scr == sc->sc_focus) {
 			if (IS_SEL_EXISTS(sc->sc_focus))
@@ -1390,7 +1403,9 @@ wsdisplaystart(struct tty *tp)
 
 		if (!(scr->scr_flags & SCR_GRAPHICS)) {
 			KASSERT(WSSCREEN_HAS_EMULATOR(scr));
+#ifdef BURNER_SUPPORT
 			wsdisplay_burn(sc, WSDISPLAY_BURN_OUTPUT);
+#endif
 			(*scr->scr_dconf->wsemul->output)
 			    (scr->scr_dconf->wsemulcookie, buf, n, 0);
 		}
@@ -1970,7 +1985,9 @@ wsdisplay_cnputc(dev_t dev, int i)
 		return;
 
 	dc = &wsdisplay_console_conf;
+#ifdef BURNER_SUPPORT
 	/*wsdisplay_burn(wsdisplay_console_device, WSDISPLAY_BURN_OUTPUT);*/
+#endif
 	(*dc->wsemul->output)(dc->wsemulcookie, &c, 1, 1);
 }
 
@@ -2053,6 +2070,7 @@ wsscrollback(void *arg, int op)
 	}
 }
 
+#ifdef BURNER_SUPPORT
 void
 wsdisplay_burn(void *v, u_int flags)
 {
@@ -2087,6 +2105,7 @@ wsdisplay_burner(void *v)
 		splx(s);
 	}
 }
+#endif
 
 /*
  * Switch the console at shutdown.
