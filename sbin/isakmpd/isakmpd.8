@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.78 2005/05/14 09:28:18 jmc Exp $
+.\" $OpenBSD: isakmpd.8,v 1.79 2005/05/18 20:22:19 jmc Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -506,27 +506,9 @@ A
 extension field has to be added
 to the certificate in order to make it usable by
 .Nm .
-There are two possible ways to add the extensions to the certificate:
-either run
-.Xr certpatch 8
-or make use of an OpenSSL configuration file, such as
-.Pa /etc/ssl/x509v3.cnf .
 Replace 10.0.0.1 with the IP address which
 .Nm
 will use as the certificate identity.
-.Pp
-To use
-.Xr certpatch 8 ,
-do the following:
-.Bd -literal -offset indent
-# openssl x509 -req -days 365 -in 10.0.0.1.csr \e
-	-CA /etc/ssl/ca.crt -CAkey /etc/ssl/private/ca.key \e
-	-CAcreateserial -out 10.0.0.1.crt
-# certpatch -i 10.0.0.1 -k /etc/ssl/private/ca.key \e
-	10.0.0.1.crt 10.0.0.1.crt
-.Ed
-.Pp
-Otherwise do:
 .Bd -literal -offset indent
 # setenv CERTIP 10.0.0.1
 # openssl x509 -req -days 365 -in 10.0.0.1.csr \e
@@ -543,17 +525,6 @@ For a FQDN certificate, do:
 	-CAcreateserial -extfile /etc/ssl/x509v3.cnf \e
 	-extensions x509v3_FQDN -out somehost.somedomain.crt
 .Ed
-.Pp
-Or with
-.Xr certpatch 8 :
-.Bd -literal -offset indent
-# certpatch -t fqdn -i somehost.somedomain \e
-	-k /etc/ssl/private/ca.key \e
-	somehost.somedomain.crt somehost.somedomain.crt
-.Ed
-.Pp
-(This assumes the previous steps were used to create a request for
-somehost.somedomain instead of 10.0.0.1.)
 .Pp
 Put the certificate (the file ending in .crt) in
 .Pa /etc/isakmpd/certs/
@@ -663,7 +634,6 @@ command is issued in the command FIFO.
 .Xr ipsec 4 ,
 .Xr isakmpd.conf 5 ,
 .Xr isakmpd.policy 5 ,
-.Xr certpatch 8 ,
 .Xr ssl 8 ,
 .Xr tcpdump 8 ,
 .Xr vpn 8
