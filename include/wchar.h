@@ -1,4 +1,4 @@
-/*	$OpenBSD: wchar.h,v 1.2 2005/05/11 18:44:12 espie Exp $	*/
+/*	$OpenBSD: wchar.h,v 1.3 2005/05/18 13:48:49 espie Exp $	*/
 /*	$NetBSD: wchar.h,v 1.16 2003/03/07 07:11:35 tshiozak Exp $	*/
 
 /*-
@@ -80,7 +80,9 @@
 #include <stdio.h> /* for FILE* */
 
 #ifdef	_BSD_WCHAR_T_
+# ifndef __cplusplus
 typedef	_BSD_WCHAR_T_	wchar_t;
+# endif
 #undef	_BSD_WCHAR_T_
 #endif
 
