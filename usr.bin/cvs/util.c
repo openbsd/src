@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.23 2005/04/18 21:02:50 jfb Exp $	*/
+/*	$OpenBSD: util.c,v 1.24 2005/05/18 20:24:19 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -604,3 +604,53 @@ cvs_exec(int argc, char **argv, int fds[3])
 
 	return (ret);
 }
+
+/*
+ * remove a directory tree from disk.
+ */
+int
+cvs_remove_dir(const char *path)
+{
+	int l, ret;
+	DIR *dirp;
+	struct dirent *ent;
+	char fpath[MAXPATHLEN];
+
+	if ((dirp = opendir(path)) == NULL) {
+		cvs_log(LP_ERRNO, "failed to open '%s'", path);
+		return (CVS_EX_FILE);
+	}
+
+	while ((ent = readdir(dirp)) != NULL) {
+		if (!strcmp(ent->d_name, ".") ||
+		    !strcmp(ent->d_name, ".."))
+			continue;
+
+		l = snprintf(fpath, sizeof(fpath), "%s/%s", path, ent->d_name);
+		if (l == -1 || l >= (int)sizeof(fpath)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", fpath);
+			closedir(dirp);
+			return (CVS_EX_FILE);
+		}
+
+		if (ent->d_type == DT_DIR) {
+			if ((ret = cvs_remove_dir(fpath)) != CVS_EX_OK) {
+				closedir(dirp);
+				return (ret);
+			}
+		} else {
+			if ((unlink(fpath) == -1) && (errno != ENOENT))
+				cvs_log(LP_ERRNO, "failed to remove '%s'",
+				    fpath);
+		}
+	}
+
+	closedir(dirp);
+
+	if ((rmdir(path) == -1) && (errno != ENOENT))
+		cvs_log(LP_ERRNO, "failed to remove '%s'", path);
+
+	return (CVS_EX_OK);
+}
+

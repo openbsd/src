@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.54 2005/05/02 15:00:18 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.55 2005/05/18 20:24:19 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -406,6 +406,7 @@ int    cvs_mkadmin    (CVSFILE *, mode_t);
 int    cvs_cksum      (const char *, char *, size_t);
 int    cvs_exec       (int, char **, int []);
 int    cvs_getargv    (const char *, char **, int);
+int    cvs_remove_dir (const char *);
 char** cvs_makeargv   (const char *, int *);
 void   cvs_freeargv   (char **, int);
 

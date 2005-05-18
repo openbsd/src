@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.13 2005/04/12 14:58:40 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.14 2005/05/18 20:24:19 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -25,6 +25,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -47,6 +48,8 @@ u_int   cvs_case   = 0;
 struct cvs_cmd_info cmd_server = {
 	NULL, NULL, NULL, NULL, NULL, 0, 0, 0 };
 
+char cvs_server_tmpdir[MAXPATHLEN];
+
 /*
  * cvs_server()
  *
@@ -61,6 +64,7 @@ struct cvs_cmd_info cmd_server = {
 int
 cvs_server(int argc, char **argv)
 {
+	int l, ret;
 	size_t len;
 	char reqbuf[512];
 
@@ -71,6 +75,27 @@ cvs_server(int argc, char **argv)
 	/* make sure standard in and standard out are line-buffered */
 	(void)setvbuf(stdin, NULL, _IOLBF, 0);
 	(void)setvbuf(stdout, NULL, _IOLBF, 0);
+
+	/* create the temporary directory */
+	l = snprintf(cvs_server_tmpdir, sizeof(cvs_server_tmpdir),
+	    "%scvs-serv%d", _PATH_TMP, getpid());
+	if (l == -1 || l >= (int)sizeof(cvs_server_tmpdir)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", cvs_server_tmpdir);
+		return (CVS_EX_DATA);
+	}
+
+	if (mkdir(cvs_server_tmpdir, 0700) == -1) {
+		cvs_log(LP_ERRNO, "failed to create temporary directory '%s'",
+		    cvs_server_tmpdir);
+		return (CVS_EX_DATA);
+	}
+
+	if (chdir(cvs_server_tmpdir) == -1) {
+		cvs_log(LP_ERRNO, "failed to change to temporary directory '%s'"
+		    , cvs_server_tmpdir);
+		return (CVS_EX_DATA);
+	}
 
 	for (;;) {
 		if (fgets(reqbuf, sizeof(reqbuf), stdin) == NULL) {
@@ -94,5 +119,8 @@ cvs_server(int argc, char **argv)
 
 	}
 
-	return (0);
+	/* cleanup the temporary tree */
+	ret = cvs_remove_dir(cvs_server_tmpdir);
+
+	return (ret);
 }

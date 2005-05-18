@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.13 2005/04/18 21:33:34 jfb Exp $	*/
+/*	$OpenBSD: req.c,v 1.14 2005/05/18 20:24:19 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -150,7 +150,11 @@ struct cvs_reqhdlr {
  */
 
 static char *cvs_req_rootpath;
+static char *cvs_req_currentdir;
+static char *cvs_req_repopath;
+static char cvs_req_tmppath[MAXPATHLEN];
 
+extern char cvs_server_tmpdir[MAXPATHLEN];
 static char *cvs_req_args[CVS_PROTO_MAXARG];
 static int   cvs_req_nargs = 0;
 
@@ -261,10 +265,41 @@ cvs_req_validresp(int reqid, char *line)
 static int
 cvs_req_directory(int reqid, char *line)
 {
+	int l;
 	char rdir[MAXPATHLEN];
 
 	if (cvs_getln(NULL, rdir, sizeof(rdir)) < 0)
 		return (-1);
+
+	if (cvs_req_currentdir != NULL)
+		free(cvs_req_currentdir);
+
+	cvs_req_currentdir = strdup(rdir);
+	if (cvs_req_currentdir == NULL) {
+		cvs_log(LP_ERROR, "failed to duplicate directory");
+		return (-1);
+	}
+
+	/* now obtain the path relative to the Root directory */
+	cvs_req_repopath = cvs_req_currentdir + strlen(cvs_req_rootpath) + 1;
+
+	/* create tmp path */
+	l = snprintf(cvs_req_tmppath, sizeof(cvs_req_tmppath), "%s/%s",
+	    cvs_server_tmpdir, cvs_req_repopath);
+	if (l == -1 || l >= (int)sizeof(cvs_req_tmppath)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", cvs_req_tmppath);
+		return (-1);
+	}
+
+	if ((mkdir(cvs_req_tmppath, 0755) == -1) && (errno != EEXIST)) {
+		cvs_log(LP_ERRNO, "failed to create temporary directory '%s'",
+		    cvs_req_tmppath);
+		return (-1);
+	}
+
+	/* create the CVS/ administrative files */
+	/* XXX - TODO */
 
 	return (0);
 }
@@ -290,13 +325,34 @@ cvs_req_entry(int reqid, char *line)
 static int
 cvs_req_filestate(int reqid, char *line)
 {
+	int l;
 	mode_t fmode;
 	BUF *fdata;
+	char fpath[MAXPATHLEN];
 
 	if (reqid == CVS_REQ_MODIFIED) {
 		fdata = cvs_recvfile(NULL, &fmode);
 		if (fdata == NULL)
 			return (-1);
+
+		/* create full temporary path */
+		l = snprintf(fpath, sizeof(fpath), "%s/%s", cvs_req_tmppath,
+		    line);
+		if (l == -1 || l >= (int)sizeof(fpath)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", fpath);
+			cvs_buf_free(fdata);
+			return (-1);
+		}
+
+		/* write the file */
+		if (cvs_buf_write(fdata, fpath, fmode) < 0) {
+			cvs_log(LP_ERROR, "failed to create file %s", fpath);
+			cvs_buf_free(fdata);
+			return (-1);
+		}
+
+		cvs_buf_free(fdata);
 	}
 
 	return (0);
