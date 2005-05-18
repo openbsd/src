@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral.c,v 1.33 2005/05/13 19:35:47 damien Exp $  */
+/*	$OpenBSD: if_ral.c,v 1.34 2005/05/18 20:10:17 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -1897,12 +1897,14 @@ ural_bbp_init(struct ural_softc *sc)
 	for (i = 0; i < N(ural_def_bbp); i++)
 		ural_bbp_write(sc, ural_def_bbp[i].reg, ural_def_bbp[i].val);
 
+#if 0
 	/* initialize BBP registers to values stored in EEPROM */
 	for (i = 0; i < 16; i++) {
 		if (sc->bbp_prom[i].reg == 0xff)
 			continue;
 		ural_bbp_write(sc, sc->bbp_prom[i].reg, sc->bbp_prom[i].val);
 	}
+#endif
 
 	return 0;
 #undef N
