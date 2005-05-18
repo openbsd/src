@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.76 2005/04/08 21:09:36 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.77 2005/05/18 20:15:22 hshoexer Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -67,8 +67,6 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes \
 #CFLAGS+=		-DUSE_BOEHM_GC -DGC_DEBUG
 # You can also use Boehm's garbage collector as a means to find leaks.
 #  # setenv GC_FIND_LEAK
-
-SUBDIR=		apps
 
 .if make(install)
 SUBDIR+=	samples
