@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.45 2005/03/09 21:53:49 hshoexer Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.46 2005/05/19 19:41:01 grange Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -77,6 +77,7 @@
 #include <dev/rndvar.h>
 
 #include <dev/ic/i82802reg.h>
+#include <dev/ic/i82810reg.h>
 
 #define PCISET_INTEL_BRIDGETYPE_MASK	0x3
 #define PCISET_INTEL_TYPE_COMPAT	0x1
@@ -376,6 +377,38 @@ pchbattach(parent, self, aux)
 			pchb_rnd(sc);
 			break;
 		default:
+			break;
+		}
+
+		/* Lock down SMM space on i82810 and later chipsets */
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_INTEL_82810_MCH:
+		case PCI_PRODUCT_INTEL_82810_DC100_MCH:
+		case PCI_PRODUCT_INTEL_82810E_MCH:
+		case PCI_PRODUCT_INTEL_82815_DC100_HUB:
+		case PCI_PRODUCT_INTEL_82815_NOGRAPH_HUB:
+		case PCI_PRODUCT_INTEL_82815_FULL_HUB:
+		case PCI_PRODUCT_INTEL_82815_NOAGP_HUB:
+			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    I82810_SMRAM);
+			bcreg |= I82810_SMRAM_D_LCK;
+			pci_conf_write(pa->pa_pc, pa->pa_tag,
+			    I82810_SMRAM, bcreg);
+			break;
+		case PCI_PRODUCT_INTEL_82820_MCH:
+		case PCI_PRODUCT_INTEL_82840_HB:
+		case PCI_PRODUCT_INTEL_82845_HB:
+		case PCI_PRODUCT_INTEL_82845G:
+		case PCI_PRODUCT_INTEL_82850_HB:
+		case PCI_PRODUCT_INTEL_82855PE:
+		case PCI_PRODUCT_INTEL_82860_HB:
+		case PCI_PRODUCT_INTEL_82875P_HB:
+			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    I82820_SMRAM);
+			printf(": SMRAM 0x%x", bcreg);
+			bcreg |= (I82820_SMRAM_D_LCK << I82820_SMRAM_SHIFT);
+			pci_conf_write(pa->pa_pc, pa->pa_tag,
+			    I82820_SMRAM, bcreg);
 			break;
 		}
 	}
