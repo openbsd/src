@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.25 2005/05/19 15:37:50 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.26 2005/05/19 16:11:10 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -241,7 +241,10 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 	else {
 		cvs_printf("total revisions: %u;\tselected revisions: %u\n",
 		    rf->rf_ndelta, nrev);
-		cvs_printf("description:\n%s", rf->rf_desc);
+
+		if (log_lhonly)
+			cvs_printf("description:\n%s", rf->rf_desc);
+
 		TAILQ_FOREACH(rdp, &(rf->rf_delta), rd_list) {
 			rcsnum_tostr(rdp->rd_num, numbuf, sizeof(numbuf));
 			cvs_printf(CVS_GETLOG_REVSEP "\nrevision %s\n", numbuf);
