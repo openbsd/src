@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.3 2005/05/17 08:16:03 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.4 2005/05/19 15:31:35 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -129,6 +129,7 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 {
 	FILE *fp;
 	int j, l;
+	char *wdir, cwd[MAXPATHLEN];
 	char buf[256], cdpath[MAXPATHLEN], dpath[MAXPATHLEN];
 	char updcmd[MAXPATHLEN];	/* XXX find a better size; malloc()?? */
 	struct stat st;
@@ -160,9 +161,17 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 		}
 
 		if (root->cr_method != CVS_METHOD_LOCAL) {
+			/* XXX kept for compat reason of `cvs update' output */
+			/* save current working directory for further use */
+			if ((wdir = getcwd(cwd, sizeof(cwd))) == NULL)
+                		cvs_log(LP_ERRNO, "cannot get current dir");
+
 			/* change dir before running the `cvs update' command */
-			if (chdir(dpath) == -1)
+			if (chdir(dpath) == -1) {
+				cvs_log(LP_ERRNO, "cannot change to dir `%s'",
+				    dpath);
 				return (-1);
+			}
 
 			/* construct `cvs update' command */
 			l = snprintf(updcmd, sizeof(updcmd), "%s %s %s update",
@@ -191,6 +200,7 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 
 			printf("You have [%d] altered file%s in this "
 			    "repository.\n", j, j > 1 ? "s" : "");
+
 			printf("Are you sure you want to release "
 			    "%sdirectory `%s': ",
 			    dflag ? "(and delete) " : "", dpath);
@@ -202,10 +212,17 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 				return (-1);
 			}
 
+			/* change back to original working dir */
+			if (chdir(wdir) == -1) {
+				cvs_log(LP_ERRNO, "cannot change to original "
+				    "working dir `%s'", wdir);
+				return (-1);
+			}
+
 			if (dflag == 1) {
-				if (unlink(dpath) == -1) {
+				if (cvs_remove_dir(dpath) != CVS_EX_OK) {
 					cvs_log(LP_ERRNO,
-				   	    "deletion of directory %s failed",
+				   	    "deletion of directory `%s' failed",
 					    dpath);
 					return (-1);
 				}
