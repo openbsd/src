@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.31 2004/01/24 19:14:09 deraadt Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.32 2005/05/19 09:28:24 jmc Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.31 2004/01/24 19:14:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.32 2005/05/19 09:28:24 jmc Exp $";
 #endif
 #endif /* not lint */
 
@@ -558,6 +558,6 @@ badtime(void)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: shutdown [-dfhknpr] shutdowntime [ message ]\n");
+	fprintf(stderr, "usage: shutdown [-] [-dfhknpr] time [warning-message ...]\n");
 	exit(1);
 }

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.35 2005/03/09 13:52:20 aoyama Exp $
+.\"	$OpenBSD: shutdown.8,v 1.36 2005/05/19 09:28:24 jmc Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm shutdown
 .Op Fl
-.Op Fl dfhkrnp
+.Op Fl dfhknpr
 .Ar time
 .Op Ar warning-message ...
 .Sh DESCRIPTION
@@ -99,12 +99,6 @@ or
 prevents the normal
 .Xr sync 2
 before stopping the system.
-.It Fl r
-.Nm
-execs
-.Xr reboot 8
-at the specified
-.Ar time .
 .It Fl p
 The
 .Fl p
@@ -113,6 +107,12 @@ flag is passed on to
 causing machines which support automatic power down to do so after halting.
 (Currently supported on some i386, luna88k, mac68k, macppc, sparc,
 sparc64 and zaurus platforms.)
+.It Fl r
+.Nm
+execs
+.Xr reboot 8
+at the specified
+.Ar time .
 .It Ar time
 .Ar time
 is the time at which
