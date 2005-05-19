@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.63 2005/05/18 11:53:38 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.64 2005/05/19 15:37:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -183,7 +183,7 @@ struct cvs_cmd cvs_cdt[] = {
 	{
 		CVS_OP_LOG, "log",      { "lo"         }, &cvs_getlog,
 		"[-bhlNRt] [-d dates] [-r revisions] [-s states] [-w logins]",
-		"d:hlRr:",
+		"bd:hlNRrs:tw",
 		"Print out history information for files",
 		NULL
 	},

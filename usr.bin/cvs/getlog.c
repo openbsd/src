@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.24 2005/05/11 22:50:09 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.25 2005/05/19 15:37:50 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -47,14 +47,14 @@
 #define CVS_GETLOG_REVEND \
  "============================================================================="
 
-static int  cvs_getlog_remote  (CVSFILE *, void *);
-static int  cvs_getlog_local   (CVSFILE *, void *);
-
-int cvs_getlog_options(char *, int, char **, int *);
+static int cvs_getlog_remote  (CVSFILE *, void *);
+static int cvs_getlog_local   (CVSFILE *, void *);
+static int cvs_getlog_options(char *, int, char **, int *);
+static int cvs_getlog_sendflags(struct cvsroot *);
 
 struct cvs_cmd_info cvs_getlog = {
 	cvs_getlog_options,
-	NULL,
+	cvs_getlog_sendflags,
 	cvs_getlog_remote,
 	NULL, NULL,
 	CF_IGNORE | CF_RECURSE,
@@ -64,15 +64,18 @@ struct cvs_cmd_info cvs_getlog = {
 
 static int log_rfonly = 0;
 static int log_honly = 0;
+static int log_lhonly = 0;
 static int log_notags = 0;
 
-int
+static int
 cvs_getlog_options(char *opt, int argc, char **argv, int *arg)
 {
 	int ch;
 
 	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
+		case 'b':
+			break;
 		case 'd':
 			break;
 		case 'h':
@@ -89,6 +92,13 @@ cvs_getlog_options(char *opt, int argc, char **argv, int *arg)
 			break;
 		case 'r':
 			break;
+		case 's':
+			break;
+		case 't':
+			log_lhonly = 1;
+			break;
+		case 'w':
+			break;
 		default:
 			return (CVS_EX_USAGE);
 		}
@@ -98,6 +108,20 @@ cvs_getlog_options(char *opt, int argc, char **argv, int *arg)
 	return (0);
 }
 
+static int
+cvs_getlog_sendflags(struct cvsroot *root)
+{
+	if (log_honly && (cvs_sendarg(root, "-h", 0) < 0))
+		return (CVS_EX_PROTO);
+	if (log_notags && (cvs_sendarg(root, "-N", 0) < 0))
+		return (CVS_EX_PROTO);
+	if (log_rfonly && (cvs_sendarg(root, "-R", 0) < 0))
+		return (CVS_EX_PROTO);
+	if (log_lhonly && (cvs_sendarg(root, "-t", 0) < 0))
+		return (CVS_EX_PROTO);
+
+	return (0);
+}
 
 /*
  * cvs_getlog_remote()
