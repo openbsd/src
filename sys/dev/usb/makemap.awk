@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.4 2005/05/19 10:40:48 miod Exp $
+#	$OpenBSD: makemap.awk,v 1.5 2005/05/19 17:49:54 miod Exp $
 #
 # Copyright (c) 2005, Miodrag Vallat
 #
@@ -31,7 +31,7 @@
 #
 
 BEGIN {
-	rcsid = "$OpenBSD: makemap.awk,v 1.4 2005/05/19 10:40:48 miod Exp $"
+	rcsid = "$OpenBSD: makemap.awk,v 1.5 2005/05/19 17:49:54 miod Exp $"
 	ifdepth = 0
 	ignore = 0
 	declk = 0
@@ -319,14 +319,44 @@ $1 == "#define" || $1 == "#undef" {
 		if (mapname == "ukbd_keydesc_fr[]") {
 			print $0
 			print "\nstatic const keysym_t ukbd_keydesc_fr_apple[] = {"
+			print "    KC(5),\tKS_b,\t\tKS_B,\t\tKS_ssharp,"
+			print "    KC(8),\tKS_e,\t\tKS_E,\t\tKS_ecircumflex,\tKS_Ecircumflex,"
+			print "    KC(11),\tKS_h,\t\tKS_H,\t\tKS_Igrave,\tKS_Icircumflex,"
+			print "    KC(12),\tKS_i,\t\tKS_I,\t\tKS_icircumflex,\tKS_idiaeresis,"
+			print "    KC(13),\tKS_j,\t\tKS_J,\t\tKS_Idiaeresis,\tKS_Iacute,"
+			print "    KC(14),\tKS_k,\t\tKS_K,\t\tKS_Egrave,\tKS_Ediaeresis,"
+			print "    KC(15),\tKS_l,\t\tKS_L,\t\tKS_voidSymbol,\tKS_bar,"
+			print "    KC(16),\tKS_comma,\tKS_question,\tKS_voidSymbol,\tKS_questiondown,"
+			print "    KC(17),\tKS_n,\t\tKS_N,\t\tKS_asciitilde,"
+			print "    KC(20),\tKS_a,\t\tKS_A,\t\tKS_ae,\t\tKS_AE,"
+			print "    KC(21),\tKS_r,\t\tKS_R,\t\tKS_registered,\tKS_comma,"
+			print "    KC(22),\tKS_s,\t\tKS_S,\t\tKS_Ograve,"
+			print "    KC(26),\tKS_z,\t\tKS_Z,\t\tKS_Acircumflex,\tKS_Aring,"
+			print "    KC(28),\tKS_y,\t\tKS_Y,\t\tKS_Uacute,"
+			print "    KC(31),\tKS_eacute,\tKS_2,\t\tKS_ediaeresis,"
+			print "    KC(32),\tKS_quotedbl,\tKS_3,"
+			print "    KC(33),\tKS_apostrophe,\tKS_4,"
+			print "    KC(34),\tKS_parenleft,\tKS_5,\t\tKS_braceleft,\tKS_bracketleft,"
 			print "    KC(35),\tKS_section,\tKS_6,"
+			print "    KC(36),\tKS_egrave,\tKS_7,\t\tKS_guillemotleft,"
+			print "\t\t\t\t\t\tKS_guillemotright,"
 			print "    KC(37),\tKS_exclam,\tKS_8,"
+			print "    KC(38),\tKS_ccedilla,\tKS_9,\t\tKS_Ccedilla,\tKS_Aacute,"
+			print "    KC(37),\tKS_exclam,\tKS_8,\t\tKS_exclamdown,\tKS_Ucircumflex,"
+			print "    KC(39),\tKS_agrave,\tKS_0,\t\tKS_oslash,\tKS_Ooblique,"
+			print "    KC(45),\tKS_parenright,\tKS_degree,\tKS_braceright,\tKS_bracketright,"
 			print "    KC(46),\tKS_minus,\tKS_underscore,"
-			print "    KC(48),\tKS_dollar,\tKS_asterisk,"
-			print "    KC(50),\tKS_backslash,\tKS_sterling,"
-			print "    KC(53),\tKS_at,\tKS_numbersign,"
+			print "    KC(47),\tKS_dead_circumflex, KS_dead_diaeresis,"
+			print "\t\t\t\t\t\tKS_ocircumflex,\tKS_Ocircumflex,"
+			print "    KC(48),\tKS_dollar,\tKS_asterisk,\tKS_cent,\tKS_yen,"
+			print "    KC(50),\tKS_grave,\tKS_sterling,\tKS_at,\t\tKS_numbersign,"
+			print "    KC(51),\tKS_m,\t\tKS_M,\t\tKS_mu,\t\tKS_Oacute,"
+			print "    KC(52),\tKS_ugrave,\tKS_percent,\tKS_Ugrave,"
+			print "    KC(53),\tKS_at,\t\tKS_numbersign,"
+			print "    KC(55),\tKS_colon,\tKS_slash,\tKS_voidSymbol,\tKS_backslash,"
 			print "    KC(56),\tKS_equal,\tKS_plus,"
 			print "    KC(103),\tKS_KP_Equal,"
+			print "    KC(231),\tKS_Mode_switch,\tKS_Multi_key,"
 		} else
 		if (mapname == "ukbd_keydesc_pt[]") {
 			print $0
