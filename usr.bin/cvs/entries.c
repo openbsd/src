@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.28 2005/05/19 04:17:24 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.29 2005/05/19 21:45:45 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -350,12 +350,6 @@ cvs_ent_parse(const char *entry)
 	memset(entp, 0, sizeof(*entp));
 	entp->ce_buf = buf;
 
-	entp->ce_rev = rcsnum_alloc();
-	if (entp->ce_rev == NULL) {
-		cvs_ent_free(entp);
-		return (NULL);
-	}
-
 	if (*fields[0] == '\0')
 		entp->ce_type = CVS_ENT_FILE;
 	else if (*fields[0] == 'D')
@@ -375,16 +369,19 @@ cvs_ent_parse(const char *entry)
 			if (strcmp(fields[2], "0") == 0)
 				entp->ce_status = CVS_ENT_ADDED;
 		}
-		rcsnum_aton(sp, NULL, entp->ce_rev);
+		if ((entp->ce_rev = rcsnum_parse(sp)) == NULL) {
+			cvs_ent_free(entp);
+			return (NULL);
+		}
 
 		if (strcmp(fields[3], CVS_DATE_DUMMY) == 0)
 			entp->ce_mtime = CVS_DATE_DMSEC;
 		else
 			entp->ce_mtime = cvs_date_parse(fields[3]);
-
-		entp->ce_opts = fields[4];
-		entp->ce_tag = fields[5];
 	}
+
+	entp->ce_opts = fields[4];
+	entp->ce_tag = fields[5];
 
 	return (entp);
 }
