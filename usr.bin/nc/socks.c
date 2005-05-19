@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.11 2005/05/19 04:29:46 djm Exp $	*/
+/*	$OpenBSD: socks.c,v 1.12 2005/05/19 08:40:59 djm Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -163,7 +163,7 @@ socks_connect(const char *host, const char *port,
 			errx(1, "short write, %d (expected 10)", cnt);
 
 		/* XXX Handle short reads better */
-		cnt = read(proxyfd, buf, sizeof buf);
+		cnt = read(proxyfd, buf, 10);
 		if (cnt == -1)
 			err(1, "read failed");
 		if (cnt != 10)
