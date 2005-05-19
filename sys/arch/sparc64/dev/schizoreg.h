@@ -1,4 +1,4 @@
-/*	$OpenBSD: schizoreg.h,v 1.7 2003/06/02 20:02:49 jason Exp $	*/
+/*	$OpenBSD: schizoreg.h,v 1.8 2005/05/19 18:28:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -35,7 +35,7 @@ struct schizo_pbm_regs {
 	volatile u_int64_t	iclr[64];
 	volatile u_int64_t	_unused4[320];
 	volatile u_int64_t	ctrl;
-	volatile u_int64_t	__unused;
+	volatile u_int64_t	__unused0;
 	volatile u_int64_t	afsr;
 	volatile u_int64_t	afar;
 	volatile u_int64_t	_unused5[252];
