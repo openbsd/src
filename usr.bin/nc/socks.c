@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.10 2005/02/08 15:26:23 otto Exp $	*/
+/*	$OpenBSD: socks.c,v 1.11 2005/05/19 04:29:46 djm Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -56,14 +56,14 @@ int	socks_connect(const char *host, const char *port, struct addrinfo hints,
 static in_addr_t
 decode_addr(const char *s)
 {
-	struct hostent *hp = gethostbyname (s);
+	struct hostent *hp = gethostbyname(s);
 	struct in_addr retval;
 
 	if (hp)
-		return *(in_addr_t *)hp->h_addr_list[0];
-	if (inet_aton (s, &retval))
-		return retval.s_addr;
-	errx (1, "cannot decode address \"%s\"", s);
+		return (*(in_addr_t *)hp->h_addr_list[0]);
+	if (inet_aton(s, &retval))
+		return (retval.s_addr);
+	errx(1, "cannot decode address \"%s\"", s);
 }
 
 static in_port_t
@@ -73,14 +73,14 @@ decode_port(const char *s)
 	in_port_t port;
 	char *p;
 
-	port = strtol (s, &p, 10);
+	port = strtol(s, &p, 10);
 	if (s == p) {
-		sp = getservbyname (s, "tcp");
+		sp = getservbyname(s, "tcp");
 		if (sp)
-			return sp->s_port;
+			return (sp->s_port);
 	}
 	if (*s != '\0' && *p == '\0')
-		return htons (port);
+		return (htons(port));
 	errx (1, "cannot decode port \"%s\"", s);
 }
 
@@ -127,77 +127,77 @@ socks_connect(const char *host, const char *port,
 	proxyfd = remote_connect(proxyhost, proxyport, proxyhints);
 
 	if (proxyfd < 0)
-		return -1;
+		return (-1);
 
-	serveraddr = decode_addr (host);
-	serverport = decode_port (port);
+	serveraddr = decode_addr(host);
+	serverport = decode_port(port);
 
 	if (socksv == 5) {
 		/* Version 5, one method: no authentication */
 		buf[0] = SOCKS_V5;
 		buf[1] = 1;
 		buf[2] = SOCKS_NOAUTH;
-		cnt = write (proxyfd, buf, 3);
+		cnt = write(proxyfd, buf, 3);
 		if (cnt == -1)
-			err (1, "write failed");
+			err(1, "write failed");
 		if (cnt != 3)
-			errx (1, "short write, %d (expected 3)", cnt);
+			errx(1, "short write, %d (expected 3)", cnt);
 
-		read (proxyfd, buf, 2);
+		read(proxyfd, buf, 2);
 		if (buf[1] == SOCKS_NOMETHOD)
-			errx (1, "authentication method negotiation failed");
+			errx(1, "authentication method negotiation failed");
 
 		/* Version 5, connect: IPv4 address */
 		buf[0] = SOCKS_V5;
 		buf[1] = SOCKS_CONNECT;
 		buf[2] = 0;
 		buf[3] = SOCKS_IPV4;
-		memcpy (buf + 4, &serveraddr, sizeof serveraddr);
-		memcpy (buf + 8, &serverport, sizeof serverport);
+		memcpy(buf + 4, &serveraddr, sizeof serveraddr);
+		memcpy(buf + 8, &serverport, sizeof serverport);
 
 		/* XXX Handle short writes better */
-		cnt = write (proxyfd, buf, 10);
+		cnt = write(proxyfd, buf, 10);
 		if (cnt == -1)
-			err (1, "write failed");
+			err(1, "write failed");
 		if (cnt != 10)
-			errx (1, "short write, %d (expected 10)", cnt);
+			errx(1, "short write, %d (expected 10)", cnt);
 
 		/* XXX Handle short reads better */
-		cnt = read (proxyfd, buf, sizeof buf);
+		cnt = read(proxyfd, buf, sizeof buf);
 		if (cnt == -1)
-			err (1, "read failed");
+			err(1, "read failed");
 		if (cnt != 10)
-			errx (1, "unexpected reply size %d (expected 10)", cnt);
+			errx(1, "unexpected reply size %d (expected 10)", cnt);
 		if (buf[1] != 0)
-			errx (1, "connection failed, SOCKS error %d", buf[1]);
+			errx(1, "connection failed, SOCKS error %d", buf[1]);
 	} else if (socksv == 4) {
 		/* Version 4 */
 		buf[0] = SOCKS_V4;
 		buf[1] = SOCKS_CONNECT;	/* connect */
-		memcpy (buf + 2, &serverport, sizeof serverport);
-		memcpy (buf + 4, &serveraddr, sizeof serveraddr);
+		memcpy(buf + 2, &serverport, sizeof serverport);
+		memcpy(buf + 4, &serveraddr, sizeof serveraddr);
 		buf[8] = 0;	/* empty username */
 
-		cnt = write (proxyfd, buf, 9);
+		cnt = write(proxyfd, buf, 9);
 		if (cnt == -1)
-			err (1, "write failed");
+			err(1, "write failed");
 		if (cnt != 9)
-			errx (1, "short write, %d (expected 9)", cnt);
+			errx(1, "short write, %d (expected 9)", cnt);
 
 		/* XXX Handle short reads better */
-		cnt = read (proxyfd, buf, 8);
+		cnt = read(proxyfd, buf, 8);
 		if (cnt == -1)
-			err (1, "read failed");
+			err(1, "read failed");
 		if (cnt != 8)
-			errx (1, "unexpected reply size %d (expected 8)", cnt);
+			errx(1, "unexpected reply size %d (expected 8)", cnt);
 		if (buf[1] != 90)
-			errx (1, "connection failed, SOCKS error %d", buf[1]);
+			errx(1, "connection failed, SOCKS error %d", buf[1]);
 	} else if (socksv == -1) {
 		/* HTTP proxy CONNECT */
 
 		/* Disallow bad chars in hostname */
 		if (strcspn(host, "\r\n\t []:") != strlen(host))
-			errx (1, "Invalid hostname");
+			errx(1, "Invalid hostname");
 
 		/* Try to be sane about numeric IPv6 addresses */
 		if (strchr(host, ':') != NULL) {
@@ -210,27 +210,27 @@ socks_connect(const char *host, const char *port,
 			    host, ntohs(serverport));
 		}
 		if (r == -1 || (size_t)r >= sizeof(buf))
-			errx (1, "hostname too long");
+			errx(1, "hostname too long");
 		r = strlen(buf);
 
 		/* XXX atomicio */
-		cnt = write (proxyfd, buf, r);
+		cnt = write(proxyfd, buf, r);
 		if (cnt == -1)
-			err (1, "write failed");
+			err(1, "write failed");
 		if (cnt != r)
-			errx (1, "short write, %d (expected %d)", cnt, r);
+			errx(1, "short write, %d (expected %d)", cnt, r);
 
 		/* Read reply */
 		for (r = 0; r < HTTP_MAXHDRS; r++) {
 			proxy_read_line(proxyfd, buf, sizeof(buf));
 			if (r == 0 && strncmp(buf, "HTTP/1.0 200 ", 12) != 0)
-				errx (1, "Proxy error: \"%s\"", buf);
+				errx(1, "Proxy error: \"%s\"", buf);
 			/* Discard headers until we hit an empty line */
 			if (*buf == '\0')
 				break;
 		}
 	} else
-		errx (1, "Unknown proxy protocol %d", socksv);
+		errx(1, "Unknown proxy protocol %d", socksv);
 
-	return proxyfd;
+	return (proxyfd);
 }
