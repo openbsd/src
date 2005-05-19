@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.3 2005/05/12 16:21:24 miod Exp $
+#	$OpenBSD: makemap.awk,v 1.4 2005/05/19 10:40:48 miod Exp $
 #
 # Copyright (c) 2005, Miodrag Vallat
 #
@@ -31,11 +31,12 @@
 #
 
 BEGIN {
-	rcsid = "$OpenBSD: makemap.awk,v 1.3 2005/05/12 16:21:24 miod Exp $"
+	rcsid = "$OpenBSD: makemap.awk,v 1.4 2005/05/19 10:40:48 miod Exp $"
 	ifdepth = 0
 	ignore = 0
 	declk = 0
 	haskeys = 0
+	kbfr = 0
 
 	# PS/2 id -> UKBD conversion table, or "sanity lossage 102"
 	# (101 is for GSC keyboards!)
@@ -312,9 +313,21 @@ $1 == "#define" || $1 == "#undef" {
 		haskeys = 0
 
 		#
-		# Apple portuguese USB keyboards use a slightly different
-		# layout. We define it here.
+		# Apple black USB keyboards use a slightly different
+		# layout. We define them here.
 		#
+		if (mapname == "ukbd_keydesc_fr[]") {
+			print $0
+			print "\nstatic const keysym_t ukbd_keydesc_fr_apple[] = {"
+			print "    KC(35),\tKS_section,\tKS_6,"
+			print "    KC(37),\tKS_exclam,\tKS_8,"
+			print "    KC(46),\tKS_minus,\tKS_underscore,"
+			print "    KC(48),\tKS_dollar,\tKS_asterisk,"
+			print "    KC(50),\tKS_backslash,\tKS_sterling,"
+			print "    KC(53),\tKS_at,\tKS_numbersign,"
+			print "    KC(56),\tKS_equal,\tKS_plus,"
+			print "    KC(103),\tKS_KP_Equal,"
+		} else
 		if (mapname == "ukbd_keydesc_pt[]") {
 			print $0
 			print "\nstatic const keysym_t ukbd_keydesc_pt_apple[] = {"
@@ -324,8 +337,17 @@ $1 == "#define" || $1 == "#undef" {
 			print "    KC(50),\tKS_backslash,\tKS_bar,"
 			print "    KC(52),\tKS_dead_tilde,\tKS_dead_circumflex"
 		}
-
 	}
+}
+/KB_FR/ {
+	print $0
+	if (kbfr++ == 0) {
+		print "\tKBD_MAP(KB_FR | KB_APPLE,\tKB_FR,\tukbd_keydesc_fr_apple),"
+	} else {
+		print "\tKBD_MAP(KB_FR | KB_APPLE | KB_SWAPCTRLCAPS,\tKB_FR | KB_APPLE,"
+		print "\t\tukbd_keydesc_swapctrlcaps),"
+	}
+	next
 }
 /KB_PT/ {
 	print $0
