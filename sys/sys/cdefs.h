@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdefs.h,v 1.14 2005/05/19 02:00:51 millert Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.15 2005/05/19 18:32:51 hshoexer Exp $	*/
 /*	$NetBSD: cdefs.h,v 1.16 1996/04/03 20:46:39 christos Exp $	*/
 
 /*
@@ -171,10 +171,8 @@
 
 #if __GNUC_PREREQ__(2, 7)
 #define	__packed	__attribute__((__packed__))
-#define	__unused	__attribute__((__unused__))
 #elif defined(lint)
 #define	__packed
-#define	__unused
 #endif
 
 #if !__GNUC_PREREQ__(2, 8)
