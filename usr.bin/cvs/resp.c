@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.33 2005/05/12 17:32:16 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.34 2005/05/19 04:17:24 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -566,7 +566,7 @@ cvs_resp_copyfile(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_modtime(struct cvsroot *root, int type, char *line)
 {
-	cvs_modtime = cvs_datesec(line, CVS_DATE_RFC822, 1);
+	cvs_modtime = cvs_date_parse(line);
 	return (0);
 }
 
@@ -615,7 +615,6 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 
 	if (cvs_modtime != CVS_DATE_DMSEC) {
 		ep->ce_mtime = cvs_modtime;
-		cvs_modtime = CVS_DATE_DMSEC;	/* invalidate */
 	} else
 		ep->ce_mtime = time(&(ep->ce_mtime));
 
@@ -652,6 +651,9 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 		if (utimes(path, tv) == -1)
 			cvs_log(LP_ERRNO, "failed to set file timestamps");
 	}
+
+	/* invalidate last received timestamp */
+	cvs_modtime = CVS_DATE_DMSEC;
 
 	/* now see if there is a checksum */
 	if (cvs_fcksum != NULL) {

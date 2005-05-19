@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.27 2005/04/22 15:16:15 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.28 2005/05/19 04:17:24 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -380,8 +380,7 @@ cvs_ent_parse(const char *entry)
 		if (strcmp(fields[3], CVS_DATE_DUMMY) == 0)
 			entp->ce_mtime = CVS_DATE_DMSEC;
 		else
-			entp->ce_mtime = cvs_datesec(fields[3],
-			    CVS_DATE_CTIME, 0);
+			entp->ce_mtime = cvs_date_parse(fields[3]);
 
 		entp->ce_opts = fields[4];
 		entp->ce_tag = fields[5];

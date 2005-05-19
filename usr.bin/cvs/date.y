@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: date.y,v 1.6 2005/04/18 21:55:13 joris Exp $	*/
+/*	$OpenBSD: date.y,v 1.7 2005/05/19 04:17:24 jfb Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -25,6 +25,7 @@
 #include <time.h>
 
 #include "log.h"
+#include "cvs.h"
 
 #define YEAR_EPOCH	1970
 #define YEAR_TMORIGIN	1900
@@ -57,7 +58,7 @@ typedef enum _MERIDIAN {
  *  yacc had the %union construct.)  Maybe someday; right now we only use
  *  the %union very rarely.
  */
-static char	*yyInput;
+static const char	*yyInput;
 static DSTMODE	yyDSTmode;
 static time_t	yyDayOrdinal;
 static time_t	yyDayNumber;
@@ -81,8 +82,6 @@ static time_t	yyRelSeconds;
 static int   yyerror   (const char *, ...);
 static int   yylex     (void);
 static int   yyparse   (void);
-
-time_t		get_date(char *, struct timeb *);
 
 %}
 
@@ -809,11 +808,13 @@ difftm(struct tm *a, struct tm *b)
 }
 
 time_t
-get_date(char *p, struct timeb *now)
+cvs_date_parse(const char *p)
 {
 	struct tm	*tm, gmt;
-	struct timeb	ftz;
+	struct timeb	ftz, *now;
 	time_t		Start, tod, nowtime;
+
+	now = NULL;
 
 	yyInput = p;
 	if (now == NULL) {
