@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.4 2005/05/19 15:31:35 xsa Exp $	*/
+/*	$OpenBSD: release.c,v 1.5 2005/05/19 22:07:33 jfb Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -105,7 +105,7 @@ cvs_release_yesno(void)
 	int c, ret;
 
 	ret = 0;
-	
+
 	fflush (stderr);
 	fflush (stdout);
 
