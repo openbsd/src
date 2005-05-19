@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82810reg.h,v 1.2 2003/06/02 19:24:22 mickey Exp $	*/
+/*	$OpenBSD: i82810reg.h,v 1.3 2005/05/19 19:38:07 grange Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -75,3 +75,15 @@
 #define	I82810_DRAMCH_SMS	0x07
 #define	I82810_DRAMCH_DRR	0x18
 #define	I82810_GTT		0x10000
+
+/*
+ * Intel i82820 memory and graphics controller
+ */
+
+/* Host-Hub Interface Bridge/DRAM Controller Device Registers (Device 0) */
+#define	I82820_SMRAM		0x9c
+#define	I82820_SMRAM_SHIFT	8
+#define	I82820_SMRAM_G_SMRAME	(1 << 3)
+#define	I82820_SMRAM_D_LCK	(1 << 4)
+#define	I82820_SMRAM_D_CLS	(1 << 5)
+#define	I82820_SMRAM_D_OPEN	(1 << 6)
