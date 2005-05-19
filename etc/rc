@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.266 2005/05/18 16:43:51 millert Exp $
+#	$OpenBSD: rc,v 1.267 2005/05/19 01:58:49 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -52,6 +52,8 @@ update_limit() {
 }
 
 sysctl_conf() {
+	test -s /etc/sysctl.conf || return
+
 	# delete comments and blank lines
 	set -- `stripcom /etc/sysctl.conf`
 	while [ $# -ge 1 ] ; do
@@ -71,10 +73,28 @@ sysctl_conf() {
 
 mixerctl_conf()
 {
+	test -s /etc/mixerctl.conf || return
+
 	# delete comments and blank lines
 	set -- `stripcom /etc/mixerctl.conf`
 	while [ $# -ge 1 ] ; do
 		mixerctl -q $1 > /dev/null 2>&1
+		shift
+	done
+}
+
+wsconsctl_conf()
+{
+	local save_IFS="$IFS"
+
+	test -x /sbin/wsconsctl -a -s /etc/wsconsctl.conf || return
+	# delete comments and blank lines
+	IFS="
+"
+	set -- `stripcom /etc/wsconsctl.conf`
+	IFS="$save_IFS"
+	while [ $# -ge 1 ] ; do
+		eval /sbin/wsconsctl -w $1
 		shift
 	done
 }
@@ -217,13 +237,9 @@ if [ X"${pf}" != X"NO" ]; then
 	echo $RULES | pfctl -f - -e
 fi
 
-if [ -f /etc/sysctl.conf ]; then
-	sysctl_conf
-fi
+sysctl_conf
 
-if [ -f /etc/mixerctl.conf ]; then
-	mixerctl_conf
-fi
+mixerctl_conf
 
 # set hostname, turn on network
 echo 'starting network'
@@ -670,20 +686,7 @@ fi
 
 echo '.'
 
-if [ -x /sbin/wsconsctl -a -f /etc/wsconsctl.conf ]; then
-(
-	# delete comments and blank lines
-	save_IFS="$IFS"
-	IFS="
-"
-	set -- `stripcom /etc/wsconsctl.conf`
-	IFS="$save_IFS"
-	while [ $# -ge 1 ] ; do
-		eval /sbin/wsconsctl -w $1
-		shift
-	done
-)
-fi
+wsconsctl_conf
 
 # KerberosV master KDC
 if [ X"${krb5_master_kdc}" = X"YES" ]; then
