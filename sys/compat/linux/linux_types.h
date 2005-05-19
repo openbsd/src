@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_types.h,v 1.7 2002/12/16 16:27:41 fgsch Exp $	*/
+/*	$OpenBSD: linux_types.h,v 1.8 2005/05/19 18:27:28 mickey Exp $	*/
 /*	$NetBSD: linux_types.h,v 1.5 1996/05/20 01:59:28 fvdl Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ struct linux___sysctl {
 	size_t       *oldlenp;
 	void         *new;
 	size_t        newlen;
-	unsigned long __unused[4];
+	unsigned long __unused0[4];
 };
 
 /* This matches struct stat64 in glibc2.1, hence the absolutely
