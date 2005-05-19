@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.14 2005/04/14 12:25:31 mickey Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.15 2005/05/19 17:43:33 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -617,15 +617,6 @@ bktr_store_address(unit, BKTR_MEM_BUF,          buf);
 
 	/* Initialise any MSP34xx or TDA98xx audio chips */
 	init_audio_devices(bktr);
-
-#ifdef BKTR_NO_OPEN_RESET
-	/* enable drivers on the GPIO port that control the MUXes */
-	OUTL(bktr, BKTR_GPIO_OUT_EN, INL(bktr, BKTR_GPIO_OUT_EN) | bktr->card.gpio_mux_bits);
-
-	/* mute the audio stream */
-	set_audio( bktr, AUDIO_MUTE );
-#endif
-
 }
 
 
@@ -1001,7 +992,8 @@ video_open( bktr_ptr_t bktr )
 
 	}
 
-	OUTB(bktr, BKTR_IFORM, INB(bktr, BKTR_IFORM) | format_params[bktr->format_params].iform_xtsel);
+	OUTB(bktr, BKTR_IFORM, INB(bktr, BKTR_IFORM) |
+	    format_params[bktr->format_params].iform_xtsel);
 
 	/* work around for new Hauppauge 878 cards */
 	if ((bktr->card.card_id == CARD_HAUPPAUGE) &&
@@ -1026,7 +1018,8 @@ video_open( bktr_ptr_t bktr )
 
 	bktr->max_clip_node = 0;
 
-	OUTB(bktr, BKTR_COLOR_CTL, BT848_COLOR_CTL_GAMMA | BT848_COLOR_CTL_RGB_DED);
+	OUTB(bktr, BKTR_COLOR_CTL,
+	    BT848_COLOR_CTL_GAMMA | BT848_COLOR_CTL_RGB_DED);
 
 	OUTB(bktr, BKTR_E_HSCALE_LO, 170);
 	OUTB(bktr, BKTR_O_HSCALE_LO, 170);
@@ -1056,9 +1049,9 @@ video_open( bktr_ptr_t bktr )
 
 	bktr->capture_area_enabled = FALSE;
 
-	OUTL(bktr, BKTR_INT_MASK, BT848_INT_MYSTERYBIT);	/* if you take this out triton
-                                                   based motherboards will
-						   operate unreliably */
+	/* if you take this out triton-based mobos will operate unreliably */
+	OUTL(bktr, BKTR_INT_MASK, BT848_INT_MYSTERYBIT);
+
 	return( 0 );
 }
 
@@ -1097,7 +1090,6 @@ tuner_open( bktr_ptr_t bktr )
 
 	bktr->tflags |= TUNER_OPEN;
 
-#ifndef BKTR_NO_OPEN_RESET
 	bktr->tuner.frequency = 0;
 	bktr->tuner.channel = 0;
 	bktr->tuner.chnlset = DEFAULT_CHNLSET;
@@ -1105,14 +1097,14 @@ tuner_open( bktr_ptr_t bktr )
 	bktr->tuner.radio_mode = 0;
 
 	/* enable drivers on the GPIO port that control the MUXes */
-	OUTL(bktr, BKTR_GPIO_OUT_EN, INL(bktr, BKTR_GPIO_OUT_EN) | bktr->card.gpio_mux_bits);
+	OUTL(bktr, BKTR_GPIO_OUT_EN,
+	    INL(bktr, BKTR_GPIO_OUT_EN) | bktr->card.gpio_mux_bits);
 
 	/* unmute the audio stream */
 	set_audio( bktr, AUDIO_UNMUTE );
 
 	/* Initialise any audio chips, eg MSP34xx or TDA98xx */
 	init_audio_devices( bktr );
-#endif
 
 	return( 0 );
 }
@@ -1155,13 +1147,12 @@ tuner_close( bktr_ptr_t bktr )
 {
 	bktr->tflags &= ~TUNER_OPEN;
 
-#ifndef BKTR_NO_OPEN_RESET
 	/* mute the audio by switching the mux */
 	set_audio( bktr, AUDIO_MUTE );
 
 	/* disable drivers on the GPIO port that control the MUXes */
-	OUTL(bktr, BKTR_GPIO_OUT_EN, INL(bktr, BKTR_GPIO_OUT_EN) & ~bktr->card.gpio_mux_bits);
-#endif
+	OUTL(bktr, BKTR_GPIO_OUT_EN,
+	    INL(bktr, BKTR_GPIO_OUT_EN) & ~bktr->card.gpio_mux_bits);
 
 	return( 0 );
 }
