@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.73 2005/05/20 05:13:44 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.74 2005/05/20 05:25:44 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -571,26 +571,24 @@ cvs_load_dirinfo(CVSFILE *cf, int flags)
 	if (cf->cf_root == NULL)
 		return (-1);
 
-	if (cf->cf_cvstat != CVS_FST_UNKNOWN) {
-		if (flags & CF_MKADMIN)
-			cvs_mkadmin(cf, 0755);
+	if (flags & CF_MKADMIN)
+		cvs_mkadmin(cf, 0755);
 
-		/* if the CVS administrative directory exists, load the info */
-		l = snprintf(pbuf, sizeof(pbuf), "%s/" CVS_PATH_CVSDIR, fpath);
-		if (l == -1 || l >= (int)sizeof(pbuf)) {
-			errno = ENAMETOOLONG;
-			cvs_log(LP_ERRNO, "%s", pbuf);
-			return (-1);
-		}
+	/* if the CVS administrative directory exists, load the info */
+	l = snprintf(pbuf, sizeof(pbuf), "%s/" CVS_PATH_CVSDIR, fpath);
+	if (l == -1 || l >= (int)sizeof(pbuf)) {
+		errno = ENAMETOOLONG;
+		cvs_log(LP_ERRNO, "%s", pbuf);
+		return (-1);
+	}
 
-		if ((stat(pbuf, &st) == 0) && S_ISDIR(st.st_mode)) {
-			if (cvs_readrepo(fpath, pbuf, sizeof(pbuf)) == 0) {
-				cf->cf_repo = strdup(pbuf);
-				if (cf->cf_repo == NULL) {
-					cvs_log(LP_ERRNO,
-					    "failed to dup repository string");
-					return (-1);
-				}
+	if ((stat(pbuf, &st) == 0) && S_ISDIR(st.st_mode)) {
+		if (cvs_readrepo(fpath, pbuf, sizeof(pbuf)) == 0) {
+			cf->cf_repo = strdup(pbuf);
+			if (cf->cf_repo == NULL) {
+				cvs_log(LP_ERRNO,
+				    "failed to dup repository string");
+				return (-1);
 			}
 		}
 	}
@@ -1061,6 +1059,10 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 		cvs_file_free(cfp);
 		return (NULL);
 	}
+
+	if ((cfp->cf_repo != NULL) && (cfp->cf_type == DT_DIR) &&
+	    !strcmp(cfp->cf_repo, path))
+		cfp->cf_cvstat = CVS_FST_UPTODATE;
 
 	return (cfp);
 }
