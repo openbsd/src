@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: date.y,v 1.7 2005/05/19 04:17:24 jfb Exp $	*/
+/*	$OpenBSD: date.y,v 1.8 2005/05/20 17:15:49 jfb Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -82,6 +82,7 @@ static time_t	yyRelSeconds;
 static int   yyerror   (const char *, ...);
 static int   yylex     (void);
 static int   yyparse   (void);
+static int   lookup    (char *);
 
 %}
 
@@ -634,7 +635,7 @@ RelativeMonth(time_t Start, time_t RelMonth)
 
 
 static int
-LookupWord(char *buff)
+lookup(char *buff)
 {
 	char		*p, *q;
 	int		i, abbrev;
@@ -769,7 +770,7 @@ yylex(void)
 					*p++ = c;
 			*p = '\0';
 			yyInput--;
-			return LookupWord(buff);
+			return lookup(buff);
 		}
 		if (c != '(')
 			return *yyInput++;
@@ -807,6 +808,11 @@ difftm(struct tm *a, struct tm *b)
 	    + (a->tm_min - b->tm_min)) + (a->tm_sec - b->tm_sec));
 }
 
+/*
+ * cvs_date_parse()
+ *
+ * Returns the number of seconds since the Epoch corresponding to the date.
+ */
 time_t
 cvs_date_parse(const char *p)
 {
@@ -821,9 +827,9 @@ cvs_date_parse(const char *p)
 		struct tm *gmt_ptr;
 
 		now = &ftz;
-		(void)time (&nowtime);
+		(void)time(&nowtime);
 
-		gmt_ptr = gmtime (&nowtime);
+		gmt_ptr = gmtime(&nowtime);
 		if (gmt_ptr != NULL) {
 			/* Make a copy, in case localtime modifies *tm (I think
 			 * that comment now applies to *gmt_ptr, but I am too
@@ -833,18 +839,11 @@ cvs_date_parse(const char *p)
 			gmt = *gmt_ptr;
 		}
 
-		if (!(tm = localtime (&nowtime)))
+		if (!(tm = localtime(&nowtime)))
 			return (-1);
 
 		if (gmt_ptr != NULL)
-			ftz.timezone = difftm (&gmt, tm) / 60;
-		else
-			/* We are on a system like VMS, where the system clock is
-			   in local time and the system has no concept of timezones.
-			   Hopefully we can fake this out (for the case in which the
-			   user specifies no timezone) by just saying the timezone
-			   is zero.  */
-			ftz.timezone = 0;
+			ftz.timezone = difftm(&gmt, tm) / 60;
 
 		if(tm->tm_isdst)
 			ftz.timezone += 60;
@@ -911,7 +910,7 @@ main(int argc, char **argv)
 	(void)printf("Enter date, or blank line to exit.\n\t> ");
 	(void)fflush(stdout);
 	while (fgets(buff, sizeof(buff), stdin) && buff[0]) {
-		d = get_date(buff, (struct timeb *)NULL);
+		d = cvs_date_parse(buff);
 		if (d == -1)
 			(void)printf("Bad format - couldn't convert.\n");
 		else
