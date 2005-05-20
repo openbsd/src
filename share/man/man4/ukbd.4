@@ -1,4 +1,4 @@
-.\" $OpenBSD: ukbd.4,v 1.10 2005/05/19 10:40:46 miod Exp $
+.\" $OpenBSD: ukbd.4,v 1.11 2005/05/20 08:58:43 jmc Exp $
 .\" $NetBSD: ukbd.4,v 1.10 2001/12/29 15:12:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -248,9 +248,11 @@ To set a German keyboard layout without
 and sending an ESC character before the key symbol if the ALT
 key is pressed simultaneously, use
 .Ic wsconsctl -w keyboard.encoding=de.nodead.metaesc .
-To set it at kernel build time, add
-.Em option UKBD_LAYOUT="(KB_DE|KB_NODEAD|KB_METAESC)"
-to the kernel configuration file.
+To set it at kernel build time, add the following
+to the kernel configuration file:
+.Bd -literal -offset indent
+option UKBD_LAYOUT="(KB_DE|KB_NODEAD|KB_METAESC)"
+.Ed
 .Sh SEE ALSO
 .Xr usbhidctl 1 ,
 .Xr intro 4 ,

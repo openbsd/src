@@ -1,4 +1,4 @@
-.\" $OpenBSD: pckbd.4,v 1.27 2005/05/06 17:58:04 mickey Exp $
+.\" $OpenBSD: pckbd.4,v 1.28 2005/05/20 08:58:43 jmc Exp $
 .\" $NetBSD: pckbd.4,v 1.3 1999/12/21 11:31:07 drochner Exp $
 .\"
 .\" Copyright (c) 1999
@@ -213,8 +213,10 @@ and sending an ESC character before the key symbol if the ALT
 key is pressed simultaneously, use
 .Ic wsconsctl -w keyboard.encoding=de.nodead.metaesc .
 To set it at kernel build time, add
-.Em option PCKBD_LAYOUT="(KB_DE|KB_NODEAD|KB_METAESC)"
-to the kernel configuration file.
+the following to the kernel configuration file:
+.Bd -literal -offset indent
+option PCKBD_LAYOUT="(KB_DE|KB_NODEAD|KB_METAESC)"
+.Ed
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr isa 4 ,

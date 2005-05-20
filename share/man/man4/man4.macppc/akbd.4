@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: akbd.4,v 1.9 2005/05/04 21:23:11 miod Exp $
+.\"	$OpenBSD: akbd.4,v 1.10 2005/05/20 08:58:43 jmc Exp $
 .\"	$NetBSD: adb.4,v 1.1 1997/07/18 02:13:42 ender Exp $
 .\"
 .Dd May 4, 2005
@@ -145,8 +145,10 @@ To set a German keyboard layout without
 use
 .Ic wsconsctl -w keyboard.encoding=de.nodead .
 To set it at kernel build time, add
-.Em option AKBD_LAYOUT="KB_DE|KB_NODEAD"
-to the kernel configuration file.
+the following to the kernel configuration file:
+.Bd -literal -offset indent
+option AKBD_LAYOUT="KB_DE|KB_NODEAD"
+.Ed
 .Sh SEE ALSO
 .Xr adb 4 ,
 .Xr intro 4 ,

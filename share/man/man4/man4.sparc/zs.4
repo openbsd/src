@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.16 2004/09/30 19:59:27 mickey Exp $
+.\"	$OpenBSD: zs.4,v 1.17 2005/05/20 08:58:43 jmc Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The OpenBSD Project
 .\" All rights reserved.
@@ -154,10 +154,15 @@ This switches off the
 To set a German keyboard layout, use
 .Ic wsconsctl -w keyboard.encoding=de .
 To set it at kernel build time, add
-.Em option SUNKBD_LAYOUT="KB_DE"
-to the kernel configuration file for a type 4 keyboard, or
-.Em option SUNKBD5_LAYOUT="KB_DE"
-for a type 5 keyboard.
+the following to the kernel configuration file for a type 4 keyboard:
+.Bd -literal -offset indent
+option SUNKBD_LAYOUT="KB_DE"
+.Ed
+.Pp
+For a type 5 keyboard:
+.Bd -literal -offset indent
+option SUNKBD5_LAYOUT="KB_DE"
+.Ed
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr intro 4 ,
