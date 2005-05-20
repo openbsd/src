@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.16 2005/04/25 21:58:32 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.17 2005/05/20 05:13:44 joris Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -66,19 +66,10 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 		argv += i;
 	}
 
-	if ((c->cmd_flags & CVS_CMD_ALLOWSPEC) && argc != 0)
-		cvs_files = cvs_file_getspec(argv, argc, c->file_flags);
-	else
-		cvs_files = cvs_file_get(".", c->file_flags);
-
-	if (cvs_files == NULL)
-		return (CVS_EX_DATA);
-
 	if ((c->cmd_helper != NULL) && ((ret = c->cmd_helper()) != 0))
 		return (ret);
 
-	root = CVS_DIR_ROOT(cvs_files);
-	if (root == NULL && (root = cvsroot_get(".")) == NULL)
+	if ((root = cvsroot_get(".")) == NULL)
 		return (CVS_EX_BADROOT);
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
@@ -109,8 +100,16 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 	if (cmd->cmd_op == CVS_OP_VERSION)
 		return (0);
 
-	if (c->cmd_examine != NULL)
-		cvs_file_examine(cvs_files, c->cmd_examine, NULL);
+	if ((c->cmd_flags & CVS_CMD_ALLOWSPEC) && argc != 0) {
+		cvs_files = cvs_file_getspec(argv, argc, c->file_flags,
+		    c->cmd_examine, NULL);
+	} else {
+		cvs_files = cvs_file_get(".", c->file_flags,
+		    c->cmd_examine, NULL);
+	}
+
+	if (cvs_files == NULL)
+		return (CVS_EX_DATA);
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		if (c->cmd_flags & CVS_CMD_SENDDIR) {

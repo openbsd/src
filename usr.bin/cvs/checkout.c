@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.18 2005/04/12 14:58:40 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.19 2005/05/20 05:13:44 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -127,8 +127,13 @@ cvs_checkout_options(char *opt, int argc, char **argv, int *arg)
 int
 cvs_checkout_sendflags(struct cvsroot *root)
 {
-	if (cvs_senddir(root, cvs_files) < 0)
+	if (cvs_sendreq(root, CVS_REQ_DIRECTORY, ".") < 0)
 		return (CVS_EX_PROTO);
+	if (cvs_sendraw(root, root->cr_dir, strlen(root->cr_dir)) < 0)
+		return (CVS_EX_PROTO);
+	if (cvs_sendraw(root, "\n", 1) < 0)
+		return (CVS_EX_PROTO);
+
 	if (cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL) < 0)
 		cvs_log(LP_ERR, "failed to expand module");
 

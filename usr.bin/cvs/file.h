@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.18 2005/05/12 23:35:42 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.19 2005/05/20 05:13:44 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -129,8 +129,8 @@ typedef struct cvs_file {
 int      cvs_file_init    (void);
 int      cvs_file_ignore  (const char *);
 int      cvs_file_chkign  (const char *);
-CVSFILE* cvs_file_get     (const char *, int);
-CVSFILE* cvs_file_getspec (char **, int, int);
+CVSFILE* cvs_file_get     (const char *, int, int (*)(CVSFILE *, void *), void *);
+CVSFILE* cvs_file_getspec (char **, int, int, int (*)(CVSFILE *, void *), void *);
 CVSFILE* cvs_file_create  (CVSFILE *, const char *, u_int, mode_t);
 CVSFILE* cvs_file_copy    (CVSFILE *);
 CVSFILE* cvs_file_find    (CVSFILE *, const char *);

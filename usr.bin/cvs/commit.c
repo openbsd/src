@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.31 2005/04/24 02:06:27 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.32 2005/05/20 05:13:44 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -58,6 +58,8 @@ struct cvs_cmd_info cvs_commit = {
 };
 
 static char *mfile = NULL;
+static char **commit_files = NULL;
+static int commit_fcount = 0;
 
 int
 cvs_commit_options(char *opt, int argc, char **argv, int *arg)
@@ -100,6 +102,10 @@ cvs_commit_options(char *opt, int argc, char **argv, int *arg)
 		return (CVS_EX_DATA);
 
 	*arg = optind;
+
+	commit_files = (argv + optind);
+	commit_fcount = (argc - optind);
+
 	return (0);
 }
 
@@ -108,15 +114,31 @@ cvs_commit_helper(void)
 {
 	struct cvs_flist cl;
 	CVSFILE *cfp;
-
+	CVSFILE *tmp;
+	int flags = CF_RECURSE | CF_IGNORE | CF_SORT;
+ 
 	SIMPLEQ_INIT(&cl);
-	cvs_file_examine(cvs_files, cvs_commit_prepare, &cl);
-	if (SIMPLEQ_EMPTY(&cl))
+
+	if (commit_fcount != 0) {
+		tmp = cvs_file_getspec(commit_files, commit_fcount,
+		    flags, cvs_commit_prepare, &cl);
+	} else {
+		tmp = cvs_file_get(".", flags, cvs_commit_prepare, &cl);
+	}
+
+	if (tmp == NULL)
+		return (CVS_EX_DATA);
+
+	if (SIMPLEQ_EMPTY(&cl)) {
+		cvs_file_free(tmp);
 		return (0);
+	}
 
 	if (cvs_msg == NULL)
-		cvs_msg = cvs_logmsg_get(CVS_FILE_NAME(cvs_files),
+		cvs_msg = cvs_logmsg_get(CVS_FILE_NAME(tmp),
 		    NULL, &cl, NULL);
+
+	cvs_file_free(tmp);
 
 	while (!SIMPLEQ_EMPTY(&cl)) {
 		cfp = SIMPLEQ_FIRST(&cl);
