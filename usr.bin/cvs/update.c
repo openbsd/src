@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.27 2005/05/20 18:26:49 xsa Exp $	*/
+/*	$OpenBSD: update.c,v 1.28 2005/05/20 20:00:53 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -138,6 +138,9 @@ cvs_update_remote(CVSFILE *cf, void *arg)
 		else
 			ret = cvs_senddir(root, cf);
 
+		if (ret == -1)
+			ret = CVS_EX_PROTO;
+
 		return (ret);
 	}
 
@@ -162,6 +165,9 @@ cvs_update_remote(CVSFILE *cf, void *arg)
 	default:
 		break;
 	}
+
+	if (ret == -1)
+		ret = CVS_EX_PROTO;
 
 	return (ret);
 }
@@ -198,7 +204,7 @@ cvs_update_local(CVSFILE *cf, void *arg)
 	if (l == -1 || l >= (int)sizeof(rcspath)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", rcspath);
-		return (-1);
+		return (CVS_EX_DATA);
 	}
 
 	rf = rcs_open(rcspath, RCS_RDWR);

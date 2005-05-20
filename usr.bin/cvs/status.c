@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.20 2005/04/27 04:54:46 jfb Exp $	*/
+/*	$OpenBSD: status.c,v 1.21 2005/05/20 20:00:53 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -129,14 +129,17 @@ cvs_status_remote(CVSFILE *cfp, void *arg)
 			    CVS_FILE_NAME(cfp));
 		else
 			ret = cvs_senddir(root, cfp);
+
+		if (ret == -1)
+			ret = CVS_EX_PROTO;
+
 		return (ret);
 	}
 
 	cvs_file_getpath(cfp, fpath, sizeof(fpath));
 
-	if (cvs_sendentry(root, cfp) < 0) {
-		return (-1);
-	}
+	if (cvs_sendentry(root, cfp) < 0)
+		return (CVS_EX_PROTO);
 
 	switch (cfp->cf_cvstat) {
 	case CVS_FST_UNKNOWN:
@@ -153,6 +156,9 @@ cvs_status_remote(CVSFILE *cfp, void *arg)
 	default:
 		break;
 	}
+
+	if (ret == -1)
+		ret = CVS_EX_PROTO;
 
 	return (ret);
 }
@@ -183,13 +189,12 @@ cvs_status_local(CVSFILE *cfp, void *arg)
 	if (l == -1 || l >= (int)sizeof(rcspath)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", rcspath);
-		return (-1);
+		return (CVS_EX_DATA);
 	}
 
 	rf = rcs_open(rcspath, RCS_READ);
-	if (rf == NULL) {
-		return (-1);
-	}
+	if (rf == NULL)
+		return (CVS_EX_DATA);
 
 	buf[0] = '\0';
 	if (cfp->cf_cvstat == CVS_FST_LOST)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.27 2005/05/20 16:57:31 jfb Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.28 2005/05/20 20:00:53 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -205,7 +205,7 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 	if (l == -1 || l >= (int)sizeof(rcspath)) {
 		errno = ENAMETOOLONG;
 		 cvs_log(LP_ERRNO, "%s", rcspath);
-		return (-1);
+		return (CVS_EX_DATA);
 	}
 
 	if (log_rfonly) {
@@ -215,7 +215,7 @@ cvs_getlog_local(CVSFILE *cf, void *arg)
 
 	rf = rcs_open(rcspath, RCS_READ);
 	if (rf == NULL)
-		return (-1);
+		return (CVS_EX_DATA);
 
 	cvs_printf("\nRCS file: %s\nWorking file: %s\n", rcspath, cf->cf_name);
 	cvs_printf("head: %s\n",

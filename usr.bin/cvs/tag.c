@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.15 2005/04/20 23:11:30 jfb Exp $	*/
+/*	$OpenBSD: tag.c,v 1.16 2005/05/20 20:00:53 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -174,7 +174,8 @@ cvs_tag_remote(CVSFILE *cfp, void *arg)
 	root = CVS_DIR_ROOT(cfp);
 
 	if (cfp->cf_type == DT_DIR) {
-		ret = cvs_senddir(root, cfp);
+		if (cvs_senddir(root, cfp) < 0)
+			ret = CVS_EX_PROTO;
 		return (ret);
 	}
 
@@ -196,6 +197,9 @@ cvs_tag_remote(CVSFILE *cfp, void *arg)
 	default:
 		break;
 	}
+
+	if (ret == -1)
+		ret = CVS_EX_PROTO;
 
 	return (ret);
 }
@@ -225,14 +229,14 @@ cvs_tag_local(CVSFILE *cf, void *arg)
 	if (len == -1 || len >= (int)sizeof(rcspath)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", rcspath);
-		return (-1);
+		return (CVS_EX_DATA);
 	}
 
 	rf = rcs_open(rcspath, RCS_READ|RCS_WRITE);
 	if (rf == NULL) {
 		cvs_log(LP_ERR, "failed to open %s: %s", rcspath,
 		    rcs_errstr(rcs_errno));
-		return (-1);
+		return (CVS_EX_DATA);
 	}
 
 	if (rcs_sym_add(rf, tag_name, tag_rev) < 0) {

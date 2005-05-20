@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.13 2005/04/18 21:02:49 jfb Exp $	*/
+/*	$OpenBSD: admin.c,v 1.14 2005/05/20 20:00:53 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -312,6 +312,9 @@ cvs_admin_file(CVSFILE *cfp, void *arg)
 				    CVS_FILE_NAME(cfp));
 			else
 				ret = cvs_senddir(root, cfp);
+
+			if (ret == -1)
+				ret = CVS_EX_PROTO;
 		}
 
 		return (ret);
@@ -341,6 +344,9 @@ cvs_admin_file(CVSFILE *cfp, void *arg)
 		default:
 			break;
 		}
+
+		if (ret == -1)
+			ret = CVS_EX_PROTO;
 	} else {
 		if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
 			cvs_log(LP_WARN, "I know nothing about %s", fpath);
@@ -352,7 +358,7 @@ cvs_admin_file(CVSFILE *cfp, void *arg)
 		if (l == -1 || l >= (int)sizeof(rcspath)) {
 			errno = ENAMETOOLONG;
 			cvs_log(LP_ERRNO, "%s", rcspath);
-			return (-1);
+			return (CVS_EX_DATA);
 		}
 
 		rf = rcs_open(rcspath, RCS_READ);

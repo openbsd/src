@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.19 2005/04/12 14:58:40 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.20 2005/05/20 20:00:53 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -118,6 +118,9 @@ cvs_add_file(CVSFILE *cf, void *arg)
 	if (cf->cf_type == DT_DIR) {
 		if (root->cr_method != CVS_METHOD_LOCAL)
 			ret = cvs_senddir(root, cf);
+
+		if (ret == -1)
+			ret = CVS_EX_PROTO;
 
 		return (ret);
 	}

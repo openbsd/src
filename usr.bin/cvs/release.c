@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.5 2005/05/19 22:07:33 jfb Exp $	*/
+/*	$OpenBSD: release.c,v 1.6 2005/05/20 20:00:53 joris Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -145,7 +145,7 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 	if (l == -1 || l >= (int)sizeof(cdpath)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", cdpath);
-		return (-1);
+		return (CVS_EX_DATA);
 	}
 
 	if (cdir->cf_type == DT_DIR) {
@@ -170,20 +170,20 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 			if (chdir(dpath) == -1) {
 				cvs_log(LP_ERRNO, "cannot change to dir `%s'",
 				    dpath);
-				return (-1);
+				return (CVS_EX_FILE);
 			}
 
 			/* construct `cvs update' command */
 			l = snprintf(updcmd, sizeof(updcmd), "%s %s %s update",
 			    __progname, UPDCMD_FLAGS, root->cr_str);
 			if (l == -1 || l >= (int)sizeof(updcmd))
-				return (-1);
+				return (CVS_EX_DATA);
 
 			/* XXX we should try to avoid a new connection ... */
 			if ((fp = popen(updcmd, "r")) == NULL) {
 				cvs_log(LP_ERROR, "cannot run command `%s'",
 				    updcmd);
-				return (-1);
+				return (CVS_EX_DATA);
 			}
 
 			while (fgets(buf, sizeof(buf), fp) != NULL) {
@@ -195,7 +195,7 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 			if (pclose(fp) != 0) {
 				cvs_log(LP_ERROR, "unable to release `%s'",
 				    dpath);
-				return (-1);
+				return (CVS_EX_DATA);
 			}
 
 			printf("You have [%d] altered file%s in this "
@@ -216,7 +216,7 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 			if (chdir(wdir) == -1) {
 				cvs_log(LP_ERRNO, "cannot change to original "
 				    "working dir `%s'", wdir);
-				return (-1);
+				return (CVS_EX_FILE);
 			}
 
 			if (dflag == 1) {
@@ -224,13 +224,13 @@ cvs_release_dir(CVSFILE *cdir, void *arg)
 					cvs_log(LP_ERRNO,
 				   	    "deletion of directory `%s' failed",
 					    dpath);
-					return (-1);
+					return (CVS_EX_FILE);
 				}
 			}
 		}
 	} else {
 		cvs_log(LP_ERR, "no such directory: %s", dpath);
-		return (-1);
+		return (CVS_EX_DATA);
 	}
 
 	return (0);

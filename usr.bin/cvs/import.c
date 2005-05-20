@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.13 2005/04/25 16:29:41 jfb Exp $	*/
+/*	$OpenBSD: import.c,v 1.14 2005/05/20 20:00:53 joris Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -141,7 +141,7 @@ cvs_import_sendflags(struct cvsroot *root)
 int
 cvs_import_file(CVSFILE *cfp, void *arg)
 {
-	int ret, l;
+	int l;
 	struct cvsroot *root;
 	char fpath[MAXPATHLEN], repodir[MAXPATHLEN];
 	char repo[MAXPATHLEN];
@@ -151,7 +151,7 @@ cvs_import_file(CVSFILE *cfp, void *arg)
 	if (l == -1 || l >= (int)sizeof(repo)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", repo);
-		return (-1);
+		return (CVS_EX_DATA);
 	}
 
 	cvs_file_getpath(cfp, fpath, sizeof(fpath));
@@ -166,13 +166,14 @@ cvs_import_file(CVSFILE *cfp, void *arg)
 			if (l == -1 || l >= (int)sizeof(repodir)) {
 				errno = ENAMETOOLONG;
 				cvs_log(LP_ERRNO, "%s", repodir);
-				return (-1);
+				return (CVS_EX_DATA);
 			}
 		}
 		if (root->cr_method != CVS_METHOD_LOCAL) {
-			ret = cvs_sendreq(root, CVS_REQ_DIRECTORY, fpath);
-			if (ret == 0)
-				ret = cvs_sendln(root, repodir);
+			if (cvs_sendreq(root, CVS_REQ_DIRECTORY, fpath) < 0)
+				return (CVS_EX_PROTO);
+			if (cvs_sendln(root, repodir) < 0)
+				return (CVS_EX_PROTO);
 		} else {
 			/* create the directory */
 		}
