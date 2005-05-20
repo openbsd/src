@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.11 2005/04/18 21:02:49 jfb Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.12 2005/05/20 18:32:23 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,10 +40,9 @@
 #include "proto.h"
 
 
-int cvs_annotate_file(CVSFILE *, void *);
-int cvs_annotate_prune(CVSFILE *, void *);
-int cvs_annotate_options(char *, int, char **, int *);
-int cvs_annotate_sendflags(struct cvsroot *);
+static int cvs_annotate_file      (CVSFILE *, void *);
+static int cvs_annotate_options   (char *, int, char **, int *);
+static int cvs_annotate_sendflags (struct cvsroot *);
 
 struct cvs_cmd_info cvs_annotate = {
 	cvs_annotate_options,
@@ -58,7 +57,7 @@ struct cvs_cmd_info cvs_annotate = {
 static char *date, *rev;
 static int usehead;
 
-int
+static int
 cvs_annotate_options(char *opt, int argc, char **argv, int *arg)
 {
 	int ch;
@@ -99,7 +98,7 @@ cvs_annotate_options(char *opt, int argc, char **argv, int *arg)
 	return (0);
 }
 
-int
+static int
 cvs_annotate_sendflags(struct cvsroot *root)
 {
 	if (usehead && (cvs_sendarg(root, "-f", 0) < 0))
@@ -125,7 +124,7 @@ cvs_annotate_sendflags(struct cvsroot *root)
  *
  * Annotate a single file.
  */
-int
+static int
 cvs_annotate_file(CVSFILE *cf, void *arg)
 {
 	int ret;
@@ -136,46 +135,33 @@ cvs_annotate_file(CVSFILE *cf, void *arg)
 	root = CVS_DIR_ROOT(cf);
 
 	if (cf->cf_type == DT_DIR) {
-		if (root->cr_method != CVS_METHOD_LOCAL) {
-			if (cf->cf_cvstat == CVS_FST_UNKNOWN)
-				ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-				    CVS_FILE_NAME(cf));
-			else
-				ret = cvs_senddir(root, cf);
-		}
-
+		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
+			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
+			    cf->cf_name);
+		else
+			ret = cvs_senddir(root, cf);
 		return (ret);
 	}
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	if (root->cr_method != CVS_METHOD_LOCAL) {
-		if (cvs_sendentry(root, cf) < 0) {
-			return (CVS_EX_PROTO);
-		}
+	if (cvs_sendentry(root, cf) < 0) {
+		return (CVS_EX_PROTO);
+	}
 
-		switch (cf->cf_cvstat) {
-		case CVS_FST_UNKNOWN:
-			ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE,
-			    CVS_FILE_NAME(cf));
-			break;
-		case CVS_FST_UPTODATE:
-			ret = cvs_sendreq(root, CVS_REQ_UNCHANGED,
-			    CVS_FILE_NAME(cf));
-			break;
-		case CVS_FST_ADDED:
-		case CVS_FST_MODIFIED:
-			ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED,
-			    CVS_FILE_NAME(cf));
-			break;
-		default:
-			break;
-		}
-	} else {
-		if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
-			cvs_printf("? %s\n", fpath);
-			return (0);
-		}
+	switch (cf->cf_cvstat) {
+	case CVS_FST_UNKNOWN:
+		ret = cvs_sendreq(root, CVS_REQ_QUESTIONABLE, cf->cf_name);
+		break;
+	case CVS_FST_UPTODATE:
+		ret = cvs_sendreq(root, CVS_REQ_UNCHANGED, cf->cf_name);
+		break;
+	case CVS_FST_ADDED:
+	case CVS_FST_MODIFIED:
+		ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED, cf->cf_name);
+		break;
+	default:
+		break;
 	}
 
 	return (ret);
