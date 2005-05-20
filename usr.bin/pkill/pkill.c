@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.12 2005/04/11 20:25:23 deraadt Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.13 2005/05/20 07:26:49 otto Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pkill.c,v 1.12 2005/04/11 20:25:23 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: pkill.c,v 1.13 2005/05/20 07:26:49 otto Exp $";
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -405,7 +405,7 @@ main(int argc, char **argv)
 		else if (rv != STATUS_ERROR)
 			rv = STATUS_MATCH;
 	}
-	if (pgrep)
+	if (pgrep && j)
 		putchar('\n');
 
 	exit(rv);
