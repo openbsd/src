@@ -1,4 +1,4 @@
-.\"     $OpenBSD: nc.1,v 1.37 2005/02/21 10:56:22 jmc Exp $
+.\"     $OpenBSD: nc.1,v 1.38 2005/05/20 10:55:09 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
 .\" All rights reserved.
@@ -375,11 +375,19 @@ Create and listen on a Unix Domain Socket:
 .Dl $ nc -lU /var/tmp/dsocket
 .Pp
 Connect to port 42 of host.example.com via an HTTP proxy at 10.2.3.4,
-port 8080:
+port 8080.
+This example could also be used by
+.Xr ssh 1 ;
+see the
+.Cm ProxyCommand
+directive in
+.Xr ssh_config 5
+for more information.
 .Pp
 .Dl $ nc -x10.2.3.4:8080 -Xconnect host.example.com 42
 .Sh SEE ALSO
-.Xr cat 1
+.Xr cat 1 ,
+.Xr ssh 1
 .Sh AUTHORS
 Original implementation by *Hobbit*
 .Aq hobbit@avian.org .
