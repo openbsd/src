@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.26 2005/04/27 04:42:40 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.27 2005/05/20 18:26:49 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -83,6 +83,8 @@ cvs_update_options(char *opt, int argc, char **argv, int *arg)
 			Pflag = 1;
 			break;
 		case 'p':
+			cvs_noexec = 1;	/* no locks will be created */
+			break;
 		case 'Q':
 		case 'q':
 			break;

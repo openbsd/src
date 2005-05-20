@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.64 2005/05/19 15:37:50 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.65 2005/05/20 18:26:49 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -56,6 +56,7 @@ int   cvs_trace = 0;
 int   cvs_nolog = 0;
 int   cvs_readonly = 0;
 int   cvs_nocase = 0;   /* set to 1 to disable filename case sensitivity */
+int   cvs_noexec = 0;	/* set to 1 to disable disk operations (-n option) */
 
 char *cvs_defargs;		/* default global arguments from .cvsrc */
 char *cvs_command;		/* name of the command we are running */
@@ -110,7 +111,7 @@ struct cvs_cmd cvs_cdt[] = {
 		CVS_OP_CHECKOUT, "checkout", { "co",  "get" }, &cvs_checkout,
 		"[-AcflNnPpRs] [-D date | -r rev] [-d dir] [-j rev] [-k mode] "
 		"[-t id] module ...",
-		"AcD:d:fj:k:lNnPRr:st:",
+		"AcD:d:fj:k:lNnPpRr:st:",
 		"Checkout sources for editing",
 		NULL
 	},
@@ -487,6 +488,7 @@ cvs_getopt(int argc, char **argv)
 			cvs_nolog = 1;
 			break;
 		case 'n':
+			cvs_noexec = 1;
 			break;
 		case 'Q':
 			verbosity = 0;

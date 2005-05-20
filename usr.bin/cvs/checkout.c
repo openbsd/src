@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.19 2005/05/20 05:13:44 joris Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.20 2005/05/20 18:26:49 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -91,6 +91,9 @@ cvs_checkout_options(char *opt, int argc, char **argv, int *arg)
 				rcs_kflag_usage();
 				return (CVS_EX_USAGE);
 			}
+			break;
+		case 'p':
+			cvs_noexec = 1;	/* no locks will be created */
 			break;
 		case 'r':
 			rev = optarg;

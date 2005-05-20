@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.56 2005/05/19 04:17:24 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.57 2005/05/20 18:26:49 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -317,6 +317,7 @@ extern int  cvs_nolog;
 extern int  cvs_compress;
 extern int  cvs_cmdop;
 extern int  cvs_nocase;
+extern int  cvs_noexec;
 extern int  cvs_readonly;
 
 extern CVSFILE *cvs_files;
