@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.26 2005/05/19 16:11:10 xsa Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.27 2005/05/20 16:57:31 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -149,9 +149,8 @@ cvs_getlog_remote(CVSFILE *cf, void *arg)
 
 	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	if (cvs_sendentry(root, cf) < 0) {
-		return (-1);
-	}
+	if (cvs_sendentry(root, cf) < 0)
+		return (CVS_EX_PROTO);
 
 	switch (cf->cf_cvstat) {
 	case CVS_FST_UNKNOWN:
@@ -168,6 +167,8 @@ cvs_getlog_remote(CVSFILE *cf, void *arg)
 		break;
 	}
 
+	if (ret == -1)
+		ret = CVS_EX_PROTO;
 	return (ret);
 }
 
