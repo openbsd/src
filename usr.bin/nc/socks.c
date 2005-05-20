@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.12 2005/05/19 08:40:59 djm Exp $	*/
+/*	$OpenBSD: socks.c,v 1.13 2005/05/20 11:06:58 djm Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -129,7 +129,9 @@ socks_connect(const char *host, const char *port,
 	if (proxyfd < 0)
 		return (-1);
 
-	serveraddr = decode_addr(host);
+	/* HTTP proxies should use hostnames. (XXX so can SOCKS5) */
+	if (socksv != -1)
+		serveraddr = decode_addr(host);
 	serverport = decode_port(port);
 
 	if (socksv == 5) {
