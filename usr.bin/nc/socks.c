@@ -1,7 +1,8 @@
-/*	$OpenBSD: socks.c,v 1.13 2005/05/20 11:06:58 djm Exp $	*/
+/*	$OpenBSD: socks.c,v 1.14 2005/05/20 22:46:08 djm Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 2004, 2005 Damien Miller.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,42 +47,42 @@
 #define SOCKS_NOMETHOD	0xff
 #define SOCKS_CONNECT	1
 #define SOCKS_IPV4	1
+#define SOCKS_DOMAIN	3
+#define SOCKS_IPV6	4
 
-
+ssize_t	atomicio(ssize_t (*)(int, void *, size_t), int, void *, size_t);
 int	remote_connect(const char *, const char *, struct addrinfo);
 int	socks_connect(const char *host, const char *port, struct addrinfo hints,
 	    const char *proxyhost, const char *proxyport, struct addrinfo proxyhints,
 	    int socksv);
 
-static in_addr_t
-decode_addr(const char *s)
+static int
+decode_addrport(const char *h, const char *p, struct sockaddr *addr,
+    socklen_t addrlen, int v4only, int numeric)
 {
-	struct hostent *hp = gethostbyname(s);
-	struct in_addr retval;
+	int r;
+	struct addrinfo hints, *res;
 
-	if (hp)
-		return (*(in_addr_t *)hp->h_addr_list[0]);
-	if (inet_aton(s, &retval))
-		return (retval.s_addr);
-	errx(1, "cannot decode address \"%s\"", s);
-}
-
-static in_port_t
-decode_port(const char *s)
-{
-	struct servent *sp;
-	in_port_t port;
-	char *p;
-
-	port = strtol(s, &p, 10);
-	if (s == p) {
-		sp = getservbyname(s, "tcp");
-		if (sp)
-			return (sp->s_port);
+	bzero(&hints, sizeof(hints));
+	hints.ai_family = v4only ? PF_INET : PF_UNSPEC;
+	hints.ai_flags = numeric ? AI_NUMERICHOST : 0;
+	hints.ai_socktype = SOCK_STREAM;
+	r = getaddrinfo(h, p, &hints, &res);
+	/* Don't fatal when attempting to convert a numeric address */
+	if (r != 0) {
+		if (!numeric) {
+			errx(1, "getaddrinfo(\"%.64s\", \"%.64s\"): %s", h, p,
+			    gai_strerror(r));
+		}
+		return (-1);
 	}
-	if (*s != '\0' && *p == '\0')
-		return (htons(port));
-	errx (1, "cannot decode port \"%s\"", s);
+	if (addrlen < res->ai_addrlen) {
+		freeaddrinfo(res);
+		errx(1, "internal error: addrlen < res->ai_addrlen");
+	}
+	memcpy(addr, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo(res);
+	return (0);
 }
 
 static int
@@ -116,9 +117,12 @@ socks_connect(const char *host, const char *port,
     int socksv)
 {
 	int proxyfd, r;
+	size_t hlen, wlen;
 	unsigned char buf[1024];
 	ssize_t cnt;
-	in_addr_t serveraddr;
+	struct sockaddr_storage addr;
+	struct sockaddr_in *in4 = (struct sockaddr_in *)&addr;
+	struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)&addr;
 	in_port_t serverport;
 
 	if (proxyport == NULL)
@@ -129,12 +133,17 @@ socks_connect(const char *host, const char *port,
 	if (proxyfd < 0)
 		return (-1);
 
-	/* HTTP proxies should use hostnames. (XXX so can SOCKS5) */
-	if (socksv != -1)
-		serveraddr = decode_addr(host);
-	serverport = decode_port(port);
+	/* Abuse API to lookup port */
+	if (decode_addrport("0.0.0.0", port, (struct sockaddr *)&addr,
+	    sizeof(addr), 1, 1) == -1)
+		errx(1, "unknown port \"%.64s\"", port);
+	serverport = in4->sin_port;
 
 	if (socksv == 5) {
+		if (decode_addrport(host, port, (struct sockaddr *)&addr,
+		    sizeof(addr), 0, 1) == -1)
+			addr.ss_family = 0; /* used in switch below */
+
 		/* Version 5, one method: no authentication */
 		buf[0] = SOCKS_V5;
 		buf[1] = 1;
@@ -149,23 +158,56 @@ socks_connect(const char *host, const char *port,
 		if (buf[1] == SOCKS_NOMETHOD)
 			errx(1, "authentication method negotiation failed");
 
-		/* Version 5, connect: IPv4 address */
-		buf[0] = SOCKS_V5;
-		buf[1] = SOCKS_CONNECT;
-		buf[2] = 0;
-		buf[3] = SOCKS_IPV4;
-		memcpy(buf + 4, &serveraddr, sizeof serveraddr);
-		memcpy(buf + 8, &serverport, sizeof serverport);
+		switch (addr.ss_family) {
+		case 0:
+			/* Version 5, connect: domain name */
 
-		/* XXX Handle short writes better */
-		cnt = write(proxyfd, buf, 10);
+			/* Max domain name length is 255 bytes */
+			hlen = strlen(host);
+			if (hlen > 255)
+				errx(1, "host name too long for SOCKS5");
+			buf[0] = SOCKS_V5;
+			buf[1] = SOCKS_CONNECT;
+			buf[2] = 0;
+			buf[3] = SOCKS_DOMAIN;
+			buf[4] = hlen;
+			memcpy(buf + 5, host, hlen);			
+			memcpy(buf + 5 + hlen, &serverport, sizeof serverport);
+			wlen = 7 + hlen;
+			break;
+		case AF_INET:
+			/* Version 5, connect: IPv4 address */
+			buf[0] = SOCKS_V5;
+			buf[1] = SOCKS_CONNECT;
+			buf[2] = 0;
+			buf[3] = SOCKS_IPV4;
+			memcpy(buf + 4, &in4->sin_addr, sizeof in4->sin_addr);
+			memcpy(buf + 8, &in4->sin_port, sizeof in4->sin_port);
+			wlen = 10;
+			break;
+		case AF_INET6:
+			/* Version 5, connect: IPv6 address */
+			buf[0] = SOCKS_V5;
+			buf[1] = SOCKS_CONNECT;
+			buf[2] = 0;
+			buf[3] = SOCKS_IPV6;
+			memcpy(buf + 4, &in6->sin6_addr, sizeof in6->sin6_addr);
+			memcpy(buf + 20, &in6->sin6_port,
+			    sizeof in6->sin6_port);
+			wlen = 22;
+			break;
+		default:
+			errx(1, "internal error: silly AF");
+		}
+
+		cnt = atomicio((ssize_t (*)(int, void *, size_t))write,
+		    proxyfd, buf, wlen);
 		if (cnt == -1)
 			err(1, "write failed");
-		if (cnt != 10)
-			errx(1, "short write, %d (expected 10)", cnt);
+		if (cnt != wlen)
+			errx(1, "short write, %d (expected %d)", cnt, wlen);
 
-		/* XXX Handle short reads better */
-		cnt = read(proxyfd, buf, 10);
+		cnt = atomicio(read, proxyfd, buf, 10);
 		if (cnt == -1)
 			err(1, "read failed");
 		if (cnt != 10)
@@ -173,21 +215,25 @@ socks_connect(const char *host, const char *port,
 		if (buf[1] != 0)
 			errx(1, "connection failed, SOCKS error %d", buf[1]);
 	} else if (socksv == 4) {
+		/* This will exit on lookup failure */
+		decode_addrport(host, port, (struct sockaddr *)&addr,
+		    sizeof(addr), 1, 0);
+
 		/* Version 4 */
 		buf[0] = SOCKS_V4;
 		buf[1] = SOCKS_CONNECT;	/* connect */
-		memcpy(buf + 2, &serverport, sizeof serverport);
-		memcpy(buf + 4, &serveraddr, sizeof serveraddr);
+		memcpy(buf + 2, &in4->sin_port, sizeof in4->sin_port);
+		memcpy(buf + 4, &in4->sin_addr, sizeof in4->sin_addr);
 		buf[8] = 0;	/* empty username */
+		wlen = 9;
 
-		cnt = write(proxyfd, buf, 9);
+		cnt = write(proxyfd, buf, wlen);
 		if (cnt == -1)
 			err(1, "write failed");
-		if (cnt != 9)
-			errx(1, "short write, %d (expected 9)", cnt);
+		if (cnt != wlen)
+			errx(1, "short write, %d (expected %d)", cnt, wlen);
 
-		/* XXX Handle short reads better */
-		cnt = read(proxyfd, buf, 8);
+		cnt = atomicio(read, proxyfd, buf, 8);
 		if (cnt == -1)
 			err(1, "read failed");
 		if (cnt != 8)
@@ -215,8 +261,8 @@ socks_connect(const char *host, const char *port,
 			errx(1, "hostname too long");
 		r = strlen(buf);
 
-		/* XXX atomicio */
-		cnt = write(proxyfd, buf, r);
+		cnt = atomicio((ssize_t (*)(int, void *, size_t))write,
+		    proxyfd, buf, r);
 		if (cnt == -1)
 			err(1, "write failed");
 		if (cnt != r)
