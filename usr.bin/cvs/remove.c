@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.13 2005/05/12 14:04:13 xsa Exp $	*/
+/*	$OpenBSD: remove.c,v 1.14 2005/05/20 19:58:03 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Xavier Santolaria <xsa@openbsd.org>
@@ -112,7 +112,7 @@ cvs_remove_file(CVSFILE *cf, void *arg)
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		/* if -f option is used, physically remove the file */
-		if (force_remove == 1) {
+		if ((force_remove == 1) && !cvs_noexec) {
 			if((unlink(fpath) == -1) && (errno != ENOENT)) {
 				cvs_log(LP_ERRNO,
 				    "failed to unlink `%s'", fpath);

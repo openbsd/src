@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.34 2005/05/19 04:17:24 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.35 2005/05/20 19:58:03 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -346,20 +346,23 @@ cvs_resp_statdir(struct cvsroot *root, int type, char *line)
 		return (-1);
 	}
 
-	if ((type == CVS_RESP_CLRSTATDIR) &&
-	    (unlink(statpath) == -1) && (errno != ENOENT)) {
-		cvs_log(LP_ERRNO, "failed to unlink %s file",
-		    CVS_PATH_STATICENTRIES);
-		return (-1);
-	} else if (type == CVS_RESP_SETSTATDIR) {
-		fd = open(statpath, O_CREAT|O_TRUNC|O_WRONLY, 0400);
-		if (fd == -1) {
-			cvs_log(LP_ERRNO,
-			    "failed to set static directory on %s", line);
+	if (!cvs_noexec) {
+		if ((type == CVS_RESP_CLRSTATDIR) &&
+		    (unlink(statpath) == -1) && (errno != ENOENT)) {
+			cvs_log(LP_ERRNO, "failed to unlink %s file",
+			    CVS_PATH_STATICENTRIES);
 			return (-1);
-		}
-		(void)close(fd);
+		} else if (type == CVS_RESP_SETSTATDIR) {
+			fd = open(statpath, O_CREAT|O_TRUNC|O_WRONLY, 0400);
+			if (fd == -1) {
+				cvs_log(LP_ERRNO,
+				    "failed to set static directory on %s",
+				    line);
+				return (-1);
+			}
+			(void)close(fd);
 
+		}
 	}
 
 	return (0);
