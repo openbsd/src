@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.19 2004/12/24 21:22:00 pvalchev Exp $
+#	$OpenBSD: genassym.cf,v 1.20 2005/05/21 19:13:55 brad Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -37,6 +37,11 @@ include <sys/device.h>
 include <sys/user.h>
 ifdef INET
 include <sys/mbuf.h>
+include <sys/socketvar.h>
+include <netinet/in.h>
+include <netinet/in_systm.h>
+include <netinet/ip.h>
+include <netinet/ip_var.h>
 endif
 
 include <uvm/uvm_extern.h>
@@ -175,6 +180,9 @@ member	mtx_lock
 member	mtx_wantipl
 member	mtx_oldipl
 member	mtx_owner
+
+define	IP_SRC			offsetof(struct ip, ip_src)
+define	IP_DST			offsetof(struct ip, ip_dst)
 
 define	P_MD_TSS_SEL		offsetof(struct proc, p_md.md_tss_sel)
 
