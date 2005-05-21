@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.25 2005/05/21 21:03:57 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.26 2005/05/21 21:05:16 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -240,7 +240,7 @@ pfi_detach_ifnet(struct ifnet *ifp)
 
 	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 	kif->pfik_ifp = NULL;
-	ifp->if_pf_kif = NULL;	
+	ifp->if_pf_kif = NULL;
 	splx(s);
 }
 
