@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.13 2005/05/08 14:46:50 reyk Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.14 2005/05/21 20:14:55 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -2105,14 +2105,21 @@ ar5k_ar5211_set_power(hal, mode, set_chip, sleep_duration)
 	HAL_BOOL set_chip;
 	u_int16_t sleep_duration;
 {
+	u_int32_t staid;
 	int i;
+
+	staid = AR5K_REG_READ(AR5K_AR5211_STA_ID1);
 
 	switch (mode) {
 	case HAL_PM_AUTO:
+		staid &= ~AR5K_AR5211_STA_ID1_DEFAULT_ANTENNA;
+		/* fallthrough */
+	case HAL_PM_NETWORK_SLEEP:
 		if (set_chip == AH_TRUE) {
 			AR5K_REG_WRITE(AR5K_AR5211_SCR,
 			    AR5K_AR5211_SCR_SLE | sleep_duration);
 		}
+		staid |= AR5K_AR5211_STA_ID1_PWR_SV;
 		break;
 
 	case HAL_PM_FULL_SLEEP:
@@ -2120,6 +2127,7 @@ ar5k_ar5211_set_power(hal, mode, set_chip, sleep_duration)
 			AR5K_REG_WRITE(AR5K_AR5211_SCR,
 			    AR5K_AR5211_SCR_SLE_SLP);
 		}
+		staid |= AR5K_AR5211_STA_ID1_PWR_SV;
 		break;
 
 	case HAL_PM_AWAKE:
@@ -2143,10 +2151,10 @@ ar5k_ar5211_set_power(hal, mode, set_chip, sleep_duration)
 		/* Fail if the AR5211 didn't wake up */
 		if (i <= 0)
 			return (AH_FALSE);
+		
+		staid &= ~AR5K_AR5211_STA_ID1_PWR_SV;
 		break;
 
-	case HAL_PM_NETWORK_SLEEP:
-	case HAL_PM_UNDEFINED:
 	default:
 		return (AH_FALSE);
 	}
@@ -2154,10 +2162,7 @@ ar5k_ar5211_set_power(hal, mode, set_chip, sleep_duration)
  commit:
 	hal->ah_power_mode = mode;
 
-	AR5K_REG_DISABLE_BITS(AR5K_AR5211_STA_ID1,
-	    AR5K_AR5211_STA_ID1_DEFAULT_ANTENNA);
-	AR5K_REG_ENABLE_BITS(AR5K_AR5211_STA_ID1,
-	    AR5K_AR5211_STA_ID1_PWR_SV);
+	AR5K_REG_WRITE(AR5K_AR5211_STA_ID1, staid);
 
 	return (AH_TRUE);
 }
