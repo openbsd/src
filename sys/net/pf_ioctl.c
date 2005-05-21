@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.140 2005/05/10 13:15:15 joel Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.141 2005/05/21 21:03:57 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -560,7 +560,7 @@ pf_empty_pool(struct pf_palist *poola)
 	while ((empty_pool_pa = TAILQ_FIRST(poola)) != NULL) {
 		pfi_dynaddr_remove(&empty_pool_pa->addr);
 		pf_tbladdr_remove(&empty_pool_pa->addr);
-		pfi_detach_rule(empty_pool_pa->kif);
+		pfi_kif_unref(empty_pool_pa->kif, PFI_KIF_REF_RULE);
 		TAILQ_REMOVE(poola, empty_pool_pa, entries);
 		pool_put(&pf_pooladdr_pl, empty_pool_pa);
 	}
@@ -606,7 +606,7 @@ pf_rm_rule(struct pf_rulequeue *rulequeue, struct pf_rule *rule)
 		if (rule->overload_tbl)
 			pfr_detach_table(rule->overload_tbl);
 	}
-	pfi_detach_rule(rule->kif);
+	pfi_kif_unref(rule->kif, PFI_KIF_REF_RULE);
 	pf_anchor_remove(rule);
 	pf_empty_pool(&rule->rpool.list);
 	pool_put(&pf_rule_pl, rule);
@@ -1039,7 +1039,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCGETSRCNODES:
 		case DIOCCLRSRCNODES:
 		case DIOCIGETIFACES:
-		case DIOCICLRISTATS:
 		case DIOCSETIFFLAG:
 		case DIOCCLRIFFLAG:
 			break;
@@ -1188,12 +1187,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		else
 			rule->nr = 0;
 		if (rule->ifname[0]) {
-			rule->kif = pfi_attach_rule(rule->ifname);
+			rule->kif = pfi_kif_get(rule->ifname);
 			if (rule->kif == NULL) {
 				pool_put(&pf_rule_pl, rule);
 				error = EINVAL;
 				break;
 			}
+			pfi_kif_ref(rule->kif, PFI_KIF_REF_RULE);
 		}
 
 #ifdef ALTQ
@@ -1408,12 +1408,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 #endif /* INET6 */
 			if (newrule->ifname[0]) {
-				newrule->kif = pfi_attach_rule(newrule->ifname);
+				newrule->kif = pfi_kif_get(newrule->ifname);
 				if (newrule->kif == NULL) {
 					pool_put(&pf_rule_pl, newrule);
 					error = EINVAL;
 					break;
 				}
+				pfi_kif_ref(newrule->kif, PFI_KIF_REF_RULE);
 			} else
 				newrule->kif = NULL;
 
@@ -1616,7 +1617,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENOMEM;
 			break;
 		}
-		kif = pfi_lookup_create(ps->state.u.ifname);
+		kif = pfi_kif_get(ps->state.u.ifname);
 		if (kif == NULL) {
 			pool_put(&pf_state_pl, state);
 			error = ENOENT;
@@ -1634,7 +1635,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		state->bytes[0] = state->bytes[1] = 0;
 
 		if (pf_insert_state(kif, state)) {
-			pfi_maybe_destroy(kif);
+			pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 			pool_put(&pf_state_pl, state);
 			error = ENOMEM;
 		}
@@ -1745,8 +1746,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		bzero(pf_status.fcounters, sizeof(pf_status.fcounters));
 		bzero(pf_status.scounters, sizeof(pf_status.scounters));
 		if (*pf_status.ifname)
-			pfi_clr_istats(pf_status.ifname, NULL,
-			    PFI_FLAG_INSTANCE);
+			pfi_clr_istats(pf_status.ifname);
 		break;
 	}
 
@@ -2068,16 +2068,17 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		bcopy(&pp->addr, pa, sizeof(struct pf_pooladdr));
 		if (pa->ifname[0]) {
-			pa->kif = pfi_attach_rule(pa->ifname);
+			pa->kif = pfi_kif_get(pa->ifname);
 			if (pa->kif == NULL) {
 				pool_put(&pf_pooladdr_pl, pa);
 				error = EINVAL;
 				break;
 			}
+			pfi_kif_ref(pa->kif, PFI_KIF_REF_RULE);
 		}
 		if (pfi_dynaddr_setup(&pa->addr, pp->af)) {
 			pfi_dynaddr_remove(&pa->addr);
-			pfi_detach_rule(pa->kif);
+			pfi_kif_unref(pa->kif, PFI_KIF_REF_RULE);
 			pool_put(&pf_pooladdr_pl, pa);
 			error = EINVAL;
 			break;
@@ -2177,18 +2178,19 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 #endif /* INET6 */
 			if (newpa->ifname[0]) {
-				newpa->kif = pfi_attach_rule(newpa->ifname);
+				newpa->kif = pfi_kif_get(newpa->ifname);
 				if (newpa->kif == NULL) {
 					pool_put(&pf_pooladdr_pl, newpa);
 					error = EINVAL;
 					break;
 				}
+				pfi_kif_ref(newpa->kif, PFI_KIF_REF_RULE);
 			} else
 				newpa->kif = NULL;
 			if (pfi_dynaddr_setup(&newpa->addr, pca->af) ||
 			    pf_tbladdr_setup(ruleset, &newpa->addr)) {
 				pfi_dynaddr_remove(&newpa->addr);
-				pfi_detach_rule(newpa->kif);
+				pfi_kif_unref(newpa->kif, PFI_KIF_REF_RULE);
 				pool_put(&pf_pooladdr_pl, newpa);
 				error = EINVAL;
 				break;
@@ -2217,7 +2219,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			TAILQ_REMOVE(&pool->list, oldpa, entries);
 			pfi_dynaddr_remove(&oldpa->addr);
 			pf_tbladdr_remove(&oldpa->addr);
-			pfi_detach_rule(oldpa->kif);
+			pfi_kif_unref(oldpa->kif, PFI_KIF_REF_RULE);
 			pool_put(&pf_pooladdr_pl, oldpa);
 		} else {
 			if (oldpa == NULL)
@@ -2771,20 +2773,12 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCIGETIFACES: {
 		struct pfioc_iface *io = (struct pfioc_iface *)addr;
 
-		if (io->pfiio_esize != sizeof(struct pfi_if)) {
+		if (io->pfiio_esize != sizeof(struct pfi_kif)) {
 			error = ENODEV;
 			break;
 		}
 		error = pfi_get_ifaces(io->pfiio_name, io->pfiio_buffer,
-		    &io->pfiio_size, io->pfiio_flags);
-		break;
-	}
-
-	case DIOCICLRISTATS: {
-		struct pfioc_iface *io = (struct pfioc_iface *)addr;
-
-		error = pfi_clr_istats(io->pfiio_name, &io->pfiio_nzero,
-		    io->pfiio_flags);
+		    &io->pfiio_size);
 		break;
 	}
 

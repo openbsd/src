@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.46 2005/02/20 15:58:38 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.47 2005/05/21 21:03:57 henning Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -173,7 +173,7 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 		return (EINVAL);
 	}
 
-	kif = pfi_lookup_create(sp->ifname);
+	kif = pfi_kif_get(sp->ifname);
 	if (kif == NULL) {
 		if (pf_status.debug >= PF_DEBUG_MISC)
 			printf("pfsync_insert_net_state: "
@@ -191,7 +191,7 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 	if (!r->max_states || r->states < r->max_states)
 		st = pool_get(&pf_state_pl, PR_NOWAIT);
 	if (st == NULL) {
-		pfi_maybe_destroy(kif);
+		pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 		return (ENOMEM);
 	}
 	bzero(st, sizeof(*st));
@@ -227,7 +227,7 @@ pfsync_insert_net_state(struct pfsync_state *sp)
 
 
 	if (pf_insert_state(kif, st)) {
-		pfi_maybe_destroy(kif);
+		pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 		/* XXX when we have nat_rule/anchors, use STATE_DEC_COUNTERS */
 		r->states--;
 		pool_put(&pf_state_pl, st);
@@ -330,13 +330,9 @@ pfsync_input(struct mbuf *m, ...)
 				}
 			}
 		} else {
-			kif = pfi_lookup_if(cp->ifname);
-			if (kif == NULL) {
-				if (pf_status.debug >= PF_DEBUG_MISC)
-					printf("pfsync_input: PFSYNC_ACT_CLR "
-					    "bad interface: %s\n", cp->ifname);
+			if ((kif = pfi_kif_get(cp->ifname)) == NULL) {
 				splx(s);
-				goto done;
+				return;
 			}
 			for (st = RB_MIN(pf_state_tree_lan_ext,
 			    &kif->pfik_lan_ext); st; st = nexts) {

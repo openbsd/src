@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.109 2005/05/09 08:08:47 mpf Exp $	*/
+/*	$OpenBSD: if.c,v 1.110 2005/05/21 21:03:57 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -776,9 +776,6 @@ if_clone_attach(struct if_clone *ifc)
 {
 	LIST_INSERT_HEAD(&if_cloners, ifc, ifc_list);
 	if_cloners_count++;
-#if NPF > 0
-	pfi_attach_clone(ifc);
-#endif
 }
 
 /*

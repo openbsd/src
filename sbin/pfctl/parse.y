@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.483 2005/04/22 11:05:36 camield Exp $	*/
+/*	$OpenBSD: parse.y,v 1.484 2005/05/21 21:03:58 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -410,7 +410,7 @@ typedef struct {
 %token	LOAD
 %token	STICKYADDRESS MAXSRCSTATES MAXSRCNODES SOURCETRACK GLOBAL RULE
 %token	MAXSRCCONN MAXSRCCONNRATE OVERLOAD FLUSH
-%token	TAGGED TAG IFBOUND GRBOUND FLOATING STATEPOLICY ROUTE
+%token	TAGGED TAG IFBOUND FLOATING STATEPOLICY ROUTE
 %token	<v.string>		STRING
 %token	<v.i>			PORTBINARY
 %type	<v.interface>		interface if_list if_item_not if_item
@@ -559,10 +559,6 @@ option		: SET OPTIMIZATION STRING		{
 					break;
 				case PFRULE_IFBOUND:
 					printf("set state-policy if-bound\n");
-					break;
-				case PFRULE_GRBOUND:
-					printf("set state-policy "
-					    "group-bound\n");
 					break;
 				}
 			default_statelock = $3;
@@ -2836,9 +2832,6 @@ sourcetrack	: SOURCETRACK		{ $$ = PF_SRCTRACK; }
 statelock	: IFBOUND {
 			$$ = PFRULE_IFBOUND;
 		}
-		| GRBOUND {
-			$$ = PFRULE_GRBOUND;
-		}
 		| FLOATING {
 			$$ = 0;
 		}
@@ -4602,7 +4595,6 @@ lookup(char *s)
 		{ "from",		FROM},
 		{ "global",		GLOBAL},
 		{ "group",		GROUP},
-		{ "group-bound",	GRBOUND},
 		{ "hfsc",		HFSC},
 		{ "hostid",		HOSTID},
 		{ "icmp-type",		ICMPTYPE},

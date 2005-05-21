@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.211 2004/12/07 10:33:41 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.212 2005/05/21 21:03:58 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -820,7 +820,7 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 		opts = 1;
 	if (r->rule_flag & PFRULE_SRCTRACK)
 		opts = 1;
-	if (r->rule_flag & (PFRULE_IFBOUND | PFRULE_GRBOUND))
+	if (r->rule_flag & PFRULE_IFBOUND)
 		opts = 1;
 	for (i = 0; !opts && i < PFTM_MAX; ++i)
 		if (r->timeout[i])
@@ -886,12 +886,6 @@ print_rule(struct pf_rule *r, const char *anchor_call, int verbose)
 			if (!opts)
 				printf(", ");
 			printf("if-bound");
-			opts = 0;
-		}
-		if (r->rule_flag & PFRULE_GRBOUND) {
-			if (!opts)
-				printf(", ");
-			printf("group-bound");
 			opts = 0;
 		}
 		for (i = 0; i < PFTM_MAX; ++i)

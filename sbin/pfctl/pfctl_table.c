@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.62 2004/12/22 17:17:55 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.63 2005/05/21 21:03:58 henning Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -61,8 +61,7 @@ static void	print_addrx(struct pfr_addr *, struct pfr_addr *, int);
 static void	print_astats(struct pfr_astats *, int);
 static void	radix_perror(void);
 static void	xprintf(int, const char *, ...);
-static void	print_iface(struct pfi_if *, int);
-static void	oprintf(int, int, const char *, int *, int);
+static void	print_iface(struct pfi_kif *, int);
 
 static const char	*stats_text[PFR_DIR_MAX][PFR_OP_TABLE_MAX] = {
 	{ "In/Block:",	"In/Pass:",	"In/XPass:" },
@@ -539,17 +538,15 @@ int
 pfctl_show_ifaces(const char *filter, int opts)
 {
 	struct pfr_buffer	 b;
-	struct pfi_if		*p;
-	int			 i = 0, f = PFI_FLAG_GROUP|PFI_FLAG_INSTANCE;
+	struct pfi_kif		*p;
+	int			 i = 0;
 
-	if (filter != NULL && *filter && !isdigit(filter[strlen(filter)-1]))
-		f &= ~PFI_FLAG_INSTANCE;
 	bzero(&b, sizeof(b));
 	b.pfrb_type = PFRB_IFACES;
 	for (;;) {
 		pfr_buf_grow(&b, b.pfrb_size);
 		b.pfrb_size = b.pfrb_msize;
-		if (pfi_get_ifaces(filter, b.pfrb_caddr, &b.pfrb_size, f)) {
+		if (pfi_get_ifaces(filter, b.pfrb_caddr, &b.pfrb_size)) {
 			radix_perror();
 			return (1);
 		}
@@ -565,46 +562,26 @@ pfctl_show_ifaces(const char *filter, int opts)
 }
 
 void
-print_iface(struct pfi_if *p, int opts)
+print_iface(struct pfi_kif *p, int opts)
 {
-	time_t	tzero = p->pfif_tzero;
-	int	flags = (opts & PF_OPT_VERBOSE) ? p->pfif_flags : 0;
-	int	first = 1;
+	time_t	tzero = p->pfik_tzero;
 	int	i, af, dir, act;
 
-	printf("%s", p->pfif_name);
-	oprintf(flags, PFI_IFLAG_INSTANCE, "instance", &first, 0);
-	oprintf(flags, PFI_IFLAG_GROUP, "group", &first, 0);
-	oprintf(flags, PFI_IFLAG_CLONABLE, "clonable", &first, 0);
-	oprintf(flags, PFI_IFLAG_DYNAMIC, "dynamic", &first, 0);
-	oprintf(flags, PFI_IFLAG_ATTACHED, "attached", &first, 0);
-	oprintf(flags, PFI_IFLAG_SKIP, "skipped", &first, 1);
+	printf("%s", p->pfik_name);
 	printf("\n");
 
 	if (!(opts & PF_OPT_VERBOSE2))
 		return;
 	printf("\tCleared:     %s", ctime(&tzero));
 	printf("\tReferences:  [ States:  %-18d Rules: %-18d ]\n",
-	    p->pfif_states, p->pfif_rules);
+	    p->pfik_states, p->pfik_rules);
 	for (i = 0; i < 8; i++) {
 		af = (i>>2) & 1;
 		dir = (i>>1) &1;
 		act = i & 1;
 		printf("\t%-12s [ Packets: %-18llu Bytes: %-18llu ]\n",
 		    istats_text[af][dir][act],
-		    (unsigned long long)p->pfif_packets[af][dir][act],
-		    (unsigned long long)p->pfif_bytes[af][dir][act]);
+		    (unsigned long long)p->pfik_packets[af][dir][act],
+		    (unsigned long long)p->pfik_bytes[af][dir][act]);
 	}
 }
-
-void
-oprintf(int flags, int flag, const char *s, int *first, int last)
-{
-	if (flags & flag) {
-		printf(*first ? "\t(%s" : ", %s", s);
-		*first = 0;
-	}
-	if (last && !*first)
-		printf(")");
-}
-

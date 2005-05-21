@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.488 2005/04/25 17:55:51 brad Exp $ */
+/*	$OpenBSD: pf.c,v 1.489 2005/05/21 21:03:57 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -252,9 +252,8 @@ struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 	(s)->lan.addr.addr32[3] != (s)->gwy.addr.addr32[3])) || \
 	(s)->lan.port != (s)->gwy.port
 
-#define BOUND_IFACE(r, k) (((r)->rule_flag & PFRULE_IFBOUND) ? (k) :   \
-	((r)->rule_flag & PFRULE_GRBOUND) ? (k)->pfik_parent :	       \
-	(k)->pfik_parent->pfik_parent)
+#define BOUND_IFACE(r, k) \
+	((r)->rule_flag & PFRULE_IFBOUND) ? (k) : pfi_all
 
 #define STATE_INC_COUNTERS(s)				\
 	do {						\
@@ -537,20 +536,20 @@ pf_find_state_recurse(struct pfi_kif *kif, struct pf_state *key, u_int8_t tree)
 
 	switch (tree) {
 	case PF_LAN_EXT:
-		for (; kif != NULL; kif = kif->pfik_parent) {
-			s = RB_FIND(pf_state_tree_lan_ext,
-			    &kif->pfik_lan_ext, key);
-			if (s != NULL)
-				return (s);
-		}
+		if ((s = RB_FIND(pf_state_tree_lan_ext, &kif->pfik_lan_ext,
+		    key)) != NULL)
+			return (s);
+		if ((s = RB_FIND(pf_state_tree_lan_ext, &pfi_all->pfik_lan_ext,
+		    key)) != NULL)
+			return (s);
 		return (NULL);
 	case PF_EXT_GWY:
-		for (; kif != NULL; kif = kif->pfik_parent) {
-			s = RB_FIND(pf_state_tree_ext_gwy,
-			    &kif->pfik_ext_gwy, key);
-			if (s != NULL)
-				return (s);
-		}
+		if ((s = RB_FIND(pf_state_tree_ext_gwy, &kif->pfik_ext_gwy,
+		    key)) != NULL)
+			return (s);
+		if ((s = RB_FIND(pf_state_tree_ext_gwy, &pfi_all->pfik_ext_gwy,
+		    key)) != NULL)
+			return (s);
 		return (NULL);
 	default:
 		panic("pf_find_state_recurse");
@@ -849,7 +848,7 @@ pf_insert_state(struct pfi_kif *kif, struct pf_state *state)
 
 	pf_status.fcounters[FCNT_STATE_INSERT]++;
 	pf_status.states++;
-	pfi_attach_state(kif);
+	pfi_kif_ref(kif, PFI_KIF_REF_STATE);
 #if NPFSYNC
 	pfsync_insert_state(state);
 #endif
@@ -990,7 +989,7 @@ pf_purge_expired_state(struct pf_state *cur)
 		if (--cur->anchor.ptr->states <= 0)
 			pf_rm_rule(NULL, cur->anchor.ptr);
 	pf_normalize_tcp_cleanup(cur);
-	pfi_detach_state(cur->u.s.kif);
+	pfi_kif_unref(cur->u.s.kif, PFI_KIF_REF_STATE);
 	TAILQ_REMOVE(&state_updates, cur, u.s.entry_updates);
 	if (cur->tag)
 		pf_tag_unref(cur->tag);
@@ -2255,8 +2254,7 @@ pf_match_translation(struct pf_pdesc *pd, struct mbuf *m, int off,
 		}
 
 		r->evaluations++;
-		if (r->kif != NULL &&
-		    (r->kif != kif && r->kif != kif->pfik_parent) == !r->ifnot)
+		if (pfi_kif_match(r->kif, kif) == r->ifnot)
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
 			r = r->skip[PF_SKIP_DIR].ptr;
@@ -2737,8 +2735,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	while (r != NULL) {
 		r->evaluations++;
-		if (r->kif != NULL &&
-		    (r->kif != kif && r->kif != kif->pfik_parent) == !r->ifnot)
+		if (pfi_kif_match(r->kif, kif) == r->ifnot)
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
 			r = r->skip[PF_SKIP_DIR].ptr;
@@ -3112,8 +3109,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	while (r != NULL) {
 		r->evaluations++;
-		if (r->kif != NULL &&
-		    (r->kif != kif && r->kif != kif->pfik_parent) == !r->ifnot)
+		if (pfi_kif_match(r->kif, kif) == r->ifnot)
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
 			r = r->skip[PF_SKIP_DIR].ptr;
@@ -3440,8 +3436,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	while (r != NULL) {
 		r->evaluations++;
-		if (r->kif != NULL &&
-		    (r->kif != kif && r->kif != kif->pfik_parent) == !r->ifnot)
+		if (pfi_kif_match(r->kif, kif) == r->ifnot)
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
 			r = r->skip[PF_SKIP_DIR].ptr;
@@ -3692,8 +3687,7 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 
 	while (r != NULL) {
 		r->evaluations++;
-		if (r->kif != NULL &&
-		    (r->kif != kif && r->kif != kif->pfik_parent) == !r->ifnot)
+		if (pfi_kif_match(r->kif, kif) == r->ifnot)
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
 			r = r->skip[PF_SKIP_DIR].ptr;
@@ -3902,8 +3896,7 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct pfi_kif *kif,
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_FILTER].active.ptr);
 	while (r != NULL) {
 		r->evaluations++;
-		if (r->kif != NULL &&
-		    (r->kif != kif && r->kif != kif->pfik_parent) == !r->ifnot)
+		if (pfi_kif_match(r->kif, kif) == r->ifnot)
 			r = r->skip[PF_SKIP_IFP].ptr;
 		else if (r->direction && r->direction != direction)
 			r = r->skip[PF_SKIP_DIR].ptr;
@@ -5708,7 +5701,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0,
 	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
 		ifp = ifp->if_carpdev;
 
-	kif = pfi_index2kif[ifp->if_index];
+	kif = (struct pfi_kif *)ifp->if_pf_kif;
 	if (kif == NULL) {
 		DPFPRINTF(PF_DEBUG_URGENT,
 		    ("pf_test: kif == NULL, if_xname %s\n", ifp->if_xname));
@@ -6027,7 +6020,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 	if (ifp->if_type == IFT_CARP && ifp->if_carpdev)
 		ifp = ifp->if_carpdev;
 
-	kif = pfi_index2kif[ifp->if_index];
+	kif = (struct pfi_kif *)ifp->if_pf_kif;
 	if (kif == NULL) {
 		DPFPRINTF(PF_DEBUG_URGENT,
 		    ("pf_test6: kif == NULL, if_xname %s\n", ifp->if_xname));

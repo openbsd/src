@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.213 2005/03/03 07:13:39 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.214 2005/05/21 21:03:57 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -588,7 +588,6 @@ struct pf_rule {
 
 /* rule flags again */
 #define PFRULE_IFBOUND		0x00010000	/* if-bound */
-#define PFRULE_GRBOUND		0x00020000	/* group-bound */
 
 #define PFSTATE_HIWAT		10000	/* default state table size */
 
@@ -846,53 +845,33 @@ RB_HEAD(pf_state_tree_ext_gwy, pf_state);
 RB_PROTOTYPE(pf_state_tree_ext_gwy, pf_state,
     u.s.entry_ext_gwy, pf_state_compare_ext_gwy);
 
-struct pfi_if {
-	char				 pfif_name[IFNAMSIZ];
-	u_int64_t			 pfif_packets[2][2][2];
-	u_int64_t			 pfif_bytes[2][2][2];
-	u_int64_t			 pfif_addcnt;
-	u_int64_t			 pfif_delcnt;
-	long				 pfif_tzero;
-	int				 pfif_states;
-	int				 pfif_rules;
-	int				 pfif_flags;
-};
-
-TAILQ_HEAD(pfi_grouphead, pfi_kif);
 TAILQ_HEAD(pfi_statehead, pfi_kif);
 RB_HEAD(pfi_ifhead, pfi_kif);
+
 struct pfi_kif {
-	struct pfi_if			 pfik_if;
 	RB_ENTRY(pfi_kif)		 pfik_tree;
+	char				 pfik_name[IFNAMSIZ];
+	u_int64_t			 pfik_packets[2][2][2];
+	u_int64_t			 pfik_bytes[2][2][2];
+	u_int32_t			 pfik_tzero;	/* XXX */
+	int				 pfik_flags;
 	struct pf_state_tree_lan_ext	 pfik_lan_ext;
 	struct pf_state_tree_ext_gwy	 pfik_ext_gwy;
-	struct pfi_grouphead		 pfik_grouphead;
-	TAILQ_ENTRY(pfi_kif)		 pfik_instances;
 	TAILQ_ENTRY(pfi_kif)		 pfik_w_states;
 	struct hook_desc_head		*pfik_ah_head;
 	void				*pfik_ah_cookie;
-	struct pfi_kif			*pfik_parent;
 	struct ifnet			*pfik_ifp;
 	int				 pfik_states;
 	int				 pfik_rules;
 };
-#define pfik_name	pfik_if.pfif_name
-#define pfik_packets	pfik_if.pfif_packets
-#define pfik_bytes	pfik_if.pfif_bytes
-#define pfik_tzero	pfik_if.pfif_tzero
-#define pfik_flags	pfik_if.pfif_flags
-#define pfik_addcnt	pfik_if.pfif_addcnt
-#define pfik_delcnt	pfik_if.pfif_delcnt
-#define pfik_states	pfik_if.pfif_states
-#define pfik_rules	pfik_if.pfif_rules
 
-#define PFI_IFLAG_GROUP		0x0001	/* group of interfaces */
-#define PFI_IFLAG_INSTANCE	0x0002	/* single instance */
-#define PFI_IFLAG_CLONABLE	0x0010	/* clonable group */
-#define PFI_IFLAG_DYNAMIC	0x0020	/* dynamic group */
-#define PFI_IFLAG_ATTACHED	0x0040	/* interface attached */
+enum pfi_kif_refs {
+	PFI_KIF_REF_NONE,
+	PFI_KIF_REF_STATE,
+	PFI_KIF_REF_RULE
+};
+
 #define PFI_IFLAG_SKIP		0x0100	/* skip filtering on interface */
-#define PFI_IFLAG_SETABLE_MASK	0x0100	/* setable via DIOC{SET,CLR}IFFLAG */
 
 struct pf_pdesc {
 	u_int64_t	 tot_len;	/* Make Mickey money */
@@ -1282,11 +1261,6 @@ struct pfioc_table {
 #define pfrio_setflag	pfrio_size2
 #define pfrio_clrflag	pfrio_nadd
 
-
-#define PFI_FLAG_GROUP		0x0001	/* gets groups of interfaces */
-#define PFI_FLAG_INSTANCE	0x0002	/* gets single interfaces */
-#define PFI_FLAG_ALLMASK	0x0003
-
 struct pfioc_iface {
 	char	 pfiio_name[IFNAMSIZ];
 	void	*pfiio_buffer;
@@ -1365,7 +1339,6 @@ struct pfioc_iface {
 #define DIOCCLRSRCNODES	_IO('D', 85)
 #define DIOCSETHOSTID	_IOWR('D', 86, u_int32_t)
 #define DIOCIGETIFACES	_IOWR('D', 87, struct pfioc_iface)
-#define DIOCICLRISTATS  _IOWR('D', 88, struct pfioc_iface)
 #define DIOCSETIFFLAG	_IOWR('D', 89, struct pfioc_iface)
 #define DIOCCLRIFFLAG	_IOWR('D', 90, struct pfioc_iface)
 
@@ -1387,7 +1360,6 @@ extern struct pf_poolqueue		  pf_pools[2];
 TAILQ_HEAD(pf_altqqueue, pf_altq);
 extern struct pf_altqqueue		  pf_altqs[2];
 extern struct pf_palist			  pf_pabuf;
-extern struct pfi_kif			**pfi_index2kif;
 
 extern u_int32_t		 ticket_altqs_active;
 extern u_int32_t		 ticket_altqs_inactive;
@@ -1513,29 +1485,26 @@ int	pfr_ina_commit(struct pfr_table *, u_int32_t, int *, int *, int);
 int	pfr_ina_define(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int *, u_int32_t, int);
 
+extern struct pfi_statehead	 pfi_statehead;
+extern struct pfi_kif		*pfi_all;
+
 void		 pfi_initialize(void);
-void		 pfi_attach_clone(struct if_clone *);
+struct pfi_kif	*pfi_kif_get(char *);
+void		 pfi_kif_ref(struct pfi_kif *, enum pfi_kif_refs);
+void		 pfi_kif_unref(struct pfi_kif *, enum pfi_kif_refs);
+int		 pfi_kif_match(struct pfi_kif *, struct pfi_kif *);
 void		 pfi_attach_ifnet(struct ifnet *);
 void		 pfi_detach_ifnet(struct ifnet *);
-struct pfi_kif	*pfi_lookup_create(const char *);
-struct pfi_kif	*pfi_lookup_if(const char *);
-int		 pfi_maybe_destroy(struct pfi_kif *);
-struct pfi_kif	*pfi_attach_rule(const char *);
-void		 pfi_detach_rule(struct pfi_kif *);
-void		 pfi_attach_state(struct pfi_kif *);
-void		 pfi_detach_state(struct pfi_kif *);
-int		 pfi_dynaddr_setup(struct pf_addr_wrap *, sa_family_t);
-void		 pfi_dynaddr_copyout(struct pf_addr_wrap *);
-void		 pfi_dynaddr_remove(struct pf_addr_wrap *);
-void		 pfi_fill_oldstatus(struct pf_status *);
-int		 pfi_clr_istats(const char *, int *, int);
-int		 pfi_get_ifaces(const char *, struct pfi_if *, int *, int);
-int		 pfi_set_flags(const char *, int);
-int		 pfi_clear_flags(const char *, int);
 int		 pfi_match_addr(struct pfi_dynaddr *, struct pf_addr *,
 		    sa_family_t);
-
-extern struct pfi_statehead	pfi_statehead;
+int		 pfi_dynaddr_setup(struct pf_addr_wrap *, sa_family_t);
+void		 pfi_dynaddr_remove(struct pf_addr_wrap *);
+void		 pfi_dynaddr_copyout(struct pf_addr_wrap *);
+void		 pfi_fill_oldstatus(struct pf_status *);
+int		 pfi_clr_istats(const char *);
+int		 pfi_get_ifaces(const char *, struct pfi_kif *, int *);
+int		 pfi_set_flags(const char *, int);
+int		 pfi_clear_flags(const char *, int);
 
 u_int16_t	pf_tagname2tag(char *);
 void		pf_tag2tagname(u_int16_t, char *);
