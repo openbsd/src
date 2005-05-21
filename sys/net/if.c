@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.110 2005/05/21 21:03:57 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.111 2005/05/21 21:24:38 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -248,6 +248,7 @@ if_attachsetup(struct ifnet *ifp)
 		continue;
 	strlcpy(ifgroup, ifp->if_xname, n + 1);
 	if_addgroup(ifp, ifgroup);
+	if_addgroup(ifp, "all");
 
 	ifindex2ifnet[if_index] = ifp;
 
