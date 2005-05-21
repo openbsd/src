@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.29 2005/05/17 20:33:26 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.30 2005/05/21 10:33:48 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -457,9 +457,16 @@ dopatsubst(const char *argv[], int argc)
 		int error;
 		regex_t re;
 		regmatch_t *pmatch;
+		int mode = REG_EXTENDED;
+		size_t l = strlen(argv[3]);
+
+		if (!mimic_gnu ||
+		    (argv[3][0] == '^') || 
+		    (l > 0 && argv[3][l-1] == '$'))
+			mode |= REG_NEWLINE;
 
 		error = regcomp(&re, mimic_gnu ? twiddle(argv[3]) : argv[3], 
-		    mimic_gnu ? REG_EXTENDED : REG_NEWLINE | REG_EXTENDED);
+		    mode);
 		if (error != 0)
 			exit_regerror(error, &re);
 		
