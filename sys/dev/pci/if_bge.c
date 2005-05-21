@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.58 2005/04/25 17:55:51 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.59 2005/05/21 17:24:50 brad Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2893,23 +2893,6 @@ bge_ifmedia_upd(ifp)
 			return(EINVAL);
 		switch(IFM_SUBTYPE(ifm->ifm_media)) {
 		case IFM_AUTO:
-			/*
-			 * The BCM5704 ASIC appears to have a special
-			 * mechanism for programming the autoneg
-			 * advertisement registers in TBI mode.
-			 */
-			if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5704) {
-				uint32_t sgdig;
-				CSR_WRITE_4(sc, BGE_TX_TBI_AUTONEG, 0);
-				sgdig = CSR_READ_4(sc, BGE_SGDIG_CFG);
-				sgdig |= BGE_SGDIGCFG_AUTO|
-				    BGE_SGDIGCFG_PAUSE_CAP|
-				    BGE_SGDIGCFG_ASYM_PAUSE;
-				CSR_WRITE_4(sc, BGE_SGDIG_CFG,
-				    sgdig|BGE_SGDIGCFG_SEND);
-				DELAY(5);
-				CSR_WRITE_4(sc, BGE_SGDIG_CFG, sgdig);
-			}
 			break;
 		case IFM_1000_SX:
 			if ((ifm->ifm_media & IFM_GMASK) == IFM_FDX) {
