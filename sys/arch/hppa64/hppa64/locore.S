@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.3 2005/05/01 19:29:56 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.4 2005/05/21 22:58:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -405,7 +405,7 @@ $syscall_return
 
 gateway_end
 	. = gateway_page + PAGE_SIZE
-	.size	$gateway_page, .-$gateway_page
+	.size	gateway_page, .-gateway_page
 
 /*
  * interrupt vector table
