@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.3 2004/12/30 23:33:28 drahn Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.4 2005/05/21 03:27:05 mickey Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -384,14 +384,14 @@ const struct cpu_classtab cpu_classes[] = {
  */
 
 static const char * const wtnames[] = {
-	"write-through",
-	"write-back",
-	"write-back",
+	"wr-thru",
+	"wr-back",
+	"wr-back",
 	"**unknown 3**",
 	"**unknown 4**",
-	"write-back-locking",		/* XXX XScale-specific? */
-	"write-back-locking-A",
-	"write-back-locking-B",
+	"wr-back-lock",		/* XXX XScale-specific? */
+	"wr-back-lock-A",
+	"wr-back-lock-B",
 	"**unknown 8**",
 	"**unknown 9**",
 	"**unknown 10**",
@@ -486,13 +486,11 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 		    arm_pdcache_line_size, arm_pdcache_ways,
 		    wtnames[arm_pcache_type]);
 	} else {
-		printf("%s: %dKB/%dB %d-way Instruction cache\n",
+		printf("%s: %dKB(%db/l,%dway) I-cache, %dKB(%db/l,%dway) %s D-cache\n",
 		    dv->dv_xname, arm_picache_size / 1024,
-		    arm_picache_line_size, arm_picache_ways);
-		printf("%s: %dKB/%dB %d-way %s Data cache\n",
-		    dv->dv_xname, arm_pdcache_size / 1024, 
-		    arm_pdcache_line_size, arm_pdcache_ways,
-		    wtnames[arm_pcache_type]);
+		    arm_picache_line_size, arm_picache_ways,
+		    arm_pdcache_size / 1024, arm_pdcache_line_size, 
+		    arm_pdcache_ways, wtnames[arm_pcache_type]);
 	}
 
  skip_pcache:
