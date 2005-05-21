@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.7 2005/05/21 18:05:58 brad Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.8 2005/05/21 19:43:20 brad Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -717,7 +717,7 @@ ntfs_readdir(ap)
 		off_t *cookiep;
 #endif
 
-		dprintf("ntfs_readdir: %d cookies\n",ncookies);
+		dprintf(("ntfs_readdir: %d cookies\n",ncookies));
 		if (uio->uio_segflg != UIO_SYSSPACE || uio->uio_iovcnt != 1)
 			panic("ntfs_readdir: unexpected uio from NFS server");
 		dpStart = (struct dirent *)
