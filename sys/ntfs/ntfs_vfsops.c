@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vfsops.c,v 1.8 2005/03/08 15:45:20 pat Exp $	*/
+/*	$OpenBSD: ntfs_vfsops.c,v 1.9 2005/05/21 18:05:58 brad Exp $	*/
 /*	$NetBSD: ntfs_vfsops.c,v 1.7 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -819,6 +819,10 @@ ntfs_root(
 	return (0);
 }
 
+/*
+ * Do operations associated with quotas, not supported
+ */
+/* ARGSUSED */
 static int
 ntfs_quotactl ( 
 	struct mount *mp,
@@ -827,7 +831,7 @@ ntfs_quotactl (
 	caddr_t arg,
 	struct proc *p)
 {
-	printf("\nntfs_quotactl():\n");
+
 	return EOPNOTSUPP;
 }
 
@@ -839,7 +843,7 @@ ntfs_calccfree(
 	struct vnode *vp;
 	u_int8_t *tmp;
 	int j, error;
-	long cfree = 0;
+	cn_t cfree = 0;
 	size_t bmsize, i;
 
 	vp = ntmp->ntm_sysvn[NTFS_BITMAPINO];

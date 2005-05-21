@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_vnops.c,v 1.6 2005/04/16 16:28:42 joris Exp $	*/
+/*	$OpenBSD: ntfs_vnops.c,v 1.7 2005/05/21 18:05:58 brad Exp $	*/
 /*	$NetBSD: ntfs_vnops.c,v 1.6 2003/04/10 21:57:26 jdolecek Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ ntfs_read(ap)
 	if (uio->uio_offset > fp->f_size)
 		toread = 0;
 	else
-		toread = min( uio->uio_resid, fp->f_size - uio->uio_offset );
+		toread = MIN(uio->uio_resid, fp->f_size - uio->uio_offset );
 
 	dprintf((", toread: %d\n",(u_int32_t)toread));
 
@@ -367,7 +367,7 @@ ntfs_strategy(ap)
 		(u_int32_t)bp->b_lblkno));
 #endif
 
-	dprintf(("strategy: bcount: %d flags: 0x%lx\n", 
+	dprintf(("strategy: bcount: %u flags: 0x%x\n", 
 		(u_int32_t)bp->b_bcount,bp->b_flags));
 
 	if (bp->b_flags & B_READ) {
@@ -377,8 +377,8 @@ ntfs_strategy(ap)
 			clrbuf(bp);
 			error = 0;
 		} else {
-			toread = min(bp->b_bcount,
-				 fp->f_size-ntfs_cntob(bp->b_blkno));
+			toread = MIN(bp->b_bcount,
+				 fp->f_size - ntfs_cntob(bp->b_blkno));
 			dprintf(("ntfs_strategy: toread: %d, fsize: %d\n",
 				toread,(u_int32_t)fp->f_size));
 
@@ -403,8 +403,8 @@ ntfs_strategy(ap)
 			bp->b_error = error = EFBIG;
 			bp->b_flags |= B_ERROR;
 		} else {
-			towrite = min(bp->b_bcount,
-				fp->f_size-ntfs_cntob(bp->b_blkno));
+			towrite = MIN(bp->b_bcount,
+				fp->f_size - ntfs_cntob(bp->b_blkno));
 			dprintf(("ntfs_strategy: towrite: %d, fsize: %d\n",
 				towrite,(u_int32_t)fp->f_size));
 
@@ -449,7 +449,7 @@ ntfs_write(ap)
 		return (EFBIG);
 	}
 
-	towrite = min(uio->uio_resid, fp->f_size - uio->uio_offset);
+	towrite = MIN(uio->uio_resid, fp->f_size - uio->uio_offset);
 
 	dprintf((", towrite: %d\n",(u_int32_t)towrite));
 
@@ -478,9 +478,6 @@ ntfs_access(ap)
 	mode_t mask, mode = ap->a_mode;
 	gid_t *gp;
 	int i;
-#if defined(__NetBSD__) && defined(QUOTA)
-	int error;
-#endif
 
 	dprintf(("ntfs_access: %d\n",ip->i_number));
 
@@ -496,10 +493,6 @@ ntfs_access(ap)
 		case VREG:
 			if (vp->v_mount->mnt_flag & MNT_RDONLY)
 				return (EROFS);
-#if defined(__NetBSD__) && defined(QUOTA)
-			if (error = getinoquota(ip))
-				return (error);
-#endif
 			break;
 		}
 	}
@@ -724,7 +717,7 @@ ntfs_readdir(ap)
 		off_t *cookiep;
 #endif
 
-		printf("ntfs_readdir: %d cookies\n",ncookies);
+		dprintf("ntfs_readdir: %d cookies\n",ncookies);
 		if (uio->uio_segflg != UIO_SYSSPACE || uio->uio_iovcnt != 1)
 			panic("ntfs_readdir: unexpected uio from NFS server");
 		dpStart = (struct dirent *)

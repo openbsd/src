@@ -1,4 +1,4 @@
-$OpenBSD: TODO,v 1.2 2003/05/20 03:23:11 mickey Exp $
+$OpenBSD: TODO,v 1.3 2005/05/21 18:05:58 brad Exp $
 $NetBSD: TODO,v 1.1 2002/12/23 17:38:31 jdolecek Exp $
 
 - convert the code to do caching in buffer cache indexed by
@@ -27,6 +27,7 @@ $NetBSD: TODO,v 1.1 2002/12/23 17:38:31 jdolecek Exp $
 	(from Semen Ustimenko <semenu@FreeBSD.org>)
   generally, better write support
 
+- once writing would work, consider quota support
 
 - support mount update
 
