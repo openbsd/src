@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
+/*	$OpenBSD: exec.h,v 1.2 2005/05/21 18:04:01 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1994, The University of Utah and
@@ -39,7 +39,7 @@
 
 #define NATIVE_EXEC_ELF
 #define _NLIST_DO_ELF
-#define	_KERN_DO_ELF
+#define	_KERN_DO_ELF64
 
 /*
  * the following MD ELF values defenitions are from the:
