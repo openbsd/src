@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.136 2005/04/14 10:23:37 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.137 2005/05/22 00:02:28 henning Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3355,7 +3355,8 @@ usage(int value)
 void
 getifgroups(void)
 {
-	int			 len;
+	int			 len, cnt, n;
+	char			 ifgroup[IFNAMSIZ];
 	struct ifgroupreq	 ifgr;
 	struct ifg_req		*ifg;
 
@@ -3374,24 +3375,27 @@ getifgroups(void)
 	    sizeof(struct ifg_req));
 	if (ifgr.ifgr_groups == NULL)
 		err(1, "getifgroups");
-
 	if (ioctl(s, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)
 		err(1, "SIOCGIFGROUP");
 
-	if (len -= sizeof(struct ifg_req)) {
-		len += sizeof(struct ifg_req);
-		printf("\tgroups: ");
-		ifg = ifgr.ifgr_groups;
-		if (ifg) {
-			len -= sizeof(struct ifg_req);
-			ifg++;
-		}
-		for (; ifg && len >= sizeof(struct ifg_req); ifg++) {
-			len -= sizeof(struct ifg_req);
+	cnt = 0;
+	ifg = ifgr.ifgr_groups;
+	for (n = 0; name[n] < '0' || name[n] > '9'; n++)
+		continue;
+	strlcpy(ifgroup, name, n + 1);
+
+	for (; ifg && len >= sizeof(struct ifg_req); ifg++) {
+		len -= sizeof(struct ifg_req);
+		if (strcmp(ifg->ifgrq_group, "all") &&
+		    strcmp(ifg->ifgrq_group, ifgroup)) {
+			if (cnt == 0)
+				printf("\tgroups: ");
+			cnt++;
 			printf("%s ", ifg->ifgrq_group);
 		}
-		printf("\n");
 	}
+	if (cnt)
+		printf("\n");
 }
 
 #ifdef INET6
