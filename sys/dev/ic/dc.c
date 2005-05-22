@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.84 2005/04/30 21:38:05 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.85 2005/05/22 01:10:23 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -131,6 +131,7 @@
 
 int dc_intr(void *);
 void dc_shutdown(void *);
+void dc_power(int, void *);
 struct dc_type *dc_devtype(void *);
 int dc_newbuf(struct dc_softc *, int, struct mbuf *);
 int dc_encap(struct dc_softc *, struct mbuf *, u_int32_t *);
@@ -1846,6 +1847,7 @@ hasmac:
 	ether_ifattach(ifp);
 
 	sc->sc_dhook = shutdownhook_establish(dc_shutdown, sc);
+	sc->sc_pwrhook = powerhook_establish(dc_power, sc);
 
 fail:
 	return;
@@ -1869,6 +1871,7 @@ dc_detach(sc)
 	if_detach(ifp);
 
 	shutdownhook_disestablish(sc->sc_dhook);
+	powerhook_disestablish(sc->sc_pwrhook);
 
 	return (0);
 }
@@ -3244,6 +3247,26 @@ dc_shutdown(v)
 	struct dc_softc *sc = (struct dc_softc *)v;
 
 	dc_stop(sc);
+}
+
+void
+dc_power(why, arg)
+	int why;
+	void *arg;
+{
+	struct dc_softc *sc = arg;
+	struct ifnet *ifp;
+	int s;
+
+	s = splimp();
+	if (why != PWR_RESUME)
+		dc_stop(sc);
+	else {
+		ifp = &sc->sc_arpcom.ac_if;
+		if (ifp->if_flags & IFF_UP)
+			dc_init(sc);
+	}
+	splx(s);
 }
 
 struct cfdriver dc_cd = {
