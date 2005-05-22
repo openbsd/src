@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.111 2005/05/01 12:28:18 pedro Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.112 2005/05/22 21:12:42 pedro Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1098,7 +1098,7 @@ vclean(vp, flags, p)
 	simple_unlock(&vp->v_selectinfo.vsi_lock);
 	vp->v_tag = VT_NON;
 	vp->v_flag &= ~VXLOCK;
-#ifdef DIAGNOSTIC
+#ifdef VFSDEBUG
 	vp->v_flag &= ~VLOCKSWORK;
 #endif
 	if (vp->v_flag & VXWANT) {
