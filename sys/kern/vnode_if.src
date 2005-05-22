@@ -1,4 +1,4 @@
-#	$OpenBSD: vnode_if.src,v 1.24 2003/11/08 19:17:28 jmc Exp $
+#	$OpenBSD: vnode_if.src,v 1.25 2005/05/22 21:08:21 pedro Exp $
 #	$NetBSD: vnode_if.src,v 1.10 1996/05/11 18:26:27 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
@@ -120,11 +120,11 @@ vop_open {
 };
 
 #
-#% close	vp	U U U
+#% close	vp	L L L
 #
 
 vop_close {
-	IN struct vnode *vp;
+	IN SHOULDBELOCKED struct vnode *vp;
 	IN int fflag;
 	IN struct ucred *cred;
 	IN struct proc *p;
