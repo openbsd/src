@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.68 2005/05/14 00:20:43 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.69 2005/05/22 01:12:47 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -577,7 +577,6 @@ scsi_execute_xs(xs)
 	xs->resid = xs->datalen;
 	xs->status = 0;
 
-retry:
 	/*
 	 * Do the transfer. If we are polling we will return:
 	 * COMPLETE,  Was poll, and scsi_done has been called
@@ -615,7 +614,7 @@ retry:
 	if ((flags & (SCSI_USER | SCSI_POLL)) == (SCSI_USER | SCSI_POLL))
 		panic("scsi_execute_xs: USER with POLL");
 #endif
-
+retry:
 	switch ((*(xs->sc_link->adapter->scsi_cmd)) (xs)) {
 	case SUCCESSFULLY_QUEUED:
 		if ((flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)
@@ -629,6 +628,8 @@ retry:
 			tsleep(xs, PRIBIO + 1, "scsi_scsi_cmd", 0);
 		splx(s);
 	case COMPLETE:		/* Polling command completed ok */
+		if ((flags & (SCSI_NOSLEEP | SCSI_POLL)) == SCSI_NOSLEEP)
+			return EJUSTRETURN;
 		if (xs->bp)
 			return EJUSTRETURN;
 	doit:
