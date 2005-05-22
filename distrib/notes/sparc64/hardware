@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.95 2005/05/16 22:50:49 brad Exp $
+dnl	$OpenBSD: hardware,v 1.96 2005/05/22 03:29:27 pvalchev Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	Sun Blade 100/150
 	Sun Fire V100
@@ -51,6 +51,25 @@ X or compile the system, more RAM is recommended.
 
 Supported devices {:-include-:}:
 	SCSI Host Adapters:
+		Adaptec AIC-7770, AIC-7850, AIC-7860, AIC-7870, AIC-7880,
+		AIC-7890, AIC-7891, AIC-7892, AIC-7895, AIC-7896, AIC-7897
+		and AIC-7899 based host adapters (ahc), including the
+		Adaptec cards
+			AHA-274X[W,T]
+			AHA-284X
+			AHA-2910, AHA-2915
+			AHA-2920
+			AHA-2930[C,U2]
+			AHA-2940[J,N,U,AU,UW,UW Dual,UW Pro,U2W,U2B]
+			AHA-2950[U2W,U2B]
+			AHA-3940[U,AU,UW,AUW,U2W]
+			AHA-3950U2
+			AHA-3960
+			AHA-3985
+			AHA-4944UW
+			AHA-19160B
+			AHA-29160[B,N]
+			AHA-39160
 		SBus NCR53c9x adapters (esp)
 		SBus 10/100Mbit SunSwift Ethernet+SCSI cards, aka HME + FAS366
 		  cards (esp)
@@ -118,6 +137,12 @@ dnl		PCI Alteon Tigon I/II PCI Gigabit Ethernet boards (ti)
                     Nortel BayStack 21
                     OvisLink LEF-8129TX, LEF-8139TX
                     SMC EZ Card 10/100 PCI 1211-TX
+		Realtek 8169/8169S/8110S based PCI adapters, including:
+		    Buffalo LGY-PCI-GT (8169S)
+		    Corega CG-LAPCIGT (8169S)
+		    Gigabyte 7N400 Pro2 Integrated Gigabit Ethernet (8110S)
+		    PLANEX COMMUNICATIONS Inc. GN-1200TC (8169S)
+		    Xterasys XN-152 10/100/1000 NIC (8169) 
 		ADMtek AN986-based USB adapters, including:
 		    Abocom UFE1000
 		    Abocom DSB650TX
