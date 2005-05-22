@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.8 2005/05/22 07:19:02 jason Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.9 2005/05/22 18:08:13 jason Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -479,7 +479,7 @@ snapper_query_encoding(h, ae)
 	void *h;
 	struct audio_encoding *ae;
 {
-	ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+	int err = 0;
 
 	switch (ae->index) {
 	case 0:
@@ -487,41 +487,60 @@ snapper_query_encoding(h, ae)
 		ae->encoding = AUDIO_ENCODING_SLINEAR;
 		ae->precision = 16;
 		ae->flags = 0;
-		return 0;
+		break;
 	case 1:
 		strlcpy(ae->name, AudioEslinear_be, sizeof(ae->name));
 		ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
 		ae->precision = 16;
 		ae->flags = 0;
-		return 0;
+		break;
 	case 2:
 		strlcpy(ae->name, AudioEslinear_le, sizeof(ae->name));
 		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
 		ae->precision = 16;
-		return 0;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
 	case 3:
 		strlcpy(ae->name, AudioEslinear_be, sizeof(ae->name));
 		ae->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		ae->precision = 16;
-		return 0;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
 	case 4:
 		strlcpy(ae->name, AudioEslinear_le, sizeof(ae->name));
 		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		ae->precision = 16;
-		return 0;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
 	case 5:
 		strlcpy(ae->name, AudioEmulaw, sizeof(ae->name));
 		ae->encoding = AUDIO_ENCODING_ULAW;
 		ae->precision = 8;
-		return 0;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
 	case 6:
 		strlcpy(ae->name, AudioEalaw, sizeof(ae->name));
 		ae->encoding = AUDIO_ENCODING_ALAW;
 		ae->precision = 8;
-		return 0;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 7:
+		strlcpy(ae->name, AudioEslinear, sizeof(ae->name));
+		ae->encoding = AUDIO_ENCODING_SLINEAR;
+		ae->precision = 8;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 8:
+		strlcpy(ae->name, AudioEulinear, sizeof(ae->name));
+		ae->encoding = AUDIO_ENCODING_ULINEAR;
+		ae->precision = 8;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
 	default:
-		return EINVAL;
+		err = EINVAL;
+		break;
 	}
+	return (err);
 }
 
 static void
@@ -598,27 +617,72 @@ snapper_set_params(h, setmode, usemode, play, rec)
 		switch (p->encoding) {
 
 		case AUDIO_ENCODING_SLINEAR_LE:
-			if (p->channels == 2 && p->precision == 16) {
-				p->sw_code = swap_bytes;
+			switch (p->precision) {
+			case 16:
+				switch (p->channels) {
+				case 1:
+					p->factor = 2;
+					p->sw_code = swap_bytes_mono16_to_stereo16;
+					break;
+				case 2:
+					p->factor = 1;
+					p->sw_code = swap_bytes;
+					break;
+				default:
+					return (EINVAL);
+				}
 				break;
-			}
-			if (p->channels == 1 && p->precision == 16) {
-				p->factor = 2;
-				p->sw_code = swap_bytes_mono16_to_stereo16;
+			case 8:
+				switch (p->channels) {
+				case 1:
+					p->factor = 4;
+					p->sw_code = linear8_to_linear16_be_mts;
+					break;
+				case 2:
+					p->factor = 2;
+					p->sw_code = linear8_to_linear16_be;
+					break;
+				default:
+					return (EINVAL);
+				}
 				break;
+			default:
+				return (EINVAL);
 			}
-			return EINVAL;
 		case AUDIO_ENCODING_SLINEAR_BE:
-			if (p->channels == 1 && p->precision == 16) {
-				p->factor = 2;
-				p->sw_code = mono16_to_stereo16;
+			switch (p->precision) {
+			case 16:
+				switch (p->channels) {
+				case 1:
+					p->factor = 2;
+					p->sw_code = mono16_to_stereo16;
+					break;
+				case 2:
+					p->factor = 1;
+					p->sw_code = NULL;
+					break;
+				default:
+					return (EINVAL);
+				}
 				break;
+			case 8:
+				switch (p->channels) {
+				case 1:
+					p->factor = 4;
+					p->sw_code = linear8_to_linear16_be_mts;
+					break;
+				case 2:
+					p->factor = 2;
+					p->sw_code = linear8_to_linear16_be;
+					break;
+				default:
+					return (EINVAL);
+				}
+				break;
+			default:
+				return (EINVAL);
 			}
-			if (p->channels == 2 && p->precision == 16)
-				break;
-
-			return EINVAL;
-
+			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
 			if (p->channels == 2 && p->precision == 16) {
 				p->sw_code = swap_bytes_change_sign16_be;
@@ -1230,7 +1294,7 @@ gpio_write(addr, val)
 	if (val)
 		data |= GPIO_DATA;
 	*addr = data;
-	asm volatile ("eieio");
+	asm volatile ("eieio" ::: "memory");
 }
 
 #define headphone_active 0	/* XXX OF */
@@ -1443,7 +1507,7 @@ snapper_init(sc, node)
 
 	/* Enable headphone interrupt? */
 	*headphone_detect |= 0x80;
-	asm volatile ("eieio");
+	asm volatile ("eieio" ::: "memory");
 
 	/* i2c_set_port(port); */
 
