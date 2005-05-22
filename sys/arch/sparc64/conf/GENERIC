@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.126 2005/05/16 16:56:44 brad Exp $
+#	$OpenBSD: GENERIC,v 1.127 2005/05/22 02:20:07 pvalchev Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -55,6 +55,7 @@ epic*	at pci?				# SMC EPIC/100 ethernet
 em*	at pci?				# Intel Pro/1000 ethernet
 rl*	at pci?				# RealTek 81[23]9 ethernet
 vr*	at pci?				# VIA Rhine ethernet
+re*	at pci?				# Realtek 8169/8169S/8110S
 
 # PCI SCSI
 ahc*	at pci?			# Adaptec 2940 SCSI controllers
@@ -284,6 +285,7 @@ inphy*	at mii?				# Intel 82555 PHYs
 lxtphy*	at mii?				# Level1 LXT970 PHYs
 rlphy*	at mii?				# RealTek 8139 internal PHYs
 urlphy*	at mii?				# Realtek RTL8150L internal PHY
+rgephy*	at mii?				# Realtek 8169S/8110S PHY
 ukphy*	at mii?				# Unknown PHYs
 
 # Framebuffers
