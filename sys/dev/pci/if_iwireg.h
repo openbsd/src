@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwireg.h,v 1.13 2005/05/22 15:14:10 damien Exp $	*/
+/*	$OpenBSD: if_iwireg.h,v 1.14 2005/05/22 15:28:45 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -330,7 +330,7 @@ struct iwi_scan {
 struct iwi_configuration {
 	u_int8_t	bluetooth_coexistence;
 	u_int8_t	reserved1;
-	u_int8_t	answer_broadcast_probe_req;
+	u_int8_t	answer_pbreq;
 	u_int8_t	allow_invalid_frames;
 	u_int8_t	multicast_enabled;
 	u_int8_t	exclude_unicast_unencrypted;

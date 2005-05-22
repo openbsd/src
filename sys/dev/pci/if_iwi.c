@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.40 2005/05/22 15:14:10 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.41 2005/05/22 15:28:45 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -1667,6 +1667,7 @@ iwi_config(struct iwi_softc *sc)
 	bzero(&config, sizeof config);
 	config.bluetooth_coexistence = 1;
 	config.multicast_enabled = 1;
+	config.answer_pbreq = (ic->ic_opmode == IEEE80211_M_IBSS) ? 1 : 0;
 	DPRINTF(("Configuring adapter\n"));
 	error = iwi_cmd(sc, IWI_CMD_SET_CONFIGURATION, &config, sizeof config,
 	    0);
@@ -1826,6 +1827,8 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 		config.bluetooth_coexistence = 1;
 		config.multicast_enabled = 1;
 		config.bg_autodetection = 1;
+		config.answer_pbreq =
+		    (ic->ic_opmode == IEEE80211_M_IBSS) ? 1 : 0;
 		DPRINTF(("Configuring adapter\n"));
 		error = iwi_cmd(sc, IWI_CMD_SET_CONFIGURATION, &config,
 		    sizeof config, 1);
@@ -1883,7 +1886,10 @@ iwi_auth_and_assoc(struct iwi_softc *sc)
 	assoc.lintval = htole16(ic->ic_lintval);
 	assoc.intval = htole16(ni->ni_intval);
 	IEEE80211_ADDR_COPY(assoc.bssid, ni->ni_bssid);
-	IEEE80211_ADDR_COPY(assoc.dst, ni->ni_bssid);
+	if (ic->ic_opmode == IEEE80211_M_IBSS)
+		IEEE80211_ADDR_COPY(assoc.dst, etherbroadcastaddr);
+	else
+		IEEE80211_ADDR_COPY(assoc.dst, ni->ni_bssid);
 
 	DPRINTF(("Trying to associate to %s channel %u auth %u\n",
 	    ether_sprintf(assoc.bssid), assoc.chan, assoc.auth));
