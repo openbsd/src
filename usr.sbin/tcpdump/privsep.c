@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.19 2005/05/22 18:41:33 moritz Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.20 2005/05/22 19:53:33 moritz Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -109,18 +109,18 @@ int		priv_fd = -1;
 volatile	pid_t child_pid = -1;
 static volatile	sig_atomic_t cur_state = STATE_INIT;
 
-static void	parent_open_bpf(int, int *);
-static void	parent_open_dump(int, const char *);
-static void	parent_open_output(int, const char *);
-static void	parent_setfilter(int, char *, int *);
-static void	parent_init_done(int, int *);
-static void	parent_gethostbyaddr(int);
-static void	parent_ether_ntohost(int);
-static void	parent_getrpcbynumber(int);
-static void	parent_getserventries(int);
-static void	parent_getprotoentries(int);
-static void	parent_localtime(int fd);
-static void	parent_getlines(int);
+static void	impl_open_bpf(int, int *);
+static void	impl_open_dump(int, const char *);
+static void	impl_open_output(int, const char *);
+static void	impl_setfilter(int, char *, int *);
+static void	impl_init_done(int, int *);
+static void	impl_gethostbyaddr(int);
+static void	impl_ether_ntohost(int);
+static void	impl_getrpcbynumber(int);
+static void	impl_getserventries(int);
+static void	impl_getprotoentries(int);
+static void	impl_localtime(int fd);
+static void	impl_getlines(int);
 
 static void	test_state(int, int);
 static void	logmsg(int, const char *, ...);
@@ -151,6 +151,7 @@ priv_init(int argc, char **argv)
 
 	if (child_pid) {
 		if (getuid() == 0) {
+			/* Parent, drop privileges to _tcpdump */
 			pw = getpwnam("_tcpdump");
 			if (pw == NULL)
 				errx(1, "unknown user _tcpdump");
@@ -170,7 +171,7 @@ priv_init(int argc, char **argv)
 			if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
 				err(1, "setresuid() failed");
 		} else {
-			/* Child - drop suid privileges */
+			/* Parent - drop suid privileges */
 			gid = getgid();
 			uid = getuid();
 			if (setresgid(gid, gid, gid) == -1)
@@ -183,7 +184,7 @@ priv_init(int argc, char **argv)
 		return (0);
 	}
 
-	/* Father - drop suid privileges */
+	/* Child - drop suid privileges */
 	gid = getgid();
 	uid = getuid();
 
@@ -192,8 +193,7 @@ priv_init(int argc, char **argv)
 	if (setresuid(uid, uid, uid) == -1)
 		err(1, "setresuid() failed");
 
-	/* parse the arguments for required options so that the child
-	 * need not send them back */
+	/* parse the arguments for required options */
 	opterr = 0;
 	while ((i = getopt(argc, argv,
 	    "ac:deE:fF:i:lLnNOopqr:s:StT:vw:xXy:Y")) != -1) {
@@ -254,51 +254,51 @@ priv_init(int argc, char **argv)
 		switch (cmd) {
 		case PRIV_OPEN_BPF:
 			test_state(cmd, STATE_BPF);
-			parent_open_bpf(socks[0], &bpfd);
+			impl_open_bpf(socks[0], &bpfd);
 			break;
 		case PRIV_OPEN_DUMP:
 			test_state(cmd, STATE_BPF);
-			parent_open_dump(socks[0], RFileName);
+			impl_open_dump(socks[0], RFileName);
 			break;
 		case PRIV_OPEN_OUTPUT:
 			test_state(cmd, STATE_RUN);
-			parent_open_output(socks[0], WFileName);
+			impl_open_output(socks[0], WFileName);
 			break;
 		case PRIV_SETFILTER:
 			test_state(cmd, STATE_FILTER);
-			parent_setfilter(socks[0], cmdbuf, &bpfd);
+			impl_setfilter(socks[0], cmdbuf, &bpfd);
 			break;
 		case PRIV_INIT_DONE:
 			test_state(cmd, STATE_RUN);
-			parent_init_done(socks[0], &bpfd);
+			impl_init_done(socks[0], &bpfd);
 			break;
 		case PRIV_GETHOSTBYADDR:
 			test_state(cmd, STATE_RUN);
-			parent_gethostbyaddr(socks[0]);
+			impl_gethostbyaddr(socks[0]);
 			break;
 		case PRIV_ETHER_NTOHOST:
 			test_state(cmd, cur_state);
-			parent_ether_ntohost(socks[0]);
+			impl_ether_ntohost(socks[0]);
 			break;
 		case PRIV_GETRPCBYNUMBER:
 			test_state(cmd, STATE_RUN);
-			parent_getrpcbynumber(socks[0]);
+			impl_getrpcbynumber(socks[0]);
 			break;
 		case PRIV_GETSERVENTRIES:
 			test_state(cmd, STATE_FILTER);
-			parent_getserventries(socks[0]);
+			impl_getserventries(socks[0]);
 			break;
 		case PRIV_GETPROTOENTRIES:
 			test_state(cmd, STATE_FILTER);
-			parent_getprotoentries(socks[0]);
+			impl_getprotoentries(socks[0]);
 			break;
 		case PRIV_LOCALTIME:
 			test_state(cmd, STATE_RUN);
-			parent_localtime(socks[0]);
+			impl_localtime(socks[0]);
 			break;
 		case PRIV_GETLINES:
 			test_state(cmd, STATE_RUN);
-			parent_getlines(socks[0]);
+			impl_getlines(socks[0]);
 			break;
 		default:
 			logmsg(LOG_ERR, "[priv]: unknown command %d", cmd);
@@ -312,7 +312,7 @@ priv_init(int argc, char **argv)
 }
 
 static void
-parent_open_bpf(int fd, int *bpfd)
+impl_open_bpf(int fd, int *bpfd)
 {
 	int snaplen, promisc, err;
 	u_int dlt;
@@ -339,7 +339,7 @@ parent_open_bpf(int fd, int *bpfd)
 }
 
 static void
-parent_open_dump(int fd, const char *RFileName)
+impl_open_dump(int fd, const char *RFileName)
 {
 	int file, err = 0;
 
@@ -362,7 +362,7 @@ parent_open_dump(int fd, const char *RFileName)
 }
 
 static void
-parent_open_output(int fd, const char *WFileName)
+impl_open_output(int fd, const char *WFileName)
 {
 	int file, err;
 
@@ -380,7 +380,7 @@ parent_open_output(int fd, const char *WFileName)
 }
 
 static void
-parent_setfilter(int fd, char *cmdbuf, int *bpfd)
+impl_setfilter(int fd, char *cmdbuf, int *bpfd)
 {
 	logmsg(LOG_DEBUG, "[priv]: msg PRIV_SETFILTER received");
 
@@ -391,7 +391,7 @@ parent_setfilter(int fd, char *cmdbuf, int *bpfd)
 }
 
 static void
-parent_init_done(int fd, int *bpfd)
+impl_init_done(int fd, int *bpfd)
 {
 	int ret;
 
@@ -404,7 +404,7 @@ parent_init_done(int fd, int *bpfd)
 }
 
 static void
-parent_gethostbyaddr(int fd)
+impl_gethostbyaddr(int fd)
 {
 	char hostname[MAXHOSTNAMELEN];
 	size_t hostname_len;
@@ -426,7 +426,7 @@ parent_gethostbyaddr(int fd)
 }
 
 static void
-parent_ether_ntohost(int fd)
+impl_ether_ntohost(int fd)
 {
 	struct ether_addr ether;
 	char hostname[MAXHOSTNAMELEN];
@@ -442,7 +442,7 @@ parent_ether_ntohost(int fd)
 }
 
 static void
-parent_getrpcbynumber(int fd)
+impl_getrpcbynumber(int fd)
 {
 	int rpc;
 	struct rpcent *rpce;
@@ -458,7 +458,7 @@ parent_getrpcbynumber(int fd)
 }
 
 static void
-parent_getserventries(int fd)
+impl_getserventries(int fd)
 {
 	struct servent *sp;
 
@@ -479,7 +479,7 @@ parent_getserventries(int fd)
 }
 
 static void
-parent_getprotoentries(int fd)
+impl_getprotoentries(int fd)
 {
 	struct protoent *pe;
 
@@ -499,9 +499,9 @@ parent_getprotoentries(int fd)
 }
 
 /* read the time and send the corresponding localtime and gmtime
- * results back to the child */
+ * results back to the unprivileged process */
 static void
-parent_localtime(int fd)
+impl_localtime(int fd)
 {
 	struct tm *lt, *gt;
 	time_t t;
@@ -527,7 +527,7 @@ parent_localtime(int fd)
 }
 
 static void
-parent_getlines(int fd)
+impl_getlines(int fd)
 {
 	FILE *fp;
 	char *buf, *lbuf, *file;
@@ -687,9 +687,9 @@ priv_getprotoentry(char *name, size_t name_len, int *num)
 	return (1);
 }
 
-/* localtime() replacement: ask parent for localtime and gmtime, cache
- * the localtime for about one minute i.e. until one of the fields other
- * than seconds changes. The check is done using gmtime
+/* localtime() replacement: ask the privileged process for localtime and
+ * gmtime, cache the localtime for about one minute i.e. until one of the
+ * fields other than seconds changes. The check is done using gmtime
  * values since they are the same in parent and child. */
 struct	tm *
 priv_localtime(const time_t *t)
