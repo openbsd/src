@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.27 2005/05/22 18:23:04 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.28 2005/05/22 18:35:43 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -206,16 +206,14 @@ pfi_kif_match(struct pfi_kif *rule_kif, struct pfi_kif *packet_kif)
 void
 pfi_attach_ifnet(struct ifnet *ifp)
 {
-	struct pfi_kif	*kif, key;
+	struct pfi_kif	*kif;
 	int		 s;
 
 	pfi_initialize();
 	s = splsoftnet();
 
-	strlcpy(key.pfik_name, ifp->if_xname, sizeof(key.pfik_name));
-	if ((kif = RB_FIND(pfi_ifhead, &pfi_ifs, &key)) == NULL)
-		if ((kif = pfi_kif_get(ifp->if_xname)) == NULL)
-			panic("pfi_kif_get failed");
+	if ((kif = pfi_kif_get(ifp->if_xname)) == NULL)
+		panic("pfi_kif_get failed");
 
 	kif->pfik_ifp = ifp;
 	ifp->if_pf_kif = (caddr_t)kif;
