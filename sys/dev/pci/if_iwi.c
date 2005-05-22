@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.42 2005/05/22 16:05:47 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.43 2005/05/22 16:28:00 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -830,7 +830,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 		return;
 	}
 
-	CSR_WRITE_4(sc, IWI_CSR_RX_BASE + i * 4, buf->map->dm_segs[0].ds_addr);
+	CSR_WRITE_4(sc, IWI_CSR_RX_BASE + i * 4, buf->map->dm_segs->ds_addr);
 }
 
 void
@@ -1566,7 +1566,7 @@ iwi_load_firmware(struct iwi_softc *sc, const char *name)
 	 * indirections. The adapter will read the firmware image through DMA
 	 * using information stored in command blocks.
 	 */
-	src = map->dm_segs[0].ds_addr;
+	src = map->dm_segs->ds_addr;
 	p = virtaddr;
 	end = p + size;
 	CSR_WRITE_4(sc, IWI_CSR_AUTOINC_ADDR, 0x27000);
@@ -1953,40 +1953,31 @@ iwi_init(struct ifnet *ifp)
 	sc->cmd_cur = 0;
 	sc->rx_cur = IWI_RX_RING_SIZE - 1;
 
-	CSR_WRITE_4(sc, IWI_CSR_CMD_BASE, sc->cmd_ring_map->dm_segs[0].ds_addr);
+	CSR_WRITE_4(sc, IWI_CSR_CMD_BASE, sc->cmd_ring_map->dm_segs->ds_addr);
 	CSR_WRITE_4(sc, IWI_CSR_CMD_SIZE, IWI_CMD_RING_SIZE);
-	CSR_WRITE_4(sc, IWI_CSR_CMD_READ_INDEX, 0);
 	CSR_WRITE_4(sc, IWI_CSR_CMD_WRITE_INDEX, sc->cmd_cur);
 
-	CSR_WRITE_4(sc, IWI_CSR_TX1_BASE, sc->tx_ring_map->dm_segs[0].ds_addr);
+	CSR_WRITE_4(sc, IWI_CSR_TX1_BASE, sc->tx_ring_map->dm_segs->ds_addr);
 	CSR_WRITE_4(sc, IWI_CSR_TX1_SIZE, IWI_TX_RING_SIZE);
-	CSR_WRITE_4(sc, IWI_CSR_TX1_READ_INDEX, 0);
 	CSR_WRITE_4(sc, IWI_CSR_TX1_WRITE_INDEX, sc->tx_cur);
 
-	CSR_WRITE_4(sc, IWI_CSR_TX2_BASE, sc->tx_ring_map->dm_segs[0].ds_addr);
+	CSR_WRITE_4(sc, IWI_CSR_TX2_BASE, sc->tx_ring_map->dm_segs->ds_addr);
 	CSR_WRITE_4(sc, IWI_CSR_TX2_SIZE, IWI_TX_RING_SIZE);
-	CSR_WRITE_4(sc, IWI_CSR_TX2_READ_INDEX, 0);
-	CSR_WRITE_4(sc, IWI_CSR_TX2_WRITE_INDEX, 0);
+	CSR_WRITE_4(sc, IWI_CSR_TX2_WRITE_INDEX, sc->tx_cur);
 
-	CSR_WRITE_4(sc, IWI_CSR_TX3_BASE, sc->tx_ring_map->dm_segs[0].ds_addr);
+	CSR_WRITE_4(sc, IWI_CSR_TX3_BASE, sc->tx_ring_map->dm_segs->ds_addr);
 	CSR_WRITE_4(sc, IWI_CSR_TX3_SIZE, IWI_TX_RING_SIZE);
-	CSR_WRITE_4(sc, IWI_CSR_TX3_READ_INDEX, 0);
-	CSR_WRITE_4(sc, IWI_CSR_TX3_WRITE_INDEX, 0);
+	CSR_WRITE_4(sc, IWI_CSR_TX3_WRITE_INDEX, sc->tx_cur);
 
-	CSR_WRITE_4(sc, IWI_CSR_TX4_BASE, sc->tx_ring_map->dm_segs[0].ds_addr);
+	CSR_WRITE_4(sc, IWI_CSR_TX4_BASE, sc->tx_ring_map->dm_segs->ds_addr);
 	CSR_WRITE_4(sc, IWI_CSR_TX4_SIZE, IWI_TX_RING_SIZE);
-	CSR_WRITE_4(sc, IWI_CSR_TX4_READ_INDEX, 0);
-	CSR_WRITE_4(sc, IWI_CSR_TX4_WRITE_INDEX, 0);
+	CSR_WRITE_4(sc, IWI_CSR_TX4_WRITE_INDEX, sc->tx_cur);
 
 	for (i = 0; i < IWI_RX_RING_SIZE; i++)
 		CSR_WRITE_4(sc, IWI_CSR_RX_BASE + i * 4,
-		    sc->rx_buf[i].map->dm_segs[0].ds_addr);
+		    sc->rx_buf[i].map->dm_segs->ds_addr);
 
-	/*
-	 * Kick Rx
-	 */
 	CSR_WRITE_4(sc, IWI_CSR_RX_WRITE_INDEX, sc->rx_cur);
-	CSR_WRITE_4(sc, IWI_CSR_RX_READ_INDEX, 0);
 
 	if ((error = iwi_load_firmware(sc, main)) != 0) {
 		printf("%s: could not load main firmware\n",
