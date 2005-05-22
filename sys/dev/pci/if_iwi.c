@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.41 2005/05/22 15:28:45 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.42 2005/05/22 16:05:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -1683,6 +1683,12 @@ iwi_config(struct iwi_softc *sc)
 	data = htole32(ic->ic_rtsthreshold);
 	DPRINTF(("Setting RTS threshold to %u\n", letoh32(data)));
 	error = iwi_cmd(sc, IWI_CMD_SET_RTS_THRESHOLD, &data, sizeof data, 0);
+	if (error != 0)
+		return error;
+
+	data = htole32(ic->ic_fragthreshold);
+	DPRINTF(("Setting fragmentation threshold to %u\n", letoh32(data)));
+	error = iwi_cmd(sc, IWI_CMD_SET_FRAG_THRESHOLD, &data, sizeof data, 0);
 	if (error != 0)
 		return error;
 

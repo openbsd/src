@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwireg.h,v 1.14 2005/05/22 15:28:45 damien Exp $	*/
+/*	$OpenBSD: if_iwireg.h,v 1.15 2005/05/22 16:05:47 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -244,6 +244,7 @@ struct iwi_cmd_desc {
 #define IWI_CMD_SET_ESSID			8
 #define IWI_CMD_SET_MAC_ADDRESS			11
 #define IWI_CMD_SET_RTS_THRESHOLD		15
+#define IWI_CMD_SET_FRAG_THRESHOLD		16
 #define IWI_CMD_SET_POWER_MODE			17
 #define IWI_CMD_SET_WEP_KEY			18
 #define IWI_CMD_SCAN				20
