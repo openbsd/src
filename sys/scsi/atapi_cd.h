@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapi_cd.h,v 1.2 2005/04/16 16:41:46 krw Exp $	*/
+/*	$OpenBSD: atapi_cd.h,v 1.3 2005/05/22 21:11:31 krw Exp $	*/
 /*	$NetBSD: atapi_cd.h,v 1.9 1998/07/13 16:50:56 thorpej Exp $	*/
 
 /*
@@ -103,7 +103,6 @@ struct atapi_cap_page {
 #define ATAPI_CAP_PAGE		0x2a
 
 union atapi_cd_pages {
-	u_int8_t page_code;
 	struct atapi_cdrom_page cdrom;
 	struct atapi_cap_page cap;
 	struct cd_audio_page audio;

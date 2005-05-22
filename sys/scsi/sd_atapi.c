@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_atapi.c,v 1.6 2005/05/14 00:20:43 krw Exp $	*/
+/*	$OpenBSD: sd_atapi.c,v 1.7 2005/05/22 21:11:31 krw Exp $	*/
 /*	$NetBSD: sd_atapi.c,v 1.3 1998/08/31 22:28:07 cgd Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ sd_atapibus_get_parms(sd, dp, flags)
 
 	bzero(&sense_data, sizeof(sense_data));
 	error = scsi_mode_sense_big(sd->sc_link, 0, ATAPI_FLEX_GEOMETRY_PAGE,
-	    (struct scsi_mode_header_big *)&sense_data, FLEXGEOMETRYPAGESIZE,
+	    (struct scsi_mode_header_big *)&sense_data, sizeof(sense_data),
 	    flags, 20000);
 	SC_DEBUG(sd->sc_link, SDEV_DB2,
 	    ("sd_atapibus_get_parms: mode sense (flex) error=%d\n", error));
@@ -136,7 +136,7 @@ sd_atapibus_get_parms(sd, dp, flags)
 		dp->heads = sense_data.pages.flex_geometry.nheads;
 		dp->sectors = sense_data.pages.flex_geometry.ph_sec_tr;
 		dp->cyls = _2btol(sense_data.pages.flex_geometry.ncyl);
-		rpm = _2btol(sense_data.pages.flex_geometry.rot_rate);
+		rpm = _2btol(sense_data.pages.flex_geometry.rpm);
 		if (rpm)
 			dp->rot_rate = rpm;
 	} else {

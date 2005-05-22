@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapi_disk.h,v 1.2 2005/04/16 16:41:46 krw Exp $	*/
+/*	$OpenBSD: atapi_disk.h,v 1.3 2005/05/22 21:11:31 krw Exp $	*/
 /*	$NetBSD: atapi_disk.h,v 1.3 1998/02/13 08:28:21 enami Exp $	*/
 
 /*
@@ -73,29 +73,9 @@ struct atapi_capacity_descriptor {
 #define ATAPI_CAP_DESC_OFFSET_HEADER	0
 #define ATAPI_CAP_DESC_OFFSET_DESC(n)	ATAPI_CAP_DESC_SIZE(n)
 
-struct atapi_flex_geometry_page {
-	u_int8_t pg_code;		/* page code */
-	u_int8_t pg_length;		/* page length */
-	u_int8_t xfr_rate[2];		/* transfer rate, Kb/sec */
-	u_int8_t nheads;		/* number of heads */
-	u_int8_t ph_sec_tr;		/* physical sectors per track */
-	u_int8_t blklen[2];		/* block length (bytes per sector) */
-	u_int8_t ncyl[2];		/* number of cylinders */
-	u_int8_t reserved1[18];
-	u_int8_t rot_rate[2];		/* medium rotation rate (RPM) */
-};
-
 #define ATAPI_FLEX_GEOMETRY_PAGE	0x05
-
-union atapi_sd_pages {
-	u_int8_t page_code;
-	struct atapi_flex_geometry_page flex_geometry;
-};
 
 struct atapi_sd_mode_data {
 	struct scsi_mode_header_big header;
-	union atapi_sd_pages pages;
+	union scsi_disk_pages pages;
 };
-
-#define FLEXGEOMETRYPAGESIZE \
-	(sizeof(struct scsi_mode_header_big) + sizeof(struct atapi_flex_geometry_page))
