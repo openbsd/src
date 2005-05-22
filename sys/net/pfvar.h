@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.214 2005/05/21 21:03:57 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.215 2005/05/22 18:23:04 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -861,6 +861,7 @@ struct pfi_kif {
 	struct hook_desc_head		*pfik_ah_head;
 	void				*pfik_ah_cookie;
 	struct ifnet			*pfik_ifp;
+	struct ifg_group		*pfik_group;
 	int				 pfik_states;
 	int				 pfik_rules;
 };
@@ -1495,6 +1496,8 @@ void		 pfi_kif_unref(struct pfi_kif *, enum pfi_kif_refs);
 int		 pfi_kif_match(struct pfi_kif *, struct pfi_kif *);
 void		 pfi_attach_ifnet(struct ifnet *);
 void		 pfi_detach_ifnet(struct ifnet *);
+void		 pfi_attach_ifgroup(struct ifg_group *);
+void		 pfi_detach_ifgroup(struct ifg_group *);
 int		 pfi_match_addr(struct pfi_dynaddr *, struct pf_addr *,
 		    sa_family_t);
 int		 pfi_dynaddr_setup(struct pf_addr_wrap *, sa_family_t);

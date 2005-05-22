@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.66 2005/05/21 21:03:57 henning Exp $	*/
+/*	$OpenBSD: if.h,v 1.67 2005/05/22 18:23:04 henning Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -410,6 +410,7 @@ struct if_announcemsghdr {
 struct ifg_group {
 	char			 ifg_group[IFNAMSIZ];
 	u_int			 ifg_refcnt;
+	caddr_t			 ifg_pf_kif;
 	TAILQ_ENTRY(ifg_group)	 ifg_next;
 };
 

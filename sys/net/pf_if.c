@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.26 2005/05/21 21:05:16 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.27 2005/05/22 18:23:04 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -176,8 +176,7 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 		panic("pfi_kif_unref with unknown type");
 	}
 
-	/* XXX check for ifgroups ptr too */
-	if (kif->pfik_ifp != NULL || kif == pfi_all)
+	if (kif->pfik_ifp != NULL || kif->pfik_group != NULL || kif == pfi_all)
 		return;
 
 	if (kif->pfik_rules || kif->pfik_states)
@@ -191,10 +190,15 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 int
 pfi_kif_match(struct pfi_kif *rule_kif, struct pfi_kif *packet_kif)
 {
+	struct ifg_list	*p;
+
 	if (rule_kif == NULL || rule_kif == packet_kif)
 		return (1);
 
-	/* XXX walk rule_kif's ifgroups and check for match */
+	if (rule_kif->pfik_group != NULL)
+		TAILQ_FOREACH(p, &packet_kif->pfik_ifp->if_groups, ifgl_next)
+			if (p->ifgl_group == rule_kif->pfik_group)
+				return (1);
 
 	return (0);
 }
@@ -241,6 +245,40 @@ pfi_detach_ifnet(struct ifnet *ifp)
 	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 	kif->pfik_ifp = NULL;
 	ifp->if_pf_kif = NULL;
+	splx(s);
+}
+
+void
+pfi_attach_ifgroup(struct ifg_group *ifg)
+{
+	struct pfi_kif	*kif;
+	int		 s;
+
+	pfi_initialize();
+	s = splsoftnet();
+	if ((kif = pfi_kif_get(ifg->ifg_group)) == NULL)
+		panic("pfi_kif_get failed");
+
+	kif->pfik_group = ifg;
+	ifg->ifg_pf_kif = (caddr_t)kif;
+
+	splx(s);
+}
+
+void
+pfi_detach_ifgroup(struct ifg_group *ifg)
+{
+	int		 s;
+	struct pfi_kif	*kif;
+
+	if ((kif = (struct pfi_kif *)ifg->ifg_pf_kif) == NULL)
+		return;
+
+	s = splsoftnet();
+
+	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
+	kif->pfik_group = NULL;
+	ifg->ifg_pf_kif = NULL;
 	splx(s);
 }
 
@@ -390,7 +428,6 @@ pfi_table_update(struct pfr_ktable *kt, struct pfi_kif *kif, int net, int flags)
 	}
 	pfi_buffer_cnt = 0;
 
-	/* XXXXXX bugs bugs bugs ? */
 	if (kif->pfik_ifp != NULL)
 		pfi_instance_add(kif->pfik_ifp, net, flags);
 	else
