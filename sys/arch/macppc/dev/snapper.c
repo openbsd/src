@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.10 2005/05/22 18:28:20 jason Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.11 2005/05/22 19:12:41 jason Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -124,6 +124,7 @@ int snapper_trigger_input(void *, void *, void *, int, void (*)(void *),
 void snapper_set_volume(struct snapper_softc *, int, int);
 int snapper_set_rate(struct snapper_softc *, int);
 void snapper_config(struct snapper_softc *sc, int node, struct device *parent);
+struct snapper_mode *snapper_find_mode(u_int, u_int, u_int);
 
 int tas3004_write(struct snapper_softc *, u_int, const void *);
 static int gpio_read(char *);
@@ -572,12 +573,55 @@ swap_bytes_mono16_to_stereo16(v, p, cc)
 	mono16_to_stereo16(v, p, cc);
 }
 
+struct snapper_mode {
+	u_int encoding;
+	u_int precision;
+	u_int channels;
+	void (*sw_code)(void *, u_char *, int);
+	int factor;
+} snapper_modes[] = {
+	{ AUDIO_ENCODING_SLINEAR_LE,  8, 1, linear8_to_linear16_be_mts, 4 },
+	{ AUDIO_ENCODING_SLINEAR_LE,  8, 2, linear8_to_linear16_be, 2 },
+	{ AUDIO_ENCODING_SLINEAR_LE, 16, 1, swap_bytes_mono16_to_stereo16, 2 },
+	{ AUDIO_ENCODING_SLINEAR_LE, 16, 2, swap_bytes, 1 },
+	{ AUDIO_ENCODING_SLINEAR_BE,  8, 1, linear8_to_linear16_be_mts, 4 },
+	{ AUDIO_ENCODING_SLINEAR_BE,  8, 2, linear8_to_linear16_be, 2 },
+	{ AUDIO_ENCODING_SLINEAR_BE, 16, 1, mono16_to_stereo16, 2 },
+	{ AUDIO_ENCODING_SLINEAR_BE, 16, 2, NULL, 1 },
+	{ AUDIO_ENCODING_ULINEAR_LE,  8, 1, ulinear8_to_linear16_be_mts, 4 },
+	{ AUDIO_ENCODING_ULINEAR_LE,  8, 2, ulinear8_to_linear16_be, 2 },
+	{ AUDIO_ENCODING_ULINEAR_LE, 16, 1, change_sign16_swap_bytes_le_mts, 2 },
+	{ AUDIO_ENCODING_ULINEAR_LE, 16, 2, swap_bytes_change_sign16_be, 1 },
+	{ AUDIO_ENCODING_ULINEAR_BE,  8, 1, ulinear8_to_linear16_be_mts, 4 },
+	{ AUDIO_ENCODING_ULINEAR_BE,  8, 2, ulinear8_to_linear16_be, 2 },
+	{ AUDIO_ENCODING_ULINEAR_BE, 16, 1, change_sign16_be_mts, 2 },
+	{ AUDIO_ENCODING_ULINEAR_BE, 16, 2, change_sign16_be, 1 }
+};
+
+
+struct snapper_mode *
+snapper_find_mode(u_int encoding, u_int precision, u_int channels)
+{
+	struct snapper_mode *m;
+	int i;
+
+	for (i = 0; i < sizeof(snapper_modes)/sizeof(snapper_modes[0]); i++) {
+		m = &snapper_modes[i];
+		if (m->encoding == encoding &&
+		    m->precision == precision &&
+		    m->channels == channels)
+			return (m);
+	}
+	return (NULL);
+}
+
 int
 snapper_set_params(h, setmode, usemode, play, rec)
 	void *h;
 	int setmode, usemode;
 	struct audio_params *play, *rec;
 {
+	struct snapper_mode *m;
 	struct snapper_softc *sc = h;
 	struct audio_params *p;
 	int mode, rate;
@@ -611,112 +655,56 @@ snapper_set_params(h, setmode, usemode, play, rec)
 		    (p->channels != 1 && p->channels != 2))
 			return EINVAL;
 
-		p->factor = 1;
-		p->sw_code = 0;
-
 		switch (p->encoding) {
-
 		case AUDIO_ENCODING_SLINEAR_LE:
-			switch (p->precision) {
-			case 16:
-				switch (p->channels) {
-				case 1:
-					p->factor = 2;
-					p->sw_code = swap_bytes_mono16_to_stereo16;
-					break;
-				case 2:
-					p->factor = 1;
-					p->sw_code = swap_bytes;
-					break;
-				default:
-					return (EINVAL);
-				}
-				break;
-			case 8:
-				switch (p->channels) {
-				case 1:
-					p->factor = 4;
-					p->sw_code = linear8_to_linear16_be_mts;
-					break;
-				case 2:
-					p->factor = 2;
-					p->sw_code = linear8_to_linear16_be;
-					break;
-				default:
-					return (EINVAL);
-				}
-				break;
-			default:
-				return (EINVAL);
-			}
 		case AUDIO_ENCODING_SLINEAR_BE:
-			switch (p->precision) {
-			case 16:
-				switch (p->channels) {
-				case 1:
-					p->factor = 2;
-					p->sw_code = mono16_to_stereo16;
-					break;
-				case 2:
-					p->factor = 1;
-					p->sw_code = NULL;
-					break;
-				default:
-					return (EINVAL);
-				}
-				break;
-			case 8:
-				switch (p->channels) {
-				case 1:
-					p->factor = 4;
-					p->sw_code = linear8_to_linear16_be_mts;
-					break;
-				case 2:
-					p->factor = 2;
-					p->sw_code = linear8_to_linear16_be;
-					break;
-				default:
-					return (EINVAL);
-				}
-				break;
-			default:
+		case AUDIO_ENCODING_ULINEAR_LE:
+		case AUDIO_ENCODING_ULINEAR_BE:
+			m = snapper_find_mode(p->encoding, p->precision,
+			    p->channels);
+			if (m == NULL) {
+				printf("mode not found: %u/%u/%u\n",
+				    p->encoding, p->precision, p->channels);
 				return (EINVAL);
 			}
+			p->factor = m->factor;
+			p->sw_code = m->sw_code;
 			break;
-		case AUDIO_ENCODING_ULINEAR_LE:
-			if (p->channels == 2 && p->precision == 16) {
-				p->sw_code = swap_bytes_change_sign16_be;
-				break;
-			}
-			return EINVAL;
-
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->channels == 2 && p->precision == 16) {
-				p->sw_code = change_sign16_be;
-				break;
-			}
-			return EINVAL;
 
 		case AUDIO_ENCODING_ULAW:
 			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = mulaw_to_slinear16_be;
-				break;
+				if (p->channels == 1) {
+					p->factor = 4;
+					p->sw_code = mulaw_to_slinear16_be_mts;
+					break;
+				}
+				if (p->channels == 2) {
+					p->factor = 2;
+					p->sw_code = mulaw_to_slinear16_be;
+					break;
+				}
 			} else
-				break;		/* XXX */
-
-			return EINVAL;
+				break; /* XXX */
+			return (EINVAL);
 
 		case AUDIO_ENCODING_ALAW:
 			if (mode == AUMODE_PLAY) {
-				p->factor = 2;
-				p->sw_code = alaw_to_slinear16_be;
-				break;
-			}
-			return EINVAL;
+				if (p->channels == 1) {
+					p->factor = 4;
+					p->sw_code = alaw_to_slinear16_be_mts;
+					break;
+				}
+				if (p->channels == 2) {
+					p->factor = 2;
+					p->sw_code = alaw_to_slinear16_be;
+					break;
+				}
+			} else
+				break; /* XXX */
+			return (EINVAL);
 
 		default:
-			return EINVAL;
+			return (EINVAL);
 		}
 	}
 
