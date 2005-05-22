@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.33 2005/05/03 01:01:15 djm Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.34 2005/05/22 21:19:39 henning Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.33 2005/05/03 01:01:15 djm Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.34 2005/05/22 21:19:39 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -255,6 +255,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 	}
+	endpwent();
 
 	if (svc_register(xprt, PMAPPROG, PMAPVERS, reg_service, FALSE) == 0) {
 		syslog(LOG_ERR, "svc_register failed.");
