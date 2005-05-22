@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.17 2005/05/12 19:10:12 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.18 2005/05/22 17:49:26 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -509,8 +509,10 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 				rt_dump(area->id, imsg.hdr.pid, RIB_RTR);
 				rt_dump(area->id, imsg.hdr.pid, RIB_NET);
-				rt_dump(area->id, imsg.hdr.pid, RIB_EXT);
 			}
+			aid.s_addr = 0;
+			rt_dump(aid, imsg.hdr.pid, RIB_EXT);
+
 			imsg_compose(ibuf_ospfe, IMSG_CTL_END, 0, imsg.hdr.pid,
 			    -1, NULL, 0);
 			break;
