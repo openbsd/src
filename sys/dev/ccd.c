@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.61 2005/05/12 17:16:06 niallo Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.62 2005/05/22 19:40:51 art Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -1250,7 +1250,7 @@ ccdioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 #ifdef DEBUG
 		if (ccddebug & CCDB_INIT)
 			for (i = 0; i < ccio->ccio_ndisks; ++i)
-				printf("ccdioctl: component %d: 0x%p\n",
+				printf("ccdioctl: component %d: %p\n",
 				    i, cpp[i]);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.31 2005/04/15 13:05:14 mickey Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.32 2005/05/22 19:40:51 art Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -1562,7 +1562,7 @@ ad1848_dma_output(addr, p, cc, intr, arg)
     
 #ifdef AUDIO_DEBUG
     if (ad1848debug > 0)
-	printf("ad1848_dma_output: cc=%d at %p 0x%p (0x%p)\n", cc, p, intr, arg);
+	printf("ad1848_dma_output: cc=%d at %p %p (%p)\n", cc, p, intr, arg);
 #endif
     sc->sc_locked = 1;
     sc->sc_intr = intr;

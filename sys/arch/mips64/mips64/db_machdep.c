@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.c,v 1.8 2004/10/30 14:48:59 pefo Exp $ */
+/*	$OpenBSD: db_machdep.c,v 1.9 2005/05/22 19:40:51 art Exp $ */
 
 /*
  * Copyright (c) 1998-2003 Opsycon AB (www.opsycon.se)
@@ -268,7 +268,7 @@ loop:
 
 	/* check for bad PC */
 	if (pc & 3 || pc < KSEG0_BASE || pc >= (unsigned)edata) {
-		(*pr)("PC 0x%p: not in kernel\n", pc);
+		(*pr)("PC %p: not in kernel\n", pc);
 		ra = 0;
 		goto done;
 	}

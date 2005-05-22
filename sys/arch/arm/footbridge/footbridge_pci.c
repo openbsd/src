@@ -1,4 +1,4 @@
-/*	$OpenBSD: footbridge_pci.c,v 1.4 2004/08/17 19:40:45 drahn Exp $	*/
+/*	$OpenBSD: footbridge_pci.c,v 1.5 2005/05/22 19:40:51 art Exp $	*/
 /*	$NetBSD: footbridge_pci.c,v 1.4 2001/09/05 16:17:35 matt Exp $	*/
 
 /*
@@ -337,7 +337,7 @@ footbridge_pci_intr_string(pcv, ih)
 	static char irqstr[32];
 
 #ifdef PCI_DEBUG
-	printf("footbridge_pci_intr_string(pcv=0x%p, ih=0x%lx)\n", pcv, ih);
+	printf("footbridge_pci_intr_string(pcv=%p, ih=0x%lx)\n", pcv, ih);
 #endif
 	if (ih == 0)
 		panic("footbridge_pci_intr_string: bogus handle 0x%lx", ih);

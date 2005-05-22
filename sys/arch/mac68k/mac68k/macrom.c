@@ -1,4 +1,4 @@
-/*	$OpenBSD: macrom.c,v 1.28 2005/04/27 00:12:43 miod Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.29 2005/05/22 19:40:51 art Exp $	*/
 /*	$NetBSD: macrom.c,v 1.47 2000/11/15 07:15:36 scottr Exp $	*/
 
 /*-
@@ -839,7 +839,7 @@ mrg_init()
 			.word   0xa99d
 			movl    sp@+, %0"
 			: "=g" (handle));
-		printf("Handle to first DRVR resource is 0x%p\n", handle);
+		printf("Handle to first DRVR resource is %p\n", handle);
 		printf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
 		    (long)Get_Ind_Resource(0x44525652, 1),
 		    (long)*Get_Ind_Resource(0x44525652, 1),
@@ -851,7 +851,7 @@ mrg_init()
 			.word   0xa99d
 			movl    sp@+, %0"
 			: "=g" (handle));
-		printf("Handle to second DRVR resource is 0x%p\n", handle);
+		printf("Handle to second DRVR resource is %p\n", handle);
 		printf("DRVR: 0x%08lx -> 0x%08lx -> 0x%08lx\n",
 		    (long)Get_Ind_Resource(0x44525652, 2),
 		    (long)*Get_Ind_Resource(0x44525652, 2),

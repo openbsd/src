@@ -1,4 +1,4 @@
-/* $OpenBSD: asc_tcds.c,v 1.3 2003/06/05 12:27:02 deraadt Exp $ */
+/* $OpenBSD: asc_tcds.c,v 1.4 2005/05/22 19:40:51 art Exp $ */
 /* $NetBSD: asc_tcds.c,v 1.5 2001/11/15 09:48:19 lukem Exp $ */
 
 /*-
@@ -413,7 +413,7 @@ tcds_dma_intr(sc)
 			if (dud & TCDS_DUD0_VALID11)
 				dudmask |= TCDS_DUD_BYTE11;
 #endif
-			NCR_DMA(("dud0 at 0x%p dudmask 0x%x\n",
+			NCR_DMA(("dud0 at %p dudmask 0x%x\n",
 			    addr, dudmask));
 			*addr = (*addr & ~dudmask) | (dud & dudmask);
 		}

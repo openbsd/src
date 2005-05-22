@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.8 2005/04/04 11:45:33 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.9 2005/05/22 19:40:51 art Exp $	*/
 /*
  * Copyright (c) 2001-2004, Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -417,7 +417,7 @@ pmap_map(vaddr_t virt, paddr_t start, paddr_t end, vm_prot_t prot, u_int cmode)
 #ifdef DEBUG
 		if ((pmap_con_dbg & (CD_MAP | CD_FULL)) == (CD_MAP | CD_FULL))
 			if (PDT_VALID(pte))
-				printf("(pmap_map: %x) pte @ 0x%p already valid\n", curproc, pte);
+				printf("(pmap_map: %x) pte @ %p already valid\n", curproc, pte);
 #endif
 
 		*pte = template | page;
@@ -485,7 +485,7 @@ pmap_cache_ctrl(pmap_t pmap, vaddr_t s, vaddr_t e, u_int mode)
 			continue;
 #ifdef DEBUG
 		if (pmap_con_dbg & CD_CACHE) {
-			printf("(cache_ctrl) pte@0x%p\n", pte);
+			printf("(cache_ctrl) pte@%p\n", pte);
 		}
 #endif /* DEBUG */
 		/*
@@ -893,7 +893,7 @@ pmap_create(void)
 		    (int)stpa);
 
 	if (pmap_con_dbg & CD_CREAT) {
-		printf("(pmap_create: %x) pmap=0x%p, pm_stab=0x%x (pa 0x%x)\n",
+		printf("(pmap_create: %x) pmap=%p, pm_stab=0x%x (pa 0x%x)\n",
 		    curproc, pmap, pmap->pm_stab, stpa);
 	}
 #endif
@@ -1145,7 +1145,7 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte)
 	}
 	if (cur == PV_ENTRY_NULL) {
 		panic("pmap_remove_pte: mapping for va "
-		    "0x%lx (pa 0x%lx) not in pv list at 0x%p",
+		    "0x%lx (pa 0x%lx) not in pv list at %p",
 		    va, pa, pvl);
 	}
 
@@ -1986,7 +1986,7 @@ pmap_activate(struct proc *p)
 
 #ifdef DEBUG
 	if (pmap_con_dbg & CD_ACTIVATE)
-		printf("(pmap_activate: %x) pmap 0x%p\n", p, pmap);
+		printf("(pmap_activate: %x) pmap %p\n", p, pmap);
 #endif
 
 	if (pmap != kernel_pmap) {
@@ -2276,7 +2276,7 @@ testbit_Retry:
 			pvl->pv_flags |= bit;
 #ifdef DEBUG
 			if ((pmap_con_dbg & (CD_TBIT | CD_FULL)) == (CD_TBIT | CD_FULL))
-				printf("(pmap_testbit: %x) true on page pte@0x%p\n", curproc, pte);
+				printf("(pmap_testbit: %x) true on page pte@%p\n", curproc, pte);
 #endif
 			SPLX(spl);
 			return (TRUE);
