@@ -1,4 +1,4 @@
-/*	$OpenBSD: net_ctl.c,v 1.1 2005/03/30 18:44:49 ho Exp $	*/
+/*	$OpenBSD: net_ctl.c,v 1.2 2005/05/22 12:14:16 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -62,8 +62,7 @@ net_ctl_check_state(struct syncpeer *p, enum RUNSTATE nstate)
 		net_ctl_send_error(p, CTL_STATE);
 		return -1;
 	}
-	if (cfgstate.runstate == MASTER &&
-	    nstate == MASTER) {
+	if (cfgstate.runstate == MASTER && nstate == MASTER) {
 		log_msg(0, "got bad state MASTER from peer \"%s\"",
 		    p->name);
 		net_ctl_send_error(p, CTL_STATE);

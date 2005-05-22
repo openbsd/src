@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.5 2005/05/03 05:44:35 djm Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.6 2005/05/22 12:14:16 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -47,6 +47,7 @@ static void
 privdrop(void)
 {
 	struct passwd	*pw = getpwnam(SASYNCD_USER);
+	extern char	*__progname;
 
 	if (!pw) {
 		log_err("%s: getpwnam(\"%s\") failed", __progname,
@@ -141,7 +142,8 @@ sasyncd_run(void)
 int
 main(int argc, char **argv)
 {
-	int	r;
+	extern char	*__progname;
+	int		r;
 
 	/* Init. */
 	closefrom(STDERR_FILENO + 1);

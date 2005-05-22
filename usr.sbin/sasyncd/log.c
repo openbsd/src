@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 2005/03/30 18:56:19 ho Exp $	*/
+/*	$OpenBSD: log.c,v 1.3 2005/05/22 12:14:16 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -62,8 +62,9 @@ log_output(char *msg)
 void
 log_err(const char *fmt, ...)
 {
-	va_list ap;
-	int off = 0;
+	extern char	*__progname;
+	int		off = 0;
+	va_list		ap;
 
 	if (cfgstate.debug) {
 		snprintf(logbuf, sizeof logbuf, "%s: ", __progname);
@@ -75,7 +76,7 @@ log_err(const char *fmt, ...)
 	va_end(ap);
 
 	strlcat(logbuf, ": ", sizeof logbuf);
-	strlcat(logbuf, strerror (errno), sizeof logbuf);
+	strlcat(logbuf, strerror(errno), sizeof logbuf);
 
 	log_output(logbuf);
 	return;

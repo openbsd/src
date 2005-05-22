@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.h,v 1.2 2005/04/03 17:19:26 ho Exp $	*/
+/*	$OpenBSD: sasyncd.h,v 1.3 2005/05/22 12:14:16 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -62,7 +62,6 @@ struct cfgstate {
 };
 
 extern struct cfgstate	cfgstate;
-extern char		*__progname;
 
 #define SASYNCD_USER	"_isakmpd"
 #define SASYNCD_CFGFILE	"/etc/sasyncd.conf"
