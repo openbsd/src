@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.56 2005/03/31 21:39:44 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.57 2005/05/22 17:37:49 pedro Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -823,6 +823,12 @@ nfs_sync(mp, waitfor, cred, p)
 	int error, allerror = 0;
 
 	/*
+	 * Don't traverse the vnode list if we want to skip all of them.
+	 */
+	if (waitfor == MNT_LAZY)
+		return (allerror);
+
+	/*
 	 * Force stale buffer cache information to be flushed.
 	 */
 loop:
@@ -834,8 +840,7 @@ loop:
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		if (VOP_ISLOCKED(vp) || LIST_FIRST(&vp->v_dirtyblkhd) == NULL ||
-		    waitfor == MNT_LAZY)
+		if (VOP_ISLOCKED(vp) || LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
 			continue;
 		if (vget(vp, LK_EXCLUSIVE, p))
 			goto loop;
@@ -844,6 +849,7 @@ loop:
 			allerror = error;
 		vput(vp);
 	}
+
 	return (allerror);
 }
 
