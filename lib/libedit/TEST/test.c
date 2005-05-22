@@ -1,4 +1,4 @@
-/*	$OpenBSD: test.c,v 1.6 2003/10/31 08:42:24 otto Exp $	*/
+/*	$OpenBSD: test.c,v 1.7 2005/05/22 05:45:35 otto Exp $	*/
 /*	$NetBSD: test.c,v 1.13 2003/08/07 16:44:35 agc Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)test.c	8.1 (Berkeley) 6/4/93";
 #else
-static const char *rcsid = "$OpenBSD: test.c,v 1.6 2003/10/31 08:42:24 otto Exp $";
+static const char *rcsid = "$OpenBSD: test.c,v 1.7 2005/05/22 05:45:35 otto Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -65,6 +65,8 @@ static const char *rcsid = "$OpenBSD: test.c,v 1.6 2003/10/31 08:42:24 otto Exp 
 static int continuation = 0;
 static EditLine *el = NULL;
 
+volatile sig_atomic_t gotsig = 0;
+
 static	u_char	complete(EditLine *, int);
 	int	main(int, char **);
 static	char   *prompt(EditLine *);
@@ -82,9 +84,7 @@ prompt(EditLine *el)
 static void
 sig(int i)
 {
-
-	(void) fprintf(stderr, "Got signal %d.\n", i);
-	el_reset(el);
+	gotsig = i;
 }
 
 static unsigned char
@@ -177,6 +177,12 @@ main(int argc, char *argv[])
 #ifdef DEBUG
 		(void) fprintf(stderr, "got %d %s", num, buf);
 #endif
+		if (gotsig) {
+			(void) fprintf(stderr, "Got signal %d.\n", gotsig);
+			gotsig = 0;
+			el_reset(el);
+		}
+
 		if (!continuation && num == 1)
 			continue;
 
