@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwireg.h,v 1.12 2005/03/12 13:31:26 damien Exp $	*/
+/*	$OpenBSD: if_iwireg.h,v 1.13 2005/05/22 15:14:10 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -317,6 +317,7 @@ struct iwi_associate {
 /* structure for command IWI_CMD_SCAN */
 struct iwi_scan {
 	u_int8_t	type;
+#define IWI_SCAN_TYPE_PASSIVE	1
 #define IWI_SCAN_TYPE_BROADCAST	3
 	u_int16_t	intval;
 	u_int8_t	channels[54];

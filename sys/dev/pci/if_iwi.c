@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.39 2005/05/14 13:32:38 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.40 2005/05/22 15:14:10 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -122,6 +122,7 @@ int iwi_reset(struct iwi_softc *);
 int iwi_load_ucode(struct iwi_softc *, const char *);
 int iwi_load_firmware(struct iwi_softc *, const char *);
 int iwi_config(struct iwi_softc *);
+int iwi_set_chan(struct iwi_softc *, struct ieee80211_channel *);
 int iwi_scan(struct iwi_softc *);
 int iwi_auth_and_assoc(struct iwi_softc *);
 int iwi_init(struct ifnet *);
@@ -239,7 +240,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 
 	/* set device capabilities */
 	ic->ic_caps = IEEE80211_C_PMGT | IEEE80211_C_WEP | IEEE80211_C_TXPMGT |
-	    IEEE80211_C_SHPREAMBLE | IEEE80211_C_SCANALL;
+	    IEEE80211_C_SHPREAMBLE | IEEE80211_C_MONITOR | IEEE80211_C_SCANALL;
 
 	/* read MAC address from EEPROM */
 	val = iwi_read_prom_word(sc, IWI_EEPROM_MAC + 0);
@@ -654,6 +655,8 @@ iwi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_RUN:
 		if (ic->ic_opmode == IEEE80211_M_IBSS)
 			ieee80211_new_state(ic, IEEE80211_S_AUTH, -1);
+		else if (ic->ic_opmode == IEEE80211_M_MONITOR)
+			iwi_set_chan(sc, ic->ic_ibss_chan);
 		break;
 
 	case IEEE80211_S_ASSOC:
@@ -741,7 +744,7 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf, int i,
 
 	if (letoh16(frame->len) < sizeof (struct ieee80211_frame_min) ||
 	    letoh16(frame->len) > MCLBYTES) {
-		printf("%s: bad frame length\n", sc->sc_dev.dv_xname);
+		DPRINTF(("%s: bad frame length\n", sc->sc_dev.dv_xname));
 		ifp->if_ierrors++;
 		return;
 	}
@@ -858,7 +861,11 @@ iwi_notification_intr(struct iwi_softc *sc, struct iwi_rx_buf *buf,
 		DPRINTFN(2, ("Scan completed (%u, %u)\n", scan->nchan,
 		    scan->status));
 
-		ieee80211_end_scan(ifp);
+		/* monitor mode uses scan to set the channel ... */
+		if (ic->ic_opmode != IEEE80211_M_MONITOR)
+			ieee80211_end_scan(ifp);
+		else
+			iwi_set_chan(sc, ic->ic_ibss_chan);
 		break;
 
 	case IWI_NOTIF_TYPE_AUTHENTICATION:
@@ -1748,6 +1755,23 @@ iwi_config(struct iwi_softc *sc)
 }
 
 int
+iwi_set_chan(struct iwi_softc *sc, struct ieee80211_channel *chan)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwi_scan scan;
+
+	bzero(&scan, sizeof scan);
+	scan.type = IWI_SCAN_TYPE_PASSIVE;
+	scan.intval = htole16(2000);
+	scan.channels[0] = 1 | (IEEE80211_IS_CHAN_5GHZ(chan) ? IWI_CHAN_5GHZ :
+	    IWI_CHAN_2GHZ);
+	scan.channels[1] = ieee80211_chan2ieee(ic, chan);
+
+	DPRINTF(("Setting channel to %u\n", ieee80211_chan2ieee(ic, chan)));
+	return iwi_cmd(sc, IWI_CMD_SCAN, &scan, sizeof scan, 1);
+}
+
+int
 iwi_scan(struct iwi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1870,6 +1894,7 @@ int
 iwi_init(struct ifnet *ifp)
 {
 	struct iwi_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 	const char *ucode, *main;
 	int i, error;
 
@@ -1965,7 +1990,10 @@ iwi_init(struct ifnet *ifp)
 		goto fail;
 	}
 
-	ieee80211_begin_scan(ifp);
+	if (ic->ic_opmode != IEEE80211_M_MONITOR)
+		ieee80211_begin_scan(ifp);
+	else
+		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
