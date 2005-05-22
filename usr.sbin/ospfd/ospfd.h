@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.h,v 1.29 2005/05/12 19:10:12 norby Exp $ */
+/*	$OpenBSD: ospfd.h,v 1.30 2005/05/22 18:05:42 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -432,8 +432,10 @@ struct ctl_rt {
 	struct in_addr		 area;
 	struct in_addr		 adv_rtr;
 	u_int32_t		 cost;
+	u_int32_t		 cost2;
 	enum path_type		 p_type;
 	enum dst_type		 d_type;
+	u_int8_t		 flags;
 	u_int8_t		 prefixlen;
 };
 

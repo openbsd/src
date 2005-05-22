@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.13 2005/05/12 20:57:01 claudio Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.14 2005/05/22 18:05:42 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -40,7 +40,8 @@ void		 rt_dump_debug(void);		/* XXX */
 void		 cand_list_dump(void);		/* XXX */
 void		 calc_next_hop(struct vertex *, struct vertex *);
 void		 rt_update(struct in_addr, u_int8_t, struct in_addr, u_int32_t,
-		     struct in_addr, struct in_addr, u_int8_t, u_int8_t);
+		     u_int32_t, struct in_addr, struct in_addr, u_int8_t,
+		     u_int8_t, u_int8_t);
 struct rt_node	*rt_lookup(u_int8_t, in_addr_t);
 void		 rt_invalidate(void);
 int		 linked(struct vertex *, struct vertex *);
@@ -104,7 +105,7 @@ spf_calc(struct area *area)
 	struct lsa_rtr_link	*rtr_link = NULL;
 	struct lsa_net_link	*net_link;
 	struct rt_node		*r;
-	u_int32_t		 d;
+	u_int32_t		 cost2, d;
 	int			 i;
 	struct in_addr		 addr, adv_rtr, a;
 	u_int8_t		 type;
@@ -242,8 +243,9 @@ spf_calc(struct area *area)
 
 				rt_update(addr, mask2prefixlen(rtr_link->data),
 				    v->nexthop, v->cost +
-				    ntohs(rtr_link->metric), area->id, adv_rtr,
-				    PT_INTRA_AREA, DT_NET);
+				    ntohs(rtr_link->metric), 0, area->id,
+				    adv_rtr, PT_INTRA_AREA, DT_NET,
+				    v->lsa->data.rtr.flags);
 			}
 
 			/* router, only add border and as-external routers */
@@ -254,8 +256,9 @@ spf_calc(struct area *area)
 			addr.s_addr = htonl(v->ls_id);
 			adv_rtr.s_addr = htonl(v->adv_rtr);
 
-			rt_update(addr, 32, v->nexthop, v->cost, area->id,
-			    adv_rtr, PT_INTRA_AREA, DT_RTR);
+			rt_update(addr, 32, v->nexthop, v->cost, 0, area->id,
+			    adv_rtr, PT_INTRA_AREA, DT_RTR,
+			    v->lsa->data.rtr.flags);
 			break;
 		case LSA_TYPE_NETWORK:
 			if (v->nexthop.s_addr == 0)
@@ -264,8 +267,8 @@ spf_calc(struct area *area)
 			addr.s_addr = htonl(v->ls_id) & v->lsa->data.net.mask;
 			adv_rtr.s_addr = htonl(v->adv_rtr);
 			rt_update(addr, mask2prefixlen(v->lsa->data.net.mask),
-			    v->nexthop, v->cost, area->id, adv_rtr,
-			    PT_INTRA_AREA, DT_NET);
+			    v->nexthop, v->cost, 0, area->id, adv_rtr,
+			    PT_INTRA_AREA, DT_NET, 0);
 			break;
 		case LSA_TYPE_SUM_NETWORK:
 		case LSA_TYPE_SUM_ROUTER:
@@ -295,13 +298,13 @@ spf_calc(struct area *area)
 				    v->lsa->data.sum.mask;
 				rt_update(addr,
 				    mask2prefixlen(v->lsa->data.sum.mask),
-				    v->nexthop, v->cost, area->id, adv_rtr,
-				    PT_INTER_AREA, DT_NET);
+				    v->nexthop, v->cost, 0, area->id, adv_rtr,
+				    PT_INTER_AREA, DT_NET, 0);
 			} else {
 				addr.s_addr = htonl(v->ls_id);
-				rt_update(addr, 32,
-				    v->nexthop, v->cost, area->id, adv_rtr,
-				    PT_INTER_AREA, DT_RTR);
+				rt_update(addr, 32, v->nexthop, v->cost, 0,
+				    area->id, adv_rtr, PT_INTER_AREA, DT_RTR,
+				    v->lsa->data.rtr.flags);
 			}
 
 			break;
@@ -337,12 +340,14 @@ spf_calc(struct area *area)
 			if (ntohl(v->lsa->data.asext.metric) &
 			    LSA_ASEXT_E_FLAG) {
 				v->cost = r->cost;
-				/* XXX where to put type2 cost? */
+				cost2 = ntohl(v->lsa->data.asext.metric) &
+				     LSA_METRIC_MASK;
 				type = PT_TYPE2_EXT;
 			} else {
 				v->cost = r->cost +
 				    (ntohl(v->lsa->data.asext.metric) &
 				     LSA_METRIC_MASK);
+				cost2 = 0;
 				type = PT_TYPE1_EXT;
 			}
 
@@ -350,7 +355,8 @@ spf_calc(struct area *area)
 			adv_rtr.s_addr = htonl(v->adv_rtr);
 			addr.s_addr = htonl(v->ls_id) & v->lsa->data.asext.mask;
 			rt_update(addr, mask2prefixlen(v->lsa->data.asext.mask),
-			    v->nexthop, v->cost, a, adv_rtr, type, DT_NET);
+			    v->nexthop, v->cost, cost2, a, adv_rtr, type,
+			    DT_NET, 0);
 			break;
 		default:
 			fatalx("spf_calc: invalid LSA type");
@@ -730,9 +736,12 @@ rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
 		case RIB_NET:
 			if (r->d_type != DT_NET)
 				continue;
+			if (r->p_type == PT_TYPE1_EXT ||
+			    r->p_type == PT_TYPE2_EXT)
+				continue;
 			break;
 		case RIB_EXT:
-			if (r->p_type != PT_TYPE1_EXT ||
+			if (r->p_type != PT_TYPE1_EXT &&
 			    r->p_type != PT_TYPE2_EXT)
 				continue;
 			break;
@@ -745,8 +754,10 @@ rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
 		rtctl.area.s_addr = r->area.s_addr;
 		rtctl.adv_rtr.s_addr = r->adv_rtr.s_addr;
 		rtctl.cost = r->cost;
+		rtctl.cost2 = r->cost2;
 		rtctl.p_type = r->p_type;
 		rtctl.d_type = r->d_type;
+		rtctl.flags = r->flags;
 		rtctl.prefixlen = r->prefixlen;
 
 		rde_imsg_compose_ospfe(IMSG_CTL_SHOW_RIB, 0, pid, &rtctl,
@@ -754,11 +765,10 @@ rt_dump(struct in_addr area, pid_t pid, u_int8_t r_type)
 	}
 }
 
-
 void
 rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
-     u_int32_t cost, struct in_addr area, struct in_addr adv_rtr,
-     u_int8_t p_type, u_int8_t d_type)
+     u_int32_t cost, u_int32_t cost2, struct in_addr area,
+     struct in_addr adv_rtr, u_int8_t p_type, u_int8_t d_type, u_int8_t flags)
 {
 	struct rt_node	*rte;
 
@@ -775,9 +785,11 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 		rte->nexthop.s_addr = nexthop.s_addr;
 		rte->adv_rtr.s_addr = adv_rtr.s_addr;
 		rte->cost = cost;
+		rte->cost2 = cost2;
 		rte->area = area;
 		rte->p_type = p_type;
 		rte->d_type = d_type;
+		rte->flags = flags;
 		rte->invalid = 0;
 
 		rt_insert(rte);
@@ -790,8 +802,10 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 			rte->nexthop.s_addr = nexthop.s_addr;
 			rte->adv_rtr.s_addr = adv_rtr.s_addr;
 			rte->cost = cost;
+			rte->cost2 = cost2;
 			rte->area = area;
 			rte->p_type = p_type;
+			rte->flags = flags;
 			rte->invalid = 0;
 		} else {
 			/* XXX better route ? */
@@ -800,8 +814,10 @@ rt_update(struct in_addr prefix, u_int8_t prefixlen, struct in_addr nexthop,
 				rte->nexthop.s_addr = nexthop.s_addr;
 				rte->adv_rtr.s_addr = adv_rtr.s_addr;
 				rte->cost = cost;
+				rte->cost2 = cost2;
 				rte->area = area;
 				rte->p_type = p_type;
+				rte->flags = flags;
 				rte->invalid = 0;
 			}
 		}
@@ -821,7 +837,7 @@ rt_lookup(u_int8_t type, in_addr_t addr)
 			return (NULL);
 		return (rn);
 	}
-	
+
 	do {
 		/* a DT_NET /32 is equivalent to a DT_RTR */
 		if ((rn = rt_find(htonl(addr & prefixlen2mask(i)), i)))
