@@ -3896,8 +3896,15 @@
 ./usr/share/man/cat3/krb5_unparse_name.0
 ./usr/share/man/cat3/krb5_us_timeofday.0
 ./usr/share/man/cat3/krb5_verify_checksum.0
+./usr/share/man/cat3/krb5_verify_opt_init.0
+./usr/share/man/cat3/krb5_verify_opt_set_ccache.0
+./usr/share/man/cat3/krb5_verify_opt_set_flags.0
+./usr/share/man/cat3/krb5_verify_opt_set_keytab.0
+./usr/share/man/cat3/krb5_verify_opt_set_secure.0
+./usr/share/man/cat3/krb5_verify_opt_set_service.0
 ./usr/share/man/cat3/krb5_verify_user.0
 ./usr/share/man/cat3/krb5_verify_user_lrealm.0
+./usr/share/man/cat3/krb5_verify_user_opt.0
 ./usr/share/man/cat3/krb5_verr.0
 ./usr/share/man/cat3/krb5_verrx.0
 ./usr/share/man/cat3/krb5_vlog.0
