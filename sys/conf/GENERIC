@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.114 2005/03/30 07:41:30 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.115 2005/05/22 21:15:18 pedro Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -48,6 +48,7 @@ option		TCP_SIGNATURE	# TCP MD5 Signatures, for BGP routing sessions
 option		NFSCLIENT	# Network File System client
 option		NFSSERVER	# Network File System server
 
+#option		VFSDEBUG	# VFS debugging
 option		CD9660		# ISO 9660 + Rock Ridge file system
 option		UDF		# UDF (DVD) file system
 option		MSDOSFS		# MS-DOS file system
