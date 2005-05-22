@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.1 2005/03/30 18:44:49 ho Exp $	*/
+/*	$OpenBSD: net.c,v 1.2 2005/05/22 20:35:48 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -36,7 +36,12 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <openssl/aes.h>
+#include <openssl/sha.h>
+
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -45,9 +50,7 @@
 
 struct msg {
 	u_int8_t	*buf;
-	u_int8_t	*obuf;		/* Original buf w/o offset. */
 	u_int32_t	 len;
-	u_int32_t	 type;
 	int		 refcnt;
 };
 
@@ -57,11 +60,30 @@ struct qmsg {
 };
 
 int	listen_socket;
+AES_KEY	aes_key[2];
+#define AES_IV_LEN AES_BLOCK_SIZE
 
 /* Local prototypes. */
 static u_int8_t *net_read(struct syncpeer *, u_int32_t *, u_int32_t *);
 static int	 net_set_sa(struct sockaddr *, char *, in_port_t);
 static void	 net_check_peers(void *);
+
+static void
+dump_buf(int lvl, u_int8_t *b, u_int32_t len, char *title)
+{
+	u_int32_t	i, off, blen = len*2 + 3 + strlen(title);
+	u_int8_t	*buf = calloc(1, blen);
+
+	if (!buf || cfgstate.verboselevel < lvl)
+		return;
+
+	snprintf(buf, blen, "%s:\n", title);
+	off = strlen(buf);
+	for (i = 0; i < len; i++, off+=2)
+		snprintf(buf + off, blen - off, "%02x", b[i]);
+	log_msg(lvl, "%s", buf);
+	free(buf);
+}
 
 int
 net_init(void)
@@ -71,8 +93,19 @@ net_init(void)
 	struct syncpeer *p;
 	int		 r;
 
-	if (net_SSL_init())
+	/* The shared key needs to be 128, 192 or 256 bits */
+	r = (strlen(cfgstate.sharedkey) - 1) << 3;
+	if (r != 128 && r != 192 && r != 256) {
+		fprintf(stderr, "Bad shared key length (%d bits), "
+		    "should be 128, 192 or 256\n", r);
 		return -1;
+	}
+	
+	if (AES_set_encrypt_key(cfgstate.sharedkey, r, &aes_key[0]) ||
+	    AES_set_decrypt_key(cfgstate.sharedkey, r, &aes_key[1])) {
+		fprintf(stderr, "Bad AES shared key\n");
+		return -1;
+	}
 
 	/* Setup listening socket.  */
 	memset(&sa_storage, 0, sizeof sa_storage);
@@ -124,10 +157,6 @@ net_enqueue(struct syncpeer *p, struct msg *m)
 	if (p->socket < 0)
 		return;
 
-	if (!p->ssl)
-		if (net_SSL_connect(p))
-			return;
-
 	qm = (struct qmsg *)malloc(sizeof *qm);
 	if (!qm) {
 		log_err("malloc()");
@@ -147,23 +176,87 @@ net_enqueue(struct syncpeer *p, struct msg *m)
  * or to all peers if no peer is specified.
  */
 int
-net_queue(struct syncpeer *p0, u_int32_t msgtype, u_int8_t *buf,
-    u_int32_t offset, u_int32_t len)
+net_queue(struct syncpeer *p0, u_int32_t msgtype, u_int8_t *buf, u_int32_t len)
 {
 	struct syncpeer *p = p0;
 	struct msg	*m;
+	SHA_CTX		 ctx;
+	u_int8_t	 hash[SHA_DIGEST_LENGTH];
+	u_int8_t	 iv[AES_IV_LEN], tmp_iv[AES_IV_LEN];
+	u_int32_t	 v, padlen = 0;
+	int		 i, offset;
 
-	m = (struct msg *)malloc(sizeof *m);
+	m = (struct msg *)calloc(1, sizeof *m);
 	if (!m) {
-		log_err("malloc()");
+		log_err("calloc()");
 		free(buf);
 		return -1;
 	}
-	memset(m, 0, sizeof *m);
-	m->obuf = buf;
-	m->buf = buf + offset;
-	m->len = len;
-	m->type = msgtype;
+
+	/* Generate hash */
+	SHA1_Init(&ctx);
+	SHA1_Update(&ctx, buf, len);
+	SHA1_Final(hash, &ctx);
+	dump_buf(5, hash, sizeof hash, "Hash");
+
+	/* Padding required? */
+	i = len % AES_IV_LEN;
+	if (i) {
+		u_int8_t *pbuf;
+		i = AES_IV_LEN - i;
+		pbuf = realloc(buf, len + i);
+		if (!pbuf) {
+			log_err("net_queue: realloc()");
+			free(buf);
+			free(m);
+			return -1;
+		}
+		padlen = i;
+		while (i > 0)
+			pbuf[len++] = (u_int8_t)i--;
+		buf = pbuf;
+	}
+
+	/* Get random IV */
+	for (i = 0; i <= sizeof iv - sizeof v; i += sizeof v) {
+		v = arc4random();
+		memcpy(&iv[i], &v, sizeof v);
+	}
+	dump_buf(5, iv, sizeof iv, "IV");
+	memcpy(tmp_iv, iv, sizeof tmp_iv);
+
+	/* Encrypt */
+	dump_buf(5, buf, len, "Pre-enc");
+	AES_cbc_encrypt(buf, buf, len, &aes_key[0], tmp_iv, AES_ENCRYPT);
+	dump_buf(5, buf, len, "Post-enc");
+
+	/* Allocate send buffer */
+	m->len = len + sizeof iv + sizeof hash + 3 * sizeof(u_int32_t);
+	m->buf = (u_int8_t *)malloc(m->len);
+	if (!m->buf) {
+		free(m);
+		free(buf);
+		log_err("net_queue: calloc()");
+		return -1;
+	}
+	offset = 0;
+
+	/* Fill it (order must match parsing code in net_read()) */
+	v = htonl(m->len - sizeof(u_int32_t));
+	memcpy(m->buf + offset, &v, sizeof v);
+	offset += sizeof v;
+	v = htonl(msgtype);
+	memcpy(m->buf + offset, &v, sizeof v);
+	offset += sizeof v;
+	v = htonl(padlen);
+	memcpy(m->buf + offset, &v, sizeof v);
+	offset += sizeof v;
+	memcpy(m->buf + offset, hash, sizeof hash);
+	offset += sizeof hash;
+	memcpy(m->buf + offset, iv, sizeof iv);
+	offset += sizeof iv;
+	memcpy(m->buf + offset, buf, len);
+	free(buf);
 
 	if (p)
 		net_enqueue(p, m);
@@ -173,7 +266,7 @@ net_queue(struct syncpeer *p0, u_int32_t msgtype, u_int8_t *buf,
 			net_enqueue(p, m);
 
 	if (!m->refcnt) {
-		free(m->obuf);
+		free(m->buf);
 		free(m);
 	}
 
@@ -265,7 +358,6 @@ net_handle_messages(fd_set *fds)
 				/* Match! */
 				found++;
 				p->socket = newsock;
-				p->ssl = NULL;
 				log_msg(1, "peer \"%s\" connected", p->name);
 			}
 			if (!found) {
@@ -324,7 +416,7 @@ net_send_messages(fd_set *fds)
 	struct syncpeer *p;
 	struct qmsg	*qm;
 	struct msg	*m;
-	u_int32_t	 v;
+	ssize_t		 r;
 
 	for (p = LIST_FIRST(&cfgstate.peerlist); p; p = LIST_NEXT(p, link)) {
 		if (p->socket < 0 || !FD_ISSET(p->socket, fds))
@@ -337,27 +429,25 @@ net_send_messages(fd_set *fds)
 		}
 		m = qm->msg;
 
-		log_msg(4, "sending msg %p (qm %p ref %d) to peer %s", m, qm,
-		    m->refcnt, p->name);
+		log_msg(4, "sending msg %p len %d ref %d to peer %s", m,
+		    m->len, m->refcnt, p->name);
 
-		/* Send the message. */
-		v = htonl(m->type);
-		if (net_SSL_write(p, &v, sizeof v))
+		/* write message */
+		r = write(p->socket, m->buf, m->len);
+		if (r == -1)
+			log_err("net_send_messages: write()");
+		else if (r < (ssize_t)m->len) {
+			/* XXX retransmit? */
 			continue;
+		}
 
-		v = htonl(m->len);
-		if (net_SSL_write(p, &v, sizeof v))
-			continue;
-
-		(void)net_SSL_write(p, m->buf, m->len);
-
-		/* Cleanup. */
+		/* cleanup */
 		SIMPLEQ_REMOVE_HEAD(&p->msgs, next);
 		free(qm);
 
 		if (--m->refcnt < 1) {
 			log_msg(4, "freeing msg %p", m);
-			free(m->obuf);
+			free(m->buf);
 			free(m);
 		}
 	}
@@ -367,7 +457,6 @@ net_send_messages(fd_set *fds)
 void
 net_disconnect_peer(struct syncpeer *p)
 {
-	net_SSL_disconnect(p);
 	if (p->socket > -1)
 		close(p->socket);
 	p->socket = -1;
@@ -385,7 +474,7 @@ net_shutdown(void)
 			SIMPLEQ_REMOVE_HEAD(&p->msgs, next);
 			m = qm->msg;
 			if (--m->refcnt < 1) {
-				free(m->obuf);
+				free(m->buf);
 				free(m);
 			}
 			free(qm);
@@ -399,7 +488,6 @@ net_shutdown(void)
 
 	if (listen_socket > -1)
 		close(listen_socket);
-	net_SSL_shutdown();
 }
 
 /*
@@ -409,29 +497,77 @@ net_shutdown(void)
 static u_int8_t *
 net_read(struct syncpeer *p, u_int32_t *msgtype, u_int32_t *msglen)
 {
-	u_int8_t	*msg;
-	u_int32_t	 v;
+	u_int8_t	*msg, *blob, *rhash, *iv, hash[SHA_DIGEST_LENGTH];
+	u_int32_t	 v, blob_len;
+	int		 padlen = 0, offset = 0, r;
+	SHA_CTX		 ctx;
 
-	if (net_SSL_read(p, &v, sizeof v))
+	/* Read blob length */
+	if (read(p->socket, &v, sizeof v) != (ssize_t)sizeof v)
 		return NULL;
-	*msgtype = ntohl(v);
-
-	if (*msgtype > MSG_MAXTYPE)
+	blob_len = ntohl(v);
+	if (blob_len < sizeof hash + AES_IV_LEN + 2 * sizeof(u_int32_t))
 		return NULL;
+	*msglen = blob_len - sizeof hash - AES_IV_LEN - 2 * sizeof(u_int32_t);
 
-	if (net_SSL_read(p, &v, sizeof v))
+	/* Read message blob */
+	blob = (u_int8_t *)malloc(blob_len);
+	if (!blob) {
+		log_err("net_read: malloc()");
 		return NULL;
-	*msglen = ntohl(v);
-
-	/* XXX msglen sanity */
-
-	msg = (u_int8_t *)malloc(*msglen);
-	memset(msg, 0, *msglen);
-	if (net_SSL_read(p, msg, *msglen)) {
-		free(msg);
+	}
+	r = read(p->socket, blob, blob_len);
+	if (r == -1) {
+		free(blob);
+		return NULL;
+	} else if (r < (ssize_t)blob_len) {
+		/* XXX wait and read more? */
+		fprintf(stderr, "net_read: wanted %d, got %d\n", blob_len, r);
+		free(blob);
 		return NULL;
 	}
 
+	offset = 0;
+	memcpy(&v, blob + offset, sizeof v);
+	*msgtype = ntohl(v);
+	offset += sizeof v;
+
+	if (*msgtype > MSG_MAXTYPE) {
+		free(blob);
+		return NULL;
+	}
+
+	memcpy(&v, blob + offset, sizeof v);
+	padlen = ntohl(v);
+	offset += sizeof v;
+
+	rhash = blob + offset;
+	iv    = rhash + sizeof hash;
+	msg = (u_int8_t *)malloc(*msglen);
+	if (!msg) {
+		free(blob);
+		return NULL;
+	}
+	memcpy(msg, iv + AES_IV_LEN, *msglen);
+
+	dump_buf(5, rhash, sizeof hash, "Recv hash");
+	dump_buf(5, iv, sizeof iv, "Recv IV");
+	dump_buf(5, msg, *msglen, "Pre-decrypt");
+	AES_cbc_encrypt(msg, msg, *msglen, &aes_key[1], iv, AES_DECRYPT);
+	dump_buf(5, msg, *msglen, "Post-decrypt");
+	*msglen -= padlen;
+
+	SHA1_Init(&ctx);
+	SHA1_Update(&ctx, msg, *msglen);
+	SHA1_Final(hash, &ctx);
+	dump_buf(5, hash, sizeof hash, "Local hash");
+
+	if (memcmp(hash, rhash, sizeof hash) != 0) {
+		free(blob);
+		log_msg(0, "net_read: bad msg hash (shared key typo?)");
+		return NULL;
+	}
+	free(blob);
 	return msg;
 }
 
@@ -487,7 +623,7 @@ net_connect_peers(void)
 	setitimer(ITIMER_REAL, &iv, NULL);
 
 	for (p = LIST_FIRST(&cfgstate.peerlist); p; p = LIST_NEXT(p, link)) {
-		if (p->ssl || p->socket > -1)
+		if (p->socket > -1)
 			continue;
 
 		memset(sa, 0, sizeof sa_storage);

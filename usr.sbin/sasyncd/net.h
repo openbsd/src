@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.h,v 1.1 2005/03/30 18:44:49 ho Exp $	*/
+/*	$OpenBSD: net.h,v 1.2 2005/05/22 20:35:48 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -30,14 +30,11 @@
  */
 
 
-#include <openssl/ssl.h>
-
 struct qmsg;
 struct syncpeer {
 	LIST_ENTRY(syncpeer)	link;
 
 	char		*name;		/* FQDN or an IP, from conf */
-	SSL		*ssl;
 	int		 socket;
 	enum RUNSTATE	 runstate;
 
@@ -60,10 +57,3 @@ int	net_ctl_send_ack(struct syncpeer *, enum CTLTYPE, u_int32_t);
 int	net_ctl_send_error(struct syncpeer *, enum CTLTYPE);
 int	net_ctl_send_state(struct syncpeer *);
 
-/* net_ssl.c */
-int	net_SSL_init(void);
-int	net_SSL_connect(struct syncpeer *);
-void	net_SSL_disconnect(struct syncpeer *);
-int	net_SSL_read(struct syncpeer *, void *, u_int32_t);
-int	net_SSL_write(struct syncpeer *, void *, u_int32_t);
-void	net_SSL_shutdown(void);

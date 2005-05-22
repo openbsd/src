@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.h,v 1.3 2005/05/22 12:14:16 ho Exp $	*/
+/*	$OpenBSD: sasyncd.h,v 1.4 2005/05/22 20:35:48 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -47,10 +47,6 @@ struct cfgstate {
 	char		*carp_ifname;
 	int		 carp_check_interval;
 
-	char		*cafile;
-	char		*certfile;
-	char		*privkeyfile;
-
 	char		*sharedkey;
 
 	int		 pfkey_socket;
@@ -67,11 +63,7 @@ extern struct cfgstate	cfgstate;
 #define SASYNCD_CFGFILE	"/etc/sasyncd.conf"
 
 #define CARP_DEFAULT_INTERVAL	10
-
-#define SASYNCD_DEFAULT_PORT	501
-#define SASYNCD_CAFILE		"/etc/ssl/ca.crt"
-#define SASYNCD_CERTFILE	"/etc/ssl/sasyncd.crt"
-#define SASYNCD_PRIVKEY		"/etc/ssl/private/sasyncd.key"
+#define SASYNCD_DEFAULT_PORT	500
 
 /*
  * sasyncd "protocol" definition
@@ -103,8 +95,7 @@ void	log_err(const char *, ...);
 void	net_ctl_update_state(void);
 int	net_init(void);
 void	net_handle_messages(fd_set *);
-int	net_queue(struct syncpeer *, u_int32_t, u_int8_t *, u_int32_t,
-    u_int32_t);
+int	net_queue(struct syncpeer *, u_int32_t, u_int8_t *, u_int32_t);
 void	net_send_messages(fd_set *);
 int	net_set_rfds(fd_set *);
 int	net_set_pending_wfds(fd_set *);

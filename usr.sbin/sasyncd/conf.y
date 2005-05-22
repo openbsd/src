@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.1 2005/04/03 17:19:26 ho Exp $	*/
+/*	$OpenBSD: conf.y,v 1.2 2005/05/22 20:35:48 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -31,8 +31,10 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <pwd.h>
 
 #include "sasyncd.h"
 #include "net.h"
@@ -226,9 +228,18 @@ conf_parse_file(char *cfgfile)
 	struct stat	st;
 	int		fd, r;
 	char		*buf, *s, *d;
+	struct passwd	*pw = getpwnam(SASYNCD_USER);
 
 	if (stat(cfgfile, &st) != 0)
 		goto bad;
+
+	/* Valid file? */
+	if ((st.st_uid && st.st_uid != pw->pw_uid) ||
+	    ((st.st_mode & S_IFMT) != S_IFREG) ||
+	    ((st.st_mode & (S_IRWXG | S_IRWXO)) != 0)) {
+		log_msg(0, "configuration file has bad owner, type or mode"); 
+		goto bad;
+	}
 
 	fd = open(cfgfile, O_RDONLY, 0);
 	if (fd < 0)
@@ -277,7 +288,7 @@ conf_parse_file(char *cfgfile)
 	return r;
 
   bad:
-	log_err("failed to open \"%s\"", cfgfile);
+	log_msg(0, "failed to open \"%s\"", cfgfile);
 	return 1;
 }
 
@@ -321,12 +332,11 @@ conf_init(int argc, char **argv)
 		cfgfile = SASYNCD_CFGFILE;
 
 	if (conf_parse_file(cfgfile) == 0) {
-		if (!cfgstate.certfile)
-			cfgstate.certfile = SASYNCD_CERTFILE;
-		if (!cfgstate.privkeyfile)
-			cfgstate.privkeyfile = SASYNCD_PRIVKEY;
-		if (!cfgstate.cafile)
-			cfgstate.cafile = SASYNCD_CAFILE;
+		if (!cfgstate.sharedkey) {
+			fprintf(stderr, "config: "
+			    "no shared key specified, cannot continue");
+			return 1;
+		}
 		return 0;
 	}
 

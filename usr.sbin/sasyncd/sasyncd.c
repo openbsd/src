@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.6 2005/05/22 12:14:16 ho Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.7 2005/05/22 20:35:48 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -145,6 +145,12 @@ main(int argc, char **argv)
 	extern char	*__progname;
 	int		r;
 
+	if (geteuid() != 0) {
+		/* No point in continuing. */
+		fprintf(stderr, "This daemon needs to be run as root.\n");
+		return 1;
+	}
+
 	/* Init. */
 	closefrom(STDERR_FILENO + 1);
 	for (r = 0; r <= 2; r++)
@@ -166,12 +172,6 @@ main(int argc, char **argv)
 	}
 	if (r)
 		return 1;
-
-	if (geteuid() != 0) {
-		/* No point in continuing. */
-		fprintf(stderr, "This daemon needs to be run as root.\n");
-		return 1;
-	}
 
 	if (carp_init())
 		return 1;

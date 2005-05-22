@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.1 2005/03/30 18:44:49 ho Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.2 2005/05/22 20:35:48 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -112,7 +112,7 @@ pfkey_print_type(struct sadb_msg *msg)
 static int
 pfkey_handle_message(struct sadb_msg *m)
 {
-	struct sadb_msg *msg = m;
+	struct sadb_msg	*msg = m;
 
 	/*
 	 * Report errors, but ignore for DELETE (both isakmpd and kernel will
@@ -125,10 +125,11 @@ pfkey_handle_message(struct sadb_msg *m)
 
 	/* We only want promiscuous messages here, skip all others. */
 	if (msg->sadb_msg_type != SADB_X_PROMISC ||
-	    (msg->sadb_msg_len * CHUNK) <= 2 * sizeof *msg) {
+	    (msg->sadb_msg_len * CHUNK) < 2 * sizeof *msg) {
 		free(m);
 		return 0;
 	}
+	/* Move next msg to start of the buffer. */
 	msg++;
 
 	/*
@@ -162,9 +163,10 @@ pfkey_handle_message(struct sadb_msg *m)
 		/* FALLTHROUGH */
 
 	default:
-		/* The rest should just be passed along to our peers. */
-		return net_queue(NULL, MSG_PFKEYDATA, (u_int8_t *)m, sizeof *m,
-		    msg->sadb_msg_len * CHUNK);
+		/* Pass the the rest along to our peers. */
+		memmove(m, msg, msg->sadb_msg_len * CHUNK); /* for realloc */
+		return net_queue(NULL, MSG_PFKEYDATA, (u_int8_t *)m,
+		    m->sadb_msg_len * CHUNK);
 	}
 
 	return 0;
@@ -211,11 +213,11 @@ pfkey_init(int reinit)
 	}
 	cfgstate.pfkey_socket = fd;
 
-	if (reinit) {
-		if (cfgstate.runstate == MASTER)
-			pfkey_set_promisc();
+	if (cfgstate.runstate == MASTER)
+		pfkey_set_promisc();
+
+	if (reinit)
 		return (fd > -1 ? 0 : -1);
-	}
 
 	SIMPLEQ_INIT(&pfkey_msglist);
 	return 0;

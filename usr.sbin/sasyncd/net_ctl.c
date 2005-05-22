@@ -1,4 +1,4 @@
-/*	$OpenBSD: net_ctl.c,v 1.2 2005/05/22 12:14:16 ho Exp $	*/
+/*	$OpenBSD: net_ctl.c,v 1.3 2005/05/22 20:35:48 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <arpa/inet.h>
 
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -155,7 +156,7 @@ net_ctl_send(struct syncpeer *p, u_int32_t type, u_int32_t d, u_int32_t d2)
 	m->data = htonl(d);
 	m->data2 = htonl(d2);
 
-	return net_queue(p, MSG_SYNCCTL, (u_int8_t *)m, 0, sizeof *m);
+	return net_queue(p, MSG_SYNCCTL, (u_int8_t *)m, sizeof *m);
 }
 
 int
