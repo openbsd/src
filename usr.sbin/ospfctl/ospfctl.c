@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.14 2005/05/12 19:10:12 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.15 2005/05/22 20:01:47 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -62,6 +62,7 @@ const char	*print_ospf_options(u_int8_t);
 int		 show_nbr_detail_msg(struct imsg *);
 int		 show_rib_msg(struct imsg *);
 void		 show_rib_head(struct in_addr, u_int8_t, u_int8_t);
+const char	*print_ospf_rtr_flags(u_int8_t);
 int		 show_rib_detail_msg(struct imsg *);
 void		 show_fib_head(void);
 int		 show_fib_msg(struct imsg *);
@@ -932,7 +933,7 @@ show_rib_msg(struct imsg *imsg)
 void
 show_rib_head(struct in_addr aid, u_int8_t d_type, u_int8_t p_type)
 {
-	char	*header, *format;
+	char	*header, *format, *format2;
 
 	switch (p_type) {
 	case PT_INTRA_AREA:
@@ -940,9 +941,11 @@ show_rib_head(struct in_addr aid, u_int8_t d_type, u_int8_t p_type)
 		switch (d_type) {
 		case DT_NET:
 			format = "Network Routing Table";
+			format2 = "";
 			break;
 		case DT_RTR:
 			format = "Router Routing Table";
+			format2 = "Type";
 			break;
 		default:
 			errx(1, "unknown route type");
@@ -951,6 +954,7 @@ show_rib_head(struct in_addr aid, u_int8_t d_type, u_int8_t p_type)
 	case PT_TYPE1_EXT:
 	case PT_TYPE2_EXT:
 		format = NULL;
+		format2 = "Cost 2";
 		if ((header = strdup("External Routing Table")) == NULL)
 			err(1, NULL);
 		break;
@@ -963,12 +967,23 @@ show_rib_head(struct in_addr aid, u_int8_t d_type, u_int8_t p_type)
 		    inet_ntoa(aid)) == -1)
 			err(1, NULL);
 
-	printf("\n%-15s %s\n", "", header);
+	printf("\n%-18s %s\n", "", header);
 	free(header);
 
-	printf("\n%-20s %-17s %-17s %-12s %-8s\n",
-	    "Destination", "Nexthop", "Adv Router", "Path type", "Cost");
+	printf("\n%-18s %-15s %-15s %-12s %-7s %-7s\n", "Destination",
+	    "Nexthop", "Adv Router", "Path type", "Cost", format2);
+}
 
+const char *
+print_ospf_rtr_flags(u_int8_t opts)
+{
+	static char	optbuf[32];
+
+	snprintf(optbuf, sizeof(optbuf), "%s%s%s",
+	    opts & OSPF_RTR_E ? "AS" : "",
+	    opts & OSPF_RTR_E && opts & OSPF_RTR_B ? "+" : "",
+	    opts & OSPF_RTR_B ? "ABR" : "");
+	return (optbuf);
 }
 
 int
@@ -1009,14 +1024,32 @@ show_rib_detail_msg(struct imsg *imsg)
 			default:
 				errx(1, "unknown route type");
 			}
-			printf("%-20s %-17s ", dstnet, inet_ntoa(rt->nexthop));
-			printf("%-17s %-12s %-7d\n", inet_ntoa(rt->adv_rtr),
+			printf("%-18s %-15s ", dstnet, inet_ntoa(rt->nexthop));
+			printf("%-15s %-12s %-7d", inet_ntoa(rt->adv_rtr),
 			    path_type_names[rt->p_type], rt->cost);
 			free(dstnet);
+
+			if (rt->d_type == DT_RTR)
+				printf(" %-7s",
+				    print_ospf_rtr_flags(rt->flags));
+
+			printf("\n");
 			break;
 		case PT_TYPE1_EXT:
 		case PT_TYPE2_EXT:
-			/* XXX TODO */
+			if (lasttype != RIB_EXT)
+				show_rib_head(rt->area, rt->d_type, rt->p_type);
+
+			if (asprintf(&dstnet, "%s/%d",
+			    inet_ntoa(rt->prefix), rt->prefixlen) == -1)
+				err(1, NULL);
+
+			printf("%-18s %-15s ", dstnet, inet_ntoa(rt->nexthop));
+			printf("%-15s %-12s %-7d %-7d\n",
+			    inet_ntoa(rt->adv_rtr), path_type_names[rt->p_type],
+			    rt->cost, rt->cost2);
+
+			lasttype = RIB_EXT;
 			break;
 		default:
 			errx(1, "unknown route type");
@@ -1150,7 +1183,6 @@ print_baudrate(u_long baudrate)
 	else
 		printf("%lu Bit/s", baudrate);
 }
-
 
 int
 show_fib_interface_msg(struct imsg *imsg)
