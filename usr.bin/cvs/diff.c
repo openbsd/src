@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.34 2005/05/20 20:00:53 joris Exp $	*/
+/*	$OpenBSD: diff.c,v 1.35 2005/05/22 17:48:54 jfb Exp $	*/
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
  * All rights reserved.
@@ -128,7 +128,6 @@
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
 
 #include <err.h>
 #include <errno.h>
@@ -207,18 +206,11 @@ struct diff_arg {
 };
 
 
-struct excludes {
-	char *pattern;
-	struct excludes *next;
-};
-
-
-char	*splice(char *, char *);
-int  cvs_diff_options(char *, int, char **, int *);
-int  cvs_diffreg(const char *, const char *);
-int  cvs_diff_file(struct cvs_file *, void *);
-int  cvs_diff_sendflags(struct cvsroot *);
-int  cvs_diff_cleanup(void);
+int  cvs_diff_options   (char *, int, char **, int *);
+int  cvs_diffreg        (const char *, const char *);
+int  cvs_diff_file      (CVSFILE *, void *);
+int  cvs_diff_sendflags (struct cvsroot *);
+int  cvs_diff_cleanup   (void);
 
 static void output(const char *, FILE *, const char *, FILE *);
 static void check(FILE *, FILE *);
@@ -769,20 +761,6 @@ files_differ(FILE *f1, FILE *f2)
 		if (memcmp(buf1, buf2, i) != 0)
 			return (1);
 	}
-}
-
-
-char *
-splice(char *dir, char *filename)
-{
-	char *tail, *buf;
-
-	if ((tail = strrchr(filename, '/')) == NULL)
-		tail = filename;
-	else
-		tail++;
-	asprintf(&buf, "%s/%s", dir, tail);
-	return (buf);
 }
 
 static int
