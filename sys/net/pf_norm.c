@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.98 2005/05/21 21:03:57 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.99 2005/05/22 16:22:41 dhartmei Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -849,7 +849,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 			break;
 	}
 
-	if (r == NULL)
+	if (r == NULL || r->action == PF_NOSCRUB)
 		return (PF_PASS);
 	else
 		r->packets++;
@@ -1067,7 +1067,7 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 			break;
 	}
 
-	if (r == NULL)
+	if (r == NULL || r->action == PF_NOSCRUB)
 		return (PF_PASS);
 	else
 		r->packets++;
