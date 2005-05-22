@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.104 2005/04/04 04:26:27 djm Exp $
+#	$OpenBSD: netstart,v 1.105 2005/05/22 08:56:08 todd Exp $
 
 # Strip comments (and leading/trailing whitespace if IFS is set)
 # from a file and spew to stdout
@@ -143,6 +143,31 @@ ifstart() {
 	done < /etc/hostname.$if
 }
 
+# Start multiple:
+#   start "$1" interfaces in order or all interfaces if empty
+#   don't start "$2" interfaces
+ifmstart() {
+	for sif in ${1:-ALL}; do
+		for hn in /etc/hostname.*; do
+			# Strip off /etc/hostname. prefix
+			if=${hn#/etc/hostname.}
+			test "$if" = "*" && continue
+	
+			# Skip unwanted ifs
+			s=""	
+			for xf in $2; do
+				test "$xf" = "${if%%[0-9]*}" && s="1" && break
+			done
+			test "$s" = "1" && continue
+
+			# Start wanted ifs
+			test "$sif" = "ALL" -o \
+			     "$sif" = "${if%%[0-9]*}" \
+				&& ifstart $if
+		done
+	done
+}
+
 # Start the $1 bridge
 bridgestart() {
 	# Interface names must be alphanumeric only.  We check to avoid
@@ -262,24 +287,11 @@ else
 	ip6kernel=NO
 fi
 
-# Configure all the non-loopback interfaces which we know about.
-# Refer to hostname.if(5) and bridgename.if(5)
-for hn in /etc/hostname.*; do
-	# Strip off /etc/hostname. prefix
-	if=${hn#/etc/hostname.}
-	test "$if" = "*" && continue
 
-	case $if in
-	"carp"*|"gif"*|"gre"*|"pfsync"*)
-		# CARP, GIF, GRE and PFSYNC interfaces need the routes to be setup
-		# before they are configured.
-		continue
-		;;
-	*)
-		ifstart $if
-		;;
-	esac
-done
+# Configure all the non-loopback interfaces which we know about, but
+# do not start interfaces which must be delayed.
+# Refer to hostname.if(5) and bridgename.if(5)
+ifmstart "" "carp gif gre pfsync pppoe"
 
 if [ "$ip6kernel" = "YES" -a "x$rtsolif" != "x" ]; then
 	fw=`sysctl -n net.inet6.ip6.forwarding`
@@ -297,27 +309,9 @@ if [ "$ip6kernel" = "YES" ]; then
 fi
 
 # The pfsync interface needs to come up before carp.
-if [ -f /etc/hostname.pfsync0 ]; then
-	ifstart pfsync0
-fi
-
 # Configure all the carp interfaces which we know about.
 # They must come up after pfsync but before default route.
-for hn in /etc/hostname.*; do
-	# Strip off /etc/hostname. prefix
-	if=${hn#/etc/hostname.}
-	test "$if" = "*" && continue
-
-	case $if in
-	"carp"*)
-		ifstart $if
-		;;
-	*)
-		# Regular interfaces have already been configured.
-		continue
-		;;
-	esac
-done
+ifmstart "pfsync carp"
 
 # /etc/mygate, if it exists, contains the name of my gateway host
 # that name must be in /etc/hosts.
@@ -358,23 +352,10 @@ EOF
 	;;
 esac
 
-# Configure all the gif and gre interfaces which we know about.
-# They were delayed because they require the routes to be set.
-for hn in /etc/hostname.*; do
-	# Strip off /etc/hostname. prefix
-	if=${hn#/etc/hostname.}
-	test "$if" = "*" && continue
 
-	case $if in
-	"gif"*|"gre"*)
-		ifstart $if
-		;;
-	*)
-		# Regular interfaces have already been configured.
-		continue
-		;;
-	esac
-done
+# Configure PPPoE, GIF, GRE interfaces, delayed because they require routes
+# to be set.  PPPoE must be first, as GIF and GRE may depend on it.
+ifmstart "pppoe gif gre"
 
 # reject 127/8 other than 127.0.0.1
 route -qn add -net 127 127.0.0.1 -reject > /dev/null
