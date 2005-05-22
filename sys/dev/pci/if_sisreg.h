@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.20 2005/04/05 00:13:57 brad Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.21 2005/05/22 05:40:52 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -121,6 +121,9 @@
 #define SIS_CFG_OUTOFWIN_TIMER	0x00000020
 #define SIS_CFG_SINGLE_BACKOFF	0x00000040
 #define SIS_CFG_PCIREQ_ALG	0x00000080
+#define SIS_CFG_FAIR_BACKOFF	0x00000200 /* 635 & 900B Specific */
+#define SIS_CFG_RND_CNT		0x00000400 /* 635 & 900B Specific */
+#define SIS_CFG_EDB_MASTER_EN	0x00002000
 
 #define SIS_EECTL_DIN		0x00000001
 #define SIS_EECTL_DOUT		0x00000002
@@ -263,8 +266,10 @@
 #define SIS_RXDMA_128BYTES	0x00600000
 #define SIS_RXDMA_256BYTES	0x00700000
 
-#define SIS_RXCFG \
+#define SIS_RXCFG256 \
 	(SIS_RXCFG_DRAIN(64)|SIS_RXDMA_256BYTES)
+#define SIS_RXCFG64 \
+	(SIS_RXCFG_DRAIN(64)|SIS_RXDMA_64BYTES)
 
 #define SIS_RXFILTCTL_ADDR	0x000F0000
 #define NS_RXFILTCTL_MCHASH	0x00200000
@@ -385,6 +390,8 @@ struct sis_ring_data {
 /*
  * SiS 900 PCI revision codes.
  */
+#define SIS_REV_900B		0x0003
+#define SIS_REV_630A		0x0080
 #define SIS_REV_630E		0x0081
 #define SIS_REV_630S		0x0082
 #define SIS_REV_630EA1		0x0083

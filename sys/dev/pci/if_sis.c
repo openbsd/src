@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.44 2005/04/05 00:13:57 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.45 2005/05/22 05:40:52 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -527,7 +527,7 @@ int sis_mii_writereg(sc, frame)
 {
 	int			s;
  
-	 s = splimp();
+	s = splimp();
  	/*
  	 * Set up frame for TX.
  	 */
@@ -970,6 +970,13 @@ void sis_attach(parent, self, aux)
 
 	/* Reset the adapter. */
 	sis_reset(sc);
+
+	if (sc->sis_type == SIS_TYPE_900 &&
+	   (sc->sis_rev == SIS_REV_635 ||
+	    sc->sis_rev == SIS_REV_900B)) {
+		SIO_SET(SIS_CFG_RND_CNT);
+		SIO_SET(SIS_CFG_PERR_DETECT);
+	}
 
 	printf(":");
 
@@ -1482,13 +1489,11 @@ void sis_tick(xsc)
 	mii = &sc->sc_mii;
 	mii_tick(mii);
 
-	if (!sc->sis_link) {
-		mii_pollstat(mii);
-		if (mii->mii_media_status & IFM_ACTIVE &&
-		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE)
-			sc->sis_link++;
-			if (!IFQ_IS_EMPTY(&ifp->if_snd))
-				sis_start(ifp);
+	if (!sc->sis_link && mii->mii_media_status & IFM_ACTIVE &&
+	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
+		sc->sis_link++;
+		if (!IFQ_IS_EMPTY(&ifp->if_snd))
+			sis_start(ifp);
 	}
 	timeout_add(&sc->sis_timeout, hz);
 
@@ -1793,8 +1798,15 @@ void sis_init(xsc)
 	CSR_WRITE_4(sc, SIS_TX_LISTPTR, sc->sc_listmap->dm_segs[0].ds_addr +
 	    offsetof(struct sis_list_data, sis_tx_list[0]));
 
-	/* Set RX configuration */
-	CSR_WRITE_4(sc, SIS_RX_CFG, SIS_RXCFG);
+	/* SIS_CFG_EDB_MASTER_EN indicates the EDB bus is used instead of
+	 * the PCI bus. When this bit is set, the Max DMA Burst Size
+	 * for TX/RX DMA should be no larger than 16 double words.
+	 */
+	if (CSR_READ_4(sc, SIS_CFG) & SIS_CFG_EDB_MASTER_EN) {
+		CSR_WRITE_4(sc, SIS_RX_CFG, SIS_RXCFG64);
+	} else {
+		CSR_WRITE_4(sc, SIS_RX_CFG, SIS_RXCFG256);
+	}
 
 	/* Accept Long Packets for VLAN support */
 	SIS_SETBIT(sc, SIS_RX_CFG, SIS_RXCFG_RX_JABBER);
