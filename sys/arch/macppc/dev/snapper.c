@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.9 2005/05/22 18:08:13 jason Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.10 2005/05/22 18:28:20 jason Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -501,13 +501,13 @@ snapper_query_encoding(h, ae)
 		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 3:
-		strlcpy(ae->name, AudioEslinear_be, sizeof(ae->name));
+		strlcpy(ae->name, AudioEulinear_be, sizeof(ae->name));
 		ae->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		ae->precision = 16;
 		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	case 4:
-		strlcpy(ae->name, AudioEslinear_le, sizeof(ae->name));
+		strlcpy(ae->name, AudioEulinear_le, sizeof(ae->name));
 		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		ae->precision = 16;
 		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
