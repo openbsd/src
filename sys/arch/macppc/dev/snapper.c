@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.12 2005/05/22 20:32:36 jason Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.13 2005/05/22 21:10:27 jason Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -125,6 +125,7 @@ void snapper_set_volume(struct snapper_softc *, int, int);
 int snapper_set_rate(struct snapper_softc *, int);
 void snapper_config(struct snapper_softc *sc, int node, struct device *parent);
 struct snapper_mode *snapper_find_mode(u_int, u_int, u_int);
+void snapper_cs16mts(void *, u_char *, int);
 
 int tas3004_write(struct snapper_softc *, u_int, const void *);
 static int gpio_read(char *);
@@ -573,6 +574,20 @@ swap_bytes_mono16_to_stereo16(v, p, cc)
 	mono16_to_stereo16(v, p, cc);
 }
 
+void
+snapper_cs16mts(void *v, u_char *p, int cc)
+{
+	u_char *q = p;
+
+	p += cc;
+	q += cc * 2;
+	while ((cc -= 2) >= 0) {
+		q -= 4;
+		q[1] = q[3] = *--p;
+		q[0] = q[2] = (*--p) ^ 80;
+	}
+}
+
 struct snapper_mode {
 	u_int encoding;
 	u_int precision;
@@ -594,7 +609,7 @@ struct snapper_mode {
 	{ AUDIO_ENCODING_ULINEAR_LE, 16, 2, swap_bytes_change_sign16_be, 1 },
 	{ AUDIO_ENCODING_ULINEAR_BE,  8, 1, ulinear8_to_linear16_be_mts, 4 },
 	{ AUDIO_ENCODING_ULINEAR_BE,  8, 2, ulinear8_to_linear16_be, 2 },
-	{ AUDIO_ENCODING_ULINEAR_BE, 16, 1, change_sign16_le_mts, 2 },
+	{ AUDIO_ENCODING_ULINEAR_BE, 16, 1, snapper_cs16mts, 2 },
 	{ AUDIO_ENCODING_ULINEAR_BE, 16, 2, change_sign16_be, 1 }
 };
 
