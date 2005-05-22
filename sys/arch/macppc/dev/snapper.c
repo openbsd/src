@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.11 2005/05/22 19:12:41 jason Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.12 2005/05/22 20:32:36 jason Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -594,7 +594,7 @@ struct snapper_mode {
 	{ AUDIO_ENCODING_ULINEAR_LE, 16, 2, swap_bytes_change_sign16_be, 1 },
 	{ AUDIO_ENCODING_ULINEAR_BE,  8, 1, ulinear8_to_linear16_be_mts, 4 },
 	{ AUDIO_ENCODING_ULINEAR_BE,  8, 2, ulinear8_to_linear16_be, 2 },
-	{ AUDIO_ENCODING_ULINEAR_BE, 16, 1, change_sign16_be_mts, 2 },
+	{ AUDIO_ENCODING_ULINEAR_BE, 16, 1, change_sign16_le_mts, 2 },
 	{ AUDIO_ENCODING_ULINEAR_BE, 16, 2, change_sign16_be, 1 }
 };
 
