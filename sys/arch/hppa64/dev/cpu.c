@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.2 2005/05/22 01:38:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -56,10 +56,12 @@ cpumatch(parent, cfdata, aux)
 	struct confargs *ca = aux;
 	/* struct cfdata *cf = cfdata; */
 
-	if (strcmp(ca->ca_name, "cpu"))
-		return 0;
+	if ((ca->ca_name && !strcmp(ca->ca_name, "cpu")) ||
+	    (ca->ca_type.iodc_type == HPPA_TYPE_NPROC &&
+	     ca->ca_type.iodc_sv_model == HPPA_NPROC_HPPA))
+		return 1;
 
-	return 1;
+	return 0;
 }
 
 int

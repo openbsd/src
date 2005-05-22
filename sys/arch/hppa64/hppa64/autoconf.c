@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.2 2005/05/22 01:38:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 Michael Shalayeff
@@ -629,6 +629,7 @@ getstr(cp, size)
 	}
 }
 
+struct pdc_sysmap_find pdc_find PDC_ALIGNMENT;
 struct pdc_iodc_read pdc_iodc_read PDC_ALIGNMENT;
 struct pdc_pat_cell_id pdc_pat_cell_id PDC_ALIGNMENT;
 struct pdc_pat_cell_module pdc_pat_cell_module PDC_ALIGNMENT;
@@ -644,21 +645,54 @@ const char *pat_names[] = {
 };
 
 void
-pdc_patscan(struct device *self, struct confargs *ca, int mod)
+pdc_scan(struct device *self, struct confargs *ca)
 {
+	struct device_path path;
+	struct confargs nca;
 	u_long	rv[16];
-	int	i, err;
+	int	i, err, mod = ca->ca_mod;
 
 	if (pdc_call((iodcio_t)pdc, 0, PDC_PAT_CELL, PDC_PAT_CELL_GETID,
-	    &pdc_pat_cell_id, 0)) {
-		printf("pat_fetch: cannot fetch cell number\n");
-		return;
-	}
+	    &pdc_pat_cell_id, 0))
+		for (i = 0; !(err = pdc_call((iodcio_t)pdc, 0, PDC_SYSMAP,
+		    PDC_SYSMAP_FIND, &pdc_find, &path, i)); i++) {
+			if (autoconf_verbose)
+				printf(">> hpa %x/%x dp %d/%d/%d/%d/%d/%d.%d\n",
+				    pdc_find.hpa, pdc_find.size,
+				    path.dp_bc[0], path.dp_bc[1], path.dp_bc[2],
+				    path.dp_bc[3], path.dp_bc[4], path.dp_bc[5],
+				    path.dp_mod);
 
-	i = 0;
-	for (i = 0; !pdc_call((iodcio_t)pdc, 0, PDC_PAT_CELL,
+			if (path.dp_bc[5] == mod) {
+				nca = *ca;
+				nca.ca_name = NULL;
+				nca.ca_hpa = 0xffffffff00000000ULL |
+				    (hppa_hpa_t)pdc_find.hpa;
+				nca.ca_hpasz = pdc_find.size;
+				nca.ca_mod = path.dp_mod;
+
+				err = pdc_call((iodcio_t)pdc, 0, PDC_IODC,
+				    PDC_IODC_READ, &pdc_iodc_read, nca.ca_hpa,
+				    IODC_DATA, &nca.ca_type, sizeof(nca.ca_type));
+				if (err < 0 || pdc_iodc_read.size < 8) {
+					if (autoconf_verbose)
+						printf(">> iodc_data error %d\n", err);
+					bzero(&nca.ca_type, sizeof(nca.ca_type));
+				}
+
+				if (autoconf_verbose) {
+					u_int *p = (u_int *)&nca.ca_type;
+					printf(">> iodc_data 0x%08x 0x%08x\n",
+					    p[0], p[1]);
+				}
+
+				config_found(self, &nca, mbprint);
+			}
+		}
+
+	for (i = 0; !(err = pdc_call((iodcio_t)pdc, 0, PDC_PAT_CELL,
 	    PDC_PAT_CELL_MODULE, rv, pdc_pat_cell_id.loc, i,
-	    PDC_PAT_PAVIEW, &pdc_pat_cell_module, 0); i++) {
+	    PDC_PAT_PAVIEW, &pdc_pat_cell_module, 0)); i++) {
 		if (autoconf_verbose)
 			printf(">> chpa %lx info %lx loc %lx "
 			    "dp %d/%d/%d/%d/%d/%d.%d\n",
@@ -673,7 +707,6 @@ pdc_patscan(struct device *self, struct confargs *ca, int mod)
 			    pdc_pat_cell_module.dp.dp_mod);
 
 		if (pdc_pat_cell_module.dp.dp_bc[5] == mod) {
-			struct confargs nca;
 			int t;
 
 			t = PDC_PAT_CELL_MODTYPE(pdc_pat_cell_module.info);
@@ -686,6 +719,7 @@ pdc_patscan(struct device *self, struct confargs *ca, int mod)
 			    ~(u_long)PAGE_MASK;
 			nca.ca_hpasz =
 			    PDC_PAT_CELL_MODSIZE(pdc_pat_cell_module.info);
+			nca.ca_mod = pdc_pat_cell_module.dp.dp_mod;
 
 			err = pdc_call((iodcio_t)pdc, 0, PDC_IODC,
 			    PDC_IODC_READ, &pdc_iodc_read, nca.ca_hpa,

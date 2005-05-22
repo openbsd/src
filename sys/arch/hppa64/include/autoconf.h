@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.1 2005/04/01 10:40:48 mickey Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.2 2005/05/22 01:38:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -27,6 +27,7 @@ struct confargs {
 	bus_dma_tag_t	ca_dmatag;	/* DMA tag */
 	hppa_hpa_t	ca_hpa;		/* module HPA */
 	u_int		ca_hpasz;	/* module HPA size (if avail) */
+	int		ca_mod;		/* this module */
 }; 
 
 /* this is used for hppa_knownmodules table
@@ -47,7 +48,7 @@ extern void (*cold_hook)(int);
 struct device;
 
 const char *hppa_mod_info(int, int);
-void	pdc_patscan(struct device *, struct confargs *, int);
+void	pdc_scan(struct device *, struct confargs *);
 int	mbprint(void *, const char *);
 
 void	dumpconf(void);

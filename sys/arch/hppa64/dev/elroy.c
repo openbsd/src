@@ -1,4 +1,4 @@
-/*	$OpenBSD: elroy.c,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: elroy.c,v 1.2 2005/05/22 01:38:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -28,6 +28,8 @@
 
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
+
+#include <arch/hppa/dev/cpudevs.h>
 
 #if NCARDBUS > 0
 #include <dev/cardbus/rbus.h>
@@ -68,10 +70,13 @@ elroymatch(parent, cfdata, aux)
 	struct confargs *ca = aux;
 	/* struct cfdata *cf = cfdata; */
 
-	if (strcmp(ca->ca_name, "lba"))
-		return (0);
+	if ((ca->ca_name && !strcmp(ca->ca_name, "lba")) ||
+	    (ca->ca_type.iodc_type == HPPA_TYPE_BRIDGE &&
+	     ca->ca_type.iodc_sv_model == HPPA_BRIDGE_DINO &&
+	     ca->ca_type.iodc_model == 0x78))
+		return (1);
 
-	return (1);
+	return (0);
 }
 
 void
@@ -1141,6 +1146,7 @@ elroyattach(parent, self, aux)
 
 	printf(": %s TR%d.%d%s", p, sc->sc_ver >> 4, sc->sc_ver & 0xf, q);
 	apic_attach(sc);
+	printf("\n");
 
 	/* TODO reserve elroy's pci space ? */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: mem.c,v 1.2 2005/05/22 01:38:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -82,6 +82,8 @@
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
 
+#include <arch/hppa/dev/cpudevs.h>
+
 struct mem_softc {
 	struct device sc_dev;
 };
@@ -107,10 +109,12 @@ memmatch(parent, cfdata, aux)
 {
 	struct confargs *ca = aux;
 
-	if (strcmp(ca->ca_name, "memory"))
-		return 0;
+	if ((ca->ca_name && !strcmp(ca->ca_name, "memory")) ||
+	    (ca->ca_type.iodc_type == HPPA_TYPE_MEMORY &&
+	     ca->ca_type.iodc_sv_model == HPPA_MEMORY_PDEP))
+		return 1;
 
-	return 1;
+	return 0;
 }
 
 void

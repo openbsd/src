@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluto.c,v 1.1 2005/04/01 10:40:47 mickey Exp $	*/
+/*	$OpenBSD: pluto.c,v 1.2 2005/05/22 01:38:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -27,6 +27,8 @@
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+
+#include <arch/hppa/dev/cpudevs.h>
 
 struct pluto_regs {
 	u_int32_t	version;	/* 0x000: version */
@@ -58,7 +60,8 @@ struct pluto_regs {
 struct pluto_softc {
 	struct device sc_dv;
 
-	struct pluto_regs volatile *sc_regs;
+	volatile struct pluto_regs *sc_regs;
+	struct confargs sc_ca;
 };
 
 int	plutomatch(struct device *, void *, void *);
@@ -67,6 +70,8 @@ void	plutoattach(struct device *, struct device *, void *);
 struct cfattach plut_ca = {
 	sizeof(struct pluto_softc), plutomatch, plutoattach
 };
+
+void	pluto_scan(struct device *self);
 
 struct cfdriver plut_cd = {
 	NULL, "plut", DV_DULL
@@ -81,10 +86,16 @@ plutomatch(parent, cfdata, aux)
 	struct confargs *ca = aux;
 	/* struct cfdata *cf = cfdata; */
 
-	if (strcmp(ca->ca_name, "sba"))
-		return 0;
+	if ((ca->ca_name && !strcmp(ca->ca_name, "sba")) ||
+	    (ca->ca_type.iodc_type == HPPA_TYPE_IOA &&
+	     ca->ca_type.iodc_sv_model == HPPA_IOA_PLUTO) ||
+	    (ca->ca_type.iodc_type == HPPA_TYPE_IOA &&
+	     ca->ca_type.iodc_sv_model == HPPA_IOA_UTURN &&
+	     ca->ca_type.iodc_model == 0x58 &&
+	     ca->ca_type.iodc_revision >= 0x20))
+		return 1;
 
-	return 1;
+	return 0;
 }
 
 void
@@ -93,7 +104,7 @@ plutoattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs *ca = aux, nca;
+	struct confargs *ca = aux;
 	struct pluto_softc *sc = (struct pluto_softc *)self;
 	struct pluto_regs volatile *r;
 	bus_space_handle_t ioh;
@@ -140,6 +151,14 @@ plutoattach(parent, self, aux)
 
 	printf(": %s\n", buf);
 
-	nca = *ca;	/* clone from us */
-	pdc_patscan(self, &nca, 0);
+	sc->sc_ca = *ca;	/* clone from us */
+	config_defer(self, &pluto_scan);
+}
+
+void
+pluto_scan(struct device *self)
+{
+	struct pluto_softc *sc = (struct pluto_softc *)self;
+
+	pdc_scan(self, &sc->sc_ca);
 }
