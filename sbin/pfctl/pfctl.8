@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.118 2005/01/05 23:41:45 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.119 2005/05/22 21:05:23 mpf Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -42,7 +42,7 @@
 .Op Fl F Ar modifier
 .Op Fl f Ar file
 .Op Fl i Ar interface
-.Op Fl k Ar host
+.Op Fl k Ar host | network
 .Op Fl p Ar device
 .Op Fl s Ar modifier
 .Oo Xo
@@ -138,8 +138,10 @@ rules from the main ruleset is described in
 For example, the following will show all filter rules (see the
 .Fl s
 flag below) inside the anchor
-.Li authpf/smith(1234) ,
-which would have been created for user smith by
+.Dq authpf/smith(1234) ,
+which would have been created for user
+.Dq smith
+by
 .Xr authpf 8 ,
 PID 1234:
 .Bd -literal -offset indent
@@ -215,29 +217,38 @@ Help.
 .It Fl i Ar interface
 Restrict the operation to the given
 .Ar interface .
-.It Fl k Ar host
+.It Fl k Ar host | network
 Kill all of the state entries originating from the specified
-.Ar host .
+.Ar host
+or
+.Ar network .
 A second
 .Fl k Ar host
+or
+.Fl k Ar network
 option may be specified, which will kill all the state entries
-from the first
-.Ar host
-to the second
-.Ar host .
+from the first host/network to the second.
 For example, to kill all of the state entries originating from
-.Li host :
-.Bd -literal -offset indent
-# pfctl -k host
-.Ed
+.Dq host :
+.Pp
+.Dl # pfctl -k host
 .Pp
 To kill all of the state entries from
-.Li host1
+.Dq host1
 to
-.Li host2 :
-.Bd -literal -offset indent
-# pfctl -k host1 -k host2
-.Ed
+.Dq host2 :
+.Pp
+.Dl # pfctl -k host1 -k host2
+.Pp
+To kill all states originating from 192.168.1.0/24 to 172.16.0.0/16:
+.Pp
+.Dl # pfctl -k 192.168.1.0/24 -k 172.16.0.0/16
+.Pp
+A network prefix length of 0 can be used as a wildcard.
+To kill all states with the target
+.Dq host2 :
+.Pp
+.Dl # pfctl -k 0.0.0.0/0 -k host2
 .It Fl m
 Merge in explicitly given options without resetting those
 which are omitted.

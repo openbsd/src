@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.236 2005/05/21 21:03:58 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.237 2005/05/22 21:05:23 mpf Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -65,6 +65,7 @@ int	 pfctl_clear_nat(int, int, char *);
 int	 pfctl_clear_altq(int, int);
 int	 pfctl_clear_src_nodes(int, int);
 int	 pfctl_clear_states(int, const char *, int);
+void	 pfctl_addrprefix(char *, struct pf_addr *);
 int	 pfctl_kill_states(int, const char *, int);
 void	 pfctl_init_options(struct pfctl *);
 int	 pfctl_load_options(struct pfctl *);
@@ -205,10 +206,10 @@ usage(void)
 	fprintf(stderr, "usage: %s [-AdeghmNnOoqRrvz] ", __progname);
 	fprintf(stderr, "[-a anchor] [-D macro=value] [-F modifier]\n");
 	fprintf(stderr, "             ");
-	fprintf(stderr, "[-f file] [-i interface] [-k host] ");
-	fprintf(stderr, "[-p device] [-s modifier]\n");
+	fprintf(stderr, "[-f file] [-i interface] [-k host | network] ");
+	fprintf(stderr, "[-p device]\n");
 	fprintf(stderr, "             ");
-	fprintf(stderr, "[-t table -T command [address ...]] ");
+	fprintf(stderr, "[-s modifier] [-t table -T command [address ...]] ");
 	fprintf(stderr, "[-x level]\n");
 	exit(1);
 }
@@ -357,6 +358,56 @@ pfctl_clear_states(int dev, const char *iface, int opts)
 	return (0);
 }
 
+void
+pfctl_addrprefix(char *addr, struct pf_addr *mask)
+{
+	char *p;
+	const char *errstr;
+	int prefix, ret_ga, q, r;
+	struct addrinfo hints, *res;
+
+	if ((p = strchr(addr, '/')) == NULL)
+		return;
+
+	*p++ = '\0';
+	prefix = strtonum(p, 0, 128, &errstr);
+	if (errstr)
+		errx(1, "prefix is %s: %s", errstr, p);
+
+	bzero(&hints, sizeof(hints));
+	/* prefix only with numeric addresses */
+	hints.ai_flags |= AI_NUMERICHOST;
+
+	if ((ret_ga = getaddrinfo(addr, NULL, &hints, &res))) {
+		errx(1, "getaddrinfo: %s", gai_strerror(ret_ga));
+		/* NOTREACHED */
+	}
+
+	if (res->ai_family == AF_INET && prefix > 32)
+		errx(1, "prefix too long for AF_INET");
+	else if (res->ai_family == AF_INET6 && prefix > 128)
+		errx(1, "prefix too long for AF_INET6");
+
+	q = prefix >> 3;
+	r = prefix & 7;
+	switch (res->ai_family) {
+	case AF_INET:
+		bzero(&mask->v4, sizeof(mask->v4));
+		mask->v4.s_addr = htonl((u_int32_t)
+		    (0xffffffffffULL << (32 - prefix)));
+		break;
+	case AF_INET6:
+		bzero(&mask->v6, sizeof(mask->v6));
+		if (q > 0)
+			memset((void *)&mask->v6, 0xff, q);
+		if (r > 0)
+			*((u_char *)&mask->v6 + q) =
+			    (0xff00 >> r) & 0xff;
+		break;
+	}
+	freeaddrinfo(res);
+}
+
 int
 pfctl_kill_states(int dev, const char *iface, int opts)
 {
@@ -376,6 +427,8 @@ pfctl_kill_states(int dev, const char *iface, int opts)
 	if (iface != NULL && strlcpy(psk.psk_ifname, iface,
 	    sizeof(psk.psk_ifname)) >= sizeof(psk.psk_ifname))
 		errx(1, "invalid interface: %s", iface);
+
+	pfctl_addrprefix(state_kill[0], &psk.psk_src.addr.v.a.mask);
 
 	if ((ret_ga = getaddrinfo(state_kill[0], NULL, NULL, &res[0]))) {
 		errx(1, "getaddrinfo: %s", gai_strerror(ret_ga));
@@ -407,6 +460,8 @@ pfctl_kill_states(int dev, const char *iface, int opts)
 			memset(&psk.psk_dst.addr.v.a.mask, 0xff,
 			    sizeof(psk.psk_dst.addr.v.a.mask));
 			memset(&last_dst, 0xff, sizeof(last_dst));
+			pfctl_addrprefix(state_kill[1],
+			    &psk.psk_dst.addr.v.a.mask);
 			if ((ret_ga = getaddrinfo(state_kill[1], NULL, NULL,
 			    &res[1]))) {
 				errx(1, "getaddrinfo: %s",
