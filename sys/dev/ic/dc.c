@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.85 2005/05/22 01:10:23 brad Exp $	*/
+/*	$OpenBSD: dc.c,v 1.86 2005/05/22 19:29:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2671,12 +2671,10 @@ dc_encap(sc, m_head, txidx)
 	if (sc->dc_flags & DC_TX_USE_TX_INTR && sc->dc_cdata.dc_tx_cnt > 64)
 		sc->dc_ldata->dc_tx_list[cur].dc_ctl |=
 		    htole32(DC_TXCTL_FINT);
-#ifdef ALTQ
 	else if ((sc->dc_flags & DC_TX_USE_TX_INTR) &&
 		 TBR_IS_ENABLED(&sc->sc_arpcom.ac_if.if_snd))
 		sc->dc_ldata->dc_tx_list[cur].dc_ctl |=
 		    htole32(DC_TXCTL_FINT);
-#endif
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE);
 
@@ -2760,11 +2758,9 @@ dc_start(ifp)
 		if (sc->dc_flags & DC_TX_COALESCE &&
 		    (m_head->m_next != NULL ||
 			sc->dc_flags & DC_TX_ALIGN)) {
-#ifdef ALTQ
 			/* note: dc_coal breaks the poll-and-dequeue rule.
 			 * if dc_coal fails, we lose the packet.
 			 */
-#endif
 			IFQ_DEQUEUE(&ifp->if_snd, m_head);
 			if (dc_coal(sc, &m_head)) {
 				ifp->if_flags |= IFF_OACTIVE;

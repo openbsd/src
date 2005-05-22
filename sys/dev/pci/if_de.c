@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.66 2005/04/23 01:45:55 martin Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.67 2005/05/22 19:29:55 martin Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -4082,11 +4082,9 @@ tulip_txput(
     int segcnt, free;
     u_int32_t d_status;
     struct mbuf *m0;
-#if 1 /* ALTQ */
     struct ifnet *ifp = &sc->tulip_if;
     struct mbuf *ombuf = m;
     int compressed = 0;
-#endif
 
 #if defined(TULIP_DEBUG)
     if ((sc->tulip_cmdmode & TULIP_CMD_TXRUN) == 0) {
@@ -4140,7 +4138,6 @@ tulip_txput(
 		 * entries that we can use for one packet, so we have
 		 * recopy it into one mbuf and then try again.
 		 */
-#if 1 /* ALTQ */
 		struct mbuf *tmp;
 		/*
 		 * tulip_mbuf_compress() frees the original mbuf.
@@ -4161,7 +4158,6 @@ tulip_txput(
 		if (tmp != ombuf)
 		    panic("tulip_txput: different mbuf dequeued!");
 		compressed = 1;
-#endif
 		m = tulip_mbuf_compress(m);
 		if (m == NULL)
 		    goto finish;
@@ -4228,7 +4224,6 @@ tulip_txput(
      * The descriptors have been filled in.  Now get ready
      * to transmit.
      */
-#if 1 /* ALTQ */
     if (!compressed && (sc->tulip_flags & TULIP_TXPROBE_ACTIVE) == 0) {
 	/* remove the mbuf from the queue */
 	struct mbuf *tmp;
@@ -4236,7 +4231,6 @@ tulip_txput(
 	if (tmp != ombuf)
 	    panic("tulip_txput: different mbuf dequeued!");
     }
-#endif
 
     IF_ENQUEUE(&sc->tulip_txq, m);
     m = NULL;
@@ -4598,14 +4592,12 @@ tulip_ifioctl(
     return error;
 }
 
-#if 1 /* ALTQ */
 /*
  * the original dequeueing policy is dequeue-and-prepend if something
  * goes wrong.  when altq is used, it is changed to peek-and-dequeue.
  * the modification becomes a bit complicated since tulip_txput() might
  * copy and modify the mbuf passed.
  */
-#endif
 /*
  * These routines gets called at device spl (from ether_output).  This might
  * pose a problem for TULIP_USE_SOFTINTR if ether_output is called at
@@ -4636,12 +4628,7 @@ tulip_ifstart(
 		break;
 	    }
 	}
-#ifdef ALTQ
-	if (0) /* don't switch to the one packet mode */
-#else
-	if (IFQ_IS_EMPTY(&sc->tulip_if.if_snd))
-#endif
-	    sc->tulip_if.if_start = tulip_ifstart_one;
+	sc->tulip_if.if_start = tulip_ifstart_one;
     }
 
     TULIP_PERFEND(ifstart);
