@@ -3,9 +3,9 @@
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	OpenBSD
+ *	OpenBSD: vnode_if.src,v 1.25 2005/05/22 21:08:21 pedro Exp 
  * by the script:
- *	OpenBSD
+ *	OpenBSD: vnode_if.sh,v 1.14 2005/05/22 21:07:23 pedro Exp 
  */
 
 /*
@@ -133,7 +133,7 @@ int VOP_CREATE(dvp, vpp, cnp, vap)
 	struct vop_create_args a;
 	a.a_desc = VDESC(vop_create);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
 		panic("vop_create: dvp");
 #endif
@@ -168,7 +168,7 @@ int VOP_MKNOD(dvp, vpp, cnp, vap)
 	struct vop_mknod_args a;
 	a.a_desc = VDESC(vop_mknod);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
 		panic("vop_mknod: dvp");
 #endif
@@ -234,6 +234,10 @@ int VOP_CLOSE(vp, fflag, cred, p)
 	struct vop_close_args a;
 	a.a_desc = VDESC(vop_close);
 	a.a_vp = vp;
+#ifdef VFSDEBUG
+	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
+		panic("vop_close: vp");
+#endif
 	a.a_fflag = fflag;
 	a.a_cred = cred;
 	a.a_p = p;
@@ -265,7 +269,7 @@ int VOP_ACCESS(vp, mode, cred, p)
 	struct vop_access_args a;
 	a.a_desc = VDESC(vop_access);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
 		panic("vop_access: vp");
 #endif
@@ -331,7 +335,7 @@ int VOP_SETATTR(vp, vap, cred, p)
 	struct vop_setattr_args a;
 	a.a_desc = VDESC(vop_setattr);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
 		panic("vop_setattr: vp");
 #endif
@@ -366,7 +370,7 @@ int VOP_READ(vp, uio, ioflag, cred)
 	struct vop_read_args a;
 	a.a_desc = VDESC(vop_read);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
 		panic("vop_read: vp");
 #endif
@@ -401,7 +405,7 @@ int VOP_WRITE(vp, uio, ioflag, cred)
 	struct vop_write_args a;
 	a.a_desc = VDESC(vop_write);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
 		panic("vop_write: vp");
 #endif
@@ -585,7 +589,7 @@ int VOP_FSYNC(vp, cred, waitfor, p)
 	struct vop_fsync_args a;
 	a.a_desc = VDESC(vop_fsync);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
 		panic("vop_fsync: vp");
 #endif
@@ -620,12 +624,12 @@ int VOP_REMOVE(dvp, vp, cnp)
 	struct vop_remove_args a;
 	a.a_desc = VDESC(vop_remove);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
 		panic("vop_remove: dvp");
 #endif
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
 		panic("vop_remove: vp");
 #endif
@@ -658,7 +662,7 @@ int VOP_LINK(dvp, vp, cnp)
 	struct vop_link_args a;
 	a.a_desc = VDESC(vop_link);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
 		panic("vop_link: dvp");
 #endif
@@ -700,7 +704,7 @@ int VOP_RENAME(fdvp, fvp, fcnp, tdvp, tvp, tcnp)
 	a.a_fvp = fvp;
 	a.a_fcnp = fcnp;
 	a.a_tdvp = tdvp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((tdvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(tdvp))
 		panic("vop_rename: tdvp");
 #endif
@@ -734,7 +738,7 @@ int VOP_MKDIR(dvp, vpp, cnp, vap)
 	struct vop_mkdir_args a;
 	a.a_desc = VDESC(vop_mkdir);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
 		panic("vop_mkdir: dvp");
 #endif
@@ -769,12 +773,12 @@ int VOP_RMDIR(dvp, vp, cnp)
 	struct vop_rmdir_args a;
 	a.a_desc = VDESC(vop_rmdir);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
 		panic("vop_rmdir: dvp");
 #endif
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
 		panic("vop_rmdir: vp");
 #endif
@@ -808,7 +812,7 @@ int VOP_SYMLINK(dvp, vpp, cnp, vap, target)
 	struct vop_symlink_args a;
 	a.a_desc = VDESC(vop_symlink);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
 		panic("vop_symlink: dvp");
 #endif
@@ -846,7 +850,7 @@ int VOP_READDIR(vp, uio, cred, eofflag, ncookies, cookies)
 	struct vop_readdir_args a;
 	a.a_desc = VDESC(vop_readdir);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
 		panic("vop_readdir: vp");
 #endif
@@ -882,7 +886,7 @@ int VOP_READLINK(vp, uio, cred)
 	struct vop_readlink_args a;
 	a.a_desc = VDESC(vop_readlink);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
 		panic("vop_readlink: vp");
 #endif
@@ -941,7 +945,7 @@ int VOP_INACTIVE(vp, p)
 	struct vop_inactive_args a;
 	a.a_desc = VDESC(vop_inactive);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
 		panic("vop_inactive: vp");
 #endif
@@ -1060,7 +1064,7 @@ int VOP_BMAP(vp, bn, vpp, bnp, runp)
 	struct vop_bmap_args a;
 	a.a_desc = VDESC(vop_bmap);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
 		panic("vop_bmap: vp");
 #endif
@@ -1181,7 +1185,7 @@ int VOP_REALLOCBLKS(vp, buflist)
 	struct vop_reallocblks_args a;
 	a.a_desc = VDESC(vop_reallocblks);
 	a.a_vp = vp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((vp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(vp))
 		panic("vop_reallocblks: vp");
 #endif
@@ -1213,7 +1217,7 @@ int VOP_WHITEOUT(dvp, cnp, flags)
 	struct vop_whiteout_args a;
 	a.a_desc = VDESC(vop_whiteout);
 	a.a_dvp = dvp;
-#ifdef LOCKDEBUG
+#ifdef VFSDEBUG
 	if ((dvp->v_flag & VLOCKSWORK) && !VOP_ISLOCKED(dvp))
 		panic("vop_whiteout: dvp");
 #endif
