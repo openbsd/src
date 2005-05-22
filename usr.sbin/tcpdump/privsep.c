@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.18 2005/05/03 01:01:14 djm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.19 2005/05/22 18:41:33 moritz Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -106,7 +106,7 @@ static struct ftab file_table[] = {{"/etc/appletalk.names", 1, 0},
 
 int		debug_level = LOG_INFO;
 int		priv_fd = -1;
-static volatile	pid_t child_pid = -1;
+volatile	pid_t child_pid = -1;
 static volatile	sig_atomic_t cur_state = STATE_INIT;
 
 static void	parent_open_bpf(int, int *);
@@ -122,8 +122,6 @@ static void	parent_getprotoentries(int);
 static void	parent_localtime(int fd);
 static void	parent_getlines(int);
 
-static void	sig_pass_to_chld(int);
-static void	sig_got_chld(int);
 static void	test_state(int, int);
 static void	logmsg(int, const char *, ...);
 
@@ -151,7 +149,7 @@ priv_init(int argc, char **argv)
 	if (child_pid < 0)
 		err(1, "fork() failed");
 
-	if (!child_pid) {
+	if (child_pid) {
 		if (getuid() == 0) {
 			pw = getpwnam("_tcpdump");
 			if (pw == NULL)
@@ -246,12 +244,6 @@ priv_init(int argc, char **argv)
 		cmdbuf = read_infile(infile);
 	else
 		cmdbuf = copy_argv(&argv[optind]);
-
-	/* Pass ALRM/TERM/HUP through to child, and accept CHLD */
-	signal(SIGALRM, sig_pass_to_chld);
-	signal(SIGTERM, sig_pass_to_chld);
-	signal(SIGHUP,  sig_pass_to_chld);
-	signal(SIGCHLD, sig_got_chld);
 
 	setproctitle("[priv]");
 	close(socks[1]);
@@ -754,37 +746,6 @@ priv_getline(char *line, size_t line_len)
 
 	/* read the line */
 	return (read_string(priv_fd, line, line_len, __func__));
-}
-
-/* If priv parent gets a TERM or HUP, pass it through to child instead */
-static void
-sig_pass_to_chld(int sig)
-{
-	int save_err = errno;
-
-	if (child_pid != -1)
-		kill(child_pid, sig);
-	errno = save_err;
-}
-
-/* When child dies, move into the shutdown state */
-static void
-sig_got_chld(int sig)
-{
-	pid_t pid;
-	int status;
-	int save_err = errno;
-
-	do {
-		pid = waitpid(child_pid, &status, WNOHANG);
-		if (pid > 0 && (WIFEXITED(status) || WIFSIGNALED(status)))
-			_exit(0);
-	} while (pid == -1 && errno == EINTR);
-
-	if (pid == -1)
-		_exit(1);
-
-	errno = save_err;
 }
 
 /* Read all data or return 1 for error. */

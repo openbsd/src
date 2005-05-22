@@ -1,4 +1,4 @@
-/*	$OpenBSD: addrtoname.c,v 1.25 2004/12/13 05:37:25 itojun Exp $	*/
+/*	$OpenBSD: addrtoname.c,v 1.26 2005/05/22 18:41:33 moritz Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.25 2004/12/13 05:37:25 itojun Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.c,v 1.26 2005/05/22 18:41:33 moritz Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -64,7 +64,6 @@ struct rtentry;
 #include "llc.h"
 #include "privsep.h"
 #include "savestr.h"
-#include "setsignal.h"
 
 /*
  * hash tables for whatever-to-name translations
