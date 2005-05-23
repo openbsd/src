@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.20 2005/05/22 19:53:33 moritz Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.21 2005/05/23 06:56:42 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -155,7 +155,6 @@ priv_init(int argc, char **argv)
 			pw = getpwnam("_tcpdump");
 			if (pw == NULL)
 				errx(1, "unknown user _tcpdump");
-			endpwent();
 
 			/* chroot, drop privs and return */
 			if (chroot(pw->pw_dir) != 0)
@@ -170,6 +169,7 @@ priv_init(int argc, char **argv)
 				err(1, "setresgid() failed");
 			if (setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid) == -1)
 				err(1, "setresuid() failed");
+			endpwent();
 		} else {
 			/* Parent - drop suid privileges */
 			gid = getgid();
