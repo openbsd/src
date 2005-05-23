@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.59 2005/03/08 12:15:12 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.60 2005/05/23 20:09:31 jsg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -68,7 +68,6 @@
 #include <dev/usb/usbdevs.h>
 
 #if NBPFILTER > 0
-#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
 #include <net/bpf.h>
 #endif
 
@@ -1470,6 +1469,19 @@ atu_complete_attach(struct atu_softc *sc)
 
 	usb_init_task(&sc->sc_task, atu_task, sc);
 
+#if NBPFILTER > 0
+	bpfattach(&sc->sc_radiobpf, &sc->sc_ic.ic_if, DLT_IEEE802_11_RADIO,
+	    sizeof(struct ieee80211_frame) + 64);
+
+	bzero(&sc->sc_rxtapu, sizeof(sc->sc_rxtapu));
+	sc->sc_rxtap.rr_ihdr.it_len = sizeof(sc->sc_rxtapu);
+	sc->sc_rxtap.rr_ihdr.it_present = htole32(ATU_RX_RADIOTAP_PRESENT);
+
+	bzero(&sc->sc_txtapu, sizeof(sc->sc_txtapu));
+	sc->sc_txtap.rt_ihdr.it_len = sizeof(sc->sc_txtapu);
+	sc->sc_txtap.rt_ihdr.it_present = htole32(ATU_TX_RADIOTAP_PRESENT);
+#endif
+
 	sc->sc_state = ATU_S_OK;
 }
 
@@ -1483,7 +1495,9 @@ USB_DETACH(atu)
 
 	if (sc->sc_state != ATU_S_UNCONFIG) {
 		atu_stop(ifp, 1);
-
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
 		ieee80211_ifdetach(ifp);
 		if_detach(ifp);
 
@@ -1722,9 +1736,25 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	}
 
 #if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
+	if (sc->sc_radiobpf != NULL) {
+		struct mbuf mb;
+		struct atu_rx_radiotap_header *rr = &sc->sc_rxtap;
+
+		rr->rr_flags = 0;
+		rr->rr_chan_freq =
+		    htole16(ic->ic_bss->ni_chan->ic_freq);
+		rr->rr_chan_flags =
+		    htole16(ic->ic_bss->ni_chan->ic_flags);
+		rr->rr_antsignal = h->rssi;
+
+		M_DUP_PKTHDR(&mb, m);
+		mb.m_data = (caddr_t)rr;
+		mb.m_len = sizeof(sc->sc_txtapu);
+		mb.m_next = m;
+		mb.m_pkthdr.len += mb.m_len;
+		bpf_mtap(sc->sc_radiobpf, &mb);
+	}
+#endif /* NPBFILTER > 0 */
 
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		/*
@@ -1817,6 +1847,7 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 	struct atu_tx_hdr	*h;
 	usbd_status		err;
 	u_int8_t		pad;
+	struct ieee80211com *ic = &sc->sc_ic;
 
 	DPRINTFN(25, ("%s: atu_tx_start\n", USBDEVNAME(sc->atu_dev)));
 
@@ -1825,6 +1856,26 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 		m_freem(m);
 		return(EIO);
 	}
+
+#if NBPFILTER > 0
+	if (sc->sc_radiobpf != NULL) {
+		struct mbuf mb;
+		struct atu_tx_radiotap_header *rt = &sc->sc_txtap;
+
+		rt->rt_flags = 0;
+		rt->rt_chan_freq =
+		    htole16(ic->ic_bss->ni_chan->ic_freq);
+		rt->rt_chan_flags =
+		    htole16(ic->ic_bss->ni_chan->ic_flags);
+
+		M_DUP_PKTHDR(&mb, m);
+		mb.m_data = (caddr_t)rt;
+		mb.m_len = sizeof(sc->sc_txtapu);
+		mb.m_next = m;
+		mb.m_pkthdr.len += mb.m_len;
+		bpf_mtap(sc->sc_radiobpf, &mb);
+	}
+#endif
 
 	/*
 	 * Copy the mbuf data into a contiguous buffer, leaving
@@ -1941,12 +1992,20 @@ atu_start(struct ifnet *ifp)
 				break;
 			}
 
-			/* XXX bpf listener goes here */
+#if NBPFILTER > 0
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, m);
+#endif
 
 			m = ieee80211_encap(ifp, m, &ni);
 			if (m == NULL)
 				goto bad;
 			wh = mtod(m, struct ieee80211_frame *);
+
+#if NBPFILTER > 0
+			if (ic->ic_rawbpf != NULL)
+				bpf_mtap(ic->ic_rawbpf, m);
+#endif
 		} else {
 			DPRINTFN(25, ("%s: atu_start: mgmt packet\n",
 			    USBDEVNAME(sc->atu_dev)));
