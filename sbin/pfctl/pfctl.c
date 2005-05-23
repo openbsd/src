@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.237 2005/05/22 21:05:23 mpf Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.238 2005/05/23 23:28:53 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -114,10 +114,12 @@ static const struct {
 	const char	*name;
 	int		index;
 } pf_limits[] = {
-	{ "states",	PF_LIMIT_STATES },
-	{ "src-nodes",	PF_LIMIT_SRC_NODES },
-	{ "frags",	PF_LIMIT_FRAGS },
-	{ NULL,		0 }
+	{ "states",		PF_LIMIT_STATES },
+	{ "src-nodes",		PF_LIMIT_SRC_NODES },
+	{ "frags",		PF_LIMIT_FRAGS },
+	{ "tables",		PF_LIMIT_TABLES },
+	{ "table-entries",	PF_LIMIT_TABLE_ENTRIES },
+	{ NULL,			0 }
 };
 
 struct pf_hint {
@@ -879,11 +881,11 @@ pfctl_show_limits(int dev, int opts)
 		pl.index = pf_limits[i].index;
 		if (ioctl(dev, DIOCGETLIMIT, &pl))
 			err(1, "DIOCGETLIMIT");
-		printf("%-10s ", pf_limits[i].name);
+		printf("%-13s ", pf_limits[i].name);
 		if (pl.limit == UINT_MAX)
 			printf("unlimited\n");
 		else
-			printf("hard limit %6u\n", pl.limit);
+			printf("hard limit %8u\n", pl.limit);
 	}
 	return (0);
 }
@@ -1202,9 +1204,11 @@ pfctl_init_options(struct pfctl *pf)
 	pf->timeout[PFTM_SRC_NODE] = PFTM_SRC_NODE_VAL;
 	pf->timeout[PFTM_TS_DIFF] = PFTM_TS_DIFF_VAL;
 
-	pf->limit[PF_LIMIT_STATES]	= PFSTATE_HIWAT;
-	pf->limit[PF_LIMIT_FRAGS]	= PFFRAG_FRENT_HIWAT;
-	pf->limit[PF_LIMIT_SRC_NODES]	= PFSNODE_HIWAT;
+	pf->limit[PF_LIMIT_STATES] = PFSTATE_HIWAT;
+	pf->limit[PF_LIMIT_FRAGS] = PFFRAG_FRENT_HIWAT;
+	pf->limit[PF_LIMIT_SRC_NODES] = PFSNODE_HIWAT;
+	pf->limit[PF_LIMIT_TABLES] = PFR_KTABLE_HIWAT;
+	pf->limit[PF_LIMIT_TABLE_ENTRIES] = PFR_KENTRY_HIWAT;
 
 	pf->debug = PF_DEBUG_URGENT;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.489 2005/05/21 21:03:57 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.490 2005/05/23 23:28:53 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -218,10 +218,15 @@ struct pf_state		*pf_find_state_recurse(struct pfi_kif *,
 int			 pf_src_connlimit(struct pf_state **);
 int			 pf_check_congestion(struct ifqueue *);
 
+extern struct pool pfr_ktable_pl;
+extern struct pool pfr_kentry_pl;
+
 struct pf_pool_limit pf_pool_limits[PF_LIMIT_MAX] = {
 	{ &pf_state_pl, PFSTATE_HIWAT },
 	{ &pf_src_tree_pl, PFSNODE_HIWAT },
-	{ &pf_frent_pl, PFFRAG_FRENT_HIWAT }
+	{ &pf_frent_pl, PFFRAG_FRENT_HIWAT },
+	{ &pfr_ktable_pl, PFR_KTABLE_HIWAT },
+	{ &pfr_kentry_pl, PFR_KENTRY_HIWAT }
 };
 
 #define STATE_LOOKUP()							\
