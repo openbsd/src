@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.20 2005/05/20 18:26:49 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.21 2005/05/23 17:30:35 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -56,6 +56,7 @@ struct cvs_cmd_info cvs_checkout = {
 static char *date, *rev, *koptstr, *tgtdir, *rcsid;
 static int statmod = 0;
 static int kflag = RCS_KWEXP_DEFAULT;
+static int usehead;
 
 int
 cvs_checkout_options(char *opt, int argc, char **argv, int *arg)
@@ -64,6 +65,7 @@ cvs_checkout_options(char *opt, int argc, char **argv, int *arg)
 
 	date = rev = koptstr = tgtdir = rcsid = NULL;
 	kflag = RCS_KWEXP_DEFAULT;
+	usehead = 0;
 
 	while ((ch = getopt(argc, argv, opt)) != -1) {
 		switch (ch) {
@@ -79,6 +81,7 @@ cvs_checkout_options(char *opt, int argc, char **argv, int *arg)
 			tgtdir = optarg;
 			break;
 		case 'f':
+			usehead = 1;
 			break;
 		case 'j':
 			break;
@@ -139,6 +142,9 @@ cvs_checkout_sendflags(struct cvsroot *root)
 
 	if (cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL) < 0)
 		cvs_log(LP_ERR, "failed to expand module");
+
+	if (usehead && (cvs_sendarg(root, "-f", 0) < 0))
+		 return (CVS_EX_PROTO);
 
 	/* XXX not too sure why we have to send this arg */
 	if (cvs_sendarg(root, "-N", 0) < 0)
