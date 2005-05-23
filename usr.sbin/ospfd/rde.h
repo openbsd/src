@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.14 2005/05/22 18:05:42 norby Exp $ */
+/*	$OpenBSD: rde.h,v 1.15 2005/05/23 23:03:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -94,6 +94,7 @@ void		 rde_send_delete_kroute(struct rt_node *);
 void		 rde_nbr_del(struct rde_nbr *);
 int		 rde_nbr_loading(struct area *);
 struct rde_nbr	*rde_nbr_self(struct area *);
+void		 rde_summary_update(struct rt_node *, struct area *);
 
 /* rde_lsdb.c */
 void		 lsa_init(struct lsa_tree *);

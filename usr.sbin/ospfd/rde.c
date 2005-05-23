@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.19 2005/05/23 22:54:05 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.20 2005/05/23 23:03:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -58,6 +58,9 @@ void		 rde_req_list_free(struct rde_nbr *);
 int		 rde_redistribute(struct kroute *);
 struct lsa	*rde_asext_get(struct kroute *);
 struct lsa	*rde_asext_put(struct kroute *);
+
+struct lsa	*orig_asext_lsa(struct kroute *, u_int16_t);
+struct lsa	*orig_sum_lsa(struct rt_node *, u_int8_t);
 
 volatile sig_atomic_t	 rde_quit = 0;
 struct ospfd_conf	*rdeconf = NULL;
@@ -880,9 +883,6 @@ rde_req_list_free(struct rde_nbr *nbr)
  */
 LIST_HEAD(, rde_asext) rde_asext_list;
 
-struct lsa	*orig_asext_lsa(struct kroute *, u_int16_t);
-
-
 int
 rde_redistribute(struct kroute *kr)
 {
@@ -978,6 +978,50 @@ rde_asext_put(struct kroute *kr)
 	return (NULL);
 }
 
+/*
+ * summary LSA stuff
+ */
+void
+rde_summary_update(struct rt_node *rte, struct area *area)
+{
+	struct vertex	*v;
+	struct lsa	*lsa;
+	u_int8_t	 type;
+
+	/* first check if we acctually need to announce this route */
+	if (!(rte->d_type == DT_NET /* || as border rtr */))
+		return;
+	/* never create summaries for as-ext LSA */
+	if (rte->p_type == PT_TYPE1_EXT || rte->p_type == PT_TYPE2_EXT)
+		return;
+	/* no need for summary LSA in the originating area */
+	if (rte->area.s_addr == area->id.s_addr)
+		return;
+	/* TODO nexthop check, nexthop part of aera -> no summary */
+	if (rte->cost == LS_INFINITY)
+		return;
+	/* TODO AS border router specific checks */
+	/* TODO inter-area network route stuff */
+	/* TODO intra-area stuff -- condense LSA ??? */
+
+	/* update lsa but only if it was changed */
+	if (rte->d_type == DT_NET) {
+		type = LSA_TYPE_SUM_NETWORK;
+		v = lsa_find(area, type, rte->prefix.s_addr, rde_router_id());
+	} else if (rte->d_type == DT_RTR) {
+		type = LSA_TYPE_SUM_ROUTER;
+		v = lsa_find(area, type, rte->adv_rtr.s_addr, rde_router_id());
+	} else
+		fatalx("orig_sum_lsa: unknown route type");
+
+	lsa = orig_sum_lsa(rte, type);
+	lsa_merge(rde_nbr_self(area), lsa, v);
+}
+
+
+/*
+ * functions for self-originated LSA
+ */
 struct lsa *
 orig_asext_lsa(struct kroute *kr, u_int16_t age)
 {
@@ -986,7 +1030,7 @@ orig_asext_lsa(struct kroute *kr, u_int16_t age)
 
 	len = sizeof(struct lsa_hdr) + sizeof(struct lsa_asext);
 	if ((lsa = calloc(1, len)) == NULL)
-		fatal("rde_asext_new");
+		fatal("orig_asext_lsa");
 
 	log_debug("orig_asext_lsa: %s/%d age %d",
 	    inet_ntoa(kr->prefix), kr->prefixlen, age);
@@ -1002,7 +1046,7 @@ orig_asext_lsa(struct kroute *kr, u_int16_t age)
 	/* prefix and mask */
 	/*
 	 * TODO ls_id must be unique, for overlapping routes this may
-	 * not be true. In this case it a hack needs to be done to
+	 * not be true. In this case a hack needs to be done to
 	 * make the ls_id unique.
 	 */
 	lsa->hdr.ls_id = kr->prefix.s_addr;
@@ -1020,6 +1064,48 @@ orig_asext_lsa(struct kroute *kr, u_int16_t age)
 	lsa->data.asext.metric = htonl(/* LSA_ASEXT_E_FLAG | */ 100);
 	/* XXX until now there is no metric */
 	lsa->data.asext.ext_tag = 0;
+
+	lsa->hdr.ls_chksum = 0;
+	lsa->hdr.ls_chksum =
+	    htons(iso_cksum(lsa, len, LS_CKSUM_OFFSET));
+
+	return (lsa);
+}
+
+struct lsa *
+orig_sum_lsa(struct rt_node *rte, u_int8_t type)
+{
+	struct lsa	*lsa;
+	size_t		 len;
+
+	len = sizeof(struct lsa_hdr) + sizeof(struct lsa_sum);
+	if ((lsa = calloc(1, len)) == NULL)
+		fatal("orig_sum_lsa");
+
+	/* LSA header */
+	lsa->hdr.age = htons(rte->invalid ? MAX_AGE : DEFAULT_AGE);
+	lsa->hdr.opts = rdeconf->options;	/* XXX not updated */
+	lsa->hdr.type = type;
+	lsa->hdr.adv_rtr = rdeconf->rtr_id.s_addr;
+	lsa->hdr.seq_num = htonl(INIT_SEQ_NUM);
+	lsa->hdr.len = htons(len);
+
+	/* prefix and mask */
+	/*
+	 * TODO ls_id must be unique, for overlapping routes this may
+	 * not be true. In this case a hack needs to be done to
+	 * make the ls_id unique.
+	 */
+	if (type == LSA_TYPE_SUM_NETWORK) {
+		lsa->hdr.ls_id = rte->prefix.s_addr;
+		lsa->data.sum.mask = prefixlen2mask(rte->prefixlen);
+	} else {
+		lsa->hdr.ls_id = rte->adv_rtr.s_addr;
+		lsa->data.sum.mask = 0;	/* must be zero per RFC */
+	}
+
+	lsa->data.sum.metric = htonl(/* LSA_ASEXT_E_FLAG | */ 100);
+	/* XXX until now there is no metric */
 
 	lsa->hdr.ls_chksum = 0;
 	lsa->hdr.ls_chksum =
