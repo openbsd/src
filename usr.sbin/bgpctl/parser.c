@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.12 2004/12/23 17:55:59 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.13 2005/05/23 20:09:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -34,7 +34,15 @@ enum token_type {
 	ASNUM,
 	ASTYPE,
 	PREFIX,
-	PEERDESC
+	PEERDESC,
+	COMMUNITY,
+	LOCALPREF,
+	MED,
+	NEXTHOP,
+	PFTABLE,
+	PREPNBR,
+	PREPSELF,
+	WEIGHT
 };
 
 struct token {
@@ -56,15 +64,24 @@ static const struct token t_neighbor_modifiers[];
 static const struct token t_show_as[];
 static const struct token t_show_prefix[];
 static const struct token t_show_ip[];
-static const struct token t_nexthop[];
+static const struct token t_network[];
 static const struct token t_prefix[];
+static const struct token t_set[];
+static const struct token t_community[];
+static const struct token t_localpref[];
+static const struct token t_med[];
+static const struct token t_nexthop[];
+static const struct token t_pftable[];
+static const struct token t_prepnbr[];
+static const struct token t_prepself[];
+static const struct token t_weight[];
 
 static const struct token t_main[] = {
 	{ KEYWORD,	"reload",	RELOAD,		NULL},
 	{ KEYWORD,	"show",		SHOW,		t_show},
 	{ KEYWORD,	"fib",		FIB,		t_fib},
 	{ KEYWORD,	"neighbor",	NEIGHBOR,	t_neighbor},
-	{ KEYWORD,	"network",	NONE,		t_nexthop},
+	{ KEYWORD,	"network",	NONE,		t_network},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -151,7 +168,7 @@ static const struct token t_show_ip[] = {
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
-static const struct token t_nexthop[] = {
+static const struct token t_network[] = {
 	{ KEYWORD,	"add",		NETWORK_ADD,	t_prefix},
 	{ KEYWORD,	"delete",	NETWORK_REMOVE,	t_prefix},
 	{ KEYWORD,	"flush",	NETWORK_FLUSH,	NULL},
@@ -160,9 +177,64 @@ static const struct token t_nexthop[] = {
 };
 
 static const struct token t_prefix[] = {
-	{ PREFIX,	"",		NONE,		NULL},
+	{ PREFIX,	"",		NONE,		t_set},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
+
+static const struct token t_set[] = {
+	{ NOTOKEN,	"",			NONE,	NULL},
+	{ KEYWORD,	"community",		NONE,	t_community},
+	{ KEYWORD,	"localpref",		NONE,	t_localpref},
+	{ KEYWORD,	"med",			NONE,	t_med},
+	{ KEYWORD,	"metric",		NONE,	t_med},
+	{ KEYWORD,	"nexthop",		NONE,	t_nexthop},
+	{ KEYWORD,	"pftable",		NONE,	t_pftable},
+	{ KEYWORD,	"prepend-neighbor",	NONE,	t_prepnbr},
+	{ KEYWORD,	"prepend-self",		NONE,	t_prepself},
+	{ KEYWORD,	"weight",		NONE,	t_weight},
+	{ ENDTOKEN,	"",			NONE,	NULL}
+};
+
+static const struct token t_community[] = {
+	{ COMMUNITY,	"",			NONE,	t_set},
+	{ ENDTOKEN,	"",			NONE,	NULL}
+};
+
+static const struct token t_localpref[] = {
+	{ LOCALPREF,	"",			NONE,	t_set},
+	{ ENDTOKEN,	"",			NONE,	NULL}
+};
+
+static const struct token t_med[] = {
+	{ MED,		"",			NONE,	t_set},
+	{ ENDTOKEN,	"",			NONE,	NULL}
+};
+
+static const struct token t_nexthop[] = {
+	{ NEXTHOP,	"",			NONE,	t_set},
+	{ ENDTOKEN,	"",			NONE,	NULL}
+};
+
+static const struct token t_pftable[] = {
+	{ PFTABLE,	"",			NONE,	t_set},
+	{ ENDTOKEN,	"",			NONE,	NULL}
+};
+
+static const struct token t_prepnbr[] = {
+	{ PREPNBR,	"",			NONE,	t_set},
+	{ ENDTOKEN,	"",			NONE,	NULL}
+};
+
+static const struct token t_prepself[] = {
+	{ PREPSELF,	"",			NONE,	t_set},
+	{ ENDTOKEN,	"",			NONE,	NULL}
+};
+
+static const struct token t_weight[] = {
+	{ WEIGHT,	"",			NONE,	t_set},
+	{ ENDTOKEN,	"",			NONE,	NULL}
+};
+
 
 static struct parse_result	res;
 
@@ -172,6 +244,11 @@ int			 parse_addr(const char *, struct bgpd_addr *);
 int			 parse_prefix(const char *, struct bgpd_addr *,
 			     u_int8_t *);
 int			 parse_asnum(const char *, u_int16_t *);
+int			 parse_number(const char *, struct parse_result *,
+			     enum token_type);
+int			 getcommunity(const char *);
+int			 parse_community(const char *, struct parse_result *);
+int			 parse_nexthop(const char *, struct parse_result *);
 
 struct parse_result *
 parse(int argc, char *argv[])
@@ -180,6 +257,7 @@ parse(int argc, char *argv[])
 	const struct token	*match;
 
 	bzero(&res, sizeof(res));
+	SIMPLEQ_INIT(&res.set);
 
 	while (argc > 0) {
 		if ((match = match_token(argv[0], table)) == NULL) {
@@ -210,6 +288,7 @@ match_token(const char *word, const struct token table[])
 {
 	u_int			 i, match;
 	const struct token	*t = NULL;
+	struct filter_set	*fs;
 
 	match = 0;
 
@@ -278,6 +357,49 @@ match_token(const char *word, const struct token table[])
 				t = &table[i];
 			}
 			break;
+		case COMMUNITY:
+			if (word != NULL && strlen(word) > 0 &&
+			    parse_community(word, &res)) {
+				match++;
+				t = &table[i];
+			}
+			break;
+		case LOCALPREF:
+		case MED:
+		case PREPNBR:
+		case PREPSELF:
+		case WEIGHT:
+			if (word != NULL && strlen(word) > 0 &&
+			    parse_number(word, &res, table[i].type)) {
+				match++;
+				t = &table[i];
+			}
+			break;
+		case NEXTHOP:
+			if (word != NULL && strlen(word) > 0 &&
+			    parse_nexthop(word, &res)) {
+				match++;
+				t = &table[i];
+			}
+			break;
+		case PFTABLE:
+			if (word != NULL && strlen(word) > 0) {
+				if ((fs = calloc(1,
+				    sizeof(struct filter_set))) == NULL)
+					err(1, NULL);
+				if (strlcpy(fs->action.pftable, word,
+				    sizeof(fs->action.pftable)) >=
+				    sizeof(fs->action.pftable)) {
+					fprintf(stderr,
+					    "pftable name too long");
+					free(fs);
+					break;
+				}
+				SIMPLEQ_INSERT_TAIL(&res.set, fs, entry);
+				match++;
+				t = &table[i];
+			}
+			break;
 		case ENDTOKEN:
 			break;
 		}
@@ -320,6 +442,22 @@ show_valid_args(const struct token table[])
 			break;
 		case PEERDESC:
 			fprintf(stderr, "  <neighbor description>\n");
+			break;
+		case COMMUNITY:
+			fprintf(stderr, "  <community>\n");
+			break;
+		case LOCALPREF:
+		case MED:
+		case PREPNBR:
+		case PREPSELF:
+		case WEIGHT:
+			fprintf(stderr, "  <number>\n");
+			break;
+		case NEXTHOP:
+			fprintf(stderr, "  <address>\n");
+			break;
+		case PFTABLE:
+			fprintf(stderr, "  <pftable>\n");
 			break;
 		case ENDTOKEN:
 			break;
@@ -393,5 +531,183 @@ parse_asnum(const char *word, u_int16_t *asnum)
 	if (ulval > USHRT_MAX)
 		return (0);
 	*asnum = (u_int16_t)ulval;
+	return (1);
+}
+
+int
+parse_number(const char *word, struct parse_result *r, enum token_type type)
+{
+	struct filter_set	*fs;
+	u_long			 ulval;
+	char			*ep;
+
+	if (word == NULL)
+		return (0);
+
+	errno = 0;
+	ulval = strtoul(word, &ep, 0);
+	if (word[0] == '\0' || *ep != '\0')
+		return (0);
+	if (errno == ERANGE && ulval == ULONG_MAX)
+		return (0);
+	if (ulval > UINT_MAX)
+		return (0);
+
+	/* number was parseable */
+	if ((fs = calloc(1, sizeof(struct filter_set))) == NULL)
+		err(1, NULL);
+	switch (type) {
+	case LOCALPREF:
+		fs->type = ACTION_SET_LOCALPREF;
+		fs->action.metric = ulval;
+		break;
+	case MED:
+		fs->type = ACTION_SET_MED;
+		fs->action.metric = ulval;
+		break;
+	case PREPNBR:
+		if (ulval > 128) {
+			free(fs);
+			return (0);
+		}
+		fs->type = ACTION_SET_PREPEND_PEER;
+		fs->action.prepend = ulval;
+		break;
+	case PREPSELF:
+		if (ulval > 128) {
+			free(fs);
+			return (0);
+		}
+		fs->type = ACTION_SET_PREPEND_SELF;
+		fs->action.prepend = ulval;
+		break;
+	case WEIGHT:
+		fs->type = ACTION_SET_WEIGHT;
+		fs->action.metric = ulval;
+		break;
+	default:
+		errx(1, "king bula sez bad things happen");
+	}
+
+	SIMPLEQ_INSERT_TAIL(&r->set, fs, entry);
+	return (1);
+}
+
+int
+getcommunity(const char *s)
+{
+	char	*ep;
+	u_long	 ulval;
+
+	if (strcmp(s, "*") == 0)
+		return (COMMUNITY_ANY);
+
+	errno = 0;
+	ulval = strtoul(s, &ep, 0);
+	if (s[0] == '\0' || *ep != '\0')
+		return (COMMUNITY_ERROR);
+	if (errno == ERANGE && ulval == ULONG_MAX)
+		return (COMMUNITY_ERROR);
+	if (ulval > USHRT_MAX)
+		return (COMMUNITY_ERROR);
+
+	return (ulval);
+}
+
+int
+parse_community(const char *word, struct parse_result *r)
+{
+	struct filter_set	*fs;
+	char 			*p;
+	int			 i;
+	u_int16_t		 as, type;
+
+	/* Well-known communities */
+	if (strcasecmp(word, "NO_EXPORT") == 0) {
+		as = COMMUNITY_WELLKNOWN;
+		type = COMMUNITY_NO_EXPORT;
+		goto done;
+	} else if (strcasecmp(word, "NO_ADVERTISE") == 0) {
+		as = COMMUNITY_WELLKNOWN;
+		type = COMMUNITY_NO_ADVERTISE;
+		goto done;
+	} else if (strcasecmp(word, "NO_EXPORT_SUBCONFED") == 0) {
+		as = COMMUNITY_WELLKNOWN;
+		type = COMMUNITY_NO_EXPSUBCONFED;
+		goto done;
+	} else if (strcasecmp(word, "NO_PEER") == 0) {
+		as = COMMUNITY_WELLKNOWN;
+		type = COMMUNITY_NO_PEER;
+		goto done;
+	}
+
+	if ((p = strchr(word, ':')) == NULL) {
+		fprintf(stderr, "Bad community syntax\n");
+		return (0);
+	}
+	*p++ = 0;
+
+	if ((i = getcommunity(word)) == COMMUNITY_ERROR) {
+		fprintf(stderr, "\"%s\" is not a number or too big", word);
+		return (0);
+	}
+	as = i;
+
+	if ((i = getcommunity(p)) == COMMUNITY_ERROR) {
+		fprintf(stderr, "\"%s\" is not a number or too big", p);
+		return (0);
+	}
+	type = i;
+
+done:
+	if (as == 0 || as == USHRT_MAX) {
+		fprintf(stderr, "Invalid community\n");
+		return (0);
+	}
+	if (as == COMMUNITY_WELLKNOWN)
+		switch (type) {
+		case COMMUNITY_NO_EXPORT:
+		case COMMUNITY_NO_ADVERTISE:
+		case COMMUNITY_NO_EXPSUBCONFED:
+			/* valid */
+			break;
+		default:
+			/* unknown */
+			fprintf(stderr, "Invalid well-known community\n");
+			return (0);
+		}
+
+	if ((fs = calloc(1, sizeof(struct filter_set))) == NULL)
+		err(1, NULL);
+	fs->type = ACTION_SET_COMMUNITY;
+	fs->action.community.as = as;
+	fs->action.community.type = type;
+	
+	SIMPLEQ_INSERT_TAIL(&r->set, fs, entry);
+	return (1);
+}
+
+int
+parse_nexthop(const char *word, struct parse_result *r)
+{
+	struct filter_set	*fs;
+
+	if ((fs = calloc(1, sizeof(struct filter_set))) == NULL)
+		err(1, NULL);
+
+	if (strcmp(word, "blackhole") == 0)
+		fs->type = ACTION_SET_NEXTHOP_BLACKHOLE;
+	else if (strcmp(word, "reject") == 0)
+		fs->type = ACTION_SET_NEXTHOP_REJECT;
+	else if (strcmp(word, "no-modify") == 0)
+		fs->type = ACTION_SET_NEXTHOP_NOMODIFY;
+	else if (parse_addr(word, &fs->action.nexthop)) {
+		fs->type = ACTION_SET_NEXTHOP;
+	} else {
+		free(fs);
+		return (0);
+	}
+
+	SIMPLEQ_INSERT_TAIL(&r->set, fs, entry);
 	return (1);
 }

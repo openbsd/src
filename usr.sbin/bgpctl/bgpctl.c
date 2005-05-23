@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.78 2005/04/18 11:09:51 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.79 2005/05/23 20:08:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -68,6 +68,7 @@ void		 show_rib_summary_head(void);
 void		 print_prefix(struct bgpd_addr *, u_int8_t, u_int8_t);
 const char *	 print_origin(u_int8_t, int);
 int		 show_rib_summary_msg(struct imsg *);
+void		 send_filterset(struct imsgbuf *, struct filter_set_head *);
 
 struct imsgbuf	*ibuf;
 
@@ -225,6 +226,7 @@ main(int argc, char *argv[])
 		if (res->action == NETWORK_ADD) {
 			imsg_compose(ibuf, IMSG_NETWORK_ADD, 0, 0, -1,
 			    &net, sizeof(net));
+			send_filterset(ibuf, &res->set);
 			imsg_compose(ibuf, IMSG_NETWORK_DONE, 0, 0, -1,
 			    NULL, 0);
 		} else
@@ -964,5 +966,18 @@ show_rib_summary_msg(struct imsg *imsg)
 	}
 
 	return (0);
+}
+
+void
+send_filterset(struct imsgbuf *i, struct filter_set_head *set)
+{
+	struct filter_set	*s;
+
+	while ((s = SIMPLEQ_FIRST(set)) != NULL) {
+		imsg_compose(i, IMSG_FILTER_SET, 0, 0, -1, s,
+		    sizeof(struct filter_set));
+		SIMPLEQ_REMOVE_HEAD(set, entry);
+		free(s);
+	}
 }
 
