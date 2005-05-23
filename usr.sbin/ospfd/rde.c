@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.18 2005/05/22 17:49:26 norby Exp $ */
+/*	$OpenBSD: rde.c,v 1.19 2005/05/23 22:54:05 henning Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -118,8 +118,6 @@ rde(struct ospfd_conf *xconf, int pipe_parent2rde[2], int pipe_ospfe2rde[2],
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
-
-	endpwent();
 
 	event_init();
 	rde_nbr_init(NBR_HASHSIZE);

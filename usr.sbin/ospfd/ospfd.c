@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfd.c,v 1.18 2005/04/25 09:28:45 claudio Exp $ */
+/*	$OpenBSD: ospfd.c,v 1.19 2005/05/23 22:54:05 henning Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -157,8 +157,6 @@ main(int argc, char *argv[])
 	/* check for ospfd user */
 	if (getpwnam(OSPFD_USER) == NULL)
 		errx(1, "unknown user %s", OSPFD_USER);
-
-	endpwent();
 
 	if (!debug)
 		daemon(1, 0);
