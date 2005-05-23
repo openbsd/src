@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_audio.c,v 1.3 2005/04/21 13:43:48 pascoe Exp $	*/
+/*	$OpenBSD: zaurus_audio.c,v 1.4 2005/05/23 22:44:57 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -18,11 +18,8 @@
 
 /*
  * TODO:
- *	- zaudio(4)
  *	- powerhooks (currently only works until first suspend)
- *	- headphone jack support
  *	- record support
- *	- mixer support (codec has independent o/p volume, l/r mix, equalizer)
  */
 
 #include <sys/param.h>
@@ -59,6 +56,14 @@ void	zaudio_attach(struct device *, struct device *, void *);
 int	zaudio_detach(struct device *, int);
 void	zaudio_power(int, void *);
 
+#define ZAUDIO_OP_SPKR	0
+#define ZAUDIO_OP_HP	1
+
+struct zaudio_volume {
+	u_int8_t		left;
+	u_int8_t		right;
+};
+
 struct zaudio_softc {
 	struct device		sc_dev;
 
@@ -71,6 +76,9 @@ struct zaudio_softc {
 
 	void 			*sc_powerhook;
 	int			sc_playing;
+
+	struct zaudio_volume	sc_volume[2];
+	char			sc_unmute[2];
 };
 
 struct cfattach zaudio_ca = {
@@ -90,6 +98,8 @@ struct audio_device wm8750_device = {
 
 void zaudio_init(struct zaudio_softc *);
 void zaudio_standby(struct zaudio_softc *);
+void zaudio_update_volume(struct zaudio_softc *, int);
+void zaudio_update_mutes(struct zaudio_softc *);
 void zaudio_play_setup(struct zaudio_softc *);
 int zaudio_open(void *, int);
 void zaudio_close(void *);
@@ -151,17 +161,9 @@ static const unsigned short playback_registers[][2] = {
 	/* Set DAC voltage references */
 	{ PWRMGMT1_REG, PWRMGMT1_SET_VMIDSEL(1) | PWRMGMT1_VREF },
 
-	/* Power DACs and outputs */
-	{ PWRMGMT2_REG, PWRMGMT2_DACL | PWRMGMT2_DACR | PWRMGMT2_LOUT1 |
-	    PWRMGMT2_ROUT1 | PWRMGMT2_LOUT2 | PWRMGMT2_ROUT2 },
-
-	/* Set left/right channel mix mixer */
-	{ LOUTMIX1_REG, LOUTMIX1_LD2LO | LOUTMIX1_SET_LI2LOVOL(5) }, 
-	{ ROUTMIX2_REG, ROUTMIX2_RD2RO | ROUTMIX2_SET_RI2ROVOL(5) },
-
-	/* Set speaker volume */
-	{ LOUT2VOL_REG, LOUT2VOL_LO2VU | LOUT2VOL_SET_LOUT2VOL(SPKR_VOLUME) },
-	{ ROUT2VOL_REG, ROUT2VOL_RO2VU | ROUT2VOL_SET_ROUT2VOL(0) },
+	/* Direct DACs to output mixers */
+	{ LOUTMIX1_REG, LOUTMIX1_LD2LO },
+	{ ROUTMIX2_REG, ROUTMIX2_RD2RO }, 
 
 	/* End of list */
 	{ 0xffff, 0xffff }
@@ -209,6 +211,13 @@ zaudio_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_probe;
 	}
 	delay(100);
+
+	/* Speaker on, headphones off by default. */
+	sc->sc_volume[ZAUDIO_OP_SPKR].left = 240;
+	sc->sc_unmute[ZAUDIO_OP_SPKR] = 1;
+	sc->sc_volume[ZAUDIO_OP_HP].left = 180;
+	sc->sc_volume[ZAUDIO_OP_HP].right = 180;
+	sc->sc_unmute[ZAUDIO_OP_HP] = 0;
 
 	zaudio_init(sc);
 
@@ -267,6 +276,11 @@ zaudio_init(struct zaudio_softc *sc)
 
 	/* Configure digital interface for I2S */
 	wm8750_write(sc, AUDINT_REG, AUDINT_SET_FORMAT(2));
+
+	/* Initialise volume levels */
+	zaudio_update_volume(sc, ZAUDIO_OP_SPKR);
+	zaudio_update_volume(sc, ZAUDIO_OP_HP);
+	scoop_set_headphone(0);
 }
 
 void
@@ -278,7 +292,50 @@ zaudio_standby(struct zaudio_softc *sc)
 	wm8750_write(sc, PWRMGMT1_REG, PWRMGMT1_SET_VMIDSEL(2));
 	wm8750_write(sc, PWRMGMT2_REG, 0);
 
+	scoop_set_headphone(0);
+
 	pxa2x0_i2c_close(&sc->sc_i2c);
+}
+
+void
+zaudio_update_volume(struct zaudio_softc *sc, int output)
+{
+	switch(output) {
+	case ZAUDIO_OP_SPKR:
+		wm8750_write(sc, LOUT2VOL_REG, LOUT2VOL_LO2VU | LOUT2VOL_LO2ZC |
+		    LOUT2VOL_SET_LOUT2VOL(sc->sc_volume[ZAUDIO_OP_SPKR
+		    ].left >> 1));
+		wm8750_write(sc, ROUT2VOL_REG, ROUT2VOL_RO2VU | ROUT2VOL_RO2ZC |
+		    ROUT2VOL_SET_ROUT2VOL(sc->sc_volume[ZAUDIO_OP_SPKR
+		    ].left >> 1));
+		break;
+	case ZAUDIO_OP_HP:
+		wm8750_write(sc, LOUT1VOL_REG, LOUT1VOL_LO1VU | LOUT1VOL_LO1ZC |
+		    LOUT1VOL_SET_LOUT1VOL(sc->sc_volume[ZAUDIO_OP_HP
+		    ].left >> 1));
+		wm8750_write(sc, ROUT1VOL_REG, ROUT1VOL_RO1VU | ROUT1VOL_RO1ZC |
+		    ROUT1VOL_SET_ROUT1VOL(sc->sc_volume[ZAUDIO_OP_HP
+		    ].right >> 1));
+		break;
+	}
+}
+
+void
+zaudio_update_mutes(struct zaudio_softc *sc)
+{
+	unsigned short val;
+
+	val = PWRMGMT2_DACL | PWRMGMT2_DACR;
+
+	if (sc->sc_unmute[ZAUDIO_OP_SPKR])
+		val |= PWRMGMT2_LOUT2 | PWRMGMT2_ROUT2;
+
+	if (sc->sc_unmute[ZAUDIO_OP_HP])
+		val |= PWRMGMT2_LOUT1 | PWRMGMT2_ROUT1;
+
+	wm8750_write(sc, PWRMGMT2_REG, val);
+
+	scoop_set_headphone(sc->sc_unmute[ZAUDIO_OP_HP]);
 }
 
 void
@@ -294,6 +351,7 @@ zaudio_play_setup(struct zaudio_softc *sc)
 		    playback_registers[i][1]);
 		i++;
 	}
+	zaudio_update_mutes(sc);
 
 	pxa2x0_i2c_close(&sc->sc_i2c);
 }
@@ -305,7 +363,6 @@ zaudio_open(void *hdl, int flags)
 
 	/* Power on the I2S bus and codec */
 	pxa2x0_i2s_open(&sc->sc_i2s);
-	scoop_audio_set(1);
 
 	return 0;
 }
@@ -317,7 +374,6 @@ zaudio_close(void *hdl)
 
 	/* Power off the I2S bus and codec */
 	pxa2x0_i2s_close(&sc->sc_i2s);
-	scoop_audio_set(0);
 }
 
 int
@@ -626,20 +682,120 @@ zaudio_getdev(void *hdl, struct audio_device *ret)
 	return 0;
 }
 
+#define ZAUDIO_SPKR_LVL		0
+#define ZAUDIO_SPKR_MUTE	1
+#define ZAUDIO_HP_LVL		2
+#define ZAUDIO_HP_MUTE		3
+#define ZAUDIO_OUTPUT_CLASS	4
+
 int
 zaudio_set_port(void *hdl, struct mixer_ctrl *mc)
 {
-	/* struct zaudio_softc *sc = hdl; */
+	struct zaudio_softc *sc = hdl;
+	int error = EINVAL;
 
-	return 0;
+	pxa2x0_i2c_open(&sc->sc_i2c);
+
+	switch (mc->dev) {
+	case ZAUDIO_SPKR_LVL:
+		if (mc->type != AUDIO_MIXER_VALUE)
+			break;
+		if (mc->un.value.num_channels == 1)
+			sc->sc_volume[ZAUDIO_OP_SPKR].left =
+			    mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+		else
+			break;
+		zaudio_update_volume(sc, ZAUDIO_OP_SPKR);
+		error = 0;
+		break;
+	case ZAUDIO_SPKR_MUTE:
+		if (mc->type != AUDIO_MIXER_ENUM)
+			break;
+		sc->sc_unmute[ZAUDIO_OP_SPKR] = mc->un.ord ? 1 : 0;
+		zaudio_update_mutes(sc);
+		error = 0;
+		break;
+	case ZAUDIO_HP_LVL:
+		if (mc->type != AUDIO_MIXER_VALUE)
+			break;
+		if (mc->un.value.num_channels == 1) {
+			sc->sc_volume[ZAUDIO_OP_HP].left =
+			    mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+			sc->sc_volume[ZAUDIO_OP_HP].right =
+			    mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+		} else if (mc->un.value.num_channels == 2) {
+			sc->sc_volume[ZAUDIO_OP_HP].left =
+			    mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+			sc->sc_volume[ZAUDIO_OP_HP].right =
+			    mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+		}
+		else
+			break;
+		zaudio_update_volume(sc, ZAUDIO_OP_HP);
+		error = 0;
+		break;
+	case ZAUDIO_HP_MUTE:
+		if (mc->type != AUDIO_MIXER_ENUM)
+			break;
+		sc->sc_unmute[ZAUDIO_OP_HP] = mc->un.ord ? 1 : 0;
+		zaudio_update_mutes(sc);
+		error = 0;
+		break;
+	}
+
+	pxa2x0_i2c_close(&sc->sc_i2c);
+
+	return error;
 }
 
 int
 zaudio_get_port(void *hdl, struct mixer_ctrl *mc)
 {
-	/* struct zaudio_softc *sc = hdl; */
+	struct zaudio_softc *sc = hdl;
+	int error = EINVAL;
 
-	return 0;
+	switch (mc->dev) {
+	case ZAUDIO_SPKR_LVL:
+		if (mc->type != AUDIO_MIXER_VALUE)
+			break;
+		if (mc->un.value.num_channels == 1)
+			mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
+			    sc->sc_volume[ZAUDIO_OP_SPKR].left;
+		else
+			break;
+		error = 0;
+		break;
+	case ZAUDIO_SPKR_MUTE:
+		if (mc->type != AUDIO_MIXER_ENUM)
+			break;
+		mc->un.ord = sc->sc_unmute[ZAUDIO_OP_SPKR] ? 1 : 0;
+		error = 0;
+		break;
+	case ZAUDIO_HP_LVL:
+		if (mc->type != AUDIO_MIXER_VALUE)
+			break;
+		if (mc->un.value.num_channels == 1)
+			mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
+			    sc->sc_volume[ZAUDIO_OP_HP].left;
+		else if (mc->un.value.num_channels == 2) {
+			mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
+			    sc->sc_volume[ZAUDIO_OP_HP].left;
+			mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
+			    sc->sc_volume[ZAUDIO_OP_HP].right;
+		}
+		else
+			break;
+		error = 0;
+		break;
+	case ZAUDIO_HP_MUTE:
+		if (mc->type != AUDIO_MIXER_ENUM)
+			break;
+		mc->un.ord = sc->sc_unmute[ZAUDIO_OP_HP] ? 1 : 0;
+		error = 0;
+		break;
+	}
+
+	return error;
 }
 
 int
@@ -647,9 +803,63 @@ zaudio_query_devinfo(void *hdl, struct mixer_devinfo *di)
 {
 	/* struct zaudio_softc *sc = hdl; */
 
-	di->prev = di->next = AUDIO_MIXER_LAST;
+	switch (di->index) {
+	case ZAUDIO_SPKR_LVL:
+		di->type = AUDIO_MIXER_VALUE;
+		di->mixer_class = ZAUDIO_OUTPUT_CLASS;
+		di->prev = AUDIO_MIXER_LAST;
+		di->next = ZAUDIO_SPKR_MUTE;
+		strlcpy(di->label.name, AudioNspeaker,
+		    sizeof(di->label.name));
+		strlcpy(di->un.v.units.name, AudioNvolume,
+		    sizeof(di->un.v.units.name));
+		di->un.v.num_channels = 1;
+		break;
+	case ZAUDIO_SPKR_MUTE:
+		di->type = AUDIO_MIXER_ENUM;
+		di->mixer_class = ZAUDIO_OUTPUT_CLASS;
+		di->prev = ZAUDIO_SPKR_LVL;
+		di->next = AUDIO_MIXER_LAST;
+		goto mute;
+	case ZAUDIO_HP_LVL:
+		di->type = AUDIO_MIXER_VALUE;
+		di->mixer_class = ZAUDIO_OUTPUT_CLASS;
+		di->prev = AUDIO_MIXER_LAST;
+		di->next = ZAUDIO_HP_MUTE;
+		strlcpy(di->label.name, AudioNheadphone,
+		    sizeof(di->label.name));
+		di->un.v.num_channels = 1;
+		strlcpy(di->un.v.units.name, AudioNvolume,
+		    sizeof(di->un.v.units.name));
+		break;
+	case ZAUDIO_HP_MUTE:
+		di->type = AUDIO_MIXER_ENUM;
+		di->mixer_class = ZAUDIO_OUTPUT_CLASS;
+		di->prev = ZAUDIO_HP_LVL;
+		di->next = AUDIO_MIXER_LAST;
+mute:
+		strlcpy(di->label.name, AudioNmute, sizeof(di->label.name));
+		di->un.e.num_mem = 2;
+		strlcpy(di->un.e.member[0].label.name, AudioNon,
+		    sizeof(di->un.e.member[0].label.name));
+		di->un.e.member[0].ord = 0;
+		strlcpy(di->un.e.member[1].label.name, AudioNoff,
+		    sizeof(di->un.e.member[1].label.name));
+		di->un.e.member[1].ord = 1;
+		break;
+	case ZAUDIO_OUTPUT_CLASS:
+		di->type = AUDIO_MIXER_CLASS;
+		di->mixer_class = ZAUDIO_OUTPUT_CLASS;
+		di->prev = AUDIO_MIXER_LAST;
+		di->next = AUDIO_MIXER_LAST;
+		strlcpy(di->label.name, AudioCoutputs,
+		    sizeof(di->label.name));
+		break;
+	default:
+		return ENXIO;
+	}
 
-	return ENXIO;
+	return 0;
 }
 
 int

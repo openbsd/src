@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoop.c,v 1.9 2005/05/09 15:16:36 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoop.c,v 1.10 2005/05/23 22:44:57 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -186,29 +186,29 @@ scoop_led_set(int led, int on)
 }
 
 /*
- * Mute or unmute audio signals going to the internal speaker (and
- * the headphone jack as well?)
+ * Enable or disable the headphone output connection.
  */
 void
-scoop_audio_set(int on)
+scoop_set_headphone(int on)
 {
 	if (scoop_cd.cd_ndevs < 1 || scoop_cd.cd_devs[0] == NULL)
 		return;
 
+	scoop_gpio_pin_ctl(scoop_cd.cd_devs[0], SCOOP0_MUTE_L,
+	    GPIO_PIN_OUTPUT);
+	scoop_gpio_pin_ctl(scoop_cd.cd_devs[0], SCOOP0_MUTE_R,
+	    GPIO_PIN_OUTPUT);
+
 	if (on) {
-		scoop_gpio_pin_ctl(scoop_cd.cd_devs[0], SCOOP0_MUTE_L,
-		    GPIO_PIN_OUTPUT);
-		scoop_gpio_pin_ctl(scoop_cd.cd_devs[0], SCOOP0_MUTE_R,
-		    GPIO_PIN_OUTPUT);
 		scoop_gpio_pin_write(scoop_cd.cd_devs[0], SCOOP0_MUTE_L,
-		    GPIO_PIN_LOW);
+		    GPIO_PIN_HIGH);
 		scoop_gpio_pin_write(scoop_cd.cd_devs[0], SCOOP0_MUTE_R,
-		    GPIO_PIN_LOW);
+		    GPIO_PIN_HIGH);
 	} else {
 		scoop_gpio_pin_write(scoop_cd.cd_devs[0], SCOOP0_MUTE_L,
-		    GPIO_PIN_HIGH);
+		    GPIO_PIN_LOW);
 		scoop_gpio_pin_write(scoop_cd.cd_devs[0], SCOOP0_MUTE_R,
-		    GPIO_PIN_HIGH);
+		    GPIO_PIN_LOW);
 	}
 }
 

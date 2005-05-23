@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_scoopvar.h,v 1.8 2005/05/09 15:16:36 uwe Exp $	*/
+/*	$OpenBSD: zaurus_scoopvar.h,v 1.9 2005/05/23 22:44:57 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -26,6 +26,6 @@ void	scoop_battery_temp_adc(int);
 void	scoop_charge_battery(int, int);
 void	scoop_discharge_battery(int);
 void	scoop_check_mcr(void);
-void	scoop_audio_set(int);
+void	scoop_set_headphone(int);
 void	scoop_suspend(void);
 void	scoop_resume(void);
