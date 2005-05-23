@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.58 2005/05/03 05:44:35 djm Exp $ */
+/*	$OpenBSD: ntp.c,v 1.59 2005/05/23 22:46:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -122,7 +122,6 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
 
-	endpwent();
 	endservent();
 
 	signal(SIGTERM, ntp_sighdlr);
