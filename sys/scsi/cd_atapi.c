@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd_atapi.c,v 1.7 2005/05/23 07:06:16 krw Exp $	*/
+/*	$OpenBSD: cd_atapi.c,v 1.8 2005/05/23 18:29:15 krw Exp $	*/
 /*	$NetBSD: cd_atapi.c,v 1.10 1998/08/31 22:28:06 cgd Exp $	*/
 
 /*
@@ -144,7 +144,8 @@ cd_atapibus_setvol(cd, arg, flags)
 	if (error != 0)
 		return (error);
 
-	error = scsi_mode_sense_big(cd->sc_link, 0, ATAPI_AUDIO_PAGE_MASK,
+	error = scsi_mode_sense_big(cd->sc_link, 0,
+	    AUDIO_PAGE | SMS_PAGE_CTRL_CHANGEABLE,
 	    (struct scsi_mode_header_big *)&mask, sizeof(mask), flags, 20000);
 	if (error != 0)
 		return (error);
