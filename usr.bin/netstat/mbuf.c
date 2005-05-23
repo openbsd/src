@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.22 2005/03/25 17:01:04 jaredy Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.23 2005/05/23 17:35:59 marius Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: mbuf.c,v 1.22 2005/03/25 17:01:04 jaredy Exp $";
+static char *rcsid = "$OpenBSD: mbuf.c,v 1.23 2005/05/23 17:35:59 marius Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,80 +98,64 @@ mbpr(u_long mbaddr, u_long mbpooladdr, u_long mclpooladdr)
 		return;
 	}
 
-	if (kvmd == NULL) {
-		if (mbaddr == 0) {
-			fprintf(stderr, "%s: mbstat: symbol not in namelist\n",
-			    __progname);
-			return;
-		}
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_MBSTAT;
+	size = sizeof(mbstat);
 
-		if (kread(mbaddr, &mbstat, sizeof (mbstat)))
-			return;
-		if (kread(mbpooladdr, &mbpool, sizeof (mbpool)))
-			return;
+	if (sysctl(mib, 2, &mbstat, &size, NULL, 0) < 0) {
+		printf("Can't retrieve mbuf statistics from the kernel: %s\n",
+		    strerror(errno));
+		return;
+	}
 
-		if (kread(mclpooladdr, &mclpool, sizeof (mclpool)))
-			return;
-	} else {
-		mib[0] = CTL_KERN;
-		mib[1] = KERN_MBSTAT;
-		size = sizeof(mbstat);
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_POOL;
+	mib[2] = KERN_POOL_NPOOLS;
+	size = sizeof(npools);
 
-		if (sysctl(mib, 2, &mbstat, &size, NULL, 0) < 0) {
-			printf("Can't retrieve mbuf statistics from the kernel: %s\n",
-			    strerror(errno));
-			return;
-		}
+	if (sysctl(mib, 3, &npools, &size, NULL, 0) < 0) {
+		printf("Can't figure out number of pools in kernel: %s\n",
+		    strerror(errno));
+		return;
+	}
+
+	for (i = 1; npools; i++) {
+		char name[32];
 
 		mib[0] = CTL_KERN;
 		mib[1] = KERN_POOL;
-		mib[2] = KERN_POOL_NPOOLS;
-		size = sizeof(npools);
-
-		if (sysctl(mib, 3, &npools, &size, NULL, 0) < 0) {
-			printf("Can't figure out number of pools in kernel: %s\n",
+		mib[2] = KERN_POOL_POOL;
+		mib[3] = i;
+		size = sizeof(struct pool);
+		if (sysctl(mib, 4, &pool, &size, NULL, 0) < 0) {
+			if (errno == ENOENT)
+				continue;
+			printf("error getting pool: %s\n",
+			    strerror(errno));
+			return;
+		}
+		npools--;
+		mib[2] = KERN_POOL_NAME;
+		size = sizeof(name);
+		if (sysctl(mib, 4, &name, &size, NULL, 0) < 0) {
+			printf("error getting pool name: %s\n",
 			    strerror(errno));
 			return;
 		}
 
-		for (i = 1; npools; i++) {
-			char name[32];
-
-			mib[0] = CTL_KERN;
-			mib[1] = KERN_POOL;
-			mib[2] = KERN_POOL_POOL;
-			mib[3] = i;
-			size = sizeof(struct pool);
-			if (sysctl(mib, 4, &pool, &size, NULL, 0) < 0) {
-				if (errno == ENOENT)
-					continue;
-				printf("error getting pool: %s\n",
-				    strerror(errno));
-				return;
-			}
-			npools--;
-			mib[2] = KERN_POOL_NAME;
-			size = sizeof(name);
-			if (sysctl(mib, 4, &name, &size, NULL, 0) < 0) {
-				printf("error getting pool name: %s\n",
-				    strerror(errno));
-				return;
-			}
-
-			if (!strncmp(name, "mbpl", strlen("mbpl"))) {
-				bcopy(&pool, &mbpool, sizeof(struct pool));
+		if (!strncmp(name, "mbpl", strlen("mbpl"))) {
+			bcopy(&pool, &mbpool, sizeof(struct pool));
+			flag++;
+		} else {
+			if (!strncmp(name, "mclpl", strlen("mclpl"))) {
+				bcopy(&pool, &mclpool,
+				    sizeof(struct pool));
 				flag++;
-			} else {
-				if (!strncmp(name, "mclpl", strlen("mclpl"))) {
-					bcopy(&pool, &mclpool,
-					    sizeof(struct pool));
-					flag++;
-				}
 			}
-
-			if (flag == 2)
-				break;
 		}
+
+		if (flag == 2)
+			break;
 	}
 
 	totmbufs = 0;
