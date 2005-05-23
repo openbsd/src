@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.24 2005/05/03 05:44:35 djm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.25 2005/05/23 20:12:28 henning Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -116,7 +116,6 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 	pw = getpwnam("_syslogd");
 	if (pw == NULL)
 		errx(1, "unknown user _syslogd");
-	endpwent();
 
 	child_pid = fork();
 	if (child_pid < 0)
