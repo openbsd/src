@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.14 2005/05/22 18:05:42 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.15 2005/05/23 22:26:45 norby Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -36,7 +36,6 @@ RB_GENERATE(rt_tree, rt_node, entry, rt_compare)
 struct vertex			*spf_root = NULL;
 
 void		 spf_dump(struct area *);	/* XXX */
-void		 rt_dump_debug(void);		/* XXX */
 void		 cand_list_dump(void);		/* XXX */
 void		 calc_next_hop(struct vertex *, struct vertex *);
 void		 rt_update(struct in_addr, u_int8_t, struct in_addr, u_int32_t,
@@ -75,26 +74,6 @@ spf_dump(struct area *area)
 	}
 
 	return;
-}
-
-void
-rt_dump_debug(void)
-{
-	struct rt_node	*r;
-	int		 i = 0;
-
-	log_debug("rt_dump_debug:");
-
-	RB_FOREACH(r, rt_tree, &rt) {
-		log_debug("net: %s/%d", inet_ntoa(r->prefix), r->prefixlen);
-		log_debug("   nexthop: %s   cost: %d  ptype: %s   dtype: %s",
-		    inet_ntoa(r->nexthop), r->cost, path_type_names[r->p_type],
-		    dst_type_names[r->d_type]);
-		log_debug("                      area: %s", inet_ntoa(r->area));
-		i++;
-	}
-
-	log_debug("count: %d", i);
 }
 
 void
@@ -364,7 +343,6 @@ spf_calc(struct area *area)
 	}
 
 	spf_dump(area);
-	rt_dump_debug();
 	log_debug("spf_calc: calculation ended, area ID %s",
 	    inet_ntoa(area->id));
 
