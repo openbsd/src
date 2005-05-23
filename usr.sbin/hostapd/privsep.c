@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.9 2005/04/13 21:15:36 reyk Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.10 2005/05/23 22:55:15 henning Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -91,7 +91,6 @@ hostapd_priv_init(struct hostapd_config *cfg)
 	if ((pw = getpwnam(HOSTAPD_USER)) == NULL)
 		hostapd_fatal("failed to get user \"%s\"\n", HOSTAPD_USER);
 
-	endpwent();
 	endservent();
 
 	/* Create sockets */
