@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.13 2005/05/22 21:10:27 jason Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.14 2005/05/23 18:49:31 jason Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -96,6 +96,7 @@ struct snapper_softc {
 	dbdma_t sc_odbdma, sc_idbdma;
 
 	struct snapper_dma *sc_dmas;
+	u_long sc_rate;
 };
 
 int snapper_match(struct device *, void *, void *);
@@ -577,15 +578,8 @@ swap_bytes_mono16_to_stereo16(v, p, cc)
 void
 snapper_cs16mts(void *v, u_char *p, int cc)
 {
-	u_char *q = p;
-
-	p += cc;
-	q += cc * 2;
-	while ((cc -= 2) >= 0) {
-		q -= 4;
-		q[1] = q[3] = *--p;
-		q[0] = q[2] = (*--p) ^ 80;
-	}
+	mono16_to_stereo16(v, p, cc);
+	change_sign16_be(v, p, cc * 2);
 }
 
 struct snapper_mode {
@@ -724,10 +718,12 @@ snapper_set_params(h, setmode, usemode, play, rec)
 	}
 
 	/* Set the speed */
+	p->sample_rate = 44100;	/*XX wire rate down */
 	rate = p->sample_rate;
 
 	if (snapper_set_rate(sc, rate))
 		return EINVAL;
+	p->sample_rate = sc->sc_rate;
 
 	return 0;
 }
@@ -1183,6 +1179,8 @@ snapper_set_rate(sc, rate)
 	DPRINTF(("I2SSetSerialFormatReg 0x%x -> 0x%x\n",
 	    in32rb(sc->sc_reg + I2S_FORMAT), reg));
 	out32rb(sc->sc_reg + I2S_FORMAT, reg);
+
+	sc->sc_rate = rate;
 
 	return 0;
 }
