@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.51 2005/05/12 23:01:35 xsa Exp $	*/
+/*	$OpenBSD: proto.c,v 1.52 2005/05/23 20:13:39 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -50,6 +50,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <pwd.h>
 
 #include "buf.h"
 #include "cvs.h"
@@ -1059,7 +1060,13 @@ cvs_sendentry(struct cvsroot *root, const CVSFILE *file)
 static int
 cvs_initlog(void)
 {
-	char *env, fpath[MAXPATHLEN];
+	int l;
+	u_int i;
+	char *env, *envdup, buf[MAXPATHLEN], fpath[MAXPATHLEN];
+	char rpath[MAXPATHLEN], *s;
+	struct stat st;
+	time_t now;
+	struct passwd *pwd;
 
 	/* avoid doing it more than once */
 	if (cvs_server_logon)
@@ -1069,8 +1076,64 @@ cvs_initlog(void)
 	if (env == NULL)
 		return (0);
 
-	strlcpy(fpath, env, sizeof(fpath));
-	strlcat(fpath, ".in", sizeof(fpath));
+	if ((envdup = strdup(env)) == NULL)
+		return (-1);
+
+	if ((s = strchr(envdup, '%')) != NULL)
+		*s = '\0';
+
+	strlcpy(buf, env, sizeof(buf));
+	strlcpy(rpath, envdup, sizeof(rpath));
+
+	s = buf;
+	while ((s = strchr(s, '%')) != NULL) {
+		*s++;
+		switch (*s) {
+		case 'c':
+			strlcpy(fpath, cvs_command, sizeof(fpath));
+			break;
+		case 'd':
+			time(&now);
+			snprintf(fpath, sizeof(fpath), "%s", ctime(&now));
+			break;
+		case 'p':
+			snprintf(fpath, sizeof(fpath), "%d", getpid());
+			break;
+		case 'u':
+			if ((pwd = getpwuid(getuid())) != NULL)
+				strlcpy(fpath, pwd->pw_name, sizeof(fpath));
+			else
+				fpath[0] = '\0';
+			endpwent();
+			break;
+		default:
+			fpath[0] = '\0';
+			break;
+		}	
+
+		if (fpath[0] != '\0') {
+			strlcat(rpath, "-", sizeof(rpath));
+			strlcat(rpath, fpath, sizeof(rpath));
+		}
+	}
+
+	for (i = 0; i < UINT_MAX; i++) {
+		l = snprintf(fpath, sizeof(fpath), "%s-%d.in", rpath, i);
+		if (l == -1 || l >= (int)sizeof(fpath)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", fpath);
+			return (-1);
+		}
+
+		if (stat(fpath, &st) != -1)
+			continue;
+
+		if (errno != ENOENT)
+			return (-1);
+
+		break;
+	}
+
 	cvs_server_inlog = fopen(fpath, "w");
 	if (cvs_server_inlog == NULL) {
 		cvs_log(LP_ERRNO, "failed to open server input log `%s'",
@@ -1078,8 +1141,23 @@ cvs_initlog(void)
 		return (-1);
 	}
 
-	strlcpy(fpath, env, sizeof(fpath));
-	strlcat(fpath, ".out", sizeof(fpath));
+	for (i = 0; i < UINT_MAX; i++) {
+		l = snprintf(fpath, sizeof(fpath), "%s-%d.out", rpath, i);
+		if (l == -1 || l >= (int)sizeof(fpath)) {
+			errno = ENAMETOOLONG;
+			cvs_log(LP_ERRNO, "%s", fpath);
+			return (-1);
+		}
+
+		if (stat(fpath, &st) != -1)
+			continue;
+
+		if (errno != ENOENT)
+			return (-1);
+
+		break;
+	}
+
 	cvs_server_outlog = fopen(fpath, "w");
 	if (cvs_server_outlog == NULL) {
 		cvs_log(LP_ERRNO, "failed to open server output log `%s'",
