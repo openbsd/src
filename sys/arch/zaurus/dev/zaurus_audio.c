@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_audio.c,v 1.4 2005/05/23 22:44:57 pascoe Exp $	*/
+/*	$OpenBSD: zaurus_audio.c,v 1.5 2005/05/23 22:53:22 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -74,7 +74,7 @@ struct zaudio_softc {
 	/* i2c device softc */
 	struct pxa2x0_i2c_softc	sc_i2c;
 
-	void 			*sc_powerhook;
+	void			*sc_powerhook;
 	int			sc_playing;
 
 	struct zaudio_volume	sc_volume[2];
@@ -153,7 +153,7 @@ static const unsigned short playback_registers[][2] = {
 	{ AUDINT_REG, AUDINT_SET_FORMAT(2) },
 
 	/* Enable thermal protection, power */
-	{ ADCTL1_REG, ADCTL1_TSDEN | ADCTL1_SET_VSEL(3) },	
+	{ ADCTL1_REG, ADCTL1_TSDEN | ADCTL1_SET_VSEL(3) },
 
 	/* Enable speaker driver, DAC oversampling */
 	{ ADCTL2_REG, ADCTL2_ROUT2INV | ADCTL2_DACOSR },
@@ -163,7 +163,7 @@ static const unsigned short playback_registers[][2] = {
 
 	/* Direct DACs to output mixers */
 	{ LOUTMIX1_REG, LOUTMIX1_LD2LO },
-	{ ROUTMIX2_REG, ROUTMIX2_RD2RO }, 
+	{ ROUTMIX2_REG, ROUTMIX2_RD2RO },
 
 	/* End of list */
 	{ 0xffff, 0xffff }
@@ -434,7 +434,7 @@ zaudio_query_encoding(void *hdl, struct audio_encoding *aep)
 }
 
 int
-zaudio_set_params(void *hdl, int setmode, int usemode, 
+zaudio_set_params(void *hdl, int setmode, int usemode,
     struct audio_params *play, struct audio_params *rec)
 {
 	struct zaudio_softc *sc = hdl;
@@ -678,7 +678,7 @@ zaudio_getdev(void *hdl, struct audio_device *ret)
 {
 	/* struct zaudio_softc *sc = hdl; */
 
-	*ret = wm8750_device;	
+	*ret = wm8750_device;
 	return 0;
 }
 
@@ -882,7 +882,7 @@ zaudio_start_output(void *hdl, void *block, int bsize, void (*intr)(void *),
 	}
 
 	/* Start DMA via I2S */
- 	err = pxa2x0_i2s_start_output(&sc->sc_i2s, block, bsize, intr, intrarg);
+	err = pxa2x0_i2s_start_output(&sc->sc_i2s, block, bsize, intr, intrarg);
 	if (err) {
 		zaudio_standby(sc);
 		sc->sc_playing = 0;
