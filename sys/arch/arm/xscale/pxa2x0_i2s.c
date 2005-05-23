@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_i2s.c,v 1.2 2005/04/17 03:21:36 pascoe Exp $	*/
+/*	$OpenBSD: pxa2x0_i2s.c,v 1.3 2005/05/23 20:20:35 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -311,14 +311,14 @@ pxa2x0_i2s_start_output(struct pxa2x0_i2s_softc *sc, void *block, int bsize,
 	    ((caddr_t)block + bsize > p->addr + p->size)); p = p->next)
 		;	/* Nothing */
 
-	/* Offset into block to use in mapped block */
-	offset = (caddr_t)block - p->addr;
-
 	if (!p) {
 		printf("pxa2x0_i2s_start_output: request with bad start "
 		    "address: %p, size: %d)", block, bsize);
 		return ENXIO;
 	}
+
+	/* Offset into block to use in mapped block */
+	offset = (caddr_t)block - p->addr;
 
 	/* Start DMA */
 	pxa2x0_dma_to_fifo(3, 1, 0x40400080, 4, 32,
