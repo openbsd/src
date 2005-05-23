@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.17 2005/05/20 05:13:44 joris Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.18 2005/05/23 17:43:54 xsa Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -71,6 +71,9 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 
 	if ((root = cvsroot_get(".")) == NULL)
 		return (CVS_EX_BADROOT);
+
+	if (cvs_trace)
+		cvs_log(LP_TRACE, "cvs_startcmd() CVSROOT=%s", root->cr_str);
 
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		if (cvs_connect(root) < 0)
