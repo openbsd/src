@@ -1,4 +1,4 @@
-.\" $OpenBSD: zaudio.4,v 1.1 2005/04/15 06:54:06 dlg Exp $
+.\" $OpenBSD: zaudio.4,v 1.2 2005/05/23 22:59:04 dlg Exp $
 .\"
 .\" Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
 .\"
@@ -34,7 +34,8 @@ Controller which is used to transfer samples to a Wolfson Microelectronics
 WM8750 audio codec.
 The WM8750 is controlled via the PXA2x0 I2C Controller.
 .Pp
-The hardware is capable of playback of 8- and 16-bit audio samples at rates
+The hardware is capable of using both the internal speaker and headphone
+socket for the playback of 8- and 16-bit audio samples at rates
 ranging from 8kHz to 48kHz.
 .Sh SEE ALSO
 .Xr audio 4 ,
@@ -51,12 +52,9 @@ The
 driver was written by
 .An Christopher Pascoe Aq pascoe@openbsd.org .
 .Sh CAVEATS
-Recording and volume control is unimplemented in the
+Recording is unimplemented in the
 .Nm
 driver.
-.Pp
-Only the internal speaker is used during playback;
-the headphone socket is currently unsupported.
 .Pp
 The
 .Nm
