@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.29 2005/05/23 20:40:13 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.30 2005/05/23 22:30:21 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -67,7 +67,7 @@ struct pfr_addr		 *pfi_buffer;
 int			  pfi_buffer_cnt;
 int			  pfi_buffer_max;
 
-void		 pfi_dynaddr_update(void *);
+void		 pfi_dynaddr_update(struct pfi_dynaddr *dyn);
 void		 pfi_table_update(struct pfr_ktable *, struct pfi_kif *,
 		    int, int);
 void		 pfi_kifaddr_update(void *);
@@ -117,15 +117,7 @@ pfi_kif_get(char *kif_name)
 	bzero(kif, sizeof(*kif));
 	strlcpy(kif->pfik_name, kif_name, sizeof(kif->pfik_name));
 	kif->pfik_tzero = time_second;
-
-	if ((kif->pfik_ah_head = malloc(sizeof(*kif->pfik_ah_head), PFI_MTYPE,
-	    M_DONTWAIT)) == NULL) {
-		free(kif, PFI_MTYPE);
-		return (NULL);
-	}
-
-	bzero(kif->pfik_ah_head, sizeof(*kif->pfik_ah_head));
-	TAILQ_INIT(kif->pfik_ah_head);
+	TAILQ_INIT(&kif->pfik_dynaddrs);
 
 	RB_INSERT(pfi_ifhead, &pfi_ifs, kif);
 
@@ -183,7 +175,6 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 		return;
 
 	RB_REMOVE(pfi_ifhead, &pfi_ifs, kif);
-	free(kif->pfik_ah_head, PFI_MTYPE);
 	free(kif, PFI_MTYPE);
 }
 
@@ -206,8 +197,9 @@ pfi_kif_match(struct pfi_kif *rule_kif, struct pfi_kif *packet_kif)
 void
 pfi_attach_ifnet(struct ifnet *ifp)
 {
-	struct pfi_kif	*kif;
-	int		 s;
+	struct pfi_kif		*kif;
+	struct pfi_dynaddr	*dyn;
+	int			 s;
 
 	pfi_initialize();
 	s = splsoftnet();
@@ -222,7 +214,9 @@ pfi_attach_ifnet(struct ifnet *ifp)
 	    pfi_kifaddr_update, kif)) == NULL)
 		panic("pfi_attach_ifnet: cannot allocate '%s' address hook",
 		    ifp->if_xname);
-	dohooks(kif->pfik_ah_head, 0);
+
+	TAILQ_FOREACH(dyn, &kif->pfik_dynaddrs, entry)
+		pfi_dynaddr_update(dyn);
 
 	splx(s);
 }
@@ -230,8 +224,9 @@ pfi_attach_ifnet(struct ifnet *ifp)
 void
 pfi_detach_ifnet(struct ifnet *ifp)
 {
-	int		 s;
-	struct pfi_kif	*kif;
+	int			 s;
+	struct pfi_kif		*kif;
+	struct pfi_dynaddr	*dyn;
 
 	if ((kif = (struct pfi_kif *)ifp->if_pf_kif) == NULL)
 		return;
@@ -239,7 +234,8 @@ pfi_detach_ifnet(struct ifnet *ifp)
 	s = splsoftnet();
 	pfi_update++;
 	hook_disestablish(ifp->if_addrhooks, kif->pfik_ah_cookie);
-	dohooks(kif->pfik_ah_head, 0);
+	TAILQ_FOREACH(dyn, &kif->pfik_dynaddrs, entry)
+		pfi_dynaddr_update(dyn);
 
 	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 	kif->pfik_ifp = NULL;
@@ -371,13 +367,8 @@ pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 	dyn->pfid_kt->pfrkt_flags |= PFR_TFLAG_ACTIVE;
 	dyn->pfid_iflags = aw->iflags;
 	dyn->pfid_af = af;
-	dyn->pfid_hook_cookie = hook_establish(dyn->pfid_kif->pfik_ah_head, 1,
-	    pfi_dynaddr_update, dyn);
-	if (dyn->pfid_hook_cookie == NULL) {
-		rv = 1;
-		goto _bad;
-	}
 
+	TAILQ_INSERT_TAIL(&dyn->pfid_kif->pfik_dynaddrs, dyn, entry);
 	aw->p.dyn = dyn;
 	pfi_dynaddr_update(aw->p.dyn);
 	splx(s);
@@ -396,9 +387,8 @@ _bad:
 }
 
 void
-pfi_dynaddr_update(void *p)
+pfi_dynaddr_update(struct pfi_dynaddr *dyn)
 {
-	struct pfi_dynaddr	*dyn = (struct pfi_dynaddr *)p;
 	struct pfi_kif		*kif;
 	struct pfr_ktable	*kt;
 
@@ -559,8 +549,7 @@ pfi_dynaddr_remove(struct pf_addr_wrap *aw)
 		return;
 
 	s = splsoftnet();
-	hook_disestablish(aw->p.dyn->pfid_kif->pfik_ah_head,
-	    aw->p.dyn->pfid_hook_cookie);
+	TAILQ_REMOVE(&aw->p.dyn->pfid_kif->pfik_dynaddrs, aw->p.dyn, entry);
 	pfi_kif_unref(aw->p.dyn->pfid_kif, PFI_KIF_REF_RULE);
 	aw->p.dyn->pfid_kif = NULL;
 	pfr_detach_table(aw->p.dyn->pfid_kt);
@@ -582,11 +571,14 @@ pfi_dynaddr_copyout(struct pf_addr_wrap *aw)
 void
 pfi_kifaddr_update(void *v)
 {
-	int		 s;
+	int			 s;
+	struct pfi_kif		*kif = (struct pfi_kif *)v;
+	struct pfi_dynaddr	*dyn;
 
 	s = splsoftnet();
 	pfi_update++;
-	dohooks(((struct pfi_kif *)v)->pfik_ah_head, 0);
+	TAILQ_FOREACH(dyn, &kif->pfik_dynaddrs, entry)
+		pfi_dynaddr_update(dyn);
 	splx(s);
 }
 

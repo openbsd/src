@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.215 2005/05/22 18:23:04 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.216 2005/05/23 22:30:21 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -152,18 +152,19 @@ struct pf_addr_wrap {
 #ifdef _KERNEL
 
 struct pfi_dynaddr {
-	struct pf_addr		 pfid_addr4;
-	struct pf_addr		 pfid_mask4;
-	struct pf_addr		 pfid_addr6;
-	struct pf_addr		 pfid_mask6;
-	struct pfr_ktable	*pfid_kt;
-	struct pfi_kif		*pfid_kif;
-	void			*pfid_hook_cookie;
-	int			 pfid_net;	/* optional mask, or 128 */
-	int			 pfid_acnt4;	/* address count, IPv4 */
-	int			 pfid_acnt6;	/* address count, IPv6 */
-	sa_family_t		 pfid_af;	/* rule address family */
-	u_int8_t		 pfid_iflags;	/* PFI_AFLAG_* */
+	TAILQ_ENTRY(pfi_dynaddr)	 entry;
+	struct pf_addr			 pfid_addr4;
+	struct pf_addr			 pfid_mask4;
+	struct pf_addr			 pfid_addr6;
+	struct pf_addr			 pfid_mask6;
+	struct pfr_ktable		*pfid_kt;
+	struct pfi_kif			*pfid_kif;
+	void				*pfid_hook_cookie;
+	int				 pfid_net;	/* mask or 128 */
+	int				 pfid_acnt4;	/* address count IPv4 */
+	int				 pfid_acnt6;	/* address count IPv6 */
+	sa_family_t			 pfid_af;	/* rule af */
+	u_int8_t			 pfid_iflags;	/* PFI_AFLAG_* */
 };
 
 /*
@@ -858,12 +859,12 @@ struct pfi_kif {
 	struct pf_state_tree_lan_ext	 pfik_lan_ext;
 	struct pf_state_tree_ext_gwy	 pfik_ext_gwy;
 	TAILQ_ENTRY(pfi_kif)		 pfik_w_states;
-	struct hook_desc_head		*pfik_ah_head;
 	void				*pfik_ah_cookie;
 	struct ifnet			*pfik_ifp;
 	struct ifg_group		*pfik_group;
 	int				 pfik_states;
 	int				 pfik_rules;
+	TAILQ_HEAD(, pfi_dynaddr)	 pfik_dynaddrs;
 };
 
 enum pfi_kif_refs {
