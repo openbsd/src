@@ -714,7 +714,9 @@ xcrypt_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc)
 {
 	AES_KEY *k = ctx->cipher_data;
+#ifndef AES_ASM
 	int i;
+#endif
 
 	bzero(k, sizeof *k);
 	if (enc)
@@ -722,9 +724,15 @@ xcrypt_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	else
 		AES_set_decrypt_key(key, ctx->key_len * 8, k);
 
-	/* Damn OpenSSL byte swaps the expanded key!! */
+#ifndef AES_ASM
+	/*
+	 * XXX Damn OpenSSL byte swaps the expanded key!!
+	 *
+	 * XXX But only if we're using the C implementation of AES
+	 */
 	for (i = 0; i < 4 * (AES_MAXNR + 1); i++)
 		k->rd_key[i] = htonl(k->rd_key[i]);
+#endif
 
 	return (1);
 }
