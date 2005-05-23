@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd_atapi.c,v 1.6 2005/05/23 06:46:38 krw Exp $	*/
+/*	$OpenBSD: cd_atapi.c,v 1.7 2005/05/23 07:06:16 krw Exp $	*/
 /*	$NetBSD: cd_atapi.c,v 1.10 1998/08/31 22:28:06 cgd Exp $	*/
 
 /*
@@ -92,7 +92,6 @@ cd_atapibus_setchan(cd, p0, p1, p2, p3, flags)
 	struct atapi_cd_mode_data data;
 	int error;
 
-	bzero(&data, sizeof(data));
 	error = scsi_mode_sense_big(cd->sc_link, 0, AUDIO_PAGE,
 	    (struct scsi_mode_header_big *)&data, sizeof(data), flags, 20000);
 	if (error != 0)
@@ -118,7 +117,6 @@ cd_atapibus_getvol(cd, arg, flags)
 	struct atapi_cd_mode_data data;
 	int error;
 
-	bzero(&data, sizeof(data));
 	error = scsi_mode_sense_big(cd->sc_link, 0, AUDIO_PAGE,
 	    (struct scsi_mode_header_big *)&data, sizeof(data), flags, 20000);
 	if (error != 0)
@@ -141,13 +139,11 @@ cd_atapibus_setvol(cd, arg, flags)
 	struct atapi_cd_mode_data data, mask;
 	int error;
 
-	bzero(&data, sizeof(data));
 	error = scsi_mode_sense_big(cd->sc_link, 0, AUDIO_PAGE,
 	    (struct scsi_mode_header_big *)&data, sizeof(data), flags, 20000);
 	if (error != 0)
 		return (error);
 
-	bzero(&mask, sizeof(mask));
 	error = scsi_mode_sense_big(cd->sc_link, 0, ATAPI_AUDIO_PAGE_MASK,
 	    (struct scsi_mode_header_big *)&mask, sizeof(mask), flags, 20000);
 	if (error != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.9 2005/05/14 00:20:43 krw Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.10 2005/05/23 07:06:16 krw Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -107,7 +107,6 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	 * However, there are stupid optical devices which does NOT
 	 * support the page 6. Ask for all (0x3f) pages. Ghaa....
 	 */
-	bzero(&scsi_sense, sizeof(scsi_sense));
 	error = scsi_mode_sense(sd->sc_link, 0, 0x3f,
 	    (struct scsi_mode_header *)&scsi_sense, sizeof(scsi_sense), flags,
 	    6000);
@@ -152,7 +151,6 @@ sd_scsibus_get_parms(sd, dp, flags)
 	if (sd->type == T_OPTICAL)
 		return (sd_scsibus_get_optparms(sd, dp, flags));
 
-	bzero(&scsi_sense, sizeof(scsi_sense));
 	error = scsi_mode_sense(sd->sc_link, 0, page = 4,
 	    (struct scsi_mode_header *)&scsi_sense, sizeof(scsi_sense),
 	    flags | SCSI_SILENT, 6000);
@@ -201,7 +199,6 @@ sd_scsibus_get_parms(sd, dp, flags)
 		return (SDGP_RESULT_OK);
 	}
 
-	bzero(&scsi_sense, sizeof(scsi_sense));
 	error = scsi_mode_sense(sd->sc_link, 0, page = 5,
 	    (struct scsi_mode_header *)&scsi_sense, sizeof(scsi_sense),
 	    flags | SCSI_SILENT, 6000);
@@ -229,7 +226,6 @@ sd_scsibus_get_parms(sd, dp, flags)
 	}
 
 	/* T_RDIRECT define page 6. */
-	bzero(&scsi_sense, sizeof(scsi_sense));
 	error = scsi_mode_sense(sd->sc_link, 0, page = 6,
 	    (struct scsi_mode_header *)&scsi_sense, sizeof(scsi_sense),
 	    flags | SCSI_SILENT, 6000);
