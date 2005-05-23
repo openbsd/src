@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.12 2005/04/03 02:09:28 db Exp $	*/
+/*	$OpenBSD: search.c,v 1.13 2005/05/23 20:39:44 jason Exp $	*/
 
 /*
  *		Search commands.
@@ -37,7 +37,7 @@ static void	is_undo(int *, int *);
 static int	is_find(int);
 static void	is_prompt(int, int, int);
 static void	is_dspl(char *, int);
-static int	eq(int, int);
+static int	eq(int, int, int);
 
 static SRCHCOM	cmds[NSRCH];
 static int	cip;
@@ -542,11 +542,14 @@ int
 forwsrch(void)
 {
 	LINE	*clp, *tlp;
-	int	 cbo, tbo, c;
+	int	 cbo, tbo, c, i, xcase = 0;
 	char	*pp;
 
 	clp = curwp->w_dotp;
 	cbo = curwp->w_doto;
+	for (i = 0; pat[i]; i++)
+		if (ISUPPER(CHARMASK(pat[i])))
+			xcase = 1;
 	for (;;) {
 		if (cbo == llength(clp)) {
 			if ((clp = lforw(clp)) == curbp->b_linep)
@@ -555,7 +558,7 @@ forwsrch(void)
 			c = CCHR('J');
 		} else
 			c = lgetc(clp, cbo++);
-		if (eq(c, pat[0]) != FALSE) {
+		if (eq(c, pat[0], xcase) != FALSE) {
 			tlp = clp;
 			tbo = cbo;
 			pp = &pat[1];
@@ -568,7 +571,7 @@ forwsrch(void)
 					c = CCHR('J');
 				} else
 					c = lgetc(tlp, tbo++);
-				if (eq(c, *pp++) == FALSE)
+				if (eq(c, *pp++, xcase) == FALSE)
 					goto fail;
 			}
 			curwp->w_dotp = tlp;
@@ -591,12 +594,15 @@ int
 backsrch(void)
 {
 	LINE	*clp, *tlp;
-	int	 cbo, tbo, c;
+	int	 cbo, tbo, c, i, xcase = 0;
 	char	*epp, *pp;
 
 	for (epp = &pat[0]; epp[1] != 0; ++epp);
 	clp = curwp->w_dotp;
 	cbo = curwp->w_doto;
+	for (i = 0; pat[i]; i++)
+		if (ISUPPER(CHARMASK(pat[i])))
+			xcase = 1;
 	for (;;) {
 		if (cbo == 0) {
 			clp = lback(clp);
@@ -608,7 +614,7 @@ backsrch(void)
 			c = CCHR('J');
 		else
 			c = lgetc(clp, cbo);
-		if (eq(c, *epp) != FALSE) {
+		if (eq(c, *epp, xcase) != FALSE) {
 			tlp = clp;
 			tbo = cbo;
 			pp = epp;
@@ -623,7 +629,7 @@ backsrch(void)
 					c = CCHR('J');
 				else
 					c = lgetc(tlp, tbo);
-				if (eq(c, *--pp) == FALSE)
+				if (eq(c, *--pp, xcase) == FALSE)
 					goto fail;
 			}
 			curwp->w_dotp = tlp;
@@ -641,12 +647,14 @@ fail:		;
  * folded out. The "pc" is from the pattern.
  */
 static int
-eq(int bc, int pc)
+eq(int bc, int pc, int xcase)
 {
 	bc = CHARMASK(bc);
 	pc = CHARMASK(pc);
 	if (bc == pc)
 		return (TRUE);
+	if (xcase)
+		return (FALSE);
 	if (ISUPPER(bc))
 		return (TOLOWER(bc) == pc);
 	if (ISUPPER(pc))
