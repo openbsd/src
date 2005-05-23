@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.159 2005/05/03 07:01:23 djm Exp $ */
+/*	$OpenBSD: rde.c,v 1.160 2005/05/23 22:45:02 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -151,8 +151,6 @@ rde_main(struct bgpd_config *config, struct peer *peer_l,
 	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
 	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid))
 		fatal("can't drop privileges");
-
-	endpwent();
 
 	signal(SIGTERM, rde_sighdlr);
 	signal(SIGINT, rde_sighdlr);
