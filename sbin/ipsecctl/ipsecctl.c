@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.4 2005/04/12 06:57:36 deraadt Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.5 2005/05/23 20:25:54 kjell Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -67,7 +67,7 @@ ipsecctl_rules(char *filename, int opts)
 	} else {
 		if ((fin = ipsecctl_fopen(filename, "r")) == NULL) {
 			warn("%s", filename);
-			return 1;
+			return (1);
 		}
 		infile = filename;
 	}
@@ -80,7 +80,7 @@ ipsecctl_rules(char *filename, int opts)
 		if (ipsecctl_commit(&ipsec))
 			err(1, NULL);
 
-	return error;
+	return (error);
 }
 
 FILE *
@@ -91,18 +91,18 @@ ipsecctl_fopen(const char *name, const char *mode)
 
 	fp = fopen(name, mode);
 	if (fp == NULL)
-		return NULL;
+		return (NULL);
 
 	if (fstat(fileno(fp), &st)) {
 		fclose(fp);
-		return NULL;
+		return (NULL);
 	}
 	if (S_ISDIR(st.st_mode)) {
 		fclose(fp);
 		errno = EISDIR;
-		return NULL;
+		return (NULL);
 	}
-	return fp;
+	return (fp);
 }
 
 int
@@ -129,7 +129,7 @@ ipsecctl_commit(struct ipsecctl *ipsec)
 		free(rp);
 	}
 
-	return 0;
+	return (0);
 }
 
 int
@@ -141,7 +141,7 @@ ipsecctl_add_rule(struct ipsecctl *ipsec, struct ipsec_rule *r)
 	    IPSECCTL_OPT_SHOW))
 		ipsecctl_print_rule(r, ipsec->opts & IPSECCTL_OPT_VERBOSE2);
 
-	return 0;
+	return (0);
 }
 
 void
@@ -201,14 +201,14 @@ int
 ipsecctl_flush(int opts)
 {
 	if (opts & IPSECCTL_OPT_NOACTION)
-		return 0;
+		return (0);
 
 	if (pfkey_init() == -1)
 		errx(1, "failed to open PF_KEY socket");
 
 	pfkey_ipsec_flush();
 
-	return 0;
+	return (0);
 }
 
 void
@@ -294,7 +294,7 @@ ipsecctl_get_rules(struct ipsecctl *ipsec)
 			else if (ipo->ipo_sproto == IPPROTO_AH)
 				rule->proto = IPSEC_AH;
 			else {
-				rule->proto = PROTO_UNKNWON;
+				rule->proto = PROTO_UNKNOWN;
 				warnx("unsupported protocol %d",
 				    ipo->ipo_sproto);
 			}

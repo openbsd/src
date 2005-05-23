@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.2 2005/04/04 22:22:55 hshoexer Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.3 2005/05/23 20:25:54 kjell Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -30,7 +30,7 @@ enum {
 	DIRECTION_UNKNOWN, IPSEC_IN, IPSEC_OUT, IPSEC_INOUT
 };
 enum {
-	PROTO_UNKNWON, IPSEC_ESP, IPSEC_AH, IPSEC_COMP
+	PROTO_UNKNOWN, IPSEC_ESP, IPSEC_AH, IPSEC_COMP
 };
 enum {
 	AUTH_UNKNOWN, AUTH_PSK, AUTH_RSA
