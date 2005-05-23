@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.484 2005/05/21 21:03:58 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.485 2005/05/23 21:29:50 camield Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -2428,31 +2428,13 @@ port_item	: port				{
 
 port		: STRING			{
 			char	*p = strchr($1, ':');
-			struct servent	*s = NULL;
-			u_long		 ulval;
 
 			if (p == NULL) {
-				if (atoul($1, &ulval) == 0) {
-					if (ulval > 65535) {
-						free($1);
-						yyerror("illegal port value %lu",
-						    ulval);
-						YYERROR;
-					}
-					$$.a = htons(ulval);
-				} else {
-					s = getservbyname($1, "tcp");
-					if (s == NULL)
-						s = getservbyname($1, "udp");
-					if (s == NULL) {
-						yyerror("unknown port %s", $1);
-						free($1);
-						YYERROR;
-					}
-					$$.a = s->s_port;
+				if (($$.a = getservice($1)) == -1) {
+					free($1);
+					YYERROR;
 				}
-				$$.b = 0;
-				$$.t = 0;
+				$$.b = $$.t = 0;
 			} else {
 				int port[2];
 
