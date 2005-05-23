@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.67 2005/05/22 19:29:55 martin Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.68 2005/05/23 20:54:32 martin Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -82,9 +82,7 @@
 #include <netinet/if_ether.h>
 
 #include <machine/bus.h>
-#if defined(__alpha__)
 #include <machine/intr.h>
-#endif
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -4420,7 +4418,7 @@ tulip_txput_setup(
 
 
 /*
- * This routine is entered at splnet() (splsoftnet() on NetBSD)
+ * This routine is entered at splnet() (splsoftnet() on OpenBSD)
  * and thereby imposes no problems when TULIP_USE_SOFTINTR is
  * defined or not.
  */
@@ -4655,7 +4653,7 @@ tulip_ifstart_one(
 
 /*
  * Even though this routine runs at device spl, it does not break
- * our use of splnet (splsoftnet under NetBSD) for the majority
+ * our use of splnet (splsoftnet under OpenBSD) for the majority
  * of this driver (if TULIP_USE_SOFTINTR defined) since
  * if_watcbog is called from if_watchdog which is called from
  * splsoftclock which is below spl[soft]net.
@@ -4979,6 +4977,9 @@ tulip_pci_attach(TULIP_PCI_ATTACH_ARGS)
 	(sc)->tulip_pci_devno = pa->pa_device; \
     } while (0)
 
+#if defined(__alpha__)
+    tulip_media_t media = TULIP_MEDIA_UNKNOWN;
+#endif
     int retval, idx;
     u_int32_t revinfo, cfdainfo, id;
     unsigned csroffset = TULIP_PCI_CSROFFSET;
@@ -5053,7 +5054,7 @@ tulip_pci_attach(TULIP_PCI_ATTACH_ARGS)
 	    sc->tulip_cmdmode |= TULIP_CMD_STOREFWD;
 
 
-#if defined(__alpha__) && defined(__NetBSD__)
+#if defined(__alpha__)
     /*
      * The Alpha SRM console encodes a console set media in the driver
      * part of the CFDA register.  Note that the Multia presents a
@@ -5171,8 +5172,14 @@ tulip_pci_attach(TULIP_PCI_ATTACH_ARGS)
 #endif
 
 	s = TULIP_RAISESPL();
-	tulip_reset(sc);
+#if defined(__alpha__)
+	sc->tulip_media = media;
+#endif
 	tulip_attach(sc);
+#if defined(__alpha__)
+	if (sc->tulip_media != TULIP_MEDIA_UNKNOWN)
+		tulip_linkup(sc, media);
+#endif
 	TULIP_RESTORESPL(s);
     }
 }
