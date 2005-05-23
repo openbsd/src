@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.28 2005/05/22 18:35:43 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.29 2005/05/23 20:40:13 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -211,7 +211,7 @@ pfi_attach_ifnet(struct ifnet *ifp)
 
 	pfi_initialize();
 	s = splsoftnet();
-
+	pfi_update++;
 	if ((kif = pfi_kif_get(ifp->if_xname)) == NULL)
 		panic("pfi_kif_get failed");
 
@@ -237,6 +237,7 @@ pfi_detach_ifnet(struct ifnet *ifp)
 		return;
 
 	s = splsoftnet();
+	pfi_update++;
 	hook_disestablish(ifp->if_addrhooks, kif->pfik_ah_cookie);
 	dohooks(kif->pfik_ah_head, 0);
 
@@ -254,6 +255,7 @@ pfi_attach_ifgroup(struct ifg_group *ifg)
 
 	pfi_initialize();
 	s = splsoftnet();
+	pfi_update++;
 	if ((kif = pfi_kif_get(ifg->ifg_group)) == NULL)
 		panic("pfi_kif_get failed");
 
@@ -273,6 +275,7 @@ pfi_detach_ifgroup(struct ifg_group *ifg)
 		return;
 
 	s = splsoftnet();
+	pfi_update++;
 
 	pfi_kif_unref(kif, PFI_KIF_REF_NONE);
 	kif->pfik_group = NULL;
@@ -582,6 +585,7 @@ pfi_kifaddr_update(void *v)
 	int		 s;
 
 	s = splsoftnet();
+	pfi_update++;
 	dohooks(((struct pfi_kif *)v)->pfik_ah_head, 0);
 	splx(s);
 }
