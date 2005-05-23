@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.45 2005/05/10 11:12:50 hshoexer Exp $	 */
+/* $OpenBSD: monitor.c,v 1.46 2005/05/23 22:21:56 ho Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -108,8 +108,8 @@ monitor_init(int debug)
 	if (pw == NULL)
 		log_fatalx("monitor_init: getpwnam(\"%s\") failed",
 		    ISAKMPD_PRIVSEP_USER);
-	endpwent();
 	strlcpy(m_state.root, pw->pw_dir, sizeof m_state.root);
+	endpwent();
 
 	set_monitor_signals();
 	m_state.pid = fork();
