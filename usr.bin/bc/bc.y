@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.25 2005/03/17 16:59:31 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.26 2005/05/23 06:44:58 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.25 2005/03/17 16:59:31 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.26 2005/05/23 06:44:58 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -88,7 +88,7 @@ static void		init(void);
 static __dead void	usage(void);
 static char		*escape(const char *);
 
-static size_t		instr_sz = 0;
+static ssize_t		instr_sz = 0;
 static struct tree	*instructions = NULL;
 static ssize_t		current = 0;
 static int		macro_char = '0';
@@ -739,7 +739,7 @@ static void
 grow(void)
 {
 	struct tree	*p;
-	int		newsize;
+	size_t		newsize;
 
 	if (current == instr_sz) {
 		newsize = instr_sz * 2 + 1;
@@ -817,7 +817,7 @@ emit_macro(int node, ssize_t code)
 static void
 free_tree(void)
 {
-	size_t i;
+	ssize_t i;
 
 	for (i = 0; i < current; i++)
 		if (instructions[i].index == ALLOC_STRING)
