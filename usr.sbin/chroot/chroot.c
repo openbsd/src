@@ -1,4 +1,4 @@
-/*	$OpenBSD: chroot.c,v 1.11 2003/06/02 23:36:52 millert Exp $	*/
+/*	$OpenBSD: chroot.c,v 1.12 2005/05/23 22:52:04 henning Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)chroot.c	8.1 (Berkeley) 6/9/93";
 #else
-static const char rcsid[] = "$OpenBSD: chroot.c,v 1.11 2003/06/02 23:36:52 millert Exp $";
+static const char rcsid[] = "$OpenBSD: chroot.c,v 1.12 2005/05/23 22:52:04 henning Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,6 @@ main(int argc, char **argv)
 		if (setuid(pwd->pw_uid) != 0)
 			err(1, "setuid");
 		endgrent();
-		endpwent();
 	}
 
 	if (argv[1]) {
