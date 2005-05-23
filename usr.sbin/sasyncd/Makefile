@@ -1,8 +1,12 @@
-#	$Id: Makefile,v 1.3 2005/05/22 20:35:48 ho Exp $
+#	$Id: Makefile,v 1.4 2005/05/23 19:53:27 ho Exp $
 
 PROG=	sasyncd
 SRCS=	sasyncd.c carp.c conf.y log.c net.c net_ctl.c pfkey.c timer.c
 MAN=	sasyncd.8 sasyncd.conf.5
+
+.ifdef DEBUG
+CFLAGS=		-O0 $(PIPE) $(DEBUG)
+.endif
 
 CFLAGS+=	-I${.CURDIR}
 CLEANFILES=	y.tab.h

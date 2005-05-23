@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.h,v 1.2 2005/05/22 20:35:48 ho Exp $	*/
+/*	$OpenBSD: net.h,v 1.3 2005/05/23 19:53:27 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -48,7 +48,7 @@ enum CTLTYPE { RESERVED = 0, CTL_STATE, CTL_ERROR, CTL_ACK, CTL_UNKNOWN };
 };
 
 /* net.c */
-void	net_connect_peers(void);
+void	net_connect(void);
 void	net_disconnect_peer(struct syncpeer *);
 
 /* net_ctl.c */

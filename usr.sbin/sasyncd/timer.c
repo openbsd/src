@@ -1,4 +1,4 @@
-/*	$OpenBSD: timer.c,v 1.1 2005/03/30 18:44:49 ho Exp $	*/
+/*	$OpenBSD: timer.c,v 1.2 2005/05/23 19:53:27 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -97,7 +97,7 @@ timer_run(void)
 	for (e = TAILQ_FIRST(&events); e && timercmp(&now, &e->expire, >=);
 	     e = TAILQ_FIRST(&events)) {
 		TAILQ_REMOVE(&events, e, next);
-		log_msg(4, "timer_run: event \"%s\"",
+		log_msg(6, "timer_run: event \"%s\"",
 		    e->name ? e->name : "<unknown>");
 		(*e->fun)(e->arg);
 		if (e->name)
@@ -128,7 +128,7 @@ timer_add(char *name, u_int32_t when, void (*function)(void *), void *arg)
 	gettimeofday(&now, 0);
 	timeradd(&now, &tmp, &new->expire);
 
-	log_msg(4, "timer_add: new event \"%s\" (expiring in %us)",
+	log_msg(6, "timer_add: new event \"%s\" (expiring in %us)",
 	    name ? name : "<unknown>", when);
 
 	/* Insert the new event in the queue so it's always sorted. */

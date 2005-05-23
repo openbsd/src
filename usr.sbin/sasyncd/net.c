@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.3 2005/05/23 17:35:01 ho Exp $	*/
+/*	$OpenBSD: net.c,v 1.4 2005/05/23 19:53:27 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -63,26 +63,41 @@ struct qmsg {
 
 int	listen_socket;
 AES_KEY	aes_key[2];
-#define AES_IV_LEN AES_BLOCK_SIZE
+#define AES_IV_LEN	AES_BLOCK_SIZE
+
+/* We never send (or expect to receive) messages smaller/larger than this. */
+#define MSG_MINLEN	12
+#define MSG_MAXLEN	4096
 
 /* Local prototypes. */
 static u_int8_t *net_read(struct syncpeer *, u_int32_t *, u_int32_t *);
 static int	 net_set_sa(struct sockaddr *, char *, in_port_t);
 static void	 net_check_peers(void *);
 
+/* Pretty-print a buffer. */
 static void
 dump_buf(int lvl, u_int8_t *b, u_int32_t len, char *title)
 {
-	u_int32_t	i, off, blen = len*2 + 3 + strlen(title);
-	u_int8_t	*buf = calloc(1, blen);
+	u_int32_t	i, off, blen;
+	u_int8_t	*buf;
+	const char	def[] = "Buffer:";
 
-	if (!buf || cfgstate.verboselevel < lvl)
+	if (cfgstate.verboselevel < lvl)
 		return;
 
-	snprintf(buf, blen, "%s:\n", title);
+	blen = 2 * (len + len / 36) + 3 + (title ? strlen(title) : sizeof def);
+	if (!(buf = (u_int8_t *)calloc(1, blen)))
+		return;
+	
+	snprintf(buf, blen, "%s\n ", title ? title : def);
 	off = strlen(buf);
-	for (i = 0; i < len; i++, off+=2)
+	for (i = 0; i < len; i++, off+=2) {
 		snprintf(buf + off, blen - off, "%02x", b[i]);
+		if ((i+1) % 36 == 0) {
+			off += 2;
+			snprintf(buf + off, blen - off, "\n ");
+		}
+	}
 	log_msg(lvl, "%s", buf);
 	free(buf);
 }
@@ -208,7 +223,7 @@ net_queue(struct syncpeer *p0, u_int32_t msgtype, u_int8_t *buf, u_int32_t len)
 	SHA1_Init(&ctx);
 	SHA1_Update(&ctx, buf, len);
 	SHA1_Final(hash, &ctx);
-	dump_buf(5, hash, sizeof hash, "Hash");
+	dump_buf(5, hash, sizeof hash, "net_queue: computed hash");
 
 	/* Padding required? */
 	i = len % AES_IV_LEN;
@@ -233,13 +248,13 @@ net_queue(struct syncpeer *p0, u_int32_t msgtype, u_int8_t *buf, u_int32_t len)
 		v = arc4random();
 		memcpy(&iv[i], &v, sizeof v);
 	}
-	dump_buf(5, iv, sizeof iv, "IV");
+	dump_buf(5, iv, sizeof iv, "net_queue: IV");
 	memcpy(tmp_iv, iv, sizeof tmp_iv);
 
 	/* Encrypt */
-	dump_buf(5, buf, len, "Pre-enc");
+	dump_buf(5, buf, len, "net_queue: pre encrypt");
 	AES_cbc_encrypt(buf, buf, len, &aes_key[0], tmp_iv, AES_ENCRYPT);
-	dump_buf(5, buf, len, "Post-enc");
+	dump_buf(5, buf, len, "net_queue: post encrypt");
 
 	/* Allocate send buffer */
 	m->len = len + sizeof iv + sizeof hash + 3 * sizeof(u_int32_t);
@@ -369,10 +384,11 @@ net_handle_messages(fd_set *fds)
 				/* Match! */
 				found++;
 				p->socket = newsock;
-				log_msg(1, "peer \"%s\" connected", p->name);
+				log_msg(1, "net: peer \"%s\" connected",
+				    p->name);
 			}
 			if (!found) {
-				log_msg(1, "Found no matching peer for "
+				log_msg(1, "net: found no matching peer for "
 				    "accepted socket, closing.");
 				close(newsock);
 			}
@@ -387,8 +403,6 @@ net_handle_messages(fd_set *fds)
 		if (!msg)
 			continue;
 
-		/* XXX check message validity. */
-
 		log_msg(4, "net_handle_messages: got msg type %u len %u from "
 		    "peer %s", msgtype, msglen, p->name);
 
@@ -401,8 +415,8 @@ net_handle_messages(fd_set *fds)
 		case MSG_PFKEYDATA:
 			if (p->runstate != MASTER ||
 			    cfgstate.runstate == MASTER) {
-				log_msg(0, "got PFKEY message from non-MASTER "
-				    "peer");
+				log_msg(1, "net: got PFKEY message from "
+				    "non-MASTER peer");
 				free(msg);
 				if (cfgstate.runstate == MASTER)
 					net_ctl_send_state(p);
@@ -413,8 +427,8 @@ net_handle_messages(fd_set *fds)
 			break;
 
 		default:
-			log_msg(0, "Got unknown message type %u len %u from "
-			    "peer %s", msgtype, msglen, p->name);
+			log_msg(0, "net: got unknown message type %u len %u "
+			    "from peer %s", msgtype, msglen, p->name);
 			free(msg);
 			net_ctl_send_error(p, 0);
 		}
@@ -432,7 +446,6 @@ net_send_messages(fd_set *fds)
 	for (p = LIST_FIRST(&cfgstate.peerlist); p; p = LIST_NEXT(p, link)) {
 		if (p->socket < 0 || !FD_ISSET(p->socket, fds))
 			continue;
-
 		qm = SIMPLEQ_FIRST(&p->msgs);
 		if (!qm) {
 			/* XXX Log */
@@ -440,15 +453,17 @@ net_send_messages(fd_set *fds)
 		}
 		m = qm->msg;
 
-		log_msg(4, "sending msg %p len %d ref %d to peer %s", m,
-		    m->len, m->refcnt, p->name);
+		log_msg(4, "net_send_messages: msg %p len %d ref %d "
+		    "to peer %s", m, m->len, m->refcnt, p->name);
 
 		/* write message */
 		r = write(p->socket, m->buf, m->len);
-		if (r == -1)
-			log_err("net_send_messages: write()");
-		else if (r < (ssize_t)m->len) {
-			/* XXX retransmit? */
+		if (r == -1) {
+			net_disconnect_peer(p);
+			log_msg(0, "net_send_messages: write() failed, "
+			    "peer disconnected");
+		} else if (r < (ssize_t)m->len) {
+			/* retransmit later */
 			continue;
 		}
 
@@ -457,7 +472,7 @@ net_send_messages(fd_set *fds)
 		free(qm);
 
 		if (--m->refcnt < 1) {
-			log_msg(4, "freeing msg %p", m);
+			log_msg(4, "net_send_messages: freeing msg %p", m);
 			free(m->buf);
 			free(m);
 		}
@@ -468,8 +483,11 @@ net_send_messages(fd_set *fds)
 void
 net_disconnect_peer(struct syncpeer *p)
 {
-	if (p->socket > -1)
+	if (p->socket > -1) {
+		log_msg(1, "net_disconnect_peer: peer \"%s\" removed",
+		    p->name);
 		close(p->socket);
+	}
 	p->socket = -1;
 }
 
@@ -514,12 +532,19 @@ net_read(struct syncpeer *p, u_int32_t *msgtype, u_int32_t *msglen)
 	SHA_CTX		 ctx;
 
 	/* Read blob length */
-	if (read(p->socket, &v, sizeof v) != (ssize_t)sizeof v)
+	r = read(p->socket, &v, sizeof v);
+	if (r != (ssize_t)sizeof v) {
+		if (r < 1)
+			net_disconnect_peer(p);
 		return NULL;
+	} 
+	
 	blob_len = ntohl(v);
 	if (blob_len < sizeof hash + AES_IV_LEN + 2 * sizeof(u_int32_t))
 		return NULL;
 	*msglen = blob_len - sizeof hash - AES_IV_LEN - 2 * sizeof(u_int32_t);
+	if (*msglen < MSG_MINLEN || *msglen > MSG_MAXLEN)
+		return NULL;
 
 	/* Read message blob */
 	blob = (u_int8_t *)malloc(blob_len);
@@ -528,7 +553,8 @@ net_read(struct syncpeer *p, u_int32_t *msgtype, u_int32_t *msglen)
 		return NULL;
 	}
 	r = read(p->socket, blob, blob_len);
-	if (r == -1) {
+	if (r < 1) {
+		net_disconnect_peer(p);
 		free(blob);
 		return NULL;
 	} else if (r < (ssize_t)blob_len) {
@@ -561,21 +587,21 @@ net_read(struct syncpeer *p, u_int32_t *msgtype, u_int32_t *msglen)
 	}
 	memcpy(msg, iv + AES_IV_LEN, *msglen);
 
-	dump_buf(5, rhash, sizeof hash, "Recv hash");
-	dump_buf(5, iv, sizeof iv, "Recv IV");
-	dump_buf(5, msg, *msglen, "Pre-decrypt");
+	dump_buf(5, rhash, sizeof hash, "net_read: got hash");
+	dump_buf(5, iv, AES_IV_LEN, "net_read: got IV");
+	dump_buf(5, msg, *msglen, "net_read: pre decrypt");
 	AES_cbc_encrypt(msg, msg, *msglen, &aes_key[1], iv, AES_DECRYPT);
-	dump_buf(5, msg, *msglen, "Post-decrypt");
+	dump_buf(5, msg, *msglen, "net_read: post decrypt");
 	*msglen -= padlen;
 
 	SHA1_Init(&ctx);
 	SHA1_Update(&ctx, msg, *msglen);
 	SHA1_Final(hash, &ctx);
-	dump_buf(5, hash, sizeof hash, "Local hash");
+	dump_buf(5, hash, sizeof hash, "net_read: computed hash");
 
 	if (memcmp(hash, rhash, sizeof hash) != 0) {
 		free(blob);
-		log_msg(0, "net_read: bad msg hash (shared key typo?)");
+		log_msg(0, "net_read: got bad message (typo in shared key?)");
 		return NULL;
 	}
 	free(blob);
@@ -660,7 +686,7 @@ got_sigalrm(int s)
 }
 
 void
-net_connect_peers(void)
+net_connect(void)
 {
 	struct sockaddr_storage sa_storage;
 	struct itimerval	iv;
@@ -686,16 +712,18 @@ net_connect_peers(void)
 			continue;
 		}
 		if (connect(p->socket, sa, sa->sa_len)) {
-			log_msg(1, "peer \"%s\" not ready yet", p->name);
+			log_msg(1, "net_connect: peer \"%s\" not ready yet",
+			    p->name);
 			net_disconnect_peer(p);
 			continue;
 		}
 		if (net_ctl_send_state(p)) {
-			log_msg(0, "peer \"%s\" failed", p->name);
+			log_msg(0, "net_connect: peer \"%s\" failed", p->name);
 			net_disconnect_peer(p);
 			continue;
 		}
-		log_msg(1, "peer \"%s\" connected", p->name);
+		log_msg(1, "net_connect: peer \"%s\" connected, fd %d",
+		    p->name, p->socket);
 	}
 
 	timerclear(&iv.it_value);
@@ -709,7 +737,7 @@ net_connect_peers(void)
 static void
 net_check_peers(void *arg)
 {
-	net_connect_peers();
+	net_connect();
 
 	(void)timer_add("peer recheck", 600, net_check_peers, 0);
 }

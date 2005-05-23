@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.2 2005/05/22 20:35:48 ho Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.3 2005/05/23 19:53:27 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -142,8 +142,9 @@ pfkey_handle_message(struct sadb_msg *m)
 		return 0;
 	}
 
-	log_msg(3, "pfkey: got %s len %u seq %d", pfkey_print_type(msg),
-	    msg->sadb_msg_len * CHUNK, msg->sadb_msg_seq);
+	log_msg(3, "pfkey_handle_message: got %s len %u seq %d",
+	    pfkey_print_type(msg), msg->sadb_msg_len * CHUNK,
+	    msg->sadb_msg_seq);
 
 	switch (msg->sadb_msg_type) {
 	case SADB_X_PROMISC:
@@ -284,8 +285,9 @@ pfkey_queue_message(u_int8_t *data, u_int32_t datalen)
 
 	sadb->sadb_msg_pid = getpid();
 	sadb->sadb_msg_seq = seq++;
-	log_msg(3, "sync: pfkey %s len %d seq %d", pfkey_print_type(sadb),
-	    sadb->sadb_msg_len * CHUNK, sadb->sadb_msg_seq);
+	log_msg(3, "pfkey_queue_message: pfkey %s len %d seq %d",
+	    pfkey_print_type(sadb), sadb->sadb_msg_len * CHUNK,
+	    sadb->sadb_msg_seq);
 
 	SIMPLEQ_INSERT_TAIL(&pfkey_msglist, pmsg, next);
 	return 0;
@@ -342,7 +344,7 @@ pfkey_snapshot(void *v)
 	while (m < (struct sadb_msg *)(buf + sz) && m->sadb_msg_len > 0) {
 		mlen = m->sadb_msg_len * CHUNK;
 		
-		fprintf(stderr, "snapshot: sadb_msg %p type %s len %u\n",
+		fprintf(stderr, "pfkey_snapshot: sadb_msg %p type %s len %u\n",
 		    m, pfkey_print_type(m), mlen);
 
 		e = (struct sadb_ext *)(m + 1);

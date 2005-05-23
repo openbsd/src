@@ -1,4 +1,4 @@
-/*	$OpenBSD: net_ctl.c,v 1.3 2005/05/22 20:35:48 ho Exp $	*/
+/*	$OpenBSD: net_ctl.c,v 1.4 2005/05/23 19:53:27 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -58,20 +58,20 @@ net_ctl_check_state(struct syncpeer *p, enum RUNSTATE nstate)
 	static char	*runstate[] = CARPSTATES;
 
 	if (nstate < INIT || nstate > FAIL) {
-		log_msg(0, "got bad state %d from peer \"%s\"", nstate,
-		    p->name);
+		log_msg(0, "net_ctl: got bad state %d from peer \"%s\"",
+		    nstate, p->name);
 		net_ctl_send_error(p, CTL_STATE);
 		return -1;
 	}
 	if (cfgstate.runstate == MASTER && nstate == MASTER) {
-		log_msg(0, "got bad state MASTER from peer \"%s\"",
+		log_msg(0, "net_ctl: got bad state MASTER from peer \"%s\"",
 		    p->name);
 		net_ctl_send_error(p, CTL_STATE);
 		return -1;
 	}
 	if (p->runstate != nstate) {
 		p->runstate = nstate;
-		log_msg(1, "peer \"%s\" state change to %s", p->name,
+		log_msg(1, "net_ctl: peer \"%s\" state change to %s", p->name,
 		    runstate[nstate]);
 	}
 	return 0;
@@ -86,7 +86,7 @@ net_ctl_handle_msg(struct syncpeer *p, u_int8_t *msg, u_int32_t msglen)
 	static char	*ct, *ctltype[] = CTLTYPES;
 
 	if (msglen < sizeof *ctl) {
-		log_msg(0, "got invalid control message from peer \"%s\"",
+		log_msg(0, "net_ctl: got bad control message from peer \"%s\"",
 		    p->name);
 		net_ctl_send_error(p, CTL_UNKNOWN);
 		return;
@@ -94,14 +94,14 @@ net_ctl_handle_msg(struct syncpeer *p, u_int8_t *msg, u_int32_t msglen)
 
 	switch (ntohl(ctl->type)) {
 	case CTL_STATE:
-		log_msg(3, "got CTL_STATE from peer \"%s\"", p->name);
+		log_msg(3, "net_ctl: got CTL_STATE from peer \"%s\"", p->name);
 		nstate = (enum RUNSTATE)ntohl(ctl->data);
 		if (net_ctl_check_state(p, nstate) == 0)
 			net_ctl_send_ack(p, CTL_STATE, cfgstate.runstate);
 		break;
 
 	case CTL_ERROR:
-		log_msg(1, "got ERROR from peer \"%s\"", p->name);
+		log_msg(1, "net_ctl: got ERROR from peer \"%s\"", p->name);
 
 		switch (ntohl(ctl->data)) {
 		case RESERVED: /* PFKEY -- nothing to do here for now */
@@ -126,7 +126,8 @@ net_ctl_handle_msg(struct syncpeer *p, u_int8_t *msg, u_int32_t msglen)
 			ct = "<unknown>";
 		else
 			ct = ctltype[ctype];
-		log_msg(3, "got %s ACK from peer \"%s\"", ct, p->name);
+		log_msg(3, "net_ctl: got %s ACK from peer \"%s\"", ct,
+		    p->name);
 		if (ctype == CTL_STATE) {
 			nstate = (enum RUNSTATE)ntohl(ctl->data2);
 			net_ctl_check_state(p, nstate);
@@ -135,7 +136,7 @@ net_ctl_handle_msg(struct syncpeer *p, u_int8_t *msg, u_int32_t msglen)
 
 	case CTL_UNKNOWN:
 	default:
-		log_msg(1, "got unknown msg type %u from peer \"%s\"", 
+		log_msg(1, "net_ctl: got unknown msg type %u from peer \"%s\"",
 		    ntohl(ctl->type), p->name);
 		break;
 	}
@@ -185,12 +186,12 @@ net_ctl_update_state(void)
 	static char	*carpstate[] = CARPSTATES;
 
 	/* We may have new peers available.  */
-	net_connect_peers();
+	net_connect();
 
 	for (p = LIST_FIRST(&cfgstate.peerlist); p; p = LIST_NEXT(p, link)) {
 		if (p->socket == -1)
 			continue;
-		log_msg(2, "sending my state %s to peer \"%s\"",
+		log_msg(2, "net_ctl: sending my state %s to peer \"%s\"",
 		    carpstate[cfgstate.runstate], p->name);
 		net_ctl_send_state(p);
 	}
