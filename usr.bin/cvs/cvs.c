@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.65 2005/05/20 18:26:49 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.66 2005/05/23 18:10:34 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -313,7 +313,7 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: %s [-flQqtv] [-d root] [-e editor] [-s var=val] [-z level] "
+	    "Usage: %s [-flnQqtv] [-d root] [-e editor] [-s var=val] [-z level] "
 	    "command [...]\n", __progname);
 }
 
