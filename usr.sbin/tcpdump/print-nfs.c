@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-nfs.c,v 1.12 2004/09/16 11:26:39 markus Exp $	*/
+/*	$OpenBSD: print-nfs.c,v 1.13 2005/05/23 20:32:05 moritz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -637,9 +637,11 @@ nfsreq_print(register const u_char *bp, u_int length,
 			 */
 			printf(" %u bytes @ ", (u_int32_t) ntohl(dp[4]));
 			print_int64(dp, SIGNED);
-			if (vflag)
+			if (vflag) {
+				TCHECK(dp[5]);
 				printf(" max %u verf %08x%08x",
 				       (u_int32_t) ntohl(dp[5]), dp[2], dp[3]);
+			}
 			return;
 		}
 		break;
@@ -669,6 +671,7 @@ nfsreq_print(register const u_char *bp, u_int length,
 		printf(" commit");
 		if ((dp = parsereq(rp, length)) != NULL &&
 		    (dp = parsefh(dp, v3)) != NULL) {
+			TCHECK(dp[2]);
 			printf(" %u bytes @ ", (u_int32_t) ntohl(dp[2]));
 			print_int64(dp, UNSIGNED);
 			return;
