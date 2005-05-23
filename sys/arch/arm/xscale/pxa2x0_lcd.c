@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_lcd.c,v 1.18 2005/04/30 23:13:47 pascoe Exp $ */
+/*	$OpenBSD: pxa2x0_lcd.c,v 1.19 2005/05/23 23:59:19 uwe Exp $ */
 /* $NetBSD: pxa2x0_lcd.c,v 1.8 2003/10/03 07:24:05 bsh Exp $ */
 
 /*
@@ -585,11 +585,6 @@ pxa2x0_lcd_setup_rasops(struct rasops_info *rinfo,
 	if (descr->c.nrows == 0) {
 		/* get rasops to compute screen size the first time */
 		rasops_init(rinfo, 100, 100);
-
-		descr->c.nrows = rinfo->ri_rows;
-		descr->c.ncols = rinfo->ri_cols;
-		descr->c.capabilities = rinfo->ri_caps;
-		descr->c.textops = &rinfo->ri_ops;
 	} else
 #ifndef __zaurus__
 		rasops_init(rinfo, descr->c.nrows, descr->c.ncols);
@@ -597,6 +592,11 @@ pxa2x0_lcd_setup_rasops(struct rasops_info *rinfo,
 		/* XXX swap rows/cols for second call because of rotation */
 		rasops_init(rinfo, descr->c.ncols, descr->c.nrows);
 #endif
+
+	descr->c.nrows = rinfo->ri_rows;
+	descr->c.ncols = rinfo->ri_cols;
+	descr->c.capabilities = rinfo->ri_caps;
+	descr->c.textops = &rinfo->ri_ops;
 }
 
 /*
@@ -641,10 +641,6 @@ pxa2x0_lcd_cnattach(struct pxa2x0_wsscreen_descr *descr,
 	pxa2x0_lcd_start_dma(pxa2x0_lcd_console.iot, pxa2x0_lcd_console.ioh,
 	    &pxa2x0_lcd_console.scr);
 
-	descr->c.nrows = ri->ri_rows;
-	descr->c.ncols = ri->ri_cols;
-	descr->c.capabilities = ri->ri_caps;
-	descr->c.textops = &ri->ri_ops;
 	wsdisplay_cnattach(&descr->c, ri, ri->ri_ccol, ri->ri_crow, defattr);
 
 	return (0);
