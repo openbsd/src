@@ -1,4 +1,4 @@
-.\" $OpenBSD: sasyncd.conf.5,v 1.3 2005/05/01 17:35:27 david Exp $
+.\" $OpenBSD: sasyncd.conf.5,v 1.4 2005/05/23 17:32:49 ho Exp $
 .\"
 .\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
 .\"
@@ -43,12 +43,21 @@ Comments can be put anywhere in the file using a hash mark
 .Pq Sq # ,
 and extends to the end of the current line.
 .Pp
+Since the file contains the shared secret key used to encrypt data
+between this host and the others,
+.Pa /etc/sasyncd.conf
+must be owned either by
+.Nm root
+or the
+.Nm _isakmpd
+pseudo user and be readable only by this owner, e.g
+.Bd -literal -offset indent
+# chown root /etc/sasyncd.conf
+# chmod 0600 /etc/sasyncd.conf
+.Ed
+.Pp
 The following configuration settings are understood:
 .Bl -tag -width Ds
-.It Ic CAcertificate file Ar filename
-Specify a file containing the CA certificate.
-The default is
-.Pa /etc/ssl/ca.crt .
 .It Ic carp interface Ar interface
 Specify which
 .Xr carp 4
@@ -59,20 +68,19 @@ should track master/slave state on.
 Specify how often the daemon should check the above interface for
 state changes.
 Defaults to once every 10 seconds.
-.It Ic certificate file Ar filename
-Specify a file containing our certificate.
-The default is
-.Pa /etc/ssl/sasyncd.crt .
 .It Ic listen on Ar address
 Specify a local IP address, hostname, or interface the
 .Xr sasyncd 8
 daemon should listen on.
 The default is to listen on all local addresses.
 .It Ic listen port Ar port
-Specify a local port the
+Specify a local TCP port the
 .Xr sasyncd 8
 daemon should listen on.
-The default is to listen on port 501.
+The default is to listen on port 500.
+.It Ic mode master | slave
+Force the daemon to run as master or slave.
+Normally only intended for debugging use.
 .It Ic peer Ar address
 Specify a
 .Xr sasyncd 8
@@ -84,18 +92,17 @@ peer 10.0.0.2
 peer 10.0.0.3
 peer 10.0.0.4
 .Ed
-.It Ic private key file Ar filename
-Specify a file containing the private key matching the certificate
-specified using
-.Ar certificate file .
-The default is
-.Pa /etc/ssl/private/sasyncd.key .
-.It Ic run as master | slave
-Force the daemon to run as master or slave.
-Normally only intended for debugging use.
+.It Ic sharedkey Ar key
+The shared AES key used to encrypt messages between
+.Xr sasyncd 8
+hosts.
+This configuration setting is required and must be either 16, 24 or 32
+bytes long (corresponding to AES using a 128, 192 or 256 bit key).
 .El
 .Sh SEE ALSO
+.Xr chmod 1 ,
 .Xr carp 4 ,
+.Xr chown 8 ,
 .Xr sasyncd 8
 .Sh HISTORY
 The

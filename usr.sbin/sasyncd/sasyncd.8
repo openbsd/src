@@ -1,4 +1,4 @@
-.\" $OpenBSD: sasyncd.8,v 1.3 2005/05/01 20:44:12 jmc Exp $
+.\" $OpenBSD: sasyncd.8,v 1.4 2005/05/23 17:32:49 ho Exp $
 .\"
 .\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
 .\"
@@ -66,17 +66,17 @@ It is possible to
 the daemon to a particular state; see
 .Xr sasyncd.conf 5 .
 .Ss Host to host communication
-All
+As
 .Nm
-host to host communication is protected by
-.Xr ssl 8 ,
-so the daemon requires certificates configured for each host.
-Normally
-.Pa /etc/ssl/sasyncd.crt
-and
-.Pa /etc/ssl/private/sasyncd.key
-are used, although alternate locations may be specified in the
-configuration file.
+will transmit IPSec SA keys over a network not guaranteed to be
+private,
+.Nm
+messages are protected using AES and SHA.
+The shared key used for the encryption must be specified in
+.Pa /etc/sasyncd.conf .
+See 
+.Xr sasyncd.conf 5
+for more information.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -89,11 +89,16 @@ option specifies an alternate configuration file instead of
 The
 .Fl d
 option causes the daemon to run in the foreground, logging to stderr.
+Without this option,
+.Nm
+sends log messages to
+.Xr syslog(3) .
 .It Fl v
 The
 .Fl v
-option increases the verbosity level of the daemon.
-This option can be specified several times.
+option increases the verbosity level of the daemon, used primarily for
+debugging.
+This option may be specified several times.
 .El
 .Sh FILES
 .Bl -tag -width /etc/ssl/private/sasyncd.key -compact
@@ -101,20 +106,14 @@ This option can be specified several times.
 The default
 .Nm
 configuration file.
-.It Pa /etc/ssl/sasyncd.crt
-The default certificate.
-.It Pa /etc/ssl/private/sasyncd.key
-The default private key.
-.It Pa /etc/ssl/ca.crt
-The default CA certificate.
 .El
 .Sh SEE ALSO
-.Xr openssl 1 ,
+.Xr crypto 3 ,
+.Xr syslog 3 ,
 .Xr carp 4 ,
 .Xr ipsec 4 ,
 .Xr sasyncd.conf 5 ,
-.Xr isakmpd 8 ,
-.Xr ssl 8
+.Xr isakmpd 8
 .Sh HISTORY
 The
 .Nm
