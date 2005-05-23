@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2005/04/12 09:54:59 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.14 2005/05/23 19:59:02 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -98,7 +98,7 @@ typedef struct {
 %}
 
 %token	AREA INTERFACE ROUTERID FIBUPDATE REDISTRIBUTE
-%token	SPFDELAY SPFHOLDTIME
+%token	RFC1583COMPAT SPFDELAY SPFHOLDTIME
 %token	AUTHKEY AUTHTYPE AUTHMD AUTHMDKEYID
 %token	METRIC PASSIVE
 %token	HELLOINTERVAL TRANSMITDELAY
@@ -249,6 +249,9 @@ conf_main	: METRIC number {
 				YYERROR;
 			}
 			free($2);
+		}
+		| RFC1583COMPAT yesno {
+				conf->rfc1583compat = $2;
 		}
 		| SPFDELAY number {
 			if ($2 < MIN_SPF_DELAY || $2 > MAX_SPF_DELAY) {
@@ -545,6 +548,7 @@ lookup(char *s)
 		{"passive",		PASSIVE},
 		{"redistribute",	REDISTRIBUTE},
 		{"retransmit-interval",	RETRANSMITINTERVAL},
+		{"rfc1583compat",	RFC1583COMPAT},
 		{"router-dead-time",	ROUTERDEADTIME},
 		{"router-id",		ROUTERID},
 		{"router-priority",	ROUTERPRIORITY},

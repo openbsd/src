@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.6 2005/04/14 20:02:09 cloder Exp $ */
+/*	$OpenBSD: config.c,v 1.7 2005/05/23 19:59:02 norby Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -146,6 +146,7 @@ show_config(struct ospfd_conf *xconf)
 	log_debug("--------------------------------------------------------");
 
 	log_debug("router-id: %s", inet_ntoa(xconf->rtr_id));
+	log_debug("rfc1583compat: %d", xconf->rfc1583compat);
 	log_debug("ospf socket: %d", xconf->ospf_socket);
 
 	LIST_FOREACH(area, &xconf->area_list, entry) {

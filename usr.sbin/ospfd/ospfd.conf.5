@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.8 2005/04/12 09:54:59 claudio Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.9 2005/05/23 19:59:02 norby Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -105,6 +105,15 @@ the default route will be announced over OSPF.
 The default setting is
 .Ar none .
 In this case no additional routes will be announced over OSPF.
+.It Xo
+.Ic rfc1583compat
+.Pq Ic yes Ns \&| Ns Ic no
+.Xc
+If set to
+.Ic yes ,
+decisions regarding AS-external routes are evaluated according to RFC 1583.
+The default is
+.Ic no .
 .It Ic router-id Ar address
 Set the router ID; if not specified, the lowest IP address of the router
 will be used.
