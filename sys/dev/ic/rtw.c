@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.26 2005/03/18 00:10:36 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.27 2005/05/23 23:14:30 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -222,121 +222,11 @@ const char * rtw_access_string(enum rtw_access);
 void rtw_dump_rings(struct rtw_softc *);
 void rtw_print_txdesc(struct rtw_softc *, const char *,
     struct rtw_txsoft *, struct rtw_txdesc_blk *, int);
-void rtw_print_regs(struct rtw_regs *, const char *, const char *);
 #endif
 
 struct cfdriver rtw_cd = {
     NULL, "rtw", DV_IFNET
 };
-
-#ifdef RTW_DEBUG
-void
-rtw_print_regs(struct rtw_regs *regs, const char *dvname, const char *where)
-{
-#define PRINTREG32(sc, reg)				\
-	RTW_DPRINTF(RTW_DEBUG_REGDUMP,			\
-	    ("%s: reg[ " #reg " / %03x ] = %08x\n",	\
-	    dvname, reg, RTW_READ(regs, reg)))
-
-#define PRINTREG16(sc, reg)				\
-	RTW_DPRINTF(RTW_DEBUG_REGDUMP,			\
-	    ("%s: reg[ " #reg " / %03x ] = %04x\n",	\
-	    dvname, reg, RTW_READ16(regs, reg)))
-
-#define PRINTREG8(sc, reg)				\
-	RTW_DPRINTF(RTW_DEBUG_REGDUMP,			\
-	    ("%s: reg[ " #reg " / %03x ] = %02x\n",	\
-	    dvname, reg, RTW_READ8(regs, reg)))
-
-	RTW_DPRINTF(RTW_DEBUG_REGDUMP, ("%s: %s\n", dvname, where));
-
-	PRINTREG32(regs, RTW_IDR0);
-	PRINTREG32(regs, RTW_IDR1);
-	PRINTREG32(regs, RTW_MAR0);
-	PRINTREG32(regs, RTW_MAR1);
-	PRINTREG32(regs, RTW_TSFTRL);
-	PRINTREG32(regs, RTW_TSFTRH);
-	PRINTREG32(regs, RTW_TLPDA);
-	PRINTREG32(regs, RTW_TNPDA);
-	PRINTREG32(regs, RTW_THPDA);
-	PRINTREG32(regs, RTW_TCR);
-	PRINTREG32(regs, RTW_RCR);
-	PRINTREG32(regs, RTW_TINT);
-	PRINTREG32(regs, RTW_TBDA);
-	PRINTREG32(regs, RTW_ANAPARM);
-	PRINTREG32(regs, RTW_BB);
-	PRINTREG32(regs, RTW_PHYCFG);
-	PRINTREG32(regs, RTW_WAKEUP0L);
-	PRINTREG32(regs, RTW_WAKEUP0H);
-	PRINTREG32(regs, RTW_WAKEUP1L);
-	PRINTREG32(regs, RTW_WAKEUP1H);
-	PRINTREG32(regs, RTW_WAKEUP2LL);
-	PRINTREG32(regs, RTW_WAKEUP2LH);
-	PRINTREG32(regs, RTW_WAKEUP2HL);
-	PRINTREG32(regs, RTW_WAKEUP2HH);
-	PRINTREG32(regs, RTW_WAKEUP3LL);
-	PRINTREG32(regs, RTW_WAKEUP3LH);
-	PRINTREG32(regs, RTW_WAKEUP3HL);
-	PRINTREG32(regs, RTW_WAKEUP3HH);
-	PRINTREG32(regs, RTW_WAKEUP4LL);
-	PRINTREG32(regs, RTW_WAKEUP4LH);
-	PRINTREG32(regs, RTW_WAKEUP4HL);
-	PRINTREG32(regs, RTW_WAKEUP4HH);
-	PRINTREG32(regs, RTW_DK0);
-	PRINTREG32(regs, RTW_DK1);
-	PRINTREG32(regs, RTW_DK2);
-	PRINTREG32(regs, RTW_DK3);
-	PRINTREG32(regs, RTW_RETRYCTR);
-	PRINTREG32(regs, RTW_RDSAR);
-	PRINTREG32(regs, RTW_FER);
-	PRINTREG32(regs, RTW_FEMR);
-	PRINTREG32(regs, RTW_FPSR);
-	PRINTREG32(regs, RTW_FFER);
-
-	/* 16-bit registers */
-	PRINTREG16(regs, RTW_BRSR);
-	PRINTREG16(regs, RTW_IMR);
-	PRINTREG16(regs, RTW_ISR);
-	PRINTREG16(regs, RTW_BCNITV);
-	PRINTREG16(regs, RTW_ATIMWND);
-	PRINTREG16(regs, RTW_BINTRITV);
-	PRINTREG16(regs, RTW_ATIMTRITV);
-	PRINTREG16(regs, RTW_CRC16ERR);
-	PRINTREG16(regs, RTW_CRC0);
-	PRINTREG16(regs, RTW_CRC1);
-	PRINTREG16(regs, RTW_CRC2);
-	PRINTREG16(regs, RTW_CRC3);
-	PRINTREG16(regs, RTW_CRC4);
-	PRINTREG16(regs, RTW_CWR);
-
-	/* 8-bit registers */
-	PRINTREG8(regs, RTW_CR);
-	PRINTREG8(regs, RTW_9346CR);
-	PRINTREG8(regs, RTW_CONFIG0);
-	PRINTREG8(regs, RTW_CONFIG1);
-	PRINTREG8(regs, RTW_CONFIG2);
-	PRINTREG8(regs, RTW_MSR);
-	PRINTREG8(regs, RTW_CONFIG3);
-	PRINTREG8(regs, RTW_CONFIG4);
-	PRINTREG8(regs, RTW_TESTR);
-	PRINTREG8(regs, RTW_PSR);
-	PRINTREG8(regs, RTW_SCR);
-	PRINTREG8(regs, RTW_PHYDELAY);
-	PRINTREG8(regs, RTW_CRCOUNT);
-	PRINTREG8(regs, RTW_PHYADDR);
-	PRINTREG8(regs, RTW_PHYDATAW);
-	PRINTREG8(regs, RTW_PHYDATAR);
-	PRINTREG8(regs, RTW_CONFIG5);
-	PRINTREG8(regs, RTW_TPPOLL);
-
-	PRINTREG16(regs, RTW_BSSID16);
-	PRINTREG32(regs, RTW_BSSID32);
-#undef PRINTREG32
-#undef PRINTREG16
-#undef PRINTREG8
-}
-#endif /* RTW_DEBUG */
-
 
 void
 rtw_continuous_tx_enable(struct rtw_softc *sc, int enable)
@@ -2632,15 +2522,8 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				rtw_pktfilt_load(sc);
 			} else
 				rc = rtw_init(ifp);
-#ifdef RTW_DEBUG
-			rtw_print_regs(&sc->sc_regs, ifp->if_xname, __func__);
-#endif /* RTW_DEBUG */
-		} else if ((sc->sc_flags & RTW_F_ENABLED) != 0) {
-#ifdef RTW_DEBUG
-			rtw_print_regs(&sc->sc_regs, ifp->if_xname, __func__);
-#endif /* RTW_DEBUG */
+		} else if ((sc->sc_flags & RTW_F_ENABLED) != 0)
 			rtw_stop(ifp, 1);
-		}
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
