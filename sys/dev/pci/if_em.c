@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.50 2005/05/07 22:16:36 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.51 2005/05/23 23:26:56 tedu Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -736,7 +736,7 @@ em_init_locked(struct em_softc *sc)
 	}
 	em_initialize_receive_unit(sc);
 
-        /* Don't loose promiscuous settings */
+        /* Don't lose promiscuous settings */
         em_set_promisc(sc);
 
 	ifp->if_flags |= IFF_RUNNING;

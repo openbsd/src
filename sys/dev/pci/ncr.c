@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.71 2004/06/25 00:54:27 tholo Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.72 2005/05/23 23:26:56 tedu Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1466,7 +1466,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.71 2004/06/25 00:54:27 tholo Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.72 2005/05/23 23:26:56 tedu Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -1773,7 +1773,7 @@ static	struct script script0 = {
 	/*
 	**	Now there are 4 possibilities:
 	**
-	**	(1) The ncr looses arbitration.
+	**	(1) The ncr loses arbitration.
 	**	This is ok, because it will try again,
 	**	when the bus becomes idle.
 	**	(But beware of the timeout function!)

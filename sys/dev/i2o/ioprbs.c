@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioprbs.c,v 1.5 2004/04/12 22:12:32 jmc Exp $	*/
+/*	$OpenBSD: ioprbs.c,v 1.6 2005/05/23 23:26:55 tedu Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist
@@ -654,7 +654,7 @@ ioprbs_adjqparam(struct device *dv, int mpi)
 	struct iop_softc *iop;
 
 	/*
-	 * AMI controllers seem to loose the plot if you hand off lots of
+	 * AMI controllers seem to lose the plot if you hand off lots of
 	 * queued commands.
 	 */
 	iop = (struct iop_softc *)dv->dv_parent;

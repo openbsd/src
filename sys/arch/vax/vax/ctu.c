@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctu.c,v 1.6 2002/06/08 08:50:26 art Exp $ */
+/*	$OpenBSD: ctu.c,v 1.7 2005/05/23 23:26:55 tedu Exp $ */
 /*	$NetBSD: ctu.c,v 1.10 2000/03/23 06:46:44 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -39,7 +39,7 @@
  * Writing of tapes does not work, by some unknown reason so far.
  * It is almost useless to try to use this driver when running
  * multiuser, because the serial device don't have any buffers 
- * so we will loose interrupts.
+ * so we will lose interrupts.
  */
 
 #include <sys/param.h>

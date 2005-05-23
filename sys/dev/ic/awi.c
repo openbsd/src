@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi.c,v 1.18 2005/04/02 23:21:33 uwe Exp $	*/
+/*	$OpenBSD: awi.c,v 1.19 2005/05/23 23:26:55 tedu Exp $	*/
 /*	$NetBSD: awi.c,v 1.26 2000/07/21 04:48:55 onoe Exp $	*/
 
 /*-
@@ -1160,7 +1160,7 @@ awi_fix_rxhdr(sc, m0)
 	}
 	if (ALIGN(mtod(m0, caddr_t) + sizeof(struct ether_header)) !=
 	    (u_int)(mtod(m0, caddr_t) + sizeof(struct ether_header))) {
-		/* XXX: we loose to estimate the type of encapsulation */
+		/* XXX: we lose to estimate the type of encapsulation */
 		struct mbuf *n, *n0, **np;
 		caddr_t newdata;
 		int off, oldmlen;

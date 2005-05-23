@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fe.c,v 1.23 2005/04/03 10:20:47 brad Exp $	*/
+/*	$OpenBSD: if_fe.c,v 1.24 2005/05/23 23:26:56 tedu Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1426,9 +1426,9 @@ fe_start(ifp)
 		 * reset the entire interface.  I don't want to do it.)
 		 *
 		 * If txb_count is incorrect, leaving it as is will cause
-		 * sending of gabages after next interrupt.  We have to
+		 * sending of garbage after next interrupt.  We have to
 		 * avoid it.  Hence, we reset the txb_count here.  If
-		 * txb_free was incorrect, resetting txb_count just loose
+		 * txb_free was incorrect, resetting txb_count just loses
 		 * some packets.  We can live with it.
 		 */
 		sc->txb_count = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.3 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.4 2005/05/23 23:26:55 tedu Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -256,7 +256,7 @@ cpu_swapout(l)
 
 	/* 
 	 * Don't do this!  If the pmap is shared with another process,
-	 * it will loose it's page0 entry.  That's bad news indeed.
+	 * it will lose its page0 entry.  That's bad news indeed.
 	 */
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)

@@ -106,7 +106,7 @@ struct zsc_softc {
  * and the Sun3 hardware does NOT take care of this for you.
  * MacII hardware DOES dake care of the delay for us. :-)
  * XXX - Then these should be inline functions! -gwr
- * Some clock-chirped macs loose serial ports. It could be that the
+ * Some clock-chirped macs lose serial ports. It could be that the
  * hardware delay is tied to the CPU speed, and that the minimum delay
  * no longer's respected. For them, ZS_DELAY might help.
  * XXX - no one seems to want to try and check this -wrs
