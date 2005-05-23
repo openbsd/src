@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.67 2005/05/17 03:11:44 brad Exp $
+#	$OpenBSD: GENERIC,v 1.68 2005/05/23 23:37:49 jason Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -13,7 +13,7 @@ machine		amd64
 include		"../../../conf/GENERIC"
 maxusers	32			# estimated number of users
 
-#option		USER_PCICONF	# user-space PCI configuration
+option		USER_PCICONF	# user-space PCI configuration
 
 #option		VM86		# Virtual 8086 emulation
 #option		USER_LDT	# user-settable LDT; see i386_set_ldt(2)
