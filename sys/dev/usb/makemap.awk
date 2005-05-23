@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.5 2005/05/19 17:49:54 miod Exp $
+#	$OpenBSD: makemap.awk,v 1.6 2005/05/23 21:33:03 miod Exp $
 #
 # Copyright (c) 2005, Miodrag Vallat
 #
@@ -31,7 +31,7 @@
 #
 
 BEGIN {
-	rcsid = "$OpenBSD: makemap.awk,v 1.5 2005/05/19 17:49:54 miod Exp $"
+	rcsid = "$OpenBSD: makemap.awk,v 1.6 2005/05/23 21:33:03 miod Exp $"
 	ifdepth = 0
 	ignore = 0
 	declk = 0
@@ -299,10 +299,15 @@ $1 == "#define" || $1 == "#undef" {
 	}
 
 	if (haskeys) {
-		# Duplicate 42 (backspace) as 76
-		# XXX maybe not correct anymore?
-		lines[76] = lines[42]
-		sub("42", "76", lines[76])
+		# Duplicate 42 (backspace) as 76 and 50 (backslash bar) as 49
+		if (!lines[76]) {
+			lines[76] = lines[42]
+			sub("42", "76", lines[76])
+		}
+		if (!lines[49]) {
+			lines[49] = lines[50]
+			sub("50", "49", lines[49])
+		}
 
 		for (i = 0; i < 256; i++)
 			if (lines[i]) {
