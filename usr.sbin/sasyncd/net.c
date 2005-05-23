@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.2 2005/05/22 20:35:48 ho Exp $	*/
+/*	$OpenBSD: net.c,v 1.3 2005/05/23 17:35:01 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -35,6 +35,8 @@
 #include <sys/time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <ifaddrs.h>
+#include <netdb.h>
 
 #include <openssl/aes.h>
 #include <openssl/sha.h>
@@ -91,10 +93,11 @@ net_init(void)
 	struct sockaddr_storage sa_storage;
 	struct sockaddr *sa = (struct sockaddr *)&sa_storage;
 	struct syncpeer *p;
+	char		 host[NI_MAXHOST], port[NI_MAXSERV];
 	int		 r;
 
 	/* The shared key needs to be 128, 192 or 256 bits */
-	r = (strlen(cfgstate.sharedkey) - 1) << 3;
+	r = strlen(cfgstate.sharedkey) << 3;
 	if (r != 128 && r != 192 && r != 256) {
 		fprintf(stderr, "Bad shared key length (%d bits), "
 		    "should be 128, 192 or 256\n", r);
@@ -110,9 +113,11 @@ net_init(void)
 	/* Setup listening socket.  */
 	memset(&sa_storage, 0, sizeof sa_storage);
 	if (net_set_sa(sa, cfgstate.listen_on, cfgstate.listen_port)) {
-		perror("inet_pton");
+		log_msg(0, "net_init: could not find listen address (%s)",
+		    cfgstate.listen_on);
 		return -1;
 	}
+
 	listen_socket = socket(sa->sa_family, SOCK_STREAM, 0);
 	if (listen_socket < 0) {
 		perror("socket()");
@@ -137,8 +142,14 @@ net_init(void)
 		close(listen_socket);
 		return -1;
 	}
-	log_msg(2, "listening on port %u fd %d", cfgstate.listen_port,
-	    listen_socket);
+
+	if (getnameinfo(sa, sa->sa_len, host, sizeof host, port, sizeof port,
+		NI_NUMERICHOST | NI_NUMERICSERV)) 
+		log_msg(2, "listening on port %u fd %d", cfgstate.listen_port,
+		    listen_socket);
+	else
+		log_msg(2, "listening on %s port %s fd %d", host, port,
+		    listen_socket);
 
 	for (p = LIST_FIRST(&cfgstate.peerlist); p; p = LIST_NEXT(p, link)) {
 		p->socket = -1;
@@ -576,22 +587,9 @@ net_set_sa(struct sockaddr *sa, char *name, in_port_t port)
 {
 	struct sockaddr_in	*sin = (struct sockaddr_in *)sa;
 	struct sockaddr_in6	*sin6 = (struct sockaddr_in6 *)sa;
+	struct ifaddrs		*ifap, *ifa;
 
-	if (name) {
-		if (inet_pton(AF_INET, name, &sin->sin_addr) == 1) {
-			sa->sa_family = AF_INET;
-			sin->sin_port = htons(port);
-			sin->sin_len = sizeof *sin;
-			return 0;
-		}
-
-		if (inet_pton(AF_INET6, name, &sin6->sin6_addr) == 1) {
-			sa->sa_family = AF_INET6;
-			sin6->sin6_port = htons(port);
-			sin6->sin6_len = sizeof *sin6;
-			return 0;
-		}
-	} else {
+	if (!name) {
 		/* XXX Assume IPv4 */
 		sa->sa_family = AF_INET;
 		sin->sin_port = htons(port);
@@ -599,8 +597,61 @@ net_set_sa(struct sockaddr *sa, char *name, in_port_t port)
 		return 0;
 	}
 
-	return 1;
+	if (inet_pton(AF_INET, name, &sin->sin_addr) == 1) {
+		sa->sa_family = AF_INET;
+		sin->sin_port = htons(port);
+		sin->sin_len = sizeof *sin;
+		return 0;
+	}
+	
+	if (inet_pton(AF_INET6, name, &sin6->sin6_addr) == 1) {
+		sa->sa_family = AF_INET6;
+		sin6->sin6_port = htons(port);
+		sin6->sin6_len = sizeof *sin6;
+		return 0;
+	}
+
+	/* inet_pton failed. fail here if name is not cfgstate.listen_on */
+	if (strcmp(cfgstate.listen_on, name) != 0)
+		return -1;
+
+	/* Is cfgstate.listen_on the name of one our interfaces? */
+	if (getifaddrs(&ifap) != 0) {
+		perror("getifaddrs()"); 
+		return -1;
+	}
+	sa->sa_family = AF_UNSPEC;
+	for (ifa = ifap; ifa && sa->sa_family == AF_UNSPEC;
+	     ifa = ifa->ifa_next) {
+		if (!ifa->ifa_name || !ifa->ifa_addr)
+			continue;
+		if (strcmp(ifa->ifa_name, name) != 0)
+			continue;
+		
+		switch (ifa->ifa_addr->sa_family) {
+		case AF_INET:
+			sa->sa_family = AF_INET;
+			sin->sin_port = htons(port);
+			sin->sin_len = sizeof *sin;
+			memcpy(&sin->sin_addr,
+			    &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
+			    sizeof sin->sin_addr);
+			break;
+			
+		case AF_INET6:
+			sa->sa_family = AF_INET6;
+			sin6->sin6_port = htons(port);
+			sin6->sin6_len = sizeof *sin6;
+			memcpy(&sin6->sin6_addr,
+			    &((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
+			    sizeof sin6->sin6_addr);
+			break;
+		}
+	}
+	freeifaddrs(ifap);
+	return sa->sa_family == AF_UNSPEC ? -1 : 0;
 }
+				
 
 static void
 got_sigalrm(int s)
