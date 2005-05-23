@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_i2s.c,v 1.3 2005/05/23 20:20:35 pascoe Exp $	*/
+/*	$OpenBSD: pxa2x0_i2s.c,v 1.4 2005/05/23 21:57:23 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2005 Christopher Pascoe <pascoe@openbsd.org>
@@ -282,20 +282,16 @@ pxa2x0_i2s_mappage(void *hdl, void *mem, off_t off, int prot)
 int
 pxa2x0_i2s_round_blocksize(void *hdl, int bs)
 {
+	/* Enforce individual DMA block size limit */
+	if (bs > DCMD_LENGTH_MASK)
+		return (DCMD_LENGTH_MASK & ~0x03);
+
 	return (bs + 0x03) & ~0x03;	/* 32-bit multiples */
 }
 
 size_t
 pxa2x0_i2s_round_buffersize(void *hdl, int direction, size_t bufsize)
 {
-	/*
-	 * PXA DMA Controller can do up to (8kB-1) DMA blocks.
-	 * The block gets split into two when using start_output, so
-	 * use 2 * the maximum DMA controller length.
-	 */
-	if (bufsize > (2 * DCMD_LENGTH_MASK))
-		bufsize = (2 * DCMD_LENGTH_MASK) & ~0x03;
-
 	return bufsize;
 }
 
@@ -313,7 +309,7 @@ pxa2x0_i2s_start_output(struct pxa2x0_i2s_softc *sc, void *block, int bsize,
 
 	if (!p) {
 		printf("pxa2x0_i2s_start_output: request with bad start "
-		    "address: %p, size: %d)", block, bsize);
+		    "address: %p, size: %d)\n", block, bsize);
 		return ENXIO;
 	}
 
