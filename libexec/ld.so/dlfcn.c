@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.47 2005/05/10 03:36:07 drahn Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.48 2005/05/23 19:22:11 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -41,9 +41,8 @@
 int _dl_errno;
 
 int _dl_real_close(void *handle);
-void _dl_unload_deps(elf_object_t *object);
 void (*_dl_thread_fnc)(int) = NULL;
-elf_object_t *obj_from_addr(const void *addr);
+static elf_object_t *obj_from_addr(const void *addr);
 
 void *
 dlopen(const char *libname, int flags)
@@ -246,35 +245,13 @@ _dl_real_close(void *handle)
 		return (1);
 	}
 
-	if (object->refcount == 1) {
-		if (dynobj->dep_next)
-			_dl_unload_deps(dynobj);
-	}
-
 	_dl_unlink_dlopen(object);
+	_dl_notify_unload_shlib(object);
+	_dl_run_all_dtors();
 	_dl_unload_shlib(object);
 	return (0);
 }
 
-/*
- * Scan through the shadow dep list and 'unload' every library
- * we depend upon. Shadow objects are removed when removing ourself.
- */
-void
-_dl_unload_deps(elf_object_t *object)
-{
-	elf_object_t *depobj;
-
-	depobj = object->dep_next;
-	while (depobj) {
-		if (depobj->next->refcount == 1) { /* This object will go away */
-			if (depobj->next->dep_next)
-				_dl_unload_deps(depobj->next);
-			_dl_unload_shlib(depobj->next);
-		}
-		depobj = depobj->dep_next;
-	}
-}
 
 /*
  * Return a character string describing the last dl... error occurred.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.39 2005/05/10 03:36:07 drahn Exp $ */
+/*	$OpenBSD: library.c,v 1.40 2005/05/23 19:22:11 drahn Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -54,13 +54,6 @@ _dl_load_list_free(struct load_list *load_list)
 	}
 }
 
-void
-_dl_notify_unload_shlib(elf_object_t *object)
-{
-	if (--object->refcount == 0) {
-		_dl_run_dtors(object);
-	}
-}
 void
 _dl_unload_shlib(elf_object_t *object)
 {
