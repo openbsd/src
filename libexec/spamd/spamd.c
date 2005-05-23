@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.77 2005/04/16 14:23:35 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.78 2005/05/23 21:08:43 frantzen Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -1125,6 +1125,7 @@ main(int argc, char *argv[])
 			exit(1);
 		case 0:
 			/* child - continue */
+			signal(SIGPIPE, SIG_IGN);
 			grey = fdopen(greypipe[1], "w");
 			if (grey == NULL) {
 				syslog(LOG_ERR, "fdopen (%m)");
