@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_stge.c,v 1.11 2005/04/25 17:55:51 brad Exp $	*/
-/*	$NetBSD: if_stge.c,v 1.4 2001/07/25 15:44:48 thorpej Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.12 2005/05/23 22:44:19 brad Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,16 +47,18 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/sockio.h>
+#include <sys/timeout.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/queue.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -65,6 +67,8 @@
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
 #endif
+
+#include <net/if_media.h>
 
 #if NVLAN > 0
 #include <net/if_types.h>
@@ -75,13 +79,16 @@
 #include <net/bpf.h>
 #endif
 
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcidevs.h>
+#include <machine/bus.h>
+#include <machine/intr.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 #include <dev/mii/mii_bitbang.h>
+
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_stgereg.h>
 
@@ -399,8 +406,9 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Get it out of power save mode if needed. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR) & 0x3;
-		if (pmode == 3) {
+		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR) &
+		    PCI_PMCSR_STATE_MASK;
+		if (pmode == PCI_PMCSR_STATE_D3) {
 			/*
 			 * The card has lost all configuration data in
 			 * this state, so punt.
@@ -410,7 +418,8 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 		}
 		if (pmode != 0) {
 			printf(": waking up from power state D%d\n", pmode);
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR, 0);
+			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
+			    PCI_PMCSR_STATE_D0);
 		}
 	}
 
@@ -476,8 +485,8 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	 * such chips to 1.
 	 */
 	for (i = 0; i < STGE_NTXDESC; i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    STGE_NTXFRAGS, MCLBYTES, 0, 0,
+		if ((error = bus_dmamap_create(sc->sc_dmat,
+		    ETHER_MAX_LEN_JUMBO, STGE_NTXFRAGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].ds_dmamap)) != 0) {
 			printf("%s: unable to create tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
@@ -515,7 +524,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Reading the station address from the EEPROM doesn't seem
-	 * to work, at least on my sample boards.  Instread, since
+	 * to work, at least on my sample boards.  Instead, since
 	 * the reset sequence does AutoInit, read it from the station
 	 * address registers.
 	 */
@@ -564,10 +573,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = stge_ioctl;
 	ifp->if_start = stge_start;
 	ifp->if_watchdog = stge_watchdog;
-#ifdef fake
-	ifp->if_init = stge_init;
-	ifp->if_stop = stge_stop;
-#endif
+	IFQ_SET_MAXLEN(&ifp->if_snd, STGE_NTXDESC - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
@@ -851,16 +857,16 @@ stge_start(struct ifnet *ifp)
 		 */
 		if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT) {
 			STGE_EVCNT_INCR(&sc->sc_ev_txipsum);
-			csum_flags |= htole64(TFD_IPChecksumEnable);
+			csum_flags |= TFD_IPChecksumEnable;
 		}
 
 		if (m0->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT) {
 			STGE_EVCNT_INCR(&sc->sc_ev_txtcpsum);
-			csum_flags |= htole64(TFD_TCPChecksumEnable);
+			csum_flags |= TFD_TCPChecksumEnable;
 		}
 		else if (m0->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT) {
 			STGE_EVCNT_INCR(&sc->sc_ev_txudpsum);
-			csum_flags |= htole64(TFD_UDPChecksumEnable);
+			csum_flags |= TFD_UDPChecksumEnable;
 		}
 #endif
 
@@ -960,6 +966,9 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	s = splnet();
 
 	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+		/* Try to get more packets going. */
+		stge_start(ifp);
+
 		splx(s);
 		return (error);
 	}
@@ -1046,6 +1055,9 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = EINVAL;
 	}
 
+	/* Try to get more packets going. */
+	stge_start(ifp);
+
 	splx(s);
 	return (error);
 }
@@ -1072,12 +1084,20 @@ stge_intr(void *arg)
 		isr = bus_space_read_2(sc->sc_st, sc->sc_sh, STGE_IntStatusAck);
 		if ((isr & sc->sc_IntEnable) == 0)
 			break;
-		
+
+		/* Host interface errors. */
+		if (isr & IS_HostError) {
+			printf("%s: Host interface error\n",
+			    sc->sc_dev.dv_xname);
+			wantinit = 1;
+			continue;
+		}
+
 		/* Receive interrupts. */
-		if (isr & (IE_RxDMAComplete|IE_RFDListEnd)) {
+		if (isr & (IS_RxDMAComplete|IS_RFDListEnd)) {
 			STGE_EVCNT_INCR(&sc->sc_ev_rxintr);
 			stge_rxintr(sc);
-			if (isr & IE_RFDListEnd) {
+			if (isr & IS_RFDListEnd) {
 				printf("%s: receive ring overflow\n",
 				    sc->sc_dev.dv_xname);
 				/*
@@ -1089,20 +1109,20 @@ stge_intr(void *arg)
 		}
 
 		/* Transmit interrupts. */
-		if (isr & (IE_TxDMAComplete|IE_TxComplete)) {
+		if (isr & (IS_TxDMAComplete|IS_TxComplete)) {
 #ifdef STGE_EVENT_COUNTERS
-			if (isr & IE_TxDMAComplete)
+			if (isr & IS_TxDMAComplete)
 				STGE_EVCNT_INCR(&sc->sc_ev_txdmaintr);
 #endif
 			stge_txintr(sc);
 		}
 
 		/* Statistics overflow. */
-		if (isr & IE_UpdateStats)
+		if (isr & IS_UpdateStats)
 			stge_stats_update(sc);
 
 		/* Transmission errors. */
-		if (isr & IE_TxComplete) {
+		if (isr & IS_TxComplete) {
 			STGE_EVCNT_INCR(&sc->sc_ev_txindintr);
 			for (;;) {
 				txstat = bus_space_read_4(sc->sc_st, sc->sc_sh,
@@ -1125,12 +1145,6 @@ stge_intr(void *arg)
 			wantinit = 1;
 		}
 
-		/* Host interface errors. */
-		if (isr & IE_HostError) {
-			printf("%s: Host interface error\n",
-			    sc->sc_dev.dv_xname);
-			wantinit = 1;
-		}
 	}
 
 	if (wantinit)
@@ -1482,8 +1496,8 @@ stge_init(struct ifnet *ifp)
 	 */
 	memset(sc->sc_txdescs, 0, sizeof(sc->sc_txdescs));
 	for (i = 0; i < STGE_NTXDESC; i++) {
-		sc->sc_txdescs[i].tfd_next =
-		    (uint64_t) STGE_CDTXADDR(sc, STGE_NEXTTX(i));
+		sc->sc_txdescs[i].tfd_next = htole64(
+		    STGE_CDTXADDR(sc, STGE_NEXTTX(i)));
 		sc->sc_txdescs[i].tfd_control = htole64(TFD_TFDDone);
 	}
 	sc->sc_txpending = 0;
@@ -1564,16 +1578,18 @@ stge_init(struct ifnet *ifp)
 	/*
 	 * Initialize the Rx DMA interrupt control register.  We
 	 * request an interrupt after every incoming packet, but
-	 * defer it for 32us (64 * 512 ns).
+	 * defer it for 32us (64 * 512 ns).  When the number of
+	 * interrupts pending reaches 8, we stop deferring the
+	 * interrupt, and signal it immediately.
 	 */
 	bus_space_write_4(st, sh, STGE_RxDMAIntCtrl,
-	    RDIC_RxFrameCount(1) | RDIC_RxDMAWaitTime(512));
+	    RDIC_RxFrameCount(8) | RDIC_RxDMAWaitTime(512));
 
 	/*
 	 * Initialize the interrupt mask.
 	 */
-	sc->sc_IntEnable = IE_HostError | IE_TxComplete | IE_UpdateStats |
-	    IE_TxDMAComplete | IE_RxDMAComplete | IE_RFDListEnd;
+	sc->sc_IntEnable = IS_HostError | IS_TxComplete | IS_UpdateStats |
+	    IS_TxDMAComplete | IS_RxDMAComplete | IS_RFDListEnd;
 	bus_space_write_2(st, sh, STGE_IntStatus, 0xffff);
 	bus_space_write_2(st, sh, STGE_IntEnable, sc->sc_IntEnable);
 
@@ -1589,8 +1605,8 @@ stge_init(struct ifnet *ifp)
 	 * FIFO, and send an un-PAUSE frame when the FIFO is totally
 	 * empty again.
 	 */
-	bus_space_write_4(st, sh, STGE_FlowOnTresh, 29696 / 16);
-	bus_space_write_4(st, sh, STGE_FlowOffThresh, 0);
+	bus_space_write_2(st, sh, STGE_FlowOnTresh, 29696 / 16);
+	bus_space_write_2(st, sh, STGE_FlowOffThresh, 0);
 
 	/*
 	 * Set the maximum frame size.
@@ -1786,7 +1802,7 @@ stge_add_rxbuf(struct stge_softc *sc, int idx)
 	int error;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)  
+	if (m == NULL)
 		return (ENOBUFS);
 
 	MCLGET(m, M_DONTWAIT);
@@ -1827,11 +1843,12 @@ stge_add_rxbuf(struct stge_softc *sc, int idx)
 void
 stge_set_filter(struct stge_softc *sc)
 {
+	struct arpcom *ac = &sc->sc_arpcom;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-        int h = 0;
-        u_int32_t mchash[2] = { 0, 0 };
+	uint32_t crc;
+	uint32_t mchash[2];
 
 	sc->sc_ReceiveMode = RM_ReceiveUnicast;
 	if (ifp->if_flags & IFF_BROADCAST)
@@ -1850,20 +1867,34 @@ stge_set_filter(struct stge_softc *sc)
 	 * select the bit within the register.
 	 */
 
-	ETHER_FIRST_MULTI(step, &sc->sc_arpcom, enm);
+	memset(mchash, 0, sizeof(mchash));
+
+	ETHER_FIRST_MULTI(step, ac, enm);
 	if (enm == NULL)
 		goto done;
 
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN))
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/*
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
+			 */
 			goto allmulti;
-		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) & 
-		    0x0000003F;
-                if (h < 32)
-                        mchash[0] |= (1 << h);
-                else
-                        mchash[1] |= (1 << (h - 32));
-                ETHER_NEXT_MULTI(step, enm);
+		}
+
+		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+		/* Just want the 6 least significant bits. */
+		crc &= 0x3f;
+
+		/* Set the corresponding bit in the hash table. */
+		mchash[crc >> 5] |= 1 << (crc & 0x1f);
+
+		ETHER_NEXT_MULTI(step, enm);
 	}
 
 	sc->sc_ReceiveMode |= RM_ReceiveMulticastHash;
@@ -1886,7 +1917,7 @@ stge_set_filter(struct stge_softc *sc)
 		    mchash[1]);
 	}
 
-	bus_space_write_1(sc->sc_st, sc->sc_sh, STGE_ReceiveMode,
+	bus_space_write_2(sc->sc_st, sc->sc_sh, STGE_ReceiveMode,
 	    sc->sc_ReceiveMode);
 }
 
