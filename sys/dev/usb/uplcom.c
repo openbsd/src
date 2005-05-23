@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.21 2005/01/28 22:35:16 djm Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.22 2005/05/23 21:20:14 deraadt Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -191,6 +191,8 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_SOURCENEXT, USB_PRODUCT_SOURCENEXT_KEIKAI8_CHG },
 	/* HAL Corporation Crossam2+USB */
 	{ USB_VENDOR_HAL, USB_PRODUCT_HAL_IMR001 },
+	/* AirPrime CDMA Wireless EVDO card */
+	{ USB_VENDOR_AIRPRIME, USB_PRODUCT_AIRPRIME_PC5220 },
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 
