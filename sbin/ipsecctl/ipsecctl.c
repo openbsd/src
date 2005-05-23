@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.5 2005/05/23 20:25:54 kjell Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.6 2005/05/23 22:48:17 kjell Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -57,7 +57,7 @@ ipsecctl_rules(char *filename, int opts)
 	struct ipsecctl	 ipsec;
 	int		 error = 0;
 
-	memset(&ipsec, 0, sizeof(ipsec));
+	bzero(&ipsec, sizeof(ipsec));
 	ipsec.opts = opts;
 	TAILQ_INIT(&ipsec.rule_queue);
 
@@ -75,11 +75,11 @@ ipsecctl_rules(char *filename, int opts)
 	if (parse_rules(fin, &ipsec) < 0) {
 		warnx("Syntax error in config file: ipsec rules not loaded");
 		error = 1;
+	} else {
+		if ((opts & IPSECCTL_OPT_NOACTION) == 0)
+			if (ipsecctl_commit(&ipsec))
+				err(1, NULL);
 	}
-	if (((opts & IPSECCTL_OPT_NOACTION) == 0) && (error == 0))
-		if (ipsecctl_commit(&ipsec))
-			err(1, NULL);
-
 	return (error);
 }
 
@@ -322,7 +322,7 @@ ipsecctl_show(int opts)
 	struct ipsecctl ipsec;
 	struct ipsec_rule *rp;
 
-	memset(&ipsec, 0, sizeof(ipsec));
+	bzero(&ipsec, sizeof(ipsec));
 	ipsec.opts = opts;
 	TAILQ_INIT(&ipsec.rule_queue);
 
@@ -336,6 +336,10 @@ ipsecctl_show(int opts)
 		free(rp->src);
 		free(rp->dst);
 		free(rp->peer);
+		if (rp->auth.srcid)
+			free(rp->auth.srcid);
+		if (rp->auth.dstid)
+			free(rp->auth.dstid);
 		free(rp);
 	}
 
