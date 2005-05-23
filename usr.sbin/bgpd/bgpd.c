@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.117 2005/04/28 13:54:45 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.118 2005/05/23 22:48:53 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -177,7 +177,6 @@ main(int argc, char *argv[])
 
 	if (getpwnam(BGPD_USER) == NULL)
 		errx(1, "unknown user %s", BGPD_USER);
-	endpwent();
 
 	log_init(debug);
 
