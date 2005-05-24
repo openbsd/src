@@ -1,4 +1,4 @@
-/*	$OpenBSD: errno.h,v 1.12 2004/07/13 21:03:39 marc Exp $	*/
+/*	$OpenBSD: errno.h,v 1.13 2005/05/24 03:55:11 millert Exp $	*/
 /*	$NetBSD: errno.h,v 1.10 1996/01/20 01:33:53 jtc Exp $	*/
 
 /*
@@ -86,9 +86,7 @@ __END_DECLS
 #define	ENFILE		23		/* Too many open files in system */
 #define	EMFILE		24		/* Too many open files */
 #define	ENOTTY		25		/* Inappropriate ioctl for device */
-#ifndef _POSIX_SOURCE
 #define	ETXTBSY		26		/* Text file busy */
-#endif
 #define	EFBIG		27		/* File too large */
 #define	ENOSPC		28		/* No space left on device */
 #define	ESPIPE		29		/* Illegal seek */
@@ -102,7 +100,6 @@ __END_DECLS
 
 /* non-blocking and interrupt i/o */
 #define	EAGAIN		35		/* Resource temporarily unavailable */
-#ifndef _POSIX_SOURCE
 #define	EWOULDBLOCK	EAGAIN		/* Operation would block */
 #define	EINPROGRESS	36		/* Operation now in progress */
 #define	EALREADY	37		/* Operation already in progress */
@@ -114,9 +111,13 @@ __END_DECLS
 #define	EPROTOTYPE	41		/* Protocol wrong type for socket */
 #define	ENOPROTOOPT	42		/* Protocol not available */
 #define	EPROTONOSUPPORT	43		/* Protocol not supported */
+#ifndef _POSIX_SOURCE
 #define	ESOCKTNOSUPPORT	44		/* Socket type not supported */
+#endif /* _POSIX_SOURCE */
 #define	EOPNOTSUPP	45		/* Operation not supported */
+#ifndef _POSIX_SOURCE
 #define	EPFNOSUPPORT	46		/* Protocol family not supported */
+#endif /* _POSIX_SOURCE */
 #define	EAFNOSUPPORT	47		/* Address family not supported by protocol family */
 #define	EADDRINUSE	48		/* Address already in use */
 #define	EADDRNOTAVAIL	49		/* Can't assign requested address */
@@ -130,13 +131,14 @@ __END_DECLS
 #define	ENOBUFS		55		/* No buffer space available */
 #define	EISCONN		56		/* Socket is already connected */
 #define	ENOTCONN	57		/* Socket is not connected */
+#ifndef _POSIX_SOURCE
 #define	ESHUTDOWN	58		/* Can't send after socket shutdown */
 #define	ETOOMANYREFS	59		/* Too many references: can't splice */
+#endif /* _POSIX_SOURCE */
 #define	ETIMEDOUT	60		/* Operation timed out */
 #define	ECONNREFUSED	61		/* Connection refused */
 
 #define	ELOOP		62		/* Too many levels of symbolic links */
-#endif /* _POSIX_SOURCE */
 #define	ENAMETOOLONG	63		/* File name too long */
 
 /* should be rearranged */
@@ -150,10 +152,12 @@ __END_DECLS
 #ifndef _POSIX_SOURCE
 #define	EPROCLIM	67		/* Too many processes */
 #define	EUSERS		68		/* Too many users */
+#endif /* _POSIX_SOURCE */
 #define	EDQUOT		69		/* Disk quota exceeded */
 
 /* Network File System */
 #define	ESTALE		70		/* Stale NFS file handle */
+#ifndef _POSIX_SOURCE
 #define	EREMOTE		71		/* Too many levels of remote in path */
 #define	EBADRPC		72		/* RPC struct is bad */
 #define	ERPCMISMATCH	73		/* RPC version wrong */
