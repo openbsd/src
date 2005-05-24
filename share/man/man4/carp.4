@@ -1,4 +1,4 @@
-.\"	$OpenBSD: carp.4,v 1.17 2005/05/17 13:16:13 jmc Exp $
+.\"	$OpenBSD: carp.4,v 1.18 2005/05/24 17:16:32 mcbride Exp $
 .\"
 .\" Copyright (c) 2003, Ryan McBride.  All rights reserved.
 .\"
@@ -124,20 +124,20 @@ This is the setup for host A:
 .Bd -literal -offset indent
 # ifconfig carp0 create
 # ifconfig carp0 vhid 1 pass mekmitasdigoat 192.168.1.1 \e
-	255.255.255.0
+	netmask 255.255.255.0
 # ifconfig carp1 create
 # ifconfig carp1 vhid 2 pass mekmitasdigoat 192.168.2.1 \e
-	255.255.255.0
+	netmask 255.255.255.0
 .Ed
 .Pp
 The setup for host B is identical, but it has a higher advskew:
 .Bd -literal -offset indent
 # ifconfig carp0 create
 # ifconfig carp0 vhid 1 advskew 100 pass mekmitasdigoat \e
-	192.168.1.1 255.255.255.0
+	192.168.1.1 netmask 255.255.255.0
 # ifconfig carp1 create
 # ifconfig carp1 vhid 2 advskew 100 pass mekmitasdigoat \e
-	192.168.2.1 255.255.255.0
+	192.168.2.1 netmask 255.255.255.0
 .Ed
 .Pp
 Because of the preempt option, when one of the physical interfaces of
@@ -163,10 +163,10 @@ out slightly less frequently.
 .Bd -literal -offset indent
 # ifconfig carp0 create
 # ifconfig carp0 vhid 1 pass mekmitasdigoat 192.168.1.10 \e
-	255.255.255.0
+	netmask 255.255.255.0
 # ifconfig carp1 create
 # ifconfig carp1 vhid 2 advskew 100 pass mekmitasdigoat \e
-	192.168.1.10 255.255.255.0
+	192.168.1.10 netmask 255.255.255.0
 .Ed
 .Pp
 The configuration for host B is identical, except the skew is on
@@ -174,10 +174,10 @@ virtual host 1 rather than virtual host 2.
 .Bd -literal -offset indent
 # ifconfig carp0 create
 # ifconfig carp0 vhid 1 advskew 100 pass mekmitasdigoat \e
-	192.168.1.10 255.255.255.0
+	192.168.1.10 netmask 255.255.255.0
 # ifconfig carp1 create
 # ifconfig carp1 vhid 2 pass mekmitasdigoat 192.168.1.10 \e
-	255.255.255.0
+	netmask 255.255.255.0
 .Ed
 .Pp
 Finally, the ARP balancing feature must be enabled on both hosts:
