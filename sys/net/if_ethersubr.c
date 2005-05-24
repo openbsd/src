@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.91 2005/05/24 07:51:53 reyk Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.92 2005/05/24 16:00:02 deraadt Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -612,9 +612,12 @@ ether_input(ifp, eh, m)
 {
 	struct ifqueue *inq;
 	u_int16_t etype;
-	int s, llcfound = 0, i = 0;
+	int s, llcfound = 0;
 	struct llc *l;
 	struct arpcom *ac;
+#if NTRUNK > 0
+	i = 0;
+#endif
 #if NPPPOE > 0
 	struct ether_header *eh_tmp;
 #endif
