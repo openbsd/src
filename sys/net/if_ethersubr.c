@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.90 2005/05/24 02:45:17 reyk Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.91 2005/05/24 07:51:53 reyk Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -612,7 +612,7 @@ ether_input(ifp, eh, m)
 {
 	struct ifqueue *inq;
 	u_int16_t etype;
-	int s, llcfound = 0;
+	int s, llcfound = 0, i = 0;
 	struct llc *l;
 	struct arpcom *ac;
 #if NPPPOE > 0
@@ -621,9 +621,14 @@ ether_input(ifp, eh, m)
 
 #if NTRUNK > 0
 	/* Handle input from a trunk port */
-	if (ifp->if_type == IFT_IEEE8023ADLAG) {
-		if (trunk_input(ifp, eh, m) != 0)
+	while (ifp->if_type == IFT_IEEE8023ADLAG) {
+		if (++i > TRUNK_MAX_STACKING ||
+		    trunk_input(ifp, eh, m) != 0) {
+			if (m)
+				m_freem(m);
 			return;
+		}
+
 		/* Has been set to the trunk interface */
 		ifp = m->m_pkthdr.rcvif;
 	}

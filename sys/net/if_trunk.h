@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.h,v 1.1 2005/05/24 02:45:17 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.h,v 1.2 2005/05/24 07:51:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -25,12 +25,14 @@
 
 #define TRUNK_MAX_PORTS		32	/* logically */
 #define TRUNK_MAX_NAMESIZE	32	/* name of a protocol */
+#define TRUNK_MAX_STACKING	4	/* maximum number of stacked trunks */
 
 /* Port flags */
 #define TRUNK_PORT_SLAVE	0x00000000	/* normal enslaved port */
 #define TRUNK_PORT_MASTER	0x00000001	/* primary port */
+#define TRUNK_PORT_STACK	0x00000002	/* stacked trunk port */
 #define TRUNK_PORT_GLOBAL	0x80000000	/* IOCTL: global flag */
-#define TRUNK_PORT_BITS		"\20\01MASTER"
+#define TRUNK_PORT_BITS		"\20\01MASTER\02STACK"
 
 /* Supported trunk PROTOs */
 enum trunk_proto {

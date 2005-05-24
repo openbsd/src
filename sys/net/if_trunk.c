@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_trunk.c,v 1.1 2005/05/24 02:45:17 reyk Exp $	*/
+/*	$OpenBSD: if_trunk.c,v 1.2 2005/05/24 07:51:53 reyk Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
@@ -61,6 +61,7 @@ int	 trunk_port_destroy(struct trunk_port *);
 void	 trunk_port_watchdog(struct ifnet *);
 int	 trunk_port_ioctl(struct ifnet *, u_long, caddr_t);
 struct trunk_port *trunk_port_get(struct trunk_softc *, struct ifnet *);
+int	 trunk_port_checkstacking(struct trunk_softc *);
 void	 trunk_port2req(struct trunk_port *, struct trunk_reqport *);
 int	 trunk_ioctl(struct ifnet *, u_long, caddr_t);
 void	 trunk_start(struct ifnet *);
@@ -162,12 +163,17 @@ trunk_clone_destroy(struct ifnet *ifp)
 {
 	struct trunk_softc *tr = (struct trunk_softc *)ifp->if_softc;
 	struct trunk_port *tp;
-	int error;
+	int error, s;
+
+	s = splnet();
 
 	/* Shutdown and remove trunk ports, return on error */
-	while ((tp = SLIST_FIRST(&tr->tr_ports)) != NULL)
-		if ((error = trunk_port_destroy(tp)) != 0)
+	while ((tp = SLIST_FIRST(&tr->tr_ports)) != NULL) {
+		if ((error = trunk_port_destroy(tp)) != 0) {
+			splx(s);
 			return (error);
+		}
+	}
 
 	ifmedia_delete_instance(&tr->tr_media, IFM_INST_ANY);
 #if NBPFILTER > 0
@@ -178,6 +184,8 @@ trunk_clone_destroy(struct ifnet *ifp)
 
 	SLIST_REMOVE(&trunk_list, tr, trunk_softc, tr_entries);
 	free(tr, M_DEVBUF);
+
+	splx(s);
 
 	return (0);
 }
@@ -200,6 +208,7 @@ trunk_lladdr(struct trunk_softc *tr, u_int8_t *lladdr)
 int
 trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 {
+	struct trunk_softc *tr_ptr;
 	struct trunk_port *tp;
 	int error = 0;
 
@@ -228,6 +237,18 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 
 	bzero(tp, sizeof(struct trunk_port));
 
+	/* Check if port is a stacked trunk */
+	SLIST_FOREACH(tr_ptr, &trunk_list, tr_entries) {
+		if (ifp == &tr_ptr->tr_ac.ac_if) {
+			tp->tp_flags |= TRUNK_PORT_STACK;
+			if (trunk_port_checkstacking(tr_ptr) >=
+			    TRUNK_MAX_STACKING) {
+				free(tp, M_DEVBUF);
+				return (E2BIG);
+			}
+		}
+	}
+
 	/* Change the interface type */
 	tp->tp_iftype = ifp->if_type;
 	ifp->if_type = IFT_IEEE8023ADLAG;
@@ -242,7 +263,7 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 
 	if (SLIST_EMPTY(&tr->tr_ports)) {
 		tr->tr_primary = tp;
-		tp->tp_flags = TRUNK_PORT_MASTER;
+		tp->tp_flags |= TRUNK_PORT_MASTER;
 		trunk_lladdr(tr, ((struct arpcom *)ifp)->ac_enaddr);
 	}
 
@@ -251,6 +272,23 @@ trunk_port_create(struct trunk_softc *tr, struct ifnet *ifp)
 	tr->tr_count++;
 
 	return (0);
+}
+
+int
+trunk_port_checkstacking(struct trunk_softc *tr)
+{
+	struct trunk_softc *tr_ptr;
+	struct trunk_port *tp;
+	int m = 0;
+	
+	SLIST_FOREACH(tp, &tr->tr_ports, tp_entries) {
+		if (tp->tp_flags & TRUNK_PORT_STACK) {
+			tr_ptr = (struct trunk_softc *)tp->tp_if->if_softc;
+			m = MAX(m, trunk_port_checkstacking(tr_ptr));
+		}
+	}
+
+	return (m + 1);
 }
 
 int
@@ -366,9 +404,7 @@ trunk_port_ifdetach(struct ifnet *ifp)
 {
 	struct trunk_port *tp;
 
-	if (SLIST_FIRST(&trunk_list) == NULL)
-		return;
-	if ((tp = trunk_port_get(NULL, ifp)) == NULL)
+	if ((tp = (struct trunk_port *)ifp->if_tp) == NULL)
 		return;
 
 	trunk_port_destroy(tp);
@@ -652,8 +688,6 @@ trunk_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 
  bad:
 	trifp->if_ierrors++;
-	if (m)
-		m_free(m);
 	return (error);
 }
 

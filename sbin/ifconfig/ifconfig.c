@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.138 2005/05/24 02:45:18 reyk Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.139 2005/05/24 07:51:53 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3202,9 +3202,17 @@ trunk_status(void)
 	struct trunk_reqport rp, rpbuf[TRUNK_MAX_PORTS];
 	struct trunk_reqall ra;
 	const char *proto = "<unknown>";
-	int i;
+	int i, isport = 0;
 
+	bzero(&rp, sizeof(rp));
 	bzero(&ra, sizeof(ra));
+
+	strlcpy(rp.rp_ifname, name, sizeof(rp.rp_ifname));
+	strlcpy(rp.rp_portname, name, sizeof(rp.rp_portname));
+	
+	if (ioctl(s, SIOCGTRUNKPORT, &rp) == 0)
+		isport = 1;
+
 	strlcpy(ra.ra_ifname, name, sizeof(ra.ra_ifname));
 	ra.ra_size = sizeof(rpbuf);
 	ra.ra_port = rpbuf;
@@ -3217,7 +3225,11 @@ trunk_status(void)
 			}
 		}
 
-		printf("\ttrunk: trunkproto %s\n", proto);
+		printf("\ttrunk: trunkproto %s", proto);
+		if (isport)
+			printf(" trunkdev %s", rp.rp_ifname);
+		putchar('\n');
+
 		for (i = 0; i < ra.ra_ports; i++) {
 			printf("\t\ttrunkport %s", rpbuf[i].rp_portname);
 			if (rpbuf[i].rp_flags & TRUNK_PORT_MASTER)
@@ -3230,15 +3242,8 @@ trunk_status(void)
 			for (i = 0; i < (sizeof(tpr) / sizeof(tpr[0])); i++)
 				printf("\t\ttrunkproto %s\n", tpr[i].tpr_name);
 		}
-	} else {
-		strlcpy(rp.rp_ifname, name, sizeof(rp.rp_ifname));
-		strlcpy(rp.rp_portname, name, sizeof(rp.rp_portname));
-
-		if (ioctl(s, SIOCGTRUNKPORT, &rp) != 0)
-			return;
-
+	} else if (isport)
 		printf("\ttrunk: trunkdev %s\n", rp.rp_ifname);
-	}
 }
 #endif /* SMALL */
 
