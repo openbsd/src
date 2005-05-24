@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.72 2005/03/31 21:24:46 tdeval Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.73 2005/05/24 16:39:05 tedu Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -1061,6 +1061,13 @@ malloc_bytes(size_t size)
 }
 
 /*
+ * magic so that malloc(sizeof(ptr)) is near the end of the page.
+ */
+#define PTR_GAP (malloc_pagesize - sizeof(void *))
+#define PTR_SIZE (sizeof(void *))
+#define PTR_ALIGNED(p) (((unsigned long)p & malloc_pagemask) == PTR_GAP)
+
+/*
  * Allocate a piece of memory
  */
 static void *
@@ -1074,6 +1081,11 @@ imalloc(size_t size)
 
     if (suicide)
 	abort();
+
+    if (malloc_guard && size == PTR_SIZE) {
+	    ptralloc = 1;
+	    size = malloc_pagesize;
+    }
 
     if ((size + malloc_pagesize) < size) {     /* Check for overflow */
 	result = NULL;
@@ -1090,6 +1102,8 @@ imalloc(size_t size)
     if (malloc_zero && result != NULL)
 	memset(result, 0, size);
 
+    if (result && ptralloc)
+	    return ((char *)result + PTR_GAP);
     return (result);
 }
 
@@ -1113,6 +1127,19 @@ irealloc(void *ptr, size_t size)
 	wrtwarning("malloc() has never been called\n");
 	return (NULL);
     }
+
+    if (malloc_guard && PTR_ALIGNED(ptr)) {
+	    if (size <= PTR_SIZE)
+		    return (ptr);
+	    else {
+		    p = imalloc(size);
+		    if (p)
+			    memcpy(p, ptr, PTR_SIZE);
+		    ifree(ptr);
+		    return (p);
+	    }
+    }
+
 
     index = ptr2index(ptr);
 
@@ -1574,6 +1601,9 @@ ifree(void *ptr)
     /* If we're already sinking, don't make matters any worse. */
     if (suicide)
 	return;
+
+    if (malloc_guard && PTR_ALIGNED(ptr))
+	    ptr = (char *)ptr - PTR_GAP;
 
     index = ptr2index(ptr);
 
