@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.385 2005/04/30 14:09:41 krw Exp $
+#	$OpenBSD: install.sub,v 1.386 2005/05/24 22:38:41 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -593,7 +593,7 @@ v6_info() {
 }
 
 # Construct etc/dhclient.conf and issue DHCP request. Return FALSE if
-# no IP address or 0.0.0.0 assigned to $1.
+# no IP address assigned to $1.
 #
 # $1 == interface
 # $2 == hostname (optional).
@@ -621,7 +621,7 @@ __EOT
 
 	set -- $(v4_info $_ifs)
 
-	if [[ $1 == UP && $2 != "0.0.0.0" ]]; then
+	if [[ $1 == UP && -n $2 ]]; then
 		# Move configuration files to where they will be copied to the
 		# installed system. Overwrites configuration information from
 		# last successful dhcp attempt.
