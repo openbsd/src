@@ -1,4 +1,4 @@
-/*	$OpenBSD: in4_cksum.c,v 1.1 2005/05/10 04:04:39 brad Exp $	*/
+/*	$OpenBSD: in4_cksum.c,v 1.2 2005/05/24 20:35:29 miod Exp $	*/
 /*	$NetBSD: in4_cksum.c,v 1.8 2003/09/29 22:54:28 matt Exp $	*/
 
 /*
@@ -128,14 +128,14 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 #endif
 
 		__asm __volatile(
-			"movzwl	16(ap),%0;"	/* mov len to sum */
-			"addb2	8(ap),%0;"	/* add proto to sum */
+			"movzwl	%3,%0;"	/* mov len to sum */
+			"addb2	%4,%0;"	/* add proto to sum */
 			"rotl	$8,%0,%0;"	/* htons, carry is preserved */
 			"adwc	12(%2),%0;"	/* add src ip */
 			"adwc	16(%2),%0;"	/* add dst ip */
 			"adwc	$0,%0;"		/* clean up carry */
 			: "=r" (sum)
-			: "0" (sum), "r" (mtod(m, void *)));
+			: "0" (sum), "r" (mtod(m, void *)), "r" (len), "r"(nxt));
 	}
 
 	/* skip unnecessary part */
