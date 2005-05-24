@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.h,v 1.1 2004/08/06 20:29:47 mickey Exp $	*/
+/*	$OpenBSD: rbus_machdep.h,v 1.2 2005/05/24 19:39:50 martin Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -26,6 +26,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+
+#if !defined _ARCH_HPPA_HPPA_RBUS_MACHDEP_H_
+#define _ARCH_HPPA_HPPA_RBUS_MACHDEP_H_
+
 static __inline int
 md_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t  size, int flags, bus_space_handle_t *bshp)
 {
@@ -41,3 +45,5 @@ struct pci_attach_args;
 
 #define rbus_pccbb_parent_mem(d, p) (*(p)->pa_pc->pc_alloc_parent)((d), (p), 0)
 #define rbus_pccbb_parent_io(d, p)  (*(p)->pa_pc->pc_alloc_parent)((d), (p), 1)
+
+#endif /* _ARCH_HPPA_HPPA_RBUS_MACHDEP_H_ */
