@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.52 2005/05/23 20:13:39 joris Exp $	*/
+/*	$OpenBSD: proto.c,v 1.53 2005/05/24 04:01:03 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -320,6 +320,8 @@ cvs_connect(struct cvsroot *root)
 	    (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-Q") < 0))
 		return (-1);
 
+	if (cvs_noexec && (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-n") < 0))
+		return (-1);
 	if (cvs_nolog && (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-l") < 0))
 		return (-1);
 	if (cvs_readonly && (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-r") < 0))
