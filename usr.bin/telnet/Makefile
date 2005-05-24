@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.22 2003/07/16 19:10:14 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.23 2005/05/24 03:41:58 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -32,8 +32,7 @@
 
 PROG=	telnet
 
-CFLAGS+=-DKLUDGELINEMODE -DUSE_TERMIO -DENV_HACK -DSKEY -Dunix
-CFLAGS+=-I${.CURDIR}/../../libexec/telnetd
+CFLAGS+=-DKLUDGELINEMODE -DUSE_TERMIO -DENV_HACK -DSKEY -Dunix -I${.CURDIR}
 CFLAGS+= -DHAS_CGETENT -Wall -Wno-unused
 LDADD+=	-lcurses
 DPADD=	${LIBCURSES}
@@ -41,8 +40,6 @@ DPADD=	${LIBCURSES}
 SRCS=	authenc.c commands.c main.c network.c ring.c sys_bsd.c telnet.c \
 	terminal.c tn3270.c utilities.c auth.c encrypt.c genget.c getent.c \
 	misc.c
-
-.PATH:	${.CURDIR}/../../libexec/telnetd
 
 .include <bsd.own.mk> # for KERBEROS
 
