@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.113 2005/05/22 21:06:02 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.114 2005/05/24 02:26:04 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1576,6 +1576,7 @@ if_addgroup(struct ifnet *ifp, char *groupname)
 {
 	struct ifg_list		*ifgl;
 	struct ifg_group	*ifg = NULL;
+	struct ifg_member	*ifgm;
 
 	TAILQ_FOREACH(ifgl, &ifp->if_groups, ifgl_next)
 		if (!strcmp(ifgl->ifgl_group->ifg_group, groupname))
@@ -1585,6 +1586,12 @@ if_addgroup(struct ifnet *ifp, char *groupname)
 	    M_NOWAIT)) == NULL)
 		return (ENOMEM);
 
+	if ((ifgm = (struct ifg_member *)malloc(sizeof(struct ifg_member),
+	    M_TEMP, M_NOWAIT)) == NULL) {
+		free(ifgl, M_TEMP);
+		return (ENOMEM);
+	}
+
 	TAILQ_FOREACH(ifg, &ifg_head, ifg_next)
 		if (!strcmp(ifg->ifg_group, groupname))
 			break;
@@ -1593,10 +1600,12 @@ if_addgroup(struct ifnet *ifp, char *groupname)
 		if ((ifg = (struct ifg_group *)malloc(sizeof(struct ifg_group),
 		    M_TEMP, M_NOWAIT)) == NULL) {
 			free(ifgl, M_TEMP);
+			free(ifgm, M_TEMP);
 			return (ENOMEM);
 		}
 		strlcpy(ifg->ifg_group, groupname, sizeof(ifg->ifg_group));
 		ifg->ifg_refcnt = 0;
+		TAILQ_INIT(&ifg->ifg_members);
 #if NPF > 0
 		pfi_attach_ifgroup(ifg);
 #endif
@@ -1605,7 +1614,9 @@ if_addgroup(struct ifnet *ifp, char *groupname)
 
 	ifg->ifg_refcnt++;
 	ifgl->ifgl_group = ifg;
+	ifgm->ifgm_ifp = ifp;
 
+	TAILQ_INSERT_TAIL(&ifg->ifg_members, ifgm, ifgm_next);
 	TAILQ_INSERT_TAIL(&ifp->if_groups, ifgl, ifgl_next);
 
 	return (0);
