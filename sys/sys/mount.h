@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.59 2005/03/29 17:24:52 pedro Exp $	*/
+/*	$OpenBSD: mount.h,v 1.60 2005/05/24 05:34:54 pedro Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -431,6 +431,8 @@ struct mount {
 #define	MNT_FORCE	0x00080000	/* force unmount or readonly change */
 #define MNT_WANTRDWR	0x02000000	/* want upgrade to read/write */
 #define MNT_SOFTDEP     0x04000000      /* soft dependencies being done */
+#define MNT_DOOMED	0x08000000	/* device behind filesystem is gone */
+
 /*
  * Sysctl CTL_VFS definitions.
  *
