@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.13 2005/05/24 05:14:13 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.14 2005/05/24 06:14:26 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -175,32 +175,6 @@ struct stge_softc {
 #define	sc_txdescs	sc_control_data->scd_txdescs
 #define	sc_rxdescs	sc_control_data->scd_rxdescs
 
-#ifdef STGE_EVENT_COUNTERS
-	/*
-	 * Event counters.
-	 */
-	struct evcnt sc_ev_txstall;	/* Tx stalled */
-	struct evcnt sc_ev_txdmaintr;	/* Tx DMA interrupts */
-	struct evcnt sc_ev_txindintr;	/* Tx Indicate interrupts */
-	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
-
-	struct evcnt sc_ev_txseg1;	/* Tx packets w/ 1 segment */
-	struct evcnt sc_ev_txseg2;	/* Tx packets w/ 2 segments */
-	struct evcnt sc_ev_txseg3;	/* Tx packets w/ 3 segments */
-	struct evcnt sc_ev_txseg4;	/* Tx packets w/ 4 segments */
-	struct evcnt sc_ev_txseg5;	/* Tx packets w/ 5 segments */
-	struct evcnt sc_ev_txsegmore;	/* Tx packets w/ more than 5 segments */
-	struct evcnt sc_ev_txcopy;	/* Tx packets that we had to copy */
-
-	struct evcnt sc_ev_rxipsum;	/* IP checksums checked in-bound */
-	struct evcnt sc_ev_rxtcpsum;	/* TCP checksums checked in-bound */
-	struct evcnt sc_ev_rxudpsum;	/* UDP checksums checked in-bound */
-
-	struct evcnt sc_ev_txipsum;	/* IP checksums comp. out-bound */
-	struct evcnt sc_ev_txtcpsum;	/* TCP checksums comp. out-bound */
-	struct evcnt sc_ev_txudpsum;	/* UDP checksums comp. out-bound */
-#endif /* STGE_EVENT_COUNTERS */
-
 	int	sc_txpending;		/* number of Tx requests pending */
 	int	sc_txdirty;		/* first dirty Tx descriptor */
 	int	sc_txlast;		/* last used Tx descriptor */
@@ -233,12 +207,6 @@ do {									\
 	*(sc)->sc_rxtailp = (sc)->sc_rxtail = (m);			\
 	(sc)->sc_rxtailp = &(m)->m_next;				\
 } while (/*CONSTCOND*/0)
-
-#ifdef STGE_EVENT_COUNTERS
-#define	STGE_EVCNT_INCR(ev)	(ev)->ev_count++
-#else
-#define	STGE_EVCNT_INCR(ev)	/* nothing */
-#endif
 
 #define	STGE_CDTXADDR(sc, x)	((sc)->sc_cddma + STGE_CDTXOFF((x)))
 #define	STGE_CDRXADDR(sc, x)	((sc)->sc_cddma + STGE_CDRXOFF((x)))
@@ -609,48 +577,6 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-#ifdef STGE_EVENT_COUNTERS
-	/*
-	 * Attach event counters.
-	 */
-	evcnt_attach_dynamic(&sc->sc_ev_txstall, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txstall");
-	evcnt_attach_dynamic(&sc->sc_ev_txdmaintr, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "txdmaintr");
-	evcnt_attach_dynamic(&sc->sc_ev_txindintr, EVCNT_TYPE_INTR,
-	    NULL, sc->sc_dev.dv_xname, "txindintr");
-	evcnt_attach_dynamic(&sc->sc_ev_rxintr, EVCNT_TYPE_INTR,        
-	    NULL, sc->sc_dev.dv_xname, "rxintr");
-
-	evcnt_attach_dynamic(&sc->sc_ev_txseg1, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txseg1");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txseg2, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txseg2");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txseg3, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txseg3");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txseg4, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txseg4");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txseg5, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txseg5");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txsegmore, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txsegmore");                      
-	evcnt_attach_dynamic(&sc->sc_ev_txcopy, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "txcopy");                      
-
-	evcnt_attach_dynamic(&sc->sc_ev_rxipsum, EVCNT_TYPE_MISC,       
-	    NULL, sc->sc_dev.dv_xname, "rxipsum");                      
-	evcnt_attach_dynamic(&sc->sc_ev_rxtcpsum, EVCNT_TYPE_MISC,      
-	    NULL, sc->sc_dev.dv_xname, "rxtcpsum");
-	evcnt_attach_dynamic(&sc->sc_ev_rxudpsum, EVCNT_TYPE_MISC,      
-	    NULL, sc->sc_dev.dv_xname, "rxudpsum");
-	evcnt_attach_dynamic(&sc->sc_ev_txipsum, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txipsum");
-	evcnt_attach_dynamic(&sc->sc_ev_txtcpsum, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txtcpsum");
-	evcnt_attach_dynamic(&sc->sc_ev_txudpsum, EVCNT_TYPE_MISC,
-	    NULL, sc->sc_dev.dv_xname, "txudpsum");
-#endif /* STGE_EVENT_COUNTERS */
-
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
@@ -760,10 +686,8 @@ stge_start(struct ifnet *ifp)
 		 * Leave one unused descriptor at the end of the
 		 * list to prevent wrapping completely around.
 		 */
-		if (sc->sc_txpending == (STGE_NTXDESC - 1)) {
-			STGE_EVCNT_INCR(&sc->sc_ev_txstall);
+		if (sc->sc_txpending == (STGE_NTXDESC - 1))
 			break;
-		}
 
 		/*
 		 * Get the last and next available transmit descriptor.
@@ -817,47 +741,18 @@ stge_start(struct ifnet *ifp)
 			totlen += dmamap->dm_segs[seg].ds_len;
 		}
 
-#ifdef STGE_EVENT_COUNTERS
-		switch (dmamap->dm_nsegs) {
-		case 1:
-			STGE_EVCNT_INCR(&sc->sc_ev_txseg1);
-			break;
-		case 2:
-			STGE_EVCNT_INCR(&sc->sc_ev_txseg2);
-			break;
-		case 3:
-			STGE_EVCNT_INCR(&sc->sc_ev_txseg3);
-			break;
-		case 4:
-			STGE_EVCNT_INCR(&sc->sc_ev_txseg4);
-			break;
-		case 5:
-			STGE_EVCNT_INCR(&sc->sc_ev_txseg5);
-			break;
-		default:
-			STGE_EVCNT_INCR(&sc->sc_ev_txsegmore);
-			break;
-		}
-#endif /* STGE_EVENT_COUNTERS */
-
 #ifdef STGE_CHECKSUM
 		/*
 		 * Initialize checksumming flags in the descriptor.
 		 * Byte-swap constants so the compiler can optimize.
 		 */
-		if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT) {
-			STGE_EVCNT_INCR(&sc->sc_ev_txipsum);
+		if (m0->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
 			csum_flags |= TFD_IPChecksumEnable;
-		}
 
-		if (m0->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT) {
-			STGE_EVCNT_INCR(&sc->sc_ev_txtcpsum);
+		if (m0->m_pkthdr.csum_flags & M_TCPV4_CSUM_OUT)
 			csum_flags |= TFD_TCPChecksumEnable;
-		}
-		else if (m0->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT) {
-			STGE_EVCNT_INCR(&sc->sc_ev_txudpsum);
+		else if (m0->m_pkthdr.csum_flags & M_UDPV4_CSUM_OUT)
 			csum_flags |= TFD_UDPChecksumEnable;
-		}
 #endif
 
 		/*
@@ -1074,7 +969,6 @@ stge_intr(void *arg)
 
 		/* Receive interrupts. */
 		if (isr & (IS_RxDMAComplete|IS_RFDListEnd)) {
-			STGE_EVCNT_INCR(&sc->sc_ev_rxintr);
 			stge_rxintr(sc);
 			if (isr & IS_RFDListEnd) {
 				printf("%s: receive ring overflow\n",
@@ -1088,13 +982,8 @@ stge_intr(void *arg)
 		}
 
 		/* Transmit interrupts. */
-		if (isr & (IS_TxDMAComplete|IS_TxComplete)) {
-#ifdef STGE_EVENT_COUNTERS
-			if (isr & IS_TxDMAComplete)
-				STGE_EVCNT_INCR(&sc->sc_ev_txdmaintr);
-#endif
+		if (isr & (IS_TxDMAComplete|IS_TxComplete))
 			stge_txintr(sc);
-		}
 
 		/* Statistics overflow. */
 		if (isr & IS_UpdateStats)
@@ -1102,7 +991,6 @@ stge_intr(void *arg)
 
 		/* Transmission errors. */
 		if (isr & IS_TxComplete) {
-			STGE_EVCNT_INCR(&sc->sc_ev_txindintr);
 			for (;;) {
 				txstat = bus_space_read_4(sc->sc_st, sc->sc_sh,
 				    STGE_TxStatus);
@@ -1319,18 +1207,14 @@ stge_rxintr(struct stge_softc *sc)
 		 * Set the incoming checksum information for the packet.
 		 */
 		if (status & RFD_IPDetected) {
-			STGE_EVCNT_INCR(&sc->sc_ev_rxipsum);
 			m->m_pkthdr.csum_flags |= (status & RFD_IPError) ?
 			  M_IPV4_CSUM_IN_BAD : M_IPV4_CSUM_IN_OK;
-			if (status & RFD_TCPDetected) {
-				STGE_EVCNT_INCR(&sc->sc_ev_rxtcpsum);
+			if (status & RFD_TCPDetected)
 				m->m_pkthdr.csum_flags |= (status & RFD_TCPError) ?
 				  M_TCP_CSUM_IN_BAD : M_TCP_CSUM_IN_OK;
-			} else if (status & RFD_UDPDetected) {
-				STGE_EVCNT_INCR(&sc->sc_ev_rxudpsum);
+			else if (status & RFD_UDPDetected)
 				m->m_pkthdr.csum_flags |= (status & RFD_UDPError) ?
 				  M_UDP_CSUM_IN_BAD : M_UDP_CSUM_IN_OK;
-			}
 		}
 #endif
 
