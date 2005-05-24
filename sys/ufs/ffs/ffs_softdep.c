@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.55 2004/12/09 17:41:53 millert Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.56 2005/05/24 04:33:35 pedro Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -4631,8 +4631,10 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 		FREE_LOCK(&lk);
 		if ((error = bread(ump->um_devvp,
 		    fsbtodb(ump->um_fs, ino_to_fsba(ump->um_fs, inum)),
-		    (int)ump->um_fs->fs_bsize, NOCRED, &bp)) != 0)
+		    (int)ump->um_fs->fs_bsize, NOCRED, &bp)) != 0) {
+		    	brelse(bp);
 			break;
+		}
 		if ((error = bwrite(bp)) != 0)
 			break;
 		ACQUIRE_LOCK(&lk);
