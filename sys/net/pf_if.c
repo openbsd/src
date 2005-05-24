@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.30 2005/05/23 22:30:21 henning Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.31 2005/05/24 04:17:19 henning Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -391,6 +391,8 @@ pfi_dynaddr_update(struct pfi_dynaddr *dyn)
 {
 	struct pfi_kif		*kif;
 	struct pfr_ktable	*kt;
+	struct ifg_list		*ifgl;
+	struct pfi_dynaddr	*p;
 
 	if (dyn == NULL || dyn->pfid_kif == NULL || dyn->pfid_kt == NULL)
 		panic("pfi_dynaddr_update");
@@ -404,6 +406,12 @@ pfi_dynaddr_update(struct pfi_dynaddr *dyn)
 		kt->pfrkt_larg = pfi_update;
 	}
 	pfr_dynaddr_update(kt, dyn);
+
+	if (kif->pfik_ifp != NULL)
+		TAILQ_FOREACH(ifgl, &kif->pfik_ifp->if_groups, ifgl_next)
+			TAILQ_FOREACH(p, &((struct pfi_kif *)
+			    ifgl->ifgl_group->ifg_pf_kif)->pfik_dynaddrs, entry)
+				pfi_dynaddr_update(p);
 }
 
 void
@@ -412,8 +420,9 @@ pfi_table_update(struct pfr_ktable *kt, struct pfi_kif *kif, int net, int flags)
 	int			 e, size2 = 0;
 	struct pfi_kif		*p;
 	struct pfr_table	 t;
+	struct ifg_member	*ifgm;
 
-	if (kif->pfik_ifp == NULL) {
+	if (kif->pfik_ifp == NULL && kif->pfik_group == NULL) {
 		pfr_clr_addrs(&kt->pfrkt_t, NULL, 0);
 		return;
 	}
@@ -421,7 +430,10 @@ pfi_table_update(struct pfr_ktable *kt, struct pfi_kif *kif, int net, int flags)
 
 	if (kif->pfik_ifp != NULL)
 		pfi_instance_add(kif->pfik_ifp, net, flags);
-	else
+	else if (kif->pfik_group != NULL) {
+		TAILQ_FOREACH(ifgm, &kif->pfik_group->ifg_members, ifgm_next)
+			pfi_instance_add(ifgm->ifgm_ifp, net, flags);
+	} else
 		RB_FOREACH(p, pfi_ifhead, &pfi_ifs)
 			if (p->pfik_ifp != NULL)
 				pfi_instance_add(p->pfik_ifp, net, flags);
