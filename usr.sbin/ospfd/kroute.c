@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.16 2005/05/13 08:29:13 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.17 2005/05/24 21:31:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -767,6 +767,7 @@ fetchtable(void)
 			continue;
 		}
 
+		kr->r.ifindex = rtm->rtm_index;
 		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
 			switch (sa->sa_family) {
 			case AF_INET:
@@ -775,7 +776,6 @@ fetchtable(void)
 				break;
 			case AF_LINK:
 				kr->r.flags |= F_CONNECTED;
-				kr->r.ifindex = rtm->rtm_index;
 				break;
 			}
 
@@ -898,7 +898,6 @@ dispatch_rtmsg(void)
 		prefixlen = 0;
 		flags = F_KERNEL;
 		nexthop.s_addr = 0;
-		ifindex = 0;
 
 		if (rtm->rtm_pid == kr_state.pid)	/* cause by us */
 			continue;
@@ -934,6 +933,7 @@ dispatch_rtmsg(void)
 			}
 		}
 
+		ifindex = rtm->rtm_index;
 		if ((sa = rti_info[RTAX_GATEWAY]) != NULL)
 			switch (sa->sa_family) {
 			case AF_INET:
@@ -942,7 +942,6 @@ dispatch_rtmsg(void)
 				break;
 			case AF_LINK:
 				flags |= F_CONNECTED;
-				ifindex = rtm->rtm_index;
 				break;
 			}
 
