@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.77 2005/04/25 17:55:52 brad Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.78 2005/05/24 00:02:37 fgont Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1118,7 +1118,11 @@ send:
 	if (error) {
 out:
 		if (error == ENOBUFS) {
-			tcp_quench(tp->t_inpcb, 0);
+			/* 
+			 * If the interface queue is full, or IP cannot
+			 * get an mbuf, trigger TCP slow start.
+			 */ 
+			tp->snd_cwnd = tp->t_maxseg;
 			return (0);
 		}
 		if (error == EMSGSIZE) {

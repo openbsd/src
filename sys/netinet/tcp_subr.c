@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.88 2005/03/04 13:21:42 markus Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.89 2005/05/24 00:02:37 fgont Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -733,8 +733,12 @@ tcp6_ctlinput(cmd, sa, d)
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return;
 	else if (cmd == PRC_QUENCH) {
+		/* 
+		 * Don't honor ICMP Source Quench messages meant for
+		 * TCP connections.
+		 */
 		/* XXX there's no PRC_QUENCH in IPv6 */
-		notify = tcp_quench;
+		return;
 	} else if (PRC_IS_REDIRECT(cmd))
 		notify = in_rtchange, d = NULL;
 	else if (cmd == PRC_MSGSIZE)
@@ -839,7 +843,11 @@ tcp_ctlinput(cmd, sa, v)
 		return NULL;
 	errno = inetctlerrmap[cmd];
 	if (cmd == PRC_QUENCH)
-		notify = tcp_quench;
+		/* 
+		 * Don't honor ICMP Source Quench messages meant for
+		 * TCP connections.
+		 */
+		return NULL;
 	else if (PRC_IS_REDIRECT(cmd))
 		notify = in_rtchange, ip = 0;
 	else if (cmd == PRC_MSGSIZE && ip_mtudisc && ip) {
@@ -903,20 +911,6 @@ tcp_ctlinput(cmd, sa, v)
 	return NULL;
 }
 
-/*
- * When a source quench is received, close congestion window
- * to one segment.  We will gradually open it again as we proceed.
- */
-void
-tcp_quench(inp, errno)
-	struct inpcb *inp;
-	int errno;
-{
-	struct tcpcb *tp = intotcpcb(inp);
-
-	if (tp)
-		tp->snd_cwnd = tp->t_maxseg;
-}
 
 #ifdef INET6
 /*
