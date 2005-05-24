@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.37 2004/11/04 20:10:07 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.38 2005/05/24 21:28:50 moritz Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 4/15/94";
 #else
-static const char rcsid[] = "$OpenBSD: main.c,v 1.37 2004/11/04 20:10:07 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: main.c,v 1.38 2005/05/24 21:28:50 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -573,14 +573,16 @@ usage(void)
 static long
 numarg(char *meaning, long vmin, long vmax)
 {
-	char *p;
 	long val;
+	const char *errstr;
 
-	val = strtol(optarg, &p, 10);
-	if (*p)
-		errx(X_STARTUP, "illegal %s -- %s", meaning, optarg);
-	if (val < vmin || (vmax && val > vmax))
-		errx(X_STARTUP, "%s must be between %ld and %ld", meaning, vmin, vmax);
+	if (vmax == 0)
+		vmax = LONG_MAX;
+	val = strtonum(optarg, vmin, vmax, &errstr);
+	if (errstr)
+		errx(X_STARTUP, "%s is %s [%ld - %ld]",
+		    meaning, errstr, vmin, vmax);
+
 	return (val);
 }
 
