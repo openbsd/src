@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.121 2005/04/24 21:48:15 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.122 2005/05/24 04:20:26 markus Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.121 2005/04/24 21:48:15 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.122 2005/05/24 04:20:26 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ static const char rcsid[] = "$OpenBSD: sysctl.c,v 1.121 2005/04/24 21:48:15 dera
 #include <sys/sensors.h>
 #include <machine/cpu.h>
 #include <net/route.h>
+#include <net/if.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -1373,6 +1374,7 @@ struct ctlname mobileipname[] = MOBILEIPCTL_NAMES;
 struct ctlname ipcompname[] = IPCOMPCTL_NAMES;
 struct ctlname carpname[] = CARPCTL_NAMES;
 struct ctlname bpfname[] = CTL_NET_BPF_NAMES;
+struct ctlname ifqname[] = CTL_IFQ_NAMES;
 struct list inetlist = { inetname, IPPROTO_MAXID };
 struct list inetvars[] = {
 	{ ipname, IPCTL_MAXID },	/* ip */
@@ -1490,6 +1492,7 @@ struct list inetvars[] = {
 	{ carpname, CARPCTL_MAXID },
 };
 struct list bpflist = { bpfname, NET_BPF_MAXID };
+struct list ifqlist = { ifqname, IFQCTL_MAXID };
 
 struct list kernmalloclist = { kernmallocname, KERN_MALLOC_MAXID };
 struct list forkstatlist = { forkstatname, KERN_FORKSTAT_MAXID };
@@ -1839,6 +1842,20 @@ sysctl_inet(char *string, char **bufpp, int mib[], int flags, int *typep)
 		return (-1);
 	mib[3] = indx;
 	*typep = lp->list[indx].ctl_type;
+	if (*typep == CTLTYPE_NODE) {
+		int tindx;
+
+		if (*bufpp == 0) {
+			listall(string, &ifqlist);
+			return(-1);
+		}
+		lp = &ifqlist;
+		if ((tindx = findname(string, "fifth", bufpp, lp)) == -1)
+			return (-1);
+		mib[4] = tindx;
+		*typep = lp->list[tindx].ctl_type;
+		return(5);
+	}
 	return (4);
 }
 

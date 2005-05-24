@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.116 2005/05/24 02:49:34 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.117 2005/05/24 04:20:25 markus Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -77,6 +77,7 @@
 #include <sys/kernel.h>
 #include <sys/ioctl.h>
 #include <sys/domain.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -1742,4 +1743,26 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 	}
 	ifr.ifr_flags = ifp->if_flags;
 	return ((*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr));
+}
+
+int
+sysctl_ifq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen, struct ifqueue *ifq)
+{
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+ 
+	switch (name[0]) {
+	case IFQCTL_LEN:
+		return (sysctl_rdint(oldp, oldlenp, newp, ifq->ifq_len));
+	case IFQCTL_MAXLEN:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &ifq->ifq_maxlen));
+	case IFQCTL_DROPS:
+		return (sysctl_rdint(oldp, oldlenp, newp, ifq->ifq_drops));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }

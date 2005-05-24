@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.69 2005/05/24 02:45:17 reyk Exp $	*/
+/*	$OpenBSD: if.h,v 1.70 2005/05/24 04:20:25 markus Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -339,6 +339,22 @@ do {									\
 
 #define	IFQ_MAXLEN	50
 #define	IFNET_SLOWHZ	1		/* granularity is 1 second */
+
+/* symbolic names for terminal (per-protocol) CTL_IFQ_ nodes */
+#define IFQCTL_LEN 1
+#define IFQCTL_MAXLEN 2
+#define IFQCTL_DROPS 3
+#define IFQCTL_CONGESTION 4
+#define IFQCTL_MAXID 5
+
+/* sysctl for ifq (per-protocol packet input queue variant of ifqueue) */
+#define CTL_IFQ_NAMES  { \
+	{ 0, 0 }, \
+	{ "len", CTLTYPE_INT }, \
+	{ "maxlen", CTLTYPE_INT }, \
+	{ "drops", CTLTYPE_INT }, \
+	{ "congestion", CTLTYPE_INT }, \
+}
 
 /*
  * The ifaddr structure contains information about one address
@@ -690,6 +706,8 @@ int	if_clone_create(const char *);
 int	if_clone_destroy(const char *);
 
 void	if_congestion(struct ifqueue *);
+int     sysctl_ifq(int *, u_int, void *, size_t *, void *, size_t,
+	    struct ifqueue *);
 
 int	loioctl(struct ifnet *, u_long, caddr_t);
 void	loopattach(int);

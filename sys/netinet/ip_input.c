@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.126 2005/04/25 17:55:51 brad Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.127 2005/05/24 04:20:25 markus Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1581,8 +1581,8 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 {
 	int error;
 
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
+	/* Almost all sysctl names at this level are terminal. */
+	if (namelen != 1 && name[0] != IPCTL_IFQUEUE)
 		return (ENOTDIR);
 
 	switch (name[0]) {
@@ -1628,6 +1628,9 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	        return (sysctl_tstring(oldp, oldlenp, newp, newlen,
 				       ipsec_def_comp,
 				       sizeof(ipsec_def_comp)));
+	case IPCTL_IFQUEUE:
+	        return (sysctl_ifq(name + 1, namelen - 1,
+		    oldp, oldlenp, newp, newlen, &ipintrq));
 	default:
 		if (name[0] < IPCTL_MAXID)
 			return (sysctl_int_arr(ipctl_vars, name, namelen,

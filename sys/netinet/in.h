@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.64 2005/01/14 14:51:27 mcbride Exp $	*/
+/*	$OpenBSD: in.h,v 1.65 2005/05/24 04:20:25 markus Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -479,7 +479,8 @@ struct ip_mreq {
 #define	IPCTL_MTUDISC		27	/* allow path MTU discovery */
 #define	IPCTL_MTUDISCTIMEOUT	28	/* allow path MTU discovery */
 #define	IPCTL_IPSEC_IPCOMP_ALGORITHM	29
-#define	IPCTL_MAXID		30
+#define	IPCTL_IFQUEUE		30
+#define	IPCTL_MAXID		31
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -512,6 +513,7 @@ struct ip_mreq {
 	{ "mtudisc", CTLTYPE_INT }, \
 	{ "mtudisctimeout", CTLTYPE_INT }, \
 	{ "ipsec-comp-alg", CTLTYPE_STRING }, \
+	{ "ifq", CTLTYPE_NODE }, \
 }
 #define	IPCTL_VARS { \
 	NULL, \
@@ -539,6 +541,7 @@ struct ip_mreq {
 	&ipsec_soft_timeout, \
 	&ipsec_soft_first_use, \
 	&ipsec_exp_first_use, \
+	NULL, \
 	NULL, \
 	NULL, \
 	NULL, \
