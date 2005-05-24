@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pcmcia.4,v 1.40 2005/03/18 02:23:38 jsg Exp $
+.\"	$OpenBSD: pcmcia.4,v 1.41 2005/05/24 20:08:54 uwe Exp $
 .\"	$NetBSD: pcmcia.4,v 1.4 1998/06/07 09:10:30 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -58,6 +58,10 @@
 .Cd "# sparc/sparc64"
 .Cd "stp*    at sbus?"
 .Cd "pcmcia* at stp?"
+.Pp
+.Cd "# zaurus"
+.Cd "pxapcic0 at pxaip?"
+.Cd "pcmcia*  at pxapcic?"
 .Pp
 .Cd "# all architectures"
 .Cd "cbb*      at pci?"
@@ -179,6 +183,8 @@ device may need to be decreased to avoid a conflict.
 .Xr ne 4 ,
 .Xr pci 4 ,
 .Xr pcic 4 ,
+.Xr pxaip 4 ,
+.Xr pxapcic 4 ,
 .Xr ray 4 ,
 .Xr rln 4 ,
 .Xr sbus 4 ,
