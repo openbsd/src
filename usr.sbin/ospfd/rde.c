@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.20 2005/05/23 23:03:07 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.21 2005/05/24 06:55:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -436,14 +436,16 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 			if (nbr == NULL)
 				fatalx("rde_dispatch_imsg: "
 				    "neighbor does not exist");
-			log_debug("rde_dispatch_imsg: IMSG_LS_MAXAGE, "
-			    "neighbor %s len %d", inet_ntoa(nbr->id),
-			    imsg.hdr.len - IMSG_HEADER_SIZE);
 
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct lsa_hdr))
 				fatalx("invalid size of OE request");
 			memcpy(&lsa_hdr, imsg.data, sizeof(lsa_hdr));
+
+			aid.s_addr = lsa_hdr.ls_id;
+			log_debug("rde_dispatch_imsg: IMSG_LS_MAXAGE, "
+			    "type %d ls_id %d", lsa_hdr.type,
+			    inet_ntoa(aid));
 
 			if (rde_nbr_loading(nbr->area)) {
 				log_debug("IMSG_LS_MAXAGE still loading");
@@ -984,12 +986,12 @@ rde_asext_put(struct kroute *kr)
 void
 rde_summary_update(struct rt_node *rte, struct area *area)
 {
-	struct vertex	*v;
+	struct vertex	*v = NULL;
 	struct lsa	*lsa;
-	u_int8_t	 type;
+	u_int8_t	 type = 0;
 
 	/* first check if we acctually need to announce this route */
-	if (!(rte->d_type == DT_NET /* || as border rtr */))
+	if (!(rte->d_type == DT_NET || rte->flags & OSPF_RTR_E))
 		return;
 	/* never create summaries for as-ext LSA */
 	if (rte->p_type == PT_TYPE1_EXT || rte->p_type == PT_TYPE2_EXT)
@@ -1016,6 +1018,16 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 
 	lsa = orig_sum_lsa(rte, type);
 	lsa_merge(rde_nbr_self(area), lsa, v);
+
+	if (v == NULL) {
+		if (rte->d_type == DT_NET)
+			v = lsa_find(area, type, rte->prefix.s_addr,
+			    rde_router_id());
+		else
+			v = lsa_find(area, type, rte->adv_rtr.s_addr,
+			    rde_router_id());
+	}
+	v->cost = rte->cost;
 }
 
 
@@ -1104,8 +1116,7 @@ orig_sum_lsa(struct rt_node *rte, u_int8_t type)
 		lsa->data.sum.mask = 0;	/* must be zero per RFC */
 	}
 
-	lsa->data.sum.metric = htonl(/* LSA_ASEXT_E_FLAG | */ 100);
-	/* XXX until now there is no metric */
+	lsa->data.sum.metric = htonl(rte->cost & LSA_METRIC_MASK);
 
 	lsa->hdr.ls_chksum = 0;
 	lsa->hdr.ls_chksum =

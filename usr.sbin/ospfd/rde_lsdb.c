@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.13 2005/05/12 20:43:14 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.14 2005/05/24 06:55:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -429,9 +429,10 @@ lsa_find_net(struct area *area, u_int32_t ls_id)
 	struct lsa_tree	*tree = &area->lsa_tree;
 	struct vertex	*v;
 
+	/* XXX speed me up */
 	RB_FOREACH(v, lsa_tree, tree) {
-		if ((v->lsa->hdr.type == LSA_TYPE_NETWORK) &&
-		    (v->lsa->hdr.ls_id == (ls_id))) {
+		if (v->lsa->hdr.type == LSA_TYPE_NETWORK &&
+		    v->lsa->hdr.ls_id == ls_id) {
 			lsa_age(v);
 			return (v);
 		}
@@ -531,8 +532,6 @@ lsa_timeout(int fd, short event, void *bula)
 
 	lsa_age(v);
 
-	log_debug("lsa_timeout: REFLOOD age %d", ntohs(v->lsa->hdr.age));
-
 	if (v->nbr->self && ntohs(v->lsa->hdr.age) < MAX_AGE)
 		lsa_refresh(v);
 
@@ -594,3 +593,26 @@ lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 		tv.tv_sec = MIN_LS_ARRIVAL;
 	evtimer_add(&v->ev, &tv);
 }
+
+void
+lsa_remove_invalid_sums(struct area *area)
+{
+	struct lsa_tree	*tree = &area->lsa_tree;
+	struct vertex	*v, *nv;
+
+	/* XXX speed me up */
+	for (v = RB_MIN(lsa_tree, tree); v != NULL; v = nv) {
+		nv = RB_NEXT(lsa_tree, tree, v);
+		if ((v->lsa->hdr.type == LSA_TYPE_SUM_NETWORK ||
+		    v->lsa->hdr.type == LSA_TYPE_SUM_ROUTER) &&
+		    v->nbr->self && v->cost == LS_INFINITY) {
+			/*
+			 * age the lsa and call lsa_timeout() which will
+			 * acctually remove it form the database.
+			 */
+			v->lsa->hdr.age = htons(MAX_AGE);
+			lsa_timeout(0, 0, v);
+		}
+	}
+}
+

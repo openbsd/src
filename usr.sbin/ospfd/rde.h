@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.15 2005/05/23 23:03:07 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.16 2005/05/24 06:55:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -112,6 +112,7 @@ int		 lsa_num_links(struct vertex *);
 void		 lsa_snap(struct area *, u_int32_t);
 void		 lsa_dump(struct lsa_tree *, int, pid_t);
 void		 lsa_merge(struct rde_nbr *, struct lsa *, struct vertex *);
+void		 lsa_remove_invalid_sums(struct area *);
 
 /* rde_spf.c */
 void		 spf_calc(struct area *);
