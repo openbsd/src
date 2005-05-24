@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.9 2005/05/24 02:12:40 moritz Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.10 2005/05/24 02:24:57 moritz Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -190,6 +190,8 @@ monitor_init(void)
 			fatalx("seteuid failed");
 		if (setuid(pw->pw_uid) == -1)
 			fatalx("setuid failed");
+
+		endpwent();
 		close(fd_slave);
 		return (1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.165 2005/05/24 02:12:40 moritz Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.166 2005/05/24 02:24:57 moritz Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] =
-    "$OpenBSD: ftpd.c,v 1.165 2005/05/24 02:12:40 moritz Exp $";
+    "$OpenBSD: ftpd.c,v 1.166 2005/05/24 02:24:57 moritz Exp $";
 #endif
 #endif /* not lint */
 
@@ -392,6 +392,7 @@ main(int argc, char *argv[])
 		    FTPD_PRIVSEP_USER);
 		exit(1);
 	}
+	endpwent();
 
 	if (daemon_mode) {
 		int *fds, n, error, i, fd;
