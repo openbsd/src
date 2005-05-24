@@ -1,4 +1,4 @@
-/*	$OpenBSD: tag.c,v 1.17 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: tag.c,v 1.18 2005/05/24 07:38:46 xsa Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
@@ -275,9 +275,11 @@ cvs_tag_local(CVSFILE *cf, void *arg)
 		return (CVS_EX_DATA);
 	}
 
-	if (rcs_sym_add(rf, tag_name, tag_rev) < 0) {
-		cvs_log(LP_ERR, "failed to tag %s: %s", rcspath,
-		    rcs_errstr(rcs_errno));
+	if (!cvs_noexec) {
+		if (rcs_sym_add(rf, tag_name, tag_rev) < 0) {
+			cvs_log(LP_ERR, "failed to tag %s: %s", rcspath,
+			    rcs_errstr(rcs_errno));
+		}
 	}
 
 	cvs_printf("T %s\n", fpath);
