@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.h,v 1.31 2005/04/07 00:21:51 mickey Exp $	*/
+/*	$OpenBSD: pdc.h,v 1.32 2005/05/24 22:26:16 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -558,6 +558,18 @@ struct pdc_pat_cell_module {	/* PDC_PAT_CELL_MODULE */
 struct pdc_pat_io_num {	/* PDC_PAT_IO */
 	u_int	num;
 	u_int	filler[31];
+};
+
+struct pdc_pat_pci_rt {	/* PDC_PAT_IO_GET_PCI_RT */
+	u_int8_t	type;		/* 0x8b */
+	u_int8_t	len;
+	u_int8_t	itype;		/* 0 -- vectored int */
+	u_int8_t	trigger;	/* polarity/level */
+	u_int8_t	pin;		/* PCI pin number */
+	u_int8_t	bus;
+	u_int8_t	seg;		/* reserved */
+	u_int8_t	line;
+	u_int64_t	addr;		/* io sapic address */
 };
 
 struct pdc_memmap {	/* PDC_MEMMAP */
