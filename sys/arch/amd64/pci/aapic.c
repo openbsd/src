@@ -1,0 +1,85 @@
+/*	$OpenBSD: aapic.c,v 1.1 2005/05/24 00:51:27 brad Exp $	*/
+/* 	$NetBSD: aapic.c,v 1.3 2005/01/13 23:40:01 fvdl Exp $	*/
+
+#if 0
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aapic.c,v 1.3 2005/01/13 23:40:01 fvdl Exp $");
+#endif
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/device.h>
+
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
+
+#include <arch/amd64/pci/amd8131reg.h>
+
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+extern int nioapics;
+#endif
+
+int	aapic_match(struct device *, void *, void *);
+void	aapic_attach(struct device *, struct device *, void *);
+
+struct aapic_softc {
+	struct device sc_dev;
+};
+
+struct cfattach aapic_ca = {
+	sizeof(struct aapic_softc), aapic_match, aapic_attach
+};
+
+struct cfdriver aapic_cd = {
+	0, "aapic", DV_DULL
+};
+
+int
+aapic_match(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
+{
+	struct pci_attach_args *pa = aux;
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_AMD &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_AMD_8131_PCIX_IOAPIC)
+		return (1);
+
+	return (0);
+}
+
+void
+aapic_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct pci_attach_args *pa = aux;
+	int bus, dev, func;
+	pcitag_t tag;
+	pcireg_t reg;
+
+	printf("\n");
+
+#if NIOAPIC > 0
+	if (nioapics == 0)
+		return;
+#else
+	return;
+#endif
+	
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, AMD8131_IOAPIC_CTL);
+	reg |= AMD8131_IOAEN;
+	pci_conf_write(pa->pa_pc, pa->pa_tag, AMD8131_IOAPIC_CTL, reg);
+
+	pci_decompose_tag(pa->pa_pc, pa->pa_tag, &bus, &dev, &func);
+	func = 0;
+	tag = pci_make_tag(pa->pa_pc, bus, dev, func);
+	reg = pci_conf_read(pa->pa_pc, tag, AMD8131_PCIX_MISC);
+	reg &= ~AMD8131_NIOAMODE;
+	pci_conf_write(pa->pa_pc, tag, AMD8131_PCIX_MISC, reg);
+}

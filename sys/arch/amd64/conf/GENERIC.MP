@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC.MP,v 1.5 2004/10/22 22:10:32 grange Exp $
+#	$OpenBSD: GENERIC.MP,v 1.6 2005/05/24 00:51:27 brad Exp $
 
 include "arch/amd64/conf/GENERIC"
 
@@ -7,3 +7,5 @@ option	MPBIOS
 
 cpu*		at mainbus?
 ioapic*		at mainbus?
+
+aapic*		at pci?			# AMD 8131 IO apic
