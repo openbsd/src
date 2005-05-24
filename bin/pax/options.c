@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.61 2004/04/16 22:50:23 deraadt Exp $	*/
+/*	$OpenBSD: options.c,v 1.62 2005/05/24 16:33:45 jaredy Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: options.c,v 1.61 2004/04/16 22:50:23 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: options.c,v 1.62 2005/05/24 16:33:45 jaredy Exp $";
 #endif
 #endif /* not lint */
 
@@ -1561,9 +1561,12 @@ pax_usage(void)
 void
 tar_usage(void)
 {
-	(void)fputs("usage: tar [-]{crtux}[-befhmopqsvwzHLOPXZ014578] [blocksize] ",
-		 stderr);
-	(void)fputs("[archive] [replstr] [-C directory] [-I file] [file ...]\n",
+	(void)fputs(
+	    "usage: tar {crtux}[014578befHhLmOoPpqsvwXZz]\n"
+	    "\t  [blocking-factor | archive | replstr] [-C directory] [-I file]\n"
+	    "\t  [file ...]\n"
+	    "       tar {-crtux} [-014578eHhLmOoPpqvwXZz] [-b blocking-factor]\n"
+	    "\t  [-C directory] [-f archive] [-I file] [-s replstr] [file ...]\n",
 	    stderr);
 	exit(1);
 }

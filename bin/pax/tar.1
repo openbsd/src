@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.46 2004/08/10 13:33:15 millert Exp $
+.\"	$OpenBSD: tar.1,v 1.47 2005/05/24 16:33:45 jaredy Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: tar.1,v 1.46 2004/08/10 13:33:15 millert Exp $
+.\"	$OpenBSD: tar.1,v 1.47 2005/05/24 16:33:45 jaredy Exp $
 .\"
 .Dd February 7, 2001
 .Dt TAR 1
@@ -34,14 +34,23 @@
 .Sh SYNOPSIS
 .Nm tar
 .Sm off
-.Oo \&- Oc {crtux} Op befhmopqsvwzHLOPXZ014578
+.No { Cm crtux No } Op Cm 014578befHhLmOoPpqsvwXZz
 .Sm on
-.Op Ar blocksize
-.Op Ar archive
-.Op Ar replstr
-.\" XXX how to do this right?
+.Bk -words
+.Op Ar blocking-factor | archive | replstr
 .Op Fl C Ar directory
 .Op Fl I Ar file
+.Op Ar file ...
+.Ek
+.Pp
+.Nm tar
+.No { Ns Fl crtux Ns }
+.Op Fl 014578eHhLmOoPpqvwXZz
+.Op Fl b Ar blocking-factor
+.Op Fl C Ar directory
+.Op Fl f Ar archive
+.Op Fl I Ar file
+.Op Fl s Ar replstr
 .Op Ar file ...
 .Sh DESCRIPTION
 The
@@ -53,8 +62,25 @@ format.
 A tar archive is often stored on a magnetic tape, but can be
 stored equally well on a floppy, CD-ROM, or in a regular disk file.
 .Pp
+In the first (legacy) form, all option flags except for
+.Fl C
+and
+.Fl I
+must be contained within the first argument to
+.Nm
+and must not be prefixed by a hyphen
+.Pq Sq - .
+Option arguments, if any, are processed as subsequent arguments to
+.Nm
+and are processed in the order in which their corresponding option
+flags have been presented on the command line.
+.Pp
+In the second and preferred form, option flags may be given in any order
+and are immediately followed by their corresponding option argument
+values.
+.Pp
 One of the following flags must be present:
-.Bl -tag -width Ar
+.Bl -tag -width Ds
 .It Fl c
 Create new archive, or overwrite an existing archive,
 adding the specified files to it.
@@ -66,6 +92,13 @@ can be overwritten.
 List contents of archive.
 If any files are named on the
 command line, only those files will be listed.
+The
+.Ar file
+arguments may be specified as glob patterns (see
+.Xr glob 3
+for more information), in which case
+.Nm
+will list all archive members that match each pattern.
 .It Fl u
 Alias for
 .Fl r .
@@ -74,6 +107,14 @@ Extract files from archive.
 If any files are named on the
 command line, only those files will be extracted from the
 archive.
+The
+.Ar file
+arguments may be specified as glob patterns (see
+.Xr glob 3
+for more information), in which case
+.Nm
+will extract all archive members that match each pattern.
+.Pp
 If more than one copy of a file exists in the
 archive, later copies will overwrite earlier copies during
 extraction.
@@ -85,27 +126,42 @@ The file mode is subject to modification by the
 .Pp
 In addition to the flags mentioned above, any of the following
 flags may be used:
-.Bl -tag -width Ar
-.It Fl b Ar "blocking factor"
+.Bl -tag -width Ds
+.It Fl b Ar blocking-factor
 Set blocking factor to use for the archive.
 .Nm
-uses 512 byte blocks.
+uses 512-byte blocks.
 The default is 20, the maximum is 126.
 Archives with a blocking factor larger than 63 violate the
 .Tn POSIX
 standard and will not be portable to all systems.
+.It Fl C Ar directory
+This is a positional argument which sets the working directory for the
+following files.
+When extracting, files will be extracted into
+the specified directory; when creating, the specified files will be matched
+from the directory.
 .It Fl e
 Stop after the first error.
 .It Fl f Ar archive
 Filename where the archive is stored.
 Defaults to
 .Pa /dev/rst0 .
+.It Fl H
+Follow symlinks given on the command line only.
 .It Fl h
 Follow symbolic links as if they were normal files
 or directories.
 In extract mode this means that a directory entry in the archive
 will not overwrite an existing symbolic link, but rather what the
 link ultimately points to.
+.It Fl I Ar file
+This is a positional argument which reads the names of files to
+archive or extract from the given file, one per line.
+.It Fl L
+Synonym for the
+.Fl h
+option.
 .It Fl m
 Do not preserve modification time.
 .It Fl O
@@ -117,6 +173,11 @@ is unable to decode.
 This implies the
 .Fl O
 flag.
+.It Fl P
+Do not strip leading slashes
+.Pq Sq /
+from pathnames.
+The default is to strip leading slashes.
 .It Fl p
 Preserve user and group ID as well as file mode regardless of
 the current
@@ -128,42 +189,54 @@ Only meaningful in conjunction with the
 flag.
 .It Fl q
 Select the first archive member that matches each
-.Ar pattern
+.Ar file
 operand.
 No more than one archive member is matched for each
-.Ar pattern .
+.Ar file .
 When members of type directory are matched, the file hierarchy rooted at that
 directory is also matched.
 .It Fl s Ar replstr
-Modify the file or archive member names specified by the
-.Ar pattern
-or
-.Ar file
-operands according to the substitution expression
+Modify the archive member names according to the substitution expression
 .Ar replstr ,
 using the syntax of the
 .Xr ed 1
 utility regular expressions.
-The format of these regular expressions is:
+.Ar file
+arguments may be given to restrict the list of archive members to those
+specified.
+.Pp
+The format of these regular expressions is
+.Pp
 .Dl /old/new/[gp]
+.Pp
 As in
 .Xr ed 1 ,
-.Cm old
-is a basic regular expression and
-.Cm new
-can contain an ampersand (&), \\n (where n is a digit) back-references,
+.Va old
+is a basic regular expression (see
+.Xr re_format 7 )
+and
+.Va new
+can contain an ampersand
+.Pq Ql & ,
+.Ql \e Ns Em n
+(where
+.Em n
+is a digit) back-references,
 or subexpression matching.
 The
-.Cm old
-string may also contain
-.Dv <newline>
-characters.
-Any non-null character can be used as a delimiter (/ is shown here).
+.Va old
+string may also contain newline characters.
+Any non-null character can be used as a delimiter
+.Po
+.Ql /
+is shown here
+.Pc .
 Multiple
 .Fl s
 expressions can be specified.
 The expressions are applied in the order they are specified on the
 command line, terminating with the first successful substitution.
+.Pp
 The optional trailing
 .Cm g
 continues to apply the substitution expression to the pathname substring,
@@ -175,9 +248,10 @@ option.
 The optional trailing
 .Cm p
 will cause the final result of a successful substitution to be written to
-.Dv standard error
-in the following format:
-.Dl <original pathname> >> <new pathname>
+standard error in the following format:
+.Pp
+.D1 Em original-pathname No >> Em new-pathname
+.Pp
 File or archive member names that substitute to the empty string
 are not selected and will be skipped.
 .It Fl v
@@ -188,32 +262,14 @@ This option causes
 .Nm
 to prompt the user for the filename to use when storing or
 extracting files in an archive.
-.It Fl z
-Compress archive using gzip.
-.It Fl C Ar directory
-This is a positional argument which sets the working directory for the
-following files.
-When extracting, files will be extracted into
-the specified directory; when creating, the specified files will be matched
-from the directory.
-.It Fl H
-Follow symlinks given on command line only.
-.It Fl L
-Synonym for the
-.Fl h
-option.
-.It Fl P
-Do not strip leading slashes
-.Pq Sq /
-from pathnames.
-The default is to strip leading slashes.
-.It Fl I Ar file
-This is a positional argument which reads the names of files to
-archive or extract from the given file, one per line.
 .It Fl X
 Do not cross mount points in the file system.
 .It Fl Z
-Compress archive using compress.
+Compress archive using
+.Xr compress 1 .
+.It Fl z
+Compress archive using
+.Xr gzip 1 .
 .El
 .Pp
 The options
@@ -234,47 +290,47 @@ Default tape device to use instead of
 default archive name
 .El
 .Sh EXAMPLES
-.Li $ tar c bonvole sekve
-.Pp
-Creates an archive on the default tape drive, containing the files named
+Create an archive on the default tape drive, containing the files named
 .Pa bonvole
 and
-.Pa sekve .
+.Pa sekve :
 .Pp
-.Li $ tar zcf foriru.tar.gz bonvole sekve
+.Dl $ tar c bonvole sekve
 .Pp
-Outputs a
+Output a
 .Xr gzip 1
 compressed archive containing the files
 .Pa bonvole
 and
 .Pa sekve
 to a file called
-.Pa foriru.tar.gz .
+.Pa foriru.tar.gz :
 .Pp
-.Li $ tar zcvf backup.tar.gz *.c
+.Dl $ tar zcf foriru.tar.gz bonvole sekve
 .Pp
-Verbosely creates an archive, called
+Verbosely create an archive, called
 .Pa backup.tar.gz ,
 of all files matching the shell
 .Xr glob 3
 function
-.Pa *.c .
+.Pa *.c :
 .Pp
-.Li $ tar tvzf backup.tar.gz '*.jpeg'
+.Dl $ tar zcvf backup.tar.gz *.c
 .Pp
-Verbosely lists, but does not extract, all files ending in
+Verbosely list, but do not extract, all files ending in
 .Pa .jpeg
 from a compressed archive named
 .Pa backup.tar.gz .
-Note that the glob pattern has been quoted to avoid expansion by the shell.
+Note that the glob pattern has been quoted to avoid expansion by the shell:
+.Pp
+.Dl $ tar tvzf backup.tar.gz '*.jpeg'
 .Pp
 For more detailed examples, see
 .Xr pax 1 .
 .Sh DIAGNOSTICS
 .Nm
 will exit with one of the following values:
-.Bl -tag -width 2n
+.Bl -tag -width 2n -offset indent
 .It 0
 All files were processed successfully.
 .It 1
