@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.37 2004/07/02 10:42:55 jmc Exp $
+.\"	$OpenBSD: malloc.3,v 1.38 2005/05/24 16:48:35 tedu Exp $
 .\"
 .Dd August 27, 1996
 .Dt MALLOC 3
@@ -204,6 +204,8 @@ Enable guard pages and chunk randomization.
 Each page size or larger allocation is followed by a guard page that will
 cause a segmentation fault upon any access.
 Smaller than page size chunks are returned in a random order.
+Pointer sized allocations are aligned to the end of a page to catch
+sizeof(ptr) errors where sizeof(*ptr) is meant.
 .Pp
 .It Cm H
 .Dq Hint .
