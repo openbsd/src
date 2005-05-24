@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.102 2005/04/27 14:22:27 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.103 2005/05/24 04:29:51 david Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -206,7 +206,7 @@ must be defined on each end of the VPN e.g.:
 .Ed
 .Pp
 Note that the
-.Fl keyfile
+.Fl key
 and
 .Fl authkey
 options may be used to specify the keys directly in the
@@ -401,7 +401,7 @@ Suites=			QM-ESP-3DES-SHA-SUITE
 .It
 Read through the configuration one more time.
 The only real differences between the two files in this example are
-the IP addresses, and ordering of Local- and Remote-ID for the VPN
+the IP addresses, and ordering of Local-ID and Remote-ID for the VPN
 itself.
 Note that the shared secret (the
 .Em Authentication
