@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.12 2005/05/23 22:44:19 brad Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.13 2005/05/24 05:14:13 brad Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -152,7 +152,7 @@ struct stge_softc {
 	struct arpcom sc_arpcom;	/* ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
 	int sc_rev;			/* silicon revision */
-
+	int stge_if_flags;
 	void *sc_ih;			/* interrupt cookie */
 
 	struct mii_data sc_mii;		/* MII/media information */
@@ -576,6 +576,8 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, STGE_NTXDESC - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 
+	ifp->if_capabilities = IFCAP_VLAN_MTU;
+
 	/*
 	 * The manual recommends disabling early transmit, so we
 	 * do.  It's disabled anyway, if using IP checksumming,
@@ -591,18 +593,6 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 #ifdef fake
 	if ((pa->pa_flags & PCI_FLAGS_MWI_OKAY) == 0)
 		sc->sc_DMACtrl |= DMAC_MWIDisable;
-#endif
-
-#ifdef fake
-	/*
-	 * We can support 802.1Q VLAN-sized frames and jumbo
-	 * Ethernet frames.
-	 *
-	 * XXX Figure out how to do hw-assisted VLAN tagging in
-	 * XXX a reasonable way on this chip.
-	 */
-	sc->sc_arpcom.ac_capabilities |=
-	    ETHERCAP_VLAN_MTU /* XXX | ETHERCAP_JUMBO_MTU */;
 #endif
 
 #ifdef STGE_CHECKSUM
@@ -984,23 +974,6 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
-#ifdef NS
-		case AF_NS:
-		    {
-			 register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
-
-			 if (ns_nullhost(*ina))
-				ina->x_host = (union ns_host *)
-				  &sc->sc_arpcom.ac_enaddr;
-			 else
-				bcopy(ina->x_host.c_host,
-				      &sc->sc_arpcom.ac_enaddr,
-				      ifp->if_addrlen);
-			 /* Set new address. */
-			 stge_init(ifp);
-			 break;
-		    }
-#endif
 		default:
 			stge_init(ifp);
 			break;
@@ -1008,24 +981,31 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU || ifr->ifr_mtu < ETHERMIN) {
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
 			error = EINVAL;
-		} else if (ifp->if_mtu != ifr->ifr_mtu) {
+		else if (ifp->if_mtu != ifr->ifr_mtu) {
 			ifp->if_mtu = ifr->ifr_mtu;
+			stge_init(ifp);
 		}
 		break;
 
 	case SIOCSIFFLAGS:
-		/*
-		 * If interface is marked up and not running, then start it.
-		 * If it is marked down and running, stop it.
-		 * XXX If it's up then re-initialize it. This is so flags
-		 * such as IFF_PROMISC are handled.
-		 */
-		if (ifp->if_flags & IFF_UP)
-			stge_init(ifp);
-		else if (ifp->if_flags & IFF_RUNNING)
-			stge_stop(ifp, 1);
+		if (ifp->if_flags & IFF_UP) {
+			if (ifp->if_flags & IFF_RUNNING &&
+			    ifp->if_flags & IFF_PROMISC &&
+			    !(sc->stge_if_flags & IFF_PROMISC))
+				stge_set_filter(sc);
+			else if (ifp->if_flags & IFF_RUNNING &&
+			    !(ifp->if_flags & IFF_PROMISC) &&
+			    sc->stge_if_flags & IFF_PROMISC)
+				stge_set_filter(sc);
+			else
+				stge_init(ifp);
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				stge_stop(ifp, 1);
+		}
+		sc->stge_if_flags = ifp->if_flags;
 		break;
 
 	case SIOCADDMULTI:
@@ -1040,9 +1020,8 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			 * filter accordingly.
 			 */
 			if (ifp->if_flags & IFF_RUNNING)
-				error = stge_init(ifp);
-			else
-				error = 0;
+				stge_set_filter(sc);
+			error = 0;
 		}
 		break;
 
@@ -1611,20 +1590,10 @@ stge_init(struct ifnet *ifp)
 	/*
 	 * Set the maximum frame size.
 	 */
-#ifdef fake
 	bus_space_write_2(st, sh, STGE_MaxFrameSize,
 	    ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN +
-	    ((sc->sc_arpcom.ac_capenable & ETHERCAP_VLAN_MTU) ?
-	     ETHER_VLAN_ENCAP_LEN : 0));
-#else
-#if NVLAN > 0
-	bus_space_write_2(st, sh, STGE_MaxFrameSize,
-	    ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN + 4);
-#else
-	bus_space_write_2(st, sh, STGE_MaxFrameSize,
-	    ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN);
-#endif
-#endif
+	    ETHER_VLAN_ENCAP_LEN);
+
 	/*
 	 * Initialize MacCtrl -- do it before setting the media,
 	 * as setting the media will actually program the register.
