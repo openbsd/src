@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.47 2005/05/23 22:33:32 ho Exp $	 */
+/* $OpenBSD: monitor.c,v 1.48 2005/05/24 02:57:15 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -114,7 +114,7 @@ monitor_init(int debug)
 	m_state.pid = fork();
 
 	if (m_state.pid == -1)
-		log_fatal("monitor_init: for of unprivileged child failed");
+		log_fatal("monitor_init: fork of unprivileged child failed");
 	if (m_state.pid == 0) {
 		/* The child process drops privileges. */
 		set_slave_signals();
