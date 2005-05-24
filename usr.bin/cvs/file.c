@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.78 2005/05/24 20:04:43 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.79 2005/05/24 21:57:33 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -269,7 +269,7 @@ cvs_file_create(CVSFILE *parent, const char *path, u_int type, mode_t mode)
 			return (NULL);
 		}
 
-		if ((mkdir(path, mode) == -1) ||
+		if (((mkdir(path, mode) == -1) && (errno != EEXIST)) ||
 		    (cvs_mkadmin(path, cfp->cf_root->cr_str, cfp->cf_repo) < 0)) {
 			cvs_file_free(cfp);
 			return (NULL);
