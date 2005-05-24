@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.53 2005/05/24 04:01:03 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.54 2005/05/24 06:42:38 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -308,6 +308,11 @@ cvs_connect(struct cvsroot *root)
 		return (-1);
 	}
 
+	/* send the CVSROOT to the server unless it's an init */
+	if ((cvs_cmdop != CVS_OP_INIT) &&
+	    (cvs_sendreq(root, CVS_REQ_ROOT, root->cr_dir) < 0))
+		return (-1);
+
 	/* don't fail if this request doesn't work */
 	if (cvs_sendreq(root, CVS_REQ_VERSION, NULL) < 0)
 		cvs_log(LP_WARN, "failed to get remote version");
@@ -327,11 +332,6 @@ cvs_connect(struct cvsroot *root)
 	if (cvs_readonly && (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-r") < 0))
 		return (-1);
 	if (cvs_trace && (cvs_sendreq(root, CVS_REQ_GLOBALOPT, "-t") < 0))
-		return (-1);
-
-	/* now send the CVSROOT to the server unless it's an init */
-	if ((cvs_cmdop != CVS_OP_INIT) &&
-	    (cvs_sendreq(root, CVS_REQ_ROOT, root->cr_dir) < 0))
 		return (-1);
 
 	/* not sure why, but we have to send this */
