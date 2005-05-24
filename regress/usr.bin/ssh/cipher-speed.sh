@@ -1,4 +1,4 @@
-#	$OpenBSD: cipher-speed.sh,v 1.1 2003/11/25 22:11:49 markus Exp $
+#	$OpenBSD: cipher-speed.sh,v 1.2 2005/05/24 04:09:54 djm Exp $
 #	Placed in the Public Domain.
 
 tid="cipher speed"
@@ -14,7 +14,7 @@ DATA=/bsd
 
 macs="hmac-sha1 hmac-md5 hmac-sha1-96 hmac-md5-96"
 ciphers="aes128-cbc 3des-cbc blowfish-cbc cast128-cbc 
-	arcfour aes192-cbc aes256-cbc aes128-ctr"
+	arcfour128 arcfour256 arcfour aes192-cbc aes256-cbc aes128-ctr"
 
 for c in $ciphers; do for m in $macs; do
 	trace "proto 2 cipher $c mac $m"
