@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5212.c,v 1.18 2005/05/21 20:14:55 reyk Exp $	*/
+/*	$OpenBSD: ar5212.c,v 1.19 2005/05/24 21:46:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -94,7 +94,7 @@ ar5k_ar5212_fill(hal)
 	AR5K_HAL_FUNCTION(hal, ar5212, set_rx_filter);
 	AR5K_HAL_FUNCTION(hal, ar5212, setup_rx_desc);
 	AR5K_HAL_FUNCTION(hal, ar5212, proc_rx_desc);
-	AR5K_HAL_FUNCTION(hal, ar5212, set_rx_monitor);
+	AR5K_HAL_FUNCTION(hal, ar5212, set_rx_signal);
 
 	/*
 	 * Misc functions
@@ -1740,11 +1740,10 @@ ar5k_ar5212_proc_rx_desc(hal, desc, phys_addr, next)
 }
 
 void
-ar5k_ar5212_set_rx_monitor(hal)
+ar5k_ar5212_set_rx_signal(hal)
 	struct ath_hal *hal;
 {
-	AR5K_REG_ENABLE_BITS(AR5K_AR5212_RX_FILTER,
-	    AR5K_AR5212_RX_FILTER_PROMISC);
+	/* Signal state monitoring is not yet supported */
 }
 
 /*

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.25 2005/05/11 05:15:01 reyk Exp $  */
+/*      $OpenBSD: ath.c,v 1.26 2005/05/24 21:46:18 reyk Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -2051,7 +2051,7 @@ ath_rx_proc(void *arg, int npending)
 		TAILQ_INSERT_TAIL(&sc->sc_rxbuf, bf, bf_list);
 	} while (ath_rxbuf_init(sc, bf) == 0);
 
-	ath_hal_set_rx_monitor(ah);			/* rx signal state monitoring */
+	ath_hal_set_rx_signal(ah);		/* rx signal state monitoring */
 	ath_hal_start_rx(ah);			/* in case of RXEOL */
 
 	if ((ifp->if_flags & IFF_OACTIVE) == 0 && !IFQ_IS_EMPTY(&ifp->if_snd))
@@ -2597,7 +2597,6 @@ ath_stoprecv(struct ath_softc *sc)
 	ath_hal_stop_pcu_recv(ah);	/* disable PCU */
 	ath_hal_set_rx_filter(ah, 0);	/* clear recv filter */
 	ath_hal_stop_rx_dma(ah);	/* disable DMA engine */
-	DELAY(3000);			/* long enough for 1 frame */
 #ifdef AR_DEBUG
 	if (ath_debug & ATH_DEBUG_RESET) {
 		struct ath_buf *bf;

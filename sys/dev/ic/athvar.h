@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.7 2005/04/18 18:42:56 reyk Exp $  */
+/*      $OpenBSD: athvar.h,v 1.8 2005/05/24 21:46:18 reyk Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -526,8 +526,8 @@ int	ath_intr(void *);
 	((*(_ah)->ah_has_veol)((_ah)))
 #define	ath_hal_get_rf_gain(_ah) \
 	((*(_ah)->ah_get_rf_gain)((_ah)))
-#define	ath_hal_set_rx_monitor(_ah) \
-	((*(_ah)->ah_set_rx_monitor)((_ah)))
+#define	ath_hal_set_rx_signal(_ah) \
+	((*(_ah)->ah_set_rx_signal)((_ah)))
 
 #define	ath_hal_setup_rx_desc(_ah, _ds, _size, _intreq) \
 	((*(_ah)->ah_setup_rx_desc)((_ah), (_ds), (_size), (_intreq)))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5xxx.h,v 1.20 2005/05/08 18:13:17 reyk Exp $	*/
+/*	$OpenBSD: ar5xxx.h,v 1.21 2005/05/24 21:46:18 reyk Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@vantronix.net>
@@ -985,7 +985,7 @@ struct ath_desc {
 	    struct ath_desc *, u_int32_t size, u_int flags); \
 	_t HAL_STATUS (_a _n##_proc_rx_desc)(struct ath_hal *, \
 	    struct ath_desc *, u_int32_t phyAddr, struct ath_desc *next); \
-	_t void (_a _n##_set_rx_monitor)(struct ath_hal *); \
+	_t void (_a _n##_set_rx_signal)(struct ath_hal *); \
 	/* Misc Functions */ \
 	_t void (_a _n##_dump_state)(struct ath_hal *); \
 	_t HAL_BOOL (_a _n##_get_diag_state)(struct ath_hal *, int, void **, \
