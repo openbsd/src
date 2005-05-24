@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.21 2005/05/24 06:55:21 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.22 2005/05/24 20:40:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -444,7 +444,7 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 
 			aid.s_addr = lsa_hdr.ls_id;
 			log_debug("rde_dispatch_imsg: IMSG_LS_MAXAGE, "
-			    "type %d ls_id %d", lsa_hdr.type,
+			    "type %d ls_id %s", lsa_hdr.type,
 			    inet_ntoa(aid));
 
 			if (rde_nbr_loading(nbr->area)) {
