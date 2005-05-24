@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.31 2005/05/17 03:11:44 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.32 2005/05/24 09:55:45 brad Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -230,6 +230,7 @@ em*	at pci?			# Intel Pro/1000 ethernet
 sf*	at pci?			# Adaptec AIC-6915 ethernet
 bge*	at pci?			# Broadcom BCM570x (aka Tigon3)
 re*	at pci?			# Realtek 8169/8169S/8110S
+stge*	at pci?			# Sundance TC9021 GigE
 #lge*	at pci?			# Level1 LXT1001 GigE
 #mtd*	at pci?			# Myson MTD803
 vge*	at pci?			# VIA VT612x
