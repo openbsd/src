@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.4 2005/05/24 02:35:39 ho Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.5 2005/05/24 02:49:32 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -338,16 +338,13 @@ pfkey_snapshot(void *v)
 	for (next = sadb; next < max; next += m->sadb_msg_len * CHUNK) {
 		m = (struct sadb_msg *)next;
 
-		fprintf(stderr, "pfkey_snapshot: SPD %p type %s len %u\n",
-		    m, pfkey_print_type(m), m->sadb_msg_len * CHUNK);
-
 		if (m->sadb_msg_len == 0)
 			break;
 
-		/* Tweak and send */
+		/* Tweak and send this SA to the peer. */
 		m->sadb_msg_type = SADB_ADD;
 		m->sadb_msg_errno = 0;
-		m->sadb_msg_reserved = 0;
+		m->sadb_msg_reserved = 0; /* XXX DUMP msg has data here. */
 
 		/* Allocate a buffer for the msg, net_queue() will free it. */
 		sendbuf = (u_int8_t *)malloc(m->sadb_msg_len * CHUNK);
@@ -366,9 +363,6 @@ pfkey_snapshot(void *v)
 	for (next = spd; next < max; next += sizeof(struct ipsec_policy)) {
 		ip = (struct ipsec_policy *)next;
 
-		fprintf(stderr, "pfkey_snapshot: SPD %p (%d)\n",ip,
-		    sizeof(struct ipsec_policy));
-
 		if (ip->ipo_flags & IPSP_POLICY_SOCKET)
 			continue;
 	}
@@ -378,6 +372,5 @@ pfkey_snapshot(void *v)
 	free(sadb);
 	memset(spd, 0, spdsz);
 	free(spd);
-	log_msg(0, "pfkey_snapshot: done");
 	return;
 }
