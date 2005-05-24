@@ -1721,7 +1721,6 @@
 ./usr/libexec/spellprog
 ./usr/libexec/ssh-keysign
 ./usr/libexec/tcpd
-./usr/libexec/telnetd
 ./usr/libexec/tftpd
 ./usr/libexec/uucpd
 ./usr/libexec/vfontedpr

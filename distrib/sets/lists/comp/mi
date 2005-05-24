@@ -961,6 +961,7 @@
 ./usr/include/net/if_sppp.h
 ./usr/include/net/if_stripvar.h
 ./usr/include/net/if_token.h
+./usr/include/net/if_trunk.h
 ./usr/include/net/if_tun.h
 ./usr/include/net/if_types.h
 ./usr/include/net/if_vlan_var.h

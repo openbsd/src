@@ -1606,6 +1606,7 @@
 ./usr/share/man/cat4/tlphy.0
 ./usr/share/man/cat4/tqphy.0
 ./usr/share/man/cat4/trm.0
+./usr/share/man/cat4/trunk.0
 ./usr/share/man/cat4/tty.0
 ./usr/share/man/cat4/tun.0
 ./usr/share/man/cat4/twe.0
@@ -2338,7 +2339,6 @@
 ./usr/share/man/cat8/tcpdmatch.0
 ./usr/share/man/cat8/tcpdrop.0
 ./usr/share/man/cat8/tcpdump.0
-./usr/share/man/cat8/telnetd.0
 ./usr/share/man/cat8/tftpd.0
 ./usr/share/man/cat8/timed.0
 ./usr/share/man/cat8/timedc.0
