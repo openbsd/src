@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd_scsi.c,v 1.10 2005/05/23 07:06:16 krw Exp $	*/
+/*	$OpenBSD: sd_scsi.c,v 1.11 2005/05/24 20:48:43 krw Exp $	*/
 /*	$NetBSD: sd_scsi.c,v 1.8 1998/10/08 20:21:13 thorpej Exp $	*/
 
 /*-
@@ -215,7 +215,7 @@ sd_scsibus_get_parms(sd, dp, flags)
 			dp->blksize = _3btol(scsi_sense.blk_desc.blklen);
 		else
 			dp->blksize =
-			    _2btol(sense_pages->reduced_geometry.bytes_s);
+			    _2btol(sense_pages->flex_geometry.bytes_s);
 		dp->sectors = sense_pages->flex_geometry.ph_sec_tr;
 		dp->disksize = dp->heads * dp->cyls * dp->sectors;
 		if (dp->disksize == 0)
