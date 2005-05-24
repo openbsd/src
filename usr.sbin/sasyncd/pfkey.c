@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.3 2005/05/23 19:53:27 ho Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.4 2005/05/24 02:35:39 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <sys/queue.h>
 #include <sys/sysctl.h>
 #include <net/pfkeyv2.h>
+#include <netinet/ip_ipsp.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -64,7 +65,7 @@ static const char *msgtypes[] = {
 
 #define CHUNK sizeof(u_int64_t)
 
-static const char *pfkey_print_type(struct sadb_msg *msg);
+static const char *pfkey_print_type(struct sadb_msg *);
 
 static int
 pfkey_write(u_int8_t *buf, ssize_t len)
@@ -103,10 +104,14 @@ pfkey_set_promisc(void)
 static const char *
 pfkey_print_type(struct sadb_msg *msg)
 {
+	static char	uk[20];
+	
 	if (msg->sadb_msg_type < sizeof msgtypes / sizeof msgtypes[0])
 		return msgtypes[msg->sadb_msg_type];
-	else
-		return "<unknown>";
+	else {
+		snprintf(uk, sizeof uk, "<unknown(%d)>", msg->sadb_msg_type);
+		return uk;
+	}
 }
 
 static int
@@ -118,9 +123,10 @@ pfkey_handle_message(struct sadb_msg *m)
 	 * Report errors, but ignore for DELETE (both isakmpd and kernel will
 	 * expire the SA, if the kernel is first, DELETE returns failure).
 	 */
-	if (msg->sadb_msg_errno && msg->sadb_msg_type != SADB_DELETE) {
+	if (msg->sadb_msg_errno && msg->sadb_msg_type != SADB_DELETE &&
+	    msg->sadb_msg_pid == (u_int32_t)getpid()) {
 		errno = msg->sadb_msg_errno;
-		log_err("pfkey error (%s)", pfkey_print_type(msg));
+		log_msg(1, "pfkey error (%s)", pfkey_print_type(msg));
 	}
 
 	/* We only want promiscuous messages here, skip all others. */
@@ -142,15 +148,12 @@ pfkey_handle_message(struct sadb_msg *m)
 		return 0;
 	}
 
-	log_msg(3, "pfkey_handle_message: got %s len %u seq %d",
-	    pfkey_print_type(msg), msg->sadb_msg_len * CHUNK,
-	    msg->sadb_msg_seq);
-
 	switch (msg->sadb_msg_type) {
 	case SADB_X_PROMISC:
 	case SADB_DUMP:
 	case SADB_GET:
 	case SADB_GETSPI:
+	/* case SADB_REGISTER: */
 		/* Some messages should not be synced. */
 		free(m);
 		break;
@@ -313,51 +316,68 @@ pfkey_shutdown(void)
 void
 pfkey_snapshot(void *v)
 {
-	struct sadb_msg *m;
-	struct sadb_ext *e;
-	u_int8_t	*buf;
-	size_t		 sz, mlen, elen;
-	int		 mib[5];
+	struct syncpeer		*p = (struct syncpeer *)v;
+	struct sadb_msg		*m;
+	struct ipsec_policy	*ip;
+	u_int8_t		*sadb, *spd, *max, *next, *sendbuf;
+	u_int32_t		 sadbsz, spdsz;
 
-	mib[0] = CTL_NET;
-	mib[1] = PF_KEY;
-	mib[2] = PF_KEY_V2;
-	mib[3] = NET_KEY_SADB_DUMP;
-	mib[4] = 0; /* Unspec SA type */
-
-	if (timer_add("pfkey_snapshot", 60, pfkey_snapshot, NULL))
-		log_err("pfkey_snapshot: failed to renew event");
-
-	if (sysctl(mib, sizeof mib / sizeof mib[0], NULL, &sz, NULL, 0) == -1
-	    || sz == 0)
+	if (!p)
 		return;
-	if ((buf = malloc(sz)) == NULL) {
-		log_err("malloc");
-		return;
-	}
-	if (sysctl(mib, sizeof mib / sizeof mib[0], buf, &sz, NULL, 0) == -1) {
-		log_err("sysctl");
-		return;
-	}
-
-	m = (struct sadb_msg *)buf;
-	while (m < (struct sadb_msg *)(buf + sz) && m->sadb_msg_len > 0) {
-		mlen = m->sadb_msg_len * CHUNK;
 		
-		fprintf(stderr, "pfkey_snapshot: sadb_msg %p type %s len %u\n",
-		    m, pfkey_print_type(m), mlen);
-
-		e = (struct sadb_ext *)(m + 1);
-		while ((u_int8_t *)e - (u_int8_t *)m < mlen && 
-		    e->sadb_ext_len > 0) {
-			elen = e->sadb_ext_len * CHUNK;
-			fprintf(stderr, "ext %p len %u\n", e, elen);
-			e = (struct sadb_ext *)((u_int8_t *)e + elen);
-		}
-		/* ... */
-		m = (struct sadb_msg *)((u_int8_t *)m + mlen);
+	if (monitor_get_pfkey_snap(&sadb, &sadbsz, &spd, &spdsz)) {
+		log_msg(0, "pfkey_snapshot: failed to get pfkey snapshot");
+		return;
 	}
-	memset(buf, 0, sz);
-	free(buf);
+
+	/* Parse SADB data */
+	if (sadbsz)
+		dump_buf(5, sadb, sadbsz, "pfkey_snapshot: SADB data");
+
+	max = sadb + sadbsz;
+	for (next = sadb; next < max; next += m->sadb_msg_len * CHUNK) {
+		m = (struct sadb_msg *)next;
+
+		fprintf(stderr, "pfkey_snapshot: SPD %p type %s len %u\n",
+		    m, pfkey_print_type(m), m->sadb_msg_len * CHUNK);
+
+		if (m->sadb_msg_len == 0)
+			break;
+
+		/* Tweak and send */
+		m->sadb_msg_type = SADB_ADD;
+		m->sadb_msg_errno = 0;
+		m->sadb_msg_reserved = 0;
+
+		/* Allocate a buffer for the msg, net_queue() will free it. */
+		sendbuf = (u_int8_t *)malloc(m->sadb_msg_len * CHUNK);
+		if (sendbuf) {
+			memcpy(sendbuf, m, m->sadb_msg_len * CHUNK);
+			net_queue(p, MSG_PFKEYDATA, sendbuf,
+			    m->sadb_msg_len * CHUNK);
+		}
+	}
+
+	/* Parse SPD data */
+	if (spdsz)
+		dump_buf(5, spd, spdsz, "pfkey_snapshot: SPD data");
+
+	max = spd + spdsz;
+	for (next = spd; next < max; next += sizeof(struct ipsec_policy)) {
+		ip = (struct ipsec_policy *)next;
+
+		fprintf(stderr, "pfkey_snapshot: SPD %p (%d)\n",ip,
+		    sizeof(struct ipsec_policy));
+
+		if (ip->ipo_flags & IPSP_POLICY_SOCKET)
+			continue;
+	}
+
+	/* Cleanup. */
+	memset(sadb, 0, sadbsz);
+	free(sadb);
+	memset(spd, 0, spdsz);
+	free(spd);
+	log_msg(0, "pfkey_snapshot: done");
 	return;
 }

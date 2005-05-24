@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.h,v 1.4 2005/05/22 20:35:48 ho Exp $	*/
+/*	$OpenBSD: sasyncd.h,v 1.5 2005/05/24 02:35:39 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -91,7 +91,14 @@ void	log_init(char *);
 void	log_msg(int, const char *, ...);
 void	log_err(const char *, ...);
 
+/* monitor.c */
+pid_t	monitor_init(void);
+void	monitor_loop(void);
+int	monitor_get_pfkey_snap(u_int8_t **, u_int32_t *, u_int8_t **,
+    u_int32_t *);
+
 /* net.c */
+void	dump_buf(int, u_int8_t *, u_int32_t, char *);
 void	net_ctl_update_state(void);
 int	net_init(void);
 void	net_handle_messages(fd_set *);

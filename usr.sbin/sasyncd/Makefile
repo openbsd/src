@@ -1,7 +1,7 @@
-#	$Id: Makefile,v 1.4 2005/05/23 19:53:27 ho Exp $
+#	$Id: Makefile,v 1.5 2005/05/24 02:35:39 ho Exp $
 
 PROG=	sasyncd
-SRCS=	sasyncd.c carp.c conf.y log.c net.c net_ctl.c pfkey.c timer.c
+SRCS=	sasyncd.c carp.c conf.y log.c monitor.c net.c net_ctl.c pfkey.c timer.c
 MAN=	sasyncd.8 sasyncd.conf.5
 
 .ifdef DEBUG

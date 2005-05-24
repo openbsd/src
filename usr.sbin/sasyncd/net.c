@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.4 2005/05/23 19:53:27 ho Exp $	*/
+/*	$OpenBSD: net.c,v 1.5 2005/05/24 02:35:39 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -75,7 +75,7 @@ static int	 net_set_sa(struct sockaddr *, char *, in_port_t);
 static void	 net_check_peers(void *);
 
 /* Pretty-print a buffer. */
-static void
+void
 dump_buf(int lvl, u_int8_t *b, u_int32_t len, char *title)
 {
 	u_int32_t	i, off, blen;
@@ -386,6 +386,9 @@ net_handle_messages(fd_set *fds)
 				p->socket = newsock;
 				log_msg(1, "net: peer \"%s\" connected",
 				    p->name);
+				if (cfgstate.runstate == MASTER)
+					timer_add("pfkey_snapshot", 2,
+					    pfkey_snapshot, p);
 			}
 			if (!found) {
 				log_msg(1, "net: found no matching peer for "
@@ -724,6 +727,10 @@ net_connect(void)
 		}
 		log_msg(1, "net_connect: peer \"%s\" connected, fd %d",
 		    p->name, p->socket);
+
+		/* Schedule a pfkey sync to the newly connected peer. */
+		if (cfgstate.runstate == MASTER)
+			timer_add("pfkey_snapshot", 2, pfkey_snapshot, p);
 	}
 
 	timerclear(&iv.it_value);

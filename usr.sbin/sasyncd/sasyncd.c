@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.c,v 1.7 2005/05/22 20:35:48 ho Exp $	*/
+/*	$OpenBSD: sasyncd.c,v 1.8 2005/05/24 02:35:39 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -43,32 +43,7 @@
 
 #include "sasyncd.h"
 
-static void
-privdrop(void)
-{
-	struct passwd	*pw = getpwnam(SASYNCD_USER);
-	extern char	*__progname;
-
-	if (!pw) {
-		log_err("%s: getpwnam(\"%s\") failed", __progname,
-		    SASYNCD_USER);
-		exit(1);
-	}
-
-	if (chroot(pw->pw_dir) != 0 || chdir("/") != 0) {
-		log_err("%s: chroot failed", __progname);
-		exit(1);
-	}
-
-	if (setgroups(1, &pw->pw_gid) || 
-	    setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) ||
-	    setresuid(pw->pw_uid, pw->pw_uid, pw->pw_uid)) {
-		log_err("%s: failed to drop privileges", __progname);
-		exit(1);
-	}
-}
-
-volatile int daemon_shutdown = 0;
+volatile sig_atomic_t	daemon_shutdown = 0;
 
 /* Called by signal handler for controlled daemon shutdown. */
 static void
@@ -180,16 +155,19 @@ main(int argc, char **argv)
 	if (net_init())
 		return 1;
 
-	/* Drop privileges. */
-	privdrop();
-
 	if (!cfgstate.debug)
 		if (daemon(1, 0)) {
 			perror("daemon()");
 			exit(1);
 		}
 
-	/* Main loop. */
+	if (monitor_init()) {
+		/* Parent, with privileges. */
+		monitor_loop();
+		exit(0);
+	}
+
+	/* Child, no privileges left. Run main loop. */
 	sasyncd_run();
 
 	/* Shutdown. */
