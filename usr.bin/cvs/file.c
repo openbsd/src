@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.76 2005/05/22 17:47:53 joris Exp $	*/
+/*	$OpenBSD: file.c,v 1.77 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -503,7 +503,7 @@ char*
 cvs_file_getpath(CVSFILE *file, char *buf, size_t len)
 {
 	u_int i;
-	char *fp, *namevec[CVS_FILE_MAXDEPTH];
+	const char *fp, *namevec[CVS_FILE_MAXDEPTH];
 	CVSFILE *top;
 
 	buf[0] = '\0';
@@ -657,10 +657,6 @@ cvs_file_getdir(CVSFILE *cf, int flags, char *path, int (*cb)(CVSFILE *, void *)
 	}
 
 	while ((ent = readdir(dirp)) != NULL) {
-		if (!strcmp(ent->d_name, ".") ||
-		    !strcmp(ent->d_name, ".."))
-			continue;
-
 		if ((flags & CF_IGNORE) && cvs_file_chkign(ent->d_name))
 			continue;
 
@@ -838,6 +834,8 @@ cvs_file_free(CVSFILE *cf)
 	} else {
 		if (cf->cf_tag != NULL)
 			cvs_strfree(cf->cf_tag);
+		if (cf->cf_opts != NULL)
+			cvs_strfree(cf->cf_opts);
 	}
 
 	free(cf);
@@ -1047,11 +1045,21 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent, struct cvs_ent *ent)
 		cfp->cf_lrev = ent->ce_rev;
 		ent->ce_rev = NULL;
 
-		if ((ent->ce_type == CVS_ENT_REG) &&
-		    (ent->ce_tag != NULL)) {
-			if ((cfp->cf_tag = cvs_strdup(ent->ce_tag)) == NULL) {
-				cvs_file_free(cfp);
-				return (NULL);
+		if (ent->ce_type == CVS_ENT_FILE) {
+			if (ent->ce_tag[0] != '\0') {
+				cfp->cf_tag = cvs_strdup(ent->ce_tag);
+				if (cfp->cf_tag == NULL) {
+					cvs_file_free(cfp);
+					return (NULL);
+				}
+			}
+
+			if (ent->ce_opts[0] != '\0') {
+				cfp->cf_opts = cvs_strdup(ent->ce_opts);
+				if (cfp->cf_opts == NULL) {
+					cvs_file_free(cfp);
+					return (NULL);
+				}
 			}
 		}
 	}

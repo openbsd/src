@@ -1,4 +1,4 @@
-/*	$OpenBSD: annotate.c,v 1.13 2005/05/20 20:00:53 joris Exp $	*/
+/*	$OpenBSD: annotate.c,v 1.14 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -41,16 +41,24 @@
 
 
 static int cvs_annotate_file      (CVSFILE *, void *);
-static int cvs_annotate_options   (char *, int, char **, int *);
+static int cvs_annotate_options   (struct cvs_cmd *, int, char **, int *);
 static int cvs_annotate_sendflags (struct cvsroot *);
 
-struct cvs_cmd_info cvs_annotate = {
+
+struct cvs_cmd cvs_cmd_annotate = {
+	CVS_OP_ANNOTATE, CVS_REQ_ANNOTATE, "annotate",
+	{ "ann", "blame"  },
+	"Show last revision where each line was modified",
+	"[-flR] [-D date | -r rev] ...",
+	"D:flRr:",
+	NULL,
+	CF_SORT | CF_RECURSE | CF_IGNORE | CF_NOSYMS,
 	cvs_annotate_options,
 	cvs_annotate_sendflags,
 	cvs_annotate_file,
-	NULL, NULL,
-	CF_SORT | CF_RECURSE | CF_IGNORE | CF_NOSYMS,
-	CVS_REQ_ANNOTATE,
+	cvs_annotate_file,
+	NULL,
+	NULL,
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
 };	
 
@@ -58,7 +66,7 @@ static char *date, *rev;
 static int usehead;
 
 static int
-cvs_annotate_options(char *opt, int argc, char **argv, int *arg)
+cvs_annotate_options(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 
@@ -66,7 +74,7 @@ cvs_annotate_options(char *opt, int argc, char **argv, int *arg)
 	date = NULL;
 	rev = NULL;
 
-	while ((ch = getopt(argc, argv, opt)) != -1) {
+	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
 		case 'D':
 			date = optarg;
@@ -75,10 +83,10 @@ cvs_annotate_options(char *opt, int argc, char **argv, int *arg)
 			usehead = 1;
 			break;
 		case 'l':
-			cvs_annotate.file_flags &= ~CF_RECURSE;
+			cmd->file_flags &= ~CF_RECURSE;
 			break;
 		case 'R':
-			cvs_annotate.file_flags |= CF_RECURSE;
+			cmd->file_flags |= CF_RECURSE;
 			break;
 		case 'r':
 			rev = optarg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.33 2005/05/20 20:00:53 joris Exp $	*/
+/*	$OpenBSD: commit.c,v 1.34 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -41,42 +41,48 @@
 #include "proto.h"
 
 
-int cvs_commit_prepare(CVSFILE *, void *);
-int cvs_commit_file(CVSFILE *, void *);
-int cvs_commit_options(char *, int, char **, int *);
-int cvs_commit_helper(void);
+static int cvs_commit_init    (struct cvs_cmd *, int, char **, int *);
+static int cvs_commit_prepare (CVSFILE *, void *);
+static int cvs_commit_file    (CVSFILE *, void *);
+static int cvs_commit_pre_exec(struct cvsroot *);
 
-struct cvs_cmd_info cvs_commit = {
-	cvs_commit_options,
+struct cvs_cmd cvs_cmd_commit = {
+	CVS_OP_COMMIT, CVS_REQ_CI, "commit",
+	{ "ci",  "com" },
+	"Check files into the repository",
+	"[-flR] [-F logfile | -m msg] [-r rev] ...",
+	"F:flm:Rr:",
 	NULL,
+	CF_RECURSE | CF_IGNORE | CF_SORT,
+	cvs_commit_init,
+	cvs_commit_pre_exec,
 	cvs_commit_file,
 	NULL,
-	cvs_commit_helper,
-	CF_RECURSE | CF_IGNORE | CF_SORT,
-	CVS_REQ_CI,
-	CVS_CMD_ALLOWSPEC | CVS_CMD_NEEDLOG | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
+	NULL,
+	NULL,
+	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2
 };
 
 static char *mfile = NULL;
 static char **commit_files = NULL;
 static int commit_fcount = 0;
 
-int
-cvs_commit_options(char *opt, int argc, char **argv, int *arg)
+static int
+cvs_commit_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 
-	while ((ch = getopt(argc, argv, opt)) != -1) {
+	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
 		case 'F':
 			mfile = optarg;
 			break;
 		case 'f':
 			/* XXX half-implemented */
-			cvs_commit.file_flags &= ~CF_RECURSE;
+			cmd->file_flags &= ~CF_RECURSE;
 			break;
 		case 'l':
-			cvs_commit.file_flags &= ~CF_RECURSE;
+			cmd->file_flags &= ~CF_RECURSE;
 			break;
 		case 'm':
 			cvs_msg = strdup(optarg);
@@ -86,7 +92,7 @@ cvs_commit_options(char *opt, int argc, char **argv, int *arg)
 			}
 			break;
 		case 'R':
-			cvs_commit.file_flags |= CF_RECURSE;
+			cmd->file_flags |= CF_RECURSE;
 			break;
 		default:
 			return (CVS_EX_USAGE);
@@ -110,7 +116,7 @@ cvs_commit_options(char *opt, int argc, char **argv, int *arg)
 }
 
 int
-cvs_commit_helper(void)
+cvs_commit_pre_exec(struct cvsroot *root)
 {
 	struct cvs_flist cl;
 	CVSFILE *cfp;

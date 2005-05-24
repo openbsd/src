@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.66 2005/05/23 18:10:34 joris Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.67 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -72,231 +72,6 @@ CVSFILE *cvs_files;
 
 
 static TAILQ_HEAD(, cvs_var) cvs_variables;
-
-/*
- * Command dispatch table
- * ----------------------
- *
- * The synopsis field should only contain the list of arguments that the
- * command supports, without the actual command's name.
- *
- * Command handlers are expected to return 0 if no error occurred, or one of
- * the CVS_EX_* error codes in case of an error.  In case the error
- * returned is 1, the command's usage string is printed to standard
- * error before returning.
- */
-struct cvs_cmd cvs_cdt[] = {
-	{
-		CVS_OP_ADD, "add",      { "ad",  "new" }, &cvs_add, 
-		"[-k mode] [-m msg] file ...",
-		"k:m:",
-		"Add a new file/directory to the repository",
-		NULL
-	},
-	{
-		CVS_OP_ADMIN, "admin",    { "adm", "rcs" }, &cvs_admin,
-		"",
-		"a:A:b::c:e::Ik:l::Lm:n:N:o:qs:t:u::U",
-		"Administration front end for rcs",
-		NULL
-	},
-	{
-		CVS_OP_ANNOTATE, "annotate", { "ann"        }, &cvs_annotate,
-		"[-flR] [-D date | -r rev] ...",
-		"D:flRr:",
-		"Show last revision where each line was modified",
-		NULL
-	},
-	{
-		CVS_OP_CHECKOUT, "checkout", { "co",  "get" }, &cvs_checkout,
-		"[-AcflNnPpRs] [-D date | -r rev] [-d dir] [-j rev] [-k mode] "
-		"[-t id] module ...",
-		"AcD:d:fj:k:lNnPpRr:st:",
-		"Checkout sources for editing",
-		NULL
-	},
-	{
-		CVS_OP_COMMIT, "commit",   { "ci",  "com" }, &cvs_commit,
-		"[-flR] [-F logfile | -m msg] [-r rev] ...",
-		"F:flm:Rr:",
-		"Check files into the repository",
-		NULL
-	},
-	{
-		CVS_OP_DIFF, "diff",     { "di",  "dif" }, &cvs_diff,
-		"[-cilNnpRu] [-D date] [-r rev] ...",
-		"cD:ilNnpRr:u",
-		"Show differences between revisions",
-		NULL
-	},
-	{
-		CVS_OP_EDIT, "edit",     {              }, NULL,
-		"",
-		"",
-		"Get ready to edit a watched file",
-		NULL
-	},
-	{
-		CVS_OP_EDITORS, "editors",  {              }, NULL,
-		"",
-		"",
-		"See who is editing a watched file",
-		NULL
-	},
-	{
-		CVS_OP_EXPORT, "export",   { "ex",  "exp" }, NULL,
-		"",
-		"",
-		"Export sources from CVS, similar to checkout",
-		NULL
-	},
-	{
-		CVS_OP_HISTORY, "history",  { "hi",  "his" }, &cvs_history,
-		"",
-		"acelm:oTt:u:wx:z:",
-		"Show repository access history",
-		NULL
-	},
-	{
-		CVS_OP_IMPORT, "import",   { "im",  "imp" }, &cvs_import,
-		"[-d] [-b branch] [-I ign] [-k subst] [-m msg] "
-		"repository vendor-tag release-tags ...",
-		"b:dI:k:m:",
-		"Import sources into CVS, using vendor branches",
-		NULL
-	},
-	{
-		CVS_OP_INIT, "init",     {              }, &cvs_init,
-		"",
-		"",
-		"Create a CVS repository if it doesn't exist",
-		NULL
-	},
-#if defined(HAVE_KERBEROS)
-	{
-		"kserver",  {}, NULL
-		"",
-		"",
-		"Start a Kerberos authentication CVS server",
-		NULL
-	},
-#endif
-	{
-		CVS_OP_LOG, "log",      { "lo"         }, &cvs_getlog,
-		"[-bhlNRt] [-d dates] [-r revisions] [-s states] [-w logins]",
-		"bd:hlNRrs:tw",
-		"Print out history information for files",
-		NULL
-	},
-	{
-		-1, "login",    {}, NULL,
-		"",
-		"",
-		"Prompt for password for authenticating server",
-		NULL
-	},
-	{
-		-1, "logout",   {}, NULL,
-		"",
-		"",
-		"Removes entry in .cvspass for remote repository",
-		NULL
-	},
-	{
-		CVS_OP_RDIFF, "rdiff",    {}, NULL,
-		"",
-		"",
-		"Create 'patch' format diffs between releases",
-		NULL
-	},
-	{
-		CVS_OP_RELEASE, "release",  { "re", "rel" }, &cvs_release,
-		"[-d] dir ...",
-		"d",
-		"Indicate that a Module is no longer in use",
-		NULL
-	},
-	{
-		CVS_OP_REMOVE, "remove",   { "rm", "delete" }, &cvs_remove,
-		"[-flR] [file ...]",
-		"flR",
-		"Remove an entry from the repository",
-		NULL
-	},
-	{
-		CVS_OP_RLOG, "rlog",     {}, NULL,
-		"",
-		"",
-		"Print out history information for a module",
-		NULL
-	},
-	{
-		CVS_OP_RTAG, "rtag",     {}, NULL,
-		"",
-		"",
-		"Add a symbolic tag to a module",
-		NULL
-	},
-	{
-		CVS_OP_SERVER, "server",   {}, &cmd_server,
-		"",
-		"",
-		"Server mode",
-		NULL
-	},
-	{
-		CVS_OP_STATUS, "status",   { "st", "stat" }, &cvs_status,
-		"[-lRv]",
-		"lRv",
-		"Display status information on checked out files",
-		NULL
-	},
-	{
-		CVS_OP_TAG, "tag",      { "ta", "freeze" }, &cvs_tag,
-		"[-bcdFflR] [-D date | -r rev] tagname ...",
-		"bcD:dFflRr:",
-		"Add a symbolic tag to checked out version of files",
-		NULL
-	},
-	{
-		CVS_OP_UNEDIT, "unedit",   {}, NULL,
-		"",
-		"",
-		"Undo an edit command",
-		NULL
-	},
-	{
-		CVS_OP_UPDATE, "update",   { "up", "upd" }, &cvs_update,
-		"[-ACdflPpR] [-D date | -r rev] [-I ign] [-j rev] [-k mode] "
-		"[-t id] ...",
-		"ACD:dflPpQqRr:",
-		"Bring work tree in sync with repository",
-		NULL
-	},
-	{
-		CVS_OP_VERSION, "version",  { "ve", "ver" }, &cvs_version, 
-		"", "",
-		"Show current CVS version(s)",
-		NULL
-	},
-	{
-		CVS_OP_WATCH, "watch",    {}, NULL,
-		"",
-		"",
-		"Set watches",
-		NULL
-	},
-	{
-		CVS_OP_WATCHERS, "watchers", {}, NULL,
-		"",
-		"",
-		"See who is watching a file",
-		NULL
-	},
-};
-
-#define CVS_NBCMD  (sizeof(cvs_cdt)/sizeof(cvs_cdt[0]))
-
 
 
 void         usage           (void);
@@ -390,15 +165,10 @@ main(int argc, char **argv)
 	if (cmdp == NULL) {
 		fprintf(stderr, "Unknown command: `%s'\n\n", cvs_command);
 		fprintf(stderr, "CVS commands are:\n");
-		for (i = 0; i < (int)CVS_NBCMD; i++)
+		for (i = 0; cvs_cdt[i] != NULL; i++)
 			fprintf(stderr, "\t%-16s%s\n",
-			    cvs_cdt[i].cmd_name, cvs_cdt[i].cmd_descr);
-		exit(1);
-	}
-
-	if (cmdp->cmd_info == NULL) {
-		cvs_log(LP_ERR, "command `%s' not implemented", cvs_command);
-		exit(1);
+			    cvs_cdt[i]->cmd_name, cvs_cdt[i]->cmd_descr);
+		exit(CVS_EX_USAGE);
 	}
 
 	cvs_cmdop = cmdp->cmd_op;
@@ -446,8 +216,6 @@ main(int argc, char **argv)
 		break;
 	}
 
-	if (cmdp->cmd_info->cmd_cleanup != NULL)
-		cmdp->cmd_info->cmd_cleanup();
 	if (cvs_files != NULL)
 		cvs_file_free(cvs_files);
 	if (cvs_msg != NULL)
@@ -544,38 +312,6 @@ cvs_getopt(int argc, char **argv)
 	optreset = 1;	/* for next call */
 
 	return (ret);
-}
-
-
-/*
- * cvs_findcmd()
- *
- * Find the entry in the command dispatch table whose name or one of its
- * aliases matches <cmd>.
- * Returns a pointer to the command entry on success, NULL on failure.
- */
-struct cvs_cmd*
-cvs_findcmd(const char *cmd)
-{
-	u_int i, j;
-	struct cvs_cmd *cmdp;
-
-	cmdp = NULL;
-
-	for (i = 0; (i < CVS_NBCMD) && (cmdp == NULL); i++) {
-		if (strcmp(cmd, cvs_cdt[i].cmd_name) == 0)
-			cmdp = &cvs_cdt[i];
-		else {
-			for (j = 0; j < CVS_CMD_MAXALIAS; j++) {
-				if (strcmp(cmd, cvs_cdt[i].cmd_alias[j]) == 0) {
-					cmdp = &cvs_cdt[i];
-					break;
-				}
-			}
-		}
-	}
-
-	return (cmdp);
 }
 
 

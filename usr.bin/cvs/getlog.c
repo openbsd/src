@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.28 2005/05/20 20:00:53 joris Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.29 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -47,18 +47,43 @@
 #define CVS_GETLOG_REVEND \
  "============================================================================="
 
-static int cvs_getlog_remote  (CVSFILE *, void *);
-static int cvs_getlog_local   (CVSFILE *, void *);
-static int cvs_getlog_options(char *, int, char **, int *);
+static int  cvs_getlog_remote  (CVSFILE *, void *);
+static int  cvs_getlog_local   (CVSFILE *, void *);
+static int cvs_getlog_options(struct cvs_cmd *, int, char **, int *);
 static int cvs_getlog_sendflags(struct cvsroot *);
 
-struct cvs_cmd_info cvs_getlog = {
+struct cvs_cmd cvs_cmd_log = {
+	CVS_OP_LOG, CVS_REQ_LOG, "log",
+	{ "lo" },
+	"Print out history information for files",
+	"[-bhlNRt] [-d dates] [-r revisions] [-s states] [-w logins]",
+	"d:hlRr:",
+	NULL,
+	CF_RECURSE,
+	cvs_getlog_options,
+	NULL,
+	cvs_getlog_remote,
+	cvs_getlog_local,
+	NULL,
+	NULL,
+	CVS_CMD_SENDDIR | CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2
+};
+
+
+struct cvs_cmd cvs_cmd_rlog = {
+	CVS_OP_LOG, CVS_REQ_LOG, "log",
+	{ "lo" },
+	"Print out history information for files",
+	"[-bhlNRt] [-d dates] [-r revisions] [-s states] [-w logins]",
+	"d:hlRr:",
+	NULL,
+	CF_RECURSE,
 	cvs_getlog_options,
 	cvs_getlog_sendflags,
 	cvs_getlog_remote,
-	NULL, NULL,
-	CF_IGNORE | CF_RECURSE,
-	CVS_REQ_LOG,
+	cvs_getlog_local,
+	NULL,
+	NULL,
 	CVS_CMD_SENDDIR | CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2
 };
 
@@ -68,11 +93,11 @@ static int log_lhonly = 0;
 static int log_notags = 0;
 
 static int
-cvs_getlog_options(char *opt, int argc, char **argv, int *arg)
+cvs_getlog_options(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 
-	while ((ch = getopt(argc, argv, opt)) != -1) {
+	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
 		case 'b':
 			break;
@@ -82,7 +107,7 @@ cvs_getlog_options(char *opt, int argc, char **argv, int *arg)
 			log_honly = 1;
 			break;
 		case 'l':
-			cvs_getlog.file_flags &= ~CF_RECURSE;
+			cmd->file_flags &= ~CF_RECURSE;
 			break;
 		case 'N':
 			log_notags = 1;

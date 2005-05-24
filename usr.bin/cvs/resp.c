@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.36 2005/05/24 03:06:16 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.37 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -50,10 +50,10 @@
 
 #define STRIP_SLASH(p)						\
 	do {							\
-		size_t len;					\
-		len = strlen(p);				\
-		while ((len > 0) && (p[len - 1] == '/'))	\
-			p[--len] = '\0';			\
+		size_t _slen;					\
+		_slen = strlen(p);				\
+		while ((_slen > 0) && (p[_slen - 1] == '/'))	\
+			p[--_slen] = '\0';			\
 	} while (0)
 
 

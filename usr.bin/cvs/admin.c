@@ -1,4 +1,4 @@
-/*	$OpenBSD: admin.c,v 1.14 2005/05/20 20:00:53 joris Exp $	*/
+/*	$OpenBSD: admin.c,v 1.15 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
@@ -48,17 +48,24 @@
 #define FLAG_INTERACTIVE	0x04
 #define FLAG_QUIET		0x08
 
-int cvs_admin_options(char *, int, char **, int *);
-int cvs_admin_sendflags(struct cvsroot *);
-int cvs_admin_file(CVSFILE *, void *);
+static int cvs_admin_init     (struct cvs_cmd *, int, char **, int *);
+static int cvs_admin_pre_exec (struct cvsroot *);
+static int cvs_admin_file     (CVSFILE *, void *);
 
-struct cvs_cmd_info cvs_admin = {
-	cvs_admin_options,
-	cvs_admin_sendflags,
-	cvs_admin_file,
-	NULL, NULL,
+struct cvs_cmd cvs_cmd_admin = {
+	CVS_OP_ADMIN, CVS_REQ_ADMIN, "admin",
+	{ "adm", "rcs" },
+	"Administrative front-end for RCS",
+	"",
+	"a:A:b::c:e::Ik:l::Lm:n:N:o:qs:t:u::U",
+	NULL,
 	CF_SORT | CF_IGNORE | CF_RECURSE,
-	CVS_REQ_ADMIN,
+	cvs_admin_init,
+	cvs_admin_pre_exec,
+	cvs_admin_file,
+	cvs_admin_file,
+	NULL,
+	NULL,
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
 };
 
@@ -67,8 +74,8 @@ static char *alist, *subst, *lockrev_arg, *unlockrev_arg;
 static char *state, *userfile, *branch_arg, *elist, *range;
 static int runflags, kflag, lockrev, strictlock;
 
-int
-cvs_admin_options(char *opt, int argc, char **argv, int *arg)
+static int
+cvs_admin_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 	RCSNUM *rcs;
@@ -79,7 +86,7 @@ cvs_admin_options(char *opt, int argc, char **argv, int *arg)
 	range = userfile = branch_arg = unlockrev_arg = NULL;
 
 	/* option-o-rama ! */
-	while ((ch = getopt(argc, argv, opt)) != -1) {
+	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
 		case 'a':
 			alist = optarg;
@@ -200,8 +207,8 @@ cvs_admin_options(char *opt, int argc, char **argv, int *arg)
 	return (0);
 }
 
-int
-cvs_admin_sendflags(struct cvsroot *root)
+static int
+cvs_admin_pre_exec(struct cvsroot *root)
 {
 	if ((alist != NULL) && ((cvs_sendarg(root, "-a", 0) < 0) || 
 	    (cvs_sendarg(root, alist, 0) < 0)))
@@ -292,7 +299,7 @@ cvs_admin_sendflags(struct cvsroot *root)
  *
  * Perform admin commands on each file.
  */
-int
+static int
 cvs_admin_file(CVSFILE *cfp, void *arg)
 {
 	int ret, l;

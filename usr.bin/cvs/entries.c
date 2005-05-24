@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.29 2005/05/19 21:45:45 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.30 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -382,7 +382,6 @@ cvs_ent_parse(const char *entry)
 
 	entp->ce_opts = fields[4];
 	entp->ce_tag = fields[5];
-
 	return (entp);
 }
 

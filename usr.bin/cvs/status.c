@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.21 2005/05/20 20:00:53 joris Exp $	*/
+/*	$OpenBSD: status.c,v 1.22 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -55,35 +55,42 @@ const char *cvs_statstr[] = {
 };
 
 
-int cvs_status_remote    (CVSFILE *, void *);
-int cvs_status_local     (CVSFILE *, void *);
-int cvs_status_options   (char *, int, char **, int *);
-int cvs_status_sendflags (struct cvsroot *);
+static int cvs_status_init      (struct cvs_cmd *, int, char **, int *);
+static int cvs_status_remote    (CVSFILE *, void *);
+static int cvs_status_local     (CVSFILE *, void *);
+static int cvs_status_pre_exec (struct cvsroot *);
 
-struct cvs_cmd_info cvs_status = {
-	cvs_status_options,
-	cvs_status_sendflags,
-	cvs_status_remote,
-	NULL, NULL,
+struct cvs_cmd cvs_cmd_status = {
+	CVS_OP_STATUS, CVS_REQ_STATUS, "status",
+	{ "st", "stat" },
+	"Display status information on checked out files",
+	"[-lRv]",
+	"lRv",
+	NULL,
 	CF_SORT | CF_IGNORE | CF_RECURSE,
-	CVS_REQ_STATUS,
+	cvs_status_init,
+	cvs_status_pre_exec,
+	cvs_status_remote,
+	cvs_status_local,
+	NULL,
+	NULL,
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
 };
 
 static int verbose = 0;
 
-int
-cvs_status_options(char *opt, int argc, char **argv, int *arg)
+static int
+cvs_status_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 
-	while ((ch = getopt(argc, argv, opt)) != -1) {
+	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
 		case 'l':
-			cvs_status.file_flags &= ~CF_RECURSE;
+			cmd->file_flags &= ~CF_RECURSE;
 			break;
 		case 'R':
-			cvs_status.file_flags |= CF_RECURSE;
+			cmd->file_flags |= CF_RECURSE;
 			break;
 		case 'v':
 			verbose = 1;
@@ -97,8 +104,8 @@ cvs_status_options(char *opt, int argc, char **argv, int *arg)
 	return (0);
 }
 
-int
-cvs_status_sendflags(struct cvsroot *root)
+static int
+cvs_status_pre_exec(struct cvsroot *root)
 {
 	if (verbose && (cvs_sendarg(root, "-v", 0) < 0))
 		return (CVS_EX_PROTO);
@@ -110,7 +117,7 @@ cvs_status_sendflags(struct cvsroot *root)
  *
  * Get the status of a single file.
  */
-int
+static int
 cvs_status_remote(CVSFILE *cfp, void *arg)
 {
 	int ret;
@@ -163,30 +170,32 @@ cvs_status_remote(CVSFILE *cfp, void *arg)
 	return (ret);
 }
 
-int
-cvs_status_local(CVSFILE *cfp, void *arg)
+static int
+cvs_status_local(CVSFILE *cf, void *arg)
 {
-	int l;
+	int len;
+	size_t sz;
 	char *repo, buf[MAXNAMLEN], fpath[MAXPATHLEN], rcspath[MAXPATHLEN];
+	char datebuf[26];
 	RCSFILE *rf;
 	struct cvsroot *root;
 
-	if (cfp->cf_type == DT_DIR)
+	if (cf->cf_type == DT_DIR)
 		return (0);
 
-	root = CVS_DIR_ROOT(cfp);
-	repo = CVS_DIR_REPO(cfp);
+	root = CVS_DIR_ROOT(cf);
+	repo = CVS_DIR_REPO(cf);
 
-	cvs_file_getpath(cfp, fpath, sizeof(fpath));
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
-	if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
+	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
 		cvs_log(LP_WARN, "I know nothing about %s", fpath);
 		return (0);
 	}
 
-	l = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
-	    root->cr_dir, repo, CVS_FILE_NAME(cfp), RCS_FILE_EXT);
-	if (l == -1 || l >= (int)sizeof(rcspath)) {
+	len = snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
+	    root->cr_dir, repo, CVS_FILE_NAME(cf), RCS_FILE_EXT);
+	if (len == -1 || len >= (int)sizeof(rcspath)) {
 		errno = ENAMETOOLONG;
 		cvs_log(LP_ERRNO, "%s", rcspath);
 		return (CVS_EX_DATA);
@@ -197,28 +206,32 @@ cvs_status_local(CVSFILE *cfp, void *arg)
 		return (CVS_EX_DATA);
 
 	buf[0] = '\0';
-	if (cfp->cf_cvstat == CVS_FST_LOST)
+	if (cf->cf_cvstat == CVS_FST_LOST)
 		strlcpy(buf, "No file ", sizeof(buf));
-	strlcat(buf, CVS_FILE_NAME(cfp), sizeof(buf));
+	strlcat(buf, cf->cf_name, sizeof(buf));
 
 	cvs_printf(CVS_STATUS_SEP "\nFile: %-18sStatus: %s\n\n",
-	    buf, cvs_statstr[cfp->cf_cvstat]);
+	    buf, cvs_statstr[cf->cf_cvstat]);
 
-	if (cfp->cf_cvstat == CVS_FST_UNKNOWN) {
-		snprintf(buf, sizeof(buf), "No entry for %s",
-		    CVS_FILE_NAME(cfp));
+	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
+		snprintf(buf, sizeof(buf), "No entry for %s", cf->cf_name);
 	} else {
+		ctime_r(&(cf->cf_mtime), datebuf);
+		sz = strlen(datebuf);
+		if ((sz > 0) && (datebuf[sz - 1] == '\n'))
+			datebuf[--sz] = '\0';
 		snprintf(buf, sizeof(buf), "%s %s",
-		    rcsnum_tostr(cfp->cf_lrev, buf, sizeof(buf)),
-		    "date here");
+		    rcsnum_tostr(cf->cf_lrev, buf, sizeof(buf)), datebuf);
 	}
 
 	cvs_printf("   Working revision:    %s\n", buf);
 	rcsnum_tostr(rf->rf_head, buf, sizeof(buf));
 	cvs_printf("   Repository revision: %s %s\n", buf, rcspath);
-	cvs_printf("   Sticky Tag:          %s\n", "(none)");
+	cvs_printf("   Sticky Tag:          %s\n",
+	    cf->cf_tag == NULL ? "(none)" : cf->cf_tag);
 	cvs_printf("   Sticky Date:         %s\n", "(none)");
-	cvs_printf("   Sticky Options:      %s\n", "(none)");
+	cvs_printf("   Sticky Options:      %s\n",
+	    cf->cf_opts == NULL ? "(none)" : cf->cf_opts);
 
 	rcs_close(rf);
 

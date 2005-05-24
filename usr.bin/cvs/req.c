@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.14 2005/05/18 20:24:19 joris Exp $	*/
+/*	$OpenBSD: req.c,v 1.15 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -158,6 +158,8 @@ extern char cvs_server_tmpdir[MAXPATHLEN];
 static char *cvs_req_args[CVS_PROTO_MAXARG];
 static int   cvs_req_nargs = 0;
 
+static CVSFILE *cvs_lastdir = NULL;
+
 
 /*
  * cvs_req_handle()
@@ -267,6 +269,7 @@ cvs_req_directory(int reqid, char *line)
 {
 	int l;
 	char rdir[MAXPATHLEN];
+	CVSFILE *dirp;
 
 	if (cvs_getln(NULL, rdir, sizeof(rdir)) < 0)
 		return (-1);
@@ -308,9 +311,12 @@ static int
 cvs_req_entry(int reqid, char *line)
 {
 	struct cvs_ent *ent;
+	CVSFILE *cf;
 
 	if ((ent = cvs_ent_parse(line)) == NULL)
 		return (-1);
+
+	cf = cvs_file_create(NULL, ent->ce_name, DT_REG, 0644);
 
 	return (0);
 }
@@ -541,25 +547,15 @@ static int
 cvs_req_command(int reqid, char *line)
 {
 	int ret;
+	struct cvs_cmd *cmdp;
 
-	switch (reqid) {
-	case CVS_REQ_VERSION:
-		ret = cvs_sendresp(CVS_RESP_M, CVS_VERSION);
-		break;
-	case CVS_REQ_ADD:
-	case CVS_REQ_ANNOTATE:
-	case CVS_REQ_CO:
-	case CVS_REQ_CI:
-	case CVS_REQ_DIFF:
-	case CVS_REQ_LOG:
-	case CVS_REQ_REMOVE:
-	case CVS_REQ_STATUS:
-	case CVS_REQ_TAG:
-	default:
-		cvs_sendresp(CVS_RESP_E, "command not yet implemented");
+	cmdp = cvs_findcmdbyreq(reqid);
+	if (cmdp == NULL) {
 		cvs_sendresp(CVS_RESP_ERROR, NULL);
-		return (0);
+		return (-1);
 	}
+
+	cvs_startcmd(cmdp, cvs_req_nargs, cvs_req_args);
 
 	if (ret == 0)
 		ret = cvs_sendresp(CVS_RESP_OK, NULL);

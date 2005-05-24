@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.16 2005/05/20 20:00:53 joris Exp $	*/
+/*	$OpenBSD: server.c,v 1.17 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -43,10 +43,19 @@
 char   **cvs_args;
 u_int   cvs_nbarg = 0;
 u_int   cvs_utf8ok = 0;
-u_int   cvs_case   = 0;
+u_int   cvs_case = 0;
 
-struct cvs_cmd_info cmd_server = {
-	NULL, NULL, NULL, NULL, NULL, 0, 0, 0 };
+struct cvs_cmd cvs_cmd_server = {
+	CVS_OP_SERVER, 0, "server",
+	{ },
+	"Server mode",
+	"",
+	"",
+	NULL,
+	0,
+	NULL, NULL, NULL, NULL, NULL, NULL,
+	0
+};
 
 char cvs_server_tmpdir[MAXPATHLEN];
 

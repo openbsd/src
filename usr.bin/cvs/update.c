@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.28 2005/05/20 20:00:53 joris Exp $	*/
+/*	$OpenBSD: update.c,v 1.29 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,31 +40,40 @@
 #include "proto.h"
 
 
+static int cvs_update_init     (struct cvs_cmd *, int, char **, int *);
+static int cvs_update_pre_exec (struct cvsroot *);
 static int cvs_update_remote    (CVSFILE *, void *);
 static int cvs_update_local     (CVSFILE *, void *);
-static int cvs_update_options   (char *, int, char **, int *);
-static int cvs_update_sendflags (struct cvsroot *);
 
-struct cvs_cmd_info cvs_update = {
-	cvs_update_options,
-	cvs_update_sendflags,
-	cvs_update_remote,
-	NULL, NULL,
+
+struct cvs_cmd cvs_cmd_update = {
+	CVS_OP_UPDATE, CVS_REQ_UPDATE, "update",
+	{ "up", "upd" },
+	"Bring work tree in sync with repository",
+	"[-ACdflPpR] [-D date | -r rev] [-I ign] [-j rev] [-k mode] "
+	"[-t id] ...",
+	"ACD:dflPpQqRr:",
+	NULL,
 	CF_SORT | CF_RECURSE | CF_IGNORE | CF_KNOWN | CF_NOSYMS,
-	CVS_REQ_UPDATE,
+	cvs_update_init,
+	cvs_update_pre_exec,
+	cvs_update_remote,
+	cvs_update_local,
+	NULL,
+	NULL,
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDARGS2 | CVS_CMD_SENDDIR
 };
 
 static int Pflag, dflag, Aflag;
 
 static int
-cvs_update_options(char *opt, int argc, char **argv, int *arg)
+cvs_update_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 
 	Pflag = dflag = Aflag = 0;
 
-	while ((ch = getopt(argc, argv, opt)) != -1) {
+	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
 		case 'A':
 			Aflag = 1;
@@ -77,7 +86,7 @@ cvs_update_options(char *opt, int argc, char **argv, int *arg)
 		case 'f':
 			break;
 		case 'l':
-			cvs_update.file_flags &= ~CF_RECURSE;
+			cmd->file_flags &= ~CF_RECURSE;
 			break;
 		case 'P':
 			Pflag = 1;
@@ -89,7 +98,7 @@ cvs_update_options(char *opt, int argc, char **argv, int *arg)
 		case 'q':
 			break;
 		case 'R':
-			cvs_update.file_flags |= CF_RECURSE;
+			cmd->file_flags |= CF_RECURSE;
 			break;
 		case 'r':
 			break;
@@ -103,7 +112,7 @@ cvs_update_options(char *opt, int argc, char **argv, int *arg)
 }
 
 static int
-cvs_update_sendflags(struct cvsroot *root)
+cvs_update_pre_exec(struct cvsroot *root)
 {
 	if (Pflag && cvs_sendarg(root, "-P", 0) < 0)
 		return (CVS_EX_PROTO);
@@ -183,16 +192,18 @@ cvs_update_local(CVSFILE *cf, void *arg)
 	RCSFILE *rf;
 	struct cvsroot *root;
 
+	printf("cvs_update_local(%s)\n", cf->cf_name);
 	ret = 0;
 	rf = NULL;
 	root = CVS_DIR_ROOT(cf);
 	repo = CVS_DIR_REPO(cf);
 
+	cvs_file_getpath(cf, fpath, sizeof(fpath));
+
 	if (cf->cf_type == DT_DIR) {
+		cvs_log(LP_INFO, "Updating %s", fpath);
 		return (CVS_EX_OK);
 	}
-
-	cvs_file_getpath(cf, fpath, sizeof(fpath));
 
 	if (cf->cf_cvstat == CVS_FST_UNKNOWN) {
 		cvs_printf("? %s\n", fpath);
@@ -207,8 +218,10 @@ cvs_update_local(CVSFILE *cf, void *arg)
 		return (CVS_EX_DATA);
 	}
 
+	printf("opening %s\n", rcspath);
 	rf = rcs_open(rcspath, RCS_RDWR);
 	if (rf == NULL) {
+		printf("failed here?\n");
 		return (CVS_EX_DATA);
 	}
 

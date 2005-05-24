@@ -1,4 +1,4 @@
-/*	$OpenBSD: add.c,v 1.20 2005/05/20 20:00:53 joris Exp $	*/
+/*	$OpenBSD: add.c,v 1.21 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -40,31 +40,38 @@
 extern char *__progname;
 
 
-int cvs_add_file(CVSFILE *, void *);
-int cvs_add_options(char *, int, char **, int *);
-int cvs_add_sendflags(struct cvsroot *);
+static int cvs_add_file(CVSFILE *, void *);
+static int cvs_add_init(struct cvs_cmd *, int, char **, int *);
+static int cvs_add_pre_exec(struct cvsroot *);
 
-struct cvs_cmd_info cvs_add = {
-	cvs_add_options,
-	cvs_add_sendflags,
-	cvs_add_file,
-	NULL, NULL,
+struct cvs_cmd cvs_cmd_add = {
+	CVS_OP_ADD, CVS_REQ_ADD, "add",
+	{ "ad", "new" },
+	"Add a new file/directory to the repository",
+	"[-k mode] [-m msg] file ...",
+	"k:m:",
+	NULL,
 	0,
-	CVS_REQ_ADD,
+	cvs_add_init,
+	cvs_add_pre_exec,
+	cvs_add_file,
+	cvs_add_file,
+	NULL,
+	NULL,
 	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
 };
 
 static int kflag = RCS_KWEXP_DEFAULT;
 static char *koptstr;
 
-int
-cvs_add_options(char *opt, int argc, char **argv, int *arg)
+static int
+cvs_add_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 
 	cvs_msg = NULL;
 
-	while ((ch = getopt(argc, argv, opt)) != -1) {
+	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
 		case 'k':
 			koptstr = optarg;
@@ -91,12 +98,13 @@ cvs_add_options(char *opt, int argc, char **argv, int *arg)
 	return (0);
 }
 
-int
-cvs_add_sendflags(struct cvsroot *root)
+static int
+cvs_add_pre_exec(struct cvsroot *root)
 {
 	char buf[16];
 
-	if (kflag != RCS_KWEXP_DEFAULT) {
+	if ((root->cr_method != CVS_METHOD_LOCAL) &&
+	    (kflag != RCS_KWEXP_DEFAULT)) {
 		strlcpy(buf, "-k", sizeof(buf));
 		strlcat(buf, koptstr, sizeof(buf));
 		if (cvs_sendarg(root, buf, 0) < 0)
@@ -106,7 +114,7 @@ cvs_add_sendflags(struct cvsroot *root)
 	return (0);
 }
 
-int
+static int
 cvs_add_file(CVSFILE *cf, void *arg)
 {
 	int ret;
@@ -128,10 +136,10 @@ cvs_add_file(CVSFILE *cf, void *arg)
 	if (root->cr_method != CVS_METHOD_LOCAL) {
 		if (cf->cf_cvstat == CVS_FST_UNKNOWN)
 			ret = cvs_sendreq(root, CVS_REQ_ISMODIFIED,
-			    CVS_FILE_NAME(cf));
+			    cf->cf_name);
 	} else {
 		cvs_log(LP_INFO, "scheduling file `%s' for addition",
-		    CVS_FILE_NAME(cf));
+		    cf->cf_name);
 		cvs_log(LP_INFO, "use `%s commit' to add this file permanently",
 		    __progname);
 	}

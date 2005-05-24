@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.19 2005/05/20 05:13:44 joris Exp $	*/
+/*	$OpenBSD: file.h,v 1.20 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -75,7 +75,7 @@ SIMPLEQ_HEAD(cvs_flist, cvs_file);
 
 typedef struct cvs_file {
 	struct cvs_file  *cf_parent;  /* parent directory (NULL if none) */
-	char             *cf_name;
+	const char       *cf_name;
 	mode_t            cf_mode;
 	u_int8_t          cf_cvstat;  /* cvs status of the file */
 	u_int8_t          cf_type;    /* uses values from dirent.h */
@@ -102,6 +102,7 @@ typedef struct cvs_file {
 #define cf_mtime  cf_td.cf_reg.cd_mtime
 #define cf_lrev   cf_td.cf_reg.cd_lrev
 #define cf_tag    cf_td.cf_reg.cd_tag
+#define cf_opts   cf_td.cf_reg.cd_opts
 
 /* only valid for directories */
 #define cf_files  cf_td.cf_dir.cd_files
@@ -133,10 +134,15 @@ CVSFILE* cvs_file_get     (const char *, int, int (*)(CVSFILE *, void *), void *
 CVSFILE* cvs_file_getspec (char **, int, int, int (*)(CVSFILE *, void *), void *);
 CVSFILE* cvs_file_create  (CVSFILE *, const char *, u_int, mode_t);
 CVSFILE* cvs_file_copy    (CVSFILE *);
-CVSFILE* cvs_file_find    (CVSFILE *, const char *);
 int      cvs_file_attach  (CVSFILE *, CVSFILE *);
-char*    cvs_file_getpath (CVSFILE *, char *, size_t);
 int      cvs_file_examine (CVSFILE *, int (*)(CVSFILE *, void *), void *);
+
+int      cvs_file_init    (void);
+int      cvs_file_ignore  (const char *);
+int      cvs_file_chkign  (const char *);
+CVSFILE* cvs_file_load    (const char *, int);
+CVSFILE* cvs_file_find    (CVSFILE *, const char *);
+char*    cvs_file_getpath (CVSFILE *, char *, size_t);
 void     cvs_file_free    (CVSFILE *);
 
 

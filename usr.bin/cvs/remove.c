@@ -1,4 +1,4 @@
-/*	$OpenBSD: remove.c,v 1.15 2005/05/20 20:00:53 joris Exp $	*/
+/*	$OpenBSD: remove.c,v 1.16 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * Copyright (c) 2004 Xavier Santolaria <xsa@openbsd.org>
@@ -42,36 +42,43 @@
 extern char *__progname;
 
 
-static int cvs_remove_file(CVSFILE *, void *);
-static int cvs_remove_options(char *, int, char **, int *);
+static int cvs_remove_init (struct cvs_cmd *, int, char **, int *);
+static int cvs_remove_file (CVSFILE *, void *);
 
 static int	force_remove = 0;	/* -f option */
 
-struct cvs_cmd_info cvs_remove = {
-	cvs_remove_options,
+struct cvs_cmd cvs_cmd_remove = {
+	CVS_OP_REMOVE, CVS_REQ_REMOVE, "remove",
+	{ "rm", "delete" },
+	"Remove an entry from the repository",
+	"[-flR] [file ...]",
+	"flR",
+	NULL,
+	CF_IGNORE | CF_RECURSE,
+	cvs_remove_init,
 	NULL,
 	cvs_remove_file,
-	NULL, NULL,
-	CF_IGNORE | CF_RECURSE,
-	CVS_REQ_REMOVE,
+	cvs_remove_file,
+	NULL,
+	NULL,
 	CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2 | CVS_CMD_ALLOWSPEC
 };
 
 static int
-cvs_remove_options(char *opt, int argc, char **argv, int *arg)
+cvs_remove_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 
-	while ((ch = getopt(argc, argv, opt)) != -1) {
+	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
 		case 'f':
 			force_remove = 1;
 			break;
 		case 'l':
-			cvs_remove.file_flags &= ~CF_RECURSE;
+			cmd->file_flags &= ~CF_RECURSE;
 			break;
 		case 'R':
-			cvs_remove.file_flags |= CF_RECURSE;
+			cmd->file_flags |= CF_RECURSE;
 			break;
 		default:
 			return (CVS_EX_USAGE);

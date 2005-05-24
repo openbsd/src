@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.21 2005/05/23 17:30:35 xsa Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.22 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -41,33 +41,45 @@
 #define CVS_LISTMOD    1
 #define CVS_STATMOD    2
 
-int cvs_checkout_options(char *, int, char **, int *);
-int cvs_checkout_sendflags(struct cvsroot *);
+static int cvs_checkout_init     (struct cvs_cmd *, int, char **, int *);
+static int cvs_checkout_pre_exec (struct cvsroot *);
 
-struct cvs_cmd_info cvs_checkout = {
-	cvs_checkout_options,
-	cvs_checkout_sendflags,
-	NULL, NULL, NULL,
+struct cvs_cmd cvs_cmd_checkout = {
+	CVS_OP_CHECKOUT, CVS_REQ_CO, "checkout",
+	{ "co", "get" },
+	"Checkout sources for editing",
+	"[-AcflNnPpRs] [-D date | -r rev] [-d dir] [-j rev] [-k mode] "
+	"[-t id] module ...",
+	"AcD:d:fj:k:lNnPRr:st:",
+	NULL,
 	0,
-	CVS_REQ_CO,
-	CVS_CMD_SENDDIR | CVS_CMD_SENDARGS1 | CVS_CMD_SENDARGS2
+	cvs_checkout_init,
+	cvs_checkout_pre_exec,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	CVS_CMD_ALLOWSPEC | CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2
 };
 
 static char *date, *rev, *koptstr, *tgtdir, *rcsid;
 static int statmod = 0;
+static int shorten = 1;
+static int usehead = 0;
 static int kflag = RCS_KWEXP_DEFAULT;
-static int usehead;
 
-int
-cvs_checkout_options(char *opt, int argc, char **argv, int *arg)
+/* modules */
+static char **co_mods;
+static int    co_nmod;
+
+static int
+cvs_checkout_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 
 	date = rev = koptstr = tgtdir = rcsid = NULL;
-	kflag = RCS_KWEXP_DEFAULT;
-	usehead = 0;
 
-	while ((ch = getopt(argc, argv, opt)) != -1) {
+	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
 		case 'A':
 			break;
@@ -95,6 +107,9 @@ cvs_checkout_options(char *opt, int argc, char **argv, int *arg)
 				return (CVS_EX_USAGE);
 			}
 			break;
+		case 'N':
+			shorten = 0;
+			break;
 		case 'p':
 			cvs_noexec = 1;	/* no locks will be created */
 			break;
@@ -115,6 +130,9 @@ cvs_checkout_options(char *opt, int argc, char **argv, int *arg)
 	argc -= optind;
 	argv += optind;
 
+	co_mods = argv;
+	co_nmod = argc;
+
 	if (!statmod && (argc == 0)) {
 		cvs_log(LP_ERR,
 		    "must specify at least one module or directory");
@@ -130,33 +148,50 @@ cvs_checkout_options(char *opt, int argc, char **argv, int *arg)
 	return (0);
 }
 
-int
-cvs_checkout_sendflags(struct cvsroot *root)
+static int
+cvs_checkout_pre_exec(struct cvsroot *root)
 {
-	if (cvs_sendreq(root, CVS_REQ_DIRECTORY, ".") < 0)
-		return (CVS_EX_PROTO);
-	if (cvs_sendraw(root, root->cr_dir, strlen(root->cr_dir)) < 0)
-		return (CVS_EX_PROTO);
-	if (cvs_sendraw(root, "\n", 1) < 0)
-		return (CVS_EX_PROTO);
+	int i;
 
-	if (cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL) < 0)
-		cvs_log(LP_ERR, "failed to expand module");
+	/* create any required base directories */
+	for (i = 0; i < co_nmod; i++) {
+		if (cvs_file_create(NULL, co_mods[i], DT_DIR, 0755) < 0)
+			return (CVS_EX_DATA);
+	}
 
-	if (usehead && (cvs_sendarg(root, "-f", 0) < 0))
-		 return (CVS_EX_PROTO);
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		for (i = 0; i < co_nmod; i++)
+			if (cvs_sendarg(root, co_mods[i], 0) < 0)
+				return (CVS_EX_PROTO);
+		if (cvs_sendreq(root, CVS_REQ_DIRECTORY, ".") < 0)
+			return (CVS_EX_PROTO);
+		if (cvs_sendln(root, root->cr_dir) < 0)
+			return (CVS_EX_PROTO);
 
-	/* XXX not too sure why we have to send this arg */
-	if (cvs_sendarg(root, "-N", 0) < 0)
-		return (CVS_EX_PROTO);
+		if (cvs_sendreq(root, CVS_REQ_XPANDMOD, NULL) < 0)
+			cvs_log(LP_ERR, "failed to expand module");
 
-	if ((statmod == CVS_LISTMOD) &&
-	    (cvs_sendarg(root, "-c", 0) < 0))
-		return (CVS_EX_PROTO);
+		if (usehead && (cvs_sendarg(root, "-f", 0) < 0))
+			return (CVS_EX_PROTO);
 
-	if ((statmod == CVS_STATMOD) &&
-	    (cvs_sendarg(root, "-s", 0) < 0))
-		return (CVS_EX_PROTO);
+		if ((tgtdir != NULL) &&
+		    ((cvs_sendarg(root, "-d", 0) < 0) ||
+		    (cvs_sendarg(root, tgtdir, 0) < 0)))
+			return (CVS_EX_PROTO);
 
+		if (!shorten && cvs_sendarg(root, "-N", 0) < 0)
+			return (CVS_EX_PROTO);
+
+		for (i = 0; i < co_nmod; i++)
+			if (cvs_sendarg(root, co_mods[i], 0) < 0)
+				return (CVS_EX_PROTO);
+
+		if ((statmod == CVS_LISTMOD) &&
+		    (cvs_sendarg(root, "-c", 0) < 0))
+			return (CVS_EX_PROTO);
+		else if ((statmod == CVS_STATMOD) &&
+		    (cvs_sendarg(root, "-s", 0) < 0))
+			return (CVS_EX_PROTO);
+	}
 	return (0);
 }

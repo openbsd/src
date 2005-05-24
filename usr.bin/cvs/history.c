@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.13 2005/04/12 14:58:40 joris Exp $	*/
+/*	$OpenBSD: history.c,v 1.14 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -53,20 +53,26 @@
 
 #define CVS_HF_EXCL (CVS_HF_C|CVS_HF_E|CVS_HF_M|CVS_HF_O|CVS_HF_T|CVS_HF_X)
 
-static void  cvs_history_print  (struct cvs_hent *);
-int cvs_history_options(char *, int, char **, int *);
-int cvs_history_sendflags(struct cvsroot *);
+static int  cvs_history_init      (struct cvs_cmd *, int, char **, int *);
+static void cvs_history_print     (struct cvs_hent *);
+static int  cvs_history_pre_exec (struct cvsroot *);
 
 extern char *__progname;
 
-struct cvs_cmd_info cvs_history = {
-	cvs_history_options,
-	cvs_history_sendflags,
-	NULL,
-	NULL,
+struct cvs_cmd cvs_cmd_history = {
+	CVS_OP_HISTORY, CVS_REQ_HISTORY, "history",
+	{ "hi", "his" },
+	"Show repository access history",
+	"",
+	"acelm:oTt:u:wx:z:",
 	NULL,
 	0,
-	CVS_REQ_HISTORY,
+	cvs_history_init,
+	cvs_history_pre_exec,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	CVS_CMD_SENDDIR
 };
 
@@ -78,12 +84,12 @@ static u_int nbmod = 0;
 static u_int rep = 0;
 static char *modules[CVS_HISTORY_MAXMOD];
 
-int
-cvs_history_options(char *opt, int argc, char **argv, int *arg)
+static int
+cvs_history_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 
-	while ((ch = getopt(argc, argv, opt)) != -1) {
+	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
 		case 'a':
 			flags |= CVS_HF_A;
@@ -147,8 +153,8 @@ cvs_history_options(char *opt, int argc, char **argv, int *arg)
 	return (0);
 }
 
-int
-cvs_history_sendflags(struct cvsroot *root)
+static int
+cvs_history_pre_exec(struct cvsroot *root)
 {
 
 	if ((flags & CVS_HF_C) && (cvs_sendarg(root, "-c", 0) < 0))

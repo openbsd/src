@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.10 2005/05/12 23:46:31 joris Exp $	*/
+/*	$OpenBSD: version.c,v 1.11 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -35,15 +35,26 @@
 #include "cvs.h"
 #include "proto.h"
 
-int cvs_version_sendflags(struct cvsroot *);
+static int cvs_version_sendflags  (struct cvsroot *);
 
-struct cvs_cmd_info cvs_version = {
+struct cvs_cmd cvs_cmd_version = {
+	CVS_OP_VERSION, CVS_REQ_VERSION, "version",
+	{ "ve", "ver" },
+	"Show current CVS version(s)",
+	"",
+	"",
+	NULL,
+	0,
 	NULL,
 	cvs_version_sendflags,
-	NULL, NULL, NULL, CF_NOFILES, 0, 0
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	0
 };
 
-int
+static int
 cvs_version_sendflags(struct cvsroot *root)
 {
 	if ((root != NULL) && (root->cr_method != CVS_METHOD_LOCAL))

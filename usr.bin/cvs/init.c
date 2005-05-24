@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.15 2005/04/16 20:05:05 xsa Exp $	*/
+/*	$OpenBSD: init.c,v 1.16 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -50,7 +50,6 @@ struct cvsroot_file {
 	mode_t  cf_mode;
 } cvsroot_files[] = {
 	{ CVS_PATH_ROOT,   CFT_DIR, (S_IRWXU|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) },
-
 	{ CVS_PATH_COMMITINFO,  CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
 	{ CVS_PATH_CONFIG,      CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
 	{ CVS_PATH_CVSIGNORE,   CFT_FILE, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) },
@@ -67,11 +66,20 @@ struct cvsroot_file {
 
 int cvs_init_local(struct cvsroot *);
 
-struct cvs_cmd_info cvs_init = {
+struct cvs_cmd cvs_cmd_init = {
+	CVS_OP_INIT, CVS_REQ_INIT, "init",
+	{ },
+	"Create a CVS repository if it doesn't exist",
+	"",
+	"",
 	NULL,
-	NULL, NULL, NULL, NULL,
 	0,
-	CVS_REQ_INIT,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	0
 };
 

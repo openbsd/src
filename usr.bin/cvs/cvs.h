@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.57 2005/05/20 18:26:49 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.58 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -35,8 +35,8 @@
 #include "file.h"
 
 #define CVS_VERSION_MAJOR 0
-#define CVS_VERSION_MINOR 2
-#define CVS_VERSION       "OpenCVS 0.2"
+#define CVS_VERSION_MINOR 3
+#define CVS_VERSION       "OpenCVS 0.3"
 
 
 #define CVS_HIST_CACHE     128
@@ -134,50 +134,35 @@
 #define CVS_PATH_ROOTSPEC       CVS_PATH_CVSDIR "/Root"
 #define CVS_PATH_REPOSITORY     CVS_PATH_CVSDIR "/Repository"
 
-struct cvs_cmd_info {
-	/* parses the options for the command */
-	int (*cmd_options)(char *, int, char **, int *);
-
-	/* send command specific flags (CVS_METHOD_REMOTE only) */
-	int (*cmd_sendflags)(struct cvsroot *);
-
-	/* callback to be used for cvs_file_examine() */
-	int (*cmd_examine)(CVSFILE *, void *);
-
-	/* called after everything is done */
-	int (*cmd_cleanup)(void);
-
-	/* helper function, gets called after cvs_file_get()
-	 * to do command specific operations if needed.
-	 */
-	int (*cmd_helper)(void);
-
-	/* flags for cvs_file_get() */
-	int file_flags;
-
-	/* number of request */
-	int cmd_req;
-
-	/* info on the command (see flags below) */
-	int cmd_flags;
-};
 
 /* flags for cmd_flags */
 #define CVS_CMD_ALLOWSPEC	0x01
-#define CVS_CMD_NEEDLOG		0x02
 #define CVS_CMD_SENDARGS1	0x04
 #define CVS_CMD_SENDARGS2	0x08
 #define CVS_CMD_SENDDIR		0x10
 
+
 struct cvs_cmd {
-	int cmd_op;
-	char cmd_name[CVS_CMD_MAXNAMELEN];
-	char cmd_alias[CVS_CMD_MAXALIAS][CVS_CMD_MAXNAMELEN];
-	struct cvs_cmd_info *cmd_info;
+	int   cmd_op;
+	int   cmd_req;
+	char  cmd_name[CVS_CMD_MAXNAMELEN];
+	char  cmd_alias[CVS_CMD_MAXALIAS][CVS_CMD_MAXNAMELEN];
+	char  cmd_descr[CVS_CMD_MAXDESCRLEN];
 	char *cmd_synopsis;
 	char *cmd_opts;
-	char cmd_descr[CVS_CMD_MAXDESCRLEN];
 	char *cmd_defargs;
+	int   file_flags;
+
+	/* operations vector */
+	int (*cmd_init)        (struct cvs_cmd *, int, char **, int *);
+	int (*cmd_pre_exec)    (struct cvsroot *);
+	int (*cmd_exec_remote) (CVSFILE *, void *);
+	int (*cmd_exec_local)  (CVSFILE *, void *);
+	int (*cmd_post_exec)   (struct cvsroot *);
+	int (*cmd_cleanup)     (void);
+
+	/* flags for cvs_file_get() */
+	int   cmd_flags;
 };
 
 struct cvs_file;
@@ -324,39 +309,42 @@ extern CVSFILE *cvs_files;
 
 #endif
 
+extern struct cvs_cmd *cvs_cdt[];
 
-/* client command handlers */
-extern struct cvs_cmd_info cvs_add;
-extern struct cvs_cmd_info cvs_admin;
-extern struct cvs_cmd_info cvs_annotate;
-extern struct cvs_cmd_info cvs_checkout;
-extern struct cvs_cmd_info cvs_commit;
-extern struct cvs_cmd_info cvs_diff;
-extern struct cvs_cmd_info cvs_edit;
-extern struct cvs_cmd_info cvs_editors;
-extern struct cvs_cmd_info cvs_export;
-extern struct cvs_cmd_info cvs_getlog;
-extern struct cvs_cmd_info cvs_history;
-extern struct cvs_cmd_info cvs_import;
-extern struct cvs_cmd_info cvs_init;
-extern struct cvs_cmd_info cvs_rdiff;
-extern struct cvs_cmd_info cvs_release;
-extern struct cvs_cmd_info cvs_remove;
-extern struct cvs_cmd_info cvs_rlog;
-extern struct cvs_cmd_info cvs_rtag;
-extern struct cvs_cmd_info cmd_server;
-extern struct cvs_cmd_info cvs_status;
-extern struct cvs_cmd_info cvs_tag;
-extern struct cvs_cmd_info cvs_unedit;
-extern struct cvs_cmd_info cvs_update;
-extern struct cvs_cmd_info cvs_version;
-extern struct cvs_cmd_info cvs_watch;
-extern struct cvs_cmd_info cvs_watchers;
+extern struct cvs_cmd cvs_cmd_add;
+extern struct cvs_cmd cvs_cmd_admin;
+extern struct cvs_cmd cvs_cmd_annotate;
+extern struct cvs_cmd cvs_cmd_checkout;
+extern struct cvs_cmd cvs_cmd_commit;
+extern struct cvs_cmd cvs_cmd_diff;
+extern struct cvs_cmd cvs_cmd_edit;
+extern struct cvs_cmd cvs_cmd_editors;
+extern struct cvs_cmd cvs_cmd_export;
+extern struct cvs_cmd cvs_cmd_history;
+extern struct cvs_cmd cvs_cmd_import;
+extern struct cvs_cmd cvs_cmd_init;
+extern struct cvs_cmd cvs_cmd_log;
+extern struct cvs_cmd cvs_cmd_login;
+extern struct cvs_cmd cvs_cmd_logout;
+extern struct cvs_cmd cvs_cmd_rdiff;
+extern struct cvs_cmd cvs_cmd_release;
+extern struct cvs_cmd cvs_cmd_remove;
+extern struct cvs_cmd cvs_cmd_rlog;
+extern struct cvs_cmd cvs_cmd_rtag;
+extern struct cvs_cmd cvs_cmd_status;
+extern struct cvs_cmd cvs_cmd_tag;
+extern struct cvs_cmd cvs_cmd_update;
+extern struct cvs_cmd cvs_cmd_version;
+extern struct cvs_cmd cvs_cmd_server;
+extern struct cvs_cmd cvs_cmd_unedit;
+extern struct cvs_cmd cvs_cmd_watch;
+extern struct cvs_cmd cvs_cmd_watchers;
 
-struct cvs_cmd* cvs_findcmd  (const char *);
-int             cvs_startcmd (struct cvs_cmd *, int, char **);
-int             cvs_server   (int, char **);
 
+struct cvs_cmd* cvs_findcmd       (const char *);
+struct cvs_cmd* cvs_findcmdbyreq  (int);
+int             cvs_startcmd      (struct cvs_cmd *, int, char **);
+int             cvs_server        (int, char **);
 
 int         cvs_var_set   (const char *, const char *);
 int         cvs_var_unset (const char *);

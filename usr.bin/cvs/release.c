@@ -1,4 +1,4 @@
-/*	$OpenBSD: release.c,v 1.6 2005/05/20 20:00:53 joris Exp $	*/
+/*	$OpenBSD: release.c,v 1.7 2005/05/24 04:12:25 jfb Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -42,29 +42,36 @@
 
 extern char *__progname;
 
-static int cvs_release_options(char *, int, char **, int *);
-static int cvs_release_sendflags(struct cvsroot *);
-static int cvs_release_yesno(void);
-static int cvs_release_dir(CVSFILE *, void *);
+static int cvs_release_init     (struct cvs_cmd *, int, char **, int *);
+static int cvs_release_pre_exec (struct cvsroot *);
+static int cvs_release_yesno    (void);
+static int cvs_release_dir      (CVSFILE *, void *);
 
-struct cvs_cmd_info cvs_release = {
-	cvs_release_options,
-	cvs_release_sendflags,
+struct cvs_cmd cvs_cmd_release = {
+	CVS_OP_RELEASE, CVS_REQ_RELEASE, "release",
+	{ },
+	"Release",
+	"[-d]",
+	"d",
+	NULL,
+	0,
+	cvs_release_init,
+	cvs_release_pre_exec,
 	cvs_release_dir,
-	NULL, NULL,
-	CF_IGNORE | CF_KNOWN | CF_NOFILES | CF_RECURSE,
-	CVS_REQ_RELEASE,
+	cvs_release_dir,
+	NULL,
+	NULL,
 	CVS_CMD_SENDDIR | CVS_CMD_SENDARGS2 | CVS_CMD_ALLOWSPEC
 };
 
 static int	dflag;	/* -d option */
 
 static int
-cvs_release_options(char *opt, int argc, char **argv, int *arg)
+cvs_release_init(struct cvs_cmd *cmd, int argc, char **argv, int *arg)
 {
 	int ch;
 
-	while ((ch = getopt(argc, argv, opt)) != -1) {
+	while ((ch = getopt(argc, argv, cmd->cmd_opts)) != -1) {
 		switch (ch) {
 		case 'd':
 			dflag = 1;
@@ -85,7 +92,7 @@ cvs_release_options(char *opt, int argc, char **argv, int *arg)
 }
 
 static int
-cvs_release_sendflags(struct cvsroot *root)
+cvs_release_pre_exec(struct cvsroot *root)
 {
 	if (dflag && cvs_sendarg(root, "-d", 0) < 0)
 		return (CVS_EX_PROTO);
