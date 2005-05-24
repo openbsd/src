@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.176 2005/05/10 01:16:32 brad Exp $
+#	$OpenBSD: files.pci,v 1.177 2005/05/24 05:57:36 ho Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -517,7 +517,7 @@ attach	ral at pci with ral_pci
 file	dev/pci/if_ral_pci.c		ral_pci
 
 # Sangoma PCI card
-device	san: ifnet, ifmedia
+device	san: ifnet, ifmedia, sppp
 attach	san at pci
 file	dev/pci/if_sandrv.c 		san
 file	dev/pci/if_san_common.c 	san
