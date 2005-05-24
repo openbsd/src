@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2003/06/23 16:42:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2005/05/24 22:25:46 millert Exp $
 #
 # C Shell with process control; VM/UNIX VAX Makefile
 # Bill Joy UC Berkeley; Jim Kulp IIASA, Austria
@@ -8,7 +8,7 @@
 PROG=	csh
 DFLAGS=-DBUILTIN -DFILEC -DNLS -DSHORT_STRINGS
 #CFLAGS+=-g
-#CFLAGS+=-Wall -ansi -pedantic
+#CFLAGS+=-Wall
 CFLAGS+=-I${.CURDIR} -I. ${DFLAGS}
 SRCS=	alloc.c char.c const.c csh.c dir.c dol.c error.c exec.c exp.c file.c \
 	func.c glob.c hist.c init.c lex.c misc.c parse.c proc.c \
