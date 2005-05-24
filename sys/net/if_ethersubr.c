@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.89 2005/04/25 01:34:27 brad Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.90 2005/05/24 02:45:17 reyk Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -94,6 +94,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <net/route.h>
 #include <net/if_llc.h>
 #include <net/if_dl.h>
+#include <net/if_media.h>
 #include <net/if_types.h>
 
 #include <netinet/in.h>
@@ -125,6 +126,11 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include "pppoe.h"
 #if NPPPOE > 0
 #include <net/if_pppoe.h>
+#endif
+
+#include "trunk.h"
+#if NTRUNK > 0
+#include <net/if_trunk.h>
 #endif
 
 #ifdef INET6
@@ -255,6 +261,11 @@ ether_output(ifp0, m0, dst, rt0)
 	struct arpcom *ac = (struct arpcom *)ifp0;
 	short mflags;
 	struct ifnet *ifp = ifp0;
+
+#if NTRUNK > 0
+	if (ifp->if_type == IFT_IEEE8023ADLAG)
+		senderr(EBUSY);
+#endif
 
 #if NCARP > 0
 	if (ifp->if_type == IFT_CARP) {
@@ -606,6 +617,16 @@ ether_input(ifp, eh, m)
 	struct arpcom *ac;
 #if NPPPOE > 0
 	struct ether_header *eh_tmp;
+#endif
+
+#if NTRUNK > 0
+	/* Handle input from a trunk port */
+	if (ifp->if_type == IFT_IEEE8023ADLAG) {
+		if (trunk_input(ifp, eh, m) != 0)
+			return;
+		/* Has been set to the trunk interface */
+		ifp = m->m_pkthdr.rcvif;
+	}
 #endif
 
 	if ((ifp->if_flags & IFF_UP) == 0) {

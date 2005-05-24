@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.137 2005/05/22 00:02:28 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.138 2005/05/24 02:45:18 reyk Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -87,6 +87,7 @@
 #include <net/pfvar.h>
 #include <net/if_pfsync.h>
 #include <net/if_pppoe.h>
+#include <net/if_trunk.h>
 
 #include <netatalk/at.h>
 
@@ -207,6 +208,10 @@ void	setpppoe_dev(const char *,int);
 void	setpppoe_svc(const char *,int);
 void	setpppoe_ac(const char *,int);
 void	pppoe_status(void);
+void	settrunkport(const char *, int);
+void	unsettrunkport(const char *, int);
+void	settrunkproto(const char *, int);
+void	trunk_status(void);
 int	main(int, char *[]);
 int	prefix(void *val, int);
 
@@ -320,6 +325,9 @@ const struct	cmd {
 	{ "timeslot",	NEXTARG,	0,		settimeslot },
 	{ "txpower",	NEXTARG,	0,		setiftxpower },
 	{ "-txpower",	1,		0,		setiftxpower },
+	{ "trunkport",	NEXTARG,	0,		settrunkport },
+	{ "-trunkport",	NEXTARG,	0,		unsettrunkport },
+	{ "trunkproto",	NEXTARG,	0,		settrunkproto },
 #endif /* SMALL */
 #if 0
 	/* XXX `create' special-cased below */
@@ -2006,6 +2014,7 @@ status(int link, struct sockaddr_dl *sdl)
 	pfsync_status();
 	pppoe_status();
 	timeslot_status();
+	trunk_status();
 #endif
 	ieee80211_status();
 	getifgroups();
@@ -3135,6 +3144,102 @@ setpppoe_ac(const char *val, int d)
 	if (ioctl(s, PPPOESETPARMS, &parms))
 		err(1, "PPPOESETPARMS");
 }
+
+void
+settrunkport(const char *val, int d)
+{
+	struct trunk_reqport rp;
+
+	bzero(&rp, sizeof(rp));
+	strlcpy(rp.rp_ifname, name, sizeof(rp.rp_ifname));
+	strlcpy(rp.rp_portname, val, sizeof(rp.rp_portname));
+
+	if (ioctl(s, SIOCSTRUNKPORT, &rp))
+		err(1, "SIOCSTRUNKPORT");
+}
+
+void
+unsettrunkport(const char *val, int d)
+{
+	struct trunk_reqport rp;
+
+	bzero(&rp, sizeof(rp));
+	strlcpy(rp.rp_ifname, name, sizeof(rp.rp_ifname));
+	strlcpy(rp.rp_portname, val, sizeof(rp.rp_portname));
+
+	if (ioctl(s, SIOCSTRUNKDELPORT, &rp))
+		err(1, "SIOCSTRUNKDELPORT");
+}
+
+void
+settrunkproto(const char *val, int d)
+{
+	struct trunk_protos tpr[] = TRUNK_PROTOS;
+	struct trunk_reqall ra;
+	int i;
+
+	bzero(&ra, sizeof(ra));
+	ra.ra_proto = TRUNK_PROTO_MAX;
+
+	for (i = 0; i < (sizeof(tpr) / sizeof(tpr[0])); i++) {
+		if (strcmp(val, tpr[i].tpr_name) == 0) {
+			ra.ra_proto = tpr[i].tpr_proto;
+			break;
+		}
+	}
+	if (ra.ra_proto == TRUNK_PROTO_MAX)
+		errx(1, "Invalid trunk protocol: %s", val);
+
+	strlcpy(ra.ra_ifname, name, sizeof(ra.ra_ifname));
+	if (ioctl(s, SIOCSTRUNK, &ra) != 0)
+		err(1, "SIOCSTRUNK");
+}
+
+void
+trunk_status(void)
+{
+	struct trunk_protos tpr[] = TRUNK_PROTOS;
+	struct trunk_reqport rp, rpbuf[TRUNK_MAX_PORTS];
+	struct trunk_reqall ra;
+	const char *proto = "<unknown>";
+	int i;
+
+	bzero(&ra, sizeof(ra));
+	strlcpy(ra.ra_ifname, name, sizeof(ra.ra_ifname));
+	ra.ra_size = sizeof(rpbuf);
+	ra.ra_port = rpbuf;
+
+	if (ioctl(s, SIOCGTRUNK, &ra) == 0) {
+		for (i = 0; i < (sizeof(tpr) / sizeof(tpr[0])); i++) {
+			if (ra.ra_proto == tpr[i].tpr_proto) {
+				proto = tpr[i].tpr_name;
+				break;
+			}
+		}
+
+		printf("\ttrunk: trunkproto %s\n", proto);
+		for (i = 0; i < ra.ra_ports; i++) {
+			printf("\t\ttrunkport %s", rpbuf[i].rp_portname);
+			if (rpbuf[i].rp_flags & TRUNK_PORT_MASTER)
+				printf(" master");
+			putchar('\n');
+		}
+
+		if (mflag) {
+			printf("\tsupported trunk protocols:\n");
+			for (i = 0; i < (sizeof(tpr) / sizeof(tpr[0])); i++)
+				printf("\t\ttrunkproto %s\n", tpr[i].tpr_name);
+		}
+	} else {
+		strlcpy(rp.rp_ifname, name, sizeof(rp.rp_ifname));
+		strlcpy(rp.rp_portname, name, sizeof(rp.rp_portname));
+
+		if (ioctl(s, SIOCGTRUNKPORT, &rp) != 0)
+			return;
+
+		printf("\ttrunk: trunkdev %s\n", rp.rp_ifname);
+	}
+}
 #endif /* SMALL */
 
 #define SIN(x) ((struct sockaddr_in *) &(x))
@@ -3337,6 +3442,7 @@ usage(int value)
 	    "\t[[-]anycast] [eui64] [pltime n] [vltime n] [[-]tentative]\n"
 #endif
 	    "\t[vlan vlan_tag vlandev parent_iface] [-vlandev] [vhid n]\n"
+	    "\t[trunkproto proto] [[-]trunkport child-iface]\n"
 	    "\t[advbase n] [advskew n] [maxupd n] [pass passphrase]\n"
 	    "\t[state init | backup | master]\n"
 	    "\t[syncdev iface] [-syncdev] [syncpeer peer_address] [-syncpeer]\n"

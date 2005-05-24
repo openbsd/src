@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.114 2005/05/24 02:26:04 henning Exp $	*/
+/*	$OpenBSD: if.c,v 1.115 2005/05/24 02:45:17 reyk Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -103,6 +103,10 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#if NTRUNK > 0
+#include <net/if_trunk.h>
 #endif
 
 #if NBRIDGE > 0
@@ -495,6 +499,11 @@ if_detach(struct ifnet *ifp)
 	ifp->if_ioctl = if_detached_ioctl;
 	ifp->if_init = if_detached_init;
 	ifp->if_watchdog = if_detached_watchdog;
+
+#if NTRUNK > 0
+	if (ifp->if_type == IFT_IEEE8023ADLAG)
+		trunk_port_ifdetach(ifp);
+#endif
 
 #if NBRIDGE > 0
 	/* Remove the interface from any bridge it is part of.  */

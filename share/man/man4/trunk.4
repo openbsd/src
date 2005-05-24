@@ -1,0 +1,76 @@
+.\"	$OpenBSD: trunk.4,v 1.1 2005/05/24 02:45:18 reyk Exp $
+.\"
+.\" Copyright (c) 2005 Reyk Floeter <reyk@vantronix.net>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd May 5, 2005
+.Dt TRUNK 4
+.Os
+.Sh NAME
+.Nm trunk
+.Nd link aggregation and link failover interface
+.Sh SYNOPSIS
+.Cd "pseudo-device trunk" Op Ar count
+.Sh DESCRIPTION
+The
+.Nm
+interface allows aggregation of multiple network interfaces as one virtual
+.Nm
+interface.
+.Pp
+A
+.Nm
+interface can be created using the
+.Ic ifconfig trunk Ns Ar N Ic create
+command.
+It can use different link aggregation protocols specified
+using the
+.Ic trunkproto Ar proto
+option.
+Child interfaces can be added using the
+.Ic trunkport Ar child-iface
+option and removed using the
+.Ic -trunkport Ar child-iface
+option.
+.Pp
+The driver currently supports the trunk protocols
+.Ic roundrobin 
+.Oo
+.Ic default
+.Oc
+and
+.Ic none
+for link aggregation and link failover.
+.Pp
+The configuration could be done at runtime or by setting up a
+.Xr hostname.if 5
+configuration file for
+.Xr netstart 8 .
+.Sh SEE ALSO
+.Xr inet 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8 ,
+.Xr netstart 8
+.Sh HISTORY
+The
+.Nm
+device appeared in
+.Ox 3.8 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Reyk Floeter Aq reyk@openbsd.org .
+.Sh CAVEATS
+Currently, only the roundrobin trunk protocol is supported.
