@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.55 2005/04/21 04:39:34 mickey Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.56 2005/05/24 21:11:47 tedu Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -395,6 +395,7 @@ struct vmspace {
 	segsz_t vm_swrss;	/* resident set size before last swap */
 	segsz_t vm_tsize;	/* text size (pages) XXX */
 	segsz_t vm_dsize;	/* data size (pages) XXX */
+	segsz_t vm_dused;	/* data segment length (pages) XXX */
 	segsz_t vm_ssize;	/* stack size (pages) */
 	caddr_t	vm_taddr;	/* user virtual address of text XXX */
 	caddr_t	vm_daddr;	/* user virtual address of data XXX */
@@ -517,9 +518,10 @@ void			*uvm_km_getpage(boolean_t);
 void			uvm_km_putpage(void *);
 
 /* uvm_map.c */
-int			uvm_map(vm_map_t, vaddr_t *, vsize_t,
+#define	uvm_map(_m, _a, _sz, _u, _f, _al, _fl) uvm_map_p(_m, _a, _sz, _u, _f, _al, _fl, 0)
+int			uvm_map_p(vm_map_t, vaddr_t *, vsize_t,
 				struct uvm_object *, voff_t, vsize_t,
-				uvm_flag_t);
+				uvm_flag_t, struct proc *);
 int			uvm_map_pageable(vm_map_t, vaddr_t, 
 				vaddr_t, boolean_t, int);
 int			uvm_map_pageable_all(vm_map_t, int, vsize_t);
@@ -547,7 +549,7 @@ void			uvm_total(struct vmtotal *);
 /* uvm_mmap.c */
 int			uvm_mmap(vm_map_t, vaddr_t *, vsize_t,
 				vm_prot_t, vm_prot_t, int, 
-				caddr_t, voff_t, vsize_t);
+				caddr_t, voff_t, vsize_t, struct proc *);
 
 /* uvm_page.c */
 struct vm_page		*uvm_pagealloc_strat(struct uvm_object *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.70 2004/12/30 08:28:39 niklas Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.71 2005/05/24 21:11:47 tedu Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /* 
@@ -695,7 +695,7 @@ uvm_map_clip_end(map, entry, end)
  */
 
 int
-uvm_map(map, startp, size, uobj, uoffset, align, flags)
+uvm_map_p(map, startp, size, uobj, uoffset, align, flags, p)
 	vm_map_t map;
 	vaddr_t *startp;	/* IN/OUT */
 	vsize_t size;
@@ -703,6 +703,7 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 	voff_t uoffset;
 	vsize_t align;
 	uvm_flag_t flags;
+	struct proc *p;
 {
 	vm_map_entry_t prev_entry, new_entry;
 	vm_prot_t prot = UVM_PROTECTION(flags), maxprot =
@@ -849,6 +850,8 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 		prev_entry->end += size;
 		uvm_rb_fixup(map, prev_entry);
 		map->size += size;
+		if (p && uobj == NULL)
+			p->p_vmspace->vm_dused += btoc(size);
 
 		uvm_tree_sanity(map, "map leave 2");
 
@@ -914,6 +917,9 @@ step3:
 	uvm_map_entry_link(map, prev_entry, new_entry);
 
 	map->size += size;
+	if (p && uobj == NULL)
+		p->p_vmspace->vm_dused += btoc(size);
+
 
 	/*
 	 *      Update the free space hint
@@ -1363,10 +1369,11 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
  */
 
 void
-uvm_unmap_remove(map, start, end, entry_list)
+uvm_unmap_remove(map, start, end, entry_list, p)
 	vm_map_t map;
 	vaddr_t start,end;
 	vm_map_entry_t *entry_list;	/* OUT */
+	struct proc *p;
 {
 	vm_map_entry_t entry, first_entry, next;
 	vaddr_t len;
@@ -1430,6 +1437,8 @@ uvm_unmap_remove(map, start, end, entry_list)
 		UVM_MAP_CLIP_END(map, entry, end); 
 		next = entry->next;
 		len = entry->end - entry->start;
+		if (p && entry->object.uvm_obj == NULL)
+			p->p_vmspace->vm_dused -= btoc(len);
 
 		/*
 		 * unwire before removing addresses from the pmap; otherwise
@@ -3333,7 +3342,7 @@ uvmspace_free(vm)
 		if (vm->vm_map.nentries) {
 			uvm_unmap_remove(&vm->vm_map,
 			    vm->vm_map.min_offset, vm->vm_map.max_offset,
-			    &dead_entries);
+			    &dead_entries, NULL);
 			if (dead_entries != NULL)
 				uvm_unmap_detach(dead_entries, 0);
 		}

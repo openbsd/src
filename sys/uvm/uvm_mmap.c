@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.55 2005/01/15 06:54:51 otto Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.56 2005/05/24 21:11:47 tedu Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -605,7 +605,7 @@ sys_mmap(p, v, retval)
 	 */
 
 	error = uvm_mmap(&p->p_vmspace->vm_map, &addr, size, prot, maxprot,
-	    flags, handle, pos, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
+	    flags, handle, pos, p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur, p);
 
 	if (error == 0)
 		/* remember to add offset */
@@ -787,7 +787,7 @@ sys_munmap(p, v, retval)
 	/*
 	 * doit!
 	 */
-	uvm_unmap_remove(map, addr, addr + size, &dead_entries);
+	uvm_unmap_remove(map, addr, addr + size, &dead_entries, p);
 
 	vm_map_unlock(map);	/* and unlock */
 
@@ -1164,7 +1164,7 @@ sys_munlockall(p, v, retval)
  */
 
 int
-uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
+uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit, p)
 	vm_map_t map;
 	vaddr_t *addr;
 	vsize_t size;
@@ -1173,6 +1173,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	caddr_t handle;		/* XXX: VNODE? */
 	voff_t foff;
 	vsize_t locklimit;
+	struct proc *p;
 {
 	struct uvm_object *uobj;
 	struct vnode *vp;
@@ -1301,7 +1302,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	 * do it!
 	 */
 
-	retval = uvm_map(map, addr, size, uobj, foff, align, uvmflag);
+	retval = uvm_map_p(map, addr, size, uobj, foff, align, uvmflag, p);
 
 	if (retval == KERN_SUCCESS) {
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.124 2005/03/10 17:26:10 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.125 2005/05/24 21:11:48 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1165,7 +1165,7 @@ fill_eproc(struct proc *p, struct eproc *ep)
 		PHOLD(p);	/* need for pstats */
 		ep->e_vm.vm_rssize = vm_resident_count(vm);
 		ep->e_vm.vm_tsize = vm->vm_tsize;
-		ep->e_vm.vm_dsize = vm->vm_dsize;
+		ep->e_vm.vm_dsize = vm->vm_dused;
 		ep->e_vm.vm_ssize = vm->vm_ssize;
 		ep->e_pstats = *p->p_stats;
 		ep->e_pstats_valid = 1;
@@ -1297,7 +1297,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki)
 
 		ki->p_vm_rssize = vm_resident_count(vm);
 		ki->p_vm_tsize = vm->vm_tsize;
-		ki->p_vm_dsize = vm->vm_dsize;
+		ki->p_vm_dsize = vm->vm_dused;
 		ki->p_vm_ssize = vm->vm_ssize;
 
 		ki->p_forw = PTRTOINT64(p->p_forw);
