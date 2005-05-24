@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.48 2005/05/24 02:57:15 moritz Exp $	 */
+/* $OpenBSD: monitor.c,v 1.49 2005/05/24 03:26:26 moritz Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -174,11 +174,9 @@ monitor_ui_init(void)
 	if (m_read_int32(m_state.s, &err))
 		goto errout;
 
-	if (err != 0) {
+	if (err != 0)
 		log_fatal("monitor_ui_init: parent could not create FIFO "
 		    "\"%s\"", ui_fifo);
-		exit(1);
-	}
 
 	ui_socket = mm_receive_fd(m_state.s);
 	if (ui_socket < 0)
