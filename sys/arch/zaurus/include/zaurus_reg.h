@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_reg.h,v 1.3 2005/01/14 18:44:08 drahn Exp $	*/
+/*	$OpenBSD: zaurus_reg.h,v 1.4 2005/05/24 20:32:43 uwe Exp $	*/
 /*	$NetBSD: lubbock_reg.h,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -54,9 +54,10 @@
 #define ZAURUS_GPIO_VBASE	0xfd000000
 #define ZAURUS_CLKMAN_VBASE 	0xfd100000
 #define ZAURUS_INTCTL_VBASE 	0xfd200000
-#define ZAURUS_AGPIO_VBASE	0xfd300000
-#define ZAURUS_VBASE_FREE	0xfd400000
-/* FFUART and/or BTUART are mapped to this area when
+#define ZAURUS_SCOOP0_VBASE	0xfd300000
+#define ZAURUS_SCOOP1_VBASE	0xfd400000
+#define ZAURUS_VBASE_FREE	0xfd500000
+/* FFUART, BTUART and/or STUART are mapped to this area when
    used for console or kgdb port */
 
 #define ioreg_read(a)  (*(volatile unsigned *)(a))

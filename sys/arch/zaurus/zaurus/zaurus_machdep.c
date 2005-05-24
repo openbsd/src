@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_machdep.c,v 1.15 2005/05/09 15:32:19 uwe Exp $	*/
+/*	$OpenBSD: zaurus_machdep.c,v 1.16 2005/05/24 20:32:43 uwe Exp $	*/
 /*	$NetBSD: lubbock_machdep.c,v 1.2 2003/07/15 00:25:06 lukem Exp $ */
 
 /*
@@ -150,6 +150,8 @@
 #include <arm/sa11x0/sa1111_reg.h>
 #include <machine/zaurus_reg.h>
 #include <machine/zaurus_var.h>
+
+#include <zaurus/dev/zaurus_scoopreg.h>
 
 #include "apm.h"
 #if NAPM > 0
@@ -407,9 +409,15 @@ struct l1_sec_map {
 	    PTE_NOCACHE,
     },
     {
-	    ZAURUS_AGPIO_VBASE,
-	    0x10800000,
-	    0x00010000, /* XXX */
+	    ZAURUS_SCOOP0_VBASE,
+	    SCOOP0_BASE,
+	    SCOOP_SIZE,
+	    PTE_NOCACHE,
+    },
+    {
+	    ZAURUS_SCOOP1_VBASE,
+	    trunc_page(SCOOP1_BASE),
+	    round_page(SCOOP_SIZE),
 	    PTE_NOCACHE,
     },
     {0, 0, 0, 0,}
@@ -488,6 +496,7 @@ copy_io_area_map(pd_entry_t *new_pd)
 	}
 }
 
+/* XXX tidy up! */
 void green_on(int virt);
 void
 green_on(int virt)
@@ -495,11 +504,27 @@ green_on(int virt)
 	/* clobber green led p */
 	volatile u_int16_t *p;
 	if (virt)
-		p = (u_int16_t *)(ZAURUS_AGPIO_VBASE+0x24);
+		p = (u_int16_t *)(ZAURUS_SCOOP0_VBASE+SCOOP_GPWR);
 	else
-		p = (u_int16_t *)0x10800024;
+		p = (u_int16_t *)(SCOOP0_BASE+SCOOP_GPWR);
 
-	*p = *p | 2;
+	*p = *p | (1<<SCOOP0_LED_GREEN);
+}
+void irda_on(int virt);
+void
+irda_on(int virt)
+{
+	/* clobber IrDA led p */
+	volatile u_int16_t *p;
+	/* XXX scoop1 registers are not page-aligned! */
+	int ofs = SCOOP1_BASE - trunc_page(SCOOP1_BASE);
+
+	if (virt)
+		p = (u_int16_t *)(ZAURUS_SCOOP1_VBASE+ofs+SCOOP_GPWR);
+	else
+		p = (u_int16_t *)(SCOOP1_BASE+SCOOP_GPWR);
+
+	*p = *p & ~(1<<SCOOP1_IR_ON);
 }
 
 #if 0
@@ -636,6 +661,17 @@ initarm(void *arg)
 		cpu_tlb_flushD();
 	}
 
+	/*
+	 * Examine the boot args string for options we need to know about
+	 * now.
+	 */
+	/* XXX should really be done after setting up the console, but we
+	 * XXX need to parse the console selection flags right now. */
+	process_kernel_args((char *)0xa0200000 - MAX_BOOT_STRING - 1);
+#ifdef RAMDISK_HOOKS
+        boothowto |= RB_DFLTROOT;
+#endif /* RAMDISK_HOOKS */
+
 	/* setup GPIO for BTUART, in case bootloader doesn't take care of it */
 	pxa2x0_gpio_bootstrap(ZAURUS_GPIO_VBASE);
 #if 0
@@ -720,15 +756,6 @@ initarm(void *arg)
 		ioreg_write(ZAURUS_SACC_PBASE+SACCSBI_SKCR,
 			     (tmp & ~(1<<4)) | (1<<0));
 	}
-
-	/*
-	 * Examine the boot args string for options we need to know about
-	 * now.
-	 */
-	process_kernel_args((char *)0xa0200000 - MAX_BOOT_STRING - 1);
-#ifdef RAMDISK_HOOKS
-        boothowto |= RB_DFLTROOT;
-#endif /* RAMDISK_HOOKS */
 
 
 	{
@@ -1145,13 +1172,7 @@ initarm(void *arg)
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
-#if defined(FFUARTCONSOLE)
-const char *console = "ffuart";
-#elif defined(BTUARTCONSOLE)
-const char *console = "btuart";
-#elif defined(STUARTCONSOLE)
-const char *console = "stuart";
-#endif
+const char *console = "glass";
 
 void
 process_kernel_args(char *args)
@@ -1212,6 +1233,16 @@ process_kernel_args(char *args)
 		case 's':
 			fl |= RB_SINGLE;
 			break;
+		/* XXX undocumented console switching flags */
+		case '0':
+			console = "ffuart";
+			break;
+		case '1':
+			console = "btuart";
+			break;
+		case '2':
+			console = "stuart";
+			break;
 		default:
 			printf("unknown option `%c'\n", *cp);
 			break;
@@ -1260,11 +1291,9 @@ consinit(void)
 		paddr = PXA2X0_BTUART_BASE;
 		cken = CKEN_BTUART;
 	} else if (strcmp(console, "stuart") == 0) {
-#if 0
-		/* XXX enable the infrared transmitter LED. */
-#endif
 		paddr = PXA2X0_STUART_BASE;
 		cken = CKEN_STUART;
+		irda_on(0);
 	}
 	if (cken != 0 && comcnattach(&pxa2x0_a4x_bs_tag, paddr, comcnspeed,
 	    PXA2X0_COM_FREQ, comcnmode) == 0) {
@@ -1290,6 +1319,7 @@ kgdb_port_init(void)
 	} else if (strcmp(kgdb_devname, "stuart") == 0) {
 		paddr = PXA2X0_STUART_BASE;
 		cken = CKEN_STUART;
+		irda_on(0);
 	} else
 		return;
 
@@ -1315,6 +1345,8 @@ early_clkman(u_int clk, int enable)
 	ioreg_write(ZAURUS_CLKMAN_VBASE + CLKMAN_CKEN, rv);
 }
 
+int glass_console = 0;
+
 void
 board_startup(void)
 {
@@ -1327,17 +1359,25 @@ board_startup(void)
 	 * are available.
 	 */
 
-	printf("attempting to switch console to lcd screen\n");
-	if (lcd_cnattach(early_clkman) == 0) {
-		/*
-		 * Kill the existing serial console.
-		 * XXX need to bus_space_unmap resources and disable
-		 *     clocks...
-		 */
-		comconsaddr = 0;
+	if ((cputype & ~CPU_ID_XSCALE_COREREV_MASK) == CPU_ID_PXA27X) {
+		if (strcmp(console, "glass") == 0) {
+			printf("attempting to switch console to lcd screen\n");
+			glass_console = 1;
+		}
+		if (glass_console == 1 && lcd_cnattach(early_clkman) == 0) {
+			/*
+			 * Kill the existing serial console.
+			 * XXX need to bus_space_unmap resources and disable
+			 *     clocks...
+			 */
+			comconsaddr = 0;
 
-		/* Display the copyright notice again on the new console */
-		printf("%s\n", copyright);
+			/*
+			 * Display the copyright notice again on the new console
+			 */
+			extern const char copyright[];
+			printf("%s\n", copyright);
+		}
 	}
 #endif
 

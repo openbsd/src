@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.21 2005/03/29 20:10:14 uwe Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.22 2005/05/24 20:32:43 uwe Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -171,6 +171,7 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	struct zkbd_softc *sc = (struct zkbd_softc *)self;
 	struct wskbddev_attach_args a;
 	int pin, i;
+	extern int glass_console;
 
 	zkbd_dev = sc;
 	sc->sc_polling = 0;
@@ -229,7 +230,7 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	pxa2x0_gpio_intr_establish(sc->sc_swb_pin, IST_EDGE_BOTH, IPL_TTY,
 	    zkbd_hinge, sc, sc->sc_dev.dv_xname);
 
-	if (1) {
+	if (glass_console) {
 		wskbd_cnattach(&zkbd_consops, sc, &zkbd_keymapdata);
 		a.console = 1;
 	} else {

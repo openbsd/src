@@ -1,4 +1,4 @@
-/*	$OpenBSD: zaurus_lcd.c,v 1.14 2005/04/11 03:32:48 uwe Exp $	*/
+/*	$OpenBSD: zaurus_lcd.c,v 1.15 2005/05/24 20:32:43 uwe Exp $	*/
 /* $NetBSD: lubbock_lcd.c,v 1.1 2003/08/09 19:38:53 bsh Exp $ */
 
 /*
@@ -174,16 +174,14 @@ lcd_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pxa2x0_lcd_softc *sc = (struct pxa2x0_lcd_softc *)self;
 	struct wsemuldisplaydev_attach_args aa;
-	int console;
-
-	console = 1;		/* XXX allow user configuration? */
+	extern int glass_console;
 
 	printf("\n");
 
 	pxa2x0_lcd_attach_sub(sc, aux, &lcd_bpp16_screen, CURRENT_DISPLAY,
-	    console);
+	    glass_console);
 
-	aa.console = console;
+	aa.console = glass_console;
 	aa.scrdata = &lcd_screen_list;
 	aa.accessops = &lcd_accessops;
 	aa.accesscookie = sc;
