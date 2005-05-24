@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.148 2005/05/17 03:06:05 brad Exp $
+#	$OpenBSD: GENERIC,v 1.149 2005/05/24 08:37:29 brad Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -206,6 +206,9 @@ rl*	at pci?				# RealTek 81[23]9 ethernet
 vr*	at pci?				# VIA Rhine ethernet
 em*	at pci?				# Intel Pro/1000 ethernet
 sis*	at pci?				# SiS 900/7016 ethernet
+epic*	at pci?				# SMC EPIC/100 ethernet
+skc*	at pci?				# SysKonnect GEnesis 984x
+sk*	at skc?				#  each port of above
 
 #UNTESTED:  the following section of drivers is untested on alpha.
 en*	at pci?				# ENI PCI ATM (untested)
@@ -216,10 +219,7 @@ wb*	at pci?				# Winbond W89C840F ethernet
 sf*	at pci?				# Adaptec AIC-6915 ethernet
 ste*	at pci?				# Sundance ST201 ethernet
 ti*	at pci?				# Alteon Tigon 1Gb ethernet
-skc*	at pci?				# SysKonnect GEnesis 984x
-sk*	at skc?				#  each port of above
 an*	at pci?				# Cisco/Aironet 802.11DS
-epic*	at pci?				# SMC EPIC/100 ethernet
 
 vga*	at pci?				# PCI VGA graphics
 tga*	at pci?				# DEC ZLXp-E[123] graphics
