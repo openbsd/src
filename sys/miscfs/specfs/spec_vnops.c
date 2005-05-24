@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.28 2004/11/29 17:05:05 grange Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.29 2005/05/24 04:45:13 pedro Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -636,11 +636,15 @@ spec_close(v)
 		/*
 		 * On last close of a block device (that isn't mounted)
 		 * we must invalidate any in core blocks, so that
-		 * we can, for instance, change floppy disks.
+		 * we can, for instance, change floppy disks. In order to do
+		 * that, we must lock the vnode. If we are coming from
+		 * vclean(), the vnode is already locked.
 		 */
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, ap->a_p);
+		if (!(vp->v_flag & VXLOCK))
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, ap->a_p);
 		error = vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 0, 0);
-		VOP_UNLOCK(vp, 0, ap->a_p);
+		if (!(vp->v_flag & VXLOCK))
+			VOP_UNLOCK(vp, 0, ap->a_p);
 		if (error)
 			return (error);
 		/*
