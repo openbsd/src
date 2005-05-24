@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.16 2004/01/14 05:23:25 tedu Exp $	*/
+/*	$OpenBSD: signal.h,v 1.17 2005/05/24 18:06:10 millert Exp $	*/
 /*	$NetBSD: signal.h,v 1.21 1996/02/09 18:25:32 christos Exp $	*/
 
 /*
@@ -53,9 +53,7 @@
 #define	SIGINT	2	/* interrupt */
 #define	SIGQUIT	3	/* quit */
 #define	SIGILL	4	/* illegal instruction (not reset when caught) */
-#ifndef _POSIX_SOURCE
 #define	SIGTRAP	5	/* trace trap (not reset when caught) */
-#endif
 #define	SIGABRT	6	/* abort() */
 #ifndef _POSIX_SOURCE
 #define	SIGIOT	SIGABRT	/* compatibility */
@@ -63,19 +61,13 @@
 #endif
 #define	SIGFPE	8	/* floating point exception */
 #define	SIGKILL	9	/* kill (cannot be caught or ignored) */
-#ifndef _POSIX_SOURCE
 #define	SIGBUS	10	/* bus error */
-#endif
 #define	SIGSEGV	11	/* segmentation violation */
-#ifndef _POSIX_SOURCE
 #define	SIGSYS	12	/* bad argument to system call */
-#endif
 #define	SIGPIPE	13	/* write on a pipe with no one to read it */
 #define	SIGALRM	14	/* alarm clock */
 #define	SIGTERM	15	/* software termination signal from kill */
-#ifndef _POSIX_SOURCE
 #define	SIGURG	16	/* urgent condition on IO channel */
-#endif
 #define	SIGSTOP	17	/* sendable stop signal not from tty */
 #define	SIGTSTP	18	/* stop signal from tty */
 #define	SIGCONT	19	/* continue a stopped process */
@@ -84,10 +76,12 @@
 #define	SIGTTOU	22	/* like TTIN for output if (tp->t_local&LTOSTOP) */
 #ifndef _POSIX_SOURCE
 #define	SIGIO	23	/* input/output possible signal */
+#endif
 #define	SIGXCPU	24	/* exceeded CPU time limit */
 #define	SIGXFSZ	25	/* exceeded file size limit */
 #define	SIGVTALRM 26	/* virtual time alarm */
 #define	SIGPROF	27	/* profiling time alarm */
+#ifndef _POSIX_SOURCE
 #define SIGWINCH 28	/* window size changes */
 #define SIGINFO	29	/* information request */
 #endif
