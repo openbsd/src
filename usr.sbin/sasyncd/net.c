@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.5 2005/05/24 02:35:39 ho Exp $	*/
+/*	$OpenBSD: net.c,v 1.6 2005/05/24 19:18:11 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -28,7 +28,6 @@
 /*
  * This code was written under funding by Multicom Security AB.
  */
-
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -61,7 +60,7 @@ struct qmsg {
 	struct msg	*msg;
 };
 
-int	listen_socket;
+int	*listeners;
 AES_KEY	aes_key[2];
 #define AES_IV_LEN	AES_BLOCK_SIZE
 
@@ -88,7 +87,7 @@ dump_buf(int lvl, u_int8_t *b, u_int32_t len, char *title)
 	blen = 2 * (len + len / 36) + 3 + (title ? strlen(title) : sizeof def);
 	if (!(buf = (u_int8_t *)calloc(1, blen)))
 		return;
-	
+
 	snprintf(buf, blen, "%s\n ", title ? title : def);
 	off = strlen(buf);
 	for (i = 0; i < len; i++, off+=2) {
@@ -102,13 +101,175 @@ dump_buf(int lvl, u_int8_t *b, u_int32_t len, char *title)
 	free(buf);
 }
 
+/* Add a listening socket. */
+static int
+net_add_listener(struct sockaddr *sa)
+{
+	char	host[NI_MAXHOST], port[NI_MAXSERV];
+	int	r, s;
+
+	s = socket(sa->sa_family, SOCK_STREAM, 0);
+	if (s < 0) {
+		perror("net_add_listener: socket()");
+		close(s);
+		return -1;
+	}
+
+	r = 1;
+	if (setsockopt(s, SOL_SOCKET,
+		cfgstate.listen_on ? SO_REUSEADDR : SO_REUSEPORT, (void *)&r,
+		sizeof r)) {
+		perror("net_add_listener: setsockopt()");
+		close(s);
+		return -1;
+	}
+
+	if (bind(s, sa, sa->sa_family == AF_INET ? sizeof(struct sockaddr_in) :
+		sizeof (struct sockaddr_in6))) {
+		perror("net_add_listener: bind()");
+		close(s);
+		return -1;
+	}
+
+	if (listen(s, 3)) {
+		perror("net_add_listener: listen()");
+		close(s);
+		return -1;
+	}
+
+	if (getnameinfo(sa, sa->sa_len, host, sizeof host, port, sizeof port,
+		NI_NUMERICHOST | NI_NUMERICSERV)) 
+		log_msg(2, "listening on port %u fd %d", cfgstate.listen_port,
+		    s);
+	else
+		log_msg(2, "listening on %s port %s fd %d", host, port, s);
+
+	return s;
+}
+
+/* Allocate and fill in listeners array. */
+static int
+net_setup_listeners(void)
+{
+	struct sockaddr_storage	 sa_storage;
+	struct sockaddr		*sa = (struct sockaddr *)&sa_storage;
+	struct sockaddr_in	*sin = (struct sockaddr_in *)sa;
+	struct sockaddr_in6	*sin6 = (struct sockaddr_in6 *)sa;
+	struct ifaddrs		*ifap = 0, *ifa;
+	int			 i, count;
+
+	/* Setup listening sockets.  */
+	memset(&sa_storage, 0, sizeof sa_storage);
+	if (net_set_sa(sa, cfgstate.listen_on, cfgstate.listen_port) == 0) {
+		listeners = (int *)calloc(2, sizeof(int));
+		if (!listeners) {
+			perror("net_setup_listeners: calloc()");
+			return -1;
+		}
+		listeners[1] = -1;
+		listeners[0] = net_add_listener(sa);
+		if (listeners[0] == -1) {
+			log_msg(0, "net_setup_listeners: could not find "
+			    "listen address (%s)", cfgstate.listen_on);
+			goto errout;
+		}
+		return 0;
+	}
+
+	/* 
+	 * If net_set_sa() failed, cfgstate.listen_on is probably an
+	 * interface name, so we should listen on all it's addresses.
+	 */
+
+	if (getifaddrs(&ifap) != 0) {
+		perror("net_setup_listeners: getifaddrs()"); 
+		return -1;
+	}
+
+	/* How many addresses matches? */
+	for (count = 0, ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (!ifa->ifa_name || !ifa->ifa_addr ||
+		    (ifa->ifa_addr->sa_family != AF_INET &&
+			ifa->ifa_addr->sa_family != AF_INET6))
+			continue;
+		if (cfgstate.listen_family &&
+		    cfgstate.listen_family != ifa->ifa_addr->sa_family)
+			continue;
+		if (strcmp(ifa->ifa_name, cfgstate.listen_on) != 0)
+			continue;
+		count++;
+	}
+
+	if (!count) {
+		log_msg(0, "net_setup_listeners: no listeners found for %s",
+		    cfgstate.listen_on);
+		return -1;
+	}
+
+	/* Allocate one extra slot and set to -1, marking end of array. */
+	listeners = (int *)calloc(count + 1, sizeof(int));
+	if (!listeners) {
+		perror("net_setup_listeners: calloc()");
+		return -1;
+	}
+	for (i = 0; i <= count; i++)
+		listeners[i] = -1;
+
+	/* Create listening sockets */
+	for (count = 0, ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		if (!ifa->ifa_name || !ifa->ifa_addr ||
+		    (ifa->ifa_addr->sa_family != AF_INET &&
+			ifa->ifa_addr->sa_family != AF_INET6))
+			continue;
+		if (cfgstate.listen_family &&
+		    cfgstate.listen_family != ifa->ifa_addr->sa_family)
+			continue;
+		if (strcmp(ifa->ifa_name, cfgstate.listen_on) != 0)
+			continue;
+
+		memset(&sa_storage, 0, sizeof sa_storage);
+		sa->sa_family = ifa->ifa_addr->sa_family;
+		switch (sa->sa_family) {
+		case AF_INET:
+			sin->sin_port = htons(cfgstate.listen_port);
+			sin->sin_len = sizeof *sin;
+			memcpy(&sin->sin_addr,
+			    &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
+			    sizeof sin->sin_addr);
+			break;
+		case AF_INET6:
+			sin6->sin6_port = htons(cfgstate.listen_port);
+			sin6->sin6_len = sizeof *sin6;
+			memcpy(&sin6->sin6_addr,
+			    &((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
+			    sizeof sin6->sin6_addr);
+			break;
+		}
+
+		listeners[count] = net_add_listener(sa);
+		if (listeners[count] == -1) {
+			log_msg(4, "net_setup_listeners(setup): failed to "
+			    "add listener, count = %d", count);
+			goto errout;
+		}
+		count++;
+	}
+	freeifaddrs(ifap);
+	return 0;
+
+  errout:
+	if (ifap)
+		freeifaddrs(ifap);
+	for (i = 0; listeners[i] != -1; i++)
+		close(listeners[i]);
+	free(listeners);
+	return -1;
+}
+
 int
 net_init(void)
 {
-	struct sockaddr_storage sa_storage;
-	struct sockaddr *sa = (struct sockaddr *)&sa_storage;
 	struct syncpeer *p;
-	char		 host[NI_MAXHOST], port[NI_MAXSERV];
 	int		 r;
 
 	/* The shared key needs to be 128, 192 or 256 bits */
@@ -118,53 +279,15 @@ net_init(void)
 		    "should be 128, 192 or 256\n", r);
 		return -1;
 	}
-	
+
 	if (AES_set_encrypt_key(cfgstate.sharedkey, r, &aes_key[0]) ||
 	    AES_set_decrypt_key(cfgstate.sharedkey, r, &aes_key[1])) {
 		fprintf(stderr, "Bad AES shared key\n");
 		return -1;
 	}
 
-	/* Setup listening socket.  */
-	memset(&sa_storage, 0, sizeof sa_storage);
-	if (net_set_sa(sa, cfgstate.listen_on, cfgstate.listen_port)) {
-		log_msg(0, "net_init: could not find listen address (%s)",
-		    cfgstate.listen_on);
+	if (net_setup_listeners())
 		return -1;
-	}
-
-	listen_socket = socket(sa->sa_family, SOCK_STREAM, 0);
-	if (listen_socket < 0) {
-		perror("socket()");
-		close(listen_socket);
-		return -1;
-	}
-	r = 1;
-	if (setsockopt(listen_socket, SOL_SOCKET,
-	    cfgstate.listen_on ? SO_REUSEADDR : SO_REUSEPORT, (void *)&r,
-	    sizeof r)) {
-		perror("setsockopt()");
-		close(listen_socket);
-		return -1;
-	}
-	if (bind(listen_socket, sa, sizeof(struct sockaddr_in))) {
-		perror("bind()");
-		close(listen_socket);
-		return -1;
-	}
-	if (listen(listen_socket, 10)) {
-		perror("listen()");
-		close(listen_socket);
-		return -1;
-	}
-
-	if (getnameinfo(sa, sa->sa_len, host, sizeof host, port, sizeof port,
-		NI_NUMERICHOST | NI_NUMERICSERV)) 
-		log_msg(2, "listening on port %u fd %d", cfgstate.listen_port,
-		    listen_socket);
-	else
-		log_msg(2, "listening on %s port %s fd %d", host, port,
-		    listen_socket);
 
 	for (p = LIST_FIRST(&cfgstate.peerlist); p; p = LIST_NEXT(p, link)) {
 		p->socket = -1;
@@ -185,7 +308,7 @@ net_enqueue(struct syncpeer *p, struct msg *m)
 
 	qm = (struct qmsg *)malloc(sizeof *qm);
 	if (!qm) {
-		log_err("malloc()");
+		log_err("net_enqueue: malloc()");
 		return;
 	}
 
@@ -214,7 +337,7 @@ net_queue(struct syncpeer *p0, u_int32_t msgtype, u_int8_t *buf, u_int32_t len)
 
 	m = (struct msg *)calloc(1, sizeof *m);
 	if (!m) {
-		log_err("calloc()");
+		log_err("net_queue: calloc()");
 		free(buf);
 		return -1;
 	}
@@ -323,7 +446,7 @@ int
 net_set_rfds(fd_set *fds)
 {
 	struct syncpeer *p;
-	int		max_fd = -1;
+	int		i, max_fd = -1;
 
 	for (p = LIST_FIRST(&cfgstate.peerlist); p; p = LIST_NEXT(p, link)) {
 		if (p->socket > -1)
@@ -331,73 +454,82 @@ net_set_rfds(fd_set *fds)
 		if (p->socket > max_fd)
 			max_fd = p->socket;
 	}
-	FD_SET(listen_socket, fds);
-	if (listen_socket > max_fd)
-		max_fd = listen_socket;
+	for (i = 0; listeners[i] != -1; i++) {
+		FD_SET(listeners[i], fds);
+		if (listeners[i] > max_fd)
+			max_fd = listeners[i];
+	}
 	return max_fd + 1;
+}
+
+static void
+net_accept(int accept_socket)
+{
+	struct sockaddr_storage	 sa_storage, sa_storage2;
+	struct sockaddr		*sa = (struct sockaddr *)&sa_storage;
+	struct sockaddr		*sa2 = (struct sockaddr *)&sa_storage2;
+	struct sockaddr_in	*sin, *sin2;
+	struct sockaddr_in6	*sin6, *sin62;
+	struct syncpeer		*p;
+	socklen_t		 socklen;
+	int			 s, found;
+
+	/* Accept a new incoming connection */
+	socklen = sizeof sa_storage;
+	memset(&sa_storage, 0, socklen);
+	memset(&sa_storage2, 0, socklen);
+	s = accept(accept_socket, sa, &socklen);
+	if (s > -1) {
+		/* Setup the syncpeer structure */
+		found = 0;
+		for (p = LIST_FIRST(&cfgstate.peerlist); p && !found;
+		     p = LIST_NEXT(p, link)) {
+
+			/* Match? */
+			if (net_set_sa(sa2, p->name, 0))
+				continue;
+			if (sa->sa_family != sa2->sa_family)
+				continue;
+			if (sa->sa_family == AF_INET) {
+				sin = (struct sockaddr_in *)sa;
+				sin2 = (struct sockaddr_in *)sa2;
+				if (memcmp(&sin->sin_addr, &sin2->sin_addr,
+					sizeof(struct in_addr)))
+					continue;
+			} else {
+				sin6 = (struct sockaddr_in6 *)sa;
+				sin62 = (struct sockaddr_in6 *)sa2;
+				if (memcmp(&sin6->sin6_addr, &sin62->sin6_addr,
+					sizeof(struct in6_addr)))
+					continue;
+			}
+			/* Match! */
+			found++;
+			p->socket = s;
+			log_msg(1, "net: peer \"%s\" connected", p->name);
+			if (cfgstate.runstate == MASTER)
+				timer_add("pfkey_snap", 2, pfkey_snapshot, p);
+		}
+		if (!found) {
+			log_msg(1, "net: found no matching peer for accepted "
+			    "socket, closing.");
+			close(s);
+		}
+	} else
+		log_err("net: accept()");
 }
 
 void
 net_handle_messages(fd_set *fds)
 {
-	struct sockaddr_storage	sa_storage, sa_storage2;
-	struct sockaddr	*sa = (struct sockaddr *)&sa_storage;
-	struct sockaddr	*sa2 = (struct sockaddr *)&sa_storage2;
-	socklen_t	socklen;
 	struct syncpeer *p;
 	u_int8_t	*msg;
 	u_int32_t	 msgtype, msglen;
-	int		 newsock, found;
+	int		 i;
 
-	if (FD_ISSET(listen_socket, fds)) {
-		/* Accept a new incoming connection */
-		socklen = sizeof sa_storage;
-		newsock = accept(listen_socket, sa, &socklen);
-		if (newsock > -1) {
-			/* Setup the syncpeer structure */
-			found = 0;
-			for (p = LIST_FIRST(&cfgstate.peerlist); p && !found;
-			     p = LIST_NEXT(p, link)) {
-				struct sockaddr_in *sin, *sin2;
-				struct sockaddr_in6 *sin6, *sin62;
-
-				/* Match? */
-				if (net_set_sa(sa2, p->name, 0))
-					continue;
-				if (sa->sa_family != sa2->sa_family)
-					continue;
-				if (sa->sa_family == AF_INET) {
-					sin = (struct sockaddr_in *)sa;
-					sin2 = (struct sockaddr_in *)sa2;
-					if (memcmp(&sin->sin_addr,
-					    &sin2->sin_addr,
-					    sizeof(struct in_addr)))
-						continue;
-				} else {
-					sin6 = (struct sockaddr_in6 *)sa;
-					sin62 = (struct sockaddr_in6 *)sa2;
-					if (memcmp(&sin6->sin6_addr,
-					    &sin62->sin6_addr,
-					    sizeof(struct in6_addr)))
-						continue;
-				}
-				/* Match! */
-				found++;
-				p->socket = newsock;
-				log_msg(1, "net: peer \"%s\" connected",
-				    p->name);
-				if (cfgstate.runstate == MASTER)
-					timer_add("pfkey_snapshot", 2,
-					    pfkey_snapshot, p);
-			}
-			if (!found) {
-				log_msg(1, "net: found no matching peer for "
-				    "accepted socket, closing.");
-				close(newsock);
-			}
-		} else
-			log_err("accept()");
-	}
+	for (i = 0; listeners[i] != -1; i++)
+		if (FD_ISSET(listeners[i], fds))
+			net_accept(listeners[i]);
 
 	for (p = LIST_FIRST(&cfgstate.peerlist); p; p = LIST_NEXT(p, link)) {
 		if (p->socket < 0 || !FD_ISSET(p->socket, fds))
@@ -500,6 +632,7 @@ net_shutdown(void)
 	struct syncpeer *p;
 	struct qmsg	*qm;
 	struct msg	*m;
+	int		 i;
 
 	while ((p = LIST_FIRST(&cfgstate.peerlist))) {
 		while ((qm = SIMPLEQ_FIRST(&p->msgs))) {
@@ -518,8 +651,12 @@ net_shutdown(void)
 		free(p);
 	}
 
-	if (listen_socket > -1)
-		close(listen_socket);
+	if (listeners) {
+		for (i = 0; listeners[i] != -1; i++)
+			close(listeners[i]);
+		free(listeners);
+		listeners = 0;
+	}
 }
 
 /*
@@ -541,7 +678,7 @@ net_read(struct syncpeer *p, u_int32_t *msgtype, u_int32_t *msglen)
 			net_disconnect_peer(p);
 		return NULL;
 	} 
-	
+
 	blob_len = ntohl(v);
 	if (blob_len < sizeof hash + AES_IV_LEN + 2 * sizeof(u_int32_t))
 		return NULL;
@@ -616,7 +753,6 @@ net_set_sa(struct sockaddr *sa, char *name, in_port_t port)
 {
 	struct sockaddr_in	*sin = (struct sockaddr_in *)sa;
 	struct sockaddr_in6	*sin6 = (struct sockaddr_in6 *)sa;
-	struct ifaddrs		*ifap, *ifa;
 
 	if (!name) {
 		/* XXX Assume IPv4 */
@@ -632,7 +768,7 @@ net_set_sa(struct sockaddr *sa, char *name, in_port_t port)
 		sin->sin_len = sizeof *sin;
 		return 0;
 	}
-	
+
 	if (inet_pton(AF_INET6, name, &sin6->sin6_addr) == 1) {
 		sa->sa_family = AF_INET6;
 		sin6->sin6_port = htons(port);
@@ -640,47 +776,8 @@ net_set_sa(struct sockaddr *sa, char *name, in_port_t port)
 		return 0;
 	}
 
-	/* inet_pton failed. fail here if name is not cfgstate.listen_on */
-	if (strcmp(cfgstate.listen_on, name) != 0)
-		return -1;
-
-	/* Is cfgstate.listen_on the name of one our interfaces? */
-	if (getifaddrs(&ifap) != 0) {
-		perror("getifaddrs()"); 
-		return -1;
-	}
-	sa->sa_family = AF_UNSPEC;
-	for (ifa = ifap; ifa && sa->sa_family == AF_UNSPEC;
-	     ifa = ifa->ifa_next) {
-		if (!ifa->ifa_name || !ifa->ifa_addr)
-			continue;
-		if (strcmp(ifa->ifa_name, name) != 0)
-			continue;
-		
-		switch (ifa->ifa_addr->sa_family) {
-		case AF_INET:
-			sa->sa_family = AF_INET;
-			sin->sin_port = htons(port);
-			sin->sin_len = sizeof *sin;
-			memcpy(&sin->sin_addr,
-			    &((struct sockaddr_in *)ifa->ifa_addr)->sin_addr,
-			    sizeof sin->sin_addr);
-			break;
-			
-		case AF_INET6:
-			sa->sa_family = AF_INET6;
-			sin6->sin6_port = htons(port);
-			sin6->sin6_len = sizeof *sin6;
-			memcpy(&sin6->sin6_addr,
-			    &((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr,
-			    sizeof sin6->sin6_addr);
-			break;
-		}
-	}
-	freeifaddrs(ifap);
-	return sa->sa_family == AF_UNSPEC ? -1 : 0;
+	return -1;
 }
-				
 
 static void
 got_sigalrm(int s)
@@ -745,7 +842,5 @@ static void
 net_check_peers(void *arg)
 {
 	net_connect();
-
 	(void)timer_add("peer recheck", 600, net_check_peers, 0);
 }
-

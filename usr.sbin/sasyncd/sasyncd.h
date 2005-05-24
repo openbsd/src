@@ -1,4 +1,4 @@
-/*	$OpenBSD: sasyncd.h,v 1.5 2005/05/24 02:35:39 ho Exp $	*/
+/*	$OpenBSD: sasyncd.h,v 1.6 2005/05/24 19:18:11 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -53,6 +53,7 @@ struct cfgstate {
 
 	char		*listen_on;
 	in_port_t	 listen_port;
+	sa_family_t	 listen_family;
 
 	LIST_HEAD(, syncpeer) peerlist;
 };

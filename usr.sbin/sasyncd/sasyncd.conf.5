@@ -1,4 +1,4 @@
-.\" $OpenBSD: sasyncd.conf.5,v 1.5 2005/05/23 20:45:41 jmc Exp $
+.\" $OpenBSD: sasyncd.conf.5,v 1.6 2005/05/24 19:18:11 ho Exp $
 .\"
 .\" Copyright (c) 2005 Håkan Olsson.  All rights reserved.
 .\"
@@ -58,26 +58,40 @@ pseudo user and be readable only by this owner, e.g.\&
 .Pp
 The following configuration settings are understood:
 .Bl -tag -width Ds
-.It Ic carp interface Ar interface
+.It Xo
+.Ic carp interface
+.Ar interface Op Ic interval Ar seconds
+.Xc
 Specify which
 .Xr carp 4
 interface
 .Nm sasyncd
 should track master/slave state on.
-.It Ic carp interval Ar seconds
-Specify how often the daemon should check the above interface for
-state changes.
+Optionally state how often the daemon should check the interface
+for state changes.
 Defaults to once every 10 seconds.
-.It Ic listen on Ar address
+.It Xo
+.Ic listen on Ar address 
+.Op Ar family
+.Op Ic port Ar port
+.Xc
 Specify a local IP address, hostname, or interface the
 .Xr sasyncd 8
 daemon should listen on.
-The default is to listen on all local addresses.
-.It Ic listen port Ar port
-Specify a local TCP port the
+The default is to listen on all local addresses. 
+When using an interface name, 
+.Ar family
+may be given as
+.Dq inet
+or
+.Dq inet6
+to only bind using the specified address family. 
+Finally, 
+.Ar port
+can be used to specify which TCP port
 .Xr sasyncd 8
-daemon should listen on.
-The default is to listen on port 500.
+should listen to.
+The default is to listen to port 500.
 .It Ic mode master | slave
 Force the daemon to run as master or slave.
 Normally only intended for debugging use.

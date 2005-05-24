@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.y,v 1.2 2005/05/22 20:35:48 ho Exp $	*/
+/*	$OpenBSD: conf.y,v 1.3 2005/05/24 19:18:10 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -29,6 +29,7 @@
 %{
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -40,10 +41,10 @@
 #include "net.h"
 
 /* Global configuration context.  */
-struct cfgstate cfgstate;
+struct cfgstate	cfgstate;
 
-struct syncpeer *peer;
-int	 conflen = 0;
+/* Local variables */
+int	conflen = 0;
 char	*confbuf, *confptr;
 
 int	yyparse(void);
@@ -57,9 +58,10 @@ void	yyerror(const char *);
 }
 
 %token MODE CARP INTERFACE INTERVAL LISTEN ON PORT PEER SHAREDKEY
-%token Y_SLAVE Y_MASTER
+%token Y_SLAVE Y_MASTER INET INET6
 %token <string> STRING
-%token <val> VALUE
+%token <val>	VALUE
+%type  <val>	af port interval mode
 
 %%
 /* Rules */
@@ -68,21 +70,37 @@ settings	: /* empty */
 		| settings setting
 		;
 
-setting		: CARP INTERFACE STRING
+af		: /* empty */			{ $$ = AF_UNSPEC; }
+		| INET				{ $$ = AF_INET; }
+		| INET6				{ $$ = AF_INET6; }
+		;
+
+port		: /* empty */			{ $$ = SASYNCD_DEFAULT_PORT; }
+		| PORT VALUE			{ $$ = $2; }
+		;
+
+mode		: MODE Y_MASTER			{ $$ = MASTER; }
+		| MODE Y_SLAVE			{ $$ = SLAVE; }
+		;
+
+interval	: /* empty */			{ $$ = CARP_DEFAULT_INTERVAL; }
+		| INTERVAL VALUE		{ $$ = $2; }
+		;
+
+setting		: CARP INTERFACE STRING interval
 		{
 			if (cfgstate.carp_ifname)
 				free(cfgstate.carp_ifname);
 			cfgstate.carp_ifname = $3;
-			log_msg(2, "config: carp interface %s", $3);
-		}
-		| CARP INTERVAL VALUE
-		{
-			cfgstate.carp_check_interval = $3;
-			log_msg(2, "config: carp interval %d", $3);
+			cfgstate.carp_check_interval = $4;
+			log_msg(2, "config: carp interface %s interval %d",
+			    $3, $4);
 		}
 		| PEER STRING
 		{
-			int dup = 0;
+			struct syncpeer	*peer;
+			int		 dup = 0;
+
 			for (peer = LIST_FIRST(&cfgstate.peerlist); peer;
 			     peer = LIST_NEXT(peer, link))
 				if (strcmp($2, peer->name) == 0) {
@@ -104,34 +122,33 @@ setting		: CARP INTERFACE STRING
 			LIST_INSERT_HEAD(&cfgstate.peerlist, peer, link);
 			log_msg(2, "config: add peer %s", peer->name);
 		}
-		| LISTEN ON STRING
+		| LISTEN ON STRING af port
 		{
+			char pstr[20];
+
 			if (cfgstate.listen_on)
 				free(cfgstate.listen_on);
 			cfgstate.listen_on = $3;
-			log_msg(2, "config: listen on %s", cfgstate.listen_on);
-		}
-		| LISTEN PORT VALUE
-		{
-			cfgstate.listen_port = $3;
+			cfgstate.listen_family = $4;
+			cfgstate.listen_port = $5;
 			if (cfgstate.listen_port < 1 ||
 			    cfgstate.listen_port > 65534) {
 				cfgstate.listen_port = SASYNCD_DEFAULT_PORT;
 				log_msg(0, "config: bad port, listen-port "
 				    "reset to %u", SASYNCD_DEFAULT_PORT);
-			} else
-				log_msg(2, "config: listen port %u",
-				    cfgstate.listen_port);
+			}
+			if ($5 != SASYNCD_DEFAULT_PORT)
+				snprintf(pstr, sizeof pstr, "port %d",$5);
+			log_msg(2, "config: listen on %s %s%s",
+			    cfgstate.listen_on, $4 == AF_INET6 ? "(IPv6) " :
+			    ($4 == AF_INET ? "(IPv4) " : ""),
+			    $5 != SASYNCD_DEFAULT_PORT ? pstr : "");
 		}
-		| MODE Y_MASTER
+		| mode
 		{
-			cfgstate.lockedstate = MASTER;
-			log_msg(2, "config: mode set to MASTER");
-		}
-		| MODE Y_SLAVE
-		{
-			cfgstate.lockedstate = SLAVE;
-			log_msg(2, "config: mode set to SLAVE");
+			cfgstate.lockedstate = $1;
+			log_msg(2, "config: mode set to %s",
+			    $1 == MASTER ? "MASTER" : "SLAVE");
 		}
 		| SHAREDKEY STRING
 		{
@@ -162,6 +179,8 @@ match(char *token)
 	/* Sorted */
 	static const struct keyword keywords[] = {
 		{ "carp", CARP },
+		{ "inet", INET },
+		{ "inet6", INET6 },
 		{ "interface", INTERFACE },
 		{ "interval", INTERVAL },
 		{ "listen", LISTEN },
@@ -209,7 +228,7 @@ yylex(void)
 		yylval.val = v;
 		return VALUE;
 	}
-	
+
   is_string:
 	v = match(confptr);
 	if (v == STRING) {
