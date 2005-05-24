@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2004/01/21 08:07:41 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2005/05/24 22:23:04 millert Exp $
 
 PROG=	spamd-setup
 SRCS=	spamd-setup.c
@@ -7,6 +7,6 @@ MAN=	spamd-setup.8
 LDADD=	-lz
 DPADD=	${LIBZ}
 
-CFLAGS+= -Wall -Wstrict-prototypes -ansi
+CFLAGS+= -Wall -Wstrict-prototypes
 
 .include <bsd.prog.mk>
