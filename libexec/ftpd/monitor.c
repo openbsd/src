@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.8 2005/02/26 17:35:05 moritz Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.9 2005/05/24 02:12:40 moritz Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -174,7 +174,6 @@ monitor_init(void)
 		if ((pw = getpwnam(FTPD_PRIVSEP_USER)) == NULL)
 			fatalx("privilege separation user %s not found",
 			    FTPD_PRIVSEP_USER);
-		endpwent();
 
 		if (chroot(pw->pw_dir) == -1)
 			fatalx("chroot %s: %m", pw->pw_dir);
