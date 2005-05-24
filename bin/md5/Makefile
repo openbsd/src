@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2004/05/04 14:50:45 millert Exp $
+#	$OpenBSD: Makefile,v 1.10 2005/05/24 21:57:47 millert Exp $
 
 PROG=	md5
 SRCS=	crc.c md5.c
@@ -10,6 +10,6 @@ LINKS=	${BINDIR}/md5 ${BINDIR}/sha1 \
 MLINKS= cksum.1 sum.1
 
 CPPFLAGS+= -I${.CURDIR}
-COPTS+=	-ansi -Wall -Wconversion -Wmissing-prototypes
+COPTS+=	-Wall -Wconversion -Wmissing-prototypes
 
 .include <bsd.prog.mk>
