@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.83 2005/04/17 07:33:13 tedu Exp $	*/
+/*	$OpenBSD: locore.s,v 1.84 2005/05/24 08:54:14 marco Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1599,22 +1599,22 @@ ENTRY(idle)
 	movl	$IPL_NONE,CPL		# spl0()
 	call	_C_LABEL(Xspllower)	# process pending interrupts
 
-ENTRY(idle_loop)
 	cmpl	$0,_C_LABEL(whichqs)
 	jnz	_C_LABEL(idle_exit)
-#if NAPM > 0
-	call	_C_LABEL(apm_cpu_idle)
-	cmpl	$0,_C_LABEL(apm_dobusy)
-	je	1f
-	call	_C_LABEL(apm_cpu_busy)
-1:
-#endif
+
+ENTRY(idle_loop)
 #if NPCTR > 0 && NAPM == 0
 	addl	$1,_C_LABEL(pctr_idlcnt)
 	adcl	$0,_C_LABEL(pctr_idlcnt)+4
+#endif
+#if NAPM > 0
+	call	_C_LABEL(apm_cpu_idle)
 #else
+	sti
 	hlt
 #endif
+	cmpl	$0,_C_LABEL(whichqs)
+	jnz	_C_LABEL(idle_exit)
 	jmp	_C_LABEL(idle_loop)
 
 ENTRY(idle_exit)
@@ -1622,16 +1622,10 @@ ENTRY(idle_exit)
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	
 	call	_C_LABEL(sched_lock_idle)
 #endif
-#if 0
-	GET_CPUINFO(%ebx)
-	leal	CPU_INFO_NAME(%ebx),%ebx
-	pushl	%ebx
-	pushl	$1f
-	call	_C_LABEL(printf)
-	addl	$8,%esp
+#if NAPM > 0
+	call	_C_LABEL(apm_cpu_busy)
 #endif
 	jmp	switch_search
-1:	.asciz	"%s: unidle\n"
 		
 #ifdef DIAGNOSTIC
 NENTRY(switch_error)
