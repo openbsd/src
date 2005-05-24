@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass.c,v 1.41 2005/05/15 00:23:33 krw Exp $ */
+/*	$OpenBSD: umass.c,v 1.42 2005/05/24 04:51:04 pascoe Exp $ */
 /*	$NetBSD: umass.c,v 1.116 2004/06/30 05:53:46 mycroft Exp $	*/
 
 /*
@@ -1549,6 +1549,7 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 	sc->transfer_state = TSTATE_CBI_COMMAND;
 
 	/* Send the Command Block from host to device via control endpoint. */
+	sc->cbw.bCDBLength = cmdlen;
 	bzero(sc->cbw.CBWCDB, sizeof(sc->cbw.CBWCDB));
 	memcpy(sc->cbw.CBWCDB, cmd, cmdlen);
 	umass_adjust_transfer(sc);
