@@ -1,4 +1,4 @@
-/*	$OpenBSD: unixdev.c,v 1.4 2005/04/13 04:33:47 uwe Exp $	*/
+/*	$OpenBSD: unixdev.c,v 1.5 2005/05/24 20:38:20 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Michael Shalayeff
@@ -28,18 +28,17 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
-#include <sys/time.h>
+#include <sys/reboot.h>
+#include <sys/disklabel.h>
 #include <sys/syscall.h>
+#include <sys/time.h>
 #define open uopen
 #include <sys/fcntl.h>
 #include <dev/cons.h>
 #undef open
+#include "disk.h"
 #include "libsa.h"
 #include <lib/libsa/unixdev.h>
-
-/* unixsys.S */
-int uselect(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 
 int
 unixstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
@@ -48,7 +47,7 @@ unixstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 	int	rc = 0;
 	off_t	off;
 
-#ifdef	UNIX_DEBUG
+#ifdef UNIX_DEBUG
 	printf("unixstrategy: %s %d bytes @ %d\n",
 	    (rw==F_READ?"reading":"writing"), size, blk);
 #endif
@@ -70,40 +69,101 @@ unixstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 int
 unixopen(struct open_file *f, ...)
 {
-	char **file, *p = NULL;
-	va_list ap;
-	int fd;
-	int c;
+	va_list	ap;
+	char	path[PATH_MAX];
+	char	*cp, **file;
+	dev_t	maj, unit, part, bsd_dev;
+	struct diskinfo *dip;
 
 	va_start(ap, f);
-	file = va_arg(ap, char **);
+	cp = *(file = va_arg(ap, char **));
 	va_end(ap);
 
-#ifdef	UNIX_DEBUG
-	printf("unixopen: %s\n", *file);
+#ifdef UNIX_DEBUG
+	if (debug)
+		printf("unixopen: %s\n", cp);
 #endif
 
-	/* p = strchr(p, ':') */
-	for (p = *file; *p != '\0' && *p != ':'; p++)
+	f->f_devdata = NULL;
+	/* Search for device specification. */
+	if (strlen(cp) < 4)
+		return ENOENT;
+	cp += 2;
+	if (cp[2] != ':') {
+		if (cp[3] != ':')
+			return ENOENT;
+		else
+			cp++;
+	}
+
+	for (maj = 0;
+	     maj < nbdevs && strncmp(*file, bdevs[maj], cp - *file) != 0;
+	     maj++)
 		;
+	if (maj >= nbdevs) {
+		printf("Unknown device: ");
+		for (cp = *file; *cp != ':'; cp++)
+			putchar(*cp);
+		putchar('\n');
+		return EADAPT;
+	}
 
-	c = *p;
-	*p = '\0';
-#if 0
-	f->f_devdata = (void *)(fd = uopen(*file, O_RDWR, 0));
-#else
-	f->f_devdata = (void *)(fd = uopen(*file, O_RDONLY, 0));
-#endif
-	*p = c;
+	/* Get unit. */
+	if ('0' <= *cp && *cp <= '9')
+		unit = *cp++ - '0';
+	else {
+		printf("Bad unit number\n");
+		return EUNIT;
+	}
 
-	if (*p == '\0')
-		*file = p;
-	else if (*(p+1) == '\0')
-		*file = (char *)"/";
+	/* Get partition. */
+	if ('a' <= *cp && *cp <= 'p')
+		part = *cp++ - 'a';
+	else {
+		printf("Bad partition id\n");
+		return EPART;
+	}
+
+	cp++;	/* skip ':' */
+	if (*cp != 0)
+		*file = cp;
 	else
-		*file = p+1;
+		f->f_flags |= F_RAW;
 
-	return fd < 0 ? -1 : 0;
+	/* Find device. */
+	dip = dkdevice(maj, unit);
+	if (dip == (struct diskinfo *)NULL)
+		return ENOENT;
+
+	/* Fix up bootdev. */
+	bsd_dev = dip->bios_info.bsd_dev;
+	dip->bsddev = MAKEBOOTDEV(B_TYPE(bsd_dev), B_ADAPTOR(bsd_dev),
+	    B_CONTROLLER(bsd_dev), unit, part);
+	dip->bootdev = MAKEBOOTDEV(B_TYPE(bsd_dev), B_ADAPTOR(bsd_dev),
+	    B_CONTROLLER(bsd_dev), B_UNIT(bsd_dev), part);
+
+	/* Try for disklabel again (might be removable media). */
+	if (dip->bios_info.flags & BDI_BADLABEL) {
+		const char *st = bios_getdisklabel(&dip->bios_info,
+		    &dip->disklabel);
+#ifdef UNIX_DEBUG
+		if (debug && st)
+			printf("%s\n", st);
+#endif
+		if (!st) {
+			dip->bios_info.flags &= ~BDI_BADLABEL;
+			dip->bios_info.flags |= BDI_GOODLABEL;
+		} else
+			return ERDLAB;
+	}
+
+	part = bios_getdospart(&dip->bios_info);
+	bios_devpath(dip->bios_info.bios_number, part, path);
+	f->f_devdata = (void *)uopen(path, O_RDONLY);
+	if ((int)f->f_devdata == -1)
+		return errno;
+
+	return 0;
 }
 
 int
@@ -144,78 +204,20 @@ ulseek(int fd, off_t off, int wh)
 	return r;
 }
 
-
-void
-unix_probe(struct consdev *cn)
-{
-	cn->cn_pri = CN_INTERNAL;
-	cn->cn_dev = makedev(0,0);
-	printf("ux%d ", minor(cn->cn_dev));
-}
-
-void
-unix_init(struct consdev *cn)
-{
-}
-
-void
-unix_putc(dev_t dev, int c)
-{
-	uwrite(1, &c, 1);
-}
-
-int
-unix_getc(dev_t dev)
-{
-	if (dev & 0x80) {
-		struct timeval tv;
-		fd_set fdset;
-		int rc;
-
-		tv.tv_sec = 0;
-		tv.tv_usec = 0;
-		FD_ZERO(&fdset);
-		FD_SET(0, &fdset);
-
-#if 0
-		rc = syscall(SYS_select, 1, &fdset, NULL, NULL, &tv);
-#else
-		rc = uselect(1, &fdset, NULL, NULL, &tv);
-#endif
-		if (rc <= 0)
-			return 0;
-		else
-			return 1;
-	} else {
-		char c;
-
-		return uread(0, &c, 1)<1? -1: c;
-	}
-}
-
 time_t
 getsecs(void)
 {
 	return (time_t)syscall(__NR_time, NULL);
 }
 
-void
-time_print(void)
+unsigned int
+sleep(unsigned int seconds)
 {
-}
+	unsigned int start;
 
-void
-atexit(void)
-{
-}
+	start = getsecs();
+	while (getsecs() - start < seconds)
+		;
 
-int
-cnspeed(dev_t dev, int sp)
-{
-	return 9600;
-}
-
-void
-__main(void)
-{
+	return (0);
 }

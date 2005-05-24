@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.2 2005/01/10 21:10:57 uwe Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.3 2005/05/24 20:38:20 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -18,6 +18,8 @@
 
 #include <lib/libsa/stand.h>
 
+#include "compat_linux.h"
+
 #define	EXEC_ELF
 
 #define DEFAULT_KERNEL_ADDRESS	0xa0200000
@@ -28,8 +30,15 @@ struct zaurus_boot_probes {
 	int count;
 };
 
+void diskprobe(void);
+
+extern const char bdevs[][4];
+extern const int nbdevs;
+
 extern struct zaurus_boot_probes probe_list[];
 extern int nibprobes;
+#if 0
 extern void (*devboot_p)(dev_t, char *);
+#endif
 
-#include "compat_linux.h"
+extern int debug;

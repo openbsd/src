@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile.c,v 1.2 2005/01/24 22:20:33 uwe Exp $ */
+/* $OpenBSD: loadfile.c,v 1.3 2005/05/24 20:38:20 uwe Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -108,6 +108,7 @@ static int elf_exec(int, Elf_Ehdr *, u_long *, int);
 static int aout_exec(int, struct exec *, u_long *, int);
 #endif
 #ifdef BOOT_ZBOOT
+#include <dev/cons.h>		/* XXX */
 static int zboot_exec(int, u_long *, int);
 #endif
 
@@ -664,16 +665,28 @@ zboot_exec(int fd, u_long *marks, int flags)
 	}
 
 	buf[0] = ' ';
+	buf[1] = '-';
+	if (uwrite(tofd, buf, 2) != 2) {
+		printf("zboot_exec: argument write error\n");
+		goto err;
+	}
+
 	i = (cmd.argc > 1 && cmd.argv[1][0] != '-') ? 2 : 1;
 	for (; i < cmd.argc; i++) {
-
-		if (i > 0 && uwrite(tofd, buf, 1) != 1) {
+		p = cmd.argv[i];
+		if (*p == '-')
+			p++;
+		sz = strlen(p);
+		if (uwrite(tofd, p, sz) != sz) {
 			printf("zboot_exec: argument write error\n");
 			goto err;
 		}
+	}
 
-		sz = strlen(cmd.argv[i]);
-		if (uwrite(tofd, cmd.argv[i], sz) != sz) {
+	/* Select UART unit for serial console. */
+	if (cn_tab && major(cn_tab->cn_dev) == 12) {
+		buf[0] = '0' + minor(cn_tab->cn_dev);
+		if (uwrite(tofd, buf, 1) != 1) {
 			printf("zboot_exec: argument write error\n");
 			goto err;
 		}

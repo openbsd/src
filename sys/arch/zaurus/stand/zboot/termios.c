@@ -1,4 +1,4 @@
-/*	$OpenBSD: termios.c,v 1.1 2005/05/12 05:10:30 uwe Exp $	*/
+/*	$OpenBSD: termios.c,v 1.2 2005/05/24 20:38:20 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -30,6 +30,39 @@
  */
 
 #include "libsa.h"
+
+/* Linux-specific line speed handling from linux_termios.c */
+
+static speed_t linux_speeds[] = {
+	0, 50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800, 2400, 4800,
+	9600, 19200, 38400, 57600, 115200, 230400
+};
+
+static const int linux_spmasks[] = {
+	LINUX_B0, LINUX_B50, LINUX_B75, LINUX_B110, LINUX_B134, LINUX_B150,
+	LINUX_B200, LINUX_B300, LINUX_B600, LINUX_B1200, LINUX_B1800,
+	LINUX_B2400, LINUX_B4800, LINUX_B9600, LINUX_B19200, LINUX_B38400,
+	LINUX_B57600, LINUX_B115200, LINUX_B230400
+};
+
+int
+cfsetspeed(struct termios *t, speed_t speed)
+{
+	int mask;
+	int i;
+
+	mask = LINUX_B9600;	/* XXX default value should this be 0? */
+	for (i = 0; i < sizeof (linux_speeds) / sizeof (speed_t); i++) {
+		if (speed == linux_speeds[i]) {
+			mask = linux_spmasks[i];
+			break;
+		}
+	}
+	t->c_cflag &= ~LINUX_CBAUD;
+	t->c_cflag |= mask;
+
+	return (0);
+}
 
 void
 cfmakeraw(struct termios *t)
@@ -63,7 +96,7 @@ tcsetattr(int fd, int action, struct termios *t)
 		break;
 	default:
 		errno = EINVAL;
-		return -1;
+		return (-1);
 	}
 	return (uioctl(fd, action, t));
 }

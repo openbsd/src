@@ -1,4 +1,4 @@
-/*	$OpenBSD: compat_linux.h,v 1.6 2005/05/12 05:10:30 uwe Exp $	*/
+/*	$OpenBSD: compat_linux.h,v 1.7 2005/05/24 20:38:20 uwe Exp $	*/
 
 /*
  * Copyright (c) 2005 Uwe Stuehler <uwe@bsdx.de>
@@ -32,11 +32,13 @@ struct proc;
 
 #undef	O_RDONLY
 #undef	O_WRONLY
+#undef	O_RDWR
 #undef	SEEK_SET
 #undef	SEEK_CUR
 
 #define O_RDONLY		LINUX_O_RDONLY
 #define O_WRONLY		LINUX_O_WRONLY
+#define O_RDWR			LINUX_O_RDWR
 #define SEEK_SET		0
 #define SEEK_CUR		1
 
@@ -72,25 +74,30 @@ struct proc;
 #define TCSADRAIN		LINUX_TCSADRAIN
 #define TCSAFLUSH		LINUX_TCSAFLUSH
 
+typedef unsigned int speed_t;
+
 void	cfmakeraw(struct termios *);
+int	cfsetspeed(struct termios *, speed_t);
 int	tcgetattr(int, struct termios *);
 int	tcsetattr(int, int, struct termios *);
 
 #endif /* !_LOCORE */
 
+#include <compat/linux/linux_syscall.h>
+
 /* linux/asm/unistd.h */
 #define __NR_SYSCALL_BASE	0x900000
-#define __NR_exit		(__NR_SYSCALL_BASE+  1)
-#define __NR_read		(__NR_SYSCALL_BASE+  3)
-#define __NR_write		(__NR_SYSCALL_BASE+  4)
-#define __NR_open		(__NR_SYSCALL_BASE+  5)
-#define __NR_close		(__NR_SYSCALL_BASE+  6)
-#define __NR_time		(__NR_SYSCALL_BASE+ 13)
-#define __NR_lseek32		(__NR_SYSCALL_BASE+ 19)
-#define __NR_ioctl		(__NR_SYSCALL_BASE+ 54)
-#define __NR__new_select	(__NR_SYSCALL_BASE+142)
-#define __NR_select		__NR__new_select /* XXX */
+#define __NR_exit		(__NR_SYSCALL_BASE+LINUX_SYS_exit)
+#define __NR_read		(__NR_SYSCALL_BASE+LINUX_SYS_read)
+#define __NR_write		(__NR_SYSCALL_BASE+LINUX_SYS_write)
+#define __NR_open		(__NR_SYSCALL_BASE+LINUX_SYS_open)
+#define __NR_close		(__NR_SYSCALL_BASE+LINUX_SYS_close)
+#define __NR_time		(__NR_SYSCALL_BASE+LINUX_SYS_time)
+#define __NR_lseek32		(__NR_SYSCALL_BASE+LINUX_SYS_lseek)
+#define __NR_ioctl		(__NR_SYSCALL_BASE+LINUX_SYS_ioctl)
+#define __NR_select		(__NR_SYSCALL_BASE+LINUX_SYS_select)
+#define __NR_stat		(__NR_SYSCALL_BASE+LINUX_SYS_stat)
 #define __NR_syscall		(__NR_SYSCALL_BASE+113)
 
 #undef	SYS_select
-#define SYS_select		__NR__new_select
+#define SYS_select		__NR_select

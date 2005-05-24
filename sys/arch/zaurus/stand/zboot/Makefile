@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2005/05/12 05:10:30 uwe Exp $
+#	$OpenBSD: Makefile,v 1.6 2005/05/24 20:38:20 uwe Exp $
 
 MAN=	boot.8
 MANSUBDIR=zaurus
@@ -33,8 +33,8 @@ SRCS+=	strcmp.c strlcpy.c strlen.c strncmp.c strncpy.c write.c \
 	ashrdi3.c divsi3.S
 
 # local overrides and additions
-SRCS+=	alloc.c cmd.c devopen.c exec.c exit.c loadfile.c machdep.c \
-	termios.c unixdev.c unixsys.S
+SRCS+=	alloc.c cmd.c devopen.c diskprobe.c exec.c exit.c loadfile.c \
+	machdep.c termios.c unixcons.c unixdev.c unixsys.S
 
 .PATH:	${S}/stand/boot
 .PATH:	${S}/lib/libsa

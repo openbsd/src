@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.4 2005/05/12 05:10:30 uwe Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.5 2005/05/24 20:38:20 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -26,14 +26,11 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "libsa.h"
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <dev/cons.h>
-
+#include "libsa.h"
 #include <stand/boot/cmd.h>
-
-extern int debug;
 
 /* XXX use slot for 'rd' for 'hd' pseudo-device */
 const char bdevs[][4] = {
@@ -45,11 +42,9 @@ const int nbdevs = NENTS(bdevs);
 
 const char cdevs[][4] = {
 	"cn", "", "", "", "", "", "", "",
-	"com", "", "", "", "pc"
+	"", "", "", "", "com"
 };
 const int ncdevs = NENTS(cdevs);
-
-int getbootdev(dev_t, char *);
 
 /* pass dev_t to the open routines */
 int
@@ -91,95 +86,16 @@ devopen(struct open_file *f, const char *fname, char **file)
 	return rc;
 }
 
-int
-getbootdev(dev_t bootdev, char *p)
-{
-	char buf[DEV_BSIZE];
-	struct dos_partition *dp;
-	struct disklabel label;
-	static int timeout = 10;
-	char *s;
-	int fd;
-	int n;
-	char *msg = "";
-
-	s = p;
-	*p++ = '/';
-	*p++ = 'd';
-	*p++ = 'e';
-	*p++ = 'v';
-	*p++ = '/';
-	*p++ = 'h';
-	*p++ = 'd';
-	*p++ = 'a' + (bootdev & 0xf); /* a - h */
-	*p = '\0';
-
-	/*
-	 * Give disk devices some time to become ready when the first open
-	 * fails.  Even when open succeeds the disk is sometimes not ready.
-	 */
-	if ((fd = uopen(s, O_RDONLY)) == -1 && errno == ENXIO) {
-		int t;
-
-		while (fd == -1 && timeout > 0) {
-			timeout--;
-			t = getsecs() + 1;
-			while (getsecs() < t)
-				;
-			fd = uopen(s, O_RDONLY);
-		}
-		if (fd != -1) {
-			t = getsecs() + 2;
-			while (getsecs() < t)
-				;
-		}
-	}
-	if (fd == -1)
-		return 0;
-
-	/* Read the disk's MBR. */
-	if (unixstrategy((void *)fd, F_READ, DOSBBSECTOR, DEV_BSIZE, buf,
-	    &n) != 0 || n != DEV_BSIZE) {
-		uclose(fd);
-		return 0;
-	}
-
-	/* Find OpenBSD primary partition in the disk's MBR. */
-	dp = (struct dos_partition *)&buf[DOSPARTOFF];
-	for (n = 0; n < NDOSPART; n++)
-		if (dp[n].dp_typ == DOSPTYP_OPENBSD)
-			break;
-	if (n == NDOSPART) {
-		uclose(fd);
-		return 0;
-	}
-	*p++ = '1' + n;
-	*p = '\0';
-	uclose(fd);
-
-	/* Test if the OpenBSD partition has a valid disklabel. */
-	if ((fd = uopen(s, O_RDONLY)) != -1) {
-		if (unixstrategy((void *)fd, F_READ, LABELSECTOR,
-		    DEV_BSIZE, buf, &n) == 0 && n == DEV_BSIZE)
-			msg = getdisklabel(buf, &label);
-		uclose(fd);
-	}
-	return msg == NULL;
-}
-
 void
 devboot(dev_t bootdev, char *p)
 {
+	dev_t unit = 0;		/* XXX */
 
-	if (bootdev != 0 && getbootdev(bootdev, p))
-		return;
-
-	for (bootdev = 0; bootdev < 8; bootdev++)
-		if (getbootdev(bootdev, p))
-			return;
-
-	/* fall-back to the previous default device */
-	strlcpy(p, "/dev/hda4", sizeof cmd.bootdev);
+	*p++ = 'h';
+	*p++ = 'd';
+	*p++ = '0' + unit;
+	*p++ = 'a';
+	*p = '\0';
 }
 
 int pch_pos = 0;
@@ -224,9 +140,7 @@ getchar(void)
 	if ((c < ' ' && c != '\n') || c == '\177')
 		return c;
 
-#ifndef _TEST
 	putchar(c);
-#endif
 
 	return c;
 }

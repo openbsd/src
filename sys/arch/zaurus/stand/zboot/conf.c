@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 2005/05/09 14:09:20 uwe Exp $	*/
+/*	$OpenBSD: conf.c,v 1.4 2005/05/24 20:38:20 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -38,31 +38,22 @@
 #include <lib/libsa/tftp.h>
 #include <lib/libsa/netif.h>
 #endif
-#include <lib/libsa/unixdev.h>
+#include "unixdev.h"
 #include <dev/cons.h>
-#if 0
-#include "debug.h"
-#endif
 
-const char version[] = "2.07";
-#if 0
+const char version[] = "2.08";
 int	debug = 1;
-#endif
 
 void (*zaurus_probe1[])(void) = {
 	cninit
 };
-#if 0
 void (*zaurus_probe2[])(void) = {
 	diskprobe
 };
-#endif
 
 struct zaurus_boot_probes probe_list[] = {
 	{ "probing", zaurus_probe1, NENTS(zaurus_probe1) },
-#if 0
 	{ "disk",    zaurus_probe2, NENTS(zaurus_probe2) }
-#endif
 };
 int nibprobes = NENTS(probe_list);
 
@@ -103,7 +94,8 @@ int n_netif_drivers = NENTS(netif_drivers);
 #endif
 
 struct consdev constab[] = {
-	{ unix_probe, unix_init, unix_getc, unix_putc },
+	{ cn_probe, cn_init, cn_getc, cn_putc },
+	{ com_probe, com_init, com_getc, com_putc },
 	{ NULL }
 };
 struct consdev *cn_tab = constab;
