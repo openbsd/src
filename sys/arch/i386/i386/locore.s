@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.84 2005/05/24 08:54:14 marco Exp $	*/
+/*	$OpenBSD: locore.s,v 1.85 2005/05/24 19:37:08 niklas Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1614,8 +1614,7 @@ ENTRY(idle_loop)
 	hlt
 #endif
 	cmpl	$0,_C_LABEL(whichqs)
-	jnz	_C_LABEL(idle_exit)
-	jmp	_C_LABEL(idle_loop)
+	jz	_C_LABEL(idle_loop)
 
 ENTRY(idle_exit)
 	movl	$IPL_HIGH,CPL		# splhigh
