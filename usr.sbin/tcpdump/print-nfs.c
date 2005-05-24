@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-nfs.c,v 1.13 2005/05/23 20:32:05 moritz Exp $	*/
+/*	$OpenBSD: print-nfs.c,v 1.14 2005/05/24 02:38:25 moritz Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -179,6 +179,7 @@ static int print_int64(const u_int32_t *dp, int how)
 #ifdef INT64_FORMAT
 	u_int64_t res;
 
+	TCHECK(dp[1]);
 	res = ((u_int64_t)ntohl(dp[0]) << 32) | (u_int64_t)ntohl(dp[1]);
 	switch (how) {
 	case SIGNED:
@@ -198,6 +199,7 @@ static int print_int64(const u_int32_t *dp, int how)
 	case SIGNED:
 	case UNSIGNED:
 	case HEX:
+		TCHECK(dp[1]);
 		if (dp[0])
 			printf("0x%x%08x", (u_int32_t)ntohl(dp[0]),
 			    (u_int32_t)ntohl(dp[1]));
@@ -209,6 +211,9 @@ static int print_int64(const u_int32_t *dp, int how)
 	}
 #endif
 	return 1;
+
+trunc:
+	return (0);
 }
 
 static const u_int32_t *
@@ -1132,10 +1137,14 @@ parse_wcc_attr(const u_int32_t *dp)
 {
 	printf(" sz ");
 	print_int64(dp, UNSIGNED);
+	TCHECK(dp[5]);
 	printf(" mtime %u.%06u ctime %u.%06u",
 	       (u_int32_t)ntohl(dp[2]), (u_int32_t)ntohl(dp[3]),
 	       (u_int32_t)ntohl(dp[4]), (u_int32_t)ntohl(dp[5]));
 	return (dp + 6);
+
+trunc:
+	return (NULL);
 }
 
 /*
@@ -1401,8 +1410,10 @@ interp_reply(const struct rpc_msg *rp, u_int32_t proc, u_int32_t vers, int lengt
 			printf(" attr:");
 		if (!(dp = parse_post_op_attr(dp, vflag)))
 			break;
-		if (!er)
+		if (!er) {
+			TCHECK(dp[0]);
 			printf(" c %04x", (u_int32_t)ntohl(dp[0]));
+		}
 		return;
 
 	case NFSPROC_READLINK:
