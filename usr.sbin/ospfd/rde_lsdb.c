@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.15 2005/05/24 07:13:00 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.16 2005/05/24 20:54:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -584,6 +584,7 @@ lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
 	/* compare LSA most header fields are equal so don't check them */
 	if (lsa->hdr.len == v->lsa->hdr.len &&
 	    lsa->hdr.opts == v->lsa->hdr.opts &&
+	    lsa->hdr.age != htons(MAX_AGE) &&
 	    memcmp(&lsa->data, &v->lsa->data, ntohs(lsa->hdr.len) -
 	    sizeof(struct lsa_hdr)) == 0) {
 		free(lsa);
