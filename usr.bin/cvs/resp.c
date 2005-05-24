@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.37 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.38 2005/05/24 07:33:36 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -343,7 +343,7 @@ cvs_resp_statdir(struct cvsroot *root, int type, char *line)
 
 	/* if the directory doesn't exist, first create it */
 	if ((stat(line, &dst) == -1) && (errno == ENOENT)) {
-		if (mkdir(line, 0755) == -1) {
+		if ((mkdir(line, 0755) == -1) && (errno != ENOENT)) {
 			cvs_log(LP_ERRNO, "failed to create %s", line);
 			return (-1);
 		}
@@ -391,7 +391,6 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 {
 	char buf[MAXPATHLEN], subdir[MAXPATHLEN], *file;
 	struct cvs_ent *ent;
-	struct stat dst;
 	CVSFILE *cf, *sdir;
 	CVSENTRIES *entf;
 
@@ -400,14 +399,6 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 		return (-1);
 
 	STRIP_SLASH(line);
-
-	/* if the directory doesn't exist, first create it */
-	if ((stat(line, &dst) == -1) && (errno == ENOENT)) {
-		if (mkdir(line, 0755) == -1) {
-			cvs_log(LP_ERRNO, "failed to create %s", line);
-			return (-1);
-		}
-	}
 
 	cvs_splitpath(line, subdir, sizeof(subdir), &file);
 	sdir = cvs_file_find(cvs_files, subdir);
@@ -420,8 +411,10 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 	if (cf == NULL) {
 		/* attempt to create it */
 		cf = cvs_file_create(sdir, line, DT_DIR, 0755);
-		if (cf == NULL)
+		if (cf == NULL) {
+			printf("yeah its this man\n");
 			return (-1);
+		}
 		cf->cf_repo = strdup(line);
 		if (cf->cf_repo == NULL) {
 			cvs_log(LP_ERRNO, "failed to duplicate `%s'", line);
