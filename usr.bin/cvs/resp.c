@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.38 2005/05/24 07:33:36 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.39 2005/05/24 19:13:52 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -412,7 +412,6 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 		/* attempt to create it */
 		cf = cvs_file_create(sdir, line, DT_DIR, 0755);
 		if (cf == NULL) {
-			printf("yeah its this man\n");
 			return (-1);
 		}
 		cf->cf_repo = strdup(line);
