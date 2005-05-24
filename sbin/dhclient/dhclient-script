@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: dhclient-script,v 1.7 2005/04/09 09:14:58 jmc Exp $
+# $OpenBSD: dhclient-script,v 1.8 2005/05/24 03:11:12 todd Exp $
 #
 # Copyright (c) 2003 Kenneth R Westerback <krw@openbsd.org>
 #
@@ -152,13 +152,12 @@ fi
 case $reason in
 MEDIUM)
 	ifconfig $interface $medium
-	ifconfig $interface inet -alias 0.0.0.0 $medium >/dev/null 2>&1
 	sleep 1
 	;;
 
 PREINIT)
 	delete_old_alias
-	ifconfig $interface inet 0.0.0.0 netmask 0.0.0.0 broadcast 255.255.255.255 up
+	ifconfig $interface up
 	;;
 
 ARPCHECK|ARPSEND)

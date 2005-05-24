@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.31 2004/09/21 04:07:03 david Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.32 2005/05/24 03:11:12 todd Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -67,8 +67,8 @@ void
 discover_interfaces(struct interface_info *iface)
 {
 	struct ifaddrs *ifap, *ifa;
-	struct sockaddr_in foo;
 	struct ifreq *tif;
+	int len = IFNAMSIZ + sizeof(struct sockaddr_storage);
 
 	if (getifaddrs(&ifap) != 0)
 		error("getifaddrs failed");
@@ -95,24 +95,12 @@ discover_interfaces(struct interface_info *iface)
 			iface->hw_address.htype = HTYPE_ETHER; /* XXX */
 			memcpy(iface->hw_address.haddr,
 			    LLADDR(foo), foo->sdl_alen);
-		} else if (ifa->ifa_addr->sa_family == AF_INET) {
-			struct iaddr addr;
-
-			memcpy(&foo, ifa->ifa_addr, sizeof(foo));
-			if (foo.sin_addr.s_addr == htonl(INADDR_LOOPBACK))
-				continue;
-			if (!iface->ifp) {
-				int len = IFNAMSIZ + ifa->ifa_addr->sa_len;
-				if ((tif = malloc(len)) == NULL)
-					error("no space to remember ifp");
-				strlcpy(tif->ifr_name, ifa->ifa_name, IFNAMSIZ);
-				memcpy(&tif->ifr_addr, ifa->ifa_addr,
-				    ifa->ifa_addr->sa_len);
-				iface->ifp = tif;
-				iface->primary_address = foo.sin_addr;
-			}
-			addr.len = 4;
-			memcpy(addr.iabuf, &foo.sin_addr.s_addr, addr.len);
+		}
+		if (!iface->ifp) {
+			if ((tif = malloc(len)) == NULL)
+				error("no space to remember ifp");
+			strlcpy(tif->ifr_name, ifa->ifa_name, IFNAMSIZ);
+			iface->ifp = tif;
 		}
 	}
 
