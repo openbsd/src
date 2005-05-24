@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.17 2005/05/24 21:31:07 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.18 2005/05/24 21:36:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -477,6 +477,34 @@ kif_clear(void)
 		kif_remove(kif);
 }
 
+void
+kif_update(struct kif *k)
+{
+	struct kif_node		*kif;
+
+	if ((kif = kif_find(k->ifindex)) == NULL) {
+		log_warnx("interface with index %u not found",
+		    k->ifindex);
+		return;
+	}
+
+	memcpy(&kif->k, k, sizeof(struct kif));
+}
+
+int
+kif_validate(int ifindex)
+{
+	struct kif_node		*kif;
+
+	if ((kif = kif_find(ifindex)) == NULL) {
+		log_warnx("interface with index %u not found",
+		    ifindex);
+		return (1);
+	}
+
+	return (kif->k.nh_reachable);
+}
+
 struct kroute_node *
 kroute_match(in_addr_t key)
 {
@@ -592,6 +620,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 
 	kif->k.nh_reachable = reachable;
 	main_imsg_compose_ospfe(IMSG_IFINFO, 0, &kif->k, sizeof(kif->k));
+	main_imsg_compose_rde(IMSG_IFINFO, 0, &kif->k, sizeof(kif->k));
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.22 2005/05/24 20:40:57 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.23 2005/05/24 21:36:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -56,6 +56,7 @@ void		 rde_req_list_del(struct rde_nbr *, struct lsa_hdr *);
 void		 rde_req_list_free(struct rde_nbr *);
 
 int		 rde_redistribute(struct kroute *);
+void		 rde_update_redistribute(int);
 struct lsa	*rde_asext_get(struct kroute *);
 struct lsa	*rde_asext_put(struct kroute *);
 
@@ -544,6 +545,7 @@ rde_dispatch_parent(int fd, short event, void *bula)
 	struct lsa		*lsa;
 	struct vertex		*v;
 	struct kroute		 kr;
+	struct kif		 kif;
 	int			 n;
 
 	switch (event) {
@@ -600,6 +602,18 @@ rde_dispatch_parent(int fd, short event, void *bula)
 
 				lsa_merge(nbrself, lsa, v);
 			}
+			break;
+		case IMSG_IFINFO:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(kif)) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			memcpy(&kif, imsg.data, sizeof(kif));
+			
+			log_debug("IMSG_IFINFO: ifindex %i reachable %d",
+			    kif.ifindex, kif.nh_reachable);
+			kif_update(&kif);
+			rde_update_redistribute(kif.ifindex);
 			break;
 		default:
 			log_debug("rde_dispatch_parent: unexpected imsg %d",
@@ -913,11 +927,12 @@ rde_redistribute(struct kroute *kr)
 	    (kr->flags & F_CONNECTED))
 		rv = 1;
 
+	/* interface is not up and running so don't announce */
+	if (kif_validate(kr->ifindex) == 0)
+		return (0);
+
 	LIST_FOREACH(area, &rdeconf->area_list, entry)
 		LIST_FOREACH(iface, &area->iface_list, entry) {
-			log_debug("rde_redistribute: iface %s/%d",
-			    inet_ntoa(iface->addr),
-			    mask2prefixlen(iface->mask.s_addr));
 			if ((iface->addr.s_addr & iface->mask.s_addr) ==
 			    kr->prefix.s_addr && iface->mask.s_addr ==
 			    prefixlen2mask(kr->prefixlen))
@@ -926,6 +941,32 @@ rde_redistribute(struct kroute *kr)
 	log_debug("rde_redistribute: prefix %s/%d used %d",
 	    inet_ntoa(kr->prefix), kr->prefixlen, rv);
 	return (rv);
+}
+
+void
+rde_update_redistribute(int ifindex)
+{
+	struct rde_asext	*ae;
+	struct lsa		*lsa;
+	struct vertex		*v;
+	int			 wasused;
+
+	LIST_FOREACH(ae, &rde_asext_list, entry)
+		if (ae->kr.ifindex == ifindex) {
+			wasused = ae->used;
+			ae->used = rde_redistribute(&ae->kr);
+			if (ae->used)
+				lsa = orig_asext_lsa(&ae->kr, DEFAULT_AGE);
+			else if (wasused)
+				lsa = orig_asext_lsa(&ae->kr, MAX_AGE);
+			else
+				continue;
+
+			v = lsa_find(NULL, lsa->hdr.type,
+			    lsa->hdr.ls_id, lsa->hdr.adv_rtr);
+
+			lsa_merge(nbrself, lsa, v);
+		}
 }
 
 struct lsa *
