@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.5 2005/05/24 02:49:32 ho Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.6 2005/05/24 03:15:11 ho Exp $	*/
 
 /*
  * Copyright (c) 2005 Håkan Olsson.  All rights reserved.
@@ -343,8 +343,6 @@ pfkey_snapshot(void *v)
 
 		/* Tweak and send this SA to the peer. */
 		m->sadb_msg_type = SADB_ADD;
-		m->sadb_msg_errno = 0;
-		m->sadb_msg_reserved = 0; /* XXX DUMP msg has data here. */
 
 		/* Allocate a buffer for the msg, net_queue() will free it. */
 		sendbuf = (u_int8_t *)malloc(m->sadb_msg_len * CHUNK);
