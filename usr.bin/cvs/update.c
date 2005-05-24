@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.29 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.30 2005/05/24 04:21:54 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -192,7 +192,6 @@ cvs_update_local(CVSFILE *cf, void *arg)
 	RCSFILE *rf;
 	struct cvsroot *root;
 
-	printf("cvs_update_local(%s)\n", cf->cf_name);
 	ret = 0;
 	rf = NULL;
 	root = CVS_DIR_ROOT(cf);
@@ -218,7 +217,6 @@ cvs_update_local(CVSFILE *cf, void *arg)
 		return (CVS_EX_DATA);
 	}
 
-	printf("opening %s\n", rcspath);
 	rf = rcs_open(rcspath, RCS_RDWR);
 	if (rf == NULL) {
 		printf("failed here?\n");

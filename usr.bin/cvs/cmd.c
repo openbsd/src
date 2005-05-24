@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.19 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.20 2005/05/24 04:21:54 jfb Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -164,7 +164,6 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 		return cvs_server(argc, argv);
 
 	if (cmd->cmd_init != NULL) {
-		printf("[init]\n");
 		if ((ret = (*cmd->cmd_init)(cmd, argc, argv, &i)) != 0)
 			return (ret);
 
@@ -184,7 +183,6 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 		cvs_log(LP_TRACE, "cvs_startcmd() CVSROOT=%s", root->cr_str);
 
 	if (cmd->cmd_pre_exec != NULL) {
-		printf("[pre-exec]\n");
 		if ((ret = cmd->cmd_pre_exec(root)) != 0)
 			return (ret);
 	}
@@ -206,7 +204,6 @@ cvs_startcmd(struct cvs_cmd *cmd, int argc, char **argv)
 		return (CVS_EX_DATA);
 
 	if (cmd->cmd_post_exec != NULL) {
-		printf("[post-exec]\n");
 		if ((ret = cmd->cmd_post_exec(root)) != 0)
 			return (ret);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: import.c,v 1.15 2005/05/24 04:12:25 jfb Exp $	*/
+/*	$OpenBSD: import.c,v 1.16 2005/05/24 04:21:54 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -251,7 +251,6 @@ cvs_import_local(CVSFILE *cf, void *arg)
 	snprintf(rpath, sizeof(rpath), "%s/%s%s",
 	    repo, fpath, RCS_FILE_EXT);
 
-	printf("importing file in %s\n", rpath);
 	cvs_printf("N %s\n", fpath);
 
 	rf = rcs_open(rpath, RCS_RDWR|RCS_CREATE);
