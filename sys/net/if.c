@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.115 2005/05/24 02:45:17 reyk Exp $	*/
+/*	$OpenBSD: if.c,v 1.116 2005/05/24 02:49:34 henning Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1638,6 +1638,7 @@ int
 if_delgroup(struct ifnet *ifp, char *groupname)
 {
 	struct ifg_list		*ifgl;
+	struct ifg_member	*ifgm;
 
 	TAILQ_FOREACH(ifgl, &ifp->if_groups, ifgl_next)
 		if (!strcmp(ifgl->ifgl_group->ifg_group, groupname))
@@ -1646,6 +1647,15 @@ if_delgroup(struct ifnet *ifp, char *groupname)
 		return (ENOENT);
 
 	TAILQ_REMOVE(&ifp->if_groups, ifgl, ifgl_next);
+
+	TAILQ_FOREACH(ifgm, &ifgl->ifgl_group->ifg_members, ifgm_next)
+		if (ifgm->ifgm_ifp == ifp)
+			break;
+
+	if (ifgm != NULL) {
+		TAILQ_REMOVE(&ifgl->ifgl_group->ifg_members, ifgm, ifgm_next);
+		free(ifgm, M_TEMP);
+	}
 
 	if (--ifgl->ifgl_group->ifg_refcnt == 0) {
 		TAILQ_REMOVE(&ifg_head, ifgl->ifgl_group, ifg_next);
