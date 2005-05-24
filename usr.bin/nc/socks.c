@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.14 2005/05/20 22:46:08 djm Exp $	*/
+/*	$OpenBSD: socks.c,v 1.15 2005/05/24 20:13:28 avsm Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "atomicio.h"
 
 #define SOCKS_PORT	"1080"
 #define HTTP_PROXY_PORT	"3128"
@@ -50,7 +51,6 @@
 #define SOCKS_DOMAIN	3
 #define SOCKS_IPV6	4
 
-ssize_t	atomicio(ssize_t (*)(int, void *, size_t), int, void *, size_t);
 int	remote_connect(const char *, const char *, struct addrinfo);
 int	socks_connect(const char *host, const char *port, struct addrinfo hints,
 	    const char *proxyhost, const char *proxyport, struct addrinfo proxyhints,
@@ -86,18 +86,15 @@ decode_addrport(const char *h, const char *p, struct sockaddr *addr,
 }
 
 static int
-proxy_read_line(int fd, char *buf, int bufsz)
+proxy_read_line(int fd, char *buf, size_t bufsz)
 {
-	int r, off;
+	size_t off;
 
 	for(off = 0;;) {
 		if (off >= bufsz)
 			errx(1, "proxy read too long");
-		if ((r = read(fd, buf + off, 1)) <= 0) {
-			if (r == -1 && errno == EINTR)
-				continue;
+		if (atomicio(read, fd, buf + off, 1) != 1)
 			err(1, "proxy read");
-		}
 		/* Skip CR */
 		if (buf[off] == '\r')
 			continue;
@@ -119,7 +116,7 @@ socks_connect(const char *host, const char *port,
 	int proxyfd, r;
 	size_t hlen, wlen;
 	unsigned char buf[1024];
-	ssize_t cnt;
+	size_t cnt;
 	struct sockaddr_storage addr;
 	struct sockaddr_in *in4 = (struct sockaddr_in *)&addr;
 	struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)&addr;
@@ -148,13 +145,14 @@ socks_connect(const char *host, const char *port,
 		buf[0] = SOCKS_V5;
 		buf[1] = 1;
 		buf[2] = SOCKS_NOAUTH;
-		cnt = write(proxyfd, buf, 3);
-		if (cnt == -1)
-			err(1, "write failed");
+		cnt = atomicio(vwrite, proxyfd, buf, 3);
 		if (cnt != 3)
-			errx(1, "short write, %d (expected 3)", cnt);
+			err(1, "write failed (%d/3)", cnt);
 
-		read(proxyfd, buf, 2);
+		cnt = atomicio(read, proxyfd, buf, 2);
+		if (cnt != 2)
+			err(1, "read failed (%d/3)", cnt);
+
 		if (buf[1] == SOCKS_NOMETHOD)
 			errx(1, "authentication method negotiation failed");
 
@@ -200,18 +198,13 @@ socks_connect(const char *host, const char *port,
 			errx(1, "internal error: silly AF");
 		}
 
-		cnt = atomicio((ssize_t (*)(int, void *, size_t))write,
-		    proxyfd, buf, wlen);
-		if (cnt == -1)
-			err(1, "write failed");
+		cnt = atomicio(vwrite, proxyfd, buf, wlen);
 		if (cnt != wlen)
-			errx(1, "short write, %d (expected %d)", cnt, wlen);
+			err(1, "write failed (%d/%d)", cnt, wlen);
 
 		cnt = atomicio(read, proxyfd, buf, 10);
-		if (cnt == -1)
-			err(1, "read failed");
 		if (cnt != 10)
-			errx(1, "unexpected reply size %d (expected 10)", cnt);
+			err(1, "read failed (%d/10)", cnt);
 		if (buf[1] != 0)
 			errx(1, "connection failed, SOCKS error %d", buf[1]);
 	} else if (socksv == 4) {
@@ -227,17 +220,13 @@ socks_connect(const char *host, const char *port,
 		buf[8] = 0;	/* empty username */
 		wlen = 9;
 
-		cnt = write(proxyfd, buf, wlen);
-		if (cnt == -1)
-			err(1, "write failed");
+		cnt = atomicio(vwrite, proxyfd, buf, wlen);
 		if (cnt != wlen)
-			errx(1, "short write, %d (expected %d)", cnt, wlen);
+			err(1, "write failed (%d/%d)", cnt, wlen);
 
 		cnt = atomicio(read, proxyfd, buf, 8);
-		if (cnt == -1)
-			err(1, "read failed");
 		if (cnt != 8)
-			errx(1, "unexpected reply size %d (expected 8)", cnt);
+			err(1, "read failed (%d/8)", cnt);
 		if (buf[1] != 90)
 			errx(1, "connection failed, SOCKS error %d", buf[1]);
 	} else if (socksv == -1) {
@@ -261,12 +250,9 @@ socks_connect(const char *host, const char *port,
 			errx(1, "hostname too long");
 		r = strlen(buf);
 
-		cnt = atomicio((ssize_t (*)(int, void *, size_t))write,
-		    proxyfd, buf, r);
-		if (cnt == -1)
-			err(1, "write failed");
+		cnt = atomicio(vwrite, proxyfd, buf, r);
 		if (cnt != r)
-			errx(1, "short write, %d (expected %d)", cnt, r);
+			err(1, "write failed (%d/%d)", cnt, r);
 
 		/* Read reply */
 		for (r = 0; r < HTTP_MAXHDRS; r++) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.78 2005/04/10 19:43:34 otto Exp $ */
+/* $OpenBSD: netcat.c,v 1.79 2005/05/24 20:13:28 avsm Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -50,6 +50,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "atomicio.h"
 
 #ifndef SUN_LEN
 #define SUN_LEN(su) \
@@ -80,7 +81,6 @@ int timeout = -1;
 int family = AF_UNSPEC;
 char *portlist[PORT_MAX+1];
 
-ssize_t	atomicio(ssize_t (*)(int, void *, size_t), int, void *, size_t);
 void	atelnet(int, unsigned char *, unsigned int);
 void	build_ports(char *);
 void	help(void);
@@ -590,7 +590,7 @@ readwrite(int nfd)
 {
 	struct pollfd pfd[2];
 	unsigned char buf[BUFSIZ];
-	int wfd = fileno(stdin), n;
+	int n, wfd = fileno(stdin);
 	int lfd = fileno(stdout);
 
 	/* Setup Network FD */
@@ -623,8 +623,7 @@ readwrite(int nfd)
 			} else {
 				if (tflag)
 					atelnet(nfd, buf, n);
-				if (atomicio((ssize_t (*)(int, void *, size_t))write,
-				    lfd, buf, n) != n)
+				if (atomicio(vwrite, lfd, buf, n) != n)
 					return;
 			}
 		}
@@ -637,8 +636,7 @@ readwrite(int nfd)
 				pfd[1].fd = -1;
 				pfd[1].events = 0;
 			} else {
-				if (atomicio((ssize_t (*)(int, void *, size_t))write,
-				    nfd, buf, n) != n)
+				if (atomicio(vwrite, nfd, buf, n) != n)
 					return;
 			}
 		}
@@ -669,9 +667,8 @@ atelnet(int nfd, unsigned char *buf, unsigned int size)
 			p++;
 			obuf[2] = *p;
 			obuf[3] = '\0';
-			if (atomicio((ssize_t (*)(int, void *, size_t))write,
-			    nfd, obuf, 3) != 3)
-				warnx("Write Error!");
+			if (atomicio(vwrite, nfd, obuf, 3) != 3)
+				warn("Write Error!");
 			obuf[0] = '\0';
 		}
 	}
