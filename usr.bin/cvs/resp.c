@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.39 2005/05/24 19:13:52 joris Exp $	*/
+/*	$OpenBSD: resp.c,v 1.40 2005/05/24 22:00:25 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -364,7 +364,7 @@ cvs_resp_statdir(struct cvsroot *root, int type, char *line)
 			    CVS_PATH_STATICENTRIES);
 			return (-1);
 		} else if (type == CVS_RESP_SETSTATDIR) {
-			fd = open(statpath, O_CREAT|O_TRUNC|O_WRONLY, 0400);
+			fd = open(statpath, O_CREAT|O_TRUNC|O_WRONLY, 0644);
 			if (fd == -1) {
 				cvs_log(LP_ERRNO,
 				    "failed to set static directory on %s",
@@ -430,14 +430,16 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 
 		/* add a directory entry to the parent */
 		if ((entf = cvs_ent_open(subdir, O_WRONLY)) != NULL) {
-			snprintf(buf, sizeof(buf), "D/%s////",
-			    CVS_FILE_NAME(cf));
-			ent = cvs_ent_parse(buf);
-			if (ent == NULL)
-				cvs_log(LP_ERR,
-				    "failed to create directory entry");
-			else
-				cvs_ent_add(entf, ent);
+			if ((ent = cvs_ent_get(entf, CVS_FILE_NAME(cf))) == NULL) {
+				snprintf(buf, sizeof(buf), "D/%s////",
+				    CVS_FILE_NAME(cf));
+				ent = cvs_ent_parse(buf);
+				if (ent == NULL)
+					cvs_log(LP_ERR,
+					    "failed to create directory entry");
+				else
+					cvs_ent_add(entf, ent);
+			}
 			cvs_ent_close(entf);
 		}
 	}
